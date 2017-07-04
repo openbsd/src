@@ -1,6 +1,7 @@
-.Dd August 5, 2014
+.\" $OpenBSD: dupe.in,v 1.4 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt DT-FIRST 2 first_arch
-.Os OpenBSD
+.Os
 .Dt DT-DUPE 1
 .Sh NAME
 .Nm Dt-order

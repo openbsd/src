@@ -1,3 +1,2 @@
-mandoc: args.in:7:5: ERROR: skipping all arguments: nf arg1 arg2 arg3
-mandoc: args.in:10:5: ERROR: skipping all arguments: fi arg1 arg2 arg3
-mandoc: args.in: BASE: RCS id missing: (OpenBSD)
+mandoc: args.in:8:5: ERROR: skipping all arguments: nf arg1 arg2 arg3
+mandoc: args.in:11:5: ERROR: skipping all arguments: fi arg1 arg2 arg3

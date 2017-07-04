@@ -1,1 +1,2 @@
-.TH TH-NOBODY 1 "June 20, 2014" OpenBSD
+.\" $OpenBSD: nobody.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.TH TH-NOBODY 1 "June 20, 2014"

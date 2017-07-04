@@ -12,4 +12,4 @@ FO-WARN(1) - General Commands Manual
 *double*  
 **atan2**(*double y, double x*);
 
-OpenBSD - October 11, 2014
+OpenBSD - July 4, 2017

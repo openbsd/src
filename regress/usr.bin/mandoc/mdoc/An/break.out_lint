@@ -1,16 +1,13 @@
-mandoc: break.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: break.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
-mandoc: break.in:14:2: WARNING: skipping empty macro: An
-mandoc: break.in:16:2: WARNING: skipping empty macro: An
-mandoc: break.in:18:12: WARNING: skipping duplicate argument: An -nosplit
-mandoc: break.in:18:21: ERROR: skipping excess arguments: An ... bogus
-mandoc: break.in:25:2: WARNING: skipping empty macro: An
-mandoc: break.in:27:2: WARNING: skipping empty macro: An
-mandoc: break.in:36:2: WARNING: skipping empty macro: An
-mandoc: break.in:38:2: WARNING: skipping empty macro: An
-mandoc: break.in:39:14: WARNING: skipping duplicate argument: An -split
-mandoc: break.in:39:21: ERROR: skipping excess arguments: An ... bogus
-mandoc: break.in:43:9: STYLE: no blank before trailing delimiter: An Ingo,
-mandoc: break.in:47:2: WARNING: skipping empty macro: An
-mandoc: break.in:49:2: WARNING: skipping empty macro: An
-mandoc: break.in: BASE: RCS id missing: (OpenBSD)
+mandoc: break.in:15:2: WARNING: skipping empty macro: An
+mandoc: break.in:17:2: WARNING: skipping empty macro: An
+mandoc: break.in:19:12: WARNING: skipping duplicate argument: An -nosplit
+mandoc: break.in:19:21: ERROR: skipping excess arguments: An ... bogus
+mandoc: break.in:26:2: WARNING: skipping empty macro: An
+mandoc: break.in:28:2: WARNING: skipping empty macro: An
+mandoc: break.in:37:2: WARNING: skipping empty macro: An
+mandoc: break.in:39:2: WARNING: skipping empty macro: An
+mandoc: break.in:40:14: WARNING: skipping duplicate argument: An -split
+mandoc: break.in:40:21: ERROR: skipping excess arguments: An ... bogus
+mandoc: break.in:44:9: STYLE: no blank before trailing delimiter: An Ingo,
+mandoc: break.in:48:2: WARNING: skipping empty macro: An
+mandoc: break.in:50:2: WARNING: skipping empty macro: An

@@ -1,6 +1,7 @@
-.Dd July 1, 2014
+.\" $OpenBSD: order.in,v 1.2 2017/07/04 14:53:26 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt SH-ORDER 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Sh-order
 .Nd sections out of conventional order

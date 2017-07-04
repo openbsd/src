@@ -1,4 +1,5 @@
-.TH MT-ARGS 1 "June 25, 2017" OpenBSD
+.\" $OpenBSD: args.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH MT-ARGS 1 "June 25, 2017"
 .SH NAME
 MT-args \- argument handling of the man-ext mailto macro
 .SH DESCRIPTION

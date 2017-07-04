@@ -1,6 +1,7 @@
-.Dd December 24, 2010
+.\" $OpenBSD: inputlines.in,v 1.3 2017/07/04 14:53:24 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt BK-INPUTLINES 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Bk-inputlines
 .Nd effect of input lines breaks on word keeps

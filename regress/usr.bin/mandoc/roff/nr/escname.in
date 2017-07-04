@@ -1,4 +1,5 @@
-.TH NR-ESCNAME 1 "June 29, 2014" OpenBSD
+.\" $OpenBSD: escname.in,v 1.3 2017/07/04 14:53:27 schwarze Exp $
+.TH NR-ESCNAME 1 "June 29, 2014"
 .SH NAME
 nr-escname \- escape sequences in register names
 .SH DESCRIPTION

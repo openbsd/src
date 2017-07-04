@@ -1,3 +1,4 @@
+.\" $OpenBSD: emptydate.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
 .TH TH-EMPTYDATE 1 "" source
 .SH NAME
 TH-emptydate \- an empty date string

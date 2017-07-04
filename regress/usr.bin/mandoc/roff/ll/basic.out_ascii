@@ -20,4 +20,4 @@ DDEESSCCRRIIPPTTIIOONN
      This is a longer text after switching to an invalid line length.  In
      ASCII mode, it is expected to break at column 78.
 
-OpenBSD                        February 5, 2014                        OpenBSD
+OpenBSD                          July 4, 2017                          OpenBSD

@@ -1,4 +1,5 @@
-.TH NR-INT 1 "October 3, 2013" OpenBSD
+.\" $OpenBSD: int.in,v 1.3 2017/07/04 14:53:27 schwarze Exp $
+.TH NR-INT 1 "October 3, 2013"
 .SH NAME
 nr-int \- integer number registers
 .SH DESCRIPTION

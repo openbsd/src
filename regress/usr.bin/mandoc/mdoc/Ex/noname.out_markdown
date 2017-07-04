@@ -15,4 +15,4 @@ The **one** utility exits&#160;0 on success, and&#160;&gt;0 if an error occurs.
 two arguments:
 The **one** and **two** utilities exit&#160;0 on success, and&#160;&gt;0 if an error occurs.
 
-OpenBSD - July 29, 2014
+OpenBSD - July 4, 2017

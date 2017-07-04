@@ -1,6 +1,7 @@
-.Dd August 5, 2014
+.\" $OpenBSD: nosec.in,v 1.2 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt DT-NOSEC
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Dt-nosec
 .Nd title macro without manual section

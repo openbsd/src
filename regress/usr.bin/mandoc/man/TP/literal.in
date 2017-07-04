@@ -1,4 +1,5 @@
-.TH TP-LITERAL 1 "January 4, 2011" OpenBSD
+.\" $OpenBSD: literal.in,v 1.3 2017/07/04 14:53:24 schwarze Exp $
+.TH TP-LITERAL 1 "January 4, 2011"
 .SH NAME
 TP-literal \- indented paragraphs in literal context
 .SH DESCRIPTION

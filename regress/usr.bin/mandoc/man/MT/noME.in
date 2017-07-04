@@ -1,4 +1,5 @@
-.TH MT-NOME 1 "June 25, 2017" OpenBSD
+.\" $OpenBSD: noME.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH MT-NOME 1 "June 25, 2017"
 .SH NAME
 MT-noME \- unclosed mailto macro
 .SH DESCRIPTION

@@ -1,4 +1,5 @@
-.TH TBL-LAYOUT-SPAN 1 "June 17, 2017" OpenBSD
+.\" $OpenBSD: span.in,v 1.5 2017/07/04 14:53:27 schwarze Exp $
+.TH TBL-LAYOUT-SPAN 1 "June 17, 2017"
 .SH NAME
 tbl-layout-span \- alignment of spanned cells
 .SH DESCRIPTION

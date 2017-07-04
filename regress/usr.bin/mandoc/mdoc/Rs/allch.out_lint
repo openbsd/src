@@ -1,9 +1,6 @@
-mandoc: allch.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: allch.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
-mandoc: allch.in:14:1: WARNING: invalid content in Rs block: text
-mandoc: allch.in:19:2: WARNING: invalid content in Rs block: Em
-mandoc: allch.in:20:1: WARNING: invalid content in Rs block: text
-mandoc: allch.in:35:1: WARNING: invalid content in Rs block: text
-mandoc: allch.in:36:2: WARNING: invalid content in Rs block: Em
-mandoc: allch.in:41:1: WARNING: invalid content in Rs block: text
-mandoc: allch.in: BASE: RCS id missing: (OpenBSD)
+mandoc: allch.in:15:1: WARNING: invalid content in Rs block: text
+mandoc: allch.in:20:2: WARNING: invalid content in Rs block: Em
+mandoc: allch.in:21:1: WARNING: invalid content in Rs block: text
+mandoc: allch.in:36:1: WARNING: invalid content in Rs block: text
+mandoc: allch.in:37:2: WARNING: invalid content in Rs block: Em
+mandoc: allch.in:42:1: WARNING: invalid content in Rs block: text

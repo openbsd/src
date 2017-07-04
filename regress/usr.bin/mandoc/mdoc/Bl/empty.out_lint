@@ -1,14 +1,11 @@
-mandoc: empty.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: empty.in:1:5: BASE: Mdocdate missing: Dd January (OpenBSD)
-mandoc: empty.in:9:2: WARNING: empty block: Bl
-mandoc: empty.in:12:2: WARNING: empty block: Bl
-mandoc: empty.in:15:2: WARNING: empty block: Bl
-mandoc: empty.in:18:2: WARNING: empty block: Bl
-mandoc: empty.in:21:2: WARNING: empty block: Bl
-mandoc: empty.in:24:2: WARNING: empty block: Bl
-mandoc: empty.in:27:2: WARNING: empty block: Bl
-mandoc: empty.in:30:2: WARNING: empty block: Bl
-mandoc: empty.in:33:2: WARNING: empty block: Bl
-mandoc: empty.in:36:2: WARNING: empty block: Bl
-mandoc: empty.in:39:2: WARNING: empty block: Bl
-mandoc: empty.in: BASE: RCS id missing: (OpenBSD)
+mandoc: empty.in:10:2: WARNING: empty block: Bl
+mandoc: empty.in:13:2: WARNING: empty block: Bl
+mandoc: empty.in:16:2: WARNING: empty block: Bl
+mandoc: empty.in:19:2: WARNING: empty block: Bl
+mandoc: empty.in:22:2: WARNING: empty block: Bl
+mandoc: empty.in:25:2: WARNING: empty block: Bl
+mandoc: empty.in:28:2: WARNING: empty block: Bl
+mandoc: empty.in:31:2: WARNING: empty block: Bl
+mandoc: empty.in:34:2: WARNING: empty block: Bl
+mandoc: empty.in:37:2: WARNING: empty block: Bl
+mandoc: empty.in:40:2: WARNING: empty block: Bl

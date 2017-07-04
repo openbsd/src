@@ -1,3 +1,2 @@
-mandoc: std.in:6:4: WARNING: undefined string, using "": DT
-mandoc: std.in:10:4: WARNING: undefined string, using "": myname
-mandoc: std.in: BASE: RCS id missing: (OpenBSD)
+mandoc: std.in:7:4: WARNING: undefined string, using "": DT
+mandoc: std.in:11:4: WARNING: undefined string, using "": myname

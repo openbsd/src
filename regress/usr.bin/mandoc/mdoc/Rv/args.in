@@ -1,6 +1,7 @@
-.Dd July 29, 2014
+.\" $OpenBSD: args.in,v 1.2 2017/07/04 14:53:26 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt RV-ARGS 3
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Rv-args
 .Nd arguments to the return value macro

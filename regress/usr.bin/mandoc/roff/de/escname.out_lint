@@ -1,11 +1,8 @@
-mandoc: escname.in:21:2: ERROR: escaped character not allowed in a name: first\e
-mandoc: escname.in:31:19: ERROR: escaped character not allowed in a name: first\e
-mandoc: escname.in:32:2: ERROR: skipping unknown macro: .first
-mandoc: escname.in:34:2: ERROR: skipping unknown macro: .first\\second
-mandoc: escname.in:37:5: ERROR: skipping excess arguments: .de ... excess arguments
-mandoc: escname.in:40:1: ERROR: escaped character not allowed in a name: witharg\(
-mandoc: escname.in:42:1: ERROR: escaped character not allowed in a name: de\e
-mandoc: escname.in:42:2: WARNING: skipping empty request: de
-mandoc: escname.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: escname.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
-mandoc: escname.in: BASE: RCS id missing: (OpenBSD)
+mandoc: escname.in:22:2: ERROR: escaped character not allowed in a name: first\e
+mandoc: escname.in:32:19: ERROR: escaped character not allowed in a name: first\e
+mandoc: escname.in:33:2: ERROR: skipping unknown macro: .first
+mandoc: escname.in:35:2: ERROR: skipping unknown macro: .first\\second
+mandoc: escname.in:38:5: ERROR: skipping excess arguments: .de ... excess arguments
+mandoc: escname.in:41:1: ERROR: escaped character not allowed in a name: witharg\(
+mandoc: escname.in:43:1: ERROR: escaped character not allowed in a name: de\e
+mandoc: escname.in:43:2: WARNING: skipping empty request: de

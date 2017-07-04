@@ -1,4 +1,5 @@
-.TH COND-CLOSE 1 2013-06-27 OpenBSD
+.\" $OpenBSD: close.in,v 1.3 2017/07/04 14:53:26 schwarze Exp $
+.TH COND-CLOSE 1 2013-06-27
 .SH NAME
 cond-close \- closing conditional macros
 .SH DESCRIPTION

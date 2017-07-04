@@ -1,3 +1,2 @@
-mandoc: args.in:6:2: WARNING: missing option string, using "": OP
-mandoc: args.in:12:13: ERROR: skipping excess arguments: OP ... bogus
-mandoc: args.in: BASE: RCS id missing: (OpenBSD)
+mandoc: args.in:7:2: WARNING: missing option string, using "": OP
+mandoc: args.in:13:13: ERROR: skipping excess arguments: OP ... bogus

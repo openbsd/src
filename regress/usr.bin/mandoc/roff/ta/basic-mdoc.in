@@ -1,6 +1,7 @@
-.Dd May 7, 2017
+.\" $OpenBSD: basic-mdoc.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt TA-BASIC-MDOC 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm ta-basic-mdoc
 .Nd setting tabstop positions in mdoc(7)

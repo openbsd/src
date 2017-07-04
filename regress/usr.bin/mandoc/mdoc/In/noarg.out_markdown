@@ -22,4 +22,4 @@ IN-NOARG(2) - System Calls Manual
 *double*
 **cos**(*double x*)
 
-OpenBSD - February 5, 2015
+OpenBSD - July 4, 2017

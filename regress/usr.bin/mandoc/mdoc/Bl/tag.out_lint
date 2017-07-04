@@ -1,4 +1,1 @@
-mandoc: tag.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: tag.in:1:5: BASE: Mdocdate missing: Dd September (OpenBSD)
-mandoc: tag.in:131:2: WARNING: missing -width in -tag list, using 6n: Bl -tag
-mandoc: tag.in: BASE: RCS id missing: (OpenBSD)
+mandoc: tag.in:132:2: WARNING: missing -width in -tag list, using 6n: Bl -tag

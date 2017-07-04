@@ -1,10 +1,7 @@
-mandoc: column.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: column.in:1:5: BASE: Mdocdate missing: Dd October (OpenBSD)
-mandoc: column.in:71:2: WARNING: skipping empty macro: It
-mandoc: column.in:72:2: WARNING: wrong number of cells: 2 columns, 1 cells
-mandoc: column.in:74:2: WARNING: skipping empty macro: It
-mandoc: column.in:76:2: WARNING: wrong number of cells: 2 columns, 4 cells
-mandoc: column.in:77:2: WARNING: wrong number of cells: 2 columns, 5 cells
-mandoc: column.in:78:2: WARNING: skipping empty macro: It
-mandoc: column.in:106:18: WARNING: skipping -width argument: Bl -column
-mandoc: column.in: BASE: RCS id missing: (OpenBSD)
+mandoc: column.in:72:2: WARNING: skipping empty macro: It
+mandoc: column.in:73:2: WARNING: wrong number of cells: 2 columns, 1 cells
+mandoc: column.in:75:2: WARNING: skipping empty macro: It
+mandoc: column.in:77:2: WARNING: wrong number of cells: 2 columns, 4 cells
+mandoc: column.in:78:2: WARNING: wrong number of cells: 2 columns, 5 cells
+mandoc: column.in:79:2: WARNING: skipping empty macro: It
+mandoc: column.in:107:18: WARNING: skipping -width argument: Bl -column

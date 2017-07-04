@@ -1,6 +1,7 @@
-.Dd October 20, 2011
+.\" $OpenBSD: spacing.in,v 1.3 2017/07/04 14:53:26 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt UX-SPACING 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Ux-spacing
 .Nd spacing around the Unix macro

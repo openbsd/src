@@ -111,4 +111,4 @@ FN-SECTION(3) - Library Functions Manual
 *double*  
 **sin**(*double x*);
 
-OpenBSD - April 7, 2010
+OpenBSD - July 4, 2017

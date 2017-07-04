@@ -1,4 +1,5 @@
-.TH PS-IGNORE 1 "Febuary 5, 2011" OpenBSD
+.\" $OpenBSD: ignore.in,v 1.3 2017/07/04 14:53:27 schwarze Exp $
+.TH PS-IGNORE 1 "Febuary 5, 2011"
 .SH NAME
 ps-ignore \- ignoreing point size macros
 .SH DESCRIPTION

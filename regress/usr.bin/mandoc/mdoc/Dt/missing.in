@@ -1,5 +1,6 @@
-.Dd August 5, 2014
-.Os OpenBSD
+.\" $OpenBSD: missing.in,v 1.2 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
+.Os
 .Sh NAME
 .Nm Dt-missing
 .Nd no title macro at all

@@ -1,4 +1,5 @@
-.TH REGISTER 1 "May 31, 2015" OpenBSD
+.\" $OpenBSD: register.in,v 1.2 2017/07/04 14:53:26 schwarze Exp $
+.TH REGISTER 1 "May 31, 2015"
 .SH NAME
 register \- conditional testing whether a register is defined
 .SH DESCRIPTION

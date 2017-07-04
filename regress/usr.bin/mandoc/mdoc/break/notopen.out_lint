@@ -1,4 +1,1 @@
-mandoc: notopen.in:10:2: ERROR: skipping end of block that is not open: Pc
-mandoc: notopen.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: notopen.in:1:5: BASE: Mdocdate missing: Dd August (OpenBSD)
-mandoc: notopen.in: BASE: RCS id missing: (OpenBSD)
+mandoc: notopen.in:11:2: ERROR: skipping end of block that is not open: Pc

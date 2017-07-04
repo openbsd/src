@@ -1,4 +1,3 @@
-mandoc: punct.in:48:7: WARNING: skipping empty macro: No
 mandoc: punct.in:49:7: WARNING: skipping empty macro: No
 mandoc: punct.in:50:7: WARNING: skipping empty macro: No
 mandoc: punct.in:51:7: WARNING: skipping empty macro: No
@@ -9,7 +8,7 @@ mandoc: punct.in:55:7: WARNING: skipping empty macro: No
 mandoc: punct.in:56:7: WARNING: skipping empty macro: No
 mandoc: punct.in:57:7: WARNING: skipping empty macro: No
 mandoc: punct.in:58:7: WARNING: skipping empty macro: No
-mandoc: punct.in:61:7: WARNING: skipping empty macro: No
+mandoc: punct.in:59:7: WARNING: skipping empty macro: No
 mandoc: punct.in:62:7: WARNING: skipping empty macro: No
 mandoc: punct.in:63:7: WARNING: skipping empty macro: No
 mandoc: punct.in:64:7: WARNING: skipping empty macro: No
@@ -20,9 +19,7 @@ mandoc: punct.in:68:7: WARNING: skipping empty macro: No
 mandoc: punct.in:69:7: WARNING: skipping empty macro: No
 mandoc: punct.in:70:7: WARNING: skipping empty macro: No
 mandoc: punct.in:71:7: WARNING: skipping empty macro: No
-mandoc: punct.in:74:7: WARNING: skipping empty macro: No
+mandoc: punct.in:72:7: WARNING: skipping empty macro: No
 mandoc: punct.in:75:7: WARNING: skipping empty macro: No
-mandoc: punct.in:83:2: WARNING: skipping empty macro: No
-mandoc: punct.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: punct.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
-mandoc: punct.in: BASE: RCS id missing: (OpenBSD)
+mandoc: punct.in:76:7: WARNING: skipping empty macro: No
+mandoc: punct.in:84:2: WARNING: skipping empty macro: No

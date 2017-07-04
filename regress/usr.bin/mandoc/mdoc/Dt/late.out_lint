@@ -1,5 +1,2 @@
-mandoc: late.in:2:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: late.in:1:5: BASE: Mdocdate missing: Dd August (OpenBSD)
-mandoc: late.in:8:2: WARNING: skipping late title macro: Dt
+mandoc: late.in:9:2: WARNING: skipping late title macro: Dt
 mandoc: late.in: WARNING: missing manual title, using UNTITLED: EOF
-mandoc: late.in: BASE: RCS id missing: (OpenBSD)

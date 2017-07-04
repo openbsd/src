@@ -1,6 +1,7 @@
-.Dd June 30, 2010
+.\" $OpenBSD: break.in,v 1.4 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt LB-BREAK 3
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Lb-break
 .Nd output line breaks after the library macro

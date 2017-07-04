@@ -1,6 +1,7 @@
-.Dd July 4, 2014
+.\" $OpenBSD: multiargs.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt BF-MULTIARGS 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Bf-multiargs
 .Nd font blocks with multiple arguments

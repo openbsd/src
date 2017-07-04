@@ -1,4 +1,5 @@
-.TH TBL-LAYOUT-COMPLEX 1 "January 26, 2015" OpenBSD
+.\" $OpenBSD: complex.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
+.TH TBL-LAYOUT-COMPLEX 1 "January 26, 2015"
 .SH NAME
 tbl-layout-complex \- complex table layout
 .SH DESCRIPTION

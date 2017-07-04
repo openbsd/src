@@ -1,6 +1,3 @@
-mandoc: bareIt.in:9:2: ERROR: skipping item outside list: It argument
-mandoc: bareIt.in:14:2: ERROR: skipping item outside list: It argument
-mandoc: bareIt.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: bareIt.in:1:5: BASE: Mdocdate missing: Dd August (OpenBSD)
-mandoc: bareIt.in:9:2: WARNING: skipping paragraph macro: br before Bl
-mandoc: bareIt.in: BASE: RCS id missing: (OpenBSD)
+mandoc: bareIt.in:10:2: ERROR: skipping item outside list: It argument
+mandoc: bareIt.in:15:2: ERROR: skipping item outside list: It argument
+mandoc: bareIt.in:10:2: WARNING: skipping paragraph macro: br before Bl

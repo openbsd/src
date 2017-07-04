@@ -1,6 +1,7 @@
-.Dd June 26, 2017
+.\" $OpenBSD: basic.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt DELIM-BASIC 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm delim-basic
 .Nd inline eqn delimiters

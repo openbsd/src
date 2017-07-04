@@ -1,6 +1,7 @@
-.Dd July 12, 2012
+.\" $OpenBSD: emptyNAMEuse.in,v 1.2 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt NM-EMPTYNAMEUSE 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm
 .Nd empty NAME \&Nm line, used later

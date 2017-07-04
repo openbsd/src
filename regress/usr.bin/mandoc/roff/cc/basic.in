@@ -1,4 +1,5 @@
-.TH CC-BASIC 1 "July 7, 2012" OpenBSD
+.\" $OpenBSD: basic.in,v 1.3 2017/07/04 14:53:26 schwarze Exp $
+.TH CC-BASIC 1 "July 7, 2012"
 .SH NAME
 cc-basic \- basic usage of the cc request
 .SH DESCRIPTION

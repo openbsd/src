@@ -1,4 +1,1 @@
-mandoc: parbefore.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: parbefore.in:1:5: BASE: Mdocdate missing: Dd April (OpenBSD)
-mandoc: parbefore.in:4:2: WARNING: skipping paragraph macro: Pp before Sh
-mandoc: parbefore.in: BASE: RCS id missing: (OpenBSD)
+mandoc: parbefore.in:5:2: WARNING: skipping paragraph macro: Pp before Sh

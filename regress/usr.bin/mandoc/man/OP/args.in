@@ -1,4 +1,5 @@
-.TH OP-ARGS 1 "February 6, 2015" OpenBSD
+.\" $OpenBSD: args.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH OP-ARGS 1 "February 6, 2015"
 .SH NAME
 OP-args \- argument handling of the man-ext OP macro
 .SH DESCRIPTION

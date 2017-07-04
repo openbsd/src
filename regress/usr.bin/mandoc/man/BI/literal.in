@@ -1,3 +1,4 @@
+.\" $OpenBSD: literal.in,v 1.3 2017/07/04 14:53:23 schwarze Exp $
 .TH GETTEXT 3 "May 2001" "GNU gettext 0.18"
 .SH NAME
 gettext, dgettext, dcgettext \- translate message

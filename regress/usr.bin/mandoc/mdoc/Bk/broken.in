@@ -1,6 +1,7 @@
-.Dd February 7, 2015
+.\" $OpenBSD: broken.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt BK-BROKEN 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Bk-broken
 .Nd word keep broken by another block

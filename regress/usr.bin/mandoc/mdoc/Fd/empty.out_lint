@@ -1,5 +1,2 @@
-mandoc: empty.in:9:2: WARNING: skipping empty macro: Fd
-mandoc: empty.in:13:2: WARNING: skipping empty macro: Fd
-mandoc: empty.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: empty.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
-mandoc: empty.in: BASE: RCS id missing: (OpenBSD)
+mandoc: empty.in:10:2: WARNING: skipping empty macro: Fd
+mandoc: empty.in:14:2: WARNING: skipping empty macro: Fd

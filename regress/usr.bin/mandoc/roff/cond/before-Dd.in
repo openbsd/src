@@ -1,8 +1,9 @@
+.\" $OpenBSD: before-Dd.in,v 1.2 2017/07/04 14:53:26 schwarze Exp $
 .if n \{.ds mystring mytext
 .\}
-.Dd May 27, 2012
+.Dd $Mdocdate: July 4 2017 $
 .Dt IF-BEFORE-DD 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm if-before-Dd
 .Nd end of if block on its own line before Dd

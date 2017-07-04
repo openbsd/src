@@ -1,16 +1,13 @@
-mandoc: mdoc.in:37:13: WARNING: whitespace at end of input line
-mandoc: mdoc.in:41:14: WARNING: whitespace at end of input line
-mandoc: mdoc.in:45:15: WARNING: whitespace at end of input line
-mandoc: mdoc.in:85:25: WARNING: whitespace at end of input line
-mandoc: mdoc.in:89:26: WARNING: whitespace at end of input line
-mandoc: mdoc.in:93:27: WARNING: whitespace at end of input line
-mandoc: mdoc.in:101:9: WARNING: unterminated quoted argument
-mandoc: mdoc.in:102:13: WARNING: unterminated quoted argument
-mandoc: mdoc.in:106:10: WARNING: unterminated quoted argument
-mandoc: mdoc.in:107:14: WARNING: unterminated quoted argument
-mandoc: mdoc.in:111:11: WARNING: unterminated quoted argument
-mandoc: mdoc.in:112:15: WARNING: unterminated quoted argument
-mandoc: mdoc.in:120:1: ERROR: escaped character not allowed in a name: Fl\(
-mandoc: mdoc.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: mdoc.in:1:5: BASE: Mdocdate missing: Dd November (OpenBSD)
-mandoc: mdoc.in: BASE: RCS id missing: (OpenBSD)
+mandoc: mdoc.in:38:13: WARNING: whitespace at end of input line
+mandoc: mdoc.in:42:14: WARNING: whitespace at end of input line
+mandoc: mdoc.in:46:15: WARNING: whitespace at end of input line
+mandoc: mdoc.in:86:25: WARNING: whitespace at end of input line
+mandoc: mdoc.in:90:26: WARNING: whitespace at end of input line
+mandoc: mdoc.in:94:27: WARNING: whitespace at end of input line
+mandoc: mdoc.in:102:9: WARNING: unterminated quoted argument
+mandoc: mdoc.in:103:13: WARNING: unterminated quoted argument
+mandoc: mdoc.in:107:10: WARNING: unterminated quoted argument
+mandoc: mdoc.in:108:14: WARNING: unterminated quoted argument
+mandoc: mdoc.in:112:11: WARNING: unterminated quoted argument
+mandoc: mdoc.in:113:15: WARNING: unterminated quoted argument
+mandoc: mdoc.in:121:1: ERROR: escaped character not allowed in a name: Fl\(

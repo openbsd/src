@@ -1,6 +1,5 @@
-mandoc: font.in:8:6: WARNING: unknown font, skipping request: TS fCW|ci
-mandoc: font.in:18:2: WARNING: tab in filled text
-mandoc: font.in:18:4: WARNING: tab in filled text
-mandoc: font.in:18:6: WARNING: tab in filled text
-mandoc: font.in:18:8: WARNING: tab in filled text
-mandoc: font.in: BASE: RCS id missing: (OpenBSD)
+mandoc: font.in:9:6: WARNING: unknown font, skipping request: TS fCW|ci
+mandoc: font.in:19:2: WARNING: tab in filled text
+mandoc: font.in:19:4: WARNING: tab in filled text
+mandoc: font.in:19:6: WARNING: tab in filled text
+mandoc: font.in:19:8: WARNING: tab in filled text

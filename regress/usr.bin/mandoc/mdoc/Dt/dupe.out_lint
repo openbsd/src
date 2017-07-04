@@ -1,5 +1,2 @@
-mandoc: dupe.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: dupe.in:1:5: BASE: Mdocdate missing: Dd August (OpenBSD)
-mandoc: dupe.in:4:2: WARNING: duplicate prologue macro: Dt
-mandoc: dupe.in:10:2: WARNING: skipping late title macro: Dt
-mandoc: dupe.in: BASE: RCS id missing: (OpenBSD)
+mandoc: dupe.in:5:2: WARNING: duplicate prologue macro: Dt
+mandoc: dupe.in:11:2: WARNING: skipping late title macro: Dt

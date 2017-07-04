@@ -32,4 +32,4 @@ IN-BREAK(2) - System Calls Manual
 *ssize\_t*
 **write**(*int d*, *const void \*buf*, *size\_t nbytes*)
 
-OpenBSD - June 6, 2010
+OpenBSD - July 4, 2017

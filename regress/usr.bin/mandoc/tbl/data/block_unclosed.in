@@ -1,4 +1,5 @@
-.TH TBL-DATA-BLOCK_UNCLOSED 1 "January 28, 2015" OpenBSD
+.\" $OpenBSD: block_unclosed.in,v 1.3 2017/07/04 14:53:27 schwarze Exp $
+.TH TBL-DATA-BLOCK_UNCLOSED 1 "January 28, 2015"
 .SH NAME
 tbl-data-block_unclosed \- unclosed text block
 .SH DESCRIPTION

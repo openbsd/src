@@ -1,6 +1,7 @@
+.\" $OpenBSD: manarg.in,v 1.2 2017/07/04 14:53:25 schwarze Exp $
 .Dd 2014-08-07
 .Dt DD-MANARG 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Dd-manarg
 .Nd date in traditional man format

@@ -1,4 +1,5 @@
-.TH NA-ARGS 1 "January 17, 2011" OpenBSD
+.\" $OpenBSD: args.in,v 1.3 2017/07/04 14:53:27 schwarze Exp $
+.TH NA-ARGS 1 "January 17, 2011"
 .SH NAME
 na-args \- arguments to .na macros
 .SH DESCRIPTION

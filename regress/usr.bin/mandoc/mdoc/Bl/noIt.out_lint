@@ -1,11 +1,8 @@
-mandoc: noIt.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: noIt.in:1:5: BASE: Mdocdate missing: Dd October (OpenBSD)
-mandoc: noIt.in:9:1: WARNING: moving content out of list: text
-mandoc: noIt.in:10:2: WARNING: moving content out of list: Em
-mandoc: noIt.in:15:1: WARNING: moving content out of list: text
-mandoc: noIt.in:16:2: WARNING: moving content out of list: Sm
-mandoc: noIt.in:17:2: WARNING: moving content out of list: Em
-mandoc: noIt.in:17:10: WARNING: moving content out of list: Sy
-mandoc: noIt.in:17:19: WARNING: moving content out of list: Em
-mandoc: noIt.in:23:1: WARNING: moving content out of list: text
-mandoc: noIt.in: BASE: RCS id missing: (OpenBSD)
+mandoc: noIt.in:10:1: WARNING: moving content out of list: text
+mandoc: noIt.in:11:2: WARNING: moving content out of list: Em
+mandoc: noIt.in:16:1: WARNING: moving content out of list: text
+mandoc: noIt.in:17:2: WARNING: moving content out of list: Sm
+mandoc: noIt.in:18:2: WARNING: moving content out of list: Em
+mandoc: noIt.in:18:10: WARNING: moving content out of list: Sy
+mandoc: noIt.in:18:19: WARNING: moving content out of list: Em
+mandoc: noIt.in:24:1: WARNING: moving content out of list: text

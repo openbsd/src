@@ -1,4 +1,1 @@
-mandoc: order.in:2:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: order.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
-mandoc: order.in:3:2: WARNING: prologue macros out of order: Dt after Os
-mandoc: order.in: BASE: RCS id missing: (OpenBSD)
+mandoc: order.in:4:2: WARNING: prologue macros out of order: Dt after Os

@@ -1,4 +1,5 @@
-.TH BLANK-AFTERSH 1 "November 10, 2013" OpenBSD
+.\" $OpenBSD: afterSH.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.TH BLANK-AFTERSH 1 "November 10, 2013"
 .SH NAME
 blank-afterSH \- handling of blank lines right after a section heading
 .SH DESCRIPTION

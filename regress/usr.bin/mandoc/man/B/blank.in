@@ -1,4 +1,5 @@
-.TH B-BLANK 1 "June 3, 2017" OpenBSD
+.\" $OpenBSD: blank.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH B-BLANK 1 "June 3, 2017"
 .SH NAME
 B-blank \- blank line in font macro next line scope
 .SH DESCRIPTION

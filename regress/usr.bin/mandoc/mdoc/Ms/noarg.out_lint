@@ -1,5 +1,2 @@
-mandoc: noarg.in:11:2: WARNING: skipping empty macro: Ms
-mandoc: noarg.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: noarg.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
-mandoc: noarg.in:9:10: STYLE: no blank before trailing delimiter: Ms alpha.
-mandoc: noarg.in: BASE: RCS id missing: (OpenBSD)
+mandoc: noarg.in:12:2: WARNING: skipping empty macro: Ms
+mandoc: noarg.in:10:10: STYLE: no blank before trailing delimiter: Ms alpha.

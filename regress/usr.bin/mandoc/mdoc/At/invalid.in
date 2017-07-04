@@ -1,6 +1,7 @@
-.Dd June 30, 2010
+.\" $OpenBSD: invalid.in,v 1.4 2017/07/04 14:53:24 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt AT-INVALID 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm At-invalid
 .Nd handling of an invalid AT&T UNIX argument

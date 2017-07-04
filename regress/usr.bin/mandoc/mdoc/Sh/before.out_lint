@@ -1,4 +1,1 @@
-mandoc: before.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: before.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
-mandoc: before.in: BASE: RCS id missing: (OpenBSD)
-mandoc: before.in:4:1: WARNING: content before first section header: text
+mandoc: before.in:5:1: WARNING: content before first section header: text

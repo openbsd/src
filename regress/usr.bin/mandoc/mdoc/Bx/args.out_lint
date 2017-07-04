@@ -1,4 +1,1 @@
-mandoc: args.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: args.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
-mandoc: args.in:15:9: STYLE: no blank before trailing delimiter: Bx nett.
-mandoc: args.in: BASE: RCS id missing: (OpenBSD)
+mandoc: args.in:16:9: STYLE: no blank before trailing delimiter: Bx nett.

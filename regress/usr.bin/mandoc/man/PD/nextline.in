@@ -1,4 +1,5 @@
-.TH PD-NEXTLINE 1 "March 20, 2015" OpenBSD
+.\" $OpenBSD: nextline.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH PD-NEXTLINE 1 "March 20, 2015"
 .SH NAME
 PD-nextline \- paragraph distance macro in next-line scope
 .SH DESCRIPTION

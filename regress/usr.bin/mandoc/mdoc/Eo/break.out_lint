@@ -1,11 +1,8 @@
-mandoc: break.in:14:2: WARNING: blocks badly nested: Eo breaks Bo
-mandoc: break.in:23:2: WARNING: blocks badly nested: Eo breaks Bo
-mandoc: break.in:29:2: WARNING: blocks badly nested: Eo breaks Bo
-mandoc: break.in:35:2: WARNING: blocks badly nested: Eo breaks Bo
-mandoc: break.in:44:2: WARNING: blocks badly nested: Bo breaks Eo
-mandoc: break.in:51:2: WARNING: blocks badly nested: Bo breaks Eo
-mandoc: break.in:59:2: WARNING: blocks badly nested: Bo breaks Eo
-mandoc: break.in:66:2: WARNING: blocks badly nested: Bo breaks Eo
-mandoc: break.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: break.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
-mandoc: break.in: BASE: RCS id missing: (OpenBSD)
+mandoc: break.in:15:2: WARNING: blocks badly nested: Eo breaks Bo
+mandoc: break.in:24:2: WARNING: blocks badly nested: Eo breaks Bo
+mandoc: break.in:30:2: WARNING: blocks badly nested: Eo breaks Bo
+mandoc: break.in:36:2: WARNING: blocks badly nested: Eo breaks Bo
+mandoc: break.in:45:2: WARNING: blocks badly nested: Bo breaks Eo
+mandoc: break.in:52:2: WARNING: blocks badly nested: Bo breaks Eo
+mandoc: break.in:60:2: WARNING: blocks badly nested: Bo breaks Eo
+mandoc: break.in:67:2: WARNING: blocks badly nested: Bo breaks Eo

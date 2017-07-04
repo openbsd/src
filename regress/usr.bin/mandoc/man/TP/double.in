@@ -1,4 +1,5 @@
-.TH TP-DOUBLE 1 2013-06-23 OpenBSD
+.\" $OpenBSD: double.in,v 1.3 2017/07/04 14:53:24 schwarze Exp $
+.TH TP-DOUBLE 1 2013-06-23
 .SH NAME
 TP-double \- effect of double tagged paragraph
 .SH DESCRIPTION

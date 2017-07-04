@@ -1,4 +1,5 @@
-.TH TP-FILL 1 "September 4, 2015" OpenBSD
+.\" $OpenBSD: fill.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.TH TP-FILL 1 "September 4, 2015"
 .SH NAME
 TP-fill \- interaction of tagged paragraphs and fill mode
 .SH DESCRIPTION

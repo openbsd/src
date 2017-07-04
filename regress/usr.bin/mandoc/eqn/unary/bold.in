@@ -1,6 +1,7 @@
-.Dd June 26, 2017
+.\" $OpenBSD: bold.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt UNARY-BOLD 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm unary-bold
 .Nd font handling in bold boxes

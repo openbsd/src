@@ -1,4 +1,1 @@
-mandoc: nosec.in:2:2: WARNING: missing manual section, using "": Dt DT-NOSEC
-mandoc: nosec.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: nosec.in:1:5: BASE: Mdocdate missing: Dd August (OpenBSD)
-mandoc: nosec.in: BASE: RCS id missing: (OpenBSD)
+mandoc: nosec.in:3:2: WARNING: missing manual section, using "": Dt DT-NOSEC

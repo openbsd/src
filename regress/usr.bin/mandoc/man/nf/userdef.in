@@ -1,4 +1,5 @@
-.TH NF-USERDEF 1 "March 8, 2014" OpenBSD
+.\" $OpenBSD: userdef.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.TH NF-USERDEF 1 "March 8, 2014"
 .SH NAME
 nf-userdef \- setting unfilled mode via user-defined macros
 .SH DESCRIPTION

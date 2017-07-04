@@ -1,5 +1,2 @@
-mandoc: badNAMEuse.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: badNAMEuse.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
-mandoc: badNAMEuse.in:5:2: ERROR: missing manual name, using "": Nm
-mandoc: badNAMEuse.in:5:5: WARNING: bad NAME section content: Bx
-mandoc: badNAMEuse.in: BASE: RCS id missing: (OpenBSD)
+mandoc: badNAMEuse.in:6:2: ERROR: missing manual name, using "": Nm
+mandoc: badNAMEuse.in:6:5: WARNING: bad NAME section content: Bx

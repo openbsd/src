@@ -1,4 +1,1 @@
-mandoc: empty.in:9:2: ERROR: inserting missing end of block: Sh breaks Xo
-mandoc: empty.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: empty.in:1:5: BASE: Mdocdate missing: Dd November (OpenBSD)
-mandoc: empty.in: BASE: RCS id missing: (OpenBSD)
+mandoc: empty.in:10:2: ERROR: inserting missing end of block: Sh breaks Xo

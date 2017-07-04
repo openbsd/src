@@ -1,6 +1,7 @@
-.Dd July 2, 2014
+.\" $OpenBSD: child.in,v 1.2 2017/07/04 14:53:26 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt VT-CHILD 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Vt-child
 .Nd the variable type macro does not want children

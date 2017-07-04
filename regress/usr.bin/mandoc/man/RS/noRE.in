@@ -1,4 +1,5 @@
-.TH RS-NORE 1 "June 20, 2014" OpenBSD
+.\" $OpenBSD: noRE.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH RS-NORE 1 "June 20, 2014"
 .SH NAME
 RS-noRE \- unclosed indented block
 .SH DESCRIPTION

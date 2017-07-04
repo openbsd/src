@@ -1,6 +1,7 @@
-.Dd February 3, 2015
+.\" $OpenBSD: par.in,v 1.2 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt NM-PAR 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Nm-par
 .Nd paragraph macro in a synopsis name block

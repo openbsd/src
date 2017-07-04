@@ -1,21 +1,18 @@
-mandoc: break.in:13:2: WARNING: blocks badly nested: Bl breaks Bo
-mandoc: break.in:21:2: WARNING: blocks badly nested: Bl breaks Bo
-mandoc: break.in:22:2: ERROR: skipping item outside list: It 
-mandoc: break.in:32:2: WARNING: blocks badly nested: Bl breaks Bd
-mandoc: break.in:41:2: WARNING: blocks badly nested: Bl breaks Bd
-mandoc: break.in:42:2: ERROR: skipping item outside list: It 
-mandoc: break.in:53:2: WARNING: blocks badly nested: Bl breaks Bd
-mandoc: break.in:56:2: WARNING: blocks badly nested: Bl breaks Bd
-mandoc: break.in:58:2: ERROR: inserting missing end of block: Sh breaks Bd
-mandoc: break.in:63:2: WARNING: blocks badly nested: Bl breaks Bd
-mandoc: break.in:64:2: ERROR: skipping column outside column list: Ta
-mandoc: break.in:71:2: WARNING: blocks badly nested: Bl breaks Bo
-mandoc: break.in:73:2: ERROR: inserting missing end of block: Sh breaks Bo
-mandoc: break.in:76:2: WARNING: blocks badly nested: Bl breaks Bo
-mandoc: break.in:75:25: ERROR: appending missing end of block: Bo
-mandoc: break.in:74:2: ERROR: appending missing end of block: Bl
-mandoc: break.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: break.in:1:5: BASE: Mdocdate missing: Dd August (OpenBSD)
-mandoc: break.in:75:2: WARNING: empty list item: Bl -enum It
-mandoc: break.in:75:2: ERROR: skipping all arguments: It before broken block
-mandoc: break.in: BASE: RCS id missing: (OpenBSD)
+mandoc: break.in:14:2: WARNING: blocks badly nested: Bl breaks Bo
+mandoc: break.in:22:2: WARNING: blocks badly nested: Bl breaks Bo
+mandoc: break.in:23:2: ERROR: skipping item outside list: It 
+mandoc: break.in:33:2: WARNING: blocks badly nested: Bl breaks Bd
+mandoc: break.in:42:2: WARNING: blocks badly nested: Bl breaks Bd
+mandoc: break.in:43:2: ERROR: skipping item outside list: It 
+mandoc: break.in:54:2: WARNING: blocks badly nested: Bl breaks Bd
+mandoc: break.in:57:2: WARNING: blocks badly nested: Bl breaks Bd
+mandoc: break.in:59:2: ERROR: inserting missing end of block: Sh breaks Bd
+mandoc: break.in:64:2: WARNING: blocks badly nested: Bl breaks Bd
+mandoc: break.in:65:2: ERROR: skipping column outside column list: Ta
+mandoc: break.in:72:2: WARNING: blocks badly nested: Bl breaks Bo
+mandoc: break.in:74:2: ERROR: inserting missing end of block: Sh breaks Bo
+mandoc: break.in:77:2: WARNING: blocks badly nested: Bl breaks Bo
+mandoc: break.in:76:25: ERROR: appending missing end of block: Bo
+mandoc: break.in:75:2: ERROR: appending missing end of block: Bl
+mandoc: break.in:76:2: WARNING: empty list item: Bl -enum It
+mandoc: break.in:76:2: ERROR: skipping all arguments: It before broken block

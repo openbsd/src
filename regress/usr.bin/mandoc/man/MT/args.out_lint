@@ -1,6 +1,5 @@
-mandoc: args.in:21:11: ERROR: skipping excess arguments: MT ... second
-mandoc: args.in:26:11: ERROR: skipping excess arguments: MT ... second
-mandoc: args.in:12:2: WARNING: empty block: MT
-mandoc: args.in:16:2: WARNING: missing resource identifier, using "": MT
-mandoc: args.in:26:2: WARNING: empty block: MT
-mandoc: args.in: BASE: RCS id missing: (OpenBSD)
+mandoc: args.in:22:11: ERROR: skipping excess arguments: MT ... second
+mandoc: args.in:27:11: ERROR: skipping excess arguments: MT ... second
+mandoc: args.in:13:2: WARNING: empty block: MT
+mandoc: args.in:17:2: WARNING: missing resource identifier, using "": MT
+mandoc: args.in:27:2: WARNING: empty block: MT

@@ -1,4 +1,1 @@
-mandoc: w.in:16:15: WARNING: invalid escape sequence: \w'foo
-mandoc: w.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: w.in:1:5: BASE: Mdocdate missing: Dd April (OpenBSD)
-mandoc: w.in: BASE: RCS id missing: (OpenBSD)
+mandoc: w.in:17:15: WARNING: invalid escape sequence: \w'foo

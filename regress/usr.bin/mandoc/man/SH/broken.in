@@ -1,4 +1,5 @@
-.TH SH-BROKEN 1 "July 30, 2014" OpenBSD
+.\" $OpenBSD: broken.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH SH-BROKEN 1 "July 30, 2014"
 .SH NAME
 SH-broken \- section header line scope broken by end of file
 .SH DESCRIPTION

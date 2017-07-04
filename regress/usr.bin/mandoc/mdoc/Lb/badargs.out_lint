@@ -1,6 +1,3 @@
-mandoc: badargs.in:9:2: WARNING: skipping empty macro: Lb
-mandoc: badargs.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: badargs.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
-mandoc: badargs.in:8:10: STYLE: no blank before trailing delimiter: Lb murks.
-mandoc: badargs.in:10:18: STYLE: no blank before trailing delimiter: Lb ... another.
-mandoc: badargs.in: BASE: RCS id missing: (OpenBSD)
+mandoc: badargs.in:10:2: WARNING: skipping empty macro: Lb
+mandoc: badargs.in:9:10: STYLE: no blank before trailing delimiter: Lb murks.
+mandoc: badargs.in:11:18: STYLE: no blank before trailing delimiter: Lb ... another.

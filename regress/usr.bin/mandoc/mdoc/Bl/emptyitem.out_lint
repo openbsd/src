@@ -1,11 +1,8 @@
-mandoc: emptyitem.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: emptyitem.in:1:5: BASE: Mdocdate missing: Dd August (OpenBSD)
-mandoc: emptyitem.in:10:2: ERROR: skipping all arguments: It head argument
-mandoc: emptyitem.in:12:2: WARNING: empty list item: Bl -bullet It
-mandoc: emptyitem.in:20:2: WARNING: empty list item: Bl -dash It
-mandoc: emptyitem.in:20:2: ERROR: skipping all arguments: It head argument
-mandoc: emptyitem.in:28:2: WARNING: empty list item: Bl -enum It
-mandoc: emptyitem.in:29:2: ERROR: skipping all arguments: It head argument
-mandoc: emptyitem.in:34:2: ERROR: skipping all arguments: It Sy
-mandoc: emptyitem.in:36:2: WARNING: empty list item: Bl -hyphen It
-mandoc: emptyitem.in: BASE: RCS id missing: (OpenBSD)
+mandoc: emptyitem.in:11:2: ERROR: skipping all arguments: It head argument
+mandoc: emptyitem.in:13:2: WARNING: empty list item: Bl -bullet It
+mandoc: emptyitem.in:21:2: WARNING: empty list item: Bl -dash It
+mandoc: emptyitem.in:21:2: ERROR: skipping all arguments: It head argument
+mandoc: emptyitem.in:29:2: WARNING: empty list item: Bl -enum It
+mandoc: emptyitem.in:30:2: ERROR: skipping all arguments: It head argument
+mandoc: emptyitem.in:35:2: ERROR: skipping all arguments: It Sy
+mandoc: emptyitem.in:37:2: WARNING: empty list item: Bl -hyphen It

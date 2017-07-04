@@ -1,6 +1,7 @@
-.Dd March 11, 2017
+.\" $OpenBSD: infinite.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt DEFINE-INFINITE 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm define-infinite
 .Nd infinite recursion in define statements

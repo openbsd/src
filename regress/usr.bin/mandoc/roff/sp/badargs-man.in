@@ -1,4 +1,5 @@
-.TH SP-BADARGS-MAN 1 "December 23, 2014" OpenBSD
+.\" $OpenBSD: badargs-man.in,v 1.5 2017/07/04 14:53:27 schwarze Exp $
+.TH SP-BADARGS-MAN 1 "December 23, 2014"
 .SH NAME
 sp-badargs-man \- bad arguments to .sp macros in man(7)
 .SH DESCRIPTION

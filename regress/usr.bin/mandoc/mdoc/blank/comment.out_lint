@@ -1,4 +1,1 @@
-mandoc: comment.in:11:3: WARNING: bad comment style
-mandoc: comment.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: comment.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
-mandoc: comment.in: BASE: RCS id missing: (OpenBSD)
+mandoc: comment.in:12:3: WARNING: bad comment style

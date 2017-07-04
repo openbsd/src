@@ -1,6 +1,3 @@
-mandoc: noarg.in:11:2: WARNING: skipping empty macro: In
-mandoc: noarg.in:18:2: WARNING: skipping empty macro: In
-mandoc: noarg.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: noarg.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
-mandoc: noarg.in:15:11: STYLE: no blank before trailing delimiter: In math.h:
-mandoc: noarg.in: BASE: RCS id missing: (OpenBSD)
+mandoc: noarg.in:12:2: WARNING: skipping empty macro: In
+mandoc: noarg.in:19:2: WARNING: skipping empty macro: In
+mandoc: noarg.in:16:11: STYLE: no blank before trailing delimiter: In math.h:

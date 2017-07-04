@@ -1,10 +1,9 @@
-mandoc: man.in:34:13: WARNING: whitespace at end of input line
-mandoc: man.in:38:14: WARNING: whitespace at end of input line
-mandoc: man.in:42:15: WARNING: whitespace at end of input line
-mandoc: man.in:82:25: WARNING: whitespace at end of input line
-mandoc: man.in:86:26: WARNING: whitespace at end of input line
-mandoc: man.in:90:27: WARNING: whitespace at end of input line
-mandoc: man.in:103:5: WARNING: unterminated quoted argument
-mandoc: man.in:106:9: WARNING: unterminated quoted argument
-mandoc: man.in:130:1: ERROR: escaped character not allowed in a name: IB\(
-mandoc: man.in: BASE: RCS id missing: (OpenBSD)
+mandoc: man.in:35:13: WARNING: whitespace at end of input line
+mandoc: man.in:39:14: WARNING: whitespace at end of input line
+mandoc: man.in:43:15: WARNING: whitespace at end of input line
+mandoc: man.in:83:25: WARNING: whitespace at end of input line
+mandoc: man.in:87:26: WARNING: whitespace at end of input line
+mandoc: man.in:91:27: WARNING: whitespace at end of input line
+mandoc: man.in:104:5: WARNING: unterminated quoted argument
+mandoc: man.in:107:9: WARNING: unterminated quoted argument
+mandoc: man.in:131:1: ERROR: escaped character not allowed in a name: IB\(

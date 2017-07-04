@@ -1,19 +1,16 @@
-mandoc: breakingIt.in:13:2: ERROR: inserting missing end of block: It breaks Ao
-mandoc: breakingIt.in:20:2: ERROR: inserting missing end of block: It breaks Ao
-mandoc: breakingIt.in:28:2: ERROR: inserting missing end of block: It breaks Ao
-mandoc: breakingIt.in:36:2: ERROR: inserting missing end of block: It breaks Ao
-mandoc: breakingIt.in:44:2: ERROR: inserting missing end of block: It breaks Bd
-mandoc: breakingIt.in:51:2: ERROR: inserting missing end of block: It breaks Bd
-mandoc: breakingIt.in:59:2: ERROR: inserting missing end of block: It breaks Bd
-mandoc: breakingIt.in:67:2: ERROR: inserting missing end of block: It breaks Bd
-mandoc: breakingIt.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: breakingIt.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
-mandoc: breakingIt.in:10:1: WARNING: moving content out of list: text
-mandoc: breakingIt.in:11:2: WARNING: moving content out of list: Ao
-mandoc: breakingIt.in:17:1: WARNING: moving content out of list: text
-mandoc: breakingIt.in:18:2: WARNING: moving content out of list: Ao
-mandoc: breakingIt.in:41:1: WARNING: moving content out of list: text
-mandoc: breakingIt.in:42:2: WARNING: moving content out of list: Bd
-mandoc: breakingIt.in:48:1: WARNING: moving content out of list: text
-mandoc: breakingIt.in:49:2: WARNING: moving content out of list: Bd
-mandoc: breakingIt.in: BASE: RCS id missing: (OpenBSD)
+mandoc: breakingIt.in:14:2: ERROR: inserting missing end of block: It breaks Ao
+mandoc: breakingIt.in:21:2: ERROR: inserting missing end of block: It breaks Ao
+mandoc: breakingIt.in:29:2: ERROR: inserting missing end of block: It breaks Ao
+mandoc: breakingIt.in:37:2: ERROR: inserting missing end of block: It breaks Ao
+mandoc: breakingIt.in:45:2: ERROR: inserting missing end of block: It breaks Bd
+mandoc: breakingIt.in:52:2: ERROR: inserting missing end of block: It breaks Bd
+mandoc: breakingIt.in:60:2: ERROR: inserting missing end of block: It breaks Bd
+mandoc: breakingIt.in:68:2: ERROR: inserting missing end of block: It breaks Bd
+mandoc: breakingIt.in:11:1: WARNING: moving content out of list: text
+mandoc: breakingIt.in:12:2: WARNING: moving content out of list: Ao
+mandoc: breakingIt.in:18:1: WARNING: moving content out of list: text
+mandoc: breakingIt.in:19:2: WARNING: moving content out of list: Ao
+mandoc: breakingIt.in:42:1: WARNING: moving content out of list: text
+mandoc: breakingIt.in:43:2: WARNING: moving content out of list: Bd
+mandoc: breakingIt.in:49:1: WARNING: moving content out of list: text
+mandoc: breakingIt.in:50:2: WARNING: moving content out of list: Bd

@@ -1,6 +1,7 @@
-.Dd December 25, 2014
+.\" $OpenBSD: hang.in,v 1.8 2017/07/04 14:53:24 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt BL-HANG 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Bl-hang
 .Nd hanged lists

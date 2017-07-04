@@ -1,6 +1,7 @@
-.Dd July 9, 2012
+.\" $OpenBSD: font.in,v 1.2 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt ER-FONT 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Er-font
 .Nd changing fonts inside the error code macro

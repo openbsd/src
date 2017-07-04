@@ -1,4 +1,5 @@
-.TH HORIZ 1 "December 23, 2014" OpenBSD
+.\" $OpenBSD: horiz.in,v 1.5 2017/07/04 14:53:27 schwarze Exp $
+.TH HORIZ 1 "December 23, 2014"
 .SH NAME
 horiz \- horizontal distances
 .SH DESCRIPTION

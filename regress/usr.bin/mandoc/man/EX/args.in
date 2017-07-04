@@ -1,4 +1,5 @@
-.TH EX-ARGS 1 "June 3, 2012" OpenBSD
+.\" $OpenBSD: args.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH EX-ARGS 1 "June 3, 2012"
 .SH NAME
 EX-args \- example macro with arguments
 .SH DESCRIPTION

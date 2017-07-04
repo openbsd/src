@@ -1,5 +1,2 @@
-mandoc: column_nogroff.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: column_nogroff.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
-mandoc: column_nogroff.in:10:2: WARNING: missing argument, using next line: Bl -column It
-mandoc: column_nogroff.in:18:2: WARNING: first macro on line: Ta
-mandoc: column_nogroff.in: BASE: RCS id missing: (OpenBSD)
+mandoc: column_nogroff.in:11:2: WARNING: missing argument, using next line: Bl -column It
+mandoc: column_nogroff.in:19:2: WARNING: first macro on line: Ta

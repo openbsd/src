@@ -1,4 +1,5 @@
-.TH TH-case 1 "June 13, 2014" OpenBSD
+.\" $OpenBSD: case.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.TH TH-case 1 "June 13, 2014"
 .SH NAME
 TH-case \- document title is not all caps
 .SH DESCRIPTION

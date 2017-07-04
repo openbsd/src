@@ -1,4 +1,5 @@
-.TH TBL-MOD-EXPAND-TOOWIDE 1 "May 1, 2017" OpenBSD
+.\" $OpenBSD: expand-toowide.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
+.TH TBL-MOD-EXPAND-TOOWIDE 1 "May 1, 2017"
 .SH NAME
 tbl-mod-expand-toowide \- try to expand columns in a table
 that is already too wide

@@ -1,6 +1,7 @@
-.Dd October 11, 2014
+.\" $OpenBSD: warn.in,v 1.2 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt FO-WARN 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Fo-warn
 .Nd warnings related to function blocks

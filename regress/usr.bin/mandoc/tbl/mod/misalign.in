@@ -1,4 +1,5 @@
-.TH TBL-MOD-MISALIGN 1 "December 24, 2014" OpenBSD
+.\" $OpenBSD: misalign.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
+.TH TBL-MOD-MISALIGN 1 "December 24, 2014"
 .SH NAME
 tbl-mod-misalign \- failing alignment in tables
 .SH DESCRIPTION

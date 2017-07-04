@@ -1,4 +1,1 @@
-mandoc: invalid.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: invalid.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
-mandoc: invalid.in:15:5: WARNING: unknown AT&T UNIX version: At murks
-mandoc: invalid.in: BASE: RCS id missing: (OpenBSD)
+mandoc: invalid.in:16:5: WARNING: unknown AT&T UNIX version: At murks

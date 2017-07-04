@@ -1,4 +1,1 @@
-mandoc: noarg.in:11:2: WARNING: skipping empty macro: Sx
-mandoc: noarg.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: noarg.in:1:5: BASE: Mdocdate missing: Dd January (OpenBSD)
-mandoc: noarg.in: BASE: RCS id missing: (OpenBSD)
+mandoc: noarg.in:12:2: WARNING: skipping empty macro: Sx

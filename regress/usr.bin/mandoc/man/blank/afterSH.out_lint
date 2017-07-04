@@ -1,5 +1,4 @@
-mandoc: afterSH.in:31:2: WARNING: skipping paragraph macro: br after SH
-mandoc: afterSH.in:35:2: WARNING: skipping paragraph macro: sp after SH
-mandoc: afterSH.in:71:2: WARNING: skipping paragraph macro: br after SH
-mandoc: afterSH.in:76:2: WARNING: skipping paragraph macro: sp after SH
-mandoc: afterSH.in: BASE: RCS id missing: (OpenBSD)
+mandoc: afterSH.in:32:2: WARNING: skipping paragraph macro: br after SH
+mandoc: afterSH.in:36:2: WARNING: skipping paragraph macro: sp after SH
+mandoc: afterSH.in:72:2: WARNING: skipping paragraph macro: br after SH
+mandoc: afterSH.in:77:2: WARNING: skipping paragraph macro: sp after SH

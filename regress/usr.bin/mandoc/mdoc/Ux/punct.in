@@ -1,6 +1,7 @@
-.Dd June 9, 2017
+.\" $OpenBSD: punct.in,v 1.2 2017/07/04 14:53:26 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt UX-PUNCT 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Ux-punct
 .Nd trailing delimiters in Unix macro arguments

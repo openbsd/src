@@ -1,4 +1,5 @@
-.TH N-BASIC 1 "January 29, 2011" OpenBSD
+.\" $OpenBSD: basic.in,v 1.3 2017/07/04 14:53:23 schwarze Exp $
+.TH N-BASIC 1 "January 29, 2011"
 .SH NAME
 N-basic \- basic handling of character number escapes
 .SH DESCRIPTION

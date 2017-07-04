@@ -1,7 +1,8 @@
+.\" $OpenBSD: TH.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
 .de BI
 .IB \\$1 \\$2 \\$3
 ..
-.TH DE-TH 1 "June 3, 2012" OpenBSD
+.TH DE-TH 1 "June 3, 2012"
 .SH NAME
 de-TH - interaction of the TH macro with de requests
 .SH DESCRIPTION

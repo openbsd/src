@@ -1,4 +1,5 @@
-.TH RS-EMPTY 1 "July 17, 2012" OpenBSD
+.\" $OpenBSD: empty.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH RS-EMPTY 1 "July 17, 2012"
 .SH NAME
 RS-empty \- empty margin reset blocks
 .SH DESCRIPTION

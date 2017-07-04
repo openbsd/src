@@ -1,2 +1,1 @@
-mandoc: nested.in:12:4: UNSUPP: ignoring macro in table: TS
-mandoc: nested.in: BASE: RCS id missing: (OpenBSD)
+mandoc: nested.in:13:4: UNSUPP: ignoring macro in table: TS

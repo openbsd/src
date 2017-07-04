@@ -1,6 +1,3 @@
-mandoc: trailing-mdoc.in:8:16: WARNING: whitespace at end of input line
-mandoc: trailing-mdoc.in:10:12: WARNING: whitespace at end of input line
-mandoc: trailing-mdoc.in:11:27: WARNING: whitespace at end of input line
-mandoc: trailing-mdoc.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: trailing-mdoc.in:1:5: BASE: Mdocdate missing: Dd December (OpenBSD)
-mandoc: trailing-mdoc.in: BASE: RCS id missing: (OpenBSD)
+mandoc: trailing-mdoc.in:9:16: WARNING: whitespace at end of input line
+mandoc: trailing-mdoc.in:11:12: WARNING: whitespace at end of input line
+mandoc: trailing-mdoc.in:12:27: WARNING: whitespace at end of input line

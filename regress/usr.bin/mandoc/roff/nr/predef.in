@@ -1,4 +1,5 @@
-.TH NR-PREDEF 1 "August 29, 2015" OpenBSD
+.\" $OpenBSD: predef.in,v 1.3 2017/07/04 14:53:27 schwarze Exp $
+.TH NR-PREDEF 1 "August 29, 2015"
 .SH NAME
 nr-predef \- pre-defined read-only integer number registers
 .SH DESCRIPTION

@@ -1,4 +1,5 @@
-.TH HP-MANYARGS 1 "January 4, 2011" OpenBSD
+.\" $OpenBSD: manyargs.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH HP-MANYARGS 1 "January 4, 2011"
 .SH NAME
 HP-manyargs \- too many header args for hanged blocks
 .SH DESCRIPTION

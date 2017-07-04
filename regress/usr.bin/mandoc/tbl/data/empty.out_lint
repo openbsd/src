@@ -1,2 +1,1 @@
-mandoc: empty.in:6:2: ERROR: tbl without any data cells
-mandoc: empty.in: BASE: RCS id missing: (OpenBSD)
+mandoc: empty.in:7:2: ERROR: tbl without any data cells

@@ -1,4 +1,5 @@
-.TH HP-SPACING 1 "December 23, 2014" OpenBSD
+.\" $OpenBSD: spacing.in,v 1.6 2017/07/04 14:53:23 schwarze Exp $
+.TH HP-SPACING 1 "December 23, 2014"
 .SH NAME
 HP-spacing \- spacing in hanged lists
 .SH DESCRIPTION

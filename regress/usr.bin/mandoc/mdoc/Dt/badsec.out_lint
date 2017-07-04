@@ -1,4 +1,1 @@
-mandoc: badsec.in:2:15: WARNING: unknown manual section: Dt ... foo
-mandoc: badsec.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: badsec.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
-mandoc: badsec.in: BASE: RCS id missing: (OpenBSD)
+mandoc: badsec.in:3:15: WARNING: unknown manual section: Dt ... foo

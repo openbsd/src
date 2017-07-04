@@ -1,3 +1,2 @@
-mandoc: broken_eline.in:7:2: WARNING: line scope broken: EOF breaks B
-mandoc: broken_eline.in:6:2: WARNING: line scope broken: EOF breaks SH
-mandoc: broken_eline.in: BASE: RCS id missing: (OpenBSD)
+mandoc: broken_eline.in:8:2: WARNING: line scope broken: EOF breaks B
+mandoc: broken_eline.in:7:2: WARNING: line scope broken: EOF breaks SH

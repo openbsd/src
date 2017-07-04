@@ -1,6 +1,7 @@
-.Dd July 8, 2012
+.\" $OpenBSD: basic.in,v 1.2 2017/07/04 14:53:26 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt VA-BASIC 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Va-basic
 .Nd basic usage of the variable name macro

@@ -1,4 +1,5 @@
-.TH SP-SCALING-MAN 1 "December 23, 2014" OpenBSD
+.\" $OpenBSD: scaling-man.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
+.TH SP-SCALING-MAN 1 "December 23, 2014"
 .SH NAME
 sp-scaling-man \- scaled arguments to .sp requests in man(7)
 .SH DESCRIPTION

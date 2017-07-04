@@ -1,6 +1,7 @@
-.Dd February 16, 2015
+.\" $OpenBSD: fourargs.in,v 1.2 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt DT-FOURARGS 1 amd64 bogus
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Dt-fourargs
 .Nd too many arguments after the \&Dt macro

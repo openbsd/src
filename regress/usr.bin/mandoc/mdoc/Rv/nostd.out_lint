@@ -1,6 +1,3 @@
-mandoc: nostd.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: nostd.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
-mandoc: nostd.in:9:2: WARNING: missing -std argument, adding it: Rv
-mandoc: nostd.in:12:2: WARNING: missing -std argument, adding it: Rv
-mandoc: nostd.in:15:2: WARNING: missing -std argument, adding it: Rv
-mandoc: nostd.in: BASE: RCS id missing: (OpenBSD)
+mandoc: nostd.in:10:2: WARNING: missing -std argument, adding it: Rv
+mandoc: nostd.in:13:2: WARNING: missing -std argument, adding it: Rv
+mandoc: nostd.in:16:2: WARNING: missing -std argument, adding it: Rv

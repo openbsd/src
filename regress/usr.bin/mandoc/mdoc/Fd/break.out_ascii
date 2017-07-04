@@ -24,4 +24,4 @@ DDEESSCCRRIIPPTTIIOONN
      ##iinncclluuddee <<uunniissttdd..hh>>
      _i_n_t dduupp(_i_n_t _o_l_d_d) _s_s_i_z_e___t wwrriittee(_i_n_t _d, _c_o_n_s_t _v_o_i_d _*_b_u_f, _s_i_z_e___t _n_b_y_t_e_s)
 
-OpenBSD                          June 9, 2010                          OpenBSD
+OpenBSD                          July 4, 2017                          OpenBSD

@@ -1,4 +1,1 @@
-mandoc: noname.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: noname.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
-mandoc: noname.in:5:2: ERROR: missing manual name, using "": Nm
-mandoc: noname.in: BASE: RCS id missing: (OpenBSD)
+mandoc: noname.in:6:2: ERROR: missing manual name, using "": Nm

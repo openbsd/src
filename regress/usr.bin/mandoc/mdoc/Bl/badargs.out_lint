@@ -1,21 +1,18 @@
-mandoc: badargs.in:78:2: ERROR: skipping all arguments: El tail argument
-mandoc: badargs.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: badargs.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
-mandoc: badargs.in:9:13: WARNING: empty argument, using 0n: Bl -offset
-mandoc: badargs.in:14:13: WARNING: empty argument, using 0n: Bl -width
-mandoc: badargs.in:18:11: WARNING: empty argument, using 0n: Bl -width
-mandoc: badargs.in:27:13: WARNING: empty argument, using 0n: Bl -width
-mandoc: badargs.in:31:11: WARNING: empty argument, using 0n: Bl -width
-mandoc: badargs.in:35:10: WARNING: empty argument, using 0n: Bl -width
-mandoc: badargs.in:41:2: WARNING: skipping duplicate list type: Bl -enum
-mandoc: badargs.in:45:2: WARNING: skipping duplicate list type: Bl -bullet
-mandoc: badargs.in:50:13: ERROR: skipping excess arguments: Bl ... -bogus
-mandoc: badargs.in:54:11: ERROR: skipping excess arguments: Bl ... -bogus
-mandoc: badargs.in:58:12: ERROR: skipping excess arguments: Bl ... -bogus
-mandoc: badargs.in:62:11: ERROR: skipping excess arguments: Bl ... -bogus
-mandoc: badargs.in:66:12: ERROR: skipping excess arguments: Bl ... -bogus
-mandoc: badargs.in:70:20: ERROR: skipping excess arguments: Bl ... -bogus
-mandoc: badargs.in:75:42: WARNING: duplicate argument: Bl -compact
-mandoc: badargs.in:75:51: WARNING: duplicate argument: Bl -offset 2n
-mandoc: badargs.in:75:62: WARNING: duplicate argument: Bl -width 6n
-mandoc: badargs.in: BASE: RCS id missing: (OpenBSD)
+mandoc: badargs.in:79:2: ERROR: skipping all arguments: El tail argument
+mandoc: badargs.in:10:13: WARNING: empty argument, using 0n: Bl -offset
+mandoc: badargs.in:15:13: WARNING: empty argument, using 0n: Bl -width
+mandoc: badargs.in:19:11: WARNING: empty argument, using 0n: Bl -width
+mandoc: badargs.in:28:13: WARNING: empty argument, using 0n: Bl -width
+mandoc: badargs.in:32:11: WARNING: empty argument, using 0n: Bl -width
+mandoc: badargs.in:36:10: WARNING: empty argument, using 0n: Bl -width
+mandoc: badargs.in:42:2: WARNING: skipping duplicate list type: Bl -enum
+mandoc: badargs.in:46:2: WARNING: skipping duplicate list type: Bl -bullet
+mandoc: badargs.in:51:13: ERROR: skipping excess arguments: Bl ... -bogus
+mandoc: badargs.in:55:11: ERROR: skipping excess arguments: Bl ... -bogus
+mandoc: badargs.in:59:12: ERROR: skipping excess arguments: Bl ... -bogus
+mandoc: badargs.in:63:11: ERROR: skipping excess arguments: Bl ... -bogus
+mandoc: badargs.in:67:12: ERROR: skipping excess arguments: Bl ... -bogus
+mandoc: badargs.in:71:20: ERROR: skipping excess arguments: Bl ... -bogus
+mandoc: badargs.in:76:42: WARNING: duplicate argument: Bl -compact
+mandoc: badargs.in:76:51: WARNING: duplicate argument: Bl -offset 2n
+mandoc: badargs.in:76:62: WARNING: duplicate argument: Bl -width 6n

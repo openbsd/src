@@ -1,6 +1,7 @@
-.Dd December 25, 2013
+.\" $OpenBSD: synopsis.in,v 1.7 2017/07/04 14:53:24 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt BK-SYNOPSIS 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Bk-synopsis
 .Nd automatic keeps in the synopsis

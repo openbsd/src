@@ -1,4 +1,5 @@
-.TH TP-SAMELINE 1 "March 8, 2014" OpenBSD
+.\" $OpenBSD: sameline.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.TH TP-SAMELINE 1 "March 8, 2014"
 .SH NAME
 TP-sameline \- test sameline logic of indented paragraphs
 .SH DESCRIPTION

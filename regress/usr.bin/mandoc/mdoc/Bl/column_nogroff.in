@@ -1,6 +1,7 @@
-.Dd June 29, 2017
+.\" $OpenBSD: column_nogroff.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt BL-COLUMN_NOGROFF 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Bl-column_nogroff
 .Nd column lists mishandled by groff

@@ -1,2 +1,1 @@
-mandoc: basic.in:12:6: ERROR: skipping excess arguments: cc ... bogus
-mandoc: basic.in: BASE: RCS id missing: (OpenBSD)
+mandoc: basic.in:13:6: ERROR: skipping excess arguments: cc ... bogus

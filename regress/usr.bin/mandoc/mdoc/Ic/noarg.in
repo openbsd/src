@@ -1,6 +1,7 @@
-.Dd June 9, 2017
+.\" $OpenBSD: noarg.in,v 1.4 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt IC-NOARG 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Ic-noarg
 .Nd interactive command without an argument

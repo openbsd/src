@@ -1,3 +1,1 @@
-mandoc: noarg.in:1:2: WARNING: missing date, using today's date
-mandoc: noarg.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: noarg.in: BASE: RCS id missing: (OpenBSD)
+mandoc: noarg.in:2:2: WARNING: missing date, using today's date

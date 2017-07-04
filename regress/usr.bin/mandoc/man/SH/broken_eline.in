@@ -1,4 +1,5 @@
-.TH SH-BROKEN_ELINE 1 "July 30, 2014" OpenBSD
+.\" $OpenBSD: broken_eline.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH SH-BROKEN_ELINE 1 "July 30, 2014"
 .SH NAME
 SH-broken_eline \- section and element line scope broken by eof
 .SH DESCRIPTION

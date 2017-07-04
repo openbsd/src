@@ -1,4 +1,5 @@
-.TH TBL-MOD-BADFONT 1 "February 10, 2015" OpenBSD
+.\" $OpenBSD: badfont.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
+.TH TBL-MOD-BADFONT 1 "February 10, 2015"
 .SH NAME
 tbl-mod-badfont \- invalid font modifiers in table layouts
 .SH DESCRIPTION

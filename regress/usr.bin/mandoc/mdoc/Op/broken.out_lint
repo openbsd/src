@@ -1,5 +1,2 @@
-mandoc: broken.in:10:17: WARNING: blocks badly nested: Do breaks Op
-mandoc: broken.in:15:15: WARNING: blocks badly nested: Do breaks Op
-mandoc: broken.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: broken.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
-mandoc: broken.in: BASE: RCS id missing: (OpenBSD)
+mandoc: broken.in:11:17: WARNING: blocks badly nested: Do breaks Op
+mandoc: broken.in:16:15: WARNING: blocks badly nested: Do breaks Op

@@ -1,4 +1,3 @@
-mandoc: lonelyRE.in:11:2: ERROR: skipping end of block that is not open: RE
-mandoc: lonelyRE.in:15:2: ERROR: skipping end of block that is not open: RE
-mandoc: lonelyRE.in:20:2: ERROR: skipping end of block that is not open: RE
-mandoc: lonelyRE.in: BASE: RCS id missing: (OpenBSD)
+mandoc: lonelyRE.in:12:2: ERROR: skipping end of block that is not open: RE
+mandoc: lonelyRE.in:16:2: ERROR: skipping end of block that is not open: RE
+mandoc: lonelyRE.in:21:2: ERROR: skipping end of block that is not open: RE

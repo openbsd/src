@@ -1,9 +1,10 @@
+.\" $OpenBSD: Dd.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
 .de At
 BSD
 ..
-.Dd June 3, 2012
+.Dd $Mdocdate: July 4 2017 $
 .Dt DE-DD 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm de-Dd
 .Nd interaction of the Dd macro with de requests

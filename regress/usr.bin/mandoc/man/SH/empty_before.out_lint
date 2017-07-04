@@ -1,2 +1,1 @@
-mandoc: empty_before.in:2:2: WARNING: skipping paragraph macro: PP empty
-mandoc: empty_before.in: BASE: RCS id missing: (OpenBSD)
+mandoc: empty_before.in:3:2: WARNING: skipping paragraph macro: PP empty

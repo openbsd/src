@@ -1,4 +1,5 @@
-.TH TP-LONGHEAD 1 "April 8, 2014" OpenBSD
+.\" $OpenBSD: longhead.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.TH TP-LONGHEAD 1 "April 8, 2014"
 .SH NAME
 TP-longhead \- tagged paragraph with a long head
 .SH DESCRIPTION

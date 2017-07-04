@@ -1,6 +1,7 @@
-.Dd June 15, 2017
+.\" $OpenBSD: lines-nogroff.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt TBL-LAYOUT-LINES-NOGROFF 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm tbl-layout-lines
 .Nd table cells containing lines, misformatting with groff

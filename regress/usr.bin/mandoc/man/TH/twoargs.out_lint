@@ -1,2 +1,2 @@
-mandoc: twoargs.in:1:2: WARNING: missing manual section, using "": TH TH-TWOARGS
-mandoc: twoargs.in:1:2: WARNING: missing date, using today's date: TH
+mandoc: twoargs.in:2:2: WARNING: missing manual section, using "": TH TH-TWOARGS
+mandoc: twoargs.in:2:2: WARNING: missing date, using today's date: TH

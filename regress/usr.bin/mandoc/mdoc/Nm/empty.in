@@ -1,6 +1,7 @@
-.Dd June 30, 2010
+.\" $OpenBSD: empty.in,v 1.4 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt NM-EMPTY 2
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Nm-empty
 .Nd handling of empty name macros

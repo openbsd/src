@@ -1,5 +1,2 @@
-mandoc: badargs-mdoc.in:13:7: ERROR: skipping excess arguments: ft ... bogus
-mandoc: badargs-mdoc.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: badargs-mdoc.in:1:5: BASE: Mdocdate missing: Dd May (OpenBSD)
-mandoc: badargs-mdoc.in:11:2: WARNING: unknown font, skipping request: ft foo
-mandoc: badargs-mdoc.in: BASE: RCS id missing: (OpenBSD)
+mandoc: badargs-mdoc.in:14:7: ERROR: skipping excess arguments: ft ... bogus
+mandoc: badargs-mdoc.in:12:2: WARNING: unknown font, skipping request: ft foo

@@ -1,4 +1,5 @@
-.TH hyphen-man 1 "September 18, 2011" OpenBSD
+.\" $OpenBSD: man.in,v 1.3 2017/07/04 14:53:23 schwarze Exp $
+.TH hyphen-man 1 "September 18, 2011"
 .SH NAME
 \fBhyphen-man\fR - formatting hyphens and breaking lines
 .SH DESCRIPTION

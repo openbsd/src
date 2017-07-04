@@ -1,4 +1,5 @@
-.TH PD-SPACING 1 "July 28, 2012" OpenBSD
+.\" $OpenBSD: spacing.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH PD-SPACING 1 "July 28, 2012"
 .SH NAME
 PD-spacing \- effect of the PD macro on vertical spacing
 .SH DESCRIPTION

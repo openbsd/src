@@ -15,4 +15,4 @@ The **one**() function returns the value&#160;0 if successful; otherwise the val
 two arguments:
 The **one**() and **two**() functions return the value&#160;0 if successful; otherwise the value&#160;&#45;1 is returned and the global variable *errno* is set to indicate the error.
 
-OpenBSD - July 29, 2014
+OpenBSD - July 4, 2017

@@ -1,6 +1,7 @@
-.Dd November 16, 2012
+.\" $OpenBSD: eos.in,v 1.2 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt IN-EOS 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm In-eos
 .Nd end of sentence handling after the include macro

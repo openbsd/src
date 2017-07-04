@@ -1,4 +1,5 @@
-.TH COND-NUMERIC 1 "December 16, 2014" OpenBSD
+.\" $OpenBSD: numeric.in,v 1.5 2017/07/04 14:53:26 schwarze Exp $
+.TH COND-NUMERIC 1 "December 16, 2014"
 .SH NAME
 cond-numeric \- roff conditions involving numbers
 .SH DESCRIPTION

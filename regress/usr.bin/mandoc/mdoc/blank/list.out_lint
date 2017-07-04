@@ -1,10 +1,7 @@
-mandoc: list.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: list.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
-mandoc: list.in:19:2: WARNING: skipping paragraph macro: Pp before It
-mandoc: list.in:22:2: WARNING: moving paragraph macro out of list: Pp
-mandoc: list.in:34:2: WARNING: moving paragraph macro out of list: Pp
-mandoc: list.in:34:2: WARNING: skipping paragraph macro: Pp before Pp
-mandoc: list.in:51:2: WARNING: moving paragraph macro out of list: Pp
-mandoc: list.in:63:2: WARNING: moving paragraph macro out of list: Pp
-mandoc: list.in:63:2: WARNING: skipping paragraph macro: Pp before Pp
-mandoc: list.in: BASE: RCS id missing: (OpenBSD)
+mandoc: list.in:20:2: WARNING: skipping paragraph macro: Pp before It
+mandoc: list.in:23:2: WARNING: moving paragraph macro out of list: Pp
+mandoc: list.in:35:2: WARNING: moving paragraph macro out of list: Pp
+mandoc: list.in:35:2: WARNING: skipping paragraph macro: Pp before Pp
+mandoc: list.in:52:2: WARNING: moving paragraph macro out of list: Pp
+mandoc: list.in:64:2: WARNING: moving paragraph macro out of list: Pp
+mandoc: list.in:64:2: WARNING: skipping paragraph macro: Pp before Pp

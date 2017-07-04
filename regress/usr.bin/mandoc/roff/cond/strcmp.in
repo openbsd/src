@@ -1,4 +1,5 @@
-.TH COND-STRCMP 1 "March 8, 2014" OpenBSD
+.\" $OpenBSD: strcmp.in,v 1.2 2017/07/04 14:53:26 schwarze Exp $
+.TH COND-STRCMP 1 "March 8, 2014"
 .SH NAME
 cond-strcmp \- roff conditions involving string comparison
 .SH DESCRIPTION

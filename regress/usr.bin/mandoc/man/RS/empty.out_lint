@@ -1,2 +1,1 @@
-mandoc: empty.in:7:2: WARNING: empty block: RS
-mandoc: empty.in: BASE: RCS id missing: (OpenBSD)
+mandoc: empty.in:8:2: WARNING: empty block: RS

@@ -1,4 +1,5 @@
-.TH NR-INT 1 "January 23, 2015" OpenBSD
+.\" $OpenBSD: scale.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
+.TH NR-INT 1 "January 23, 2015"
 .SH NAME
 nr-scale \- scaling units in numeric expressions
 .SH DESCRIPTION

@@ -1,6 +1,7 @@
-.Dd February 5, 2015
+.\" $OpenBSD: break.in,v 1.7 2017/07/04 14:53:24 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt AN-BREAK 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm An-break
 .Nd line breaking of the author macro

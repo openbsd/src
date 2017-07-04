@@ -1,4 +1,1 @@
-mandoc: first.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: first.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
-mandoc: first.in:4:2: WARNING: first section is not "NAME": Sh DESCRIPTION
-mandoc: first.in: BASE: RCS id missing: (OpenBSD)
+mandoc: first.in:5:2: WARNING: first section is not "NAME": Sh DESCRIPTION

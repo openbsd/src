@@ -1,9 +1,8 @@
-mandoc: line.in:5:2: WARNING: skipping paragraph macro: sp after SH
-mandoc: line.in:23:2: WARNING: skipping paragraph macro: br after PP
-mandoc: line.in:25:2: WARNING: skipping paragraph macro: PP empty
-mandoc: line.in:35:2: WARNING: skipping paragraph macro: sp after PP
-mandoc: line.in:38:2: WARNING: skipping paragraph macro: sp after PP
-mandoc: line.in:53:1: WARNING: skipping paragraph macro: sp after PP
-mandoc: line.in:81:2: WARNING: skipping paragraph macro: sp after SH
-mandoc: line.in:84:2: WARNING: skipping paragraph macro: sp after SS
-mandoc: line.in: BASE: RCS id missing: (OpenBSD)
+mandoc: line.in:6:2: WARNING: skipping paragraph macro: sp after SH
+mandoc: line.in:24:2: WARNING: skipping paragraph macro: br after PP
+mandoc: line.in:26:2: WARNING: skipping paragraph macro: PP empty
+mandoc: line.in:36:2: WARNING: skipping paragraph macro: sp after PP
+mandoc: line.in:39:2: WARNING: skipping paragraph macro: sp after PP
+mandoc: line.in:54:1: WARNING: skipping paragraph macro: sp after PP
+mandoc: line.in:82:2: WARNING: skipping paragraph macro: sp after SH
+mandoc: line.in:85:2: WARNING: skipping paragraph macro: sp after SS

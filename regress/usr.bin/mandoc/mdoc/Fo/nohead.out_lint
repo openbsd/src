@@ -1,4 +1,1 @@
-mandoc: nohead.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: nohead.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
-mandoc: nohead.in:10:2: WARNING: missing function name, using "": Fo
-mandoc: nohead.in: BASE: RCS id missing: (OpenBSD)
+mandoc: nohead.in:11:2: WARNING: missing function name, using "": Fo

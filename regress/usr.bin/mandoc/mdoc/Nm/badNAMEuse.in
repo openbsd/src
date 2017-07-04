@@ -1,6 +1,7 @@
-.Dd July 12, 2012
+.\" $OpenBSD: badNAMEuse.in,v 1.2 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt NM-BADNAMEUSE 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Bx
 .Nd text production macro on the NAME \&Nm line, used later

@@ -1,6 +1,3 @@
-mandoc: badargs.in:17:2: ERROR: skipping all arguments: Ef tail argument
-mandoc: badargs.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: badargs.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
-mandoc: badargs.in:11:2: WARNING: missing font type, using \fR: Bf
-mandoc: badargs.in:15:5: WARNING: unknown font type, using \fR: Bf badarg
-mandoc: badargs.in: BASE: RCS id missing: (OpenBSD)
+mandoc: badargs.in:18:2: ERROR: skipping all arguments: Ef tail argument
+mandoc: badargs.in:12:2: WARNING: missing font type, using \fR: Bf
+mandoc: badargs.in:16:5: WARNING: unknown font type, using \fR: Bf badarg

@@ -1,4 +1,5 @@
-.TH SPACE-TAB-MAN 1 "May 24, 2010" OpenBSD
+.\" $OpenBSD: tab-man.in,v 1.5 2017/07/04 14:53:23 schwarze Exp $
+.TH SPACE-TAB-MAN 1 "May 24, 2010"
 .SH NAME
 SPACE-TAB-MAN \- handling of literal tab characters
 .SH DESCRIPTION

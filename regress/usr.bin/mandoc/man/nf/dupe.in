@@ -1,4 +1,5 @@
-.TH NF-DUPE 1 "July 2, 2014" OpenBSD
+.\" $OpenBSD: dupe.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.TH NF-DUPE 1 "July 2, 2014"
 .SH NAME
 nf-dupe \- duplicate filling macros
 .SH DESCRIPTION

@@ -1,4 +1,5 @@
-.TH HP-BREAK 1 "September 21, 2011" OpenBSD
+.\" $OpenBSD: break.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH HP-BREAK 1 "September 21, 2011"
 .SH NAME
 HP-break \- breaking the head line of hanged paragraphs
 .SH DESCRIPTION

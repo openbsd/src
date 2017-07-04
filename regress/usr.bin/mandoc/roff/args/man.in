@@ -1,4 +1,5 @@
-.TH ARGS-MAN 1 "November 19, 2014" OpenBSD
+.\" $OpenBSD: man.in,v 1.5 2017/07/04 14:53:26 schwarze Exp $
+.TH ARGS-MAN 1 "November 19, 2014"
 .SH NAME
 args-man - arguments to man macros
 .SH DESCRIPTION

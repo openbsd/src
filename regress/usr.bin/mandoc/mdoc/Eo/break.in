@@ -1,6 +1,7 @@
-.Dd February 1, 2015
+.\" $OpenBSD: break.in,v 1.3 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt EO-BREAK 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Eo-break
 .Nd breaking a custom enclosure block

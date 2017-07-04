@@ -1,6 +1,7 @@
+.\" $OpenBSD: noarg.in,v 1.2 2017/07/04 14:53:25 schwarze Exp $
 .Dd
 .Dt DD-NOARG 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Dd-noarg
 .Nd date macro without an argument

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.23 2017/05/30 19:29:31 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.24 2017/07/04 14:53:23 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -76,13 +76,13 @@ htmlval: ${_HTMLVALS}
 		.out_ascii .out_lint .out_utf8
 
 .in.mandoc_ascii:
-	@${MANDOC} ${MOPTS} -Tascii ${.IMPSRC} > ${.TARGET}
+	@${MANDOC} ${MOPTS} -Ios=OpenBSD -Tascii ${.IMPSRC} > ${.TARGET}
 
 .mandoc_ascii.diff_ascii:
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_ascii$/out_ascii/} ${.IMPSRC}
 
 .in.mandoc_utf8:
-	@${MANDOC} ${MOPTS} -Tutf8 ${.IMPSRC} > ${.TARGET}
+	@${MANDOC} ${MOPTS} -Ios=OpenBSD -Tutf8 ${.IMPSRC} > ${.TARGET}
 
 .mandoc_utf8.diff_utf8:
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_utf8$/out_utf8/} ${.IMPSRC}
@@ -95,20 +95,20 @@ htmlval: ${_HTMLVALS}
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_html$/out_html/} ${.IMPSRC}
 
 .in.mandoc_markdown:
-	@${MANDOC} ${MOPTS} -Tmarkdown ${.IMPSRC} > ${.TARGET}
+	@${MANDOC} ${MOPTS} -Ios=OpenBSD -Tmarkdown ${.IMPSRC} > ${.TARGET}
 
 .mandoc_markdown.diff_markdown:
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_markdown$/out_markdown/} \
 		${.IMPSRC}
 
 .in.in_man:
-	@${MANDOC} ${MOPTS} -Tman ${.IMPSRC} > ${.TARGET}
+	@${MANDOC} ${MOPTS} -Ios=OpenBSD -Tman ${.IMPSRC} > ${.TARGET}
 
 .in_man.mandoc_man:
 	@${MANDOC} -man -Tascii -Omdoc ${.IMPSRC} > ${.TARGET}
 
 .in.mandoc_lint:
-	@-${MANDOC} ${MOPTS} -Tlint -Wall ${.IMPSRC} 2>&1 | \
+	@-${MANDOC} ${MOPTS} -Ios=OpenBSD -Tlint -Wall ${.IMPSRC} 2>&1 | \
 		sed -E 's/^mandoc: \/[^:]+\//mandoc: /' > ${.TARGET}
 
 .mandoc_lint.diff_lint:
@@ -283,13 +283,14 @@ ${t}.out_html: ${t}.in
 .for t in ${REGRESS_TARGETS}
 .  if empty(SKIP_MARKDOWN:MALL) && empty(SKIP_MARKDOWN:M${t})
 ${t}.out_markdown: ${t}.in
-	${MANDOC} ${MOPTS} -Tmarkdown ${.ALLSRC} > ${.TARGET}
+	${MANDOC} ${MOPTS} -Ios=OpenBSD -Tmarkdown ${.ALLSRC} > ${.TARGET}
 .  endif
 .endfor
 
 .for t in ${LINT_TARGETS}
 ${t}.out_lint: ${t}.in
-	-${MANDOC} ${MOPTS} -Tlint -Wall ${.ALLSRC} > ${.TARGET} 2>&1
+	-${MANDOC} ${MOPTS} -Ios=OpenBSD -Tlint -Wall ${.ALLSRC} \
+		> ${.TARGET} 2>&1
 .endfor
 
 # --- phony targets ---

@@ -1,4 +1,1 @@
-mandoc: unclosed.in:9:2: ERROR: appending missing end of block: Bd
-mandoc: unclosed.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: unclosed.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
-mandoc: unclosed.in: BASE: RCS id missing: (OpenBSD)
+mandoc: unclosed.in:10:2: ERROR: appending missing end of block: Bd

@@ -1,6 +1,7 @@
+.\" $OpenBSD: badarg.in,v 1.2 2017/07/04 14:53:25 schwarze Exp $
 .Dd "bad date"
 .Dt DD-BADARG 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Dd-badarg
 .Nd date cannot be parsed

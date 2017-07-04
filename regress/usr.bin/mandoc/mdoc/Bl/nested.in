@@ -1,6 +1,7 @@
-.Dd May 19, 2013
+.\" $OpenBSD: nested.in,v 1.6 2017/07/04 14:53:24 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt BL-NESTED 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Bl-nested
 .Nd nested lists

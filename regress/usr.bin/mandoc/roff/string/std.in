@@ -1,4 +1,5 @@
-.TH STRING-STD 1 "June 18, 2017" OpenBSD
+.\" $OpenBSD: std.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
+.TH STRING-STD 1 "June 18, 2017"
 .SH NAME
 string-std - expanding standard macros as strings
 .SH DESCRIPTION

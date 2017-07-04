@@ -1,4 +1,5 @@
-.TH UR-ARGS 1 "October 17, 2013" OpenBSD
+.\" $OpenBSD: args.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.TH UR-ARGS 1 "October 17, 2013"
 .SH NAME
 UR-basic \- argument handling of the man-ext URI macro
 .SH DESCRIPTION

@@ -1,4 +1,5 @@
-.TH bar-man 1 "July 17, 2012" OpenBSD
+.\" $OpenBSD: man.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH bar-man 1 "July 17, 2012"
 .SH NAME
 \fBbar-man\fR - formatting the vertical bar symbol
 .SH DESCRIPTION

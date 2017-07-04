@@ -1,6 +1,7 @@
-.Dd February 16, 2017
+.\" $OpenBSD: twice.in,v 1.4 2017/07/04 14:53:26 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt BREAK-TWICE 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm break-twice
 .Nd breaking the same block twice

@@ -1,6 +1,7 @@
-.Dd December 23, 2014
+.\" $OpenBSD: badargs-mdoc.in,v 1.5 2017/07/04 14:53:27 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt SP-BADARGS-MDOC 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm sp-badargs-mdoc
 .Nd bad arguments to .sp macros in mdoc(7)

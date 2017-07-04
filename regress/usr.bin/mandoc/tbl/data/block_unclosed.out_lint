@@ -1,3 +1,2 @@
-mandoc: block_unclosed.in:6:2: ERROR: data block open at end of tbl: TE
-mandoc: block_unclosed.in:29:2: ERROR: data block open at end of tbl: T&
-mandoc: block_unclosed.in: BASE: RCS id missing: (OpenBSD)
+mandoc: block_unclosed.in:7:2: ERROR: data block open at end of tbl: TE
+mandoc: block_unclosed.in:30:2: ERROR: data block open at end of tbl: T&

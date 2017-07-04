@@ -1,6 +1,7 @@
-.Dd January 15, 2011
+.\" $OpenBSD: leading-mdoc.in,v 1.4 2017/07/04 14:53:23 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt SPACE-LEADING_MDOC 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm space-leading-mdoc
 .Nd leading spaces on text lines in mdoc documents

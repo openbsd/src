@@ -1,13 +1,10 @@
-mandoc: noarg.in:23:2: WARNING: skipping empty macro: Fa
-mandoc: noarg.in:27:2: WARNING: skipping empty macro: Fn
-mandoc: noarg.in:29:2: WARNING: skipping empty macro: Ft
-mandoc: noarg.in:32:2: WARNING: skipping empty macro: Ft
-mandoc: noarg.in:34:2: WARNING: skipping empty macro: Ft
-mandoc: noarg.in:37:2: WARNING: skipping empty macro: Ft
-mandoc: noarg.in:39:2: WARNING: skipping empty macro: Fa
-mandoc: noarg.in:42:2: WARNING: skipping empty macro: Ft
-mandoc: noarg.in:43:2: WARNING: skipping empty macro: Fn
-mandoc: noarg.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: noarg.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
-mandoc: noarg.in:12:10: ERROR: skipping excess arguments: Fo ... bogus
-mandoc: noarg.in: BASE: RCS id missing: (OpenBSD)
+mandoc: noarg.in:24:2: WARNING: skipping empty macro: Fa
+mandoc: noarg.in:28:2: WARNING: skipping empty macro: Fn
+mandoc: noarg.in:30:2: WARNING: skipping empty macro: Ft
+mandoc: noarg.in:33:2: WARNING: skipping empty macro: Ft
+mandoc: noarg.in:35:2: WARNING: skipping empty macro: Ft
+mandoc: noarg.in:38:2: WARNING: skipping empty macro: Ft
+mandoc: noarg.in:40:2: WARNING: skipping empty macro: Fa
+mandoc: noarg.in:43:2: WARNING: skipping empty macro: Ft
+mandoc: noarg.in:44:2: WARNING: skipping empty macro: Fn
+mandoc: noarg.in:13:10: ERROR: skipping excess arguments: Fo ... bogus

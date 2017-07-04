@@ -1,4 +1,5 @@
-.TH SPACE-ESCT-MAN 1 2013-06-20 OpenBSD
+.\" $OpenBSD: esct-man.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH SPACE-ESCT-MAN 1 2013-06-20
 .SH NAME
 SPACE-T-MAN \- the t escape sequence in pages with man macros
 .SH DESCRIPTION

@@ -1,4 +1,5 @@
-.TH TP-WIDTH 1 "December 23, 2014" OpenBSD
+.\" $OpenBSD: width.in,v 1.6 2017/07/04 14:53:24 schwarze Exp $
+.TH TP-WIDTH 1 "December 23, 2014"
 .SH NAME
 TP-width \- indentation width of indented paragraphs
 .SH DESCRIPTION

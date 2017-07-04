@@ -1,15 +1,12 @@
-mandoc: badargs.in:12:2: ERROR: skipping all arguments: Ed tail argument
-mandoc: badargs.in:19:16: ERROR: skipping excess arguments: Bd ... -bogus
-mandoc: badargs.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: badargs.in:1:5: BASE: Mdocdate missing: Dd October (OpenBSD)
-mandoc: badargs.in:9:13: WARNING: empty argument, using 0n: Bd -offset
-mandoc: badargs.in:14:34: WARNING: duplicate argument: Bd -compact
-mandoc: badargs.in:14:43: WARNING: duplicate argument: Bd -offset 6n
-mandoc: badargs.in:19:2: WARNING: missing display type, using -ragged: Bd
-mandoc: badargs.in:24:2: WARNING: skipping duplicate display type: Bd -unfilled
-mandoc: badargs.in:28:2: WARNING: skipping duplicate display type: Bd -ragged
-mandoc: badargs.in:33:2: ERROR: NOT IMPLEMENTED: Bd -file
-mandoc: badargs.in:38:2: ERROR: NOT IMPLEMENTED: Bd -file
-mandoc: badargs.in:43:2: ERROR: NOT IMPLEMENTED: Bd -file
-mandoc: badargs.in:48:2: ERROR: skipping display without arguments: Bd
-mandoc: badargs.in: BASE: RCS id missing: (OpenBSD)
+mandoc: badargs.in:13:2: ERROR: skipping all arguments: Ed tail argument
+mandoc: badargs.in:20:16: ERROR: skipping excess arguments: Bd ... -bogus
+mandoc: badargs.in:10:13: WARNING: empty argument, using 0n: Bd -offset
+mandoc: badargs.in:15:34: WARNING: duplicate argument: Bd -compact
+mandoc: badargs.in:15:43: WARNING: duplicate argument: Bd -offset 6n
+mandoc: badargs.in:20:2: WARNING: missing display type, using -ragged: Bd
+mandoc: badargs.in:25:2: WARNING: skipping duplicate display type: Bd -unfilled
+mandoc: badargs.in:29:2: WARNING: skipping duplicate display type: Bd -ragged
+mandoc: badargs.in:34:2: ERROR: NOT IMPLEMENTED: Bd -file
+mandoc: badargs.in:39:2: ERROR: NOT IMPLEMENTED: Bd -file
+mandoc: badargs.in:44:2: ERROR: NOT IMPLEMENTED: Bd -file
+mandoc: badargs.in:49:2: ERROR: skipping display without arguments: Bd

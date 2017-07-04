@@ -1,4 +1,5 @@
-.TH NR-EVAL 1 "April 7, 2014" OpenBSD
+.\" $OpenBSD: eval.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
+.TH NR-EVAL 1 "April 7, 2014"
 .SH NAME
 nr-eval \- numeric expressions in assignments to number registers
 .SH DESCRIPTION

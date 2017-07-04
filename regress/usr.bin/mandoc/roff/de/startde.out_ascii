@@ -12,4 +12,4 @@ DDEESSCCRRIIPPTTIIOONN
      call inner macro: inner macro called; end outer scope.  returned from
      call of outer macro; end inner scope.  returned from call of inner macro.
 
-OpenBSD                        December 30, 2014                       OpenBSD
+OpenBSD                          July 4, 2017                          OpenBSD

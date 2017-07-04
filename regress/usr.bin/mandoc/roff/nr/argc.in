@@ -1,6 +1,7 @@
-.Dd December 15, 2013
+.\" $OpenBSD: argc.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt NR-ARGC 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm nr-argc
 .Nd varying number of arguments to the .nr macro

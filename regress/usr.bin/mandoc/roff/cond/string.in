@@ -1,4 +1,5 @@
-.TH STRING 1 "June 14, 2017" OpenBSD
+.\" $OpenBSD: string.in,v 1.3 2017/07/04 14:53:26 schwarze Exp $
+.TH STRING 1 "June 14, 2017"
 .SH NAME
 string \- conditional testing whether a string is defined
 .SH DESCRIPTION

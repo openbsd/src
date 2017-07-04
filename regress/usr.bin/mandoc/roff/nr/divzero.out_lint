@@ -1,3 +1,2 @@
-mandoc: divzero.in:6:4: ERROR: divide by zero: 1/0
-mandoc: divzero.in:7:4: ERROR: divide by zero: 1%0
-mandoc: divzero.in: BASE: RCS id missing: (OpenBSD)
+mandoc: divzero.in:7:4: ERROR: divide by zero: 1/0
+mandoc: divzero.in:8:4: ERROR: divide by zero: 1%0

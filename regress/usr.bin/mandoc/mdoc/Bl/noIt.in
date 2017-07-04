@@ -1,6 +1,7 @@
-.Dd October 6, 2013
+.\" $OpenBSD: noIt.in,v 1.4 2017/07/04 14:53:24 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt BL-NOIT 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Bl-noIt
 .Nd list missing item macros

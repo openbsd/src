@@ -1,4 +1,5 @@
-.TH TBL-BREAK 1 "January 30, 2015" OpenBSD
+.\" $OpenBSD: break.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.TH TBL-BREAK 1 "January 30, 2015"
 .SH NAME
 tbl-break \- tables breaking blocks
 .SH DESCRIPTION

@@ -1,4 +1,5 @@
-.TH RS-WIDTH 1 "December 23, 2014" OpenBSD
+.\" $OpenBSD: width.in,v 1.5 2017/07/04 14:53:23 schwarze Exp $
+.TH RS-WIDTH 1 "December 23, 2014"
 .SH NAME
 RS-width \- negative and excessive indentation
 .SH DESCRIPTION

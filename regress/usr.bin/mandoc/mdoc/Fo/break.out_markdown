@@ -42,4 +42,4 @@ using Fo and single-argument Fa:
 using Fo and multi-argument Fa:  
 **my\_long\_function**(*my\_long\_type first\_argument*, *my\_long\_type second\_argument*)
 
-OpenBSD - April 8, 2014
+OpenBSD - July 4, 2017

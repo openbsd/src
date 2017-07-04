@@ -1,4 +1,5 @@
-.TH SS-LONGARG 1 "April 4, 2015" OpenBSD
+.\" $OpenBSD: longarg.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.TH SS-LONGARG 1 "April 4, 2015"
 .SH NAME
 SS-longarg \- long subsection header lines
 .SH

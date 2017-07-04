@@ -1,4 +1,5 @@
-.TH IP-MANYARGS 1 "January 4, 2011" OpenBSD
+.\" $OpenBSD: manyargs.in,v 1.5 2017/07/04 14:53:23 schwarze Exp $
+.TH IP-MANYARGS 1 "January 4, 2011"
 .SH NAME
 IP-manyargs \- too many header args for indented blocks
 .SH DESCRIPTION

@@ -1,6 +1,7 @@
-.Dd February 12, 2017
+.\" $OpenBSD: sqrt.in,v 1.4 2017/07/04 14:53:23 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt UNARY-SQRT 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm unary-sqrt
 .Nd square root

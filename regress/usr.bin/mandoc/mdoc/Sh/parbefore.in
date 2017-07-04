@@ -1,6 +1,7 @@
-.Dd April 28, 2017
+.\" $OpenBSD: parbefore.in,v 1.2 2017/07/04 14:53:26 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt SH-PARBEFORE 1
-.Os OpenBSD
+.Os
 .Pp
 .Sh NAME
 .Nm Sh-parbefore

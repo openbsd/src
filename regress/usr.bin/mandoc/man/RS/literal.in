@@ -1,4 +1,5 @@
-.TH RS-LITERAL 1 "January 5, 2013" OpenBSD
+.\" $OpenBSD: literal.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH RS-LITERAL 1 "January 5, 2013"
 .SH NAME
 RS-literal \- indented literal text
 .SH DESCRIPTION

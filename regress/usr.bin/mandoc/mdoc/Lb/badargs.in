@@ -1,6 +1,7 @@
-.Dd June 9, 2017
+.\" $OpenBSD: badargs.in,v 1.5 2017/07/04 14:53:25 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt LB-BADARGS 3
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Lb-badargs
 .Nd bad arguments to the library macro

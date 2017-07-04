@@ -1,4 +1,5 @@
-.TH CHAR-UNICODE-NOGROFF 1 "October 28, 2014" OpenBSD
+.\" $OpenBSD: nogroff.in,v 1.5 2017/07/04 14:53:23 schwarze Exp $
+.TH CHAR-UNICODE-NOGROFF 1 "October 28, 2014"
 .SH NAME
 char-unicode-nogroff \- characters handled differently by groff
 .SH DESCRIPTION

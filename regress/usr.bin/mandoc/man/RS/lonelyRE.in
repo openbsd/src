@@ -1,4 +1,5 @@
-.TH RS-LONELYRE 1 "November 10, 2013" OpenBSD
+.\" $OpenBSD: lonelyRE.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
+.TH RS-LONELYRE 1 "November 10, 2013"
 .SH NAME
 RS-lonelyRE \- closing RS that is not open
 .SH DESCRIPTION

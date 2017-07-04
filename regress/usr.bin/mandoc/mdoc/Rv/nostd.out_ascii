@@ -19,4 +19,4 @@ RREETTUURRNN VVAALLUUEESS
      the value -1 is returned and the global variable _e_r_r_n_o is set to indicate
      the error.
 
-OpenBSD                          July 29, 2014                         OpenBSD
+OpenBSD                          July 4, 2017                          OpenBSD

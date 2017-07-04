@@ -1,2 +1,1 @@
-mandoc: blank.in:7:1: WARNING: skipping blank line in line scope
-mandoc: blank.in: BASE: RCS id missing: (OpenBSD)
+mandoc: blank.in:8:1: WARNING: skipping blank line in line scope

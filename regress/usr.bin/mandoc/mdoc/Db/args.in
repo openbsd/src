@@ -1,6 +1,7 @@
-.Dd November 27, 2014
+.\" $OpenBSD: args.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt DB-ARGS 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Db-args
 .Nd obsolete debug macro

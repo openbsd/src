@@ -1,4 +1,5 @@
-.TH TBL-LAYOUT_CENTER 1 "January 28, 2015" OpenBSD
+.\" $OpenBSD: center.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
+.TH TBL-LAYOUT_CENTER 1 "January 28, 2015"
 .SH NAME
 tbl-layout_center \- center a table as a whole
 .SH DESCRIPTION

@@ -1,6 +1,7 @@
-.Dd November 26, 2014
+.\" $OpenBSD: twoarg.in,v 1.2 2017/07/04 14:53:26 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt SM-TWOARG 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm Sm-twoarg
 .Nd spacing macro with multiple arguments

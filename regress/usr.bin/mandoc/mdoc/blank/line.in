@@ -1,6 +1,7 @@
-.Dd February 17, 2010
+.\" $OpenBSD: line.in,v 1.6 2017/07/04 14:53:26 schwarze Exp $
+.Dd $Mdocdate: July 4 2017 $
 .Dt BLANK-LINE 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm blank-line
 .Nd handling of blank line

@@ -1,4 +1,5 @@
-.TH TP-BADARG 1 "November 18, 2012" OpenBSD
+.\" $OpenBSD: badarg.in,v 1.2 2017/07/04 14:53:24 schwarze Exp $
+.TH TP-BADARG 1 "November 18, 2012"
 .SH NAME
 TP-badarg \- invalid width specification for tagged paragraph
 .SH DESCRIPTION

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2017/03/07 20:00:02 schwarze Exp $
+# $OpenBSD: Makefile,v 1.11 2017/07/04 14:53:27 schwarze Exp $
 
 REGRESS_TARGETS	 = append cond escname factorial indir infinite startde TH Dd
 LINT_TARGETS	 = escname indir infinite
@@ -29,10 +29,10 @@ ascii-diff-opt: TH.mandoc_ascii_opt Dd.mandoc_ascii_opt
 	@${DIFF} ${.CURDIR}/Dd.out_ascii_opt Dd.mandoc_ascii_opt
 
 TH.mandoc_ascii_opt: TH.in
-	@${MANDOC} -Tascii -man ${.ALLSRC} > ${.TARGET}
+	@${MANDOC} -Ios=OpenBSD -Tascii -man ${.ALLSRC} > ${.TARGET}
 
 Dd.mandoc_ascii_opt: Dd.in
-	@${MANDOC} -Tascii -mdoc ${.ALLSRC} > ${.TARGET}
+	@${MANDOC} -Ios=OpenBSD -Tascii -mdoc ${.ALLSRC} > ${.TARGET}
 
 ascii-clean-opt:
 	@rm -f TH.mandoc_ascii_opt Dd.mandoc_ascii_opt

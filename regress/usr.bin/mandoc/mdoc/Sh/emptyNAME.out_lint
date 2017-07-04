@@ -1,5 +1,2 @@
-mandoc: emptyNAME.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: emptyNAME.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
-mandoc: emptyNAME.in:4:2: WARNING: NAME section without Nm before Nd
-mandoc: emptyNAME.in:4:2: WARNING: NAME section without description
-mandoc: emptyNAME.in: BASE: RCS id missing: (OpenBSD)
+mandoc: emptyNAME.in:5:2: WARNING: NAME section without Nm before Nd
+mandoc: emptyNAME.in:5:2: WARNING: NAME section without description
