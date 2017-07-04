@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2017/07/03 18:19:55 bluhm Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2017/07/04 18:02:21 bluhm Exp $
 
 TOPSRC=		${.CURDIR}/../../../../sbin/isakmpd
 TOPOBJ!!=	${MAKE} -C ${TOPSRC} -V .OBJDIR
@@ -13,4 +13,4 @@ generated:
 	${MAKE} -C ${TOPSRC} generated
 
 .PATH:		${.CURDIR}/../common
-.PATH:		${TOPSRC} ${TOPSRC}/sysdep/openbsd ${TOPOBJ}
+.PATH:		${TOPSRC} ${TOPSRC}/sysdep/openbsd
