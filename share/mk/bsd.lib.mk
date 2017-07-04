@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.86 2017/07/02 17:55:14 espie Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.87 2017/07/04 00:59:11 espie Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -183,6 +183,10 @@ BUILDAFTER += ${_LIBS}
 
 OBJS+=	${SRCS:N*.h:R:S/$/.o/}
 DEPS+=	${OBJS:R:S/$/.d/}
+
+_LEXINTM?=${SRCS:M*.l:.l=.c}
+_YACCINTM?=${SRCS:M*.y:.y=.c}
+
 BUILDAFTER += ${OBJS}
 
 lib${LIB}.a: ${OBJS}
@@ -245,7 +249,8 @@ ${DIST_LIB}: ${SELECTED_DOBJS}
 
 .if !target(clean)
 clean: _SUBDIRUSE
-	rm -f a.out [Ee]rrs mklog *.core ${CLEANFILES}
+	rm -f a.out [Ee]rrs mklog *.core y.tab.h \
+	    ${_LEXINTM} ${_YACCINTM} ${CLEANFILES}
 	rm -f lib${LIB}.a ${OBJS}
 	rm -f lib${LIB}_g.a ${GOBJS}
 	rm -f lib${LIB}_p.a ${POBJS}

@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.dep.mk,v 1.18 2017/07/03 15:11:02 espie Exp $
+#	$OpenBSD: bsd.dep.mk,v 1.19 2017/07/04 00:59:11 espie Exp $
 #	$NetBSD: bsd.dep.mk,v 1.12 1995/09/27 01:15:09 christos Exp $
 
 .if !target(depend)
@@ -31,12 +31,18 @@ tags:
 
 # explicitly tag most source files
 .for i in ${SRCS:N*.[hyl]:N*.sh} ${_LEXINTM} ${_YACCINTM}
-${i:R:S/$/.o/}: $i
+# assume libraries
+${i:R:S/$/.o/} ${i:R:S/$/.po/} ${i:R:S/$/.so/} ${i:R:S/$/.do/}: $i
 .endfor
 
 CLEANFILES += ${DEPS} .depend
+
 BUILDFIRST ?=
 BUILDAFTER ?=
-.if !empty(BUILDFIRST) && !empty(BUILDAFTER)
-${BUILDAFTER}: ${BUILDFIRST}
+.if !empty(BUILDAFTER)
+.  for i in ${BUILDFIRST} ${_LEXINTM} ${_YACCINTM}
+.    if !exists($i)
+${BUILDAFTER}: $i
+.    endif
+.  endfor
 .endif

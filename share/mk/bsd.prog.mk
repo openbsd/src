@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.72 2017/07/01 14:41:54 espie Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.73 2017/07/04 00:59:11 espie Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -74,8 +74,8 @@ SRCS?=	${PROG}.c
 OBJS+=	${SRCS:N*.h:N*.sh:R:S/$/.o/}
 DEPS+=	${OBJS:R:S/$/.d/}
 
-_LEXINTM+=${SRCS:M*.l:.l=.c}
-_YACCINTM+=${SRCS:M*.y:.y=.c}
+_LEXINTM?=${SRCS:M*.l:.l=.c}
+_YACCINTM?=${SRCS:M*.y:.y=.c}
 .  endif
 
 .  if defined(OBJS) && !empty(OBJS)
