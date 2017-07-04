@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.219 2017/07/04 15:43:38 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.220 2017/07/04 15:55:22 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1377,7 +1377,7 @@ pr_ipopt(int hlen, u_char *buf)
 			    !memcmp(cp, old_rr, i) &&
 			    !(options & F_FLOOD)) {
 				(void)printf("\t(same route)");
-				i = ((i + 3) / 4) * 4;
+				i = (i + 3) & ~0x3;
 				hlen -= i;
 				cp += i;
 				break;
