@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2017/06/17 01:55:16 bcallah Exp $
+#	$OpenBSD: Makefile,v 1.15 2017/07/04 08:39:57 espie Exp $
 
 # -DEXTENDED 
 # 	if you want the paste & spaste macros.
@@ -15,7 +15,7 @@ SRCS=	eval.c expr.c look.c main.c misc.c gnum4.c trace.c tokenizer.l parser.y
 MAN=	m4.1
 
 parser.c parser.h: parser.y
-	${YACC} -d ${.ALLSRC} && mv y.tab.c parser.c && mv y.tab.h parser.h
+	${YACC} -o parser.c -d ${.ALLSRC}
 
 tokenizer.o: parser.h
 
