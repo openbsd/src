@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.51 2017/05/26 17:38:46 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.52 2017/07/04 12:48:36 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -506,8 +506,8 @@ slowcgi_accept(int fd, short events, void *arg)
 	event_set(&c->ev, s, EV_READ | EV_PERSIST, slowcgi_request, c);
 	event_add(&c->ev, NULL);
 	event_set(&c->resp_ev, s, EV_WRITE | EV_PERSIST, slowcgi_response, c);
-	event_set(&c->tmo, s, 0, slowcgi_timeout, c);
-	event_add(&c->tmo, &timeout);
+	evtimer_set(&c->tmo, slowcgi_timeout, c);
+	evtimer_add(&c->tmo, &timeout);
 	requests->request = c;
 	SLIST_INSERT_HEAD(&slowcgi_proc.requests, requests, entry);
 }
