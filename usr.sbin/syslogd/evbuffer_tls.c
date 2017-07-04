@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer_tls.c,v 1.10 2017/03/03 20:26:23 bluhm Exp $ */
+/*	$OpenBSD: evbuffer_tls.c,v 1.11 2017/07/04 15:52:26 bluhm Exp $ */
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -298,21 +298,6 @@ evtls_read(struct evbuffer *buf, int fd, int howmuch, struct tls *ctx)
 	size_t oldoff = buf->off;
 	int n = EVBUFFER_MAX_READ;
 
-	if (ioctl(fd, FIONREAD, &n) == -1 || n <= 0) {
-		n = EVBUFFER_MAX_READ;
-	} else if (n > EVBUFFER_MAX_READ && n > howmuch) {
-		/*
-		 * It's possible that a lot of data is available for
-		 * reading.  We do not want to exhaust resources
-		 * before the reader has a chance to do something
-		 * about it.  If the reader does not tell us how much
-		 * data we should read, we artifically limit it.
-		 */
-		if ((size_t)n > buf->totallen << 2)
-			n = buf->totallen << 2;
-		if (n < EVBUFFER_MAX_READ)
-			n = EVBUFFER_MAX_READ;
-	}
 	if (howmuch < 0 || howmuch > n)
 		howmuch = n;
 
