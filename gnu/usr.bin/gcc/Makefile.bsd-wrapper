@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.65 2017/06/12 18:49:34 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.66 2017/07/04 12:43:07 espie Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
 
@@ -147,7 +147,7 @@ clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
 	-rm -f ${CLEANFILES}
 
-depend: config.status
+${MAN}: config.status
 	exec ${MAKE} ${MAKE_FLAGS} generated-manpages
 
 FILES= ${.CURDIR}/gcc/unwind.h
