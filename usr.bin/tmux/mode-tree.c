@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.6 2017/06/09 16:01:39 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.7 2017/07/04 12:26:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -445,7 +445,7 @@ void
 mode_tree_draw(struct mode_tree_data *mtd)
 {
 	struct window_pane	*wp = mtd->wp;
-	struct screen		*s = &mtd->screen, *box;
+	struct screen		*s = &mtd->screen, *box = NULL;
 	struct mode_tree_line	*line;
 	struct mode_tree_item	*mti;
 	struct options		*oo = wp->window->options;
@@ -571,7 +571,8 @@ mode_tree_draw(struct mode_tree_data *mtd)
 	box_x = w - 4;
 	box_y = sy - h - 2;
 
-	box = mtd->drawcb(mtd->modedata, mti->itemdata, box_x, box_y);
+	if (box_x != 0 && box_y != 0)
+		box = mtd->drawcb(mtd->modedata, mti->itemdata, box_x, box_y);
 	if (box != NULL) {
 		screen_write_cursormove(&ctx, 2, h + 1);
 		screen_write_copy(&ctx, box, 0, 0, box_x, box_y, NULL, NULL);

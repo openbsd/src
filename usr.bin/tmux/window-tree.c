@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.9 2017/07/03 22:48:02 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.10 2017/07/04 12:26:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -422,8 +422,6 @@ window_tree_draw_session(struct session *s, struct screen_write_ctx *ctx,
 	char			*label;
 	size_t			 len;
 
-	if (sx == 0)
-		return;
 	total = winlink_count(&s->windows);
 
 	memcpy(&gc, &grid_default_cell, sizeof gc);
@@ -544,8 +542,6 @@ window_tree_draw_window(struct session *s, struct window *w,
 	char			*label;
 	size_t			 len;
 
-	if (sx == 0)
-		return;
 	total = window_count_panes(w);
 
 	memcpy(&gc, &grid_default_cell, sizeof gc);
