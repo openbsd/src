@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.159 2017/07/03 17:33:01 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.160 2017/07/04 14:40:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -71,7 +71,7 @@ static	void	  mparse_parse_buffer(struct mparse *, struct buf,
 
 static	const enum mandocerr	mandoclimits[MANDOCLEVEL_MAX] = {
 	MANDOCERR_OK,
-	MANDOCERR_STYLE,
+	MANDOCERR_OK,
 	MANDOCERR_WARNING,
 	MANDOCERR_ERROR,
 	MANDOCERR_UNSUPP,

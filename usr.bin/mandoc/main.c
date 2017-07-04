@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.201 2017/07/02 21:17:12 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.202 2017/07/04 14:40:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1059,8 +1059,7 @@ mmsg(enum mandocerr t, enum mandoclevel lvl,
 	if (line)
 		fprintf(stderr, "%d:%d:", line, col + 1);
 
-	fprintf(stderr, " %s",
-	    t < MANDOCERR_STYLE ? "BASE" : mparse_strlevel(lvl));
+	fprintf(stderr, " %s", mparse_strlevel(lvl));
 
 	if ((mparse_msg = mparse_strerror(t)) != NULL)
 		fprintf(stderr, ": %s", mparse_msg);
