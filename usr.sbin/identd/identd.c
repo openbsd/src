@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.36 2017/05/26 17:38:46 florian Exp $ */
+/*	$OpenBSD: identd.c,v 1.37 2017/07/04 01:07:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <signal.h>
 #include <syslog.h>
