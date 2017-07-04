@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.218 2017/02/22 13:43:35 renato Exp $	*/
+/*	$OpenBSD: ping.c,v 1.219 2017/07/04 15:43:38 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -729,10 +729,8 @@ main(int argc, char *argv[])
 			rspace[IPOPT_OLEN] = sizeof(rspace)-1;
 			rspace[IPOPT_OFFSET] = IPOPT_MINOFF;
 			if (setsockopt(s, IPPROTO_IP, IP_OPTIONS, rspace,
-			    sizeof(rspace)) < 0) {
-				perror("ping: record route");
-				exit(1);
-			}
+			    sizeof(rspace)) < 0)
+				err(1, "record route");
 		}
 
 		if ((moptions & MULTICAST_NOLOOP) &&
