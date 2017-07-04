@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.20 2017/05/26 17:38:46 florian Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.21 2017/07/04 12:47:51 florian Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -46,6 +46,7 @@
 #include <stdio.h>
 #include <syslog.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <event.h>
 
