@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.152 2017/07/01 16:00:25 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.153 2017/07/04 22:27:23 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -559,7 +559,9 @@ drm_find_description(int vendor, int device, const struct drm_pcidev *idlist)
 	
 	for (i = 0; idlist[i].vendor != 0; i++) {
 		if ((idlist[i].vendor == vendor) &&
-		    (idlist[i].device == device))
+		    (idlist[i].device == device) &&
+		    (idlist[i].subvendor == PCI_ANY_ID) &&
+		    (idlist[i].subdevice == PCI_ANY_ID))
 			return &idlist[i];
 	}
 	return NULL;
