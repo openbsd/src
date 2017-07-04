@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.240 2017/05/27 08:33:25 claudio Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.241 2017/07/04 19:59:51 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1218,8 +1218,8 @@ int	 relay_httpdesc_init(struct ctl_relay_event *);
 ssize_t	 relay_http_time(time_t, char *, size_t);
 
 /* relay_udp.c */
-void	 relay_udp_privinit(struct relayd *, struct relay *);
-void	 relay_udp_init(struct relay *);
+void	 relay_udp_privinit(struct relay *);
+void	 relay_udp_init(struct relayd *, struct relay *);
 int	 relay_udp_bind(struct sockaddr_storage *, in_port_t,
 	    struct protocol *);
 void	 relay_udp_server(int, short, void *);

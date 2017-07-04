@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.221 2017/05/28 10:39:15 benno Exp $	*/
+/*	$OpenBSD: relay.c,v 1.222 2017/07/04 19:59:51 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -285,7 +285,7 @@ relay_privinit(struct relay *rlay)
 
 	switch (rlay->rl_proto->type) {
 	case RELAY_PROTO_DNS:
-		relay_udp_privinit(env, rlay);
+		relay_udp_privinit(rlay);
 		break;
 	case RELAY_PROTO_TCP:
 		break;
@@ -445,7 +445,7 @@ relay_launch(void)
 
 		switch (rlay->rl_proto->type) {
 		case RELAY_PROTO_DNS:
-			relay_udp_init(rlay);
+			relay_udp_init(env, rlay);
 			break;
 		case RELAY_PROTO_TCP:
 		case RELAY_PROTO_HTTP:
