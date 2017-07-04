@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.49 2017/07/03 18:45:34 benno Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.50 2017/07/04 21:09:52 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -64,7 +64,7 @@ void		check_external_status(struct ifsd_state *);
 void		external_evtimer_setup(struct ifsd_state *, int);
 void		scan_ifstate(int, int, int);
 int		scan_ifstate_single(int, int, struct ifsd_state *);
-void		fetch_state(void);
+void		fetch_ifstate(void);
 __dead void	usage(void);
 void		adjust_expressions(struct ifsd_expression_list *, int);
 void		adjust_external_expressions(struct ifsd_state *);
@@ -208,7 +208,7 @@ load_config(void)
 		clear_config(conf);
 	conf = newconf;
 	conf->initstate.entered = time(NULL);
-	fetch_state();
+	fetch_ifstate();
 	external_evtimer_setup(&conf->initstate, IFSD_EVTIMER_ADD);
 	adjust_external_expressions(&conf->initstate);
 	eval_state(&conf->initstate);
@@ -597,7 +597,7 @@ do_action(struct ifsd_action *action)
  * Fetch the current link states.
  */
 void
-fetch_state(void)
+fetch_ifstate(void)
 {
 	struct ifaddrs *ifap, *ifa;
 	char *oname = NULL;
