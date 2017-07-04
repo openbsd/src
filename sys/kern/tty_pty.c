@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.79 2017/02/11 19:51:06 guenther Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.80 2017/07/04 17:29:51 tedu Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -247,13 +247,13 @@ ptsopen(dev_t dev, int flag, int devtype, struct proc *p)
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_ispeed = tp->t_ospeed = B115200;
 		ttsetwater(tp);		/* would be done in xxparam() */
-	} else if (tp->t_state&TS_XCLUDE && suser(p, 0) != 0)
+	} else if (tp->t_state & TS_XCLUDE && suser(p, 0) != 0)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		tp->t_state |= TS_CARR_ON;
 	while ((tp->t_state & TS_CARR_ON) == 0) {
 		tp->t_state |= TS_WOPEN;
-		if (flag&FNONBLOCK)
+		if (flag & FNONBLOCK)
 			break;
 		error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
 				 ttopen, 0);
@@ -453,8 +453,8 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 	 * then return the appropriate error instead.
 	 */
 	for (;;) {
-		if (tp->t_state&TS_ISOPEN) {
-			if (pti->pt_flags&PF_PKT && pti->pt_send) {
+		if (tp->t_state & TS_ISOPEN) {
+			if (pti->pt_flags & PF_PKT && pti->pt_send) {
 				error = ureadc((int)pti->pt_send, uio);
 				if (error)
 					return (error);
@@ -468,17 +468,17 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 				pti->pt_send = 0;
 				return (0);
 			}
-			if (pti->pt_flags&PF_UCNTL && pti->pt_ucntl) {
+			if (pti->pt_flags & PF_UCNTL && pti->pt_ucntl) {
 				error = ureadc((int)pti->pt_ucntl, uio);
 				if (error)
 					return (error);
 				pti->pt_ucntl = 0;
 				return (0);
 			}
-			if (tp->t_outq.c_cc && (tp->t_state&TS_TTSTOP) == 0)
+			if (tp->t_outq.c_cc && (tp->t_state & TS_TTSTOP) == 0)
 				break;
 		}
-		if ((tp->t_state&TS_CARR_ON) == 0)
+		if ((tp->t_state & TS_CARR_ON) == 0)
 			return (0);	/* EOF */
 		if (flag & IO_NDELAY)
 			return (EWOULDBLOCK);
@@ -517,7 +517,7 @@ ptcwrite(dev_t dev, struct uio *uio, int flag)
 	int error = 0;
 
 again:
-	if ((tp->t_state&TS_ISOPEN) == 0)
+	if ((tp->t_state & TS_ISOPEN) == 0)
 		goto block;
 	if (pti->pt_flags & PF_REMOTE) {
 		if (tp->t_canq.c_cc)
@@ -533,7 +533,7 @@ again:
 				if (error)
 					goto done;
 				/* check again for safety */
-				if ((tp->t_state&TS_ISOPEN) == 0) {
+				if ((tp->t_state & TS_ISOPEN) == 0) {
 					error = EIO;
 					goto done;
 				}
@@ -557,7 +557,7 @@ again:
 			if (error)
 				goto done;
 			/* check again for safety */
-			if ((tp->t_state&TS_ISOPEN) == 0) {
+			if ((tp->t_state & TS_ISOPEN) == 0) {
 				error = EIO;
 				goto done;
 			}
@@ -581,7 +581,7 @@ block:
 	 * Come here to wait for slave to open, for space
 	 * in outq, or space in rawq.
 	 */
-	if ((tp->t_state&TS_CARR_ON) == 0) {
+	if ((tp->t_state & TS_CARR_ON) == 0) {
 		error = EIO;
 		goto done;
 	}
@@ -840,11 +840,11 @@ ptyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			if (*(unsigned int *)data >= NSIG ||
 			    *(unsigned int *)data == 0)
 				return(EINVAL);
-			if ((tp->t_lflag&NOFLSH) == 0)
+			if ((tp->t_lflag & NOFLSH) == 0)
 				ttyflush(tp, FREAD|FWRITE);
 			pgsignal(tp->t_pgrp, *(unsigned int *)data, 1);
 			if ((*(unsigned int *)data == SIGINFO) &&
-			    ((tp->t_lflag&NOKERNINFO) == 0))
+			    ((tp->t_lflag & NOKERNINFO) == 0))
 				ttyinfo(tp);
 			return (0);
 
@@ -873,7 +873,7 @@ ptyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	/*
 	 * If external processing and packet mode send ioctl packet.
 	 */
-	if ((tp->t_lflag&EXTPROC) && (pti->pt_flags & PF_PKT)) {
+	if ((tp->t_lflag & EXTPROC) && (pti->pt_flags & PF_PKT)) {
 		switch (cmd) {
 		case TIOCSETA:
 		case TIOCSETAW:
