@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.81 2017/07/04 12:51:18 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.82 2017/07/04 12:52:48 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ int sbsleep(struct sockbuf *, struct rwlock *);
 void
 soisconnecting(struct socket *so)
 {
-
+	soassertlocked(so);
 	so->so_state &= ~(SS_ISCONNECTED|SS_ISDISCONNECTING);
 	so->so_state |= SS_ISCONNECTING;
 }
@@ -99,6 +99,7 @@ soisconnected(struct socket *so)
 {
 	struct socket *head = so->so_head;
 
+	soassertlocked(so);
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISDISCONNECTING);
 	so->so_state |= SS_ISCONNECTED;
 	if (head && soqremque(so, 0)) {
@@ -115,7 +116,7 @@ soisconnected(struct socket *so)
 void
 soisdisconnecting(struct socket *so)
 {
-
+	soassertlocked(so);
 	so->so_state &= ~SS_ISCONNECTING;
 	so->so_state |= (SS_ISDISCONNECTING|SS_CANTRCVMORE|SS_CANTSENDMORE);
 	wakeup(&so->so_timeo);
@@ -126,7 +127,7 @@ soisdisconnecting(struct socket *so)
 void
 soisdisconnected(struct socket *so)
 {
-
+	soassertlocked(so);
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISCONNECTED|SS_ISDISCONNECTING);
 	so->so_state |= (SS_CANTRCVMORE|SS_CANTSENDMORE|SS_ISDISCONNECTED);
 	wakeup(&so->so_timeo);
@@ -261,7 +262,7 @@ soqremque(struct socket *so, int q)
 void
 socantsendmore(struct socket *so)
 {
-
+	soassertlocked(so);
 	so->so_state |= SS_CANTSENDMORE;
 	sowwakeup(so);
 }
@@ -269,7 +270,7 @@ socantsendmore(struct socket *so)
 void
 socantrcvmore(struct socket *so)
 {
-
+	soassertlocked(so);
 	so->so_state |= SS_CANTRCVMORE;
 	sorwakeup(so);
 }
