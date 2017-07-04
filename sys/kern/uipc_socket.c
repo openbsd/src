@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.191 2017/07/03 08:29:24 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.192 2017/07/04 12:58:32 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -418,14 +418,14 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 			    (sizeof(struct fdpass) / sizeof(int)));
 	}
 
-#define	snderr(errno)	{ error = errno; sounlock(s); goto release; }
+#define	snderr(errno)	{ error = errno; goto release; }
 
+	s = solock(so);
 restart:
-	if ((error = sblock(&so->so_snd, SBLOCKWAIT(flags), NULL)) != 0)
+	if ((error = sblock(so, &so->so_snd, SBLOCKWAIT(flags))) != 0)
 		goto out;
 	so->so_state |= SS_ISSENDING;
 	do {
-		s = solock(so);
 		if (so->so_state & SS_CANTSENDMORE)
 			snderr(EPIPE);
 		if (so->so_error) {
@@ -455,12 +455,10 @@ restart:
 			sbunlock(&so->so_snd);
 			error = sbwait(so, &so->so_snd);
 			so->so_state &= ~SS_ISSENDING;
-			sounlock(s);
 			if (error)
 				goto out;
 			goto restart;
 		}
-		sounlock(s);
 		space -= clen;
 		do {
 			if (uio == NULL) {
@@ -471,8 +469,9 @@ restart:
 				if (flags & MSG_EOR)
 					top->m_flags |= M_EOR;
 			} else {
-				error = m_getuio(&top, atomic,
-				    space, uio);
+				sounlock(s);
+				error = m_getuio(&top, atomic, space, uio);
+				s = solock(so);
 				if (error)
 					goto release;
 				space -= top->m_pkthdr.len;
@@ -480,7 +479,6 @@ restart:
 				if (flags & MSG_EOR)
 					top->m_flags |= M_EOR;
 			}
-			s = solock(so);
 			if (resid == 0)
 				so->so_state &= ~SS_ISSENDING;
 			if (top && so->so_options & SO_ZEROIZE)
@@ -488,7 +486,6 @@ restart:
 			error = (*so->so_proto->pr_usrreq)(so,
 			    (flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
 			    top, addr, control, curproc);
-			sounlock(s);
 			clen = 0;
 			control = NULL;
 			top = NULL;
@@ -501,6 +498,7 @@ release:
 	so->so_state &= ~SS_ISSENDING;
 	sbunlock(&so->so_snd);
 out:
+	sounlock(s);
 	m_freem(top);
 	m_freem(control);
 	return (error);
@@ -670,9 +668,11 @@ bad:
 		*mp = NULL;
 
 restart:
-	if ((error = sblock(&so->so_rcv, SBLOCKWAIT(flags), NULL)) != 0)
-		return (error);
 	s = solock(so);
+	if ((error = sblock(so, &so->so_rcv, SBLOCKWAIT(flags))) != 0) {
+		sounlock(s);
+		return (error);
+	}
 
 	m = so->so_rcv.sb_mb;
 #ifdef SOCKET_SPLICE
@@ -1040,13 +1040,10 @@ sorflush(struct socket *so)
 {
 	struct sockbuf *sb = &so->so_rcv;
 	struct protosw *pr = so->so_proto;
-	sa_family_t af = pr->pr_domain->dom_family;
 	struct socket aso;
 
 	sb->sb_flags |= SB_NOINTR;
-	sblock(sb, M_WAITOK,
-	    (af != PF_LOCAL && af != PF_ROUTE && af != PF_KEY) ?
-	    &netlock : NULL);
+	sblock(so, sb, M_WAITOK);
 	socantrcvmore(so);
 	sbunlock(sb);
 	aso.so_proto = pr;
@@ -1094,15 +1091,17 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 
 	/* If no fd is given, unsplice by removing existing link. */
 	if (fd < 0) {
-		/* Lock receive buffer. */
-		if ((error = sblock(&so->so_rcv,
-		    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK, NULL)) != 0)
-			return (error);
 		s = solock(so);
+		/* Lock receive buffer. */
+		if ((error = sblock(so, &so->so_rcv,
+		    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK)) != 0) {
+			sounlock(s);
+			return (error);
+		}
 		if (so->so_sp->ssp_socket)
 			sounsplice(so, so->so_sp->ssp_socket, 1);
-		sounlock(s);
 		sbunlock(&so->so_rcv);
+		sounlock(s);
 		return (0);
 	}
 
@@ -1119,18 +1118,20 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	if (sosp->so_sp == NULL)
 		sosp->so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
 
-	/* Lock both receive and send buffer. */
-	if ((error = sblock(&so->so_rcv,
-	    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK, NULL)) != 0) {
-		FRELE(fp, curproc);
-		return (error);
-	}
-	if ((error = sblock(&sosp->so_snd, M_WAITOK, NULL)) != 0) {
-		sbunlock(&so->so_rcv);
-		FRELE(fp, curproc);
-		return (error);
-	}
 	s = solock(so);
+	/* Lock both receive and send buffer. */
+	if ((error = sblock(so, &so->so_rcv,
+	    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK)) != 0) {
+		sounlock(s);
+		FRELE(fp, curproc);
+		return (error);
+	}
+	if ((error = sblock(so, &sosp->so_snd, M_WAITOK)) != 0) {
+		sbunlock(&so->so_rcv);
+		sounlock(s);
+		FRELE(fp, curproc);
+		return (error);
+	}
 
 	if (so->so_sp->ssp_socket || sosp->so_sp->ssp_soback) {
 		error = EBUSY;
@@ -1171,9 +1172,9 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	}
 
  release:
-	sounlock(s);
 	sbunlock(&sosp->so_snd);
 	sbunlock(&so->so_rcv);
+	sounlock(s);
 	FRELE(fp, curproc);
 	return (error);
 }

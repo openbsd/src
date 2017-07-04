@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.82 2017/07/04 12:52:48 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.83 2017/07/04 12:58:32 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -53,8 +53,6 @@ u_long	sb_max = SB_MAX;		/* patchable */
 
 extern struct pool mclpools[];
 extern struct pool mbpool;
-
-int sbsleep(struct sockbuf *, struct rwlock *);
 
 /*
  * Procedures to manipulate state flags of socket
@@ -340,24 +338,12 @@ sbwait(struct socket *so, struct sockbuf *sb)
 }
 
 int
-sbsleep(struct sockbuf *sb, struct rwlock *lock)
+sblock(struct socket *so, struct sockbuf *sb, int wait)
 {
 	int error, prio = (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH;
 
-	if (lock != NULL)
-		error = rwsleep(&sb->sb_flags, lock, prio, "netlck", 0);
-	else
-		error = tsleep(&sb->sb_flags, prio, "netlck", 0);
-
-	return (error);
-}
-
-int
-sblock(struct sockbuf *sb, int wait, struct rwlock *lock)
-{
-	int error;
-
 	KERNEL_ASSERT_LOCKED();
+	soassertlocked(so);
 
 	if ((sb->sb_flags & SB_LOCK) == 0) {
 		sb->sb_flags |= SB_LOCK;
@@ -368,7 +354,7 @@ sblock(struct sockbuf *sb, int wait, struct rwlock *lock)
 
 	while (sb->sb_flags & SB_LOCK) {
 		sb->sb_flags |= SB_WANT;
-		error = sbsleep(sb, lock);
+		error = sosleep(so, &sb->sb_flags, prio, "netlck", 0);
 		if (error)
 			return (error);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.71 2017/07/04 12:51:18 mpi Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.72 2017/07/04 12:58:32 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -243,7 +243,7 @@ struct rwlock;
  * Unless SB_NOINTR is set on sockbuf, sleep is interruptible.
  * Returns error without lock if sleep is interrupted.
  */
-int sblock(struct sockbuf *, int, struct rwlock *);
+int sblock(struct socket *, struct sockbuf *, int);
 
 /* release lock on sockbuf sb */
 void sbunlock(struct sockbuf *);
