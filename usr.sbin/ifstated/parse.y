@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.43 2017/07/02 15:28:26 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.44 2017/07/04 21:13:03 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -106,7 +106,7 @@ typedef struct {
 %}
 
 %token	STATE INITSTATE
-%token	LINK UP DOWN UNKNOWN ADDED REMOVED
+%token	LINK UP DOWN UNKNOWN
 %token	IF RUN SETSTATE EVERY INIT
 %left	AND OR
 %left	UNARY
@@ -390,14 +390,12 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "&&",			AND},
-		{ "added",		ADDED},
 		{ "down",		DOWN},
 		{ "every",		EVERY},
 		{ "if",			IF},
 		{ "init",		INIT},
 		{ "init-state",		INITSTATE},
 		{ "link",		LINK},
-		{ "removed",		REMOVED},
 		{ "run",		RUN},
 		{ "set-state",		SETSTATE},
 		{ "state",		STATE},
