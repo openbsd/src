@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.80 2017/06/27 12:02:43 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.81 2017/07/04 12:51:18 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -208,6 +208,7 @@ sonewconn(struct socket *head, int connstatus)
 void
 soqinsque(struct socket *head, struct socket *so, int q)
 {
+	soassertlocked(head);
 
 #ifdef DIAGNOSTIC
 	if (so->so_onq != NULL)
@@ -228,9 +229,10 @@ soqinsque(struct socket *head, struct socket *so, int q)
 int
 soqremque(struct socket *so, int q)
 {
-	struct socket *head;
+	struct socket *head = so->so_head;
 
-	head = so->so_head;
+	soassertlocked(head);
+
 	if (q == 0) {
 		if (so->so_onq != &head->so_q0)
 			return (0);
