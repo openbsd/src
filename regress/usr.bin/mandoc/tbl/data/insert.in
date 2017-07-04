@@ -1,0 +1,21 @@
+.\" $OpenBSD: insert.in,v 1.1 2017/07/04 20:59:17 schwarze Exp $
+.TH TBL-DATA-INSERT 1 "July 4, 2017"
+.SH NAME
+tbl-data-insert \- insertion of empty spans for line-only layout rows
+.SH DESCRIPTION
+initial text
+.TS
+tab(:);
+_ _
+l l
+- -
+l r
+_ ^
+r.
+colum one:column two
+left:right
+not:printed
+right:left
+.TE
+.sp
+final text

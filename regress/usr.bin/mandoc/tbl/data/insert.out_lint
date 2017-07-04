@@ -1,0 +1,2 @@
+mandoc: insert.in:17:1: ERROR: ignoring data in spanned tbl cell: not
+mandoc: insert.in:17:5: ERROR: ignoring data in spanned tbl cell: printed
