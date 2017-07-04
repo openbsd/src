@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.54 2017/05/28 10:39:15 benno Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.55 2017/07/04 20:27:09 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -82,11 +82,19 @@ check_tcp(struct ctl_tcp_event *cte)
 	if (setsockopt(s, SOL_SOCKET, SO_LINGER, &lng, sizeof(lng)) == -1)
 		goto bad;
 
-	if (cte->host->conf.ttl > 0) {
-		if (setsockopt(s, IPPROTO_IP, IP_TTL,
-		    &cte->host->conf.ttl, sizeof(int)) == -1)
-			goto bad;
-	}
+	if (cte->host->conf.ttl > 0)
+		switch (cte->host->conf.ss.ss_family) {
+		case AF_INET:
+			if (setsockopt(s, IPPROTO_IP, IP_TTL,
+			    &cte->host->conf.ttl, sizeof(int)) == -1)
+				goto bad;
+			break;
+		case AF_INET6:
+			if (setsockopt(s, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
+			    &cte->host->conf.ttl, sizeof(int)) == -1)
+				goto bad;
+			break;
+		}
 
 	bcopy(&cte->table->conf.timeout, &tv, sizeof(tv));
 	if (connect(s, (struct sockaddr *)&cte->host->conf.ss, len) == -1) {
