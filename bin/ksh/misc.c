@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.56 2017/07/04 07:29:32 anton Exp $	*/
+/*	$OpenBSD: misc.c,v 1.57 2017/07/04 11:46:15 anton Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -52,7 +52,7 @@ initctypes(void)
 	setctypes("*@#!$-?", C_VAR1);
 	setctypes(" \t\n", C_IFSWS);
 	setctypes("=-+?", C_SUBOP1);
-	setctypes("#%/", C_SUBOP2);
+	setctypes("#%", C_SUBOP2);
 	setctypes(" \n\t\"#$&'()*;<>?[\\`|", C_QUOTE);
 }
 
@@ -516,19 +516,6 @@ gmatch(const char *s, const char *p, int isfile)
 	}
 	return do_gmatch((const unsigned char *) s, (const unsigned char *) se,
 	    (const unsigned char *) p, (const unsigned char *) pe);
-}
-
-int
-gnmatch(char *s, size_t n, const char *p, int isfile)
-{
-	int	c, match;
-
-	c = s[n];
-	s[n] = '\0';
-	match = gmatch(s, p, isfile);
-	s[n] = c;
-
-	return match;
 }
 
 /* Returns if p is a syntacticly correct globbing pattern, false

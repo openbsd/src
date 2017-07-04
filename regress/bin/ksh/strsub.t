@@ -11,6 +11,10 @@ stdin:
 	v='new old'
 	echo ${v/old/new}
 	echo "${v/old/new}"
+	foo='baaaaar'
+	echo ${foo//a/v}
+	echo ${foo/a/v}
+expected-fail: yes
 expected-stdout:
 	empty
 	empty
@@ -18,6 +22,8 @@ expected-stdout:
 	new new
 	new new
 	new new
+	bvvvvvr
+	bvaaaar
 ---
 
 name: strsub-multiline
@@ -30,6 +36,7 @@ stdin:
 	bsd.sp
 	!`
 	echo ${v/bsd.rd/}
+expected-fail: yes
 expected-stdout:
 	bsd bsd.sp
 ---
@@ -44,6 +51,7 @@ stdin:
 	echo ${v//[[:blank:]]/}
 	v='/usr/src'
 	echo ${v//\////}
+expected-fail: yes
 expected-stdout:
 	new new new
 	whitespace
@@ -58,6 +66,7 @@ stdin:
 	echo ${u:-${v/old/new}}
 	v='old new'
 	echo ${v/old/${v/old/new}}
+expected-fail: yes
 expected-stdout:
 	new
 	new new new
@@ -72,6 +81,7 @@ stdin:
 	echo ${v/o*/new}
 	echo ${v//old?(\/)/new}
 	echo ${v//?(\/)old//}
+expected-fail: yes
 expected-stdout:
 	new old
 	new
@@ -86,6 +96,7 @@ stdin:
 	v=old
 	r=new
 	echo ${v/old/$r}
+expected-fail: yes
 expected-stdout:
 	new
 ---
@@ -96,6 +107,7 @@ description:
 stdin:
 	v=old
 	echo ${v/old/new*}
+expected-fail: yes
 expected-stdout:
 	new*
 ---
@@ -106,6 +118,7 @@ description:
 stdin:
 	v=old
 	echo ${v/}
+expected-fail: yes
 expected-stdout:
 	old
 ---
@@ -116,6 +129,7 @@ description:
 stdin:
 	set -u
 	echo ${v/old/new}
+expected-fail: yes
 expected-stderr-pattern:
 	/v: parameter not set/
 expected-exit: 1

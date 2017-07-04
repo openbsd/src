@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.60 2017/07/04 07:29:32 anton Exp $	*/
+/*	$OpenBSD: sh.h,v 1.61 2017/07/04 11:46:15 anton Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -278,7 +278,7 @@ extern int really_exit;
 #define	C_VAR1	 BIT(3)		/* *@#!$-? */
 #define	C_IFSWS	 BIT(4)		/* \t \n (IFS white space) */
 #define	C_SUBOP1 BIT(5)		/* "=-+?" */
-#define	C_SUBOP2 BIT(6)		/* "#%/" */
+#define	C_SUBOP2 BIT(6)		/* "#%" */
 #define	C_IFS	 BIT(7)		/* $IFS */
 #define	C_QUOTE	 BIT(8)		/*  \n\t"#$&'()*;<>?[\`| (needing quoting) */
 
@@ -544,7 +544,6 @@ int	parse_args(char **, int, int *);
 int	getn(const char *, int *);
 int	bi_getn(const char *, int *);
 int	gmatch(const char *, const char *, int);
-int	gnmatch(char *, size_t, const char *, int);
 int	has_globbing(const char *, const char *);
 const unsigned char *pat_scan(const unsigned char *, const unsigned char *,
     int);
