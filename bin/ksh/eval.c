@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.51 2017/05/01 19:05:49 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.52 2017/07/04 07:29:32 anton Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -50,6 +50,7 @@ typedef struct Expand {
 
 static	int	varsub(Expand *, char *, char *, int *, int *);
 static	int	comsub(Expand *, char *);
+static	char   *strsub(char *, char *, int);
 static	char   *trimsub(char *, char *, int);
 static	void	glob(char *, XPtrV *, int);
 static	void	globit(XString *, char **, char *, XPtrV *, int);
@@ -143,6 +144,7 @@ typedef struct SubType {
 	short	f;		/* saved value of f (DOPAT, etc) */
 	struct tbl *var;	/* variable for ${var..} */
 	short	quote;		/* saved value of quote (for ${..[%#]..}) */
+	int	strsub;		/* set to 1 if pat in /pat/rep has been ended */
 	struct SubType *prev;	/* old type */
 	struct SubType *next;	/* poped type (to avoid re-allocating) */
 } SubType;
@@ -209,6 +211,21 @@ expand(char *cp,	/* input word */
 				break;
 			case CHAR:
 				c = *sp++;
+				if (st->strsub == 0 &&
+				    (st->stype & 0x7f) == '/' && c == '/') {
+					st->strsub = 1;
+					/* Write end of pattern. */
+					*dp++ = MAGIC;
+					*dp++ = ')';
+					*dp++ = '\0';
+					/*
+					 * Reset quote and flags for the
+					 * upcoming replacement.
+					 */
+					quote = 0;
+					f = 0;
+					continue;
+				}
 				break;
 			case QCHAR:
 				quote |= 2; /* temporary quote */
@@ -317,6 +334,7 @@ expand(char *cp,	/* input word */
 					switch (stype & 0x7f) {
 					case '#':
 					case '%':
+					case '/':
 						/* ! DOBLANK,DOBRACE_,DOTILDE */
 						f = DOPAT | (f&DONTRUNCOMMAND) |
 						    DOTEMP_;
@@ -378,13 +396,20 @@ expand(char *cp,	/* input word */
 				case '%':
 					/* Append end-pattern */
 					*dp++ = MAGIC; *dp++ = ')'; *dp = '\0';
+					/* FALLTHROUGH */
+				case '/':
 					dp = Xrestpos(ds, dp, st->base);
 					/* Must use st->var since calling
 					 * global would break things
 					 * like x[i+=1].
 					 */
-					x.str = trimsub(str_val(st->var),
-						dp, st->stype);
+					if ((st->stype & 0x7f) == '/')
+						x.str = strsub(str_val(st->var),
+						    dp, st->stype);
+					else
+						x.str = trimsub(
+						    str_val(st->var),
+						    dp, st->stype);
 					if (x.str[0] != '\0' || st->quote)
 						type = XSUB;
 					else
@@ -753,6 +778,9 @@ varsub(Expand *xp, char *sp, char *word,
 		stype = 0x80;
 		c = word[slen + 0] == CHAR ? word[slen + 1] : 0;
 	}
+	if (c == '/' && Flag(FPOSIX))
+		return -1;
+
 	if (ctype(c, C_SUBOP1)) {
 		slen += 2;
 		stype |= c;
@@ -892,6 +920,114 @@ comsub(Expand *xp, char *cp)
 
 	xp->u.shf = shf;
 	return XCOM;
+}
+
+static char *
+strsub(char *str, char *pat, int how)
+{
+	char	*actpat, *dst, *prepat, *rep, *src;
+	size_t	 beg, dstlen, dstsiz, end, match, len, patlen, replen;
+
+	len = strlen(str);
+	if (len == 0)
+		return str;
+	src = str;
+
+	dstlen = 0;
+	dstsiz = len + 1;	/* NUL */
+	dst = alloc(dstsiz, ATEMP);
+
+	actpat = pat;
+	patlen = strlen(actpat) + 1;		/* NUL */
+	prepat = alloc(patlen + 2, ATEMP);	/* make room for wildcard */
+	/*
+	 * Copy actpat to prepat and add a wildcard after the open pattern
+	 * prefix.
+	 */
+	memcpy(prepat, actpat, 2);
+	prepat[2] = MAGIC;
+	prepat[3] = '*';
+	memcpy(&prepat[4], &actpat[2], patlen - 2);
+
+	rep = &actpat[patlen];
+	replen = strlen(rep);
+
+	for (;;) {
+		/*
+		 * Find the wildcard prefix in prepat followed by actpat.
+		 * This allows occurrences of actpat to be found anywhere in the
+		 * string.
+		 */
+		match = 0;
+		for (end = 1; end <= len; end++)
+			if (gnmatch(src, end, prepat, 0))
+				match = end;
+			else if (match)
+				break;
+		if (!match)
+			break;
+		end = match;
+
+		/*
+		 * Find the prefix, if any, that was matched by the wildcard in
+		 * prepat.
+		 */
+		match = 0;
+		for (beg = 0; beg < end; beg++)
+			if ((match = gnmatch(src + beg, end - beg, actpat, 0)))
+				break;
+
+		/*
+		 * At this point, [src, beg) contains the prefix that is present
+		 * before the actual pattern and [beg, end) what was matched by
+		 * the actual pattern.
+		 * The first range will be copied over to dst and the latter
+		 * replaced with rep.
+		 */
+		if (match && beg > 0) {
+			if (beg + dstlen >= dstsiz) {
+				dst = areallocarray(dst, 1, dstsiz + beg + 1,
+				    ATEMP);
+				dstsiz += beg + 1;
+			}
+			memcpy(&dst[dstlen], src, beg);
+			dstlen += beg;
+		}
+
+		if (replen + dstlen >= dstsiz) {
+			dst = areallocarray(dst, 1, dstsiz + replen + 1, ATEMP);
+			dstsiz += replen + 1;
+		}
+		memcpy(&dst[dstlen], rep, replen);
+		dstlen += replen;
+
+		src += end;
+		len -= end;
+		if (len == 0 || how == '/')
+			break;
+	}
+
+	afree(prepat, ATEMP);
+
+	if (str == src) {
+		/* No substitutions performed. */
+		afree(dst, ATEMP);
+
+		return str;
+	}
+
+	/* Copy unmatched suffix from src. */
+	if (len > 0) {
+		if (len + dstlen >= dstsiz) {
+			dst = areallocarray(dst, 1, dstsiz + len + 1, ATEMP);
+			dstsiz += len + 1;
+		}
+		memcpy(&dst[dstlen], src, len);
+		dstlen += len;
+	}
+	dst[dstlen] = '\0';
+
+	return dst;
 }
 
 /*

@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.188 2017/06/20 17:32:20 brynet Exp $
+.\"	$OpenBSD: ksh.1,v 1.189 2017/07/04 07:29:32 anton Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: June 20 2017 $
+.Dd $Mdocdate: July 4 2017 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1240,6 +1240,18 @@ of them result in the longest match.
 .It Pf ${ Ar name Ns % Ns Ar pattern Ns }
 .It Pf ${ Ar name Ns %% Ns Ar pattern Ns }
 Like ${..#..} substitution, but it deletes from the end of the value.
+.Pp
+.It Pf ${ Ns Ar name Ns / Ns Ar pattern Ns / Ns Ar replacement Ns }
+.It Pf ${ Ns Ar name Ns // Ns Ar pattern Ns / Ns Ar replacement Ns }
+The first longest match of
+.Ar pattern
+in the value of parameter
+.Ar name
+is substituted with
+.Ar replacement .
+Using
+.Ql // ,
+all matches are substituted.
 .El
 .Pp
 The following special parameters are implicitly set by the shell and cannot be
