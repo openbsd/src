@@ -8,6 +8,7 @@ NNAAMMEE
 DDEESSCCRRIIPPTTIIOONN
        One-line true condition.
        Text following the true condition.
+       Two-line true condition.
        Text following the false condition.
        Two-line else after false.
        Else after empty condition.
@@ -16,4 +17,4 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-OpenBSD                        December 16, 2014                         IE(1)
+OpenBSD                          July 4, 2017                            IE(1)

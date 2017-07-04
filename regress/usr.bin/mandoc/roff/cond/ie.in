@@ -1,5 +1,5 @@
-.\" $OpenBSD: ie.in,v 1.5 2017/07/04 14:53:26 schwarze Exp $
-.TH IE 1 "December 16, 2014"
+.\" $OpenBSD: ie.in,v 1.6 2017/07/04 22:49:59 schwarze Exp $
+.TH IE 1 "July 4, 2017"
 .SH NAME
 if \- the roff conditional instruction with else-clause
 .SH DESCRIPTION
@@ -10,6 +10,14 @@ Text following the true condition.
 .el One-line else after true.
 .el Another else after true.
 .br
+.ie n \{\
+Two-line
+true condition.
+.br\}
+.el \{\
+Two-line
+else after true.
+.br\}
 .ie t One-line false condition.
 Text following the false condition.
 .br

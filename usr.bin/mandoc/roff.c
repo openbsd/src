@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.189 2017/06/25 07:23:53 bentley Exp $ */
+/*	$OpenBSD: roff.c,v 1.190 2017/07/04 22:49:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1924,15 +1924,6 @@ roff_cond_sub(ROFF_ARGS)
 
 	rr = r->last->rule;
 	roffnode_cleanscope(r);
-	t = roff_parse(r, buf->buf, &pos, ln, ppos);
-
-	/*
-	 * Fully handle known macros when they are structurally
-	 * required or when the conditional evaluated to true.
-	 */
-
-	if (t != TOKEN_NONE && (rr || roffs[t].flags & ROFFMAC_STRUCT))
-		return (*roffs[t].proc)(r, t, buf, ln, ppos, pos, offs);
 
 	/*
 	 * If `\}' occurs on a macro line without a preceding macro,
@@ -1946,14 +1937,29 @@ roff_cond_sub(ROFF_ARGS)
 	/* Always check for the closing delimiter `\}'. */
 
 	while ((ep = strchr(ep, '\\')) != NULL) {
-		if (*(++ep) == '}') {
-			*ep = '&';
-			roff_ccond(r, ln, ep - buf->buf - 1);
-		}
-		if (*ep != '\0')
+		switch (ep[1]) {
+		case '}':
+			memmove(ep, ep + 2, strlen(ep + 2) + 1);
+			roff_ccond(r, ln, ep - buf->buf);
+			break;
+		case '\0':
 			++ep;
+			break;
+		default:
+			ep += 2;
+			break;
+		}
 	}
-	return rr ? ROFF_CONT : ROFF_IGN;
+
+	/*
+	 * Fully handle known macros when they are structurally
+	 * required or when the conditional evaluated to true.
+	 */
+
+	t = roff_parse(r, buf->buf, &pos, ln, ppos);
+	return t != TOKEN_NONE && (rr || roffs[t].flags & ROFFMAC_STRUCT)
+	    ? (*roffs[t].proc)(r, t, buf, ln, ppos, pos, offs) : rr
+	    ? ROFF_CONT : ROFF_IGN;
 }
 
 static enum rofferr
