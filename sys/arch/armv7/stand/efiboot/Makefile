@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2016/11/06 16:42:00 tb Exp $
+#	$OpenBSD: Makefile,v 1.7 2017/07/04 14:54:15 espie Exp $
 
 NOMAN=		#
 
@@ -22,7 +22,7 @@ LDFLAGS+=-nostdlib -T ${.CURDIR}/ldscript.arm -Bsymbolic -shared
 SRCS+=	boot.c cmd.c vars.c
 
 .PATH:	${S}/lib/libsa
-SRCS+=	alloc.c ctime.c exit.c getchar.c memcmp.o memcpy.o memmove.c memset.c \
+SRCS+=	alloc.c ctime.c exit.c getchar.c memcmp.c memcpy.c memmove.c memset.c \
 	printf.c putchar.c snprintf.c strchr.c strcmp.c strerror.c strncmp.c \
 	strncpy.c strtol.c
 SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
