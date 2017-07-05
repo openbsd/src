@@ -13,6 +13,14 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+genseq() {
+	n=$1
+	while [ $# -ge 1 ]; do
+		shift
+		jot -n -b "$1" -s '' "$n"
+	done
+}
+
 testseq() {
 	stdin=$1
 	exp=$(echo "$2")
@@ -21,13 +29,13 @@ testseq() {
 
 	echo input:
 	echo ">>>$stdin<<<"
-	echo -n "$stdin" | hexdump -C
+	echo -n "$stdin" | hexdump -Cv
 	echo expected:
 	echo ">>>$exp<<<"
-	echo -n "$exp" | hexdump -C
+	echo -n "$exp" | hexdump -Cv
 	echo actual:
 	echo ">>>$act<<<"
-	echo -n "$act" | hexdump -C
+	echo -n "$act" | hexdump -Cv
 
 	return 1
 }

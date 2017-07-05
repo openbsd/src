@@ -19,8 +19,12 @@ set -e
 
 . "${1:-.}/subr.sh"
 
+tmp=$(mktemp -d)
+trap 'rm -r $tmp' 0
+>$tmp/.profile
+
 EDITOR=
-ENV=
+ENV=$tmp/.profile
 HISTFILE=
 MAIL=
 MALLOC_OPTIONS=S
@@ -91,3 +95,16 @@ testseq "z\0002\0364\0277\0277\0277" \
 
 # insertion of unmatched meta sequence
 testseq "z\0002\0033[3z" " $ z\b\0007"
+
+# file completion
+echo "cd $tmp" >$tmp/.profile
+mkdir -p \
+	$tmp/a/a{1,2} $tmp/b\ b/b{1,2} $tmp/\(ccc\)/c{1,2} $tmp/\(d\ d\)/d{1,2}
+testseq "cd a/\t" \
+	" $ cd a/\b\b  \b\b\r $ cd a/a$(genseq 70 " " "\b")\r $ cd a/a \b"
+testseq "cd b\ b/\t" \
+	" $ cd b\ b/$(genseq 5 "\b" " " "\b")\r $ cd b\ b/b$(genseq 67 " " "\b")\r $ cd b\ b/b \b"
+testseq "cd \(ccc\)/\t" \
+	" $ cd \(ccc\)/$(genseq 8 "\b" " " "\b")\r $ cd \(ccc\)/c$(genseq 64 " " "\b")\r $ cd \(ccc\)/c \b"
+testseq "cd \(d\ d\)/\t" \
+	" $ cd \(d\ d\)/$(genseq 9 "\b" " " "\b")\r $ cd \(d\ d\)/d$(genseq 63 " " "\b")\r $ cd \(d\ d\)/d \b"
