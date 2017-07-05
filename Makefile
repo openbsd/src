@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.133 2017/04/14 21:37:15 espie Exp $
+#	$OpenBSD: Makefile,v 1.134 2017/07/05 10:22:32 espie Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -86,12 +86,12 @@ do-build:
 	exec ${MAKE} cleandir
 	exec ${MAKE} includes
 	cd ${.CURDIR}/lib && \
-	    su ${BUILDUSER} -c '${MAKE} depend && exec ${MAKE}' && \
+	    su ${BUILDUSER} -c 'exec ${MAKE}' && \
 	    NOMAN=1 exec ${MAKE} install
 	cd ${.CURDIR}/gnu/lib && \
-	    su ${BUILDUSER} -c '${MAKE} depend && exec ${MAKE}' && \
+	    su ${BUILDUSER} -c 'exec ${MAKE}' && \
 	    NOMAN=1 exec ${MAKE} install
-	su ${BUILDUSER} -c '${MAKE} depend && exec ${MAKE}' && \
+	su ${BUILDUSER} -c 'exec ${MAKE}' && \
 	    exec ${MAKE} install
 	/bin/sh ${.CURDIR}/distrib/sets/makeetcset ${.CURDIR} ${MAKE}
 .endif
