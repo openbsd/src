@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1821 2017/07/03 06:32:54 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1822 2017/07/05 12:43:10 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -12022,6 +12022,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BSW_PCIE_4,
 	    "Braswell PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BSW_SENSOR,
+	    "Braswell Sensor Hub",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BSW_PM,
