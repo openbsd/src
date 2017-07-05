@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.31 2017/05/30 15:39:04 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.32 2017/07/05 10:48:41 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -83,14 +83,6 @@ int db_numargs(struct callframe *, Elf_Sym *);
 void db_nextframe(struct callframe **, db_addr_t *, long *, int,
     int (*) (const char *, ...));
 
-/*
- * Lookup the function signature in the CTF section, or just
- * return 0 like before when unable to do so. In case of no CTF:
- * Figure out how many arguments were passed into the frame at "fp".
- * We can probably figure out how many arguments where passed above
- * the first 6 (which are in registers), but since we can't
- * reliably determine the values currently, just return 0.
- */
 int
 db_numargs(struct callframe *fp, Elf_Sym *sym)
 {
