@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.55 2017/04/25 17:45:50 bluhm Exp $
+.\"	$OpenBSD: syslogd.8,v 1.56 2017/07/05 09:40:16 mpi Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"	$NetBSD: syslogd.8,v 1.3 1996/01/02 17:41:48 perry Exp $
 .\"
-.Dd $Mdocdate: April 25 2017 $
+.Dd $Mdocdate: July 5 2017 $
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -87,8 +87,8 @@ the default is
 .Pa /etc/ssl/cert.pem .
 .It Fl c Ar cert_file
 PEM encoded file containing the client certificate for TLS connections
-to a remote host.
-The default is not to use a client certificate for the connection
+to a remote loghost.
+The default is not to use a client certificate for the outgoing connection
 to a syslog server.
 This option has to be used together with
 .Fl k Ar key_file .
@@ -103,14 +103,14 @@ Specify the pathname of an alternate configuration file;
 the default is
 .Pa /etc/syslog.conf .
 .It Fl h
-Include the hostname when forwarding messages to a remote host.
+Include the hostname when sending messages to a remote loghost.
 .It Fl K Ar CAfile
 PEM encoded file containing CA certificates used for client certificate
-validation on the local server socket.
-By default incoming connections from any TLS server are allowed.
+validation on the local listen socket.
+By default incoming connections from any TLS client are allowed.
 .It Fl k Ar key_file
 PEM encoded file containing the client private key for TLS connections
-to a remote host.
+to a remote loghost.
 This option has to be used together with
 .Fl c Ar cert_file .
 .It Fl m Ar mark_interval
@@ -262,7 +262,7 @@ client's certificate may be added to
 .Ar CAfile
 using the
 .Fl K
-option to protect from messages being spoofed by malicious clients.
+option to protect from messages being spoofed by malicious senders.
 .Sh FILES
 .Bl -tag -width /var/run/syslog.pid -compact
 .It Pa /dev/log
