@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.39 2017/06/22 18:03:57 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.40 2017/07/05 15:38:35 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -91,10 +91,16 @@ tls_servername_cb(SSL *ssl, int *al, void *arg)
 		return (SSL_TLSEXT_ERR_NOACK);
 	}
 
-	/* Per RFC 6066 section 3: ensure that name is not an IP literal. */
+	/*
+	 * Per RFC 6066 section 3: ensure that name is not an IP literal.
+	 *
+	 * While we should treat this as an error, a number of clients
+	 * (Python, Ruby and Safari) are not RFC compliant. To avoid handshake
+	 * failures, pretend that we did not receive the extension.
+	 */
 	if (inet_pton(AF_INET, name, &addrbuf) == 1 ||
             inet_pton(AF_INET6, name, &addrbuf) == 1)
-		goto err;
+		return (SSL_TLSEXT_ERR_NOACK);
 
 	free((char *)conn_ctx->servername);
 	if ((conn_ctx->servername = strdup(name)) == NULL)
