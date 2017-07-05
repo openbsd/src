@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.dep.mk,v 1.19 2017/07/04 00:59:11 espie Exp $
+#	$OpenBSD: bsd.dep.mk,v 1.20 2017/07/05 13:30:01 espie Exp $
 #	$NetBSD: bsd.dep.mk,v 1.12 1995/09/27 01:15:09 christos Exp $
 
 .if !target(depend)
@@ -8,9 +8,12 @@ depend:
 
 # relies on DEPS defined by bsd.lib.mk and bsd.prog.mk
 .if defined(DEPS) && !empty(DEPS)
-.  for o in ${DEPS}
-     sinclude $o
-.  endfor
+# catch22: don't include potentially bogus files we are going to clean
+.  if !(make(clean) || make(cleandir) || make(obj))
+.    for o in ${DEPS}
+       sinclude $o
+.    endfor
+.  endif
 .endif
 
 CFLAGS += -MD -MP
