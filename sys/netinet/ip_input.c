@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.314 2017/07/05 11:34:10 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.315 2017/07/05 14:47:58 visa Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -717,9 +717,7 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af)
 		af = naf;
 	}
 	return nxt;
-#ifdef IPSEC
  bad:
-#endif
 	m_freemp(mp);
 	return IPPROTO_DONE;
 }
