@@ -1,3 +1,4 @@
+/*	$OpenBSD: glue.c,v 1.4 2017/07/05 15:31:45 bluhm Exp $	*/
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *

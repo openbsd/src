@@ -1,3 +1,4 @@
+/*	$OpenBSD: history.c,v 1.7 2017/07/05 15:31:45 bluhm Exp $	*/
 /*
  * Copyright (c) 2016 Bastian Maerkisch <bmaerkisch@web.de>
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>

@@ -1,4 +1,5 @@
 #!/bin/sh
+# $OpenBSD: test_read_char.sh,v 1.3 2017/07/05 15:31:45 bluhm Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 #

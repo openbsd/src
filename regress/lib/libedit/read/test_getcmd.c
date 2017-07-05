@@ -1,3 +1,4 @@
+/*	$OpenBSD: test_getcmd.c,v 1.8 2017/07/05 15:31:45 bluhm Exp $	*/
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
