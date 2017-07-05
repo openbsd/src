@@ -1921,7 +1921,7 @@ int
 inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct inteldrm_softc *dev_priv = v;
-	struct drm_device *dev = dev_priv->dev;
+	struct backlight_device *bd = dev_priv->backlight;
 	struct rasops_info *ri = &dev_priv->ro;
 	struct wsdisplay_fbinfo *wdf;
 	struct wsdisplay_param *dp = (struct wsdisplay_param *)data;
@@ -1941,14 +1941,14 @@ inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (ws_get_param && ws_get_param(dp) == 0)
 			return 0;
 
-		if (dev_priv->backlight.connector == NULL)
+		if (bd == NULL)
 			return -1;
 
 		switch (dp->param) {
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			dp->min = 0;
-			dp->max = dev_priv->backlight.props.max_brightness;
-			dp->curval = dev_priv->backlight.props.brightness;
+			dp->max = bd->props.max_brightness;
+			dp->curval = bd->ops->get_brightness(bd);
 			return (dp->max > dp->min) ? 0 : -1;
 		}
 		break;
@@ -1956,16 +1956,13 @@ inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (ws_set_param && ws_set_param(dp) == 0)
 			return 0;
 
-		if (dev_priv->backlight.connector == NULL ||
-		    dp->curval > dev_priv->backlight.props.max_brightness)
+		if (bd == NULL || dp->curval > bd->props.max_brightness)
 			return -1;
 
 		switch (dp->param) {
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
-			mutex_lock(&dev->mode_config.mutex);
-			intel_panel_set_backlight_acpi(dev_priv->backlight.connector,
-			    dp->curval, dev_priv->backlight.props.max_brightness);
-			mutex_unlock(&dev->mode_config.mutex);
+			bd->props.brightness = dp->curval;
+			backlight_update_status(bd);
 			return 0;
 		}
 		break;
@@ -2129,6 +2126,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	const struct drm_pcidev *id;
 	struct intel_device_info *info, *device_info;
+	struct intel_connector *intel_connector;
 	struct rasops_info *ri = &dev_priv->ro;
 	struct wsemuldisplaydev_attach_args aa;
 	extern int vga_console_attached;
@@ -2243,6 +2241,19 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	    ri->ri_width, ri->ri_height, ri->ri_depth);
 
 	intel_fbdev_restore_mode(dev);
+
+	/* Grab backlight from the first connector that has one. */
+	drm_modeset_lock(&dev->mode_config.connection_mutex, NULL);
+	list_for_each_entry(intel_connector, &dev->mode_config.connector_list,
+	    base.head) {
+		struct intel_panel *panel = &intel_connector->panel;
+
+		if (panel->backlight.present) {
+			dev_priv->backlight = panel->backlight.device;
+			break;
+		}
+	}
+	drm_modeset_unlock(&dev->mode_config.connection_mutex);
 
 	ri->ri_flg = RI_CENTER | RI_WRONLY | RI_VCONS | RI_CLEAR;
 	ri->ri_hw = dev_priv;

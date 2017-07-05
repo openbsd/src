@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.75 2017/07/01 16:14:10 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.76 2017/07/05 20:30:13 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1817,14 +1817,7 @@ struct inteldrm_softc {
 	struct task burner_task;
 	int burner_fblank;
 
-	struct backlight_device {
-		struct intel_connector *connector;
-		struct {
-			uint32_t brightness;
-			uint32_t max_brightness;
-			uint32_t power;
-		} props;
-	} backlight;
+	struct backlight_device *backlight;
 
 	struct intel_uncore uncore;
 

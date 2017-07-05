@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_encoders.c,v 1.9 2015/04/18 14:47:34 jsg Exp $	*/
+/*	$OpenBSD: atombios_encoders.c,v 1.10 2017/07/05 20:30:13 kettenis Exp $	*/
 /*
  * Copyright 2007-11 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -204,8 +204,10 @@ void radeon_atom_backlight_init(struct radeon_encoder *radeon_encoder,
 	memset(&props, 0, sizeof(props));
 	props.max_brightness = RADEON_MAX_BL_LEVEL;
 	props.type = BACKLIGHT_RAW;
+#ifdef __linux__
 	snprintf(bl_name, sizeof(bl_name),
 		 "radeon_bl%d", dev->primary->index);
+#endif
 	bd = backlight_device_register(bl_name, &drm_connector->kdev,
 				       pdata, &radeon_atom_backlight_ops, &props);
 	if (IS_ERR(bd)) {

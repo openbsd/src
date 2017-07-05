@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.13 2017/07/01 16:14:10 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.14 2017/07/05 20:30:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -696,3 +696,23 @@ acpi_get_table_with_size(const char *sig, int instance,
 }
 
 #endif
+
+struct backlight_device *
+backlight_device_register(const char *name, void *kdev, void *data,
+    const struct backlight_ops *ops, struct backlight_properties *props)
+{
+	struct backlight_device *bd;
+
+	bd = malloc(sizeof(*bd), M_DRM, M_WAITOK);
+	bd->ops = ops;
+	bd->props = *props;
+	bd->data = data;
+	
+	return bd;
+}
+
+void
+backlight_device_unregister(struct backlight_device *bd)
+{
+	free(bd, M_DRM, sizeof(*bd));
+}

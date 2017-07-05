@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.52 2017/07/02 20:58:55 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.53 2017/07/05 20:30:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -1899,6 +1899,40 @@ acpi_status acpi_get_table_with_size(const char *, int, struct acpi_table_header
 
 #define acpi_video_register()
 #define acpi_video_unregister()
+
+struct backlight_device;
+
+struct backlight_properties {
+	int type;
+	int max_brightness;
+	int brightness;
+	int power;
+};
+
+struct backlight_ops {
+	int (*update_status)(struct backlight_device *);
+	int (*get_brightness)(struct backlight_device *);
+};
+
+struct backlight_device {
+	const struct backlight_ops *ops;
+	struct backlight_properties props;
+	void *data;
+};
+
+#define bl_get_data(bd)	(bd)->data
+
+#define BACKLIGHT_RAW	0
+
+struct backlight_device *backlight_device_register(const char *, void *,
+     void *, const struct backlight_ops *, struct backlight_properties *);
+void backlight_device_unregister(struct backlight_device *);
+
+static inline void
+backlight_update_status(struct backlight_device *bd)
+{
+	bd->ops->update_status(bd);
+};
 
 #define MIPI_DSI_V_SYNC_START			0x01
 #define MIPI_DSI_V_SYNC_END			0x11
