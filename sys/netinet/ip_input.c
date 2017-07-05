@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.313 2017/06/26 19:06:12 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.314 2017/07/05 11:34:10 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -60,6 +60,11 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
+
+#ifdef INET6
+#include <netinet6/ip6protosw.h>
+#include <netinet6/ip6_var.h>
+#endif
 
 #if NPF > 0
 #include <net/pfvar.h>
@@ -216,6 +221,10 @@ ip_init(void)
 int
 ip_ours(struct mbuf **mp, int *offp, int nxt, int af)
 {
+	/* We are already in a IPv4/IPv6 local deliver loop. */
+	if (af != AF_UNSPEC)
+		return ip_local(mp, offp, nxt, af);
+
 	niq_enqueue(&ipintrq, *mp);
 	*mp = NULL;
 	return IPPROTO_DONE;
@@ -595,36 +604,118 @@ found:
 	}
 
 	*offp = hlen;
-	return ip_deliver(mp, offp, ip->ip_p, AF_INET);
+	nxt = ip->ip_p;
+	/* Check wheter we are already in a IPv4/IPv6 local deliver loop. */
+	if (af == AF_UNSPEC)
+		nxt = ip_deliver(mp, offp, nxt, AF_INET);
+	return nxt;
  bad:
 	m_freemp(mp);
 	return IPPROTO_DONE;
 }
 
+#ifndef INET6
+#define IPSTAT_INC(name)	ipstat_inc(ips_##name)
+#else
+#define IPSTAT_INC(name)	(af == AF_INET ?	\
+    ipstat_inc(ips_##name) : ip6stat_inc(ip6s_##name))
+#endif
+
 int
 ip_deliver(struct mbuf **mp, int *offp, int nxt, int af)
 {
+	struct protosw *psw;
+	int naf = af;
+#ifdef INET6
+	int nest = 0;
+#endif /* INET6 */
+
 	KERNEL_ASSERT_LOCKED();
 
 	/* pf might have modified stuff, might have to chksum */
-	in_proto_cksum_out(*mp, NULL);
-
-#ifdef IPSEC
-	if (ipsec_in_use) {
-		if (ipsec_local_check(*mp, *offp, nxt, af) != 0) {
-			ipstat_inc(ips_cantforward);
-			goto bad;
-		}
+	switch (af) {
+	case AF_INET:
+		in_proto_cksum_out(*mp, NULL);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		in6_proto_cksum_out(*mp, NULL);
+		break;
+#endif /* INET6 */
 	}
-	/* Otherwise, just fall through and deliver the packet */
-#endif /* IPSEC */
 
 	/*
-	 * Switch out to protocol's input routine.
+	 * Tell launch routine the next header
 	 */
-	ipstat_inc(ips_delivered);
-	nxt = (*inetsw[ip_protox[nxt]].pr_input)(mp, offp, nxt, af);
-	KASSERT(nxt == IPPROTO_DONE);
+	IPSTAT_INC(delivered);
+
+	while (nxt != IPPROTO_DONE) {
+#ifdef INET6
+		if (af == AF_INET6 &&
+		    ip6_hdrnestlimit && (++nest > ip6_hdrnestlimit)) {
+			ip6stat_inc(ip6s_toomanyhdr);
+			goto bad;
+		}
+#endif /* INET6 */
+
+		/*
+		 * protection against faulty packet - there should be
+		 * more sanity checks in header chain processing.
+		 */
+		if ((*mp)->m_pkthdr.len < *offp) {
+			IPSTAT_INC(tooshort);
+			goto bad;
+		}
+
+#ifdef INET6
+		/* draft-itojun-ipv6-tcp-to-anycast */
+		if (af == AF_INET6 &&
+		    ISSET((*mp)->m_flags, M_ACAST) && (nxt == IPPROTO_TCP)) {
+			if ((*mp)->m_len >= sizeof(struct ip6_hdr)) {
+				icmp6_error(*mp, ICMP6_DST_UNREACH,
+					ICMP6_DST_UNREACH_ADDR,
+					offsetof(struct ip6_hdr, ip6_dst));
+				*mp = NULL;
+			}
+			goto bad;
+		}
+#endif /* INET6 */
+
+#ifdef IPSEC
+		if (ipsec_in_use) {
+			if (ipsec_local_check(*mp, *offp, nxt, af) != 0) {
+				IPSTAT_INC(cantforward);
+				goto bad;
+			}
+		}
+		/* Otherwise, just fall through and deliver the packet */
+#endif /* IPSEC */
+
+		switch (nxt) {
+		case IPPROTO_IPV4:
+			naf = AF_INET;
+			ipstat_inc(ips_delivered);
+			break;
+#ifdef INET6
+		case IPPROTO_IPV6:
+			naf = AF_INET6;
+			ip6stat_inc(ip6s_delivered);
+			break;
+#endif /* INET6 */
+		}
+		switch (af) {
+		case AF_INET:
+			psw = &inetsw[ip_protox[nxt]];
+			break;
+#ifdef INET6
+		case AF_INET6:
+			psw = &inet6sw[ip6_protox[nxt]];
+			break;
+#endif /* INET6 */
+		}
+		nxt = (*psw->pr_input)(mp, offp, nxt, af);
+		af = naf;
+	}
 	return nxt;
 #ifdef IPSEC
  bad:
@@ -632,6 +723,7 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af)
 	m_freemp(mp);
 	return IPPROTO_DONE;
 }
+#undef IPSTAT_INC
 
 int
 in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct rtentry **prt)

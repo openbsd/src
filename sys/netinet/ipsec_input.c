@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.155 2017/06/19 17:58:49 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.156 2017/07/05 11:34:10 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -607,21 +607,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	}
 #endif
 	/* Call the appropriate IPsec transform callback. */
-	switch (af) {
-	case AF_INET:
-		ip_deliver(&m, &skip, prot, af);
-		return;
-#ifdef INET6
-	case AF_INET6:
-		ip6_deliver(&m, &skip, prot, af);
-		return;
-#endif /* INET6 */
-	default:
-		DPRINTF(("ipsec_common_input_cb(): unknown/unsupported "
-		    "protocol family %d\n", af));
-		m_freem(m);
-		return;
-	}
+	ip_deliver(&m, &skip, prot, af);
 #undef IPSEC_ISTAT
 }
 

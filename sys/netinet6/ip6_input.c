@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.197 2017/06/27 13:28:02 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.198 2017/07/05 11:34:10 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -169,6 +169,10 @@ ip6_init(void)
 int
 ip6_ours(struct mbuf **mp, int *offp, int nxt, int af)
 {
+	/* We are already in a IPv4/IPv6 local deliver loop. */
+	if (af != AF_UNSPEC)
+		return ip6_local(mp, offp, nxt, af);
+
 	niq_enqueue(&ip6intrq, *mp);
 	*mp = NULL;
 	return IPPROTO_DONE;
@@ -425,9 +429,12 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 			}
 
 			if (ours) {
-				KERNEL_LOCK();
-				nxt = ip6_deliver(mp, offp, nxt, AF_INET6);
-				KERNEL_UNLOCK();
+				if (af == AF_UNSPEC) {
+					KERNEL_LOCK();
+					nxt = ip_deliver(mp, offp, nxt,
+					    AF_INET6);
+					KERNEL_UNLOCK();
+				}
 				goto out;
 			}
 			goto bad;
@@ -502,9 +509,11 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		goto out;
 
 	if (ours) {
-		KERNEL_LOCK();
-		nxt = ip6_deliver(mp, offp, nxt, AF_INET6);
-		KERNEL_UNLOCK();
+		if (af == AF_UNSPEC) {
+			KERNEL_LOCK();
+			nxt = ip_deliver(mp, offp, nxt, AF_INET6);
+			KERNEL_UNLOCK();
+		}
 		goto out;
 	}
 
@@ -542,66 +551,10 @@ ip6_local(struct mbuf **mp, int *offp, int nxt, int af)
 	if (ip6_hbhchcheck(*mp, offp, &nxt, NULL))
 		return IPPROTO_DONE;
 
-	return ip6_deliver(mp, offp, nxt, AF_INET6);
-}
-
-int
-ip6_deliver(struct mbuf **mp, int *offp, int nxt, int af)
-{
-	int nest = 0;
-
-	KERNEL_ASSERT_LOCKED();
-
-	/* pf might have changed things */
-	in6_proto_cksum_out(*mp, NULL);
-
-	/*
-	 * Tell launch routine the next header
-	 */
-	ip6stat_inc(ip6s_delivered);
-
-	while (nxt != IPPROTO_DONE) {
-		if (ip6_hdrnestlimit && (++nest > ip6_hdrnestlimit)) {
-			ip6stat_inc(ip6s_toomanyhdr);
-			goto bad;
-		}
-
-		/*
-		 * protection against faulty packet - there should be
-		 * more sanity checks in header chain processing.
-		 */
-		if ((*mp)->m_pkthdr.len < *offp) {
-			ip6stat_inc(ip6s_tooshort);
-			goto bad;
-		}
-
-		/* draft-itojun-ipv6-tcp-to-anycast */
-		if (ISSET((*mp)->m_flags, M_ACAST) && (nxt == IPPROTO_TCP)) {
-			if ((*mp)->m_len >= sizeof(struct ip6_hdr)) {
-				icmp6_error(*mp, ICMP6_DST_UNREACH,
-					ICMP6_DST_UNREACH_ADDR,
-					offsetof(struct ip6_hdr, ip6_dst));
-				*mp = NULL;
-			}
-			goto bad;
-		}
-
-#ifdef IPSEC
-		if (ipsec_in_use) {
-			if (ipsec_local_check(*mp, *offp, nxt, af) != 0) {
-				ip6stat_inc(ip6s_cantforward);
-				goto bad;
-			}
-		}
-		/* Otherwise, just fall through and deliver the packet */
-#endif /* IPSEC */
-
-		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(mp, offp, nxt, af);
-	}
+	/* Check wheter we are already in a IPv4/IPv6 local deliver loop. */
+	if (af == AF_UNSPEC)
+		nxt = ip_deliver(mp, offp, nxt, AF_INET6);
 	return nxt;
- bad:
-	m_freemp(mp);
-	return IPPROTO_DONE;
 }
 
 int

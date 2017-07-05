@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.85 2017/06/20 11:12:13 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.86 2017/07/05 11:34:10 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -316,14 +316,10 @@ ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf,
 
 	switch (proto) {
 	case IPPROTO_IPV4:
-		ipv4_input(ifp, m);
-		*mp = NULL;
-		return IPPROTO_DONE;
+		return ip_input_if(mp, offp, proto, oaf, ifp);
 #ifdef INET6
 	case IPPROTO_IPV6:
-		ipv6_input(ifp, m);
-		*mp = NULL;
-		return IPPROTO_DONE;
+		return ip6_input_if(mp, offp, proto, oaf, ifp);
 #endif
 	}
  bad:
