@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1821 2017/07/03 06:32:54 dlg Exp $
+$OpenBSD: pcidevs,v 1.1822 2017/07/05 12:43:10 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3627,6 +3627,7 @@ product INTEL BSW_PCIE_1	0x22c8	Braswell PCIE
 product INTEL BSW_PCIE_2	0x22ca	Braswell PCIE
 product INTEL BSW_PCIE_3	0x22cc	Braswell PCIE
 product INTEL BSW_PCIE_4	0x22ce	Braswell PCIE
+product INTEL BSW_SENSOR	0x22d8	Braswell Sensor Hub
 product INTEL BSW_PM		0x22dc	Braswell Power
 product INTEL DH8900_LPC	0x2310	DH8900 LPC
 product INTEL DH8900_AHCI	0x2323	DH8900 AHCI
