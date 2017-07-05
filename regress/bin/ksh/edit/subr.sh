@@ -13,14 +13,6 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-genseq() {
-	n=$1
-	while [ $# -ge 1 ]; do
-		shift
-		jot -n -b "$1" -s '' "$n"
-	done
-}
-
 testseq() {
 	stdin=$1
 	exp=$(echo "$2")
