@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.117 2017/06/08 13:28:03 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.118 2017/07/05 09:51:37 florian Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -445,7 +445,8 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 		 * We use the source address for the prompting packet
 		 * (saddr6), if:
 		 * - saddr6 is given from the caller (by giving "ln"), and
-		 * - saddr6 belongs to the outgoing interface.
+		 * - saddr6 belongs to the outgoing interface and
+		 * - if taddr is link local saddr6 must be link local as well
 		 * Otherwise, we perform the source address selection as usual.
 		 */
 		struct ip6_hdr *hip6;		/* hold ip6 */
@@ -453,9 +454,12 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 
 		if (ln && ln->ln_hold) {
 			hip6 = mtod(ln->ln_hold, struct ip6_hdr *);
-			if (sizeof(*hip6) <= ln->ln_hold->m_len)
+			if (sizeof(*hip6) <= ln->ln_hold->m_len) {
 				saddr6 = &hip6->ip6_src;
-			else
+				if (saddr6 && IN6_IS_ADDR_LINKLOCAL(taddr6) &&
+				    !IN6_IS_ADDR_LINKLOCAL(saddr6))
+					saddr6 = NULL;
+			} else
 				saddr6 = NULL;
 		} else
 			saddr6 = NULL;
