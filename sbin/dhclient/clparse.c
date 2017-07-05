@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.114 2017/06/29 21:37:43 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.115 2017/07/05 16:17:41 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -60,16 +60,50 @@
 #include "dhctoken.h"
 #include "log.h"
 
-void parse_client_statement(FILE *, struct interface_info *);
+void parse_client_statement(FILE *, char *);
 int parse_X(FILE *, u_int8_t *, int);
 int parse_option_list(FILE *, u_int8_t *, size_t);
-void parse_interface_declaration(FILE *, struct interface_info *);
-void parse_client_lease_statement(FILE *, unsigned int,
-    struct interface_info *);
-void parse_client_lease_declaration(FILE *, struct client_lease *,
-    struct interface_info *);
+void parse_interface_declaration(FILE *, char *);
+struct client_lease *parse_client_lease_statement(FILE *, char *);
+void parse_client_lease_declaration(FILE *, struct client_lease *, char *);
 int parse_option_decl(FILE *, struct option_data *);
 void parse_reject_statement(FILE *);
+void add_lease(struct client_lease_tq *, struct client_lease *);
+
+void
+add_lease(struct client_lease_tq *tq, struct client_lease *lease)
+{
+	struct client_lease	*lp, *nlp;
+
+	if (lease == NULL)
+		return;
+
+	/*
+	 * The new lease will supersede a lease with the same ssid
+	 * AND the same Client Identifier AND the same
+	 * IP address.
+	 */
+	TAILQ_FOREACH_SAFE(lp, tq, next, nlp) {
+		if (lp->ssid_len != lease->ssid_len)
+			continue;
+		if (memcmp(lp->ssid, lease->ssid, lp->ssid_len) != 0)
+			continue;
+		if ((lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len != 0) &&
+		    ((lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len !=
+		    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len) ||
+		    memcmp(lp->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
+		    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
+		    lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len)))
+			continue;
+		if (lp->address.s_addr != lease->address.s_addr)
+			continue;
+
+		TAILQ_REMOVE(tq, lp, next);
+		free_client_lease(lp);
+	}
+
+	TAILQ_INSERT_TAIL(tq, lease, next);
+}
 
 /*
  * client-conf-file :== client-declarations EOF
@@ -78,12 +112,15 @@ void parse_reject_statement(FILE *);
  *			 | client-declarations client-declaration
  */
 void
-read_client_conf(struct interface_info *ifi)
+read_client_conf(char *name)
 {
 	FILE *cfile;
 	int token;
 
 	new_parse(path_dhclient_conf);
+
+	TAILQ_INIT(&config->static_leases);
+	TAILQ_INIT(&config->reject_list);
 
 	/* Set some defaults. */
 	config->link_timeout = 10;	/* secs before going daemon w/o link */
@@ -123,7 +160,7 @@ read_client_conf(struct interface_info *ifi)
 			token = peek_token(NULL, cfile);
 			if (token == EOF)
 				break;
-			parse_client_statement(cfile, ifi);
+			parse_client_statement(cfile, name);
 		} while (1);
 		fclose(cfile);
 	}
@@ -135,17 +172,18 @@ read_client_conf(struct interface_info *ifi)
  *		     | client-lease-statements LEASE client-lease-statement
  */
 void
-read_client_leases(struct interface_info *ifi)
+read_client_leases(char *name, struct client_lease_tq *tq)
 {
 	FILE	*cfile;
 	int	 token;
 
-	new_parse(path_dhclient_db);
+	TAILQ_INIT(tq);
 
-	/* Open the lease file.   If we can't open it, just return -
-	   we can safely trust the server to remember our state. */
 	if ((cfile = fopen(path_dhclient_db, "r")) == NULL)
 		return;
+
+	new_parse(path_dhclient_db);
+
 	do {
 		token = next_token(NULL, cfile);
 		if (token == EOF)
@@ -154,7 +192,7 @@ read_client_leases(struct interface_info *ifi)
 			log_warnx("Corrupt lease file - possible data loss!");
 			break;
 		}
-		parse_client_lease_statement(cfile, 0, ifi);
+		add_lease(tq, parse_client_lease_statement(cfile, name));
 	} while (1);
 	fclose(cfile);
 }
@@ -180,11 +218,11 @@ read_client_leases(struct interface_info *ifi)
  *	TOK_REJECT reject-statement
  */
 void
-parse_client_statement(FILE *cfile, struct interface_info *ifi)
+parse_client_statement(FILE *cfile, char *name)
 {
-	u_int8_t optlist[256];
-	char *string;
-	int code, count, token;
+	u_int8_t	 optlist[256];
+	char		*string;
+	int		 code, count, token;
 
 	token = next_token(NULL, cfile);
 
@@ -258,10 +296,11 @@ parse_client_statement(FILE *cfile, struct interface_info *ifi)
 		parse_lease_time(cfile, &config->initial_interval);
 		break;
 	case TOK_INTERFACE:
-		parse_interface_declaration(cfile, ifi);
+		parse_interface_declaration(cfile, name);
 		break;
 	case TOK_LEASE:
-		parse_client_lease_statement(cfile, 1, ifi);
+		add_lease(&config->static_leases,
+		    parse_client_lease_statement(cfile, name));
 		break;
 	case TOK_REJECT:
 		parse_reject_statement(cfile);
@@ -406,10 +445,10 @@ syntaxerror:
  *	INTERFACE string LBRACE client-declarations RBRACE
  */
 void
-parse_interface_declaration(FILE *cfile, struct interface_info *ifi)
+parse_interface_declaration(FILE *cfile, char *name)
 {
-	char *val;
-	int token;
+	char	*val;
+	int	 token;
 
 	token = next_token(&val, cfile);
 	if (token != TOK_STRING) {
@@ -419,7 +458,7 @@ parse_interface_declaration(FILE *cfile, struct interface_info *ifi)
 		return;
 	}
 
-	if (strcmp(ifi->name, val) != 0) {
+	if (strcmp(name, val) != 0) {
 		skip_to_semi(cfile);
 		return;
 	}
@@ -440,7 +479,7 @@ parse_interface_declaration(FILE *cfile, struct interface_info *ifi)
 		}
 		if (token == '}')
 			break;
-		parse_client_statement(cfile, ifi);
+		parse_client_statement(cfile, name);
 	} while (1);
 	token = next_token(&val, cfile);
 }
@@ -454,11 +493,10 @@ parse_interface_declaration(FILE *cfile, struct interface_info *ifi)
  *		client-lease-declaration |
  *		client-lease-declarations client-lease-declaration
  */
-void
-parse_client_lease_statement(FILE *cfile, unsigned int is_static,
-    struct interface_info *ifi)
+struct client_lease *
+parse_client_lease_statement(FILE *cfile, char *name)
 {
-	struct client_lease	*lease, *lp, *pl;
+	struct client_lease	*lease;
 	int			 token;
 
 	token = next_token(NULL, cfile);
@@ -466,7 +504,7 @@ parse_client_lease_statement(FILE *cfile, unsigned int is_static,
 		parse_warn("expecting '{'.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return;
+		return NULL;
 	}
 
 	lease = calloc(1, sizeof(struct client_lease));
@@ -478,51 +516,15 @@ parse_client_lease_statement(FILE *cfile, unsigned int is_static,
 		if (token == EOF) {
 			parse_warn("unterminated lease declaration.");
 			free_client_lease(lease);
-			return;
+			return NULL;
 		}
 		if (token == '}')
 			break;
-		parse_client_lease_declaration(cfile, lease, ifi);
+		parse_client_lease_declaration(cfile, lease, name);
 	} while (1);
 	token = next_token(NULL, cfile);
 
-	/*
-	 * The new lease will supersede a lease which is of the same type
-	 * AND the same ssid AND the same Client Identifier AND the same
-	 * IP address.
-	 */
-	TAILQ_FOREACH_SAFE(lp, &ifi->leases, next, pl) {
-		if (lp->is_static != is_static)
-			continue;
-		if (lp->ssid_len != lease->ssid_len)
-			continue;
-		if (memcmp(lp->ssid, lease->ssid, lp->ssid_len) != 0)
-			continue;
-		if ((lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len != 0) &&
-		    ((lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len !=
-		    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len) ||
-		    memcmp(lp->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
-		    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
-		    lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len)))
-			continue;
-		if (lp->address.s_addr != lease->address.s_addr)
-			continue;
-
-		TAILQ_REMOVE(&ifi->leases, lp, next);
-		lp->is_static = 0;	/* Else it won't be freed. */
-		free_client_lease(lp);
-	}
-
-	/*
-	 * If the lease is marked as static before now it will leak on parse
-	 * errors because free_client_lease() ignores attempts to free static
-	 * leases.
-	 */
-	lease->is_static = is_static;
-	if (is_static)
-		TAILQ_INSERT_TAIL(&ifi->leases, lease, next);
-	else
-		TAILQ_INSERT_HEAD(&ifi->leases, lease,  next);
+	return lease;
 }
 
 /*
@@ -539,7 +541,7 @@ parse_client_lease_statement(FILE *cfile, unsigned int is_static,
  */
 void
 parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
-    struct interface_info *ifi)
+    char *name)
 {
 	char *val;
 	unsigned int len;
@@ -559,7 +561,7 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 				skip_to_semi(cfile);
 			return;
 		}
-		if (strcmp(ifi->name, val) != 0) {
+		if (strcmp(name, val) != 0) {
 			if (lease->is_static == 0)
 				parse_warn("wrong interface name.");
 			skip_to_semi(cfile);

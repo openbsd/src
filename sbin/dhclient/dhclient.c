@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.454 2017/07/01 23:27:55 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.455 2017/07/05 16:17:42 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -434,6 +434,7 @@ main(int argc, char *argv[])
 	const char		*tail_path = "/etc/resolv.conf.tail";
 	struct interface_info	*ifi;
 	struct passwd		*pw;
+	struct client_lease	*lp, *nlp;
 	char			*ignore_list = NULL;
 	ssize_t			 tailn;
 	int			 fd, socket_fd[2];
@@ -547,11 +548,8 @@ main(int argc, char *argv[])
 	config = calloc(1, sizeof(struct client_config));
 	if (config == NULL)
 		fatalx("config calloc");
-	TAILQ_INIT(&config->reject_list);
 
-	TAILQ_INIT(&ifi->leases);
-
-	read_client_conf(ifi);
+	read_client_conf(ifi->name);
 
 	/*
 	 * Set default client identifier, if needed, *before* reading
@@ -625,11 +623,18 @@ main(int argc, char *argv[])
 	if ((fd = open(path_dhclient_db,
 	    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640)) == -1)
 		fatal("can't open and lock %s", path_dhclient_db);
-	read_client_leases(ifi);
+	read_client_leases(ifi->name, &ifi->leases);
 	if ((leaseFile = fopen(path_dhclient_db, "w")) == NULL)
 		fatal("can't open %s", path_dhclient_db);
 	rewrite_client_leases(ifi);
 	close(fd);
+
+	/* Add the static leases to the end of the list of available leases. */
+	TAILQ_FOREACH_SAFE(lp, &config->static_leases, next, nlp) {
+		TAILQ_REMOVE(&config->static_leases, lp, next);
+		lp->is_static = 1;
+		TAILQ_INSERT_TAIL(&ifi->leases, lp, next);
+	}
 
 	if (strlen(path_option_db) != 0) {
 		if ((optionDB = fopen(path_option_db, "a")) == NULL)
@@ -1754,7 +1759,7 @@ rewrite_client_leases(struct interface_info *ifi)
 	 * the chonological order required.
 	 */
 	time(&cur_time);
-	TAILQ_FOREACH_REVERSE(lp, &ifi->leases, _leases, next) {
+	TAILQ_FOREACH_REVERSE(lp, &ifi->leases, client_lease_tq, next) {
 		/* Don't write out static leases from dhclient.conf. */
 		if (lp->is_static)
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.202 2017/07/02 09:11:13 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.203 2017/07/05 16:17:42 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -86,6 +86,8 @@ enum dhcp_state {
 	S_REBINDING
 };
 
+TAILQ_HEAD(client_lease_tq, client_lease);
+
 struct client_config {
 	struct option_data	defaults[256];
 	enum {
@@ -115,6 +117,7 @@ struct client_config {
 	char			*resolv_tail;
 	char			*filename;
 	char			*server_name;
+	struct client_lease_tq	 static_leases;
 };
 
 
@@ -152,7 +155,7 @@ struct interface_info {
 	struct in_addr		 requested_address;
 	struct client_lease	*active;
 	struct client_lease	*offer;
-	TAILQ_HEAD(_leases, client_lease) leases;
+	struct client_lease_tq	 leases;
 };
 
 #define	_PATH_DHCLIENT_CONF	"/etc/dhclient.conf"
@@ -234,8 +237,8 @@ u_int32_t checksum(unsigned char *, u_int32_t, u_int32_t);
 u_int32_t wrapsum(u_int32_t);
 
 /* clparse.c */
-void read_client_conf(struct interface_info *);
-void read_client_leases(struct interface_info *);
+void read_client_conf(char *);
+void read_client_leases(char *, struct client_lease_tq *);
 
 /* kroute.c */
 void delete_addresses(char *);
