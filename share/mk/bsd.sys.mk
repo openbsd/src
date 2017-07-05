@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.sys.mk,v 1.11 2017/07/01 14:41:54 espie Exp $
+#	$OpenBSD: bsd.sys.mk,v 1.12 2017/07/05 13:31:40 espie Exp $
 #	$NetBSD: bsd.sys.mk,v 1.2 1995/12/13 01:25:07 cgd Exp $
 #
 # Overrides used for OpenBSD source tree builds.
@@ -11,19 +11,6 @@ CXXFLAGS+= -idirafter ${DESTDIR}/usr/include/g++
 .endif
 
 .if defined(PARALLEL)
-# Lex
-.l:
-	${LEX.l} -o${.TARGET:R}.yy.c ${.IMPSRC}
-	${LINK.c} -o ${.TARGET} ${.TARGET:R}.yy.c ${LDLIBS} -ll
-	rm -f ${.TARGET:R}.yy.c
-.l.c:
-	${LEX.l} -o${.TARGET} ${.IMPSRC}
-.l.o:
-	${LEX.l} -o${.TARGET:R}.yy.c ${.IMPSRC}
-	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.yy.c 
-	rm -f ${.TARGET:R}.yy.c
-	if test -f ${.TARGET:R}.d; then sed -i -e 's,${.TARGET:R}.yy.c,${.IMPSRC},' ${.TARGET:R}.d; fi
-
 # Yacc
 .y:
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
