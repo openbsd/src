@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.53 2017/06/10 14:15:52 schwarze Exp $
+.\" $OpenBSD: keynote.3,v 1.54 2017/07/05 11:43:09 schwarze Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: June 10 2017 $
+.Dd $Mdocdate: July 5 2017 $
 .Dt KN_INIT 3
 .\" .TH KeyNote 3 local
 .Os
@@ -241,7 +241,7 @@ as the
 .Fa Authorizer .
 On success, this function will return an assertion ID which can be
 used to remove the assertion from the session, by using
-.Xr kn_remove_assertion 3 .
+.Fn kn_remove_assertion .
 On failure, \-1 is returned, and
 .Va keynote_errno
 is set to
@@ -324,7 +324,7 @@ This is particularly useful when the action attribute set is particularly
 large.
 .Pp
 On success,
-.Xr kn_add_action 3
+.Fn kn_add_action
 returns 0.
 On failure, it returns \-1 and sets
 .Va keynote_errno
@@ -407,12 +407,12 @@ is
 the
 .Fa returnvalues
 from the previous call to
-.Xr kn_do_query 3
+.Fn kn_do_query
 will be used.
 The programmer SHOULD NOT free
 .Fa returnvalues
 after the call to
-.Xr kn_do_query 3
+.Fn kn_do_query
 if this feature is used, as the array is not replicated internally.
 On success, this function returns an index into the
 .Fa returnvalues
@@ -436,7 +436,7 @@ assertion (starting from zero) in session
 .Fa sessid
 that was somehow invalid during evaluation.
 This function is typically called after
-.Xr kn_do_query 3
+.Fn kn_do_query
 is used to evaluate a request.
 .Fa type
 specifies the type of failure the application is interested in.
@@ -454,7 +454,7 @@ if the assertion could not be cryptographically verified.
 .Pp
 These values are defined in keynote.h.
 An application can then delete the offending assertion using
-.Xr kn_remove_assertion 3 .
+.Fn kn_remove_assertion .
 For example, to remove all assertion whose signature failed, an application
 could do something like:
 .Bd -literal
@@ -464,7 +464,7 @@ could do something like:
 .Ed
 .Pp
 On success,
-.Xr kn_get_failed 3
+.Fn kn_get_failed
 returns an assertion ID.
 On failure, or when no assertion matching the given criteria is found,
 it returns \-1 and set
@@ -605,7 +605,7 @@ fields correspond to the
 and
 .Fa flags
 arguments to
-.Xr kn_add_assertion 3
+.Fn kn_add_assertion
 respectively.
 .Fa env_regex
 is not used.
@@ -615,7 +615,7 @@ indicating the returned value to the query.
 On failure, it returns \-1 and sets
 .Va keynote_errno
 to the same values as
-.Xr kn_do_query 3 ,
+.Fn kn_do_query ,
 or to
 .Er ERROR_MEMORY
 if a trusted or untrusted assertion could not be added to the session due
@@ -786,7 +786,7 @@ The result is placed in
 with
 .Fa dec_algorithm
 describing the algorithm (see
-.Xr kn_encode_key 3 ) ,
+.Fn kn_encode_key ) ,
 and
 .Fa dec_key
 pointing to an algorithm-dependent structure.
