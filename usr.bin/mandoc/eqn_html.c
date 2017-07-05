@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn_html.c,v 1.10 2017/06/23 22:59:27 schwarze Exp $ */
+/*	$OpenBSD: eqn_html.c,v 1.11 2017/07/05 15:03:20 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,7 +49,8 @@ eqn_box(struct html *p, const struct eqn_box *bp)
 	if (EQN_MATRIX == bp->type) {
 		if (NULL == bp->first)
 			goto out;
-		if (EQN_LIST != bp->first->type) {
+		if (bp->first->type != EQN_LIST ||
+		    bp->first->expectargs == 1) {
 			eqn_box(p, bp->first);
 			goto out;
 		}
@@ -129,9 +130,11 @@ eqn_box(struct html *p, const struct eqn_box *bp)
 
 	if (EQN_PILE == bp->type) {
 		assert(NULL == post);
-		if (bp->first != NULL && bp->first->type == EQN_LIST)
+		if (bp->first != NULL &&
+		    bp->first->type == EQN_LIST &&
+		    bp->first->expectargs > 1)
 			post = print_otag(p, TAG_MTABLE, "");
-	} else if (bp->type == EQN_LIST &&
+	} else if (bp->type == EQN_LIST && bp->expectargs > 1 &&
 	    bp->parent && bp->parent->type == EQN_PILE) {
 		assert(NULL == post);
 		post = print_otag(p, TAG_MTR, "");

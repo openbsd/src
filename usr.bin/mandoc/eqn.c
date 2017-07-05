@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.35 2017/06/29 16:30:47 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.36 2017/07/05 15:03:20 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -727,7 +727,7 @@ next_tok:
 			cur->text = mandoc_strdup("");
 		}
 		parent = eqn_box_makebinary(ep, EQNPOS_NONE, parent);
-		parent->type = EQN_LISTONE;
+		parent->type = EQN_LIST;
 		parent->expectargs = 1;
 		parent->font = EQNFONT_ROMAN;
 		switch (tok) {
@@ -780,7 +780,7 @@ next_tok:
 		 * exactly one of those.
 		 */
 		parent = eqn_box_alloc(ep, parent);
-		parent->type = EQN_LISTONE;
+		parent->type = EQN_LIST;
 		parent->expectargs = 1;
 		switch (tok) {
 		case EQN_TOK_FAT:
@@ -818,7 +818,7 @@ next_tok:
 			break;
 		}
 		parent = eqn_box_alloc(ep, parent);
-		parent->type = EQN_LISTONE;
+		parent->type = EQN_LIST;
 		parent->expectargs = 1;
 		parent->size = size;
 		break;
@@ -906,6 +906,7 @@ next_tok:
 		 */
 		for (cur = parent; cur != NULL; cur = cur->parent)
 			if (cur->type == EQN_LIST &&
+			    cur->expectargs > 1 &&
 			    (tok == EQN_TOK_BRACE_CLOSE ||
 			     cur->left != NULL))
 				break;
@@ -937,8 +938,9 @@ next_tok:
 		     parent->type == EQN_MATRIX))
 			parent = parent->parent;
 		/* Close out any "singleton" lists. */
-		while (parent->type == EQN_LISTONE &&
-		    parent->args == parent->expectargs)
+		while (parent->type == EQN_LIST &&
+		    parent->expectargs == 1 &&
+		    parent->args == 1)
 			parent = parent->parent;
 		break;
 	case EQN_TOK_BRACE_OPEN:
@@ -1098,8 +1100,9 @@ next_tok:
 		/*
 		 * Post-process list status.
 		 */
-		while (parent->type == EQN_LISTONE &&
-		    parent->args == parent->expectargs)
+		while (parent->type == EQN_LIST &&
+		    parent->expectargs == 1 &&
+		    parent->args == 1)
 			parent = parent->parent;
 		break;
 	default:

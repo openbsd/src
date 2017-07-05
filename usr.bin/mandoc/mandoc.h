@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.183 2017/07/03 17:33:01 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.184 2017/07/05 15:03:20 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -338,7 +338,6 @@ enum	eqn_boxt {
 	EQN_TEXT, /* text (number, variable, whatever) */
 	EQN_SUBEXPR, /* nested `eqn' subexpression */
 	EQN_LIST, /* list (braces, etc.) */
-	EQN_LISTONE, /* singleton list */
 	EQN_PILE, /* vertical pile */
 	EQN_MATRIX /* pile of piles */
 };

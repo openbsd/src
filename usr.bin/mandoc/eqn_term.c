@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn_term.c,v 1.5 2017/02/12 14:13:23 schwarze Exp $ */
+/*	$OpenBSD: eqn_term.c,v 1.6 2017/07/05 15:03:20 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -50,7 +50,7 @@ eqn_box(struct termp *p, const struct eqn_box *bp)
 {
 	const struct eqn_box *child;
 
-	if (bp->type == EQN_LIST ||
+	if ((bp->type == EQN_LIST && bp->expectargs > 1) ||
 	    (bp->type == EQN_PILE && (bp->prev || bp->next)) ||
 	    (bp->parent != NULL && bp->parent->pos == EQNPOS_SQRT)) {
 		if (bp->parent->type == EQN_SUBEXPR && bp->prev != NULL)
@@ -94,12 +94,15 @@ eqn_box(struct termp *p, const struct eqn_box *bp)
 	} else {
 		child = bp->first;
 		if (bp->type == EQN_MATRIX &&
-		    child != NULL && child->type == EQN_LIST)
+		    child != NULL &&
+		    child->type == EQN_LIST &&
+		    child->expectargs > 1)
 			child = child->first;
 		while (child != NULL) {
 			eqn_box(p,
 			    bp->type == EQN_PILE &&
 			    child->type == EQN_LIST &&
+			    child->expectargs > 1 &&
 			    child->args == 1 ?
 			    child->first : child);
 			child = child->next;
@@ -108,7 +111,7 @@ eqn_box(struct termp *p, const struct eqn_box *bp)
 
 	if (bp->font != EQNFONT_NONE)
 		term_fontpop(p);
-	if (bp->type == EQN_LIST ||
+	if ((bp->type == EQN_LIST && bp->expectargs > 1) ||
 	    (bp->type == EQN_PILE && (bp->prev || bp->next)) ||
 	    (bp->parent != NULL && bp->parent->pos == EQNPOS_SQRT)) {
 		p->flags |= TERMP_NOSPACE;
