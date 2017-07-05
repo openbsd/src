@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.2 2017/07/03 19:02:04 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.3 2017/07/05 20:18:11 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1545,6 +1545,11 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 			gen_dfr_proposal(iface, ra);
 
 		LIST_FOREACH(prefix, &ra->prefixes, entries) {
+			if (!prefix->autonomous || prefix->pltime == 0 ||
+			    prefix->vltime == 0 || prefix->pltime >
+			    prefix->vltime || prefix->prefix_len != 64 ||
+			    IN6_IS_ADDR_LINKLOCAL(&prefix->prefix))
+				continue;
 			found = 0;
 			found_privacy = 0;
 			LIST_FOREACH(addr_proposal, &iface->addr_proposals,
