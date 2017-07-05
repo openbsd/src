@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.317 2017/06/28 19:30:24 mikeb Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.318 2017/07/05 11:40:17 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -84,6 +84,8 @@
 #include <net/if_pfsync.h>
 #endif /* NPFSYNC > 0 */
 
+struct pool		 pf_tag_pl;
+
 void			 pfattach(int);
 void			 pf_thread_create(void *);
 int			 pfopen(dev_t, int, int, struct proc *);
@@ -165,6 +167,8 @@ pfattach(int num)
 	    IPL_SOFTNET, 0, "pfruleitem", NULL);
 	pool_init(&pf_queue_pl, sizeof(struct pf_queuespec), 0,
 	    IPL_SOFTNET, 0, "pfqueue", NULL);
+	pool_init(&pf_tag_pl, sizeof(struct pf_tagname), 0,
+	    IPL_SOFTNET, 0, "pftag", NULL);
 	hfsc_initialize();
 	pfr_initialize();
 	pfi_initialize();
@@ -348,16 +352,17 @@ tagname2tag(struct pf_tags *head, char *tagname, int create)
 	 */
 
 	/* new entry */
-	if (!TAILQ_EMPTY(head))
-		for (p = TAILQ_FIRST(head); p != NULL &&
-		    p->tag == new_tagid; p = TAILQ_NEXT(p, entries))
-			new_tagid = p->tag + 1;
+	TAILQ_FOREACH(p, head, entries) {
+		if (p->tag != new_tagid)
+			break;
+		new_tagid = p->tag + 1;
+	}
 
 	if (new_tagid > TAGID_MAX)
 		return (0);
 
 	/* allocate and fill new struct pf_tagname */
-	tag = malloc(sizeof(*tag), M_RTABLE, M_NOWAIT|M_ZERO);
+	tag = pool_get(&pf_tag_pl, PR_NOWAIT | PR_ZERO);
 	if (tag == NULL)
 		return (0);
 	strlcpy(tag->name, tagname, sizeof(tag->name));
@@ -392,12 +397,11 @@ tag_unref(struct pf_tags *head, u_int16_t tag)
 	if (tag == 0)
 		return;
 
-	for (p = TAILQ_FIRST(head); p != NULL; p = next) {
-		next = TAILQ_NEXT(p, entries);
+	TAILQ_FOREACH_SAFE(p, head, entries, next) {
 		if (tag == p->tag) {
 			if (--p->ref == 0) {
 				TAILQ_REMOVE(head, p, entries);
-				free(p, M_RTABLE, sizeof(*p));
+				pool_put(&pf_tag_pl, p);
 			}
 			break;
 		}
