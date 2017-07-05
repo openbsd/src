@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.62 2017/04/04 15:50:29 reyk Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.63 2017/07/05 11:11:56 reyk Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -106,7 +106,6 @@ main(int argc, char *argv[])
 	daemonize = 1;
 
 	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
-	log_setverbose(1);
 
 	setup_iflist();
 
@@ -309,9 +308,9 @@ main(int argc, char *argv[])
 	if (daemonize) {
 		if (rdaemon(devnull) == -1)
 			fatal("rdaemon");
+
+		log_init(0, LOG_DAEMON);	/* stop logging to stderr */
 	}
-	log_init(0, LOG_DAEMON);	/* stop loggoing to stderr */
-	log_setverbose(0);
 
 	if (pledge("stdio route", NULL) == -1)
 		fatalx("pledge");
