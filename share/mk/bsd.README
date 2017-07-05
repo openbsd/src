@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.66 2017/07/02 17:03:45 espie Exp $
+#	$OpenBSD: bsd.README,v 1.67 2017/07/05 10:41:01 espie Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -264,8 +264,7 @@ It has seven targets:
 		well as .depend, tags, and any manual pages.
 	depend:
 		Misnomer as dependencies are built on-the-fly during make all.
-		Still used by a few directories needing some configuration
-		before make all.
+		No longer used in normal builds.
 	includes:
 		install any header files.
 	install:
