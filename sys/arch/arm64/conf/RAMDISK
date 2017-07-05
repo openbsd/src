@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.29 2017/05/21 08:59:45 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.30 2017/07/05 14:58:59 visa Exp $
 #
 # GENERIC machine description file
 #
@@ -37,6 +37,7 @@ option		FFS2
 option		MSDOSFS
 option		INET6
 option		EXT2FS
+option		NFSCLIENT
 
 makeoptions	KERNEL_BASE_PHYS="0x00200000"
 makeoptions	KERNEL_BASE_VIRT="0xffffff8000200000"
