@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtoumax.c,v 1.3 2015/09/12 16:23:14 guenther Exp $	*/
+/*	$OpenBSD: strtoumax.c,v 1.4 2017/07/06 16:23:11 millert Exp $	*/
 /*
  * Copyright (c) 1992 The Regents of the University of California.
  * All rights reserved.
@@ -68,8 +68,8 @@ strtoumax(const char *nptr, char **endptr, int base)
 		if (c == '+')
 			c = *s++;
 	}
-	if ((base == 0 || base == 16) &&
-	    c == '0' && (*s == 'x' || *s == 'X')) {
+	if ((base == 0 || base == 16) && c == '0' &&
+	    (*s == 'x' || *s == 'X') && isxdigit((unsigned char)s[1])) {
 		c = s[1];
 		s += 2;
 		base = 16;
