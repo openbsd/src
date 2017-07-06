@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.5 2017/03/25 15:47:37 mlarkin Exp $	*/
+/*	$OpenBSD: pci.h,v 1.6 2017/07/06 06:19:15 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -25,7 +25,7 @@
 #define PCI_BAR_TYPE_IO		0x0
 #define PCI_BAR_TYPE_MMIO	0x1
 
-#define PCI_MAX_PIC_IRQS	8
+#define PCI_MAX_PIC_IRQS	10
 
 typedef int (*pci_cs_fn_t)(int dir, uint8_t reg, uint32_t *data);
 typedef int (*pci_iobar_fn_t)(int dir, uint16_t reg, uint32_t *data, uint8_t *,

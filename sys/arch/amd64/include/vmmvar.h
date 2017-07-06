@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.41 2017/05/30 20:31:24 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.42 2017/07/06 06:19:15 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -24,7 +24,7 @@
 #define VMM_HV_SIGNATURE 	"OpenBSDVMM58"
 
 #define VMM_MAX_MEM_RANGES	16
-#define VMM_MAX_DISKS_PER_VM	2
+#define VMM_MAX_DISKS_PER_VM	4
 #define VMM_MAX_PATH_DISK	128
 #define VMM_MAX_NAME_LEN	32
 #define VMM_MAX_KERNEL_PATH	128
