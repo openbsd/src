@@ -26,6 +26,8 @@ tls_config_set_ca_path
 tls_config_set_cert_file
 tls_config_set_cert_mem
 tls_config_set_ciphers
+tls_config_set_crl_file
+tls_config_set_crl_mem
 tls_config_set_dheparams
 tls_config_set_ecdhecurve
 tls_config_set_key_file

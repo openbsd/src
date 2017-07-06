@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.40 2017/05/06 20:59:28 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.41 2017/07/06 17:12:22 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -268,6 +268,7 @@ tls_config_free(struct tls_config *config)
 	free((char *)config->ca_mem);
 	free((char *)config->ca_path);
 	free((char *)config->ciphers);
+	free((char *)config->crl_mem);
 
 	free(config);
 }
@@ -299,6 +300,7 @@ tls_config_clear_keys(struct tls_config *config)
 		tls_keypair_clear(kp);
 
 	tls_config_set_ca_mem(config, NULL, 0);
+	tls_config_set_crl_mem(config, NULL, 0);
 }
 
 int
@@ -576,6 +578,20 @@ tls_config_set_ciphers(struct tls_config *config, const char *ciphers)
  fail:
 	SSL_CTX_free(ssl_ctx);
 	return -1;
+}
+
+int
+tls_config_set_crl_file(struct tls_config *config, const char *crl_file)
+{
+	return tls_config_load_file(&config->error, "CRL", crl_file,
+	    &config->crl_mem, &config->crl_len);
+}
+
+int
+tls_config_set_crl_mem(struct tls_config *config, const uint8_t *crl,
+    size_t len)
+{
+	return set_mem(&config->crl_mem, &config->crl_len, crl, len);
 }
 
 int

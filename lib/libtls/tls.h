@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.49 2017/05/06 20:57:45 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.50 2017/07/06 17:12:22 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -105,6 +105,9 @@ int tls_config_set_cert_file(struct tls_config *_config,
 int tls_config_set_cert_mem(struct tls_config *_config, const uint8_t *_cert,
     size_t _len);
 int tls_config_set_ciphers(struct tls_config *_config, const char *_ciphers);
+int tls_config_set_crl_file(struct tls_config *_config, const char *_crl_file);
+int tls_config_set_crl_mem(struct tls_config *_config, const uint8_t *_crl,
+    size_t _len);
 int tls_config_set_dheparams(struct tls_config *_config, const char *_params);
 int tls_config_set_ecdhecurve(struct tls_config *_config, const char *_name);
 int tls_config_set_key_file(struct tls_config *_config, const char *_key_file);
