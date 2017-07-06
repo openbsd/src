@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.184 2017/07/05 15:03:20 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.185 2017/07/06 22:58:44 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -56,31 +56,34 @@ enum	mandocerr {
 	MANDOCERR_STYLE, /* ===== start of style suggestions ===== */
 
 	MANDOCERR_DATE_LEGACY, /* legacy man(7) date format: Dd ... */
+	MANDOCERR_TITLE_CASE, /* lower case character in document title */
 	MANDOCERR_RCS_REP, /* duplicate RCS id: ... */
 	MANDOCERR_SEC_TYPO,  /* typo in section name: Sh ... */
+	MANDOCERR_ARG_QUOTE, /* unterminated quoted argument */
 	MANDOCERR_MACRO_USELESS, /* useless macro: macro */
 	MANDOCERR_BX, /* consider using OS macro: macro */
 	MANDOCERR_ER_ORDER, /* errnos out of order: Er ... */
 	MANDOCERR_ER_REP, /* duplicate errno: Er ... */
 	MANDOCERR_DELIM, /* trailing delimiter: macro ... */
 	MANDOCERR_DELIM_NB, /* no blank before trailing delimiter: macro ... */
+	MANDOCERR_FI_SKIP, /* fill mode already enabled, skipping: fi */
+	MANDOCERR_NF_SKIP, /* fill mode already disabled, skipping: nf */
 	MANDOCERR_FUNC, /* function name without markup: name() */
+	MANDOCERR_SPACE_EOL, /* whitespace at end of input line */
+	MANDOCERR_COMMENT_BAD, /* bad comment style */
 
 	MANDOCERR_WARNING, /* ===== start of warnings ===== */
 
 	/* related to the prologue */
 	MANDOCERR_DT_NOTITLE, /* missing manual title, using UNTITLED: line */
 	MANDOCERR_TH_NOTITLE, /* missing manual title, using "": [macro] */
-	MANDOCERR_TITLE_CASE, /* lower case character in document title */
 	MANDOCERR_MSEC_MISSING, /* missing manual section, using "": macro */
 	MANDOCERR_MSEC_BAD, /* unknown manual section: Dt ... section */
 	MANDOCERR_DATE_MISSING, /* missing date, using today's date */
 	MANDOCERR_DATE_BAD, /* cannot parse date, using it verbatim: date */
 	MANDOCERR_DATE_FUTURE, /* date in the future, using it anyway: date */
 	MANDOCERR_OS_MISSING, /* missing Os macro, using "" */
-	MANDOCERR_PROLOG_REP, /* duplicate prologue macro: macro */
 	MANDOCERR_PROLOG_LATE, /* late prologue macro: macro */
-	MANDOCERR_DT_LATE, /* skipping late title macro: Dt args */
 	MANDOCERR_PROLOG_ORDER, /* prologue macros out of order: macros */
 
 	/* related to document structure */
@@ -113,8 +116,6 @@ enum	mandocerr {
 	MANDOCERR_BD_NEST, /* nested displays are not portable: macro ... */
 	MANDOCERR_BL_MOVE, /* moving content out of list: macro */
 	MANDOCERR_TA_LINE, /* first macro on line: Ta */
-	MANDOCERR_FI_SKIP, /* fill mode already enabled, skipping: fi */
-	MANDOCERR_NF_SKIP, /* fill mode already disabled, skipping: nf */
 	MANDOCERR_BLK_LINE, /* line scope broken: macro breaks macro */
 	MANDOCERR_BLK_BLANK, /* skipping blank line in line scope */
 
@@ -143,7 +144,6 @@ enum	mandocerr {
 	MANDOCERR_EQN_NOBOX, /* missing eqn box, using "": op */
 
 	/* related to bad arguments */
-	MANDOCERR_ARG_QUOTE, /* unterminated quoted argument */
 	MANDOCERR_ARG_REP, /* duplicate argument: macro arg */
 	MANDOCERR_AN_REP, /* skipping duplicate argument: An -arg */
 	MANDOCERR_BD_REP, /* skipping duplicate display type: Bd -type */
@@ -162,9 +162,7 @@ enum	mandocerr {
 	/* related to plain text */
 	MANDOCERR_FI_BLANK, /* blank line in fill mode, using .sp */
 	MANDOCERR_FI_TAB, /* tab in filled text */
-	MANDOCERR_SPACE_EOL, /* whitespace at end of input line */
 	MANDOCERR_EOS, /* new sentence, new line */
-	MANDOCERR_COMMENT_BAD, /* bad comment style */
 	MANDOCERR_ESC_BAD, /* invalid escape sequence: esc */
 	MANDOCERR_STR_UNDEF, /* undefined string, using "": name */
 
@@ -190,6 +188,8 @@ enum	mandocerr {
 
 	/* related to document structure and macros */
 	MANDOCERR_FILE, /* cannot open file */
+	MANDOCERR_PROLOG_REP, /* duplicate prologue macro: macro */
+	MANDOCERR_DT_LATE, /* skipping late title macro: Dt args */
 	MANDOCERR_ROFFLOOP, /* input stack limit exceeded, infinite loop? */
 	MANDOCERR_CHAR_BAD, /* skipping bad character: number */
 	MANDOCERR_MACRO, /* skipping unknown macro: macro */

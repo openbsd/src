@@ -1,3 +1,3 @@
 mandoc: dupe.in:2:5: STYLE: Mdocdate missing: Dd August (OpenBSD)
-mandoc: dupe.in:5:2: WARNING: duplicate prologue macro: Dd
-mandoc: dupe.in:11:2: WARNING: duplicate prologue macro: Dd
+mandoc: dupe.in:5:2: ERROR: duplicate prologue macro: Dd
+mandoc: dupe.in:11:2: ERROR: duplicate prologue macro: Dd

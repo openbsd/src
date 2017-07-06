@@ -1,16 +1,16 @@
-mandoc: roff.in:31:15: WARNING: whitespace at end of input line
-mandoc: roff.in:33:16: WARNING: whitespace at end of input line
-mandoc: roff.in:35:17: WARNING: whitespace at end of input line
-mandoc: roff.in:55:27: WARNING: whitespace at end of input line
-mandoc: roff.in:57:28: WARNING: whitespace at end of input line
-mandoc: roff.in:59:29: WARNING: whitespace at end of input line
-mandoc: roff.in:63:7: WARNING: unterminated quoted argument
-mandoc: roff.in:64:11: WARNING: unterminated quoted argument
-mandoc: roff.in:66:7: WARNING: unterminated quoted argument
-mandoc: roff.in:66:12: WARNING: whitespace at end of input line
-mandoc: roff.in:67:11: WARNING: unterminated quoted argument
-mandoc: roff.in:67:16: WARNING: whitespace at end of input line
-mandoc: roff.in:69:7: WARNING: unterminated quoted argument
-mandoc: roff.in:69:13: WARNING: whitespace at end of input line
-mandoc: roff.in:70:11: WARNING: unterminated quoted argument
-mandoc: roff.in:70:17: WARNING: whitespace at end of input line
+mandoc: roff.in:31:15: STYLE: whitespace at end of input line
+mandoc: roff.in:33:16: STYLE: whitespace at end of input line
+mandoc: roff.in:35:17: STYLE: whitespace at end of input line
+mandoc: roff.in:55:27: STYLE: whitespace at end of input line
+mandoc: roff.in:57:28: STYLE: whitespace at end of input line
+mandoc: roff.in:59:29: STYLE: whitespace at end of input line
+mandoc: roff.in:63:7: STYLE: unterminated quoted argument
+mandoc: roff.in:64:11: STYLE: unterminated quoted argument
+mandoc: roff.in:66:7: STYLE: unterminated quoted argument
+mandoc: roff.in:66:12: STYLE: whitespace at end of input line
+mandoc: roff.in:67:11: STYLE: unterminated quoted argument
+mandoc: roff.in:67:16: STYLE: whitespace at end of input line
+mandoc: roff.in:69:7: STYLE: unterminated quoted argument
+mandoc: roff.in:69:13: STYLE: whitespace at end of input line
+mandoc: roff.in:70:11: STYLE: unterminated quoted argument
+mandoc: roff.in:70:17: STYLE: whitespace at end of input line

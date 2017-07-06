@@ -1,2 +1,2 @@
-mandoc: dupe.in:8:2: WARNING: fill mode already enabled, skipping: fi
-mandoc: dupe.in:15:2: WARNING: fill mode already disabled, skipping: nf
+mandoc: dupe.in:8:2: STYLE: fill mode already enabled, skipping: fi
+mandoc: dupe.in:15:2: STYLE: fill mode already disabled, skipping: nf
