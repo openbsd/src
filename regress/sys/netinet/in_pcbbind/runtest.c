@@ -1,4 +1,4 @@
-/* $OpenBSD: runtest.c,v 1.4 2016/09/05 10:15:24 vgross Exp $ */
+/* $OpenBSD: runtest.c,v 1.5 2017/07/06 13:20:54 bluhm Exp $ */
 /*
  * Copyright (c) 2015 Vincent Gross <vincent.gross@kilob.yt>
  *
@@ -120,6 +120,7 @@ unicast_testsuite(struct addrinfo *local, struct addrinfo *any)
 	int test_rc, rc, *s;
 	int sockets[4];
 
+	test_rc = 0;
 	rc = 0; s = sockets;
 	rc |= runtest(s++, local, 0, 0, NULL, 0);
 	rc |= runtest(s++, any,   0, 0, NULL, EADDRINUSE);
@@ -186,6 +187,7 @@ mcast_reuse_testsuite(struct addrinfo *local, void *mr)
 	int sockets[6];
 	int testnum = 1;
 
+	test_rc = 0;
 	rc = 0; s = sockets;
 	rc |= runtest(s++, local, 0, 0, mr, 0);
 	rc |= runtest(s++, local, 1, 0, mr, EADDRINUSE);
@@ -272,6 +274,7 @@ mcast6_testsuite(struct addrinfo *local, struct ipv6_mreq *local_mreq,
 	int sockets[4];
 	int testnum = 1;
 
+	test_rc = 0;
 	rc = 0; s = sockets;
 	rc |= runtest(s++, local, 0, 0, local_mreq, 0);
 	rc |= runtest(s++, any,   0, 0, any_mreq,   EADDRINUSE);
