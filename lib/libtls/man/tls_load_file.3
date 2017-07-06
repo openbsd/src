@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_load_file.3,v 1.6 2017/05/06 21:06:19 jsing Exp $
+.\" $OpenBSD: tls_load_file.3,v 1.7 2017/07/06 17:27:19 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 6 2017 $
+.Dd $Mdocdate: July 6 2017 $
 .Dt TLS_LOAD_FILE 3
 .Os
 .Sh NAME
@@ -28,6 +28,8 @@
 .Nm tls_config_set_ca_mem ,
 .Nm tls_config_set_cert_file ,
 .Nm tls_config_set_cert_mem ,
+.Nm tls_config_set_crl_file ,
+.Nm tls_config_set_crl_mem ,
 .Nm tls_config_set_key_file ,
 .Nm tls_config_set_key_mem ,
 .Nm tls_config_set_ocsp_staple_mem ,
@@ -83,6 +85,17 @@
 .Fo tls_config_set_cert_mem
 .Fa "struct tls_config *config"
 .Fa "const uint8_t *cert"
+.Fa "size_t len"
+.Fc
+.Ft int
+.Fo tls_config_set_crl_file
+.Fa "struct tls_config *config"
+.Fa "const char *crl_file"
+.Fc
+.Ft int
+.Fo tls_config_set_crl_mem
+.Fa "struct tls_config *config"
+.Fa "const uint8_t *crl"
 .Fa "size_t len"
 .Fc
 .Ft int
@@ -184,7 +197,8 @@
 .Fn tls_load_file
 loads a certificate or key from disk into memory to be used with
 .Fn tls_config_set_ca_mem ,
-.Fn tls_config_set_cert_mem
+.Fn tls_config_set_cert_mem ,
+.Fn tls_config_set_crl_mem
 or
 .Fn tls_config_set_key_mem .
 A private key will be decrypted if the optional
@@ -212,6 +226,13 @@ sets file from which the public certificate will be read.
 .Pp
 .Fn tls_config_set_cert_mem
 sets the public certificate directly from memory.
+.Pp
+.Fn tls_config_set_crl_file
+sets the filename used to load a file containing the
+Certificate Revocation List (CRL).
+.Pp
+.Fn tls_config_set_crl_mem
+sets the CRL directly from memory.
 .Pp
 .Fn tls_config_set_key_file
 sets the file from which the private key will be read.
@@ -324,6 +345,12 @@ and
 .Fn tls_config_add_keypair_mem
 in
 .Ox 6.1 .
+.Pp
+.Fn tls_config_set_crl_file
+and
+.Fn tls_config_set_crl_mem
+appeared in
+.Ox 6.2 .
 .Sh AUTHORS
 .An Joel Sing Aq Mt jsing@openbsd.org
 with contibutions from
