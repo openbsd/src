@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.203 2017/07/05 16:17:42 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.204 2017/07/06 16:56:52 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -170,7 +170,7 @@ extern struct in_addr deleting;
 extern struct in_addr adding;
 
 /* options.c */
-int cons_options(struct interface_info *, struct option_data *);
+int cons_options(unsigned char *, int, struct option_data *);
 char *pretty_print_option(unsigned int, struct option_data *, int);
 char *pretty_print_domain_search(unsigned char *, size_t);
 char *pretty_print_string(unsigned char *, size_t, int);

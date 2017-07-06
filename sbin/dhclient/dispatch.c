@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.130 2017/07/01 23:27:56 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.131 2017/07/06 16:56:52 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -52,6 +52,8 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+
+#include <arpa/inet.h>
 
 #include <errno.h>
 #include <ifaddrs.h>
@@ -198,10 +200,12 @@ dispatch(struct interface_info *ifi, int routefd)
 void
 packethandler(struct interface_info *ifi)
 {
-	struct sockaddr_in from;
-	struct ether_addr hfrom;
-	struct in_addr ifrom;
-	ssize_t result;
+	struct sockaddr_in	 from;
+	struct ether_addr	 hfrom;
+	struct in_addr		 ifrom;
+	struct dhcp_packet	*packet = &ifi->recv_packet;
+	struct reject_elem	*ap;
+	ssize_t			 result;
 
 	if ((result = receive_packet(ifi, &from, &hfrom)) == -1) {
 		ifi->errors++;
@@ -218,6 +222,39 @@ packethandler(struct interface_info *ifi)
 		return;
 
 	ifrom.s_addr = from.sin_addr.s_addr;
+
+	if (packet->hlen != ETHER_ADDR_LEN) {
+#ifdef DEBUG
+		log_debug("Discarding packet with hlen != %s (%u)",
+		    ifi->name, packet->hlen);
+#endif	/* DEBUG */
+		return;
+	} else if (memcmp(&ifi->hw_address, packet->chaddr,
+	    sizeof(ifi->hw_address))) {
+#ifdef DEBUG
+		log_debug("Discarding packet with chaddr != %s (%s)",
+		    ifi->name,
+		    ether_ntoa((struct ether_addr *)packet->chaddr));
+#endif	/* DEBUG */
+		return;
+	}
+
+	if (ifi->xid != packet->xid) {
+#ifdef DEBUG
+		log_debug("Discarding packet with XID != %u (%u)", ifi->xid,
+		    packet->xid);
+#endif	/* DEBUG */
+		return;
+	}
+
+	TAILQ_FOREACH(ap, &config->reject_list, next)
+	    if (ifrom.s_addr == ap->addr.s_addr) {
+#ifdef DEBUG
+		    log_debug("Discarding packet from address on reject "
+			"list (%s)", inet_ntoa(ifrom));
+#endif	/* DEBUG */
+		    return;
+	    }
 
 	do_packet(ifi, from.sin_port, ifrom, &hfrom);
 }

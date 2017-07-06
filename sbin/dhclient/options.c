@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.92 2017/06/15 17:06:17 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.93 2017/07/06 16:56:52 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -160,10 +160,8 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
  * to see if it's DHO_END to decide if all the options were copied.
  */
 int
-cons_options(struct interface_info *ifi, struct option_data *options)
+cons_options(unsigned char *buf, int buflen, struct option_data *options)
 {
-	unsigned char *buf = ifi->sent_packet.options;
-	int buflen = 576 - DHCP_FIXED_LEN;
 	int ix, incr, length, bufix, code, lastopt = -1;
 
 	memset(buf, 0, buflen);
@@ -635,43 +633,9 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 {
 	struct dhcp_packet *packet = &ifi->recv_packet;
 	struct option_data options[256];
-	struct reject_elem *ap;
 	void (*handler)(struct interface_info *, struct option_data *, char *);
 	char *type, *info;
 	int i, rslt, options_valid = 1;
-
-	if (packet->hlen != ETHER_ADDR_LEN) {
-#ifdef DEBUG
-		log_debug("Discarding packet with hlen != %s (%u)",
-		    ifi->name, packet->hlen);
-#endif	/* DEBUG */
-		return;
-	} else if (memcmp(&ifi->hw_address, packet->chaddr,
-	    sizeof(ifi->hw_address))) {
-#ifdef DEBUG
-		log_debug("Discarding packet with chaddr != %s (%s)",
-		    ifi->name,
-		    ether_ntoa((struct ether_addr *)packet->chaddr));
-#endif	/* DEBUG */
-		return;
-	}
-
-	if (ifi->xid != packet->xid) {
-#ifdef DEBUG
-		log_debug("Discarding packet with XID != %u (%u)", ifi->xid,
-		    packet->xid);
-#endif	/* DEBUG */
-		return;
-	}
-
-	TAILQ_FOREACH(ap, &config->reject_list, next)
-		if (from.s_addr == ap->addr.s_addr) {
-#ifdef DEBUG
-			log_debug("Discarding packet from address on reject "
-			    "list (%s)", inet_ntoa(from));
-#endif	/* DEBUG */
-			return;
-		}
 
 	memset(options, 0, sizeof(options));
 
