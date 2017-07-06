@@ -24,13 +24,13 @@ testseq() {
 
 	echo input:
 	echo ">>>${stdin}<<<"
-	echo -n "$stdin" | hexdump -C
+	echo -n "$stdin" | hexdump -Cv
 	echo expected:
 	echo ">>>${exp}<<<"
-	echo -n "$exp" | hexdump -C
+	echo -n "$exp" | hexdump -Cv
 	echo actual:
 	echo ">>>${act}<<<"
-	echo -n "$act" | hexdump -C
+	echo -n "$act" | hexdump -Cv
 
 	return 1
 }
@@ -38,9 +38,10 @@ testseq() {
 # Create a fake HOME with a minimal .cshrc and a few files used for completion.
 tmp=$(mktemp -d)
 trap 'rm -r $tmp' 0
-touch "${tmp}/complete" "${tmp}/incomplete.1" "${tmp}/incomplete.2"
-cat >"${tmp}/.cshrc" <<!
+touch $tmp/ambiguous.{1,2} $tmp/complete $tmp/ignore.{c,o} $tmp/only.o
+cat >$tmp/.cshrc <<!
 set filec
+set fignore = (.o)
 set prompt = " % "
 cd ~
 !
@@ -55,16 +56,20 @@ testseq "echo \0001\nb" " % echo ^A\r\n\0001\r\n % b"
 
 # VEOF: List all completions or exit.
 testseq "\0004" " % exit\r"
-testseq "i\0004" " % i^D\r\nincomplete.1  incomplete.2  \r\r\n % i"
+testseq "a\0004" " % a^D\r\nambiguous.1  ambiguous.2  \r\r\n % a"
+testseq "ignore\0004" " % ignore^D\r\nignore.c  ignore.o  \r\r\n % ignore"
 testseq "set ignoreeof\n\0004" \
 	" % set ignoreeof\r\n % ^D\r\nUse \"exit\" to leave csh.\r\n % "
-testseq "set ignoreeof\ni\0004" \
-	" % set ignoreeof\r\n % i^D\r\nincomplete.1  incomplete.2  \r\r\n % i"
+testseq "set ignoreeof\na\0004" \
+	" % set ignoreeof\r\n % a^D\r\nambiguous.1  ambiguous.2  \r\r\n % a"
 
 # VEOL: File name completion.
 testseq "\0033" " % \0007"
 testseq "c\0033" " % complete"
-testseq "i\0033" " % i\0007ncomplete."
+testseq "a\0033" " % a\0007mbiguous."
+testseq "~${USER}\0033" " % ~${USER}"
+testseq "ignore\0033" " % ignore.c"
+testseq "only\0033" " % only.o"
 
 # VERASE: Delete character.
 testseq "\0177" " % "
