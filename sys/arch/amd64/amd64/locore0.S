@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.1 2017/05/31 19:18:18 deraadt Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.2 2017/07/06 06:17:04 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -125,7 +125,7 @@
 /*
  * override user-land alignment before including asm.h
  */
-#define	ALIGN_DATA	.align	8
+#define	ALIGN_DATA	.align	8,0xcc
 #define ALIGN_TEXT	.align 16,0x90
 #define _ALIGN_TEXT	ALIGN_TEXT
 

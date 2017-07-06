@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.177 2017/06/30 06:17:47 mlarkin Exp $	*/
+/*	$OpenBSD: locore.s,v 1.178 2017/07/06 06:17:05 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -80,9 +80,8 @@
  * override user-land alignment before including asm.h
  */
 
-#define	ALIGN_DATA	.align  4
+#define	ALIGN_DATA	.align  4,0xcc
 #define	ALIGN_TEXT	.align  4,0x90	/* 4-byte boundaries, NOP-filled */
-#define	SUPERALIGN_TEXT	.align  16,0x90	/* 16-byte boundaries better for 486 */
 #define _ALIGN_TEXT	ALIGN_TEXT
 #include <machine/asm.h>
 
@@ -347,7 +346,7 @@ ENTRY(kcopy)
 #endif
 	ret
 
-	ALIGN_TEXT
+	.align  4,0xcc
 1:	addl	%ecx,%edi		# copy backward
 	addl	%ecx,%esi
 	std
@@ -1233,7 +1232,7 @@ ENTRY(i686_pagezero)
 	movl	12(%esp), %edi
 	movl	$1024, %ecx
 
-	ALIGN_TEXT
+	.align  4,0x90
 1:
 	xorl	%eax, %eax
 	repe
@@ -1244,8 +1243,7 @@ ENTRY(i686_pagezero)
 	popl	%edi
 	ret
 
-	ALIGN_TEXT
-
+	.align  4,0x90
 2:
 	incl	%ecx
 	subl	$4, %edi

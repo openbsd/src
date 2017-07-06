@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.32 2016/07/16 06:04:29 mlarkin Exp $ */
+/* $OpenBSD: apicvec.s,v 1.33 2017/07/06 06:17:05 deraadt Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -58,7 +58,7 @@ XINTR(ipi):
 	INTRFASTEXIT
 
 	.globl	XINTR(ipi_invltlb)
-	.p2align 4,0x90
+	.p2align 4,0xcc
 XINTR(ipi_invltlb):
 	pushl	%eax
 	pushl	%ds
@@ -78,7 +78,7 @@ XINTR(ipi_invltlb):
 	iret
 
 	.globl	XINTR(ipi_invlpg)
-	.p2align 4,0x90
+	.p2align 4,0xcc
 XINTR(ipi_invlpg):
 	pushl	%eax
 	pushl	%ds
@@ -98,7 +98,7 @@ XINTR(ipi_invlpg):
 	iret
 
 	.globl	XINTR(ipi_invlrange)
-	.p2align 4,0x90
+	.p2align 4,0xcc
 XINTR(ipi_invlrange):
 	pushl	%eax
 	pushl	%edx
@@ -124,7 +124,7 @@ XINTR(ipi_invlrange):
 	iret
 
 	.globl	XINTR(ipi_reloadcr3)
-	.p2align 4,0x90
+	.p2align 4,0xcc
 XINTR(ipi_reloadcr3):
 	pushl	%eax
 	pushl	%ds
