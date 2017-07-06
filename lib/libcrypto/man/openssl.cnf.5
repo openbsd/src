@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openssl.cnf.5,v 1.2 2016/12/12 22:02:55 jmc Exp $
+.\"	$OpenBSD: openssl.cnf.5,v 1.3 2017/07/06 15:42:04 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 12 2016 $
+.Dd $Mdocdate: July 6 2017 $
 .Dt OPENSSL.CNF 5
 .Os
 .Sh NAME
@@ -321,41 +321,6 @@ some_ctrl = some_value
 other_ctrl = EMPTY
 # Supply all default algorithms
 default_algorithms = ALL
-.Ed
-.Ss SSL Configuration Module
-This module has the name
-.Ic ssl_conf
-which points to a section containing SSL configurations.
-.Pp
-Each line in the SSL configuration section contains the name of the
-configuration and the section containing it.
-.Pp
-Each configuration section consists of command value pairs for
-.Vt SSL_CONF .
-Each pair will be passed to a
-.Vt SSL_CTX
-or
-.Vt SSL
-structure if it calls
-.Xr SSL_CTX_config 3
-or
-.Xr SSL_config 3
-with the appropriate configuration name.
-.Pp
-Note: any characters before an initial dot in the configuration section
-are ignored so the same command can be used multiple times.
-.Pp
-For example:
-.Bd -literal -offset indent
-ssl_conf = ssl_sect
-
-[ssl_sect]
-server = server_section
-
-[server_section]
-RSA.Certificate = server-rsa.pem
-ECDSA.Certificate = server-ecdsa.pem
-Ciphers = ALL:!RC4
 .Ed
 .Sh FILES
 .Bl -tag -width /etc/ssl/openssl.cnf -compact

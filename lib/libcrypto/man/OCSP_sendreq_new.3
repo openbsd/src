@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_sendreq_new.3,v 1.3 2016/12/06 14:54:55 schwarze Exp $
+.\"	$OpenBSD: OCSP_sendreq_new.3,v 1.4 2017/07/06 15:42:04 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: July 6 2017 $
 .Dt OCSP_SENDREQ_NEW 3
 .Os
 .Sh NAME
@@ -140,7 +140,7 @@ If
 indicates an operation should be retried, the corresponding BIO can
 be examined to determine which operation (read or write) should be
 retried and appropriate action can be taken, for example a
-.Xr select 3
+.Xr select 2
 call on the underlying socket.
 .Pp
 .Fn OCSP_REQ_CTX_free
