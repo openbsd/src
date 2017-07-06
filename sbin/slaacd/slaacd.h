@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.4 2017/07/06 14:57:29 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.5 2017/07/06 15:02:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -45,6 +45,7 @@ struct imsgev {
 
 enum imsg_type {
 	IMSG_NONE,
+#ifndef	SMALL
 	IMSG_CTL_LOG_VERBOSE,
 	IMSG_CTL_SHOW_INTERFACE_INFO,
 	IMSG_CTL_SHOW_INTERFACE_INFO_RA,
@@ -56,6 +57,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSALS,
 	IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSAL,
 	IMSG_CTL_END,
+#endif	/* SMALL */
 	IMSG_CTL_SEND_SOLICITATION,
 	IMSG_SOCKET_IPC,
 	IMSG_STARTUP,
@@ -85,6 +87,7 @@ enum rpref {
 	HIGH,
 };
 
+#ifndef	SMALL
 struct ctl_engine_info {
 	uint32_t		if_index;
 	int			running;
@@ -151,6 +154,7 @@ struct ctl_engine_info_dfr_proposal {
 	uint32_t		 router_lifetime;
 	char			 rpref[sizeof("MEDIUM")];
 };
+#endif	/* SMALL */
 
 struct imsg_ifinfo {
 	uint32_t		if_index;

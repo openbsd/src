@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.1 2017/06/03 10:00:29 florian Exp $ */
+/*	$OpenBSD: log.h,v 1.2 2017/07/06 15:02:53 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <sys/cdefs.h>
 
+#ifndef	SMALL
 void	log_init(int, int);
 void	log_procinit(const char *);
 void	log_setverbose(int);
@@ -42,5 +43,18 @@ __dead void fatal(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 __dead void fatalx(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
+#else
+#define log_init(x...)		do {} while(0)
+#define log_procinit(x...)	do {} while(0)
+#define log_setverbose(x...)	do {} while(0)
+#define log_warn(x...)		do {} while(0)
+#define log_warnx(x...)		do {} while(0)
+#define log_info(x...)		do {} while(0)
+#define log_debug(x...)		do {} while(0)
+#define logit(x...)		do {} while(0)
+#define vlog(x...)		do {} while(0)
+#define fatal(x...)		exit(1)
+#define fatalx(x...)		exit(1)
+#endif	/* SMALL */
 
 #endif /* LOG_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.3 2017/07/06 14:57:29 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.4 2017/07/06 15:02:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -50,6 +50,7 @@
 #include "engine.h"
 #include "control.h"
 
+#ifndef	SMALL
 const char* imsg_type_name[] = {
 	"IMSG_NONE",
 	"IMSG_CTL_LOG_VERBOSE",
@@ -77,6 +78,7 @@ const char* imsg_type_name[] = {
 	"IMSG_CONFIGURE_DFR",
 	"IMSG_WITHDRAW_DFR",
 };
+#endif	/* SMALL */
 
 __dead void	usage(void);
 __dead void	main_shutdown(void);
@@ -308,7 +310,9 @@ main_shutdown(void)
 	free(iev_frontend);
 	free(iev_engine);
 
+#ifndef	SMALL
 	control_cleanup(csock);
+#endif	/* SMALL */
 
 	log_info("terminating");
 	exit(0);
@@ -366,7 +370,10 @@ main_dispatch_frontend(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
-	int			 shut = 0, verbose;
+	int			 shut = 0;
+#ifndef	SMALL
+	int			 verbose;
+#endif	/* SMALL */
 
 	ibuf = &iev->ibuf;
 
@@ -390,11 +397,13 @@ main_dispatch_frontend(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
+#ifndef	SMALL
 		case IMSG_CTL_LOG_VERBOSE:
 			/* Already checked by frontend. */
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
 			break;
+#endif	/* SMALL */
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);

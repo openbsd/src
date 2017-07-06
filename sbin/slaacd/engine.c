@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.3 2017/07/05 20:18:11 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.4 2017/07/06 15:02:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -218,8 +218,10 @@ __dead void		 engine_shutdown(void);
 void			 engine_sig_handler(int sig, short, void *);
 void			 engine_dispatch_frontend(int, short, void *);
 void			 engine_dispatch_main(int, short, void *);
+#ifndef	SMALL
 void			 send_interface_info(struct slaacd_iface *, pid_t);
 void			 engine_showinfo_ctl(struct imsg *, uint32_t);
+#endif	/* SMALL */
 struct slaacd_iface	*get_slaacd_iface_by_id(uint32_t);
 void			 remove_slaacd_iface(uint32_t);
 void			 free_ra(struct radv *);
@@ -382,7 +384,10 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 	struct dfr_proposal		*dfr_proposal = NULL;
 	struct imsg_del_addr		 del_addr;
 	ssize_t				 n;
-	int				 shut = 0, verbose;
+	int				 shut = 0;
+#ifndef	SMALL
+	int				 verbose;
+#endif	/* SMALL */
 	uint32_t			 if_index;
 
 	if (event & EV_READ) {
@@ -405,6 +410,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
+#ifndef	SMALL
 		case IMSG_CTL_LOG_VERBOSE:
 			/* Already checked by frontend. */
 			memcpy(&verbose, imsg.data, sizeof(verbose));
@@ -417,6 +423,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			memcpy(&if_index, imsg.data, sizeof(if_index));
 			engine_showinfo_ctl(&imsg, if_index);
 			break;
+#endif	/* SMALL */
 		case IMSG_UPDATE_IF:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(imsg_ifinfo))
@@ -669,6 +676,7 @@ engine_dispatch_main(int fd, short event, void *bula)
 	}
 }
 
+#ifndef	SMALL
 void
 send_interface_info(struct slaacd_iface *iface, pid_t pid)
 {
@@ -830,6 +838,7 @@ engine_showinfo_ctl(struct imsg *imsg, uint32_t if_index)
 		break;
 	}
 }
+#endif	/* SMALL */
 
 struct slaacd_iface*
 get_slaacd_iface_by_id(uint32_t if_index)

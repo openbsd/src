@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.2 2017/07/03 19:02:04 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.3 2017/07/06 15:02:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -121,9 +121,11 @@ frontend(int debug, int verbose, char *sockname)
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
 
+#ifndef	SMALL
 	/* Create slaacd control socket outside chroot. */
 	if (control_init(sockname) == -1)
 		fatalx("control socket setup failed");
+#endif	/* SMALL */
 
 	if ((pw = getpwnam(SLAACD_USER)) == NULL)
 		fatal("getpwnam");
@@ -195,9 +197,11 @@ frontend(int debug, int verbose, char *sockname)
 	    iev_main->handler, iev_main);
 	event_add(&iev_main->ev, NULL);
 
+#ifndef	SMALL
 	/* Listen on control socket. */
 	TAILQ_INIT(&ctl_conns);
 	control_listen();
+#endif	/* SMALL */
 
 	event_set(&ev_route, routesock, EV_READ | EV_PERSIST, route_receive,
 	    NULL);
@@ -371,9 +375,11 @@ frontend_dispatch_main(int fd, short event, void *bula)
 		case IMSG_STARTUP:
 			frontend_startup();
 			break;
+#ifndef	SMALL
 		case IMSG_CTL_END:
 			control_imsg_relay(&imsg);
 			break;
+#endif	/* SMALL */
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);
@@ -420,6 +426,7 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
+#ifndef	SMALL
 		case IMSG_CTL_END:
 		case IMSG_CTL_SHOW_INTERFACE_INFO:
 		case IMSG_CTL_SHOW_INTERFACE_INFO_RA:
@@ -432,6 +439,7 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 		case IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSAL:
 			control_imsg_relay(&imsg);
 			break;
+#endif	/* SMALL */
 		case IMSG_CTL_SEND_SOLICITATION:
 			if_index = *((uint32_t *)imsg.data);
 			send_solicitation(if_index);
