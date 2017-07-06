@@ -1,10 +1,12 @@
-# $OpenBSD: Makefile,v 1.7 2014/08/27 15:27:20 kspillner Exp $
+# $OpenBSD: Makefile,v 1.8 2017/07/06 21:33:45 bluhm Exp $
 
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15
+DIFF?=		diff
+PATCH?=		patch
+PATCHFLAGS=	-sb
+CLEANFILES=	*.copy *.patch *.orig
 
-DIFF=diff
-PATCH=patch
-PATCHOPTIONS=-sb
+REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
+		t10 t11 t12 t13 t14 t15
 
 # Skip the cmp(1) part for ed(1) style diffs for these tests
 EDSKIPCMP=t7 t10 t12
@@ -31,8 +33,6 @@ EDSKIPCMP=t7 t10 t12
 
 .SUFFIXES: .1 .2
 
-all: clean ${REGRESS_TARGET}
-
 .1:
 	@cp ${.CURDIR}/${*}.1 ${*}.copy
 	@cp ${.CURDIR}/${*}.1 ${*}.c.copy
@@ -42,10 +42,10 @@ all: clean ${REGRESS_TARGET}
 	@${DIFF} -c  ${.CURDIR}/${*}.1 ${.CURDIR}/${*}.2 > ${*}.c.patch || true
 	@${DIFF} -u  ${.CURDIR}/${*}.1 ${.CURDIR}/${*}.2 > ${*}.u.patch || true
 	@${DIFF} -e  ${.CURDIR}/${*}.1 ${.CURDIR}/${*}.2 > ${*}.e.patch || true
-	@${PATCH} ${PATCHOPTIONS} ${*}.copy ${*}.patch || true
-	@${PATCH} ${PATCHOPTIONS} ${*}.c.copy ${*}.c.patch || true
-	@${PATCH} ${PATCHOPTIONS} ${*}.u.copy ${*}.u.patch || true
-	@${PATCH} ${PATCHOPTIONS} ${*}.e.copy ${*}.e.patch || true
+	@${PATCH} ${PATCHFLAGS} ${*}.copy ${*}.patch || true
+	@${PATCH} ${PATCHFLAGS} ${*}.c.copy ${*}.c.patch || true
+	@${PATCH} ${PATCHFLAGS} ${*}.u.copy ${*}.u.patch || true
+	@${PATCH} ${PATCHFLAGS} ${*}.e.copy ${*}.e.patch || true
 	@cmp -s ${.CURDIR}/${*}.2 ${*}.copy || \
 		(echo "XXX ${*} standard diff failed" && false)
 	@cmp -s ${.CURDIR}/${*}.2 ${*}.c.copy || \
@@ -59,12 +59,8 @@ all: clean ${REGRESS_TARGET}
 t14.1 t15.1:
 	@cp ${.CURDIR}/${*}.1 ${*}.uw.copy
 	@${DIFF} -uw  ${.CURDIR}/${*}.1 ${.CURDIR}/${*}.2 > ${*}.uw.patch || true
-	@${PATCH} ${PATCHOPTIONS} ${*}.uw.copy ${*}.uw.patch || true
+	@${PATCH} ${PATCHFLAGS} ${*}.uw.copy ${*}.uw.patch || true
 	@cmp -s ${.CURDIR}/${*}.2 ${*}.uw.copy || \
 		(echo "XXX ${*} unified diff ignoring whitespace failed" && false)
-
-# Clean all files generated
-clean:
-	rm -f *.copy *.patch *.orig
 
 .include <bsd.regress.mk>
