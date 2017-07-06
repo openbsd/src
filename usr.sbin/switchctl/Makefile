@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2016/11/17 10:05:44 reyk Exp $
+# $OpenBSD: Makefile,v 1.5 2017/07/06 12:15:23 espie Exp $
 
 SWITCHD=	${.CURDIR}/../switchd
 
@@ -20,7 +20,7 @@ CFLAGS+=	-Wsign-compare
 
 GENERATED=	ofp_map.c ofp10_map.c
 SRCS+=		${GENERATED}
-CLEANFILES+=	${GENERATED} *~
+CLEANFILES+=	${GENERATED}
 
 ofp_map.c: genmap.sh ${SWITCHD}/ofp_map.h ${SWITCHD}/../../sys/net/ofp.h
 	/bin/sh ${SWITCHD}/genmap.sh -i ${SWITCHD}/../../sys/net/ofp.h -t ofp \
