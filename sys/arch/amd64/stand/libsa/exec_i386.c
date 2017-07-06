@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.18 2016/09/11 17:51:21 jsing Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.19 2017/07/06 11:27:56 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -132,9 +132,8 @@ run_loadfile(u_long *marks, int howto)
 
 	entry = marks[MARK_ENTRY] & 0x0fffffff;
 
-	printf("entry point at 0x%lx [%x, %x, %x, %x]\n", entry,
-	    ((int *)entry)[0], ((int *)entry)[1],
-	    ((int *)entry)[2], ((int *)entry)[3]);
+	printf("entry point at 0x%lx\n", entry);
+
 #ifndef EFIBOOT
 	/* stack and the gung is ok at this point, so, no need for asm setup */
 	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER, marks[MARK_END],
