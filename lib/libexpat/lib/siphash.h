@@ -16,7 +16,6 @@
  *   - Clarify license note in the header
  *   - Address C89 issues:
  *     - Stop using inline keyword (and let compiler decide)
- *     - Turn integer suffix ULL to UL
  *     - Replace _Bool by int
  *     - Turn macro siphash24 into a function
  *     - Address invalid conversion (void pointer) by explicit cast
@@ -159,10 +158,10 @@ static void sip_round(struct siphash *H, const int rounds) {
 
 
 static struct siphash *sip24_init(struct siphash *H, const struct sipkey *key) {
-	H->v0 = 0x736f6d6570736575UL ^ key->k[0];
-	H->v1 = 0x646f72616e646f6dUL ^ key->k[1];
-	H->v2 = 0x6c7967656e657261UL ^ key->k[0];
-	H->v3 = 0x7465646279746573UL ^ key->k[1];
+	H->v0 = 0x736f6d6570736575ULL ^ key->k[0];
+	H->v1 = 0x646f72616e646f6dULL ^ key->k[1];
+	H->v2 = 0x6c7967656e657261ULL ^ key->k[0];
+	H->v3 = 0x7465646279746573ULL ^ key->k[1];
 
 	H->p = H->buf;
 	H->c = 0;

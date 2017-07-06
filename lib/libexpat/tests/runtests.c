@@ -247,7 +247,7 @@ START_TEST(test_siphash_spec)
     const char message[] = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09"
             "\x0a\x0b\x0c\x0d\x0e";
     const size_t len = sizeof(message) - 1;
-    const uint64_t expected = 0xa129ca6149be45e5U;
+    const uint64_t expected = 0xa129ca6149be45e5ULL;
     struct siphash state;
     struct sipkey key;
     (void)sip_tobin;
