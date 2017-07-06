@@ -10,6 +10,6 @@ edit.c: ${.CURDIR}/../ksh/edit/edit.c
 	@cp ${.CURDIR}/../ksh/edit/edit.c .
 
 filec: edit
-	@sh ${.CURDIR}/filec.sh
+	sh ${.CURDIR}/filec.sh
 
 .include <bsd.regress.mk>
