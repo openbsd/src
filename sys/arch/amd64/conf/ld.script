@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.6 2017/06/21 20:08:53 deraadt Exp $	*/
+/*	$OpenBSD: ld.script,v 1.7 2017/07/06 06:21:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -37,43 +37,37 @@ PHDRS
  *__ALIGN_SIZE = 0x200000;
  */
 __ALIGN_SIZE = 0x1000;
-__kernel_base_virt = 0xffffffff81000000 + SIZEOF_HEADERS;
-__kernel_base_phys = __kernel_base_virt & 0x7fffffff;
+__kernel_base = 0xffffffff80000000;
+__kernel_virt_base = __kernel_base + 0x1000000;
+__kernel_phys_base = 0x1000000;
+__kernel_base_phys =  __kernel_phys_base + SIZEOF_HEADERS;
 
-/* We use physical address to jump to kernel */
-start_phys = LOADADDR(.text) + (start - __kernel_base_virt);
-ENTRY(start_phys)
+ENTRY(start)
 SECTIONS
 {
-	__kernel_text_virt = __kernel_base_virt;
-	__kernel_text_phys = __kernel_base_phys;
-	.text (__kernel_text_virt) : AT (__kernel_text_phys)
+	.text (__kernel_virt_base + SIZEOF_HEADERS) : AT (__kernel_base_phys)
 	{
-		__text_start = ABSOLUTE(.) & 0xfffffffffffff000;
-		__text_size = SIZEOF(.text);
-		__text_load = LOADADDR(.text);
+		start = .;
 		locore0.o(.text)
 		*(.text .text.*)
 	} :text =0xcccccccc
-	PROVIDE (__etext = .);
+
 	PROVIDE (etext = .);
 	_etext = .;
 
 	/* Move rodata to the next page, so we can nuke X and W bit on them */
 	. = ALIGN(__ALIGN_SIZE);
-	__kernel_rodata_virt = .;
-	__kernel_rodata_phys = . & 0x7fffffff;
-	.rodata (__kernel_rodata_virt) : AT (__kernel_rodata_phys)
+	__kernel_rodata_phys = (. - __kernel_virt_base) + 0x1000000;
+	.rodata : AT (__kernel_rodata_phys)
 	{
 		__rodata_start = ABSOLUTE(.);
-		__rodata_size = SIZEOF(.rodata);
-		__rodata_load = LOADADDR(.rodata);
 		*(.rodata .rodata.*)
 		*(.codepatch)
 		*(.codepatchend)
 	} :rodata =0xcccccccc
+
 	. = ALIGN(0x1000);
-	__kernel_randomdata_phys = . & 0x7fffffff;
+	__kernel_randomdata_phys = (. - __kernel_virt_base) + 0x1000000;
 	.openbsd.randomdata : AT (__kernel_randomdata_phys)
 	{
 		*(.openbsd.randomdata)
@@ -84,13 +78,10 @@ SECTIONS
 
 	/* Move data to the next page, so we can add W bit on them */
 	. = ALIGN(__ALIGN_SIZE);
-	__kernel_data_virt = .;
-	__kernel_data_phys = . & 0x7fffffff;
-	.data (__kernel_data_virt) : AT (__kernel_data_phys)
+	__kernel_data_phys = (. - __kernel_virt_base) + 0x1000000;
+	.data : AT (__kernel_data_phys)
 	{
 		__data_start = ABSOLUTE(.);
-		__data_size = SIZEOF(.data);
-		__data_load = LOADADDR(.data);
 		*(.data .data.*)
 	} :data =0xcccccccc
 	. = ALIGN(0x1000);
@@ -98,13 +89,9 @@ SECTIONS
 	_edata = .;
 
 	/* BSS starts right after padded data */
-	__kernel_bss_virt = .;
-	__kernel_bss_phys = . & 0x7fffffff;
-	.bss (__kernel_bss_virt) : AT (__kernel_bss_phys)
+	__kernel_bss_phys = (. - __kernel_virt_base) + 0x1000000;
+	.bss : AT (__kernel_bss_phys)
 	{
-		__bss_start = ABSOLUTE(.);
-		__bss_size = SIZEOF(.bss);
-		__bss_load = LOADADDR(.bss);
 		*(.bss .bss.*)
 		*(COMMON)
 		/* Align after .bss to ensure correct alignment even if the
@@ -116,7 +103,7 @@ SECTIONS
 	. = ALIGN(0x200000);
 	_end = .;
 	PROVIDE (end = .);
-	__kernel_end_phys = . & 0x7fffffff;
+	__kernel_end_phys = (. - __kernel_virt_base) + 0x1000000;
 
 	/* XXX - hack alert, since we are not C++, nuke these */
 	/DISCARD/ :
