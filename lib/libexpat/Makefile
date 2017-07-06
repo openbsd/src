@@ -1,15 +1,13 @@
-#	$OpenBSD: Makefile,v 1.12 2017/06/30 11:25:29 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.13 2017/07/06 11:17:58 bluhm Exp $
 
 .PATH: ${.CURDIR}/lib
 
 LIB=	expat
 SRCS=	xmlparse.c xmltok.c xmlrole.c
-CFLAGS+=-I${.CURDIR} -DHAVE_EXPAT_CONFIG_H
+CFLAGS+=-I${.CURDIR} -DHAVE_EXPAT_CONFIG_H -fvisibility=hidden
 
 PC_FILES=expat.pc
 CLEANFILES+=${PC_FILES}
-
-VERSION_SCRIPT= ${.CURDIR}/Symbols.map
 
 includes:
 	cmp -s ${DESTDIR}/usr/include/expat.h ${.CURDIR}/lib/expat.h || \
