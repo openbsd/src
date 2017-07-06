@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcscp.4,v 1.15 2012/08/14 01:08:19 dlg Exp $
+.\"	$OpenBSD: pcscp.4,v 1.16 2017/07/06 16:52:32 schwarze Exp $
 .\"	$NetBSD: pcscp.4,v 1.3 1999/09/12 18:47:12 kleink Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -24,9 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"    $NetBSD: pcscp.4,v 1.3 1999/09/12 18:47:12 kleink Exp $
-.\"
-.Dd $Mdocdate: August 14 2012 $
+.Dd $Mdocdate: July 6 2017 $
 .Dt PCSCP 4
 .Os
 .Sh NAME
@@ -37,24 +35,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the
-.Tn Advanced Micro Devices
-Am53c974 PCscsi-PCI
-.Tn SCSI
-controller and boards using this chip,
-including the
-.Tn Tekram
-.Tn DC-390
-.Tn PCI
-.Tn SCSI
-host adapter.
+driver provides support for the Advanced Micro Devices Am53c974
+PCscsi-PCI SCSI controller and boards using this chip, including
+the Tekram DC-390 PCI SCSI host adapter.
 .Pp
-For
-.Tn Tekram
-.Tn DC-390U/F
-.Tn PCI
-.Tn SCSI
-host adapters, use the
+For Tekram DC-390U/F PCI SCSI host adapters, use the
 .Xr siop 4
 driver.
 .Sh SEE ALSO
