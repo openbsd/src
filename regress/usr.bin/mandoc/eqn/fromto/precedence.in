@@ -1,0 +1,15 @@
+.\" $OpenBSD: precedence.in,v 1.1 2017/07/06 00:08:52 schwarze Exp $
+.Dd $Mdocdate: July 6 2017 $
+.Dt SUBSUP-PRECEDENCE 1
+.Os
+.Sh NAME
+.Nm subsup-precedence
+.Nd precedence of subscripts and superscripts
+.Sh DESCRIPTION
+.ps 36
+initial text
+.EQ
+X from a under to c hat ; roman X from bold a to italic c ;
+X sub 1 sup 2 from a sub c sup e to o sub r sup s
+.EN
+final text
