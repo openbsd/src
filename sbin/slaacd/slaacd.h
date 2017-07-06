@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.2 2017/06/06 13:57:23 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.3 2017/07/06 14:56:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -79,18 +79,18 @@ enum {
 	PROC_FRONTEND
 } slaacd_process;
 
+enum rpref {
+	LOW,
+	MEDIUM,
+	HIGH,
+};
+
 struct ctl_engine_info {
 	uint32_t		if_index;
 	int			running;
 	int			autoconfprivacy;
 	struct ether_addr	hw_address;
 	struct sockaddr_in6	ll_address;
-};
-
-enum rpref {
-	LOW,
-	MEDIUM,
-	HIGH,
 };
 
 struct ctl_engine_info_ra {
