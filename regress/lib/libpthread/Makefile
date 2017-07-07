@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.47 2016/05/10 03:59:55 guenther Exp $
+# $OpenBSD: Makefile,v 1.48 2017/07/07 23:55:21 bluhm Exp $
 
 # disabled because it requires a buggy behavior that uthread had:
 #	dup2_race
@@ -35,7 +35,7 @@ install:
 .PHONY: testall
 testall:
 	rm -f /tmp/thread-{shared,static,debug}
-	make cleandir && make obj && make depend && \
+	make cleandir && make obj && \
 	REGRESS_LOG=/tmp/thread-shared make
 	(export LDFLAGS="-static ${NOPIE_LDFLAGS}"; make clean && \
 	 REGRESS_LOG=/tmp/thread-static make)

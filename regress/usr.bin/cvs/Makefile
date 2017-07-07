@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2016/09/30 22:11:37 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.32 2017/07/07 23:55:21 bluhm Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -348,7 +348,6 @@ clean:
 # opencvs is not linked to the build, so make it on demand as a workaround
 ${OPENCVS}:
 	cd ${BSDSRCDIR}/usr.bin/cvs && ${MAKE} obj
-	cd ${BSDSRCDIR}/usr.bin/cvs && ${MAKE} depend
 	cd ${BSDSRCDIR}/usr.bin/cvs && ${MAKE} all
 
 .include <bsd.regress.mk>
