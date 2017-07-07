@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.80 2017/07/07 13:44:45 espie Exp $
+#	$OpenBSD: sys.mk,v 1.81 2017/07/07 14:11:07 espie Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -192,7 +192,7 @@ CTAGS?=		/usr/bin/ctags
 	${LEX.l} -o ${.TARGET} ${.IMPSRC}
 .l.o:
 	${LEX.l} -o lex.${.PREFIX}.c ${.IMPSRC}
-	${COMPILE.c} -o ${.TARGET} -c lex.${.PREFIX}.c
+	${COMPILE.c} -o ${.TARGET} lex.${.PREFIX}.c
 	rm -f lex.${.PREFIX}.c
 	if test -f ${.TARGET:R}.d; then sed -i -e 's,lex.${.PREFIX}.c,${.IMPSRC},' ${.TARGET:R}.d; fi
 
