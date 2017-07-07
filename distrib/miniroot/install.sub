@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1019 2017/07/02 12:45:43 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1020 2017/07/07 16:21:34 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -275,7 +275,7 @@ diskinfo() {
 		_i=${_i##+([[:space:],])}
 		_i=${_i%%+([[:space:],])}
 
-		# Extract Network Address Authority information from dmesg..
+		# Extract Network Address Authority information from dmesg.
 		_n=$(dmesg | sed -En '/^'$_d' at /h;${g;s/^.* ([a-z0-9]+\.[a-zA-Z0-9_]+)$/\1/p;}')
 
 		# Extract disk size from disklabel output.
@@ -2968,7 +2968,7 @@ do_install() {
 	finish_up
 }
 
-do_upgrade(){
+do_upgrade() {
 	# Get $ROOTDISK and $ROOTDEV
 	get_rootinfo
 
