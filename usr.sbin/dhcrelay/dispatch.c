@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.21 2017/04/04 15:52:12 reyk Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.22 2017/07/07 17:25:09 reyk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -137,18 +137,19 @@ setup_iflist(void)
 			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
 			ifi = (struct if_data *)ifa->ifa_data;
 
-			/* Skip non ethernet interfaces. */
+			/* Skip unsupported interfaces. */
 			if (ifi->ifi_type != IFT_ETHER &&
-			    ifi->ifi_type != IFT_ENC) {
+			    ifi->ifi_type != IFT_ENC &&
+			    ifi->ifi_type != IFT_CARP) {
 				TAILQ_REMOVE(&intflist, intf, entry);
 				free(intf);
 				continue;
 			}
 
-			if (ifi->ifi_type == IFT_ETHER)
-				intf->hw_address.htype = HTYPE_ETHER;
-			else
+			if (ifi->ifi_type == IFT_ENC)
 				intf->hw_address.htype = HTYPE_IPSEC_TUNNEL;
+			else
+				intf->hw_address.htype = HTYPE_ETHER;
 
 			intf->index = sdl->sdl_index;
 			intf->hw_address.hlen = sdl->sdl_alen;
