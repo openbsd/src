@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.55 2017/07/03 22:06:11 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.56 2017/07/07 15:14:47 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -272,7 +272,7 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to)
 	dest.sin_addr.s_addr = to.s_addr;
 
 	if (to.s_addr == INADDR_BROADCAST) {
-		assemble_eh_header(ifi, &eh);
+		assemble_eh_header(ifi->hw_address, &eh);
 		iov[0].iov_base = &eh;
 		iov[0].iov_len = sizeof(eh);
 		iovcnt++;
