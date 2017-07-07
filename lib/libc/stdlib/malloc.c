@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.226 2017/06/19 03:06:26 dlg Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.227 2017/07/07 19:14:46 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1013,7 +1013,7 @@ malloc_bytes(struct dir_info *d, size_t size, void *f)
 	/* Adjust to the real offset of that chunk */
 	k += (lp - bp->bits) * MALLOC_BITS;
 
-	if (mopts.chunk_canaries)
+	if (mopts.chunk_canaries && size > 0)
 		bp->bits[bp->offset + k] = size;
 
 	k <<= bp->shift;
