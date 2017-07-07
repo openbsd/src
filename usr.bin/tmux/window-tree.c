@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.11 2017/07/04 22:21:31 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.12 2017/07/07 16:27:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -512,7 +512,7 @@ window_tree_draw_session(struct window_tree_modedata *data, struct session *s,
 		else
 			offset = (i * each);
 		if (loop == end - 1)
-			width = each - 1 + remaining;
+			width = each + remaining;
 		else
 			width = each - 1;
 
@@ -638,7 +638,7 @@ window_tree_draw_window(struct window_tree_modedata *data, struct session *s,
 		else
 			offset = (i * each);
 		if (loop == end - 1)
-			width = each - 1 + remaining;
+			width = each + remaining;
 		else
 			width = each - 1;
 
