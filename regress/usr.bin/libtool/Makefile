@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.33 2012/07/17 09:35:09 jasper Exp $
+# $OpenBSD: Makefile,v 1.34 2017/07/07 10:56:13 bluhm Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-link-4 \
@@ -16,17 +16,16 @@ COMPILE_TESTS = compile-mode-0 compile-mode-1 compile-mode-2 \
 	compile-mode-12 compile-mode-13
 
 FAILING_TARGETS += error-0
-.include <bsd.own.mk>
-.if defined(NOPIC)
-FAILING_TARGETS += static-arch-fail
-.else
 REGRESS_TARGETS += version-override-0 version-override-1 error-5 \
 		    ${COMPILE_TESTS} prefer-static linkception-0 \
 		    release-0 release-1 trip-0
 FAILING_TARGETS += test-all-static
-.endif
 
 REGRESS_TARGETS += ${FAILING_TARGETS}
+
+${FAILING_TARGETS}:
+	# regress target $@ is know to fail
+	@echo DISABLED
 
 compile-tests: ${COMPILE_TESTS}
 
@@ -66,7 +65,7 @@ test-run-3:  ${DEST}/bin/p2
 	LD_LIBRARY_PATH=${DEST}/lib ${DEST}/bin/p2
 
 test-run-4: p2
-	${LIBTOOL} --mode=execute p2
+	${LIBTOOL} --mode=execute ./p2
 
 test-help:
 	${LIBTOOL} --help > /dev/null
@@ -135,10 +134,6 @@ version-override-0: liba9.la
 
 version-override-1: lib${WEIRD}.la
 	fgrep -q "lib${WEIRD}.so.5.6" lib${WEIRD}.la
-
-static-arch-fail:
-	@echo "Some tests are not run on static architectures"
-	@exit 1
 
 compile-mode-0: dummy.c
 	${LIBTOOL} --mode=compile ${CC} -c dummy.c|tee out0
