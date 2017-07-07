@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.49 2017/07/07 00:09:14 djm Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.50 2017/07/07 00:10:15 djm Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -315,7 +315,7 @@ open_file(char *method, char *file)
 
 	if ((method == NULL) || (strcmp(method, "file") == 0))
 		return (open(file, O_RDONLY));
-	if ((strcmp(method, "http") == 0) ||
+	if (strcmp(method, "http") == 0 || strcmp(method, "https") == 0 ||
 	    strcmp(method, "ftp") == 0) {
 		if (asprintf(&url, "%s://%s", method, file) == -1)
 			return (-1);
