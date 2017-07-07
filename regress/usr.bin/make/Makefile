@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.44 2017/01/29 10:03:09 espie Exp $
+# $OpenBSD: Makefile,v 1.45 2017/07/07 14:12:43 espie Exp $
 
 # We don't pass t7, t13, t14, t17, t19, t20 t21 t26
 # and t16 yields piss poor performance
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 \
 	t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23 t24 \
 	t25 t26 t27 t28 t29 t30 t31 t32 t33 t34 t35 t36 \
-	t37 t38 t38j t39 t40 t41 t42 t43 t44 t45 t46
+	t37 t38 t38j t39 t40 t41 t42 t43 t44 t45 t46 t47
 
 MALLOC_OPTIONS?=J
 t1: t1.out
@@ -191,6 +191,9 @@ t46:
 		    false; fi; \
 	    fi
 
+t47: tok.o
+	test -f tok.o  || exit 1
+
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@
 
@@ -198,6 +201,6 @@ t1.out:
 
 CLEANFILES+=t1.out z.a a.a a.b mk34.b goodfile phony t15file \
 	t25.1st t25.2nd f26.2nd f26 t27.2nd t27.3rd \
-	libt29.a t29dep t29.targ t29.targ2
+	libt29.a t29dep t29.targ t29.targ2 tok tok.o tok.d
 
 .include <bsd.regress.mk>
