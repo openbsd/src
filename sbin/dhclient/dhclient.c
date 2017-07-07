@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.457 2017/07/07 14:53:06 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.458 2017/07/07 15:39:30 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2091,7 +2091,8 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 			continue;
 		}
 
-		got_imsg_hup = dispatch_imsg(ifi, ioctlfd, routefd, priv_ibuf);
+		got_imsg_hup = dispatch_imsg(ifi->name, ifi->rdomain, ioctlfd,
+		    routefd, priv_ibuf);
 		if (got_imsg_hup)
 			quit = SIGHUP;
 	}
