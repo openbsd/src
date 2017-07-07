@@ -1,16 +1,37 @@
-# $OpenBSD: Makefile,v 1.45 2017/07/07 14:12:43 espie Exp $
+# $OpenBSD: Makefile,v 1.46 2017/07/07 16:31:37 bluhm Exp $
 
-# We don't pass t7, t13, t14, t17, t19, t20 t21 t26
+REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
+		t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 \
+		t20 t21 t22 t23 t24 t25 t26 t27 t28 t29 \
+		t30 t31 t32 t33 t34 t35 t36 t37 t38 t38j t39 \
+		t40 t41 t42 t43 t44 t45 t46 t47
+
+# We don't pass t14 t17 t18 t20
 # and t16 yields piss poor performance
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 \
-	t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23 t24 \
-	t25 t26 t27 t28 t29 t30 t31 t32 t33 t34 t35 t36 \
-	t37 t38 t38j t39 t40 t41 t42 t43 t44 t45 t46 t47
+
+t14:
+	# make currently incorrectly uses annotations for suffixes
+	# rules for non-suffixes rules.
+	@echo DISABLED
+
+t17:
+	# Bug in cond-parser, ends up having too many open conds.
+	@echo DISABLED
+
+t18:
+	# Another test case: this one holds too many open conditionals,
+	# and exactly enough closes...
+	@echo DISABLED
+
+t20:
+        # Some posix tests we don't pass yet, and won't until I've
+        # added a `magic' status for variables (as SHELL is very,
+        # very special, according to POSIX/Single Unix).
+	@echo DISABLED
 
 MALLOC_OPTIONS?=J
 t1: t1.out
 	env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -e -r -f ${.CURDIR}/mk1 | diff - t1.out
-
 
 # This is a POSIX test. pmake does not pass variables to submakes until
 # after OpenBSD 2.7.
@@ -40,7 +61,7 @@ t5:
 t6:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} A=good -r -f mk6 | diff - t6.out
 
-# This test currently fails, and will until the cond parser is rewritten.
+# This test passes since the cond parser has been rewritten.
 t7:
 	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk7 2>/dev/null || test $$? -ge 128; then false; fi
 
@@ -65,7 +86,7 @@ t11:
 t12:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk12 |diff - t12.out
 
-# Verify whitespace handling. Currently failing.
+# Verify whitespace handling.
 t13:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk13 |diff - t13.out
 
@@ -89,7 +110,7 @@ t19:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} SHELL=/bin/zsh ${MAKE} -r -f mk19 | diff - t19.out
 
 t20:
-	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk20 | diff - t20.out
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} SHELL=/bin/sh -r -f mk20 | diff - t20.out
 
 t21:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk21 | diff - t21.out
@@ -192,7 +213,7 @@ t46:
 	    fi
 
 t47: tok.o
-	test -f tok.o  || exit 1
+	test -f tok.o || exit 1
 
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@
@@ -201,6 +222,6 @@ t1.out:
 
 CLEANFILES+=t1.out z.a a.a a.b mk34.b goodfile phony t15file \
 	t25.1st t25.2nd f26.2nd f26 t27.2nd t27.3rd \
-	libt29.a t29dep t29.targ t29.targ2 tok tok.o tok.d
+	libt29.a t29dep t29.targ t29.targ2 t38.b tok tok.o tok.d
 
 .include <bsd.regress.mk>

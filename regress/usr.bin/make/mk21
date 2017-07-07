@@ -1,14 +1,20 @@
-# $OpenBSD: mk21,v 1.1 2004/11/21 12:58:12 espie Exp $
+# $OpenBSD: mk21,v 1.2 2017/07/07 16:31:37 bluhm Exp $
 TRUC= http://heanet.dl.sourceforge.net/sourceforge/%SUBDIR%/
 
 .for _S in ${TRUC}
-S?=        ${_S:S/^${_S:C@/:[^/:]+$@/@}//:S/^://}
+S?=        ${_S:S/^${_S:C@([^:/])/.+$@\1/@}//:S/^://}
 .endfor
 
 _S=     ${TRUC}
-T?=        ${_S:S/^${_S:C@/:[^/:]+$@/@}//:S/^://}
+T?=        ${_S:S/^${_S:C@([^:/])/.+$@\1/@}//:S/^://}
+
+X?=        ${TRUC:C@([^:/])/.+$@\1/@}
+Y?=        ${TRUC:S/^${X}//:S/^://}
+Z?=        ${TRUC:S/^${TRUC:C@([^:/])/.+$@\1/@}//:S/^://}
 
 all:
 	@echo "S= $S"
 	@echo "T= $T"
-
+	@echo "X= $X"
+	@echo "Y= $Y"
+	@echo "Z= $Z"

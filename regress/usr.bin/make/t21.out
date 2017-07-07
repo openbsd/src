@@ -1,3 +1,5 @@
-S= http://heanet.dl.sourceforge.net/sourceforge/%SUBDIR%/
-T= http://heanet.dl.sourceforge.net/sourceforge/%SUBDIR%/
-
+S= sourceforge/%SUBDIR%/
+T= sourceforge/%SUBDIR%/
+X= http://heanet.dl.sourceforge.net/
+Y= sourceforge/%SUBDIR%/
+Z= sourceforge/%SUBDIR%/

@@ -12,8 +12,9 @@ all: a b c
 a: ${T1}
 	@echo ${>:T}
 
+# new tests have been written with mk40, mk41, ...; filter them out with N
 b: ${T2}
-	@echo ${>:T}
+	@echo ${>:T:Nmk4[0-9]}
 
 c: ${T3}
 	@echo ${>:T}
