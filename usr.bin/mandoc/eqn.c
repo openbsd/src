@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.37 2017/07/06 00:08:52 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.38 2017/07/07 17:15:21 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -284,7 +284,7 @@ enum	parse_mode {
 static	struct eqn_box	*eqn_box_alloc(struct eqn_node *, struct eqn_box *);
 static	void		 eqn_box_free(struct eqn_box *);
 static	struct eqn_box	*eqn_box_makebinary(struct eqn_node *,
-				enum eqn_post, struct eqn_box *);
+				struct eqn_box *);
 static	void		 eqn_def(struct eqn_node *);
 static	struct eqn_def	*eqn_def_find(struct eqn_node *);
 static	void		 eqn_delim(struct eqn_node *);
@@ -539,8 +539,7 @@ eqn_box_alloc(struct eqn_node *ep, struct eqn_box *parent)
  * The new EQN_SUBEXPR will have a two-child limit.
  */
 static struct eqn_box *
-eqn_box_makebinary(struct eqn_node *ep,
-	enum eqn_post pos, struct eqn_box *parent)
+eqn_box_makebinary(struct eqn_node *ep, struct eqn_box *parent)
 {
 	struct eqn_box	*b, *newb;
 
@@ -552,7 +551,6 @@ eqn_box_makebinary(struct eqn_node *ep,
 	parent->last = b->prev;
 	b->prev = NULL;
 	newb = eqn_box_alloc(ep, parent);
-	newb->pos = pos;
 	newb->type = EQN_SUBEXPR;
 	newb->expectargs = 2;
 	newb->args = 1;
@@ -667,7 +665,6 @@ eqn_parse(struct eqn_node *ep, struct eqn_box *parent)
 	const char	*cp, *cpn;
 	char		*p;
 	enum eqn_tok	 tok;
-	enum eqn_post	 pos;
 	enum { CCL_LET, CCL_DIG, CCL_PUN } ccl, ccln;
 	int		 size;
 
@@ -726,7 +723,7 @@ next_tok:
 			cur->type = EQN_TEXT;
 			cur->text = mandoc_strdup("");
 		}
-		parent = eqn_box_makebinary(ep, EQNPOS_NONE, parent);
+		parent = eqn_box_makebinary(ep, parent);
 		parent->type = EQN_LIST;
 		parent->expectargs = 1;
 		parent->font = EQNFONT_ROMAN;
@@ -863,23 +860,23 @@ next_tok:
 			parent->pos = EQNPOS_FROMTO;
 			break;
 		}
+		parent = eqn_box_makebinary(ep, parent);
 		switch (tok) {
 		case EQN_TOK_FROM:
-			pos = EQNPOS_FROM;
+			parent->pos = EQNPOS_FROM;
 			break;
 		case EQN_TOK_TO:
-			pos = EQNPOS_TO;
+			parent->pos = EQNPOS_TO;
 			break;
 		case EQN_TOK_SUP:
-			pos = EQNPOS_SUP;
+			parent->pos = EQNPOS_SUP;
 			break;
 		case EQN_TOK_SUB:
-			pos = EQNPOS_SUB;
+			parent->pos = EQNPOS_SUB;
 			break;
 		default:
 			abort();
 		}
-		parent = eqn_box_makebinary(ep, pos, parent);
 		break;
 	case EQN_TOK_SQRT:
 		while (parent->args == parent->expectargs)
@@ -911,7 +908,8 @@ next_tok:
 			parent = parent->parent;
 		while (EQN_SUBEXPR == parent->type)
 			parent = parent->parent;
-		parent = eqn_box_makebinary(ep, EQNPOS_OVER, parent);
+		parent = eqn_box_makebinary(ep, parent);
+		parent->pos = EQNPOS_OVER;
 		break;
 	case EQN_TOK_RIGHT:
 	case EQN_TOK_BRACE_CLOSE:
