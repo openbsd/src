@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.2 2017/06/19 13:31:04 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.3 2017/07/07 10:04:43 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -194,7 +194,7 @@ octciu_intr_establish(int irq, int level, int (*ih_fun)(void *),
 
 #ifdef DIAGNOSTIC
 	if (irq >= OCTCIU_NINTS || irq < 0)
-		panic("intr_establish: illegal irq %d", irq);
+		panic("%s: illegal irq %d", __func__, irq);
 #endif
 
 	flags = (level & IPL_MPSAFE) ? IH_MPSAFE : 0;
