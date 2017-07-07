@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.185 2017/07/06 22:58:44 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.186 2017/07/07 19:39:17 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -334,7 +334,6 @@ struct	tbl_span {
 };
 
 enum	eqn_boxt {
-	EQN_ROOT, /* root of parse tree */
 	EQN_TEXT, /* text (number, variable, whatever) */
 	EQN_SUBEXPR, /* nested `eqn' subexpression */
 	EQN_LIST, /* list (braces, etc.) */
