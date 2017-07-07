@@ -4,6 +4,6 @@ NNAAMMEE
      ssuubbssuupp--nnooaarrgg - empty subscripts and superscripts
 
 DDEESSCCRRIIPPTTIIOONN
-     initial text _x_1^^ final text
+     initial text _x_(1^)^ final text
 
 OpenBSD                          July 4, 2017                          OpenBSD

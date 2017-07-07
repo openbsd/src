@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn_term.c,v 1.7 2017/07/06 00:08:52 schwarze Exp $ */
+/*	$OpenBSD: eqn_term.c,v 1.8 2017/07/07 19:06:15 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,20 +49,39 @@ static void
 eqn_box(struct termp *p, const struct eqn_box *bp)
 {
 	const struct eqn_box *child;
+	int delim;
+
+	/* Delimiters around this box? */
 
 	if ((bp->type == EQN_LIST && bp->expectargs > 1) ||
 	    (bp->type == EQN_PILE && (bp->prev || bp->next)) ||
-	    (bp->parent != NULL && bp->parent->pos == EQNPOS_SQRT)) {
+	    (bp->parent != NULL && (bp->parent->pos == EQNPOS_SQRT ||
+	    /* Diacritic followed by ^ or _. */
+	    ((bp->top != NULL || bp->bottom != NULL) &&
+	     bp->parent->type == EQN_SUBEXPR &&
+	     bp->parent->pos != EQNPOS_OVER && bp->next != NULL) ||
+	    /* Nested over, sub, sup, from, to. */
+	    (bp->type == EQN_SUBEXPR && bp->pos != EQNPOS_SQRT &&
+	     ((bp->parent->type == EQN_LIST && bp->expectargs == 1) ||
+	      (bp->parent->type == EQN_SUBEXPR &&
+	       bp->pos != EQNPOS_SQRT)))))) {
 		if (bp->parent->type == EQN_SUBEXPR && bp->prev != NULL)
 			p->flags |= TERMP_NOSPACE;
 		term_word(p, bp->left != NULL ? bp->left : "(");
 		p->flags |= TERMP_NOSPACE;
-	}
+		delim = 1;
+	} else
+		delim = 0;
+
+	/* Handle Fonts and text. */
+
 	if (bp->font != EQNFONT_NONE)
 		term_fontpush(p, fontmap[(int)bp->font]);
 
 	if (bp->text != NULL)
 		term_word(p, bp->text);
+
+	/* Special box types. */
 
 	if (bp->pos == EQNPOS_SQRT) {
 		term_word(p, "sqrt");
@@ -109,6 +128,8 @@ eqn_box(struct termp *p, const struct eqn_box *bp)
 		}
 	}
 
+	/* Handle Fonts and diacritics. */
+
 	if (bp->font != EQNFONT_NONE)
 		term_fontpop(p);
 	if (bp->top != NULL) {
@@ -119,9 +140,10 @@ eqn_box(struct termp *p, const struct eqn_box *bp)
 		p->flags |= TERMP_NOSPACE;
 		term_word(p, "_");
 	}
-	if ((bp->type == EQN_LIST && bp->expectargs > 1) ||
-	    (bp->type == EQN_PILE && (bp->prev || bp->next)) ||
-	    (bp->parent != NULL && bp->parent->pos == EQNPOS_SQRT)) {
+
+	/* Right delimiter after this box? */
+
+	if (delim) {
 		p->flags |= TERMP_NOSPACE;
 		term_word(p, bp->right != NULL ? bp->right : ")");
 		if (bp->parent->type == EQN_SUBEXPR && bp->next != NULL)

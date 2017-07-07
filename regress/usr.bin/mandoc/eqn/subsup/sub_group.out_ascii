@@ -4,6 +4,6 @@ NNAAMMEE
      ssuubbssuupp--ssuubb__ggrroouupp - grouping of subscripts
 
 DDEESSCCRRIIPPTTIIOONN
-     initial text _x__i + _x__j_1 + (_M__i)__j final text
+     initial text _x__i + _x_(_j_1) + (_M__i)__j final text
 
 OpenBSD                          July 4, 2017                          OpenBSD
