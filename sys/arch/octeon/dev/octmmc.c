@@ -1,7 +1,7 @@
-/*	$OpenBSD: octmmc.c,v 1.2 2017/04/06 15:29:47 visa Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.3 2017/07/07 14:49:04 visa Exp $	*/
 
 /*
- * Copyright (c) 2016 Visa Hankala
+ * Copyright (c) 2016, 2017 Visa Hankala
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -47,6 +47,9 @@
 #define OCTMMC_MAX_DMASEG		(1u << 18)
 #define OCTMMC_MAX_FREQ			52000		/* in kHz */
 #define OCTMMC_MAX_BUSES		4
+
+#define DEF_STS_MASK			0xe4390080ul
+#define PIO_STS_MASK			0x00b00000ul
 
 #define MMC_RD_8(sc, reg) \
 	bus_space_read_8((sc)->sc_iot, (sc)->sc_mmc_ioh, (reg))
@@ -106,6 +109,7 @@ void	 octmmc_exec_pio(struct octmmc_bus *, struct sdmmc_command *);
 void	 octmmc_acquire(struct octmmc_bus *);
 void	 octmmc_release(struct octmmc_bus *);
 
+uint64_t octmmc_crtype_fixup(struct sdmmc_command *);
 void	 octmmc_get_response(struct octmmc_softc *, struct sdmmc_command *);
 int	 octmmc_init_bus(struct octmmc_bus *);
 int	 octmmc_intr(void *);
@@ -352,8 +356,7 @@ octmmc_init_bus(struct octmmc_bus *bus)
 	    MIO_EMM_INT_CMD_ERR | MIO_EMM_INT_CMD_DONE |
 	    MIO_EMM_INT_DMA_ERR | MIO_EMM_INT_DMA_DONE);
 
-	/* Magic from Linux. */
-	MMC_WR_8(sc, MIO_EMM_STS_MASK, 0xe4390080ul);
+	MMC_WR_8(sc, MIO_EMM_STS_MASK, DEF_STS_MASK);
 
 	octmmc_release(bus);
 
@@ -492,16 +495,6 @@ octmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	struct octmmc_bus *bus = sch;
 
 	/*
-	 * Refuse SDIO setup. The controller cannot run SDIO commands
-	 * without tricks.
-	 */
-	if (cmd->c_opcode == SD_IO_SEND_OP_COND ||
-	    cmd->c_opcode == SD_IO_RW_DIRECT) {
-		cmd->c_error = ENOTSUP;
-		return;
-	}
-
-	/*
 	 * The DMA mode can only do data block transfers. Other commands have
 	 * to use the PIO mode. Single-block transfers can use PIO because
 	 * it has low setup overhead.
@@ -571,6 +564,9 @@ octmmc_exec_dma(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 		Octeon_lock_secondary_cache(curcpu(), locked_block,
 		    OCTMMC_BLOCK_SIZE);
 	}
+
+	/* Set status mask. */
+	MMC_WR_8(sc, MIO_EMM_STS_MASK, DEF_STS_MASK);
 
 	/* Set up the DMA engine. */
 	dmacfg = MIO_NDF_DMA_CFG_EN;
@@ -693,11 +689,15 @@ octmmc_exec_pio(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 		}
 	}
 
+	/* Set status mask. */
+	MMC_WR_8(sc, MIO_EMM_STS_MASK, PIO_STS_MASK);
+
 	/* Issue the command. */
 	piocmd = MIO_EMM_CMD_CMD_VAL;
 	piocmd |= (uint64_t)bus->bus_id << MIO_EMM_CMD_BUS_ID_SHIFT;
 	piocmd |= (uint64_t)cmd->c_opcode << MIO_EMM_CMD_CMD_IDX_SHIFT;
 	piocmd |= cmd->c_arg;
+	piocmd |= octmmc_crtype_fixup(cmd);
 	MMC_WR_8(sc, MIO_EMM_CMD, piocmd);
 
 	cmd->c_error = octmmc_wait_intr(sc, MIO_EMM_INT_CMD_DONE,
@@ -748,6 +748,45 @@ octmmc_exec_pio(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 pio_out:
 	octmmc_release(bus);
 	splx(s);
+}
+
+/*
+ * The controller uses MMC command and response types by default.
+ * When the command and response types of an SD opcode differ from those
+ * of an overlapping MMC opcode, it is necessary to fix the types.
+ * Fixing is also needed with a non-overlapping SD opcode when the command
+ * is a data transfer (adtc) or if a response is expected.
+ */
+uint64_t
+octmmc_crtype_fixup(struct sdmmc_command *cmd)
+{
+	uint64_t cxor = 0;
+	uint64_t rxor = 0;
+
+	switch (cmd->c_opcode) {
+	case SD_IO_SEND_OP_COND:
+		cxor = 0x00;
+		rxor = 0x02;
+		break;
+	case SD_SEND_IF_COND:
+		/* The opcode overlaps with MMC_SEND_EXT_CSD. */
+		if (SCF_CMD(cmd->c_flags) == SCF_CMD_BCR) {
+			cxor = 0x01;
+			rxor = 0x00;
+		}
+		break;
+	case SD_APP_OP_COND:
+		cxor = 0x00;
+		rxor = 0x03;
+		break;
+	case SD_IO_RW_DIRECT:
+	case SD_IO_RW_EXTENDED:
+		cxor = 0x00;
+		rxor = 0x01;
+		break;
+	}
+	return (cxor << MIO_EMM_CMD_CTYPE_XOR_SHIFT) |
+	    (rxor << MIO_EMM_CMD_RTYPE_XOR_SHIFT);
 }
 
 void
