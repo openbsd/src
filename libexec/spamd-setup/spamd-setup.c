@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.48 2016/01/04 09:15:24 mestre Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.49 2017/07/07 00:09:14 djm Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -26,11 +26,13 @@
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,6 +43,7 @@
 #define PATH_PFCTL		"/sbin/pfctl"
 #define PATH_SPAMD_CONF		"/etc/mail/spamd.conf"
 #define SPAMD_ARG_MAX		256 /* max # of args to an exec */
+#define SPAMD_USER		"_spamd"
 
 struct cidr {
 	u_int32_t addr;
@@ -69,7 +72,7 @@ struct cidr	*range2cidrlist(struct cidr *, u_int *, u_int *, u_int32_t,
 void		 cidr2range(struct cidr, u_int32_t *, u_int32_t *);
 char		*atop(u_int32_t);
 int		 parse_netblock(char *, struct bl *, struct bl *, int);
-int		 open_child(char *, char **);
+int		 open_child(char *, char **, int);
 int		 fileget(char *);
 int		 open_file(char *, char *);
 char		*fix_quoted_colons(char *);
@@ -82,6 +85,8 @@ int		 configure_pf(struct cidr *);
 int		 getlist(char **, char *, struct blacklist *, struct blacklist *);
 __dead void	 usage(void);
 
+uid_t		  spamd_uid;
+gid_t		  spamd_gid;
 int		  debug;
 int		  dryrun;
 int		  greyonly = 1;
@@ -241,8 +246,19 @@ parse_netblock(char *buf, struct bl *start, struct bl *end, int white)
 	return (1);
 }
 
+void
+drop_privileges(void)
+{
+	if (setgroups(1, &spamd_gid) != 0)
+		err(1, "setgroups %ld", (long)spamd_gid);
+	if (setresgid(spamd_gid, spamd_gid, spamd_gid) != 0)
+		err(1, "setresgid %ld", (long)spamd_gid);
+	if (setresuid(spamd_uid, spamd_uid, spamd_uid) != 0)
+		err(1, "setresuid %ld", (long)spamd_uid);
+}
+
 int
-open_child(char *file, char **argv)
+open_child(char *file, char **argv, int drop_privs)
 {
 	int pdes[2];
 
@@ -260,6 +276,9 @@ open_child(char *file, char **argv)
 			dup2(pdes[1], STDOUT_FILENO);
 			close(pdes[1]);
 		}
+		if (drop_privs)
+			drop_privileges();
+		closefrom(STDERR_FILENO + 1);
 		execvp(file, argv);
 		_exit(1);
 	}
@@ -284,7 +303,7 @@ fileget(char *url)
 	if (debug)
 		fprintf(stderr, "Getting %s\n", url);
 
-	return (open_child(PATH_FTP, argv));
+	return (open_child(PATH_FTP, argv, 1));
 }
 
 int
@@ -314,7 +333,7 @@ open_file(char *method, char *file)
 				ap++;
 		}
 		*ap = NULL;
-		i = open_child(argv[0], argv);
+		i = open_child(argv[0], argv, 0);
 		oerrno = errno;
 		free(argv);
 		errno = oerrno;
@@ -647,6 +666,7 @@ configure_pf(struct cidr *blacklists)
 				dup2(pdes[0], STDIN_FILENO);
 				close(pdes[0]);
 			}
+			closefrom(STDERR_FILENO + 1);
 			execvp(PATH_PFCTL, argv);
 			_exit(1);
 		}
@@ -800,6 +820,7 @@ main(int argc, char *argv[])
 	struct blacklist *blists;
 	struct servent *ent;
 	int daemonize = 0, ch;
+	struct passwd *pw;
 
 	while ((ch = getopt(argc, argv, "bdDn")) != -1) {
 		switch (ch) {
@@ -825,11 +846,18 @@ main(int argc, char *argv[])
 	if (argc != 0)
 		usage();
 
-	if (pledge("stdio rpath inet proc exec", NULL) == -1)
+	if ((pw = getpwnam(SPAMD_USER)) == NULL)
+		errx(1, "cannot find user %s", SPAMD_USER);
+	spamd_uid = pw->pw_uid;
+	spamd_gid = pw->pw_gid;
+
+	if (pledge("stdio rpath inet proc exec id", NULL) == -1)
 		err(1, "pledge");
 
 	if (daemonize)
 		daemon(0, 0);
+	else if (chdir("/") != 0)
+		err(1, "chdir(\"/\")");
 
 	if ((ent = getservbyname("spamd-cfg", "tcp")) == NULL)
 		errx(1, "cannot find service \"spamd-cfg\" in /etc/services");
