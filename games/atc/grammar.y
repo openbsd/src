@@ -1,4 +1,4 @@
-/*	$OpenBSD: grammar.y,v 1.10 2016/01/09 19:27:56 mestre Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.11 2017/07/07 12:41:59 espie Exp $	*/
 /*	$NetBSD: grammar.y,v 1.3 1995/03/21 15:03:59 cgd Exp $	*/
 
 /*-
@@ -60,7 +60,6 @@
 %{
 #include "def.h"
 #include "extern.h"
-#include "y.tab.h"
 
 int	errors = 0;
 int	line = 1;
