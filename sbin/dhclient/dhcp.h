@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.h,v 1.18 2015/10/26 16:32:33 krw Exp $	*/
+/*	$OpenBSD: dhcp.h,v 1.19 2017/07/07 16:58:45 krw Exp $	*/
 
 /* Protocol structures. */
 
@@ -182,6 +182,7 @@ struct dhcp_packet {
 #define DHO_CLASSLESS_MS_STATIC_ROUTES	249
 #define DHO_AUTOPROXY_SCRIPT		252
 #define DHO_END				255
+#define DHO_COUNT			256	/* # of DHCP options */
 
 /* DHCP message types. */
 #define DHCPDISCOVER	1

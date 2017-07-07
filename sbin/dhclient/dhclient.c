@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.458 2017/07/07 15:39:30 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.459 2017/07/07 16:58:45 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1197,7 +1197,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	}
 
 	/* Copy the lease options. */
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < DHO_COUNT; i++) {
 		if (options[i].len == 0)
 			continue;
 		if (!unknown_ok && strncmp("option-",
@@ -1520,7 +1520,7 @@ send_decline(struct interface_info *ifi)
 void
 make_discover(struct interface_info *ifi, struct client_lease *lease)
 {
-	struct option_data	 options[256];
+	struct option_data	 options[DHO_COUNT];
 	struct dhcp_packet	*packet = &ifi->sent_packet;
 	unsigned char		 discover = DHCPDISCOVER;
 	int			 i;
@@ -1548,7 +1548,7 @@ make_discover(struct interface_info *ifi, struct client_lease *lease)
 		ifi->requested_address.s_addr = INADDR_ANY;
 
 	/* Send any options requested in the config file. */
-	for (i = 0; i < 256; i++)
+	for (i = 0; i < DHO_COUNT; i++)
 		if (!options[i].data &&
 		    config->send_options[i].data) {
 			options[i].data = config->send_options[i].data;
@@ -1588,7 +1588,7 @@ make_discover(struct interface_info *ifi, struct client_lease *lease)
 void
 make_request(struct interface_info *ifi, struct client_lease * lease)
 {
-	struct option_data	 options[256];
+	struct option_data	 options[DHO_COUNT];
 	struct dhcp_packet	*packet = &ifi->sent_packet;
 	unsigned char		 request = DHCPREQUEST;
 	int			 i;
@@ -1625,7 +1625,7 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 	}
 
 	/* Send any options requested in the config file. */
-	for (i = 0; i < 256; i++)
+	for (i = 0; i < DHO_COUNT; i++)
 		if (!options[i].data && config->send_options[i].data) {
 			options[i].data = config->send_options[i].data;
 			options[i].len = config->send_options[i].len;
@@ -1674,7 +1674,7 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 void
 make_decline(struct interface_info *ifi, struct client_lease *lease)
 {
-	struct option_data	 options[256];
+	struct option_data	 options[DHO_COUNT];
 	struct dhcp_packet	*packet = &ifi->sent_packet;
 	unsigned char		 decline = DHCPDECLINE;
 	int			 i;
@@ -1747,7 +1747,7 @@ free_client_lease(struct client_lease *lease)
 	free(lease->server_name);
 	free(lease->filename);
 	free(lease->resolv_conf);
-	for (i = 0; i < 256; i++)
+	for (i = 0; i < DHO_COUNT; i++)
 		free(lease->options[i].data);
 
 	free(lease);
@@ -1876,7 +1876,7 @@ lease_as_string(char *name, char *type, struct client_lease *lease)
 		append_statement(string, sizeof(string), "  ssid ", buf);
 	}
 
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < DHO_COUNT; i++) {
 		opt = &lease->options[i];
 		if (opt->len == 0)
 			continue;
@@ -2182,7 +2182,7 @@ apply_defaults(struct client_lease *lease)
 	if (config->next_server.s_addr != INADDR_ANY)
 		newlease->next_server.s_addr = config->next_server.s_addr;
 
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < DHO_COUNT; i++) {
 		for (j = 0; j < config->ignored_option_count; j++) {
 			if (config->ignored_options[j] == i) {
 				free(newlease->options[i].data);
@@ -2324,7 +2324,7 @@ clone_lease(struct client_lease *oldlease)
 			goto cleanup;
 	}
 
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < DHO_COUNT; i++) {
 		if (oldlease->options[i].len == 0)
 			continue;
 		newlease->options[i].len = oldlease->options[i].len;
@@ -2355,7 +2355,7 @@ cleanup:
 void
 apply_ignore_list(char *ignore_list)
 {
-	u_int8_t list[256];
+	u_int8_t list[DHO_COUNT];
 	char *p;
 	int ix, i, j;
 
@@ -2480,7 +2480,7 @@ compare_lease(struct client_lease *active, struct client_lease *new)
 			return (1);
 	}
 
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < DHO_COUNT; i++) {
 		if (active->options[i].len != new->options[i].len)
 			return (1);
 		if (memcmp(active->options[i].data, new->options[i].data,

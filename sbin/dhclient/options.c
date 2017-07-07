@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.94 2017/07/07 14:53:07 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.95 2017/07/07 16:58:45 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -630,10 +630,10 @@ toobig:
 struct option_data *
 unpack_options(struct dhcp_packet *packet)
 {
-	static struct option_data options[256];
+	static struct option_data options[DHO_COUNT];
 	int i;
 
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < DHO_COUNT; i++) {
 		free(options[i].data);
 		options[i].data = NULL;
 		options[i].len = 0;

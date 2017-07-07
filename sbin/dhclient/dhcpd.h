@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.206 2017/07/07 15:14:47 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.207 2017/07/07 16:58:45 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -70,7 +70,7 @@ struct client_lease {
 	char			 ssid[32];
 	uint8_t			 ssid_len;
 	unsigned int		 is_static;
-	struct option_data	 options[256];
+	struct option_data	 options[DHO_COUNT];
 };
 #define BOOTP_LEASE(l)	((l)->options[DHO_DHCP_MESSAGE_TYPE].len == 0)
 
@@ -89,20 +89,20 @@ enum dhcp_state {
 TAILQ_HEAD(client_lease_tq, client_lease);
 
 struct client_config {
-	struct option_data	defaults[256];
+	struct option_data	defaults[DHO_COUNT];
 	enum {
 		ACTION_DEFAULT,
 		ACTION_SUPERSEDE,
 		ACTION_PREPEND,
 		ACTION_APPEND
-	} default_actions[256];
+	} default_actions[DHO_COUNT];
 
 	struct in_addr		 address;
 	struct in_addr		 next_server;
-	struct option_data	 send_options[256];
-	u_int8_t		 required_options[256];
-	u_int8_t		 requested_options[256];
-	u_int8_t		 ignored_options[256];
+	struct option_data	 send_options[DHO_COUNT];
+	u_int8_t		 required_options[DHO_COUNT];
+	u_int8_t		 requested_options[DHO_COUNT];
+	u_int8_t		 ignored_options[DHO_COUNT];
 	int			 requested_option_count;
 	int			 required_option_count;
 	int			 ignored_option_count;
@@ -214,7 +214,7 @@ void get_hw_address(struct interface_info *);
 void sendhup(void);
 
 /* tables.c */
-extern const struct option dhcp_options[256];
+extern const struct option dhcp_options[DHO_COUNT];
 
 /* dhclient.c */
 extern char *path_dhclient_conf;
