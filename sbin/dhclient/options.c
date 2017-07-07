@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.93 2017/07/06 16:56:52 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.94 2017/07/07 14:53:07 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -155,12 +155,12 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 }
 
 /*
- * Copy as many options as fit in buflen bytes of buf. Return the
+ * Pack as many options as fit in buflen bytes of buf. Return the
  * offset of the start of the last option copied. A caller can check
  * to see if it's DHO_END to decide if all the options were copied.
  */
 int
-cons_options(unsigned char *buf, int buflen, struct option_data *options)
+pack_options(unsigned char *buf, int buflen, struct option_data *options)
 {
 	int ix, incr, length, bufix, code, lastopt = -1;
 
@@ -627,100 +627,36 @@ toobig:
 	return (optbuf);
 }
 
-void
-do_packet(struct interface_info *ifi, unsigned int from_port,
-    struct in_addr from, struct ether_addr *hfrom)
+struct option_data *
+unpack_options(struct dhcp_packet *packet)
 {
-	struct dhcp_packet *packet = &ifi->recv_packet;
-	struct option_data options[256];
-	void (*handler)(struct interface_info *, struct option_data *, char *);
-	char *type, *info;
-	int i, rslt, options_valid = 1;
+	static struct option_data options[256];
+	int i;
 
-	memset(options, 0, sizeof(options));
+	for (i = 0; i < 256; i++) {
+		free(options[i].data);
+		options[i].data = NULL;
+		options[i].len = 0;
+	}
 
 	if (memcmp(&packet->options, DHCP_OPTIONS_COOKIE, 4) == 0) {
 		/* Parse the BOOTP/DHCP options field. */
-		options_valid = parse_option_buffer(options,
-		    &packet->options[4], sizeof(packet->options) - 4);
+		parse_option_buffer(options, &packet->options[4],
+		    sizeof(packet->options) - 4);
 
-		/* Only DHCP packets have overload areas for options. */
-		if (options_valid &&
-		    options[DHO_DHCP_MESSAGE_TYPE].data &&
+		/* DHCP packets can also use overload areas for options. */
+		if (options[DHO_DHCP_MESSAGE_TYPE].data &&
 		    options[DHO_DHCP_OPTION_OVERLOAD].data) {
 			if (options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)
-				options_valid = parse_option_buffer(options,
+				parse_option_buffer(options,
 				    (unsigned char *)packet->file,
 				    sizeof(packet->file));
-			if (options_valid &&
-			    options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)
-				options_valid = parse_option_buffer(options,
+			if (options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)
+				parse_option_buffer(options,
 				    (unsigned char *)packet->sname,
 				    sizeof(packet->sname));
 		}
-
-		/*
-		 * RFC 6842 says if the server sends a client identifier
-		 * that doesn't match then the packet must be dropped.
-		 */
-		i = DHO_DHCP_CLIENT_IDENTIFIER;
-		if ((options[i].len != 0) &&
-		    ((options[i].len != config->send_options[i].len) ||
-		    memcmp(options[i].data, config->send_options[i].data,
-		    options[i].len) != 0)) {
-#ifdef DEBUG
-			log_debug("Discarding packet with client-identifier "
-			    "'%s'", pretty_print_option(i, &options[i], 0));
-#endif	/* DEBUG */
-			goto done;
-		}
 	}
 
-	type = "<unknown>";
-	handler = NULL;
-
-	if (options[DHO_DHCP_MESSAGE_TYPE].data) {
-		/* Always try a DHCP packet, even if a bad option was seen. */
-		switch (options[DHO_DHCP_MESSAGE_TYPE].data[0]) {
-		case DHCPOFFER:
-			handler = dhcpoffer;
-			type = "DHCPOFFER";
-			break;
-		case DHCPNAK:
-			handler = dhcpnak;
-			type = "DHCPNACK";
-			break;
-		case DHCPACK:
-			handler = dhcpack;
-			type = "DHCPACK";
-			break;
-		default:
-#ifdef DEBUG
-			log_debug("Discarding DHCP packet of unknown type "
-			    "(%d)", options[DHO_DHCP_MESSAGE_TYPE].data[0]);
-#endif	/* DEBUG */
-			break;
-		}
-	} else if (options_valid && packet->op == BOOTREPLY) {
-		handler = dhcpoffer;
-		type = "BOOTREPLY";
-	} else {
-#ifdef DEBUG
-		log_debug("Discarding packet which is neither DHCP nor BOOTP");
-#endif	/* DEBUG */
-	}
-
-	rslt = asprintf(&info, "%s from %s (%s)", type, inet_ntoa(from),
-	    ether_ntoa(hfrom));
-	if (rslt == -1)
-		fatalx("no memory for info string");
-
-	if (handler)
-		(*handler)(ifi, options, info);
-
-	free(info);
-
-done:
-	for (i = 0; i < 256; i++)
-		free(options[i].data);
+	return options;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.131 2017/07/06 16:56:52 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.132 2017/07/07 14:53:07 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -205,7 +205,12 @@ packethandler(struct interface_info *ifi)
 	struct in_addr		 ifrom;
 	struct dhcp_packet	*packet = &ifi->recv_packet;
 	struct reject_elem	*ap;
+	struct option_data	*options;
+	char			*type, *info;
 	ssize_t			 result;
+	void			(*handler)(struct interface_info *,
+	    struct option_data *, char *);
+	int			 i, rslt;
 
 	if ((result = receive_packet(ifi, &from, &hfrom)) == -1) {
 		ifi->errors++;
@@ -256,7 +261,69 @@ packethandler(struct interface_info *ifi)
 		    return;
 	    }
 
-	do_packet(ifi, from.sin_port, ifrom, &hfrom);
+	options = unpack_options(&ifi->recv_packet);
+
+	/*
+	 * RFC 6842 says if the server sends a client identifier
+	 * that doesn't match then the packet must be dropped.
+	 */
+	i = DHO_DHCP_CLIENT_IDENTIFIER;
+	if ((options[i].len != 0) &&
+	    ((options[i].len != config->send_options[i].len) ||
+	    memcmp(options[i].data, config->send_options[i].data,
+	    options[i].len) != 0)) {
+#ifdef DEBUG
+		log_debug("Discarding packet with client-identifier "
+		    "'%s'", pretty_print_option(i, &options[i], 0));
+#endif	/* DEBUG */
+		return;
+	}
+
+	type = "<unknown>";
+	handler = NULL;
+
+	i = DHO_DHCP_MESSAGE_TYPE;
+	if (options[i].data != NULL) {
+		/* Always try a DHCP packet, even if a bad option was seen. */
+		switch (options[i].data[0]) {
+		case DHCPOFFER:
+			handler = dhcpoffer;
+			type = "DHCPOFFER";
+			break;
+		case DHCPNAK:
+			handler = dhcpnak;
+			type = "DHCPNACK";
+			break;
+		case DHCPACK:
+			handler = dhcpack;
+			type = "DHCPACK";
+			break;
+		default:
+#ifdef DEBUG
+			log_debug("Discarding DHCP packet of unknown type "
+			    "(%d)", options[i].data[0]);
+#endif	/* DEBUG */
+			return;
+		}
+	} else if (packet->op == BOOTREPLY) {
+		handler = dhcpoffer;
+		type = "BOOTREPLY";
+	} else {
+#ifdef DEBUG
+		log_debug("Discarding packet which is neither DHCP nor BOOTP");
+#endif	/* DEBUG */
+		return;
+	}
+
+	rslt = asprintf(&info, "%s from %s (%s)", type, inet_ntoa(ifrom),
+	    ether_ntoa(&hfrom));
+	if (rslt == -1)
+		fatalx("no memory for info string");
+
+	if (handler)
+		(*handler)(ifi, options, info);
+
+	free(info);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.456 2017/07/06 16:56:52 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.457 2017/07/07 14:53:06 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1560,7 +1560,7 @@ make_discover(struct interface_info *ifi, struct client_lease *lease)
 	 * RFC 791 says is the largest packet that *MUST* be accepted
 	 * by any host.
 	 */
-	i = cons_options(ifi->sent_packet.options, 576 - DHCP_FIXED_LEN,
+	i = pack_options(ifi->sent_packet.options, 576 - DHCP_FIXED_LEN,
 	    options);
 	if (i == -1 || packet->options[i] != DHO_END)
 		fatalx("options do not fit in DHCPDISCOVER packet.");
@@ -1636,7 +1636,7 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 	 * RFC 791 says is the largest packet that *MUST* be accepted
 	 * by any host.
 	 */
-	i = cons_options(ifi->sent_packet.options, 576 - DHCP_FIXED_LEN,
+	i = pack_options(ifi->sent_packet.options, 576 - DHCP_FIXED_LEN,
 	    options);
 	if (i == -1 || packet->options[i] != DHO_END)
 		fatalx("options do not fit in DHCPREQUEST packet.");
@@ -1709,7 +1709,7 @@ make_decline(struct interface_info *ifi, struct client_lease *lease)
 	 * RFC 791 says is the largest packet that *MUST* be accepted
 	 * by any host.
 	 */
-	i = cons_options(ifi->sent_packet.options, 576 - DHCP_FIXED_LEN,
+	i = pack_options(ifi->sent_packet.options, 576 - DHCP_FIXED_LEN,
 	    options);
 	if (i == -1 || packet->options[i] != DHO_END)
 		fatalx("options do not fit in DHCPDECLINE packet.");
