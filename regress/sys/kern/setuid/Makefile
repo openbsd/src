@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2016/11/28 22:27:10 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2017/07/07 23:15:27 bluhm Exp $
 
 MOUNT_NOSUID != mount | grep ^$$(df -P /tmp | tail -1 | awk '{ print $$1 }') |\
     grep nosuid || true
@@ -64,7 +64,7 @@ BINFILES+=	setgid_exec_inherit
 
 CLEANFILES+=	*.o ${BINFILES}
 
-.ifmake !clean && !cleandir && !depend && !obj
+.ifmake !clean && !cleandir && !obj
 DIR !!=		mktemp -d -t setuid-regress-XXXXXXXXXX
 .BEGIN:
 	@chmod 755 ${DIR}
