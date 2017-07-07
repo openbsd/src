@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.566 2017/07/04 22:21:31 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.567 2017/07/07 14:39:45 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2017 $
+.Dd $Mdocdate: July 7 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3596,6 +3596,7 @@ The following variables are available, where appropriate:
 .It Li "pane_left" Ta "" Ta "Left of pane"
 .It Li "pane_mode" Ta "" Ta "Name of pane mode, if any."
 .It Li "pane_pid" Ta "" Ta "PID of first process in pane"
+.It Li "pane_pipe" Ta "" Ta "1 if pane is being piped"
 .It Li "pane_right" Ta "" Ta "Right of pane"
 .It Li "pane_search_string" Ta "" Ta "Last search string in copy mode"
 .It Li "pane_start_command" Ta "" Ta "Command pane started with"
