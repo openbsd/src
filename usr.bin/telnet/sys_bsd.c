@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.32 2016/03/16 15:41:11 krw Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.33 2017/07/07 09:14:26 fcambus Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -123,28 +123,6 @@ TerminalSaveState(void)
     tcgetattr(0, &old_tc);
 
     new_tc = old_tc;
-
-#ifndef	VDISCARD
-    termFlushChar = CONTROL('O');
-#endif
-#ifndef	VWERASE
-    termWerasChar = CONTROL('W');
-#endif
-#ifndef	VREPRINT
-    termRprntChar = CONTROL('R');
-#endif
-#ifndef	VLNEXT
-    termLiteralNextChar = CONTROL('V');
-#endif
-#ifndef	VSTART
-    termStartChar = CONTROL('Q');
-#endif
-#ifndef	VSTOP
-    termStopChar = CONTROL('S');
-#endif
-#ifndef	VSTATUS
-    termAytChar = CONTROL('T');
-#endif
 }
 
 cc_t *
@@ -161,22 +139,11 @@ tcval(int func)
     case SLC_FORW1:	return(&termForw1Char);
     case SLC_FORW2:	return(&termForw2Char);
     case SLC_SUSP:	return(&termSuspChar);
-# ifdef	VDISCARD
     case SLC_AO:	return(&termFlushChar);
-# endif
-# ifdef	VWERASE
     case SLC_EW:	return(&termWerasChar);
-# endif
-# ifdef	VREPRINT
     case SLC_RP:	return(&termRprntChar);
-# endif
-# ifdef	VLNEXT
     case SLC_LNEXT:	return(&termLiteralNextChar);
-# endif
-# ifdef	VSTATUS
     case SLC_AYT:	return(&termAytChar);
-# endif
-
     case SLC_SYNCH:
     case SLC_BRK:
     case SLC_EOR:
@@ -189,27 +156,6 @@ void
 TerminalDefaultChars(void)
 {
     memcpy(new_tc.c_cc, old_tc.c_cc, sizeof(old_tc.c_cc));
-# ifndef	VDISCARD
-    termFlushChar = CONTROL('O');
-# endif
-# ifndef	VWERASE
-    termWerasChar = CONTROL('W');
-# endif
-# ifndef	VREPRINT
-    termRprntChar = CONTROL('R');
-# endif
-# ifndef	VLNEXT
-    termLiteralNextChar = CONTROL('V');
-# endif
-# ifndef	VSTART
-    termStartChar = CONTROL('Q');
-# endif
-# ifndef	VSTOP
-    termStopChar = CONTROL('S');
-# endif
-# ifndef	VSTATUS
-    termAytChar = CONTROL('T');
-# endif
 }
 
 /*

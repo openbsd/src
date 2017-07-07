@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.13 2014/07/22 07:30:24 jsg Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.14 2017/07/07 09:14:26 fcambus Exp $	*/
 /*	$NetBSD: terminal.c,v 1.5 1996/02/28 21:04:17 thorpej Exp $	*/
 
 /*
@@ -40,34 +40,6 @@ Ring		ttyoring, ttyiring;
 unsigned char	ttyobuf[2*BUFSIZ], ttyibuf[BUFSIZ];
 
 int termdata;			/* Debugging flag */
-
-# ifndef VDISCARD
-cc_t termFlushChar;
-# endif
-# ifndef VLNEXT
-cc_t termLiteralNextChar;
-# endif
-# ifndef VWERASE
-cc_t termWerasChar;
-# endif
-# ifndef VREPRINT
-cc_t termRprntChar;
-# endif
-# ifndef VSTART
-cc_t termStartChar;
-# endif
-# ifndef VSTOP
-cc_t termStopChar;
-# endif
-# ifndef VEOL
-cc_t termForw1Char;
-# endif
-# ifndef VEOL2
-cc_t termForw2Char;
-# endif
-# ifndef VSTATUS
-cc_t termAytChar;
-# endif
 
 /*
  * initialize the terminal data structures.

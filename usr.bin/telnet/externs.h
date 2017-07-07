@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.30 2015/11/24 05:06:24 beck Exp $	*/
+/*	$OpenBSD: externs.h,v 1.31 2017/07/07 09:14:26 fcambus Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -277,55 +277,15 @@ extern struct	termios new_tc;
 # define termKillChar		new_tc.c_cc[VKILL]
 # define termQuitChar		new_tc.c_cc[VQUIT]
 # define termSuspChar		new_tc.c_cc[VSUSP]
-
-# if	defined(VFLUSHO) && !defined(VDISCARD)
-#  define VDISCARD VFLUSHO
-# endif
-# ifndef	VDISCARD
-extern cc_t termFlushChar;
-# else
-#  define termFlushChar		new_tc.c_cc[VDISCARD]
-# endif
-# ifndef VWERASE
-extern cc_t termWerasChar;
-# else
-#  define termWerasChar		new_tc.c_cc[VWERASE]
-# endif
-# ifndef	VREPRINT
-extern cc_t termRprntChar;
-# else
-#  define termRprntChar		new_tc.c_cc[VREPRINT]
-# endif
-# ifndef	VLNEXT
-extern cc_t termLiteralNextChar;
-# else
-#  define termLiteralNextChar	new_tc.c_cc[VLNEXT]
-# endif
-# ifndef	VSTART
-extern cc_t termStartChar;
-# else
-#  define termStartChar		new_tc.c_cc[VSTART]
-# endif
-# ifndef	VSTOP
-extern cc_t termStopChar;
-# else
-#  define termStopChar		new_tc.c_cc[VSTOP]
-# endif
-# ifndef	VEOL
-extern cc_t termForw1Char;
-# else
-#  define termForw1Char		new_tc.c_cc[VEOL]
-# endif
-# ifndef	VEOL2
-extern cc_t termForw2Char;
-# else
-#  define termForw2Char		new_tc.c_cc[VEOL]
-# endif
-# ifndef	VSTATUS
-extern cc_t termAytChar;
-#else
-#  define termAytChar		new_tc.c_cc[VSTATUS]
-#endif
+# define termFlushChar		new_tc.c_cc[VDISCARD]
+# define termWerasChar		new_tc.c_cc[VWERASE]
+# define termRprntChar		new_tc.c_cc[VREPRINT]
+# define termLiteralNextChar	new_tc.c_cc[VLNEXT]
+# define termStartChar		new_tc.c_cc[VSTART]
+# define termStopChar		new_tc.c_cc[VSTOP]
+# define termForw1Char		new_tc.c_cc[VEOL]
+# define termForw2Char		new_tc.c_cc[VEOL]
+# define termAytChar		new_tc.c_cc[VSTATUS]
 
 /* Ring buffer structures which are shared */
 
