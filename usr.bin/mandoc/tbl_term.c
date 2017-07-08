@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.43 2017/06/27 18:23:29 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.44 2017/07/08 13:43:09 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2012,2014,2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -168,7 +168,8 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			if (dp == NULL)
 				continue;
 			spans = dp->spans;
-			dp = dp->next;
+			if (ic || sp->layout->first->pos != TBL_CELL_SPAN)
+				dp = dp->next;
 		}
 
 		/* Set up a column for a right vertical frame. */
@@ -202,7 +203,8 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			if (dp == NULL)
 				continue;
 			spans = dp->spans;
-			dp = dp->next;
+			if (cp->pos != TBL_CELL_SPAN)
+				dp = dp->next;
 		}
 		break;
 	}
@@ -302,7 +304,9 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 				}
 				if (dp != NULL) {
 					spans = dp->spans;
-					dp = dp->next;
+					if (ic || sp->layout->first->pos
+					    != TBL_CELL_SPAN)
+						dp = dp->next;
 				}
 
 				/*
@@ -512,14 +516,11 @@ tbl_data(struct termp *tp, const struct tbl_opts *opts,
 		break;
 	}
 
-	if (dp == NULL) {
-		tbl_char(tp, ASCII_NBRSP, col->width);
+	if (dp == NULL)
 		return;
-	}
 
 	switch (dp->pos) {
 	case TBL_DATA_NONE:
-		tbl_char(tp, ASCII_NBRSP, col->width);
 		return;
 	case TBL_DATA_HORIZ:
 	case TBL_DATA_NHORIZ:
@@ -544,7 +545,7 @@ tbl_data(struct termp *tp, const struct tbl_opts *opts,
 		tbl_number(tp, opts, dp, col);
 		break;
 	case TBL_CELL_DOWN:
-		tbl_char(tp, ASCII_NBRSP, col->width);
+	case TBL_CELL_SPAN:
 		break;
 	default:
 		abort();
