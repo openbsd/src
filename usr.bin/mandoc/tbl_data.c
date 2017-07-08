@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.31 2017/07/04 20:59:17 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.32 2017/07/08 17:52:42 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -126,7 +126,7 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		    tbl->parse, ln, sv, dat->string);
 }
 
-int
+void
 tbl_cdata(struct tbl_node *tbl, int ln, const char *p, int pos)
 {
 	struct tbl_dat	*dat;
@@ -141,10 +141,10 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p, int pos)
 			pos++;
 			while (p[pos] != '\0')
 				getdata(tbl, tbl->last_span, ln, p, &pos);
-			return 1;
+			return;
 		} else if (p[pos] == '\0') {
 			tbl->part = TBL_PART_DATA;
-			return 1;
+			return;
 		}
 
 		/* Fallthrough: T} is part of a word. */
@@ -164,8 +164,6 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p, int pos)
 	if (dat->layout->pos == TBL_CELL_DOWN)
 		mandoc_msg(MANDOCERR_TBLDATA_SPAN, tbl->parse,
 		    ln, pos, dat->string);
-
-	return 0;
 }
 
 static struct tbl_span *

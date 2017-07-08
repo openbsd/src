@@ -1,7 +1,7 @@
-/*	$OpenBSD: libroff.h,v 1.19 2017/07/08 14:51:01 schwarze Exp $ */
+/*	$OpenBSD: libroff.h,v 1.20 2017/07/08 17:52:42 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -65,13 +65,13 @@ struct tbl_node	*tbl_alloc(int, int, struct mparse *);
 void		 tbl_restart(int, int, struct tbl_node *);
 void		 tbl_free(struct tbl_node *);
 void		 tbl_reset(struct tbl_node *);
-enum rofferr	 tbl_read(struct tbl_node *, int, const char *, int);
+void		 tbl_read(struct tbl_node *, int, const char *, int);
 void		 tbl_option(struct tbl_node *, int, const char *, int *);
 void		 tbl_layout(struct tbl_node *, int, const char *, int);
 void		 tbl_data(struct tbl_node *, int, const char *, int);
-int		 tbl_cdata(struct tbl_node *, int, const char *, int);
+void		 tbl_cdata(struct tbl_node *, int, const char *, int);
 const struct tbl_span	*tbl_span(struct tbl_node *);
-int		 tbl_end(struct tbl_node **);
+int		 tbl_end(struct tbl_node *);
 struct eqn_node	*eqn_alloc(struct mparse *);
 void		 eqn_box_free(struct eqn_box *);
 void		 eqn_free(struct eqn_node *);
