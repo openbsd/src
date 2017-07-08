@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.37 2017/02/20 21:27:36 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.38 2017/07/08 15:45:11 florian Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -53,6 +53,10 @@ if [[ -z $DONEPROFILE ]]; then
 
 	# Create a fake rc that just returns 1 and throws us back.
 	echo ! : >/etc/rc
+
+	if [[ -x /sbin/slaacd ]]; then
+		/sbin/slaacd
+	fi
 
 	# Set up some sane defaults.
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'

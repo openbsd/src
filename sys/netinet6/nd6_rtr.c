@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.161 2017/06/09 12:56:44 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.162 2017/07/08 15:45:11 florian Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -282,9 +282,7 @@ nd6_rs_output(struct ifnet* ifp, struct in6_ifaddr *ia6)
 void
 nd6_rs_output_set_timo(int timeout)
 {
-#ifndef	SMALL_KERNEL
 	return;
-#endif	/* SMALL_KERNEL */
 	nd6_rs_output_timeout = timeout;
 	timeout_add_sec(&nd6_rs_output_timer, nd6_rs_output_timeout);
 }
@@ -384,9 +382,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	if (ifp == NULL)
 		goto freeit;
 
-#ifndef	SMALL_KERNEL
 	goto freeit;
-#endif	/* SMALL_KERNEL */
 
 	/* We accept RAs only if inet6 autoconf is enabled  */
 	if (!(ifp->if_xflags & IFXF_AUTOCONF6))
