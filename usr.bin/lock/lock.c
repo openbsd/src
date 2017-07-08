@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.36 2017/07/08 22:07:39 tedu Exp $	*/
+/*	$OpenBSD: lock.c,v 1.37 2017/07/08 22:14:48 tedu Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -64,9 +64,6 @@
 void bye(int);
 void hi(int);
 
-struct timeval	timeout;
-struct timeval	zerotime;
-time_t	nexttime;			/* keep the timeout time */
 int	no_timeout;			/* lock terminal forever */
 
 extern	char *__progname;
@@ -78,6 +75,7 @@ main(int argc, char *argv[])
 	char hostname[HOST_NAME_MAX+1], s[BUFSIZ], s1[BUFSIZ], date[256];
 	char *p, *style, *nstyle, *ttynam;
 	struct itimerval ntimer, otimer;
+	struct timeval timeout;
 	int ch, sectimeout, usemine, cnt, tries = 10, backoff = 3;
 	const char *errstr;
 	struct passwd *pw;
@@ -89,6 +87,7 @@ main(int argc, char *argv[])
 	style = NULL;
 	usemine = 0;
 	no_timeout = 0;
+	memset(&timeout, 0, sizeof(timeout));
 
 	if (pledge("stdio rpath wpath getpw tty proc exec", NULL) == -1)
 		err(1, "pledge");
@@ -144,7 +143,6 @@ main(int argc, char *argv[])
 	if (!(ttynam = ttyname(STDIN_FILENO)))
 		errx(1, "not a terminal?");
 	curtime = time(NULL);
-	nexttime = curtime + (sectimeout * 60);
 	timp = localtime(&curtime);
 	strftime(date, sizeof(date), "%c", timp);
 
@@ -171,7 +169,7 @@ main(int argc, char *argv[])
 	(void)signal(SIGTSTP, hi);
 	(void)signal(SIGALRM, bye);
 
-	ntimer.it_interval = zerotime;
+	memset(&ntimer, 0, sizeof(ntimer));
 	ntimer.it_value = timeout;
 	if (!no_timeout)
 		setitimer(ITIMER_REAL, &ntimer, &otimer);
