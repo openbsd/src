@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.12 2017/01/24 13:32:55 jsing Exp $ */
+/*	$Id: revokeproc.c,v 1.13 2017/07/08 13:37:23 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -164,7 +164,7 @@ revokeproc(int fd, const char *certdir, const char *certfile, int force,
 	/*
 	 * Next, the long process to make sure that the SAN entries
 	 * listed with the certificate fully cover those passed on the
-	 * comamnd line.
+	 * command line.
 	 */
 
 	extsz = x->cert_info->extensions != NULL ?
