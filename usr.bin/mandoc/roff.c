@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.191 2017/07/08 14:51:01 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.192 2017/07/08 15:28:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -2932,7 +2932,8 @@ roff_onearg(ROFF_ARGS)
 	int			 npos;
 
 	if (r->man->flags & (MAN_BLINE | MAN_ELINE) &&
-	    (tok == ROFF_sp || tok == ROFF_ti))
+	    (tok == ROFF_ce || tok == ROFF_rj || tok == ROFF_sp ||
+	     tok == ROFF_ti))
 		man_breakscope(r->man, tok);
 
 	if (roffce_node != NULL && (tok == ROFF_ce || tok == ROFF_rj)) {
