@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn_html.c,v 1.11 2017/07/05 15:03:20 schwarze Exp $ */
+/*	$OpenBSD: eqn_html.c,v 1.12 2017/07/08 14:51:01 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -225,14 +225,14 @@ out:
 }
 
 void
-print_eqn(struct html *p, const struct eqn *ep)
+print_eqn(struct html *p, const struct eqn_box *bp)
 {
 	struct tag	*t;
 
 	t = print_otag(p, TAG_MATH, "c", "eqn");
 
 	p->flags |= HTML_NONOSPACE;
-	eqn_box(p, ep->root);
+	eqn_box(p, bp);
 	p->flags &= ~HTML_NONOSPACE;
 
 	print_tagq(p, t);

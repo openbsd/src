@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.186 2017/07/07 19:39:17 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.187 2017/07/08 14:51:01 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -399,17 +399,6 @@ struct	eqn_box {
 	enum eqn_post	  pos; /* position of next box */
 	enum eqn_fontt	  font; /* font of box */
 	enum eqn_pilet	  pile; /* equation piling */
-};
-
-/*
- * An equation consists of a tree of expressions starting at a given
- * line and position.
- */
-struct	eqn {
-	char		 *name; /* identifier (or NULL) */
-	struct eqn_box	 *root; /* root mathematical expression */
-	int		  ln; /* invocation line */
-	int		  pos; /* invocation position */
 };
 
 /*

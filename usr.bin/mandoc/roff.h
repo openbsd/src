@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.39 2017/06/25 07:23:53 bentley Exp $	*/
+/*	$OpenBSD: roff.h,v 1.40 2017/07/08 14:51:01 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -499,7 +499,7 @@ struct	roff_node {
 	union mdoc_data	 *norm;    /* Normalized arguments. */
 	char		 *string;  /* TEXT */
 	const struct tbl_span *span; /* TBL */
-	const struct eqn *eqn;	   /* EQN */
+	struct eqn_box	 *eqn;     /* EQN */
 	int		  line;    /* Input file line number. */
 	int		  pos;     /* Input file column number. */
 	int		  flags;

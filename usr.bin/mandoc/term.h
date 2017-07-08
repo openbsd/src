@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.73 2017/06/17 14:55:02 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.74 2017/07/08 14:51:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -36,7 +36,7 @@ enum	termfont {
 	TERMFONT__MAX
 };
 
-struct	eqn;
+struct	eqn_box;
 struct	roff_meta;
 struct	roff_node;
 struct	tbl_span;
@@ -126,7 +126,7 @@ const char	 *ascii_uc2str(int);
 
 void		  roff_term_pre(struct termp *, const struct roff_node *);
 
-void		  term_eqn(struct termp *, const struct eqn *);
+void		  term_eqn(struct termp *, const struct eqn_box *);
 void		  term_tbl(struct termp *, const struct tbl_span *);
 void		  term_free(struct termp *);
 void		  term_setcol(struct termp *, size_t);

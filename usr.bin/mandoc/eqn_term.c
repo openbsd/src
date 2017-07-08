@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn_term.c,v 1.8 2017/07/07 19:06:15 schwarze Exp $ */
+/*	$OpenBSD: eqn_term.c,v 1.9 2017/07/08 14:51:01 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -38,10 +38,10 @@ static void	eqn_box(struct termp *, const struct eqn_box *);
 
 
 void
-term_eqn(struct termp *p, const struct eqn *ep)
+term_eqn(struct termp *p, const struct eqn_box *bp)
 {
 
-	eqn_box(p, ep->root);
+	eqn_box(p, bp);
 	p->flags &= ~TERMP_NOSPACE;
 }
 

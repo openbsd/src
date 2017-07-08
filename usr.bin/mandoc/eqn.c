@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.38 2017/07/07 17:15:21 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.39 2017/07/08 14:51:01 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -25,8 +25,9 @@
 #include <string.h>
 #include <time.h>
 
-#include "mandoc.h"
 #include "mandoc_aux.h"
+#include "mandoc.h"
+#include "roff.h"
 #include "libmandoc.h"
 #include "libroff.h"
 
@@ -282,76 +283,48 @@ enum	parse_mode {
 };
 
 static	struct eqn_box	*eqn_box_alloc(struct eqn_node *, struct eqn_box *);
-static	void		 eqn_box_free(struct eqn_box *);
 static	struct eqn_box	*eqn_box_makebinary(struct eqn_node *,
 				struct eqn_box *);
 static	void		 eqn_def(struct eqn_node *);
 static	struct eqn_def	*eqn_def_find(struct eqn_node *);
 static	void		 eqn_delim(struct eqn_node *);
 static	enum eqn_tok	 eqn_next(struct eqn_node *, enum parse_mode);
-static	enum rofferr	 eqn_parse(struct eqn_node *, struct eqn_box *);
 static	void		 eqn_undef(struct eqn_node *);
 
 
-enum rofferr
-eqn_read(struct eqn_node **epp, int ln,
-		const char *p, int pos, int *offs)
+struct eqn_node *
+eqn_alloc(struct mparse *parse)
 {
-	size_t		 sz;
-	struct eqn_node	*ep;
-	enum rofferr	 er;
+	struct eqn_node *ep;
 
-	ep = *epp;
-
-	/*
-	 * If we're the terminating mark, unset our equation status and
-	 * validate the full equation.
-	 */
-
-	if (0 == strncmp(p, ".EN", 3)) {
-		er = eqn_end(epp);
-		p += 3;
-		while (' ' == *p || '\t' == *p)
-			p++;
-		if ('\0' == *p)
-			return er;
-		mandoc_vmsg(MANDOCERR_ARG_SKIP, ep->parse,
-		    ln, pos, "EN %s", p);
-		return er;
-	}
-
-	/*
-	 * Build up the full string, replacing all newlines with regular
-	 * whitespace.
-	 */
-
-	sz = strlen(p + pos) + 1;
-	ep->data = mandoc_realloc(ep->data, ep->sz + sz + 1);
-
-	/* First invocation: nil terminate the string. */
-
-	if (0 == ep->sz)
-		*ep->data = '\0';
-
-	ep->sz += sz;
-	strlcat(ep->data, p + pos, ep->sz + 1);
-	strlcat(ep->data, " ", ep->sz + 1);
-	return ROFF_IGN;
+	ep = mandoc_calloc(1, sizeof(*ep));
+	ep->parse = parse;
+	ep->gsize = EQN_DEFSIZE;
+	return ep;
 }
 
-struct eqn_node *
-eqn_alloc(int pos, int line, struct mparse *parse)
+void
+eqn_reset(struct eqn_node *ep)
 {
-	struct eqn_node	*p;
+	free(ep->data);
+	ep->data = ep->start = ep->end = NULL;
+	ep->sz = ep->toksz = 0;
+}
 
-	p = mandoc_calloc(1, sizeof(struct eqn_node));
+void
+eqn_read(struct eqn_node *ep, const char *p)
+{
+	char		*cp;
 
-	p->parse = parse;
-	p->eqn.ln = line;
-	p->eqn.pos = pos;
-	p->gsize = EQN_DEFSIZE;
-
-	return p;
+	if (ep->data == NULL) {
+		ep->sz = strlen(p);
+		ep->data = mandoc_strdup(p);
+	} else {
+		ep->sz = mandoc_asprintf(&cp, "%s %s", ep->data, p);
+		free(ep->data);
+		ep->data = cp;
+	}
+	ep->sz += 1;
 }
 
 /*
@@ -425,7 +398,7 @@ eqn_next(struct eqn_node *ep, enum parse_mode mode)
 			ep->start++;  /* Skip opening quote. */
 			if (ep->end == NULL) {
 				mandoc_msg(MANDOCERR_ARG_QUOTE, ep->parse,
-				    ep->eqn.ln, ep->eqn.pos, NULL);
+				    ep->node->line, ep->node->pos, NULL);
 				ep->end = strchr(ep->start, '\0');
 			}
 		} else {
@@ -446,7 +419,7 @@ eqn_next(struct eqn_node *ep, enum parse_mode mode)
 			break;
 		if (++lim > EQN_NEST_MAX) {
 			mandoc_msg(MANDOCERR_ROFFLOOP, ep->parse,
-			    ep->eqn.ln, ep->eqn.pos, NULL);
+			    ep->node->line, ep->node->pos, NULL);
 			return EQN_TOK_EOF;
 		}
 
@@ -490,7 +463,7 @@ eqn_next(struct eqn_node *ep, enum parse_mode mode)
 	return EQN_TOK__MAX;
 }
 
-static void
+void
 eqn_box_free(struct eqn_box *bp)
 {
 
@@ -568,7 +541,7 @@ eqn_delim(struct eqn_node *ep)
 {
 	if (ep->end[0] == '\0' || ep->end[1] == '\0') {
 		mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
-		    ep->eqn.ln, ep->eqn.pos, "delim");
+		    ep->node->line, ep->node->pos, "delim");
 		if (ep->end[0] != '\0')
 			ep->end++;
 	} else if (strncmp(ep->end, "off", 3) == 0) {
@@ -595,7 +568,7 @@ eqn_undef(struct eqn_node *ep)
 
 	if (eqn_next(ep, MODE_NOSUB) == EQN_TOK_EOF) {
 		mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
-		    ep->eqn.ln, ep->eqn.pos, "undef");
+		    ep->node->line, ep->node->pos, "undef");
 		return;
 	}
 	if ((def = eqn_def_find(ep)) == NULL)
@@ -614,7 +587,7 @@ eqn_def(struct eqn_node *ep)
 
 	if (eqn_next(ep, MODE_NOSUB) == EQN_TOK_EOF) {
 		mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
-		    ep->eqn.ln, ep->eqn.pos, "define");
+		    ep->node->line, ep->node->pos, "define");
 		return;
 	}
 
@@ -643,7 +616,7 @@ eqn_def(struct eqn_node *ep)
 
 	if (eqn_next(ep, MODE_QUOTED) == EQN_TOK_EOF) {
 		mandoc_vmsg(MANDOCERR_REQ_EMPTY, ep->parse,
-		    ep->eqn.ln, ep->eqn.pos, "define %s", def->key);
+		    ep->node->line, ep->node->pos, "define %s", def->key);
 		free(def->key);
 		free(def->val);
 		def->key = def->val = NULL;
@@ -655,19 +628,17 @@ eqn_def(struct eqn_node *ep)
 	def->valsz = ep->toksz;
 }
 
-/*
- * Recursively parse an eqn(7) expression.
- */
-static enum rofferr
-eqn_parse(struct eqn_node *ep, struct eqn_box *parent)
+void
+eqn_parse(struct eqn_node *ep)
 {
-	struct eqn_box	*cur, *nbox, *split;
+	struct eqn_box	*cur, *nbox, *parent, *split;
 	const char	*cp, *cpn;
 	char		*p;
 	enum eqn_tok	 tok;
 	enum { CCL_LET, CCL_DIG, CCL_PUN } ccl, ccln;
 	int		 size;
 
+	parent = ep->node->eqn;
 	assert(parent != NULL);
 
 	/*
@@ -676,7 +647,7 @@ eqn_parse(struct eqn_node *ep, struct eqn_box *parent)
 	 */
 
 	if (ep->data == NULL)
-		return ROFF_IGN;
+		return;
 
 	ep->start = ep->end = ep->data + strspn(ep->data, " ^~");
 
@@ -694,7 +665,7 @@ next_tok:
 		if (eqn_next(ep, MODE_NOSUB) == EQN_TOK_EOF ||
 		    eqn_next(ep, MODE_QUOTED) == EQN_TOK_EOF)
 			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
-			    ep->eqn.ln, ep->eqn.pos, "tdefine");
+			    ep->node->line, ep->node->pos, "tdefine");
 		break;
 	case EQN_TOK_DELIM:
 		eqn_delim(ep);
@@ -702,7 +673,7 @@ next_tok:
 	case EQN_TOK_GFONT:
 		if (eqn_next(ep, MODE_SUB) == EQN_TOK_EOF)
 			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
-			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			    ep->node->line, ep->node->pos, eqn_toks[tok]);
 		break;
 	case EQN_TOK_MARK:
 	case EQN_TOK_LINEUP:
@@ -718,7 +689,7 @@ next_tok:
 	case EQN_TOK_DOTDOT:
 		if (parent->last == NULL) {
 			mandoc_msg(MANDOCERR_EQN_NOBOX, ep->parse,
-			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			    ep->node->line, ep->node->pos, eqn_toks[tok]);
 			cur = eqn_box_alloc(ep, parent);
 			cur->type = EQN_TEXT;
 			cur->text = mandoc_strdup("");
@@ -763,7 +734,7 @@ next_tok:
 	case EQN_TOK_UP:
 		if (eqn_next(ep, MODE_SUB) == EQN_TOK_EOF)
 			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
-			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			    ep->node->line, ep->node->pos, eqn_toks[tok]);
 		break;
 	case EQN_TOK_FAT:
 	case EQN_TOK_ROMAN:
@@ -801,13 +772,13 @@ next_tok:
 		/* Accept two values: integral size and a single. */
 		if (eqn_next(ep, MODE_SUB) == EQN_TOK_EOF) {
 			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
-			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			    ep->node->line, ep->node->pos, eqn_toks[tok]);
 			break;
 		}
 		size = mandoc_strntoi(ep->start, ep->toksz, 10);
 		if (-1 == size) {
 			mandoc_msg(MANDOCERR_IT_NONUM, ep->parse,
-			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			    ep->node->line, ep->node->pos, eqn_toks[tok]);
 			break;
 		}
 		if (EQN_TOK_GSIZE == tok) {
@@ -832,7 +803,7 @@ next_tok:
 		 */
 		if (parent->last == NULL) {
 			mandoc_msg(MANDOCERR_EQN_NOBOX, ep->parse,
-			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			    ep->node->line, ep->node->pos, eqn_toks[tok]);
 			cur = eqn_box_alloc(ep, parent);
 			cur->type = EQN_TEXT;
 			cur->text = mandoc_strdup("");
@@ -899,7 +870,7 @@ next_tok:
 		 */
 		if (parent->last == NULL) {
 			mandoc_msg(MANDOCERR_EQN_NOBOX, ep->parse,
-			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			    ep->node->line, ep->node->pos, eqn_toks[tok]);
 			cur = eqn_box_alloc(ep, parent);
 			cur->type = EQN_TEXT;
 			cur->text = mandoc_strdup("");
@@ -926,15 +897,15 @@ next_tok:
 				break;
 		if (cur == NULL) {
 			mandoc_msg(MANDOCERR_BLK_NOTOPEN, ep->parse,
-			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			    ep->node->line, ep->node->pos, eqn_toks[tok]);
 			break;
 		}
 		parent = cur;
 		if (EQN_TOK_RIGHT == tok) {
 			if (eqn_next(ep, MODE_SUB) == EQN_TOK_EOF) {
 				mandoc_msg(MANDOCERR_REQ_EMPTY,
-				    ep->parse, ep->eqn.ln,
-				    ep->eqn.pos, eqn_toks[tok]);
+				    ep->parse, ep->node->line,
+				    ep->node->pos, eqn_toks[tok]);
 				break;
 			}
 			/* Handling depends on right/left. */
@@ -969,7 +940,7 @@ next_tok:
 		if (EQN_TOK_LEFT == tok &&
 		    eqn_next(ep, MODE_SUB) == EQN_TOK_EOF) {
 			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
-			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			    ep->node->line, ep->node->pos, eqn_toks[tok]);
 			break;
 		}
 		parent = eqn_box_alloc(ep, parent);
@@ -1003,7 +974,7 @@ next_tok:
 				break;
 		if (cur == NULL) {
 			mandoc_msg(MANDOCERR_IT_STRAY, ep->parse,
-			    ep->eqn.ln, ep->eqn.pos, eqn_toks[tok]);
+			    ep->node->line, ep->node->pos, eqn_toks[tok]);
 			break;
 		}
 		parent = eqn_box_alloc(ep, cur);
@@ -1017,11 +988,7 @@ next_tok:
 		parent->expectargs = 1;
 		break;
 	case EQN_TOK_EOF:
-		/*
-		 * End of file!
-		 * TODO: make sure we're not in an open subexpression.
-		 */
-		return ROFF_EQN;
+		return;
 	case EQN_TOK__MAX:
 	case EQN_TOK_FUNC:
 	case EQN_TOK_QUOTED:
@@ -1118,25 +1085,10 @@ next_tok:
 	goto next_tok;
 }
 
-enum rofferr
-eqn_end(struct eqn_node **epp)
-{
-	struct eqn_node	*ep;
-
-	ep = *epp;
-	*epp = NULL;
-
-	ep->eqn.root = mandoc_calloc(1, sizeof(struct eqn_box));
-	ep->eqn.root->expectargs = UINT_MAX;
-	return eqn_parse(ep, ep->eqn.root);
-}
-
 void
 eqn_free(struct eqn_node *p)
 {
 	int		 i;
-
-	eqn_box_free(p->eqn.root);
 
 	for (i = 0; i < (int)p->defsz; i++) {
 		free(p->defs[i].key);

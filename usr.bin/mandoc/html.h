@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.48 2017/06/23 02:31:39 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.49 2017/07/08 14:51:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -115,7 +115,7 @@ struct	html {
 
 struct	roff_node;
 struct	tbl_span;
-struct	eqn;
+struct	eqn_box;
 
 void		  roff_html_pre(struct html *, const struct roff_node *);
 
@@ -127,7 +127,7 @@ void		  print_stagq(struct html *, const struct tag *);
 void		  print_text(struct html *, const char *);
 void		  print_tblclose(struct html *);
 void		  print_tbl(struct html *, const struct tbl_span *);
-void		  print_eqn(struct html *, const struct eqn *);
+void		  print_eqn(struct html *, const struct eqn_box *);
 void		  print_paragraph(struct html *);
 void		  print_endline(struct html *);
 

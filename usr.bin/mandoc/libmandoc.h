@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmandoc.h,v 1.53 2017/06/11 19:36:31 schwarze Exp $ */
+/*	$OpenBSD: libmandoc.h,v 1.54 2017/07/08 14:51:01 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,7 +24,6 @@ enum	rofferr {
 	ROFF_SO, /* include another file */
 	ROFF_IGN, /* ignore current line */
 	ROFF_TBL, /* a table row was successfully parsed */
-	ROFF_EQN /* an equation was successfully parsed */
 };
 
 struct	buf {
@@ -35,7 +34,6 @@ struct	buf {
 
 struct	mparse;
 struct	tbl_span;
-struct	eqn;
 struct	roff;
 struct	roff_man;
 
@@ -77,4 +75,3 @@ int		 roff_getcontrol(const struct roff *,
 int		 roff_getformat(const struct roff *);
 
 const struct tbl_span	*roff_span(const struct roff *);
-const struct eqn	*roff_eqn(const struct roff *);
