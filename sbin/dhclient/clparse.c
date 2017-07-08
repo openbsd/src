@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.116 2017/07/07 16:58:45 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.117 2017/07/08 00:36:10 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -61,8 +61,8 @@
 #include "log.h"
 
 void parse_client_statement(FILE *, char *);
-int parse_X(FILE *, u_int8_t *, int);
-int parse_option_list(FILE *, u_int8_t *, size_t);
+int parse_X(FILE *, uint8_t *, int);
+int parse_option_list(FILE *, uint8_t *, size_t);
 void parse_interface_declaration(FILE *, char *);
 struct client_lease *parse_client_lease_statement(FILE *, char *);
 void parse_client_lease_declaration(FILE *, struct client_lease *, char *);
@@ -220,7 +220,7 @@ read_client_leases(char *name, struct client_lease_tq *tq)
 void
 parse_client_statement(FILE *cfile, char *name)
 {
-	u_int8_t	 optlist[DHO_COUNT];
+	uint8_t		 optlist[DHO_COUNT];
 	char		*string;
 	int		 code, count, token;
 
@@ -334,7 +334,7 @@ parse_client_statement(FILE *cfile, char *name)
 }
 
 int
-parse_X(FILE *cfile, u_int8_t *buf, int max)
+parse_X(FILE *cfile, uint8_t *buf, int max)
 {
 	int	 token;
 	char	*val;
@@ -385,7 +385,7 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
  *		   option_list COMMA option_name
  */
 int
-parse_option_list(FILE *cfile, u_int8_t *list, size_t sz)
+parse_option_list(FILE *cfile, uint8_t *list, size_t sz)
 {
 	unsigned int	 ix, j;
 	int		 i;
@@ -618,13 +618,13 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 {
 	char		*val;
 	int		 token;
-	u_int8_t	 buf[4];
-	u_int8_t	 cidr[5];
-	u_int8_t	 hunkbuf[1024];
+	uint8_t		 buf[4];
+	uint8_t		 cidr[5];
+	uint8_t		 hunkbuf[1024];
 	unsigned int	 hunkix = 0;
 	char		*fmt;
 	struct in_addr	 ip_addr;
-	u_int8_t	*dp;
+	uint8_t		*dp;
 	int		 len, code;
 	int		 nul_term = 0;
 
@@ -680,7 +680,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				if (!parse_ip_addr(cfile, &ip_addr))
 					return (-1);
 				len = sizeof(ip_addr);
-				dp = (u_int8_t *)&ip_addr;
+				dp = (uint8_t *)&ip_addr;
 alloc:
 				if (hunkix + len > sizeof(hunkbuf)) {
 					parse_warn("option data buffer "

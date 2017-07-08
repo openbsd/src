@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.95 2017/07/07 16:58:45 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.96 2017/07/08 00:36:10 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -414,19 +414,20 @@ char *
 pretty_print_option(unsigned int code, struct option_data *option,
     int emit_punct)
 {
-	static char optbuf[8192]; /* XXX */
-	int hunksize = 0, numhunk = -1, numelem = 0;
-	char fmtbuf[32], *op = optbuf, *buf;
-	int i, j, k, opleft = sizeof(optbuf);
-	unsigned char *data = option->data;
-	unsigned char *dp = data;
-	int len = option->len;
-	int opcount = 0;
-	struct in_addr foo;
-	char comma;
-	int32_t int32val;
-	u_int32_t uint32val;
-	u_int16_t uint16val;
+	static char	 optbuf[8192]; /* XXX */
+	char		 fmtbuf[32];
+	struct in_addr	 foo;
+	unsigned char	*data = option->data;
+	unsigned char	*dp = data;
+	char		*op = optbuf, *buf;
+	int		 hunksize = 0, numhunk = -1, numelem = 0;
+	int		 i, j, k, opleft = sizeof(optbuf);
+	int		 len = option->len;
+	int		 opcount = 0;
+	int32_t		 int32val;
+	uint32_t	 uint32val;
+	uint16_t	 uint16val;
+	char		 comma;
 
 	memset(optbuf, 0, sizeof(optbuf));
 

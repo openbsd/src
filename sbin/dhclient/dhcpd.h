@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.207 2017/07/07 16:58:45 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.208 2017/07/08 00:36:10 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -51,7 +51,7 @@ struct option {
 
 struct option_data {
 	unsigned int	 len;
-	u_int8_t	*data;
+	uint8_t		*data;
 };
 
 struct reject_elem {
@@ -100,9 +100,9 @@ struct client_config {
 	struct in_addr		 address;
 	struct in_addr		 next_server;
 	struct option_data	 send_options[DHO_COUNT];
-	u_int8_t		 required_options[DHO_COUNT];
-	u_int8_t		 requested_options[DHO_COUNT];
-	u_int8_t		 ignored_options[DHO_COUNT];
+	uint8_t			 required_options[DHO_COUNT];
+	uint8_t			 requested_options[DHO_COUNT];
+	uint8_t			 ignored_options[DHO_COUNT];
 	int			 requested_option_count;
 	int			 required_option_count;
 	int			 ignored_option_count;
@@ -133,7 +133,7 @@ struct interface_info {
 	size_t			 rbuf_offset;
 	size_t			 rbuf_len;
 	int			 errors;
-	u_int16_t		 index;
+	uint16_t		 index;
 	int			 linkstat;
 	int			 rdomain;
 	int			 flags;
@@ -143,10 +143,10 @@ struct interface_info {
 	struct dhcp_packet	 recv_packet;
 	struct dhcp_packet	 sent_packet;
 	int			 sent_packet_length;
-	u_int32_t		 xid;
+	uint32_t		 xid;
 	time_t			 timeout;
 	void			(*timeout_func)(struct interface_info *);
-	u_int16_t		 secs;
+	uint16_t		 secs;
 	time_t			 first_sending;
 	time_t			 startup_time;
 	enum dhcp_state		 state;
@@ -230,10 +230,10 @@ void routehandler(struct interface_info *, int);
 
 /* packet.c */
 void assemble_eh_header(struct ether_addr, struct ether_header *);
-ssize_t decode_hw_header(unsigned char *, u_int32_t, struct ether_addr *);
-ssize_t decode_udp_ip_header(unsigned char *, u_int32_t, struct sockaddr_in *);
-u_int32_t checksum(unsigned char *, u_int32_t, u_int32_t);
-u_int32_t wrapsum(u_int32_t);
+ssize_t decode_hw_header(unsigned char *, uint32_t, struct ether_addr *);
+ssize_t decode_udp_ip_header(unsigned char *, uint32_t, struct sockaddr_in *);
+uint32_t checksum(unsigned char *, uint32_t, uint32_t);
+uint32_t wrapsum(uint32_t);
 
 /* clparse.c */
 void read_client_conf(char *);

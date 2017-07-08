@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.36 2017/07/07 15:14:47 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.37 2017/07/08 00:36:10 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -59,14 +59,14 @@
 #include "dhcpd.h"
 #include "log.h"
 
-u_int32_t
-checksum(unsigned char *buf, u_int32_t nbytes, u_int32_t sum)
+uint32_t
+checksum(unsigned char *buf, uint32_t nbytes, uint32_t sum)
 {
 	unsigned int i;
 
 	/* Checksum all the pairs of bytes first. */
 	for (i = 0; i < (nbytes & ~1U); i += 2) {
-		sum += (u_int16_t)ntohs(*((u_int16_t *)(buf + i)));
+		sum += (uint16_t)ntohs(*((uint16_t *)(buf + i)));
 		if (sum > 0xFFFF)
 			sum -= 0xFFFF;
 	}
@@ -85,8 +85,8 @@ checksum(unsigned char *buf, u_int32_t nbytes, u_int32_t sum)
 	return (sum);
 }
 
-u_int32_t
-wrapsum(u_int32_t sum)
+uint32_t
+wrapsum(uint32_t sum)
 {
 	sum = ~sum & 0xFFFF;
 	return (htons(sum));
@@ -104,7 +104,7 @@ assemble_eh_header(struct ether_addr shost, struct ether_header *eh)
 }
 
 ssize_t
-decode_hw_header(unsigned char *buf, u_int32_t buflen, struct ether_addr *from)
+decode_hw_header(unsigned char *buf, uint32_t buflen, struct ether_addr *from)
 {
 	struct ether_header eh;
 
@@ -119,21 +119,21 @@ decode_hw_header(unsigned char *buf, u_int32_t buflen, struct ether_addr *from)
 }
 
 ssize_t
-decode_udp_ip_header(unsigned char *buf, u_int32_t buflen,
+decode_udp_ip_header(unsigned char *buf, uint32_t buflen,
     struct sockaddr_in *from)
 {
-	struct ip *ip;
-	struct udphdr *udp;
-	unsigned char *data;
-	u_int32_t ip_len;
-	u_int32_t sum, usum;
-	static int ip_packets_seen;
-	static int ip_packets_bad_checksum;
-	static int udp_packets_seen;
-	static int udp_packets_bad_checksum;
-	static int udp_packets_length_checked;
-	static int udp_packets_length_overflow;
-	int len;
+	static int	 ip_packets_seen;
+	static int	 ip_packets_bad_checksum;
+	static int	 udp_packets_seen;
+	static int	 udp_packets_bad_checksum;
+	static int	 udp_packets_length_checked;
+	static int	 udp_packets_length_overflow;
+	struct ip	*ip;
+	struct udphdr	*udp;
+	unsigned char	*data;
+	int		 len;
+	uint32_t	 ip_len;
+	uint32_t	 sum, usum;
 
 	/* Assure that an entire IP header is within the buffer. */
 	if (sizeof(*ip) > buflen)
@@ -211,7 +211,7 @@ decode_udp_ip_header(unsigned char *buf, u_int32_t buflen,
 	sum = wrapsum(checksum((unsigned char *)udp, sizeof(*udp),
 	    checksum(data, len, checksum((unsigned char *)&ip->ip_src,
 	    2 * sizeof(ip->ip_src),
-	    IPPROTO_UDP + (u_int32_t)ntohs(udp->uh_ulen)))));
+	    IPPROTO_UDP + (uint32_t)ntohs(udp->uh_ulen)))));
 
 	udp_packets_seen++;
 	if (usum && usum != sum) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.459 2017/07/07 16:58:45 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.460 2017/07/08 00:36:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1022,8 +1022,8 @@ bind_lease(struct interface_info *ifi)
 	flush_routes();
 
 	opt = &options[DHO_INTERFACE_MTU];
-	if (opt->len == sizeof(u_int16_t)) {
-		u_int16_t mtu;
+	if (opt->len == sizeof(uint16_t)) {
+		uint16_t mtu;
 		memcpy(&mtu, opt->data, sizeof(mtu));
 		mtu = ntohs(mtu);
 		/* "The minimum legal value for the MTU is 68." */
@@ -2355,9 +2355,9 @@ cleanup:
 void
 apply_ignore_list(char *ignore_list)
 {
-	u_int8_t list[DHO_COUNT];
-	char *p;
-	int ix, i, j;
+	uint8_t	 list[DHO_COUNT];
+	char	*p;
+	int	 ix, i, j;
 
 	memset(list, 0, sizeof(list));
 	ix = 0;
@@ -2390,8 +2390,8 @@ apply_ignore_list(char *ignore_list)
 void
 set_lease_times(struct client_lease *lease)
 {
-	time_t cur_time, time_max;
-	u_int32_t uint32val;
+	time_t		 cur_time, time_max;
+	uint32_t	 uint32val;
 
 	time(&cur_time);
 

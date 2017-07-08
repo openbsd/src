@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.56 2017/07/07 15:14:47 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.57 2017/07/08 00:36:10 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -136,7 +136,7 @@ struct bpf_insn dhcp_bpf_filter[] = {
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 67, 0, 1),		/* patch */
 
 	/* If we passed all the tests, ask for the whole packet. */
-	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
+	BPF_STMT(BPF_RET+BPF_K, (unsigned int)-1),
 
 	/* Otherwise, drop it. */
 	BPF_STMT(BPF_RET+BPF_K, 0),
@@ -176,7 +176,7 @@ struct bpf_insn dhcp_bpf_wfilter[] = {
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 67, 0, 1),
 
 	/* If we passed all the tests, ask for the whole packet. */
-	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
+	BPF_STMT(BPF_RET+BPF_K, (unsigned int)-1),
 
 	/* Otherwise, drop it. */
 	BPF_STMT(BPF_RET+BPF_K, 0),
@@ -302,7 +302,7 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to)
 	    checksum((unsigned char *)packet, len,
 	    checksum((unsigned char *)&ip.ip_src,
 	    2 * sizeof(ip.ip_src),
-	    IPPROTO_UDP + (u_int32_t)ntohs(udp.uh_ulen)))));
+	    IPPROTO_UDP + (uint32_t)ntohs(udp.uh_ulen)))));
 	iov[iovcnt].iov_base = &udp;
 	iov[iovcnt].iov_len = sizeof(udp);
 	iovcnt++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.102 2017/07/02 09:11:13 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.103 2017/07/08 00:36:10 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -709,7 +709,7 @@ priv_add_address(char *name, int ioctlfd, struct imsg_add_address *imsg)
  * [priv_]write_resolv_conf write out a new resolv.conf.
  */
 void
-write_resolv_conf(u_int8_t *contents, size_t sz)
+write_resolv_conf(uint8_t *contents, size_t sz)
 {
 	int rslt;
 
@@ -722,11 +722,11 @@ write_resolv_conf(u_int8_t *contents, size_t sz)
 }
 
 void
-priv_write_resolv_conf(u_int8_t *contents, size_t sz)
+priv_write_resolv_conf(uint8_t *contents, size_t sz)
 {
-	const char *path = "/etc/resolv.conf";
-	ssize_t n;
-	int fd;
+	const char	*path = "/etc/resolv.conf";
+	ssize_t		 n;
+	int		 fd;
 
 	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
