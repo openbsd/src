@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.222 2017/07/08 16:21:51 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.223 2017/07/08 16:22:29 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -573,7 +573,7 @@ main(int argc, char *argv[])
 
 	if (v6flag) {
 		/* in F_VERBOSE case, we may get non-echoreply packets*/
-		if (options & F_VERBOSE && datalen < 2048) /* XXX 2048? */
+		if ((options & F_VERBOSE) && datalen < 2048) /* XXX 2048? */
 			packlen = 2048 + IP6LEN + ECHOLEN + EXTRA;
 		else
 			packlen = datalen + IP6LEN + ECHOLEN + EXTRA;
@@ -696,7 +696,7 @@ main(int argc, char *argv[])
 				options |= F_HDRINCL;
 		}
 
-		if (options & F_RROUTE && options & F_HDRINCL)
+		if ((options & F_RROUTE) && (options & F_HDRINCL))
 			errx(1, "-R option and -D or -T, or -t to unicast"
 			    " destinations are incompatible");
 
@@ -1092,7 +1092,7 @@ pinger(int s)
 			warn("sendmsg");
 		printf("ping: wrote %s %d chars, ret=%d\n", hostname, cc, i);
 	}
-	if (!(options & F_QUIET) && options & F_FLOOD)
+	if (!(options & F_QUIET) && (options & F_FLOOD))
 		write(STDOUT_FILENO, &DOT, 1);
 
 	return (0);
