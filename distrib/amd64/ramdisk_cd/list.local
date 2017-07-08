@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.28 2016/12/30 22:32:25 deraadt Exp $
+# $OpenBSD: list.local,v 1.29 2017/07/08 15:42:46 florian Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					sbin/dhclient
@@ -9,6 +9,7 @@ LINK	instbin					sbin/mount_msdos
 LINK	instbin					sbin/mount_udf
 LINK	instbin					sbin/newfs_msdos
 LINK	instbin					sbin/fsck_msdos
+LINK	instbin					sbin/slaacd
 
 COPY	${DESTDIR}/etc/ssl/cert.pem		etc/ssl/cert.pem
 LINK	instbin					usr/bin/ftp-ssl usr/bin/ftp

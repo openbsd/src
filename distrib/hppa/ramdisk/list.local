@@ -1,10 +1,11 @@
-#	$OpenBSD: list.local,v 1.4 2016/09/04 09:54:22 rpe Exp $
+#	$OpenBSD: list.local,v 1.5 2017/07/08 15:42:46 florian Exp $
 
 # hppa extra's
 LINK	instbin					sbin/disklabel
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/more usr/bin/less
 LINK	instbin					sbin/bioctl
+LINK	instbin					sbin/slaacd
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.21 2016/09/17 15:03:39 florian Exp $
+#	$OpenBSD: list,v 1.22 2017/07/08 15:42:47 florian Exp $
 
 SRCDIRS distrib/special
 
@@ -47,6 +47,7 @@ LINK	instbin					sbin/newfs_msdos
 LINK	instbin					sbin/ping sbin/ping6
 LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/route
+LINK	instbin					sbin/slaacd
 LINK	instbin					sbin/sysctl
 LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/doas
