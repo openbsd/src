@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.37 2017/07/08 22:14:48 tedu Exp $	*/
+/*	$OpenBSD: lock.c,v 1.38 2017/07/08 22:19:23 tedu Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -73,6 +73,7 @@ int
 main(int argc, char *argv[])
 {
 	char hostname[HOST_NAME_MAX+1], s[BUFSIZ], s1[BUFSIZ], date[256];
+	char hash[_PASSWORD_LEN];
 	char *p, *style, *nstyle, *ttynam;
 	struct itimerval ntimer, otimer;
 	struct timeval timeout;
@@ -160,7 +161,9 @@ main(int argc, char *argv[])
 			warnx("\apasswords didn't match.");
 			exit(1);
 		}
+		crypt_newhash(s, "bcrypt", hash, sizeof(hash));
 		explicit_bzero(s, sizeof(s));
+		explicit_bzero(s1, sizeof(s1));
 	}
 
 	/* set signal handlers */
@@ -209,7 +212,7 @@ main(int argc, char *argv[])
 				explicit_bzero(s, sizeof(s));
 				break;
 			}
-		} else if (strcmp(s, s1) == 0) {
+		} else if (crypt_checkpass(s, hash) == 0) {
 			explicit_bzero(s, sizeof(s));
 			explicit_bzero(s1, sizeof(s1));
 			break;
