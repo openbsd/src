@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.35 2017/07/08 22:01:09 tedu Exp $	*/
+/*	$OpenBSD: lock.c,v 1.36 2017/07/08 22:07:39 tedu Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -234,19 +234,16 @@ main(int argc, char *argv[])
 void
 hi(int signo)
 {
-	char buf[1024], buf2[1024];
-	time_t left;
+	struct itimerval left;
 
-	if (no_timeout)
-		buf2[0] = '\0';
-	else {
-		left = nexttime - time(NULL);
-		(void)snprintf(buf2, sizeof buf2, " timeout in %lld:%d minutes",
-		    (long long)(left / 60), (int)(left % 60));
+	(void)dprintf(STDERR_FILENO, "%s: type in the unlock key.", __progname);
+	if (!no_timeout) {
+		(void)getitimer(ITIMER_REAL, &left);
+		(void)dprintf(STDERR_FILENO, " timeout in %lld:%02d minutes",
+		    (long long)(left.it_value.tv_sec / 60),
+		    (int)(left.it_value.tv_sec % 60));
 	}
-	(void)snprintf(buf, sizeof buf, "%s: type in the unlock key.%s\n",
-	    __progname, buf2);
-	(void) write(STDERR_FILENO, buf, strlen(buf));
+	(void)dprintf(STDERR_FILENO, "\n");
 }
 
 /*ARGSUSED*/
