@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet_addr.3,v 1.1 2014/04/19 11:18:01 guenther Exp $
+.\"	$OpenBSD: inet_addr.3,v 1.2 2017/07/08 21:45:35 tedu Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 19 2014 $
+.Dd $Mdocdate: July 8 2017 $
 .Dt INET_ADDR 3
 .Os
 .Sh NAME
@@ -113,7 +113,7 @@ to the four bytes of an Internet address.
 Note that when an Internet address is viewed as a 32-bit
 integer quantity on a system that uses little-endian
 byte order
-(such as the Intel 386, 486 and Pentium processors)
+(such as AMD64 or ARM processors)
 the bytes referred to above appear as
 .Dq Li d.c.b.a .
 That is, little-endian bytes are ordered from right to left.
