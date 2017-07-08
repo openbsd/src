@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.192 2017/07/04 12:58:32 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.193 2017/07/08 09:19:02 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1998,10 +1998,8 @@ int
 filt_sowrite(struct knote *kn, long hint)
 {
 	struct socket *so = kn->kn_fp->f_data;
-	int s, rv;
+	int rv;
 
-	if (!(hint & NOTE_SUBMIT))
-		s = solock(so);
 	kn->kn_data = sbspace(so, &so->so_snd);
 	if (so->so_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
@@ -2017,8 +2015,6 @@ filt_sowrite(struct knote *kn, long hint)
 	} else {
 		rv = (kn->kn_data >= so->so_snd.sb_lowat);
 	}
-	if (!(hint & NOTE_SUBMIT))
-		sounlock(s);
 
 	return (rv);
 }
@@ -2027,13 +2023,8 @@ int
 filt_solisten(struct knote *kn, long hint)
 {
 	struct socket *so = kn->kn_fp->f_data;
-	int s;
 
-	if (!(hint & NOTE_SUBMIT))
-		s = solock(so);
 	kn->kn_data = so->so_qlen;
-	if (!(hint & NOTE_SUBMIT))
-		sounlock(s);
 
 	return (kn->kn_data != 0);
 }
