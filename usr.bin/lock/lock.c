@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.39 2017/07/08 22:22:04 tedu Exp $	*/
+/*	$OpenBSD: lock.c,v 1.40 2017/07/08 22:27:17 tedu Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -99,8 +99,8 @@ main(int argc, char *argv[])
 		 * We allow "login-tries" attempts to login but start
 		 * slowing down after "login-backoff" attempts.
 		 */
-		tries = (int)login_getcapnum(lc, "login-tries", 10, 10);
-		backoff = (int)login_getcapnum(lc, "login-backoff", 3, 3);
+		tries = login_getcapnum(lc, "login-tries", 10, 10);
+		backoff = login_getcapnum(lc, "login-backoff", 3, 3);
 	}
 
 	while ((ch = getopt(argc, argv, "a:npt:")) != -1) {
@@ -116,7 +116,7 @@ main(int argc, char *argv[])
 			usemine = 1;
 			break;
 		case 't':
-			sectimeout = (int)strtonum(optarg, 1, INT_MAX, &errstr);
+			sectimeout = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "timeout %s: %s", errstr, optarg);
 			break;
@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 			no_timeout = 1;
 			break;
 		default:
-			(void)fprintf(stderr,
+			fprintf(stderr,
 			    "usage: %s [-np] [-a style] [-t timeout]\n",
 			    getprogname());
 			exit(1);
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 		 * Don't need EOF test here, if we get EOF, then s1 != s
 		 * and the right things will happen.
 		 */
-		(void)readpassphrase("Again: ", s1, sizeof(s1), RPP_ECHO_OFF);
+		readpassphrase("Again: ", s1, sizeof(s1), RPP_ECHO_OFF);
 		if (strcmp(s1, s)) {
 			warnx("\apasswords didn't match.");
 			exit(1);
@@ -164,10 +164,10 @@ main(int argc, char *argv[])
 	}
 
 	/* set signal handlers */
-	(void)signal(SIGINT, hi);
-	(void)signal(SIGQUIT, hi);
-	(void)signal(SIGTSTP, hi);
-	(void)signal(SIGALRM, bye);
+	signal(SIGINT, hi);
+	signal(SIGQUIT, hi);
+	signal(SIGTSTP, hi);
+	signal(SIGALRM, bye);
 
 	memset(&ntimer, 0, sizeof(ntimer));
 	ntimer.it_value = timeout;
@@ -176,11 +176,11 @@ main(int argc, char *argv[])
 
 	/* header info */
 	if (no_timeout) {
-		(void)fprintf(stderr,
+		fprintf(stderr,
 		    "%s: %s on %s. no timeout\ntime now is %s\n",
 		    getprogname(), ttynam, hostname, date);
 	} else {
-		(void)fprintf(stderr,
+		fprintf(stderr,
 		    "%s: %s on %s. timeout in %d minutes\ntime now is %s\n",
 		    getprogname(), ttynam, hostname, sectimeout, date);
 	}
@@ -214,7 +214,7 @@ main(int argc, char *argv[])
 			explicit_bzero(s1, sizeof(s1));
 			break;
 		}
-		(void)putc('\a', stderr);
+		putc('\a', stderr);
 		cnt %= tries;
 		if (++cnt > backoff) {
 			sigset_t set, oset;
@@ -233,15 +233,15 @@ hi(int signo)
 {
 	struct itimerval left;
 
-	(void)dprintf(STDERR_FILENO, "%s: type in the unlock key.",
+	dprintf(STDERR_FILENO, "%s: type in the unlock key.",
 	    getprogname());
 	if (!no_timeout) {
-		(void)getitimer(ITIMER_REAL, &left);
-		(void)dprintf(STDERR_FILENO, " timeout in %lld:%02d minutes",
+		getitimer(ITIMER_REAL, &left);
+		dprintf(STDERR_FILENO, " timeout in %lld:%02d minutes",
 		    (long long)(left.it_value.tv_sec / 60),
 		    (int)(left.it_value.tv_sec % 60));
 	}
-	(void)dprintf(STDERR_FILENO, "\n");
+	dprintf(STDERR_FILENO, "\n");
 }
 
 void
