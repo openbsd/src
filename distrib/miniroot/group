@@ -12,5 +12,6 @@ _shadow:*:65:
 _dhcp:*:77:
 _sndio:*:99:
 _file:*:104:
+_slaacd:*:115:
 dialer:*:117:
 nobody:*:32767:
