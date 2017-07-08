@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.34 2017/05/03 09:51:39 mestre Exp $	*/
+/*	$OpenBSD: lock.c,v 1.35 2017/07/08 22:01:09 tedu Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -188,8 +188,9 @@ main(int argc, char *argv[])
 	}
 
 	for (cnt = 0;;) {
-		if (!readpassphrase("Key: ", s, sizeof(s), RPP_ECHO_OFF) ||
-		    *s == '\0') {
+		if (!readpassphrase("Key: ", s, sizeof(s), RPP_ECHO_OFF))
+			continue;
+		if (strlen(s) == 0) {
 			hi(0);
 			continue;
 		}
