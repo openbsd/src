@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.118 2017/07/08 15:26:27 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.119 2017/07/08 20:38:31 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -409,10 +409,8 @@ parse_option_list(FILE *cfile, uint8_t *list, size_t sz)
 		 * lists.  They are not really options and it makes no sense
 		 * to request, require or ignore them.
 		 */
-		for (i = 1; i < DHO_END; i++)
-			if (!strcasecmp(dhcp_options[i].name, val))
-				break;
 
+		i = name_to_code(val);
 		if (i == DHO_END) {
 			parse_warn("expecting option name.");
 			goto syntaxerror;
@@ -637,12 +635,8 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	}
 
 	/* Look up the actual option info. */
-	fmt = NULL;
-	for (code = 0; code < DHO_COUNT; code++)
-		if (strcasecmp(dhcp_options[code].name, val) == 0)
-			break;
-
-	if (code > 255) {
+	code = name_to_code(val);
+	if (code == DHO_END) {
 		parse_warn("unknown option name.");
 		skip_to_semi(cfile);
 		return (-1);
@@ -650,7 +644,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 
 	/* Parse the option data. */
 	do {
-		for (fmt = dhcp_options[code].format; *fmt; fmt++) {
+		for (fmt = code_to_format(code); *fmt; fmt++) {
 			if (*fmt == 'A')
 				break;
 			switch (*fmt) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.460 2017/07/08 00:36:10 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.461 2017/07/08 20:38:31 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1187,7 +1187,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	struct dhcp_packet *packet = &ifi->recv_packet;
 	char ifname[IF_NAMESIZE];
 	struct client_lease *lease;
-	char *pretty, *buf;
+	char *pretty, *buf, *name;
 	int i;
 
 	lease = calloc(1, sizeof(struct client_lease));
@@ -1200,8 +1200,8 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	for (i = 0; i < DHO_COUNT; i++) {
 		if (options[i].len == 0)
 			continue;
-		if (!unknown_ok && strncmp("option-",
-		    dhcp_options[i].name, 7) != 0) {
+		name = code_to_name(i);
+		if (!unknown_ok && strncmp("option-", name, 7) != 0) {
 			log_warnx("lease declined: unknown option %d", i);
 			goto decline;
 		}
@@ -1215,7 +1215,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 			    options[i].len);
 			if (buf == NULL || !res_hnok_list(buf)) {
 				log_warnx("Ignoring %s in offer: invalid host "
-				    "name(s)", dhcp_options[i].name);
+				    "name(s)", name);
 				continue;
 			}
 			break;
@@ -1228,7 +1228,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 			 */
 			if (!res_hnok_list(pretty)) {
 				log_warnx("Ignoring %s in offer: invalid host "
-				    "name(s)", dhcp_options[i].name);
+				    "name(s)", name);
 				continue;
 			}
 			break;
@@ -1236,7 +1236,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 		case DHO_NIS_DOMAIN:
 			if (!res_hnok(pretty)) {
 				log_warnx("Ignoring %s in offer: invalid host "
-				    "name", dhcp_options[i].name);
+				    "name", name);
 				continue;
 			}
 			break;
@@ -1253,8 +1253,9 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	 */
 	for (i = 0; i < config->required_option_count; i++) {
 		if (!lease->options[config->required_options[i]].len) {
+			name = code_to_name(i);
 			log_warnx("lease declined: %s required but missing",
-			    dhcp_options[i].name);
+			    name);
 			goto decline;
 		}
 	}
@@ -1829,12 +1830,12 @@ append_statement(char *string, size_t sz, char *s1, char *s2)
 }
 
 char *
-lease_as_string(char *name, char *type, struct client_lease *lease)
+lease_as_string(char *ifname, char *type, struct client_lease *lease)
 {
 	static char string[8192];
 	char timebuf[27];	/* to hold "6 2017/04/08 05:47:50 UTC;" */
 	struct option_data *opt;
-	char *buf;
+	char *buf, *name;
 	size_t rslt;
 	int i;
 
@@ -1844,7 +1845,7 @@ lease_as_string(char *name, char *type, struct client_lease *lease)
 	strlcat(string, " {\n", sizeof(string));
 	strlcat(string, BOOTP_LEASE(lease) ? "  bootp;\n" : "", sizeof(string));
 
-	buf = pretty_print_string(name, strlen(name), 1);
+	buf = pretty_print_string(ifname, strlen(ifname), 1);
 	if (buf == NULL)
 		return (NULL);
 	append_statement(string, sizeof(string), "  interface ", buf);
@@ -1880,12 +1881,13 @@ lease_as_string(char *name, char *type, struct client_lease *lease)
 		opt = &lease->options[i];
 		if (opt->len == 0)
 			continue;
+		name = code_to_name(i);
 
 		buf = pretty_print_option(i, opt, 1);
 		if (buf == NULL)
 			return (NULL);
 		strlcat(string, "  option ", sizeof(string));
-		strlcat(string, dhcp_options[i].name, sizeof(string));
+		strlcat(string, name, sizeof(string));
 		append_statement(string, sizeof(string), " ", buf);
 	}
 
@@ -2367,10 +2369,7 @@ apply_ignore_list(char *ignore_list)
 		if (*p == '\0')
 			continue;
 
-		for (i = 1; i < DHO_END; i++)
-			if (!strcasecmp(dhcp_options[i].name, p))
-				break;
-
+		i = name_to_code(p);
 		if (i == DHO_END) {
 			log_info("Invalid option name: '%s'", p);
 			return;

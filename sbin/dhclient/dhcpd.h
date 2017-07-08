@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.208 2017/07/08 00:36:10 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.209 2017/07/08 20:38:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -43,11 +43,6 @@
 #define	REMOTE_PORT	67
 #define	INTERNALSIG	INT_MAX
 #define DB_TIMEFMT	"%w %Y/%m/%d %T UTC"
-
-struct option {
-	char *name;
-	char *format;
-};
 
 struct option_data {
 	unsigned int	 len;
@@ -176,6 +171,9 @@ char *pretty_print_domain_search(unsigned char *, size_t);
 char *pretty_print_string(unsigned char *, size_t, int);
 char *pretty_print_classless_routes(unsigned char *, size_t);
 struct option_data *unpack_options(struct dhcp_packet *);
+char *code_to_name(int);
+char *code_to_format(int);
+int name_to_code(char *);
 
 /* conflex.c */
 extern int lexline, lexchar;
@@ -212,9 +210,6 @@ void interface_link_forceup(char *, int);
 int interface_status(char *);
 void get_hw_address(struct interface_info *);
 void sendhup(void);
-
-/* tables.c */
-extern const struct option dhcp_options[DHO_COUNT];
 
 /* dhclient.c */
 extern char *path_dhclient_conf;
