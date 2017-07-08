@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.25 2017/07/02 14:48:19 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.26 2017/07/08 14:26:23 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -103,7 +103,7 @@ uint8_t		rtwn_efuse_read_1(struct rtwn_softc *, uint16_t);
 void		rtwn_efuse_read(struct rtwn_softc *, uint8_t *, size_t);
 void		rtwn_efuse_switch_power(struct rtwn_softc *);
 int		rtwn_read_chipid(struct rtwn_softc *);
-void		rtwn_read_rom(void *);
+void		rtwn_read_rom(struct rtwn_softc *);
 void		rtwn_r92c_read_rom(struct rtwn_softc *);
 void		rtwn_r88e_read_rom(struct rtwn_softc *);
 int		rtwn_media_change(struct ifnet *);
@@ -118,6 +118,8 @@ void		rtwn_update_short_preamble(struct ieee80211com *);
 void		rtwn_update_avgrssi(struct rtwn_softc *, int, int8_t);
 int8_t		rtwn_r88e_get_rssi(struct rtwn_softc *, int, void *);
 void		rtwn_watchdog(struct ifnet *);
+void		rtwn_fw_reset(struct rtwn_softc *);
+void		rtwn_r92c_fw_reset(struct rtwn_softc *);
 void		rtwn_r88e_fw_reset(struct rtwn_softc *);
 int		rtwn_load_firmware(struct rtwn_softc *);
 void		rtwn_rf_init(struct rtwn_softc *);
@@ -128,8 +130,9 @@ void		rtwn_edca_init(struct rtwn_softc *);
 void		rtwn_rate_fallback_init(struct rtwn_softc *);
 void		rtwn_usb_aggr_init(struct rtwn_softc *);
 void		rtwn_write_txpower(struct rtwn_softc *, int, uint16_t[]);
-void		rtwn_get_txpower(void *, int, struct ieee80211_channel *,
-		    struct ieee80211_channel *, uint16_t[]);
+void		rtwn_get_txpower(struct rtwn_softc *sc, int,
+		    struct ieee80211_channel *, struct ieee80211_channel *,
+		    uint16_t[]);
 void		rtwn_r92c_get_txpower(struct rtwn_softc *, int,
 		    struct ieee80211_channel *, struct ieee80211_channel *,
 		    uint16_t[]);
@@ -182,9 +185,6 @@ rtwn_attach(struct device *pdev, struct rtwn_softc *sc)
 		printf("%s: unsupported chip\n", sc->sc_pdev->dv_xname);
 		return (ENXIO);
 	}
-
-	sc->sc_ops.get_txpower = rtwn_get_txpower;
-	sc->sc_ops.read_rom = rtwn_read_rom;
 
 	/* Determine number of Tx/Rx chains. */
 	if (sc->chip & RTWN_CHIP_92C) {
@@ -585,10 +585,8 @@ rtwn_read_chipid(struct rtwn_softc *sc)
 }
 
 void
-rtwn_read_rom(void *cookie)
+rtwn_read_rom(struct rtwn_softc *sc)
 {
-	struct rtwn_softc *sc = cookie;
-
 	if (sc->chip & RTWN_CHIP_88E)
 		rtwn_r88e_read_rom(sc);
 	else
@@ -1475,6 +1473,15 @@ rtwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 void
 rtwn_fw_reset(struct rtwn_softc *sc)
 {
+	if (sc->chip & RTWN_CHIP_88E)
+		rtwn_r88e_fw_reset(sc);
+	else
+		rtwn_r92c_fw_reset(sc);
+}
+
+void
+rtwn_r92c_fw_reset(struct rtwn_softc *sc)
+{
 	uint16_t reg;
 	int ntries;
 
@@ -1505,8 +1512,14 @@ rtwn_r88e_fw_reset(struct rtwn_softc *sc)
 {
 	uint16_t reg;
 
+	/* Reset MCU IO wrapper. */
+	rtwn_write_1(sc, R92C_RSV_CTRL + 1,
+	    rtwn_read_1(sc, R92C_RSV_CTRL + 1) & ~R92C_RSV_CTRL_WLOCK_08);
 	reg = rtwn_read_2(sc, R92C_SYS_FUNC_EN);
 	rtwn_write_2(sc, R92C_SYS_FUNC_EN, reg & ~R92C_SYS_FUNC_EN_CPUEN);
+	/* Enable MCU IO wrapper. */
+	rtwn_write_1(sc, R92C_RSV_CTRL + 1,
+	    rtwn_read_1(sc, R92C_RSV_CTRL) | R92C_RSV_CTRL_WLOCK_08);
 	rtwn_write_2(sc, R92C_SYS_FUNC_EN, reg | R92C_SYS_FUNC_EN_CPUEN);
 }
 
@@ -1543,23 +1556,20 @@ rtwn_load_firmware(struct rtwn_softc *sc)
 	}
 
 	if (rtwn_read_1(sc, R92C_MCUFWDL) & R92C_MCUFWDL_RAM_DL_SEL) {
-		if (sc->chip & RTWN_CHIP_88E)
-			rtwn_r88e_fw_reset(sc);
-		else
-			rtwn_fw_reset(sc);
 		rtwn_write_1(sc, R92C_MCUFWDL, 0);
+		rtwn_fw_reset(sc);
+	}
+
+	if (sc->chip & RTWN_CHIP_PCI) {
+		rtwn_write_2(sc, R92C_SYS_FUNC_EN,
+		    rtwn_read_2(sc, R92C_SYS_FUNC_EN) | R92C_SYS_FUNC_EN_CPUEN);
 	}
 
 	/* Enable FW download. */
-	if (!(sc->chip & RTWN_CHIP_88E))
-		rtwn_write_2(sc, R92C_SYS_FUNC_EN,
-		    rtwn_read_2(sc, R92C_SYS_FUNC_EN) |
-		    R92C_SYS_FUNC_EN_CPUEN);
-
 	rtwn_write_1(sc, R92C_MCUFWDL,
 	    rtwn_read_1(sc, R92C_MCUFWDL) | R92C_MCUFWDL_EN);
-	rtwn_write_1(sc, R92C_MCUFWDL + 2,
-	    rtwn_read_1(sc, R92C_MCUFWDL + 2) & ~0x08);
+	rtwn_write_4(sc, R92C_MCUFWDL, 
+	    rtwn_read_4(sc, R92C_MCUFWDL) & ~R92C_MCUFWDL_ROM_DLEN);
 
 	/* Reset the FWDL checksum. */
 	rtwn_write_1(sc, R92C_MCUFWDL,
@@ -1578,11 +1588,6 @@ rtwn_load_firmware(struct rtwn_softc *sc)
 		len -= mlen;
 	}
 
-	/* Disable FW download. */
-	rtwn_write_1(sc, R92C_MCUFWDL,
-	    rtwn_read_1(sc, R92C_MCUFWDL) & ~R92C_MCUFWDL_EN);
-	rtwn_write_1(sc, R92C_MCUFWDL + 1, 0);
-
 	/* Wait for checksum report. */
 	for (ntries = 0; ntries < 1000; ntries++) {
 		if (rtwn_read_4(sc, R92C_MCUFWDL) & R92C_MCUFWDL_CHKSUM_RPT)
@@ -1596,11 +1601,22 @@ rtwn_load_firmware(struct rtwn_softc *sc)
 		goto fail;
 	}
 
+	/* Disable FW download. */
+	rtwn_write_1(sc, R92C_MCUFWDL,
+	    rtwn_read_1(sc, R92C_MCUFWDL) & ~R92C_MCUFWDL_EN);
+	rtwn_write_1(sc, R92C_MCUFWDL + 1, 0);
+
 	reg = rtwn_read_4(sc, R92C_MCUFWDL);
 	reg = (reg & ~R92C_MCUFWDL_WINTINI_RDY) | R92C_MCUFWDL_RDY;
 	rtwn_write_4(sc, R92C_MCUFWDL, reg);
-	if (sc->chip & RTWN_CHIP_88E)
-		rtwn_r88e_fw_reset(sc);
+	if (sc->chip & (RTWN_CHIP_92C | RTWN_CHIP_88C)) {
+		reg = rtwn_read_2(sc, R92C_SYS_FUNC_EN);
+		rtwn_write_2(sc, R92C_SYS_FUNC_EN,
+		    reg & ~R92C_SYS_FUNC_EN_CPUEN);
+		rtwn_write_2(sc, R92C_SYS_FUNC_EN,
+		    reg | R92C_SYS_FUNC_EN_CPUEN);
+	} else
+		rtwn_fw_reset(sc);
 	/* Wait for firmware readiness. */
 	for (ntries = 0; ntries < 1000; ntries++) {
 		if (rtwn_read_4(sc, R92C_MCUFWDL) & R92C_MCUFWDL_WINTINI_RDY)
@@ -1613,7 +1629,7 @@ rtwn_load_firmware(struct rtwn_softc *sc)
 		error = ETIMEDOUT;
 		goto fail;
 	}
- fail:
+fail:
 	free(fw, M_DEVBUF, len0);
 	return (error);
 }
@@ -1884,11 +1900,9 @@ rtwn_write_txpower(struct rtwn_softc *sc, int chain,
 }
 
 void
-rtwn_get_txpower(void *cookie, int chain, struct ieee80211_channel *c,
+rtwn_get_txpower(struct rtwn_softc *sc, int chain, struct ieee80211_channel *c,
     struct ieee80211_channel *extc, uint16_t power[RTWN_POWER_COUNT])
 {
-	struct rtwn_softc *sc = cookie;
-
 	if (sc->chip & RTWN_CHIP_88E)
 		rtwn_r88e_get_txpower(sc, chain, c, extc, power);
 	else

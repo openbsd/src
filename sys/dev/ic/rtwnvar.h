@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.9 2017/06/16 14:57:51 kevlo Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.10 2017/07/08 14:26:23 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -43,10 +43,6 @@ struct rtwn_ops {
 	void		(*next_scan)(void *);
 	void		(*cancel_scan)(void *);
 	void		(*wait_async)(void *);
-
-	void		(*get_txpower)(void *, int, struct ieee80211_channel *,
-			    struct ieee80211_channel *, uint16_t[]);
-	void		(*read_rom)(void *);
 };
 
 #define RTWN_LED_LINK	0

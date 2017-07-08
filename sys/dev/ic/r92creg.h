@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.11 2017/07/01 15:56:11 kevlo Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.12 2017/07/08 14:26:23 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -304,6 +304,16 @@
 #define R92C_SYS_CLKR_SYS_EN		0x00001000
 #define R92C_SYS_CLKR_RING_EN		0x00002000
 
+/* Bits for R92C_RSV_CTRL. */
+#define R92C_RSV_CTRL_WLOCK_ALL		0x01
+#define R92C_RSV_CTRL_WLOCK_00		0x02
+#define R92C_RSV_CTRL_WLOCK_04		0x04
+#define R92C_RSV_CTRL_WLOCK_08		0x08
+#define R92C_RSV_CTRL_WLOCK_40		0x10
+#define R92C_RSV_CTRL_R_DIS_PRST_0	0x20
+#define R92C_RSV_CTRL_R_DIS_PRST_1	0x40
+#define R92C_RSV_CTRL_LOCK_ALL_EN	0x80
+
 /* Bits for R92C_RF_CTRL. */
 #define R92C_RF_CTRL_EN		0x01
 #define R92C_RF_CTRL_RSTB	0x02
@@ -348,6 +358,7 @@
 #define R92C_MCUFWDL_RAM_DL_SEL		0x00000080 /* 1: RAM, 0: ROM */
 #define R92C_MCUFWDL_PAGE_M		0x00070000
 #define R92C_MCUFWDL_PAGE_S		16
+#define R92C_MCUFWDL_ROM_DLEN		0x00080000
 #define R92C_MCUFWDL_CPRST		0x00800000
 
 /* Bits for R88E_HIMR. */
