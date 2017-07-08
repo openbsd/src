@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.38 2017/07/08 22:19:23 tedu Exp $	*/
+/*	$OpenBSD: lock.c,v 1.39 2017/07/08 22:22:04 tedu Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -66,9 +66,6 @@ void hi(int);
 
 int	no_timeout;			/* lock terminal forever */
 
-extern	char *__progname;
-
-/*ARGSUSED*/
 int
 main(int argc, char *argv[])
 {
@@ -132,7 +129,7 @@ main(int argc, char *argv[])
 		default:
 			(void)fprintf(stderr,
 			    "usage: %s [-np] [-a style] [-t timeout]\n",
-			    __progname);
+			    getprogname());
 			exit(1);
 		}
 	}
@@ -181,11 +178,11 @@ main(int argc, char *argv[])
 	if (no_timeout) {
 		(void)fprintf(stderr,
 		    "%s: %s on %s. no timeout\ntime now is %s\n",
-		    __progname, ttynam, hostname, date);
+		    getprogname(), ttynam, hostname, date);
 	} else {
 		(void)fprintf(stderr,
 		    "%s: %s on %s. timeout in %d minutes\ntime now is %s\n",
-		    __progname, ttynam, hostname, sectimeout, date);
+		    getprogname(), ttynam, hostname, sectimeout, date);
 	}
 
 	for (cnt = 0;;) {
@@ -231,13 +228,13 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-/*ARGSUSED*/
 void
 hi(int signo)
 {
 	struct itimerval left;
 
-	(void)dprintf(STDERR_FILENO, "%s: type in the unlock key.", __progname);
+	(void)dprintf(STDERR_FILENO, "%s: type in the unlock key.",
+	    getprogname());
 	if (!no_timeout) {
 		(void)getitimer(ITIMER_REAL, &left);
 		(void)dprintf(STDERR_FILENO, " timeout in %lld:%02d minutes",
@@ -247,7 +244,6 @@ hi(int signo)
 	(void)dprintf(STDERR_FILENO, "\n");
 }
 
-/*ARGSUSED*/
 void
 bye(int signo)
 {
