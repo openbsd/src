@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2017/04/28 11:28:20 kettenis Exp $
+# $OpenBSD: Makefile,v 1.12 2017/07/09 15:28:34 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -86,9 +86,6 @@ HEADERS+=	altivec.h \
 .endif
 
 all:	${HEADERS}
-
-depend:
-	# Nothing here so far ...
 
 clean cleandir:
 	rm -f ${GEN}

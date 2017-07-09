@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2017/04/17 19:58:53 pascal Exp $
+# $OpenBSD: Makefile,v 1.9 2017/07/09 15:28:36 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -15,9 +15,6 @@ CPPFLAGS+=	${CLANG_INCLUDES}
 CPPFLAGS+=	-I${.CURDIR}/../../../llvm/tools/lld/include
 
 .PATH:	${.CURDIR}/../../../llvm/tools/lld/tools/lld
-
-depend:
-	# Nothing here so far ...
 
 LLVM_LIBDEPS=	lldELF \
 		lldConfig \

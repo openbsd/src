@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/01/24 08:44:47 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2017/07/09 15:28:34 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -9,10 +9,7 @@ DEFS=	Attributes.gen Intrinsics.gen
 all: ${DEFS}
 
 install:
-	# Nothing here so far ...
-
-depend:
-	# Nothing here so far ...
+	@# Nothing here so far ...
 
 clean cleandir:
 	rm -f ${DEFS}

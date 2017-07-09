@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2017/04/17 19:58:53 pascal Exp $
+# $OpenBSD: Makefile,v 1.9 2017/07/09 15:28:34 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -26,9 +26,6 @@ MLINKS+=clang.1 cc.1 \
 CPPFLAGS+=	-I${.CURDIR}/../../../llvm/tools/clang/include
 
 .PATH:	${.CURDIR}/../../../llvm/tools/clang/tools/driver
-
-depend:
-	# Nothing here so far ...
 
 LLVM_LIBDEPS=	clangFrontendTool \
 		clangFrontend \

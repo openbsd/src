@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2017/01/24 08:44:47 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:35 espie Exp $
 
 LIB=	LLVMDebugInfoMSF
 NOPIC=
@@ -16,10 +16,7 @@ SRCS=	MappedBlockStream.cpp \
 
 .PATH:	${.CURDIR}/../../../llvm/lib/DebugInfo/MSF
 
-depend:
-	# Nothing here so far ...
-
 install:
-	# Nothing here so far ...
+	@# Nothing here so far ...
 
 .include <bsd.lib.mk>

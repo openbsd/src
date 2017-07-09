@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2017/01/25 19:24:33 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:35 espie Exp $
 
 LIB=	LLVMMipsDesc
 NOPIC=
@@ -22,10 +22,7 @@ SRCS=	MipsABIInfo.cpp \
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Target/Mips/MCTargetDesc
 
-depend:
-	# Nothing here so far ...
-
 install:
-	# Nothing here so far ...
+	@# Nothing here so far ...
 
 .include <bsd.lib.mk>

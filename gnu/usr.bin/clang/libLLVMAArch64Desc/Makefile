@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/11/24 22:32:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:34 espie Exp $
 
 LIB=	LLVMAArch64Desc
 NOPIC=
@@ -20,10 +20,7 @@ SRCS=	AArch64AsmBackend.cpp \
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Target/AArch64/MCTargetDesc
 
-depend:
-	# Nothing here so far ...
-
 install:
-	# Nothing here so far ...
+	@# Nothing here so far ...
 
 .include <bsd.lib.mk>

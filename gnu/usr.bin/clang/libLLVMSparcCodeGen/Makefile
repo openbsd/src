@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/01/14 20:12:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:35 espie Exp $
 
 LIB=	LLVMSparcCodeGen
 NOPIC=
@@ -24,10 +24,7 @@ SRCS=	DelaySlotFiller.cpp \
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Target/Sparc
 
-depend:
-	# Nothing here so far ...
-
 install:
-	# Nothing here so far ...
+	@# Nothing here so far ...
 
 .include <bsd.lib.mk>

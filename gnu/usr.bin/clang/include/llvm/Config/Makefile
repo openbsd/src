@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2016/09/08 18:05:30 pascal Exp $
+# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:34 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -9,10 +9,7 @@ DEFS=	AsmParsers.def AsmPrinters.def Disassemblers.def Targets.def
 all: ${DEFS}
 
 install:
-	# Nothing here so far ...
-
-depend:
-	# Nothing here so far ...
+	@# Nothing here so far ...
 
 clean cleandir:
 	rm -f ${DEFS}

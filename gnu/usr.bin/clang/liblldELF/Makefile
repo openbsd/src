@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/01/24 08:44:47 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:36 espie Exp $
 
 LIB=	lldELF
 NOPROFILE=
@@ -38,10 +38,7 @@ Options.inc: Options.td
 		-I ${LLVM_SRCS}/include \
 		-o ${.TARGET} ${.ALLSRC}
 
-depend:
-	# Nothing here so far ...
-
 install:
-	# Nothing here so far ...
+	@# Nothing here so far ...
 
 .include <bsd.lib.mk>

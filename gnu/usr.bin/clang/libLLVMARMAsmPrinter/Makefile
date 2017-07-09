@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/17 16:43:51 kettenis Exp $
+# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:34 espie Exp $
 
 LIB=	LLVMARMAsmPrinter
 NOPIC=
@@ -11,10 +11,7 @@ SRCS=	ARMInstPrinter.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Target/ARM/InstPrinter
 
-depend:
-	# Nothing here so far ...
-
 install:
-	# Nothing here so far ...
+	@# Nothing here so far ...
 
 .include <bsd.lib.mk>

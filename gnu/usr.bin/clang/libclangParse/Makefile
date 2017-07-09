@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:50 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:36 espie Exp $
 
 LIB=	clangParse
 NOPIC=
@@ -25,10 +25,7 @@ SRCS=	ParseAST.cpp \
 
 .PATH:	${.CURDIR}/../../../llvm/tools/clang/lib/Parse
 
-depend:
-	# Nothing here so far ...
-
 install:
-	# Nothing here so far ...
+	@# Nothing here so far ...
 
 .include <bsd.lib.mk>
