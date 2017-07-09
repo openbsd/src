@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.20 2017/06/07 14:53:28 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.21 2017/07/09 00:51:40 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -77,6 +77,8 @@ void vcpu_exit_inout(struct vm_run_params *);
 uint8_t vcpu_exit_pci(struct vm_run_params *);
 int vcpu_pic_intr(uint32_t, uint32_t, uint8_t);
 int loadfile_bios(FILE *, struct vcpu_reg_state *);
+void pause_vm(struct vm_create_params *);
+void unpause_vm(struct vm_create_params *);
 
 static struct vm_mem_range *find_gpa_range(struct vm_create_params *, paddr_t,
     size_t);
@@ -345,6 +347,7 @@ void
 vm_dispatch_vmm(int fd, short event, void *arg)
 {
 	struct vmd_vm		*vm = arg;
+	struct vmop_result	 vmr;
 	struct imsgev		*iev = &vm->vm_iev;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
@@ -391,6 +394,24 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 			if (vmmci_ctl(VMMCI_REBOOT) == -1)
 				_exit(0);
 			break;
+		case IMSG_VMDOP_PAUSE_VM:
+			vmr.vmr_result = 0;
+			vmr.vmr_id = vm->vm_vmid;
+			pause_vm(&vm->vm_params.vmc_params);
+			imsg_compose_event(&vm->vm_iev,
+			    IMSG_VMDOP_PAUSE_VM_RESPONSE,
+			    imsg.hdr.peerid, imsg.hdr.pid, -1, &vmr,
+			    sizeof(vmr));
+			break;
+		case IMSG_VMDOP_UNPAUSE_VM:
+			vmr.vmr_result = 0;
+			vmr.vmr_id = vm->vm_vmid;
+			unpause_vm(&vm->vm_params.vmc_params);
+			imsg_compose_event(&vm->vm_iev,
+			    IMSG_VMDOP_UNPAUSE_VM_RESPONSE,
+			    imsg.hdr.peerid, imsg.hdr.pid, -1, &vmr,
+			    sizeof(vmr));
+			break;
 		default:
 			fatalx("%s: got invalid imsg %d from %s",
 			    __func__, imsg.hdr.type,
@@ -425,6 +446,37 @@ vm_shutdown(unsigned int cmd)
 	imsg_flush(&current_vm->vm_iev.ibuf);
 
 	_exit(0);
+}
+
+void
+pause_vm(struct vm_create_params *vcp)
+{
+	if (current_vm->vm_paused)
+		return;
+
+	current_vm->vm_paused = 1;
+
+	/* XXX: vcpu_run_loop is running in another thread and we have to wait
+	 * for the vm to exit before returning */
+	sleep(1);
+
+	i8253_stop();
+	mc146818_stop();
+}
+
+void
+unpause_vm(struct vm_create_params *vcp)
+{
+	unsigned int n;
+	if (!current_vm->vm_paused)
+		return;
+
+	current_vm->vm_paused = 0;
+
+	i8253_start();
+	mc146818_start();
+	for (n = 0; n <= vcp->vcp_ncpus; n++)
+		pthread_cond_broadcast(&vcpu_run_cond[n]);
 }
 
 /*
@@ -921,20 +973,37 @@ vcpu_run_loop(void *arg)
 			return ((void *)ret);
 		}
 
-		/* If we are halted, wait */
+		/* If we are halted or paused, wait */
 		if (vcpu_hlt[n]) {
-			ret = pthread_cond_wait(&vcpu_run_cond[n],
-			    &vcpu_run_mtx[n]);
+			while (current_vm->vm_paused == 1) {
+				ret = pthread_cond_wait(&vcpu_run_cond[n],
+				    &vcpu_run_mtx[n]);
+				if (ret) {
+					log_warnx(
+					    "%s: can't wait on cond (%d)",
+					    __func__, (int)ret);
+					(void)pthread_mutex_unlock(
+					    &vcpu_run_mtx[n]);
+					break;
+				}
+			}
+			if (vcpu_hlt[n]) {
+				ret = pthread_cond_wait(&vcpu_run_cond[n],
+				    &vcpu_run_mtx[n]);
 
-			if (ret) {
-				log_warnx("%s: can't wait on cond (%d)",
-				    __func__, (int)ret);
-				(void)pthread_mutex_unlock(&vcpu_run_mtx[n]);
-				break;
+				if (ret) {
+					log_warnx(
+					    "%s: can't wait on cond (%d)",
+					    __func__, (int)ret);
+					(void)pthread_mutex_unlock(
+					    &vcpu_run_mtx[n]);
+					break;
+				}
 			}
 		}
 
 		ret = pthread_mutex_unlock(&vcpu_run_mtx[n]);
+
 		if (ret) {
 			log_warnx("%s: can't unlock mutex on cond (%d)",
 			    __func__, (int)ret);

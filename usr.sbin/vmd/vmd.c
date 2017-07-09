@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.62 2017/05/29 07:15:22 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.63 2017/07/09 00:51:40 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -163,6 +163,22 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		proc_forward_imsg(ps, imsg, PROC_PRIV, -1);
 		cmd = IMSG_CTL_OK;
 		break;
+	case IMSG_VMDOP_PAUSE_VM:
+	case IMSG_VMDOP_UNPAUSE_VM:
+		IMSG_SIZE_CHECK(imsg, &vid);
+		memcpy(&vid, imsg->data, sizeof(vid));
+		if (vid.vid_id == 0) {
+			if ((vm = vm_getbyname(vid.vid_name)) == NULL) {
+				res = ENOENT;
+				cmd = IMSG_VMDOP_PAUSE_VM_RESPONSE;
+				break;
+			} else {
+				vid.vid_id = vm->vm_vmid;
+			}
+		}
+		proc_compose_imsg(ps, PROC_VMM, -1, imsg->hdr.type,
+		    imsg->hdr.peerid, -1, &vid, sizeof(vid));
+		break;
 	default:
 		return (-1);
 	}
@@ -200,6 +216,30 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vmop_info_result	 vir;
 
 	switch (imsg->hdr.type) {
+	case IMSG_VMDOP_PAUSE_VM_RESPONSE:
+		IMSG_SIZE_CHECK(imsg, &vmr);
+		memcpy(&vmr, imsg->data, sizeof(vmr));
+		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
+			break;
+		proc_compose_imsg(ps, PROC_CONTROL, -1,
+		    imsg->hdr.type, imsg->hdr.peerid, -1,
+		    imsg->data, sizeof(imsg->data));
+		log_info("%s: paused vm %d successfully",
+		    vm->vm_params.vmc_params.vcp_name,
+		    vm->vm_vmid);
+		break;
+	case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
+		IMSG_SIZE_CHECK(imsg, &vmr);
+		memcpy(&vmr, imsg->data, sizeof(vmr));
+		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
+			break;
+		proc_compose_imsg(ps, PROC_CONTROL, -1,
+		    imsg->hdr.type, imsg->hdr.peerid, -1,
+		    imsg->data, sizeof(imsg->data));
+		log_info("%s: unpaused vm %d successfully.",
+		    vm->vm_params.vmc_params.vcp_name,
+		    vm->vm_vmid);
+		break;
 	case IMSG_VMDOP_START_VM_RESPONSE:
 		IMSG_SIZE_CHECK(imsg, &vmr);
 		memcpy(&vmr, imsg->data, sizeof(vmr));
@@ -869,6 +909,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	vcp = &vmc->vmc_params;
 	vm->vm_pid = -1;
 	vm->vm_tty = -1;
+	vm->vm_paused = 0;
 
 	for (i = 0; i < vcp->vcp_ndisks; i++)
 		vm->vm_disks[i] = -1;

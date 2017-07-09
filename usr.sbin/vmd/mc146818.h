@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.h,v 1.4 2017/05/08 09:08:40 reyk Exp $ */
+/* $OpenBSD: mc146818.h,v 1.5 2017/07/09 00:51:40 pd Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -21,3 +21,4 @@ void dump_mc146818(void);
 int mc146818_dump(int);
 int mc146818_restore(int, uint32_t);
 void mc146818_stop(void);
+void mc146818_start(void);

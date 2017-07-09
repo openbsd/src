@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.14 2017/05/08 09:08:40 reyk Exp $ */
+/* $OpenBSD: mc146818.c,v 1.15 2017/07/09 00:51:40 pd Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -341,9 +341,6 @@ mc146818_restore(int fd, uint32_t vm_id)
 	memset(&rtc.per, 0, sizeof(struct event));
 	evtimer_set(&rtc.sec, rtc_fire1, NULL);
 	evtimer_set(&rtc.per, rtc_fireper, (void *)(intptr_t)rtc.vm_id);
-
-	evtimer_add(&rtc.per, &rtc.per_tv);
-	evtimer_add(&rtc.sec, &rtc.sec_tv);
 	return (0);
 }
 
@@ -352,4 +349,11 @@ mc146818_stop()
 {
 	evtimer_del(&rtc.per);
 	evtimer_del(&rtc.sec);
+}
+
+void
+mc146818_start()
+{
+	evtimer_add(&rtc.per, &rtc.per_tv);
+	evtimer_add(&rtc.sec, &rtc.sec_tv);
 }

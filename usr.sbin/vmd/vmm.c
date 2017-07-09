@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.69 2017/04/21 07:03:26 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.70 2017/07/09 00:51:40 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -105,6 +105,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	int			 res = 0, cmd = 0, verbose;
 	struct vmd_vm		*vm = NULL;
 	struct vm_terminate_params vtp;
+	struct vmop_id vid;
 	struct vmop_result	 vmr;
 	uint32_t		 id = 0;
 	unsigned int		 mode;
@@ -202,6 +203,33 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			    -1, &verbose, sizeof(verbose));
 		}
 		break;
+	case IMSG_VMDOP_PAUSE_VM:
+		IMSG_SIZE_CHECK(imsg, &vid);
+		memcpy(&vid, imsg->data, sizeof(vid));
+		id = vid.vid_id;
+		vm = vm_getbyvmid(id);
+		if ((vm = vm_getbyvmid(id)) == NULL) {
+			res = ENOENT;
+			cmd = IMSG_VMDOP_PAUSE_VM_RESPONSE;
+			break;
+		}
+		imsg_compose_event(&vm->vm_iev,
+		    imsg->hdr.type, imsg->hdr.peerid, imsg->hdr.pid,
+		    imsg->fd, &vid, sizeof(vid));
+		break;
+	case IMSG_VMDOP_UNPAUSE_VM:
+		IMSG_SIZE_CHECK(imsg, &vid);
+		memcpy(&vid, imsg->data, sizeof(vid));
+		id = vid.vid_id;
+		if ((vm = vm_getbyvmid(id)) == NULL) {
+			res = ENOENT;
+			cmd = IMSG_VMDOP_UNPAUSE_VM_RESPONSE;
+			break;
+		}
+		imsg_compose_event(&vm->vm_iev,
+		    imsg->hdr.type, imsg->hdr.peerid, imsg->hdr.pid,
+		    imsg->fd, &vid, sizeof(vid));
+		break;
 	default:
 		return (-1);
 	}
@@ -217,6 +245,8 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		if (id == 0)
 			id = imsg->hdr.peerid;
+	case IMSG_VMDOP_PAUSE_VM_RESPONSE:
+	case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 		memset(&vmr, 0, sizeof(vmr));
 		vmr.vmr_result = res;
@@ -354,6 +384,7 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
+	unsigned int		 i;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -392,6 +423,18 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 		case IMSG_VMDOP_VM_REBOOT:
 			vm->vm_shutdown = 0;
 			break;
+		case IMSG_VMDOP_PAUSE_VM_RESPONSE:
+		case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
+			for (i = 0; i < sizeof(procs); i++) {
+				if (procs[i].p_id == PROC_PARENT) {
+					proc_forward_imsg(procs[i].p_ps,
+							&imsg, PROC_PARENT,
+							-1);
+					break;
+				}
+			}
+			break;
+
 		default:
 			fatalx("%s: got invalid imsg %d from %s",
 			    __func__, imsg.hdr.type,
