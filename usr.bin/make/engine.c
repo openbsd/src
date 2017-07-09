@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.52 2017/01/29 10:04:13 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.53 2017/07/09 15:28:00 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -783,6 +783,10 @@ do_run_command(Job *job)
 		return false;
 	/* always flush for other stuff */
 	fflush(stdout);
+
+	/* Optimization: bypass comments entirely */
+	if (*cmd == '#')
+		return false;
 
 	/* Fork and execute the single command. If the fork fails, we abort.  */
 	switch (cpid = fork()) {
