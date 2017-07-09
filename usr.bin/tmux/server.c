@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.172 2017/07/03 08:16:03 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.173 2017/07/09 22:33:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -249,7 +249,7 @@ server_send_exit(void)
 	}
 
 	RB_FOREACH_SAFE(s, sessions, &sessions, s1)
-		session_destroy(s);
+		session_destroy(s, __func__);
 }
 
 /* Update socket execute permissions based on whether sessions are attached. */
@@ -347,6 +347,7 @@ server_signal(int sig)
 {
 	int	fd;
 
+	log_debug("%s: %s", __func__, strsignal(sig));
 	switch (sig) {
 	case SIGTERM:
 		server_exit = 1;
