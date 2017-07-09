@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.56 2017/07/09 18:45:27 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.57 2017/07/09 19:19:58 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -123,9 +123,9 @@ parse_semi(FILE *cfile)
 	if (token != ';') {
 		parse_warn("expecting semicolon.");
 		skip_to_semi(cfile);
-		return (0);
+		return 0;
 	}
-	return (1);
+	return 1;
 }
 
 char *
@@ -140,13 +140,13 @@ parse_string(FILE *cfile, unsigned int *len)
 		parse_warn("expecting string.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (NULL);
+		return NULL;
 	}
 
 	i = strnunvis(unvisbuf, val, sizeof(unvisbuf));
 	if (i == -1) {
 		parse_warn("could not unvis string");
-		return (NULL);
+		return NULL;
 	}
 	s = malloc(i+1);
 	if (!s)
@@ -155,7 +155,7 @@ parse_string(FILE *cfile, unsigned int *len)
 	if (len != NULL)
 		*len = i;
 
-	return (s);
+	return s;
 }
 
 /* cidr :== ip-address "/" bit-count
@@ -183,18 +183,18 @@ parse_cidr(FILE *cfile, unsigned char *cidr)
 	if (!len) {
 		parse_warn("expecting decimal value.");
 		skip_to_semi(cfile);
-		return (0);
+		return 0;
 	} else if (token != '/') {
 		parse_warn("expecting '/'.");
 		skip_to_semi(cfile);
-		return (0);
+		return 0;
 	} else if (!parse_decimal(cfile, cidr, 'B') || *cidr > 32) {
 		parse_warn("expecting decimal value <= 32.");
 		skip_to_semi(cfile);
-		return (0);
+		return 0;
 	}
 
-	return (1);
+	return 1;
 }
 
 int
@@ -214,15 +214,15 @@ parse_ip_addr(FILE *cfile, struct in_addr *addr)
 
 	if (len == 4) {
 		memcpy(addr, &buf, sizeof(*addr));
-		return (1);
+		return 1;
 	} else if (token != '.') {
 		parse_warn("expecting '.'.");
 		skip_to_semi(cfile);
-		return (0);
+		return 0;
 	} else {
 		parse_warn("expecting decimal value.");
 		skip_to_semi(cfile);
-		return (0);
+		return 0;
 	}
 }
 
@@ -256,16 +256,16 @@ parse_boolean(FILE *cfile, unsigned char *buf)
 		if (strcasecmp(val, "true") == 0 ||
 		    strcasecmp(val, "on") == 0) {
 			buf[0] = 1;
-			return (1);
+			return 1;
 		}
 		if (strcasecmp(val, "false") == 0 ||
 		    strcasecmp(val, "off") == 0) {
 			buf[0] = 0;
-			return (1);
+			return 1;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -300,17 +300,17 @@ parse_decimal(FILE *cfile, unsigned char *buf, char fmt)
 		bytes = 1;
 		break;
 	default:
-		return (0);
+		return 0;
 	}
 
 	numval = strtonum(val, low, high, &errstr);
 	if (errstr)
-		return (0);
+		return 0;
 
 	numval = htobe64(numval);
 	memcpy(buf, (char *)&numval + (sizeof(numval) - bytes), bytes);
 
-	return (1);
+	return 1;
 }
 
 int
@@ -327,11 +327,11 @@ parse_hex(FILE *cfile, unsigned char *buf)
 	if ((val[0] == '\0' || *ep != '\0') ||
 	    (errno == ERANGE && ulval == ULONG_MAX) ||
 	    (ulval > UINT8_MAX))
-		return (0);
+		return 0;
 
 	buf[0] = ulval;
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -368,7 +368,7 @@ parse_date(FILE *cfile)
 				/* XXX Will break after year 9999! */
 				parse_warn("time string too long");
 				skip_to_semi(cfile);
-				return (0);
+				return 0;
 			}
 			break;
 		case';':
@@ -376,7 +376,7 @@ parse_date(FILE *cfile)
 		default:
 			parse_warn("invalid time string");
 			skip_to_semi(cfile);
-			return (0);
+			return 0;
 		}
 	} while (token != ';');
 
@@ -386,16 +386,16 @@ parse_date(FILE *cfile)
 	p = strptime(timestr, DB_TIMEFMT, &tm);
 	if (p == NULL || *p != '\0') {
 		parse_warn("unparseable time string");
-		return (0);
+		return 0;
 	}
 
 	guess = timegm(&tm);
 	if (guess == -1) {
 		parse_warn("time could not be represented");
-		return (0);
+		return 0;
 	}
 
-	return (guess);
+	return guess;
 }
 
 void

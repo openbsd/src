@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.40 2017/06/29 21:37:43 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.41 2017/07/09 19:19:58 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -134,7 +134,7 @@ get_char(FILE *cfile)
 		}
 	} else
 		ugflag = 0;
-	return (c);
+	return c;
 }
 
 static int
@@ -175,7 +175,7 @@ get_token(FILE *cfile)
 			break;
 		}
 	} while (1);
-	return (ttok);
+	return ttok;
 }
 
 int
@@ -197,7 +197,7 @@ next_token(char **rval, FILE *cfile)
 	if (rval)
 		*rval = tval;
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -221,7 +221,7 @@ peek_token(char **rval, FILE *cfile)
 	if (rval)
 		*rval = tval;
 
-	return (token);
+	return token;
 }
 
 static void
@@ -271,7 +271,7 @@ read_string(FILE *cfile)
 	tokbuf[i] = '\0';
 	tval = tokbuf;
 
-	return (TOK_STRING);
+	return TOK_STRING;
 }
 
 static int
@@ -314,7 +314,7 @@ read_num_or_name(int c, FILE *cfile)
 	if (rv == TOK_NUMBER_OR_NAME && xdigits != i)
 		rv = TOK_NAME;
 
-	return (rv);
+	return rv;
 }
 
 static const struct keywords {
@@ -357,7 +357,7 @@ int	kw_cmp(const void *k, const void *e);
 int
 kw_cmp(const void *k, const void *e)
 {
-	return (strcasecmp(k, ((const struct keywords *)e)->k_name));
+	return strcasecmp(k, ((const struct keywords *)e)->k_name);
 }
 
 static int
@@ -368,6 +368,6 @@ intern(char *atom, int dfv)
 	p = bsearch(atom, keywords, sizeof(keywords)/sizeof(keywords[0]),
 	    sizeof(keywords[0]), kw_cmp);
 	if (p)
-		return (p->k_val);
-	return (dfv);
+		return p->k_val;
+	return dfv;
 }

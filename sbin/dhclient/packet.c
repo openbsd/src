@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.37 2017/07/08 00:36:10 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.38 2017/07/09 19:19:58 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -82,14 +82,14 @@ checksum(unsigned char *buf, uint32_t nbytes, uint32_t sum)
 			sum -= 0xFFFF;
 	}
 
-	return (sum);
+	return sum;
 }
 
 uint32_t
 wrapsum(uint32_t sum)
 {
 	sum = ~sum & 0xFFFF;
-	return (htons(sum));
+	return htons(sum);
 }
 
 void
@@ -109,13 +109,13 @@ decode_hw_header(unsigned char *buf, uint32_t buflen, struct ether_addr *from)
 	struct ether_header eh;
 
 	if (buflen < sizeof(eh))
-		return (-1);
+		return -1;
 
 	memcpy(&eh, buf, sizeof(eh));
 
 	memcpy(from->ether_addr_octet, eh.ether_shost, ETHER_ADDR_LEN);
 
-	return (sizeof(eh));
+	return sizeof(eh);
 }
 
 ssize_t
@@ -137,10 +137,10 @@ decode_udp_ip_header(unsigned char *buf, uint32_t buflen,
 
 	/* Assure that an entire IP header is within the buffer. */
 	if (sizeof(*ip) > buflen)
-		return (-1);
+		return -1;
 	ip_len = (*buf & 0xf) << 2;
 	if (ip_len > buflen)
-		return (-1);
+		return -1;
 	ip = (struct ip *)(buf);
 	ip_packets_seen++;
 
@@ -153,7 +153,7 @@ decode_udp_ip_header(unsigned char *buf, uint32_t buflen,
 			    ip_packets_bad_checksum, ip_packets_seen);
 			ip_packets_seen = ip_packets_bad_checksum = 0;
 		}
-		return (-1);
+		return -1;
 	}
 
 	memcpy(&from->sin_addr, &ip->ip_src, sizeof(from->sin_addr));
@@ -166,17 +166,17 @@ decode_udp_ip_header(unsigned char *buf, uint32_t buflen,
 
 	/* Assure that the entire IP packet is within the buffer. */
 	if (ntohs(ip->ip_len) > buflen)
-		return (-1);
+		return -1;
 
 	/* Assure that the UDP header is within the buffer. */
 	if (ip_len + sizeof(*udp) > buflen)
-		return (-1);
+		return -1;
 	udp = (struct udphdr *)(buf + ip_len);
 	udp_packets_seen++;
 
 	/* Assure that the entire UDP packet is within the buffer. */
 	if (ip_len + ntohs(udp->uh_ulen) > buflen)
-		return (-1);
+		return -1;
 	data = buf + ip_len + sizeof(*udp);
 
 	/*
@@ -198,7 +198,7 @@ decode_udp_ip_header(unsigned char *buf, uint32_t buflen,
 			udp_packets_length_overflow =
 			    udp_packets_length_checked = 0;
 		}
-		return (-1);
+		return -1;
 	}
 #ifdef DEBUG
 	if (len + data != buf + buflen)
@@ -222,10 +222,10 @@ decode_udp_ip_header(unsigned char *buf, uint32_t buflen,
 			    udp_packets_bad_checksum, udp_packets_seen);
 			udp_packets_seen = udp_packets_bad_checksum = 0;
 		}
-		return (-1);
+		return -1;
 	}
 
 	memcpy(&from->sin_port, &udp->uh_sport, sizeof(udp->uh_sport));
 
-	return (ip_len + sizeof(*udp));
+	return ip_len + sizeof(*udp);
 }

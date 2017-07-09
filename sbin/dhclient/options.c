@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.97 2017/07/08 20:38:31 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.98 2017/07/09 19:19:58 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -432,11 +432,11 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 			} else {
 				log_warnx("option %s (%d) larger than buffer.",
 				    name, len);
-				return (0);
+				return 0;
 			}
 		} else {
 			log_warnx("option %s has no length field.", name);
-			return (0);
+			return 0;
 		}
 
 		/*
@@ -486,7 +486,7 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 		s += len + 2;
 	}
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -515,7 +515,7 @@ pack_options(unsigned char *buf, int buflen, struct option_data *options)
 
 		length = options[code].len;
 		if (bufix + length + 2*((length+254)/255) >= buflen)
-			return (lastopt);
+			return lastopt;
 
 		lastopt = bufix;
 		ix = 0;
@@ -538,7 +538,7 @@ pack_options(unsigned char *buf, int buflen, struct option_data *options)
 		lastopt = bufix;
 	}
 
-	return (lastopt);
+	return lastopt;
 }
 
 /*
@@ -572,9 +572,9 @@ pretty_print_string(unsigned char *src, size_t srclen, int emit_punct)
 		rslt = strlcat(string, "\"", sizeof(string));
 
 	if (rslt >= sizeof(string))
-		return (NULL);
+		return NULL;
 
-	return (string);
+	return string;
 }
 
 /*
@@ -600,10 +600,10 @@ pretty_print_classless_routes(unsigned char *src, size_t srclen)
 		bytes = (bits + 7) / 8;
 		if (srclen < (bytes + sizeof(gateway.s_addr)) ||
 		    bytes > sizeof(net.s_addr))
-			return (NULL);
+			return NULL;
 		rslt = snprintf(bitsbuf, sizeof(bitsbuf), "/%d ", bits);
 		if (rslt == -1 || (unsigned int)rslt >= sizeof(bitsbuf))
-			return (NULL);
+			return NULL;
 
 		memset(&net, 0, sizeof(net));
 		memcpy(&net.s_addr, src, bytes);
@@ -620,10 +620,10 @@ pretty_print_classless_routes(unsigned char *src, size_t srclen)
 		strlcat(string, bitsbuf, sizeof(string));
 		if (strlcat(string, inet_ntoa(gateway), sizeof(string)) >=
 		    sizeof(string))
-			return (NULL);
+			return NULL;
 	}
 
-	return (string);
+	return string;
 }
 
 int
@@ -646,14 +646,14 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 			 * domain name.
 			 */
 			*offset = i + 1;
-			return (domain_name_len);
+			return domain_name_len;
 		} else if (label_len & 0xC0) {
 			/* This is a pointer to another list of labels. */
 			if (i + 1 >= srclen) {
 				/* The pointer is truncated. */
 				log_warnx("Truncated pointer in DHCP Domain "
 				    "Search option.");
-				return (-1);
+				return -1;
 			}
 
 			pointer = ((label_len & ~(0xC0)) << 8) + src[i + 1];
@@ -664,7 +664,7 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 				 */
 				log_warnx("Invalid forward pointer in DHCP "
 				    "Domain Search option compression.");
-				return (-1);
+				return -1;
 			}
 
 			pointed_len = expand_search_domain_name(src, srclen,
@@ -672,12 +672,12 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 			domain_name_len += pointed_len;
 
 			*offset = i + 2;
-			return (domain_name_len);
+			return domain_name_len;
 		}
 		if (i + label_len + 1 > srclen) {
 			log_warnx("Truncated label in DHCP Domain Search "
 			    "option.");
-			return (-1);
+			return -1;
 		}
 		/*
 		 * Update the domain name length with the length of the
@@ -688,7 +688,7 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 		if (strlen(domain_search) + domain_name_len >=
 		    DHCP_DOMAIN_SEARCH_LEN) {
 			log_warnx("Domain search list too long.");
-			return (-1);
+			return -1;
 		}
 
 		/* Copy the label found. */
@@ -702,7 +702,7 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 
 	log_warnx("Truncated DHCP Domain Search option.");
 
-	return (-1);
+	return -1;
 }
 
 /*
@@ -732,14 +732,14 @@ pretty_print_domain_search(unsigned char *src, size_t srclen)
 		len = expand_search_domain_name(src, srclen, &offset,
 		    domain_search);
 		if (len == -1)
-			return (NULL);
+			return NULL;
 		domains++;
 		expanded_len += len;
 		if (domains > DHCP_DOMAIN_SEARCH_CNT)
-			return (NULL);
+			return NULL;
 	}
 
-	return (domain_search);
+	return domain_search;
 }
 
 /*
@@ -955,11 +955,11 @@ pretty_print_option(unsigned int code, struct option_data *option,
 	}
 
 done:
-	return (optbuf);
+	return optbuf;
 
 toobig:
 	memset(optbuf, 0, sizeof(optbuf));
-	return (optbuf);
+	return optbuf;
 }
 
 struct option_data *
