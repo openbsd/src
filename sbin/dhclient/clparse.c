@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.120 2017/07/09 18:45:27 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.121 2017/07/09 21:29:19 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -350,16 +350,16 @@ parse_X(FILE *cfile, uint8_t *buf, int max)
 			if (++len == max)
 				break;
 			if (peek_token(NULL, cfile) == ';')
-				return (len);
+				return len;
 		}
 		if (token != ':') {
 			parse_warn("expecting ':'.");
 			skip_to_semi(cfile);
-			return (-1);
+			return -1;
 		} else {
 			parse_warn("expecting hex value.");
 			skip_to_semi(cfile);
-			return (-1);
+			return -1;
 		}
 	} else if (token == TOK_STRING) {
 		token = next_token(&val, cfile);
@@ -367,7 +367,7 @@ parse_X(FILE *cfile, uint8_t *buf, int max)
 		if (len + 1 > max) {
 			parse_warn("string constant too long.");
 			skip_to_semi(cfile);
-			return (-1);
+			return -1;
 		}
 		memcpy(buf, val, len + 1);
 	} else {
@@ -375,9 +375,9 @@ parse_X(FILE *cfile, uint8_t *buf, int max)
 		parse_warn("expecting string or hex data.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (-1);
+		return -1;
 	}
-	return (len);
+	return len;
 }
 
 /*
@@ -398,7 +398,7 @@ parse_option_list(FILE *cfile, uint8_t *list, size_t sz)
 		token = next_token(&val, cfile);
 		if (token == ';' && ix == 0) {
 			/* Empty list. */
-			return (0);
+			return 0;
 		}
 		if (!is_identifier(token)) {
 			parse_warn("expecting option name.");
@@ -430,12 +430,12 @@ parse_option_list(FILE *cfile, uint8_t *list, size_t sz)
 	} while (token == ',');
 
 	if (parse_semi(cfile))
-		return (ix);
+		return ix;
 
 syntaxerror:
 	if (token != ';')
 		skip_to_semi(cfile);
-	return (-1);
+	return -1;
 }
 
 /*
@@ -631,7 +631,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 		parse_warn("expecting identifier.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return (-1);
+		return -1;
 	}
 
 	/* Look up the actual option info. */
@@ -639,7 +639,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	if (code == DHO_END) {
 		parse_warn("unknown option name.");
 		skip_to_semi(cfile);
-		return (-1);
+		return -1;
 	}
 
 	/* Parse the option data. */
@@ -652,19 +652,19 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				len = parse_X(cfile, &hunkbuf[hunkix],
 				    sizeof(hunkbuf) - hunkix);
 				if (len == -1)
-					return (-1);
+					return -1;
 				hunkix += len;
 				dp = NULL;
 				break;
 			case 't': /* Text string. */
 				val = parse_string(cfile, &len);
 				if (val == NULL)
-					return (-1);
+					return -1;
 				if (hunkix + len + 1 > sizeof(hunkbuf)) {
 					parse_warn("option data buffer "
 					    "overflow");
 					skip_to_semi(cfile);
-					return (-1);
+					return -1;
 				}
 				memcpy(&hunkbuf[hunkix], val, len + 1);
 				nul_term = 1;
@@ -674,7 +674,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				break;
 			case 'I': /* IP address. */
 				if (!parse_ip_addr(cfile, &ip_addr))
-					return (-1);
+					return -1;
 				len = sizeof(ip_addr);
 				dp = (uint8_t *)&ip_addr;
 				break;
@@ -683,7 +683,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 					parse_warn("expecting signed 32-bit "
 					    "integer.");
 					skip_to_semi(cfile);
-					return (-1);
+					return -1;
 				}
 				len = 4;
 				dp = buf;
@@ -693,7 +693,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 					parse_warn("expecting unsigned 32-bit "
 					    "integer.");
 					skip_to_semi(cfile);
-					return (-1);
+					return -1;
 				}
 				len = 4;
 				dp = buf;
@@ -703,7 +703,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 					parse_warn("expecting unsigned 16-bit "
 					    "integer.");
 					skip_to_semi(cfile);
-					return (-1);
+					return -1;
 				}
 				len = 2;
 				dp = buf;
@@ -713,7 +713,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 					parse_warn("expecting unsigned 8-bit "
 					    "integer.");
 					skip_to_semi(cfile);
-					return (-1);
+					return -1;
 				}
 				len = 1;
 				dp = buf;
@@ -722,14 +722,14 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				if (!parse_boolean(cfile, buf)) {
 					parse_warn("expecting boolean.");
 					skip_to_semi(cfile);
-					return (-1);
+					return -1;
 				}
 				len = 1;
 				dp = buf;
 				break;
 			case 'C':
 				if (!parse_cidr(cfile, cidr))
-					return (-1);
+					return -1;
 				len = 1 + (cidr[0] + 7) / 8;
 				dp = cidr;
 				break;
@@ -737,14 +737,14 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				log_warnx("Bad format %c in "
 				    "parse_option_param.", *fmt);
 				skip_to_semi(cfile);
-				return (-1);
+				return -1;
 			}
 			if (dp != NULL && len > 0) {
 				if (hunkix + len > sizeof(hunkbuf)) {
 					parse_warn("option data buffer "
 					    "overflow");
 					skip_to_semi(cfile);
-					return (-1);
+					return -1;
 				}
 				memcpy(&hunkbuf[hunkix], dp, len);
 				hunkix += len;
@@ -756,14 +756,14 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	} while (*fmt == 'A' && token == ',');
 
 	if (!parse_semi(cfile))
-		return (-1);
+		return -1;
 
 	options[code].data = malloc(hunkix + nul_term);
 	if (!options[code].data)
 		fatalx("out of memory allocating option data.");
 	memcpy(options[code].data, hunkbuf, hunkix + nul_term);
 	options[code].len = hunkix;
-	return (code);
+	return code;
 }
 
 void
