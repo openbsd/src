@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.119 2017/07/08 20:38:31 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.120 2017/07/09 18:45:27 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -654,6 +654,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				if (len == -1)
 					return (-1);
 				hunkix += len;
+				dp = NULL;
 				break;
 			case 't': /* Text string. */
 				val = parse_string(cfile, &len);
@@ -669,13 +670,76 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				nul_term = 1;
 				hunkix += len;
 				free(val);
+				dp = NULL;
 				break;
 			case 'I': /* IP address. */
 				if (!parse_ip_addr(cfile, &ip_addr))
 					return (-1);
 				len = sizeof(ip_addr);
 				dp = (uint8_t *)&ip_addr;
-alloc:
+				break;
+			case 'l':	/* Signed 32-bit integer. */
+				if (!parse_decimal(cfile, buf, 'l')) {
+					parse_warn("expecting signed 32-bit "
+					    "integer.");
+					skip_to_semi(cfile);
+					return (-1);
+				}
+				len = 4;
+				dp = buf;
+				break;
+			case 'L':	/* Unsigned 32-bit integer. */
+				if (!parse_decimal(cfile, buf, 'L')) {
+					parse_warn("expecting unsigned 32-bit "
+					    "integer.");
+					skip_to_semi(cfile);
+					return (-1);
+				}
+				len = 4;
+				dp = buf;
+				break;
+			case 'S':	/* Unsigned 16-bit integer. */
+				if (!parse_decimal(cfile, buf, 'S')) {
+					parse_warn("expecting unsigned 16-bit "
+					    "integer.");
+					skip_to_semi(cfile);
+					return (-1);
+				}
+				len = 2;
+				dp = buf;
+				break;
+			case 'B':	/* Unsigned 8-bit integer. */
+				if (!parse_decimal(cfile, buf, 'B')) {
+					parse_warn("expecting unsigned 8-bit "
+					    "integer.");
+					skip_to_semi(cfile);
+					return (-1);
+				}
+				len = 1;
+				dp = buf;
+				break;
+			case 'f': /* Boolean flag. */
+				if (!parse_boolean(cfile, buf)) {
+					parse_warn("expecting boolean.");
+					skip_to_semi(cfile);
+					return (-1);
+				}
+				len = 1;
+				dp = buf;
+				break;
+			case 'C':
+				if (!parse_cidr(cfile, cidr))
+					return (-1);
+				len = 1 + (cidr[0] + 7) / 8;
+				dp = cidr;
+				break;
+			default:
+				log_warnx("Bad format %c in "
+				    "parse_option_param.", *fmt);
+				skip_to_semi(cfile);
+				return (-1);
+			}
+			if (dp != NULL && len > 0) {
 				if (hunkix + len > sizeof(hunkbuf)) {
 					parse_warn("option data buffer "
 					    "overflow");
@@ -684,80 +748,6 @@ alloc:
 				}
 				memcpy(&hunkbuf[hunkix], dp, len);
 				hunkix += len;
-				break;
-			case 'l':	/* Signed 32-bit integer. */
-				if (!parse_decimal(cfile, buf, *fmt)) {
-					parse_warn("expecting signed 32-bit "
-					    "integer.");
-					skip_to_semi(cfile);
-					return (-1);
-				}
-				len = 4;
-				dp = buf;
-				goto alloc;
-			case 'L':	/* Unsigned 32-bit integer. */
-				if (!parse_decimal(cfile, buf, *fmt)) {
-					parse_warn("expecting unsigned 32-bit "
-					    "integer.");
-					skip_to_semi(cfile);
-					return (-1);
-				}
-				len = 4;
-				dp = buf;
-				goto alloc;
-			case 'S':	/* Unsigned 16-bit integer. */
-				if (!parse_decimal(cfile, buf, *fmt)) {
-					parse_warn("expecting unsigned 16-bit "
-					    "integer.");
-					skip_to_semi(cfile);
-					return (-1);
-				}
-				len = 2;
-				dp = buf;
-				goto alloc;
-			case 'B':	/* Unsigned 8-bit integer. */
-				if (!parse_decimal(cfile, buf, *fmt)) {
-					parse_warn("expecting unsigned 8-bit "
-					    "integer.");
-					skip_to_semi(cfile);
-					return (-1);
-				}
-				len = 1;
-				dp = buf;
-				goto alloc;
-			case 'f': /* Boolean flag. */
-				token = next_token(&val, cfile);
-				if (!is_identifier(token)) {
-					parse_warn("expecting identifier.");
-bad_flag:
-					if (token != ';')
-						skip_to_semi(cfile);
-					return (-1);
-				}
-				if (!strcasecmp(val, "true") ||
-				    !strcasecmp(val, "on"))
-					buf[0] = 1;
-				else if (!strcasecmp(val, "false") ||
-				    !strcasecmp(val, "off"))
-					buf[0] = 0;
-				else {
-					parse_warn("expecting boolean.");
-					goto bad_flag;
-				}
-				len = 1;
-				dp = buf;
-				goto alloc;
-			case 'C':
-				if (!parse_cidr(cfile, cidr))
-					return (-1);
-				len = 1 + (cidr[0] + 7) / 8;
-				dp = cidr;
-				goto alloc;
-			default:
-				log_warnx("Bad format %c in "
-				    "parse_option_param.", *fmt);
-				skip_to_semi(cfile);
-				return (-1);
 			}
 		}
 		token = peek_token(NULL, cfile);
