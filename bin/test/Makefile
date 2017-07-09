@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.5 2016/03/30 06:38:40 jmc Exp $
+#	$OpenBSD: Makefile,v 1.6 2017/07/09 21:23:19 espie Exp $
 
 PROG=	test
-SRCS=   test.c
 LINKS=	${BINDIR}/test ${BINDIR}/[
 
 .include <bsd.prog.mk>

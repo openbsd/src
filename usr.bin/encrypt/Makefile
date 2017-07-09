@@ -1,6 +1,5 @@
-#	$OpenBSD: Makefile,v 1.9 2015/10/12 13:53:40 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2017/07/09 21:23:19 espie Exp $
 
 PROG=	encrypt
-SRCS= encrypt.c
 
 .include <bsd.prog.mk>

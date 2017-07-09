@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile,v 1.2 2016/03/30 06:38:46 jmc Exp $
+#	$OpenBSD: Makefile,v 1.3 2017/07/09 21:23:19 espie Exp $
 #	$NetBSD: Makefile,v 1.1 2002/03/01 11:21:58 ad Exp $
 
 PROG=	pkill
-SRCS=	pkill.c
-MAN=	pkill.1
 
 LDADD+=	-lkvm
 DPADD+=	${LIBKVM}

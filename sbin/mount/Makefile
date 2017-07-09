@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.7 2014/07/14 06:39:23 jmc Exp $
+#	$OpenBSD: Makefile,v 1.8 2017/07/09 21:23:19 espie Exp $
 
 PROG=	mount
-SRCS=	mount.c
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 MAN=	mount.8

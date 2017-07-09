@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.7 2011/11/08 10:37:10 guenther Exp $
+#	$OpenBSD: Makefile,v 1.8 2017/07/09 21:23:19 espie Exp $
 
 PROG=	xinstall
-SRCS=	xinstall.c
 MAN=	install.1
 
 realinstall:

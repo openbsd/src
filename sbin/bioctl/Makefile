@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.13 2014/01/18 05:54:51 martynas Exp $
+#	$OpenBSD: Makefile,v 1.14 2017/07/09 21:23:19 espie Exp $
 
 PROG=	bioctl
-SRCS=	bioctl.c
 
 LDADD=	-lutil
 DPADD=	${LIBUTIL}

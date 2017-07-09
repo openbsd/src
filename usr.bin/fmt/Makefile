@@ -1,6 +1,5 @@
-#	$OpenBSD: Makefile,v 1.4 1998/04/25 23:08:26 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 2017/07/09 21:23:19 espie Exp $
 
 PROG=	fmt
-SRCS=	fmt.c
 
 .include <bsd.prog.mk>

@@ -1,6 +1,5 @@
-#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:35:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2017/07/09 21:23:19 espie Exp $
 
 PROG=		expr
-SRCS=		expr.c
 
 .include <bsd.prog.mk>

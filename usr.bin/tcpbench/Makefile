@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.7 2015/11/17 15:41:08 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2017/07/09 21:23:19 espie Exp $
 
 PROG=	tcpbench
-MAN=	tcpbench.1
 LDADD=	-lkvm -levent
 DPADD=	${LIBKVM} ${LIBEVENT}
 
