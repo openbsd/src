@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.73 2017/07/04 00:59:11 espie Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.74 2017/07/09 15:29:52 espie Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -69,18 +69,51 @@ LIBARCH?=
 .endif
 
 .if defined(PROG)
-SRCS?=	${PROG}.c
+SRCS ?=	${PROG}.c
+MAN ?= ${PROG}.1
+.endif
+
+# if we have several progs, define appropriate vars instead
+.if defined(PROGS)
+.  for p in ${PROGS}
+SRCS_$p ?= $p.c
+OBJS_$p = ${SRCS_$p:N*.h:N*.sh:R:S/$/.o/}
+DPADD_$p ?= ${DPADD}
+LDADD_$p ?= ${LDADD}
+
+# XXX still create SRCS, because it's what bsd.dep.mk understands
+SRCS += ${SRCS_$p}
+
+# and we can write the actual target already
+.    if defined(OBJS_$p) && !empty(OBJS_$p)
+.      if !empty(SRCS_$p:M*.C) || !empty(SRCS_$p:M*.cc) || \
+	!empty(SRCS_$p:M*.cpp) || !empty(SRCS_$p:M*.cxx)
+$p: ${LIBCRT0} ${OBJS_$p} ${LIBC} ${CRTBEGIN} ${CRTEND} ${DPADD_$p}
+	${CXX} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS_$p} ${LDADD_$p}
+.      else
+$p: ${LIBCRT0} ${OBJS_$p} ${LIBC} ${CRTBEGIN} ${CRTEND} ${DPADD_$p}
+	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS_$p} ${LDADD_$p}
+.      endif
+.    endif
+.  endfor
+MAN ?= ${PROGS:=.1}
+.endif
+
+.if defined(PROG) || defined(PROGS)
+# ... so we create appropriate full list of obj, dep, lex, yacc...
 .  if !empty(SRCS:N*.h:N*.sh)
 OBJS+=	${SRCS:N*.h:N*.sh:R:S/$/.o/}
-DEPS+=	${OBJS:R:S/$/.d/}
+DEPS+=	${OBJS:.o=.d}
+.  endif
 
 _LEXINTM?=${SRCS:M*.l:.l=.c}
 _YACCINTM?=${SRCS:M*.y:.y=.c}
-.  endif
+.endif
 
+.if defined(PROG)
 .  if defined(OBJS) && !empty(OBJS)
-.    if !empty(SRCS:M*.C) || !empty(SRCS:M*.cc) || !empty(SRCS:M*.cpp) || \
-       !empty(SRCS:M*.cxx)
+.    if !empty(SRCS:M*.C) || !empty(SRCS:M*.cc) || \
+	!empty(SRCS:M*.cpp) || !empty(SRCS:M*.cxx)
 ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${CRTBEGIN} ${CRTEND} ${DPADD}
 	${CXX} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 .    else
@@ -88,21 +121,17 @@ ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${CRTBEGIN} ${CRTEND} ${DPADD}
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 .    endif
 .  endif	# defined(OBJS) && !empty(OBJS)
-
-.  if	!defined(MAN)
-MAN=	${PROG}.1
-.  endif	# !defined(MAN)
-.endif	# defined(PROG)
+.endif
 
 .MAIN: all
-all: ${PROG} _SUBDIRUSE
+all: ${PROG} ${PROGS} _SUBDIRUSE
 
-BUILDAFTER += ${PROG} ${OBJS}
+BUILDAFTER += ${PROG} ${PROGS} ${OBJS}
 
 .if !target(clean)
 clean: _SUBDIRUSE
 	rm -f a.out [Ee]rrs mklog *.core y.tab.h \
-	    ${PROG} ${OBJS} ${_LEXINTM} ${_YACCINTM} ${CLEANFILES}
+	    ${PROG} ${PROGS} ${OBJS} ${_LEXINTM} ${_YACCINTM} ${CLEANFILES}
 .endif
 
 cleandir: _SUBDIRUSE clean
@@ -117,11 +146,18 @@ afterinstall:
 
 .if !target(realinstall)
 realinstall:
-.if defined(PROG)
+.  if defined(PROG)
 	${INSTALL} ${INSTALL_COPY} -S ${INSTALL_STRIP} \
 	    -o ${BINOWN} -g ${BINGRP} \
 	    -m ${BINMODE} ${PROG} ${DESTDIR}${BINDIR}/${PROG}
-.endif
+.  endif
+.  if defined(PROGS)
+.    for p in ${PROGS}
+	${INSTALL} ${INSTALL_COPY} -S ${INSTALL_STRIP} \
+	    -o ${BINOWN} -g ${BINGRP} \
+	    -m ${BINMODE} $p ${DESTDIR}${BINDIR}/$p
+.    endfor
+.  endif
 .endif
 
 install: maninstall _SUBDIRUSE
