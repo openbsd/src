@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.23 2015/11/17 21:39:23 mmcc Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.24 2017/07/09 15:32:09 espie Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -44,7 +44,7 @@
 #include "os-proto.h"
 #endif
 
-#include "grammar.tab.h"
+#include "grammar.h"
 
 static int stoi(char *);
 static inline int xdtoi(int);
