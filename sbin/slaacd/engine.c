@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.4 2017/07/06 15:02:53 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.5 2017/07/09 08:41:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1708,7 +1708,8 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 			addr_proposal->vltime = prefix->vltime;
 
 		if (prefix->pltime > ND6_PRIV_PREFERRED_LIFETIME)
-			addr_proposal->pltime = ND6_PRIV_PREFERRED_LIFETIME;
+			addr_proposal->pltime = ND6_PRIV_PREFERRED_LIFETIME
+			    - arc4random_uniform(ND6_PRIV_MAX_DESYNC_FACTOR);
 		else
 			addr_proposal->pltime = prefix->pltime;
 	} else {
