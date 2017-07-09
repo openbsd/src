@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: lex.l,v 1.4 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: lex.l,v 1.5 2017/07/09 14:04:50 espie Exp $	*/
 /*	$NetBSD: lex.l,v 1.3 1995/03/21 15:04:15 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
-#include "y.tab.h"
+#include "grammar.h"
 
 extern int	line;
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.dep.mk,v 1.20 2017/07/05 13:30:01 espie Exp $
+#	$OpenBSD: bsd.dep.mk,v 1.21 2017/07/09 14:04:50 espie Exp $
 #	$NetBSD: bsd.dep.mk,v 1.12 1995/09/27 01:15:09 christos Exp $
 
 .if !target(depend)
@@ -37,6 +37,17 @@ tags:
 # assume libraries
 ${i:R:S/$/.o/} ${i:R:S/$/.po/} ${i:R:S/$/.so/} ${i:R:S/$/.do/}: $i
 .endfor
+
+# give us better rules for yacc
+
+.if ${YFLAGS:M-d}
+# loop may not trigger
+.  for f in ${SRCS:M*.y}	
+${f:.y=.c} ${f:.y=.h}: $f
+	${YACC.y} -o ${f:.y=.c} ${.IMPSRC}
+.  endfor
+CLEANFILES += ${SRCS:M*.y:.y=.h}
+.endif
 
 CLEANFILES += ${DEPS} .depend
 

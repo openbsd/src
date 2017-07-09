@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.23 2015/11/19 19:48:27 tedu Exp $	*/
+/*	$OpenBSD: scan.l,v 1.24 2017/07/09 14:04:50 espie Exp $	*/
 /*	$NetBSD: scan.l,v 1.13 1997/02/02 21:12:37 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "config.h"
-#include "y.tab.h"
+#include "gram.h"
 
 int	yyline;
 const char *yyfile;

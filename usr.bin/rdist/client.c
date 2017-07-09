@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.35 2015/12/09 19:39:10 mmcc Exp $	*/
+/*	$OpenBSD: client.c,v 1.36 2017/07/09 14:04:50 espie Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@
 #include <unistd.h>
 
 #include "client.h"
-#include "y.tab.h"
+#include "gram.h"
 
 /*
  * Routines used in client mode to communicate with remove server.
