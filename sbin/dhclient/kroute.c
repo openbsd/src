@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.103 2017/07/08 00:36:10 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.104 2017/07/09 12:38:47 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -47,8 +47,8 @@
 #include "log.h"
 #include "privsep.h"
 
-#define ROUNDUP(a) \
-    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ROUNDUP(a)	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : \
+    sizeof(long))
 
 /*
  * flush_unpriv_ibuf makes sure queued messages are delivered to the
