@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.5 2017/07/09 08:41:47 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.6 2017/07/09 09:00:56 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1641,9 +1641,28 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 				/* new proposal */
 				gen_address_proposal(iface, ra, prefix, 0);
 
-			if (!found_privacy && iface->autoconfprivacy)
-				/* new privacy proposal */
-				gen_address_proposal(iface, ra, prefix, 1);
+			if (!found_privacy && iface->autoconfprivacy) {
+				if (prefix->pltime <
+				    ND6_PRIV_MAX_DESYNC_FACTOR) {
+					if (getnameinfo((struct sockaddr *)
+					    &ra->from, ra->from.sin6_len,
+					    hbuf, sizeof(hbuf), NULL, 0,
+					    NI_NUMERICHOST | NI_NUMERICSERV)) {
+						log_warnx("cannot get router "
+						    "IP");
+						strlcpy(hbuf, "unknown",
+						    sizeof(hbuf));
+					}
+					log_warnx("%s: pltime from %s is too "
+					    "small: %d < %d; not generating "
+					    "privacy address", __func__, hbuf,
+					    prefix->pltime,
+					    ND6_PRIV_MAX_DESYNC_FACTOR);
+				} else
+					/* new privacy proposal */
+					gen_address_proposal(iface, ra, prefix,
+					    1);
+			}
 		}
 	}
 }
