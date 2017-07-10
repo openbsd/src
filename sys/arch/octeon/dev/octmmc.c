@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.3 2017/07/07 14:49:04 visa Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.4 2017/07/10 16:17:51 visa Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Visa Hankala
@@ -493,6 +493,15 @@ void
 octmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
 	struct octmmc_bus *bus = sch;
+
+	/*
+	 * Refuse SDIO probe. Proper SDIO operation is not possible
+	 * because of a lack of card interrupt handling.
+	 */
+	if (cmd->c_opcode == SD_IO_SEND_OP_COND) {
+		cmd->c_error = ENOTSUP;
+		return;
+	}
 
 	/*
 	 * The DMA mode can only do data block transfers. Other commands have
