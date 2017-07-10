@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.13 2017/06/20 18:32:26 ajacoutot Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.14 2017/07/10 07:28:26 ajacoutot Exp $
 #
 # Copyright (c) 2016-2017 Robert Nagy <robert@openbsd.org>
 #
@@ -57,6 +57,7 @@ _FAKE_COOKIE=	${ERRATA}/.fake_done
 .if ${BUILD:L:Msrc} || ${BUILD:L:Mkernel}
 SRCDIR=		${BSDSRCDIR}
 .elif ${BUILD:L:Mxenocara}
+XSRCDIR?=	/usr/xenocara
 SRCDIR=		${XSRCDIR}
 MTREE_FILES+=	/etc/mtree/BSD.x11.dist
 .endif
