@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.19 2017/03/16 15:09:32 jmc Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.20 2017/07/10 15:42:46 sthen Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -24,7 +24,7 @@
 .\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 16 2017 $
+.Dd $Mdocdate: July 10 2017 $
 .Dt SPAMD.CONF 5
 .Os
 .Sh NAME
@@ -65,13 +65,13 @@ nixspam:\e
 override:\e
 	:white:\e
 	:method=file:\e
-	:file=/var/mail/override.txt:
+	:file=/etc/mail/override.txt:
 
 myblack:\e
 	:black:\e
-	:msg=/var/mail/myblackmsg.txt:\e
+	:msg=/etc/mail/myblackmsg.txt:\e
 	:method=file:\e
-	:file=/var/mail/myblack.txt:
+	:file=/etc/mail/myblack.txt:
 .Ed
 .Pp
 The default configuration file must include the entry
