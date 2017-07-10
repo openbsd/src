@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2003/07/28 09:49:56 djm Exp $
+#	$OpenBSD: Makefile,v 1.23 2017/07/10 14:09:59 espie Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -8,7 +8,6 @@ BINOWN=	root
 BINMODE?=555
 
 BINDIR=	/usr/bin
-MAN=	ssh-keygen.1
 
 SRCS=	ssh-keygen.c moduli.c
 

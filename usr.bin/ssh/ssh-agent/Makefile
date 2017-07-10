@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2010/02/09 08:55:31 markus Exp $
+#	$OpenBSD: Makefile,v 1.25 2017/07/10 14:09:59 espie Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -9,7 +9,6 @@ BINGRP=	_sshagnt
 BINMODE?=2555
 
 BINDIR=	/usr/bin
-MAN=	ssh-agent.1
 
 SRCS=	ssh-agent.c ssh-pkcs11-client.c
 

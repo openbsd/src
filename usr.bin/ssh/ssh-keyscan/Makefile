@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2016/01/14 16:17:40 markus Exp $
+#	$OpenBSD: Makefile,v 1.7 2017/07/10 14:09:59 espie Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -8,9 +8,6 @@ BINOWN=	root
 BINMODE?=555
 
 BINDIR=	/usr/bin
-MAN=	ssh-keyscan.1
-
-SRCS=	ssh-keyscan.c
 
 .include <bsd.prog.mk>
 
