@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.c,v 1.4 2017/07/01 19:38:41 sf Exp $    */
+/*      $OpenBSD: codepatch.c,v 1.5 2017/07/10 00:59:24 mortimer Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -36,20 +36,6 @@ CTASSERT(sizeof(struct codepatch) % 8 == 0);
 extern struct codepatch codepatch_begin;
 extern struct codepatch codepatch_end;
 
-#define NOP_LEN_MAX	9
-
-static const unsigned char nops[][NOP_LEN_MAX] = {
-	{ 0x90 },
-	{ 0x66, 0x90 },
-	{ 0x0F, 0x1F, 0x00 },
-	{ 0x0F, 0x1F, 0x40, 0x00 },
-	{ 0x0F, 0x1F, 0x44, 0x00, 0x00 },
-	{ 0x66, 0x0F, 0x1F, 0x44, 0x00, 0x00 },
-	{ 0x0F, 0x1F, 0x80, 0x00, 0x00, 0x00, 0x00 },
-	{ 0x0F, 0x1F, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00 },
-	{ 0x66, 0x0F, 0x1F, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00},
-};
-
 void
 codepatch_fill_nop(void *caddr, uint16_t len)
 {
@@ -57,11 +43,21 @@ codepatch_fill_nop(void *caddr, uint16_t len)
 	uint16_t nop_len;
 
 	while (len > 0) {
-		if (len <= NOP_LEN_MAX)
-			nop_len = len;
-		else
-			nop_len = NOP_LEN_MAX;
-		memcpy(addr, nops[nop_len-1], nop_len);
+		nop_len = len < 127 ? len : 127;
+		switch (nop_len) {
+		case 1:
+			addr[0] = 0x90;
+			break;
+		case 2:
+			addr[0] = 0x66;
+			addr[1] = 0x90;
+			break;
+		default:
+			addr[0] = 0xEB;
+			addr[1] = nop_len - 2;
+			memset(addr + 2, 0xCC, nop_len - 2);
+			break;
+		}
 		addr += nop_len;
 		len -= nop_len;
 	}
