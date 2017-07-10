@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.46 2017/02/24 23:38:47 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.47 2017/07/10 07:10:29 bluhm Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1517,7 +1517,7 @@ VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt,
 		} else {
 			Error("Bad modifier: %s", tstr);
 			/* Try skipping to end of var... */
-			for (tstr++; *tstr != endc && *tstr != '\0';)
+			while (*tstr != endc && *tstr != '\0')
 				tstr++;
 			if (str != NULL && *freePtr)
 				free(str);
