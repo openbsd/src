@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.69 2017/07/09 18:28:44 espie Exp $
+#	$OpenBSD: bsd.README,v 1.70 2017/07/10 07:51:37 espie Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -287,7 +287,7 @@ BINMODE		Binary mode.
 BUILDFIRST	Stuff that needs to be built before anything else, in
 		terms of dependencies.
 
-BUILDLATER	Stuff that comes later (usually don't touch, defined correctly
+BUILDAFTER	Stuff that comes later (usually don't touch, defined correctly
 		by <bsd.prog.mk> and <bsd.lib.mk>)
 
 CLEANFILES	Additional files to remove for the clean and cleandir targets.
