@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.129 2017/06/07 13:30:36 mpi Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.130 2017/07/10 23:49:10 dlg Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
+#include <sys/mutex.h>
 #include <sys/rwlock.h>
 
 #include <uvm/uvm_extern.h>
@@ -94,6 +95,7 @@ u_int	nkmempages_min = 0;
 #endif
 u_int	nkmempages_max = 0;
 
+struct mutex malloc_mtx = MUTEX_INITIALIZER(IPL_VM);
 struct kmembuckets bucket[MINBUCKET + 16];
 #ifdef KMEMSTATS
 struct kmemstats kmemstats[M_LAST];
@@ -151,36 +153,30 @@ malloc(size_t size, int type, int flags)
 	struct kmemusage *kup;
 	struct kmem_freelist *freep;
 	long indx, npg, allocsize;
-	int s;
 	caddr_t va, cp;
+	int s;
 #ifdef DIAGNOSTIC
 	int freshalloc;
 	char *savedtype;
 #endif
 #ifdef KMEMSTATS
 	struct kmemstats *ksp = &kmemstats[type];
+	int wake;
 
 	if (((unsigned long)type) <= 1 || ((unsigned long)type) >= M_LAST)
 		panic("malloc: bogus type %d", type);
 #endif
 
-	if (!cold)
-		KERNEL_ASSERT_LOCKED();
-
 	KASSERT(flags & (M_WAITOK | M_NOWAIT));
 
+#ifdef DIAGNOSTIC
 	if ((flags & M_NOWAIT) == 0) {
 		extern int pool_debug;
-#ifdef DIAGNOSTIC
 		assertwaitok();
 		if (pool_debug == 2)
 			yield();
-#endif
-		if (!cold && pool_debug) {
-			KERNEL_UNLOCK();
-			KERNEL_LOCK();
-		}
 	}
+#endif
 
 #ifdef MALLOC_DEBUG
 	if (debug_malloc(size, type, flags, (void **)&va)) {
@@ -193,6 +189,7 @@ malloc(size_t size, int type, int flags)
 	if (size > 65535 * PAGE_SIZE) {
 		if (flags & M_CANFAIL) {
 #ifndef SMALL_KERNEL
+			/* XXX lock */
 			if (ratecheck(&malloc_lasterr, &malloc_errintvl))
 				printf("malloc(): allocation too large, "
 				    "type = %d, size = %lu\n", type, size);
@@ -204,32 +201,36 @@ malloc(size_t size, int type, int flags)
 	}
 
 	indx = BUCKETINDX(size);
-	kbp = &bucket[indx];
-	s = splvm();
-#ifdef KMEMSTATS
-	while (ksp->ks_memuse >= ksp->ks_limit) {
-		if (flags & M_NOWAIT) {
-			splx(s);
-			return (NULL);
-		}
-		if (ksp->ks_limblocks < 65535)
-			ksp->ks_limblocks++;
-		tsleep(ksp, PSWP+2, memname[type], 0);
-	}
-	ksp->ks_size |= 1 << indx;
-#endif
 	if (size > MAXALLOCSAVE)
 		allocsize = round_page(size);
 	else
 		allocsize = 1 << indx;
+	kbp = &bucket[indx];
+	mtx_enter(&malloc_mtx);
+#ifdef KMEMSTATS
+	while (ksp->ks_memuse >= ksp->ks_limit) {
+		if (flags & M_NOWAIT) {
+			mtx_leave(&malloc_mtx);
+			return (NULL);
+		}
+		if (ksp->ks_limblocks < 65535)
+			ksp->ks_limblocks++;
+		msleep(ksp, &malloc_mtx, PSWP+2, memname[type], 0);
+	}
+	ksp->ks_memuse += allocsize; /* account for this early */
+	ksp->ks_size |= 1 << indx;
+#endif
 	if (XSIMPLEQ_FIRST(&kbp->kb_freelist) == NULL) {
+		mtx_leave(&malloc_mtx);
 		npg = atop(round_page(allocsize));
+		s = splvm();
 		va = (caddr_t)uvm_km_kmemalloc_pla(kmem_map, NULL,
 		    (vsize_t)ptoa(npg), 0,
 		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
 		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0),
 		    no_constraint.ucr_low, no_constraint.ucr_high,
 		    0, 0, 0);
+		splx(s);
 		if (va == NULL) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can
@@ -241,9 +242,20 @@ malloc(size_t size, int type, int flags)
 			 */
 			if ((flags & (M_NOWAIT|M_CANFAIL)) == 0)
 				panic("malloc: out of space in kmem_map");
-			splx(s);
+
+#ifdef KMEMSTATS
+			mtx_enter(&malloc_mtx);
+			ksp->ks_memuse -= allocsize;
+			wake = ksp->ks_memuse + allocsize >= ksp->ks_limit &&
+			    ksp->ks_memuse < ksp->ks_limit;
+			mtx_leave(&malloc_mtx);
+			if (wake)
+				wakeup(ksp);
+#endif
+			
 			return (NULL);
 		}
+		mtx_enter(&malloc_mtx);
 #ifdef KMEMSTATS
 		kbp->kb_total += kbp->kb_elmpercl;
 #endif
@@ -254,9 +266,6 @@ malloc(size_t size, int type, int flags)
 #endif
 		if (allocsize > MAXALLOCSAVE) {
 			kup->ku_pagecnt = npg;
-#ifdef KMEMSTATS
-			ksp->ks_memuse += allocsize;
-#endif
 			goto out;
 		}
 #ifdef KMEMSTATS
@@ -334,7 +343,6 @@ malloc(size_t size, int type, int flags)
 		panic("malloc: lost data");
 	kup->ku_freecnt--;
 	kbp->kb_totalfree--;
-	ksp->ks_memuse += 1 << indx;
 out:
 	kbp->kb_calls++;
 	ksp->ks_inuse++;
@@ -344,7 +352,7 @@ out:
 #else
 out:
 #endif
-	splx(s);
+	mtx_leave(&malloc_mtx);
 
 	if ((flags & M_ZERO) && va != NULL)
 		memset(va, 0, size);
@@ -369,9 +377,6 @@ free(void *addr, int type, size_t freedsize)
 	struct kmemstats *ksp = &kmemstats[type];
 #endif
 
-	if (!cold)
-		KERNEL_ASSERT_LOCKED();
-
 	if (addr == NULL)
 		return;
 
@@ -391,7 +396,6 @@ free(void *addr, int type, size_t freedsize)
 	kbp = &bucket[kup->ku_indx];
 	if (size > MAXALLOCSAVE)
 		size = kup->ku_pagecnt << PAGE_SHIFT;
-	s = splvm();
 #ifdef DIAGNOSTIC
 	if (freedsize != 0 && freedsize > size)
 		panic("free: size too large %zu > %ld (%p) type %s",
@@ -412,8 +416,11 @@ free(void *addr, int type, size_t freedsize)
 			addr, size, memname[type], alloc);
 #endif /* DIAGNOSTIC */
 	if (size > MAXALLOCSAVE) {
+		s = splvm();
 		uvm_km_free(kmem_map, (vaddr_t)addr, ptoa(kup->ku_pagecnt));
+		splx(s);
 #ifdef KMEMSTATS
+		mtx_enter(&malloc_mtx);
 		ksp->ks_memuse -= size;
 		kup->ku_indx = 0;
 		kup->ku_pagecnt = 0;
@@ -422,11 +429,12 @@ free(void *addr, int type, size_t freedsize)
 			wakeup(ksp);
 		ksp->ks_inuse--;
 		kbp->kb_total -= 1;
+		mtx_leave(&malloc_mtx);
 #endif
-		splx(s);
 		return;
 	}
 	freep = (struct kmem_freelist *)addr;
+	mtx_enter(&malloc_mtx);
 #ifdef DIAGNOSTIC
 	/*
 	 * Check for multiple frees. Use a quick check to see if
@@ -468,7 +476,7 @@ free(void *addr, int type, size_t freedsize)
 	ksp->ks_inuse--;
 #endif
 	XSIMPLEQ_INSERT_TAIL(&kbp->kb_freelist, freep, kf_flist);
-	splx(s);
+	mtx_leave(&malloc_mtx);
 }
 
 /*
@@ -578,6 +586,9 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
 	struct kmembuckets kb;
+#ifdef KMEMSTATS
+	struct kmemstats km;
+#endif
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
 	int error;
 #endif
@@ -606,15 +617,19 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstring(oldp, oldlenp, newp, buckstring));
 
 	case KERN_MALLOC_BUCKET:
+		mtx_enter(&malloc_mtx);
 		memcpy(&kb, &bucket[BUCKETINDX(name[1])], sizeof(kb));
+		mtx_leave(&malloc_mtx);
 		memset(&kb.kb_freelist, 0, sizeof(kb.kb_freelist));
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &kb, sizeof(kb)));
 	case KERN_MALLOC_KMEMSTATS:
 #ifdef KMEMSTATS
 		if ((name[1] < 0) || (name[1] >= M_LAST))
 			return (EINVAL);
-		return (sysctl_rdstruct(oldp, oldlenp, newp,
-		    &kmemstats[name[1]], sizeof(struct kmemstats)));
+		mtx_enter(&malloc_mtx);
+		memcpy(&km, &kmemstats[name[1]], sizeof(km));
+		mtx_leave(&malloc_mtx);
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &km, sizeof(km)));
 #else
 		return (EOPNOTSUPP);
 #endif
