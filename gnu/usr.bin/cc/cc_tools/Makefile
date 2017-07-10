@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/cc_tools/Makefile,v 1.88.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.16 2017/06/23 11:54:22 jsg Exp $
+# $OpenBSD: Makefile,v 1.17 2017/07/10 21:30:37 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -510,7 +510,6 @@ GNTOOLS+=	genattr genattrtab genautomata gencodes gencheck genchecksum \
 		genoutput genpeep genpreds genrecog
 
 all: ${GNTOOLS} ${GENSRCS} ${GENONLY}
-beforedepend: ${GENONLY}
 
 #-----------------------------------------------------------------------
 # Fixups.

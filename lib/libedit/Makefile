@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2017/07/03 18:19:55 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.29 2017/07/10 21:30:37 espie Exp $
 #	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
@@ -35,7 +35,7 @@ CLEANFILES+=	${GENERATED}
 HOST_SH=	sh
 
 .PHONY: generated
-.depend generated: ${GENERATED}
+generated: ${GENERATED}
 BUILDFIRST = ${GENERATED}
 
 vi.h: vi.c makelist

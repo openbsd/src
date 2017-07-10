@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.15 2017/07/01 14:37:25 espie Exp $
+#	$OpenBSD: Makefile,v 1.16 2017/07/10 21:30:37 espie Exp $
 
 PROG=	hack
 CFLAGS+=-I.
-SRCS+=	hack.onames.h
 SRCS+=	alloc.c hack.Decl.c hack.apply.c hack.bones.c hack.c hack.cmd.c \
 	hack.do.c hack.do_name.c hack.do_wear.c hack.dog.c hack.eat.c \
 	hack.end.c hack.engrave.c hack.fight.c hack.invent.c hack.ioctl.c \

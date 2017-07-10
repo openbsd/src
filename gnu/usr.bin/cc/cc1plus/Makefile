@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/cc1plus/Makefile,v 1.39.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.2 2010/05/06 20:58:10 naddy Exp $
+# $OpenBSD: Makefile,v 1.3 2017/07/10 21:30:37 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@
 .PATH: ${GCCDIR}/cp ${GCCDIR}
 
 PROG=	cc1plus
-#SRCS=	cfns.h
+
 SRCS+=	main.c cp-lang.c c-opts.c call.c class.c cvt.c cxx-pretty-print.c \
 	decl.c decl2.c error.c except.c expr.c dump.c friend.c  init.c lex.c \
 	mangle.c method.c name-lookup.c parser.c pt.c ptree.c repo.c rtti.c \

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.42 2017/06/16 10:25:54 espie Exp $
+#	$OpenBSD: Makefile,v 1.43 2017/07/10 21:30:37 espie Exp $
 
 .if ${MACHINE} != "octeon"
 
@@ -7,9 +7,8 @@ SRCS=	display.c keyboard.c keysym.c map_parse.y map_scan.l \
 	mouse.c util.c wsconsctl.c
 
 CPPFLAGS+=	-I${.CURDIR} -I.
-CLEANFILES+=	keysym.h y.tab.h
+CLEANFILES+=	keysym.h
 
-beforedepend: keysym.h
 keysym.o: keysym.h
 
 keysym.h: mkkeysym.sh ${DESTDIR}/usr/include/dev/wscons/wsksymdef.h

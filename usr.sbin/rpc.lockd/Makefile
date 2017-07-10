@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2017/06/16 10:25:54 espie Exp $
+#	$OpenBSD: Makefile,v 1.7 2017/07/10 21:30:37 espie Exp $
 
 PROG =	rpc.lockd
 SRCS =	nlm_prot_svc.c lockd.c lockd_lock.c procs.c
@@ -14,7 +14,7 @@ CLEANFILES= nlm_prot_svc.c nlm_prot.h
 RPCSRC= ${DESTDIR}/usr/include/rpcsvc/nlm_prot.x
 RPCGEN= rpcgen -L -C
 
-nlm_prot_svc.c: ${RPCSRC} nlm_prot.h
+nlm_prot_svc.c: ${RPCSRC}
 	${RPCGEN} -m -o ${.TARGET} ${RPCSRC}
 
 nlm_prot.h: ${RPCSRC}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.87 2017/07/03 18:19:55 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.88 2017/07/10 21:30:37 espie Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -82,7 +82,7 @@ isakmp_num.c isakmp_num.h: genconstants.sh isakmp_num.cst
 	/bin/sh ${.CURDIR}/genconstants.sh ${.CURDIR}/isakmp_num
 
 .PHONY: generated
-${PROG} beforedepend generated: ${GENERATED}
+generated: ${GENERATED}
 
 BUILDFIRST = ${GENERATED}
 

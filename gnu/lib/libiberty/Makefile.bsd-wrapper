@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 2017/06/16 10:25:54 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 2017/07/10 21:30:37 espie Exp $
 
 LIB=		iberty
 CPPFLAGS+=	-DHAVE_CONFIG_H -I$(.CURDIR)/src -I$(.CURDIR)/include -I$(.OBJDIR)
@@ -28,8 +28,6 @@ CLEANFILES+=	config.h config.status needed-list
 CLEANFILES+=	Makefile config.cache config.log stamp-h xhost-mkfrag \
 		testsuite/Makefile libiberty.info
 
-
-depend:	needed-list
 
 BUILDFIRST = needed-list
 
