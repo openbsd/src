@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.43 2017/07/08 00:36:10 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.44 2017/07/10 14:11:47 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -55,7 +55,7 @@ void	add_direct_route(struct in_addr, struct in_addr, struct in_addr);
 void	add_default_route(struct in_addr, struct in_addr);
 void	add_static_routes(struct option_data *, struct in_addr);
 void	add_classless_static_routes(struct option_data *, struct in_addr);
-void	priv_add_route(int, struct imsg_add_route *);
+void	priv_add_route(int, int, struct imsg_add_route *);
 void	priv_flush_routes(char *, int, int);
 
 char	*resolv_conf_contents(char *, struct option_data *,

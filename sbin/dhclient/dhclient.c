@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.464 2017/07/10 00:47:47 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.465 2017/07/10 14:11:47 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -120,7 +120,7 @@ int		 res_hnok_list(const char *dn);
 int		 addressinuse(char *, struct in_addr, char *);
 
 void		 fork_privchld(struct interface_info *, int, int);
-void		 get_ifname(struct interface_info *, char *);
+void		 get_ifname(struct interface_info *, int, char *);
 
 struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
@@ -506,7 +506,9 @@ main(int argc, char *argv[])
 	ifi = calloc(1, sizeof(struct interface_info));
 	if (ifi == NULL)
 		fatalx("ifi calloc");
-	get_ifname(ifi, argv[0]);
+	if ((ioctlfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		fatal("Can't create socket to do ioctl");
+	get_ifname(ifi, ioctlfd, argv[0]);
 	ifi->index = if_nametoindex(ifi->name);
 	if (ifi->index == 0)
 		fatalx("%s: no such interface", ifi->name);
@@ -515,8 +517,6 @@ main(int argc, char *argv[])
 	tzset();
 
 	/* Get the ssid if present. */
-	if ((ioctlfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		fatalx("Can't create socket to do ioctl");
 	memset(&ifr, 0, sizeof(ifr));
 	memset(&nwid, 0, sizeof(nwid));
 	ifr.ifr_data = (caddr_t)&nwid;
@@ -2119,20 +2119,16 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 }
 
 void
-get_ifname(struct interface_info *ifi, char *arg)
+get_ifname(struct interface_info *ifi, int ioctlfd, char *arg)
 {
 	struct ifgroupreq	 ifgr;
 	struct ifg_req		*ifg;
 	unsigned int		 len;
-	int			 s;
 
 	if (strcmp(arg, "egress") == 0) {
-		s = socket(AF_INET, SOCK_DGRAM, 0);
-		if (s == -1)
-			fatalx("socket error");
 		memset(&ifgr, 0, sizeof(ifgr));
 		strlcpy(ifgr.ifgr_name, "egress", sizeof(ifgr.ifgr_name));
-		if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1) {
+		if (ioctl(ioctlfd, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1) {
 			if (errno == ENOENT)
 				fatalx("no interface in group egress found");
 			fatal("ioctl SIOCGIFGMEMB");
@@ -2140,7 +2136,7 @@ get_ifname(struct interface_info *ifi, char *arg)
 		len = ifgr.ifgr_len;
 		if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
 			fatalx("get_ifname");
-		if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
+		if (ioctl(ioctlfd, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
 			fatal("ioctl SIOCGIFGMEMB");
 
 		arg = NULL;
@@ -2156,7 +2152,6 @@ get_ifname(struct interface_info *ifi, char *arg)
 			fatal("Interface name too long");
 
 		free(ifgr.ifgr_groups);
-		close(s);
 	} else if (strlcpy(ifi->name, arg, IFNAMSIZ) >= IFNAMSIZ)
 		fatalx("Interface name too long");
 }

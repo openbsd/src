@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.106 2017/07/10 00:47:47 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.107 2017/07/10 14:11:47 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -425,7 +425,7 @@ add_route(struct in_addr dest, struct in_addr netmask,
 }
 
 void
-priv_add_route(int rdomain, struct imsg_add_route *imsg)
+priv_add_route(int rdomain, int routefd, struct imsg_add_route *imsg)
 {
 	char			 destbuf[INET_ADDRSTRLEN];
 	char			 gatewaybuf[INET_ADDRSTRLEN];
@@ -435,10 +435,7 @@ priv_add_route(int rdomain, struct imsg_add_route *imsg)
 	struct rt_msghdr	 rtm;
 	struct sockaddr_in	 dest, gateway, mask, ifa;
 	struct sockaddr_rtlabel	 label;
-	int			 s, i, iovcnt = 0;
-
-	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
-		fatal("Routing Socket open failed");
+	int			 i, iovcnt = 0;
 
 	memset(destbuf, 0, sizeof(destbuf));
 	memset(maskbuf, 0, sizeof(maskbuf));
@@ -527,7 +524,7 @@ priv_add_route(int rdomain, struct imsg_add_route *imsg)
 
 	/* Check for EEXIST since other dhclient may not be done. */
 	for (i = 0; i < 5; i++) {
-		if (writev(s, iov, iovcnt) != -1)
+		if (writev(routefd, iov, iovcnt) != -1)
 			break;
 		if (i == 4)
 			log_warn("failed to add route (%s/%s via %s/%s)",
@@ -535,8 +532,6 @@ priv_add_route(int rdomain, struct imsg_add_route *imsg)
 		else if (errno == EEXIST || errno == ENETUNREACH)
 			sleep(1);
 	}
-
-	close(s);
 }
 
 /*
