@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.34 2017/05/31 14:52:05 mikeb Exp $
+.\"	$OpenBSD: kqueue.2,v 1.35 2017/07/10 06:38:07 dlg Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: May 31 2017 $
+.Dd $Mdocdate: July 10 2017 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -280,7 +280,7 @@ The end of file condition is indicated by the presence of
 in
 .Va fflags
 on return.
-.It "Fifos, Pipes"
+.It "FIFOs, Pipes"
 Returns when there is data to read;
 .Va data
 contains the number of bytes available.
