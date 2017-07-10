@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.210 2017/07/09 18:45:27 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.211 2017/07/10 17:13:24 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -196,8 +196,9 @@ time_t parse_date(FILE *);
 void parse_warn(char *);
 
 /* bpf.c */
-void if_register_send(struct interface_info *);
-void if_register_receive(struct interface_info *);
+int get_bpf_sock(char *);
+int get_udp_sock(int);
+int configure_bpf_sock(int);
 ssize_t send_packet(struct interface_info *, struct in_addr, struct in_addr);
 ssize_t receive_packet(struct interface_info *, struct sockaddr_in *,
     struct ether_addr *);

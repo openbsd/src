@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.465 2017/07/10 14:11:47 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.466 2017/07/10 17:13:24 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -642,8 +642,15 @@ main(int argc, char *argv[])
 	}
 
 	/* Register the interface. */
-	if_register_receive(ifi);
-	if_register_send(ifi);
+	ifi->ufdesc = get_udp_sock(ifi->rdomain);
+	ifi->bfdesc = get_bpf_sock(ifi->name);
+	ifi->rbuf_max = configure_bpf_sock(ifi->bfdesc);
+	ifi->rbuf = malloc(ifi->rbuf_max);
+	if (!ifi->rbuf)
+		fatalx("Can't allocate %lu bytes for bpf input buffer.",
+		    (unsigned long)ifi->rbuf_max);
+	ifi->rbuf_offset = 0;
+	ifi->rbuf_len = 0;
 
 	if (chroot(_PATH_VAREMPTY) == -1)
 		fatalx("chroot");
