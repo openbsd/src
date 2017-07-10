@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.98 2017/07/09 19:19:58 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.99 2017/07/10 00:47:47 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -497,7 +497,7 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 int
 pack_options(unsigned char *buf, int buflen, struct option_data *options)
 {
-	int ix, incr, length, bufix, code, lastopt = -1;
+	int	 ix, incr, length, bufix, code, lastopt = -1;
 
 	memset(buf, 0, buflen);
 
@@ -550,10 +550,10 @@ pack_options(unsigned char *buf, int buflen, struct option_data *options)
 char *
 pretty_print_string(unsigned char *src, size_t srclen, int emit_punct)
 {
-	static char string[8196];
-	char visbuf[5];
-	unsigned char *origsrc = src;
-	size_t rslt = 0;
+	static char	 string[8196];
+	char		 visbuf[5];
+	unsigned char	*origsrc = src;
+	size_t		 rslt = 0;
 
 	memset(string, 0, sizeof(string));
 
@@ -584,11 +584,11 @@ pretty_print_string(unsigned char *src, size_t srclen, int emit_punct)
 char *
 pretty_print_classless_routes(unsigned char *src, size_t srclen)
 {
-	static char string[8196];
-	char bitsbuf[5];	/* to hold "/nn " */
-	struct in_addr net, gateway;
-	unsigned int bytes;
-	int bits, rslt;
+	static char	 string[8196];
+	char		 bitsbuf[5];	/* to hold "/nn " */
+	struct in_addr	 net, gateway;
+	unsigned int	 bytes;
+	int		 bits, rslt;
 
 	memset(string, 0, sizeof(string));
 
@@ -630,9 +630,9 @@ int
 expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
     unsigned char *domain_search)
 {
-	unsigned int i;
-	int domain_name_len, label_len, pointer, pointed_len;
-	char *cursor;
+	char		*cursor;
+	unsigned int	 i;
+	int		 domain_name_len, label_len, pointer, pointed_len;
 
 	cursor = domain_search + strlen(domain_search);
 	domain_name_len = 0;
@@ -712,10 +712,10 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 char *
 pretty_print_domain_search(unsigned char *src, size_t srclen)
 {
-	static char domain_search[DHCP_DOMAIN_SEARCH_LEN];
-	unsigned int offset;
-	int len, expanded_len, domains;
-	unsigned char *cursor;
+	static char	 domain_search[DHCP_DOMAIN_SEARCH_LEN];
+	unsigned char	*cursor;
+	unsigned int	 offset;
+	int		 len, expanded_len, domains;
 
 	memset(domain_search, 0, sizeof(domain_search));
 
@@ -965,8 +965,8 @@ toobig:
 struct option_data *
 unpack_options(struct dhcp_packet *packet)
 {
-	static struct option_data options[DHO_COUNT];
-	int i;
+	static struct option_data	 options[DHO_COUNT];
+	int				 i;
 
 	for (i = 0; i < DHO_COUNT; i++) {
 		free(options[i].data);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.38 2017/07/09 19:19:58 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.39 2017/07/10 00:47:47 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -62,7 +62,7 @@
 uint32_t
 checksum(unsigned char *buf, uint32_t nbytes, uint32_t sum)
 {
-	unsigned int i;
+	unsigned int	 i;
 
 	/* Checksum all the pairs of bytes first. */
 	for (i = 0; i < (nbytes & ~1U); i += 2) {
@@ -106,7 +106,7 @@ assemble_eh_header(struct ether_addr shost, struct ether_header *eh)
 ssize_t
 decode_hw_header(unsigned char *buf, uint32_t buflen, struct ether_addr *from)
 {
-	struct ether_header eh;
+	struct ether_header	 eh;
 
 	if (buflen < sizeof(eh))
 		return -1;

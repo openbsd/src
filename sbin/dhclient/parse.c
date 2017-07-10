@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.57 2017/07/09 19:19:58 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.58 2017/07/10 00:47:47 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -131,9 +131,9 @@ parse_semi(FILE *cfile)
 char *
 parse_string(FILE *cfile, unsigned int *len)
 {
-	static char unvisbuf[1500];
-	char *val, *s;
-	int i, token;
+	static char	 unvisbuf[1500];
+	char		*val, *s;
+	int		 i, token;
 
 	token = next_token(&val, cfile);
 	if (token != TOK_STRING) {
@@ -165,9 +165,9 @@ parse_string(FILE *cfile, unsigned int *len)
 int
 parse_cidr(FILE *cfile, unsigned char *cidr)
 {
-	struct in_addr addr;
-	int token;
-	int len;
+	struct in_addr	 addr;
+	int		 token;
+	int		 len;
 
 	token = '.';
 	len = 0;
@@ -200,8 +200,8 @@ parse_cidr(FILE *cfile, unsigned char *cidr)
 int
 parse_ip_addr(FILE *cfile, struct in_addr *addr)
 {
-	struct in_addr buf;
-	int len, token;
+	struct in_addr	 buf;
+	int		 len, token;
 
 	token = '.';
 	len = 0;
@@ -232,7 +232,7 @@ parse_ip_addr(FILE *cfile, struct in_addr *addr)
 void
 parse_lease_time(FILE *cfile, time_t *timep)
 {
-	uint32_t value;
+	uint32_t	 value;
 
 	if (!parse_decimal(cfile, (char *)&value, 'L')) {
 		parse_warn("expecting unsigned 32-bit decimal value.");
@@ -271,10 +271,10 @@ parse_boolean(FILE *cfile, unsigned char *buf)
 int
 parse_decimal(FILE *cfile, unsigned char *buf, char fmt)
 {
-	char *val;
-	const char *errstr;
-	int bytes, token;
-	long long numval, low, high;
+	const char	*errstr;
+	char		*val;
+	int		 bytes, token;
+	long long	 numval, low, high;
 
 	token = next_token(&val, cfile);
 
@@ -316,9 +316,9 @@ parse_decimal(FILE *cfile, unsigned char *buf, char fmt)
 int
 parse_hex(FILE *cfile, unsigned char *buf)
 {
-	char *val, *ep;
-	int token;
-	unsigned long ulval;
+	char		*val, *ep;
+	unsigned long	 ulval;
+	int		 token;
 
 	token = next_token(&val, cfile);
 
@@ -345,12 +345,12 @@ parse_hex(FILE *cfile, unsigned char *buf)
 time_t
 parse_date(FILE *cfile)
 {
-	struct tm tm;
 	char timestr[26]; /* "w yyyy/mm/dd hh:mm:ss UTC" */
-	char *val, *p;
-	size_t n;
-	time_t guess;
-	int token;
+	struct tm	 tm;
+	char		*val, *p;
+	size_t		 n;
+	time_t		 guess;
+	int		 token;
 
 	memset(timestr, 0, sizeof(timestr));
 
@@ -401,8 +401,8 @@ parse_date(FILE *cfile)
 void
 parse_warn(char *msg)
 {
-	static char spaces[81];
-	unsigned int i;
+	static char	 spaces[81];
+	unsigned int	 i;
 
 	log_warnx("%s line %d: %s", tlname, lexline, msg);
 	log_warnx("%s", token_line);

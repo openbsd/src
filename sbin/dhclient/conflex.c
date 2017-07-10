@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.41 2017/07/09 19:19:58 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.42 2017/07/10 00:47:47 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -140,8 +140,8 @@ get_char(FILE *cfile)
 static int
 get_token(FILE *cfile)
 {
-	int		c, ttok;
 	static char	tb[2];
+	int		c, ttok;
 	int		l, p, u;
 
 	u = ugflag;
@@ -203,7 +203,7 @@ next_token(char **rval, FILE *cfile)
 int
 peek_token(char **rval, FILE *cfile)
 {
-	int	x;
+	int	 x;
 
 	if (!token) {
 		tlpos = lexchar;
@@ -227,7 +227,7 @@ peek_token(char **rval, FILE *cfile)
 static void
 skip_to_eol(FILE *cfile)
 {
-	int	c;
+	int	 c;
 
 	do {
 		c = get_char(cfile);
@@ -241,7 +241,7 @@ skip_to_eol(FILE *cfile)
 static int
 read_string(FILE *cfile)
 {
-	int i, c, bs;
+	int	 i, c, bs;
 
 	/*
 	 * Read in characters until an un-escaped '"' is encountered.
@@ -277,8 +277,8 @@ read_string(FILE *cfile)
 static int
 read_num_or_name(int c, FILE *cfile)
 {
-	unsigned int i, xdigits;
-	int rv;
+	unsigned int	 i, xdigits;
+	int		 rv;
 
 	xdigits = isxdigit(c) ? 1 : 0;
 
@@ -319,7 +319,7 @@ read_num_or_name(int c, FILE *cfile)
 
 static const struct keywords {
 	const char	*k_name;
-	int		k_val;
+	int		 k_val;
 } keywords[] = {
 	{ "append",				TOK_APPEND },
 	{ "backoff-cutoff",			TOK_BACKOFF_CUTOFF },
@@ -363,7 +363,7 @@ kw_cmp(const void *k, const void *e)
 static int
 intern(char *atom, int dfv)
 {
-	const struct keywords *p;
+	const struct keywords	*p;
 
 	p = bsearch(atom, keywords, sizeof(keywords)/sizeof(keywords[0]),
 	    sizeof(keywords[0]), kw_cmp);
