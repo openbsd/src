@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.dep.mk,v 1.21 2017/07/09 14:04:50 espie Exp $
+#	$OpenBSD: bsd.dep.mk,v 1.22 2017/07/10 07:59:00 espie Exp $
 #	$NetBSD: bsd.dep.mk,v 1.12 1995/09/27 01:15:09 christos Exp $
 
 .if !target(depend)
@@ -49,6 +49,12 @@ ${f:.y=.c} ${f:.y=.h}: $f
 CLEANFILES += ${SRCS:M*.y:.y=.h}
 .endif
 
+.if defined(SRCS)
+cleandir: cleandepend
+cleandepend:
+	rm -f ${.CURDIR}/tags
+.endif
+
 CLEANFILES += ${DEPS} .depend
 
 BUILDFIRST ?=
@@ -60,3 +66,4 @@ ${BUILDAFTER}: $i
 .    endif
 .  endfor
 .endif
+.PHONY: cleandepend
