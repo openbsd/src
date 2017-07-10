@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.70 2017/01/22 22:57:15 benno Exp $
+.\"	$OpenBSD: style.9,v 1.71 2017/07/10 21:39:38 tedu Exp $
 .\"
-.Dd $Mdocdate: January 22 2017 $
+.Dd $Mdocdate: July 10 2017 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -563,7 +563,6 @@ vaf(const char *fmt, ...)
 static void
 usage(void)
 {
-	extern char *__progname;	/* from crt0.o */
 .Ed
 .Pp
 Usage statements should take the same form as the synopsis in manual pages.
@@ -589,10 +588,10 @@ Uppercase letters take precedence over lowercase.
 .Ed
 .Pp
 The
-.Li __progname
-string may be used instead of hard-coding the program name.
+.Xr getprogname 3
+function may be used instead of hard-coding the program name.
 .Bd -literal -offset indent
-(void)fprintf(stderr, "usage: %s [-ab]\en", __progname);
+fprintf(stderr, "usage: %s [-ab]\en", getprogname());
 exit(1);
 .Ed
 .Pp
