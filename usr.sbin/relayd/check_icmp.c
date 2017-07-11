@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.45 2017/05/28 10:39:15 benno Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.46 2017/07/11 19:41:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -220,18 +220,45 @@ send_icmp(int s, short event, void *arg)
 				    sizeof(packet));
 			}
 
-			if ((ttl = host->conf.ttl) > 0)
-				(void)setsockopt(s, IPPROTO_IP, IP_TTL,
-				    &host->conf.ttl, sizeof(int));
-			else {
-				/* Revert to default TTL */
-				len = sizeof(ttl);
-				if (getsockopt(s, IPPROTO_IP, IP_IPDEFTTL,
-				    &ttl, &len) == 0)
-					(void)setsockopt(s, IPPROTO_IP, IP_TTL,
-					    &ttl, len);
-				else
-				    log_warn("%s: getsockopt",__func__);
+			switch(cie->af) {
+			case AF_INET:
+				if ((ttl = host->conf.ttl) > 0) {
+					if (setsockopt(s, IPPROTO_IP, IP_TTL,
+					    &host->conf.ttl, sizeof(int)) == -1)
+						log_warn("%s: setsockopt",
+						    __func__);
+				} else {
+					/* Revert to default TTL */
+					len = sizeof(ttl);
+					if (getsockopt(s, IPPROTO_IP,
+					    IP_IPDEFTTL, &ttl, &len) == 0) {
+						if (setsockopt(s, IPPROTO_IP,
+						    IP_TTL, &ttl, len) == -1)
+							log_warn(
+							    "%s: setsockopt",
+							    __func__);
+					} else
+						log_warn("%s: getsockopt",
+						    __func__);
+				}
+				break;
+			case AF_INET6:
+				if ((ttl = host->conf.ttl) > 0) {
+					if (setsockopt(s, IPPROTO_IPV6,
+					    IPV6_UNICAST_HOPS, &host->conf.ttl,
+					    sizeof(int)) == -1)
+						log_warn("%s: setsockopt",
+						    __func__);
+				} else {
+					/* Revert to default hop limit */
+					ttl = -1;
+					if (setsockopt(s, IPPROTO_IPV6,
+					    IPV6_UNICAST_HOPS, &ttl,
+					    sizeof(int)) == -1)
+						log_warn("%s: setsockopt",
+						    __func__);
+				}
+				break;
 			}
 
 			r = sendto(s, packet, sizeof(packet), 0, to, slen);
