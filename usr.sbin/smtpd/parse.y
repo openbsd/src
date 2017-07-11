@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.196 2017/05/22 13:43:15 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.197 2017/07/11 06:08:40 natano Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -169,7 +169,7 @@ typedef struct {
 %}
 
 %token	AS QUEUE COMPRESSION ENCRYPTION MAXMESSAGESIZE MAXMTADEFERRED LISTEN ON ANY PORT EXPIRE
-%token	TABLE SECURE SMTPS CERTIFICATE DOMAIN BOUNCEWARN LIMIT INET4 INET6 NODSN SESSION
+%token	TABLE SMTPS CERTIFICATE DOMAIN BOUNCEWARN LIMIT INET4 INET6 NODSN SESSION
 %token  RELAY BACKUP VIA DELIVER TO LMTP MAILDIR MBOX RCPTTO HOSTNAME HOSTNAMES
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR SOURCE MTA PKI SCHEDULER
 %token	ARROW AUTH TLS LOCAL VIRTUAL TAG TAGGED ALIAS FILTER KEY CA DHE
@@ -514,14 +514,6 @@ opt_if_listen : INET4 {
 			}
 			listen_opts.options |= LO_SSL;
 			listen_opts.ssl = F_STARTTLS;
-		}
-		| SECURE       			{
-			if (listen_opts.options & LO_SSL) {
-				yyerror("TLS mode already specified");
-				YYERROR;
-			}
-			listen_opts.options |= LO_SSL;
-			listen_opts.ssl = F_SSL;
 		}
 		| TLS_REQUIRE			{
 			if (listen_opts.options & LO_SSL) {
@@ -1512,7 +1504,6 @@ lookup(char *s)
 		{ "reject",		REJECT },
 		{ "relay",		RELAY },
 		{ "scheduler",		SCHEDULER },
-		{ "secure",		SECURE },
 		{ "sender",    		SENDER },
 		{ "senders",   		SENDERS },
 		{ "session",   		SESSION },

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.173 2017/06/07 13:25:18 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.174 2017/07/11 06:08:40 natano Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 7 2017 $
+.Dd $Mdocdate: July 11 2017 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -657,7 +657,7 @@ Changing the default value might degrade performance.
 .Ic listen on Ar interface
 .Op Ar family
 .Op Ic port Ar port
-.Op Ic tls | tls-require | tls-require verify | smtps | secure
+.Op Ic tls | tls-require | tls-require verify | smtps
 .Op Ic pki Ar pkiname
 .Op Ic ca Ar caname
 .Op Ic auth | auth-optional Op < Ns Ar authtable Ns >
@@ -701,8 +701,6 @@ If
 is specified, the client must provide a valid certificate to be
 able to establish an SMTP session.
 .Pp
-.Ic secure
-may be specified to provide both STARTTLS and SMTPS services.
 Host certificates may be used for these connections,
 and must be previously declared using the pki directive.
 If
