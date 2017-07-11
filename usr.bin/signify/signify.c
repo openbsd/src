@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.127 2017/04/18 02:20:50 deraadt Exp $ */
+/* $OpenBSD: signify.c,v 1.128 2017/07/11 23:27:13 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -346,13 +346,13 @@ static const char *
 check_keyname_compliance(const char *pubkeyfile, const char *seckeyfile)
 {
 	const char *pos;
+	size_t len;
 
 	/* basename may or may not modify input */
 	pos = strrchr(seckeyfile, '/');
 	if (pos != NULL)
-		seckeyfile = pos+1;
+		seckeyfile = pos + 1;
 
-	size_t len;
 	len = strlen(seckeyfile);
 	if (len < 5) /* ?.key */
 		goto bad;
@@ -361,7 +361,7 @@ check_keyname_compliance(const char *pubkeyfile, const char *seckeyfile)
 	if (pubkeyfile != NULL) {
 		pos = strrchr(pubkeyfile, '/');
 		if (pos != NULL)
-			pubkeyfile = pos+1;
+			pubkeyfile = pos + 1;
 
 		if (strlen(pubkeyfile) != len)
 			goto bad;
