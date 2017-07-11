@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.66 2017/07/04 12:43:07 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.67 2017/07/11 15:15:47 espie Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
 
@@ -9,9 +9,6 @@ LANGUAGES=--enable-languages=c
 LANGUAGES=--enable-languages='c,c++,objc' 
 .endif
 V=3.3.6
-
-.SUFFIXES:	.1
-.PATH.1:	${.CURDIR}/gcc ${.CURDIR}/gcc/doc
 
 LIBIBERTY_INCLUDES=${.CURDIR}/../../lib/libiberty/include
 GNUCFLAGS=	${CFLAGS} ${COPTS} -DOPENBSD_NATIVE \
@@ -147,7 +144,7 @@ clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
 	-rm -f ${CLEANFILES}
 
-${MAN}: config.status
+gcc.1 cpp.1 gcov.1: config.status
 	exec ${MAKE} ${MAKE_FLAGS} generated-manpages
 
 FILES= ${.CURDIR}/gcc/unwind.h
