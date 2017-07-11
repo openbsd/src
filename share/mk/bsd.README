@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.72 2017/07/11 22:17:28 schwarze Exp $
+#	$OpenBSD: bsd.README,v 1.73 2017/07/11 23:38:53 schwarze Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -412,9 +412,13 @@ grammar.c grammar.h: grammar.y
 	${YACC.Y} -o grammar.c grammar.y
 
 
-<bsd.prog.mk> may be used to build several programs in a single directory.
-Just define the list of programs as PROGS instead of using PROG.
-For instance PROGS = foo bar
+<bsd.prog.mk> provides a limited capability to build several
+programs in a single directory by defining the list of programs
+as PROGS instead of using PROG, for instance: PROGS = foo bar
+
+This only works if all programs in the directory use the same
+compiler and linker flags.  Also, the programs cannot use source
+files with the same file name but different content.
 
 Each program of the list, for instance foo, will use SRCS_foo instead
 of SRCS to find its sources.  SRCS_foo still defaults to foo.c, and
