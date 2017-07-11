@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2016/01/03 14:38:16 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2017/07/11 14:32:16 fcambus Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,7 +35,6 @@
 #include "backlocal.h"
 
 #define MVPAUSE	5		/* time to sleep when stuck */
-/* #define MAXUSERS 35	*/		/* maximum number of users */
 
 extern const char   *const instruct[];		/* text of instructions */
 
@@ -90,14 +89,6 @@ main (int argc, char **argv)
 		err(1, "pledge");
 
 	signal(SIGINT, getout);	/* trap interrupts */
-
-/* check user count */
-#if 0
-	if (ucount() > MAXUSERS)  {
-		printw("%s%d%s", user1a, MAXUSERS, user1b);
-		getout(0);
-	}
-#endif
 
 	/* use whole screen for text */
 	begscr = 0;
@@ -394,15 +385,6 @@ main (int argc, char **argv)
 
 		/* write score */
 		wrscore();
-
-/* check user count */
-#if 0
-		if (ucount() > MAXUSERS)  {
-			printw("%s%d%s", user2a, MAXUSERS, user2b);
-			rfl = 1;
-			break;
-		}
-#endif
 
 		/* see if he wants another game */
 		addstr(again);
