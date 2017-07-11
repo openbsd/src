@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.66 2016/12/27 18:45:01 bluhm Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.67 2017/07/11 12:51:05 florian Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -165,60 +165,12 @@ struct	llinfo_nd6 {
 		(((MIN_RANDOM_FACTOR * (x >> 10)) + (arc4random() & \
 		((MAX_RANDOM_FACTOR - MIN_RANDOM_FACTOR) * (x >> 10)))) /1000)
 
-TAILQ_HEAD(nd_drhead, nd_defrouter);
-struct	nd_defrouter {
-	TAILQ_ENTRY(nd_defrouter) dr_entry;
-	struct	in6_addr rtaddr;
-	struct  ifnet *ifp;
-	time_t	expire;
-	int	installed;	/* is installed into kernel routing table */
-	u_short	rtlifetime;
-	u_char	flags;		/* flags on RA message */
-};
-
-struct nd_prefix {
-	struct ifnet *ndpr_ifp;
-	LIST_ENTRY(nd_prefix) ndpr_entry;
-	struct sockaddr_in6 ndpr_prefix;	/* prefix */
-	struct in6_addr ndpr_mask; /* netmask derived from the prefix */
-
-	struct task ndpr_task;
-
-	time_t ndpr_expire;	/* expiration time of the prefix */
-	time_t ndpr_preferred;	/* preferred time of the prefix */
-	time_t ndpr_lastupdate; /* reception time of last advertisement */
-
-	u_int32_t ndpr_vltime;	/* advertised valid lifetime */
-	u_int32_t ndpr_pltime;	/* advertised preferred lifetime */
-
-	struct prf_ra ndpr_flags;
-	u_int32_t ndpr_stateflags; /* actual state flags */
-	/* list of routers that advertise the prefix: */
-	LIST_HEAD(pr_rtrhead, nd_pfxrouter) ndpr_advrtrs;
-	u_char	ndpr_plen;
-	int	ndpr_refcnt;	/* reference counter from addresses */
-};
-
-#define ndpr_raf		ndpr_flags
-#define ndpr_raf_onlink		ndpr_flags.onlink
-#define ndpr_raf_auto		ndpr_flags.autonomous
-#define ndpr_raf_router		ndpr_flags.router
-
-struct nd_pfxrouter {
-	LIST_ENTRY(nd_pfxrouter) pfr_entry;
-	struct nd_defrouter *router;
-};
-
-LIST_HEAD(nd_prhead, nd_prefix);
-
 extern int nd6_prune;
 extern int nd6_delay;
 extern int nd6_umaxtries;
 extern int nd6_mmaxtries;
 extern int nd6_maxnudhint;
 extern int nd6_gctimer;
-extern struct nd_drhead nd_defrouter;
-extern struct nd_prhead nd_prefix;
 extern int nd6_debug;
 
 #define nd6log(x)	do { if (nd6_debug) log x; } while (0)
@@ -279,22 +231,9 @@ void nd6_dad_start(struct ifaddr *);
 void nd6_dad_stop(struct ifaddr *);
 void nd6_ra_input(struct mbuf *, int, int);
 
-void nd6_rs_init(void);
-void nd6_rs_attach(struct ifnet *);
-void nd6_rs_detach(struct ifnet *);
 void nd6_rs_input(struct mbuf *, int, int);
 
-void prelist_del(struct nd_prefix *);
-void defrouter_reset(void);
-void defrouter_select(void);
-void defrtrlist_del(struct nd_defrouter *);
-void prelist_remove(struct nd_prefix *);
-void pfxlist_onlink_check(void);
-struct nd_defrouter *defrouter_lookup(struct in6_addr *, unsigned int);
-
-struct nd_prefix *nd6_prefix_lookup(struct nd_prefix *);
 int in6_ifdel(struct ifnet *, struct in6_addr *);
-int in6_init_prefix_ltimes(struct nd_prefix *ndpr);
 void rt6_flush(struct in6_addr *, struct ifnet *);
 
 #endif /* _KERNEL */

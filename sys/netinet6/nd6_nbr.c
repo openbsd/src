@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.118 2017/07/05 09:51:37 florian Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.119 2017/07/11 12:51:05 florian Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -737,7 +737,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * non-reachable to probably reachable, and might
 			 * affect the status of associated prefixes..
 			 */
-			pfxlist_onlink_check();
 			if ((rt->rt_flags & RTF_LLINFO) == 0)
 				goto freeit;	/* ln is gone */
 		}
@@ -827,29 +826,9 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		}
 
 		if (ln->ln_router && !is_router) {
-			/*
-			 * The peer dropped the router flag.
-			 * Remove the sender from the Default Router List and
-			 * update the Destination Cache entries.
-			 */
-			struct nd_defrouter *dr;
-			struct in6_addr *in6;
-
-			in6 = &satosin6(rt_key(rt))->sin6_addr;
-
-			/*
-			 * Lock to protect the default router list.
-			 * XXX: this might be unnecessary, since this function
-			 * is only called under the network software interrupt
-			 * context.  However, we keep it just for safety.
-			 */
-			dr = defrouter_lookup(in6, rt->rt_ifidx);
-			if (dr)
-				defrtrlist_del(dr);
-			else if (!ip6_forwarding) {
+			if (!ip6_forwarding) {
 				/*
-				 * Even if the neighbor is not in the default
-				 * router list, the neighbor may be used
+				 * The neighbor may be used
 				 * as a next hop for some destinations
 				 * (e.g. redirect case). So we must
 				 * call rt6_flush explicitly.

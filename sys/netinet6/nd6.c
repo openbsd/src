@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.209 2017/05/16 12:24:02 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.210 2017/07/11 12:51:05 florian Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -87,9 +87,6 @@ TAILQ_HEAD(llinfo_nd6_head, llinfo_nd6) nd6_list;
 struct	pool nd6_pool;		/* pool for llinfo_nd6 structures */
 int	nd6_inuse, nd6_allocated;
 
-struct nd_drhead nd_defrouter;
-struct nd_prhead nd_prefix = { 0 };
-
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 
 void nd6_slowtimo(void *);
@@ -102,9 +99,6 @@ void nd6_llinfo_timer(void *);
 struct timeout nd6_slowtimo_ch;
 struct timeout nd6_timer_ch;
 struct task nd6_timer_task;
-
-int fill_drlist(void *, size_t *, size_t);
-int fill_prlist(void *, size_t *, size_t);
 
 void
 nd6_init(void)
@@ -121,7 +115,6 @@ nd6_init(void)
 	    IPL_SOFTNET, 0, "nd6", NULL);
 
 	/* initialization of the default router list */
-	TAILQ_INIT(&nd_defrouter);
 
 	task_set(&nd6_timer_task, nd6_timer_work, NULL);
 
@@ -133,7 +126,6 @@ nd6_init(void)
 	timeout_set(&nd6_timer_ch, nd6_timer, NULL);
 	timeout_add_sec(&nd6_timer_ch, nd6_prune);
 
-	nd6_rs_init();
 }
 
 struct nd_ifinfo *
@@ -433,19 +425,12 @@ nd6_llinfo_timer(void *arg)
 void
 nd6_timer_work(void *null)
 {
-	struct nd_defrouter *dr, *ndr;
-	struct nd_prefix *pr, *npr;
 	struct ifnet *ifp;
 	int s;
 
 	NET_LOCK(s);
 
 	timeout_add_sec(&nd6_timer_ch, nd6_prune);
-
-	/* expire default router list */
-	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr)
-		if (dr->expire && dr->expire < time_uptime)
-			defrtrlist_del(dr);
 
 	/*
 	 * expire interface addresses.
@@ -476,23 +461,6 @@ nd6_timer_work(void *null)
 		}
 	}
 
-	/* expire prefix list */
-	LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, npr) {
-		/*
-		 * check prefix lifetime.
-		 * since pltime is just for autoconf, pltime processing for
-		 * prefix is not necessary.
-		 */
-		if (pr->ndpr_vltime != ND6_INFINITE_LIFETIME &&
-		    time_uptime - pr->ndpr_lastupdate > pr->ndpr_vltime) {
-			/*
-			 * address expiration and prefix expiration are
-			 * separate.  NEVER perform in6_purgeaddr here.
-			 */
-
-			prelist_remove(pr);
-		}
-	}
 	NET_UNLOCK(s);
 }
 
@@ -510,42 +478,8 @@ void
 nd6_purge(struct ifnet *ifp)
 {
 	struct llinfo_nd6 *ln, *nln;
-	struct nd_defrouter *dr, *ndr;
-	struct nd_prefix *pr, *npr;
 
 	NET_ASSERT_LOCKED();
-
-	/*
-	 * Nuke default router list entries toward ifp.
-	 * We defer removal of default router list entries that is installed
-	 * in the routing table, in order to keep additional side effects as
-	 * small as possible.
-	 */
-	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr) {
-		if (dr->installed)
-			continue;
-
-		if (dr->ifp == ifp)
-			defrtrlist_del(dr);
-	}
-	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr) {
-		if (!dr->installed)
-			continue;
-
-		if (dr->ifp == ifp)
-			defrtrlist_del(dr);
-	}
-
-	/* Nuke prefix list entries toward ifp */
-	LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, npr) {
-		if (pr->ndpr_ifp == ifp)
-			prelist_remove(pr);
-	}
-
-	if (ifp->if_xflags & IFXF_AUTOCONF6) {
-		/* refresh default router list */
-		defrouter_select();
-	}
 
 	/*
 	 * Nuke neighbor cache entries for the ifp.
@@ -661,7 +595,6 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 int
 nd6_is_addr_neighbor(struct sockaddr_in6 *addr, struct ifnet *ifp)
 {
-	struct nd_prefix *pr;
 	struct in6_ifaddr *ia6;
 	struct ifaddr *ifa;
 	struct rtentry *rt;
@@ -689,22 +622,6 @@ nd6_is_addr_neighbor(struct sockaddr_in6 *addr, struct ifnet *ifp)
 		if (IN6_ARE_MASKED_ADDR_EQUAL(&addr->sin6_addr,
 		    &ia6->ia_addr.sin6_addr,
 		    &ia6->ia_prefixmask.sin6_addr))
-			return (1);
-	}
-
-	/*
-	 * If the address matches one of our on-link prefixes, it should be a
-	 * neighbor.
-	 */
-	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
-		if (pr->ndpr_ifp != ifp)
-			continue;
-
-		if (!(pr->ndpr_stateflags & NDPRF_ONLINK))
-			continue;
-
-		if (IN6_ARE_MASKED_ADDR_EQUAL(&pr->ndpr_prefix.sin6_addr,
-		    &addr->sin6_addr, &pr->ndpr_mask))
 			return (1);
 	}
 
@@ -743,7 +660,6 @@ nd6_free(struct rtentry *rt, int gc)
 {
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo, *next;
 	struct in6_addr in6 = satosin6(rt_key(rt))->sin6_addr;
-	struct nd_defrouter *dr;
 	struct ifnet *ifp;
 
 	NET_ASSERT_LOCKED();
@@ -751,33 +667,7 @@ nd6_free(struct rtentry *rt, int gc)
 	ifp = if_get(rt->rt_ifidx);
 
 	if (!ip6_forwarding) {
-		dr = defrouter_lookup(&satosin6(rt_key(rt))->sin6_addr,
-		    rt->rt_ifidx);
-
-		if (dr != NULL && dr->expire &&
-		    ln->ln_state == ND6_LLINFO_STALE && gc) {
-			/*
-			 * If the reason for the deletion is just garbage
-			 * collection, and the neighbor is an active default
-			 * router, do not delete it.  Instead, reset the GC
-			 * timer using the router's lifetime.
-			 * Simply deleting the entry would affect default
-			 * router selection, which is not necessarily a good
-			 * thing, especially when we're using router preference
-			 * values.
-			 * XXX: the check for ln_state would be redundant,
-			 *      but we intentionally keep it just in case.
-			 */
-			if (dr->expire > time_uptime) {
-				nd6_llinfo_settimer(ln,
-				    dr->expire - time_uptime);
-			} else
-				nd6_llinfo_settimer(ln, nd6_gctimer);
-			if_put(ifp);
-			return (TAILQ_NEXT(ln, ln_list));
-		}
-
-		if (ln->ln_router || dr) {
+		if (ln->ln_router) {
 			/*
 			 * rt6_flush must be called whether or not the neighbor
 			 * is in the Default Router List.
@@ -785,43 +675,11 @@ nd6_free(struct rtentry *rt, int gc)
 			 */
 			rt6_flush(&in6, ifp);
 		}
-
-		if (dr) {
-			/*
-			 * Unreachability of a router might affect the default
-			 * router selection and on-link detection of advertised
-			 * prefixes.
-			 */
-
-			/*
-			 * Temporarily fake the state to choose a new default
-			 * router and to perform on-link determination of
-			 * prefixes correctly.
-			 * Below the state will be set correctly,
-			 * or the entry itself will be deleted.
-			 */
-			ln->ln_state = ND6_LLINFO_INCOMPLETE;
-
-			/*
-			 * Since defrouter_select() does not affect the
-			 * on-link determination and MIP6 needs the check
-			 * before the default router selection, we perform
-			 * the check now.
-			 */
-			pfxlist_onlink_check();
-
-			/*
-			 * refresh default router list
-			 */
-			defrouter_select();
-		}
 	}
 
 	/*
 	 * Before deleting the entry, remember the next entry as the
-	 * return value.  We need this because pfxlist_onlink_check() above
-	 * might have freed other entries (particularly the old next entry) as
-	 * a side effect (XXX).
+	 * return value.
 	 */
 	next = TAILQ_NEXT(ln, ln_list);
 
@@ -888,16 +746,6 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	struct ifaddr *ifa;
-	struct nd_defrouter *dr;
-
-	if (req == RTM_DELETE && (rt->rt_flags & RTF_GATEWAY) &&
-	    (IN6_ARE_ADDR_EQUAL(&(satosin6(rt_key(rt)))->sin6_addr,
-	    &in6addr_any) && rt_plen(rt) == 0)) {
-		dr = defrouter_lookup(&satosin6(gate)->sin6_addr,
-		    ifp->if_index);
-		if (dr)
-			dr->installed = 0;
-	}
 
 	if (ISSET(rt->rt_flags, RTF_GATEWAY|RTF_MULTICAST))
 		return;
@@ -1144,63 +992,18 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		break;
 	case SIOCSNDFLUSH_IN6:	/* XXX: the ioctl name is confusing... */
 		/* sync kernel routing table with the default router list */
-		defrouter_reset();
-		defrouter_select();
+		error = ENOTSUP;
 		break;
 	case SIOCSPFXFLUSH_IN6:
 	{
 		/* flush all the prefix advertised by routers */
-		struct nd_prefix *pr, *npr;
-
-		/* First purge the addresses referenced by a prefix. */
-		LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, npr) {
-			struct ifnet *ifp;
-			struct ifaddr *ifa, *nifa;
-			struct in6_ifaddr *ia6;
-
-			if (IN6_IS_ADDR_LINKLOCAL(&pr->ndpr_prefix.sin6_addr))
-				continue; /* XXX */
-
-			/* do we really have to remove addresses as well? */
-			TAILQ_FOREACH(ifp, &ifnet, if_list) {
-				TAILQ_FOREACH_SAFE(ifa, &ifp->if_addrlist,
-				    ifa_list, nifa) {
-					if (ifa->ifa_addr->sa_family !=
-					    AF_INET6)
-						continue;
-
-					ia6 = ifatoia6(ifa);
-					if ((ia6->ia6_flags & IN6_IFF_AUTOCONF)
-					    == 0)
-						continue;
-
-					if (ia6->ia6_ndpr == pr)
-						in6_purgeaddr(&ia6->ia_ifa);
-				}
-			}
-		}
-		/*
-		 * Purging the addresses might remove the prefix as well.
-		 * So run the loop again to access only prefixes that have
-		 * not been freed already.
-		 */
-		LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, npr) {
-			if (IN6_IS_ADDR_LINKLOCAL(&pr->ndpr_prefix.sin6_addr))
-				continue; /* XXX */
-
-			prelist_remove(pr);
-		}
+		error = ENOTSUP;
 		break;
 	}
 	case SIOCSRTRFLUSH_IN6:
 	{
 		/* flush all the default routers */
-		struct nd_defrouter *dr, *ndr;
-
-		defrouter_reset();
-		TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr)
-			defrtrlist_del(dr);
-		defrouter_select();
+		error = ENOTSUP;
 		break;
 	}
 	case SIOCGNBRINFO_IN6:
@@ -1471,21 +1274,6 @@ fail:
 		break;
 	}
 
-	/*
-	 * When the link-layer address of a router changes, select the
-	 * best router again.  In particular, when the neighbor entry is newly
-	 * created, it might affect the selection policy.
-	 * Question: can we restrict the first condition to the "is_newentry"
-	 * case?
-	 * XXX: when we hear an RA from a new router with the link-layer
-	 * address option, defrouter_select() is called twice, since
-	 * defrtrlist_update called the function as well.  However, I believe
-	 * we can compromise the overhead, since it only happens the first
-	 * time.
-	 */
-	if (do_update && ln->ln_router && (ifp->if_xflags & IFXF_AUTOCONF6))
-		defrouter_select();
-
 	rtfree(rt);
 }
 
@@ -1647,7 +1435,7 @@ nd6_need_cache(struct ifnet *ifp)
  * oldp - syscall arg, need copyout
  * newp - syscall arg, need copyin
  */
-
+/* XXXDEL? */
 int
 nd6_sysctl(int name, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
@@ -1673,15 +1461,11 @@ nd6_sysctl(int name, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 		p = NULL;
 	switch (name) {
 	case ICMPV6CTL_ND6_DRLIST:
-		error = fill_drlist(p, oldlenp, ol);
-		if (!error && p && oldp)
-			error = copyout(p, oldp, *oldlenp);
+		error = ENOTSUP; /* XXXDEL? can we delete more? */
 		break;
 
 	case ICMPV6CTL_ND6_PRLIST:
-		error = fill_prlist(p, oldlenp, ol);
-		if (!error && p && oldp)
-			error = copyout(p, oldp, *oldlenp);
+		error = ENOTSUP; /* XXXDEL? can we delete more? */
 		break;
 
 	default:
@@ -1689,145 +1473,6 @@ nd6_sysctl(int name, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 		break;
 	}
 	free(p, M_TEMP, ol);
-
-	return (error);
-}
-
-int
-fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
-{
-	int error = 0;
-	struct in6_defrouter *d = NULL, *de = NULL;
-	struct nd_defrouter *dr;
-	time_t expire;
-	size_t l;
-
-	if (oldp) {
-		d = (struct in6_defrouter *)oldp;
-		de = (struct in6_defrouter *)((caddr_t)oldp + *oldlenp);
-	}
-	l = 0;
-
-	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
-		if (oldp && d + 1 <= de) {
-			bzero(d, sizeof(*d));
-			d->rtaddr.sin6_family = AF_INET6;
-			d->rtaddr.sin6_len = sizeof(struct sockaddr_in6);
-			in6_recoverscope(&d->rtaddr, &dr->rtaddr);
-			d->flags = dr->flags;
-			d->rtlifetime = dr->rtlifetime;
-			expire = dr->expire;
-			if (expire != 0) {
-				expire -= time_uptime;
-				expire += time_second;
-			}
-			d->expire = expire;
-			d->if_index = dr->ifp->if_index;
-		}
-
-		l += sizeof(*d);
-		if (d)
-			d++;
-	}
-
-	if (oldp) {
-		*oldlenp = l;	/* (caddr_t)d - (caddr_t)oldp */
-		if (l > ol)
-			error = ENOMEM;
-	} else
-		*oldlenp = l;
-
-	return (error);
-}
-
-int
-fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
-{
-	int error = 0;
-	struct nd_prefix *pr;
-	char *p = NULL, *ps = NULL;
-	char *pe = NULL;
-	size_t l;
-
-	if (oldp) {
-		ps = p = (char *)oldp;
-		pe = (char *)oldp + *oldlenp;
-	}
-	l = 0;
-
-	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
-		u_short advrtrs;
-		struct sockaddr_in6 sin6;
-		struct nd_pfxrouter *pfr;
-		struct in6_prefix pfx;
-
-		if (oldp && p + sizeof(struct in6_prefix) <= pe) {
-			memset(&pfx, 0, sizeof(pfx));
-			ps = p;
-
-			pfx.prefix = pr->ndpr_prefix;
-			in6_recoverscope(&pfx.prefix,
-			    &pfx.prefix.sin6_addr);
-			pfx.raflags = pr->ndpr_raf;
-			pfx.prefixlen = pr->ndpr_plen;
-			pfx.vltime = pr->ndpr_vltime;
-			pfx.pltime = pr->ndpr_pltime;
-			pfx.if_index = pr->ndpr_ifp->if_index;
-			if (pr->ndpr_vltime == ND6_INFINITE_LIFETIME)
-				pfx.expire = 0;
-			else {
-				time_t maxexpire;
-
-				/* XXX: we assume time_t is signed. */
-				maxexpire = (time_t)~(1ULL <<
-				    ((sizeof(maxexpire) * 8) - 1));
-				if (pr->ndpr_vltime <
-				    maxexpire - pr->ndpr_lastupdate) {
-					pfx.expire = pr->ndpr_lastupdate +
-						pr->ndpr_vltime;
-				} else
-					pfx.expire = maxexpire;
-			}
-			pfx.refcnt = pr->ndpr_refcnt;
-			pfx.flags = pr->ndpr_stateflags;
-			pfx.origin = PR_ORIG_RA;
-
-			p += sizeof(pfx); l += sizeof(pfx);
-
-			advrtrs = 0;
-			LIST_FOREACH(pfr, &pr->ndpr_advrtrs, pfr_entry) {
-				if (p + sizeof(sin6) > pe) {
-					advrtrs++;
-					continue;
-				}
-				bzero(&sin6, sizeof(sin6));
-				sin6.sin6_family = AF_INET6;
-				sin6.sin6_len = sizeof(struct sockaddr_in6);
-				in6_recoverscope(&sin6, &pfr->router->rtaddr);
-				advrtrs++;
-				memcpy(p, &sin6, sizeof(sin6));
-				p += sizeof(sin6);
-				l += sizeof(sin6);
-			}
-			pfx.advrtrs = advrtrs;
-			memcpy(ps, &pfx, sizeof(pfx));
-		}
-		else {
-			l += sizeof(pfx);
-			advrtrs = 0;
-			LIST_FOREACH(pfr, &pr->ndpr_advrtrs, pfr_entry) {
-				advrtrs++;
-				l += sizeof(sin6);
-			}
-		}
-	}
-
-	if (oldp) {
-		*oldlenp = l;	/* (caddr_t)d - (caddr_t)oldp */
-		if (l > ol)
-			error = ENOMEM;
-	} else
-		*oldlenp = l;
 
 	return (error);
 }

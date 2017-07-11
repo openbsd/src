@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.206 2017/05/29 20:28:57 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.207 2017/07/11 12:51:05 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -902,18 +902,10 @@ in6_unlink_ifa(struct in6_ifaddr *ia6, struct ifnet *ifp)
 	NET_ASSERT_LOCKED();
 
 	/* Release the reference to the base prefix. */
-	if (ia6->ia6_ndpr == NULL) {
-		plen = in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL);
-		if ((ifp->if_flags & IFF_LOOPBACK) == 0 && plen != 128) {
-			rt_ifa_del(ifa, RTF_CLONING | RTF_CONNECTED,
-			    ifa->ifa_addr);
-		}
-	} else {
-		KASSERT(ia6->ia6_flags & IN6_IFF_AUTOCONF);
-		ia6->ia6_flags &= ~IN6_IFF_AUTOCONF;
-		if (--ia6->ia6_ndpr->ndpr_refcnt == 0)
-			prelist_remove(ia6->ia6_ndpr);
-		ia6->ia6_ndpr = NULL;
+	plen = in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL);
+	if ((ifp->if_flags & IFF_LOOPBACK) == 0 && plen != 128) {
+		rt_ifa_del(ifa, RTF_CLONING | RTF_CONNECTED,
+		    ifa->ifa_addr);
 	}
 
 	rt_ifa_purge(ifa);

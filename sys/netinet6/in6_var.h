@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.66 2017/03/06 08:59:07 mpi Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.67 2017/07/11 12:51:05 florian Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -111,9 +111,6 @@ struct	in6_ifaddr {
 				 * currently used for temporary addresses only.
 				 */
 	time_t	ia6_updatetime;
-
-	/* back pointer to the prefix (for autoconf) */
-	struct nd_prefix *ia6_ndpr;
 
 	/* multicast addresses joined from the kernel */
 	LIST_HEAD(, in6_multi_mship) ia6_memberships;

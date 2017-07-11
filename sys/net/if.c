@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.504 2017/06/23 11:18:12 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.505 2017/07/11 12:51:05 florian Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1951,16 +1951,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			error = in6_ifattach(ifp);
 			if (error != 0)
 				return (error);
-		}
-
-		if ((ifr->ifr_flags & IFXF_AUTOCONF6) &&
-		    !(ifp->if_xflags & IFXF_AUTOCONF6)) {
-			nd6_rs_attach(ifp);
-		}
-
-		if ((ifp->if_xflags & IFXF_AUTOCONF6) &&
-		    !(ifr->ifr_flags & IFXF_AUTOCONF6)) {
-			nd6_rs_detach(ifp);
 		}
 #endif	/* INET6 */
 
