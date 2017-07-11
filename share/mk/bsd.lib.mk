@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.87 2017/07/04 00:59:11 espie Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.88 2017/07/11 18:16:48 robert Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -210,9 +210,10 @@ BUILDAFTER += ${SOBJS}
 ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f ${.TARGET}
-.if defined(SYSPATCH)
+.if defined(SYSPATCH_PATH)
 	${CC} -shared ${PICFLAG} -o ${.TARGET} \
-	    `readelf -Ws ${LIBDIR}/${.TARGET} | awk '/ FILE/{gsub(/\..*/, ".so", $$NF); sub(".*/", "", $$NF); print $$NF}' | \
+	    `readelf -Ws ${SYSPATCH_PATH}${LIBDIR}/${.TARGET} | \
+	    awk '/ FILE/{gsub(/\..*/, ".so", $$NF); sub(".*/", "", $$NF); print $$NF}' | \
 	    egrep -v "(cmll-586|libgcc2|unwind-dw2)" | awk '!x[$$0]++'` ${LDADD}
 .else
 	${CC} -shared ${PICFLAG} -o ${.TARGET} \

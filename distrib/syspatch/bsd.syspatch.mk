@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.14 2017/07/10 07:28:26 ajacoutot Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.15 2017/07/11 18:16:48 robert Exp $
 #
 # Copyright (c) 2016-2017 Robert Nagy <robert@openbsd.org>
 #
@@ -19,6 +19,7 @@
 ERRATA?=
 ECURR=${ERRATA:C/_.*//}
 EPREV!=echo ${ECURR} | awk '{printf "%03d\n", $$1 - 1;}'
+EPREV_PATH!=echo ${FAKEROOT}/syspatch/${OSrev}-${EPREV}*
 
 # use the base and xenocara build user
 BUILDUSER?=	build
@@ -92,12 +93,12 @@ ${_FAKE_COOKIE}:
 		echo $${destmp} must have owner BUILDUSER and mode 700 >&2; \
 		false; \
 	fi
-	@test -d ${FAKEROOT}/syspatch/${OSrev}-${EPREV}_* || \
+	@test -f ${EPREV_PATH}/usr/lib/crt0.o || \
 		{ echo "***>   previous (${EPREV}) syspatch build is missing"; \
 		exit 1; }; \
 	echo '>> Copying previous syspatch fakeroot to ${FAKE}'; \
 	${INSTALL} -d -m 755 ${SYSPATCH_DIR}; \
-	cd ${FAKEROOT}/syspatch/${OSrev}-${EPREV}_* && tar cf - . | \
+	cd ${EPREV_PATH} && tar cf - . | \
 		(cd ${FAKE} && tar xpf - )
 	@${INSTALL} ${INSTALL_COPY} -o ${SHAREOWN} -g ${SHAREGRP} -m ${SHAREMODE} \
 		${ERRATA}/${ERRATA}.patch.sig ${SYSPATCH_DIR}
@@ -137,19 +138,19 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE} ${_FAKE_COOKIE}
 	@echo '>> Building syspatch for ${ERRATA}'
 .if ${BUILD:L:Msrc}
 . for _t in clean obj build
-	@cd ${SRCDIR} && /usr/bin/make SYSPATCH=Yes ${_t}
+	@cd ${SRCDIR} && /usr/bin/make SYSPATCH_PATH=${EPREV_PATH} ${_t}
 . endfor
-	@su ${BUILDUSER} -c "cd ${SRCDIR} && make SYSPATCH=Yes DESTDIR=${FAKE} install"
+	@su ${BUILDUSER} -c "cd ${SRCDIR} && make SYSPATCH_PATH=${EPREV_PATH} DESTDIR=${FAKE} install"
 .elif ${BUILD:L:Mxenocara}
 . for _t in clean bootstrap obj build
-	@cd ${SRCDIR} && /usr/bin/make SYSPATCH=Yes ${_t}
+	@cd ${SRCDIR} && /usr/bin/make SYSPATCH_PATH=${EPREV_PATH} ${_t}
 . endfor
-	@su ${BUILDUSER} -c "cd ${SRCDIR} && make SYSPATCH=Yes DESTDIR=${FAKE} install"
+	@su ${BUILDUSER} -c "cd ${SRCDIR} && make SYSPATCH_PATH=${EPREV_PATH} DESTDIR=${FAKE} install"
 .elif ${BUILD:L:Mkernel}
-. for _t in clean obj build
-	@cd ${SRCDIR} && /usr/bin/make SYSPATCH=Yes ${_t}
+. for _t in clean obj
+	@cd ${SRCDIR} && /usr/bin/make SYSPATCH_PATH=${EPREV_PATH} ${_t}
 . endfor
-	@su ${BUILDUSER} -c "cd ${SRCDIR} && make SYSPATCH=Yes DESTDIR=${FAKE} install"
+	@cd ${SRCDIR} && make SYSPATCH_PATH=${EPREV_PATH} DESTDIR=${FAKE} includes
 .  for _kern in GENERIC GENERIC.MP
 	@if cd ${SRCDIR}/sys/arch/${MACHINE_ARCH}/conf; then \
 		if config ${_kern}; then \
@@ -189,8 +190,8 @@ ${SYSPATCH}: ${ERRATA}/.plist
 
 ${ERRATA}/.plist: ${_BUILD_COOKIE}
 	@echo ">> Creating the list of files to be included in ${SYSPATCH}"
-	@su ${BUILDUSER} -c '							\
-	${.CURDIR}/diff.sh ${FAKEROOT}/syspatch/${OSrev}-${EPREV}_* ${FAKE} 	\
+	@su ${BUILDUSER} -c \
+	'${.CURDIR}/diff.sh ${EPREV_PATH} ${FAKE} \
 		done > ${.TARGET}' || \
 		{ echo "***>   unable to create list of files";	\
 		exit 1; };
