@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.56 2017/04/24 14:58:36 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.57 2017/07/11 10:28:24 reyk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -527,7 +527,7 @@ dhcpinform(struct packet *packet)
 	 * not all clients are standards compliant.
 	 */
 	cip.len = 4;
-	if (packet->raw->ciaddr.s_addr) {
+	if (packet->raw->ciaddr.s_addr && !packet->raw->giaddr.s_addr) {
 		if (memcmp(&packet->raw->ciaddr.s_addr,
 		    packet->client_addr.iabuf, 4) != 0) {
 			log_info("DHCPINFORM from %s but ciaddr %s is not "
