@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.78 2017/05/21 13:00:53 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.79 2017/07/12 06:26:33 natano Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -1028,7 +1028,6 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return ENOTDIR;		/* Overloaded */
 
 	switch (name[0]) {
-	case CPU_LIDSUSPEND:
 	case CPU_LIDACTION:
 		val = lid_action;
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);

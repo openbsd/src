@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.230 2017/06/29 07:19:40 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.231 2017/07/12 06:26:32 natano Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -476,7 +476,6 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #endif
 	case CPU_XCRYPT:
 		return (sysctl_rdint(oldp, oldlenp, newp, amd64_has_xcrypt));
-	case CPU_LIDSUSPEND:
 	case CPU_LIDACTION:
 		val = lid_action;
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);

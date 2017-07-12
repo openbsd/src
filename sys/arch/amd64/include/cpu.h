@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.112 2017/06/20 05:34:41 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.113 2017/07/12 06:26:32 natano Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -427,7 +427,6 @@ void mp_setperf_init(void);
 #define CPU_KBDRESET		10	/* keyboard reset under pcvt */
 #define CPU_APMHALT		11	/* halt -p hack */
 #define CPU_XCRYPT		12	/* supports VIA xcrypt in userland */
-#define CPU_LIDSUSPEND		13	/* lid close causes a suspend */
 #define CPU_LIDACTION		14	/* action caused by lid close */
 #define CPU_FORCEUKBD		15	/* Force ukbd(4) as console keyboard */
 #define CPU_MAXID		16	/* number of valid machdep ids */
@@ -446,7 +445,7 @@ void mp_setperf_init(void);
 	{ "kbdreset", CTLTYPE_INT }, \
 	{ "apmhalt", CTLTYPE_INT }, \
 	{ "xcrypt", CTLTYPE_INT }, \
-	{ "lidsuspend", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "lidaction", CTLTYPE_INT }, \
 	{ "forceukbd", CTLTYPE_INT }, \
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.46 2017/04/27 22:41:46 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.47 2017/07/12 06:26:32 natano Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 		/*		9	   formerly int: CPU_ZTSRAWMODE */
 		/*		10	   formerly struct: CPU_ZTSSCALE */
 #define	CPU_MAXSPEED		11	/* int: number of valid machdep ids */
-#define CPU_LIDSUSPEND		12	/* int: closing lid causes suspend */
+		/*		12	   formerly int: CPU_LIDSUSPEND */
 #define CPU_LIDACTION		13	/* action caused by lid close */
 #define	CPU_MAXID		14	/* number of valid machdep ids */
 
@@ -82,7 +82,7 @@
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "maxspeed", CTLTYPE_INT }, \
-	{ "lidsuspend", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "lidaction", CTLTYPE_INT }, \
 }
 
