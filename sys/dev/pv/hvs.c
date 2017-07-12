@@ -254,7 +254,7 @@ hvs_match(struct device *parent, void *match, void *aux)
 {
 	struct hv_attach_args *aa = aux;
 
-	if (/* strcmp("ide", aa->aa_ident) && */
+	if (strcmp("ide", aa->aa_ident) &&
 	    strcmp("scsi", aa->aa_ident))
 		return (0);
 
@@ -267,6 +267,7 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 	struct hv_attach_args *aa = aux;
 	struct hvs_softc *sc = (struct hvs_softc *)self;
 	struct scsibus_attach_args saa;
+	extern int pciide_skip_ata;
 
 	sc->sc_hvsc = (struct hv_softc *)parent;
 	sc->sc_chan = aa->aa_chan;
@@ -318,6 +319,9 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 	sc->sc_scsibus = config_found(self, &saa, scsiprint);
+
+	if (sc->sc_scsibus)
+		pciide_skip_ata = 1;
 }
 
 void
