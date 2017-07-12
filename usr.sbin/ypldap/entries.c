@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.3 2015/01/16 06:40:22 deraadt Exp $ */
+/*	$OpenBSD: entries.c,v 1.4 2017/07/12 23:18:24 jca Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -90,6 +90,7 @@ flatten_entries(struct env *env)
 		free(tmp);
 	}
 	env->sc_user_lines = linep;
+	log_debug("done pushing users");
 
 	wrlen = env->sc_group_line_len;
 	if ((linep = calloc(1, env->sc_group_line_len + 1)) == NULL) {
@@ -115,6 +116,7 @@ flatten_entries(struct env *env)
 		wrlen -= len;
 	}
 	env->sc_group_lines = linep;
+	log_debug("done pushing groups");
 }
 
 int
