@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.41 2016/08/02 17:00:09 jca Exp $	*/
+/*	$OpenBSD: if.c,v 1.42 2017/07/12 06:09:03 florian Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ if_nametosdl(char *name)
 int
 if_getmtu(char *name)
 {
-	int		s;
+	int		s, save_errno;
 	struct ifreq	ifr;
 	u_long		mtu = 0;
 
@@ -123,7 +123,9 @@ if_getmtu(char *name)
 			fatalx("strlcpy");
 		if (ioctl(s, SIOCGIFMTU, (char *)&ifr) >= 0)
 			mtu = ifr.ifr_mtu;
+		save_errno = errno;
 		close(s);
+		errno = save_errno;
 	}
 
 	return (mtu);
