@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.60 2016/09/25 13:54:39 florian Exp $	*/
+/*	$OpenBSD: config.c,v 1.61 2017/07/12 06:11:07 florian Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -85,9 +85,8 @@ getconfig(char *intface)
     do {								\
 	int64_t t;							\
 	if ((t = agetnum(cap)) < 0) {					\
-		log_warnx("need %s for interface %s",			\
+		fatalx("need %s for interface %s",			\
 			cap, intface);					\
-		exit(1);						\
 	}								\
 	var = t;							\
      } while (0)
@@ -129,10 +128,9 @@ getconfig(char *intface)
 	else
 		tmp->advlinkopt = 1;
 	if (tmp->advlinkopt) {
-		if ((tmp->sdl = if_nametosdl(intface)) == NULL) {
-			log_warnx("can't get information of %s", intface);
-			exit(1);
-		}
+		if ((tmp->sdl = if_nametosdl(intface)) == NULL)
+			fatalx("can't get information of %s", intface);
+
 		tmp->ifindex = tmp->sdl->sdl_index;
 	} else
 		tmp->ifindex = if_nametoindex(intface);
@@ -146,20 +144,18 @@ getconfig(char *intface)
 	 * set router configuration variables.
 	 */
 	MAYHAVE(val, "maxinterval", DEF_MAXRTRADVINTERVAL);
-	if (val < MIN_MAXINTERVAL || val > MAX_MAXINTERVAL) {
-		log_warnx("maxinterval (%ld) on %s is invalid "
+	if (val < MIN_MAXINTERVAL || val > MAX_MAXINTERVAL)
+		fatalx("maxinterval (%ld) on %s is invalid "
 		    "(must be between %u and %u)", val,
 		    intface, MIN_MAXINTERVAL, MAX_MAXINTERVAL);
-		exit(1);
-	}
+
 	tmp->maxinterval = (u_int)val;
 	MAYHAVE(val, "mininterval", tmp->maxinterval/3);
-	if (val < MIN_MININTERVAL || val > (tmp->maxinterval * 3) / 4) {
-		log_warnx("mininterval (%ld) on %s is invalid "
+	if (val < MIN_MININTERVAL || val > (tmp->maxinterval * 3) / 4)
+		fatalx("mininterval (%ld) on %s is invalid "
 		    "(must be between %u and %u)",
 		    val, intface, MIN_MININTERVAL, (tmp->maxinterval * 3) / 4);
-		exit(1);
-	}
+
 	tmp->mininterval = (u_int)val;
 
 	MAYHAVE(val, "chlim", DEF_ADVCURHOPLIMIT);
@@ -169,20 +165,17 @@ getconfig(char *intface)
 	tmp->managedflg = val & ND_RA_FLAG_MANAGED;
 	tmp->otherflg = val & ND_RA_FLAG_OTHER;
 	tmp->rtpref = val & ND_RA_FLAG_RTPREF_MASK;
-	if (tmp->rtpref == ND_RA_FLAG_RTPREF_RSV) {
-		log_warnx("invalid router preference (%02x) on %s",
+	if (tmp->rtpref == ND_RA_FLAG_RTPREF_RSV)
+		fatalx("invalid router preference (%02x) on %s",
 		    tmp->rtpref, intface);
-		exit(1);
-	}
 
 	MAYHAVE(val, "rltime", tmp->maxinterval * 3);
-	if (val && (val < tmp->maxinterval || val > MAX_ROUTERLIFETIME)) {
-		log_warnx("router lifetime (%ld) on %s is invalid "
+	if (val && (val < tmp->maxinterval || val > MAX_ROUTERLIFETIME))
+		fatalx("router lifetime (%ld) on %s is invalid "
 		    "(must be 0 or between %d and %d)",
 		    val, intface,
 		    tmp->maxinterval, MAX_ROUTERLIFETIME);
-		exit(1);
-	}
+
 	/*
 	 * Basically, hosts MUST NOT send Router Advertisement messages at any
 	 * time (RFC 2461, Section 6.2.3). However, it would sometimes be
@@ -191,36 +184,32 @@ getconfig(char *intface)
 	 * only when router lifetime (on every advertising interface) is
 	 * explicitely set to zero. (see also the above section)
 	 */
-	if (val && forwarding == 0) {
-		log_warnx("non zero router lifetime is specified for %s, "
+	if (val && forwarding == 0)
+		fatalx("non zero router lifetime is specified for %s, "
 		    "which must not be allowed for hosts.  you must "
 		    "change router lifetime or enable IPv6 forwarding.",
 		    intface);
-		exit(1);
-	}
+
 	tmp->lifetime = val & 0xffff;
 
 	MAYHAVE(val, "rtime", DEF_ADVREACHABLETIME);
-	if (val < 0 || val > MAX_REACHABLETIME) {
+	if (val < 0 || val > MAX_REACHABLETIME)
 		log_warnx("reachable time (%ld) on %s is invalid"
 		    " (must be no greater than %d)",
 		    val, intface, MAX_REACHABLETIME);
-		exit(1);
-	}
+
 	tmp->reachabletime = (u_int32_t)val;
 
 	MAYHAVE(val64, "retrans", DEF_ADVRETRANSTIMER);
-	if (val64 < 0 || val64 > 0xffffffff) {
-		log_warnx("retrans time (%lld) on %s out of range",
+	if (val64 < 0 || val64 > 0xffffffff)
+		fatalx("retrans time (%lld) on %s out of range",
 		    (long long)val64, intface);
-		exit(1);
-	}
+
 	tmp->retranstimer = (u_int32_t)val64;
 
-	if (agetnum("hapref") != -1 || agetnum("hatime") != -1) {
-		log_warnx("mobile-ip6 configuration not supported");
-		exit(1);
-	}
+	if (agetnum("hapref") != -1 || agetnum("hatime") != -1)
+		fatalx("mobile-ip6 configuration not supported");
+
 	/* prefix information */
 
 	/*
@@ -251,16 +240,14 @@ getconfig(char *intface)
 
 		pfx->origin = PREFIX_FROM_CONFIG;
 
-		if (inet_pton(AF_INET6, addr, &pfx->prefix) != 1) {
-			log_warn("inet_pton failed for %s", addr);
-			exit(1);
-		}
-		if (IN6_IS_ADDR_MULTICAST(&pfx->prefix)) {
-			log_warnx("multicast prefix (%s) must"
+		if (inet_pton(AF_INET6, addr, &pfx->prefix) != 1)
+			fatal("inet_pton failed for %s", addr);
+
+		if (IN6_IS_ADDR_MULTICAST(&pfx->prefix))
+			fatalx("multicast prefix (%s) must"
 			    " not be advertised on %s",
 			    addr, intface);
-			exit(1);
-		}
+
 		if (IN6_IS_ADDR_LINKLOCAL(&pfx->prefix))
 			log_info("link-local prefix (%s) will be"
 			    " advertised on %s",
@@ -268,12 +255,11 @@ getconfig(char *intface)
 
 		makeentry(entbuf, sizeof(entbuf), i, "prefixlen");
 		MAYHAVE(val, entbuf, 64);
-		if (val < 0 || val > 128) {
-			log_warnx("prefixlen (%ld) for %s "
+		if (val < 0 || val > 128)
+			fatalx("prefixlen (%ld) for %s "
                             "on %s out of range",
 			    val, addr, intface);
-			exit(1);
-		}
+
 		pfx->prefixlen = (int)val;
 
 		makeentry(entbuf, sizeof(entbuf), i, "pinfoflags");
@@ -284,13 +270,12 @@ getconfig(char *intface)
 
 		makeentry(entbuf, sizeof(entbuf), i, "vltime");
 		MAYHAVE(val64, entbuf, DEF_ADVVALIDLIFETIME);
-		if (val64 < 0 || val64 > 0xffffffff) {
-			log_warnx("vltime (%lld) for"
+		if (val64 < 0 || val64 > 0xffffffff)
+			fatalx("vltime (%lld) for"
 			    " %s/%d on %s is out of range",
 			    (long long)val64,
 			    addr, pfx->prefixlen, intface);
-			exit(1);
-		}
+
 		pfx->validlifetime = (u_int32_t)val64;
 
 		makeentry(entbuf, sizeof(entbuf), i, "vltimedecr");
@@ -303,13 +288,12 @@ getconfig(char *intface)
 
 		makeentry(entbuf, sizeof(entbuf), i, "pltime");
 		MAYHAVE(val64, entbuf, DEF_ADVPREFERREDLIFETIME);
-		if (val64 < 0 || val64 > 0xffffffff) {
-			log_warnx("pltime (%lld) for %s/%d on %s"
+		if (val64 < 0 || val64 > 0xffffffff)
+			fatalx("pltime (%lld) for %s/%d on %s"
 			    " is out of range",
 			    (long long)val64,
 			    addr, pfx->prefixlen, intface);
-			exit(1);
-		}
+
 		pfx->preflifetime = (u_int32_t)val64;
 
 		makeentry(entbuf, sizeof(entbuf), i, "pltimedecr");
@@ -337,19 +321,16 @@ getconfig(char *intface)
 		if (rti == NULL)
 			fatal(NULL);
 
-		if (inet_pton(AF_INET6, addr, &rti->prefix) != 1) {
-			log_warn("inet_pton failed for %s", addr);
-			exit(1);
-		}
+		if (inet_pton(AF_INET6, addr, &rti->prefix) != 1)
+			fatal("inet_pton failed for %s", addr);
 
 		makeentry(entbuf, sizeof(entbuf), i, "rtplen");
 		MAYHAVE(val, entbuf, 64);
-		if (val < 0 || val > 128) {
-			log_warnx("route prefixlen (%ld) for %s "
+		if (val < 0 || val > 128)
+			fatalx("route prefixlen (%ld) for %s "
                             "on %s out of range",
 			    val, addr, intface);
-			exit(1);
-		}
+
 		rti->prefixlen = (int)val;
 
 		makeentry(entbuf, sizeof(entbuf), i, "rtflags");
@@ -358,35 +339,31 @@ getconfig(char *intface)
 			if (strchr(flagstr, 'h'))
 				val |= ND_RA_FLAG_RTPREF_HIGH;
 			if (strchr(flagstr, 'l')) {
-				if (val & ND_RA_FLAG_RTPREF_HIGH) {
-					log_warnx("the \'h\' and \'l\'"
+				if (val & ND_RA_FLAG_RTPREF_HIGH)
+					fatalx("the \'h\' and \'l\'"
 					    " route preferences are"
 					    " exclusive");
-					exit(1);
-				}
+
 				val |= ND_RA_FLAG_RTPREF_LOW;
 			}
 		} else
 			MAYHAVE(val, entbuf, 0);
 
 		rti->rtpref = val & ND_RA_FLAG_RTPREF_MASK;
-		if (rti->rtpref == ND_RA_FLAG_RTPREF_RSV) {
-			log_warnx("invalid route preference (%02x)"
+		if (rti->rtpref == ND_RA_FLAG_RTPREF_RSV)
+			fatalx("invalid route preference (%02x)"
 			    " for %s/%d on %s",
 			    rti->rtpref, addr, rti->prefixlen, intface);
-			exit(1);
-		}
 
 		makeentry(entbuf, sizeof(entbuf), i, "rtltime");
 		MAYHAVE(val64, entbuf, -1);
 		if (val64 == -1)
 			val64 = tmp->lifetime;
-		if (val64 < 0 || val64 >= 0xffffffff) {
-			log_warnx("route lifetime (%d) "
+		if (val64 < 0 || val64 >= 0xffffffff)
+			fatalx("route lifetime (%d) "
 			    " for %s/%d on %s out of range",
 			    rti->rtpref, addr, rti->prefixlen, intface);
-			exit(1);
-		}
+
 		rti->lifetime = (uint32_t)val64;
 
 		TAILQ_INSERT_TAIL(&tmp->rtinfos, rti, entry);
@@ -429,10 +406,10 @@ getconfig(char *intface)
 
 		val = 0;
 		while ((tmpaddr = strsep(&addr, ","))) {
-			if (inet_pton(AF_INET6, tmpaddr, &rds->servers[val]) != 1) {
-				log_warn("inet_pton failed for %s", tmpaddr);
-				exit(1);
-			}
+			if (inet_pton(AF_INET6, tmpaddr, &rds->servers[val]) !=
+			    1)
+				fatal("inet_pton failed for %s", tmpaddr);
+
 			val++;
 		}
 	}
@@ -489,10 +466,9 @@ getconfig(char *intface)
 	}
 
 	MAYHAVE(val, "mtu", 0);
-	if (val < 0 || val > 0xffffffff) {
-		log_warnx("mtu (%ld) on %s out of range", val, intface);
-		exit(1);
-	}
+	if (val < 0 || val > 0xffffffff)
+		fatalx("mtu (%ld) on %s out of range", val, intface);
+
 	tmp->linkmtu = (u_int32_t)val;
 	if (tmp->linkmtu == 0) {
 		char *mtustr;
@@ -500,13 +476,10 @@ getconfig(char *intface)
 		if ((mtustr = agetstr("mtu", &bp)) &&
 		    strcmp(mtustr, "auto") == 0)
 			tmp->linkmtu = tmp->phymtu;
-	}
-	else if (tmp->linkmtu < IPV6_MMTU || tmp->linkmtu > tmp->phymtu) {
-		log_warnx("advertised link mtu (%u) on %s is invalid (must"
+	} else if (tmp->linkmtu < IPV6_MMTU || tmp->linkmtu > tmp->phymtu)
+		fatalx("advertised link mtu (%u) on %s is invalid (must"
 		    " be between least MTU (%d) and physical link MTU (%d)",
 		    tmp->linkmtu, intface, IPV6_MMTU, tmp->phymtu);
-		exit(1);
-	}
 
 	/* route information */
 	MAYHAVE(val, "routes", -1);

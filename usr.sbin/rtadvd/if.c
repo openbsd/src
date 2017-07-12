@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.42 2017/07/12 06:09:03 florian Exp $	*/
+/*	$OpenBSD: if.c,v 1.43 2017/07/12 06:11:07 florian Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -181,8 +181,7 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 		memcpy(addr, LLADDR(sdl), ETHER_ADDR_LEN);
 		break;
 	default:
-		log_warn("unsupported link type(%d)", sdl->sdl_type);
-		exit(1);
+		fatalx("unsupported link type(%d)", sdl->sdl_type);
 	}
 }
 
@@ -444,12 +443,11 @@ parse_iflist(struct if_msghdr ***ifmlist_p, char *buf, size_t bufsize)
 			if (ifm->ifm_version == RTM_VERSION)
 				(*ifmlist_p)[ifm->ifm_index] = ifm;
 		} else {
-			log_warn("out of sync parsing NET_RT_IFLIST,"
+			fatalx("out of sync parsing NET_RT_IFLIST,"
 			    " expected %d, got %d, msglen = %d,"
 			    " buf:%p, ifm:%p, lim:%p",
 			    RTM_IFINFO, ifm->ifm_type, ifm->ifm_msglen,
 			    buf, ifm, lim);
-			exit(1);
 		}
 		for (ifam = (struct ifa_msghdr *)
 			((char *)ifm + ifm->ifm_msglen);
