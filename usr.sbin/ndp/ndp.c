@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.81 2017/04/15 11:58:51 bluhm Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.82 2017/07/12 16:56:48 florian Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -135,10 +135,6 @@ void usage(void);
 int rtmsg(int);
 int rtget(struct sockaddr_in6 **, struct sockaddr_dl **);
 void ifinfo(char *, int, char **);
-void rtrlist(void);
-void plist(void);
-void pfx_flush(void);
-void rtr_flush(void);
 void harmonize_rtr(void);
 static char *sec2str(time_t);
 static void ts_print(const struct timeval *);
@@ -162,7 +158,7 @@ main(int argc, char *argv[])
 	pid = getpid();
 	thiszone = gmt2local(0);
 	rdomain = getrtable();
-	while ((ch = getopt(argc, argv, "acd:f:i:nprstA:HPRV:")) != -1) {
+	while ((ch = getopt(argc, argv, "acd:f:i:nstA:HV:")) != -1) {
 		switch (ch) {
 		case 'a':
 		case 'c':
@@ -170,7 +166,6 @@ main(int argc, char *argv[])
 		case 'r':
 		case 'H':
 		case 'P':
-		case 'R':
 		case 's':
 			if (mode) {
 				usage();
@@ -243,22 +238,8 @@ main(int argc, char *argv[])
 			usage();
 		file(arg);
 		break;
-	case 'p':
-		if (argc != 0) {
-			usage();
-			/*NOTREACHED*/
-		}
-		plist();
-		break;
 	case 'i':
 		ifinfo(arg, argc, argv);
-		break;
-	case 'r':
-		if (argc != 0) {
-			usage();
-			/*NOTREACHED*/
-		}
-		rtrlist();
 		break;
 	case 's':
 		if (argc < 2 || argc > 4)
@@ -270,20 +251,6 @@ main(int argc, char *argv[])
 			/*NOTREACHED*/
 		}
 		harmonize_rtr();
-		break;
-	case 'P':
-		if (argc != 0) {
-			usage();
-			/*NOTREACHED*/
-		}
-		pfx_flush();
-		break;
-	case 'R':
-		if (argc != 0) {
-			usage();
-			/*NOTREACHED*/
-		}
-		rtr_flush();
 		break;
 	case 0:
 		if (argc != 1) {
@@ -800,7 +767,7 @@ ndp_ether_aton(char *a, u_char *n)
 void
 usage(void)
 {
-	printf("usage: ndp [-nrt] [-a | -c | -p] [-H | -P | -R] ");
+	printf("usage: ndp [-nt] [-a | -c] [-H] ");
 	printf("[-A wait] [-d hostname]\n");
 	printf("\t[-f filename] [-i interface [flag ...]]\n");
 	printf("\t[-s nodename ether_addr [temp] [proxy]] ");
@@ -986,203 +953,6 @@ ifinfo(char *ifname, int argc, char **argv)
 			printf("accept_rtadv ");
 	}
 	putc('\n', stdout);
-
-	close(s);
-}
-
-#ifndef ND_RA_FLAG_RTPREF_MASK	/* XXX: just for compilation on *BSD release */
-#define ND_RA_FLAG_RTPREF_MASK	0x18 /* 00011000 */
-#endif
-
-void
-rtrlist(void)
-{
-	int mib[] = { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_ND6_DRLIST };
-	char *buf;
-	struct in6_defrouter *p, *ep;
-	size_t l;
-	struct timeval now;
-
-	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), NULL, &l, NULL, 0) < 0) {
-		err(1, "sysctl(ICMPV6CTL_ND6_DRLIST)");
-		/*NOTREACHED*/
-	}
-	if (l == 0)
-		return;
-	buf = malloc(l);
-	if (buf == NULL) {
-		err(1, "malloc");
-		/*NOTREACHED*/
-	}
-	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), buf, &l, NULL, 0) < 0) {
-		err(1, "sysctl(ICMPV6CTL_ND6_DRLIST)");
-		/*NOTREACHED*/
-	}
-
-	ep = (struct in6_defrouter *)(buf + l);
-	for (p = (struct in6_defrouter *)buf; p < ep; p++) {
-		int rtpref;
-
-		if (getnameinfo((struct sockaddr *)&p->rtaddr,
-		    p->rtaddr.sin6_len, host_buf, sizeof(host_buf), NULL, 0,
-		    (nflag ? NI_NUMERICHOST : 0)) != 0)
-			strlcpy(host_buf, "?", sizeof(host_buf));
-
-		printf("%s if=%s", host_buf,
-		    if_indextoname(p->if_index, ifix_buf));
-		printf(", flags=%s%s",
-		    p->flags & ND_RA_FLAG_MANAGED ? "M" : "",
-		    p->flags & ND_RA_FLAG_OTHER   ? "O" : "");
-		rtpref = ((p->flags & ND_RA_FLAG_RTPREF_MASK) >> 3) & 0xff;
-		printf(", pref=%s", rtpref_str[rtpref]);
-
-		gettimeofday(&now, 0);
-		if (p->expire == 0)
-			printf(", expire=Never\n");
-		else
-			printf(", expire=%s\n",
-			    sec2str(p->expire - now.tv_sec));
-	}
-	free(buf);
-}
-
-void
-plist(void)
-{
-	int mib[] = { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_ND6_PRLIST };
-	char *buf, *p, *ep;
-	struct in6_prefix pfx;
-	size_t l;
-	struct timeval now;
-	const int niflags = NI_NUMERICHOST;
-	int ninflags = nflag ? NI_NUMERICHOST : 0;
-	char namebuf[NI_MAXHOST];
-
-	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), NULL, &l, NULL, 0) < 0) {
-		err(1, "sysctl(ICMPV6CTL_ND6_PRLIST)");
-		/*NOTREACHED*/
-	}
-	if (l == 0)
-		return;
-	buf = malloc(l);
-	if (buf == NULL) {
-		err(1, "malloc");
-		/*NOTREACHED*/
-	}
-	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), buf, &l, NULL, 0) < 0) {
-		err(1, "sysctl(ICMPV6CTL_ND6_PRLIST)");
-		/*NOTREACHED*/
-	}
-
-	ep = buf + l;
-	for (p = buf; p < ep; ) {
-		memcpy(&pfx, p, sizeof(pfx));
-		p += sizeof(pfx);
-
-		if (getnameinfo((struct sockaddr *)&pfx.prefix,
-		    pfx.prefix.sin6_len, namebuf, sizeof(namebuf),
-		    NULL, 0, niflags) != 0)
-			strlcpy(namebuf, "?", sizeof(namebuf));
-		printf("%s/%d if=%s\n", namebuf, pfx.prefixlen,
-		    if_indextoname(pfx.if_index, ifix_buf));
-
-		gettimeofday(&now, 0);
-		/*
-		 * meaning of fields, especially flags, is very different
-		 * by origin.  notify the difference to the users.
-		 */
-		printf("flags=%s%s%s%s%s",
-		    pfx.raflags.onlink ? "L" : "",
-		    pfx.raflags.autonomous ? "A" : "",
-		    (pfx.flags & NDPRF_ONLINK) != 0 ? "O" : "",
-		    (pfx.flags & NDPRF_DETACHED) != 0 ? "D" : "",
-		    (pfx.flags & NDPRF_HOME) != 0 ? "H" : ""
-		    );
-		if (pfx.vltime == ND6_INFINITE_LIFETIME)
-			printf(" vltime=infinity");
-		else
-			printf(" vltime=%lu", (unsigned long)pfx.vltime);
-		if (pfx.pltime == ND6_INFINITE_LIFETIME)
-			printf(", pltime=infinity");
-		else
-			printf(", pltime=%lu", (unsigned long)pfx.pltime);
-		if (pfx.expire == 0)
-			printf(", expire=Never");
-		else if (pfx.expire >= now.tv_sec)
-			printf(", expire=%s",
-			    sec2str(pfx.expire - now.tv_sec));
-		else
-			printf(", expired");
-		printf(", ref=%d", pfx.refcnt);
-		printf("\n");
-		/*
-		 * "advertising router" list is meaningful only if the prefix
-		 * information is from RA.
-		 */
-		if (pfx.advrtrs) {
-			int j;
-			struct sockaddr_in6 sin6;
-
-			printf("  advertised by\n");
-			for (j = 0; j < pfx.advrtrs && p <= ep; j++) {
-				struct in6_nbrinfo *nbi;
-
-				memcpy(&sin6, p, sizeof(sin6));
-				p += sizeof(sin6);
-
-				if (getnameinfo((struct sockaddr *)&sin6,
-				    sin6.sin6_len, namebuf, sizeof(namebuf),
-				    NULL, 0, ninflags) != 0)
-					strlcpy(namebuf, "?", sizeof(namebuf));
-				printf("    %s", namebuf);
-
-				nbi = getnbrinfo(&sin6.sin6_addr,
-				    pfx.if_index, 0);
-				if (nbi) {
-					switch (nbi->state) {
-					case ND6_LLINFO_REACHABLE:
-					case ND6_LLINFO_STALE:
-					case ND6_LLINFO_DELAY:
-					case ND6_LLINFO_PROBE:
-						printf(" (reachable)\n");
-						break;
-					default:
-						printf(" (unreachable)\n");
-					}
-				} else
-					printf(" (no neighbor state)\n");
-			}
-		} else
-			printf("  No advertising router\n");
-	}
-	free(buf);
-}
-
-void
-pfx_flush(void)
-{
-	char dummyif[IFNAMSIZ+8];
-	int s;
-
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
-		err(1, "socket");
-	strlcpy(dummyif, "lo0", sizeof(dummyif)); /* dummy */
-	if (ioctl(s, SIOCSPFXFLUSH_IN6, (caddr_t)&dummyif) < 0)
-		err(1, "ioctl(SIOCSPFXFLUSH_IN6)");
-	close(s);
-}
-
-void
-rtr_flush(void)
-{
-	char dummyif[IFNAMSIZ+8];
-	int s;
-
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
-		err(1, "socket");
-	strlcpy(dummyif, "lo0", sizeof(dummyif)); /* dummy */
-	if (ioctl(s, SIOCSRTRFLUSH_IN6, (caddr_t)&dummyif) < 0)
-		err(1, "ioctl(SIOCSRTRFLUSH_IN6)");
 
 	close(s);
 }
