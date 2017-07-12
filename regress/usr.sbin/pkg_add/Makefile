@@ -1,17 +1,44 @@
-# $OpenBSD: Makefile,v 1.52 2016/01/22 16:45:52 landry Exp $
+# $OpenBSD: Makefile,v 1.53 2017/07/12 15:21:12 bluhm Exp $
 
-REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
-	pkgcfl update-check1 \
-	collision-check3 collision-check5 partial-update-test conflict-update \
+REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
+	collision-check1-disabled collision-check2-disabled collision-check3 \
+	collision-check4 collision-check5-disabled collision-check6-disabled \
+	collision-check7-disabled \
+	update-check1 partial-update-test conflict-update \
 	merge-update split-update big-merge family-circus missing \
 	lib-report1 lib-report2 lib-report3 loop1 \
 	lib-report4 lib-report5 lib-report6 lib-report7 \
-	qttest gstest exotest inter1 manual1 oldlib1 \
+	qttest gstest exotest-disabled inter1 manual1 oldlib1
 
-# extra stuff
-#	collision-check1 collision-check2 collision-check4 collision-check6
-#	collision-check7
+collision-check{1,2}-disabled:
+	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
+	# Failing test ${@:S/-disabled$//} added in rev 1.8.
+	# more half-baked regress-targets
+	@echo DISABLED
 
+collision-check5-disabled:
+	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
+	# Failing test ${@:S/-disabled$//} added in rev 1.35.
+	# new test for vstat
+	@echo DISABLED
+
+collision-check6-disabled:
+	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
+	# Failing test ${@:S/-disabled$//} added in rev 1.9.
+	# more tests
+	@echo DISABLED
+
+collision-check7-disabled:
+	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
+	# Failing test added in rev 1.48.
+	# pure display check, not linked since it fails
+	@echo DISABLED
+
+exotest-disabled:
+	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
+	# Failing test ${@:S/-disabled$//} added in rev 1.41.
+	# Workaround in ports/x11/xfce4/exo/Makefile rev 1.32.
+	@echo DISABLED
 
 ADD_PKG=perl ${.CURDIR}/my add
 DELETE_PKG=perl ${.CURDIR}/my delete
@@ -68,7 +95,7 @@ collision-check2: rep1/d-0.tgz rep1/e-0.tgz
 	@-rm -rf ${D4}
 	@ROOT=${D4} ${ADD_PKG} rep1/d-0.tgz
 	@-rm -rf ${D4}/pkgdb/d-0
-	@ROOT=${D4} ${ADD_PKG} rep1/e-0.tgz
+	@ROOT=${D4} ${ADD_PKG} -I rep1/e-0.tgz
 
 collision-check3: rep1/d-0.tgz rep1/f-0.tgz
 	@-rm -rf ${D5}
@@ -620,9 +647,7 @@ keys:
 	mkdir signify
 	signify -G -n -s signify/test-pkg.sec -p signify/test-pkg.pub
 
-# some extra tests do not yet pass correctly
-.PHONY: ${REGRESS_TARGETS} \
-	collision-check1 collision-check2 collision-check4 collision-check5
+.PHONY: ${REGRESS_TARGETS}
 
 clean:
 	-rm -rf rep* dest* plist* src* signatures.out
