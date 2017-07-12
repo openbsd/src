@@ -2092,6 +2092,32 @@ inteldrm_burner_cb(void *arg1)
 	drm_fb_helper_blank(dev_priv->burner_fblank, helper->fbdev);
 }
 
+int
+inteldrm_backlight_update_status(struct backlight_device *bd)
+{
+	struct wsdisplay_param dp;
+
+	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
+	dp.curval = bd->props.brightness;
+	ws_set_param(&dp);
+	return 0;
+}
+
+int
+inteldrm_backlight_get_brightness(struct backlight_device *bd)
+{
+	struct wsdisplay_param dp;
+
+	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
+	ws_get_param(&dp);
+	return dp.curval;
+}
+
+const struct backlight_ops inteldrm_backlight_ops = {
+	.update_status = inteldrm_backlight_update_status,
+	.get_brightness = inteldrm_backlight_get_brightness
+};
+
 int	inteldrm_match(struct device *, void *, void *);
 void	inteldrm_attach(struct device *, struct device *, void *);
 int	inteldrm_detach(struct device *, int);
@@ -2106,6 +2132,7 @@ struct cfdriver inteldrm_cd = {
 	0, "inteldrm", DV_DULL
 };
 
+void	inteldrm_init_backlight(struct inteldrm_softc *);
 int	inteldrm_intr(void *);
 
 int
@@ -2126,7 +2153,6 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	const struct drm_pcidev *id;
 	struct intel_device_info *info, *device_info;
-	struct intel_connector *intel_connector;
 	struct rasops_info *ri = &dev_priv->ro;
 	struct wsemuldisplaydev_attach_args aa;
 	extern int vga_console_attached;
@@ -2242,18 +2268,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	intel_fbdev_restore_mode(dev);
 
-	/* Grab backlight from the first connector that has one. */
-	drm_modeset_lock(&dev->mode_config.connection_mutex, NULL);
-	list_for_each_entry(intel_connector, &dev->mode_config.connector_list,
-	    base.head) {
-		struct intel_panel *panel = &intel_connector->panel;
-
-		if (panel->backlight.present) {
-			dev_priv->backlight = panel->backlight.device;
-			break;
-		}
-	}
-	drm_modeset_unlock(&dev->mode_config.connection_mutex);
+	inteldrm_init_backlight(dev_priv);
 
 	ri->ri_flg = RI_CENTER | RI_WRONLY | RI_VCONS | RI_CLEAR;
 	ri->ri_hw = dev_priv;
@@ -2327,6 +2342,85 @@ inteldrm_activate(struct device *self, int act)
 	}
 
 	return (rv);
+}
+
+void
+inteldrm_native_backlight(struct inteldrm_softc *dev_priv)
+{
+	struct drm_device *dev = dev_priv->dev;
+	struct intel_connector *intel_connector;
+
+	list_for_each_entry(intel_connector,
+	    &dev->mode_config.connector_list, base.head) {
+		struct drm_connector *connector = &intel_connector->base;
+		struct intel_panel *panel = &intel_connector->panel;
+		struct backlight_device *bd = panel->backlight.device;
+
+		if (!panel->backlight.present)
+			continue;
+
+		connector->backlight_device = bd;
+		connector->backlight_property = drm_property_create_range(dev,
+		    0, "Backlight", 0, bd->props.max_brightness);
+		drm_object_attach_property(&connector->base,
+		    connector->backlight_property, bd->props.brightness);
+
+		/*
+		 * Use backlight from the first connector that has one
+		 * for wscons(4).
+		 */
+		if (dev_priv->backlight == NULL)
+			dev_priv->backlight = bd;
+	}
+}
+
+void
+inteldrm_firmware_backlight(struct inteldrm_softc *dev_priv,
+    struct wsdisplay_param *dp)
+{
+	struct drm_device *dev = dev_priv->dev;
+	struct intel_connector *intel_connector;
+	struct backlight_properties props;
+	struct backlight_device *bd;
+
+	memset(&props, 0, sizeof(props));
+	props.type = BACKLIGHT_FIRMWARE;
+	props.brightness = dp->curval;
+	bd = backlight_device_register(dev->device.dv_xname, NULL, NULL,
+	    &inteldrm_backlight_ops, &props);
+
+	list_for_each_entry(intel_connector,
+	    &dev->mode_config.connector_list, base.head) {
+		struct drm_connector *connector = &intel_connector->base;
+
+		if (connector->connector_type != DRM_MODE_CONNECTOR_LVDS &&
+		    connector->connector_type != DRM_MODE_CONNECTOR_eDP &&
+		    connector->connector_type != DRM_MODE_CONNECTOR_DSI)
+			continue;
+
+		connector->backlight_device = bd;
+		connector->backlight_property = drm_property_create_range(dev,
+		    0, "Backlight", dp->min, dp->max);
+		drm_object_attach_property(&connector->base,
+		    connector->backlight_property, dp->curval);
+	}
+}
+
+void
+inteldrm_init_backlight(struct inteldrm_softc *dev_priv)
+{
+	struct drm_device *dev = dev_priv->dev;
+	struct wsdisplay_param dp;
+
+	drm_modeset_lock(&dev->mode_config.connection_mutex, NULL);
+
+	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
+	if (ws_get_param && ws_get_param(&dp) == 0)
+		inteldrm_firmware_backlight(dev_priv, &dp);
+	else
+		inteldrm_native_backlight(dev_priv);
+
+	drm_modeset_unlock(&dev->mode_config.connection_mutex);
 }
 
 int

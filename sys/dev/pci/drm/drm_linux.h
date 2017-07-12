@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.54 2017/07/07 18:06:51 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.55 2017/07/12 20:12:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -1917,12 +1917,14 @@ struct backlight_ops {
 struct backlight_device {
 	const struct backlight_ops *ops;
 	struct backlight_properties props;
+	struct task task;
 	void *data;
 };
 
 #define bl_get_data(bd)	(bd)->data
 
-#define BACKLIGHT_RAW	0
+#define BACKLIGHT_RAW		0
+#define BACKLIGHT_FIRMWARE	1
 
 struct backlight_device *backlight_device_register(const char *, void *,
      void *, const struct backlight_ops *, struct backlight_properties *);
@@ -1932,7 +1934,9 @@ static inline void
 backlight_update_status(struct backlight_device *bd)
 {
 	bd->ops->update_status(bd);
-};
+}
+
+void backlight_schedule_update_status(struct backlight_device *);
 
 #define MIPI_DSI_V_SYNC_START			0x01
 #define MIPI_DSI_V_SYNC_END			0x11

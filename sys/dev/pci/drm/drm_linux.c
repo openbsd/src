@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.14 2017/07/05 20:30:13 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.15 2017/07/12 20:12:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -697,6 +697,12 @@ acpi_get_table_with_size(const char *sig, int instance,
 
 #endif
 
+void
+backlight_do_update_status(void *arg)
+{
+	backlight_update_status(arg);
+}
+
 struct backlight_device *
 backlight_device_register(const char *name, void *kdev, void *data,
     const struct backlight_ops *ops, struct backlight_properties *props)
@@ -707,6 +713,8 @@ backlight_device_register(const char *name, void *kdev, void *data,
 	bd->ops = ops;
 	bd->props = *props;
 	bd->data = data;
+
+	task_set(&bd->task, backlight_do_update_status, bd);
 	
 	return bd;
 }
@@ -715,4 +723,10 @@ void
 backlight_device_unregister(struct backlight_device *bd)
 {
 	free(bd, M_DRM, sizeof(*bd));
+}
+
+void
+backlight_schedule_update_status(struct backlight_device *bd)
+{
+	task_add(systq, &bd->task);
 }
