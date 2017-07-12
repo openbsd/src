@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.217 2017/06/23 01:21:55 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.218 2017/07/12 06:39:13 visa Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1957,6 +1957,9 @@ pool_cache_gc(struct pool *pp)
 	if ((contention - pp->pr_cache_contention_prev) > 8 /* magic */) {
 		if ((ncpusfound * 8 * 2) <= pp->pr_cache_nitems)
 			pp->pr_cache_items += 8;
+	} else if ((contention - pp->pr_cache_contention_prev) == 0) {
+		if (pp->pr_cache_items > 8)
+			pp->pr_cache_items--;
 	}
 	pp->pr_cache_contention_prev = contention;
 }
