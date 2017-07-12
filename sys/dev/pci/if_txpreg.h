@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.38 2009/03/24 11:12:10 kettenis Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.39 2017/07/12 14:36:57 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -608,6 +608,8 @@ struct txp_fw_section_header {
 
 #define	TXP_MAX_SEGLEN	0xffff
 #define	TXP_MAX_PKTLEN	0x0800
+
+#define	TXP_MAXTXSEGS	16
 
 #define	WRITE_REG(sc,reg,val) \
     bus_space_write_4((sc)->sc_bt, (sc)->sc_bh, reg, val)
