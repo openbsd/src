@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.3 2017/03/21 12:06:56 bluhm Exp $ */
+/*	$OpenBSD: log.c,v 1.4 2017/07/12 06:09:59 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -135,26 +135,44 @@ log_debug(const char *emsg, ...)
 	}
 }
 
-void
-fatal(const char *emsg)
+static void
+vfatalc(int code, const char *emsg, va_list ap)
 {
-	if (emsg == NULL)
-		logit(LOG_CRIT, "fatal in %s: %s", log_procname,
-		    strerror(errno));
-	else
-		if (errno)
-			logit(LOG_CRIT, "fatal in %s: %s: %s",
-			    log_procname, emsg, strerror(errno));
-		else
-			logit(LOG_CRIT, "fatal in %s: %s",
-			    log_procname, emsg);
+	static char	s[BUFSIZ];
+	const char	*sep;
 
+	if (emsg != NULL) {
+		(void)vsnprintf(s, sizeof(s), emsg, ap);
+		sep = ": ";
+	} else {
+		s[0] = '\0';
+		sep = "";
+	}
+	if (code)
+		logit(LOG_CRIT, "fatal in %s: %s%s%s",
+		    log_procname, s, sep, strerror(code));
+	else
+		logit(LOG_CRIT, "fatal in %s%s%s", log_procname, sep, s);
+}
+
+void
+fatal(const char *emsg, ...)
+{
+	va_list	ap;
+
+	va_start(ap, emsg);
+	vfatalc(errno, emsg, ap);
+	va_end(ap);
 	exit(1);
 }
 
 void
-fatalx(const char *emsg)
+fatalx(const char *emsg, ...)
 {
-	errno = 0;
-	fatal(emsg);
+	va_list	ap;
+
+	va_start(ap, emsg);
+	vfatalc(0, emsg, ap);
+	va_end(ap);
+	exit(1);
 }
