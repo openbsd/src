@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.12 2017/07/07 16:27:26 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.13 2017/07/12 14:31:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -258,8 +258,12 @@ window_tree_build_window(struct session *s, struct winlink *wl, void* modedata,
 	free(text);
 	free(name);
 
+	if (window_count_panes(wl->window) == 1)
+		return (1);
+
 	l = NULL;
 	n = 0;
+
 	TAILQ_FOREACH(wp, &wl->window->panes, entry) {
 		if (filter != NULL) {
 			cp = format_single(NULL, filter, NULL, s, wl, wp);

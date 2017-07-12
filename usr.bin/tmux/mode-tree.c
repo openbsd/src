@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.7 2017/07/04 12:26:14 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.8 2017/07/12 14:31:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -487,7 +487,7 @@ mode_tree_draw(struct mode_tree_data *mtd)
 		screen_write_cursormove(&ctx, 0, i - mtd->offset);
 
 		if (i < 10)
-			snprintf(key, sizeof key, "(%c)", '0' + i);
+			snprintf(key, sizeof key, "(%c)  ", '0' + i);
 		else if (i < 36)
 			snprintf(key, sizeof key, "(M-%c)", 'a' + (i - 10));
 		else
