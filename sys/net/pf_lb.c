@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.60 2017/04/23 11:37:11 sthen Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.61 2017/07/12 14:07:55 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -211,7 +211,7 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 				return (0);
 			}
 		} else {
-			u_int16_t tmp;
+			u_int32_t tmp;
 
 			if (low > high) {
 				tmp = low;
@@ -221,7 +221,7 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 			/* low < high */
 			cut = arc4random_uniform(1 + high - low) + low;
 			/* low <= cut <= high */
-			for (tmp = cut; tmp <= high; ++(tmp)) {
+			for (tmp = cut; tmp <= high && tmp <= 0xffff; ++tmp) {
 				key.port[sidx] = htons(tmp);
 				if (pf_find_state_all(&key, dir, NULL) ==
 				    NULL && !in_baddynamic(tmp, pd->proto)) {
@@ -229,7 +229,8 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 					return (0);
 				}
 			}
-			for (tmp = cut - 1; tmp >= low; --(tmp)) {
+			tmp = cut;
+			for (tmp -= 1; tmp >= low && tmp <= 0xffff; --tmp) {
 				key.port[sidx] = htons(tmp);
 				if (pf_find_state_all(&key, dir, NULL) ==
 				    NULL && !in_baddynamic(tmp, pd->proto)) {
