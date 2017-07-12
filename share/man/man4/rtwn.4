@@ -1,4 +1,4 @@
-.\" $OpenBSD: rtwn.4,v 1.2 2015/07/09 11:28:53 stsp Exp $
+.\" $OpenBSD: rtwn.4,v 1.3 2017/07/12 05:44:33 bentley Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\" Copyright (c) 2015 Stefan Sperling <stsp@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2015 $
+.Dd $Mdocdate: July 12 2017 $
 .Dt RTWN 4
 .Os
 .Sh NAME
@@ -73,8 +73,8 @@ The driver needs at least version 1.0 of the following firmware files,
 which are loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It /etc/firmware/rtwn-rtl8192cfwU
-.It /etc/firmware/rtwn-rtl8192cfwU_B
+.It Pa /etc/firmware/rtwn-rtl8192cfwU
+.It Pa /etc/firmware/rtwn-rtl8192cfwU_B
 .El
 .Pp
 A prepackaged version of the firmware can be installed using

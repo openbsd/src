@@ -1,4 +1,4 @@
-.\" $OpenBSD: otus.4,v 1.29 2015/03/30 12:35:15 jung Exp $
+.\" $OpenBSD: otus.4,v 1.30 2017/07/12 05:44:33 bentley Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 30 2015 $
+.Dd $Mdocdate: July 12 2017 $
 .Dt OTUS 4
 .Os
 .Sh NAME
@@ -72,8 +72,8 @@ The driver needs at least version 1.0 of the following firmware files,
 which are loaded when an interface is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It /etc/firmware/otus-init
-.It /etc/firmware/otus-main
+.It Pa /etc/firmware/otus-init
+.It Pa /etc/firmware/otus-main
 .El
 .Pp
 Although these firmware files are freely redistributable, their usage

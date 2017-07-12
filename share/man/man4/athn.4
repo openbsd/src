@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.32 2017/02/05 19:19:46 jmc Exp $
+.\" $OpenBSD: athn.4,v 1.33 2017/07/12 05:44:33 bentley Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 5 2017 $
+.Dd $Mdocdate: July 12 2017 $
 .Dt ATHN 4
 .Os
 .Sh NAME
@@ -165,9 +165,9 @@ For USB devices, the driver needs at least version 1.1 of the following
 firmware files, which are loaded when an interface is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It /etc/firmware/athn-ar7010
-.It /etc/firmware/athn-ar7010-11
-.It /etc/firmware/athn-ar9271
+.It Pa /etc/firmware/athn-ar7010
+.It Pa /etc/firmware/athn-ar7010-11
+.It Pa /etc/firmware/athn-ar9271
 .El
 .Pp
 A prepackaged version of the firmware can be installed using
