@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.152 2017/07/03 23:05:21 bluhm Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.153 2017/07/12 09:25:47 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -110,10 +110,10 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 		closef(fp, p);
 		fdpunlock(fdp);
 	} else {
-		fp->f_data = so;
 		if (type & SOCK_NONBLOCK)
-			(*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&type, p);
+			so->so_state |= SS_NBIO;
 		so->so_state |= ss;
+		fp->f_data = so;
 		FILE_SET_MATURE(fp, p);
 		*retval = fd;
 	}
@@ -332,12 +332,15 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_flag = FREAD | FWRITE | nflag;
 	fp->f_ops = &socketops;
-	fp->f_data = so;
 	error = soaccept(so, nam);
 	if (!error && name != NULL)
 		error = copyaddrout(p, nam, name, namelen, anamelen);
 	if (!error) {
-		(*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&nflag, p);
+		if (nflag & FNONBLOCK)
+			so->so_state |= SS_NBIO;
+		else
+			so->so_state &= ~SS_NBIO;
+		fp->f_data = so;
 		FILE_SET_MATURE(fp, p);
 		*retval = tmpfd;
 	}
