@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.73 2017/07/08 09:19:02 mpi Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.74 2017/07/12 10:56:47 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -238,8 +238,6 @@ soreadable(struct socket *so)
 	if ((m)->m_flags & M_EXT)					\
 		(sb)->sb_mbcnt -= (m)->m_ext.ext_size;			\
 } while (/* CONSTCOND */ 0)
-
-struct rwlock;
 
 /*
  * Set lock on sockbuf sb; sleep if lock is already held.
