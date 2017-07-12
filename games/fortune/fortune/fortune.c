@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.58 2017/06/30 08:39:16 mestre Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.59 2017/07/12 11:36:22 schwarze Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,6 +134,7 @@ FILEDESC *
 void	 print_file_list(void);
 void	 print_list(FILEDESC *, int);
 void	 rot13(char *, size_t);
+void	 sanitize(unsigned char *cp);
 void	 sum_noprobs(FILEDESC *);
 void	 sum_tbl(STRFILE *, STRFILE *);
 __dead void	 usage(void);
@@ -148,6 +150,8 @@ regex_t regex;
 int
 main(int ac, char *av[])
 {
+	setlocale(LC_CTYPE, "");
+
 	if (pledge("stdio rpath", NULL) == -1) {
 		perror("pledge");
 		return 1;
@@ -192,6 +196,16 @@ rot13(char *p, size_t len)
 }
 
 void
+sanitize(unsigned char *cp)
+{
+	if (MB_CUR_MAX > 1)
+		return;
+	for (; *cp != '\0'; cp++)
+		if (!isprint(*cp) && !isspace(*cp))
+			*cp = '?';
+}
+
+void
 display(FILEDESC *fp)
 {
 	char	line[BUFSIZ];
@@ -202,6 +216,7 @@ display(FILEDESC *fp)
 	    !STR_ENDSTRING(line, fp->tbl); Fort_len++) {
 		if (fp->tbl.str_flags & STR_ROTATED)
 			rot13(line, strlen(line));
+		sanitize(line);
 		fputs(line, stdout);
 	}
 	(void) fflush(stdout);
@@ -1189,6 +1204,7 @@ matches_in_list(FILEDESC *list)
 						in_file = 1;
 					}
 					putchar('\n');
+					sanitize(Fortbuf);
 					(void) fwrite(Fortbuf, 1, (sp - Fortbuf), stdout);
 				}
 				sp = Fortbuf;
