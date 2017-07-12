@@ -1,4 +1,4 @@
-/*	$OpenBSD: vipw.c,v 1.20 2017/06/29 08:45:20 tb Exp $	 */
+/*	$OpenBSD: vipw.c,v 1.21 2017/07/12 23:10:28 jca Exp $	 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -37,7 +37,6 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <util.h>
 
