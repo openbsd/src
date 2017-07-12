@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.210 2017/07/11 12:51:05 florian Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.211 2017/07/12 16:53:58 florian Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1429,50 +1429,4 @@ nd6_need_cache(struct ifnet *ifp)
 	default:
 		return (0);
 	}
-}
-
-/*
- * oldp - syscall arg, need copyout
- * newp - syscall arg, need copyin
- */
-/* XXXDEL? */
-int
-nd6_sysctl(int name, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
-{
-	void *p;
-	size_t ol;
-	int error;
-
-	NET_ASSERT_LOCKED();
-
-	error = 0;
-
-	if (newp)
-		return EPERM;
-	if (oldp && !oldlenp)
-		return EINVAL;
-	ol = oldlenp ? *oldlenp : 0;
-
-	if (oldp) {
-		p = malloc(ol, M_TEMP, M_WAITOK | M_CANFAIL);
-		if (!p)
-			return ENOMEM;
-	} else
-		p = NULL;
-	switch (name) {
-	case ICMPV6CTL_ND6_DRLIST:
-		error = ENOTSUP; /* XXXDEL? can we delete more? */
-		break;
-
-	case ICMPV6CTL_ND6_PRLIST:
-		error = ENOTSUP; /* XXXDEL? can we delete more? */
-		break;
-
-	default:
-		error = ENOPROTOOPT;
-		break;
-	}
-	free(p, M_TEMP, ol);
-
-	return (error);
 }

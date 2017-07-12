@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.67 2017/07/11 12:51:05 florian Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.68 2017/07/12 16:53:58 florian Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -68,38 +68,11 @@ struct in6_nbrinfo {
 	int	state;		/* reachability state */
 };
 
-struct	in6_defrouter {
-	struct	sockaddr_in6 rtaddr;
-	time_t	expire;
-	u_short	rtlifetime;
-	u_short	if_index;
-	u_char	flags;
-};
-
 struct prf_ra {
 	u_int onlink : 1;
 	u_int autonomous : 1;
 	u_int router : 1;
 	u_int reserved : 5;
-};
-
-struct in6_prefix {
-	struct	sockaddr_in6 prefix;
-	struct	prf_ra raflags;
-	time_t	expire;
-	u_int32_t vltime;
-	u_int32_t pltime;
-	u_int32_t flags;
-	int	refcnt;
-	u_short	if_index;
-	u_short	advrtrs; /* number of advertisement routers */
-	u_char	prefixlen;
-	u_char	origin;
-#define PR_ORIG_RA	0
-#define PR_ORIG_RR	1
-#define PR_ORIG_STATIC	2
-#define PR_ORIG_KERNEL	3
-	/* struct sockaddr_in6 advrtr[] */
 };
 
 struct	in6_ndireq {
@@ -217,7 +190,6 @@ int nd6_ioctl(u_long, caddr_t, struct ifnet *);
 void nd6_cache_lladdr(struct ifnet *, struct in6_addr *, char *, int, int, int);
 int nd6_resolve(struct ifnet *, struct rtentry *, struct mbuf *,
 	 struct sockaddr *, u_char *);
-int nd6_sysctl(int, void *, size_t *, void *, size_t);
 int nd6_need_cache(struct ifnet *);
 
 void nd6_na_input(struct mbuf *, int, int);

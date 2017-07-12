@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.212 2017/06/26 14:12:35 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.213 2017/07/12 16:53:58 florian Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1904,9 +1904,6 @@ icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	case ICMPV6CTL_STATS:
 		return icmp6_sysctl_icmp6stat(oldp, oldlenp, newp);
-	case ICMPV6CTL_ND6_DRLIST:
-	case ICMPV6CTL_ND6_PRLIST:
-		return nd6_sysctl(name[0], oldp, oldlenp, newp, newlen);
 	default:
 		if (name[0] < ICMPV6CTL_MAXID)
 			return (sysctl_int_arr(icmpv6ctl_vars, name, namelen,
