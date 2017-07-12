@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.173 2017/07/09 22:33:09 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.174 2017/07/12 09:24:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -136,7 +136,8 @@ server_create_socket(void)
 
 /* Fork new server. */
 int
-server_start(struct event_base *base, int lockfd, char *lockfile)
+server_start(struct tmuxproc *client, struct event_base *base, int lockfd,
+    char *lockfile)
 {
 	int		 pair[2];
 	struct job	*job;
@@ -144,12 +145,24 @@ server_start(struct event_base *base, int lockfd, char *lockfile)
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) != 0)
 		fatal("socketpair failed");
 
-	server_proc = proc_start("server", base, 1, server_signal);
-	if (server_proc == NULL) {
+	switch (fork()) {
+	case -1:
+		fatal("fork failed");
+	case 0:
+		break;
+	default:
 		close(pair[1]);
 		return (pair[0]);
 	}
 	close(pair[0]);
+
+	if (daemon(1, 0) != 0)
+		fatal("daemon failed");
+	proc_clear_signals(client);
+	if (event_reinit(base) != 0)
+		fatalx("event_reinit failed");
+	server_proc = proc_start("server");
+	proc_set_signals(server_proc, server_signal);
 
 	if (log_get_level() > 1)
 		tty_create_log();

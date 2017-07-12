@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.201 2017/07/03 12:38:50 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.202 2017/07/12 09:24:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -943,7 +943,7 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 		environ_set(env, "TMUX_PANE", "%%%u", wp->id);
 		environ_push(env);
 
-		clear_signals(1);
+		proc_clear_signals(server_proc);
 		log_close();
 
 		setenv("SHELL", wp->shell, 1);

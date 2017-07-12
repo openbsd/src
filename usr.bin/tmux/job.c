@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.45 2017/05/31 17:56:48 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.46 2017/07/12 09:24:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -68,7 +68,7 @@ job_run(const char *cmd, struct session *s, const char *cwd,
 		close(out[1]);
 		return (NULL);
 	case 0:		/* child */
-		clear_signals(1);
+		proc_clear_signals(server_proc);
 
 		if (cwd == NULL || chdir(cwd) != 0) {
 			if ((home = find_home()) == NULL || chdir(home) != 0)
