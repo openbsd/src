@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.12 2017/07/12 09:24:17 nicm Exp $ */
+/* $OpenBSD: proc.c,v 1.13 2017/07/12 12:35:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -223,7 +223,6 @@ proc_set_signals(struct tmuxproc *tp, void (*signalcb)(int))
 
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGPIPE, &sa, NULL);
-	sigaction(SIGUSR2, &sa, NULL);
 	sigaction(SIGTSTP, &sa, NULL);
 
 	signal_set(&tp->ev_sighup, SIGHUP, proc_signal_cb, tp);
@@ -254,7 +253,6 @@ proc_clear_signals(struct tmuxproc *tp)
 
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGPIPE, &sa, NULL);
-	sigaction(SIGUSR2, &sa, NULL);
 	sigaction(SIGTSTP, &sa, NULL);
 
 	event_del(&tp->ev_sighup);
