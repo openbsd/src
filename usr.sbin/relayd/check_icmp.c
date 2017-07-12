@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.46 2017/07/11 19:41:30 florian Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.47 2017/07/12 22:57:40 jca Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -220,11 +220,12 @@ send_icmp(int s, short event, void *arg)
 				    sizeof(packet));
 			}
 
+			ttl = host->conf.ttl;
 			switch(cie->af) {
 			case AF_INET:
-				if ((ttl = host->conf.ttl) > 0) {
+				if (ttl > 0) {
 					if (setsockopt(s, IPPROTO_IP, IP_TTL,
-					    &host->conf.ttl, sizeof(int)) == -1)
+					    &ttl, sizeof(ttl)) == -1)
 						log_warn("%s: setsockopt",
 						    __func__);
 				} else {
@@ -243,10 +244,10 @@ send_icmp(int s, short event, void *arg)
 				}
 				break;
 			case AF_INET6:
-				if ((ttl = host->conf.ttl) > 0) {
+				if (ttl > 0) {
 					if (setsockopt(s, IPPROTO_IPV6,
-					    IPV6_UNICAST_HOPS, &host->conf.ttl,
-					    sizeof(int)) == -1)
+					    IPV6_UNICAST_HOPS, &ttl,
+					    sizeof(ttl)) == -1)
 						log_warn("%s: setsockopt",
 						    __func__);
 				} else {
@@ -254,7 +255,7 @@ send_icmp(int s, short event, void *arg)
 					ttl = -1;
 					if (setsockopt(s, IPPROTO_IPV6,
 					    IPV6_UNICAST_HOPS, &ttl,
-					    sizeof(int)) == -1)
+					    sizeof(ttl)) == -1)
 						log_warn("%s: setsockopt",
 						    __func__);
 				}
