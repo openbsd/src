@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.182 2017/04/18 13:41:32 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.183 2017/07/12 11:13:22 mikeb Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -536,7 +536,23 @@ bread_cluster_callback(struct buf *bp)
 		bp->b_bcount = newsize;
 	}
 
-	for (i = 1; xbpp[i] != 0; i++) {
+	/* Invalidate read-ahead buffers if read short */
+	if (bp->b_resid > 0) {
+		for (i = 0; xbpp[i] != NULL; i++)
+			continue;
+		for (i = i - 1; i != 0; i--) {
+			if (xbpp[i]->b_bufsize <= bp->b_resid) {
+				bp->b_resid -= xbpp[i]->b_bufsize;
+				SET(xbpp[i]->b_flags, B_INVAL);
+			} else if (bp->b_resid > 0) {
+				bp->b_resid = 0;
+				SET(xbpp[i]->b_flags, B_INVAL);
+			} else
+				break;
+		}
+	}
+
+	for (i = 1; xbpp[i] != NULL; i++) {
 		if (ISSET(bp->b_flags, B_ERROR))
 			SET(xbpp[i]->b_flags, B_INVAL | B_ERROR);
 		biodone(xbpp[i]);
@@ -607,7 +623,7 @@ bread_cluster(struct vnode *vp, daddr_t blkno, int size, struct buf **rbpp)
 
 	bp = xbpp[0];
 
-	xbpp[howmany] = 0;
+	xbpp[howmany] = NULL;
 
 	inc = btodb(size);
 
