@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.43 2017/07/12 06:11:07 florian Exp $	*/
+/*	$OpenBSD: if.c,v 1.44 2017/07/12 06:11:45 florian Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -435,7 +435,7 @@ parse_iflist(struct if_msghdr ***ifmlist_p, char *buf, size_t bufsize)
 	lim = buf + bufsize;
 	for (ifm = (struct if_msghdr *)buf; ifm < (struct if_msghdr *)lim;) {
 		if (ifm->ifm_msglen == 0) {
-			log_warn("ifm_msglen is 0 (buf=%p lim=%p ifm=%p)",
+			log_warnx("ifm_msglen is 0 (buf=%p lim=%p ifm=%p)",
 			    buf, lim, ifm);
 			return;
 		}
