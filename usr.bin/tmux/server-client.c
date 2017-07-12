@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.239 2017/06/13 07:12:33 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.240 2017/07/12 09:07:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -371,7 +371,7 @@ server_client_detach(struct client *c, enum msgtype msgtype)
 
 	c->flags |= CLIENT_DETACHING;
 	notify_client("client-detached", c);
-	proc_send_s(c->peer, msgtype, s->name);
+	proc_send(c->peer, msgtype, -1, s->name, strlen(s->name) + 1);
 }
 
 /* Execute command to replace a client. */
@@ -1721,7 +1721,7 @@ server_client_dispatch_shell(struct client *c)
 	shell = options_get_string(global_s_options, "default-shell");
 	if (*shell == '\0' || areshell(shell))
 		shell = _PATH_BSHELL;
-	proc_send_s(c->peer, MSG_SHELL, shell);
+	proc_send(c->peer, MSG_SHELL, -1, shell, strlen(shell) + 1);
 
 	proc_kill_peer(c->peer);
 }

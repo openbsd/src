@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.792 2017/07/09 22:33:09 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.793 2017/07/12 09:07:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1493,7 +1493,6 @@ const char	*find_home(void);
 /* proc.c */
 struct imsg;
 int	proc_send(struct tmuxpeer *, enum msgtype, int, const void *, size_t);
-int	proc_send_s(struct tmuxpeer *, enum msgtype, const char *);
 struct tmuxproc *proc_start(const char *, struct event_base *, int,
 	    void (*)(int));
 void	proc_loop(struct tmuxproc *, int (*)(void));

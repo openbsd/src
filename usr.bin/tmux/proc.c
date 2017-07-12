@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.10 2017/06/07 15:27:46 nicm Exp $ */
+/* $OpenBSD: proc.c,v 1.11 2017/07/12 09:07:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -159,12 +159,6 @@ proc_send(struct tmuxpeer *peer, enum msgtype type, int fd, const void *buf,
 		return (-1);
 	proc_update_event(peer);
 	return (0);
-}
-
-int
-proc_send_s(struct tmuxpeer *peer, enum msgtype type, const char *s)
-{
-	return (proc_send(peer, type, -1, s, strlen(s) + 1));
 }
 
 struct tmuxproc *
