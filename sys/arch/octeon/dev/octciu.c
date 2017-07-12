@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.3 2017/07/07 10:04:43 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.4 2017/07/12 13:25:12 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -66,14 +66,18 @@ struct intrbank {
 #define IRQ_TO_BANK(x)	((x) >> 6)
 #define IRQ_TO_BIT(x)	((x) & 0x3f)
 
+struct octciu_cpu {
+	struct intrbank		 scpu_ibank[NBANKS];
+	uint64_t		 scpu_intem[NBANKS];
+	uint64_t		 scpu_imask[NIPLS][NBANKS];
+};
+
 struct octciu_softc {
 	struct device		 sc_dev;
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
+	struct octciu_cpu	 sc_cpu[MAXCPUS];
 	struct intrhand		*sc_intrhand[OCTCIU_NINTS];
-	struct intrbank		 sc_ibank[MAXCPUS][NBANKS];
-	uint64_t		 sc_intem[MAXCPUS][NBANKS];
-	uint64_t		 sc_imask[MAXCPUS][NIPLS][NBANKS];
 
 	int			(*sc_ipi_handler)(void *);
 
@@ -167,19 +171,22 @@ void
 octciu_init(void)
 {
 	struct octciu_softc *sc = octciu_sc;
+	struct octciu_cpu *scpu;
 	int cpuid = cpu_number();
+
+	scpu = &sc->sc_cpu[cpuid];
 
 	bus_space_write_8(sc->sc_iot, sc->sc_ioh, CIU_IP2_EN0(cpuid), 0);
 	bus_space_write_8(sc->sc_iot, sc->sc_ioh, CIU_IP3_EN0(cpuid), 0);
 	bus_space_write_8(sc->sc_iot, sc->sc_ioh, CIU_IP2_EN1(cpuid), 0);
 	bus_space_write_8(sc->sc_iot, sc->sc_ioh, CIU_IP3_EN1(cpuid), 0);
 
-	sc->sc_ibank[cpuid][0].en = CIU_IP2_EN0(cpuid);
-	sc->sc_ibank[cpuid][0].sum = CIU_IP2_SUM0(cpuid);
-	sc->sc_ibank[cpuid][0].id = 0;
-	sc->sc_ibank[cpuid][1].en = CIU_IP2_EN1(cpuid);
-	sc->sc_ibank[cpuid][1].sum = CIU_INT32_SUM1;
-	sc->sc_ibank[cpuid][1].id = 1;
+	scpu->scpu_ibank[0].en = CIU_IP2_EN0(cpuid);
+	scpu->scpu_ibank[0].sum = CIU_IP2_SUM0(cpuid);
+	scpu->scpu_ibank[0].id = 0;
+	scpu->scpu_ibank[1].en = CIU_IP2_EN1(cpuid);
+	scpu->scpu_ibank[1].sum = CIU_INT32_SUM1;
+	scpu->scpu_ibank[1].id = 1;
 }
 
 void *
@@ -223,7 +230,8 @@ octciu_intr_establish(int irq, int level, int (*ih_fun)(void *),
 		continue;
 	*p = ih;
 
-	sc->sc_intem[cpuid][IRQ_TO_BANK(irq)] |= 1UL << IRQ_TO_BIT(irq);
+	sc->sc_cpu[cpuid].scpu_intem[IRQ_TO_BANK(irq)] |=
+	    1UL << IRQ_TO_BIT(irq);
 	octciu_intr_makemasks(sc);
 
 	splx(s);	/* causes hw mask update */
@@ -273,7 +281,7 @@ octciu_intr_disestablish(void *_ih)
 		sc->sc_intrhand[irq] = ih->ih_next;
 
 		if (sc->sc_intrhand[irq] == NULL)
-			sc->sc_intem[cpuid][IRQ_TO_BANK(irq)] &=
+			sc->sc_cpu[cpuid].scpu_intem[IRQ_TO_BANK(irq)] &=
 			    ~(1UL << IRQ_TO_BIT(irq));
 	} else {
 		for (p = sc->sc_intrhand[irq]; p != NULL; p = p->ih_next) {
@@ -298,10 +306,10 @@ octciu_intr_disestablish(void *_ih)
 void
 octciu_intr_makemasks(struct octciu_softc *sc)
 {
-	int cpuid = cpu_number();
-	int irq, level;
+	struct octciu_cpu *scpu = &sc->sc_cpu[cpu_number()];
 	struct intrhand *q;
 	uint intrlevel[OCTCIU_NINTS];
+	int irq, level;
 
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < OCTCIU_NINTS; irq++) {
@@ -323,8 +331,8 @@ octciu_intr_makemasks(struct octciu_softc *sc)
 			if (intrlevel[irq] & (1 << level))
 				mask[IRQ_TO_BANK(irq)] |=
 				    1UL << IRQ_TO_BIT(irq);
-		sc->sc_imask[cpuid][level][0] = mask[0];
-		sc->sc_imask[cpuid][level][1] = mask[1];
+		scpu->scpu_imask[level][0] = mask[0];
+		scpu->scpu_imask[level][1] = mask[1];
 	}
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
@@ -337,18 +345,18 @@ octciu_intr_makemasks(struct octciu_softc *sc)
 	dst[0] |= src[0];	\
 	dst[1] |= src[1];	\
 } while (0)
-	ADD_MASK(sc->sc_imask[cpuid][IPL_NET], sc->sc_imask[cpuid][IPL_BIO]);
-	ADD_MASK(sc->sc_imask[cpuid][IPL_TTY], sc->sc_imask[cpuid][IPL_NET]);
-	ADD_MASK(sc->sc_imask[cpuid][IPL_VM], sc->sc_imask[cpuid][IPL_TTY]);
-	ADD_MASK(sc->sc_imask[cpuid][IPL_CLOCK], sc->sc_imask[cpuid][IPL_VM]);
-	ADD_MASK(sc->sc_imask[cpuid][IPL_HIGH], sc->sc_imask[cpuid][IPL_CLOCK]);
-	ADD_MASK(sc->sc_imask[cpuid][IPL_IPI], sc->sc_imask[cpuid][IPL_HIGH]);
+	ADD_MASK(scpu->scpu_imask[IPL_NET], scpu->scpu_imask[IPL_BIO]);
+	ADD_MASK(scpu->scpu_imask[IPL_TTY], scpu->scpu_imask[IPL_NET]);
+	ADD_MASK(scpu->scpu_imask[IPL_VM], scpu->scpu_imask[IPL_TTY]);
+	ADD_MASK(scpu->scpu_imask[IPL_CLOCK], scpu->scpu_imask[IPL_VM]);
+	ADD_MASK(scpu->scpu_imask[IPL_HIGH], scpu->scpu_imask[IPL_CLOCK]);
+	ADD_MASK(scpu->scpu_imask[IPL_IPI], scpu->scpu_imask[IPL_HIGH]);
 
 	/*
 	 * These are pseudo-levels.
 	 */
-	sc->sc_imask[cpuid][IPL_NONE][0] = 0;
-	sc->sc_imask[cpuid][IPL_NONE][1] = 0;
+	scpu->scpu_imask[IPL_NONE][0] = 0;
+	scpu->scpu_imask[IPL_NONE][1] = 0;
 }
 
 static inline int
@@ -380,6 +388,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 {
 	struct cpu_info *ci = curcpu();
 	struct intrhand *ih;
+	struct octciu_cpu *scpu = &sc->sc_cpu[cpu_number()];
 	uint64_t imr, isr, mask;
 	int handled, ipl, irq;
 #ifdef MULTIPROCESSOR
@@ -403,7 +412,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 	 * If interrupts are spl-masked, mask them and wait for splx()
 	 * to reenable them when necessary.
 	 */
-	if ((mask = isr & sc->sc_imask[ci->ci_cpuid][frame->ipl][bank->id])
+	if ((mask = isr & scpu->scpu_imask[frame->ipl][bank->id])
 	    != 0) {
 		isr &= ~mask;
 		imr &= ~mask;
@@ -470,20 +479,20 @@ uint32_t
 octciu_intr(uint32_t hwpend, struct trapframe *frame)
 {
 	struct octciu_softc *sc = octciu_sc;
-	int cpuid = cpu_number();
+	struct octciu_cpu *scpu = &sc->sc_cpu[cpu_number()];
 	int handled;
 
-	handled = octciu_intr_bank(sc, &sc->sc_ibank[cpuid][0], frame);
-	handled |= octciu_intr_bank(sc, &sc->sc_ibank[cpuid][1], frame);
+	handled = octciu_intr_bank(sc, &scpu->scpu_ibank[0], frame);
+	handled |= octciu_intr_bank(sc, &scpu->scpu_ibank[1], frame);
 	return handled ? hwpend : 0;
 }
 
 void
 octciu_splx(int newipl)
 {
-	struct octciu_softc *sc = octciu_sc;
 	struct cpu_info *ci = curcpu();
-	cpuid_t cpuid = ci->ci_cpuid;
+	struct octciu_softc *sc = octciu_sc;
+	struct octciu_cpu *scpu = &sc->sc_cpu[ci->ci_cpuid];
 
 	/* Update IPL. Order highly important! */
 	__asm__ (".set noreorder\n");
@@ -492,10 +501,10 @@ octciu_splx(int newipl)
 	__asm__ (".set reorder\n");
 
 	/* Set hardware masks. */
-	bus_space_write_8(sc->sc_iot, sc->sc_ioh, sc->sc_ibank[cpuid][0].en,
-	    sc->sc_intem[cpuid][0] & ~sc->sc_imask[cpuid][newipl][0]);
-	bus_space_write_8(sc->sc_iot, sc->sc_ioh, sc->sc_ibank[cpuid][1].en,
-	    sc->sc_intem[cpuid][1] & ~sc->sc_imask[cpuid][newipl][1]);
+	bus_space_write_8(sc->sc_iot, sc->sc_ioh, scpu->scpu_ibank[0].en,
+	    scpu->scpu_intem[0] & ~scpu->scpu_imask[newipl][0]);
+	bus_space_write_8(sc->sc_iot, sc->sc_ioh, scpu->scpu_ibank[1].en,
+	    scpu->scpu_intem[1] & ~scpu->scpu_imask[newipl][1]);
 
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
