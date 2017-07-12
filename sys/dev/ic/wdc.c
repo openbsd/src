@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.131 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.132 2017/07/12 13:40:59 mikeb Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -646,6 +646,9 @@ wdcprobe(struct channel_softc *chp)
 	if (ret_value == 0)
 		return 0;
 
+	if (chp->wdc->quirks & WDC_QUIRK_NOATAPI)
+		goto noatapi;
+
 	/*
 	 * Use signatures to find potential ATAPI drives
 	 */
@@ -676,6 +679,10 @@ wdcprobe(struct channel_softc *chp)
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
 	}
 
+noatapi:
+	if (chp->wdc->quirks & WDC_QUIRK_NOATA)
+		goto noata;
+
 	/*
 	 * Detect ATA drives by poking around the registers
 	 */
@@ -697,6 +704,8 @@ wdcprobe(struct channel_softc *chp)
 		}
 		wdc_enable_intr(chp);
 	}
+
+noata:
 
 #ifdef WDCDEBUG
 	wdcdebug_mask = savedmask;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.357 2015/12/21 20:52:33 mmcc Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.358 2017/07/12 13:40:59 mikeb Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -124,6 +124,9 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <dev/pci/pciide_jmicron_reg.h>
 #include <dev/pci/pciide_rdc_reg.h>
 #include <dev/pci/cy82c693var.h>
+
+int pciide_skip_ata;
+int pciide_skip_atapi;
 
 /* functions for reading/writing 8-bit PCI registers */
 
@@ -1538,6 +1541,11 @@ pciide_attach(struct device *parent, struct device *self, void *aux)
 
 	WDCDEBUG_PRINT((" sc_pc=%p, sc_tag=%p, pa_class=0x%x\n", sc->sc_pc,
 	    sc->sc_tag, pa->pa_class), DEBUG_PROBE);
+
+	if (pciide_skip_ata)
+		sc->sc_wdcdev.quirks |= WDC_QUIRK_NOATA;
+	if (pciide_skip_atapi)
+		sc->sc_wdcdev.quirks |= WDC_QUIRK_NOATAPI;
 
 	sc->sc_pp->chip_map(sc, pa);
 
