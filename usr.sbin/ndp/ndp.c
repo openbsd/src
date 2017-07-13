@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.82 2017/07/12 16:56:48 florian Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.83 2017/07/13 11:28:02 florian Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -158,13 +158,12 @@ main(int argc, char *argv[])
 	pid = getpid();
 	thiszone = gmt2local(0);
 	rdomain = getrtable();
-	while ((ch = getopt(argc, argv, "acd:f:i:nstA:HV:")) != -1) {
+	while ((ch = getopt(argc, argv, "acd:f:i:nstA:V:")) != -1) {
 		switch (ch) {
 		case 'a':
 		case 'c':
 		case 'p':
 		case 'r':
-		case 'H':
 		case 'P':
 		case 's':
 			if (mode) {
@@ -245,13 +244,6 @@ main(int argc, char *argv[])
 		if (argc < 2 || argc > 4)
 			usage();
 		exit(set(argc, argv) ? 1 : 0);
-	case 'H':
-		if (argc != 0) {
-			usage();
-			/*NOTREACHED*/
-		}
-		harmonize_rtr();
-		break;
 	case 0:
 		if (argc != 1) {
 			usage();
@@ -767,11 +759,11 @@ ndp_ether_aton(char *a, u_char *n)
 void
 usage(void)
 {
-	printf("usage: ndp [-nt] [-a | -c] [-H] ");
-	printf("[-A wait] [-d hostname]\n");
-	printf("\t[-f filename] [-i interface [flag ...]]\n");
-	printf("\t[-s nodename ether_addr [temp] [proxy]] ");
-	printf("[-V rdomain] [hostname]\n");
+	printf("usage: ndp [-acnt] ");
+	printf("[-A wait] [-d hostname] [-f filename]\n");
+	printf("\t[-i interface [flag ...]] ");
+	printf("[-s nodename ether_addr [temp] [proxy]]\n");
+	printf("\t[-V rdomain] [hostname]\n");
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.42 2017/07/12 16:56:48 florian Exp $
+.\"	$OpenBSD: ndp.8,v 1.43 2017/07/13 11:28:02 florian Exp $
 .\"	$KAME: ndp.8,v 1.28 2002/07/17 08:46:33 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 12 2017 $
+.Dd $Mdocdate: July 13 2017 $
 .Dt NDP 8
 .Os
 .Sh NAME
@@ -36,9 +36,7 @@
 .Nd control/diagnose IPv6 Neighbor Discovery Protocol (NDP)
 .Sh SYNOPSIS
 .Nm ndp
-.Op Fl nt
-.Op Fl a | c
-.Op Fl H
+.Op Fl acnt
 .Op Fl A Ar wait
 .Op Fl d Ar hostname
 .Op Fl f Ar filename
@@ -121,9 +119,6 @@ to be inserted in the neighbor cache.
 See the
 .Fl s
 option for a description of the file format.
-.It Fl H
-Harmonize consistency between the routing table and the default router
-list; install the top entry of the list into the kernel routing table.
 .It Fl i Ar interface Op Ar flag ...
 View ND information for the specified interface.
 If additional arguments are given,
