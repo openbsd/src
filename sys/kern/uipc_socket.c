@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.193 2017/07/08 09:19:02 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.194 2017/07/13 16:19:38 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -396,8 +396,9 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 		resid = top->m_pkthdr.len;
 	/* MSG_EOR on a SOCK_STREAM socket is invalid. */
 	if (so->so_type == SOCK_STREAM && (flags & MSG_EOR)) {
-		error = EINVAL;
-		goto out;
+		m_freem(top);
+		m_freem(control);
+		return (EINVAL);
 	}
 	if (uio && uio->uio_procp)
 		uio->uio_procp->p_ru.ru_msgsnd++;
