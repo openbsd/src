@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmap_hint.c,v 1.4 2017/07/12 22:56:22 bluhm Exp $	*/
+/*	$OpenBSD: mmap_hint.c,v 1.5 2017/07/13 11:24:58 bluhm Exp $	*/
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
  *
@@ -33,7 +33,7 @@ void *
 mmap_hint(void *hint)
 {
 	void	*p;
-	size_t	 pd;
+	size_t	 delta;
 
 	p = mmap(hint, 1, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
 	if (p == MAP_FAILED) {
@@ -48,14 +48,13 @@ mmap_hint(void *hint)
 		fprintf(stderr, "    -> %p\n", p);
 
 	if (hint > p)
-		pd = hint - p;
+		delta = hint - p;
 	else
-		pd = p - hint;
+		delta = p - hint;
 
-	if (hint != NULL && pd > MAX_HINT_DIST) {
-		warnx("hinted allocation more than 0x%lx "
-		    "bytes away from hint: "
-		    "hint %p, result %p", pd, hint, p);
+	if (hint != NULL && delta > MAX_HINT_DIST) {
+		warnx("hinted allocation more than %#zx bytes away from hint: "
+		    "hint %p, result %p", delta, hint, p);
 		errors++;
 		return MAP_FAILED;
 	}
@@ -65,21 +64,23 @@ mmap_hint(void *hint)
 int
 main()
 {
-	void	*p, *p_prev;
+	void	*p, *hint;
 
 	/* Check that unhinted allocation works properly. */
-	fprintf(stderr, "1: Checking hint NULL mmap\n");
-	p = mmap_hint(NULL);
+	hint = NULL;
+	fprintf(stderr, "1: Checking hint %p mmap\n", hint);
+	p = mmap_hint(hint);
 
 	/* Check hinted allocation at top of map. */
-	fprintf(stderr, "2: Checking hint VM_MAXUSER_ADDRESS-page 0x%lx mmap\n",
-	    (unsigned long)VM_MAXUSER_ADDRESS - PAGE_SIZE);
-	p = mmap_hint((void*)VM_MAXUSER_ADDRESS - PAGE_SIZE);
+	hint = (void *)((VM_MAXUSER_ADDRESS & ~PAGE_MASK) - PAGE_SIZE);
+	fprintf(stderr, "2: Checking hint page below "
+	    "VM_MAXUSER_ADDRESS %p mmap\n", hint);
+	p = mmap_hint(hint);
 
 	/* Check hinted allocation at bottom of map. */
-	fprintf(stderr, "3: Checking hint VM_MIN_ADDRESS 0x%lx mmap\n",
-	    (unsigned long)VM_MIN_ADDRESS);
-	p = mmap_hint((void*)VM_MIN_ADDRESS);
+	hint = (void *)VM_MIN_ADDRESS;
+	fprintf(stderr, "3: Checking hint VM_MIN_ADDRESS %p mmap\n", hint);
+	p = mmap_hint(hint);
 
 	/*
 	 * Check that hinted allocation doesn't overwrite existing allocation.
@@ -89,16 +90,15 @@ main()
 		    "to succeed");
 		goto skip4;
 	}
-	p_prev = p;
-	fprintf(stderr, "4: Checking hint 0x%lx mmap, which is in use\n",
-	    p_prev);
-	p = mmap_hint(p_prev);
-	if (p == p_prev) {
-		warnx("hinted allocation %p "
-		    "overwrites previous allocation", p_prev);
+	hint = p;
+	fprintf(stderr, "4: Checking hint %p mmap, which is in use\n", hint);
+	p = mmap_hint(hint);
+	if (p == hint) {
+		warnx("hinted allocation %p overwrites previous allocation %p",
+		    hint, p);
 		errors++;
 	}
-skip4:
 
+skip4:
 	return errors;
 }
