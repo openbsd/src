@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.32 2017/03/20 14:35:06 tedu Exp $
+.\" $OpenBSD: doas.conf.5,v 1.33 2017/07/13 19:16:33 jmc Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,14 +13,12 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: March 20 2017 $
+.Dd $Mdocdate: July 13 2017 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
 .Nm doas.conf
 .Nd doas configuration file
-.Sh SYNOPSIS
-.Nm /etc/doas.conf
 .Sh DESCRIPTION
 The
 .Xr doas 1
@@ -119,6 +117,11 @@ as a result, comments may not be extended over multiple lines.
 .It
 If quotes or backslashes are used in a word,
 it is not considered a keyword.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/doas.conf"
+.It Pa /etc/doas.conf
+Doas configuration file.
 .El
 .Sh EXAMPLES
 The following example permits user aja to install packages

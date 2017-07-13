@@ -1,15 +1,13 @@
-.\" $OpenBSD: security.8,v 1.25 2014/09/08 01:27:55 schwarze Exp $
+.\" $OpenBSD: security.8,v 1.26 2017/07/13 19:16:33 jmc Exp $
 .\"
 .\" David Leonard, 2001. Public Domain.
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: July 13 2017 $
 .Dt SECURITY 8
 .Os
 .Sh NAME
 .Nm security
 .Nd periodic system security check
-.Sh SYNOPSIS
-.Nm /usr/libexec/security
 .Sh DESCRIPTION
 .Nm
 is a command script that examines the system for some signs of security
@@ -126,6 +124,7 @@ Avoid trailing slashes.
 .It Pa /etc/changelist
 .It Pa /etc/daily
 .It Pa /etc/mtree
+.It Pa /usr/libexec/security
 .It Pa /var/backups
 .El
 .Sh SEE ALSO

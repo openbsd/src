@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd-users.5,v 1.6 2014/07/12 14:55:22 yasuoka Exp $
+.\"	$OpenBSD: npppd-users.5,v 1.7 2017/07/13 19:16:33 jmc Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -15,14 +15,12 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: July 12 2014 $
+.Dd $Mdocdate: July 13 2017 $
 .Dt NPPPD-USERS 5
 .Os
 .Sh NAME
 .Nm npppd-users
 .Nd user database file
-.Sh SYNOPSIS
-.Nm /etc/npppd/npppd-users
 .Sh DESCRIPTION
 The
 .Nm
@@ -48,6 +46,11 @@ IPv4 address to be assigned for the user.
 IPv4 netmask to be used for the user.
 .It calling-number Ta
 Calling phone number to check user's phone number.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/npppd/npppd-users"
+.It Pa /etc/npppd/npppd-users
+User database file.
 .El
 .Sh EXAMPLES
 .Bd -literal
