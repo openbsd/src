@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.38 2017/07/03 08:17:20 visa Exp $
+#	$OpenBSD: files.octeon,v 1.39 2017/07/13 12:50:50 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -124,6 +124,10 @@ file	arch/octeon/dev/octeon_pcibus.c			pcibus
 file	arch/octeon/dev/octeon_bus_space.c
 
 file	arch/octeon/octeon/pciide_machdep.c		pciide
+
+device	octcib
+attach	octcib at fdt
+file	arch/octeon/dev/octcib.c			octcib
 
 device	octciu
 attach	octciu at fdt
