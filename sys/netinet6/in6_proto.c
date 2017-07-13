@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.94 2017/05/18 10:56:45 bluhm Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.95 2017/07/13 17:17:27 florian Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -360,8 +360,6 @@ int	ip6_auto_flowlabel = 1;
 int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
 int	ip6_mcast_pmtu = 0;	/* enable pMTU discovery for multicast? */
 int	ip6_neighborgcthresh = 2048; /* Threshold # of NDP entries for GC */
-int	ip6_maxifprefixes = 16; /* Max acceptable prefixes via RA per IF */
-int	ip6_maxifdefrouters = 16; /* Max acceptable def routers via RA */
 int	ip6_maxdynroutes = 4096; /* Max # of routes created via redirect */
 time_t	ip6_log_time = (time_t)0L;
 

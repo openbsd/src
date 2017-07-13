@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.96 2017/05/30 09:10:49 mpi Exp $	*/
+/*	$OpenBSD: in6.h,v 1.97 2017/07/13 17:17:27 florian Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -584,8 +584,6 @@ ifatoia6(struct ifaddr *ifa)
 #define IPV6CTL_MULTIPATH	43
 #define IPV6CTL_MCAST_PMTU	44	/* path MTU discovery for multicast */
 #define IPV6CTL_NEIGHBORGCTHRESH 45
-#define IPV6CTL_MAXIFPREFIXES	46
-#define IPV6CTL_MAXIFDEFROUTERS 47
 #define IPV6CTL_MAXDYNROUTES	48
 #define IPV6CTL_DAD_PENDING	49
 #define IPV6CTL_MTUDISCTIMEOUT	50
@@ -644,8 +642,8 @@ ifatoia6(struct ifaddr *ifa)
 	{ "multipath", CTLTYPE_INT }, \
 	{ "multicast_mtudisc", CTLTYPE_INT }, \
 	{ "neighborgcthresh", CTLTYPE_INT }, \
-	{ "maxifprefixes", CTLTYPE_INT }, \
-	{ "maxifdefrouters", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
 	{ "maxdynroutes", CTLTYPE_INT }, \
 	{ "dad_pending", CTLTYPE_INT }, \
 	{ "mtudisctimeout", CTLTYPE_INT }, \
@@ -701,8 +699,8 @@ ifatoia6(struct ifaddr *ifa)
 	&ip6_multipath, \
 	&ip6_mcast_pmtu, \
 	&ip6_neighborgcthresh, \
-	&ip6_maxifprefixes, \
-	&ip6_maxifdefrouters, \
+	NULL, \
+	NULL, \
 	&ip6_maxdynroutes, \
 	NULL, \
 	NULL, \
