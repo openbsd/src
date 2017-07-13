@@ -320,7 +320,13 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 	saa.saa_sc_link = &sc->sc_link;
 	sc->sc_scsibus = config_found(self, &saa, scsiprint);
 
-	if (sc->sc_scsibus)
+	/*
+	 * If the driver has successfully attached to an IDE
+	 * device, we need to make sure that the same disk is
+	 * not available to the system via pciide(4) causing
+	 * DUID conflicts and preventing system from booting.
+	 */
+	if (!(sc->sc_flags & HVSF_SCSI) && sc->sc_scsibus)
 		pciide_skip_ata = 1;
 }
 
