@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.5 2017/07/13 05:37:53 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.6 2017/07/13 05:53:57 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -51,9 +51,10 @@
 #include <machine/intr.h>
 #include <machine/octeonreg.h>
 
-#define OCTCIU_NINTS 128
+#define OCTCIU_NINTS 192
 
 #define INTPRI_CIU_0	(INTPRI_CLOCK + 1)
+#define INTPRI_CIU_1	(INTPRI_CLOCK + 2)
 
 struct intrbank {
 	uint64_t	en;		/* enable mask register */
@@ -61,7 +62,7 @@ struct intrbank {
 	int		id;		/* bank number */
 };
 
-#define NBANKS		2
+#define NBANKS		3
 #define BANK_SIZE	64
 #define IRQ_TO_BANK(x)	((x) >> 6)
 #define IRQ_TO_BIT(x)	((x) & 0x3f)
@@ -78,6 +79,7 @@ struct octciu_softc {
 	bus_space_handle_t	 sc_ioh;
 	struct octciu_cpu	 sc_cpu[MAXCPUS];
 	struct intrhand		*sc_intrhand[OCTCIU_NINTS];
+	unsigned int		 sc_nbanks;
 
 	int			(*sc_ipi_handler)(void *);
 
@@ -89,7 +91,8 @@ void	 octciu_attach(struct device *, struct device *, void *);
 
 void	 octciu_init(void);
 void	 octciu_intr_makemasks(struct octciu_softc *);
-uint32_t octciu_intr(uint32_t, struct trapframe *);
+uint32_t octciu_intr0(uint32_t, struct trapframe *);
+uint32_t octciu_intr2(uint32_t, struct trapframe *);
 uint32_t octciu_intr_bank(struct octciu_softc *, struct intrbank *,
 	    struct trapframe *);
 void	*octciu_intr_establish(int, int, int (*)(void *), void *,
@@ -140,6 +143,11 @@ octciu_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	if (octeon_ver == OCTEON_2 || octeon_ver == OCTEON_3)
+		sc->sc_nbanks = 3;
+	else
+		sc->sc_nbanks = 2;
+
 	printf("\n");
 
 	sc->sc_ic.ic_cookie = sc;
@@ -156,7 +164,9 @@ octciu_attach(struct device *parent, struct device *self, void *aux)
 
 	octciu_sc = sc;
 
-	set_intr(INTPRI_CIU_0, CR_INT_0, octciu_intr);
+	set_intr(INTPRI_CIU_0, CR_INT_0, octciu_intr0);
+	if (sc->sc_nbanks == 3)
+		set_intr(INTPRI_CIU_1, CR_INT_2, octciu_intr2);
 #ifdef MULTIPROCESSOR
 	set_intr(INTPRI_IPI, CR_INT_1, octciu_ipi_intr);
 #endif
@@ -181,12 +191,19 @@ octciu_init(void)
 	bus_space_write_8(sc->sc_iot, sc->sc_ioh, CIU_IP2_EN1(cpuid), 0);
 	bus_space_write_8(sc->sc_iot, sc->sc_ioh, CIU_IP3_EN1(cpuid), 0);
 
+	if (sc->sc_nbanks == 3)
+		bus_space_write_8(sc->sc_iot, sc->sc_ioh,
+		    CIU_IP4_EN2(cpuid), 0);
+
 	scpu->scpu_ibank[0].en = CIU_IP2_EN0(cpuid);
 	scpu->scpu_ibank[0].sum = CIU_IP2_SUM0(cpuid);
 	scpu->scpu_ibank[0].id = 0;
 	scpu->scpu_ibank[1].en = CIU_IP2_EN1(cpuid);
 	scpu->scpu_ibank[1].sum = CIU_INT32_SUM1;
 	scpu->scpu_ibank[1].id = 1;
+	scpu->scpu_ibank[2].en = CIU_IP4_EN2(cpuid);
+	scpu->scpu_ibank[2].sum = CIU_IP4_SUM2(cpuid);
+	scpu->scpu_ibank[2].id = 2;
 }
 
 void *
@@ -200,7 +217,7 @@ octciu_intr_establish(int irq, int level, int (*ih_fun)(void *),
 	int s;
 
 #ifdef DIAGNOSTIC
-	if (irq >= OCTCIU_NINTS || irq < 0)
+	if (irq >= sc->sc_nbanks * BANK_SIZE || irq < 0)
 		panic("%s: illegal irq %d", __func__, irq);
 #endif
 
@@ -273,7 +290,7 @@ octciu_intr_disestablish(void *_ih)
 	int cpuid = cpu_number();
 	int s;
 
-	KASSERT(irq < OCTCIU_NINTS);
+	KASSERT(irq < sc->sc_nbanks * BANK_SIZE);
 
 	s = splhigh();
 
@@ -333,6 +350,7 @@ octciu_intr_makemasks(struct octciu_softc *sc)
 				    1UL << IRQ_TO_BIT(irq);
 		scpu->scpu_imask[level][0] = mask[0];
 		scpu->scpu_imask[level][1] = mask[1];
+		scpu->scpu_imask[level][2] = mask[2];
 	}
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
@@ -344,6 +362,7 @@ octciu_intr_makemasks(struct octciu_softc *sc)
 #define ADD_MASK(dst, src) do {	\
 	dst[0] |= src[0];	\
 	dst[1] |= src[1];	\
+	dst[2] |= src[2];	\
 } while (0)
 	ADD_MASK(scpu->scpu_imask[IPL_NET], scpu->scpu_imask[IPL_BIO]);
 	ADD_MASK(scpu->scpu_imask[IPL_TTY], scpu->scpu_imask[IPL_NET]);
@@ -357,6 +376,7 @@ octciu_intr_makemasks(struct octciu_softc *sc)
 	 */
 	scpu->scpu_imask[IPL_NONE][0] = 0;
 	scpu->scpu_imask[IPL_NONE][1] = 0;
+	scpu->scpu_imask[IPL_NONE][2] = 0;
 }
 
 static inline int
@@ -476,7 +496,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 }
 
 uint32_t
-octciu_intr(uint32_t hwpend, struct trapframe *frame)
+octciu_intr0(uint32_t hwpend, struct trapframe *frame)
 {
 	struct octciu_softc *sc = octciu_sc;
 	struct octciu_cpu *scpu = &sc->sc_cpu[cpu_number()];
@@ -484,6 +504,17 @@ octciu_intr(uint32_t hwpend, struct trapframe *frame)
 
 	handled = octciu_intr_bank(sc, &scpu->scpu_ibank[0], frame);
 	handled |= octciu_intr_bank(sc, &scpu->scpu_ibank[1], frame);
+	return handled ? hwpend : 0;
+}
+
+uint32_t
+octciu_intr2(uint32_t hwpend, struct trapframe *frame)
+{
+	struct octciu_softc *sc = octciu_sc;
+	struct octciu_cpu *scpu = &sc->sc_cpu[cpu_number()];
+	int handled;
+
+	handled = octciu_intr_bank(sc, &scpu->scpu_ibank[2], frame);
 	return handled ? hwpend : 0;
 }
 
@@ -505,6 +536,11 @@ octciu_splx(int newipl)
 	    scpu->scpu_intem[0] & ~scpu->scpu_imask[newipl][0]);
 	bus_space_write_8(sc->sc_iot, sc->sc_ioh, scpu->scpu_ibank[1].en,
 	    scpu->scpu_intem[1] & ~scpu->scpu_imask[newipl][1]);
+
+	if (sc->sc_nbanks == 3)
+		bus_space_write_8(sc->sc_iot, sc->sc_ioh,
+		    scpu->scpu_ibank[2].en,
+		    scpu->scpu_intem[2] & ~scpu->scpu_imask[newipl][2]);
 
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
