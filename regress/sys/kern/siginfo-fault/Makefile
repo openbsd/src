@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2014/06/23 21:10:03 matthew Exp $
+#	$OpenBSD: Makefile,v 1.2 2017/07/13 00:29:14 bluhm Exp $
 
 PROG=	siginfo-fault
+CFLAGS=	-Wall
 
 .include <bsd.regress.mk>

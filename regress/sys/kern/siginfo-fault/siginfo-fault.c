@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginfo-fault.c,v 1.3 2016/09/28 08:55:11 bluhm Exp $	*/
+/*	$OpenBSD: siginfo-fault.c,v 1.4 2017/07/13 00:29:14 bluhm Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -16,9 +16,11 @@
  */
 
 #include <sys/mman.h>
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
@@ -28,7 +30,7 @@
 
 #define CHECK_EQ(a, b) assert((a) == (b))
 #define CHECK_NE(a, b) assert((a) != (b))
-#define CHECK_GE(a, b) assert((a) >= (b))
+#define CHECK_LE(a, b) assert((a) <= (b))
 #define FAIL() assert(0)
 
 static jmp_buf env;
@@ -40,89 +42,121 @@ sigsegv(int signo, siginfo_t *si, void *ctx)
 {
 	gotsigno = signo;
 	gotsi = *si;
-        siglongjmp(env, 1);
+	siglongjmp(env, 1);
 }
 
-static void
-checksig(int expsigno, int expcode, volatile char *expaddr)
+static const char *
+strsigcode(int signum, int sigcode)
+{
+	switch (signum) {
+	case SIGSEGV:
+		switch (sigcode) {
+		case SEGV_MAPERR:
+			return "address not mapped to object";
+		case SEGV_ACCERR:
+			return "invalid permissions";
+		}
+		break;
+	case SIGBUS:
+		switch (sigcode) {
+		case BUS_ADRALN:
+			return "invalid address alignment";
+		case BUS_ADRERR:
+			return "non-existent physical address";
+		case BUS_OBJERR:
+			return "object specific hardware error";
+		}
+		break;
+	}
+	return "unknown";
+}
+
+static int
+checksig(const char *name, int expsigno, int expcode, volatile char *expaddr)
 {
 	int fail = 0;
+	char str1[NL_TEXTMAX], str2[NL_TEXTMAX];
 	if (expsigno != gotsigno) {
-		fprintf(stderr, "signo: expect %d (%s), actual %d (%s)\n",
-		    expsigno, strsignal(expsigno),
-		    gotsigno, strsignal(gotsigno));
+		strlcpy(str1, strsignal(expsigno), sizeof(str1));
+		strlcpy(str2, strsignal(gotsigno), sizeof(str2));
+		fprintf(stderr, "%s signo: expect %d (%s), actual %d (%s)\n",
+		    name, expsigno, str1, gotsigno, str2);
 		++fail;
 	}
 	if (expsigno != gotsi.si_signo) {
-		fprintf(stderr, "signo: expect %d (%s), actual %d (%s)\n",
-		    expsigno, strsignal(expsigno),
-		    gotsi.si_signo, strsignal(gotsi.si_signo));
+		strlcpy(str1, strsignal(expsigno), sizeof(str1));
+		strlcpy(str2, strsignal(gotsi.si_signo), sizeof(str2));
+		fprintf(stderr, "%s si_signo: expect %d (%s), actual %d (%s)\n",
+		    name, expsigno, str1, gotsi.si_signo, str2);
 		++fail;
 	}
 	if (expcode != gotsi.si_code) {
-		fprintf(stderr, "si_code: expect %d, actual %d\n",
-		    expcode, gotsi.si_code);
+		fprintf(stderr, "%s si_code: expect %d (%s), actual %d (%s)\n",
+		    name, expcode, strsigcode(expsigno, expcode),
+		    gotsi.si_code, strsigcode(gotsigno, gotsi.si_code));
 		++fail;
 	}
 	if (expaddr != gotsi.si_addr) {
-		fprintf(stderr, "si_addr: expect %p, actual %p\n",
-		    expaddr, gotsi.si_addr);
+		fprintf(stderr, "%s si_addr: expect %p, actual %p\n",
+		    name, expaddr, gotsi.si_addr);
 		++fail;
 	}
-	CHECK_EQ(0, fail);
+	return (fail);
 }
 
 int
 main()
 {
-        long pagesize = sysconf(_SC_PAGESIZE);
-        CHECK_NE(-1, pagesize);
+	int fail = 0;
+	long pagesize = sysconf(_SC_PAGESIZE);
+	CHECK_NE(-1, pagesize);
 
-        const struct sigaction sa = {
-                .sa_sigaction = sigsegv,
-                .sa_flags = SA_SIGINFO,
-        };
-        CHECK_EQ(0, sigaction(SIGSEGV, &sa, NULL));
-        CHECK_EQ(0, sigaction(SIGBUS, &sa, NULL));
+	const struct sigaction sa = {
+		.sa_sigaction = sigsegv,
+		.sa_flags = SA_SIGINFO,
+	};
+	CHECK_EQ(0, sigaction(SIGSEGV, &sa, NULL));
+	CHECK_EQ(0, sigaction(SIGBUS, &sa, NULL));
 
-        volatile char *p = mmap(NULL, pagesize, PROT_READ,
-	    MAP_PRIVATE|MAP_ANON, -1, 0);
-        CHECK_NE(MAP_FAILED, p);
+	volatile char *p;
+	CHECK_NE(MAP_FAILED, (p = mmap(NULL, pagesize, PROT_NONE,
+	    MAP_PRIVATE|MAP_ANON, -1, 0)));
 
-        if (sigsetjmp(env, 1) == 0) {
+	CHECK_EQ(0, mprotect((void *)p, pagesize, PROT_READ));
+	if (sigsetjmp(env, 1) == 0) {
 		p[0] = 1;
-                FAIL();
-        }
-	checksig(SIGSEGV, SEGV_ACCERR, p);
+		FAIL();
+	}
+	fail += checksig("mprotect read", SIGSEGV, SEGV_ACCERR, p);
 
 	CHECK_EQ(0, mprotect((void *)p, pagesize, PROT_NONE));
-        if (sigsetjmp(env, 1) == 0) {
+	if (sigsetjmp(env, 1) == 0) {
 		(void)p[1];
-                FAIL();
-        }
-	checksig(SIGSEGV, SEGV_ACCERR, p + 1);
+		FAIL();
+	}
+	fail += checksig("mprotect none", SIGSEGV, SEGV_ACCERR, p + 1);
 
 	CHECK_EQ(0, munmap((void *)p, pagesize));
-        if (sigsetjmp(env, 1) == 0) {
+	if (sigsetjmp(env, 1) == 0) {
 		(void)p[2];
-                FAIL();
-        }
-	checksig(SIGSEGV, SEGV_MAPERR, p + 2);
+		FAIL();
+	}
+	fail += checksig("munmap", SIGSEGV, SEGV_MAPERR, p + 2);
 
 	char filename[] = "/tmp/siginfo-fault.XXXXXXXX";
-	int fd = mkstemp(filename);
-	CHECK_GE(fd, 0);
+	int fd;
+	CHECK_LE(0, (fd = mkstemp(filename)));
 	CHECK_EQ(0, unlink(filename));
 	CHECK_EQ(0, ftruncate(fd, 0));  /* just in case */
-	p = mmap(NULL, pagesize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-	CHECK_NE(MAP_FAILED, p);
+	CHECK_NE(MAP_FAILED, (p = mmap(NULL, pagesize, PROT_READ|PROT_WRITE,
+	    MAP_SHARED, fd, 0)));
 	CHECK_EQ(0, close(fd));
 
 	if (sigsetjmp(env, 1) == 0) {
 		p[3] = 1;
 		FAIL();
 	}
-	checksig(SIGBUS, BUS_ADRERR, p + 3);
+	fail += checksig("mmap file", SIGBUS, BUS_ADRERR, p + 3);
 
-        return (0);
+	return (fail);
 }
