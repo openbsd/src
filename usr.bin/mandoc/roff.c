@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.193 2017/07/08 17:52:42 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.194 2017/07/13 15:12:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -2877,6 +2877,8 @@ roff_EQ(ROFF_ARGS)
 {
 	struct roff_node	*n;
 
+	if (r->man->macroset == MACROSET_MAN)
+		man_breakscope(r->man, ROFF_EQ);
 	n = roff_node_alloc(r->man, ln, ppos, ROFFT_EQN, TOKEN_NONE);
 	if (ln > r->man->last->line)
 		n->flags |= NODE_LINE;
