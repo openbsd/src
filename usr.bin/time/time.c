@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.21 2015/10/10 14:49:23 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.22 2017/07/13 06:39:54 tedu Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ main(int argc, char *argv[])
 {
 	pid_t pid;
 	int ch, status;
-	struct timeval before, after;
+	struct timespec before, after, during;
 	struct rusage ru;
 	int exitonsig = 0;
 
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 	if (argc < 1)
 		usage();
 
-	gettimeofday(&before, (struct timezone *)NULL);
+	clock_gettime(CLOCK_MONOTONIC, &before);
 	switch(pid = vfork()) {
 	case -1:			/* error */
 		perror("time");
@@ -97,24 +97,23 @@ main(int argc, char *argv[])
 	(void)signal(SIGQUIT, SIG_IGN);
 	while (wait3(&status, 0, &ru) != pid)
 		;
-	gettimeofday(&after, (struct timezone *)NULL);
+	clock_gettime(CLOCK_MONOTONIC, &after);
 	if (WIFSIGNALED(status))
 		exitonsig = WTERMSIG(status);
 	if (!WIFEXITED(status))
 		fprintf(stderr, "Command terminated abnormally.\n");
-	timersub(&after, &before, &after);
+	timespecsub(&after, &before, &during);
 
 	if (portableflag) {
 		fprintf(stderr, "real %9lld.%02ld\n",
-			(long long)after.tv_sec, after.tv_usec/10000);
+			(long long)during.tv_sec, during.tv_nsec/10000000);
 		fprintf(stderr, "user %9lld.%02ld\n",
 			(long long)ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
 		fprintf(stderr, "sys  %9lld.%02ld\n",
 			(long long)ru.ru_stime.tv_sec, ru.ru_stime.tv_usec/10000);
 	} else {
-
 		fprintf(stderr, "%9lld.%02ld real ",
-			(long long)after.tv_sec, after.tv_usec/10000);
+			(long long)during.tv_sec, during.tv_nsec/10000000);
 		fprintf(stderr, "%9lld.%02ld user ",
 			(long long)ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
 		fprintf(stderr, "%9lld.%02ld sys\n",
