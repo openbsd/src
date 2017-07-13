@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.4 2017/07/12 13:25:12 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.5 2017/07/13 05:37:53 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -388,7 +388,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 {
 	struct cpu_info *ci = curcpu();
 	struct intrhand *ih;
-	struct octciu_cpu *scpu = &sc->sc_cpu[cpu_number()];
+	struct octciu_cpu *scpu = &sc->sc_cpu[ci->ci_cpuid];
 	uint64_t imr, isr, mask;
 	int handled, ipl, irq;
 #ifdef MULTIPROCESSOR
