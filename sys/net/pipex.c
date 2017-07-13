@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.102 2017/06/06 13:07:22 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.103 2017/07/13 14:54:25 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -129,9 +129,9 @@ pipex_init(void)
 	rn_init(sizeof(struct sockaddr_in6));
 
 	pool_init(&pipex_session_pool, sizeof(struct pipex_session), 0,
-	    IPL_NONE, PR_WAITOK, "ppxss", NULL);
+	    IPL_SOFTNET, PR_WAITOK, "ppxss", NULL);
 	pool_init(&mppe_key_pool, PIPEX_MPPE_KEYLEN * PIPEX_MPPE_NOLDKEY, 0,
-	    IPL_NONE, PR_WAITOK, "mppekey", NULL);
+	    IPL_SOFTNET, PR_WAITOK, "mppekey", NULL);
 
 	LIST_INIT(&pipex_session_list);
 	LIST_INIT(&pipex_close_wait_list);
