@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.68 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.69 2017/07/13 17:45:00 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -154,7 +154,6 @@ int wb_mii_readreg(struct wb_softc *, struct wb_mii_frame *);
 int wb_mii_writereg(struct wb_softc *, struct wb_mii_frame *);
 
 void wb_setcfg(struct wb_softc *, uint64_t);
-u_int8_t wb_calchash(caddr_t);
 void wb_setmulti(struct wb_softc *);
 void wb_reset(struct wb_softc *);
 void wb_fixmedia(struct wb_softc *);
