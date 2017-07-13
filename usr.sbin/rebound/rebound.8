@@ -1,4 +1,4 @@
-.\" $OpenBSD: rebound.8,v 1.6 2016/10/07 21:03:06 jmc Exp $
+.\" $OpenBSD: rebound.8,v 1.7 2017/07/13 17:12:51 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: October 7 2016 $
+.Dd $Mdocdate: July 13 2017 $
 .Dt REBOUND 8
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nm rebound
 .Op Fl d
 .Op Fl c Ar config
+.Op Fl l Ar address
 .Sh DESCRIPTION
 The
 .Nm
@@ -49,6 +50,10 @@ Debug mode.
 does not
 .Xr fork 2
 into the background.
+.It Fl l Ar address
+Listen for connections by binding to
+.Ar address ,
+an IP specified in dotted quad notation, instead of the default of localhost.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/resolv.confXX" -compact

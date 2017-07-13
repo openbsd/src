@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.87 2017/07/04 00:30:45 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.88 2017/07/13 17:12:51 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -959,7 +959,7 @@ resetport(void)
 static void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: rebound [-d] [-c config]\n");
+	fprintf(stderr, "usage: rebound [-d] [-c config] [-l address]\n");
 	exit(1);
 }
 
@@ -972,6 +972,7 @@ main(int argc, char **argv)
 	int ld, ld6, ud, ud6, ch;
 	int one = 1;
 	const char *confname = "/etc/resolv.conf";
+	const char *bindname = "127.0.0.1";
 
 	tzset();
 	openlog("rebound", LOG_PID | LOG_NDELAY, LOG_DAEMON);
@@ -979,13 +980,17 @@ main(int argc, char **argv)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGUSR1, SIG_IGN);
 
-	while ((ch = getopt(argc, argv, "c:dW")) != -1) {
+	while ((ch = getopt(argc, argv, "c:dl:W")) != -1) {
 		switch (ch) {
 		case 'c':
 			confname = optarg;
 			break;
 		case 'd':
 			debug = 1;
+			break;
+		case 'l':
+			bindname = optarg;
+			jackport = 0;
 			break;
 		case 'W':
 			daemonized = 1;
@@ -1008,8 +1013,8 @@ main(int argc, char **argv)
 	memset(&bindaddr, 0, sizeof(bindaddr));
 	bindaddr.i.sin_len = sizeof(bindaddr.i);
 	bindaddr.i.sin_family = AF_INET;
-	bindaddr.i.sin_port = htons(jackport);
-	inet_aton("127.0.0.1", &bindaddr.i.sin_addr);
+	bindaddr.i.sin_port = htons(jackport ? jackport : 53);
+	inet_aton(bindname, &bindaddr.i.sin_addr);
 
 	ud = socket(AF_INET, SOCK_DGRAM, 0);
 	if (ud == -1)
@@ -1029,7 +1034,7 @@ main(int argc, char **argv)
 	memset(&bindaddr, 0, sizeof(bindaddr));
 	bindaddr.i6.sin6_len = sizeof(bindaddr.i6);
 	bindaddr.i6.sin6_family = AF_INET6;
-	bindaddr.i6.sin6_port = htons(jackport);
+	bindaddr.i6.sin6_port = htons(jackport ? jackport : 53);
 	bindaddr.i6.sin6_addr = in6addr_loopback;
 
 	ud6 = socket(AF_INET6, SOCK_DGRAM, 0);
@@ -1047,8 +1052,10 @@ main(int argc, char **argv)
 	if (listen(ld6, 10) == -1)
 		logerr("listen: %s", strerror(errno));
 
-	atexit(resetport);
-	sysctl(dnsjacking, 2, NULL, NULL, &jackport, sizeof(jackport));
+	if (jackport) {
+		atexit(resetport);
+		sysctl(dnsjacking, 2, NULL, NULL, &jackport, sizeof(jackport));
+	}
 	
 	if (debug) {
 		int conffd = openconfig(confname, -1);
