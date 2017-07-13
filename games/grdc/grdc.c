@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.26 2016/03/07 12:07:56 mestre Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.27 2017/07/13 02:57:52 tb Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 	if (argc == 1) {
 		n = strtonum(*argv, 1, INT_MAX, &errstr);
 		if (errstr) {
-			fprintf(stderr, "number of seconds is %s\n", errstr);
+			warnx("number of seconds is %s", errstr);
 			usage();
 		}
 	}
@@ -232,9 +232,7 @@ main(int argc, char *argv[])
 			clear();
 			refresh();
 			endwin();
-			fprintf(stderr, "%s terminated by signal %d\n",
-			    getprogname(), sigtermed);
-			return 1;
+			errx(1, "terminated by signal %d", sigtermed);
 		}
 	} while (n == 0 || nowtv.tv_sec < endtv.tv_sec);
 	standend();
