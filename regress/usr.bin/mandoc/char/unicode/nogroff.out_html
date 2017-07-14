@@ -1,37 +1,37 @@
 BEGINTEST
-&#65533;&#65533;	&lt;control&gt; NULL
-&#65533;&#65533;	&lt;control&gt; START OF HEADING
-&#65533;&#65533;	&lt;control&gt; BELL
-&#65533;&#65533;	&lt;control&gt; BACKSPACE
+&#xFFFD;&#xFFFD;	&lt;control&gt; NULL
+&#xFFFD;&#xFFFD;	&lt;control&gt; START OF HEADING
+&#xFFFD;&#xFFFD;	&lt;control&gt; BELL
+&#xFFFD;&#xFFFD;	&lt;control&gt; BACKSPACE
 			&lt;control&gt; CHARACTER TABULATION
-&#65533;&#65533;	&lt;control&gt; LINE FEED
-&#65533;&#65533;	&lt;control&gt; LINE TABULATION
-&#65533;&#65533;	&lt;control&gt; FORM FEED
-&#65533;&#65533;	&lt;control&gt; CARRIAGE RETURN
-&#65533;&#65533;	&lt;control&gt; ESCAPE
-&#65533;&#65533;	&lt;control&gt; DELETE
-&#65533;&#65533;	&lt;control&gt; 0x80
-&#65533;&#65533;	&lt;control&gt; 0x81
-&#65533;&#65533;	&lt;control&gt; BREAK PERMITTED HERE
-&#65533;&#65533;	&lt;control&gt; NO BREAK HERE
-&#65533;&#65533;	&lt;control&gt; PRIVACY MESSAGE
-&#65533;&#65533;	&lt;control&gt; APPLICATION PROGRAM COMMAND
-&#8810;&#8810;	MUCH LESS-THAN
-&#8811;&#8811;	MUCH GREATER-THAN
-&#64256;&#64256;	LATIN SMALL LIGATURE FF
-&#64257;&#64257;	LATIN SMALL LIGATURE FI
-&#64258;&#64258;	LATIN SMALL LIGATURE FL
-&#64259;&#64259;	LATIN SMALL LIGATURE FFI
-&#64260;&#64260;	LATIN SMALL LIGATURE FFL
-&#65533;	REPLACEMENT CHARACTER
-&#65534;	&lt;undefined&gt;
-&#65535;	&lt;undefined&gt;
-&#65536;	LINEAR B SYLLABLE B008 A
-&#1048573;	&lt;Plane 15 Private Use, Last&gt;
-&#1048574;	&lt;undefined&gt;
-&#1048575;	&lt;undefined&gt;
-&#1048576;	&lt;Plane 16 Private Use, First&gt;
-&#1114109;	&lt;Plane 16 Private Use, Last&gt;
-&#1114110;	&lt;undefined&gt;
-&#1114111;	&lt;undefined&gt;
+&#xFFFD;&#xFFFD;	&lt;control&gt; LINE FEED
+&#xFFFD;&#xFFFD;	&lt;control&gt; LINE TABULATION
+&#xFFFD;&#xFFFD;	&lt;control&gt; FORM FEED
+&#xFFFD;&#xFFFD;	&lt;control&gt; CARRIAGE RETURN
+&#xFFFD;&#xFFFD;	&lt;control&gt; ESCAPE
+&#xFFFD;&#xFFFD;	&lt;control&gt; DELETE
+&#xFFFD;&#xFFFD;	&lt;control&gt; 0x80
+&#xFFFD;&#xFFFD;	&lt;control&gt; 0x81
+&#xFFFD;&#xFFFD;	&lt;control&gt; BREAK PERMITTED HERE
+&#xFFFD;&#xFFFD;	&lt;control&gt; NO BREAK HERE
+&#xFFFD;&#xFFFD;	&lt;control&gt; PRIVACY MESSAGE
+&#xFFFD;&#xFFFD;	&lt;control&gt; APPLICATION PROGRAM COMMAND
+&#x226A;&#x226A;	MUCH LESS-THAN
+&#x226B;&#x226B;	MUCH GREATER-THAN
+&#xFB00;&#xFB00;	LATIN SMALL LIGATURE FF
+&#xFB01;&#xFB01;	LATIN SMALL LIGATURE FI
+&#xFB02;&#xFB02;	LATIN SMALL LIGATURE FL
+&#xFB03;&#xFB03;	LATIN SMALL LIGATURE FFI
+&#xFB04;&#xFB04;	LATIN SMALL LIGATURE FFL
+&#xFFFD;	REPLACEMENT CHARACTER
+&#xFFFE;	&lt;undefined&gt;
+&#xFFFF;	&lt;undefined&gt;
+&#x10000;	LINEAR B SYLLABLE B008 A
+&#xFFFFD;	&lt;Plane 15 Private Use, Last&gt;
+&#xFFFFE;	&lt;undefined&gt;
+&#xFFFFF;	&lt;undefined&gt;
+&#x100000;	&lt;Plane 16 Private Use, First&gt;
+&#x10FFFD;	&lt;Plane 16 Private Use, Last&gt;
+&#x10FFFE;	&lt;undefined&gt;
+&#x10FFFF;	&lt;undefined&gt;
 ENDTEST
