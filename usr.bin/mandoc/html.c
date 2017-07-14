@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.86 2017/07/14 15:26:14 bentley Exp $ */
+/*	$OpenBSD: html.c,v 1.87 2017/07/14 16:05:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -621,11 +621,6 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 		case 'u':
 			su = va_arg(ap, struct roffsu *);
 			break;
-		case 'v':
-			i = va_arg(ap, int);
-			su = &mysu;
-			SCALE_VS_INIT(su, i);
-			break;
 		case 'w':
 			if ((arg2 = va_arg(ap, char *)) == NULL)
 				break;
@@ -650,9 +645,6 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 		/* Second letter: style name. */
 
 		switch (*fmt++) {
-		case 'b':
-			attr = "margin-bottom";
-			break;
 		case 'h':
 			attr = "height";
 			break;
@@ -661,9 +653,6 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			break;
 		case 'l':
 			attr = "margin-left";
-			break;
-		case 't':
-			attr = "margin-top";
 			break;
 		case 'w':
 			attr = "width";

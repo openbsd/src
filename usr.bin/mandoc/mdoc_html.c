@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.166 2017/06/24 14:38:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.167 2017/07/14 16:05:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -713,10 +713,7 @@ mdoc_it_pre(MDOC_ARGS)
 		case ROFFT_HEAD:
 			return 0;
 		case ROFFT_BODY:
-			if (bl->norm->Bl.comp)
-				print_otag(h, TAG_LI, "csvt", cattr, 0);
-			else
-				print_otag(h, TAG_LI, "c", cattr);
+			print_otag(h, TAG_LI, "c", cattr);
 			break;
 		default:
 			break;
@@ -728,10 +725,7 @@ mdoc_it_pre(MDOC_ARGS)
 	case LIST_ohang:
 		switch (n->type) {
 		case ROFFT_HEAD:
-			if (bl->norm->Bl.comp)
-				print_otag(h, TAG_DT, "csvt", cattr, 0);
-			else
-				print_otag(h, TAG_DT, "c", cattr);
+			print_otag(h, TAG_DT, "c", cattr);
 			if (type == LIST_diag)
 				print_otag(h, TAG_B, "c", cattr);
 			break;
@@ -778,10 +772,7 @@ mdoc_it_pre(MDOC_ARGS)
 		case ROFFT_HEAD:
 			break;
 		case ROFFT_BODY:
-			if (bl->norm->Bl.comp)
-				print_otag(h, TAG_TD, "csvt", cattr, 0);
-			else
-				print_otag(h, TAG_TD, "c", cattr);
+			print_otag(h, TAG_TD, "c", cattr);
 			break;
 		default:
 			print_otag(h, TAG_TR, "c", cattr);
@@ -796,9 +787,9 @@ mdoc_it_pre(MDOC_ARGS)
 static int
 mdoc_bl_pre(MDOC_ARGS)
 {
+	char		 cattr[21];
 	struct tag	*t;
 	struct mdoc_bl	*bl;
-	const char	*cattr;
 	size_t		 i;
 	enum htmltag	 elemtype;
 
@@ -833,50 +824,52 @@ mdoc_bl_pre(MDOC_ARGS)
 	switch (bl->type) {
 	case LIST_bullet:
 		elemtype = TAG_UL;
-		cattr = "Bl-bullet";
+		(void)strlcpy(cattr, "Bl-bullet", sizeof(cattr));
 		break;
 	case LIST_dash:
 	case LIST_hyphen:
 		elemtype = TAG_UL;
-		cattr = "Bl-dash";
+		(void)strlcpy(cattr, "Bl-dash", sizeof(cattr));
 		break;
 	case LIST_item:
 		elemtype = TAG_UL;
-		cattr = "Bl-item";
+		(void)strlcpy(cattr, "Bl-item", sizeof(cattr));
 		break;
 	case LIST_enum:
 		elemtype = TAG_OL;
-		cattr = "Bl-enum";
+		(void)strlcpy(cattr, "Bl-enum", sizeof(cattr));
 		break;
 	case LIST_diag:
 		elemtype = TAG_DL;
-		cattr = "Bl-diag";
+		(void)strlcpy(cattr, "Bl-diag", sizeof(cattr));
 		break;
 	case LIST_hang:
 		elemtype = TAG_DL;
-		cattr = "Bl-hang";
+		(void)strlcpy(cattr, "Bl-hang", sizeof(cattr));
 		break;
 	case LIST_inset:
 		elemtype = TAG_DL;
-		cattr = "Bl-inset";
+		(void)strlcpy(cattr, "Bl-inset", sizeof(cattr));
 		break;
 	case LIST_ohang:
 		elemtype = TAG_DL;
-		cattr = "Bl-ohang";
+		(void)strlcpy(cattr, "Bl-ohang", sizeof(cattr));
 		break;
 	case LIST_tag:
-		cattr = "Bl-tag";
 		if (bl->offs)
-			print_otag(h, TAG_DIV, "cswl", cattr, bl->offs);
-		print_otag(h, TAG_DL, "csw+l", cattr, bl->width);
+			print_otag(h, TAG_DIV, "cswl", "Bl-tag", bl->offs);
+		print_otag(h, TAG_DL, "csw+l", bl->comp ?
+		    "Bl-tag Bl-compact" : "Bl-tag", bl->width);
 		return 1;
 	case LIST_column:
 		elemtype = TAG_TABLE;
-		cattr = "Bl-column";
+		(void)strlcpy(cattr, "Bl-column", sizeof(cattr));
 		break;
 	default:
 		abort();
 	}
+	if (bl->comp)
+		(void)strlcat(cattr, " Bl-compact", sizeof(cattr));
 	print_otag(h, elemtype, "cswl", cattr, bl->offs);
 	return 1;
 }
