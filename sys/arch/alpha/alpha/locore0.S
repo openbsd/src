@@ -1,4 +1,4 @@
-/* $OpenBSD: locore0.S,v 1.1 2017/06/05 17:49:05 deraadt Exp $ */
+/* $OpenBSD: locore0.S,v 1.2 2017/07/14 05:34:10 dlg Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -64,6 +64,20 @@
 
 #include "assym.h"
 
+#if defined(MULTIPROCESSOR)
+
+#define	GET_CURPCB							\
+	call_pal PAL_OSF1_rdval					;	\
+	addq	v0, CPU_INFO_CURPCB, v0
+
+#else	/* if not MULTIPROCESSOR... */
+
+IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
+
+#define	GET_CURPCB		lda v0, cpu_info_primary + CPU_INFO_CURPCB
+
+#endif
+
 /*
  * Perform actions necessary to switch to a new context.  The
  * hwpcb should be in a0.  Clobbers v0, t0, t8..t11, a0.
@@ -80,18 +94,6 @@
 	/* don't reorder instructions; paranoia. */
 	.set noreorder
 	.text
-
-	.macro	bfalse	reg, dst
-	beq	\reg, \dst
-	.endm
-
-	.macro	btrue	reg, dst
-	bne	\reg, \dst
-	.endm
-
-#define	GET_CURPCB							\
-	call_pal PAL_OSF1_rdval					;	\
-	addq	v0, CPU_INFO_CURPCB, v0
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
