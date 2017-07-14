@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.102 2017/03/16 10:32:01 bluhm Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.103 2017/07/14 20:51:17 jca Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -79,6 +79,7 @@
 #define SENDMAIL "/usr/sbin/sendmail"
 
 #include <sys/param.h>	/* DEV_BSIZE */
+#include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -126,8 +127,9 @@ struct conf_entry {
 	char	*whom;		/* Whom to notify if logfile changes */
 	char	*pidfile;	/* Path to file containing pid to signal */
 	char	*runcmd;	/* Command to run instead of sending a signal */
-	struct conf_entry *next; /* Linked list pointer */
+	TAILQ_ENTRY(conf_entry) next;
 };
+TAILQ_HEAD(entrylist, conf_entry);
 
 struct pidinfo {
 	char	*file;
@@ -158,8 +160,7 @@ int	movefile(char *, char *, uid_t, gid_t, mode_t);
 int	stat_suffix(char *, size_t, char *, struct stat *,
 	    int (*)(const char *, struct stat *));
 off_t	sizefile(struct stat *);
-struct conf_entry *
-	parse_file(int *);
+void	parse_file(struct entrylist *, int *);
 time_t	parse8601(char *);
 time_t	parseDWM(char *);
 void	child_killer(int);
@@ -175,7 +176,8 @@ void	usage(void);
 int
 main(int argc, char **argv)
 {
-	struct conf_entry *p, *q, *x, *y;
+	struct entrylist config, runlist;
+	struct conf_entry *p, *q, *tmp;
 	struct pidinfo *pidlist, *pl;
 	int status, listlen;
 	char **av;
@@ -187,30 +189,28 @@ main(int argc, char **argv)
 	if (needroot && getuid() && geteuid())
 		errx(1, "You must be root.");
 
-	p = parse_file(&listlen);
-	if (argc > 0) {
+	TAILQ_INIT(&config);
+	TAILQ_INIT(&runlist);
+
+	parse_file(&config, &listlen);
+	if (argc == 0)
+		TAILQ_CONCAT(&runlist, &config, next);
+	else {
 		/* Only rotate specified files. */
-		x = y = NULL;
 		listlen = 0;
 		for (av = argv; *av; av++) {
-			for (q = p; q; q = q->next)
+			TAILQ_FOREACH_SAFE(q, &config, next, tmp)
 				if (strcmp(*av, q->log) == 0) {
-					if (x == NULL)
-						x = y = q;
-					else {
-						y->next = q;
-						y = q;
-					}
+					TAILQ_REMOVE(&config, q, next);
+					TAILQ_INSERT_TAIL(&runlist, q, next);
 					listlen++;
 					break;
 				}
 			if (q == NULL)
 				warnx("%s: %s not found", conf, *av);
 		}
-		if (x == NULL)
+		if (TAILQ_EMPTY(&runlist))
 			errx(1, "%s: no specified log files", conf);
-		y->next = NULL;
-		p = x;
 	}
 
 	pidlist = calloc(listlen + 1, sizeof(struct pidinfo));
@@ -220,11 +220,12 @@ main(int argc, char **argv)
 	signal(SIGCHLD, child_killer);
 
 	/* Step 1, rotate all log files */
-	for (q = p; q; q = q->next)
+	TAILQ_FOREACH(q, &runlist, next)
 		do_entry(q);
 
 	/* Step 2, make a list of unique pid files */
-	for (q = p, pl = pidlist; q; ) {
+	pl = pidlist;
+	TAILQ_FOREACH(q, &runlist, next) {
 		if (q->flags & CE_ROTATED) {
 			struct pidinfo *pltmp;
 
@@ -247,7 +248,6 @@ main(int argc, char **argv)
 				pl++;
 			}
 		}
-		q = q->next;
 	}
 
 	/* Step 3, send a signal or run a command */
@@ -263,13 +263,11 @@ main(int argc, char **argv)
 		sleep(5);
 
 	/* Step 4, compress the log.0 file if configured to do so and free */
-	while (p) {
+	TAILQ_FOREACH_SAFE(p, &runlist, next, tmp) {
 		if ((p->flags & CE_COMPACT) && (p->flags & CE_ROTATED) &&
 		    p->numlogs > 0)
 			compress_log(p);
-		q = p;
-		p = p->next;
-		free(q);
+		free(p);
 	}
 
 	/* Wait for children to finish, then exit */
@@ -464,14 +462,14 @@ usage(void)
 }
 
 /*
- * Parse a configuration file and return a linked list of all the logs
+ * Parse a configuration file and build a linked list of all the logs
  * to process
  */
-struct conf_entry *
-parse_file(int *nentries)
+void
+parse_file(struct entrylist *list, int *nentries)
 {
 	char line[BUFSIZ], *parse, *q, *errline, *group, *tmp, *ep;
-	struct conf_entry *working = NULL, *first = NULL;
+	struct conf_entry *working;
 	struct passwd *pwd;
 	struct group *grp;
 	struct stat sb;
@@ -492,18 +490,9 @@ parse_file(int *nentries)
 		errline = strdup(tmp);
 		if (errline == NULL)
 			err(1, "strdup");
-		(*nentries)++;
-		if (!first) {
-			working = malloc(sizeof(struct conf_entry));
-			if (working == NULL)
-				err(1, "malloc");
-			first = working;
-		} else {
-			working->next = malloc(sizeof(struct conf_entry));
-			if (working->next == NULL)
-				err(1, "malloc");
-			working = working->next;
-		}
+		working = calloc(1, sizeof(*working));
+		if (working == NULL)
+			err(1, "calloc");
 
 		q = parse = missing_field(sob(line), errline, lineno);
 		*(parse = son(line)) = '\0';
@@ -722,11 +711,10 @@ parse_file(int *nentries)
 				errx(1, "%s:%d: pathname too long: %s",
 				    conf, lineno, working->log);
 		}
+		TAILQ_INSERT_TAIL(list, working, next);
+		(*nentries)++;
 	}
-	if (working)
-		working->next = NULL;
 	(void)fclose(f);
-	return (first);
 }
 
 char *
