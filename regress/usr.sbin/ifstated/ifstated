@@ -1,0 +1,163 @@
+# $OpenBSD: ifstated,v 1.1 2017/07/14 10:41:30 benno Exp $
+#/*
+# * Copyright (c) Rob Pierce <rob@2keys.ca>
+# *
+# * Permission to use, copy, modify, and distribute this software for any
+# * purpose with or without fee is hereby granted, provided that the above
+# * copyright notice and this permission notice appear in all copies.
+# *
+# * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# */
+
+# Basic ifstated regression script to test interface changes.
+
+# Golbal variables
+VHIDA=252
+VHIDB=253
+PREFIX=172.16.0
+DEMOTE=ifconfig
+PROMOTE=ifconfig
+EVERY=5
+SLEEP=10
+
+cleanup() {
+	ifconfig carp${VHIDA} destroy > /dev/null 2>&1
+	ifconfig carp${VHIDB} destroy > /dev/null 2>&1
+	rm working/ifstated.conf >/dev/null 2>&1
+	rm working/ifstated.log >/dev/null 2>&1
+	rm working/output.test >/dev/null 2>&1
+	rm working/output.new >/dev/null 2>&1
+	rm working/nohup.out >/dev/null 2>&1
+	rmdir working >/dev/null 2>&1
+}
+
+fail() {
+	echo FAILED
+	cleanup
+	exit 1
+}
+
+skip() {
+	echo SKIPPED
+	cleanup
+	exit 0
+}
+
+trap 'skip' INT
+
+# look for a suitable physical interface for carp
+NIC="$(netstat -rn -finet | grep ^default | awk '{ print $8 }')"
+STATUS="$(ifconfig | grep -A5 ^${NIC} | grep status: | awk '{ print $2 }')"
+
+if [ "$STATUS" != "active" ]
+then
+	echo "No suitable physical interface found."
+	echo SKIPPED
+	exit 0
+fi
+
+if [ "$(pgrep ifstated)" ]
+then
+	echo "The ifstated daemon is already running."
+	echo SKIPPED
+	exit 0
+fi
+
+for interface in carp${VHIDA} carp${VHIDB}
+do
+	ifconfig ${interface} > /dev/null 2>&1
+	if [ $? -eq 0 ]
+	then
+		echo "Interface $interface already exists."
+		echo SKIPPED
+		exit 0
+	fi
+done
+
+mkdir -p working
+
+cat > working/ifstated.conf <<EOF
+# This is a config template for ifstated regression testing
+carp = "carp${VHIDA}.link.up"
+init-state primary
+net = '( "ping -q -c 1 -w 1 ${PREFIX}.${VHIDB} > /dev/null" every ${EVERY})'
+state primary {
+	init {
+		run "ifconfig"
+	}
+	if ! \$net
+		set-state demoted
+	if ! \$carp
+		set-state demoted
+}
+state demoted {
+	init {
+		run "ifconfig"
+	}
+	if \$net && \$carp
+		set-state primary
+}
+EOF
+
+ifconfig carp${VHIDA} inet ${PREFIX}.${VHIDA} netmask 255.255.255.0 broadcast \
+   ${PREFIX}.255 vhid ${VHIDA} carpdev ${NIC}
+ifconfig carp${VHIDB} inet ${PREFIX}.${VHIDB} netmask 255.255.255.0 broadcast \
+   ${PREFIX}.255 vhid ${VHIDB} carpdev ${NIC}
+
+# give the carp interface time to come up as MASTER
+sleep 5
+
+cat > working/output.test <<EOF
+changing state to primary
+changing state to demoted
+changing state to primary
+changing state to demoted
+changing state to primary
+changing state to demoted
+changing state to primary
+changing state to primary
+EOF
+
+(cd working && nohup ifstated -dvf ./ifstated.conf > ifstated.log 2>&1) &
+
+sleep ${SLEEP}
+ifconfig carp${VHIDA} down
+sleep ${SLEEP}
+ifconfig carp${VHIDA} up
+sleep ${SLEEP}
+ifconfig carp${VHIDB} destroy
+sleep ${SLEEP}
+ifconfig carp${VHIDB} inet ${PREFIX}.${VHIDB} netmask 255.255.255.0 broadcast \
+   ${PREFIX}.255 vhid ${VHIDB} carpdev ${NIC}
+sleep ${SLEEP}
+ifconfig carp${VHIDA} down
+sleep ${SLEEP}
+ifconfig carp${VHIDB} destroy
+sleep ${SLEEP}
+ifconfig carp${VHIDA} up
+sleep ${SLEEP}
+ifconfig carp${VHIDB} inet ${PREFIX}.${VHIDB} netmask 255.255.255.0 broadcast \
+   ${PREFIX}.255 vhid ${VHIDB} carpdev ${NIC}
+sleep ${SLEEP}
+kill -HUP $(pgrep ifstated) >/dev/null 2>&1
+sleep ${SLEEP}
+
+grep ^changing working/ifstated.log > working/output.new
+
+kill $(pgrep ifstated) >/dev/null 2>&1
+
+diff working/output.test working/output.new
+case $? in
+0)	echo PASSED
+	cleanup
+	exit 0
+	;;
+1)	fail
+	;;
+esac
