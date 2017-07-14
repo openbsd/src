@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.61 2017/07/14 16:21:03 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.62 2017/07/14 16:35:59 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -79,7 +79,7 @@ get_bpf_sock(char *name)
 
 	/* Set the BPF device to point at this interface. */
 	strlcpy(ifr.ifr_name, name, IFNAMSIZ);
-	if (ioctl(sock, BIOCSETIF, &ifr) < 0)
+	if (ioctl(sock, BIOCSETIF, &ifr) == -1)
 		fatal("Can't attach interface %s to /dev/bpf", name);
 
 	return sock;
@@ -188,7 +188,7 @@ configure_bpf_sock(int bfdesc)
 	int			 flag = 1, sz;
 
 	/* Make sure the BPF version is in range. */
-	if (ioctl(bfdesc, BIOCVERSION, &v) < 0)
+	if (ioctl(bfdesc, BIOCVERSION, &v) == -1)
 		fatal("Can't get BPF version");
 
 	if (v.bv_major != BPF_MAJOR_VERSION ||
@@ -201,14 +201,14 @@ configure_bpf_sock(int bfdesc)
 	 * comes in, rather than waiting for the input buffer to fill
 	 * with packets.
 	 */
-	if (ioctl(bfdesc, BIOCIMMEDIATE, &flag) < 0)
+	if (ioctl(bfdesc, BIOCIMMEDIATE, &flag) == -1)
 		fatal("Can't set immediate mode on bpf device");
 
-	if (ioctl(bfdesc, BIOCSFILDROP, &flag) < 0)
+	if (ioctl(bfdesc, BIOCSFILDROP, &flag) == -1)
 		fatal("Can't set filter-drop mode on bpf device");
 
 	/* Get the required BPF buffer length from the kernel. */
-	if (ioctl(bfdesc, BIOCGBLEN, &sz) < 0)
+	if (ioctl(bfdesc, BIOCGBLEN, &sz) == -1)
 		fatal("Can't get bpf buffer length");
 
 	/* Set up the bpf filter program structure. */
@@ -222,7 +222,7 @@ configure_bpf_sock(int bfdesc)
 	 */
 	dhcp_bpf_filter[8].k = LOCAL_PORT;
 
-	if (ioctl(bfdesc, BIOCSETF, &p) < 0)
+	if (ioctl(bfdesc, BIOCSETF, &p) == -1)
 		fatal("Can't install packet filter program");
 
 	/* Set up the bpf write filter program structure. */
@@ -232,11 +232,11 @@ configure_bpf_sock(int bfdesc)
 	if (dhcp_bpf_wfilter[7].k == 0x1fff)
 		dhcp_bpf_wfilter[7].k = htons(IP_MF|IP_OFFMASK);
 
-	if (ioctl(bfdesc, BIOCSETWF, &p) < 0)
+	if (ioctl(bfdesc, BIOCSETWF, &p) == -1)
 		fatal("Can't install write filter program");
 
-	if (ioctl(bfdesc, BIOCLOCK, NULL) < 0)
-		fatalx("Cannot lock bpf");
+	if (ioctl(bfdesc, BIOCLOCK, NULL) == -1)
+		fatal("Cannot lock bpf");
 
 	return sz;
 }
