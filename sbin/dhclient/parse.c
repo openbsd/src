@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.59 2017/07/14 14:03:15 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.60 2017/07/14 16:21:03 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -88,8 +88,8 @@ skip_to_semi(FILE *cfile)
 	do {
 		token = peek_token(NULL, cfile);
 		if (token == '}') {
-			if (brace_count) {
-				if (!--brace_count) {
+			if (brace_count > 0) {
+				if (--brace_count == 0) {
 					token = next_token(NULL, cfile);
 					return;
 				}
@@ -97,7 +97,7 @@ skip_to_semi(FILE *cfile)
 				return;
 		} else if (token == '{') {
 			brace_count++;
-		} else if (token == ';' && !brace_count) {
+		} else if (token == ';' && brace_count == 0) {
 			token = next_token(NULL, cfile);
 			return;
 		} else if (token == '\n') {
@@ -172,7 +172,7 @@ parse_cidr(FILE *cfile, unsigned char *cidr)
 	token = '.';
 	len = 0;
 	for (token = '.'; token == '.'; token = next_token(NULL, cfile)) {
-		if (!parse_decimal(cfile, cidr + 1 + len, 'B'))
+		if (parse_decimal(cfile, cidr + 1 + len, 'B') == 0)
 			break;
 		if (++len == sizeof(addr)) {
 			token = next_token(NULL, cfile);
@@ -180,7 +180,7 @@ parse_cidr(FILE *cfile, unsigned char *cidr)
 		}
 	}
 
-	if (!len) {
+	if (len == 0) {
 		parse_warn("expecting decimal value.");
 		skip_to_semi(cfile);
 		return 0;
@@ -188,7 +188,7 @@ parse_cidr(FILE *cfile, unsigned char *cidr)
 		parse_warn("expecting '/'.");
 		skip_to_semi(cfile);
 		return 0;
-	} else if (!parse_decimal(cfile, cidr, 'B') || *cidr > 32) {
+	} else if (parse_decimal(cfile, cidr, 'B') == 0 || *cidr > 32) {
 		parse_warn("expecting decimal value <= 32.");
 		skip_to_semi(cfile);
 		return 0;
@@ -206,7 +206,7 @@ parse_ip_addr(FILE *cfile, struct in_addr *addr)
 	token = '.';
 	len = 0;
 	for (token = '.'; token == '.'; token = next_token(NULL, cfile)) {
-		if (!parse_decimal(cfile, (unsigned char *)&buf + len, 'B'))
+		if (parse_decimal(cfile, (unsigned char *)&buf + len, 'B') == 0)
 			break;
 		if (++len == sizeof(buf))
 			break;
@@ -234,7 +234,7 @@ parse_lease_time(FILE *cfile, time_t *timep)
 {
 	uint32_t	 value;
 
-	if (!parse_decimal(cfile, (char *)&value, 'L')) {
+	if (parse_decimal(cfile, (char *)&value, 'L') == 0) {
 		parse_warn("expecting unsigned 32-bit decimal value.");
 		skip_to_semi(cfile);
 		return;
@@ -252,7 +252,7 @@ parse_boolean(FILE *cfile, unsigned char *buf)
 	int	 token;
 
 	token = next_token(&val, cfile);
-	if (is_identifier(token)) {
+	if (is_identifier(token) != 0) {
 		if (strcasecmp(val, "true") == 0 ||
 		    strcasecmp(val, "on") == 0) {
 			buf[0] = 1;
@@ -304,7 +304,7 @@ parse_decimal(FILE *cfile, unsigned char *buf, char fmt)
 	}
 
 	numval = strtonum(val, low, high, &errstr);
-	if (errstr)
+	if (errstr != NULL)
 		return 0;
 
 	numval = htobe64(numval);

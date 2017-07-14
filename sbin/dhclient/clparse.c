@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.123 2017/07/14 14:03:15 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.124 2017/07/14 16:21:03 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -318,11 +318,11 @@ parse_client_statement(FILE *cfile, char *name)
 		parse_semi(cfile);
 		break;
 	case TOK_FIXED_ADDR:
-		if (parse_ip_addr(cfile, &config->address))
+		if (parse_ip_addr(cfile, &config->address) != 0)
 			parse_semi(cfile);
 		break;
 	case TOK_NEXT_SERVER:
-		if (parse_ip_addr(cfile, &config->next_server))
+		if (parse_ip_addr(cfile, &config->next_server) != 0)
 			parse_semi(cfile);
 		break;
 	default:
@@ -345,7 +345,7 @@ parse_X(FILE *cfile, uint8_t *buf, int max)
 		len = 0;
 		for (token = ':'; token == ':';
 		     token = next_token(NULL, cfile)) {
-			if (!parse_hex(cfile, &buf[len]))
+			if (parse_hex(cfile, &buf[len]) == 0)
 				break;
 			if (++len == max)
 				break;
@@ -400,7 +400,7 @@ parse_option_list(FILE *cfile, uint8_t *list, size_t sz)
 			/* Empty list. */
 			return 0;
 		}
-		if (!is_identifier(token)) {
+		if (is_identifier(token) == 0) {
 			parse_warn("expecting option name.");
 			goto syntaxerror;
 		}
@@ -429,7 +429,7 @@ parse_option_list(FILE *cfile, uint8_t *list, size_t sz)
 			token = next_token(NULL, cfile);
 	} while (token == ',');
 
-	if (parse_semi(cfile))
+	if (parse_semi(cfile) != 0)
 		return ix;
 
 syntaxerror:
@@ -567,11 +567,11 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 		}
 		break;
 	case TOK_FIXED_ADDR:
-		if (!parse_ip_addr(cfile, &lease->address))
+		if (parse_ip_addr(cfile, &lease->address) == 0)
 			return;
 		break;
 	case TOK_NEXT_SERVER:
-		if (!parse_ip_addr(cfile, &lease->next_server))
+		if (parse_ip_addr(cfile, &lease->next_server) == 0)
 			return;
 		break;
 	case TOK_FILENAME:
@@ -627,7 +627,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	int		 nul_term = 0;
 
 	token = next_token(&val, cfile);
-	if (!is_identifier(token)) {
+	if (is_identifier(token) == 0) {
 		parse_warn("expecting identifier.");
 		if (token != ';')
 			skip_to_semi(cfile);
@@ -673,13 +673,13 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				dp = NULL;
 				break;
 			case 'I': /* IP address. */
-				if (!parse_ip_addr(cfile, &ip_addr))
+				if (parse_ip_addr(cfile, &ip_addr) == 0)
 					return -1;
 				len = sizeof(ip_addr);
 				dp = (uint8_t *)&ip_addr;
 				break;
 			case 'l':	/* Signed 32-bit integer. */
-				if (!parse_decimal(cfile, buf, 'l')) {
+				if (parse_decimal(cfile, buf, 'l') == 0) {
 					parse_warn("expecting signed 32-bit "
 					    "integer.");
 					skip_to_semi(cfile);
@@ -689,7 +689,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				dp = buf;
 				break;
 			case 'L':	/* Unsigned 32-bit integer. */
-				if (!parse_decimal(cfile, buf, 'L')) {
+				if (parse_decimal(cfile, buf, 'L') == 0) {
 					parse_warn("expecting unsigned 32-bit "
 					    "integer.");
 					skip_to_semi(cfile);
@@ -699,7 +699,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				dp = buf;
 				break;
 			case 'S':	/* Unsigned 16-bit integer. */
-				if (!parse_decimal(cfile, buf, 'S')) {
+				if (parse_decimal(cfile, buf, 'S') == 0) {
 					parse_warn("expecting unsigned 16-bit "
 					    "integer.");
 					skip_to_semi(cfile);
@@ -709,7 +709,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				dp = buf;
 				break;
 			case 'B':	/* Unsigned 8-bit integer. */
-				if (!parse_decimal(cfile, buf, 'B')) {
+				if (parse_decimal(cfile, buf, 'B') == 0) {
 					parse_warn("expecting unsigned 8-bit "
 					    "integer.");
 					skip_to_semi(cfile);
@@ -719,7 +719,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				dp = buf;
 				break;
 			case 'f': /* Boolean flag. */
-				if (!parse_boolean(cfile, buf)) {
+				if (parse_boolean(cfile, buf) == 0) {
 					parse_warn("expecting boolean.");
 					skip_to_semi(cfile);
 					return -1;
@@ -728,7 +728,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				dp = buf;
 				break;
 			case 'C':
-				if (!parse_cidr(cfile, cidr))
+				if (parse_cidr(cfile, cidr) == 0)
 					return -1;
 				len = 1 + (cidr[0] + 7) / 8;
 				dp = cidr;
@@ -755,7 +755,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 			token = next_token(NULL, cfile);
 	} while (*fmt == 'A' && token == ',');
 
-	if (!parse_semi(cfile))
+	if (parse_semi(cfile) == 0)
 		return -1;
 
 	options[code].data = malloc(hunkix + nul_term);
@@ -774,7 +774,7 @@ parse_reject_statement(FILE *cfile)
 	int			 token;
 
 	do {
-		if (!parse_ip_addr(cfile, &addr))
+		if (parse_ip_addr(cfile, &addr) == 0)
 			return;
 
 		elem = malloc(sizeof(struct reject_elem));

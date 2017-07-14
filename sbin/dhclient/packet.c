@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.39 2017/07/10 00:47:47 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.40 2017/07/14 16:21:03 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -214,7 +214,7 @@ decode_udp_ip_header(unsigned char *buf, uint32_t buflen,
 	    IPPROTO_UDP + (uint32_t)ntohs(udp->uh_ulen)))));
 
 	udp_packets_seen++;
-	if (usum && usum != sum) {
+	if (usum != 0 && usum != sum) {
 		udp_packets_bad_checksum++;
 		if (udp_packets_seen > 4 && udp_packets_bad_checksum != 0 &&
 		    (udp_packets_seen / udp_packets_bad_checksum) < 2) {

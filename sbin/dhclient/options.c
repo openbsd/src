@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.100 2017/07/14 14:03:15 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.101 2017/07/14 16:21:03 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -503,7 +503,7 @@ pack_options(unsigned char *buf, int buflen, struct option_data *options)
 	memset(buf, 0, buflen);
 
 	memcpy(buf, DHCP_OPTIONS_COOKIE, 4);
-	if (options[DHO_DHCP_MESSAGE_TYPE].data) {
+	if (options[DHO_DHCP_MESSAGE_TYPE].data != NULL) {
 		memcpy(&buf[4], DHCP_OPTIONS_MESSAGE_TYPE, 3);
 		buf[6] = options[DHO_DHCP_MESSAGE_TYPE].data[0];
 		bufix = 7;
@@ -559,7 +559,7 @@ pretty_print_string(unsigned char *src, size_t srclen, int emit_punct)
 
 	memset(string, 0, sizeof(string));
 
-	if (emit_punct)
+	if (emit_punct != 0)
 		rslt = strlcat(string, "\"", sizeof(string));
 
 	for (; src < origsrc + srclen; src++) {
@@ -570,7 +570,7 @@ pretty_print_string(unsigned char *src, size_t srclen, int emit_punct)
 		rslt = strlcat(string, visbuf, sizeof(string));
 	}
 
-	if (emit_punct)
+	if (emit_punct != 0)
 		rslt = strlcat(string, "\"", sizeof(string));
 
 	if (rslt >= sizeof(string))
@@ -649,7 +649,7 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 			 */
 			*offset = i + 1;
 			return domain_name_len;
-		} else if (label_len & 0xC0) {
+		} else if ((label_len & 0xC0) != 0) {
 			/* This is a pointer to another list of labels. */
 			if (i + 1 >= srclen) {
 				/* The pointer is truncated. */
@@ -774,7 +774,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 		goto done;
 	}
 
-	if (emit_punct)
+	if (emit_punct != 0)
 		comma = ',';
 	else
 		comma = ' ';
@@ -797,7 +797,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 
 	/* Figure out the size of the data. */
 	for (i = 0; fmt[i]; i++) {
-		if (!numhunk) {
+		if (numhunk == 0) {
 			log_warnx("%s: Excess information in format string: "
 			    "%s", name, &fmt[i]);
 			goto done;
@@ -817,8 +817,8 @@ pretty_print_option(unsigned int code, struct option_data *option,
 			break;
 		case 'X':
 			for (k = 0; k < len; k++)
-				if (!isascii(data[k]) ||
-				    !isprint(data[k]))
+				if (isascii(data[k]) == 0 ||
+				    isprint(data[k]) == 0)
 					break;
 			if (k == len) {
 				fmtbuf[i] = 't';
@@ -869,7 +869,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 	}
 
 	/* If this is an array, compute its size. */
-	if (!numhunk)
+	if (numhunk == 0)
 		numhunk = len / hunksize;
 	/* See if we got an exact number of hunks. */
 	if (numhunk > 0 && numhunk * hunksize != len) {
@@ -982,13 +982,13 @@ unpack_options(struct dhcp_packet *packet)
 		    sizeof(packet->options) - 4);
 
 		/* DHCP packets can also use overload areas for options. */
-		if (options[DHO_DHCP_MESSAGE_TYPE].data &&
-		    options[DHO_DHCP_OPTION_OVERLOAD].data) {
-			if (options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)
+		if (options[DHO_DHCP_MESSAGE_TYPE].data != NULL &&
+		    options[DHO_DHCP_OPTION_OVERLOAD].data != NULL) {
+			if ((options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1) != 0)
 				parse_option_buffer(options,
 				    (unsigned char *)packet->file,
 				    sizeof(packet->file));
-			if (options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)
+			if ((options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2) != 0)
 				parse_option_buffer(options,
 				    (unsigned char *)packet->sname,
 				    sizeof(packet->sname));

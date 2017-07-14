@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.108 2017/07/14 14:03:15 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.109 2017/07/14 16:21:03 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -182,7 +182,7 @@ priv_flush_routes(char *name, int routefd, int rdomain)
 		break;
 	}
 
-	if (errmsg) {
+	if (errmsg != NULL) {
 		log_warn("route cleanup failed - %s (msize=%zu)", errmsg,
 		    needed);
 		free(buf);
@@ -349,7 +349,7 @@ add_classless_static_routes(struct option_data *opt, struct in_addr iface)
 		else if (i + bytes > opt->len)
 			return;
 
-		if (bits)
+		if (bits != 0)
 			netmask.s_addr = htonl(0xffffffff << (32 - bits));
 		else
 			netmask.s_addr = INADDR_ANY;
@@ -548,9 +548,9 @@ delete_addresses(char *name)
 		fatal("delete_addresses getifaddrs");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
-		    (ifa->ifa_flags & IFF_POINTOPOINT) ||
-		    (!(ifa->ifa_flags & IFF_UP)) ||
+		if ((ifa->ifa_flags & IFF_LOOPBACK) != 0 ||
+		    (ifa->ifa_flags & IFF_POINTOPOINT) != 0 ||
+		    ((ifa->ifa_flags & IFF_UP) == 0) ||
 		    (ifa->ifa_addr->sa_family != AF_INET) ||
 		    (strcmp(name, ifa->ifa_name) != 0))
 			continue;
@@ -744,7 +744,7 @@ priv_write_resolv_conf(uint8_t *contents, size_t sz)
 }
 
 /*
- * resolve_conf_priority decides if the interface is the best one to
+ * resolv_conf_priority decides if the interface is the best one to
  * suppy the contents of the resolv.conf file.
  */
 int
@@ -815,7 +815,7 @@ resolv_conf_priority(int rdomain, int routefd)
 		if (m_rtmsg.m_rtm.rtm_type == RTM_GET &&
 		    m_rtmsg.m_rtm.rtm_pid == pid &&
 		    m_rtmsg.m_rtm.rtm_seq == seq) {
-			if (m_rtmsg.m_rtm.rtm_errno) {
+			if (m_rtmsg.m_rtm.rtm_errno != 0) {
 				log_warnx("default route read rtm: %s",
 				    strerror(m_rtmsg.m_rtm.rtm_errno));
 				goto done;
@@ -850,7 +850,7 @@ resolv_conf_contents(char *name,
 
 	memset(nss, 0, sizeof(nss));
 
-	if (domainsearch->len) {
+	if (domainsearch->len != 0) {
 		buf = pretty_print_domain_search(domainsearch->data,
 		    domainsearch->len);
 		if (buf == NULL)
@@ -860,7 +860,7 @@ resolv_conf_contents(char *name,
 			if (rslt == -1)
 				dn = NULL;
 		}
-	} else if (domainname->len) {
+	} else if (domainname->len != 0) {
 		rslt = asprintf(&dn, "search %s\n",
 		    pretty_print_option(DHO_DOMAIN_NAME, domainname, 0));
 		if (rslt == -1)
@@ -870,7 +870,7 @@ resolv_conf_contents(char *name,
 	if (dn == NULL)
 		fatalx("no memory for domainname");
 
-	if (nameservers->len) {
+	if (nameservers->len != 0) {
 		ns = pretty_print_option(DHO_DOMAIN_NAME_SERVERS, nameservers,
 		    0);
 		for (i = 0; i < MAXNS; i++) {
@@ -887,7 +887,7 @@ resolv_conf_contents(char *name,
 
 	len = strlen(dn);
 	for (i = 0; i < MAXNS; i++)
-		if (nss[i])
+		if (nss[i] != NULL)
 			len += strlen(nss[i]);
 
 	if (len > 0 && config->resolv_tail)
@@ -915,7 +915,7 @@ resolv_conf_contents(char *name,
 	free(dn);
 
 	for (i = 0; i < MAXNS; i++) {
-		if (nss[i]) {
+		if (nss[i] != NULL) {
 			strlcat(contents, nss[i], len);
 			free(nss[i]);
 		}

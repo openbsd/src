@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.56 2017/07/10 14:11:47 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.57 2017/07/14 16:21:03 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -93,7 +93,7 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 		case IMSG_WRITE_RESOLV_CONF:
 			if (imsg.hdr.len <= IMSG_HEADER_SIZE)
 				log_warnx("short IMSG_WRITE_RESOLV_CONF");
-			else if (resolv_conf_priority(rdomain, routefd))
+			else if (resolv_conf_priority(rdomain, routefd) != 0)
 				priv_write_resolv_conf(imsg.data,
 				    imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;

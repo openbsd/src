@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.133 2017/07/14 13:08:41 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.134 2017/07/14 16:21:03 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -111,7 +111,7 @@ get_hw_address(struct interface_info *ifi)
 		ifi->flags |= IFI_VALID_LLADDR;
 	}
 
-	if (!found)
+	if (found == 0)
 		fatalx("%s: no such interface", ifi->name);
 
 	freeifaddrs(ifap);
@@ -134,7 +134,7 @@ dispatch(struct interface_info *ifi, int routefd)
 			sendhup();
 		}
 
-		if (ifi->timeout_func) {
+		if (ifi->timeout_func != NULL) {
 			time(&cur_time);
 			if (ifi->timeout <= cur_time) {
 				func = ifi->timeout_func;
@@ -181,16 +181,16 @@ dispatch(struct interface_info *ifi, int routefd)
 			}
 		}
 
-		if ((fds[0].revents & (POLLIN | POLLHUP))) {
+		if ((fds[0].revents & (POLLIN | POLLHUP)) != 0) {
 			do {
 				packethandler(ifi);
 			} while (ifi->rbuf_offset < ifi->rbuf_len);
 		}
-		if ((fds[1].revents & (POLLIN | POLLHUP)))
+		if ((fds[1].revents & (POLLIN | POLLHUP)) != 0)
 			routehandler(ifi, routefd);
-		if (fds[2].revents & POLLOUT)
+		if ((fds[2].revents & POLLOUT) != 0)
 			flush_unpriv_ibuf("dispatch");
-		if ((fds[2].revents & (POLLIN | POLLHUP))) {
+		if ((fds[2].revents & (POLLIN | POLLHUP)) != 0) {
 			/* Pipe to [priv] closed. Assume it emitted error. */
 			quit = INTERNALSIG;
 		}
@@ -323,7 +323,7 @@ packethandler(struct interface_info *ifi)
 	if (rslt == -1)
 		fatalx("no memory for info string");
 
-	if (handler)
+	if (handler != NULL)
 		(*handler)(ifi, options, info);
 
 	free(info);

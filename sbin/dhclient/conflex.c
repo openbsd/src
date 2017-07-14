@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.42 2017/07/10 00:47:47 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.43 2017/07/14 16:21:03 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -113,7 +113,7 @@ static int
 get_char(FILE *cfile)
 {
 	int c = getc(cfile);
-	if (!ugflag) {
+	if (ugflag == 0) {
 		if (c == '\n') {
 			if (cur_line == line1) {
 				cur_line = line2;
@@ -153,7 +153,7 @@ get_token(FILE *cfile)
 
 		c = get_char(cfile);
 
-		if (isascii(c) && isspace(c))
+		if (isascii(c) != 0 && isspace(c) != 0)
 			continue;
 		if (c == '#') {
 			skip_to_eol(cfile);
@@ -164,7 +164,7 @@ get_token(FILE *cfile)
 		if (c == '"') {
 			ttok = read_string(cfile);
 			break;
-		} else if (c == '-' || (isascii(c) && isalnum(c))) {
+		} else if (c == '-' || (isascii(c) != 0 && isalnum(c) != 0)) {
 			ttok = read_num_or_name(c, cfile);
 			break;
 		} else {
@@ -183,7 +183,7 @@ next_token(char **rval, FILE *cfile)
 {
 	int	rv;
 
-	if (token) {
+	if (token != 0) {
 		if (lexline != tline)
 			token_line = cur_line;
 		lexchar = tlpos;
@@ -194,7 +194,7 @@ next_token(char **rval, FILE *cfile)
 		rv = get_token(cfile);
 		token_line = cur_line;
 	}
-	if (rval)
+	if (rval != 0)
 		*rval = tval;
 
 	return rv;
@@ -205,7 +205,7 @@ peek_token(char **rval, FILE *cfile)
 {
 	int	 x;
 
-	if (!token) {
+	if (token == 0) {
 		tlpos = lexchar;
 		tline = lexline;
 		token = get_token(cfile);
@@ -218,7 +218,7 @@ peek_token(char **rval, FILE *cfile)
 		lexline = tline;
 		tline = x;
 	}
-	if (rval)
+	if (rval != 0)
 		*rval = tval;
 
 	return token;
@@ -252,7 +252,7 @@ read_string(FILE *cfile)
 			break;
 
 		tokbuf[i++] = c;
-		if (bs)
+		if (bs != 0)
 			bs = 0;
 		else if (c == '\\')
 			bs = 1;
@@ -280,17 +280,18 @@ read_num_or_name(int c, FILE *cfile)
 	unsigned int	 i, xdigits;
 	int		 rv;
 
-	xdigits = isxdigit(c) ? 1 : 0;
+	xdigits = (isxdigit(c) != 0) ? 1 : 0;
 
 	tokbuf[0] = c;
 	for (i = 1; i < sizeof(tokbuf); i++) {
 		c = get_char(cfile);
-		if (!isascii(c) || (c != '-' && c != '_' && !isalnum(c))) {
+		if (isascii(c) == 0 || (c != '-' && c != '_' &&
+		    isalnum(c) == 0)) {
 			ungetc(c, cfile);
 			ugflag = 1;
 			break;
 		}
-		if (isxdigit(c))
+		if (isxdigit(c) != 0)
 			xdigits++;
 		tokbuf[i] = c;
 	}
@@ -298,7 +299,7 @@ read_num_or_name(int c, FILE *cfile)
 		parse_warn("token larger than internal buffer");
 		i--;
 		c = tokbuf[i];
-		if (isxdigit(c))
+		if (isxdigit(c) != 0)
 			xdigits--;
 	}
 	tokbuf[i] = 0;
@@ -367,7 +368,7 @@ intern(char *atom, int dfv)
 
 	p = bsearch(atom, keywords, sizeof(keywords)/sizeof(keywords[0]),
 	    sizeof(keywords[0]), kw_cmp);
-	if (p)
+	if (p != NULL)
 		return p->k_val;
 	return dfv;
 }
