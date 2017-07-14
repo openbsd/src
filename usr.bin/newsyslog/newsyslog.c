@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.103 2017/07/14 20:51:17 jca Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.104 2017/07/14 22:17:16 jca Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -263,11 +263,10 @@ main(int argc, char **argv)
 		sleep(5);
 
 	/* Step 4, compress the log.0 file if configured to do so and free */
-	TAILQ_FOREACH_SAFE(p, &runlist, next, tmp) {
+	TAILQ_FOREACH(p, &runlist, next) {
 		if ((p->flags & CE_COMPACT) && (p->flags & CE_ROTATED) &&
 		    p->numlogs > 0)
 			compress_log(p);
-		free(p);
 	}
 
 	/* Wait for children to finish, then exit */
