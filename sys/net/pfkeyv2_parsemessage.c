@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.52 2017/06/26 09:17:55 patrick Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.53 2017/07/14 16:50:41 tedu Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -76,7 +76,6 @@
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <netinet/ip_ipsp.h>
-#include <netinet/ip_var.h>
 #include <net/pfkeyv2.h>
 
 #if NPF > 0
