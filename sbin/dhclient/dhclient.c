@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.466 2017/07/10 17:13:24 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.467 2017/07/14 13:47:09 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -111,6 +111,20 @@ const struct in_addr inaddr_broadcast = { INADDR_BROADCAST };
 struct client_config *config;
 struct imsgbuf *unpriv_ibuf;
 
+struct proposal {
+	uint8_t		rtstatic[RTSTATIC_LEN];
+	uint8_t		rtsearch[RTSEARCH_LEN];
+	uint8_t		rtdns[RTDNS_LEN];
+	struct in_addr	ifa;
+	struct in_addr	netmask;
+	unsigned int	rtstatic_len;
+	unsigned int	rtsearch_len;
+	unsigned int	rtdns_len;
+	int		mtu;
+	int		addrs;
+	int		inits;
+};
+
 void		 sighdlr(int);
 int		 findproto(char *, int);
 struct sockaddr	*get_ifa(char *, int);
@@ -126,7 +140,6 @@ struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
 void		 apply_ignore_list(char *);
 
-int compare_lease(struct client_lease *, struct client_lease *);
 void set_lease_times(struct client_lease *);
 
 void state_preboot(struct interface_info *);
@@ -149,6 +162,7 @@ void make_decline(struct interface_info *, struct client_lease *);
 void rewrite_client_leases(struct interface_info *);
 void rewrite_option_db(char *, struct client_lease *, struct client_lease *);
 char *lease_as_string(char *, char *, struct client_lease *);
+struct proposal *lease_as_proposal(struct client_lease *);
 void append_statement(char *, size_t, char *, char *);
 
 struct client_lease *packet_to_lease(struct interface_info *,
@@ -981,6 +995,8 @@ bind_lease(struct interface_info *ifi)
 	struct option_data	*opt;
 	struct option_data	*options;
 	struct client_lease	*lease, *pl;
+	struct proposal		*active_proposal = NULL;
+	struct proposal		*offered_proposal = NULL;
 	time_t			 cur_time;
 	int			 seen;
 
@@ -1001,19 +1017,23 @@ bind_lease(struct interface_info *ifi)
 	ifi->offer->rebind = lease->rebind;
 
 	/*
-	 * A duplicate lease once we are responsible & S_RENEWING means we
+	 * A duplicate proposal once we are responsible & S_RENEWING means we
 	 * don't need to change the interface, routing table or resolv.conf.
 	 */
-	if ((ifi->flags & IFI_IS_RESPONSIBLE) && ifi->state == S_RENEWING &&
-	    compare_lease(ifi->active, ifi->offer) == 0) {
-		ifi->offer->resolv_conf = ifi->active->resolv_conf;
-		ifi->active->resolv_conf = NULL;
-		ifi->active = ifi->offer;
-		ifi->offer = NULL;
-		log_info("bound to %s -- renewal in %lld seconds.",
-		    inet_ntoa(ifi->active->address),
-		    (long long)(ifi->active->renewal - time(NULL)));
-		goto newlease;
+	if ((ifi->flags & IFI_IS_RESPONSIBLE) && ifi->state == S_RENEWING) {
+		active_proposal = lease_as_proposal(ifi->active);
+		offered_proposal = lease_as_proposal(ifi->offer);
+		if (memcmp(active_proposal, offered_proposal,
+		    sizeof(*active_proposal)) == 0) {
+			ifi->offer->resolv_conf = ifi->active->resolv_conf;
+			    ifi->active->resolv_conf = NULL;
+			    ifi->active = ifi->offer;
+			    ifi->offer = NULL;
+			    log_info("bound to %s -- renewal in %lld seconds.",
+				inet_ntoa(ifi->active->address),
+				(long long)(ifi->active->renewal - time(NULL)));
+			    goto newlease;
+		}
 	}
 
 	ifi->offer->resolv_conf = resolv_conf_contents(ifi->name,
@@ -1085,6 +1105,8 @@ bind_lease(struct interface_info *ifi)
 newlease:
 	rewrite_option_db(ifi->name, ifi->active, lease);
 	free_client_lease(lease);
+	free(active_proposal);
+	free(offered_proposal);
 
 	/*
 	 * Remove previous dynamic lease(es) for this address, and any expired
@@ -1836,6 +1858,97 @@ append_statement(char *string, size_t sz, char *s1, char *s2)
 	strlcat(string, ";\n", sz);
 }
 
+struct proposal *
+lease_as_proposal(struct client_lease *lease)
+{
+	struct proposal	*proposal;
+	struct option_data	*opt;
+	char			*buf;
+
+	proposal = calloc(1, sizeof(*proposal));
+	if (proposal == NULL)
+		fatal("No memory for lease_as_proposal");
+
+	proposal->ifa = lease->address;
+	proposal->addrs |= RTA_IFA;
+
+	opt = &lease->options[DHO_INTERFACE_MTU];
+	if (opt->len == sizeof(u_int16_t)) {
+		memcpy(&proposal->mtu, opt->data, sizeof(proposal->mtu));
+		proposal->mtu = ntohs(proposal->mtu);
+		proposal->inits |= RTV_MTU;
+	}
+
+	opt = &lease->options[DHO_SUBNET_MASK];
+	if (opt->len == sizeof(proposal->netmask)) {
+		proposal->addrs |= RTA_NETMASK;
+		proposal->netmask.s_addr = ((struct in_addr *)opt->data)->s_addr;
+	}
+
+	if (lease->options[DHO_CLASSLESS_STATIC_ROUTES].len) {
+		opt = &lease->options[DHO_CLASSLESS_STATIC_ROUTES];
+		/* XXX */
+		if (opt->len < sizeof(proposal->rtstatic)) {
+			proposal->rtstatic_len = opt->len;
+			memcpy(&proposal->rtstatic, opt->data, opt->len);
+			proposal->addrs |= RTA_STATIC;
+		} else
+			log_warnx("CLASSLESS_STATIC_ROUTES too long");
+	} else if (lease->options[DHO_CLASSLESS_MS_STATIC_ROUTES].len) {
+		opt = &lease->options[DHO_CLASSLESS_MS_STATIC_ROUTES];
+		/* XXX */
+		if (opt->len < sizeof(proposal->rtstatic)) {
+			proposal->rtstatic_len = opt->len;
+			memcpy(&proposal->rtstatic[1], opt->data, opt->len);
+			proposal->addrs |= RTA_STATIC;
+		} else
+			log_warnx("MS_CLASSLESS_STATIC_ROUTES too long");
+	} else {
+		opt = &lease->options[DHO_ROUTERS];
+		if (opt->len >= sizeof(struct in_addr)) {
+			proposal->rtstatic_len = 1 + sizeof(struct in_addr);
+			proposal->rtstatic[0] = 0;
+			memcpy(&proposal->rtstatic[1], opt->data,
+			    sizeof(struct in_addr));
+			proposal->addrs |= RTA_STATIC;
+		}
+	}
+
+	if (lease->options[DHO_DOMAIN_SEARCH].len) {
+		opt = &lease->options[DHO_DOMAIN_SEARCH];
+		buf = pretty_print_domain_search(opt->data, opt->len);
+		if (buf == NULL )
+			log_warnx("DOMAIN_SEARCH too long");
+		else {
+			proposal->rtsearch_len = strlen(buf);
+			memcpy(proposal->rtsearch, buf, proposal->rtsearch_len);
+			proposal->addrs |= RTA_SEARCH;
+		}
+	} else if (lease->options[DHO_DOMAIN_NAME].len) {
+		opt = &lease->options[DHO_DOMAIN_NAME];
+		if (opt->len < sizeof(proposal->rtsearch)) {
+			proposal->rtsearch_len = opt->len;
+			memcpy(proposal->rtsearch, opt->data, opt->len);
+			proposal->addrs |= RTA_SEARCH;
+		} else
+			log_warnx("DOMAIN_NAME too long");
+	}
+	if (&lease->options[DHO_DOMAIN_NAME_SERVERS].len) {
+		int servers;
+		opt = &lease->options[DHO_DOMAIN_NAME_SERVERS];
+		servers = opt->len / sizeof(struct in_addr);
+		if (servers > MAXNS)
+			servers = MAXNS;
+		if (servers > 0) {
+			proposal->addrs |= RTA_DNS;
+			proposal->rtdns_len = opt->len;
+			memcpy(proposal->rtdns, opt->data, opt->len);
+		}
+	}
+
+	return proposal;
+}
+
 char *
 lease_as_string(char *ifname, char *type, struct client_lease *lease)
 {
@@ -2449,47 +2562,6 @@ set_lease_times(struct client_lease *lease)
 	lease->expiry += cur_time;
 	lease->renewal += cur_time;
 	lease->rebind += cur_time;
-}
-
-int
-compare_lease(struct client_lease *active, struct client_lease *new)
-{
-	int	 i;
-
-	if (active == new)
-		return 0;
-
-	if (!new || !active)
-		return 1;
-
-	if (active->address.s_addr != new->address.s_addr ||
-	    active->is_static != new->is_static ||
-	    BOOTP_LEASE(active) != BOOTP_LEASE(new))
-		return 1;
-
-	if (active->server_name != new->server_name) {
-		if (!active->server_name || !new->server_name)
-			return 1;
-		if (strcmp(active->server_name, new->server_name) != 0)
-			return 1;
-	}
-
-	if (active->filename != new->filename) {
-		if (!active->filename || !new->filename)
-			return 1;
-		if (strcmp(active->filename, new->filename) != 0)
-			return 1;
-	}
-
-	for (i = 0; i < DHO_COUNT; i++) {
-		if (active->options[i].len != new->options[i].len)
-			return 1;
-		if (memcmp(active->options[i].data, new->options[i].data,
-		    active->options[i].len))
-			return 1;
-	}
-
-	return 0;
 }
 
 void
