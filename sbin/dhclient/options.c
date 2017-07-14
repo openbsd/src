@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.99 2017/07/10 00:47:47 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.100 2017/07/14 14:03:15 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -455,8 +455,9 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 		 * If we haven't seen this option before, just make
 		 * space for it and copy it there.
 		 */
-		if (!options[code].data) {
-			if (!(t = calloc(1, len + 1)))
+		if (options[code].data == NULL) {
+			t = calloc(1, len + 1);
+			if (t == NULL)
 				fatalx("Can't allocate storage for option %s.",
 				    name);
 			/*
@@ -473,7 +474,7 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 			 * we last saw.
 			 */
 			t = calloc(1, len + options[code].len + 1);
-			if (!t)
+			if (t == NULL)
 				fatalx("Can't expand storage for option %s.",
 				    name);
 			memcpy(t, options[code].data, options[code].len);
@@ -510,7 +511,8 @@ pack_options(unsigned char *buf, int buflen, struct option_data *options)
 		bufix = 4;
 
 	for (code = DHO_SUBNET_MASK; code < DHO_END; code++) {
-		if (!options[code].data || code == DHO_DHCP_MESSAGE_TYPE)
+		if (options[code].data == NULL ||
+		    code == DHO_DHCP_MESSAGE_TYPE)
 			continue;
 
 		length = options[code].len;

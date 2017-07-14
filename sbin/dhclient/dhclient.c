@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.467 2017/07/14 13:47:09 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.468 2017/07/14 14:03:15 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -660,7 +660,7 @@ main(int argc, char *argv[])
 	ifi->bfdesc = get_bpf_sock(ifi->name);
 	ifi->rbuf_max = configure_bpf_sock(ifi->bfdesc);
 	ifi->rbuf = malloc(ifi->rbuf_max);
-	if (!ifi->rbuf)
+	if (ifi->rbuf == NULL)
 		fatalx("Can't allocate %lu bytes for bpf input buffer.",
 		    (unsigned long)ifi->rbuf_max);
 	ifi->rbuf_offset = 0;
@@ -964,7 +964,7 @@ dhcpnak(struct interface_info *ifi, struct option_data *options, char *info)
 		return;
 	}
 
-	if (!ifi->active) {
+	if (ifi->active == NULL) {
 #ifdef DEBUG
 		log_debug("Unexpected %s. No active lease.", info);
 #endif	/* DEBUG */
@@ -1310,7 +1310,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	    !(lease->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)) &&
 	    packet->sname[0]) {
 		lease->server_name = malloc(DHCP_SNAME_LEN + 1);
-		if (!lease->server_name) {
+		if (lease->server_name == NULL) {
 			log_warnx("lease declined:: no memory for SNAME.");
 			goto decline;
 		}
@@ -1328,7 +1328,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	    packet->file[0]) {
 		/* Don't count on the NUL terminator. */
 		lease->filename = malloc(DHCP_FILE_LEN + 1);
-		if (!lease->filename) {
+		if (lease->filename == NULL) {
 			log_warnx("lease declined: no memory for filename.");
 			goto decline;
 		}
@@ -1579,8 +1579,8 @@ make_discover(struct interface_info *ifi, struct client_lease *lease)
 
 	/* Send any options requested in the config file. */
 	for (i = 0; i < DHO_COUNT; i++)
-		if (!options[i].data &&
-		    config->send_options[i].data) {
+		if (options[i].data == NULL &&
+		    config->send_options[i].data != NULL) {
 			options[i].data = config->send_options[i].data;
 			options[i].len = config->send_options[i].len;
 		}
@@ -1656,7 +1656,8 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 
 	/* Send any options requested in the config file. */
 	for (i = 0; i < DHO_COUNT; i++)
-		if (!options[i].data && config->send_options[i].data) {
+		if (options[i].data == NULL &&
+		    config->send_options[i].data != NULL) {
 			options[i].data = config->send_options[i].data;
 			options[i].len = config->send_options[i].len;
 		}
