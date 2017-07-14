@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_i2c.c,v 1.6 2017/07/01 16:14:10 kettenis Exp $	*/
+/*	$OpenBSD: radeon_i2c.c,v 1.7 2017/07/14 11:18:04 kettenis Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -975,25 +975,19 @@ static int radeon_hw_i2c_xfer(struct i2c_adapter *i2c_adap,
 	return ret;
 }
 
-#ifdef notyet
-static u32 radeon_hw_i2c_func(struct i2c_controller *adap)
+static u32 radeon_hw_i2c_func(struct i2c_adapter *adap)
 {
 	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
 }
-#endif
 
 static const struct i2c_algorithm radeon_i2c_algo = {
 	.master_xfer = radeon_hw_i2c_xfer,
-#ifdef notyet
 	.functionality = radeon_hw_i2c_func,
-#endif
 };
 
 static const struct i2c_algorithm radeon_atom_i2c_algo = {
 	.master_xfer = radeon_atom_hw_i2c_xfer,
-#ifdef notyet
 	.functionality = radeon_atom_hw_i2c_func,
-#endif
 };
 
 struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.55 2017/07/12 20:12:19 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.56 2017/07/14 11:18:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -49,51 +49,6 @@
 #pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
 #pragma clang diagnostic ignored "-Wunused-const-variable"
 #endif
-
-struct i2c_algorithm;
-
-struct i2c_adapter {
-	struct i2c_controller ic;
-
-	char name[48];
-	const struct i2c_algorithm *algo;
-	void *algo_data;
-	int retries;
-
-	void *data;
-};
-
-#define I2C_NAME_SIZE	20
-
-struct i2c_msg {
-	uint16_t addr;
-	uint16_t flags;
-	uint16_t len;
-	uint8_t *buf;
-};
-
-#define I2C_M_RD	0x0001
-#define I2C_M_NOSTART	0x0002
-
-struct i2c_algorithm {
-	int (*master_xfer)(struct i2c_adapter *, struct i2c_msg *, int);
-};
-
-int i2c_transfer(struct i2c_adapter *, struct i2c_msg *, int);
-#define i2c_add_adapter(x) 0
-#define i2c_del_adapter(x)
-
-static inline void *
-i2c_get_adapdata(struct i2c_adapter *adap)
-{
-	return adap->data;
-}
-
-static inline void
-i2c_set_adapdata(struct i2c_adapter *adap, void *data)
-{
-	adap->data = data;
-}
 
 typedef int irqreturn_t;
 enum irqreturn {
@@ -1564,6 +1519,58 @@ vga_client_register(struct pci_dev *a, void *b, void *c, void *d)
 #define vga_switcheroo_process_delayed_switch()
 
 #endif
+
+struct i2c_algorithm;
+
+#define I2C_FUNC_I2C			0
+#define I2C_FUNC_SMBUS_EMUL		0
+#define I2C_FUNC_SMBUS_READ_BLOCK_DATA	0
+#define I2C_FUNC_SMBUS_BLOCK_PROC_CALL	0
+#define I2C_FUNC_10BIT_ADDR		0
+
+struct i2c_adapter {
+	struct i2c_controller ic;
+
+	char name[48];
+	const struct i2c_algorithm *algo;
+	void *algo_data;
+	int retries;
+
+	void *data;
+};
+
+#define I2C_NAME_SIZE	20
+
+struct i2c_msg {
+	uint16_t addr;
+	uint16_t flags;
+	uint16_t len;
+	uint8_t *buf;
+};
+
+#define I2C_M_RD	0x0001
+#define I2C_M_NOSTART	0x0002
+
+struct i2c_algorithm {
+	u32 (*functionality)(struct i2c_adapter *);
+	int (*master_xfer)(struct i2c_adapter *, struct i2c_msg *, int);
+};
+
+int i2c_transfer(struct i2c_adapter *, struct i2c_msg *, int);
+#define i2c_add_adapter(x) 0
+#define i2c_del_adapter(x)
+
+static inline void *
+i2c_get_adapdata(struct i2c_adapter *adap)
+{
+	return adap->data;
+}
+
+static inline void
+i2c_set_adapdata(struct i2c_adapter *adap, void *data)
+{
+	adap->data = data;
+}
 
 #define memcpy_toio(d, s, n)	memcpy(d, s, n)
 #define memcpy_fromio(d, s, n)	memcpy(d, s, n)

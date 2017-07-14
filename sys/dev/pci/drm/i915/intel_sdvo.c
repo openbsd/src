@@ -2920,19 +2920,15 @@ static int intel_sdvo_ddc_proxy_xfer(struct i2c_adapter *adapter,
 	return sdvo->i2c->algo->master_xfer(sdvo->i2c, msgs, num);
 }
 
-#ifdef notyet
 static u32 intel_sdvo_ddc_proxy_func(struct i2c_adapter *adapter)
 {
 	struct intel_sdvo *sdvo = adapter->algo_data;
 	return sdvo->i2c->algo->functionality(sdvo->i2c);
 }
-#endif
 
 static const struct i2c_algorithm intel_sdvo_ddc_proxy = {
 	.master_xfer	= intel_sdvo_ddc_proxy_xfer,
-#ifdef notyet
 	.functionality	= intel_sdvo_ddc_proxy_func
-#endif
 };
 
 static bool

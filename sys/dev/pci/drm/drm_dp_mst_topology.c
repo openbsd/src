@@ -3030,7 +3030,6 @@ out:
 	return ret;
 }
 
-#ifdef notyet
 static u32 drm_dp_mst_i2c_functionality(struct i2c_adapter *adapter)
 {
 	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL |
@@ -3038,12 +3037,9 @@ static u32 drm_dp_mst_i2c_functionality(struct i2c_adapter *adapter)
 	       I2C_FUNC_SMBUS_BLOCK_PROC_CALL |
 	       I2C_FUNC_10BIT_ADDR;
 }
-#endif
 
 static const struct i2c_algorithm drm_dp_mst_i2c_algo = {
-#ifdef notyet
 	.functionality = drm_dp_mst_i2c_functionality,
-#endif
 	.master_xfer = drm_dp_mst_i2c_xfer,
 };
 

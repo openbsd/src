@@ -426,8 +426,6 @@ EXPORT_SYMBOL(drm_dp_link_configure);
  * I2C-over-AUX implementation
  */
 
-#ifdef notyet
-
 static u32 drm_dp_i2c_functionality(struct i2c_adapter *adapter)
 {
 	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL |
@@ -435,8 +433,6 @@ static u32 drm_dp_i2c_functionality(struct i2c_adapter *adapter)
 	       I2C_FUNC_SMBUS_BLOCK_PROC_CALL |
 	       I2C_FUNC_10BIT_ADDR;
 }
-
-#endif
 
 static void drm_dp_i2c_msg_write_status_update(struct drm_dp_aux_msg *msg)
 {
@@ -758,9 +754,7 @@ static int drm_dp_i2c_xfer(struct i2c_adapter *adapter, struct i2c_msg *msgs,
 }
 
 static const struct i2c_algorithm drm_dp_i2c_algo = {
-#ifdef notyet
 	.functionality = drm_dp_i2c_functionality,
-#endif
 	.master_xfer = drm_dp_i2c_xfer,
 };
 
