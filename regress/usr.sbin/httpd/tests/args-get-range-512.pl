@@ -6,7 +6,7 @@ my $path = 1048576;
 our %args = (
     client => {
 	path => $path,
-        http_vers => [ "1.1" ],
+	http_vers => [ "1.1" ],
 	code => "206 Partial Content",
 	header => {
 		"Range" => "bytes=0-511",

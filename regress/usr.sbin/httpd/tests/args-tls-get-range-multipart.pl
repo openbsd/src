@@ -5,7 +5,7 @@ my $len = 1048576;
 our %args = (
     client => {
 	path => $len,
-        http_vers => [ "1.1" ],
+	http_vers => [ "1.1" ],
 	code => "206 Partial Content",
 	header => {
 		"Range" => "bytes=0-255,256-10240,10241-",

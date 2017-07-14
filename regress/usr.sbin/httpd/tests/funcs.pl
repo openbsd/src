@@ -1,6 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.7 2017/02/01 10:26:06 reyk Exp $
+#	$OpenBSD: funcs.pl,v 1.8 2017/07/14 13:31:44 bluhm Exp $
 
-# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -234,7 +234,6 @@ sub http_response {
 	} elsif ($chunked) {
 		read_chunked($self);
 	} else {
-		#$len = $vers eq "1.1" ? $len : undef;
 		read_char($self, $len)
 		    if $method eq "GET";
 	}
@@ -310,21 +309,7 @@ sub read_multipart {
 		}
 		last unless $part > 0;
 
-		my $max = $part;
-		my $rlen = POSIX::BUFSIZ;
-		my $r;
-		do {
-			if ($rlen > $max) {
-				$rlen = $max;
-			}
-			$r = read(STDIN, my $buf, $rlen);
-			last if not $r;
-			$_ = $buf;
-			$ctx->add($_);
-			$max = $max - $r;
-		} while ($max && $r == $rlen);
-
-		$len = $len + $part;
+		$len += read_part($self, $ctx, $part);
 	}
 
 	print STDERR "LEN: ", $len, "\n";
@@ -344,7 +329,7 @@ sub errignore {
 }
 
 ########################################################################
-# Server funcs
+# Common funcs
 ########################################################################
 
 sub read_char {
@@ -352,107 +337,39 @@ sub read_char {
 	my $max = shift // $self->{max};
 
 	my $ctx = Digest::MD5->new();
-	my $len = 0;
-	if (defined($max) && $max == 0) {
-		print STDERR "Max\n";
-	} else {
-		while ((my $r = sysread(STDIN, my $buf, POSIX::BUFSIZ))) {
-			my $pct;
-			$_ = $buf;
-			$len += $r;
-			$ctx->add($_);
-			$pct = ($len / $max) * 100.0;
-			printf(STDERR "%.2f%%\n", $pct);
-			if (defined($max) && $len >= $max) {
-				print STDERR "\nMax";
-				last;
-			}
-		}
-		print STDERR "\n";
-	}
+	my $len = read_part($self, $ctx, $max);
 
 	print STDERR "LEN: ", $len, "\n";
 	print STDERR "MD5: ", $ctx->hexdigest, "\n";
 }
 
-sub http_server {
+sub read_part {
 	my $self = shift;
-	my %header = %{$self->{header} || { Server => "Perl/".$^V }};
-	my $cookie = $self->{cookie} || "";
+	my ($ctx, $max) = @_;
 
-	my($method, $url, $vers);
-	do {
-		my $len;
-		{
-			local $/ = "\r\n";
-			local $_ = <STDIN>;
-			return unless defined $_;
-			chomp;
-			print STDERR "<<< $_\n";
-			($method, $url, $vers) = m{^(\w+) (.*) HTTP/(1\.[01])$}
-			    or die ref($self), " http request not ok";
-			$method =~ /^(GET|PUT)$/
-			    or die ref($self), " unknown method: $method";
-			($len, my @chunks) = $url =~ /(\d+)/g;
-			$len = [ $len, @chunks ] if @chunks;
-			while (<STDIN>) {
-				chomp;
-				print STDERR "<<< $_\n";
-				last if /^$/;
-				if ($method eq "PUT" &&
-				    /^Content-Length: (.*)/) {
-					$1 == $len or die ref($self),
-					    " bad content length $1";
-				}
-				$cookie ||= $1 if /^Cookie: (.*)/;
-			}
+	my $opct = 0;
+	my $len = 0;
+	for (;;) {
+		if (defined($max) && $len >= $max) {
+			print STDERR "Max\n";
+			last;
 		}
-		if ($method eq "PUT" ) {
-			if (ref($len) eq 'ARRAY') {
-				read_chunked($self);
-			} else {
-				read_char($self, $len);
-			}
+		my $rlen = POSIX::BUFSIZ;
+		if (defined($max) && $rlen > $max - $len) {
+			$rlen = $max - $len;
 		}
-
-		my @response = ("HTTP/$vers 200 OK");
-		$len = defined($len) ? $len : scalar(split /|/,$url);
-		if ($vers eq "1.1" && $method eq "GET") {
-			if (ref($len) eq 'ARRAY') {
-				push @response, "Transfer-Encoding: chunked";
-			} else {
-				push @response, "Content-Length: $len";
-			}
+		defined(my $n = read(STDIN, my $buf, $rlen))
+		    or die ref($self), " read failed: $!";
+		$n or last;
+		$len += $n;
+		$ctx->add($buf);
+		my $pct = ($len / $max) * 100.0;
+		if ($pct >= $opct + 1) {
+			printf(STDERR "%.2f%% $len/$max\n", $pct);
+			$opct = $pct;
 		}
-		foreach my $key (sort keys %header) {
-			my $val = $header{$key};
-			if (ref($val) eq 'ARRAY') {
-				push @response, "$key: $_"
-				    foreach @{$val};
-			} else {
-				push @response, "$key: $val";
-			}
-		}
-		push @response, "Set-Cookie: $cookie" if $cookie;
-		push @response, "";
-
-		print STDERR map { ">>> $_\n" } @response;
-		print map { "$_\r\n" } @response;
-
-		if ($method eq "GET") {
-			if (ref($len) eq 'ARRAY') {
-				if ($vers eq "1.1") {
-					write_chunked($self, @$len);
-				} else {
-					write_char($self, $_) foreach (@$len);
-				}
-			} else {
-				write_char($self, $len);
-			}
-		}
-		IO::Handle::flush(\*STDOUT);
-	} while ($vers eq "1.1");
-	$self->{redo}-- if $self->{redo};
+	}
+	return $len;
 }
 
 sub write_chunked {

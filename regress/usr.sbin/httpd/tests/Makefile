@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2017/01/30 21:18:24 reyk Exp $
+#	$OpenBSD: Makefile,v 1.8 2017/07/14 13:31:44 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -28,11 +28,10 @@ REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 CLEANFILES +=		*.log httpd.conf ktrace.out stamp-*
 CLEANFILES +=		*.pem *.req *.crt *.key *.srl md5-*
 
-HTDOCS =		${.OBJDIR}/htdocs
 HTDOCS_FILES =		512 1048576 1073741824
-HTDOCS_MD5 =		${HTDOCS_FILES:S/^/${.OBJDIR}\/md5-/}
+HTDOCS_MD5 =		${HTDOCS_FILES:S,^,md5-,}
 HTDOCS_SPARSE =		yes
-CLEANFILES +=		${HTDOCS_FILES:S/^/${HTDOCS}\//} ${HTDOCS}/*.log
+CLEANFILES +=		htdocs/*
 
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
@@ -49,27 +48,25 @@ PERLPATH =	${.CURDIR}/
 # test parameters.  Generally they consist of client, httpd, server.
 
 .for a in ${ARGS}
-run-regress-$a: ${HTDOCS} $a ${HTDOCS_MD5}
+run-regress-$a: $a ${HTDOCS_MD5}
 	@echo '\n======== $@ ========'
 	time SUDO=${SUDO} KTRACE=${KTRACE} HTTPD=${HTTPD} perl ${PERLINC} ${PERLPATH}httpd.pl ${.OBJDIR} ${PERLPATH}$a
 .endfor
 
-# htdocs
-
-${HTDOCS}:
-	@mkdir -m 0755 -p ${HTDOCS}
+# populate htdocs
 
 .for d in ${HTDOCS_FILES}
-${HTDOCS}/$d:
+htdocs/$d:
 	@echo '\n======== file: $d ========'
+	mkdir -m 0755 -p ${@:H}
 .if (${HTDOCS_SPARSE} != "yes")
-	@dd if=/dev/arandom of=$@ count=$$(($d / 512)) bs=512
+	dd if=/dev/arandom of=$@ count=$$(($d / 512)) bs=512
 .else
-	@dd of=$@ seek=$$(($d / 512)) bs=512 count=0 status=none
+	dd of=$@ seek=$$(($d / 512)) bs=512 count=0 status=none
 .endif
 
-${.OBJDIR}/md5-$d: ${HTDOCS}/$d
-	@md5 -q ${HTDOCS}/$d > $@
+md5-$d: htdocs/$d
+	md5 -q htdocs/$d >$@
 .endfor
 
 # create certificates for TLS

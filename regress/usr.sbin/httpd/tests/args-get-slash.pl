@@ -7,7 +7,7 @@ our %args = (
 	    my $self = shift;
 	    print "GET /\r\n\r\n";
 	},
-        nocheck => 1
+	nocheck => 1
     },
     httpd => {
 	loggrep => {
