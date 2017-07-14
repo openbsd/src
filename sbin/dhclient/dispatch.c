@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.132 2017/07/07 14:53:07 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.133 2017/07/14 13:08:41 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -181,8 +181,11 @@ dispatch(struct interface_info *ifi, int routefd)
 			}
 		}
 
-		if ((fds[0].revents & (POLLIN | POLLHUP)))
-			packethandler(ifi);
+		if ((fds[0].revents & (POLLIN | POLLHUP))) {
+			do {
+				packethandler(ifi);
+			} while (ifi->rbuf_offset < ifi->rbuf_len);
+		}
 		if ((fds[1].revents & (POLLIN | POLLHUP)))
 			routehandler(ifi, routefd);
 		if (fds[2].revents & POLLOUT)
