@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.82 2017/06/02 20:25:50 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.83 2017/07/14 19:09:52 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -71,6 +71,7 @@ int	xen_getfeatures(struct xen_softc *);
 int	xen_init_info_page(struct xen_softc *);
 int	xen_init_cbvec(struct xen_softc *);
 int	xen_init_interrupts(struct xen_softc *);
+void	xen_intr_dispatch(void *);
 int	xen_init_grant_tables(struct xen_softc *);
 struct xen_gntent *
 	xen_grant_table_grow(struct xen_softc *);
@@ -634,6 +635,27 @@ xen_intsrc_remove(struct xen_softc *sc, evtchn_port_t port)
 	return (xi);
 }
 
+static inline void
+xen_intr_mask_acquired(struct xen_softc *sc, struct xen_intsrc *xi)
+{
+	xi->xi_masked = 1;
+	set_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0]);
+}
+
+static inline int
+xen_intr_unmask_release(struct xen_softc *sc, struct xen_intsrc *xi)
+{
+	struct evtchn_unmask eu;
+
+	xi->xi_masked = 0;
+	if (!test_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0]))
+		return (0);
+	eu.port = xi->xi_port;
+	xen_intsrc_release(sc, xi);
+	return (xen_evtchn_hypercall(sc, EVTCHNOP_unmask, &eu,
+	    sizeof(eu)));
+}
+
 void
 xen_intr_ack(void)
 {
@@ -678,8 +700,8 @@ xen_intr(void)
 				continue;
 			}
 			xi->xi_evcnt.ec_count++;
+			xen_intr_mask_acquired(sc, xi);
 			task_add(xi->xi_taskq, &xi->xi_task);
-			xen_intsrc_release(sc, xi);
 		}
 	}
 }
@@ -690,10 +712,8 @@ xen_intr_schedule(xen_intr_handle_t xih)
 	struct xen_softc *sc = xen_sc;
 	struct xen_intsrc *xi;
 
-	if ((xi = xen_intsrc_acquire(sc, (evtchn_port_t)xih)) != NULL) {
+	if ((xi = xen_intsrc_acquire(sc, (evtchn_port_t)xih)) != NULL)
 		task_add(xi->xi_taskq, &xi->xi_task);
-		xen_intsrc_release(sc, xi);
-	}
 }
 
 static void
@@ -780,6 +800,9 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih, int domain,
 
 	xi->xi_port = (evtchn_port_t)*xih;
 
+	xi->xi_handler = handler;
+	xi->xi_ctx = arg;
+
 	xi->xi_taskq = taskq_create(name, 1, IPL_NET, TASKQ_MPSAFE);
 	if (!xi->xi_taskq) {
 		printf("%s: failed to create interrupt task for %s\n",
@@ -787,7 +810,7 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih, int domain,
 		free(xi, M_DEVBUF, sizeof(*xi));
 		return (-1);
 	}
-	task_set(&xi->xi_task, handler, arg);
+	task_set(&xi->xi_task, xen_intr_dispatch, xi);
 
 	if (port == 0) {
 		/* We're being asked to allocate a new event port */
@@ -886,6 +909,18 @@ xen_intr_disestablish(xen_intr_handle_t xih)
 }
 
 void
+xen_intr_dispatch(void *arg)
+{
+	struct xen_softc *sc = xen_sc;
+	struct xen_intsrc *xi = arg;
+
+	if (xi->xi_handler)
+		xi->xi_handler(xi->xi_ctx);
+
+	xen_intr_unmask_release(sc, xi);
+}
+
+void
 xen_intr_enable(void)
 {
 	struct xen_softc *sc = xen_sc;
@@ -917,8 +952,7 @@ xen_intr_mask(xen_intr_handle_t xih)
 	struct xen_intsrc *xi;
 
 	if ((xi = xen_intsrc_acquire(sc, port)) != NULL) {
-		xi->xi_masked = 1;
-		set_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0]);
+		xen_intr_mask_acquired(sc, xi);
 		xen_intsrc_release(sc, xi);
 	}
 }
@@ -929,17 +963,10 @@ xen_intr_unmask(xen_intr_handle_t xih)
 	struct xen_softc *sc = xen_sc;
 	evtchn_port_t port = (evtchn_port_t)xih;
 	struct xen_intsrc *xi;
-	struct evtchn_unmask eu;
 
-	if ((xi = xen_intsrc_acquire(sc, port)) != NULL) {
-		xi->xi_masked = 0;
-		if (!test_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0]))
-			return (0);
-		eu.port = xi->xi_port;
-		xen_intsrc_release(sc, xi);
-		return (xen_evtchn_hypercall(sc, EVTCHNOP_unmask, &eu,
-		    sizeof(eu)));
-	}
+	if ((xi = xen_intsrc_acquire(sc, port)) != NULL)
+		return (xen_intr_unmask_release(sc, xi));
+
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.49 2017/02/08 16:15:52 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.50 2017/07/14 19:09:52 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -49,6 +49,8 @@ struct xen_intsrc {
 	struct refcnt		 xi_refcnt;
 	struct task		 xi_task;
 	struct taskq		*xi_taskq;
+	void			(*xi_handler)(void *);
+	void			*xi_ctx;
 };
 
 struct xen_gntent {
