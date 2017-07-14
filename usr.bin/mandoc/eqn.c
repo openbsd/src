@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.39 2017/07/08 14:51:01 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.40 2017/07/14 18:18:05 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1039,7 +1039,7 @@ next_tok:
 				/* No boundary after last character. */
 				if (*cpn == '\0')
 					break;
-				if (ccln == ccl)
+				if (ccln == ccl && *cp != ',' && *cpn != ',')
 					continue;
 				/* Boundary found, split the text. */
 				if (parent->args == parent->expectargs) {
