@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.85 2017/06/23 02:31:39 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.86 2017/07/14 15:26:14 bentley Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -451,7 +451,7 @@ print_encode(struct html *h, const char *p, const char *pend, int norecurse)
 		    (c > 0x7E && c < 0xA0))
 			c = 0xFFFD;
 		if (c > 0x7E) {
-			(void)snprintf(numbuf, sizeof(numbuf), "&#%d;", c);
+			(void)snprintf(numbuf, sizeof(numbuf), "&#x%.4X;", c);
 			print_word(h, numbuf);
 		} else if (print_escape(h, c) == 0)
 			print_byte(h, c);
@@ -514,7 +514,7 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 		print_indent(h);
 	else if ((h->flags & HTML_NOSPACE) == 0) {
 		if (h->flags & HTML_KEEP)
-			print_word(h, "&#160;");
+			print_word(h, "&#x00A0;");
 		else {
 			if (h->flags & HTML_PREKEEP)
 				h->flags |= HTML_KEEP;
@@ -777,7 +777,7 @@ print_text(struct html *h, const char *word)
 				h->flags |= HTML_KEEP;
 			print_endword(h);
 		} else
-			print_word(h, "&#160;");
+			print_word(h, "&#x00A0;");
 	}
 
 	assert(NULL == h->metaf);
