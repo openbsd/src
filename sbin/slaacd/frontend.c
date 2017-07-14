@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.3 2017/07/06 15:02:53 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.4 2017/07/14 09:29:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -509,7 +509,7 @@ update_iface(uint32_t if_index, char* if_name)
 	memcpy(&nd_opt_source_link_addr, &imsg_ifinfo.hw_address,
 	    sizeof(nd_opt_source_link_addr));
 
-	frontend_imsg_compose_engine(IMSG_UPDATE_IF, 0, 0, &imsg_ifinfo,
+	frontend_imsg_compose_main(IMSG_UPDATE_IF, 0, &imsg_ifinfo,
 	    sizeof(imsg_ifinfo));
 }
 

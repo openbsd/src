@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.6 2017/07/09 09:00:56 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.7 2017/07/14 09:29:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -378,7 +378,6 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 	struct imsg			 imsg;
 	struct slaacd_iface		*iface;
 	struct imsg_ra			 ra;
-	struct imsg_ifinfo		 imsg_ifinfo;
 	struct imsg_proposal_ack	 proposal_ack;
 	struct address_proposal		*addr_proposal = NULL;
 	struct dfr_proposal		*dfr_proposal = NULL;
@@ -424,73 +423,6 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			engine_showinfo_ctl(&imsg, if_index);
 			break;
 #endif	/* SMALL */
-		case IMSG_UPDATE_IF:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(imsg_ifinfo))
-				fatal("%s: IMSG_UPDATE_IF wrong length: %d",
-				    __func__, imsg.hdr.len);
-			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
-
-			iface = get_slaacd_iface_by_id(imsg_ifinfo.if_index);
-			if (iface == NULL) {
-				if ((iface = calloc(1, sizeof(*iface))) == NULL)
-					fatal("calloc");
-				evtimer_set(&iface->timer, iface_timeout,
-				    iface);
-				iface->if_index = imsg_ifinfo.if_index;
-				iface->running = imsg_ifinfo.running;
-				if (iface->running)
-					start_probe(iface);
-				else
-					iface->state = IF_DOWN;
-				iface->autoconfprivacy =
-				    imsg_ifinfo.autoconfprivacy;
-				memcpy(&iface->hw_address,
-				    &imsg_ifinfo.hw_address,
-				    sizeof(struct ether_addr));
-				memcpy(&iface->ll_address,
-				    &imsg_ifinfo.ll_address,
-				    sizeof(struct sockaddr_in6));
-				LIST_INIT(&iface->radvs);
-				LIST_INSERT_HEAD(&slaacd_interfaces,
-				    iface, entries);
-				LIST_INIT(&iface->addr_proposals);
-				LIST_INIT(&iface->dfr_proposals);
-			} else {
-				int need_refresh = 0;
-
-				if (iface->autoconfprivacy !=
-				    imsg_ifinfo.autoconfprivacy) {
-					iface->autoconfprivacy =
-					    imsg_ifinfo.autoconfprivacy;
-					need_refresh = 1;
-				}
-				if (memcmp(&iface->hw_address,
-					    &imsg_ifinfo.hw_address,
-					    sizeof(struct ether_addr)) != 0) {
-					memcpy(&iface->hw_address,
-					    &imsg_ifinfo.hw_address,
-					    sizeof(struct ether_addr));
-					need_refresh = 1;
-				}
-
-				if (iface->state != IF_DOWN &&
-				    imsg_ifinfo.running && need_refresh)
-					start_probe(iface);
-
-				iface->running = imsg_ifinfo.running;
-				if (!iface->running) {
-					iface->state = IF_DOWN;
-					if (evtimer_pending(&iface->timer,
-					    NULL))
-						evtimer_del(&iface->timer);
-				}
-
-				memcpy(&iface->ll_address,
-				    &imsg_ifinfo.ll_address,
-				    sizeof(struct sockaddr_in6));
-			}
-			break;
 		case IMSG_REMOVE_IF:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(if_index))
 				fatal("%s: IMSG_REMOVE_IF wrong length: %d",
@@ -605,6 +537,8 @@ engine_dispatch_main(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
+	struct imsg_ifinfo	 imsg_ifinfo;
+	struct slaacd_iface	*iface;
 	ssize_t			 n;
 	int			 shut = 0;
 
@@ -659,6 +593,73 @@ engine_dispatch_main(int fd, short event, void *bula)
 
 			if (pledge("stdio", NULL) == -1)
 				fatal("pledge");
+			break;
+		case IMSG_UPDATE_IF:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(imsg_ifinfo))
+				fatal("%s: IMSG_UPDATE_IF wrong length: %d",
+				    __func__, imsg.hdr.len);
+			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
+
+			iface = get_slaacd_iface_by_id(imsg_ifinfo.if_index);
+			if (iface == NULL) {
+				if ((iface = calloc(1, sizeof(*iface))) == NULL)
+					fatal("calloc");
+				evtimer_set(&iface->timer, iface_timeout,
+				    iface);
+				iface->if_index = imsg_ifinfo.if_index;
+				iface->running = imsg_ifinfo.running;
+				if (iface->running)
+					start_probe(iface);
+				else
+					iface->state = IF_DOWN;
+				iface->autoconfprivacy =
+				    imsg_ifinfo.autoconfprivacy;
+				memcpy(&iface->hw_address,
+				    &imsg_ifinfo.hw_address,
+				    sizeof(struct ether_addr));
+				memcpy(&iface->ll_address,
+				    &imsg_ifinfo.ll_address,
+				    sizeof(struct sockaddr_in6));
+				LIST_INIT(&iface->radvs);
+				LIST_INSERT_HEAD(&slaacd_interfaces,
+				    iface, entries);
+				LIST_INIT(&iface->addr_proposals);
+				LIST_INIT(&iface->dfr_proposals);
+			} else {
+				int need_refresh = 0;
+
+				if (iface->autoconfprivacy !=
+				    imsg_ifinfo.autoconfprivacy) {
+					iface->autoconfprivacy =
+					    imsg_ifinfo.autoconfprivacy;
+					need_refresh = 1;
+				}
+				if (memcmp(&iface->hw_address,
+					    &imsg_ifinfo.hw_address,
+					    sizeof(struct ether_addr)) != 0) {
+					memcpy(&iface->hw_address,
+					    &imsg_ifinfo.hw_address,
+					    sizeof(struct ether_addr));
+					need_refresh = 1;
+				}
+
+				if (iface->state != IF_DOWN &&
+				    imsg_ifinfo.running && need_refresh)
+					start_probe(iface);
+
+				iface->running = imsg_ifinfo.running;
+				if (!iface->running) {
+					iface->state = IF_DOWN;
+					if (evtimer_pending(&iface->timer,
+					    NULL))
+						evtimer_del(&iface->timer);
+				}
+
+				memcpy(&iface->ll_address,
+				    &imsg_ifinfo.ll_address,
+				    sizeof(struct sockaddr_in6));
+			}
 			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,

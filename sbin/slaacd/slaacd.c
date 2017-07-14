@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.4 2017/07/06 15:02:53 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.5 2017/07/14 09:29:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -369,6 +369,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
+	struct imsg_ifinfo	 imsg_ifinfo;
 	ssize_t			 n;
 	int			 shut = 0;
 #ifndef	SMALL
@@ -404,6 +405,15 @@ main_dispatch_frontend(int fd, short event, void *bula)
 			log_setverbose(verbose);
 			break;
 #endif	/* SMALL */
+		case IMSG_UPDATE_IF:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(imsg_ifinfo))
+				fatal("%s: IMSG_UPDATE_IF wrong length: %d",
+				    __func__, imsg.hdr.len);
+			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
+			main_imsg_compose_engine(IMSG_UPDATE_IF, 0,
+			    &imsg_ifinfo, sizeof(imsg_ifinfo));
+			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);
