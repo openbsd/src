@@ -1,6 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.22 2016/05/03 19:13:04 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.23 2017/07/14 14:41:03 bluhm Exp $
 
-# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -51,25 +51,27 @@ sub find_ports {
 sub write_syswrite {
 	my $self = shift;
 	my $buf = shift;
-	my $len = 0;
-	my $size = length($buf);
-	my $r = 0;
 
+	IO::Handle::flush(\*STDOUT);
+	my $size = length($buf);
+	my $len = 0;
 	while ($len < $size) {
-		while (($r = syswrite(STDOUT, $buf, $size, $len))) {
-		    $len += $r;
-			if ($r != $size) {
-			    print STDERR "short write (only $r bytes)\n";
-			}
+		my $n = syswrite(STDOUT, $buf, $size, $len);
+		if (!defined($n)) {
+			$!{EWOULDBLOCK}
+			    or die ref($self), " syswrite failed: $!";
+			print STDERR "blocked write at $len of $size: $!\n";
+			next;
 		}
-		if ($len != $size) {
-		    print STDERR "short write ($!)\n";
+		if ($len + $n != $size) {
+			print STDERR "short write $n at $len of $size\n";
 		}
+		$len += $n;
 	}
 	return $len;
 }
 
-sub write_blocks {
+sub write_block {
 	my $self = shift;
 	my $len = shift;
 
@@ -79,22 +81,30 @@ sub write_blocks {
 	my $rest = $len % 1000;
 
 	for (my $i = 1; $i <= 100 ; $i++) {
-		$data .= '012345678'."\n";
+		$data .= "012345678\n";
 	}
 
+	my $opct = 0;
 	for (my $i = 1; $i <= $blocks; $i++) {
-		$outb += write_syswrite($self,$data);
-		print STDERR ".";
+		$outb += write_syswrite($self, $data);
+		my $pct = ($outb / $len) * 100.0;
+		if ($pct >= $opct + 1) {
+			printf(STDERR "%.2f%% $outb/$len\n", $pct);
+			$opct = $pct;
+		}
 	}
 
 	if ($rest>0) {
 		for (my $i = 1; $i < $rest-1 ; $i++) {
-		    $outb += write_syswrite($self,'r');
-		    print STDERR ".";
+		    $outb += write_syswrite($self, 'r');
+		    my $pct = ($outb / $len) * 100.0;
+		    if ($pct >= $opct + 1) {
+			    printf(STDERR "%.2f%% $outb/$len\n", $pct);
+			    $opct = $pct;
+		    }
 		}
 	}
-	print STDERR "\n";
-	$outb += write_syswrite($self,"\n\n");
+	$outb += write_syswrite($self, "\n\n");
 	IO::Handle::flush(\*STDOUT);
 	print STDERR "LEN: ", $outb, "\n";
 }
@@ -105,7 +115,7 @@ sub write_char {
 	my $sleep = $self->{sleep};
 
 	if ($self->{fast}) {
-		write_blocks($self,$len);
+		write_block($self, $len);
 		return;
 	}
 
@@ -273,7 +283,8 @@ sub http_response {
 	if ($chunked) {
 		read_chunked($self);
 	} else {
-		read_char($self, $vers eq "1.1" ? $len : undef)
+		undef $len unless defined($vers) && $vers eq "1.1";
+		read_char($self, $len)
 		    if $method eq "GET";
 	}
 }
@@ -327,43 +338,15 @@ sub errignore {
 }
 
 ########################################################################
-# Server funcs
+# Common funcs
 ########################################################################
-
-sub read_char_fast {
-	my $self = shift;
-	my $max = shift // $self->{max};
-
-	my $ctx = Digest::MD5->new();
-	my $len = 0;
-	if (defined($max) && $max == 0) {
-		print STDERR "Max\n";
-	} else {
-		while ((my $r = sysread(STDIN, my $buf, POSIX::BUFSIZ))) {
-			my $pct;
-			$_ = $buf;
-			$len += $r;
-			$ctx->add($_);
-			$pct = ($len / $max) * 100.0;
-			printf(STDERR "%.2f%%\n", $pct);
-			if (defined($max) && $len >= $max) {
-				print STDERR "\nMax";
-				last;
-			}
-		}
-		print STDERR "\n";
-	}
-
-	print STDERR "LEN: ", $len, "\n";
-	print STDERR "MD5: ", $ctx->hexdigest, "\n";
-}
 
 sub read_char {
 	my $self = shift;
 	my $max = shift // $self->{max};
 
 	if ($self->{fast}) {
-		read_char_fast($self,$max);
+		read_block($self, $max);
 		return;
 	}
 
@@ -387,6 +370,42 @@ sub read_char {
 	print STDERR "LEN: ", $len, "\n";
 	print STDERR "MD5: ", $ctx->hexdigest, "\n";
 }
+
+sub read_block {
+	my $self = shift;
+	my $max = shift // $self->{max};
+
+	my $opct = 0;
+	my $ctx = Digest::MD5->new();
+	my $len = 0;
+	for (;;) {
+		if (defined($max) && $len >= $max) {
+			print STDERR "Max\n";
+			last;
+		}
+		my $rlen = POSIX::BUFSIZ;
+		if (defined($max) && $rlen > $max - $len) {
+			$rlen = $max - $len;
+		}
+		defined(my $n = read(STDIN, my $buf, $rlen))
+		    or die ref($self), " read failed: $!";
+		$n or last;
+		$len += $n;
+		$ctx->add($buf);
+		my $pct = ($len / $max) * 100.0;
+		if ($pct >= $opct + 1) {
+			printf(STDERR "%.2f%% $len/$max\n", $pct);
+			$opct = $pct;
+		}
+	}
+
+	print STDERR "LEN: ", $len, "\n";
+	print STDERR "MD5: ", $ctx->hexdigest, "\n";
+}
+
+########################################################################
+# Server funcs
+########################################################################
 
 sub http_server {
 	my $self = shift;

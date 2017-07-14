@@ -19,8 +19,8 @@ our %args = (
 	    http_request($self , $size, "1.0", "");
 	    http_response($self , $size);
 	    print STDERR "going to sleep\n";
-	    ${$self->{server}}->loggrep(qr/short write \($errors\)/, 8)
-		or die "no short write in server.log";
+	    ${$self->{server}}->loggrep(qr/blocked write/, 8)
+		or die "no blocked write in server.log";
 	    read_char($self, $size);
 	    return;
 	},
@@ -39,7 +39,7 @@ our %args = (
 	func => \&http_server,
 	sndbuf => 2**12,
 	sndtimeo => 2,
-	loggrep => 'short write',
+	loggrep => qr/blocked write .*: $errors/,
 
     },
     lengths => [$size],

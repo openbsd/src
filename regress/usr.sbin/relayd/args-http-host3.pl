@@ -29,7 +29,7 @@ EOF
     },
     server => {
 	func => \&http_server,
-        nocheck => 1
+	nocheck => 1
     },
 );
 
