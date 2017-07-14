@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.795 2017/07/12 09:24:17 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.796 2017/07/14 18:49:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1499,7 +1499,7 @@ struct tmuxproc *proc_start(const char *);
 void	proc_loop(struct tmuxproc *, int (*)(void));
 void	proc_exit(struct tmuxproc *);
 void	proc_set_signals(struct tmuxproc *, void(*)(int));
-void	proc_clear_signals(struct tmuxproc *);
+void	proc_clear_signals(struct tmuxproc *, int);
 struct tmuxpeer *proc_add_peer(struct tmuxproc *, int,
 	    void (*)(struct imsg *, void *), void *);
 void	proc_remove_peer(struct tmuxpeer *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.45 2017/07/12 10:04:51 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.46 2017/07/14 18:49:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -115,7 +115,7 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_ERROR);
 	case 0:
 		/* Child process. */
-		proc_clear_signals(server_proc);
+		proc_clear_signals(server_proc, 1);
 		sigprocmask(SIG_SETMASK, &oldset, NULL);
 		close(pipe_fd[0]);
 

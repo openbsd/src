@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.47 2017/07/12 10:04:51 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.48 2017/07/14 18:49:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -72,7 +72,7 @@ job_run(const char *cmd, struct session *s, const char *cwd,
 		close(out[1]);
 		return (NULL);
 	case 0:
-		proc_clear_signals(server_proc);
+		proc_clear_signals(server_proc, 1);
 		sigprocmask(SIG_SETMASK, &oldset, NULL);
 
 		if (cwd == NULL || chdir(cwd) != 0) {
