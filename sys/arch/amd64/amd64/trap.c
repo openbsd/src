@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.54 2017/04/30 13:04:49 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.55 2017/07/14 12:20:32 bluhm Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -362,9 +362,6 @@ faultcommon:
 			KERNEL_UNLOCK();
 			goto out;
 		}
-		if (error == EACCES) {
-			error = EFAULT;
-		}
 
 		if (type == T_PAGEFLT) {
 			if (pcb->pcb_onfault != 0) {
@@ -389,7 +386,8 @@ faultcommon:
 			frame_dump(frame);
 #endif
 			sv.sival_ptr = (void *)fa;
-			trapsignal(p, SIGSEGV, T_PAGEFLT, SEGV_MAPERR, sv);
+			trapsignal(p, SIGSEGV, T_PAGEFLT,
+			    error == EACCES ? SEGV_ACCERR : SEGV_MAPERR, sv);
 		}
 		KERNEL_UNLOCK();
 		break;
