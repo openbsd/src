@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.13 2017/07/12 12:35:31 nicm Exp $ */
+/* $OpenBSD: proc.c,v 1.14 2017/07/14 08:04:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -255,13 +255,13 @@ proc_clear_signals(struct tmuxproc *tp)
 	sigaction(SIGPIPE, &sa, NULL);
 	sigaction(SIGTSTP, &sa, NULL);
 
-	event_del(&tp->ev_sighup);
-	event_del(&tp->ev_sigchld);
-	event_del(&tp->ev_sigcont);
-	event_del(&tp->ev_sigterm);
-	event_del(&tp->ev_sigusr1);
-	event_del(&tp->ev_sigusr2);
-	event_del(&tp->ev_sigwinch);
+	signal_del(&tp->ev_sighup);
+	signal_del(&tp->ev_sigchld);
+	signal_del(&tp->ev_sigcont);
+	signal_del(&tp->ev_sigterm);
+	signal_del(&tp->ev_sigusr1);
+	signal_del(&tp->ev_sigusr2);
+	signal_del(&tp->ev_sigwinch);
 }
 
 struct tmuxpeer *
