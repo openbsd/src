@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.195 2017/07/14 16:49:16 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.196 2017/07/14 17:16:13 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1557,7 +1557,8 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 	/* For now, let high level macros abort .ce mode. */
 
 	if (ctl && roffce_node != NULL &&
-	    (t == TOKEN_NONE || t == ROFF_EQ || t == ROFF_TS)) {
+	    (t == TOKEN_NONE || t == ROFF_Dd || t == ROFF_EQ ||
+	     t == ROFF_TH || t == ROFF_TS)) {
 		r->man->last = roffce_node;
 		r->man->next = ROFF_NEXT_SIBLING;
 		roffce_lines = 0;
