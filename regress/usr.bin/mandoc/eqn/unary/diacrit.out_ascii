@@ -4,6 +4,6 @@ NNAAMMEE
      uunnaarryy--ddiiaaccrriitt - diacritical marks in equations
 
 DDEESSCCRRIIPPTTIIOONN
-     initial text _x. _x" _x^ _x~ _x-> _x<-> (_x + _y) (_x + _y)_ _x~^ final text
+     initial text _x. _x" _x^ _x~ _x-> _x<-> (_x + _y)- (_x + _y)_ _x~^ final text
 
 OpenBSD                          July 6, 2017                          OpenBSD
