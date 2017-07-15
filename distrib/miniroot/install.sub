@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1022 2017/07/15 22:48:12 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1023 2017/07/15 23:01:33 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3005,6 +3005,8 @@ do_upgrade() {
 		[[ -f $_f ]] || { echo "No $_f!"; exit; }
 		cp $_f /tmp/i/${_f##*/}
 	done
+
+	# Set system hostname and register hostname specific site set.
 	hostname $(stripcom /tmp/i/myname)
 	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 
