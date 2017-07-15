@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.200 2017/06/24 14:38:27 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.201 2017/07/15 13:17:07 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -2090,7 +2090,7 @@ dbwrite(struct dba *dba)
 
 	dba_array_start(dba->pages);
 	if (dba_array_next(dba->pages) == NULL) {
-		if (unlink(MANDOC_DB) == -1)
+		if (unlink(MANDOC_DB) == -1 && errno != ENOENT)
 			say(MANDOC_DB, "&unlink");
 		return;
 	}
