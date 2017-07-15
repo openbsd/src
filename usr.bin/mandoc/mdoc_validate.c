@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.263 2017/07/03 17:33:01 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.264 2017/07/15 16:40:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -698,7 +698,7 @@ post_bl_norm(POST_ARGS)
 
 	switch (n->norm->Bl.type) {
 	case LIST_tag:
-		if (NULL == n->norm->Bl.width)
+		if (n->norm->Bl.width == NULL)
 			mandoc_msg(MANDOCERR_BL_NOWIDTH, mdoc->parse,
 			    n->line, n->pos, "Bl -tag");
 		break;
@@ -707,19 +707,20 @@ post_bl_norm(POST_ARGS)
 	case LIST_ohang:
 	case LIST_inset:
 	case LIST_item:
-		if (n->norm->Bl.width)
+		if (n->norm->Bl.width != NULL)
 			mandoc_vmsg(MANDOCERR_BL_SKIPW, mdoc->parse,
 			    wa->line, wa->pos, "Bl -%s",
 			    mdoc_argnames[mdoclt]);
+		n->norm->Bl.width = NULL;
 		break;
 	case LIST_bullet:
 	case LIST_dash:
 	case LIST_hyphen:
-		if (NULL == n->norm->Bl.width)
+		if (n->norm->Bl.width == NULL)
 			n->norm->Bl.width = "2n";
 		break;
 	case LIST_enum:
-		if (NULL == n->norm->Bl.width)
+		if (n->norm->Bl.width == NULL)
 			n->norm->Bl.width = "3n";
 		break;
 	default:
