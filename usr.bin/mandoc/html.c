@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.88 2017/07/14 16:28:35 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.89 2017/07/15 17:57:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -622,24 +622,28 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			su = va_arg(ap, struct roffsu *);
 			break;
 		case 'w':
-			if ((arg2 = va_arg(ap, char *)) == NULL) {
-				if (*fmt == '+')
-					fmt++;
-				if (*fmt == '-')
-					fmt++;
-				break;
+			if ((arg2 = va_arg(ap, char *)) != NULL) {
+				su = &mysu;
+				a2width(arg2, su);
 			}
-			su = &mysu;
-			a2width(arg2, su);
+			if (*fmt == '*') {
+				if (su != NULL && su->unit == SCALE_EN &&
+				    su->scale > 5.9 && su->scale < 6.1)
+					su = NULL;
+				fmt++;
+			}
 			if (*fmt == '+') {
-				/* Increase to make even bold text fit. */
-				su->scale *= 1.2;
-				/* Add padding. */
-				su->scale += 3.0;
+				if (su != NULL) {
+					/* Make even bold text fit. */
+					su->scale *= 1.2;
+					/* Add padding. */
+					su->scale += 3.0;
+				}
 				fmt++;
 			}
 			if (*fmt == '-') {
-				su->scale *= -1.0;
+				if (su != NULL)
+					su->scale *= -1.0;
 				fmt++;
 			}
 			break;
