@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.63 2017/07/09 00:51:40 pd Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.64 2017/07/15 05:05:36 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -40,6 +40,7 @@
 #include <grp.h>
 
 #include "proc.h"
+#include "atomicio.h"
 #include "vmd.h"
 
 __dead void usage(void);
@@ -75,6 +76,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vmop_id			 vid;
 	struct vm_terminate_params	 vtp;
 	struct vmop_result		 vmr;
+	struct vm_dump_header		 vmh;
 	struct vmd_vm			*vm = NULL;
 	char				*str = NULL;
 	uint32_t			 id = 0;
@@ -178,6 +180,82 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		proc_compose_imsg(ps, PROC_VMM, -1, imsg->hdr.type,
 		    imsg->hdr.peerid, -1, &vid, sizeof(vid));
+		break;
+	case IMSG_VMDOP_SEND_VM_REQUEST:
+		IMSG_SIZE_CHECK(imsg, &vid);
+		memcpy(&vid, imsg->data, sizeof(vid));
+		id = vid.vid_id;
+		if (vid.vid_id == 0) {
+			if ((vm = vm_getbyname(vid.vid_name)) == NULL) {
+				res = ENOENT;
+				cmd = IMSG_VMDOP_SEND_VM_RESPONSE;
+				close(imsg->fd);
+				break;
+			} else {
+				vid.vid_id = vm->vm_vmid;
+			}
+		} else if ((vm = vm_getbyvmid(vid.vid_id)) == NULL) {
+			res = ENOENT;
+			cmd = IMSG_VMDOP_SEND_VM_RESPONSE;
+			close(imsg->fd);
+			break;
+		} else {
+		}
+		vmr.vmr_id = vid.vid_id;
+		log_debug("%s: sending fd to vmctl", __func__);
+		proc_compose_imsg(ps, PROC_VMM, -1, imsg->hdr.type,
+		    imsg->hdr.peerid, imsg->fd, &vid, sizeof(vid));
+		break;
+	case IMSG_VMDOP_RECEIVE_VM_REQUEST:
+		IMSG_SIZE_CHECK(imsg, &vid);
+		memcpy(&vid, imsg->data, sizeof(vid));
+		if (imsg->fd == -1) {
+			log_warnx("%s: invalid fd", __func__);
+			return (-1);
+		}
+		if (atomicio(read, imsg->fd, &vmh, sizeof(vmh)) !=
+		    sizeof(vmh)) {
+			log_warnx("%s: error reading vmh from recevied vm",
+			    __func__);
+			res = EIO;
+			close(imsg->fd);
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+			break;
+		}
+		if (vmh.vmh_version != VM_DUMP_VERSION) {
+			log_warnx("%s: incompatible dump version",
+			    __func__);
+			res = ENOENT;
+			close(imsg->fd);
+			cmd = IMSG_VMDOP_SEND_VM_RESPONSE;
+			break;
+		}
+		if (atomicio(read, imsg->fd, &vmc, sizeof(vmc)) !=
+		    sizeof(vmc)) {
+			log_warnx("%s: error reading vmc from recevied vm",
+			    __func__);
+			res = EIO;
+			close(imsg->fd);
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+			break;
+		}
+		strlcpy(vmc.vmc_params.vcp_name, vid.vid_name,
+		    sizeof(vmc.vmc_params.vcp_name));
+		vmc.vmc_params.vcp_id = 0;
+
+		ret = vm_register(ps, &vmc, &vm, 0, vmc.vmc_uid);
+		if (ret != 0) {
+			res = errno;
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+			close(imsg->fd);
+		} else {
+			vm->vm_received = 1;
+			config_setvm(ps, vm, imsg->hdr.peerid, vmc.vmc_uid);
+			log_debug("%s: sending fd to vmctl", __func__);
+			proc_compose_imsg(ps, PROC_VMM, -1,
+			    IMSG_VMDOP_RECEIVE_VM_END, vm->vm_vmid, imsg->fd,
+			    NULL, 0);
+		}
 		break;
 	default:
 		return (-1);
@@ -296,6 +374,15 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			vm->vm_shutdown = 1;
 		}
 		break;
+	case IMSG_VMDOP_SEND_VM_RESPONSE:
+		IMSG_SIZE_CHECK(imsg, &vmr);
+		memcpy(&vmr, imsg->data, sizeof(vmr));
+		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
+			break;
+		if (!vmr.vmr_result)
+			log_info("%s: sent vm %d successfully.",
+			    vm->vm_params.vmc_params.vcp_name,
+			    vm->vm_vmid);
 	case IMSG_VMDOP_TERMINATE_VM_EVENT:
 		IMSG_SIZE_CHECK(imsg, &vmr);
 		memcpy(&vmr, imsg->data, sizeof(vmr));
@@ -572,10 +659,11 @@ vmd_configure(void)
 	 * tty - for openpty.
 	 * proc - run kill to terminate its children safely.
 	 * sendfd - for disks, interfaces and other fds.
+	 * recvfd - for send and receive.
 	 * getpw - lookup user or group id by name.
 	 * chown, fattr - change tty ownership
 	 */
-	if (pledge("stdio rpath wpath proc tty sendfd getpw"
+	if (pledge("stdio rpath wpath proc tty recvfd sendfd getpw"
 	    " chown fattr", NULL) == -1)
 		fatal("pledge");
 
@@ -909,6 +997,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	vcp = &vmc->vmc_params;
 	vm->vm_pid = -1;
 	vm->vm_tty = -1;
+	vm->vm_receive_fd = -1;
 	vm->vm_paused = 0;
 
 	for (i = 0; i < vcp->vcp_ndisks; i++)

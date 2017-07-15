@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.31 2017/07/09 00:51:40 pd Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.32 2017/07/15 05:05:36 pd Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -40,6 +40,7 @@
 
 #include "vmd.h"
 #include "vmctl.h"
+#include "atomicio.h"
 
 extern char *__progname;
 uint32_t info_id;
@@ -194,6 +195,68 @@ vm_start_complete(struct imsg *imsg, int *ret, int autoconnect)
 	}
 
 	return (1);
+}
+
+void
+send_vm(uint32_t id, const char *name)
+{
+	struct vmop_id vid;
+	int fds[2], readn, writen;
+	char buf[PAGE_SIZE];
+
+	memset(&vid, 0, sizeof(vid));
+	vid.vid_id = id;
+	if (name != NULL)
+		strlcpy(vid.vid_name, name, sizeof(vid.vid_name));
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fds) == -1) {
+		warnx("%s: socketpair creation failed", __func__);
+	} else {
+		imsg_compose(ibuf, IMSG_VMDOP_SEND_VM_REQUEST, 0, 0, fds[0],
+				&vid, sizeof(vid));
+		imsg_flush(ibuf);
+		while (1) {
+			readn = atomicio(read, fds[1], buf, sizeof(buf));
+			if (!readn)
+				break;
+			writen = atomicio(vwrite, STDOUT_FILENO, buf,
+					readn);
+			if (writen != readn)
+				break;
+		}
+		if (vid.vid_id)
+			warnx("sent vm %d successfully", vid.vid_id);
+		else
+			warnx("sent vm %s successfully", vid.vid_name);
+	}
+}
+
+void
+vm_receive(uint32_t id, const char *name)
+{
+	struct vmop_id vid;
+	int fds[2], readn, writen;
+	char buf[PAGE_SIZE];
+
+	memset(&vid, 0, sizeof(vid));
+	if (name != NULL)
+		strlcpy(vid.vid_name, name, sizeof(vid.vid_name));
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fds) == -1) {
+		warnx("%s: socketpair creation failed", __func__);
+	} else {
+		imsg_compose(ibuf, IMSG_VMDOP_RECEIVE_VM_REQUEST, 0, 0, fds[0],
+		    &vid, sizeof(vid));
+		imsg_flush(ibuf);
+		while (1) {
+			readn = atomicio(read, STDIN_FILENO, buf, sizeof(buf));
+			if (!readn) {
+				close(fds[1]);
+				break;
+			}
+			writen = atomicio(vwrite, fds[1], buf, readn);
+			if (writen != readn)
+				break;
+		}
+	}
 }
 
 void

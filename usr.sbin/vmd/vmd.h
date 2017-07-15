@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.57 2017/07/09 00:51:40 pd Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.58 2017/07/15 05:05:36 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -69,6 +69,11 @@ enum imsg_type {
 	IMSG_VMDOP_PAUSE_VM_RESPONSE,
 	IMSG_VMDOP_UNPAUSE_VM,
 	IMSG_VMDOP_UNPAUSE_VM_RESPONSE,
+	IMSG_VMDOP_SEND_VM_REQUEST,
+	IMSG_VMDOP_SEND_VM_RESPONSE,
+	IMSG_VMDOP_RECEIVE_VM_REQUEST,
+	IMSG_VMDOP_RECEIVE_VM_RESPONSE,
+	IMSG_VMDOP_RECEIVE_VM_END,
 	IMSG_VMDOP_TERMINATE_VM_REQUEST,
 	IMSG_VMDOP_TERMINATE_VM_RESPONSE,
 	IMSG_VMDOP_TERMINATE_VM_EVENT,
@@ -140,6 +145,14 @@ struct vmop_create_params {
 	int64_t			 vmc_gid;
 };
 
+struct vm_dump_header {
+	uint8_t			 vmh_signature[12];
+#define VM_DUMP_SIGNATURE	 VMM_HV_SIGNATURE
+	uint8_t			 vmh_pad[3];
+	uint8_t			 vmh_version;
+#define VM_DUMP_VERSION		 1
+} __packed;
+
 struct vmboot_params {
 	int			 vbp_fd;
 	off_t			 vbp_partoff;
@@ -193,7 +206,9 @@ struct vmd_vm {
 	struct imsgev		 vm_iev;
 	int			 vm_shutdown;
 	uid_t			 vm_uid;
+	int			 vm_received;
 	int			 vm_paused;
+	int			 vm_receive_fd;
 
 	TAILQ_ENTRY(vmd_vm)	 vm_entry;
 };
@@ -304,6 +319,7 @@ int	 vmm_pipe(struct vmd_vm *, int, void (*)(int, short, void *));
 
 /* vm.c */
 int	 start_vm(struct vmd_vm *, int);
+int receive_vm(struct vmd_vm *, int, int);
 __dead void vm_shutdown(unsigned int);
 
 /* control.c */

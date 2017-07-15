@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.31 2017/05/04 08:26:06 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.32 2017/07/15 05:05:36 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -40,6 +40,7 @@
 
 /* Supported bridge types */
 const char *vmd_descsw[] = { "switch", "bridge", NULL };
+
 
 int
 config_init(struct vmd *env)
@@ -191,28 +192,34 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	vm->vm_peerid = peerid;
 	vm->vm_uid = uid;
 
-	if (strlen(vcp->vcp_kernel)) {
-		/* Boot kernel from disk image if path matches the root disk */
-		if (vcp->vcp_ndisks &&
-		    strcmp(vcp->vcp_kernel, vcp->vcp_disks[0]) == 0)
-			vmboot = 1;
-		/* Open external kernel for child */
-		else if ((kernfd = open(vcp->vcp_kernel, O_RDONLY)) == -1) {
-			log_warn("%s: can't open kernel/BIOS boot image %s",
-			    __func__, vcp->vcp_kernel);
+	if (!vm->vm_received) {
+		if (strlen(vcp->vcp_kernel)) {
+			/* Boot kernel from disk image if path matches the root
+			 * disk */
+			if (vcp->vcp_ndisks &&
+			    strcmp(vcp->vcp_kernel, vcp->vcp_disks[0]) == 0)
+				vmboot = 1;
+			/* Open external kernel for child */
+			else if ((kernfd = open(vcp->vcp_kernel, O_RDONLY)) ==
+			    -1) {
+				log_warn("%s: can't open kernel/BIOS boot image\
+						%s", __func__, vcp->vcp_kernel);
+				goto fail;
+			}
+		}
+
+		/*
+		 * Try to open the default BIOS image if no kernel/BIOS has been
+		 * specified.  The BIOS is an external firmware file that is
+		 * typically distributed separately due to an incompatible
+		 * license.
+		 */
+		if (kernfd == -1 && !vmboot &&
+		    (kernfd = open(VM_DEFAULT_BIOS, O_RDONLY)) == -1) {
+			log_warn("%s: can't open %s", __func__,
+			    VM_DEFAULT_BIOS);
 			goto fail;
 		}
-	}
-
-	/*
-	 * Try to open the default BIOS image if no kernel/BIOS has
-	 * been specified.  The BIOS is an external firmware file that is
-	 * typically distributed separately due to an incompatible license.
-	 */
-	if (kernfd == -1 && !vmboot &&
-	    (kernfd = open(VM_DEFAULT_BIOS, O_RDONLY)) == -1) {
-		log_warn("%s: can't open %s", __func__, VM_DEFAULT_BIOS);
-		goto fail;
 	}
 
 	/* Open disk images for child */
@@ -304,9 +311,14 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	}
 
 	/* Send VM information */
-	proc_compose_imsg(ps, PROC_VMM, -1,
-	    IMSG_VMDOP_START_VM_REQUEST, vm->vm_vmid, kernfd,
-	    vmc, sizeof(*vmc));
+	if (vm->vm_received)
+		proc_compose_imsg(ps, PROC_VMM, -1,
+		    IMSG_VMDOP_RECEIVE_VM_REQUEST, vm->vm_vmid, fd,  vmc,
+		    sizeof(struct vmop_create_params));
+	else
+		proc_compose_imsg(ps, PROC_VMM, -1,
+		    IMSG_VMDOP_START_VM_REQUEST, vm->vm_vmid, kernfd,
+		    vmc, sizeof(*vmc));
 	for (i = 0; i < vcp->vcp_ndisks; i++) {
 		proc_compose_imsg(ps, PROC_VMM, -1,
 		    IMSG_VMDOP_START_VM_DISK, vm->vm_vmid, diskfds[i],
@@ -318,8 +330,9 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		    &i, sizeof(i));
 	}
 
-	proc_compose_imsg(ps, PROC_VMM, -1,
-	    IMSG_VMDOP_START_VM_END, vm->vm_vmid, fd,  NULL, 0);
+	if (!vm->vm_received)
+		proc_compose_imsg(ps, PROC_VMM, -1,
+		    IMSG_VMDOP_START_VM_END, vm->vm_vmid, fd,  NULL, 0);
 
 	free(diskfds);
 	free(tapfds);
@@ -429,7 +442,6 @@ config_getif(struct privsep *ps, struct imsg *imsg)
 		goto fail;
 	}
 	vm->vm_ifs[n].vif_fd = imsg->fd;
-
 	return (0);
  fail:
 	if (imsg->fd != -1)

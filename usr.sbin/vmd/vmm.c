@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.70 2017/07/09 00:51:40 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.71 2017/07/15 05:05:36 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -55,6 +55,7 @@
 
 void vmm_sighdlr(int, short, void *);
 int vmm_start_vm(struct imsg *, uint32_t *);
+int vmm_receive_vm(struct vmd_vm * , int);
 int vmm_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 void vmm_run(struct privsep *, struct privsep_proc *, void *);
 void vmm_dispatch_vm(int, short, void *);
@@ -89,9 +90,10 @@ vmm_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	 * stdio - for malloc and basic I/O including events.
 	 * vmm - for the vmm ioctls and operations.
 	 * proc - for forking and maitaining vms.
+	 * send - for sending send/recv fds to vm proc.
 	 * recvfd - for disks, interfaces and other fds.
 	 */
-	if (pledge("stdio vmm recvfd proc", NULL) == -1)
+	if (pledge("stdio vmm sendfd recvfd proc", NULL) == -1)
 		fatal("pledge");
 
 	/* Get and terminate all running VMs */
@@ -102,11 +104,12 @@ int
 vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep		*ps = p->p_ps;
-	int			 res = 0, cmd = 0, verbose;
+	int			 res = 0, cmd = 0, verbose, ret;
 	struct vmd_vm		*vm = NULL;
 	struct vm_terminate_params vtp;
-	struct vmop_id vid;
+	struct vmop_id		 vid;
 	struct vmop_result	 vmr;
+	struct vmop_create_params vmc;
 	uint32_t		 id = 0;
 	unsigned int		 mode;
 
@@ -229,6 +232,38 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		imsg_compose_event(&vm->vm_iev,
 		    imsg->hdr.type, imsg->hdr.peerid, imsg->hdr.pid,
 		    imsg->fd, &vid, sizeof(vid));
+		break;
+	case IMSG_VMDOP_SEND_VM_REQUEST:
+		IMSG_SIZE_CHECK(imsg, &vid);
+		memcpy(&vid, imsg->data, sizeof(vid));
+		id = vid.vid_id;
+		if ((vm = vm_getbyvmid(id)) == NULL) {
+			res = ENOENT;
+			close(imsg->fd);
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+			break;
+		}
+		imsg_compose_event(&vm->vm_iev,
+		    imsg->hdr.type, imsg->hdr.peerid, imsg->hdr.pid,
+		    imsg->fd, &vid, sizeof(vid));
+		break;
+	case IMSG_VMDOP_RECEIVE_VM_REQUEST:
+		IMSG_SIZE_CHECK(imsg, &vmc);
+		memcpy(&vmc, imsg->data, sizeof(vmc));
+		ret = vm_register(ps, &vmc, &vm, imsg->hdr.peerid, vmc.vmc_uid);
+		vm->vm_tty = imsg->fd;
+		vm->vm_received = 1;
+		break;
+	case IMSG_VMDOP_RECEIVE_VM_END:
+		if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
+			res = ENOENT;
+			close(imsg->fd);
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+			break;
+		}
+		vm->vm_receive_fd = imsg->fd;
+		res = vmm_start_vm(imsg, &id);
+		cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		break;
 	default:
 		return (-1);
@@ -380,6 +415,7 @@ void
 vmm_dispatch_vm(int fd, short event, void *arg)
 {
 	struct vmd_vm		*vm = arg;
+	struct vmop_result	 vmr;
 	struct imsgev		*iev = &vm->vm_iev;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
@@ -423,6 +459,11 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 		case IMSG_VMDOP_VM_REBOOT:
 			vm->vm_shutdown = 0;
 			break;
+		case IMSG_VMDOP_SEND_VM_RESPONSE:
+			IMSG_SIZE_CHECK(&imsg, &vmr);
+			memcpy(&vmr, imsg.data, sizeof(vmr));
+			if(!vmr.vmr_result)
+				vm_remove(vm);
 		case IMSG_VMDOP_PAUSE_VM_RESPONSE:
 		case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
 			for (i = 0; i < sizeof(procs); i++) {
@@ -528,9 +569,11 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id)
 	}
 	vcp = &vm->vm_params.vmc_params;
 
-	if ((vm->vm_tty = imsg->fd) == -1) {
-		log_warnx("%s: can't get tty", __func__);
-		goto err;
+	if (!vm->vm_received) {
+		if ((vm->vm_tty = imsg->fd) == -1) {
+			log_warnx("%s: can't get tty", __func__);
+			goto err;
+		}
 	}
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fds) == -1)

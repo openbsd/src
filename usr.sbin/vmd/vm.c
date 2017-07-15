@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.21 2017/07/09 00:51:40 pd Exp $	*/
+/*	$OpenBSD: vm.c,v 1.22 2017/07/15 05:05:36 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -60,6 +60,7 @@
 #include "i8259.h"
 #include "ns8250.h"
 #include "mc146818.h"
+#include "atomicio.h"
 
 io_fn_t ioports_map[MAX_PORTS];
 
@@ -73,10 +74,16 @@ void create_memory_map(struct vm_create_params *);
 int alloc_guest_mem(struct vm_create_params *);
 int vmm_create_vm(struct vm_create_params *);
 void init_emulated_hw(struct vmop_create_params *, int *, int *);
+void restore_emulated_hw(struct vm_create_params *,int , int *, int *);
 void vcpu_exit_inout(struct vm_run_params *);
 uint8_t vcpu_exit_pci(struct vm_run_params *);
 int vcpu_pic_intr(uint32_t, uint32_t, uint8_t);
 int loadfile_bios(FILE *, struct vcpu_reg_state *);
+int send_vm(int, struct vm_create_params *);
+int dump_vmr(int , struct vm_mem_range *);
+int dump_mem(int, struct vm_create_params *);
+void restore_vmr(int, struct vm_mem_range *);
+void restore_mem(int, struct vm_create_params *);
 void pause_vm(struct vm_create_params *);
 void unpause_vm(struct vm_create_params *);
 
@@ -257,13 +264,17 @@ start_vm(struct vmd_vm *vm, int fd)
 	FILE			*fp;
 	struct vmboot_params	 vmboot;
 	size_t			 i;
+	struct vm_rwregs_params  vrp;
 
 	/* Child */
 	setproctitle("%s", vcp->vcp_name);
 	log_procinit(vcp->vcp_name);
 
-	create_memory_map(vcp);
+	if (!vm->vm_received)
+		create_memory_map(vcp);
+
 	ret = alloc_guest_mem(vcp);
+
 	if (ret) {
 		errno = ret;
 		fatal("could not allocate guest memory - exiting");
@@ -285,37 +296,46 @@ start_vm(struct vmd_vm *vm, int fd)
 	/*
 	 * pledge in the vm processes:
 	 * stdio - for malloc and basic I/O including events.
+	 * recvfd - for send/recv.
 	 * vmm - for the vmm ioctls and operations.
 	 */
-	if (pledge("stdio vmm", NULL) == -1)
+	if (pledge("stdio vmm recvfd", NULL) == -1)
 		fatal("pledge");
 
-	/*
-	 * Set up default "flat 32 bit" register state - RIP,
-	 * RSP, and GDT info will be set in bootloader
-	 */
-	memcpy(&vrs, &vcpu_init_flat32, sizeof(vrs));
+	if (vm->vm_received) {
+		ret = read(vm->vm_receive_fd, &vrp, sizeof(vrp));
+		if (ret != sizeof(vrp)) {
+			fatal("received incomplete vrp - exiting");
+		}
+		vrs = vrp.vrwp_regs;
+	} else {
+		/*
+		 * Set up default "flat 32 bit" register state - RIP,
+		 * RSP, and GDT info will be set in bootloader
+		 */
+		memcpy(&vrs, &vcpu_init_flat32, sizeof(vrs));
 
-	/* Find and open kernel image */
-	if ((fp = vmboot_open(vm->vm_kernel,
-	    vm->vm_disks[0], &vmboot)) == NULL)
-		fatalx("failed to open kernel - exiting");
+		/* Find and open kernel image */
+		if ((fp = vmboot_open(vm->vm_kernel,
+		    vm->vm_disks[0], &vmboot)) == NULL)
+			fatalx("failed to open kernel - exiting");
 
-	/* Load kernel image */
-	ret = loadfile_elf(fp, vcp, &vrs,
-	    vmboot.vbp_bootdev, vmboot.vbp_howto);
+		/* Load kernel image */
+		ret = loadfile_elf(fp, vcp, &vrs,
+		    vmboot.vbp_bootdev, vmboot.vbp_howto);
 
-	/*
-	 * Try BIOS as a fallback (only if it was provided as an image
-	 * with vm->vm_kernel and not loaded from the disk)
-	 */
-	if (ret && errno == ENOEXEC && vm->vm_kernel != -1)
-		ret = loadfile_bios(fp, &vrs);
+		/*
+		 * Try BIOS as a fallback (only if it was provided as an image
+		 * with vm->vm_kernel and not loaded from the disk)
+		 */
+		if (ret && errno == ENOEXEC && vm->vm_kernel != -1)
+			ret = loadfile_bios(fp, &vrs);
 
-	if (ret)
-		fatal("failed to load kernel or BIOS - exiting");
+		if (ret)
+			fatal("failed to load kernel or BIOS - exiting");
 
-	vmboot_close(fp, &vmboot);
+		vmboot_close(fp, &vmboot);
+	}
 
 	if (vm->vm_kernel != -1)
 		close(vm->vm_kernel);
@@ -328,6 +348,12 @@ start_vm(struct vmd_vm *vm, int fd)
 		nicfds[i] = vm->vm_ifs[i].vif_fd;
 
 	event_init();
+
+	if (vm->vm_received) {
+		restore_emulated_hw(vcp, vm->vm_receive_fd, nicfds,
+		    vm->vm_disks);
+		restore_mem(vm->vm_receive_fd, vcp);
+	}
 
 	if (vmm_pipe(vm, fd, vm_dispatch_vmm) == -1)
 		fatal("setup vm pipe");
@@ -412,6 +438,15 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 			    imsg.hdr.peerid, imsg.hdr.pid, -1, &vmr,
 			    sizeof(vmr));
 			break;
+		case IMSG_VMDOP_SEND_VM_REQUEST:
+			vmr.vmr_id = vm->vm_vmid;
+			vmr.vmr_result = send_vm(imsg.fd,
+			    &vm->vm_params.vmc_params);
+			imsg_compose_event(&vm->vm_iev,
+			    IMSG_VMDOP_SEND_VM_RESPONSE,
+			    imsg.hdr.peerid, imsg.hdr.pid, -1, &vmr,
+			    sizeof(vmr));
+			break;
 		default:
 			fatalx("%s: got invalid imsg %d from %s",
 			    __func__, imsg.hdr.type,
@@ -446,6 +481,150 @@ vm_shutdown(unsigned int cmd)
 	imsg_flush(&current_vm->vm_iev.ibuf);
 
 	_exit(0);
+}
+
+int
+send_vm(int fd, struct vm_create_params *vcp)
+{
+	struct vm_rwregs_params	   vrp;
+	struct vmop_create_params *vmc;
+	struct vm_terminate_params vtp;
+	struct vm_dump_header	   vmh;
+	unsigned int		   flags = 0;
+	unsigned int		   i;
+	int			   ret = 0;
+
+	memset(&vmh, 0, sizeof(vmh));
+	memcpy(vmh.vmh_signature, VM_DUMP_SIGNATURE, sizeof(vmh.vmh_signature));
+	vmh.vmh_version = VM_DUMP_VERSION;
+	if (atomicio(vwrite, fd, &vmh, sizeof(vmh)) != sizeof(vmh)) {
+		log_warn("%s: failed to send vm dump header", __func__);
+		goto err;
+	}
+
+	pause_vm(vcp);
+
+	vmc = calloc(1, sizeof(struct vmop_create_params));
+	if (vmc == NULL) {
+		log_warn("%s: calloc error geting vmc", __func__);
+		ret = -1;
+		goto err;
+	}
+
+	flags |= VMOP_CREATE_MEMORY;
+	memcpy(&vmc->vmc_params, &current_vm->vm_params, sizeof(struct
+	    vmop_create_params));
+	vmc->vmc_flags = flags;
+	vrp.vrwp_vm_id = vcp->vcp_id;
+	vrp.vrwp_mask = VM_RWREGS_ALL;
+
+	if ((ret = atomicio(vwrite, fd, vmc,
+	    sizeof(struct vmop_create_params)) !=
+	    sizeof(struct vmop_create_params)))
+		goto err;
+
+	for (i = 0; i < vcp->vcp_ncpus; i++) {
+		vrp.vrwp_vcpu_id = i;
+		if ((ret = ioctl(env->vmd_fd, VMM_IOC_READREGS, &vrp))) {
+			log_warn("%s: readregs failed", __func__);
+			goto err;
+		}
+		if ((ret = atomicio(vwrite, fd, &vrp,
+		    sizeof(struct vm_rwregs_params))) !=
+		    sizeof(struct vm_rwregs_params)) {
+			log_warn("%s: dumping registers failed", __func__);
+			goto err;
+		}
+	}
+
+	if ((ret = i8253_dump(fd)))
+		goto err;
+	if ((ret = i8259_dump(fd)))
+		goto err;
+	if ((ret = ns8250_dump(fd)))
+		goto err;
+	if ((ret = mc146818_dump(fd)))
+		goto err;
+	if ((ret = virtio_dump(fd)))
+		goto err;
+	if ((ret = dump_mem(fd, vcp)))
+		goto err;
+
+	vtp.vtp_vm_id = vcp->vcp_id;
+	if (ioctl(env->vmd_fd, VMM_IOC_TERM, &vtp) < 0) {
+		log_warnx("%s: term IOC error: %d, %d", __func__,
+		    errno, ENOENT);
+	}
+err:
+	close(fd);
+	if (ret)
+		unpause_vm(vcp);
+	return ret;
+}
+
+int
+dump_mem(int fd, struct vm_create_params *vcp)
+{
+	unsigned int	i;
+	int		ret;
+	struct		vm_mem_range *vmr;
+
+	for (i = 0; i < vcp->vcp_nmemranges; i++) {
+		vmr = &vcp->vcp_memranges[i];
+		ret = dump_vmr(fd, vmr);
+		if (ret)
+			return ret;
+	}
+	return (0);
+}
+
+void
+restore_mem(int fd, struct vm_create_params *vcp)
+{
+	unsigned int	     i;
+	struct vm_mem_range *vmr;
+
+	for (i = 0; i < vcp->vcp_nmemranges; i++) {
+		vmr = &vcp->vcp_memranges[i];
+		restore_vmr(fd, vmr);
+	}
+}
+
+int
+dump_vmr(int fd, struct vm_mem_range *vmr)
+{
+	size_t	rem = vmr->vmr_size, read=0;
+	char	buf[PAGE_SIZE];
+
+	while (rem > 0) {
+		if(read_mem(vmr->vmr_gpa + read, buf, PAGE_SIZE)) {
+			log_warn("failed to read vmr");
+			return (-1);
+		}
+		if (atomicio(vwrite, fd, buf, sizeof(buf)) != sizeof(buf)) {
+			log_warn("failed to dump vmr");
+			return (-1);
+		}
+		rem = rem - PAGE_SIZE;
+		read = read + PAGE_SIZE;
+	}
+	return (0);
+}
+
+void
+restore_vmr(int fd, struct vm_mem_range *vmr)
+{
+	size_t	rem = vmr->vmr_size, wrote=0;
+	char	buf[PAGE_SIZE];
+
+	while (rem > 0) {
+		if (atomicio(read, fd, buf, sizeof(buf)) != sizeof(buf))
+			fatal("failed to restore vmr");
+		if (write_mem(vmr->vmr_gpa + wrote, buf, PAGE_SIZE))
+			fatal("failed to write vmr");
+		rem = rem - PAGE_SIZE;
+		wrote = wrote + PAGE_SIZE;
+	}
 }
 
 void
@@ -726,6 +905,55 @@ init_emulated_hw(struct vmop_create_params *vmc, int *child_disks,
 	/* Initialize virtio devices */
 	virtio_init(current_vm, child_disks, child_taps);
 }
+/*
+ * restore_emulated_hw
+ *
+ * Restores the userspace hardware emulation from fd
+ */
+void
+restore_emulated_hw(struct vm_create_params *vcp, int fd,
+    int *child_taps, int *child_disks)
+{
+	/* struct vm_create_params *vcp = &vmc->vmc_params; */
+	int i;
+	memset(&ioports_map, 0, sizeof(io_fn_t) * MAX_PORTS);
+
+	/* Init i8253 PIT */
+	i8253_restore(fd, vcp->vcp_id);
+	ioports_map[TIMER_CTRL] = vcpu_exit_i8253;
+	ioports_map[TIMER_BASE + TIMER_CNTR0] = vcpu_exit_i8253;
+	ioports_map[TIMER_BASE + TIMER_CNTR1] = vcpu_exit_i8253;
+	ioports_map[TIMER_BASE + TIMER_CNTR2] = vcpu_exit_i8253;
+
+	/* Init master and slave PICs */
+	i8259_restore(fd);
+	ioports_map[IO_ICU1] = vcpu_exit_i8259;
+	ioports_map[IO_ICU1 + 1] = vcpu_exit_i8259;
+	ioports_map[IO_ICU2] = vcpu_exit_i8259;
+	ioports_map[IO_ICU2 + 1] = vcpu_exit_i8259;
+
+	/* Init ns8250 UART */
+	ns8250_restore(fd, con_fd, vcp->vcp_id);
+	for (i = COM1_DATA; i <= COM1_SCR; i++)
+		ioports_map[i] = vcpu_exit_com;
+
+	/* Init mc146818 RTC */
+	mc146818_restore(fd, vcp->vcp_id);
+	ioports_map[IO_RTC] = vcpu_exit_mc146818;
+	ioports_map[IO_RTC + 1] = vcpu_exit_mc146818;
+
+	/* Initialize PCI */
+	for (i = VMM_PCI_IO_BAR_BASE; i <= VMM_PCI_IO_BAR_END; i++)
+		ioports_map[i] = vcpu_exit_pci;
+
+	ioports_map[PCI_MODE1_ADDRESS_REG] = vcpu_exit_pci;
+	ioports_map[PCI_MODE1_DATA_REG] = vcpu_exit_pci;
+	ioports_map[PCI_MODE1_DATA_REG + 1] = vcpu_exit_pci;
+	ioports_map[PCI_MODE1_DATA_REG + 2] = vcpu_exit_pci;
+	ioports_map[PCI_MODE1_DATA_REG + 3] = vcpu_exit_pci;
+	pci_init();
+	virtio_restore(fd, current_vm, child_disks, child_taps);
+}
 
 /*
  * run_vm
@@ -748,6 +976,7 @@ run_vm(int *child_disks, int *child_taps, struct vmop_create_params *vmc,
     struct vcpu_reg_state *vrs)
 {
 	struct vm_create_params *vcp = &vmc->vmc_params;
+	struct vm_rwregs_params vregsp;
 	uint8_t evdone = 0;
 	size_t i;
 	int ret;
@@ -788,7 +1017,8 @@ run_vm(int *child_disks, int *child_taps, struct vmop_create_params *vmc,
 	log_debug("%s: initializing hardware for vm %s", __func__,
 	    vcp->vcp_name);
 
-	init_emulated_hw(vmc, child_disks, child_taps);
+	if (!current_vm->vm_received)
+		init_emulated_hw(vmc, child_disks, child_taps);
 
 	ret = pthread_mutex_init(&threadmutex, NULL);
 	if (ret) {
@@ -836,6 +1066,19 @@ run_vm(int *child_disks, int *child_taps, struct vmop_create_params *vmc,
 			log_warnx("%s: cannot reset VCPU %zu - exiting.",
 			    __progname, i);
 			return (EIO);
+		}
+
+		/* once more becuase reset_cpu changes regs */
+		if (current_vm->vm_received) {
+			vregsp.vrwp_vm_id = vcp->vcp_id;
+			vregsp.vrwp_vcpu_id = i;
+			vregsp.vrwp_regs = *vrs;
+			vregsp.vrwp_mask = VM_RWREGS_ALL;
+			if ((ret = ioctl(env->vmd_fd, VMM_IOC_WRITEREGS,
+			    &vregsp)) < 0) {
+				log_warn("%s: writeregs failed", __func__);
+				return (ret);
+			}
 		}
 
 		ret = pthread_cond_init(&vcpu_run_cond[i], NULL);

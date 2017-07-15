@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.9 2017/06/07 14:53:28 mlarkin Exp $ */
+/* $OpenBSD: ns8250.c,v 1.10 2017/07/15 05:05:36 pd Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -608,6 +608,13 @@ ns8250_restore(int fd, int con_fd, uint32_t vmid)
 	com1_dev.fd = con_fd;
 	com1_dev.irq = 4;
 	com1_dev.rcv_pending = 0;
+	com1_dev.vmid = vmid;
+	com1_dev.byte_out = 0;
+	com1_dev.regs.divlo = 1;
+	com1_dev.baudrate = 115200;
+	com1_dev.rate_tv.tv_usec = 10000;
+	com1_dev.pause_ct = (com1_dev.baudrate / 8) / 1000 * 10;
+	evtimer_set(&com1_dev.rate, ratelimit, NULL);
 
 	event_set(&com1_dev.event, com1_dev.fd, EV_READ | EV_PERSIST,
 	    com_rcv_event, (void *)(intptr_t)vmid);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2017/07/09 00:51:40 pd Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2017/07/15 05:05:36 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -58,6 +58,8 @@ int		 ctl_status(struct parse_result *, int, char *[]);
 int		 ctl_stop(struct parse_result *, int, char *[]);
 int		 ctl_pause(struct parse_result *, int, char *[]);
 int		 ctl_unpause(struct parse_result *, int, char *[]);
+int		 ctl_send(struct parse_result *, int, char *[]);
+int		 ctl_receive(struct parse_result *, int, char *[]);
 
 struct ctl_command ctl_commands[] = {
 	{ "console",	CMD_CONSOLE,	ctl_console,	"id" },
@@ -73,6 +75,8 @@ struct ctl_command ctl_commands[] = {
 	{ "stop",	CMD_STOP,	ctl_stop,	"id" },
 	{ "pause",	CMD_PAUSE,	ctl_pause,	"id" },
 	{ "unpause",	CMD_UNPAUSE,	ctl_unpause,	"id" },
+	{ "send",	CMD_SEND,	ctl_send,	"id",	1},
+	{ "receive",	CMD_RECEIVE,	ctl_receive,	"id" ,	1},
 	{ NULL }
 };
 
@@ -235,6 +239,13 @@ vmmaction(struct parse_result *res)
 	case CMD_UNPAUSE:
 		unpause_vm(res->id, res->name);
 		break;
+	case CMD_SEND:
+		send_vm(res->id, res->name);
+		done = 1;
+		break;
+	case CMD_RECEIVE:
+		vm_receive(res->id, res->name);
+		break;
 	case CMD_CREATE:
 	case NONE:
 		break;
@@ -287,6 +298,9 @@ vmmaction(struct parse_result *res)
 				break;
 			case CMD_PAUSE:
 				done = pause_vm_complete(&imsg, &ret);
+				break;
+			case CMD_RECEIVE:
+				done = vm_start_complete(&imsg, &ret, 0);
 				break;
 			case CMD_UNPAUSE:
 				done = unpause_vm_complete(&imsg, &ret);
@@ -413,6 +427,33 @@ parse_vmid(struct parse_result *res, char *word)
 	if (error == NULL) {
 		res->id = id;
 		res->name = NULL;
+	} else {
+		if (strlen(word) >= VMM_MAX_NAME_LEN) {
+			warnx("name too long");
+			return (-1);
+		}
+		res->id = 0;
+		if ((res->name = strdup(word)) == NULL)
+			errx(1, "strdup");
+	}
+
+	return (0);
+}
+
+int
+parse_vmname(struct parse_result *res, char *word)
+{
+	const char	*error;
+	uint32_t	 id;
+
+	if (word == NULL) {
+		warnx("missing vmid argument");
+		return (-1);
+	}
+	id = strtonum(word, 0, UINT32_MAX, &error);
+	if (error == NULL) {
+		warnx("invalid vm name");
+		return (-1);
 	} else {
 		if (strlen(word) >= VMM_MAX_NAME_LEN) {
 			warnx("name too long");
@@ -649,6 +690,34 @@ ctl_unpause(struct parse_result *res, int argc, char *argv[])
 {
 	if (argc == 2) {
 		if (parse_vmid(res, argv[1]) == -1)
+			errx(1, "invalid id: %s", argv[1]);
+	} else if (argc != 2)
+		ctl_usage(res->ctl);
+
+	return (vmmaction(res));
+}
+
+int
+ctl_send(struct parse_result *res, int argc, char *argv[])
+{
+	if (pledge("stdio unix sendfd", NULL) == -1)
+		err(1, "pledge");
+	if (argc == 2) {
+		if (parse_vmid(res, argv[1]) == -1)
+			errx(1, "invalid id: %s", argv[1]);
+	} else if (argc != 2)
+		ctl_usage(res->ctl);
+
+	return (vmmaction(res));
+}
+
+int
+ctl_receive(struct parse_result *res, int argc, char *argv[])
+{
+	if (pledge("stdio unix sendfd", NULL) == -1)
+		err(1, "pledge");
+	if (argc == 2) {
+		if (parse_vmname(res, argv[1]) == -1)
 			errx(1, "invalid id: %s", argv[1]);
 	} else if (argc != 2)
 		ctl_usage(res->ctl);

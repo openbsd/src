@@ -1,9 +1,11 @@
-#	$OpenBSD: Makefile,v 1.3 2016/10/26 05:26:36 mlarkin Exp $
+#	$OpenBSD: Makefile,v 1.4 2017/07/15 05:05:36 pd Exp $
 
 .if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
 
+.PATH:	${.CURDIR}/../vmd
+
 PROG=	vmctl
-SRCS=	vmctl.c main.c
+SRCS=	vmctl.c main.c atomicio.c
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations
@@ -12,6 +14,7 @@ CFLAGS+= -Wsign-compare
 CFLAGS+= -I${.CURDIR} -I${.CURDIR}/../vmd
 LDADD+=	-lutil
 DPADD+= ${LIBUTIL}
+PATH+=../vmd
 
 .else
 
