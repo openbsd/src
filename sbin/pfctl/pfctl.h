@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.53 2015/01/19 23:52:02 deraadt Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.54 2017/07/15 16:01:14 awolk Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -75,12 +75,12 @@ int	 pfi_get_ifaces(const char *, struct pfi_kif *, int *);
 int	 pfi_clr_istats(const char *, int *, int);
 
 void	 pfctl_print_title(char *);
-int	 pfctl_clear_tables(const char *, int);
-int	 pfctl_show_tables(const char *, int);
+void	 pfctl_clear_tables(const char *, int);
+void	 pfctl_show_tables(const char *, int);
 int	 pfctl_command_tables(int, char *[], char *, const char *, char *,
 	    const char *, int);
 void	 warn_namespace_collision(const char *);
-int	 pfctl_show_ifaces(const char *, int);
+void	 pfctl_show_ifaces(const char *, int);
 FILE	*pfctl_fopen(const char *, const char *);
 
 /*
