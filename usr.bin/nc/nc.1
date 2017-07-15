@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.86 2017/07/15 17:27:39 jsing Exp $
+.\"     $OpenBSD: nc.1,v 1.87 2017/07/15 18:11:47 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -232,12 +232,12 @@ option.
 Change IPv4 TOS value or TLS options.
 For TLS options
 .Ar keyword
-may be one of
-.Ar tlsall ;
-which allows the use of all supported TLS protocols and ciphers,
-.Ar tlscompat ;
-which allows the use of all supported TLS protocols and "compat" ciphers,
-.Ar noverify ;
+may be one of:
+.Ar tlsall ,
+which allows the use of all supported TLS protocols and ciphers;
+.Ar tlscompat ,
+which allows the use of all supported TLS protocols and "compat" ciphers;
+.Ar noverify ,
 which disables certificate verification;
 .Ar noname ,
 which disables certificate name checking;
