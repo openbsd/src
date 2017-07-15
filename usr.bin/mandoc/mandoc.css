@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.7 2017/07/15 16:35:48 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.8 2017/07/15 17:29:26 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -93,7 +93,7 @@ dd.It-diag {	margin-left: 0ex; }
 b.It-diag {	font-style: normal; }
 dl.Bl-hang { }
 dt.It-hang { }
-dd.It-hang {	margin-left: 5ex; }
+dd.It-hang {	margin-left: 10.2ex; }
 dl.Bl-inset { }
 dt.It-inset { }
 dd.It-inset {	margin-left: 0ex; }

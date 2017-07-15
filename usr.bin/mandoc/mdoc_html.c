@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.167 2017/07/14 16:05:52 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.168 2017/07/15 17:29:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -730,7 +730,7 @@ mdoc_it_pre(MDOC_ARGS)
 				print_otag(h, TAG_B, "c", cattr);
 			break;
 		case ROFFT_BODY:
-			print_otag(h, TAG_DD, "cswl", cattr,
+			print_otag(h, TAG_DD, "csw+l", cattr,
 			    bl->norm->Bl.width);
 			break;
 		default:
