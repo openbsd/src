@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.40 2017/07/14 18:18:05 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.41 2017/07/15 15:06:31 bentley Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -715,7 +715,7 @@ next_tok:
 			parent->bottom = mandoc_strdup("\\[ul]");
 			break;
 		case EQN_TOK_BAR:
-			parent->top = mandoc_strdup("\\[rl]");
+			parent->top = mandoc_strdup("\\[rn]");
 			break;
 		case EQN_TOK_DOT:
 			parent->top = mandoc_strdup("\\[a.]");
