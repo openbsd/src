@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.144 2017/05/07 21:05:05 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.145 2017/07/15 17:40:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1513,10 +1513,10 @@ ssl3_handshake_msg_start(SSL *s, uint8_t msg_type)
 void
 ssl3_handshake_msg_finish(SSL *s, unsigned int len)
 {
-	unsigned char *d, *p;
+	unsigned char *p;
 	uint8_t msg_type;
 
-	d = p = (unsigned char *)s->internal->init_buf->data;
+	p = (unsigned char *)s->internal->init_buf->data;
 
 	/* Handshake message length. */
 	msg_type = *(p++);
