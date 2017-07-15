@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.198 2017/06/20 13:52:40 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.199 2017/07/15 15:48:08 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -391,6 +391,7 @@ void	iwm_update_sched(struct iwm_softc *, int, int, uint8_t, uint16_t);
 const struct iwm_rate *iwm_tx_fill_cmd(struct iwm_softc *, struct iwm_node *,
 	    struct ieee80211_frame *, struct iwm_tx_cmd *);
 int	iwm_tx(struct iwm_softc *, struct mbuf *, struct ieee80211_node *, int);
+int	iwm_flush_tx_path(struct iwm_softc *, int);
 void	iwm_led_enable(struct iwm_softc *);
 void	iwm_led_disable(struct iwm_softc *);
 int	iwm_led_is_enabled(struct iwm_softc *);
@@ -410,6 +411,7 @@ int	iwm_enable_beacon_filter(struct iwm_softc *, struct iwm_node *);
 int	iwm_disable_beacon_filter(struct iwm_softc *);
 int	iwm_add_sta_cmd(struct iwm_softc *, struct iwm_node *, int);
 int	iwm_add_aux_sta(struct iwm_softc *);
+int	iwm_rm_sta_cmd(struct iwm_softc *, struct iwm_node *);
 uint16_t iwm_scan_rx_chain(struct iwm_softc *);
 uint32_t iwm_scan_rate_n_flags(struct iwm_softc *, int, int);
 uint8_t	iwm_lmac_scan_fill_channels(struct iwm_softc *,
@@ -426,9 +428,14 @@ void	iwm_mac_ctxt_cmd_common(struct iwm_softc *, struct iwm_node *,
 void	iwm_mac_ctxt_cmd_fill_sta(struct iwm_softc *, struct iwm_node *,
 	    struct iwm_mac_data_sta *, int);
 int	iwm_mac_ctxt_cmd(struct iwm_softc *, struct iwm_node *, uint32_t, int);
-int	iwm_update_quotas(struct iwm_softc *, struct iwm_node *);
+int	iwm_update_quotas(struct iwm_softc *, struct iwm_node *, int);
+int	iwm_scan(struct iwm_softc *);
 int	iwm_auth(struct iwm_softc *);
+int	iwm_deauth(struct iwm_softc *);
 int	iwm_assoc(struct iwm_softc *);
+int	iwm_disassoc(struct iwm_softc *);
+int	iwm_run(struct iwm_softc *);
+int	iwm_run_stop(struct iwm_softc *);
 struct ieee80211_node *iwm_node_alloc(struct ieee80211com *);
 void	iwm_calib_timeout(void *);
 void	iwm_setrates(struct iwm_node *);
@@ -3575,8 +3582,14 @@ iwm_binding_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
 {
 	struct iwm_binding_cmd cmd;
 	struct iwm_phy_ctxt *phyctxt = in->in_phyctxt;
-	int i, err;
+	uint32_t mac_id = IWM_FW_CMD_ID_AND_COLOR(in->in_id, in->in_color);
+	int i, err, active = (sc->sc_flags & IWM_FLAG_BINDING_ACTIVE);
 	uint32_t status;
+
+	if (action == IWM_FW_CTXT_ACTION_ADD && active)
+		panic("binding already added");
+	if (action == IWM_FW_CTXT_ACTION_REMOVE && !active)
+		panic("binding already removed");
 
 	memset(&cmd, 0, sizeof(cmd));
 
@@ -3585,7 +3598,7 @@ iwm_binding_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
 	cmd.action = htole32(action);
 	cmd.phy = htole32(IWM_FW_CMD_ID_AND_COLOR(phyctxt->id, phyctxt->color));
 
-	cmd.macs[0] = htole32(IWM_FW_CMD_ID_AND_COLOR(in->in_id, in->in_color));
+	cmd.macs[0] = htole32(mac_id);
 	for (i = 1; i < IWM_MAX_MACS_IN_BINDING; i++)
 		cmd.macs[i] = htole32(IWM_FW_CTXT_INVALID);
 
@@ -3620,7 +3633,6 @@ iwm_phy_ctxt_cmd_data(struct iwm_softc *sc, struct iwm_phy_context_cmd *cmd,
 
 	cmd->ci.band = IEEE80211_IS_CHAN_2GHZ(chan) ?
 	    IWM_PHY_BAND_24 : IWM_PHY_BAND_5;
-
 	cmd->ci.channel = ieee80211_chan2ieee(ic, chan);
 	cmd->ci.width = IWM_PHY_VHT_CHANNEL_MODE20;
 	cmd->ci.ctrl_pos = IWM_PHY_VHT_CTRL_POS_1_BELOW;
@@ -4254,10 +4266,8 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	return 0;
 }
 
-#if 0
-/* not necessary? */
 int
-iwm_flush_tx_path(struct iwm_softc *sc, int tfd_msk, int sync)
+iwm_flush_tx_path(struct iwm_softc *sc, int tfd_msk)
 {
 	struct iwm_tx_path_flush_cmd flush_cmd = {
 		.queues_ctl = htole32(tfd_msk),
@@ -4265,14 +4275,12 @@ iwm_flush_tx_path(struct iwm_softc *sc, int tfd_msk, int sync)
 	};
 	int err;
 
-	err = iwm_send_cmd_pdu(sc, IWM_TXPATH_FLUSH,
-	    sync ? 0 : IWM_CMD_ASYNC,
+	err = iwm_send_cmd_pdu(sc, IWM_TXPATH_FLUSH, 0,
 	    sizeof(flush_cmd), &flush_cmd);
 	if (err)
                 printf("%s: Flushing tx queue failed: %d\n", DEVNAME(sc), err);
 	return err;
 }
-#endif
 
 void
 iwm_led_enable(struct iwm_softc *sc)
@@ -4466,6 +4474,9 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 	uint32_t status;
 	struct ieee80211com *ic = &sc->sc_ic;
 
+	if (!update && (sc->sc_flags & IWM_FLAG_STA_ACTIVE))
+		panic("STA already added");
+
 	memset(&add_sta_cmd, 0, sizeof(add_sta_cmd));
 
 	add_sta_cmd.sta_id = IWM_STATION_ID;
@@ -4547,6 +4558,24 @@ iwm_add_aux_sta(struct iwm_softc *sc)
 	    &status);
 	if (err == 0 && status != IWM_ADD_STA_SUCCESS)
 		err = EIO;
+
+	return err;
+}
+
+int
+iwm_rm_sta_cmd(struct iwm_softc *sc, struct iwm_node *in)
+{
+	struct iwm_rm_sta_cmd rm_sta_cmd;
+	int err;
+
+	if ((sc->sc_flags & IWM_FLAG_STA_ACTIVE) == 0)
+		panic("sta already removed");
+
+	memset(&rm_sta_cmd, 0, sizeof(rm_sta_cmd));
+	rm_sta_cmd.sta_id = IWM_STATION_ID;
+
+	err = iwm_send_cmd_pdu(sc, IWM_REMOVE_STA, 0, sizeof(rm_sta_cmd),
+	    &rm_sta_cmd);
 
 	return err;
 }
@@ -5222,6 +5251,12 @@ iwm_mac_ctxt_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action,
 {
 	struct ieee80211_node *ni = &in->in_ni;
 	struct iwm_mac_ctx_cmd cmd;
+	int active = (sc->sc_flags & IWM_FLAG_MAC_ACTIVE);
+
+	if (action == IWM_FW_CTXT_ACTION_ADD && active)
+		panic("MAC already added");
+	if (action == IWM_FW_CTXT_ACTION_REMOVE && !active)
+		panic("MAC already removed");
 
 	memset(&cmd, 0, sizeof(cmd));
 
@@ -5238,7 +5273,7 @@ iwm_mac_ctxt_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action,
 }
 
 int
-iwm_update_quotas(struct iwm_softc *sc, struct iwm_node *in)
+iwm_update_quotas(struct iwm_softc *sc, struct iwm_node *in, int running)
 {
 	struct iwm_time_quota_cmd cmd;
 	int i, idx, num_active_macs, quota, quota_rem;
@@ -5253,8 +5288,7 @@ iwm_update_quotas(struct iwm_softc *sc, struct iwm_node *in)
 		id = in->in_phyctxt->id;
 		KASSERT(id < IWM_MAX_BINDINGS);
 		colors[id] = in->in_phyctxt->color;
-
-		if (1)
+		if (running)
 			n_ifs[id] = 1;
 	}
 
@@ -5301,6 +5335,32 @@ iwm_update_quotas(struct iwm_softc *sc, struct iwm_node *in)
 }
 
 int
+iwm_scan(struct iwm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	int err;
+
+	if (sc->sc_flags & IWM_FLAG_SCANNING)
+		return 0;
+
+	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_UMAC_SCAN))
+		err = iwm_umac_scan(sc);
+	else
+		err = iwm_lmac_scan(sc);
+	if (err) {
+		printf("%s: could not initiate scan\n", DEVNAME(sc));
+		return err;
+	}
+
+	sc->sc_flags |= IWM_FLAG_SCANNING;
+	ic->ic_state = IEEE80211_S_SCAN;
+	iwm_led_blink_start(sc);
+	wakeup(&ic->ic_state); /* wake iwm_init() */
+
+	return 0;
+}
+
+int
 iwm_auth(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -5308,19 +5368,16 @@ iwm_auth(struct iwm_softc *sc)
 	uint32_t duration;
 	int err;
 
-	err = iwm_sf_config(sc, IWM_SF_FULL_ON);
-	if (err)
-		return err;
-
-	err = iwm_allow_mcast(sc);
-	if (err)
-		return err;
+	splassert(IPL_NET);
 
 	sc->sc_phyctxt[0].channel = in->in_ni.ni_chan;
 	err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0], 1, 1,
 	    IWM_FW_CTXT_ACTION_MODIFY, 0);
-	if (err)
+	if (err) {
+		printf("%s: could not update PHY context (error %d)\n",
+		    DEVNAME(sc), err);
 		return err;
+	}
 	in->in_phyctxt = &sc->sc_phyctxt[0];
 
 	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_ADD, 0);
@@ -5329,20 +5386,23 @@ iwm_auth(struct iwm_softc *sc)
 		    DEVNAME(sc), err);
 		return err;
  	}
+	sc->sc_flags |= IWM_FLAG_MAC_ACTIVE;
 
 	err = iwm_binding_cmd(sc, in, IWM_FW_CTXT_ACTION_ADD);
-	if (err)
-		return err;
+	if (err) {
+		printf("%s: could not add binding (error %d)\n",
+		    DEVNAME(sc), err);
+		goto rm_mac_ctxt;
+	}
+	sc->sc_flags |= IWM_FLAG_BINDING_ACTIVE;
 
 	err = iwm_add_sta_cmd(sc, in, 0);
-	if (err)
-		return err;
-
-	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 0);
 	if (err) {
-		printf("%s: failed to update MAC\n", DEVNAME(sc));
-		return err;
+		printf("%s: could not add sta (error %d)\n",
+		    DEVNAME(sc), err);
+		goto rm_binding;
 	}
+	sc->sc_flags |= IWM_FLAG_STA_ACTIVE;
 
 	/*
 	 * Prevent the FW from wandering off channel during association
@@ -5356,6 +5416,56 @@ iwm_auth(struct iwm_softc *sc)
 	DELAY(100);
 
 	return 0;
+
+rm_binding:
+	iwm_binding_cmd(sc, in, IWM_FW_CTXT_ACTION_REMOVE);
+	sc->sc_flags &= ~IWM_FLAG_BINDING_ACTIVE;
+rm_mac_ctxt:
+	iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_REMOVE, 0);
+	sc->sc_flags &= ~IWM_FLAG_MAC_ACTIVE;
+	return err;
+}
+
+int
+iwm_deauth(struct iwm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwm_node *in = (void *)ic->ic_bss;
+	int ac, tfd_msk, err;
+
+	splassert(IPL_NET);
+
+	tfd_msk = 0;
+	for (ac = 0; ac < EDCA_NUM_AC; ac++)
+		tfd_msk |= htole32(1 << iwm_ac_to_tx_fifo[ac]);
+	err = iwm_flush_tx_path(sc, tfd_msk);
+	if (err) {
+		printf("%s: could not flush Tx path (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
+	}
+
+	if (sc->sc_flags & IWM_FLAG_BINDING_ACTIVE) {
+		err = iwm_binding_cmd(sc, in, IWM_FW_CTXT_ACTION_REMOVE);
+		if (err) {
+			printf("%s: could not remove binding (error %d)\n",
+			    DEVNAME(sc), err);
+			return err;
+		}
+		sc->sc_flags &= ~IWM_FLAG_BINDING_ACTIVE;
+	}
+
+	if (sc->sc_flags & IWM_FLAG_MAC_ACTIVE) {
+		err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_REMOVE, 0);
+		if (err) {
+			printf("%s: could not remove MAC context (error %d)\n",
+			    DEVNAME(sc), err);
+			return err;
+		}
+		sc->sc_flags &= ~IWM_FLAG_MAC_ACTIVE;
+	}
+
+	return 0;
 }
 
 int
@@ -5363,11 +5473,170 @@ iwm_assoc(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_node *in = (void *)ic->ic_bss;
+	int update_sta = (sc->sc_flags & IWM_FLAG_STA_ACTIVE);
 	int err;
 
-	err = iwm_add_sta_cmd(sc, in, 1);
+	splassert(IPL_NET);
+
+	err = iwm_add_sta_cmd(sc, in, update_sta);
+	if (err) {
+		printf("%s: could not %s STA (error %d)\n",
+		    DEVNAME(sc), update_sta ? "update" : "add", err);
+		return err;
+	}
+
+	return 0;
+}
+
+int
+iwm_disassoc(struct iwm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwm_node *in = (void *)ic->ic_bss;
+	int err;
+
+	splassert(IPL_NET);
+
+	if (sc->sc_flags & IWM_FLAG_STA_ACTIVE) {
+		err = iwm_rm_sta_cmd(sc, in);
+		if (err) {
+			printf("%s: could not remove STA (error %d)\n",
+			    DEVNAME(sc), err);
+			return err;
+		}
+		sc->sc_flags &= ~IWM_FLAG_STA_ACTIVE;
+	}
+
+	return 0;
+}
+
+int
+iwm_run(struct iwm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwm_node *in = (void *)ic->ic_bss;
+	int err;
+
+	splassert(IPL_NET);
+
+	/* Configure Rx chains for MIMO. */
+	if ((in->in_ni.ni_flags & IEEE80211_NODE_HT) &&
+	    !sc->sc_nvm.sku_cap_mimo_disable) {
+		err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0],
+		    2, 2, IWM_FW_CTXT_ACTION_MODIFY, 0);
+		if (err) {
+			printf("%s: failed to update PHY\n",
+			    DEVNAME(sc));
+			return err;
+		}
+	}
+
+	/* We have now been assigned an associd by the AP. */
+	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 1);
+	if (err) {
+		printf("%s: failed to update MAC\n", DEVNAME(sc));
+		return err;
+	}
+
+	err = iwm_sf_config(sc, IWM_SF_FULL_ON);
+	if (err) {
+		printf("%s: could not set sf full on (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
+	}
+
+	err = iwm_allow_mcast(sc);
+	if (err) {
+		printf("%s: could not allow mcast (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
+	}
+
+	err = iwm_power_update_device(sc);
+	if (err) {
+		printf("%s: could send power command (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
+	}
+#ifdef notyet
+	/* 
+	 * Disabled for now. Default beacon filter settings
+	 * prevent net80211 from getting ERP and HT protection
+	 * updates from beacons.
+	 */
+	err = iwm_enable_beacon_filter(sc, in);
+	if (err) {
+		printf("%s: could not enable beacon filter\n",
+		    DEVNAME(sc));
+		return err;
+	}
+#endif
+	err = iwm_power_mac_update_mode(sc, in);
+	if (err) {
+		printf("%s: could not update MAC power (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
+	}
+
+	err = iwm_update_quotas(sc, in, 1);
+	if (err) {
+		printf("%s: could not update quotas (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
+	}
+
+	ieee80211_amrr_node_init(&sc->sc_amrr, &in->in_amn);
+	ieee80211_mira_node_init(&in->in_mn);
+
+	/* Start at lowest available bit-rate, AMRR will raise. */
+	in->in_ni.ni_txrate = 0;
+	in->in_ni.ni_txmcs = 0;
+	iwm_setrates(in);
+
+	timeout_add_msec(&sc->sc_calib_to, 500);
+	iwm_led_enable(sc);
+
+	return 0;
+}
+
+int
+iwm_run_stop(struct iwm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwm_node *in = (void *)ic->ic_bss;
+	int err;
+
+	splassert(IPL_NET);
+
+	err = iwm_sf_config(sc, IWM_SF_INIT_OFF);
 	if (err)
 		return err;
+
+	iwm_disable_beacon_filter(sc);
+
+	err = iwm_update_quotas(sc, in, 0);
+	if (err) {
+		printf("%s: could not update quotas (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
+	}
+
+	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 0);
+	if (err) {
+		printf("%s: failed to update MAC\n", DEVNAME(sc));
+		return err;
+	}
+
+	/* Reset Tx chains in case MIMO was enabled. */
+	if ((in->in_ni.ni_flags & IEEE80211_NODE_HT) &&
+	    !sc->sc_nvm.sku_cap_mimo_disable) {
+		err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0], 1, 1,
+		    IWM_FW_CTXT_ACTION_MODIFY, 0);
+		if (err) {
+			printf("%s: failed to update PHY\n", DEVNAME(sc));
+			return err;
+		}
+	}
 
 	return 0;
 }
@@ -5563,12 +5832,10 @@ iwm_newstate_task(void *psc)
 {
 	struct iwm_softc *sc = (struct iwm_softc *)psc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = IC2IFP(ic);
 	enum ieee80211_state nstate = sc->ns_nstate;
 	enum ieee80211_state ostate = ic->ic_state;
-	struct iwm_node *in = (struct iwm_node *)ic->ic_bss;
 	int arg = sc->ns_arg;
-	int err;
+	int err = 0, s = splnet();
 
 	DPRINTF(("switching state %s->%s\n",
 	    ieee80211_state_name[ostate],
@@ -5577,30 +5844,32 @@ iwm_newstate_task(void *psc)
 	if (ostate == IEEE80211_S_SCAN && nstate != ostate)
 		iwm_led_blink_stop(sc);
 
-	if (ostate == IEEE80211_S_RUN && nstate != ostate)
-		iwm_disable_beacon_filter(sc);
-
-	/* Reset the device if moving out of AUTH, ASSOC, or RUN. */
-	/* XXX Is there a way to switch states without a full reset? */
-	if (ostate > IEEE80211_S_SCAN && nstate < ostate) {
-		iwm_stop_device(sc);
-		err = iwm_init_hw(sc);
-		if (err) {
-			iwm_stop(ifp, 1);
-			return;
-		}
-
-		/* 
-		 * Upon receiving a deauth frame from AP the net80211 stack
-		 * puts the driver into AUTH state. This will fail with this
-		 * driver so bring the FSM from RUN to SCAN in this case.
-		 */
-		if (nstate == IEEE80211_S_SCAN ||
-		    nstate == IEEE80211_S_AUTH ||
-		    nstate == IEEE80211_S_ASSOC) {
-			/* Always pass arg as -1 since we can't Tx right now. */
-			sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
-			nstate = IEEE80211_S_SCAN;
+	if (nstate <= ostate) {
+		switch (ostate) {
+		case IEEE80211_S_RUN:
+			if (nstate <= IEEE80211_S_RUN) {
+				err = iwm_run_stop(sc);
+				if (err)
+					goto out;
+			}
+			/* FALLTHROUGH */
+		case IEEE80211_S_ASSOC:
+			if (nstate <= IEEE80211_S_ASSOC) {
+				err = iwm_disassoc(sc);
+				if (err)
+					goto out;
+			}
+			/* FALLTHROUGH */
+		case IEEE80211_S_AUTH:
+			if (nstate <= IEEE80211_S_AUTH) {
+				err = iwm_deauth(sc);
+				if (err)
+					goto out;
+			}
+			/* FALLTHROUGH */
+		case IEEE80211_S_SCAN:
+		case IEEE80211_S_INIT:
+			break;
 		}
 	}
 
@@ -5609,106 +5878,32 @@ iwm_newstate_task(void *psc)
 		break;
 
 	case IEEE80211_S_SCAN:
-		if (ic->ic_state == nstate &&
-		    (sc->sc_flags & IWM_FLAG_SCANNING))
-			return;
-		if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_UMAC_SCAN))
-			err = iwm_umac_scan(sc);
-		else
-			err = iwm_lmac_scan(sc);
-		if (err) {
-			printf("%s: could not initiate scan\n", DEVNAME(sc));
-			return;
-		}
-		sc->sc_flags |= IWM_FLAG_SCANNING;
-		ic->ic_state = nstate;
-		iwm_led_blink_start(sc);
-		wakeup(&ic->ic_state); /* wake iwm_init() */
+		err = iwm_scan(sc);
+		if (err)
+			break;
+		splx(s);
 		return;
 
 	case IEEE80211_S_AUTH:
 		err = iwm_auth(sc);
-		if (err)
-			return;
-
 		break;
 
 	case IEEE80211_S_ASSOC:
 		err = iwm_assoc(sc);
-		if (err)
-			return;
 		break;
 
 	case IEEE80211_S_RUN:
-		/* Configure Rx chains for MIMO. */
-		if ((in->in_ni.ni_flags & IEEE80211_NODE_HT) &&
-		    !sc->sc_nvm.sku_cap_mimo_disable) {
-			err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0],
-			    2, 2, IWM_FW_CTXT_ACTION_MODIFY, 0);
-			if (err) {
-				printf("%s: failed to update PHY\n",
-				    DEVNAME(sc));
-				return;
-			}
-		}
-
-		/* We have now been assigned an associd by the AP. */
-		err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 1);
-		if (err) {
-			printf("%s: failed to update MAC\n", DEVNAME(sc));
-			return;
-		}
-
-		err = iwm_power_update_device(sc);
-		if (err) {
-			printf("%s: could send power command (error %d)\n",
-			    DEVNAME(sc), err);
-			return;
-		}
-#ifdef notyet
-		/* 
-		 * Disabled for now. Default beacon filter settings
-		 * prevent net80211 from getting ERP and HT protection
-		 * updates from beacons.
-		 */
-		err = iwm_enable_beacon_filter(sc, in);
-		if (err) {
-			printf("%s: could not enable beacon filter\n",
-			    DEVNAME(sc));
-			return;
-		}
-#endif
-		err = iwm_power_mac_update_mode(sc, in);
-		if (err) {
-			printf("%s: could not update MAC power (error %d)\n",
-			    DEVNAME(sc), err);
-			return;
-		}
-
-		err = iwm_update_quotas(sc, in);
-		if (err) {
-			printf("%s: could not update quotas (error %d)\n",
-			    DEVNAME(sc), err);
-			return;
-		}
-
-		ieee80211_amrr_node_init(&sc->sc_amrr, &in->in_amn);
-		ieee80211_mira_node_init(&in->in_mn);
-
-		/* Start at lowest available bit-rate, AMRR will raise. */
-		in->in_ni.ni_txrate = 0;
-		in->in_ni.ni_txmcs = 0;
-		iwm_setrates(in);
-
-		timeout_add_msec(&sc->sc_calib_to, 500);
-		iwm_led_enable(sc);
+		err = iwm_run(sc);
 		break;
 
 	default:
 		break;
 	}
 
-	sc->sc_newstate(ic, nstate, arg);
+out:
+	if (err == 0)
+		sc->sc_newstate(ic, nstate, arg);
+	splx(s);
 }
 
 int
@@ -6208,6 +6403,7 @@ iwm_stop(struct ifnet *ifp, int disable)
 	struct iwm_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_node *in = (void *)ic->ic_bss;
+	int s = splnet();
 
 	sc->sc_generation++;
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
@@ -6226,12 +6422,18 @@ iwm_stop(struct ifnet *ifp, int disable)
 	task_del(systq, &sc->htprot_task);
 
 	sc->sc_flags &= ~IWM_FLAG_SCANNING;
+	sc->sc_flags &= ~IWM_FLAG_MAC_ACTIVE;
+	sc->sc_flags &= ~IWM_FLAG_BINDING_ACTIVE;
+	sc->sc_flags &= ~IWM_FLAG_STA_ACTIVE;
+
 	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 
 	timeout_del(&sc->sc_calib_to);
 	iwm_led_blink_stop(sc);
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	iwm_stop_device(sc);
+
+	splx(s);
 }
 
 void
