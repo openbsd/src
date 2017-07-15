@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.20 2017/06/18 13:58:44 visa Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.21 2017/07/15 06:35:42 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -122,8 +122,6 @@ bus_space_t iobus_tag = {
 	._space_vaddr =		generic_space_vaddr
 };
 
-bus_space_handle_t iobus_h;
-
 struct machine_bus_dma_tag iobus_bus_dma_tag = {
 	NULL,			/* _cookie */
 	_dmamap_create,
@@ -212,15 +210,6 @@ iobusattach(struct device *parent, struct device *self, void *aux)
 	struct octeon_config oc;
 	struct device *sc = self;
 	int chipid, i, ngmx, soc;
-
-	/*
-	 * Map and setup CIU control registers.
-	 */
-	if (bus_space_map(&iobus_tag, OCTEON_CIU_BASE, OCTEON_CIU_SIZE, 0,
-		&iobus_h)) {
-		printf(": can't map CIU control registers\n");
-		return;
-	}
 
 	iobus_found = 1;
 
