@@ -12589,7 +12589,9 @@ intel_pipe_config_compare(struct drm_device *dev,
 		PIPE_CONF_CHECK_I(limited_color_range);
 	PIPE_CONF_CHECK_I(has_infoframe);
 
+#ifdef notyet
 	PIPE_CONF_CHECK_I(has_audio);
+#endif
 
 	PIPE_CONF_CHECK_FLAGS(base.adjusted_mode.flags,
 			      DRM_MODE_FLAG_INTERLACE);
