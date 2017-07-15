@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.27 2016/09/14 18:34:51 rpe Exp $
+#	$OpenBSD: ksh.kshrc,v 1.28 2017/07/15 07:11:42 tb Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -39,7 +39,7 @@ case "$-" in
 	0) PS1S='# ';;
 	esac
 	PS1S=${PS1S:-'$ '}
-	HOSTNAME=${HOSTNAME:-`uname -n`}
+	HOSTNAME=${HOSTNAME:-$(uname -n)}
 	HOST=${HOSTNAME%%.*}
 
 	PROMPT="$USER:!$PS1S"
@@ -49,8 +49,8 @@ case "$-" in
 	PS1=$PPROMPT
 	# $TTY is the tty we logged in on,
 	# $tty is that which we are in now (might by pty)
-	tty=`tty`
-	tty=`basename $tty`
+	tty=$(tty)
+	tty=${tty##*/}
 	TTY=${TTY:-$tty}
 	# $console is the system console device
 	console=$(sysctl kern.consdev)
@@ -117,7 +117,7 @@ case "$-" in
 	alias o='fg %-'
 	alias df='df -k'
 	alias du='du -k'
-	alias rsize='eval `resize`'
+	alias rsize='eval $(resize)'
 ;;
 *)	# non-interactive
 ;;
@@ -142,6 +142,6 @@ function pre_path {
 }
 # if $1 is in path, remove it
 function del_path {
-	no_path $* || eval ${2:-PATH}=`eval echo :'$'${2:-PATH}: |
-		sed -e "s;:$1:;:;g" -e "s;^:;;" -e "s;:\$;;"`
+	no_path $* || eval ${2:-PATH}=$(eval echo :'$'${2:-PATH}: |
+		sed -e "s;:$1:;:;g" -e "s;^:;;" -e "s;:\$;;")
 }
