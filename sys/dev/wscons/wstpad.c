@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.7 2017/06/18 13:21:48 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.8 2017/07/16 18:00:53 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -132,7 +132,8 @@ struct tpad_touch {
 
 
 #define WSTPAD_TOUCHPAD_DEFAULTS (WSTPAD_TWOFINGERSCROLL)
-#define WSTPAD_CLICKPAD_DEFAULTS (WSTPAD_SOFTBUTTONS | WSTPAD_TWOFINGERSCROLL)
+#define WSTPAD_CLICKPAD_DEFAULTS \
+    (WSTPAD_SOFTBUTTONS | WSTPAD_SOFTMBTN | WSTPAD_TWOFINGERSCROLL)
 
 
 struct wstpad {
@@ -303,9 +304,8 @@ wstpad_set_direction(struct tpad_touch *t, int dx, int dy, int ratio)
 }
 
 /*
- * If a touch starts in an edge area that is configured for softbuttons,
- * scrolling, or palm detection, pointer motion will be suppressed as long
- * as it stays in that area.
+ * If a touch starts in an edge area, pointer movement will be
+ * suppressed as long as it stays in that area.
  */
 static inline u_int
 edge_flags(struct wstpad *tp, int x, int y)
@@ -915,7 +915,7 @@ wstpad_process_input(struct wsmouseinput *input, struct evq_access *evq)
 	cmds = 0;
 	handlers = tp->handlers;
 	if (DISABLE(tp))
-		handlers &= (1 << TOPBUTTON_HDLR);
+		handlers &= ((1 << TOPBUTTON_HDLR) | (1 << SOFTBUTTON_HDLR));
 
 	FOREACHBIT(handlers, hdlr) {
 		switch (hdlr) {
@@ -1296,15 +1296,6 @@ wstpad_configure(struct wsmouseinput *input)
 		input->filter.dclr = h_unit - h_unit / 5;
 		wstpad_init_deceleration(input);
 
-		tp->params.top_edge = EDGERATIO_DEFAULT;
-		tp->params.bottom_edge = EDGERATIO_DEFAULT;
-		tp->params.left_edge = EDGERATIO_DEFAULT;
-		tp->params.right_edge = EDGERATIO_DEFAULT;
-		tp->params.center_width = CENTERWIDTH_DEFAULT;
-		tp->tap.maxtime.tv_nsec = TAP_MAXTIME_DEFAULT * 1000000;
-		tp->tap.clicktime = TAP_CLICKTIME_DEFAULT;
-		tp->tap.locktime = TAP_LOCKTIME_DEFAULT;
-
 		tp->features &= (WSTPAD_MT | WSTPAD_DISABLE);
 		if (input->hw.hw_type == WSMOUSEHW_TOUCHPAD)
 			tp->features |= WSTPAD_TOUCHPAD_DEFAULTS;
@@ -1314,6 +1305,17 @@ wstpad_configure(struct wsmouseinput *input)
 			tp->features &= ~WSTPAD_TWOFINGERSCROLL;
 			tp->features |= WSTPAD_EDGESCROLL;
 		}
+
+		tp->params.bottom_edge = (tp->features &
+		    WSTPAD_SOFTBUTTONS) ? EDGERATIO_DEFAULT : 0;
+		tp->params.top_edge = 0;
+		tp->params.left_edge = EDGERATIO_DEFAULT;
+		tp->params.right_edge = EDGERATIO_DEFAULT;
+		tp->params.center_width = CENTERWIDTH_DEFAULT;
+		tp->tap.maxtime.tv_nsec = TAP_MAXTIME_DEFAULT * 1000000;
+		tp->tap.clicktime = TAP_CLICKTIME_DEFAULT;
+		tp->tap.locktime = TAP_LOCKTIME_DEFAULT;
+
 		tp->scroll.hdist = 5 * h_unit;
 		tp->scroll.vdist = 5 * v_unit;
 		tp->tap.maxdist = 3 * h_unit;
@@ -1334,25 +1336,23 @@ wstpad_configure(struct wsmouseinput *input)
 	    width * tp->params.center_width / 8192;
 	tp->edge.middle = (input->hw.y_max - input->hw.y_min) / 2;
 
+	/*
+	 * A touch with a flag that is also set in this mask does not
+	 * move the pointer.  For now, it only contains the edge flags.
+	 */
+	tp->freeze = EDGES;
+
 	tp->handlers = 0;
-	tp->freeze = 0;
 
-	if (tp->features & WSTPAD_SOFTBUTTONS) {
+	if (tp->features & WSTPAD_SOFTBUTTONS)
 		tp->handlers |= 1 << SOFTBUTTON_HDLR;
-		tp->freeze |= B_EDGE;
-	}
-	if (tp->features & WSTPAD_TOPBUTTONS) {
+	if (tp->features & WSTPAD_TOPBUTTONS)
 		tp->handlers |= 1 << TOPBUTTON_HDLR;
-		tp->freeze |= T_EDGE;
-	}
 
-	if (tp->features & WSTPAD_TWOFINGERSCROLL) {
+	if (tp->features & WSTPAD_TWOFINGERSCROLL)
 		tp->handlers |= 1 << F2SCROLL_HDLR;
-	} else if (tp->features & WSTPAD_EDGESCROLL) {
+	else if (tp->features & WSTPAD_EDGESCROLL)
 		tp->handlers |= 1 << EDGESCROLL_HDLR;
-		tp->freeze |=
-		    ((tp->features & WSTPAD_SWAPSIDES) ? L_EDGE : R_EDGE);
-	}
 
 	if (tp->features & WSTPAD_TAPPING) {
 		tp->tap.clicktime = imin(imax(tp->tap.clicktime, 80), 350);
