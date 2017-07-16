@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.201 2017/07/16 22:03:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.202 2017/07/16 23:38:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5851,8 +5851,10 @@ iwm_newstate_task(void *psc)
 	    ieee80211_state_name[ostate],
 	    ieee80211_state_name[nstate]));
 
-	if (nstate == ostate)
+	if (nstate == ostate) {
+		splx(s);
 		return;
+	}
 
 	if (ostate == IEEE80211_S_SCAN)
 		iwm_led_blink_stop(sc);
