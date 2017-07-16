@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.30 2017/07/15 15:48:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.31 2017/07/16 22:48:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -279,12 +279,12 @@ struct iwm_rx_ring {
 	int			cur;
 };
 
-#define IWM_FLAG_USE_ICT	0x01
-#define IWM_FLAG_RFKILL		0x02
-#define IWM_FLAG_SCANNING	0x04
-#define IWM_FLAG_MAC_ACTIVE	0x08
-#define IWM_FLAG_BINDING_ACTIVE	0x10
-#define IWM_FLAG_STA_ACTIVE	0x20
+#define IWM_FLAG_USE_ICT	0x01	/* using Interrupt Cause Table */
+#define IWM_FLAG_RFKILL		0x02	/* radio kill switch is set */
+#define IWM_FLAG_SCANNING	0x04	/* scan in progress */
+#define IWM_FLAG_MAC_ACTIVE	0x08	/* MAC context added to firmware */
+#define IWM_FLAG_BINDING_ACTIVE	0x10	/* MAC->PHY binding added to firmware */
+#define IWM_FLAG_STA_ACTIVE	0x20	/* AP added to firmware station table */
 
 struct iwm_ucode_status {
 	uint32_t uc_error_event_table;
