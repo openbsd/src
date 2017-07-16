@@ -1,5 +1,5 @@
-.\" $OpenBSD: diag.in,v 1.6 2017/07/04 14:53:24 schwarze Exp $
-.Dd $Mdocdate: July 4 2017 $
+.\" $OpenBSD: diag.in,v 1.7 2017/07/16 17:53:29 schwarze Exp $
+.Dd $Mdocdate: July 16 2017 $
 .Dt BL-DIAG 1
 .Os
 .Sh NAME
@@ -38,10 +38,11 @@ x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .It zehn__zehn
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .El
-.Bl -diag
+.Bl -diag -width 10n
 .It This is a very long text contained in the diag item head, it is \
 so long that it overruns the line -
-and here comes the item body.
+and here comes the item body,
+which is also long enough to break the line again.
 .El
 .Pp
 Check that It is not parsed in Bl:

@@ -1,0 +1,4 @@
+mandoc: diag.in:51:2: WARNING: skipping empty macro: No
+mandoc: diag.in:53:2: WARNING: skipping empty macro: No
+mandoc: diag.in:55:2: WARNING: skipping empty macro: No
+mandoc: diag.in:41:11: WARNING: skipping -width argument: Bl -diag

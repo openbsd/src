@@ -31,7 +31,8 @@ zehn\_\_zehn
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 
 This is a very long text contained in the diag item head, it is so long that it overruns the line -
-and here comes the item body.
+and here comes the item body,
+which is also long enough to break the line again.
 
 Check that It is not parsed in Bl:
 
