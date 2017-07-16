@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.1 2010/03/25 14:26:21 jsing Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.2 2017/07/16 22:48:38 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -39,17 +39,45 @@ struct __mp_lock {
 	volatile int mpl_lock[4];
 	volatile struct cpu_info *mpl_cpu;
 	volatile long mpl_count;
+#ifdef WITNESS
+	struct lock_object	mpl_lock_obj;
+#endif
 };
 
 #ifndef _LOCORE
 
-void __mp_lock_init(struct __mp_lock *);
-void __mp_lock(struct __mp_lock *);
-void __mp_unlock(struct __mp_lock *);
-int __mp_release_all(struct __mp_lock *);
-int __mp_release_all_but_one(struct __mp_lock *);
-void __mp_acquire_count(struct __mp_lock *, int);
-int __mp_lock_held(struct __mp_lock *);
+void	___mp_lock_init(struct __mp_lock *);
+void	___mp_lock(struct __mp_lock * LOCK_FL_VARS);
+void	___mp_unlock(struct __mp_lock * LOCK_FL_VARS);
+int	___mp_release_all(struct __mp_lock * LOCK_FL_VARS);
+int	___mp_release_all_but_one(struct __mp_lock * LOCK_FL_VARS);
+void	___mp_acquire_count(struct __mp_lock *, int LOCK_FL_VARS);
+int	__mp_lock_held(struct __mp_lock *);
+
+#ifdef WITNESS
+
+void	_mp_lock_init(struct __mp_lock *, struct lock_type *);
+
+#define __mp_lock_init(mpl) do {					\
+	static struct lock_type __lock_type = { .lt_name = #mpl };	\
+	_mp_lock_init((mpl), &__lock_type);				\
+} while (0)
+
+#else /* WITNESS */
+
+#define __mp_lock_init		___mp_lock_init
+
+#endif /* WITNESS */
+
+#define __mp_lock(mpl)		___mp_lock((mpl) LOCK_FILE_LINE)
+#define __mp_unlock(mpl)	___mp_unlock((mpl) LOCK_FILE_LINE)
+
+#define __mp_release_all(mpl) \
+	___mp_release_all((mpl) LOCK_FILE_LINE)
+#define __mp_release_all_but_one(mpl) \
+	___mp_release_all_but_one((mpl) LOCK_FILE_LINE)
+#define __mp_acquire_count(mpl, count) \
+	___mp_acquire_count((mpl), (count) LOCK_FILE_LINE)
 
 #endif
 
