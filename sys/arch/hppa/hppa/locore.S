@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.198 2017/06/05 18:59:06 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.199 2017/07/16 22:47:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2597,7 +2597,7 @@ ENTRY(cpu_switchto,128)
 	copy	r3, r1
 	stw	rp, HPPA_FRAME_CRP(sp)
 	copy	sp, r3
-	stwm	r1, HPPA_FRAME_SIZE+20*4(sp)
+	stwm	r1, HPPA_FRAME_SIZE+16*4(sp)
 
 #ifdef DIAGNOSTIC
 	b	kstack_check
@@ -2686,7 +2686,7 @@ switch_exited
 	mtctl	t2, cr30
 	mtctl	t3, pidr2
 	/* XXX enable interrupts? */
-	ldo	-(HPPA_FRAME_SIZE+20*4)(sp), r3
+	ldo	-(HPPA_FRAME_SIZE+16*4)(sp), r3
 	ldw	HPPA_FRAME_ARG(0)(sp), arg0
 	ldw	HPPA_FRAME_ARG(1)(sp), t4 /* in case we're on trampoline */
 	sub,=	r0, t4, r0
@@ -2710,7 +2710,7 @@ switch_exited
 switch_return
 	ldw	HPPA_FRAME_CRP(r3), rp
 	bv	0(rp)
-	ldwm	-(HPPA_FRAME_SIZE+20*4)(sp), r3
+	ldwm	-(HPPA_FRAME_SIZE+16*4)(sp), r3
 EXIT(cpu_switchto)
 
 LEAF_ENTRY(cpu_idle_enter)
@@ -2729,13 +2729,14 @@ LEAF_ENTRY(cpu_idle_leave)
 EXIT(cpu_idle_leave)
 
 ENTRY(switch_trampoline,0)
+	copy	r0, r3
 #ifdef MULTIPROCESSOR
-	copy	t4, r3
+	copy	t4, r5
 	copy	arg0, r4
 	bl	proc_trampoline_mp, rp
 	nop
 	copy	r4, arg0
-	copy	r3, t4
+	copy	r5, t4
 #endif
 	mfctl	cr29, t1
 	stw	r0, CI_CPL(t1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.82 2017/02/12 04:55:08 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.83 2017/07/16 22:47:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -54,7 +54,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 {
 	struct pcb *pcbp;
 	struct trapframe *tf;
-	register_t sp, osp;
+	register_t sp;
 
 #ifdef DIAGNOSTIC
 	if (round_page(sizeof(struct user)) > NBPG)
@@ -112,12 +112,12 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	/*
 	 * Build stack frames for the cpu_switchto & co.
 	 */
-	osp = sp + HPPA_FRAME_SIZE;
-	*(register_t*)(osp - HPPA_FRAME_SIZE) = 0;
-	*(register_t*)(osp + HPPA_FRAME_CRP) = (register_t)&switch_trampoline;
-	*(register_t*)(osp) = (osp - HPPA_FRAME_SIZE);
+	sp += HPPA_FRAME_SIZE;
+	*(register_t*)(sp - HPPA_FRAME_SIZE) = 0;
+	*(register_t*)(sp + HPPA_FRAME_CRP) = (register_t)&switch_trampoline;
+	*(register_t*)(sp) = (sp - HPPA_FRAME_SIZE);
 
-	sp = osp + HPPA_FRAME_SIZE + 20*4; /* frame + callee-saved registers */
+	sp += HPPA_FRAME_SIZE + 16*4; /* frame + callee-saved registers */
 	*HPPA_FRAME_CARG(0, sp) = (register_t)arg;
 	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
 	pcbp->pcb_ksp = sp;
