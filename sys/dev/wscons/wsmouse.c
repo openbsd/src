@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.39 2017/05/08 20:55:29 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.40 2017/07/16 18:30:24 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1183,6 +1183,16 @@ wsmouse_matching(int *matrix, int m, int n, int *buffer)
 	}
 }
 
+/*
+ * Assign slot numbers to the points in the pt array, and update all slots by
+ * calling wsmouse_mtstate internally.  The slot numbers are passed to the
+ * caller in the pt->slot fields.
+ *
+ * The slot assignment pairs the points with points of the previous frame in
+ * such a way that the sum of the squared distances is minimal.  Using
+ * squares instead of simple distances favours assignments with more uniform
+ * distances, and it is faster.
+ */
 void
 wsmouse_mtframe(struct device *sc, struct mtpoint *pt, int size)
 {
