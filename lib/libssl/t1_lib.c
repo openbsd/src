@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.117 2017/05/07 04:22:24 beck Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.118 2017/07/16 18:14:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,7 +117,9 @@
 #include <openssl/ocsp.h>
 
 #include "ssl_locl.h"
+
 #include "bytestring.h"
+#include "ssl_tlsext.h"
 
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
     const unsigned char *sess_id, int sesslen,
@@ -678,6 +680,8 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	int extdatalen = 0;
 	unsigned char *ret = p;
 	int using_ecc = 0;
+	size_t len;
+	CBB cbb;
 
 	/* See if we support any ECC ciphersuites. */
 	if (s->version != DTLS1_VERSION && s->version >= TLS1_VERSION) {
@@ -699,43 +703,21 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	}
 
 	ret += 2;
-
 	if (ret >= limit)
 		return NULL; /* this really never occurs, but ... */
 
-	if (s->tlsext_hostname != NULL) {
-		/* Add TLS extension servername to the Client Hello message */
-		size_t size_str, lenmax;
-
-		/* check for enough space.
-		   4 for the servername type and extension length
-		   2 for servernamelist length
-		   1 for the hostname type
-		   2 for hostname length
-		   + hostname length
-		*/
-
-		if ((size_t)(limit - ret) < 9)
-			return NULL;
-
-		lenmax = limit - ret - 9;
-		if ((size_str = strlen(s->tlsext_hostname)) > lenmax)
-			return NULL;
-
-		/* extension type and length */
-		s2n(TLSEXT_TYPE_server_name, ret);
-
-		s2n(size_str + 5, ret);
-
-		/* length of servername list */
-		s2n(size_str + 3, ret);
-
-		/* hostname type, length and hostname */
-		*(ret++) = (unsigned char) TLSEXT_NAMETYPE_host_name;
-		s2n(size_str, ret);
-		memcpy(ret, s->tlsext_hostname, size_str);
-		ret += size_str;
+	CBB_init_fixed(&cbb, ret, limit - ret);
+	if (!tlsext_clienthello_build(s, &cbb)) {
+		CBB_cleanup(&cbb);
+		return NULL;
 	}
+	if (!CBB_finish(&cbb, NULL, &len)) {
+		CBB_cleanup(&cbb);
+		return NULL;
+	}
+	if (len > (limit - ret))
+		return NULL;
+	ret += len;
 
 	/* Add RI if renegotiating */
 	if (s->internal->renegotiate) {
@@ -997,6 +979,8 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	unsigned long alg_a, alg_k;
 	unsigned char *ret = p;
 	int next_proto_neg_seen;
+	size_t len;
+	CBB cbb;
 
 	alg_a = S3I(s)->hs.new_cipher->algorithm_auth;
 	alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
@@ -1007,14 +991,18 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	if (ret >= limit)
 		return NULL; /* this really never occurs, but ... */
 
-	if (!s->internal->hit && s->internal->servername_done == 1 &&
-	    s->session->tlsext_hostname != NULL) {
-		if ((size_t)(limit - ret) < 4)
-			return NULL;
-
-		s2n(TLSEXT_TYPE_server_name, ret);
-		s2n(0, ret);
+	CBB_init_fixed(&cbb, ret, limit - ret);
+	if (!tlsext_serverhello_build(s, &cbb)) {
+		CBB_cleanup(&cbb);
+		return NULL;
 	}
+	if (!CBB_finish(&cbb, NULL, &len)) {
+		CBB_cleanup(&cbb);
+		return NULL;
+	}
+	if (len > (limit - ret))
+		return NULL;
+	ret += len;
 
 	if (S3I(s)->send_connection_binding) {
 		int el;
@@ -1241,6 +1229,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 	unsigned char *end = d + n;
 	int renegotiate_seen = 0;
 	int sigalg_seen = 0;
+	CBS cbs;
 
 	s->internal->servername_done = 0;
 	s->tlsext_status_type = -1;
@@ -1269,106 +1258,12 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 		if (s->internal->tlsext_debug_cb)
 			s->internal->tlsext_debug_cb(s, 0, type, data, size,
 			    s->internal->tlsext_debug_arg);
-/* The servername extension is treated as follows:
 
-   - Only the hostname type is supported with a maximum length of 255.
-   - The servername is rejected if too long or if it contains zeros,
-     in which case an fatal alert is generated.
-   - The servername field is maintained together with the session cache.
-   - When a session is resumed, the servername call back invoked in order
-     to allow the application to position itself to the right context.
-   - The servername is acknowledged if it is new for a session or when
-     it is identical to a previously used for the same session.
-     Applications can control the behaviour.  They can at any time
-     set a 'desirable' servername for a new SSL object. This can be the
-     case for example with HTTPS when a Host: header field is received and
-     a renegotiation is requested. In this case, a possible servername
-     presented in the new client hello is only acknowledged if it matches
-     the value of the Host: field.
-   - Applications must  use SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
-     if they provide for changing an explicit servername context for the session,
-     i.e. when the session has been established with a servername extension.
-   - On session reconnect, the servername extension may be absent.
+		CBS_init(&cbs, data, size);
+		if (!tlsext_clienthello_parse_one(s, &cbs, type, al))
+			return 0;
 
-*/
-
-		if (type == TLSEXT_TYPE_server_name) {
-			unsigned char *sdata;
-			int servname_type;
-			int dsize;
-
-			if (size < 2) {
-				*al = SSL_AD_DECODE_ERROR;
-				return 0;
-			}
-			n2s(data, dsize);
-
-			size -= 2;
-			if (dsize > size) {
-				*al = SSL_AD_DECODE_ERROR;
-				return 0;
-			}
-
-			sdata = data;
-			while (dsize > 3) {
-				servname_type = *(sdata++);
-
-				n2s(sdata, len);
-				dsize -= 3;
-
-				if (len > dsize) {
-					*al = SSL_AD_DECODE_ERROR;
-					return 0;
-				}
-				if (s->internal->servername_done == 0)
-					switch (servname_type) {
-					case TLSEXT_NAMETYPE_host_name:
-						if (!s->internal->hit) {
-							if (s->session->tlsext_hostname) {
-								*al = SSL_AD_DECODE_ERROR;
-								return 0;
-							}
-							if (len > TLSEXT_MAXLEN_host_name) {
-								*al = TLS1_AD_UNRECOGNIZED_NAME;
-								return 0;
-							}
-							if ((s->session->tlsext_hostname =
-							    malloc(len + 1)) == NULL) {
-								*al = TLS1_AD_INTERNAL_ERROR;
-								return 0;
-							}
-							memcpy(s->session->tlsext_hostname, sdata, len);
-							s->session->tlsext_hostname[len] = '\0';
-							if (strlen(s->session->tlsext_hostname) != len) {
-								free(s->session->tlsext_hostname);
-								s->session->tlsext_hostname = NULL;
-								*al = TLS1_AD_UNRECOGNIZED_NAME;
-								return 0;
-							}
-							s->internal->servername_done = 1;
-
-
-						} else {
-							s->internal->servername_done = s->session->tlsext_hostname &&
-							    strlen(s->session->tlsext_hostname) == len &&
-							    strncmp(s->session->tlsext_hostname, (char *)sdata, len) == 0;
-						}
-						break;
-
-					default:
-						break;
-					}
-
-				dsize -= len;
-			}
-			if (dsize != 0) {
-				*al = SSL_AD_DECODE_ERROR;
-				return 0;
-			}
-
-		}
-
-		else if (type == TLSEXT_TYPE_ec_point_formats &&
+		if (type == TLSEXT_TYPE_ec_point_formats &&
 		    s->version != DTLS1_VERSION) {
 			unsigned char *sdata = data;
 			size_t formatslen;
