@@ -68,4 +68,4 @@ SECTIONS {
 }
 __EOF__
 
-ld -r gap.link $GAPDUMMY -o gap.o
+$LD -r gap.link $GAPDUMMY -o gap.o

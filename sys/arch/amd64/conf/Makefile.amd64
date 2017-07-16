@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.87 2017/06/29 16:51:35 espie Exp $
+#	$OpenBSD: Makefile.amd64,v 1.88 2017/07/16 16:47:06 visa Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -128,7 +128,7 @@ makegap.sh:
 	cp $S/conf/makegap.sh $@
 
 gap.o:	Makefile makegap.sh
-	sh makegap.sh 0xcccccccc
+	LD="${LD}" sh makegap.sh 0xcccccccc
 
 vers.o: ${SYSTEM_DEP:Ngap.o}
 	sh $S/conf/newvers.sh

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.98 2017/06/29 16:51:35 espie Exp $
+#	$OpenBSD: Makefile.hppa,v 1.99 2017/07/16 16:47:06 visa Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -133,7 +133,7 @@ makegap.sh:
 	cp $S/conf/makegap.sh $@
 
 gap.o:	Makefile makegap.sh
-	sh makegap.sh 0x00000000	# BREAK 0,0 -> trap
+	LD="${LD}" sh makegap.sh 0x00000000	# BREAK 0,0 -> trap
 
 vers.o: ${SYSTEM_DEP:Ngap.o}
 	sh $S/conf/newvers.sh
