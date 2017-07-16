@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1822 2017/07/05 12:43:10 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1823 2017/07/16 13:41:58 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -11280,6 +11280,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core 6G PCIE",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE6G_S_GT1,
+	    "HD Graphics 510",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE6G_THERM,
 	    "Core 6G Thermal",
 	},
@@ -11316,7 +11320,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core GMM",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE6G_D_GT2_1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE6G_S_GT2,
 	    "HD Graphics 530",
 	},
 	{
@@ -11332,6 +11336,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics 530",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V5_GT2,
+	    "HD Graphics P530",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE6G_Y_GT2,
 	    "HD Graphics 515",
 	},
@@ -11340,8 +11348,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core 6G Host",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE6G_U_GT3,
+	    "Iris 540/550",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE6G_H_GT4,
-	    "Iris Pro Graphics 580",
+	    "Iris Pro 580",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1500V5_GT4,
+	    "Iris Pro P580",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RP_ATU,
