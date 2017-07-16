@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.200 2017/07/16 21:35:20 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.201 2017/07/16 22:03:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5434,6 +5434,16 @@ iwm_deauth(struct iwm_softc *sc)
 	int ac, tfd_msk, err;
 
 	splassert(IPL_NET);
+
+	if (sc->sc_flags & IWM_FLAG_STA_ACTIVE) {
+		err = iwm_rm_sta_cmd(sc, in);
+		if (err) {
+			printf("%s: could not remove STA (error %d)\n",
+			    DEVNAME(sc), err);
+			return err;
+		}
+		sc->sc_flags &= ~IWM_FLAG_STA_ACTIVE;
+	}
 
 	tfd_msk = 0;
 	for (ac = 0; ac < EDCA_NUM_AC; ac++)
