@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.2 2017/03/26 17:36:46 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.3 2017/07/16 19:30:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -104,6 +104,7 @@ sxiccmu_match(struct device *parent, void *match, void *aux)
 		    OF_is_compatible(node, "allwinner,sun5i-a10s") ||
 		    OF_is_compatible(node, "allwinner,sun5i-r8") ||
 		    OF_is_compatible(node, "allwinner,sun50i-a64") ||
+		    OF_is_compatible(node, "allwinner,sun50i-h5") ||
 		    OF_is_compatible(node, "allwinner,sun7i-a20") ||
 		    OF_is_compatible(node, "allwinner,sun8i-h3") ||
 		    OF_is_compatible(node, "allwinner,sun9i-a80"));
