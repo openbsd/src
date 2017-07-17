@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.58 2017/07/14 18:24:51 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.59 2017/07/17 15:58:22 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -139,6 +139,12 @@ struct xnf_tx_ring {
 	union xnf_tx_desc	 txr_desc[XNF_TX_DESC];
 } __packed;
 
+struct xnf_tx_buf {
+	uint16_t		 txb_used;
+	uint16_t		 txb_ndesc;
+	bus_dmamap_t		 txb_dmap;
+	struct mbuf		*txb_mbuf;
+};
 
 /* Management frame, "extra info" in Xen parlance */
 struct xnf_mgmt {
@@ -192,8 +198,9 @@ struct xnf_softc {
 	uint32_t		 sc_tx_ref;		  /* grant table ref */
 	uint32_t		 sc_tx_cons;
 	int			 sc_tx_frags;
-	struct mbuf		*sc_tx_buf[XNF_TX_DESC];
-	bus_dmamap_t		 sc_tx_dmap[XNF_TX_DESC]; /* maps for packets */
+	uint32_t		 sc_tx_next;		  /* next buffer */
+	volatile unsigned int	 sc_tx_avail;
+	struct xnf_tx_buf	 sc_tx_buf[XNF_TX_DESC];
 };
 
 int	xnf_match(struct device *, void *, void *);
@@ -501,8 +508,8 @@ xnf_start(struct ifqueue *ifq)
 	prod = oprod = txr->txr_prod;
 
 	for (;;) {
-		if ((XNF_TX_DESC - (prod - sc->sc_tx_cons)) <
-		    sc->sc_tx_frags) {
+		if (((XNF_TX_DESC - (prod - sc->sc_tx_cons)) <
+		    sc->sc_tx_frags) || !sc->sc_tx_avail) {
 			/* transient */
 			ifq_set_oactive(ifq);
 			break;
@@ -563,98 +570,105 @@ xnf_fragcount(struct mbuf *m_head)
 int
 xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 {
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct xnf_tx_ring *txr = sc->sc_tx_ring;
+	struct xnf_tx_buf *txb = NULL;
 	union xnf_tx_desc *txd = NULL;
 	struct mbuf *m;
-	bus_dmamap_t dmap;
 	uint32_t oprod = *prod;
 	uint16_t id;
-	int i, flags, n;
+	int i, flags, n, used = 0;
 
 	if ((xnf_fragcount(m_head) > sc->sc_tx_frags) &&
 	    m_defrag(m_head, M_DONTWAIT))
-		goto errout;
+		return (ENOBUFS);
 
 	flags = (sc->sc_domid << 16) | BUS_DMA_WRITE | BUS_DMA_NOWAIT;
 
 	for (m = m_head; m != NULL && m->m_len > 0; m = m->m_next) {
 		i = *prod & (XNF_TX_DESC - 1);
 		txd = &txr->txr_desc[i];
-		id = txd->txd_req.txq_id;
 
-		if (sc->sc_tx_buf[id])
-			panic("%s: buf %u @%u cons %u(%u) prod %u next %u "
-			    "seg %d/%d\n", ifp->if_xname, id, i, txr->txr_cons,
-			    sc->sc_tx_cons, txr->txr_prod, *prod, *prod - oprod,
-			    xnf_fragcount(m_head));
+		/*
+		 * Find an unused TX buffer.  We're guaranteed to find one
+		 * because xnf_encap cannot be called with sc_tx_avail == 0.
+		 */
+		do {
+			id = sc->sc_tx_next++ & (XNF_TX_DESC - 1);
+			txb = &sc->sc_tx_buf[id];
+		} while (txb->txb_used);
 
-		dmap = sc->sc_tx_dmap[id];
-		if (bus_dmamap_load(sc->sc_dmat, dmap, m->m_data, m->m_len,
-		    NULL, flags)) {
+		if (bus_dmamap_load(sc->sc_dmat, txb->txb_dmap, m->m_data,
+		    m->m_len, NULL, flags)) {
 			DPRINTF("%s: failed to load %u bytes @%lu\n",
 			    sc->sc_dev.dv_xname, m->m_len,
 			    mtod(m, vaddr_t) & PAGE_MASK);
 			goto unroll;
 		}
 
-		if (m == m_head) {
-			if (m->m_pkthdr.csum_flags &
-			    (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT))
-				txd->txd_req.txq_flags = XNF_TXF_CSUM_BLANK |
-				    XNF_TXF_CSUM_VALID;
-			txd->txd_req.txq_size = m->m_pkthdr.len;
-		}
-		for (n = 0; n < dmap->dm_nsegs; n++) {
+		for (n = 0; n < txb->txb_dmap->dm_nsegs; n++) {
 			i = *prod & (XNF_TX_DESC - 1);
 			txd = &txr->txr_desc[i];
-			id = txd->txd_req.txq_id;
 
-			if (sc->sc_tx_buf[id])
-				panic("%s: buf %u @%u cons %u(%u) prod %u "
-				    "next %u seg %d/%d\n", ifp->if_xname,
-				    id, i, txr->txr_cons, sc->sc_tx_cons,
-				    txr->txr_prod, *prod, *prod - oprod,
-				    xnf_fragcount(m_head));
-
-			/* Don't overwrite lenght of the very first one */
-			if (!(m == m_head && n == 0))
-				txd->txd_req.txq_size = dmap->dm_segs[n].ds_len;
-			/* The chunk flag will be removed from the last one */
-			txd->txd_req.txq_flags |= XNF_TXF_CHUNK;
-			txd->txd_req.txq_ref = dmap->dm_segs[n].ds_addr;
+			if (m == m_head && n == 0) {
+				if (m->m_pkthdr.csum_flags &
+				    (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT))
+					txd->txd_req.txq_flags =
+					    XNF_TXF_CSUM_BLANK |
+					    XNF_TXF_CSUM_VALID;
+				txd->txd_req.txq_size = m->m_pkthdr.len;
+			} else {
+				txd->txd_req.txq_size =
+				    txb->txb_dmap->dm_segs[n].ds_len;
+			}
+			txd->txd_req.txq_ref =
+			    txb->txb_dmap->dm_segs[n].ds_addr;
 			if (n == 0)
 				txd->txd_req.txq_offset =
 				    mtod(m, vaddr_t) & PAGE_MASK;
+			/* The chunk flag will be removed from the last one */
+			txd->txd_req.txq_flags |= XNF_TXF_CHUNK;
+			txd->txd_req.txq_id = id;
+
+			txb->txb_ndesc++;
 			(*prod)++;
 		}
-		sc->sc_tx_buf[id] = m;
+
+		txb->txb_mbuf = m;
+		txb->txb_used = 1;
+		used++;
 	}
+
 	/* Clear the chunk flag from the last segment */
 	txd->txd_req.txq_flags &= ~XNF_TXF_CHUNK;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
 	    BUS_DMASYNC_PREWRITE);
 
+	KASSERT(sc->sc_tx_avail > used);
+	atomic_sub_int(&sc->sc_tx_avail, used);
+
 	return (0);
 
  unroll:
+	DPRINTF("%s: unrolling from %u to %u\n", sc->sc_dev.dv_xname,
+	    *prod, oprod);
 	for (; *prod != oprod; (*prod)--) {
 		i = (*prod - 1) & (XNF_TX_DESC - 1);
 		txd = &txr->txr_desc[i];
-		id = txd->txd_req.txq_id;
+		id = --sc->sc_tx_next & (XNF_TX_DESC - 1);
+		txb = &sc->sc_tx_buf[id];
 
 		memset(txd, 0, sizeof(*txd));
-		txd->txd_req.txq_id = id;
 
-		dmap = sc->sc_tx_dmap[id];
-		bus_dmamap_sync(sc->sc_dmat, dmap, 0, 0,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, dmap);
+		if (txb->txb_mbuf) {
+			bus_dmamap_sync(sc->sc_dmat, txb->txb_dmap, 0, 0,
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, txb->txb_dmap);
 
-		sc->sc_tx_buf[id] = NULL;
+			txb->txb_mbuf = NULL;
+			txb->txb_ndesc = 0;
+			txb->txb_used = 0;
+		}
 	}
-
- errout:
 	return (ENOBUFS);
 }
 
@@ -686,33 +700,35 @@ xnf_txeof(struct xnf_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct xnf_tx_ring *txr = sc->sc_tx_ring;
+	struct xnf_tx_buf *txb;
 	union xnf_tx_desc *txd;
-	bus_dmamap_t dmap;
+	uint done = 0;
 	uint32_t cons;
 	uint16_t id;
 	int i;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
-	    BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	for (cons = sc->sc_tx_cons; cons != txr->txr_cons; cons++) {
 		i = cons & (XNF_TX_DESC - 1);
 		txd = &txr->txr_desc[i];
-
 		id = txd->txd_rsp.txp_id;
-		dmap = sc->sc_tx_dmap[id];
+		txb = &sc->sc_tx_buf[id];
 
-		bus_dmamap_sync(sc->sc_dmat, dmap, 0, 0,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, dmap);
+		KASSERT(txb->txb_ndesc > 0);
+		if (--txb->txb_ndesc == 0) {
+			bus_dmamap_sync(sc->sc_dmat, txb->txb_dmap, 0, 0,
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, txb->txb_dmap);
 
-		if (sc->sc_tx_buf[id] != NULL) {
-			m_free(sc->sc_tx_buf[id]);
-			sc->sc_tx_buf[id] = NULL;
+			m_free(txb->txb_mbuf);
+			txb->txb_mbuf = NULL;
+			txb->txb_used = 0;
+			done++;
 		}
 
 		memset(txd, 0, sizeof(*txd));
-		txd->txd_req.txq_id = id;
 	}
 
 	sc->sc_tx_cons = cons;
@@ -721,7 +737,9 @@ xnf_txeof(struct xnf_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	if (txr->txr_cons == txr->txr_prod)
+	atomic_add_int(&sc->sc_tx_avail, done);
+
+	if (sc->sc_tx_cons == txr->txr_prod)
 		ifp->if_timer = 0;
 	if (ifq_is_oactive(&ifp->if_snd))
 		ifq_restart(&ifp->if_snd);
@@ -743,7 +761,7 @@ xnf_rxeof(struct xnf_softc *sc)
 	int i, flags, len, offset;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_rmap, 0, 0,
-	    BUS_DMASYNC_POSTREAD);
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	for (cons = sc->sc_rx_cons; cons != rxr->rxr_cons; cons++) {
 		i = cons & (XNF_RX_DESC - 1);
@@ -1021,13 +1039,15 @@ xnf_tx_ring_create(struct xnf_softc *sc)
 	}
 	for (i = 0; i < XNF_TX_DESC; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, segsz, nsegs, XNF_MCLEN,
-		    PAGE_SIZE, BUS_DMA_NOWAIT, &sc->sc_tx_dmap[i])) {
+		    PAGE_SIZE, BUS_DMA_NOWAIT, &sc->sc_tx_buf[i].txb_dmap)) {
 			printf("%s: failed to create a memory map for the"
 			    " tx slot %d\n", sc->sc_dev.dv_xname, i);
 			goto errout;
 		}
-		sc->sc_tx_ring->txr_desc[i].txd_req.txq_id = i;
 	}
+
+	sc->sc_tx_avail = XNF_TX_DESC;
+	sc->sc_tx_next = 0;
 
 	return (0);
 
@@ -1051,17 +1071,19 @@ xnf_tx_ring_destroy(struct xnf_softc *sc)
 	int i;
 
 	for (i = 0; i < XNF_TX_DESC; i++) {
-		if (sc->sc_tx_dmap[i] == NULL)
+		if (sc->sc_tx_buf[i].txb_dmap == NULL)
 			continue;
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmap[i], 0, 0,
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_buf[i].txb_dmap, 0, 0,
 		    BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, sc->sc_tx_dmap[i]);
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_tx_dmap[i]);
-		sc->sc_tx_dmap[i] = NULL;
-		if (sc->sc_tx_buf[i] == NULL)
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_tx_buf[i].txb_dmap);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_tx_buf[i].txb_dmap);
+		sc->sc_tx_buf[i].txb_dmap = NULL;
+		if (sc->sc_tx_buf[i].txb_mbuf == NULL)
 			continue;
-		m_free(sc->sc_tx_buf[i]);
-		sc->sc_tx_buf[i] = NULL;
+		m_free(sc->sc_tx_buf[i].txb_mbuf);
+		sc->sc_tx_buf[i].txb_mbuf = NULL;
+		sc->sc_tx_buf[i].txb_used = 0;
+		sc->sc_tx_buf[i].txb_ndesc = 0;
 	}
 	if (sc->sc_tx_rmap) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
@@ -1076,6 +1098,8 @@ xnf_tx_ring_destroy(struct xnf_softc *sc)
 	}
 	sc->sc_tx_ring = NULL;
 	sc->sc_tx_rmap = NULL;
+	sc->sc_tx_avail = XNF_TX_DESC;
+	sc->sc_tx_next = 0;
 }
 
 int
