@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.211 2017/07/10 17:13:24 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.212 2017/07/17 15:05:03 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -133,8 +133,7 @@ struct interface_info {
 	int			 rdomain;
 	int			 flags;
 #define	IFI_VALID_LLADDR	0x01
-#define IFI_IS_RESPONSIBLE	0x08
-#define IFI_IN_CHARGE		0x10
+#define IFI_IN_CHARGE		0x02
 	struct dhcp_packet	 recv_packet;
 	struct dhcp_packet	 sent_packet;
 	int			 sent_packet_length;
@@ -161,8 +160,6 @@ struct interface_info {
 extern struct client_config *config;
 extern struct imsgbuf *unpriv_ibuf;
 extern volatile sig_atomic_t quit;
-extern struct in_addr deleting;
-extern struct in_addr adding;
 
 /* options.c */
 int pack_options(unsigned char *, int, struct option_data *);

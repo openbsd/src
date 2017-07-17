@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.31 2017/06/28 17:54:31 jmc Exp $
+.\" $OpenBSD: dhclient.8,v 1.32 2017/07/17 15:05:03 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" Enterprises.  To learn more about the Internet Software Consortium,
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
-.Dd $Mdocdate: June 28 2017 $
+.Dd $Mdocdate: July 17 2017 $
 .Dt DHCLIENT 8
 .Os
 .Sh NAME
@@ -168,11 +168,8 @@ attempts to remove any existing addresses, gateway routes that use
 the interface, and non-permanent
 .Xr arp 8
 entries.
-Conversely, if the interface is later manipulated to add or delete
-addresses then
 .Nm
-will automatically exit.
-It thus automatically exits whenever a new
+automatically exits whenever a new
 .Nm
 is run on the same interface.
 .Pp
