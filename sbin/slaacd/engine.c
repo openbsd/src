@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.7 2017/07/14 09:29:40 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.8 2017/07/17 11:27:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1477,6 +1477,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 	struct radv_prefix	*prefix;
 	struct address_proposal	*addr_proposal;
 	struct dfr_proposal	*dfr_proposal, *tmp;
+	uint32_t		 remaining_lifetime;
 	int			 found, found_privacy;
 	char			 hbuf[NI_MAXHOST];
 
@@ -1555,9 +1556,9 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 			gen_dfr_proposal(iface, ra);
 
 		LIST_FOREACH(prefix, &ra->prefixes, entries) {
-			if (!prefix->autonomous || prefix->pltime == 0 ||
-			    prefix->vltime == 0 || prefix->pltime >
-			    prefix->vltime || prefix->prefix_len != 64 ||
+			if (!prefix->autonomous || prefix->vltime == 0 ||
+			    prefix->pltime > prefix->vltime ||
+			    prefix->prefix_len != 64 ||
 			    IN6_IS_ADDR_LINKLOCAL(&prefix->prefix))
 				continue;
 			found = 0;
@@ -1600,16 +1601,20 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 
 				found = 1;
 
-				if (real_lifetime(&addr_proposal->uptime,
-				    addr_proposal->vltime) >= prefix->vltime) {
-					log_warnx("ignoring router "
-					    "advertisement that lowers vltime");
-					continue;
-				}
+				remaining_lifetime =
+				    real_lifetime(&addr_proposal->uptime,
+				    addr_proposal->vltime);
 
 				addr_proposal->when = ra->when;
 				addr_proposal->uptime = ra->uptime;
-				addr_proposal->vltime = prefix->vltime;
+
+/* RFC 4862 5.5.3 two hours rule */
+#define TWO_HOURS 2 * 3600
+				if (prefix->vltime > TWO_HOURS ||
+				    prefix->vltime > remaining_lifetime)
+					addr_proposal->vltime = prefix->vltime;
+				else
+					addr_proposal->vltime = TWO_HOURS;
 				addr_proposal->pltime = prefix->pltime;
 
 				log_debug("%s, addr state: %s", __func__,
@@ -1673,13 +1678,23 @@ configure_address(struct address_proposal *addr_proposal)
 {
 	struct imsg_configure_address	 address;
 	struct timeval			 tv;
+	uint32_t			 lifetime;
 
-	addr_proposal->next_timeout = addr_proposal->pltime -
-	    MAX_RTR_SOLICITATIONS * (RTR_SOLICITATION_INTERVAL + 1);
+	if (addr_proposal->pltime > MAX_RTR_SOLICITATIONS *
+	    (RTR_SOLICITATION_INTERVAL + 1))
+		lifetime = addr_proposal->pltime;
+	else
+		lifetime = addr_proposal->vltime;
 
-	tv.tv_sec = addr_proposal->next_timeout;
-	tv.tv_usec = arc4random_uniform(1000000);
-	evtimer_add(&addr_proposal->timer, &tv);
+	if (lifetime > MAX_RTR_SOLICITATIONS *
+	    (RTR_SOLICITATION_INTERVAL + 1)) {
+		addr_proposal->next_timeout = lifetime - MAX_RTR_SOLICITATIONS *
+		    (RTR_SOLICITATION_INTERVAL + 1);
+		tv.tv_sec = addr_proposal->next_timeout;
+		tv.tv_usec = arc4random_uniform(1000000);
+		evtimer_add(&addr_proposal->timer, &tv);
+	} else
+		addr_proposal->next_timeout = 0;
 
 	addr_proposal->state = PROPOSAL_CONFIGURED;
 
