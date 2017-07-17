@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.109 2017/07/14 16:21:03 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.110 2017/07/17 17:53:59 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -69,9 +69,6 @@ flush_unpriv_ibuf(const char *who)
 		}
 	}
 }
-
-struct in_addr deleting;
-struct in_addr adding;
 
 int	create_route_label(struct sockaddr_rtlabel *);
 int	check_route_label(struct sockaddr_rtlabel *);
@@ -575,9 +572,6 @@ delete_address(struct in_addr addr)
 	struct imsg_delete_address	 imsg;
 	int				 rslt;
 
-	/* Note the address we are deleting for RTM_DELADDR filtering! */
-	deleting.s_addr = addr.s_addr;
-
 	imsg.addr = addr;
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_DELETE_ADDRESS, 0, 0 , -1, &imsg,
@@ -660,9 +654,6 @@ add_address(struct in_addr addr, struct in_addr mask)
 {
 	struct imsg_add_address	 imsg;
 	int			 rslt;
-
-	/* Note the address we are adding for RTM_NEWADDR filtering! */
-	adding = addr;
 
 	imsg.addr = addr;
 	imsg.mask = mask;
