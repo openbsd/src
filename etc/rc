@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.509 2017/07/17 18:16:14 tb Exp $
+#	$OpenBSD: rc,v 1.510 2017/07/17 18:37:42 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -399,28 +399,35 @@ wsconsctl_conf
 
 # Set initial temporary pf rule set.
 if [[ $pf != NO ]]; then
-	RULES="block all"
-	RULES="$RULES\npass on lo0"
-	RULES="$RULES\npass in proto tcp from any to any port ssh keep state"
-	RULES="$RULES\npass out proto { tcp, udp } from any to any port domain keep state"
-	RULES="$RULES\npass out inet proto icmp all icmp-type echoreq keep state"
-	RULES="$RULES\npass out inet proto udp from any port bootpc to any port bootps"
-	RULES="$RULES\npass in inet proto udp from any port bootps to any port bootpc"
+	RULES='
+	block all
+	pass on lo0
+	pass in proto tcp from any to any port ssh keep state
+	pass out proto { tcp, udp } from any to any port domain keep state
+	pass out inet proto icmp all icmp-type echoreq keep state
+	pass out inet proto udp from any port bootpc to any port bootps
+	pass in inet proto udp from any port bootps to any port bootpc'
+
 	if ifconfig lo0 inet6 >/dev/null 2>&1; then
-		RULES="$RULES\npass out inet6 proto icmp6 all icmp6-type neighbrsol"
-		RULES="$RULES\npass in inet6 proto icmp6 all icmp6-type neighbradv"
-		RULES="$RULES\npass out inet6 proto icmp6 all icmp6-type routersol"
-		RULES="$RULES\npass in inet6 proto icmp6 all icmp6-type routeradv"
-		RULES="$RULES\npass out inet6 proto udp from any port dhcpv6-client to any port dhcpv6-server"
-		RULES="$RULES\npass in inet6 proto udp from any port dhcpv6-server to any port dhcpv6-client"
+		RULES="$RULES
+		pass out inet6 proto icmp6 all icmp6-type neighbrsol
+		pass in inet6 proto icmp6 all icmp6-type neighbradv
+		pass out inet6 proto icmp6 all icmp6-type routersol
+		pass in inet6 proto icmp6 all icmp6-type routeradv
+		pass out inet6 proto udp from any port dhcpv6-client to any port dhcpv6-server
+		pass in inet6 proto udp from any port dhcpv6-server to any port dhcpv6-client"
 	fi
-	RULES="$RULES\npass in proto carp keep state (no-sync)"
-	RULES="$RULES\npass out proto carp !received-on any keep state (no-sync)"
+
+	RULES="$RULES
+	pass in proto carp keep state (no-sync)
+	pass out proto carp !received-on any keep state (no-sync)"
+
+	# Don't kill NFS.
 	if [[ $(sysctl vfs.mounts.nfs 2>/dev/null) == *[1-9]* ]]; then
-		# Don't kill NFS.
-		RULES="set reassemble yes no-df\n$RULES"
-		RULES="$RULES\npass in proto { tcp, udp } from any port { sunrpc, nfsd } to any"
-		RULES="$RULES\npass out proto { tcp, udp } from any to any port { sunrpc, nfsd } !received-on any"
+		RULES="set reassemble yes no-df
+		$RULES
+		pass in proto { tcp, udp } from any port { sunrpc, nfsd } to any
+		pass out proto { tcp, udp } from any to any port { sunrpc, nfsd } !received-on any"
 	fi
 	print -- "$RULES" | pfctl -f -
 	pfctl -e
