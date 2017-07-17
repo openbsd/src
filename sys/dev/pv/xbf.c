@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.31 2017/06/07 15:49:21 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.32 2017/07/17 10:30:03 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -785,6 +785,16 @@ xbf_complete_cmd(struct xbf_softc *sc, struct xbf_ccb_queue *cq, int desc)
 
 	mtx_leave(&sc->sc_ccb_sqlck);
 
+	DPRINTF("%s: completing desc %d(%llu) op %u with error %d\n",
+	    sc->sc_dev.dv_xname, desc, xrd->xrd_rsp.rsp_id,
+	    xrd->xrd_rsp.rsp_op, xrd->xrd_rsp.rsp_status);
+
+	memset(xrd, 0, sizeof(*xrd));
+	xrd->xrd_req.req_id = desc;
+
+	if (ccb->ccb_seen != ccb->ccb_want)
+		return;
+
 	if (ccb->ccb_bbuf.dma_size > 0)
 		map = ccb->ccb_bbuf.dma_map;
 	else
@@ -794,18 +804,9 @@ xbf_complete_cmd(struct xbf_softc *sc, struct xbf_ccb_queue *cq, int desc)
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, map);
 
-	DPRINTF("%s: completing desc %d(%llu) op %u with error %d\n",
-	    sc->sc_dev.dv_xname, desc, xrd->xrd_rsp.rsp_id,
-	    xrd->xrd_rsp.rsp_op, xrd->xrd_rsp.rsp_status);
-
-	memset(xrd, 0, sizeof(*xrd));
-	xrd->xrd_req.req_id = desc;
-
-	if (ccb->ccb_seen == ccb->ccb_want) {
-		ccb->ccb_xfer->resid = 0;
-		ccb->ccb_xfer->error = error;
-		TAILQ_INSERT_TAIL(cq, ccb, ccb_link);
-	}
+	ccb->ccb_xfer->resid = 0;
+	ccb->ccb_xfer->error = error;
+	TAILQ_INSERT_TAIL(cq, ccb, ccb_link);
 }
 
 void
