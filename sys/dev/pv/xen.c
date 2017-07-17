@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.86 2017/07/17 16:04:31 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.87 2017/07/17 16:32:26 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -1178,6 +1178,11 @@ xen_grant_table_enter(struct xen_softc *sc, grant_ref_t ref, paddr_t pa,
 	}
 #endif
 	ref -= ge->ge_start;
+	if (ge->ge_table[ref].flags != GTF_invalid) {
+		panic("reference %u is still in use, flags %#x frame %#x",
+		    ref + ge->ge_start, ge->ge_table[ref].flags,
+		    ge->ge_table[ref].frame);
+	}
 	ge->ge_table[ref].frame = atop(pa);
 	ge->ge_table[ref].domid = domain;
 	virtio_membar_sync();
