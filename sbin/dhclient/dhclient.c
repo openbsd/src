@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.470 2017/07/17 15:05:03 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.471 2017/07/17 16:13:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -126,8 +126,6 @@ struct proposal {
 };
 
 void		 sighdlr(int);
-int		 findproto(char *, int);
-struct sockaddr	*get_ifa(char *, int);
 void		 usage(void);
 int		 res_hnok(const char *dn);
 int		 res_hnok_list(const char *dn);
@@ -184,55 +182,6 @@ void
 sighdlr(int sig)
 {
 	quit = sig;
-}
-
-int
-findproto(char *cp, int n)
-{
-	struct sockaddr		*sa;
-	unsigned int		 i;
-
-	if (n == 0)
-		return -1;
-	for (i = 1; i; i <<= 1) {
-		if ((i & n) != 0) {
-			sa = (struct sockaddr *)cp;
-			switch (i) {
-			case RTA_IFA:
-			case RTA_DST:
-			case RTA_GATEWAY:
-			case RTA_NETMASK:
-				if (sa->sa_family == AF_INET)
-					return AF_INET;
-				if (sa->sa_family == AF_INET6)
-					return AF_INET6;
-				break;
-			case RTA_IFP:
-				break;
-			}
-			ADVANCE(cp, sa);
-		}
-	}
-	return -1;
-}
-
-struct sockaddr *
-get_ifa(char *cp, int n)
-{
-	struct sockaddr		*sa;
-	unsigned int		 i;
-
-	if (n == 0)
-		return NULL;
-	for (i = 1; i; i <<= 1)
-		if ((i & n) != 0) {
-			sa = (struct sockaddr *)cp;
-			if (i == RTA_IFA)
-				return sa;
-			ADVANCE(cp, sa);
-		}
-
-	return NULL;
 }
 
 void
