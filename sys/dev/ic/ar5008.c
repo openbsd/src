@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.44 2017/04/26 07:53:17 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.45 2017/07/17 14:25:29 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1601,7 +1601,7 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		}
 		/* Select protection rate (suboptimal but ok). */
 		protridx = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ?
-		    ATHN_RIDX_OFDM6 : ATHN_RIDX_CCK1;
+		    ATHN_RIDX_OFDM6 : ATHN_RIDX_CCK2;
 		if (ds->ds_ctl0 & AR_TXC0_RTS_ENABLE) {
 			/* Account for CTS duration. */
 			dur += athn_txtime(sc, IEEE80211_ACK_LEN,
