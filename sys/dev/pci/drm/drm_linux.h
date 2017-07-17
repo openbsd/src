@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.56 2017/07/14 11:18:04 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.57 2017/07/17 17:57:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -40,6 +40,7 @@
 
 #include <dev/pci/drm/linux_types.h>
 #include <dev/pci/drm/drm_linux_atomic.h>
+#include <dev/pci/drm/drm_linux_list.h>
 
 /* The Linux code doesn't meet our usual standards! */
 #ifdef __clang__
@@ -202,16 +203,42 @@ bitmap_weight(void *p, u_int n)
 	return sum;
 }
 
-#define DECLARE_HASHTABLE(x, y) struct hlist_head x;
+#define DECLARE_HASHTABLE(name, bits) struct hlist_head name[1 << (bits)]
 
-#define hash_init(x)		INIT_HLIST_HEAD(&(x))
-#define hash_add(x, y, z)	hlist_add_head(y, &(x))
-#define hash_del(x)		hlist_del_init(x)
-#define hash_empty(x)		hlist_empty(&(x))
-#define hash_for_each_possible(a, b, c, d) \
-	hlist_for_each_entry(b, &(a), c)
-#define hash_for_each_safe(a, b, c, d, e) (void)(b); \
-	hlist_for_each_entry_safe(d, c, &(a), e)
+static inline void
+__hash_init(struct hlist_head *table, u_int size)
+{
+	u_int i;
+
+	for (i = 0; i < size; i++)
+		INIT_HLIST_HEAD(&table[i]);
+}
+
+static inline bool
+__hash_empty(struct hlist_head *table, u_int size)
+{
+	u_int i;
+
+	for (i = 0; i < size; i++) {
+		if (!hlist_empty(&table[i]))
+			return false;
+	}
+
+	return true;
+}
+
+#define __hash(table, key)	&table[key % (nitems(table) - 1)]
+
+#define hash_init(table)	__hash_init(table, nitems(table))
+#define hash_add(table, node, key) \
+	hlist_add_head(node, __hash(table, key))
+#define hash_del(node)		hlist_del_init(node)
+#define hash_empty(table)	__hash_empty(table, nitems(table))
+#define hash_for_each_possible(table, obj, member, key) \
+	hlist_for_each_entry(obj, __hash(table, key), member)
+#define hash_for_each_safe(table, i, tmp, obj, member) 	\
+	for (i = 0; i < nitems(table); i++)		\
+	       hlist_for_each_entry_safe(obj, tmp, &table[i], member)
 
 #define ACCESS_ONCE(x)		(x)
 
