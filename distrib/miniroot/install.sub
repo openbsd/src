@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1023 2017/07/15 23:01:33 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1024 2017/07/17 18:02:31 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1076,8 +1076,7 @@ v6_defroute() {
 	route -n show -inet6 | egrep -q '^default[[:space:]]' && return
 
 	_routers=$(bsort $(ping6 -n -c 2 ff02::2%$_if 2>/dev/null |
-		sed -n '/bytes from/{s/^.*from //;s/,.*$//;p;}' |
-		sed -n 'G;s/\n/&&/;/^\(.*\n\).*\n\1/d;h;P'))
+		sed -En '/^[0-9]+ bytes from /{s///;s/: .*$//p;}'))
 
 	_prompt="IPv6 default router?"
 
