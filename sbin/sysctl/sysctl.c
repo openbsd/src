@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.226 2017/04/25 17:33:16 tb Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.227 2017/07/17 06:32:53 dlg Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -182,6 +182,8 @@ int	Aflag, aflag, nflag, qflag;
 /* prototypes */
 void debuginit(void);
 void listall(char *, struct list *);
+int parse_hex_char(char);
+ssize_t parse_hex_string(unsigned char *, size_t, const char *);
 void parse(char *, int);
 void parse_baddynamic(int *, size_t, char *, void **, size_t *, int, int);
 void usage(void);
@@ -286,6 +288,53 @@ listall(char *prefix, struct list *lp)
 	}
 }
 
+int
+parse_hex_char(char ch)
+{
+	if (ch >= '0' && ch <= '9')
+		return (ch - '0');
+
+	ch = tolower(ch);
+	if (ch >= 'a' && ch <= 'f')
+		return (ch - 'a' + 10);
+
+	return (-1);
+}
+
+ssize_t
+parse_hex_string(unsigned char *dst, size_t dstlen, const char *src)
+{
+	ssize_t len = 0;
+	int digit;
+
+	while (len < dstlen) {
+		if (*src == '\0')
+			return (len);
+
+		digit = parse_hex_char(*src++);
+		if (digit == -1)
+			return (-1);
+		dst[len] = digit << 4;
+
+		digit = parse_hex_char(*src++);
+		if (digit == -1)
+			return (-1);
+		
+		dst[len] |= digit;
+		len++;
+	}
+
+	while (*src != '\0') {
+		if (parse_hex_char(*src++) == -1 ||
+		    parse_hex_char(*src++) == -1)
+			return (-1);
+
+		len++;
+	}
+
+	return (len);
+}
+
 /*
  * Parse a name into a MIB entry.
  * Lookup and print out the MIB entry if it exists.
@@ -302,6 +351,7 @@ parse(char *string, int flags)
 	struct list *lp;
 	int mib[CTL_MAXNAME];
 	char *cp, *bufp, buf[SYSCTL_BUFSIZ];
+	unsigned char hex[SYSCTL_BUFSIZ];
 
 	(void)strlcpy(buf, string, sizeof(buf));
 	bufp = buf;
@@ -566,6 +616,11 @@ parse(char *string, int flags)
 			len = sysctl_inet6(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
+#ifdef IPV6CTL_SOIIKEY
+			if (mib[2] == IPPROTO_IPV6 &&
+			    mib[3] == IPV6CTL_SOIIKEY)
+				special |= HEX;
+#endif
 
 			if ((mib[2] == IPPROTO_IPV6 && mib[3] == IPV6CTL_MRTMFC) ||
 			    (mib[2] == IPPROTO_IPV6 && mib[3] == IPV6CTL_MRTMIF) ||
@@ -716,6 +771,27 @@ parse(char *string, int flags)
 			(void)sscanf(newval, "%lld", &quadval);
 			newval = &quadval;
 			newsize = sizeof(quadval);
+			break;
+		case CTLTYPE_STRING:
+			if (special & HEX) {
+				ssize_t len;
+
+				len = parse_hex_string(hex, sizeof(hex),
+				    newval);
+				if (len == -1) {
+					warnx("%s: hex string %s: invalid",
+					    string, newval);
+					return;
+				}
+				if (len > sizeof(hex)) {
+					warnx("%s: hex string %s: too long",
+					    string, newval);
+					return;
+				}
+
+				newval = hex;
+				newsize = len;
+			}
 			break;
 		}
 	}
@@ -936,13 +1012,30 @@ parse(char *string, int flags)
 		if (newval == NULL) {
 			if (!nflag)
 				(void)printf("%s%s", string, equ);
-			(void)puts(buf);
-		} else {
-			if (!qflag) {
-				if (!nflag)
-					(void)printf("%s: %s -> ", string, buf);
-				(void)puts((char *)newval);
+			if (special & HEX) {
+				size_t i;
+				for (i = 0; i < size; i++) {
+					(void)printf("%02x",
+					    (unsigned char)buf[i]);
+				}
+				(void)printf("\n");
+			} else
+				(void)puts(buf);
+		} else if (!qflag) {
+			if (!nflag) {
+				(void)printf("%s: ", string);
+				if (special & HEX) {
+					size_t i;
+					for (i = 0; i < size; i++) {
+						(void)printf("%02x",
+						    (unsigned char)buf[i]);
+					}
+				} else
+					(void)printf("%s", cp);
+
+				(void)printf(" -> ");
 			}
+			(void)puts(cp);
 		}
 		return;
 
