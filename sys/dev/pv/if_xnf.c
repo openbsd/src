@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.59 2017/07/17 15:58:22 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.60 2017/07/17 16:01:24 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -654,7 +654,7 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 	for (; *prod != oprod; (*prod)--) {
 		i = (*prod - 1) & (XNF_TX_DESC - 1);
 		txd = &txr->txr_desc[i];
-		id = --sc->sc_tx_next & (XNF_TX_DESC - 1);
+		id = txd->txd_req.txq_id;
 		txb = &sc->sc_tx_buf[id];
 
 		memset(txd, 0, sizeof(*txd));
