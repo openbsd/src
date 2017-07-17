@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.508 2017/07/17 12:02:53 tb Exp $
+#	$OpenBSD: rc,v 1.509 2017/07/17 18:16:14 tb Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -170,12 +170,6 @@ reorder_libs() {
 
 	echo -n 'reordering libraries:'
 
-	# Only choose the latest version of the libraries.
-	for _liba in /usr/lib/lib{c,crypto}; do
-		_libas="$_libas $(ls $_liba.so.+([0-9.]).a | sort -V | tail -1)"
-	done
-	_libas=${_libas# }
-
 	# Remount read-write, if /usr/lib is on a read-only ffs filesystem.
 	if [[ $_mp == *' type ffs '*'read-only'* ]]; then
 		if mount -u -w $_dkdev; then
@@ -185,6 +179,12 @@ reorder_libs() {
 			return
 		fi
 	fi
+
+	# Only choose the latest version of the libraries.
+	for _liba in /usr/lib/lib{c,crypto}; do
+		_libas="$_libas $(ls $_liba.so.+([0-9.]).a | sort -V | tail -1)"
+	done
+	_libas=${_libas# }
 
 	for _liba in $_libas; do
 		_tmpdir=$(mktemp -dq /tmp/_librebuild.XXXXXXXXXXXX) && (
