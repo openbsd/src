@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.8 2016/12/28 22:45:24 kettenis Exp $ */
+/* $OpenBSD: imxccm.c,v 1.9 2017/07/18 15:06:37 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -120,7 +120,8 @@
 #define CCM_CCGR1_ENET				(3 << 10)
 #define CCM_CCGR4_125M_PCIE			(3 << 0)
 #define CCM_CCGR5_100M_SATA			(3 << 4)
-#define CCM_CSCMR1_PERCLK_CLK_SEL_MASK		0x1f
+#define CCM_CSCMR1_PERCLK_CLK_PODF_MASK		0x1f
+#define CCM_CSCMR1_PERCLK_CLK_SEL_MASK		(1 << 6)
 #define CCM_ANALOG_PLL_ARM_DIV_SELECT_MASK	0x7f
 #define CCM_ANALOG_PLL_ARM_BYPASS		(1 << 16)
 #define CCM_ANALOG_PLL_USB1_DIV_SELECT_MASK	0x1
@@ -276,8 +277,13 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size + 0x1000, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
-	sc->sc_gates = imx6_gates;
-	sc->sc_ngates = nitems(imx6_gates);
+	if (OF_is_compatible(sc->sc_node, "fsl,imx6ul-ccm")) {
+		sc->sc_gates = imx6ul_gates;
+		sc->sc_ngates = nitems(imx6ul_gates);
+	} else {
+		sc->sc_gates = imx6_gates;
+		sc->sc_ngates = nitems(imx6_gates);
+	}
 
 	printf(": imx6 rev 1.%d CPU freq: %d MHz",
 	    HREAD4(sc, CCM_ANALOG_DIGPROG) & CCM_ANALOG_DIGPROG_MINOR_MASK,
@@ -517,11 +523,18 @@ unsigned int
 imxccm_get_ipg_perclk(void)
 {
 	struct imxccm_softc *sc = imxccm_sc;
-	uint32_t ipg_podf;
+	uint32_t cscmr1 = HREAD4(sc, CCM_CSCMR1);
+	uint32_t freq, ipg_podf;
 
-	ipg_podf = HREAD4(sc, CCM_CSCMR1) & CCM_CSCMR1_PERCLK_CLK_SEL_MASK;
+	if (sc->sc_gates == imx6ul_gates &&
+	    cscmr1 & CCM_CSCMR1_PERCLK_CLK_SEL_MASK)
+		freq = HCLK_FREQ;
+	else
+		freq = imxccm_get_ipgclk();
 
-	return imxccm_get_ipgclk() / (ipg_podf + 1);
+	ipg_podf = cscmr1 & CCM_CSCMR1_PERCLK_CLK_PODF_MASK;
+
+	return freq / (ipg_podf + 1);
 }
 
 void
@@ -565,18 +578,32 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 		return imxccm_get_frequency(sc, &parent);
 	}
 
-	switch (idx) {
-	case IMX6_CLK_IPG:
-		return imxccm_get_ipgclk();
-	case IMX6_CLK_IPG_PER:
-		return imxccm_get_ipg_perclk();
-	case IMX6_CLK_UART_SERIAL:
-		return imxccm_get_uartclk();
-	case IMX6_CLK_USDHC1:
-	case IMX6_CLK_USDHC2:
-	case IMX6_CLK_USDHC3:
-	case IMX6_CLK_USDHC4:
-		return imxccm_get_usdhx(idx - IMX6_CLK_USDHC1 + 1);
+	if (sc->sc_gates == imx6ul_gates) {
+		switch (idx) {
+		case IMX6UL_CLK_IPG:
+			return imxccm_get_ipgclk();
+		case IMX6UL_CLK_PERCLK:
+			return imxccm_get_ipg_perclk();
+		case IMX6UL_CLK_UART1_SERIAL:
+			return imxccm_get_uartclk();
+		case IMX6UL_CLK_USDHC1:
+		case IMX6UL_CLK_USDHC2:
+			return imxccm_get_usdhx(idx - IMX6UL_CLK_USDHC1 + 1);
+		}
+	} else {
+		switch (idx) {
+		case IMX6_CLK_IPG:
+			return imxccm_get_ipgclk();
+		case IMX6_CLK_IPG_PER:
+			return imxccm_get_ipg_perclk();
+		case IMX6_CLK_UART_SERIAL:
+			return imxccm_get_uartclk();
+		case IMX6_CLK_USDHC1:
+		case IMX6_CLK_USDHC2:
+		case IMX6_CLK_USDHC3:
+		case IMX6_CLK_USDHC4:
+			return imxccm_get_usdhx(idx - IMX6_CLK_USDHC1 + 1);
+		}
 	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
