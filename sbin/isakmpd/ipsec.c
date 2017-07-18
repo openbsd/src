@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.146 2015/12/10 17:27:00 mmcc Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.147 2017/07/18 06:19:07 mpi Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -270,6 +270,15 @@ ipsec_sa_check_flow_any(struct sa *sa, void *v_arg)
 
 	if (isa->tproto != isa2->tproto || isa->sport != isa2->sport ||
 	    isa->dport != isa2->dport)
+		return 0;
+
+	/*
+	 * If at least one of the IPsec SAs is incomplete, we're done.
+	 */
+	if (isa->src_net == NULL || isa2->src_net == NULL ||
+	    isa->dst_net == NULL || isa2->dst_net == NULL ||
+	    isa->src_mask == NULL || isa2->src_mask == NULL ||
+	    isa->dst_mask == NULL || isa2->dst_mask == NULL)
 		return 0;
 
 	return isa->src_net->sa_family == isa2->src_net->sa_family &&
