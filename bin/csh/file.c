@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.30 2017/06/29 04:23:12 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.31 2017/07/18 17:24:42 anton Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -228,8 +228,10 @@ cl_abort(struct cmdline *cl, int c)
 	cl_visc(cl, c);
 
 	/* Abort while/foreach loop prematurely. */
-	if (whyles)
+	if (whyles) {
+		setup_tty(0);
 		kill(getpid(), SIGINT);
+	}
 
 	cl_putc(cl, '\n');
 	cl->len = cl->cursor = 0;
