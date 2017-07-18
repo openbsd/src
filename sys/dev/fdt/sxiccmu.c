@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.4 2017/07/17 19:28:35 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.5 2017/07/18 00:53:45 jsg Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -139,7 +139,7 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_get_frequency = sxiccmu_a64_get_frequency;
 		sc->sc_set_frequency = sxiccmu_a64_set_frequency;
 	} else if (OF_is_compatible(sc->sc_node, "allwinner,sun8i-h3-ccu") ||
-	    OF_is_compatible(sc->sc_node, "allwinner,sun50i-h5-ccu") {
+	    OF_is_compatible(sc->sc_node, "allwinner,sun50i-h5-ccu")) {
 		KASSERT(faa->fa_nreg > 0);
 		sc->sc_gates = sun8i_h3_gates;
 		sc->sc_ngates = nitems(sun8i_h3_gates);
