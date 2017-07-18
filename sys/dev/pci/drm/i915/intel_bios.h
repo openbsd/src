@@ -30,7 +30,6 @@
 
 #include <dev/pci/drm/drmP.h>
 
-
 struct vbt_header {
 	u8 signature[20];		/**< Always starts with 'VBT$' */
 	u16 version;			/**< decimal */
