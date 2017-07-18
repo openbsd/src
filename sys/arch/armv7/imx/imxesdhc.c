@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.36 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.37 2017/07/18 18:45:44 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -282,7 +282,8 @@ imxesdhc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "fsl,imx6q-usdhc");
+	return OF_is_compatible(faa->fa_node, "fsl,imx6q-usdhc") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx6sx-usdhc");
 }
 
 void
@@ -327,6 +328,8 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Determine host capabilities. */
 	caps = HREAD4(sc, SDHC_HOST_CTRL_CAP);
+	if (OF_is_compatible(sc->sc_node, "fsl,imx6sx-usdhc"))
+		caps &= 0xffff0000;
 
 	/* Use DMA if the host system and the controller support it. */
 	if (ISSET(caps, SDHC_HOST_CTRL_CAP_ADMAS))
