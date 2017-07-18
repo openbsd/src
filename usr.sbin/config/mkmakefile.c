@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.43 2017/06/22 15:57:16 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.44 2017/07/18 16:43:27 tb Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -510,9 +510,10 @@ emitload(FILE *fp)
 		if (fputs("\t${NORMAL_C}\n\n", fp) < 0)
 			return (1);
 
-		if (fprintf(fp, "new%s: gap.o\n", nm) < 0)
+		if (fprintf(fp, "new%s:\n", nm) < 0)
 			return (1);
 		if (fprintf(fp,
+		    "\t${MAKE_GAP}\n"
 		    "\t${SYSTEM_LD_HEAD}\n"
 		    "\t${SYSTEM_LD} swap%s.o\n"
 		    "\t${SYSTEM_LD_TAIL}\n"

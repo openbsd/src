@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.luna88k,v 1.71 2017/06/29 16:51:35 espie Exp $
+#	$OpenBSD: Makefile.luna88k,v 1.72 2017/07/18 16:43:27 tb Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -156,7 +156,7 @@ install-kernel-${MACHINE_NAME}:
  ${SYSTEM_OBJ}: ${DB_STRUCTINFO}
 .endif
 .ifnmake clean
-. for o in ${SYSTEM_OBJ} assym.h ${DB_STRUCTINFO}
+. for o in ${SYSTEM_OBJ:Ngap.o} assym.h ${DB_STRUCTINFO}
 .  if exists(${o:R}.d)
 .   include "${o:R}.d"
 .  elif exists($o)

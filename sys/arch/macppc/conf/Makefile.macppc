@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.88 2017/07/16 16:47:07 visa Exp $
+#	$OpenBSD: Makefile.macppc,v 1.89 2017/07/18 16:43:27 tb Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -124,8 +124,10 @@ ld.script: ${_machdir}/conf/ld.script
 makegap.sh:
 	cp $S/conf/makegap.sh $@
 
-gap.o:	Makefile makegap.sh
-	LD="${LD}" sh makegap.sh 0x00000000	# guaranteed illegal
+MAKE_GAP = LD="${LD}" sh makegap.sh 0x00000000	# guaranteed illegal
+
+gap.o:	Makefile makegap.sh vers.o
+	${MAKE_GAP}
 
 vers.o: ${SYSTEM_DEP:Ngap.o}
 	sh $S/conf/newvers.sh
@@ -161,7 +163,7 @@ install: update-link newinstall
  ${SYSTEM_OBJ}: ${DB_STRUCTINFO}
 .endif
 .ifnmake clean
-. for o in ${SYSTEM_OBJ} assym.h ${DB_STRUCTINFO}
+. for o in ${SYSTEM_OBJ:Ngap.o} assym.h ${DB_STRUCTINFO}
 .  if exists(${o:R}.d)
 .   include "${o:R}.d"
 .  elif exists($o)
