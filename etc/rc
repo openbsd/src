@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.511 2017/07/17 18:52:26 rpe Exp $
+#	$OpenBSD: rc,v 1.512 2017/07/18 16:29:44 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -422,7 +422,7 @@ if [[ $pf != NO ]]; then
 	pass in proto carp keep state (no-sync)
 	pass out proto carp !received-on any keep state (no-sync)"
 
-	if [[ $(sysctl vfs.mounts.nfs 2>/dev/null) == *[1-9]* ]]; then
+	if (($(sysctl -n vfs.mounts.nfs 2>/dev/null) > 0)); then
 		# Don't kill NFS.
 		RULES="set reassemble yes no-df
 		$RULES
