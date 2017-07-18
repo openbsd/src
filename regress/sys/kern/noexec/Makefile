@@ -1,14 +1,10 @@
-#	$OpenBSD: Makefile,v 1.15 2016/09/01 10:12:35 tedu Exp $
+#	$OpenBSD: Makefile,v 1.16 2017/07/18 23:00:31 bluhm Exp $
 
-.if ${MACHINE} == "sparc64" || \
-    ${MACHINE} == "alpha" || ${MACHINE} == "armv7" || \
-    ${MACHINE_ARCH} == "amd64" || ${MACHINE} == "i386" || \
-    ${MACHINE} == "hppa"
+PROG=		noexec
+SRCS=		noexec.c testfly.S
+CFLAGS=		-Wall -fno-inline
+LDSTATIC=	${STATIC}
 
-PROG=	noexec
-SRCS=	noexec.c testfly.S
-CFLAGS+=-Wall
-LDSTATIC= ${STATIC}
 REGRESS_TARGETS=	nxtext-mmap	nxtext-mprotect \
 		nxdata	nxdata-mmap	nxdata-mprotect \
 		nxbss	nxbss-mmap	nxbss-mprotect \
@@ -66,8 +62,16 @@ nxmmap: ${PROG}
 nxmmap-mprotect: ${PROG}
 	@./${PROG} -m -p
 
-.else
-REGRESS_TARGETS=		# this architecture has no test for this
+.if ${MACHINE} != "alpha" && \
+    ${MACHINE} != "amd64" && \
+    ${MACHINE} != "armv7" && \
+    ${MACHINE} != "hppa" && \
+    ${MACHINE} != "i386" && \
+    ${MACHINE} != "sparc64"
+REGRESS_TARGETS=run-regress-skiparch
+run-regress-skiparch:
+	# this architecture has no test for this
+	@echo SKIPPED
 .endif
 
 .include <bsd.regress.mk>
