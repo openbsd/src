@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendsyslog.2,v 1.8 2016/03/22 13:09:08 bluhm Exp $
+.\"	$OpenBSD: sendsyslog.2,v 1.9 2017/07/18 22:22:19 bluhm Exp $
 .\"
 .\" Copyright (c) 2014 Theo de Raadt
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 22 2016 $
+.Dd $Mdocdate: July 18 2017 $
 .Dt SENDSYSLOG 2
 .Os
 .Sh NAME
@@ -33,6 +33,11 @@ function is used to transmit a
 formatted message direct to
 .Xr syslogd 8
 without requiring the allocation of a socket.
+The
+.Fa msg
+is not NUL terminated and its
+.Fa len
+is limited to 8192 bytes.
 If
 .Dv LOG_CONS
 is specified in the
