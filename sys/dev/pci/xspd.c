@@ -1,4 +1,4 @@
-/*	$OpenBSD: xspd.c,v 1.5 2016/01/29 19:04:30 mikeb Exp $	*/
+/*	$OpenBSD: xspd.c,v 1.6 2017/07/18 11:42:51 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -85,7 +85,7 @@ xspd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET | IPL_MPSAFE,
 	    xspd_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt\n");
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -126,4 +126,3 @@ xspd_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 }
 #endif	/* NXEN > 0 */
-
