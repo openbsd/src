@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.83 2017/07/04 12:58:32 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.84 2017/07/18 06:12:09 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -429,6 +429,7 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 int
 soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 {
+	soassertlocked(so);
 
 	if (sbreserve(so, &so->so_snd, sndcc))
 		goto bad;
