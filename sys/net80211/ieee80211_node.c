@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.117 2017/06/04 12:48:42 tb Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.118 2017/07/19 19:50:58 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -657,13 +657,27 @@ ieee80211_end_scan(struct ifnet *ifp)
 		else if ((ic->ic_caps & IEEE80211_C_SCANALLBAND) &&
 		    IEEE80211_IS_CHAN_5GHZ(selbs->ni_chan) &&
 		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan) &&
-		    selbs->ni_rssi >= (ic->ic_max_rssi - (ic->ic_max_rssi / 4)))
+		    ni->ni_rssi > selbs->ni_rssi) {
+		    	uint8_t min_rssi = 0, max_rssi = ic->ic_max_rssi;
+
 			/* 
 			 * Prefer 5GHz (with reasonable RSSI) over 2GHz since
 			 * the 5GHz band is usually less saturated.
 			 */
-			continue;
-		else if (ni->ni_rssi > selbs->ni_rssi)
+			if (max_rssi) {
+				/* Driver reports RSSI relative to maximum. */
+				if (ni->ni_rssi > max_rssi / 3)
+					min_rssi = ni->ni_rssi - (max_rssi / 3);
+			} else {
+				/* Driver reports RSSI value in dBm. */
+				if (ni->ni_rssi > 10) /* XXX magic number */
+		    			min_rssi = ni->ni_rssi - 10;
+			}
+			if (selbs->ni_rssi >= min_rssi)
+				continue;
+		}
+
+		if (ni->ni_rssi > selbs->ni_rssi)
 			selbs = ni;
 	}
 	if (selbs == NULL)
