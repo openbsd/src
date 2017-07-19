@@ -16,8 +16,8 @@
 testseq() {
 	stdin=$1
 	exp=$(echo "$2")
-	act=$(echo -n "$stdin" | ./edit ksh -r)
-	[ "$exp" = "$act" ] && return 0
+	act=$(echo -n "$stdin" | ./edit -p "$PS1" ksh -r)
+	[ $? = 0 ] && [ "$exp" = "$act" ] && return 0
 
 	echo input:
 	echo ">>>$stdin<<<"
@@ -29,5 +29,5 @@ testseq() {
 	echo ">>>$act<<<"
 	echo -n "$act" | hexdump -Cv
 
-	return 1
+	exit 1
 }

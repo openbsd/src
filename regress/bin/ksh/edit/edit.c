@@ -25,6 +25,10 @@
 #include <unistd.h>
 #include <util.h>
 
+#define	WRTIM	50	/* input write timeout */
+#define	PRTIM	5000	/* prompt read timeout */
+
+static size_t		findprompt(const char *, const char *);
 static void		sighandler(int);
 static void __dead	usage(void);
 
@@ -33,16 +37,28 @@ static volatile sig_atomic_t	gotsig;
 int
 main(int argc, char *argv[])
 {
-	char		in[BUFSIZ], out[BUFSIZ];
-	struct termios	tio;
-	struct pollfd	pfd;
-	struct winsize	ws;
-	pid_t		pid;
-	ssize_t		n;
-	size_t		nin, nread, nwrite;
-	int		nready, ptyfd;
+	const char	*linefeed = "\003\004\n\r";
+	const char	*prompt = "";
+	char		 in[BUFSIZ], out[BUFSIZ];
+	struct pollfd	 pfd;
+	struct winsize	 ws;
+	pid_t		 pid;
+	ssize_t		 n;
+	size_t		 nin, nprompt, nread, nwrite;
+	int		 c, nready, ptyfd, readprompt, ret, timeout;
 
-	if (argc < 2)
+	while ((c = getopt(argc, argv, "p:")) != -1) {
+		switch (c) {
+		case 'p':
+			prompt = optarg;
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+	if (argc == 0 || strlen(prompt) == 0)
 		usage();
 
 	nin = 0;
@@ -50,7 +66,7 @@ main(int argc, char *argv[])
 		if (nin == sizeof(in))
 			errx(1, "input buffer too small");
 
-		n = read(0, &in[nin], sizeof(in) - nin);
+		n = read(0, in + nin, sizeof(in) - nin);
 		if (n == -1)
 			err(1, "read");
 		if (n == 0)
@@ -72,22 +88,30 @@ main(int argc, char *argv[])
 	if (pid == -1)
 		err(1, "forkpty");
 	if (pid == 0) {
-		execvp(argv[1], &argv[1]);
-		err(1, "%s", argv[1]);
+		execvp(*argv, argv);
+		err(1, "%s", *argv);
 	}
 
-	nread = nwrite = 0;
-	pfd.fd = ptyfd;
-	pfd.events = (POLLIN | POLLOUT);
+	nprompt = nread = nwrite = ret = 0;
+	readprompt = 1;
 	while (!gotsig) {
-		nready = poll(&pfd, 1, 10);
+		pfd.fd = ptyfd;
+		if (!readprompt && nwrite < nin)
+			pfd.events = POLLOUT;
+		else
+			pfd.events = POLLIN;
+		timeout = readprompt ? PRTIM : WRTIM;
+		nready = poll(&pfd, 1, timeout);
 		if (nready == -1) {
 			if (errno == EINTR)
 				continue;
 			err(1, "poll");
 		}
-		if (nready == 0)
-			break;	/* timeout */
+		if (nready == 0) {
+			if (timeout == PRTIM)
+				ret = 1;
+			break;
+		}
 		if (pfd.revents & (POLLERR | POLLNVAL))
 			errc(1, EBADF, NULL);
 
@@ -95,32 +119,45 @@ main(int argc, char *argv[])
 			if (nread == sizeof(out))
 				errx(1, "output buffer too small");
 
-			n = read(ptyfd, &out[nread], sizeof(out) - nread);
+			n = read(ptyfd, out + nread, sizeof(out) - 1 - nread);
 			if (n == -1)
 				err(1, "read");
 			nread += n;
+			out[nread] = '\0';
+
+			if (readprompt &&
+			    (n = findprompt(out + nprompt, prompt)) > 0) {
+				nprompt += n;
+				readprompt = 0;
+			}
 		} else if (pfd.revents & POLLOUT) {
-			if (nread == 0)
-				continue;
+			if (strchr(linefeed, in[nwrite]) != NULL)
+				readprompt = 1;
 
-			if (tcgetattr(ptyfd, &tio) == -1)
-				err(1, "tcgetattr");
-			if ((tio.c_lflag & ICANON) == ICANON)
-				continue;
-
-			n = write(ptyfd, &in[nwrite], 1);
+			n = write(ptyfd, in + nwrite, 1);
 			if (n == -1)
 				err(1, "write");
 			nwrite += n;
-			if (nwrite == nin)
-				pfd.events &= ~(POLLOUT);
 		}
 	}
 	close(ptyfd);
 
-	printf("%.*s\n", (int)nread, out);
+	printf("%.*s", (int)nread, out);
 
-	return 0;
+	return ret;
+}
+
+static size_t
+findprompt(const char *str, const char *prompt)
+{
+	char	*cp;
+	size_t	 len;
+
+	if ((cp = strstr(str, prompt)) == NULL)
+		return 0;
+	len = strlen(prompt);
+
+	return (cp - str) + len;
 }
 
 static void
@@ -132,6 +169,6 @@ sighandler(int sig)
 static void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: edit command [args]\n");
+	fprintf(stderr, "usage: edit -p prompt command [args]\n");
 	exit(1);
 }
