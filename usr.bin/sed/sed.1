@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.49 2016/10/26 00:46:01 schwarze Exp $
+.\"	$OpenBSD: sed.1,v 1.50 2017/07/19 21:28:19 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: October 26 2016 $
+.Dd $Mdocdate: July 19 2017 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -305,7 +305,6 @@ only when the pattern space is selected.
 .br
 .Ar text
 .Xc
-.Pp
 Write
 .Ar text
 to standard output immediately before each attempt to read a line of input,
@@ -322,7 +321,6 @@ If the label is not specified, branch to the end of the script.
 .br
 .Ar text
 .Xc
-.Pp
 Delete the pattern space.
 With 0 or 1 address or at the end of a 2-address range,
 .Ar text
@@ -348,7 +346,6 @@ to the hold space.
 .br
 .Ar text
 .Xc
-.Pp
 Write
 .Ar text
 to the standard output.
