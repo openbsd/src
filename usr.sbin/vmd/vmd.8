@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmd.8,v 1.7 2017/03/25 16:28:25 reyk Exp $
+.\"	$OpenBSD: vmd.8,v 1.8 2017/07/19 01:26:20 mlarkin Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 25 2017 $
+.Dd $Mdocdate: July 19 2017 $
 .Dt VMD 8
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ can be enabled during system boot by setting the following in
 interfaces with the virtual machine monitor (VMM) built into the kernel.
 One instance of
 .Nm
-will be spawned for each VM running on the host, plus an extra instance
+will be spawned for each VM running on the host, plus extra instances
 for control operations.
 Each child
 .Nm
