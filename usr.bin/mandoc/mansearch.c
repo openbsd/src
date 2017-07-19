@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.57 2017/07/01 09:47:23 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.58 2017/07/19 14:05:09 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -391,13 +391,29 @@ static int
 manpage_compare(const void *vp1, const void *vp2)
 {
 	const struct manpage	*mp1, *mp2;
+	const char		*cp1, *cp2;
+	size_t			 sz1, sz2;
 	int			 diff;
 
 	mp1 = vp1;
 	mp2 = vp2;
-	return (diff = mp2->bits - mp1->bits) ? diff :
-	    (diff = mp1->sec - mp2->sec) ? diff :
-	    strcasecmp(mp1->names, mp2->names);
+	if ((diff = mp2->bits - mp1->bits) ||
+	    (diff = mp1->sec - mp2->sec))
+		return diff;
+
+	/* Fall back to alphabetic ordering of names. */
+	sz1 = strcspn(mp1->names, "(");
+	sz2 = strcspn(mp2->names, "(");
+	if (sz1 < sz2)
+		sz1 = sz2;
+	if ((diff = strncasecmp(mp1->names, mp2->names, sz1)))
+		return diff;
+
+	/* For identical names and sections, prefer arch-dependent. */
+	cp1 = strchr(mp1->names + sz1, '/');
+	cp2 = strchr(mp2->names + sz2, '/');
+	return cp1 != NULL && cp2 != NULL ? strcasecmp(cp1, cp2) :
+	    cp1 != NULL ? -1 : cp2 != NULL ? 1 : 0;
 }
 
 static char *
