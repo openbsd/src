@@ -1879,6 +1879,7 @@ void	inteldrm_free_screen(void *, void *);
 int	inteldrm_show_screen(void *, void *, int,
 	    void (*)(void *, int, int), void *);
 void	inteldrm_doswitch(void *);
+void	inteldrm_enter_ddb(void *, void *);
 int	inteldrm_load_font(void *, void *, struct wsdisplay_font *);
 int	inteldrm_list_font(void *, struct wsdisplay_font *);
 int	inteldrm_getchar(void *, int, int, struct wsdisplay_charcell *);
@@ -1908,6 +1909,7 @@ struct wsdisplay_accessops inteldrm_accessops = {
 	.alloc_screen = inteldrm_alloc_screen,
 	.free_screen = inteldrm_free_screen,
 	.show_screen = inteldrm_show_screen,
+	.enter_ddb = inteldrm_enter_ddb,
 	.getchar = inteldrm_getchar,
 	.load_font = inteldrm_load_font,
 	.list_font = inteldrm_list_font,
@@ -2031,6 +2033,20 @@ inteldrm_doswitch(void *v)
 
 	if (dev_priv->switchcb)
 		(*dev_priv->switchcb)(dev_priv->switchcbarg, 0, 0);
+}
+
+void
+inteldrm_enter_ddb(void *v, void *cookie)
+{
+	struct inteldrm_softc *dev_priv = v;
+	struct rasops_info *ri = &dev_priv->ro;
+	struct drm_fb_helper *helper = &dev_priv->fbdev->helper;
+
+	if (cookie == ri->ri_active)
+		return;
+
+	rasops_show_screen(ri, cookie, 0, NULL, NULL);
+	drm_fb_helper_debug_enter(helper->fbdev);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.127 2017/07/18 21:27:50 kettenis Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.128 2017/07/19 14:34:10 kettenis Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -2133,6 +2133,30 @@ wsdisplay_switchtoconsole(void)
 			return;
 		(*sc->sc_accessops->show_screen)(sc->sc_accesscookie,
 		    scr->scr_dconf->emulcookie, 0, NULL, NULL);
+	}
+}
+
+/*
+ * Switch rhe console display to its ddb screen, avoiding locking
+ * where we can.
+ */
+void
+wsdisplay_enter_ddb(void)
+{
+	struct wsdisplay_softc *sc;
+	struct wsscreen *scr;
+
+	if (wsdisplay_console_device != NULL && cn_tab == &wsdisplay_cons) {
+		sc = wsdisplay_console_device;
+		if ((scr = sc->sc_scr[0]) == NULL)
+			return;
+		if (sc->sc_accessops) {
+			(*sc->sc_accessops->enter_ddb)(sc->sc_accesscookie,
+			    scr->scr_dconf->emulcookie);
+		} else {
+			(*sc->sc_accessops->show_screen)(sc->sc_accesscookie,
+			    scr->scr_dconf->emulcookie, 0, NULL, NULL);
+		}
 	}
 }
 

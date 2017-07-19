@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.35 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.36 2017/07/19 14:34:10 kettenis Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ db_ktrap(int type, int code, db_regs_t *regs)
 	int s;
 
 #if NWSDISPLAY > 0
-	wsdisplay_switchtoconsole();
+	wsdisplay_enter_ddb();
 #endif
 
 	switch (type) {

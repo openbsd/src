@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.30 2016/09/04 18:20:34 tedu Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.31 2017/07/19 14:34:10 kettenis Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -145,6 +145,7 @@ struct wsdisplay_accessops {
 	int	(*getchar)(void *, int, int, struct wsdisplay_charcell *);
 	void	(*burn_screen)(void *, u_int, u_int);
 	void	(*pollc)(void *, int);
+	void	(*enter_ddb)(void *, void *);
 };
 
 /* passed to wscons by the video driver to tell about its capabilities */
@@ -229,6 +230,7 @@ int wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc,
  */
 #define WSDISPLAY_NULLSCREEN	-1
 void wsdisplay_switchtoconsole(void);
+void wsdisplay_enter_ddb(void);
 void wsdisplay_suspend(void);
 void wsdisplay_resume(void);
 const struct wsscreen_descr *
