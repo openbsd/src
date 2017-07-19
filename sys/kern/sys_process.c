@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.76 2017/01/25 07:35:04 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.77 2017/07/19 14:17:49 deraadt Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -101,7 +101,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 	register_t wcookie;
 #endif
 	int error, write;
-	int temp;
+	int temp = 0;
 	int req = SCARG(uap, req);
 	pid_t pid = SCARG(uap, pid);
 	caddr_t addr = SCARG(uap, addr);
