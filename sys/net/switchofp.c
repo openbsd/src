@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.61 2017/05/12 13:40:29 bluhm Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.62 2017/07/19 12:29:22 claudio Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -3397,7 +3397,8 @@ swofp_action_output_controller(struct switch_softc *sc, struct mbuf *m0,
 	}
 	if ((sizeof(*pin) + match_len) >= MHLEN) {
 		MCLGET(m, M_DONTWAIT);
-		if (m == NULL) {
+		if ((m->m_flags & M_EXT) == 0) {
+			m_freem(m);
 			m_freem(m0);
 			return (ENOBUFS);
 		}
@@ -4909,8 +4910,10 @@ swofp_send_flow_removed(struct switch_softc *sc, struct swofp_flow_entry *swfe,
 		return (ENOBUFS);
 	if ((sizeof(*ofr) + match_len) >= MHLEN) {
 		MCLGET(m, M_WAITOK);
-		if (m == NULL)
+		if ((m->m_flags & M_EXT) == 0) {
+			m_freem(m);
 			return (ENOBUFS);
+		}
 	}
 
 	ofr = mtod(m, struct ofp_flow_removed *);
@@ -5676,10 +5679,13 @@ swofp_mpmsg_reply_create(struct ofp_multipart *req, struct swofp_mpmsg *swmp)
 	swmp->swmp_hdr = hdr;
 
 	MGETHDR(body, M_DONTWAIT, MT_DATA);
-	if (body != NULL)
-		MCLGET(body, M_DONTWAIT);
 	if (body == NULL)
 		goto error;
+	MCLGET(body, M_DONTWAIT);
+	if ((body->m_flags & M_EXT) == 0) {
+		m_freem(body);
+		goto error;
+	}
 	body->m_len = body->m_pkthdr.len = 0;
 
 	ml_enqueue(&swmp->swmp_body, body);
@@ -5709,10 +5715,13 @@ swofp_mpmsg_put(struct swofp_mpmsg *swmp, caddr_t data, size_t len)
 
 	if (m->m_pkthdr.len + len > SWOFP_MPMSG_MAX) {
 		MGETHDR(n, M_DONTWAIT, MT_DATA);
-		if (n != NULL)
-			MCLGET(n, M_DONTWAIT);
 		if (n == NULL)
 			return (ENOBUFS);
+		MCLGET(n, M_DONTWAIT);
+		if ((n->m_flags & M_EXT) == 0) {
+			m_freem(n);
+			return (ENOBUFS);
+		}
 		n->m_len = n->m_pkthdr.len = 0;
 
 		ml_enqueue(&swmp->swmp_body, n);
@@ -5743,10 +5752,13 @@ swofp_mpmsg_m_put(struct swofp_mpmsg *swmp, struct mbuf *msg)
 
 	if (m->m_pkthdr.len + msg->m_pkthdr.len > SWOFP_MPMSG_MAX) {
 		MGETHDR(n, M_DONTWAIT, MT_DATA);
-		if (n != NULL)
-			MCLGET(n, M_DONTWAIT);
 		if (n == NULL)
 			return (ENOBUFS);
+		MCLGET(n, M_DONTWAIT);
+		if ((n->m_flags & M_EXT) == 0) {
+			m_freem(n);
+			return (ENOBUFS);
+		}
 		n->m_len = n->m_pkthdr.len = 0;
 
 		ml_enqueue(&swmp->swmp_body, n);
@@ -6401,10 +6413,13 @@ swofp_mp_recv_table_features(struct switch_softc *sc, struct mbuf *m)
 	TAILQ_FOREACH(swft, &ofs->swofs_table_list, swft_table_next) {
 		/* using mbuf becouse table featrues struct is variable length*/
 		MGETHDR(n, M_DONTWAIT, MT_DATA);
-		if (n != NULL)
-			MCLGET(n, M_DONTWAIT);
 		if (n == NULL)
 			goto error;
+		MCLGET(n, M_DONTWAIT);
+		if ((n->m_flags & M_EXT) == 0) {
+			m_freem(n);
+			goto error;
+		}
 		n->m_len = n->m_pkthdr.len = sizeof(*tblf);
 
 		tblf = mtod(n, struct ofp_table_features *);
