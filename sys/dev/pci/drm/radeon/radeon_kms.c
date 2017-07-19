@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.51 2017/07/01 16:14:10 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.52 2017/07/19 22:02:39 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -319,6 +319,7 @@ void radeondrm_free_screen(void *, void *);
 int radeondrm_show_screen(void *, void *, int,
     void (*)(void *, int, int), void *);
 void radeondrm_doswitch(void *);
+void radeondrm_enter_ddb(void *, void *);
 #ifdef __sparc64__
 void radeondrm_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 #endif
@@ -346,6 +347,7 @@ struct wsdisplay_accessops radeondrm_accessops = {
 	.alloc_screen = radeondrm_alloc_screen,
 	.free_screen = radeondrm_free_screen,
 	.show_screen = radeondrm_show_screen,
+	.enter_ddb = radeondrm_enter_ddb,
 	.getchar = rasops_getchar,
 	.load_font = rasops_load_font,
 	.list_font = rasops_list_font,
@@ -440,6 +442,20 @@ radeondrm_doswitch(void *v)
 
 	if (rdev->switchcb)
 		(rdev->switchcb)(rdev->switchcbarg, 0, 0);
+}
+
+void
+radeondrm_enter_ddb(void *v, void *cookie)
+{
+	struct rasops_info *ri = v;
+	struct radeon_device *rdev = ri->ri_hw;
+	struct drm_fb_helper *fb_helper = (void *)rdev->mode_info.rfbdev;
+
+	if (cookie == ri->ri_active)
+		return;
+
+	rasops_show_screen(ri, cookie, 0, NULL, NULL);
+	drm_fb_helper_debug_enter(fb_helper->fbdev);
 }
 
 #ifdef __sparc64__
