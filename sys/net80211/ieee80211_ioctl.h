@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.28 2017/03/11 13:22:36 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.29 2017/07/19 22:04:46 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -315,8 +315,6 @@ struct ieee80211_nodereq {
 	u_int8_t	nr_tstamp[8];	/* from last received beacon */
 	u_int16_t	nr_intval;	/* beacon interval */
 	u_int16_t	nr_capinfo;	/* capabilities */
-	u_int16_t	nr_fhdwell;	/* FH only */
-	u_int8_t	nr_fhindex;	/* FH only */
 	u_int8_t	nr_erp;		/* 11g only */
 	u_int8_t	nr_pwrsave;	/* power saving mode */
 	u_int16_t	nr_associd;	/* assoc response */
