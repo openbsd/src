@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.345 2017/06/16 19:59:13 awolk Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.346 2017/07/19 12:51:30 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1406,7 +1406,17 @@ pfctl_check_qassignments(struct pf_ruleset *rs)
 	if (rs->anchor->path[0] == 0) {
 		TAILQ_FOREACH(qi, &rootqs, entries) {
 			flags = pfctl_find_childqs(qi);
-			if (!(qi->qs.flags & PFQS_FLOWQUEUE) &&
+			if (!(qi->qs.flags & PFQS_ROOTCLASS) &&
+			    !TAILQ_EMPTY(&qi->children)) {
+				if (qi->qs.flags & PFQS_FLOWQUEUE)
+					errx(1, "root queue %s doesn't "
+					    "support hierarchy",
+					    qi->qs.qname);
+				else
+					errx(1, "no bandwidth was specified "
+					    "for root queue %s", qi->qs.qname);
+			}
+			if ((qi->qs.flags & PFQS_ROOTCLASS) &&
 			    !(flags & PFQS_DEFAULT))
 				errx(1, "no default queue specified");
 		}

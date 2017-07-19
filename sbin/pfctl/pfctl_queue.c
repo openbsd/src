@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_queue.c,v 1.5 2017/05/15 16:24:44 mikeb Exp $ */
+/*	$OpenBSD: pfctl_queue.c,v 1.6 2017/07/19 12:51:30 mikeb Exp $ */
 
 /*
  * Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -212,7 +212,8 @@ pfctl_print_queue_nodestat(int dev, const struct pfctl_queue_node *node)
 	    (unsigned long long)stats->xmit_cnt.bytes,
 	    (unsigned long long)stats->drop_cnt.packets,
 	    (unsigned long long)stats->drop_cnt.bytes);
-	if (node->qs.flags & PFQS_FLOWQUEUE) {
+	if (node->qs.parent_qid == 0 && (node->qs.flags & PFQS_FLOWQUEUE) &&
+	    !(node->qs.flags & PFQS_ROOTCLASS)) {
 		double avg = 0, dev = 0;
 
 		if (fqstats->flows > 0) {

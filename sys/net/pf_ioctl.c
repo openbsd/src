@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.318 2017/07/05 11:40:17 bluhm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.319 2017/07/19 12:51:30 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -606,12 +606,12 @@ pf_create_queues(void)
 		qif = malloc(sizeof(*qif), M_TEMP, M_WAITOK);
 		qif->ifp = ifp;
 
-		if ((q->flags & PFQS_FLOWQUEUE) && !(q->flags & PFQS_DEFAULT)) {
-			qif->ifqops = ifq_fqcodel_ops;
-			qif->pfqops = pfq_fqcodel_ops;
-		} else {
+		if (q->flags & PFQS_ROOTCLASS) {
 			qif->ifqops = ifq_hfsc_ops;
 			qif->pfqops = pfq_hfsc_ops;
+		} else {
+			qif->ifqops = ifq_fqcodel_ops;
+			qif->pfqops = pfq_fqcodel_ops;
 		}
 
 		qif->disc = qif->pfqops->pfq_alloc(ifp);
@@ -1104,8 +1104,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(qs, &pq->queue, sizeof(pq->queue));
+		/* It's a root flow queue but is not an HFSC root class */
 		if ((qs->flags & PFQS_FLOWQUEUE) && qs->parent_qid == 0 &&
-		    !(qs->flags & PFQS_DEFAULT))
+		    !(qs->flags & PFQS_ROOTCLASS))
 			error = pfq_fqcodel_ops->pfq_qstats(qs, pq->buf,
 			    &nbytes);
 		else

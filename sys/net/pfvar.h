@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.460 2017/06/28 19:30:24 mikeb Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.461 2017/07/19 12:51:31 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1343,6 +1343,7 @@ struct pf_queuespec {
 };
 
 #define PFQS_FLOWQUEUE			0x0001
+#define PFQS_ROOTCLASS			0x0002
 #define PFQS_DEFAULT			0x1000 /* maps to HFSC_DEFAULTCLASS */
 
 struct priq_opts {
