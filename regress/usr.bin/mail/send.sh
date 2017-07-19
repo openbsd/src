@@ -35,8 +35,16 @@ testseq() {
 	return 1
 }
 
+# Create a fake HOME with a minimal .mailrc.
+tmp=$(mktemp -d)
+trap 'rm -r $tmp' 0
+cat >$tmp/.mailrc <<!
+set ask
+!
+
+HOME=$tmp
 MALLOC_OPTIONS=S
-export MALLOC_OPTIONS
+export HOME MALLOC_OPTIONS
 
 # NL: New line.
 testseq "\n" "Subject: \r\n"
@@ -46,7 +54,7 @@ testseq "\0177" "Subject: "
 testseq "a\0177" "Subject: a\b \b"
 
 # VINTR: Kill letter.
-testseq "\0003\0003" \
+testseq "\0003" \
 	"Subject: ^C\r\n(Interrupt -- one more to kill letter)\r\nSubject: "
 
 # VKILL: Kill line.
