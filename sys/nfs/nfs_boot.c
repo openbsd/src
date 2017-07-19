@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.41 2016/12/19 08:36:50 mpi Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.42 2017/07/19 12:32:13 claudio Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -453,8 +453,10 @@ bp_getfile(struct sockaddr_in *bpsin, char *key, struct sockaddr_in *md_sin,
 
 	/* key name (root or swap) */
 	m->m_next = xdr_string_encode(key, strlen(key));
-	if (m->m_next == NULL)
+	if (m->m_next == NULL) {
+		m_freem(m);
 		return (ENOMEM);
+	}
 
 	/* RPC: bootparam/getfile */
 	error = krpc_call(bpsin, BOOTPARAM_PROG, BOOTPARAM_VERS,
