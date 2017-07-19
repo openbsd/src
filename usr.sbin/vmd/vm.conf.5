@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.20 2017/05/04 08:26:06 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.21 2017/07/19 01:36:31 mlarkin Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 4 2017 $
+.Dd $Mdocdate: July 19 2017 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -300,13 +300,16 @@ Stop the switch from forwarding packets.
 .Sh EXAMPLES
 Create a new VM with 1GB memory, 1 network interface connected to
 .Dq uplink ,
-and one disk image
-.Sq disk.img :
+with one disk image
+.Sq /home/joe/vm2-disk.img ,
+owned by user
+.Sq joe :
 .Bd -literal -offset indent
 vm "vm2.example.com" {
 	memory 1G
-	disk "/var/vmm/vm2-disk.img"
+	disk "/home/joe/vm2-disk.img"
 	interface { switch "uplink" }
+	owner joe
 }
 .Ed
 .Pp
