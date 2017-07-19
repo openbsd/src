@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.163 2017/01/21 05:42:04 guenther Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.164 2017/07/19 13:38:05 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -419,6 +419,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 		/* Geometry eventually has to fit into label fields */
 		if (vio->vnd_secsize > UINT_MAX ||
+		    vio->vnd_secsize == 0 ||
 		    vio->vnd_ntracks > UINT_MAX ||
 		    vio->vnd_nsectors > UINT_MAX)
 			return (EINVAL);
