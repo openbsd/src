@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.118 2017/07/16 18:14:37 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.119 2017/07/19 17:45:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -706,7 +706,8 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	if (ret >= limit)
 		return NULL; /* this really never occurs, but ... */
 
-	CBB_init_fixed(&cbb, ret, limit - ret);
+	if (!CBB_init_fixed(&cbb, ret, limit - ret))
+		return NULL;
 	if (!tlsext_clienthello_build(s, &cbb)) {
 		CBB_cleanup(&cbb);
 		return NULL;
@@ -991,7 +992,8 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	if (ret >= limit)
 		return NULL; /* this really never occurs, but ... */
 
-	CBB_init_fixed(&cbb, ret, limit - ret);
+	if (!CBB_init_fixed(&cbb, ret, limit - ret))
+		return NULL;
 	if (!tlsext_serverhello_build(s, &cbb)) {
 		CBB_cleanup(&cbb);
 		return NULL;
