@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.75 2017/07/19 12:45:30 schwarze Exp $
+#	$OpenBSD: bsd.README,v 1.76 2017/07/19 17:28:51 schwarze Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -302,13 +302,13 @@ CLEANFILES	Additional files to remove for the clean and cleandir targets.
 
 COPTS		Additional flags to the compiler when creating C objects.
 
-LDADD		Additional loader objects.  Usually used for libraries.
-		For example, to load with the crypto and utility
+LDADD		Additional linker objects.  Usually used for libraries.
+		For example, to link with the crypto and utility
 		libraries, use:
 
 			LDADD+=-lutil -lcrypto
 
-LDFLAGS		Additional loader flags.
+LDFLAGS		Additional linker flags.
 
 LINKS		The list of binary links; should be full pathnames, the
 		linked-to file coming first, followed by the linked
@@ -478,7 +478,7 @@ LIBOWN		Library owner.
 
 LIBMODE		Library mode.
 
-LDADD		Additional loader objects.
+LDADD		Additional linker objects.
 
 MAN		The manual pages to be installed (use a .1 - .9 suffix).
 
