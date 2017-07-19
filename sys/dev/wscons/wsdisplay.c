@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.128 2017/07/19 14:34:10 kettenis Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.129 2017/07/19 20:12:54 kettenis Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -2150,7 +2150,7 @@ wsdisplay_enter_ddb(void)
 		sc = wsdisplay_console_device;
 		if ((scr = sc->sc_scr[0]) == NULL)
 			return;
-		if (sc->sc_accessops) {
+		if (sc->sc_accessops->enter_ddb) {
 			(*sc->sc_accessops->enter_ddb)(sc->sc_accesscookie,
 			    scr->scr_dconf->emulcookie);
 		} else {
