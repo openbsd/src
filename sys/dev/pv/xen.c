@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.87 2017/07/17 16:32:26 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.88 2017/07/19 16:48:22 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -1218,10 +1218,11 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 	loop = 0;
 	while (atomic_cas_uint(ptr, flags, GTF_invalid) != flags) {
 		if (loop++ > 10) {
-			printf("%s: grant table reference %u is held "
-			    "by domain %d\n", sc->sc_dev.dv_xname, ref +
-			    ge->ge_start, ge->ge_table[ref].domid);
-			return;
+			panic("%s: grant table reference %u is held "
+			    "by domain %d: frame %#x flags %#x\n",
+			    sc->sc_dev.dv_xname, ref + ge->ge_start,
+			    ge->ge_table[ref].domid, ge->ge_table[ref].frame,
+			    ge->ge_table[ref].flags);
 		}
 #if (defined(__amd64__) || defined(__i386__))
 		__asm volatile("pause": : : "memory");
