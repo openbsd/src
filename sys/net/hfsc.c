@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.41 2017/06/28 18:24:02 mikeb Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.42 2017/07/19 12:54:09 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -123,8 +123,10 @@ struct hfsc_class {
 	struct hfsc_class *cl_children;	/* child classes */
 
 	struct hfsc_classq cl_q;	/* class queue structure */
-/*	struct red	*cl_red;*/	/* RED state */
-	struct altq_pktattr *cl_pktattr; /* saved header used by ECN */
+
+	const struct pfq_ops *cl_qops;	/* queue manager */
+	void		*cl_qdata;	/* queue manager data */
+	void		*cl_cookie;	/* queue manager cookie */
 
 	u_int64_t	cl_total;	/* total work in bytes */
 	u_int64_t	cl_cumul;	/* cumulative work in bytes
@@ -284,15 +286,63 @@ void		*hfsc_pf_alloc(struct ifnet *);
 int		 hfsc_pf_addqueue(void *, struct pf_queuespec *);
 void		 hfsc_pf_free(void *);
 int		 hfsc_pf_qstats(struct pf_queuespec *, void *, int *);
+unsigned int	 hfsc_pf_qlength(void *);
+struct mbuf *	 hfsc_pf_enqueue(void *, struct mbuf *);
+struct mbuf *	 hfsc_pf_deq_begin(void *, void **, struct mbuf_list *);
+void		 hfsc_pf_deq_commit(void *, struct mbuf *, void *);
+void		 hfsc_pf_purge(void *, struct mbuf_list *);
 
 const struct pfq_ops hfsc_pf_ops = {
 	hfsc_pf_alloc,
 	hfsc_pf_addqueue,
 	hfsc_pf_free,
-	hfsc_pf_qstats
+	hfsc_pf_qstats,
+	hfsc_pf_qlength,
+	hfsc_pf_enqueue,
+	hfsc_pf_deq_begin,
+	hfsc_pf_deq_commit,
+	hfsc_pf_purge
 };
 
 const struct pfq_ops * const pfq_hfsc_ops = &hfsc_pf_ops;
+
+/*
+ * shortcuts for repeated use
+ */
+static inline unsigned int
+hfsc_class_qlength(struct hfsc_class *cl)
+{
+	/* Only leaf classes have a queue */
+	if (cl->cl_qops != NULL)
+		return cl->cl_qops->pfq_qlength(cl->cl_qdata);
+	return 0;
+}
+
+static inline struct mbuf *
+hfsc_class_enqueue(struct hfsc_class *cl, struct mbuf *m)
+{
+	return cl->cl_qops->pfq_enqueue(cl->cl_qdata, m);
+}
+
+static inline struct mbuf *
+hfsc_class_deq_begin(struct hfsc_class *cl, struct mbuf_list *ml)
+{
+	return cl->cl_qops->pfq_deq_begin(cl->cl_qdata, &cl->cl_cookie, ml);
+}
+
+static inline void
+hfsc_class_deq_commit(struct hfsc_class *cl, struct mbuf *m)
+{
+	return cl->cl_qops->pfq_deq_commit(cl->cl_qdata, m, cl->cl_cookie);
+}
+
+static inline void
+hfsc_class_purge(struct hfsc_class *cl, struct mbuf_list *ml)
+{
+	/* Only leaf classes have a queue */
+	if (cl->cl_qops != NULL)
+		return cl->cl_qops->pfq_purge(cl->cl_qdata, ml);
+}
 
 u_int64_t
 hfsc_microuptime(void)
@@ -362,6 +412,7 @@ hfsc_pf_addqueue(void *arg, struct pf_queuespec *q)
 	struct hfsc_if *hif = arg;
 	struct hfsc_class *cl, *parent;
 	struct hfsc_sc rtsc, lssc, ulsc;
+	int error = 0;
 
 	KASSERT(hif != NULL);
 
@@ -401,6 +452,35 @@ hfsc_pf_addqueue(void *arg, struct pf_queuespec *q)
 	    parent, q->qlimit, q->flags, q->qid);
 	if (cl == NULL)
 		return (ENOMEM);
+
+	/* Compatibility with older pfctl, remove after 6.2 */
+	if (parent == NULL)
+		return (0);
+
+	/* Attach a queue manager if specified */
+	cl->cl_qops = pf_queue_manager(q);
+	/* Realtime class cannot be used with an external queue manager */
+	if (cl->cl_qops == NULL || cl->cl_rsc != NULL) {
+		cl->cl_qops = pfq_hfsc_ops;
+		cl->cl_qdata = &cl->cl_q;
+	} else {
+		cl->cl_qdata = cl->cl_qops->pfq_alloc(q->kif->pfik_ifp);
+		if (cl->cl_qdata == NULL) {
+			cl->cl_qops = NULL;
+			hfsc_class_destroy(hif, cl);
+			return (ENOMEM);
+		}
+		error = cl->cl_qops->pfq_addqueue(cl->cl_qdata, q);
+		if (error) {
+			cl->cl_qops->pfq_free(cl->cl_qdata);
+			cl->cl_qops = NULL;
+			hfsc_class_destroy(hif, cl);
+			return (error);
+		}
+	}
+
+	KASSERT(cl->cl_qops != NULL);
+	KASSERT(cl->cl_qdata != NULL);
 
 	return (0);
 }
@@ -442,9 +522,52 @@ hfsc_pf_qstats(struct pf_queuespec *q, void *ubuf, int *nbytes)
 void
 hfsc_pf_free(void *arg)
 {
-	struct hfsc_if *hif = arg;
+	hfsc_free(0, arg);
+}
 
-	hfsc_free(0, hif);
+unsigned int
+hfsc_pf_qlength(void *arg)
+{
+	struct hfsc_classq *cq = arg;
+
+	return ml_len(&cq->q);
+}
+
+struct mbuf *
+hfsc_pf_enqueue(void *arg, struct mbuf *m)
+{
+	struct hfsc_classq *cq = arg;
+
+	if (ml_len(&cq->q) >= cq->qlimit)
+		return (m);
+
+	ml_enqueue(&cq->q, m);
+	m->m_pkthdr.pf.prio = IFQ_MAXPRIO;
+	return (NULL);
+}
+
+struct mbuf *
+hfsc_pf_deq_begin(void *arg, void **cookiep, struct mbuf_list *free_ml)
+{
+	struct hfsc_classq *cq = arg;
+
+	return MBUF_LIST_FIRST(&cq->q);
+}
+
+void
+hfsc_pf_deq_commit(void *arg, struct mbuf *m, void *cookie)
+{
+	struct hfsc_classq *cq = arg;
+
+	ml_dequeue(&cq->q);
+}
+
+void
+hfsc_pf_purge(void *arg, struct mbuf_list *ml)
+{
+	struct hfsc_classq *cq = arg;
+
+	ml_enlist(ml, &cq->q);
 }
 
 unsigned int
@@ -617,7 +740,7 @@ hfsc_class_destroy(struct hfsc_if *hif, struct hfsc_class *cl)
 		return (EBUSY);
 
 	s = splnet();
-	KASSERT(ml_empty(&cl->cl_q.q));
+	KASSERT(hfsc_class_qlength(cl) == 0);
 
 	if (cl->cl_parent != NULL) {
 		struct hfsc_class *p = cl->cl_parent->cl_children;
@@ -647,6 +770,10 @@ hfsc_class_destroy(struct hfsc_if *hif, struct hfsc_class *cl)
 		hif->hif_rootclass = NULL;
 	if (cl == hif->hif_defaultclass)
 		hif->hif_defaultclass = NULL;
+
+	/* Free external queue manager resources */
+	if (cl->cl_qops != pfq_hfsc_ops)
+		cl->cl_qops->pfq_free(cl->cl_qdata);
 
 	if (cl->cl_usc != NULL)
 		pool_put(&hfsc_internal_sc_pl, cl->cl_usc);
@@ -688,34 +815,32 @@ hfsc_enq(struct ifqueue *ifq, struct mbuf *m)
 {
 	struct hfsc_if *hif = ifq->ifq_q;
 	struct hfsc_class *cl;
+	struct mbuf *dm;
 
 	if ((cl = hfsc_clh2cph(hif, m->m_pkthdr.pf.qid)) == NULL ||
 	    cl->cl_children != NULL) {
 		cl = hif->hif_defaultclass;
 		if (cl == NULL)
 			return (m);
-		cl->cl_pktattr = NULL;
 	}
 
-	if (ml_len(&cl->cl_q.q) >= cl->cl_q.qlimit) {
-		/* drop occurred.  mbuf needs to be freed */
-		PKTCNTR_INC(&cl->cl_stats.drop_cnt, m->m_pkthdr.len);
-		return (m);
-	}
-
-	ml_enqueue(&cl->cl_q.q, m);
-	m->m_pkthdr.pf.prio = IFQ_MAXPRIO;
+	dm = hfsc_class_enqueue(cl, m);
 
 	/* successfully queued. */
-	if (ml_len(&cl->cl_q.q) == 1)
+	if (dm != m && hfsc_class_qlength(cl) == 1)
 		hfsc_set_active(hif, cl, m->m_pkthdr.len);
 
-	return (NULL);
+	/* drop occurred. */
+	if (dm != NULL)
+		PKTCNTR_INC(&cl->cl_stats.drop_cnt, dm->m_pkthdr.len);
+
+	return (dm);
 }
 
 struct mbuf *
 hfsc_deq_begin(struct ifqueue *ifq, void **cookiep)
 {
+	struct mbuf_list free_ml = MBUF_LIST_INITIALIZER();
 	struct hfsc_if *hif = ifq->ifq_q;
 	struct hfsc_class *cl, *tcl;
 	struct mbuf *m;
@@ -756,8 +881,13 @@ hfsc_deq_begin(struct ifqueue *ifq, void **cookiep)
 			return (NULL);
 	}
 
-	m = MBUF_LIST_FIRST(&cl->cl_q.q);
-	KASSERT(m != NULL);
+	m = hfsc_class_deq_begin(cl, &free_ml);
+	ifq_mfreeml(ifq, &free_ml);
+	if (m == NULL) {
+		/* the class becomes passive */
+		hfsc_set_passive(hif, cl);
+		return (NULL);
+	}
 
 	hif->hif_microtime = cur_time;
 	*cookiep = cl;
@@ -767,6 +897,7 @@ hfsc_deq_begin(struct ifqueue *ifq, void **cookiep)
 void
 hfsc_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
 {
+	struct mbuf_list free_ml = MBUF_LIST_INITIALIZER();
 	struct hfsc_if *hif = ifq->ifq_q;
 	struct hfsc_class *cl = cookie;
 	struct mbuf *m0;
@@ -777,8 +908,7 @@ hfsc_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
 	if (cl->cl_rsc != NULL)
 		realtime = (cl->cl_e <= cur_time);
 
-	m0 = ml_dequeue(&cl->cl_q.q);
-	KASSERT(m == m0);
+	hfsc_class_deq_commit(cl, m);
 
 	PKTCNTR_INC(&cl->cl_stats.xmit_cnt, m->m_pkthdr.len);
 
@@ -786,10 +916,16 @@ hfsc_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
 	if (realtime)
 		cl->cl_cumul += m->m_pkthdr.len;
 
-	if (ml_len(&cl->cl_q.q) > 0) {
+	if (hfsc_class_qlength(cl) > 0) {
+		/*
+		 * Realtime queue needs to look into the future and make
+		 * calculations based on that. This is the reason it can't
+		 * be used with an external queue manager.
+		 */
 		if (cl->cl_rsc != NULL) {
 			/* update ed */
-			m0 = MBUF_LIST_FIRST(&cl->cl_q.q);
+			m0 = hfsc_class_deq_begin(cl, &free_ml);
+			ifq_mfreeml(ifq, &free_ml);
 			next_len = m0->m_pkthdr.len;
 
 			if (realtime)
@@ -825,16 +961,7 @@ hfsc_deferred(void *arg)
 void
 hfsc_cl_purge(struct hfsc_if *hif, struct hfsc_class *cl, struct mbuf_list *ml)
 {
-	struct mbuf *m;
-
-	if (ml_empty(&cl->cl_q.q))
-		return;
-
-	MBUF_LIST_FOREACH(&cl->cl_q.q, m)
-		PKTCNTR_INC(&cl->cl_stats.drop_cnt, m->m_pkthdr.len);
-
-	ml_enlist(ml, &cl->cl_q.q);
-
+	hfsc_class_purge(cl, ml);
 	hfsc_update_vf(cl, 0, 0);	/* remove cl from the actlist */
 	hfsc_set_passive(hif, cl);
 }
@@ -1001,9 +1128,10 @@ void
 hfsc_update_vf(struct hfsc_class *cl, int len, u_int64_t cur_time)
 {
 	u_int64_t f, myf_bound, delta;
-	int go_passive;
+	int go_passive = 0;
 
-	go_passive = ml_empty(&cl->cl_q.q);
+	if (hfsc_class_qlength(cl) == 0)
+		go_passive = 1;
 
 	for (; cl->cl_parent != NULL; cl = cl->cl_parent) {
 		cl->cl_total += len;
@@ -1563,7 +1691,7 @@ hfsc_getclstats(struct hfsc_class_stats *sp, struct hfsc_class *cl)
 	sp->cur_time = hfsc_microuptime();
 	sp->machclk_freq = HFSC_FREQ;
 
-	sp->qlength = ml_len(&cl->cl_q.q);
+	sp->qlength = hfsc_class_qlength(cl);
 	sp->qlimit = cl->cl_q.qlimit;
 	sp->xmit_cnt = cl->cl_stats.xmit_cnt;
 	sp->drop_cnt = cl->cl_stats.drop_cnt;
