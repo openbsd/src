@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/cc_tools/Makefile,v 1.88.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.17 2017/07/10 21:30:37 espie Exp $
+# $OpenBSD: Makefile,v 1.18 2017/07/19 12:50:32 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -378,10 +378,8 @@ GENSRCS+=	unwind.h
 gengtype-lex.c:	gengtype-lex.l
 	flex -ogengtype-lex.c ${.ALLSRC}
 
-gengtype-yacc.h: gengtype-yacc.y
+gengtype-yacc.h gengtype-yacc.c: gengtype-yacc.y
 	yacc -d -o gengtype-yacc.c ${.ALLSRC}
-
-gengtype-yacc.c: gengtype-yacc.h
 
 gengtype-yacc+%DIKED.c: gengtype-yacc.c
 	cat    ${.ALLSRC} > ${.TARGET}

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2007/07/08 00:17:21 krw Exp $
+# $OpenBSD: Makefile,v 1.12 2017/07/19 12:50:32 espie Exp $
 # $FreeBSD: src/sys/dev/aic7xxx/Makefile,v 1.6 1999/08/28 00:41:22 peter Exp $
 
 PROG=	aicasm
@@ -36,14 +36,10 @@ SEQFLAGS= -l seq.lst
 microcode:	7xxx_headers 79xx_headers
 
 aicasm_gram.c aicasm_gram.h: aicasm_gram.y
-	${YACC} ${YFLAGS} $<
-	@mv y.tab.c aicasm_gram.c
-	@mv y.tab.h aicasm_gram.h
+	${YACC} ${YFLAGS} -o aicasm_gram.c $<
 
 aicasm_macro_gram.c aicasm_macro_gram.h: aicasm_macro_gram.y
-	${YACC} -pmm ${YFLAGS} $<
-	@mv y.tab.c aicasm_macro_gram.c
-	@mv y.tab.h aicasm_macro_gram.h
+	${YACC} -pmm ${YFLAGS} -o aicams_macro_gram.c $<
 
 7xxx_headers:	aicasm aic7xxx.seq aic7xxx.reg
 	${OBJDIR}./aicasm -I/sys ${SEQFLAGS} -r tempreg.h -o tempseq.h ${.CURDIR}/aic7xxx.seq

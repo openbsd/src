@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.29 2017/07/02 23:19:07 deraadt Exp $	*/
+/*      $OpenBSD: scan.l,v 1.30 2017/07/19 12:50:33 espie Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -25,7 +25,7 @@
 
 #include "extern.h"
 #include "pathnames.h"
-#include "y.tab.h"
+#include "bc.h"
 
 int		lineno;
 bool		interactive;

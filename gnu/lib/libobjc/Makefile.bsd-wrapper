@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 2017/07/04 12:43:07 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 2017/07/19 12:50:32 espie Exp $
 
 LIB=		objc
 
@@ -58,7 +58,7 @@ includes:
 
 BUILDFIRST = ${GCCOBJDIR}/config.status
 
-${GCCOBJDIR}/config.status depend:
+${GCCOBJDIR}/config.status:
 	cd ${GCCDIR} && exec ${MAKE} -f Makefile.bsd-wrapper config.status target_path tconfig.h
 
 sendmsg.o sendmsg.po sendmsg.so: runtime-info.h

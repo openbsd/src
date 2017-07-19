@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2017/07/03 00:17:52 espie Exp $
+#	$OpenBSD: Makefile,v 1.10 2017/07/19 12:50:32 espie Exp $
 
 PROG=		bc
 SRCS=		bc.y scan.l tty.c dc.c bcode.c inout.c mem.c stack.c
@@ -10,11 +10,10 @@ DPADD+=		${LIBEDIT} ${LIBCURSES} ${LIBCRYPTO}
 
 .PATH:		${.CURDIR}/../dc
 
-bc.c y.tab.h: bc.y
-	${YACC} -d ${.CURDIR}/bc.y
-	mv y.tab.c bc.c
+bc.c bc.h: bc.y
+	${YACC} -o bc.c -d ${.CURDIR}/bc.y
 
-scan.o: y.tab.h
+scan.o: bc.h
 
 beforeinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/bc.library \
