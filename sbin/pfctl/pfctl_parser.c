@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.312 2017/06/01 14:38:28 patrick Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.313 2017/07/19 12:58:31 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1213,7 +1213,8 @@ print_queuespec(struct pf_queuespec *q)
 		if (q->flowqueue.target > 0)
 			printf(" target %ums",
 			    q->flowqueue.target / 1000000);
-	} else {
+	}
+	if (q->linkshare.m1.absolute || q->linkshare.m2.absolute) {
 		print_scspec(" bandwidth ", &q->linkshare);
 		print_scspec(", min ", &q->realtime);
 		print_scspec(", max ", &q->upperlimit);

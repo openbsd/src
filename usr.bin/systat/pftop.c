@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.39 2017/05/22 14:51:10 mikeb Exp $	 */
+/* $OpenBSD: pftop.c,v 1.40 2017/07/19 12:58:31 mikeb Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1623,23 +1623,22 @@ print_queue_node(struct pfctl_queue_node *node)
 
 	// XXX: missing min, max, burst
 	tb_start();
-	if (node->qs.flags & PFQS_FLOWQUEUE) {
+	rate = node->qs.linkshare.m2.absolute;
+	for (i = 0; rate > 9999 && i <= 3; i++) {
+		rtmp = rate / 1000;
+		if (rtmp <= 9999)
+			rtmp += (rate % 1000) / 500;
+		rate = rtmp;
+	}
+	if (rate == 0 && (node->qs.flags & PFQS_FLOWQUEUE)) {
 		/*
 		 * XXX We're abusing the fact that 'flows' in
 		 * the fqcodel_stats structure is at the same
 		 * spot as the 'period' in hfsc_class_stats.
 		 */
 		tbprintf("%u", node->qstats.data.period);
-	} else {
-		rate = node->qs.linkshare.m2.absolute;
-		for (i = 0; rate > 9999 && i <= 3; i++) {
-			rtmp = rate / 1000;
-			if (rtmp <= 9999)
-				rtmp += (rate % 1000) / 500;
-			rate = rtmp;
-		}
+	} else
 		tbprintf("%u%c", rate, unit[i]);
-	}
 	print_fld_tb(FLD_BANDW);
 
 	print_fld_str(FLD_SCHED, node->qs.flags & PFQS_FLOWQUEUE ?

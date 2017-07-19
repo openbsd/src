@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.661 2017/07/19 12:51:30 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.662 2017/07/19 12:58:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1324,11 +1324,6 @@ queue_opt	: BANDWIDTH scspec optscs			{
 				yyerror("bandwidth cannot be respecified");
 				YYERROR;
 			}
-			if (queue_opts.marker & QOM_FLOWS) {
-				yyerror("bandwidth cannot be specified for "
-				    "a flow queue");
-				YYERROR;
-			}
 			queue_opts.marker |= QOM_BWSPEC;
 			queue_opts.linkshare = $2;
 			queue_opts.realtime= $3.realtime;
@@ -1365,11 +1360,6 @@ queue_opt	: BANDWIDTH scspec optscs			{
 		| FLOWS NUMBER					{
 			if (queue_opts.marker & QOM_FLOWS) {
 				yyerror("number of flows cannot be respecified");
-				YYERROR;
-			}
-			if (queue_opts.marker & QOM_BWSPEC) {
-				yyerror("bandwidth cannot be specified for "
-				    "a flow queue");
 				YYERROR;
 			}
 			if ($2 < 1 || $2 > 32767) {

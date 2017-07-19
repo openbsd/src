@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.346 2017/07/19 12:51:30 mikeb Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.347 2017/07/19 12:58:31 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1299,8 +1299,14 @@ pfctl_find_childqs(struct pfctl_qsitem *qi)
 	TAILQ_FOREACH(p, &qi->children, entries)
 		flags |= pfctl_find_childqs(p);
 
-	if (qi->qs.flags & PFQS_DEFAULT && !TAILQ_EMPTY(&qi->children))
-		errx(1, "default queue %s is not a leaf queue", qi->qs.qname);
+	if (!TAILQ_EMPTY(&qi->children)) {
+		if (qi->qs.flags & PFQS_DEFAULT)
+			errx(1, "default queue %s is not a leaf queue",
+			    qi->qs.qname);
+		if (qi->qs.flags & PFQS_FLOWQUEUE)
+			errx(1, "flow queue %s is not a leaf queue",
+			    qi->qs.qname);
+	}
 
 	return (flags);
 }
@@ -1329,18 +1335,28 @@ int
 pfctl_load_queues(struct pfctl *pf)
 {
 	struct pfctl_qsitem	*qi, *tempqi;
+	struct pf_queue_scspec	*rtsc, *lssc, *ulsc;
 	u_int32_t		 ticket;
 
 	TAILQ_FOREACH(qi, &qspecs, entries) {
 		if (qi->matches == 0)
-			errx(1, "queue %s: parent %s not found\n", qi->qs.qname,
+			errx(1, "queue %s: parent %s not found", qi->qs.qname,
 			    qi->qs.parent);
-		if (qi->qs.realtime.m1.percent || qi->qs.realtime.m2.percent ||
-		    qi->qs.linkshare.m1.percent ||
-		    qi->qs.linkshare.m2.percent ||
-		    qi->qs.upperlimit.m1.percent ||
-		    qi->qs.upperlimit.m2.percent)
+
+		rtsc = &qi->qs.realtime;
+		lssc = &qi->qs.linkshare;
+		ulsc = &qi->qs.upperlimit;
+
+		if (rtsc->m1.percent || rtsc->m2.percent ||
+		    lssc->m1.percent || lssc->m2.percent ||
+		    ulsc->m1.percent || ulsc->m2.percent)
 			errx(1, "only absolute bandwidth specs for now");
+
+		/* Link sharing policy must be specified for child classes */
+		if (qi->qs.parent[0] != '\0' &&
+		    lssc->m1.absolute == 0 && lssc->m2.absolute == 0)
+			errx(1, "queue %s: no bandwidth was specified",
+			    qi->qs.qname);
 	}
 
 	if ((pf->opts & PF_OPT_NOACTION) == 0)
