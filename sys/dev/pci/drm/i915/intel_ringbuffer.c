@@ -473,9 +473,9 @@ static void ring_setup_phys_status_page(struct intel_engine_cs *ring)
 	struct drm_i915_private *dev_priv = ring->dev->dev_private;
 	u32 addr;
 
-	addr = dev_priv->status_page_dmah->map->dm_segs[0].ds_addr;
+	addr = dev_priv->status_page_dmah->busaddr;
 	if (INTEL_INFO(ring->dev)->gen >= 4)
-		addr |= (dev_priv->status_page_dmah->map->dm_segs[0].ds_addr >> 28) & 0xf0;
+		addr |= (dev_priv->status_page_dmah->busaddr >> 28) & 0xf0;
 	I915_WRITE(HWS_PGA, addr);
 }
 
@@ -1929,11 +1929,7 @@ static void cleanup_phys_status_page(struct intel_engine_cs *ring)
 	if (!dev_priv->status_page_dmah)
 		return;
 
-#ifdef __linux__
 	drm_pci_free(ring->dev, dev_priv->status_page_dmah);
-#else
-	drm_dmamem_free(dev_priv->dmat, dev_priv->status_page_dmah);
-#endif
 	ring->status_page.page_addr = NULL;
 }
 
@@ -2007,18 +2003,13 @@ static int init_phys_status_page(struct intel_engine_cs *ring)
 	struct drm_i915_private *dev_priv = ring->dev->dev_private;
 
 	if (!dev_priv->status_page_dmah) {
-#ifdef __linux__
 		dev_priv->status_page_dmah =
 			drm_pci_alloc(ring->dev, PAGE_SIZE, PAGE_SIZE);
-#else
-		dev_priv->status_page_dmah = drm_dmamem_alloc(dev_priv->dmat,
-		    PAGE_SIZE, PAGE_SIZE, 1, PAGE_SIZE, 0, BUS_DMA_READ);
-#endif
 		if (!dev_priv->status_page_dmah)
 			return -ENOMEM;
 	}
 
-	ring->status_page.page_addr = (u32 *)dev_priv->status_page_dmah->kva;
+	ring->status_page.page_addr = dev_priv->status_page_dmah->vaddr;
 	memset(ring->status_page.page_addr, 0, PAGE_SIZE);
 
 	return 0;

@@ -13850,7 +13850,7 @@ intel_commit_cursor_plane(struct drm_plane *plane,
 	else if (!INTEL_INFO(dev)->cursor_needs_physical)
 		addr = i915_gem_obj_ggtt_offset(obj);
 	else
-		addr = obj->phys_handle->segs[0].ds_addr;
+		addr = obj->phys_handle->busaddr;
 
 	intel_crtc->cursor_addr = addr;
 

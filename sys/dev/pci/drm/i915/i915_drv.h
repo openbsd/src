@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.76 2017/07/05 20:30:13 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.77 2017/07/19 22:05:58 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1849,7 +1849,7 @@ struct inteldrm_softc {
 	struct drm_i915_gem_object *semaphore_obj;
 	uint32_t last_seqno, next_seqno;
 
-	struct drm_dmamem *status_page_dmah;
+	struct drm_dma_handle *status_page_dmah;
 	struct resource mch_res;
 	union flush {
 		struct {

@@ -196,7 +196,7 @@ intel_overlay_map_regs(struct intel_overlay *overlay)
 	struct overlay_registers __iomem *regs;
 
 	if (OVERLAY_NEEDS_PHYSICAL(overlay->dev))
-		regs = (struct overlay_registers __iomem *)overlay->reg_bo->phys_handle->kva;
+		regs = (struct overlay_registers __iomem *)overlay->reg_bo->phys_handle->vaddr;
 	else {
 		if (overlay->reg_refcount++ == 0 &&
 		    agp_map_subregion(dev_priv->agph,
@@ -1415,7 +1415,7 @@ void intel_setup_overlay(struct drm_device *dev)
 			DRM_ERROR("failed to attach phys overlay regs\n");
 			goto out_free_bo;
 		}
-		overlay->flip_addr = reg_bo->phys_handle->segs[0].ds_addr;
+		overlay->flip_addr = reg_bo->phys_handle->busaddr;
 	} else {
 		ret = i915_gem_obj_ggtt_pin(reg_bo, PAGE_SIZE, PIN_MAPPABLE);
 		if (ret) {

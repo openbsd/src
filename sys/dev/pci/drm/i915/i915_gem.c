@@ -159,10 +159,8 @@ i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 {
 #ifdef __linux__
 	struct address_space *mapping = file_inode(obj->base.filp)->i_mapping;
-	char *vaddr = obj->phys_handle->vaddr;
-#else
-	char *vaddr = obj->phys_handle->kva;
 #endif
+	char *vaddr = obj->phys_handle->vaddr;
 	struct sg_table *st;
 	struct scatterlist *sg;
 	int i;
@@ -214,11 +212,7 @@ i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 	sg->offset = 0;
 	sg->length = obj->base.size;
 
-#ifdef __linux__
 	sg_dma_address(sg) = obj->phys_handle->busaddr;
-#else
-	sg_dma_address(sg) = obj->phys_handle->segs[0].ds_addr;
-#endif
 	sg_dma_len(sg) = obj->base.size;
 
 	obj->pages = st;
@@ -247,10 +241,8 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj)
 	if (obj->dirty) {
 #ifdef __linux__
 		struct address_space *mapping = file_inode(obj->base.filp)->i_mapping;
-		char *vaddr = obj->phys_handle->vaddr;
-#else
-		char *vaddr = obj->phys_handle->kva;
 #endif
+		char *vaddr = obj->phys_handle->vaddr;
 		int i;
 
 		for (i = 0; i < obj->base.size / PAGE_SIZE; i++) {
@@ -294,11 +286,7 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj)
 static void
 i915_gem_object_release_phys(struct drm_i915_gem_object *obj)
 {
-#ifdef __linux__
 	drm_pci_free(obj->base.dev, obj->phys_handle);
-#else
-	drm_dmamem_free(obj->base.dev->dmat, obj->phys_handle);
-#endif
 }
 
 static const struct drm_i915_gem_object_ops i915_gem_phys_ops = {
@@ -332,7 +320,7 @@ i915_gem_object_attach_phys(struct drm_i915_gem_object *obj,
 	int ret;
 
 	if (obj->phys_handle) {
-		if ((unsigned long)obj->phys_handle->kva & (align -1))
+		if ((unsigned long)obj->phys_handle->vaddr & (align -1))
 			return -EBUSY;
 
 		return 0;
@@ -349,12 +337,7 @@ i915_gem_object_attach_phys(struct drm_i915_gem_object *obj,
 		return ret;
 
 	/* create a new object */
-#ifdef __linux__
 	phys = drm_pci_alloc(obj->base.dev, obj->base.size, align);
-#else
-	phys = drm_dmamem_alloc(obj->base.dev->dmat, obj->base.size, align,
-				1, obj->base.size, BUS_DMA_NOCACHE, 0);
-#endif
 	if (!phys)
 		return -ENOMEM;
 
@@ -370,7 +353,7 @@ i915_gem_phys_pwrite(struct drm_i915_gem_object *obj,
 		     struct drm_file *file_priv)
 {
 	struct drm_device *dev = obj->base.dev;
-	void *vaddr = obj->phys_handle->kva + args->offset;
+	void *vaddr = obj->phys_handle->vaddr + args->offset;
 	char __user *user_data = to_user_ptr(args->data_ptr);
 	int ret = 0;
 
