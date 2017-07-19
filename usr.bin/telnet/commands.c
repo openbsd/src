@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.84 2016/05/03 02:06:54 awolk Exp $	*/
+/*	$OpenBSD: commands.c,v 1.85 2017/07/19 12:25:52 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -1636,7 +1636,6 @@ status(int argc, char *argv[])
 	return 1;
 }
 
-#ifdef	SIGINFO
 /*
  * Function that gets called when SIGINFO is received.
  */
@@ -1645,7 +1644,6 @@ ayt_status(int sig)
 {
 	connection_status(1);
 }
-#endif
 
 static Command *getcmd(char *name);
 

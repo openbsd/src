@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.33 2017/07/07 09:14:26 fcambus Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.34 2017/07/19 12:25:52 deraadt Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -181,9 +181,7 @@ TerminalDefaultChars(void)
  */
 
 static void susp();
-#ifdef SIGINFO
 static void ayt();
-#endif
 
 void
 TerminalNewMode(int f)
@@ -318,9 +316,7 @@ TerminalNewMode(int f)
 
     if (f != -1) {
 	(void) signal(SIGTSTP, susp);
-#ifdef	SIGINFO
 	(void) signal(SIGINFO, ayt);
-#endif
 #if	defined(NOKERNINFO)
 	tmp_tc.c_lflag |= NOKERNINFO;
 #endif
@@ -352,9 +348,7 @@ TerminalNewMode(int f)
 	}
     } else {
 	sigset_t mask;
-#ifdef	SIGINFO
 	(void) signal(SIGINFO, ayt_status);
-#endif
 	(void) signal(SIGTSTP, SIG_DFL);
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGTSTP);
@@ -368,77 +362,9 @@ TerminalNewMode(int f)
     ioctl(tout, FIONBIO, &onoff);
 }
 
-/*
- * Try to guess whether speeds are "encoded" (4.2BSD) or just numeric (4.4BSD).
- */
-#if B4800 != 4800
-#define	DECODE_BAUD
-#endif
-
-#ifdef	DECODE_BAUD
-#ifndef	B7200
-#define B7200   B4800
-#endif
-
-#ifndef	B14400
-#define B14400  B9600
-#endif
-
-#ifndef	B19200
-# define B19200 B14400
-#endif
-
-#ifndef	B28800
-#define B28800  B19200
-#endif
-
-#ifndef	B38400
-# define B38400 B28800
-#endif
-
-#ifndef B57600
-#define B57600  B38400
-#endif
-
-#ifndef B76800
-#define B76800  B57600
-#endif
-
-#ifndef B115200
-#define B115200 B76800
-#endif
-
-#ifndef B230400
-#define B230400 B115200
-#endif
-
-
-/*
- * This code assumes that the values B0, B50, B75...
- * are in ascending order.  They do not have to be
- * contiguous.
- */
-struct termspeeds {
-	long speed;
-	long value;
-} termspeeds[] = {
-	{ 0,      B0 },      { 50,    B50 },    { 75,     B75 },
-	{ 110,    B110 },    { 134,   B134 },   { 150,    B150 },
-	{ 200,    B200 },    { 300,   B300 },   { 600,    B600 },
-	{ 1200,   B1200 },   { 1800,  B1800 },  { 2400,   B2400 },
-	{ 4800,   B4800 },   { 7200,  B7200 },  { 9600,   B9600 },
-	{ 14400,  B14400 },  { 19200, B19200 }, { 28800,  B28800 },
-	{ 38400,  B38400 },  { 57600, B57600 }, { 115200, B115200 },
-	{ 230400, B230400 }, { -1,    B230400 }
-};
-#endif	/* DECODE_BAUD */
-
 void
 TerminalSpeeds(long *ispeed, long *ospeed)
 {
-#ifdef	DECODE_BAUD
-    struct termspeeds *tp;
-#endif	/* DECODE_BAUD */
     long in, out;
 
     out = cfgetospeed(&old_tc);
@@ -446,26 +372,13 @@ TerminalSpeeds(long *ispeed, long *ospeed)
     if (in == 0)
 	in = out;
 
-#ifdef	DECODE_BAUD
-    tp = termspeeds;
-    while ((tp->speed != -1) && (tp->value < in))
-	tp++;
-    *ispeed = tp->speed;
-
-    tp = termspeeds;
-    while ((tp->speed != -1) && (tp->value < out))
-	tp++;
-    *ospeed = tp->speed;
-#else	/* DECODE_BAUD */
-	*ispeed = in;
-	*ospeed = out;
-#endif	/* DECODE_BAUD */
+    *ispeed = in;
+    *ospeed = out;
 }
 
 int
 TerminalWindowSize(long *rows, long *cols)
 {
-#ifdef	TIOCGWINSZ
     struct winsize ws;
 
     if (ioctl(fileno(stdin), TIOCGWINSZ, &ws) >= 0) {
@@ -473,7 +386,6 @@ TerminalWindowSize(long *rows, long *cols)
 	*cols = ws.ws_col;
 	return 1;
     }
-#endif	/* TIOCGWINSZ */
     return 0;
 }
 
@@ -522,7 +434,6 @@ susp(int sig)
 	sendsusp();
 }
 
-#ifdef	SIGWINCH
 void
 sendwin(int sig)
 {
@@ -530,9 +441,7 @@ sendwin(int sig)
 	sendnaws();
     }
 }
-#endif
 
-#ifdef	SIGINFO
 void
 ayt(int sig)
 {
@@ -541,7 +450,6 @@ ayt(int sig)
     else
 	ayt_status(sig);
 }
-#endif
 
 
 void
@@ -552,13 +460,9 @@ sys_telnet_init(void)
     (void) signal(SIGINT, intr);
     (void) signal(SIGQUIT, intr2);
     (void) signal(SIGPIPE, deadpeer);
-#ifdef	SIGWINCH
     (void) signal(SIGWINCH, sendwin);
-#endif
     (void) signal(SIGTSTP, susp);
-#ifdef	SIGINFO
     (void) signal(SIGINFO, ayt);
-#endif
 
     setconnmode(0);
 
