@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.52 2017/05/28 10:37:26 benno Exp $	*/
+/*	$OpenBSD: config.c,v 1.53 2017/07/19 17:36:25 jsing Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -222,7 +222,7 @@ config_setserver(struct httpd *env, struct server *srv)
 			}
 
 			/* Configure TLS if necessary. */
-			config_settls(env, srv);
+			config_setserver_tls(env, srv);
 		} else {
 			if (proc_composev(ps, id, IMSG_CFG_SERVER,
 			    iov, c) != 0) {
@@ -246,8 +246,9 @@ config_setserver(struct httpd *env, struct server *srv)
 	return (0);
 }
 
-int
-config_settls(struct httpd *env, struct server *srv)
+static int
+config_settls(struct httpd *env, struct server *srv, enum tls_config_type type,
+    const char *label, uint8_t *data, size_t len)
 {
 	struct privsep		*ps = env->sc_ps;
 	struct server_config	*srv_conf = &srv->srv_conf;
@@ -255,76 +256,65 @@ config_settls(struct httpd *env, struct server *srv)
 	struct iovec		 iov[2];
 	size_t			 c;
 
+	if (data == NULL || len == 0)
+		return (0);
+
+	DPRINTF("%s: sending tls %s for \"%s[%u]\" to %s fd %d", __func__,
+	    label, srv_conf->name, srv_conf->id, ps->ps_title[PROC_SERVER],
+	    srv->srv_s);
+
+	memset(&tls, 0, sizeof(tls));
+	tls.id = srv_conf->id;
+	tls.tls_type = type;
+	tls.tls_len = len;
+	tls.tls_chunk_offset = 0;
+
+	while (len > 0) {
+		tls.tls_chunk_len = len;
+		if (tls.tls_chunk_len > (MAX_IMSG_DATA_SIZE - sizeof(tls)))
+			tls.tls_chunk_len = MAX_IMSG_DATA_SIZE - sizeof(tls);
+
+		c = 0;
+		iov[c].iov_base = &tls;
+		iov[c++].iov_len = sizeof(tls);
+		iov[c].iov_base = data;
+		iov[c++].iov_len = tls.tls_chunk_len;
+
+		if (proc_composev(ps, PROC_SERVER, IMSG_CFG_TLS, iov, c) != 0) {
+			log_warn("%s: failed to compose IMSG_CFG_TLS imsg for "
+			    "`%s'", __func__, srv_conf->name);
+			return (-1);
+		}
+
+		tls.tls_chunk_offset += tls.tls_chunk_len;
+		data += tls.tls_chunk_len;
+		len -= tls.tls_chunk_len;
+	}
+
+	return (0);
+}
+
+int
+config_setserver_tls(struct httpd *env, struct server *srv)
+{
+	struct server_config	*srv_conf = &srv->srv_conf;
+
 	if ((srv_conf->flags & SRVFLAG_TLS) == 0)
 		return (0);
 
 	log_debug("%s: configuring tls for %s", __func__, srv_conf->name);
 
-	if (srv_conf->tls_cert_len != 0) {
-		DPRINTF("%s: sending tls cert \"%s[%u]\" to %s fd %d", __func__,
-		    srv_conf->name, srv_conf->id, ps->ps_title[PROC_SERVER],
-		    srv->srv_s);
+	if (config_settls(env, srv, TLS_CFG_CERT, "cert", srv_conf->tls_cert,
+	    srv_conf->tls_cert_len) != 0)
+		return (-1);
 
-		memset(&tls, 0, sizeof(tls));
-		tls.id = srv_conf->id;
-		tls.tls_cert_len = srv_conf->tls_cert_len;
+	if (config_settls(env, srv, TLS_CFG_KEY, "key", srv_conf->tls_key,
+	    srv_conf->tls_key_len) != 0)
+		return (-1);
 
-		c = 0;
-		iov[c].iov_base = &tls;
-		iov[c++].iov_len = sizeof(tls);
-		iov[c].iov_base = srv_conf->tls_cert;
-		iov[c++].iov_len = srv_conf->tls_cert_len;
-
-		if (proc_composev(ps, PROC_SERVER, IMSG_CFG_TLS, iov, c) != 0) {
-			log_warn("%s: failed to compose IMSG_CFG_TLS imsg for "
-			    "`%s'", __func__, srv_conf->name);
-			return (-1);
-		}
-	}
-
-	if (srv_conf->tls_key_len != 0) {
-		DPRINTF("%s: sending tls key \"%s[%u]\" to %s fd %d", __func__,
-		    srv_conf->name, srv_conf->id, ps->ps_title[PROC_SERVER],
-		    srv->srv_s);
-
-		memset(&tls, 0, sizeof(tls));
-		tls.id = srv_conf->id;
-		tls.tls_key_len = srv_conf->tls_key_len;
-
-		c = 0;
-		iov[c].iov_base = &tls;
-		iov[c++].iov_len = sizeof(tls);
-		iov[c].iov_base = srv_conf->tls_key;
-		iov[c++].iov_len = srv_conf->tls_key_len;
-
-		if (proc_composev(ps, PROC_SERVER, IMSG_CFG_TLS, iov, c) != 0) {
-			log_warn("%s: failed to compose IMSG_CFG_TLS imsg for "
-			    "`%s'", __func__, srv_conf->name);
-			return (-1);
-		}
-	}
-
-	if (srv_conf->tls_ocsp_staple_len != 0) {
-		DPRINTF("%s: sending ocsp staple \"%s[%u]\" to %s fd %d",
-		    __func__, srv_conf->name, srv_conf->id,
-		    ps->ps_title[PROC_SERVER], srv->srv_s);
-
-		memset(&tls, 0, sizeof(tls));
-		tls.id = srv_conf->id;
-		tls.tls_ocsp_staple_len = srv_conf->tls_ocsp_staple_len;
-
-		c = 0;
-		iov[c].iov_base = &tls;
-		iov[c++].iov_len = sizeof(tls);
-		iov[c].iov_base = srv_conf->tls_ocsp_staple;
-		iov[c++].iov_len = srv_conf->tls_ocsp_staple_len;
-
-		if (proc_composev(ps, PROC_SERVER, IMSG_CFG_TLS, iov, c) != 0) {
-			log_warn("%s: failed to compose IMSG_CFG_TLS imsg for "
-			    "`%s'", __func__, srv_conf->name);
-			return (-1);
-		}
-	}
+	if (config_settls(env, srv, TLS_CFG_OCSP_STAPLE, "ocsp staple",
+	    srv_conf->tls_ocsp_staple, srv_conf->tls_ocsp_staple_len) != 0)
+		return (-1);
 
 	return (0);
 }
@@ -593,57 +583,101 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	return (-1);
 }
 
-int
-config_gettls(struct httpd *env, struct imsg *imsg)
+static int
+config_gettls(struct httpd *env, struct server_config *srv_conf,
+    struct tls_config *tls_conf, const char *label, uint8_t *data, size_t len,
+    uint8_t **outdata, size_t *outlen)
 {
 #ifdef DEBUG
 	struct privsep		*ps = env->sc_ps;
 #endif
+
+	DPRINTF("%s: %s %d getting tls %s (%zu:%zu@%zu) for \"%s[%u]\"",
+	    __func__, ps->ps_title[privsep_process], ps->ps_instance, label,
+	    tls_conf->tls_len, len, tls_conf->tls_chunk_offset, srv_conf->name,
+	    srv_conf->id);
+
+	if (tls_conf->tls_chunk_offset == 0) {
+		free(*outdata);
+		*outlen = 0;
+		if ((*outdata = calloc(1, tls_conf->tls_len)) == NULL)
+			goto fail;
+		*outlen = tls_conf->tls_len;
+	}
+
+	if (*outdata == NULL) {
+		log_debug("%s: tls config invalid chunk sequence", __func__);
+		goto fail;
+	}
+
+	if (*outlen != tls_conf->tls_len) {
+		log_debug("%s: tls config length mismatch (%zu != %zu)",
+		    __func__, *outlen, tls_conf->tls_len);
+		goto fail;
+	}
+
+	if (len > (tls_conf->tls_len - tls_conf->tls_chunk_offset)) {
+		log_debug("%s: tls config invalid chunk length", __func__);
+		goto fail;
+	}
+
+	memcpy(*outdata + tls_conf->tls_chunk_offset, data, len);
+
+	return (0);
+
+ fail:
+	return (-1);
+}
+
+int
+config_getserver_tls(struct httpd *env, struct imsg *imsg)
+{
 	struct server_config	*srv_conf = NULL;
 	struct tls_config	 tls_conf;
 	uint8_t			*p = imsg->data;
-	size_t			 s;
+	size_t			 len;
 
 	IMSG_SIZE_CHECK(imsg, &tls_conf);
 	memcpy(&tls_conf, p, sizeof(tls_conf));
-	s = sizeof(tls_conf);
 
-	if ((IMSG_DATA_SIZE(imsg) - s) <
-	    (tls_conf.tls_cert_len + tls_conf.tls_key_len +
-	    tls_conf.tls_ocsp_staple_len)) {
+	len = tls_conf.tls_chunk_len;
+
+	if ((IMSG_DATA_SIZE(imsg) - sizeof(tls_conf)) < len) {
 		log_debug("%s: invalid message length", __func__);
 		goto fail;
 	}
+
+	p += sizeof(tls_conf);
 
 	if ((srv_conf = serverconfig_byid(tls_conf.id)) == NULL) {
 		log_debug("%s: server not found", __func__);
 		goto fail;
 	}
 
-	DPRINTF("%s: %s %d tls configuration \"%s[%u]\"", __func__,
-	    ps->ps_title[privsep_process], ps->ps_instance,
-	    srv_conf->name, srv_conf->id);
+	switch (tls_conf.tls_type) {
+	case TLS_CFG_CERT:
+		if (config_gettls(env, srv_conf, &tls_conf, "cert", p, len,
+		    &srv_conf->tls_cert, &srv_conf->tls_cert_len) != 0)
+			goto fail;
+		break;
 
-	if (tls_conf.tls_cert_len != 0) {
-		srv_conf->tls_cert_len = tls_conf.tls_cert_len;
-		if ((srv_conf->tls_cert = get_data(p + s,
-		    tls_conf.tls_cert_len)) == NULL)
+	case TLS_CFG_KEY:
+		if (config_gettls(env, srv_conf, &tls_conf, "key", p, len,
+		    &srv_conf->tls_key, &srv_conf->tls_key_len) != 0)
 			goto fail;
-		s += tls_conf.tls_cert_len;
-	}
-	if (tls_conf.tls_key_len != 0) {
-		srv_conf->tls_key_len = tls_conf.tls_key_len;
-		if ((srv_conf->tls_key = get_data(p + s,
-		    tls_conf.tls_key_len)) == NULL)
+		break;
+
+	case TLS_CFG_OCSP_STAPLE:
+		if (config_gettls(env, srv_conf, &tls_conf, "ocsp staple",
+		    p, len, &srv_conf->tls_ocsp_staple,
+		    &srv_conf->tls_ocsp_staple_len) != 0)
 			goto fail;
-		s += tls_conf.tls_key_len;
-	}
-	if (tls_conf.tls_ocsp_staple_len != 0) {
-		srv_conf->tls_ocsp_staple_len = tls_conf.tls_ocsp_staple_len;
-		if ((srv_conf->tls_ocsp_staple = get_data(p + s,
-		    tls_conf.tls_ocsp_staple_len)) == NULL)
-			goto fail;
-		s += tls_conf.tls_ocsp_staple_len;
+		break;
+
+	default:
+		log_debug("%s: unknown tls config type %i\n",
+		     __func__, tls_conf.tls_type);
+		goto fail;
 	}
 
 	return (0);

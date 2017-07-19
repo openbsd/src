@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.109 2017/04/17 21:58:27 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.110 2017/07/19 17:36:25 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1280,7 +1280,7 @@ server_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		config_getserver(httpd_env, imsg);
 		break;
 	case IMSG_CFG_TLS:
-		config_gettls(httpd_env, imsg);
+		config_getserver_tls(httpd_env, imsg);
 		break;
 	case IMSG_CFG_DONE:
 		config_getcfg(httpd_env, imsg);

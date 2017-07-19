@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.132 2017/05/28 10:37:26 benno Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.133 2017/07/19 17:36:25 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -192,6 +192,7 @@ struct imsgev {
 		fatalx("bad length imsg received");		\
 } while (0)
 #define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
+#define MAX_IMSG_DATA_SIZE	(MAX_IMSGSIZE - IMSG_HEADER_SIZE)
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
@@ -518,12 +519,19 @@ struct server_config {
 };
 TAILQ_HEAD(serverhosts, server_config);
 
+enum tls_config_type {
+	TLS_CFG_CERT,
+	TLS_CFG_KEY,
+	TLS_CFG_OCSP_STAPLE,
+};
+
 struct tls_config {
 	uint32_t		 id;
 
-	size_t			 tls_cert_len;
-	size_t			 tls_key_len;
-	size_t			 tls_ocsp_staple_len;
+	enum tls_config_type	 tls_type;
+	size_t			 tls_len;
+	size_t			 tls_chunk_len;
+	size_t			 tls_chunk_offset;
 };
 
 struct server {
@@ -786,9 +794,9 @@ int	 config_setreset(struct httpd *, unsigned int);
 int	 config_getreset(struct httpd *, struct imsg *);
 int	 config_getcfg(struct httpd *, struct imsg *);
 int	 config_setserver(struct httpd *, struct server *);
-int	 config_settls(struct httpd *, struct server *);
+int	 config_setserver_tls(struct httpd *, struct server *);
 int	 config_getserver(struct httpd *, struct imsg *);
-int	 config_gettls(struct httpd *, struct imsg *);
+int	 config_getserver_tls(struct httpd *, struct imsg *);
 int	 config_setmedia(struct httpd *, struct media_type *);
 int	 config_getmedia(struct httpd *, struct imsg *);
 int	 config_setauth(struct httpd *, struct auth *);
