@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.42 2017/07/19 12:54:09 mikeb Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.43 2017/07/19 13:41:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -772,7 +772,7 @@ hfsc_class_destroy(struct hfsc_if *hif, struct hfsc_class *cl)
 		hif->hif_defaultclass = NULL;
 
 	/* Free external queue manager resources */
-	if (cl->cl_qops != pfq_hfsc_ops)
+	if (cl->cl_qops && cl->cl_qops != pfq_hfsc_ops)
 		cl->cl_qops->pfq_free(cl->cl_qdata);
 
 	if (cl->cl_usc != NULL)
