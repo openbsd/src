@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.66 2017/06/10 12:58:37 kevlo Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.67 2017/07/19 16:31:56 mikeb Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -89,6 +89,8 @@ u_int32_t urndis_ctrl_handle_init(struct urndis_softc *,
 u_int32_t urndis_ctrl_handle_query(struct urndis_softc *,
     const struct rndis_comp_hdr *, void **, size_t *);
 u_int32_t urndis_ctrl_handle_reset(struct urndis_softc *,
+    const struct rndis_comp_hdr *);
+u_int32_t urndis_ctrl_handle_status(struct urndis_softc *,
     const struct rndis_comp_hdr *);
 
 u_int32_t urndis_ctrl_init(struct urndis_softc *);
@@ -233,6 +235,10 @@ urndis_ctrl_handle(struct urndis_softc *sc, struct rndis_comp_hdr *hdr,
 		case REMOTE_NDIS_KEEPALIVE_CMPLT:
 		case REMOTE_NDIS_SET_CMPLT:
 			rval = letoh32(hdr->rm_status);
+			break;
+
+		case REMOTE_NDIS_INDICATE_STATUS_MSG:
+			rval = urndis_ctrl_handle_status(sc, hdr);
 			break;
 
 		default:
@@ -396,6 +402,38 @@ urndis_ctrl_handle_reset(struct urndis_softc *sc,
 			    DEVNAME(sc));
 			return rval;
 		}
+	}
+
+	return rval;
+}
+
+u_int32_t
+urndis_ctrl_handle_status(struct urndis_softc *sc,
+    const struct rndis_comp_hdr *hdr)
+{
+	const struct rndis_status_msg	*msg;
+	u_int32_t			 rval;
+
+	msg = (struct rndis_status_msg *)hdr;
+
+	rval = letoh32(msg->rm_status);
+
+	DPRINTF(("%s: urndis_ctrl_handle_status: len %u status 0x%x "
+	    "stbuflen %u\n",
+	    DEVNAME(sc),
+	    letoh32(msg->rm_len),
+	    rval,
+	    letoh32(msg->rm_stbuflen)));
+
+	switch (rval) {
+		case RNDIS_STATUS_MEDIA_CONNECT:
+		case RNDIS_STATUS_MEDIA_DISCONNECT:
+		case RNDIS_STATUS_OFFLOAD_CURRENT_CONFIG:
+			rval = RNDIS_STATUS_SUCCESS;
+			break;
+
+		default:
+			printf("%s: status 0x%x\n", DEVNAME(sc), rval);
 	}
 
 	return rval;
