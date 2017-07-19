@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.35 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.36 2017/07/19 12:25:34 claudio Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1987,6 +1987,10 @@ et_newbuf(struct et_rxbuf_data *rbd, int buf_idx, int init, int len0)
 		if (m == NULL)
 			return (ENOBUFS);
 		MCLGET(m, init ? M_WAITOK : M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_freem(m);
+			return (ENOBUFS);
+		}
 		len = MCLBYTES;
 	} else {
 		MGETHDR(m, init ? M_WAITOK : M_DONTWAIT, MT_DATA);
