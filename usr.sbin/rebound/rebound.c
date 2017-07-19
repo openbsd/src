@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.88 2017/07/13 17:12:51 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.89 2017/07/19 22:51:30 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -202,6 +202,23 @@ freecacheent(struct dnscache *ent)
 	free(ent);
 }
 
+/*
+ * names end with either a nul byte, or a two byte 0xc0 pointer
+ */
+static size_t
+dnamelen(const unsigned char *p, size_t len)
+{
+	size_t n = 0;
+
+	for (n = 0; n < len; n++) {
+		if (p[n] == 0)
+			return n + 1;
+		if ((p[n] & 0xc0) == 0xc0)
+			return n + 2;
+	}
+	return len + 1;
+}
+
 static int
 adjustttl(struct dnscache *ent)
 {
@@ -225,7 +242,7 @@ adjustttl(struct dnscache *ent)
 	if (ntohs(resp->qdcount) != 1)
 		return -1;
 	/* skip past query name, type, and class */
-	used += strnlen(p + used, rlen - used);
+	used += dnamelen(p + used, rlen - used);
 	used += 2;
 	used += 2;
 	cnt = ntohs(resp->ancount);
@@ -233,7 +250,7 @@ adjustttl(struct dnscache *ent)
 		if (used >= rlen)
 			return -1;
 		/* skip past answer name, type, and class */
-		used += strnlen(p + used, rlen - used);
+		used += dnamelen(p + used, rlen - used);
 		used += 2;
 		used += 2;
 		if (used + 4 >= rlen)
@@ -435,7 +452,7 @@ minttl(struct dnspacket *resp, u_int rlen)
 	if (ntohs(resp->qdcount) != 1)
 		return -1;
 	/* skip past query name, type, and class */
-	used += strnlen(p + used, rlen - used);
+	used += dnamelen(p + used, rlen - used);
 	used += 2;
 	used += 2;
 	cnt = ntohs(resp->ancount);
@@ -443,7 +460,7 @@ minttl(struct dnspacket *resp, u_int rlen)
 		if (used >= rlen)
 			return -1;
 		/* skip past answer name, type, and class */
-		used += strnlen(p + used, rlen - used);
+		used += dnamelen(p + used, rlen - used);
 		used += 2;
 		used += 2;
 		if (used + 4 >= rlen)
