@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.62 2017/05/27 18:36:20 mpi Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.63 2017/07/19 06:59:16 claudio Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -519,7 +519,9 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			if (errortag && len) {
 				n = m_pulldown(m, off, len,
 				    &noff);
-				if (n) {
+				if (n == NULL) {
+					m = NULL;
+				} else {
 					u_int8_t *et = mtod(n, caddr_t) + noff;
 					while (len--)
 						addlog("%c", *et++);
