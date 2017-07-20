@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginfo-fault.c,v 1.4 2017/07/13 00:29:14 bluhm Exp $	*/
+/*	$OpenBSD: siginfo-fault.c,v 1.5 2017/07/20 18:22:25 bluhm Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -156,7 +156,7 @@ main()
 		p[3] = 1;
 		FAIL();
 	}
-	fail += checksig("mmap file", SIGBUS, BUS_ADRERR, p + 3);
+	fail += checksig("mmap file", SIGBUS, BUS_OBJERR, p + 3);
 
 	return (fail);
 }

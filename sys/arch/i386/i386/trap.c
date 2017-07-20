@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.131 2017/07/14 12:20:32 bluhm Exp $	*/
+/*	$OpenBSD: trap.c,v 1.132 2017/07/20 18:22:25 bluhm Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -374,6 +374,7 @@ trap(struct trapframe *frame)
 		struct vmspace *vm;
 		struct vm_map *map;
 		int error;
+		int signal, sicode;
 
 		cr2 = rcr2();
 		KERNEL_LOCK();
@@ -431,9 +432,17 @@ trap(struct trapframe *frame)
 			    map, va, ftype, error);
 			goto we_re_toast;
 		}
+
+		signal = SIGSEGV;
+		sicode = SEGV_MAPERR;
+		if (error == EACCES)
+			sicode = SEGV_ACCERR;
+		if (error == EIO) {
+			signal = SIGBUS;
+			sicode = BUS_OBJERR;
+		}
 		sv.sival_int = fa;
-		trapsignal(p, SIGSEGV, vftype,
-		    error == EACCES ? SEGV_ACCERR : SEGV_MAPERR, sv);
+		trapsignal(p, signal, vftype, sicode, sv);
 		KERNEL_UNLOCK();
 		break;
 	}

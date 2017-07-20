@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.55 2017/04/05 18:15:43 millert Exp $
+.\"	$OpenBSD: mmap.2,v 1.56 2017/07/20 18:22:25 bluhm Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mmap.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 5 2017 $
+.Dd $Mdocdate: July 20 2017 $
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -313,7 +313,7 @@ system call first appeared in
 specifies that references to pages beyond the end of a mapped object
 shall generate a
 .Dv SIGBUS
-signal; however,
+signal; however, on some architectures
 .Ox
 generates a
 .Dv SIGSEGV

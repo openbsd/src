@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.91 2016/09/16 01:09:53 dlg Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.92 2017/07/20 18:22:25 bluhm Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1032,7 +1032,7 @@ Case2:
 			}
 
 			if (!UVM_ET_ISNOFAULT(ufi.entry))
-				return (EACCES); /* XXX i/o error */
+				return (EIO);
 
 			uobjpage = PGO_DONTCARE;	
 			promote = TRUE;
