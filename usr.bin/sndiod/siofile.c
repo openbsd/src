@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.13 2016/10/27 04:37:47 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.14 2017/07/20 10:23:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -153,7 +153,7 @@ dev_sio_open(struct dev *d)
 	if (par.bps > SIO_BPS(BITS_MAX)) {
 		log_puts(d->path);
 		log_puts(": ");
-		log_putu(par.bits);
+		log_putu(par.bps);
 		log_puts(": unsupported sample size\n");
 		goto bad_close;
 	}
