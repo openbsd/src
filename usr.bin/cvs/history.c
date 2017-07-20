@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.44 2016/10/13 20:51:25 fcambus Exp $	*/
+/*	$OpenBSD: history.c,v 1.45 2017/07/20 13:39:11 okan Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "cvs.h"
