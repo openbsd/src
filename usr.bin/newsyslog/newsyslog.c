@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.104 2017/07/14 22:17:16 jca Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.105 2017/07/20 18:39:16 jca Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -160,7 +160,7 @@ int	movefile(char *, char *, uid_t, gid_t, mode_t);
 int	stat_suffix(char *, size_t, char *, struct stat *,
 	    int (*)(const char *, struct stat *));
 off_t	sizefile(struct stat *);
-void	parse_file(struct entrylist *, int *);
+int	parse_file(struct entrylist *, int *);
 time_t	parse8601(char *);
 time_t	parseDWM(char *);
 void	child_killer(int);
@@ -179,7 +179,7 @@ main(int argc, char **argv)
 	struct entrylist config, runlist;
 	struct conf_entry *p, *q, *tmp;
 	struct pidinfo *pidlist, *pl;
-	int status, listlen;
+	int status, listlen, ret;
 	char **av;
 	
 	parse_args(argc, argv);
@@ -192,7 +192,7 @@ main(int argc, char **argv)
 	TAILQ_INIT(&config);
 	TAILQ_INIT(&runlist);
 
-	parse_file(&config, &listlen);
+	ret = parse_file(&config, &listlen);
 	if (argc == 0)
 		TAILQ_CONCAT(&runlist, &config, next);
 	else {
@@ -272,7 +272,7 @@ main(int argc, char **argv)
 	/* Wait for children to finish, then exit */
 	while (waitpid(-1, &status, 0) != -1)
 		;
-	exit(0);
+	return (ret);
 }
 
 void
@@ -464,7 +464,7 @@ usage(void)
  * Parse a configuration file and build a linked list of all the logs
  * to process
  */
-void
+int
 parse_file(struct entrylist *list, int *nentries)
 {
 	char line[BUFSIZ], *parse, *q, *errline, *group, *tmp, *ep;
@@ -472,7 +472,8 @@ parse_file(struct entrylist *list, int *nentries)
 	struct passwd *pwd;
 	struct group *grp;
 	struct stat sb;
-	int lineno;
+	int lineno = 0;
+	int ret = 0;
 	FILE *f;
 	long l;
 
@@ -482,7 +483,10 @@ parse_file(struct entrylist *list, int *nentries)
 		err(1, "can't open %s", conf);
 
 	*nentries = 0;
-	for (lineno = 1; fgets(line, sizeof(line), f); lineno++) {
+
+nextline:
+	while (fgets(line, sizeof(line), f) != NULL) {
+		lineno++;
 		tmp = sob(line);
 		if (*tmp == '\0' || *tmp == '#')
 			continue;
@@ -509,9 +513,13 @@ parse_file(struct entrylist *list, int *nentries)
 			*group++ = '\0';
 			if (*q) {
 				if (!(isnumberstr(q))) {
-					if ((pwd = getpwnam(q)) == NULL)
-						errx(1, "%s:%d: unknown user: %s",
+					if ((pwd = getpwnam(q)) == NULL) {
+						warnx("%s:%d: unknown user"
+						    " %s --> skipping",
 						    conf, lineno, q);
+						ret = 1;
+						goto nextline;
+					}
 					working->uid = pwd->pw_uid;
 				} else
 					working->uid = atoi(q);
@@ -521,9 +529,13 @@ parse_file(struct entrylist *list, int *nentries)
 			q = group;
 			if (*q) {
 				if (!(isnumberstr(q))) {
-					if ((grp = getgrnam(q)) == NULL)
-						errx(1, "%s:%d: unknown group: %s",
+					if ((grp = getgrnam(q)) == NULL) {
+						warnx("%s:%d: unknown group"
+						    " %s --> skipping",
 						    conf, lineno, q);
+						ret = 1;
+						goto nextline;
+					}
 					working->gid = grp->gr_gid;
 				} else
 					working->gid = atoi(q);
@@ -538,15 +550,23 @@ parse_file(struct entrylist *list, int *nentries)
 		}
 
 		l = strtol(q, &ep, 8);
-		if (*ep != '\0' || l < 0 || l > ALLPERMS)
-			errx(1, "%s:%d: bad permissions: %s", conf, lineno, q);
+		if (*ep != '\0' || l < 0 || l > ALLPERMS) {
+			warnx("%s:%d: bad permissions: %s --> skipping", conf,
+			    lineno, q);
+			ret = 1;
+			goto nextline;
+		}
 		working->permissions = (mode_t)l;
 
 		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
 		l = strtol(q, &ep, 10);
-		if (*ep != '\0' || l < 0 || l >= INT_MAX)
-			errx(1, "%s:%d: bad number: %s", conf, lineno, q);
+		if (*ep != '\0' || l < 0 || l >= INT_MAX) {
+			warnx("%s:%d: bad number: %s --> skipping", conf,
+			    lineno, q);
+			ret = 1;
+			goto nextline;
+		}
 		working->numlogs = (int)l;
 
 		q = parse = missing_field(sob(++parse), errline, lineno);
@@ -560,23 +580,34 @@ parse_file(struct entrylist *list, int *nentries)
 		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
 		l = strtol(q, &ep, 10);
-		if (l < 0 || l >= INT_MAX)
-			errx(1, "%s:%d: interval out of range: %s", conf,
-			    lineno, q);
+		if (l < 0 || l >= INT_MAX) {
+			warnx("%s:%d: interval out of range: %s --> skipping",
+			    conf, lineno, q);
+			ret = 1;
+			goto nextline;
+		}
 		working->hours = (int)l;
 		switch (*ep) {
 		case '\0':
 			break;
 		case '@':
 			working->trim_at = parse8601(ep + 1);
-			if (working->trim_at == (time_t) - 1)
-				errx(1, "%s:%d: bad time: %s", conf, lineno, q);
+			if (working->trim_at == (time_t) - 1) {
+				warnx("%s:%d: bad time: %s --> skipping", conf,
+				    lineno, q);
+				ret = 1;
+				goto nextline;
+			}
 			working->flags |= CE_TRIMAT;
 			break;
 		case '$':
 			working->trim_at = parseDWM(ep + 1);
-			if (working->trim_at == (time_t) - 1)
-				errx(1, "%s:%d: bad time: %s", conf, lineno, q);
+			if (working->trim_at == (time_t) - 1) {
+				warnx("%s:%d: bad time: %s --> skipping", conf,
+				    lineno, q);
+				ret = 1;
+				goto nextline;
+			}
 			working->flags |= CE_TRIMAT;
 			break;
 		case '*':
@@ -584,8 +615,10 @@ parse_file(struct entrylist *list, int *nentries)
 				break;
 			/* FALLTHROUGH */
 		default:
-			errx(1, "%s:%d: bad interval/at: %s", conf, lineno, q);
-			break;
+			warnx("%s:%d: bad interval/at: %s --> skipping", conf,
+			    lineno, q);
+			ret = 1;
+			goto nextline;
 		}
 
 		q = sob(++parse);	/* Optional field */
@@ -611,9 +644,11 @@ parse_file(struct entrylist *list, int *nentries)
 					working->flags |= CE_FOLLOW;
 					break;
 				default:
-					errx(1, "%s:%d: illegal flag: `%c'",
+					warnx("%s:%d: illegal flag: `%c'"
+					    " --> skipping",
 					    conf, lineno, *q);
-					break;
+					ret = 1;
+					goto nextline;
 				}
 				q++;
 			}
@@ -630,9 +665,13 @@ parse_file(struct entrylist *list, int *nentries)
 				break;
 			if (*q == '/') {
 				*(parse = son(parse)) = '\0';
-				if (strlen(q) >= PATH_MAX)
-					errx(1, "%s:%d: pathname too long: %s",
+				if (strlen(q) >= PATH_MAX) {
+					warnx("%s:%d: pathname too long: %s"
+					    " --> skipping",
 					    conf, lineno, q);
+					ret = 1;
+					goto nextline;
+				}
 				working->pidfile = strdup(q);
 				if (working->pidfile == NULL)
 					err(1, "strdup");
@@ -655,23 +694,35 @@ parse_file(struct entrylist *list, int *nentries)
 						break;
 					}
 				}
-				if (i == NSIG)
-					errx(1, "%s:%d: unknown signal: %s",
+				if (i == NSIG) {
+					warnx("%s:%d: unknown signal: %s"
+					    " --> skipping",
 					    conf, lineno, q);
+					ret = 1;
+					goto nextline;
+				}
 			} else if (working->flags & CE_MONITOR) {
 				*(parse = son(parse)) = '\0';
 				working->whom = strdup(q);
 				if (working->whom == NULL)
 					err(1, "strdup");
-			} else
-				errx(1, "%s:%d: unrecognized field: %s",
+			} else {
+				warnx("%s:%d: unrecognized field: %s"
+				    " --> skipping",
 				    conf, lineno, q);
+				ret = 1;
+				goto nextline;
+			}
 		}
 		free(errline);
 
-		if ((working->flags & CE_MONITOR) && working->whom == NULL)
-			errx(1, "%s:%d: missing monitor notification field",
+		if ((working->flags & CE_MONITOR) && working->whom == NULL) {
+			warnx("%s:%d: missing monitor notification field"
+			    " --> skipping",
 			    conf, lineno);
+			ret = 1;
+			goto nextline;
+		}
 
 		/* If there is an arcdir, set working->backdir. */
 		if (arcdir != NULL && working->logbase != NULL) {
@@ -700,20 +751,28 @@ parse_file(struct entrylist *list, int *nentries)
 		if (working->backdir != NULL) {
 			if (snprintf(line, sizeof(line), "%s/%s.%d%s",
 			    working->backdir, working->logbase,
-			    working->numlogs, COMPRESS_POSTFIX) >= PATH_MAX)
-				errx(1, "%s:%d: pathname too long: %s",
-				    conf, lineno, q);
+			    working->numlogs, COMPRESS_POSTFIX) >= PATH_MAX) {
+				warnx("%s:%d: pathname too long: %s"
+				    " --> skipping", conf, lineno, q);
+				ret = 1;
+				goto nextline;
+			}
 		} else {
 			if (snprintf(line, sizeof(line), "%s.%d%s",
 			    working->log, working->numlogs, COMPRESS_POSTFIX)
-			    >= PATH_MAX)
-				errx(1, "%s:%d: pathname too long: %s",
-				    conf, lineno, working->log);
+			    >= PATH_MAX) {
+				warnx("%s:%d: pathname too long: %s"
+				    " --> skipping", conf, lineno,
+				    working->log);
+				ret = 1;
+				goto nextline;
+			}
 		}
 		TAILQ_INSERT_TAIL(list, working, next);
 		(*nentries)++;
 	}
 	(void)fclose(f);
+	return (ret);
 }
 
 char *

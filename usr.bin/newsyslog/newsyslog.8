@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.53 2015/11/14 01:22:04 jmc Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.54 2017/07/20 18:39:16 jca Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -41,7 +41,7 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\"
-.Dd $Mdocdate: November 14 2015 $
+.Dd $Mdocdate: July 20 2017 $
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -429,6 +429,8 @@ will not send a
 .It Pa /etc/newsyslog.conf
 default configuration file
 .El
+.Sh EXIT STATUS
+.Ex -std
 .Sh SEE ALSO
 .Xr compress 1 ,
 .Xr gzip 1 ,
