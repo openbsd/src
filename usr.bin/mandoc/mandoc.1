@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.140 2017/07/07 16:19:30 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.141 2017/07/20 15:26:35 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2017 $
+.Dd $Mdocdate: July 20 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -238,7 +238,9 @@ See
 .It Fl T Cm lint
 Parse only: produce no output.
 Implies
-.Fl W Cm all .
+.Fl W Cm all
+and redirects parser messages, which usually appear
+on standard error output, to standard output.
 .It Fl T Cm locale
 Encode output using the current locale.
 This is the default.
