@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.7 2017/04/29 17:10:43 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.8 2017/07/20 19:57:35 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -136,7 +136,7 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 	vaddr_t va;
 	union sigval sv;
 	uint64_t far;
-	int error = 0, sig;
+	int error = 0, sig, code;
 
 	pcb = curcpu()->ci_curpcb;
 	p = curcpu()->ci_curproc;
@@ -191,13 +191,22 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 
 	if (error != 0) {
 		if (lower) {
-			if (error == ENOMEM)
+			if (error == ENOMEM) {
 				sig = SIGKILL;
-			else
+				code = 0;
+			} else if (error == EIO) {
+				sig = SIGBUS;
+				code = BUS_OBJERR;
+			} else if (error == EACCES) {
 				sig = SIGSEGV;
+				code = SEGV_ACCERR;
+			} else {
+				sig = SIGSEGV;
+				code = SEGV_MAPERR;
+			}
 			sv.sival_ptr = (u_int64_t *)far;
 
-			trapsignal(p, sig, 0, SEGV_ACCERR, sv);
+			trapsignal(p, sig, 0, code, sv);
 		} else {
 			if (curcpu()->ci_idepth == 0 &&
 			    pcb->pcb_onfault != 0) {
