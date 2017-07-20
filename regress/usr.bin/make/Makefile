@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.46 2017/07/07 16:31:37 bluhm Exp $
+# $OpenBSD: Makefile,v 1.47 2017/07/20 21:32:10 espie Exp $
 
 REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
 		t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 \
 		t20 t21 t22 t23 t24 t25 t26 t27 t28 t29 \
 		t30 t31 t32 t33 t34 t35 t36 t37 t38 t38j t39 \
-		t40 t41 t42 t43 t44 t45 t46 t47
+		t40 t41 t42 t42bis t43 t44 t45 t46 t47
 
 # We don't pass t14 t17 t18 t20
 # and t16 yields piss poor performance
@@ -24,9 +24,9 @@ t18:
 	@echo DISABLED
 
 t20:
-        # Some posix tests we don't pass yet, and won't until I've
-        # added a `magic' status for variables (as SHELL is very,
-        # very special, according to POSIX/Single Unix).
+	# Some posix tests we don't pass yet, and won't until I've
+	# added a `magic' status for variables (as SHELL is very,
+	# very special, according to POSIX/Single Unix).
 	@echo DISABLED
 
 MALLOC_OPTIONS?=J
@@ -191,6 +191,9 @@ t41:
 
 t42:
 	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk38 2>/dev/null || test $$? -ge 128; then false; fi
+
+t42bis:
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk38bis 2>/dev/null || test $$? -ge 128; then false; fi
 
 t43:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -j2 -f mk39 b 2>&1 | diff - t43.out
