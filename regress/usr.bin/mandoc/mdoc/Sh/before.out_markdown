@@ -1,7 +1,7 @@
 SH-BEFORE(1) - General Commands Manual
 
 Can
-mandoc(1)
+man(1)
 on
 OpenBSD
 handle this?
@@ -14,4 +14,4 @@ handle this?
 
 some text
 
-OpenBSD - July 4, 2017
+OpenBSD - July 20, 2017
