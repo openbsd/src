@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.58 2017/07/03 09:21:09 kevlo Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.59 2017/07/20 22:29:26 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1114,6 +1114,11 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 		return;
 	}
 	mlen -= IEEE80211_CRC_LEN;	/* strip 802.11 FCS */
+	if (mlen > MCLBYTES) {
+		DPRINTF(("frame too large: %d\n", mlen));
+		ifp->if_ierrors++;
+		return;
+	}
 
 	wh = (struct ieee80211_frame *)(plcp + AR_PLCP_HDR_LEN);
 	/* Provide a 32-bit aligned protocol header to the stack. */
