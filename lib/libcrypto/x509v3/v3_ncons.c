@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_ncons.c,v 1.12 2017/05/02 04:11:08 deraadt Exp $ */
+/* $OpenBSD: v3_ncons.c,v 1.13 2017/07/20 19:45:08 tedu Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -457,7 +457,7 @@ nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
 	 */
 	if (dns->length > base->length) {
 		dnsptr += dns->length - base->length;
-		if (dnsptr[-1] != '.')
+		if (baseptr[0] != '.' && dnsptr[-1] != '.')
 			return X509_V_ERR_PERMITTED_VIOLATION;
 	}
 
