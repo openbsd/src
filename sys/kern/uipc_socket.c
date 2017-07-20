@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.194 2017/07/13 16:19:38 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.195 2017/07/20 08:23:43 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1965,22 +1965,27 @@ int
 filt_soread(struct knote *kn, long hint)
 {
 	struct socket *so = kn->kn_fp->f_data;
+	int rv;
 
 	kn->kn_data = so->so_rcv.sb_cc;
 #ifdef SOCKET_SPLICE
-	if (isspliced(so))
-		return (0);
+	if (isspliced(so)) {
+		rv = 0;
+	} else
 #endif /* SOCKET_SPLICE */
 	if (so->so_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
 		kn->kn_fflags = so->so_error;
-		return (1);
+		rv = 1;
+	} else if (so->so_error) {	/* temporary udp error */
+		rv = 1;
+	} else if (kn->kn_sfflags & NOTE_LOWAT) {
+		rv = (kn->kn_data >= kn->kn_sdata);
+	} else {
+		rv = (kn->kn_data >= so->so_rcv.sb_lowat);
 	}
-	if (so->so_error)	/* temporary udp error */
-		return (1);
-	if (kn->kn_sfflags & NOTE_LOWAT)
-		return (kn->kn_data >= kn->kn_sdata);
-	return (kn->kn_data >= so->so_rcv.sb_lowat);
+
+	return rv;
 }
 
 void
