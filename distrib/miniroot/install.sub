@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1024 2017/07/17 18:02:31 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1025 2017/07/20 09:25:59 anton Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -197,7 +197,7 @@ show_cols() {
 # Echo file $1 to stdout. Skip comment lines and delete everything
 # after the first '#' from other lines. Strip leading and trailing
 # whitespace if IFS is set.
-stripcom () {
+stripcom() {
 	local _file=$1 _line
 
 	[[ -f $_file ]] || return
@@ -248,7 +248,7 @@ __EOT
 # field provided as parameters and return the value of the first field found.
 #
 # Note that strings are unescaped but not unvis()'d.
-lease_value () {
+lease_value() {
 	local _lf=$1 _o
 
 	shift
@@ -305,12 +305,12 @@ scan_disknames() {
 }
 
 # Return disk devices found in hw.disknames.
-get_dkdevs () {
+get_dkdevs() {
 	echo $(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
 }
 
 # Return CDROM devices found in hw.disknames.
-get_cddevs () {
+get_cddevs() {
 	echo $(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
 }
 
@@ -2232,7 +2232,7 @@ parse_hn_line() {
 
 # Start interface using the on-disk hostname.if file passed as argument $1.
 # Much of this is gratuitously stolen from /etc/netstart.
-ifstart () {
+ifstart() {
 	local _hn=$1 _if=${1#/mnt/etc/hostname.} _cmds _i=0 _line
 	set -A _cmds
 
