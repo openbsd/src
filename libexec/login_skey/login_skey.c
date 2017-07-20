@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.25 2015/10/16 13:37:43 millert Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.26 2017/07/20 15:47:29 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -160,9 +160,11 @@ main(int argc, char *argv[])
 		fprintf(back, BI_VALUE " challenge %s\n",
 		    auth_mkvalue(challenge));
 		fprintf(back, BI_CHALLENGE "\n");
-		fprintf(back, BI_FDPASS "\n");
-		fflush(back);
-		send_fd(fileno(back));
+		if (haskey) {
+			fprintf(back, BI_FDPASS "\n");
+			fflush(back);
+			send_fd(fileno(back));
+		}
 		exit(0);
 
 	case MODE_RESPONSE:
