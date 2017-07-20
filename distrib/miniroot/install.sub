@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1025 2017/07/20 09:25:59 anton Exp $
+#	$OpenBSD: install.sub,v 1.1026 2017/07/20 19:48:13 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2639,8 +2639,6 @@ finish_up() {
 		)
 	fi
 
-	[[ -x /mnt/$MODE.site ]] && chroot /mnt /$MODE.site
-
 	# In case this is a softraid device, make sure all underlying
 	# device nodes exist before installing boot-blocks on disk.
 	make_dev $(bioctl $ROOTDISK 2>/dev/null | sed -n 's/.*<\(.*\)>$/\1/p')
@@ -2680,6 +2678,8 @@ finish_up() {
 
 	# Email installer questions and their answers to root on next boot.
 	prep_root_mail /tmp/i/$MODE.resp "$(hostname) $MODE response file"
+
+	[[ -x /mnt/$MODE.site ]] && chroot /mnt /$MODE.site
 
 	# Store entropy for the next boot.
 	store_random
