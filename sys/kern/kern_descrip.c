@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.140 2017/02/11 19:51:06 guenther Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.141 2017/07/20 16:47:21 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -435,6 +435,7 @@ restart:
 			*retval = ((struct pipe *)fp->f_data)->pipe_pgid;
 			break;
 		}
+		tmp = 0;
 		error = (*fp->f_ops->fo_ioctl)
 			(fp, TIOCGPGRP, (caddr_t)&tmp, p);
 		*retval = -tmp;
