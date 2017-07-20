@@ -831,11 +831,11 @@ dev_mmcloc(int hr, int min, int sec, int fr, int cent, int fps)
 {
 	long long pos;
 
-	pos = dev_rate * hr * 3600 +
-	    dev_rate * min * 60 +
-	    dev_rate * sec +
-	    dev_rate * fr / fps +
-	    dev_rate * cent / (100 * fps);
+	pos = (long long)dev_rate * hr * 3600 +
+	    (long long)dev_rate * min * 60 +
+	    (long long)dev_rate * sec +
+	    (long long)dev_rate * fr / fps +
+	    (long long)dev_rate * cent / (100 * fps);
 	if (dev_pos == pos)
 		return;
 	dev_pos = pos;
