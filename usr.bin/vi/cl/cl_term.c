@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_term.c,v 1.27 2016/12/18 06:11:23 krw Exp $	*/
+/*	$OpenBSD: cl_term.c,v 1.28 2017/07/20 08:37:48 anton Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -18,7 +18,6 @@
 
 #include <bitstring.h>
 #include <curses.h>
-#include <errno.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
@@ -301,8 +300,7 @@ cl_ssize(SCR *sp, int sigwinch, size_t *rowp, size_t *colp, int *changedp)
 	struct winsize win;
 	size_t col, row;
 	int rval;
-	long lval;
-	char *p, *ep;
+	char *p;
 
 	/* Assume it's changed. */
 	if (changedp != NULL)
@@ -396,28 +394,12 @@ noterm:	if (row == 0)
 	 * deleting the LINES and COLUMNS environment variables from their
 	 * dot-files.
 	 */
-	if ((p = getenv("LINES")) != NULL) {
-		errno = 0;
-		lval = strtol(p, &ep, 10);
-		if (p[0] == '\0' || *ep != '\0')
-			;
-		else if ((errno == ERANGE && (lval == LONG_MAX || lval ==
-		    LONG_MIN)) || (lval > INT_MAX || lval < 1))
-			;
-		else
-			row = lval;
-	}
-	if ((p = getenv("COLUMNS")) != NULL) {
-		errno = 0;
-		lval = strtol(p, &ep, 10);
-		if (p[0] == '\0' || *ep != '\0')
-			;
-		else if ((errno == ERANGE && (lval == LONG_MAX || lval ==
-		    LONG_MIN)) || (lval > INT_MAX || lval < 1))
-			;
-		else
-			col = lval;
-	}
+	if ((p = getenv("LINES")) != NULL &&
+	    (rval = strtonum(p, 1, INT_MAX, NULL)) > 0)
+		row = rval;
+	if ((p = getenv("COLUMNS")) != NULL &&
+	    (rval = strtonum(p, 1, INT_MAX, NULL)) > 0)
+		col = rval;
 
 	if (rowp != NULL)
 		*rowp = row;
