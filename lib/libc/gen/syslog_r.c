@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.16 2016/10/19 16:09:24 millert Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.17 2017/07/20 16:58:25 bluhm Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -73,9 +73,9 @@ __vsyslog_r(int pri, struct syslog_data *data,
 	int cnt;
 	char ch, *p, *t;
 	int saved_errno;
-#define	TBUF_LEN	(8192+1)
-#define	FMT_LEN		1024
-	char *conp = NULL, *stdp = NULL, tbuf[TBUF_LEN], fmt_cpy[FMT_LEN];
+#define	TBUF_SIZE	(8192+1)
+#define	FMT_SIZE	(1024+1)
+	char *conp = NULL, *stdp = NULL, tbuf[TBUF_SIZE], fmt_cpy[FMT_SIZE];
 	int tbuf_left, fmt_left, prlen;
 
 #define	INTERNALLOG	LOG_ERR|LOG_CONS|LOG_PERROR|LOG_PID
@@ -98,7 +98,7 @@ __vsyslog_r(int pri, struct syslog_data *data,
 		pri |= data->log_fac;
 
 	p = tbuf;
-	tbuf_left = TBUF_LEN;
+	tbuf_left = TBUF_SIZE;
 
 #define	DEC()	\
 	do {					\
@@ -138,7 +138,9 @@ __vsyslog_r(int pri, struct syslog_data *data,
 		}
 	}
 
-	for (t = fmt_cpy, fmt_left = FMT_LEN; (ch = *fmt); ++fmt) {
+	for (t = fmt_cpy, fmt_left = FMT_SIZE;
+	    (ch = *fmt) != '\0' && fmt_left > 1;
+	    ++fmt) {
 		if (ch == '%' && fmt[1] == 'm') {
 			char ebuf[NL_TEXTMAX];
 
@@ -152,15 +154,13 @@ __vsyslog_r(int pri, struct syslog_data *data,
 			t += prlen;
 			fmt_left -= prlen;
 		} else if (ch == '%' && fmt[1] == '%' && fmt_left > 2) {
+			++fmt;
 			*t++ = '%';
 			*t++ = '%';
-			fmt++;
 			fmt_left -= 2;
 		} else {
-			if (fmt_left > 1) {
-				*t++ = ch;
-				fmt_left--;
-			}
+			*t++ = ch;
+			fmt_left--;
 		}
 	}
 	*t = '\0';
