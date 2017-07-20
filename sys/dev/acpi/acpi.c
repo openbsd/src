@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.328 2017/04/08 04:06:01 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.329 2017/07/20 18:34:24 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2799,6 +2799,12 @@ const char *acpi_skip_hids[] = {
 	NULL
 };
 
+/* ISA devices for which we attach a driver later */
+const char *acpi_isa_hids[] = {
+	"PNP0501",	/* 16550A-compatible COM Serial Port */
+	NULL
+};
+
 void
 acpi_attach_deps(struct acpi_softc *sc, struct aml_node *node)
 {
@@ -2856,7 +2862,8 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	aaa.aaa_node = node->parent;
 	aaa.aaa_dev = dev;
 
-	if (acpi_matchhids(&aaa, acpi_skip_hids, "none"))
+	if (acpi_matchhids(&aaa, acpi_skip_hids, "none") ||
+	    acpi_matchhids(&aaa, acpi_isa_hids, "none"))
 		return (0);
 
 #ifndef SMALL_KERNEL
