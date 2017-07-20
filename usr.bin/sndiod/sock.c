@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.19 2016/10/27 04:37:47 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.20 2017/07/20 10:26:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -540,6 +540,10 @@ sock_wdata(struct sock *f)
 		return 1;
 	}
 	while (f->wtodo > 0) {
+		/*
+		 * f->slot and f->midi are set by sock_hello(), so
+		 * count is always properly initialized
+		 */
 		if (f->slot)
 			data = abuf_rgetblk(&f->slot->sub.buf, &count);
 		else if (f->midi)
@@ -1508,6 +1512,11 @@ sock_write(struct sock *f)
 	case SOCK_WMSG:
 		if (!sock_wmsg(f))
 			return 0;
+		/*
+		 * f->wmsg is either build by sock_buildmsg() or
+		 * copied from f->rmsg (in the SOCK_RRET state), so
+		 * it's safe.
+		 */
 		if (ntohl(f->wmsg.cmd) != AMSG_DATA) {
 			f->wstate = SOCK_WIDLE;
 			f->wtodo = 0xdeadbeef;
