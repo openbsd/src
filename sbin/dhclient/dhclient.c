@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.471 2017/07/17 16:13:13 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.472 2017/07/20 17:44:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -133,6 +133,7 @@ int		 addressinuse(char *, struct in_addr, char *);
 
 void		 fork_privchld(struct interface_info *, int, int);
 void		 get_ifname(struct interface_info *, int, char *);
+int		 get_ifa_family(char *, int);
 
 struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
@@ -184,6 +185,24 @@ sighdlr(int sig)
 	quit = sig;
 }
 
+int
+get_ifa_family(char *cp, int n)
+{
+	struct sockaddr		*sa;
+	unsigned int		 i;
+
+	for (i = 1; i; i <<= 1) {
+		if ((i & n) != 0) {
+			sa = (struct sockaddr *)cp;
+			if (i == RTA_IFA)
+				    return sa->sa_family;
+			ADVANCE(cp, sa);
+		}
+	}
+
+	return AF_UNSPEC;
+}
+
 void
 routehandler(struct interface_info *ifi, int routefd)
 {
@@ -191,6 +210,7 @@ routehandler(struct interface_info *ifi, int routefd)
 	struct rt_msghdr		*rtm;
 	struct if_msghdr		*ifm;
 	struct if_announcemsghdr	*ifan;
+	struct ifa_msghdr		*ifam;
 	char				*errmsg, *rtmmsg;
 	ssize_t				 n;
 	int				 linkstat, rslt;
@@ -278,6 +298,16 @@ routehandler(struct interface_info *ifi, int routefd)
 			rslt = asprintf(&errmsg, "%s departured", ifi->name);
 			goto die;
 		}
+		break;
+	case RTM_NEWADDR:
+	case RTM_DELADDR:
+		/* Need to check if it is time to write resolv.conf. */
+		ifam = (struct ifa_msghdr *)rtm;
+		if (ifam->ifam_index != ifi->index)
+			goto done;
+		if (get_ifa_family((char *)ifam + ifam->ifam_hdrlen,
+		    ifam->ifam_addrs) != AF_INET)
+			goto done;
 		break;
 	default:
 		break;
@@ -484,6 +514,7 @@ main(int argc, char *argv[])
 		fatal("socket(PF_ROUTE, SOCK_RAW)");
 
 	rtfilter = ROUTE_FILTER(RTM_PROPOSAL) | ROUTE_FILTER(RTM_IFINFO) |
+	    ROUTE_FILTER(RTM_NEWADDR) | ROUTE_FILTER(RTM_DELADDR) |
 	    ROUTE_FILTER(RTM_IFANNOUNCE);
 
 	if (setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
