@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.7 2017/06/22 02:44:37 deraadt Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.8 2017/07/20 08:30:34 mpi Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
  * All rights reserved.
@@ -470,8 +470,6 @@ ure_init(void *xsc)
 	/* Cancel pending I/O. */
 	ure_stop(sc);
 
-	ure_reset(sc);
-
 	if (ure_rx_list_init(sc) == ENOBUFS) {
 		printf("%s: rx list init failed\n", sc->ure_dev.dv_xname);
 		splx(s);
@@ -485,8 +483,10 @@ ure_init(void *xsc)
 	}
 
 	/* Set MAC address. */
+	ure_write_1(sc, URE_PLA_CRWECR, URE_MCU_TYPE_PLA, URE_CRWECR_CONFIG);
 	ure_write_mem(sc, URE_PLA_IDR, URE_MCU_TYPE_PLA | URE_BYTE_EN_SIX_BYTES,
 	    sc->ure_ac.ac_enaddr, 8);
+	ure_write_1(sc, URE_PLA_CRWECR, URE_MCU_TYPE_PLA, URE_CRWECR_NORAML);
 
 	/* Reset the packet filter. */
 	ure_write_2(sc, URE_PLA_FMC, URE_MCU_TYPE_PLA,
@@ -683,10 +683,10 @@ ure_rtl8152_init(struct ure_softc *sc)
 	    URE_GPHY_STS_MSK | URE_SPEED_DOWN_MSK | URE_SPDWN_RXDV_MSK |
 	    URE_SPDWN_LINKCHG_MSK);
 
-	/* Disable Rx aggregation. */
+	/* Enable Rx aggregation. */
 	ure_write_2(sc, URE_USB_USB_CTRL, URE_MCU_TYPE_USB,
-	    ure_read_2(sc, URE_USB_USB_CTRL, URE_MCU_TYPE_USB) |
-	    URE_RX_AGG_DISABLE);
+	    ure_read_2(sc, URE_USB_USB_CTRL, URE_MCU_TYPE_USB) &
+	    ~URE_RX_AGG_DISABLE);
 
 	/* Disable ALDPS. */
 	ure_ocp_reg_write(sc, URE_OCP_ALDPS_CONFIG, URE_ENPDNPS | URE_LINKENA |
@@ -835,10 +835,10 @@ ure_rtl8153_init(struct ure_softc *sc)
 
 	ure_init_fifo(sc);
 
-	/* Disable Rx aggregation. */
+	/* Enable Rx aggregation. */
 	ure_write_2(sc, URE_USB_USB_CTRL, URE_MCU_TYPE_USB,
-	    ure_read_2(sc, URE_USB_USB_CTRL, URE_MCU_TYPE_USB) |
-	    URE_RX_AGG_DISABLE);
+	    ure_read_2(sc, URE_USB_USB_CTRL, URE_MCU_TYPE_USB) &
+	    ~URE_RX_AGG_DISABLE);
 
 	val = ure_read_2(sc, URE_USB_U2P3_CTRL, URE_MCU_TYPE_USB);
 	if (!(sc->ure_chip & (URE_CHIP_VER_5C00 | URE_CHIP_VER_5C10)))
@@ -1289,7 +1289,7 @@ ure_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			goto done;
 		}
 
-		buf += pktlen;
+		buf += roundup(pktlen, 8);
 
 		memcpy(&rxhdr, buf, sizeof(rxhdr));
 		total_len -= sizeof(rxhdr);
@@ -1302,7 +1302,7 @@ ure_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			goto done;
 		}
 
-		total_len -= pktlen;
+		total_len -= roundup(pktlen, 8);
 		buf += sizeof(rxhdr);
 
 		m = m_devget(buf, pktlen, ETHER_ALIGN);
