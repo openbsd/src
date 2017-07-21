@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.110 2017/07/17 17:53:59 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.111 2017/07/21 18:57:55 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -609,29 +609,28 @@ priv_delete_address(char *name, int ioctlfd, struct imsg_delete_address *imsg)
 }
 
 /*
- * [priv_]set_interface_mtu is the equivalent of
+ * [priv_]set_mtu is the equivalent of
  *
  *      ifconfig <if> mtu <mtu>
  */
 void
-set_interface_mtu(int mtu)
+set_mtu(int mtu)
 {
-	struct imsg_set_interface_mtu	 imsg;
-	int				 rslt;
+	struct imsg_set_mtu	 imsg;
+	int			 rslt;
 
 	imsg.mtu = mtu;
 
-	rslt = imsg_compose(unpriv_ibuf, IMSG_SET_INTERFACE_MTU, 0, 0, -1,
+	rslt = imsg_compose(unpriv_ibuf, IMSG_SET_MTU, 0, 0, -1,
 	    &imsg, sizeof(imsg));
 	if (rslt == -1)
-		log_warn("set_interface_mtu: imsg_compose");
+		log_warn("set_mtu: imsg_compose");
 
-	flush_unpriv_ibuf("set_interface_mtu");
+	flush_unpriv_ibuf("set_mtu");
 }
 
 void
-priv_set_interface_mtu(char *name, int ioctlfd,
-    struct imsg_set_interface_mtu *imsg)
+priv_set_mtu(char *name, int ioctlfd, struct imsg_set_mtu *imsg)
 {
 	struct ifreq	 ifr;
 
