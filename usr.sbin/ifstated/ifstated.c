@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.51 2017/07/21 16:31:23 jca Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.52 2017/07/21 16:32:18 jca Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -611,6 +611,7 @@ fetch_ifstate(void)
 			    ifdata->ifi_link_state, 0);
 		}
 	}
+
 	freeifaddrs(ifap);
 }
 
