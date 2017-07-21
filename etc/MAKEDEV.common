@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.94 2016/09/11 19:59:51 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.95 2017/07/21 19:15:07 mikeb Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -167,7 +167,7 @@ target(all, hotplug)dnl
 target(all, pppx)dnl
 target(all, fuse)dnl
 target(all, vmm)dnl
-target(all, pvbus, 0)dnl
+target(all, pvbus, 0, 1)dnl
 target(all, bpf)dnl
 dnl
 _mkdev(all, {-all-}, {-dnl
