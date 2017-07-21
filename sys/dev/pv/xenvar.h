@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.50 2017/07/14 19:09:52 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.51 2017/07/21 20:00:47 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -89,6 +89,8 @@ struct xen_softc {
 	void			*sc_hc;
 	uint32_t		 sc_features;
 #define  XENFEAT_CBVEC		(1<<8)
+
+	bus_dma_tag_t		 sc_dmat;	/* parent dma tag */
 
 	struct shared_info	*sc_ipg;	/* HYPERVISOR_shared_info */
 
