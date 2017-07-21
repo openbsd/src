@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.39 2017/07/21 13:14:41 stsp Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.40 2017/07/21 13:15:05 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -819,7 +819,9 @@ rsu_newstate_cb(struct rsu_softc *sc, void *arg)
 
 	s = splnet();
 	ostate = ic->ic_state;
-	DPRINTF(("newstate %d -> %d\n", ostate, cmd->state));
+	DPRINTF(("newstate %s -> %s\n",
+	    ieee80211_state_name[ostate],
+	    ieee80211_state_name[cmd->state]));
 
 	if (ostate == IEEE80211_S_RUN) {
 		/* Stop calibration. */
@@ -840,6 +842,7 @@ rsu_newstate_cb(struct rsu_softc *sc, void *arg)
 		splx(s);
 		return;
 	case IEEE80211_S_AUTH:
+		ic->ic_bss->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
 		error = rsu_join_bss(sc, ic->ic_bss);
 		if (error != 0) {
 			printf("%s: could not send join command\n",
@@ -849,9 +852,12 @@ rsu_newstate_cb(struct rsu_softc *sc, void *arg)
 			return;
 		}
 		ic->ic_state = cmd->state;
+		if (ic->ic_flags & IEEE80211_F_RSNON)
+			ic->ic_bss->ni_rsn_supp_state = RSNA_SUPP_PTKSTART;
 		splx(s);
 		return;
 	case IEEE80211_S_ASSOC:
+		/* No-op for this driver. See rsu_event_join_bss(). */
 		ic->ic_state = cmd->state;
 		splx(s);
 		return;
@@ -1134,6 +1140,8 @@ rsu_event_join_bss(struct rsu_softc *sc, uint8_t *buf, int len)
 	if (ic->ic_flags & IEEE80211_F_WEPON)
 		ni->ni_flags |= IEEE80211_NODE_TXRXPROT;
 
+	/* Force an ASSOC->RUN transition. AUTH->RUN is invalid. */
+	ic->ic_state = IEEE80211_S_ASSOC;
 	ieee80211_new_state(ic, IEEE80211_S_RUN,
 	    IEEE80211_FC0_SUBTYPE_ASSOC_RESP);
 }
@@ -1336,8 +1344,8 @@ rsu_rx_frame(struct rsu_softc *sc, uint8_t *buf, int pktlen)
 			tap->wr_rate = 0x80 | (rate - 12);
 		}
 		tap->wr_dbm_antsignal = rssi;
-		tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
-		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
+		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 
 		mb.m_data = (caddr_t)tap;
 		mb.m_len = sc->sc_rxtap_len;
