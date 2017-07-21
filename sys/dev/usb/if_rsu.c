@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.38 2017/03/26 15:31:15 deraadt Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.39 2017/07/21 13:14:41 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1056,12 +1056,13 @@ rsu_event_survey(struct rsu_softc *sc, uint8_t *buf, int len)
 	struct ieee80211_frame *wh;
 	struct ndis_wlan_bssid_ex *bss;
 	struct mbuf *m;
-	int pktlen;
+	uint32_t pktlen, ieslen;
 
 	if (__predict_false(len < sizeof(*bss)))
 		return;
 	bss = (struct ndis_wlan_bssid_ex *)buf;
-	if (__predict_false(len < sizeof(*bss) + letoh32(bss->ieslen)))
+	ieslen = letoh32(bss->ieslen);
+	if (ieslen > len - sizeof(*bss))
 		return;
 
 	DPRINTFN(2, ("found BSS %s: len=%d chan=%d inframode=%d "
@@ -1071,7 +1072,7 @@ rsu_event_survey(struct rsu_softc *sc, uint8_t *buf, int len)
 	    letoh32(bss->networktype), letoh32(bss->privacy)));
 
 	/* Build a fake beacon frame to let net80211 do all the parsing. */
-	pktlen = sizeof(*wh) + letoh32(bss->ieslen);
+	pktlen = sizeof(*wh) + ieslen;
 	if (__predict_false(pktlen > MCLBYTES))
 		return;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -1093,7 +1094,7 @@ rsu_event_survey(struct rsu_softc *sc, uint8_t *buf, int len)
 	IEEE80211_ADDR_COPY(wh->i_addr2, bss->macaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr3, bss->macaddr);
 	*(uint16_t *)wh->i_seq = 0;
-	memcpy(&wh[1], (uint8_t *)&bss[1], letoh32(bss->ieslen));
+	memcpy(&wh[1], (uint8_t *)&bss[1], ieslen);
 
 	/* Finalize mbuf. */
 	m->m_pkthdr.len = m->m_len = pktlen;
@@ -1206,6 +1207,8 @@ rsu_rx_multi_event(struct rsu_softc *sc, uint8_t *buf, int len)
 		/* Check that command payload fits. */
 		cmdsz = letoh16(cmd->len);
 		if (__predict_false(len < sizeof(*cmd) + cmdsz))
+			break;
+		if (cmdsz > len)
 			break;
 
 		/* Process firmware event. */
@@ -1402,6 +1405,7 @@ rsu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct rsu_rx_data *data = priv;
 	struct rsu_softc *sc = data->sc;
 	struct r92s_rx_stat *stat;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int len;
 
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
@@ -1416,8 +1420,15 @@ rsu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (__predict_false(len < sizeof(*stat))) {
 		DPRINTF(("xfer too short %d\n", len));
+		ifp->if_ierrors++;
 		goto resubmit;
 	}
+	if (len > RSU_RXBUFSZ) {
+		DPRINTF(("xfer too large %d\n", len));
+		ifp->if_ierrors++;
+		goto resubmit;
+	}
+		
 	/* Determine if it is a firmware C2H event or an 802.11 frame. */
 	stat = (struct r92s_rx_stat *)data->buf;
 	if ((letoh32(stat->rxdw1) & 0x1ff) == 0x1ff)
