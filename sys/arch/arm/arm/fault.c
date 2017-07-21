@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.28 2017/04/30 13:04:49 mpi Exp $	*/
+/*	$OpenBSD: fault.c,v 1.29 2017/07/21 09:19:05 kettenis Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -339,16 +339,21 @@ data_abort_handler(trapframe_t *tf)
 		dab_fatal(tf, fsr, far, p, NULL);
 	}
 
-	sv.sival_ptr = (u_int32_t *)far;
+	sd.signo = SIGSEGV;
+	sd.code = SEGV_MAPERR;
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", p->p_p->ps_pid, p->p_p->ps_comm,
 		    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
 		sd.signo = SIGKILL;
-	} else
-		sd.signo = SIGSEGV;
-
-	sd.code = (error == EACCES) ? SEGV_ACCERR : SEGV_MAPERR;
+		sd.code = 0;
+	}
+	if (error == EACCES) 
+		sd.code = SEGV_ACCERR;
+	if (error == EIO) {
+		sd.signo = SIGBUS;
+		sd.code = BUS_OBJERR;
+	}
 	sd.addr = far;
 	sd.trap = fsr;
 do_trapsignal:
