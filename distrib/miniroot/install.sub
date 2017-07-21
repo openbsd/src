@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1026 2017/07/20 19:48:13 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1027 2017/07/21 16:02:26 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -654,7 +654,7 @@ get_responsefile() {
 	return 1
 }
 
-# Search question in $RESPFILE, return answer in $resp.
+# Search question in $AI_RESPFILE, return answer in $resp.
 #
 # 1) split question and answer at leftmost =
 # 2) strip leading/trailing blanks
@@ -672,7 +672,7 @@ _autorespond() {
 	typeset -l _q=$1 _key
 	local _def=$2 _l _val
 
-	[[ -f $RESPFILE ]] || return
+	[[ -f $AI_RESPFILE ]] || return
 
 	# Find a suitable response in /tmp/ai/ai.conf and remove it if found.
 	mv /tmp/ai/ai.conf /tmp/ai/ai.conf.tmp
@@ -804,7 +804,7 @@ ask_which() {
 			break
 		fi
 		echo "'$resp' is not a valid choice."
-		$AUTO && [[ -n $RESPFILE ]] && exit 1
+		$AUTO && [[ -n $AI_RESPFILE ]] && exit 1
 	done
 }
 
@@ -3050,11 +3050,11 @@ do_upgrade() {
 AUTO=false
 MODE=
 PROGNAME=${0##*/}
-RESPFILE=
+AI_RESPFILE=
 while getopts "af:m:" opt; do
 	case $opt in
 	a)	AUTO=true;;
-	f)	RESPFILE=$OPTARG;;
+	f)	AI_RESPFILE=$OPTARG;;
 	m)	MODE=$OPTARG;;
 	*)	usage;;
 	esac
@@ -3179,13 +3179,13 @@ pressing RETURN.  You can exit this program at any time by pressing
 Control-C, but this can leave your system in an inconsistent state.
 
 __EOT
-elif [[ -z $RESPFILE ]]; then
+elif [[ -z $AI_RESPFILE ]]; then
 	get_responsefile ||
 		err_exit "No response file found; non-interactive mode aborted."
 
 	do_autoinstall
 else
-	cp $RESPFILE /tmp/ai/ai.conf || exit
+	cp $AI_RESPFILE /tmp/ai/ai.conf || exit
 fi
 
 # Configure the terminal and keyboard.
