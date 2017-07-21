@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.567 2017/07/07 14:39:45 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.568 2017/07/21 09:17:19 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2017 $
+.Dd $Mdocdate: July 21 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1834,6 +1834,7 @@ and unzoomed (its normal position in the layout).
 begins mouse resizing (only valid if bound to a mouse key binding, see
 .Sx MOUSE SUPPORT ) .
 .It Xo Ic respawn-pane
+.Op Fl c Ar start-directory
 .Op Fl k
 .Op Fl t Ar target-pane
 .Op Ar shell-command
@@ -1848,7 +1849,10 @@ is not given, the command used when the pane was created is executed.
 The pane must be already inactive, unless
 .Fl k
 is given, in which case any existing command is killed.
+.Fl c
+specifies a new working directory for the pane.
 .It Xo Ic respawn-window
+.Op Fl c Ar start-directory
 .Op Fl k
 .Op Fl t Ar target-window
 .Op Ar shell-command
@@ -1863,6 +1867,8 @@ is not given, the command used when the window was created is executed.
 The window must be already inactive, unless
 .Fl k
 is given, in which case any existing command is killed.
+.Fl c
+specifies a new working directory for the window.
 .It Xo Ic rotate-window
 .Op Fl DU
 .Op Fl t Ar target-window
