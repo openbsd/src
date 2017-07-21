@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.122 2017/03/26 15:31:15 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.123 2017/07/21 15:55:04 stsp Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1670,14 +1670,26 @@ atu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
-	if (len <= 1) {
+	if (len < ATU_RX_HDRLEN) {
 		DPRINTF(("%s: atu_rxeof: too short\n",
 		    sc->atu_dev.dv_xname));
+		ic->ic_stats.is_rx_tooshort++;
+		ifp->if_ierrors++;
 		goto done;
 	}
 
 	h = (struct atu_rx_hdr *)c->atu_buf;
-	len = UGETW(h->length) - 4; /* XXX magic number */
+	len = UGETW(h->length);
+	if (len < IEEE80211_MIN_LEN) {
+		ic->ic_stats.is_rx_tooshort++;
+		ifp->if_ierrors++;
+		goto done;
+	}
+	if (len > ATU_RX_BUFSZ) {
+		ifp->if_ierrors++;
+		goto done;
+	}
+	len -= IEEE80211_CRC_LEN;
 
 	m = c->atu_mbuf;
 	memcpy(mtod(m, char *), c->atu_buf + ATU_RX_HDRLEN, len);
