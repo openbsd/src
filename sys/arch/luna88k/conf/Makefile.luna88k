@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.luna88k,v 1.73 2017/07/20 12:07:54 aoyama Exp $
+#	$OpenBSD: Makefile.luna88k,v 1.74 2017/07/21 13:27:21 aoyama Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -128,8 +128,10 @@ ld.script: ${_machdir}/conf/ld.script
 makegap.sh:
 	cp $S/conf/makegap.sh $@
 
-gap.o:	Makefile makegap.sh
-	LD="${LD}" sh makegap.sh 0x00000000
+MAKE_GAP = LD="${LD}" sh makegap.sh 0x00000000
+
+gap.o:	Makefile makegap.sh vers.o
+	${MAKE_GAP}
 
 vers.o: ${SYSTEM_DEP:Ngap.o}
 	sh $S/conf/newvers.sh
