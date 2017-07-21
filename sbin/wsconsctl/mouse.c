@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.13 2012/08/08 16:44:07 shadchin Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.14 2017/07/21 20:38:20 bru Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -38,6 +38,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include "wsconsctl.h"
+#include "mousecfg.h"
 
 static u_int mstype;
 static u_int resolution;
@@ -52,12 +53,50 @@ struct field mouse_field_tab[] = {
     { "type",			&mstype,	FMT_MSTYPE,	FLG_RDONLY },
     { "rawmode",		&rawmode,	FMT_UINT,	FLG_MODIFY|FLG_INIT},
     { "scale",			&wmcoords,	FMT_SCALE,	FLG_MODIFY|FLG_INIT},
+    /* touchpad configuration (mousecfg): */
+    { "tp.tapping",		&cfg_tapping,	FMT_CFG,	FLG_NORDBACK },
+    { "tp.scaling",		&cfg_scaling,	FMT_CFG,	FLG_NORDBACK },
+    { "tp.swapsides",		&cfg_swapsides,	FMT_CFG,	FLG_NORDBACK },
+    { "tp.disable",		&cfg_disable,	FMT_CFG,	FLG_NORDBACK },
+    { "tp.param",		&cfg_param,	FMT_CFG,	FLG_WRONLY },
     { NULL }
 };
+
+static int dev_index = -1;
+
+
+void
+mouse_init(int devfd, int devidx) {
+	struct field *f;
+	const char *errstr;
+	int err;
+
+	if (dev_index == devidx)
+		return;
+
+	if ((err = mousecfg_init(devfd, &errstr))) {
+		devidx = -1;
+		for (f = mouse_field_tab; f->name != NULL; f++) {
+			if (f->format == FMT_CFG)
+				f->flags |= FLG_DEAD;
+		}
+		if (errstr != NULL)
+			warnx("mousecfg error: %s (%d)", errstr, err);
+	} else if (dev_index > -1) {
+		for (f = mouse_field_tab; f->name != NULL; f++) {
+			if (f->format == FMT_CFG)
+				f->flags &= ~FLG_DEAD;
+		}
+	}
+
+	dev_index = devidx;
+}
 
 void
 mouse_get_values(int fd)
 {
+	struct field *f;
+
 	if (field_by_value(mouse_field_tab, &mstype)->flags & FLG_GET)
 		if (ioctl(fd, WSMOUSEIO_GTYPE, &mstype) < 0)
 			warn("WSMOUSEIO_GTYPE");
@@ -81,11 +120,24 @@ mouse_get_values(int fd)
 			else
 				warn("WSMOUSEIO_GCALIBCOORDS");
 	}
+
+	for (f = mouse_field_tab; f->name != NULL; f++) {
+		if (f->format != FMT_CFG || !(f->flags & FLG_GET))
+			continue;
+		if (f->valp == &cfg_param)
+			continue;
+		if (mousecfg_get_field((struct wsmouse_parameters *) f->valp)) {
+			f->flags |= FLG_DEAD;
+			warnx("mousecfg: invalid key in '%s'", f->name);
+		}
+	}
 }
 
 int
 mouse_put_values(int fd)
 {
+	struct field *f;
+
 	if (field_by_value(mouse_field_tab, &resolution)->flags & FLG_SET) {
 		if (ioctl(fd, WSMOUSEIO_SRES, &resolution) < 0) {
 			warn("WSMOUSEIO_SRES");
@@ -127,6 +179,16 @@ mouse_put_values(int fd)
 				warn("WSMOUSEIO_SCALIBCOORDS");
 				return 1;
 			}
+		}
+	}
+
+	for (f = mouse_field_tab; f->name != NULL; f++) {
+		if (f->format != FMT_CFG || !(f->flags & FLG_SET))
+			continue;
+		if (mousecfg_put_field(fd,
+		    (struct wsmouse_parameters *) f->valp)) {
+			warn("mousecfg error (%s)", f->name);
+			return 1;
 		}
 	}
 

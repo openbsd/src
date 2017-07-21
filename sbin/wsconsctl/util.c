@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.63 2016/02/10 05:49:50 guenther Exp $ */
+/*	$OpenBSD: util.c,v 1.64 2017/07/21 20:38:20 bru Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "wsconsctl.h"
+#include "mousecfg.h"
 
 #define TABLEN(t)		(sizeof(t)/sizeof(t[0]))
 
@@ -309,6 +310,9 @@ pr_field(const char *pre, struct field *f, const char *sep)
 	case FMT_STRING:
 		printf("%s", (const char *)f->valp);
 		break;
+	case FMT_CFG:
+		mousecfg_pr_field((struct wsmouse_parameters *) f->valp);
+		break;
 	default:
 		errx(1, "internal error: pr_field: no format %d", f->format);
 		break;
@@ -461,6 +465,9 @@ rd_field(struct field *f, char *val, int merge)
 	}
 	case FMT_STRING:
 		strlcpy(f->valp, val, WSFONT_NAME_SIZE);
+		break;
+	case FMT_CFG:
+		mousecfg_rd_field((struct wsmouse_parameters *) f->valp, val);
 		break;
 	default:
 		errx(1, "internal error: rd_field: no format %d", f->format);

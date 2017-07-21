@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.h,v 1.15 2015/05/08 19:12:51 miod Exp $	*/
+/*	$OpenBSD: wsconsctl.h,v 1.16 2017/07/21 20:38:20 bru Exp $	*/
 /*	$NetBSD: wsconsctl.h 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -48,6 +48,7 @@ struct field {
 #define FMT_EMUL	107		/* wsdisplay emulations */
 #define FMT_SCREEN	108		/* wsdisplay screen types */
 #define FMT_STRING	109		/* free string */
+#define FMT_CFG		201		/* wsmouse parameters */
 	int format;
 #define FLG_RDONLY	0x0001		/* variable cannot be modified */
 #define FLG_WRONLY	0x0002		/* variable cannot be displayed */
@@ -78,6 +79,7 @@ keysym_t ksym_upcase(keysym_t);
 void	keyboard_get_values(int);
 int	keyboard_put_values(int);
 char *	keyboard_next_device(int);
+void	mouse_init(int,int);
 void	mouse_get_values(int);
 int	mouse_put_values(int);
 char *	mouse_next_device(int);

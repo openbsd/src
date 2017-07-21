@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.43 2017/07/10 21:30:37 espie Exp $
+#	$OpenBSD: Makefile,v 1.44 2017/07/21 20:38:20 bru Exp $
 
 .if ${MACHINE} != "octeon"
 
 PROG=	wsconsctl
 SRCS=	display.c keyboard.c keysym.c map_parse.y map_scan.l \
-	mouse.c util.c wsconsctl.c
+	mouse.c mousecfg.c util.c wsconsctl.c
 
 CPPFLAGS+=	-I${.CURDIR} -I.
 CLEANFILES+=	keysym.h

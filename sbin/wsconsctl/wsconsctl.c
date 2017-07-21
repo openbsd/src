@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.30 2017/04/06 17:33:39 jmc Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.31 2017/07/21 20:38:20 bru Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -50,15 +50,16 @@ void	usage(void);
 struct vartypesw {
 	const	char *name;
 	struct field *field_tab;
+	void	(*init)(int,int);
 	void	(*getval)(int);
 	int	(*putval)(int);
 	char *	(*nextdev)(int);
 } typesw[] = {
-	{ "keyboard", keyboard_field_tab,
+	{ "keyboard", keyboard_field_tab, NULL,
 	  keyboard_get_values, keyboard_put_values, keyboard_next_device },
-	{ "mouse", mouse_field_tab,
+	{ "mouse", mouse_field_tab, mouse_init,
 	  mouse_get_values, mouse_put_values, mouse_next_device },
-	{ "display", display_field_tab,
+	{ "display", display_field_tab, NULL,
 	  display_get_values, display_put_values, display_next_device },
 	{ NULL }
 };
@@ -138,6 +139,9 @@ main(int argc, char *argv[])
 					snprintf(devname, sizeof(devname),
 					    "%s%d", sw->name, devidx);
 
+				if (sw->init != NULL)
+					(*sw->init)(devfd, devidx);
+
 				for (f = sw->field_tab; f->name; f++)
 					if (!(f->flags &
 					    (FLG_NOAUTO|FLG_WRONLY)))
@@ -188,6 +192,9 @@ main(int argc, char *argv[])
 			else
 				snprintf(devname, sizeof(devname),
 				    "%s%d", sw->name, devidx);
+
+			if (sw->init != NULL)
+				(*sw->init)(devfd, devidx);
 
 			p = strchr(argv[i], '=');
 			if (p == NULL) {
