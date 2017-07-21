@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.50 2017/07/04 21:09:52 benno Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.51 2017/07/21 16:31:23 jca Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -600,31 +600,18 @@ void
 fetch_ifstate(void)
 {
 	struct ifaddrs *ifap, *ifa;
-	char *oname = NULL;
-	int sock = socket(AF_INET, SOCK_DGRAM, 0);
 
 	if (getifaddrs(&ifap) != 0)
 		err(1, "getifaddrs");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		struct ifreq ifr;
-		struct if_data ifrdat;
-
-		if (oname && !strcmp(oname, ifa->ifa_name))
-			continue;
-		oname = ifa->ifa_name;
-
-		strlcpy(ifr.ifr_name, ifa->ifa_name, sizeof(ifr.ifr_name));
-		ifr.ifr_data = (caddr_t)&ifrdat;
-
-		if (ioctl(sock, SIOCGIFDATA, (caddr_t)&ifr) == -1)
-			continue;
-
-		scan_ifstate(if_nametoindex(ifa->ifa_name),
-		    ifrdat.ifi_link_state, 0);
+		if (ifa->ifa_addr->sa_family == AF_LINK) {
+			struct if_data *ifdata = ifa->ifa_data;
+			scan_ifstate(if_nametoindex(ifa->ifa_name),
+			    ifdata->ifi_link_state, 0);
+		}
 	}
 	freeifaddrs(ifap);
-	close(sock);
 }
 
 void
