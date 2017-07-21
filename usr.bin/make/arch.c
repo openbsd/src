@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.87 2016/10/21 16:12:38 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.88 2017/07/21 09:29:42 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -242,6 +242,10 @@ parse_archive(Buffer expand, const char **linePtr, Lst nodeLst, SymTable *ctxt)
 		elib = lib + strlen(lib);
 	}
 
+	if (*cp == '\0') {
+		printf("Unclosed parenthesis in archive specification\n");
+		return false;
+	}
 	cp++;
 	/* iterate on members, that may be separated by spaces */
 	for (;;) {
@@ -266,7 +270,7 @@ parse_archive(Buffer expand, const char **linePtr, Lst nodeLst, SymTable *ctxt)
 		 * chances are there's something wrong (like a missing
 		 * backslash), so it's better to return failure than allow such
 		 * things to happen.  */
-		if (*cp == '\0') {
+		if (*cp == '\0' || ISSPACE(*cp)) {
 			printf("No closing parenthesis in archive specification\n");
 			return false;
 		}
