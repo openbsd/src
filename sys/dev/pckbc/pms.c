@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.77 2017/06/18 13:34:03 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.78 2017/07/21 20:10:10 bru Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -1074,11 +1074,13 @@ pms_enable_synaptics(struct pms_softc *sc)
 		    nitems(synaptics_params)))
 			goto err;
 
-		printf("%s: Synaptics %s, firmware %d.%d\n", DEVNAME(sc),
+		printf("%s: Synaptics %s, firmware %d.%d, 0x%x 0x%x\n",
+		    DEVNAME(sc),
 		    (syn->ext_capabilities & SYNAPTICS_EXT_CAP_CLICKPAD ?
 			"clickpad" : "touchpad"),
 		    SYNAPTICS_ID_MAJOR(syn->identify),
-		    SYNAPTICS_ID_MINOR(syn->identify));
+		    SYNAPTICS_ID_MINOR(syn->identify),
+		    syn->model, syn->ext_model);
 	}
 
 	mode = SYNAPTICS_ABSOLUTE_MODE | SYNAPTICS_HIGH_RATE;
