@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.120 2017/07/03 09:21:09 kevlo Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.121 2017/07/21 00:55:05 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2182,6 +2182,11 @@ run_rx_frame(struct run_softc *sc, uint8_t *buf, int dmalen)
 	len = letoh16(rxwi->len) & 0xfff;
 	if (__predict_false(len > dmalen)) {
 		DPRINTF(("bad RXWI length %u > %u\n", len, dmalen));
+		return;
+	}
+	if (len > MCLBYTES) {
+		DPRINTF(("frame too large (length=%d)\n", len));
+		ifp->if_ierrors++;
 		return;
 	}
 	/* Rx descriptor is located at the end */
