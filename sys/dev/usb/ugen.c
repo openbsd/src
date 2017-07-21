@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.95 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: ugen.c,v 1.96 2017/07/21 20:13:41 ians Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1167,7 +1167,10 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd, caddr_t addr,
 				ur->ucr_request.bmRequestType & UT_READ ?
 				UIO_READ : UIO_WRITE;
 			uio.uio_procp = p;
-			ptr = malloc(len, M_TEMP, M_WAITOK);
+			if ((ptr = malloc(len, M_TEMP, M_NOWAIT)) == NULL) {
+				error = ENOMEM;
+				goto ret;
+			}
 			if (uio.uio_rw == UIO_WRITE) {
 				error = uiomove(ptr, len, &uio);
 				if (error)

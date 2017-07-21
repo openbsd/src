@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.112 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: usb.c,v 1.113 2017/07/21 20:13:41 ians Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -649,7 +649,10 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 				ur->ucr_request.bmRequestType & UT_READ ?
 				UIO_READ : UIO_WRITE;
 			uio.uio_procp = p;
-			ptr = malloc(len, M_TEMP, M_WAITOK);
+			if ((ptr = malloc(len, M_TEMP, M_NOWAIT)) == NULL) {
+				error = ENOMEM;
+				goto ret;
+			}
 			if (uio.uio_rw == UIO_WRITE) {
 				error = uiomove(ptr, len, &uio);
 				if (error)
