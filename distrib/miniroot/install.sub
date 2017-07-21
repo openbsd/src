@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1027 2017/07/21 16:02:26 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1028 2017/07/21 20:22:13 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2233,7 +2233,7 @@ parse_hn_line() {
 # Start interface using the on-disk hostname.if file passed as argument $1.
 # Much of this is gratuitously stolen from /etc/netstart.
 ifstart() {
-	local _hn=$1 _if=${1#/mnt/etc/hostname.} _cmds _i=0 _line
+	local _if=$1 _hn=/mnt/etc/hostname.$1 _cmds _i=0 _line
 	set -A _cmds
 
 	((NIFS++))
@@ -2281,19 +2281,19 @@ enable_network() {
 		if isin "${_if%%+([0-9])}" $(ifconfig -C); then
 			# Dynamic interfaces must be done later.
 			case ${_if%%+([0-9])} in
-			trunk)	_trunks="$_trunks $_hn";;
-			svlan)	_svlans="$_svlans $_hn";;
-			vlan)	_vlans="$_vlans $_hn";;
+			trunk)	_trunks="$_trunks $_if";;
+			svlan)	_svlans="$_svlans $_if";;
+			vlan)	_vlans="$_vlans $_if";;
 			esac
 		else
 			# 'Real' interfaces (if available) are done now.
-			ifconfig $_if >/dev/null 2>&1 && ifstart $_hn
+			ifconfig $_if >/dev/null 2>&1 && ifstart $_if
 		fi
 	done
 	# Configure any dynamic interfaces now that 'real' ones are up.
 	# ORDER IS IMPORTANT! (see /etc/netstart).
 	for _hn in $_trunks $_svlans $_vlans; do
-		ifstart $_hn
+		ifstart $_if
 	done
 
 	# /mnt/etc/mygate, if it exists, contains the address(es) of my

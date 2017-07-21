@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.184 2017/05/28 08:07:33 awolk Exp $
+#	$OpenBSD: netstart,v 1.185 2017/07/21 20:22:13 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -82,24 +82,24 @@ parse_hn_line() {
 # Start a single interface.
 # Usage: ifstart if1
 ifstart() {
-	local _if=$1 _file=$HN_DIR/hostname.$1 _cmds _i=0 _line _stat
+	local _if=$1 _hn=$HN_DIR/hostname.$1 _cmds _i=0 _line _stat
 	set -A _cmds
 
 	# Interface names must be alphanumeric only.  We check to avoid
 	# configuring backup or temp files, and to catch the "*" case.
 	[[ $_if != +([[:alpha:]])+([[:digit:]]) ]] && return
 
-	if [[ ! -f $_file ]]; then
-		echo "${0##*/}: $_file: No such file or directory"
+	if [[ ! -f $_hn ]]; then
+		echo "${0##*/}: $_hn: No such file or directory"
 		return
 	fi
 
 	# Not using stat(1), we can't rely on having /usr yet.
-	set -A _stat -- $(ls -nL $_file)
+	set -A _stat -- $(ls -nL $_hn)
 	if [[ "${_stat[0]}${_stat[2]}${_stat[3]}" != *---00 ]]; then
-		echo "WARNING: $_file is insecure, fixing permissions"
-		chmod -LR o-rwx $_file
-		chown -LR root:wheel $_file
+		echo "WARNING: $_hn is insecure, fixing permissions"
+		chmod -LR o-rwx $_hn
+		chown -LR root:wheel $_hn
 	fi
 
 	# Check for ifconfig'able interface, except if -n option is specified.
@@ -113,7 +113,7 @@ ifstart() {
 	set -o noglob
 	while IFS= read -- _line; do
 		parse_hn_line $_line
-	done <$_file
+	done <$_hn
 
 	# Apply the interface configuration commands stored in _cmds array.
 	while ((_i < ${#_cmds[*]})); do
