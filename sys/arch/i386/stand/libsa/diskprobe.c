@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.43 2017/06/22 01:26:28 deraadt Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.44 2017/07/21 01:21:42 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -55,7 +55,6 @@
 
 /* Local Prototypes */
 static int disksum(int);
-static void check_hibernate(struct diskinfo *);
 
 int bootdev_has_hibernate(void);		/* export for loadfile() */
 
@@ -472,7 +471,7 @@ bootdev_has_hibernate(void)
 	return ((bootdev_dip->bios_info.flags & BDI_HIBVALID)? 1 : 0);
 }
 
-static void
+void
 check_hibernate(struct diskinfo *dip)
 {
 	daddr_t sec;
@@ -489,9 +488,6 @@ check_hibernate(struct diskinfo *dip)
             (sizeof(union hibernate_info) / DEV_BSIZE);
 
 	error = dip->strategy(dip, F_READ, (daddr32_t)sec, sizeof hib, &hib, NULL);
-	if (error == 0 && hib.magic == HIBERNATE_MAGIC)	{
-		/* Hibernate present */
-		dip->bios_info.flags |= BDI_HIBVALID;
-		printf("&");
-	}
+	if (error == 0 && hib.magic == HIBERNATE_MAGIC)
+		dip->bios_info.flags |= BDI_HIBVALID; /* Hibernate present */
 }

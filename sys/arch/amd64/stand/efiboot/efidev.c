@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.26 2017/05/16 02:56:23 yasuoka Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.27 2017/07/21 01:21:42 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -625,6 +625,7 @@ efiopen(struct open_file *f, ...)
 			if (sr_getdisklabel(bv, &dip->disklabel))
 				return ERDLAB;
 			dip->bios_info.flags &= ~BDI_BADLABEL;
+			check_hibernate(dip);
 		}
 
 		bv->sbv_part = part + 'a';

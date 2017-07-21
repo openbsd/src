@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.6 2015/09/02 04:09:24 yasuoka Exp $	*/
+/*	$OpenBSD: disk.h,v 1.7 2017/07/21 01:21:42 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -58,5 +58,7 @@ extern struct diskinfo *bootdev_dip;
 extern struct disklist_lh disklist;
 
 void dump_diskinfo(void);
+
+void check_hibernate(struct diskinfo *);
 
 #endif /* _DISK_H */
