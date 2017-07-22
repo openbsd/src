@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.476 2017/07/22 15:28:56 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.477 2017/07/22 15:34:22 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -965,7 +965,7 @@ bind_lease(struct interface_info *ifi)
 				    opt->data)->s_addr;
 				if (mask.s_addr == INADDR_BROADCAST) {
 					add_direct_route(gateway, mask,
-				    ifi->active->address);
+					    ifi->active->address);
 				}
 			}
 
