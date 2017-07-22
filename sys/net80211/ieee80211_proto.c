@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.77 2017/06/03 15:44:03 tb Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.78 2017/07/22 16:54:46 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -981,7 +981,9 @@ justcleanup:
 		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
 		switch (ostate) {
 		case IEEE80211_S_INIT:
-			DPRINTF(("invalid transition\n"));
+			panic("invalid transition %s -> %s",
+			    ieee80211_state_name[ostate],
+			    ieee80211_state_name[nstate]);
 			break;
 		case IEEE80211_S_SCAN:
 			IEEE80211_SEND_MGMT(ic, ni,
@@ -1021,7 +1023,9 @@ justcleanup:
 		case IEEE80211_S_INIT:
 		case IEEE80211_S_SCAN:
 		case IEEE80211_S_ASSOC:
-			DPRINTF(("invalid transition\n"));
+			panic("invalid transition %s -> %s",
+			    ieee80211_state_name[ostate],
+			    ieee80211_state_name[nstate]);
 			break;
 		case IEEE80211_S_AUTH:
 			IEEE80211_SEND_MGMT(ic, ni,
@@ -1038,7 +1042,9 @@ justcleanup:
 		case IEEE80211_S_INIT:
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_RUN:
-			DPRINTF(("invalid transition\n"));
+			panic("invalid transition %s -> %s",
+			    ieee80211_state_name[ostate],
+			    ieee80211_state_name[nstate]);
 			break;
 		case IEEE80211_S_SCAN:		/* adhoc/hostap mode */
 		case IEEE80211_S_ASSOC:		/* infra mode */
