@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.475 2017/07/22 14:56:27 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.476 2017/07/22 15:28:56 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -959,9 +959,14 @@ bind_lease(struct interface_info *ifi)
 			 * we were given a /32 IP assignment, then add a /32
 			 * direct route for the gateway to make it routable.
 			 */
-			if (mask.s_addr == INADDR_BROADCAST) {
-				add_direct_route(gateway, mask,
+			opt = &options[DHO_SUBNET_MASK];
+			if (opt->len == sizeof(mask)) {
+				mask.s_addr = ((struct in_addr *)
+				    opt->data)->s_addr;
+				if (mask.s_addr == INADDR_BROADCAST) {
+					add_direct_route(gateway, mask,
 				    ifi->active->address);
+				}
 			}
 
 			add_default_route(ifi->active->address, gateway);
