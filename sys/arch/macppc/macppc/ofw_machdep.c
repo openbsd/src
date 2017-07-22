@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.55 2015/07/21 05:58:34 jsg Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.56 2017/07/22 18:33:38 anton Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -469,8 +469,10 @@ of_display_console(void)
 		}
 	}
 
-	if (OF_getnodebyname(0, "backlight") != 0)
+	if (OF_getnodebyname(0, "backlight") != 0) {
 		cons_backlight_available = 1;
+		cons_brightness = MAX_BRIGHTNESS;
+	}
 
 #if 1
 	printf(": memaddr %x, size %x ", addr[0].phys_lo, addr[0].size_lo);
