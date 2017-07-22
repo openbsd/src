@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.115 2017/07/04 20:25:53 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.116 2017/07/22 09:59:08 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -262,11 +262,6 @@ sp_cleanup()
 		[[ -f ${_k} ]] || continue
 		[[ ${_k} == /bsd.syspatch${_OSrev} ]] || rm ${_k}
 	done
-
-	# in case a patch added a new directory (install -D)
-	mtree -qdef /etc/mtree/4.4BSD.dist -p / -U >/dev/null
-	[[ -f /var/sysmerge/xetc.tgz ]] &&
-		mtree -qdef /etc/mtree/BSD.x11.dist -p / -U >/dev/null
 }
 
 unpriv()
@@ -322,10 +317,15 @@ done
 shift $((OPTIND - 1))
 (($# != 0)) && usage
 
+# default action: apply all patches
 if ((OPTIND == 1)); then
+	sp_cleanup
 	_PATCHES=$(ls_missing)
 	for _PATCH in ${_PATCHES}; do
 		apply_patch ${_OSrev}-${_PATCH}
 	done
-	sp_cleanup
+	# in case a patch added a new directory (install -D)
+	mtree -qdef /etc/mtree/4.4BSD.dist -p / -U >/dev/null
+	[[ ! -f /var/sysmerge/xetc.tgz ]] ||
+		mtree -qdef /etc/mtree/BSD.x11.dist -p / -U >/dev/null
 fi
