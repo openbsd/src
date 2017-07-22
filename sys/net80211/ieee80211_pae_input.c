@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.28 2017/03/01 20:20:45 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.29 2017/07/22 16:48:21 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -78,7 +78,7 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m,
 	struct ether_header *eh;
 	struct ieee80211_eapol_key *key;
 	u_int16_t info, desc;
-	int totlen;
+	int totlen, bodylen, paylen;
 
 	ifp->if_ibytes += m->m_pkthdr.len;
 
@@ -109,12 +109,14 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m,
 		goto done;
 
 	/* check packet body length */
-	if (m->m_pkthdr.len < 4 + BE_READ_2(key->len))
+	bodylen = BE_READ_2(key->len);
+	totlen = 4 + bodylen;
+	if (m->m_pkthdr.len < totlen || totlen > MCLBYTES)
 		goto done;
 
 	/* check key data length */
-	totlen = sizeof(*key) + BE_READ_2(key->paylen);
-	if (m->m_pkthdr.len < totlen || totlen > MCLBYTES)
+	paylen = BE_READ_2(key->paylen);
+	if (paylen > totlen - sizeof(*key))
 		goto done;
 
 	info = BE_READ_2(key->info);
