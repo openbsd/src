@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt_checkpass.3,v 1.10 2017/07/22 03:23:48 tedu Exp $
+.\" $OpenBSD: crypt_checkpass.3,v 1.11 2017/07/22 06:39:54 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -70,7 +70,7 @@ Possible values are:
 .It Dq bcrypt,<rounds>
 The bcrypt algorithm, where the value of rounds can be between 4 and 31 and
 specifies the base 2 logarithm of the number of rounds.
-If rounds is omitted or the special value 
+If rounds is omitted or the special value
 .Sq a ,
 an appropriate number of rounds is automatically selected based on system
 performance.
