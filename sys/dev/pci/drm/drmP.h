@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.214 2017/07/19 22:05:58 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.215 2017/07/22 14:33:45 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -121,8 +121,6 @@ struct fb_image;
 #define DRM_MTRR_WC		MDF_WRITECOMBINE
 
 #define DRM_WAKEUP(x)		wakeup(x)
-
-extern int ticks;
 
 #define drm_msleep(x)		mdelay(x)
 

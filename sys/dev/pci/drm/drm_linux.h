@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.57 2017/07/17 17:57:27 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.58 2017/07/22 14:33:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -839,8 +839,7 @@ timespec_sub(struct timespec t1, struct timespec t2)
 
 #define time_in_range(x, min, max) ((x) >= (min) && (x) <= (max))
 
-extern int ticks;
-#define jiffies ticks
+extern volatile unsigned long jiffies;
 #undef HZ
 #define HZ	hz
 
@@ -858,10 +857,10 @@ round_jiffies_up_relative(unsigned long j)
 	return roundup(j, hz);
 }
 
-#define jiffies_to_msecs(x)	(((int64_t)(x)) * 1000 / hz)
-#define jiffies_to_usecs(x)	(((int64_t)(x)) * 1000000 / hz)
-#define msecs_to_jiffies(x)	(((int64_t)(x)) * hz / 1000)
-#define nsecs_to_jiffies64(x)	(((int64_t)(x)) * hz / 1000000000)
+#define jiffies_to_msecs(x)	(((uint64_t)(x)) * 1000 / hz)
+#define jiffies_to_usecs(x)	(((uint64_t)(x)) * 1000000 / hz)
+#define msecs_to_jiffies(x)	(((uint64_t)(x)) * hz / 1000)
+#define nsecs_to_jiffies64(x)	(((uint64_t)(x)) * hz / 1000000000)
 #define get_jiffies_64()	jiffies
 #define time_after(a,b)		((long)(b) - (long)(a) < 0)
 #define time_after_eq(a,b)	((long)(b) - (long)(a) <= 0)
@@ -886,7 +885,7 @@ timespec_to_ns(const struct timespec *ts)
 	return ((ts->tv_sec * NSEC_PER_SEC) + ts->tv_nsec);
 }
 
-static inline int
+static inline unsigned long
 timespec_to_jiffies(const struct timespec *ts)
 {
 	long long to_ticks;
