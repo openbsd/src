@@ -1,3 +1,5 @@
+# $OpenBSD: subr.sh,v 1.6 2017/07/22 13:50:54 anton Exp $
+#
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
 #

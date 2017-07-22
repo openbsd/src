@@ -1,7 +1,8 @@
+# $OpenBSD: Makefile,v 1.3 2017/07/22 13:50:54 anton Exp $
+
 REGRESS_TARGETS=	send
 
 PROG=		edit
-SRCS=		edit.c
 CFLAGS+=	-Wall
 LDADD+=		-lutil
 CLEANFILES+=	edit.c

@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+# $OpenBSD: emacs.sh,v 1.8 2017/07/22 13:50:54 anton Exp $
+#
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
 # Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 #

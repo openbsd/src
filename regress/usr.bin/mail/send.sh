@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+# $OpenBSD: send.sh,v 1.4 2017/07/22 13:50:54 anton Exp $
+#
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
