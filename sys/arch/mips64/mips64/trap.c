@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.125 2017/07/03 16:37:07 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.126 2017/07/22 16:44:15 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -420,12 +420,9 @@ fault_common_no_miss:
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if ((caddr_t)va >= vm->vm_maxsaddr) {
-			if (rv == 0)
-				uvm_grow(p, va);
-			else if (rv == EACCES)
-				rv = EFAULT;
-		}
+		if (rv == 0 && (caddr_t)va >= vm->vm_maxsaddr)
+			uvm_grow(p, va);
+
 		KERNEL_UNLOCK();
 		if (rv == 0)
 			return;
@@ -441,6 +438,12 @@ fault_common_no_miss:
 		ucode = ftype;
 		i = SIGSEGV;
 		typ = SEGV_MAPERR;
+		if (rv == EACCES)
+			typ = SEGV_ACCERR;
+		if (rv == EIO) {
+			i = SIGBUS;
+			typ = BUS_OBJERR;
+		}
 		break;
 	    }
 
