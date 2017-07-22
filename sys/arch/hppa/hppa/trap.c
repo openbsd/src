@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.141 2016/10/19 08:31:32 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.142 2017/07/22 15:20:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -513,23 +513,27 @@ datacc:
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if (space != HPPA_SID_KERNEL &&
-		    va < (vaddr_t)vm->vm_minsaddr) {
-			if (ret == 0)
-				uvm_grow(p, va);
-			else if (ret == EACCES)
-				ret = EFAULT;
-		}
+		if (ret == 0 && space != HPPA_SID_KERNEL &&
+		    va < (vaddr_t)vm->vm_minsaddr)
+			uvm_grow(p, va);
 
 		KERNEL_UNLOCK();
 
 		if (ret != 0) {
 			if (type & T_USER) {
+				int signal, sicode;
+
+				signal = SIGSEGV;
+				sicode = SEGV_MAPERR;
+				if (ret == EACCES)
+					sicode = SEGV_ACCERR;
+				if (ret == EIO) {
+					signal = SIGBUS;
+					sicode = BUS_OBJERR;
+				}
 				sv.sival_int = va;
 				KERNEL_LOCK();
-				trapsignal(p, SIGSEGV, vftype,
-				    ret == EACCES? SEGV_ACCERR : SEGV_MAPERR,
-				    sv);
+				trapsignal(p, signal, vftype, sicode, sv);
 				KERNEL_UNLOCK();
 			} else {
 				if (p && p->p_addr->u_pcb.pcb_onfault) {
