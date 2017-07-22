@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.23 2017/07/22 16:20:10 schwarze Exp $	*/
+/*	$OpenBSD: time.c,v 1.24 2017/07/22 17:01:09 schwarze Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -42,22 +42,20 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int lflag;
-int portableflag;
-
 __dead void usage(void);
 
 int
 main(int argc, char *argv[])
 {
-	pid_t pid;
-	int ch, status;
-	struct timespec before, after, during;
 	struct rusage ru;
-	int exitonsig = 0;
+	struct timespec before, after, during;
+	int ch, exitonsig, lflag, portableflag, status;
+	pid_t pid;
 
 	if (pledge("stdio proc exec", NULL) == -1)
 		err(1, "pledge");
+
+	exitonsig = lflag = portableflag = 0;
 
 	while ((ch = getopt(argc, argv, "lp")) != -1) {
 		switch(ch) {
