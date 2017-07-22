@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.97 2017/01/21 05:42:04 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.98 2017/07/22 15:17:49 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -832,18 +832,17 @@ data_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0)
-			uvm_grow(p, va);
-		else if (rv == EACCES)
-			rv = EFAULT;
-	}
+	if (rv == 0 && (caddr_t)va >= vm->vm_maxsaddr)
+		uvm_grow(p, va);
+
 	if (rv != 0) {
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
 		 * address.  Any other page fault in kernel, die; if user
 		 * fault, deliver SIGSEGV.
 		 */
+		int signal, sicode;
+
 		if (tstate & TSTATE_PRIV) {
 kfault:
 			onfault = (long)p->p_addr->u_pcb.pcb_onfault;
@@ -864,14 +863,21 @@ kfault:
 		else
 			sv.sival_ptr = (void *)sfva;
 
+		signal = SIGSEGV;
+		sicode = SEGV_MAPERR;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			    p->p_p->ps_pid, p->p_p->ps_comm,
 			    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, access_type, SEGV_MAPERR, sv);
-		} else {
-			trapsignal(p, SIGSEGV, access_type, SEGV_MAPERR, sv);
+			signal = SIGKILL;
 		}
+		if (rv == EACCES)
+			sicode = SEGV_ACCERR;
+		if (rv == EIO) {
+			signal = SIGBUS;
+			sicode = BUS_OBJERR;
+		}
+		trapsignal(p, signal, access_type, sicode, sv);
 	}
 
 	if ((tstate & TSTATE_PRIV) == 0) {
@@ -1010,23 +1016,31 @@ text_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0)
-			uvm_grow(p, va);
-		else if (rv == EACCES)
-			rv = EFAULT;
-	}
+	if (rv == 0 && (caddr_t)va >= vm->vm_maxsaddr)
+		uvm_grow(p, va);
+
 	if (rv != 0) {
 		/*
 		 * Pagein failed. Any other page fault in kernel, die; if user
 		 * fault, deliver SIGSEGV.
 		 */
+		int signal, sicode;
+
 		if (tstate & TSTATE_PRIV) {
 			(void) splhigh();
 			panic("kernel text fault: pc=%llx", (unsigned long long)pc);
 			/* NOTREACHED */
 		}
-		trapsignal(p, SIGSEGV, access_type, SEGV_MAPERR, sv);
+
+		signal = SIGSEGV;
+		sicode = SEGV_MAPERR;
+		if (rv == EACCES)
+			sicode = SEGV_ACCERR;
+		if (rv == EIO) {
+			signal = SIGBUS;
+			sicode = BUS_OBJERR;
+		}
+		trapsignal(p, signal, access_type, sicode, sv);
 	}
 
 	KERNEL_UNLOCK();
@@ -1106,25 +1120,34 @@ text_access_error(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0)
-			uvm_grow(p, va);
-		else if (rv == EACCES)
-			rv = EFAULT;
+	if (rv == 0 && (caddr_t)va >= vm->vm_maxsaddr) {
+		uvm_grow(p, va);
 	}
+
 	if (rv != 0) {
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
 		 * address.  Any other page fault in kernel, die; if user
 		 * fault, deliver SIGSEGV.
 		 */
+		int signal, sicode;
+
 		if (tstate & TSTATE_PRIV) {
 			(void) splhigh();
 			panic("kernel text error: pc=%lx sfsr=%lb", pc,
 			    sfsr, SFSR_BITS);
 			/* NOTREACHED */
 		}
-		trapsignal(p, SIGSEGV, access_type, SEGV_MAPERR, sv);
+
+		signal = SIGSEGV;
+		sicode = SEGV_MAPERR;
+		if (rv == EACCES)
+			sicode = SEGV_ACCERR;
+		if (rv == EIO) {
+			signal = SIGBUS;
+			sicode = BUS_OBJERR;
+		}
+		trapsignal(p, signal, access_type, sicode, sv);
 	}
 
 	KERNEL_UNLOCK();
