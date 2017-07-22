@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.58 2017/07/21 18:57:55 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.59 2017/07/22 14:56:27 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -58,12 +58,12 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 				priv_delete_address(name, ioctlfd, imsg.data);
 			break;
 
-		case IMSG_ADD_ADDRESS:
+		case IMSG_SET_ADDRESS:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct imsg_add_address))
-				log_warnx("bad IMSG_ADD_ADDRESS");
+			    sizeof(struct imsg_set_address))
+				log_warnx("bad IMSG_SET_ADDRESS");
 			else
-				priv_add_address(name, ioctlfd, imsg.data);
+				priv_set_address(name, ioctlfd, imsg.data);
 			break;
 
 		case IMSG_FLUSH_ROUTES:

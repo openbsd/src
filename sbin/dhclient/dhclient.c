@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.474 2017/07/21 18:57:55 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.475 2017/07/22 14:56:27 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -935,28 +935,11 @@ bind_lease(struct interface_info *ifi)
 	flush_routes();
 
 	opt = &options[DHO_INTERFACE_MTU];
-	if (opt->len == sizeof(uint16_t)) {
-		uint16_t mtu;
-		memcpy(&mtu, opt->data, sizeof(mtu));
-		mtu = ntohs(mtu);
-		/* "The minimum legal value for the MTU is 68." */
-		if (mtu < 68)
-			log_warnx("mtu size %u < 68: ignored", mtu);
-		else
-			set_mtu(mtu);
-	}
+	set_mtu(opt);
 
 	opt = &options[DHO_SUBNET_MASK];
-	if (opt->len == sizeof(mask))
-		mask.s_addr = ((struct in_addr *)opt->data)->s_addr;
-	else
-		mask.s_addr = INADDR_ANY;
+	set_address(ifi->active->address, opt);
 
-        /*
-	 * Add address and default route last, so we know when the binding
-	 * is done by the RTM_NEWADDR message being received.
-	 */
-	add_address(ifi->active->address, mask);
 	if (options[DHO_CLASSLESS_STATIC_ROUTES].len != 0) {
 		add_classless_static_routes(
 		    &options[DHO_CLASSLESS_STATIC_ROUTES],

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.111 2017/07/21 18:57:55 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.112 2017/07/22 14:56:27 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -614,12 +614,20 @@ priv_delete_address(char *name, int ioctlfd, struct imsg_delete_address *imsg)
  *      ifconfig <if> mtu <mtu>
  */
 void
-set_mtu(int mtu)
+set_mtu(struct option_data *mtu)
 {
 	struct imsg_set_mtu	 imsg;
 	int			 rslt;
 
-	imsg.mtu = mtu;
+	if (mtu->len != sizeof(uint16_t))
+		return;
+
+	memcpy(&imsg.mtu, mtu->data, sizeof(uint16_t));
+	imsg.mtu = ntohs(imsg.mtu);
+	if (imsg.mtu < 68) {
+		log_warnx("mtu size %u < 68: ignored", imsg.mtu);
+		return;
+	}
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_SET_MTU, 0, 0, -1,
 	    &imsg, sizeof(imsg));
@@ -644,29 +652,32 @@ priv_set_mtu(char *name, int ioctlfd, struct imsg_set_mtu *imsg)
 }
 
 /*
- * [priv_]add_address is the equivalent of
+ * [priv_]set_address is the equivalent of
  *
  *	ifconfig <if> inet <addr> netmask <mask> broadcast <addr>
  */
 void
-add_address(struct in_addr addr, struct in_addr mask)
+set_address(struct in_addr addr, struct option_data *mask)
 {
-	struct imsg_add_address	 imsg;
+	struct imsg_set_address	 imsg;
 	int			 rslt;
 
 	imsg.addr = addr;
-	imsg.mask = mask;
+	if (mask->len == sizeof(imsg.mask))
+		imsg.mask.s_addr = ((struct in_addr *)mask->data)->s_addr;
+	else
+		imsg.mask.s_addr = INADDR_ANY;
 
-	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_ADDRESS, 0, 0, -1, &imsg,
+	rslt = imsg_compose(unpriv_ibuf, IMSG_SET_ADDRESS, 0, 0, -1, &imsg,
 	    sizeof(imsg));
 	if (rslt == -1)
-		log_warn("add_address: imsg_compose");
+		log_warn("set_address: imsg_compose");
 
-	flush_unpriv_ibuf("add_address");
+	flush_unpriv_ibuf("set_address");
 }
 
 void
-priv_add_address(char *name, int ioctlfd, struct imsg_add_address *imsg)
+priv_set_address(char *name, int ioctlfd, struct imsg_set_address *imsg)
 {
 	struct ifaliasreq	 ifaliasreq;
 	struct sockaddr_in	*in;
