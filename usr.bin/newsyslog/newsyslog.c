@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.106 2017/07/22 17:05:14 jca Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.107 2017/07/22 17:06:40 jca Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -181,7 +181,7 @@ main(int argc, char **argv)
 	struct pidinfo *pidlist, *pl;
 	int status, listlen, ret;
 	char **av;
-	
+
 	parse_args(argc, argv);
 	argc -= optind;
 	argv += optind;
@@ -525,7 +525,7 @@ nextline:
 					working->uid = atoi(q);
 			} else
 				working->uid = (uid_t)-1;
-			
+
 			q = group;
 			if (*q) {
 				if (!(isnumberstr(q))) {
@@ -541,7 +541,7 @@ nextline:
 					working->gid = atoi(q);
 			} else
 				working->gid = (gid_t)-1;
-			
+
 			q = parse = missing_field(sob(++parse), errline, lineno);
 			*(parse = son(parse)) = '\0';
 		} else {
@@ -575,7 +575,7 @@ nextline:
 			working->size = atoi(q) * 1024;
 		else
 			working->size = -1;
-		
+
 		working->flags = 0;
 		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
@@ -1072,7 +1072,7 @@ domonitor(struct conf_entry *ent)
 			fclose(fp);
 			goto cleanup;
 		}
-		
+
 		/* Send message. */
 		fclose(fp);
 
