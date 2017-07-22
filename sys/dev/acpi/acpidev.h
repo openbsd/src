@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.40 2017/02/22 16:39:56 jcs Exp $ */
+/* $OpenBSD: acpidev.h,v 1.41 2017/07/22 21:06:17 jcs Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -49,26 +49,60 @@
  * 	Battery Type			//ASCIIZ
  * 	OEM Information			//ASCIIZ
  * }
+ *
+ * _BIX (Battery InFormation Extended)
+ * Arguments: none
+ * Results  : package _BIX (Battery InFormation Extended)
+ * Package {
+ * 	// ASCIIZ is ASCII character string terminated with a 0x00.
+ *	Revision			//Integer
+ * 	Power Unit			//DWORD
+ * 	Design Capacity			//DWORD
+ * 	Last Full Charge Capacity	//DWORD
+ * 	Battery Technology		//DWORD
+ * 	Design Voltage			//DWORD
+ * 	Design Capacity of Warning	//DWORD
+ * 	Design Capacity of Low		//DWORD
+ * 	Cycle Count			//DWORD
+ * 	Measurement Accuracy		//DWORD
+ * 	Max Sampling Time		//DWORD
+ * 	Min Sampling Time		//DWORD
+ * 	Max Averaging Interval		//DWORD
+ * 	Min Averaging Interval		//DWORD
+ * 	Battery Capacity Granularity 1	//DWORD
+ * 	Battery Capacity Granularity 2	//DWORD
+ * 	Model Number			//ASCIIZ
+ * 	Serial Number			//ASCIIZ
+ * 	Battery Type			//ASCIIZ
+ * 	OEM Information			//ASCIIZ
+ * }
  */
-struct acpibat_bif {
-	u_int32_t	bif_power_unit;
-#define BIF_POWER_MW		0x00
-#define BIF_POWER_MA		0x01
-	u_int32_t	bif_capacity;
-#define BIF_UNKNOWN		0xffffffff
-	u_int32_t	bif_last_capacity;
-	u_int32_t	bif_technology;
-#define BIF_TECH_PRIMARY	0x00
-#define BIF_TECH_SECONDARY	0x01
-	u_int32_t	bif_voltage;
-	u_int32_t	bif_warning;
-	u_int32_t	bif_low;
-	u_int32_t	bif_cap_granu1;
-	u_int32_t	bif_cap_granu2;
-	char		bif_model[20];
-	char		bif_serial[20];
-	char		bif_type[20];
-	char		bif_oem[20];
+struct acpibat_bix {
+	u_int8_t	bix_revision;
+	u_int32_t	bix_power_unit;
+#define BIX_POWER_MW		0x00
+#define BIX_POWER_MA		0x01
+	u_int32_t	bix_capacity;
+#define BIX_UNKNOWN		0xffffffff
+	u_int32_t	bix_last_capacity;
+	u_int32_t	bix_technology;
+#define BIX_TECH_PRIMARY	0x00
+#define BIX_TECH_SECONDARY	0x01
+	u_int32_t	bix_voltage;
+	u_int32_t	bix_warning;
+	u_int32_t	bix_low;
+	u_int32_t	bix_cycle_count;
+	u_int32_t	bix_accuracy;
+	u_int32_t	bix_max_sample;
+	u_int32_t	bix_min_sample;
+	u_int32_t	bix_max_avg;
+	u_int32_t	bix_min_avg;
+	u_int32_t	bix_cap_granu1;
+	u_int32_t	bix_cap_granu2;
+	char		bix_model[20];
+	char		bix_serial[20];
+	char		bix_type[20];
+	char		bix_oem[20];
 };
 
 /*
@@ -278,11 +312,12 @@ struct acpibat_softc {
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
 
-	struct acpibat_bif	sc_bif;
+	struct acpibat_bix	sc_bix;
+	int			sc_use_bif;
 	struct acpibat_bst	sc_bst;
 	volatile int		sc_bat_present;
 
-	struct ksensor		sc_sens[9];
+	struct ksensor		sc_sens[10];
 	struct ksensordev	sc_sensdev;
 };
 

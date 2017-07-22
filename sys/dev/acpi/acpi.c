@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.329 2017/07/20 18:34:24 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.330 2017/07/22 21:06:17 jcs Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3096,12 +3096,12 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			if (bat->aba_softc->sc_bat_present == 0)
 				continue;
 
-			if (bat->aba_softc->sc_bif.bif_last_capacity == 0)
+			if (bat->aba_softc->sc_bix.bix_last_capacity == 0)
 				continue;
 
 			bats++;
 			rem = (bat->aba_softc->sc_bst.bst_capacity * 100) /
-			    bat->aba_softc->sc_bif.bif_last_capacity;
+			    bat->aba_softc->sc_bix.bix_last_capacity;
 			if (rem > 100)
 				rem = 100;
 			remaining += rem;
