@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.25 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: extern.h,v 1.26 2017/07/22 09:37:21 anton Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -272,7 +272,7 @@ void	 plist(struct varent *);
 void	donice(Char **, struct command *);
 void	dotime(Char **, struct command *);
 void	prusage(struct rusage *, struct rusage *,
-	    struct timeval *, struct timeval *);
+	    struct timespec *, struct timespec *);
 void	ruadd(struct rusage *, struct rusage *);
 void	settimes(void);
 void	pcsecs(long);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.3 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: proc.h,v 1.4 2017/07/22 09:37:21 anton Exp $	*/
 /*	$NetBSD: proc.h,v 1.7 1995/04/29 23:21:35 mycroft Exp $	*/
 
 /*-
@@ -50,8 +50,8 @@ struct process {
     pid_t   p_pid;
     pid_t   p_jobid;		/* pid of job leader */
     /* if a job is stopped/background p_jobid gives its pgrp */
-    struct timeval p_btime;	/* begin time */
-    struct timeval p_etime;	/* end time */
+    struct timespec p_btime;	/* begin time */
+    struct timespec p_etime;	/* end time */
     struct rusage p_rusage;
     Char   *p_command;		/* first PMAXLEN chars of command */
 };

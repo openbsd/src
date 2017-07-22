@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.14 2013/08/22 04:43:40 guenther Exp $	*/
+/*	$OpenBSD: time.c,v 1.15 2017/07/22 09:37:21 anton Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@ settimes(void)
 {
     struct rusage ruch;
 
-    (void) gettimeofday(&time0, NULL);
+    (void) clock_gettime(CLOCK_MONOTONIC, &time0);
     (void) getrusage(RUSAGE_SELF, &ru0);
     (void) getrusage(RUSAGE_CHILDREN, &ruch);
     ruadd(&ru0, &ruch);
@@ -60,13 +60,13 @@ void
 /*ARGSUSED*/
 dotime(Char **v, struct command *t)
 {
-    struct timeval timedol;
+    struct timespec timedol;
     struct rusage ru1, ruch;
 
     (void) getrusage(RUSAGE_SELF, &ru1);
     (void) getrusage(RUSAGE_CHILDREN, &ruch);
     ruadd(&ru1, &ruch);
-    (void) gettimeofday(&timedol, NULL);
+    (void) clock_gettime(CLOCK_MONOTONIC, &timedol);
     prusage(&ru0, &ru1, &timedol, &time0);
 }
 
@@ -112,8 +112,8 @@ ruadd(struct rusage *ru, struct rusage *ru2)
 }
 
 void
-prusage(struct rusage *r0, struct rusage *r1, struct timeval *e,
-    struct timeval *b)
+prusage(struct rusage *r0, struct rusage *r1, struct timespec *e,
+    struct timespec *b)
 {
     time_t t =
     (r1->ru_utime.tv_sec - r0->ru_utime.tv_sec) * 100 +
@@ -125,7 +125,7 @@ prusage(struct rusage *r0, struct rusage *r1, struct timeval *e,
     struct varent *vp = adrof(STRtime);
 
     int     ms =
-    (e->tv_sec - b->tv_sec) * 100 + (e->tv_usec - b->tv_usec) / 10000;
+    (e->tv_sec - b->tv_sec) * 100 + (e->tv_nsec - b->tv_nsec) / 10000000;
 
     cp = "%Uu %Ss %E %P %X+%Dk %I+%Oio %Fpf+%Ww";
 

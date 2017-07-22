@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.28 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: csh.h,v 1.29 2017/07/22 09:37:21 anton Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -122,7 +122,7 @@ char   *seterr;			/* Error message from scanner/parser */
 #include <sys/time.h>
 #include <sys/resource.h>
 
-struct timeval time0;		/* Time at which the shell started */
+struct timespec time0;		/* Time at which the shell started */
 struct rusage ru0;
 
 /*

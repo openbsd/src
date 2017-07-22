@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.30 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: proc.c,v 1.31 2017/07/22 09:37:21 anton Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -108,7 +108,7 @@ found:
     }
     else {
 	if (pp->p_flags & (PTIME | PPTIME) || adrof(STRtime))
-	    (void) gettimeofday(&pp->p_etime, NULL);
+	    (void) clock_gettime(CLOCK_MONOTONIC, &pp->p_etime);
 
 	pp->p_rusage = ru;
 	if (WIFSIGNALED(w)) {
@@ -494,7 +494,7 @@ palloc(int pid, struct command *t)
     }
     pp->p_next = proclist.p_next;
     proclist.p_next = pp;
-    (void) gettimeofday(&pp->p_btime, NULL);
+    (void) clock_gettime(CLOCK_MONOTONIC, &pp->p_btime);
 }
 
 static void
@@ -799,8 +799,8 @@ prcomd:
 static void
 ptprint(struct process *tp)
 {
-    struct timeval tetime, diff;
-    static struct timeval ztime;
+    struct timespec tetime, diff;
+    static struct timespec ztime;
     struct rusage ru;
     static struct rusage zru;
     struct process *pp = tp;
@@ -809,8 +809,8 @@ ptprint(struct process *tp)
     tetime = ztime;
     do {
 	ruadd(&ru, &pp->p_rusage);
-	timersub(&pp->p_etime, &pp->p_btime, &diff);
-	if (timercmp(&diff, &tetime, >))
+	timespecsub(&pp->p_etime, &pp->p_btime, &diff);
+	if (timespeccmp(&diff, &tetime, >))
 	    tetime = diff;
     } while ((pp = pp->p_friends) != tp);
     prusage(&zru, &ru, &tetime, &ztime);
