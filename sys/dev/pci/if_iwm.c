@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.202 2017/07/16 23:38:36 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.203 2017/07/22 16:48:58 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3357,6 +3357,15 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	rx_res = (struct iwm_rx_mpdu_res_start *)pkt->data;
 	wh = (struct ieee80211_frame *)(pkt->data + sizeof(*rx_res));
 	len = le16toh(rx_res->byte_count);
+	if (len < IEEE80211_MIN_LEN) {
+		ic->ic_stats.is_rx_tooshort++;
+		IC2IFP(ic)->if_ierrors++;
+		return;
+	}
+	if (len > IWM_RBUF_SIZE) {
+		IC2IFP(ic)->if_ierrors++;
+		return;
+	}
 	rx_pkt_status = le32toh(*(uint32_t *)(pkt->data +
 	    sizeof(*rx_res) + len));
 
