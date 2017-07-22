@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.52 2017/07/21 16:32:18 jca Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.53 2017/07/22 19:52:01 jca Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -24,7 +24,6 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
 
