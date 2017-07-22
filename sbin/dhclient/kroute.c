@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.112 2017/07/22 14:56:27 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.113 2017/07/22 17:55:20 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -272,7 +272,7 @@ add_direct_route(struct in_addr dest, struct in_addr mask,
  *	route -q $rdomain add default $router
  */
 void
-add_default_route(struct in_addr addr, struct in_addr gateway)
+add_default_route(struct in_addr gateway, struct in_addr addr)
 {
 	struct in_addr	 netmask, dest;
 	int		 addrs, flags;
@@ -394,6 +394,45 @@ create_route_label(struct sockaddr_rtlabel *label)
 	}
 
 	return 0;
+}
+
+void
+set_routes(struct in_addr addr, struct option_data *classless,
+    struct option_data *msclassless, struct option_data *routers,
+    struct option_data *classfull, struct option_data *subnet)
+{
+	struct in_addr	gateway, mask;
+
+	if (classless->len != 0) {
+		add_classless_static_routes(classless, addr);
+		return;
+	}
+
+	if (msclassless->len != 0) {
+		add_classless_static_routes(msclassless, addr);
+		return;
+	}
+
+	if (routers->len >= sizeof(gateway)) {
+		/* XXX Only use FIRST router address for now. */
+		gateway.s_addr = ((struct in_addr *)routers->data)->s_addr;
+
+		/*
+		 * To be compatible with ISC DHCP behavior on Linux, if
+		 * we were given a /32 IP assignment, then add a /32
+		 * direct route for the gateway to make it routable.
+		 */
+		if (subnet->len == sizeof(mask)) {
+			mask.s_addr = ((struct in_addr *)subnet->data)->s_addr;
+			if (mask.s_addr == INADDR_BROADCAST)
+				add_direct_route(gateway, mask, addr);
+		}
+
+		add_default_route(gateway, addr);
+	}
+
+	if (classfull->len != 0)
+		add_static_routes(classfull, addr);
 }
 
 /*

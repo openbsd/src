@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.477 2017/07/22 15:34:22 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.478 2017/07/22 17:55:20 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -880,8 +880,6 @@ dhcpnak(struct interface_info *ifi, struct option_data *options, char *info)
 void
 bind_lease(struct interface_info *ifi)
 {
-	struct in_addr		 gateway, mask;
-	struct option_data	*opt;
 	struct option_data	*options;
 	struct client_lease	*lease, *pl;
 	struct proposal		*active_proposal = NULL;
@@ -934,47 +932,16 @@ bind_lease(struct interface_info *ifi)
 	delete_addresses(ifi->name);
 	flush_routes();
 
-	opt = &options[DHO_INTERFACE_MTU];
-	set_mtu(opt);
+	set_mtu(&options[DHO_INTERFACE_MTU]);
 
-	opt = &options[DHO_SUBNET_MASK];
-	set_address(ifi->active->address, opt);
+	set_address(ifi->active->address, &options[DHO_SUBNET_MASK]);
 
-	if (options[DHO_CLASSLESS_STATIC_ROUTES].len != 0) {
-		add_classless_static_routes(
-		    &options[DHO_CLASSLESS_STATIC_ROUTES],
-		    ifi->active->address);
-	} else if (options[DHO_CLASSLESS_MS_STATIC_ROUTES].len != 0) {
-		add_classless_static_routes(
-		    &options[DHO_CLASSLESS_MS_STATIC_ROUTES],
-		    ifi->active->address);
-	} else {
-		opt = &options[DHO_ROUTERS];
-		if (opt->len >= sizeof(gateway)) {
-			/* XXX Only use FIRST router address for now. */
-			gateway.s_addr = ((struct in_addr *)opt->data)->s_addr;
-
-			/*
-			 * To be compatible with ISC DHCP behavior on Linux, if
-			 * we were given a /32 IP assignment, then add a /32
-			 * direct route for the gateway to make it routable.
-			 */
-			opt = &options[DHO_SUBNET_MASK];
-			if (opt->len == sizeof(mask)) {
-				mask.s_addr = ((struct in_addr *)
-				    opt->data)->s_addr;
-				if (mask.s_addr == INADDR_BROADCAST) {
-					add_direct_route(gateway, mask,
-					    ifi->active->address);
-				}
-			}
-
-			add_default_route(ifi->active->address, gateway);
-		}
-		if (options[DHO_STATIC_ROUTES].len != 0)
-			add_static_routes(&options[DHO_STATIC_ROUTES],
-			    ifi->active->address);
-	}
+	set_routes(ifi->active->address,
+	    &options[DHO_CLASSLESS_STATIC_ROUTES],
+	    &options[DHO_CLASSLESS_MS_STATIC_ROUTES],
+	    &options[DHO_ROUTERS],
+	    &options[DHO_STATIC_ROUTES],
+	    &options[DHO_SUBNET_MASK]);
 
 newlease:
 	log_info("bound to %s -- renewal in %lld seconds.",
