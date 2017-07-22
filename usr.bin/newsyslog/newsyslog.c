@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.105 2017/07/20 18:39:16 jca Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.106 2017/07/22 17:05:14 jca Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -215,7 +215,7 @@ main(int argc, char **argv)
 
 	pidlist = calloc(listlen + 1, sizeof(struct pidinfo));
 	if (pidlist == NULL)
-		err(1, "calloc");
+		err(1, NULL);
 
 	signal(SIGCHLD, child_killer);
 
@@ -492,16 +492,16 @@ nextline:
 			continue;
 		errline = strdup(tmp);
 		if (errline == NULL)
-			err(1, "strdup");
+			err(1, NULL);
 		working = calloc(1, sizeof(*working));
 		if (working == NULL)
-			err(1, "calloc");
+			err(1, NULL);
 
 		q = parse = missing_field(sob(line), errline, lineno);
 		*(parse = son(line)) = '\0';
 		working->log = strdup(q);
 		if (working->log == NULL)
-			err(1, "strdup");
+			err(1, NULL);
 
 		if ((working->logbase = strrchr(working->log, '/')) != NULL)
 			working->logbase++;
@@ -674,13 +674,13 @@ nextline:
 				}
 				working->pidfile = strdup(q);
 				if (working->pidfile == NULL)
-					err(1, "strdup");
+					err(1, NULL);
 			} else if (*q == '"' && (tmp = strchr(q + 1, '"'))) {
 				*(parse = tmp) = '\0';
 				if (*++q != '\0') {
 					working->runcmd = strdup(q);
 					if (working->runcmd == NULL)
-						err(1, "strdup");
+						err(1, NULL);
 				}
 				working->pidfile = NULL;
 				working->signal = -1;
@@ -705,7 +705,7 @@ nextline:
 				*(parse = son(parse)) = '\0';
 				working->whom = strdup(q);
 				if (working->whom == NULL)
-					err(1, "strdup");
+					err(1, NULL);
 			} else {
 				warnx("%s:%d: unrecognized field: %s"
 				    " --> skipping",
@@ -734,7 +734,7 @@ nextline:
 				*(working->logbase - 1) = '\0';
 				if ((asprintf(&working->backdir, "%s/%s",
 				    working->log, arcdir)) == -1)
-					err(1, "malloc");
+					err(1, NULL);
 				*(working->logbase - 1) = '/';
 			}
 			/* Ignore arcdir if it doesn't exist. */
@@ -1024,7 +1024,7 @@ domonitor(struct conf_entry *ent)
 
 	flog = strdup(ent->log);
 	if (flog == NULL)
-		err(1, "strdup");
+		err(1, NULL);
 
 	for (p = flog; *p != '\0'; p++) {
 		if (*p == '/')
@@ -1057,7 +1057,7 @@ domonitor(struct conf_entry *ent)
 	if (sb.st_size > osize) {
 		rb = malloc(sb.st_size - osize);
 		if (rb == NULL)
-			err(1, "malloc");
+			err(1, NULL);
 
 		/* Open logfile, seek. */
 		fp = fopen(ent->log, "r");
