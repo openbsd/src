@@ -1180,7 +1180,8 @@ _bfd_elf_merge_symbol (bfd *abfd,
       && (olddef
 	  || (h->root.type == bfd_link_hash_common
 	      && (newweak
-		  || ELF_ST_TYPE (sym->st_info) == STT_FUNC))))
+		  || ELF_ST_TYPE (sym->st_info) == STT_FUNC
+		  || (!olddyn && info->executable)))))
     {
       *override = TRUE;
       newdef = FALSE;
