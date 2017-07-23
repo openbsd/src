@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.7 2017/07/23 10:12:57 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.8 2017/07/23 17:06:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -283,8 +283,13 @@ rk3288_enable(void *cookie, uint32_t *cells, int on)
 	case RK3288_CLK_UART2:
 	case RK3288_CLK_UART3:
 	case RK3288_CLK_UART4:
+	case RK3288_CLK_MAC_RX:
+	case RK3288_CLK_MAC_TX:
 	case RK3288_CLK_SDMMC_DRV:
 	case RK3288_CLK_SDMMC_SAMPLE:
+	case RK3288_CLK_MAC:
+	case RK3288_ACLK_GMAC:
+	case RK3288_PCLK_GMAC:
 	case RK3288_HCLK_HOST0:
 	case RK3288_HCLK_SDMMC:
 		/* Enabled by default. */
