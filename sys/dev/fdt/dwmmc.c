@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.3 2017/05/21 17:44:52 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.4 2017/07/23 17:06:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -262,10 +262,10 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %d MHz base clock\n", sc->sc_clkbase / 1000000);
 
 	HSET4(sc, SDMMC_CTRL, SDMMC_CTRL_ALL_RESET);
-	for (timeout = 10000; timeout > 0; timeout--) {
+	for (timeout = 5000; timeout > 0; timeout--) {
 		if ((HREAD4(sc, SDMMC_CTRL) & SDMMC_CTRL_ALL_RESET) == 0)
 			break;
-		delay(10);
+		delay(100);
 	}
 	if (timeout == 0)
 		printf("%s: reset failed\n", sc->sc_dev.dv_xname);
@@ -446,7 +446,7 @@ dwmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 	s = splbio();
 
-	for (timeout = 1000; timeout > 0; timeout--) {
+	for (timeout = 10000; timeout > 0; timeout--) {
 		status = HREAD4(sc, SDMMC_STATUS);
 		if ((status & SDMMC_STATUS_DATA_BUSY) == 0)
 			break;
@@ -606,7 +606,7 @@ dwmmc_transfer_data(struct dwmmc_softc *sc, struct sdmmc_command *cmd)
 		datalen -= count;
 	}
 
-	for (timeout = 1000; timeout > 0; timeout--) {
+	for (timeout = 10000; timeout > 0; timeout--) {
 		status = HREAD4(sc, SDMMC_RINTSTS);
 		if (status & SDMMC_RINTSTS_DTO)
 			break;
