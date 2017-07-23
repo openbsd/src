@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UList.pm,v 1.3 2016/12/25 13:46:18 zhuk Exp $
+# $OpenBSD: UList.pm,v 1.4 2017/07/23 09:47:11 zhuk Exp $
 #
 # Copyright (c) 2013 Vadim Zhukov <zhuk@openbsd.org>
 #
@@ -35,7 +35,7 @@ sub _translate_num_key($$;$) {
 	} else {
 		$_[1] += 1;
 	}
-	die "invalid index" if $_[1] - int($_[2] // 0) >= @{$_[0]};
+	die "invalid index $_[1]" if $_[1] - int($_[2] // 0) >= @{$_[0]};
 }
 
 # Construct new UList and returnes reference to the array,
@@ -140,73 +140,53 @@ sub SPLICE
 
 	my $length = shift;
 	if (defined $length) {
-		$length = $maxrm - (-$length) if $length < 0;
-		$length = $maxrm if $length > $maxrm;
+		if ($length < 0) {
+			$length = $maxrm - (-$length);
+			$length = 0 if $length < 0;
+		} elsif ($length > $maxrm) {
+			$length = $maxrm;
+		}
 	} else {
 		$length = $maxrm;
 	}
 
-	my $i = @$self;
-
-	# make sure no duplicates get added
-	@_ = grep { !exists $self->[0] or
-		    $self->[0]->{$_} >= $offset &&
-	            $self->[0]->{$_} < $offset + $length } @_;
-
-	for (@_) {
-		# set up index
-		$self->[0]->{$_} = $i++;
-	}
+	# trailing elemenets positions to be renumbered by adding $delta
+	my $delta = -$length;
 
 	#
-	# Renumber (in advance) trailing items, in case something gets added
-	# and number of added and removed items differs.
+	# First, always remove elements; then add one by one.
+	# This way we can be sure to not add duplicates, even if
+	# they exist in added elements, e.g., adding ("-lfoo", "-lfoo").
 	#
-	my $delta = scalar(@_) - $length;
-	if (scalar(@_) and $delta) {
-		for $i ($offset + $length .. scalar(@$self)) {
-			$self->[0]->{$self->[$i]} += $delta;
-		}
-	}
 
-	my @ret = splice(@$self, $offset, $length, @_);
-
+	my @ret = splice(@$self, $offset, $length);
 	for (@ret) {
 		delete $self->[0]->{$_};
 	}
-	for ($offset .. scalar(@$self) - 1) {
-		$self->[0]->{$self->[$_]} -= $length;
-	}
 
-	return @ret unless scalar(@_);
-
-	if ($length == $maxrm) {
-		# simply add items to the end
-		$self->PUSH(@_);
-		return @ret;
-	}
-
-	my $newpos = $offset;
+	my $i = 0;
+	my %seen;
 	for (@_) {
-		my $index = $self->[0]->{$_};
-		if (defined $index) {
-			if ($index < $offset) {
-				# skip current item totally
-				continue;
-			} elsif ($index == $offset) {
-				# skip adding but act as if added
-				$self->[0]->{$_} += $newpos - $offset;
-				$newpos++;
+		next if exists $seen{$_};	# skip already added items
+		$seen{$_} = 1;
+		if (exists $self->[0]->{$_}) {
+			if ($self->[0]->{$_} >= $offset + $length) {
+				# "move" from tail to new position
+				splice(@$self, $self->[0]->{$_} - $length + $i, 1);
+			} else {
 				next;
 			}
-			splice(@$self, $index, 1);
 		}
-		splice(@$self, $newpos, 0, $_);
-		$self->[0]->{$_} = $newpos++;
+		splice(@$self, $offset + $i, 0, $_);
+		$self->[0]->{$_} = $offset + $i;
+		$i++;
+		$delta++;
 	}
-	for ($newpos .. scalar(@$self) - 1) {
-		$self->[0]->{$self->[$_]} += $newpos - $offset;
+
+	for $i ($offset + scalar(@_) .. @$self - 1) {
+		$self->[0]->{$self->[$i]} = $i;
 	}
+
 	return @ret;
 }
 
@@ -214,18 +194,64 @@ sub SPLICE
 =head1 test
 package main;
 
+sub compare_ulists {
+	my ($list1, $list2) = @_;
+	return 0 if scalar(@$list1) != scalar(@$list2);
+	for my $i (0 .. scalar(@$list1) - 1) {
+		return 0 if $list1->[$i] ne $list2->[$i];
+	}
+	return 1;
+}
+
 my $r = ['/path0', '/path1'];
 tie(@$r, 'LT::UList');
-#push(@$r, '/path0');
-#push(@$r, '/path1');
+push(@$r, '/path0');
+push(@$r, '/path1');
 push(@$r, '/path2');
 push(@$r, '/path3');
 push(@$r, '/path4');
 push(@$r, '/path3');
 push(@$r, '/path1');
 push(@$r, '/path5');
-say "spliced: ".join(", ", splice(@$r, 2, 2, '/pathAdd1', '/pathAdd2', '/pathAdd1'));
-#say "a: ".join(", ", @a);
-say "r: ".join(", ", @$r);
-#say "r2: ".join(", ", @$r2);
+
+my @tests = (
+	# offset, length, args,
+	# expected resulting array
+
+	[
+		3, 0, [],
+		['/path0', '/path1', '/path2', '/path3', '/path4', '/path5']
+	],
+
+	[
+		3, 2, [],
+		['/path0', '/path1', '/path2', '/path5']
+	],
+
+	[
+		0, 3, ['/path0', '/path1', '/path2'],
+		['/path0', '/path1', '/path2', '/path5']
+	],
+
+	[
+		0, 3, ['/path0', '/path5', '/path5', '/path2'],
+		['/path0', '/path5', '/path2']
+	],
+
+	[
+		0, 3, [],
+		[]
+	],
+
+);
+
+for my $t (@tests) {
+	splice(@$r, $t->[0], $t->[1], @{$t->[2]});
+	if (!compare_ulists($r, $t->[3])) {
+		say "expected: ".join(", ", @{$t->[2]});
+		say "     got: ".join(", ", @$r);
+		exit 1;
+	}
+}
+exit 0;
 =cut
