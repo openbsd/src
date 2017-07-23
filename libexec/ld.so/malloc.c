@@ -583,6 +583,7 @@ omalloc_make_chunks(struct dir_info *d, int bits, int listnum)
 		while (i >>= 1)
 			bp->shift++;
 		bp->total = bp->free = MALLOC_PAGESIZE >> bp->shift;
+		bp->offset = 0xdead;
 		bp->page = pp;
 
 		k = _dl_mprotect(pp, MALLOC_PAGESIZE, PROT_NONE);
@@ -697,7 +698,7 @@ malloc_bytes(struct dir_info *d, size_t argsize)
 	/* Adjust to the real offset of that chunk */
 	k += (lp - bp->bits) * MALLOC_BITS;
 
-	if (mopts.chunk_canaries)
+	if (mopts.chunk_canaries && argsize > 0)
 		bp->bits[bp->offset + k] = argsize;
 
 	k <<= bp->shift;
