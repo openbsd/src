@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.c,v 1.262 2017/06/24 06:38:11 djm Exp $ */
+/* $OpenBSD: packet.c,v 1.263 2017/07/23 23:37:02 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1982,7 +1982,7 @@ ssh_packet_not_very_much_data_to_write(struct ssh *ssh)
 void
 ssh_packet_set_tos(struct ssh *ssh, int tos)
 {
-	if (!ssh_packet_connection_is_on_socket(ssh))
+	if (!ssh_packet_connection_is_on_socket(ssh) || tos == INT_MAX)
 		return;
 	switch (ssh_packet_connection_af(ssh)) {
 	case AF_INET:
