@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.53 2016/01/16 03:17:48 canacar Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.54 2017/07/23 14:28:22 jca Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -194,23 +194,7 @@ set_pcap_filter(void)
 int
 if_exists(char *ifname)
 {
-	int s, ret = 1;
-	struct ifreq ifr;
-	struct if_data ifrdat;
-
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		err(1, "socket");
-	bzero(&ifr, sizeof(ifr));
-	if (strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name)) >=
-		sizeof(ifr.ifr_name))
-			errx(1, "main ifr_name: strlcpy");
-	ifr.ifr_data = (caddr_t)&ifrdat;
-	if (ioctl(s, SIOCGIFDATA, (caddr_t)&ifr) == -1)
-		ret = 0;
-	if (close(s))
-		err(1, "close");
-
-	return (ret);
+	return (if_nametoindex(ifname) != 0);
 }
 
 int
