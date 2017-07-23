@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.54 2017/07/23 13:49:18 deraadt Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.55 2017/07/23 13:53:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -45,10 +45,10 @@
 #include "ifstated.h"
 #include "log.h"
 
-struct	 ifsd_config *conf = NULL, *newconf = NULL;
+struct	 ifsd_config *conf, *newconf;
 
-int	 opts = 0;
-int	 opt_inhibit = 0;
+int	 opts;
+int	 opt_inhibit;
 char	*configfile = "/etc/ifstated.conf";
 struct event	rt_msg_ev, sighup_ev, startup_ev, sigchld_ev;
 
