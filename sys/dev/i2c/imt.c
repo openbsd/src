@@ -1,4 +1,4 @@
-/* $OpenBSD: imt.c,v 1.1 2016/01/20 01:26:00 jcs Exp $ */
+/* $OpenBSD: imt.c,v 1.2 2017/07/23 22:39:11 jcs Exp $ */
 /*
  * HID-over-i2c multitouch trackpad driver for devices conforming to
  * Windows Precision Touchpad standard
@@ -60,8 +60,8 @@ int	imt_match(struct device *, void *, void *);
 int	imt_find_winptp_reports(struct ihidev_softc *, void *, int,
 	    struct imt_softc *);
 void	imt_attach(struct device *, struct device *, void *);
-int	ims_hidev_get_report(struct device *, int, int, void *, int);
-int	ims_hidev_set_report(struct device *, int, int, void *, int);
+int	imt_hidev_get_report(struct device *, int, int, void *, int);
+int	imt_hidev_set_report(struct device *, int, int, void *, int);
 int	imt_detach(struct device *, int);
 
 struct cfdriver imt_cd = {
@@ -154,8 +154,8 @@ imt_attach(struct device *parent, struct device *self, void *aux)
 	/* assume everything has "natural scrolling" where Y axis is reversed */
 	mt->sc_flags = HIDMT_REVY;
 
-	mt->hidev_get_report = ims_hidev_get_report;
-	mt->hidev_set_report = ims_hidev_set_report;
+	mt->hidev_get_report = imt_hidev_get_report;
+	mt->hidev_set_report = imt_hidev_set_report;
 	mt->sc_rep_input = sc->sc_rep_input;
 	mt->sc_rep_config = sc->sc_rep_config;
 	mt->sc_rep_cap = sc->sc_rep_cap;
@@ -167,7 +167,7 @@ imt_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ims_hidev_get_report(struct device *self, int type, int id, void *data, int len)
+imt_hidev_get_report(struct device *self, int type, int id, void *data, int len)
 {
 	struct imt_softc *sc = (struct imt_softc *)self;
 
@@ -176,7 +176,7 @@ ims_hidev_get_report(struct device *self, int type, int id, void *data, int len)
 }
 
 int
-ims_hidev_set_report(struct device *self, int type, int id, void *data, int len)
+imt_hidev_set_report(struct device *self, int type, int id, void *data, int len)
 {
 	struct imt_softc *sc = (struct imt_softc *)self;
 
