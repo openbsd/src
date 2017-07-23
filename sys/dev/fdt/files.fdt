@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.17 2017/05/21 08:59:45 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.18 2017/07/23 19:26:03 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -22,6 +22,14 @@ file	dev/fdt/sxirtc.c		sxirtc
 device	sximmc: sdmmcbus
 attach	sximmc at fdt
 file	dev/fdt/sximmc.c		sximmc
+
+device	sxitwi: i2cbus
+attach	sxitwi at fdt
+file	dev/fdt/sxitwi.c		sxitwi
+
+device	axppmic
+attach	axppmic at i2c
+file	dev/fdt/axp20x.c		axppmic
 
 device	bcmdog
 attach	bcmdog at fdt

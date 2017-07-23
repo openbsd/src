@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.83 2017/05/21 17:44:52 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.84 2017/07/23 19:26:03 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -99,6 +99,8 @@ ehci*		at fdt?			# EHCI (shim)
 usb*		at ehci?	#flags 0x1
 #ohci*		at sunxi?
 #usb*		at ohci?
+sxitwi*		at fdt?			# Two-Wire Serial Interface
+iic*		at sxitwi?		# I2C bus
 
 # ARM Versatile Express
 sysreg*		at fdt?
@@ -148,6 +150,7 @@ mvxhci*		at fdt?
 usb*		at mvxhci?
 mvahci*		at fdt?
 
+axppmic*	at iic?			# axp209 pmic
 crosec*		at iic?
 wskbd*		at crosec? mux 1
 pcfrtc*		at iic?
