@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.25 2015/07/27 17:28:40 sobrado Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.26 2017/07/23 19:41:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: July 23 2017 $
 .Dt SENSORSD.CONF 5
 .Os
 .Sh NAME
@@ -28,12 +28,16 @@ The
 file is read by
 .Xr sensorsd 8
 to configure hardware sensor monitoring.
-Each sensor registered in the system
-is matched by at most one entry in
+Each variable in the
+.Xr sysctl 3
+.Va hw.sensors
+subtree represents a sensor.
+Each sensor is matched by at most one entry in
 .Nm ,
 which may specify high and low limits,
 and whether sensor status changes provided by the driver should be ignored.
-If the limits are crossed or if the status provided by the driver changes,
+Each time the limits are crossed in either direction
+or the status provided by the driver changes,
 .Xr sensorsd 8 Ns 's
 alert functionality is triggered and a command, if specified, is
 executed.
@@ -58,9 +62,9 @@ The following attributes may be used:
 .It Li command
 Specify a command to be executed on state change.
 .It Li high
-Specify an upper limit.
+Specify the largest acceptable value.
 .It Li low
-Specify a lower limit.
+Specify the smallest acceptable value.
 .It Li istatus
 Ignore status provided by the driver.
 .El
@@ -68,6 +72,10 @@ Ignore status provided by the driver.
 The values for temperature sensors can be given in degrees Celsius or
 Fahrenheit, for voltage sensors in volts, and fan speed sensors take a
 unit-less number representing RPM.
+For Boolean sensors, specify 0 for
+.Qq Off
+or 1 for
+.Qq On .
 Values for all other types of sensors can be specified
 in the same units as they appear under the
 .Xr sysctl 8
@@ -110,6 +118,11 @@ The sensor's low limit.
 The sensor's high limit.
 .El
 .Pp
+For Boolean sensors, %2, %3, and %4 are substituted with
+.Qq On
+or
+.Qq Off .
+.Pp
 By default,
 .Xr sensorsd 8
 monitors status changes on all sensors that keep their state.
@@ -126,16 +139,16 @@ Configuration file for
 .El
 .Sh EXAMPLES
 In the following configuration file,
-if hw.sensors.ipmi0.temp0 transitions 80C or
-if its status as provided by
+if hw.sensors.ipmi0.temp0 moves upwards beyond 80C
+or downwards to 80C or less or if its status as provided by
 .Xr ipmi 4
 changes, the command
 .Pa /etc/sensorsd/log_warning
 will be executed,
 with the sensor type, number and current value passed to it.
 Alerts will be sent
-if hw.sensors.lm0.volt3 transitions to being within or outside
-a range of 4.8V and 5.2V;
+if hw.sensors.lm0.volt3 moves into or out of
+the range from 4.8V to 5.2V, inclusive;
 if the speed of the fan attached to hw.sensors.lm0.fan1
 transitions to being below or above 1000RPM;
 if any RAID volume drive

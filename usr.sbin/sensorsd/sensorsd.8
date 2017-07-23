@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.8,v 1.23 2017/03/20 15:31:23 bluhm Exp $
+.\"	$OpenBSD: sensorsd.8,v 1.24 2017/07/23 19:41:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 20 2017 $
+.Dd $Mdocdate: July 23 2017 $
 .Dt SENSORSD 8
 .Os
 .Sh NAME
@@ -31,11 +31,17 @@
 The
 .Nm
 utility retrieves sensor monitoring data like fan speed,
-temperature, voltage and RAID logical disk status via
-.Xr sysctl 3 .
-When the state of any monitored sensor changes, an alert is sent using
+temperature, voltage and RAID logical disk status from the
+.Xr sysctl 3
+.Va hw.sensors
+subtree.
+When the state of any monitored sensor changes, an alert is triggered.
+Every alert logs a message to
 .Xr syslog 3
-and a command, if specified, is executed.
+using the
+.Cm daemon
+facility.
+Optionally, an alert can be configured to execute a command.
 .Pp
 By default,
 .Nm
@@ -61,9 +67,10 @@ The options are as follows:
 Check sensors every
 .Ar check
 seconds.
-The shortest reporting period for state changes
-will be three times this value.
 The default is 20.
+The state of a sensor is not yet regarded as changed when a check
+returns a new state for the first time, but only when the two
+subsequent checks both confirm the new state.
 .It Fl d
 Do not daemonize.
 If this option is specified,
@@ -83,22 +90,22 @@ Configuration file for
 .El
 .Sh SEE ALSO
 .Xr sysctl 3 ,
-.Xr syslog 3 ,
 .Xr sensorsd.conf 5 ,
-.Xr syslogd 8
+.Xr syslog.conf 5 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
 program first appeared in
 .Ox 3.5 .
 .Sh CAVEATS
-Certain sensors may flip status from time to time.
+Certain sensors may erratically flip status from time to time.
 To guard against false reports,
 .Nm
-implements a state dumping mechanism.
+requires two confirmations before reporting a state change.
 However, this inevitably introduces
 an additional delay in status reporting and command execution,
 e.g. one may notice that
 .Nm
 makes its initial report about the state of monitored sensors
-not immediately, but about 60 seconds after it is started.
+not immediately, but by default about 60 seconds after it is started.
