@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.1 2017/06/14 13:12:49 patrick Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.2 2017/07/23 10:11:27 kettenis Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -40,20 +40,6 @@
 
 #define ELR	.long	0xe12ef30e		@ msr	ELR_hyp, lr
 #define ERET	.long	0xe160006e		@ eret
-
-/*
- * CPWAIT -- Canonical method to wait for CP15 update.
- * NOTE: Clobbers the specified temp reg.
- * copied from arm/arm/cpufunc_asm_xscale.S
- * XXX: better be in a common header file.
- */
-#define	CPWAIT_BRANCH							 \
-	sub	pc, pc, #4
-
-#define	CPWAIT(tmp)							 \
-	mrc	CP15_TTBR0(tmp)		/* arbitrary read of CP15 */	;\
-	mov	tmp, tmp		/* wait for it to complete */	;\
-	CPWAIT_BRANCH			/* branch to next insn */
 
 /*
  * Kernel start routine for OMAP
@@ -159,12 +145,13 @@ _C_LABEL(bootstrap_start):
 	/* Set the Domain Access register.  Very important! */
 	mov     r0, #DOMAIN_CLIENT	/* We only use domain 0 */
 	mcr	CP15_DACR(r0)
+	isb
 
 	/* Enable MMU */
 	mrc	CP15_SCTLR(r0)
 	orr	r0, r0, #CPU_CONTROL_MMU_ENABLE
 	mcr	CP15_SCTLR(r0)
-	CPWAIT(r0)
+	isb
 
 	/* Restore U-Boot arguments */
 	mov	r0, r6
