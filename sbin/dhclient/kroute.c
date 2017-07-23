@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.113 2017/07/22 17:55:20 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.114 2017/07/23 13:44:53 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -296,35 +296,6 @@ add_default_route(struct in_addr gateway, struct in_addr addr)
 }
 
 /*
- * add_static_routes() accepts a list of static routes in the format
- * specified for DHCP option 33 (static-routes) and adds them to the
- * routing table.
- */
-void
-add_static_routes(struct option_data *static_routes, struct in_addr iface)
-{
-	struct in_addr		 dest, netmask, gateway;
-	struct in_addr		 *addr;
-	int			 i;
-
-	netmask.s_addr = INADDR_ANY;	/* Not used for CLASSFULL! */
-
-	for (i = 0; (i + 2*sizeof(*addr)) <= static_routes->len;
-	     i += 2*sizeof(*addr)) {
-		addr = (struct in_addr *)&static_routes->data[i];
-		if (addr->s_addr == INADDR_ANY)
-			continue; /* RFC 2132 says 0.0.0.0 is not allowed. */
-
-		dest.s_addr = addr->s_addr;
-		gateway.s_addr = (addr+1)->s_addr;
-
-		/* XXX Order implies priority but we're ignoring that. */
-		add_route(dest, netmask, gateway, iface,
-		    RTA_DST | RTA_GATEWAY | RTA_IFA, RTF_GATEWAY | RTF_STATIC);
-	}
-}
-
-/*
  *
  * add_classless_static_routes() accepts a list of static routes in the
  * format specified for DHCP options 121 (classless-static-routes) and
@@ -431,8 +402,8 @@ set_routes(struct in_addr addr, struct option_data *classless,
 		add_default_route(gateway, addr);
 	}
 
-	if (classfull->len != 0)
-		add_static_routes(classfull, addr);
+	if (classfull->len != 0) 
+		log_warnx("DHO_STATIC_ROUTES (option 33) not supported");
 }
 
 /*
