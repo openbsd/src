@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgrf.c,v 1.1 2017/04/30 14:00:06 kettenis Exp $	*/
+/*	$OpenBSD: rkgrf.c,v 1.2 2017/07/23 17:07:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -49,7 +49,10 @@ rkgrf_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return (OF_is_compatible(faa->fa_node, "rockchip,rk3399-grf") ||
+	return (OF_is_compatible(faa->fa_node, "rockchip,rk3288-grf") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-pmu") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-sgrf") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-grf") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-pmugrf"));
 }
 
