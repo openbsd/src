@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.87 2016/04/02 11:07:50 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.88 2017/07/23 10:34:44 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -328,7 +328,7 @@ sub pack_header
 	return $header;
 }
 
-my $whatever = "usual_suspect000";
+my $whatever = "usualSuspect000";
 
 sub mkheader
 {
