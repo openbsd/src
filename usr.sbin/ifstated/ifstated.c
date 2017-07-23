@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.53 2017/07/22 19:52:01 jca Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.54 2017/07/23 13:49:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -230,7 +230,7 @@ rt_msg_handler(int fd, short event, void *arg)
 	char msg[2048];
 	struct rt_msghdr *rtm = (struct rt_msghdr *)&msg;
 	struct if_msghdr ifm;
-	int len;
+	ssize_t len;
 
 	len = read(fd, msg, sizeof(msg));
 
