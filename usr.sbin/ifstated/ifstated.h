@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.16 2017/07/04 21:04:14 benno Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.17 2017/07/23 13:48:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -52,7 +52,7 @@ struct ifsd_external {
 	int				 prevstatus;
 	u_int32_t			 frequency;
 	u_int32_t			 refcount;
-	u_int32_t			 lastexec;
+	time_t				 lastexec;
 	pid_t				 pid;
 };
 
@@ -110,7 +110,7 @@ struct ifsd_state {
 	TAILQ_ENTRY(ifsd_state)		 entries;
 	struct ifsd_action		*init;
 	struct ifsd_action		*body;
-	u_int32_t			 entered;
+	time_t				 entered;
 	char				*name;
 };
 
