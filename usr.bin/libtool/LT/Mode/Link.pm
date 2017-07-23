@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.35 2017/04/25 21:13:15 sthen Exp $
+# $OpenBSD: Link.pm,v 1.36 2017/07/23 09:48:53 zhuk Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -153,7 +153,9 @@ sub run
 	    'static-libtool-libs',
 	    'thread-safe', # XXX and --thread-safe ?
 	    'version-info:',
-	    'version-number:');
+	    'version-number:',
+	    'weak',
+	    );
 
 	# XXX options ignored: bindir, dlopen, dlpreopen, no-fast-install,
 	#	no-install, no-undefined, precious-files-regex,
