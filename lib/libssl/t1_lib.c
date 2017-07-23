@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.119 2017/07/19 17:45:31 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.120 2017/07/23 16:27:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1555,6 +1555,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 	unsigned char *end = *p + n;
 	int tlsext_servername = 0;
 	int renegotiate_seen = 0;
+	CBS cbs;
 
 	S3I(s)->next_proto_neg_seen = 0;
 	free(S3I(s)->alpn_selected);
@@ -1580,6 +1581,10 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 		if (s->internal->tlsext_debug_cb)
 			s->internal->tlsext_debug_cb(s, 1, type, data, size,
 			    s->internal->tlsext_debug_arg);
+
+		CBS_init(&cbs, data, size);
+		if (!tlsext_serverhello_parse_one(s, &cbs, type, al))
+			return 0;
 
 		if (type == TLSEXT_TYPE_server_name) {
 			if (s->tlsext_hostname == NULL || size > 0) {
