@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.6 2017/05/20 23:12:40 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.7 2017/07/23 10:12:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,7 +28,12 @@
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
 
-/* Registers */
+/* RK3288 registers */
+#define RK3288_CRU_CPLL_CON(i)		(0x0020 + (i) * 4)
+#define RK3288_CRU_GPLL_CON(i)		(0x0030 + (i) * 4)
+#define RK3288_CRU_CLKSEL_CON(i)	(0x0060 + (i) * 4)
+
+/* RK3399 registers */
 #define RK3399_CRU_CPLL_CON(i)		(0x0060 + (i) * 4)
 #define RK3399_CRU_GPLL_CON(i)		(0x0080 + (i) * 4)
 #define RK3399_CRU_NPLL_CON(i)		(0x00a0 + (i) * 4)
@@ -68,6 +73,11 @@ struct cfdriver rkclock_cd = {
 	NULL, "rkclock", DV_DULL
 };
 
+uint32_t rk3288_get_frequency(void *, uint32_t *);
+int	rk3288_set_frequency(void *, uint32_t *, uint32_t);
+void	rk3288_enable(void *, uint32_t *, int);
+void	rk3288_reset(void *, uint32_t *, int);
+
 uint32_t rk3399_get_frequency(void *, uint32_t *);
 int	rk3399_set_frequency(void *, uint32_t *, uint32_t);
 void	rk3399_enable(void *, uint32_t *, int);
@@ -88,8 +98,13 @@ struct rkclock_compat {
 
 struct rkclock_compat rkclock_compat[] = {
 	{
+		"rockchip,rk3288-cru",
+		rk3288_enable, rk3288_get_frequency,
+		rk3288_set_frequency, rk3288_reset
+	},
+	{
 		"rockchip,rk3399-cru",
-		rk3399_enable,rk3399_get_frequency,
+		rk3399_enable, rk3399_get_frequency,
 		rk3399_set_frequency, rk3399_reset
 	},
 	{
@@ -156,9 +171,142 @@ rkclock_attach(struct device *parent, struct device *self, void *aux)
 	reset_register(&sc->sc_rd);
 }
 
+/*
+ * Rockchip RK3288
+ */
+
+uint32_t
+rk3288_get_pll(struct rkclock_softc *sc, bus_size_t base)
+{
+	uint32_t clkod, clkr, clkf;
+	uint32_t reg;
+
+	reg = HREAD4(sc, base);
+	clkod = (reg >> 0) & 0xf;
+	clkr = (reg >> 8) & 0x3f;
+	reg = HREAD4(sc, base + 4);
+	clkf = (reg >> 0) & 0x1fff;
+	return 24000000ULL * (clkf + 1) / (clkr + 1) / (clkod + 1);
+}
+
+uint32_t
+rk3288_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint32_t reg, mux, div_con;
+
+	switch (idx) {
+	case RK3288_PLL_CPLL:
+		return rk3288_get_pll(sc, RK3288_CRU_CPLL_CON(0));
+	case RK3288_PLL_GPLL:
+		return rk3288_get_pll(sc, RK3288_CRU_GPLL_CON(0));
+	case RK3288_CLK_SDMMC:
+		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(11));
+		mux = (reg >> 6) & 0x3;
+		div_con = reg & 0x3f;
+		switch (mux) {
+		case 0:
+			idx = RK3288_PLL_CPLL;
+			break;
+		case 1:
+			idx = RK3288_PLL_GPLL;
+			break;
+		case 2:
+			return 24000000 / (div_con + 1);
+		default:
+			return 0;
+		}
+		return rk3288_get_frequency(sc, &idx) / (div_con + 1);
+		break;
+	case RK3288_CLK_UART0:
+		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(13));
+		mux = (reg >> 8) & 0x3;
+		div_con = reg & 0x7f;
+		if (mux == 2)
+			return 24000000 / (div_con + 1);
+		break;
+	case RK3288_CLK_UART1:
+		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(14));
+		mux = (reg >> 8) & 0x3;
+		div_con = reg & 0x7f;
+		if (mux == 2)
+			return 24000000 / (div_con + 1);
+		break;
+	case RK3288_CLK_UART2:
+		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(15));
+		mux = (reg >> 8) & 0x3;
+		div_con = reg & 0x7f;
+		if (mux == 2)
+			return 24000000 / (div_con + 1);
+		break;
+	case RK3288_CLK_UART3:
+		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(16));
+		mux = (reg >> 8) & 0x3;
+		div_con = reg & 0x7f;
+		if (mux == 2)
+			return 24000000 / (div_con + 1);
+		break;
+	case RK3288_CLK_UART4:
+		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(3));
+		mux = (reg >> 8) & 0x3;
+		div_con = reg & 0x7f;
+		if (mux == 2)
+			return 24000000 / (div_con + 1);
+		break;
+	default:
+		break;
+	}
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return 0;
+}
+
+int
+rk3288_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+{
+	uint32_t idx = cells[0];
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return -1;
+}
+
+void
+rk3288_enable(void *cookie, uint32_t *cells, int on)
+{
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case RK3288_CLK_SDMMC:
+	case RK3288_CLK_UART0:
+	case RK3288_CLK_UART1:
+	case RK3288_CLK_UART2:
+	case RK3288_CLK_UART3:
+	case RK3288_CLK_UART4:
+	case RK3288_CLK_SDMMC_DRV:
+	case RK3288_CLK_SDMMC_SAMPLE:
+	case RK3288_HCLK_HOST0:
+	case RK3288_HCLK_SDMMC:
+		/* Enabled by default. */
+		break;
+	default:
+		printf("%s: 0x%08x\n", __func__, idx);
+		break;
+	}
+}
+
+void
+rk3288_reset(void *cookie, uint32_t *cells, int on)
+{
+	uint32_t idx = cells[0];
+
+	printf("%s: 0x%08x\n", __func__, idx);
+}
+
 /* 
  * Rockchip RK3399 
  */
+
 uint32_t
 rk3399_get_pll(struct rkclock_softc *sc, bus_size_t base)
 {
