@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpinctrl.c,v 1.3 2017/05/13 12:25:55 kettenis Exp $	*/
+/*	$OpenBSD: rkpinctrl.c,v 1.4 2017/07/23 17:08:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -29,9 +29,17 @@
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
+#ifdef __armv7__
+#include <arm/simplebus/simplebusvar.h>
+#else
 #include <arm64/dev/simplebusvar.h>
+#endif
 
-/* Registers */
+/* RK3288 registers */
+#define RK3288_GRF_GPIO1A_IOMUX		0x0000
+#define RK3288_PMUGRF_GPIO0A_IOMUX	0x0084
+
+/* RK3399 registers */
 #define RK3399_GRF_GPIO2A_IOMUX		0xe000
 #define RK3399_PMUGRF_GPIO0A_IOMUX	0x0000
 
@@ -53,6 +61,7 @@ struct cfdriver rkpinctrl_cd = {
 	NULL, "rkpinctrl", DV_DULL
 };
 
+int	rk3288_pinctrl(uint32_t, void *);
 int	rk3399_pinctrl(uint32_t, void *);
 
 int
@@ -60,7 +69,8 @@ rkpinctrl_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "rockchip,rk3399-pinctrl");
+	return (OF_is_compatible(faa->fa_node, "rockchip,rk3288-pinctrl") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-pinctrl"));
 }
 
 void
@@ -80,10 +90,160 @@ rkpinctrl_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	pinctrl_register(faa->fa_node, rk3399_pinctrl, sc);
+	if (OF_is_compatible(faa->fa_node, "rockchip,rk3288-pinctrl"))
+		pinctrl_register(faa->fa_node, rk3288_pinctrl, sc);
+	else
+		pinctrl_register(faa->fa_node, rk3399_pinctrl, sc);
 
 	/* Attach GPIO banks. */
 	simplebus_attach(parent, &sc->sc_sbus.sc_dev, faa);
+}
+
+/*
+ * Rockchip RK3288
+ */
+
+int
+rk3288_pull(uint32_t bank, uint32_t idx, uint32_t phandle)
+{
+	int node;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return -1;
+
+	/* XXX */
+	if (bank == 0)
+		return -1;
+
+	if (OF_getproplen(node, "bias-disable") == 0)
+		return 0;
+	if (OF_getproplen(node, "bias-pull-up") == 0)
+		return 1;
+	if (OF_getproplen(node, "bias-pull-down") == 0)
+		return 2;
+
+	return -1;
+}
+
+int
+rk3288_strength(uint32_t bank, uint32_t idx, uint32_t phandle)
+{
+	int strength, level;
+	int levels[4] = { 2, 4, 8, 12 };
+	int node;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return -1;
+
+	/* XXX */
+	if (bank == 0)
+		return -1;
+
+	strength = OF_getpropint(node, "drive-strength", -1);
+	if (strength == -1)
+		return -1;
+
+	/* Convert drive strength to level. */
+	for (level = 3; level >= 0; level--) {
+		if (strength >= levels[level])
+			break;
+	}
+	return level;
+}
+
+int
+rk3288_pinctrl(uint32_t phandle, void *cookie)
+{
+	struct rkpinctrl_softc *sc = cookie;
+	uint32_t *pins;
+	int node, len, i;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return -1;
+
+	len = OF_getproplen(node, "rockchip,pins");
+	if (len <= 0)
+		return -1;
+
+	pins = malloc(len, M_TEMP, M_WAITOK);
+	if (OF_getpropintarray(node, "rockchip,pins", pins, len) != len)
+		goto fail;
+
+	for (i = 0; i < len / sizeof(uint32_t); i += 4) {
+		struct regmap *rm;
+		bus_size_t base, off;
+		uint32_t bank, idx, mux;
+		int pull, strength;
+		uint32_t mask, bits;
+		int s;
+
+		bank = pins[i];
+		idx = pins[i + 1];
+		mux = pins[i + 2];
+		pull = rk3288_pull(bank, idx, pins[i + 3]);
+		strength = rk3288_strength(bank, idx, pins[i + 3]);
+
+		if (bank > 8 || idx > 32 || mux > 7)
+			continue;
+
+		/* Bank 0 lives in the PMU. */
+		if (bank < 1) {
+			rm = sc->sc_pmu;
+			base = RK3288_PMUGRF_GPIO0A_IOMUX;
+		} else {
+			rm = sc->sc_grf;
+			base = RK3288_GRF_GPIO1A_IOMUX - 0x10;
+		}
+
+		s = splhigh();
+
+		/* IOMUX control */
+		off = bank * 0x10 + (idx / 8) * 0x04;
+
+		/* GPIO3D, GPIO4A and GPIO4B are special. */
+		if ((bank == 3 && idx >= 24) || (bank == 4 && idx < 16)) {
+			mask = (0x7 << ((idx % 4) * 4));
+			bits = (mux << ((idx % 4) * 4));
+		} else {
+			mask = (0x3 << ((idx % 8) * 2));
+			bits = (mux << ((idx % 8) * 2));
+		}
+		if (bank > 3 || (bank == 3 && idx >= 28))
+			off += 0x04;
+		if (bank > 4 || (bank == 4 && idx >= 4))
+			off += 0x04;
+		if (bank > 4 || (bank == 4 && idx >= 12))
+			off += 0x04;
+		regmap_write_4(rm, base + off, mask << 16 | bits);
+
+		/* GPIO pad pull down and pull up control */
+		if (pull >= 0) {
+			off = 0x140 + bank * 0x10 + (idx / 8) * 0x04;
+			mask = (0x3 << ((idx % 8) * 2));
+			bits = (pull << ((idx % 8) * 2));
+			regmap_write_4(rm, base + off, mask << 16 | bits);
+		}
+
+		/* GPIO drive strength control */
+		if (strength >= 0) {
+			off = 0x1c0 + bank * 0x10 + (idx / 8) * 0x04;
+			mask = (0x3 << ((idx % 8) * 2));
+			bits = (strength << ((idx % 8) * 2));
+			regmap_write_4(rm, base + off, mask << 16 | bits);
+		}
+
+		splx(s);
+	}
+
+	free(pins, M_TEMP, len);
+	return 0;
+
+fail:
+	free(pins, M_TEMP, len);
+	return -1;
 }
 
 /* 
