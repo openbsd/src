@@ -1,9 +1,9 @@
-/*	$OpenBSD: apm.c,v 1.32 2015/11/01 14:13:30 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.33 2017/07/23 12:51:20 anton Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
  *  All rights reserved.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -14,7 +14,7 @@
  *     documentation and/or other materials provided with the distribution.
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -26,7 +26,7 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <sys/types.h>
@@ -50,13 +50,14 @@
 
 extern char *__progname;
 
-void usage(void);
-void zzusage(void);
-int do_zzz(int, enum apm_action action);
-int open_socket(const char *pn);
-int send_command(int fd, struct apm_command *cmd, struct apm_reply *reply);
+static int		do_zzz(int, enum apm_action);
+static int		open_socket(const char *);
+static int		send_command(int, struct apm_command *,
+			    struct apm_reply *);
+static __dead void	usage(void);
+static __dead void	zzusage(void);
 
-void
+static __dead void
 usage(void)
 {
 	fprintf(stderr,"usage: %s [-AabHLlmPSvZz] [-f sockname]\n",
@@ -64,7 +65,7 @@ usage(void)
 	exit(1);
 }
 
-void
+static __dead void
 zzusage(void)
 {
 	fprintf(stderr,"usage: %s [-SZz] [-f sockname]\n",
@@ -72,7 +73,7 @@ zzusage(void)
 	exit(1);
 }
 
-int
+static int
 send_command(int fd, struct apm_command *cmd, struct apm_reply *reply)
 {
 	/* send a command to the apm daemon */
@@ -90,7 +91,7 @@ send_command(int fd, struct apm_command *cmd, struct apm_reply *reply)
 	return (0);
 }
 
-int
+static int
 do_zzz(int fd, enum apm_action action)
 {
 	struct apm_command command;
@@ -119,7 +120,7 @@ do_zzz(int fd, enum apm_action action)
 	exit(send_command(fd, &command, &reply));
 }
 
-int
+static int
 open_socket(const char *sockname)
 {
 	int sock, errr;
@@ -234,7 +235,8 @@ main(int argc, char *argv[])
 			action = GETSTATUS;
 			break;
 		default:
-			if (!strcmp(__progname, "zzz") || !strcmp(__progname, "ZZZ"))
+			if (!strcmp(__progname, "zzz") ||
+			    !strcmp(__progname, "ZZZ"))
 				zzusage();
 			else
 				usage();
