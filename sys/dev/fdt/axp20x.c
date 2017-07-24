@@ -1,4 +1,4 @@
-/* $OpenBSD: axp20x.c,v 1.1 2017/07/23 19:26:03 kettenis Exp $ */
+/* $OpenBSD: axp20x.c,v 1.2 2017/07/24 20:35:26 kettenis Exp $ */
 /*
  * Copyright (c) 2014,2016 Artturi Alm
  *
@@ -66,7 +66,8 @@ axp20x_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int node = *(int *)ia->ia_cookie;
 
-	return OF_is_compatible(node, "x-powers,axp209");
+	return (OF_is_compatible(node, "x-powers,axp152") ||
+	    OF_is_compatible(node, "x-powers,axp209"));
 }
 
 void
@@ -74,20 +75,25 @@ axp20x_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct axp20x_softc *sc = (struct axp20x_softc *)self;
 	struct i2c_attach_args *ia = aux;
+	int node = *(int *)ia->ia_cookie;
 	uint8_t psr;
 
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	axp20x_readb(AXP209_PSR, &psr);
-	printf(": AXP209,");
-	if ((psr & (AXP209_PSR_ACIN | AXP209_PSR_VBUS)) == 0)
-		printf(" BAT");
-	else {
-		if (psr & AXP209_PSR_ACIN)
-			printf(" ACIN");
-		if (psr & AXP209_PSR_VBUS)
-			printf(" VBUS");
+	if (OF_is_compatible(node, "x-powers,axp152")) {
+		printf(": AXP152");
+	} else {
+		axp20x_readb(AXP209_PSR, &psr);
+		printf(": AXP209,");
+		if ((psr & (AXP209_PSR_ACIN | AXP209_PSR_VBUS)) == 0)
+			printf(" BAT");
+		else {
+			if (psr & AXP209_PSR_ACIN)
+				printf(" ACIN");
+			if (psr & AXP209_PSR_VBUS)
+				printf(" VBUS");
+		}
 	}
 	printf("\n");
 
