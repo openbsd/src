@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.505 2017/07/11 12:51:05 florian Exp $	*/
+/*	$OpenBSD: if.c,v 1.506 2017/07/24 09:38:25 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1057,10 +1057,10 @@ if_detach(struct ifnet *ifp)
 
 	/* Remove the watchdog timeout & task */
 	timeout_del(ifp->if_slowtimo);
-	task_del(systq, ifp->if_watchdogtask);
+	task_del(softnettq, ifp->if_watchdogtask);
 
 	/* Remove the link state task */
-	task_del(systq, ifp->if_linkstatetask);
+	task_del(softnettq, ifp->if_linkstatetask);
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);
@@ -1587,6 +1587,7 @@ if_linkstate_task(void *xifidx)
 	struct ifnet *ifp;
 	int s;
 
+	KERNEL_LOCK();
 	NET_LOCK(s);
 
 	ifp = if_get(ifidx);
@@ -1595,6 +1596,7 @@ if_linkstate_task(void *xifidx)
 	if_put(ifp);
 
 	NET_UNLOCK(s);
+	KERNEL_UNLOCK();
 }
 
 void
@@ -1615,7 +1617,7 @@ if_linkstate(struct ifnet *ifp)
 void
 if_link_state_change(struct ifnet *ifp)
 {
-	task_add(systq, ifp->if_linkstatetask);
+	task_add(softnettq, ifp->if_linkstatetask);
 }
 
 /*
@@ -1631,7 +1633,7 @@ if_slowtimo(void *arg)
 
 	if (ifp->if_watchdog) {
 		if (ifp->if_timer > 0 && --ifp->if_timer == 0)
-			task_add(systq, ifp->if_watchdogtask);
+			task_add(softnettq, ifp->if_watchdogtask);
 		timeout_add(ifp->if_slowtimo, hz / IFNET_SLOWHZ);
 	}
 	splx(s);
@@ -1648,10 +1650,12 @@ if_watchdog_task(void *xifidx)
 	if (ifp == NULL)
 		return;
 
+	KERNEL_LOCK();
 	s = splnet();
 	if (ifp->if_watchdog)
 		(*ifp->if_watchdog)(ifp);
 	splx(s);
+	KERNEL_UNLOCK();
 
 	if_put(ifp);
 }
