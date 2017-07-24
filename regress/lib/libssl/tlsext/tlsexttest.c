@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.2 2017/07/24 17:15:27 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.3 2017/07/24 17:42:14 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -396,6 +396,19 @@ test_tlsext_sni_clienthello(void)
 		goto done;
 	}
 
+	ssl->internal->hit = 1;
+
+	if ((ssl->session->tlsext_hostname = strdup("notthesame.libressl.org")) ==
+	    NULL)
+		errx(1, "failed to strdup tlsext_hostname");
+
+	CBS_init(&cbs, tlsext_sni_clienthello, sizeof(tlsext_sni_clienthello));
+	if (tlsext_sni_clienthello_parse(ssl, &cbs, &alert)) {
+		fprintf(stderr, "FAIL: parsed clienthello with mismatched SNI\n");
+		failure = 1;
+		goto done;
+	}
+
  done:
 	CBB_cleanup(&cbb);
 	SSL_CTX_free(ssl_ctx);
@@ -475,6 +488,9 @@ test_tlsext_sni_serverhello(void)
 		goto done;
 	}
 
+	free(ssl->session->tlsext_hostname);
+	ssl->session->tlsext_hostname = NULL;
+
 	CBS_init(&cbs, tlsext_sni_serverhello, sizeof(tlsext_sni_serverhello));
 	if (!tlsext_sni_serverhello_parse(ssl, &cbs, &alert)) {
 		fprintf(stderr, "FAIL: failed to parse serverhello SNI\n");
@@ -482,7 +498,20 @@ test_tlsext_sni_serverhello(void)
 		goto done;
 	}
 
-	/* XXX - test parse with session with mismatched name. */
+	if (ssl->session->tlsext_hostname == NULL) {
+		fprintf(stderr, "FAIL: no tlsext_hostname after serverhello SNI\n");
+		failure = 1;
+		goto done;
+	}
+
+	if (strlen(ssl->session->tlsext_hostname) != strlen(TEST_SNI_SERVERNAME) ||
+	    strncmp(ssl->session->tlsext_hostname, TEST_SNI_SERVERNAME,
+		strlen(TEST_SNI_SERVERNAME)) != 0) {
+		fprintf(stderr, "FAIL: got tlsext_hostname `%s', want `%s'\n",
+		    ssl->session->tlsext_hostname, TEST_SNI_SERVERNAME);
+		failure = 1;
+		goto done;
+	}
 
  done:
 	CBB_cleanup(&cbb);
