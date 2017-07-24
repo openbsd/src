@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.107 2017/07/22 17:06:40 jca Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.108 2017/07/24 12:57:01 jca Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -147,7 +147,6 @@ char	hostname[HOST_NAME_MAX+1]; /* Hostname */
 char	daytime[33];		/* timenow in human readable form */
 char	*arcdir;		/* Dir to put archives in (if it exists) */
 
-FILE   *openmail(void);
 char   *lstat_log(char *, size_t, int);
 char   *missing_field(char *, char *, int);
 char   *sob(char *);
@@ -1072,13 +1071,12 @@ domonitor(struct conf_entry *ent)
 			fclose(fp);
 			goto cleanup;
 		}
-
-		/* Send message. */
 		fclose(fp);
 
-		fp = openmail();
+		/* Send message. */
+		fp = popen(SENDMAIL " -t", "w");
 		if (fp == NULL) {
-			warn("openmail");
+			warn("popen");
 			goto cleanup;
 		}
 		fprintf(fp, "Auto-Submitted: auto-generated\n");
@@ -1103,20 +1101,6 @@ cleanup:
 	free(flog);
 	free(rb);
 	return (1);
-}
-
-FILE *
-openmail(void)
-{
-	char *cmdbuf = NULL;
-	FILE *ret;
-
-	if (asprintf(&cmdbuf, "%s -t", SENDMAIL) != -1) {
-		ret = popen(cmdbuf, "w");
-		free(cmdbuf);
-		return (ret);
-	}
-	return (NULL);
 }
 
 /* ARGSUSED */
