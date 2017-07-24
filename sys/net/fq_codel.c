@@ -641,6 +641,7 @@ struct mbuf *
 fqcodel_deq_begin(struct fqcodel *fqc, void **cookiep,
     struct mbuf_list *free_ml)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct flowq *fq;
 	struct flow *flow;
 	struct mbuf *m;
@@ -653,11 +654,13 @@ fqcodel_deq_begin(struct fqcodel *fqc, void **cookiep,
 
 	for (flow = first_flow(fqc, &fq); flow != NULL;
 	     flow = next_flow(fqc, flow, &fq)) {
-		m = codel_dequeue(&flow->cd, &fqc->cparams, now, free_ml,
+		m = codel_dequeue(&flow->cd, &fqc->cparams, now, &ml,
 		    &fqc->drop_cnt.packets, &fqc->drop_cnt.bytes);
 
-		KASSERT(fqc->qlength >= ml_len(free_ml));
-		fqc->qlength -= ml_len(free_ml);
+		KASSERT(fqc->qlength >= ml_len(&ml));
+		fqc->qlength -= ml_len(&ml);
+
+		ml_enlist(free_ml, &ml);
 
 		if (m != NULL) {
 			flow->deficit -= m->m_pkthdr.len;
