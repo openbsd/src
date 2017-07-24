@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.91 2016/10/21 16:12:38 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.92 2017/07/24 12:07:46 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -1531,7 +1531,7 @@ sfnd_abort:
 			 * path to be the name so Dir_MTime won't go grovelling
 			 * for it.  */
 			gn->suffix = targ == NULL ? NULL : targ->suff;
-			efree(gn->path);
+			free(gn->path);
 			gn->path = estrdup(gn->name);
 		}
 
@@ -1602,7 +1602,7 @@ sfnd_abort:
 	gn->suffix = src->suff;
 
 	/* So Dir_MTime doesn't go questing for it...  */
-	efree(gn->path);
+	free(gn->path);
 	gn->path = estrdup(gn->name);
 
 	/* Nuke the transformation path and the Src structures left over in the

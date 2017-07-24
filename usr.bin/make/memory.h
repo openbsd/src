@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-/* $OpenBSD: memory.h,v 1.9 2014/05/18 08:08:50 espie Exp $ */
+/* $OpenBSD: memory.h,v 1.10 2017/07/24 12:07:46 espie Exp $ */
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -44,10 +44,6 @@ extern void *erealloc(void *, size_t);
 extern void *ereallocarray(void *, size_t, size_t);
 extern int eunlink(const char *);
 extern void esetenv(const char *, const char *);
-
-/* efree(x) works when x==NULL. STDC behavior, may need some different
- * definition for cross-builds on deficient systems */
-#define efree	free
 
 extern void *hash_calloc(size_t, size_t, void *);
 extern void hash_free(void *, void *);

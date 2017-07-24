@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.88 2017/07/21 09:29:42 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.89 2017/07/24 12:07:46 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -411,7 +411,7 @@ read_archive(const char *archive, const char *earchive)
 
 		/*  Whole archive read ok.  */
 		if (n == 0 && feof(arch)) {
-			efree(list.fnametab);
+			free(list.fnametab);
 			fclose(arch);
 			return ar;
 		}
@@ -495,7 +495,7 @@ read_archive(const char *archive, const char *earchive)
 
 	fclose(arch);
 	ohash_delete(&ar->members);
-	efree(list.fnametab);
+	free(list.fnametab);
 	free(ar);
 	return NULL;
 }
@@ -762,7 +762,7 @@ ArchFindMember(
 #endif
 			if (length == sizeof(arHeaderPtr->ar_name) ||
 			    memberName[length] == ' ') {
-				efree(list.fnametab);
+				free(list.fnametab);
 				return arch;
 			}
 		}
@@ -786,7 +786,7 @@ ArchFindMember(
 				continue;
 			/* Got the entry.  */
 			if (strcmp(memberName, member) == 0) {
-				efree(list.fnametab);
+				free(list.fnametab);
 				return arch;
 			}
 		}
@@ -812,7 +812,7 @@ ArchFindMember(
 				printf("ArchFind: Extended format entry for %s\n", ename);
 			/* Found as extended name.	*/
 			if (strcmp(ename, member) == 0) {
-				efree(list.fnametab);
+				free(list.fnametab);
 				return arch;
 			}
 		}
@@ -826,7 +826,7 @@ ArchFindMember(
 	/* We did not find the member, or we ran into an error while reading
 	 * the archive.  */
 #ifdef SVRARCHIVES
-	efree(list.fnametab);
+	free(list.fnametab);
 #endif
 	fclose(arch);
 	return NULL;
