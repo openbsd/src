@@ -1,4 +1,11 @@
-# $OpenBSD: Makefile.common,v 1.4 2015/05/14 02:56:01 jsg Exp $
+# $OpenBSD: Makefile.common,v 1.5 2017/07/24 19:22:49 robert Exp $
+
+.include <bsd.own.mk>
+
+.if ${COMPILER_VERSION:L} == "clang"
+CC=	gcc
+CXX=	g++
+.endif
 
 GCCDIR= ${.CURDIR}/../../gcc/gcc
 GCCLIB= ${GCCDIR}/gcc

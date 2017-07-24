@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libobjc/Makefile,v 1.34.2.1 2009/08/03 08:13:06 kensmith Exp $
-# $OpenBSD: Makefile,v 1.7 2017/07/10 21:30:37 espie Exp $
+# $OpenBSD: Makefile,v 1.8 2017/07/24 19:22:49 robert Exp $
 
 OBJCDIR=${.CURDIR}/../../../gcc/libobjc
 GCCDIR=	${.CURDIR}/../../../gcc/gcc
@@ -57,7 +57,7 @@ BUILDFIRST = ${GENHDRS}
 .SUFFIXES: .m
 
 # ObjC
-OBJC?=		cc
+OBJC?=		${CC}
 OBJCFLAGS?=	${CFLAGS} ${CPPFLAGS} -Wno-import
 COMPILE.m?=	${OBJC} ${OBJCFLAGS} -c
 LINK.m?=	${OBJC} ${OBJCFLAGS} ${LDFLAGS}
