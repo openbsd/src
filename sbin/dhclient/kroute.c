@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.117 2017/07/24 17:15:41 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.118 2017/07/24 18:13:19 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -373,7 +373,7 @@ create_route_label(struct sockaddr_rtlabel *label)
 void
 set_routes(struct in_addr addr, struct option_data *classless,
     struct option_data *msclassless, struct option_data *routers,
-    struct option_data *classfull, struct option_data *subnet)
+    struct option_data *subnet)
 {
 	struct in_addr	gateway, mask;
 
@@ -406,9 +406,6 @@ set_routes(struct in_addr addr, struct option_data *classless,
 
 		add_default_route(gateway, addr);
 	}
-
-	if (classfull->len != 0) 
-		log_warnx("DHO_STATIC_ROUTES (option 33) not supported");
 }
 
 /*

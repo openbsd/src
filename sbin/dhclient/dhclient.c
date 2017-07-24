@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.482 2017/07/24 17:15:41 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.483 2017/07/24 18:13:19 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1038,7 +1038,6 @@ bind_lease(struct interface_info *ifi)
 	    &options[DHO_CLASSLESS_STATIC_ROUTES],
 	    &options[DHO_CLASSLESS_MS_STATIC_ROUTES],
 	    &options[DHO_ROUTERS],
-	    &options[DHO_STATIC_ROUTES],
 	    &options[DHO_SUBNET_MASK]);
 
 newlease:
@@ -2319,23 +2318,22 @@ apply_defaults(struct client_lease *lease)
 		}
 	}
 
+	if (newlease->options[DHO_STATIC_ROUTES].len != 0) {
+		log_warnx("DHO_STATIC_ROUTES (option 33) not supported");
+		free(newlease->options[DHO_STATIC_ROUTES].data);
+		newlease->options[DHO_STATIC_ROUTES].data = NULL;
+		newlease->options[DHO_STATIC_ROUTES].len = 0;
+	}
 
 	/*
-	 * RFC 3442 says client *MUST* ignore both DHO_ROUTERS and
-	 * DHO_STATIC_ROUTES when DHO_CLASSLESS_[MS_]_ROUTES present.
-	 *
-	 * Remove them from 'newlease' so that -L will not show them
-	 * as part of the effective lease.
+	 * RFC 3442 says client *MUST* ignore DHO_ROUTERS
+	 * when DHO_CLASSLESS_[MS_]_ROUTES present.
 	 */
 	if ((newlease->options[DHO_CLASSLESS_MS_STATIC_ROUTES].len != 0) ||
 	    (newlease->options[DHO_CLASSLESS_STATIC_ROUTES].len != 0)) {
 		free(newlease->options[DHO_ROUTERS].data);
 		newlease->options[DHO_ROUTERS].data = NULL;
 		newlease->options[DHO_ROUTERS].len = 0;
-
-		free(newlease->options[DHO_STATIC_ROUTES].data);
-		newlease->options[DHO_STATIC_ROUTES].data = NULL;
-		newlease->options[DHO_STATIC_ROUTES].len = 0;
 	}
 
 	return newlease;
