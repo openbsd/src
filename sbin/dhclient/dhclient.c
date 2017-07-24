@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.479 2017/07/24 13:16:06 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.480 2017/07/24 13:51:43 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -928,13 +928,9 @@ bind_lease(struct interface_info *ifi)
 	ifi->active = ifi->offer;
 	ifi->offer = NULL;
 
-	/* Deleting the addresses also clears out arp entries. */
-	delete_addresses(ifi->name);
-	flush_routes();
-
 	set_mtu(&options[DHO_INTERFACE_MTU]);
 
-	set_address(ifi->active->address, &options[DHO_SUBNET_MASK]);
+	set_address(ifi->name, ifi->active->address, &options[DHO_SUBNET_MASK]);
 
 	set_routes(ifi->active->address,
 	    &options[DHO_CLASSLESS_STATIC_ROUTES],

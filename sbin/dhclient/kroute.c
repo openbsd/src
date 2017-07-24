@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.115 2017/07/24 11:00:01 friehm Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.116 2017/07/24 13:51:43 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -74,7 +74,8 @@ int	create_route_label(struct sockaddr_rtlabel *);
 int	check_route_label(struct sockaddr_rtlabel *);
 void	populate_rti_info(struct sockaddr **, struct rt_msghdr *);
 void	delete_route(int, struct rt_msghdr *);
-
+void	flush_routes(void);
+void	delete_addresses(char *);
 
 #define	ROUTE_LABEL_NONE		1
 #define	ROUTE_LABEL_NOT_DHCLIENT	2
@@ -374,6 +375,8 @@ set_routes(struct in_addr addr, struct option_data *classless,
 {
 	struct in_addr	gateway, mask;
 
+	flush_routes();
+
 	if (classless->len != 0) {
 		add_classless_static_routes(classless, addr);
 		return;
@@ -667,10 +670,13 @@ priv_set_mtu(char *name, int ioctlfd, struct imsg_set_mtu *imsg)
  *	ifconfig <if> inet <addr> netmask <mask> broadcast <addr>
  */
 void
-set_address(struct in_addr addr, struct option_data *mask)
+set_address(char *name, struct in_addr addr, struct option_data *mask)
 {
 	struct imsg_set_address	 imsg;
 	int			 rslt;
+
+	/* Deleting the addresses also clears out arp entries. */
+	delete_addresses(name);
 
 	imsg.addr = addr;
 	if (mask->len == sizeof(imsg.mask))
