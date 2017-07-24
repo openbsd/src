@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.40 2015/07/18 19:21:03 sf Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.41 2017/07/24 15:17:31 naddy Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -420,6 +420,7 @@ lapic_delay(int usec)
  * XXX the following belong mostly or partly elsewhere..
  */
 
+#ifdef MULTIPROCESSOR
 static __inline void i82489_icr_wait(void);
 
 static __inline void
@@ -439,7 +440,6 @@ i82489_icr_wait(void)
 	}
 }
 
-#ifdef MULTIPROCESSOR
 void
 i386_ipi_init(int target)
 {
