@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.216 2017/07/24 13:51:43 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.217 2017/07/24 17:15:41 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -155,95 +155,89 @@ struct interface_info {
 #define	_PATH_DHCLIENT_CONF	"/etc/dhclient.conf"
 #define	_PATH_DHCLIENT_DB	"/var/db/dhclient.leases"
 
-/* External definitions. */
-
-extern struct client_config *config;
-extern struct imsgbuf *unpriv_ibuf;
-extern volatile sig_atomic_t quit;
-
 /* options.c */
-int pack_options(unsigned char *, int, struct option_data *);
-char *pretty_print_option(unsigned int, struct option_data *, int);
-char *pretty_print_domain_search(unsigned char *, size_t);
-char *pretty_print_string(unsigned char *, size_t, int);
-char *pretty_print_classless_routes(unsigned char *, size_t);
-struct option_data *unpack_options(struct dhcp_packet *);
-char *code_to_name(int);
-char *code_to_format(int);
-int name_to_code(char *);
+int			 pack_options(unsigned char *, int,
+	struct option_data *);
+struct option_data	*unpack_options(struct dhcp_packet *);
+char			*pretty_print_option(unsigned int, struct option_data *,
+    int);
+char			*pretty_print_domain_search(unsigned char *, size_t);
+char			*pretty_print_string(unsigned char *, size_t, int);
+char			*pretty_print_classless_routes(unsigned char *, size_t);
+char			*code_to_name(int);
+char			*code_to_format(int);
+int			 name_to_code(char *);
 
 /* conflex.c */
-extern int lexline, lexchar;
-extern char *token_line, *tlname;
-void new_parse(char *);
-int next_token(char **, FILE *);
-int peek_token(char **, FILE *);
+extern int	 lexline, lexchar;
+extern char	*token_line, *tlname;
+
+void		 new_parse(char *);
+int		 next_token(char **, FILE *);
+int		 peek_token(char **, FILE *);
 
 /* parse.c */
-void skip_to_semi(FILE *);
-int parse_semi(FILE *);
-char *parse_string(FILE *, unsigned int *);
-int parse_ip_addr(FILE *, struct in_addr *);
-int parse_cidr(FILE *, unsigned char *);
-void parse_lease_time(FILE *, time_t *);
-int parse_decimal(FILE *, unsigned char *, char);
-int parse_hex(FILE *, unsigned char *);
-int parse_boolean(FILE *, unsigned char *);
-time_t parse_date(FILE *);
-void parse_warn(char *);
+void		 skip_to_semi(FILE *);
+int		 parse_semi(FILE *);
+char		*parse_string(FILE *, unsigned int *);
+int		 parse_ip_addr(FILE *, struct in_addr *);
+int		 parse_cidr(FILE *, unsigned char *);
+void		 parse_lease_time(FILE *, time_t *);
+int		 parse_decimal(FILE *, unsigned char *, char);
+int		 parse_hex(FILE *, unsigned char *);
+int		 parse_boolean(FILE *, unsigned char *);
+time_t		 parse_date(FILE *);
+void		 parse_warn(char *);
 
 /* bpf.c */
-int get_bpf_sock(char *);
-int get_udp_sock(int);
-int configure_bpf_sock(int);
-ssize_t send_packet(struct interface_info *, struct in_addr, struct in_addr);
-ssize_t receive_packet(struct interface_info *, struct sockaddr_in *,
+int		 get_bpf_sock(char *);
+int		 get_udp_sock(int);
+int		 configure_bpf_sock(int);
+ssize_t		 send_packet(struct interface_info *, struct in_addr,
+    struct in_addr);
+ssize_t		 receive_packet(struct interface_info *, struct sockaddr_in *,
     struct ether_addr *);
 
 /* dispatch.c */
-void dispatch(struct interface_info *, int);
-void set_timeout( struct interface_info *, time_t,
+void		 dispatch(struct interface_info *, int);
+void		 set_timeout( struct interface_info *, time_t,
     void (*)(struct interface_info *));
-void cancel_timeout(struct interface_info *);
-void interface_link_forceup(char *, int);
-int interface_status(char *);
-void get_hw_address(struct interface_info *);
-void sendhup(void);
+void		 cancel_timeout(struct interface_info *);
+void		 sendhup(void);
 
 /* dhclient.c */
-extern char *path_dhclient_conf;
-extern char *path_dhclient_db;
+extern char			*path_dhclient_conf;
+extern char			*path_dhclient_db;
+extern struct client_config	*config;
+extern struct imsgbuf		*unpriv_ibuf;
+extern volatile sig_atomic_t	 quit;
 
-void dhcpoffer(struct interface_info *, struct option_data *, char *);
-void dhcpack(struct interface_info *, struct option_data *,char *);
-void dhcpnak(struct interface_info *, struct option_data *,char *);
-
-void free_client_lease(struct client_lease *);
-
-void routehandler(struct interface_info *, int);
+void		 dhcpoffer(struct interface_info *, struct option_data *,
+    char *);
+void		 dhcpack(struct interface_info *, struct option_data *,char *);
+void		 dhcpnak(struct interface_info *, struct option_data *,char *);
+void		 free_client_lease(struct client_lease *);
+void		 routehandler(struct interface_info *, int);
 
 /* packet.c */
-void assemble_eh_header(struct ether_addr, struct ether_header *);
-ssize_t decode_hw_header(unsigned char *, uint32_t, struct ether_addr *);
-ssize_t decode_udp_ip_header(unsigned char *, uint32_t, struct sockaddr_in *);
-uint32_t checksum(unsigned char *, uint32_t, uint32_t);
-uint32_t wrapsum(uint32_t);
+void		 assemble_eh_header(struct ether_addr, struct ether_header *);
+ssize_t		 decode_hw_header(unsigned char *, uint32_t,
+    struct ether_addr *);
+ssize_t		 decode_udp_ip_header(unsigned char *, uint32_t,
+    struct sockaddr_in *);
+uint32_t	 checksum(unsigned char *, uint32_t, uint32_t);
+uint32_t	 wrapsum(uint32_t);
 
 /* clparse.c */
-void read_client_conf(char *);
-void read_client_leases(char *, struct client_lease_tq *);
+void		 read_client_conf(char *);
+void		 read_client_leases(char *, struct client_lease_tq *);
 
 /* kroute.c */
-void delete_address(struct in_addr);
-
-void set_mtu(struct option_data *);
-void set_address(char *, struct in_addr, struct option_data *);
-void set_routes(struct in_addr, struct option_data *, struct option_data *,
-    struct option_data *, struct option_data *, struct option_data *);
-
-void add_route(struct in_addr, struct in_addr, struct in_addr, struct in_addr,
-    int, int);
-
-void flush_unpriv_ibuf(const char *);
-
-int resolv_conf_priority(int, int);
+void		 delete_address(struct in_addr);
+void		 write_resolv_conf(uint8_t *, size_t);
+void		 flush_unpriv_ibuf(const char *);
+void		 set_mtu(struct option_data *);
+void		 set_address(char *, struct in_addr, struct option_data *);
+void		 set_routes(struct in_addr, struct option_data *,
+    struct option_data *, struct option_data *, struct option_data *,
+    struct option_data *);

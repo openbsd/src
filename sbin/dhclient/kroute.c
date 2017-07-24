@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.116 2017/07/24 13:51:43 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.117 2017/07/24 17:15:41 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -74,6 +74,8 @@ int	create_route_label(struct sockaddr_rtlabel *);
 int	check_route_label(struct sockaddr_rtlabel *);
 void	populate_rti_info(struct sockaddr **, struct rt_msghdr *);
 void	delete_route(int, struct rt_msghdr *);
+void	add_route(struct in_addr, struct in_addr, struct in_addr,
+    struct in_addr, int, int);
 void	flush_routes(void);
 void	delete_addresses(char *);
 

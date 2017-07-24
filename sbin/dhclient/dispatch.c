@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.134 2017/07/14 16:21:03 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.135 2017/07/24 17:15:41 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -46,9 +46,7 @@
 
 #include <net/if.h>
 #include <net/if_arp.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -73,49 +71,6 @@
 
 
 void packethandler(struct interface_info *ifi);
-
-void
-get_hw_address(struct interface_info *ifi)
-{
-	struct ifaddrs *ifap, *ifa;
-	struct sockaddr_dl *sdl;
-	struct if_data *ifdata;
-	int found;
-
-	if (getifaddrs(&ifap) != 0)
-		fatalx("getifaddrs failed");
-
-	found = 0;
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
-		    (ifa->ifa_flags & IFF_POINTOPOINT))
-			continue;
-
-		if (strcmp(ifi->name, ifa->ifa_name) != 0)
-			continue;
-		found = 1;
-
-		if (ifa->ifa_addr->sa_family != AF_LINK)
-			continue;
-
-		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-		if (sdl->sdl_type != IFT_ETHER ||
-		    sdl->sdl_alen != ETHER_ADDR_LEN)
-			continue;
-
-		ifdata = ifa->ifa_data;
-		ifi->rdomain = ifdata->ifi_rdomain;
-
-		memcpy(ifi->hw_address.ether_addr_octet, LLADDR(sdl),
-		    ETHER_ADDR_LEN);
-		ifi->flags |= IFI_VALID_LLADDR;
-	}
-
-	if (found == 0)
-		fatalx("%s: no such interface", ifi->name);
-
-	freeifaddrs(ifap);
-}
 
 /*
  * Loop waiting for packets, timeouts or routing messages.
@@ -327,60 +282,6 @@ packethandler(struct interface_info *ifi)
 		(*handler)(ifi, options, info);
 
 	free(info);
-}
-
-void
-interface_link_forceup(char *name, int ioctlfd)
-{
-	struct ifreq ifr;
-
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(ioctlfd, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
-		log_warn("SIOCGIFFLAGS");
-		return;
-	}
-
-	/* Force it up if it isn't already. */
-	if ((ifr.ifr_flags & IFF_UP) == 0) {
-		ifr.ifr_flags |= IFF_UP;
-		if (ioctl(ioctlfd, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
-			log_warn("SIOCSIFFLAGS");
-			return;
-		}
-	}
-}
-
-int
-interface_status(char *name)
-{
-	struct ifaddrs *ifap, *ifa;
-	struct if_data *ifdata;
-
-	if (getifaddrs(&ifap) != 0)
-		fatalx("getifaddrs failed");
-
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
-		    (ifa->ifa_flags & IFF_POINTOPOINT))
-			continue;
-
-		if (strcmp(name, ifa->ifa_name) != 0)
-			continue;
-
-		if (ifa->ifa_addr->sa_family != AF_LINK)
-			continue;
-
-		if ((ifa->ifa_flags & (IFF_UP|IFF_RUNNING)) !=
-		    (IFF_UP|IFF_RUNNING))
-			return 0;
-
-		ifdata = ifa->ifa_data;
-
-		return LINK_STATE_IS_UP(ifdata->ifi_link_state);
-	}
-
-	return 0;
 }
 
 void
