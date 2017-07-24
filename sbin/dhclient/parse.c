@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.60 2017/07/14 16:21:03 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.61 2017/07/24 16:17:35 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -151,14 +151,15 @@ parse_string(FILE *cfile, unsigned int *len)
 	s = malloc(i+1);
 	if (s == NULL)
 		fatalx("no memory for string %s.", val);
-	memcpy(s, unvisbuf, i+1);	/* copy terminating NUL */
+	memcpy(s, unvisbuf, i+1);	/* Copy the terminating NUL. */
 	if (len != NULL)
 		*len = i;
 
 	return s;
 }
 
-/* cidr :== ip-address "/" bit-count
+/*
+ * cidr :== ip-address "/" bit-count
  * ip-address :== NUMBER [ DOT NUMBER [ DOT NUMBER [ DOT NUMBER ] ] ]
  * bit-count :== 0..32
  */

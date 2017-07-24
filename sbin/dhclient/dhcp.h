@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.h,v 1.20 2017/07/08 00:36:10 krw Exp $	*/
+/*	$OpenBSD: dhcp.h,v 1.21 2017/07/24 16:17:35 krw Exp $	*/
 
 /* Protocol structures. */
 
@@ -87,14 +87,15 @@ struct dhcp_packet {
 #define HTYPE_ETHER		1	/* Ethernet			*/
 #define HTYPE_IPSEC_TUNNEL	31	/* IPsec Tunnel (RFC3456)	*/
 
-/* Magic cookie validating dhcp options field (and bootp vendor
-   extensions field). */
+/*
+ * Magic cookie validating dhcp options field (and bootp vendor
+ * extensions field).
+ */
 #define DHCP_OPTIONS_COOKIE		"\143\202\123\143"
 #define DHCP_OPTIONS_COOKIE_LEN		4
 #define DHCP_OPTIONS_MESSAGE_TYPE	"\065\001\000"
 
 /* DHCP Option codes: */
-
 #define DHO_PAD				0
 #define DHO_SUBNET_MASK			1
 #define DHO_TIME_OFFSET			2

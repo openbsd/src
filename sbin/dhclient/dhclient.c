@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.480 2017/07/24 13:51:43 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.481 2017/07/24 16:17:35 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1119,7 +1119,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	}
 
 	/*
-	 * If this lease doesn't supply a required parameter, blow it off.
+	 * If this lease doesn't supply a required parameter, decline it.
 	 */
 	for (i = 0; i < config->required_option_count; i++) {
 		if (lease->options[config->required_options[i]].len == 0) {
@@ -1132,7 +1132,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 
 	/*
 	 * If this lease is trying to sell us an address we are already
-	 * using, blow it off.
+	 * using, decline it.
 	 */
 	lease->address.s_addr = packet->yiaddr.s_addr;
 	memset(ifname, 0, sizeof(ifname));
@@ -1163,7 +1163,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 		}
 	}
 
-	/* Ditto for the filename. */
+	/* If the file name was filled out, copy it. */
 	if ((lease->options[DHO_DHCP_OPTION_OVERLOAD].len == 0 ||
 	    (lease->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1) == 0) &&
 	    packet->file[0]) {
@@ -1225,8 +1225,10 @@ send_discover(struct interface_info *ifi)
 	if (ifi->interval > config->backoff_cutoff)
 		ifi->interval = config->backoff_cutoff;
 
-	/* If the backoff would take us to the panic timeout, just use that
-	   as the interval. */
+	/*
+	 * If the backoff would take us to the panic timeout, just use that
+	 * as the interval.
+	 */
 	if (cur_time + ifi->interval >
 	    ifi->first_sending + config->timeout)
 		ifi->interval = (ifi->first_sending +
@@ -1293,7 +1295,7 @@ send_request(struct interface_info *ifi)
 	 * If we're in the INIT-REBOOT state and we've been trying longer
 	 * than reboot_timeout, go to INIT state and DISCOVER an address.
 	 *
-	 * XXX In the INIT-REBOOT state, if we don't get an ACK, it
+	 * In the INIT-REBOOT state, if we don't get an ACK, it
 	 * means either that we're on a network with no DHCP server,
 	 * or that our server is down.  In the latter case, assuming
 	 * that there is a backup DHCP server, DHCPDISCOVER will get
@@ -2503,7 +2505,6 @@ set_default_client_identifier(struct interface_info *ifi)
 	struct option_data	*opt;
 
 	/*
-	 *
 	 * Check both len && data so
 	 *
 	 *     send dhcp-client-identifier "";

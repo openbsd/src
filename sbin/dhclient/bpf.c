@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.62 2017/07/14 16:35:59 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.63 2017/07/24 16:17:35 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -65,9 +65,6 @@
 #include "dhcpd.h"
 #include "log.h"
 
-/*
- * Returns a packet filter socket fd on the interface.
- */
 int
 get_bpf_sock(char *name)
 {
@@ -108,7 +105,7 @@ get_udp_sock(int rdomain)
 /*
  * Packet filter program.
  *
- * XXX: Changes to the filter program may require changes to the
+ * N.B.: Changes to the filter program may require changes to the
  * constant offsets used in if_register_receive to patch the BPF program!
  */
 struct bpf_insn dhcp_bpf_filter[] = {
@@ -217,7 +214,7 @@ configure_bpf_sock(int bfdesc)
 
 	/* Patch the server port into the BPF program.
 	 *
-	 * XXX: changes to filter program may require changes to the
+	 * N.B.: changes to filter program may require changes to the
 	 * insn number(s) used below!
 	 */
 	dhcp_bpf_filter[8].k = LOCAL_PORT;
