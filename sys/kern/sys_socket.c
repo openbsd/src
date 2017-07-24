@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.31 2017/07/20 08:25:17 mpi Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.32 2017/07/24 09:29:15 mpi Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -78,13 +78,16 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	switch (cmd) {
 
 	case FIONBIO:
+		s = solock(so);
 		if (*(int *)data)
 			so->so_state |= SS_NBIO;
 		else
 			so->so_state &= ~SS_NBIO;
-		return (0);
+		sounlock(s);
+		break;
 
 	case FIOASYNC:
+		s = solock(so);
 		if (*(int *)data) {
 			so->so_state |= SS_ASYNC;
 			so->so_rcv.sb_flags |= SB_ASYNC;
@@ -94,43 +97,47 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 			so->so_rcv.sb_flags &= ~SB_ASYNC;
 			so->so_snd.sb_flags &= ~SB_ASYNC;
 		}
-		return (0);
+		sounlock(s);
+		break;
 
 	case FIONREAD:
 		*(int *)data = so->so_rcv.sb_datacc;
-		return (0);
+		break;
 
 	case SIOCSPGRP:
 		so->so_pgid = *(int *)data;
 		so->so_siguid = p->p_ucred->cr_ruid;
 		so->so_sigeuid = p->p_ucred->cr_uid;
-		return (0);
+		break;
 
 	case SIOCGPGRP:
 		*(int *)data = so->so_pgid;
-		return (0);
+		break;
 
 	case SIOCATMARK:
 		*(int *)data = (so->so_state&SS_RCVATMARK) != 0;
-		return (0);
+		break;
+
+	default:
+		/*
+		 * Interface/routing/protocol specific ioctls:
+		 * interface and routing ioctls should have a
+		 * different entry since a socket's unnecessary
+		 */
+		if (IOCGROUP(cmd) == 'i') {
+			NET_LOCK(s);
+			error = ifioctl(so, cmd, data, p);
+			NET_UNLOCK(s);
+			return (error);
+		}
+		if (IOCGROUP(cmd) == 'r')
+			return (EOPNOTSUPP);
+		s = solock(so);
+		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
+		    (struct mbuf *)cmd, (struct mbuf *)data, NULL, p));
+		sounlock(s);
+		break;
 	}
-	/*
-	 * Interface/routing/protocol specific ioctls:
-	 * interface and routing ioctls should have a
-	 * different entry since a socket's unnecessary
-	 */
-	if (IOCGROUP(cmd) == 'i') {
-		NET_LOCK(s);
-		error = ifioctl(so, cmd, data, p);
-		NET_UNLOCK(s);
-		return (error);
-	}
-	if (IOCGROUP(cmd) == 'r')
-		return (EOPNOTSUPP);
-	s = solock(so);
-	error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL, 
-	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)NULL, p));
-	sounlock(s);
 
 	return (error);
 }
