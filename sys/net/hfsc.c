@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.43 2017/07/19 13:41:20 mikeb Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.44 2017/07/24 15:20:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -961,7 +961,14 @@ hfsc_deferred(void *arg)
 void
 hfsc_cl_purge(struct hfsc_if *hif, struct hfsc_class *cl, struct mbuf_list *ml)
 {
-	hfsc_class_purge(cl, ml);
+	struct mbuf_list ml2 = MBUF_LIST_INITIALIZER();
+
+	hfsc_class_purge(cl, &ml2);
+	if (ml_empty(&ml2))
+		return;
+
+	ml_enlist(ml, &ml2);
+
 	hfsc_update_vf(cl, 0, 0);	/* remove cl from the actlist */
 	hfsc_set_passive(hif, cl);
 }
