@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.84 2017/07/23 19:26:03 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.85 2017/07/24 20:27:58 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -154,6 +154,7 @@ axppmic*	at iic?			# axp209 pmic
 crosec*		at iic?
 wskbd*		at crosec? mux 1
 pcfrtc*		at iic?
+pcxrtc*		at iic?
 tpspmic*	at iic?
 
 # virtio devices

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.80 2017/07/23 19:26:03 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.81 2017/07/24 20:27:58 kettenis Exp $
 
 machine		armv7 arm
 
@@ -151,6 +151,7 @@ axppmic*	at iic?			# axp209 pmic
 crosec*		at iic?
 wskbd*		at crosec? mux 1
 pcfrtc*		at iic?
+pcxrtc*		at iic?
 tpspmic*	at iic?
 
 # virtio devices
