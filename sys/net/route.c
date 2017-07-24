@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.359 2017/06/09 12:56:43 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.360 2017/07/24 09:20:32 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -134,11 +134,6 @@
 #include <netmpls/mpls.h>
 #endif
 
-#ifdef IPSEC
-#include <netinet/ip_ipsp.h>
-#include <net/if_enc.h>
-#endif
-
 #ifdef BFD
 #include <net/bfd.h>
 #endif
@@ -165,9 +160,6 @@ void	rtflushclone(unsigned int, struct rtentry *);
 int	rt_ifa_purge_walker(struct rtentry *, void *, unsigned int);
 struct rtentry *rt_match(struct sockaddr *, uint32_t *, int, unsigned int);
 struct sockaddr *rt_plentosa(sa_family_t, int, struct sockaddr_in6 *);
-
-struct	ifaddr *ifa_ifwithroute(int, struct sockaddr *, struct sockaddr *,
-		    u_int);
 
 #ifdef DDB
 void	db_print_sa(struct sockaddr *);
@@ -714,120 +706,6 @@ rtflushclone(unsigned int rtableid, struct rtentry *parent)
 	rtable_walk(rtableid, rt_key(parent)->sa_family, rtflushclone1, parent);
 }
 
-struct ifaddr *
-ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
-    u_int rtableid)
-{
-	struct ifaddr	*ifa;
-
-	if ((flags & RTF_GATEWAY) == 0) {
-		/*
-		 * If we are adding a route to an interface,
-		 * and the interface is a pt to pt link
-		 * we should search for the destination
-		 * as our clue to the interface.  Otherwise
-		 * we can use the local address.
-		 */
-		ifa = NULL;
-		if (flags & RTF_HOST)
-			ifa = ifa_ifwithdstaddr(dst, rtableid);
-		if (ifa == NULL)
-			ifa = ifa_ifwithaddr(gateway, rtableid);
-	} else {
-		/*
-		 * If we are adding a route to a remote net
-		 * or host, the gateway may still be on the
-		 * other end of a pt to pt link.
-		 */
-		ifa = ifa_ifwithdstaddr(gateway, rtableid);
-	}
-	if (ifa == NULL) {
-		if (gateway->sa_family == AF_LINK) {
-			struct sockaddr_dl *sdl = satosdl(gateway);
-			struct ifnet *ifp = if_get(sdl->sdl_index);
-
-			if (ifp != NULL)
-				ifa = ifaof_ifpforaddr(dst, ifp);
-			if_put(ifp);
-		} else {
-			struct rtentry *rt;
-
-			rt = rtalloc(gateway, RT_RESOLVE, rtable_l2(rtableid));
-			if (rt != NULL)
-				ifa = rt->rt_ifa;
-			rtfree(rt);
-		}
-	}
-	if (ifa == NULL)
-		return (NULL);
-	if (ifa->ifa_addr->sa_family != dst->sa_family) {
-		struct ifaddr	*oifa = ifa;
-		ifa = ifaof_ifpforaddr(dst, ifa->ifa_ifp);
-		if (ifa == NULL)
-			ifa = oifa;
-	}
-	return (ifa);
-}
-
-int
-rt_getifa(struct rt_addrinfo *info, u_int rtid)
-{
-	struct ifnet	*ifp = NULL;
-
-	/*
-	 * ifp may be specified by sockaddr_dl when protocol address
-	 * is ambiguous
-	 */
-	if (info->rti_info[RTAX_IFP] != NULL) {
-		struct sockaddr_dl *sdl;
-
-		sdl = satosdl(info->rti_info[RTAX_IFP]);
-		ifp = if_get(sdl->sdl_index);
-	}
-
-#ifdef IPSEC
-	/*
-	 * If the destination is a PF_KEY address, we'll look
-	 * for the existence of a encap interface number or address
-	 * in the options list of the gateway. By default, we'll return
-	 * enc0.
-	 */
-	if (info->rti_info[RTAX_DST] &&
-	    info->rti_info[RTAX_DST]->sa_family == PF_KEY)
-		info->rti_ifa = enc_getifa(rtid, 0);
-#endif
-
-	if (info->rti_ifa == NULL && info->rti_info[RTAX_IFA] != NULL)
-		info->rti_ifa = ifa_ifwithaddr(info->rti_info[RTAX_IFA], rtid);
-
-	if (info->rti_ifa == NULL) {
-		struct sockaddr	*sa;
-
-		if ((sa = info->rti_info[RTAX_IFA]) == NULL)
-			if ((sa = info->rti_info[RTAX_GATEWAY]) == NULL)
-				sa = info->rti_info[RTAX_DST];
-
-		if (sa != NULL && ifp != NULL)
-			info->rti_ifa = ifaof_ifpforaddr(sa, ifp);
-		else if (info->rti_info[RTAX_DST] != NULL &&
-		    info->rti_info[RTAX_GATEWAY] != NULL)
-			info->rti_ifa = ifa_ifwithroute(info->rti_flags,
-			    info->rti_info[RTAX_DST],
-			    info->rti_info[RTAX_GATEWAY],
-			    rtid);
-		else if (sa != NULL)
-			info->rti_ifa = ifa_ifwithroute(info->rti_flags,
-			    sa, sa, rtid);
-	}
-
-	if_put(ifp);
-
-	if (info->rti_ifa == NULL)
-		return (ENETUNREACH);
-
-	return (0);
-}
-
 int
 rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
     struct rtentry **ret_nrt, u_int tableid)
@@ -939,8 +817,8 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		/* FALLTHROUGH */
 
 	case RTM_ADD:
-		if (info->rti_ifa == NULL && (error = rt_getifa(info, tableid)))
-			return (error);
+		if (info->rti_ifa == NULL)
+			return (EINVAL);
 		ifa = info->rti_ifa;
 		ifp = ifa->ifa_ifp;
 		if (prio == 0)

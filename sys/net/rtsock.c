@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.240 2017/07/03 19:23:47 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.241 2017/07/24 09:20:32 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -82,6 +82,10 @@
 #ifdef MPLS
 #include <netmpls/mpls.h>
 #endif
+#ifdef IPSEC
+#include <netinet/ip_ipsp.h>
+#include <net/if_enc.h>
+#endif
 #ifdef BFD
 #include <net/bfd.h>
 #endif
@@ -109,6 +113,7 @@ int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
 void	route_senddesync(void *);
 
+int	rtm_getifa(struct rt_addrinfo *, unsigned int);
 int	rtm_output(struct rt_msghdr *, struct rtentry **, struct rt_addrinfo *,
 	    uint8_t, unsigned int);
 struct rt_msghdr *rtm_report(struct rtentry *, u_char, int, int);
@@ -767,6 +772,8 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		rtfree(rt);
 		rt = NULL;
 
+		if ((error = rtm_getifa(info, tableid)) != 0)
+			break;
 		error = rtrequest(RTM_ADD, info, prio, &rt, tableid);
 		if (error == 0)
 			rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
@@ -880,7 +887,7 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 			 */
 			if (newgate || info->rti_info[RTAX_IFP] != NULL ||
 			    info->rti_info[RTAX_IFA] != NULL) {
-				if ((error = rt_getifa(info, tableid)) != 0)
+				if ((error = rtm_getifa(info, tableid)) != 0)
 					break;
 				ifa = info->rti_ifa;
 				if (rt->rt_ifa != ifa) {
@@ -1007,6 +1014,120 @@ change:
 
 	*prt = rt;
 	return (error);
+}
+
+struct ifaddr *
+ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
+    unsigned int rtableid)
+{
+	struct ifaddr	*ifa;
+
+	if ((flags & RTF_GATEWAY) == 0) {
+		/*
+		 * If we are adding a route to an interface,
+		 * and the interface is a pt to pt link
+		 * we should search for the destination
+		 * as our clue to the interface.  Otherwise
+		 * we can use the local address.
+		 */
+		ifa = NULL;
+		if (flags & RTF_HOST)
+			ifa = ifa_ifwithdstaddr(dst, rtableid);
+		if (ifa == NULL)
+			ifa = ifa_ifwithaddr(gateway, rtableid);
+	} else {
+		/*
+		 * If we are adding a route to a remote net
+		 * or host, the gateway may still be on the
+		 * other end of a pt to pt link.
+		 */
+		ifa = ifa_ifwithdstaddr(gateway, rtableid);
+	}
+	if (ifa == NULL) {
+		if (gateway->sa_family == AF_LINK) {
+			struct sockaddr_dl *sdl = satosdl(gateway);
+			struct ifnet *ifp = if_get(sdl->sdl_index);
+
+			if (ifp != NULL)
+				ifa = ifaof_ifpforaddr(dst, ifp);
+			if_put(ifp);
+		} else {
+			struct rtentry *rt;
+
+			rt = rtalloc(gateway, RT_RESOLVE, rtable_l2(rtableid));
+			if (rt != NULL)
+				ifa = rt->rt_ifa;
+			rtfree(rt);
+		}
+	}
+	if (ifa == NULL)
+		return (NULL);
+	if (ifa->ifa_addr->sa_family != dst->sa_family) {
+		struct ifaddr	*oifa = ifa;
+		ifa = ifaof_ifpforaddr(dst, ifa->ifa_ifp);
+		if (ifa == NULL)
+			ifa = oifa;
+	}
+	return (ifa);
+}
+
+int
+rtm_getifa(struct rt_addrinfo *info, unsigned int rtid)
+{
+	struct ifnet	*ifp = NULL;
+
+	/*
+	 * ifp may be specified by sockaddr_dl when protocol address
+	 * is ambiguous
+	 */
+	if (info->rti_info[RTAX_IFP] != NULL) {
+		struct sockaddr_dl *sdl;
+
+		sdl = satosdl(info->rti_info[RTAX_IFP]);
+		ifp = if_get(sdl->sdl_index);
+	}
+
+#ifdef IPSEC
+	/*
+	 * If the destination is a PF_KEY address, we'll look
+	 * for the existence of a encap interface number or address
+	 * in the options list of the gateway. By default, we'll return
+	 * enc0.
+	 */
+	if (info->rti_info[RTAX_DST] &&
+	    info->rti_info[RTAX_DST]->sa_family == PF_KEY)
+		info->rti_ifa = enc_getifa(rtid, 0);
+#endif
+
+	if (info->rti_ifa == NULL && info->rti_info[RTAX_IFA] != NULL)
+		info->rti_ifa = ifa_ifwithaddr(info->rti_info[RTAX_IFA], rtid);
+
+	if (info->rti_ifa == NULL) {
+		struct sockaddr	*sa;
+
+		if ((sa = info->rti_info[RTAX_IFA]) == NULL)
+			if ((sa = info->rti_info[RTAX_GATEWAY]) == NULL)
+				sa = info->rti_info[RTAX_DST];
+
+		if (sa != NULL && ifp != NULL)
+			info->rti_ifa = ifaof_ifpforaddr(sa, ifp);
+		else if (info->rti_info[RTAX_DST] != NULL &&
+		    info->rti_info[RTAX_GATEWAY] != NULL)
+			info->rti_ifa = ifa_ifwithroute(info->rti_flags,
+			    info->rti_info[RTAX_DST],
+			    info->rti_info[RTAX_GATEWAY],
+			    rtid);
+		else if (sa != NULL)
+			info->rti_ifa = ifa_ifwithroute(info->rti_flags,
+			    sa, sa, rtid);
+	}
+
+	if_put(ifp);
+
+	if (info->rti_ifa == NULL)
+		return (ENETUNREACH);
+
+	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.162 2017/06/09 12:56:43 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.163 2017/07/24 09:20:32 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -450,7 +450,6 @@ struct	 rtentry *rtalloc(struct sockaddr *, int, unsigned int);
 void	 rtref(struct rtentry *);
 void	 rtfree(struct rtentry *);
 
-int	 rt_getifa(struct rt_addrinfo *, u_int);
 int	 rt_ifa_add(struct ifaddr *, int, struct sockaddr *);
 int	 rt_ifa_del(struct ifaddr *, int, struct sockaddr *);
 void	 rt_ifa_purge(struct ifaddr *);
