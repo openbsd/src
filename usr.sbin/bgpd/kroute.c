@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.215 2017/05/31 10:47:21 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.216 2017/07/24 11:00:01 friehm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2446,8 +2446,8 @@ prefixlen2mask6(u_int8_t prefixlen)
 	return (&mask);
 }
 
-#define	ROUNDUP(a)	\
-    (((a) & (sizeof(long) - 1)) ? (1 + ((a) | (sizeof(long) - 1))) : (a))
+#define ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 void
 get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)

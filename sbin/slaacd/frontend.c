@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.4 2017/07/14 09:29:40 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.5 2017/07/24 11:00:01 friehm Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -684,8 +684,8 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 
 }
 
-#define	ROUNDUP(a)	\
-    (((a) & (sizeof(long) - 1)) ? (1 + ((a) | (sizeof(long) - 1))) : (a))
+#define ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 void
 get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
