@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2017/05/07 11:07:48 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 2017/07/24 12:12:09 patrick Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -35,7 +35,7 @@
 #include "efiboot.h"
 #include "efidev.h"
 
-const char version[] = "0.3";
+const char version[] = "0.4";
 int	debug = 0;
 
 struct fs_ops file_system[] = {
