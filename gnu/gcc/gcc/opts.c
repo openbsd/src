@@ -435,7 +435,7 @@ decode_options (unsigned int argc, const char **argv)
 	  /* Handle -Os, -O2, -O3, -O69, ...  */
 	  const char *p = &argv[i][2];
 
-	  if ((p[0] == 's') && (p[1] == 0))
+	  if ((p[0] == 's' || p[0] == 'z') && (p[1] == 0))
 	    {
 	      optimize_size = 1;
 
