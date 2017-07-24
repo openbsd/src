@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.47 2017/05/29 14:19:49 mpi Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.48 2017/07/24 15:31:14 robert Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -148,12 +148,14 @@ x2apic_writereg(int reg, u_int32_t val)
 	wrmsr(MSR_X2APIC_BASE + (reg >> 4), val);
 }
 
+#ifdef MULTIPROCESSOR
 static inline void
 x2apic_writeicr(u_int32_t hi, u_int32_t lo)
 {
 	u_int32_t msr = MSR_X2APIC_BASE + (LAPIC_ICRLO >> 4);
 	__asm volatile("wrmsr" : : "a" (lo), "d" (hi), "c" (msr));
 }
+#endif
 
 u_int32_t
 lapic_cpu_number(void)
@@ -579,6 +581,7 @@ lapic_delay(int usec)
  * XXX the following belong mostly or partly elsewhere..
  */
 
+#ifdef MULTIPROCESSOR
 static __inline void i82489_icr_wait(void);
 
 static __inline void
@@ -598,7 +601,6 @@ i82489_icr_wait(void)
 	}
 }
 
-#ifdef MULTIPROCESSOR
 void
 i82489_ipi_init(int target)
 {

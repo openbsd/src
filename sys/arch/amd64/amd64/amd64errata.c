@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd64errata.c,v 1.7 2014/07/13 12:11:01 jasper Exp $	*/
+/*	$OpenBSD: amd64errata.c,v 1.8 2017/07/24 15:31:14 robert Exp $	*/
 /*	$NetBSD: errata.c,v 1.6 2007/02/05 21:05:45 ad Exp $	*/
 
 /*-
@@ -92,9 +92,11 @@ static const uint8_t amd64_errata_set1[] = {
 	SH_B3, SH_C0, SH_CG, DH_CG, CH_CG, OINK
 };
 
+#ifdef MULTIPROCESSOR
 static const uint8_t amd64_errata_set2[] = {
 	SH_B3, SH_C0, SH_CG, DH_CG, CH_CG, SH_D0, DH_D0, CH_D0, OINK
 };
+#endif
 
 static const uint8_t amd64_errata_set3[] = {
 	JH_E1, DH_E3, OINK
