@@ -1562,6 +1562,7 @@
 ./usr/share/man/man4/pcn.4
 ./usr/share/man/man4/pcppi.4
 ./usr/share/man/man4/pcscp.4
+./usr/share/man/man4/pcxrtc.4
 ./usr/share/man/man4/pf.4
 ./usr/share/man/man4/pflog.4
 ./usr/share/man/man4/pflow.4
