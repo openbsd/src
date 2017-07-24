@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.223 2017/07/19 01:15:02 djm Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.224 2017/07/24 04:34:28 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -934,7 +934,7 @@ prepare_poll(struct pollfd **pfdp, size_t *npfdp, int *timeoutp)
 		deadline = (deadline == 0) ? parent_alive_interval :
 		    MINIMUM(deadline, parent_alive_interval);
 	if (deadline == 0) {
-		*timeoutp = INFTIM;
+		*timeoutp = -1; /* INFTIM */
 	} else {
 		if (deadline > INT_MAX / 1000)
 			*timeoutp = INT_MAX / 1000;
@@ -1003,7 +1003,6 @@ main(int ac, char **av)
 {
 	int c_flag = 0, d_flag = 0, D_flag = 0, k_flag = 0, s_flag = 0;
 	int sock, fd, ch, result, saved_errno;
-	u_int nalloc;
 	char *shell, *format, *pidstr, *agentsocket = NULL;
 	struct rlimit rlim;
 	extern int optind;
@@ -1012,7 +1011,7 @@ main(int ac, char **av)
 	char pidstrbuf[1 + 3 * sizeof pid];
 	size_t len;
 	mode_t prev_mask;
-	int timeout = INFTIM;
+	int timeout = -1; /* INFTIM */
 	struct pollfd *pfd = NULL;
 	size_t npfd = 0;
 
@@ -1228,7 +1227,6 @@ skip:
 	signal(SIGINT, (d_flag | D_flag) ? cleanup_handler : SIG_IGN);
 	signal(SIGHUP, cleanup_handler);
 	signal(SIGTERM, cleanup_handler);
-	nalloc = 0;
 
 	if (pledge("stdio rpath cpath unix id proc exec", NULL) == -1)
 		fatal("%s: pledge: %s", __progname, strerror(errno));
