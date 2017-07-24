@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.55 2017/07/23 13:53:54 deraadt Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.56 2017/07/24 12:33:59 jca Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -158,6 +158,9 @@ main(int argc, char *argv[])
 	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_TABLEFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)	/* not fatal */
 		log_warn("%s: setsockopt tablefilter", __func__);
+
+	if (pledge("stdio rpath route proc exec", NULL) == -1)
+		fatal("pledge");
 
 	signal_set(&sigchld_ev, SIGCHLD, sigchld_handler, NULL);
 	signal_add(&sigchld_ev, NULL);
