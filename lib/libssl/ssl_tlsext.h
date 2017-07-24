@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.1 2017/07/16 18:14:37 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.2 2017/07/24 17:10:31 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -14,6 +14,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+int tlsext_ri_clienthello_needs(SSL *s);
+int tlsext_ri_clienthello_build(SSL *s, CBB *cbb);
+int tlsext_ri_clienthello_parse(SSL *s, CBS *cbs, int *alert);
+int tlsext_ri_serverhello_needs(SSL *s);
+int tlsext_ri_serverhello_build(SSL *s, CBB *cbb);
+int tlsext_ri_serverhello_parse(SSL *s, CBS *cbs, int *alert);
 
 int tlsext_sni_clienthello_needs(SSL *s);
 int tlsext_sni_clienthello_build(SSL *s, CBB *cbb);

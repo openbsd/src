@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.181 2017/05/07 04:22:24 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.182 2017/07/24 17:10:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -881,6 +881,9 @@ typedef struct ssl3_state_internal_st {
 	unsigned char previous_server_finished_len;
 	int send_connection_binding; /* TODOEKR */
 
+	/* Set if we saw a Renegotiation Indication extension from our peer. */
+	int renegotiate_seen;
+
 	/* Set if we saw the Next Protocol Negotiation extension from our peer.
 	 */
 	int next_proto_neg_seen;
@@ -1344,14 +1347,6 @@ int tls12_get_sigid(const EVP_PKEY *pk);
 const EVP_MD *tls12_get_hash(unsigned char hash_alg);
 
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
-int ssl_add_serverhello_renegotiate_ext(SSL *s, unsigned char *p,
-    int *len, int maxlen);
-int ssl_parse_serverhello_renegotiate_ext(SSL *s, const unsigned char *d,
-    int len, int *al);
-int ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p,
-    int *len, int maxlen);
-int ssl_parse_clienthello_renegotiate_ext(SSL *s, const unsigned char *d,
-    int len, int *al);
 long ssl_get_algorithm2(SSL *s);
 int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize);
 int tls12_get_req_sig_algs(SSL *s, unsigned char *p);

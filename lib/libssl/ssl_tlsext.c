@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.1 2017/07/16 18:14:37 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.2 2017/07/24 17:10:31 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -19,6 +19,138 @@
 
 #include "bytestring.h"
 #include "ssl_tlsext.h"
+
+/*
+ * Renegotiation Indication - RFC 5746.
+ */
+int
+tlsext_ri_clienthello_needs(SSL *s)
+{
+	return (s->internal->renegotiate);
+}
+
+int
+tlsext_ri_clienthello_build(SSL *s, CBB *cbb)
+{
+	CBB reneg;
+
+	if (!CBB_add_u8_length_prefixed(cbb, &reneg))
+		return 0;
+	if (!CBB_add_bytes(&reneg, S3I(s)->previous_client_finished,
+	    S3I(s)->previous_client_finished_len))
+		return 0;
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
+}
+
+int
+tlsext_ri_clienthello_parse(SSL *s, CBS *cbs, int *alert)
+{
+	CBS reneg;
+
+	if (!CBS_get_u8_length_prefixed(cbs, &reneg))
+		goto err;
+	if (CBS_len(cbs) != 0)
+		goto err;
+
+	if (!CBS_mem_equal(&reneg, S3I(s)->previous_client_finished,
+	    S3I(s)->previous_client_finished_len)) {
+		SSLerror(s, SSL_R_RENEGOTIATION_MISMATCH);
+		*alert = SSL_AD_HANDSHAKE_FAILURE;
+		return 0;
+	}
+
+	S3I(s)->renegotiate_seen = 1;
+	S3I(s)->send_connection_binding = 1;
+
+	return 1;
+
+ err:
+	SSLerror(s, SSL_R_RENEGOTIATION_ENCODING_ERR);
+	*alert = SSL_AD_DECODE_ERROR;
+	return 0;
+}
+
+int
+tlsext_ri_serverhello_needs(SSL *s)
+{
+	return (S3I(s)->send_connection_binding);
+}
+
+int
+tlsext_ri_serverhello_build(SSL *s, CBB *cbb)
+{
+	CBB reneg;
+
+	if (!CBB_add_u8_length_prefixed(cbb, &reneg))
+		return 0;
+	if (!CBB_add_bytes(&reneg, S3I(s)->previous_client_finished,
+	    S3I(s)->previous_client_finished_len))
+		return 0;
+	if (!CBB_add_bytes(&reneg, S3I(s)->previous_server_finished,
+	    S3I(s)->previous_server_finished_len))
+		return 0;
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
+}
+
+int
+tlsext_ri_serverhello_parse(SSL *s, CBS *cbs, int *alert)
+{
+	CBS reneg, prev_client, prev_server;
+
+	/*
+	 * Ensure that the previous client and server values are both not
+	 * present, or that they are both present.
+	 */
+	if ((S3I(s)->previous_client_finished_len == 0 &&
+	    S3I(s)->previous_server_finished_len != 0) ||
+	    (S3I(s)->previous_client_finished_len != 0 &&
+	    S3I(s)->previous_server_finished_len == 0)) {
+		*alert = TLS1_AD_INTERNAL_ERROR;
+		return 0;
+	}
+
+	if (!CBS_get_u8_length_prefixed(cbs, &reneg))
+		goto err;
+	if (!CBS_get_bytes(&reneg, &prev_client,
+	    S3I(s)->previous_client_finished_len))
+		goto err;
+	if (!CBS_get_bytes(&reneg, &prev_server,
+	    S3I(s)->previous_server_finished_len))
+		goto err;
+	if (CBS_len(&reneg) != 0)
+		goto err;
+	if (CBS_len(cbs) != 0)
+		goto err;
+
+	if (!CBS_mem_equal(&prev_client, S3I(s)->previous_client_finished,
+	    S3I(s)->previous_client_finished_len)) {
+		SSLerror(s, SSL_R_RENEGOTIATION_MISMATCH);
+		*alert = SSL_AD_HANDSHAKE_FAILURE;
+		return 0;
+	}
+	if (!CBS_mem_equal(&prev_server, S3I(s)->previous_server_finished,
+	    S3I(s)->previous_server_finished_len)) {
+		SSLerror(s, SSL_R_RENEGOTIATION_MISMATCH);
+		*alert = SSL_AD_HANDSHAKE_FAILURE;
+		return 0;
+	}
+
+	S3I(s)->renegotiate_seen = 1;
+	S3I(s)->send_connection_binding = 1;
+
+	return 1;
+
+ err:
+	SSLerror(s, SSL_R_RENEGOTIATION_ENCODING_ERR);
+	*alert = SSL_AD_DECODE_ERROR;
+	return 0;
+}
 
 /*
  * Server Name Indication - RFC 6066, section 3.
@@ -149,6 +281,15 @@ static struct tls_extension tls_extensions[] = {
 		.serverhello_needs = tlsext_sni_serverhello_needs,
 		.serverhello_build = tlsext_sni_serverhello_build,
 		.serverhello_parse = tlsext_sni_serverhello_parse,
+	},
+	{
+		.type = TLSEXT_TYPE_renegotiate,
+		.clienthello_needs = tlsext_ri_clienthello_needs,
+		.clienthello_build = tlsext_ri_clienthello_build,
+		.clienthello_parse = tlsext_ri_clienthello_parse,
+		.serverhello_needs = tlsext_ri_serverhello_needs,
+		.serverhello_build = tlsext_ri_serverhello_build,
+		.serverhello_parse = tlsext_ri_serverhello_parse,
 	},
 };
 

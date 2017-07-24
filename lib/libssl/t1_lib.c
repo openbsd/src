@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.120 2017/07/23 16:27:44 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.121 2017/07/24 17:10:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -720,29 +720,6 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		return NULL;
 	ret += len;
 
-	/* Add RI if renegotiating */
-	if (s->internal->renegotiate) {
-		int el;
-
-		if (!ssl_add_clienthello_renegotiate_ext(s, 0, &el, 0)) {
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			return NULL;
-		}
-
-		if ((size_t)(limit - ret) < 4 + el)
-			return NULL;
-
-		s2n(TLSEXT_TYPE_renegotiate, ret);
-		s2n(el, ret);
-
-		if (!ssl_add_clienthello_renegotiate_ext(s, ret, &el, el)) {
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			return NULL;
-		}
-
-		ret += el;
-	}
-
 	if (using_ecc) {
 		size_t curveslen, formatslen, lenmax;
 		const uint16_t *curves;
@@ -1006,28 +983,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		return NULL;
 	ret += len;
 
-	if (S3I(s)->send_connection_binding) {
-		int el;
-
-		if (!ssl_add_serverhello_renegotiate_ext(s, 0, &el, 0)) {
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			return NULL;
-		}
-
-		if ((size_t)(limit - ret) < 4 + el)
-			return NULL;
-
-		s2n(TLSEXT_TYPE_renegotiate, ret);
-		s2n(el, ret);
-
-		if (!ssl_add_serverhello_renegotiate_ext(s, ret, &el, el)) {
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			return NULL;
-		}
-
-		ret += el;
-	}
-
 	if (using_ecc && s->version != DTLS1_VERSION) {
 		const unsigned char *formats;
 		size_t formatslen, lenmax;
@@ -1229,12 +1184,12 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 	unsigned short len;
 	unsigned char *data = *p;
 	unsigned char *end = d + n;
-	int renegotiate_seen = 0;
 	int sigalg_seen = 0;
 	CBS cbs;
 
 	s->internal->servername_done = 0;
 	s->tlsext_status_type = -1;
+	S3I(s)->renegotiate_seen = 0;
 	S3I(s)->next_proto_neg_seen = 0;
 	free(S3I(s)->alpn_selected);
 	S3I(s)->alpn_selected = NULL;
@@ -1335,10 +1290,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				*al = TLS1_AD_INTERNAL_ERROR;
 				return 0;
 			}
-		} else if (type == TLSEXT_TYPE_renegotiate) {
-			if (!ssl_parse_clienthello_renegotiate_ext(s, data, size, al))
-				return 0;
-			renegotiate_seen = 1;
 		} else if (type == TLSEXT_TYPE_signature_algorithms) {
 			int dsize;
 			if (sigalg_seen || size < 2) {
@@ -1513,7 +1464,7 @@ ri_check:
 
 	/* Need RI if renegotiating */
 
-	if (!renegotiate_seen && s->internal->renegotiate) {
+	if (!S3I(s)->renegotiate_seen && s->internal->renegotiate) {
 		*al = SSL_AD_HANDSHAKE_FAILURE;
 		SSLerror(s, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 		return 0;
@@ -1554,9 +1505,9 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 	unsigned char *data = *p;
 	unsigned char *end = *p + n;
 	int tlsext_servername = 0;
-	int renegotiate_seen = 0;
 	CBS cbs;
 
+	S3I(s)->renegotiate_seen = 0;
 	S3I(s)->next_proto_neg_seen = 0;
 	free(S3I(s)->alpn_selected);
 	S3I(s)->alpn_selected = NULL;
@@ -1719,10 +1670,6 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 			memcpy(S3I(s)->alpn_selected, data + 3, len);
 			S3I(s)->alpn_selected_len = len;
 
-		} else if (type == TLSEXT_TYPE_renegotiate) {
-			if (!ssl_parse_serverhello_renegotiate_ext(s, data, size, al))
-				return 0;
-			renegotiate_seen = 1;
 		}
 #ifndef OPENSSL_NO_SRTP
 		else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_use_srtp) {
@@ -1769,7 +1716,7 @@ ri_check:
 	 * which doesn't support RI so for the immediate future tolerate RI
 	 * absence on initial connect only.
 	 */
-	if (!renegotiate_seen &&
+	if (!S3I(s)->renegotiate_seen &&
 	    !(s->internal->options & SSL_OP_LEGACY_SERVER_CONNECT)) {
 		*al = SSL_AD_HANDSHAKE_FAILURE;
 		SSLerror(s, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
