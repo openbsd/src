@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.196 2017/07/20 09:49:45 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.197 2017/07/24 15:07:39 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -311,11 +311,12 @@ soaccept(struct socket *so, struct mbuf *nam)
 int
 soconnect(struct socket *so, struct mbuf *nam)
 {
-	int s, error;
+	int error;
+
+	soassertlocked(so);
 
 	if (so->so_options & SO_ACCEPTCONN)
 		return (EOPNOTSUPP);
-	s = solock(so);
 	/*
 	 * If protocol is connection-based, can only connect once.
 	 * Otherwise, if connected, try to disconnect first.
@@ -329,19 +330,17 @@ soconnect(struct socket *so, struct mbuf *nam)
 	else
 		error = (*so->so_proto->pr_usrreq)(so, PRU_CONNECT,
 		    NULL, nam, NULL, curproc);
-	sounlock(s);
 	return (error);
 }
 
 int
 soconnect2(struct socket *so1, struct socket *so2)
 {
-	int s, error;
+	int error;
 
-	s = solock(so1);
+	soassertlocked(so1);
 	error = (*so1->so_proto->pr_usrreq)(so1, PRU_CONNECT2, NULL,
 	    (struct mbuf *)so2, NULL, curproc);
-	sounlock(s);
 	return (error);
 }
 

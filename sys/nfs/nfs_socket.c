@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.119 2017/06/27 12:02:43 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.120 2017/07/24 15:07:39 mpi Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -297,16 +297,18 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 			goto bad;
 		}
 	} else {
+		s = solock(so);
 		error = soconnect(so, nmp->nm_nam);
-		if (error)
+		if (error) {
+			sounlock(s);
 			goto bad;
+		}
 
 		/*
 		 * Wait for the connection to complete. Cribbed from the
 		 * connect system call but with the wait timing out so
 		 * that interruptible mounts don't hang here for a long time.
 		 */
-		s = solock(so);
 		while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
 			sosleep(so, &so->so_timeo, PSOCK, "nfscon", 2 * hz);
 			if ((so->so_state & SS_ISCONNECTING) &&

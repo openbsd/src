@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.155 2017/07/20 18:40:16 bluhm Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.156 2017/07/24 15:07:39 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -373,18 +373,19 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	so = fp->f_data;
+	s = solock(so);
 	if (so->so_state & SS_ISCONNECTING) {
-		FRELE(fp, p);
-		return (EALREADY);
+		error = EALREADY;
+		goto out;
 	}
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
 	    MT_SONAME);
 	if (error)
-		goto bad;
+		goto out;
 	error = pledge_socket(p, so->so_proto->pr_domain->dom_family,
 	    so->so_state);
 	if (error)
-		goto bad;
+		goto out;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_STRUCT))
 		ktrsockaddr(p, mtod(nam, caddr_t), SCARG(uap, namelen));
@@ -393,11 +394,8 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	if (isdnssocket(so)) {
 		u_int namelen = nam->m_len;
 		error = dns_portcheck(p, so, mtod(nam, void *), &namelen);
-		if (error) {
-			FRELE(fp, p);
-			m_freem(nam);
-			return (error);
-		}
+		if (error)
+			goto out;
 		nam->m_len = namelen;
 	}
 
@@ -405,11 +403,9 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto bad;
 	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
-		FRELE(fp, p);
-		m_freem(nam);
-		return (EINPROGRESS);
+		error = EINPROGRESS;
+		goto out;
 	}
-	s = solock(so);
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
 		error = sosleep(so, &so->so_timeo, PSOCK | PCATCH,
 		    "netcon2", 0);
@@ -423,10 +419,11 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 		error = so->so_error;
 		so->so_error = 0;
 	}
-	sounlock(s);
 bad:
 	if (!interrupted)
 		so->so_state &= ~SS_ISCONNECTING;
+out:
+	sounlock(s);
 	FRELE(fp, p);
 	m_freem(nam);
 	if (error == ERESTART)
@@ -446,7 +443,7 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp1, *fp2;
 	struct socket *so1, *so2;
-	int type, cloexec, nonblock, fflag, error, sv[2];
+	int s, type, cloexec, nonblock, fflag, error, sv[2];
 
 	type  = SCARG(uap, type) & ~(SOCK_CLOEXEC | SOCK_NONBLOCK);
 	cloexec = (SCARG(uap, type) & SOCK_CLOEXEC) ? UF_EXCLOSE : 0;
@@ -460,14 +457,20 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto free1;
 
-	if ((error = soconnect2(so1, so2)) != 0)
+	s = solock(so1);
+	error = soconnect2(so1, so2);
+	sounlock(s);
+	if (error != 0)
 		goto free2;
 
 	if ((SCARG(uap, type) & SOCK_TYPE_MASK) == SOCK_DGRAM) {
 		/*
 		 * Datagram socket connection is asymmetric.
 		 */
-		 if ((error = soconnect2(so2, so1)) != 0)
+		s = solock(so2);
+		error = soconnect2(so2, so1);
+		sounlock(s);
+		if (error != 0)
 			goto free2;
 	}
 	fdplock(fdp);
