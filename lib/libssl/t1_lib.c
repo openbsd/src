@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.121 2017/07/24 17:10:31 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.122 2017/07/24 17:39:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1504,7 +1504,6 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 	unsigned short len;
 	unsigned char *data = *p;
 	unsigned char *end = *p + n;
-	int tlsext_servername = 0;
 	CBS cbs;
 
 	S3I(s)->renegotiate_seen = 0;
@@ -1537,15 +1536,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 		if (!tlsext_serverhello_parse_one(s, &cbs, type, al))
 			return 0;
 
-		if (type == TLSEXT_TYPE_server_name) {
-			if (s->tlsext_hostname == NULL || size > 0) {
-				*al = TLS1_AD_UNRECOGNIZED_NAME;
-				return 0;
-			}
-			tlsext_servername = 1;
-
-		}
-		else if (type == TLSEXT_TYPE_ec_point_formats &&
+		if (type == TLSEXT_TYPE_ec_point_formats &&
 		    s->version != DTLS1_VERSION) {
 			unsigned char *sdata = data;
 			size_t formatslen;
@@ -1686,23 +1677,6 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 	if (data != end) {
 		*al = SSL_AD_DECODE_ERROR;
 		return 0;
-	}
-
-	if (!s->internal->hit && tlsext_servername == 1) {
-		if (s->tlsext_hostname) {
-			if (s->session->tlsext_hostname == NULL) {
-				s->session->tlsext_hostname =
-				    strdup(s->tlsext_hostname);
-
-				if (!s->session->tlsext_hostname) {
-					*al = SSL_AD_UNRECOGNIZED_NAME;
-					return 0;
-				}
-			} else {
-				*al = SSL_AD_DECODE_ERROR;
-				return 0;
-			}
-		}
 	}
 
 	*p = data;

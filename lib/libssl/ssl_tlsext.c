@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.2 2017/07/24 17:10:31 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.3 2017/07/24 17:39:43 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -257,6 +257,28 @@ tlsext_sni_serverhello_parse(SSL *s, CBS *cbs, int *alert)
 	if (s->tlsext_hostname == NULL || CBS_len(cbs) != 0) {
 		*alert = TLS1_AD_UNRECOGNIZED_NAME;
 		return 0;
+	}
+
+	if (s->internal->hit) {
+		if (s->session->tlsext_hostname == NULL) {
+			*alert = TLS1_AD_UNRECOGNIZED_NAME;
+			return 0;
+		}
+		if (strcmp(s->tlsext_hostname,
+		    s->session->tlsext_hostname) != 0) {
+			*alert = TLS1_AD_UNRECOGNIZED_NAME;
+			return 0;
+		}
+	} else {
+		if (s->session->tlsext_hostname != NULL) {
+			*alert = SSL_AD_DECODE_ERROR;
+			return 0;
+		}
+		if ((s->session->tlsext_hostname =
+		    strdup(s->tlsext_hostname)) == NULL) {
+			*alert = TLS1_AD_INTERNAL_ERROR;
+			return 0;
+		}
 	}
 
 	return 1;
