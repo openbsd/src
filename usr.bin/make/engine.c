@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.53 2017/07/09 15:28:00 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.54 2017/07/24 12:08:15 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -734,7 +734,7 @@ setup_engine(void)
 }
 
 static bool
-do_run_command(Job *job)
+do_run_command(Job *job, const char *pre)
 {
 	bool silent;	/* Don't print command */
 	bool doExecute;	/* Execute the command */
@@ -752,7 +752,9 @@ do_run_command(Job *job)
 	/* How can we execute a null command ? we warn the user that the
 	 * command expanded to nothing (is this the right thing to do?).  */
 	if (*cmd == '\0') {
-		Error("%s expands to empty string", cmd);
+		Parse_Error(PARSE_WARNING, 
+		    "'%s' expands to '' while building %s", 
+		    pre, job->node->name);
 		return false;
 	}
 
@@ -833,7 +835,7 @@ job_run_next(Job *job)
 		job->next_cmd = Lst_Adv(job->next_cmd);
 		if (fatal_errors)
 			Punt(NULL);
-		started = do_run_command(job);
+		started = do_run_command(job, command->string);
 		if (started)
 			return false;
 		else
