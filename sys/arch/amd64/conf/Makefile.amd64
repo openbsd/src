@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.90 2017/07/23 21:43:29 naddy Exp $
+#	$OpenBSD: Makefile.amd64,v 1.91 2017/07/25 13:27:37 robert Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -39,7 +39,6 @@ CMACHFLAGS+=	-fno-stack-protector
 CMACHFLAGS+=	-msave-args
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
-CMACHFLAGS+=	-Wa,-n
 SORTR=		cat
 .endif
 .if ${COMPILER_VERSION:Mclang}
