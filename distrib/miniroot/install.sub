@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1029 2017/07/21 20:35:59 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1030 2017/07/25 21:17:11 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2211,13 +2211,6 @@ parse_hn_line() {
 		_c[0]=
 		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} down;dhclient $_if"
 		V4_DHCPCONF=true
-		;;
-	rtsol)	# XXX Support the rtsol keyword for some time to enable a smooth
-		# XXX transition to autoconf.
-		_c[0]=
-		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} up"
-		_cmds[${#_cmds[*]}]="ifconfig $_if inet6 autoconf"
-		V6_AUTOCONF=true
 		;;
 	'!'*|bridge)
 		# Skip shell commands and bridge in the installer.

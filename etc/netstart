@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.185 2017/07/21 20:22:13 rpe Exp $
+#	$OpenBSD: netstart,v 1.186 2017/07/25 21:17:11 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -61,13 +61,6 @@ parse_hn_line() {
 	dhcp)	_c[0]=
 		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} down;dhclient $_if"
 		V4_DHCPCONF=true
-		;;
-	rtsol)	# XXX Support the rtsol keyword for some time to enable a smooth
-		# XXX transition to autoconf.
-		_c[0]=
-		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} up"
-		_cmds[${#_cmds[*]}]="ifconfig $_if inet6 autoconf"
-		V6_AUTOCONF=true
 		;;
 	'!'*)	_cmd=$(print -- "${_c[@]}" | sed 's/\$if/'$_if'/g')
 		_cmds[${#_cmds[*]}]="${_cmd#!}"
