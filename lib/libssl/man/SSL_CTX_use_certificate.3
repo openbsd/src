@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_use_certificate.3,v 1.3 2017/04/10 01:46:37 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_use_certificate.3,v 1.4 2017/07/25 17:28:37 benno Exp $
 .\"	OpenSSL e248596b Apr 8 22:49:57 2005 +0000
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 10 2017 $
+.Dd $Mdocdate: July 25 2017 $
 .Dt SSL_CTX_USE_CERTIFICATE 3
 .Os
 .Sh NAME
@@ -301,22 +301,38 @@ to
 adds the first private RSA key found to
 .Fa ssl .
 .Pp
+The
 .Fn SSL_CTX_check_private_key
-checks the consistency of a private key with the corresponding certificate
-loaded into
+function is seriously misnamed.
+It compares the
+.Em public
+key components and parameters of an OpenSSL private key with the
+corresponding certificate loaded into
 .Fa ctx .
 If more than one key/certificate pair (RSA/DSA) is installed,
-the last item installed will be checked.
+the last item installed will be compared.
 If, e.g., the last item was a RSA certificate or key,
 the RSA key/certificate pair will be checked.
 .Fn SSL_check_private_key
-performs the same check for
+performs the same
+.Em public
+key comparison for
 .Fa ssl .
 If no key/certificate was explicitly added for this
 .Fa ssl ,
 the last item added into
 .Fa ctx
 will be checked.
+.Pp
+Despite the name, neither
+.Fn SSL_CTX_check_private_key
+nor
+.Fn SSL_check_private_key
+checks whether the private key component is indeed a private key,
+nor whether it matches the public key component.
+They merely compare the public materials (e.g. exponent and modulus of
+an RSA key) and/or key parameters (e.g. EC params of an EC key) of a
+key pair.
 .Sh NOTES
 The internal certificate store of OpenSSL can hold two private key/certificate
 pairs at a time:
