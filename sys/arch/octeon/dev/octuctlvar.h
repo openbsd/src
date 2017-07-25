@@ -1,4 +1,4 @@
-/*	$OpenBSD: octuctlvar.h,v 1.1 2016/03/18 05:38:10 jmatthew Exp $ */
+/*	$OpenBSD: octuctlvar.h,v 1.2 2017/07/25 11:01:28 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2015 Jonathan Matthew  <jmatthew@openbsd.org>
@@ -20,13 +20,16 @@
 #define	_OCTUCTLVAR_H_
 
 #include <machine/bus.h>
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 struct octuctl_attach_args {
-	char			*aa_name;
 	bus_space_tag_t		aa_octuctl_bust;
 	bus_space_tag_t  	aa_bust;
 	bus_dma_tag_t	 	aa_dmat;
 	bus_space_handle_t 	aa_ioh;
+	int			aa_node;
+	struct fdt_reg		aa_reg;
 };
 
 #endif	/* _OCTUCTLVAR_H_ */

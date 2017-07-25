@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.33 2017/07/13 12:50:50 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.34 2017/07/25 11:01:28 jmatthew Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -62,7 +62,7 @@ pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0000
 
 dwctwo0		at iobus0 irq 56
-octuctl0	at iobus0 irq 56
+octuctl*	at fdt?
 ehci0		at octuctl?
 ohci0		at octuctl?
 

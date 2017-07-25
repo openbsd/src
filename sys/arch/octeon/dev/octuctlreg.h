@@ -1,4 +1,4 @@
-/*	$OpenBSD: octuctlreg.h,v 1.1 2016/03/18 05:38:10 jmatthew Exp $ */
+/*	$OpenBSD: octuctlreg.h,v 1.2 2017/07/25 11:01:28 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2015 Jonathan Matthew  <jmatthew@openbsd.org>
@@ -22,13 +22,6 @@
 /*
  * UCTL - octeon II usb controller interface
  */
-#define UCTL_BASE				0x000118006f000000ull
-#define UCTL_SIZE				0x100
-
-#define UCTL_EHCI_BASE				0x00016f0000000000ull
-#define UCTL_EHCI_SIZE				0x100
-#define UCTL_OHCI_BASE				0x00016f0000000400ull
-#define UCTL_OHCI_SIZE				0x100
 
 #define UCTL_CLK_TARGET_FREQ			130000000ull
 

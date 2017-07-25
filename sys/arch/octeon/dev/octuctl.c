@@ -1,4 +1,4 @@
-/*	$OpenBSD: octuctl.c,v 1.1 2016/03/18 05:38:10 jmatthew Exp $ */
+/*	$OpenBSD: octuctl.c,v 1.2 2017/07/25 11:01:28 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2015 Jonathan Matthew  <jmatthew@openbsd.org>
@@ -24,7 +24,7 @@
 #include <machine/bus.h>
 #include <machine/octeonreg.h>
 #include <machine/octeonvar.h>
-#include <machine/octeon_model.h>
+#include <machine/fdt.h>
 
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/octuctlreg.h>
@@ -108,15 +108,9 @@ octuctl_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, uint32_t 
 int
 octuctl_match(struct device *parent, void *match, void *aux)
 {
-	int id;
+	struct fdt_attach_args *faa = aux;
 
-	id = octeon_get_chipid();
-	switch (octeon_model_family(id)) {
-	case OCTEON_MODEL_FAMILY_CN61XX:
-		return (1);
-	default:
-		return (0);
-	}
+	return OF_is_compatible(faa->fa_node, "cavium,octeon-6335-uctl");
 }
 
 int
@@ -202,20 +196,40 @@ octuctl_clock_setup(struct octuctl_softc *sc, uint64_t ctl)
 void
 octuctl_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct fdt_attach_args *faa = aux;
 	struct octuctl_softc *sc = (struct octuctl_softc *)self;
-	struct iobus_attach_args *aa = aux;
 	struct octuctl_attach_args uaa;
 	uint64_t port_ctl;
 	uint64_t ctl;
 	uint64_t preg;
 	uint64_t txvref;
-	int rc;
+	uint32_t reg[4];
 	int port;
+	int node;
+	int rc;
 
-	sc->sc_iot = aa->aa_bust;
-	rc = bus_space_map(sc->sc_iot, UCTL_BASE, UCTL_SIZE,
-	    0, &sc->sc_ioh);
-	KASSERT(rc == 0);
+	if (faa->fa_nreg != 1) {
+		printf(": expected one IO space, got %d\n", faa->fa_nreg);
+		return;
+	}
+
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, faa->fa_reg[0].size,
+	    0, &sc->sc_ioh)) {
+		printf(": could not map IO space\n");
+		return;
+	}
+
+	rc = OF_getpropint(faa->fa_node, "#address-cells", 0);
+	if (rc != 2) {
+		printf(": expected #address-cells 2, got %d\n", rc);
+		return;
+	}
+	rc = OF_getpropint(faa->fa_node, "#size-cells", 0);
+	if (rc != 2) {
+		printf(": expected #size-cells 2, got %d\n", rc);
+		return;
+	}
 
 	/* do clock setup if not already done */
 	bus_space_write_8(sc->sc_iot, sc->sc_ioh, UCTL_IF_ENA,
@@ -237,14 +251,19 @@ octuctl_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	uaa.aa_octuctl_bust = aa->aa_bust;
+	uaa.aa_octuctl_bust = sc->sc_iot;
 	uaa.aa_bust = &octuctl_tag;
-	uaa.aa_dmat = aa->aa_dmat;
+	uaa.aa_dmat = faa->fa_dmat;
 	uaa.aa_ioh = sc->sc_ioh;
 
-	uaa.aa_name = "ehci";
-	config_found(self, &uaa, octuctlprint);
+	for (node = OF_child(faa->fa_node); node != 0; node = OF_peer(node)) {
+		if (OF_getproplen(node, "reg") != sizeof(reg))
+			continue;
 
-	uaa.aa_name = "ohci";
-	config_found(self, &uaa, octuctlprint);
+		OF_getpropintarray(node, "reg", reg, sizeof(reg));
+		uaa.aa_reg.addr = (((uint64_t)reg[0]) << 32) | reg[1];
+		uaa.aa_reg.size = (((uint64_t)reg[2]) << 32) | reg[3];
+		uaa.aa_node = node;
+		config_found(self, &uaa, octuctlprint);
+	}
 }

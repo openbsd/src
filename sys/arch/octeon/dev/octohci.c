@@ -1,4 +1,4 @@
-/*	$OpenBSD: octohci.c,v 1.1 2016/03/18 05:38:10 jmatthew Exp $ */
+/*	$OpenBSD: octohci.c,v 1.2 2017/07/25 11:01:28 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2015 Jonathan Matthew  <jmatthew@openbsd.org>
@@ -39,6 +39,7 @@ struct octohci_softc {
 	struct ohci_softc	sc_ohci;
 
 	void			*sc_ih;
+	uint64_t		sc_reg_size;
 };
 
 int		octohci_match(struct device *, void *, void *);
@@ -57,11 +58,7 @@ int
 octohci_match(struct device *parent, void *match, void *aux)
 {
 	struct octuctl_attach_args *aa = aux;
-
-	if (strcmp(aa->aa_name, "ohci") != 0)
-		return (0);
-
-	return (1);
+	return (OF_is_compatible(aa->aa_node, "cavium,octeon-6335-ohci"));
 }
 
 void
@@ -78,9 +75,10 @@ octohci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ohci.sc_bus.pipe_size = sizeof(struct usbd_pipe);
 	sc->sc_ohci.sc_bus.dmatag = aa->aa_dmat;
 
-	rc = bus_space_map(sc->sc_ohci.iot, UCTL_OHCI_BASE, UCTL_OHCI_SIZE,
+	rc = bus_space_map(sc->sc_ohci.iot, aa->aa_reg.addr, aa->aa_reg.size,
 	    0, &sc->sc_ohci.ioh);
 	KASSERT(rc == 0);
+	sc->sc_reg_size = aa->aa_reg.size;
 
 	port_ctl = bus_space_read_8(aa->aa_octuctl_bust, aa->aa_ioh,
 	    UCTL_OHCI_CTL);
@@ -112,7 +110,7 @@ octohci_attach(struct device *parent, struct device *self, void *aux)
 
 failed:
 	octeon_intr_disestablish(sc->sc_ih);
-	bus_space_unmap(sc->sc_ohci.iot, sc->sc_ohci.ioh, UCTL_OHCI_SIZE);
+	bus_space_unmap(sc->sc_ohci.iot, sc->sc_ohci.ioh, sc->sc_reg_size);
 	splx(s);
 	return;
 }
@@ -135,7 +133,7 @@ octohci_attach_deferred(struct device *self)
 		    sc->sc_ohci.sc_bus.bdev.dv_xname, r);
 		octeon_intr_disestablish(sc->sc_ih);
 		bus_space_unmap(sc->sc_ohci.iot, sc->sc_ohci.ioh,
-		    UCTL_OHCI_SIZE);
+		    sc->sc_reg_size);
 	} else {
 		config_found(self, &sc->sc_ohci.sc_bus, usbctlprint);
 	}
