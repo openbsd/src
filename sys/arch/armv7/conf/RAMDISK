@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.82 2017/07/25 19:39:27 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.83 2017/07/25 20:39:12 kettenis Exp $
 
 machine		armv7 arm
 
@@ -152,6 +152,7 @@ rkclock*	at fdt? early 1
 rkgrf*		at fdt? early 1
 rkpinctrl*	at fdt? early 1
 rkgpio*		at fdt?
+dwdog*		at fdt?
 
 axppmic*	at iic?			# axp209 pmic
 crosec*		at iic?
