@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.38 2017/04/27 22:41:46 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.39 2017/07/25 07:53:27 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -119,80 +119,29 @@ enum cpu_class {
 	CPU_CLASS_ARMv8
 };
 
-static const char * const generic_steppings[16] = {
-	"rev 0",	"rev 1",	"rev 2",	"rev 3",
-	"rev 4",	"rev 5",	"rev 6",	"rev 7",
-	"rev 8",	"rev 9",	"rev 10",	"rev 11",
-	"rev 12",	"rev 13",	"rev 14",	"rev 15"
-};
-
 struct cpuidtab {
 	u_int32_t	cpuid;
 	enum		cpu_class cpu_class;
 	const char	*cpu_name;
-	const char * const *cpu_steppings;
 };
 
 const struct cpuidtab cpuids[] = {
-	{ CPU_ID_CORTEX_A5,	CPU_CLASS_ARMv7,	"ARM Cortex A5",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A7,	CPU_CLASS_ARMv7,	"ARM Cortex A7",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A8,	CPU_CLASS_ARMv7,	"ARM Cortex A8",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A8_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A8 R1",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A8_R2,	CPU_CLASS_ARMv7,	"ARM Cortex A8 R2",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A8_R3,	CPU_CLASS_ARMv7,	"ARM Cortex A8 R3",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A9,	CPU_CLASS_ARMv7,	"ARM Cortex A9",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A9_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A9 R1",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A9_R2,	CPU_CLASS_ARMv7,	"ARM Cortex A9 R2",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A9_R3,	CPU_CLASS_ARMv7,	"ARM Cortex A9 R3",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A9_R4,	CPU_CLASS_ARMv7,	"ARM Cortex A9 R4",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A12,	CPU_CLASS_ARMv7,	"ARM Cortex A12",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A15,	CPU_CLASS_ARMv7,	"ARM Cortex A15",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A15_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A15 R1",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A15_R2,	CPU_CLASS_ARMv7,	"ARM Cortex A15 R2",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A15_R3,	CPU_CLASS_ARMv7,	"ARM Cortex A15 R3",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A15_R4,	CPU_CLASS_ARMv7,	"ARM Cortex A15 R4",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A17,	CPU_CLASS_ARMv7,	"ARM Cortex A17",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A17_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A17 R1",
-	  generic_steppings },
+	{ CPU_ID_CORTEX_A5,	CPU_CLASS_ARMv7,	"ARM Cortex-A5" },
+	{ CPU_ID_CORTEX_A7,	CPU_CLASS_ARMv7,	"ARM Cortex-A7" },
+	{ CPU_ID_CORTEX_A8,	CPU_CLASS_ARMv7,	"ARM Cortex-A8" },
+	{ CPU_ID_CORTEX_A9,	CPU_CLASS_ARMv7,	"ARM Cortex-A9" },
+	{ CPU_ID_CORTEX_A12,	CPU_CLASS_ARMv7,	"ARM Cortex-A12" },
+	{ CPU_ID_CORTEX_A15,	CPU_CLASS_ARMv7,	"ARM Cortex-A15" },
+	{ CPU_ID_CORTEX_A17,	CPU_CLASS_ARMv7,	"ARM Cortex-A17" },
 
-	{ CPU_ID_CORTEX_A32,	CPU_CLASS_ARMv8,	"ARM Cortex A32",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A35,	CPU_CLASS_ARMv8,	"ARM Cortex A35",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A53,	CPU_CLASS_ARMv8,	"ARM Cortex A53",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A53_R1,	CPU_CLASS_ARMv8,	"ARM Cortex A53 R1",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A57,	CPU_CLASS_ARMv8,	"ARM Cortex A57",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A57_R1,	CPU_CLASS_ARMv8,	"ARM Cortex A57 R1",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A72,	CPU_CLASS_ARMv8,	"ARM Cortex A72",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A72_R1,	CPU_CLASS_ARMv8,	"ARM Cortex A72 R1",
-	  generic_steppings },
-	{ CPU_ID_CORTEX_A73,	CPU_CLASS_ARMv8,	"ARM Cortex A73",
-	  generic_steppings },
+	{ CPU_ID_CORTEX_A32,	CPU_CLASS_ARMv8,	"ARM Cortex-A32" },
+	{ CPU_ID_CORTEX_A35,	CPU_CLASS_ARMv8,	"ARM Cortex-A35" },
+	{ CPU_ID_CORTEX_A53,	CPU_CLASS_ARMv8,	"ARM Cortex-A53" },
+	{ CPU_ID_CORTEX_A57,	CPU_CLASS_ARMv8,	"ARM Cortex-A57" },
+	{ CPU_ID_CORTEX_A72,	CPU_CLASS_ARMv8,	"ARM Cortex-A72" },
+	{ CPU_ID_CORTEX_A73,	CPU_CLASS_ARMv8,	"ARM Cortex-A73" },
 
-	{ 0, CPU_CLASS_NONE, NULL, NULL }
+	{ 0, CPU_CLASS_NONE, NULL }
 };
 
 struct cpu_classtab {
@@ -246,12 +195,12 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	}
 
 	for (i = 0; cpuids[i].cpuid != 0; i++)
-		if (cpuids[i].cpuid == (cpuid & CPU_ID_CPU_MASK)) {
+		if (cpuids[i].cpuid == (cpuid & CPU_ID_CORTEX_MASK)) {
 			cpu_class = cpuids[i].cpu_class;
 			snprintf(cpu_model, sizeof(cpu_model),
-			    "%s %s (%s core)", cpuids[i].cpu_name,
-			    cpuids[i].cpu_steppings[cpuid &
-						    CPU_ID_REVISION_MASK],
+			    "%s r%dp%d (%s)", cpuids[i].cpu_name,
+			    (cpuid & CPU_ID_VARIANT_MASK) >> 20,
+			    cpuid & CPU_ID_REVISION_MASK,
 			    cpu_classes[cpu_class]);
 			break;
 		}
