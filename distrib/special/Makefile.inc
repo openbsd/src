@@ -1,6 +1,6 @@
 # options for all the directories below
 
-COPTS+=-Os -fno-stack-protector
+COPTS+=-Oz -fno-stack-protector
 MAN=
 LDSTATIC=-static
 NOPIE=

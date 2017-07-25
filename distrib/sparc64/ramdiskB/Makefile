@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2017/01/27 17:59:09 natano Exp $
+#	$OpenBSD: Makefile,v 1.27 2017/07/25 13:32:14 robert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -78,7 +78,7 @@ ${IMAGE}: ${CBIN}
 
 bsd:
 	cd ${TOP}/../../sys/arch/sparc64/compile/${KERNEL} && \
-	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Os ${MAKE}'
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Oz ${MAKE}'
 	cp -p ${TOP}/../../sys/arch/sparc64/compile/${KERNEL}/obj/bsd bsd
 
 elfrdsetroot:	${TOP}/../common/elfrdsetroot.c

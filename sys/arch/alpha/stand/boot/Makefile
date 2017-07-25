@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2017/06/12 18:49:34 espie Exp $
+#	$OpenBSD: Makefile,v 1.23 2017/07/25 13:32:14 robert Exp $
 #	$NetBSD: Makefile,v 1.17 1997/04/17 07:27:46 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -28,7 +28,7 @@ DEFNS= -DCOMPAT_UFS
 
 AFLAGS += -DASSEMBLER ${DEFNS} -fno-pie
 CPPFLAGS += -I${.CURDIR}/../../../../lib/libsa -I${.CURDIR}/../.. -I${S} ${DEFNS}
-CFLAGS = -Os -Werror -mno-fp-regs -fno-pie \
+CFLAGS = -Oz -Werror -mno-fp-regs -fno-pie \
 	-msmall-data -msmall-text
 
 ${PROG}.nosym: ${PROG}.sym

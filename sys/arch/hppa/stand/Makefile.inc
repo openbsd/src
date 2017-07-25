@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.21 2016/11/06 16:04:20 tb Exp $
+#	$OpenBSD: Makefile.inc,v 1.22 2017/07/25 13:32:14 robert Exp $
 
-CFLAGS=${DEBUG} -Os -Wall -Werror
+CFLAGS=${DEBUG} -Oz -Wall -Werror
 CPPFLAGS+=-I${S} -I. -I${.CURDIR}
 SACFLAGS=-nostdinc -fno-builtin -D_STANDALONE -I${STANDIR}/libsa
 SACFLAGS+=-mdisable-fpregs -mfast-indirect-calls -mpa-risc-1-1

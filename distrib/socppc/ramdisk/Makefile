@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2016/12/22 10:26:47 natano Exp $
+#	$OpenBSD: Makefile,v 1.17 2017/07/25 13:32:14 robert Exp $
 
 REV=	${OSrev}
 
@@ -48,7 +48,7 @@ ${IMAGE}: ${CBIN}
 
 bsd:
 	cd ${TOP}/../../sys/arch/socppc/compile/RAMDISK && \
-	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Os ${MAKE}'
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Oz ${MAKE}'
 	cp -p ${TOP}/../../sys/arch/socppc/compile/RAMDISK/obj/bsd bsd
 
 rdsetroot:	${TOP}/../common/elfrdsetroot.c
