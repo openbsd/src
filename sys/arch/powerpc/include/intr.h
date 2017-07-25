@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.52 2015/09/13 14:06:40 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.53 2017/07/25 03:46:59 visa Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -155,10 +155,6 @@ void	softintr_init(void);
 void	softintr_schedule(void *);
 void	dosoftint(int);
 
-#define	setsoftclock()	set_sint(SI_TO_IRQBIT(SI_SOFTCLOCK))
-#define	setsoftnet()	set_sint(SI_TO_IRQBIT(SI_SOFTNET))
-#define	setsofttty()	set_sint(SI_TO_IRQBIT(SI_SOFTTTY))
- 
 #define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
 
