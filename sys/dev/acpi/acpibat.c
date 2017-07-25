@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.64 2017/07/22 21:06:17 jcs Exp $ */
+/* $OpenBSD: acpibat.c,v 1.65 2017/07/25 21:32:07 jcs Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -328,8 +328,18 @@ acpibat_getbix(struct acpibat_softc *sc)
 		return (0);
 	}
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BIX", 0, NULL, &res)) {
-		/* no _BIX, fallback on _BIF */
+	sc->sc_use_bif = 1;
+
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BIX", 0, NULL,
+	    &res) == 0) {
+		if (res.length == 20)
+			sc->sc_use_bif = 0;
+		else
+			dnprintf(10, "%s: invalid _BIX (%d != 20)\n",
+			    DEVNAME(sc), res.length);
+	}
+
+	if (sc->sc_use_bif) {
 		if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BIF", 0, NULL,
 		    &res)) {
 			dnprintf(10, "%s: no _BIX or _BIF\n", DEVNAME(sc));
@@ -341,16 +351,6 @@ acpibat_getbix(struct acpibat_softc *sc)
 			    DEVNAME(sc), res.length);
 			goto out;
 		}
-
-		sc->sc_use_bif = 1;
-	} else {
-		if (res.length != 20) {
-			dnprintf(10, "%s: invalid _BIX (%d != 20)\n",
-			    DEVNAME(sc), res.length);
-			goto out;
-		}
-
-		sc->sc_use_bif = 0;
 	}
 
 	if (!sc->sc_use_bif)
