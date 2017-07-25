@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.2 2017/07/23 10:11:27 kettenis Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.3 2017/07/25 19:37:27 kettenis Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -138,6 +138,11 @@ _C_LABEL(bootstrap_start):
 	ldmia	r4!, {r1,r2,r3}   /* # of sections, PA|attr, VA */
 	cmp	r1, #0
 	bne	3b
+
+	/* Set ASID to zero */
+	mov	r1, #0
+	mcr	CP15_CONTEXTIDR(r1)
+	isb
 
 	mcr	CP15_TTBR0(r0)		/* Set TTB */
 	mcr	CP15_TLBIALL(r0)	/* Flush TLB */
