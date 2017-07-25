@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.35 2017/07/10 18:48:37 bluhm Exp $
+# $OpenBSD: Makefile,v 1.36 2017/07/25 12:49:29 bluhm Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-link-4 \
@@ -348,7 +348,7 @@ lib$l.la: ${OBJ_$l}
 	${LIBS_ENV} ${LIBTOOL} --mode=link ${CC} ${CFLAGS} -o $@ ${$l_OPTS} ${OBJ_$l}
 .endfor
 
-CLEANFILES += ${PRGS} s1 *.c *.o *.lo *.la .libs/* lib1/* out*
+CLEANFILES += ${PRGS} s1 e dummy*.c *.d *.o *.lo *.la .libs/* lib1/* out*
 CLEANFILES += ${DEST}/bin/* ${DEST}/lib/* ${DEST2}/lib/* ${DEST3}/lib/*
 
 .PHONY: ${REGRESS_TARGETS} regress compile-tests
