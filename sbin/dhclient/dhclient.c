@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.485 2017/07/26 16:53:22 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.486 2017/07/26 18:16:21 jca Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1878,7 +1878,7 @@ lease_as_proposal(struct client_lease *lease)
 		} else
 			log_warnx("DOMAIN_NAME too long");
 	}
-	if (&lease->options[DHO_DOMAIN_NAME_SERVERS].len != 0) {
+	if (lease->options[DHO_DOMAIN_NAME_SERVERS].len != 0) {
 		int servers;
 		opt = &lease->options[DHO_DOMAIN_NAME_SERVERS];
 		servers = opt->len / sizeof(struct in_addr);
