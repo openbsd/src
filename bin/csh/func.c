@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.33 2016/08/14 19:46:31 guenther Exp $       */
+/*    $OpenBSD: func.c,v 1.34 2017/07/26 19:15:09 anton Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -589,7 +589,7 @@ search(int type, int level, Char *goal)
 	bseek(&a);
     }
     do {
-	if (intty && fseekp == feobp && aret == F_SEEK)
+	if (intty && !filec && fseekp == feobp && aret == F_SEEK)
 	    (void) fprintf(cshout, "? "), (void) fflush(cshout);
 	aword[0] = 0;
 	(void) getword(aword);
