@@ -1,4 +1,4 @@
-/*	$OpenBSD: refresh.c,v 1.20 2016/05/06 18:01:40 schwarze Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.21 2017/07/26 12:10:56 schwarze Exp $	*/
 /*	$NetBSD: refresh.c,v 1.50 2016/05/02 16:35:17 christos Exp $	*/
 
 /*-
@@ -1052,7 +1052,10 @@ re_refresh_cursor(EditLine *el)
 static void
 re_fastputc(EditLine *el, wint_t c)
 {
-	int w = wcwidth(c);
+	wchar_t *lastline;
+	int w;
+
+	w = wcwidth(c);
 	while (w > 1 && el->el_cursor.h + w > el->el_terminal.t_size.h)
 	    re_fastputc(el, ' ');
 
@@ -1074,17 +1077,16 @@ re_fastputc(EditLine *el, wint_t c)
 		 */
 		if (el->el_cursor.v + 1 >= el->el_terminal.t_size.v) {
 			int i, lins = el->el_terminal.t_size.v;
-			wchar_t *firstline = el->el_display[0];
-
+			lastline = el->el_display[0];
 			for(i = 1; i < lins; i++)
 				el->el_display[i - 1] = el->el_display[i];
-
-			re__copy_and_pad(firstline, L"", 0);
-			el->el_display[i - 1] = firstline;
+			el->el_display[i - 1] = lastline;
 		} else {
 			el->el_cursor.v++;
-			el->el_refresh.r_oldcv++;
+			lastline = el->el_display[el->el_refresh.r_oldcv++];
 		}
+		re__copy_and_pad(lastline, L"", el->el_terminal.t_size.h);
+
 		if (EL_HAS_AUTO_MARGINS) {
 			if (EL_HAS_MAGIC_MARGINS) {
 				terminal__putc(el, ' ');
