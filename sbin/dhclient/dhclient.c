@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.483 2017/07/24 18:13:19 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.484 2017/07/26 14:11:25 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1818,7 +1818,7 @@ lease_as_proposal(struct client_lease *lease)
 	proposal->addrs |= RTA_IFA;
 
 	opt = &lease->options[DHO_INTERFACE_MTU];
-	if (opt->len == sizeof(u_int16_t)) {
+	if (opt->len == sizeof(uint16_t)) {
 		memcpy(&proposal->mtu, opt->data, sizeof(proposal->mtu));
 		proposal->mtu = ntohs(proposal->mtu);
 		proposal->inits |= RTV_MTU;
