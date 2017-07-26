@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.118 2017/07/24 18:13:19 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.119 2017/07/26 13:22:03 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -282,18 +282,16 @@ add_default_route(struct in_addr gateway, struct in_addr addr)
 
 	memset(&netmask, 0, sizeof(netmask));
 	memset(&dest, 0, sizeof(dest));
-	addrs = RTA_DST | RTA_NETMASK;
-	flags = 0;
+	addrs = RTA_DST | RTA_NETMASK | RTA_GATEWAY | RTA_IFA;
+	flags = RTF_GATEWAY | RTF_STATIC;
 
 	/*
 	 * When 'addr' and 'gateway' are identical the desired behaviour is
-	 * to emulate the '-iface' variant of 'route'. This is done by
-	 * claiming there is no gateway address to use.
+	 * to emulate the '-iface' variant of 'route'. i.e. do *NOT* set
+	 * the RTF_GATEWAY flag for the default route.
 	 */
-	if (memcmp(&gateway, &addr, sizeof(addr)) != 0) {
-		addrs |= RTA_GATEWAY | RTA_IFA;
-		flags |= RTF_GATEWAY | RTF_STATIC;
-	}
+	if (memcmp(&gateway, &addr, sizeof(addr)) == 0)
+		flags &= ~RTF_GATEWAY;
 
 	add_route(dest, netmask, gateway, addr, addrs, flags);
 }
