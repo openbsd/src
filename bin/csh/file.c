@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.32 2017/07/26 19:15:09 anton Exp $	*/
+/*	$OpenBSD: file.c,v 1.33 2017/07/26 19:20:51 anton Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -180,10 +180,10 @@ cl_getc(struct cmdline *cl)
 static Char *
 cl_lastw(struct cmdline *cl)
 {
-	static Char	 word[BUFSIZ];
-	const unsigned char *delimiters = " '\"\t;&<>()|^%";
-	Char	*cp;
-	size_t		 i;
+	static Char		 word[BUFSIZ];
+	const unsigned char	*delimiters = " '\"\t;&<>()|^%";
+	Char			*cp;
+	size_t			 i;
 
 	for (i = cl->len; i > 0; i--)
 		if (strchr(delimiters, cl->buf[i - 1]) != NULL)
@@ -200,7 +200,7 @@ cl_lastw(struct cmdline *cl)
 static void
 cl_putc(struct cmdline *cl, int c)
 {
-	unsigned char cc = c;
+	unsigned char	cc = c;
 
 	write(cl->fdout, &cc, 1);
 }
@@ -255,14 +255,14 @@ cl_erasew(struct cmdline *cl, int c)
 	const unsigned char	*ws = " \t";
 
 	for (; cl->len > 0; cl->len--)
-		if (strchr(ws, cl->buf[cl->len - 1]) == NULL
-		    && ((cl->flags & CL_ALTWERASE) == 0
-			    || isalpha(cl->buf[cl->len - 1])))
+		if (strchr(ws, cl->buf[cl->len - 1]) == NULL &&
+		    ((cl->flags & CL_ALTWERASE) == 0 ||
+		     isalpha(cl->buf[cl->len - 1])))
 			break;
 	for (; cl->len > 0; cl->len--)
-		if (strchr(ws, cl->buf[cl->len - 1]) != NULL
-		    || ((cl->flags & CL_ALTWERASE)
-			    && !isalpha(cl->buf[cl->len - 1])))
+		if (strchr(ws, cl->buf[cl->len - 1]) != NULL ||
+		    ((cl->flags & CL_ALTWERASE) &&
+		     !isalpha(cl->buf[cl->len - 1])))
 			break;
 
 	return 0;
