@@ -1,12 +1,7 @@
-/*	$OpenBSD: uha.c,v 1.24 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: uha.c,v 1.25 2017/07/26 03:36:19 deraadt Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
-#ifdef DDB
-#define	integrate
-#else
-#define	integrate	static inline
-#endif
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -81,9 +76,8 @@
 
 #define KVTOPHYS(x)	vtophys((vaddr_t)x)
 
-integrate void uha_reset_mscp(struct uha_softc *, struct uha_mscp *);
+void uha_reset_mscp(struct uha_softc *, struct uha_mscp *);
 void uha_mscp_free(void *, void *);
-integrate void uha_init_mscp(struct uha_softc *, struct uha_mscp *);
 void *uha_mscp_alloc(void *);
 void uhaminphys(struct buf *, struct scsi_link *);
 void uha_scsi_cmd(struct scsi_xfer *);
@@ -149,7 +143,7 @@ uha_attach(sc)
 	config_found(&sc->sc_dev, &saa, uhaprint);
 }
 
-integrate void
+void
 uha_reset_mscp(sc, mscp)
 	struct uha_softc *sc;
 	struct uha_mscp *mscp;
@@ -173,25 +167,6 @@ uha_mscp_free(xsc, xmscp)
 	mtx_enter(&sc->sc_mscp_mtx);
 	SLIST_INSERT_HEAD(&sc->sc_free_mscp, mscp, chain);
 	mtx_leave(&sc->sc_mscp_mtx);
-}
-
-integrate void
-uha_init_mscp(sc, mscp)
-	struct uha_softc *sc;
-	struct uha_mscp *mscp;
-{
-	int hashnum;
-
-	bzero(mscp, sizeof(struct uha_mscp));
-	/*
-	 * put in the phystokv hash table
-	 * Never gets taken out.
-	 */
-	mscp->hashkey = KVTOPHYS(mscp);
-	hashnum = MSCP_HASH(mscp->hashkey);
-	mscp->nexthash = sc->sc_mscphash[hashnum];
-	sc->sc_mscphash[hashnum] = mscp;
-	uha_reset_mscp(sc, mscp);
 }
 
 /*
