@@ -1,4 +1,4 @@
-/* $OpenBSD: alerts.c,v 1.21 2017/07/26 16:14:08 nicm Exp $ */
+/* $OpenBSD: alerts.c,v 1.22 2017/07/26 16:16:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -45,7 +45,6 @@ alerts_timer(__unused int fd, __unused short events, void *arg)
 	struct window	*w = arg;
 
 	log_debug("@%u alerts timer expired", w->id);
-	alerts_reset(w);
 	alerts_queue(w, WINDOW_SILENCE);
 }
 
@@ -132,8 +131,7 @@ alerts_reset(struct window *w)
 void
 alerts_queue(struct window *w, int flags)
 {
-	if (w->flags & WINDOW_ACTIVITY)
-		alerts_reset(w);
+	alerts_reset(w);
 
 	if (!event_initialized(&w->alerts_timer))
 		evtimer_set(&w->alerts_timer, alerts_timer, w);
