@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.203 2017/07/20 15:26:35 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.204 2017/07/26 10:21:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -448,7 +448,7 @@ main(int argc, char *argv[])
 				parse(&curp, fd, *argv);
 			else if (resp->form == FORM_SRC) {
 				/* For .so only; ignore failure. */
-				chdir(conf.manpath.paths[resp->ipath]);
+				(void)chdir(conf.manpath.paths[resp->ipath]);
 				parse(&curp, fd, resp->file);
 			} else
 				passthrough(resp->file, fd,
