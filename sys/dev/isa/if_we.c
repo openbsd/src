@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.26 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.27 2017/07/26 05:25:21 deraadt Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -134,7 +134,7 @@ int	we_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
 void	we_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
 int	we_test_mem(struct dp8390_softc *);
 
-__inline void we_readmem(struct we_softc *, int, u_int8_t *, int);
+static __inline void we_readmem(struct we_softc *, int, u_int8_t *, int);
 
 static const int we_584_irq[] = {
 	9, 3, 5, 7, 10, 11, 15, 4,
@@ -584,7 +584,7 @@ we_test_mem(struct dp8390_softc *sc)
  * copy 'len' from NIC to host using shared memory.  The 'len' is rounded
  * up to a word - ok as long as mbufs are word-sized.
  */
-__inline void
+static __inline void
 we_readmem(struct we_softc *wsc, int from, u_int8_t *to, int len)
 {
 	bus_space_tag_t memt = wsc->sc_dp8390.sc_buft;

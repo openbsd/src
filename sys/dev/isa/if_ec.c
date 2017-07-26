@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ec.c,v 1.16 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_ec.c,v 1.17 2017/07/26 05:25:21 deraadt Exp $	*/
 /*	$NetBSD: if_ec.c,v 1.9 1998/07/05 06:49:12 jonathan Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ void	ec_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
 int	ec_fake_test_mem(struct dp8390_softc *);
 int	ec_test_mem(struct dp8390_softc *);
 
-__inline void ec_readmem(struct ec_softc *, int, u_int8_t *, int);
+static __inline void ec_readmem(struct ec_softc *, int, u_int8_t *, int);
 
 static const int ec_iobase[] = {
 	0x2e0, 0x2a0, 0x280, 0x250, 0x350, 0x330, 0x310, 0x300,
@@ -539,7 +539,7 @@ ec_test_mem(struct dp8390_softc *sc)
  * copy 'len' from NIC to host using shared memory.  The 'len' is rounded
  * up to a word - ok as long as mbufs are word-sized.
  */
-__inline void
+static __inline void
 ec_readmem(struct ec_softc *esc, int from, u_int8_t *to, int len)
 {
 	bus_space_tag_t memt = esc->sc_dp8390.sc_buft;
