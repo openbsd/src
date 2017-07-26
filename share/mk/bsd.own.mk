@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.185 2017/06/19 08:35:24 mpi Exp $
+#	$OpenBSD: bsd.own.mk,v 1.186 2017/07/26 19:44:42 robert Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -16,7 +16,7 @@ SKEY?=		yes
 YP?=		yes
 
 CLANG_ARCH=aarch64 amd64 i386
-GCC4_ARCH=alpha amd64 arm hppa i386 mips64 mips64el powerpc sh sparc64
+GCC4_ARCH=alpha arm hppa mips64 mips64el powerpc sh sparc64
 GCC3_ARCH=m88k
 
 # m88k: ?
@@ -37,7 +37,8 @@ BUILD_GCC3?=yes
 .else
 BUILD_GCC3?=no
 .endif
-.if !empty(GCC4_ARCH:M${_arch})
+.if !empty(GCC4_ARCH:M${_arch}) || ${MACHINE_ARCH} == "amd64" || \
+    ${MACHINE_ARCH} == "i386"
 BUILD_GCC4?=yes
 .else
 BUILD_GCC4?=no
