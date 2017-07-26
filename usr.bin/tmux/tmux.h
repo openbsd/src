@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.796 2017/07/14 18:49:07 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.797 2017/07/26 16:14:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -82,6 +82,11 @@ struct tmuxproc;
 #define BELL_ANY 1
 #define BELL_CURRENT 2
 #define BELL_OTHER 3
+
+/* Visual option values. */
+#define VISUAL_OFF 0
+#define VISUAL_ON 1
+#define VISUAL_BOTH 2
 
 /* Special key codes. */
 #define KEYC_NONE 0xffff00000000ULL
