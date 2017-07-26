@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.103 2017/06/25 07:23:53 bentley Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.104 2017/07/26 10:33:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -209,9 +209,8 @@ post_OP(CHKARGS)
 static void
 post_UR(CHKARGS)
 {
-
 	if (n->type == ROFFT_HEAD && n->child == NULL)
-		mandoc_vmsg(MANDOCERR_UR_NOHEAD, man->parse,
+		mandoc_msg(MANDOCERR_UR_NOHEAD, man->parse,
 		    n->line, n->pos, roff_name[n->tok]);
 	check_part(man, n);
 }
