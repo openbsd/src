@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.23 2017/05/30 12:52:59 akfaew Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.24 2017/07/26 08:18:28 job Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -238,7 +238,7 @@ static const char *bgpnotify_minor_fsm[] = {
 
 /* RFC 4486 */
 #define BGP_NOTIFY_MINOR_CEASE_MAXPRFX  1
-/* draft-ietf-idr-shutdown-07 */
+/* RFC 8203 */
 #define BGP_NOTIFY_MINOR_CEASE_SHUT			2
 #define BGP_NOTIFY_MINOR_CEASE_RESET			4
 #define BGP_NOTIFY_MINOR_CEASE_ADMIN_SHUTDOWN_LEN	128
@@ -1046,11 +1046,11 @@ bgp_notification_print(const u_char *dat, int length)
 		}
 
 		/*
-		 * draft-ietf-idr-shutdown describes a method to send a
-		 * message intended for human consumption regarding the
-		 * Administrative Shutdown or Reset event. This is called
-		 * the "Shutdown Communication". The communication is
-		 * UTF-8 encoded and may be no longer than 128 bytes.
+		 * RFC 8203 describes a method to send a message intended
+		 * for human consumption regarding the Administrative 
+		 * Shutdown or Reset event. This is called the "Shutdown
+		 * Communication". The communication is UTF-8 encoded
+		 * and may be no longer than 128 bytes.
 		 */
 		if ((bgpn.bgpn_minor == BGP_NOTIFY_MINOR_CEASE_SHUT ||
 		    bgpn.bgpn_minor == BGP_NOTIFY_MINOR_CEASE_RESET) &&
