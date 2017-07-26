@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.241 2017/07/24 09:20:32 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.242 2017/07/26 20:32:58 anton Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -764,7 +764,7 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		/*
 		 * We cannot go through a delete/create/insert cycle for
 		 * cached route because this can lead to races in the
-		 * receive path.  Instead we upade the L2 cache.
+		 * receive path.  Instead we update the L2 cache.
 		 */
 		if ((rt != NULL) && ISSET(rt->rt_flags, RTF_CACHED))
 			goto change;
