@@ -5465,7 +5465,7 @@ default|recommended)
 	?*) 	echo " "
 		echo "Checking if your compiler accepts -fno-delete-null-pointer-checks" 2>&1
 		echo 'int main(void) { return 0; }' > gcctest.c
-		if $cc -O2 -fno-delete-null-pointer-checks -o gcctest gcctest.c; then
+		if $cc -O2 -Werror -fno-delete-null-pointer-checks -o gcctest gcctest.c; then
 			echo "Yes, it does." 2>&1
 			case "$ccflags" in
 			*delete-null-pointer-checks*)

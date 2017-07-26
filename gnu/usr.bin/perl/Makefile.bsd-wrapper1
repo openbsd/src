@@ -5,7 +5,6 @@ NOPROFILE=
 
 # Perl builds with -fno-strict-aliasing, we want libperl to do the same
 CFLAGS+= -fno-strict-aliasing
-CFLAGS+= -fno-delete-null-pointer-checks
 
 H2PH=		/usr/bin/h2ph
 
