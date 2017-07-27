@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.62 2017/05/30 15:10:48 schwarze Exp $	*/
+/*	$OpenBSD: w.c,v 1.63 2017/07/27 14:17:34 jca Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -384,7 +384,7 @@ pr_args(struct kinfo_proc *kp)
 	int left;
 
 	if (kp == NULL)
-		goto nothing;		/* XXX - can this happen? */
+		goto nothing;		/* no matching process found */
 	left = argwidth;
 	argv = kvm_getargv(kd, kp, argwidth+60);  /* +60 for ftpd snip */
 	if (argv == NULL)
