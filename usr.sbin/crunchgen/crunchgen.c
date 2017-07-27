@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.17 2017/02/28 20:42:12 guenther Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.18 2017/07/27 15:12:30 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -955,6 +955,7 @@ prog_makefile_rules(FILE * outmk, prog_t * p)
 
 	fprintf(outmk, "%s_stub.c:\n", p->name);
 	fprintf(outmk, "\t@echo \""
+	    "extern int main(int argc, char **argv, char **envp);\\\n"
 	    "int _crunched_%s_stub(int argc, char **argv, char **envp)"
 	    " { return main(argc, argv, envp); }\" >$@\n",
 	    p->ident);

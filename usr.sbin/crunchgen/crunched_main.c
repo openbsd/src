@@ -1,4 +1,4 @@
-/* $OpenBSD: crunched_main.c,v 1.6 2016/05/20 01:28:43 guenther Exp $	 */
+/* $OpenBSD: crunched_main.c,v 1.7 2017/07/27 15:12:30 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -44,6 +44,8 @@ struct stub {
 
 extern struct stub entry_points[];
 
+void	crunched_usage(void);
+
 static int
 crunched_main2(char *progname, int argc, char **argv, char **envp)
 {
@@ -60,6 +62,7 @@ crunched_main2(char *progname, int argc, char **argv, char **envp)
 		return ep->f(argc, argv, envp);
 	fprintf(stderr, "%s: %s not compiled in\n", EXECNAME, progname);
 	crunched_usage();
+	return (1);
 }
 
 int
@@ -78,7 +81,7 @@ crunched_main(int argc, char **argv, char **envp)
 	return crunched_main2(argv[1], argc-1, argv+1, envp);
 }
 
-int
+void
 crunched_usage(void)
 {
 	int		columns = 0, len;
