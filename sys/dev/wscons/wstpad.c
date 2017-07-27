@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.9 2017/07/26 20:25:15 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.10 2017/07/27 20:25:27 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -1320,17 +1320,24 @@ wstpad_configure(struct wsmouseinput *input)
 		tp->tap.maxdist = 3 * h_unit;
 	}
 
+	/* A touch with a flag set in this mask does not move the pointer. */
+	tp->freeze = 0;
+
 	if ((ratio = tp->params.left_edge) == 0
 	    && (tp->features & WSTPAD_EDGESCROLL)
 	    && (tp->features & WSTPAD_SWAPSIDES))
 		ratio = EDGERATIO_DEFAULT;
 	tp->edge.left = input->hw.x_min + width * ratio / 4096;
+	if (ratio)
+		tp->freeze |= L_EDGE;
 
 	if ((ratio = tp->params.right_edge) == 0
 	    && (tp->features & WSTPAD_EDGESCROLL)
 	    && !(tp->features & WSTPAD_SWAPSIDES))
 		ratio = EDGERATIO_DEFAULT;
 	tp->edge.right = input->hw.x_max - width * ratio / 4096;
+	if (ratio)
+		tp->freeze |= R_EDGE;
 
 	if ((ratio = tp->params.bottom_edge) == 0
 	    && ((tp->features & WSTPAD_SOFTBUTTONS)
@@ -1338,11 +1345,15 @@ wstpad_configure(struct wsmouseinput *input)
 	    && (tp->features & WSTPAD_HORIZSCROLL))))
 		ratio = EDGERATIO_DEFAULT;
 	tp->edge.bottom = input->hw.y_min + height * ratio / 4096;
+	if (ratio)
+		tp->freeze |= B_EDGE;
 
 	if ((ratio = tp->params.top_edge) == 0
 	    && (tp->features & WSTPAD_TOPBUTTONS))
 		ratio = EDGERATIO_DEFAULT;
 	tp->edge.top = input->hw.y_max - height * ratio / 4096;
+	if (ratio)
+		tp->freeze |= T_EDGE;
 
 	if ((ratio = abs(tp->params.center_width)) == 0)
 		ratio = CENTERWIDTH_DEFAULT;
@@ -1350,12 +1361,6 @@ wstpad_configure(struct wsmouseinput *input)
 	tp->edge.center_left = tp->edge.center - width * ratio / 8192;
 	tp->edge.center_right = tp->edge.center + width * ratio / 8192;
 	tp->edge.middle = (input->hw.y_max - input->hw.y_min) / 2;
-
-	/*
-	 * A touch with a flag that is also set in this mask does not
-	 * move the pointer.  For now, it only contains the edge flags.
-	 */
-	tp->freeze = EDGES;
 
 	tp->handlers = 0;
 
