@@ -1,19 +1,10 @@
-#	$OpenBSD: Makefile,v 1.4 2011/07/07 21:00:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2017/07/27 17:43:24 bluhm Exp $
 
-PROG=		gaitest
-SRCS=		gaitest.c
-NOMAN=		# defined
-CLEANFILES+=	out
+PROG =		gaitest
+CLEANFILES =	out
 
-REGRESS_TARGETS=do-test
-
-do-test: ${PROG}
+run-regress-${PROG}: ${PROG}
 	sh ${.CURDIR}/testsuite.sh >out 2>&1
-	@if diff -u10 out ${.CURDIR}/answer; then \
-		echo SUCCESS; \
-	else \
-		echo FAIL; \
-		exit 1; \
-	fi
+	diff -u10 out ${.CURDIR}/answer
 
 .include <bsd.regress.mk>
