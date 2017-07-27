@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.319 2017/07/19 12:51:30 mikeb Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.320 2017/07/27 12:09:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2104,6 +2104,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EFAULT;
 				goto fail;
 			}
+			if (strnlen(ioe->anchor, sizeof(ioe->anchor)) ==
+			    sizeof(ioe->anchor)) {
+				free(table, M_TEMP, sizeof(*table));
+				free(ioe, M_TEMP, sizeof(*ioe));
+				error = ENAMETOOLONG;
+				goto fail;
+			}
 			switch (ioe->type) {
 			case PF_TRANS_TABLE:
 				bzero(table, sizeof(*table));
@@ -2156,6 +2163,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EFAULT;
 				goto fail;
 			}
+			if (strnlen(ioe->anchor, sizeof(ioe->anchor)) ==
+			    sizeof(ioe->anchor)) {
+				free(table, M_TEMP, sizeof(*table));
+				free(ioe, M_TEMP, sizeof(*ioe));
+				error = ENAMETOOLONG;
+				goto fail;
+			}
 			switch (ioe->type) {
 			case PF_TRANS_TABLE:
 				bzero(table, sizeof(*table));
@@ -2204,6 +2218,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EFAULT;
 				goto fail;
 			}
+			if (strnlen(ioe->anchor, sizeof(ioe->anchor)) ==
+			    sizeof(ioe->anchor)) {
+				free(table, M_TEMP, sizeof(*table));
+				free(ioe, M_TEMP, sizeof(*ioe));
+				error = ENAMETOOLONG;
+				goto fail;
+			}
 			switch (ioe->type) {
 			case PF_TRANS_TABLE:
 				rs = pf_find_ruleset(ioe->anchor);
@@ -2249,6 +2270,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				free(table, M_TEMP, sizeof(*table));
 				free(ioe, M_TEMP, sizeof(*ioe));
 				error = EFAULT;
+				goto fail;
+			}
+			if (strnlen(ioe->anchor, sizeof(ioe->anchor)) ==
+			    sizeof(ioe->anchor)) {
+				free(table, M_TEMP, sizeof(*table));
+				free(ioe, M_TEMP, sizeof(*ioe));
+				error = ENAMETOOLONG;
 				goto fail;
 			}
 			switch (ioe->type) {
