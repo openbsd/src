@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.532 2017/05/26 21:30:00 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.533 2017/07/27 18:48:30 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -103,6 +103,9 @@
 
 #define MTA_EXT_DSN		0x400
 
+
+#define P_NEWALIASES	0
+#define P_MAKEMAP	1
 
 struct userinfo {
 	char username[SMTPD_VUSERNAME_SIZE];
@@ -1254,7 +1257,7 @@ size_t mda_expand_format(char *, size_t, const struct envelope *,
 
 
 /* makemap.c */
-int makemap(int, char **);
+int makemap(int, int, char **);
 
 
 /* mailaddr.c */

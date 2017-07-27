@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.153 2017/05/19 19:56:42 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.154 2017/07/27 18:48:30 sunil Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -1096,10 +1096,8 @@ sendmail_compat(int argc, char **argv)
 		 * that should invoke makemap/newaliases.
 		 */
 		for (i = 1; i < argc; i++)
-			if (strncmp(argv[i], "-bi", 3) == 0) {
-				__progname = "newaliases";
-				exit(makemap(argc, argv));
-			}
+			if (strncmp(argv[i], "-bi", 3) == 0)
+				exit(makemap(P_NEWALIASES, argc, argv));
 
 		if (!srv_connect())
 			offlinefp = offline_file();
@@ -1115,9 +1113,10 @@ sendmail_compat(int argc, char **argv)
 
 		sendmail = 1;
 		exit(enqueue(argc, argv, offlinefp));
-	} else if (strcmp(__progname, "makemap") == 0 ||
-	    strcmp(__progname, "newaliases") == 0)
-		exit(makemap(argc, argv));
+	} else if (strcmp(__progname, "makemap") == 0)
+		exit(makemap(P_MAKEMAP, argc, argv));
+	else if (strcmp(__progname, "newaliases") == 0)
+		exit(makemap(P_NEWALIASES, argc, argv));
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.66 2017/01/09 09:53:23 reyk Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.67 2017/07/27 18:48:30 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -55,12 +55,7 @@ static int	 dump_db(const char *, DBTYPE);
 struct smtpd	 smtpd;
 struct smtpd	*env = &smtpd;
 char		*source;
-extern char	*__progname;
-
-enum program {
-	P_MAKEMAP,
-	P_NEWALIASES
-} mode;
+static int	 mode;
 
 enum output_type {
 	T_PLAIN,
@@ -84,7 +79,7 @@ fork_proc_backend(const char *backend, const char *conf, const char *procname)
 }
 
 int
-makemap(int argc, char *argv[])
+makemap(int prog_mode, int argc, char *argv[])
 {
 	struct stat	 sb;
 	char		 dbname[PATH_MAX];
@@ -98,7 +93,7 @@ makemap(int argc, char *argv[])
 
 	log_init(1, LOG_MAIL);
 
-	mode = strcmp(__progname, "newaliases") ? P_MAKEMAP : P_NEWALIASES;
+	mode = prog_mode;
 	conf = CONF_FILE;
 	type = T_PLAIN;
 	opts = "b:C:d:ho:O:t:U";
@@ -501,9 +496,9 @@ static void
 usage(void)
 {
 	if (mode == P_NEWALIASES)
-		fprintf(stderr, "usage: %s [-f file]\n", __progname);
+		fprintf(stderr, "usage: newaliases [-f file]\n");
 	else
-		fprintf(stderr, "usage: %s [-U] [-d dbtype] [-o dbfile] "
-		    "[-t type] file\n", __progname);
+		fprintf(stderr, "usage: makemap [-U] [-d dbtype] [-o dbfile] "
+		    "[-t type] file\n");
 	exit(1);
 }
