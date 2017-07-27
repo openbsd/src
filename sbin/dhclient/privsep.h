@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.48 2017/07/24 17:15:41 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.49 2017/07/27 12:45:06 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -51,9 +51,6 @@ struct imsg_set_mtu {
 
 int	dispatch_imsg(char *, int, int, int, struct imsgbuf *);
 
-void	add_direct_route(struct in_addr, struct in_addr, struct in_addr);
-void	add_default_route(struct in_addr, struct in_addr);
-void	add_classless_static_routes(struct option_data *, struct in_addr);
 void	priv_add_route(int, int, struct imsg_add_route *);
 void	priv_flush_routes(char *, int, int);
 

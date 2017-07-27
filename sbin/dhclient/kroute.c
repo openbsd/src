@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.119 2017/07/26 13:22:03 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.120 2017/07/27 12:45:06 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -251,97 +251,6 @@ delete_route(int s, struct rt_msghdr *rtm)
 }
 
 /*
- * add_direct_route is the equivalent of
- *
- *     route add -net $dest -netmask $mask -cloning -iface $iface
- */
-void
-add_direct_route(struct in_addr dest, struct in_addr mask,
-    struct in_addr iface)
-{
-	struct in_addr	 ifa = { INADDR_ANY };
-
-	add_route(dest, mask, iface, ifa,
-	    RTA_DST | RTA_NETMASK | RTA_GATEWAY, RTF_CLONING | RTF_STATIC);
-}
-
-/*
- * add_default_route is the equivalent of
- *
- *	route -q $rdomain add default -iface $router
- *
- *	or
- *
- *	route -q $rdomain add default $router
- */
-void
-add_default_route(struct in_addr gateway, struct in_addr addr)
-{
-	struct in_addr	 netmask, dest;
-	int		 addrs, flags;
-
-	memset(&netmask, 0, sizeof(netmask));
-	memset(&dest, 0, sizeof(dest));
-	addrs = RTA_DST | RTA_NETMASK | RTA_GATEWAY | RTA_IFA;
-	flags = RTF_GATEWAY | RTF_STATIC;
-
-	/*
-	 * When 'addr' and 'gateway' are identical the desired behaviour is
-	 * to emulate the '-iface' variant of 'route'. i.e. do *NOT* set
-	 * the RTF_GATEWAY flag for the default route.
-	 */
-	if (memcmp(&gateway, &addr, sizeof(addr)) == 0)
-		flags &= ~RTF_GATEWAY;
-
-	add_route(dest, netmask, gateway, addr, addrs, flags);
-}
-
-/*
- *
- * add_classless_static_routes() accepts a list of static routes in the
- * format specified for DHCP options 121 (classless-static-routes) and
- * 249 (classless-ms-static-routes).
- */
-void
-add_classless_static_routes(struct option_data *opt, struct in_addr iface)
-{
-	struct in_addr	 dest, netmask, gateway;
-	unsigned int	 i, bits, bytes;
-
-	i = 0;
-	while (i < opt->len) {
-		bits = opt->data[i++];
-		bytes = (bits + 7) / 8;
-
-		if (bytes > sizeof(netmask))
-			return;
-		else if (i + bytes > opt->len)
-			return;
-
-		if (bits != 0)
-			netmask.s_addr = htonl(0xffffffff << (32 - bits));
-		else
-			netmask.s_addr = INADDR_ANY;
-
-		memcpy(&dest, &opt->data[i], bytes);
-		dest.s_addr = dest.s_addr & netmask.s_addr;
-		i += bytes;
-
-		if (i + sizeof(gateway) > opt->len)
-			return;
-		memcpy(&gateway, &opt->data[i], sizeof(gateway));
-		i += sizeof(gateway);
-
-		if (gateway.s_addr == INADDR_ANY)
-			add_direct_route(dest, netmask, iface);
-		else
-			add_route(dest, netmask, gateway, iface,
-			    RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_IFA,
-			    RTF_GATEWAY | RTF_STATIC);
-	}
-}
-
-/*
  * create_route_label constructs a short string that can be uses to label
  * a route so that subsequent route examinations can find routes added by
  * dhclient. The label includes the pid so that routes can be further
@@ -373,36 +282,96 @@ set_routes(struct in_addr addr, struct option_data *classless,
     struct option_data *msclassless, struct option_data *routers,
     struct option_data *subnet)
 {
-	struct in_addr	gateway, mask;
+	const struct in_addr	 any = { INADDR_ANY };
+	struct in_addr		 dest, gateway, netmask;
+	struct option_data	*opt;
+	unsigned int		 i, bits, bytes;
 
 	flush_routes();
 
-	if (classless->len != 0) {
-		add_classless_static_routes(classless, addr);
-		return;
-	}
+	if (classless->len != 0)
+		opt = classless;
+	else if (msclassless->len != 0)
+		opt = msclassless;
+	else {
+		/* Add default route. */
+		if (routers->len < sizeof(struct in_addr))
+			return;
 
-	if (msclassless->len != 0) {
-		add_classless_static_routes(msclassless, addr);
-		return;
-	}
-
-	if (routers->len >= sizeof(gateway)) {
 		/* XXX Only use FIRST router address for now. */
 		gateway.s_addr = ((struct in_addr *)routers->data)->s_addr;
 
-		/*
-		 * To be compatible with ISC DHCP behavior on Linux, if
-		 * we were given a /32 IP assignment, then add a /32
-		 * direct route for the gateway to make it routable.
-		 */
-		if (subnet->len == sizeof(mask)) {
-			mask.s_addr = ((struct in_addr *)subnet->data)->s_addr;
-			if (mask.s_addr == INADDR_BROADCAST)
-				add_direct_route(gateway, mask, addr);
+		opt = subnet;
+		if (opt->len == sizeof(struct in_addr)) {
+			netmask.s_addr = ((struct in_addr *)opt->data)->s_addr;
+			if (netmask.s_addr == INADDR_BROADCAST) {
+				/*
+				 * To be compatible with ISC DHCP behavior on
+				 * Linux, if we were given a /32 IP assignment
+				 * then add a /32 direct route for the gateway
+				 * to make it routable.
+				 *
+				 * route add -net $gateway -netmask $netmask
+				 *     -cloning -iface $addr
+				 */
+				add_route(gateway, netmask, addr, any,
+				    RTA_DST | RTA_NETMASK | RTA_GATEWAY,
+				    RTF_CLONING | RTF_STATIC);
+			}
 		}
 
-		add_default_route(gateway, addr);
+		if (memcmp(&gateway, &addr, sizeof(addr)) == 0) {
+			/* route -q $rdomain add default -iface $addr */
+			add_route(any, any, gateway, addr,
+			    RTA_DST | RTA_NETMASK | RTA_GATEWAY | RTA_IFA,
+			    RTF_STATIC);
+		} else {
+			/* route -q $rdomain add default $gateway */
+			add_route(any, any, gateway, addr,
+			    RTA_DST | RTA_NETMASK | RTA_GATEWAY | RTA_IFA,
+			    RTF_GATEWAY | RTF_STATIC);
+		}
+		return;
+	}
+
+	/* Add classless static routes. */
+	i = 0;
+	while (i < opt->len) {
+		bits = opt->data[i++];
+		bytes = (bits + 7) / 8;
+
+		if (bytes > sizeof(struct in_addr))
+			return;
+		else if (i + bytes > opt->len)
+			return;
+
+		if (bits != 0)
+			netmask.s_addr = htonl(0xffffffff << (32 - bits));
+		else
+			netmask.s_addr = INADDR_ANY;
+
+		memcpy(&dest, &opt->data[i], bytes);
+		dest.s_addr = dest.s_addr & netmask.s_addr;
+		i += bytes;
+
+		if (i + sizeof(gateway) > opt->len)
+			return;
+		memcpy(&gateway, &opt->data[i], sizeof(gateway));
+		i += sizeof(gateway);
+
+		if (gateway.s_addr == INADDR_ANY) {
+			/*
+			 * route add -net $dest -netmask $netmask -cloning 
+			 *     -iface $addr
+			 */
+			add_route(dest, netmask, addr, any,
+			    RTA_DST | RTA_NETMASK | RTA_GATEWAY,
+			    RTF_CLONING | RTF_STATIC);
+		} else
+			/* route add -net $dest -netmask $netmask $gateway */
+			add_route(dest, netmask, gateway, addr,
+			    RTA_DST | RTA_NETMASK | RTA_GATEWAY | RTA_IFA,
+			    RTF_GATEWAY | RTF_STATIC);
 	}
 }
 
