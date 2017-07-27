@@ -817,3 +817,5 @@ int memcmp(const void *x, const void *y, size_t n);
 #endif /* !HAVE_STRUCT_TIMESPEC */
 #endif /* !CONFIG_DEFINES */
 
+int __b64_ntop(uint8_t const *, size_t, char *, size_t);
+int __b64_pton(char const *, uint8_t*, size_t);
