@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.28 2017/05/28 21:57:19 mlarkin Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.29 2017/07/27 05:57:04 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -336,16 +336,16 @@ extern struct pipex_hash_head	pipex_id_hashtable[];
 	}
 #define PIPEX_SEEK_NEXTHDR(ptr, len, t)					\
     ((t) (((char *)ptr) + len))
-#define SEQ32_LT(a,b)	((int)((a) - (b)) <  0)
-#define SEQ32_LE(a,b)	((int)((a) - (b)) <= 0)
-#define SEQ32_GT(a,b)	((int)((a) - (b)) >  0)
-#define SEQ32_GE(a,b)	((int)((a) - (b)) >= 0)
+#define SEQ32_LT(a,b)	((int32_t)((a) - (b)) <  0)
+#define SEQ32_LE(a,b)	((int32_t)((a) - (b)) <= 0)
+#define SEQ32_GT(a,b)	((int32_t)((a) - (b)) >  0)
+#define SEQ32_GE(a,b)	((int32_t)((a) - (b)) >= 0)
 #define SEQ32_SUB(a,b)	((int32_t)((a) - (b)))
 
-#define SEQ16_LT(a,b)	((int)((a) - (b)) <  0)
-#define SEQ16_LE(a,b)	((int)((a) - (b)) <= 0)
-#define SEQ16_GT(a,b)	((int)((a) - (b)) >  0)
-#define SEQ16_GE(a,b)	((int)((a) - (b)) >= 0)
+#define SEQ16_LT(a,b)	((int16_t)((a) - (b)) <  0)
+#define SEQ16_LE(a,b)	((int16_t)((a) - (b)) <= 0)
+#define SEQ16_GT(a,b)	((int16_t)((a) - (b)) >  0)
+#define SEQ16_GE(a,b)	((int16_t)((a) - (b)) >= 0)
 #define SEQ16_SUB(a,b)	((int16_t)((a) - (b)))
 
 #define	pipex_session_is_acfc_accepted(s)				\
