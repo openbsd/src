@@ -1,21 +1,29 @@
-#	$OpenBSD: Makefile,v 1.49 2017/05/17 14:47:06 millert Exp $
+#	$OpenBSD: Makefile,v 1.50 2017/07/27 17:56:35 bluhm Exp $
 
-SUBDIR+= _setjmp alloca arc4random-fork
-SUBDIR+= atexit basename cephes cxa-atexit db dirname env
-SUBDIR+= explicit_bzero fmemopen fnmatch fpclassify getcap getopt_long glob
-SUBDIR+= hsearch ifnameindex longjmp locale malloc mkstemp modf netdb
-SUBDIR+= open_memstream orientation popen printf qsort
-SUBDIR+= regex setjmp setjmp-signal sigsetjmp sprintf stdio_threading
+SUBDIR+= _setjmp
+SUBDIR+= alloca arc4random-fork atexit
+SUBDIR+= basename
+SUBDIR+= cephes cxa-atexit
+SUBDIR+= db dirname
+SUBDIR+= env explicit_bzero
+SUBDIR+= fmemopen fnmatch fpclassify
+SUBDIR+= getaddrinfo getcap getopt_long glob
+SUBDIR+= hsearch
+SUBDIR+= ieeefp ifnameindex
+SUBDIR+= longjmp locale
+SUBDIR+= malloc mkstemp modf
+SUBDIR+= netdb
+SUBDIR+= open_memstream orientation
+SUBDIR+= popen printf
+SUBDIR+= qsort
+SUBDIR+= regex
+SUBDIR+= setjmp setjmp-signal sigsetjmp sprintf stdio_threading
 SUBDIR+= stpncpy strerror strlcat strlcpy strnlen strtod strtol strtonum
-SUBDIR+= telldir time timingsafe vis
+SUBDIR+= telldir time timingsafe
+SUBDIR+= vis
 
 .if defined(REGRESS_FULL) || make(clean) || make(cleandir) || make(obj)
-SUBDIR+= getaddrinfo
 SUBDIR+= setjmp-fpu
-.endif
-
-.if (${MACHINE_ARCH} != "vax")
-SUBDIR+= ieeefp
 .endif
 
 .if exists(arch/${MACHINE_ARCH})
