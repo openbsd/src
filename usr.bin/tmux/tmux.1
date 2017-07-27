@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.569 2017/07/26 16:14:08 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.570 2017/07/27 10:42:05 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 26 2017 $
+.Dd $Mdocdate: July 27 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2774,7 +2774,6 @@ Set action on window silence when
 is on.
 The values are the same as those for
 .Ic activity-action .
-.Pp
 .It Xo Ic status
 .Op Ic on | off
 .Xc
@@ -3610,6 +3609,10 @@ The following variables are available, where appropriate:
 .It Li "mouse_standard_flag" Ta "" Ta "Pane mouse standard flag"
 .It Li "mouse_all_flag" Ta "" Ta "Pane mouse all flag"
 .It Li "pane_active" Ta "" Ta "1 if active pane"
+.It Li "pane_at_bottom" Ta "" Ta "1 if pane is at the bottom of window"
+.It Li "pane_at_left" Ta "" Ta "1 if pane is at the left of window"
+.It Li "pane_at_right" Ta "" Ta "1 if pane is at the right of window"
+.It Li "pane_at_top" Ta "" Ta "1 if pane is at the top of window"
 .It Li "pane_bottom" Ta "" Ta "Bottom of pane"
 .It Li "pane_current_command" Ta "" Ta "Current command if available"
 .It Li "pane_dead" Ta "" Ta "1 if pane is dead"
