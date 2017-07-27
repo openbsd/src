@@ -111,6 +111,7 @@ extern char *_rl_strpbrk PARAMS((const char *, const char *));
 
 #if !defined (savestring)
 #include <stdio.h>
+#include <stdlib.h>
 static char *
 xstrdup(const char *s)
 {
