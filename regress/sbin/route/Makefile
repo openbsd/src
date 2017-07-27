@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2017/07/07 23:55:21 bluhm Exp $
+# $OpenBSD: Makefile,v 1.17 2017/07/27 12:44:07 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -120,6 +120,8 @@ rttest${n}:
 	${RCMD} add -priority 18 10.8.1/24 192.0.2.3
 	${SUDO} ifconfig lo10002 down
 	${RCMD} add -priority 17 10.8.1/24 192.0.2.2 && exit 1 || exit 0
+	@# Work around a race that mess up the route reference counts
+	@sleep .1
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
