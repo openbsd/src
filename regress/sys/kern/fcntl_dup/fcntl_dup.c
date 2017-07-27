@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl_dup.c,v 1.2 2003/07/31 21:48:08 deraadt Exp $	*/
+/*	$OpenBSD: fcntl_dup.c,v 1.3 2017/07/27 10:42:24 bluhm Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -28,7 +28,7 @@ main(int argc, char *argv[])
 	if (fcntl(fd1, F_SETFD, 1) != 0)
 		err(1, "fcntl(F_SETFD)");
 
-	if ((fd2 = fcntl(fd1, F_DUPFD)) < 0)
+	if ((fd2 = fcntl(fd1, F_DUPFD, 0)) < 0)
 		err(1, "fcntl(F_DUPFD)");
 
 	/* Test 2: Was close-on-exec cleared? */
