@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.94 2016/09/04 10:13:35 akfaew Exp $ */
+/*	$OpenBSD: rthread.c,v 1.95 2017/07/27 16:35:08 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -64,6 +64,7 @@ REDIRECT_SYSCALL(thrkill);
 static int concurrency_level;	/* not used */
 
 int _threads_ready;
+int _post_threaded;
 size_t _thread_pagesize;
 struct listhead _thread_list = LIST_HEAD_INITIALIZER(_thread_list);
 _atomic_lock_t _thread_lock = _SPINLOCK_UNLOCKED;
@@ -358,6 +359,11 @@ pthread_join(pthread_t thread, void **retval)
 	pthread_t self;
 	PREP_CANCEL_POINT(tib);
 
+	if (_post_threaded) {
+#define GREATSCOTT "great scott! serious repercussions on future events!\n"
+		write(2, GREATSCOTT, sizeof(GREATSCOTT) - 1);
+		abort();
+	}
 	if (!_threads_ready)
 		_rthread_init();
 	self = tib->tib_thread;

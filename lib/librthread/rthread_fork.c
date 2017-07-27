@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.19 2016/09/04 10:13:35 akfaew Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.20 2017/07/27 16:35:08 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -58,6 +58,7 @@ _dofork(pid_t (*sys_fork)(void))
 	pthread_t me;
 	pid_t newid;
 	int i;
+	extern int _post_threaded;
 
 	if (!_threads_ready)
 		return sys_fork();
@@ -110,6 +111,7 @@ _dofork(pid_t (*sys_fork)(void))
 
 		/* single threaded now */
 		__isthreaded = 0;
+		_post_threaded = 1;
 	}
 #ifndef NO_PIC
 	else if (_DYNAMIC)
