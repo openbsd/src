@@ -5496,9 +5496,9 @@ i915_gem_load(struct drm_device *dev)
 #else
 	pool_init(&dev_priv->objects, sizeof(struct drm_i915_gem_object),
 	    0, IPL_NONE, 0, "drmobj", NULL);
-	pool_init(&dev_priv->vmas, sizeof(struct drm_i915_gem_object),
+	pool_init(&dev_priv->vmas, sizeof(struct i915_vma),
 	    0, IPL_NONE, 0, "drmvma", NULL);
-	pool_init(&dev_priv->requests, sizeof(struct drm_i915_gem_object),
+	pool_init(&dev_priv->requests, sizeof(struct drm_i915_gem_request),
 	    0, IPL_NONE, 0, "drmreq", NULL);
 #endif
 
