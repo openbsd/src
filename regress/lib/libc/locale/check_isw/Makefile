@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 2005/08/11 21:57:02 espie Exp $
+#	$OpenBSD: Makefile,v 1.2 2017/07/27 15:08:37 bluhm Exp $
 
-NOMAN=
-PROG=check_isw
+PROG =	check_isw
 
-run-regress-check_isw: ${PROG}
+run-regress-${PROG}: ${PROG}
 	./${PROG} >/dev/null
 
 .include <bsd.regress.mk>

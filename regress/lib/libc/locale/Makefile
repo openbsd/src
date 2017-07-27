@@ -1,11 +1,5 @@
-# $OpenBSD: Makefile,v 1.5 2016/09/05 09:53:53 schwarze Exp $
+# $OpenBSD: Makefile,v 1.6 2017/07/27 15:08:37 bluhm Exp $
 
-.if defined(REGRESS_FULL) || make(clean) || make(cleandir) || make(obj)
-SUBDIR+= check_isw
-.endif
-
-SUBDIR += mbrtowc setlocale wcrtomb
-
-install:
+SUBDIR =	check_isw mbrtowc setlocale wcrtomb
 
 .include <bsd.subdir.mk>

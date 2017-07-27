@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbtest.c,v 1.15 2017/04/16 16:04:48 kettenis Exp $	*/
+/*	$OpenBSD: dbtest.c,v 1.16 2017/07/27 15:08:37 bluhm Exp $	*/
 /*	$NetBSD: dbtest.c,v 1.8 1996/05/03 21:57:48 cgd Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@ enum S { COMMAND, COMPARE, GET, PUT, REMOVE, SEQ, SEQFLAG, KEY, DATA };
 void	 compare(DBT *, DBT *);
 DBTYPE	 dbtype(char *);
 void	 dump(DB *, int);
-void	 dberr(const char *, ...);
+void	 __dead dberr(const char *, ...);
 void	 get(DB *, DBT *);
 void	 getdata(DB *, DBT *, DBT *);
 void	 put(DB *, DBT *, DBT *);
@@ -61,7 +61,7 @@ void	*rfile(char *, size_t *);
 void	 seq(DB *, DBT *);
 u_int	 setflags(char *);
 void	*setinfo(DBTYPE, char *);
-void	 usage(void);
+void	 __dead usage(void);
 void	*xmalloc(char *, size_t);
 
 DBTYPE type;				/* Database type. */
@@ -345,7 +345,7 @@ compare(db1, db2)
 	len = MIN(db1->size, db2->size);
 	for (p1 = db1->data, p2 = db2->data; len--;)
 		if (*p1++ != *p2++) {
-			printf("compare failed at offset %d\n",
+			printf("compare failed at offset %ld\n",
 			    p1 - (u_char *)db1->data);
 			break;
 		}
@@ -372,8 +372,8 @@ get(dbp, kp)
 		if (ofd != STDOUT_FILENO)
 			(void)write(ofd, NOSUCHKEY, sizeof(NOSUCHKEY) - 1);
 		else
-			(void)fprintf(stderr, "%d: %.*s: %s",
-			    lineno, MIN(kp->size, 20), kp->data, NOSUCHKEY);
+			(void)fprintf(stderr, "%lu: %.*s: %s", lineno,
+			    MIN((int)kp->size, 20), kp->data, NOSUCHKEY);
 #undef	NOSUCHKEY
 		break;
 	}
@@ -429,11 +429,11 @@ rem(dbp, kp)
 		if (ofd != STDOUT_FILENO)
 			(void)write(ofd, NOSUCHKEY, sizeof(NOSUCHKEY) - 1);
 		else if (flags != R_CURSOR)
-			(void)fprintf(stderr, "%d: %.*s: %s", 
-			    lineno, MIN(kp->size, 20), kp->data, NOSUCHKEY);
+			(void)fprintf(stderr, "%lu: %.*s: %s", lineno,
+			    MIN((int)kp->size, 20), kp->data, NOSUCHKEY);
 		else
 			(void)fprintf(stderr,
-			    "%d: rem of cursor failed\n", lineno);
+			    "%lu: rem of cursor failed\n", lineno);
 #undef	NOSUCHKEY
 		break;
 	}
@@ -473,11 +473,11 @@ seq(dbp, kp)
 		if (ofd != STDOUT_FILENO)
 			(void)write(ofd, NOSUCHKEY, sizeof(NOSUCHKEY) - 1);
 		else if (flags == R_CURSOR)
-			(void)fprintf(stderr, "%d: %.*s: %s", 
-			    lineno, MIN(kp->size, 20), kp->data, NOSUCHKEY);
+			(void)fprintf(stderr, "%lu: %.*s: %s", lineno,
+			    MIN((int)kp->size, 20), kp->data, NOSUCHKEY);
 		else
 			(void)fprintf(stderr,
-			    "%d: seq (%s) failed\n", lineno, sflags(flags));
+			    "%lu: seq (%s) failed\n", lineno, sflags(flags));
 #undef	NOSUCHKEY
 		break;
 	}
@@ -708,7 +708,7 @@ xmalloc(text, len)
 	return (p);
 }
 
-void
+void __dead
 usage()
 {
 	(void)fprintf(stderr,
@@ -716,7 +716,7 @@ usage()
 	exit(1);
 }
 
-void
+void __dead
 dberr(const char *fmt, ...)
 {
 	va_list ap;

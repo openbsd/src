@@ -1,4 +1,4 @@
-/*	$OpenBSD: mconf.h,v 1.2 2014/07/21 01:51:11 guenther Exp $	*/
+/*	$OpenBSD: mconf.h,v 1.3 2017/07/27 15:08:37 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -185,3 +185,5 @@ int mtherr();
 
 /* Variable for error reporting.  See mtherr.c.  */
 extern int merror;
+
+int drand(double *);

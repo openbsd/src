@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis_test.c,v 1.4 2015/07/20 01:52:28 millert Exp $	*/
+/*	$OpenBSD: vis_test.c,v 1.5 2017/07/27 15:08:37 bluhm Exp $	*/
 
 /* Public domain. 2005, Otto Moerbeek */
 
@@ -81,7 +81,8 @@ main(int argc, char *argv[])
 				}
 			} else if (o > strlen(ibuf) * 4) {
 				dotitle(i, j);
-				printf("wants too much %d %d\n", o, strlen(ibuf) * 4);
+				printf("wants too much %zd %zu\n",
+				    o, strlen(ibuf) * 4);
 				continue;
 			}
 
@@ -94,7 +95,8 @@ main(int argc, char *argv[])
 				fail = 1;
 			} else if (r != strlen(ibuf)) {
 				dotitle(i, j);
-				printf("rlen %d != inlen %d\n", r, strlen(ibuf));
+				printf("rlen %zd != inlen %zu\n",
+				    r, strlen(ibuf));
 				printf("%s\n", obuf);
 				printf("%s\n", rbuf);
 				fail = 1;

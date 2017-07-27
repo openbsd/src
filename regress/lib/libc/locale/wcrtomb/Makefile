@@ -1,9 +1,5 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/04 09:38:02 schwarze Exp $
+# $OpenBSD: Makefile,v 1.2 2017/07/27 15:08:37 bluhm Exp $
 
-PROG = test_wcrtomb
-NOMAN =
+PROG =	test_wcrtomb
 
-regress: ${PROG}
-	./${PROG}
-
-.include <bsd.prog.mk>
+.include <bsd.regress.mk>

@@ -1,3 +1,4 @@
+/*	$OpenBSD: test_wcrtomb.c,v 1.2 2017/07/27 15:08:37 bluhm Exp $	*/
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -35,13 +36,13 @@ onetest(const char *name, const wchar_t wcin, int outerr, const char *out)
 	outsz = out == NULL ? (size_t)-1 : *out == '\0' ? 1 : strlen(out);
 	sz = wcrtomb(buf, wcin, &mbs);
 	if (errno != outerr)
-		err(1, "%d %s U+%04X", MB_CUR_MAX, name, wcin);
+		err(1, "%zu %s U+%04X", MB_CUR_MAX, name, wcin);
 	if (sz != outsz || (out != NULL && strncmp(buf, out, sz)))
-		errx(1, "%d %s U+%04X: %4.4s(%zd) != %4.4s(%zd)",
+		errx(1, "%zu %s U+%04X: %4.4s(%zd) != %4.4s(%zd)",
 		    MB_CUR_MAX, name, wcin, buf, sz,
 		    out == NULL ? "(NULL)" : out, outsz);
 	if (mbsinit(&mbs) == 0)
-		errx(1, "%d %s U+%04X mbsinit", MB_CUR_MAX, name, wcin);
+		errx(1, "%zu %s U+%04X mbsinit", MB_CUR_MAX, name, wcin);
 	if (errno == 0 && outerr == 0)
 		return;
 	errno = 0;

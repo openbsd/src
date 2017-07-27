@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieetst.c,v 1.2 2011/07/03 13:39:07 martynas Exp $	*/
+/*	$OpenBSD: ieetst.c,v 1.3 2017/07/27 15:08:37 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -94,6 +94,7 @@ static int etrflag;
 void chkit(), printerr(), mnrand(), etrand(), shownoncrit();
 void chkid(), pvec();
 
+int
 main()
 {
 int i, iprec, retval = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_ulimit1.c,v 1.2 2006/05/16 05:47:13 otto Exp $	*/
+/*	$OpenBSD: malloc_ulimit1.c,v 1.3 2017/07/27 15:08:37 bluhm Exp $	*/
 
 /* Public Domain, 2006, Otto Moerbeek <otto@drijf.net> */
 
@@ -22,6 +22,7 @@
 #define	STARTI	1300
 #define FACTOR 	1024
 
+int
 main()
 {
 	struct rlimit lim;

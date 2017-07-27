@@ -1,3 +1,4 @@
+/*	$OpenBSD: test_mbrtowc.c,v 1.2 2017/07/27 15:08:37 bluhm Exp $	*/
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -33,12 +34,12 @@ onetest(const char *name, const char *in, size_t insz,
 
 	sz = mbrtowc(&wc, in, insz, &mbs);
 	if (errno != outerr)
-		err(1, "%d %s(%zd)", MB_CUR_MAX, name, insz);
+		err(1, "%zu %s(%zd)", MB_CUR_MAX, name, insz);
 	if (sz != outsz || (out != WEOF && wc != out))
-		errx(1, "%d %s(%zd) = (%zd, %d) != (%zd, %d)",
+		errx(1, "%zu %s(%zd) = (%zd, %d) != (%zd, %d)",
 		    MB_CUR_MAX, name, insz, sz, wc, outsz, out);
 	if (mbsinit(&mbs) == (insz && outsz == (size_t)-2))
-		errx(1, "%d %s(%zd) mbsinit", MB_CUR_MAX, name, insz);
+		errx(1, "%zu %s(%zd) mbsinit", MB_CUR_MAX, name, insz);
 	if (errno == 0 && outerr == 0)
 		return;
 	errno = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.1 2013/11/03 00:20:24 schwarze Exp $	*/
+/*	$OpenBSD: utils.c,v 1.2 2017/07/27 15:08:37 bluhm Exp $	*/
 
 /*	Written by Otto Moerbeek, 2006,  Public domain.	*/
 
@@ -39,7 +39,7 @@ delfiles(void)
 	dp = opendir("d");
 	if (dp == NULL)
 		err(1, "opendir");
-	while (f = readdir(dp)) {
+	while ((f = readdir(dp))) {
 		if (strcmp(f->d_name, ".") == 0 ||
 		    strcmp(f->d_name, "..") == 0)
 			continue;
