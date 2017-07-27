@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.158 2017/05/16 21:42:14 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.159 2017/07/27 19:59:46 florian Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -339,8 +339,8 @@ netdomainpr(struct kinfo_file *kf, int proto)
 		inetprint(&faddr, kf->inp_fport, name, 0);
 	}
 	if (istcp) {
-		if (kf->t_state < 0 || kf->t_state >= TCP_NSTATES)
-			printf(" %d", kf->t_state);
+		if (kf->t_state >= TCP_NSTATES)
+			printf(" %u", kf->t_state);
 		else
 			printf(" %s", tcpstates[kf->t_state]);
 	} else if (kf->so_type == SOCK_RAW) {
