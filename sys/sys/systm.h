@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.131 2017/05/29 12:12:35 tedu Exp $	*/
+/*	$OpenBSD: systm.h,v 1.132 2017/07/27 12:08:19 mpi Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -299,12 +299,12 @@ extern struct rwlock netlock;
 #define	NET_LOCK(s)							\
 do {									\
 	rw_enter_write(&netlock);					\
-	s = splsoftnet();						\
+	s = IPL_SOFTNET;						\
 } while (0)
 
 #define	NET_UNLOCK(s)							\
 do {									\
-	splx(s);							\
+	(void)s;							\
 	rw_exit_write(&netlock);					\
 } while (0)
 
@@ -312,7 +312,6 @@ do {									\
 do {									\
 	if (rw_status(&netlock) != RW_WRITE)				\
 		splassert_fail(RW_WRITE, rw_status(&netlock), __func__);\
-	splsoftassert(IPL_SOFTNET);					\
 } while (0)
 
 #define	NET_ASSERT_UNLOCKED()						\
