@@ -65,7 +65,6 @@ BEGIN {
 	print "#include <sys/cdio.h>"
 	print "#include <sys/chio.h>"
 	print "#include <sys/disk.h>"
-	print "#include <sys/dkbad.h>"
 	print "#include <sys/dkio.h>"
 	print "#include <sys/filio.h>"
 	print "#include <sys/gpio.h>"
