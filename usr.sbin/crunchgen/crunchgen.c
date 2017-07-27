@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.18 2017/07/27 15:12:30 deraadt Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.19 2017/07/27 15:33:42 espie Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -876,6 +876,7 @@ top_makefile_rules(FILE * outmk)
 
 	fprintf(outmk, ".include <bsd.own.mk>\n");
 	fprintf(outmk, "CFLAGS+=$(NOPIE_FLAGS)\n");
+	fprintf(outmk, "CFLAGS+=-Oz\n");
 	fprintf(outmk, "LDFLAGS+=$(NOPIE_LDFLAGS)\n");
 	fprintf(outmk, "STRIP?=strip\n");
 	fprintf(outmk, "LINK=$(LD) -dc -r ${LDFLAGS}\n");
