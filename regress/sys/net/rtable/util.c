@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2016/03/24 07:03:30 mpi Exp $ */
+/*	$OpenBSD: util.c,v 1.6 2017/07/27 13:34:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -14,6 +14,34 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include "srp_compat.h"
@@ -399,3 +427,77 @@ inet_net_satop(sa_family_t af, struct sockaddr *sa, int plen, char *buf,
 		return (NULL);
 	}
 }
+
+/* Give some jitter to hash, to avoid synchronization between routers. */
+static uint32_t		rt_hashjitter;
+
+/*
+ * Originated from bridge_hash() in if_bridge.c
+ */
+#define mix(a, b, c) do {						\
+	a -= b; a -= c; a ^= (c >> 13);					\
+	b -= c; b -= a; b ^= (a << 8);					\
+	c -= a; c -= b; c ^= (b >> 13);					\
+	a -= b; a -= c; a ^= (c >> 12);					\
+	b -= c; b -= a; b ^= (a << 16);					\
+	c -= a; c -= b; c ^= (b >> 5);					\
+	a -= b; a -= c; a ^= (c >> 3);					\
+	b -= c; b -= a; b ^= (a << 10);					\
+	c -= a; c -= b; c ^= (b >> 15);					\
+} while (0)
+
+int
+rt_hash(struct rtentry *rt, struct sockaddr *dst, uint32_t *src)
+{
+	uint32_t a, b, c;
+
+	while (rt_hashjitter == 0)
+		rt_hashjitter = arc4random();
+
+	if (src == NULL)
+		return (-1);
+
+	a = b = 0x9e3779b9;
+	c = rt_hashjitter;
+
+	switch (dst->sa_family) {
+	case AF_INET:
+	    {
+		struct sockaddr_in *sin;
+
+		sin = satosin(dst);
+		a += sin->sin_addr.s_addr;
+		b += (src != NULL) ? src[0] : 0;
+		mix(a, b, c);
+		break;
+	    }
+#ifdef INET6
+	case AF_INET6:
+	    {
+		struct sockaddr_in6 *sin6;
+
+		sin6 = satosin6(dst);
+		a += sin6->sin6_addr.s6_addr32[0];
+		b += sin6->sin6_addr.s6_addr32[2];
+		c += (src != NULL) ? src[0] : 0;
+		mix(a, b, c);
+		a += sin6->sin6_addr.s6_addr32[1];
+		b += sin6->sin6_addr.s6_addr32[3];
+		c += (src != NULL) ? src[1] : 0;
+		mix(a, b, c);
+		a += sin6->sin6_addr.s6_addr32[2];
+		b += sin6->sin6_addr.s6_addr32[1];
+		c += (src != NULL) ? src[2] : 0;
+		mix(a, b, c);
+		a += sin6->sin6_addr.s6_addr32[3];
+		b += sin6->sin6_addr.s6_addr32[0];
+		c += (src != NULL) ? src[3] : 0;
+		mix(a, b, c);
+		break;
+	    }
+#endif /* INET6 */
+	}
+
+	return (c & 0xffff);
+}
+

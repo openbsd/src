@@ -1,4 +1,4 @@
-/* 	$OpenBSD: kern_compat.h,v 1.6 2017/06/06 13:19:29 mpi Exp $ */
+/* 	$OpenBSD: kern_compat.h,v 1.7 2017/07/27 13:34:30 mpi Exp $ */
 
 #ifndef _KERN_COMPAT_H_
 #define _KERN_COMPAT_H_
@@ -70,5 +70,13 @@ extern struct domain *domains[];
 #define rw_enter_write(rwl)
 #define rw_exit_write(rwl)
 #define rw_assert_wrlock(rwl)
+
+#define SET(t, f)	((t) |= (f))
+#define CLR(t, f)	((t) &= ~(f))
+#define ISSET(t, f)	((t) & (f))
+
+struct rtentry;
+
+int	 rt_hash(struct rtentry *, struct sockaddr *, uint32_t *);
 
 #endif /* _KERN_COMPAT_H_ */

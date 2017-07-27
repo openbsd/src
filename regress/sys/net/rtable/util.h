@@ -1,4 +1,4 @@
-/* 	$OpenBSD: util.h,v 1.1 2015/11/04 09:45:52 mpi Exp $ */
+/* 	$OpenBSD: util.h,v 1.2 2017/07/27 13:34:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -30,3 +30,6 @@ int	maskcmp(sa_family_t, struct sockaddr *, struct sockaddr *);
 int	inet_net_ptosa(sa_family_t, const char *, struct sockaddr *,
 	     struct sockaddr *);
 char	*inet_net_satop(sa_family_t, struct sockaddr *, int, char *, size_t);
+
+#define satosin(sa)	((struct sockaddr_in *)(sa))
+#define satosin6(sa)	((struct sockaddr_in6 *)(sa))
