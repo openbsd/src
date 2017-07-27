@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.120 2017/07/27 12:45:06 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.121 2017/07/27 12:52:58 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -361,7 +361,7 @@ set_routes(struct in_addr addr, struct option_data *classless,
 
 		if (gateway.s_addr == INADDR_ANY) {
 			/*
-			 * route add -net $dest -netmask $netmask -cloning 
+			 * route add -net $dest -netmask $netmask -cloning
 			 *     -iface $addr
 			 */
 			add_route(dest, netmask, addr, any,
