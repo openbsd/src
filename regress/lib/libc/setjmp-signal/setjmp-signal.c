@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp-signal.c,v 1.3 2003/01/03 20:46:05 miod Exp $	*/
+/*	$OpenBSD: setjmp-signal.c,v 1.4 2017/07/27 12:31:09 bluhm Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -19,7 +19,7 @@ main()
 {
 	signal(SIGSEGV, segv_handler);
 	if (setjmp(jb) == 0) {
-		*((int *)0L) = 0;
+		*((volatile int *)0L) = 0;
 		return (1);
 	}
 	return (0);
