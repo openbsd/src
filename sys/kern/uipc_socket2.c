@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.84 2017/07/18 06:12:09 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.85 2017/07/27 12:05:36 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -382,6 +382,7 @@ sbunlock(struct sockbuf *sb)
 void
 sowakeup(struct socket *so, struct sockbuf *sb)
 {
+	KERNEL_ASSERT_LOCKED();
 	soassertlocked(so);
 
 	selwakeup(&sb->sb_sel);

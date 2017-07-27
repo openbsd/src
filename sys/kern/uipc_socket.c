@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.197 2017/07/24 15:07:39 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.198 2017/07/27 12:05:36 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1925,6 +1925,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 void
 sohasoutofband(struct socket *so)
 {
+	KERNEL_ASSERT_LOCKED();
 	csignal(so->so_pgid, SIGURG, so->so_siguid, so->so_sigeuid);
 	selwakeup(&so->so_rcv.sb_sel);
 }
