@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.48 2017/06/26 09:32:32 mpi Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.49 2017/07/27 12:04:42 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -226,8 +226,11 @@ divert_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 			divstat_inc(divs_fullsock);
 			m_freem(m);
 			return (0);
-		} else
+		} else {
+			KERNEL_LOCK();
 			sorwakeup(inp->inp_socket);
+			KERNEL_UNLOCK();
+		}
 	}
 
 	if (sa == NULL) {
