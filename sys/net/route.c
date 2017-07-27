@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.360 2017/07/24 09:20:32 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.361 2017/07/27 12:27:24 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -627,7 +627,7 @@ rtdeletemsg(struct rtentry *rt, struct ifnet *ifp, u_int tableid)
 {
 	int			error;
 	struct rt_addrinfo	info;
-	unsigned int		ifidx;
+	struct sockaddr_rtlabel	sa_rl;
 	struct sockaddr_in6	sa_mask;
 
 	KASSERT(rt->rt_ifidx == ifp->if_index);
@@ -637,16 +637,18 @@ rtdeletemsg(struct rtentry *rt, struct ifnet *ifp, u_int tableid)
 	 * deleted.  That will allow the information being reported to
 	 * be accurate (and consistent with route_output()).
 	 */
-	bzero((caddr_t)&info, sizeof(info));
+	memset(&info, 0, sizeof(info));
 	info.rti_info[RTAX_DST] = rt_key(rt);
+	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	if (!ISSET(rt->rt_flags, RTF_HOST))
 		info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
-	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(rt->rt_labelid, &sa_rl);
 	info.rti_flags = rt->rt_flags;
-	ifidx = rt->rt_ifidx;
+	info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
+	info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	error = rtrequest_delete(&info, rt->rt_priority, ifp, &rt, tableid);
 	KERNEL_LOCK();
-	rtm_miss(RTM_DELETE, &info, info.rti_flags, rt->rt_priority, ifidx,
+	rtm_miss(RTM_DELETE, &info, rt->rt_flags, rt->rt_priority, rt->rt_ifidx,
 	    error, tableid);
 	KERNEL_UNLOCK();
 	if (error == 0)
