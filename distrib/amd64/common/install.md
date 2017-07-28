@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.54 2017/01/22 23:43:54 rpe Exp $
+#	$OpenBSD: install.md,v 1.55 2017/07/28 18:15:44 rpe Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,8 +38,6 @@ NCPU=$(sysctl -n hw.ncpufound)
 if dmesg | grep -q 'efifb0 at mainbus0'; then
 	MDEFI=y
 fi
-
-((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp"; SANESETS="bsd bsd.mp"; }
 
 md_installboot() {
 	if ! installboot -r /mnt ${1}; then

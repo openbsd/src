@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 2017/05/07 12:00:12 jsg Exp $
+#	$OpenBSD: install.md,v 1.6 2017/07/28 18:15:44 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,9 +31,6 @@
 #
 # machine dependent section of installation/upgrade script.
 #
-
-SANESETS="bsd"
-DEFAULTSETS="bsd bsd.rd"
 
 NEWFSARGS_msdos="-F 16 -L boot"
 MOUNT_ARGS_msdos="-o-l"

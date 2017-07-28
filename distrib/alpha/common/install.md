@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.43 2016/09/04 09:52:03 rpe Exp $
+#       $OpenBSD: install.md,v 1.44 2017/07/28 18:15:44 rpe Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,8 +33,6 @@
 
 MDXAPERTURE=1
 NCPU=$(sysctl -n hw.ncpufound)
-
-((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp"; SANESETS="bsd bsd.mp"; }
 
 md_installboot() {
 	# Use cat to avoid holes created by cp(1)

@@ -1,12 +1,10 @@
-#	$OpenBSD: install.md,v 1.32 2016/09/04 09:52:03 rpe Exp $
+#	$OpenBSD: install.md,v 1.33 2017/07/28 18:15:44 rpe Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
 
 MDTERM=vt100
 NCPU=$(sysctl -n hw.ncpufound)
-
-((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp"; SANESETS="bsd bsd.mp"; }
 
 md_installboot() {
 	if ! installboot -r /mnt ${1}; then

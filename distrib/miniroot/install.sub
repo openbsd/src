@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1030 2017/07/25 21:17:11 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1031 2017/07/28 18:15:44 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3092,7 +3092,8 @@ done
 # The following variables can be provided if required:
 #	MDEFI       - set to 'y' on archs that support GPT partitioning
 #	MDROOTFSOPT - newfs options for the root partition
-#	MDSETS	    - list of files to add to THESETS
+#	MDSETS	    - list of files to add to DEFAULT and THESETS
+#	MDSANESETS  - list of files to add to SANESETS
 #	MDTERM      - 'vt220' assumed if not provided
 #	MDDKDEVS    - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
 #	MDCDDEVS    - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
@@ -3154,9 +3155,14 @@ md_consoleinfo
 # Ensure that siteXX.tgz is the *last* set listed so its contents overwrite
 # the contents of the other sets, not the other way around.
 SETS=$(echo {base,comp,man,game,xbase,xshare,xfont,xserv}$VERSION.tgz)
-DEFAULTSETS="${DEFAULTSETS:-bsd bsd.rd} $SETS"
-THESETS="bsd bsd.rd bsd.mp $MDSETS $SETS site$VERSION.tgz"
-SANESETS="${SANESETS:-bsd} base${VERSION}.tgz"
+DEFAULTSETS="${MDSETS:-bsd bsd.rd} $SETS"
+THESETS="${MDSETS:-bsd bsd.rd} $SETS site$VERSION.tgz"
+SANESETS="${MDSANESETS:-bsd} base${VERSION}.tgz"
+if ((NCPU > 1)); then
+	DEFAULTSETS="${MDSETS:-bsd bsd.mp bsd.rd} $SETS"
+	THESETS="${MDSETS:-bsd bsd.mp bsd.rd} $SETS site$VERSION.tgz"
+	SANESETS="${MDSANESETS:-bsd bsd.mp} base${VERSION}.tgz"
+fi
 
 # Prepare COLUMNS sanely.
 export COLUMNS=$(stty -a </dev/console |
