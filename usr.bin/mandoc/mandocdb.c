@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.201 2017/07/15 13:17:07 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.202 2017/07/28 14:46:46 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -394,7 +394,7 @@ mandocdb(int argc, char *argv[])
 
 	exitcode = (int)MANDOCLEVEL_OK;
 	mchars_alloc();
-	mp = mparse_alloc(mparse_options, MANDOCLEVEL_BADARG, NULL,
+	mp = mparse_alloc(mparse_options, MANDOCERR_MAX, NULL,
 	    MANDOC_OS_OTHER, NULL);
 	mandoc_ohash_init(&mpages, 6, offsetof(struct mpage, inodev));
 	mandoc_ohash_init(&mlinks, 6, offsetof(struct mlink, file));
