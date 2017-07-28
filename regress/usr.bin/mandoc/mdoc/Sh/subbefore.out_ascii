@@ -1,7 +1,7 @@
 SH-SUBBEFORE(1)             General Commands Manual            SH-SUBBEFORE(1)
 
    SSuubbsseeccttiioonn
-     Can man(1) on OpenBSD handle this?
+     Plain text and _a _m_a_c_r_o before the first section header.
 
 NNAAMMEE
      SShh--ssuubbbbeeffoorree - subsection before the first section header

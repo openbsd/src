@@ -2,11 +2,9 @@ SH-SUBBEFORE(1) - General Commands Manual
 
 ## Subsection
 
-Can
-man(1)
-on
-OpenBSD
-handle this?
+Plain text and
+*a macro*
+before the first section header.
 
 # NAME
 

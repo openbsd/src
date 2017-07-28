@@ -1,6 +1,6 @@
 SH-BEFORE(1)                General Commands Manual               SH-BEFORE(1)
 
-Can man(1) on OpenBSD handle this?
+Plain text and _a _m_a_c_r_o before the first section header.
 
 NNAAMMEE
      SShh--bbeeffoorree - content before the first section header
@@ -8,4 +8,4 @@ NNAAMMEE
 DDEESSCCRRIIPPTTIIOONN
      some text
 
-OpenBSD                          July 20, 2017                         OpenBSD
+OpenBSD                          July 28, 2017                         OpenBSD

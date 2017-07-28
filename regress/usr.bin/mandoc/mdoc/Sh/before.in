@@ -1,12 +1,10 @@
-.\" $OpenBSD: before.in,v 1.4 2017/07/20 16:33:13 schwarze Exp $
-.Dd $Mdocdate: July 20 2017 $
+.\" $OpenBSD: before.in,v 1.5 2017/07/28 12:37:51 schwarze Exp $
+.Dd $Mdocdate: July 28 2017 $
 .Dt SH-BEFORE 1
 .Os
-Can
-.Xr man 1
-on
-.Ox
-handle this?
+Plain text and
+.Em a macro
+before the first section header.
 .Sh NAME
 .Nm Sh-before
 .Nd content before the first section header
