@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.40 2017/07/25 11:01:28 jmatthew Exp $
+#	$OpenBSD: files.octeon,v 1.41 2017/07/28 14:54:12 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -76,6 +76,8 @@ device	simplebus: fdt
 attach	simplebus at fdt, iobus
 file	arch/octeon/dev/simplebus.c			simplebus
 
+include	"dev/fdt/files.fdt"
+
 # On-board USB
 attach	dwctwo at iobus with octdwctwo
 file	arch/octeon/dev/octdwctwo.c			octdwctwo	needs-flag
@@ -136,6 +138,10 @@ file	arch/octeon/dev/octciu.c			octciu
 device	octmmc: sdmmcbus
 attach	octmmc at fdt
 file	arch/octeon/dev/octmmc.c			octmmc
+
+device	octsctl: fdt
+attach	octsctl at fdt
+file	arch/octeon/dev/octsctl.c			octsctl
 
 pseudo-device	openprom
 file	arch/octeon/octeon/openprom.c			openprom needs-flag

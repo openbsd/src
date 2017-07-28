@@ -1,4 +1,4 @@
-/* $OpenBSD: ahci_fdt.c,v 1.2 2017/02/24 17:12:31 patrick Exp $ */
+/* $OpenBSD: ahci_fdt.c,v 1.3 2017/07/28 14:54:13 visa Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -53,6 +53,7 @@ ahci_fdt_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return OF_is_compatible(faa->fa_node, "generic-ahci") ||
+	    OF_is_compatible(faa->fa_node, "cavium,octeon-7130-ahci") ||
 	    OF_is_compatible(faa->fa_node, "snps,dwc-ahci");
 }
 
