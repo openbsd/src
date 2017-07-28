@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.3 2017/03/21 12:06:56 bluhm Exp $	*/
+/*	$OpenBSD: log.c,v 1.4 2017/07/28 13:05:21 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -93,7 +93,7 @@ vlog(int pri, const char *fmt, va_list ap)
 
 	(void)vsnprintf(tmpbuf, sizeof(tmpbuf), fmt, ap);
 	(void)strlcpy(logbuf, logqueue, sizeof(logbuf));
-	(void)strlcat(logbuf, tmpbuf, sizeof(tmpbuf));
+	(void)strlcat(logbuf, tmpbuf, sizeof(logbuf));
 
 	logqueue[0] = '\0';
 
