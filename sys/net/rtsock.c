@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.242 2017/07/26 20:32:58 anton Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.243 2017/07/28 09:01:09 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1373,7 +1373,7 @@ again:
 }
 
 void
-rtm_send(struct rtentry *rt, int cmd, u_int rtableid)
+rtm_send(struct rtentry *rt, int cmd, int error, unsigned int rtableid)
 {
 	struct rt_addrinfo	 info;
 	struct ifnet		*ifp;
@@ -1392,7 +1392,7 @@ rtm_send(struct rtentry *rt, int cmd, u_int rtableid)
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	}
 
-	rtm_miss(cmd, &info, rt->rt_flags, rt->rt_priority, rt->rt_ifidx, 0,
+	rtm_miss(cmd, &info, rt->rt_flags, rt->rt_priority, rt->rt_ifidx, error,
 	    rtableid);
 	if_put(ifp);
 }

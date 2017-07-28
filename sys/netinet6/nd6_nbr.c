@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.119 2017/07/11 12:51:05 florian Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.120 2017/07/28 09:01:09 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -721,7 +721,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			ln->ln_byhint = 0;
 			/* Notify userland that a new ND entry is reachable. */
 			KERNEL_LOCK();
-			rtm_send(rt, RTM_RESOLVE, ifp->if_rdomain);
+			rtm_send(rt, RTM_RESOLVE, 0, ifp->if_rdomain);
 			KERNEL_UNLOCK();
 			if (!ND6_LLINFO_PERMANENT(ln)) {
 				nd6_llinfo_settimer(ln,
