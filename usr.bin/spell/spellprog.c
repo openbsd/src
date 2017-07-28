@@ -1,4 +1,4 @@
-/*	$OpenBSD: spellprog.c,v 1.12 2015/10/10 19:11:04 deraadt Exp $	*/
+/*	$OpenBSD: spellprog.c,v 1.13 2017/07/28 17:16:35 nicm Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -91,7 +91,7 @@ int	 ize(char *, char *, char *, int);
 int	 metry(char *, char *, char *, int);
 int	 monosyl(char *, char *);
 int	 ncy(char *, char *, char *, int);
-int	 nop(void);
+int	 nop(char *, char *, char *, int);
 int	 trypref(char *, char *, int);
 int	 tryword(char *, char *, int);
 int	 s(char *, char *, char *, int);
@@ -115,11 +115,11 @@ int	 look(unsigned char *, unsigned char *, unsigned char *);
 
 struct suftab {
 	char *suf;
-	int (*p1)();	/* XXX - variable args */
+	int (*p1)(char *, char *, char *, int);
 	int n1;
 	char *d1;
 	char *a1;
-	int (*p2)();	/* XXX - variable args */
+	int (*p2)(char *, char *, char *, int);
 	int n2;
 	char *d2;
 	char *a2;
@@ -385,7 +385,7 @@ suffix(char *ep, int lev)
 		if ((*t->p1)(ep-t->n1, t->d1, t->a1, lev+1))
 			return (1);
 		if (t->p2 != NULL) {
-			deriv[lev] = deriv[lev+1] = '\0';
+			deriv[lev] = deriv[lev+1] = 0;
 			return ((*t->p2)(ep-t->n2, t->d2, t->a2, lev));
 		}
 		return (0);
@@ -395,7 +395,7 @@ next:		;
 }
 
 int
-nop(void)
+nop(char *ep, char *d, char *a, int lev)
 {
 
 	return (0);
@@ -645,7 +645,7 @@ trypref(char *ep, char *a, int lev)
 		if (pp - space >= sizeof(space))
 			return (0);
 	}
-	deriv[lev+1] = deriv[lev+2] = '\0';
+	deriv[lev+1] = deriv[lev+2] = 0;
 	return (val);
 }
 
