@@ -6368,6 +6368,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 #endif
 
+  // Disable some builtins on OpenBSD because they are just not
+  // right...
+  if (getToolChain().getTriple().isOSOpenBSD()) { 
+    CmdArgs.push_back("-fno-builtin-malloc");
+    CmdArgs.push_back("-fno-builtin-calloc");
+    CmdArgs.push_back("-fno-builtin-realloc");
+    CmdArgs.push_back("-fno-builtin-valloc");
+    CmdArgs.push_back("-fno-builtin-free");
+    CmdArgs.push_back("-fno-builtin-strdup");
+    CmdArgs.push_back("-fno-builtin-strndup");
+  }
+ 
   // Enable rewrite includes if the user's asked for it or if we're generating
   // diagnostics.
   // TODO: Once -module-dependency-dir works with -frewrite-includes it'd be
