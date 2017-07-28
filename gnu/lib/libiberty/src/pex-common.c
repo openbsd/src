@@ -21,6 +21,7 @@ Boston, MA 02110-1301, USA.  */
 #include "config.h"
 #include "libiberty.h"
 #include "pex-common.h"
+#include "pex-protos.h"
 
 #include <stdio.h>
 #include <errno.h>

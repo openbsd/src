@@ -24,6 +24,7 @@ Boston, MA 02110-1301, USA.  */
 
 #include "config.h"
 #include "libiberty.h"
+#include "pex-protos.h"
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
