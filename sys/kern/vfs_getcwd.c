@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.26 2016/03/19 12:04:15 natano Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.27 2017/07/28 21:54:49 bluhm Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -102,18 +102,20 @@ vfs_getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 
 	/* If we don't care about the pathname, we're done */
 	if (bufp == NULL) {
-		vrele(lvp);
-		*lvpp = NULL;
-		return (0);
+		error = 0;
+		goto out;
 	}
 
 	fileno = va.va_fileid;
 
 	dirbuflen = DIRBLKSIZ;
-
 	if (dirbuflen < va.va_blocksize)
 		dirbuflen = va.va_blocksize;
-
+	/* XXX we need some limit for fuse, 1 MB should be enough */
+	if (dirbuflen > 0xfffff) {
+		error = EINVAL;
+		goto out;
+	}
 	dirbuf = malloc(dirbuflen, M_TEMP, M_WAITOK);
 
 	off = 0;
@@ -159,15 +161,20 @@ vfs_getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 			reclen = dp->d_reclen;
 
 			/* Check for malformed directory */
-			if (reclen < DIRENT_RECSIZE(1)) {
+			if (reclen < DIRENT_RECSIZE(1) || reclen > len) {
 				error = EINVAL;
 				goto out;
 			}
 
 			if (dp->d_fileno == fileno) {
 				char *bp = *bpp;
-				bp -= dp->d_namlen;
 
+				if (offsetof(struct dirent, d_name) +
+				    dp->d_namlen > reclen) {
+					error = EINVAL;
+					goto out;
+				}
+				bp -= dp->d_namlen;
 				if (bp <= bufp) {
 					error = ERANGE;
 					goto out;
