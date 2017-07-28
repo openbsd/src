@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.80 2017/03/26 15:31:15 deraadt Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.81 2017/07/28 10:50:56 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -587,7 +587,7 @@ uath_alloc_rx_data_list(struct uath_softc *sc)
 			error = ENOMEM;
 			goto fail;
 		}
-		MCLGET(data->m, M_DONTWAIT);
+		MCLGETI(data->m, M_DONTWAIT, NULL, sc->rxbufsz);
 		if (!(data->m->m_flags & M_EXT)) {
 			printf("%s: could not allocate rx mbuf cluster\n",
 			    sc->sc_dev.dv_xname);
@@ -1201,7 +1201,7 @@ uath_data_rxeof(struct usbd_xfer *xfer, void *priv,
 		ifp->if_ierrors++;
 		goto skip;
 	}
-	MCLGET(mnew, M_DONTWAIT);
+	MCLGETI(mnew, M_DONTWAIT, NULL, sc->rxbufsz);
 	if (!(mnew->m_flags & M_EXT)) {
 		printf("%s: could not allocate rx mbuf cluster\n",
 		    sc->sc_dev.dv_xname);
