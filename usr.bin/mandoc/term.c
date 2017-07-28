@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.133 2017/06/14 23:23:51 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.134 2017/07/28 14:24:17 florian Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -127,7 +127,7 @@ term_flushln(struct termp *p)
 	    p->maxrmargin - p->viscol - vbl : 0;
 	vis = vend = 0;
 
-	if ((p->flags && TERMP_MULTICOL) == 0)
+	if ((p->flags & TERMP_MULTICOL) == 0)
 		p->tcol->col = 0;
 	while (p->tcol->col < p->tcol->lastcol) {
 
