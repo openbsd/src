@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.19 2017/02/11 20:40:03 guenther Exp $ */
+/*	$OpenBSD: modify.c,v 1.20 2017/07/28 12:58:52 florian Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -132,7 +132,7 @@ ldap_add(struct request *req)
 			return ldap_refer(req, dn, NULL, refs);
 	}
 
-	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE) != 0)
+	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE))
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
 
 	/* Check that we're not adding immutable attributes.
@@ -242,7 +242,7 @@ ldap_modify(struct request *req)
 			return ldap_refer(req, dn, NULL, refs);
 	}
 
-	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE) != 0)
+	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE))
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
 
 	if (namespace_begin(ns) == -1) {
