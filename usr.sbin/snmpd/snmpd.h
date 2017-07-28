@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.75 2017/04/21 13:50:23 jca Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.76 2017/07/28 13:17:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -438,7 +438,7 @@ struct snmp_message {
 	long long		 sm_secmodel;
 	u_int32_t		 sm_engine_boots;
 	u_int32_t		 sm_engine_time;
-	char			 sm_ctxengineid[SNMPD_MAXENGINEIDLEN];
+	uint8_t			 sm_ctxengineid[SNMPD_MAXENGINEIDLEN];
 	size_t			 sm_ctxengineid_len;
 	char			 sm_ctxname[SNMPD_MAXCONTEXNAMELEN+1];
 
@@ -574,7 +574,7 @@ struct snmpd {
 	char			 sc_rwcommunity[SNMPD_MAXCOMMUNITYLEN];
 	char			 sc_trcommunity[SNMPD_MAXCOMMUNITYLEN];
 
-	char			 sc_engineid[SNMPD_MAXENGINEIDLEN];
+	uint8_t			 sc_engineid[SNMPD_MAXENGINEIDLEN];
 	size_t			 sc_engineid_len;
 
 	struct snmp_stats	 sc_stats;
