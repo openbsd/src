@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.13 2017/07/12 14:31:06 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.14 2017/07/28 10:59:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -244,7 +244,8 @@ window_tree_build_window(struct session *s, struct winlink *wl, void* modedata,
 	item->pane = -1;
 
 	text = format_single(NULL,
-	    "#{window_name}#{window_flags} (#{window_panes} panes)",
+	    "#{window_name}#{window_flags} (#{window_panes} panes)"
+	    "#{?#{==:#{window_panes},1}, \"#{pane_title}\",}",
 	    NULL, s, wl, NULL);
 	xasprintf(&name, "%u", wl->idx);
 
