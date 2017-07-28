@@ -34,6 +34,8 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
+POST_INSTALL = :
+
 # main GDB source directory
 gdbdir = $(srcdir)/..
 
