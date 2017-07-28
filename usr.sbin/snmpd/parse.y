@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.43 2017/01/05 13:53:10 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.44 2017/07/28 13:15:32 florian Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -273,14 +273,14 @@ main		: LISTEN ON STRING		{
 			const char *errstr;
 			user = usm_newuser($2, &errstr);
 			if (user == NULL) {
-				yyerror(errstr);
+				yyerror("%s", errstr);
 				free($2);
 				YYERROR;
 			}
 		} userspecs {
 			const char *errstr;
 			if (usm_checkuser(user, &errstr) < 0) {
-				yyerror(errstr);
+				yyerror("%s", errstr);
 				YYERROR;
 			}
 			user = NULL;
