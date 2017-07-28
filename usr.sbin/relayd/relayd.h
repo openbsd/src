@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.241 2017/07/04 19:59:51 benno Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.242 2017/07/28 13:58:52 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1245,12 +1245,13 @@ void	 ssl_init(struct relayd *);
 char	*ssl_load_key(struct relayd *, const char *, off_t *, char *);
 uint8_t *ssl_update_certificate(const uint8_t *, size_t, EVP_PKEY *,
 	    EVP_PKEY *, X509 *, size_t *);
-int	 ssl_load_pkey(void *, char *, off_t, X509 **, EVP_PKEY **);
+int	 ssl_load_pkey(char *, off_t, X509 **, EVP_PKEY **);
 int	 ssl_ctx_fake_private_key(char *, off_t, const char **);
 
 /* ca.c */
 void	 ca(struct privsep *, struct privsep_proc *);
 void	 ca_engine_init(struct relayd *);
+void	 hash_x509(X509 *cert, char *hash, size_t hashlen);
 
 /* relayd.c */
 struct host	*host_find(struct relayd *, objid_t);

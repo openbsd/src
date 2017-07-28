@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.222 2017/07/04 19:59:51 benno Exp $	*/
+/*	$OpenBSD: relay.c,v 1.223 2017/07/28 13:58:52 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2100,12 +2100,12 @@ relay_tls_ctx_create(struct relay *rlay)
 
 		if (rlay->rl_conf.tls_cacert_len) {
 			log_debug("%s: loading CA certificate", __func__);
-			if (!ssl_load_pkey(&rlay->rl_conf.tls_cakeyid,
+			if (!ssl_load_pkey(
 			    rlay->rl_tls_cacert, rlay->rl_conf.tls_cacert_len,
 			    &rlay->rl_tls_cacertx509, &rlay->rl_tls_capkey))
 				goto err;
 			/* loading certificate public key */
-			if (!ssl_load_pkey(NULL,
+			if (!ssl_load_pkey(
 			    rlay->rl_tls_cert, rlay->rl_conf.tls_cert_len,
 			    NULL, &rlay->rl_tls_pkey))
 				goto err;
@@ -2207,6 +2207,10 @@ relay_tls_transaction(struct rsession *con, struct ctl_relay_event *cre)
 			tls_server = relay_tls_inspect_create(rlay, cre);
 		else
 			tls_server = rlay->rl_tls_ctx;
+		if (tls_server == NULL) {
+			errstr = "no TLS server context available";
+			goto err;
+		}
 
 		if (tls_accept_socket(tls_server, &cre->tls, cre->s) == -1) {
 			errstr = "could not accept the TLS connection";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.33 2017/05/28 10:39:15 benno Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.34 2017/07/28 13:58:52 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -205,62 +205,60 @@ done:
 }
 
 int
-ssl_load_pkey(void *data, char *buf, off_t len,
-    X509 **x509ptr, EVP_PKEY **pkeyptr)
+ssl_load_pkey(char *buf, off_t len, X509 **x509ptr, EVP_PKEY **pkeyptr)
 {
 	BIO		*in;
 	X509		*x509 = NULL;
 	EVP_PKEY	*pkey = NULL;
 	RSA		*rsa = NULL;
-	void		*exdata = NULL;
+	char		*hash = NULL;
 
 	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
 		log_warnx("%s: BIO_new_mem_buf failed", __func__);
 		return (0);
 	}
-
 	if ((x509 = PEM_read_bio_X509(in, NULL,
 	    ssl_password_cb, NULL)) == NULL) {
 		log_warnx("%s: PEM_read_bio_X509 failed", __func__);
 		goto fail;
 	}
-
 	if ((pkey = X509_get_pubkey(x509)) == NULL) {
 		log_warnx("%s: X509_get_pubkey failed", __func__);
 		goto fail;
 	}
-
-	BIO_free(in);
-
-	if (data != NULL) {
-		if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL) {
-			log_warnx("%s: failed to extract RSA", __func__);
-			goto fail;
-		}
-
-		RSA_set_ex_data(rsa, 0, data);
-		RSA_free(rsa); /* dereference, will be cleaned up with pkey */
+	if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL) {
+		log_warnx("%s: failed to extract RSA", __func__);
+		goto fail;
+	}
+	if ((hash = malloc(TLS_CERT_HASH_SIZE)) == NULL) {
+		log_warn("%s: allocate hash failed", __func__);
+		goto fail;
+	}
+	hash_x509(x509, hash, TLS_CERT_HASH_SIZE);
+	if (RSA_set_ex_data(rsa, 0, hash) != 1) {
+		log_warnx("%s: failed to set hash as exdata", __func__);
+		goto fail;
 	}
 
+	RSA_free(rsa); /* dereference, will be cleaned up with pkey */
+	*pkeyptr = pkey;
 	if (x509ptr != NULL)
 		*x509ptr = x509;
 	else
 		X509_free(x509);
-
-	*pkeyptr = pkey;
+	BIO_free(in);
 
 	return (1);
 
  fail:
+	free(hash);
 	if (rsa != NULL)
 		RSA_free(rsa);
-	if (in != NULL)
-		BIO_free(in);
 	if (pkey != NULL)
 		EVP_PKEY_free(pkey);
 	if (x509 != NULL)
 		X509_free(x509);
-	free(exdata);
+	BIO_free(in);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.26 2017/05/28 10:39:15 benno Exp $	*/
+/*	$OpenBSD: ca.c,v 1.27 2017/07/28 13:58:52 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -82,20 +82,25 @@ ca_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 	env->sc_id = getpid() & 0xffff;
 }
 
-static void
-hash_string(char *d, size_t dlen, char *hash, size_t hashlen)
+void
+hash_x509(X509 *cert, char *hash, size_t hashlen)
 {
 	static const char	hex[] = "0123456789abcdef";
-	size_t			off, i;
+	size_t			off;
+	char			digest[EVP_MAX_MD_SIZE];
+	int		 	dlen, i;
+
+	if (X509_digest(cert, EVP_sha256(), digest, &dlen) != 1)
+		fatalx("%s: X509_digest failed", __func__);
 
 	if (hashlen < 2 * dlen + sizeof("SHA256:"))
-		fatalx("%s hash buffer to small", __func__);
+		fatalx("%s: hash buffer to small", __func__);
 
 	off = strlcpy(hash, "SHA256:", hashlen);
 
 	for (i = 0; i < dlen; i++) {
-		hash[off++] = hex[(d[i] >> 4) & 0x0f];
-		hash[off++] = hex[d[i] & 0x0f];
+		hash[off++] = hex[(digest[i] >> 4) & 0x0f];
+		hash[off++] = hex[digest[i] & 0x0f];
 	}
 	hash[off] = 0;
 }
@@ -103,12 +108,11 @@ hash_string(char *d, size_t dlen, char *hash, size_t hashlen)
 void
 ca_launch(void)
 {
-	char		 d[EVP_MAX_MD_SIZE], hash[TLS_CERT_HASH_SIZE];
+	char		 hash[TLS_CERT_HASH_SIZE];
 	BIO		*in = NULL;
 	EVP_PKEY	*pkey = NULL;
 	struct relay	*rlay;
 	X509		*cert = NULL;
-	int		 dlen;
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 		if ((rlay->rl_conf.flags & (F_TLS|F_TLSCLIENT)) == 0)
@@ -123,10 +127,7 @@ ca_launch(void)
 			    NULL, NULL)) == NULL)
 				fatalx("ca_launch: cert");
 
-			if (X509_digest(cert, EVP_sha256(), d, &dlen) != 1)
-				fatalx("ca_launch: cert");
-
-			hash_string(d, dlen, hash, sizeof(hash));
+			hash_x509(cert, hash, sizeof(hash));
 
 			BIO_free(in);
 			X509_free(cert);
@@ -161,10 +162,7 @@ ca_launch(void)
 			    NULL, NULL)) == NULL)
 				fatalx("ca_launch: cacert");
 
-			if (X509_digest(cert, EVP_sha256(), d, &dlen) != 1)
-				fatalx("ca_launch: cacert");
-
-			hash_string(d, dlen, hash, sizeof(hash));
+			hash_x509(cert, hash, sizeof(hash));
 
 			BIO_free(in);
 			X509_free(cert);
@@ -234,9 +232,11 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			fatalx("%s: invalid relay proc", __func__);
 		if (IMSG_DATA_SIZE(imsg) != (sizeof(cko) + cko.cko_flen))
 			fatalx("%s: invalid key operation", __func__);
-		if ((pkey = pkey_find(env, cko.cko_hash)) == NULL ||
-		    (rsa = EVP_PKEY_get1_RSA(pkey)) == NULL)
-			fatalx("%s: invalid relay key or id", __func__);
+		if ((pkey = pkey_find(env, cko.cko_hash)) == NULL)
+			fatalx("%s: invalid relay hash '%s'",
+			    __func__, cko.cko_hash);
+		if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL)
+			fatalx("%s: invalid relay key", __func__);
 
 		DPRINTF("%s:%d: key hash %s proc %d",
 		    __func__, __LINE__, cko.cko_hash, cko.cko_proc);
