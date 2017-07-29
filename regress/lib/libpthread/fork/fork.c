@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork.c,v 1.5 2017/07/29 16:53:38 tedu Exp $	*/
+/*	$OpenBSD: fork.c,v 1.6 2017/07/29 17:36:59 bluhm Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -49,18 +49,9 @@
 #include <sys/wait.h>
 #include "test.h"
 
-
-static void *
-empty(void *arg)
-{
-
-	return (void *)0x12345678;
-}
-
 static void *
 sleeper(void *arg)
 {
-
 	pthread_set_name_np(pthread_self(), "slpr");
 	sleep(10);
 	PANIC("sleeper timed out");
@@ -72,7 +63,6 @@ main(int argc, char *argv[])
 {
 	int flags;
 	pthread_t sleeper_thread;
-	void *result;
 	int status;
 	pid_t parent_pid;
 	pid_t child_pid;
@@ -100,6 +90,7 @@ main(int argc, char *argv[])
 		/* Our sleeper thread should have disappeared */
 		printf("sleeper should have disappeared\n");
 
+		printf("child ok\n");
 		_exit(0);
 		PANIC("child _exit");
 	}
