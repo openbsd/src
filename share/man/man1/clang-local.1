@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.7 2017/06/23 06:07:51 tedu Exp $
+.\" $OpenBSD: clang-local.1,v 1.8 2017/07/29 20:49:32 kettenis Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 23 2017 $
+.Dd $Mdocdate: July 29 2017 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -70,6 +70,10 @@ This can be
 re-enabled with the
 .Fl Wpointer-sign
 flag.
+.It
+The warning option
+.Fl Waddress-of-packed-member
+is disabled by default.
 .It
 Color diagnostic messages are disabled by default and can be re-enabled with
 .Fl fdiagnostics-color .
