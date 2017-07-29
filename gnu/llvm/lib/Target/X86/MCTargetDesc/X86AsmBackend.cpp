@@ -326,15 +326,6 @@ void X86AsmBackend::relaxInstruction(const MCInst &Inst,
 /// \return - true on success, false on failure
 bool X86AsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
 
-  // This CPU doesn't support long nops. If needed add more.
-  // FIXME: Can we get this from the subtarget somehow?
-  // FIXME: We could generated something better than plain 0x90.
-  if (!HasNopl) {
-    for (uint64_t i = 0; i < Count; ++i)
-      OW->write8(0x90);
-    return true;
-  }
-
   // Write 1 or 2 byte NOP sequences, or a longer trapsled, until 
   // we have written Count bytes
   do {
