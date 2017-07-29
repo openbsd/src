@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.113 2017/07/21 20:13:41 ians Exp $	*/
+/*	$OpenBSD: usb.c,v 1.114 2017/07/29 18:26:14 ians Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -678,8 +678,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 		}
 	ret:
-		if (ptr)
-			free(ptr, M_TEMP, len);
+		free(ptr, M_TEMP, len);
 		return (error);
 	}
 
