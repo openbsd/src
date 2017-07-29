@@ -1,4 +1,4 @@
-/*	$OpenBSD: octrtc.c,v 1.6 2017/06/19 13:45:22 visa Exp $	*/
+/*	$OpenBSD: octrtc.c,v 1.7 2017/07/29 02:42:56 visa Exp $	*/
 
 /*
  * Copyright (c) 2013, 2014 Paul Irofti.
@@ -75,20 +75,25 @@ union mio_tws_sw_twsi_reg {
 };
 
 
+static const uint16_t no_rtc_boards[] = {
+	BOARD_TYPE_UBIQUITI_E100,
+	BOARD_TYPE_UBIQUITI_E200,
+	BOARD_TYPE_UBIQUITI_E1000,
+	BOARD_TYPE_RHINOLABS_SHASTA
+};
+
 int
 octrtc_match(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 	struct cfdata *cf = match;
+	int i;
 
 	if (strcmp(maa->maa_name, cf->cf_driver->cd_name) != 0)
 		return 0;
-	/* No RTC on Ubiquiti */
-	if ((octeon_boot_info->board_type == BOARD_TYPE_UBIQUITI_E100) ||
-	    (octeon_boot_info->board_type == BOARD_TYPE_UBIQUITI_E200) ||
-	    (octeon_boot_info->board_type == BOARD_TYPE_UBIQUITI_E1000) ||
-	    (octeon_boot_info->board_type == BOARD_TYPE_RHINOLABS_SHASTA))
-		return 0;
+	for (i = 0; i < nitems(no_rtc_boards); i++)
+		if (octeon_boot_info->board_type == no_rtc_boards[i])
+			return 0;
 	return 1;
 }
 
