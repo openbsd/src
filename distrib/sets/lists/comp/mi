@@ -1229,7 +1229,6 @@
 ./usr/include/sys/dirent.h
 ./usr/include/sys/disk.h
 ./usr/include/sys/disklabel.h
-./usr/include/sys/dkbad.h
 ./usr/include/sys/dkio.h
 ./usr/include/sys/domain.h
 ./usr/include/sys/endian.h
