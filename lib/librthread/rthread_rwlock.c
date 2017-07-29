@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_rwlock.c,v 1.9 2017/07/29 08:36:23 pirofti Exp $ */
+/*	$OpenBSD: rthread_rwlock.c,v 1.10 2017/07/29 16:42:10 deraadt Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -27,8 +27,6 @@
 
 #include <pthread.h>
 
-#include <sys/atomic.h>
-
 #include "rthread.h"
 
 static _atomic_lock_t rwlock_init_lock = _SPINLOCK_UNLOCKED;
@@ -45,7 +43,6 @@ pthread_rwlock_init(pthread_rwlock_t *lockp,
 	lock->lock = _SPINLOCK_UNLOCKED;
 	TAILQ_INIT(&lock->writers);
 
-	membar_producer();
 	*lockp = lock;
 
 	return (0);
