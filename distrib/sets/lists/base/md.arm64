@@ -35,6 +35,7 @@
 ./usr/lib/crtendS.o
 ./usr/lib/libc++.so.0.0
 ./usr/lib/libc++abi.so.0.0
+./usr/lib/libcompiler_rt.a
 ./usr/libdata/perl5/aarch64-openbsd
 ./usr/libdata/perl5/aarch64-openbsd/.packlist
 ./usr/libdata/perl5/aarch64-openbsd/B

@@ -80,6 +80,7 @@
 ./usr/lib/gcc-lib/i386-unknown-openbsd6.1/4.2.1/specs
 ./usr/lib/libc++.so.0.0
 ./usr/lib/libc++abi.so.0.0
+./usr/lib/libcompiler_rt.a
 ./usr/lib/libobjc.so.6.0
 ./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/i386-openbsd

@@ -238,7 +238,6 @@
 ./usr/lib/libc++_p.a
 ./usr/lib/libc++abi.a
 ./usr/lib/libc++abi_p.a
-./usr/lib/libcompiler_rt.a
 ./usr/share/man/man1/clang++.1
 ./usr/share/man/man1/clang-cpp.1
 ./usr/share/man/man1/clang.1
