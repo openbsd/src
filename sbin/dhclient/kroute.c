@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.121 2017/07/27 12:52:58 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.122 2017/07/29 15:07:47 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -278,71 +278,24 @@ create_route_label(struct sockaddr_rtlabel *label)
 }
 
 void
-set_routes(struct in_addr addr, struct option_data *classless,
-    struct option_data *msclassless, struct option_data *routers,
-    struct option_data *subnet)
+set_routes(struct in_addr addr, struct in_addr addrmask, uint8_t *rtstatic,
+    unsigned int rtstatic_len)
 {
 	const struct in_addr	 any = { INADDR_ANY };
 	struct in_addr		 dest, gateway, netmask;
-	struct option_data	*opt;
 	unsigned int		 i, bits, bytes;
 
 	flush_routes();
 
-	if (classless->len != 0)
-		opt = classless;
-	else if (msclassless->len != 0)
-		opt = msclassless;
-	else {
-		/* Add default route. */
-		if (routers->len < sizeof(struct in_addr))
-			return;
-
-		/* XXX Only use FIRST router address for now. */
-		gateway.s_addr = ((struct in_addr *)routers->data)->s_addr;
-
-		opt = subnet;
-		if (opt->len == sizeof(struct in_addr)) {
-			netmask.s_addr = ((struct in_addr *)opt->data)->s_addr;
-			if (netmask.s_addr == INADDR_BROADCAST) {
-				/*
-				 * To be compatible with ISC DHCP behavior on
-				 * Linux, if we were given a /32 IP assignment
-				 * then add a /32 direct route for the gateway
-				 * to make it routable.
-				 *
-				 * route add -net $gateway -netmask $netmask
-				 *     -cloning -iface $addr
-				 */
-				add_route(gateway, netmask, addr, any,
-				    RTA_DST | RTA_NETMASK | RTA_GATEWAY,
-				    RTF_CLONING | RTF_STATIC);
-			}
-		}
-
-		if (memcmp(&gateway, &addr, sizeof(addr)) == 0) {
-			/* route -q $rdomain add default -iface $addr */
-			add_route(any, any, gateway, addr,
-			    RTA_DST | RTA_NETMASK | RTA_GATEWAY | RTA_IFA,
-			    RTF_STATIC);
-		} else {
-			/* route -q $rdomain add default $gateway */
-			add_route(any, any, gateway, addr,
-			    RTA_DST | RTA_NETMASK | RTA_GATEWAY | RTA_IFA,
-			    RTF_GATEWAY | RTF_STATIC);
-		}
-		return;
-	}
-
 	/* Add classless static routes. */
 	i = 0;
-	while (i < opt->len) {
-		bits = opt->data[i++];
+	while (i < rtstatic_len) {
+		bits = rtstatic[i++];
 		bytes = (bits + 7) / 8;
 
 		if (bytes > sizeof(struct in_addr))
 			return;
-		else if (i + bytes > opt->len)
+		else if (i + bytes > rtstatic_len)
 			return;
 
 		if (bits != 0)
@@ -350,28 +303,75 @@ set_routes(struct in_addr addr, struct option_data *classless,
 		else
 			netmask.s_addr = INADDR_ANY;
 
-		memcpy(&dest, &opt->data[i], bytes);
+		memcpy(&dest, &rtstatic[i], bytes);
 		dest.s_addr = dest.s_addr & netmask.s_addr;
 		i += bytes;
 
-		if (i + sizeof(gateway) > opt->len)
+		if (i + sizeof(gateway) > rtstatic_len)
 			return;
-		memcpy(&gateway, &opt->data[i], sizeof(gateway));
+		memcpy(&gateway, &rtstatic[i], sizeof(gateway));
 		i += sizeof(gateway);
 
 		if (gateway.s_addr == INADDR_ANY) {
 			/*
+			 * DIRECT ROUTE
+			 *
 			 * route add -net $dest -netmask $netmask -cloning
 			 *     -iface $addr
 			 */
 			add_route(dest, netmask, addr, any,
 			    RTA_DST | RTA_NETMASK | RTA_GATEWAY,
 			    RTF_CLONING | RTF_STATIC);
-		} else
-			/* route add -net $dest -netmask $netmask $gateway */
+		} else if (netmask.s_addr == INADDR_ANY) {
+			/*
+			 * DEFAULT ROUTE
+			 */
+			if (addrmask.s_addr == INADDR_BROADCAST) {
+				/*
+				 * DIRECT ROUTE TO DEFAULT GATEWAY
+				 *
+				 * To be compatible with ISC DHCP behavior on
+				 * Linux, if we were given a /32 IP assignment
+				 * then add a /32 direct route for the gateway
+				 * to make it routable.
+				 *
+				 * route add -net $gateway -netmask $addrmask
+				 *     -cloning -iface $addr
+				 */
+				add_route(gateway, addrmask, addr, any,
+				    RTA_DST | RTA_NETMASK | RTA_GATEWAY,
+				    RTF_CLONING | RTF_STATIC);
+			}
+
+			if (memcmp(&gateway, &addr, sizeof(addr)) == 0) {
+				/*
+				 * DEFAULT ROUTE IS A DIRECT ROUTE
+				 *
+				 * route add default -iface $addr
+				 */
+				add_route(any, any, gateway, addr,
+				    RTA_DST | RTA_NETMASK | RTA_GATEWAY | RTA_IFA,
+				    RTF_STATIC);
+			} else {
+				/*
+				* DEFAULT ROUTE IS VIA GATEWAY
+				*
+				* route add default $gateway
+				*/
+				add_route(any, any, gateway, addr,
+				    RTA_DST | RTA_NETMASK | RTA_GATEWAY | RTA_IFA,
+				    RTF_GATEWAY | RTF_STATIC);
+			}
+		} else {
+			/*
+			 * NON-DIRECT, NON-DEFAULT ROUTE
+			 *
+			 * route add -net $dest -netmask $netmask $gateway
+			 */
 			add_route(dest, netmask, gateway, addr,
 			    RTA_DST | RTA_NETMASK | RTA_GATEWAY | RTA_IFA,
 			    RTF_GATEWAY | RTF_STATIC);
+		}
 	}
 }
 

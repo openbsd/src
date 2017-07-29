@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.218 2017/07/24 18:13:19 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.219 2017/07/29 15:07:47 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -238,5 +238,5 @@ void		 write_resolv_conf(uint8_t *, size_t);
 void		 flush_unpriv_ibuf(const char *);
 void		 set_mtu(struct option_data *);
 void		 set_address(char *, struct in_addr, struct option_data *);
-void		 set_routes(struct in_addr, struct option_data *,
-    struct option_data *, struct option_data *, struct option_data *);
+void		 set_routes(struct in_addr, struct in_addr, uint8_t *,
+    unsigned int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.486 2017/07/26 18:16:21 jca Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.487 2017/07/29 15:07:47 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -986,6 +986,7 @@ bind_lease(struct interface_info *ifi)
 	struct client_lease	*lease, *pl;
 	struct proposal		*active_proposal = NULL;
 	struct proposal		*offered_proposal = NULL;
+	struct proposal		*effective_proposal = NULL;
 	time_t			 cur_time;
 	int			 seen;
 
@@ -1034,11 +1035,9 @@ bind_lease(struct interface_info *ifi)
 
 	set_address(ifi->name, ifi->active->address, &options[DHO_SUBNET_MASK]);
 
-	set_routes(ifi->active->address,
-	    &options[DHO_CLASSLESS_STATIC_ROUTES],
-	    &options[DHO_CLASSLESS_MS_STATIC_ROUTES],
-	    &options[DHO_ROUTERS],
-	    &options[DHO_SUBNET_MASK]);
+	effective_proposal = lease_as_proposal(lease);
+	set_routes(effective_proposal->ifa, effective_proposal->netmask,
+	    effective_proposal->rtstatic, effective_proposal->rtstatic_len);
 
 newlease:
 	log_info("bound to %s -- renewal in %lld seconds.",
@@ -1049,6 +1048,7 @@ newlease:
 	free_client_lease(lease);
 	free(active_proposal);
 	free(offered_proposal);
+	free(effective_proposal);
 
 	/*
 	 * Remove previous dynamic lease(es) for this address, and any expired
