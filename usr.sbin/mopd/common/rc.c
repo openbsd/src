@@ -1,4 +1,4 @@
-/*	$OpenBSD: rc.c,v 1.8 2009/10/27 23:59:52 deraadt Exp $ */
+/*	$OpenBSD: rc.c,v 1.9 2017/07/29 07:18:03 florian Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -62,7 +62,7 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 		break;
 	case MOP_K_CODE_BOT:
 
-		if ((moplen == 5)) {
+		if (moplen == 5) {
 			tmps = mopGetShort(pkt, &idx);
 			fprintf(fd, "Verification : %04x\n", tmps);
 		} else {
@@ -97,17 +97,17 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 
 			tmpc = mopGetChar(pkt, &idx);      /* Software ID */
 			fprintf(fd, "Software ID  :   %02x ", tmpc);
-			if ((tmpc == 0))
+			if (tmpc == 0)
 				fprintf(fd, "No software id");
-			if ((tmpc == 254)) {
+			if (tmpc == 254) {
 				fprintf(fd, "Maintenance system");
 				tmpc = 0;
 			}
-			if ((tmpc == 255)) {
+			if (tmpc == 255) {
 				fprintf(fd, "Standard operating system");
 				tmpc = 0;
 			}
-			if ((tmpc > 0)) {
+			if (tmpc > 0) {
 				fprintf(fd, "'");
 				for (i = 0; i < ((int) tmpc); i++)
 					fprintf(fd, "%c",

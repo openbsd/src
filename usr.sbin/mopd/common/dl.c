@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl.c,v 1.10 2017/01/21 08:33:51 krw Exp $ */
+/*	$OpenBSD: dl.c,v 1.11 2017/07/29 07:18:03 florian Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -162,7 +162,7 @@ mopDumpDL(FILE *fd, u_char *pkt, int trans)
 
 		tmpc = mopGetChar(pkt, &idx);	/* Error */
 		fprintf(fd, "Error        :   %02x (", tmpc);
-		if ((tmpc == 0))
+		if (tmpc == 0)
 			fprintf(fd, "no error)\n");
 		else
 			fprintf(fd, "error)\n");

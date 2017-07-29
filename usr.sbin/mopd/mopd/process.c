@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.21 2015/11/16 23:47:52 millert Exp $ */
+/*	$OpenBSD: process.c,v 1.22 2017/07/29 07:18:03 florian Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -136,15 +136,15 @@ mopSendASV(u_char *dst, u_char *src, struct if_info *ii, int trans)
 
 	mopPutLength(pkt, trans, idx);
 
-	if ((DebugFlag == DEBUG_ONELINE))
+	if (DebugFlag == DEBUG_ONELINE)
 		mopPrintOneline(stdout, pkt, trans);
 
-	if ((DebugFlag >= DEBUG_HEADER)) {
+	if (DebugFlag >= DEBUG_HEADER) {
 		mopPrintHeader(stdout, pkt, trans);
 		mopPrintMopHeader(stdout, pkt, trans);
 	}
 
-	if ((DebugFlag >= DEBUG_INFO))
+	if (DebugFlag >= DEBUG_INFO)
 		mopDumpDL(stdout, pkt, trans);
 
 	if (pfWrite(ii->fd, pkt, idx, trans) != idx)
@@ -213,15 +213,15 @@ mopStartLoad(u_char *dst, u_char *src, struct dllist *dl_rpr, int trans)
 
 	mopPutLength(pkt, trans, idx);
 
-	if ((DebugFlag == DEBUG_ONELINE))
+	if (DebugFlag == DEBUG_ONELINE)
 		mopPrintOneline(stdout, pkt, trans);
 
-	if ((DebugFlag >= DEBUG_HEADER)) {
+	if (DebugFlag >= DEBUG_HEADER) {
 		mopPrintHeader(stdout, pkt, trans);
 		mopPrintMopHeader(stdout, pkt, trans);
 	}
 
-	if ((DebugFlag >= DEBUG_INFO))
+	if (DebugFlag >= DEBUG_INFO)
 		mopDumpDL(stdout, pkt, trans);
 
 	if (pfWrite(dllist[slot].ii->fd, pkt, idx, trans) != idx)
@@ -252,7 +252,7 @@ mopNextLoad(u_char *dst, u_char *src, u_char new_count, int trans)
 	if (slot == -1)
 		return;
 
-	if ((new_count == ((dllist[slot].count+1) % 256))) {
+	if (new_count == ((dllist[slot].count+1) % 256)) {
 		dllist[slot].loadaddr = dllist[slot].nloadaddr;
 		dllist[slot].count    = new_count;
 	} else
@@ -318,15 +318,15 @@ mopNextLoad(u_char *dst, u_char *src, u_char new_count, int trans)
 		}
 	}
 
-	if ((DebugFlag == DEBUG_ONELINE))
+	if (DebugFlag == DEBUG_ONELINE)
 		mopPrintOneline(stdout, pkt, trans);
 
-	if ((DebugFlag >= DEBUG_HEADER)) {
+	if (DebugFlag >= DEBUG_HEADER) {
 		mopPrintHeader(stdout, pkt, trans);
 		mopPrintMopHeader(stdout, pkt, trans);
 	}
 
-	if ((DebugFlag >= DEBUG_INFO))
+	if (DebugFlag >= DEBUG_INFO)
 		mopDumpDL(stdout, pkt, trans);
 
 	if (pfWrite(dllist[slot].ii->fd, pkt, idx, trans) != idx)
@@ -348,15 +348,15 @@ mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *idx, u_char *dst,
 	struct dllist	dl, *dl_rpr;
 	u_char		load;
 
-	if ((DebugFlag == DEBUG_ONELINE))
+	if (DebugFlag == DEBUG_ONELINE)
 		mopPrintOneline(stdout, pkt, trans);
 
-	if ((DebugFlag >= DEBUG_HEADER)) {
+	if (DebugFlag >= DEBUG_HEADER) {
 		mopPrintHeader(stdout, pkt, trans);
 		mopPrintMopHeader(stdout, pkt, trans);
 	}
 
-	if ((DebugFlag >= DEBUG_INFO))
+	if (DebugFlag >= DEBUG_INFO)
 		mopDumpDL(stdout, pkt, trans);
 
 	moplen  = mopGetLength(pkt, trans);
@@ -472,15 +472,15 @@ mopProcessRC(FILE *fd, struct if_info *ii, u_char *pkt, int *idx, u_char dst,
 	u_char		mopcode;
 	struct dllist	dl, *dl_rpr;
 
-	if ((DebugFlag == DEBUG_ONELINE))
+	if (DebugFlag == DEBUG_ONELINE)
 		mopPrintOneline(stdout, pkt, trans);
 
-	if ((DebugFlag >= DEBUG_HEADER)) {
+	if (DebugFlag >= DEBUG_HEADER) {
 		mopPrintHeader(stdout, pkt, trans);
 		mopPrintMopHeader(stdout, pkt, trans);
 	}
 
-	if ((DebugFlag >= DEBUG_INFO))
+	if (DebugFlag >= DEBUG_INFO)
 		mopDumpRC(stdout, pkt, trans);
 
 	moplen  = mopGetLength(pkt, trans);

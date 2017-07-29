@@ -1,4 +1,4 @@
-/*	$OpenBSD: put.c,v 1.8 2009/10/27 23:59:52 deraadt Exp $ */
+/*	$OpenBSD: put.c,v 1.9 2017/07/29 07:18:03 florian Exp $ */
 
 /*
  * Copyright (c) 1993-2006 Mats O Jansson.  All rights reserved.
@@ -80,7 +80,7 @@ mopPutTime(u_char *pkt, int *idx, time_t value)
 	time_t		 tnow;
 	struct tm	*timenow;
 
-	if ((value == 0))
+	if (value == 0)
 		tnow = time(NULL);
 	else
 		tnow = value;

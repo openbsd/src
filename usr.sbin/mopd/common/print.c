@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.12 2009/10/27 23:59:52 deraadt Exp $ */
+/*	$OpenBSD: print.c,v 1.13 2017/07/29 07:18:03 florian Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -506,17 +506,17 @@ mopPrintInfo(FILE *fd, u_char *pkt, int *idx, u_short moplen, u_char mopcode,
 		case MOP_K_INFO_SFID:
 			tmpc = mopGetChar(pkt, idx);
 			fprintf(fd, "Software ID  :   %02x ", tmpc);
-			if ((tmpc == 0))
+			if (tmpc == 0)
 				fprintf(fd, "No software id");
-			if ((tmpc == 254)) {
+			if (tmpc == 254) {
 				fprintf(fd, "Maintenance system");
 				tmpc = 0;
 			}
-			if ((tmpc == 255)) {
+			if (tmpc == 255) {
 				fprintf(fd, "Standard operating system");
 				tmpc = 0;
 			}
-			if ((tmpc > 0)) {
+			if (tmpc > 0) {
 				fprintf(fd, "'");
 				for (i = 0; i < ((int) tmpc); i++)
 					fprintf(fd, "%c",
