@@ -17,12 +17,14 @@
 
 #include "elfrdsetroot.h"
 
-void *
+void
 ELFNAME(locate_image)(int, struct elfhdr *,  char *, long *, long *, off_t *,
     size_t *);
 int
 ELFNAME(find_rd_root_image)(char *, int, Elf_Phdr *, int, long *, long *,
     off_t *, size_t *);
+int
+ELFNAME(nlist)(int fd, struct nlist *list);
 
 struct elf_fn ELFDEFNNAME(fn) =
 {
@@ -30,7 +32,7 @@ struct elf_fn ELFDEFNNAME(fn) =
 	ELFNAME(find_rd_root_image)
 };
 
-void *
+void
 ELFNAME(locate_image)(int fd, struct elfhdr *ghead,  char *file,
     long *prd_root_size_off, long *prd_root_image_off, off_t *pmmap_off,
     size_t *pmmap_size)
@@ -97,27 +99,32 @@ ELFNAME(find_rd_root_image)(char *file, int fd, Elf_Phdr *ph, int segment,
 	kernel_size = ph->p_filesz;
 
 	rd_root_size_off = ELFNAME(wantsyms)[0].n_value - kernel_start;
+	if (rd_root_size_off < (ph->p_vaddr - ph->p_paddr))
+		return (0);
 	rd_root_size_off -= (ph->p_vaddr - ph->p_paddr);
+
 	rd_root_image_off = ELFNAME(wantsyms)[1].n_value - kernel_start;
+	if (rd_root_image_off < (ph->p_vaddr - ph->p_paddr))
+		return (0);
 	rd_root_image_off -= (ph->p_vaddr - ph->p_paddr);
 
 	if (debug) {
-		fprintf(stderr, "segment %d rd_root_size_off = 0x%x\n", segment,
+		fprintf(stderr, "segment %d rd_root_size_off = 0x%llx\n", segment,
 		    rd_root_size_off);
 		if ((ph->p_vaddr - ph->p_paddr) != 0)
-			fprintf(stderr, "root_off v %x p %x, diff %x altered %x\n",
+			fprintf(stderr, "root_off v %tx p %tx, diff %tx altered %llx\n",
 			    ph->p_vaddr, ph->p_paddr,
 			    (ph->p_vaddr - ph->p_paddr),
 			    rd_root_size_off - (ph->p_vaddr - ph->p_paddr));
-		fprintf(stderr, "rd_root_image_off = 0x%x\n", rd_root_image_off);
+		fprintf(stderr, "rd_root_image_off = 0x%llx\n", rd_root_image_off);
 	}
 
 	/*
 	 * Sanity check locations of db_* symbols
 	 */
-	if (rd_root_image_off < 0 || rd_root_image_off >= kernel_size)
+	if (rd_root_image_off >= kernel_size)
 		return (0);
-	if (rd_root_size_off < 0 || rd_root_size_off >= kernel_size) {
+	if (rd_root_size_off >= kernel_size) {
 		fprintf(stderr, "%s: rd_root_size not in data segment?\n",
 		    file);
 		return (0);
@@ -193,7 +200,7 @@ ELFNAME(nlist)(int fd, struct nlist *list)
 
 	/* Make sure it's not too big to mmap */
 	if (SIZE_MAX - ehdr.e_shoff < shdr_size ||
-	    S_ISREG(st.st_mode) && ehdr.e_shoff + shdr_size > st.st_size) {
+	    (S_ISREG(st.st_mode) && ehdr.e_shoff + shdr_size > st.st_size)) {
 		errno = EFBIG;
 		return (-1);
 	}
@@ -263,7 +270,7 @@ ELFNAME(nlist)(int fd, struct nlist *list)
 
 	/* Check for files too large to mmap. */
 	if (SIZE_MAX - symstrsize < symstroff ||
-	    S_ISREG(st.st_mode) && symstrsize + symstroff > st.st_size) {
+	    (S_ISREG(st.st_mode) && symstrsize + symstroff > st.st_size)) {
 		errno = EFBIG;
 		return (-1);
 	}

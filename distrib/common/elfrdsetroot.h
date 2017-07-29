@@ -1,5 +1,5 @@
 struct elf_fn {
-	void * (*locate_image)(int, struct elfhdr *,  char *, long *, long *,
+	void (*locate_image)(int, struct elfhdr *,  char *, long *, long *,
 	    off_t *, size_t *);
 	int (*find_rd_root_image)(char *, int, Elf_Phdr *, int, long *, long *,
 	    off_t *, size_t *);
