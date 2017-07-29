@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.20 2017/06/01 11:32:15 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.21 2017/07/29 19:52:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -222,7 +222,7 @@ efi_device_path_depth(EFI_DEVICE_PATH *dp, int dptype)
 
 	for (i = 0; !IsDevicePathEnd(dp); dp = NextDevicePathNode(dp), i++) {
 		if (DevicePathType(dp) == dptype)
-			return (i);
+			return (i + 1);
 	}
 
 	return (-1);
