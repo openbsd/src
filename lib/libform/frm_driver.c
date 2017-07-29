@@ -1,4 +1,4 @@
-/*	$OpenBSD: frm_driver.c,v 1.11 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: frm_driver.c,v 1.12 2017/07/29 07:18:32 florian Exp $	*/
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
@@ -33,7 +33,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: frm_driver.c,v 1.11 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: frm_driver.c,v 1.12 2017/07/29 07:18:32 florian Exp $")
 
 /*----------------------------------------------------------------------------
   This is the core module of the form library. It contains the majority
@@ -1285,7 +1285,7 @@ _nc_Synchronize_Options(FIELD *field, Field_Options newopts)
 
       if (form->status & _POSTED)
 	{
-	  if ((form->curpage == field->page))
+	  if (form->curpage == field->page)
 	    {
 	      if (changed_opts & O_VISIBLE)
 		{
