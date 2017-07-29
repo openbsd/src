@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.38 2017/05/29 13:30:35 tedu Exp $
+#	$OpenBSD: mkioctls,v 1.39 2017/07/29 08:50:42 zhuk Exp $
 
 #
 # Copyright (c) 1994
@@ -65,7 +65,6 @@ BEGIN {
 	print "#include <sys/cdio.h>"
 	print "#include <sys/chio.h>"
 	print "#include <sys/disk.h>"
-	print "#include <sys/dkbad.h>"
 	print "#include <sys/dkio.h>"
 	print "#include <sys/filio.h>"
 	print "#include <sys/gpio.h>"
