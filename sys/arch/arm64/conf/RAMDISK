@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.30 2017/07/05 14:58:59 visa Exp $
+# $OpenBSD: RAMDISK,v 1.31 2017/07/29 17:25:20 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -86,6 +86,7 @@ viornd*		at virtio?
 vioscsi*	at virtio?
 
 # Raspberry Pi 3
+bcmaux*		at fdt?
 bcmintc*	at fdt?
 bcmdog*		at fdt?
 dwctwo*		at fdt?

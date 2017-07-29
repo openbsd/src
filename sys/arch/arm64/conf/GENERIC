@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.32 2017/05/21 08:59:45 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.33 2017/07/29 17:25:20 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -78,6 +78,7 @@ simplefb*	at fdt?
 wsdisplay*	at simplefb?
 
 # Raspberry Pi 3
+bcmaux*		at fdt?
 bcmintc*	at fdt?
 bcmdog*		at fdt?
 dwctwo*		at fdt?
