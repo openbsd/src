@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.44 2016/09/04 10:13:35 akfaew Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.45 2017/07/29 08:36:23 pirofti Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -54,6 +54,8 @@ pthread_mutex_init(pthread_mutex_t *mutexp, const pthread_mutexattr_t *attr)
 		mutex->prioceiling = (*attr)->ma_protocol ==
 		    PTHREAD_PRIO_PROTECT ? (*attr)->ma_prioceiling : -1;
 	}
+
+	membar_producer();
 	*mutexp = mutex;
 
 	return (0);
