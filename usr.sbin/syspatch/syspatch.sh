@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.117 2017/07/30 08:30:46 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.118 2017/07/30 09:02:57 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -31,7 +31,7 @@ usage()
 
 apply_patch()
 {
-	local _edir _file _files _patch=$1 _ret=0 _s
+	local _edir _file _files _patch=$1 _ret=0 _s _upself=false
 	[[ -n ${_patch} ]]
 
 	_edir=${_TMP}/${_patch}
@@ -53,6 +53,7 @@ apply_patch()
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			install_kernel ${_edir}/${_file} || _ret=$?
 		else
+			[[ ${_file} == usr/sbin/syspatch ]] && _upself=true
 			install_file ${_edir}/${_file} /${_file} || _ret=$?
 		fi
 	done
@@ -64,6 +65,9 @@ apply_patch()
 	# don't fill up /tmp when installing multiple patches at once; non-fatal
 	rm -rf ${_edir} ${_TMP}/syspatch${_patch}.tgz
 	trap exit INT
+
+	${_upself} && sp_err "syspatch updated itself, run it again to \
+install missing patches" 2
 }
 
 # quick-and-dirty filesystem status and size checks:
