@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.20 2017/07/27 16:35:08 tedu Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.21 2017/07/30 19:48:30 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -111,7 +111,7 @@ _dofork(pid_t (*sys_fork)(void))
 
 		/* single threaded now */
 		__isthreaded = 0;
-		_post_threaded = 1;
+		_post_threaded = 0; /* notyet... */
 	}
 #ifndef NO_PIC
 	else if (_DYNAMIC)
