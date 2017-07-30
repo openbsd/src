@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.363 2017/07/30 18:16:14 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.364 2017/07/30 18:18:08 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -269,7 +269,6 @@ rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 	return (rt);
 }
 
-#ifndef SMALL_KERNEL
 /*
  * Originated from bridge_hash() in if_bridge.c
  */
@@ -351,7 +350,6 @@ rtalloc_mpath(struct sockaddr *dst, uint32_t *src, unsigned int rtableid)
 {
 	return (rt_match(dst, src, RT_RESOLVE, rtableid));
 }
-#endif /* SMALL_KERNEL */
 
 /*
  * Look in the routing table for the best matching entry for
@@ -724,7 +722,6 @@ rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
 		return (ESRCH);
 	}
 
-#ifndef SMALL_KERNEL
 	/*
 	 * If we got multipath routes, we require users to specify
 	 * a matching gateway.
@@ -734,7 +731,6 @@ rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
 		rtfree(rt);
 		return (ESRCH);
 	}
-#endif
 
 #ifdef BFD
 	if (ISSET(rt->rt_flags, RTF_BFD))
@@ -842,7 +838,6 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		rt->rt_priority = prio;	/* init routing priority */
 		LIST_INIT(&rt->rt_timer);
 
-#ifndef SMALL_KERNEL
 		/* Check the link state if the table supports it. */
 		if (rtable_mpath_capable(tableid, ndst->sa_family) &&
 		    !ISSET(rt->rt_flags, RTF_LOCAL) &&
@@ -851,7 +846,6 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			rt->rt_flags &= ~RTF_UP;
 			rt->rt_priority |= RTP_DOWN;
 		}
-#endif
 
 		if (info->rti_info[RTAX_LABEL] != NULL) {
 			sa_rl = (struct sockaddr_rtlabel *)
@@ -1543,7 +1537,6 @@ rtlabel_unref(u_int16_t id)
 	}
 }
 
-#ifndef SMALL_KERNEL
 void
 rt_if_track(struct ifnet *ifp)
 {
@@ -1612,7 +1605,6 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 
 	return (0);
 }
-#endif
 
 struct sockaddr *
 rt_plentosa(sa_family_t af, int plen, struct sockaddr_in6 *sa_mask)

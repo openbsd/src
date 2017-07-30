@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.165 2017/07/30 18:16:14 florian Exp $	*/
+/*	$OpenBSD: route.h,v 1.166 2017/07/30 18:18:08 florian Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -441,11 +441,7 @@ void			 rt_timer_timer(void *);
 
 int	 rtisvalid(struct rtentry *);
 int	 rt_hash(struct rtentry *, struct sockaddr *, uint32_t *);
-#ifdef SMALL_KERNEL
-#define	 rtalloc_mpath(dst, s, rid) rtalloc((dst), RT_RESOLVE, (rid))
-#else
 struct	 rtentry *rtalloc_mpath(struct sockaddr *, uint32_t *, u_int);
-#endif
 struct	 rtentry *rtalloc(struct sockaddr *, int, unsigned int);
 void	 rtref(struct rtentry *);
 void	 rtfree(struct rtentry *);
@@ -460,10 +456,8 @@ int	 rtrequest(int, struct rt_addrinfo *, u_int8_t, struct rtentry **,
 	     u_int);
 int	 rtrequest_delete(struct rt_addrinfo *, u_int8_t, struct ifnet *,
 	     struct rtentry **, u_int);
-#ifndef SMALL_KERNEL
 void	 rt_if_track(struct ifnet *);
 int	 rt_if_linkstate_change(struct rtentry *, void *, u_int);
-#endif
 int	 rtdeletemsg(struct rtentry *, struct ifnet *, u_int);
 #endif /* _KERNEL */
 

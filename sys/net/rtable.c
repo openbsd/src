@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.60 2017/07/30 18:16:14 florian Exp $ */
+/*	$OpenBSD: rtable.c,v 1.61 2017/07/30 18:18:08 florian Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -332,9 +332,7 @@ int	an_match(struct art_node *, struct sockaddr *, int);
 void	rtentry_ref(void *, void *);
 void	rtentry_unref(void *, void *);
 
-#ifndef SMALL_KERNEL
 void	rtable_mpath_insert(struct art_node *, struct rtentry *);
-#endif
 
 struct srpl_rc rt_rc = SRPL_RC_INITIALIZER(rtentry_ref, rtentry_unref, NULL);
 
@@ -384,9 +382,6 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 			goto out;
 	}
 
-#ifdef SMALL_KERNEL
-	rt = SRPL_FIRST(&sr, &an->an_rtlist);
-#else
 	SRPL_FOREACH(rt, &sr, &an->an_rtlist, rt_next) {
 		if (prio != RTP_ANY &&
 		    (rt->rt_priority & RTP_MASK) != (prio & RTP_MASK))
@@ -399,7 +394,6 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 		    memcmp(rt->rt_gateway, gateway, gateway->sa_len) == 0)
 			break;
 	}
-#endif /* SMALL_KERNEL */
 	if (rt != NULL)
 		rtref(rt);
 
@@ -418,9 +412,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 	struct rtentry			*rt = NULL;
 	struct srp_ref			 sr, nsr;
 	uint8_t				*addr;
-#ifndef SMALL_KERNEL
 	int				 hash;
-#endif /* SMALL_KERNEL */
 
 	ar = rtable_get(rtableid, dst->sa_family);
 	if (ar == NULL)
@@ -436,7 +428,6 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 	rtref(rt);
 	SRPL_LEAVE(&sr);
 
-#ifndef SMALL_KERNEL
 	/* Gateway selection by Hash-Threshold (RFC 2992) */
 	if ((hash = rt_hash(rt, dst, src)) != -1) {
 		struct rtentry		*mrt;
@@ -477,7 +468,6 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 		}
 		SRPL_LEAVE(&sr);
 	}
-#endif /* SMALL_KERNEL */
 out:
 	srp_leave(&nsr);
 	return (rt);
@@ -488,10 +478,8 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
     struct sockaddr *mask, struct sockaddr *gateway, uint8_t prio,
     struct rtentry *rt)
 {
-#ifndef SMALL_KERNEL
 	struct rtentry			*mrt;
 	struct srp_ref			 sr;
-#endif /* SMALL_KERNEL */
 	struct art_root			*ar;
 	struct art_node			*an, *prev;
 	uint8_t				*addr;
@@ -511,7 +499,6 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	rtref(rt); /* guarantee rtfree won't do anything during insert */
 	rw_enter_write(&ar->ar_lock);
 
-#ifndef SMALL_KERNEL
 	/* Do not permit exactly the same dst/mask/gw pair. */
 	an = art_lookup(ar, addr, plen, &sr);
 	srp_leave(&sr); /* an can't go away while we have the lock */
@@ -532,7 +519,6 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 			}
 		}
 	}
-#endif /* SMALL_KERNEL */
 
 	an = art_get(dst, plen);
 	if (an == NULL) {
@@ -559,7 +545,6 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 			goto leave;
 		}
 
-#ifndef SMALL_KERNEL
 		an = prev;
 
 		mrt = SRPL_FIRST_LOCKED(&an->an_rtlist);
@@ -586,9 +571,6 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 
 		/* Put newly inserted entry at the right place. */
 		rtable_mpath_insert(an, rt);
-#else
-		error = EEXIST;
-#endif /* SMALL_KERNEL */
 	}
 leave:
 	rw_exit_write(&ar->ar_lock);
@@ -605,10 +587,8 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	struct srp_ref			 sr;
 	uint8_t				*addr;
 	int				 plen;
-#ifndef SMALL_KERNEL
 	struct rtentry			*mrt;
 	int				 npaths = 0;
-#endif /* SMALL_KERNEL */
 	int				 error = 0;
 
 	ar = rtable_get(rtableid, dst->sa_family);
@@ -629,7 +609,6 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 		goto leave;
 	}
 
-#ifndef SMALL_KERNEL
 	/*
 	 * If other multipath route entries are still attached to
 	 * this ART node we only have to unlink it.
@@ -648,7 +627,6 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 
 		goto leave;
 	}
-#endif /* SMALL_KERNEL */
 
 	if (art_delete(ar, an, addr, plen) == NULL)
 		panic("art_delete failed to find node %p", an);
@@ -716,19 +694,16 @@ struct rtentry *
 rtable_iterate(struct rtentry *rt0)
 {
 	struct rtentry *rt = NULL;
-#ifndef SMALL_KERNEL
 	struct srp_ref sr;
 
 	rt = SRPL_NEXT(&sr, rt0, rt_next);
 	if (rt != NULL)
 		rtref(rt);
 	SRPL_LEAVE(&sr);
-#endif /* SMALL_KERNEL */
 	rtfree(rt0);
 	return (rt);
 }
 
-#ifndef SMALL_KERNEL
 int
 rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
 {
@@ -818,7 +793,6 @@ rtable_mpath_insert(struct art_node *an, struct rtentry *rt)
 		SRPL_INSERT_HEAD_LOCKED(&rt_rc, &an->an_rtlist, rt, rt_next);
 	}
 }
-#endif /* SMALL_KERNEL */
 
 /*
  * Returns 1 if ``an'' perfectly matches (``dst'', ``plen''), 0 otherwise.

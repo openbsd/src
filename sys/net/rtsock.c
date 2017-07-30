@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.244 2017/07/30 18:16:14 florian Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.245 2017/07/30 18:18:08 florian Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -827,7 +827,6 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		rt = rtable_lookup(tableid, info->rti_info[RTAX_DST],
 		    info->rti_info[RTAX_NETMASK], info->rti_info[RTAX_GATEWAY],
 		    prio);
-#ifndef SMALL_KERNEL
 		/*
 		 * If we got multipath routes, we require users to specify
 		 * a matching gateway.
@@ -837,7 +836,6 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 			rtfree(rt);
 			rt = NULL;
 		}
-#endif
 		/*
 		 * If RTAX_GATEWAY is the argument we're trying to
 		 * change, try to find a compatible route.
@@ -846,13 +844,11 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		    (rtm->rtm_type == RTM_CHANGE)) {
 			rt = rtable_lookup(tableid, info->rti_info[RTAX_DST],
 			    info->rti_info[RTAX_NETMASK], NULL, prio);
-#ifndef SMALL_KERNEL
 			/* Ensure we don't pick a multipath one. */
 			if ((rt != NULL) && ISSET(rt->rt_flags, RTF_MPATH)) {
 				rtfree(rt);
 				rt = NULL;
 			}
-#endif
 		}
 
 		if (rt == NULL) {
@@ -900,11 +896,9 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 					ifa->ifa_refcnt++;
 					rt->rt_ifa = ifa;
 					rt->rt_ifidx = ifa->ifa_ifp->if_index;
-#ifndef SMALL_KERNEL
 					/* recheck link state after ifp change*/
 					rt_if_linkstate_change(rt, ifa->ifa_ifp,
 					    tableid);
-#endif
 				}
 			}
 change:
