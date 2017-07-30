@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.487 2017/07/29 15:07:47 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.488 2017/07/30 14:05:41 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1030,12 +1030,13 @@ bind_lease(struct interface_info *ifi)
 	/* Replace the old active lease with the accepted offer. */
 	ifi->active = ifi->offer;
 	ifi->offer = NULL;
-
-	set_mtu(&options[DHO_INTERFACE_MTU]);
-
-	set_address(ifi->name, ifi->active->address, &options[DHO_SUBNET_MASK]);
-
 	effective_proposal = lease_as_proposal(lease);
+
+	set_mtu(effective_proposal->inits, effective_proposal->mtu);
+
+	set_address(ifi->name, effective_proposal->ifa,
+	    effective_proposal->netmask);
+
 	set_routes(effective_proposal->ifa, effective_proposal->netmask,
 	    effective_proposal->rtstatic, effective_proposal->rtstatic_len);
 

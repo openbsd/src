@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.122 2017/07/29 15:07:47 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.123 2017/07/30 14:05:41 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -593,20 +593,19 @@ priv_delete_address(char *name, int ioctlfd, struct imsg_delete_address *imsg)
  *      ifconfig <if> mtu <mtu>
  */
 void
-set_mtu(struct option_data *mtu)
+set_mtu(int inits, uint16_t mtu)
 {
 	struct imsg_set_mtu	 imsg;
 	int			 rslt;
 
-	if (mtu->len != sizeof(uint16_t))
+	if ((inits & RTV_MTU) == 0)
 		return;
 
-	memcpy(&imsg.mtu, mtu->data, sizeof(uint16_t));
-	imsg.mtu = ntohs(imsg.mtu);
-	if (imsg.mtu < 68) {
-		log_warnx("mtu size %u < 68: ignored", imsg.mtu);
+	if (mtu < 68) {
+		log_warnx("mtu size %u < 68: ignored", mtu);
 		return;
 	}
+	imsg.mtu = mtu;
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_SET_MTU, 0, 0, -1,
 	    &imsg, sizeof(imsg));
@@ -636,7 +635,7 @@ priv_set_mtu(char *name, int ioctlfd, struct imsg_set_mtu *imsg)
  *	ifconfig <if> inet <addr> netmask <mask> broadcast <addr>
  */
 void
-set_address(char *name, struct in_addr addr, struct option_data *mask)
+set_address(char *name, struct in_addr addr, struct in_addr netmask)
 {
 	struct imsg_set_address	 imsg;
 	int			 rslt;
@@ -645,10 +644,7 @@ set_address(char *name, struct in_addr addr, struct option_data *mask)
 	delete_addresses(name);
 
 	imsg.addr = addr;
-	if (mask->len == sizeof(imsg.mask))
-		imsg.mask.s_addr = ((struct in_addr *)mask->data)->s_addr;
-	else
-		imsg.mask.s_addr = INADDR_ANY;
+	imsg.mask = netmask;
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_SET_ADDRESS, 0, 0, -1, &imsg,
 	    sizeof(imsg));
