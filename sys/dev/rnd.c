@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.192 2017/03/15 15:24:24 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.193 2017/07/30 21:40:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -225,7 +225,7 @@ u_int rnd_event_idx;
 struct timeout rnd_timeout;
 
 static u_int32_t entropy_pool[POOLWORDS];
-static const u_int32_t entropy_pool0[POOLWORDS] __attribute__((section(".openbsd.randomdata")));
+u_int32_t entropy_pool0[POOLWORDS] __attribute__((section(".openbsd.randomdata")));
 u_int	entropy_add_ptr;
 u_char	entropy_input_rotate;
 
@@ -442,7 +442,7 @@ struct task arc4_task = TASK_INITIALIZER(arc4_init, NULL);
 static chacha_ctx rs;		/* chacha context for random keystream */
 /* keystream blocks (also chacha seed from boot) */
 static u_char rs_buf[RSBUFSZ];
-static const u_char rs_buf0[RSBUFSZ] __attribute__((section(".openbsd.randomdata")));
+u_char rs_buf0[RSBUFSZ] __attribute__((section(".openbsd.randomdata")));
 static size_t rs_have;		/* valid bytes at end of rs_buf */
 static size_t rs_count;		/* bytes till reseed */
 
