@@ -1,4 +1,6 @@
-# $OpenBSD: statemachine,v 1.1 2017/07/14 10:41:30 benno Exp $
+#!/bin/sh
+#
+# $OpenBSD: statemachine,v 1.2 2017/07/30 18:13:38 jca Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@2keys.ca>
 # *
