@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.119 2017/07/12 06:26:33 natano Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.120 2017/07/30 16:05:24 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -238,7 +238,6 @@ extern void (*cpu_idle_cycle_func)(void);
 #define cpu_idle_cycle()		(*cpu_idle_cycle_func)()
 
 #ifdef MULTIPROCESSOR
-#define MAXCPUS				4
 #define getcurcpu()			hw_getcurcpu()
 #define setcurcpu(ci)			hw_setcurcpu(ci)
 extern struct cpu_info *get_cpu_info(int);
