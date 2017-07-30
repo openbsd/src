@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.73 2017/06/22 02:44:37 deraadt Exp $ */
+/* $OpenBSD: xhci.c,v 1.74 2017/07/30 19:24:18 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -2492,7 +2492,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 			flags |= XHCI_TRB_TRT_OUT;
 	}
 
-	trb0->trb_paddr = (uint64_t)*((uint64_t *)&xfer->request);
+	memcpy(&trb0->trb_paddr, &xfer->request, sizeof(trb0->trb_paddr));
 	trb0->trb_status = htole32(XHCI_TRB_INTR(0) | XHCI_TRB_LEN(8));
 	trb0->trb_flags = htole32(flags);
 
