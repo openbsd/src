@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.35 2017/07/29 02:50:17 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.36 2017/07/30 16:08:09 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -189,8 +189,7 @@ struct octeon_fau_map {
 #if defined(_KERNEL) || defined(_STANDALONE)
 #define OCTEON_ARGV_MAX 64
 
-/* Maximum number of cores on <= CN52XX */
-#define OCTEON_MAXCPUS	4
+#define OCTEON_MAXCPUS	16
 
 struct boot_desc {
 	uint32_t	desc_ver;
