@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.243 2017/07/28 09:01:09 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.244 2017/07/30 18:16:14 florian Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1152,7 +1152,6 @@ route_cleargateway(struct rtentry *rt, void *arg, unsigned int rtableid)
 int
 route_arp_conflict(struct rtentry *rt, struct rt_addrinfo *info)
 {
-#ifdef ART
 	int		 proxy = (info->rti_flags & RTF_ANNOUNCE);
 
 	if ((info->rti_flags & RTF_LLINFO) == 0 ||
@@ -1176,7 +1175,6 @@ route_arp_conflict(struct rtentry *rt, struct rt_addrinfo *info)
 
 	/* No conflict but an entry exist so we need to force mpath. */
 	info->rti_flags |= RTF_MPATH;
-#endif /* ART */
 	return (0);
 }
 

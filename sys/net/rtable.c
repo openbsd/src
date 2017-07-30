@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.59 2017/05/11 14:03:19 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.60 2017/07/30 18:16:14 florian Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -325,157 +325,6 @@ rtable_l2set(unsigned int rtableid, unsigned int rdomain, unsigned int loifidx)
 	dmm->value[rtableid] = value;
 }
 
-#ifndef ART
-void
-rtable_init_backend(unsigned int keylen)
-{
-	rn_init(keylen); /* initialize all zeroes, all ones, mask table */
-}
-
-void *
-rtable_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
-{
-	struct radix_node_head *rnh = NULL;
-
-	if (rn_inithead((void **)&rnh, off)) {
-		rnh->rnh_rtableid = rtableid;
-	}
-
-	return (rnh);
-}
-
-struct rtentry *
-rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask, struct sockaddr *gateway, uint8_t prio)
-{
-	struct radix_node_head	*rnh;
-	struct radix_node	*rn;
-	struct rtentry		*rt;
-
-	rnh = rtable_get(rtableid, dst->sa_family);
-	if (rnh == NULL)
-		return (NULL);
-
-	rn = rn_lookup(dst, mask, rnh);
-	if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0)
-		return (NULL);
-
-	rt = ((struct rtentry *)rn);
-
-	rtref(rt);
-	return (rt);
-}
-
-struct rtentry *
-rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
-{
-	struct radix_node_head	*rnh;
-	struct radix_node	*rn;
-	struct rtentry		*rt = NULL;
-
-	rnh = rtable_get(rtableid, dst->sa_family);
-	if (rnh == NULL)
-		return (NULL);
-
-	KERNEL_LOCK();
-	rn = rn_match(dst, rnh);
-	if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0)
-		goto out;
-
-	rt = ((struct rtentry *)rn);
-	rtref(rt);
-out:
-	KERNEL_UNLOCK();
-	return (rt);
-}
-
-int
-rtable_insert(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask, struct sockaddr *gateway, uint8_t prio,
-    struct rtentry *rt)
-{
-	struct radix_node_head	*rnh;
-	struct radix_node	*rn = (struct radix_node *)rt;
-
-	rnh = rtable_get(rtableid, dst->sa_family);
-	if (rnh == NULL)
-		return (EAFNOSUPPORT);
-
-	rn = rn_addroute(dst, mask, rnh, rn, prio);
-	if (rn == NULL)
-		return (ESRCH);
-
-	rt = ((struct rtentry *)rn);
-	rtref(rt);
-
-	return (0);
-}
-
-int
-rtable_delete(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask, struct rtentry *rt)
-{
-	struct radix_node_head	*rnh;
-	struct radix_node	*rn = (struct radix_node *)rt;
-
-	rnh = rtable_get(rtableid, dst->sa_family);
-	if (rnh == NULL)
-		return (EAFNOSUPPORT);
-
-	rn = rn_delete(dst, mask, rnh, rn);
-	if (rn == NULL)
-		return (ESRCH);
-
-	if (rn->rn_flags & (RNF_ACTIVE | RNF_ROOT))
-		panic("active node flags=%x", rn->rn_flags);
-
-	rt = ((struct rtentry *)rn);
-	rtfree(rt);
-
-	return (0);
-}
-
-int
-rtable_walk(unsigned int rtableid, sa_family_t af,
-    int (*func)(struct rtentry *, void *, unsigned int), void *arg)
-{
-	struct radix_node_head	*rnh;
-	int (*f)(struct radix_node *, void *, unsigned int) = (void *)func;
-	int error;
-
-	rnh = rtable_get(rtableid, af);
-	if (rnh == NULL)
-		return (EAFNOSUPPORT);
-
-	while ((error = rn_walktree(rnh, f, arg)) == EAGAIN)
-		continue;
-
-	return (error);
-}
-
-struct rtentry *
-rtable_iterate(struct rtentry *rt0)
-{
-	rtfree(rt0);
-	return (NULL);
-}
-
-#ifndef SMALL_KERNEL
-int
-rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
-{
-	return (0);
-}
-
-int
-rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask, uint8_t prio, struct rtentry *rt)
-{
-	return (0);
-}
-#endif /* SMALL_KERNEL */
-
-#else /* ART */
 
 static inline uint8_t	*satoaddr(struct art_root *, struct sockaddr *);
 
@@ -1017,7 +866,6 @@ satoaddr(struct art_root *at, struct sockaddr *sa)
 {
 	return (((uint8_t *)sa) + at->ar_off);
 }
-#endif /* ART */
 
 /*
  * Return the prefix length of a mask.

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.244 2017/05/27 08:02:40 claudio Exp $
+#	$OpenBSD: GENERIC,v 1.245 2017/07/30 18:16:14 florian Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -51,7 +51,6 @@ option		TCP_ECN		# Explicit Congestion Notification for TCP
 option		TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions
 #option		TCP_FACK	# Forward Acknowledgements for TCP
 
-option		ART		# Allotment Routing Table
 option		INET6		# IPv6
 option		IPSEC		# IPsec
 option		PPP_BSDCOMP	# PPP BSD compression
