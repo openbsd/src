@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.116 2017/07/22 09:59:08 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.117 2017/07/30 08:30:46 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -279,7 +279,7 @@ unpriv()
 	eval su -s /bin/sh ${_user} -c "'$@'"
 }
 
-[[ $@ == @(|-[[:alpha:]]) ]] || usage; [[ $@ == @(|-(c|r)) ]] &&
+[[ $@ == @(|-[[:alpha:]]) ]] || usage; [[ $@ == @(|-(c|R|r)) ]] &&
 	(($(id -u) != 0)) && sp_err "${0##*/}: need root privileges"
 
 # only run on release (not -current nor -stable)
