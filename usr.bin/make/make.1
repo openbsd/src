@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.125 2017/04/19 09:32:46 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.126 2017/07/30 21:17:05 anton Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: April 19 2017 $
+.Dd $Mdocdate: July 30 2017 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -511,8 +511,7 @@ They are also called
 in various texts.
 For portability, only periods, underscores, digits and letters should be
 used for variable names.
-The five operators that can be used to assign values to variables are as
-follows:
+The following operators can be used to assign values to variables:
 .Bl -tag -width Ds
 .It Ic \&=
 Assign the value to the variable.
@@ -575,6 +574,7 @@ Combinations that do not make sense, such as
 .Bd -literal -offset indent
 A +!!= cmd
 .Ed
+.Pp
 will not work.
 .Pp
 Variables are expanded by surrounding the variable name with either
