@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.488 2017/07/30 14:05:41 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.489 2017/07/30 15:26:46 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -982,7 +982,6 @@ dhcpnak(struct interface_info *ifi, struct option_data *options, char *info)
 void
 bind_lease(struct interface_info *ifi)
 {
-	struct option_data	*options;
 	struct client_lease	*lease, *pl;
 	struct proposal		*active_proposal = NULL;
 	struct proposal		*offered_proposal = NULL;
@@ -998,7 +997,6 @@ bind_lease(struct interface_info *ifi)
 	ifi->offer->resolv_conf = NULL;
 
 	lease = apply_defaults(ifi->offer);
-	options = lease->options;
 
 	set_lease_times(lease);
 
@@ -1023,14 +1021,16 @@ bind_lease(struct interface_info *ifi)
 		}
 	}
 
-	ifi->offer->resolv_conf = resolv_conf_contents(ifi->name,
-	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS],
-	    &options[DHO_DOMAIN_SEARCH]);
-
 	/* Replace the old active lease with the accepted offer. */
 	ifi->active = ifi->offer;
 	ifi->offer = NULL;
 	effective_proposal = lease_as_proposal(lease);
+
+	ifi->active->resolv_conf = resolv_conf_contents(ifi->name,
+	    effective_proposal->rtsearch,
+	    effective_proposal->rtsearch_len,
+	    effective_proposal->rtdns,
+	    effective_proposal->rtdns_len);
 
 	set_mtu(effective_proposal->inits, effective_proposal->mtu);
 
@@ -1887,8 +1887,8 @@ lease_as_proposal(struct client_lease *lease)
 			servers = MAXNS;
 		if (servers > 0) {
 			proposal->addrs |= RTA_DNS;
-			proposal->rtdns_len = opt->len;
-			memcpy(proposal->rtdns, opt->data, opt->len);
+			proposal->rtdns_len = servers * sizeof(struct in_addr);
+			memcpy(proposal->rtdns, opt->data, proposal->rtdns_len);
 		}
 	}
 

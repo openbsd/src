@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.49 2017/07/27 12:45:06 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.50 2017/07/30 15:26:46 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -54,8 +54,8 @@ int	dispatch_imsg(char *, int, int, int, struct imsgbuf *);
 void	priv_add_route(int, int, struct imsg_add_route *);
 void	priv_flush_routes(char *, int, int);
 
-char	*resolv_conf_contents(char *, struct option_data *,
-    struct option_data *, struct option_data *);
+char	*resolv_conf_contents(char *, uint8_t *, unsigned int, uint8_t *,
+    unsigned int);
 int	resolv_conf_priority(int, int);
 void	priv_write_resolv_conf(uint8_t *, size_t);
 

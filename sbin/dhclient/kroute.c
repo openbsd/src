@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.123 2017/07/30 14:05:41 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.124 2017/07/30 15:26:46 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -820,56 +820,50 @@ done:
  */
 char *
 resolv_conf_contents(char *name,
-    struct option_data *domainname, struct option_data *nameservers,
-    struct option_data *domainsearch)
+    uint8_t *rtsearch, unsigned int rtsearch_len,
+    uint8_t *rtdns, unsigned int rtdns_len)
 {
-	char		*dn, *ns, *nss[MAXNS], *contents, *courtesy, *p, *buf;
+	char		*dn, *nss[MAXNS], *contents, *courtesy;
+	struct in_addr	*addr;
 	size_t		 len;
-	int		 i, rslt;
+	unsigned int	 i, servers;
+	int		 rslt;
 
 	memset(nss, 0, sizeof(nss));
+	len = 0;
 
-	if (domainsearch->len != 0) {
-		buf = pretty_print_domain_search(domainsearch->data,
-		    domainsearch->len);
-		if (buf == NULL)
-			dn = strdup("");
-		else {
-			rslt = asprintf(&dn, "search %s\n", buf);
-			if (rslt == -1)
-				dn = NULL;
-		}
-	} else if (domainname->len != 0) {
-		rslt = asprintf(&dn, "search %s\n",
-		    pretty_print_option(DHO_DOMAIN_NAME, domainname, 0));
+	if (rtsearch_len != 0) {
+		rslt = asprintf(&dn, "search %.*s\n", rtsearch_len,
+		    rtsearch);
 		if (rslt == -1)
 			dn = NULL;
 	} else
 		dn = strdup("");
 	if (dn == NULL)
 		fatalx("no memory for domainname");
+	len += strlen(dn);
 
-	if (nameservers->len != 0) {
-		ns = pretty_print_option(DHO_DOMAIN_NAME_SERVERS, nameservers,
-		    0);
-		for (i = 0; i < MAXNS; i++) {
-			p = strsep(&ns, " ");
-			if (p == NULL)
-				break;
-			if (*p == '\0')
-				continue;
-			rslt = asprintf(&nss[i], "nameserver %s\n", p);
+	if (rtdns_len != 0) {
+		addr = (struct in_addr *)rtdns;
+		servers = rtdns_len / sizeof(struct in_addr);
+		if (servers > MAXNS)
+			servers = MAXNS;
+		for (i = 0; i < servers; i++) {
+			rslt = asprintf(&nss[i], "nameserver %s\n",
+			    inet_ntoa(*addr));
 			if (rslt == -1)
 				fatalx("no memory for nameserver");
+			len += strlen(nss[i]);
+			addr++;
 		}
 	}
 
-	len = strlen(dn);
-	for (i = 0; i < MAXNS; i++)
-		if (nss[i] != NULL)
-			len += strlen(nss[i]);
-
-	if (len > 0 && config->resolv_tail)
+	/*
+	 * XXX historically dhclient-script did not overwrite
+	 *     resolv.conf when neither search nor dns info
+	 *     was provided. Is that really what we want?
+	 */
+	if (len > 0 && config->resolv_tail != NULL)
 		len += strlen(config->resolv_tail);
 
 	if (len == 0) {
@@ -900,7 +894,7 @@ resolv_conf_contents(char *name,
 		}
 	}
 
-	if (config->resolv_tail)
+	if (config->resolv_tail != NULL)
 		strlcat(contents, config->resolv_tail, len);
 
 	return contents;
