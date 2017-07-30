@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.37 2017/07/28 14:54:12 visa Exp $
+#	$OpenBSD: GENERIC,v 1.38 2017/07/30 12:59:00 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -50,6 +50,7 @@ pci*		at ppb?
 cn30xxsmi*	at fdt?		# MDIO controller
 com*		at fdt?
 octcib*		at fdt?		# Interrupt controller
+octcit*		at fdt?		# Interrupt controller v3
 octciu*		at fdt?		# Interrupt controller v1
 octmmc*		at fdt?		# MMC host controller
 sdmmc*		at octmmc?	# SD/MMC bus
