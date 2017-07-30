@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.5 2017/07/06 15:02:53 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.6 2017/07/30 07:41:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -23,9 +23,6 @@
 
 #define OPT_VERBOSE	0x00000001
 #define OPT_VERBOSE2	0x00000002
-
-#define SLAACD_MAXTEXT		256
-#define SLAACD_MAXGROUPNAME	16
 
 /* MAXDNAME from arpa/namesr.h */
 #define SLAACD_MAX_DNSSL	1025
