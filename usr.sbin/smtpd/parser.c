@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.40 2015/01/09 08:28:02 gilles Exp $	*/
+/*	$OpenBSD: parser.c,v 1.41 2017/07/31 16:38:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot	<eric@openbsd.org>
@@ -115,20 +115,6 @@ cmd_install(const char *pattern, int (*cmd)(int, struct parameter*))
 
 	free(s);
 	return (n);
-}
-
-static void
-cmd_dump(struct node *node, int depth)
-{
-	struct node	*n;
-	int		 i;
-
-	for(i = 0; i < depth; i++)
-		printf("  ");
-	printf("%s\n", node->token ? node->token : "");
-
-	TAILQ_FOREACH(n, &node->children, entry)
-		cmd_dump(n, depth + 1);
 }
 
 static int
