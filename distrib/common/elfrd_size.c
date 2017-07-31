@@ -24,7 +24,7 @@ int
 ELFNAME(find_rd_root_image)(char *, int, Elf_Phdr *, int, long *, long *,
     off_t *, size_t *);
 int
-ELFNAME(nlist)(int fd, struct nlist *list);
+ELFNAME(nlist)(int, struct nlist *);
 
 struct elf_fn ELFDEFNNAME(fn) =
 {
@@ -371,7 +371,6 @@ ELFNAME(nlist)(int fd, struct nlist *list)
 			}
 		}
 	}
-elf_done:
 	if (usemalloc)
 		free(strtab);
 	else
