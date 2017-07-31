@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: ifstated,v 1.2 2017/07/30 18:13:38 jca Exp $
+# $OpenBSD: ifstated,v 1.3 2017/07/31 18:41:21 rob Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@2keys.ca>
 # *
@@ -102,7 +102,7 @@ state demoted {
 	init {
 		run "ifconfig"
 	}
-	if \$net && \$carp
+	if \$net && ( ! carp${VHIDA}.link.down && ! carp${VHIDA}.link.unknown )
 		set-state primary
 }
 EOF
