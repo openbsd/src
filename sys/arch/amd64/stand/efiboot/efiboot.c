@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.21 2017/07/29 19:52:29 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.22 2017/07/31 14:04:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -185,6 +185,15 @@ efi_diskprobe(void)
 	if (efi_bootdp != NULL)
 		depth = efi_device_path_depth(efi_bootdp, MEDIA_DEVICE_PATH);
 
+	/*
+	 * U-Boot incorrectly represents devices with a single
+	 * MEDIA_DEVICE_PATH component.  In that case include that
+	 * component into the matching, otherwise we'll blindly select
+	 * the first device.
+	 */
+	if (depth == 0)
+		depth = 1;
+
 	for (i = 0; i < sz / sizeof(EFI_HANDLE); i++) {
 		status = EFI_CALL(BS->HandleProtocol, handles[i], &blkio_guid,
 		    (void **)&blkio);
@@ -215,6 +224,10 @@ next:
 	free(handles, sz);
 }
 
+/*
+ * Determine the number of nodes up to, but not including, the first
+ * node of the specified type.
+ */
 static int
 efi_device_path_depth(EFI_DEVICE_PATH *dp, int dptype)
 {
@@ -222,7 +235,7 @@ efi_device_path_depth(EFI_DEVICE_PATH *dp, int dptype)
 
 	for (i = 0; !IsDevicePathEnd(dp); dp = NextDevicePathNode(dp), i++) {
 		if (DevicePathType(dp) == dptype)
-			return (i + 1);
+			return (i);
 	}
 
 	return (-1);
