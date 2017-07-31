@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcib.c,v 1.1 2017/07/13 12:50:50 visa Exp $	*/
+/*	$OpenBSD: octcib.c,v 1.2 2017/07/31 14:46:14 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -188,7 +188,7 @@ octcib_establish(void *cookie, int node, int idx, int level,
 
 	if (bit >= sc->sc_maxbits)
 		return NULL;
-	if (type == 1 || type == 2)
+	if (type != 4)
 		flags |= CIH_EDGE;
 
 	cih = malloc(sizeof(*cih), M_DEVBUF, M_NOWAIT);
