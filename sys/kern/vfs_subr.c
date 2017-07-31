@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.259 2017/04/20 14:13:00 visa Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.260 2017/07/31 16:47:03 florian Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -155,7 +155,9 @@ vntblinit(void)
 	 */
 	vn_initialize_syncerd();
 
+#ifdef NFSSERVER
 	rn_init(sizeof(struct sockaddr_in));
+#endif /* NFSSERVER */
 }
 
 /*
@@ -1354,9 +1356,10 @@ vfs_mountedon(struct vnode *vp)
 	return (error);
 }
 
+#ifdef NFSSERVER
 /*
  * Build hash lists of net addresses and hang them off the mount point.
- * Called by ufs_mount() to set up the lists of export addresses.
+ * Called by vfs_export() to set up the lists of export addresses.
  */
 int
 vfs_hang_addrlist(struct mount *mp, struct netexport *nep,
@@ -1454,10 +1457,12 @@ vfs_free_addrlist(struct netexport *nep)
 		nep->ne_rtable_inet = NULL;
 	}
 }
+#endif /* NFSSERVER */
 
 int
 vfs_export(struct mount *mp, struct netexport *nep, struct export_args *argp)
 {
+#ifdef NFSSERVER
 	int error;
 
 	if (argp->ex_flags & MNT_DELEXPORT) {
@@ -1470,11 +1475,15 @@ vfs_export(struct mount *mp, struct netexport *nep, struct export_args *argp)
 		mp->mnt_flag |= MNT_EXPORTED;
 	}
 	return (0);
+#else
+	return (ENOTSUP);
+#endif /* NFSSERVER */
 }
 
 struct netcred *
 vfs_export_lookup(struct mount *mp, struct netexport *nep, struct mbuf *nam)
 {
+#ifdef NFSSERVER
 	struct netcred *np;
 	struct radix_node_head *rnh;
 	struct sockaddr *saddr;
@@ -1504,6 +1513,9 @@ vfs_export_lookup(struct mount *mp, struct netexport *nep, struct mbuf *nam)
 			np = &nep->ne_defexported;
 	}
 	return (np);
+#else
+	return (NULL);
+#endif /* NFSSERVER */
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.649 2017/07/30 18:16:14 florian Exp $
+#	$OpenBSD: files,v 1.650 2017/07/31 16:47:03 florian Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -784,7 +784,7 @@ file net/if_switch.c			switch			needs-count
 file net/switchctl.c			switch
 file net/switchofp.c			switch
 file net/pipex.c			pipex
-file net/radix.c
+file net/radix.c			pf | ipsec | pipex | nfsserver
 file net/raw_cb.c
 file net/raw_usrreq.c
 file net/rtable.c
