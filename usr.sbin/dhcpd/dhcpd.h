@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.64 2017/04/24 14:58:36 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.65 2017/07/31 19:00:40 rob Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -52,11 +52,6 @@
 struct iaddr {
 	int len;
 	unsigned char iabuf[16];
-};
-
-struct iaddrlist {
-	struct iaddrlist *next;
-	struct iaddr addr;
 };
 
 #define DEFAULT_HASH_SIZE	97
