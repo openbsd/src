@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.96 2017/07/03 08:17:20 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.97 2017/07/31 14:53:56 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -665,7 +665,7 @@ get_ncpusfound(void)
 	uint64_t core_mask = octeon_boot_desc->core_mask;
 	uint64_t i, m, ncpus = 0;
 
-	for (i = 0, m = 1 ; i < OCTEON_MAXCPUS; i++, m <<= 1)
+	for (i = 0, m = 1 ; i < MAXCPUS; i++, m <<= 1)
 		if (core_mask & m)
 			ncpus++;
 

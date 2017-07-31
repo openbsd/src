@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.9 2017/07/03 08:17:20 visa Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.10 2017/07/31 14:53:56 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -73,7 +73,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &caa, mainbus_print);
 
 #ifdef MULTIPROCESSOR
-	for (cpuid = 1; cpuid < OCTEON_MAXCPUS &&
+	for (cpuid = 1; cpuid < MAXCPUS &&
 	    octeon_boot_info->core_mask & (1 << cpuid); cpuid++) {
 		bcopy(&bootcpu_hwinfo, &hw, sizeof(struct cpu_hwinfo));
 		caa.caa_hw = &hw;
