@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: statemachine,v 1.2 2017/07/30 18:13:38 jca Exp $
+# $OpenBSD: statemachine,v 1.3 2017/07/31 18:37:32 rob Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@2keys.ca>
 # *
@@ -76,7 +76,7 @@ test1 = '( "test -f ${FILE1}" every $EVERY )'
 test2 = '( "test -f ${FILE2}" every $EVERY )'
 state one {
 	init {
-		run "sleep $SLEEP  && ( test -f ${FILE2} || touch ${FILE1} )"
+		run "sleep $SLEEP && ( test -f ${FILE2} || touch ${FILE1} )"
 	}
 	if \$test1 && ! \$test2
 		set-state two
@@ -102,14 +102,14 @@ state five {
 	init {
 		run "sleep $SLEEP && touch ${FILE1}"
 	}
-	if ( \$false || \$true ) && ( ! \$true || \$test1  )
+	if ( \$false || \$true ) && ( ! \$true || \$test1 )
 		set-state six
 }
 state six {
 	init {
 		run "sleep $SLEEP && touch ${FILE1}"
 	}
-	if ( \$false || \$true ) && ( ! \$true || \$test1  )
+	if ( \$false || \$true ) && ( ! \$true || \$test1 )
 		if \$true
 			set-state seven
 }
