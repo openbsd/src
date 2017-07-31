@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.14 2017/07/29 16:03:10 florian Exp $	*/
+/*	$OpenBSD: pool.c,v 1.15 2017/07/31 04:23:30 dlg Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -558,7 +558,7 @@ pool_cache_show(const struct pool_cache_info *pc)
 	print_fld_str(FLD_POOL_CACHE_NAME, pc->name);
 	print_fld_uint(FLD_POOL_CACHE_LEN, kpc->pr_len);
 	print_fld_uint(FLD_POOL_CACHE_IDLE, kpc->pr_nitems);
-	print_fld_uint(FLD_POOL_CACHE_NGC, kpc->pr_ngc);
+	print_fld_size(FLD_POOL_CACHE_NGC, kpc->pr_ngc);
 
 	for (cpu = 0; cpu < ncpusfound; cpu++) {
 		kpcc = &pc->cache_cpus[cpu];
