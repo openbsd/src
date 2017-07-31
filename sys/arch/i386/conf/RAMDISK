@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.191 2015/07/17 22:52:28 tedu Exp $
+#	$OpenBSD: RAMDISK,v 1.192 2017/07/31 13:23:42 deraadt Exp $
 
 machine		i386
 maxusers	4
@@ -58,11 +58,11 @@ pcic2		at isa? port 0x3e4 iomem 0xd4000 iosiz 0x4000
 pcic*		at pci?
 pcmcia*		at pcic?
 
-xhci*		at pci?
+#xhci*		at pci?
 ehci*		at pci?
 uhci*		at pci?
 ohci*		at pci?
-usb*		at xhci?
+#usb*		at xhci?
 usb*		at ehci?
 usb*		at uhci?
 usb*		at ohci?
@@ -90,7 +90,7 @@ com2		at isa? port 0x3e8 irq 5
 
 scsibus*	at scsi?
 sd*		at scsibus?		# SCSI disk drives
-cd*		at scsibus?		# SCSI CD-ROM drives
+#cd*		at scsibus?		# SCSI CD-ROM drives
 
 fdc0		at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*		at fdc?
@@ -98,7 +98,7 @@ fd*		at fdc?
 pciide*		at pci? flags 0x0000
 wdc0		at isa? port 0x1f0 irq 14 flags 0x00
 wdc1		at isa? port 0x170 irq 15 flags 0x00
-wdc*		at pcmcia?
+#wdc*		at pcmcia?
 wd*		at wdc? flags 0x0000
 wd*		at pciide? flags 0x0000
 atapiscsi*	at wdc?
