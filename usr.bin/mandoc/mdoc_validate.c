@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.265 2017/07/20 12:53:55 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.266 2017/07/31 15:18:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1916,7 +1916,7 @@ post_root(POST_ARGS)
 	/* Check that we begin with a proper `Sh'. */
 
 	n = mdoc->first->child;
-	while (n != NULL && n->tok != TOKEN_NONE &&
+	while (n != NULL && n->tok >= MDOC_Dd &&
 	    mdoc_macros[n->tok].flags & MDOC_PROLOGUE)
 		n = n->next;
 
