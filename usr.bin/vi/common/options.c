@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.25 2017/07/03 07:01:14 bentley Exp $	*/
+/*	$OpenBSD: options.c,v 1.26 2017/07/31 19:45:49 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -257,15 +257,18 @@ opts_init(SCR *sp, int *oargs)
 	argv[1] = &b;
 
 	/* Set numeric and string default values. */
-#define	OI(indx, str) {							\
-	if ((str) != b1)	/* GCC puts strings in text-space. */	\
-		(void)strlcpy(b1, (str), sizeof(b1));			\
+#define OI_b1(indx) {							\
 	a.len = strlen(b1);						\
 	if (opts_set(sp, argv, NULL)) {					\
 		optindx = indx;						\
 		goto err;						\
 	}								\
 }
+#define	OI(indx, str) {							\
+	(void)strlcpy(b1, (str), sizeof(b1));				\
+	OI_b1(indx);							\
+}
+
 	/*
 	 * Indirect global options to global space.  Specifically, set up
 	 * terminal, lines, columns first, they're used by other options.
@@ -295,27 +298,26 @@ opts_init(SCR *sp, int *oargs)
 	/* Initialize string values. */
 	(void)snprintf(b1, sizeof(b1),
 	    "cdpath=%s", (s = getenv("CDPATH")) == NULL ? ":" : s);
-	OI(O_CDPATH, b1);
+	OI_b1(O_CDPATH);
 	OI(O_ESCAPETIME, "escapetime=1");
 	OI(O_FILEC, "filec=\t");
 	OI(O_KEYTIME, "keytime=6");
 	OI(O_MATCHTIME, "matchtime=7");
 	OI(O_REPORT, "report=5");
 	OI(O_PARAGRAPHS, "paragraphs=IPLPPPQPP LIpplpipbpBlBdPpLpIt");
-	(void)snprintf(b1, sizeof(b1), "path=%s", "");
-	OI(O_PATH, b1);
+	OI(O_PATH, "path=");
 	(void)snprintf(b1, sizeof(b1), "recdir=%s", _PATH_PRESERVE);
-	OI(O_RECDIR, b1);
+	OI_b1(O_RECDIR);
 	OI(O_SECTIONS, "sections=NHSHH HUnhshShSs");
 	(void)snprintf(b1, sizeof(b1),
 	    "shell=%s", (s = getenv("SHELL")) == NULL ? _PATH_BSHELL : s);
-	OI(O_SHELL, b1);
+	OI_b1(O_SHELL);
 	OI(O_SHELLMETA, "shellmeta=~{[*?$`'\"\\");
 	OI(O_SHIFTWIDTH, "shiftwidth=8");
 	OI(O_SIDESCROLL, "sidescroll=16");
 	OI(O_TABSTOP, "tabstop=8");
 	(void)snprintf(b1, sizeof(b1), "tags=%s", _PATH_TAGS);
-	OI(O_TAGS, b1);
+	OI_b1(O_TAGS);
 
 	/*
 	 * XXX
@@ -325,7 +327,7 @@ opts_init(SCR *sp, int *oargs)
 	if ((v = (O_VAL(sp, O_LINES) - 1) / 2) == 0)
 		v = 1;
 	(void)snprintf(b1, sizeof(b1), "scroll=%ld", v);
-	OI(O_SCROLL, b1);
+	OI_b1(O_SCROLL);
 
 	/*
 	 * The default window option values are:
@@ -345,7 +347,7 @@ opts_init(SCR *sp, int *oargs)
 	else
 		v = O_VAL(sp, O_LINES) - 1;
 	(void)snprintf(b1, sizeof(b1), "window=%lu", v);
-	OI(O_WINDOW, b1);
+	OI_b1(O_WINDOW);
 
 	/*
 	 * Set boolean default values, and copy all settings into the default
@@ -381,6 +383,7 @@ opts_init(SCR *sp, int *oargs)
 		OI(*oargs, optlist[*oargs].name);
 	return (0);
 #undef OI
+#undef OI_b1
 
 err:	msgq(sp, M_ERR,
 	    "Unable to set default %s option", optlist[optindx].name);
