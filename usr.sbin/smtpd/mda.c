@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.126 2016/11/30 17:43:32 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.127 2017/07/31 16:45:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -617,7 +617,8 @@ mda_getlastline(int fd, char *dst, size_t dstsz)
 	char	*ln = NULL;
 	size_t	 sz = 0;
 	ssize_t	 len;
-
+	int	 out = 0;
+	
 	if (lseek(fd, 0, SEEK_SET) < 0) {
 		log_warn("warn: mda: lseek");
 		close(fd);
@@ -632,10 +633,11 @@ mda_getlastline(int fd, char *dst, size_t dstsz)
 	while ((len = getline(&ln, &sz, fp)) != -1) {
 		if (ln[len - 1] == '\n')
 			ln[len - 1] = '\0';
+		out = 1;
 	}
 	fclose(fp);
 
-	if (sz != 0) {
+	if (out) {
 		(void)strlcpy(dst, "\"", dstsz);
 		(void)strnvis(dst + 1, ln, dstsz - 2, VIS_SAFE | VIS_CSTYLE);
 		(void)strlcat(dst, "\"", dstsz);
