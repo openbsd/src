@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.62 2017/07/24 23:56:37 tb Exp $	*/
+/*	$OpenBSD: history.c,v 1.63 2017/08/01 14:30:05 deraadt Exp $	*/
 
 /*
  * command history
@@ -593,10 +593,12 @@ history_lock(int operation)
 void
 histsave(int lno, const char *cmd, int dowrite)
 {
-	struct stat	sb;
-	char		*c, *cp, *encoded;
+	char		*c, *cp;
 
 	if (dowrite && histfh) {
+#ifndef SMALL
+		struct stat	sb;
+
 		history_lock(LOCK_EX);
 		if (fstat(fileno(histfh), &sb) != -1) {
 			if (timespeccmp(&sb.st_mtim, &last_sb.st_mtim, ==))
@@ -608,6 +610,7 @@ histsave(int lno, const char *cmd, int dowrite)
 				history_load(hist_source);
 			}
 		}
+#endif
 	}
 
 	c = str_save(cmd, APERM);
@@ -624,6 +627,9 @@ histsave(int lno, const char *cmd, int dowrite)
 	*histptr = c;
 
 	if (dowrite && histfh) {
+#ifndef SMALL
+		char *encoded;
+
 		/* append to file */
 		if (fseeko(histfh, 0, SEEK_END) == 0 &&
 		    stravis(&encoded, c, VIS_SAFE | VIS_NL) != -1) {
@@ -635,14 +641,16 @@ histsave(int lno, const char *cmd, int dowrite)
 			free(encoded);
 		}
 		history_lock(LOCK_UN);
+#endif
 	}
 }
 
 static FILE *
 history_open(void)
 {
+	FILE		*f = NULL;
+#ifndef SMALL
 	struct stat	sb;
-	FILE		*f;
 	int		fd, fddup;
 
 	if ((fd = open(hname, O_RDWR | O_CREAT | O_EXLOCK, 0600)) == -1)
@@ -659,7 +667,7 @@ history_open(void)
 		close(fddup);
 	else
 		last_sb = sb;
-
+#endif
 	return f;
 }
 
