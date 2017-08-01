@@ -1536,6 +1536,7 @@
 ./usr/share/man/man4/octeon/octrtc.4
 ./usr/share/man/man4/octeon/octsctl.4
 ./usr/share/man/man4/octeon/octuctl.4
+./usr/share/man/man4/octeon/octxctl.4
 ./usr/share/man/man4/ohci.4
 ./usr/share/man/man4/onewire.4
 ./usr/share/man/man4/oosiop.4
