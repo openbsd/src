@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.345 2017/06/25 22:22:06 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.346 2017/08/01 19:01:08 benno Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -4445,6 +4445,7 @@ pflow_addr(const char *val, struct sockaddr_storage *ss) {
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
 
 	if ((error = getaddrinfo(ip, port, &hints, &res0)) != 0)
 		errx(1, "error in parsing address string: %s",
