@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.61 2017/05/27 14:20:39 mpi Exp $ */
+/*	$OpenBSD: rthread.h,v 1.62 2017/08/01 08:57:48 kettenis Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -60,7 +60,7 @@ TAILQ_HEAD(pthread_queue, pthread);
 #ifdef FUTEX
 
 struct pthread_mutex {
-	_atomic_lock_t lock;
+	volatile unsigned int lock;
 	int type;
 	pthread_t owner;
 	int count;
@@ -68,7 +68,7 @@ struct pthread_mutex {
 };
 
 struct pthread_cond {
-	_atomic_lock_t seq;
+	volatile unsigned int seq;
 	clockid_t clock;
 	struct pthread_mutex *mutex;
 };
