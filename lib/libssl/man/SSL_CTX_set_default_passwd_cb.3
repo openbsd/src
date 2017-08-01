@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_default_passwd_cb.3,v 1.2 2016/11/30 18:05:18 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_default_passwd_cb.3,v 1.3 2017/08/01 14:57:03 schwarze Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,12 +48,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2016 $
+.Dd $Mdocdate: August 1 2017 $
 .Dt SSL_CTX_SET_DEFAULT_PASSWD_CB 3
 .Os
 .Sh NAME
 .Nm SSL_CTX_set_default_passwd_cb ,
-.Nm SSL_CTX_set_default_passwd_cb_userdata
+.Nm SSL_CTX_set_default_passwd_cb_userdata ,
+.Nm pem_password_cb
 .Nd set passwd callback for encrypted PEM file handling
 .Sh SYNOPSIS
 .In openssl/ssl.h

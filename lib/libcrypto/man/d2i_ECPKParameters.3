@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ECPKParameters.3,v 1.9 2016/12/25 18:39:35 schwarze Exp $
+.\"	$OpenBSD: d2i_ECPKParameters.3,v 1.10 2017/08/01 14:57:03 schwarze Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 25 2016 $
+.Dd $Mdocdate: August 1 2017 $
 .Dt D2I_ECPKPARAMETERS 3
 .Os
 .Sh NAME
@@ -172,7 +172,7 @@
 .Fa "EC_KEY **val_out"
 .Fc
 .Ft int
-.Fo i2d_ECPKPrivateKey_fp
+.Fo i2d_ECPrivateKey_fp
 .Fa "FILE *out_fp"
 .Fa "EC_KEY *val_in"
 .Fc
@@ -237,7 +237,7 @@
 .Fa "EC_KEY **val_out"
 .Fc
 .Ft int
-.Fo i2d_ECPK_PUBKEY_fp
+.Fo i2d_EC_PUBKEY_fp
 .Fa "FILE *out_fp"
 .Fa "EC_KEY *val_in"
 .Fc
@@ -407,14 +407,14 @@ an error occurs.
 .Fn i2d_ECPKParameters_bio ,
 .Fn i2d_ECPKParameters_fp ,
 .Fn i2d_ECPrivateKey_bio ,
-.Fn i2d_ECPKPrivateKey_fp ,
+.Fn i2d_ECPrivateKey_fp ,
 .Fn ECPKParameters_print ,
 .Fn ECPKParameters_print_fp ,
 .Fn ECParameters_print ,
 .Fn ECParameters_print_fp ,
 .Fn i2d_EC_PUBKEY_bio ,
 and
-.Fn i2d_ECPK_PUBKEY_fp
+.Fn i2d_EC_PUBKEY_fp
 return 1 for success or 0 if an error occurs.
 .Sh SEE ALSO
 .Xr ASN1_item_d2i 3 ,
