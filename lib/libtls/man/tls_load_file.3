@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_load_file.3,v 1.7 2017/07/06 17:27:19 jsing Exp $
+.\" $OpenBSD: tls_load_file.3,v 1.8 2017/08/01 08:41:36 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 6 2017 $
+.Dd $Mdocdate: August 1 2017 $
 .Dt TLS_LOAD_FILE 3
 .Os
 .Sh NAME
@@ -254,7 +254,7 @@ sets the files from which the public certificate, and private key will be read.
 .Fn tls_config_set_keypair_mem
 directly sets the public certificate, and private key from memory.
 .Pp
-.Fn tls_config_set_keypair_file
+.Fn tls_config_set_keypair_ocsp_file
 sets the files from which the public certificate, private key, and DER encoded
 OCSP staple will be read.
 .Pp
