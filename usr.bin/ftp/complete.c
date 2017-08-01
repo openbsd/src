@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.30 2017/01/21 08:33:07 krw Exp $	*/
+/*	$OpenBSD: complete.c,v 1.31 2017/08/01 15:04:44 anton Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -288,7 +288,6 @@ complete(EditLine *el, int ch)
 	int celems, dolist;
 	size_t len;
 
-	ch = ch;		/* not used */
 	lf = el_line(el);
 	len = lf->lastchar - lf->buffer;
 	if (len >= sizeof(line))
