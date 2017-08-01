@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.165 2017/06/16 10:58:43 stsp Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.166 2017/08/01 20:52:32 mpi Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -665,6 +665,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	rv = if_enqueue(ifp, m);
 	if (rv != 0) {
 		ifp->if_oerrors++;
+		splx(s);
 		return (rv);
 	}
 
@@ -674,6 +675,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	 * according to RFC 1333.
 	 */
 	ifp->if_obytes += sp->pp_framebytes;
+	splx(s);
 
 	return (0);
 }
