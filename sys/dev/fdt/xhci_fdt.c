@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.3 2017/06/02 11:06:08 patrick Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.4 2017/08/01 16:18:12 visa Exp $	*/
 /*
  * Copyright (c) 2017 Mark kettenis <kettenis@openbsd.org>
  *
@@ -57,6 +57,7 @@ xhci_fdt_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return OF_is_compatible(faa->fa_node, "generic-xhci") ||
+	    OF_is_compatible(faa->fa_node, "cavium,octeon-7130-xhci") ||
 	    OF_is_compatible(faa->fa_node, "snps,dwc3");
 }
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.42 2017/07/30 12:59:00 visa Exp $
+#	$OpenBSD: files.octeon,v 1.43 2017/08/01 16:18:11 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -14,6 +14,7 @@ major	{ amdcf = 19 }
 
 file	dev/cninit.c
 file	dev/ofw/fdt.c
+file	dev/ofw/ofw_misc.c
 file	arch/octeon/octeon/autoconf.c
 file	arch/octeon/octeon/bus_dma.c
 file	arch/octeon/octeon/conf.c
@@ -146,6 +147,10 @@ file	arch/octeon/dev/octmmc.c			octmmc
 device	octsctl: fdt
 attach	octsctl at fdt
 file	arch/octeon/dev/octsctl.c			octsctl
+
+device	octxctl: fdt
+attach	octxctl at fdt
+file	arch/octeon/dev/octxctl.c			octxctl
 
 pseudo-device	openprom
 file	arch/octeon/octeon/openprom.c			openprom needs-flag
