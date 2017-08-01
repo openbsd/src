@@ -1,7 +1,7 @@
-/*	$OpenBSD: aa.c,v 1.2 2015/01/20 04:41:01 krw Exp $	*/
+/*	$OpenBSD: aa.c,v 1.3 2017/08/01 13:05:55 deraadt Exp $	*/
 #include <sys/types.h>
 
-static int64_t aavalue __attribute__((section(".openbsd.randomdata")));
+int64_t aavalue __attribute__((section(".openbsd.randomdata")));
 
 int64_t
 getaavalue()
