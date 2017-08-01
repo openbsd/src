@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.4 2017/07/23 17:06:11 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.5 2017/08/01 20:47:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -337,8 +337,6 @@ dwmmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 {
 	struct dwmmc_softc *sc = sch;
 
-	printf("%s: ocr 0x%08x\n", sc->sc_dev.dv_xname, ocr);
-
 	if (ISSET(ocr, MMC_OCR_3_2V_3_3V|MMC_OCR_3_3V_3_4V))
 		HSET4(sc, SDMMC_PWREN, 1);
 	else
@@ -353,8 +351,6 @@ dwmmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	struct dwmmc_softc *sc = sch;
 	int div = 0, timeout;
 
-	printf("%s: freq %d timing %d\n", sc->sc_dev.dv_xname, freq, timing);
-
 	HWRITE4(sc, SDMMC_CLKENA, 0);
 	HWRITE4(sc, SDMMC_CLKSRC, 0);
 
@@ -366,7 +362,6 @@ dwmmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 			if (sc->sc_clkbase / (2 * 1000 * div) <= freq)
 				break;
 	}
-	printf("%s: div %d\n", sc->sc_dev.dv_xname, div);
 	HWRITE4(sc, SDMMC_CLKDIV, div);
 
 	/* Update clock. */
@@ -409,8 +404,6 @@ dwmmc_bus_width(sdmmc_chipset_handle_t sch, int width)
 {
 	struct dwmmc_softc *sc = sch;
 	
-	printf("%s: width %d\n", sc->sc_dev.dv_xname, width);
-
 	switch (width) {
 	case 1:
 		HCLR4(sc, SDMMC_CTYPE, SDMMC_CTYPE_8BIT|SDMMC_CTYPE_4BIT);
