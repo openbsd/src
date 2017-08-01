@@ -20490,8 +20490,8 @@ $cat >try.c <<EOP
 #define DOUBLESIZE $doublesize
 #$d_longdbl HAS_LONG_DOUBLE
 #ifdef HAS_LONG_DOUBLE
-#define LONGDBLSIZE $longdblsize
-#define LONGDBLKIND $longdblkind
+#define LONG_DOUBLESIZE $longdblsize
+#define LONG_DOUBLEKIND $longdblkind
 #endif
 #$i_math I_MATH
 #ifdef I_MATH
@@ -20523,16 +20523,15 @@ int main(int argc, char *argv[]) {
 #ifdef HAS_LONG_DOUBLE
    long double ldinf = (long double)exp(1e9);
    long double ldnan = (long double)sqrt(-1.0);
-#endif
+# if LONG_DOUBLEKIND == 3 || LONG_DOUBLEKIND == 4
+/* the 80-bit long doubles might have garbage in their excess bytes */
+    memset((char *)&ldinf + 10, '\0', LONG_DOUBLESIZE - 10);
+    memset((char *)&ldnan + 10, '\0', LONG_DOUBLESIZE - 10);
+# endif
   if (argc == 2) {
     switch (argv[1][0]) {
     case '1': bytes(&dinf, sizeof(dinf)); break;
     case '2': bytes(&dnan, sizeof(dnan)); break;
-#ifdef HAS_LONG_DOUBLE
-# if LONG_DOUBLEKIND == 3 || LONG_DOUBLEKIND == 4
-/* the 80-bit long doubles might have garbage in their excess bytes */
-    memset((char *)&ldinf + 10, '\0', LONG_DOUBLESIZE - 10);
-# endif
     case '3': bytes(&ldinf, sizeof(ldinf)); break;
     case '4': bytes(&ldnan, sizeof(ldnan)); break;
 #endif
