@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.7 2016/12/22 15:45:37 rzalamena Exp $	*/
+/*	$OpenBSD: parser.c,v 1.8 2017/08/01 13:11:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -68,7 +68,9 @@ static const struct token t_log[];
 static const struct token t_load[];
 static const struct token t_show[];
 static const struct token t_switch[];
+#if 0
 static const struct token t_switchreq[];
+#endif
 static const struct token t_table[];
 static const struct token t_dump[];
 static const struct token t_flow[];
@@ -124,11 +126,13 @@ static const struct token  t_switch[] = {
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
+#if 0
 static const struct token  t_switchreq[] = {
 	{ KEYWORD,	"dump",		NONE,		t_dump },
 	{ KEYWORD,	"flow",		NONE,		t_flow },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
+#endif
 
 static const struct token t_dump[] = {
 	{ KEYWORD,	"desc",		DUMP_DESC,	NULL },
