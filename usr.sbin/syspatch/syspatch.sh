@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.118 2017/07/30 09:02:57 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.119 2017/08/01 11:13:23 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -42,7 +42,7 @@ apply_patch()
 	echo "Installing patch ${_patch##${_OSrev}-}"
 	install -d ${_edir} ${_PDIR}/${_patch}
 
-	! ${_BSDMP} && [[ ! -f /bsd.mp ]] && _s="-s /^bsd.mp$//"
+	${_BSDMP} && _s="-s /^bsd$//" || _s="-s /^bsd.mp$//"
 	_files="$(tar -xvzphf ${_TMP}/syspatch${_patch}.tgz -C ${_edir} ${_s})"
 
 	checkfs ${_files}
@@ -66,8 +66,8 @@ apply_patch()
 	rm -rf ${_edir} ${_TMP}/syspatch${_patch}.tgz
 	trap exit INT
 
-	${_upself} && sp_err "syspatch updated itself, run it again to \
-install missing patches" 2
+	${_upself} && sp_err "syspatch updated itself, run it again to install \
+missing patches" 2
 }
 
 # quick-and-dirty filesystem status and size checks:
@@ -75,17 +75,16 @@ install missing patches" 2
 # - ignore new (nonexistent) files
 # - ignore rollback tarball: create_rollback() will handle the failure
 # - compute total size of all files per fs, simpler and less margin for error
-# - if we install a kernel, double /bsd size (duplicate it in the list) when:
-#   - we are on an MP system (/bsd.mp does not exist there)
-#   - /bsd.syspatchXX is not present (create_rollback will copy it from /bsd)
+# - if we install a kernel, double /bsd size (duplicate it in the list) when
+#   /bsd.syspatchXX is not present (create_rollback will copy it from /bsd)
 checkfs()
 {
 	local _d _dev _df _files="${@}" _ret _sz
 	[[ -n ${_files} ]]
 
-	if echo "${_files}" | grep -qw bsd; then
-		${_BSDMP} || [[ ! -f /bsd.syspatch${_OSrev} ]] &&
-			_files="bsd ${_files}"
+	if echo "${_files}" | grep -Eq '(^|[[:blank:]]+)bsd([[:blank:]]+|$)'
+	then
+		[[ -f /bsd.syspatch${_OSrev} ]] || _files="bsd ${_files}"
 	fi
 
 	set +e # ignore errors due to:
@@ -109,13 +108,16 @@ checkfs()
 create_rollback()
 {
 	# XXX annotate new files so we can remove them if we rollback?
-	local _file _patch=$1 _rbfiles _ret=0
+	local _file _patch=$1 _rbfiles _ret=0 _s
 	[[ -n ${_patch} ]]
 	shift
 	local _files="${@}"
 	[[ -n ${_files} ]]
 
 	for _file in ${_files}; do
+		if [[ ${_file} == bsd.mp ]] && ${_BSDMP}; then
+			_file=bsd && _s="-s /^bsd$/&.mp/"
+		fi
 		[[ -f /${_file} ]] || continue
 		# only save the original release kernel once
 		if [[ ${_file} == bsd && ! -f /bsd.syspatch${_OSrev} ]]; then
@@ -124,16 +126,8 @@ create_rollback()
 		_rbfiles="${_rbfiles} ${_file}"
 	done
 
-	# GENERIC.MP: substitute bsd.mp->bsd and bsd.sp->bsd
-	if ${_BSDMP} &&
-		tar -tzf ${_TMP}/syspatch${_patch}.tgz bsd >/dev/null 2>&1; then
-		tar -C / -czf ${_PDIR}/${_patch}/rollback.tgz -s '/^bsd.mp$//' \
-			-s '/^bsd$/bsd.mp/' -s '/^bsd.sp$/bsd/' bsd.sp \
-			${_rbfiles} || _ret=$?
-	else
-		tar -C / -czf ${_PDIR}/${_patch}/rollback.tgz ${_rbfiles} ||
-			_ret=$?
-	fi
+	tar -C / -czf ${_PDIR}/${_patch}/rollback.tgz ${_s} ${_rbfiles} ||
+		_ret=$?
 
 	if ((_ret != 0)); then
 		sp_err "Failed to create rollback patch ${_patch##${_OSrev}-}" 0
@@ -166,14 +160,10 @@ install_file()
 
 install_kernel()
 {
-	local _bsd _kern=$1
+	local _kern=$1
 	[[ -n ${_kern} ]]
 
-	if ${_BSDMP}; then
-		[[ ${_kern##*/} == bsd ]] && _bsd=bsd.sp || _bsd=bsd
-	fi
-
-	install -FSp ${_kern} /${_bsd:-${_kern##*/}}
+	install -FSp ${_kern} /bsd
 }
 
 ls_installed()
