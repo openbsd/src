@@ -590,7 +590,7 @@ void AsmPrinter::EmitFunctionHeader() {
 
   EmitLinkage(F, CurrentFnSym);
   if (MAI->hasFunctionAlignment())
-    EmitAlignment(MF->getAlignment(), F);
+    EmitTrapAlignment(MF->getAlignment(), F);
 
   if (MAI->hasDotTypeDotSizeDirective())
     OutStreamer->EmitSymbolAttribute(CurrentFnSym, MCSA_ELF_TypeFunction);
@@ -1759,6 +1759,33 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalObject *GV) const {
   else
     OutStreamer->EmitValueToAlignment(1u << NumBits);
 }
+
+//===----------------------------------------------------------------------===//
+/// EmitTrapAlignment - Emit an alignment directive to the specified power of
+/// two boundary, but call EmitTrapToAlignment to fill with Trap instructions
+/// if the Target implements EmitTrapToAlignment.
+void AsmPrinter::EmitTrapAlignment(unsigned NumBits, const GlobalObject *GV) const {
+  if (GV)
+    NumBits = getGVAlignmentLog2(GV, GV->getParent()->getDataLayout(), NumBits);
+
+  if (NumBits == 0) return;   // 1-byte aligned: no need to emit alignment.
+
+  assert(NumBits <
+             static_cast<unsigned>(std::numeric_limits<unsigned>::digits) &&
+         "undefined behavior");
+  EmitTrapToAlignment(NumBits);
+}
+
+//===----------------------------------------------------------------------===//
+/// EmitTrapToAlignment - Emit an alignment directive to the specified power
+/// of two boundary. This default implementation calls EmitCodeAlignment on
+/// the OutStreamer, but can be overridden by Target implementations.
+void AsmPrinter::EmitTrapToAlignment(unsigned NumBits) const {
+  if (NumBits == 0) return;
+  OutStreamer->EmitCodeAlignment(1u << NumBits);
+}
+
+
 
 //===----------------------------------------------------------------------===//
 // Constant emission.

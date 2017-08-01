@@ -1736,3 +1736,9 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   EmitAndCountInstruction(TmpInst);
 }
+
+/// Emit Trap bytes to the specified power of two alignment
+void X86AsmPrinter::EmitTrapToAlignment(unsigned NumBits) const {
+  if (NumBits == 0) return;
+  OutStreamer->EmitValueToAlignment(1u << NumBits, 0xCC, 1);
+}

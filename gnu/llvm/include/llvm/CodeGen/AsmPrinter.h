@@ -297,6 +297,11 @@ public:
   ///
   void EmitAlignment(unsigned NumBits, const GlobalObject *GO = nullptr) const;
 
+  /// Emit an alignment directive to the specified power of two boundary,
+  /// like EmitAlignment, but call EmitTrapToAlignment to fill with
+  /// trap instructions instead of NOPs.
+  void EmitTrapAlignment(unsigned NumBits, const GlobalObject *GO = nullptr) const;
+
   /// Lower the specified LLVM Constant to an MCExpr.
   virtual const MCExpr *lowerConstant(const Constant *CV);
 
@@ -354,6 +359,11 @@ public:
   virtual void EmitInstruction(const MachineInstr *) {
     llvm_unreachable("EmitInstruction not implemented");
   }
+
+  /// Emit an alignment directive to the specified power
+  /// of two boundary, but use Trap instructions for alignment
+  /// sections that should never be executed.
+  virtual void EmitTrapToAlignment(unsigned NumBits) const;
 
   /// Return the symbol for the specified constant pool entry.
   virtual MCSymbol *GetCPISymbol(unsigned CPID) const;
