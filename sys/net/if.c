@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.506 2017/07/24 09:38:25 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.507 2017/08/01 20:57:10 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1605,9 +1605,7 @@ if_linkstate(struct ifnet *ifp)
 	NET_ASSERT_LOCKED();
 
 	rtm_ifchg(ifp);
-#ifndef SMALL_KERNEL
 	rt_if_track(ifp);
-#endif
 	dohooks(ifp->if_linkstatehooks, 0);
 }
 
