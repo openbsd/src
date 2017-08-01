@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.102 2017/02/07 06:51:58 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.103 2017/08/01 01:11:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -292,20 +292,6 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	    part[0] == '\0' ? "(unknown)" : part,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
-	/* this is sort of racy */
-	if (myx_mcl_pool == NULL) {
-		myx_mcl_pool = malloc(sizeof(*myx_mcl_pool), M_DEVBUF,
-		    M_WAITOK);
-		if (myx_mcl_pool == NULL) {
-			printf("%s: unable to allocate mcl pool\n",
-			    DEVNAME(sc));
-			goto unmap;
-		}
-
-		m_pool_init(myx_mcl_pool, MYX_RXBIG_SIZE, MYX_BOUNDARY,
-		    "myxmcl");
-	}
-
 	if (myx_pcie_dc(sc, pa) != 0)
 		printf("%s: unable to configure PCI Express\n", DEVNAME(sc));
 
@@ -468,6 +454,16 @@ myx_attachhook(struct device *self)
 	struct myx_softc	*sc = (struct myx_softc *)self;
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
 	struct myx_cmd		 mc;
+
+	/* this is sort of racy */
+	if (myx_mcl_pool == NULL) {
+		myx_mcl_pool = malloc(sizeof(*myx_mcl_pool), M_DEVBUF,
+		    M_WAITOK);
+
+		m_pool_init(myx_mcl_pool, MYX_RXBIG_SIZE, MYX_BOUNDARY,
+		    "myxmcl");
+		pool_cache_init(myx_mcl_pool);
+	}
 
 	/* Allocate command DMA memory */
 	if (myx_dmamem_alloc(sc, &sc->sc_cmddma, MYXALIGN_CMD,
