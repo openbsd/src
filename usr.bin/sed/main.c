@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2017/01/20 10:26:16 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2017/08/01 18:05:53 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -105,6 +105,8 @@ static int next_files_have_lines(void);
 
 int termwidth;
 
+int pledge_wpath, pledge_rpath;
+
 int
 main(int argc, char *argv[])
 {
@@ -176,11 +178,26 @@ main(int argc, char *argv[])
 	compile();
 
 	/* Continue with first and start second usage */
-	if (*argv)
+	if (*argv) {
+		if (!pledge_wpath && inplace == NULL) {
+			if (pledge("stdio rpath", NULL) == -1)
+				error(FATAL, "pledge: %s", strerror(errno));
+		}
 		for (; *argv; argv++)
 			add_file(*argv);
-	else
+	} else {
+		if (!pledge_wpath && !pledge_rpath) {
+			if (pledge("stdio", NULL) == -1)
+				error(FATAL, "pledge: %s", strerror(errno));
+		} else if (pledge_rpath) {
+			if (pledge("stdio rpath", NULL) == -1)
+				error(FATAL, "pledge: %s", strerror(errno));
+		} else if (pledge_wpath) {
+			if (pledge("stdio wpath cpath", NULL) == -1)
+				error(FATAL, "pledge: %s", strerror(errno));
+		}
 		add_file(NULL);
+	}
 	process();
 	cfclose(prog, NULL);
 	if (fclose(stdout))

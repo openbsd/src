@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.12 2017/01/20 10:26:16 krw Exp $ */
+/*	$OpenBSD: extern.h,v 1.13 2017/08/01 18:05:53 martijn Exp $ */
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993
@@ -41,6 +41,7 @@ extern size_t maxnsub;
 extern u_long linenum;
 extern size_t appendnum;
 extern int Eflag, aflag, eflag, nflag;
+extern int pledge_wpath, pledge_rpath;
 extern const char *fname, *outfname;
 extern FILE *infile, *outfile;
 

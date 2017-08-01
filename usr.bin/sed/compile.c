@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.41 2017/01/20 10:26:16 krw Exp $	*/
+/*	$OpenBSD: compile.c,v 1.42 2017/08/01 18:05:53 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -264,14 +264,17 @@ nonsel:		/* Now parse the command */
 			if (*p == '\0')
 				error(COMPILE, "filename expected");
 			cmd->t = duptoeol(p, "w command", NULL);
-			if (aflag)
+			if (aflag) {
 				cmd->u.fd = -1;
+				pledge_wpath = 1;
+			}
 			else if ((cmd->u.fd = open(p,
 			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 			    DEFFILEMODE)) == -1)
 				error(FATAL, "%s: %s", p, strerror(errno));
 			break;
 		case RFILE:			/* r */
+			pledge_rpath = 1;
 			p++;
 			EATSPACE();
 			cmd->t = duptoeol(p, "read command", NULL);
@@ -594,7 +597,9 @@ compile_flags(char *p, struct s_subst *s)
 			if (q == wfile)
 				error(COMPILE, "no wfile specified");
 			s->wfile = strdup(wfile);
-			if (!aflag && (s->wfd = open(wfile,
+			if (aflag)
+				pledge_wpath = 1;
+			else if ((s->wfd = open(wfile,
 			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 			    DEFFILEMODE)) == -1)
 				error(FATAL, "%s: %s", wfile, strerror(errno));
