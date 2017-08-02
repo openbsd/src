@@ -122,6 +122,8 @@ match_pattern(void *pattern, char *tpattern, char *line, int line_len,
 		rm.rm_so = 0;
 		rm.rm_eo = line_len;
 #endif
+		*sp = NULL;
+		*ep = NULL;
 		matched = !regexec(spattern, line, 1, &rm, flags);
 		if (matched) {
 			*sp = line + rm.rm_so;

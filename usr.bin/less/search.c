@@ -477,8 +477,6 @@ hilite_line(off_t linepos, char *line, int line_len, int *chpos,
 	char *searchp;
 	char *line_end = line + line_len;
 
-	if (sp == NULL || ep == NULL)
-		return;
 	/*
 	 * sp and ep delimit the first match in the line.
 	 * Mark the corresponding file positions, then
@@ -491,6 +489,9 @@ hilite_line(off_t linepos, char *line, int line_len, int *chpos,
 	 */
 	searchp = line;
 	do {
+		if (sp == NULL || ep == NULL)
+			return;
+
 		create_hilites(linepos, (intptr_t)sp - (intptr_t)line,
 		    (intptr_t)ep - (intptr_t)line, chpos);
 		/*
