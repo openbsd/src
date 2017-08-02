@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.245 2017/07/30 18:18:08 florian Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.246 2017/08/02 07:42:11 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -784,6 +784,16 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		    info->rti_info[RTAX_NETMASK], info->rti_info[RTAX_GATEWAY],
 		    prio);
 		if (rt == NULL) {
+			error = ESRCH;
+			break;
+		}
+
+		/*
+		 * If we got multipath routes, we require users to specify
+		 * a matching gateway.
+		 */
+		if (ISSET(rt->rt_flags, RTF_MPATH) &&
+		    info->rti_info[RTAX_GATEWAY] == NULL) {
 			error = ESRCH;
 			break;
 		}
