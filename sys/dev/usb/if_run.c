@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.121 2017/07/21 00:55:05 kevlo Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.122 2017/08/02 18:26:47 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -153,6 +153,7 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(COREGA,		RT3070),
 	USB_ID(CYBERTAN,	RT2870),
 	USB_ID(DLINK,		DWA127),
+	USB_ID(DLINK,		DWA130F1),
 	USB_ID(DLINK,		DWA140B3),
 	USB_ID(DLINK,		DWA160B2),
 	USB_ID(DLINK,	 	DWA162),
