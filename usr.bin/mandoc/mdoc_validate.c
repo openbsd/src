@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.266 2017/07/31 15:18:59 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.267 2017/08/02 13:28:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1122,8 +1122,6 @@ post_fname(POST_ARGS)
 	if ( ! (cp[0] == '\0' || (cp[0] == '(' && cp[1] == '*')))
 		mandoc_msg(MANDOCERR_FN_PAREN, mdoc->parse,
 		    n->line, n->pos + pos, n->string);
-	if (n->sec == SEC_SYNOPSIS && mdoc->meta.msec != NULL)
-		mandoc_xr_add(mdoc->meta.msec, n->string, -1, -1);
 }
 
 static void
@@ -1190,9 +1188,8 @@ post_nm(POST_ARGS)
 
 	n = mdoc->last;
 
-	if ((n->sec == SEC_NAME || n->sec == SEC_SYNOPSIS) &&
-	    n->child != NULL && n->child->type == ROFFT_TEXT &&
-	    mdoc->meta.msec != NULL)
+	if (n->sec == SEC_NAME && n->child != NULL &&
+	    n->child->type == ROFFT_TEXT && mdoc->meta.msec != NULL)
 		mandoc_xr_add(mdoc->meta.msec, n->child->string, -1, -1);
 
 	if (n->last != NULL &&
