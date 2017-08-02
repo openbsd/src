@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.674 2017/06/06 00:52:02 kevlo Exp $
+$OpenBSD: usbdevs,v 1.675 2017/08/02 18:25:45 stsp Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1544,6 +1544,7 @@ product DLINK DWA140B3		0x3c15	DWA-140 rev B3
 product DLINK DWA160B2		0x3c1a	DWA-160 rev B2
 product DLINK DWA127		0x3c1b	DWA-127
 product DLINK DWA162		0x3c1f	DWA-162 Wireless Adapter
+product DLINK DWA130F1		0x3c25	DWA-130 rev F1
 product DLINK DSB650C		0x4000	10Mbps Ethernet
 product DLINK DSB650TX1		0x4001	10/100 Ethernet
 product DLINK DSB650TX		0x4002	10/100 Ethernet
