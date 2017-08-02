@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.119 2017/08/01 11:13:23 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.120 2017/08/02 05:58:29 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -319,7 +319,9 @@ if ((OPTIND == 1)); then
 		apply_patch ${_OSrev}-${_PATCH}
 	done
 	# in case a patch added a new directory (install -D)
-	mtree -qdef /etc/mtree/4.4BSD.dist -p / -U >/dev/null
-	[[ ! -f /var/sysmerge/xetc.tgz ]] ||
-		mtree -qdef /etc/mtree/BSD.x11.dist -p / -U >/dev/null
+	if [[ -n ${_PATCHES} ]]; then
+		mtree -qdef /etc/mtree/4.4BSD.dist -p / -U >/dev/null
+		[[ ! -f /var/sysmerge/xetc.tgz ]] ||
+			mtree -qdef /etc/mtree/BSD.x11.dist -p / -U >/dev/null
+	fi
 fi
