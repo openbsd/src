@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2005/09/28 15:42:32 kurt Exp $
+#	$OpenBSD: Makefile,v 1.2 2017/08/02 21:04:50 kettenis Exp $
 
 LIB=		bb
-SRCS=		bb.c
+SRCS=		bb.c bbb.c
 
 regress: all
 

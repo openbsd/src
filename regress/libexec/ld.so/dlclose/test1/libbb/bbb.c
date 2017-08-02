@@ -1,4 +1,4 @@
-/*	$OpenBSD: bb.c,v 1.3 2017/08/02 21:04:50 kettenis Exp $	*/
+/*	$OpenBSD: bbb.c,v 1.1 2017/08/02 21:04:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Kurt Miller <kurt@openbsd.org>
@@ -17,32 +17,14 @@
  *
  */
 
-#include <dlfcn.h>
-#include <stdio.h>
-
-extern void bbLazyFun();
-extern int duplicateFun();
-
-int bbSymbol;
-
-int
-bbTest1()
+void
+bbLazyFun()
 {
-	int ret = 0;
 
-	/* RTLD_DEFAULT should see bbSymbol */
-	if (dlsym(RTLD_DEFAULT, "bbSymbol") == NULL) {
-		printf("dlsym(RTLD_DEFAULT, \"bbSymbol\") == NULL\n");
-		ret = 1;
-	}
-
-	bbLazyFun();
-
-	return (ret);
 }
 
 int
-bbTest2()
+duplicateFun()
 {
-	return(duplicateFun());
+	return (1);
 }
