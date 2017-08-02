@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.166 2017/07/30 18:18:08 florian Exp $	*/
+/*	$OpenBSD: route.h,v 1.167 2017/08/02 08:38:28 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ struct rt_metrics {
  */
 
 struct rtentry {
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(ART)
 	struct	radix_node rt_nodes[2];	/* tree glue, and other values */
 #else
 	struct sockaddr	*rt_dest;	/* destination */
@@ -115,7 +115,7 @@ struct rtentry {
 	unsigned int	 rt_ifidx;	/* the answer: interface to use */
 	unsigned int	 rt_flags;	/* up/down?, host/net */
 	int		 rt_refcnt;	/* # held references */
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(ART)
 	int		 rt_plen;	/* prefix length */
 #endif
 	uint16_t	 rt_labelid;	/* route label ID */

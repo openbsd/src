@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.19 2017/07/30 18:16:14 florian Exp $ */
+/*	$OpenBSD: rtable.h,v 1.20 2017/08/02 08:38:28 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -19,7 +19,7 @@
 #ifndef	_NET_RTABLE_H_
 #define	_NET_RTABLE_H_
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(ART)
 
 /*
  * Traditional BSD routing table implementation based on a radix tree.
@@ -31,7 +31,7 @@
 #define	rt_plen(rt)	(rtable_satoplen(rt_key(rt)->sa_family, rt_mask(rt)))
 #define	RT_ROOT(rt)	((rt)->rt_nodes[0].rn_flags & RNF_ROOT)
 
-#else /* _KERNEL */
+#else /* defined(_KERNEL) || defined(ART) */
 
 /*
  * Newer routing table implementation based on ART (Allotment Routing
@@ -43,7 +43,7 @@
 #define	rt_plen(rt)	((rt)->rt_plen)
 #define	RT_ROOT(rt)	(0)
 
-#endif /* _KERNEL */
+#endif /* defined(_KERNEL) || defined(ART) */
 
 int		 rtable_satoplen(sa_family_t, struct sockaddr *);
 
