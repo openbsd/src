@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.126 2017/08/03 00:33:07 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.127 2017/08/03 14:53:22 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -351,10 +351,10 @@ set_routes(struct in_addr addr, struct in_addr addrmask, uint8_t *rtstatic,
 				    RTF_STATIC);
 			} else {
 				/*
-				* DEFAULT ROUTE IS VIA GATEWAY
-				*
-				* route add default $gateway
-				*/
+				 * DEFAULT ROUTE IS VIA GATEWAY
+				 *
+				 * route add default $gateway
+				 */
 				add_route(any, any, gateway, addr,
 				    RTA_DST | RTA_NETMASK | RTA_GATEWAY | RTA_IFA,
 				    RTF_GATEWAY | RTF_STATIC);
