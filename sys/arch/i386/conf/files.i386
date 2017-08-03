@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.233 2017/05/31 19:18:18 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.234 2017/08/03 06:35:24 fcambus Exp $
 #
 # new style config file for i386 architecture
 #
@@ -410,8 +410,6 @@ attach	ipmi at mainbus
 device	esm
 attach	esm at mainbus
 file	arch/i386/i386/esm.c			esm needs-flag
-
-#include "dev/rasops/files.rasops"
 
 # quad support is necessary for 32 bit architectures
 file lib/libkern/adddi3.c
