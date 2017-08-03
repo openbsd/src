@@ -1,4 +1,4 @@
-/*	$OpenBSD: worker.c,v 1.4 2017/05/28 10:04:27 benno Exp $	*/
+/*	$OpenBSD: worker.c,v 1.5 2017/08/03 17:36:06 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -779,7 +779,7 @@ icmp6_code(int code, int *got_there, int *unreachable)
 		++(*unreachable);
 		printf(" !P");
 		break;
-	case ICMP6_DST_UNREACH_NOTNEIGHBOR:
+	case ICMP6_DST_UNREACH_BEYONDSCOPE:
 		++(*unreachable);
 		printf(" !S");
 		break;

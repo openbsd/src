@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.313 2017/07/19 12:58:31 mikeb Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.314 2017/08/03 17:36:06 florian Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -173,7 +173,6 @@ static const struct icmpcodeent icmp_code[] = {
 static const struct icmpcodeent icmp6_code[] = {
 	{ "admin-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN },
 	{ "noroute-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE },
-	{ "notnbr-unr",	ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOTNEIGHBOR },
 	{ "beyond-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_BEYONDSCOPE },
 	{ "addr-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR },
 	{ "port-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOPORT },
