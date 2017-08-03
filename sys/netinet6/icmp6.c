@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.213 2017/07/12 16:53:58 florian Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.214 2017/08/03 15:46:00 florian Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -467,16 +467,10 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af)
 		case ICMP6_DST_UNREACH_ADDR:
 			code = PRC_HOSTDEAD;
 			break;
-#ifdef COMPAT_RFC1885
-		case ICMP6_DST_UNREACH_NOTNEIGHBOR:
-			code = PRC_UNREACH_SRCFAIL;
-			break;
-#else
 		case ICMP6_DST_UNREACH_BEYONDSCOPE:
 			/* I mean "source address was incorrect." */
 			code = PRC_PARAMPROB;
 			break;
-#endif
 		case ICMP6_DST_UNREACH_NOPORT:
 			code = PRC_UNREACH_PORT;
 			break;
@@ -1041,15 +1035,6 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 /*
  * Reflect the ip6 packet back to the source.
  * OFF points to the icmp6 header, counted from the top of the mbuf.
- *
- * Note: RFC 1885 required that an echo reply should be truncated if it
- * did not fit in with (return) path MTU, and KAME code supported the
- * behavior.  However, as a clarification after the RFC, this limitation
- * was removed in a revised version of the spec, RFC 2463.  We had kept the
- * old behavior, with a (non-default) ifdef block, while the new version of
- * the spec was an internet-draft status, and even after the new RFC was
- * published.  But it would rather make sense to clean the obsoleted part
- * up, and to make the code simpler at this stage.
  */
 void
 icmp6_reflect(struct mbuf *m, size_t off)
