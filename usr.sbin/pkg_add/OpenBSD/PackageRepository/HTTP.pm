@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: HTTP.pm,v 1.12 2014/08/27 18:40:03 kspillner Exp $
+# $OpenBSD: HTTP.pm,v 1.13 2017/08/04 11:53:03 sthen Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -280,7 +280,7 @@ sub get_directory
 			exit 1;
 	}
 	print "SUCCESS: directory $dname\n";
-	for my $pkg ($r =~ m/\<A\s+HREF=\"(.+?)\.tgz\"\>/gio) {
+	for my $pkg ($r =~ m/\<A[^>]*\s+HREF=\"(.+?)\.tgz\"/gio) {
 		$pkg = $1 if $pkg =~ m|^.*/(.*)$|;
 		# decode uri-encoding; from URI::Escape
 		$pkg =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.145 2017/06/20 18:05:44 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.146 2017/08/04 11:53:03 sthen Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -912,7 +912,7 @@ sub get_http_list
 	    $error) or return;
 	while(<$fh>) {
 		chomp;
-		for my $pkg (m/\<A\s+HREF=\"(.*?\.tgz)\"\>/gio) {
+		for my $pkg (m/\<A[^>]*\s+HREF=\"(.*?\.tgz)\"/gio) {
 			$pkg = $1 if $pkg =~ m|^.*/(.*)$|;
 			# decode uri-encoding; from URI::Escape
 			$pkg =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
