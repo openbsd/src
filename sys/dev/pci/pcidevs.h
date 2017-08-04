@@ -971,6 +971,7 @@
 
 /* ASIX Electronics products */
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A/88141 */
+#define	PCI_PRODUCT_ASIX_AX99100	0x9100		/* AX99100 */
 
 /* ASMedia products */
 #define	PCI_PRODUCT_ASMEDIA_ASM1061_SATA	0x0611		/* ASM1061 SATA */
