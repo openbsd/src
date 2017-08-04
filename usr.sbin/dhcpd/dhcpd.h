@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.65 2017/07/31 19:00:40 rob Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.66 2017/08/04 02:01:46 rob Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -71,25 +71,6 @@ struct hash_table {
 struct option_data {
 	int len;
 	u_int8_t *data;
-};
-
-struct string_list {
-	struct string_list *next;
-	char *string;
-};
-
-/* A name server, from /etc/resolv.conf. */
-struct name_server {
-	struct name_server *next;
-	struct sockaddr_in addr;
-	time_t rcdate;
-};
-
-/* A domain search list element. */
-struct domain_search_list {
-	struct domain_search_list *next;
-	char *domain;
-	time_t rcdate;
 };
 
 /* A dhcp packet and the pointers to its option values. */
@@ -296,12 +277,6 @@ struct interface_info {
 	    size_t, struct in_addr, struct sockaddr_in *, struct hardware *);
 };
 
-struct hardware_link {
-	struct hardware_link *next;
-	char name[IFNAMSIZ];
-	struct hardware address;
-};
-
 struct dhcpd_timeout {
 	struct dhcpd_timeout *next;
 	time_t when;
@@ -315,20 +290,6 @@ struct protocol {
 	void (*handler)(struct protocol *);
 	void *local;
 };
-
-/* Bitmask of dhcp option codes. */
-typedef unsigned char option_mask[16];
-
-/* DHCP Option mask manipulation macros... */
-#define OPTION_ZERO(mask)	(memset (mask, 0, 16))
-#define OPTION_SET(mask, bit)	(mask[bit >> 8] |= (1 << (bit & 7)))
-#define OPTION_CLR(mask, bit)	(mask[bit >> 8] &= ~(1 << (bit & 7)))
-#define OPTION_ISSET(mask, bit)	(mask[bit >> 8] & (1 << (bit & 7)))
-#define OPTION_ISCLR(mask, bit)	(!OPTION_ISSET (mask, bit))
-
-/* An option occupies its length plus two header bytes (code and
-    length) for every 255 bytes that must be stored. */
-#define OPTION_SPACE(x)		((x) + 2 * ((x) / 255 + 1))
 
 #define _PATH_DHCPD_CONF	"/etc/dhcpd.conf"
 #define _PATH_DHCPD_DB		"/var/db/dhcpd.leases"
