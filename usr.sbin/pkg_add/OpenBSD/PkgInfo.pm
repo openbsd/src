@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.45 2017/08/03 13:08:58 abieber Exp $
+# $OpenBSD: PkgInfo.pm,v 1.46 2017/08/04 23:35:40 abieber Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -406,18 +406,13 @@ sub print_info
 		}
 		$state->say("#1", $compose);
 	} elsif ($state->opt('I')) {
-		if ($state->opt('Q')) {
-			$state->say(
-			    is_installed($pkg) ? "#1 (installed)" : "#1", $pkg);
+		if ($state->opt('q')) {
+			$state->say("#1", $pkg);
 		} else {
-			if ($state->opt('q')) {
-				$state->say("#1", $pkg);
-			} else {
-				my $l = 20 - length($pkg);
-				$l = 1 if $l <= 0;
-				$state->say("#1#2#3", $pkg, " "x$l,
-				    get_comment($handle->info));
-		    	}
+			my $l = 20 - length($pkg);
+			$l = 1 if $l <= 0;
+			$state->say("#1#2#3", $pkg, " "x$l,
+			    get_comment($handle->info));
 		}
 	} else {
 		if ($state->opt('c')) {
@@ -606,10 +601,15 @@ sub parse_and_run
 		my $r = $state->repo->match_locations($partial);
 
 		for my $p (sort map {$_->name} @$r) {
-			$self->find_pkg($state, $p,
-			    sub {
-				$self->print_info($state, @_);
-			    });
+			if ($state->hasanyopt('cdfMqs')) {
+				$self->find_pkg($state, $p,
+			    	    sub {
+					$self->print_info($state, @_);
+			    	    });
+			} else {
+				$state->say(
+			    	    is_installed($p) ? "#1 (installed)" : "#1", $p);
+			}
 		}
 
 		return 0;
