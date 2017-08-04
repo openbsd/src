@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.211 2017/07/12 16:53:58 florian Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.212 2017/08/04 21:33:09 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ void nd6_slowtimo(void *);
 void nd6_timer_work(void *);
 void nd6_timer(void *);
 void nd6_invalidate(struct rtentry *);
-struct llinfo_nd6 *nd6_free(struct rtentry *, int);
+void nd6_free(struct rtentry *);
 void nd6_llinfo_timer(void *);
 
 struct timeout nd6_slowtimo_ch;
@@ -369,7 +369,7 @@ nd6_llinfo_timer(void *arg)
 					ln->ln_hold = NULL;
 				}
 			}
-			(void)nd6_free(rt, 0);
+			nd6_free(rt);
 			ln = NULL;
 		}
 		break;
@@ -384,7 +384,7 @@ nd6_llinfo_timer(void *arg)
 	case ND6_LLINFO_PURGE:
 		/* Garbage Collection(RFC 2461 5.3) */
 		if (!ND6_LLINFO_PERMANENT(ln)) {
-			(void)nd6_free(rt, 1);
+			nd6_free(rt);
 			ln = NULL;
 		}
 		break;
@@ -409,7 +409,7 @@ nd6_llinfo_timer(void *arg)
 			nd6_ns_output(ifp, &dst->sin6_addr,
 			    &dst->sin6_addr, ln, 0);
 		} else {
-			(void)nd6_free(rt, 0);
+			nd6_free(rt);
 			ln = NULL;
 		}
 		break;
@@ -493,7 +493,7 @@ nd6_purge(struct ifnet *ifp)
 		    rt->rt_gateway->sa_family == AF_LINK) {
 			sdl = satosdl(rt->rt_gateway);
 			if (sdl->sdl_index == ifp->if_index)
-				nln = nd6_free(rt, 0);
+				nd6_free(rt);
 		}
 	}
 }
@@ -655,10 +655,10 @@ nd6_invalidate(struct rtentry *rt)
  * make it global, unless you have a strong reason for the change, and are sure
  * that the change is safe.
  */
-struct llinfo_nd6 *
-nd6_free(struct rtentry *rt, int gc)
+void
+nd6_free(struct rtentry *rt)
 {
-	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo, *next;
+	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	struct in6_addr in6 = satosin6(rt_key(rt))->sin6_addr;
 	struct ifnet *ifp;
 
@@ -677,12 +677,6 @@ nd6_free(struct rtentry *rt, int gc)
 		}
 	}
 
-	/*
-	 * Before deleting the entry, remember the next entry as the
-	 * return value.
-	 */
-	next = TAILQ_NEXT(ln, ln_list);
-
 	nd6_invalidate(rt);
 
 	/*
@@ -694,8 +688,6 @@ nd6_free(struct rtentry *rt, int gc)
 		rtdeletemsg(rt, ifp, ifp->if_rdomain);
 
 	if_put(ifp);
-
-	return (next);
 }
 
 /*
@@ -1111,7 +1103,7 @@ nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr,
 		return;
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_LLINFO)) != RTF_LLINFO) {
 fail:
-		(void)nd6_free(rt, 0);
+		nd6_free(rt);
 		rtfree(rt);
 		return;
 	}
