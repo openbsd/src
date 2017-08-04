@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.5 2017/08/01 20:47:55 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.6 2017/08/04 08:18:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -32,9 +32,9 @@
 
 #define SDMMC_CTRL		0x0000
 #define  SDMMC_CTRL_USE_INTERNAL_DMAC	(1 << 25)
-#define  SDMMC_CTRL_DMA_RESET		(1 << 3)
-#define  SDMMC_CTRL_FIFO_RESET		(1 << 2)
-#define  SDMMC_CTRL_CONTROLLER_RESET	(1 << 3)
+#define  SDMMC_CTRL_DMA_RESET		(1 << 2)
+#define  SDMMC_CTRL_FIFO_RESET		(1 << 1)
+#define  SDMMC_CTRL_CONTROLLER_RESET	(1 << 0)
 #define  SDMMC_CTRL_ALL_RESET	(SDMMC_CTRL_CONTROLLER_RESET | \
     SDMMC_CTRL_FIFO_RESET | SDMMC_CTRL_DMA_RESET)
 #define SDMMC_PWREN		0x0004
