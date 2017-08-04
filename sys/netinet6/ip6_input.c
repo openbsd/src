@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.198 2017/07/05 11:34:10 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.199 2017/08/04 14:24:05 florian Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -942,7 +942,6 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 
-#ifdef SO_TIMESTAMP
 	if (in6p->inp_socket->so_options & SO_TIMESTAMP) {
 		struct timeval tv;
 
@@ -952,7 +951,6 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
-#endif
 
 	/* RFC 2292 sec. 5 */
 	if ((in6p->inp_flags & IN6P_PKTINFO) != 0) {
