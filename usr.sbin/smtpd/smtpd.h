@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.533 2017/07/27 18:48:30 sunil Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.534 2017/08/04 14:38:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1150,7 +1150,7 @@ int	uncompress_file(FILE *, FILE *);
 #define PURGE_RULES		0x04
 #define PURGE_PKI		0x08
 #define PURGE_PKI_KEYS		0x10
-#define PURGE_EVERYTHING	0x0f
+#define PURGE_EVERYTHING	0xff
 void purge_config(uint8_t);
 void config_process(enum smtp_proc_type);
 void config_peer(enum smtp_proc_type);
