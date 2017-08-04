@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.118 2017/07/19 19:50:58 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.119 2017/08/04 17:31:46 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -516,11 +516,9 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 			fail |= 0x40;
 	}
 
-#ifdef IEEE80211_DEBUG
 	if (ic->ic_if.if_flags & IFF_DEBUG) {
-		printf(" %c %s", fail ? '-' : '+',
-		    ether_sprintf(ni->ni_macaddr));
-		printf(" %s%c", ether_sprintf(ni->ni_bssid),
+		printf(" %c %s%c", fail ? '-' : '+',
+		    ether_sprintf(ni->ni_bssid),
 		    fail & 0x20 ? '!' : ' ');
 		printf(" %3d%c", ieee80211_chan2ieee(ic, ni->ni_chan),
 			fail & 0x01 ? '!' : ' ');
@@ -543,7 +541,7 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 		ieee80211_print_essid(ni->ni_essid, ni->ni_esslen);
 		printf("%s\n", fail & 0x10 ? "!" : "");
 	}
-#endif
+
 	return fail;
 }
 
