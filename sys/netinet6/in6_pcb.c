@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.98 2017/05/13 17:42:55 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.99 2017/08/04 18:16:42 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -284,16 +284,24 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 
 	if (in6_pcbhashlookup(inp->inp_table, &sin6->sin6_addr, sin6->sin6_port,
 	    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) ? in6a : &inp->inp_laddr6,
-	    inp->inp_lport, inp->inp_rtableid)) {
+	    inp->inp_lport, inp->inp_rtableid) != NULL) {
 		return (EADDRINUSE);
 	}
 
 	KASSERT(IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) || inp->inp_lport);
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6)) {
-		if (inp->inp_lport == 0 &&
-		    in_pcbbind(inp, NULL, curproc) == EADDRNOTAVAIL)
-			return (EADDRNOTAVAIL);
+		if (inp->inp_lport == 0) {
+			error = in_pcbbind(inp, NULL, curproc);
+			if (error)
+				return (error);
+			if (in6_pcbhashlookup(inp->inp_table, &sin6->sin6_addr,
+			    sin6->sin6_port, in6a, inp->inp_lport,
+			    inp->inp_rtableid) != NULL) {
+				inp->inp_lport = 0;
+				return (EADDRINUSE);
+			}
+		}
 		inp->inp_laddr6 = *in6a;
 	}
 	inp->inp_faddr6 = sin6->sin6_addr;
