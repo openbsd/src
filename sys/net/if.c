@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.507 2017/08/01 20:57:10 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.508 2017/08/04 21:32:26 florian Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1828,7 +1828,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	struct if_afreq *ifar;
 	char ifdescrbuf[IFDESCRSIZE];
 	char ifrtlabelbuf[RTLABEL_LEN];
-	int s, error = 0;
+	int s, error = 0, oif_xflags;
 	size_t bytesdone;
 	short oif_flags;
 	const char *label;
@@ -1865,23 +1865,28 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		ifar = (struct if_afreq *)data;
 		if ((ifp = ifunit(ifar->ifar_name)) == NULL)
 			return (ENXIO);
+		oif_flags = ifp->if_flags;
+		oif_xflags = ifp->if_xflags;
 		switch (ifar->ifar_af) {
 		case AF_INET:
 			/* attach is a noop for AF_INET */
 			if (cmd == SIOCIFAFDETACH)
 				in_ifdetach(ifp);
-			return (0);
+			break;
 #ifdef INET6
 		case AF_INET6:
 			if (cmd == SIOCIFAFATTACH)
 				error = in6_ifattach(ifp);
 			else
 				in6_ifdetach(ifp);
-			return (error);
+			break;
 #endif /* INET6 */
 		default:
 			return (EAFNOSUPPORT);
 		}
+		if (oif_flags != ifp->if_flags || oif_xflags != ifp->if_xflags)
+			rtm_ifchg(ifp);
+		return (error);
 	}
 
 	ifp = ifunit(ifr->ifr_name);
