@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.78 2017/07/22 16:54:46 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.79 2017/08/04 16:25:10 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -847,8 +847,9 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 #endif
 
 	ostate = ic->ic_state;
-	DPRINTF(("%s -> %s\n", ieee80211_state_name[ostate],
-	    ieee80211_state_name[nstate]));
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: %s -> %s\n", ifp->if_xname,
+		    ieee80211_state_name[ostate], ieee80211_state_name[nstate]);
 	ic->ic_state = nstate;			/* state transition */
 	ni = ic->ic_bss;			/* NB: no reference held */
 	ieee80211_set_link_state(ic, LINK_STATE_DOWN);
@@ -981,9 +982,10 @@ justcleanup:
 		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
 		switch (ostate) {
 		case IEEE80211_S_INIT:
-			panic("invalid transition %s -> %s",
-			    ieee80211_state_name[ostate],
-			    ieee80211_state_name[nstate]);
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: invalid transition %s -> %s",
+				    ifp->if_xname, ieee80211_state_name[ostate],
+				    ieee80211_state_name[nstate]);
 			break;
 		case IEEE80211_S_SCAN:
 			IEEE80211_SEND_MGMT(ic, ni,
@@ -1023,9 +1025,10 @@ justcleanup:
 		case IEEE80211_S_INIT:
 		case IEEE80211_S_SCAN:
 		case IEEE80211_S_ASSOC:
-			panic("invalid transition %s -> %s",
-			    ieee80211_state_name[ostate],
-			    ieee80211_state_name[nstate]);
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: invalid transition %s -> %s",
+				    ifp->if_xname, ieee80211_state_name[ostate],
+				    ieee80211_state_name[nstate]);
 			break;
 		case IEEE80211_S_AUTH:
 			IEEE80211_SEND_MGMT(ic, ni,
@@ -1042,9 +1045,10 @@ justcleanup:
 		case IEEE80211_S_INIT:
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_RUN:
-			panic("invalid transition %s -> %s",
-			    ieee80211_state_name[ostate],
-			    ieee80211_state_name[nstate]);
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: invalid transition %s -> %s",
+				    ifp->if_xname, ieee80211_state_name[ostate],
+				    ieee80211_state_name[nstate]);
 			break;
 		case IEEE80211_S_SCAN:		/* adhoc/hostap mode */
 		case IEEE80211_S_ASSOC:		/* infra mode */
