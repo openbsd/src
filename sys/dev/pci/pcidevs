@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1823 2017/07/16 13:41:58 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1824 2017/08/04 22:37:42 uaa Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -966,6 +966,7 @@ product ARECA ARC1880		0x1880	ARC-1880
 
 /* ASIX Electronics products */
 product ASIX AX88140A		0x1400	AX88140A/88141
+product ASIX AX99100		0x9100	AX99100
 
 /* ASMedia products */
 product ASMEDIA ASM1061_SATA	0x0611	ASM1061 SATA
