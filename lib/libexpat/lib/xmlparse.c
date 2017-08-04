@@ -1,7 +1,7 @@
 /* Copyright (c) 1998, 1999, 2000 Thai Open Source Software Center Ltd
    See the file COPYING for copying permission.
 
-   cd4063469a95eab9a93001afb109e3dee122cdda4635bbec36257fc01c327348 (2.2.2+)
+   101bfd65d1ff3d1511cf6671e6aae65f82cd97df6f4da137d46d510731830ad9 (2.2.3+)
 */
 
 #if !defined(_GNU_SOURCE)
@@ -21,6 +21,8 @@
 #include <sys/time.h>                   /* gettimeofday() */
 #include <sys/types.h>                  /* getpid() */
 #include <unistd.h>                     /* getpid() */
+#include <fcntl.h>                      /* O_RDONLY */
+#include <errno.h>
 #endif
 
 #define XML_BUILDING_EXPAT 1
@@ -1665,9 +1667,22 @@ XML_Parse(XML_Parser parser, const char *s, int len, int isFinal)
     if (errorCode == XML_ERROR_NONE) {
       switch (ps_parsing) {
       case XML_SUSPENDED:
+        /* It is hard to be certain, but it seems that this case
+         * cannot occur.  This code is cleaning up a previous parse
+         * with no new data (since len == 0).  Changing the parsing
+         * state requires getting to execute a handler function, and
+         * there doesn't seem to be an opportunity for that while in
+         * this circumstance.
+         *
+         * Given the uncertainty, we retain the code but exclude it
+         * from coverage tests.
+         *
+         * LCOV_EXCL_START
+         */
         XmlUpdatePosition(encoding, positionPtr, bufferPtr, &position);
         positionPtr = bufferPtr;
         return XML_STATUS_SUSPENDED;
+        /* LCOV_EXCL_STOP */
       case XML_INITIALIZED:
       case XML_PARSING:
         ps_parsing = XML_FINISHED;
@@ -2856,9 +2871,17 @@ doContent(XML_Parser parser,
         return XML_ERROR_NO_MEMORY;
       break;
     default:
+      /* All of the tokens produced by XmlContentTok() have their own
+       * explicit cases, so this default is not strictly necessary.
+       * However it is a useful safety net, so we retain the code and
+       * simply exclude it from the coverage tests.
+       *
+       * LCOV_EXCL_START
+       */
       if (defaultHandler)
         reportDefault(parser, enc, s, next);
       break;
+      /* LCOV_EXCL_STOP */
     }
     *eventPP = s = next;
     switch (ps_parsing) {
@@ -2949,13 +2972,17 @@ storeAtts(XML_Parser parser, const ENCODING *enc,
 #endif
     attsSize = n + nDefaultAtts + INIT_ATTS_SIZE;
     temp = (ATTRIBUTE *)REALLOC((void *)atts, attsSize * sizeof(ATTRIBUTE));
-    if (temp == NULL)
+    if (temp == NULL) {
+      attsSize = oldAttsSize;
       return XML_ERROR_NO_MEMORY;
+    }
     atts = temp;
 #ifdef XML_ATTR_INFO
     temp2 = (XML_AttrInfo *)REALLOC((void *)attInfo, attsSize * sizeof(XML_AttrInfo));
-    if (temp2 == NULL)
+    if (temp2 == NULL) {
+      attsSize = oldAttsSize;
       return XML_ERROR_NO_MEMORY;
+    }
     attInfo = temp2;
 #endif
     if (n > oldAttsSize)
@@ -3092,6 +3119,7 @@ storeAtts(XML_Parser parser, const ENCODING *enc,
     int j;  /* hash table index */
     unsigned long version = nsAttsVersion;
     int nsAttsSize = (int)1 << nsAttsPower;
+    unsigned char oldNsAttsPower = nsAttsPower;
     /* size of hash table must be at least 2 * (# of prefixed attributes) */
     if ((nPrefixes << 1) >> nsAttsPower) {  /* true for nsAttsPower = 0 */
       NS_ATT *temp;
@@ -3101,8 +3129,11 @@ storeAtts(XML_Parser parser, const ENCODING *enc,
         nsAttsPower = 3;
       nsAttsSize = (int)1 << nsAttsPower;
       temp = (NS_ATT *)REALLOC(nsAtts, nsAttsSize * sizeof(NS_ATT));
-      if (!temp)
+      if (!temp) {
+        /* Restore actual size of memory in nsAtts */
+        nsAttsPower = oldNsAttsPower;
         return XML_ERROR_NO_MEMORY;
+      }
       nsAtts = temp;
       version = 0;  /* force re-initialization of nsAtts hash table */
     }
@@ -3129,8 +3160,23 @@ storeAtts(XML_Parser parser, const ENCODING *enc,
 
         ((XML_Char *)s)[-1] = 0;  /* clear flag */
         id = (ATTRIBUTE_ID *)lookup(parser, &dtd->attributeIds, s, 0);
-        if (!id || !id->prefix)
-          return XML_ERROR_NO_MEMORY;
+        if (!id || !id->prefix) {
+          /* This code is walking through the appAtts array, dealing
+           * with (in this case) a prefixed attribute name.  To be in
+           * the array, the attribute must have already been bound, so
+           * has to have passed through the hash table lookup once
+           * already.  That implies that an entry for it already
+           * exists, so the lookup above will return a pointer to
+           * already allocated memory.  There is no opportunaity for
+           * the allocator to fail, so the condition above cannot be
+           * fulfilled.
+           *
+           * Since it is difficult to be certain that the above
+           * analysis is complete, we retain the test and merely
+           * remove the code from coverage tests.
+           */
+          return XML_ERROR_NO_MEMORY; /* LCOV_EXCL_LINE */
+        }
         b = id->prefix->binding;
         if (!b)
           return XML_ERROR_UNBOUND_PREFIX;
@@ -3507,8 +3553,16 @@ doCdataSection(XML_Parser parser,
       }
       return XML_ERROR_UNCLOSED_CDATA_SECTION;
     default:
+      /* Every token returned by XmlCdataSectionTok() has its own
+       * explicit case, so this default case will never be executed.
+       * We retain it as a safety net and exclude it from the coverage
+       * statistics.
+       *
+       * LCOV_EXCL_START
+      */
       *eventPP = next;
       return XML_ERROR_UNEXPECTED_STATE;
+      /* LCOV_EXCL_STOP */
     }
 
     *eventPP = s = next;
@@ -3568,8 +3622,20 @@ doIgnoreSection(XML_Parser parser,
     eventEndPP = &eventEndPtr;
   }
   else {
+    /* It's not entirely clear, but it seems the following two lines
+     * of code cannot be executed.  The only occasions on which 'enc'
+     * is not 'parser->m_encoding' are when this function is called
+     * from the internal entity processing, and IGNORE sections are an
+     * error in internal entities.
+     *
+     * Since it really isn't clear that this is true, we keep the code
+     * and just remove it from our coverage tests.
+     *
+     * LCOV_EXCL_START
+     */
     eventPP = &(openInternalEntities->internalEventPtr);
     eventEndPP = &(openInternalEntities->internalEventEndPtr);
+    /* LCOV_EXCL_STOP */
   }
   *eventPP = s;
   *startPtr = NULL;
@@ -3602,8 +3668,16 @@ doIgnoreSection(XML_Parser parser,
     }
     return XML_ERROR_SYNTAX; /* XML_ERROR_UNCLOSED_IGNORE_SECTION */
   default:
+    /* All of the tokens that XmlIgnoreSectionTok() returns have
+     * explicit cases to handle them, so this default case is never
+     * executed.  We keep it as a safety net anyway, and remove it
+     * from our test coverage statistics.
+     *
+     * LCOV_EXCL_START
+     */
     *eventPP = next;
     return XML_ERROR_UNEXPECTED_STATE;
+    /* LCOV_EXCL_STOP */
   }
   /* not reached */
 }
@@ -3700,7 +3774,14 @@ processXmlDecl(XML_Parser parser, int isGeneralTextEntity,
     reportDefault(parser, encoding, s, next);
   if (protocolEncodingName == NULL) {
     if (newEncoding) {
-      if (newEncoding->minBytesPerChar != encoding->minBytesPerChar) {
+      /* Check that the specified encoding does not conflict with what
+       * the parser has already deduced.  Do we have the same number
+       * of bytes in the smallest representation of a character?  If
+       * this is UTF-16, is it the same endianness?
+       */
+      if (newEncoding->minBytesPerChar != encoding->minBytesPerChar
+          || (newEncoding->minBytesPerChar == 2 &&
+              newEncoding != encoding)) {
         eventPtr = encodingName;
         return XML_ERROR_INCORRECT_ENCODING;
       }
@@ -3845,15 +3926,14 @@ entityValueInitProcessor(XML_Parser parser,
       result = processXmlDecl(parser, 0, start, next);
       if (result != XML_ERROR_NONE)
         return result;
-      switch (ps_parsing) {
-      case XML_SUSPENDED:
-        *nextPtr = next;
-        return XML_ERROR_NONE;
-      case XML_FINISHED:
+      /* At this point, ps_parsing cannot be XML_SUSPENDED.  For that
+       * to happen, a parameter entity parsing handler must have
+       * attempted to suspend the parser, which fails and raises an
+       * error.  The parser can be aborted, but can't be suspended.
+       */
+      if (ps_parsing == XML_FINISHED)
         return XML_ERROR_ABORTED;
-      default:
-        *nextPtr = next;
-      }
+      *nextPtr = next;
       /* stop scanning for text declaration - we found one */
       processor = entityValueProcessor;
       return entityValueProcessor(parser, next, end, nextPtr);
@@ -4176,8 +4256,14 @@ doProlog(XML_Parser parser,
                                             &dtd->paramEntities,
                                             externalSubsetName,
                                             sizeof(ENTITY));
-          if (!entity)
-            return XML_ERROR_NO_MEMORY;
+          if (!entity) {
+            /* The external subset name "#" will have already been
+             * inserted into the hash table at the start of the
+             * external entity parsing, so no allocation will happen
+             * and lookup() cannot fail.
+             */
+            return XML_ERROR_NO_MEMORY; /* LCOV_EXCL_LINE */
+          }
           if (useForeignDTD)
             entity->base = curBase;
           dtd->paramEntityRead = XML_FALSE;
@@ -4656,8 +4742,10 @@ doProlog(XML_Parser parser,
       if (prologState.level >= groupSize) {
         if (groupSize) {
           char *temp = (char *)REALLOC(groupConnector, groupSize *= 2);
-          if (temp == NULL)
+          if (temp == NULL) {
+            groupSize /= 2;
             return XML_ERROR_NO_MEMORY;
+          }
           groupConnector = temp;
           if (dtd->scaffIndex) {
             int *temp = (int *)REALLOC(dtd->scaffIndex,
@@ -4669,8 +4757,10 @@ doProlog(XML_Parser parser,
         }
         else {
           groupConnector = (char *)MALLOC(groupSize = 32);
-          if (!groupConnector)
+          if (!groupConnector) {
+            groupSize = 0;
             return XML_ERROR_NO_MEMORY;
+          }
         }
       }
       groupConnector[prologState.level] = 0;
@@ -4733,8 +4823,29 @@ doProlog(XML_Parser parser,
              : !dtd->hasParamEntityRefs)) {
           if (!entity)
             return XML_ERROR_UNDEFINED_ENTITY;
-          else if (!entity->is_internal)
-            return XML_ERROR_ENTITY_DECLARED_IN_PE;
+          else if (!entity->is_internal) {
+            /* It's hard to exhaustively search the code to be sure,
+             * but there doesn't seem to be a way of executing the
+             * following line.  There are two cases:
+             *
+             * If 'standalone' is false, the DTD must have no
+             * parameter entities or we wouldn't have passed the outer
+             * 'if' statement.  That measn the only entity in the hash
+             * table is the external subset name "#" which cannot be
+             * given as a parameter entity name in XML syntax, so the
+             * lookup must have returned NULL and we don't even reach
+             * the test for an internal entity.
+             *
+             * If 'standalone' is true, it does not seem to be
+             * possible to create entities taking this code path that
+             * are not internal entities, so fail the test above.
+             *
+             * Because this analysis is very uncertain, the code is
+             * being left in place and merely removed from the
+             * coverage test statistics.
+             */
+            return XML_ERROR_ENTITY_DECLARED_IN_PE; /* LCOV_EXCL_LINE */
+          }
         }
         else if (!entity) {
           dtd->keepProcessing = dtd->standalone;
@@ -5206,11 +5317,15 @@ appendAttributeValue(XML_Parser parser, const ENCODING *enc, XML_Bool isCdata,
             && (poolLength(pool) == 0 || poolLastChar(pool) == 0x20))
           break;
         n = XmlEncode(n, (ICHAR *)buf);
-        if (!n) {
-          if (enc == encoding)
-            eventPtr = ptr;
-          return XML_ERROR_BAD_CHAR_REF;
-        }
+        /* The XmlEncode() functions can never return 0 here.  That
+         * error return happens if the code point passed in is either
+         * negative or greater than or equal to 0x110000.  The
+         * XmlCharRefNumber() functions will all return a number
+         * strictly less than 0x110000 or a negative value if an error
+         * occurred.  The negative value is intercepted above, so
+         * XmlEncode() is never passed a value it might return an
+         * error for.
+         */
         for (i = 0; i < n; i++) {
           if (!poolAppendChar(pool, buf[i]))
             return XML_ERROR_NO_MEMORY;
@@ -5284,8 +5399,26 @@ appendAttributeValue(XML_Parser parser, const ENCODING *enc, XML_Bool isCdata,
           break;
         }
         if (entity->open) {
-          if (enc == encoding)
-            eventPtr = ptr;
+          if (enc == encoding) {
+            /* It does not appear that this line can be executed.
+             *
+             * The "if (entity->open)" check catches recursive entity
+             * definitions.  In order to be called with an open
+             * entity, it must have gone through this code before and
+             * been through the recursive call to
+             * appendAttributeValue() some lines below.  That call
+             * sets the local encoding ("enc") to the parser's
+             * internal encoding (internal_utf8 or internal_utf16),
+             * which can never be the same as the principle encoding.
+             * It doesn't appear there is another code path that gets
+             * here with entity->open being TRUE.
+             *
+             * Since it is not certain that this logic is watertight,
+             * we keep the line and merely exclude it from coverage
+             * tests.
+             */
+            eventPtr = ptr; /* LCOV_EXCL_LINE */
+          }
           return XML_ERROR_RECURSIVE_ENTITY_REF;
         }
         if (entity->notation) {
@@ -5312,9 +5445,21 @@ appendAttributeValue(XML_Parser parser, const ENCODING *enc, XML_Bool isCdata,
       }
       break;
     default:
+      /* The only token returned by XmlAttributeValueTok() that does
+       * not have an explicit case here is XML_TOK_PARTIAL_CHAR.
+       * Getting that would require an entity name to contain an
+       * incomplete XML character (e.g. \xE2\x82); however previous
+       * tokenisers will have already recognised and rejected such
+       * names before XmlAttributeValueTok() gets a look-in.  This
+       * default case should be retained as a safety net, but the code
+       * excluded from coverage tests.
+       *
+       * LCOV_EXCL_START
+       */
       if (enc == encoding)
         eventPtr = ptr;
       return XML_ERROR_UNEXPECTED_STATE;
+      /* LCOV_EXCL_STOP */
     }
     ptr = next;
   }
@@ -5447,12 +5592,15 @@ storeEntityValue(XML_Parser parser,
           goto endEntityValue;
         }
         n = XmlEncode(n, (ICHAR *)buf);
-        if (!n) {
-          if (enc == encoding)
-            eventPtr = entityTextPtr;
-          result = XML_ERROR_BAD_CHAR_REF;
-          goto endEntityValue;
-        }
+        /* The XmlEncode() functions can never return 0 here.  That
+         * error return happens if the code point passed in is either
+         * negative or greater than or equal to 0x110000.  The
+         * XmlCharRefNumber() functions will all return a number
+         * strictly less than 0x110000 or a negative value if an error
+         * occurred.  The negative value is intercepted above, so
+         * XmlEncode() is never passed a value it might return an
+         * error for.
+         */
         for (i = 0; i < n; i++) {
           if (pool->end == pool->ptr && !poolGrow(pool)) {
             result = XML_ERROR_NO_MEMORY;
@@ -5473,10 +5621,18 @@ storeEntityValue(XML_Parser parser,
       result = XML_ERROR_INVALID_TOKEN;
       goto endEntityValue;
     default:
+      /* This default case should be unnecessary -- all the tokens
+       * that XmlEntityValueTok() can return have their own explicit
+       * cases -- but should be retained for safety.  We do however
+       * exclude it from the coverage statistics.
+       *
+       * LCOV_EXCL_START
+       */
       if (enc == encoding)
         eventPtr = entityTextPtr;
       result = XML_ERROR_UNEXPECTED_STATE;
       goto endEntityValue;
+      /* LCOV_EXCL_STOP */
     }
     entityTextPtr = next;
   }
@@ -5574,8 +5730,25 @@ reportDefault(XML_Parser parser, const ENCODING *enc,
       eventEndPP = &eventEndPtr;
     }
     else {
+      /* To get here, two things must be true; the parser must be
+       * using a character encoding that is not the same as the
+       * encoding passed in, and the encoding passed in must need
+       * conversion to the internal format (UTF-8 unless XML_UNICODE
+       * is defined).  The only occasions on which the encoding passed
+       * in is not the same as the parser's encoding are when it is
+       * the internal encoding (e.g. a previously defined parameter
+       * entity, already converted to internal format).  This by
+       * definition doesn't need conversion, so the whole branch never
+       * gets executed.
+       *
+       * For safety's sake we don't delete these lines and merely
+       * exclude them from coverage statistics.
+       *
+       * LCOV_EXCL_START
+       */
       eventPP = &(openInternalEntities->internalEventPtr);
       eventEndPP = &(openInternalEntities->internalEventEndPtr);
+      /* LCOV_EXCL_STOP */
     }
     do {
       ICHAR *dataPtr = (ICHAR *)dataBuf;
@@ -5744,9 +5917,30 @@ getContext(XML_Parser parser)
     len = dtd->defaultPrefix.binding->uriLen;
     if (namespaceSeparator)
       len--;
-    for (i = 0; i < len; i++)
-      if (!poolAppendChar(&tempPool, dtd->defaultPrefix.binding->uri[i]))
-        return NULL;
+    for (i = 0; i < len; i++) {
+      if (!poolAppendChar(&tempPool, dtd->defaultPrefix.binding->uri[i])) {
+        /* Because of memory caching, I don't believe this line can be
+         * executed.
+         *
+         * This is part of a loop copying the default prefix binding
+         * URI into the parser's temporary string pool.  Previously,
+         * that URI was copied into the same string pool, with a
+         * terminating NUL character, as part of setContext().  When
+         * the pool was cleared, that leaves a block definitely big
+         * enough to hold the URI on the free block list of the pool.
+         * The URI copy in getContext() therefore cannot run out of
+         * memory.
+         *
+         * If the pool is used between the setContext() and
+         * getContext() calls, the worst it can do is leave a bigger
+         * block on the front of the free list.  Given that this is
+         * all somewhat inobvious and program logic can be changed, we
+         * don't delete the line but we do exclude it from the test
+         * coverage statistics.
+         */
+        return NULL; /* LCOV_EXCL_LINE */
+      }
+    }
     needSep = XML_TRUE;
   }
 
@@ -5758,8 +5952,15 @@ getContext(XML_Parser parser)
     PREFIX *prefix = (PREFIX *)hashTableIterNext(&iter);
     if (!prefix)
       break;
-    if (!prefix->binding)
-      continue;
+    if (!prefix->binding) {
+      /* This test appears to be (justifiable) paranoia.  There does
+       * not seem to be a way of injecting a prefix without a binding
+       * that doesn't get errored long before this function is called.
+       * The test should remain for safety's sake, so we instead
+       * exclude the following line from the coverage statistics.
+       */
+      continue; /* LCOV_EXCL_LINE */
+    }
     if (needSep && !poolAppendChar(&tempPool, CONTEXT_SEP))
       return NULL;
     for (s = prefix->name; *s; s++)
@@ -6430,8 +6631,20 @@ poolCopyString(STRING_POOL *pool, const XML_Char *s)
 static const XML_Char *
 poolCopyStringN(STRING_POOL *pool, const XML_Char *s, int n)
 {
-  if (!pool->ptr && !poolGrow(pool))
-    return NULL;
+  if (!pool->ptr && !poolGrow(pool)) {
+    /* The following line is unreachable given the current usage of
+     * poolCopyStringN().  Currently it is called from exactly one
+     * place to copy the text of a simple general entity.  By that
+     * point, the name of the entity is already stored in the pool, so
+     * pool->ptr cannot be NULL.
+     *
+     * If poolCopyStringN() is used elsewhere as it well might be,
+     * this line may well become executable again.  Regardless, this
+     * sort of check shouldn't be removed lightly, so we just exclude
+     * it from the coverage statistics.
+     */
+    return NULL; /* LCOV_EXCL_LINE */
+  }
   for (; n > 0; --n, s++) {
     if (!poolAppendChar(pool, *s))
       return NULL;
@@ -6524,8 +6737,19 @@ poolGrow(STRING_POOL *pool)
     int blockSize = (int)((unsigned)(pool->end - pool->start)*2U);
     size_t bytesToAllocate;
 
-    if (blockSize < 0)
-      return XML_FALSE;
+    // NOTE: Needs to be calculated prior to calling `realloc`
+    //       to avoid dangling pointers:
+    const ptrdiff_t offsetInsideBlock = pool->ptr - pool->start;
+
+    if (blockSize < 0) {
+      /* This condition traps a situation where either more than
+       * INT_MAX/2 bytes have already been allocated.  This isn't
+       * readily testable, since it is unlikely that an average
+       * machine will have that much memory, so we exclude it from the
+       * coverage statistics.
+       */
+      return XML_FALSE; /* LCOV_EXCL_LINE */
+    }
 
     bytesToAllocate = poolBytesToAllocateFor(blockSize);
     if (bytesToAllocate == 0)
@@ -6537,7 +6761,7 @@ poolGrow(STRING_POOL *pool)
       return XML_FALSE;
     pool->blocks = temp;
     pool->blocks->size = blockSize;
-    pool->ptr = pool->blocks->s + (pool->ptr - pool->start);
+    pool->ptr = pool->blocks->s + offsetInsideBlock;
     pool->start = pool->blocks->s;
     pool->end = pool->start + blockSize;
   }
@@ -6546,8 +6770,18 @@ poolGrow(STRING_POOL *pool)
     int blockSize = (int)(pool->end - pool->start);
     size_t bytesToAllocate;
 
-    if (blockSize < 0)
-      return XML_FALSE;
+    if (blockSize < 0) {
+      /* This condition traps a situation where either more than
+       * INT_MAX bytes have already been allocated (which is prevented
+       * by various pieces of program logic, not least this one, never
+       * mind the unlikelihood of actually having that much memory) or
+       * the pool control fields have been corrupted (which could
+       * conceivably happen in an extremely buggy user handler
+       * function).  Either way it isn't readily testable, so we
+       * exclude it from the coverage statistics.
+       */
+      return XML_FALSE;  /* LCOV_EXCL_LINE */
+    }
 
     if (blockSize < INIT_BLOCK_SIZE)
       blockSize = INIT_BLOCK_SIZE;
