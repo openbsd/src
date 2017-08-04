@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.127 2017/08/03 14:53:22 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.128 2017/08/04 00:10:14 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -781,10 +781,10 @@ resolv_conf_priority(int rdomain, int routefd)
 		len = read(routefd, &m_rtmsg, sizeof(m_rtmsg));
 		if (len == -1) {
 			log_warn("get default route read");
-			break;
+			goto done;
 		} else if (len == 0) {
 			log_warnx("no data from default route read");
-			break;
+			goto done;
 		}
 		if (m_rtmsg.m_rtm.rtm_version != RTM_VERSION)
 			continue;
