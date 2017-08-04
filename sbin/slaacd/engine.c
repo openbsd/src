@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.9 2017/08/04 14:00:33 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.10 2017/08/04 14:17:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -856,36 +856,35 @@ get_slaacd_iface_by_id(uint32_t if_index)
 void
 remove_slaacd_iface(uint32_t if_index)
 {
-	struct slaacd_iface	*iface, *tiface;
+	struct slaacd_iface	*iface;
 	struct radv		*ra;
 	struct address_proposal	*addr_proposal;
 	struct dfr_proposal	*dfr_proposal;
 
-	LIST_FOREACH_SAFE (iface, &slaacd_interfaces, entries, tiface) {
-		if (iface->if_index == if_index) {
-			LIST_REMOVE(iface, entries);
-			while(!LIST_EMPTY(&iface->radvs)) {
-				ra = LIST_FIRST(&iface->radvs);
-				LIST_REMOVE(ra, entries);
-				free_ra(ra);
-			}
-			/* XXX inform netcfgd? */
-			while(!LIST_EMPTY(&iface->addr_proposals)) {
-				addr_proposal =
-				    LIST_FIRST(&iface->addr_proposals);
-				LIST_REMOVE(addr_proposal, entries);
-				free_address_proposal(addr_proposal);
-			}
-			while(!LIST_EMPTY(&iface->dfr_proposals)) {
-				dfr_proposal =
-				    LIST_FIRST(&iface->dfr_proposals);
-				free_dfr_proposal(dfr_proposal);
-			}
-			evtimer_del(&iface->timer);
-			free(iface);
-			break;
-		}
+	iface = get_slaacd_iface_by_id(if_index);
+
+	if (iface == NULL)
+		return;
+
+	LIST_REMOVE(iface, entries);
+	while(!LIST_EMPTY(&iface->radvs)) {
+		ra = LIST_FIRST(&iface->radvs);
+		LIST_REMOVE(ra, entries);
+		free_ra(ra);
 	}
+	/* XXX inform netcfgd? */
+	while(!LIST_EMPTY(&iface->addr_proposals)) {
+		addr_proposal = LIST_FIRST(&iface->addr_proposals);
+		LIST_REMOVE(addr_proposal, entries);
+		free_address_proposal(addr_proposal);
+	}
+	while(!LIST_EMPTY(&iface->dfr_proposals)) {
+		dfr_proposal = LIST_FIRST(&iface->dfr_proposals);
+		LIST_REMOVE(dfr_proposal, entries);
+		free_dfr_proposal(dfr_proposal);
+	}
+	evtimer_del(&iface->timer);
+	free(iface);
 }
 
 void
