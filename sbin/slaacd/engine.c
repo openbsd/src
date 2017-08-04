@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.8 2017/07/17 11:27:05 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.9 2017/08/04 14:00:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -230,6 +230,7 @@ void			 gen_addr(struct slaacd_iface *, struct radv_prefix *,
 			     struct address_proposal *, int);
 void			 gen_address_proposal(struct slaacd_iface *, struct
 			     radv *, struct radv_prefix *, int);
+void			 free_address_proposal(struct address_proposal *);
 void			 configure_address(struct address_proposal *);
 void			 in6_prefixlen2mask(struct in6_addr *, int len);
 void			 gen_dfr_proposal(struct slaacd_iface *, struct
@@ -510,8 +511,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			if (addr_proposal) {
 				/* XXX should we inform netcfgd? */
 				LIST_REMOVE(addr_proposal, entries);
-				evtimer_del(&addr_proposal->timer);
-				free(addr_proposal);
+				free_address_proposal(addr_proposal);
 			}
 
 			break;
@@ -874,13 +874,14 @@ remove_slaacd_iface(uint32_t if_index)
 				addr_proposal =
 				    LIST_FIRST(&iface->addr_proposals);
 				LIST_REMOVE(addr_proposal, entries);
-				free(addr_proposal);
+				free_address_proposal(addr_proposal);
 			}
 			while(!LIST_EMPTY(&iface->dfr_proposals)) {
 				dfr_proposal =
 				    LIST_FIRST(&iface->dfr_proposals);
 				free_dfr_proposal(dfr_proposal);
 			}
+			evtimer_del(&iface->timer);
 			free(iface);
 			break;
 		}
@@ -1771,6 +1772,16 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 }
 
 void
+free_address_proposal(struct address_proposal *addr_proposal)
+{
+	if (addr_proposal == NULL)
+		return;
+
+	evtimer_del(&addr_proposal->timer);
+	free(addr_proposal);
+}
+
+void
 gen_dfr_proposal(struct slaacd_iface *iface, struct radv *ra)
 {
 	struct dfr_proposal	*dfr_proposal;
@@ -1958,8 +1969,7 @@ address_proposal_timeout(int fd, short events, void *arg)
 			log_debug("%s: giving up, no response to proposal",
 			    __func__);
 			LIST_REMOVE(addr_proposal, entries);
-			evtimer_del(&addr_proposal->timer);
-			free(addr_proposal);
+			free_address_proposal(addr_proposal);
 		}
 		break;
 	case PROPOSAL_CONFIGURED:
@@ -1987,7 +1997,7 @@ address_proposal_timeout(int fd, short events, void *arg)
 		    addr_proposal->vltime) == 0) {
 			evtimer_del(&addr_proposal->timer);
 			LIST_REMOVE(addr_proposal, entries);
-			free(addr_proposal);
+			free_address_proposal(addr_proposal);
 			log_debug("%s: removing address proposal", __func__);
 			break;
 		}
