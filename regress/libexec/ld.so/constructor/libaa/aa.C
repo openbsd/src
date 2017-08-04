@@ -1,11 +1,11 @@
 /*
  * Public Domain 2003 Dale Rahn
  *
- * $OpenBSD: aa.C,v 1.2 2016/09/27 06:52:50 kettenis Exp $
+ * $OpenBSD: aa.C,v 1.3 2017/08/04 18:23:52 kettenis Exp $
  */
 
 #include "aa.h"
-int a;
+volatile int a;
 
 
 AA::AA(char *arg)
