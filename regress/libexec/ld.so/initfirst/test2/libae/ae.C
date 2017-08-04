@@ -1,10 +1,10 @@
 /*
  * Public Domain 2011 Kurt Miller
  *
- * $OpenBSD: ae.C,v 1.1 2011/11/29 04:36:15 kurt Exp $
+ * $OpenBSD: ae.C,v 1.2 2017/08/04 18:26:54 kettenis Exp $
  */
 
-#include <iostream>
+#include <cstdio>
 
 class AE
 {
@@ -15,12 +15,12 @@ class AE
 
 AE::AE()
 {
-   std::cout << "E";
+   std::printf("E");
 }
 
 AE::~AE()
 {
-   std::cout << "e";
+   std::printf("e");
 }
 
 AE e;

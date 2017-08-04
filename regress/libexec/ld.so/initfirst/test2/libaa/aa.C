@@ -1,10 +1,10 @@
 /*
  * Public Domain 2011 Kurt Miller
  *
- * $OpenBSD: aa.C,v 1.1 2011/11/29 04:36:15 kurt Exp $
+ * $OpenBSD: aa.C,v 1.2 2017/08/04 18:26:54 kettenis Exp $
  */
 
-#include <iostream>
+#include <cstdio>
 
 class AA
 {
@@ -15,12 +15,12 @@ class AA
 
 AA::AA()
 {
-   std::cout << "A";
+   std::printf("A");
 }
 
 AA::~AA()
 {
-   std::cout << "a";
+   std::printf("a");
 }
 
 AA a;
