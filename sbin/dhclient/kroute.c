@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.128 2017/08/04 00:10:14 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.129 2017/08/05 12:08:33 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -77,7 +77,7 @@ void	delete_route(int, struct rt_msghdr *);
 void	add_route(struct in_addr, struct in_addr, struct in_addr,
     struct in_addr, int, int);
 void	flush_routes(void);
-void	delete_addresses(char *);
+int	delete_addresses(char *, struct in_addr, struct in_addr);
 
 #define	ROUTE_LABEL_NONE		1
 #define	ROUTE_LABEL_NOT_DHCLIENT	2
@@ -508,14 +508,17 @@ priv_add_route(int rdomain, int routefd, struct imsg_add_route *imsg)
 }
 
 /*
- * delete_addresses deletes all existing inet addresses on the specified
- * interface.
+ * delete_addresses() deletes existing inet addresses on the named interface,
+ * leaving in place newaddr/newnetmask.
+ *
+ * Return 1 if newaddr/newnetmask is seen while deleting addresses, 0 otherwise.
  */
-void
-delete_addresses(char *name)
+int
+delete_addresses(char *name, struct in_addr newaddr, struct in_addr newnetmask)
 {
-	struct in_addr		 addr;
+	struct in_addr		 addr, netmask;
 	struct ifaddrs		*ifap, *ifa;
+	int			 found = 0;
 
 	if (getifaddrs(&ifap) != 0)
 		fatal("delete_addresses getifaddrs");
@@ -528,13 +531,22 @@ delete_addresses(char *name)
 		    (strcmp(name, ifa->ifa_name) != 0))
 			continue;
 
-		memcpy(&addr, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+		memcpy(&addr,
+		    &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
 		    sizeof(addr));
+		memcpy(&netmask,
+		    &((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr,
+		    sizeof(netmask));
 
-		delete_address(addr);
+		if (addr.s_addr == newaddr.s_addr &&
+		    netmask.s_addr == newnetmask.s_addr)
+			found = 1;
+		else
+			delete_address(addr);
 	}
 
 	freeifaddrs(ifap);
+	return (found);
 }
 
 /*
@@ -638,7 +650,8 @@ set_address(char *name, struct in_addr addr, struct in_addr netmask)
 	int			 rslt;
 
 	/* Deleting the addresses also clears out arp entries. */
-	delete_addresses(name);
+	if (delete_addresses(name, addr, netmask) != 0)
+		return;
 
 	imsg.addr = addr;
 	imsg.mask = netmask;
