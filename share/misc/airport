@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.65 2017/06/03 00:22:34 halex Exp $
+#	$OpenBSD: airport,v 1.66 2017/08/05 13:22:57 fcambus Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1820,6 +1820,7 @@ WIL:Wilson, Nairobi, Kenya
 WIN:Winton, Queensland, Australia
 WLG:Wellington International, New Zealand
 WMH:Mountain Home, Arkansas, USA
+WMI:Nowy Dwor Mazowiecki, Warsaw, Poland
 WNA:Napakiak, Alaska, USA
 WRL:Worland, Wyoming, USA
 WRO:Strachowice, Wroclaw, Poland
