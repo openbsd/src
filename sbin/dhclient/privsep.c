@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.59 2017/07/22 14:56:27 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.60 2017/08/05 12:35:17 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -78,7 +78,8 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 			    sizeof(struct imsg_add_route))
 				log_warnx("bad IMSG_ADD_ROUTE");
 			else
-				priv_add_route(rdomain, routefd, imsg.data);
+				priv_add_route(name, rdomain, routefd,
+				    imsg.data);
 			break;
 
 		case IMSG_SET_MTU:
