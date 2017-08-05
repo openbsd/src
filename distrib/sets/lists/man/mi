@@ -1244,6 +1244,7 @@
 ./usr/share/man/man4/dwctwo.4
 ./usr/share/man/man4/dwge.4
 ./usr/share/man/man4/dwiic.4
+./usr/share/man/man4/dwmmc.4
 ./usr/share/man/man4/eap.4
 ./usr/share/man/man4/ec.4
 ./usr/share/man/man4/eephy.4
