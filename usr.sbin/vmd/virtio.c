@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.49 2017/05/30 17:56:47 tedu Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.50 2017/08/05 05:41:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -150,8 +150,10 @@ void
 viornd_update_qs(void)
 {
 	/* Invalid queue? */
-	if (viornd.cfg.queue_select > 0)
+	if (viornd.cfg.queue_select > 0) {
+		viornd.cfg.queue_size = 0;
 		return;
+	}
 
 	/* Update queue address/size based on queue select */
 	viornd.cfg.queue_address = viornd.vq[viornd.cfg.queue_select].qa;
@@ -324,8 +326,10 @@ void
 vioblk_update_qs(struct vioblk_dev *dev)
 {
 	/* Invalid queue? */
-	if (dev->cfg.queue_select > 0)
+	if (dev->cfg.queue_select > 0) {
+		dev->cfg.queue_size = 0;
 		return;
+	}
 
 	/* Update queue address/size based on queue select */
 	dev->cfg.queue_address = dev->vq[dev->cfg.queue_select].qa;
@@ -1037,8 +1041,10 @@ void
 vionet_update_qs(struct vionet_dev *dev)
 {
 	/* Invalid queue? */
-	if (dev->cfg.queue_select > 1)
+	if (dev->cfg.queue_select > 1) {
+		dev->cfg.queue_size = 0;
 		return;
+	}
 
 	/* Update queue address/size based on queue select */
 	dev->cfg.queue_address = dev->vq[dev->cfg.queue_select].qa;
