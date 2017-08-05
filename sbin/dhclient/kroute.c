@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.130 2017/08/05 12:35:17 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.131 2017/08/05 13:39:17 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -77,6 +77,7 @@ void	delete_route(int, struct rt_msghdr *);
 void	add_route(struct in_addr, struct in_addr, struct in_addr, int);
 void	flush_routes(void);
 int	delete_addresses(char *, struct in_addr, struct in_addr);
+char	*get_routes(int, int, size_t *);
 
 #define	ROUTE_LABEL_NONE		1
 #define	ROUTE_LABEL_NOT_DHCLIENT	2
@@ -84,6 +85,56 @@ int	delete_addresses(char *, struct in_addr, struct in_addr);
 #define	ROUTE_LABEL_DHCLIENT_UNKNOWN	4
 #define	ROUTE_LABEL_DHCLIENT_LIVE	5
 #define	ROUTE_LABEL_DHCLIENT_DEAD	6
+
+char *
+get_routes(int rdomain, int flags, size_t *len)
+{
+	int		 mib[7];
+	char		*buf, *bufp, *errmsg = NULL;
+	size_t		 needed;
+
+	mib[0] = CTL_NET;
+	mib[1] = PF_ROUTE;
+	mib[2] = 0;
+	mib[3] = AF_INET;
+	mib[4] = NET_RT_FLAGS;
+	mib[5] = flags;
+	mib[6] = rdomain;
+
+	buf = NULL;
+	errmsg = NULL;
+	while (1) {
+		if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1) {
+			errmsg = "sysctl size of routes:";
+			break;
+		}
+		if (needed == 0) {
+			free(buf);
+			return NULL;
+		}
+		if ((bufp = realloc(buf, needed)) == NULL) {
+			errmsg = "routes buf realloc:";
+			break;
+		}
+		buf = bufp;
+		if (sysctl(mib, 7, buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
+			errmsg = "sysctl retrieval of routes:";
+			break;
+		}
+		break;
+	}
+
+	if (errmsg != NULL) {
+		log_warn("get_routes - %s (msize=%zu)", errmsg, needed);
+		free(buf);
+		buf = NULL;
+	}
+
+	*len = needed;
+	return buf;
+}
 
 /*
  * check_route_label examines the label associated with a route and
@@ -141,54 +192,19 @@ flush_routes(void)
 void
 priv_flush_routes(char *name, int routefd, int rdomain)
 {
-	int			 mib[7];
-	char			 ifname[IF_NAMESIZE];
-	struct sockaddr		*rti_info[RTAX_MAX];
-	char			*lim, *buf = NULL, *bufp, *next, *errmsg = NULL;
-	struct rt_msghdr	*rtm;
-	struct sockaddr_in	*sa_in;
-	struct sockaddr_rtlabel	*sa_rl;
-	size_t			 needed;
+	char				 ifname[IF_NAMESIZE];
+	struct sockaddr			*rti_info[RTAX_MAX];
+	char				*lim, *buf = NULL, *next;
+	struct rt_msghdr		*rtm;
+	struct sockaddr_in		*sa_in;
+	struct sockaddr_rtlabel		*sa_rl;
+	size_t				 len;
 
-	mib[0] = CTL_NET;
-	mib[1] = PF_ROUTE;
-	mib[2] = 0;
-	mib[3] = AF_INET;
-	mib[4] = NET_RT_FLAGS;
-	mib[5] = RTF_STATIC;
-	mib[6] = rdomain;
-
-	while (1) {
-		if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1) {
-			errmsg = "sysctl size of routes:";
-			break;
-		}
-		if (needed == 0) {
-			free(buf);
-			return;
-		}
-		if ((bufp = realloc(buf, needed)) == NULL) {
-			errmsg = "routes buf realloc:";
-			break;
-		}
-		buf = bufp;
-		if (sysctl(mib, 7, buf, &needed, NULL, 0) == -1) {
-			if (errno == ENOMEM)
-				continue;
-			errmsg = "sysctl retrieval of routes:";
-			break;
-		}
-		break;
-	}
-
-	if (errmsg != NULL) {
-		log_warn("route cleanup failed - %s (msize=%zu)", errmsg,
-		    needed);
-		free(buf);
+	buf = get_routes(rdomain, RTF_STATIC, &len);
+	if (buf == NULL)
 		return;
-	}
 
-	lim = buf + needed;
+	lim = buf + len;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_version != RTM_VERSION)
