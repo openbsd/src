@@ -1,4 +1,4 @@
-/* 	$OpenBSD: rune_local.h,v 1.5 2016/09/05 09:47:03 schwarze Exp $ */
+/* 	$OpenBSD: rune_local.h,v 1.6 2017/08/05 15:16:32 schwarze Exp $ */
 /*	$NetBSD: rune_local.h,v 1.7 2003/03/02 22:18:15 tshiozak Exp $	*/
 
 /*-
@@ -42,7 +42,6 @@ extern int _newrunelocale(const char *);
 
 /* runeglue.c */
 extern int __make_ctype_tabs(_RuneLocale *);
-extern void __install_currentrunelocale_ctype(void);
 
 /* ___runetype_mb.c */
 extern _RuneType ___runetype_mb(wint_t);

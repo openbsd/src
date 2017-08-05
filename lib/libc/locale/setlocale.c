@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.25 2016/05/23 00:05:15 guenther Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.26 2017/08/05 15:16:32 schwarze Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -194,7 +194,6 @@ revert_to_default(int category)
 	switch (category) {
 	case LC_CTYPE:
 		(void)_xpg4_setrunelocale("C");
-		__install_currentrunelocale_ctype();
 		break;
 	case LC_MESSAGES:
 	case LC_COLLATE:
@@ -236,7 +235,6 @@ load_locale_sub(int category, const char *locname)
 	case LC_CTYPE:
 		if (_xpg4_setrunelocale(locname))
 			return -1;
-		__install_currentrunelocale_ctype();
 		break;
 
 	case LC_MESSAGES:
