@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.157 2017/07/02 19:49:31 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.158 2017/08/05 05:49:37 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -949,7 +949,6 @@ stop_vmm_on_cpu(struct cpu_info *ci)
 size_t
 vm_create_check_mem_ranges(struct vm_create_params *vcp)
 {
-	int disjunct_range;
 	size_t i, memsize = 0;
 	struct vm_mem_range *vmr, *pvmr;
 	const paddr_t maxgpa = (uint64_t)VMM_MAX_VM_MEM_SIZE * 1024 * 1024;
@@ -982,10 +981,21 @@ vm_create_check_mem_ranges(struct vm_create_params *vcp)
 		    vmr->vmr_size >= VM_MAXUSER_ADDRESS - vmr->vmr_va)
 			return (0);
 
-		/* Specifying ranges within the PCI MMIO space is forbidden */
-		disjunct_range = (vmr->vmr_gpa > VMM_PCI_MMIO_BAR_END) ||
-		    (vmr->vmr_gpa + vmr->vmr_size <= VMM_PCI_MMIO_BAR_BASE);
-		if (!disjunct_range)
+		/*
+		 * Specifying ranges within the PCI MMIO space is forbidden.
+		 * Disallow ranges that start inside the MMIO space:
+		 * [VMM_PCI_MMIO_BAR_BASE .. VMM_PCI_MMIO_BAR_END]
+		 */
+		if (vmr->vmr_gpa >= VMM_PCI_MMIO_BAR_BASE &&
+		    vmr->vmr_gpa <= VMM_PCI_MMIO_BAR_END)
+			return (0);
+
+		/*
+		 * ... and disallow ranges that end inside the MMIO space:
+		 * [VMM_PCI_MMIO_BAR_BASE .. VMM_PCI_MMIO_BAR_END]
+		 */
+		if (vmr->vmr_gpa + vmr->vmr_size >= VMM_PCI_MMIO_BAR_BASE &&
+		    vmr->vmr_gpa + vmr->vmr_size <= VMM_PCI_MMIO_BAR_END)
 			return (0);
 
 		/*
