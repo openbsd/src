@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.3 2017/02/19 19:42:40 patrick Exp $ */
+/* $OpenBSD: exception.S,v 1.4 2017/08/05 17:30:51 drahn Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -159,8 +159,8 @@ handle_el0_sync:
 	save_registers 0
 	mov	x0, sp
 	bl	do_el0_sync
-	bl	_C_LABEL(vfp_enable)
 	do_ast
+	bl	_C_LABEL(vfp_enable)
 	restore_registers 0
 	eret
 
@@ -169,8 +169,8 @@ handle_el0_irq:
 	bl	_C_LABEL(vfp_save)
 	mov	x0, sp
 	bl	arm_cpu_intr
-	bl	_C_LABEL(vfp_enable)
 	do_ast
+	bl	_C_LABEL(vfp_enable)
 	restore_registers 0
 	eret
 
