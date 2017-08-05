@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.10 2017/08/04 14:17:47 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.11 2017/08/05 13:02:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -258,6 +258,7 @@ void			 find_prefix(struct slaacd_iface *, struct
 			     radv_prefix **);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 uint32_t		 real_lifetime(struct timespec *, uint32_t);
+const char		 *sin6_to_str(struct sockaddr_in6 *);
 
 struct imsgev		*iev_frontend;
 struct imsgev		*iev_main;
@@ -929,19 +930,14 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 	struct radv_rdns	*rdns;
 	struct radv_dnssl	*ra_dnssl;
 	ssize_t			 len = ra->len;
-	char			 hbuf[NI_MAXHOST];
+	const char		*hbuf;
 	uint8_t			*p;
 
 #if 0
 	debug_log_ra(ra);
 #endif
 
-	if (getnameinfo((struct sockaddr *)&ra->from, ra->from.sin6_len, hbuf,
-	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV)) {
-		log_warnx("cannot get router IP");
-		strlcpy(hbuf, "unknown", sizeof(hbuf));
-	}
-
+	hbuf = sin6_to_str(&ra->from);
 	if (!IN6_IS_ADDR_LINKLOCAL(&ra->from.sin6_addr)) {
 		log_warnx("RA from non link local address %s", hbuf);
 		return;
@@ -1238,14 +1234,11 @@ debug_log_ra(struct imsg_ra *ra)
 {
 	struct nd_router_advert	*nd_ra;
 	ssize_t			 len = ra->len;
-	char			 hbuf[NI_MAXHOST], ntopbuf[INET6_ADDRSTRLEN];
+	char			 ntopbuf[INET6_ADDRSTRLEN];
+	const char		*hbuf;
 	uint8_t			*p;
 
-	if (getnameinfo((struct sockaddr *)&ra->from, ra->from.sin6_len, hbuf,
-	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV)) {
-		log_warnx("cannot get router IP");
-		strlcpy(hbuf, "unknown", sizeof(hbuf));
-	}
+	hbuf = sin6_to_str(&ra->from);
 
 	if (!IN6_IS_ADDR_LINKLOCAL(&ra->from.sin6_addr)) {
 		log_warnx("RA from non link local address %s", hbuf);
@@ -1479,7 +1472,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 	struct dfr_proposal	*dfr_proposal, *tmp;
 	uint32_t		 remaining_lifetime;
 	int			 found, found_privacy;
-	char			 hbuf[NI_MAXHOST];
+	const char		*hbuf;
 
 	if ((old_ra = find_ra(iface, &ra->from)) == NULL)
 		LIST_INSERT_HEAD(&iface->radvs, ra, entries);
@@ -1528,19 +1521,8 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 						configure_dfr(dfr_proposal);
 						break;
 					default:
-						if (getnameinfo((struct
-						    sockaddr *)
-						    &dfr_proposal->addr,
-						    dfr_proposal->
-						    addr.sin6_len, hbuf,
-						    sizeof(hbuf), NULL, 0,
-						    NI_NUMERICHOST |
-						    NI_NUMERICSERV)) {
-							log_warnx("cannot get "
-							    "proposal IP");
-							strlcpy(hbuf, "unknown",
-							    sizeof(hbuf));
-						}
+						hbuf = sin6_to_str(
+						    &dfr_proposal->addr);
 						log_debug("%s: iface %d: %s",
 						    __func__, iface->if_index,
 						    hbuf);
@@ -1627,16 +1609,8 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 					configure_address(addr_proposal);
 					break;
 				default:
-					if (getnameinfo((struct sockaddr *)
-					    &addr_proposal->addr,
-					    addr_proposal->addr.sin6_len, hbuf,
-					    sizeof(hbuf), NULL, 0,
-					    NI_NUMERICHOST | NI_NUMERICSERV)) {
-						log_warnx("cannot get proposal "
-						    "IP");
-						strlcpy(hbuf, "unknown",
-						    sizeof(hbuf));
-					}
+					hbuf = sin6_to_str(&addr_proposal->
+					    addr);
 					log_debug("%s: iface %d: %s", __func__,
 					    iface->if_index, hbuf);
 					break;
@@ -1650,15 +1624,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 			if (!found_privacy && iface->autoconfprivacy) {
 				if (prefix->pltime <
 				    ND6_PRIV_MAX_DESYNC_FACTOR) {
-					if (getnameinfo((struct sockaddr *)
-					    &ra->from, ra->from.sin6_len,
-					    hbuf, sizeof(hbuf), NULL, 0,
-					    NI_NUMERICHOST | NI_NUMERICSERV)) {
-						log_warnx("cannot get router "
-						    "IP");
-						strlcpy(hbuf, "unknown",
-						    sizeof(hbuf));
-					}
+					hbuf = sin6_to_str(&ra->from);
 					log_warnx("%s: pltime from %s is too "
 					    "small: %d < %d; not generating "
 					    "privacy address", __func__, hbuf,
@@ -1717,7 +1683,7 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 {
 	struct address_proposal	*addr_proposal;
 	struct timeval		 tv;
-	char			 hbuf[NI_MAXHOST];
+	const char		*hbuf;
 
 	if ((addr_proposal = calloc(1, sizeof(*addr_proposal))) == NULL)
 		fatal("calloc");
@@ -1760,12 +1726,7 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 
 	LIST_INSERT_HEAD(&iface->addr_proposals, addr_proposal, entries);
 
-	if (getnameinfo((struct sockaddr *)&addr_proposal->addr,
-	    addr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
-	    NI_NUMERICHOST | NI_NUMERICSERV)) {
-		log_warnx("cannot get router IP");
-		strlcpy(hbuf, "unknown", sizeof(hbuf));
-	}
+	hbuf = sin6_to_str(&addr_proposal->addr);
 	log_debug("%s: iface %d: %s: %lld s", __func__,
 	    iface->if_index, hbuf, tv.tv_sec);
 }
@@ -1785,7 +1746,7 @@ gen_dfr_proposal(struct slaacd_iface *iface, struct radv *ra)
 {
 	struct dfr_proposal	*dfr_proposal;
 	struct timeval		 tv;
-	char			 hbuf[NI_MAXHOST];
+	const char		*hbuf;
 
 	if ((dfr_proposal = calloc(1, sizeof(*dfr_proposal))) == NULL)
 		fatal("calloc");
@@ -1808,12 +1769,7 @@ gen_dfr_proposal(struct slaacd_iface *iface, struct radv *ra)
 
 	LIST_INSERT_HEAD(&iface->dfr_proposals, dfr_proposal, entries);
 
-	if (getnameinfo((struct sockaddr *)&dfr_proposal->addr,
-	    dfr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
-	    NI_NUMERICHOST | NI_NUMERICSERV)) {
-		log_warnx("cannot get router IP");
-		strlcpy(hbuf, "unknown", sizeof(hbuf));
-	}
+	hbuf = sin6_to_str(&dfr_proposal->addr);
 	log_debug("%s: iface %d: %s: %lld s", __func__,
 	    iface->if_index, hbuf, tv.tv_sec);
 }
@@ -1922,16 +1878,11 @@ address_proposal_timeout(int fd, short events, void *arg)
 	struct address_proposal	*addr_proposal;
 	struct imsg_proposal	 proposal;
 	struct timeval		 tv;
-	char			 hbuf[NI_MAXHOST];
+	const char		*hbuf;
 
 	addr_proposal = (struct address_proposal *)arg;
 
-	if (getnameinfo((struct sockaddr *)&addr_proposal->addr,
-	    addr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
-	    NI_NUMERICHOST | NI_NUMERICSERV)) {
-		log_warnx("cannot get router IP");
-		strlcpy(hbuf, "unknown", sizeof(hbuf));
-	}
+	hbuf = sin6_to_str(&addr_proposal->addr);
 	log_debug("%s: iface %d: %s [%s], priv: %s", __func__,
 	    addr_proposal->if_index, hbuf,
 	    proposal_state_name[addr_proposal->state],
@@ -2025,16 +1976,11 @@ dfr_proposal_timeout(int fd, short events, void *arg)
 	struct dfr_proposal	*dfr_proposal;
 	struct imsg_proposal	 proposal;
 	struct timeval		 tv;
-	char			 hbuf[NI_MAXHOST];
+	const char		*hbuf;
 
 	dfr_proposal = (struct dfr_proposal *)arg;
 
-	if (getnameinfo((struct sockaddr *)&dfr_proposal->addr,
-	    dfr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
-	    NI_NUMERICHOST | NI_NUMERICSERV)) {
-		log_warnx("cannot get router IP");
-		strlcpy(hbuf, "unknown", sizeof(hbuf));
-	}
+	hbuf = sin6_to_str(&dfr_proposal->addr);
 	log_debug("%s: iface %d: %s [%s]", __func__, dfr_proposal->if_index,
 	    hbuf, proposal_state_name[dfr_proposal->state]);
 
@@ -2236,4 +2182,19 @@ real_lifetime(struct timespec *received_uptime, uint32_t ltime)
 		remaining = 0;
 
 	return (remaining);
+}
+
+const char*
+sin6_to_str(struct sockaddr_in6 *sin6)
+{
+	static char hbuf[NI_MAXHOST];
+	int error;
+
+	error = getnameinfo((struct sockaddr *)sin6, sin6->sin6_len, hbuf,
+	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
+	if (error) {
+		log_warnx("%s", gai_strerror(error));
+		strlcpy(hbuf, "unknown", sizeof(hbuf));
+	}
+	return hbuf;
 }
