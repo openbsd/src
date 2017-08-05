@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.44 2017/02/26 16:51:18 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.45 2017/08/05 14:13:39 jsg Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -418,6 +418,8 @@
                     ..
                     xtrans
                     ..
+                ..
+                libdrm
                 ..
                 mk
                 ..
