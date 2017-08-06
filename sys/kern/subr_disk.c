@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.230 2017/05/04 22:47:27 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.231 2017/08/06 19:56:29 kettenis Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1864,7 +1864,7 @@ duid_format(u_char *duid)
 	static char duid_str[17];
 
 	snprintf(duid_str, sizeof(duid_str),
-	    "%02hx%02hx%02hx%02hx%02hx%02hx%02hx%02hx",
+	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
 	    duid[0], duid[1], duid[2], duid[3],
 	    duid[4], duid[5], duid[6], duid[7]);
 
