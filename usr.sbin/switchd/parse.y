@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2017/01/05 12:42:19 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.5 2017/08/06 17:31:19 rob Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -29,7 +29,6 @@
 #include <sys/un.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <netdb.h>
