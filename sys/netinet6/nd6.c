@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.212 2017/08/04 21:33:09 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.213 2017/08/06 12:53:30 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -90,15 +90,15 @@ int	nd6_inuse, nd6_allocated;
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 
 void nd6_slowtimo(void *);
-void nd6_timer_work(void *);
-void nd6_timer(void *);
+void nd6_expire(void *);
+void nd6_expire_timer(void *);
 void nd6_invalidate(struct rtentry *);
 void nd6_free(struct rtentry *);
 void nd6_llinfo_timer(void *);
 
 struct timeout nd6_slowtimo_ch;
-struct timeout nd6_timer_ch;
-struct task nd6_timer_task;
+struct timeout nd6_expire_timeout;
+struct task nd6_expire_task;
 
 void
 nd6_init(void)
@@ -114,17 +114,15 @@ nd6_init(void)
 	pool_init(&nd6_pool, sizeof(struct llinfo_nd6), 0,
 	    IPL_SOFTNET, 0, "nd6", NULL);
 
-	/* initialization of the default router list */
-
-	task_set(&nd6_timer_task, nd6_timer_work, NULL);
+	task_set(&nd6_expire_task, nd6_expire, NULL);
 
 	nd6_init_done = 1;
 
 	/* start timer */
 	timeout_set_proc(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
 	timeout_add_sec(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL);
-	timeout_set(&nd6_timer_ch, nd6_timer, NULL);
-	timeout_add_sec(&nd6_timer_ch, nd6_prune);
+	timeout_set(&nd6_expire_timeout, nd6_expire_timer, NULL);
+	timeout_add_sec(&nd6_expire_timeout, nd6_prune);
 
 }
 
@@ -420,24 +418,19 @@ nd6_llinfo_timer(void *arg)
 }
 
 /*
- * ND6 timer routine to expire default route list and prefix list
+ * Expire interface addresses.
  */
 void
-nd6_timer_work(void *null)
+nd6_expire(void *unused)
 {
 	struct ifnet *ifp;
 	int s;
 
+	KERNEL_LOCK();
 	NET_LOCK(s);
 
-	timeout_add_sec(&nd6_timer_ch, nd6_prune);
+	timeout_add_sec(&nd6_expire_timeout, nd6_prune);
 
-	/*
-	 * expire interface addresses.
-	 * in the past the loop was inside prefix expiry processing.
-	 * However, from a stricter spec-conformance standpoint, we should
-	 * rather separate address lifetimes and prefix lifetimes.
-	 */
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		struct ifaddr *ifa, *nifa;
 		struct in6_ifaddr *ia6;
@@ -462,12 +455,13 @@ nd6_timer_work(void *null)
 	}
 
 	NET_UNLOCK(s);
+	KERNEL_UNLOCK();
 }
 
 void
-nd6_timer(void *ignored_arg)
+nd6_expire_timer(void *unused)
 {
-	task_add(systq, &nd6_timer_task);
+	task_add(softnettq, &nd6_expire_task);
 }
 
 /*
