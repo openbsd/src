@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.36 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.37 2017/08/06 08:35:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -45,7 +45,6 @@
 #include "smtpd.h"
 #include "log.h"
 
-static int envelope_upgrade_v1(struct dict *);
 static int envelope_ascii_load(struct envelope *, struct dict *);
 static void envelope_ascii_dump(const struct envelope *, char **, size_t *,
     const char *);
@@ -152,21 +151,7 @@ envelope_load_buffer(struct envelope *ep, const char *ibuf, size_t buflen)
 		goto end;
 	}
 
-	switch (version) {
-	case 1:
-		log_debug("debug: upgrading envelope to version 1");
-		if (!envelope_upgrade_v1(&d)) {
-			log_debug("debug: failed to upgrade "
-			    "envelope to version 1");
-			goto end;
-		}
-		/* FALLTRHOUGH */
-	case 2:
-		/* Can be missing in some v2 envelopes */
-		if (dict_get(&d, "smtpname") == NULL)
-			dict_xset(&d, "smtpname", env->sc_hostname);
-		break;
-	default:
+	if (version != 2) {
 		log_debug("debug: bad envelope version %lld", version);
 		goto end;
 	}
@@ -950,44 +935,4 @@ envelope_ascii_dump(const struct envelope *ep, char **dest, size_t *len,
 	return;
 err:
 	*dest = NULL;
-}
-
-static int
-envelope_upgrade_v1(struct dict *d)
-{
-	static char	 buf_relay[1024];
-	char		*val;
-
-	/*
-	 * very very old envelopes had a "msgid" field
-	 */
-	dict_pop(d, "msgid");
-
-	/*
-	 * rename "mta-relay-helo" field to "mta-relay-helotable"
-	 */
-	if ((val = dict_get(d, "mta-relay-helo"))) {
-		dict_xset(d, "mta-relay-helotable", val);
-		dict_xpop(d, "mta-relay-helo");
-	}
-
-	/*
-	 * "ssl" becomes "secure" in "mta-relay" scheme
-	 */
-	if ((val = dict_get(d, "mta-relay"))) {
-		if (strncasecmp("ssl://", val, 6) == 0) {
-			if (!bsnprintf(buf_relay, sizeof(buf_relay),
-			    "secure://%s", val+6))
-				return (0);
-			dict_set(d, "mta-relay", buf_relay);
-		}
-		else if (strncasecmp("ssl+auth://", val, 11) == 0) {
-			if (!bsnprintf(buf_relay, sizeof(buf_relay),
-			    "secure+auth://%s", val+11))
-				return (0);
-			dict_set(d, "mta-relay", buf_relay);
-		}
-	}
-
-	return (1);
 }
