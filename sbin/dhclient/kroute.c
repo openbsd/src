@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.131 2017/08/05 13:39:17 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.132 2017/08/06 22:05:16 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -714,8 +714,8 @@ priv_write_resolv_conf(uint8_t *contents, size_t sz)
 }
 
 /*
- * resolv_conf_priority decides if the interface is the best one to
- * suppy the contents of the resolv.conf file.
+ * resolv_conf_priority returns the index of the interface which the
+ * default route is on.
  */
 int
 resolv_conf_priority(int rdomain, int routefd)
@@ -725,14 +725,10 @@ resolv_conf_priority(int rdomain, int routefd)
 	struct {
 		struct rt_msghdr	m_rtm;
 		char			m_space[512];
-	}			 m_rtmsg;
-	struct sockaddr		*rti_info[RTAX_MAX];
-	struct sockaddr_rtlabel *sa_rl;
+	} m_rtmsg;
 	pid_t			 pid;
 	ssize_t			 len;
-	int			 seq, rslt, iovcnt = 0;
-
-	rslt = 0;
+	int			 seq, iovcnt = 0;
 
 	/* Build RTM header */
 
@@ -740,18 +736,14 @@ resolv_conf_priority(int rdomain, int routefd)
 
 	m_rtmsg.m_rtm.rtm_version = RTM_VERSION;
 	m_rtmsg.m_rtm.rtm_type = RTM_GET;
-	m_rtmsg.m_rtm.rtm_msglen = sizeof(m_rtmsg.m_rtm);
-	m_rtmsg.m_rtm.rtm_flags = RTF_STATIC | RTF_GATEWAY | RTF_UP;
 	m_rtmsg.m_rtm.rtm_seq = seq = arc4random();
 	m_rtmsg.m_rtm.rtm_tableid = rdomain;
+	m_rtmsg.m_rtm.rtm_addrs = RTA_DST | RTA_NETMASK;
 
 	iov[iovcnt].iov_base = &m_rtmsg.m_rtm;
 	iov[iovcnt++].iov_len = sizeof(m_rtmsg.m_rtm);
 
-	/* Set destination & netmask addresses of all zeros. */
-
-	m_rtmsg.m_rtm.rtm_addrs = RTA_DST | RTA_NETMASK;
-
+	/* Ask for route to 0.0.0.0/0 (a.k.a. the default route). */
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
@@ -761,7 +753,7 @@ resolv_conf_priority(int rdomain, int routefd)
 	iov[iovcnt].iov_base = &sin;
 	iov[iovcnt++].iov_len = sizeof(sin);
 
-	m_rtmsg.m_rtm.rtm_msglen += 2 * sizeof(sin);
+	m_rtmsg.m_rtm.rtm_msglen = sizeof(m_rtmsg.m_rtm) + 2 * sizeof(sin);
 
 	if (writev(routefd, iov, iovcnt) == -1) {
 		if (errno != ESRCH)
@@ -780,9 +772,8 @@ resolv_conf_priority(int rdomain, int routefd)
 			log_warnx("no data from default route read");
 			goto done;
 		}
-		if (m_rtmsg.m_rtm.rtm_version != RTM_VERSION)
-			continue;
-		if (m_rtmsg.m_rtm.rtm_type == RTM_GET &&
+		if (m_rtmsg.m_rtm.rtm_version == RTM_VERSION &&
+		    m_rtmsg.m_rtm.rtm_type == RTM_GET &&
 		    m_rtmsg.m_rtm.rtm_pid == pid &&
 		    m_rtmsg.m_rtm.rtm_seq == seq) {
 			if (m_rtmsg.m_rtm.rtm_errno != 0) {
@@ -790,18 +781,12 @@ resolv_conf_priority(int rdomain, int routefd)
 				    strerror(m_rtmsg.m_rtm.rtm_errno));
 				goto done;
 			}
-			break;
+			return m_rtmsg.m_rtm.rtm_index;
 		}
 	} while (1);
 
-	populate_rti_info(rti_info, &m_rtmsg.m_rtm);
-
-	sa_rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
-	if (check_route_label(sa_rl) == ROUTE_LABEL_DHCLIENT_OURS)
-		rslt = 1;
-
 done:
-	return rslt;
+	return 0;
 }
 
 /*
