@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.56 2017/07/24 12:33:59 jca Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.57 2017/08/06 19:27:54 rob Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -38,6 +38,7 @@
 #include <stdint.h>
 #include <syslog.h>
 #include <err.h>
+#include <errno.h>
 #include <event.h>
 #include <unistd.h>
 #include <ifaddrs.h>
@@ -63,7 +64,7 @@ void		check_external_status(struct ifsd_state *);
 void		external_evtimer_setup(struct ifsd_state *, int);
 void		scan_ifstate(int, int, int);
 int		scan_ifstate_single(int, int, struct ifsd_state *);
-void		fetch_ifstate(void);
+void		fetch_ifstate(int);
 __dead void	usage(void);
 void		adjust_expressions(struct ifsd_expression_list *, int);
 void		adjust_external_expressions(struct ifsd_state *);
@@ -210,7 +211,7 @@ load_config(void)
 		clear_config(conf);
 	conf = newconf;
 	conf->initstate.entered = time(NULL);
-	fetch_ifstate();
+	fetch_ifstate(0);
 	external_evtimer_setup(&conf->initstate, IFSD_EVTIMER_ADD);
 	adjust_external_expressions(&conf->initstate);
 	eval_state(&conf->initstate);
@@ -235,20 +236,30 @@ rt_msg_handler(int fd, short event, void *arg)
 	struct if_msghdr ifm;
 	ssize_t len;
 
-	len = read(fd, msg, sizeof(msg));
+	if ((len = read(fd, msg, sizeof(msg))) == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			return;
+		fatal("%s: routing socket read error", __func__);
+	}
 
-	/* XXX ignore errors? */
-	if (len < sizeof(struct rt_msghdr))
-		return;
+	if (len == 0)
+		fatal("%s: routing socket closed", __func__);
 
 	if (rtm->rtm_version != RTM_VERSION)
 		return;
 
-	if (rtm->rtm_type != RTM_IFINFO)
-		return;
-
-	memcpy(&ifm, rtm, sizeof(ifm));
-	scan_ifstate(ifm.ifm_index, ifm.ifm_data.ifi_link_state, 1);
+	switch (rtm->rtm_type) {
+	case RTM_IFINFO:
+		memcpy(&ifm, rtm, sizeof(ifm));
+		scan_ifstate(ifm.ifm_index, ifm.ifm_data.ifi_link_state, 1);
+		break;
+	case RTM_DESYNC:
+		fetch_ifstate(1);
+		break;
+	default:
+		break;
+	}
+	return;
 }
 
 void
@@ -599,7 +610,7 @@ do_action(struct ifsd_action *action)
  * Fetch the current link states.
  */
 void
-fetch_ifstate(void)
+fetch_ifstate(int do_eval)
 {
 	struct ifaddrs *ifap, *ifa;
 
@@ -610,7 +621,7 @@ fetch_ifstate(void)
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
 			struct if_data *ifdata = ifa->ifa_data;
 			scan_ifstate(if_nametoindex(ifa->ifa_name),
-			    ifdata->ifi_link_state, 0);
+			    ifdata->ifi_link_state, do_eval);
 		}
 	}
 
