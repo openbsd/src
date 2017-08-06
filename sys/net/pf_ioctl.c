@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.320 2017/07/27 12:09:51 claudio Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.321 2017/08/06 13:16:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -231,16 +231,6 @@ pfattach(int num)
 
 	/* XXX do our best to avoid a conflict */
 	pf_status.hostid = arc4random();
-
-	/* require process context to purge states, so perform in a thread */
-	kthread_create_deferred(pf_thread_create, NULL);
-}
-
-void
-pf_thread_create(void *v)
-{
-	if (kthread_create(pf_purge_thread, NULL, NULL, "pfpurge"))
-		panic("pfpurge thread");
 }
 
 int
@@ -1027,6 +1017,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pf_status.stateid = time_second;
 				pf_status.stateid = pf_status.stateid << 32;
 			}
+			timeout_add(&pf_purge_to, 1 * hz);
 			pf_create_queues();
 			DPFPRINTF(LOG_NOTICE, "pf: started");
 		}
@@ -2320,7 +2311,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    pf_default_rule_new.timeout[i];
 			if (pf_default_rule.timeout[i] == PFTM_INTERVAL &&
 			    pf_default_rule.timeout[i] < old)
-				wakeup(pf_purge_thread);
+				task_add(softnettq, &pf_purge_task);
 		}
 		pfi_xcommit();
 		pf_trans_set_commit();

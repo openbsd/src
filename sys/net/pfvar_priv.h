@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.3 2017/06/05 22:18:28 sashan Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.4 2017/08/06 13:16:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -98,6 +98,9 @@ struct pf_pdesc {
 	} hdr;
 };
 
+extern struct task	pf_purge_task;
+extern struct timeout	pf_purge_to;
+
 #ifdef WITH_PF_LOCK
 extern struct rwlock	pf_lock;
 
@@ -128,6 +131,8 @@ extern struct rwlock	pf_lock;
 #define PF_ASSERT_UNLOCKED()	(void)(0)
 #endif /* WITH_PF_LOCK */
 
+extern void			 pf_purge_timeout(void *);
+extern void			 pf_purge(void *);
 #endif /* _KERNEL */
 
 #endif /* _NET_PFVAR_PRIV_H_ */

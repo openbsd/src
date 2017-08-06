@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1037 2017/07/04 14:10:15 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.1038 2017/08/06 13:16:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -120,6 +120,10 @@ SHA2_CTX		 pf_tcp_secret_ctx;
 u_char			 pf_tcp_secret[16];
 int			 pf_tcp_secret_init;
 int			 pf_tcp_iss_off;
+
+int		 pf_npurge;
+struct task	 pf_purge_task = TASK_INITIALIZER(pf_purge, &pf_npurge);
+struct timeout	 pf_purge_to = TIMEOUT_INITIALIZER(pf_purge_timeout, NULL);
 
 enum pf_test_status {
 	PF_TEST_FAIL = -1,
@@ -1200,36 +1204,43 @@ pf_purge_expired_rules(void)
 }
 
 void
-pf_purge_thread(void *v)
+pf_purge_timeout(void *unused)
 {
-	int nloops = 0, s;
+	task_add(softnettq, &pf_purge_task);
+}
 
-	for (;;) {
-		tsleep(pf_purge_thread, PWAIT, "pftm", 1 * hz);
+void
+pf_purge(void *xnloops)
+{
+	int *nloops = xnloops;
+	int s;
 
-		NET_LOCK(s);
+	KERNEL_LOCK();
+	NET_LOCK(s);
 
-		PF_LOCK();
-		/* process a fraction of the state table every second */
-		pf_purge_expired_states(1 + (pf_status.states
-		    / pf_default_rule.timeout[PFTM_INTERVAL]));
+	PF_LOCK();
+	/* process a fraction of the state table every second */
+	pf_purge_expired_states(1 + (pf_status.states
+	    / pf_default_rule.timeout[PFTM_INTERVAL]));
 
-		/* purge other expired types every PFTM_INTERVAL seconds */
-		if (++nloops >= pf_default_rule.timeout[PFTM_INTERVAL]) {
-			pf_purge_expired_src_nodes(0);
-			pf_purge_expired_rules();
-		}
-		PF_UNLOCK();
-		/*
-		 * Fragments don't require PF_LOCK(), they use their own lock.
-		 */
-		if (nloops >= pf_default_rule.timeout[PFTM_INTERVAL]) {
-			pf_purge_expired_fragments();
-			nloops = 0;
-		}
-
-		NET_UNLOCK(s);
+	/* purge other expired types every PFTM_INTERVAL seconds */
+	if (++(*nloops) >= pf_default_rule.timeout[PFTM_INTERVAL]) {
+		pf_purge_expired_src_nodes(0);
+		pf_purge_expired_rules();
 	}
+	PF_UNLOCK();
+
+	/*
+	 * Fragments don't require PF_LOCK(), they use their own lock.
+	 */
+	if ((*nloops) >= pf_default_rule.timeout[PFTM_INTERVAL]) {
+		pf_purge_expired_fragments();
+		*nloops = 0;
+	}
+	NET_UNLOCK(s);
+	KERNEL_UNLOCK();
+
+	timeout_add(&pf_purge_to, 1 * hz);
 }
 
 int32_t
