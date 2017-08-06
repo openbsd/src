@@ -1,4 +1,4 @@
-/*	$OpenBSD: exp.c,v 1.2 2011/07/09 03:33:07 martynas Exp $	*/
+/*	$OpenBSD: exp.c,v 1.3 2017/08/06 20:31:58 robert Exp $	*/
 
 /*	Written by Otto Moerbeek, 2006,  Public domain.	*/
 
@@ -28,10 +28,10 @@ main(void)
 
 	rl = expl(bigl);
 	if (!isinf(rl))
-		errx(1, "exp(bigl) = %f", rl);
+		errx(1, "exp(bigl) = %Lf", rl);
 	rl = expl(-bigl);
 	if (rl != 0.0L)
-		errx(1, "exp(-bigl) = %f", rl);
+		errx(1, "exp(-bigl) = %Lf", rl);
 
 	return (0);
 }
