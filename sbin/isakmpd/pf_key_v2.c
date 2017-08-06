@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.198 2017/02/28 16:46:27 bluhm Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.199 2017/08/06 13:54:04 mpi Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2131,6 +2131,7 @@ pf_key_v2_stayalive(struct exchange *exchange, void *vconn, int fail)
 		pf_key_v2_remove_conf(conn);
 		pf_key_v2_remove_conf(conn);
 	}
+	free(conn);
 }
 
 /* Check if a connection CONN exists, otherwise establish it.  */
@@ -2141,9 +2142,11 @@ pf_key_v2_connection_check(char *conn)
 		LOG_DBG((LOG_SYSDEP, 70,
 		    "pf_key_v2_connection_check: SA for %s missing", conn));
 		exchange_establish(conn, pf_key_v2_stayalive, conn, 0);
-	} else
+	} else {
 		LOG_DBG((LOG_SYSDEP, 70, "pf_key_v2_connection_check: "
 		    "SA for %s exists", conn));
+		free(conn);
+	}
 }
 
 /* Handle a PF_KEY lifetime expiration message PMSG.  */
@@ -3144,8 +3147,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	conf_end(af, 1);
 
 	/* Let's rock 'n roll. */
-	pf_key_v2_connection_check(conn);
 	connection_record_passive(conn);
+	pf_key_v2_connection_check(conn);
 	conn = 0;
 
 	/* Fall-through to cleanup. */

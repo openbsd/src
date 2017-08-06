@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.c,v 1.37 2014/01/22 03:09:31 deraadt Exp $	 */
+/* $OpenBSD: connection.c,v 1.38 2017/08/06 13:54:04 mpi Exp $	 */
 /* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
@@ -146,6 +146,7 @@ connection_checker(void *vconn)
 {
 	struct timeval  now;
 	struct connection *conn = vconn;
+	char *name;
 
 	gettimeofday(&now, 0);
 	now.tv_sec += conf_get_num("General", "check-interval",
@@ -153,9 +154,16 @@ connection_checker(void *vconn)
 	conn->ev = timer_add_event("connection_checker",
 	    connection_checker, conn, &now);
 	if (!conn->ev)
-		log_print("connection_checker: could not add timer event");
-	if (!ui_daemon_passive)
-		pf_key_v2_connection_check(conn->name);
+		log_print("%s: could not add timer event", __func__);
+	if (ui_daemon_passive)
+		return;
+
+	name = strdup(conn->name);
+	if (!name) {
+		log_print("%s: strdup (\"%s\") failed", __func__, conn->name);
+		return;
+	}
+	pf_key_v2_connection_check(name);
 }
 
 /* Find the connection named NAME.  */
