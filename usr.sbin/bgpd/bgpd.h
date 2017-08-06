@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.310 2017/08/06 12:28:31 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.311 2017/08/06 13:23:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -818,7 +818,7 @@ struct ext_comm_pairs {
 	{ EXT_COMMUNITY_TRANS_EVPN, 0x01, "esi-lab" },		\
 	{ EXT_COMMUNITY_TRANS_EVPN, 0x02, "esi-rt" },		\
 								\
-	{ 0 },							\
+	{ 0 }							\
 }
 
 extern const struct ext_comm_pairs iana_ext_comms[];
