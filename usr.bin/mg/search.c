@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.45 2017/05/30 07:05:22 florian Exp $	*/
+/*	$OpenBSD: search.c,v 1.46 2017/08/06 04:39:45 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -838,7 +838,7 @@ readpattern(char *r_prompt)
 	if (pat[0] == '\0')
 		rep = eread("%s: ", tpat, NPAT, EFNEW | EFCR, r_prompt);
 	else
-		rep = eread("%s: (default %s) ", tpat, NPAT,
+		rep = eread("%s (default %s): ", tpat, NPAT,
 		    EFNUL | EFNEW | EFCR, r_prompt, pat);
 
 	/* specified */
