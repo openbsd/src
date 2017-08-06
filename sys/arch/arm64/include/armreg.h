@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.4 2017/04/27 10:23:19 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.5 2017/08/06 20:05:24 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -444,20 +444,20 @@
 #define	PSR_N		0x80000000
 
 /* TCR_EL1 - Translation Control Register */
-#define	TCR_ASID_16	(1 << 36)
+#define	TCR_AS		(1UL << 36)
 
 #define	TCR_IPS_SHIFT	32
-#define	TCR_IPS_32BIT	(0 << TCR_IPS_SHIFT)
-#define	TCR_IPS_36BIT	(1 << TCR_IPS_SHIFT)
-#define	TCR_IPS_40BIT	(2 << TCR_IPS_SHIFT)
-#define	TCR_IPS_42BIT	(3 << TCR_IPS_SHIFT)
-#define	TCR_IPS_44BIT	(4 << TCR_IPS_SHIFT)
-#define	TCR_IPS_48BIT	(5 << TCR_IPS_SHIFT)
+#define	TCR_IPS_32BIT	(0UL << TCR_IPS_SHIFT)
+#define	TCR_IPS_36BIT	(1UL << TCR_IPS_SHIFT)
+#define	TCR_IPS_40BIT	(2UL << TCR_IPS_SHIFT)
+#define	TCR_IPS_42BIT	(3UL << TCR_IPS_SHIFT)
+#define	TCR_IPS_44BIT	(4UL << TCR_IPS_SHIFT)
+#define	TCR_IPS_48BIT	(5UL << TCR_IPS_SHIFT)
 
 #define	TCR_TG1_SHIFT	30
-#define	TCR_TG1_16K	(1 << TCR_TG1_SHIFT)
-#define	TCR_TG1_4K	(2 << TCR_TG1_SHIFT)
-#define	TCR_TG1_64K	(3 << TCR_TG1_SHIFT)
+#define	TCR_TG1_16K	(1UL << TCR_TG1_SHIFT)
+#define	TCR_TG1_4K	(2UL << TCR_TG1_SHIFT)
+#define	TCR_TG1_64K	(3UL << TCR_TG1_SHIFT)
 
 #define	TCR_SH1_SHIFT	28
 #define	TCR_SH1_IS	(0x3UL << TCR_SH1_SHIFT)
@@ -465,6 +465,14 @@
 #define	TCR_ORGN1_WBWA	(0x1UL << TCR_ORGN1_SHIFT)
 #define	TCR_IRGN1_SHIFT	24
 #define	TCR_IRGN1_WBWA	(0x1UL << TCR_IRGN1_SHIFT)
+
+#define	TCR_A1		(1UL << 22)
+
+#define	TCR_TG0_SHIFT	14
+#define	TCR_TG0_16K	(1UL << TCR_TG0_SHIFT)
+#define	TCR_TG0_4K	(2UL << TCR_TG0_SHIFT)
+#define	TCR_TG0_64K	(3UL << TCR_TG0_SHIFT)
+
 #define	TCR_SH0_SHIFT	12
 #define	TCR_SH0_IS	(0x3UL << TCR_SH0_SHIFT)
 #define	TCR_ORGN0_SHIFT	10
