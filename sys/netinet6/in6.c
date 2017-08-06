@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.207 2017/07/11 12:51:05 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.208 2017/08/06 08:15:58 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1350,14 +1350,13 @@ in6_joingroup(struct ifnet *ifp, struct in6_addr *addr, int *errorp)
 	return imm;
 }
 
-int
+void
 in6_leavegroup(struct in6_multi_mship *imm)
 {
 
 	if (imm->i6mm_maddr)
 		in6_delmulti(imm->i6mm_maddr);
 	free(imm,  M_IPMADDR, sizeof(*imm));
-	return 0;
 }
 
 /*
