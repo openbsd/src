@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.17 2017/07/20 16:58:25 bluhm Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.18 2017/08/07 23:49:13 bluhm Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,7 @@ __vsyslog_r(int pri, struct syslog_data *data,
 	int saved_errno;
 #define	TBUF_SIZE	(8192+1)
 #define	FMT_SIZE	(1024+1)
-	char *conp = NULL, *stdp = NULL, tbuf[TBUF_SIZE], fmt_cpy[FMT_SIZE];
+	char *stdp = NULL, tbuf[TBUF_SIZE], fmt_cpy[FMT_SIZE];
 	int tbuf_left, fmt_left, prlen;
 
 #define	INTERNALLOG	LOG_ERR|LOG_CONS|LOG_PERROR|LOG_PID
@@ -112,8 +112,6 @@ __vsyslog_r(int pri, struct syslog_data *data,
 
 	prlen = snprintf(p, tbuf_left, "<%d>", pri);
 	DEC();
-	if (data->log_stat & LOG_CONS)
-		conp = p;
 
 	if (data->log_stat & LOG_PERROR)
 		stdp = p;
