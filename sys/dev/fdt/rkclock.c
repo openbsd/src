@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.8 2017/07/23 17:06:51 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.9 2017/08/07 22:20:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -436,10 +436,17 @@ rk3399_enable(void *cookie, uint32_t *cells, int on)
 	case RK3399_CLK_MAC_RX:
 	case RK3399_CLK_MAC_TX:
 	case RK3399_CLK_MAC:
+	case RK3399_CLK_USB3OTG0_REF:
+	case RK3399_CLK_USB3OTG1_REF:
+	case RK3399_CLK_USB3OTG0_SUSPEND:
+	case RK3399_CLK_USB3OTG1_SUSPEND:
 	case RK3399_CLK_SDMMC_DRV:
 	case RK3399_CLK_SDMMC_SAMPLE:
 	case RK3399_ACLK_EMMC:
 	case RK3399_ACLK_GMAC:
+	case RK3399_ACLK_USB3OTG0:
+	case RK3399_ACLK_USB3OTG1:
+	case RK3399_ACLK_USB3_GRF:
 	case RK3399_PCLK_GMAC:
 	case RK3399_HCLK_HOST0:
 	case RK3399_HCLK_HOST0_ARB:
