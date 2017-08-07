@@ -1,14 +1,14 @@
 /*
  * Public Domain 2003 Dale Rahn
  *
- * $OpenBSD: aa.C,v 1.3 2017/08/04 18:23:52 kettenis Exp $
+ * $OpenBSD: aa.C,v 1.4 2017/08/07 16:33:52 bluhm Exp $
  */
 
 #include "aa.h"
 volatile int a;
 
 
-AA::AA(char *arg)
+AA::AA(const char *arg)
 {
 	a = 1;
 }

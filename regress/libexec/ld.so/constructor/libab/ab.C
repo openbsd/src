@@ -1,7 +1,7 @@
 /*
  * Public Domain 2003 Dale Rahn
  *
- * $OpenBSD: ab.C,v 1.4 2017/02/25 07:28:32 jsg Exp $
+ * $OpenBSD: ab.C,v 1.5 2017/08/07 16:33:52 bluhm Exp $
  */
 
 #include <cstdlib>
@@ -13,7 +13,7 @@ using namespace std;
 
 extern int a;
 
-BB::BB(char *str)
+BB::BB(const char *str)
 {
 	if (a == 0) {
 		cout << "A not initialized in B constructors " << a << "\n";

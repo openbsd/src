@@ -1,4 +1,4 @@
-/*      $OpenBSD: test1.c,v 1.2 2007/08/01 12:53:28 kurt Exp $       */
+/*      $OpenBSD: test1.c,v 1.3 2017/08/07 16:33:52 bluhm Exp $       */
 
 /*
  * Copyright (c) 2007 Kurt Miller <kurt@openbsd.org>
@@ -31,7 +31,6 @@ main()
 {
 	void *libaa, *libab;
 	void (*hidden_test)();
-	int i;
 
 	libaa = dlopen(LIBAA, RTLD_LAZY);
 	libab = dlopen(LIBAB, RTLD_LAZY);

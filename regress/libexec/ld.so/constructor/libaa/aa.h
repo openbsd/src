@@ -1,6 +1,6 @@
 class AA {
 public:
-	AA(char *);
+	AA(const char *);
 };
 
 

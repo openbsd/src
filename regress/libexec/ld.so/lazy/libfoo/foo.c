@@ -1,4 +1,4 @@
-/*	$OpenBSD: foo.c,v 1.2 2017/02/25 07:28:32 jsg Exp $ */
+/*	$OpenBSD: foo.c,v 1.3 2017/08/07 16:33:52 bluhm Exp $ */
 /* Public domain. 2008, Matthieu Herrb */
 
 #include <dlfcn.h>
@@ -6,6 +6,8 @@
 #include <err.h>
 
 static void *h = NULL;
+
+extern int bar(void);
 
 void
 foo_init(void)
