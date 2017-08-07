@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.22 2017/07/31 14:04:53 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.23 2017/08/07 19:34:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -793,7 +793,8 @@ _rtt(void)
 	efi_cons_getc(0);
 #endif
 	EFI_CALL(RS->ResetSystem, EfiResetCold, EFI_SUCCESS, 0, NULL);
-	while (1) { }
+	for (;;)
+		continue;
 }
 
 time_t
@@ -834,7 +835,8 @@ int
 Xexit_efi(void)
 {
 	EFI_CALL(BS->Exit, IH, 0, 0, NULL);
-	while (1) { }
+	for (;;)
+		continue;
 	return (0);
 }
 

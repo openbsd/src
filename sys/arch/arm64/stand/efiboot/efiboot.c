@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.10 2017/07/31 14:06:29 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.11 2017/08/07 19:34:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -395,17 +395,9 @@ _rtt(void)
 	printf("Hit any key to reboot\n");
 	efi_cons_getc(0);
 #endif
-	/*
-	 * XXX ResetSystem doesn't seem to work on U-Boot 2016.05 on
-	 * the CuBox-i.  So trigger an unimplemented instruction trap
-	 * instead.
-	 */
-#if 1
-	asm volatile(".word 0xa000f7f0\n");
-#else
 	RS->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
-#endif
-	while (1) { }
+	for (;;)
+		continue;
 }
 
 /*
@@ -634,4 +626,33 @@ efi_memprobe_find(UINTN pages, UINTN align, EFI_PHYSICAL_ADDRESS *addr)
 		}
 	}
 	return EFI_OUT_OF_RESOURCES;
+}
+
+/*
+ * Commands
+ */
+
+int Xexit_efi(void);
+int Xpoweroff_efi(void);
+
+const struct cmd_table cmd_machine[] = {
+	{ "exit",	CMDT_CMD, Xexit_efi },
+	{ "poweroff",	CMDT_CMD, Xpoweroff_efi },
+	{ NULL, 0 }
+};
+
+int
+Xexit_efi(void)
+{
+	EFI_CALL(BS->Exit, IH, 0, 0, NULL);
+	for (;;)
+		continue;
+	return (0);
+}
+
+int
+Xpoweroff_efi(void)
+{
+	EFI_CALL(RS->ResetSystem, EfiResetShutdown, EFI_SUCCESS, 0, NULL);
+	return (0);
 }

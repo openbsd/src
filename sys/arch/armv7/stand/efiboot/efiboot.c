@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.17 2017/07/31 14:05:57 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.18 2017/08/07 19:34:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -374,7 +374,7 @@ _rtt(void)
 	efi_cons_getc(0);
 #endif
 	/*
-	 * XXX ResetSystem doesn't seem to work on U-Boot 2016.05 on
+	 * XXX ResetSystem doesn't seem to work on U-Boot 2017.03 on
 	 * the CuBox-i.  So trigger an unimplemented instruction trap
 	 * instead.
 	 */
@@ -383,7 +383,8 @@ _rtt(void)
 #else
 	RS->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
 #endif
-	while (1) { }
+	for (;;)
+		continue;
 }
 
 /*
@@ -540,4 +541,33 @@ devopen(struct open_file *f, const char *fname, char **file)
 	f->f_dev = dp;
 
 	return (*dp->dv_open)(f, unit, part);
+}
+
+/*
+ * Commands
+ */
+
+int Xexit_efi(void);
+int Xpoweroff_efi(void);
+
+const struct cmd_table cmd_machine[] = {
+	{ "exit",	CMDT_CMD, Xexit_efi },
+	{ "poweroff",	CMDT_CMD, Xpoweroff_efi },
+	{ NULL, 0 }
+};
+
+int
+Xexit_efi(void)
+{
+	EFI_CALL(BS->Exit, IH, 0, 0, NULL);
+	for (;;)
+		continue;
+	return (0);
+}
+
+int
+Xpoweroff_efi(void)
+{
+	EFI_CALL(RS->ResetSystem, EfiResetShutdown, EFI_SUCCESS, 0, NULL);
+	return (0);
 }

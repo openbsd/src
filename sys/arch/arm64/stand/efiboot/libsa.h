@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.2 2017/08/07 19:34:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -28,3 +28,5 @@
 
 void machdep(void);
 void devboot(dev_t, char *);
+
+#define MACHINE_CMD	cmd_machine
