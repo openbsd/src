@@ -22,7 +22,7 @@ block return-icmp6(noroute-unr) in inet6 proto icmp6 all
 block return-icmp6(1) in inet6 proto icmp6 all
 block return-icmp6(admin-unr) in inet6 proto icmp6 all
 block return-icmp6(2) in inet6 proto icmp6 all
-block return-icmp6(notnbr-unr) in inet6 proto icmp6 all
+block return-icmp6(beyond-unr) in inet6 proto icmp6 all
 block return-icmp6(3) in inet6 proto icmp6 all
 block return-icmp6(addr-unr) in inet6 proto icmp6 all
 block return-icmp6(4) in inet6 proto icmp6 all
