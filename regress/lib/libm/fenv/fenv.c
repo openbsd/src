@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.2 2012/12/05 23:20:07 deraadt Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.3 2017/08/07 20:56:46 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.org>
@@ -519,21 +519,27 @@ raiseexcept(int excepts)
 static int
 getround(void)
 {
-	volatile double d;
+	volatile double d, e;
 
 	/*
 	 * This test works just as well with 0.0 - 0.0, except on ia64
 	 * where 0.0 - 0.0 gives the wrong sign when rounding downwards.
+	 * On i386 use two volatile variables d and e to retrieve the
+	 * value out of the x87 and force rounding.
+	 * https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=204671
 	 */
 	d = 1.0;
 	d -= 1.0;
-	if (copysign(1.0, d) < 0.0)
+	e = copysign(1.0, d);
+	if (e < 0.0)
 		return (FE_DOWNWARD);
 
 	d = 1.0;
-	if (d + (DBL_EPSILON * 3.0 / 4.0) == 1.0)
+	e = d + (DBL_EPSILON * 3.0 / 4.0);
+	if (e == 1.0)
 		return (FE_TOWARDZERO);
-	if (d + (DBL_EPSILON * 1.0 / 4.0) > 1.0)
+	e = d + (DBL_EPSILON * 1.0 / 4.0);
+	if (e > 1.0)
 		return (FE_UPWARD);
 
 	return (FE_TONEAREST);

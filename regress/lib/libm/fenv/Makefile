@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2017/06/02 20:03:54 otto Exp $
+#	$OpenBSD: Makefile,v 1.4 2017/08/07 20:56:46 bluhm Exp $
 
 PROG=fenv
 
-CFLAGS+=-ffloat-store
 LDADD=-lm
 DPADD=${LIBM}
 
