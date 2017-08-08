@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.h,v 1.16 2014/07/13 13:57:56 mpi Exp $	*/
+/*	$OpenBSD: ip.h,v 1.17 2017/08/08 12:23:56 bluhm Exp $	*/
 /*	$NetBSD: ip.h,v 1.9 1995/05/15 01:22:44 cgd Exp $	*/
 
 /*
@@ -209,6 +209,10 @@ struct	ip_timestamp {
 #define	IP_MSS		576		/* default maximum segment size */
 
 #ifdef _KERNEL
+
+/* Maximum lenght for IP protocol queues */
+#define IPQ_MAXLEN	2048
+
 /*
  * This is the real IPv4 pseudo header, used for computing the TCP and UDP
  * checksums. For the Internet checksum, struct ipovly can be used instead.

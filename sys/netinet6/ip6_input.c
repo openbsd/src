@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.199 2017/08/04 14:24:05 florian Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.200 2017/08/08 12:23:56 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -114,7 +114,7 @@
 #include <netinet/ip_carp.h>
 #endif
 
-struct niqueue ip6intrq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_IPV6);
+struct niqueue ip6intrq = NIQUEUE_INITIALIZER(IPQ_MAXLEN, NETISR_IPV6);
 
 struct cpumem *ip6counters;
 

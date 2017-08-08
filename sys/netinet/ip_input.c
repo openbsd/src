@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.316 2017/08/04 14:24:05 florian Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.317 2017/08/08 12:23:56 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ int	ip_frags = 0;
 
 int *ipctl_vars[IPCTL_MAXID] = IPCTL_VARS;
 
-struct niqueue ipintrq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_IP);
+struct niqueue ipintrq = NIQUEUE_INITIALIZER(IPQ_MAXLEN, NETISR_IP);
 
 struct pool ipqent_pool;
 struct pool ipq_pool;
