@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.489 2017/07/30 15:26:46 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.490 2017/08/08 17:20:09 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1828,7 +1828,8 @@ lease_as_proposal(struct client_lease *lease)
 	opt = &lease->options[DHO_SUBNET_MASK];
 	if (opt->len == sizeof(proposal->netmask)) {
 		proposal->addrs |= RTA_NETMASK;
-		proposal->netmask.s_addr = ((struct in_addr *)opt->data)->s_addr;
+		proposal->netmask.s_addr =
+		    ((struct in_addr *)opt->data)->s_addr;
 	}
 
 	if (lease->options[DHO_CLASSLESS_STATIC_ROUTES].len != 0) {
