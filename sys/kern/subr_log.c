@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.51 2017/07/18 22:22:19 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.52 2017/08/08 14:23:23 bluhm Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -418,8 +418,8 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
 	size_t i, len;
 	int error;
 
-	if (nbyte > 8192)
-		nbyte = 8192;
+	if (nbyte > LOG_MAXLINE)
+		nbyte = LOG_MAXLINE;
 
 	/* Global variable syslogf may change during sleep, use local copy. */
 	fp = syslogf;

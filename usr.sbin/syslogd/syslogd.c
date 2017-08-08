@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.244 2017/04/28 14:52:13 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.245 2017/08/08 14:23:23 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -54,7 +54,7 @@
  */
 
 #define MAX_UDPMSG	1180		/* maximum UDP send size */
-#define MIN_MEMBUF	(MAXLINE * 4)	/* Minimum memory buffer size */
+#define MIN_MEMBUF	(LOG_MAXLINE * 4) /* Minimum memory buffer size */
 #define MAX_MEMBUF	(256 * 1024)	/* Maximum memory buffer size */
 #define MAX_MEMBUF_NAME	64		/* Max length of membuf log name */
 #define MAX_TCPBUF	(256 * 1024)	/* Maximum tcp event buffer size */
@@ -492,8 +492,8 @@ main(int argc, char *argv[])
 
 	/* Reserve space for kernel message buffer plus buffer full message. */
 	linesize = getmsgbufsize() + 64;
-	if (linesize < MAXLINE)
-		linesize = MAXLINE;
+	if (linesize < LOG_MAXLINE)
+		linesize = LOG_MAXLINE;
 	linesize++;
 	if ((linebuf = malloc(linesize)) == NULL)
 		fatal("allocate line buffer");
@@ -1011,7 +1011,8 @@ udp_readcb(int fd, short event, void *arg)
 	ssize_t			 n;
 
 	salen = sizeof(sa);
-	n = recvfrom(fd, linebuf, MAXLINE, 0, (struct sockaddr *)&sa, &salen);
+	n = recvfrom(fd, linebuf, LOG_MAXLINE, 0, (struct sockaddr *)&sa,
+	    &salen);
 	if (n > 0) {
 		char	 resolve[NI_MAXHOST];
 
@@ -1031,7 +1032,8 @@ unix_readcb(int fd, short event, void *arg)
 	ssize_t			 n;
 
 	salen = sizeof(sa);
-	n = recvfrom(fd, linebuf, MAXLINE, 0, (struct sockaddr *)&sa, &salen);
+	n = recvfrom(fd, linebuf, LOG_MAXLINE, 0, (struct sockaddr *)&sa,
+	    &salen);
 	if (n > 0) {
 		linebuf[n] = '\0';
 		printline(LocalHostName, linebuf);
@@ -1265,15 +1267,15 @@ tcp_readcb(struct bufferevent *bufev, void *arg)
 		if (len > 0 && msg[len-1] == '\n')
 			msg[len-1] = '\0';
 		if (len == 0 || msg[len-1] != '\0') {
-			memcpy(linebuf, msg, MINIMUM(len, MAXLINE));
-			linebuf[MINIMUM(len, MAXLINE)] = '\0';
+			memcpy(linebuf, msg, MINIMUM(len, LOG_MAXLINE));
+			linebuf[MINIMUM(len, LOG_MAXLINE)] = '\0';
 			msg = linebuf;
 		}
 		printline(p->p_hostname, msg);
 		evbuffer_drain(bufev->input, len);
 	}
 	/* Maximum frame has 5 digits, 1 space, MAXLINE chars, 1 new line. */
-	if (EVBUFFER_LENGTH(bufev->input) >= 5 + 1 + MAXLINE + 1) {
+	if (EVBUFFER_LENGTH(bufev->input) >= 5 + 1 + LOG_MAXLINE + 1) {
 		log_debug(", use %zu bytes", EVBUFFER_LENGTH(bufev->input));
 		printline(p->p_hostname, EVBUFFER_DATA(bufev->input));
 		evbuffer_drain(bufev->input, -1);
@@ -1558,7 +1560,7 @@ void
 printline(char *hname, char *msg)
 {
 	int pri;
-	char *p, *q, line[MAXLINE + 4 + 1];  /* message, encoding, NUL */
+	char *p, *q, line[LOG_MAXLINE + 4 + 1];  /* message, encoding, NUL */
 
 	/* test for special codes */
 	pri = DEFUPRI;
@@ -1575,13 +1577,13 @@ printline(char *hname, char *msg)
 	if (LOG_FAC(pri) == LOG_KERN)
 		pri = LOG_USER | LOG_PRI(pri);
 
-	for (q = line; *p && q < &line[MAXLINE]; p++) {
+	for (q = line; *p && q < &line[LOG_MAXLINE]; p++) {
 		if (*p == '\n')
 			*q++ = ' ';
 		else
 			q = vis(q, *p, 0, 0);
 	}
-	line[MAXLINE] = *q = '\0';
+	line[LOG_MAXLINE] = *q = '\0';
 
 	logline(pri, 0, hname, line);
 }
@@ -1593,7 +1595,7 @@ void
 printsys(char *msg)
 {
 	int c, pri, flags;
-	char *lp, *p, *q, line[MAXLINE + 1];
+	char *lp, *p, *q, line[LOG_MAXLINE + 1];
 	size_t prilen;
 
 	(void)snprintf(line, sizeof line, "%s: ", _PATH_UNIX);
@@ -1855,7 +1857,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 	struct iovec iov[6];
 	struct iovec *v;
 	int l, retryonce;
-	char line[MAXLINE + 1], repbuf[80], greetings[500];
+	char line[LOG_MAXLINE + 1], repbuf[80], greetings[500];
 
 	v = iov;
 	if (f->f_type == F_WALL) {
@@ -2496,7 +2498,7 @@ cfline(char *line, char *progblock, char *hostblock)
 	int i, pri;
 	size_t rb_len;
 	char *bp, *p, *q, *proto, *host, *port, *ipproto;
-	char buf[MAXLINE];
+	char buf[LOG_MAXLINE];
 	struct filed *xf, *f, *d;
 	struct timeval to;
 
@@ -2946,7 +2948,7 @@ unix_socket(char *path, int type, mode_t mode)
 		return (-1);
 	}
 
-	optval = MAXLINE + PATH_MAX;
+	optval = LOG_MAXLINE + PATH_MAX;
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &optval, sizeof(optval))
 	    == -1)
 		log_warn("setsockopt unix \"%s\"", path);
@@ -2964,7 +2966,7 @@ double_sockbuf(int fd, int optname)
 	if (getsockopt(fd, SOL_SOCKET, optname, &oldsize, &len) == -1)
 		log_warn("getsockopt bufsize");
 	len = sizeof(newsize);
-	newsize =  MAXLINE + 128;  /* data + control */
+	newsize =  LOG_MAXLINE + 128;  /* data + control */
 	/* allow 8 full length messages */
 	for (i = 0; i < 4; i++, newsize *= 2) {
 		if (newsize <= oldsize)

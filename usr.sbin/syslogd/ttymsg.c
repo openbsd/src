@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.15 2017/04/05 21:55:31 bluhm Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.16 2017/08/08 14:23:23 bluhm Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include <sys/stat.h>
+#include <sys/syslog.h>
 
 #include <dirent.h>
 #include <errno.h>
@@ -52,7 +53,7 @@
 struct tty_delay {
 	struct event	 td_event;
 	size_t		 td_length;
-	char		 td_line[MAXLINE];
+	char		 td_line[LOG_MAXLINE];
 };
 int tty_delayed = 0;
 void ttycb(int, short, void *);
@@ -148,8 +149,8 @@ ttymsg(struct iovec *iov, int iovcnt, char *utline)
 				break;
 			}
 			td->td_length = 0;
-			if (left > MAXLINE)
-				left = MAXLINE;
+			if (left > LOG_MAXLINE)
+				left = LOG_MAXLINE;
 			while (iovcnt && left) {
 				if (iov->iov_len > left)
 					iov->iov_len = left;

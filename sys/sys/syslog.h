@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.h,v 1.15 2014/07/14 03:52:04 deraadt Exp $	*/
+/*	$OpenBSD: syslog.h,v 1.16 2017/08/08 14:23:23 bluhm Exp $	*/
 /*	$NetBSD: syslog.h,v 1.14 1996/04/03 20:46:44 christos Exp $	*/
 
 /*
@@ -38,6 +38,8 @@
 #define	_PATH_LOG	"/dev/log"
 
 #define	LIOCSFD		_IOW('l', 127, int)	/* set sendsyslog() fd */
+
+#define LOG_MAXLINE	8192			/* maximum line length */
 
 /*
  * priorities/facilities are encoded into a single 32-bit quantity, where the
