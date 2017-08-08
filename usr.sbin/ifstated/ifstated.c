@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.57 2017/08/06 19:27:54 rob Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.58 2017/08/08 14:09:38 rob Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -37,7 +37,6 @@
 #include <signal.h>
 #include <stdint.h>
 #include <syslog.h>
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <unistd.h>
@@ -103,7 +102,7 @@ main(int argc, char *argv[])
 			break;
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
-				errx(1, "could not parse macro definition %s",
+				fatalx("could not parse macro definition %s",
 				    optarg);
 			break;
 		case 'f':
@@ -136,7 +135,7 @@ main(int argc, char *argv[])
 	if (opts & IFSD_OPT_NOACTION) {
 		if ((newconf = parse_config(configfile, opts)) == NULL)
 			exit(1);
-		warnx("configuration OK");
+		fprintf(stderr, "configuration OK\n");
 		exit(0);
 	}
 
@@ -148,7 +147,7 @@ main(int argc, char *argv[])
 	log_setverbose(opts & IFSD_OPT_VERBOSE);
 
 	if ((rt_fd = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
-		err(1, "no routing socket");
+		fatal("no routing socket");
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO);
 	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_MSGFILTER,
@@ -615,7 +614,7 @@ fetch_ifstate(int do_eval)
 	struct ifaddrs *ifap, *ifa;
 
 	if (getifaddrs(&ifap) != 0)
-		err(1, "getifaddrs");
+		fatal("getifaddrs");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
