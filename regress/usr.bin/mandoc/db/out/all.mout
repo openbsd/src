@@ -40,7 +40,7 @@ man1/one.1
 man1/one.1
 
 >>> sortnames
-sortnames, link, withsyn, another, last, onlysyn(1) - sorting names
+sortnames, link, withsyn, another, last(1) - sorting names
 
 >>> twosect
 empty(1, 8) - no title
