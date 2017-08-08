@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.133 2017/08/08 17:20:09 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.134 2017/08/08 17:54:24 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -716,11 +716,11 @@ priv_write_resolv_conf(uint8_t *contents, size_t sz)
 }
 
 /*
- * resolv_conf_priority returns the index of the interface which the
+ * default_route_index returns the index of the interface which the
  * default route is on.
  */
 int
-resolv_conf_priority(int rdomain, int routefd)
+default_route_index(int rdomain, int routefd)
 {
 	struct iovec		 iov[3];
 	struct sockaddr_in	 sin;
