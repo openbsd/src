@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.48 2016/06/22 01:12:38 mikeb Exp $	*/
+/*	$OpenBSD: intr.c,v 1.49 2017/08/08 15:53:55 visa Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -712,19 +712,18 @@ spllower(int nlevel)
 	int olevel;
 	struct cpu_info *ci = curcpu();
 	u_int64_t imask;
-	u_long psl;
+	u_long flags;
 
 	imask = IUNMASK(ci, nlevel);
 	olevel = ci->ci_ilevel;
 
-	psl = read_psl();
-	disable_intr();
+	flags = intr_disable();
 
 	if (ci->ci_ipending & imask) {
 		Xspllower(nlevel);
 	} else {
 		ci->ci_ilevel = nlevel;
-		write_psl(psl);
+		intr_restore(flags);
 	}
 	return (olevel);
 }

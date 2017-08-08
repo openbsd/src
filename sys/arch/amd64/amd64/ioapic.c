@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.25 2016/06/29 06:05:15 mlarkin Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.26 2017/08/08 15:53:55 visa Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -114,8 +114,7 @@ ioapic_lock(struct ioapic_softc *sc)
 {
 	u_long flags;
 
-	flags = read_psl();
-	disable_intr();
+	flags = intr_disable();
 #ifdef MULTIPROCESSOR
 	mtx_enter(&sc->sc_pic.pic_mutex);
 #endif
@@ -128,7 +127,7 @@ ioapic_unlock(struct ioapic_softc *sc, u_long flags)
 #ifdef MULTIPROCESSOR
 	mtx_leave(&sc->sc_pic.pic_mutex);
 #endif
-	write_psl(flags);
+	intr_restore(flags);
 }
 
 /*

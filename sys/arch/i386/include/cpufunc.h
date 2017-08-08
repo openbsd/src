@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.26 2017/06/17 09:32:26 jmatthew Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.27 2017/08/08 15:53:55 visa Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -286,9 +286,6 @@ breakpoint(void)
 {
 	__asm volatile("int $3");
 }
-
-#define read_psl()	read_eflags()
-#define write_psl(x)	write_eflags(x)
 
 void amd64_errata(struct cpu_info *);
 
