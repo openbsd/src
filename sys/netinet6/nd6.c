@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.213 2017/08/06 12:53:30 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.214 2017/08/08 18:15:58 florian Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/stdint.h>
 #include <sys/task.h>
 
 #include <net/if.h>
@@ -66,7 +67,7 @@
 #define ND6_RECALC_REACHTM_INTERVAL (60 * 120) /* 2 hours */
 
 /* timer values */
-int	nd6_prune	= 1;	/* walk list every 1 seconds */
+time_t	nd6_expire_time	= -1;	/* at which time_uptime nd6_expire runs */
 int	nd6_delay	= 5;	/* delay first probe time 5 second */
 int	nd6_umaxtries	= 3;	/* maximum unicast query */
 int	nd6_mmaxtries	= 3;	/* maximum multicast query */
@@ -122,8 +123,6 @@ nd6_init(void)
 	timeout_set_proc(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
 	timeout_add_sec(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL);
 	timeout_set(&nd6_expire_timeout, nd6_expire_timer, NULL);
-	timeout_add_sec(&nd6_expire_timeout, nd6_prune);
-
 }
 
 struct nd_ifinfo *
@@ -417,6 +416,44 @@ nd6_llinfo_timer(void *arg)
 	NET_UNLOCK(s);
 }
 
+void
+nd6_expire_timer_update(struct in6_ifaddr *ia6)
+{
+	time_t expire_time = INT64_MAX;
+	int secs;
+
+	KERNEL_ASSERT_LOCKED();
+
+	if (ia6->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME)
+		expire_time = ia6->ia6_lifetime.ia6t_expire;
+
+	if (!(ia6->ia6_flags & IN6_IFF_DEPRECATED) &&
+	    ia6->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME &&
+	    expire_time > ia6->ia6_lifetime.ia6t_preferred)
+		expire_time = ia6->ia6_lifetime.ia6t_preferred;
+
+	if (expire_time == INT64_MAX)
+		return;
+
+	/*
+	 * IFA6_IS_INVALID() and IFA6_IS_DEPRECATED() check for uptime
+	 * greater than ia6t_expire or ia6t_preferred, not greater or equal.
+	 * Schedule timeout one second later so that either IFA6_IS_INVALID()
+	 * or IFA6_IS_DEPRECATED() is true.
+	 */
+	expire_time++; 
+
+	if (!timeout_pending(&nd6_expire_timeout) || nd6_expire_time >
+	    expire_time) {
+		secs = expire_time - time_uptime;
+		if ( secs < 0)
+			secs = 0;
+
+		timeout_add_sec(&nd6_expire_timeout, secs);
+		nd6_expire_time = expire_time;
+	}
+}
+
 /*
  * Expire interface addresses.
  */
@@ -429,8 +466,6 @@ nd6_expire(void *unused)
 	KERNEL_LOCK();
 	NET_LOCK(s);
 
-	timeout_add_sec(&nd6_expire_timeout, nd6_prune);
-
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		struct ifaddr *ifa, *nifa;
 		struct in6_ifaddr *ia6;
@@ -442,14 +477,10 @@ nd6_expire(void *unused)
 			/* check address lifetime */
 			if (IFA6_IS_INVALID(ia6)) {
 				in6_purgeaddr(&ia6->ia_ifa);
-			} else if (IFA6_IS_DEPRECATED(ia6)) {
-				ia6->ia6_flags |= IN6_IFF_DEPRECATED;
 			} else {
-				/*
-				 * A new RA might have made a deprecated address
-				 * preferred.
-				 */
-				ia6->ia6_flags &= ~IN6_IFF_DEPRECATED;
+				if (IFA6_IS_DEPRECATED(ia6))
+					ia6->ia6_flags |= IN6_IFF_DEPRECATED;
+				nd6_expire_timer_update(ia6);
 			}
 		}
 	}

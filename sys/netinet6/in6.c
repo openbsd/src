@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.208 2017/08/06 08:15:58 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.209 2017/08/08 18:15:58 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -685,6 +685,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * configure address flags.
 	 */
 	ia6->ia6_flags = ifra->ifra_flags;
+
+	nd6_expire_timer_update(ia6);
 
 	/*
 	 * We are done if we have simply modified an existing address.

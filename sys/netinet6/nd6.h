@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.68 2017/07/12 16:53:58 florian Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.69 2017/08/08 18:15:58 florian Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -138,7 +138,6 @@ struct	llinfo_nd6 {
 		(((MIN_RANDOM_FACTOR * (x >> 10)) + (arc4random() & \
 		((MAX_RANDOM_FACTOR - MIN_RANDOM_FACTOR) * (x >> 10)))) /1000)
 
-extern int nd6_prune;
 extern int nd6_delay;
 extern int nd6_umaxtries;
 extern int nd6_mmaxtries;
@@ -208,6 +207,7 @@ void nd6_rs_input(struct mbuf *, int, int);
 int in6_ifdel(struct ifnet *, struct in6_addr *);
 void rt6_flush(struct in6_addr *, struct ifnet *);
 
+void nd6_expire_timer_update(struct in6_ifaddr *);
 #endif /* _KERNEL */
 
 #endif /* _NETINET6_ND6_H_ */

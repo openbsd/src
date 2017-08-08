@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.46 2017/08/03 17:36:06 florian Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.47 2017/08/08 18:15:58 florian Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -502,7 +502,6 @@ struct icmp6stat {
 #define ICMPV6CTL_STATS		1
 #define ICMPV6CTL_REDIRACCEPT	2	/* accept/process redirects */
 #define ICMPV6CTL_REDIRTIMEOUT	3	/* redirect cache time */
-#define ICMPV6CTL_ND6_PRUNE	6
 #define ICMPV6CTL_ND6_DELAY	8
 #define ICMPV6CTL_ND6_UMAXTRIES	9
 #define ICMPV6CTL_ND6_MMAXTRIES		10
@@ -521,7 +520,7 @@ struct icmp6stat {
 	{ "redirtimeout", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
-	{ "nd6_prune", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "nd6_delay", CTLTYPE_INT }, \
 	{ "nd6_umaxtries", CTLTYPE_INT }, \
@@ -543,7 +542,7 @@ struct icmp6stat {
 	&icmp6_redirtimeout, \
 	NULL, \
 	NULL, \
-	&nd6_prune, \
+	NULL, \
 	NULL, \
 	&nd6_delay, \
 	&nd6_umaxtries, \

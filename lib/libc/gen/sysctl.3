@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.280 2017/07/13 17:17:27 florian Exp $
+.\"	$OpenBSD: sysctl.3,v 1.281 2017/08/08 18:15:58 florian Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2017 $
+.Dd $Mdocdate: August 8 2017 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1639,7 +1639,6 @@ The currently defined protocols and names are:
 .It icmp6 Ta nd6_delay Ta integer Ta yes
 .It icmp6 Ta nd6_maxnudhint Ta integer Ta yes
 .It icmp6 Ta nd6_mmaxtries Ta integer Ta yes
-.It icmp6 Ta nd6_prune Ta integer Ta yes
 .It icmp6 Ta nd6_umaxtries Ta integer Ta yes
 .It icmp6 Ta redirtimeout Ta integer Ta yes
 .It ip6 Ta auto_flowlabel Ta integer Ta yes
@@ -1717,10 +1716,6 @@ This variable specifies the
 .Dv MAX_MULTICAST_SOLICIT
 constant in IPv6 neighbor discovery specification
 .Pq RFC 4861 .
-.Pp
-.It Li icmp6.nd6_prune Pq Va net.inet6.icmp6.nd6_prune
-This variable specifies the interval between IPv6 neighbor cache babysitting
-in seconds.
 .Pp
 .It Li icmp6.nd6_umaxtries Pq Va net.inet6.icmp6.nd6_umaxtries
 This variable specifies the
