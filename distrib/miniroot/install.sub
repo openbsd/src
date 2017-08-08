@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1031 2017/07/28 18:15:44 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1032 2017/08/08 07:14:05 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2285,7 +2285,7 @@ enable_network() {
 	done
 	# Configure any dynamic interfaces now that 'real' ones are up.
 	# ORDER IS IMPORTANT! (see /etc/netstart).
-	for _hn in $_trunks $_svlans $_vlans; do
+	for _if in $_trunks $_svlans $_vlans; do
 		ifstart $_if
 	done
 
