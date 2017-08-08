@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.h,v 1.17 2017/08/08 12:23:56 bluhm Exp $	*/
+/*	$OpenBSD: ip.h,v 1.18 2017/08/08 18:25:31 tj Exp $	*/
 /*	$NetBSD: ip.h,v 1.9 1995/05/15 01:22:44 cgd Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ struct	ip_timestamp {
 
 #ifdef _KERNEL
 
-/* Maximum lenght for IP protocol queues */
+/* Maximum length for IP protocol queues */
 #define IPQ_MAXLEN	2048
 
 /*
