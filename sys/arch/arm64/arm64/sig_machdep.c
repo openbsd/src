@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.3 2017/03/12 17:57:12 kettenis Exp $ */
+/*	$OpenBSD: sig_machdep.c,v 1.4 2017/08/08 21:52:41 drahn Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -159,10 +159,10 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	tf->tf_x[0] = sig;
 	tf->tf_x[1] = (register_t)sip;
 	tf->tf_x[2] = (register_t)&fp->sf_sc;
-	tf->tf_elr = (register_t)catcher;
+	tf->tf_lr = (register_t)catcher;
 	tf->tf_sp = (register_t)fp;
 
-	tf->tf_lr = p->p_p->ps_sigcode;
+	tf->tf_elr = p->p_p->ps_sigcode;
 }
 
 /*
