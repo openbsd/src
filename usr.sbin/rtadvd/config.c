@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.61 2017/07/12 06:11:07 florian Exp $	*/
+/*	$OpenBSD: config.c,v 1.62 2017/08/08 09:03:02 jca Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -625,6 +625,7 @@ make_prefix(struct rainfo *rai, int ifindex, struct in6_addr *addr, int plen)
 	 */
 	rai->initcounter = 0;
 	ra_timer_update(rai);
+	evtimer_add(&rai->timer.ev, &rai->timer.tm);
 }
 
 /*
