@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.152 2017/08/09 17:21:34 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.153 2017/08/09 17:42:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2165,6 +2165,84 @@ _SSL_CTX_set_ecdh_auto(SSL_CTX *ctx, int state)
 	return 1;
 }
 
+static int
+_SSL_CTX_set_tlsext_servername_arg(SSL_CTX *ctx, void *arg)
+{
+	ctx->internal->tlsext_servername_arg = arg;
+	return 1;
+}
+
+static int
+_SSL_CTX_get_tlsext_ticket_keys(SSL_CTX *ctx, unsigned char *keys, int keys_len)
+{
+	if (keys == NULL)
+		return 48;
+
+	if (keys_len != 48) {
+		SSLerrorx(SSL_R_INVALID_TICKET_KEYS_LENGTH);
+		return 0;
+	}
+
+	memcpy(keys, ctx->internal->tlsext_tick_key_name, 16);
+	memcpy(keys + 16, ctx->internal->tlsext_tick_hmac_key, 16);
+	memcpy(keys + 32, ctx->internal->tlsext_tick_aes_key, 16);
+
+	return 1;
+}
+
+static int
+_SSL_CTX_set_tlsext_ticket_keys(SSL_CTX *ctx, unsigned char *keys, int keys_len)
+{
+	if (keys == NULL)
+		return 48;
+
+	if (keys_len != 48) {
+		SSLerrorx(SSL_R_INVALID_TICKET_KEYS_LENGTH);
+		return 0;
+	}
+
+	memcpy(ctx->internal->tlsext_tick_key_name, keys, 16);
+	memcpy(ctx->internal->tlsext_tick_hmac_key, keys + 16, 16);
+	memcpy(ctx->internal->tlsext_tick_aes_key, keys + 32, 16);
+
+	return 1;
+}
+
+static int
+_SSL_CTX_set_tlsext_status_arg(SSL_CTX *ctx, void *arg)
+{
+	ctx->internal->tlsext_status_arg = arg;
+	return 1;
+}
+
+static int
+_SSL_CTX_add_extra_chain_cert(SSL_CTX *ctx, X509 *cert)
+{
+	if (ctx->extra_certs == NULL) {
+		if ((ctx->extra_certs = sk_X509_new_null()) == NULL)
+			return 0;
+	}
+	if (sk_X509_push(ctx->extra_certs, cert) == 0)
+		return 0;
+
+	return 1;
+}
+
+int
+_SSL_CTX_get_extra_chain_certs(SSL_CTX *ctx, STACK_OF(X509) **certs)
+{
+	*certs = ctx->extra_certs;
+	return 1;
+}
+
+int
+_SSL_CTX_clear_extra_chain_certs(SSL_CTX *ctx)
+{
+	sk_X509_pop_free(ctx->extra_certs, X509_free);
+	ctx->extra_certs = NULL;
+	return 1;
+}
+
 int
 SSL_CTX_set1_groups(SSL_CTX *ctx, const int *groups, size_t groups_len)
 {
@@ -2204,55 +2282,25 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		return _SSL_CTX_set_ecdh_auto(ctx, larg);
 
 	case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
-		ctx->internal->tlsext_servername_arg = parg;
-		break;
+		return _SSL_CTX_set_tlsext_servername_arg(ctx, parg);
+
+	case SSL_CTRL_GET_TLSEXT_TICKET_KEYS:
+		return _SSL_CTX_get_tlsext_ticket_keys(ctx, parg, larg);
 
 	case SSL_CTRL_SET_TLSEXT_TICKET_KEYS:
-	case SSL_CTRL_GET_TLSEXT_TICKET_KEYS:
-		{
-			unsigned char *keys = parg;
-			if (!keys)
-				return 48;
-			if (larg != 48) {
-				SSLerrorx(SSL_R_INVALID_TICKET_KEYS_LENGTH);
-				return 0;
-			}
-			if (cmd == SSL_CTRL_SET_TLSEXT_TICKET_KEYS) {
-				memcpy(ctx->internal->tlsext_tick_key_name, keys, 16);
-				memcpy(ctx->internal->tlsext_tick_hmac_key,
-				    keys + 16, 16);
-				memcpy(ctx->internal->tlsext_tick_aes_key, keys + 32, 16);
-			} else {
-				memcpy(keys, ctx->internal->tlsext_tick_key_name, 16);
-				memcpy(keys + 16,
-				    ctx->internal->tlsext_tick_hmac_key, 16);
-				memcpy(keys + 32,
-				    ctx->internal->tlsext_tick_aes_key, 16);
-			}
-			return 1;
-		}
+		return _SSL_CTX_set_tlsext_ticket_keys(ctx, parg, larg);
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG:
-		ctx->internal->tlsext_status_arg = parg;
-		return 1;
+		return _SSL_CTX_set_tlsext_status_arg(ctx, parg);
 
-		/* A Thawte special :-) */
 	case SSL_CTRL_EXTRA_CHAIN_CERT:
-		if (ctx->extra_certs == NULL) {
-			if ((ctx->extra_certs = sk_X509_new_null()) == NULL)
-				return (0);
-		}
-		sk_X509_push(ctx->extra_certs,(X509 *)parg);
-		break;
+		return _SSL_CTX_add_extra_chain_cert(ctx, parg);
 
 	case SSL_CTRL_GET_EXTRA_CHAIN_CERTS:
-		*(STACK_OF(X509) **)parg = ctx->extra_certs;
-		break;
+		return _SSL_CTX_get_extra_chain_certs(ctx, parg);
 
 	case SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS:
-		sk_X509_pop_free(ctx->extra_certs, X509_free);
-		ctx->extra_certs = NULL;
-		break;
+		return _SSL_CTX_clear_extra_chain_certs(ctx);
 
 	case SSL_CTRL_SET_GROUPS:
 		return SSL_CTX_set1_groups(ctx, parg, larg);
