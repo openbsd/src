@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.62 2017/07/06 17:12:22 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.63 2017/08/09 21:27:24 claudio Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -53,7 +53,7 @@ struct tls_keypair {
 	size_t key_len;
 	char *ocsp_staple;
 	size_t ocsp_staple_len;
-	char *cert_hash;
+	char *pubkey_hash;
 };
 
 #define TLS_MIN_SESSION_TIMEOUT (4)
