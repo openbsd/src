@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcit.c,v 1.1 2017/07/30 12:59:00 visa Exp $	*/
+/*	$OpenBSD: octcit.c,v 1.2 2017/08/09 15:10:38 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -160,10 +160,11 @@ octcit_attach(struct device *parent, struct device *self, void *aux)
 	for (hash = 0; hash < HASH_SIZE; hash++)
 		SLIST_INIT(&sc->sc_handlers[hash]);
 
-	/* Disable all interrupts. */
+	/* Disable all interrupts and acknowledge any pending ones. */
 	for (intsn = 0; intsn < CIU3_NINTSN; intsn++) {
 		val = CIU3_RD_8(sc, CIU3_ISC_CTL(intsn));
 		if (ISSET(val, CIU3_ISC_CTL_IMP)) {
+			CIU3_WR_8(sc, CIU3_ISC_W1C(intsn), CIU3_ISC_CTL_RAW);
 			CIU3_WR_8(sc, CIU3_ISC_CTL(intsn), 0);
 			(void)CIU3_RD_8(sc, CIU3_ISC_CTL(intsn));
 		}
