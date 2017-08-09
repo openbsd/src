@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.59 2017/08/09 20:22:08 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.60 2017/08/09 21:23:38 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -354,6 +354,29 @@
 #define MSR_THERM_STATUS_VALID_BIT	0x80000000
 #define	MSR_THERM_STATUS_TEMP(msr)	((msr >> 16) & 0x7f)
 #define MSR_THERM2_CTL		0x19d	/* Pentium M */
+#define MSR_MISC_ENABLE		0x1a0
+/*
+ * MSR_MISC_ENABLE (0x1a0)
+ *
+ * Enable Fast Strings: enables fast REP MOVS/REP STORS (R/W)
+ * Enable TCC: Enable automatic thermal control circuit (R/W)
+ * Performance monitoring available: 1 if enabled (R/O)
+ * Branch trace storage unavailable: 1 if unsupported (R/O)
+ * Processor event based sampling unavailable: 1 if unsupported (R/O)
+ * Enhanced Intel SpeedStep technology enable: 1 to enable (R/W)
+ * Enable monitor FSM: 1 to enable MONITOR/MWAIT (R/W)
+ */
+#define MISC_ENABLE_FAST_STRINGS		(1 << 0)
+#define MISC_ENABLE_TCC				(1 << 3)
+#define MISC_ENABLE_PERF_MON_AVAILABLE		(1 << 7)
+#define MISC_ENABLE_BTS_UNAVAILABLE		(1 << 11)
+#define MISC_ENABLE_PEBS_UNAVAILABLE		(1 << 12)
+#define MISC_ENABLE_EIST_ENABLED		(1 << 16)
+#define MISC_ENABLE_ENABLE_MONITOR_FSM		(1 << 18)
+#define MISC_ENABLE_LIMIT_CPUID_MAXVAL		(1 << 22)
+#define MISC_ENABLE_xTPR_MESSAGE_DISABLE	(1 << 23)
+#define MISC_ENABLE_XD_BIT_DISABLE		(1 << 34)
+
 /*
  * for Core i Series and newer Xeons, see
  * http://www.intel.com/content/dam/www/public/us/en/
