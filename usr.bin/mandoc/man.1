@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.27 2017/05/17 23:22:29 schwarze Exp $
+.\"	$OpenBSD: man.1,v 1.28 2017/08/09 12:48:47 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)man.1	8.2 (Berkeley) 1/2/94
 .\"
-.Dd $Mdocdate: May 17 2017 $
+.Dd $Mdocdate: August 9 2017 $
 .Dt MAN 1
 .Os
 .Sh NAME
@@ -78,6 +78,18 @@ Copy the manual page to the standard output instead of using
 .Xr more 1
 to paginate it.
 This is done by default if the standard output is not a terminal device.
+.Pp
+When using
+.Fl c ,
+most terminal devices are unable to show the markup.
+To print the output of
+.Nm
+to the terminal with markup but without using a pager, pipe it to
+.Xr ul 1 .
+To remove the markup, pipe the output to
+.Xr col 1
+.Fl b
+instead.
 .It Fl f
 A synonym for
 .Xr whatis 1 .
@@ -303,18 +315,12 @@ See
 for details.
 .Sh SEE ALSO
 .Xr apropos 1 ,
-.Xr intro 1 ,
+.Xr col 1 ,
+.Xr mandoc 1 ,
+.Xr ul 1 ,
 .Xr whereis 1 ,
-.Xr intro 2 ,
-.Xr intro 3 ,
-.Xr intro 4 ,
-.Xr intro 5 ,
 .Xr man.conf 5 ,
-.Xr intro 6 ,
-.Xr intro 7 ,
-.Xr mdoc 7 ,
-.Xr intro 8 ,
-.Xr intro 9
+.Xr mdoc 7
 .Sh STANDARDS
 The
 .Nm
