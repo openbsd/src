@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.163 2017/07/11 12:51:05 florian Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.164 2017/08/09 06:21:04 florian Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -58,8 +58,6 @@
 #include <netinet/icmp6.h>
 
 int rt6_deleteroute(struct rtentry *, void *, unsigned int);
-
-extern int nd6_recalc_reachtm_interval;
 
 /*
  * Receive Router Solicitation Message - just for routers.
