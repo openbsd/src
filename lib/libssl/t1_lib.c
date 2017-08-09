@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.122 2017/07/24 17:39:43 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.123 2017/08/09 22:24:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -679,28 +679,11 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 {
 	int extdatalen = 0;
 	unsigned char *ret = p;
-	int using_ecc = 0;
+	int using_ecc;
 	size_t len;
 	CBB cbb;
 
-	/* See if we support any ECC ciphersuites. */
-	if (s->version != DTLS1_VERSION && s->version >= TLS1_VERSION) {
-		STACK_OF(SSL_CIPHER) *cipher_stack = SSL_get_ciphers(s);
-		unsigned long alg_k, alg_a;
-		int i;
-
-		for (i = 0; i < sk_SSL_CIPHER_num(cipher_stack); i++) {
-			SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
-
-			alg_k = c->algorithm_mkey;
-			alg_a = c->algorithm_auth;
-
-			if ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA)) {
-				using_ecc = 1;
-				break;
-			}
-		}
-	}
+	using_ecc = ssl_has_ecc_ciphers(s);
 
 	ret += 2;
 	if (ret >= limit)
@@ -954,16 +937,12 @@ unsigned char *
 ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 {
 	int using_ecc, extdatalen = 0;
-	unsigned long alg_a, alg_k;
 	unsigned char *ret = p;
 	int next_proto_neg_seen;
 	size_t len;
 	CBB cbb;
 
-	alg_a = S3I(s)->hs.new_cipher->algorithm_auth;
-	alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
-	using_ecc = ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA)) &&
-	    SSI(s)->tlsext_ecpointformatlist != NULL;
+	using_ecc = ssl_using_ecc_cipher(s);
 
 	ret += 2;
 	if (ret >= limit)
@@ -1809,13 +1788,9 @@ ssl_check_serverhello_tlsext(SSL *s)
 	 * suite, then if server returns an EC point formats lists extension
 	 * it must contain uncompressed.
 	 */
-	unsigned long alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
-	unsigned long alg_a = S3I(s)->hs.new_cipher->algorithm_auth;
-	if ((s->internal->tlsext_ecpointformatlist != NULL) &&
-	    (s->internal->tlsext_ecpointformatlist_length > 0) &&
-	    (SSI(s)->tlsext_ecpointformatlist != NULL) &&
-	    (SSI(s)->tlsext_ecpointformatlist_length > 0) &&
-	    ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
+	if (ssl_using_ecc_cipher(s) &&
+	    s->internal->tlsext_ecpointformatlist != NULL &&
+	    s->internal->tlsext_ecpointformatlist_length > 0) {
 		/* we are using an ECC cipher */
 		size_t i;
 		unsigned char *list;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.182 2017/07/24 17:10:31 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.183 2017/08/09 22:24:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1127,6 +1127,7 @@ DH *ssl_get_auto_dh(SSL *s);
 int ssl_cert_type(X509 *x, EVP_PKEY *pkey);
 void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher);
 STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
+int ssl_has_ecc_ciphers(SSL *s);
 int ssl_verify_alarm_type(long type);
 void ssl_load_ciphers(void);
 
@@ -1312,6 +1313,7 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 int tls1_alert_code(int code);
 int ssl_ok(SSL *s);
 
+int ssl_using_ecc_cipher(SSL *s);
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
 
 int tls1_set_groups(uint16_t **out_group_ids, size_t *out_group_ids_len,

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.161 2017/05/07 04:22:24 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.162 2017/08/09 22:24:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1259,6 +1259,33 @@ ssl_get_ciphers_by_id(SSL *s)
 	return (NULL);
 }
 
+/* See if we have any ECC cipher suites. */
+int
+ssl_has_ecc_ciphers(SSL *s)
+{
+	STACK_OF(SSL_CIPHER) *ciphers;
+	unsigned long alg_k, alg_a;
+	SSL_CIPHER *cipher;
+	int i;
+
+	if (s->version == DTLS1_VERSION)
+		return 0;
+	if ((ciphers = SSL_get_ciphers(s)) == NULL)
+		return 0;
+
+	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+		cipher = sk_SSL_CIPHER_value(ciphers, i);
+
+		alg_k = cipher->algorithm_mkey;
+		alg_a = cipher->algorithm_auth;
+
+		if ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))
+			return 1;
+	}
+
+	return 0;
+}
+
 /* The old interface to get the same thing as SSL_get_ciphers(). */
 const char *
 SSL_get_cipher_list(const SSL *s, int n)
@@ -2083,6 +2110,20 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	c->mask_k = mask_k;
 	c->mask_a = mask_a;
 	c->valid = 1;
+}
+
+/* See if this handshake is using an ECC cipher suite. */
+int
+ssl_using_ecc_cipher(SSL *s)
+{
+	unsigned long alg_a, alg_k;
+
+	alg_a = S3I(s)->hs.new_cipher->algorithm_auth;
+	alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
+
+	return SSI(s)->tlsext_ecpointformatlist != NULL &&
+	    SSI(s)->tlsext_ecpointformatlist_length > 0 &&
+	    ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA));
 }
 
 int
