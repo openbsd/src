@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.145 2017/07/15 17:40:53 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.146 2017/08/09 14:58:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1778,7 +1778,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
 	int ret = 0;
 
-	if (cmd == SSL_CTRL_SET_TMP_DH || cmd == SSL_CTRL_SET_TMP_DH_CB) {
+	if (cmd == SSL_CTRL_SET_TMP_DH || cmd == SSL_CTRL_SET_TMP_ECDH) {
 		if (!ssl_cert_inst(&s->cert)) {
 			SSLerror(s, ERR_R_MALLOC_FAILURE);
 			return (0);
@@ -1981,7 +1981,7 @@ ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 {
 	int	ret = 0;
 
-	if (cmd == SSL_CTRL_SET_TMP_DH_CB) {
+	if (cmd == SSL_CTRL_SET_TMP_DH_CB || cmd == SSL_CTRL_SET_TMP_ECDH_CB) {
 		if (!ssl_cert_inst(&s->cert)) {
 			SSLerror(s, ERR_R_MALLOC_FAILURE);
 			return (0);
