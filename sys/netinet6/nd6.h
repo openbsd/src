@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.69 2017/08/08 18:15:58 florian Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.70 2017/08/09 14:34:05 florian Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -50,10 +50,6 @@ struct nd_ifinfo {
 	u_int32_t flags;		/* Flags */
 	int recalctm;			/* BaseReacable re-calculation timer */
 	u_int8_t initialized; /* Flag to see the entry is initialized */
-	/* the following 3 members are for privacy extension for addrconf */
-	u_int8_t randomseed0[8]; /* upper 64 bits of MD5 digest */
-	u_int8_t randomseed1[8]; /* lower 64 bits (usually the EUI64 IFID) */
-	u_int8_t randomid[8];	/* current random ID */
 };
 
 #define ND6_IFF_PERFORMNUD	0x1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.214 2017/08/08 18:15:58 florian Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.215 2017/08/09 14:34:05 florian Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1000,9 +1000,6 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 	switch (cmd) {
 	case SIOCGIFINFO_IN6:
 		ndi->ndi = *ND_IFINFO(ifp);
-		memset(&ndi->ndi.randomseed0, 0, sizeof ndi->ndi.randomseed0);
-		memset(&ndi->ndi.randomseed1, 0, sizeof ndi->ndi.randomseed1);
-		memset(&ndi->ndi.randomid, 0, sizeof ndi->ndi.randomid);
 		break;
 	case SIOCSIFINFO_FLAGS:
 		ND_IFINFO(ifp)->flags = ndi->ndi.flags;
