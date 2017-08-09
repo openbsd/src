@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.151 2017/08/09 16:50:00 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.152 2017/08/09 17:21:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2107,73 +2107,101 @@ ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 	return (ret);
 }
 
+static int
+_SSL_CTX_set_tmp_dh(SSL_CTX *ctx, DH *dh)
+{
+	DH *dh_tmp;
+
+	if ((dh_tmp = DHparams_dup(dh)) == NULL) {
+		SSLerrorx(ERR_R_DH_LIB);
+		return 0;
+	}
+
+	DH_free(ctx->internal->cert->dh_tmp);
+	ctx->internal->cert->dh_tmp = dh_tmp;
+
+	return 1;
+}
+
+static int
+_SSL_CTX_set_dh_auto(SSL_CTX *ctx, int state)
+{
+	ctx->internal->cert->dh_tmp_auto = state;
+	return 1;
+}
+
+static int
+_SSL_CTX_set_tmp_ecdh(SSL_CTX *ctx, EC_KEY *ecdh)
+{
+	EC_KEY *ecdh_tmp;
+
+	if (ecdh == NULL) {
+		SSLerrorx(ERR_R_ECDH_LIB);
+		return 0;
+	}
+
+	if ((ecdh_tmp = EC_KEY_dup(ecdh)) == NULL) {
+		SSLerrorx(ERR_R_EC_LIB);
+		return 0;
+	}
+	if (!(ctx->internal->options & SSL_OP_SINGLE_ECDH_USE)) {
+		if (!EC_KEY_generate_key(ecdh_tmp)) {
+			EC_KEY_free(ecdh_tmp);
+			SSLerrorx(ERR_R_ECDH_LIB);
+			return 0;
+		}
+	}
+
+	EC_KEY_free(ctx->internal->cert->ecdh_tmp);
+	ctx->internal->cert->ecdh_tmp = ecdh_tmp;
+
+	return 1;
+}
+
+static int
+_SSL_CTX_set_ecdh_auto(SSL_CTX *ctx, int state)
+{
+	ctx->internal->cert->ecdh_tmp_auto = state;
+	return 1;
+}
+
+int
+SSL_CTX_set1_groups(SSL_CTX *ctx, const int *groups, size_t groups_len)
+{
+	return tls1_set_groups(&ctx->internal->tlsext_supportedgroups,
+	    &ctx->internal->tlsext_supportedgroups_length, groups, groups_len);
+}
+
+int
+SSL_CTX_set1_groups_list(SSL_CTX *ctx, const char *groups)
+{
+	return tls1_set_groups_list(&ctx->internal->tlsext_supportedgroups,
+	    &ctx->internal->tlsext_supportedgroups_length, groups);
+}
+
 long
 ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
-	CERT	*cert;
-
-	cert = ctx->internal->cert;
-
 	switch (cmd) {
-	case SSL_CTRL_NEED_TMP_RSA:
-		return (0);
-	case SSL_CTRL_SET_TMP_RSA:
-	case SSL_CTRL_SET_TMP_RSA_CB:
-		SSLerrorx(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return (0);
 	case SSL_CTRL_SET_TMP_DH:
-		{
-			DH *new = NULL, *dh;
-
-			dh = (DH *)parg;
-			if ((new = DHparams_dup(dh)) == NULL) {
-				SSLerrorx(ERR_R_DH_LIB);
-				return 0;
-			}
-			DH_free(cert->dh_tmp);
-			cert->dh_tmp = new;
-			return 1;
-		}
-		/*break; */
+		return _SSL_CTX_set_tmp_dh(ctx, parg);
 
 	case SSL_CTRL_SET_TMP_DH_CB:
 		SSLerrorx(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return (0);
+		return 0;
 
 	case SSL_CTRL_SET_DH_AUTO:
-		ctx->internal->cert->dh_tmp_auto = larg;
-		return (1);
+		return _SSL_CTX_set_dh_auto(ctx, larg);
 
 	case SSL_CTRL_SET_TMP_ECDH:
-		{
-			EC_KEY *ecdh = NULL;
-
-			if (parg == NULL) {
-				SSLerrorx(ERR_R_ECDH_LIB);
-				return 0;
-			}
-			ecdh = EC_KEY_dup((EC_KEY *)parg);
-			if (ecdh == NULL) {
-				SSLerrorx(ERR_R_EC_LIB);
-				return 0;
-			}
-			if (!(ctx->internal->options & SSL_OP_SINGLE_ECDH_USE)) {
-				if (!EC_KEY_generate_key(ecdh)) {
-					EC_KEY_free(ecdh);
-					SSLerrorx(ERR_R_ECDH_LIB);
-					return 0;
-				}
-			}
-
-			EC_KEY_free(cert->ecdh_tmp);
-			cert->ecdh_tmp = ecdh;
-			return 1;
-		}
-		/* break; */
+		return _SSL_CTX_set_tmp_ecdh(ctx, parg);
 
 	case SSL_CTRL_SET_TMP_ECDH_CB:
 		SSLerrorx(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return (0);
+		return 0;
+
+	case SSL_CTRL_SET_ECDH_AUTO:
+		return _SSL_CTX_set_ecdh_auto(ctx, larg);
 
 	case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
 		ctx->internal->tlsext_servername_arg = parg;
@@ -2206,10 +2234,6 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG:
 		ctx->internal->tlsext_status_arg = parg;
-		return 1;
-
-	case SSL_CTRL_SET_ECDH_AUTO:
-		ctx->internal->cert->ecdh_tmp_auto = larg;
 		return 1;
 
 		/* A Thawte special :-) */
@@ -2246,24 +2270,21 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 			return (0);
 		return SSL_CTX_set_max_proto_version(ctx, larg);
 
+	/*
+	 * Legacy controls that should eventually be removed.
+	 */
+	case SSL_CTRL_NEED_TMP_RSA:
+		return 0;
+
+	case SSL_CTRL_SET_TMP_RSA:
+	case SSL_CTRL_SET_TMP_RSA_CB:
+		SSLerrorx(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+
 	default:
 		return (0);
 	}
 	return (1);
-}
-
-int
-SSL_CTX_set1_groups(SSL_CTX *ctx, const int *groups, size_t groups_len)
-{
-	return tls1_set_groups(&ctx->internal->tlsext_supportedgroups,
-	    &ctx->internal->tlsext_supportedgroups_length, groups, groups_len);
-}
-
-int
-SSL_CTX_set1_groups_list(SSL_CTX *ctx, const char *groups)
-{
-	return tls1_set_groups_list(&ctx->internal->tlsext_supportedgroups,
-	    &ctx->internal->tlsext_supportedgroups_length, groups);
 }
 
 long
