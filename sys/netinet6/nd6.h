@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.71 2017/08/09 14:35:02 florian Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.72 2017/08/09 14:36:00 florian Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -47,12 +47,9 @@ struct nd_ifinfo {
 	u_int32_t basereachable;	/* BaseReachableTime */
 	u_int32_t reachable;		/* Reachable Time */
 	u_int32_t retrans;		/* Retrans Timer */
-	u_int32_t flags;		/* Flags */
 	int recalctm;			/* BaseReacable re-calculation timer */
 	u_int8_t initialized; /* Flag to see the entry is initialized */
 };
-
-#define ND6_IFF_PERFORMNUD	0x1
 
 struct in6_nbrinfo {
 	char ifname[IFNAMSIZ];	/* if name, e.g. "en0" */

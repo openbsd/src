@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.44 2017/08/09 14:35:02 florian Exp $
+.\"	$OpenBSD: ndp.8,v 1.45 2017/08/09 14:36:00 florian Exp $
 .\"	$KAME: ndp.8,v 1.28 2002/07/17 08:46:33 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
 .Op Fl A Ar wait
 .Op Fl d Ar hostname
 .Op Fl f Ar filename
-.Op Fl i Ar interface Op Ar flag ...
+.Op Fl i Ar interface
 .Op Fl s Ar nodename ether_addr Oo Cm temp Oc Op Cm proxy
 .Op Fl V Ar rdomain
 .Op Ar hostname
@@ -119,28 +119,8 @@ to be inserted in the neighbor cache.
 See the
 .Fl s
 option for a description of the file format.
-.It Fl i Ar interface Op Ar flag ...
+.It Fl i Ar interface
 View ND information for the specified interface.
-If additional arguments are given,
-.Nm
-sets or clears the specified flags for the interface.
-Each flag should be separated by whitespace or tab characters.
-Possible flags are as follows.
-All of the flags can begin with the
-special character
-.Ql - ,
-which means the flag should be cleared.
-Note that
-.Fl -
-would be needed before
-.Fl foo
-in this case.
-.Bl -tag -width Ds
-.It Ic nud
-Turn on or off NUD (Neighbor Unreachability Detection) on the
-interface.
-NUD is usually turned on by default.
-.El
 .It Fl n
 Do not try to resolve numeric addresses to hostnames.
 .It Xo
