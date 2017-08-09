@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.147 2017/08/09 15:02:53 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.148 2017/08/09 15:25:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1773,6 +1773,49 @@ ssl_ctrl_get_server_tmp_key(SSL *s, EVP_PKEY **pkey_tmp)
 	return (ret);
 }
 
+static int
+_SSL_session_reused(SSL *s)
+{
+	return s->internal->hit;
+}
+
+static int
+_SSL_num_renegotiations(SSL *s)
+{
+	return S3I(s)->num_renegotiations;
+}
+
+static int
+_SSL_clear_num_renegotiations(SSL *s)
+{
+	int renegs;
+
+	renegs = S3I(s)->num_renegotiations;
+	S3I(s)->num_renegotiations = 0;
+
+	return renegs;
+}
+
+static int
+_SSL_total_renegotiations(SSL *s)
+{
+	return S3I(s)->total_renegotiations;
+}
+
+int
+SSL_set1_groups(SSL *s, const int *groups, size_t groups_len)
+{
+	return tls1_set_groups(&s->internal->tlsext_supportedgroups,
+	    &s->internal->tlsext_supportedgroups_length, groups, groups_len);
+}
+
+int
+SSL_set1_groups_list(SSL *s, const char *groups)
+{
+	return tls1_set_groups_list(&s->internal->tlsext_supportedgroups,
+	    &s->internal->tlsext_supportedgroups_length, groups);
+}
+
 long
 ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
@@ -1787,26 +1830,21 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 	switch (cmd) {
 	case SSL_CTRL_GET_SESSION_REUSED:
-		ret = s->internal->hit;
-		break;
-	case SSL_CTRL_GET_CLIENT_CERT_REQUEST:
-		break;
+		return _SSL_session_reused(s);
+
 	case SSL_CTRL_GET_NUM_RENEGOTIATIONS:
-		ret = S3I(s)->num_renegotiations;
-		break;
+		return _SSL_num_renegotiations(s);
+
 	case SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS:
-		ret = S3I(s)->num_renegotiations;
-		S3I(s)->num_renegotiations = 0;
-		break;
+		return _SSL_clear_num_renegotiations(s);
+
 	case SSL_CTRL_GET_TOTAL_RENEGOTIATIONS:
-		ret = S3I(s)->total_renegotiations;
-		break;
-	case SSL_CTRL_GET_FLAGS:
-		ret = (int)(s->s3->flags);
-		break;
+		return _SSL_total_renegotiations(s);
+
 	case SSL_CTRL_NEED_TMP_RSA:
 		ret = 0;
 		break;
+
 	case SSL_CTRL_SET_TMP_RSA:
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -1954,25 +1992,21 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			return (0);
 		return SSL_set_max_proto_version(s, larg);
 
+	/*
+	 * Legacy controls that should be removed.
+	 */
+	case SSL_CTRL_GET_CLIENT_CERT_REQUEST:
+		break;
+
+	case SSL_CTRL_GET_FLAGS:
+		ret = (int)(s->s3->flags);
+		break;
+
 	default:
 		break;
 	}
 
 	return (ret);
-}
-
-int
-SSL_set1_groups(SSL *s, const int *groups, size_t groups_len)
-{
-	return tls1_set_groups(&s->internal->tlsext_supportedgroups,
-	    &s->internal->tlsext_supportedgroups_length, groups, groups_len);
-}
-
-int
-SSL_set1_groups_list(SSL *s, const char *groups)
-{
-	return tls1_set_groups_list(&s->internal->tlsext_supportedgroups,
-	    &s->internal->tlsext_supportedgroups_length, groups);
 }
 
 long
