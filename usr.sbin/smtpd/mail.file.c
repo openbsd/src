@@ -34,7 +34,10 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
-	
+
+	if (! geteuid())
+		errx(1, "mail.file: may not be executed as root");
+
 	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {
 		default:

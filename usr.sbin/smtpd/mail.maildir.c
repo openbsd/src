@@ -37,7 +37,10 @@ main(int argc, char *argv[])
 {
 	int ch;
 	char *dirname = NULL;
-	
+
+	if (! geteuid())
+		errx(1, "mail.maildir: may not be executed as root");
+
 	while ((ch = getopt(argc, argv, "d:")) != -1) {
 		switch (ch) {
 		case 'd':

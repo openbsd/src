@@ -57,6 +57,9 @@ main(int argc, char *argv[])
 	const char *destination = "inet:localhost";
 	struct session	session;
 
+	if (! geteuid())
+		errx(1, "mail.lmtp: may not be executed as root");
+
 	session.lhlo = "localhost";
 	session.mailfrom = NULL;
 
