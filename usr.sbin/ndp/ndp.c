@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.83 2017/07/13 11:28:02 florian Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.84 2017/08/09 14:35:02 florian Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -917,7 +917,6 @@ ifinfo(char *ifname, int argc, char **argv)
 		}\
 	} while (0)
 		SETFLAG("nud", ND6_IFF_PERFORMNUD);
-		SETFLAG("accept_rtadv", ND6_IFF_ACCEPT_RTADV);
 
 		nd.ndi.flags = newflags;
 		if (ioctl(s, SIOCSIFINFO_FLAGS, (caddr_t)&nd) < 0) {
@@ -940,9 +939,7 @@ ifinfo(char *ifname, int argc, char **argv)
 	if (nd.ndi.flags) {
 		printf("\nFlags: ");
 		if ((nd.ndi.flags & ND6_IFF_PERFORMNUD))
-			printf("nud ");
-		if ((nd.ndi.flags & ND6_IFF_ACCEPT_RTADV))
-			printf("accept_rtadv ");
+			printf("nud");
 	}
 	putc('\n', stdout);
 

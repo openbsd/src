@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.70 2017/08/09 14:34:05 florian Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.71 2017/08/09 14:35:02 florian Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -53,7 +53,6 @@ struct nd_ifinfo {
 };
 
 #define ND6_IFF_PERFORMNUD	0x1
-#define ND6_IFF_ACCEPT_RTADV	0x2
 
 struct in6_nbrinfo {
 	char ifname[IFNAMSIZ];	/* if name, e.g. "en0" */
