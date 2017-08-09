@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.150 2017/08/09 16:47:18 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.151 2017/08/09 16:50:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1971,8 +1971,6 @@ SSL_set1_groups_list(SSL *s, const char *groups)
 long
 ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
-	int ret = 0;
-
 	switch (cmd) {
 	case SSL_CTRL_GET_SESSION_REUSED:
 		return _SSL_session_reused(s);
@@ -2001,7 +1999,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_SET_TMP_ECDH_CB:
 		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return (0);
+		return 0;
 
 	case SSL_CTRL_SET_ECDH_AUTO:
 		return _SSL_set_ecdh_auto(s, larg);
@@ -2044,43 +2042,37 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		return SSL_set1_groups_list(s, parg);
 
 	case SSL_CTRL_GET_SERVER_TMP_KEY:
-		ret = ssl_ctrl_get_server_tmp_key(s, parg);
-		break;
+		return ssl_ctrl_get_server_tmp_key(s, parg);
 
 	case SSL_CTRL_SET_MIN_PROTO_VERSION:
 		if (larg < 0 || larg > UINT16_MAX)
-			return (0);
+			return 0;
 		return SSL_set_min_proto_version(s, larg);
 
 	case SSL_CTRL_SET_MAX_PROTO_VERSION:
 		if (larg < 0 || larg > UINT16_MAX)
-			return (0);
+			return 0;
 		return SSL_set_max_proto_version(s, larg);
 
 	/*
 	 * Legacy controls that should eventually be removed.
 	 */
 	case SSL_CTRL_GET_CLIENT_CERT_REQUEST:
-		break;
+		return 0;
 
 	case SSL_CTRL_GET_FLAGS:
-		ret = (int)(s->s3->flags);
-		break;
+		return (int)(s->s3->flags);
 
 	case SSL_CTRL_NEED_TMP_RSA:
-		ret = 0;
-		break;
+		return 0;
 
 	case SSL_CTRL_SET_TMP_RSA:
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		break;
-
-	default:
-		break;
+		return 0;
 	}
 
-	return (ret);
+	return 0;
 }
 
 long
