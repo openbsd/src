@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.18 2017/07/06 06:19:15 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.19 2017/08/09 21:42:44 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -345,9 +345,23 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 				vei->vei.vei_data = 0;
 		}
 
-		/* XXX - discard writes to reassign IRQs / pins */
-		if (o != 0x3c && o != 0x30 && o != 0x38)
-			get_input_data(vei, &pci.pci_devices[d].pd_cfg_space[o / 4]);
+		/*
+		 * Discard writes to "option rom base address" as none of our
+		 * emulated devices have PCI option roms.
+		 */
+		if (o != PCI_EXROMADDR_0)
+			get_input_data(vei,
+			    &pci.pci_devices[d].pd_cfg_space[o / 4]);
+
+		if (o == PCI_INTLINE) {
+			/* Guest reassigned IRQ */
+
+			pci.pci_devices[d].pd_irq =
+			    pci.pci_devices[d].pd_cfg_space[o / 4];
+
+			log_debug("%s: reassigned pci irq for device %d "
+			    "to 0x%x", __func__, d, pci.pci_devices[d].pd_irq);
+                }
 
 		/* IOBAR registers must have bit 0 set */
 		if (o == 0x10)
