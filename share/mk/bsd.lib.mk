@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.89 2017/07/25 13:32:14 robert Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.90 2017/08/09 06:15:29 robert Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -213,8 +213,8 @@ ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 .if defined(SYSPATCH_PATH)
 	${CC} -shared ${PICFLAG} -o ${.TARGET} \
 	    `readelf -Ws ${SYSPATCH_PATH}${LIBDIR}/${.TARGET} | \
-	    awk '/ FILE/{gsub(/\..*/, ".so", $$NF); sub(".*/", "", $$NF); print $$NF}' | \
-	    egrep -v "(cmll-586|libgcc2|unwind-dw2)" | awk '!x[$$0]++'` ${LDADD}
+	    awk '/ FILE/{sub(".*/", "", $$NF); gsub(/\..*/, ".so", $$NF); print $$NF}' | \
+	    egrep -v "(cmll-586|libgcc2|unwind-dw2|mul(d|s|x)c3)" | awk '!x[$$0]++'` ${LDADD}
 .else
 	${CC} -shared ${PICFLAG} -o ${.TARGET} \
 	    `echo ${SOBJS} | tr ' ' '\n' | sort -R` ${LDADD}
