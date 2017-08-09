@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.159 2017/08/09 16:42:24 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.160 2017/08/09 17:22:18 pd Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5210,7 +5210,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 
 	switch (*rax) {
 	case 0x00:	/* Max level and vendor ID */
-		*rax = 0x0d; /* cpuid_level */
+		*rax = cpuid_level;
 		*rbx = *((uint32_t *)&cpu_vendor);
 		*rdx = *((uint32_t *)&cpu_vendor + 1);
 		*rcx = *((uint32_t *)&cpu_vendor + 2);
@@ -5236,7 +5236,6 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		 *  direct cache access (CPUIDECX_DCA)
 		 *  x2APIC (CPUIDECX_X2APIC)
 		 *  apic deadline (CPUIDECX_DEADLINE)
-		 *  timestamp (CPUID_TSC)
 		 *  apic (CPUID_APIC)
 		 *  psn (CPUID_PSN)
 		 *  self snoop (CPUID_SS)
@@ -5253,10 +5252,9 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		    CPUIDECX_SDBG | CPUIDECX_XTPR | CPUIDECX_PCID |
 		    CPUIDECX_DCA | CPUIDECX_X2APIC | CPUIDECX_DEADLINE);
 		*rdx = curcpu()->ci_feature_flags &
-		    ~(CPUID_ACPI | CPUID_TM | CPUID_TSC |
-		      CPUID_HTT | CPUID_DS | CPUID_APIC |
-		      CPUID_PSN | CPUID_SS | CPUID_PBE |
-		      CPUID_MTRR);
+		    ~(CPUID_ACPI | CPUID_TM | CPUID_HTT |
+		      CPUID_DS | CPUID_APIC | CPUID_PSN |
+		      CPUID_SS | CPUID_PBE | CPUID_MTRR);
 		break;
 	case 0x02:	/* Cache and TLB information */
 		*rax = eax;
@@ -5409,13 +5407,8 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rcx = 0;
 		*rdx = 0;
 		break;
-	case 0x15:	/* TSC / Core Crystal Clock info (not supported) */
-		DPRINTF("%s: function 0x15 (TSC / CCC info) not supported\n",
-		    __func__);
-		*rax = 0;
-		*rbx = 0;
-		*rcx = 0;
-		*rdx = 0;
+	case 0x15:
+		CPUID(0x15, *rax, *rbx, *rcx, *rdx);
 		break;
 	case 0x16:	/* Processor frequency info (not supported) */
 		DPRINTF("%s: function 0x16 (frequency info) not supported\n",
@@ -5442,7 +5435,6 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rbx = 0;	/* Reserved */
 		*rcx = curcpu()->ci_efeature_ecx;
 		*rdx = curcpu()->ci_feature_eflags;
-		*rdx &= ~CPUID_RDTSCP;
 		break;
 	case 0x80000002:	/* Brand string */
 		*rax = curcpu()->ci_brand[0];
@@ -5475,10 +5467,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = curcpu()->ci_extcacheinfo[3];
 		break;
 	case 0x80000007:	/* apmi */
-		*rax = 0;	/* Reserved */
-		*rbx = 0;	/* Reserved */
-		*rcx = 0;	/* Reserved */
-		*rdx = 0;	/* unsupported ITSC */
+		CPUID(0x80000007, *rax, *rbx, *rcx, *rdx);
 		break;
 	case 0x80000008:	/* Phys bits info and topology (AMD) */
 		DPRINTF("%s: function 0x80000008 (phys bits info) not "
