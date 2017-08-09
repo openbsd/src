@@ -1,4 +1,4 @@
-/* $OpenBSD: support.S,v 1.5 2017/01/25 10:23:17 patrick Exp $ */
+/* $OpenBSD: support.S,v 1.6 2017/08/09 03:06:55 jsg Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * Copyright (c) 2014-2015 The FreeBSD Foundation
@@ -36,6 +36,7 @@ __FBSDID("$FreeBSD: head/sys/arm64/arm64/support.S 297615 2016-04-06 14:08:10Z a
 #endif
 
 #include <machine/setjmp.h>
+#include <machine/param.h>
 #include <machine/vmparam.h>
 
 #include "assym.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.2 2017/05/27 09:54:43 kettenis Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.3 2017/08/09 03:06:55 jsg Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*-
@@ -77,13 +77,6 @@
  * Size of User Raw I/O map
  */
 #define	USRIOSIZE 	300
-
-/*
- * Page sizes
- */
-#define	PAGE_SHIFT	12
-#define	PAGE_SIZE	(1LL << PAGE_SHIFT)
-#define	PAGE_MASK	((vaddr_t)PAGE_SIZE - 1)
 
 /*
  * Kernel base

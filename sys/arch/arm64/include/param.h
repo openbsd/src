@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: param.h,v 1.2 2017/08/09 03:06:55 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,8 +46,8 @@
 #define	MID_MACHINE	MID_ARM64
 
 #define	PAGE_SHIFT	12
-#define	PAGE_SIZE	(1LL << PAGE_SHIFT)
-#define	PAGE_MASK	((vaddr_t)PAGE_SIZE - 1)
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #define	KERNBASE	0xffffff8000000000ULL	/* start of kernel virtual space */
 
