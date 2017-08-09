@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.158 2017/08/05 05:49:37 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.159 2017/08/09 16:42:24 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5266,7 +5266,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		break;
 	/*
 	 * XXX "CPUID leaves above 02H and below 8000000H are only visible when
-	 * IA32_MISC_ENABLE MSR has bit 22 set to its default value 0
+	 * IA32_MISC_ENABLE MSR has bit 22 set to its default value 0"
 	 */
 	case 0x03:	/* Processor serial number (not supported) */
 		DPRINTF("%s: function 0x03 (processor serial number) not "
