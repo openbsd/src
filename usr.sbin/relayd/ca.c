@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.27 2017/07/28 13:58:52 bluhm Exp $	*/
+/*	$OpenBSD: ca.c,v 1.28 2017/08/09 21:31:16 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -90,8 +90,8 @@ hash_x509(X509 *cert, char *hash, size_t hashlen)
 	char			digest[EVP_MAX_MD_SIZE];
 	int		 	dlen, i;
 
-	if (X509_digest(cert, EVP_sha256(), digest, &dlen) != 1)
-		fatalx("%s: X509_digest failed", __func__);
+	if (X509_pubkey_digest(cert, EVP_sha256(), digest, &dlen) != 1)
+		fatalx("%s: X509_pubkey_digest failed", __func__);
 
 	if (hashlen < 2 * dlen + sizeof("SHA256:"))
 		fatalx("%s: hash buffer to small", __func__);
