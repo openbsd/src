@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.85 2017/08/09 14:36:00 florian Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.86 2017/08/09 17:35:38 jmc Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -762,10 +762,9 @@ void
 usage(void)
 {
 	printf("usage: ndp [-acnt] ");
-	printf("[-A wait] [-d hostname] [-f filename]\n");
-	printf("\t[-i interface] ");
-	printf("[-s nodename ether_addr [temp] [proxy]]\n");
-	printf("\t[-V rdomain] [hostname]\n");
+	printf("[-A wait] [-d hostname] [-f filename] [-i interface]\n");
+	printf("\t[-s nodename ether_addr [temp] [proxy]] ");
+	printf("[-V rdomain] [hostname]\n");
 	exit(1);
 }
 
