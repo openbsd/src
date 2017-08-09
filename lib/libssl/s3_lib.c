@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.146 2017/08/09 14:58:11 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.147 2017/08/09 15:02:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1861,12 +1861,11 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			ret = 1;
 		}
 		break;
+
 	case SSL_CTRL_SET_TMP_ECDH_CB:
-		{
-			SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-			return (ret);
-		}
-		break;
+		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return (0);
+
 	case SSL_CTRL_SET_TLSEXT_HOSTNAME:
 		if (larg == TLSEXT_NAMETYPE_host_name) {
 			free(s->tlsext_hostname);
@@ -2071,15 +2070,15 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 			return 1;
 		}
 		/* break; */
+
 	case SSL_CTRL_SET_TMP_ECDH_CB:
-		{
-			SSLerrorx(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-			return (0);
-		}
-		break;
+		SSLerrorx(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return (0);
+
 	case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
 		ctx->internal->tlsext_servername_arg = parg;
 		break;
+
 	case SSL_CTRL_SET_TLSEXT_TICKET_KEYS:
 	case SSL_CTRL_GET_TLSEXT_TICKET_KEYS:
 		{
@@ -2178,12 +2177,15 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		SSLerrorx(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return (0);
+
 	case SSL_CTRL_SET_TMP_DH_CB:
 		cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
 		break;
+
 	case SSL_CTRL_SET_TMP_ECDH_CB:
 		cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
 		break;
+
 	case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
 		ctx->internal->tlsext_servername_callback =
 		    (int (*)(SSL *, int *, void *))fp;
