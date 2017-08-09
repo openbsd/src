@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.61 2017/01/24 09:03:05 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.62 2017/08/09 20:23:55 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -320,19 +320,6 @@
 #define P6MSR_CTR0		0x0c1
 #define P6MSR_CTR1		0x0c2
 #define MSR_FSB_FREQ		0x0cd	/* Core Duo/Solo only */
-/*
- * for Core i Series and newer Xeons, see
- * http://www.intel.com/content/dam/www/public/us/en/
- * documents/white-papers/cpu-monitoring-dts-peci-paper.pdf
- */
-#define MSR_TEMPERATURE_TARGET	0x1a2	/* Core i Series, Newer Xeons */
-#define MSR_TEMPERATURE_TARGET_TJMAX(r) (((r) >> 16) & 0xff)
-/*
- * not documented anywhere, see intelcore_update_sensor()
- * only available Core Duo and Core Solo Processors
- */
-#define MSR_TEMPERATURE_TARGET_UNDOCUMENTED	0x0ee
-#define MSR_TEMPERATURE_TARGET_LOW_BIT_UNDOCUMENTED	0x40000000
 #define MSR_MTRRcap		0x0fe
 #define MTRRcap_FIXED		0x100	/* bit 8 - fixed MTRRs supported */
 #define MTRRcap_WC		0x400	/* bit 10 - WC type supported */
@@ -361,6 +348,19 @@
 #define MSR_THERM_STATUS_TEMP(msr)	((msr >> 16) & 0x7f)
 #define MSR_THERM2_CTL		0x19d	/* Pentium M */
 #define MSR_MISC_ENABLE		0x1a0
+/*
+ * for Core i Series and newer Xeons, see
+ * http://www.intel.com/content/dam/www/public/us/en/
+ * documents/white-papers/cpu-monitoring-dts-peci-paper.pdf
+ */
+#define MSR_TEMPERATURE_TARGET	0x1a2	/* Core i Series, Newer Xeons */
+#define MSR_TEMPERATURE_TARGET_TJMAX(r) (((r) >> 16) & 0xff)
+/*
+ * not documented anywhere, see intelcore_update_sensor()
+ * only available Core Duo and Core Solo Processors
+ */
+#define MSR_TEMPERATURE_TARGET_UNDOCUMENTED	0x0ee
+#define MSR_TEMPERATURE_TARGET_LOW_BIT_UNDOCUMENTED	0x40000000
 #define MSR_DEBUGCTLMSR		0x1d9
 #define MSR_LASTBRANCHFROMIP	0x1db
 #define MSR_LASTBRANCHTOIP	0x1dc
