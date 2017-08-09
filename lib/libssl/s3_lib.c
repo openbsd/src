@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.148 2017/08/09 15:25:27 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.149 2017/08/09 15:52:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1802,6 +1802,78 @@ _SSL_total_renegotiations(SSL *s)
 	return S3I(s)->total_renegotiations;
 }
 
+static int
+_SSL_set_tmp_dh(SSL *s, DH *dh)
+{
+	DH *dh_tmp;
+
+	if (!ssl_cert_inst(&s->cert)) {
+		SSLerror(s, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+
+	if (dh == NULL) {
+		SSLerror(s, ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+	}
+
+	if ((dh_tmp = DHparams_dup(dh)) == NULL) {
+		SSLerror(s, ERR_R_DH_LIB);
+		return 0;
+	}
+
+	DH_free(s->cert->dh_tmp);
+	s->cert->dh_tmp = dh_tmp;
+
+	return 1;
+}
+
+static int
+_SSL_set_dh_auto(SSL *s, int state)
+{
+	s->cert->dh_tmp_auto = state;
+	return 1;
+}
+
+static int
+_SSL_set_tmp_ecdh(SSL *s, EC_KEY *ecdh)
+{
+	if (!ssl_cert_inst(&s->cert)) {
+		SSLerror(s, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+
+	if (ecdh == NULL) {
+		SSLerror(s, ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+	}
+
+	if (!EC_KEY_up_ref(ecdh)) {
+		SSLerror(s, ERR_R_ECDH_LIB);
+		return 0;
+	}
+
+	if (!(s->internal->options & SSL_OP_SINGLE_ECDH_USE)) {
+		if (!EC_KEY_generate_key(ecdh)) {
+			EC_KEY_free(ecdh);
+			SSLerror(s, ERR_R_ECDH_LIB);
+			return 0;
+		}
+	}
+
+	EC_KEY_free(s->cert->ecdh_tmp);
+	s->cert->ecdh_tmp = ecdh;
+
+	return 1;
+}
+
+static int
+_SSL_set_ecdh_auto(SSL *s, int state)
+{
+	s->cert->ecdh_tmp_auto = state;
+	return 1;
+}
+
 int
 SSL_set1_groups(SSL *s, const int *groups, size_t groups_len)
 {
@@ -1821,13 +1893,6 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
 	int ret = 0;
 
-	if (cmd == SSL_CTRL_SET_TMP_DH || cmd == SSL_CTRL_SET_TMP_ECDH) {
-		if (!ssl_cert_inst(&s->cert)) {
-			SSLerror(s, ERR_R_MALLOC_FAILURE);
-			return (0);
-		}
-	}
-
 	switch (cmd) {
 	case SSL_CTRL_GET_SESSION_REUSED:
 		return _SSL_session_reused(s);
@@ -1841,68 +1906,25 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 	case SSL_CTRL_GET_TOTAL_RENEGOTIATIONS:
 		return _SSL_total_renegotiations(s);
 
-	case SSL_CTRL_NEED_TMP_RSA:
-		ret = 0;
-		break;
-
-	case SSL_CTRL_SET_TMP_RSA:
-	case SSL_CTRL_SET_TMP_RSA_CB:
-		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		break;
 	case SSL_CTRL_SET_TMP_DH:
-		{
-			DH *dh = (DH *)parg;
-			if (dh == NULL) {
-				SSLerror(s, ERR_R_PASSED_NULL_PARAMETER);
-				return (ret);
-			}
-			if ((dh = DHparams_dup(dh)) == NULL) {
-				SSLerror(s, ERR_R_DH_LIB);
-				return (ret);
-			}
-			DH_free(s->cert->dh_tmp);
-			s->cert->dh_tmp = dh;
-			ret = 1;
-		}
-		break;
+		return _SSL_set_tmp_dh(s, (DH *)parg);
 
 	case SSL_CTRL_SET_TMP_DH_CB:
 		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return (ret);
+		return 0;
 
 	case SSL_CTRL_SET_DH_AUTO:
-		s->cert->dh_tmp_auto = larg;
-		return 1;
+		return _SSL_set_dh_auto(s, larg);
 
 	case SSL_CTRL_SET_TMP_ECDH:
-		{
-			EC_KEY *ecdh = NULL;
-
-			if (parg == NULL) {
-				SSLerror(s, ERR_R_PASSED_NULL_PARAMETER);
-				return (ret);
-			}
-			if (!EC_KEY_up_ref((EC_KEY *)parg)) {
-				SSLerror(s, ERR_R_ECDH_LIB);
-				return (ret);
-			}
-			ecdh = (EC_KEY *)parg;
-			if (!(s->internal->options & SSL_OP_SINGLE_ECDH_USE)) {
-				if (!EC_KEY_generate_key(ecdh)) {
-					EC_KEY_free(ecdh);
-					SSLerror(s, ERR_R_ECDH_LIB);
-					return (ret);
-				}
-			}
-			EC_KEY_free(s->cert->ecdh_tmp);
-			s->cert->ecdh_tmp = ecdh;
-			ret = 1;
-		}
-		break;
+		return _SSL_set_tmp_ecdh(s, (EC_KEY *)parg);
 
 	case SSL_CTRL_SET_TMP_ECDH_CB:
 		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return (0);
+
+	case SSL_CTRL_SET_ECDH_AUTO:
+		return _SSL_set_ecdh_auto(s, larg);
 
 	case SSL_CTRL_SET_TLSEXT_HOSTNAME:
 		if (larg == TLSEXT_NAMETYPE_host_name) {
@@ -1926,6 +1948,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			return 0;
 		}
 		break;
+
 	case SSL_CTRL_SET_TLSEXT_DEBUG_ARG:
 		s->internal->tlsext_debug_arg = parg;
 		ret = 1;
@@ -1967,11 +1990,6 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		ret = 1;
 		break;
 
-	case SSL_CTRL_SET_ECDH_AUTO:
-		s->cert->ecdh_tmp_auto = larg;
-		ret = 1;
-		break;
-
 	case SSL_CTRL_SET_GROUPS:
 		return SSL_set1_groups(s, parg, larg);
 
@@ -1993,13 +2011,22 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		return SSL_set_max_proto_version(s, larg);
 
 	/*
-	 * Legacy controls that should be removed.
+	 * Legacy controls that should eventually be removed.
 	 */
 	case SSL_CTRL_GET_CLIENT_CERT_REQUEST:
 		break;
 
 	case SSL_CTRL_GET_FLAGS:
 		ret = (int)(s->s3->flags);
+		break;
+
+	case SSL_CTRL_NEED_TMP_RSA:
+		ret = 0;
+		break;
+
+	case SSL_CTRL_SET_TMP_RSA:
+	case SSL_CTRL_SET_TMP_RSA_CB:
+		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		break;
 
 	default:
