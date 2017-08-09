@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.120 2017/07/24 15:07:39 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.121 2017/08/09 14:22:58 mpi Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -262,7 +262,9 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		mopt->m_len = sizeof(int);
 		ip = mtod(mopt, int *);
 		*ip = IP_PORTRANGE_LOW;
+		s = solock(so);
 		error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
+		sounlock(s);
 		if (error)
 			goto bad;
 
@@ -282,7 +284,9 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		mopt->m_len = sizeof(int);
 		ip = mtod(mopt, int *);
 		*ip = IP_PORTRANGE_DEFAULT;
+		s = solock(so);
 		error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
+		sounlock(s);
 		if (error)
 			goto bad;
 	}
@@ -331,6 +335,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	 * Always set receive timeout to detect server crash and reconnect.
 	 * Otherwise, we can get stuck in soreceive forever.
 	 */
+	s = solock(so);
 	so->so_rcv.sb_timeo = (5 * hz);
 	if (nmp->nm_flag & (NFSMNT_SOFT | NFSMNT_INT))
 		so->so_snd.sb_timeo = (5 * hz);
@@ -364,7 +369,6 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		rcvreserve = (nmp->nm_rsize + NFS_MAXPKTHDR +
 		    sizeof (u_int32_t)) * 2;
 	}
-	s = solock(so);
 	error = soreserve(so, sndreserve, rcvreserve);
 	sounlock(s);
 	if (error)

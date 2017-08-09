@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.198 2017/07/27 12:05:36 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.199 2017/08/09 14:22:58 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1073,7 +1073,9 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	struct file	*fp;
 	struct socket	*sosp;
 	struct sosplice	*sp;
-	int		 s, error = 0;
+	int		 error = 0;
+
+	soassertlocked(so);
 
 	if (sosplice_taskq == NULL)
 		sosplice_taskq = taskq_create("sosplice", 1, IPL_SOFTNET, 0);
@@ -1097,17 +1099,14 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 
 	/* If no fd is given, unsplice by removing existing link. */
 	if (fd < 0) {
-		s = solock(so);
 		/* Lock receive buffer. */
 		if ((error = sblock(so, &so->so_rcv,
 		    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK)) != 0) {
-			sounlock(s);
 			return (error);
 		}
 		if (so->so_sp->ssp_socket)
 			sounsplice(so, so->so_sp->ssp_socket, 1);
 		sbunlock(&so->so_rcv);
-		sounlock(s);
 		return (0);
 	}
 
@@ -1129,17 +1128,14 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 			pool_put(&sosplice_pool, sp);
 	}
 
-	s = solock(so);
 	/* Lock both receive and send buffer. */
 	if ((error = sblock(so, &so->so_rcv,
 	    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK)) != 0) {
-		sounlock(s);
 		FRELE(fp, curproc);
 		return (error);
 	}
 	if ((error = sblock(so, &sosp->so_snd, M_WAITOK)) != 0) {
 		sbunlock(&so->so_rcv);
-		sounlock(s);
 		FRELE(fp, curproc);
 		return (error);
 	}
@@ -1185,7 +1181,6 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
  release:
 	sbunlock(&sosp->so_snd);
 	sbunlock(&so->so_rcv);
-	sounlock(s);
 	FRELE(fp, curproc);
 	return (error);
 }
@@ -1565,15 +1560,15 @@ sowwakeup(struct socket *so)
 int
 sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 {
-	int s, error = 0;
+	int error = 0;
 	struct mbuf *m = m0;
+
+	soassertlocked(so);
 
 	if (level != SOL_SOCKET) {
 		if (so->so_proto && so->so_proto->pr_ctloutput) {
-			s = solock(so);
 			error = (*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so,
 			    level, optname, m0);
-			sounlock(s);
 			return (error);
 		}
 		error = ENOPROTOOPT;
@@ -1647,14 +1642,11 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 					error = EINVAL;
 					goto bad;
 				}
-				s = solock(so);
 				if (sbcheckreserve(cnt, so->so_snd.sb_wat) ||
 				    sbreserve(so, &so->so_snd, cnt)) {
-				    	sounlock(s);
 					error = ENOBUFS;
 					goto bad;
 				}
-				sounlock(s);
 				so->so_snd.sb_wat = cnt;
 				break;
 
@@ -1663,14 +1655,11 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 					error = EINVAL;
 					goto bad;
 				}
-				s = solock(so);
 				if (sbcheckreserve(cnt, so->so_rcv.sb_wat) ||
 				    sbreserve(so, &so->so_rcv, cnt)) {
-					sounlock(s);
 					error = ENOBUFS;
 					goto bad;
 				}
-				sounlock(s);
 				so->so_rcv.sb_wat = cnt;
 				break;
 
@@ -1724,10 +1713,8 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				struct domain *dom = so->so_proto->pr_domain;
 
 				level = dom->dom_protosw->pr_protocol;
-				s = solock(so);
 				error = (*so->so_proto->pr_ctloutput)
 				    (PRCO_SETOPT, so, level, optname, m0);
-				sounlock(s);
 				return (error);
 			}
 			error = ENOPROTOOPT;
@@ -1756,10 +1743,8 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 			break;
 		}
 		if (error == 0 && so->so_proto && so->so_proto->pr_ctloutput) {
-			s = solock(so);
 			(*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so,
 			    level, optname, m0);
-			sounlock(s);
 			m = NULL;	/* freed by protocol */
 		}
 	}
@@ -1772,18 +1757,18 @@ bad:
 int
 sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 {
-	int s, error = 0;
+	int error = 0;
 	struct mbuf *m;
+
+	soassertlocked(so);
 
 	if (level != SOL_SOCKET) {
 		if (so->so_proto && so->so_proto->pr_ctloutput) {
 			m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = 0;
 
-			s = solock(so);
 			error = (*so->so_proto->pr_ctloutput)(PRCO_GETOPT, so,
 			    level, optname, m);
-			sounlock(s);
 			if (error) {
 				m_free(m);
 				return (error);
@@ -1869,10 +1854,8 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 				struct domain *dom = so->so_proto->pr_domain;
 
 				level = dom->dom_protosw->pr_protocol;
-				s = solock(so);
 				error = (*so->so_proto->pr_ctloutput)
 				    (PRCO_GETOPT, so, level, optname, m);
-				sounlock(s);
 				if (error) {
 					(void)m_free(m);
 					return (error);
@@ -1886,13 +1869,10 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		case SO_SPLICE:
 		    {
 			off_t len;
-			int s;
 
-			s = solock(so);
 			m->m_len = sizeof(off_t);
 			len = so->so_sp ? so->so_sp->ssp_len : 0;
 			memcpy(mtod(m, off_t *), &len, sizeof(off_t));
-			sounlock(s);
 			break;
 		    }
 #endif /* SOCKET_SPLICE */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.156 2017/07/24 15:07:39 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.157 2017/08/09 14:22:58 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -940,7 +940,8 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
-	int error;
+	struct socket *so;
+	int s, error;
 
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
@@ -972,7 +973,10 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 		}
 		m->m_len = SCARG(uap, valsize);
 	}
-	error = sosetopt(fp->f_data, SCARG(uap, level), SCARG(uap, name), m);
+	so = fp->f_data;
+	s = solock(so);
+	error = sosetopt(so, SCARG(uap, level), SCARG(uap, name), m);
+	sounlock(s);
 	m = NULL;
 bad:
 	m_freem(m);
@@ -993,7 +997,8 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	struct mbuf *m = NULL;
 	socklen_t valsize;
-	int error;
+	struct socket *so;
+	int s, error;
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
@@ -1007,9 +1012,11 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 			goto out;
 	} else
 		valsize = 0;
-	if ((error = sogetopt(fp->f_data, SCARG(uap, level),
-	    SCARG(uap, name), &m)) == 0 && SCARG(uap, val) && valsize &&
-	    m != NULL) {
+	so = fp->f_data;
+	s = solock(so);
+	error = sogetopt(so, SCARG(uap, level), SCARG(uap, name), &m);
+	sounlock(s);
+	if (error == 0 && SCARG(uap, val) && valsize && m != NULL) {
 		if (valsize > m->m_len)
 			valsize = m->m_len;
 		error = copyout(mtod(m, caddr_t), SCARG(uap, val), valsize);

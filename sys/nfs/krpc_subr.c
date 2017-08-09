@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.29 2015/08/24 14:00:29 bluhm Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.30 2017/08/09 14:22:58 mpi Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	struct rpc_call *call;
 	struct rpc_reply *reply;
 	struct uio auio;
-	int error, rcvflg, timo, secs, len;
+	int s, error, rcvflg, timo, secs, len;
 	static u_int32_t xid = 0;
 	char addr[INET_ADDRSTRLEN];
 	int *ip;
@@ -239,7 +239,10 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	tv.tv_usec = 0;
 	memcpy(mtod(m, struct timeval *), &tv, sizeof tv);
 	m->m_len = sizeof(tv);
-	if ((error = sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m)))
+	s = solock(so);
+	error = sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m);
+	sounlock(s);
+	if (error)
 		goto out;
 
 	/*
@@ -251,7 +254,10 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 		on = mtod(m, int32_t *);
 		m->m_len = sizeof(*on);
 		*on = 1;
-		if ((error = sosetopt(so, SOL_SOCKET, SO_BROADCAST, m)))
+		s = solock(so);
+		error = sosetopt(so, SOL_SOCKET, SO_BROADCAST, m);
+		sounlock(s);
+		if (error)
 			goto out;
 	}
 
@@ -264,7 +270,9 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	mopt->m_len = sizeof(int);
 	ip = mtod(mopt, int *);
 	*ip = IP_PORTRANGE_LOW;
+	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
+	sounlock(s);
 	if (error)
 		goto out;
 
@@ -286,7 +294,9 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	mopt->m_len = sizeof(int);
 	ip = mtod(mopt, int *);
 	*ip = IP_PORTRANGE_DEFAULT;
+	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
+	sounlock(s);
 	if (error)
 		goto out;
 
