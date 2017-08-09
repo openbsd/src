@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.153 2017/08/09 17:42:12 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.154 2017/08/09 17:49:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2078,33 +2078,33 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 long
 ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 {
-	int	ret = 0;
-
 	if (cmd == SSL_CTRL_SET_TMP_DH_CB || cmd == SSL_CTRL_SET_TMP_ECDH_CB) {
 		if (!ssl_cert_inst(&s->cert)) {
 			SSLerror(s, ERR_R_MALLOC_FAILURE);
-			return (0);
+			return 0;
 		}
 	}
 
 	switch (cmd) {
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		break;
+		return 0;
+
 	case SSL_CTRL_SET_TMP_DH_CB:
 		s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
-		break;
+		return 1;
+
 	case SSL_CTRL_SET_TMP_ECDH_CB:
 		s->cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
-		break;
+		return 1;
+
 	case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
 		s->internal->tlsext_debug_cb = (void (*)(SSL *, int , int,
 		    unsigned char *, int, void *))fp;
-		break;
-	default:
-		break;
+		return 1;
 	}
-	return (ret);
+
+	return 0;
 }
 
 static int
@@ -2310,12 +2310,12 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_SET_MIN_PROTO_VERSION:
 		if (larg < 0 || larg > UINT16_MAX)
-			return (0);
+			return 0;
 		return SSL_CTX_set_min_proto_version(ctx, larg);
 
 	case SSL_CTRL_SET_MAX_PROTO_VERSION:
 		if (larg < 0 || larg > UINT16_MAX)
-			return (0);
+			return 0;
 		return SSL_CTX_set_max_proto_version(ctx, larg);
 
 	/*
@@ -2328,51 +2328,45 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		SSLerrorx(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
-
-	default:
-		return (0);
 	}
-	return (1);
+
+	return 0;
 }
 
 long
 ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 {
-	CERT	*cert;
-
-	cert = ctx->internal->cert;
-
 	switch (cmd) {
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		SSLerrorx(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return (0);
+		return 0;
 
 	case SSL_CTRL_SET_TMP_DH_CB:
-		cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
-		break;
+		ctx->internal->cert->dh_tmp_cb =
+		    (DH *(*)(SSL *, int, int))fp;
+		return 1;
 
 	case SSL_CTRL_SET_TMP_ECDH_CB:
-		cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
-		break;
+		ctx->internal->cert->ecdh_tmp_cb =
+		    (EC_KEY *(*)(SSL *, int, int))fp;
+		return 1;
 
 	case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
 		ctx->internal->tlsext_servername_callback =
 		    (int (*)(SSL *, int *, void *))fp;
-		break;
+		return 1;
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB:
 		ctx->internal->tlsext_status_cb = (int (*)(SSL *, void *))fp;
-		break;
+		return 1;
 
 	case SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB:
 		ctx->internal->tlsext_ticket_key_cb = (int (*)(SSL *, unsigned char  *,
 		    unsigned char *, EVP_CIPHER_CTX *, HMAC_CTX *, int))fp;
-		break;
-
-	default:
-		return (0);
+		return 1;
 	}
-	return (1);
+
+	return 0;
 }
 
 /*
