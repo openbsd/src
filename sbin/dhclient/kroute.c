@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.134 2017/08/08 17:54:24 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.135 2017/08/09 19:57:54 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -49,26 +49,6 @@
 
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-
-/*
- * flush_unpriv_ibuf makes sure queued messages are delivered to the
- * imsg socket.
- */
-void
-flush_unpriv_ibuf(const char *who)
-{
-	while (unpriv_ibuf->w.queued) {
-		if (msgbuf_write(&unpriv_ibuf->w) <= 0) {
-			if (errno == EAGAIN)
-				break;
-			if (quit == 0)
-				quit = INTERNALSIG;
-			if (errno != EPIPE && errno != 0)
-				log_warn("%s: msgbuf_write", who);
-			break;
-		}
-	}
-}
 
 int	create_route_label(struct sockaddr_rtlabel *);
 int	check_route_label(struct sockaddr_rtlabel *);
@@ -185,8 +165,6 @@ flush_routes(void)
 	rslt = imsg_compose(unpriv_ibuf, IMSG_FLUSH_ROUTES, 0, 0, -1, NULL, 0);
 	if (rslt == -1)
 		log_warn("flush_routes: imsg_compose");
-
-	flush_unpriv_ibuf("flush_routes");
 }
 
 void
@@ -400,8 +378,6 @@ add_route(struct in_addr dest, struct in_addr netmask, struct in_addr gateway,
 	    &imsg, sizeof(imsg));
 	if (rslt == -1)
 		log_warn("add_route: imsg_compose");
-
-	flush_unpriv_ibuf("add_route");
 }
 
 void
@@ -549,8 +525,6 @@ delete_address(struct in_addr addr)
 	    sizeof(imsg));
 	if (rslt == -1)
 		log_warn("delete_address: imsg_compose");
-
-	flush_unpriv_ibuf("delete_address");
 }
 
 void
@@ -603,8 +577,6 @@ set_mtu(int inits, uint16_t mtu)
 	    &imsg, sizeof(imsg));
 	if (rslt == -1)
 		log_warn("set_mtu: imsg_compose");
-
-	flush_unpriv_ibuf("set_mtu");
 }
 
 void
@@ -643,8 +615,6 @@ set_address(char *name, struct in_addr addr, struct in_addr netmask)
 	    sizeof(imsg));
 	if (rslt == -1)
 		log_warn("set_address: imsg_compose");
-
-	flush_unpriv_ibuf("set_address");
 }
 
 void
@@ -686,8 +656,6 @@ write_resolv_conf(uint8_t *contents, size_t sz)
 	    0, 0, -1, contents, sz);
 	if (rslt == -1)
 		log_warn("write_resolv_conf: imsg_compose");
-
-	flush_unpriv_ibuf("write_resolv_conf");
 }
 
 void
