@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.135 2017/07/24 17:15:41 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.136 2017/08/09 19:35:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -81,7 +81,7 @@ dispatch(struct interface_info *ifi, int routefd)
 	struct pollfd		 fds[3];
 	void			(*func)(struct interface_info *);
 	time_t			 cur_time, howlong;
-	int			 count, to_msec;
+	int			 nfds, to_msec;
 
 	while (quit == 0 || quit == SIGHUP) {
 		if (quit == SIGHUP) {
@@ -125,30 +125,45 @@ dispatch(struct interface_info *ifi, int routefd)
 		if (unpriv_ibuf->w.queued)
 			fds[2].events |= POLLOUT;
 
-		count = poll(fds, 3, to_msec);
-		if (count == -1) {
-			if (errno == EAGAIN || errno == EINTR) {
+		nfds = poll(fds, 3, to_msec);
+		if (nfds == -1) {
+			if (errno == EINTR)
 				continue;
-			} else {
-				log_warn("poll");
-				quit = INTERNALSIG;
-				continue;
-			}
+			log_warn("dispatch poll");
+			quit = INTERNALSIG;
+			continue;
 		}
 
-		if ((fds[0].revents & (POLLIN | POLLHUP)) != 0) {
+		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
+			log_warnx("bfdesc poll error");
+			quit = INTERNALSIG;
+			continue;
+		}
+		if ((fds[1].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
+			log_warnx("routefd poll error");
+			quit = INTERNALSIG;
+			continue;
+		}
+		if ((fds[2].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
+			log_warnx("unpriv_ibuf poll error");
+			quit = INTERNALSIG;
+			continue;
+		}
+
+		if (nfds == 0)
+			continue;
+
+		if ((fds[0].revents & POLLIN) != 0) {
 			do {
 				packethandler(ifi);
 			} while (ifi->rbuf_offset < ifi->rbuf_len);
 		}
-		if ((fds[1].revents & (POLLIN | POLLHUP)) != 0)
+		if ((fds[1].revents & POLLIN) != 0)
 			routehandler(ifi, routefd);
 		if ((fds[2].revents & POLLOUT) != 0)
 			flush_unpriv_ibuf("dispatch");
-		if ((fds[2].revents & (POLLIN | POLLHUP)) != 0) {
-			/* Pipe to [priv] closed. Assume it emitted error. */
+		if ((fds[2].revents & POLLIN) != 0)
 			quit = INTERNALSIG;
-		}
 	}
 
 	if (quit != INTERNALSIG)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.490 2017/08/08 17:20:09 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.491 2017/08/09 19:35:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2137,14 +2137,19 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	while (quit == 0) {
 		pfd[0].fd = priv_ibuf->fd;
 		pfd[0].events = POLLIN;
-		if ((nfds = poll(pfd, 1, INFTIM)) == -1) {
-			if (errno != EINTR) {
-				log_warn("poll error");
-				quit = INTERNALSIG;
-			}
+
+		nfds = poll(pfd, 1, INFTIM);
+		if (nfds == -1) {
+			if (errno == EINTR)
+				continue;
+			log_warn("priv_ibuf poll");
+			quit = INTERNALSIG;
 			continue;
 		}
-
+		if ((pfd[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
+			quit = INTERNALSIG;
+			continue;
+		}
 		if (nfds == 0 || (pfd[0].revents & POLLIN) == 0)
 			continue;
 
@@ -2153,7 +2158,6 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 			quit = INTERNALSIG;
 			continue;
 		}
-
 		if (n == 0) {
 			/* Connection closed - other end should log message. */
 			quit = INTERNALSIG;
@@ -2516,7 +2520,7 @@ take_charge(struct interface_info *ifi, int routefd)
 	struct pollfd		 fds[1];
 	struct rt_msghdr	 rtm;
 	time_t			 start_time, cur_time;
-	int			 retries;
+	int			 nfds, retries;
 
 	if (time(&start_time) == -1)
 		fatal("time");
@@ -2555,13 +2559,17 @@ take_charge(struct interface_info *ifi, int routefd)
 		}
 		fds[0].fd = routefd;
 		fds[0].events = POLLIN;
-		if (poll(fds, 1, 3) == -1) {
-			if (errno == EAGAIN || errno == EINTR)
+		nfds = poll(fds, 1, 3);
+		if (nfds == -1) {
+			if (errno == EINTR)
 				continue;
 			fatal("routefd poll");
 		}
-		if ((fds[0].revents & (POLLIN | POLLHUP)) != 0)
-			routehandler(ifi, routefd);
+		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
+			fatalx("routed poll error");
+		if (nfds == 0 || (fds[0].revents & POLLIN) == 0)
+			continue;
+		routehandler(ifi, routefd);
 	}
 }
 
