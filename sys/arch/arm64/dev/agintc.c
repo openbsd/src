@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.4 2017/04/30 21:52:40 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.5 2017/08/09 05:53:11 jsg Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  *
@@ -367,7 +367,7 @@ agintc_cpuinit(void)
 		printf("cpu mpidr not found mpidr %llx affinity %08x\n",
 		    mpidr, affinity);
 		for (i = 0; i < sc->sc_num_redist; i++)
-			printf("rdist%d: %08x\n", i, sc->sc_affinity[i]);
+			printf("rdist%d: %016llx\n", i, sc->sc_affinity[i]);
 		panic("failed to indentify cpunumber %d \n", ci->ci_cpuid);
 	}
 

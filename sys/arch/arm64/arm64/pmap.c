@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.36 2017/05/21 19:14:36 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.37 2017/08/09 05:53:11 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1063,9 +1063,9 @@ pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart, long kernelend,
 	 * bootstrap vm table, which we may need to preserve until
 	 * later.
 	 */
-	printf("removing %llx-%llx\n", ram_start, kernelstart+kvo);
+	printf("removing %lx-%lx\n", ram_start, kernelstart+kvo);
 	pmap_remove_avail(ram_start, kernelstart+kvo);
-	printf("removing %llx-%llx\n", kernelstart+kvo, kernelend+kvo);
+	printf("removing %lx-%lx\n", kernelstart+kvo, kernelend+kvo);
 	pmap_remove_avail(kernelstart+kvo, kernelend+kvo);
 
 	/*
@@ -1452,8 +1452,8 @@ pmap_pte_insert(struct pte_desc *pted)
 	uint64_t *pl3;
 
 	if (pmap_vp_lookup(pm, pted->pted_va, &pl3) == NULL) {
-		panic("pmap_pte_insert: have a pted, but missing a vp"
-		    " for %x va pmap %x", __func__, pted->pted_va, pm);
+		panic("%s: have a pted, but missing a vp"
+		    " for %lx va pmap %p", __func__, pted->pted_va, pm);
 	}
 
 	pmap_pte_update(pted, pl3);
@@ -1515,17 +1515,17 @@ pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 	else
 		vp1 = pm->pm_vp.l1;
 	if (vp1->vp[VP_IDX1(pted->pted_va)] == NULL) {
-		panic("have a pted, but missing the l2 for %x va pmap %x",
+		panic("have a pted, but missing the l2 for %lx va pmap %p",
 		    pted->pted_va, pm);
 	}
 	vp2 = vp1->vp[VP_IDX1(pted->pted_va)];
 	if (vp2 == NULL) {
-		panic("have a pted, but missing the l2 for %x va pmap %x",
+		panic("have a pted, but missing the l2 for %lx va pmap %p",
 		    pted->pted_va, pm);
 	}
 	vp3 = vp2->vp[VP_IDX2(pted->pted_va)];
 	if (vp3 == NULL) {
-		panic("have a pted, but missing the l2 for %x va pmap %x",
+		panic("have a pted, but missing the l2 for %lx va pmap %p",
 		    pted->pted_va, pm);
 	}
 	vp3->l3[VP_IDX3(pted->pted_va)] = 0;
@@ -1907,7 +1907,7 @@ pmap_steal_avail(size_t size, int align, void **kva)
 			}
 		}
 	}
-	panic ("unable to allocate region with size %x align %x",
+	panic ("unable to allocate region with size %lx align %x",
 	    size, align);
 }
 
@@ -1987,7 +1987,7 @@ pmap_show_mapping(uint64_t va)
 		pm = curproc->p_vmspace->vm_map.pmap;
 
 	if (pm->have_4_level_pt) {
-		printf("  vp0 = %llx off %x\n",  pm->pm_vp.l0, VP_IDX0(va)*8);
+		printf("  vp0 = %p off %x\n",  pm->pm_vp.l0, VP_IDX0(va)*8);
 		vp1 = pm->pm_vp.l0->vp[VP_IDX0(va)];
 		if (vp1 == NULL)
 			return;
@@ -1998,16 +1998,16 @@ pmap_show_mapping(uint64_t va)
 	__asm volatile ("mrs     %x0, ttbr0_el1" : "=r"(ttbr0));
 	__asm volatile ("mrs     %x0, tcr_el1" : "=r"(tcr));
 	printf("  ttbr0 %llx %llx tcr %llx\n", ttbr0, pm->pm_pt0pa, tcr);
-	printf("  vp1 = %llx\n", vp1);
+	printf("  vp1 = %p\n", vp1);
 
 	vp2 = vp1->vp[VP_IDX1(va)];
-	printf("  vp2 = %llx lp2 = %llx idx1 off %x\n",
+	printf("  vp2 = %p lp2 = %llx idx1 off %x\n",
 		vp2, vp1->l1[VP_IDX1(va)], VP_IDX1(va)*8);
 	if (vp2 == NULL)
 		return;
 
 	vp3 = vp2->vp[VP_IDX2(va)];
-	printf("  vp3 = %llx lp3 = %llx idx2 off %x\n",
+	printf("  vp3 = %p lp3 = %llx idx2 off %x\n",
 		vp3, vp2->l2[VP_IDX2(va)], VP_IDX2(va)*8);
 	if (vp3 == NULL)
 		return;

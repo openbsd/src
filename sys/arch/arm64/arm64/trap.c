@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.8 2017/07/20 19:57:35 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.9 2017/08/09 05:53:11 jsg Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -271,7 +271,7 @@ do_el1h_sync(struct trapframe *frame)
 		db_trapper(frame->tf_elr, 0/*XXX*/, frame, exception);
 		}
 #endif
-		panic("Unknown kernel exception %x esr_el1 %lx lr %lxpc %lx\n",
+		panic("Unknown kernel exception %x esr_el1 %llx lr %lxpc %lx\n",
 		    exception,
 		    esr, frame->tf_lr, frame->tf_elr);
 	}
@@ -318,7 +318,7 @@ do_el0_sync(struct trapframe *frame)
 		// USERLAND MUST NOT PANIC MACHINE
 		{
 			// only here to debug !?!?
-			printf("exception %x esr_el1 %lx\n", exception, esr);
+			printf("exception %x esr_el1 %llx\n", exception, esr);
 			dumpregs(frame);
 		}
 		sigexit(p, SIGILL);

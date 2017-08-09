@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.5 2017/05/06 11:27:34 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.6 2017/08/09 05:53:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -124,12 +124,13 @@ cpu_identify(struct cpu_info *ci)
 	}
 
 	if (impl_name && part_name) {
-		printf(" %s %s r%dp%d", impl_name, part_name, CPU_VAR(midr),
+		printf(" %s %s r%llup%llu", impl_name, part_name, CPU_VAR(midr),
 		    CPU_REV(midr));
 
 		if (CPU_IS_PRIMARY(ci))
-			snprintf(cpu_model, sizeof(cpu_model), "%s %s r%dp%d",
-			    impl_name, part_name, CPU_VAR(midr), CPU_REV(midr));
+			snprintf(cpu_model, sizeof(cpu_model),
+			    "%s %s r%llup%llu", impl_name, part_name,
+			    CPU_VAR(midr), CPU_REV(midr));
 	} else {
 		printf(" Unknown, MIDR 0x%llx", midr);
 
