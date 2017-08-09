@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.129 2017/06/30 22:24:08 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.130 2017/08/09 11:43:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -411,7 +411,7 @@ screen_write_hline(struct screen_write_ctx *ctx, u_int nx, int left, int right)
 
 /* Draw a horizontal line on screen. */
 void
-screen_write_vline(struct screen_write_ctx *ctx, u_int ny, int top, int bottom) 
+screen_write_vline(struct screen_write_ctx *ctx, u_int ny, int top, int bottom)
 {
 	struct screen		*s = ctx->s;
 	struct grid_cell	 gc;
