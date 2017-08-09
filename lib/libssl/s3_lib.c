@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.149 2017/08/09 15:52:27 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.150 2017/08/09 16:47:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1874,6 +1874,86 @@ _SSL_set_ecdh_auto(SSL *s, int state)
 	return 1;
 }
 
+static int
+_SSL_set_tlsext_host_name(SSL *s, const char *name)
+{
+	free(s->tlsext_hostname);
+	s->tlsext_hostname = NULL;
+
+	if (name == NULL)
+		return 1;
+
+	if (strlen(name) > TLSEXT_MAXLEN_host_name) {
+		SSLerror(s, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
+		return 0;
+	}
+
+	if ((s->tlsext_hostname = strdup(name)) == NULL) {
+		SSLerror(s, ERR_R_INTERNAL_ERROR);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+_SSL_set_tlsext_debug_arg(SSL *s, void *arg)
+{
+	s->internal->tlsext_debug_arg = arg;
+	return 1;
+}
+
+static int
+_SSL_set_tlsext_status_type(SSL *s, int type)
+{
+	s->tlsext_status_type = type;
+	return 1;
+}
+
+static int
+_SSL_get_tlsext_status_exts(SSL *s, STACK_OF(X509_EXTENSION) **exts)
+{
+	*exts = s->internal->tlsext_ocsp_exts;
+	return 1;
+}
+
+static int
+_SSL_set_tlsext_status_exts(SSL *s, STACK_OF(X509_EXTENSION) *exts)
+{
+	s->internal->tlsext_ocsp_exts = exts;
+	return 1;
+}
+
+static int
+_SSL_get_tlsext_status_ids(SSL *s, STACK_OF(OCSP_RESPID) **ids)
+{
+	*ids = s->internal->tlsext_ocsp_ids;
+	return 1;
+}
+
+static int
+_SSL_set_tlsext_status_ids(SSL *s, STACK_OF(OCSP_RESPID) *ids)
+{
+	s->internal->tlsext_ocsp_ids = ids;
+	return 1;
+}
+
+static int
+_SSL_get_tlsext_status_ocsp_resp(SSL *s, unsigned char **resp)
+{
+	*resp = s->internal->tlsext_ocsp_resp;
+	return s->internal->tlsext_ocsp_resplen;
+}
+
+static int
+_SSL_set_tlsext_status_ocsp_resp(SSL *s, unsigned char *resp, int resp_len)
+{
+	free(s->internal->tlsext_ocsp_resp);
+	s->internal->tlsext_ocsp_resp = resp;
+	s->internal->tlsext_ocsp_resplen = resp_len;
+	return 1;
+}
+
 int
 SSL_set1_groups(SSL *s, const int *groups, size_t groups_len)
 {
@@ -1907,7 +1987,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		return _SSL_total_renegotiations(s);
 
 	case SSL_CTRL_SET_TMP_DH:
-		return _SSL_set_tmp_dh(s, (DH *)parg);
+		return _SSL_set_tmp_dh(s, parg);
 
 	case SSL_CTRL_SET_TMP_DH_CB:
 		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -1917,7 +1997,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		return _SSL_set_dh_auto(s, larg);
 
 	case SSL_CTRL_SET_TMP_ECDH:
-		return _SSL_set_tmp_ecdh(s, (EC_KEY *)parg);
+		return _SSL_set_tmp_ecdh(s, parg);
 
 	case SSL_CTRL_SET_TMP_ECDH_CB:
 		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -1927,68 +2007,35 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		return _SSL_set_ecdh_auto(s, larg);
 
 	case SSL_CTRL_SET_TLSEXT_HOSTNAME:
-		if (larg == TLSEXT_NAMETYPE_host_name) {
-			free(s->tlsext_hostname);
-			s->tlsext_hostname = NULL;
-
-			ret = 1;
-			if (parg == NULL)
-				break;
-			if (strlen((char *)parg) > TLSEXT_MAXLEN_host_name) {
-				SSLerror(s, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
-				return 0;
-			}
-			if ((s->tlsext_hostname = strdup((char *)parg))
-			    == NULL) {
-				SSLerror(s, ERR_R_INTERNAL_ERROR);
-				return 0;
-			}
-		} else {
+		if (larg != TLSEXT_NAMETYPE_host_name) {
 			SSLerror(s, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
 			return 0;
 		}
-		break;
+		return _SSL_set_tlsext_host_name(s, parg);
 
 	case SSL_CTRL_SET_TLSEXT_DEBUG_ARG:
-		s->internal->tlsext_debug_arg = parg;
-		ret = 1;
-		break;
+		return _SSL_set_tlsext_debug_arg(s, parg);
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE:
-		s->tlsext_status_type = larg;
-		ret = 1;
-		break;
+		return _SSL_set_tlsext_status_type(s, larg);
 
 	case SSL_CTRL_GET_TLSEXT_STATUS_REQ_EXTS:
-		*(STACK_OF(X509_EXTENSION) **)parg = s->internal->tlsext_ocsp_exts;
-		ret = 1;
-		break;
+		return _SSL_get_tlsext_status_exts(s, parg);
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_EXTS:
-		s->internal->tlsext_ocsp_exts = parg;
-		ret = 1;
-		break;
+		return _SSL_set_tlsext_status_exts(s, parg);
 
 	case SSL_CTRL_GET_TLSEXT_STATUS_REQ_IDS:
-		*(STACK_OF(OCSP_RESPID) **)parg = s->internal->tlsext_ocsp_ids;
-		ret = 1;
-		break;
+		return _SSL_get_tlsext_status_ids(s, parg);
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS:
-		s->internal->tlsext_ocsp_ids = parg;
-		ret = 1;
-		break;
+		return _SSL_set_tlsext_status_ids(s, parg);
 
 	case SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP:
-		*(unsigned char **)parg = s->internal->tlsext_ocsp_resp;
-		return s->internal->tlsext_ocsp_resplen;
+		return _SSL_get_tlsext_status_ocsp_resp(s, parg);
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP:
-		free(s->internal->tlsext_ocsp_resp);
-		s->internal->tlsext_ocsp_resp = parg;
-		s->internal->tlsext_ocsp_resplen = larg;
-		ret = 1;
-		break;
+		return _SSL_set_tlsext_status_ocsp_resp(s, parg, larg);
 
 	case SSL_CTRL_SET_GROUPS:
 		return SSL_set1_groups(s, parg, larg);
