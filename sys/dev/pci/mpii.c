@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.111 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.112 2017/08/10 15:01:42 mikeb Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -838,7 +838,6 @@ mpii_load_xs(struct mpii_ccb *ccb)
 	for (i = 0; i < dmap->dm_nsegs; i++, nsge++) {
 		if (nsge == csge) {
 			nsge++;
-			sge->sg_hdr |= htole32(MPII_SGE_FL_LAST);
 			/* offset to the chain sge from the beginning */
 			io->chain_offset = ((caddr_t)csge - (caddr_t)io) / 4;
 			/* length of the sgl segment we're pointing to */
