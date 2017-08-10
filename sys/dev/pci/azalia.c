@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.235 2017/04/11 14:43:49 dhill Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.236 2017/08/10 15:25:52 tb Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -697,12 +697,23 @@ azalia_shutdown(void *v)
 {
 	azalia_t *az = (azalia_t *)v;
 	uint32_t gctl;
+	codec_t *codec;
+	int i;
 
 	/* disable unsolicited response */
 	gctl = AZ_READ_4(az, GCTL);
 	AZ_WRITE_4(az, GCTL, gctl & ~(HDA_GCTL_UNSOL));
 
 	timeout_del(&az->unsol_to);
+
+	/* power off all codecs */
+	for (i = 0; i < az->ncodecs; i++) {
+		codec = &az->codecs[i];
+		if (codec->audiofunc < 0)
+			continue;
+		azalia_comresp(codec, codec->audiofunc, CORB_SET_POWER_STATE,
+		    CORB_PS_D3, NULL);
+	}
 
 	/* halt CORB/RIRB */
 	azalia_halt_corb(az);
