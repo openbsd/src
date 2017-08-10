@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.42 2017/05/07 03:27:06 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.43 2017/08/10 18:18:30 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -197,6 +197,14 @@ tls_connect_common(struct tls *ctx, const char *servername)
 
 	if (tls_configure_ssl_verify(ctx, ctx->ssl_ctx, SSL_VERIFY_PEER) == -1)
 		goto err;
+
+	if (ctx->config->ecdhecurves != NULL) {
+		if (SSL_CTX_set1_groups(ctx->ssl_ctx, ctx->config->ecdhecurves,
+		    ctx->config->ecdhecurves_len) != 1) {
+			tls_set_errorx(ctx, "failed to set ecdhe curves");
+			goto err;
+		}
+	}
 
 	if (SSL_CTX_set_tlsext_status_cb(ctx->ssl_ctx, tls_ocsp_verify_cb) != 1) {
 		tls_set_errorx(ctx, "ssl OCSP verification setup failure");

@@ -30,6 +30,7 @@ tls_config_set_crl_file
 tls_config_set_crl_mem
 tls_config_set_dheparams
 tls_config_set_ecdhecurve
+tls_config_set_ecdhecurves
 tls_config_set_key_file
 tls_config_set_key_mem
 tls_config_set_keypair_file

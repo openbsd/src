@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.40 2017/07/05 15:38:35 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.41 2017/08/10 18:18:30 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -241,8 +241,6 @@ static int
 tls_configure_server_ssl(struct tls *ctx, SSL_CTX **ssl_ctx,
     struct tls_keypair *keypair)
 {
-	EC_KEY *ecdh_key;
-
 	SSL_CTX_free(*ssl_ctx);
 
 	if ((*ssl_ctx = SSL_CTX_new(SSLv23_server_method())) == NULL) {
@@ -283,17 +281,13 @@ tls_configure_server_ssl(struct tls *ctx, SSL_CTX **ssl_ctx,
 	else if (ctx->config->dheparams == 1024)
 		SSL_CTX_set_dh_auto(*ssl_ctx, 2);
 
-	if (ctx->config->ecdhecurve == -1) {
+	if (ctx->config->ecdhecurves != NULL) {
 		SSL_CTX_set_ecdh_auto(*ssl_ctx, 1);
-	} else if (ctx->config->ecdhecurve != NID_undef) {
-		if ((ecdh_key = EC_KEY_new_by_curve_name(
-		    ctx->config->ecdhecurve)) == NULL) {
-			tls_set_errorx(ctx, "failed to set ECDHE curve");
+		if (SSL_CTX_set1_groups(*ssl_ctx, ctx->config->ecdhecurves,
+		    ctx->config->ecdhecurves_len) != 1) {
+			tls_set_errorx(ctx, "failed to set ecdhe curves");
 			goto err;
 		}
-		SSL_CTX_set_options(*ssl_ctx, SSL_OP_SINGLE_ECDH_USE);
-		SSL_CTX_set_tmp_ecdh(*ssl_ctx, ecdh_key);
-		EC_KEY_free(ecdh_key);
 	}
 
 	if (ctx->config->ciphers_server == 1)
