@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.43 2017/03/13 01:10:03 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.44 2017/08/10 18:14:56 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -845,8 +845,10 @@ xs_watch(void *xsc, const char *path, const char *property, struct task *task,
 		ret = snprintf(key, sizeof(key), "%s/%s", path, property);
 	else
 		ret = snprintf(key, sizeof(key), "%s", property);
-	if (ret == -1 || ret >= sizeof(key))
+	if (ret == -1 || ret >= sizeof(key)) {
+		free(xsw, M_DEVBUF, sizeof(*xsw));
 		return (EINVAL);
+	}
 
 	iov.iov_base = xsw->xsw_token;
 	iov.iov_len = sizeof(xsw->xsw_token);
