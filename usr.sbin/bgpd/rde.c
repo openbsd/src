@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.369 2017/08/10 14:12:34 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.370 2017/08/10 15:44:09 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -213,11 +213,11 @@ rde_main(int debug, int verbose)
 	signal(SIGALRM, SIG_IGN);
 	signal(SIGUSR1, SIG_IGN);
 
-	/* initialize the RIB structures */
 	if ((ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
 	imsg_init(ibuf_main, 3);
 
+	/* initialize the RIB structures */
 	pt_init();
 	path_init(pathhashsize);
 	aspath_init(pathhashsize);
@@ -1169,7 +1169,8 @@ rde_update_dispatch(struct imsg *imsg)
 		if (peer->conf.max_prefix &&
 		    peer->prefix_cnt > peer->conf.max_prefix) {
 			log_peer_warnx(&peer->conf, "prefix limit reached"
-			    " (>%u/%u)", peer->prefix_cnt, peer->conf.max_prefix);
+			    " (>%u/%u)", peer->prefix_cnt,
+			    peer->conf.max_prefix);
 			rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX,
 			    NULL, 0);
 			goto done;
