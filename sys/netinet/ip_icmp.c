@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.170 2017/06/19 17:58:49 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.171 2017/08/10 02:26:26 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -957,6 +957,16 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 
 	/* Check if the route is actually usable */
 	if (!rtisvalid(rt) || (rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE))) {
+		rtfree(rt);
+		return (NULL);
+	}
+
+	/*
+	 * No PMTU for local routes and permanent neighbors,
+	 * ARP and NDP use the same expire timer as the route.
+	 */
+	if (ISSET(rt->rt_flags, RTF_LOCAL) ||
+	    (ISSET(rt->rt_flags, RTF_LLINFO) && rt->rt_expire == 0)) {
 		rtfree(rt);
 		return (NULL);
 	}
