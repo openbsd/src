@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.13 2016/06/29 14:19:38 jca Exp $	*/
+/*	$OpenBSD: if.h,v 1.14 2017/08/10 19:07:14 jca Exp $	*/
 /*	$KAME: if.h,v 1.6 2001/01/21 15:37:14 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ int if_getmtu(char *);
 int if_getflags(int, int);
 int lladdropt_length(struct sockaddr_dl *);
 void lladdropt_fill(struct sockaddr_dl *, struct nd_opt_hdr *);
-char *get_next_msg(char *, char *, size_t *);
+int validate_msg(char *);
 struct in6_addr *get_addr(char *);
 int get_rtm_ifindex(char *);
 int get_ifm_ifindex(char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.44 2017/07/12 06:11:45 florian Exp $	*/
+/*	$OpenBSD: if.c,v 1.45 2017/08/10 19:07:14 jca Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -186,80 +186,70 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 }
 
 #define SIN6(s) ((struct sockaddr_in6 *)(s))
-char *
-get_next_msg(char *buf, char *lim, size_t *lenp)
+int
+validate_msg(char *buf)
 {
-	struct rt_msghdr *rtm;
+	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
 	struct ifa_msghdr *ifam;
 	struct sockaddr *sa, *dst, *ifa, *rti_info[RTAX_MAX];
 
-	*lenp = 0;
-	for (rtm = (struct rt_msghdr *)buf;
-	     rtm < (struct rt_msghdr *)lim;
-	     rtm = (struct rt_msghdr *)((char *)rtm + rtm->rtm_msglen)) {
-		/* just for safety */
-		if (!rtm->rtm_msglen) {
-			log_warnx("rtm_msglen is 0 (buf=%p lim=%p rtm=%p)",
-			    buf, lim, rtm);
-			break;
-		}
-		if (rtm->rtm_version != RTM_VERSION)
-			continue;
-
-		switch (rtm->rtm_type) {
-		case RTM_ADD:
-		case RTM_DELETE:
-			if (rtm->rtm_tableid != 0)
-				continue;
-
-			/* address related checks */
-			sa = (struct sockaddr *)((char *)rtm + rtm->rtm_hdrlen);
-			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
-			if ((dst = rti_info[RTAX_DST]) == NULL ||
-			    dst->sa_family != AF_INET6)
-				continue;
-
-			if (IN6_IS_ADDR_LINKLOCAL(&SIN6(dst)->sin6_addr) ||
-			    IN6_IS_ADDR_MULTICAST(&SIN6(dst)->sin6_addr))
-				continue;
-
-			if (rti_info[RTAX_NETMASK] == NULL)
-				continue;
-
-			/* found */
-			*lenp = rtm->rtm_msglen;
-			return (char *)rtm;
-			/* NOTREACHED */
-		case RTM_NEWADDR:
-		case RTM_DELADDR:
-			ifam = (struct ifa_msghdr *)rtm;
-
-			/* address related checks */
-			sa = (struct sockaddr *)((char *)rtm + rtm->rtm_hdrlen);
-			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
-			if ((ifa = rti_info[RTAX_IFA]) == NULL ||
-			    (ifa->sa_family != AF_INET &&
-			     ifa->sa_family != AF_INET6))
-				continue;
-
-			if (ifa->sa_family == AF_INET6 &&
-			    (IN6_IS_ADDR_LINKLOCAL(&SIN6(ifa)->sin6_addr) ||
-			     IN6_IS_ADDR_MULTICAST(&SIN6(ifa)->sin6_addr)))
-				continue;
-
-			/* found */
-			*lenp = rtm->rtm_msglen;
-			return (char *)rtm;
-			/* NOTREACHED */
-		case RTM_IFINFO:
-			/* found */
-			*lenp = rtm->rtm_msglen;
-			return (char *)rtm;
-			/* NOTREACHED */
-		}
+	/* just for safety */
+	if (!rtm->rtm_msglen) {
+		log_warnx("rtm_msglen is 0 (rtm=%p)", rtm);
+		return -1;
 	}
+	if (rtm->rtm_version != RTM_VERSION)
+		return -1;
 
-	return (char *)rtm;
+	switch (rtm->rtm_type) {
+	case RTM_ADD:
+	case RTM_DELETE:
+		if (rtm->rtm_tableid != 0)
+			return -1;
+
+		/* address related checks */
+		sa = (struct sockaddr *)((char *)rtm + rtm->rtm_hdrlen);
+		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+		if ((dst = rti_info[RTAX_DST]) == NULL ||
+		    dst->sa_family != AF_INET6)
+			return -1;
+
+		if (IN6_IS_ADDR_LINKLOCAL(&SIN6(dst)->sin6_addr) ||
+		    IN6_IS_ADDR_MULTICAST(&SIN6(dst)->sin6_addr))
+			return -1;
+
+		if (rti_info[RTAX_NETMASK] == NULL)
+			return -1;
+
+		/* found */
+		return 0;
+		/* NOTREACHED */
+	case RTM_NEWADDR:
+	case RTM_DELADDR:
+		ifam = (struct ifa_msghdr *)rtm;
+
+		/* address related checks */
+		sa = (struct sockaddr *)((char *)rtm + rtm->rtm_hdrlen);
+		get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
+		if ((ifa = rti_info[RTAX_IFA]) == NULL ||
+		    (ifa->sa_family != AF_INET &&
+		    ifa->sa_family != AF_INET6))
+			return -1;
+
+		if (ifa->sa_family == AF_INET6 &&
+		    (IN6_IS_ADDR_LINKLOCAL(&SIN6(ifa)->sin6_addr) ||
+		    IN6_IS_ADDR_MULTICAST(&SIN6(ifa)->sin6_addr)))
+			return -1;
+
+		/* found */
+		return 0;
+		/* NOTREACHED */
+	case RTM_IFINFO:
+		/* found */
+		return 0;
+		/* NOTREACHED */
+	}
+	return -1;
 }
 
 struct in6_addr *

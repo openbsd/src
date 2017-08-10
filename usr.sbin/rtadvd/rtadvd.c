@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.87 2017/07/12 06:11:07 florian Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.88 2017/08/10 19:07:14 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -303,9 +303,8 @@ die_cb(int sig, short event, void *arg)
 static void
 rtsock_cb(int fd, short event, void *arg)
 {
-	int n, type, ifindex = 0, plen;
-	size_t len;
-	char *next, *lim;
+	int n, type, ifindex = 0, oldifflags, plen;
+	char *next;
 	u_char ifname[IF_NAMESIZE];
 	struct prefix *prefix;
 	struct rainfo *rai;
@@ -315,148 +314,129 @@ rtsock_cb(int fd, short event, void *arg)
 	n = read(rtsock, rtsockbuf, rtsockbuflen);
 	log_debug("received a routing message "
 	    "(type = %d, len = %d)", rtmsg_type(rtsockbuf), n);
-	if (n > rtmsg_len(rtsockbuf)) {
-		/*
-		 * This usually won't happen for messages received on
-		 * a routing socket.
-		 */
-		log_debug("received data length is larger than "
-		    "1st routing message len. multiple messages? "
-		    "read %d bytes, but 1st msg len = %d",
-		    n, rtmsg_len(rtsockbuf));
-#if 0
-		/* adjust length */
-		n = rtmsg_len(rtsockbuf);
-#endif
+
+	next = rtsockbuf;
+	if (validate_msg(next) == -1)
+		return;
+
+	type = rtmsg_type(next);
+	switch (type) {
+	case RTM_ADD:
+	case RTM_DELETE:
+		ifindex = get_rtm_ifindex(next);
+		break;
+	case RTM_NEWADDR:
+	case RTM_DELADDR:
+		ifindex = get_ifam_ifindex(next);
+		break;
+	case RTM_IFINFO:
+		ifindex = get_ifm_ifindex(next);
+		break;
+	default:
+		/* should not reach here */
+		log_debug("unknown rtmsg %d on %s",
+		    type, if_indextoname(ifindex, ifname));
+		return;
 	}
 
-	lim = rtsockbuf + n;
-	for (next = rtsockbuf; next < lim; next += len) {
-		int oldifflags;
+	if ((rai = if_indextorainfo(ifindex)) == NULL) {
+		log_debug("route changed on "
+		    "non advertising interface(%s)",
+		    if_indextoname(ifindex, ifname));
+		return;
+	}
+	oldifflags = iflist[ifindex]->ifm_flags;
 
-		next = get_next_msg(next, lim, &len);
+	switch (type) {
+	case RTM_ADD:
+		/* init ifflags because it may have changed */
+		iflist[ifindex]->ifm_flags =
+			if_getflags(ifindex, iflist[ifindex]->ifm_flags);
 
-		if (len == 0)
+		if (sflag)
+			break;	/* we aren't interested in prefixes  */
+
+		addr = get_addr(next);
+		plen = get_prefixlen(next);
+		/* sanity check for plen */
+		/* as RFC2373, prefixlen is at least 4 */
+		if (plen < 4 || plen > 127) {
+			log_info("new interface route's"
+			    " plen %d is invalid for a prefix", plen);
 			break;
-		type = rtmsg_type(next);
-		switch (type) {
-		case RTM_ADD:
-		case RTM_DELETE:
-			ifindex = get_rtm_ifindex(next);
-			break;
-		case RTM_NEWADDR:
-		case RTM_DELADDR:
-			ifindex = get_ifam_ifindex(next);
-			break;
-		case RTM_IFINFO:
-			ifindex = get_ifm_ifindex(next);
-			break;
-		default:
-			/* should not reach here */
-			log_debug("unknown rtmsg %d on %s",
-			    type, if_indextoname(ifindex, ifname));
-			continue;
 		}
-
-		if ((rai = if_indextorainfo(ifindex)) == NULL) {
-			log_debug("route changed on "
-			    "non advertising interface(%s)",
-			    if_indextoname(ifindex, ifname));
-			continue;
+		prefix = find_prefix(rai, addr, plen);
+		if (prefix) {
+			log_debug("new prefix(%s/%d) "
+			    "added on %s, "
+			    "but it was already in list",
+			    inet_ntop(AF_INET6, addr,
+				addrbuf, INET6_ADDRSTRLEN),
+			    plen, rai->ifname);
+			break;
 		}
-		oldifflags = iflist[ifindex]->ifm_flags;
+		make_prefix(rai, ifindex, addr, plen);
+		break;
+	case RTM_DELETE:
+		/* init ifflags because it may have changed */
+		iflist[ifindex]->ifm_flags =
+			if_getflags(ifindex, iflist[ifindex]->ifm_flags);
 
-		switch (type) {
-		case RTM_ADD:
-			/* init ifflags because it may have changed */
-			iflist[ifindex]->ifm_flags =
-			    if_getflags(ifindex, iflist[ifindex]->ifm_flags);
-
-			if (sflag)
-				break;	/* we aren't interested in prefixes  */
-
-			addr = get_addr(next);
-			plen = get_prefixlen(next);
-			/* sanity check for plen */
-			/* as RFC2373, prefixlen is at least 4 */
-			if (plen < 4 || plen > 127) {
-				log_info("new interface route's"
-				    " plen %d is invalid for a prefix", plen);
-				break;
-			}
-			prefix = find_prefix(rai, addr, plen);
-			if (prefix) {
-				log_debug("new prefix(%s/%d) "
-				    "added on %s, "
-				    "but it was already in list",
-				    inet_ntop(AF_INET6, addr,
-				        addrbuf, INET6_ADDRSTRLEN),
-				    plen, rai->ifname);
-				break;
-			}
-			make_prefix(rai, ifindex, addr, plen);
+		if (sflag)
 			break;
-		case RTM_DELETE:
-			/* init ifflags because it may have changed */
-			iflist[ifindex]->ifm_flags =
-			    if_getflags(ifindex, iflist[ifindex]->ifm_flags);
 
-			if (sflag)
-				break;
-
-			addr = get_addr(next);
-			plen = get_prefixlen(next);
-			/* sanity check for plen */
-			/* as RFC2373, prefixlen is at least 4 */
-			if (plen < 4 || plen > 127) {
-				log_info("deleted interface route's "
-				    "plen %d is invalid for a prefix", plen);
-				break;
-			}
-			prefix = find_prefix(rai, addr, plen);
-			if (prefix == NULL) {
-				log_debug("prefix(%s/%d) was "
-				    "deleted on %s, "
-				    "but it was not in list",
-				    inet_ntop(AF_INET6, addr,
-				        addrbuf, INET6_ADDRSTRLEN),
-				    plen, rai->ifname);
-				break;
-			}
-			delete_prefix(rai, prefix);
+		addr = get_addr(next);
+		plen = get_prefixlen(next);
+		/* sanity check for plen */
+		/* as RFC2373, prefixlen is at least 4 */
+		if (plen < 4 || plen > 127) {
+			log_info("deleted interface route's "
+			    "plen %d is invalid for a prefix", plen);
 			break;
-		case RTM_NEWADDR:
-		case RTM_DELADDR:
-			/* init ifflags because it may have changed */
-			iflist[ifindex]->ifm_flags =
-			    if_getflags(ifindex, iflist[ifindex]->ifm_flags);
-			break;
-		case RTM_IFINFO:
-			iflist[ifindex]->ifm_flags = get_ifm_flags(next);
-			break;
-		default:
-			/* should not reach here */
-			log_debug("unknown rtmsg %d on %s",
-			    type, if_indextoname(ifindex, ifname));
-			return;
 		}
-
-		/* check if an interface flag is changed */
-		if ((oldifflags & IFF_UP) != 0 &&	/* UP to DOWN */
-		    (iflist[ifindex]->ifm_flags & IFF_UP) == 0) {
-			log_info("interface %s becomes down. stop timer.",
-			    rai->ifname);
-			evtimer_del(&rai->timer.ev);
-		} else if ((oldifflags & IFF_UP) == 0 && /* DOWN to UP */
-			 (iflist[ifindex]->ifm_flags & IFF_UP) != 0) {
-			log_info("interface %s becomes up. restart timer.",
-			    rai->ifname);
-
-			rai->initcounter = 0; /* reset the counter */
-			rai->waiting = 0; /* XXX */
-			ra_timer_update(rai);
-			evtimer_add(&rai->timer.ev, &rai->timer.tm);
+		prefix = find_prefix(rai, addr, plen);
+		if (prefix == NULL) {
+			log_debug("prefix(%s/%d) was "
+			    "deleted on %s, "
+			    "but it was not in list",
+			    inet_ntop(AF_INET6, addr,
+				addrbuf, INET6_ADDRSTRLEN),
+			    plen, rai->ifname);
+			break;
 		}
+		delete_prefix(rai, prefix);
+		break;
+	case RTM_NEWADDR:
+	case RTM_DELADDR:
+		/* init ifflags because it may have changed */
+		iflist[ifindex]->ifm_flags =
+			if_getflags(ifindex, iflist[ifindex]->ifm_flags);
+		break;
+	case RTM_IFINFO:
+		iflist[ifindex]->ifm_flags = get_ifm_flags(next);
+		break;
+	default:
+		/* should not reach here */
+		log_debug("unknown rtmsg %d on %s",
+		    type, if_indextoname(ifindex, ifname));
+		return;
+	}
+
+	/* check if an interface flag is changed */
+	if ((oldifflags & IFF_UP) != 0 &&	/* UP to DOWN */
+	    (iflist[ifindex]->ifm_flags & IFF_UP) == 0) {
+		log_info("interface %s becomes down. stop timer.",
+		    rai->ifname);
+		evtimer_del(&rai->timer.ev);
+	} else if ((oldifflags & IFF_UP) == 0 && /* DOWN to UP */
+	    (iflist[ifindex]->ifm_flags & IFF_UP) != 0) {
+		log_info("interface %s becomes up. restart timer.",
+		    rai->ifname);
+
+		rai->initcounter = 0; /* reset the counter */
+		rai->waiting = 0; /* XXX */
+		ra_timer_update(rai);
+		evtimer_add(&rai->timer.ev, &rai->timer.tm);
 	}
 }
 
