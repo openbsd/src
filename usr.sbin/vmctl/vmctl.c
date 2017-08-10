@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.32 2017/07/15 05:05:36 pd Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.33 2017/08/10 19:17:43 jasper Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -619,8 +619,9 @@ vm_console(struct vmop_info_result *list, size_t ct)
 
 	for (i = 0; i < ct; i++) {
 		vir = &list[i];
-		if (check_info_id(vir->vir_info.vir_name,
-		    vir->vir_info.vir_id) > 0) {
+		if ((check_info_id(vir->vir_info.vir_name,
+		    vir->vir_info.vir_id) > 0) &&
+			(vir->vir_ttyname[0] != '\0')) {
 			/* does not return */
 			ctl_openconsole(vir->vir_ttyname);
 		}
