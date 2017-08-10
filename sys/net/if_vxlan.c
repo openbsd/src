@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.60 2017/05/04 15:00:24 bluhm Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.61 2017/08/10 18:38:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -538,6 +538,7 @@ vxlan_sockaddr_cmp(struct sockaddr *srcsa, struct sockaddr *dstsa)
 		dst4 = satosin(dstsa);
 		if (src4->sin_addr.s_addr == dst4->sin_addr.s_addr)
 			return (0);
+		break;
 #ifdef INET6
 	case AF_INET6:
 		src6 = satosin6(srcsa);
@@ -545,6 +546,7 @@ vxlan_sockaddr_cmp(struct sockaddr *srcsa, struct sockaddr *dstsa)
 		if (IN6_ARE_ADDR_EQUAL(&src6->sin6_addr, &dst6->sin6_addr) &&
 		    src6->sin6_scope_id == dst6->sin6_scope_id)
 			return (0);
+		break;
 #endif /* INET6 */
 	}
 
