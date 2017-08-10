@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.197 2017/06/26 10:09:13 phessler Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.198 2017/08/10 14:12:34 benno Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -260,6 +260,11 @@ main(int argc, char *argv[])
 			memcpy(&ribreq.community, &res->community,
 			    sizeof(res->community));
 			type = IMSG_CTL_SHOW_RIB_COMMUNITY;
+		}
+		if (res->extcommunity.flags == EXT_COMMUNITY_FLAG_VALID) {
+			memcpy(&ribreq.extcommunity, &res->extcommunity,
+			    sizeof(res->extcommunity));
+			type = IMSG_CTL_SHOW_RIB_EXTCOMMUNITY;
 		}
 		if (res->large_community.as != COMMUNITY_UNSET &&
 		    res->large_community.ld1 != COMMUNITY_UNSET &&
