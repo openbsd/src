@@ -860,6 +860,8 @@ kvp_get_ip_info(struct hv_kvp *kvp, const uint8_t *mac, uint8_t *family,
 	case ADDR_FAMILY_IPV6:
 		af = AF_INET6;
 		break;
+	default:
+		return (-1);
 	}
 
 	KERNEL_LOCK();
