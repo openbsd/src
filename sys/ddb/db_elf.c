@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.26 2017/05/30 15:39:05 mpi Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.27 2017/08/10 19:39:38 mpi Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -431,14 +431,14 @@ db_elf_sym_forall(db_forall_func_t db_forall_func, void *arg)
 		}
 }
 
-int
-db_value_of_name(char *name, db_expr_t *valuep)
+Elf_Sym *
+db_symbol_by_name(char *name, db_expr_t *valuep)
 {
 	Elf_Sym		*sym;
 
 	sym = db_elf_sym_lookup(name);
 	if (sym == NULL)
-	    return (0);
+	    return (NULL);
 	db_symbol_values(sym, &name, valuep);
-	return (1);
+	return (sym);
 }

@@ -65,7 +65,7 @@ extern unsigned int db_maxoff;		/* like gdb's "max-symbolic-offset" */
 int db_eqname(char *, char *, int);
 					/* strcmp, modulo leading char */
 
-int db_value_of_name(char *, db_expr_t *);
+Elf_Sym * db_symbol_by_name(char *, db_expr_t *);
 					/* find symbol value given name */
 
 Elf_Sym * db_search_symbol(db_addr_t, db_strategy_t, db_expr_t *);
@@ -94,7 +94,10 @@ bool db_dwarf_line_at_pc(const char *, size_t, uintptr_t,
     const char **, const char **, int *);
 
 #ifdef DDBCTF
-int	db_ctf_func_numargs(Elf_Sym *);
+struct ctf_type;
+
+int			 db_ctf_func_numargs(Elf_Sym *);
+const struct ctf_type	*db_ctf_type_by_name(char *);
 #endif
 
 #endif /* _DDB_DB_SYM_H_ */

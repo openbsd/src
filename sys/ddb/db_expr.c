@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_expr.c,v 1.13 2016/04/19 12:23:25 mpi Exp $	*/
+/*	$OpenBSD: db_expr.c,v 1.14 2017/08/10 19:39:38 mpi Exp $	*/
 /*	$NetBSD: db_expr.c,v 1.5 1996/02/05 01:56:58 christos Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ db_term(db_expr_t *valuep)
 
 	t = db_read_token();
 	if (t == tIDENT) {
-	    if (!db_value_of_name(db_tok_string, valuep)) {
+	    if (db_symbol_by_name(db_tok_string, valuep) == NULL) {
 		db_error("Symbol not found\n");
 		/*NOTREACHED*/
 	    }

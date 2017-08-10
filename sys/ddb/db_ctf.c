@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.10 2017/05/30 15:39:05 mpi Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.11 2017/08/10 19:39:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -26,9 +26,11 @@
 #include <machine/db_machdep.h>
 
 #include <ddb/db_extern.h>
-#include <ddb/db_sym.h>
+#include <ddb/db_command.h>
 #include <ddb/db_elf.h>
+#include <ddb/db_lex.h>
 #include <ddb/db_output.h>
+#include <ddb/db_sym.h>
 
 #include <sys/exec_elf.h>
 #include <sys/ctf.h>
@@ -49,9 +51,13 @@ struct ddb_ctf {
 
 struct ddb_ctf db_ctf;
 
-static const char	*db_ctf_lookup_name(uint32_t);
+static const char	*db_ctf_off2name(uint32_t);
 static Elf_Sym		*db_ctf_idx2sym(size_t *, uint8_t);
 static char		*db_ctf_decompress(const char *, size_t, off_t);
+
+const struct ctf_type	*db_ctf_type_by_symbol(Elf_Sym *);
+const struct ctf_type	*db_ctf_type_by_index(uint16_t);
+void			 db_ctf_pprint_struct(const struct ctf_type *, vaddr_t);
 
 /*
  * Entrypoint to verify CTF presence, initialize the header, decompress
@@ -96,33 +102,6 @@ db_ctf_init(void)
 	db_ctf.ctf_found = 1;
 }
 
-void
-db_dump_ctf_header(void)
-{
-	if (!db_ctf.ctf_found)
-		return;
-
-	db_printf("CTF header found at %p (%ld)\n", db_ctf.rawctf,
-		  db_ctf.rawctflen);
-	db_printf("cth_magic: 0x%04x\n", db_ctf.cth->cth_magic);
-	db_printf("cth_verion: %d\n", db_ctf.cth->cth_version);
-	db_printf("cth_flags: 0x%02x", db_ctf.cth->cth_flags);
-	if (db_ctf.cth->cth_flags & CTF_F_COMPRESS) {
-		db_printf(" (compressed)");
-	}
-	db_printf("\n");
-	db_printf("cth_parlabel: %s\n",
-		  db_ctf_lookup_name(db_ctf.cth->cth_parlabel));
-	db_printf("cth_parname: %s\n",
-		  db_ctf_lookup_name(db_ctf.cth->cth_parname));
-	db_printf("cth_lbloff: %d\n", db_ctf.cth->cth_lbloff);
-	db_printf("cth_objtoff: %d\n", db_ctf.cth->cth_objtoff);
-	db_printf("cth_funcoff: %d\n", db_ctf.cth->cth_funcoff);
-	db_printf("cth_typeoff: %d\n", db_ctf.cth->cth_typeoff);
-	db_printf("cth_stroff: %d\n", db_ctf.cth->cth_stroff);
-	db_printf("cth_strlen: %d\n", db_ctf.cth->cth_strlen);
-}
-
 /*
  * Convert an index to a symbol name while ensuring the type is matched.
  * It must be noted this only works if the CTF table has the same order
@@ -154,12 +133,12 @@ db_ctf_idx2sym(size_t *idx, uint8_t type)
 int
 db_ctf_func_numargs(Elf_Sym *st)
 {
-	Elf_Sym			*symp, *stp = (Elf_Sym *)st;
+	Elf_Sym			*symp;
 	uint16_t		*fstart, *fend;
 	uint16_t		*fsp, kind, vlen;
 	size_t			 i, idx = 0;
 
-	if (!db_ctf.ctf_found || stp == NULL)
+	if (!db_ctf.ctf_found || st == NULL)
 		return -1;
 
 	fstart = (uint16_t *)(db_ctf.data + db_ctf.cth->cth_funcoff);
@@ -185,15 +164,259 @@ db_ctf_func_numargs(Elf_Sym *st)
 		for (i = 0; i < vlen; i++)
 			fsp++;
 
-		if (symp == stp)
+		if (symp == st)
 			return vlen;
 	}
 
 	return -1;
 }
 
+/*
+ * Return the length of the type record in the CTF section.
+ */
+uint32_t
+db_ctf_type_len(const struct ctf_type *ctt)
+{
+	uint16_t		 kind, vlen, i;
+	uint32_t		 tlen;
+	uint64_t		 size;
+
+	kind = CTF_INFO_KIND(ctt->ctt_info);
+	vlen = CTF_INFO_VLEN(ctt->ctt_info);
+
+	if (ctt->ctt_size <= CTF_MAX_SIZE) {
+		size = ctt->ctt_size;
+		tlen = sizeof(struct ctf_stype);
+	} else {
+		size = CTF_TYPE_LSIZE(ctt);
+		tlen = sizeof(struct ctf_type);
+	}
+
+	switch (kind) {
+	case CTF_K_UNKNOWN:
+	case CTF_K_FORWARD:
+		break;
+	case CTF_K_INTEGER:
+		tlen += sizeof(uint32_t);
+		break;
+	case CTF_K_FLOAT:
+		tlen += sizeof(uint32_t);
+		break;
+	case CTF_K_ARRAY:
+		tlen += sizeof(struct ctf_array);
+		break;
+	case CTF_K_FUNCTION:
+		tlen += (vlen + (vlen & 1)) * sizeof(uint16_t);
+		break;
+	case CTF_K_STRUCT:
+	case CTF_K_UNION:
+		if (size < CTF_LSTRUCT_THRESH) {
+			for (i = 0; i < vlen; i++) {
+				tlen += sizeof(struct ctf_member);
+			}
+		} else {
+			for (i = 0; i < vlen; i++) {
+				tlen += sizeof(struct ctf_lmember);
+			}
+		}
+		break;
+	case CTF_K_ENUM:
+		for (i = 0; i < vlen; i++) {
+			tlen += sizeof(struct ctf_enum);
+		}
+		break;
+	case CTF_K_POINTER:
+	case CTF_K_TYPEDEF:
+	case CTF_K_VOLATILE:
+	case CTF_K_CONST:
+	case CTF_K_RESTRICT:
+		break;
+	default:
+		return 0;
+	}
+
+	return tlen;
+}
+
+void
+db_ctf_dump_object()
+{
+	uint32_t		 objtoff = db_ctf.cth->cth_objtoff;
+	size_t			 idx = 0, i = 0;
+	uint16_t		*dsp;
+	Elf_Sym			*st;
+	int			 l;
+	char			*name;
+
+	while (objtoff < db_ctf.cth->cth_funcoff) {
+		dsp = (uint16_t *)(db_ctf.data + objtoff);
+
+		l = db_printf("  [%zu] %u", i++, *dsp);
+		if ((st = db_ctf_idx2sym(&idx, STT_OBJECT)) != NULL) {
+			db_symbol_values(st, &name, NULL);
+			db_printf("%*s %s (%zu)\n", (14 - l), "", name, idx);
+		} else
+			db_printf("\n");
+
+		objtoff += sizeof(*dsp);
+	}
+	db_printf("\n");
+}
+
+const struct ctf_type *
+db_ctf_type_by_symbol(Elf_Sym *st)
+{
+	Elf_Sym			*symp;
+	uint32_t		 objtoff = db_ctf.cth->cth_objtoff;
+	uint16_t		*dsp;
+	size_t			 idx = 0;
+
+	while (objtoff < db_ctf.cth->cth_funcoff) {
+		dsp = (uint16_t *)(db_ctf.data + objtoff);
+
+		symp = db_ctf_idx2sym(&idx, STT_OBJECT);
+		if (symp == NULL)
+			break;
+		if (symp == st)
+			return db_ctf_type_by_index(*dsp);
+
+		objtoff += sizeof(*dsp);
+	}
+
+	return NULL;
+}
+
+const struct ctf_type *
+db_ctf_type_by_index(uint16_t index)
+{
+	uint32_t		 offset = db_ctf.cth->cth_typeoff;
+	uint16_t		 idx = 1;
+
+	if (!db_ctf.ctf_found)
+		return NULL;
+
+	while (offset < db_ctf.cth->cth_stroff) {
+		const struct ctf_type   *ctt;
+		uint32_t		 toff;
+
+		ctt = (struct ctf_type *)(db_ctf.data + offset);
+		if (idx == index)
+			return ctt;
+
+		toff = db_ctf_type_len(ctt);
+		if (toff == 0) {
+			db_printf("incorrect type at offset %u", offset);
+			break;
+		}
+		offset += toff;
+		idx++;
+	}
+
+	return NULL;
+}
+
+void
+db_ctf_pprintf(const struct ctf_type *ctt, vaddr_t addr)
+{
+	const struct ctf_type	*ref;
+	uint16_t		 kind;
+	const char		*name;
+
+	kind = CTF_INFO_KIND(ctt->ctt_info);
+
+	switch (kind) {
+	case CTF_K_FLOAT:
+	case CTF_K_ENUM:
+	case CTF_K_ARRAY:
+	case CTF_K_FUNCTION:
+		db_printf("%lu", *((unsigned long *)addr));
+		break;
+	case CTF_K_INTEGER:
+		db_printf("%d", *((int *)addr));
+		break;
+	case CTF_K_STRUCT:
+	case CTF_K_UNION:
+		db_ctf_pprint_struct(ctt, addr);
+		break;
+	case CTF_K_POINTER:
+		ref = db_ctf_type_by_index(ctt->ctt_type);
+		name = db_ctf_off2name(ref->ctt_name);
+		if (name != NULL)
+			db_printf("(%s *)", name);
+		db_printf("0x%lx", addr);
+		break;
+	case CTF_K_TYPEDEF:
+	case CTF_K_VOLATILE:
+	case CTF_K_CONST:
+	case CTF_K_RESTRICT:
+		ref = db_ctf_type_by_index(ctt->ctt_type);
+		db_ctf_pprintf(ref, addr);
+		break;
+	case CTF_K_UNKNOWN:
+	case CTF_K_FORWARD:
+	default:
+		break;
+	}
+}
+
+void
+db_ctf_pprint_struct(const struct ctf_type *ctt, vaddr_t addr)
+{
+	const char		*name, *p = (const char *)ctt;
+	const struct ctf_type	*ref;
+	uint32_t		 toff;
+	uint64_t		 size;
+	uint16_t		 i, vlen;
+
+	vlen = CTF_INFO_VLEN(ctt->ctt_info);
+
+	if (ctt->ctt_size <= CTF_MAX_SIZE) {
+		size = ctt->ctt_size;
+		toff = sizeof(struct ctf_stype);
+	} else {
+		size = CTF_TYPE_LSIZE(ctt);
+		toff = sizeof(struct ctf_type);
+	}
+
+	db_printf("{");
+	if (size < CTF_LSTRUCT_THRESH) {
+
+		for (i = 0; i < vlen; i++) {
+			struct ctf_member	*ctm;
+
+			ctm = (struct ctf_member *)(p + toff);
+			toff += sizeof(struct ctf_member);
+
+			name = db_ctf_off2name(ctm->ctm_name);
+			if (name != NULL)
+				db_printf("%s = ", name);
+			ref = db_ctf_type_by_index(ctm->ctm_type);
+			db_ctf_pprintf(ref, addr + ctm->ctm_offset / 8);
+			if (i < vlen - 1)
+				db_printf(", ");
+		}
+	} else {
+		for (i = 0; i < vlen; i++) {
+			struct ctf_lmember	*ctlm;
+
+			ctlm = (struct ctf_lmember *)(p + toff);
+			toff += sizeof(struct ctf_lmember);
+
+			name = db_ctf_off2name(ctlm->ctlm_name);
+			if (name != NULL)
+				db_printf("%s = ", name);
+			ref = db_ctf_type_by_index(ctlm->ctlm_type);
+			db_ctf_pprintf(ref, addr +
+			    CTF_LMEM_OFFSET(ctlm) / 8);
+			if (i < vlen - 1)
+				db_printf(", ");
+		}
+	}
+	db_printf("}");
+}
+
 static const char *
-db_ctf_lookup_name(uint32_t offset)
+db_ctf_off2name(uint32_t offset)
 {
 	const char		*name;
 
@@ -208,7 +431,7 @@ db_ctf_lookup_name(uint32_t offset)
 
 	name = db_ctf.data + db_ctf.cth->cth_stroff + CTF_NAME_OFFSET(offset);
 	if (*name == '\0')
-		return "(anon)";
+		return NULL;
 
 	return name;
 }
@@ -257,4 +480,46 @@ db_ctf_decompress(const char *buf, size_t size, off_t len)
 exit:
 	free(data, M_DEVBUF, sizeof(*data));
 	return NULL;
+}
+
+/*
+ * print <symbol name>
+ */
+void
+db_ctf_pprint_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modifiers)
+{
+	Elf_Sym *st;
+	const struct ctf_type *ctt;
+	int t;
+
+	if (!db_ctf.ctf_found)
+		return;
+
+	/*
+	 * Read the struct name from the debugger input.
+	 */
+	t = db_read_token();
+	if (t != tIDENT) {
+		db_printf("Bad symbol name\n");
+		db_flush_lex();
+		return;
+	}
+
+	if ((st = db_symbol_by_name(db_tok_string, &addr)) == NULL) {
+		db_printf("Symbol not found %s\n", db_tok_string);
+		db_flush_lex();
+		return;
+	}
+
+
+	if ((ctt = db_ctf_type_by_symbol(st)) == NULL) {
+		db_printf("Type not found %s\n", db_tok_string);
+		db_flush_lex();
+		return;
+	}
+
+	db_printf("%s:\t", db_tok_string);
+	db_ctf_pprintf(ctt, addr);
+	db_printf("\n");
 }

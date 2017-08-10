@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.20 2017/05/30 15:39:05 mpi Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.21 2017/08/10 19:39:38 mpi Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -785,7 +785,7 @@ void OF_sym2val(cells)
 	symbol = (char *)(u_long)args->symbol;
 	if (obp_symbol_debug)
 		prom_printf("looking up symbol %s\r\n", symbol);
-	args->result = (db_value_of_name(symbol, &value) == TRUE) ? 0 : -1;
+	args->result = (db_symbol_by_name(symbol, &value) != NULL) ? 0 : -1;
 	if (obp_symbol_debug)
 		prom_printf("%s is %lx\r\n", symbol, value);
 	args->value = ADR2CELL(value);
