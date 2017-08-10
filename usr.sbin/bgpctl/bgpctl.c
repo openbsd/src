@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.198 2017/08/10 14:12:34 benno Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.199 2017/08/10 14:22:59 benno Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -247,33 +247,30 @@ main(int argc, char *argv[])
 		bzero(&ribreq, sizeof(ribreq));
 		type = IMSG_CTL_SHOW_RIB;
 		if (res->as.type != AS_NONE) {
-			memcpy(&ribreq.as, &res->as, sizeof(res->as));
+			ribreq.as = res->as;
 			type = IMSG_CTL_SHOW_RIB_AS;
 		}
 		if (res->addr.aid) {
-			memcpy(&ribreq.prefix, &res->addr, sizeof(res->addr));
+			ribreq.prefix = res->addr;
 			ribreq.prefixlen = res->prefixlen;
 			type = IMSG_CTL_SHOW_RIB_PREFIX;
 		}
 		if (res->community.as != COMMUNITY_UNSET &&
 		    res->community.type != COMMUNITY_UNSET) {
-			memcpy(&ribreq.community, &res->community,
-			    sizeof(res->community));
+			ribreq.community = res->community;
 			type = IMSG_CTL_SHOW_RIB_COMMUNITY;
 		}
 		if (res->extcommunity.flags == EXT_COMMUNITY_FLAG_VALID) {
-			memcpy(&ribreq.extcommunity, &res->extcommunity,
-			    sizeof(res->extcommunity));
+			ribreq.extcommunity = res->extcommunity;
 			type = IMSG_CTL_SHOW_RIB_EXTCOMMUNITY;
 		}
 		if (res->large_community.as != COMMUNITY_UNSET &&
 		    res->large_community.ld1 != COMMUNITY_UNSET &&
 		    res->large_community.ld2 != COMMUNITY_UNSET) {
-			memcpy(&ribreq.large_community, &res->large_community,
-			    sizeof(res->large_community));
+			ribreq.large_community = res->large_community;
 			type = IMSG_CTL_SHOW_RIB_LARGECOMMUNITY;
 		}
-		memcpy(&ribreq.neighbor, &neighbor, sizeof(ribreq.neighbor));
+		ribreq.neighbor = neighbor;
 		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
 		ribreq.aid = res->aid;
 		ribreq.flags = res->flags;
@@ -285,21 +282,20 @@ main(int argc, char *argv[])
 		close(fd);
 		bzero(&ribreq, sizeof(ribreq));
 		if (res->as.type != AS_NONE)
-			memcpy(&ribreq.as, &res->as, sizeof(res->as));
+			ribreq.as = res->as;
 		if (res->addr.aid) {
-			memcpy(&ribreq.prefix, &res->addr, sizeof(res->addr));
+			ribreq.prefix = res->addr;
 			ribreq.prefixlen = res->prefixlen;
 		}
 		if (res->community.as != COMMUNITY_UNSET &&
 		    res->community.type != COMMUNITY_UNSET)
-			memcpy(&ribreq.community, &res->community,
-			    sizeof(res->community));
+			ribreq.community = res->community;
 		if (res->large_community.as != COMMUNITY_UNSET &&
 		    res->large_community.ld1 != COMMUNITY_UNSET &&
 		    res->large_community.ld2 != COMMUNITY_UNSET)
-			memcpy(&ribreq.large_community, &res->large_community,
-			    sizeof(res->large_community));
-		memcpy(&ribreq.neighbor, &neighbor, sizeof(ribreq.neighbor));
+			ribreq.large_community = res->large_community;
+		/* XXX extended communities missing? */
+		ribreq.neighbor = neighbor;
 		ribreq.aid = res->aid;
 		ribreq.flags = res->flags;
 		show_mrt.arg = &ribreq;
@@ -361,7 +357,7 @@ main(int argc, char *argv[])
 	case NETWORK_ADD:
 	case NETWORK_REMOVE:
 		bzero(&net, sizeof(net));
-		memcpy(&net.prefix, &res->addr, sizeof(res->addr));
+		net.prefix = res->addr;
 		net.prefixlen = res->prefixlen;
 		/* attribute sets are not supported */
 		if (res->action == NETWORK_ADD) {
@@ -392,21 +388,20 @@ main(int argc, char *argv[])
 	case NETWORK_MRT:
 		bzero(&ribreq, sizeof(ribreq));
 		if (res->as.type != AS_NONE)
-			memcpy(&ribreq.as, &res->as, sizeof(res->as));
+			ribreq.as = res->as;
 		if (res->addr.aid) {
-			memcpy(&ribreq.prefix, &res->addr, sizeof(res->addr));
+			ribreq.prefix = res->addr;
 			ribreq.prefixlen = res->prefixlen;
 		}
 		if (res->community.as != COMMUNITY_UNSET &&
 		    res->community.type != COMMUNITY_UNSET)
-			memcpy(&ribreq.community, &res->community,
-			    sizeof(res->community));
+			ribreq.community = res->community;
 		if (res->large_community.as != COMMUNITY_UNSET &&
 		    res->large_community.ld1 != COMMUNITY_UNSET &&
 		    res->large_community.ld2 != COMMUNITY_UNSET)
-			memcpy(&ribreq.large_community, &res->large_community,
-			    sizeof(res->large_community));
-		memcpy(&ribreq.neighbor, &neighbor, sizeof(ribreq.neighbor));
+			ribreq.large_community = res->large_community;
+		/* XXX ext communities missing? */
+		ribreq.neighbor = neighbor;
 		ribreq.aid = res->aid;
 		ribreq.flags = res->flags;
 		net_mrt.arg = &ribreq;
@@ -1823,7 +1818,7 @@ network_bulk(struct parse_result *res)
 					break;
 				bzero(&net, sizeof(net));
 				parse_prefix(b, strlen(b), &h, &len);
-				memcpy(&net.prefix, &h, sizeof(h));
+				net.prefix = h;
 				net.prefixlen = len;
 
 				if (res->action == NETWORK_BULK_ADD) {
@@ -1968,7 +1963,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 			continue;
 
 		bzero(&net, sizeof(net));
-		memcpy(&net.prefix, &ctl.prefix, sizeof(net.prefix));
+		net.prefix = ctl.prefix;
 		net.prefixlen = ctl.prefixlen;
 		net.type = NETWORK_MRTCLONE;
 		/* XXX rtableid */
