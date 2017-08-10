@@ -619,7 +619,7 @@ hvn_txeof(struct hvn_softc *sc, uint64_t tid)
 	if ((tid & 0xffffffffU) != 0)
 		return;
 	id -= HVN_NVS_CHIM_SIG;
-	if (id > HVN_TX_DESC)
+	if (id >= HVN_TX_DESC)
 		panic("tx packet index too large: %u", id);
 
 	txd = &sc->sc_tx_desc[id];
