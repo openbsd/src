@@ -589,7 +589,7 @@ fixup_inquiry(struct scsi_xfer *xs, struct hvs_srb *srb)
 	struct hvs_softc *sc = xs->sc_link->adapter_softc;
 	struct scsi_inquiry_data *inq = (struct scsi_inquiry_data *)xs->data;
 	int datalen, resplen;
-	char vendor[16];
+	char vendor[8];
 
 	resplen = srb->srb_datalen >= 5 ? inq->additional_length + 5 : 0;
 	datalen = MIN(resplen, srb->srb_datalen);
