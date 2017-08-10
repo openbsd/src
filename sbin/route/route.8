@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.79 2017/01/01 01:08:11 tb Exp $
+.\"	$OpenBSD: route.8,v 1.80 2017/08/10 16:05:23 benno Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: January 1 2017 $
+.Dd $Mdocdate: August 10 2017 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -317,7 +317,8 @@ data, in hexadecimal format
 In the absence of modifiers, an address is assumed to be IPv4,
 unless containing a
 .Sq :\&
-character, when it is treated as IPv6.
+character, when it is treated as IPv6. When using the "default" keyword,
+the address family used is that of the gateway.
 .Pp
 The optional modifier
 .Fl link
