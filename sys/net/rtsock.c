@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.246 2017/08/02 07:42:11 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.247 2017/08/10 13:00:30 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -863,6 +863,15 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 
 		if (rt == NULL) {
 			error = ESRCH;
+			break;
+		}
+
+		/*
+		 * Make sure that local routes are only modified by the
+		 * kernel.
+		 */
+		if (ISSET(rt->rt_flags, RTF_LOCAL|RTF_BROADCAST)) {
+			error = EINVAL;
 			break;
 		}
 
