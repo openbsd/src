@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.c,v 1.4 2015/04/14 14:57:05 mpi Exp $ */
+/* $OpenBSD: umcs.c,v 1.5 2017/08/10 15:11:34 mpi Exp $ */
 /* $NetBSD: umcs.c,v 1.8 2014/08/23 21:37:56 martin Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
@@ -209,7 +209,11 @@ umcs_attach(struct device *parent, struct device *self, void *aux)
 	 *
 	 * Also, see notes in header file for these constants.
 	 */
-	umcs_get_reg(sc, UMCS_GPIO, &data);
+	if (!umcs_get_reg(sc, UMCS_GPIO, &data)) {
+		printf("%s: unable to get number of ports\n", DEVNAME(sc));
+		usbd_deactivate(sc->sc_udev);
+		return;
+	}
 	if (data & UMCS_GPIO_4PORTS)
 		sc->sc_numports = 4; /* physical port no are : 0, 1, 2, 3 */
 	else if (uaa->product == USB_PRODUCT_MOSCHIP_MCS7810)
