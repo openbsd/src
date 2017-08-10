@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.129 2017/05/07 04:22:24 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.130 2017/08/10 17:18:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -503,8 +503,6 @@ struct ssl_session_st {
 #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
 /* Disallow client initiated renegotiation. */
 #define SSL_OP_NO_CLIENT_RENEGOTIATION			0x00020000L
-/* If set, always create a new key when using tmp_ecdh parameters */
-#define SSL_OP_SINGLE_ECDH_USE				0x00080000L
 /* If set, always create a new key when using tmp_dh parameters */
 #define SSL_OP_SINGLE_DH_USE				0x00100000L
 /* Set on servers to choose the cipher according to the server's
@@ -549,6 +547,7 @@ struct ssl_session_st {
 #define SSL_OP_PKCS1_CHECK_1				0x0
 #define SSL_OP_PKCS1_CHECK_2				0x0
 #define SSL_OP_SAFARI_ECDHE_ECDSA_BUG			0x0
+#define SSL_OP_SINGLE_ECDH_USE				0x0
 #define SSL_OP_SSLEAY_080_CLIENT_DH_BUG			0x0
 #define SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG		0x0
 #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x0

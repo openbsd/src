@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.183 2017/08/09 22:24:25 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.184 2017/08/10 17:18:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -993,8 +993,6 @@ typedef struct cert_st {
 	int dh_tmp_auto;
 
 	EC_KEY *ecdh_tmp;
-	EC_KEY *(*ecdh_tmp_cb)(SSL *ssl, int is_export, int keysize);
-	int ecdh_tmp_auto;
 
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
 

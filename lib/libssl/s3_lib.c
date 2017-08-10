@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.154 2017/08/09 17:49:54 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.155 2017/08/10 17:18:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1838,39 +1838,26 @@ _SSL_set_dh_auto(SSL *s, int state)
 static int
 _SSL_set_tmp_ecdh(SSL *s, EC_KEY *ecdh)
 {
+	const EC_GROUP *group;
+	int nid;
+
 	if (!ssl_cert_inst(&s->cert)) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 
-	if (ecdh == NULL) {
-		SSLerror(s, ERR_R_PASSED_NULL_PARAMETER);
+	if (ecdh == NULL)
 		return 0;
-	}
-
-	if (!EC_KEY_up_ref(ecdh)) {
-		SSLerror(s, ERR_R_ECDH_LIB);
+	if ((group = EC_KEY_get0_group(ecdh)) == NULL)
 		return 0;
-	}
 
-	if (!(s->internal->options & SSL_OP_SINGLE_ECDH_USE)) {
-		if (!EC_KEY_generate_key(ecdh)) {
-			EC_KEY_free(ecdh);
-			SSLerror(s, ERR_R_ECDH_LIB);
-			return 0;
-		}
-	}
-
-	EC_KEY_free(s->cert->ecdh_tmp);
-	s->cert->ecdh_tmp = ecdh;
-
-	return 1;
+	nid = EC_GROUP_get_curve_name(group);
+	return SSL_set1_groups(s, &nid, 1);
 }
 
 static int
 _SSL_set_ecdh_auto(SSL *s, int state)
 {
-	s->cert->ecdh_tmp_auto = state;
 	return 1;
 }
 
@@ -2095,7 +2082,6 @@ ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 		return 1;
 
 	case SSL_CTRL_SET_TMP_ECDH_CB:
-		s->cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
 		return 1;
 
 	case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
@@ -2133,35 +2119,21 @@ _SSL_CTX_set_dh_auto(SSL_CTX *ctx, int state)
 static int
 _SSL_CTX_set_tmp_ecdh(SSL_CTX *ctx, EC_KEY *ecdh)
 {
-	EC_KEY *ecdh_tmp;
+	const EC_GROUP *group;
+	int nid;
 
-	if (ecdh == NULL) {
-		SSLerrorx(ERR_R_ECDH_LIB);
+	if (ecdh == NULL)
 		return 0;
-	}
-
-	if ((ecdh_tmp = EC_KEY_dup(ecdh)) == NULL) {
-		SSLerrorx(ERR_R_EC_LIB);
+	if ((group = EC_KEY_get0_group(ecdh)) == NULL)
 		return 0;
-	}
-	if (!(ctx->internal->options & SSL_OP_SINGLE_ECDH_USE)) {
-		if (!EC_KEY_generate_key(ecdh_tmp)) {
-			EC_KEY_free(ecdh_tmp);
-			SSLerrorx(ERR_R_ECDH_LIB);
-			return 0;
-		}
-	}
 
-	EC_KEY_free(ctx->internal->cert->ecdh_tmp);
-	ctx->internal->cert->ecdh_tmp = ecdh_tmp;
-
-	return 1;
+	nid = EC_GROUP_get_curve_name(group);
+	return SSL_CTX_set1_groups(ctx, &nid, 1);
 }
 
 static int
 _SSL_CTX_set_ecdh_auto(SSL_CTX *ctx, int state)
 {
-	ctx->internal->cert->ecdh_tmp_auto = state;
 	return 1;
 }
 
@@ -2347,8 +2319,6 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 		return 1;
 
 	case SSL_CTRL_SET_TMP_ECDH_CB:
-		ctx->internal->cert->ecdh_tmp_cb =
-		    (EC_KEY *(*)(SSL *, int, int))fp;
 		return 1;
 
 	case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:

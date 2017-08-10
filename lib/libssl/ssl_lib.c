@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.162 2017/08/09 22:24:25 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.163 2017/08/10 17:18:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2042,7 +2042,7 @@ void
 ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 {
 	int		 rsa_enc, rsa_sign, dh_tmp, dsa_sign;
-	int		 have_ecc_cert, have_ecdh_tmp;
+	int		 have_ecc_cert;
 	unsigned long	 mask_k, mask_a;
 	X509		*x = NULL;
 	CERT_PKEY	*cpk;
@@ -2052,9 +2052,6 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 
 	dh_tmp = (c->dh_tmp != NULL || c->dh_tmp_cb != NULL ||
 	    c->dh_tmp_auto != 0);
-
-	have_ecdh_tmp = (c->ecdh_tmp != NULL || c->ecdh_tmp_cb != NULL ||
-	    c->ecdh_tmp_auto != 0);
 
 	cpk = &(c->pkeys[SSL_PKEY_RSA_ENC]);
 	rsa_enc = (cpk->x509 != NULL && cpk->privatekey != NULL);
@@ -2104,8 +2101,7 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 			mask_a|=SSL_aECDSA;
 	}
 
-	if (have_ecdh_tmp)
-		mask_k|=SSL_kECDHE;
+	mask_k |= SSL_kECDHE;
 
 	c->mask_k = mask_k;
 	c->mask_a = mask_a;

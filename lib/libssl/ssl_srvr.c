@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.17 2017/05/07 04:22:24 beck Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.18 2017/08/10 17:18:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1267,27 +1267,23 @@ ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
 static int
 ssl3_send_server_kex_ecdhe_ecp(SSL *s, int nid, CBB *cbb)
 {
-	CBB ecpoint;
-	unsigned char *data;
-	EC_KEY *ecdh = NULL, *ecdhp;
 	const EC_GROUP *group;
+	const EC_POINT *pubkey;
+	unsigned char *data;
 	int encoded_len = 0;
 	int curve_id = 0;
 	BN_CTX *bn_ctx = NULL;
+	EC_KEY *ecdh;
+	CBB ecpoint;
 	int al;
 
-	ecdhp = s->cert->ecdh_tmp;
-	if (s->cert->ecdh_tmp_auto != 0) {
-		if (nid != NID_undef)
-			ecdhp = EC_KEY_new_by_curve_name(nid);
-	} else if (ecdhp == NULL && s->cert->ecdh_tmp_cb != NULL) {
-		ecdhp = s->cert->ecdh_tmp_cb(s, 0,
-		    SSL_C_PKEYLENGTH(S3I(s)->hs.new_cipher));
-	}
-	if (ecdhp == NULL) {
-		al = SSL_AD_HANDSHAKE_FAILURE;
-		SSLerror(s, SSL_R_MISSING_TMP_ECDH_KEY);
-		goto f_err;
+	/*
+	 * Only named curves are supported in ECDH ephemeral key exchanges.
+	 * For supported named curves, curve_id is non-zero.
+	 */
+	if ((curve_id = tls1_ec_nid2curve_id(nid)) == 0) {
+		SSLerror(s, SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
+		goto err;
 	}
 
 	if (S3I(s)->tmp.ecdh != NULL) {
@@ -1295,46 +1291,28 @@ ssl3_send_server_kex_ecdhe_ecp(SSL *s, int nid, CBB *cbb)
 		goto err;
 	}
 
-	/* Duplicate the ECDH structure. */
-	if (s->cert->ecdh_tmp_auto != 0) {
-		ecdh = ecdhp;
-	} else if ((ecdh = EC_KEY_dup(ecdhp)) == NULL) {
+	if ((S3I(s)->tmp.ecdh = EC_KEY_new_by_curve_name(nid)) == NULL) {
+		al = SSL_AD_HANDSHAKE_FAILURE;
+		SSLerror(s, SSL_R_MISSING_TMP_ECDH_KEY);
+		goto f_err;
+	}
+	ecdh = S3I(s)->tmp.ecdh;
+
+	if (!EC_KEY_generate_key(ecdh)) {
 		SSLerror(s, ERR_R_ECDH_LIB);
 		goto err;
 	}
-	S3I(s)->tmp.ecdh = ecdh;
-
-	if ((EC_KEY_get0_public_key(ecdh) == NULL) ||
-	    (EC_KEY_get0_private_key(ecdh) == NULL) ||
-	    (s->internal->options & SSL_OP_SINGLE_ECDH_USE)) {
-		if (!EC_KEY_generate_key(ecdh)) {
-			SSLerror(s, ERR_R_ECDH_LIB);
-			goto err;
-		}
-	}
-
-	if (((group = EC_KEY_get0_group(ecdh)) == NULL) ||
-	    (EC_KEY_get0_public_key(ecdh)  == NULL) ||
-	    (EC_KEY_get0_private_key(ecdh) == NULL)) {
+	if ((group = EC_KEY_get0_group(ecdh)) == NULL ||
+	    (pubkey = EC_KEY_get0_public_key(ecdh)) == NULL ||
+	    EC_KEY_get0_private_key(ecdh) == NULL) {
 		SSLerror(s, ERR_R_ECDH_LIB);
 		goto err;
 	}
 
 	/*
-	 * Only named curves are supported in ECDH ephemeral key exchanges.
-	 * For supported named curves, curve_id is non-zero.
+	 * Encode the public key.
 	 */
-	if ((curve_id = tls1_ec_nid2curve_id(
-	    EC_GROUP_get_curve_name(group))) == 0) {
-		SSLerror(s, SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
-		goto err;
-	}
-
-	/*
-	 * Encode the public key. First check the size of encoding and
-	 * allocate memory accordingly.
-	 */
-	encoded_len = EC_POINT_point2oct(group, EC_KEY_get0_public_key(ecdh),
+	encoded_len = EC_POINT_point2oct(group, pubkey,
 	    POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
 	if (encoded_len == 0) {
 		SSLerror(s, ERR_R_ECDH_LIB);
@@ -1360,8 +1338,8 @@ ssl3_send_server_kex_ecdhe_ecp(SSL *s, int nid, CBB *cbb)
 		goto err;
 	if (!CBB_add_space(&ecpoint, &data, encoded_len))
 		goto err;
-	if (EC_POINT_point2oct(group, EC_KEY_get0_public_key(ecdh),
-	    POINT_CONVERSION_UNCOMPRESSED, data, encoded_len, bn_ctx) == 0) {
+	if (EC_POINT_point2oct(group, pubkey, POINT_CONVERSION_UNCOMPRESSED,
+	    data, encoded_len, bn_ctx) == 0) {
 		SSLerror(s, ERR_R_ECDH_LIB);
 		goto err;
 	}
@@ -1431,7 +1409,7 @@ ssl3_send_server_kex_ecdhe(SSL *s, CBB *cbb)
 
 	nid = tls1_get_shared_curve(s);
 
-	if (s->cert->ecdh_tmp_auto != 0 && nid == NID_X25519)
+	if (nid == NID_X25519)
 		return ssl3_send_server_kex_ecdhe_ecx(s, nid, cbb);
 
 	return ssl3_send_server_kex_ecdhe_ecp(s, nid, cbb);
