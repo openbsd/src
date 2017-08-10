@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.35 2017/04/11 14:43:49 dhill Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.36 2017/08/10 09:12:32 fcambus Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -472,25 +472,6 @@ wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp,
 		/* cancel current escape sequence */
 		edp->state = VT100_EMUL_STATE_NORMAL;
 		break;
-#if 0
-	case CSI: /* 8-bit */
-		/* XXX cancel current escape sequence */
-		edp->nargs = 0;
-		memset(edp->args, 0, sizeof (edp->args));
-		edp->modif1 = edp->modif2 = '\0';
-		edp->state = VT100_EMUL_STATE_CSI;
-		break;
-	case DCS: /* 8-bit */
-		/* XXX cancel current escape sequence */
-		edp->nargs = 0;
-		memset(edp->args, 0, sizeof (edp->args));
-		edp->state = VT100_EMUL_STATE_DCS;
-		break;
-	case ST: /* string end 8-bit */
-		/* XXX only in VT100_EMUL_STATE_STRING */
-		wsemul_vt100_handle_dcs(edp);
-		return (VT100_EMUL_STATE_NORMAL);
-#endif
 	case ASCII_LF:
 	case ASCII_VT:
 	case ASCII_FF:
