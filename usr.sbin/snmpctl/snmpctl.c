@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpctl.c,v 1.22 2016/10/28 20:49:32 natano Exp $	*/
+/*	$OpenBSD: snmpctl.c,v 1.23 2017/08/10 16:03:10 rob Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -123,6 +123,8 @@ main(int argc, char *argv[])
 		usage();
 		break;
 	case SHOW_MIB:
+		if (pledge("stdio", NULL) == -1)
+			fatal("pledge");
 		show_mib();
 		break;
 	case WALK:
@@ -138,6 +140,9 @@ main(int argc, char *argv[])
 	return (0);
 
  connect:
+	if (pledge("stdio unix", NULL) == -1)
+		fatal("pledge");
+
 	/* connect to snmpd control socket */
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
@@ -155,6 +160,9 @@ main(int argc, char *argv[])
 		}
 		err(1, "connect: %s", sock);
 	}
+
+	if (pledge("stdio", NULL) == -1)
+		fatal("pledge");
 
 	imsg_init(&ibuf, ctl_sock);
 	done = 0;
