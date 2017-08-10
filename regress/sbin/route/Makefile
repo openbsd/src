@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.17 2017/07/27 12:44:07 mpi Exp $
+# $OpenBSD: Makefile,v 1.18 2017/08/10 13:06:12 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -322,6 +322,12 @@ n=	28
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
 	${RCMD} delete 192.0.2.1 192.0.2.1 && exit 1 || exit 0
+
+# Can't change/set expire on a RTF_LOCAL route
+n=	29
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} change -expire 30 192.0.2.1 192.0.2.2 && exit 1 || exit 0
 
 REGRESS_TARGETS=netmask ${RTTEST_TARGETS}
 REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
