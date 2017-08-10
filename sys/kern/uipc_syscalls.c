@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.157 2017/08/09 14:22:58 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.158 2017/08/10 19:20:43 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	struct mbuf *nam;
 	struct socket *so;
-	int error;
+	int s, error;
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
@@ -201,7 +201,9 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 	if (KTRPOINT(p, KTR_STRUCT))
 		ktrsockaddr(p, mtod(nam, caddr_t), SCARG(uap, namelen));
 #endif
+	s = solock(so);
 	error = sobind(so, nam, p);
+	sounlock(s);
 	m_freem(nam);
 out:
 	FRELE(fp, p);

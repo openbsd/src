@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.121 2017/08/09 14:22:58 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.122 2017/08/10 19:20:43 mpi Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -275,7 +275,9 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = INADDR_ANY;
 		sin->sin_port = htons(0);
+		s = solock(so);
 		error = sobind(so, m, &proc0);
+		sounlock(s);
 		m_freem(m);
 		if (error)
 			goto bad;

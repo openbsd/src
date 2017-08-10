@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.80 2017/05/31 13:05:43 visa Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.81 2017/08/10 19:20:43 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -438,6 +438,7 @@ pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
 				return (error);
 			if (pflowvalidsockaddr(sc->sc_flowsrc, 1)) {
 				struct mbuf *m;
+				int s;
 
 				MGET(m, M_WAIT, MT_SONAME);
 				m->m_len = sc->sc_flowsrc->sa_len;
@@ -445,7 +446,9 @@ pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
 				memcpy(sa, sc->sc_flowsrc,
 				    sc->sc_flowsrc->sa_len);
 
+				s = solock(so);
 				error = sobind(so, m, p);
+				sounlock(s);
 				m_freem(m);
 				if (error) {
 					soclose(so);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.200 2017/08/10 16:48:25 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.201 2017/08/10 19:20:43 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -152,11 +152,11 @@ socreate(int dom, struct socket **aso, int type, int proto)
 int
 sobind(struct socket *so, struct mbuf *nam, struct proc *p)
 {
-	int s, error;
+	int error;
 
-	s = solock(so);
+	soassertlocked(so);
+
 	error = (*so->so_proto->pr_usrreq)(so, PRU_BIND, NULL, nam, NULL, p);
-	sounlock(s);
 	return (error);
 }
 
