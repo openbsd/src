@@ -341,7 +341,7 @@ hvs_scsi_cmd(struct scsi_xfer *xs)
 	struct hvs_srb *srb = &io->cmd_srb;
 	int i, rv, flags = BUS_DMA_NOWAIT;
 
-	if (xs->cmdlen > HVS_CMD_SIZE) {
+	if (xs->cmdlen > MAX_SRB_DATA) {
 		printf("%s: CDB is too big: %d\n", sc->sc_dev.dv_xname,
 		    xs->cmdlen);
 		memset(&xs->sense, 0, sizeof(xs->sense));
