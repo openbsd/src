@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.8 2017/06/03 08:50:38 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.9 2017/08/10 18:06:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -405,7 +405,7 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 	struct scsi_rw_12 *rw12;
 	struct scsi_rw_16 *rw16;
 	u_int64_t lba = 0;
-	u_int32_t sector_count;
+	u_int32_t sector_count = 0;
 	uint8_t operation;
 
 	switch (xs->cmd->opcode) {
