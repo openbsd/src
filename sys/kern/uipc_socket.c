@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.199 2017/08/09 14:22:58 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.200 2017/08/10 16:48:25 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1566,7 +1566,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 	soassertlocked(so);
 
 	if (level != SOL_SOCKET) {
-		if (so->so_proto && so->so_proto->pr_ctloutput) {
+		if (so->so_proto->pr_ctloutput) {
 			error = (*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so,
 			    level, optname, m0);
 			return (error);
@@ -1707,7 +1707,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 		    }
 
 		case SO_RTABLE:
-			if (so->so_proto && so->so_proto->pr_domain &&
+			if (so->so_proto->pr_domain &&
 			    so->so_proto->pr_domain->dom_protosw &&
 			    so->so_proto->pr_ctloutput) {
 				struct domain *dom = so->so_proto->pr_domain;
@@ -1742,7 +1742,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 			error = ENOPROTOOPT;
 			break;
 		}
-		if (error == 0 && so->so_proto && so->so_proto->pr_ctloutput) {
+		if (error == 0 && so->so_proto->pr_ctloutput) {
 			(*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so,
 			    level, optname, m0);
 			m = NULL;	/* freed by protocol */
@@ -1763,7 +1763,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 	soassertlocked(so);
 
 	if (level != SOL_SOCKET) {
-		if (so->so_proto && so->so_proto->pr_ctloutput) {
+		if (so->so_proto->pr_ctloutput) {
 			m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = 0;
 
@@ -1848,7 +1848,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		    }
 
 		case SO_RTABLE:
-			if (so->so_proto && so->so_proto->pr_domain &&
+			if (so->so_proto->pr_domain &&
 			    so->so_proto->pr_domain->dom_protosw &&
 			    so->so_proto->pr_ctloutput) {
 				struct domain *dom = so->so_proto->pr_domain;
