@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.50 2017/08/05 05:41:31 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.51 2017/08/10 16:59:04 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -548,7 +548,6 @@ vioblk_notifyq(struct vioblk_dev *dev)
 				dump_descriptor_chain(desc, cmd_desc_idx);
 				goto out;
 			}
-
 
 			ret = 1;
 			dev->cfg.isr_status = 1;
