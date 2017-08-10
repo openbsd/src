@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.2 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: errno.h,v 1.3 2017/08/10 13:34:46 guenther Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -52,7 +52,6 @@ extern char *sys_errlist[];
 
 #ifndef errno
 int *__errno(void);
-int *___errno(void);
 #define	errno (*__errno())
 #endif /* errno */
 __END_DECLS
