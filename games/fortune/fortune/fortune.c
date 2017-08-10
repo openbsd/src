@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.59 2017/07/12 11:36:22 schwarze Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.60 2017/08/10 17:00:08 millert Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -201,7 +201,7 @@ sanitize(unsigned char *cp)
 	if (MB_CUR_MAX > 1)
 		return;
 	for (; *cp != '\0'; cp++)
-		if (!isprint(*cp) && !isspace(*cp))
+		if (!isprint(*cp) && !isspace(*cp) && *cp != '\b')
 			*cp = '?';
 }
 
