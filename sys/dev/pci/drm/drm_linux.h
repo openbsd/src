@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.58 2017/07/22 14:33:45 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.59 2017/08/10 14:18:31 guenther Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -491,6 +491,24 @@ typedef struct mutex spinlock_t;
 #define DEFINE_SPINLOCK(x)	struct mutex x
 #define DEFINE_MUTEX(x)		struct rwlock x
 
+#ifdef WITNESS
+static inline void
+_spin_lock_irqsave(struct mutex *mtxp, __unused unsigned long flags
+    LOCK_FL_VARS)
+{
+	_mtx_enter(mtxp LOCK_FL_ARGS);
+}
+static inline void
+_spin_unlock_irqrestore(struct mutex *mtxp, __unused unsigned long flags
+    LOCK_FL_VARS)
+{
+	_mtx_leave(mtxp LOCK_FL_ARGS);
+}
+#define spin_lock_irqsave(m, fl)	\
+	_spin_lock_irqsave(m, fl LOCK_FILE_LINE)
+#define spin_unlock_irqrestore(m, fl)	\
+	_spin_unlock_irqrestore(m, fl LOCK_FILE_LINE)
+#else /* !WITNESS */
 static inline void
 spin_lock_irqsave(struct mutex *mtxp, __unused unsigned long flags)
 {
@@ -501,6 +519,9 @@ spin_unlock_irqrestore(struct mutex *mtxp, __unused unsigned long flags)
 {
 	mtx_leave(mtxp);
 }
+#endif /* !WITNESS */
+
+
 #define spin_lock(mtxp)			mtx_enter(mtxp)
 #define spin_unlock(mtxp)		mtx_leave(mtxp)
 #define spin_lock_irq(mtxp)		mtx_enter(mtxp)
@@ -645,6 +666,37 @@ init_completion(struct completion *x)
 	mtx_init(&x->wait.lock, IPL_NONE);
 }
 
+#ifdef WITNESS
+static inline u_long
+_wait_for_completion_interruptible_timeout(struct completion *x, u_long timo
+    LOCK_FL_VARS)
+{
+	int ret;
+
+	_mtx_enter(&x->wait.lock LOCK_FL_ARGS);
+	while (x->done == 0) {
+		ret = msleep(x, &x->wait.lock, PCATCH, "wfcit", timo);
+		if (ret) {
+			_mtx_leave(&x->wait.lock LOCK_FL_ARGS);
+			return (ret == EWOULDBLOCK) ? 0 : -ret;
+		}
+	}
+
+	return 1;
+}
+#define wait_for_completion_interruptible_timeout(x, timo)	\
+	_wait_for_completion_interruptible_timeout(x, timo LOCK_FILE_LINE)
+
+static inline void
+_complete_all(struct completion *x LOCK_FL_VARS)
+{
+	_mtx_enter(&x->wait.lock LOCK_FL_ARGS);
+	x->done = 1;
+	_mtx_leave(&x->wait.lock LOCK_FL_ARGS);
+	wakeup(x);
+}
+#define complete_all(x)	_complete_all(x LOCK_FILE_LINE)
+#else /* !WITNESS */
 static inline u_long
 wait_for_completion_interruptible_timeout(struct completion *x, u_long timo)
 {
@@ -670,6 +722,7 @@ complete_all(struct completion *x)
 	mtx_leave(&x->wait.lock);
 	wakeup(x);
 }
+#endif /* !WITNESS */
 
 struct workqueue_struct;
 
