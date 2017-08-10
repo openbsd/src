@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: keywords.sh,v 1.31 2016/09/04 09:41:03 claudio Exp $
+# $OpenBSD: keywords.sh,v 1.32 2017/08/10 13:44:48 benno Exp $
 # $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
@@ -17,6 +17,7 @@ bgp
 change
 cloning
 connected
+del
 delete
 dst
 exec

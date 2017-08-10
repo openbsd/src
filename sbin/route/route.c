@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.200 2017/03/23 13:28:25 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.201 2017/08/10 13:44:48 benno Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -252,6 +252,7 @@ main(int argc, char **argv)
 		/* FALLTHROUGH */
 	case K_CHANGE:
 	case K_ADD:
+	case K_DEL:
 	case K_DELETE:
 		rval = newroute(argc, argv);
 		break;
