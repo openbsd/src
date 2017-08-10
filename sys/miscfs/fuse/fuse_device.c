@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.22 2017/01/10 19:48:32 bluhm Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.23 2017/08/10 14:36:34 mestre Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -296,6 +296,8 @@ fuseioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	int error = 0;
 
 	fd = fuse_lookup(minor(dev));
+	if (fd == NULL)
+		return (ENXIO);
 
 	switch (cmd) {
 	case FIOCGETFBDAT:
