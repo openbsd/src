@@ -1,4 +1,4 @@
-/*	$OpenBSD: caesar.c,v 1.19 2016/02/26 12:10:49 mestre Exp $	*/
+/*	$OpenBSD: caesar.c,v 1.20 2017/08/10 17:24:30 tedu Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,13 +52,12 @@
 	    islower(ch) ? ('a' + (ch - 'a' + perm) % 26) : ch
 
 /*
- * letter frequencies (taken from some unix(tm) documentation)
- * (unix is a trademark of Bell Laboratories)
+ * letter frequencies
  */
 double stdf[26] = {
-	7.97, 1.35, 3.61, 4.78, 12.37, 2.01, 1.46, 4.49, 6.39, 0.04,
-	0.42, 3.81, 2.69, 5.92,  6.96, 2.91, 0.08, 6.63, 8.77, 9.68,
-	2.62, 0.81, 1.88, 0.23,  2.07, 0.06
+	8.1, 1.4, 2.7, 3.8, 13.0, 2.9, 2.0, 5.2, 6.3, 0.13,
+	0.4, 3.4, 2.5, 7.1, 7.9, 1.9, 0.11, 6.8, 6.1, 10.5,
+	2.4, 0.9, 1.5, 0.15, 1.9, 0.07
 };
 
 __dead void printit(int);
