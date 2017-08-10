@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.491 2017/08/09 19:35:59 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.492 2017/08/10 17:15:05 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -416,10 +416,8 @@ routehandler(struct interface_info *ifi, int routefd)
 	}
 
 	/* Something has happened. Try to write out the resolv.conf. */
-	if (ifi->active != NULL && ifi->active->resolv_conf != NULL &&
-	    (ifi->flags & IFI_IN_CHARGE) != 0)
-		write_resolv_conf(ifi->active->resolv_conf,
-		    strlen(ifi->active->resolv_conf));
+	if (ifi->active != NULL && (ifi->flags & IFI_IN_CHARGE) != 0)
+		write_resolv_conf();
 
 done:
 	free(rtmmsg);
@@ -989,13 +987,6 @@ bind_lease(struct interface_info *ifi)
 	time_t			 cur_time;
 	int			 seen;
 
-	/*
-	 * Clear out any old resolv_conf in case the lease has been here
-	 * before (e.g. static lease).
-	 */
-	free(ifi->offer->resolv_conf);
-	ifi->offer->resolv_conf = NULL;
-
 	lease = apply_defaults(ifi->offer);
 
 	set_lease_times(lease);
@@ -1013,8 +1004,6 @@ bind_lease(struct interface_info *ifi)
 		offered_proposal = lease_as_proposal(ifi->offer);
 		if (memcmp(active_proposal, offered_proposal,
 		    sizeof(*active_proposal)) == 0) {
-			ifi->offer->resolv_conf = ifi->active->resolv_conf;
-			ifi->active->resolv_conf = NULL;
 			ifi->active = ifi->offer;
 			ifi->offer = NULL;
 			goto newlease;
@@ -1026,7 +1015,7 @@ bind_lease(struct interface_info *ifi)
 	ifi->offer = NULL;
 	effective_proposal = lease_as_proposal(lease);
 
-	ifi->active->resolv_conf = resolv_conf_contents(ifi->name,
+	set_resolv_conf(ifi->name,
 	    effective_proposal->rtsearch,
 	    effective_proposal->rtsearch_len,
 	    effective_proposal->rtdns,
@@ -1041,6 +1030,7 @@ bind_lease(struct interface_info *ifi)
 	    effective_proposal->rtstatic, effective_proposal->rtstatic_len);
 
 newlease:
+	write_resolv_conf();
 	log_info("bound to %s -- renewal in %lld seconds.",
 	    inet_ntoa(ifi->active->address),
 	    (long long)(ifi->active->renewal - time(NULL)));
@@ -1722,7 +1712,6 @@ free_client_lease(struct client_lease *lease)
 
 	free(lease->server_name);
 	free(lease->filename);
-	free(lease->resolv_conf);
 	for (i = 0; i < DHO_COUNT; i++)
 		free(lease->options[i].data);
 
@@ -2383,11 +2372,6 @@ clone_lease(struct client_lease *oldlease)
 	if (oldlease->filename != NULL) {
 		newlease->filename = strdup(oldlease->filename);
 		if (newlease->filename == NULL)
-			goto cleanup;
-	}
-	if (oldlease->resolv_conf != NULL) {
-		newlease->resolv_conf = strdup(oldlease->resolv_conf);
-		if (newlease->resolv_conf == NULL)
 			goto cleanup;
 	}
 

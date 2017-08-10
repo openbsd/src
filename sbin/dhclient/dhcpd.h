@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.221 2017/08/09 19:57:54 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.222 2017/08/10 17:15:05 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -61,7 +61,6 @@ struct client_lease {
 	struct in_addr		 next_server;
 	char			*server_name;
 	char			*filename;
-	char			*resolv_conf;
 	char			 ssid[32];
 	uint8_t			 ssid_len;
 	unsigned int		 is_static;
@@ -234,7 +233,9 @@ void		 read_client_leases(char *, struct client_lease_tq *);
 
 /* kroute.c */
 void		 delete_address(struct in_addr);
-void		 write_resolv_conf(uint8_t *, size_t);
+void		 set_resolv_conf(char *, uint8_t *, unsigned int,
+    uint8_t *, unsigned int);
+void		 write_resolv_conf(void);
 void		 set_mtu(int, uint16_t);
 void		 set_address(char *, struct in_addr, struct in_addr);
 void		 set_routes(struct in_addr, struct in_addr, uint8_t *,

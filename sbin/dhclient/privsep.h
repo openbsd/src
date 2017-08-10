@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.52 2017/08/08 17:54:24 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.53 2017/08/10 17:15:05 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -24,6 +24,7 @@ enum imsg_code {
 	IMSG_FLUSH_ROUTES,
 	IMSG_ADD_ROUTE,
 	IMSG_SET_MTU,
+	IMSG_SET_RESOLV_CONF,
 	IMSG_WRITE_RESOLV_CONF
 };
 
@@ -53,9 +54,7 @@ int	default_route_index(int, int);
 void	priv_add_route(char *, int, int, struct imsg_add_route *);
 void	priv_flush_routes(char *, int, int);
 
-char	*resolv_conf_contents(char *, uint8_t *, unsigned int, uint8_t *,
-    unsigned int);
-void	priv_write_resolv_conf(uint8_t *, size_t);
+void	priv_write_resolv_conf(char *);
 
 void	priv_delete_address(char *, int, struct imsg_delete_address *);
 void	priv_set_address(char *, int, struct imsg_set_address *);

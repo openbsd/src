@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.62 2017/08/08 17:54:24 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.63 2017/08/10 17:15:05 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -28,6 +28,7 @@
 #include <imsg.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "dhcp.h"
@@ -39,9 +40,11 @@ int
 dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
     struct imsgbuf *ibuf)
 {
-	struct imsg	imsg;
-	ssize_t		n;
-	int		index;
+	static char	*resolv_conf;
+	struct imsg	 imsg;
+	ssize_t		 n;
+	size_t		 sz;
+	int		 index;
 
 	index = if_nametoindex(name);
 	if (index == 0)
@@ -95,13 +98,31 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 				priv_set_mtu(name, ioctlfd, imsg.data);
 			break;
 
+		case IMSG_SET_RESOLV_CONF:
+			if (imsg.hdr.len < IMSG_HEADER_SIZE)
+				log_warnx("bad IMSG_SET_RESOLV_CONF");
+			else {
+				free(resolv_conf);
+				resolv_conf = NULL;
+				sz = imsg.hdr.len - IMSG_HEADER_SIZE;
+				if (sz > 0) {
+					resolv_conf = malloc(sz);
+					if (resolv_conf == NULL)
+						log_warnx("no memory for "
+						    "resolv_conf");
+					else
+						strlcpy(resolv_conf,
+						    imsg.data, sz);
+				}
+			}
+			break;
+
 		case IMSG_WRITE_RESOLV_CONF:
-			if (imsg.hdr.len <= IMSG_HEADER_SIZE)
-				log_warnx("short IMSG_WRITE_RESOLV_CONF");
+			if (imsg.hdr.len != IMSG_HEADER_SIZE)
+				log_warnx("bad IMSG_WRITE_RESOLV_CONF");
 			else if (default_route_index(rdomain, routefd) ==
 			    index)
-				priv_write_resolv_conf(imsg.data,
-				    imsg.hdr.len - IMSG_HEADER_SIZE);
+				priv_write_resolv_conf(resolv_conf);
 			break;
 
 		case IMSG_HUP:
