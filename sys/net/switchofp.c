@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.68 2017/08/11 13:55:09 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.69 2017/08/11 13:56:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -5346,7 +5346,7 @@ swofp_flow_mod_cmd_delete_strict(struct switch_softc *sc, struct mbuf *m)
 ofp_msg_handler *
 swofp_flow_mod_lookup_handler(uint8_t cmd)
 {
-	if (cmd > nitems(ofp_flow_mod_table))
+	if (cmd >= nitems(ofp_flow_mod_table))
 		return (NULL);
 	else
 		return (&ofp_flow_mod_table[cmd].ofm_cmd_handler);
