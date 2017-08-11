@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# Turn off Strict Bourne shell mode.
+set +o sh
+
+USAGE="usage: ${0##*/} [-S] [-o outfile] file"
+
+while getopts "o:S" opt; do
+	case $opt in
+	S)	STRIPFLAG=-g;;
+	o)	OUTFILE="${OPTARG}";;
+	*)	print -u2 "${USAGE}"; exit 1;;
+	esac
+done
+shift $((OPTIND-1))
+
+if [[ $# == 0 ]]; then
+	print -u2 "${USAGE}";
+	exit 1
+fi
+
+LABEL="unknown"
+TMPFILE=$1.rawctf
+
+# Extract kernel verison
+if [[ "$1" == bsd* ]]; then
+	LABEL=`what $1 |tr -d '\n'|awk -F"$1	" '{ print $2 '\n' }'`
+fi
+
+ctfconv -o ${TMPFILE} -l "${LABEL}" $1 || exit 2
+
+objcopy --add-section .SUNW_ctf=${TMPFILE} ${STRIPFLAG} $1 ${OUTFILE}
+
+rm -f ${TMPFILE}
