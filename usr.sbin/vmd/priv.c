@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.9 2017/05/04 08:26:06 reyk Exp $	*/
+/*	$OpenBSD: priv.c,v 1.10 2017/08/11 16:33:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -279,16 +279,17 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 		    sizeof(vfr.vfr_name)) >= sizeof(vfr.vfr_name))
 			return (-1);
 
-		/* Set non-default rdomain */
-		if (vif->vif_flags & VMIFF_RDOMAIN) {
+		/* Use the configured rdomain or get it from the process */
+		if (vif->vif_flags & VMIFF_RDOMAIN)
 			vfr.vfr_id = vif->vif_rdomain;
-
+		else
+			vfr.vfr_id = getrtable();
+		if (vfr.vfr_id != 0)
 			log_debug("%s: interface %s rdomain %u", __func__,
 			    vfr.vfr_name, vfr.vfr_id);
 
-			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
-			    &vfr, sizeof(vfr));
-		}
+		proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
+		    &vfr, sizeof(vfr));
 
 		/* Description can be truncated */
 		(void)snprintf(vfr.vfr_value, sizeof(vfr.vfr_value),
@@ -310,17 +311,18 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 			if (strlcpy(vfbr.vfr_value, vif->vif_name,
 			    sizeof(vfbr.vfr_value)) >= sizeof(vfbr.vfr_value))
 				return (-1);
-			vfbr.vfr_id = vsw->sw_rdomain;
+			if (vsw->sw_flags & VMIFF_RDOMAIN)
+				vfbr.vfr_id = vsw->sw_rdomain;
+			else
+				vfbr.vfr_id = getrtable();
 
 			log_debug("%s: interface %s add %s", __func__,
 			    vfbr.vfr_name, vfbr.vfr_value);
 
 			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFCREATE,
 			    &vfbr, sizeof(vfbr));
-			if (vsw->sw_flags & VMIFF_RDOMAIN)
-				proc_compose(ps,
-				    PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
-				    &vfbr, sizeof(vfbr));
+			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
+			    &vfbr, sizeof(vfbr));
 			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFADD,
 			    &vfbr, sizeof(vfbr));
 		} else if (vif->vif_switch != NULL)
@@ -395,15 +397,21 @@ vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 	if (strlcpy(vfr.vfr_name, vsw->sw_ifname,
 	    sizeof(vfr.vfr_name)) >= sizeof(vfr.vfr_name))
 		return (-1);
-	vfr.vfr_id = vsw->sw_rdomain;
 
 	proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFCREATE,
 	    &vfr, sizeof(vfr));
 
-	/* Set non-default rdomain */
+	/* Use the configured rdomain or get it from the process */
 	if (vsw->sw_flags & VMIFF_RDOMAIN)
-		proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
-		    &vfr, sizeof(vfr));
+		vfr.vfr_id = vsw->sw_rdomain;
+	else
+		vfr.vfr_id = getrtable();
+	if (vfr.vfr_id != 0)
+		log_debug("%s: interface %s rdomain %u", __func__,
+		    vfr.vfr_name, vfr.vfr_id);
+
+	proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
+	    &vfr, sizeof(vfr));
 
 	/* Description can be truncated */
 	(void)snprintf(vfr.vfr_value, sizeof(vfr.vfr_value),
