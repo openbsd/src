@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.63 2017/08/10 17:15:05 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.64 2017/08/11 18:00:38 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -41,10 +41,11 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
     struct imsgbuf *ibuf)
 {
 	static char	*resolv_conf;
+	static int	 lastidx;
 	struct imsg	 imsg;
 	ssize_t		 n;
 	size_t		 sz;
-	int		 index;
+	int		 index, newidx;
 
 	index = if_nametoindex(name);
 	if (index == 0)
@@ -114,15 +115,19 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 						strlcpy(resolv_conf,
 						    imsg.data, sz);
 				}
+				lastidx = 0;
 			}
 			break;
 
 		case IMSG_WRITE_RESOLV_CONF:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE)
 				log_warnx("bad IMSG_WRITE_RESOLV_CONF");
-			else if (default_route_index(rdomain, routefd) ==
-			    index)
-				priv_write_resolv_conf(resolv_conf);
+			else {
+				newidx = default_route_index(rdomain, routefd);
+				if (newidx == index && newidx != lastidx)
+					priv_write_resolv_conf(resolv_conf);
+				lastidx = newidx;
+			}
 			break;
 
 		case IMSG_HUP:
