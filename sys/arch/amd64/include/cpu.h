@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.113 2017/07/12 06:26:32 natano Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.114 2017/08/11 20:19:14 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -423,9 +423,7 @@ void mp_setperf_init(void);
 #define CPU_CPUVENDOR		6	/* cpuid vendor string */
 #define CPU_CPUID		7	/* cpuid */
 #define CPU_CPUFEATURE		8	/* cpuid features */
-#define CPU_APMWARN		9	/* APM battery warning percentage */
 #define CPU_KBDRESET		10	/* keyboard reset under pcvt */
-#define CPU_APMHALT		11	/* halt -p hack */
 #define CPU_XCRYPT		12	/* supports VIA xcrypt in userland */
 #define CPU_LIDACTION		14	/* action caused by lid close */
 #define CPU_FORCEUKBD		15	/* Force ukbd(4) as console keyboard */
@@ -441,9 +439,9 @@ void mp_setperf_init(void);
 	{ "cpuvendor", CTLTYPE_STRING }, \
 	{ "cpuid", CTLTYPE_INT }, \
 	{ "cpufeature", CTLTYPE_INT }, \
-	{ "apmwarn", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "kbdreset", CTLTYPE_INT }, \
-	{ "apmhalt", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "xcrypt", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ "lidaction", CTLTYPE_INT }, \
