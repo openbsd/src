@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.13 2017/08/11 16:57:19 mpi Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.14 2017/08/11 20:47:21 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -249,6 +249,9 @@ db_ctf_type_by_symbol(Elf_Sym *st)
 	uint32_t		 objtoff = db_ctf.cth->cth_objtoff;
 	uint16_t		*dsp;
 	size_t			 idx = 0;
+
+	if (!db_ctf.ctf_found || st == NULL)
+		return NULL;
 
 	while (objtoff < db_ctf.cth->cth_funcoff) {
 		dsp = (uint16_t *)(db_ctf.data + objtoff);
@@ -502,15 +505,11 @@ exit:
  * print <symbol name>
  */
 void
-db_ctf_pprint_cmd(db_expr_t addr, int have_addr, db_expr_t count,
-    char *modifiers)
+db_ctf_pprint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	Elf_Sym *st;
 	const struct ctf_type *ctt;
 	int t;
-
-	if (!db_ctf.ctf_found)
-		return;
 
 	/*
 	 * Read the struct name from the debugger input.
@@ -528,9 +527,9 @@ db_ctf_pprint_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 		return;
 	}
 
-
 	if ((ctt = db_ctf_type_by_symbol(st)) == NULL) {
-		db_printf("Type not found %s\n", db_tok_string);
+	        modif[0] = '\0';
+		db_print_cmd(addr, 0, 0, modif);
 		db_flush_lex();
 		return;
 	}
