@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.185 2017/08/11 05:06:34 doug Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.186 2017/08/11 17:54:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1138,7 +1138,7 @@ int ssl3_get_finished(SSL *s, int state_a, int state_b);
 int ssl3_send_change_cipher_spec(SSL *s, int state_a, int state_b);
 int ssl3_do_write(SSL *s, int type);
 int ssl3_send_alert(SSL *s, int level, int desc);
-int ssl3_get_req_cert_type(SSL *s, unsigned char *p);
+int ssl3_get_req_cert_types(SSL *s, CBB *cbb);
 long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
 int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen);
 int ssl3_num_ciphers(void);

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.155 2017/08/10 17:18:38 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.156 2017/08/11 17:54:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2438,36 +2438,45 @@ ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 }
 
 int
-ssl3_get_req_cert_type(SSL *s, unsigned char *p)
+ssl3_get_req_cert_types(SSL *s, CBB *cbb)
 {
-	int		ret = 0;
-	unsigned long	alg_k;
+	unsigned long alg_k;
 
 	alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
 
 #ifndef OPENSSL_NO_GOST
-	if ((alg_k & SSL_kGOST)) {
-		p[ret++] = TLS_CT_GOST94_SIGN;
-		p[ret++] = TLS_CT_GOST01_SIGN;
-		p[ret++] = TLS_CT_GOST12_256_SIGN;
-		p[ret++] = TLS_CT_GOST12_512_SIGN;
+	if ((alg_k & SSL_kGOST) != 0) {
+		if (!CBB_add_u8(cbb, TLS_CT_GOST94_SIGN))
+			return 0;
+		if (!CBB_add_u8(cbb, TLS_CT_GOST01_SIGN))
+			return 0;
+		if (!CBB_add_u8(cbb, TLS_CT_GOST12_256_SIGN))
+			return 0;
+		if (!CBB_add_u8(cbb, TLS_CT_GOST12_512_SIGN))
+			return 0;
 	}
 #endif
 
-	if (alg_k & SSL_kDHE) {
-		p[ret++] = SSL3_CT_RSA_FIXED_DH;
-		p[ret++] = SSL3_CT_DSS_FIXED_DH;
+	if ((alg_k & SSL_kDHE) != 0) {
+		if (!CBB_add_u8(cbb, SSL3_CT_RSA_FIXED_DH))
+			return 0;
+		if (!CBB_add_u8(cbb, SSL3_CT_DSS_FIXED_DH))
+			return 0;
 	}
-	p[ret++] = SSL3_CT_RSA_SIGN;
-	p[ret++] = SSL3_CT_DSS_SIGN;
+
+	if (!CBB_add_u8(cbb, SSL3_CT_RSA_SIGN))
+		return 0;
+	if (!CBB_add_u8(cbb, SSL3_CT_DSS_SIGN))
+		return 0;
 
 	/*
 	 * ECDSA certs can be used with RSA cipher suites as well
 	 * so we don't need to check for SSL_kECDH or SSL_kECDHE.
 	 */
-	p[ret++] = TLS_CT_ECDSA_SIGN;
+	if (!CBB_add_u8(cbb, TLS_CT_ECDSA_SIGN))
+		return 0;
 
-	return (ret);
+	return 1;
 }
 
 int

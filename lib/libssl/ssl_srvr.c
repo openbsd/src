@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.18 2017/08/10 17:18:38 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.19 2017/08/11 17:54:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1573,69 +1573,70 @@ ssl3_send_server_key_exchange(SSL *s)
 int
 ssl3_send_certificate_request(SSL *s)
 {
-	unsigned char *p, *d;
-	int i, j, nl, off, n;
+	CBB cbb, cert_request, cert_types, sigalgs, cert_auth, dn;
 	STACK_OF(X509_NAME) *sk = NULL;
 	X509_NAME *name;
-	BUF_MEM *buf;
+	int i;
+
+	/*
+	 * Certificate Request - RFC 5246 section 7.4.4.
+	 */
+
+	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == SSL3_ST_SW_CERT_REQ_A) {
-		buf = s->internal->init_buf;
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &cert_request,
+		    SSL3_MT_CERTIFICATE_REQUEST))
+			goto err;
 
-		d = p = ssl3_handshake_msg_start(s,
-		    SSL3_MT_CERTIFICATE_REQUEST);
-
-		/* get the list of acceptable cert types */
-		p++;
-		n = ssl3_get_req_cert_type(s, p);
-		d[0] = n;
-		p += n;
-		n++;
+		if (!CBB_add_u8_length_prefixed(&cert_request, &cert_types))
+			goto err;
+		if (!ssl3_get_req_cert_types(s, &cert_types))
+			goto err;
 
 		if (SSL_USE_SIGALGS(s)) {
-			nl = tls12_get_req_sig_algs(s, p + 2);
-			s2n(nl, p);
-			p += nl + 2;
-			n += nl + 2;
+			unsigned char *sigalgs_data;
+			size_t sigalgs_len;
+
+			sigalgs_len = tls12_get_req_sig_algs(s, NULL);
+			if (!CBB_add_u16_length_prefixed(&cert_request, &sigalgs))
+				goto err;
+			if (!CBB_add_space(&sigalgs, &sigalgs_data, sigalgs_len))
+				goto err;
+			tls12_get_req_sig_algs(s, sigalgs_data);
 		}
 
-		off = n;
-		p += 2;
-		n += 2;
+		if (!CBB_add_u16_length_prefixed(&cert_request, &cert_auth))
+			goto err;
 
 		sk = SSL_get_client_CA_list(s);
-		nl = 0;
-		if (sk != NULL) {
-			for (i = 0; i < sk_X509_NAME_num(sk); i++) {
-				name = sk_X509_NAME_value(sk, i);
-				j = i2d_X509_NAME(name, NULL);
-				if (!BUF_MEM_grow_clean(buf,
-				    ssl3_handshake_msg_hdr_len(s) + n + j
-				    + 2)) {
-					SSLerror(s, ERR_R_BUF_LIB);
-					goto err;
-				}
-				p = ssl3_handshake_msg_start(s,
-				    SSL3_MT_CERTIFICATE_REQUEST) + n;
-				s2n(j, p);
-				i2d_X509_NAME(name, &p);
-				n += 2 + j;
-				nl += 2 + j;
-			}
-		}
-		/* else no CA names */
-		p = ssl3_handshake_msg_start(s,
-		    SSL3_MT_CERTIFICATE_REQUEST) + off;
-		s2n(nl, p);
+		for (i = 0; i < sk_X509_NAME_num(sk); i++) {
+			unsigned char *name_data;
+			size_t name_len;
 
-		ssl3_handshake_msg_finish(s, n);
+			name = sk_X509_NAME_value(sk, i);
+			name_len = i2d_X509_NAME(name, NULL);
+
+			if (!CBB_add_u16_length_prefixed(&cert_auth, &dn))
+				goto err;
+			if (!CBB_add_space(&dn, &name_data, name_len))
+				goto err;
+			if (i2d_X509_NAME(name, &name_data) != name_len)
+				goto err;
+		}
+
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_SW_CERT_REQ_B;
 	}
 
 	/* SSL3_ST_SW_CERT_REQ_B */
 	return (ssl3_handshake_write(s));
-err:
+
+ err:
+	CBB_cleanup(&cbb);
+
 	return (-1);
 }
 
