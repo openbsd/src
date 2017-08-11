@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.24 2017/01/25 08:23:50 tom Exp $	*/
+/*	$OpenBSD: clock.c,v 1.25 2017/08/11 21:18:11 jcs Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -157,16 +157,10 @@ u_long rtclock_tval;
 void
 startclocks(void)
 {
-	int s;
-
 	mtx_enter(&timer_mutex);
 	rtclock_tval = TIMER_DIV(hz);
 	i8254_startclock();
 	mtx_leave(&timer_mutex);
-
-	/* Check diagnostic status */
-	if ((s = mc146818_read(NULL, NVRAM_DIAG)) != 0)	/* XXX softc */
-		printf("RTC BIOS diagnostic error %b\n", s, NVRAM_DIAG_BITS);
 }
 
 int
