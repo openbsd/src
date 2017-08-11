@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.12 2017/08/11 15:08:13 mpi Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.13 2017/08/11 16:57:19 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -58,6 +58,7 @@ static char		*db_ctf_decompress(const char *, size_t, off_t);
 const struct ctf_type	*db_ctf_type_by_symbol(Elf_Sym *);
 const struct ctf_type	*db_ctf_type_by_index(uint16_t);
 void			 db_ctf_pprint_struct(const struct ctf_type *, vaddr_t);
+void			 db_ctf_pprint_ptr(const struct ctf_type *, vaddr_t);
 
 /*
  * Entrypoint to verify CTF presence, initialize the header, decompress
@@ -304,7 +305,6 @@ db_ctf_pprintf(const struct ctf_type *ctt, vaddr_t addr)
 {
 	const struct ctf_type	*ref;
 	uint16_t		 kind;
-	const char		*name;
 
 	kind = CTF_INFO_KIND(ctt->ctt_info);
 
@@ -323,11 +323,7 @@ db_ctf_pprintf(const struct ctf_type *ctt, vaddr_t addr)
 		db_ctf_pprint_struct(ctt, addr);
 		break;
 	case CTF_K_POINTER:
-		ref = db_ctf_type_by_index(ctt->ctt_type);
-		name = db_ctf_off2name(ref->ctt_name);
-		if (name != NULL)
-			db_printf("(%s *)", name);
-		db_printf("0x%lx", addr);
+		db_ctf_pprint_ptr(ctt, addr);
 		break;
 	case CTF_K_TYPEDEF:
 	case CTF_K_VOLATILE:
@@ -397,6 +393,42 @@ db_ctf_pprint_struct(const struct ctf_type *ctt, vaddr_t addr)
 		}
 	}
 	db_printf("}");
+}
+
+void
+db_ctf_pprint_ptr(const struct ctf_type *ctt, vaddr_t addr)
+{
+	const char		*name, *modif = "";
+	const struct ctf_type	*ref;
+	uint16_t		 kind;
+
+	ref = db_ctf_type_by_index(ctt->ctt_type);
+	kind = CTF_INFO_KIND(ref->ctt_info);
+
+	switch (kind) {
+	case CTF_K_VOLATILE:
+		modif = "volatile ";
+		ref = db_ctf_type_by_index(ref->ctt_type);
+		break;
+	case CTF_K_CONST:
+		modif = "const ";
+		ref = db_ctf_type_by_index(ref->ctt_type);
+		break;
+	case CTF_K_STRUCT:
+		modif = "struct ";
+		break;
+	case CTF_K_UNION:
+		modif = "union ";
+		break;
+	default:
+		break;
+	}
+
+	name = db_ctf_off2name(ref->ctt_name);
+	if (name != NULL)
+		db_printf("(%s%s *)", modif, name);
+
+	db_printf("0x%lx", addr);
 }
 
 static const char *
