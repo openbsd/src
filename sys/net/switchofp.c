@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.62 2017/07/19 12:29:22 claudio Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.63 2017/08/11 13:48:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1215,7 +1215,7 @@ swofp_lookup_oxm_handler(struct ofp_ox_match *oxm)
 ofp_msg_handler
 swofp_lookup_msg_handler(uint8_t type)
 {
-	if (type > OFP_T_TYPE_MAX)
+	if (type >= OFP_T_TYPE_MAX)
 		return (NULL);
 	else
 		return (ofp_msg_table[type].msg_handler);
