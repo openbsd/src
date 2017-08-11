@@ -642,9 +642,18 @@ int conn_write(struct xfrd_tcp* tcp)
 
 	if(tcp->total_bytes < sizeof(tcp->msglen)) {
 		uint16_t sendlen = htons(tcp->msglen);
+#ifdef HAVE_WRITEV
+		struct iovec iov[2];
+		iov[0].iov_base = (uint8_t*)&sendlen + tcp->total_bytes;
+		iov[0].iov_len = sizeof(sendlen) - tcp->total_bytes;
+		iov[1].iov_base = buffer_begin(tcp->packet);
+		iov[1].iov_len = buffer_limit(tcp->packet);
+		sent = writev(tcp->fd, iov, 2);
+#else /* HAVE_WRITEV */
 		sent = write(tcp->fd,
 			(const char*)&sendlen + tcp->total_bytes,
 			sizeof(tcp->msglen) - tcp->total_bytes);
+#endif /* HAVE_WRITEV */
 
 		if(sent == -1) {
 			if(errno == EAGAIN || errno == EINTR) {
@@ -656,11 +665,19 @@ int conn_write(struct xfrd_tcp* tcp)
 		}
 
 		tcp->total_bytes += sent;
+		if(sent > (ssize_t)sizeof(tcp->msglen))
+			buffer_skip(tcp->packet, sent-sizeof(tcp->msglen));
 		if(tcp->total_bytes < sizeof(tcp->msglen)) {
 			/* incomplete write, resume later */
 			return 0;
 		}
-		assert(tcp->total_bytes == sizeof(tcp->msglen));
+#ifdef HAVE_WRITEV
+		if(tcp->total_bytes == tcp->msglen + sizeof(tcp->msglen)) {
+			/* packet done */
+			return 1;
+		}
+#endif
+		assert(tcp->total_bytes >= sizeof(tcp->msglen));
 	}
 
 	assert(tcp->total_bytes < tcp->msglen + sizeof(tcp->msglen));

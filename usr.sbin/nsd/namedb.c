@@ -305,6 +305,7 @@ void zone_add_domain_in_hash_tree(region_type* region, rbtree_type** tree,
 {
 	if(!*tree)
 		*tree = rbtree_create(region, cmpf);
+	if(node->key) return;
 	memset(node, 0, sizeof(rbnode_type));
 	node->key = domain;
 	rbtree_insert(*tree, node);

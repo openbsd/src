@@ -739,6 +739,10 @@ static rrtype_descriptor_type rrtype_descriptors[(RRTYPE_DESCRIPTORS_LENGTH+1)] 
 	{ TYPE_CAA, "CAA", T_CAA, 3, 3,
 	  { RDATA_WF_BYTE, RDATA_WF_TEXT, RDATA_WF_LONG_TEXT },
 	  { RDATA_ZF_BYTE, RDATA_ZF_TAG, RDATA_ZF_LONG_TEXT } },
+	/* 258 - AVC */
+	{ TYPE_AVC, "AVC", T_AVC, 1, 1,
+	  { RDATA_WF_TEXTS },
+	  { RDATA_ZF_TEXTS } },
 
 	/* 32768 - TA */
 	/* 32769 */

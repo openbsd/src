@@ -396,8 +396,11 @@ rdata_base64_to_string(buffer_type *output, rdata_atom_type rdata,
 {
 	int length;
 	size_t size = rdata_atom_size(rdata);
-	if(size == 0)
+	if(size == 0) {
+		/* single zero represents empty buffer */
+		buffer_write(output, "0", 1);
 		return 1;
+	}
 	buffer_reserve(output, size * 2 + 1);
 	length = __b64_ntop(rdata_atom_data(rdata), size,
 			  (char *) buffer_current(output), size * 2);
@@ -428,7 +431,12 @@ static int
 rdata_hex_to_string(buffer_type *output, rdata_atom_type rdata,
 	rr_type* ATTR_UNUSED(rr))
 {
-	hex_to_string(output, rdata_atom_data(rdata), rdata_atom_size(rdata));
+	if(rdata_atom_size(rdata) == 0) {
+		/* single zero represents empty buffer, such as CDS deletes */
+		buffer_printf(output, "0");
+	} else {
+		hex_to_string(output, rdata_atom_data(rdata), rdata_atom_size(rdata));
+	}
 	return 1;
 }
 

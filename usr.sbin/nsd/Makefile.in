@@ -169,8 +169,11 @@ cutest:	$(CUTEST_OBJ) $(LIBOBJS)
 udb-inspect:	udb-inspect.o $(COMMON_OBJ) $(LIBOBJS)
 	$(LINK) -o $@ udb-inspect.o $(COMMON_OBJ) $(LIBOBJS) $(LIBS)
 
+xfr-inspect:	xfr-inspect.o $(COMMON_OBJ) $(LIBOBJS)
+	$(LINK) -o $@ xfr-inspect.o $(COMMON_OBJ) $(LIBOBJS) $(LIBS)
+
 clean:
-	rm -f *.o $(TARGETS) $(MANUALS) cutest udb-inspect nsd-mem
+	rm -f *.o $(TARGETS) $(MANUALS) cutest udb-inspect xfr-inspect nsd-mem
 
 realclean: clean
 	rm -f Makefile config.h config.log config.status
@@ -283,6 +286,9 @@ qtest.o:	$(srcdir)/tpkg/cutest/qtest.c
 udb-inspect.o:	$(srcdir)/tpkg/cutest/udb-inspect.c
 	$(COMPILE) -c $(srcdir)/tpkg/cutest/udb-inspect.c
 
+xfr-inspect.o:	$(srcdir)/tpkg/cutest/xfr-inspect.c
+	$(COMPILE) -c $(srcdir)/tpkg/cutest/xfr-inspect.c
+
 zlexer.c:	$(srcdir)/zlexer.lex
 	if test "$(LEX)" != ":"; then rm -f $@ ;\
 		echo '#include "config.h"' > $@ ;\
@@ -366,7 +372,8 @@ dname.o: $(srcdir)/dname.c config.h $(srcdir)/dns.h $(srcdir)/dname.h $(srcdir)/
  $(srcdir)/util.h $(srcdir)/query.h $(srcdir)/namedb.h $(srcdir)/radtree.h $(srcdir)/rbtree.h $(srcdir)/nsd.h $(srcdir)/edns.h $(srcdir)/packet.h $(srcdir)/tsig.h
 dns.o: $(srcdir)/dns.c config.h $(srcdir)/dns.h $(srcdir)/zonec.h $(srcdir)/namedb.h $(srcdir)/dname.h $(srcdir)/buffer.h \
  $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/radtree.h $(srcdir)/rbtree.h zparser.h
-edns.o: $(srcdir)/edns.c config.h $(srcdir)/dns.h $(srcdir)/edns.h $(srcdir)/buffer.h $(srcdir)/region-allocator.h $(srcdir)/util.h
+edns.o: $(srcdir)/edns.c config.h $(srcdir)/dns.h $(srcdir)/edns.h $(srcdir)/buffer.h $(srcdir)/region-allocator.h $(srcdir)/util.h \
+ $(srcdir)/nsd.h $(srcdir)/query.h $(srcdir)/namedb.h $(srcdir)/dname.h $(srcdir)/radtree.h $(srcdir)/rbtree.h $(srcdir)/packet.h $(srcdir)/tsig.h
 ipc.o: $(srcdir)/ipc.c config.h $(srcdir)/ipc.h $(srcdir)/netio.h $(srcdir)/region-allocator.h $(srcdir)/buffer.h $(srcdir)/util.h \
  $(srcdir)/xfrd-tcp.h $(srcdir)/xfrd.h $(srcdir)/rbtree.h $(srcdir)/namedb.h $(srcdir)/dname.h $(srcdir)/dns.h $(srcdir)/radtree.h $(srcdir)/options.h \
  $(srcdir)/tsig.h $(srcdir)/nsd.h $(srcdir)/edns.h $(srcdir)/xfrd-notify.h $(srcdir)/difffile.h $(srcdir)/udb.h
@@ -509,3 +516,7 @@ udb-inspect.o: $(srcdir)/tpkg/cutest/udb-inspect.c config.h $(srcdir)/udb.h $(sr
  $(srcdir)/udb.h $(srcdir)/udbzone.h $(srcdir)/dns.h $(srcdir)/udbradtree.h $(srcdir)/util.h $(srcdir)/buffer.h $(srcdir)/region-allocator.h \
  $(srcdir)/util.h $(srcdir)/packet.h $(srcdir)/namedb.h $(srcdir)/dname.h $(srcdir)/buffer.h $(srcdir)/radtree.h $(srcdir)/rbtree.h $(srcdir)/rdata.h \
  $(srcdir)/namedb.h $(srcdir)/difffile.h $(srcdir)/options.h config.h
+xfr-inspect.o: $(srcdir)/tpkg/cutest/xfr-inspect.c config.h $(srcdir)/udbzone.h $(srcdir)/udb.h $(srcdir)/dns.h \
+ $(srcdir)/udbradtree.h $(srcdir)/util.h $(srcdir)/buffer.h $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/packet.h $(srcdir)/namedb.h \
+ $(srcdir)/dname.h $(srcdir)/buffer.h $(srcdir)/radtree.h $(srcdir)/rbtree.h $(srcdir)/rdata.h $(srcdir)/namedb.h $(srcdir)/difffile.h \
+ $(srcdir)/options.h config.h
