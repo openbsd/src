@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.66 2017/08/11 13:52:59 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.67 2017/08/11 13:54:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -3259,7 +3259,7 @@ swofp_action_pop_vlan(struct switch_softc *sc, struct mbuf *m,
 		swfcl->swfcl_vlan->vlan_tpid = htons(ETHERTYPE_VLAN);
 		swfcl->swfcl_vlan->vlan_vid =
 		    (evl->evl_tag & htons(EVL_VLID_MASK));
-		swfcl->swfcl_vlan->vlan_vid =
+		swfcl->swfcl_vlan->vlan_pcp =
 		    EVL_PRIOFTAG(ntohs(evl->evl_tag));
 	} else {
 		pool_put(&swfcl_pool, swfcl->swfcl_vlan);
