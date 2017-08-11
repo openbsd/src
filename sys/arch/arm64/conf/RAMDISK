@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.31 2017/07/29 17:25:20 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.32 2017/08/11 22:07:09 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -97,6 +97,7 @@ rkclock*	at fdt? early 1
 rkgrf*		at fdt? early 1
 rkpinctrl*	at fdt? early 1
 rkgpio*		at fdt?
+rkdwusb*	at fdt?
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
 
