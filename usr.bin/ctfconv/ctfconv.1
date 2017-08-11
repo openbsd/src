@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctfconv.1,v 1.2 2017/08/11 14:58:56 jasper Exp $
+.\"	$OpenBSD: ctfconv.1,v 1.3 2017/08/11 16:45:33 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -39,13 +39,13 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
 Display types as if they would be dumped from a
-.Dv \.SUNW_ctf
+.Dv .SUNW_ctf
 section by
 .Xr ctfdump 1 .
 .It Fl l Ar label
 Set the
 .Dv CTF
-label as
+label to
 .Ar label .
 .It Fl o Ar outfile
 Write the raw section in

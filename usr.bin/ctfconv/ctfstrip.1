@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctfstrip.1,v 1.2 2017/08/11 14:58:56 jasper Exp $
+.\"	$OpenBSD: ctfstrip.1,v 1.3 2017/08/11 16:45:33 jmc Exp $
 .\"
 .\" Copyright (c) 2017 Martin Pieuchot
 .\"
@@ -28,21 +28,21 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility generates and inserts a 
+utility generates and inserts a
 .Dv .SUNW_ctf
-section in a 
+section in an
 .Xr elf 5
 file based on the content of its exisiting DWARF debug sections.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl S
-Remove debug sections.
 .It Fl o Ar outfile
 Put the converted output in
 .Ar outfile
 instead of replacing
 .Ar file .
+.It Fl S
+Remove debug sections.
 .El
 .Sh EXIT STATUS
 .Ex -std ctfstrip
