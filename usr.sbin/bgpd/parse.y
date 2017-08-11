@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.312 2017/06/26 10:08:06 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.313 2017/08/11 16:02:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -190,7 +190,7 @@ typedef struct {
 %token	GROUP NEIGHBOR NETWORK
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
 %token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY
-%token	DEMOTE ENFORCE NEIGHBORAS REFLECTOR DEPEND DOWN SOFTRECONFIG
+%token	DEMOTE ENFORCE NEIGHBORAS REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT SOCKET RESTRICTED
 %token	LOG ROUTECOLL TRANSPARENT
 %token	TCP MD5SIG PASSWORD KEY TTLSECURITY
@@ -1421,12 +1421,6 @@ peeropts	: REMOTEAS as4number	{
 				YYERROR;
 			}
 		}
-		| SOFTRECONFIG inout yesno {
-			if ($2)
-				curpeer->conf.softreconfig_in = $3;
-			else
-				curpeer->conf.softreconfig_out = $3;
-		}
 		| TRANSPARENT yesno	{
 			if ($2 == 1)
 				curpeer->conf.flags |= PEERFLAG_TRANS_AS;
@@ -2442,7 +2436,6 @@ lookup(char *s)
 		{ "self",		SELF},
 		{ "set",		SET},
 		{ "socket",		SOCKET },
-		{ "softreconfig",	SOFTRECONFIG},
 		{ "source-as",		SOURCEAS},
 		{ "spi",		SPI},
 		{ "static",		STATIC},
@@ -3273,8 +3266,6 @@ alloc_peer(void)
 	p->conf.capabilities.as4byte = 1;
 	p->conf.local_as = conf->as;
 	p->conf.local_short_as = conf->short_as;
-	p->conf.softreconfig_in = 1;
-	p->conf.softreconfig_out = 1;
 
 	return (p);
 }

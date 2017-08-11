@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.370 2017/08/10 15:44:09 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.371 2017/08/11 16:02:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1326,13 +1326,12 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 {
 	struct rde_aspath	*fasp;
 	enum filter_actions	 action;
-	int			 r = 0, f = 0;
 	u_int16_t		 i;
 
 	peer->prefix_rcvd_update++;
 	/* add original path to the Adj-RIB-In */
-	if (peer->conf.softreconfig_in)
-		r += path_update(&ribs[0].rib, peer, asp, prefix, prefixlen);
+	path_update(&ribs[0].rib, peer, asp, prefix, prefixlen);
+	peer->prefix_cnt++;
 
 	for (i = 1; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
@@ -1347,49 +1346,40 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 		if (action == ACTION_ALLOW) {
 			rde_update_log("update", i, peer,
 			    &fasp->nexthop->exit_nexthop, prefix, prefixlen);
-			r += path_update(&ribs[i].rib, peer, fasp, prefix,
+			path_update(&ribs[i].rib, peer, fasp, prefix,
 			    prefixlen);
 		} else if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen,
 		    0)) {
 			rde_update_log("filtered withdraw", i, peer,
 			    NULL, prefix, prefixlen);
-			f++;
 		}
 
 		/* free modified aspath */
 		if (fasp != asp)
 			path_put(fasp);
 	}
-
-	if (r)
-		peer->prefix_cnt++;
-	else if (f)
-		peer->prefix_cnt--;
 }
 
 void
 rde_update_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
     u_int8_t prefixlen)
 {
-	int r = 0;
 	u_int16_t i;
 
-	peer->prefix_rcvd_withdraw++;
-
-	for (i = rib_size - 1; ; i--) {
+	for (i = 1; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
 		if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen, 0)) {
 			rde_update_log("withdraw", i, peer, NULL, prefix,
 			    prefixlen);
-			r++;
 		}
-		if (i == 0)
-			break;
 	}
 
-	if (r)
+	/* remove original path form the Adj-RIB-In */
+	if (prefix_remove(&ribs[0].rib, peer, prefix, prefixlen, 0))
 		peer->prefix_cnt--;
+
+	peer->prefix_rcvd_withdraw++;
 }
 
 /*
@@ -2940,8 +2930,7 @@ rde_reload_done(void)
 			peer->reconf_rib = 1;
 			continue;
 		}
-		if (peer->conf.softreconfig_out &&
-		    !rde_filter_equal(out_rules, out_rules_tmp, peer)) {
+		if (!rde_filter_equal(out_rules, out_rules_tmp, peer)) {
 			peer->reconf_out = 1;
 		}
 	}
@@ -3658,7 +3647,7 @@ network_delete(struct network_config *nc, int flagstatic)
 		}
 	}
 
-	for (i = rib_size - 1; i > 0; i--) {
+	for (i = 1; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
 		prefix_remove(&ribs[i].rib, peerself, &nc->prefix,

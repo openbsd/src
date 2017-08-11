@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.89 2017/08/10 14:12:34 benno Exp $ */
+/*	$OpenBSD: control.c,v 1.90 2017/08/11 16:02:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -455,15 +455,6 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 					 * peer.
 					 */
 					control_result(c, CTL_RES_NOSUCHPEER);
-					break;
-				}
-				if ((ribreq->flags & F_CTL_ADJ_IN) && p &&
-				    !p->conf.softreconfig_in) {
-					/*
-					 * without softreconfig_in we do not
-					 * have an Adj-RIB-In table
-					 */
-					control_result(c, CTL_RES_NOCAP);
 					break;
 				}
 				if ((imsg.hdr.type == IMSG_CTL_SHOW_RIB_PREFIX)

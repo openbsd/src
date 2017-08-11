@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.161 2017/06/26 10:05:57 phessler Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.162 2017/08/11 16:02:53 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2017 $
+.Dd $Mdocdate: August 11 2017 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -972,25 +972,6 @@ and
 .Ic nexthop self .
 These sets are rewritten into filter rules and can be viewed with
 .Dq bgpd -nv .
-.Pp
-.It Xo
-.Ic softreconfig
-.Pq Ic in Ns | Ns Ic out
-.Pq Ic yes Ns | Ns Ic no
-.Xc
-Turn soft reconfiguration on or off for the specified direction.
-If soft reconfiguration is turned on, filter changes will be applied on
-configuration reloads.
-If turned off, a BGP session needs to be cleared to apply the filter changes.
-Enabling
-.Ic softreconfig in
-will raise the memory requirements of
-.Xr bgpd 8
-because the unmodified
-.Em AS path attributes
-need to be stored as well.
-The default is
-.Ic yes .
 .Pp
 .It Ic tcp md5sig password Ar secret
 .It Ic tcp md5sig key Ar secret

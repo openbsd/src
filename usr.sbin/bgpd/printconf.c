@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.104 2017/05/31 10:44:00 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.105 2017/08/11 16:02:53 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -537,17 +537,6 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tttl-security yes\n", c);
 
 	print_announce(p, c);
-
-	if (p->softreconfig_in == 1)
-		printf("%s\tsoftreconfig in yes\n", c);
-	else
-		printf("%s\tsoftreconfig in no\n", c);
-
-	if (p->softreconfig_out == 1)
-		printf("%s\tsoftreconfig out yes\n", c);
-	else
-		printf("%s\tsoftreconfig out no\n", c);
-
 
 	print_mrt(conf, p->id, p->groupid, c, "\t");
 
