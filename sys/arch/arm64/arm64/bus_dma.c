@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.8 2017/05/10 21:58:55 kettenis Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.9 2017/08/11 22:01:09 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -506,6 +506,7 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 	   (flags & BUS_DMA_COHERENT)) || (flags & BUS_DMA_NOCACHE))
 		cache = PMAP_CACHE_CI;
 	for (curseg = 0; curseg < nsegs; curseg++) {
+		segs[curseg]._ds_vaddr = va;
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += NBPG, va += NBPG, size -= NBPG) {
