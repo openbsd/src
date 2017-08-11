@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.269 2017/04/28 13:50:55 mpi Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.270 2017/08/11 20:50:15 mpi Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -548,7 +548,7 @@ main(void *framep)
 
 	config_process_deferred_mountroot();
 
-#ifdef DDBCTF
+#ifdef DDB
 	db_ctf_init();
 #endif
 

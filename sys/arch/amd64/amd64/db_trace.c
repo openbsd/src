@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.32 2017/07/05 10:48:41 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.33 2017/08/11 20:50:15 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -86,12 +86,11 @@ void db_nextframe(struct callframe **, db_addr_t *, long *, int,
 int
 db_numargs(struct callframe *fp, Elf_Sym *sym)
 {
-#ifdef DDBCTF
 	int args;
 
 	if ((args = db_ctf_func_numargs(sym)) != -1)
 		return args;
-#endif /* DDBCTF */
+
 	return 6;
 }
 
