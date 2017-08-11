@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.191 2017/07/06 15:42:04 schwarze Exp $
+.\"	$OpenBSD: ksh.1,v 1.192 2017/08/11 23:10:55 guenther Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: July 6 2017 $
+.Dd $Mdocdate: August 11 2017 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1535,15 +1535,6 @@ The default prompt is
 for non-root users,
 .Sq #\ \&
 for root.
-If
-.Nm
-is invoked by root and
-.Ev PS1
-does not contain a
-.Sq #
-character, the default value will be used even if
-.Ev PS1
-already exists in the environment.
 .Pp
 The following backslash-escaped special characters can be used
 to customise the prompt:
