@@ -68,7 +68,7 @@ nsec3_add_params(const char* hash_algo_str, const char* flag_str,
 %token <type> T_AXFR T_MAILB T_MAILA T_DS T_DLV T_SSHFP T_RRSIG T_NSEC T_DNSKEY
 %token <type> T_SPF T_NSEC3 T_IPSECKEY T_DHCID T_NSEC3PARAM T_TLSA T_URI
 %token <type> T_NID T_L32 T_L64 T_LP T_EUI48 T_EUI64 T_CAA T_CDS T_CDNSKEY
-%token <type> T_OPENPGPKEY T_CSYNC
+%token <type> T_OPENPGPKEY T_CSYNC T_AVC
 
 /* other tokens */
 %token	       DOLLAR_TTL DOLLAR_ORIGIN NL SP
@@ -556,6 +556,8 @@ type_and_rdata:
     |	T_TXT sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_SPF sp rdata_txt
     |	T_SPF sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
+    |	T_AVC sp rdata_txt
+    |	T_AVC sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_RP sp rdata_rp		/* RFC 1183 */
     |	T_RP sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_AFSDB sp rdata_afsdb	/* RFC 1183 */
