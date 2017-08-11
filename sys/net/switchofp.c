@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.63 2017/08/11 13:48:21 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.64 2017/08/11 13:50:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1224,7 +1224,7 @@ swofp_lookup_msg_handler(uint8_t type)
 ofp_msg_handler
 swofp_lookup_mpmsg_handler(uint16_t type)
 {
-	if (type > nitems(ofp_mpmsg_table))
+	if (type >= nitems(ofp_mpmsg_table))
 		return (NULL);
 	else
 		return (ofp_mpmsg_table[type].mpmsg_handler);
