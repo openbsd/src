@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.110 2017/07/19 17:36:25 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.111 2017/08/11 18:48:56 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -142,7 +142,7 @@ server_tls_cmp(struct server *s1, struct server *s2, int match_keypair)
 		return (-1);
 	if (strcmp(sc1->tls_dhe_params, sc2->tls_dhe_params) != 0)
 		return (-1);
-	if (strcmp(sc1->tls_ecdhe_curve, sc2->tls_ecdhe_curve) != 0)
+	if (strcmp(sc1->tls_ecdhe_curves, sc2->tls_ecdhe_curves) != 0)
 		return (-1);
 
 	if (match_keypair) {
@@ -237,9 +237,9 @@ server_tls_init(struct server *srv)
 		    __func__, tls_config_error(srv->srv_tls_config));
 		return (-1);
 	}
-	if (tls_config_set_ecdhecurve(srv->srv_tls_config,
-	    srv->srv_conf.tls_ecdhe_curve) != 0) {
-		log_warnx("%s: failed to set tls ecdhe curve: %s",
+	if (tls_config_set_ecdhecurves(srv->srv_tls_config,
+	    srv->srv_conf.tls_ecdhe_curves) != 0) {
+		log_warnx("%s: failed to set tls ecdhe curves: %s",
 		    __func__, tls_config_error(srv->srv_tls_config));
 		return (-1);
 	}

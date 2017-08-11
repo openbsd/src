@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.90 2017/03/25 17:25:34 claudio Exp $	*/
+/*	$OpenBSD: parse.y,v 1.91 2017/08/11 18:48:56 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -266,9 +266,9 @@ server		: SERVER optmatch STRING	{
 			strlcpy(s->srv_conf.tls_dhe_params,
 			    HTTPD_TLS_DHE_PARAMS,
 			    sizeof(s->srv_conf.tls_dhe_params));
-			strlcpy(s->srv_conf.tls_ecdhe_curve,
-			    HTTPD_TLS_ECDHE_CURVE,
-			    sizeof(s->srv_conf.tls_ecdhe_curve));
+			strlcpy(s->srv_conf.tls_ecdhe_curves,
+			    HTTPD_TLS_ECDHE_CURVES,
+			    sizeof(s->srv_conf.tls_ecdhe_curves));
 
 			s->srv_conf.hsts_max_age = SERVER_HSTS_DEFAULT_AGE;
 
@@ -748,9 +748,9 @@ tlsopts		: CERTIFICATE STRING		{
 			free($2);
 		}
 		| ECDHE STRING			{
-			if (strlcpy(srv_conf->tls_ecdhe_curve, $2,
-			    sizeof(srv_conf->tls_ecdhe_curve)) >=
-			    sizeof(srv_conf->tls_ecdhe_curve)) {
+			if (strlcpy(srv_conf->tls_ecdhe_curves, $2,
+			    sizeof(srv_conf->tls_ecdhe_curves)) >=
+			    sizeof(srv_conf->tls_ecdhe_curves)) {
 				yyerror("ecdhe too long");
 				free($2);
 				YYERROR;

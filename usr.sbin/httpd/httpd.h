@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.133 2017/07/19 17:36:25 jsing Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.134 2017/08/11 18:48:56 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -59,7 +59,7 @@
 #define HTTPD_TLS_KEY		"/etc/ssl/private/server.key"
 #define HTTPD_TLS_CIPHERS	"compat"
 #define HTTPD_TLS_DHE_PARAMS	"none"
-#define HTTPD_TLS_ECDHE_CURVE	"auto"
+#define HTTPD_TLS_ECDHE_CURVES	"default"
 #define FD_RESERVE		5
 
 #define SERVER_MAX_CLIENTS	1024
@@ -481,7 +481,7 @@ struct server_config {
 	char			*tls_cert_file;
 	char			 tls_ciphers[NAME_MAX];
 	char			 tls_dhe_params[NAME_MAX];
-	char			 tls_ecdhe_curve[NAME_MAX];
+	char			 tls_ecdhe_curves[NAME_MAX];
 	uint8_t			*tls_key;
 	size_t			 tls_key_len;
 	char			*tls_key_file;
