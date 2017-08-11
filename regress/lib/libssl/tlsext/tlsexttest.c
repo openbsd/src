@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.3 2017/07/24 17:42:14 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.4 2017/08/11 05:06:34 doug Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -32,6 +32,23 @@ hexdump(const unsigned char *buf, size_t len)
 
 	fprintf(stderr, "\n");
 }
+
+static void
+compare_data(const uint8_t *recv, size_t recv_len, const uint8_t *expect,
+    size_t expect_len)
+{
+	fprintf(stderr, "received:\n");
+	hexdump(recv, recv_len);
+
+	fprintf(stderr, "test data:\n");
+	hexdump(expect, expect_len);
+}
+
+#define FAIL(msg, ...)						\
+do {								\
+	fprintf(stderr, "[%s:%d] FAIL: ", __FILE__, __LINE__);	\
+	fprintf(stderr, msg, ##__VA_ARGS__);			\
+} while(0)
 
 /*
  * Renegotiation Indication - RFC 5746.
@@ -522,6 +539,455 @@ test_tlsext_sni_serverhello(void)
 	return (failure);
 }
 
+/*
+ * ECPointFormats - RFC 4492 section 5.1.2 (Supported Point Formats).
+ *
+ * Examples are from the RFC.  Both client and server have the same build and
+ * parse but the needs differ.
+ */
+
+static uint8_t tlsext_ecpf_hello_uncompressed_val[] = {
+	TLSEXT_ECPOINTFORMAT_uncompressed
+};
+static uint8_t tlsext_ecpf_hello_uncompressed[] = {
+	0x01,
+	0x00 /* TLSEXT_ECPOINTFORMAT_uncompressed */
+};
+
+static uint8_t tlsext_ecpf_hello_prime[] = {
+	0x01,
+	0x01 /* TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime */
+};
+
+static uint8_t tlsext_ecpf_hello_prefer_order_val[] = {
+	TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime,
+	TLSEXT_ECPOINTFORMAT_uncompressed,
+	TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
+};
+static uint8_t tlsext_ecpf_hello_prefer_order[] = {
+	0x03,
+	0x01, /* TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime */
+	0x00, /* TLSEXT_ECPOINTFORMAT_uncompressed */
+	0x02  /* TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2 */
+};
+
+static int
+test_tlsext_ecpf_clienthello(void)
+{
+	uint8_t *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	size_t dlen;
+	int failure, alert;
+	CBB cbb;
+	CBS cbs;
+
+	failure = 1;
+
+	CBB_init(&cbb, 0);
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	/*
+	 * Default ciphers include EC so we need it by default.
+	 */
+	if (!tlsext_ecpf_clienthello_needs(ssl)) {
+		FAIL("clienthello should need ECPointFormats for default "
+		    "ciphers\n");
+		goto err;
+	}
+
+	/*
+	 * Exclude EC cipher suites so we can test not including it.
+	 */
+	if (!SSL_set_cipher_list(ssl, "ALL:!ECDHE:!ECDH")) {
+		FAIL("clienthello should be able to set cipher list\n");
+		goto err;
+	}
+	if (tlsext_ecpf_clienthello_needs(ssl)) {
+		FAIL("clienthello should not need ECPointFormats\n");
+		goto err;
+	}
+
+	/*
+	 * Use libtls default for the rest of the testing
+	 */
+	if (!SSL_set_cipher_list(ssl, "TLSv1.2+AEAD+ECDHE")) {
+		FAIL("clienthello should be able to set cipher list\n");
+		goto err;
+	}
+	if (!tlsext_ecpf_clienthello_needs(ssl)) {
+		FAIL("clienthello should need ECPointFormats\n");
+		goto err;
+	}
+
+	/*
+	 * The default ECPointFormats should only have uncompressed
+	 */
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	if (!tlsext_ecpf_clienthello_build(ssl, &cbb)) {
+		FAIL("clienthello failed to build ECPointFormats\n");
+		goto err;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_ecpf_hello_uncompressed)) {
+		FAIL("got clienthello ECPointFormats with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_ecpf_hello_uncompressed));
+		compare_data(data, dlen, tlsext_ecpf_hello_uncompressed,
+		    sizeof(tlsext_ecpf_hello_uncompressed));
+		goto err;
+	}
+
+	if (memcmp(data, tlsext_ecpf_hello_uncompressed, dlen) != 0) {
+		FAIL("clienthello ECPointFormats differs:\n");
+		compare_data(data, dlen, tlsext_ecpf_hello_uncompressed,
+		    sizeof(tlsext_ecpf_hello_uncompressed));
+		goto err;
+	}
+
+	/*
+	 * Make sure we can parse the default.
+	 */
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+	free(data);
+	data = NULL;
+
+	SSL_SESSION_free(ssl->session);
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	CBS_init(&cbs, tlsext_ecpf_hello_uncompressed,
+	    sizeof(tlsext_ecpf_hello_uncompressed));
+	if (!tlsext_ecpf_clienthello_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse clienthello ECPointFormats\n");
+		goto err;
+	}
+
+	if (SSI(ssl)->tlsext_ecpointformatlist_length !=
+	    sizeof(tlsext_ecpf_hello_uncompressed_val)) {
+		FAIL("no tlsext_ecpointformats from clienthello "
+		    "ECPointFormats\n");
+		goto err;
+	}
+
+	if (memcmp(SSI(ssl)->tlsext_ecpointformatlist,
+	    tlsext_ecpf_hello_uncompressed_val,
+	    sizeof(tlsext_ecpf_hello_uncompressed_val)) != 0) {
+		FAIL("clienthello had an incorrect ECPointFormats entry\n");
+		goto err;
+	}
+
+	/*
+	 * Test with a custom order.
+	 */
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+	free(data);
+	data = NULL;
+
+	SSL_SESSION_free(ssl->session);
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	if ((ssl->internal->tlsext_ecpointformatlist = malloc(sizeof(uint8_t) * 3)) == NULL) {
+		FAIL("client could not malloc\n");
+		goto err;
+	}
+	ssl->internal->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
+	ssl->internal->tlsext_ecpointformatlist[1] = TLSEXT_ECPOINTFORMAT_uncompressed;
+	ssl->internal->tlsext_ecpointformatlist[2] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
+	ssl->internal->tlsext_ecpointformatlist_length = 3;
+
+	if (!tlsext_ecpf_clienthello_needs(ssl)) {
+		FAIL("clienthello should need ECPointFormats with a custom "
+		    "format\n");
+		goto err;
+	}
+
+	if (!tlsext_ecpf_clienthello_build(ssl, &cbb)) {
+		FAIL("clienthello failed to build ECPointFormats\n");
+		goto err;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_ecpf_hello_prefer_order)) {
+		FAIL("got clienthello ECPointFormats with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_ecpf_hello_prefer_order));
+		compare_data(data, dlen, tlsext_ecpf_hello_prefer_order,
+		    sizeof(tlsext_ecpf_hello_prefer_order));
+		goto err;
+	}
+
+	if (memcmp(data, tlsext_ecpf_hello_prefer_order, dlen) != 0) {
+		FAIL("clienthello ECPointFormats differs:\n");
+		compare_data(data, dlen, tlsext_ecpf_hello_prefer_order,
+		    sizeof(tlsext_ecpf_hello_prefer_order));
+		goto err;
+	}
+
+	/*
+	 * Make sure that we can parse this custom order.
+	 */
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+	free(data);
+	data = NULL;
+
+	SSL_SESSION_free(ssl->session);
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	/* Reset the custom list so we go back to the default uncompressed. */
+	free(ssl->internal->tlsext_ecpointformatlist);
+	ssl->internal->tlsext_ecpointformatlist = NULL;
+	ssl->internal->tlsext_ecpointformatlist_length = 0;
+
+	CBS_init(&cbs, tlsext_ecpf_hello_prefer_order,
+	    sizeof(tlsext_ecpf_hello_prefer_order));
+	if (!tlsext_ecpf_clienthello_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse clienthello ECPointFormats\n");
+		goto err;
+	}
+
+	if (SSI(ssl)->tlsext_ecpointformatlist_length !=
+	    sizeof(tlsext_ecpf_hello_prefer_order_val)) {
+		FAIL("no tlsext_ecpointformats from clienthello "
+		    "ECPointFormats\n");
+		goto err;
+	}
+
+	if (memcmp(SSI(ssl)->tlsext_ecpointformatlist,
+	    tlsext_ecpf_hello_prefer_order_val,
+	    sizeof(tlsext_ecpf_hello_prefer_order_val)) != 0) {
+		FAIL("clienthello had an incorrect ECPointFormats entry\n");
+		goto err;
+	}
+
+
+	failure = 0;
+
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
+
+static int
+test_tlsext_ecpf_serverhello(void)
+{
+	uint8_t *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	size_t dlen;
+	int failure, alert;
+	CBB cbb;
+	CBS cbs;
+
+	failure = 1;
+
+	CBB_init(&cbb, 0);
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	/* Setup the state so we can call needs. */
+	if ((S3I(ssl)->hs.new_cipher =
+	    ssl3_get_cipher_by_id(TLS1_CK_ECDHE_ECDSA_CHACHA20_POLY1305))
+	    == NULL) {
+		FAIL("serverhello cannot find cipher\n");
+		goto err;
+	}
+	if ((SSI(ssl)->tlsext_ecpointformatlist = malloc(sizeof(uint8_t)))
+	    == NULL) {
+		FAIL("server could not malloc\n");
+		goto err;
+	}
+	SSI(ssl)->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
+	SSI(ssl)->tlsext_ecpointformatlist_length = 1;
+
+	if (!tlsext_ecpf_serverhello_needs(ssl)) {
+		FAIL("serverhello should need ECPointFormats now\n");
+		goto err;
+	}
+
+	/*
+	 * The server will ignore the session list and use either a custom
+	 * list or the default (uncompressed).
+	 */
+	if (!tlsext_ecpf_serverhello_build(ssl, &cbb)) {
+		FAIL("serverhello failed to build ECPointFormats\n");
+		goto err;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_ecpf_hello_uncompressed)) {
+		FAIL("got serverhello ECPointFormats with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_ecpf_hello_uncompressed));
+		compare_data(data, dlen, tlsext_ecpf_hello_uncompressed,
+		    sizeof(tlsext_ecpf_hello_uncompressed));
+		goto err;
+	}
+
+	if (memcmp(data, tlsext_ecpf_hello_uncompressed, dlen) != 0) {
+		FAIL("serverhello ECPointFormats differs:\n");
+		compare_data(data, dlen, tlsext_ecpf_hello_uncompressed,
+		    sizeof(tlsext_ecpf_hello_uncompressed));
+		goto err;
+	}
+
+	/*
+	 * Cannot parse a non-default list without at least uncompressed.
+	 */
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+	free(data);
+	data = NULL;
+
+	SSL_SESSION_free(ssl->session);
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	CBS_init(&cbs, tlsext_ecpf_hello_prime,
+	    sizeof(tlsext_ecpf_hello_prime));
+	if (tlsext_ecpf_serverhello_parse(ssl, &cbs, &alert)) {
+		FAIL("must include uncompressed in serverhello ECPointFormats\n");
+		goto err;
+	}
+
+	/*
+	 * Test with a custom order that replaces the default uncompressed.
+	 */
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+	free(data);
+	data = NULL;
+
+	SSL_SESSION_free(ssl->session);
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	/* Add a session list even though it will be ignored. */
+	if ((SSI(ssl)->tlsext_ecpointformatlist = malloc(sizeof(uint8_t)))
+	    == NULL) {
+		FAIL("server could not malloc\n");
+		goto err;
+	}
+	SSI(ssl)->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
+	SSI(ssl)->tlsext_ecpointformatlist_length = 1;
+
+	/* Replace the default list with a custom one. */
+	if ((ssl->internal->tlsext_ecpointformatlist = malloc(sizeof(uint8_t) * 3)) == NULL) {
+		FAIL("server could not malloc\n");
+		goto err;
+	}
+	ssl->internal->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
+	ssl->internal->tlsext_ecpointformatlist[1] = TLSEXT_ECPOINTFORMAT_uncompressed;
+	ssl->internal->tlsext_ecpointformatlist[2] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
+	ssl->internal->tlsext_ecpointformatlist_length = 3;
+
+	if (!tlsext_ecpf_serverhello_needs(ssl)) {
+		FAIL("serverhello should need ECPointFormats\n");
+		goto err;
+	}
+
+	if (!tlsext_ecpf_serverhello_build(ssl, &cbb)) {
+		FAIL("serverhello failed to build ECPointFormats\n");
+		goto err;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_ecpf_hello_prefer_order)) {
+		FAIL("got serverhello ECPointFormats with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_ecpf_hello_prefer_order));
+		compare_data(data, dlen, tlsext_ecpf_hello_prefer_order,
+		    sizeof(tlsext_ecpf_hello_prefer_order));
+		goto err;
+	}
+
+	if (memcmp(data, tlsext_ecpf_hello_prefer_order, dlen) != 0) {
+		FAIL("serverhello ECPointFormats differs:\n");
+		compare_data(data, dlen, tlsext_ecpf_hello_prefer_order,
+		    sizeof(tlsext_ecpf_hello_prefer_order));
+		goto err;
+	}
+
+	/*
+	 * Should be able to parse the custom list into a session list.
+	 */
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+	free(data);
+	data = NULL;
+
+	SSL_SESSION_free(ssl->session);
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	/* Reset back to the default (uncompressed) */
+	free(ssl->internal->tlsext_ecpointformatlist);
+	ssl->internal->tlsext_ecpointformatlist = NULL;
+	ssl->internal->tlsext_ecpointformatlist_length = 0;
+
+	CBS_init(&cbs, tlsext_ecpf_hello_prefer_order,
+	    sizeof(tlsext_ecpf_hello_prefer_order));
+	if (!tlsext_ecpf_serverhello_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse serverhello ECPointFormats\n");
+		goto err;
+	}
+
+	if (SSI(ssl)->tlsext_ecpointformatlist_length !=
+	    sizeof(tlsext_ecpf_hello_prefer_order_val)) {
+		FAIL("no tlsext_ecpointformats from serverhello "
+		    "ECPointFormats\n");
+		goto err;
+	}
+
+	if (memcmp(SSI(ssl)->tlsext_ecpointformatlist,
+	    tlsext_ecpf_hello_prefer_order_val,
+	    sizeof(tlsext_ecpf_hello_prefer_order_val)) != 0) {
+		FAIL("serverhello had an incorrect ECPointFormats entry\n");
+		goto err;
+	}
+
+	failure = 0;
+
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -534,6 +1000,9 @@ main(int argc, char **argv)
 
 	failed |= test_tlsext_sni_clienthello();
 	failed |= test_tlsext_sni_serverhello();
+
+	failed |= test_tlsext_ecpf_clienthello();
+	failed |= test_tlsext_ecpf_serverhello();
 
 	return (failed);
 }

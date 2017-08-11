@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.184 2017/08/10 17:18:38 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.185 2017/08/11 05:06:34 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1379,6 +1379,9 @@ int SSL_state_func_code(int _state);
 #define SSLerror(s, r) SSL_error_internal(s, r, __FILE__, __LINE__)
 #define SSLerrorx(r) ERR_PUT_error(ERR_LIB_SSL,(0xfff),(r),__FILE__,__LINE__)
 void SSL_error_internal(const SSL *s, int r, char *f, int l);
+
+void tls1_get_formatlist(SSL *s, int client_formats, const uint8_t **pformats,
+    size_t *pformatslen);
 
 __END_HIDDEN_DECLS
 

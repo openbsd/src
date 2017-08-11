@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.124 2017/08/10 17:18:38 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.125 2017/08/11 05:06:34 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -342,7 +342,7 @@ tls1_ec_nid2curve_id(int nid)
  * the client/session formats. Otherwise return the custom format list if one
  * exists, or the default formats if a custom list has not been specified.
  */
-static void
+void
 tls1_get_formatlist(SSL *s, int client_formats, const uint8_t **pformats,
     size_t *pformatslen)
 {
@@ -699,32 +699,9 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	ret += len;
 
 	if (using_ecc) {
-		size_t curveslen, formatslen, lenmax;
+		size_t curveslen, lenmax;
 		const uint16_t *curves;
-		const uint8_t *formats;
 		int i;
-
-		/*
-		 * Add TLS extension ECPointFormats to the ClientHello message.
-		 */
-		tls1_get_formatlist(s, 0, &formats, &formatslen);
-
-		if ((size_t)(limit - ret) < 5)
-			return NULL;
-
-		lenmax = limit - ret - 5;
-		if (formatslen > lenmax)
-			return NULL;
-		if (formatslen > 255) {
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			return NULL;
-		}
-
-		s2n(TLSEXT_TYPE_ec_point_formats, ret);
-		s2n(formatslen + 1, ret);
-		*(ret++) = (unsigned char)formatslen;
-		memcpy(ret, formats, formatslen);
-		ret += formatslen;
 
 		/*
 		 * Add TLS extension EllipticCurves to the ClientHello message.
@@ -931,13 +908,11 @@ skip_ext:
 unsigned char *
 ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 {
-	int using_ecc, extdatalen = 0;
+	int extdatalen = 0;
 	unsigned char *ret = p;
 	int next_proto_neg_seen;
 	size_t len;
 	CBB cbb;
-
-	using_ecc = ssl_using_ecc_cipher(s);
 
 	ret += 2;
 	if (ret >= limit)
@@ -956,33 +931,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	if (len > (limit - ret))
 		return NULL;
 	ret += len;
-
-	if (using_ecc && s->version != DTLS1_VERSION) {
-		const unsigned char *formats;
-		size_t formatslen, lenmax;
-
-		/*
-		 * Add TLS extension ECPointFormats to the ServerHello message.
-		 */
-		tls1_get_formatlist(s, 0, &formats, &formatslen);
-
-		if ((size_t)(limit - ret) < 5)
-			return NULL;
-
-		lenmax = limit - ret - 5;
-		if (formatslen > lenmax)
-			return NULL;
-		if (formatslen > 255) {
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			return NULL;
-		}
-
-		s2n(TLSEXT_TYPE_ec_point_formats, ret);
-		s2n(formatslen + 1, ret);
-		*(ret++) = (unsigned char)formatslen;
-		memcpy(ret, formats, formatslen);
-		ret += formatslen;
-	}
 
 	/*
 	 * Currently the server should not respond with a SupportedCurves
@@ -1194,38 +1142,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 		if (!tlsext_clienthello_parse_one(s, &cbs, type, al))
 			return 0;
 
-		if (type == TLSEXT_TYPE_ec_point_formats &&
-		    s->version != DTLS1_VERSION) {
-			unsigned char *sdata = data;
-			size_t formatslen;
-			uint8_t *formats;
-
-			if (size < 1) {
-				*al = TLS1_AD_DECODE_ERROR;
-				return 0;
-			}
-			formatslen = *(sdata++);
-			if (formatslen != size - 1) {
-				*al = TLS1_AD_DECODE_ERROR;
-				return 0;
-			}
-
-			if (!s->internal->hit) {
-				free(SSI(s)->tlsext_ecpointformatlist);
-				SSI(s)->tlsext_ecpointformatlist = NULL;
-				SSI(s)->tlsext_ecpointformatlist_length = 0;
-
-				if ((formats = reallocarray(NULL, formatslen,
-				    sizeof(uint8_t))) == NULL) {
-					*al = TLS1_AD_INTERNAL_ERROR;
-					return 0;
-				}
-				memcpy(formats, sdata, formatslen);
-				SSI(s)->tlsext_ecpointformatlist = formats;
-				SSI(s)->tlsext_ecpointformatlist_length =
-				    formatslen;
-			}
-		} else if (type == TLSEXT_TYPE_elliptic_curves &&
+		if (type == TLSEXT_TYPE_elliptic_curves &&
 		    s->version != DTLS1_VERSION) {
 			unsigned char *sdata = data;
 			size_t curveslen, i;
@@ -1510,39 +1427,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 		if (!tlsext_serverhello_parse_one(s, &cbs, type, al))
 			return 0;
 
-		if (type == TLSEXT_TYPE_ec_point_formats &&
-		    s->version != DTLS1_VERSION) {
-			unsigned char *sdata = data;
-			size_t formatslen;
-			uint8_t *formats;
-
-			if (size < 1) {
-				*al = TLS1_AD_DECODE_ERROR;
-				return 0;
-			}
-			formatslen = *(sdata++);
-			if (formatslen != size - 1) {
-				*al = TLS1_AD_DECODE_ERROR;
-				return 0;
-			}
-
-			if (!s->internal->hit) {
-				free(SSI(s)->tlsext_ecpointformatlist);
-				SSI(s)->tlsext_ecpointformatlist = NULL;
-				SSI(s)->tlsext_ecpointformatlist_length = 0;
-
-				if ((formats = reallocarray(NULL, formatslen,
-				    sizeof(uint8_t))) == NULL) {
-					*al = TLS1_AD_INTERNAL_ERROR;
-					return 0;
-				}
-				memcpy(formats, sdata, formatslen);
-				SSI(s)->tlsext_ecpointformatlist = formats;
-				SSI(s)->tlsext_ecpointformatlist_length =
-				    formatslen;
-			}
-		}
-		else if (type == TLSEXT_TYPE_session_ticket) {
+		if (type == TLSEXT_TYPE_session_ticket) {
 			if (s->internal->tls_session_ticket_ext_cb &&
 			    !s->internal->tls_session_ticket_ext_cb(s, data, size, s->internal->tls_session_ticket_ext_cb_arg)) {
 				*al = TLS1_AD_INTERNAL_ERROR;
@@ -1779,29 +1664,6 @@ ssl_check_serverhello_tlsext(SSL *s)
 	int ret = SSL_TLSEXT_ERR_NOACK;
 	int al = SSL_AD_UNRECOGNIZED_NAME;
 
-	/* If we are client and using an elliptic curve cryptography cipher
-	 * suite, then if server returns an EC point formats lists extension
-	 * it must contain uncompressed.
-	 */
-	if (ssl_using_ecc_cipher(s) &&
-	    s->internal->tlsext_ecpointformatlist != NULL &&
-	    s->internal->tlsext_ecpointformatlist_length > 0) {
-		/* we are using an ECC cipher */
-		size_t i;
-		unsigned char *list;
-		int found_uncompressed = 0;
-		list = SSI(s)->tlsext_ecpointformatlist;
-		for (i = 0; i < SSI(s)->tlsext_ecpointformatlist_length; i++) {
-			if (*(list++) == TLSEXT_ECPOINTFORMAT_uncompressed) {
-				found_uncompressed = 1;
-				break;
-			}
-		}
-		if (!found_uncompressed) {
-			SSLerror(s, SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
-			return -1;
-		}
-	}
 	ret = SSL_TLSEXT_ERR_OK;
 
 	if (s->ctx != NULL && s->ctx->internal->tlsext_servername_callback != 0)
