@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.14 2016/08/07 02:44:00 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.15 2017/08/11 20:13:31 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -145,12 +145,6 @@
 	"	syscall				\n" \
 	"	j	$ra			\n" \
 	"	.end	_dl_exit		\n" \
-	"	.globl	_dl_printf		\n" \
-	"	.ent	_dl_printf		\n" \
-	"	.type	_dl_printf, @function	\n" \
-	"_dl_printf:				\n" \
-	"	j	$ra			\n" \
-	"	.end	_dl_printf		\n" \
 	"	.previous")
 
 struct kframe {

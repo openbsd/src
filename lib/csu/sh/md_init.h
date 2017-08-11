@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.7 2017/01/19 23:47:04 guenther Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.8 2017/08/11 20:13:31 guenther Exp $	*/
 /*	$NetBSD: dot_init.h,v 1.3 2005/12/24 22:02:10 perry Exp $	*/
 
 /*-
@@ -129,13 +129,6 @@ __asm(".section " #section "\n"		\
 	"	.long	4 + 4 + (16 * 4)				\n" \
 	".L_dynamic:							\n" \
 	"	.long	_DYNAMIC - .L_offbase				\n" \
-									\
-	"	.align	2						\n" \
-	"	.globl	_dl_printf					\n" \
-	"	.type	_dl_printf,@function				\n" \
-	"_dl_printf:							\n" \
-	"	rts							\n" \
-	"	 nop							\n" \
 									\
 	"	.align	2						\n" \
 	"	.globl	_dl_exit					\n" \

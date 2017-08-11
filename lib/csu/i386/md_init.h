@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.8 2016/08/07 02:30:55 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.9 2017/08/11 20:13:31 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -118,14 +118,6 @@
 	"	xorl	%ebp,%ebp	# mark deepest stack frame\n" \
 	"	call	___start	# ___start(argc,argv,envp,0) \n" \
 	"					\n" \
-	".text					\n" \
-	"	.align	4			\n" \
-	"	.globl	_dl_printf		\n" \
-	"	.type	_dl_printf,@function	\n" \
-	"_dl_printf:				\n" \
-	"	ret				\n" \
-	"					\n" \
-	".text					\n" \
 	"	.align	4			\n" \
 	"	.globl	_dl_exit		\n" \
 	"	.type	_dl_exit,@function	\n" \

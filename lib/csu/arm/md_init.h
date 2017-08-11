@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.11 2017/02/26 15:20:58 kettenis Exp $ */
+/* $OpenBSD: md_init.h,v 1.12 2017/08/11 20:13:31 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -157,6 +157,4 @@
 	"_dl_exit:				\n" \
 	"	mov	r12, #1			\n" \
 	"	swi	#0			\n" \
-	"_dl_printf:				\n" \
-	"	mov	pc, lr			\n" \
 	".previous");
