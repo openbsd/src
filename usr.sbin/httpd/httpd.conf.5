@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.83 2017/08/11 18:48:56 jsing Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.84 2017/08/11 20:30:45 jmc Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -535,7 +535,7 @@ The default is none, which disables DHE cipher suites.
 .It Ic ecdhe Ar curves
 Specify a comma separated list of elliptic curves to use for ECDHE cipher suites,
 in order of preference.
-The special value of "default" will use the default curves, see
+The special value of "default" will use the default curves; see
 .Xr tls_config_set_ecdhecurves 3
 for further details.
 .It Ic key Ar file
