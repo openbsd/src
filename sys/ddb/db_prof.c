@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_prof.c,v 1.3 2017/02/08 04:30:45 guenther Exp $	*/
+/*	$OpenBSD: db_prof.c,v 1.4 2017/08/11 15:14:23 nayden Exp $	*/
 
 /*
  * Copyright (c) 2016 Martin Pieuchot
@@ -78,7 +78,7 @@ int db_prof_on;				/* Profiling state On/Off */
 vaddr_t db_get_pc(struct trapframe *);
 vaddr_t db_get_probe_addr(struct trapframe *);
 
-void db_prof_forall(db_sym_t, char *, char *, int, void *);
+void db_prof_forall(Elf_Sym *, char *, char *, int, void *);
 void db_prof_count(unsigned long, unsigned long);
 
 void
@@ -95,9 +95,9 @@ db_prof_init(void)
 }
 
 void
-db_prof_forall(db_sym_t sym, char *name, char *suff, int pre, void *xarg)
+db_prof_forall(Elf_Sym *sym, char *name, char *suff, int pre, void *xarg)
 {
-	Elf_Sym *symb = (Elf_Sym *)sym;
+	Elf_Sym *symb = sym;
 	unsigned long *nentries = xarg;
 	struct prof_probe *pp;
 	vaddr_t inst;
