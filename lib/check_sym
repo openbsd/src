@@ -1,5 +1,5 @@
 #!/bin/ksh
-#  $OpenBSD: check_sym,v 1.4 2016/09/22 21:37:02 guenther Exp $
+#  $OpenBSD: check_sym,v 1.5 2017/08/11 17:58:21 guenther Exp $
 #
 # Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
 #
@@ -73,6 +73,10 @@
 #  BUGS
 #	Should report changes in the size of exported data objects.
 #
+#	While the author stills find the intermediate files useful,
+#	most people won't.  By default they should be placed in a
+#	temp directory and removed.
+#
 
 get_lib_name()
 {
@@ -99,17 +103,34 @@ pick_highest()
 	[[ $old != "" ]]
 }
 
+usage()
+{
+	usage="usage: check_sym [-chv] [old [new]]"
+	if [[ $# -gt 0 ]]
+	then
+		echo "check_sym: $@
+$usage" >&2
+		exit 1
+	fi
+	echo "$usage"
+	exit 0
+}
+
 file_list=/tmp/{D{,S,W},J,S,U,d,j,r,s}{1,2}
 
-if [[ $1 = "-h" ]]
-then
-	echo "usage: $0 [-ch] [old [new]]"
-	exit 0
-elif [[ $1 = "-c" ]]
-then
-	rm -f $file_list
-	exit 0
-fi
+verbose=false
+while getopts :chv opt "$@"
+do
+	case $opt in
+	h)	usage;;
+	c)	rm -f $file_list
+		exit 0;;
+	v)	verbose=true;;
+	\?)	usage "unknown option -- $OPTARG";;
+	esac
+done
+shift $((OPTIND - 1))
+[[ $# -gt 2 ]] && usage "too many arguments"
 
 # Old library?
 if [[ $1 = ?(*/)lib*.so* ]]
@@ -145,17 +166,17 @@ fi
 # New library?
 if [[ $1 = ?(*/)lib*.so* ]]
 then
-	if [[ ! -f $1 ]]
-	then
-		echo "$1 doesn't exist" >&2
-		exit 1
-	fi
 	new=$1
 	shift
 else
 	# Dig info out of the just built library
 	. ./shlib_version
 	new=obj/${lib}.so.${major}.${minor}
+fi
+if [[ ! -f $new ]]
+then
+	echo "$new doesn't exist" >&2
+	exit 1
 fi
 
 # Filter the output of readelf -s to be easier to parse by removing a
@@ -263,7 +284,7 @@ then
 	output_if_not_empty "removed:" comm -23 /tmp/U[12]
 fi
 
-if false; then
+if $verbose; then
 	printf "\nReloc counts:\nbefore:\n" 
 	grep ^R /tmp/r1
 	printf "\nafter:\n"
