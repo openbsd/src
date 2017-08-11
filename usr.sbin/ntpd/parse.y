@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.66 2017/05/30 23:30:48 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.67 2017/08/11 19:12:21 naddy Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -136,8 +136,10 @@ main		: LISTEN ON address listen_opts	{
 			struct sockaddr_in sin4;
 			struct sockaddr_in6 sin6;
 
+			memset(&sin4, 0, sizeof(sin4));
 			sin4.sin_family = AF_INET;
 			sin4.sin_len = sizeof(struct sockaddr_in);
+			memset(&sin6, 0, sizeof(sin6));
 			sin6.sin6_family = AF_INET6;
 			sin6.sin6_len = sizeof(struct sockaddr_in6);
 
