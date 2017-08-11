@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.65 2017/08/11 13:51:45 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.66 2017/08/11 13:52:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1839,7 +1839,7 @@ swofp_ox_cmp_vlan_vid(struct ofp_ox_match *target,
 		tmask = UINT16_MAX;
 
 	memcpy(&kmth, ((caddr_t)key + sizeof(*key)), sizeof(uint16_t));
-	if (OFP_OXM_GET_HASMASK(target))
+	if (OFP_OXM_GET_HASMASK(key))
 		memcpy(&kmask, ((caddr_t)key + sizeof(*key) +
 		    sizeof(uint16_t)), sizeof(uint16_t));
 	else
