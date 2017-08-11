@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.100 2017/06/26 09:32:32 mpi Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.101 2017/08/11 19:53:02 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -434,16 +434,10 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_BIND:
 	    {
-		struct sockaddr_in *addr = mtod(nam, struct sockaddr_in *);
+		struct sockaddr_in *addr;
 
-		if (nam->m_len != sizeof(*addr)) {
-			error = EINVAL;
+		if ((error = in_nam2sin(nam, &addr)))
 			break;
-		}
-		if (addr->sin_family != AF_INET) {
-			error = EADDRNOTAVAIL;
-			break;
-		}
 		if (!((so->so_options & SO_BINDANY) ||
 		    addr->sin_addr.s_addr == INADDR_ANY ||
 		    addr->sin_addr.s_addr == INADDR_BROADCAST ||
@@ -457,16 +451,10 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	    }
 	case PRU_CONNECT:
 	    {
-		struct sockaddr_in *addr = mtod(nam, struct sockaddr_in *);
+		struct sockaddr_in *addr;
 
-		if (nam->m_len != sizeof(*addr)) {
-			error = EINVAL;
+		if ((error = in_nam2sin(nam, &addr)))
 			break;
-		}
-		if (addr->sin_family != AF_INET) {
-			error = EAFNOSUPPORT;
-			break;
-		}
 		inp->inp_faddr = addr->sin_addr;
 		soisconnected(so);
 		break;
@@ -501,12 +489,15 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			}
 			dst.sin_addr = inp->inp_faddr;
 		} else {
+			struct sockaddr_in *addr;
+
 			if (nam == NULL) {
 				error = ENOTCONN;
 				break;
 			}
-			dst.sin_addr =
-			    mtod(nam, struct sockaddr_in *)->sin_addr;
+			if ((error = in_nam2sin(nam, &addr)))
+				break;
+			dst.sin_addr = addr->sin_addr;
 		}
 #ifdef IPSEC
 		/* XXX Find an IPsec TDB */

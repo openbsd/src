@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.223 2017/08/04 18:16:42 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.224 2017/08/11 19:53:02 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -327,12 +327,9 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 
 		if (nam) {
 			struct sockaddr_in6 *sin6;
-			sin6 = mtod(nam, struct sockaddr_in6 *);
-			if (nam->m_len != sizeof(struct sockaddr_in6))
-				return (EINVAL);
-			if (sin6->sin6_family != AF_INET6)
-				return (EAFNOSUPPORT);
 
+			if ((error = in6_nam2sin6(nam, &sin6)))
+				return (error);
 			if ((error = in6_pcbaddrisavail(inp, sin6, wild, p)))
 				return (error);
 			laddr = &sin6->sin6_addr;
@@ -346,12 +343,9 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 
 		if (nam) {
 			struct sockaddr_in *sin;
-			sin = mtod(nam, struct sockaddr_in *);
-			if (nam->m_len != sizeof(*sin))
-				return (EINVAL);
-			if (sin->sin_family != AF_INET)
-				return (EAFNOSUPPORT);
 
+			if ((error = in_nam2sin(nam, &sin)))
+				return (error);
 			if ((error = in_pcbaddrisavail(inp, sin, wild, p)))
 				return (error);
 			laddr = &sin->sin_addr;
@@ -511,7 +505,7 @@ int
 in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 {
 	struct in_addr *ina = NULL;
-	struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
+	struct sockaddr_in *sin;
 	int error;
 
 #ifdef INET6
@@ -521,13 +515,10 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 		panic("IPv6 pcb passed into in_pcbconnect");
 #endif /* INET6 */
 
-	if (nam->m_len != sizeof(*sin))
-		return (EINVAL);
-	if (sin->sin_family != AF_INET)
-		return (EAFNOSUPPORT);
+	if ((error = in_nam2sin(nam, &sin)))
+		return (error);
 	if (sin->sin_port == 0)
 		return (EADDRNOTAVAIL);
-
 	error = in_pcbselsrc(&ina, sin, inp);
 	if (error)
 		return (error);

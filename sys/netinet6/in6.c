@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.209 2017/08/08 18:15:58 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.210 2017/08/11 19:53:02 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -161,6 +161,24 @@ in6_mask2len(struct in6_addr *mask, u_char *lim0)
 	}
 
 	return x * 8 + y;
+}
+
+int
+in6_nam2sin6(const struct mbuf *nam, struct sockaddr_in6 **sin6)
+{
+	struct sockaddr *sa = mtod(nam, struct sockaddr *);
+
+	if (nam->m_len < offsetof(struct sockaddr, sa_data))
+		return EINVAL;
+	if (sa->sa_family != AF_INET6)
+		return EAFNOSUPPORT;
+	if (sa->sa_len != nam->m_len)
+		return EINVAL;
+	if (sa->sa_len != sizeof(struct sockaddr_in6))
+		return EINVAL;
+	*sin6 = satosin6(sa);
+
+	return 0;
 }
 
 int

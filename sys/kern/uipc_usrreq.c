@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.118 2017/06/26 09:32:31 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.119 2017/08/11 19:53:02 bluhm Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ struct	unp_deferral {
 void	unp_discard(struct fdpass *, int);
 void	unp_mark(struct fdpass *, int);
 void	unp_scan(struct mbuf *, void (*)(struct fdpass *, int));
-
+int	unp_nam2sun(struct mbuf *, struct sockaddr_un **, size_t *);
 
 /* list of sets of files that were sent over sockets that are now closed */
 SLIST_HEAD(,unp_deferral) unp_deferred = SLIST_HEAD_INITIALIZER(unp_deferred);
@@ -405,7 +405,7 @@ unp_detach(struct unpcb *unp)
 int
 unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 {
-	struct sockaddr_un *soun = mtod(nam, struct sockaddr_un *);
+	struct sockaddr_un *soun;
 	struct mbuf *nam2;
 	struct vnode *vp;
 	struct vattr vattr;
@@ -415,17 +415,8 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 
 	if (unp->unp_vnode != NULL)
 		return (EINVAL);
-
-	if (soun->sun_len > sizeof(struct sockaddr_un) ||
-	    soun->sun_len < offsetof(struct sockaddr_un, sun_path))
-		return (EINVAL);
-	if (soun->sun_family != AF_UNIX)
-		return (EAFNOSUPPORT);
-
-	pathlen = strnlen(soun->sun_path, soun->sun_len -
-	    offsetof(struct sockaddr_un, sun_path));
-	if (pathlen == sizeof(soun->sun_path))
-		return (EINVAL);
+	if ((error = unp_nam2sun(nam, &soun, &pathlen)))
+		return (error);
 
 	nam2 = m_getclr(M_WAITOK, MT_SONAME);
 	nam2->m_len = sizeof(struct sockaddr_un);
@@ -480,22 +471,15 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 int
 unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 {
-	struct sockaddr_un *soun = mtod(nam, struct sockaddr_un *);
+	struct sockaddr_un *soun;
 	struct vnode *vp;
 	struct socket *so2, *so3;
 	struct unpcb *unp, *unp2, *unp3;
 	struct nameidata nd;
 	int error;
 
-	if (soun->sun_family != AF_UNIX)
-		return (EAFNOSUPPORT);
-
-	if (nam->m_len < sizeof(struct sockaddr_un))
-		*(mtod(nam, caddr_t) + nam->m_len) = 0;
-	else if (nam->m_len > sizeof(struct sockaddr_un))
-		return (EINVAL);
-	else if (memchr(soun->sun_path, '\0', sizeof(soun->sun_path)) == NULL)
-		return (EINVAL);
+	if ((error = unp_nam2sun(nam, &soun, NULL)))
+		return (error);
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, soun->sun_path, p);
 	nd.ni_pledge = PLEDGE_UNIX;
@@ -1075,4 +1059,38 @@ unp_discard(struct fdpass *rp, int nfds)
 	SLIST_INSERT_HEAD(&unp_deferred, defer, ud_link);
 
 	task_add(systq, &unp_gc_task);
+}
+
+int
+unp_nam2sun(struct mbuf *nam, struct sockaddr_un **sun, size_t *pathlen)
+{
+	struct sockaddr *sa = mtod(nam, struct sockaddr *);
+	size_t size, len;
+
+	if (nam->m_len < offsetof(struct sockaddr, sa_data))
+		return EINVAL;
+	if (sa->sa_family != AF_UNIX)
+		return EAFNOSUPPORT;
+	if (sa->sa_len != nam->m_len)
+		return EINVAL;
+	if (sa->sa_len > sizeof(struct sockaddr_un))
+		return EINVAL;
+	*sun = (struct sockaddr_un *)sa;
+
+	/* ensure that sun_path is NUL terminated and fits */
+	size = (*sun)->sun_len - offsetof(struct sockaddr_un, sun_path);
+	len = strnlen((*sun)->sun_path, size);
+	if (len == sizeof((*sun)->sun_path))
+		return EINVAL;
+	if (len == size) {
+		if (M_TRAILINGSPACE(nam) == 0)
+			return EINVAL;
+		nam->m_len++;
+		(*sun)->sun_len++;
+		(*sun)->sun_path[len] = '\0';
+	}
+	if (pathlen != NULL)
+		*pathlen = len;
+
+	return 0;
 }

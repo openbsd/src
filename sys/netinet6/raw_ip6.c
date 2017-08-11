@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.115 2017/06/26 09:32:32 mpi Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.116 2017/08/11 19:53:02 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -609,17 +609,10 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_BIND:
 	    {
-		struct sockaddr_in6 *addr = mtod(nam, struct sockaddr_in6 *);
+		struct sockaddr_in6 *addr;
 
-		if (nam->m_len != sizeof(*addr)) {
-			error = EINVAL;
+		if ((error = in6_nam2sin6(nam, &addr)))
 			break;
-		}
-		if (addr->sin6_family != AF_INET6) {
-			error = EADDRNOTAVAIL;
-			break;
-		}
-
 		/*
 		 * Make sure to not enter in_pcblookup_local(), local ports
 		 * are non-sensical for raw sockets.
@@ -635,18 +628,11 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_CONNECT:
 	{
-		struct sockaddr_in6 *addr = mtod(nam, struct sockaddr_in6 *);
+		struct sockaddr_in6 *addr;
 		struct in6_addr *in6a = NULL;
 
-		if (nam->m_len != sizeof(*addr)) {
-			error = EINVAL;
+		if ((error = in6_nam2sin6(nam, &addr)))
 			break;
-		}
-		if (addr->sin6_family != AF_INET6) {
-			error = EAFNOSUPPORT;
-			break;
-		}
-
 		/* Source address selection. XXX: need pcblookup? */
 		error = in6_pcbselsrc(&in6a, addr, in6p, in6p->inp_outputopts6);
 		if (error)
