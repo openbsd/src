@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.63 2017/08/01 14:30:05 deraadt Exp $	*/
+/*	$OpenBSD: history.c,v 1.64 2017/08/11 19:37:58 tb Exp $	*/
 
 /*
  * command history
@@ -709,9 +709,14 @@ history_load(Source *s)
 	return 0;
 }
 
+#define HMAGIC1 0xab
+#define HMAGIC2 0xcd
+
 void
 hist_init(Source *s)
 {
+	int oldmagic1, oldmagic2;
+
 	if (Flag(FTALKING) == 0)
 		return;
 
@@ -726,6 +731,22 @@ hist_init(Source *s)
 	histfh = history_open();
 	if (histfh == NULL)
 		return;
+
+	oldmagic1 = fgetc(histfh);
+	oldmagic2 = fgetc(histfh);
+
+	if (oldmagic1 == EOF || oldmagic2 == EOF) {
+		if (!feof(histfh) && ferror(histfh)) {
+			history_close();
+			return;
+		}
+	} else if (oldmagic1 == HMAGIC1 && oldmagic2 == HMAGIC2) {
+		bi_errorf("ignoring old style history file");
+		history_close();
+		return;
+	}
+
+	rewind(histfh);
 
 	history_load(s);
 
