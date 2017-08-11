@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.64 2017/08/11 13:50:15 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.65 2017/08/11 13:51:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1692,11 +1692,9 @@ swofp_ox_cmp_data(struct ofp_ox_match *target,
 	if (strict) {
 		if (tmask != kmask)
 			return (1);
-		return !((tmth & tmask) == (kmth & kmask));
 	} else {
 		if ((tmask & kmask) != kmask)
 			return (1);
-		return !((tmth & kmask) == (kmth & kmask));
 	}
 
 	return !((tmth & tmask) == (kmth & kmask));
@@ -1752,7 +1750,6 @@ swofp_ox_cmp_ipv6_addr(struct ofp_ox_match *target,
 		kmth.s6_addr32[2] &= kmask.s6_addr32[2];
 		kmth.s6_addr32[3] &= kmask.s6_addr32[3];
 
-		return memcmp(&tmth, &kmth, sizeof(tmth));
 	} else {
 		tmask.s6_addr32[0] &= kmask.s6_addr32[0];
 		tmask.s6_addr32[1] &= kmask.s6_addr32[1];
@@ -1772,8 +1769,9 @@ swofp_ox_cmp_ipv6_addr(struct ofp_ox_match *target,
 		kmth.s6_addr32[2] &= kmask.s6_addr32[2];
 		kmth.s6_addr32[3] &= kmask.s6_addr32[3];
 
-		return memcmp(&tmth, &kmth, sizeof(tmth));
 	}
+
+	return memcmp(&tmth, &kmth, sizeof(tmth));
 }
 #endif /* INET6 */
 
@@ -1815,12 +1813,12 @@ swofp_ox_cmp_ipv4_addr(struct ofp_ox_match *target,
 	if (strict) {
 		if (tmask != kmask)
 			return (1);
-		return !((tmth & tmask) == (kmth & kmask));
 	} else {
 		if ((tmask & kmask) != kmask)
 			return (1);
-		return !((tmth & kmask) == (kmth & kmask));
 	}
+
+	return !((tmth & kmask) == (kmth & kmask));
 }
 
 int
@@ -1855,12 +1853,12 @@ swofp_ox_cmp_vlan_vid(struct ofp_ox_match *target,
 	if (strict) {
 		if (tmask != kmask)
 			return (1);
-		return !((tmth & tmask) == (kmth & kmask));
 	} else {
 		if ((tmask & kmask) != kmask)
 			return (1);
-		return !((tmth & kmask) == (kmth & kmask));
 	}
+
+	return !((tmth & kmask) == (kmth & kmask));
 }
 
 int
@@ -1908,12 +1906,12 @@ swofp_ox_cmp_ether_addr(struct ofp_ox_match *target,
 	if (strict) {
 		if (tmask != kmask)
 			return (1);
-		return !((tmth & tmask) == (kmth & kmask));
 	} else {
 		if ((tmask & kmask) != kmask)
 			return (1);
-		return !((tmth & kmask) == (kmth & kmask));
 	}
+
+	return !((tmth & kmask) == (kmth & kmask));
 }
 
 int
