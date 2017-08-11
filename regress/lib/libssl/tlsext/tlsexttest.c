@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.4 2017/08/11 05:06:34 doug Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.5 2017/08/11 20:14:13 doug Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -34,6 +34,17 @@ hexdump(const unsigned char *buf, size_t len)
 }
 
 static void
+hexdump2(const uint16_t *buf, size_t len)
+{
+	size_t i;
+
+	for (i = 1; i <= len / 2; i++)
+		fprintf(stderr, " 0x%04hx,%s", buf[i - 1], i % 8 ? "" : "\n");
+
+	fprintf(stderr, "\n");
+}
+
+static void
 compare_data(const uint8_t *recv, size_t recv_len, const uint8_t *expect,
     size_t expect_len)
 {
@@ -42,6 +53,17 @@ compare_data(const uint8_t *recv, size_t recv_len, const uint8_t *expect,
 
 	fprintf(stderr, "test data:\n");
 	hexdump(expect, expect_len);
+}
+
+static void
+compare_data2(const uint16_t *recv, size_t recv_len, const uint16_t *expect,
+    size_t expect_len)
+{
+	fprintf(stderr, "received:\n");
+	hexdump2(recv, recv_len);
+
+	fprintf(stderr, "test data:\n");
+	hexdump2(expect, expect_len);
 }
 
 #define FAIL(msg, ...)						\
@@ -988,6 +1010,317 @@ test_tlsext_ecpf_serverhello(void)
 	return (failure);
 }
 
+/*
+ * ellliptic_curves - RFC 4492 section 5.1.1 (Supported Elliptic Curves).
+ *
+ * This extension is only used by the client.
+ */
+
+static uint8_t tlsext_ec_clienthello_default[] = {
+	0x00, 0x06,
+	0x00, 0x1d,  /* X25519 (29) */
+	0x00, 0x17,  /* secp256r1 (23) */
+	0x00, 0x18   /* secp384r1 (24) */
+};
+
+static uint16_t tlsext_ec_clienthello_secp384r1_val[] = {
+	0x0018   /* tls1_ec_nid2curve_id(NID_secp384r1) */
+};
+static uint8_t tlsext_ec_clienthello_secp384r1[] = {
+	0x00, 0x02,
+	0x00, 0x18  /* secp384r1 (24) */
+};
+
+/* Example from RFC 4492 section 5.1.1 */
+static uint16_t tlsext_ec_clienthello_nistp192and224_val[] = {
+	0x0013,  /* tls1_ec_nid2curve_id(NID_X9_62_prime192v1) */
+	0x0015   /* tls1_ec_nid2curve_id(NID_secp224r1) */
+};
+static uint8_t tlsext_ec_clienthello_nistp192and224[] = {
+	0x00, 0x04,
+	0x00, 0x13, /* secp192r1 aka NIST P-192 */
+	0x00, 0x15  /* secp224r1 aka NIST P-224 */
+};
+
+static int
+test_tlsext_ec_clienthello(void)
+{
+	unsigned char *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	size_t dlen;
+	int failure, alert;
+	CBB cbb;
+	CBS cbs;
+
+	failure = 1;
+
+	CBB_init(&cbb, 0);
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	/*
+	 * Default ciphers include EC so we need it by default.
+	 */
+	if (!tlsext_ec_clienthello_needs(ssl)) {
+		FAIL("clienthello should need Ellipticcurves for default "
+		    "ciphers\n");
+		goto err;
+	}
+
+	/*
+	 * Exclude cipher suites so we can test not including it.
+	 */
+	if (!SSL_set_cipher_list(ssl, "TLSv1.2:!ECDHE:!ECDSA")) {
+		FAIL("clienthello should be able to set cipher list\n");
+		goto err;
+	}
+	if (tlsext_ec_clienthello_needs(ssl)) {
+		FAIL("clienthello should not need Ellipticcurves\n");
+		goto err;
+	}
+
+	/*
+	 * Use libtls default for the rest of the testing
+	 */
+	if (!SSL_set_cipher_list(ssl, "TLSv1.2+AEAD+ECDHE")) {
+		FAIL("clienthello should be able to set cipher list\n");
+		goto err;
+	}
+	if (!tlsext_ec_clienthello_needs(ssl)) {
+		FAIL("clienthello should need Ellipticcurves\n");
+		goto err;
+	}
+
+	/*
+	 * Test with a session secp384r1.  The default is used instead.
+	 */
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	if ((SSI(ssl)->tlsext_supportedgroups = malloc(sizeof(uint16_t)))
+	    == NULL) {
+		FAIL("client could not malloc\n");
+		goto err;
+	}
+	SSI(ssl)->tlsext_supportedgroups[0] = tls1_ec_nid2curve_id(NID_secp384r1);
+	SSI(ssl)->tlsext_supportedgroups_length = 1;
+
+	if (!tlsext_ec_clienthello_needs(ssl)) {
+		FAIL("clienthello should need Ellipticcurves\n");
+		goto err;
+	}
+
+	if (!tlsext_ec_clienthello_build(ssl, &cbb)) {
+		FAIL("clienthello failed to build Ellipticcurves\n");
+		goto err;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_ec_clienthello_default)) {
+		FAIL("got clienthello Ellipticcurves with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_ec_clienthello_default));
+		compare_data(data, dlen, tlsext_ec_clienthello_default,
+		    sizeof(tlsext_ec_clienthello_default));
+		goto err;
+	}
+
+	if (memcmp(data, tlsext_ec_clienthello_default, dlen) != 0) {
+		FAIL("clienthello Ellipticcurves differs:\n");
+		compare_data(data, dlen, tlsext_ec_clienthello_default,
+		    sizeof(tlsext_ec_clienthello_default));
+		goto err;
+	}
+
+	/*
+	 * Test parsing secp384r1
+	 */
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+	free(data);
+	data = NULL;
+
+	SSL_SESSION_free(ssl->session);
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	CBS_init(&cbs, tlsext_ec_clienthello_secp384r1,
+	    sizeof(tlsext_ec_clienthello_secp384r1));
+	if (!tlsext_ec_clienthello_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse clienthello Ellipticcurves\n");
+		goto err;
+	}
+
+	if (SSI(ssl)->tlsext_supportedgroups_length !=
+	    sizeof(tlsext_ec_clienthello_secp384r1_val) / sizeof(uint16_t)) {
+		FAIL("no tlsext_ellipticcurves from clienthello "
+		    "Ellipticcurves\n");
+		goto err;
+	}
+
+	if (memcmp(SSI(ssl)->tlsext_supportedgroups,
+	    tlsext_ec_clienthello_secp384r1_val,
+	    sizeof(tlsext_ec_clienthello_secp384r1_val)) != 0) {
+		FAIL("clienthello had an incorrect Ellipticcurves "
+		    "entry\n");
+		compare_data2(SSI(ssl)->tlsext_supportedgroups,
+		    SSI(ssl)->tlsext_supportedgroups_length * 2,
+		    tlsext_ec_clienthello_secp384r1_val,
+		    sizeof(tlsext_ec_clienthello_secp384r1_val));
+		goto err;
+	}
+
+	/*
+	 * Use a custom order.
+	 */
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+
+	SSL_SESSION_free(ssl->session);
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	if ((ssl->internal->tlsext_supportedgroups = malloc(sizeof(uint16_t) * 2)) == NULL) {
+		FAIL("client could not malloc\n");
+		goto err;
+	}
+	ssl->internal->tlsext_supportedgroups[0] = tls1_ec_nid2curve_id(NID_X9_62_prime192v1);
+	ssl->internal->tlsext_supportedgroups[1] = tls1_ec_nid2curve_id(NID_secp224r1);
+	ssl->internal->tlsext_supportedgroups_length = 2;
+
+	if (!tlsext_ec_clienthello_needs(ssl)) {
+		FAIL("clienthello should need Ellipticcurves\n");
+		goto err;
+	}
+
+	if (!tlsext_ec_clienthello_build(ssl, &cbb)) {
+		FAIL("clienthello failed to build Ellipticcurves\n");
+		goto err;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_ec_clienthello_nistp192and224)) {
+		FAIL("got clienthello Ellipticcurves with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_ec_clienthello_nistp192and224));
+		fprintf(stderr, "received:\n");
+		hexdump(data, dlen);
+		fprintf(stderr, "test data:\n");
+		hexdump(tlsext_ec_clienthello_nistp192and224,
+		    sizeof(tlsext_ec_clienthello_nistp192and224));
+		goto err;
+	}
+
+	if (memcmp(data, tlsext_ec_clienthello_nistp192and224, dlen) != 0) {
+		FAIL("clienthello Ellipticcurves differs:\n");
+		fprintf(stderr, "received:\n");
+		hexdump(data, dlen);
+		fprintf(stderr, "test data:\n");
+		hexdump(tlsext_ec_clienthello_nistp192and224,
+		    sizeof(tlsext_ec_clienthello_nistp192and224));
+		goto err;
+	}
+
+	/*
+	 * Parse non-default curves to session.
+	 */
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+	free(data);
+	data = NULL;
+
+	SSL_SESSION_free(ssl->session);
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	/* Reset back to the default list. */
+	free(ssl->internal->tlsext_supportedgroups);
+	ssl->internal->tlsext_supportedgroups = NULL;
+	ssl->internal->tlsext_supportedgroups_length = 0;
+
+	CBS_init(&cbs, tlsext_ec_clienthello_nistp192and224,
+	    sizeof(tlsext_ec_clienthello_nistp192and224));
+	if (!tlsext_ec_clienthello_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse clienthello Ellipticcurves\n");
+		goto err;
+	}
+
+	if (SSI(ssl)->tlsext_supportedgroups_length !=
+	    sizeof(tlsext_ec_clienthello_nistp192and224_val) / sizeof(uint16_t)) {
+		FAIL("no tlsext_ellipticcurves from clienthello "
+		    "Ellipticcurves\n");
+		goto err;
+	}
+
+	if (memcmp(SSI(ssl)->tlsext_supportedgroups,
+	    tlsext_ec_clienthello_nistp192and224_val,
+	    sizeof(tlsext_ec_clienthello_nistp192and224_val)) != 0) {
+		FAIL("clienthello had an incorrect Ellipticcurves entry\n");
+		compare_data2(SSI(ssl)->tlsext_supportedgroups,
+		    SSI(ssl)->tlsext_supportedgroups_length * 2,
+		    tlsext_ec_clienthello_nistp192and224_val,
+		    sizeof(tlsext_ec_clienthello_nistp192and224_val));
+		goto err;
+	}
+
+	failure = 0;
+
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
+
+/* elliptic_curves is only used by the client so this doesn't test much. */
+static int
+test_tlsext_ec_serverhello(void)
+{
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	int failure;
+
+	failure = 1;
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	if (tlsext_ec_serverhello_needs(ssl)) {
+		FAIL("serverhello should not need elliptic_curves\n");
+		goto err;
+	}
+
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	if (tlsext_ec_serverhello_needs(ssl)) {
+		FAIL("serverhello should not need elliptic_curves\n");
+		goto err;
+	}
+
+	failure = 0;
+
+ err:
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+
+	return (failure);
+
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1003,6 +1336,9 @@ main(int argc, char **argv)
 
 	failed |= test_tlsext_ecpf_clienthello();
 	failed |= test_tlsext_ecpf_serverhello();
+
+	failed |= test_tlsext_ec_clienthello();
+	failed |= test_tlsext_ec_serverhello();
 
 	return (failed);
 }

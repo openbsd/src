@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.4 2017/08/11 06:30:41 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.5 2017/08/11 20:14:13 doug Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -30,12 +30,20 @@ int tlsext_sni_serverhello_needs(SSL *s);
 int tlsext_sni_serverhello_build(SSL *s, CBB *cbb);
 int tlsext_sni_serverhello_parse(SSL *s, CBS *cbs, int *alert);
 
+int tlsext_ec_clienthello_needs(SSL *s);
+int tlsext_ec_clienthello_build(SSL *s, CBB *cbb);
+int tlsext_ec_clienthello_parse(SSL *s, CBS *cbs, int *alert);
+int tlsext_ec_serverhello_needs(SSL *s);
+int tlsext_ec_serverhello_build(SSL *s, CBB *cbb);
+int tlsext_ec_serverhello_parse(SSL *s, CBS *cbs, int *alert);
+
 int tlsext_ecpf_clienthello_needs(SSL *s);
 int tlsext_ecpf_clienthello_build(SSL *s, CBB *cbb);
 int tlsext_ecpf_clienthello_parse(SSL *s, CBS *cbs, int *alert);
 int tlsext_ecpf_serverhello_needs(SSL *s);
 int tlsext_ecpf_serverhello_build(SSL *s, CBB *cbb);
 int tlsext_ecpf_serverhello_parse(SSL *s, CBS *cbs, int *alert);
+
 
 int tlsext_clienthello_build(SSL *s, CBB *cbb);
 int tlsext_clienthello_parse_one(SSL *s, CBS *cbs, uint16_t tlsext_type,

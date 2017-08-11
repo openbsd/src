@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.125 2017/08/11 05:06:34 doug Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.126 2017/08/11 20:14:13 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -365,7 +365,7 @@ tls1_get_formatlist(SSL *s, int client_formats, const uint8_t **pformats,
  * the client/session curves. Otherwise return the custom curve list if one
  * exists, or the default curves if a custom list has not been specified.
  */
-static void
+void
 tls1_get_curvelist(SSL *s, int client_curves, const uint16_t **pcurves,
     size_t *pcurveslen)
 {
@@ -674,11 +674,8 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 {
 	int extdatalen = 0;
 	unsigned char *ret = p;
-	int using_ecc;
 	size_t len;
 	CBB cbb;
-
-	using_ecc = ssl_has_ecc_ciphers(s);
 
 	ret += 2;
 	if (ret >= limit)
@@ -697,40 +694,6 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	if (len > (limit - ret))
 		return NULL;
 	ret += len;
-
-	if (using_ecc) {
-		size_t curveslen, lenmax;
-		const uint16_t *curves;
-		int i;
-
-		/*
-		 * Add TLS extension EllipticCurves to the ClientHello message.
-		 */
-		tls1_get_curvelist(s, 0, &curves, &curveslen);
-
-		if ((size_t)(limit - ret) < 6)
-			return NULL;
-
-		lenmax = limit - ret - 6;
-		if (curveslen * 2 > lenmax)
-			return NULL;
-		if (curveslen * 2 > 65532) {
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			return NULL;
-		}
-
-		s2n(TLSEXT_TYPE_elliptic_curves, ret);
-		s2n((curveslen * 2) + 2, ret);
-
-		/* NB: draft-ietf-tls-ecc-12.txt uses a one-byte prefix for
-		 * elliptic_curve_list, but the examples use two bytes.
-		 * https://www1.ietf.org/mail-archive/web/tls/current/msg00538.html
-		 * resolves this to two bytes.
-		 */
-		s2n(curveslen * 2, ret);
-		for (i = 0; i < curveslen; i++)
-			s2n(curves[i], ret);
-	}
 
 	if (!(SSL_get_options(s) & SSL_OP_NO_TICKET)) {
 		int ticklen;
@@ -1142,40 +1105,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 		if (!tlsext_clienthello_parse_one(s, &cbs, type, al))
 			return 0;
 
-		if (type == TLSEXT_TYPE_elliptic_curves &&
-		    s->version != DTLS1_VERSION) {
-			unsigned char *sdata = data;
-			size_t curveslen, i;
-			uint16_t *curves;
-
-			if (size < 2) {
-				*al = TLS1_AD_DECODE_ERROR;
-				return 0;
-			}
-			n2s(sdata, curveslen);
-			if (curveslen != size - 2 || curveslen % 2 != 0) {
-				*al = TLS1_AD_DECODE_ERROR;
-				return 0;
-			}
-			curveslen /= 2;
-
-			if (!s->internal->hit) {
-				if (SSI(s)->tlsext_supportedgroups) {
-					*al = TLS1_AD_DECODE_ERROR;
-					return 0;
-				}
-				SSI(s)->tlsext_supportedgroups_length = 0;
-				if ((curves = reallocarray(NULL, curveslen,
-				    sizeof(uint16_t))) == NULL) {
-					*al = TLS1_AD_INTERNAL_ERROR;
-					return 0;
-				}
-				for (i = 0; i < curveslen; i++)
-					n2s(sdata, curves[i]);
-				SSI(s)->tlsext_supportedgroups = curves;
-				SSI(s)->tlsext_supportedgroups_length = curveslen;
-			}
-		} else if (type == TLSEXT_TYPE_session_ticket) {
+		if (type == TLSEXT_TYPE_session_ticket) {
 			if (s->internal->tls_session_ticket_ext_cb &&
 			    !s->internal->tls_session_ticket_ext_cb(s, data, size, s->internal->tls_session_ticket_ext_cb_arg)) {
 				*al = TLS1_AD_INTERNAL_ERROR;
