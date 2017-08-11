@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.166 2017/08/01 20:52:32 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.167 2017/08/11 13:23:27 reyk Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -419,11 +419,12 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	struct timeval tv;
 	int debug = ifp->if_flags & IFF_DEBUG;
 
+	getmicrouptime(&tv);
+
 	if (ifp->if_flags & IFF_UP) {
 		/* Count received bytes, add hardware framing */
 		ifp->if_ibytes += m->m_pkthdr.len + sp->pp_framebytes;
 		/* Note time of last receive */
-		getmicrouptime(&tv);
 		sp->pp_last_receive = tv.tv_sec;
 	}
 
