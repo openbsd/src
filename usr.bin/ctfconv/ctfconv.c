@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.4 2017/08/11 16:55:46 mpi Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.5 2017/08/11 19:34:24 jasper Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -77,7 +77,8 @@ struct itype_queue iobjq = TAILQ_HEAD_INITIALIZER(iobjq);
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-d] -l label -o outfile file\n",
+	fprintf(stderr, "usage: %s -d file\n", getprogname());
+	fprintf(stderr, "       %s -l label -o outfile file\n",
 	    getprogname());
 	exit(1);
 }
@@ -95,7 +96,7 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "dl:o:")) != -1) {
 		switch (ch) {
 		case 'd':
-			dump = 1;	/* ctfdump(1) like SUNW_ctf sections */
+			dump = 1;	/* ctfdump(1)-like SUNW_ctf sections */
 			break;
 		case 'l':
 			if (label != NULL)
@@ -118,7 +119,9 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	if (!dump && (outfile == NULL || label == NULL))
+	/* Either dump the sections, or write it out. */
+	if ((dump && (outfile != NULL || label != NULL)) ||
+	    (!dump && (outfile == NULL || label == NULL)))
 		usage();
 
 	filename = *argv;
@@ -143,6 +146,8 @@ main(int argc, char *argv[])
 
 			dump_type(it);
 		}
+
+		return 0;
 	}
 
 	if (outfile != NULL) {
