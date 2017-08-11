@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.76 2017/07/15 16:01:14 awolk Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.77 2017/08/11 22:30:38 benno Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -58,7 +58,7 @@ static int	pfctl_table(int, char *[], char *, const char *, char *,
 		    const char *, int);
 static void	print_table(struct pfr_table *, int, int);
 static void	print_tstats(struct pfr_tstats *, int);
-static int	load_addr(struct pfr_buffer *, int, char *[], char *, int);
+static int	load_addr(struct pfr_buffer *, int, char *[], char *, int, int);
 static void	print_addrx(struct pfr_addr *, struct pfr_addr *, int);
 static void	print_astats(struct pfr_astats *, int);
 static void	radix_perror(void);
@@ -199,7 +199,7 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 		xprintf(opts, "%d addresses deleted", ndel);
 	} else if (!strcmp(command, "add")) {
 		b.pfrb_type = PFRB_ADDRS;
-		if (load_addr(&b, argc, argv, file, 0))
+		if (load_addr(&b, argc, argv, file, 0, opts))
 			goto _error;
 		CREATE_TABLE;
 		if (opts & PF_OPT_VERBOSE)
@@ -214,7 +214,7 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 					    opts & PF_OPT_USEDNS);
 	} else if (!strcmp(command, "delete")) {
 		b.pfrb_type = PFRB_ADDRS;
-		if (load_addr(&b, argc, argv, file, 0))
+		if (load_addr(&b, argc, argv, file, 0, opts))
 			goto _error;
 		if (opts & PF_OPT_VERBOSE)
 			flags |= PFR_FLAG_FEEDBACK;
@@ -228,7 +228,7 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 					    opts & PF_OPT_USEDNS);
 	} else if (!strcmp(command, "replace")) {
 		b.pfrb_type = PFRB_ADDRS;
-		if (load_addr(&b, argc, argv, file, 0))
+		if (load_addr(&b, argc, argv, file, 0, opts))
 			goto _error;
 		CREATE_TABLE;
 		if (opts & PF_OPT_VERBOSE)
@@ -321,7 +321,7 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 		b.pfrb_type = PFRB_ADDRS;
 		b2.pfrb_type = PFRB_ADDRS;
 
-		if (load_addr(&b, argc, argv, file, 1))
+		if (load_addr(&b, argc, argv, file, 1, opts))
 			goto _error;
 		if (opts & PF_OPT_VERBOSE2) {
 			flags |= PFR_FLAG_REPLACE;
@@ -413,11 +413,11 @@ print_tstats(struct pfr_tstats *ts, int debug)
 
 int
 load_addr(struct pfr_buffer *b, int argc, char *argv[], char *file,
-    int nonetwork)
+    int nonetwork, int opts)
 {
 	int	ev = 0;
 	while (argc--)
-		if ((ev = append_addr(b, *argv++, nonetwork)) == -1) {
+		if ((ev = append_addr(b, *argv++, nonetwork, opts)) == -1) {
 			if (errno)
 				warn("cannot decode %s", argv[-1]);
 			return (-1);
@@ -426,7 +426,7 @@ load_addr(struct pfr_buffer *b, int argc, char *argv[], char *file,
 		warnx("failed to decode %s", argv[-1]);
 		return (-1);
 	}
-	if (pfr_buf_load(b, file, nonetwork)) {
+	if (pfr_buf_load(b, file, nonetwork, opts)) {
 		warn("cannot load %s", file);
 		return (-1);
 	}

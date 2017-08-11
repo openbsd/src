@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.105 2016/07/18 19:11:18 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.106 2017/08/11 22:30:38 benno Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -48,6 +48,7 @@
 #define PF_OPT_DEBUG		0x0200
 #define PF_OPT_SHOWALL		0x0400
 #define PF_OPT_OPTIMIZE		0x0800
+#define PF_OPT_NODNS		0x1000
 #define PF_OPT_RECURSE		0x4000
 #define PF_OPT_PORTNAMES	0x8000
 
@@ -280,9 +281,9 @@ unsigned int		 ifa_nametoindex(const char *);
 char			*ifa_indextoname(unsigned int, char *);
 struct node_host	*ifa_exists(const char *);
 struct node_host	*ifa_lookup(const char *, int);
-struct node_host	*host(const char *);
+struct node_host	*host(const char *, int);
 
-int			 append_addr(struct pfr_buffer *, char *, int);
+int			 append_addr(struct pfr_buffer *, char *, int, int);
 int			 append_addr_host(struct pfr_buffer *,
 			    struct node_host *, int, int);
 

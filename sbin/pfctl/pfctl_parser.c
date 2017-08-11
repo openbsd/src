@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.314 2017/08/03 17:36:06 florian Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.315 2017/08/11 22:30:38 benno Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -76,7 +76,7 @@ struct node_host	*ifa_grouplookup(const char *, int);
 struct node_host	*host_if(const char *, int);
 struct node_host	*host_v4(const char *, int);
 struct node_host	*host_v6(const char *, int);
-struct node_host	*host_dns(const char *, int, int);
+struct node_host	*host_dns(const char *, int, int, int);
 
 const char *tcpflags = "FSRPAUEW";
 
@@ -1609,7 +1609,7 @@ ifa_skip_if(const char *filter, struct node_host *p)
 }
 
 struct node_host *
-host(const char *s)
+host(const char *s, int opts)
 {
 	struct node_host	*h = NULL, *n;
 	int			 mask = -1, v4mask = 32, v6mask = 128, cont = 1;
@@ -1653,7 +1653,8 @@ host(const char *s)
 		cont = 0;
 
 	/* dns lookup */
-	if (cont && (h = host_dns(ps, v4mask, v6mask)) != NULL)
+	if (cont && (h = host_dns(ps, v4mask, v6mask,
+	    (opts & PF_OPT_NODNS))) != NULL)
 		cont = 0;
 
 	if (if_name && if_name[0])
@@ -1779,7 +1780,7 @@ host_v6(const char *s, int mask)
 }
 
 struct node_host *
-host_dns(const char *s, int v4mask, int v6mask)
+host_dns(const char *s, int v4mask, int v6mask, int numeric)
 {
 	struct addrinfo		 hints, *res0, *res;
 	struct node_host	*n, *h = NULL;
@@ -1796,6 +1797,8 @@ host_dns(const char *s, int v4mask, int v6mask)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM; /* DUMMY */
+	if (numeric)
+		hints.ai_flags = AI_NUMERICHOST;
 	error = getaddrinfo(ps, NULL, &hints, &res0);
 	if (error) {
 		free(ps);
@@ -1859,7 +1862,7 @@ host_dns(const char *s, int v4mask, int v6mask)
  *	if set to 1, only simple addresses are accepted (no netblock, no "!").
  */
 int
-append_addr(struct pfr_buffer *b, char *s, int test)
+append_addr(struct pfr_buffer *b, char *s, int test, int opts)
 {
 	static int 		 previous = 0;
 	static int		 expect = 0;
@@ -1899,7 +1902,7 @@ append_addr(struct pfr_buffer *b, char *s, int test)
 
 	for (r = s; *r == '!'; r++)
 		not = !not;
-	if ((n = host(r)) == NULL) {
+	if ((n = host(r, opts)) == NULL) {
 		errno = 0;
 		return (-1);
 	}

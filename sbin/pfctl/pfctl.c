@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.347 2017/07/19 12:58:31 mikeb Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.348 2017/08/11 22:30:38 benno Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -237,7 +237,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-deghnPqrvz] ", __progname);
+	fprintf(stderr, "usage: %s [-deghNnPqrvz] ", __progname);
 	fprintf(stderr, "[-a anchor] [-D macro=value] [-F modifier]");
 	fprintf(stderr, " [-f file]\n");
 	fprintf(stderr, "\t[-i interface] [-K key] [-k key] [-L statefile]");
@@ -2238,7 +2238,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while ((ch = getopt(argc, argv,
-	    "a:dD:eqf:F:ghi:k:K:L:no:Pp:R:rS:s:t:T:vV:x:z")) != -1) {
+	    "a:dD:eqf:F:ghi:k:K:L:Nno:Pp:R:rS:s:t:T:vV:x:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -2287,6 +2287,9 @@ main(int argc, char *argv[])
 			}
 			src_node_kill[src_node_killers++] = optarg;
 			mode = O_RDWR;
+			break;
+		case 'N':
+			opts |= PF_OPT_NODNS;
 			break;
 		case 'n':
 			opts |= PF_OPT_NOACTION;

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.226 2017/07/19 13:02:46 mikeb Exp $
+# $OpenBSD: Makefile,v 1.227 2017/08/11 22:30:38 benno Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check whether the output matches pfNN.ok
@@ -29,6 +29,7 @@ PFOPT=1 2 6
 PFIF2IP=1 2 3
 PFCHKSUM=1 2 3
 PFCMD=1
+PFCMDFAIL=1
 
 MAKEOBJDIRPREFIX=
 
@@ -248,6 +249,32 @@ pfcmd:		${PFCMD_TARGETS}
 pfcmd-update:	${PFCMD_UPDATES}
 NODEFAULT_TARGETS+=pfcmd
 REGRESS_TARGETS+=pfcmd
+
+REGRESS_ROOT_TARGETS+=pfcmd
+UPDATE_TARGETS+=pfcmd-update
+
+.for n in ${PFCMDFAIL}
+PFCMDFAIL_TARGETS+=pfcmdfail${n}
+PFCMDFAIL_UPDATES+=pfcmdfail${n}-update
+
+pfcmdfail${n}:
+	${SUDO} pfctl `cat ${.CURDIR}/pfcmdfail${n}.opts` \
+	    -f - < ${.CURDIR}/pfcmdfail${n}.in 2>&1 | \
+            diff -u ${.CURDIR}/pfcmdfail${n}.ok /dev/stdin
+
+pfcmdfail${n}-update:
+	if ${SUDO} pfctl `cat ${.CURDIR}/pfcmdfail${n}.opts` \
+	    -f - < ${.CURDIR}/pfcmdfail${n}.in > \
+	    ${.CURDIR}/pfcmdfail${n}.ok 2>&1; then \
+		true; \
+	fi;
+
+.endfor
+
+pfcmdfail:		${PFCMDFAIL_TARGETS}
+pfcmdfail-update:	${PFCMDFAIL_UPDATES}
+NODEFAULT_TARGETS+=pfcmdfail
+REGRESS_TARGETS+=pfcmdfail
 
 REGRESS_ROOT_TARGETS+=pfcmd
 UPDATE_TARGETS+=pfcmd-update

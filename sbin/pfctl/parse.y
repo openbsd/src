@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.662 2017/07/19 12:58:31 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.663 2017/08/11 22:30:38 benno Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -342,7 +342,7 @@ int		 disallow_table(struct node_host *, const char *);
 int		 disallow_urpf_failed(struct node_host *, const char *);
 int		 disallow_alias(struct node_host *, const char *);
 int		 rule_consistent(struct pf_rule *, int);
-int		 process_tabledef(char *, struct table_opts *);
+int		 process_tabledef(char *, struct table_opts *, int);
 void		 expand_label_str(char *, size_t, const char *, const char *);
 void		 expand_label_if(const char *, char *, size_t, const char *);
 void		 expand_label_addr(const char *, char *, size_t, u_int8_t,
@@ -1176,7 +1176,7 @@ tabledef	: TABLE '<' STRING '>' table_opts {
 				free($3);
 				YYERROR;
 			}
-			if (process_tabledef($3, &$5)) {
+			if (process_tabledef($3, &$5, pf->opts)) {
 				free($3);
 				YYERROR;
 			}
@@ -2035,7 +2035,7 @@ filter_opt	: USER uids {
 			filter_opts.rtableid = $2;
 		}
 		| DIVERTTO STRING PORT portplain {
-			if ((filter_opts.divert.addr = host($2)) == NULL) {
+			if ((filter_opts.divert.addr = host($2, pf->opts)) == NULL) {
 				yyerror("could not parse divert address: %s",
 				    $2);
 				free($2);
@@ -2670,7 +2670,7 @@ optweight	: WEIGHT NUMBER			{
 		;
 
 host		: STRING			{
-			if (($$ = host($1)) == NULL)	{
+			if (($$ = host($1, pf->opts)) == NULL)	{
 				/* error. "any" is handled elsewhere */
 				free($1);
 				yyerror("could not parse host specification");
@@ -2682,7 +2682,8 @@ host		: STRING			{
 		| STRING '-' STRING		{
 			struct node_host *b, *e;
 
-			if ((b = host($1)) == NULL || (e = host($3)) == NULL) {
+			if ((b = host($1, pf->opts)) == NULL ||
+			    (e = host($3, pf->opts)) == NULL) {
 				free($1);
 				free($3);
 				yyerror("could not parse host specification");
@@ -2718,7 +2719,7 @@ host		: STRING			{
 			if (asprintf(&buf, "%s/%lld", $1, $3) == -1)
 				err(1, "host: asprintf");
 			free($1);
-			if (($$ = host(buf)) == NULL)	{
+			if (($$ = host(buf, pf->opts)) == NULL)	{
 				/* error. "any" is handled elsewhere */
 				free(buf);
 				yyerror("could not parse host specification");
@@ -2732,7 +2733,7 @@ host		: STRING			{
 			/* ie. for 10/8 parsing */
 			if (asprintf(&buf, "%lld/%lld", $1, $3) == -1)
 				err(1, "host: asprintf");
-			if (($$ = host(buf)) == NULL)	{
+			if (($$ = host(buf, pf->opts)) == NULL)	{
 				/* error. "any" is handled elsewhere */
 				free(buf);
 				yyerror("could not parse host specification");
@@ -3722,7 +3723,7 @@ pool_opt	: BITMASK	{
 route_host	: STRING			{
 			/* try to find @if0 address specs */
 			if (strrchr($1, '@') != NULL) {
-				if (($$ = host($1)) == NULL)	{
+				if (($$ = host($1, pf->opts)) == NULL)	{
 					yyerror("invalid host for route spec");
 					YYERROR;
 				}
@@ -3744,7 +3745,7 @@ route_host	: STRING			{
 			if (asprintf(&buf, "%s/%s", $1, $3) == -1)
 				err(1, "host: asprintf");
 			free($1);
-			if (($$ = host(buf)) == NULL)	{
+			if (($$ = host(buf, pf->opts)) == NULL)	{
 				/* error. "any" is handled elsewhere */
 				free(buf);
 				yyerror("could not parse host specification");
@@ -4080,7 +4081,7 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 }
 
 int
-process_tabledef(char *name, struct table_opts *opts)
+process_tabledef(char *name, struct table_opts *opts, int popts)
 {
 	struct pfr_buffer	 ab;
 	struct node_tinit	*ti;
@@ -4089,7 +4090,7 @@ process_tabledef(char *name, struct table_opts *opts)
 	ab.pfrb_type = PFRB_ADDRS;
 	SIMPLEQ_FOREACH(ti, &opts->init_nodes, entries) {
 		if (ti->file)
-			if (pfr_buf_load(&ab, ti->file, 0)) {
+			if (pfr_buf_load(&ab, ti->file, 0, popts)) {
 				if (errno)
 					yyerror("cannot load \"%s\": %s",
 					    ti->file, strerror(errno));

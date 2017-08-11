@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.33 2015/12/10 17:27:00 mmcc Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.34 2017/08/11 22:30:38 benno Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -496,7 +496,7 @@ pfr_buf_clear(struct pfr_buffer *b)
 }
 
 int
-pfr_buf_load(struct pfr_buffer *b, char *file, int nonetwork)
+pfr_buf_load(struct pfr_buffer *b, char *file, int nonetwork, int opts)
 {
 	FILE	*fp;
 	char	 buf[BUF_SIZE];
@@ -513,7 +513,7 @@ pfr_buf_load(struct pfr_buffer *b, char *file, int nonetwork)
 			return (-1);
 	}
 	while ((rv = pfr_next_token(buf, fp)) == 1)
-		if ((ev = append_addr(b, buf, nonetwork)) == -1) {
+		if ((ev = append_addr(b, buf, nonetwork, opts)) == -1) {
 			rv = -1;
 			break;
 		}
