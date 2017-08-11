@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_ctl.h,v 1.6 2014/03/22 04:30:31 yasuoka Exp $ */
+/*	$OpenBSD: npppd_ctl.h,v 1.7 2017/08/11 16:25:59 goda Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -70,6 +70,7 @@ struct npppd_who {
 	}                 tunnel_peer; 	/** Tunnel peer address */
 	struct in_addr    framed_ip_address;
 					/** Framed IP Address */
+	uint16_t          mru;		/** MRU */
 	uint32_t          ipackets;	/** Numbers of input packets */
 	uint32_t          opackets;	/** Numbers of output packets */
 	uint32_t          ierrors;	/** Numbers of input error packets */

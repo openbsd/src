@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_ctl.c,v 1.15 2015/12/05 18:43:36 mmcc Exp $ */
+/*	$OpenBSD: npppd_ctl.c,v 1.16 2017/08/11 16:25:59 goda Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -297,6 +297,7 @@ npppd_who_init(struct npppd_who *_this, npppd_ppp *ppp)
 	_this->ibytes = ppp->ibytes;
 	_this->obytes = ppp->obytes;
 	_this->ppp_id = ppp->id;
+	_this->mru = ppp->peer_mru;
 
 #ifdef USE_NPPPD_PIPEX
 	if (ppp->pipex_enabled != 0) {

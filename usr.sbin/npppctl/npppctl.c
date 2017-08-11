@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppctl.c,v 1.7 2017/01/21 11:32:04 guenther Exp $	*/
+/*	$OpenBSD: npppctl.c,v 1.8 2017/08/11 16:25:59 goda Exp $	*/
 
 /*
  * Copyright (c) 2012 Internet Initiative Japan Inc.
@@ -296,6 +296,7 @@ fprint_who_all(int i, struct npppd_who *w, FILE *out)
 	    "          Realm Name              : %s\n"
 	    "          Concentrated Interface  : %s\n"
 	    "          Assigned IPv4 Address   : %s\n"
+	    "          MRU                     : %u\n"
 	    "          Tunnel Protocol         : %s\n"
 	    "          Tunnel From             : %s\n"
 	    "          Start Time              : %s\n"
@@ -307,7 +308,7 @@ fprint_who_all(int i, struct npppd_who *w, FILE *out)
 	    "          Output Packets          : %lu\n"
 	    "          Output Errors           : %lu (%.1f%%)\n",
 	    w->ppp_id, w->ppp_id, w->username, w->rlmname, w->ifname,
-	    inet_ntoa(w->framed_ip_address), w->tunnel_proto,
+	    inet_ntoa(w->framed_ip_address), (u_int)w->mru, w->tunnel_proto,
 	    peerstr((struct sockaddr *)&w->tunnel_peer, peer_buf,
 		sizeof(peer_buf)), time_buf,
 	    (unsigned long)w->duration_sec,
