@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.h,v 1.8 2014/07/12 14:04:18 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth.h,v 1.9 2017/08/11 16:41:47 goda Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -83,6 +83,8 @@ const char          *npppd_auth_get_suffix (npppd_auth_base *);
 const char          *npppd_auth_username_for_auth (npppd_auth_base *, const char *, char *);
 void                *npppd_auth_radius_get_radius_auth_setting (npppd_auth_radius *);
 void                *npppd_auth_radius_get_radius_acct_setting (npppd_auth_radius *);
+int                 npppd_auth_user_session_unlimited(npppd_auth_base *);
+int                 npppd_check_auth_user_max_session(npppd_auth_base *, int);
 
 #ifdef __cplusplus
 }

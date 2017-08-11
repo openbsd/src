@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.45 2017/04/18 03:28:04 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.46 2017/08/11 16:41:47 goda Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.45 2017/04/18 03:28:04 yasuoka Exp $
+ * $Id: npppd.c,v 1.46 2017/08/11 16:41:47 goda Exp $
  */
 #include "version.h"
 #include <sys/param.h>	/* ALIGNED_POINTER */
@@ -800,25 +800,37 @@ npppd_get_ppp_by_id(npppd *_this, u_int ppp_id)
 int
 npppd_check_user_max_session(npppd *_this, npppd_ppp *ppp)
 {
-	int count;
+	int global_count, realm_count;
 	npppd_ppp *ppp1;
 	slist *uppp;
 
 	/* user_max_session == 0 means unlimit */
-	if (_this->conf.user_max_session == 0)
+	if (_this->conf.user_max_session == 0 &&
+	    npppd_auth_user_session_unlimited(ppp->realm))
 		return 1;
 
-	count = 0;
+	global_count = realm_count = 0;
 	if ((uppp = npppd_get_ppp_by_user(_this, ppp->username)) != NULL) {
 		for (slist_itr_first(uppp); slist_itr_has_next(uppp); ) {
 			ppp1 = slist_itr_next(uppp);
-			if (strcmp(ppp_iface(ppp)->ifname,
-			    ppp_iface(ppp1)->ifname) == 0)
-				count++;
+			if (ppp->realm == ppp1->realm)
+				realm_count++;
+			global_count++;
 		}
 	}
 
-	return (count < _this->conf.user_max_session)? 1 : 0;
+	if (npppd_check_auth_user_max_session(ppp->realm, realm_count)) {
+		ppp_log(ppp, LOG_WARNING,
+		    "user %s exceeds user-max-session limit per auth",
+		    ppp->username);
+		return 0;
+	} else if (_this->conf.user_max_session != 0 &&
+	    _this->conf.user_max_session <= global_count) {
+		ppp_log(ppp, LOG_WARNING,
+		    "user %s exceeds user-max-session limit", ppp->username);
+		return 0;
+	} else
+		return 1;
 }
 
 /***********************************************************************

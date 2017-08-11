@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.26 2015/12/05 18:43:36 mmcc Exp $ */
+/*	$OpenBSD: ppp.c,v 1.27 2017/08/11 16:41:47 goda Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.26 2015/12/05 18:43:36 mmcc Exp $ */
+/* $Id: ppp.c,v 1.27 2017/08/11 16:41:47 goda Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -583,9 +583,6 @@ ppp_auth_ok(npppd_ppp *_this)
 	if (_this->peer_auth != 0) {
 		/* Limit the number of connections per the user */
 		if (!npppd_check_user_max_session(_this->pppd, _this)) {
-			ppp_log(_this, LOG_WARNING,
-			    "user %s exceeds user-max-session limit",
-			    _this->username);
 			ppp_stop(_this, NULL);
 
 			return;

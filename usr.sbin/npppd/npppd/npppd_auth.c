@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.c,v 1.19 2017/02/22 07:48:26 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.20 2017/08/11 16:41:47 goda Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.19 2017/02/22 07:48:26 yasuoka Exp $ */
+/* $Id: npppd_auth.c,v 1.20 2017/08/11 16:41:47 goda Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -193,6 +193,7 @@ npppd_auth_reload(npppd_auth_base *base)
 	base->strip_atmark_realm = auth->strip_atmark_realm;
 	base->has_users_file = 0;
 	base->radius_ready = 0;
+	base->user_max_session = auth->user_max_session;
 
 	if (strlen(auth->users_file_path) > 0) {
 		strlcpy(base->users_file_path, auth->users_file_path,
@@ -459,6 +460,22 @@ npppd_auth_username_for_auth(npppd_auth_base *base, const char *username,
 	}
 
 	return username_buffer;
+}
+
+int
+npppd_auth_user_session_unlimited(npppd_auth_base *_this)
+{
+	return (_this->user_max_session == 0) ? 1 : 0;
+}
+
+int
+npppd_check_auth_user_max_session(npppd_auth_base *_this, int count)
+{
+	if (!npppd_auth_user_session_unlimited(_this) &&
+	    _this->user_max_session <= count)
+		return 1;
+	else
+		return 0;
 }
 
 /***********************************************************************

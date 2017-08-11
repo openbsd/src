@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth_local.h,v 1.7 2014/03/22 04:23:17 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth_local.h,v 1.8 2017/08/11 16:41:47 goda Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -56,6 +56,8 @@ struct _npppd_auth_base {
 	char	users_file_path[64];
 	/** last load time */
 	time_t	last_load;
+	/**counter of sessions from this auth */
+	int    user_max_session;
 };
 
 #ifdef USE_NPPPD_RADIUS

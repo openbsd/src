@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2015/10/11 07:16:01 guenther Exp $ */
+/*	$OpenBSD: parse.y,v 1.18 2017/08/11 16:41:47 goda Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -675,6 +675,9 @@ authopt	: USERNAME_SUFFIX STRING {
 			strlcpy(curr_authconf->users_file_path, $2,
 			    sizeof(curr_authconf->users_file_path));
 			free($2);
+		}
+		| USER_MAX_SESSION NUMBER {
+			curr_authconf->user_max_session = $2;
 		}
 		| AUTHENTICATION_SERVER {
 			if (curr_authconf->auth_type != NPPPD_AUTH_TYPE_RADIUS){
