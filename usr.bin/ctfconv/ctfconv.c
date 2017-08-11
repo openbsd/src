@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.5 2017/08/11 19:34:24 jasper Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.6 2017/08/11 20:49:26 jasper Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -93,6 +93,9 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
+
 	while ((ch = getopt(argc, argv, "dl:o:")) != -1) {
 		switch (ch) {
 		case 'd':
@@ -129,7 +132,19 @@ main(int argc, char *argv[])
 	if (error != 0)
 		return error;
 
+	if (outfile != NULL) {
+		if (pledge("stdio wpath cpath", NULL) == -1)
+			err(1, "pledge");
+
+		error = generate(outfile, label, 1);
+		if (error != 0)
+			return error;
+	}
+
 	if (dump) {
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+
 		int fidx = -1, oidx = -1;
 
 		TAILQ_FOREACH(it, &iobjq, it_symb)
@@ -148,12 +163,6 @@ main(int argc, char *argv[])
 		}
 
 		return 0;
-	}
-
-	if (outfile != NULL) {
-		error = generate(outfile, label, 1);
-		if (error != 0)
-			return error;
 	}
 
 	return 0;
