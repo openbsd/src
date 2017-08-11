@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.104 2017/08/11 14:59:43 mestre Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.105 2017/08/11 17:25:09 mpi Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -1237,6 +1237,7 @@ wdc_atapi_pio_intr(struct channel_softc *chp, struct wdc_xfer *xfer,
 			return;
 		}
 
+		wdc_atapi_intr_complete(chp, xfer, timeout, ret);
 		return;
 
 	case as_completed:
