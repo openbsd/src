@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.346 2017/06/26 09:32:32 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.347 2017/08/11 21:24:20 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3455,9 +3455,8 @@ void
 syn_cache_timer(void *arg)
 {
 	struct syn_cache *sc = arg;
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	if (sc->sc_flags & SCF_DEAD)
 		goto out;
 
@@ -3483,14 +3482,14 @@ syn_cache_timer(void *arg)
 	SYN_CACHE_TIMER_ARM(sc);
 
  out:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	return;
 
  dropit:
 	tcpstat_inc(tcps_sc_timed_out);
 	syn_cache_rm(sc);
 	syn_cache_put(sc);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void

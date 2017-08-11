@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.329 2017/06/20 14:11:46 gerhard Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.330 2017/08/11 21:24:19 mpi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1302,9 +1302,8 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			extern struct inpcbtable rawin6pcbtable;
 #endif
 			struct inpcb *inp;
-			int s;
 
-			NET_LOCK(s);
+			NET_LOCK();
 			TAILQ_FOREACH(inp, &tcbtable.inpt_queue, inp_queue)
 				FILLSO(inp->inp_socket);
 			TAILQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue)
@@ -1316,7 +1315,7 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			    inp_queue)
 				FILLSO(inp->inp_socket);
 #endif
-			NET_UNLOCK(s);
+			NET_UNLOCK();
 		}
 		fp = LIST_FIRST(&filehead);
 		/* don't FREF when f_count == 0 to avoid race in fdrop() */

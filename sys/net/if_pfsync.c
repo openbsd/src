@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.253 2017/06/09 17:43:06 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.254 2017/08/11 21:24:19 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1794,11 +1794,9 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 void
 pfsync_defer_tmo(void *arg)
 {
-	int s;
-
-	NET_LOCK(s);
+	NET_LOCK();
 	pfsync_undefer(arg, 0);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
@@ -2212,9 +2210,8 @@ pfsync_bulk_update(void *arg)
 	struct pfsync_softc *sc = arg;
 	struct pf_state *st;
 	int i = 0;
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	st = sc->sc_bulk_next;
 
 	for (;;) {
@@ -2245,7 +2242,7 @@ pfsync_bulk_update(void *arg)
 			break;
 		}
 	}
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
@@ -2275,10 +2272,8 @@ void
 pfsync_bulk_fail(void *arg)
 {
 	struct pfsync_softc *sc = arg;
-	int s;
 
-	NET_LOCK(s);
-
+	NET_LOCK();
 	if (sc->sc_bulk_tries++ < PFSYNC_MAX_BULKTRIES) {
 		/* Try again */
 		timeout_add_sec(&sc->sc_bulkfail_tmo, 5);
@@ -2303,7 +2298,7 @@ pfsync_bulk_fail(void *arg)
 		sc->sc_link_demoted = 0;
 		DPFPRINTF(LOG_ERR, "failed to receive bulk update");
 	}
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
@@ -2350,11 +2345,9 @@ pfsync_state_in_use(struct pf_state *st)
 void
 pfsync_timeout(void *arg)
 {
-	int s;
-
-	NET_LOCK(s);
+	NET_LOCK();
 	pfsync_sendout();
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 /* this is a softnet/netisr handler */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.177 2017/06/03 11:58:54 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.178 2017/08/11 21:24:19 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -309,12 +309,12 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if ((tp = tun_lookup(minor(dev))) == NULL) {	/* create on demand */
 		char	xname[IFNAMSIZ];
-		int	s, error;
+		int	error;
 
 		snprintf(xname, sizeof(xname), "%s%d", "tun", minor(dev));
-		NET_LOCK(s);
+		NET_LOCK();
 		error = if_clone_create(xname, rdomain);
-		NET_UNLOCK(s);
+		NET_UNLOCK();
 		if (error != 0)
 			return (error);
 
@@ -334,12 +334,12 @@ tapopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if ((tp = tap_lookup(minor(dev))) == NULL) {	/* create on demand */
 		char	xname[IFNAMSIZ];
-		int	s, error;
+		int	error;
 
 		snprintf(xname, sizeof(xname), "%s%d", "tap", minor(dev));
-		NET_LOCK(s);
+		NET_LOCK();
 		error = if_clone_create(xname, rdomain);
-		NET_UNLOCK(s);
+		NET_UNLOCK();
 		if (error != 0)
 			return (error);
 
@@ -399,7 +399,7 @@ tapclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 tun_dev_close(struct tun_softc *tp, int flag, int mode, struct proc *p)
 {
-	int			 s, error = 0;
+	int			 error = 0;
 	struct ifnet		*ifp;
 
 	ifp = &tp->tun_if;
@@ -415,9 +415,9 @@ tun_dev_close(struct tun_softc *tp, int flag, int mode, struct proc *p)
 	TUNDEBUG(("%s: closed\n", ifp->if_xname));
 
 	if (!(tp->tun_flags & TUN_STAYUP)) {
-		NET_LOCK(s);
+		NET_LOCK();
 		error = if_clone_destroy(ifp->if_xname);
-		NET_UNLOCK(s);
+		NET_UNLOCK();
 	} else {
 		tp->tun_pgid = 0;
 		selwakeup(&tp->tun_rsel);
@@ -837,7 +837,7 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 	struct ifnet		*ifp;
 	u_int32_t		*th;
 	struct mbuf		*top, **mp, *m;
-	int			error = 0, tlen, s;
+	int			error = 0, tlen;
 	size_t			mlen;
 
 	ifp = &tp->tun_if;
@@ -930,7 +930,7 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 	ifp->if_ipackets++;
 	ifp->if_ibytes += top->m_pkthdr.len;
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	switch (ntohl(*th)) {
 	case AF_INET:
@@ -947,7 +947,7 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 		break;
 	}
 
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	return (error);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.164 2017/07/26 21:15:57 claudio Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.165 2017/08/11 21:24:19 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -934,7 +934,7 @@ pfkeyv2_get_proto_alg(u_int8_t satype, u_int8_t *sproto, int *alg)
 int
 pfkeyv2_send(struct socket *so, void *message, int len)
 {
-	int i, j, s, rval = 0, mode = PFKEYV2_SENDMESSAGE_BROADCAST;
+	int i, j, rval = 0, mode = PFKEYV2_SENDMESSAGE_BROADCAST;
 	int delflag = 0;
 	struct sockaddr_encap encapdst, encapnetmask;
 	struct ipsec_policy *ipo, *tmpipo;
@@ -959,7 +959,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 
 	u_int rdomain;
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	/* Verify that we received this over a legitimate pfkeyv2 socket */
 	bzero(headers, sizeof(headers));
@@ -1833,7 +1833,7 @@ ret:
 	rval = pfkeyv2_sendmessage(headers, mode, so, 0, 0, rdomain);
 
 realret:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	if (freeme)
 		free(freeme, M_PFKEY, 0);

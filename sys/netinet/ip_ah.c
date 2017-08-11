@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.130 2017/05/30 16:07:22 deraadt Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.131 2017/08/11 21:24:19 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -700,7 +700,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 void
 ah_input_cb(struct cryptop *crp)
 {
-	int s, roff, rplen, skip, protoff;
+	int roff, rplen, skip, protoff;
 	unsigned char calc[AH_ALEN_MAX];
 	struct mbuf *m1, *m0, *m;
 	struct auth_hash *ahx;
@@ -727,7 +727,7 @@ ah_input_cb(struct cryptop *crp)
 		return;
 	}
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -745,7 +745,7 @@ ah_input_cb(struct cryptop *crp)
 			/* Reset the session ID */
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
-			NET_UNLOCK(s);
+			NET_UNLOCK();
 			crypto_dispatch(crp);
 			return;
 		}
@@ -830,7 +830,7 @@ ah_input_cb(struct cryptop *crp)
 	m1 = m_getptr(m, skip, &roff);
 	if (m1 == NULL) {
 		ahstat.ahs_hdrops++;
-		NET_UNLOCK(s);
+		NET_UNLOCK();
 		m_freem(m);
 
 		DPRINTF(("ah_input(): bad mbuf chain for packet in SA "
@@ -898,11 +898,11 @@ ah_input_cb(struct cryptop *crp)
 		}
 
 	ipsec_common_input_cb(m, tdb, skip, protoff);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	return;
 
  baddone:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	m_freem(m);
 
@@ -1193,7 +1193,6 @@ ah_output_cb(struct cryptop *crp)
 	struct tdb *tdb;
 	struct mbuf *m;
 	caddr_t ptr;
-	int s;
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
@@ -1210,7 +1209,7 @@ ah_output_cb(struct cryptop *crp)
 		return;
 	}
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -1226,7 +1225,7 @@ ah_output_cb(struct cryptop *crp)
 			/* Reset the session ID */
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
-			NET_UNLOCK(s);
+			NET_UNLOCK();
 			crypto_dispatch(crp);
 			return;
 		}
@@ -1249,11 +1248,11 @@ ah_output_cb(struct cryptop *crp)
 
 	if (ipsp_process_done(m, tdb))
 		ahstat.ahs_outfail++;
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	return;
 
  baddone:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	m_freem(m);
 

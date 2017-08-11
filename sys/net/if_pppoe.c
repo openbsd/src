@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.63 2017/07/19 06:59:16 claudio Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.64 2017/08/11 21:24:19 mpi Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -196,7 +196,6 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 {
 	struct pppoe_softc *sc, *tmpsc;
 	u_int32_t unique;
-	int s;
 
         sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
         if (sc == NULL)
@@ -232,7 +231,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&sc->sc_sppp.pp_if.if_bpf, &sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
 #endif
 
-	NET_LOCK(s);
+	NET_LOCK();
 retry:
 	unique = arc4random();
 	LIST_FOREACH(tmpsc, &pppoe_softc_list, sc_list)
@@ -240,7 +239,7 @@ retry:
 			goto retry;
 	sc->sc_unique = unique;
 	LIST_INSERT_HEAD(&pppoe_softc_list, sc, sc_list);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	return (0);
 }
@@ -250,11 +249,10 @@ int
 pppoe_clone_destroy(struct ifnet *ifp)
 {
 	struct pppoe_softc *sc = ifp->if_softc;
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	LIST_REMOVE(sc, sc_list);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	timeout_del(&sc->sc_timeout);
 
@@ -1054,11 +1052,11 @@ static void
 pppoe_timeout(void *arg)
 {
 	struct pppoe_softc *sc = (struct pppoe_softc *)arg;
-	int s, x, retry_wait, err;
+	int x, retry_wait, err;
 
 	PPPOEDEBUG(("%s: timeout\n", sc->sc_sppp.pp_if.if_xname));
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	switch (sc->sc_state) {
 	case PPPOE_STATE_PADI_SENT:
@@ -1130,7 +1128,7 @@ pppoe_timeout(void *arg)
 		break;	/* all done, work in peace */
 	}
 
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 /* Start a connection (i.e. initiate discovery phase). */

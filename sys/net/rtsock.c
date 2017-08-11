@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.247 2017/08/10 13:00:30 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.248 2017/08/11 21:24:19 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -744,9 +744,8 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 	struct sockaddr_mpls	*psa_mpls;
 #endif
 	int			 plen, newgate = 0, error = 0;
-	int			 s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	switch (rtm->rtm_type) {
 	case RTM_ADD:
 		if (info->rti_info[RTAX_GATEWAY] == NULL) {
@@ -1023,7 +1022,7 @@ change:
 			error = ESRCH;
 		break;
 	}
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	*prt = rt;
 	return (error);

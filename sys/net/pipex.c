@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.104 2017/08/11 20:56:15 mestre Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.105 2017/08/11 21:24:19 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -203,9 +203,9 @@ pipex_iface_fini(struct pipex_iface_context *pipex_iface)
 int
 pipex_ioctl(struct pipex_iface_context *pipex_iface, u_long cmd, caddr_t data)
 {
-	int s, pipexmode, ret = 0;
+	int pipexmode, ret = 0;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	switch (cmd) {
 	case PIPEXSMODE:
 		pipexmode = *(int *)data;
@@ -248,7 +248,7 @@ pipex_ioctl(struct pipex_iface_context *pipex_iface, u_long cmd, caddr_t data)
 		ret = ENOTTY;
 		break;
 	}
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	return (ret);
 }
@@ -749,13 +749,12 @@ pipex_timer_stop(void)
 Static void
 pipex_timer(void *ignored_arg)
 {
-	int s;
 	struct pipex_session *session;
 	struct pipex_session *session_next;
 
 	timeout_add_sec(&pipex_timer_ch, pipex_prune);
 
-	NET_LOCK(s);
+	NET_LOCK();
 	/* walk through */
 	for (session = LIST_FIRST(&pipex_session_list); session;
 	    session = session_next) {
@@ -800,7 +799,7 @@ pipex_timer(void *ignored_arg)
 		}
 	}
 
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 /***********************************************************************

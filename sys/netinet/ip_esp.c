@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.149 2017/05/30 16:07:22 deraadt Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.150 2017/08/11 21:24:20 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -531,7 +531,7 @@ void
 esp_input_cb(struct cryptop *crp)
 {
 	u_int8_t lastthree[3], aalg[AH_HMAC_MAX_HASHLEN];
-	int s, hlen, roff, skip, protoff;
+	int hlen, roff, skip, protoff;
 	struct mbuf *m1, *mo, *m;
 	struct auth_hash *esph;
 	struct tdb_crypto *tc;
@@ -556,7 +556,7 @@ esp_input_cb(struct cryptop *crp)
 		return;
 	}
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -574,7 +574,7 @@ esp_input_cb(struct cryptop *crp)
 			/* Reset the session ID */
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
-			NET_UNLOCK(s);
+			NET_UNLOCK();
 			crypto_dispatch(crp);
 			return;
 		}
@@ -662,7 +662,7 @@ esp_input_cb(struct cryptop *crp)
 	m1 = m_getptr(m, skip, &roff);
 	if (m1 == NULL)	{
 		espstat.esps_hdrops++;
-		NET_UNLOCK(s);
+		NET_UNLOCK();
 		DPRINTF(("esp_input_cb(): bad mbuf chain, SA %s/%08x\n",
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
@@ -720,7 +720,7 @@ esp_input_cb(struct cryptop *crp)
 	/* Verify pad length */
 	if (lastthree[1] + 2 > m->m_pkthdr.len - skip) {
 		espstat.esps_badilen++;
-		NET_UNLOCK(s);
+		NET_UNLOCK();
 		DPRINTF(("esp_input_cb(): invalid padding length %d for "
 		    "packet in SA %s/%08x\n", lastthree[1],
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
@@ -732,7 +732,7 @@ esp_input_cb(struct cryptop *crp)
 	/* Verify correct decryption by checking the last padding bytes */
 	if ((lastthree[1] != lastthree[0]) && (lastthree[1] != 0)) {
 		espstat.esps_badenc++;
-		NET_UNLOCK(s);
+		NET_UNLOCK();
 		DPRINTF(("esp_input(): decryption failed for packet in "
 		    "SA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
 		    sizeof(buf)), ntohl(tdb->tdb_spi)));
@@ -748,11 +748,11 @@ esp_input_cb(struct cryptop *crp)
 
 	/* Back to generic IPsec input processing */
 	ipsec_common_input_cb(m, tdb, skip, protoff);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	return;
 
  baddone:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	m_freem(m);
 
@@ -1041,7 +1041,6 @@ esp_output_cb(struct cryptop *crp)
 	struct tdb_crypto *tc;
 	struct tdb *tdb;
 	struct mbuf *m;
-	int s;
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 
@@ -1057,7 +1056,7 @@ esp_output_cb(struct cryptop *crp)
 	}
 
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -1073,7 +1072,7 @@ esp_output_cb(struct cryptop *crp)
 			/* Reset the session ID */
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
-			NET_UNLOCK(s);
+			NET_UNLOCK();
 			crypto_dispatch(crp);
 			return;
 		}
@@ -1091,11 +1090,11 @@ esp_output_cb(struct cryptop *crp)
 	/* Call the IPsec input callback. */
 	if (ipsp_process_done(m, tdb))
 		espstat.esps_outfail++;
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	return;
 
  baddone:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	m_freem(m);
 

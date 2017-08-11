@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.321 2017/08/06 13:16:11 mpi Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.322 2017/08/11 21:24:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -905,7 +905,6 @@ pf_addr_copyout(struct pf_addr_wrap *addr)
 int
 pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 {
-	int			 s;
 	int			 error = 0;
 
 	/* XXX keep in sync with switch() below */
@@ -1003,7 +1002,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			return (EACCES);
 		}
 
-	NET_LOCK(s);
+	NET_LOCK();
 	PF_LOCK();
 	switch (cmd) {
 
@@ -2476,7 +2475,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 fail:
 	PF_UNLOCK();
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	return (error);
 }
 

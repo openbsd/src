@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.163 2017/05/24 16:26:58 bluhm Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.164 2017/08/11 21:24:19 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -580,7 +580,7 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 	struct mbuf *m;
 	struct bpf_program *bf;
 	struct bpf_insn *fcode = NULL;
-	int error, s;
+	int error;
 	struct sockaddr_storage dst;
 	u_int dlt;
 
@@ -626,9 +626,9 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 	if (d->bd_hdrcmplt && dst.ss_family == AF_UNSPEC)
 		dst.ss_family = pseudo_AF_HDRCMPLT;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	error = ifp->if_output(ifp, m, sstosa(&dst), NULL);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 out:
 	bpf_put(d);

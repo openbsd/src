@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.85 2017/07/27 12:05:36 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.86 2017/08/11 21:24:19 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -276,12 +276,12 @@ socantrcvmore(struct socket *so)
 int
 solock(struct socket *so)
 {
-	int s;
+	int s = 0;
 
 	if ((so->so_proto->pr_domain->dom_family != PF_LOCAL) &&
 	    (so->so_proto->pr_domain->dom_family != PF_ROUTE) &&
 	    (so->so_proto->pr_domain->dom_family != PF_KEY))
-		NET_LOCK(s);
+		NET_LOCK();
 	else
 		s = -42;
 
@@ -292,7 +292,7 @@ void
 sounlock(int s)
 {
 	if (s != -42)
-		NET_UNLOCK(s);
+		NET_UNLOCK();
 }
 
 void

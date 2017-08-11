@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.218 2017/08/10 13:05:58 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.219 2017/08/11 21:24:20 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -311,21 +311,20 @@ nd6_llinfo_settimer(struct llinfo_nd6 *ln, int secs)
 void
 nd6_llinfo_timer(void *arg)
 {
-	int s;
 	struct llinfo_nd6 *ln;
 	struct rtentry *rt;
 	struct sockaddr_in6 *dst;
 	struct ifnet *ifp;
 	struct nd_ifinfo *ndi = NULL;
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	ln = (struct llinfo_nd6 *)arg;
 
 	if ((rt = ln->ln_rt) == NULL)
 		panic("ln->ln_rt == NULL");
 	if ((ifp = if_get(rt->rt_ifidx)) == NULL) {
-		NET_UNLOCK(s);
+		NET_UNLOCK();
 		return;
 	}
 	ndi = ND_IFINFO(ifp);
@@ -409,7 +408,7 @@ nd6_llinfo_timer(void *arg)
 	}
 
 	if_put(ifp);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
@@ -457,10 +456,9 @@ void
 nd6_expire(void *unused)
 {
 	struct ifnet *ifp;
-	int s;
 
 	KERNEL_LOCK();
-	NET_LOCK(s);
+	NET_LOCK();
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		struct ifaddr *ifa, *nifa;
@@ -481,7 +479,7 @@ nd6_expire(void *unused)
 		}
 	}
 
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	KERNEL_UNLOCK();
 }
 
@@ -1293,9 +1291,8 @@ nd6_slowtimo(void *ignored_arg)
 {
 	struct nd_ifinfo *nd6if;
 	struct ifnet *ifp;
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	timeout_add_sec(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL);
 
@@ -1313,7 +1310,7 @@ nd6_slowtimo(void *ignored_arg)
 			nd6if->reachable = ND_COMPUTE_RTIME(nd6if->basereachable);
 		}
 	}
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 int

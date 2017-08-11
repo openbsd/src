@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.317 2017/08/08 12:23:56 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.318 2017/08/11 21:24:20 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1794,7 +1794,6 @@ ip_send_dispatch(void *xmq)
 	struct mbuf_queue *mq = xmq;
 	struct mbuf *m;
 	struct mbuf_list ml;
-	int s;
 #ifdef IPSEC
 	int locked = 0;
 #endif /* IPSEC */
@@ -1816,11 +1815,11 @@ ip_send_dispatch(void *xmq)
 	}
 #endif /* IPSEC */
 
-	NET_LOCK(s);
+	NET_LOCK();
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		ip_output(m, NULL, NULL, 0, NULL, NULL, 0);
 	}
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 #ifdef IPSEC
 	if (locked)

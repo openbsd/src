@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.86 2017/05/15 14:33:20 bluhm Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.87 2017/08/11 21:24:19 mpi Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -121,7 +121,6 @@ int
 gre_clone_create(struct if_clone *ifc, int unit)
 {
 	struct gre_softc *sc;
-	int s;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (!sc)
@@ -163,9 +162,9 @@ gre_clone_create(struct if_clone *ifc, int unit)
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_LOOP, sizeof(u_int32_t));
 #endif
-	NET_LOCK(s);
+	NET_LOCK();
 	LIST_INSERT_HEAD(&gre_softc_list, sc, sc_list);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	return (0);
 }
@@ -174,13 +173,12 @@ int
 gre_clone_destroy(struct ifnet *ifp)
 {
 	struct gre_softc *sc = ifp->if_softc;
-	int s;
 
 	timeout_del(&sc->sc_ka_snd);
 	timeout_del(&sc->sc_ka_hold);
-	NET_LOCK(s);
+	NET_LOCK();
 	LIST_REMOVE(sc, sc_list);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	if_detach(ifp);
 
@@ -612,7 +610,6 @@ gre_send_keepalive(void *arg)
 	struct ip *ip;
 	struct gre_h *gh;
 	struct sockaddr dst;
-	int s;
 
 	if (sc->sc_ka_timout)
 		timeout_add_sec(&sc->sc_ka_snd, sc->sc_ka_timout);
@@ -658,10 +655,10 @@ gre_send_keepalive(void *arg)
 	bzero(&dst, sizeof(dst));
 	dst.sa_family = AF_INET;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	/* should we care about the error? */
 	gre_output(&sc->sc_if, m, &dst, NULL);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void

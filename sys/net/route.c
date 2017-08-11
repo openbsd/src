@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.365 2017/08/02 07:42:11 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.366 2017/08/11 21:24:19 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1414,11 +1414,10 @@ rt_timer_timer(void *arg)
 	struct rttimer_queue	*rtq;
 	struct rttimer		*r;
 	long			 current_time;
-	int			 s;
 
 	current_time = time_uptime;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	LIST_FOREACH(rtq, &rttimer_queue_head, rtq_link) {
 		while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL &&
 		    (r->rtt_time + rtq->rtq_timeout) < current_time) {
@@ -1432,7 +1431,7 @@ rt_timer_timer(void *arg)
 				printf("rt_timer_timer: rtq_count reached 0\n");
 		}
 	}
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	timeout_add_sec(to, 1);
 }

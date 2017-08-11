@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.314 2017/06/22 11:34:51 tom Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.315 2017/08/11 21:24:19 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -870,11 +870,10 @@ int
 carp_clone_destroy(struct ifnet *ifp)
 {
 	struct carp_softc *sc = ifp->if_softc;
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	carpdetach(sc);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
@@ -1036,11 +1035,9 @@ carp_vhe_send_ad_all(struct carp_softc *sc)
 void
 carp_timer_ad(void *v)
 {
-	int s;
-
-	NET_LOCK(s);
+	NET_LOCK();
 	carp_send_ad(v);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
@@ -1548,11 +1545,9 @@ done:
 void
 carp_timer_down(void *v)
 {
-	int s;
-
-	NET_LOCK(s);
+	NET_LOCK();
 	carp_master_down(v);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.225 2017/06/26 09:08:00 patrick Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.226 2017/08/11 21:24:20 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -536,67 +536,63 @@ void
 tdb_timeout(void *v)
 {
 	struct tdb *tdb = v;
-	int s;
 
 	if (!(tdb->tdb_flags & TDBF_TIMER))
 		return;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	/* If it's an "invalid" TDB do a silent expiration. */
 	if (!(tdb->tdb_flags & TDBF_INVALID))
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	tdb_delete(tdb);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
 tdb_firstuse(void *v)
 {
 	struct tdb *tdb = v;
-	int s;
 
 	if (!(tdb->tdb_flags & TDBF_SOFT_FIRSTUSE))
 		return;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	/* If the TDB hasn't been used, don't renew it. */
 	if (tdb->tdb_first_use != 0)
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	tdb_delete(tdb);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
 tdb_soft_timeout(void *v)
 {
 	struct tdb *tdb = v;
-	int s;
 
 	if (!(tdb->tdb_flags & TDBF_SOFT_TIMER))
 		return;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	/* Soft expirations. */
 	pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
 tdb_soft_firstuse(void *v)
 {
 	struct tdb *tdb = v;
-	int s;
 
 	if (!(tdb->tdb_flags & TDBF_SOFT_FIRSTUSE))
 		return;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	/* If the TDB hasn't been used, don't renew it. */
 	if (tdb->tdb_first_use != 0)
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
@@ -993,18 +989,17 @@ void
 ipsp_ids_timeout(void *arg)
 {
 	struct ipsec_ids *ids = arg;
-	int s;
 
 	DPRINTF(("%s: ids %p count %d\n", __func__, ids, ids->id_refcount));
 	KASSERT(ids->id_refcount == 0);
 
-	NET_LOCK(s);
+	NET_LOCK();
 	RBT_REMOVE(ipsec_ids_tree, &ipsec_ids_tree, ids);
 	RBT_REMOVE(ipsec_ids_flows, &ipsec_ids_flows, ids);
 	free(ids->id_local, M_CREDENTIALS, 0);
 	free(ids->id_remote, M_CREDENTIALS, 0);
 	free(ids, M_CREDENTIALS, 0);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 /* decrements refcount, actual free happens in timeout */

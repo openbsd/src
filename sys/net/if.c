@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.509 2017/08/10 16:48:25 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.510 2017/08/11 21:24:19 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -511,25 +511,21 @@ if_attachdomain(struct ifnet *ifp)
 void
 if_attachhead(struct ifnet *ifp)
 {
-	int s;
-
 	if_attach_common(ifp);
-	NET_LOCK(s);
+	NET_LOCK();
 	TAILQ_INSERT_HEAD(&ifnet, ifp, if_list);
 	if_attachsetup(ifp);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
 if_attach(struct ifnet *ifp)
 {
-	int s;
-
 	if_attach_common(ifp);
-	NET_LOCK(s);
+	NET_LOCK();
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
 	if_attachsetup(ifp);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
@@ -875,7 +871,7 @@ if_input_process(void *xifidx)
 	struct ifnet *ifp;
 	struct ifih *ifih;
 	struct srp_ref sr;
-	int s, s2;
+	int s;
 #ifdef IPSEC
 	int locked = 0;
 #endif /* IPSEC */
@@ -916,7 +912,7 @@ if_input_process(void *xifidx)
 	 * to PF globals, pipex globals, unicast and multicast addresses
 	 * lists.
 	 */
-	NET_LOCK(s2);
+	NET_LOCK();
 	s = splnet();
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		/*
@@ -933,7 +929,7 @@ if_input_process(void *xifidx)
 			m_freem(m);
 	}
 	splx(s);
-	NET_UNLOCK(s2);
+	NET_UNLOCK();
 
 #ifdef IPSEC
 	if (locked)
@@ -947,17 +943,16 @@ void
 if_netisr(void *unused)
 {
 	int n, t = 0;
-	int s;
 
 	KERNEL_LOCK();
-	NET_LOCK(s);
+	NET_LOCK();
 
 	while ((n = netisr) != 0) {
 		/* Like sched_pause() but with a rwlock dance. */
 		if (curcpu()->ci_schedstate.spc_schedflags & SPCF_SHOULDYIELD) {
-			NET_UNLOCK(s);
+			NET_UNLOCK();
 			yield();
-			NET_LOCK(s);
+			NET_LOCK();
 		}
 
 		atomic_clearbits_int(&netisr, n);
@@ -1000,16 +995,14 @@ if_netisr(void *unused)
 		pfsyncintr();
 #endif
 
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	KERNEL_UNLOCK();
 }
 
 void
 if_deactivate(struct ifnet *ifp)
 {
-	int s;
-
-	NET_LOCK(s);
+	NET_LOCK();
 	/*
 	 * Call detach hooks from head to tail.  To make sure detach
 	 * hooks are executed in the reverse order they were added, all
@@ -1022,7 +1015,7 @@ if_deactivate(struct ifnet *ifp)
 	if (ifp->if_carp && ifp->if_type != IFT_CARP)
 		carp_ifdetach(ifp);
 #endif
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 /*
@@ -1035,7 +1028,7 @@ if_detach(struct ifnet *ifp)
 	struct ifaddr *ifa;
 	struct ifg_list *ifg;
 	struct domain *dp;
-	int i, s, s2;
+	int i, s;
 
 	/* Undo pseudo-driver changes. */
 	if_deactivate(ifp);
@@ -1045,8 +1038,8 @@ if_detach(struct ifnet *ifp)
 	/* Other CPUs must not have a reference before we start destroying. */
 	if_idxmap_remove(ifp);
 
-	NET_LOCK(s);
-	s2 = splnet();
+	NET_LOCK();
+	s = splnet();
 	ifp->if_qstart = if_detached_qstart;
 	ifp->if_ioctl = if_detached_ioctl;
 	ifp->if_watchdog = NULL;
@@ -1118,8 +1111,8 @@ if_detach(struct ifnet *ifp)
 
 	/* Announce that the interface is gone. */
 	rtm_ifannounce(ifp, IFAN_DEPARTURE);
-	splx(s2);
-	NET_UNLOCK(s);
+	splx(s);
+	NET_UNLOCK();
 
 	for (i = 0; i < ifp->if_nifqs; i++)
 		ifq_destroy(ifp->if_ifqs[i]);
@@ -1523,9 +1516,8 @@ if_downall(void)
 {
 	struct ifreq ifrq;	/* XXX only partly built */
 	struct ifnet *ifp;
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if ((ifp->if_flags & IFF_UP) == 0)
 			continue;
@@ -1536,7 +1528,7 @@ if_downall(void)
 			    (caddr_t)&ifrq);
 		}
 	}
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 /*
@@ -1585,17 +1577,16 @@ if_linkstate_task(void *xifidx)
 {
 	unsigned int ifidx = (unsigned long)xifidx;
 	struct ifnet *ifp;
-	int s;
 
 	KERNEL_LOCK();
-	NET_LOCK(s);
+	NET_LOCK();
 
 	ifp = if_get(ifidx);
 	if (ifp != NULL)
 		if_linkstate(ifp);
 	if_put(ifp);
 
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	KERNEL_UNLOCK();
 }
 

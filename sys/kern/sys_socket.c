@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.32 2017/07/24 09:29:15 mpi Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.33 2017/08/11 21:24:19 mpi Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -125,9 +125,9 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		 * different entry since a socket's unnecessary
 		 */
 		if (IOCGROUP(cmd) == 'i') {
-			NET_LOCK(s);
+			NET_LOCK();
 			error = ifioctl(so, cmd, data, p);
-			NET_UNLOCK(s);
+			NET_UNLOCK();
 			return (error);
 		}
 		if (IOCGROUP(cmd) == 'r')

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.14 2017/05/30 07:50:37 mpi Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.15 2017/08/11 21:24:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -947,7 +947,7 @@ umb_state_task(void *arg)
 	struct ifnet *ifp = GET_IFP(sc);
 	struct ifreq ifr;
 	struct in_aliasreq ifra;
-	int	 s, ns;
+	int	 s;
 	int	 state;
 
 	s = splnet();
@@ -971,7 +971,7 @@ umb_state_task(void *arg)
 			 */
 			memset(sc->sc_info.ipv4dns, 0,
 			    sizeof (sc->sc_info.ipv4dns));
-			NET_LOCK(ns);
+			NET_LOCK();
 			if (in_ioctl(SIOCGIFADDR, (caddr_t)&ifr, ifp, 1) == 0 &&
 			    satosin(&ifr.ifr_addr)->sin_addr.s_addr !=
 			    INADDR_ANY) {
@@ -980,7 +980,7 @@ umb_state_task(void *arg)
 				    sizeof (ifra.ifra_addr));
 				in_ioctl(SIOCDIFADDR, (caddr_t)&ifra, ifp, 1);
 			}
-			NET_UNLOCK(ns);
+			NET_UNLOCK();
 		}
 		if_link_state_change(ifp);
 	}
@@ -1613,7 +1613,7 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 {
 	struct mbim_cid_ip_configuration_info *ic = data;
 	struct ifnet *ifp = GET_IFP(sc);
-	int	 s, ns;
+	int	 s;
 	uint32_t avail;
 	uint32_t val;
 	int	 n, i;
@@ -1667,9 +1667,9 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		sin->sin_len = sizeof (ifra.ifra_mask);
 		in_len2mask(&sin->sin_addr, ipv4elem.prefixlen);
 
-		NET_LOCK(ns);
+		NET_LOCK();
 		rv = in_ioctl(SIOCAIFADDR, (caddr_t)&ifra, ifp, 1);
-		NET_UNLOCK(ns);
+		NET_UNLOCK();
 		if (rv == 0) {
 			if (ifp->if_flags & IFF_DEBUG)
 				log(LOG_INFO, "%s: IPv4 addr %s, mask %s, "

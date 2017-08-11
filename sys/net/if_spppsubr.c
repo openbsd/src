@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.169 2017/08/11 15:13:25 reyk Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.170 2017/08/11 21:24:19 mpi Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -4048,10 +4048,10 @@ void
 sppp_keepalive(void *dummy)
 {
 	struct sppp *sp;
-	int s, sl;
+	int s;
 	struct timeval tv;
 
-	NET_LOCK(sl);
+	NET_LOCK();
 	s = splnet();
 	getmicrouptime(&tv);
 	for (sp=spppq; sp; sp=sp->pp_next) {
@@ -4103,7 +4103,7 @@ sppp_keepalive(void *dummy)
 		}
 	}
 	splx(s);
-	NET_UNLOCK(sl);
+	NET_UNLOCK();
 	timeout_add_sec(&keepalive_ch, 10);
 }
 
@@ -4192,7 +4192,6 @@ sppp_set_ip_addrs(void *arg1)
 	struct ifaddr *ifa;
 	struct sockaddr_in *si;
 	struct sockaddr_in *dest;
-	int s;
 
 	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, NULL);
 	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) &&
@@ -4203,7 +4202,7 @@ sppp_set_ip_addrs(void *arg1)
 		hisaddr = sp->ipcp.req_hisaddr;
 
 
-	NET_LOCK(s);
+	NET_LOCK();
 	/*
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
@@ -4247,7 +4246,7 @@ sppp_set_ip_addrs(void *arg1)
 		sppp_update_gw(ifp);
 	}
 out:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 /*
@@ -4264,9 +4263,8 @@ sppp_clear_ip_addrs(void *arg1)
 	struct sockaddr_in *si;
 	struct sockaddr_in *dest;
 	u_int32_t remote;
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	if (sp->ipcp.flags & IPCP_HISADDR_DYN)
 		remote = sp->ipcp.saved_hisaddr;
@@ -4308,7 +4306,7 @@ sppp_clear_ip_addrs(void *arg1)
 		sppp_update_gw(ifp);
 	}
 out:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 
@@ -4359,9 +4357,9 @@ sppp_update_ip6_addr(void *arg)
 	struct in6_aliasreq *ifra = &sp->ipv6cp.req_ifid;
 	struct in6_addr mask = in6mask128;
 	struct in6_ifaddr *ia6;
-	int s, error;
+	int error;
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	ia6 = in6ifa_ifpforlinklocal(ifp, 0);
 	if (ia6 == NULL) {
@@ -4402,7 +4400,7 @@ sppp_update_ip6_addr(void *arg)
 		    SPP_ARGS(ifp), error);
 	}
 out:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.108 2017/05/30 07:50:37 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.109 2017/08/11 21:24:19 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -204,7 +204,6 @@ int
 ppp_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ppp_softc *sc;
-	int s;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (!sc)
@@ -230,9 +229,9 @@ ppp_clone_create(struct if_clone *ifc, int unit)
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_PPP, PPP_HDRLEN);
 #endif
-	NET_LOCK(s);
+	NET_LOCK();
 	LIST_INSERT_HEAD(&ppp_softc_list, sc, sc_list);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	return (0);
 }
@@ -241,14 +240,13 @@ int
 ppp_clone_destroy(struct ifnet *ifp)
 {
 	struct ppp_softc *sc = ifp->if_softc;
-	int s;
 
 	if (sc->sc_devp != NULL)
 		return (EBUSY);
 
-	NET_LOCK(s);
+	NET_LOCK();
 	LIST_REMOVE(sc, sc_list);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	if_detach(ifp);
 
@@ -262,14 +260,14 @@ ppp_clone_destroy(struct ifnet *ifp)
 struct ppp_softc *
 pppalloc(pid_t pid)
 {
-	int i, s;
+	int i;
 	struct ppp_softc *sc;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	LIST_FOREACH(sc, &ppp_softc_list, sc_list) {
 		if (sc->sc_xfer == pid) {
 			sc->sc_xfer = 0;
-			NET_UNLOCK(s);
+			NET_UNLOCK();
 			return sc;
 		}
 	}
@@ -277,7 +275,7 @@ pppalloc(pid_t pid)
 		if (sc->sc_devp == NULL)
 			break;
 	}
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	if (sc == NULL)
 		return NULL;
 
@@ -309,9 +307,8 @@ void
 pppdealloc(struct ppp_softc *sc)
 {
 	struct ppp_pkt *pkt;
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	if_down(&sc->sc_if);
 	sc->sc_if.if_flags &= ~IFF_RUNNING;
 	sc->sc_devp = NULL;
@@ -346,7 +343,7 @@ pppdealloc(struct ppp_softc *sc)
 		sc->sc_comp = 0;
 	}
 #endif
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 /*

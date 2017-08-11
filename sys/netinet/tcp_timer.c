@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.56 2017/05/16 12:24:02 mpi Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.57 2017/08/11 21:24:20 mpi Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -105,20 +105,19 @@ void
 tcp_delack(void *arg)
 {
 	struct tcpcb *tp = arg;
-	int s;
 
 	/*
 	 * If tcp_output() wasn't able to transmit the ACK
 	 * for whatever reason, it will restart the delayed
 	 * ACK callout.
 	 */
-	NET_LOCK(s);
+	NET_LOCK();
 	if (tp->t_flags & TF_DEAD)
 		goto out;
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
  out:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 /*
@@ -187,9 +186,8 @@ tcp_timer_rexmt(void *arg)
 {
 	struct tcpcb *tp = arg;
 	uint32_t rto;
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	if (tp->t_flags & TF_DEAD)
 		goto out;
 
@@ -369,7 +367,7 @@ tcp_timer_rexmt(void *arg)
 	(void) tcp_output(tp);
 
  out:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
@@ -377,9 +375,8 @@ tcp_timer_persist(void *arg)
 {
 	struct tcpcb *tp = arg;
 	uint32_t rto;
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	if ((tp->t_flags & TF_DEAD) ||
             TCP_TIMER_ISARMED(tp, TCPT_REXMT)) {
 		goto out;
@@ -407,16 +404,15 @@ tcp_timer_persist(void *arg)
 	(void) tcp_output(tp);
 	tp->t_force = 0;
  out:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
 tcp_timer_keep(void *arg)
 {
 	struct tcpcb *tp = arg;
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	if (tp->t_flags & TF_DEAD)
 		goto out;
 
@@ -448,22 +444,21 @@ tcp_timer_keep(void *arg)
 	} else
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
  out:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	return;
 
  dropit:
 	tcpstat_inc(tcps_keepdrops);
 	tp = tcp_drop(tp, ETIMEDOUT);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void
 tcp_timer_2msl(void *arg)
 {
 	struct tcpcb *tp = arg;
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	if (tp->t_flags & TF_DEAD)
 		goto out;
 
@@ -478,5 +473,5 @@ tcp_timer_2msl(void *arg)
 		tp = tcp_close(tp);
 
  out:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }

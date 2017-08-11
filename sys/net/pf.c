@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1038 2017/08/06 13:16:11 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.1039 2017/08/11 21:24:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1213,10 +1213,9 @@ void
 pf_purge(void *xnloops)
 {
 	int *nloops = xnloops;
-	int s;
 
 	KERNEL_LOCK();
-	NET_LOCK(s);
+	NET_LOCK();
 
 	PF_LOCK();
 	/* process a fraction of the state table every second */
@@ -1237,7 +1236,7 @@ pf_purge(void *xnloops)
 		pf_purge_expired_fragments();
 		*nloops = 0;
 	}
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	KERNEL_UNLOCK();
 
 	timeout_add(&pf_purge_to, 1 * hz);

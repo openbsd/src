@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.56 2017/04/05 22:27:03 dhill Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.57 2017/08/11 21:24:20 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -192,7 +192,7 @@ ipcomp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 void
 ipcomp_input_cb(struct cryptop *crp)
 {
-	int s, skip, protoff, roff, hlen = IPCOMP_HLENGTH, clen;
+	int skip, protoff, roff, hlen = IPCOMP_HLENGTH, clen;
 	u_int8_t nproto;
 	struct mbuf *m, *m1, *mo;
 	struct tdb_crypto *tc;
@@ -217,7 +217,7 @@ ipcomp_input_cb(struct cryptop *crp)
 		return;
 	}
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -252,7 +252,7 @@ ipcomp_input_cb(struct cryptop *crp)
 			/* Reset the session ID */
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
-			NET_UNLOCK(s);
+			NET_UNLOCK();
 			crypto_dispatch(crp);
 			return;
 		}
@@ -332,11 +332,11 @@ ipcomp_input_cb(struct cryptop *crp)
 
 	/* Back to generic IPsec input processing */
 	ipsec_common_input_cb(m, tdb, skip, protoff);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	return;
 
 baddone:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	m_freem(m);
 
@@ -523,7 +523,7 @@ ipcomp_output_cb(struct cryptop *crp)
 	struct tdb_crypto *tc;
 	struct tdb *tdb;
 	struct mbuf *m, *mo;
-	int s, skip, rlen, roff;
+	int skip, rlen, roff;
 	u_int16_t cpi;
 	struct ip *ip;
 #ifdef INET6
@@ -549,7 +549,7 @@ ipcomp_output_cb(struct cryptop *crp)
 		return;
 	}
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -565,7 +565,7 @@ ipcomp_output_cb(struct cryptop *crp)
 			/* Reset the session ID */
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
-			NET_UNLOCK(s);
+			NET_UNLOCK();
 			crypto_dispatch(crp);
 			return;
 		}
@@ -583,7 +583,7 @@ ipcomp_output_cb(struct cryptop *crp)
 		crypto_freereq(crp);
 		if (ipsp_process_done(m, tdb))
 			ipcompstat.ipcomps_outfail++;
-		NET_UNLOCK(s);
+		NET_UNLOCK();
 		return;
 	}
 
@@ -632,11 +632,11 @@ ipcomp_output_cb(struct cryptop *crp)
 
 	if (ipsp_process_done(m, tdb))
 		ipcompstat.ipcomps_outfail++;
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	return;
 
 baddone:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	m_freem(m);
 

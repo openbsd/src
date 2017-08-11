@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.120 2017/07/28 09:01:09 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.121 2017/08/11 21:24:20 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1173,9 +1173,8 @@ nd6_dad_timer(void *xifa)
 	struct in6_ifaddr *ia6 = ifatoia6(ifa);
 	struct dadq *dp;
 	char addr[INET6_ADDRSTRLEN];
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 
 	/* Sanity check */
 	if (ia6 == NULL) {
@@ -1266,7 +1265,7 @@ nd6_dad_timer(void *xifa)
 	}
 
 done:
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void

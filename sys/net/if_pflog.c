@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.79 2017/05/16 11:35:36 mpi Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.80 2017/08/11 21:24:19 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -136,7 +136,6 @@ pflog_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet *ifp;
 	struct pflog_softc *pflogif;
-	int s;
 
 	if ((pflogif = malloc(sizeof(*pflogif),
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
@@ -161,13 +160,13 @@ pflog_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&pflogif->sc_if.if_bpf, ifp, DLT_PFLOG, PFLOG_HDRLEN);
 #endif
 
-	NET_LOCK(s);
+	NET_LOCK();
 	if (unit + 1 > npflogifs && pflogifs_resize(unit + 1) != 0) {
-		NET_UNLOCK(s);
+		NET_UNLOCK();
 		return (ENOMEM);
 	}
 	pflogifs[unit] = ifp;
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	return (0);
 }
@@ -176,15 +175,15 @@ int
 pflog_clone_destroy(struct ifnet *ifp)
 {
 	struct pflog_softc	*pflogif = ifp->if_softc;
-	int			 s, i;
+	int			 i;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	pflogifs[pflogif->sc_unit] = NULL;
 	for (i = npflogifs; i > 0 && pflogifs[i - 1] == NULL; i--)
 		; /* nothing */
 	if (i < npflogifs)
 		pflogifs_resize(i);	/* error harmless here */
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	if_detach(ifp);
 	free(pflogif, M_DEVBUF, 0);

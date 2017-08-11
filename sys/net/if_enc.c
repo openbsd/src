@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.68 2017/05/28 09:35:13 mpi Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.69 2017/08/11 21:24:19 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -72,7 +72,7 @@ enc_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet		*ifp;
 	struct ifnet		**new;
 	size_t			 newlen;
-	int			 s, error;
+	int			 error;
 
 	if (unit > ENC_MAX_UNITS)
 		return (EINVAL);
@@ -111,10 +111,10 @@ enc_clone_create(struct if_clone *ifc, int unit)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_ENC, ENC_HDRLEN);
 #endif
-	NET_LOCK(s);
+	NET_LOCK();
 	error = enc_setif(ifp, 0);
 	if (error != 0) {
-		NET_UNLOCK(s);
+		NET_UNLOCK();
 		if_detach(ifp);
 		free(sc, M_DEVBUF, 0);
 		return (error);
@@ -123,7 +123,7 @@ enc_clone_create(struct if_clone *ifc, int unit)
 	if (unit == 0 || unit > enc_max_unit) {
 		if ((new = mallocarray(unit + 1, sizeof(struct ifnet *),
 		    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
-			NET_UNLOCK(s);
+			NET_UNLOCK();
 			return (ENOBUFS);
 		}
 		newlen = sizeof(struct ifnet *) * (unit + 1);
@@ -137,7 +137,7 @@ enc_clone_create(struct if_clone *ifc, int unit)
 		enc_max_unit = unit;
 	}
 	enc_allifps[unit] = ifp;
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	return (0);
 }
@@ -146,16 +146,15 @@ int
 enc_clone_destroy(struct ifnet *ifp)
 {
 	struct enc_softc	*sc = ifp->if_softc;
-	int			 s;
 
 	/* Protect users from removing enc0 */
 	if (sc->sc_unit == 0)
 		return (EPERM);
 
-	NET_LOCK(s);
+	NET_LOCK();
 	enc_allifps[sc->sc_unit] = NULL;
 	enc_unsetif(ifp);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 
 	if_detach(ifp);
 	free(sc, M_DEVBUF, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.230 2017/07/30 18:16:14 florian Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.231 2017/08/11 21:24:19 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -111,9 +111,8 @@ arptimer(void *arg)
 {
 	struct timeout *to = (struct timeout *)arg;
 	struct llinfo_arp *la, *nla;
-	int s;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	timeout_add_sec(to, arpt_prune);
 	LIST_FOREACH_SAFE(la, &arp_list, la_list, nla) {
 		struct rtentry *rt = la->la_rt;
@@ -121,7 +120,7 @@ arptimer(void *arg)
 		if (rt->rt_expire && rt->rt_expire <= time_uptime)
 			arptfree(rt); /* timer has expired; clear */
 	}
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.122 2017/08/10 19:20:43 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.123 2017/08/11 21:24:20 mpi Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1137,9 +1137,9 @@ nfs_timer(void *arg)
 	struct nfsreq *rep;
 	struct mbuf *m;
 	struct socket *so;
-	int timeo, s, error;
+	int timeo, error;
 
-	NET_LOCK(s);
+	NET_LOCK();
 	TAILQ_FOREACH(rep, &nmp->nm_reqsq, r_chain) {
 		if (rep->r_mrep || (rep->r_flags & R_SOFTTERM))
 			continue;
@@ -1222,7 +1222,7 @@ nfs_timer(void *arg)
 			}
 		}
 	}
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	timeout_add(&nmp->nm_rtimeout, nfs_ticks);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.81 2017/08/10 19:20:43 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.82 2017/08/11 21:24:19 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -145,7 +145,6 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet		*ifp;
 	struct pflow_softc	*pflowif;
-	int			 s;
 
 	if ((pflowif = malloc(sizeof(*pflowif),
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
@@ -267,9 +266,9 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	task_set(&pflowif->sc_outputtask, pflow_output_process, pflowif);
 
 	/* Insert into list of pflows */
-	NET_LOCK(s);
+	NET_LOCK();
 	SLIST_INSERT_HEAD(&pflowif_list, pflowif, sc_next);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	return (0);
 }
 
@@ -277,7 +276,7 @@ int
 pflow_clone_destroy(struct ifnet *ifp)
 {
 	struct pflow_softc	*sc = ifp->if_softc;
-	int			 s, error;
+	int			 error;
 
 	error = 0;
 
@@ -300,9 +299,9 @@ pflow_clone_destroy(struct ifnet *ifp)
 	if (sc->sc_flowsrc != NULL)
 		free(sc->sc_flowsrc, M_DEVBUF, sc->sc_flowsrc->sa_len);
 	if_detach(ifp);
-	NET_LOCK(s);
+	NET_LOCK();
 	SLIST_REMOVE(&pflowif_list, sc, pflow_softc, sc_next);
-	NET_UNLOCK(s);
+	NET_UNLOCK();
 	free(sc, M_DEVBUF, sizeof(*sc));
 	return (error);
 }
