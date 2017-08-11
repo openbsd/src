@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.7 2017/08/11 21:13:12 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.8 2017/08/11 21:22:12 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -866,11 +866,13 @@ test_tlsext_ri_clienthello(void)
 	unsigned char *data = NULL;
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
-	int failure = 0;
+	int failure;
 	size_t dlen;
 	int alert;
 	CBB cbb;
 	CBS cbs;
+
+	failure = 1;
 
 	CBB_init(&cbb, 0);
 
@@ -880,21 +882,18 @@ test_tlsext_ri_clienthello(void)
 		errx(1, "failed to create SSL");
 
 	if (tlsext_ri_clienthello_needs(ssl)) {
-		fprintf(stderr, "FAIL: clienthello should not need RI\n");
-		failure = 1;
-		goto done;
+		FAIL("clienthello should not need RI\n");
+		goto err;
 	}
 
 	if (!SSL_renegotiate(ssl)) {
-		fprintf(stderr, "FAIL: client failed to set renegotiate\n");
-		failure = 1;
-		goto done;
+		FAIL("client failed to set renegotiate\n");
+		goto err;
 	}
 
 	if (!tlsext_ri_clienthello_needs(ssl)) {
-		fprintf(stderr, "FAIL: clienthello should need RI\n");
-		failure = 1;
-		goto done;
+		FAIL("clienthello should need RI\n");
+		goto err;
 	}
 
 	memcpy(S3I(ssl)->previous_client_finished, tlsext_ri_prev_client,
@@ -904,47 +903,41 @@ test_tlsext_ri_clienthello(void)
 	S3I(ssl)->renegotiate_seen = 0;
 
 	if (!tlsext_ri_clienthello_build(ssl, &cbb)) {
-		fprintf(stderr, "FAIL: clienthello failed to build RI\n");
-		failure = 1;
-		goto done;
+		FAIL("clienthello failed to build RI\n");
+		goto err;
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
 		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_ri_clienthello)) {
-		fprintf(stderr, "FAIL: got clienthello RI with length %zu, "
+		FAIL("got clienthello RI with length %zu, "
 		    "want length %zu\n", dlen, sizeof(tlsext_ri_clienthello));
-		failure = 1;
-		goto done;
+		goto err;
 	}
 
 	if (memcmp(data, tlsext_ri_clienthello, dlen) != 0) {
-		fprintf(stderr, "FAIL: clienthello RI differs:\n");
+		FAIL("clienthello RI differs:\n");
 		fprintf(stderr, "received:\n");
 		hexdump(data, dlen);
 		fprintf(stderr, "test data:\n");
 		hexdump(tlsext_ri_clienthello, sizeof(tlsext_ri_clienthello));
-		failure = 1;
-		goto done;
+		goto err;
 	}
 
 	CBS_init(&cbs, tlsext_ri_clienthello, sizeof(tlsext_ri_clienthello));
 	if (!tlsext_ri_clienthello_parse(ssl, &cbs, &alert)) {
-		fprintf(stderr, "FAIL: failed to parse clienthello RI\n");
-		failure = 1;
-		goto done;
+		FAIL("failed to parse clienthello RI\n");
+		goto err;
 	}
 
 	if (S3I(ssl)->renegotiate_seen != 1) {
-		fprintf(stderr, "FAIL: renegotiate seen not set\n");
-		failure = 1;
-		goto done;
+		FAIL("renegotiate seen not set\n");
+		goto err;
 	}
         if (S3I(ssl)->send_connection_binding != 1) {
-		fprintf(stderr, "FAIL: send connection binding not set\n");
-		failure = 1;
-		goto done;
+		FAIL("send connection binding not set\n");
+		goto err;
 	}
 
 	memset(S3I(ssl)->previous_client_finished, 0,
@@ -954,18 +947,19 @@ test_tlsext_ri_clienthello(void)
 
 	CBS_init(&cbs, tlsext_ri_clienthello, sizeof(tlsext_ri_clienthello));
 	if (tlsext_ri_clienthello_parse(ssl, &cbs, &alert)) {
-		fprintf(stderr, "FAIL: parsed invalid clienthello RI\n");
+		FAIL("parsed invalid clienthello RI\n");
 		failure = 1;
-		goto done;
+		goto err;
 	}
 
 	if (S3I(ssl)->renegotiate_seen == 1) {
-		fprintf(stderr, "FAIL: renegotiate seen set\n");
-		failure = 1;
-		goto done;
+		FAIL("renegotiate seen set\n");
+		goto err;
 	}
 
- done:
+	failure = 0;
+
+ err:
 	CBB_cleanup(&cbb);
 	SSL_CTX_free(ssl_ctx);
 	SSL_free(ssl);
@@ -980,11 +974,13 @@ test_tlsext_ri_serverhello(void)
 	unsigned char *data = NULL;
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
-	int failure = 0;
+	int failure;
 	size_t dlen;
 	int alert;
 	CBB cbb;
 	CBS cbs;
+
+	failure = 1;
 
 	CBB_init(&cbb, 0);
 
@@ -994,17 +990,15 @@ test_tlsext_ri_serverhello(void)
 		errx(1, "failed to create SSL");
 
 	if (tlsext_ri_serverhello_needs(ssl)) {
-		fprintf(stderr, "FAIL: serverhello should not need RI\n");
-		failure = 1;
-		goto done;
+		FAIL("serverhello should not need RI\n");
+		goto err;
 	}
 
         S3I(ssl)->send_connection_binding = 1;
 	
 	if (!tlsext_ri_serverhello_needs(ssl)) {
-		fprintf(stderr, "FAIL: serverhello should need RI\n");
-		failure = 1;
-		goto done;
+		FAIL("serverhello should need RI\n");
+		goto err;
 	}
 
 	memcpy(S3I(ssl)->previous_client_finished, tlsext_ri_prev_client,
@@ -1018,47 +1012,41 @@ test_tlsext_ri_serverhello(void)
 	S3I(ssl)->renegotiate_seen = 0;
 
 	if (!tlsext_ri_serverhello_build(ssl, &cbb)) {
-		fprintf(stderr, "FAIL: serverhello failed to build RI\n");
-		failure = 1;
-		goto done;
+		FAIL("serverhello failed to build RI\n");
+		goto err;
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
 		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_ri_serverhello)) {
-		fprintf(stderr, "FAIL: got serverhello RI with length %zu, "
+		FAIL("got serverhello RI with length %zu, "
 		    "want length %zu\n", dlen, sizeof(tlsext_ri_serverhello));
-		failure = 1;
-		goto done;
+		goto err;
 	}
 
 	if (memcmp(data, tlsext_ri_serverhello, dlen) != 0) {
-		fprintf(stderr, "FAIL: serverhello RI differs:\n");
+		FAIL("serverhello RI differs:\n");
 		fprintf(stderr, "received:\n");
 		hexdump(data, dlen);
 		fprintf(stderr, "test data:\n");
 		hexdump(tlsext_ri_serverhello, sizeof(tlsext_ri_serverhello));
-		failure = 1;
-		goto done;
+		goto err;
 	}
 
 	CBS_init(&cbs, tlsext_ri_serverhello, sizeof(tlsext_ri_serverhello));
 	if (!tlsext_ri_serverhello_parse(ssl, &cbs, &alert)) {
-		fprintf(stderr, "FAIL: failed to parse serverhello RI\n");
-		failure = 1;
-		goto done;
+		FAIL("failed to parse serverhello RI\n");
+		goto err;
 	}
 
 	if (S3I(ssl)->renegotiate_seen != 1) {
-		fprintf(stderr, "FAIL: renegotiate seen not set\n");
-		failure = 1;
-		goto done;
+		FAIL("renegotiate seen not set\n");
+		goto err;
 	}
         if (S3I(ssl)->send_connection_binding != 1) {
-		fprintf(stderr, "FAIL: send connection binding not set\n");
-		failure = 1;
-		goto done;
+		FAIL("send connection binding not set\n");
+		goto err;
 	}
 
 	memset(S3I(ssl)->previous_client_finished, 0,
@@ -1070,18 +1058,18 @@ test_tlsext_ri_serverhello(void)
 
 	CBS_init(&cbs, tlsext_ri_serverhello, sizeof(tlsext_ri_serverhello));
 	if (tlsext_ri_serverhello_parse(ssl, &cbs, &alert)) {
-		fprintf(stderr, "FAIL: parsed invalid serverhello RI\n");
-		failure = 1;
-		goto done;
+		FAIL("parsed invalid serverhello RI\n");
+		goto err;
 	}
 
 	if (S3I(ssl)->renegotiate_seen == 1) {
-		fprintf(stderr, "FAIL: renegotiate seen set\n");
-		failure = 1;
-		goto done;
+		FAIL("renegotiate seen set\n");
+		goto err;
 	}
 
- done:
+	failure = 0;
+
+ err:
 	CBB_cleanup(&cbb);
 	SSL_CTX_free(ssl_ctx);
 	SSL_free(ssl);
@@ -1111,11 +1099,13 @@ test_tlsext_sni_clienthello(void)
 	unsigned char *data = NULL;
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
-	int failure = 0;
+	int failure;
 	size_t dlen;
 	int alert;
 	CBB cbb;
 	CBS cbs;
+
+	failure = 1;
 
 	CBB_init(&cbb, 0);
 
@@ -1125,47 +1115,41 @@ test_tlsext_sni_clienthello(void)
 		errx(1, "failed to create SSL");
 
 	if (tlsext_sni_clienthello_needs(ssl)) {
-		fprintf(stderr, "FAIL: clienthello should not need SNI\n");
-		failure = 1;
-		goto done;
+		FAIL("clienthello should not need SNI\n");
+		goto err;
 	}
 
 	if (!SSL_set_tlsext_host_name(ssl, TEST_SNI_SERVERNAME)) {
-		fprintf(stderr, "FAIL: client failed to set server name\n");
-		failure = 1;
-		goto done;
+		FAIL("client failed to set server name\n");
+		goto err;
 	}
 
 	if (!tlsext_sni_clienthello_needs(ssl)) {
-		fprintf(stderr, "FAIL: clienthello should need SNI\n");
-		failure = 1;
-		goto done;
+		FAIL("clienthello should need SNI\n");
+		goto err;
 	}
 
 	if (!tlsext_sni_clienthello_build(ssl, &cbb)) {
-		fprintf(stderr, "FAIL: clienthello failed to build SNI\n");
-		failure = 1;
-		goto done;
+		FAIL("clienthello failed to build SNI\n");
+		goto err;
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
 		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_sni_clienthello)) {
-		fprintf(stderr, "FAIL: got clienthello SNI with length %zu, "
+		FAIL("got clienthello SNI with length %zu, "
 		    "want length %zu\n", dlen, sizeof(tlsext_sni_clienthello));
-		failure = 1;
-		goto done;
+		goto err;
 	}
 
 	if (memcmp(data, tlsext_sni_clienthello, dlen) != 0) {
-		fprintf(stderr, "FAIL: clienthello SNI differs:\n");
+		FAIL("clienthello SNI differs:\n");
 		fprintf(stderr, "received:\n");
 		hexdump(data, dlen);
 		fprintf(stderr, "test data:\n");
 		hexdump(tlsext_sni_clienthello, sizeof(tlsext_sni_clienthello));
-		failure = 1;
-		goto done;
+		goto err;
 	}
 
 	if ((ssl->session = SSL_SESSION_new()) == NULL)
@@ -1175,24 +1159,21 @@ test_tlsext_sni_clienthello(void)
 
 	CBS_init(&cbs, tlsext_sni_clienthello, sizeof(tlsext_sni_clienthello));
 	if (!tlsext_sni_clienthello_parse(ssl, &cbs, &alert)) {
-		fprintf(stderr, "FAIL: failed to parse clienthello SNI\n");
-		failure = 1;
-		goto done;
+		FAIL("failed to parse clienthello SNI\n");
+		goto err;
 	}
 
 	if (ssl->session->tlsext_hostname == NULL) {
-		fprintf(stderr, "FAIL: no tlsext_hostname from clienthello SNI\n");
-		failure = 1;
-		goto done;
+		FAIL("no tlsext_hostname from clienthello SNI\n");
+		goto err;
 	}
 
 	if (strlen(ssl->session->tlsext_hostname) != strlen(TEST_SNI_SERVERNAME) ||
 	    strncmp(ssl->session->tlsext_hostname, TEST_SNI_SERVERNAME,
 		strlen(TEST_SNI_SERVERNAME)) != 0) {
-		fprintf(stderr, "FAIL: got tlsext_hostname `%s', want `%s'\n",
+		FAIL("got tlsext_hostname `%s', want `%s'\n",
 		    ssl->session->tlsext_hostname, TEST_SNI_SERVERNAME);
-		failure = 1;
-		goto done;
+		goto err;
 	}
 
 	ssl->internal->hit = 1;
@@ -1203,12 +1184,13 @@ test_tlsext_sni_clienthello(void)
 
 	CBS_init(&cbs, tlsext_sni_clienthello, sizeof(tlsext_sni_clienthello));
 	if (tlsext_sni_clienthello_parse(ssl, &cbs, &alert)) {
-		fprintf(stderr, "FAIL: parsed clienthello with mismatched SNI\n");
-		failure = 1;
-		goto done;
+		FAIL("parsed clienthello with mismatched SNI\n");
+		goto err;
 	}
 
- done:
+	failure = 0;
+
+ err:
 	CBB_cleanup(&cbb);
 	SSL_CTX_free(ssl_ctx);
 	SSL_free(ssl);
@@ -1223,11 +1205,13 @@ test_tlsext_sni_serverhello(void)
 	unsigned char *data = NULL;
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
-	int failure = 0;
+	int failure;
 	size_t dlen;
 	int alert;
 	CBB cbb;
 	CBS cbs;
+
+	failure = 1;
 
 	CBB_init(&cbb, 0);
 
@@ -1240,15 +1224,13 @@ test_tlsext_sni_serverhello(void)
 		errx(1, "failed to create session");
 
 	if (tlsext_sni_serverhello_needs(ssl)) {
-		fprintf(stderr, "FAIL: serverhello should not need SNI\n");
-		failure = 1;
-		goto done;
+		FAIL("serverhello should not need SNI\n");
+		goto err;
 	}
 
 	if (!SSL_set_tlsext_host_name(ssl, TEST_SNI_SERVERNAME)) {
-		fprintf(stderr, "FAIL: client failed to set server name\n");
-		failure = 1;
-		goto done;
+		FAIL("client failed to set server name\n");
+		goto err;
 	}
 
 	if ((ssl->session->tlsext_hostname = strdup(TEST_SNI_SERVERNAME)) ==
@@ -1256,35 +1238,31 @@ test_tlsext_sni_serverhello(void)
 		errx(1, "failed to strdup tlsext_hostname");
 	
 	if (!tlsext_sni_serverhello_needs(ssl)) {
-		fprintf(stderr, "FAIL: serverhello should need SNI\n");
-		failure = 1;
-		goto done;
+		FAIL("serverhello should need SNI\n");
+		goto err;
 	}
 
 	if (!tlsext_sni_serverhello_build(ssl, &cbb)) {
-		fprintf(stderr, "FAIL: serverhello failed to build SNI\n");
-		failure = 1;
-		goto done;
+		FAIL("serverhello failed to build SNI\n");
+		goto err;
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
 		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_sni_serverhello)) {
-		fprintf(stderr, "FAIL: got serverhello SNI with length %zu, "
+		FAIL("got serverhello SNI with length %zu, "
 		    "want length %zu\n", dlen, sizeof(tlsext_sni_serverhello));
-		failure = 1;
-		goto done;
+		goto err;
 	}
 
 	if (memcmp(data, tlsext_sni_serverhello, dlen) != 0) {
-		fprintf(stderr, "FAIL: serverhello SNI differs:\n");
+		FAIL("serverhello SNI differs:\n");
 		fprintf(stderr, "received:\n");
 		hexdump(data, dlen);
 		fprintf(stderr, "test data:\n");
 		hexdump(tlsext_sni_serverhello, sizeof(tlsext_sni_serverhello));
-		failure = 1;
-		goto done;
+		goto err;
 	}
 
 	free(ssl->session->tlsext_hostname);
@@ -1292,27 +1270,26 @@ test_tlsext_sni_serverhello(void)
 
 	CBS_init(&cbs, tlsext_sni_serverhello, sizeof(tlsext_sni_serverhello));
 	if (!tlsext_sni_serverhello_parse(ssl, &cbs, &alert)) {
-		fprintf(stderr, "FAIL: failed to parse serverhello SNI\n");
-		failure = 1;
-		goto done;
+		FAIL("failed to parse serverhello SNI\n");
+		goto err;
 	}
 
 	if (ssl->session->tlsext_hostname == NULL) {
-		fprintf(stderr, "FAIL: no tlsext_hostname after serverhello SNI\n");
-		failure = 1;
-		goto done;
+		FAIL("no tlsext_hostname after serverhello SNI\n");
+		goto err;
 	}
 
 	if (strlen(ssl->session->tlsext_hostname) != strlen(TEST_SNI_SERVERNAME) ||
 	    strncmp(ssl->session->tlsext_hostname, TEST_SNI_SERVERNAME,
 		strlen(TEST_SNI_SERVERNAME)) != 0) {
-		fprintf(stderr, "FAIL: got tlsext_hostname `%s', want `%s'\n",
+		FAIL("got tlsext_hostname `%s', want `%s'\n",
 		    ssl->session->tlsext_hostname, TEST_SNI_SERVERNAME);
-		failure = 1;
-		goto done;
+		goto err;
 	}
 
- done:
+	failure = 0;
+
+ err:
 	CBB_cleanup(&cbb);
 	SSL_CTX_free(ssl_ctx);
 	SSL_free(ssl);
