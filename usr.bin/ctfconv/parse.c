@@ -1,3 +1,5 @@
+/*	$OpenBSD: parse.c,v 1.2 2017/08/11 14:58:56 jasper Exp $ */
+
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
  * Copyright (c) 2016 Jasper Lievisse Adriaanse <jasper@openbsd.org>

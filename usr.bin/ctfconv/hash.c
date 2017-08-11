@@ -1,3 +1,5 @@
+/*	$OpenBSD: hash.c,v 1.2 2017/08/11 14:58:56 jasper Exp $ */
+
 /* Copyright (c) 1999, 2004 Marc Espie <espie@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any

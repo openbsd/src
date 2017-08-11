@@ -1,3 +1,5 @@
+/*	$OpenBSD: dw.c,v 1.2 2017/08/11 14:58:56 jasper Exp $ */
+
 /*
  * Copyright (c) 2016 Martin Pieuchot
  * Copyright (c) 2014 Matthew Dempsky <matthew@dempsky.org>
