@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_config_set_protocols.3,v 1.4 2017/08/10 18:18:30 jsing Exp $
+.\" $OpenBSD: tls_config_set_protocols.3,v 1.5 2017/08/11 10:33:31 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015, 2016 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 10 2017 $
+.Dd $Mdocdate: August 11 2017 $
 .Dt TLS_CONFIG_SET_PROTOCOLS 3
 .Os
 .Sh NAME
@@ -131,7 +131,8 @@ for further information.
 specifies the names of the elliptic curves that may be used during key exchange.
 This is a comma separated list, given in order of preference.
 The special value of "default" will use the default curves (currently X25519,
-P-256 and P-384). This function replaces
+P-256 and P-384).
+This function replaces
 .Fn tls_config_set_ecdhecurve ,
 which is deprecated.
 .Pp
