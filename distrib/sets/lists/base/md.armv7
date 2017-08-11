@@ -38,7 +38,6 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd6.1/4.2.1/collect2
 ./usr/lib/gcc-lib/arm-unknown-openbsd6.1/4.2.1/libgcc.a
 ./usr/lib/gcc-lib/arm-unknown-openbsd6.1/4.2.1/specs
-./usr/lib/libobjc.so.6.0
 ./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/arm-openbsd
 ./usr/libdata/perl5/arm-openbsd/.packlist

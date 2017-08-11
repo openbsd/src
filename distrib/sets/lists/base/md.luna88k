@@ -9,7 +9,6 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd6.1/3.3.6/fPIC/libgcc.a
 ./usr/lib/gcc-lib/m88k-unknown-openbsd6.1/3.3.6/fpic/libgcc.a
 ./usr/lib/gcc-lib/m88k-unknown-openbsd6.1/3.3.6/libgcc.a
-./usr/lib/libobjc.so.6.0
 ./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/m88k-openbsd
 ./usr/libdata/perl5/m88k-openbsd/.packlist

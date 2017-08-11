@@ -607,8 +607,6 @@
 ./usr/lib/gcc-lib/amd64-unknown-openbsd6.1/4.2.1/cc1obj
 ./usr/lib/gcc-lib/amd64-unknown-openbsd6.1/4.2.1/cc1plus
 ./usr/lib/gcc-lib/amd64-unknown-openbsd6.1/4.2.1/libgcov.a
-./usr/lib/libobjc.a
-./usr/lib/libobjc_p.a
 ./usr/lib/libstdc++.a
 ./usr/lib/libstdc++_p.a
 ./usr/lib/libsupc++.a
