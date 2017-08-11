@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.3 2017/08/11 18:22:22 jasper Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.4 2017/08/11 20:42:59 jasper Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -80,10 +80,10 @@ main(int argc, char *argv[])
 	uint8_t flags = 0;
 	int ch, error = 0;
 
+	setlocale(LC_ALL, "");
+
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
-
-	setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "dfhlst")) != -1) {
 		switch (ch) {
