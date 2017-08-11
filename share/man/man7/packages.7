@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.41 2017/03/27 20:05:51 fcambus Exp $
+.\" $OpenBSD: packages.7,v 1.42 2017/08/11 17:43:06 schwarze Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2017 $
+.Dd $Mdocdate: August 11 2017 $
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -85,6 +85,16 @@ security issues and
 will warn if those are installed and cannot be updated.
 This prevents a scenario where a bad guy would maintain a partial mirror
 with outdated packages.
+.Pp
+A small number of packages contain insecure code requiring
+.Xr mmap 2
+memory both writeable and executable.
+To use such insecurely written software, a separate
+.Pa /usr/local
+file system with the
+.Cm wxallowed
+.Xr mount 8
+option is needed.
 .Sh MANAGING FILES
 The package system offers some strong warranties.
 .Ss "Installing a package won't erase existing files"
