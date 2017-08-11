@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.168 2017/08/11 15:12:32 reyk Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.169 2017/08/11 15:13:25 reyk Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -600,12 +600,12 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		 * - we flag TCP packets with src ip 0 as an error
 		 */
 
-		if(ip && ip->ip_src.s_addr == INADDR_ANY) {
+		if (ip && ip->ip_src.s_addr == INADDR_ANY) {
 			u_int8_t proto = ip->ip_p;
 
 			m_freem(m);
 			splx(s);
-			if(proto == IPPROTO_TCP)
+			if (proto == IPPROTO_TCP)
 				return (EADDRNOTAVAIL);
 			else
 				return (0);
