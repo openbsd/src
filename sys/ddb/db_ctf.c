@@ -1,8 +1,8 @@
-/*	$OpenBSD: db_ctf.c,v 1.11 2017/08/10 19:39:38 mpi Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.12 2017/08/11 15:08:13 mpi Exp $	*/
 
 /*
+ * Copyright (c) 2016-2017 Martin Pieuchot
  * Copyright (c) 2016 Jasper Lievisse Adriaanse <jasper@openbsd.org>
- * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -238,31 +238,9 @@ db_ctf_type_len(const struct ctf_type *ctt)
 	return tlen;
 }
 
-void
-db_ctf_dump_object()
-{
-	uint32_t		 objtoff = db_ctf.cth->cth_objtoff;
-	size_t			 idx = 0, i = 0;
-	uint16_t		*dsp;
-	Elf_Sym			*st;
-	int			 l;
-	char			*name;
-
-	while (objtoff < db_ctf.cth->cth_funcoff) {
-		dsp = (uint16_t *)(db_ctf.data + objtoff);
-
-		l = db_printf("  [%zu] %u", i++, *dsp);
-		if ((st = db_ctf_idx2sym(&idx, STT_OBJECT)) != NULL) {
-			db_symbol_values(st, &name, NULL);
-			db_printf("%*s %s (%zu)\n", (14 - l), "", name, idx);
-		} else
-			db_printf("\n");
-
-		objtoff += sizeof(*dsp);
-	}
-	db_printf("\n");
-}
-
+/*
+ * Return the CTF type associated to an ELF symbol.
+ */
 const struct ctf_type *
 db_ctf_type_by_symbol(Elf_Sym *st)
 {
@@ -286,6 +264,9 @@ db_ctf_type_by_symbol(Elf_Sym *st)
 	return NULL;
 }
 
+/*
+ * Return the CTF type corresponding to a given index in the type section.
+ */
 const struct ctf_type *
 db_ctf_type_by_index(uint16_t index)
 {
@@ -315,6 +296,9 @@ db_ctf_type_by_index(uint16_t index)
 	return NULL;
 }
 
+/*
+ * Pretty print `addr'.
+ */
 void
 db_ctf_pprintf(const struct ctf_type *ctt, vaddr_t addr)
 {
