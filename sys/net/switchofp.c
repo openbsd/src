@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.67 2017/08/11 13:54:14 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.68 2017/08/11 13:55:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -212,6 +212,7 @@ int	 swofp_validate_buckets(struct switch_softc *, struct mbuf *, uint8_t,
  */
 int	 swofp_flow_entry_put_instructions(struct switch_softc *,
 	    struct mbuf *, struct swofp_flow_entry *, uint16_t *, uint16_t *);
+void	 swofp_flow_entry_table_free(struct ofp_instruction **);
 void	 swofp_flow_entry_instruction_free(struct swofp_flow_entry *);
 void	 swofp_flow_entry_free(struct swofp_flow_entry **);
 void	 swofp_flow_entry_add(struct switch_softc *, struct swofp_flow_table *,
@@ -1523,29 +1524,31 @@ swofp_validate_buckets(struct switch_softc *sc, struct mbuf *m, uint8_t type,
 }
 
 void
+swofp_flow_entry_table_free(struct ofp_instruction **table)
+{
+	if (*table) {
+		free(*table, M_DEVBUF, ntohs((*table)->i_len));
+		*table = NULL;
+	}
+}
+
+void
 swofp_flow_entry_instruction_free(struct swofp_flow_entry *swfe)
 {
-	if (swfe->swfe_goto_table)
-		free(swfe->swfe_goto_table, M_DEVBUF,
-		    ntohs(swfe->swfe_goto_table->igt_len));
-	if (swfe->swfe_write_metadata)
-		free(swfe->swfe_write_metadata, M_DEVBUF,
-		    ntohs(swfe->swfe_write_metadata->iwm_len));
-	if (swfe->swfe_apply_actions)
-		free(swfe->swfe_apply_actions, M_DEVBUF,
-		    ntohs(swfe->swfe_apply_actions->ia_len));
-	if (swfe->swfe_write_actions)
-		free(swfe->swfe_write_actions, M_DEVBUF,
-		    ntohs(swfe->swfe_write_actions->ia_len));
-	if (swfe->swfe_clear_actions)
-		free(swfe->swfe_clear_actions, M_DEVBUF,
-		    ntohs(swfe->swfe_clear_actions->ia_len));
-	if (swfe->swfe_experimenter)
-		free(swfe->swfe_experimenter, M_DEVBUF,
-		    ntohs(swfe->swfe_experimenter->ie_len));
-	if (swfe->swfe_meter)
-		free(swfe->swfe_meter, M_DEVBUF,
-		    ntohs(swfe->swfe_meter->im_len));
+	swofp_flow_entry_table_free((struct ofp_instruction **)
+	    &swfe->swfe_goto_table);
+	swofp_flow_entry_table_free((struct ofp_instruction **)
+	    &swfe->swfe_write_metadata);
+	swofp_flow_entry_table_free((struct ofp_instruction **)
+	    &swfe->swfe_apply_actions);
+	swofp_flow_entry_table_free((struct ofp_instruction **)
+	    &swfe->swfe_write_actions);
+	swofp_flow_entry_table_free((struct ofp_instruction **)
+	    &swfe->swfe_clear_actions);
+	swofp_flow_entry_table_free((struct ofp_instruction **)
+	    &swfe->swfe_experimenter);
+	swofp_flow_entry_table_free((struct ofp_instruction **)
+	    &swfe->swfe_meter);
 }
 
 void
