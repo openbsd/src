@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.167 2017/08/11 13:23:27 reyk Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.168 2017/08/11 15:12:32 reyk Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -585,6 +585,9 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 
 	if (dst->sa_family == AF_INET) {
 		struct ip *ip = NULL;
+
+		if (m->m_len >= sizeof(struct ip))
+			ip = mtod(m, struct ip *);
 
 		/*
 		 * When using dynamic local IP address assignment by using
