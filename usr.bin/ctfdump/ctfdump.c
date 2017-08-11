@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.2 2017/08/11 15:00:00 jasper Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.3 2017/08/11 18:22:22 jasper Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -79,6 +79,9 @@ main(int argc, char *argv[])
 	const char *filename;
 	uint8_t flags = 0;
 	int ch, error = 0;
+
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	setlocale(LC_ALL, "");
 
