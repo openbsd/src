@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.164 2017/08/11 21:06:17 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.165 2017/08/11 21:06:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2059,9 +2059,9 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	rsa_sign = (cpk->x509 != NULL && cpk->privatekey != NULL);
 	cpk = &(c->pkeys[SSL_PKEY_DSA_SIGN]);
 	dsa_sign = (cpk->x509 != NULL && cpk->privatekey != NULL);
-/* FIX THIS EAY EAY EAY */
 	cpk = &(c->pkeys[SSL_PKEY_ECC]);
 	have_ecc_cert = (cpk->x509 != NULL && cpk->privatekey != NULL);
+
 	mask_k = 0;
 	mask_a = 0;
 
