@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.3 2017/08/11 16:28:30 mpi Exp $ */
+/*	$OpenBSD: parse.c,v 1.4 2017/08/11 16:55:46 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -1010,6 +1010,16 @@ subparse_member(struct dwdie *die, size_t psz, struct itype *it, size_t offset)
 
 		/* Skip members of members */
 		if (die->die_lvl > lvl + 1)
+			continue;
+		/*
+		 * Nested declaration.
+		 *
+		 * This matches the case where a ``struct'', ``union'',
+		 * ``enum'' or ``typedef'' is first declared "inside" a
+		 * union or struct declaration.
+		 */
+		if (tag == DW_TAG_structure_type || tag == DW_TAG_union_type ||
+		    tag == DW_TAG_enumeration_type || tag == DW_TAG_typedef)
 			continue;
 
 		it->it_flags |= ITF_UNRES_MEMB;
