@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.163 2017/08/10 17:18:38 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.164 2017/08/11 21:06:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2072,18 +2072,18 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	}
 
 	if (rsa_enc)
-		mask_k|=SSL_kRSA;
+		mask_k |= SSL_kRSA;
 
 	if (dh_tmp)
-		mask_k|=SSL_kDHE;
+		mask_k |= SSL_kDHE;
 
 	if (rsa_enc || rsa_sign)
-		mask_a|=SSL_aRSA;
+		mask_a |= SSL_aRSA;
 
 	if (dsa_sign)
-		mask_a|=SSL_aDSS;
+		mask_a |= SSL_aDSS;
 
-	mask_a|=SSL_aNULL;
+	mask_a |= SSL_aNULL;
 
 	/*
 	 * An ECC certificate may be usable for ECDH and/or
@@ -2098,7 +2098,7 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 		/* Key usage, if present, must allow signing. */
 		if ((x->ex_flags & EXFLAG_KUSAGE) == 0 ||
 		    (x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE))
-			mask_a|=SSL_aECDSA;
+			mask_a |= SSL_aECDSA;
 	}
 
 	mask_k |= SSL_kECDHE;
