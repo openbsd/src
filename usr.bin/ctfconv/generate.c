@@ -1,4 +1,4 @@
-/*	$OpenBSD: generate.c,v 1.2 2017/08/11 14:58:56 jasper Exp $ */
+/*	$OpenBSD: generate.c,v 1.3 2017/08/11 16:28:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2017 Martin Pieuchot
@@ -230,7 +230,7 @@ imcs_add_type(struct imcs *imcs, struct itype *it)
 			memset(&ctm, 0, sizeof(ctm));
 			TAILQ_FOREACH(im, &it->it_members, im_next) {
 				ctm.ctm_name =
-				    imcs_add_string(imcs, im->im_name);
+				    imcs_add_string(imcs, im_name(im));
 				ctm.ctm_type = im->im_refp->it_idx;
 				ctm.ctm_offset = im->im_off;
 
@@ -242,7 +242,7 @@ imcs_add_type(struct imcs *imcs, struct itype *it)
 			memset(&ctlm, 0, sizeof(ctlm));
 			TAILQ_FOREACH(im, &it->it_members, im_next) {
 				ctlm.ctlm_name =
-				    imcs_add_string(imcs, im->im_name);
+				    imcs_add_string(imcs, im_name(im));
 				ctlm.ctlm_type = im->im_refp->it_idx;
 				ctlm.ctlm_offsethi =
 				    CTF_OFFSET_TO_LMEMHI(im->im_off);
@@ -268,7 +268,7 @@ imcs_add_type(struct imcs *imcs, struct itype *it)
 		TAILQ_FOREACH(im, &it->it_members, im_next) {
 			struct ctf_enum	cte;
 
-			cte.cte_name = imcs_add_string(imcs, im->im_name);
+			cte.cte_name = imcs_add_string(imcs, im_name(im));
 			cte.cte_value = im->im_ref;
 
 			dbuf_copy(&imcs->body, &cte, sizeof(cte));

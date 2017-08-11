@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.2 2017/08/11 14:58:56 jasper Exp $ */
+/*	$OpenBSD: parse.c,v 1.3 2017/08/11 16:28:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -233,7 +233,7 @@ it_dup(struct itype *it)
 	copit->it_nelems = it->it_nelems;
 
 	TAILQ_FOREACH(im, &it->it_members, im_next) {
-		copim = im_new(im->im_name, im->im_ref, im->im_off);
+		copim = im_new(im_name(im), im->im_ref, im->im_off);
 		copim->im_refp = im->im_refp;
 		TAILQ_INSERT_TAIL(&copit->it_members, copim, im_next);
 	}
@@ -367,7 +367,7 @@ im_new(const char *name, size_t ref, size_t off)
 	im->im_off = off;
 	im->im_refp = NULL;
 	if (name == NULL) {
-		im->im_flags = ITM_ANON;
+		im->im_flags = IMF_ANON;
 	} else {
 		size_t n;
 
@@ -379,6 +379,15 @@ im_new(const char *name, size_t ref, size_t off)
 	}
 
 	return im;
+}
+
+const char *
+im_name(struct imember *im)
+{
+	if (!(im->im_flags & IMF_ANON))
+		return im->im_name;
+
+	return NULL;
 }
 
 void
@@ -436,10 +445,9 @@ cu_resolve(struct dwcu *dcu, struct itype_queue *cutq, struct ioff_tree *cuot)
 			if (toresolve)
 				printf(": %d members", toresolve);
 			TAILQ_FOREACH(im, &it->it_members, im_next) {
-				if (im->im_refp == NULL) {
-					printf("\n%zu: %s", im->im_ref,
-					    im->im_name);
-				}
+				if (im->im_refp != NULL)
+					continue;
+				printf("\n%zu: %s", im->im_ref, im_name(im));
 			}
 			printf("\n");
 		}

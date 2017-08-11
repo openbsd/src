@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.2 2017/08/11 14:58:56 jasper Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.3 2017/08/11 16:28:29 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -382,7 +382,7 @@ dump_type(struct itype *it)
 		    type_name(it), it->it_size);
 		TAILQ_FOREACH(im, &it->it_members, im_next) {
 			printf("\t%s type=%u off=%zd\n",
-			    (im->im_flags & ITM_ANON) ? "unknown" : im->im_name,
+			    (im_name(im) == NULL) ? "unknown" : im_name(im),
 			    im->im_refp->it_idx, im->im_off);
 		}
 		printf("\n");

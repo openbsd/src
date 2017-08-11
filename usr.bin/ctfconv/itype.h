@@ -1,4 +1,4 @@
-/*	$OpenBSD: itype.h,v 1.2 2017/08/11 14:58:56 jasper Exp $ */
+/*	$OpenBSD: itype.h,v 1.3 2017/08/11 16:28:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -75,7 +75,7 @@ struct imember {
 	size_t			 im_off;    /* field offset in struct/union */
 	struct itype		*im_refp;   /* resolved CTF type */
 	unsigned int		 im_flags;  /* parser flags */
-#define	ITM_ANON		 0x01	    /* member without name */
+#define	IMF_ANON		 0x01	    /* member without name */
 };
 
 /*
@@ -100,5 +100,6 @@ RB_PROTOTYPE(isymb_tree, itype, it_node, it_name_cmp);
 
 struct itype *it_dup(struct itype *);
 const char *it_name(struct itype *);
+const char *im_name(struct imember *);
 
 #endif /*_ITTYPE_H_ */
