@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.1 2017/08/11 17:45:02 rob Exp $
+# $OpenBSD: snmpd.sh,v 1.2 2017/08/11 21:36:04 rob Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@2keys.ca>
 # *
@@ -150,6 +150,7 @@ then
 fi
 
 kill $(pgrep snmpd) >/dev/null 2>&1
+wait
 
 # # # # # CONFIG TWO # # # # #
 
@@ -192,6 +193,7 @@ then
 fi
 
 kill $(pgrep snmpd) >/dev/null 2>&1
+wait
 
 # # # # # CONFIG THREE # # # # #
 
@@ -225,6 +227,7 @@ then
 fi
 
 kill $(pgrep snmpd) >/dev/null 2>&1
+wait
 
 # # # # # CONFIG FOUR # # # # #
 
