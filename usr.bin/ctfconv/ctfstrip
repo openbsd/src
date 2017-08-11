@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: ctfstrip,v 1.2 2017/08/11 14:24:24 mpi Exp $
+# $OpenBSD: ctfstrip,v 1.3 2017/08/11 15:08:16 jasper Exp $
 #
 # Copyright (c) 2017 Martin Pieuchot 
 #
@@ -16,8 +16,14 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# Turn off Strict Bourne shell mode.
-set +o sh
+set -o posix
+
+cleanup() {
+	rm -f ${TMPFILE}
+	exit 1
+}
+
+trap "cleanup" 1 2 3 13 15
 
 USAGE="usage: ${0##*/} [-S] [-o outfile] file"
 
@@ -36,14 +42,14 @@ if [[ $# == 0 ]]; then
 fi
 
 LABEL="unknown"
-TMPFILE=$1.rawctf
+TMPFILE=$(mktemp /tmp/.ctf.XXXXXXXXXX)
 
-# Extract kernel verison
+# Extract kernel version
 if [[ "$1" == bsd* ]]; then
 	LABEL=`what $1 |tr -d '\n'|awk -F"$1	" '{ print $2 '\n' }'`
 fi
 
-ctfconv -o ${TMPFILE} -l "${LABEL}" $1 || exit 2
+ctfconv -o ${TMPFILE} -l "${LABEL}" $1 || cleanup
 
 objcopy --add-section .SUNW_ctf=${TMPFILE} ${STRIPFLAG} $1 ${OUTFILE}
 
