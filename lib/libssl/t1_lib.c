@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.130 2017/08/12 21:47:59 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.131 2017/08/12 23:38:12 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -687,51 +687,6 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		return NULL;
 	ret += len;
 
-	if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp &&
-	    s->version != DTLS1_VERSION) {
-		int i;
-		long extlen, idlen, itmp;
-		OCSP_RESPID *id;
-
-		idlen = 0;
-		for (i = 0; i < sk_OCSP_RESPID_num(s->internal->tlsext_ocsp_ids); i++) {
-			id = sk_OCSP_RESPID_value(s->internal->tlsext_ocsp_ids, i);
-			itmp = i2d_OCSP_RESPID(id, NULL);
-			if (itmp <= 0)
-				return NULL;
-			idlen += itmp + 2;
-		}
-
-		if (s->internal->tlsext_ocsp_exts) {
-			extlen = i2d_X509_EXTENSIONS(s->internal->tlsext_ocsp_exts, NULL);
-			if (extlen < 0)
-				return NULL;
-		} else
-			extlen = 0;
-
-		if ((size_t)(limit - ret) < 7 + extlen + idlen)
-			return NULL;
-		s2n(TLSEXT_TYPE_status_request, ret);
-		if (extlen + idlen > 0xFFF0)
-			return NULL;
-		s2n(extlen + idlen + 5, ret);
-		*(ret++) = TLSEXT_STATUSTYPE_ocsp;
-		s2n(idlen, ret);
-		for (i = 0; i < sk_OCSP_RESPID_num(s->internal->tlsext_ocsp_ids); i++) {
-			/* save position of id len */
-			unsigned char *q = ret;
-			id = sk_OCSP_RESPID_value(s->internal->tlsext_ocsp_ids, i);
-			/* skip over id len */
-			ret += 2;
-			itmp = i2d_OCSP_RESPID(id, &ret);
-			/* write id len */
-			s2n(itmp, q);
-		}
-		s2n(extlen, ret);
-		if (extlen > 0)
-			i2d_X509_EXTENSIONS(s->internal->tlsext_ocsp_exts, &ret);
-	}
-
 	if (s->internal->alpn_client_proto_list != NULL &&
 	    S3I(s)->tmp.finish_md_len == 0) {
 		if ((size_t)(limit - ret) <
@@ -836,14 +791,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	 * Currently the server should not respond with a SupportedCurves
 	 * extension.
 	 */
-
-	if (s->internal->tlsext_status_expected) {
-		if ((size_t)(limit - ret) < 4)
-			return NULL;
-
-		s2n(TLSEXT_TYPE_status_request, ret);
-		s2n(0, ret);
-	}
 
 #ifndef OPENSSL_NO_SRTP
 	if (SSL_IS_DTLS(s) && s->internal->srtp_profile) {
@@ -1011,111 +958,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 		if (!tlsext_clienthello_parse_one(s, &cbs, type, al))
 			return 0;
 
-		if (type == TLSEXT_TYPE_status_request &&
-		    s->version != DTLS1_VERSION) {
-
-			if (size < 5) {
-				*al = SSL_AD_DECODE_ERROR;
-				return 0;
-			}
-
-			s->tlsext_status_type = *data++;
-			size--;
-			if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp) {
-				const unsigned char *sdata;
-				int dsize;
-				/* Read in responder_id_list */
-				n2s(data, dsize);
-				size -= 2;
-				if (dsize > size) {
-					*al = SSL_AD_DECODE_ERROR;
-					return 0;
-				}
-
-				/*
-				 * We remove any OCSP_RESPIDs from a
-				 * previous handshake to prevent
-				 * unbounded memory growth.
-				 */
-				sk_OCSP_RESPID_pop_free(s->internal->tlsext_ocsp_ids,
-				    OCSP_RESPID_free);
-				s->internal->tlsext_ocsp_ids = NULL;
-				if (dsize > 0) {
-					s->internal->tlsext_ocsp_ids =
-					    sk_OCSP_RESPID_new_null();
-					if (s->internal->tlsext_ocsp_ids == NULL) {
-						*al = SSL_AD_INTERNAL_ERROR;
-						return 0;
-					}
-				}
-
-				while (dsize > 0) {
-					OCSP_RESPID *id;
-					int idsize;
-					if (dsize < 4) {
-						*al = SSL_AD_DECODE_ERROR;
-						return 0;
-					}
-					n2s(data, idsize);
-					dsize -= 2 + idsize;
-					size -= 2 + idsize;
-					if (dsize < 0) {
-						*al = SSL_AD_DECODE_ERROR;
-						return 0;
-					}
-					sdata = data;
-					data += idsize;
-					id = d2i_OCSP_RESPID(NULL,
-					    &sdata, idsize);
-					if (!id) {
-						*al = SSL_AD_DECODE_ERROR;
-						return 0;
-					}
-					if (data != sdata) {
-						OCSP_RESPID_free(id);
-						*al = SSL_AD_DECODE_ERROR;
-						return 0;
-					}
-					if (!sk_OCSP_RESPID_push(
-					    s->internal->tlsext_ocsp_ids, id)) {
-						OCSP_RESPID_free(id);
-						*al = SSL_AD_INTERNAL_ERROR;
-						return 0;
-					}
-				}
-
-				/* Read in request_extensions */
-				if (size < 2) {
-					*al = SSL_AD_DECODE_ERROR;
-					return 0;
-				}
-				n2s(data, dsize);
-				size -= 2;
-				if (dsize != size) {
-					*al = SSL_AD_DECODE_ERROR;
-					return 0;
-				}
-				sdata = data;
-				if (dsize > 0) {
-					sk_X509_EXTENSION_pop_free(s->internal->tlsext_ocsp_exts,
-					    X509_EXTENSION_free);
-
-					s->internal->tlsext_ocsp_exts =
-					    d2i_X509_EXTENSIONS(NULL,
-					    &sdata, dsize);
-					if (!s->internal->tlsext_ocsp_exts ||
-						    (data + dsize != sdata)) {
-						*al = SSL_AD_DECODE_ERROR;
-						return 0;
-					}
-				}
-			} else {
-				/* We don't know what to do with any other type
- 			 	* so ignore it.
- 			 	*/
-				s->tlsext_status_type = -1;
-			}
-		} else if (type ==
+		if (type ==
 		    TLSEXT_TYPE_application_layer_protocol_negotiation &&
 		    s->ctx->internal->alpn_select_cb != NULL &&
 		    S3I(s)->tmp.finish_md_len == 0) {
@@ -1123,7 +966,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			    size, al) != 1)
 				return (0);
 		}
-
 		/* session ticket processed earlier */
 #ifndef OPENSSL_NO_SRTP
 		else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_use_srtp) {
@@ -1197,19 +1039,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 		if (!tlsext_serverhello_parse_one(s, &cbs, type, al))
 			return 0;
 
-		if (type == TLSEXT_TYPE_status_request &&
-		    s->version != DTLS1_VERSION) {
-			/* MUST be empty and only sent if we've requested
-			 * a status request message.
-			 */
-			if ((s->tlsext_status_type == -1) || (size > 0)) {
-				*al = TLS1_AD_UNSUPPORTED_EXTENSION;
-				return 0;
-			}
-			/* Set flag to expect CertificateStatus message */
-			s->internal->tlsext_status_expected = 1;
-		} else if (type ==
-		    TLSEXT_TYPE_application_layer_protocol_negotiation) {
+		if (type == TLSEXT_TYPE_application_layer_protocol_negotiation) {
 			unsigned int len;
 
 			/* We must have requested it. */

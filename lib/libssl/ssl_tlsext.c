@@ -1,7 +1,8 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.8 2017/08/12 21:47:59 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.9 2017/08/12 23:38:12 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
+ * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +16,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <openssl/ocsp.h>
 
 #include "ssl_locl.h"
 
@@ -551,6 +553,160 @@ tlsext_sni_serverhello_parse(SSL *s, CBS *cbs, int *alert)
 }
 
 /*
+ *Certificate Status Request - RFC 6066 section 8.
+ */
+
+int
+tlsext_ocsp_clienthello_needs(SSL *s)
+{
+	return (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp &&
+	    s->version != DTLS1_VERSION);
+}
+
+int
+tlsext_ocsp_clienthello_build(SSL *s, CBB *cbb)
+{
+	CBB ocsp_respid_list, respid, exts;
+	unsigned char *ext_data;
+	size_t ext_len;
+	int i;
+
+	if (!CBB_add_u8(cbb, TLSEXT_STATUSTYPE_ocsp))
+		return 0;
+	if (!CBB_add_u16_length_prefixed(cbb, &ocsp_respid_list))
+		return 0;
+	if (!CBB_add_u16_length_prefixed(cbb, &exts))
+		return 0;
+	for (i = 0; i < sk_OCSP_RESPID_num(s->internal->tlsext_ocsp_ids); i++) {
+		unsigned char *respid_data;
+		OCSP_RESPID *id;
+		size_t id_len;
+
+		if ((id = sk_OCSP_RESPID_value(s->internal->tlsext_ocsp_ids,
+		    i)) ==  NULL)
+			return 0;
+		if ((id_len = i2d_OCSP_RESPID(id, NULL)) == -1)
+			return 0;
+		if (!CBB_add_u16_length_prefixed(&ocsp_respid_list, &respid))
+			return 0;
+		if (!CBB_add_space(&respid, &respid_data, id_len))
+			return 0;
+		if ((i2d_OCSP_RESPID(id, &respid_data)) != id_len)
+			return 0;
+	}
+	if ((ext_len = i2d_X509_EXTENSIONS(s->internal->tlsext_ocsp_exts,
+	    NULL)) == -1)
+		return 0;
+	if (!CBB_add_space(&exts, &ext_data, ext_len))
+		return 0;
+	if ((i2d_X509_EXTENSIONS(s->internal->tlsext_ocsp_exts, &ext_data) !=
+	    ext_len))
+		return 0;
+	if (!CBB_flush(cbb))
+		return 0;
+	return 1;
+}
+
+int
+tlsext_ocsp_clienthello_parse(SSL *s, CBS *cbs, int *alert)
+{
+	int failure = SSL_AD_DECODE_ERROR;
+	unsigned char *respid_data = NULL;
+	unsigned char *ext_data = NULL;
+	size_t ext_len, respid_len;
+	uint8_t status_type;
+	CBS respids, exts;
+	int ret = 0;
+
+	if (!CBS_get_u8(cbs, &status_type))
+		goto err;
+	if (status_type != TLSEXT_STATUSTYPE_ocsp) {
+		/* ignore unknown status types */
+		s->tlsext_status_type = -1;
+		return 1;
+	}
+	s->tlsext_status_type = status_type;
+	if (!CBS_get_u16_length_prefixed(cbs, &respids))
+		goto err;
+
+	/* XXX */
+	sk_OCSP_RESPID_pop_free(s->internal->tlsext_ocsp_ids, OCSP_RESPID_free);
+	s->internal->tlsext_ocsp_ids = NULL;
+	if (CBS_len(cbs) > 0) {
+		s->internal->tlsext_ocsp_ids = sk_OCSP_RESPID_new_null();
+		if (s->internal->tlsext_ocsp_ids == NULL) {
+			failure = SSL_AD_INTERNAL_ERROR;
+			goto err;
+		}
+	}
+
+	while (CBS_len(&respids) > 0) {
+		OCSP_RESPID *id = NULL;
+
+		if (!CBS_stow(cbs, &respid_data, &respid_len))
+			goto err;
+		if ((id = d2i_OCSP_RESPID(NULL,
+		    (const unsigned char **)&respid_data, respid_len)) == NULL)
+			goto err;
+		if (!sk_OCSP_RESPID_push(s->internal->tlsext_ocsp_ids, id)) {
+			failure = SSL_AD_INTERNAL_ERROR;
+			OCSP_RESPID_free(id);
+			goto err;
+		}
+		free(respid_data);
+		respid_data = NULL;
+	}
+
+	/* Read in request_extensions */
+	if (!CBS_get_u16_length_prefixed(cbs, &exts))
+		goto err;
+	if (!CBS_stow(&exts, &ext_data, &ext_len))
+		goto err;
+	if (ext_len > 0) {
+		sk_X509_EXTENSION_pop_free(s->internal->tlsext_ocsp_exts,
+		    X509_EXTENSION_free);
+		if ((s->internal->tlsext_ocsp_exts = d2i_X509_EXTENSIONS(NULL,
+		    (const unsigned char **)&ext_data, ext_len)) == NULL)
+			goto err;
+	}
+	/* should be nothing left */
+	if (CBS_len(cbs) > 0)
+		goto err;
+
+	ret = 1;
+ err:
+	free(respid_data);
+	free(ext_data);
+	if (ret == 0)
+		*alert = failure;
+	return ret;
+}
+
+int
+tlsext_ocsp_serverhello_needs(SSL *s)
+{
+	return s->internal->tlsext_status_expected;
+}
+
+int
+tlsext_ocsp_serverhello_build(SSL *s, CBB *cbb)
+{
+	return 1;
+}
+
+int
+tlsext_ocsp_serverhello_parse(SSL *s, CBS *cbs, int *alert)
+{
+	if (s->tlsext_status_type == -1) {
+		*alert = TLS1_AD_UNSUPPORTED_EXTENSION;
+		return 0;
+	}
+	/* Set flag to expect CertificateStatus message */
+	s->internal->tlsext_status_expected = 1;
+	return 1;
+}
+
+/*
  * SessionTicket extension - RFC 5077 section 3.2
  */
 int
@@ -705,6 +861,15 @@ static struct tls_extension tls_extensions[] = {
 		.serverhello_parse = tlsext_ri_serverhello_parse,
 	},
 	{
+		.type = TLSEXT_TYPE_status_request,
+		.clienthello_needs = tlsext_ocsp_clienthello_needs,
+		.clienthello_build = tlsext_ocsp_clienthello_build,
+		.clienthello_parse = tlsext_ocsp_clienthello_parse,
+		.serverhello_needs = tlsext_ocsp_serverhello_needs,
+		.serverhello_build = tlsext_ocsp_serverhello_build,
+		.serverhello_parse = tlsext_ocsp_serverhello_parse,
+	},
+	{
 		.type = TLSEXT_TYPE_ec_point_formats,
 		.clienthello_needs = tlsext_ecpf_clienthello_needs,
 		.clienthello_build = tlsext_ecpf_clienthello_build,
@@ -758,7 +923,7 @@ tlsext_clienthello_build(SSL *s, CBB *cbb)
 
 		if (!tlsext->clienthello_needs(s))
 			continue;
-		
+
 		if (!CBB_add_u16(cbb, tlsext->type))
 			return 0;
 		if (!CBB_add_u16_length_prefixed(cbb, &extension_data))
@@ -811,7 +976,7 @@ tlsext_serverhello_build(SSL *s, CBB *cbb)
 
 		if (!tlsext->serverhello_needs(s))
 			continue;
-		
+
 		if (!CBB_add_u16(cbb, tlsext->type))
 			return 0;
 		if (!CBB_add_u16_length_prefixed(cbb, &extension_data))

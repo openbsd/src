@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.7 2017/08/12 21:47:59 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.8 2017/08/12 23:38:12 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -50,6 +50,13 @@ int tlsext_ecpf_clienthello_parse(SSL *s, CBS *cbs, int *alert);
 int tlsext_ecpf_serverhello_needs(SSL *s);
 int tlsext_ecpf_serverhello_build(SSL *s, CBB *cbb);
 int tlsext_ecpf_serverhello_parse(SSL *s, CBS *cbs, int *alert);
+
+int tlsext_ocsp_clienthello_needs(SSL *s);
+int tlsext_ocsp_clienthello_build(SSL *s, CBB *cbb);
+int tlsext_ocsp_clienthello_parse(SSL *s, CBS *cbs, int *alert);
+int tlsext_ocsp_serverhello_needs(SSL *s);
+int tlsext_ocsp_serverhello_build(SSL *s, CBB *cbb);
+int tlsext_ocsp_serverhello_parse(SSL *s, CBS *cbs, int *alert);
 
 int tlsext_sessionticket_clienthello_needs(SSL *s);
 int tlsext_sessionticket_clienthello_build(SSL *s, CBB *cbb);
