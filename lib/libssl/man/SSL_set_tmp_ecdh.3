@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_set_tmp_ecdh.3,v 1.1 2017/08/12 12:31:30 schwarze Exp $
+.\"	$OpenBSD: SSL_set_tmp_ecdh.3,v 1.2 2017/08/12 14:09:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -68,7 +68,9 @@ is that the curve of the given
 .Fa ecdh
 key becomes the only curve enabled for the
 .Fa ssl
-connection.
+connection, so it is equivalent to calling
+.Xr SSL_set1_groups_list 3
+with the same single curve name.
 .Pp
 .Fn SSL_CTX_set_tmp_ecdh
 has the same effect on all connections that will be created from
@@ -99,4 +101,5 @@ always return 1.
 .Xr SSL_CTX_set_cipher_list 3 ,
 .Xr SSL_CTX_set_options 3 ,
 .Xr SSL_CTX_set_tmp_dh_callback 3 ,
+.Xr SSL_CTX_set1_groups 3 ,
 .Xr SSL_new 3
