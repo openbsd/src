@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.9 2017/05/16 13:30:48 dlg Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.10 2017/08/12 16:28:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -75,6 +75,11 @@ void	__mtx_enter(struct mutex *);
 int	__mtx_enter_try(struct mutex *);
 void	__mtx_leave(struct mutex *);
 
+#define mtx_init(m, ipl)	mtx_init_flags(m, ipl, NULL, 0)
+#define mtx_enter(m)		_mtx_enter(m LOCK_FILE_LINE)
+#define mtx_enter_try(m)	_mtx_enter_try(m LOCK_FILE_LINE)
+#define mtx_leave(m)		_mtx_leave(m LOCK_FILE_LINE)
+
 #ifdef WITNESS
 
 void	_mtx_init_flags(struct mutex *, int, const char *, int,
@@ -89,23 +94,17 @@ void	_mtx_leave(struct mutex *, const char *, int);
 	_mtx_init_flags(m, ipl, name, flags, &__lock_type);		\
 } while (0)
 
-#define mtx_init(m, ipl)	mtx_init_flags(m, ipl, NULL, 0)
-#define mtx_enter(m)		_mtx_enter(m, __FILE__, __LINE__)
-#define mtx_enter_try(m)	_mtx_enter_try(m, __FILE__, __LINE__)
-#define mtx_leave(m)		_mtx_leave(m, __FILE__, __LINE__)
-
 #else /* WITNESS */
-
-#define mtx_init(m, ipl)	_mtx_init(m, ipl)
 
 #define mtx_init_flags(m, ipl, name, flags) do {			\
 	(void)(name); (void)(flags);					\
 	_mtx_init(m, ipl);						\
 } while (0)
 
-#define mtx_enter __mtx_enter
-#define mtx_leave __mtx_leave
-#define mtx_enter_try __mtx_enter_try
+#define _mtx_init_flags(m,i,n,f,t)	_mtx_init(m,i)
+#define _mtx_enter(m)			__mtx_enter(m)
+#define _mtx_enter_try(m)		__mtx_enter_try(m)
+#define _mtx_leave(m)			__mtx_leave(m)
 
 #endif /* WITNESS */
 
