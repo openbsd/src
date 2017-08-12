@@ -1,12 +1,14 @@
-#	$OpenBSD: Makefile,v 1.14 2017/06/25 22:07:55 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.15 2017/08/12 04:53:25 rob Exp $
 
 SUBDIR += acme-client
 SUBDIR += arp
 SUBDIR += httpd
+SUBDIR += ifstated
 SUBDIR += ldapd
 SUBDIR += mtree
 SUBDIR += ospfd
 SUBDIR += relayd
+SUBDIR += snmpd
 SUBDIR += switchd
 SUBDIR += syslogd
 
