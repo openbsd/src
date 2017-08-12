@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.21 2017/08/12 21:03:08 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.22 2017/08/12 21:47:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1577,12 +1577,12 @@ ssl3_send_certificate_request(SSL *s)
 			unsigned char *sigalgs_data;
 			size_t sigalgs_len;
 
-			sigalgs_len = tls12_get_req_sig_algs(s, NULL);
+			tls12_get_req_sig_algs(s, &sigalgs_data, &sigalgs_len);
+
 			if (!CBB_add_u16_length_prefixed(&cert_request, &sigalgs))
 				goto err;
-			if (!CBB_add_space(&sigalgs, &sigalgs_data, sigalgs_len))
+			if (!CBB_add_bytes(&sigalgs, sigalgs_data, sigalgs_len))
 				goto err;
-			tls12_get_req_sig_algs(s, sigalgs_data);
 		}
 
 		if (!CBB_add_u16_length_prefixed(&cert_request, &cert_auth))

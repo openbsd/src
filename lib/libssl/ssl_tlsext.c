@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.7 2017/08/12 21:17:03 doug Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.8 2017/08/12 21:47:59 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -361,6 +361,64 @@ tlsext_ri_serverhello_parse(SSL *s, CBS *cbs, int *alert)
 }
 
 /*
+ * Signature Algorithms - RFC 5246 section 7.4.1.4.1.
+ */
+int
+tlsext_sigalgs_clienthello_needs(SSL *s)
+{
+	return (TLS1_get_client_version(s) >= TLS1_2_VERSION);
+}
+
+int
+tlsext_sigalgs_clienthello_build(SSL *s, CBB *cbb)
+{
+	unsigned char *sigalgs_data;
+	size_t sigalgs_len;
+	CBB sigalgs;
+
+	tls12_get_req_sig_algs(s, &sigalgs_data, &sigalgs_len);
+
+	if (!CBB_add_u16_length_prefixed(cbb, &sigalgs))
+		return 0;
+	if (!CBB_add_bytes(&sigalgs, sigalgs_data, sigalgs_len))
+		return 0;
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
+}
+
+int
+tlsext_sigalgs_clienthello_parse(SSL *s, CBS *cbs, int *alert)
+{
+	CBS sigalgs;
+
+	if (!CBS_get_u16_length_prefixed(cbs, &sigalgs))
+		return 0;
+
+	return tls1_process_sigalgs(s, &sigalgs);
+}
+
+int
+tlsext_sigalgs_serverhello_needs(SSL *s)
+{
+	return 0;
+}
+
+int
+tlsext_sigalgs_serverhello_build(SSL *s, CBB *cbb)
+{
+	return 0;
+}
+
+int
+tlsext_sigalgs_serverhello_parse(SSL *s, CBS *cbs, int *alert)
+{
+	/* As per the RFC, servers must not send this extension. */
+	return 0;
+}
+
+/*
  * Server Name Indication - RFC 6066, section 3.
  */
 int
@@ -672,6 +730,15 @@ static struct tls_extension tls_extensions[] = {
 		.serverhello_needs = tlsext_sessionticket_serverhello_needs,
 		.serverhello_build = tlsext_sessionticket_serverhello_build,
 		.serverhello_parse = tlsext_sessionticket_serverhello_parse,
+	},
+	{
+		.type = TLSEXT_TYPE_signature_algorithms,
+		.clienthello_needs = tlsext_sigalgs_clienthello_needs,
+		.clienthello_build = tlsext_sigalgs_clienthello_build,
+		.clienthello_parse = tlsext_sigalgs_clienthello_parse,
+		.serverhello_needs = tlsext_sigalgs_serverhello_needs,
+		.serverhello_build = tlsext_sigalgs_serverhello_build,
+		.serverhello_parse = tlsext_sigalgs_serverhello_parse,
 	},
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.129 2017/08/12 21:17:03 doug Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.130 2017/08/12 21:47:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -654,14 +654,11 @@ static unsigned char tls12_sigalgs[] = {
 	TLSEXT_hash_sha1, TLSEXT_signature_ecdsa,
 };
 
-int
-tls12_get_req_sig_algs(SSL *s, unsigned char *p)
+void
+tls12_get_req_sig_algs(SSL *s, unsigned char **sigalgs, size_t *sigalgs_len)
 {
-	size_t slen = sizeof(tls12_sigalgs);
-
-	if (p)
-		memcpy(p, tls12_sigalgs, slen);
-	return (int)slen;
+	*sigalgs = tls12_sigalgs;
+	*sigalgs_len = sizeof(tls12_sigalgs);
 }
 
 unsigned char *
@@ -689,17 +686,6 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	if (len > (limit - ret))
 		return NULL;
 	ret += len;
-
-	if (TLS1_get_client_version(s) >= TLS1_2_VERSION) {
-		if ((size_t)(limit - ret) < sizeof(tls12_sigalgs) + 6)
-			return NULL;
-
-		s2n(TLSEXT_TYPE_signature_algorithms, ret);
-		s2n(sizeof(tls12_sigalgs) + 2, ret);
-		s2n(sizeof(tls12_sigalgs), ret);
-		memcpy(ret, tls12_sigalgs, sizeof(tls12_sigalgs));
-		ret += sizeof(tls12_sigalgs);
-	}
 
 	if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp &&
 	    s->version != DTLS1_VERSION) {
@@ -991,7 +977,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 	unsigned short len;
 	unsigned char *data = *p;
 	unsigned char *end = d + n;
-	int sigalg_seen = 0;
 	CBS cbs;
 
 	s->internal->servername_done = 0;
@@ -1026,24 +1011,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 		if (!tlsext_clienthello_parse_one(s, &cbs, type, al))
 			return 0;
 
-		if (type == TLSEXT_TYPE_signature_algorithms) {
-			int dsize;
-			if (sigalg_seen || size < 2) {
-				*al = SSL_AD_DECODE_ERROR;
-				return 0;
-			}
-			sigalg_seen = 1;
-			n2s(data, dsize);
-			size -= 2;
-			if (dsize != size || dsize & 1) {
-				*al = SSL_AD_DECODE_ERROR;
-				return 0;
-			}
-			if (!tls1_process_sigalgs(s, data, dsize)) {
-				*al = SSL_AD_DECODE_ERROR;
-				return 0;
-			}
-		} else if (type == TLSEXT_TYPE_status_request &&
+		if (type == TLSEXT_TYPE_status_request &&
 		    s->version != DTLS1_VERSION) {
 
 			if (size < 5) {
@@ -1830,36 +1798,30 @@ tls12_get_hash(unsigned char hash_alg)
 /* Set preferred digest for each key type */
 
 int
-tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
+tls1_process_sigalgs(SSL *s, CBS *cbs)
 {
-	int idx;
 	const EVP_MD *md;
 	CERT *c = s->cert;
-	CBS cbs;
+	int idx;
 
 	/* Extension ignored for inappropriate versions */
 	if (!SSL_USE_SIGALGS(s))
 		return 1;
 
 	/* Should never happen */
-	if (!c || dsize < 0)
+	if (c == NULL)
 		return 0;
-
-	CBS_init(&cbs, data, dsize);
 
 	c->pkeys[SSL_PKEY_RSA_SIGN].digest = NULL;
 	c->pkeys[SSL_PKEY_RSA_ENC].digest = NULL;
 	c->pkeys[SSL_PKEY_ECC].digest = NULL;
 	c->pkeys[SSL_PKEY_GOST01].digest = NULL;
 
-	while (CBS_len(&cbs) > 0) {
+	while (CBS_len(cbs) > 0) {
 		uint8_t hash_alg, sig_alg;
 
-		if (!CBS_get_u8(&cbs, &hash_alg) ||
-		    !CBS_get_u8(&cbs, &sig_alg)) {
-			/* Should never happen */
+		if (!CBS_get_u8(cbs, &hash_alg) || !CBS_get_u8(cbs, &sig_alg))
 			return 0;
-		}
 
 		switch (sig_alg) {
 		case TLSEXT_signature_rsa:
@@ -1888,7 +1850,8 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 
 	}
 
-	/* Set any remaining keys to default values. NOTE: if alg is not
+	/*
+	 * Set any remaining keys to default values. NOTE: if alg is not
 	 * supported it stays as NULL.
 	 */
 	if (!c->pkeys[SSL_PKEY_RSA_SIGN].digest) {

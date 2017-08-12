@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.16 2017/08/12 21:03:08 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.17 2017/08/12 21:47:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1621,9 +1621,7 @@ ssl3_get_certificate_request(SSL *s)
 			SSLerror(s, SSL_R_DATA_LENGTH_TOO_LONG);
 			goto err;
 		}
-		if ((CBS_len(&sigalgs) & 1) ||
-		    !tls1_process_sigalgs(s, CBS_data(&sigalgs),
-		    CBS_len(&sigalgs))) {
+		if (!tls1_process_sigalgs(s, &sigalgs)) {
 			ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 			SSLerror(s, SSL_R_SIGNATURE_ALGORITHMS_ERROR);
 			goto err;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.6 2017/08/12 21:17:03 doug Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.7 2017/08/12 21:47:59 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -22,6 +22,13 @@ int tlsext_ri_clienthello_parse(SSL *s, CBS *cbs, int *alert);
 int tlsext_ri_serverhello_needs(SSL *s);
 int tlsext_ri_serverhello_build(SSL *s, CBB *cbb);
 int tlsext_ri_serverhello_parse(SSL *s, CBS *cbs, int *alert);
+
+int tlsext_sigalgs_clienthello_needs(SSL *s);
+int tlsext_sigalgs_clienthello_build(SSL *s, CBB *cbb);
+int tlsext_sigalgs_clienthello_parse(SSL *s, CBS *cbs, int *alert);
+int tlsext_sigalgs_serverhello_needs(SSL *s);
+int tlsext_sigalgs_serverhello_build(SSL *s, CBB *cbb);
+int tlsext_sigalgs_serverhello_parse(SSL *s, CBS *cbs, int *alert);
 
 int tlsext_sni_clienthello_needs(SSL *s);
 int tlsext_sni_clienthello_build(SSL *s, CBB *cbb);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.189 2017/08/12 21:03:08 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.190 2017/08/12 21:47:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1310,8 +1310,9 @@ const EVP_MD *tls12_get_hash(unsigned char hash_alg);
 
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
 long ssl_get_algorithm2(SSL *s);
-int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize);
-int tls12_get_req_sig_algs(SSL *s, unsigned char *p);
+int tls1_process_sigalgs(SSL *s, CBS *cbs);
+void tls12_get_req_sig_algs(SSL *s, unsigned char **sigalgs,
+    size_t *sigalgs_len);
 
 int tls1_check_ec_server_key(SSL *s);
 int tls1_check_ec_tmp_key(SSL *s);
