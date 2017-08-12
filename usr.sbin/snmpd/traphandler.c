@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.8 2017/01/09 14:49:22 reyk Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.9 2017/08/12 04:29:57 rob Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -95,6 +95,9 @@ traphandler_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	struct snmpd		*env = ps->ps_env;
 	struct listen_sock	*so;
+
+	if (pledge("stdio id proc recvfd exec", NULL) == -1)
+		fatal("pledge");
 
 	if (!env->sc_traphandler)
 		return;
