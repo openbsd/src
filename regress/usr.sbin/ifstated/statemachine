@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: statemachine,v 1.3 2017/07/31 18:37:32 rob Exp $
+# $OpenBSD: statemachine,v 1.4 2017/08/12 12:22:35 rob Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@2keys.ca>
 # *
@@ -23,6 +23,8 @@
 # NOTE: Increase LSLEEP as required when adding additional test states.
 #
 
+export OBJDIR
+
 # Golbal variables
 FILE1="truth1.test"
 FILE2="truth2.test"
@@ -31,14 +33,13 @@ SLEEP=5
 LSLEEP=35
 
 cleanup() {
-	rm working/$FILE1 >/dev/null 2>&1
-	rm working/$FILE2 >/dev/null 2>&1
-	rm working/ifstated.conf >/dev/null 2>&1
-	rm working/ifstated.log >/dev/null 2>&1
-	rm working/output.test >/dev/null 2>&1
-	rm working/output.new >/dev/null 2>&1
-	rm working/nohup.out >/dev/null 2>&1
-	rmdir working >/dev/null 2>&1
+	rm ${OBJDIR}/$FILE1 >/dev/null 2>&1
+	rm ${OBJDIR}/$FILE2 >/dev/null 2>&1
+	rm ${OBJDIR}/ifstated.conf >/dev/null 2>&1
+	rm ${OBJDIR}/ifstated.log >/dev/null 2>&1
+	rm ${OBJDIR}/output.test >/dev/null 2>&1
+	rm ${OBJDIR}/output.new >/dev/null 2>&1
+	rm ${OBJDIR}/nohup.out >/dev/null 2>&1
 }
 
 fail() {
@@ -62,12 +63,10 @@ then
 	exit 0
 fi
 
-mkdir -p working
+rm -f ${OBJDIR}/${FILE1}
+rm -f ${OBJDIR}/${FILE2}
 
-rm -rf working/${FILE1}
-rm -rf working/${FILE2}
-
-cat > working/ifstated.conf <<EOF
+cat > ${OBJDIR}/ifstated.conf <<EOF
 # This is a config template for ifstated regression testing
 init-state one
 true = '( "true" every $EVERY )'
@@ -163,7 +162,7 @@ state end {
 }
 EOF
 
-cat > working/output.test <<EOF
+cat > ${OBJDIR}/output.test <<EOF
 changing state to one
 changing state to two
 changing state to three
@@ -181,15 +180,15 @@ changing state to onehundred
 changing state to end
 EOF
 
-(cd working && nohup ifstated -dvf ./ifstated.conf > ifstated.log 2>&1) &
+(cd ${OBJDIR} && nohup ifstated -dvf ./ifstated.conf > ifstated.log 2>&1) &
 
 sleep ${LSLEEP}
 
-grep ^changing working/ifstated.log > working/output.new
+grep ^changing ${OBJDIR}/ifstated.log > ${OBJDIR}/output.new
 
 kill $(pgrep ifstated) >/dev/null 2>&1
 
-diff working/output.test working/output.new
+diff ${OBJDIR}/output.test ${OBJDIR}/output.new
 case $? in
 0)	echo PASSED
 	cleanup

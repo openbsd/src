@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: ifstated,v 1.4 2017/08/12 04:40:47 rob Exp $
+# $OpenBSD: ifstated,v 1.5 2017/08/12 12:22:35 rob Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@2keys.ca>
 # *
@@ -19,6 +19,8 @@
 
 # Basic ifstated regression script to test interface changes.
 
+export OBJDIR
+
 # Golbal variables
 VHIDA=252
 VHIDB=253
@@ -32,12 +34,11 @@ cleanup() {
 	ifconfig carp${VHIDA} destroy > /dev/null 2>&1
 	ifconfig carp${VHIDB} destroy > /dev/null 2>&1
 	ifconfig vether${VHIDB} destroy > /dev/null 2>&1
-	rm working/ifstated.conf >/dev/null 2>&1
-	rm working/ifstated.log >/dev/null 2>&1
-	rm working/output.test >/dev/null 2>&1
-	rm working/output.new >/dev/null 2>&1
-	rm working/nohup.out >/dev/null 2>&1
-	rmdir working >/dev/null 2>&1
+	rm ${OBJDIR}/ifstated.conf >/dev/null 2>&1
+	rm ${OBJDIR}/ifstated.log >/dev/null 2>&1
+	rm ${OBJDIR}/output.test >/dev/null 2>&1
+	rm ${OBJDIR}/output.new >/dev/null 2>&1
+	rm ${OBJDIR}/nohup.out >/dev/null 2>&1
 }
 
 fail() {
@@ -83,9 +84,7 @@ do
 	fi
 done
 
-mkdir -p working
-
-cat > working/ifstated.conf <<EOF
+cat > ${OBJDIR}/ifstated.conf <<EOF
 # This is a config template for ifstated regression testing
 carp = "carp${VHIDA}.link.up"
 init-state primary
@@ -116,7 +115,7 @@ ifconfig carp${VHIDB} inet ${PREFIX}.${VHIDB} netmask 255.255.255.0 broadcast \
 # give the carp interface time to come up as MASTER
 sleep 5
 
-cat > working/output.test <<EOF
+cat > ${OBJDIR}/output.test <<EOF
 changing state to primary
 changing state to demoted
 changing state to primary
@@ -127,7 +126,7 @@ changing state to primary
 changing state to primary
 EOF
 
-(cd working && nohup ifstated -dvf ./ifstated.conf > ifstated.log 2>&1) &
+(cd ${OBJDIR} && nohup ifstated -dvf ./ifstated.conf > ifstated.log 2>&1) &
 
 sleep ${SLEEP}
 ifconfig carp${VHIDA} down
@@ -151,11 +150,11 @@ sleep ${SLEEP}
 kill -HUP $(pgrep ifstated) >/dev/null 2>&1
 sleep ${SLEEP}
 
-grep ^changing working/ifstated.log > working/output.new
+grep ^changing ${OBJDIR}/ifstated.log > ${OBJDIR}/output.new
 
 kill $(pgrep ifstated) >/dev/null 2>&1
 
-diff working/output.test working/output.new
+diff ${OBJDIR}/output.test ${OBJDIR}/output.new
 case $? in
 0)	echo PASSED
 	cleanup
