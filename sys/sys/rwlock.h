@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.21 2017/04/20 13:33:00 visa Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.22 2017/08/12 23:27:44 guenther Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -158,10 +158,12 @@ void	_rw_exit_write(struct rwlock * LOCK_FL_VARS);
 #ifdef DIAGNOSTIC
 void	rw_assert_wrlock(struct rwlock *);
 void	rw_assert_rdlock(struct rwlock *);
+void	rw_assert_anylock(struct rwlock *);
 void	rw_assert_unlocked(struct rwlock *);
 #else
 #define rw_assert_wrlock(rwl)	((void)0)
 #define rw_assert_rdlock(rwl)	((void)0)
+#define rw_assert_anylock(rwl)	((void)0)
 #define rw_assert_unlocked(rwl)	((void)0)
 #endif
 

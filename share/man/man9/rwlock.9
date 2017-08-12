@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.18 2016/06/19 11:54:33 natano Exp $
+.\" $OpenBSD: rwlock.9,v 1.19 2017/08/12 23:27:44 guenther Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 19 2016 $
+.Dd $Mdocdate: August 12 2017 $
 .Dt RWLOCK 9
 .Os
 .Sh NAME
@@ -29,6 +29,7 @@
 .Nm rw_exit_write ,
 .Nm rw_assert_wrlock ,
 .Nm rw_assert_rdlock ,
+.Nm rw_assert_anylock ,
 .Nm rw_assert_unlocked ,
 .Nm rw_status ,
 .Nm RWLOCK_INITIALIZER ,
@@ -57,6 +58,8 @@
 .Fn rw_assert_wrlock "struct rwlock *rwl"
 .Ft void
 .Fn rw_assert_rdlock "struct rwlock *rwl"
+.Ft void
+.Fn rw_assert_anylock "struct rwlock *rwl"
 .Ft void
 .Fn rw_assert_unlocked "struct rwlock *rwl"
 .Ft int
@@ -142,11 +145,12 @@ function releases a write lock.
 The
 .Fn rw_assert_wrlock ,
 .Fn rw_assert_rdlock ,
+.Fn rw_assert_anylock ,
 and
 .Fn rw_assert_unlocked
 functions check the status
 .Fa rwl ,
-panicking if it is not write-, read-, or unlocked, respectively.
+panicking if it is not write-, read-, any-, or unlocked, respectively.
 .Pp
 .Nm rw_status
 returns the current state of the lock:
