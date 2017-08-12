@@ -1063,15 +1063,18 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 	CHECK_GOTO(BN_zero(c));
 	if (BN_mod_exp(d, a, b, c, ctx)) {
 		fprintf(stderr, "BN_mod_exp with zero modulus succeeded!\n");
-		return (0);
+		rc = 0;
+		goto err;
 	}
 	if (BN_mod_exp_ct(d, a, b, c, ctx)) {
 		fprintf(stderr, "BN_mod_exp_ct with zero modulus succeeded!\n");
-		return (0);
+		rc = 0;
+		goto err;
 	}
 	if (BN_mod_exp_nonct(d, a, b, c, ctx)) {
 		fprintf(stderr, "BN_mod_exp_nonct with zero modulus succeeded!\n");
-		return (0);
+		rc = 0;
+		goto err;
 	}
 
 	CHECK_GOTO(BN_bntest_rand(c, 30, 0, 1)); /* must be odd for montgomery */
@@ -1420,6 +1423,7 @@ err:
 	BN_free(b);
 	BN_free(n);
 	BN_free(c);
+	BN_MONT_CTX_free(mont);
 	return (rc);
 }
 
