@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.44 2017/08/05 05:49:37 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.45 2017/08/12 19:56:08 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -368,7 +368,8 @@ struct vcpu_segment_info {
 #define VCPU_REGS_CSTAR  	3
 #define VCPU_REGS_SFMASK 	4
 #define VCPU_REGS_KGSBASE	5
-#define VCPU_REGS_NMSRS	(VCPU_REGS_KGSBASE + 1)
+#define VCPU_REGS_MISC_ENABLE	6
+#define VCPU_REGS_NMSRS	(VCPU_REGS_MISC_ENABLE + 1)
 
 struct vcpu_reg_state {
 	uint64_t			vrs_gprs[VCPU_REGS_NGPRS];
@@ -485,7 +486,7 @@ struct vm_rwregs_params {
 #define VMX_FAIL_LAUNCH_INVALID_VMCS 2
 #define VMX_FAIL_LAUNCH_VALID_VMCS 3
 
-#define VMX_NUM_MSR_STORE 6
+#define VMX_NUM_MSR_STORE 7
 
 /* MSR bitmap manipulation macros */
 #define VMX_MSRIDX(m) ((m) / 8)

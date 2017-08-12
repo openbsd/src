@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.161 2017/08/09 19:13:06 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.162 2017/08/12 19:56:08 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -169,6 +169,7 @@ int svm_handle_hlt(struct vcpu *);
 int vmx_handle_hlt(struct vcpu *);
 void vmx_handle_intr(struct vcpu *);
 void vmx_handle_intwin(struct vcpu *);
+void vmx_handle_misc_enable_msr(struct vcpu *);
 int vmm_get_guest_memtype(struct vm *, paddr_t);
 int vmm_get_guest_faulttype(void);
 int vmx_get_guest_faulttype(void);
@@ -2435,6 +2436,8 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	msr_store[4].vms_data = rdmsr(MSR_SFMASK);
 	msr_store[5].vms_index = MSR_KERNELGSBASE;
 	msr_store[5].vms_data = rdmsr(MSR_KERNELGSBASE);
+	msr_store[6].vms_index = MSR_MISC_ENABLE;
+	msr_store[6].vms_data = rdmsr(MSR_MISC_ENABLE);
 
 	/*
 	 * Select guest MSRs to be loaded on entry / saved on exit
@@ -2447,6 +2450,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	msr_store[VCPU_REGS_CSTAR].vms_index = MSR_CSTAR;
 	msr_store[VCPU_REGS_SFMASK].vms_index = MSR_SFMASK;
 	msr_store[VCPU_REGS_KGSBASE].vms_index = MSR_KERNELGSBASE;
+	msr_store[VCPU_REGS_MISC_ENABLE].vms_index = MSR_MISC_ENABLE;
 
 	/*
 	 * Currently we have the same count of entry/exit MSRs loads/stores
@@ -2531,6 +2535,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vmx_setmsrbrw(vcpu, MSR_FSBASE);
 	vmx_setmsrbrw(vcpu, MSR_GSBASE);
 	vmx_setmsrbrw(vcpu, MSR_KERNELGSBASE);
+	vmx_setmsrbr(vcpu, MSR_MISC_ENABLE);
 
 	/* XXX CR0 shadow */
 	/* XXX CR4 shadow */
@@ -5069,6 +5074,34 @@ vmm_handle_xsetbv(struct vcpu *vcpu, uint64_t *rax)
 
 	return (0);
 }
+
+/*
+ * vmx_handle_misc_enable_msr
+ *
+ * Handler for writes to the MSR_MISC_ENABLE (0x1a0) MSR on Intel CPUs. We
+ * limit what the guest can write to this MSR (certain hardware-related
+ * settings like speedstep, etc).
+ *
+ * Parameters:
+ *  vcpu: vcpu structure containing information about the wrmsr causing this
+ *   exit
+ */
+void
+vmx_handle_misc_enable_msr(struct vcpu *vcpu)
+{
+	uint64_t *rax, *rdx;
+	struct vmx_msr_store *msr_store;
+
+	rax = &vcpu->vc_gueststate.vg_rax;
+	rdx = &vcpu->vc_gueststate.vg_rdx;
+	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+
+	/* Filter out guest writes to TCC, EIST, and xTPR */
+	*rax &= ~(MISC_ENABLE_TCC | MISC_ENABLE_EIST_ENABLED |
+	    MISC_ENABLE_xTPR_MESSAGE_DISABLE);
+	
+	msr_store[VCPU_REGS_MISC_ENABLE].vms_data = *rax | (*rdx << 32);
+}
 	
 /*
  * vmx_handle_wrmsr
@@ -5088,10 +5121,7 @@ int
 vmx_handle_wrmsr(struct vcpu *vcpu)
 {
 	uint64_t insn_length;
-	uint64_t *rax, *rdx;
-#ifdef VMM_DEBUG
-	uint64_t *rcx;
-#endif /* VMM_DEBUG */
+	uint64_t *rax, *rdx, *rcx;
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
@@ -5102,14 +5132,23 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 	KASSERT(insn_length == 2);
 
 	rax = &vcpu->vc_gueststate.vg_rax;
+	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
 
+	switch (*rcx) {
+		case MSR_MISC_ENABLE:
+			vmx_handle_misc_enable_msr(vcpu);
+			break;
 #ifdef VMM_DEBUG
-	/* Log the access, to be able to identify unknown MSRs */
-	rcx = &vcpu->vc_gueststate.vg_rcx;
-	DPRINTF("%s: wrmsr exit, msr=0x%llx, discarding data written from "
-	    "guest=0x%llx:0x%llx\n", __func__, *rcx, *rdx, *rax);
+		default:
+			/*
+			 * Log the access, to be able to identify unknown MSRs
+			 */
+			DPRINTF("%s: wrmsr exit, msr=0x%llx, discarding data "
+			    "written from guest=0x%llx:0x%llx\n", __func__,
+			    *rcx, *rdx, *rax);
 #endif /* VMM_DEBUG */
+	}
 
 	vcpu->vc_gueststate.vg_rip += insn_length;
 
@@ -5180,9 +5219,10 @@ int
 vmm_handle_cpuid(struct vcpu *vcpu)
 {
 	uint64_t insn_length;
-	uint64_t *rax, *rbx, *rcx, *rdx;
+	uint64_t *rax, *rbx, *rcx, *rdx, cpuid_limit;
 	struct vmcb *vmcb;
 	uint32_t eax, ebx, ecx, edx;
+	struct vmx_msr_store *msr_store;
 
 	if (vmm_softc->mode == VMM_MODE_VMX ||
 	    vmm_softc->mode == VMM_MODE_EPT) {
@@ -5196,6 +5236,10 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		KASSERT(insn_length == 2);
 
 		rax = &vcpu->vc_gueststate.vg_rax;
+		msr_store =
+		    (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+		cpuid_limit = msr_store[VCPU_REGS_MISC_ENABLE].vms_data &
+		    MISC_ENABLE_LIMIT_CPUID_MAXVAL;
 	} else {
 		insn_length = 2;
 		vmcb = (struct vmcb *)vcpu->vc_control_va;
@@ -5205,6 +5249,20 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 	rbx = &vcpu->vc_gueststate.vg_rbx;
 	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
+	vcpu->vc_gueststate.vg_rip += insn_length;
+
+	/*
+	 * "CPUID leaves above 02H and below 80000000H are only visible when
+	 * IA32_MISC_ENABLE MSR has bit 22 set to its default value 0"
+	 */
+	if ((vmm_softc->mode == VMM_MODE_VMX || vmm_softc->mode == VMM_MODE_EPT)
+	    && cpuid_limit && (*rax > 0x02 && *rax < 0x80000000)) {
+		*rax = 0;
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
+		return (0);
+	}
 
 	CPUID_LEAF(*rax, 0, eax, ebx, ecx, edx);
 
@@ -5262,10 +5320,6 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rcx = ecx;
 		*rdx = edx;
 		break;
-	/*
-	 * XXX "CPUID leaves above 02H and below 8000000H are only visible when
-	 * IA32_MISC_ENABLE MSR has bit 22 set to its default value 0"
-	 */
 	case 0x03:	/* Processor serial number (not supported) */
 		DPRINTF("%s: function 0x03 (processor serial number) not "
 		"supported\n", __func__);
@@ -5383,8 +5437,6 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 			*rbx = 0;
 			*rcx = 0;
 			*rdx = 0;
-		} else {
-			CPUID_LEAF(*rax, *rcx, eax, ebx, ecx, edx);
 			*rax = eax;
 			*rbx = ebx;
 			*rcx = ecx;
@@ -5485,13 +5537,11 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = 0;
 	}
 
-	vcpu->vc_gueststate.vg_rip += insn_length;
 
-	
 	if (vmm_softc->mode == VMM_MODE_SVM ||
 	    vmm_softc->mode == VMM_MODE_RVI) {
 		/*
-		 * update rax. the rest of the registers get updated in
+		 * update %rax. the rest of the registers get updated in
 		 * svm_enter_guest
 	 	 */
 		vmcb->v_rax = *rax;
