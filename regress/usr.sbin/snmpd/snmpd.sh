@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.2 2017/08/11 21:36:04 rob Exp $
+# $OpenBSD: snmpd.sh,v 1.3 2017/08/12 00:13:13 rob Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@2keys.ca>
 # *
@@ -26,7 +26,7 @@ SLEEP=1
 PF[0]="disabled"
 PF[1]="enabled"
 
-# This file will be creatred by traphandler.c as user _snmp
+# This file will be creatred by traphandler.c as user _snmpd
 TMPFILE=$(mktemp -q /tmp/_snmpd_traptest.XXXXXX)
 
 trap 'skip' INT
