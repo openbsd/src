@@ -124,7 +124,7 @@ timeval_subtract(struct timeval* d, const struct timeval* end,
 
 /** divide sum of timers to get average */
 static void
-timeval_divide(struct timeval* avg, const struct timeval* sum, size_t d)
+timeval_divide(struct timeval* avg, const struct timeval* sum, long long d)
 {
 #ifndef S_SPLINT_S
 	size_t leftover;
@@ -242,6 +242,29 @@ daemon_remote_create(struct config_file* cfg)
 		daemon_remote_delete(rc);
 		return NULL;
 	}
+#if defined(SSL_OP_NO_TLSv1) && defined(SSL_OP_NO_TLSv1_1)
+	/* if we have tls 1.1 disable 1.0 */
+	if((SSL_CTX_set_options(rc->ctx, SSL_OP_NO_TLSv1) & SSL_OP_NO_TLSv1)
+		!= SSL_OP_NO_TLSv1){
+		log_crypto_err("could not set SSL_OP_NO_TLSv1");
+		daemon_remote_delete(rc);
+		return NULL;
+	}
+#endif
+#if defined(SSL_OP_NO_TLSv1_1) && defined(SSL_OP_NO_TLSv1_2)
+	/* if we have tls 1.2 disable 1.1 */
+	if((SSL_CTX_set_options(rc->ctx, SSL_OP_NO_TLSv1_1) & SSL_OP_NO_TLSv1_1)
+		!= SSL_OP_NO_TLSv1_1){
+		log_crypto_err("could not set SSL_OP_NO_TLSv1_1");
+		daemon_remote_delete(rc);
+		return NULL;
+	}
+#endif
+#if defined(SHA256_DIGEST_LENGTH) && defined(USE_ECDSA)
+	/* if we have sha256, set the cipher list to have no known vulns */
+	if(!SSL_CTX_set_cipher_list(rc->ctx, "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256"))
+		log_crypto_err("could not set cipher list with SSL_CTX_set_cipher_list");
+#endif
 
 	if (cfg->remote_control_use_cert == 0) {
 		/* No certificates are requested */
@@ -757,9 +780,9 @@ do_verbosity(SSL* ssl, char* str)
 
 /** print stats from statinfo */
 static int
-print_stats(SSL* ssl, const char* nm, struct stats_info* s)
+print_stats(SSL* ssl, const char* nm, struct ub_stats_info* s)
 {
-	struct timeval avg;
+	struct timeval sumwait, avg;
 	if(!ssl_printf(ssl, "%s.num.queries"SQ"%lu\n", nm, 
 		(unsigned long)s->svr.num_queries)) return 0;
 	if(!ssl_printf(ssl, "%s.num.queries_ip_ratelimited"SQ"%lu\n", nm,
@@ -775,10 +798,20 @@ print_stats(SSL* ssl, const char* nm, struct stats_info* s)
 		(unsigned long)s->svr.zero_ttl_responses)) return 0;
 	if(!ssl_printf(ssl, "%s.num.recursivereplies"SQ"%lu\n", nm, 
 		(unsigned long)s->mesh_replies_sent)) return 0;
+#ifdef USE_DNSCRYPT
+	if(!ssl_printf(ssl, "%s.num.dnscrypt.crypted"SQ"%lu\n", nm,
+		(unsigned long)s->svr.num_query_dnscrypt_crypted)) return 0;
+	if(!ssl_printf(ssl, "%s.num.dnscrypt.cert"SQ"%lu\n", nm,
+		(unsigned long)s->svr.num_query_dnscrypt_cert)) return 0;
+	if(!ssl_printf(ssl, "%s.num.dnscrypt.cleartext"SQ"%lu\n", nm,
+		(unsigned long)s->svr.num_query_dnscrypt_cleartext)) return 0;
+	if(!ssl_printf(ssl, "%s.num.dnscrypt.malformed"SQ"%lu\n", nm,
+		(unsigned long)s->svr.num_query_dnscrypt_crypted_malformed)) return 0;
+#endif
 	if(!ssl_printf(ssl, "%s.requestlist.avg"SQ"%g\n", nm,
 		(s->svr.num_queries_missed_cache+s->svr.num_queries_prefetch)?
 			(double)s->svr.sum_query_list_size/
-			(s->svr.num_queries_missed_cache+
+			(double)(s->svr.num_queries_missed_cache+
 			s->svr.num_queries_prefetch) : 0.0)) return 0;
 	if(!ssl_printf(ssl, "%s.requestlist.max"SQ"%lu\n", nm,
 		(unsigned long)s->svr.max_query_list_size)) return 0;
@@ -790,7 +823,11 @@ print_stats(SSL* ssl, const char* nm, struct stats_info* s)
 		(unsigned long)s->mesh_num_states)) return 0;
 	if(!ssl_printf(ssl, "%s.requestlist.current.user"SQ"%lu\n", nm,
 		(unsigned long)s->mesh_num_reply_states)) return 0;
-	timeval_divide(&avg, &s->mesh_replies_sum_wait, s->mesh_replies_sent);
+#ifndef S_SPLINT_S
+	sumwait.tv_sec = s->mesh_replies_sum_wait_sec;
+	sumwait.tv_usec = s->mesh_replies_sum_wait_usec;
+#endif
+	timeval_divide(&avg, &sumwait, s->mesh_replies_sent);
 	if(!ssl_printf(ssl, "%s.recursion.time.avg"SQ ARG_LL "d.%6.6d\n", nm,
 		(long long)avg.tv_sec, (int)avg.tv_usec)) return 0;
 	if(!ssl_printf(ssl, "%s.recursion.time.median"SQ"%g\n", nm, 
@@ -802,7 +839,7 @@ print_stats(SSL* ssl, const char* nm, struct stats_info* s)
 
 /** print stats for one thread */
 static int
-print_thread_stats(SSL* ssl, int i, struct stats_info* s)
+print_thread_stats(SSL* ssl, int i, struct ub_stats_info* s)
 {
 	char nm[16];
 	snprintf(nm, sizeof(nm), "thread%d", i);
@@ -829,26 +866,24 @@ print_longnum(SSL* ssl, const char* desc, size_t x)
 static int
 print_mem(SSL* ssl, struct worker* worker, struct daemon* daemon)
 {
-	int m;
-	size_t msg, rrset, val, iter;
+	size_t msg, rrset, val, iter, respip;
+#ifdef CLIENT_SUBNET
+	size_t subnet = 0;
+#endif /* CLIENT_SUBNET */
+#ifdef USE_IPSECMOD
+	size_t ipsecmod = 0;
+#endif /* USE_IPSECMOD */
 	msg = slabhash_get_mem(daemon->env->msg_cache);
 	rrset = slabhash_get_mem(&daemon->env->rrset_cache->table);
-	val=0;
-	iter=0;
-	m = modstack_find(&worker->env.mesh->mods, "validator");
-	if(m != -1) {
-		fptr_ok(fptr_whitelist_mod_get_mem(worker->env.mesh->
-			mods.mod[m]->get_mem));
-		val = (*worker->env.mesh->mods.mod[m]->get_mem)
-			(&worker->env, m);
-	}
-	m = modstack_find(&worker->env.mesh->mods, "iterator");
-	if(m != -1) {
-		fptr_ok(fptr_whitelist_mod_get_mem(worker->env.mesh->
-			mods.mod[m]->get_mem));
-		iter = (*worker->env.mesh->mods.mod[m]->get_mem)
-			(&worker->env, m);
-	}
+	val = mod_get_mem(&worker->env, "validator");
+	iter = mod_get_mem(&worker->env, "iterator");
+	respip = mod_get_mem(&worker->env, "respip");
+#ifdef CLIENT_SUBNET
+	subnet = mod_get_mem(&worker->env, "subnet");
+#endif /* CLIENT_SUBNET */
+#ifdef USE_IPSECMOD
+	ipsecmod = mod_get_mem(&worker->env, "ipsecmod");
+#endif /* USE_IPSECMOD */
 
 	if(!print_longnum(ssl, "mem.cache.rrset"SQ, rrset))
 		return 0;
@@ -858,6 +893,16 @@ print_mem(SSL* ssl, struct worker* worker, struct daemon* daemon)
 		return 0;
 	if(!print_longnum(ssl, "mem.mod.validator"SQ, val))
 		return 0;
+	if(!print_longnum(ssl, "mem.mod.respip"SQ, respip))
+		return 0;
+#ifdef CLIENT_SUBNET
+	if(!print_longnum(ssl, "mem.mod.subnet"SQ, subnet))
+		return 0;
+#endif /* CLIENT_SUBNET */
+#ifdef USE_IPSECMOD
+	if(!print_longnum(ssl, "mem.mod.ipsecmod"SQ, ipsecmod))
+		return 0;
+#endif /* USE_IPSECMOD */
 	return 1;
 }
 
@@ -882,7 +927,7 @@ print_uptime(SSL* ssl, struct worker* worker, int reset)
 
 /** print extended histogram */
 static int
-print_hist(SSL* ssl, struct stats_info* s)
+print_hist(SSL* ssl, struct ub_stats_info* s)
 {
 	struct timehist* hist;
 	size_t i;
@@ -910,14 +955,14 @@ print_hist(SSL* ssl, struct stats_info* s)
 
 /** print extended stats */
 static int
-print_ext(SSL* ssl, struct stats_info* s)
+print_ext(SSL* ssl, struct ub_stats_info* s)
 {
 	int i;
 	char nm[16];
 	const sldns_rr_descriptor* desc;
 	const sldns_lookup_table* lt;
 	/* TYPE */
-	for(i=0; i<STATS_QTYPE_NUM; i++) {
+	for(i=0; i<UB_STATS_QTYPE_NUM; i++) {
 		if(inhibit_zero && s->svr.qtype[i] == 0)
 			continue;
 		desc = sldns_rr_descript((uint16_t)i);
@@ -944,7 +989,7 @@ print_ext(SSL* ssl, struct stats_info* s)
 			(unsigned long)s->svr.qtype_big)) return 0;
 	}
 	/* CLASS */
-	for(i=0; i<STATS_QCLASS_NUM; i++) {
+	for(i=0; i<UB_STATS_QCLASS_NUM; i++) {
 		if(inhibit_zero && s->svr.qclass[i] == 0)
 			continue;
 		lt = sldns_lookup_by_id(sldns_rr_classes, i);
@@ -961,7 +1006,7 @@ print_ext(SSL* ssl, struct stats_info* s)
 			(unsigned long)s->svr.qclass_big)) return 0;
 	}
 	/* OPCODE */
-	for(i=0; i<STATS_OPCODE_NUM; i++) {
+	for(i=0; i<UB_STATS_OPCODE_NUM; i++) {
 		if(inhibit_zero && s->svr.qopcode[i] == 0)
 			continue;
 		lt = sldns_lookup_by_id(sldns_opcodes, i);
@@ -1003,7 +1048,7 @@ print_ext(SSL* ssl, struct stats_info* s)
 		(unsigned long)s->svr.qEDNS_DO)) return 0;
 
 	/* RCODE */
-	for(i=0; i<STATS_RCODE_NUM; i++) {
+	for(i=0; i<UB_STATS_RCODE_NUM; i++) {
 		/* Always include RCODEs 0-5 */
 		if(inhibit_zero && i > LDNS_RCODE_REFUSED && s->svr.ans_rcode[i] == 0)
 			continue;
@@ -1049,8 +1094,8 @@ static void
 do_stats(SSL* ssl, struct daemon_remote* rc, int reset)
 {
 	struct daemon* daemon = rc->worker->daemon;
-	struct stats_info total;
-	struct stats_info s;
+	struct ub_stats_info total;
+	struct ub_stats_info s;
 	int i;
 	log_assert(daemon->num > 0);
 	/* gather all thread statistics in one place */
@@ -1342,6 +1387,21 @@ do_view_zone_add(SSL* ssl, struct worker* worker, char* arg)
 		ssl_printf(ssl,"no view with name: %s\n", arg);
 		return;
 	}
+	if(!v->local_zones) {
+		if(!(v->local_zones = local_zones_create())){
+			lock_rw_unlock(&v->lock);
+			ssl_printf(ssl,"error out of memory\n");
+			return;
+		}
+		if(!v->isfirst) {
+			/* Global local-zone is not used for this view,
+			 * therefore add defaults to this view-specic
+			 * local-zone. */
+			struct config_file lz_cfg;
+			memset(&lz_cfg, 0, sizeof(lz_cfg));
+			local_zone_enter_defaults(v->local_zones, &lz_cfg);
+		}
+	}
 	do_zone_add(ssl, v->local_zones, arg2);
 	lock_rw_unlock(&v->lock);
 }
@@ -1358,6 +1418,11 @@ do_view_zone_remove(SSL* ssl, struct worker* worker, char* arg)
 		arg, 1 /* get write lock*/);
 	if(!v) {
 		ssl_printf(ssl,"no view with name: %s\n", arg);
+		return;
+	}
+	if(!v->local_zones) {
+		lock_rw_unlock(&v->lock);
+		send_ok(ssl);
 		return;
 	}
 	do_zone_remove(ssl, v->local_zones, arg2);
@@ -1378,6 +1443,13 @@ do_view_data_add(SSL* ssl, struct worker* worker, char* arg)
 		ssl_printf(ssl,"no view with name: %s\n", arg);
 		return;
 	}
+	if(!v->local_zones) {
+		if(!(v->local_zones = local_zones_create())){
+			lock_rw_unlock(&v->lock);
+			ssl_printf(ssl,"error out of memory\n");
+			return;
+		}
+	}
 	do_data_add(ssl, v->local_zones, arg2);
 	lock_rw_unlock(&v->lock);
 }
@@ -1394,6 +1466,11 @@ do_view_data_remove(SSL* ssl, struct worker* worker, char* arg)
 		arg, 1 /* get write lock*/);
 	if(!v) {
 		ssl_printf(ssl,"no view with name: %s\n", arg);
+		return;
+	}
+	if(!v->local_zones) {
+		lock_rw_unlock(&v->lock);
+		send_ok(ssl);
 		return;
 	}
 	do_data_remove(ssl, v->local_zones, arg2);
@@ -2531,7 +2608,9 @@ do_view_list_local_zones(SSL* ssl, struct worker* worker, char* arg)
 		ssl_printf(ssl,"no view with name: %s\n", arg);
 		return;
 	}
-	do_list_local_zones(ssl, v->local_zones);
+	if(v->local_zones) {
+		do_list_local_zones(ssl, v->local_zones);
+	}
 	lock_rw_unlock(&v->lock);
 }
 
@@ -2545,7 +2624,9 @@ do_view_list_local_data(SSL* ssl, struct worker* worker, char* arg)
 		ssl_printf(ssl,"no view with name: %s\n", arg);
 		return;
 	}
-	do_list_local_data(ssl, worker, v->local_zones);
+	if(v->local_zones) {
+		do_list_local_data(ssl, worker, v->local_zones);
+	}
 	lock_rw_unlock(&v->lock);
 }
 

@@ -459,6 +459,10 @@ packed_rrset_encode(struct ub_packed_rrset_key* key, sldns_buffer* pkt,
 	owner_labs = dname_count_labels(key->rk.dname);
 	owner_pos = sldns_buffer_position(pkt);
 
+	/* For an rrset with a fixed TTL, use the rrset's TTL as given */
+	if((key->rk.flags & PACKED_RRSET_FIXEDTTL) != 0)
+		timenow = 0;
+
 	if(do_data) {
 		const sldns_rr_descriptor* c = type_rdata_compressable(key);
 		for(i=0; i<data->count; i++) {
@@ -643,6 +647,8 @@ reply_info_encode(struct query_info* qinfo, struct reply_info* rep,
 	sldns_buffer_clear(buffer);
 	if(udpsize < sldns_buffer_limit(buffer))
 		sldns_buffer_set_limit(buffer, udpsize);
+	else if(sldns_buffer_limit(buffer) < udpsize)
+		udpsize = sldns_buffer_limit(buffer);
 	if(sldns_buffer_remaining(buffer) < LDNS_HEADER_SIZE)
 		return 0;
 
@@ -806,7 +812,7 @@ reply_info_answer_encode(struct query_info* qinf, struct reply_info* rep,
 	struct edns_data* edns, int dnssec, int secure)
 {
 	uint16_t flags;
-	int attach_edns = 1;
+	unsigned int attach_edns = 0;
 
 	if(!cached || rep->authoritative) {
 		/* original flags, copy RD and CD bits from query. */
@@ -829,12 +835,15 @@ reply_info_answer_encode(struct query_info* qinf, struct reply_info* rep,
 	log_assert(flags & BIT_QR); /* QR bit must be on in our replies */
 	if(udpsize < LDNS_HEADER_SIZE)
 		return 0;
+	if(sldns_buffer_capacity(pkt) < udpsize)
+		udpsize = sldns_buffer_capacity(pkt);
 	if(udpsize < LDNS_HEADER_SIZE + calc_edns_field_size(edns)) {
 		/* packet too small to contain edns, omit it. */
 		attach_edns = 0;
 	} else {
 		/* reserve space for edns record */
-		udpsize -= calc_edns_field_size(edns);
+		attach_edns = (unsigned int)calc_edns_field_size(edns);
+		udpsize -= attach_edns;
 	}
 
 	if(!reply_info_encode(qinf, rep, id, flags, pkt, timenow, region,
@@ -842,7 +851,8 @@ reply_info_answer_encode(struct query_info* qinf, struct reply_info* rep,
 		log_err("reply encode: out of memory");
 		return 0;
 	}
-	if(attach_edns)
+	if(attach_edns && sldns_buffer_capacity(pkt) >=
+		sldns_buffer_limit(pkt)+attach_edns)
 		attach_edns_record(pkt, edns);
 	return 1;
 }

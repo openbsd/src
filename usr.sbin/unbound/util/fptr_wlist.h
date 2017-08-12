@@ -234,6 +234,15 @@ int fptr_whitelist_modenv_attach_sub(int (*fptr)(
 	uint16_t qflags, int prime, int valrec, struct module_qstate** newq));
 
 /**
+ * Check function pointer whitelist for module_env add_sub callback values.
+ *
+ * @param fptr: function pointer to check.
+ * @return false if not in whitelist.
+ */
+int fptr_whitelist_modenv_add_sub(int (*fptr)(struct module_qstate* qstate,
+	struct query_info* qinfo, uint16_t qflags, int prime, int valrec,
+	struct module_qstate** newq, struct mesh_state** sub));
+/**
  * Check function pointer whitelist for module_env kill_sub callback values.
  *
  * @param fptr: function pointer to check.
@@ -350,6 +359,22 @@ int fptr_whitelist_inplace_cb_reply_generic(inplace_cb_reply_func_type* fptr,
  * @return false if not in whitelist.
  */
 int fptr_whitelist_inplace_cb_query(inplace_cb_query_func_type* fptr);
+
+/**
+ * Check function pointer whitelist for inplace_cb_edns_back_parsed func values.
+ * @param fptr: function pointer to check.
+ * @return false if not in whitelist.
+ */
+int fptr_whitelist_inplace_cb_edns_back_parsed(
+	inplace_cb_edns_back_parsed_func_type* fptr);
+
+/**
+ * Check function pointer whitelist for inplace_cb_query_response func values.
+ * @param fptr: function pointer to check.
+ * @return false if not in whitelist.
+ */
+int fptr_whitelist_inplace_cb_query_response(
+	inplace_cb_query_response_func_type* fptr);
 
 /** Due to module breakage by fptr wlist, these test app declarations
  * are presented here */

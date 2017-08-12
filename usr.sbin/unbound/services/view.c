@@ -66,6 +66,10 @@ views_create(void)
 	return v;
 }
 
+/** This prototype is defined in in respip.h, but we want to avoid
+  * unnecessary dependencies */
+void respip_set_delete(struct respip_set *set);
+
 void 
 view_delete(struct view* v)
 {
@@ -73,6 +77,7 @@ view_delete(struct view* v)
 		return;
 	lock_rw_destroy(&v->lock);
 	local_zones_delete(v->local_zones);
+	respip_set_delete(v->respip_set);
 	free(v->name);
 	free(v);
 }
@@ -162,6 +167,44 @@ views_apply_cfg(struct views* vs, struct config_file* cfg)
 			lz_cfg.local_data = cv->local_data;
 			lz_cfg.local_zones_nodefault =
 				cv->local_zones_nodefault;
+			if(v->isfirst) {
+				/* Do not add defaults to view-specific
+				 * local-zone when global local zone will be
+				 * used. */
+				struct config_strlist* nd;
+				lz_cfg.local_zones_disable_default = 1;
+				/* Add nodefault zones to list of zones to add,
+				 * so they will be used as if they are
+				 * configured as type transparent */
+				for(nd = cv->local_zones_nodefault; nd;
+					nd = nd->next) {
+					char* nd_str, *nd_type;
+					nd_str = strdup(nd->str);
+					if(!nd_str) {
+						log_err("out of memory");
+						lock_rw_unlock(&v->lock);
+						return 0;
+					}
+					nd_type = strdup("nodefault");
+					if(!nd_type) {
+						log_err("out of memory");
+						free(nd_str);
+						lock_rw_unlock(&v->lock);
+						return 0;
+					}
+					if(!cfg_str2list_insert(
+						&lz_cfg.local_zones, nd_str,
+						nd_type)) {
+						log_err("failed to insert "
+							"default zones into "
+							"local-zone list");
+						free(nd_str);
+						free(nd_type);
+						lock_rw_unlock(&v->lock);
+						return 0;
+					}
+				}
+			}
 			if(!local_zones_apply_cfg(v->local_zones, &lz_cfg)){
 				lock_rw_unlock(&v->lock);
 				return 0;

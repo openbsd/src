@@ -38,6 +38,8 @@ extern struct sldns_struct_lookup_table* sldns_edns_flags;
 extern struct sldns_struct_lookup_table* sldns_edns_options;
 /** error string from wireparse */
 extern struct sldns_struct_lookup_table* sldns_wireparse_errors;
+/** tsig errors are the rcodes with extra (higher) values */
+extern struct sldns_struct_lookup_table* sldns_tsig_errors;
 
 /**
  * Convert wireformat packet to a string representation
@@ -442,6 +444,17 @@ int sldns_wire2str_class_buf(uint16_t rrclass, char* str, size_t len);
 int sldns_wire2str_rcode_buf(int rcode, char* str, size_t len);
 
 /**
+ * Convert host format opcode to a string. 'QUERY', 'NOTIFY', 'UPDATE'.
+ * With user buffer.
+ * @param opcode: opcode as integer in host order
+ * @param str: the string to write to.
+ * @param len: length of str.
+ * @return the number of characters for this element, excluding zerobyte.
+ * 	Is larger or equal than str_len if output was truncated.
+ */
+int sldns_wire2str_opcode_buf(int opcode, char* str, size_t len);
+
+/**
  * Convert wire dname to a string, "example.com.".  With user buffer.
  * @param dname: the dname in uncompressed wireformat.
  * @param dname_len: length of the dname.
@@ -794,6 +807,19 @@ int sldns_wire2str_hip_scan(uint8_t** data, size_t* data_len, char** str,
  * 	Can return -1 on failure.
  */
 int sldns_wire2str_int16_data_scan(uint8_t** data, size_t* data_len, char** str,
+	size_t* str_len);
+
+/**
+ * Scan wireformat tsigerror field to string, with user buffers.
+ * It shifts the arguments to move along (see sldns_wire2str_pkt_scan).
+ * @param data: wireformat data.
+ * @param data_len: length of data buffer.
+ * @param str: string buffer.
+ * @param str_len: length of string buffer.
+ * @return number of characters (except null) needed to print.
+ * 	Can return -1 on failure.
+ */
+int sldns_wire2str_tsigerror_scan(uint8_t** data, size_t* data_len, char** str,
 	size_t* str_len);
 
 /**

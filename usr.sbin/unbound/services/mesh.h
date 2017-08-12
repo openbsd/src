@@ -59,6 +59,7 @@ struct query_info;
 struct reply_info;
 struct outbound_entry;
 struct timehist;
+struct respip_client_info;
 
 /**
  * Maximum number of mesh state activations. Any more is likely an
@@ -274,14 +275,18 @@ void mesh_delete(struct mesh_area* mesh);
  *
  * @param mesh: the mesh.
  * @param qinfo: query from client.
+ * @param cinfo: additional information associated with the query client.
+ * 	'cinfo' itself is ephemeral but data pointed to by its members
+ *      can be assumed to be valid and unchanged until the query processing is
+ *      completed.
  * @param qflags: flags from client query.
  * @param edns: edns data from client query.
  * @param rep: where to reply to.
  * @param qid: query id to reply with.
  */
 void mesh_new_client(struct mesh_area* mesh, struct query_info* qinfo,
-	uint16_t qflags, struct edns_data* edns, struct comm_reply* rep, 
-	uint16_t qid);
+	struct respip_client_info* cinfo, uint16_t qflags,
+	struct edns_data* edns, struct comm_reply* rep, uint16_t qid);
 
 /**
  * New query with callback. Create new query state if needed, and
@@ -366,6 +371,35 @@ int mesh_attach_sub(struct module_qstate* qstate, struct query_info* qinfo,
 	uint16_t qflags, int prime, int valrec, struct module_qstate** newq);
 
 /**
+ * Add detached query.
+ * Creates it if it does not exist already.
+ * Does not make super/sub references.
+ * Performs a cycle detection - for double check - and fails if there is one.
+ * Updates stat items in mesh_area structure.
+ * Pass if it is priming query or not.
+ * return:
+ * 	o if error (malloc) happened.
+ * 	o need to initialise the new state (module init; it is a new state).
+ * 	  so that the next run of the query with this module is successful.
+ * 	o no init needed, attachment successful.
+ * 	o added subquery, created if it did not exist already.
+ *
+ * @param qstate: the state to find mesh state, and that wants to receive
+ * 	the results from the new subquery.
+ * @param qinfo: what to query for (copied).
+ * @param qflags: what flags to use (RD / CD flag or not).
+ * @param prime: if it is a (stub) priming query.
+ * @param valrec: if it is a validation recursion query (lookup of key, DS).
+ * @param newq: If the new subquery needs initialisation, it is returned,
+ * 	otherwise NULL is returned.
+ * @param sub: The added mesh state, created if it did not exist already.
+ * @return: false on error, true if success (and init may be needed).
+ */
+int mesh_add_sub(struct module_qstate* qstate, struct query_info* qinfo,
+        uint16_t qflags, int prime, int valrec, struct module_qstate** newq,
+	struct mesh_state** sub);
+
+/**
  * Query state is done, send messages to reply entries.
  * Encode messages using reply entry values and the querystate (with original
  * qinfo), using given reply_info.
@@ -409,14 +443,16 @@ void mesh_state_delete(struct module_qstate* qstate);
  * Does not put the mesh state into rbtrees and so on.
  * @param env: module environment to set.
  * @param qinfo: query info that the mesh is for.
+ * @param cinfo: control info for the query client (can be NULL).
  * @param qflags: flags for query (RD / CD flag).
  * @param prime: if true, it is a priming query, set is_priming on mesh state.
  * @param valrec: if true, it is a validation recursion query, and sets
  * 	is_valrec on the mesh state.
  * @return: new mesh state or NULL on allocation error.
  */
-struct mesh_state* mesh_state_create(struct module_env* env, 
-	struct query_info* qinfo, uint16_t qflags, int prime, int valrec);
+struct mesh_state* mesh_state_create(struct module_env* env,
+	struct query_info* qinfo, struct respip_client_info* cinfo,
+	uint16_t qflags, int prime, int valrec);
 
 /**
  * Check if the mesh state is unique.
@@ -451,14 +487,17 @@ void mesh_delete_all(struct mesh_area* mesh);
  * Find a mesh state in the mesh area. Pass relevant flags.
  *
  * @param mesh: the mesh area to look in.
+ * @param cinfo: if non-NULL client specific info that may affect IP-based
+ * 	actions that apply to the query result.
  * @param qinfo: what query
  * @param qflags: if RD / CD bit is set or not.
  * @param prime: if it is a priming query.
  * @param valrec: if it is a validation-recursion query.
  * @return: mesh state or NULL if not found.
  */
-struct mesh_state* mesh_area_find(struct mesh_area* mesh, 
-	struct query_info* qinfo, uint16_t qflags, int prime, int valrec);
+struct mesh_state* mesh_area_find(struct mesh_area* mesh,
+	struct respip_client_info* cinfo, struct query_info* qinfo,
+	uint16_t qflags, int prime, int valrec);
 
 /**
  * Setup attachment super/sub relation between super and sub mesh state.

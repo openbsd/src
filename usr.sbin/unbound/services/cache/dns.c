@@ -41,6 +41,7 @@
 #include "config.h"
 #include "iterator/iter_delegpt.h"
 #include "validator/val_nsec.h"
+#include "validator/val_utils.h"
 #include "services/cache/dns.h"
 #include "services/cache/rrset.h"
 #include "util/data/msgreply.h"
@@ -182,7 +183,7 @@ addr_to_additional(struct ub_packed_rrset_key* rrset, struct regional* region,
 }
 
 /** lookup message in message cache */
-static struct msgreply_entry* 
+struct msgreply_entry* 
 msg_cache_lookup(struct module_env* env, uint8_t* qname, size_t qnamelen, 
 	uint16_t qtype, uint16_t qclass, uint16_t flags, time_t now, int wr)
 {
@@ -479,8 +480,7 @@ gen_dns_msg(struct regional* region, struct query_info* q, size_t num)
 	return msg;
 }
 
-/** generate dns_msg from cached message */
-static struct dns_msg*
+struct dns_msg*
 tomsg(struct module_env* env, struct query_info* q, struct reply_info* r, 
 	struct regional* region, time_t now, struct regional* scratch)
 {
@@ -525,8 +525,11 @@ tomsg(struct module_env* env, struct query_info* q, struct reply_info* r,
 			return NULL;
 		}
 	}
-	rrset_array_unlock_touch(env->rrset_cache, scratch, r->ref, 
+	if(env)
+		rrset_array_unlock_touch(env->rrset_cache, scratch, r->ref, 
 		r->rrset_count);
+	else
+		rrset_array_unlock(r->ref, r->rrset_count);
 	return msg;
 }
 
@@ -753,10 +756,16 @@ dns_cache_lookup(struct module_env* env,
 	if( qtype != LDNS_RR_TYPE_DS &&
 	   (rrset=rrset_cache_lookup(env->rrset_cache, qname, qnamelen, 
 		LDNS_RR_TYPE_CNAME, qclass, 0, now, 0))) {
-		struct dns_msg* msg = rrset_msg(rrset, region, now, &k);
-		if(msg) {
-			lock_rw_unlock(&rrset->entry.lock);
-			return msg;
+		uint8_t* wc = NULL;
+		/* if the rrset is not a wildcard expansion, with wcname */
+		/* because, if we return that CNAME rrset on its own, it is
+		 * missing the NSEC or NSEC3 proof */
+		if(!(val_rrset_wildcard(rrset, &wc) && wc != NULL)) {
+			struct dns_msg* msg = rrset_msg(rrset, region, now, &k);
+			if(msg) {
+				lock_rw_unlock(&rrset->entry.lock);
+				return msg;
+			}
 		}
 		lock_rw_unlock(&rrset->entry.lock);
 	}

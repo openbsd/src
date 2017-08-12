@@ -1,7 +1,7 @@
 #
 # Example configuration file.
 #
-# See unbound.conf(5) man page, version 1.6.1.
+# See unbound.conf(5) man page, version 1.6.4.
 #
 # this is a comment.
 
@@ -18,6 +18,14 @@ server:
 	# print statistics to the log (for every thread) every N seconds.
 	# Set to "" or 0 to disable. Default is disabled.
 	# statistics-interval: 0
+
+	# enable shm for stats, default no.  if you enable also enable
+	# statistics-interval, every time it also writes stats to the
+	# shared memory segment keyed with shm-key.
+	# shm-enable: no
+
+	# shm for stats uses this key, and key+1 for the shared mem segment.
+	# shm-key: 11777
 
 	# enable cumulative statistics, without clearing them after printing.
 	# statistics-cumulative: no
@@ -308,6 +316,9 @@ server:
 
 	# enable to not answer version.server and version.bind queries.
 	# hide-version: no
+	
+	# enable to not answer trustanchor.unbound queries.
+	# hide-trustanchor: no
 
 	# the identity to report. Leave "" or default to return hostname.
 	# identity: ""
@@ -436,6 +447,9 @@ server:
 	# Please note usage of unbound-anchor root anchor is at your own risk
 	# and under the terms of our LICENSE (see that file in the source).
 	# auto-trust-anchor-file: "@UNBOUND_ROOTKEY_FILE@"
+
+	# trust anchor signaling sends a RFC8145 key tag query after priming.
+	# trust-anchor-signaling: no
 
 	# File with DLV trusted keys. Same format as trust-anchor-file.
 	# There can be only one DLV configured, it is trusted from root down.
@@ -687,6 +701,34 @@ server:
 	# 0 blocks when ip is ratelimited, otherwise let 1/xth traffic through
 	# ip-ratelimit-factor: 10
 
+	# Specific options for ipsecmod. unbound needs to be configured with
+	# --enable-ipsecmod for these to take effect.
+	#
+	# Enable or disable ipsecmod (it still needs to be defined in
+	# module-config above). Can be used when ipsecmod needs to be
+	# enabled/disabled via remote-control(below).
+	# ipsecmod-enabled: yes
+	#
+	# Path to executable external hook. It must be defined when ipsecmod is
+	# listed in module-config (above).
+	# ipsecmod-hook: "./my_executable"
+	#
+	# When enabled unbound will reply with SERVFAIL if the return value of
+	# the ipsecmod-hook is not 0.
+	# ipsecmod-strict: no
+	#
+	# Maximum time to live (TTL) for cached A/AAAA records with IPSECKEY.
+	# ipsecmod-max-ttl: 3600
+	#
+	# Reply with A/AAAA even if the relevant IPSECKEY is bogus. Mainly used for
+	# testing.
+	# ipsecmod-ignore-bogus: no
+	#
+	# Domains for which ipsecmod will be triggered. If not defined (default)
+	# all domains are treated as being whitelisted.
+	# ipsecmod-whitelist: "example.com"
+	# ipsecmod-whitelist: "nlnetlabs.nl"
+
 
 # Python config section. To enable:
 # o use --with-pythonmodule to configure before compiling.
@@ -771,7 +813,28 @@ remote-control:
 #	name: "viewname"
 #	local-zone: "example.com" redirect
 #	local-data: "example.com A 192.0.2.3"
+# 	local-data-ptr: "192.0.2.3 www.example.com"
 #	view-first: no
 # view:
 #	name: "anotherview"
 #	local-zone: "example.com" refuse
+
+# DNSCrypt
+# Caveats:
+# 1. the keys/certs cannot be produced by unbound. You can use dnscrypt-wrapper
+#   for this: https://github.com/cofyc/dnscrypt-wrapper/blob/master/README.md#usage
+# 2. dnscrypt channel attaches to an interface. you MUST set interfaces to
+#   listen on `dnscrypt-port` with the follo0wing snippet:
+# server:
+#     interface: 0.0.0.0@443
+#     interface: ::0@443
+#
+# Finally, `dnscrypt` config has its own section.
+# dnscrypt:
+#     dnscrypt-enable: yes
+#     dnscrypt-port: 443
+#     dnscrypt-provider: 2.dnscrypt-cert.example.com.
+#     dnscrypt-secret-key: /path/unbound-conf/keys1/1.key
+#     dnscrypt-secret-key: /path/unbound-conf/keys2/1.key
+#     dnscrypt-provider-cert: /path/unbound-conf/keys1/1.cert
+#     dnscrypt-provider-cert: /path/unbound-conf/keys2/1.cert

@@ -54,6 +54,7 @@
 #include "util/net_help.h"
 #include "util/module.h"
 #include "util/regional.h"
+#include "util/config_file.h"
 #include "sldns/wire2str.h"
 #include "sldns/parseutil.h"
 
@@ -495,16 +496,21 @@ val_verify_DNSKEY_with_DS(struct module_env* env, struct val_env* ve,
 		return sec_status_bogus;
 	}
 
-	digest_algo = val_favorite_ds_algo(ds_rrset);
-	if(sigalg)
+	if(sigalg) {
+		/* harden against algo downgrade is enabled */
+		digest_algo = val_favorite_ds_algo(ds_rrset);
 		algo_needs_init_ds(&needs, ds_rrset, digest_algo, sigalg);
+	} else {
+		/* accept any key algo, any digest algo */
+		digest_algo = -1;
+	}
 	num = rrset_get_count(ds_rrset);
 	for(i=0; i<num; i++) {
 		/* Check to see if we can understand this DS. 
 		 * And check it is the strongest digest */
 		if(!ds_digest_algo_is_supported(ds_rrset, i) ||
 			!ds_key_algo_is_supported(ds_rrset, i) ||
-			ds_get_digest_algo(ds_rrset, i) != digest_algo) {
+			(sigalg && (ds_get_digest_algo(ds_rrset, i) != digest_algo))) {
 			continue;
 		}
 
@@ -909,7 +915,7 @@ void val_reply_remove_auth(struct reply_info* rep, size_t index)
 }
 
 void
-val_check_nonsecure(struct val_env* ve, struct reply_info* rep) 
+val_check_nonsecure(struct module_env* env, struct reply_info* rep) 
 {
 	size_t i;
 	/* authority */
@@ -950,7 +956,7 @@ val_check_nonsecure(struct val_env* ve, struct reply_info* rep)
 		}
 	}
 	/* additional */
-	if(!ve->clean_additional)
+	if(!env->cfg->val_clean_additional)
 		return;
 	for(i=rep->an_numrrsets+rep->ns_numrrsets; i<rep->rrset_count; i++) {
 		if(((struct packed_rrset_data*)rep->rrsets[i]->entry.data)

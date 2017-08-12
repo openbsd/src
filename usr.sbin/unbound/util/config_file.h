@@ -172,6 +172,20 @@ struct config_file {
 	struct config_view* views;
 	/** list of donotquery addresses, linked list */
 	struct config_strlist* donotqueryaddrs;
+#ifdef CLIENT_SUBNET
+	/** list of servers we send edns-client-subnet option to and 
+	 * accept option from, linked list */
+	struct config_strlist* client_subnet;
+	/** list of zones we send edns-client-subnet option for */
+	struct config_strlist* client_subnet_zone;
+	/** opcode assigned by IANA for edns0-client-subnet option */
+	uint16_t client_subnet_opcode;
+	/** Do not check whitelist if incoming query contains an ECS record */
+	int client_subnet_always_forward;
+	/** Subnet length we are willing to give up privacy for */
+	uint8_t max_client_subnet_ipv4;
+	uint8_t max_client_subnet_ipv6;
+#endif
 	/** list of access control entries, linked list */
 	struct config_str2list* acls;
 	/** use default localhost donotqueryaddr entries */
@@ -238,6 +252,8 @@ struct config_file {
 	int hide_identity;
 	/** do not report version (version.server, version.bind) */
 	int hide_version;
+	/** do not report trustanchor (trustanchor.unbound) */
+	int hide_trustanchor;
 	/** identity, hostname is returned if "". */
 	char* identity;
 	/** version, package version returned if "". */
@@ -260,6 +276,8 @@ struct config_file {
 	struct config_strlist* dlv_anchor_list;
 	/** insecure domain list */
 	struct config_strlist* domain_insecure;
+	/** send key tag query */
+	int trust_anchor_signaling;
 
 	/** if not 0, this value is the validation date for RRSIGs */
 	int32_t val_date_override;
@@ -303,6 +321,8 @@ struct config_file {
 	struct config_str2list* local_zones;
 	/** local zones nodefault list */
 	struct config_strlist* local_zones_nodefault;
+	/** do not add any default local zone */
+	int local_zones_disable_default;
 	/** local data RRs configured */
 	struct config_strlist* local_data;
 	/** local zone override types per netblock */
@@ -321,6 +341,12 @@ struct config_file {
 	struct config_str3list* acl_tag_datas;
 	/** list of aclname, view*/
 	struct config_str2list* acl_view;
+	/** list of IP-netblock, tagbitlist */
+	struct config_strbytelist* respip_tags;
+	/** list of response-driven access control entries, linked list */
+	struct config_str2list* respip_actions;
+	/** RRs configured for response-driven access controls */
+	struct config_str2list* respip_data;
 	/** tag list, array with tagname[i] is malloced string */
 	char** tagname;
 	/** number of items in the taglist */
@@ -422,6 +448,38 @@ struct config_file {
 	/** minimise QNAME in strict mode, minimise according to RFC.
 	 *  Do not apply fallback */
 	int qname_minimisation_strict;
+	/** SHM data - true if shm is enabled */
+	int shm_enable;
+	/** SHM data - key for the shm */
+	int shm_key;
+
+	/** DNSCrypt */
+	/** true to enable dnscrypt */
+	int dnscrypt;
+	/** port on which to provide dnscrypt service */
+	int dnscrypt_port;
+	/** provider name 2.dnscrypt-cert.example.com */
+	char* dnscrypt_provider;
+	/** dnscrypt secret keys 1.key */
+	struct config_strlist* dnscrypt_secret_key;
+	/** dnscrypt provider certs 1.cert */
+	struct config_strlist* dnscrypt_provider_cert;
+
+	/** IPsec module */
+#ifdef USE_IPSECMOD
+	/** false to bypass the IPsec module */
+	int ipsecmod_enabled;
+	/** whitelisted domains for ipsecmod */
+	struct config_strlist* ipsecmod_whitelist;
+	/** path to external hook */
+	char* ipsecmod_hook;
+	/** true to proceed even with a bogus IPSECKEY */
+	int ipsecmod_ignore_bogus;
+	/** max TTL for the A/AAAA records that call the hook */
+	int ipsecmod_max_ttl;
+	/** false to proceed even when ipsecmod_hook fails */
+	int ipsecmod_strict;
+#endif
 };
 
 /** from cfg username, after daemonise setup performed */
@@ -447,7 +505,7 @@ struct config_stub {
 	int isprime;
 	/** if forward-first is set (failover to without if fails) */
 	int isfirst;
-	/* use SSL for queries to this stub */
+	/** use SSL for queries to this stub */
 	int ssl_upstream;
 };
 
@@ -468,6 +526,10 @@ struct config_view {
 	/** Fallback to global local_zones when there is no match in the view
 	 * view specific tree. 1 for yes, 0 for no */	
 	int isfirst;
+	/** predefined actions for particular IP address responses */
+	struct config_str2list* respip_actions;
+	/** data complementing the 'redirect' response IP actions */
+	struct config_str2list* respip_data;
 };
 
 /**
@@ -964,6 +1026,6 @@ void w_config_adjust_directory(struct config_file* cfg);
 #endif /* UB_ON_WINDOWS */
 
 /** debug option for unit tests. */
-extern int fake_dsa;
+extern int fake_dsa, fake_sha1;
 
 #endif /* UTIL_CONFIG_FILE_H */
