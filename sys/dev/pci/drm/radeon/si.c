@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.22 2015/04/06 14:10:59 jsg Exp $	*/
+/*	$OpenBSD: si.c,v 1.23 2017/08/12 14:29:11 mpi Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -385,7 +385,7 @@ out:
 			rdev->pfp_fw = NULL;
 		}
 		if (rdev->me_fw) {
-			free(rdev->pfp_fw, M_DEVBUF, 0);
+			free(rdev->me_fw, M_DEVBUF, 0);
 			rdev->me_fw = NULL;
 		}
 		if (rdev->ce_fw) {
