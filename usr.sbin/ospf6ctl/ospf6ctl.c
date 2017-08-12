@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.45 2017/06/19 19:55:57 friehm Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.46 2017/08/12 22:09:54 benno Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -584,6 +584,9 @@ show_database_head(struct in_addr aid, char *ifname, u_int16_t type)
 	} else if (LSA_IS_SCOPE_LLOCAL(ntohs(type))) {
 		if (asprintf(&header, "%s (Area %s Interface %s)", format,
 		    inet_ntoa(aid), ifname) == -1)
+			err(1, NULL);
+	} else {
+		if (asprintf(&header, "%s", format) == -1)
 			err(1, NULL);
 	}
 
