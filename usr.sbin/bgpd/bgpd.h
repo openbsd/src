@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.313 2017/08/11 16:02:53 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.314 2017/08/12 16:47:50 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -741,6 +741,8 @@ struct filter_peers {
 	u_int32_t	groupid;
 	u_int32_t	remote_as;
 	u_int16_t	ribid;
+	u_int8_t	ebgp;
+	u_int8_t	ibgp;
 };
 
 /* special community type */

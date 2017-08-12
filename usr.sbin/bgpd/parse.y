@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.313 2017/08/11 16:02:53 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.314 2017/08/12 16:47:50 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -188,6 +188,7 @@ typedef struct {
 %token	RDOMAIN RD EXPORTTRGT IMPORTTRGT
 %token	RDE RIB EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
+%token	EBGP IBGP
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
 %token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY
 %token	DEMOTE ENFORCE NEIGHBORAS REFLECTOR DEPEND DOWN
@@ -1637,6 +1638,18 @@ filter_peer	: ANY		{
 			}
 			free($2);
 		}
+		| EBGP {
+			if (($$ = calloc(1, sizeof(struct filter_peers_l))) ==
+			    NULL)
+				fatal(NULL);
+			$$->p.ebgp = 1;
+		}
+		| IBGP {
+			if (($$ = calloc(1, sizeof(struct filter_peers_l))) ==
+			    NULL)
+				fatal(NULL);
+			$$->p.ibgp = 1;
+		}
 		;
 
 filter_prefix_h	: IPV4 prefixlenop			 {
@@ -2366,6 +2379,7 @@ lookup(char *s)
 		{ "descr",		DESCR},
 		{ "down",		DOWN},
 		{ "dump",		DUMP},
+		{ "ebgp",		EBGP},
 		{ "enforce",		ENFORCE},
 		{ "esp",		ESP},
 		{ "evaluate",		EVALUATE},
@@ -2376,6 +2390,7 @@ lookup(char *s)
 		{ "from",		FROM},
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
+		{ "ibgp",		IBGP},
 		{ "ignore",		IGNORE},
 		{ "ike",		IKE},
 		{ "import-target",	IMPORTTRGT},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.82 2017/05/27 10:33:15 phessler Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.83 2017/08/12 16:47:50 phessler Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -347,6 +347,11 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 			return (0);
 	}
 
+	if (asp != NULL && f->peer.ebgp && !peer->conf.ebgp)
+			return (0);
+	if (asp != NULL && f->peer.ibgp && peer->conf.ebgp)
+			return (0);
+
 	if (asp != NULL && f->match.aslen.type != ASLEN_NONE)
 		if (aspath_lenmatch(asp->aspath, f->match.aslen.type,
 		    f->match.aslen.aslen) == 0)
@@ -539,6 +544,18 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 
 		if (peer != NULL && fa != NULL && fa->peer.remote_as != 0 &&
 		    fa->peer.remote_as != peer->conf.remote_as) {
+			fa = TAILQ_NEXT(fa, entry);
+			continue;
+		}
+
+		if (peer != NULL && fa != NULL && fa->peer.ebgp != 0 &&
+		    fa->peer.ebgp != peer->conf.ebgp) {
+			fa = TAILQ_NEXT(fa, entry);
+			continue;
+		}
+
+		if (peer != NULL && fa != NULL && fa->peer.ibgp != 0 &&
+		    fa->peer.ibgp != !peer->conf.ebgp) {
 			fa = TAILQ_NEXT(fa, entry);
 			continue;
 		}
