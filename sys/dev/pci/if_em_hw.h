@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.69 2017/03/19 11:09:26 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.70 2017/08/12 16:40:54 sf Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -1004,6 +1004,7 @@ struct em_ffvt_entry {
 #define E1000_MDICNFG  0x00E04  /* MDI Config - RW */
 #define E1000_SCTL     0x00024  /* SerDes Control - RW */
 #define E1000_FEXTNVM  0x00028  /* Future Extended NVM register */
+#define E1000_FEXTNVM3 0x0003C  /* Future Extended NVM 3 - RW */
 #define E1000_FEXTNVM4 0x00024  /* Future Extended NVM 4 - RW */
 #define E1000_FEXTNVM6 0x00010  /* Future Extended NVM 6 - RW */
 #define E1000_FCAL     0x00028  /* Flow Control Address Low - RW */
@@ -1198,6 +1199,7 @@ struct em_ffvt_entry {
 #define E1000_GSCL_4    0x05B1C /* PCI-Ex Statistic Control #4 */
 #define E1000_FACTPS    0x05B30 /* Function Active and Power State to MNG */
 #define E1000_SWSM      0x05B50 /* SW Semaphore */
+#define E1000_H2ME      E1000_SWSM /* Host to ME */
 #define E1000_FWSM      0x05B54 /* FW Semaphore */
 #define E1000_FFLT_DBG  0x05F04 /* Debug Register */
 #define E1000_HICR      0x08F00 /* Host Interface Control */
@@ -1234,8 +1236,10 @@ struct em_ffvt_entry {
 #define E1000_82542_MDIC     E1000_MDIC
 #define E1000_82542_SCTL     E1000_SCTL
 #define E1000_82542_FEXTNVM  E1000_FEXTNVM
+#define E1000_82542_FEXTNVM3 E1000_FEXTNVM3
 #define E1000_82542_FEXTNVM4 E1000_FEXTNVM4
 #define E1000_82542_FEXTNVM6 E1000_FEXTNVM6
+#define E1000_82542_FEXTNVM7 E1000_FEXTNVM7
 #define E1000_82542_FCAL     E1000_FCAL
 #define E1000_82542_FCAH     E1000_FCAH
 #define E1000_82542_FCT      E1000_FCT
@@ -1420,6 +1424,7 @@ struct em_ffvt_entry {
 #define E1000_82542_GSCL_4      E1000_GSCL_4
 #define E1000_82542_FACTPS      E1000_FACTPS
 #define E1000_82542_SWSM        E1000_SWSM
+#define E1000_82542_H2ME        E1000_H2ME
 #define E1000_82542_FWSM        E1000_FWSM
 #define E1000_82542_FFLT_DBG    E1000_FFLT_DBG
 #define E1000_82542_IAC         E1000_IAC
@@ -1444,6 +1449,9 @@ struct em_ffvt_entry {
 #define E1000_82542_RSSIR       E1000_RSSIR
 #define E1000_82542_KUMCTRLSTA E1000_KUMCTRLSTA
 #define E1000_82542_SW_FW_SYNC E1000_SW_FW_SYNC
+
+#define E1000_FEXTNVM3_PHY_CFG_COUNTER_MASK    0x0C000000
+#define E1000_FEXTNVM3_PHY_CFG_COUNTER_50MSEC  0x08000000
 
 #define E1000_FEXTNVM4_BEACON_DURATION_MASK    0x7
 #define E1000_FEXTNVM4_BEACON_DURATION_8USEC   0x7
@@ -1648,7 +1656,9 @@ struct em_hw {
 #define E1000_CTRL_FORCE_PHY_RESET 0x00008000 /* Reset both PHY ports, through PHYRST_N pin */
 #define E1000_CTRL_LANPHYPC_OVERRIDE 0x00010000 /* SW control of LANPHYPC */
 #define E1000_CTRL_LANPHYPC_VALUE    0x00020000 /* SW value of LANPHYPC */
-#define E1000_CTRL_EXT_PHYPDEN 0x00100000
+#define E1000_CTRL_EXT_FORCE_SMBUS   0x00000800 /* Force SMBus mode */
+#define E1000_CTRL_EXT_PHYPDEN       0x00100000
+
 #define E1000_CTRL_SWDPIN0  0x00040000  /* SWDPIN 0 value */
 #define E1000_CTRL_SWDPIN1  0x00080000  /* SWDPIN 1 value */
 #define E1000_CTRL_SWDPIN2  0x00100000  /* SWDPIN 2 value */
@@ -1780,6 +1790,7 @@ struct em_hw {
 #define E1000_CTRL_EXT_GPI1_EN   0x00000002 /* Maps SDP5 to GPI1 */
 #define E1000_CTRL_EXT_PHYINT_EN E1000_CTRL_EXT_GPI1_EN
 #define E1000_CTRL_EXT_GPI2_EN   0x00000004 /* Maps SDP6 to GPI2 */
+#define E1000_CTRL_EXT_LPCD      0x00000004 /* LCD Power Cycle Done */
 #define E1000_CTRL_EXT_GPI3_EN   0x00000008 /* Maps SDP7 to GPI3 */
 #define E1000_CTRL_EXT_SDP4_DATA 0x00000010 /* Value of SW Defineable Pin 4 */
 #define E1000_CTRL_EXT_SDP5_DATA 0x00000020 /* Value of SW Defineable Pin 5 */
@@ -2315,10 +2326,14 @@ struct em_hw {
 #define E1000_SWSM_SWESMBI      0x00000002 /* FW Semaphore bit */
 #define E1000_SWSM_WMNG         0x00000004 /* Wake MNG Clock */
 #define E1000_SWSM_DRV_LOAD     0x00000008 /* Driver Loaded Bit */
+/* Host to ME */
+#define E1000_H2ME_ULP              0x00000800 /* ULP Indication Bit */
+#define E1000_H2ME_ENFORCE_SETTINGS 0x00001000 /* Enforce Settings */
 
 /* FW Semaphore Register */
 #define E1000_FWSM_MODE_MASK    0x0000000E /* FW mode */
 #define E1000_FWSM_MODE_SHIFT            1
+#define E1000_FWSM_ULP_CFG_DONE 0x00000400 /* Low power cfg done */
 #define E1000_FWSM_FW_VALID     0x00008000 /* FW established a valid mode */
 
 #define E1000_FWSM_RSPCIPHY        0x00000040 /* Reset PHY on PCI reset */
@@ -3707,6 +3722,24 @@ union ich8_hws_flash_regacc {
 #define E1000_EXTCNF_CTRL_EXT_CNF_POINTER_MASK   0x0FFF0000
 #define E1000_EXTCNF_CTRL_EXT_CNF_POINTER_SHIFT          16
 
+/* SMBus Control Phy Register */
+#define CV_SMB_CTRL             PHY_REG(769, 23)
+#define CV_SMB_CTRL_FORCE_SMBUS 0x0001
+
+/* I218 Ultra Low Power Configuration 1 Register */
+#define I218_ULP_CONFIG1                PHY_REG(779, 16)
+#define I218_ULP_CONFIG1_START          0x0001 /* Start auto ULP config */
+#define I218_ULP_CONFIG1_IND            0x0004 /* Pwr up from ULP indication */
+#define I218_ULP_CONFIG1_STICKY_ULP     0x0010 /* Set sticky ULP mode */
+#define I218_ULP_CONFIG1_INBAND_EXIT    0x0020 /* Inband on ULP exit */
+#define I218_ULP_CONFIG1_WOL_HOST       0x0040 /* WoL Host on ULP exit */
+#define I218_ULP_CONFIG1_RESET_TO_SMBUS 0x0100 /* Reset to SMBus mode */
+/* enable ULP even if when phy powered down via lanphypc */
+#define I218_ULP_CONFIG1_EN_ULP_LANPHYPC        0x0400
+/* disable clear of sticky ULP on PERST */
+#define I218_ULP_CONFIG1_DIS_CLR_STICKY_ON_PERST        0x0800
+#define I218_ULP_CONFIG1_DISABLE_SMB_PERST      0x1000 /* Disable on PERST# */
+
 /* Hanksville definitions */
 #define HV_INTC_FC_PAGE_START   768
 
@@ -3738,6 +3771,11 @@ union ich8_hws_flash_regacc {
 #define HV_KMRN_MODE_CTRL	PHY_REG(769, 16)
 #define HV_KMRN_MDIO_SLOW	0x0400
 
+/* PHY Power Management Control */
+#define HV_PM_CTRL              PHY_REG(770, 17)
+#define HV_PM_CTRL_K1_CLK_REQ           0x200
+#define HV_PM_CTRL_K1_ENABLE            0x4000
+
 /* I217 definitions */
 #define I2_DFT_CTRL		PHY_REG(769, 20)
 #define I2_SMBUS_CTRL		PHY_REG(769, 23)
@@ -3747,6 +3785,7 @@ union ich8_hws_flash_regacc {
 /* FEXTNVM registers */
 #define E1000_FEXTNVM7                          0xe4UL
 #define E1000_FEXTNVM7_SIDE_CLK_UNGATE          0x04UL
+#define E1000_FEXTNVM7_DISABLE_SMB_PERST        0x00000020
 #define E1000_FEXTNVM9                          0x5bb4UL
 #define E1000_FEXTNVM9_IOSFSB_CLKGATE_DIS       0x0800UL
 #define E1000_FEXTNVM9_IOSFSB_CLKREQ_DIS        0x1000UL
