@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.92 2017/07/03 09:21:09 kevlo Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.93 2017/08/12 14:09:46 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -2938,6 +2938,7 @@ rt2661_prepare_beacon(struct rt2661_softc *sc)
 	/* send beacons at the lowest available rate */
 	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
 
+	memset(&desc, 0, sizeof(desc));
 	rt2661_setup_tx_desc(sc, &desc, RT2661_TX_TIMESTAMP, RT2661_TX_HWSEQ,
 	    m0->m_pkthdr.len, rate, NULL, 0, RT2661_QID_MGT,
 	    RT2661_AMRR_INVALID_ID);
