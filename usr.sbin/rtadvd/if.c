@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.45 2017/08/10 19:07:14 jca Exp $	*/
+/*	$OpenBSD: if.c,v 1.46 2017/08/12 07:38:26 florian Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -65,6 +65,8 @@ static void get_iflist(char **buf, size_t *size);
 static void parse_iflist(struct if_msghdr ***ifmlist_p, char *buf,
     size_t bufsize);
 
+extern int ioctl_sock;
+
 static void
 get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 {
@@ -111,23 +113,18 @@ if_nametosdl(char *name)
 int
 if_getmtu(char *name)
 {
-	int		s, save_errno;
 	struct ifreq	ifr;
 	u_long		mtu = 0;
 
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) >= 0) {
-		memset(&ifr, 0, sizeof(ifr));
-		ifr.ifr_addr.sa_family = AF_INET6;
-		if (strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name)) >=
-		    sizeof(ifr.ifr_name))
-			fatalx("strlcpy");
-		if (ioctl(s, SIOCGIFMTU, (char *)&ifr) >= 0)
-			mtu = ifr.ifr_mtu;
-		save_errno = errno;
-		close(s);
-		errno = save_errno;
-	}
-
+	memset(&ifr, 0, sizeof(ifr));
+	ifr.ifr_addr.sa_family = AF_INET6;
+	if (strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name)) >=
+	    sizeof(ifr.ifr_name))
+		fatalx("strlcpy");
+	if (ioctl(ioctl_sock, SIOCGIFMTU, (char *)&ifr) >= 0)
+		mtu = ifr.ifr_mtu;
+	else
+		log_warn("s: %d", ioctl_sock);
 	return (mtu);
 }
 
@@ -136,20 +133,12 @@ int
 if_getflags(int ifindex, int oifflags)
 {
 	struct ifreq ifr;
-	int s;
-
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-		log_warn("socket");
-		return (oifflags & ~IFF_UP);
-	}
 
 	if_indextoname(ifindex, ifr.ifr_name);
-	if (ioctl(s, SIOCGIFFLAGS, (char *)&ifr) < 0) {
+	if (ioctl(ioctl_sock, SIOCGIFFLAGS, (char *)&ifr) < 0) {
 		log_warn("ioctl:SIOCGIFFLAGS: failed for %s", ifr.ifr_name);
-		close(s);
 		return (oifflags & ~IFF_UP);
 	}
-	close(s);
 	return (ifr.ifr_flags);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.88 2017/08/10 19:07:14 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.89 2017/08/12 07:38:26 florian Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ struct sockaddr_in6 from;
 struct sockaddr_in6 sin6_allnodes = {sizeof(sin6_allnodes), AF_INET6};
 int sock;
 int rtsock = -1;
+int ioctl_sock;
 int dflag = 0, sflag = 0;
 
 u_char *conffile = NULL;
@@ -203,6 +204,9 @@ main(int argc, char *argv[])
 
 	if (conffile == NULL)
 		log_init(dflag);
+
+	if ((ioctl_sock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+		fatal("socket");
 
 	while (argc--)
 		getconfig(*argv++);
