@@ -2,6 +2,9 @@
 ./usr/bin/c++
 ./usr/bin/c++filt
 ./usr/bin/cpp
+./usr/bin/ctfconv
+./usr/bin/ctfdump
+./usr/bin/ctfstrip
 ./usr/bin/flex
 ./usr/bin/flex++
 ./usr/bin/gprof
@@ -1496,6 +1499,9 @@
 ./usr/share/man/man1/ar.1
 ./usr/share/man/man1/c++filt.1
 ./usr/share/man/man1/clang-local.1
+./usr/share/man/man1/ctfconv.1
+./usr/share/man/man1/ctfdump.1
+./usr/share/man/man1/ctfstrip.1
 ./usr/share/man/man1/flex.1
 ./usr/share/man/man1/gcc-local.1
 ./usr/share/man/man1/gprof.1
