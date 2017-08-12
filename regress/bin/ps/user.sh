@@ -29,10 +29,10 @@ test_ps()
 
 ./shortsleep &
 pid=$!
-login=`id -un | cut -c -32`
+login=`id -p | awk '$1=="login"{l=$2} $1=="uid"&&l==""{l=$2} END{print substr(l,1,32)}'`
 uname=`id -un | cut -c -8`
 gname=`id -gn | cut -c -8`
-lpad=`printf '%-32s' $uname`
+lpad=`printf '%-32s' $login`
 upad=`printf '%-8s' $uname`
 gpad=`printf '%-8s' $gname`
 
