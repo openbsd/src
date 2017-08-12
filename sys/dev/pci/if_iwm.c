@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.207 2017/08/12 19:23:42 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.208 2017/08/12 22:05:20 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3392,11 +3392,11 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	if (iwm_rx_addbuf(sc, IWM_RBUF_SIZE, sc->rxq.cur) != 0)
 		return;
 
-	ni = ieee80211_find_rxnode(ic, wh);
-
-	chanidx = phy_info->channel;
+	chanidx = letoh32(phy_info->channel);
 	if (chanidx < 0 || chanidx >= nitems(ic->ic_channels))	
-		chanidx = ieee80211_chan2ieee(ic, ni->ni_chan);
+		chanidx = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
+	ni = ieee80211_find_rxnode(ic, wh);
+	ni->ni_chan = &ic->ic_channels[chanidx];
 
 	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = rssi;
