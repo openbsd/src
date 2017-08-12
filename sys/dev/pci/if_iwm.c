@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.204 2017/07/23 13:51:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.205 2017/08/12 14:07:33 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3340,7 +3340,6 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
-	struct ieee80211_channel *c = NULL;
 	struct ieee80211_rxinfo rxi;
 	struct mbuf *m;
 	struct iwm_rx_phy_info *phy_info;
@@ -3348,7 +3347,7 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	int device_timestamp;
 	uint32_t len;
 	uint32_t rx_pkt_status;
-	int rssi;
+	int rssi, chanidx;
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, IWM_RBUF_SIZE,
 	    BUS_DMASYNC_POSTREAD);
@@ -3393,15 +3392,15 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	if (iwm_rx_addbuf(sc, IWM_RBUF_SIZE, sc->rxq.cur) != 0)
 		return;
 
-	if (le32toh(phy_info->channel) < nitems(ic->ic_channels))
-		c = &ic->ic_channels[le32toh(phy_info->channel)];
+	ni = ieee80211_find_rxnode(ic, wh);
+
+	chanidx = phy_info->channel;
+	if (chanidx < 0 || chanidx >= nitems(ic->ic_channels))	
+		chanidx = ieee80211_chan2ieee(ic, ni->ni_chan);
 
 	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = device_timestamp;
-	ni = ieee80211_find_rxnode(ic, wh);
-	if (c)
-		ni->ni_chan = c;
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -3413,8 +3412,8 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 		if (phy_info->phy_flags & htole16(IWM_PHY_INFO_FLAG_SHPREAMBLE))
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 		tap->wr_chan_freq =
-		    htole16(ic->ic_channels[phy_info->channel].ic_freq);
-		chan_flags = ic->ic_channels[phy_info->channel].ic_flags;
+		    htole16(ic->ic_channels[chanidx].ic_freq);
+		chan_flags = ic->ic_channels[chanidx].ic_flags;
 		if (ic->ic_curmode != IEEE80211_MODE_11N)
 			chan_flags &= ~IEEE80211_CHAN_HT;
 		tap->wr_chan_flags = htole16(chan_flags);
