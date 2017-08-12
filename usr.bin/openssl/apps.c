@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.43 2017/04/18 02:15:50 deraadt Exp $ */
+/* $OpenBSD: apps.c,v 1.44 2017/08/12 21:04:33 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2079,7 +2079,8 @@ policies_print(BIO *out, X509_STORE_CTX *ctx)
 		BIO_free(out);
 }
 
-/* next_protos_parse parses a comma separated list of strings into a string
+/*
+ * next_protos_parse parses a comma separated list of strings into a string
  * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
  *   outlen: (output) set to the length of the resulting buffer on success.
  *   err: (maybe NULL) on failure, an error message line is written to this BIO.

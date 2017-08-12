@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.32 2017/04/18 02:15:50 deraadt Exp $ */
+/* $OpenBSD: s_client.c,v 1.33 2017/08/12 21:04:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -243,7 +243,6 @@ sc_usage(void)
 	BIO_printf(bio_err, " -tlsextdebug      - hex dump of all TLS extensions received\n");
 	BIO_printf(bio_err, " -status           - request certificate status from server\n");
 	BIO_printf(bio_err, " -no_ticket        - disable use of RFC4507bis session tickets\n");
-	BIO_printf(bio_err, " -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
 	BIO_printf(bio_err, " -alpn arg         - enable ALPN extension, considering named protocols supported (comma-separated list)\n");
 	BIO_printf(bio_err, " -groups arg       - specify EC curve groups (colon-separated list)\n");
 #ifndef OPENSSL_NO_SRTP
@@ -277,36 +276,6 @@ ssl_servername_cb(SSL * s, int *ad, void *arg)
 #ifndef OPENSSL_NO_SRTP
 char *srtp_profiles = NULL;
 #endif
-
-/* This the context that we pass to next_proto_cb */
-typedef struct tlsextnextprotoctx_st {
-	unsigned char *data;
-	unsigned short len;
-	int status;
-} tlsextnextprotoctx;
-
-static tlsextnextprotoctx next_proto;
-
-static int
-next_proto_cb(SSL * s, unsigned char **out, unsigned char *outlen, const unsigned char *in, unsigned int inlen, void *arg)
-{
-	tlsextnextprotoctx *ctx = arg;
-
-	if (!c_quiet) {
-		/* We can assume that |in| is syntactically valid. */
-		unsigned i;
-		BIO_printf(bio_c_out, "Protocols advertised by server: ");
-		for (i = 0; i < inlen;) {
-			if (i)
-				BIO_write(bio_c_out, ", ", 2);
-			BIO_write(bio_c_out, &in[i + 1], in[i]);
-			i += in[i] + 1;
-		}
-		BIO_write(bio_c_out, "\n", 1);
-	}
-	ctx->status = SSL_select_next_proto(out, outlen, in, inlen, ctx->data, ctx->len);
-	return SSL_TLSEXT_ERR_OK;
-}
 
 enum {
 	PROTO_OFF = 0,
@@ -354,9 +323,7 @@ s_client_main(int argc, char **argv)
 	struct timeval timeout;
 	const char *errstr = NULL;
 	char *servername = NULL;
-	tlsextctx tlsextcbp =
-	{NULL, 0};
-	const char *next_proto_neg_in = NULL;
+	tlsextctx tlsextcbp = {NULL, 0};
 	const char *alpn_in = NULL;
 	const char *groups_in = NULL;
 	char *sess_in = NULL;
@@ -532,9 +499,10 @@ s_client_main(int argc, char **argv)
 		} else if (strcmp(*argv, "-no_ticket") == 0) {
 			off |= SSL_OP_NO_TICKET;
 		} else if (strcmp(*argv, "-nextprotoneg") == 0) {
+			/* Ignored. */
 			if (--argc < 1)
 				goto bad;
-			next_proto_neg_in = *(++argv);
+			++argv;
 		} else if (strcmp(*argv, "-alpn") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -633,16 +601,6 @@ bad:
 		goto end;
 	}
 
-	next_proto.status = -1;
-	if (next_proto_neg_in) {
-		next_proto.data = next_protos_parse(&next_proto.len, next_proto_neg_in);
-		if (next_proto.data == NULL) {
-			BIO_printf(bio_err, "Error parsing -nextprotoneg argument\n");
-			goto end;
-		}
-	} else
-		next_proto.data = NULL;
-
 	if (!app_passwd(bio_err, passarg, NULL, &pass, NULL)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
@@ -704,8 +662,6 @@ bad:
 	if (socket_type == SOCK_DGRAM)
 		SSL_CTX_set_read_ahead(ctx, 1);
 
-	if (next_proto.data)
-		SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
 	if (alpn_in) {
 		unsigned short alpn_len;
 		unsigned char *alpn = next_protos_parse(&alpn_len, alpn_in);
@@ -1256,7 +1212,6 @@ end:
 			print_stuff(bio_c_out, con, 1);
 		SSL_free(con);
 	}
-	free(next_proto.data);
 	if (ctx != NULL)
 		SSL_CTX_free(ctx);
 	if (cert)
@@ -1404,14 +1359,6 @@ print_stuff(BIO * bio, SSL * s, int full)
 	}
 #endif
 
-	if (next_proto.status != -1) {
-		const unsigned char *proto;
-		unsigned int proto_len;
-		SSL_get0_next_proto_negotiated(s, &proto, &proto_len);
-		BIO_printf(bio, "Next protocol: (%d) ", next_proto.status);
-		BIO_write(bio, proto, proto_len);
-		BIO_write(bio, "\n", 1);
-	}
 	{
 		const unsigned char *proto;
 		unsigned int proto_len;
