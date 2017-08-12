@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_config_set_protocols.3,v 1.5 2017/08/11 10:33:31 jmc Exp $
+.\" $OpenBSD: tls_config_set_protocols.3,v 1.6 2017/08/12 04:24:49 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015, 2016 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 11 2017 $
+.Dd $Mdocdate: August 12 2017 $
 .Dt TLS_CONFIG_SET_PROTOCOLS 3
 .Os
 .Sh NAME
@@ -125,10 +125,19 @@ Alternatively, libssl cipher strings can be specified.
 See the CIPHERS section of
 .Xr openssl 1
 for further information.
-.\" XXX tls_config_set_dheparams does what?
+.Pp
+.Fn tls_config_set_dheparams
+specifies the parameters that will be used during Diffie-Hellman Ephemeral
+(DHE) key exchange.
+Possible values are "none", "auto" and "legacy".
+In "auto" mode, the key size for the ephemeral key is automatically selected
+based on the size of the private key being used for signing.
+In "legacy" mode, 1024 bit ephemeral keys are used.
+The default value is "none", which disables DHE key exchange.
 .Pp
 .Fn tls_config_set_ecdhecurves
-specifies the names of the elliptic curves that may be used during key exchange.
+specifies the names of the elliptic curves that may be used during Elliptic
+Curve Diffie-Hellman Ephemeral (ECDHE) key exchange.
 This is a comma separated list, given in order of preference.
 The special value of "default" will use the default curves (currently X25519,
 P-256 and P-384).
