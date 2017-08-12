@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.5 2017/07/14 09:29:40 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.6 2017/08/12 16:31:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -271,7 +271,7 @@ main(int argc, char *argv[])
 
 #if 0
 	/* XXX ioctl SIOCAIFADDR_IN6 */
-	if (pledge("rpath stdio sendfd cpath", NULL) == -1)
+BROKEN	if (pledge("rpath stdio sendfd cpath", NULL) == -1)
 		fatal("pledge");
 #endif
 
