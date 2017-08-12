@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.11 2017/08/12 21:49:28 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.12 2017/08/12 23:39:24 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1457,6 +1457,130 @@ test_tlsext_sni_serverhello(void)
 	return (failure);
 }
 
+static unsigned char tls_ocsp_clienthello_default[] = {
+	0x01, 0x00, 0x00, 0x00, 0x00
+};
+
+static int
+test_tlsext_ocsp_clienthello(void)
+{
+	unsigned char *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	size_t dlen;
+	int failure;
+	int alert;
+	CBB cbb;
+	CBS cbs;
+
+	failure = 1;
+
+	CBB_init(&cbb, 0);
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	if (tlsext_ocsp_clienthello_needs(ssl)) {
+		FAIL("clienthello should not need ocsp\n");
+		goto err;
+	}
+	SSL_set_tlsext_status_type(ssl, TLSEXT_STATUSTYPE_ocsp);
+
+	if (!tlsext_ocsp_clienthello_needs(ssl)) {
+		FAIL("clienthello should need ocsp\n");
+		goto err;
+	}
+	if (!tlsext_ocsp_clienthello_build(ssl, &cbb)) {
+		FAIL("clienthello failed to build SNI\n");
+		goto err;
+	}
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tls_ocsp_clienthello_default)) {
+		FAIL("got ocsp clienthello with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tls_ocsp_clienthello_default));
+		goto err;
+	}
+	if (memcmp(data, tls_ocsp_clienthello_default, dlen) != 0) {
+		FAIL("ocsp clienthello differs:\n");
+		fprintf(stderr, "received:\n");
+		hexdump(data, dlen);
+		fprintf(stderr, "test data:\n");
+		hexdump(tls_ocsp_clienthello_default,
+		    sizeof(tls_ocsp_clienthello_default));
+		goto err;
+	}
+	CBS_init(&cbs, tls_ocsp_clienthello_default,
+	    sizeof(tls_ocsp_clienthello_default));
+	if (!tlsext_ocsp_clienthello_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse ocsp clienthello\n");
+		goto err;
+	}
+
+	failure = 0;
+
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
+static int
+test_tlsext_ocsp_serverhello(void)
+{
+	unsigned char *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	size_t dlen;
+	int failure;
+	CBB cbb;
+
+	failure = 1;
+
+	CBB_init(&cbb, 0);
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	if (tlsext_ocsp_serverhello_needs(ssl)) {
+		FAIL("serverhello should not need ocsp\n");
+		goto err;
+	}
+
+	ssl->internal->tlsext_status_expected = 1;
+
+	if (!tlsext_ocsp_serverhello_needs(ssl)) {
+		FAIL("serverhello should need ocsp\n");
+		goto err;
+	}
+	if (!tlsext_ocsp_serverhello_build(ssl, &cbb)) {
+		FAIL("serverhello failed to build ocsp\n");
+		goto err;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	failure = 0;
+
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
 /*
  * Session ticket - RFC 5077 since no known implementations use 4507.
  *
@@ -1776,6 +1900,9 @@ main(int argc, char **argv)
 
 	failed |= test_tlsext_sni_clienthello();
 	failed |= test_tlsext_sni_serverhello();
+
+	failed |= test_tlsext_ocsp_clienthello();
+	failed |= test_tlsext_ocsp_serverhello();
 
 	failed |= test_tlsext_sessionticket_clienthello();
 	failed |= test_tlsext_sessionticket_serverhello();
