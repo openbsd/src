@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2017/07/10 21:30:37 espie Exp $
+#	$OpenBSD: Makefile,v 1.28 2017/08/12 00:05:16 guenther Exp $
 
 OBJS=		crt0.o gcrt0.o
 OBJS+=		crtbegin.o crtend.o
@@ -40,47 +40,50 @@ RCFLAGS=-DRCRT0
 RCFLAGS+=-fno-stack-protector 
 .endif
 
+DEPS = ${OBJS:.o=.d}
+DFLAGS += -MF ${.TARGET:R}.d
+
 all: ${OBJS}
 
 crt0.o: crt0.c
 	@echo ${COMPILE.c} ${.CURDIR}/crt0.c -o ${.TARGET}
-	@${COMPILE.c} ${.CURDIR}/crt0.c -o ${.TARGET}.o
+	@${COMPILE.c} ${DFLAGS} ${.CURDIR}/crt0.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 gcrt0.o: crt0.c
 	@echo ${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}
-	@${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}.o
+	@${COMPILE.c} ${DFLAGS} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 rcrt0.o: crt0.c
 	@echo ${COMPILE.c} ${RCFLAGS} ${.CURDIR}/crt0.c -o ${.TARGET}
-	@${COMPILE.c} ${RCFLAGS} ${.CURDIR}/crt0.c -o ${.TARGET}.o
+	@${COMPILE.c} ${DFLAGS} ${RCFLAGS} ${.CURDIR}/crt0.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 crtbegin.o: crtbegin.c
 	@echo ${COMPILE.c} ${.CURDIR}/crtbegin.c -o ${.TARGET}
-	@${COMPILE.c} ${.CURDIR}/crtbegin.c -o ${.TARGET}.o
+	@${COMPILE.c} ${DFLAGS} ${.CURDIR}/crtbegin.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 crtbeginS.o: crtbeginS.c
 	@echo ${COMPILE.c} ${PICFLAG} ${.CURDIR}/crtbeginS.c -o ${.TARGET}
-	@${COMPILE.c} ${PICFLAG} ${.CURDIR}/crtbeginS.c -o ${.TARGET}.o
+	@${COMPILE.c} ${DFLAGS} ${PICFLAG} ${.CURDIR}/crtbeginS.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 crtend.o: crtend.c
 	@echo ${COMPILE.c} ${.CURDIR}/crtend.c -o ${.TARGET}
-	@${COMPILE.c} ${.CURDIR}/crtend.c -o ${.TARGET}.o
+	@${COMPILE.c} ${DFLAGS} ${.CURDIR}/crtend.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 crtendS.o: crtendS.c
 	@echo ${COMPILE.c} ${PICFLAG} ${.CURDIR}/crtendS.c -o ${.TARGET}
-	@${COMPILE.c} ${PICFLAG} ${.CURDIR}/crtendS.c -o ${.TARGET}.o
+	@${COMPILE.c} ${DFLAGS} ${PICFLAG} ${.CURDIR}/crtendS.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
