@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.510 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.511 2017/08/12 20:27:28 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1176,9 +1176,9 @@ if_clone_create(const char *name, int rdomain)
 		return (EEXIST);
 
 	/* XXXSMP breaks atomicity */
-	rw_exit_write(&netlock);
+	NET_UNLOCK();
 	ret = (*ifc->ifc_create)(ifc, unit);
-	rw_enter_write(&netlock);
+	NET_LOCK();
 
 	if (ret != 0 || (ifp = ifunit(name)) == NULL)
 		return (ret);
@@ -1221,9 +1221,9 @@ if_clone_destroy(const char *name)
 	}
 
 	/* XXXSMP breaks atomicity */
-	rw_exit_write(&netlock);
+	NET_UNLOCK();
 	ret = (*ifc->ifc_destroy)(ifp);
-	rw_enter_write(&netlock);
+	NET_LOCK();
 
 	return (ret);
 }

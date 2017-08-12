@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.97 2017/05/15 12:26:00 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.98 2017/08/12 20:27:28 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1183,7 +1183,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 		 * faulted in copyin() or copyout() in the network stack.
 		 */
 		if (netlocked)
-			rw_exit_write(&netlock);
+			NET_UNLOCK();
 
 		/* NOTE: vnode now locked! */
 		if (rw == UIO_READ)
@@ -1194,7 +1194,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 			    curproc->p_ucred);
 
 		if (netlocked)
-			rw_enter_write(&netlock);
+			NET_LOCK();
 
 		if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
 			VOP_UNLOCK(vn, curproc);
