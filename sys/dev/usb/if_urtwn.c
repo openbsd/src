@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.72 2017/06/23 14:41:54 kevlo Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.73 2017/08/12 14:08:44 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -522,7 +522,7 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 	uint8_t rx_no;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	int i, error;
+	int i, error, nrx = 0;
 
 	/* Find all bulk endpoints. */
 	id = usbd_get_interface_descriptor(sc->sc_iface);
@@ -531,12 +531,18 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 		if (ed == NULL || UE_GET_XFERTYPE(ed->bmAttributes) != UE_BULK)
 			continue;
 
-		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN)
+		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN) {
 			rx_no = ed->bEndpointAddress;
-		else {
+			nrx++;
+		} else {
 			epaddr[sc->ntx] = ed->bEndpointAddress;
 			sc->ntx++;
 		}
+	}
+	if (nrx == 0) {
+		printf("%s: %d: invalid number of Rx bulk pipes\n",
+		    sc->sc_dev.dv_xname, nrx);
+		return (EIO);
 	}
 	DPRINTF(("found %d bulk-out pipes\n", sc->ntx));
 	if (sc->ntx == 0 || sc->ntx > R92C_MAX_EPOUT) {
