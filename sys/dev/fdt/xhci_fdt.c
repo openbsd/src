@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.5 2017/08/12 03:20:37 kettenis Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.6 2017/08/12 16:57:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark kettenis <kettenis@openbsd.org>
  *
@@ -103,6 +103,7 @@ xhci_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	xhci_init_phys(sc);
 
+	strlcpy(sc->sc.sc_vendor, "Generic", sizeof(sc->sc.sc_vendor));
 	if ((error = xhci_init(&sc->sc)) != 0) {
 		printf("%s: init failed, error=%d\n",
 		    sc->sc.sc_bus.bdev.dv_xname, error);
