@@ -1,4 +1,4 @@
-/*	$OpenBSD: rewinddir.c,v 1.11 2013/11/05 20:36:51 schwarze Exp $ */
+/*	$OpenBSD: rewinddir.c,v 1.12 2017/08/12 22:59:52 guenther Exp $ */
 /*
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,8 +29,6 @@
  */
 
 #include <dirent.h>
-#include "thread_private.h"
-#include "telldir.h"
 
 void
 rewinddir(DIR *dirp)

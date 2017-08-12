@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlogin.c,v 1.14 2016/03/30 07:52:47 guenther Exp $ */
+/*	$OpenBSD: getlogin.c,v 1.15 2017/08/12 22:59:52 guenther Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,10 +30,8 @@
 
 #include <errno.h>
 #include <limits.h>
-#include <string.h>
 #include <unistd.h>
 
-#include "thread_private.h"
 
 static char logname[LOGIN_NAME_MAX];
 

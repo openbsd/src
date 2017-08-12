@@ -1,4 +1,4 @@
-/*	$OpenBSD: exit.c,v 1.13 2015/09/13 08:31:47 guenther Exp $ */
+/*	$OpenBSD: exit.c,v 1.14 2017/08/12 22:59:52 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -28,12 +28,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/mman.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "atexit.h"
-#include "thread_private.h"
 
 /*
  * This variable is zero until a process has created a thread.
