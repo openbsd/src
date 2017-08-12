@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.3 2017/05/22 13:54:14 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.4 2017/08/12 03:13:23 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from BSDI $Id: subr_witness.c,v 1.3 2017/05/22 13:54:14 visa Exp $
- *	and BSDI $Id: subr_witness.c,v 1.3 2017/05/22 13:54:14 visa Exp $
+ *	from BSDI $Id: subr_witness.c,v 1.4 2017/08/12 03:13:23 guenther Exp $
+ *	and BSDI $Id: subr_witness.c,v 1.4 2017/08/12 03:13:23 guenther Exp $
  */
 
 /*
@@ -416,8 +416,6 @@ static struct witness_lock_order_data *w_lofree = NULL;
 static struct witness_lock_order_hash w_lohash;
 static int w_max_used_index = 0;
 static unsigned int w_generation = 0;
-static const char w_notrunning[] = "Witness not running\n";
-static const char w_stillcold[] = "Witness is still cold\n";
 
 static struct lock_class lock_class_kernel_lock = {
 	.lc_name = "kernel_lock",
@@ -1649,8 +1647,8 @@ _isitmyx(struct witness *w1, struct witness *w2, int rmask, const char *fname)
 		if (w_mtx.mtx_owner != curcpu())
 			return (0);
 		printf("%s: rmatrix mismatch between %s (index %d) and %s "
-		    "(index %d): w_rmatrix[%d][%d] == %hx but "
-		    "w_rmatrix[%d][%d] == %hx\n",
+		    "(index %d): w_rmatrix[%d][%d] == %x but "
+		    "w_rmatrix[%d][%d] == %x\n",
 		    fname, w1->w_type->lt_name, i1, w2->w_type->lt_name,
 		    i2, i1, i2, r1,
 		    i2, i1, r2);
