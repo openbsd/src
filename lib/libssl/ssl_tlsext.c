@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.6 2017/08/11 20:14:13 doug Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.7 2017/08/12 21:17:03 doug Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -492,6 +492,131 @@ tlsext_sni_serverhello_parse(SSL *s, CBS *cbs, int *alert)
 	return 1;
 }
 
+/*
+ * SessionTicket extension - RFC 5077 section 3.2
+ */
+int
+tlsext_sessionticket_clienthello_needs(SSL *s)
+{
+	/*
+	 * Send session ticket extension when enabled and not overridden.
+	 *
+	 * When renegotiating, send an empty session ticket to indicate support.
+	 */
+	if ((SSL_get_options(s) & SSL_OP_NO_TICKET) != 0)
+		return 0;
+
+	if (s->internal->new_session)
+		return 1;
+
+	if (s->internal->tlsext_session_ticket != NULL &&
+	    s->internal->tlsext_session_ticket->data == NULL)
+		return 0;
+
+	return 1;
+}
+
+int
+tlsext_sessionticket_clienthello_build(SSL *s, CBB *cbb)
+{
+	/*
+	 * Signal that we support session tickets by sending an empty
+	 * extension when renegotiating or no session found.
+	 */
+	if (s->internal->new_session || s->session == NULL)
+		return 1;
+
+	if (s->session->tlsext_tick != NULL) {
+		/* Attempt to resume with an existing session ticket */
+		if (!CBB_add_bytes(cbb, s->session->tlsext_tick,
+		    s->session->tlsext_ticklen))
+			return 0;
+
+	} else if (s->internal->tlsext_session_ticket != NULL) {
+		/*
+		 * Attempt to resume with a custom provided session ticket set
+		 * by SSL_set_session_ticket_ext().
+		 */
+		if (s->internal->tlsext_session_ticket->length > 0) {
+			size_t ticklen = s->internal->tlsext_session_ticket->length;
+
+			if ((s->session->tlsext_tick = malloc(ticklen)) == NULL)
+				return 0;
+			memcpy(s->session->tlsext_tick,
+			    s->internal->tlsext_session_ticket->data,
+			    ticklen);
+			s->session->tlsext_ticklen = ticklen;
+
+			if (!CBB_add_bytes(cbb, s->session->tlsext_tick,
+			    s->session->tlsext_ticklen))
+				return 0;
+		}
+	}
+
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
+}
+
+int
+tlsext_sessionticket_clienthello_parse(SSL *s, CBS *cbs, int *alert)
+{
+	if (s->internal->tls_session_ticket_ext_cb) {
+		if (!s->internal->tls_session_ticket_ext_cb(s, CBS_data(cbs),
+		    (int)CBS_len(cbs),
+		    s->internal->tls_session_ticket_ext_cb_arg)) {
+			*alert = TLS1_AD_INTERNAL_ERROR;
+			return 0;
+		}
+	}
+
+	/* We need to signal that this was processed fully */
+	if (!CBS_skip(cbs, CBS_len(cbs))) {
+		*alert = TLS1_AD_INTERNAL_ERROR;
+		return 0;
+	}
+
+	return 1;
+}
+
+int
+tlsext_sessionticket_serverhello_needs(SSL *s)
+{
+	return (s->internal->tlsext_ticket_expected &&
+	    !(SSL_get_options(s) & SSL_OP_NO_TICKET));
+}
+
+int
+tlsext_sessionticket_serverhello_build(SSL *s, CBB *cbb)
+{
+	/* Empty ticket */
+
+	return 1;
+}
+
+int
+tlsext_sessionticket_serverhello_parse(SSL *s, CBS *cbs, int *alert)
+{
+	if (s->internal->tls_session_ticket_ext_cb) {
+		if (!s->internal->tls_session_ticket_ext_cb(s, CBS_data(cbs),
+		    (int)CBS_len(cbs),
+		    s->internal->tls_session_ticket_ext_cb_arg)) {
+			*alert = TLS1_AD_INTERNAL_ERROR;
+			return 0;
+		}
+	}
+
+	if ((SSL_get_options(s) & SSL_OP_NO_TICKET) != 0 || CBS_len(cbs) > 0) {
+		*alert = TLS1_AD_UNSUPPORTED_EXTENSION;
+		return 0;
+	}
+
+	s->internal->tlsext_ticket_expected = 1;
+
+	return 1;
+}
+
 struct tls_extension {
 	uint16_t type;
 	int (*clienthello_needs)(SSL *s);
@@ -538,6 +663,15 @@ static struct tls_extension tls_extensions[] = {
 		.serverhello_needs = tlsext_ec_serverhello_needs,
 		.serverhello_build = tlsext_ec_serverhello_build,
 		.serverhello_parse = tlsext_ec_serverhello_parse,
+	},
+	{
+		.type = TLSEXT_TYPE_session_ticket,
+		.clienthello_needs = tlsext_sessionticket_clienthello_needs,
+		.clienthello_build = tlsext_sessionticket_clienthello_build,
+		.clienthello_parse = tlsext_sessionticket_clienthello_parse,
+		.serverhello_needs = tlsext_sessionticket_serverhello_needs,
+		.serverhello_build = tlsext_sessionticket_serverhello_build,
+		.serverhello_parse = tlsext_sessionticket_serverhello_parse,
 	},
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.128 2017/08/12 21:03:08 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.129 2017/08/12 21:17:03 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -690,39 +690,6 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		return NULL;
 	ret += len;
 
-	if (!(SSL_get_options(s) & SSL_OP_NO_TICKET)) {
-		int ticklen;
-		if (!s->internal->new_session && s->session && s->session->tlsext_tick)
-			ticklen = s->session->tlsext_ticklen;
-		else if (s->session && s->internal->tlsext_session_ticket &&
-		    s->internal->tlsext_session_ticket->data) {
-			ticklen = s->internal->tlsext_session_ticket->length;
-			s->session->tlsext_tick = malloc(ticklen);
-			if (!s->session->tlsext_tick)
-				return NULL;
-			memcpy(s->session->tlsext_tick,
-			    s->internal->tlsext_session_ticket->data, ticklen);
-			s->session->tlsext_ticklen = ticklen;
-		} else
-			ticklen = 0;
-		if (ticklen == 0 && s->internal->tlsext_session_ticket &&
-		    s->internal->tlsext_session_ticket->data == NULL)
-			goto skip_ext;
-		/* Check for enough room 2 for extension type, 2 for len
- 		 * rest for ticket
-  		 */
-		if ((size_t)(limit - ret) < 4 + ticklen)
-			return NULL;
-		s2n(TLSEXT_TYPE_session_ticket, ret);
-
-		s2n(ticklen, ret);
-		if (ticklen) {
-			memcpy(ret, s->session->tlsext_tick, ticklen);
-			ret += ticklen;
-		}
-	}
-skip_ext:
-
 	if (TLS1_get_client_version(s) >= TLS1_2_VERSION) {
 		if ((size_t)(limit - ret) < sizeof(tls12_sigalgs) + 6)
 			return NULL;
@@ -883,15 +850,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	 * Currently the server should not respond with a SupportedCurves
 	 * extension.
 	 */
-
-	if (s->internal->tlsext_ticket_expected &&
-	    !(SSL_get_options(s) & SSL_OP_NO_TICKET)) {
-		if ((size_t)(limit - ret) < 4)
-			return NULL;
-
-		s2n(TLSEXT_TYPE_session_ticket, ret);
-		s2n(0, ret);
-	}
 
 	if (s->internal->tlsext_status_expected) {
 		if ((size_t)(limit - ret) < 4)
@@ -1068,13 +1026,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 		if (!tlsext_clienthello_parse_one(s, &cbs, type, al))
 			return 0;
 
-		if (type == TLSEXT_TYPE_session_ticket) {
-			if (s->internal->tls_session_ticket_ext_cb &&
-			    !s->internal->tls_session_ticket_ext_cb(s, data, size, s->internal->tls_session_ticket_ext_cb_arg)) {
-				*al = TLS1_AD_INTERNAL_ERROR;
-				return 0;
-			}
-		} else if (type == TLSEXT_TYPE_signature_algorithms) {
+		if (type == TLSEXT_TYPE_signature_algorithms) {
 			int dsize;
 			if (sigalg_seen || size < 2) {
 				*al = SSL_AD_DECODE_ERROR;
@@ -1277,19 +1229,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 		if (!tlsext_serverhello_parse_one(s, &cbs, type, al))
 			return 0;
 
-		if (type == TLSEXT_TYPE_session_ticket) {
-			if (s->internal->tls_session_ticket_ext_cb &&
-			    !s->internal->tls_session_ticket_ext_cb(s, data, size, s->internal->tls_session_ticket_ext_cb_arg)) {
-				*al = TLS1_AD_INTERNAL_ERROR;
-				return 0;
-			}
-			if ((SSL_get_options(s) & SSL_OP_NO_TICKET) || (size > 0)) {
-				*al = TLS1_AD_UNSUPPORTED_EXTENSION;
-				return 0;
-			}
-			s->internal->tlsext_ticket_expected = 1;
-		}
-		else if (type == TLSEXT_TYPE_status_request &&
+		if (type == TLSEXT_TYPE_status_request &&
 		    s->version != DTLS1_VERSION) {
 			/* MUST be empty and only sent if we've requested
 			 * a status request message.
