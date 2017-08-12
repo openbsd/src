@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.8 2017/08/11 21:22:12 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.9 2017/08/12 19:09:37 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -995,7 +995,7 @@ test_tlsext_ri_serverhello(void)
 	}
 
         S3I(ssl)->send_connection_binding = 1;
-	
+
 	if (!tlsext_ri_serverhello_needs(ssl)) {
 		FAIL("serverhello should need RI\n");
 		goto err;
@@ -1236,7 +1236,7 @@ test_tlsext_sni_serverhello(void)
 	if ((ssl->session->tlsext_hostname = strdup(TEST_SNI_SERVERNAME)) ==
 	    NULL)
 		errx(1, "failed to strdup tlsext_hostname");
-	
+
 	if (!tlsext_sni_serverhello_needs(ssl)) {
 		FAIL("serverhello should need SNI\n");
 		goto err;
