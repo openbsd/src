@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.166 2017/08/12 02:55:22 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.167 2017/08/12 21:03:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -339,8 +339,6 @@ SSL_new(SSL_CTX *ctx)
 		    ctx->internal->tlsext_supportedgroups_length;
 	}
 
-	s->internal->next_proto_negotiated = NULL;
-
 	if (s->ctx->internal->alpn_client_proto_list != NULL) {
 		s->internal->alpn_client_proto_list =
 		    malloc(s->ctx->internal->alpn_client_proto_list_len);
@@ -548,7 +546,6 @@ SSL_free(SSL *s)
 
 	SSL_CTX_free(s->ctx);
 
-	free(s->internal->next_proto_negotiated);
 	free(s->internal->alpn_client_proto_list);
 
 #ifndef OPENSSL_NO_SRTP
@@ -1541,33 +1538,15 @@ SSL_get_servername_type(const SSL *s)
 }
 
 /*
- * SSL_select_next_proto implements the standard protocol selection. It is
+ * SSL_select_next_proto implements standard protocol selection. It is
  * expected that this function is called from the callback set by
- * SSL_CTX_set_next_proto_select_cb.
+ * SSL_CTX_set_alpn_select_cb.
  *
  * The protocol data is assumed to be a vector of 8-bit, length prefixed byte
  * strings. The length byte itself is not included in the length. A byte
  * string of length 0 is invalid. No byte string may be truncated.
  *
- * The current, but experimental algorithm for selecting the protocol is:
- *
- * 1) If the server doesn't support NPN then this is indicated to the
- * callback. In this case, the client application has to abort the connection
- * or have a default application level protocol.
- *
- * 2) If the server supports NPN, but advertises an empty list then the
- * client selects the first protcol in its list, but indicates via the
- * API that this fallback case was enacted.
- *
- * 3) Otherwise, the client finds the first protocol in the server's list
- * that it supports and selects this protocol. This is because it's
- * assumed that the server has better information about which protocol
- * a client should use.
- *
- * 4) If the client doesn't support any of the server's advertised
- * protocols, then this is treated the same as case 2.
- *
- * It returns either
+ * It returns either:
  * OPENSSL_NPN_NEGOTIATED if a common protocol was found, or
  * OPENSSL_NPN_NO_OVERLAP if the fallback case was reached.
  */
@@ -1611,64 +1590,28 @@ found:
 	return (status);
 }
 
-/*
- * SSL_get0_next_proto_negotiated sets *data and *len to point to the client's
- * requested protocol for this connection and returns 0. If the client didn't
- * request any protocol, then *data is set to NULL.
- *
- * Note that the client can request any protocol it chooses. The value returned
- * from this function need not be a member of the list of supported protocols
- * provided by the callback.
- */
+/* SSL_get0_next_proto_negotiated is deprecated. */
 void
 SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
     unsigned *len)
 {
-	*data = s->internal->next_proto_negotiated;
-	if (!*data) {
-		*len = 0;
-	} else {
-		*len = s->internal->next_proto_negotiated_len;
-	}
+	*data = NULL;
+	*len = 0;
 }
 
-/*
- * SSL_CTX_set_next_protos_advertised_cb sets a callback that is called when a
- * TLS server needs a list of supported protocols for Next Protocol
- * Negotiation. The returned list must be in wire format.  The list is returned
- * by setting |out| to point to it and |outlen| to its length. This memory will
- * not be modified, but one should assume that the SSL* keeps a reference to
- * it.
- *
- * The callback should return SSL_TLSEXT_ERR_OK if it wishes to advertise.
- * Otherwise, no such extension will be included in the ServerHello.
- */
+/* SSL_CTX_set_next_protos_advertised_cb is deprecated. */
 void
 SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *ctx, int (*cb) (SSL *ssl,
     const unsigned char **out, unsigned int *outlen, void *arg), void *arg)
 {
-	ctx->internal->next_protos_advertised_cb = cb;
-	ctx->internal->next_protos_advertised_cb_arg = arg;
 }
 
-/*
- * SSL_CTX_set_next_proto_select_cb sets a callback that is called when a
- * client needs to select a protocol from the server's provided list. |out|
- * must be set to point to the selected protocol (which may be within |in|).
- * The length of the protocol name must be written into |outlen|. The server's
- * advertised protocols are provided in |in| and |inlen|. The callback can
- * assume that |in| is syntactically valid.
- *
- * The client must select a protocol. It is fatal to the connection if this
- * callback returns a value other than SSL_TLSEXT_ERR_OK.
- */
+/* SSL_CTX_set_next_proto_select_cb is deprecated. */
 void
 SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx, int (*cb) (SSL *s,
     unsigned char **out, unsigned char *outlen, const unsigned char *in,
     unsigned int inlen, void *arg), void *arg)
 {
-	ctx->internal->next_proto_select_cb = cb;
-	ctx->internal->next_proto_select_cb_arg = arg;
 }
 
 /*
@@ -1911,9 +1854,6 @@ SSL_CTX_new(const SSL_METHOD *meth)
 
 	ret->internal->tlsext_status_cb = 0;
 	ret->internal->tlsext_status_arg = NULL;
-
-	ret->internal->next_protos_advertised_cb = 0;
-	ret->internal->next_proto_select_cb = 0;
 
 #ifndef OPENSSL_NO_ENGINE
 	ret->internal->client_cert_engine = NULL;

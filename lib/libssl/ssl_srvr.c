@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.20 2017/08/12 02:55:22 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.21 2017/08/12 21:03:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -468,10 +468,7 @@ ssl3_accept(SSL *s)
 				 * the client uses its key from the certificate
 				 * for key exchange.
 				 */
-				if (S3I(s)->next_proto_neg_seen)
-					S3I(s)->hs.state = SSL3_ST_SR_NEXT_PROTO_A;
-				else
-					S3I(s)->hs.state = SSL3_ST_SR_FINISHED_A;
+				S3I(s)->hs.state = SSL3_ST_SR_FINISHED_A;
 				s->internal->init_num = 0;
 			} else if (SSL_USE_SIGALGS(s) || (alg_k & SSL_kGOST)) {
 				S3I(s)->hs.state = SSL3_ST_SR_CERT_VRFY_A;
@@ -525,20 +522,8 @@ ssl3_accept(SSL *s)
 			if (ret <= 0)
 				goto end;
 
-			if (S3I(s)->next_proto_neg_seen)
-				S3I(s)->hs.state = SSL3_ST_SR_NEXT_PROTO_A;
-			else
-				S3I(s)->hs.state = SSL3_ST_SR_FINISHED_A;
-			s->internal->init_num = 0;
-			break;
-
-		case SSL3_ST_SR_NEXT_PROTO_A:
-		case SSL3_ST_SR_NEXT_PROTO_B:
-			ret = ssl3_get_next_proto(s);
-			if (ret <= 0)
-				goto end;
-			s->internal->init_num = 0;
 			S3I(s)->hs.state = SSL3_ST_SR_FINISHED_A;
+			s->internal->init_num = 0;
 			break;
 
 		case SSL3_ST_SR_FINISHED_A:
@@ -610,15 +595,9 @@ ssl3_accept(SSL *s)
 			if (ret <= 0)
 				goto end;
 			S3I(s)->hs.state = SSL3_ST_SW_FLUSH;
-			if (s->internal->hit) {
-				if (S3I(s)->next_proto_neg_seen) {
-					s->s3->flags |= SSL3_FLAGS_CCS_OK;
-					S3I(s)->hs.next_state =
-					    SSL3_ST_SR_NEXT_PROTO_A;
-				} else
-					S3I(s)->hs.next_state =
-					    SSL3_ST_SR_FINISHED_A;
-			} else
+			if (s->internal->hit)
+				S3I(s)->hs.next_state = SSL3_ST_SR_FINISHED_A;
+			else
 				S3I(s)->hs.next_state = SSL_ST_OK;
 			s->internal->init_num = 0;
 			break;
@@ -2707,75 +2686,4 @@ ssl3_send_cert_status(SSL *s)
 	CBB_cleanup(&cbb);
 
 	return (-1);
-}
-
-/*
- * ssl3_get_next_proto reads a Next Protocol Negotiation handshake message.
- * It sets the next_proto member in s if found
- */
-int
-ssl3_get_next_proto(SSL *s)
-{
-	CBS cbs, proto, padding;
-	int ok;
-	long n;
-	size_t len;
-
-	/*
-	 * Clients cannot send a NextProtocol message if we didn't see the
-	 * extension in their ClientHello
-	 */
-	if (!S3I(s)->next_proto_neg_seen) {
-		SSLerror(s, SSL_R_GOT_NEXT_PROTO_WITHOUT_EXTENSION);
-		return (-1);
-	}
-
-	/* 514 maxlen is enough for the payload format below */
-	n = s->method->internal->ssl_get_message(s, SSL3_ST_SR_NEXT_PROTO_A,
-	    SSL3_ST_SR_NEXT_PROTO_B, SSL3_MT_NEXT_PROTO, 514, &ok);
-	if (!ok)
-		return ((int)n);
-
-	/*
-	 * S3I(s)->hs.state doesn't reflect whether ChangeCipherSpec has been received
-	 * in this handshake, but S3I(s)->change_cipher_spec does (will be reset
-	 * by ssl3_get_finished).
-	 */
-	if (!S3I(s)->change_cipher_spec) {
-		SSLerror(s, SSL_R_GOT_NEXT_PROTO_BEFORE_A_CCS);
-		return (-1);
-	}
-
-	if (n < 2)
-		return (0);
-	/* The body must be > 1 bytes long */
-
-	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
-
-	/*
-	 * The payload looks like:
-	 *   uint8 proto_len;
-	 *   uint8 proto[proto_len];
-	 *   uint8 padding_len;
-	 *   uint8 padding[padding_len];
-	 */
-	if (!CBS_get_u8_length_prefixed(&cbs, &proto) ||
-	    !CBS_get_u8_length_prefixed(&cbs, &padding) ||
-	    CBS_len(&cbs) != 0)
-		return 0;
-
-	/*
-	 * XXX We should not NULL it, but this matches old behavior of not
-	 * freeing before malloc.
-	 */
-	s->internal->next_proto_negotiated = NULL;
-	s->internal->next_proto_negotiated_len = 0;
-
-	if (!CBS_stow(&proto, &s->internal->next_proto_negotiated, &len)) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
-		return (0);
-	}
-	s->internal->next_proto_negotiated_len = (uint8_t)len;
-
-	return (1);
 }

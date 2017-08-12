@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.188 2017/08/12 02:55:22 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.189 2017/08/12 21:03:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -575,24 +575,8 @@ typedef struct ssl_ctx_internal_st {
 	/* SRTP profiles we are willing to do from RFC 5764 */
 	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
 
-	/* Next protocol negotiation information */
-	/* (for experimental NPN extension). */
-
-	/* For a server, this contains a callback function by which the set of
-	 * advertised protocols can be provided. */
-	int (*next_protos_advertised_cb)(SSL *s, const unsigned char **buf,
-	    unsigned int *len, void *arg);
-	void *next_protos_advertised_cb_arg;
-	/* For a client, this contains a callback function that selects the
-	 * next protocol from the list provided by the server. */
-	int (*next_proto_select_cb)(SSL *s, unsigned char **out,
-	    unsigned char *outlen, const unsigned char *in,
-	    unsigned int inlen, void *arg);
-	void *next_proto_select_cb_arg;
-
 	/*
-	 * ALPN information
-	 * (we are in the process of transitioning from NPN to ALPN).
+	 * ALPN information.
 	 */
 
 	/*
@@ -626,16 +610,6 @@ typedef struct ssl_internal_st {
 
 	unsigned long options; /* protocol behaviour */
 	unsigned long mode; /* API behaviour */
-
-	/* Next protocol negotiation. For the client, this is the protocol that
-	 * we sent in NextProtocol and is set when handling ServerHello
-	 * extensions.
-	 *
-	 * For a server, this is the client's selected_protocol from
-	 * NextProtocol and is set when handling the NextProtocol message,
-	 * before the Finished message. */
-	unsigned char *next_proto_negotiated;
-	unsigned char next_proto_negotiated_len;
 
 	/* Client list of supported protocols in wire format. */
 	unsigned char *alpn_client_proto_list;
@@ -881,16 +855,9 @@ typedef struct ssl3_state_internal_st {
 	/* Set if we saw a Renegotiation Indication extension from our peer. */
 	int renegotiate_seen;
 
-	/* Set if we saw the Next Protocol Negotiation extension from our peer.
-	 */
-	int next_proto_neg_seen;
-
 	/*
-	 * ALPN information
-	 * (we are in the process of transitioning from NPN to ALPN).
-	 */
-
-	/*
+	 * ALPN information.
+	 *
 	 * In a server these point to the selected ALPN protocol after the
 	 * ClientHello has been processed. In a client these contain the
 	 * protocol that the server selected once the ServerHello has been
@@ -1245,7 +1212,6 @@ int ssl3_get_server_key_exchange(SSL *s);
 int ssl3_get_server_certificate(SSL *s);
 int ssl3_check_cert_and_algorithm(SSL *s);
 int ssl3_check_finished(SSL *s);
-int ssl3_send_next_proto(SSL *s);
 
 /* some server-only functions */
 int ssl3_get_client_hello(SSL *s);
@@ -1257,7 +1223,6 @@ int ssl3_send_server_done(SSL *s);
 int ssl3_get_client_certificate(SSL *s);
 int ssl3_get_client_key_exchange(SSL *s);
 int ssl3_get_cert_verify(SSL *s);
-int ssl3_get_next_proto(SSL *s);
 
 int ssl23_accept(SSL *s);
 int ssl23_connect(SSL *s);

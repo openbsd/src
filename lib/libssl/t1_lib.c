@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.127 2017/08/12 02:55:22 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.128 2017/08/12 21:03:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -779,16 +779,6 @@ skip_ext:
 			i2d_X509_EXTENSIONS(s->internal->tlsext_ocsp_exts, &ret);
 	}
 
-	if (s->ctx->internal->next_proto_select_cb &&
-	    !S3I(s)->tmp.finish_md_len) {
-		/* The client advertises an emtpy extension to indicate its
-		 * support for Next Protocol Negotiation */
-		if ((size_t)(limit - ret) < 4)
-			return NULL;
-		s2n(TLSEXT_TYPE_next_proto_neg, ret);
-		s2n(0, ret);
-	}
-
 	if (s->internal->alpn_client_proto_list != NULL &&
 	    S3I(s)->tmp.finish_md_len == 0) {
 		if ((size_t)(limit - ret) <
@@ -868,7 +858,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 {
 	int extdatalen = 0;
 	unsigned char *ret = p;
-	int next_proto_neg_seen;
 	size_t len;
 	CBB cbb;
 
@@ -947,26 +936,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 			return NULL;
 		memcpy(ret, cryptopro_ext, sizeof(cryptopro_ext));
 		ret += sizeof(cryptopro_ext);
-	}
-
-	next_proto_neg_seen = S3I(s)->next_proto_neg_seen;
-	S3I(s)->next_proto_neg_seen = 0;
-	if (next_proto_neg_seen && s->ctx->internal->next_protos_advertised_cb) {
-		const unsigned char *npa;
-		unsigned int npalen;
-		int r;
-
-		r = s->ctx->internal->next_protos_advertised_cb(s, &npa, &npalen,
-		    s->ctx->internal->next_protos_advertised_cb_arg);
-		if (r == SSL_TLSEXT_ERR_OK) {
-			if ((size_t)(limit - ret) < 4 + npalen)
-				return NULL;
-			s2n(TLSEXT_TYPE_next_proto_neg, ret);
-			s2n(npalen, ret);
-			memcpy(ret, npa, npalen);
-			ret += npalen;
-			S3I(s)->next_proto_neg_seen = 1;
-		}
 	}
 
 	if (S3I(s)->alpn_selected != NULL) {
@@ -1070,7 +1039,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 	s->internal->servername_done = 0;
 	s->tlsext_status_type = -1;
 	S3I(s)->renegotiate_seen = 0;
-	S3I(s)->next_proto_neg_seen = 0;
 	free(S3I(s)->alpn_selected);
 	S3I(s)->alpn_selected = NULL;
 	s->internal->srtp_profile = NULL;
@@ -1227,36 +1195,13 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
  			 	*/
 				s->tlsext_status_type = -1;
 			}
-		}
-		else if (type == TLSEXT_TYPE_next_proto_neg &&
-		    S3I(s)->tmp.finish_md_len == 0 &&
-		    S3I(s)->alpn_selected == NULL) {
-			/* We shouldn't accept this extension on a
-			 * renegotiation.
-			 *
-			 * s->internal->new_session will be set on renegotiation, but we
-			 * probably shouldn't rely that it couldn't be set on
-			 * the initial renegotation too in certain cases (when
-			 * there's some other reason to disallow resuming an
-			 * earlier session -- the current code won't be doing
-			 * anything like that, but this might change).
-
-			 * A valid sign that there's been a previous handshake
-			 * in this connection is if S3I(s)->tmp.finish_md_len >
-			 * 0.  (We are talking about a check that will happen
-			 * in the Hello protocol round, well before a new
-			 * Finished message could have been computed.) */
-			S3I(s)->next_proto_neg_seen = 1;
-		}
-		else if (type ==
+		} else if (type ==
 		    TLSEXT_TYPE_application_layer_protocol_negotiation &&
 		    s->ctx->internal->alpn_select_cb != NULL &&
 		    S3I(s)->tmp.finish_md_len == 0) {
 			if (tls1_alpn_handle_client_hello(s, data,
 			    size, al) != 1)
 				return (0);
-			/* ALPN takes precedence over NPN. */
-			S3I(s)->next_proto_neg_seen = 0;
 		}
 
 		/* session ticket processed earlier */
@@ -1293,25 +1238,6 @@ err:
 	return 0;
 }
 
-/*
- * ssl_next_proto_validate validates a Next Protocol Negotiation block. No
- * elements of zero length are allowed and the set of elements must exactly fill
- * the length of the block.
- */
-static char
-ssl_next_proto_validate(const unsigned char *d, unsigned int len)
-{
-	CBS npn, value;
-
-	CBS_init(&npn, d, len);
-	while (CBS_len(&npn) > 0) {
-		if (!CBS_get_u8_length_prefixed(&npn, &value) ||
-		    CBS_len(&value) == 0)
-			return 0;
-	}
-	return 1;
-}
-
 int
 ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 {
@@ -1323,7 +1249,6 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 	CBS cbs;
 
 	S3I(s)->renegotiate_seen = 0;
-	S3I(s)->next_proto_neg_seen = 0;
 	free(S3I(s)->alpn_selected);
 	S3I(s)->alpn_selected = NULL;
 
@@ -1375,39 +1300,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 			}
 			/* Set flag to expect CertificateStatus message */
 			s->internal->tlsext_status_expected = 1;
-		}
-		else if (type == TLSEXT_TYPE_next_proto_neg &&
-		    S3I(s)->tmp.finish_md_len == 0) {
-			unsigned char *selected;
-			unsigned char selected_len;
-
-			/* We must have requested it. */
-			if (s->ctx->internal->next_proto_select_cb == NULL) {
-				*al = TLS1_AD_UNSUPPORTED_EXTENSION;
-				return 0;
-			}
-			/* The data must be valid */
-			if (!ssl_next_proto_validate(data, size)) {
-				*al = TLS1_AD_DECODE_ERROR;
-				return 0;
-			}
-			if (s->ctx->internal->next_proto_select_cb(s, &selected,
-			    &selected_len, data, size,
-			    s->ctx->internal->next_proto_select_cb_arg) !=
-			    SSL_TLSEXT_ERR_OK) {
-				*al = TLS1_AD_INTERNAL_ERROR;
-				return 0;
-			}
-			s->internal->next_proto_negotiated = malloc(selected_len);
-			if (!s->internal->next_proto_negotiated) {
-				*al = TLS1_AD_INTERNAL_ERROR;
-				return 0;
-			}
-			memcpy(s->internal->next_proto_negotiated, selected, selected_len);
-			s->internal->next_proto_negotiated_len = selected_len;
-			S3I(s)->next_proto_neg_seen = 1;
-		}
-		else if (type ==
+		} else if (type ==
 		    TLSEXT_TYPE_application_layer_protocol_negotiation) {
 			unsigned int len;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.15 2017/08/12 02:55:22 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.16 2017/08/12 21:03:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -407,14 +407,11 @@ ssl3_connect(SSL *s)
 		case SSL3_ST_CW_CHANGE_A:
 		case SSL3_ST_CW_CHANGE_B:
 			ret = ssl3_send_change_cipher_spec(s,
-			SSL3_ST_CW_CHANGE_A, SSL3_ST_CW_CHANGE_B);
+			    SSL3_ST_CW_CHANGE_A, SSL3_ST_CW_CHANGE_B);
 			if (ret <= 0)
 				goto end;
 
-			if (S3I(s)->next_proto_neg_seen)
-				S3I(s)->hs.state = SSL3_ST_CW_NEXT_PROTO_A;
-			else
-				S3I(s)->hs.state = SSL3_ST_CW_FINISHED_A;
+			S3I(s)->hs.state = SSL3_ST_CW_FINISHED_A;
 			s->internal->init_num = 0;
 
 			s->session->cipher = S3I(s)->hs.new_cipher;
@@ -429,14 +426,6 @@ ssl3_connect(SSL *s)
 				goto end;
 			}
 
-			break;
-
-		case SSL3_ST_CW_NEXT_PROTO_A:
-		case SSL3_ST_CW_NEXT_PROTO_B:
-			ret = ssl3_send_next_proto(s);
-			if (ret <= 0)
-				goto end;
-			S3I(s)->hs.state = SSL3_ST_CW_FINISHED_A;
 			break;
 
 		case SSL3_ST_CW_FINISHED_A:
@@ -2597,45 +2586,6 @@ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
 err:
 	return (0);
-}
-
-int
-ssl3_send_next_proto(SSL *s)
-{
-	CBB cbb, nextproto, npn, padding;
-	size_t pad_len;
-	uint8_t *pad;
-
-	memset(&cbb, 0, sizeof(cbb));
-
-	if (S3I(s)->hs.state == SSL3_ST_CW_NEXT_PROTO_A) {
-		pad_len = 32 - ((s->internal->next_proto_negotiated_len + 2) % 32);
-
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &nextproto,
-		    SSL3_MT_NEXT_PROTO))
-			goto err;
-		if (!CBB_add_u8_length_prefixed(&nextproto, &npn))
-			goto err;
-		if (!CBB_add_bytes(&npn, s->internal->next_proto_negotiated,
-		    s->internal->next_proto_negotiated_len))
-			goto err;
-		if (!CBB_add_u8_length_prefixed(&nextproto, &padding))
-			goto err;
-		if (!CBB_add_space(&padding, &pad, pad_len))
-			goto err;
-		memset(pad, 0, pad_len);
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
-			goto err;
-
-		S3I(s)->hs.state = SSL3_ST_CW_NEXT_PROTO_B;
-	}
-
-	return (ssl3_handshake_write(s));
-
- err:
-	CBB_cleanup(&cbb);
-
-	return (-1);
 }
 
 /*
