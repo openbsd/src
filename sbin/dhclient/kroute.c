@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.136 2017/08/10 17:15:05 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.137 2017/08/12 16:57:38 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -50,24 +50,14 @@
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
-int	create_route_label(struct sockaddr_rtlabel *);
-int	check_route_label(struct sockaddr_rtlabel *);
 void	populate_rti_info(struct sockaddr **, struct rt_msghdr *);
-void	delete_route(int, struct rt_msghdr *);
 void	add_route(struct in_addr, struct in_addr, struct in_addr, int);
 void	flush_routes(void);
 int	delete_addresses(char *, struct in_addr, struct in_addr);
-char	*get_routes(int, int, size_t *);
-
-#define	ROUTE_LABEL_NONE		1
-#define	ROUTE_LABEL_NOT_DHCLIENT	2
-#define	ROUTE_LABEL_DHCLIENT_OURS	3
-#define	ROUTE_LABEL_DHCLIENT_UNKNOWN	4
-#define	ROUTE_LABEL_DHCLIENT_LIVE	5
-#define	ROUTE_LABEL_DHCLIENT_DEAD	6
+char	*get_routes(int, size_t *);
 
 char *
-get_routes(int rdomain, int flags, size_t *len)
+get_routes(int rdomain, size_t *len)
 {
 	int		 mib[7];
 	char		*buf, *bufp, *errmsg = NULL;
@@ -78,7 +68,7 @@ get_routes(int rdomain, int flags, size_t *len)
 	mib[2] = 0;
 	mib[3] = AF_INET;
 	mib[4] = NET_RT_FLAGS;
-	mib[5] = flags;
+	mib[5] = RTF_STATIC | RTF_GATEWAY | RTF_LLINFO;
 	mib[6] = rdomain;
 
 	buf = NULL;
@@ -117,44 +107,9 @@ get_routes(int rdomain, int flags, size_t *len)
 }
 
 /*
- * check_route_label examines the label associated with a route and
- * returns a value indicating that there was no label (ROUTE_LABEL_NONE),
- * that the route was created by the current process
- * (ROUTE_LABEL_DHCLIENT_OURS), a dead process (ROUTE_LABEL_DHCLIENT_DEAD), or
- * an indeterminate process (ROUTE_LABEL_DHCLIENT_UNKNOWN).
- */
-int
-check_route_label(struct sockaddr_rtlabel *label)
-{
-	pid_t pid;
-
-	if (label == NULL)
-		return ROUTE_LABEL_NONE;
-
-	if (strncmp("DHCLIENT ", label->sr_label, 9) != 0)
-		return ROUTE_LABEL_NOT_DHCLIENT;
-
-	pid = (pid_t)strtonum(label->sr_label + 9, 1, INT_MAX, NULL);
-	if (pid <= 0)
-		return ROUTE_LABEL_DHCLIENT_UNKNOWN;
-
-	if (pid == getpid())
-		return ROUTE_LABEL_DHCLIENT_OURS;
-
-	if (kill(pid, 0) == -1) {
-		if (errno == ESRCH)
-			return ROUTE_LABEL_DHCLIENT_DEAD;
-		else
-			return ROUTE_LABEL_DHCLIENT_UNKNOWN;
-	}
-
-	return ROUTE_LABEL_DHCLIENT_LIVE;
-}
-
-/*
  * [priv_]flush_routes do the equivalent of
  *
- *	route -q $rdomain -n flush -inet -iface $interface
+ *	route -q -T $rdomain -n flush -inet -iface $interface
  *	arp -dan
  */
 void
@@ -168,17 +123,15 @@ flush_routes(void)
 }
 
 void
-priv_flush_routes(char *name, int routefd, int rdomain)
+priv_flush_routes(int index, int routefd, int rdomain)
 {
-	char				 ifname[IF_NAMESIZE];
-	struct sockaddr			*rti_info[RTAX_MAX];
+	static int			 seqno;
 	char				*lim, *buf = NULL, *next;
 	struct rt_msghdr		*rtm;
-	struct sockaddr_in		*sa_in;
-	struct sockaddr_rtlabel		*sa_rl;
 	size_t				 len;
+	ssize_t				 rlen;
 
-	buf = get_routes(rdomain, RTF_STATIC, &len);
+	buf = get_routes(rdomain, &len);
 	if (buf == NULL)
 		return;
 
@@ -187,84 +140,27 @@ priv_flush_routes(char *name, int routefd, int rdomain)
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
+		if (rtm->rtm_index != index)
+			continue;
+		if (rtm->rtm_tableid != rdomain)
+			continue;
+		if ((rtm->rtm_flags & (RTF_GATEWAY|RTF_STATIC|RTF_LLINFO)) == 0)
+			continue;
+		if ((rtm->rtm_flags & (RTF_LOCAL|RTF_BROADCAST)) != 0)
+			continue;
 
-		populate_rti_info(rti_info, rtm);
+		rtm->rtm_type = RTM_DELETE;
+		rtm->rtm_seq = seqno++;
 
-		sa_rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
-		sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
-
-		switch (check_route_label(sa_rl)) {
-		case ROUTE_LABEL_DHCLIENT_OURS:
-		case ROUTE_LABEL_DHCLIENT_DEAD:
-			delete_route(routefd, rtm);
-			break;
-		case ROUTE_LABEL_DHCLIENT_LIVE:
-		case ROUTE_LABEL_DHCLIENT_UNKNOWN:
-			/* Another dhclient's responsibility. */
-			break;
-		case ROUTE_LABEL_NONE:
-		case ROUTE_LABEL_NOT_DHCLIENT:
-			/* Delete default routes on our interface. */
-			if (if_indextoname(rtm->rtm_index, ifname) &&
-			    sa_in &&
-			    sa_in->sin_addr.s_addr == INADDR_ANY &&
-			    rtm->rtm_tableid == rdomain &&
-			    strcmp(name, ifname) == 0)
-				delete_route(routefd, rtm);
-			break;
-		default:
-			break;
-		}
+		rlen = write(routefd, (char *)rtm, rtm->rtm_msglen);
+		if (rlen == -1) {
+			if (errno != ESRCH)
+				log_warn("RTM_DELETE write");
+		} else if (rlen < (int)rtm->rtm_msglen)
+			log_warnx("short RTM_DELETE write (%zd)\n", rlen);
 	}
 
 	free(buf);
-}
-
-/*
- * delete_route deletes a single route from the routing table.
- */
-void
-delete_route(int s, struct rt_msghdr *rtm)
-{
-	static int	 seqno;
-	ssize_t		 rlen;
-
-	rtm->rtm_type = RTM_DELETE;
-	rtm->rtm_seq = seqno++;
-
-	rlen = write(s, (char *)rtm, rtm->rtm_msglen);
-	if (rlen == -1) {
-		if (errno != ESRCH)
-			fatal("RTM_DELETE write");
-	} else if (rlen < (int)rtm->rtm_msglen)
-		fatalx("short RTM_DELETE write (%zd)\n", rlen);
-}
-
-/*
- * create_route_label constructs a short string that can be uses to label
- * a route so that subsequent route examinations can find routes added by
- * dhclient. The label includes the pid so that routes can be further
- * identified as coming from a particular dhclient instance.
- */
-int
-create_route_label(struct sockaddr_rtlabel *label)
-{
-	int	 len;
-
-	memset(label, 0, sizeof(*label));
-
-	label->sr_len = sizeof(label);
-	label->sr_family = AF_UNSPEC;
-
-	len = snprintf(label->sr_label, sizeof(label->sr_label), "DHCLIENT %d",
-	    (int)getpid());
-
-	if (len == -1 || (unsigned int)len >= sizeof(label->sr_label)) {
-		log_warn("could not create route label");
-		return 1;
-	}
-
-	return 0;
 }
 
 void
@@ -389,7 +285,6 @@ priv_add_route(char *name, int rdomain, int routefd,
 	struct iovec		 iov[5];
 	struct rt_msghdr	 rtm;
 	struct sockaddr_in	 dest, gateway, mask;
-	struct sockaddr_rtlabel	 label;
 	int			 i, index, iovcnt = 0;
 
 	index = if_nametoindex(name);
@@ -441,14 +336,6 @@ priv_add_route(char *name, int rdomain, int routefd,
 	rtm.rtm_msglen += sizeof(mask);
 	iov[iovcnt].iov_base = &mask;
 	iov[iovcnt++].iov_len = sizeof(mask);
-
-	/* Add our label so we can identify the route as our creation. */
-	if (create_route_label(&label) == 0) {
-		rtm.rtm_addrs |= RTA_LABEL;
-		rtm.rtm_msglen += sizeof(label);
-		iov[iovcnt].iov_base = &label;
-		iov[iovcnt++].iov_len = sizeof(label);
-	}
 
 	/* Check for EEXIST since other dhclient may not be done. */
 	for (i = 0; i < 5; i++) {

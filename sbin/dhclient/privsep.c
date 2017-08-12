@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.64 2017/08/11 18:00:38 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.65 2017/08/12 16:57:38 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -79,7 +79,7 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 			if (imsg.hdr.len != IMSG_HEADER_SIZE)
 				log_warnx("bad IMSG_FLUSH_ROUTES");
 			else
-				priv_flush_routes(name, routefd, rdomain);
+				priv_flush_routes(index, routefd, rdomain);
 			break;
 
 		case IMSG_ADD_ROUTE:
