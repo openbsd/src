@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.5 2017/05/30 21:59:36 zhuk Exp $
+# $OpenBSD: Makefile,v 1.6 2017/08/12 22:20:28 bluhm Exp $
 
 # initial SUID handling bits taken from regress/sys/kern/setuid/
 
 ALLOWED_MOUNTS = ${.OBJDIR} /tmp
 .for d in ${ALLOWED_MOUNTS}
 SUID_MOUNTS  +!= mount | grep ^$$(df -P $d | tail -1 | awk '{ print $$1 }') |\
-    egrep -vw 'nosuid|noexec' | awk '{ print $$3 }' || true
+    egrep -vw 'nosuid|noexec' | awk '{ print "$d" }' || true
 .endfor
 
 REGRESS_TARGETS = \
@@ -49,12 +49,13 @@ ${t}:
 .for t in ${REGRESS_TARGETS:M*-permit*}
 ${t}:
 	@echo '$@'
-	@id | grep '(wobj)' >/dev/null || { echo SKIPPED; exit 0; } ; \
-	rv=true; \
+	@rv=true; \
 	while read ident cmdline; do \
 		read expected; \
 		set +e; \
-		action=$$(doas -C ${.CURDIR}/$@.conf -u $$ident $$cmdline); \
+		doascmd="doas -C ${.CURDIR}/$@.conf -u $$ident $$cmdline"; \
+		if id | grep -q '(wobj)'; then action=$$($$doascmd); \
+		else action=$$(su ${BUILDUSER} -c "exec $$doascmd"); fi; \
 		ret=$$?; \
 		set -e; \
 		if [ X"$$action" != X"$$expected" ]; then \
