@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.206 2017/08/12 15:10:27 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.207 2017/08/12 19:23:42 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -442,7 +442,7 @@ void	iwm_setrates(struct iwm_node *);
 int	iwm_media_change(struct ifnet *);
 void	iwm_newstate_task(void *);
 int	iwm_newstate(struct ieee80211com *, enum ieee80211_state, int);
-void	iwm_endscan_cb(void *);
+void	iwm_endscan(struct iwm_softc *);
 void	iwm_fill_sf_command(struct iwm_softc *, struct iwm_sf_cfg_cmd *,
 	    struct ieee80211_node *);
 int	iwm_sf_config(struct iwm_softc *, int);
@@ -5954,13 +5954,11 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 }
 
 void
-iwm_endscan_cb(void *arg)
+iwm_endscan(struct iwm_softc *sc)
 {
-	struct iwm_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	/* Check if device was reset while scanning. */
-	if (ic->ic_state != IEEE80211_S_SCAN)
+	if ((sc->sc_flags & IWM_FLAG_SCANNING) == 0)
 		return;
 
 	sc->sc_flags &= ~IWM_FLAG_SCANNING;
@@ -6444,7 +6442,6 @@ iwm_stop(struct ifnet *ifp, int disable)
 
 	task_del(systq, &sc->init_task);
 	task_del(sc->sc_nswq, &sc->newstate_task);
-	task_del(sc->sc_eswq, &sc->sc_eswk);
 	task_del(systq, &sc->setrates_task);
 	task_del(systq, &sc->ba_task);
 	task_del(systq, &sc->htprot_task);
@@ -7005,22 +7002,21 @@ iwm_notif_intr(struct iwm_softc *sc)
 		case IWM_SCAN_ITERATION_COMPLETE: {
 			struct iwm_lmac_scan_complete_notif *notif;
 			SYNC_RESP_STRUCT(notif, pkt);
-			task_add(sc->sc_eswq, &sc->sc_eswk);
+			iwm_endscan(sc);
 			break;
 		}
 
 		case IWM_SCAN_COMPLETE_UMAC: {
 			struct iwm_umac_scan_complete *notif;
 			SYNC_RESP_STRUCT(notif, pkt);
-			task_add(sc->sc_eswq, &sc->sc_eswk);
+			iwm_endscan(sc);
 			break;
 		}
 
 		case IWM_SCAN_ITERATION_COMPLETE_UMAC: {
 			struct iwm_umac_scan_iter_complete_notif *notif;
 			SYNC_RESP_STRUCT(notif, pkt);
-
-			task_add(sc->sc_eswq, &sc->sc_eswk);
+			iwm_endscan(sc);
 			break;
 		}
 
@@ -7332,7 +7328,6 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
 
-	task_set(&sc->sc_eswk, iwm_endscan_cb, sc);
 	rw_init(&sc->ioctl_rwl, "iwmioctl");
 
 	err = pci_get_capability(sc->sc_pct, sc->sc_pcitag,
@@ -7541,9 +7536,6 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		goto fail4;
 	}
 
-	sc->sc_eswq = taskq_create("iwmes", 1, IPL_NET, 0);
-	if (sc->sc_eswq == NULL)
-		goto fail4;
 	sc->sc_nswq = taskq_create("iwmns", 1, IPL_NET, 0);
 	if (sc->sc_nswq == NULL)
 		goto fail4;

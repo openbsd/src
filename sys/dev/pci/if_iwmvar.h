@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.31 2017/07/16 22:48:26 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.32 2017/08/12 19:23:42 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -466,8 +466,7 @@ struct iwm_softc {
 	int sc_wantresp;
 	int sc_nic_locks;
 
-	struct taskq *sc_nswq, *sc_eswq;
-	struct task sc_eswk;
+	struct taskq *sc_nswq;
 
 	struct iwm_rx_phy_info sc_last_phy_info;
 	int sc_ampdu_ref;
