@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.156 2017/08/11 17:54:41 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.157 2017/08/12 02:55:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2460,13 +2460,9 @@ ssl3_get_req_cert_types(SSL *s, CBB *cbb)
 	if ((alg_k & SSL_kDHE) != 0) {
 		if (!CBB_add_u8(cbb, SSL3_CT_RSA_FIXED_DH))
 			return 0;
-		if (!CBB_add_u8(cbb, SSL3_CT_DSS_FIXED_DH))
-			return 0;
 	}
 
 	if (!CBB_add_u8(cbb, SSL3_CT_RSA_SIGN))
-		return 0;
-	if (!CBB_add_u8(cbb, SSL3_CT_DSS_SIGN))
 		return 0;
 
 	/*

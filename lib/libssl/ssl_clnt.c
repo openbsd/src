@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.14 2017/05/07 04:22:24 beck Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.15 2017/08/12 02:55:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1162,8 +1162,6 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 
 	if (alg_a & SSL_aRSA)
 		*pkey = X509_get_pubkey(sc->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
-	else if (alg_a & SSL_aDSS)
-		*pkey = X509_get_pubkey(sc->peer_pkeys[SSL_PKEY_DSA_SIGN].x509);
 	else
 		/* XXX - Anonymous DH, so no certificate or pkey. */
 		*pkey = NULL;
@@ -2395,16 +2393,6 @@ ssl3_send_client_verify(SSL *s)
 			}
 			s2n(u, p);
 			n = u + 2;
-		} else if (pkey->type == EVP_PKEY_DSA) {
-			if (!DSA_sign(pkey->save_type,
-			    &(data[MD5_DIGEST_LENGTH]),
-			    SHA_DIGEST_LENGTH, &(p[2]),
-			    (unsigned int *)&j, pkey->pkey.dsa)) {
-				SSLerror(s, ERR_R_DSA_LIB);
-				goto err;
-			}
-			s2n(j, p);
-			n = j + 2;
 		} else if (pkey->type == EVP_PKEY_EC) {
 			if (!ECDSA_sign(pkey->save_type,
 			    &(data[MD5_DIGEST_LENGTH]),
@@ -2593,13 +2581,8 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	if ((alg_a & SSL_aRSA) && !has_bits(i, EVP_PK_RSA|EVP_PKT_SIGN)) {
 		SSLerror(s, SSL_R_MISSING_RSA_SIGNING_CERT);
 		goto f_err;
-	} else if ((alg_a & SSL_aDSS) &&
-	    !has_bits(i, EVP_PK_DSA|EVP_PKT_SIGN)) {
-		SSLerror(s, SSL_R_MISSING_DSA_SIGNING_CERT);
-		goto f_err;
 	}
-	if ((alg_k & SSL_kRSA) &&
-	    !has_bits(i, EVP_PK_RSA|EVP_PKT_ENC)) {
+	if ((alg_k & SSL_kRSA) && !has_bits(i, EVP_PK_RSA|EVP_PKT_ENC)) {
 		SSLerror(s, SSL_R_MISSING_RSA_ENCRYPTING_CERT);
 		goto f_err;
 	}

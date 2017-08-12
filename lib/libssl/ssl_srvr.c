@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.19 2017/08/11 17:54:41 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.20 2017/08/12 02:55:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2253,17 +2253,6 @@ ssl3_get_cert_verify(SSL *s)
 		if (i == 0) {
 			al = SSL_AD_DECRYPT_ERROR;
 			SSLerror(s, SSL_R_BAD_RSA_SIGNATURE);
-			goto f_err;
-		}
-	} else
-	if (pkey->type == EVP_PKEY_DSA) {
-		j = DSA_verify(pkey->save_type,
-		    &(S3I(s)->tmp.cert_verify_md[MD5_DIGEST_LENGTH]),
-		    SHA_DIGEST_LENGTH, p, i, pkey->pkey.dsa);
-		if (j <= 0) {
-			/* bad signature */
-			al = SSL_AD_DECRYPT_ERROR;
-			SSLerror(s, SSL_R_BAD_DSA_SIGNATURE);
 			goto f_err;
 		}
 	} else

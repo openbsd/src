@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.65 2017/08/10 17:18:38 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.66 2017/08/12 02:55:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -162,7 +162,6 @@ static void
 ssl_cert_set_default_md(CERT *cert)
 {
 	/* Set digest values to defaults */
-	cert->pkeys[SSL_PKEY_DSA_SIGN].digest = EVP_sha1();
 	cert->pkeys[SSL_PKEY_RSA_SIGN].digest = EVP_sha1();
 	cert->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();
 	cert->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
@@ -267,12 +266,7 @@ ssl_cert_dup(CERT *cert)
 				/* We have an RSA key. */
 				break;
 
-			case SSL_PKEY_DSA_SIGN:
-				/* We have a DSA key. */
-				break;
-
 			case SSL_PKEY_DH_RSA:
-			case SSL_PKEY_DH_DSA:
 				/* We have a DH key. */
 				break;
 

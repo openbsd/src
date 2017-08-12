@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.187 2017/08/11 20:14:13 doug Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.188 2017/08/12 02:55:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -341,15 +341,12 @@ __BEGIN_HIDDEN_DECLS
 #define SSL_USE_TLS1_2_CIPHERS(s) \
 	(s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
 
-/* Mostly for SSLv3 */
 #define SSL_PKEY_RSA_ENC	0
 #define SSL_PKEY_RSA_SIGN	1
-#define SSL_PKEY_DSA_SIGN	2
-#define SSL_PKEY_DH_RSA		3
-#define SSL_PKEY_DH_DSA		4
-#define SSL_PKEY_ECC            5
-#define SSL_PKEY_GOST01		6
-#define SSL_PKEY_NUM		7
+#define SSL_PKEY_DH_RSA		2
+#define SSL_PKEY_ECC            3
+#define SSL_PKEY_GOST01		4
+#define SSL_PKEY_NUM		5
 
 #define SSL_MAX_EMPTY_RECORDS	32
 

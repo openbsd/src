@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.126 2017/08/11 20:14:13 doug Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.127 2017/08/12 02:55:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -631,18 +631,15 @@ tls1_check_ec_tmp_key(SSL *s)
 
 static unsigned char tls12_sigalgs[] = {
 	TLSEXT_hash_sha512, TLSEXT_signature_rsa,
-	TLSEXT_hash_sha512, TLSEXT_signature_dsa,
 	TLSEXT_hash_sha512, TLSEXT_signature_ecdsa,
 #ifndef OPENSSL_NO_GOST
 	TLSEXT_hash_streebog_512, TLSEXT_signature_gostr12_512,
 #endif
 
 	TLSEXT_hash_sha384, TLSEXT_signature_rsa,
-	TLSEXT_hash_sha384, TLSEXT_signature_dsa,
 	TLSEXT_hash_sha384, TLSEXT_signature_ecdsa,
 
 	TLSEXT_hash_sha256, TLSEXT_signature_rsa,
-	TLSEXT_hash_sha256, TLSEXT_signature_dsa,
 	TLSEXT_hash_sha256, TLSEXT_signature_ecdsa,
 
 #ifndef OPENSSL_NO_GOST
@@ -651,11 +648,9 @@ static unsigned char tls12_sigalgs[] = {
 #endif
 
 	TLSEXT_hash_sha224, TLSEXT_signature_rsa,
-	TLSEXT_hash_sha224, TLSEXT_signature_dsa,
 	TLSEXT_hash_sha224, TLSEXT_signature_ecdsa,
 
 	TLSEXT_hash_sha1, TLSEXT_signature_rsa,
-	TLSEXT_hash_sha1, TLSEXT_signature_dsa,
 	TLSEXT_hash_sha1, TLSEXT_signature_ecdsa,
 };
 
@@ -1932,7 +1927,6 @@ static tls12_lookup tls12_md[] = {
 
 static tls12_lookup tls12_sig[] = {
 	{EVP_PKEY_RSA, TLSEXT_signature_rsa},
-	{EVP_PKEY_DSA, TLSEXT_signature_dsa},
 	{EVP_PKEY_EC, TLSEXT_signature_ecdsa},
 	{EVP_PKEY_GOSTR01, TLSEXT_signature_gostr01},
 };
@@ -2020,7 +2014,6 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 
 	CBS_init(&cbs, data, dsize);
 
-	c->pkeys[SSL_PKEY_DSA_SIGN].digest = NULL;
 	c->pkeys[SSL_PKEY_RSA_SIGN].digest = NULL;
 	c->pkeys[SSL_PKEY_RSA_ENC].digest = NULL;
 	c->pkeys[SSL_PKEY_ECC].digest = NULL;
@@ -2038,9 +2031,6 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 		switch (sig_alg) {
 		case TLSEXT_signature_rsa:
 			idx = SSL_PKEY_RSA_SIGN;
-			break;
-		case TLSEXT_signature_dsa:
-			idx = SSL_PKEY_DSA_SIGN;
 			break;
 		case TLSEXT_signature_ecdsa:
 			idx = SSL_PKEY_ECC;
@@ -2068,8 +2058,6 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	/* Set any remaining keys to default values. NOTE: if alg is not
 	 * supported it stays as NULL.
 	 */
-	if (!c->pkeys[SSL_PKEY_DSA_SIGN].digest)
-		c->pkeys[SSL_PKEY_DSA_SIGN].digest = EVP_sha1();
 	if (!c->pkeys[SSL_PKEY_RSA_SIGN].digest) {
 		c->pkeys[SSL_PKEY_RSA_SIGN].digest = EVP_sha1();
 		c->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();

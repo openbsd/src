@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_algs.c,v 1.26 2017/04/29 22:31:42 beck Exp $ */
+/* $OpenBSD: ssl_algs.c,v 1.27 2017/08/12 02:55:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,10 +112,6 @@ SSL_library_init(void)
 	EVP_add_digest(EVP_sha256());
 	EVP_add_digest(EVP_sha384());
 	EVP_add_digest(EVP_sha512());
-	EVP_add_digest(EVP_dss1()); /* DSA with sha1 */
-	EVP_add_digest_alias(SN_dsaWithSHA1, SN_dsaWithSHA1_2);
-	EVP_add_digest_alias(SN_dsaWithSHA1, "DSS1");
-	EVP_add_digest_alias(SN_dsaWithSHA1, "dss1");
 	EVP_add_digest(EVP_ecdsa());
 #ifndef OPENSSL_NO_GOST
 	EVP_add_digest(EVP_gostr341194());
