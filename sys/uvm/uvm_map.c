@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.231 2017/05/17 08:13:33 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.232 2017/08/12 16:30:10 guenther Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -5059,7 +5059,7 @@ vm_map_lock_try_ln(struct vm_map *map, char *file, int line)
 	boolean_t rv;
 
 	if (map->flags & VM_MAP_INTRSAFE) {
-		rv = mtx_enter_try(&map->mtx);
+		rv = _mtx_enter_try(&map->mtx LOCK_FL_ARGS);
 	} else {
 		mtx_enter(&map->flags_lock);
 		if (map->flags & VM_MAP_BUSY) {
@@ -5067,12 +5067,13 @@ vm_map_lock_try_ln(struct vm_map *map, char *file, int line)
 			return (FALSE);
 		}
 		mtx_leave(&map->flags_lock);
-		rv = (rw_enter(&map->lock, RW_WRITE|RW_NOSLEEP) == 0);
+		rv = (_rw_enter(&map->lock, RW_WRITE|RW_NOSLEEP LOCK_FL_ARGS)
+		    == 0);
 		/* check if the lock is busy and back out if we won the race */
 		if (rv) {
 			mtx_enter(&map->flags_lock);
 			if (map->flags & VM_MAP_BUSY) {
-				rw_exit(&map->lock);
+				_rw_exit(&map->lock LOCK_FL_ARGS);
 				rv = FALSE;
 			}
 			mtx_leave(&map->flags_lock);
@@ -5102,16 +5103,17 @@ tryagain:
 				    PVM, vmmapbsy, 0);
 			}
 			mtx_leave(&map->flags_lock);
-		} while (rw_enter(&map->lock, RW_WRITE|RW_SLEEPFAIL) != 0);
+		} while (_rw_enter(&map->lock, RW_WRITE|RW_SLEEPFAIL
+		    LOCK_FL_ARGS) != 0);
 		/* check if the lock is busy and back out if we won the race */
 		mtx_enter(&map->flags_lock);
 		if (map->flags & VM_MAP_BUSY) {
-			rw_exit(&map->lock);
+			_rw_exit(&map->lock LOCK_FL_ARGS);
 			goto tryagain;
 		}
 		mtx_leave(&map->flags_lock);
 	} else {
-		mtx_enter(&map->mtx);
+		_mtx_enter(&map->mtx LOCK_FL_ARGS);
 	}
 
 	map->timestamp++;
@@ -5124,9 +5126,9 @@ void
 vm_map_lock_read_ln(struct vm_map *map, char *file, int line)
 {
 	if ((map->flags & VM_MAP_INTRSAFE) == 0)
-		rw_enter_read(&map->lock);
+		_rw_enter_read(&map->lock LOCK_FL_ARGS);
 	else
-		mtx_enter(&map->mtx);
+		_mtx_enter(&map->mtx LOCK_FL_ARGS);
 	LPRINTF(("map   lock: %p (at %s %d)\n", map, file, line));
 	uvm_tree_sanity(map, file, line);
 	uvm_tree_size_chk(map, file, line);
@@ -5139,9 +5141,9 @@ vm_map_unlock_ln(struct vm_map *map, char *file, int line)
 	uvm_tree_size_chk(map, file, line);
 	LPRINTF(("map unlock: %p (at %s %d)\n", map, file, line));
 	if ((map->flags & VM_MAP_INTRSAFE) == 0)
-		rw_exit(&map->lock);
+		_rw_exit(&map->lock LOCK_FL_ARGS);
 	else
-		mtx_leave(&map->mtx);
+		_mtx_leave(&map->mtx LOCK_FL_ARGS);
 }
 
 void
@@ -5151,9 +5153,9 @@ vm_map_unlock_read_ln(struct vm_map *map, char *file, int line)
 	/* XXX: RO */ uvm_tree_size_chk(map, file, line);
 	LPRINTF(("map unlock: %p (at %s %d)\n", map, file, line));
 	if ((map->flags & VM_MAP_INTRSAFE) == 0)
-		rw_exit_read(&map->lock);
+		_rw_exit_read(&map->lock LOCK_FL_ARGS);
 	else
-		mtx_leave(&map->mtx);
+		_mtx_leave(&map->mtx LOCK_FL_ARGS);
 }
 
 void
@@ -5165,7 +5167,7 @@ vm_map_downgrade_ln(struct vm_map *map, char *file, int line)
 	LPRINTF(("map   lock: %p (at %s %d)\n", map, file, line));
 	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 	if ((map->flags & VM_MAP_INTRSAFE) == 0)
-		rw_enter(&map->lock, RW_DOWNGRADE);
+		_rw_enter(&map->lock, RW_DOWNGRADE LOCK_FL_ARGS);
 }
 
 void
@@ -5176,8 +5178,8 @@ vm_map_upgrade_ln(struct vm_map *map, char *file, int line)
 	LPRINTF(("map unlock: %p (at %s %d)\n", map, file, line));
 	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 	if ((map->flags & VM_MAP_INTRSAFE) == 0) {
-		rw_exit_read(&map->lock);
-		rw_enter_write(&map->lock);
+		_rw_exit_read(&map->lock LOCK_FL_ARGS);
+		_rw_enter_write(&map->lock LOCK_FL_ARGS);
 	}
 	LPRINTF(("map   lock: %p (at %s %d)\n", map, file, line));
 	uvm_tree_sanity(map, file, line);
