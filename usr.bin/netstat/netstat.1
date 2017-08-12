@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.80 2016/10/12 13:04:03 jca Exp $
+.\"	$OpenBSD: netstat.1,v 1.81 2017/08/12 03:21:02 benno Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: October 12 2016 $
+.Dd $Mdocdate: August 12 2017 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd show network status
 .Sh SYNOPSIS
 .Nm netstat
-.Op Fl AaBn
+.Op Fl AaBln
 .Op Fl f Ar address_family
 .Op Fl p Ar protocol
 .Op Fl M Ar core
@@ -200,6 +200,8 @@ option) is present, show per-interface statistics on all interfaces
 for the specified
 .Ar address_family .
 .It Fl l
+With the default display,
+show only listening sockets.
 With the
 .Fl g
 option, display wider fields for the IPv6 multicast routing table

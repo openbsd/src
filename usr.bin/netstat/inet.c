@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.159 2017/07/27 19:59:46 florian Exp $	*/
+/*	$OpenBSD: inet.c,v 1.160 2017/08/12 03:21:02 benno Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -294,9 +294,14 @@ netdomainpr(struct kinfo_file *kf, int proto)
 	}
 
 	/* filter listening sockets out unless -a is set */
-	if (!aflag && istcp && kf->t_state <= TCPS_LISTEN)
+	if (!(aflag || lflag) && istcp && kf->t_state <= TCPS_LISTEN)
 		return;
-	else if (!aflag && isany)
+	else if (!(aflag || lflag) && isany)
+		return;
+
+	/* when -l is set, show only listening sockets */
+	if (!aflag && lflag && istcp &&
+	    kf->t_state != TCPS_LISTEN)
 		return;
 
 	if (af != kf->so_family || type != kf->so_type) {
@@ -305,6 +310,8 @@ netdomainpr(struct kinfo_file *kf, int proto)
 		printf("Active Internet connections");
 		if (aflag)
 			printf(" (including servers)");
+		else if (lflag)
+			printf(" (only servers)");
 		putchar('\n');
 		if (Aflag) {
 			addrlen = 18;
