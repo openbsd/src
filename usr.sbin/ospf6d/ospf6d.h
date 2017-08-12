@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.33 2017/06/19 19:55:57 friehm Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.34 2017/08/12 16:27:50 benno Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -30,6 +30,7 @@
 
 #include <imsg.h>
 #include "ospf6.h"
+#include "log.h"
 
 #define CONF_FILE		"/etc/ospf6d.conf"
 #define	OSPF6D_SOCKET		"/var/run/ospf6d.sock"

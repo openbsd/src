@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.71 2017/06/19 19:55:57 friehm Exp $ */
+/*	$OpenBSD: rde.c,v 1.72 2017/08/12 16:27:50 benno Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -142,8 +142,14 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 		fatal("chdir(\"/\")");
 
 	setproctitle("route decision engine");
+	/*
+	 * XXX needed with fork+exec
+	 * log_init(debug, LOG_DAEMON);
+	 * log_setverbose(verbose);
+	 */
+
 	ospfd_process = PROC_RDE_ENGINE;
-	log_procname = log_procnames[ospfd_process];
+	log_procinit(log_procnames[ospfd_process]);
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
@@ -600,7 +606,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_CTL_LOG_VERBOSE:
 			/* already checked by ospfe */
 			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
+			log_setverbose(verbose);
 			break;
 		default:
 			log_debug("rde_dispatch_imsg: unexpected imsg %d",
