@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.13 2017/01/27 17:59:09 natano Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 2017/08/12 19:41:16 jasper Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -11,6 +11,7 @@ LISTS?=		${.CURDIR}/../common/list
 CRUNCHCONF?=	${CBIN}.conf
 MTREE=		${UTILS}/mtree.conf
 STRIP=		strip
+STRIPOPTS?=	-R .eh_frame -R .SUNW_ctf
 
 ${CRUNCHCONF}: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
@@ -20,7 +21,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
-	${STRIP} -R .eh_frame ${CBIN}
+	${STRIP} ${STRIPOPTS} ${CBIN}
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
