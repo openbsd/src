@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.89 2017/07/19 22:51:30 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.90 2017/08/12 00:24:13 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -164,23 +164,23 @@ cachecmp(struct dnscache *c1, struct dnscache *c2)
 RB_GENERATE_STATIC(cachetree, dnscache, cachenode, cachecmp)
 
 static void
-lowercase(unsigned char *s)
+lowercase(unsigned char *s, size_t len)
 {
-	while (*s) {
+	while (len--) {
 		*s = tolower(*s);
 		s++;
 	}
 }
 
 static void
-randomcase(unsigned char *s)
+randomcase(unsigned char *s, size_t len)
 {
 	unsigned char bits[NAMELEN / 8], *b;
 	u_int i = 0;
 
-	arc4random_buf(bits, (strlen(s) + 7) / 8);
+	arc4random_buf(bits, (len + 7) / 8);
 	b = bits;
-	while (*s) {
+	while (len--) {
 		*s = (*b & (1 << i)) ? toupper(*s) : tolower(*s);
 		s++;
 		i++;
@@ -275,20 +275,14 @@ adjustttl(struct dnscache *ent)
 }
 
 static struct dnscache *
-cachelookup(struct dnspacket *dnsreq, size_t reqlen)
+cachelookup(struct dnspacket *dnsreq, size_t reqlen, size_t namelen)
 {
 	struct dnscache *hit, key;
 	unsigned char origname[NAMELEN];
 	uint16_t origid;
-	size_t namelen;
 
-	if (ntohs(dnsreq->qdcount) != 1)
-		return NULL;
-
-	namelen = strlcpy(origname, dnsreq->qname, sizeof(origname));
-	if (namelen >= sizeof(origname))
-		return NULL;
-	lowercase(dnsreq->qname);
+	memcpy(origname, dnsreq->qname, namelen);
+	lowercase(dnsreq->qname, namelen);
 
 	origid = dnsreq->id;
 	dnsreq->id = 0;
@@ -304,7 +298,7 @@ cachelookup(struct dnspacket *dnsreq, size_t reqlen)
 			cachehits += 1;
 	}
 
-	memcpy(dnsreq->qname, origname, namelen + 1);
+	memcpy(dnsreq->qname, origname, namelen);
 	dnsreq->id = origid;
 	return hit;
 }
@@ -350,8 +344,9 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	struct request *req;
 	uint8_t buf[65536];
 	struct dnspacket *dnsreq;
-	struct dnscache *hit;
+	struct dnscache *hit = NULL;
 	size_t r;
+	size_t namelen = 0;
 
 	dnsreq = (struct dnspacket *)buf;
 
@@ -361,14 +356,18 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 		return NULL;
 	if (ntohs(dnsreq->qdcount) == 1) {
 		/* some more checking */
-		if (!memchr(dnsreq->qname, '\0', r - sizeof(struct dnspacket)))
+		namelen = dnamelen(dnsreq->qname, r - sizeof(struct dnspacket));
+		if (namelen > r - sizeof(struct dnspacket))
 			return NULL;
+		if (namelen > NAMELEN)
+			return NULL;
+		hit = cachelookup(dnsreq, r, namelen);
 	}
 
 	conntotal += 1;
-	if ((hit = cachelookup(dnsreq, r))) {
+	if (hit) {
 		hit->resp->id = dnsreq->id;
-		memcpy(hit->resp->qname, dnsreq->qname, strlen(hit->resp->qname) + 1);
+		memcpy(hit->resp->qname, dnsreq->qname, namelen);
 		sendto(ud, hit->resp, hit->resplen, 0, &from.a, fromlen);
 		return NULL;
 	}
@@ -389,12 +388,9 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	req->reqid = randomid();
 	dnsreq->id = req->reqid;
 	if (ntohs(dnsreq->qdcount) == 1) {
-		size_t namelen;
-		namelen = strlcpy(req->origname, dnsreq->qname, sizeof(req->origname));
-		if (namelen >= sizeof(req->origname))
-			goto fail;
-		randomcase(dnsreq->qname);
-		memcpy(req->newname, dnsreq->qname, namelen + 1);
+		memcpy(req->origname, dnsreq->qname, namelen);
+		randomcase(dnsreq->qname, namelen);
+		memcpy(req->newname, dnsreq->qname, namelen);
 
 		hit = calloc(1, sizeof(*hit));
 		if (hit) {
@@ -403,7 +399,7 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 				memcpy(hit->req, dnsreq, r);
 				hit->reqlen = r;
 				hit->req->id = 0;
-				lowercase(hit->req->qname);
+				lowercase(hit->req->qname, namelen);
 			} else {
 				free(hit);
 				hit = NULL;
@@ -498,11 +494,14 @@ sendreply(struct request *req)
 	resp->id = req->clientid;
 	if (ntohs(resp->qdcount) == 1) {
 		/* some more checking */
-		if (!memchr(resp->qname, '\0', r - sizeof(struct dnspacket)))
+		size_t namelen = dnamelen(resp->qname, r - sizeof(struct dnspacket));
+		if (namelen > r - sizeof(struct dnspacket))
 			return;
-		if (strcmp(resp->qname, req->newname) != 0)
+		if (namelen > NAMELEN)
 			return;
-		memcpy(resp->qname, req->origname, strlen(resp->qname) + 1);
+		if (memcmp(resp->qname, req->newname, namelen) != 0)
+			return;
+		memcpy(resp->qname, req->origname, namelen);
 	}
 	sendto(req->client, buf, r, 0, &req->from.a, req->fromlen);
 	if ((ent = req->cacheent)) {
