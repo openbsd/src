@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.20 2017/08/11 16:41:47 goda Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.21 2017/08/12 11:20:34 goda Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 11 2017 $
+.Dd $Mdocdate: August 12 2017 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -506,6 +506,13 @@ Specify whether
 is allowed to assign an address selected by the user.
 The default is
 .Dq yes .
+.It Ic max-session Ar number
+Specify the maximum number of sessions for this
+.Ic ipcp
+setting.
+.Sq 0
+means no limit.
+The default value is 0.
 .El
 .Sh INTERFACE
 The

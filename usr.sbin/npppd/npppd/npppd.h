@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.h,v 1.18 2017/08/11 16:41:47 goda Exp $ */
+/*	$OpenBSD: npppd.h,v 1.19 2017/08/12 11:20:34 goda Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -179,6 +179,7 @@ struct ipcpconf {
 	bool                               allow_user_select;
 	struct in_addr_range              *dynamic_pool;
 	struct in_addr_range              *static_pool;
+	int                                max_session;
 };
 
 struct iface {
@@ -226,6 +227,14 @@ struct sockaddr_npppd {
 #define	SNP_POOL		1
 #define	SNP_DYN_POOL		2
 #define	SNP_PPP			3
+
+struct ipcpstat {
+	LIST_ENTRY(ipcpstat)	entry;
+	char			name[NPPPD_GENERIC_NAME_LEN];
+	int			nsession;
+	LIST_HEAD(, _npppd_ppp) ppp;
+};
+LIST_HEAD(ipcpstat_head, ipcpstat);
 
 typedef struct _npppd		npppd;
 

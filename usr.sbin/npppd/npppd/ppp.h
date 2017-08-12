@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.h,v 1.20 2017/05/30 17:22:00 yasuoka Exp $ */
+/*	$OpenBSD: ppp.h,v 1.21 2017/08/12 11:20:34 goda Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -601,6 +601,10 @@ struct _npppd_ppp {
 	int8_t				disconnect_direction;
 	/** disconnect message */
 	const char			*disconnect_message;
+
+	/** back pointer to ipcpsstats */
+	struct ipcpstat			*ipcpstat;
+	LIST_ENTRY(_npppd_ppp)		 ipcpstat_entry;
 };
 
 /** proxied dialin */
