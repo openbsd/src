@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.63 2017/08/09 21:23:38 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.64 2017/08/12 19:53:37 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -358,6 +358,9 @@
  * Processor event based sampling unavailable: 1 if unsupported (R/O)
  * Enhanced Intel SpeedStep technology enable: 1 to enable (R/W)
  * Enable monitor FSM: 1 to enable MONITOR/MWAIT (R/W)
+ * Limit CPUID maxval: 1 to limit CPUID leaf nodes to 0x2 and lower (R/W)
+ * Enable xTPR message disable: 1 to disable xTPR messages
+ * XD bit disable: 1 to disable NX capability (bit 34, or bit 2 of %edx/%rdx)
  */
 #define MISC_ENABLE_FAST_STRINGS		(1 << 0)
 #define MISC_ENABLE_TCC				(1 << 3)
@@ -368,7 +371,7 @@
 #define MISC_ENABLE_ENABLE_MONITOR_FSM		(1 << 18)
 #define MISC_ENABLE_LIMIT_CPUID_MAXVAL		(1 << 22)
 #define MISC_ENABLE_xTPR_MESSAGE_DISABLE	(1 << 23)
-#define MISC_ENABLE_XD_BIT_DISABLE		(1 << 34)
+#define MISC_ENABLE_XD_BIT_DISABLE		(1 << 2)
 /*
  * for Core i Series and newer Xeons, see
  * http://www.intel.com/content/dam/www/public/us/en/
