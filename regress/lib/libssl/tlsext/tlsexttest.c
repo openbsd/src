@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.10 2017/08/12 21:17:03 doug Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.11 2017/08/12 21:49:28 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1079,6 +1079,165 @@ test_tlsext_ri_serverhello(void)
 }
 
 /*
+ * Signature Algorithms - RFC 5246 section 7.4.1.4.1.
+ */
+
+static unsigned char tlsext_sigalgs_clienthello[] = {
+	0x00, 0x1a, 0x06, 0x01, 0x06, 0x03, 0xef, 0xef,
+	0x05, 0x01, 0x05, 0x03, 0x04, 0x01, 0x04, 0x03,
+	0xee, 0xee, 0xed, 0xed, 0x03, 0x01, 0x03, 0x03,
+	0x02, 0x01, 0x02, 0x03,
+};
+
+static int
+test_tlsext_sigalgs_clienthello(void)
+{
+	unsigned char *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	int failure = 0;
+	size_t dlen;
+	int alert;
+	CBB cbb;
+	CBS cbs;
+
+	CBB_init(&cbb, 0);
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	ssl->client_version = TLS1_1_VERSION;
+
+	if (tlsext_sigalgs_clienthello_needs(ssl)) {
+		fprintf(stderr, "FAIL: clienthello should not need sigalgs\n");
+		failure = 1;
+		goto done;
+	}
+
+	ssl->client_version = TLS1_2_VERSION;
+
+	if (!tlsext_sigalgs_clienthello_needs(ssl)) {
+		fprintf(stderr, "FAIL: clienthello should need sigalgs\n");
+		failure = 1;
+		goto done;
+	}
+
+	if (!tlsext_sigalgs_clienthello_build(ssl, &cbb)) {
+		fprintf(stderr, "FAIL: clienthello failed to build sigalgs\n");
+		failure = 1;
+		goto done;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_sigalgs_clienthello)) {
+		fprintf(stderr, "FAIL: got clienthello sigalgs with length %zu, "
+		    "want length %zu\n", dlen, sizeof(tlsext_sigalgs_clienthello));
+		failure = 1;
+		goto done;
+	}
+
+	if (memcmp(data, tlsext_sigalgs_clienthello, dlen) != 0) {
+		fprintf(stderr, "FAIL: clienthello SNI differs:\n");
+		fprintf(stderr, "received:\n");
+		hexdump(data, dlen);
+		fprintf(stderr, "test data:\n");
+		hexdump(tlsext_sigalgs_clienthello, sizeof(tlsext_sigalgs_clienthello));
+		failure = 1;
+		goto done;
+	}
+
+	CBS_init(&cbs, tlsext_sigalgs_clienthello, sizeof(tlsext_sigalgs_clienthello));
+	if (!tlsext_sigalgs_clienthello_parse(ssl, &cbs, &alert)) {
+		fprintf(stderr, "FAIL: failed to parse clienthello SNI\n");
+		failure = 1;
+		goto done;
+	}
+
+	if (ssl->cert->pkeys[SSL_PKEY_RSA_SIGN].digest != EVP_sha512()) {
+		fprintf(stderr, "FAIL: RSA sign digest mismatch\n");
+		failure = 1;
+		goto done;
+	}
+	if (ssl->cert->pkeys[SSL_PKEY_RSA_ENC].digest != EVP_sha512()) {
+		fprintf(stderr, "FAIL: RSA enc digest mismatch\n");
+		failure = 1;
+		goto done;
+	}
+	if (ssl->cert->pkeys[SSL_PKEY_ECC].digest != EVP_sha512()) {
+		fprintf(stderr, "FAIL: ECC digest mismatch\n");
+		failure = 1;
+		goto done;
+	}
+	if (ssl->cert->pkeys[SSL_PKEY_GOST01].digest != EVP_streebog512()) {
+		fprintf(stderr, "FAIL: GOST01 digest mismatch\n");
+		failure = 1;
+		goto done;
+	}
+		
+ done:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
+static int
+test_tlsext_sigalgs_serverhello(void)
+{
+	unsigned char *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	int failure = 0;
+	size_t dlen;
+	int alert;
+	CBB cbb;
+	CBS cbs;
+
+	CBB_init(&cbb, 0);
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	if (tlsext_sigalgs_serverhello_needs(ssl)) {
+		fprintf(stderr, "FAIL: serverhello should not need sigalgs\n");
+		failure = 1;
+		goto done;
+	}
+
+	if (tlsext_sigalgs_serverhello_build(ssl, &cbb)) {
+		fprintf(stderr, "FAIL: serverhello should not build sigalgs\n");
+		failure = 1;
+		goto done;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	CBS_init(&cbs, tlsext_sigalgs_clienthello, sizeof(tlsext_sigalgs_clienthello));
+	if (tlsext_sigalgs_serverhello_parse(ssl, &cbs, &alert)) {
+		fprintf(stderr, "FAIL: failed to parse serverhello sigalgs\n");
+		failure = 1;
+		goto done;
+	}
+
+ done:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
+/*
  * Server Name Indication - RFC 6066 section 3.
  */
 
@@ -1611,6 +1770,9 @@ main(int argc, char **argv)
 
 	failed |= test_tlsext_ri_clienthello();
 	failed |= test_tlsext_ri_serverhello();
+
+	failed |= test_tlsext_sigalgs_clienthello();
+	failed |= test_tlsext_sigalgs_serverhello();
 
 	failed |= test_tlsext_sni_clienthello();
 	failed |= test_tlsext_sni_serverhello();
