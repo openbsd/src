@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.205 2017/08/12 14:07:33 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.206 2017/08/12 15:10:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3599,6 +3599,9 @@ iwm_binding_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
 	if (action == IWM_FW_CTXT_ACTION_REMOVE && !active)
 		panic("binding already removed");
 
+	if (phyctxt == NULL) /* XXX race with iwm_stop() */
+		return EINVAL;
+
 	memset(&cmd, 0, sizeof(cmd));
 
 	cmd.id_and_color
@@ -5292,7 +5295,7 @@ iwm_update_quotas(struct iwm_softc *sc, struct iwm_node *in, int running)
 	memset(&cmd, 0, sizeof(cmd));
 
 	/* currently, PHY ID == binding ID */
-	if (in) {
+	if (in && in->in_phyctxt) {
 		id = in->in_phyctxt->id;
 		KASSERT(id < IWM_MAX_BINDINGS);
 		colors[id] = in->in_phyctxt->color;
