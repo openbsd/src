@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.91 2017/07/25 13:27:37 robert Exp $
+#	$OpenBSD: Makefile.amd64,v 1.92 2017/08/12 20:26:11 mpi Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -11,7 +11,7 @@
 .include <bsd.own.mk>
 
 SIZE?=	size
-STRIP?=	strip
+STRIP?=	ctfstrip
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
