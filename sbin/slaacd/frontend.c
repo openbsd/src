@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.5 2017/07/24 11:00:01 friehm Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.6 2017/08/12 07:39:55 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -536,11 +536,9 @@ route_receive(int fd, short events, void *arg)
 {
 	static uint8_t			 buf[ROUTE_SOCKET_BUF_SIZE];
 
-	struct rt_msghdr		*rtm;
+	struct rt_msghdr		*rtm = (struct rt_msghdr *)buf;
 	struct sockaddr			*sa, *rti_info[RTAX_MAX];
-	size_t				 len, offset;
 	ssize_t				 n;
-	char				*next;
 
 	if ((n = read(fd, &buf, sizeof(buf))) == -1) {
 		if (errno == EAGAIN || errno == EINTR)
@@ -549,26 +547,21 @@ route_receive(int fd, short events, void *arg)
 		return;
 	}
 
-	if (n == 0) {
-		log_warnx("routing socket closed");
+	if (n == 0)
+		fatal("routing socket closed");
+
+	if (n < rtm->rtm_msglen) {
+		log_warnx("partial rtm in buffer");
 		return;
 	}
 
-	len = n;
-	for (offset = 0; offset < len; offset += rtm->rtm_msglen) {
-		next = buf + offset;
-		rtm = (struct rt_msghdr *)next;
-		if (len < offset + sizeof(u_short) ||
-		    len < offset + rtm->rtm_msglen)
-			fatalx("rtmsg_process: partial rtm in buffer");
-		if (rtm->rtm_version != RTM_VERSION)
-			continue;
+	if (rtm->rtm_version != RTM_VERSION)
+		return;
 
-		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
-		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+	sa = (struct sockaddr *)(buf + rtm->rtm_hdrlen);
+	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
-		handle_route_message(rtm, rti_info);
-	}
+	handle_route_message(rtm, rti_info);
 }
 
 void
