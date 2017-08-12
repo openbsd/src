@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.162 2017/08/11 16:02:53 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.163 2017/08/12 17:39:51 job Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 11 2017 $
+.Dd $Mdocdate: August 12 2017 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1248,6 +1248,14 @@ is one of the following:
 .Bl -tag -width "group descr" -compact
 .It Ic any
 Any neighbor will be matched.
+.It Ic ibgp
+All
+.Em IBGP
+neighbors will be matched.
+.It Ic ebgp
+All
+.Em EBGP
+neighbors will be matched.
 .It Ar address
 Neighbors with this address will be matched.
 .It Ic group Ar descr
