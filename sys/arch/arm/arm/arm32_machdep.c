@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.53 2017/01/13 09:18:11 fcambus Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.54 2017/08/12 13:18:48 tedu Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -303,9 +303,6 @@ int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
-#if NAPM > 0
-	extern int cpu_apmwarn;
-#endif
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -332,11 +329,6 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			    &allowaperture));
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
-#endif
-
-#if NAPM > 0
-	case CPU_APMWARN:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmwarn));
 #endif
 
 	default:

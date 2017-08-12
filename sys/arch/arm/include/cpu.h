@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.47 2017/07/12 06:26:32 natano Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.48 2017/08/12 13:18:48 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
 #define	CPU_CONSDEV		4	/* struct: dev_t of our console */
 #define	CPU_POWERSAVE		5	/* int: use CPU powersave mode */
 #define	CPU_ALLOWAPERTURE	6	/* int: allow mmap of /dev/xf86 */
-#define CPU_APMWARN		7	/* APM battery warning percentage */
+		/*		7	   formerly int: apmwarn */
 		/*		8	   formerly int: keyboard reset */
 		/*		9	   formerly int: CPU_ZTSRAWMODE */
 		/*		10	   formerly struct: CPU_ZTSSCALE */
@@ -77,7 +77,7 @@
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "powersave", CTLTYPE_INT }, \
 	{ "allowaperture", CTLTYPE_INT }, \
-	{ "apmwarn", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
