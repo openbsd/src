@@ -446,15 +446,16 @@ err:
 }
 EXPORT_SYMBOL(drm_vblank_init);
 
-#ifdef __linux__
 static void drm_irq_vgaarb_nokms(void *cookie, bool state)
 {
 	struct drm_device *dev = cookie;
 
+#ifdef __linux__
 	if (dev->driver->vgaarb_irq) {
 		dev->driver->vgaarb_irq(dev, state);
 		return;
 	}
+#endif
 
 	if (!dev->irq_enabled)
 		return;
@@ -469,7 +470,6 @@ static void drm_irq_vgaarb_nokms(void *cookie, bool state)
 			dev->driver->irq_postinstall(dev);
 	}
 }
-#endif
 
 /**
  * drm_irq_install - install IRQ handler
@@ -491,9 +491,7 @@ static void drm_irq_vgaarb_nokms(void *cookie, bool state)
 int drm_irq_install(struct drm_device *dev, int irq)
 {
 	int ret;
-#ifdef __linux__
 	unsigned long sh_flags = 0;
-#endif
 
 	if (!drm_core_check_feature(dev, DRIVER_HAVE_IRQ))
 		return -EINVAL;
@@ -515,7 +513,6 @@ int drm_irq_install(struct drm_device *dev, int irq)
 	if (dev->driver->irq_preinstall)
 		dev->driver->irq_preinstall(dev);
 
-#ifdef __linux__
 	/* Install handler */
 	if (drm_core_check_feature(dev, DRIVER_IRQ_SHARED))
 		sh_flags = IRQF_SHARED;
@@ -530,7 +527,6 @@ int drm_irq_install(struct drm_device *dev, int irq)
 
 	if (!drm_core_check_feature(dev, DRIVER_MODESET))
 		vga_client_register(dev->pdev, (void *)dev, drm_irq_vgaarb_nokms, NULL);
-#endif
 
 	/* After installing handler */
 	if (dev->driver->irq_postinstall)
@@ -538,11 +534,9 @@ int drm_irq_install(struct drm_device *dev, int irq)
 
 	if (ret < 0) {
 		dev->irq_enabled = false;
-#ifdef __linux__
 		if (!drm_core_check_feature(dev, DRIVER_MODESET))
 			vga_client_register(dev->pdev, NULL, NULL, NULL);
 		free_irq(irq, dev);
-#endif
 	} else {
 		dev->irq = irq;
 	}
@@ -606,17 +600,13 @@ int drm_irq_uninstall(struct drm_device *dev)
 
 	DRM_DEBUG("irq=%d\n", dev->irq);
 
-#ifdef __linux__
 	if (!drm_core_check_feature(dev, DRIVER_MODESET))
 		vga_client_register(dev->pdev, NULL, NULL, NULL);
-#endif
 
 	if (dev->driver->irq_uninstall)
 		dev->driver->irq_uninstall(dev);
 
-#ifdef __linux__
 	free_irq(dev->irq, dev);
-#endif
 
 	return 0;
 }

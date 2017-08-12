@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.60 2017/08/12 16:28:01 guenther Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.61 2017/08/12 19:46:02 mpi Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -532,9 +532,13 @@ _spin_unlock_irqrestore(struct mutex *mtxp, __unused unsigned long flags
 #define might_lock(lock)
 #define lockdep_assert_held(lock)	do { (void)(lock); } while(0)
 
+#define IRQF_SHARED	0
+
 #define local_irq_save(x)		(x) = splhigh()
 #define local_irq_restore(x)		splx((x))
 
+#define request_irq(irq, hdlr, flags, name, dev)	(0)
+#define free_irq(irq, dev)
 #define synchronize_irq(x)
 
 #define fence_wait(x, y)
