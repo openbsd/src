@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.6 2017/08/11 20:49:26 jasper Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.7 2017/08/12 19:00:08 jasper Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -77,8 +77,7 @@ struct itype_queue iobjq = TAILQ_HEAD_INITIALIZER(iobjq);
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s -d file\n", getprogname());
-	fprintf(stderr, "       %s -l label -o outfile file\n",
+	fprintf(stderr, "usage: %s [-d] -l label -o outfile file\n",
 	    getprogname());
 	exit(1);
 }

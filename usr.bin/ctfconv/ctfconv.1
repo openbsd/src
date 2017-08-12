@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctfconv.1,v 1.4 2017/08/11 19:34:24 jasper Exp $
+.\"	$OpenBSD: ctfconv.1,v 1.5 2017/08/12 19:00:08 jasper Exp $
 .\"
 .\" Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 11 2017 $
+.Dd $Mdocdate: August 12 2017 $
 .Dt CTFCONV 1
 .Os
 .Sh NAME
@@ -22,8 +22,7 @@
 .Nd generates a raw CTF section from debug data
 .Sh SYNOPSIS
 .Nm ctfconv
-.Fl d file
-.Nm ctfconv
+.Op Fl d
 .Fl l Ar label
 .Fl o Ar outfile
 .Ar file
@@ -42,7 +41,9 @@ The options are as follows:
 Display types as if they would be dumped from a
 .Dv .SUNW_ctf
 section by
-.Xr ctfdump 1 .
+.Xr ctfdump 1 
+and exit.
+This option cannot be used in conjuction with other modes of operation.
 .It Fl l Ar label
 Set the
 .Dv CTF
