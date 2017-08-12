@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.91 2017/02/14 10:31:15 mpi Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.92 2017/08/12 00:03:10 tedu Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -392,42 +392,28 @@ ktrpledge(struct proc *p, int error, uint64_t code, int syscall)
 
 /* Interface and common routines */
 
-/*
- * ktrace system call
- */
 int
-sys_ktrace(struct proc *p, void *v, register_t *retval)
+doktrace(struct vnode *vp, int ops, int facs, pid_t pid, struct proc *p)
 {
-	struct sys_ktrace_args /* {
-		syscallarg(const char *) fname;
-		syscallarg(int) ops;
-		syscallarg(int) facs;
-		syscallarg(pid_t) pid;
-	} */ *uap = v;
-	struct vnode *vp = NULL;
 	struct process *pr = NULL;
 	struct ucred *cred = NULL;
 	struct pgrp *pg;
-	int facs = SCARG(uap, facs) & ~((unsigned) KTRFAC_ROOT);
-	int ops = KTROP(SCARG(uap, ops));
-	int descend = SCARG(uap, ops) & KTRFLAG_DESCEND;
+	int descend = ops & KTRFLAG_DESCEND;
 	int ret = 0;
 	int error = 0;
-	struct nameidata nd;
+
+	facs = facs & ~((unsigned)KTRFAC_ROOT);
+	ops = KTROP(ops);
 
 	if (ops != KTROP_CLEAR) {
 		/*
 		 * an operation which requires a file argument.
 		 */
 		cred = p->p_ucred;
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, fname),
-		    p);
-		nd.ni_pledge = PLEDGE_CPATH | PLEDGE_WPATH;
-		if ((error = vn_open(&nd, FWRITE|O_NOFOLLOW, 0)) != 0)
+		if (!vp) {
+			error = EINVAL;
 			goto done;
-		vp = nd.ni_vp;
-
-		VOP_UNLOCK(vp, p);
+		}
 		if (vp->v_type != VREG) {
 			error = EACCES;
 			goto done;
@@ -462,11 +448,11 @@ sys_ktrace(struct proc *p, void *v, register_t *retval)
 	/*
 	 * do it
 	 */
-	if (SCARG(uap, pid) < 0) {
+	if (pid < 0) {
 		/*
 		 * by process group
 		 */
-		pg = pgfind(-SCARG(uap, pid));
+		pg = pgfind(-pid);
 		if (pg == NULL) {
 			error = ESRCH;
 			goto done;
@@ -482,7 +468,7 @@ sys_ktrace(struct proc *p, void *v, register_t *retval)
 		/*
 		 * by pid
 		 */
-		pr = prfind(SCARG(uap, pid));
+		pr = prfind(pid);
 		if (pr == NULL) {
 			error = ESRCH;
 			goto done;
@@ -495,9 +481,75 @@ sys_ktrace(struct proc *p, void *v, register_t *retval)
 	if (!ret)
 		error = EPERM;
 done:
-	if (vp != NULL)
-		(void) vn_close(vp, FWRITE, cred, p);
 	return (error);
+}
+
+/*
+ * ktrace system call
+ */
+int
+sys_ktrace(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_ktrace_args /* {
+		syscallarg(const char *) fname;
+		syscallarg(int) ops;
+		syscallarg(int) facs;
+		syscallarg(pid_t) pid;
+	} */ *uap = v;
+	struct vnode *vp = NULL;
+	const char *fname = SCARG(uap, fname);
+	struct ucred *cred = NULL;
+	int error;
+
+	if (fname) {
+		struct nameidata nd;
+
+		cred = p->p_ucred;
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fname, p);
+		nd.ni_pledge = PLEDGE_CPATH | PLEDGE_WPATH;
+		if ((error = vn_open(&nd, FWRITE|O_NOFOLLOW, 0)) != 0)
+			return error;
+		vp = nd.ni_vp;
+
+		VOP_UNLOCK(vp, p);
+	}
+
+	error = doktrace(vp, SCARG(uap, ops), SCARG(uap, facs),
+	    SCARG(uap, pid), p);
+	if (vp != NULL)
+		(void)vn_close(vp, FWRITE, cred, p);
+
+	return error;
+}
+
+int
+sys_fktrace(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_fktrace_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) ops;
+		syscallarg(int) facs;
+		syscallarg(pid_t) pid;
+	} */ *uap = v;
+	struct vnode *vp = NULL;
+	int fd = SCARG(uap, fd);
+	struct file *fp;
+	int error;
+
+	if (fd != -1) {
+		if ((error = getvnode(p, fd, &fp)) != 0)
+			return error;
+		vp = fp->f_data;
+		vref(vp);
+		FRELE(fp, p);
+	}
+
+	error = doktrace(vp, SCARG(uap, ops), SCARG(uap, facs),
+	    SCARG(uap, pid), p);
+	if (vp != NULL)
+		vrele(vp);
+	
+	return error;
 }
 
 int

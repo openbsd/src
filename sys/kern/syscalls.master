@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.176 2017/04/28 13:50:55 mpi Exp $
+;	$OpenBSD: syscalls.master,v 1.177 2017/08/12 00:03:10 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -237,7 +237,12 @@
 111	STD		{ int sys_sigsuspend(int mask); }
 112	STD		{ int sys_sendsyslog(const void *buf, size_t nbyte, \
 			    int flags); }
-113	OBSOL		orecvmsg
+#ifdef KTRACE
+113	STD		{ int sys_fktrace(int fd, int ops, \
+			    int facs, pid_t pid); }
+#else
+113	UNIMPL		fktrace
+#endif
 114	OBSOL		osendmsg
 115	OBSOL		vtrace
 116	OBSOL		t32_gettimeofday
