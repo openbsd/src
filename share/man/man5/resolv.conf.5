@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.52 2017/02/18 19:23:05 jca Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.53 2017/08/13 19:03:19 krw Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: February 18 2017 $
+.Dd $Mdocdate: August 13 2017 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -63,36 +63,27 @@ or if any DNS nameservers are configured.
 .Pp
 If
 .Xr dhclient 8
-is used to configure the network it
-will normally overwrite the
+is used to configure an interface it
+will overwrite
 .Nm resolv.conf
-file with updated information such as nameserver addresses,
-losing any previous values the file contained.
-In order to force options to be passed to the
+whenever the interface becomes the default gateway.
+The information written is generated from the DHCP options
+domain-name-servers, domain-name and domain-search and the
+contents of the file
+.Nm resolv.conf.tail
+are appended to the generated information.
+If dhclient has no domain-name-servers, no domain-name and
+no domain-search information then it will not
+overwrite the existing
+.Nm resolv.conf ,
+even if
+.Nm resolv.conf.tail
+exists.
+.Nm resolv.conf.tail
+is normally used to specify
 .Xr resolver 3
-routines, the file
-.Nm resolv.conf.tail
-may be created manually.
-This file will be appended to the generated
-.Nm resolv.conf
-file by dhclient,
-ensuring options remain.
-If no updated information is available to dhclient,
-and
-.Nm resolv.conf.tail
-is not present, then
-.Nm resolv.conf
-will not be modified by dhclient.
-.Pp
-On a machine whose network connection does not change frequently (such as a desktop
-machine on a local-area network), the
-.Nm resolv.conf.tail
-file should not be necessary.
-However the
-.Nm resolv.conf.tail
-file may be useful on notebooks, to search multiple domains,
-to refer to hard-coded information in local files, or otherwise
-override the defaults.
+options that are not available via DHCP.
+e.g. lookup or family.
 .Pp
 A keyword and its values must appear on a single line, and the keyword (e.g.\&
 .Ic nameserver )
