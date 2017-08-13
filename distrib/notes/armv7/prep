@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.12 2017/01/19 06:22:56 jsg Exp $
+dnl	$OpenBSD: prep,v 1.13 2017/08/13 11:20:53 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -77,11 +77,11 @@ Install on systems without a supported miniroot:
 
   For systems based on Freescale/NXP i.MX SoCs:
 
- 	dd if=/usr/local/share/u-boot/board/SPL of=/dev/rsdXc bs=1024 seek=1
+ 	dd if=/usr/local/share/u-boot/board/SPL of=/dev/sdXc bs=1024 seek=1
  	dd if=/usr/local/share/u-boot/board/u-boot.img \
- 	    of=/dev/rsdXc bs=1024 seek=69
+ 	    of=/dev/sdXc bs=1024 seek=69
 
-  For systems based on Allwinner Axx Socs:
+  For systems based on Allwinner Axx SoCs:
 
  	dd if=/usr/local/share/u-boot/board/u-boot-sunxi-with-spl.bin \
- 	    of=/dev/rsdXc bs=1024 seek=8
+ 	    of=/dev/sdXc bs=1024 seek=8

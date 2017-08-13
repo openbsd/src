@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.4 2017/02/27 10:15:11 sthen Exp $
+dnl	$OpenBSD: prep,v 1.5 2017/08/13 11:20:53 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -67,4 +67,4 @@ Install on systems without a supported miniroot:
   For systems based on Allwinner Axx Socs:
 
  	dd if=/usr/local/share/u-boot/board/u-boot-sunxi-with-spl.bin \
- 	    of=/dev/rsdXc bs=1024 seek=8
+ 	    of=/dev/sdXc bs=1024 seek=8
