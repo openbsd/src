@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.167 2017/08/12 21:03:08 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.168 2017/08/13 17:04:36 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1623,13 +1623,27 @@ int
 SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
     unsigned int protos_len)
 {
+	int failed = 1;
+
+	if (protos == NULL || protos_len == 0)
+		goto err;
+
 	free(ctx->internal->alpn_client_proto_list);
-	if ((ctx->internal->alpn_client_proto_list = malloc(protos_len)) == NULL)
-		return (1);
-	memcpy(ctx->internal->alpn_client_proto_list, protos, protos_len);
+	ctx->internal->alpn_client_proto_list = NULL;
+	ctx->internal->alpn_client_proto_list_len = 0;
+
+	if ((ctx->internal->alpn_client_proto_list = malloc(protos_len))
+	    == NULL)
+		goto err;
 	ctx->internal->alpn_client_proto_list_len = protos_len;
 
-	return (0);
+	memcpy(ctx->internal->alpn_client_proto_list, protos, protos_len);
+
+	failed = 0;
+
+ err:
+	/* NOTE: Return values are the reverse of what you expect. */
+	return (failed);
 }
 
 /*
@@ -1638,16 +1652,30 @@ SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
  * 8-bit length-prefixed strings). Returns 0 on success.
  */
 int
-SSL_set_alpn_protos(SSL *ssl, const unsigned char* protos,
+SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
     unsigned int protos_len)
 {
+	int failed = 1;
+
+	if (protos == NULL || protos_len == 0)
+		goto err;
+
 	free(ssl->internal->alpn_client_proto_list);
-	if ((ssl->internal->alpn_client_proto_list = malloc(protos_len)) == NULL)
-		return (1);
-	memcpy(ssl->internal->alpn_client_proto_list, protos, protos_len);
+	ssl->internal->alpn_client_proto_list = NULL;
+	ssl->internal->alpn_client_proto_list_len = 0;
+
+	if ((ssl->internal->alpn_client_proto_list = malloc(protos_len))
+	    == NULL)
+		goto err;
 	ssl->internal->alpn_client_proto_list_len = protos_len;
 
-	return (0);
+	memcpy(ssl->internal->alpn_client_proto_list, protos, protos_len);
+
+	failed = 0;
+
+ err:
+	/* NOTE: Return values are the reverse of what you expect. */
+	return (failed);
 }
 
 /*
