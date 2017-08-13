@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.131 2017/08/13 16:25:19 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.132 2017/08/13 16:28:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -481,7 +481,6 @@ struct ssl_session_st {
 
 /* Allow initial connection to servers that don't support RI */
 #define SSL_OP_LEGACY_SERVER_CONNECT			0x00000004L
-#define SSL_OP_TLSEXT_PADDING				0x00000010L
 
 /* Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added
  * in OpenSSL 0.9.6d.  Usually (depending on the application protocol)
@@ -520,8 +519,7 @@ struct ssl_session_st {
 
 /* SSL_OP_ALL: various bug workarounds that should be rather harmless. */
 #define SSL_OP_ALL \
-    (SSL_OP_LEGACY_SERVER_CONNECT | \
-     SSL_OP_TLSEXT_PADDING)
+    (SSL_OP_LEGACY_SERVER_CONNECT)
 
 /* Obsolete flags kept for compatibility. No sane code should use them. */
 #define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION	0x0
@@ -544,6 +542,7 @@ struct ssl_session_st {
 #define SSL_OP_SINGLE_ECDH_USE				0x0
 #define SSL_OP_SSLEAY_080_CLIENT_DH_BUG			0x0
 #define SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG		0x0
+#define SSL_OP_TLSEXT_PADDING				0x0
 #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x0
 #define SSL_OP_TLS_D5_BUG				0x0
 
