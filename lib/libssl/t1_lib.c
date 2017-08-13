@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.131 2017/08/12 23:38:12 beck Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.132 2017/08/13 16:25:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -811,23 +811,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		ret += el;
 	}
 #endif
-
-	if (((S3I(s)->hs.new_cipher->id & 0xFFFF) == 0x80 ||
-	    (S3I(s)->hs.new_cipher->id & 0xFFFF) == 0x81) &&
-	    (SSL_get_options(s) & SSL_OP_CRYPTOPRO_TLSEXT_BUG)) {
-		static const unsigned char cryptopro_ext[36] = {
-			0xfd, 0xe8, /*65000*/
-			0x00, 0x20, /*32 bytes length*/
-			0x30, 0x1e, 0x30, 0x08, 0x06, 0x06, 0x2a, 0x85,
-			0x03, 0x02, 0x02, 0x09, 0x30, 0x08, 0x06, 0x06,
-			0x2a, 0x85, 0x03, 0x02, 0x02, 0x16, 0x30, 0x08,
-			0x06, 0x06, 0x2a, 0x85, 0x03, 0x02, 0x02, 0x17
-		};
-		if ((size_t)(limit - ret) < sizeof(cryptopro_ext))
-			return NULL;
-		memcpy(ret, cryptopro_ext, sizeof(cryptopro_ext));
-		ret += sizeof(cryptopro_ext);
-	}
 
 	if (S3I(s)->alpn_selected != NULL) {
 		const unsigned char *selected = S3I(s)->alpn_selected;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.130 2017/08/10 17:18:38 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.131 2017/08/13 16:25:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -518,21 +518,15 @@ struct ssl_session_st {
 #define SSL_OP_NO_TLSv1_2				0x08000000L
 #define SSL_OP_NO_TLSv1_1				0x10000000L
 
-/* Make server add server-hello extension from early version of
- * cryptopro draft, when GOST ciphersuite is negotiated.
- * Required for interoperability with CryptoPro CSP 3.x
- */
-#define SSL_OP_CRYPTOPRO_TLSEXT_BUG			0x80000000L
-
 /* SSL_OP_ALL: various bug workarounds that should be rather harmless. */
 #define SSL_OP_ALL \
     (SSL_OP_LEGACY_SERVER_CONNECT | \
-     SSL_OP_TLSEXT_PADDING | \
-     SSL_OP_CRYPTOPRO_TLSEXT_BUG)
+     SSL_OP_TLSEXT_PADDING)
 
 /* Obsolete flags kept for compatibility. No sane code should use them. */
 #define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION	0x0
 #define SSL_OP_CISCO_ANYCONNECT				0x0
+#define SSL_OP_CRYPTOPRO_TLSEXT_BUG			0x0
 #define SSL_OP_EPHEMERAL_RSA				0x0
 #define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER		0x0
 #define SSL_OP_MICROSOFT_SESS_ID_BUG			0x0
