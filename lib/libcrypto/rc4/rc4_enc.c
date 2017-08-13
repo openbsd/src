@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4_enc.c,v 1.15 2015/10/21 16:36:50 jsing Exp $ */
+/* $OpenBSD: rc4_enc.c,v 1.16 2017/08/13 17:46:24 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,43 +150,43 @@ RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 		 *
 		 *			<appro@fy.chalmers.se>
 		 */
-		if (BYTE_ORDER != LITTLE_ENDIAN) {	/* BIG-ENDIAN CASE */
+#if BYTE_ORDER == BIG_ENDIAN
 # define BESHFT(c)	(((sizeof(RC4_CHUNK)-(c)-1)*8)&(sizeof(RC4_CHUNK)*8-1))
-			for (; len & (0 - sizeof(RC4_CHUNK)); len -= sizeof(RC4_CHUNK)) {
-				ichunk  = *(RC4_CHUNK *)indata;
-				otp = RC4_STEP << BESHFT(0);
-				otp |= RC4_STEP << BESHFT(1);
-				otp |= RC4_STEP << BESHFT(2);
-				otp |= RC4_STEP << BESHFT(3);
-				if (sizeof(RC4_CHUNK) == 8) {
-					otp |= RC4_STEP << BESHFT(4);
-					otp |= RC4_STEP << BESHFT(5);
-					otp |= RC4_STEP << BESHFT(6);
-					otp |= RC4_STEP << BESHFT(7);
-				}
-				*(RC4_CHUNK *)outdata = otp^ichunk;
-				indata += sizeof(RC4_CHUNK);
-				outdata += sizeof(RC4_CHUNK);
+		for (; len & (0 - sizeof(RC4_CHUNK)); len -= sizeof(RC4_CHUNK)) {
+			ichunk  = *(RC4_CHUNK *)indata;
+			otp = RC4_STEP << BESHFT(0);
+			otp |= RC4_STEP << BESHFT(1);
+			otp |= RC4_STEP << BESHFT(2);
+			otp |= RC4_STEP << BESHFT(3);
+			if (sizeof(RC4_CHUNK) == 8) {
+				otp |= RC4_STEP << BESHFT(4);
+				otp |= RC4_STEP << BESHFT(5);
+				otp |= RC4_STEP << BESHFT(6);
+				otp |= RC4_STEP << BESHFT(7);
 			}
-		} else {	/* LITTLE-ENDIAN CASE */
-# define LESHFT(c)	(((c)*8)&(sizeof(RC4_CHUNK)*8-1))
-			for (; len & (0 - sizeof(RC4_CHUNK)); len -= sizeof(RC4_CHUNK)) {
-				ichunk = *(RC4_CHUNK *)indata;
-				otp = RC4_STEP;
-				otp |= RC4_STEP << 8;
-				otp |= RC4_STEP << 16;
-				otp |= RC4_STEP << 24;
-				if (sizeof(RC4_CHUNK) == 8) {
-					otp |= RC4_STEP << LESHFT(4);
-					otp |= RC4_STEP << LESHFT(5);
-					otp |= RC4_STEP << LESHFT(6);
-					otp |= RC4_STEP << LESHFT(7);
-				}
-				*(RC4_CHUNK *)outdata = otp ^ ichunk;
-				indata += sizeof(RC4_CHUNK);
-				outdata += sizeof(RC4_CHUNK);
-			}
+			*(RC4_CHUNK *)outdata = otp^ichunk;
+			indata += sizeof(RC4_CHUNK);
+			outdata += sizeof(RC4_CHUNK);
 		}
+#else
+# define LESHFT(c)	(((c)*8)&(sizeof(RC4_CHUNK)*8-1))
+		for (; len & (0 - sizeof(RC4_CHUNK)); len -= sizeof(RC4_CHUNK)) {
+			ichunk = *(RC4_CHUNK *)indata;
+			otp = RC4_STEP;
+			otp |= RC4_STEP << 8;
+			otp |= RC4_STEP << 16;
+			otp |= RC4_STEP << 24;
+			if (sizeof(RC4_CHUNK) == 8) {
+				otp |= RC4_STEP << LESHFT(4);
+				otp |= RC4_STEP << LESHFT(5);
+				otp |= RC4_STEP << LESHFT(6);
+				otp |= RC4_STEP << LESHFT(7);
+			}
+			*(RC4_CHUNK *)outdata = otp ^ ichunk;
+			indata += sizeof(RC4_CHUNK);
+			outdata += sizeof(RC4_CHUNK);
+		}
+#endif
 	}
 #endif
 #define LOOP(in,out) \

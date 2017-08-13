@@ -1,4 +1,4 @@
-/* $OpenBSD: xts128.c,v 1.6 2015/02/10 09:46:30 miod Exp $ */
+/* $OpenBSD: xts128.c,v 1.7 2017/08/13 17:46:24 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -98,25 +98,24 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 
 		if (len==0)	return 0;
 
-		if (BYTE_ORDER == LITTLE_ENDIAN) {
-			unsigned int carry,res;
-			
-			res = 0x87&(((int)tweak.d[3])>>31);
-			carry = (unsigned int)(tweak.u[0]>>63);
-			tweak.u[0] = (tweak.u[0]<<1)^res;
-			tweak.u[1] = (tweak.u[1]<<1)|carry;
-		}
-		else {
-			size_t c;
+#if BYTE_ORDER == LITTLE_ENDIAN
+		unsigned int carry,res;
 
-			for (c=0,i=0;i<16;++i) {
-				/*+ substitutes for |, because c is 1 bit */ 
-				c += ((size_t)tweak.c[i])<<1;
-				tweak.c[i] = (u8)c;
-				c = c>>8;
-			}
-			tweak.c[0] ^= (u8)(0x87&(0-c));
+		res = 0x87&(((int)tweak.d[3])>>31);
+		carry = (unsigned int)(tweak.u[0]>>63);
+		tweak.u[0] = (tweak.u[0]<<1)^res;
+		tweak.u[1] = (tweak.u[1]<<1)|carry;
+#else /* BIG_ENDIAN */
+		size_t c;
+
+		for (c=0,i=0;i<16;++i) {
+			/*+ substitutes for |, because c is 1 bit */
+			c += ((size_t)tweak.c[i])<<1;
+			tweak.c[i] = (u8)c;
+			c = c>>8;
 		}
+		tweak.c[0] ^= (u8)(0x87&(0-c));
+#endif
 	}
 	if (enc) {
 		for (i=0;i<len;++i) {
@@ -134,25 +133,24 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 	else {
 		union { u64 u[2]; u8 c[16]; } tweak1;
 
-		if (BYTE_ORDER == LITTLE_ENDIAN) {
-			unsigned int carry,res;
+#if BYTE_ORDER == LITTLE_ENDIAN
+		unsigned int carry,res;
 
-			res = 0x87&(((int)tweak.d[3])>>31);
-			carry = (unsigned int)(tweak.u[0]>>63);
-			tweak1.u[0] = (tweak.u[0]<<1)^res;
-			tweak1.u[1] = (tweak.u[1]<<1)|carry;
-		}
-		else {
-			size_t c;
+		res = 0x87&(((int)tweak.d[3])>>31);
+		carry = (unsigned int)(tweak.u[0]>>63);
+		tweak1.u[0] = (tweak.u[0]<<1)^res;
+		tweak1.u[1] = (tweak.u[1]<<1)|carry;
+#else
+		size_t c;
 
-			for (c=0,i=0;i<16;++i) {
-				/*+ substitutes for |, because c is 1 bit */ 
-				c += ((size_t)tweak.c[i])<<1;
-				tweak1.c[i] = (u8)c;
-				c = c>>8;
-			}
-			tweak1.c[0] ^= (u8)(0x87&(0-c));
+		for (c=0,i=0;i<16;++i) {
+			/*+ substitutes for |, because c is 1 bit */
+			c += ((size_t)tweak.c[i])<<1;
+			tweak1.c[i] = (u8)c;
+			c = c>>8;
 		}
+		tweak1.c[0] ^= (u8)(0x87&(0-c));
+#endif
 #ifdef __STRICT_ALIGNMENT
 		memcpy(scratch.c,inp,16);
 		scratch.u[0] ^= tweak1.u[0];
