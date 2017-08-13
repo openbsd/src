@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.31 2016/06/18 04:24:19 guenther Exp $
+.\"	$OpenBSD: ktrace.2,v 1.32 2017/08/13 19:34:12 tedu Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ktrace.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 18 2016 $
+.Dd $Mdocdate: August 13 2017 $
 .Dt KTRACE 2
 .Os
 .Sh NAME
@@ -43,6 +43,8 @@
 .In sys/ktrace.h
 .Ft int
 .Fn ktrace "const char *tracefile" "int ops" "int trpoints" "pid_t pid"
+.Ft int
+.Fn fktrace "int tracefd" "int ops" "int trpoints" "pid_t pid"
 .Sh DESCRIPTION
 The
 .Fn ktrace
@@ -58,6 +60,10 @@ option.
 gives the pathname of the file to be used for tracing.
 The file must exist, be writable by the calling process, and
 not be a symbolic link.
+An existing file descriptor
+.Fa tracefd
+may be used with
+.Fn fktrace .
 All trace records are always appended to the file,
 so the file must be truncated to zero length to discard
 previous trace data.
@@ -66,7 +72,10 @@ If tracing points are being disabled (see
 below),
 .Fa tracefile
 may be
-.Dv NULL .
+.Dv NULL
+or
+.Fa tracefd
+may be -1.
 .Pp
 The
 .Fa ops

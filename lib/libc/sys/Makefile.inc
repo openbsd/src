@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.151 2017/08/12 00:07:35 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.152 2017/08/13 19:34:12 tedu Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -47,7 +47,7 @@ ASM=	__semctl.o __syscall.o __thrsigdivert.o \
 	dup.o dup2.o dup3.o \
 	execve.o \
 	faccessat.o fchdir.o fchflags.o fchmod.o fchmodat.o fchown.o \
-	fchownat.o fhopen.o fhstat.o fhstatfs.o \
+	fchownat.o fhopen.o fhstat.o fhstatfs.o fktrace.o \
 	flock.o fpathconf.o fstat.o fstatat.o fstatfs.o \
 	futimens.o futimes.o \
 	getentropy.o getdents.o getfh.o getfsstat.o \
