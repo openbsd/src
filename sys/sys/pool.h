@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.73 2017/06/23 01:02:18 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.74 2017/08/13 20:26:33 guenther Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -98,9 +98,11 @@ struct kinfo_pool_cache_cpu {
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/mutex.h>
+#include <sys/rwlock.h>
 
 struct pool;
 struct pool_request;
+struct pool_lock_ops;
 TAILQ_HEAD(pool_requests, pool_request);
 
 struct pool_allocator {
@@ -141,8 +143,15 @@ struct pool_cache_item;
 TAILQ_HEAD(pool_cache_lists, pool_cache_item);
 struct cpumem;
 
+union pool_lock {
+	struct mutex	prl_mtx;
+	struct rwlock	prl_rwlock;
+};
+
 struct pool {
-	struct mutex	pr_mtx;
+	union pool_lock	pr_lock;
+	const struct pool_lock_ops *
+			pr_lock_ops;
 	SIMPLEQ_ENTRY(pool)
 			pr_poollist;
 	struct pool_pagelist
@@ -174,8 +183,10 @@ struct pool {
 #define PR_NOWAIT	0x0002 /* M_NOWAIT */
 #define PR_LIMITFAIL	0x0004 /* M_CANFAIL */
 #define PR_ZERO		0x0008 /* M_ZERO */
+#define PR_RWLOCK	0x0010
 #define PR_WANTED	0x0100
 
+	int		pr_flags;
 	int		pr_ipl;
 
 	RBT_HEAD(phtree, pool_page_header)
@@ -183,7 +194,7 @@ struct pool {
 
 	struct cpumem *	pr_cache;
 	unsigned long	pr_cache_magic[2];
-	struct mutex	pr_cache_mtx;
+	union pool_lock	pr_cache_lock;
 	struct pool_cache_lists
 			pr_cache_lists;	/* list of idle item lists */
 	u_int		pr_cache_nitems; /* # of idle items */
@@ -209,7 +220,7 @@ struct pool {
 	/*
 	 * pool item requests queue
 	 */
-	struct mutex	pr_requests_mtx;
+	union pool_lock	pr_requests_lock;
 	struct pool_requests
 			pr_requests;
 	unsigned int	pr_requesting;
@@ -239,7 +250,7 @@ extern struct pool_allocator pool_allocator_multi;
 
 struct pool_request {
 	TAILQ_ENTRY(pool_request) pr_entry;
-	void (*pr_handler)(void *, void *);
+	void (*pr_handler)(struct pool *, void *, void *);
 	void *pr_cookie;
 	void *pr_item;
 };
@@ -257,7 +268,7 @@ void		pool_set_constraints(struct pool *,
 
 void		*pool_get(struct pool *, int) __malloc;
 void		pool_request_init(struct pool_request *,
-		    void (*)(void *, void *), void *);
+		    void (*)(struct pool *, void *, void *), void *);
 void		pool_request(struct pool *, struct pool_request *);
 void		pool_put(struct pool *, void *);
 int		pool_reclaim(struct pool *);

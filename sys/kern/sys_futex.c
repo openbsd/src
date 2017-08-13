@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.3 2017/05/27 16:42:41 kettenis Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.4 2017/08/13 20:26:33 guenther Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -75,8 +75,8 @@ struct pool			ftpool;
 void
 futex_init(void)
 {
-	pool_init(&ftpool, sizeof(struct futex), 0, IPL_NONE, 0, "futexpl",
-	    NULL);
+	pool_init(&ftpool, sizeof(struct futex), 0, IPL_NONE,
+	    PR_WAITOK | PR_RWLOCK, "futexpl", NULL);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.219 2017/07/12 08:51:42 visa Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.220 2017/08/13 20:26:33 guenther Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/syslog.h>
-#include <sys/rwlock.h>
 #include <sys/sysctl.h>
 #include <sys/task.h>
 #include <sys/timeout.h>
@@ -74,6 +73,67 @@ struct rwlock pool_lock = RWLOCK_INITIALIZER("pools");
 
 /* Private pool for page header structures */
 struct pool phpool;
+
+struct pool_lock_ops {
+	void	(*pl_init)(struct pool *, union pool_lock *,
+		    struct lock_type *);
+	void	(*pl_enter)(union pool_lock * LOCK_FL_VARS);
+	int	(*pl_enter_try)(union pool_lock * LOCK_FL_VARS);
+	void	(*pl_leave)(union pool_lock * LOCK_FL_VARS);
+	void	(*pl_assert_locked)(union pool_lock *);
+	void	(*pl_assert_unlocked)(union pool_lock *);
+	int	(*pl_sleep)(void *, union pool_lock *, int, const char *, int);
+};
+
+static const struct pool_lock_ops pool_lock_ops_mtx;
+static const struct pool_lock_ops pool_lock_ops_rw;
+
+#ifdef WITNESS
+#define pl_init(pp, pl) do {						\
+	static struct lock_type __lock_type = { .lt_name = #pl };	\
+	(pp)->pr_lock_ops->pl_init(pp, pl, &__lock_type);		\
+} while (0)
+#else /* WITNESS */
+#define pl_init(pp, pl)		(pp)->pr_lock_ops->pl_init(pp, pl, NULL)
+#endif /* WITNESS */
+
+static inline void
+pl_enter(struct pool *pp, union pool_lock *pl LOCK_FL_VARS)
+{
+	pp->pr_lock_ops->pl_enter(pl LOCK_FL_ARGS);
+}
+static inline int
+pl_enter_try(struct pool *pp, union pool_lock *pl LOCK_FL_VARS)
+{
+	return pp->pr_lock_ops->pl_enter_try(pl LOCK_FL_ARGS);
+}
+static inline void
+pl_leave(struct pool *pp, union pool_lock *pl LOCK_FL_VARS)
+{
+	pp->pr_lock_ops->pl_leave(pl LOCK_FL_ARGS);
+}
+static inline void
+pl_assert_locked(struct pool *pp, union pool_lock *pl)
+{
+	pp->pr_lock_ops->pl_assert_locked(pl);
+}
+static inline void
+pl_assert_unlocked(struct pool *pp, union pool_lock *pl)
+{
+	pp->pr_lock_ops->pl_assert_unlocked(pl);
+}
+static inline int
+pl_sleep(struct pool *pp, void *ident, union pool_lock *lock, int priority,
+    const char *wmesg, int timo)
+{
+	return pp->pr_lock_ops->pl_sleep(ident, lock, priority, wmesg, timo);
+}
+
+#ifdef WITNESS
+# define pl_enter(pp,pl)	pl_enter(pp,pl LOCK_FILE_LINE)
+# define pl_enter_try(pp,pl)	pl_enter_try(pp,pl LOCK_FILE_LINE)
+# define pl_leave(pp,pl)	pl_leave(pp,pl LOCK_FILE_LINE)
+#endif
 
 struct pool_item {
 	u_long				pi_magic;
@@ -160,7 +220,7 @@ void	*pool_do_get(struct pool *, int, int *);
 void	 pool_do_put(struct pool *, void *);
 int	 pool_chk_page(struct pool *, struct pool_page_header *, int);
 int	 pool_chk(struct pool *);
-void	 pool_get_done(void *, void *);
+void	 pool_get_done(struct pool *, void *, void *);
 void	 pool_runqueue(struct pool *, int);
 
 void	*pool_allocator_alloc(struct pool *, int, int *);
@@ -344,6 +404,11 @@ pool_init(struct pool *pp, size_t size, u_int align, int ipl, int flags,
 	 * Initialize the pool structure.
 	 */
 	memset(pp, 0, sizeof(*pp));
+	if (ISSET(flags, PR_RWLOCK)) {
+		KASSERT(flags & PR_WAITOK);
+		pp->pr_lock_ops = &pool_lock_ops_rw;
+	} else
+		pp->pr_lock_ops = &pool_lock_ops_mtx;
 	TAILQ_INIT(&pp->pr_emptypages);
 	TAILQ_INIT(&pp->pr_fullpages);
 	TAILQ_INIT(&pp->pr_partpages);
@@ -387,8 +452,10 @@ pool_init(struct pool *pp, size_t size, u_int align, int ipl, int flags,
 	pp->pr_nidle = 0;
 
 	pp->pr_ipl = ipl;
-	mtx_init_flags(&pp->pr_mtx, pp->pr_ipl, wchan, 0);
-	mtx_init_flags(&pp->pr_requests_mtx, pp->pr_ipl, wchan, 0);
+	pp->pr_flags = flags;
+
+	pl_init(pp, &pp->pr_lock);
+	pl_init(pp, &pp->pr_requests_lock);
 	TAILQ_INIT(&pp->pr_requests);
 
 	if (phpool.pr_size == 0) {
@@ -459,9 +526,9 @@ pool_destroy(struct pool *pp)
 
 	/* Remove all pages */
 	while ((ph = TAILQ_FIRST(&pp->pr_emptypages)) != NULL) {
-		mtx_enter(&pp->pr_mtx);
+		pl_enter(pp, &pp->pr_lock);
 		pool_p_remove(pp, ph);
-		mtx_leave(&pp->pr_mtx);
+		pl_leave(pp, &pp->pr_lock);
 		pool_p_free(pp, ph);
 	}
 	KASSERT(TAILQ_EMPTY(&pp->pr_fullpages));
@@ -470,7 +537,7 @@ pool_destroy(struct pool *pp)
 
 void
 pool_request_init(struct pool_request *pr,
-    void (*handler)(void *, void *), void *cookie)
+    void (*handler)(struct pool *, void *, void *), void *cookie)
 {
 	pr->pr_handler = handler;
 	pr->pr_cookie = cookie;
@@ -480,14 +547,14 @@ pool_request_init(struct pool_request *pr,
 void
 pool_request(struct pool *pp, struct pool_request *pr)
 {
-	mtx_enter(&pp->pr_requests_mtx);
+	pl_enter(pp, &pp->pr_requests_lock);
 	TAILQ_INSERT_TAIL(&pp->pr_requests, pr, pr_entry);
 	pool_runqueue(pp, PR_NOWAIT);
-	mtx_leave(&pp->pr_requests_mtx);
+	pl_leave(pp, &pp->pr_requests_lock);
 }
 
 struct pool_get_memory {
-	struct mutex mtx;
+	union pool_lock lock;
 	void * volatile v;
 };
 
@@ -500,6 +567,10 @@ pool_get(struct pool *pp, int flags)
 	void *v = NULL;
 	int slowdown = 0;
 
+	KASSERT(flags & (PR_WAITOK | PR_NOWAIT));
+	if (pp->pr_flags & PR_RWLOCK)
+		KASSERT(flags & PR_WAITOK);
+
 #ifdef MULTIPROCESSOR
 	if (pp->pr_cache != NULL) {
 		v = pool_cache_get(pp);
@@ -508,9 +579,7 @@ pool_get(struct pool *pp, int flags)
 	}
 #endif
 
-	KASSERT(flags & (PR_WAITOK | PR_NOWAIT));
-
-	mtx_enter(&pp->pr_mtx);
+	pl_enter(pp, &pp->pr_lock);
 	if (pp->pr_nout >= pp->pr_hardlimit) {
 		if (ISSET(flags, PR_NOWAIT|PR_LIMITFAIL))
 			goto fail;
@@ -518,24 +587,23 @@ pool_get(struct pool *pp, int flags)
 		if (ISSET(flags, PR_NOWAIT))
 			goto fail;
 	}
-	mtx_leave(&pp->pr_mtx);
+	pl_leave(pp, &pp->pr_lock);
 
 	if ((slowdown || pool_debug == 2) && ISSET(flags, PR_WAITOK))
 		yield();
 
 	if (v == NULL) {
-		struct pool_get_memory mem = {
-		    MUTEX_INITIALIZER(pp->pr_ipl),
-		    NULL };
+		struct pool_get_memory mem = { .v = NULL };
 		struct pool_request pr;
 
+		pl_init(pp, &mem.lock);
 		pool_request_init(&pr, pool_get_done, &mem);
 		pool_request(pp, &pr);
 
-		mtx_enter(&mem.mtx);
+		pl_enter(pp, &mem.lock);
 		while (mem.v == NULL)
-			msleep(&mem, &mem.mtx, PSWP, pp->pr_wchan, 0);
-		mtx_leave(&mem.mtx);
+			pl_sleep(pp, &mem, &mem.lock, PSWP, pp->pr_wchan, 0);
+		pl_leave(pp, &mem.lock);
 
 		v = mem.v;
 	}
@@ -550,18 +618,18 @@ good:
 
 fail:
 	pp->pr_nfail++;
-	mtx_leave(&pp->pr_mtx);
+	pl_leave(pp, &pp->pr_lock);
 	return (NULL);
 }
 
 void
-pool_get_done(void *xmem, void *v)
+pool_get_done(struct pool *pp, void *xmem, void *v)
 {
 	struct pool_get_memory *mem = xmem;
 
-	mtx_enter(&mem->mtx);
+	pl_enter(pp, &mem->lock);
 	mem->v = v;
-	mtx_leave(&mem->mtx);
+	pl_leave(pp, &mem->lock);
 
 	wakeup_one(mem);
 }
@@ -572,8 +640,8 @@ pool_runqueue(struct pool *pp, int flags)
 	struct pool_requests prl = TAILQ_HEAD_INITIALIZER(prl);
 	struct pool_request *pr;
 
-	MUTEX_ASSERT_UNLOCKED(&pp->pr_mtx);
-	MUTEX_ASSERT_LOCKED(&pp->pr_requests_mtx);
+	pl_assert_unlocked(pp, &pp->pr_lock);
+	pl_assert_locked(pp, &pp->pr_requests_lock);
 
 	if (pp->pr_requesting++)
 		return;
@@ -589,9 +657,9 @@ pool_runqueue(struct pool *pp, int flags)
 		if (TAILQ_EMPTY(&prl))
 			continue;
 
-		mtx_leave(&pp->pr_requests_mtx);
+		pl_leave(pp, &pp->pr_requests_lock);
 
-		mtx_enter(&pp->pr_mtx);
+		pl_enter(pp, &pp->pr_lock);
 		pr = TAILQ_FIRST(&prl);
 		while (pr != NULL) {
 			int slowdown = 0;
@@ -605,15 +673,15 @@ pool_runqueue(struct pool *pp, int flags)
 
 			pr = TAILQ_NEXT(pr, pr_entry);
 		}
-		mtx_leave(&pp->pr_mtx);
+		pl_leave(pp, &pp->pr_lock);
 
 		while ((pr = TAILQ_FIRST(&prl)) != NULL &&
 		    pr->pr_item != NULL) {
 			TAILQ_REMOVE(&prl, pr, pr_entry);
-			(*pr->pr_handler)(pr->pr_cookie, pr->pr_item);
+			(*pr->pr_handler)(pp, pr->pr_cookie, pr->pr_item);
 		}
 
-		mtx_enter(&pp->pr_requests_mtx);
+		pl_enter(pp, &pp->pr_requests_lock);
 	} while (--pp->pr_requesting);
 
 	/* no TAILQ_JOIN :( */
@@ -629,20 +697,20 @@ pool_do_get(struct pool *pp, int flags, int *slowdown)
 	struct pool_item *pi;
 	struct pool_page_header *ph;
 
-	MUTEX_ASSERT_LOCKED(&pp->pr_mtx);
+	pl_assert_locked(pp, &pp->pr_lock);
 
 	splassert(pp->pr_ipl);
 
 	/*
 	 * Account for this item now to avoid races if we need to give up
-	 * pr_mtx to allocate a page.
+	 * pr_lock to allocate a page.
 	 */
 	pp->pr_nout++;
 
 	if (pp->pr_curpage == NULL) {
-		mtx_leave(&pp->pr_mtx);
+		pl_leave(pp, &pp->pr_lock);
 		ph = pool_p_alloc(pp, flags, slowdown);
-		mtx_enter(&pp->pr_mtx);
+		pl_enter(pp, &pp->pr_lock);
 
 		if (ph == NULL) {
 			pp->pr_nout--;
@@ -676,7 +744,7 @@ pool_do_get(struct pool *pp, int flags, int *slowdown)
 			panic("%s: %s free list modified: "
 			    "page %p; item addr %p; offset 0x%zx=0x%x",
 			    __func__, pp->pr_wchan, ph->ph_page, pi,
-			    pidx * sizeof(int), ip[pidx]);
+			    (pidx * sizeof(int)) + sizeof(*pi), ip[pidx]);
 		}
 	}
 #endif /* DIAGNOSTIC */
@@ -727,7 +795,7 @@ pool_put(struct pool *pp, void *v)
 	}
 #endif
 
-	mtx_enter(&pp->pr_mtx);
+	pl_enter(pp, &pp->pr_lock);
 
 	pool_do_put(pp, v);
 
@@ -742,15 +810,15 @@ pool_put(struct pool *pp, void *v)
 		pool_p_remove(pp, freeph);
 	}
 
-	mtx_leave(&pp->pr_mtx);
+	pl_leave(pp, &pp->pr_lock);
 
 	if (freeph != NULL)
 		pool_p_free(pp, freeph);
 
 	if (!TAILQ_EMPTY(&pp->pr_requests)) {
-		mtx_enter(&pp->pr_requests_mtx);
+		pl_enter(pp, &pp->pr_requests_lock);
 		pool_runqueue(pp, PR_NOWAIT);
-		mtx_leave(&pp->pr_requests_mtx);
+		pl_leave(pp, &pp->pr_requests_lock);
 	}
 }
 
@@ -827,12 +895,12 @@ pool_prime(struct pool *pp, int n)
 		TAILQ_INSERT_TAIL(&pl, ph, ph_entry);
 	}
 
-	mtx_enter(&pp->pr_mtx);
+	pl_enter(pp, &pp->pr_lock);
 	while ((ph = TAILQ_FIRST(&pl)) != NULL) {
 		TAILQ_REMOVE(&pl, ph, ph_entry);
 		pool_p_insert(pp, ph);
 	}
-	mtx_leave(&pp->pr_mtx);
+	pl_leave(pp, &pp->pr_lock);
 
 	return (0);
 }
@@ -845,7 +913,7 @@ pool_p_alloc(struct pool *pp, int flags, int *slowdown)
 	caddr_t addr;
 	int n;
 
-	MUTEX_ASSERT_UNLOCKED(&pp->pr_mtx);
+	pl_assert_unlocked(pp, &pp->pr_lock);
 	KASSERT(pp->pr_size >= sizeof(*pi));
 
 	addr = pool_allocator_alloc(pp, flags, slowdown);
@@ -898,7 +966,7 @@ pool_p_free(struct pool *pp, struct pool_page_header *ph)
 {
 	struct pool_item *pi;
 
-	MUTEX_ASSERT_UNLOCKED(&pp->pr_mtx);
+	pl_assert_unlocked(pp, &pp->pr_lock);
 	KASSERT(ph->ph_nmissing == 0);
 
 	XSIMPLEQ_FOREACH(pi, &ph->ph_items, pi_list) {
@@ -934,7 +1002,7 @@ pool_p_free(struct pool *pp, struct pool_page_header *ph)
 void
 pool_p_insert(struct pool *pp, struct pool_page_header *ph)
 {
-	MUTEX_ASSERT_LOCKED(&pp->pr_mtx);
+	pl_assert_locked(pp, &pp->pr_lock);
 
 	/* If the pool was depleted, point at the new page */
 	if (pp->pr_curpage == NULL)
@@ -955,7 +1023,7 @@ pool_p_insert(struct pool *pp, struct pool_page_header *ph)
 void
 pool_p_remove(struct pool *pp, struct pool_page_header *ph)
 {
-	MUTEX_ASSERT_LOCKED(&pp->pr_mtx);
+	pl_assert_locked(pp, &pp->pr_lock);
 
 	pp->pr_npagefree++;
 	pp->pr_npages--;
@@ -983,7 +1051,7 @@ pool_setlowat(struct pool *pp, int n)
 {
 	int prime = 0;
 
-	mtx_enter(&pp->pr_mtx);
+	pl_enter(pp, &pp->pr_lock);
 	pp->pr_minitems = n;
 	pp->pr_minpages = (n == 0)
 		? 0
@@ -991,7 +1059,7 @@ pool_setlowat(struct pool *pp, int n)
 
 	if (pp->pr_nitems < n)
 		prime = n - pp->pr_nitems;
-	mtx_leave(&pp->pr_mtx);
+	pl_leave(pp, &pp->pr_lock);
 
 	if (prime > 0)
 		pool_prime(pp, prime);
@@ -1042,7 +1110,7 @@ pool_reclaim(struct pool *pp)
 	struct pool_page_header *ph, *phnext;
 	struct pool_pagelist pl = TAILQ_HEAD_INITIALIZER(pl);
 
-	mtx_enter(&pp->pr_mtx);
+	pl_enter(pp, &pp->pr_lock);
 	for (ph = TAILQ_FIRST(&pp->pr_emptypages); ph != NULL; ph = phnext) {
 		phnext = TAILQ_NEXT(ph, ph_entry);
 
@@ -1061,7 +1129,7 @@ pool_reclaim(struct pool *pp)
 		pool_p_remove(pp, ph);
 		TAILQ_INSERT_TAIL(&pl, ph, ph_entry);
 	}
-	mtx_leave(&pp->pr_mtx);
+	pl_leave(pp, &pp->pr_lock);
 
 	if (TAILQ_EMPTY(&pl))
 		return (0);
@@ -1422,7 +1490,7 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 	case KERN_POOL_POOL:
 		memset(&pi, 0, sizeof(pi));
 
-		mtx_enter(&pp->pr_mtx);
+		pl_enter(pp, &pp->pr_lock);
 		pi.pr_size = pp->pr_size;
 		pi.pr_pgsize = pp->pr_pgsize;
 		pi.pr_itemsperpage = pp->pr_itemsperpage;
@@ -1439,7 +1507,7 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 		pi.pr_npagefree = pp->pr_npagefree;
 		pi.pr_hiwat = pp->pr_hiwat;
 		pi.pr_nidle = pp->pr_nidle;
-		mtx_leave(&pp->pr_mtx);
+		pl_leave(pp, &pp->pr_lock);
 
 		pool_cache_pool_info(pp, &pi);
 
@@ -1483,7 +1551,7 @@ pool_gc_pages(void *null)
 #endif
 
 		if (pp->pr_nidle <= pp->pr_minpages || /* guess */
-		    !mtx_enter_try(&pp->pr_mtx)) /* try */
+		    !pl_enter_try(pp, &pp->pr_lock)) /* try */
 			continue;
 
 		/* is it time to free a page? */
@@ -1495,7 +1563,7 @@ pool_gc_pages(void *null)
 		} else
 			freeph = NULL;
 
-		mtx_leave(&pp->pr_mtx);
+		pl_leave(pp, &pp->pr_lock);
 
 		if (freeph != NULL)
 			pool_p_free(pp, freeph);
@@ -1636,7 +1704,8 @@ pool_cache_init(struct pool *pp)
 
 	if (pool_caches.pr_size == 0) {
 		pool_init(&pool_caches, sizeof(struct pool_cache),
-		    CACHELINESIZE, IPL_NONE, PR_WAITOK, "plcache", NULL);
+		    CACHELINESIZE, IPL_NONE, PR_WAITOK | PR_RWLOCK,
+		    "plcache", NULL);
 	}
 
 	/* must be able to use the pool items as cache list items */
@@ -1644,7 +1713,7 @@ pool_cache_init(struct pool *pp)
 
 	cm = cpumem_get(&pool_caches);
 
-	mtx_init(&pp->pr_cache_mtx, pp->pr_ipl);
+	pl_init(pp, &pp->pr_cache_lock);
 	arc4random_buf(pp->pr_cache_magic, sizeof(pp->pr_cache_magic));
 	TAILQ_INIT(&pp->pr_cache_lists);
 	pp->pr_cache_nitems = 0;
@@ -1708,8 +1777,8 @@ fail:
 static inline void
 pool_list_enter(struct pool *pp)
 {
-	if (mtx_enter_try(&pp->pr_cache_mtx) == 0) {
-		mtx_enter(&pp->pr_cache_mtx);
+	if (pl_enter_try(pp, &pp->pr_cache_lock) == 0) {
+		pl_enter(pp, &pp->pr_cache_lock);
 		pp->pr_cache_contention++;
 	}
 }
@@ -1717,7 +1786,7 @@ pool_list_enter(struct pool *pp)
 static inline void
 pool_list_leave(struct pool *pp)
 {
-	mtx_leave(&pp->pr_cache_mtx);
+	pl_leave(pp, &pp->pr_cache_lock);
 }
 
 static inline struct pool_cache_item *
@@ -1887,13 +1956,13 @@ pool_cache_list_put(struct pool *pp, struct pool_cache_item *pl)
 
 	rpl = TAILQ_NEXT(pl, ci_nextl);
 
-	mtx_enter(&pp->pr_mtx);
+	pl_enter(pp, &pp->pr_lock);
 	do {
 		next = pl->ci_next;
 		pool_do_put(pp, pl);
 		pl = next;
 	} while (pl != NULL);
-	mtx_leave(&pp->pr_mtx);
+	pl_leave(pp, &pp->pr_lock);
 
 	return (rpl);
 }
@@ -1930,7 +1999,7 @@ pool_cache_gc(struct pool *pp)
 
 	if ((ticks - pp->pr_cache_tick) > (hz * pool_wait_gc) &&
 	    !TAILQ_EMPTY(&pp->pr_cache_lists) &&
-	    mtx_enter_try(&pp->pr_cache_mtx)) {
+	    pl_enter_try(pp, &pp->pr_cache_lock)) {
 		struct pool_cache_item *pl = NULL;
 
 		pl = TAILQ_FIRST(&pp->pr_cache_lists);
@@ -1942,7 +2011,7 @@ pool_cache_gc(struct pool *pp)
 			pp->pr_cache_ngc++;
 		}
 
-		mtx_leave(&pp->pr_cache_mtx);
+		pl_leave(pp, &pp->pr_cache_lock);
 
 		pool_cache_list_put(pp, pl);
 	}
@@ -1976,7 +2045,7 @@ pool_cache_pool_info(struct pool *pp, struct kinfo_pool *pi)
 
 	/* loop through the caches twice to collect stats */
 
-	/* once without the mtx so we can yield while reading nget/nput */
+	/* once without the lock so we can yield while reading nget/nput */
 	CPUMEM_FOREACH(pc, &i, pp->pr_cache) {
 		uint64_t gen, nget, nput;
 
@@ -1993,12 +2062,12 @@ pool_cache_pool_info(struct pool *pp, struct kinfo_pool *pi)
 	}
 
 	/* and once with the mtx so we can get consistent nout values */
-	mtx_enter(&pp->pr_cache_mtx);
+	pl_enter(pp, &pp->pr_cache_lock);
 	CPUMEM_FOREACH(pc, &i, pp->pr_cache)
 		pi->pr_nout += pc->pc_nout;
 
 	pi->pr_nout += pp->pr_cache_nout;
-	mtx_leave(&pp->pr_cache_mtx);
+	pl_leave(pp, &pp->pr_cache_lock);
 }
 
 int
@@ -2011,12 +2080,12 @@ pool_cache_info(struct pool *pp, void *oldp, size_t *oldlenp)
 
 	memset(&kpc, 0, sizeof(kpc)); /* don't leak padding */
 
-	mtx_enter(&pp->pr_cache_mtx);
+	pl_enter(pp, &pp->pr_cache_lock);
 	kpc.pr_ngc = pp->pr_cache_ngc;
 	kpc.pr_len = pp->pr_cache_items;
 	kpc.pr_nitems = pp->pr_cache_nitems;
 	kpc.pr_contention = pp->pr_cache_contention;
-	mtx_leave(&pp->pr_cache_mtx);
+	pl_leave(pp, &pp->pr_cache_lock);
 
 	return (sysctl_rdstruct(oldp, oldlenp, NULL, &kpc, sizeof(kpc)));
 }
@@ -2100,3 +2169,113 @@ pool_cache_cpus_info(struct pool *pp, void *oldp, size_t *oldlenp)
 	return (EOPNOTSUPP);
 }
 #endif /* MULTIPROCESSOR */
+
+
+void
+pool_lock_mtx_init(struct pool *pp, union pool_lock *lock,
+    struct lock_type *type)
+{
+	_mtx_init_flags(&lock->prl_mtx, pp->pr_ipl, pp->pr_wchan, 0, type);
+}
+
+void
+pool_lock_mtx_enter(union pool_lock *lock LOCK_FL_VARS)
+{
+	_mtx_enter(&lock->prl_mtx LOCK_FL_ARGS);
+}
+
+int
+pool_lock_mtx_enter_try(union pool_lock *lock LOCK_FL_VARS)
+{
+	return (_mtx_enter_try(&lock->prl_mtx LOCK_FL_ARGS));
+}
+
+void
+pool_lock_mtx_leave(union pool_lock *lock LOCK_FL_VARS)
+{
+	_mtx_leave(&lock->prl_mtx LOCK_FL_ARGS);
+}
+
+void
+pool_lock_mtx_assert_locked(union pool_lock *lock)
+{
+	MUTEX_ASSERT_LOCKED(&lock->prl_mtx);
+}
+
+void
+pool_lock_mtx_assert_unlocked(union pool_lock *lock)
+{
+	MUTEX_ASSERT_UNLOCKED(&lock->prl_mtx);
+}
+
+int
+pool_lock_mtx_sleep(void *ident, union pool_lock *lock, int priority,
+    const char *wmesg, int timo)
+{
+	return msleep(ident, &lock->prl_mtx, priority, wmesg, timo);
+}
+
+static const struct pool_lock_ops pool_lock_ops_mtx = {
+	pool_lock_mtx_init,
+	pool_lock_mtx_enter,
+	pool_lock_mtx_enter_try,
+	pool_lock_mtx_leave,
+	pool_lock_mtx_assert_locked,
+	pool_lock_mtx_assert_unlocked,
+	pool_lock_mtx_sleep,
+};
+
+void
+pool_lock_rw_init(struct pool *pp, union pool_lock *lock,
+    struct lock_type *type)
+{
+	_rw_init_flags(&lock->prl_rwlock, pp->pr_wchan, 0, type);
+}
+
+void
+pool_lock_rw_enter(union pool_lock *lock LOCK_FL_VARS)
+{
+	_rw_enter_write(&lock->prl_rwlock LOCK_FL_ARGS);
+}
+
+int
+pool_lock_rw_enter_try(union pool_lock *lock LOCK_FL_VARS)
+{
+	return (_rw_enter(&lock->prl_rwlock, RW_WRITE | RW_NOSLEEP
+	    LOCK_FL_ARGS) == 0);
+}
+
+void
+pool_lock_rw_leave(union pool_lock *lock LOCK_FL_VARS)
+{
+	_rw_exit_write(&lock->prl_rwlock LOCK_FL_ARGS);
+}
+
+void
+pool_lock_rw_assert_locked(union pool_lock *lock)
+{
+	rw_assert_wrlock(&lock->prl_rwlock);
+}
+
+void
+pool_lock_rw_assert_unlocked(union pool_lock *lock)
+{
+	KASSERT(rw_status(&lock->prl_rwlock) != RW_WRITE);
+}
+
+int
+pool_lock_rw_sleep(void *ident, union pool_lock *lock, int priority,
+    const char *wmesg, int timo)
+{
+	return rwsleep(ident, &lock->prl_rwlock, priority, wmesg, timo);
+}
+
+static const struct pool_lock_ops pool_lock_ops_rw = {
+	pool_lock_rw_init,
+	pool_lock_rw_enter,
+	pool_lock_rw_enter_try,
+	pool_lock_rw_leave,
+	pool_lock_rw_assert_locked,
+	pool_lock_rw_assert_unlocked,
+	pool_lock_rw_sleep,
+};

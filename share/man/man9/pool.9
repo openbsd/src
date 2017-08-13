@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.54 2016/09/15 06:11:14 jmc Exp $
+.\"	$OpenBSD: pool.9,v 1.55 2017/08/13 20:26:33 guenther Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 15 2016 $
+.Dd $Mdocdate: August 13 2017 $
 .Dt POOL_INIT 9
 .Os
 .Sh NAME
@@ -116,7 +116,27 @@ See
 .Xr spl 9
 for a list of the IPLs.
 .It Fa flags
-Specifies various flags set on the pool at creation time.
+The bitwise OR of zero or more of the following values:
+.Pp
+.Bl -tag -width "PR_WAITOK" -offset indent -compact
+.It Dv PR_WAITOK
+The pool doesn't need to be interrupt safe.
+It is recommended to specify this flag if the pool will never be
+accessed in interrupt context.
+.It Dv PR_RWLOCK
+The pool will use an
+.Xr rwlock 9
+instead a
+.Xr mutex 9
+for exclusion.
+Requires
+.Dv PR_WAITOK
+to be specified as well, both to
+.Fn pool_init
+and on all
+.Fn pool_get
+calls on this pool.
+.El
 .It Fa wmesg
 The message passed on to
 .Xr tsleep 9
@@ -129,11 +149,6 @@ The back-end allocator used to manage the memory for the pool.
 may be
 .Dv NULL ,
 in which case the pool manager chooses an appropriate back-end allocator.
-If the
-.Dv PR_WAITOK
-flag has been specified, this allocator may not be interrupt safe.
-It is recommended to specify this flag if the pool will never be
-accessed in interrupt context.
 .El
 .Ss DESTROYING A POOL
 The
@@ -334,6 +349,8 @@ The pool manager is implemented in the file
 .Sh SEE ALSO
 .Xr free 9 ,
 .Xr malloc 9 ,
+.Xr mutex 9 ,
+.Xr rwlock 9 ,
 .Xr spl 9 ,
 .Xr uvm 9
 .Sh HISTORY
