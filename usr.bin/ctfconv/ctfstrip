@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: ctfstrip,v 1.5 2017/08/12 19:51:17 jasper Exp $
+# $OpenBSD: ctfstrip,v 1.6 2017/08/13 15:28:51 visa Exp $
 #
 # Copyright (c) 2017 Martin Pieuchot
 #
@@ -39,7 +39,7 @@ for arg in "$@"; do
 	-S)	STRIPFLAG=-g; shift; continue;;
 	esac
 	shift
-	set -- "$@" "$arg"
+	set -- "$@" "$INFILE"
 	INFILE="$arg"
 done
 
