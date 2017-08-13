@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.89 2017/08/12 07:38:26 florian Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.90 2017/08/13 07:52:17 florian Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -837,11 +837,6 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 	int inconsistent = 0;
 	u_char ntopbuf[INET6_ADDRSTRLEN], prefixbuf[INET6_ADDRSTRLEN];
 	struct timeval now;
-
-#if 0				/* impossible */
-	if (pinfo->nd_opt_pi_type != ND_OPT_PREFIX_INFORMATION)
-		return(0);
-#endif
 
 	/*
 	 * log if the advertised prefix has link-local scope(sanity check?)
