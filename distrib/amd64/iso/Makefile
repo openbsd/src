@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2017/06/13 16:28:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 2017/08/13 15:41:30 jasper Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -60,7 +60,7 @@ ${FS}: ${BASE} ${XBASE} bsd.gz
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${BOOT} ${MOUNT_POINT}/boot
 	strip ${MOUNT_POINT}/boot
-	strip -R .comment ${MOUNT_POINT}/boot
+	strip -R .comment -R .SUNW_ctf ${MOUNT_POINT}/boot
 	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
 	installboot -v -r ${MOUNT_POINT} ${VND_CRDEV} \
 	    ${DESTDIR}/usr/mdec/biosboot ${MOUNT_POINT}/boot
@@ -117,7 +117,7 @@ clean cleandir:
 bsd.gz: bsd.rd
 	cp ${BSDRD} bsd.strip
 	strip bsd.strip
-	strip -R .comment bsd.strip
+	strip -R .comment -R .SUNW_ctf bsd.strip
 	gzip -c9n bsd.strip > bsd.gz
 
 bsd.rd: ${BSDRD}

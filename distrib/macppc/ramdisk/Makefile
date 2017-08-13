@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2016/12/30 22:34:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.34 2017/08/13 15:41:30 jasper Exp $
 
 REV=	${OSrev}
 
@@ -34,7 +34,7 @@ cd: ${BSD_RD}
 	-rm -rf ${.OBJDIR}/cd-dir/
 	-@mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/macppc/
 	cp bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
-	strip ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
+	strip -R .SUNW_ctf ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
 	gzip -9n ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
 	mv ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd.gz ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
 	# On HFS, doing the following means COPIES of the files.. therefore

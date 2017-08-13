@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.43 2017/07/25 13:32:14 robert Exp $
+#	$OpenBSD: Makefile.inc,v 1.44 2017/08/13 15:41:30 jasper Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -37,7 +37,7 @@ ${FS}:	bsd.gz
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${BOOT} ${.OBJDIR}/boot
 	strip ${.OBJDIR}/boot
-	strip -R .comment ${.OBJDIR}/boot
+	strip -R .comment -R .SUNW_ctf ${.OBJDIR}/boot
 	installboot -v -r ${MOUNT_POINT} ${VND_CRDEV} \
 	    ${DESTDIR}/usr/mdec/biosboot ${.OBJDIR}/boot
 	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
@@ -62,7 +62,7 @@ COPTS= -Oz -mtune=i486
 bsd.gz: bsd.rd
 	cp bsd.rd bsd.strip
 	strip bsd.strip
-	strip -R .comment bsd.strip
+	strip -R .comment -R .SUNW_ctf bsd.strip
 	gzip -c9n bsd.strip > bsd.gz
 
 bsd.rd:	${IMAGE} bsd rdsetroot
@@ -110,7 +110,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
-	strip -R .comment ${CBIN}
+	strip -R .comment -R .SUNW_ctf ${CBIN}
 
 ${CRUNCHCONF}: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CRUNCHCONF}

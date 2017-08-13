@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2017/07/25 13:32:14 robert Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2017/08/13 15:41:30 jasper Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -42,7 +42,7 @@ ${FS}:	bsd.gz
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${BOOT} ${.OBJDIR}/boot
 	strip ${.OBJDIR}/boot
-	strip -R .comment ${.OBJDIR}/boot
+	strip -R .comment -R .SUNW_ctf ${.OBJDIR}/boot
 	installboot -v -r ${MOUNT_POINT} ${VND_CRDEV} \
 	    ${DESTDIR}/usr/mdec/biosboot ${.OBJDIR}/boot
 	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
@@ -65,7 +65,7 @@ MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
 bsd.gz: bsd.rd
 	cp bsd.rd bsd.strip
 	strip bsd.strip
-	strip -R .comment bsd.strip
+	strip -R .comment -R .SUNW_ctf bsd.strip
 	gzip -c9n bsd.strip > bsd.gz
 
 bsd.rd:	mr.fs bsd rdsetroot
@@ -110,7 +110,7 @@ instbin.mk instbin.cache instbin.c: instbin.conf
 
 instbin: instbin.mk instbin.cache instbin.c
 	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
-	strip -R .comment instbin
+	strip -R .comment -R .SUNW_ctf instbin
 
 instbin.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=instbin ${LISTS} > instbin.conf
