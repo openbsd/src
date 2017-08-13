@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctf.h,v 1.4 2017/05/08 11:14:33 mpi Exp $	*/
+/*	$OpenBSD: ctf.h,v 1.5 2017/08/13 14:56:05 nayden Exp $	*/
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -90,7 +90,7 @@ struct ctf_lmember {
 
 struct ctf_enum {
 	uint32_t		cte_name;
-	int			cte_value;
+	int32_t			cte_value;
 };
 
 #define CTF_MAGIC		0xcff1
