@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.30 2017/05/30 14:04:02 jmatthew Exp $ */
+/*	$OpenBSD: ahci.c,v 1.31 2017/08/13 15:00:29 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -3332,9 +3332,9 @@ ahci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 	ahci_hibernate_load_prdt(my->ccb);
 
 	ahci_hibernate_io_start(my->ap, my->ccb);
-	timeout = 1000;
+	timeout = 1000000;
 	while ((rc = ahci_hibernate_io_poll(my->ap, my->ccb)) == EAGAIN) {
-		delay(1000);
+		delay(1);
 		timeout--;
 		if (timeout == 0) {
 			return (EIO);
