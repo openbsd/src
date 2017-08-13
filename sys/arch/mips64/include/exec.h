@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.8 2017/02/08 05:09:25 guenther Exp $	*/
+/*	$OpenBSD: exec.h,v 1.9 2017/08/13 14:56:09 visa Exp $	*/
 
 /*
  * Copyright (c) 1996-2004 Per Fogelstrom, Opsycon AB
@@ -132,29 +132,5 @@ typedef struct {
 	Elf32_Sword	ri_gp_value;	/* $gp register value */
 } Elf32_RegInfo;
 #endif
-
-
-/*
- * Mips relocations.
- */
-
-#define	R_MIPS_NONE	0	/* No reloc */
-#define	R_MIPS_16	1	/* Direct 16 bit */
-#define	R_MIPS_32	2	/* Direct 32 bit */
-#define	R_MIPS_REL32	3	/* PC relative 32 bit */
-#define	R_MIPS_26	4	/* Direct 26 bit shifted */
-#define	R_MIPS_HI16	5	/* High 16 bit */
-#define	R_MIPS_LO16	6	/* Low 16 bit */
-#define	R_MIPS_GPREL16	7	/* GP relative 16 bit */
-#define	R_MIPS_LITERAL	8	/* 16 bit literal entry */
-#define	R_MIPS_GOT16	9	/* 16 bit GOT entry */
-#define	R_MIPS_PC16	10	/* PC relative 16 bit */
-#define	R_MIPS_CALL16	11	/* 16 bit GOT entry for function */
-#define	R_MIPS_GPREL32	12	/* GP relative 32 bit */
-
-#define	R_MIPS_64	18
-
-#define	R_MIPS_REL32_64	((R_MIPS_64 << 8) | R_MIPS_REL32)
-
 
 #endif	/* !_MIPS64_EXEC_H_ */
