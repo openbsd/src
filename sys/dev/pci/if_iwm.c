@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.210 2017/08/13 15:34:54 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.211 2017/08/13 18:08:03 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -453,7 +453,7 @@ void	iwm_tt_tx_backoff(struct iwm_softc *, uint32_t);
 int	iwm_init_hw(struct iwm_softc *);
 int	iwm_init(struct ifnet *);
 void	iwm_start(struct ifnet *);
-void	iwm_stop(struct ifnet *, int);
+void	iwm_stop(struct ifnet *);
 void	iwm_watchdog(struct ifnet *);
 int	iwm_ioctl(struct ifnet *, u_long, caddr_t);
 #ifdef IWM_DEBUG
@@ -5910,7 +5910,7 @@ iwm_media_change(struct ifnet *ifp)
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING)) {
-		iwm_stop(ifp, 0);
+		iwm_stop(ifp);
 		err = iwm_init(ifp);
 	}
 	return err;
@@ -6395,7 +6395,7 @@ iwm_init(struct ifnet *ifp)
 
 	err = iwm_init_hw(sc);
 	if (err) {
-		iwm_stop(ifp, 1);
+		iwm_stop(ifp);
 		return err;
 	}
 
@@ -6488,7 +6488,7 @@ iwm_start(struct ifnet *ifp)
 }
 
 void
-iwm_stop(struct ifnet *ifp, int disable)
+iwm_stop(struct ifnet *ifp)
 {
 	struct iwm_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -6582,7 +6582,7 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				iwm_stop(ifp, 1);
+				iwm_stop(ifp);
 		}
 		break;
 
@@ -6604,7 +6604,7 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		err = 0;
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING)) {
-			iwm_stop(ifp, 0);
+			iwm_stop(ifp);
 			err = iwm_init(ifp);
 		}
 	}
@@ -7238,7 +7238,7 @@ iwm_intr(void *arg)
 #endif
 
 		printf("%s: fatal firmware error\n", DEVNAME(sc));
-		iwm_stop(ifp, 1);
+		iwm_stop(ifp);
 		task_add(systq, &sc->init_task);
 		rv = 1;
 		goto out;
@@ -7248,7 +7248,7 @@ iwm_intr(void *arg)
 	if (r1 & IWM_CSR_INT_BIT_HW_ERR) {
 		handled |= IWM_CSR_INT_BIT_HW_ERR;
 		printf("%s: hardware error, stopping device \n", DEVNAME(sc));
-		iwm_stop(ifp, 1);
+		iwm_stop(ifp);
 		rv = 1;
 		goto out;
 	}
@@ -7265,7 +7265,7 @@ iwm_intr(void *arg)
 	if (r1 & IWM_CSR_INT_BIT_RF_KILL) {
 		handled |= IWM_CSR_INT_BIT_RF_KILL;
 		if (iwm_check_rfkill(sc) && (ifp->if_flags & IFF_UP)) {
-			iwm_stop(ifp, 1);
+			iwm_stop(ifp);
 		}
 	}
 
@@ -7750,7 +7750,7 @@ iwm_init_task(void *arg1)
 	s = splnet();
 
 	if (ifp->if_flags & IFF_RUNNING)
-		iwm_stop(ifp, 0);
+		iwm_stop(ifp);
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
 		iwm_init(ifp);
 
@@ -7780,7 +7780,7 @@ iwm_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
-			iwm_stop(ifp, 0);
+			iwm_stop(ifp);
 		break;
 	case DVACT_RESUME:
 		err = iwm_resume(sc);
