@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.h,v 1.5 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: input.h,v 1.6 2017/08/13 02:12:16 tedu Exp $	*/
 /*	$NetBSD: input.h,v 1.2 1995/04/22 07:42:36 cgd Exp $	*/
 
 /*-
@@ -35,6 +35,6 @@
  *	@(#)input.h	8.1 (Berkeley) 5/31/93
  */
 
-int	rwait(struct timeval *);
+int	rwait(struct timespec *);
 int	tgetchar(void);
 void	tsleep(void);

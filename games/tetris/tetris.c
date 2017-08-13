@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.31 2016/06/10 13:07:07 tb Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.32 2017/08/13 02:12:16 tedu Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -197,7 +197,7 @@ main(int argc, char *argv[])
 	if (argc)
 		usage();
 
-	fallrate = 1000000 / level;
+	fallrate = 1000000000L / level;
 
 	for (i = 0; i <= 5; i++) {
 		for (j = i+1; j <= 5; j++) {
@@ -280,7 +280,7 @@ main(int argc, char *argv[])
 				scr_msg(key_msg, 0);
 				scr_msg(msg, 1);
 				(void) fflush(stdout);
-			} while (rwait((struct timeval *)NULL) == -1);
+			} while (rwait(NULL) == -1);
 			scr_msg(msg, 0);
 			scr_msg(key_msg, 1);
 			place(curshape, pos, 0);

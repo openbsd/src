@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.18 2016/08/27 02:02:44 guenther Exp $	*/
+/*	$OpenBSD: input.c,v 1.19 2017/08/13 02:12:16 tedu Exp $	*/
 /*    $NetBSD: input.c,v 1.3 1996/02/06 22:47:33 jtc Exp $    */
 
 /*-
@@ -40,89 +40,75 @@
  */
 
 #include <sys/time.h>
+
 #include <errno.h>
 #include <poll.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "input.h"
 #include "tetris.h"
 
-/* return true iff the given timeval is positive */
-#define	TV_POS(tv) \
-	((tv)->tv_sec > 0 || ((tv)->tv_sec == 0 && (tv)->tv_usec > 0))
-
-/* subtract timeval `sub' from `res' */
-#define	TV_SUB(res, sub) \
-	(res)->tv_sec -= (sub)->tv_sec; \
-	(res)->tv_usec -= (sub)->tv_usec; \
-	if ((res)->tv_usec < 0) { \
-		(res)->tv_usec += 1000000; \
-		(res)->tv_sec--; \
-	}
+/* return true iff the given timespec is positive */
+#define	TS_POS(ts) \
+	((ts)->tv_sec > 0 || ((ts)->tv_sec == 0 && (ts)->tv_nsec > 0))
 
 /*
- * Do a `read wait': poll for reading from stdin, with timeout *tvp.
- * On return, modify *tvp to reflect the amount of time spent waiting.
+ * Do a `read wait': poll for reading from stdin, with timeout *limit.
+ * On return, subtract the time spent waiting from *limit.
  * It will be positive only if input appeared before the time ran out;
  * otherwise it will be zero or perhaps negative.
  *
- * If tvp is nil, wait forever, but return if poll is interrupted.
+ * If limit is NULL, wait forever, but return if poll is interrupted.
  *
- * Return 0 => no input, 1 => can read() from stdin
+ * Return 0 => no input, 1 => can read() from stdin, -1 => interrupted
  */
 int
-rwait(struct timeval *tvp)
+rwait(struct timespec *limit)
 {
-	int	timo = INFTIM;
-	struct timeval starttv, endtv;
+	struct timespec start, end, elapsed;
 	struct pollfd pfd[1];
 
-#define	NILTZ ((struct timezone *)0)
-
-	if (tvp) {
-		(void) gettimeofday(&starttv, NILTZ);
-		endtv = *tvp;
-		timo = endtv.tv_sec * 1000 + endtv.tv_usec / 1000;
-	}
-again:
 	pfd[0].fd = STDIN_FILENO;
 	pfd[0].events = POLLIN;
-	switch (poll(pfd, 1, timo)) {
+
+	if (limit != NULL)
+		clock_gettime(CLOCK_MONOTONIC, &start);
+again:
+	switch (ppoll(pfd, 1, limit, NULL)) {
 	case -1:
-		if (tvp == 0)
+		if (limit == NULL)
 			return (-1);
 		if (errno == EINTR)
 			goto again;
 		stop("poll failed, help");
-
 	case 0:	/* timed out */
-		tvp->tv_sec = 0;
-		tvp->tv_usec = 0;
+		timespecclear(limit);
 		return (0);
 	}
-	if (tvp) {
-		/* since there is input, we may not have timed out */
-		(void) gettimeofday(&endtv, NILTZ);
-		TV_SUB(&endtv, &starttv);
-		TV_SUB(tvp, &endtv);	/* adjust *tvp by elapsed time */
+	if (limit != NULL) {
+		/* we have input, so subtract the elapsed time from *limit */
+		clock_gettime(CLOCK_MONOTONIC, &end);
+		timespecsub(&end, &start, &elapsed);
+		timespecsub(limit, &elapsed, limit);
 	}
 	return (1);
 }
 
 /*
- * `sleep' for the current turn time (using poll).
- * Eat any input that might be available.
+ * `sleep' for the current turn time and eat any
+ * input that becomes available.
  */
 void
 tsleep(void)
 {
-	struct timeval tv;
+	struct timespec ts;
 	char c;
 
-	tv.tv_sec = 0;
-	tv.tv_usec = fallrate;
-	while (TV_POS(&tv))
-		if (rwait(&tv) && read(STDIN_FILENO, &c, 1) != 1)
+	ts.tv_sec = 0;
+	ts.tv_nsec = fallrate;
+	while (TS_POS(&ts))
+		if (rwait(&ts) && read(STDIN_FILENO, &c, 1) != 1)
 			break;
 }
 
@@ -132,7 +118,7 @@ tsleep(void)
 int
 tgetchar(void)
 {
-	static struct timeval timeleft;
+	static struct timespec timeleft;
 	char c;
 
 	/*
@@ -144,10 +130,10 @@ tgetchar(void)
 	 *
 	 * Most of the hard work is done by rwait().
 	 */
-	if (!TV_POS(&timeleft)) {
+	if (!TS_POS(&timeleft)) {
 		faster();	/* go faster */
 		timeleft.tv_sec = 0;
-		timeleft.tv_usec = fallrate;
+		timeleft.tv_nsec = fallrate;
 	}
 	if (!rwait(&timeleft))
 		return (-1);

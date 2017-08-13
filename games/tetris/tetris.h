@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.h,v 1.11 2015/11/20 07:40:23 tb Exp $	*/
+/*	$OpenBSD: tetris.h,v 1.12 2017/08/13 02:12:16 tedu Exp $	*/
 /*	$NetBSD: tetris.h,v 1.2 1995/04/22 07:42:48 cgd Exp $	*/
 
 /*-
@@ -135,15 +135,15 @@ extern const struct shape *nextshape;
 /*
  * Shapes fall at a rate faster than once per second.
  *
- * The initial rate is determined by dividing 1 million microseconds
- * by the game `level'.  (This is at most 1 million, or one second.)
- * Each time the fall-rate is used, it is decreased a little bit,
+ * The initial rate is determined by dividing 1 billion nanoseconds
+ * by the game `level'.  (This is at most 1 billion, or one second.)
+ * Each time the fallrate is used, it is decreased a little bit,
  * depending on its current value, via the `faster' macro below.
  * The value eventually reaches a limit, and things stop going faster,
  * but by then the game is utterly impossible.
  */
-extern long	fallrate;	/* less than 1 million; smaller => faster */
-#define	faster() (fallrate -= fallrate / 3000)
+extern long	fallrate;	/* less than 1 billion; smaller => faster */
+#define	faster() (fallrate -= fallrate / 3000000)
 
 /*
  * Game level must be between 1 and 9.  This controls the initial fall rate
