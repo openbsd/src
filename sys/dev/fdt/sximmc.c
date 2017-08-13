@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.2 2017/06/22 02:44:37 deraadt Exp $ */
+/* $OpenBSD: sximmc.c,v 1.3 2017/08/13 00:13:07 kettenis Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -289,16 +289,11 @@ sximmc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	if (OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-mmc"))
-		return 1;
-	if (OF_is_compatible(faa->fa_node, "allwinner,sun5i-a13-mmc"))
-		return 1;
-	if (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-mmc"))
-		return 1;
-	if (OF_is_compatible(faa->fa_node, "allwinner,sun9i-a80-mmc"))
-		return 1;
-
-	return 0;
+	return (OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-mmc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun5i-a13-mmc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-mmc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun9i-a80-mmc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-a64-mmc"));
 }
 
 int
