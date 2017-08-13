@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2017/07/09 21:23:19 espie Exp $
+#	$OpenBSD: Makefile,v 1.10 2017/08/13 19:42:33 doug Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ CFLAGS+= -Wreturn-type
 CFLAGS+= -Wtrigraphs
 CFLAGS+= -Wuninitialized
 CFLAGS+= -Wunused
-.if ${COMPILER_VERSION:L} == "gcc4"
+.if ${COMPILER_VERSION:L} == "clang"
 CFLAGS+= -Werror
 .endif
 CFLAGS+= -DLIBRESSL_INTERNAL

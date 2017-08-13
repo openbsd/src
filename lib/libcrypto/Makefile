@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.20 2017/07/10 21:30:37 espie Exp $
+# $OpenBSD: Makefile,v 1.21 2017/08/13 19:42:33 doug Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -15,7 +15,7 @@ CLEANFILES=${PC_FILES} ${VERSION_SCRIPT}
 LCRYPTO_SRC=	${.CURDIR}
 
 CFLAGS+= -Wall -Wundef
-.if ${COMPILER_VERSION:L} == "gcc4"
+.if ${COMPILER_VERSION:L} == "clang"
 CFLAGS+= -Werror
 .endif
 CFLAGS+= -DLIBRESSL_INTERNAL

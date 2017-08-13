@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2017/04/30 04:44:58 jsing Exp $
+#	$OpenBSD: Makefile,v 1.32 2017/08/13 19:42:33 doug Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -6,7 +6,7 @@ SUBDIR=	man
 .endif
 
 CFLAGS+= -Wall -Wimplicit -Wundef
-.if ${COMPILER_VERSION:L} == "gcc4"
+.if ${COMPILER_VERSION:L} == "clang"
 CFLAGS+= -Werror
 .endif
 CFLAGS+= -DLIBRESSL_INTERNAL
