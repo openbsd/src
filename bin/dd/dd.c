@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.23 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: dd.c,v 1.24 2017/08/13 02:06:42 tedu Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -193,7 +193,7 @@ setup(void)
 	}
 
 	/* Statistics timestamp. */
-	(void)gettimeofday(&st.startv, (struct timezone *)NULL);
+	clock_gettime(CLOCK_MONOTONIC, &st.start);
 }
 
 static void

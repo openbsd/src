@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.20 2016/08/25 05:25:21 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.21 2017/08/13 02:06:42 tedu Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -52,20 +52,20 @@
 void
 summary(void)
 {
-	struct timeval nowtv;
+	struct timespec elapsed, now;
 	char buf[4][100];
 	struct iovec iov[4];
-	double microsecs;
+	double nanosecs;
 	int i = 0;
 
 	if (ddflags & C_NOINFO)
 		return;
 
-	(void)gettimeofday(&nowtv, (struct timezone *)NULL);
-	timersub(&nowtv, &st.startv, &nowtv);
-	microsecs = ((double)nowtv.tv_sec * 1000000) + nowtv.tv_usec;
-	if (microsecs == 0)
-		microsecs = 1;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	timespecsub(&now, &st.start, &elapsed);
+	nanosecs = ((double)elapsed.tv_sec * 1000000000) + elapsed.tv_nsec;
+	if (nanosecs == 0)
+		nanosecs = 1;
 
 	/* Use snprintf(3) so that we don't reenter stdio(3). */
 	(void)snprintf(buf[0], sizeof(buf[0]),
@@ -92,8 +92,8 @@ summary(void)
 		(void)snprintf(buf[3], sizeof(buf[3]),
 		    "%lld bytes transferred in %lld.%03ld secs "
 		    "(%0.0f bytes/sec)\n", (long long)st.bytes,
-		    (long long)nowtv.tv_sec, nowtv.tv_usec / 1000,
-		    ((double)st.bytes * 1000000) / microsecs);
+		    (long long)elapsed.tv_sec, elapsed.tv_nsec / 1000000,
+		    ((double)st.bytes * 1000000000) / nanosecs);
 		iov[i].iov_base = buf[3];
 		iov[i++].iov_len = strlen(buf[3]);
 	}
