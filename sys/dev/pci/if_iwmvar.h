@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.32 2017/08/12 19:23:42 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.33 2017/08/13 15:34:54 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -285,6 +285,7 @@ struct iwm_rx_ring {
 #define IWM_FLAG_MAC_ACTIVE	0x08	/* MAC context added to firmware */
 #define IWM_FLAG_BINDING_ACTIVE	0x10	/* MAC->PHY binding added to firmware */
 #define IWM_FLAG_STA_ACTIVE	0x20	/* AP added to firmware station table */
+#define IWM_FLAG_TE_ACTIVE	0x40	/* time event is scheduled */
 
 struct iwm_ucode_status {
 	uint32_t uc_error_event_table;
@@ -470,6 +471,8 @@ struct iwm_softc {
 
 	struct iwm_rx_phy_info sc_last_phy_info;
 	int sc_ampdu_ref;
+
+	uint32_t sc_time_event_uid;
 
 	/* phy contexts.  we only use the first one */
 	struct iwm_phy_ctxt sc_phyctxt[IWM_NUM_PHY_CTX];

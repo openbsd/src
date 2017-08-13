@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.209 2017/08/13 15:02:45 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.210 2017/08/13 15:34:54 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -312,6 +312,7 @@ int	iwm_send_time_event_cmd(struct iwm_softc *,
 	    const struct iwm_time_event_cmd_v2 *);
 void	iwm_protect_session(struct iwm_softc *, struct iwm_node *, uint32_t,
 	    uint32_t);
+void	iwm_unprotect_session(struct iwm_softc *, struct iwm_node *);
 int	iwm_nvm_read_chunk(struct iwm_softc *, uint16_t, uint16_t, uint16_t,
 	    uint8_t *, uint16_t *);
 int	iwm_nvm_read_section(struct iwm_softc *, uint16_t, uint8_t *,
@@ -2200,14 +2201,47 @@ iwm_send_time_event_cmd(struct iwm_softc *sc,
     const struct iwm_time_event_cmd_v2 *cmd)
 {
 	struct iwm_time_event_cmd_v1 cmd_v1;
+	struct iwm_host_cmd hcmd = {
+		.id = IWM_TIME_EVENT_CMD,
+		.flags = IWM_CMD_WANT_SKB,
+	};
+	struct iwm_rx_packet *pkt;
+	struct iwm_time_event_resp *resp;
+	uint32_t resp_len;
+	int err;
 
-	if (sc->sc_capaflags & IWM_UCODE_TLV_FLAGS_TIME_EVENT_API_V2)
-		return iwm_send_cmd_pdu(sc, IWM_TIME_EVENT_CMD,
-		    0, sizeof(*cmd), cmd);
+	if (sc->sc_capaflags & IWM_UCODE_TLV_FLAGS_TIME_EVENT_API_V2) {
+		hcmd.data[0] = cmd;
+		hcmd.len[0] = sizeof(*cmd);
+	} else {
+		iwm_te_v2_to_v1(cmd, &cmd_v1);
+		hcmd.data[0] = &cmd_v1;
+		hcmd.len[0] = sizeof(cmd_v1);
+	}
+	err = iwm_send_cmd(sc, &hcmd);
+	if (err)
+		return err;
 
-	iwm_te_v2_to_v1(cmd, &cmd_v1);
-	return iwm_send_cmd_pdu(sc, IWM_TIME_EVENT_CMD, 0,
-	    sizeof(cmd_v1), &cmd_v1);
+	pkt = hcmd.resp_pkt;
+	if (!pkt || (pkt->hdr.flags & IWM_CMD_FAILED_MSK)) {
+		err = EIO;
+		goto out;
+	}
+
+	resp_len = iwm_rx_packet_payload_len(pkt);
+	if (resp_len != sizeof(*resp)) {
+		err = EIO;
+		goto out;
+	}
+
+	resp = (void *)pkt->data;
+	if (le32toh(resp->status) == 0)
+		sc->sc_time_event_uid = le32toh(resp->unique_id);
+	else
+		err = EIO;
+out:
+	iwm_free_resp(sc, &hcmd);
+	return err;
 }
 
 void
@@ -2215,6 +2249,10 @@ iwm_protect_session(struct iwm_softc *sc, struct iwm_node *in,
     uint32_t duration, uint32_t max_delay)
 {
 	struct iwm_time_event_cmd_v2 time_cmd;
+
+	/* Do nothing if a time event is already scheduled. */
+	if (sc->sc_flags & IWM_FLAG_TE_ACTIVE)
+		return;
 
 	memset(&time_cmd, 0, sizeof(time_cmd));
 
@@ -2236,7 +2274,32 @@ iwm_protect_session(struct iwm_softc *sc, struct iwm_node *in,
 	        IWM_TE_V2_NOTIF_HOST_EVENT_END |
 		IWM_T2_V2_START_IMMEDIATELY);
 
-	iwm_send_time_event_cmd(sc, &time_cmd);
+	if (iwm_send_time_event_cmd(sc, &time_cmd) == 0)
+		sc->sc_flags |= IWM_FLAG_TE_ACTIVE;
+
+	DELAY(100);
+}
+
+void
+iwm_unprotect_session(struct iwm_softc *sc, struct iwm_node *in)
+{
+	struct iwm_time_event_cmd_v2 time_cmd;
+
+	/* Do nothing if the time event has already ended. */
+	if ((sc->sc_flags & IWM_FLAG_TE_ACTIVE) == 0)
+		return;
+
+	memset(&time_cmd, 0, sizeof(time_cmd));
+
+	time_cmd.action = htole32(IWM_FW_CTXT_ACTION_REMOVE);
+	time_cmd.id_and_color =
+	    htole32(IWM_FW_CMD_ID_AND_COLOR(in->in_id, in->in_color));
+	time_cmd.id = htole32(sc->sc_time_event_uid);
+
+	if (iwm_send_time_event_cmd(sc, &time_cmd) == 0)
+		sc->sc_flags &= ~IWM_FLAG_TE_ACTIVE;
+
+	DELAY(100);
 }
 
 /*
@@ -5424,7 +5487,6 @@ iwm_auth(struct iwm_softc *sc)
 	else
 		duration = IEEE80211_DUR_TU; 
 	iwm_protect_session(sc, in, duration, in->in_ni.ni_intval / 2);
-	DELAY(100);
 
 	return 0;
 
@@ -5449,6 +5511,8 @@ iwm_deauth(struct iwm_softc *sc)
 	int ac, tfd_msk, err;
 
 	splassert(IPL_NET);
+
+	iwm_unprotect_session(sc, in);
 
 	if (sc->sc_flags & IWM_FLAG_STA_ACTIVE) {
 		err = iwm_rm_sta_cmd(sc, in);
@@ -6452,6 +6516,7 @@ iwm_stop(struct ifnet *ifp, int disable)
 	sc->sc_flags &= ~IWM_FLAG_MAC_ACTIVE;
 	sc->sc_flags &= ~IWM_FLAG_BINDING_ACTIVE;
 	sc->sc_flags &= ~IWM_FLAG_STA_ACTIVE;
+	sc->sc_flags &= ~IWM_FLAG_TE_ACTIVE;
 
 	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 
@@ -6967,7 +7032,6 @@ iwm_notif_intr(struct iwm_softc *sc)
 		case IWM_POWER_TABLE_CMD:
 		case IWM_PHY_CONTEXT_CMD:
 		case IWM_BINDING_CONTEXT_CMD:
-		case IWM_TIME_EVENT_CMD:
 		case IWM_WIDE_ID(IWM_ALWAYS_LONG_GROUP, IWM_SCAN_CFG_CMD):
 		case IWM_WIDE_ID(IWM_ALWAYS_LONG_GROUP, IWM_SCAN_REQ_UMAC):
 		case IWM_SCAN_OFFLOAD_REQUEST_CMD:
@@ -6985,6 +7049,16 @@ iwm_notif_intr(struct iwm_softc *sc)
 				    pkt, sizeof(*pkt)+sizeof(*cresp));
 			}
 			break;
+
+		case IWM_TIME_EVENT_CMD: {
+			struct iwm_time_event_resp *resp;
+			if (sc->sc_wantresp == ((qid << 16) | idx)) {
+				SYNC_RESP_STRUCT(resp, pkt);
+				memcpy(sc->sc_cmd_resp,
+				    pkt, sizeof(*pkt) + sizeof(*resp));
+			}
+			break;
+		}
 
 		/* ignore */
 		case 0x6c: /* IWM_PHY_DB_CMD */
@@ -7033,7 +7107,14 @@ iwm_notif_intr(struct iwm_softc *sc)
 
 		case IWM_TIME_EVENT_NOTIFICATION: {
 			struct iwm_time_event_notif *notif;
+			uint32_t action;
 			SYNC_RESP_STRUCT(notif, pkt);
+
+			if (sc->sc_time_event_uid != le32toh(notif->unique_id))
+				break;
+			action = le32toh(notif->action);
+			if (action & IWM_TE_V2_NOTIF_HOST_EVENT_END)
+				sc->sc_flags &= ~IWM_FLAG_TE_ACTIVE;
 			break;
 		}
 
