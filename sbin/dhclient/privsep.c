@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.65 2017/08/12 16:57:38 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.66 2017/08/13 17:57:32 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -28,6 +28,7 @@
 #include <imsg.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -36,7 +37,7 @@
 #include "log.h"
 #include "privsep.h"
 
-int
+void
 dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
     struct imsgbuf *ibuf)
 {
@@ -48,8 +49,11 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 	int		 index, newidx;
 
 	index = if_nametoindex(name);
-	if (index == 0)
-		return 0;
+	if (index == 0) {
+		log_warnx("Unknown interface %s", name);
+		quit = INTERNALSIG;
+		return;
+	}
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
@@ -133,10 +137,8 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 		case IMSG_HUP:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE)
 				log_warnx("bad IMSG_HUP");
-			else {
-				imsg_free(&imsg);
-				return 1;
-			}
+			else
+				quit = SIGHUP;
 			break;
 
 		default:
@@ -146,5 +148,4 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 
 		imsg_free(&imsg);
 	}
-	return 0;
 }

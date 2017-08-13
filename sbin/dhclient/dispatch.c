@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.138 2017/08/12 17:36:21 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.139 2017/08/13 17:57:32 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -87,11 +87,9 @@ dispatch(struct interface_info *ifi, int routefd)
 
 	while (quit == 0 || quit == SIGHUP) {
 		if (quit == SIGHUP) {
-			log_warnx("%s; restarting", strsignal(quit));
 			sendhup();
-		}
-
-		if (ifi->timeout_func != NULL) {
+			to_msec = 100;
+		} else if (ifi->timeout_func != NULL) {
 			time(&cur_time);
 			if (ifi->timeout <= cur_time) {
 				func = ifi->timeout_func;
@@ -107,8 +105,8 @@ dispatch(struct interface_info *ifi, int routefd)
 			 */
 			howlong = ifi->timeout - cur_time;
 			if (howlong > INT_MAX / 1000)
-				howlong = INT_MAX / 1000;
-			to_msec = howlong * 1000;
+					howlong = INT_MAX / 1000;
+				to_msec = howlong * 1000;
 		} else
 			to_msec = -1;
 
@@ -168,7 +166,7 @@ dispatch(struct interface_info *ifi, int routefd)
 			quit = INTERNALSIG;
 	}
 
-	if (quit != INTERNALSIG)
+	if (quit != INTERNALSIG && quit != SIGHUP)
 		fatalx("%s", strsignal(quit));
 }
 

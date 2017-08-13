@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.492 2017/08/10 17:15:05 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.493 2017/08/13 17:57:32 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2092,7 +2092,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	struct pollfd	 pfd[1];
 	struct imsgbuf	*priv_ibuf;
 	ssize_t		 n;
-	int		 ioctlfd, routefd, nfds, got_imsg_hup = 0;
+	int		 ioctlfd, routefd, nfds;
 
 	switch (fork()) {
 	case -1:
@@ -2153,10 +2153,8 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 			continue;
 		}
 
-		got_imsg_hup = dispatch_imsg(ifi->name, ifi->rdomain, ioctlfd,
-		    routefd, priv_ibuf);
-		if (got_imsg_hup != 0)
-			quit = SIGHUP;
+		dispatch_imsg(ifi->name, ifi->rdomain, ioctlfd, routefd,
+		    priv_ibuf);
 	}
 	close(routefd);
 	close(ioctlfd);
@@ -2165,8 +2163,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	close(fd);
 
 	if (quit == SIGHUP) {
-		if (got_imsg_hup == 0)
-			log_warnx("%s; restarting.", strsignal(quit));
+		log_warnx("%s; restarting.", strsignal(quit));
 		signal(SIGHUP, SIG_IGN); /* will be restored after exec */
 		execvp(saved_argv[0], saved_argv);
 		fatal("RESTART FAILED: '%s'", saved_argv[0]);
