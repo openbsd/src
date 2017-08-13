@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.208 2017/08/12 22:05:20 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.209 2017/08/13 15:02:45 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6432,6 +6432,8 @@ iwm_stop(struct ifnet *ifp, int disable)
 	int s = splnet();
 
 	sc->sc_generation++;
+	if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST)
+		wakeup(&ic->ic_scan_lock);
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
