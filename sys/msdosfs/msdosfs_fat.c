@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.28 2015/10/23 17:21:34 krw Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.29 2017/08/13 23:36:27 sf Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -122,6 +122,8 @@ fatblock(struct msdosfsmount *pmp, uint32_t ofs, uint32_t *bnp, uint32_t *sizep,
  * bnp	  - address of where to place the file system relative block number.
  *	    If this pointer is null then don't return this quantity.
  * cnp	  - address of where to place the file system relative cluster number.
+ *	    If this pointer is null then don't return this quantity.
+ * sp	  - address of where to place the block size for the file/dir
  *	    If this pointer is null then don't return this quantity.
  *
  * NOTE: Either bnp or cnp must be non-null.
@@ -258,7 +260,7 @@ pcbmap(struct denode *dep, uint32_t findcn, daddr_t *bnp, uint32_t *cnp,
 		return (0);
 	}
 
-hiteof:;
+hiteof:
 	if (cnp)
 		*cnp = i;
 	if (bp)
