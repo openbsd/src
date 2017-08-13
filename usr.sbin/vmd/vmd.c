@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.64 2017/07/15 05:05:36 pd Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.65 2017/08/13 16:45:07 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -114,6 +114,10 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 				break;
 			} else if (vm->vm_shutdown) {
 				res = EALREADY;
+				cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
+				break;
+			} else if (vm->vm_running == 0) {
+				res = EINVAL;
 				cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 				break;
 			}
