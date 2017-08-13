@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.8 2016/12/21 15:49:29 jsing Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.9 2017/08/13 19:47:49 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -151,5 +151,7 @@ struct x509_crl_method_st {
 
 int UTF8_getc(const unsigned char *str, int len, unsigned long *val);
 int UTF8_putc(unsigned char *str, int len, unsigned long value);
+
+int ASN1_time_tm_clamp_notafter(struct tm *tm);
 
 __END_HIDDEN_DECLS

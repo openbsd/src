@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.12 2017/05/06 17:12:59 beck Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.13 2017/08/13 19:47:49 beck Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -56,6 +56,22 @@ ASN1_time_tm_cmp(struct tm *tm1, struct tm *tm2) {
 	if (tm1->tm_sec > tm2->tm_sec)
 		return (1);
 	return 0;
+}
+
+int
+ASN1_time_tm_clamp_notafter(struct tm *tm)
+{
+#ifdef SMALL_TIME_T
+	struct tm broken_os_epoch_tm;
+	time_t broken_os_epoch_time = INT_MAX;
+
+	if (gmtime_r(&broken_os_epoch_time, &broken_os_epoch_tm) == NULL)
+		return 0;
+
+	if (ASN1_time_tm_cmp(tm, &broken_os_epoch_tm) == 1)
+		memcpy(tm, &broken_os_epoch_tm, sizeof(*tm));
+#endif
+	return 1;
 }
 
 /* Format a time as an RFC 5280 format Generalized time */

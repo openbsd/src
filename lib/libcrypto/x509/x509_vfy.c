@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.64 2017/04/28 23:03:58 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.65 2017/08/13 19:47:49 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,8 +73,9 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include "x509_lcl.h"
+#include "asn1_locl.h"
 #include "vpm_int.h"
+#include "x509_lcl.h"
 
 /* CRL score values */
 
@@ -137,6 +138,8 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
 static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
 static int check_crl_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *cert_path,
     STACK_OF(X509) *crl_path);
+static int X509_cmp_time_internal(const ASN1_TIME *ctm, time_t *cmp_time,
+    int clamp_notafter);
 
 static int internal_verify(X509_STORE_CTX *ctx);
 
@@ -1745,7 +1748,7 @@ x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 		X509_V_ERR_CERT_NOT_YET_VALID))
 		return 0;
 
-	i = X509_cmp_time(X509_get_notAfter(x), ptime);
+	i = X509_cmp_time_internal(X509_get_notAfter(x), ptime, 1);
 	if (i <= 0 && depth < 0)
 		return 0;
 	if (i == 0 && !verify_cb_cert(ctx, x, depth,
@@ -1852,8 +1855,8 @@ X509_cmp_current_time(const ASN1_TIME *ctm)
  * 1 if the ASN1_time is later than *cmp_time.
  * 0 on error.
  */
-int
-X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
+static int
+X509_cmp_time_internal(const ASN1_TIME *ctm, time_t *cmp_time, int clamp_notafter)
 {
 	time_t time1, time2;
 	struct tm tm1, tm2;
@@ -1877,6 +1880,12 @@ X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
 	if (tm1.tm_year >= 150 && type != V_ASN1_GENERALIZEDTIME)
 		goto out;
 
+	if (clamp_notafter) {
+		/* Allow for completely broken operating systems. */
+		if (!ASN1_time_tm_clamp_notafter(&tm1))
+			goto out;
+	}
+
 	/*
 	 * Defensively fail if the time string is not representable as
 	 * a time_t. A time_t must be sane if you care about times after
@@ -1894,6 +1903,13 @@ X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
  out:
 	return (ret);
 }
+
+int
+X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
+{
+	return X509_cmp_time_internal(ctm, cmp_time, 0);
+}
+
 
 ASN1_TIME *
 X509_gmtime_adj(ASN1_TIME *s, long adj)
