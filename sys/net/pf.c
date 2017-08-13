@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1039 2017/08/11 21:24:19 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.1040 2017/08/13 16:57:20 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -207,10 +207,8 @@ static __inline int	 pf_state_key_addr_setup(struct pf_pdesc *, void *,
 int			 pf_state_key_setup(struct pf_pdesc *, struct
 			    pf_state_key **, struct pf_state_key **, int);
 int			 pf_tcp_track_full(struct pf_pdesc *,
-			    struct pf_state_peer *, struct pf_state_peer *,
-			    struct pf_state **, u_short *, int *);
+			    struct pf_state **, u_short *, int *, int);
 int			 pf_tcp_track_sloppy(struct pf_pdesc *,
-			    struct pf_state_peer *, struct pf_state_peer *,
 			    struct pf_state **, u_short *);
 static __inline int	 pf_synproxy(struct pf_pdesc *, struct pf_state **,
 			    u_short *);
@@ -311,6 +309,7 @@ static __inline int pf_state_compare_id(struct pf_state *,
 	struct pf_state *);
 static __inline void pf_cksum_uncover(u_int16_t *, u_int16_t, u_int8_t);
 static __inline void pf_cksum_cover(u_int16_t *, u_int16_t, u_int8_t);
+static __inline void pf_set_protostate(struct pf_state *, int, u_int8_t);
 
 struct pf_src_tree tree_src_tracking;
 
@@ -375,6 +374,17 @@ pf_src_compare(struct pf_src_node *a, struct pf_src_node *b)
 	if ((diff = pf_addr_compare(&a->addr, &b->addr, a->af)) != 0)
 		return (diff);
 	return (0);
+}
+
+static __inline void
+pf_set_protostate(struct pf_state *s, int which, u_int8_t newstate)
+{
+	if (which == PF_PEER_DST || which == PF_PEER_BOTH)
+		s->dst.state = newstate;
+	if (which == PF_PEER_DST)
+		return;
+
+	s->src.state = newstate;
 }
 
 void
@@ -508,8 +518,8 @@ pf_src_connlimit(struct pf_state **state)
 				    PF_FLUSH_GLOBAL ||
 				    (*state)->rule.ptr == st->rule.ptr)) {
 					st->timeout = PFTM_PURGE;
-					st->src.state = st->dst.state =
-					    TCPS_CLOSED;
+					pf_set_protostate(st, PF_PEER_BOTH,
+					    TCPS_CLOSED);
 					killed++;
 				}
 			}
@@ -522,7 +532,7 @@ pf_src_connlimit(struct pf_state **state)
 
 	/* kill this state */
 	(*state)->timeout = PFTM_PURGE;
-	(*state)->src.state = (*state)->dst.state = TCPS_CLOSED;
+	pf_set_protostate(*state, PF_PEER_BOTH, TCPS_CLOSED);
 	return (1);
 }
 
@@ -713,8 +723,8 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 					addlog("\n");
 				}
 				if (reuse) {
-					si->s->src.state = si->s->dst.state =
-					    TCPS_CLOSED;
+					pf_set_protostate(si->s, PF_PEER_BOTH,
+					    TCPS_CLOSED);
 					/* remove late or sks can go away */
 					olds = si->s;
 				} else {
@@ -3962,13 +3972,13 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 			s->src.seqhi++;
 		s->dst.seqhi = 1;
 		s->dst.max_win = 1;
-		s->src.state = TCPS_SYN_SENT;
-		s->dst.state = TCPS_CLOSED;
+		pf_set_protostate(s, PF_PEER_SRC, TCPS_SYN_SENT);
+		pf_set_protostate(s, PF_PEER_DST, TCPS_CLOSED);
 		s->timeout = PFTM_TCP_FIRST_PACKET;
 		break;
 	case IPPROTO_UDP:
-		s->src.state = PFUDPS_SINGLE;
-		s->dst.state = PFUDPS_NO_TRAFFIC;
+		pf_set_protostate(s, PF_PEER_SRC, PFUDPS_SINGLE);
+		pf_set_protostate(s, PF_PEER_DST, PFUDPS_NO_TRAFFIC);
 		s->timeout = PFTM_UDP_FIRST_PACKET;
 		break;
 	case IPPROTO_ICMP:
@@ -3978,8 +3988,8 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 		s->timeout = PFTM_ICMP_FIRST_PACKET;
 		break;
 	default:
-		s->src.state = PFOTHERS_SINGLE;
-		s->dst.state = PFOTHERS_NO_TRAFFIC;
+		pf_set_protostate(s, PF_PEER_SRC, PFOTHERS_SINGLE);
+		pf_set_protostate(s, PF_PEER_DST, PFOTHERS_NO_TRAFFIC);
 		s->timeout = PFTM_OTHER_FIRST_PACKET;
 	}
 
@@ -4051,7 +4061,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 		int rtid = pd->rdomain;
 		if (act->rtableid >= 0)
 			rtid = act->rtableid;
-		s->src.state = PF_TCPS_PROXY_SRC;
+		pf_set_protostate(s, PF_PEER_SRC, PF_TCPS_PROXY_SRC);
 		s->src.seqhi = arc4random();
 		/* Find mss option */
 		mss = pf_get_mss(pd);
@@ -4154,15 +4164,28 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 }
 
 int
-pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
-    struct pf_state_peer *dst, struct pf_state **state, u_short *reason,
-    int *copyback)
+pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state **state, u_short *reason,
+    int *copyback, int reverse)
 {
 	struct tcphdr		*th = &pd->hdr.tcp;
+	struct pf_state_peer	*src, *dst;
 	u_int16_t		 win = ntohs(th->th_win);
 	u_int32_t		 ack, end, data_end, seq, orig_seq;
-	u_int8_t		 sws, dws;
+	u_int8_t		 sws, dws, psrc, pdst;
 	int			 ackskew;
+
+	if ((pd->dir == (*state)->direction && !reverse) ||
+	    (pd->dir != (*state)->direction && reverse)) {
+		src = &(*state)->src;
+		dst = &(*state)->dst;
+		psrc = PF_PEER_SRC;
+		pdst = PF_PEER_DST;
+	} else {
+		src = &(*state)->dst;
+		dst = &(*state)->src;
+		psrc = PF_PEER_DST;
+		pdst = PF_PEER_SRC;
+	}
 
 	if (src->wscale && dst->wscale && !(th->th_flags & TH_SYN)) {
 		sws = src->wscale & PF_WSCALE_MASK;
@@ -4229,7 +4252,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 
 		src->seqlo = seq;
 		if (src->state < TCPS_SYN_SENT)
-			src->state = TCPS_SYN_SENT;
+			pf_set_protostate(*state, psrc, TCPS_SYN_SENT);
 
 		/*
 		 * May need to slide the window (seqhi may have been set by
@@ -4331,13 +4354,14 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 		/* update states */
 		if (th->th_flags & TH_SYN)
 			if (src->state < TCPS_SYN_SENT)
-				src->state = TCPS_SYN_SENT;
+				pf_set_protostate(*state, psrc, TCPS_SYN_SENT);
 		if (th->th_flags & TH_FIN)
 			if (src->state < TCPS_CLOSING)
-				src->state = TCPS_CLOSING;
+				pf_set_protostate(*state, psrc, TCPS_CLOSING);
 		if (th->th_flags & TH_ACK) {
 			if (dst->state == TCPS_SYN_SENT) {
-				dst->state = TCPS_ESTABLISHED;
+				pf_set_protostate(*state, pdst,
+				    TCPS_ESTABLISHED);
 				if (src->state == TCPS_ESTABLISHED &&
 				    !SLIST_EMPTY(&(*state)->src_nodes) &&
 				    pf_src_connlimit(state)) {
@@ -4345,10 +4369,11 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 					return (PF_DROP);
 				}
 			} else if (dst->state == TCPS_CLOSING)
-				dst->state = TCPS_FIN_WAIT_2;
+				pf_set_protostate(*state, pdst,
+				    TCPS_FIN_WAIT_2);
 		}
 		if (th->th_flags & TH_RST)
-			src->state = dst->state = TCPS_TIME_WAIT;
+			pf_set_protostate(*state, PF_PEER_BOTH, TCPS_TIME_WAIT);
 
 		/* update expire time */
 		(*state)->expire = time_uptime;
@@ -4431,9 +4456,9 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 		 */
 		if (th->th_flags & TH_FIN)
 			if (src->state < TCPS_CLOSING)
-				src->state = TCPS_CLOSING;
+				pf_set_protostate(*state, psrc, TCPS_CLOSING);
 		if (th->th_flags & TH_RST)
-			src->state = dst->state = TCPS_TIME_WAIT;
+			pf_set_protostate(*state, PF_PEER_BOTH, TCPS_TIME_WAIT);
 
 		/* Fall through to PASS packet */
 	} else {
@@ -4478,20 +4503,34 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 }
 
 int
-pf_tcp_track_sloppy(struct pf_pdesc *pd, struct pf_state_peer *src,
-    struct pf_state_peer *dst, struct pf_state **state, u_short *reason)
+pf_tcp_track_sloppy(struct pf_pdesc *pd, struct pf_state **state,
+    u_short *reason)
 {
 	struct tcphdr		*th = &pd->hdr.tcp;
+	struct pf_state_peer	*src, *dst;
+	u_int8_t		 psrc, pdst;
+
+	if (pd->dir == (*state)->direction) {
+		src = &(*state)->src;
+		dst = &(*state)->dst;
+		psrc = PF_PEER_SRC;
+		pdst = PF_PEER_DST;
+	} else {
+		src = &(*state)->dst;
+		dst = &(*state)->src;
+		psrc = PF_PEER_DST;
+		pdst = PF_PEER_SRC;
+	}
 
 	if (th->th_flags & TH_SYN)
 		if (src->state < TCPS_SYN_SENT)
-			src->state = TCPS_SYN_SENT;
+			pf_set_protostate(*state, psrc, TCPS_SYN_SENT);
 	if (th->th_flags & TH_FIN)
 		if (src->state < TCPS_CLOSING)
-			src->state = TCPS_CLOSING;
+			pf_set_protostate(*state, psrc, TCPS_CLOSING);
 	if (th->th_flags & TH_ACK) {
 		if (dst->state == TCPS_SYN_SENT) {
-			dst->state = TCPS_ESTABLISHED;
+			pf_set_protostate(*state, pdst, TCPS_ESTABLISHED);
 			if (src->state == TCPS_ESTABLISHED &&
 			    !SLIST_EMPTY(&(*state)->src_nodes) &&
 			    pf_src_connlimit(state)) {
@@ -4499,7 +4538,7 @@ pf_tcp_track_sloppy(struct pf_pdesc *pd, struct pf_state_peer *src,
 				return (PF_DROP);
 			}
 		} else if (dst->state == TCPS_CLOSING) {
-			dst->state = TCPS_FIN_WAIT_2;
+			pf_set_protostate(*state, pdst, TCPS_FIN_WAIT_2);
 		} else if (src->state == TCPS_SYN_SENT &&
 		    dst->state < TCPS_SYN_SENT) {
 			/*
@@ -4508,7 +4547,8 @@ pf_tcp_track_sloppy(struct pf_pdesc *pd, struct pf_state_peer *src,
 			 * the initial SYN without ever seeing a packet from
 			 * the destination, set the connection to established.
 			 */
-			dst->state = src->state = TCPS_ESTABLISHED;
+			pf_set_protostate(*state, PF_PEER_BOTH,
+			    TCPS_ESTABLISHED);
 			if (!SLIST_EMPTY(&(*state)->src_nodes) &&
 			    pf_src_connlimit(state)) {
 				REASON_SET(reason, PFRES_SRCLIMIT);
@@ -4522,11 +4562,11 @@ pf_tcp_track_sloppy(struct pf_pdesc *pd, struct pf_state_peer *src,
 			 * don't see the full bidirectional FIN/ACK+ACK
 			 * handshake.
 			 */
-			dst->state = TCPS_CLOSING;
+			pf_set_protostate(*state, pdst, TCPS_CLOSING);
 		}
 	}
 	if (th->th_flags & TH_RST)
-		src->state = dst->state = TCPS_TIME_WAIT;
+		pf_set_protostate(*state, PF_PEER_BOTH, TCPS_TIME_WAIT);
 
 	/* update expire time */
 	(*state)->expire = time_uptime;
@@ -4582,7 +4622,8 @@ pf_synproxy(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 			REASON_SET(reason, PFRES_SRCLIMIT);
 			return (PF_DROP);
 		} else
-			(*state)->src.state = PF_TCPS_PROXY_DST;
+			pf_set_protostate(*state, PF_PEER_SRC,
+			    PF_TCPS_PROXY_DST);
 	}
 	if ((*state)->src.state == PF_TCPS_PROXY_DST) {
 		struct tcphdr	*th = &pd->hdr.tcp;
@@ -4633,8 +4674,8 @@ pf_synproxy(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 			(*state)->dst.seqhi = (*state)->dst.seqlo +
 			    (*state)->src.max_win;
 			(*state)->src.wscale = (*state)->dst.wscale = 0;
-			(*state)->src.state = (*state)->dst.state =
-			    TCPS_ESTABLISHED;
+			pf_set_protostate(*state, PF_PEER_BOTH,
+			    TCPS_ESTABLISHED);
 			REASON_SET(reason, PFRES_SYNPROXY);
 			return (PF_SYNPROXY_DROP);
 		}
@@ -4650,6 +4691,7 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 	struct pf_state_peer	*src, *dst;
 	int			 action = PF_PASS;
 	struct inpcb		*inp;
+	u_int8_t		 psrc, pdst;
 
 	key.af = pd->af;
 	key.proto = pd->virtual_proto;
@@ -4665,9 +4707,13 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 	if (pd->dir == (*state)->direction) {
 		src = &(*state)->src;
 		dst = &(*state)->dst;
+		psrc = PF_PEER_SRC;
+		pdst = PF_PEER_DST;
 	} else {
 		src = &(*state)->dst;
 		dst = &(*state)->src;
+		psrc = PF_PEER_DST;
+		pdst = PF_PEER_SRC;
 	}
 
 	switch (pd->virtual_proto) {
@@ -4685,8 +4731,8 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 					addlog("\n");
 				}
 				/* XXX make sure it's the same direction ?? */
-				(*state)->src.state = TCPS_CLOSED;
-				(*state)->dst.state = TCPS_CLOSED;
+				pf_set_protostate(*state, PF_PEER_BOTH,
+				    TCPS_CLOSED);
 				pf_remove_state(*state);
 				*state = NULL;
 				pd->m->m_pkthdr.pf.inp = inp;
@@ -4707,28 +4753,20 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 		}
 
 		if ((*state)->state_flags & PFSTATE_SLOPPY) {
-			if (pf_tcp_track_sloppy(pd, src, dst, state, reason) ==
-			    PF_DROP)
+			if (pf_tcp_track_sloppy(pd, state, reason) == PF_DROP)
 				return (PF_DROP);
 		} else {
-			int	ret;
-
-			if (PF_REVERSED_KEY((*state)->key, pd->af))
-				ret = pf_tcp_track_full(pd, dst, src, state,
-				    reason, &copyback);
-			else
-				ret = pf_tcp_track_full(pd, src, dst, state,
-				    reason, &copyback);
-			if (ret == PF_DROP)
+			if (pf_tcp_track_full(pd, state, reason, &copyback,
+			    PF_REVERSED_KEY((*state)->key, pd->af)) == PF_DROP)
 				return (PF_DROP);
 		}
 		break;
 	case IPPROTO_UDP:
 		/* update states */
 		if (src->state < PFUDPS_SINGLE)
-			src->state = PFUDPS_SINGLE;
+			pf_set_protostate(*state, psrc, PFUDPS_SINGLE);
 		if (dst->state == PFUDPS_SINGLE)
-			dst->state = PFUDPS_MULTIPLE;
+			pf_set_protostate(*state, pdst, PFUDPS_MULTIPLE);
 
 		/* update expire time */
 		(*state)->expire = time_uptime;
@@ -4741,9 +4779,9 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 	default:
 		/* update states */
 		if (src->state < PFOTHERS_SINGLE)
-			src->state = PFOTHERS_SINGLE;
+			pf_set_protostate(*state, psrc, PFOTHERS_SINGLE);
 		if (dst->state == PFOTHERS_SINGLE)
-			dst->state = PFOTHERS_MULTIPLE;
+			pf_set_protostate(*state, pdst, PFOTHERS_MULTIPLE);
 
 		/* update expire time */
 		(*state)->expire = time_uptime;

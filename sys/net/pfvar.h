@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.462 2017/08/06 13:16:11 mpi Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.463 2017/08/13 16:57:20 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -76,6 +76,7 @@ enum	{ PF_CHANGE_NONE, PF_CHANGE_ADD_HEAD, PF_CHANGE_ADD_TAIL,
 	  PF_CHANGE_REMOVE, PF_CHANGE_GET_TICKET };
 enum	{ PF_GET_NONE, PF_GET_CLR_CNTR };
 enum	{ PF_SK_WIRE, PF_SK_STACK, PF_SK_BOTH };
+enum	{ PF_PEER_SRC, PF_PEER_DST, PF_PEER_BOTH };
 
 /*
  * Note about PFTM_*: real indices into pf_rule.timeout[] come before
