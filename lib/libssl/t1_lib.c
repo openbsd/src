@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.133 2017/08/13 16:28:45 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.134 2017/08/13 21:10:42 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -270,7 +270,7 @@ tls1_ec_curve_id2nid(const uint16_t curve_id)
 }
 
 uint16_t
-tls1_ec_nid2curve_id(int nid)
+tls1_ec_nid2curve_id(const int nid)
 {
 	/* ECC curves from draft-ietf-tls-ecc-12.txt (Oct. 17, 2005) */
 	switch (nid) {
