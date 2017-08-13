@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.534 2017/08/04 14:38:49 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.535 2017/08/13 11:10:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1198,18 +1198,6 @@ void expand_free(struct expand *);
 int expand_line(struct expand *, const char *, int);
 int expand_to_text(struct expand *, char *, size_t);
 RB_PROTOTYPE(expandtree, expandnode, nodes, expand_cmp);
-
-
-/* filter.c */
-void filter_postfork(void);
-void filter_configure(void);
-void filter_connect(uint64_t, const struct sockaddr *,
-    const struct sockaddr *, const char *, const char *);
-void filter_mailaddr(uint64_t, int, const struct mailaddr *);
-void filter_line(uint64_t, int, const char *);
-void filter_eom(uint64_t, int, size_t);
-void filter_event(uint64_t, int);
-void filter_build_fd_chain(uint64_t, int);
 
 
 /* forward.c */
