@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.33 2017/08/11 20:50:15 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.34 2017/08/14 16:32:37 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 				if (--narg != 0)
 					(*pr)(",");
 			}
-			
+
 			arg0 = &frame->f_arg0;
 		}
 
@@ -299,7 +299,8 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			 * back to just above lastframe so we can find the
 			 * trapframe as with syscalls and traps.
 			 */
-			frame = (struct callframe *)&lastframe->f_retaddr;
+			frame = (struct callframe *)db_get_value(
+			    (db_addr_t)&lastframe->f_retaddr, sizeof(long), 0);
 			arg0 = &frame->f_arg0;
 		}
 
@@ -385,8 +386,9 @@ db_save_stack_trace(struct db_stack_trace *st)
 				if (lastframe == NULL)
 					break;
 
-				frame =
-				    (struct callframe *)&lastframe->f_retaddr;
+				frame = (struct callframe *)db_get_value(
+				    (db_addr_t)&lastframe->f_retaddr,
+				    sizeof(long), 0);
 			}
 			lastframe = frame;
 
