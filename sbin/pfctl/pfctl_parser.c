@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.315 2017/08/11 22:30:38 benno Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.316 2017/08/14 15:53:04 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -586,6 +586,7 @@ print_status(struct pf_status *s, int opts)
 	}
 	printf("%-27s %14s %16s\n", "State Table", "Total", "Rate");
 	printf("  %-25s %14u %14s\n", "current entries", s->states, "");
+	printf("  %-25s %14u %14s\n", "half-open tcp", s->states_halfopen, "");
 	for (i = 0; i < FCNT_MAX; i++) {
 		printf("  %-25s %14llu ", pf_fcounters[i],
 			    (unsigned long long)s->fcounters[i]);
