@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.15 2016/01/22 13:08:44 gilles Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.16 2017/08/14 08:01:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -47,7 +47,6 @@ static int table_static_lookup(void *, struct dict *, const char *,
 static int table_static_fetch(void *, struct dict *, enum table_service,
     union lookup *);
 static void  table_static_close(void *);
-static int table_static_parse(struct table *, const char *, enum table_type);
 
 struct table_backend table_backend_static = {
 	K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_NETADDR|K_USERINFO|
@@ -71,17 +70,7 @@ static struct keycmp {
 
 
 static int
-table_static_config(struct table *table)
-{
-	/* no config ? ok */
-	if (*table->t_config == '\0')
-		return 1;
-
-	return table_static_parse(table, table->t_config, T_LIST|T_HASH);
-}
-
-static int
-table_static_parse(struct table *t, const char *config, enum table_type type)
+table_static_config(struct table *t)
 {
 	FILE	*fp;
 	char	*buf = NULL;
@@ -91,10 +80,14 @@ table_static_parse(struct table *t, const char *config, enum table_type type)
 	char	*valp;
 	size_t	 ret = 0;
 
-        if ((fp = fopen(config, "r")) == NULL) {
-                log_warn("warn: Table \"%s\"", config);
-                return 0;
-        }
+	/* no config ? ok */
+	if (*t->t_config == '\0')
+		return 1;
+
+	if ((fp = fopen(t->t_config, "r")) == NULL) {
+		log_warn("warn: Table \"%s\"", t->t_config);
+		return 0;
+	}
 
 	while ((flen = getline(&buf, &sz, fp)) != -1) {
 		if (buf[flen - 1] == '\n')
@@ -122,9 +115,6 @@ table_static_parse(struct table *t, const char *config, enum table_type type)
 		if (t->t_type == 0)
 			t->t_type = (valp == keyp || valp == NULL) ? T_LIST :
 			    T_HASH;
-
-		if (!(t->t_type & type))
-			goto end;
 
 		if ((valp == keyp || valp == NULL) && t->t_type == T_LIST)
 			table_add(t, keyp, NULL);
