@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.35 2017/08/14 19:38:04 jasper Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.36 2017/08/14 19:46:44 jasper Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -133,7 +133,7 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
 			strlcpy(vmc->vmc_ifswitch[i], "", IF_NAMESIZE);
 			vmc->vmc_ifflags[i] |= VMIFF_LOCAL;
 		} else {
-			/* Add a interface to a switch */
+			/* Add an interface to a switch */
 			strlcpy(vmc->vmc_ifswitch[i], nics[i], IF_NAMESIZE);
 		}
 	}
@@ -177,7 +177,7 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
  *
  * Return:
  *  Always 1 to indicate we have processed the return message (even if it
- *  was an incorrect/failure message) 
+ *  was an incorrect/failure message)
  *
  *  The function also sets 'ret' to the error code as follows:
  *   0     : Message successfully processed
@@ -394,7 +394,7 @@ terminate_vm(uint32_t terminate_id, const char *name)
  *
  * Return:
  *  Always 1 to indicate we have processed the return message (even if it
- *  was an incorrect/failure message) 
+ *  was an incorrect/failure message)
  *
  *  The function also sets 'ret' to the error code as follows:
  *   0     : Message successfully processed
@@ -433,7 +433,7 @@ terminate_vm_complete(struct imsg *imsg, int *ret)
  *
  * Parameters:
  *  id: optional ID of a VM to list
- *  name: optional name of a VM to list 
+ *  name: optional name of a VM to list
  *  console: if true, open the console of the selected VM (by name or ID)
  *
  * Request a list of running VMs from vmd

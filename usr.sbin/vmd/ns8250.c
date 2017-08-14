@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.10 2017/07/15 05:05:36 pd Exp $ */
+/* $OpenBSD: ns8250.c,v 1.11 2017/08/14 19:46:44 jasper Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -86,7 +86,7 @@ ns8250_init(int fd, uint32_t vmid)
 	 * group of characters have been transmitted. Since it takes nearly
 	 * zero time to send the actual characters, the total amount of time
 	 * spent is roughly equal to what it would be on real hardware.
-	 * 
+	 *
 	 * To make things simple, we don't adjust for different sized bytes
 	 * (and parity, stop bits, etc) and simply assume each character
 	 * output is 8 bits.
