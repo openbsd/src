@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1041 2017/08/14 15:48:29 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.1042 2017/08/14 15:58:16 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -219,8 +219,6 @@ int			 pf_icmp_state_lookup(struct pf_pdesc *,
 			    u_int16_t, u_int16_t, int, int *, int, int);
 int			 pf_test_state_icmp(struct pf_pdesc *,
 			    struct pf_state **, u_short *);
-u_int8_t		 pf_get_wscale(struct pf_pdesc *);
-u_int16_t		 pf_get_mss(struct pf_pdesc *);
 u_int16_t		 pf_calc_mss(struct pf_addr *, sa_family_t, int,
 			    u_int16_t);
 static __inline int	 pf_set_rt_ifp(struct pf_state *, struct pf_addr *,
