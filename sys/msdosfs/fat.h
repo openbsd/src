@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.h,v 1.11 2015/10/23 10:45:31 krw Exp $	*/
+/*	$OpenBSD: fat.h,v 1.12 2017/08/14 22:45:12 sf Exp $	*/
 /*	$NetBSD: fat.h,v 1.11 1997/10/17 11:23:49 ws Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@
 #define	CLUST_BAD	0xfffffff7	/* a cluster with a defect */
 #define	CLUST_EOFS	0xfffffff8	/* start of eof cluster range */
 #define	CLUST_EOFE	0xffffffff	/* end of eof cluster range */
+#define	CLUST_END	CLUST_EOFE	/* bigger than any valid cluster */
 
 #define	FAT12_MASK	0x00000fff	/* mask for 12 bit cluster numbers */
 #define	FAT16_MASK	0x0000ffff	/* mask for 16 bit cluster numbers */
@@ -94,7 +95,7 @@
 
 int pcbmap(struct denode *, uint32_t, daddr_t *, uint32_t *, int *);
 int clusterfree(struct msdosfsmount *, uint32_t, uint32_t *);
-int clusteralloc(struct msdosfsmount *, uint32_t, uint32_t, uint32_t, uint32_t *, uint32_t *);
+int clusteralloc(struct msdosfsmount *, uint32_t, uint32_t, uint32_t *, uint32_t *);
 int extendfile(struct denode *, uint32_t, struct buf **, uint32_t *, int);
 int fatentry(int, struct msdosfsmount *, uint32_t, uint32_t *, uint32_t);
 void fc_purge(struct denode *, u_int);
