@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.45 2017/08/12 19:56:08 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.46 2017/08/14 18:29:41 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -276,6 +276,31 @@
 #define SVM_AVIC_NOACCEL			0x402
 #define SVM_VMEXIT_VMGEXIT			0x403
 #define SVM_VMEXIT_INVALID			-1
+
+/*
+ * Exception injection vectors (these correspond to the CPU exception types
+ * defined in the SDM.)
+ */
+#define VMM_EX_DE	0	/* Divide Error #DE */
+#define VMM_EX_DB	1	/* Debug Exception #DB */
+#define VMM_EX_NMI	2	/* NMI */
+#define VMM_EX_BP	3	/* Breakpoint #BP */
+#define VMM_EX_OF	4	/* Overflow #OF */
+#define VMM_EX_BR	5	/* Bound range exceeded #BR */
+#define VMM_EX_UD	6	/* Undefined opcode #UD */
+#define VMM_EX_NM	7	/* Device not available #NM */
+#define VMM_EX_DF	8	/* Double fault #DF */
+#define VMM_EX_CP	9	/* Coprocessor segment overrun (unused) */
+#define VMM_EX_TS	10	/* Invalid TSS #TS */
+#define VMM_EX_NP	11	/* Segment not present #NP */
+#define VMM_EX_SS	12	/* Stack segment fault #SS */
+#define VMM_EX_GP	13	/* General protection #GP */
+#define VMM_EX_PF	14	/* Page fault #PF */
+#define VMM_EX_MF	16	/* x87 FPU floating point error #MF */
+#define VMM_EX_AC	17	/* Alignment check #AC */
+#define VMM_EX_MC	18	/* Machine check #MC */
+#define VMM_EX_XM	19	/* SIMD floating point exception #XM */
+#define VMM_EX_VE	20	/* Virtualization exception #VE */
 
 /*
  * VCPU state values. Note that there is a conversion function in vmm.c
