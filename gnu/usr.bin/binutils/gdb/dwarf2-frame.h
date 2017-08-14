@@ -50,6 +50,7 @@ enum dwarf2_frame_reg_rule
   DWARF2_FRAME_REG_SAVED_REG,
   DWARF2_FRAME_REG_SAVED_EXP,
   DWARF2_FRAME_REG_SAME_VALUE,
+  DWARF2_FRAME_REG_SAVED_VAL_EXP,
 
   /* These aren't defined by the DWARF2 CFI specification, but are
      used internally by GDB.  */

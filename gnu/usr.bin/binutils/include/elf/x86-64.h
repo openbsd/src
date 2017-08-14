@@ -53,4 +53,8 @@ START_RELOC_NUMBERS (elf_x86_64_reloc_type)
      RELOC_NUMBER (R_X86_64_GNU_VTENTRY, 251)         /* GNU C++ hack  */
 END_RELOC_NUMBERS (R_X86_64_max)
 
+/* Processor specific section types.  */
+
+#define SHT_X86_64_UNWIND	0x70000001	/* unwind information */
+
 #endif

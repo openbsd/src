@@ -2750,6 +2750,23 @@ elf64_x86_64_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *inf
   return TRUE;
 }
 
+/* Handle an x86-64 specific section when reading an object file.  This
+   is called when elfcode.h finds a section with an unknown type.  */
+
+static bfd_boolean
+elf64_x86_64_section_from_shdr (bfd *abfd,
+				Elf_Internal_Shdr *hdr,
+				const char *name)
+{
+  if (hdr->sh_type != SHT_X86_64_UNWIND)
+    return FALSE;
+
+  if (! _bfd_elf_make_section_from_shdr (abfd, hdr, name))
+    return FALSE;
+
+  return TRUE;
+}
+
 
 #define TARGET_LITTLE_SYM		    bfd_elf64_x86_64_vec
 #define TARGET_LITTLE_NAME		    "elf64-x86-64"
@@ -2786,5 +2803,8 @@ elf64_x86_64_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *inf
 #define elf_backend_size_dynamic_sections   elf64_x86_64_size_dynamic_sections
 #define elf_backend_object_p		    elf64_x86_64_elf_object_p
 #define bfd_elf64_mkobject		    elf64_x86_64_mkobject
+
+#define elf_backend_section_from_shdr \
+	elf64_x86_64_section_from_shdr
 
 #include "elf64-target.h"

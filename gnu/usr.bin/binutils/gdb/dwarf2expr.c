@@ -505,6 +505,20 @@ execute_stack_op (struct dwarf_expr_context *ctx, unsigned char *op_ptr,
 	    goto no_push;
 	  }
 
+	case DW_OP_swap:
+	  {
+	    CORE_ADDR t1, t2;
+
+	    if (ctx->stack_len < 2)
+	       error ("Not enough elements for DW_OP_swap. Need 2, have %d\n",
+		      ctx->stack_len);
+	    t1 = ctx->stack[ctx->stack_len - 1];
+	    t2 = ctx->stack[ctx->stack_len - 2];
+	    ctx->stack[ctx->stack_len - 1] = t2;
+	    ctx->stack[ctx->stack_len - 2] = t1;
+	    goto no_push;
+	  }
+
 	case DW_OP_deref:
 	case DW_OP_deref_size:
 	case DW_OP_abs:

@@ -445,6 +445,16 @@ bad CFI data; mismatched DW_CFA_restore_state at 0x%s", paddr (fs->pc));
 	      /* cfa_how deliberately not set.  */
 	      break;
 
+	    case DW_CFA_val_expression:
+	      insn_ptr = read_uleb128 (insn_ptr, insn_end, &reg);
+	      dwarf2_frame_state_alloc_regs (&fs->regs, reg + 1);
+	      insn_ptr = read_uleb128 (insn_ptr, insn_end, &utmp);
+	      fs->regs.reg[reg].loc.exp = insn_ptr;
+	      fs->regs.reg[reg].exp_len = utmp;
+	      fs->regs.reg[reg].how = DWARF2_FRAME_REG_SAVED_VAL_EXP;
+	      insn_ptr += utmp;
+	      break;
+
 	    case DW_CFA_GNU_args_size:
 	      /* Ignored.  */
 	      insn_ptr = read_uleb128 (insn_ptr, insn_end, &utmp);
@@ -738,6 +748,7 @@ dwarf2_frame_prev_register (struct frame_info *next_frame, void **this_cache,
   struct gdbarch *gdbarch = get_frame_arch (next_frame);
   struct dwarf2_frame_cache *cache =
     dwarf2_frame_cache (next_frame, this_cache);
+  CORE_ADDR value;
 
   switch (cache->reg[regnum].how)
     {
@@ -786,6 +797,21 @@ dwarf2_frame_prev_register (struct frame_info *next_frame, void **this_cache,
 	{
 	  /* Read the value in from memory.  */
 	  read_memory (*addrp, valuep, register_size (gdbarch, regnum));
+	}
+      break;
+
+    case DWARF2_FRAME_REG_SAVED_VAL_EXP:
+      *optimizedp = 0;
+      *lvalp = not_lval;
+      *addrp = 0;
+      value = execute_stack_op (cache->reg[regnum].loc.exp,
+				cache->reg[regnum].exp_len,
+				next_frame, cache->cfa);
+      *realnump = -1;
+      if (valuep)
+	{
+	  /* Store the value.  */
+	  store_typed_address (valuep, builtin_type_void_data_ptr, value);
 	}
       break;
 
