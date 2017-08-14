@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcpy.c,v 1.2 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: memcpy.c,v 1.3 2017/08/14 17:10:02 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -44,6 +44,8 @@ typedef	long word;		/* "word" used for optimal copy speed */
 #define	wsize	sizeof(word)
 #define	wmask	(wsize - 1)
 
+static const char backwards_msg[] = ": backwards memcpy";
+
 /*
  * Copy a block of memory, not handling overlap.
  */
@@ -59,9 +61,16 @@ memcpy(void *dst0, const void *src0, size_t length)
 
 	if ((dst < src && dst + length > src) ||
 	    (src < dst && src + length > dst)) {
-		struct syslog_data sdata = SYSLOG_DATA_INIT;
+		char buf[1024];
 
-		syslog_r(LOG_CRIT, &sdata, "backwards memcpy");
+		/* <10> is LOG_CRIT */
+		strlcpy(buf, "<10>", sizeof buf);
+
+		/* Make sure progname does not fill the whole buffer */
+		strlcat(buf, __progname, sizeof(buf) - sizeof backwards_msg);
+		strlcat(buf, backwards_msg, sizeof buf);
+
+		sendsyslog(buf, strlen(buf), LOG_CONS);
 		abort();
 	}
 
