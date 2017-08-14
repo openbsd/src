@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.163 2017/08/14 06:24:53 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.164 2017/08/14 18:50:58 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -166,6 +166,7 @@ int svm_handle_inout(struct vcpu *);
 int vmx_handle_inout(struct vcpu *);
 int svm_handle_hlt(struct vcpu *);
 int vmx_handle_hlt(struct vcpu *);
+int vmm_inject_ud(struct vcpu *);
 void vmx_handle_intr(struct vcpu *);
 void vmx_handle_intwin(struct vcpu *);
 void vmx_handle_misc_enable_msr(struct vcpu *);
@@ -1748,6 +1749,8 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * SKINIT instruction (SVM_INTERCEPT_SKINIT)
 	 * ICEBP instruction (SVM_INTERCEPT_ICEBP)
 	 * MWAIT instruction (SVM_INTERCEPT_MWAIT_UNCOND)
+	 * MWAIT instruction (SVM_INTERCEPT_MWAIT_COND)
+	 * MONITOR instruction (SVM_INTERCEPT_MONITOR)
 	 * XSETBV instruction (SVM_INTERCEPT_XSETBV) (if available)
 	 */
 	vmcb->v_intercept1 = SVM_INTERCEPT_INTR | SVM_INTERCEPT_NMI |
@@ -1757,7 +1760,8 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vmcb->v_intercept2 = SVM_INTERCEPT_VMRUN | SVM_INTERCEPT_VMMCALL |
 	    SVM_INTERCEPT_VMLOAD | SVM_INTERCEPT_VMSAVE | SVM_INTERCEPT_STGI |
 	    SVM_INTERCEPT_CLGI | SVM_INTERCEPT_SKINIT | SVM_INTERCEPT_ICEBP |
-	    SVM_INTERCEPT_MWAIT_UNCOND;
+	    SVM_INTERCEPT_MWAIT_UNCOND | SVM_INTERCEPT_MONITOR |
+	    SVM_INTERCEPT_MWAIT_COND;
 
 	if (xsave_mask)
 		vmcb->v_intercept2 |= SVM_INTERCEPT_XSETBV;
@@ -2154,6 +2158,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * IA32_VMX_CR8_LOAD_EXITING - guest TPR access
 	 * IA32_VMX_CR8_STORE_EXITING - guest TPR access
 	 * IA32_VMX_USE_TPR_SHADOW - guest TPR access (shadow)
+	 * IA32_VMX_MONITOR_EXITING - exit on MONITOR instruction
 	 *
 	 * If we have EPT, we must be able to clear the following
 	 * IA32_VMX_CR3_LOAD_EXITING - don't care about guest CR3 accesses
@@ -2165,6 +2170,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	    IA32_VMX_USE_MSR_BITMAPS |
 	    IA32_VMX_CR8_LOAD_EXITING |
 	    IA32_VMX_CR8_STORE_EXITING |
+	    IA32_VMX_MONITOR_EXITING |
 	    IA32_VMX_USE_TPR_SHADOW;
 	want0 = 0;
 
@@ -2450,6 +2456,18 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	msr_store[VCPU_REGS_SFMASK].vms_index = MSR_SFMASK;
 	msr_store[VCPU_REGS_KGSBASE].vms_index = MSR_KERNELGSBASE;
 	msr_store[VCPU_REGS_MISC_ENABLE].vms_index = MSR_MISC_ENABLE;
+
+	/*
+	 * Initialize MSR_MISC_ENABLE as it can't be read and populated from vmd
+	 * and some of the content is based on the host.
+	 */
+	msr_store[VCPU_REGS_MISC_ENABLE].vms_data = rdmsr(MSR_MISC_ENABLE);
+	msr_store[VCPU_REGS_MISC_ENABLE].vms_data &= 
+	    ~(MISC_ENABLE_TCC | MISC_ENABLE_PERF_MON_AVAILABLE |
+	      MISC_ENABLE_EIST_ENABLED | MISC_ENABLE_ENABLE_MONITOR_FSM |
+	      MISC_ENABLE_xTPR_MESSAGE_DISABLE);
+	msr_store[VCPU_REGS_MISC_ENABLE].vms_data |= 
+	      MISC_ENABLE_BTS_UNAVAILABLE | MISC_ENABLE_PEBS_UNAVAILABLE;
 
 	/*
 	 * Currently we have the same count of entry/exit MSRs loads/stores
@@ -3775,7 +3793,19 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		if (vcpu->vc_event != 0) {
 			eii = (vcpu->vc_event & 0xFF);
 			eii |= (1ULL << 31);	/* Valid */
-			eii |= (1ULL << 11);	/* Send error code */
+
+			/* Set the "Send error code" flag for certain vectors */
+			switch (vcpu->vc_event & 0xFF) {
+				case VMM_EX_DF:
+				case VMM_EX_TS:
+				case VMM_EX_NP:
+				case VMM_EX_SS:
+				case VMM_EX_GP:
+				case VMM_EX_PF:
+				case VMM_EX_AC:
+					eii |= (1ULL << 11);
+			}
+
 			eii |= (3ULL << 8);	/* Hardware Exception */
 			if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
 				printf("%s: can't vector event to guest\n",
@@ -4229,6 +4259,12 @@ svm_handle_exit(struct vcpu *vcpu)
 		ret = svm_handle_hlt(vcpu);
 		update_rip = 1;
 		break;
+	case SVM_VMEXIT_MWAIT:
+	case SVM_VMEXIT_MWAIT_CONDITIONAL:
+	case SVM_VMEXIT_MONITOR:
+		ret = vmm_inject_ud(vcpu);
+		update_rip = 0;
+		break;
 	default:
 		DPRINTF("%s: unhandled exit 0x%llx (pa=0x%llx)\n", __func__,
 		    exit_reason, (uint64_t)vcpu->vc_control_pa);
@@ -4308,6 +4344,11 @@ vmx_handle_exit(struct vcpu *vcpu)
 		ret = vmx_handle_xsetbv(vcpu);
 		update_rip = 1;
 		break;
+	case VMX_EXIT_MWAIT:
+	case VMX_EXIT_MONITOR:
+		ret = vmm_inject_ud(vcpu);
+		update_rip = 0;
+		break;
 	case VMX_EXIT_TRIPLE_FAULT:
 #ifdef VMM_DEBUG
 		DPRINTF("%s: vm %d vcpu %d triple fault\n", __func__,
@@ -4351,6 +4392,27 @@ vmx_handle_exit(struct vcpu *vcpu)
 	}
 
 	return (ret);
+}
+
+/*
+ * vmm_inject_ud
+ *
+ * Injects an #UD exception into the guest VCPU.
+ *
+ * Parameters:
+ *  vcpu: vcpu to inject into
+ *
+ * Return values:
+ *  Always 0
+ */
+int
+vmm_inject_ud(struct vcpu *vcpu)
+{
+	DPRINTF("%s: injecting #UD at guest %rip 0x%llx\n", __func__,
+	    vcpu->vc_gueststate.vg_rip);
+	vcpu->vc_event = VMM_EX_UD;
+	
+	return (0);
 }
 
 /*
@@ -5650,8 +5712,18 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		/* Inject event if present */
 		if (vcpu->vc_event != 0) {
+			/* Set the "Send error code" flag for certain vectors */
+			switch (vcpu->vc_event & 0xFF) {
+				case VMM_EX_DF:
+				case VMM_EX_TS:
+				case VMM_EX_NP:
+				case VMM_EX_SS:
+				case VMM_EX_GP:
+				case VMM_EX_PF:
+				case VMM_EX_AC:
+					vmcb->v_eventinj |= (1ULL << 1);
+			}
 			vmcb->v_eventinj = (vcpu->vc_event) | (1 << 31);
-			vmcb->v_eventinj |= (1ULL << 1); /* Send error code */
 			vmcb->v_eventinj |= (3ULL << 8); /* Hardware Exception */
 			vcpu->vc_event = 0;
 		}
