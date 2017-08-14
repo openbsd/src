@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.9 2017/08/09 05:53:11 jsg Exp $ */
+/* $OpenBSD: trap.c,v 1.10 2017/08/14 21:53:34 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -291,6 +291,11 @@ do_el0_sync(struct trapframe *frame)
 	refreshcreds(p);
 
 	switch(exception) {
+	case EXCP_UNKNOWN:
+		vfp_save();
+		sv.sival_ptr = (void *)frame->tf_elr;
+		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+		break;
 	case EXCP_FP_SIMD:
 	case EXCP_TRAP_FP:
 		vfp_fault(frame->tf_elr, 0, frame, exception);
