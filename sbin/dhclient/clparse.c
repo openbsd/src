@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.124 2017/07/14 16:21:03 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.125 2017/08/14 22:12:59 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -505,7 +505,7 @@ parse_client_lease_statement(FILE *cfile, char *name)
 		return NULL;
 	}
 
-	lease = calloc(1, sizeof(struct client_lease));
+	lease = calloc(1, sizeof(*lease));
 	if (lease == NULL)
 		fatalx("no memory for lease.");
 
@@ -777,7 +777,7 @@ parse_reject_statement(FILE *cfile)
 		if (parse_ip_addr(cfile, &addr) == 0)
 			return;
 
-		elem = malloc(sizeof(struct reject_elem));
+		elem = malloc(sizeof(*elem));
 		if (elem == NULL)
 			fatalx("no memory for reject address!");
 

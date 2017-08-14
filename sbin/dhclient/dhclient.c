@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.493 2017/08/13 17:57:32 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.494 2017/08/14 22:12:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -509,7 +509,7 @@ main(int argc, char *argv[])
 
 	log_init(log_perror, LOG_DAEMON);
 
-	ifi = calloc(1, sizeof(struct interface_info));
+	ifi = calloc(1, sizeof(*ifi));
 	if (ifi == NULL)
 		fatalx("ifi calloc");
 	if ((ioctlfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
@@ -547,11 +547,11 @@ main(int argc, char *argv[])
 	fork_privchld(ifi, socket_fd[0], socket_fd[1]);
 
 	close(socket_fd[0]);
-	if ((unpriv_ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
+	if ((unpriv_ibuf = malloc(sizeof(*unpriv_ibuf))) == NULL)
 		fatalx("no memory for unpriv_ibuf");
 	imsg_init(unpriv_ibuf, socket_fd[1]);
 
-	config = calloc(1, sizeof(struct client_config));
+	config = calloc(1, sizeof(*config));
 	if (config == NULL)
 		fatalx("config calloc");
 
@@ -1152,7 +1152,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	char			*pretty, *buf, *name;
 	int			 i;
 
-	lease = calloc(1, sizeof(struct client_lease));
+	lease = calloc(1, sizeof(*lease));
 	if (lease == NULL) {
 		log_warnx("lease declined: no memory for lease.");
 		return NULL;
@@ -1586,7 +1586,7 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 		ifi->requested_address = lease->address;
 		i = DHO_DHCP_REQUESTED_ADDRESS;
 		options[i].data = (char *)&lease->address.s_addr;
-		options[i].len = sizeof(in_addr_t);
+		options[i].len = sizeof(lease->address.s_addr);
 	}
 
 	/* Send any options requested in the config file. */
@@ -1661,7 +1661,7 @@ make_decline(struct interface_info *ifi, struct client_lease *lease)
 	/* Send back the address we're declining. */
 	i = DHO_DHCP_REQUESTED_ADDRESS;
 	options[i].data = (char *)&lease->address.s_addr;
-	options[i].len = sizeof(in_addr_t);
+	options[i].len = sizeof(lease->address.s_addr);
 
 	/* Send the uid if the user supplied one. */
 	i = DHO_DHCP_CLIENT_IDENTIFIER;
@@ -1841,11 +1841,11 @@ lease_as_proposal(struct client_lease *lease)
 			log_warnx("MS_CLASSLESS_STATIC_ROUTES too long");
 	} else {
 		opt = &lease->options[DHO_ROUTERS];
-		if (opt->len >= sizeof(struct in_addr)) {
-			proposal->rtstatic_len = 1 + sizeof(struct in_addr);
+		if (opt->len >= sizeof(in_addr_t)) {
+			proposal->rtstatic_len = 1 + sizeof(in_addr_t);
 			proposal->rtstatic[0] = 0;
 			memcpy(&proposal->rtstatic[1], opt->data,
-			    sizeof(struct in_addr));
+			    sizeof(in_addr_t));
 			proposal->addrs |= RTA_STATIC;
 		}
 	}
@@ -1872,12 +1872,12 @@ lease_as_proposal(struct client_lease *lease)
 	if (lease->options[DHO_DOMAIN_NAME_SERVERS].len != 0) {
 		int servers;
 		opt = &lease->options[DHO_DOMAIN_NAME_SERVERS];
-		servers = opt->len / sizeof(struct in_addr);
+		servers = opt->len / sizeof(in_addr_t);
 		if (servers > MAXNS)
 			servers = MAXNS;
 		if (servers > 0) {
 			proposal->addrs |= RTA_DNS;
-			proposal->rtdns_len = servers * sizeof(struct in_addr);
+			proposal->rtdns_len = servers * sizeof(in_addr_t);
 			memcpy(proposal->rtdns, opt->data, proposal->rtdns_len);
 		}
 	}
@@ -2113,7 +2113,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 
 	close(fd2);
 
-	if ((priv_ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
+	if ((priv_ibuf = malloc(sizeof(*priv_ibuf))) == NULL)
 		fatalx("no memory for priv_ibuf");
 
 	imsg_init(priv_ibuf, fd);
@@ -2197,9 +2197,8 @@ get_ifname(struct interface_info *ifi, int ioctlfd, char *arg)
 			fatal("ioctl SIOCGIFGMEMB");
 
 		arg = NULL;
-		for (ifg = ifgr.ifgr_groups;
-		    ifg && len >= sizeof(struct ifg_req); ifg++) {
-			len -= sizeof(struct ifg_req);
+		for (ifg = ifgr.ifgr_groups; ifg && len >= sizeof(*ifg); ifg++) {
+			len -= sizeof(*ifg);
 			if (arg != NULL)
 				fatalx("too many interfaces in group egress");
 			arg = ifg->ifgrq_member;
@@ -2348,7 +2347,7 @@ clone_lease(struct client_lease *oldlease)
 	struct client_lease	*newlease;
 	int			 i;
 
-	newlease = calloc(1, sizeof(struct client_lease));
+	newlease = calloc(1, sizeof(*newlease));
 	if (newlease == NULL)
 		goto cleanup;
 

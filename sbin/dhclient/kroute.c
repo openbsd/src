@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.137 2017/08/12 16:57:38 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.138 2017/08/14 22:12:59 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -179,7 +179,7 @@ set_routes(struct in_addr addr, struct in_addr addrmask, uint8_t *rtstatic,
 		bits = rtstatic[i++];
 		bytes = (bits + 7) / 8;
 
-		if (bytes > sizeof(struct in_addr))
+		if (bytes > sizeof(netmask.s_addr))
 			return;
 		else if (i + bytes > rtstatic_len)
 			return;
@@ -195,8 +195,8 @@ set_routes(struct in_addr addr, struct in_addr addrmask, uint8_t *rtstatic,
 
 		if (i + sizeof(gateway) > rtstatic_len)
 			return;
-		memcpy(&gateway, &rtstatic[i], sizeof(gateway));
-		i += sizeof(gateway);
+		memcpy(&gateway.s_addr, &rtstatic[i], sizeof(gateway.s_addr));
+		i += sizeof(gateway.s_addr);
 
 		if (gateway.s_addr == INADDR_ANY) {
 			/*
@@ -681,7 +681,7 @@ set_resolv_conf(char *name, uint8_t *rtsearch, unsigned int rtsearch_len,
 
 	if (rtdns_len != 0) {
 		addr = (struct in_addr *)rtdns;
-		servers = rtdns_len / sizeof(struct in_addr);
+		servers = rtdns_len / sizeof(addr->s_addr);
 		if (servers > MAXNS)
 			servers = MAXNS;
 		for (i = 0; i < servers; i++) {
