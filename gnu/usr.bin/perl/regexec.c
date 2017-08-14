@@ -6191,23 +6191,26 @@ S_regmatch(pTHX_ regmatch_info *reginfo, char *startpos, regnode *prog)
                 if (! (to_complement ^ cBOOL(isFOO_lc(FLAGS(scan), (U8) nextchr)))) {
                     sayNO;
                 }
+
+                locinput++;
+                break;
             }
-            else if (UTF8_IS_DOWNGRADEABLE_START(nextchr)) {
-                if (! (to_complement ^ cBOOL(isFOO_lc(FLAGS(scan),
-                                               EIGHT_BIT_UTF8_TO_NATIVE(nextchr,
-                                               *(locinput + 1))))))
-                {
-                    sayNO;
-                }
-            }
-            else { /* Here, must be an above Latin-1 code point */
+
+            if (! UTF8_IS_DOWNGRADEABLE_START(nextchr)) { /* An above Latin-1 code point */
                 _CHECK_AND_OUTPUT_WIDE_LOCALE_UTF8_MSG(locinput, reginfo->strend);
                 goto utf8_posix_above_latin1;
             }
 
-            /* Here, must be utf8 */
-            locinput += UTF8SKIP(locinput);
-            break;
+            /* Here is a UTF-8 variant code point below 256 and the target is
+             * UTF-8 */
+            if (! (to_complement ^ cBOOL(isFOO_lc(FLAGS(scan),
+                                            EIGHT_BIT_UTF8_TO_NATIVE(nextchr,
+                                            *(locinput + 1))))))
+            {
+                sayNO;
+            }
+
+            goto increment_locinput;
 
         case NPOSIXD:   /* \W or [:^punct:] etc. under /d */
             to_complement = 1;

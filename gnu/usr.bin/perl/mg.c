@@ -1259,7 +1259,7 @@ Perl_magic_setenv(pTHX_ SV *sv, MAGIC *mg)
 #else
 		const char path_sep = ':';
 #endif
-		s = delimcpy(tmpbuf, tmpbuf + sizeof tmpbuf,
+		s = delimcpy_no_escape(tmpbuf, tmpbuf + sizeof tmpbuf,
 			     s, strend, path_sep, &i);
 		s++;
 		if (i >= (I32)sizeof tmpbuf   /* too long -- assume the worst */

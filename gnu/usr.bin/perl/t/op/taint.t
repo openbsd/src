@@ -17,7 +17,7 @@ BEGIN {
 use strict;
 use Config;
 
-plan tests => 808;
+plan tests => 812;
 
 $| = 1;
 
@@ -185,6 +185,22 @@ my $TEST = 'TEST';
 	# Message can be different depending on whether echo
 	# is a builtin or not
 	like($@, qr/^Insecure (?:directory in )?\$ENV\{PATH}/);
+    }
+
+    # Relative paths in $ENV{PATH} are always implicitly tainted.
+    SKIP: {
+        skip "Do these work on VMS?", 4 if $Is_VMS;
+        skip "Not applicable to DOSish systems", 4 if! $tmp;
+
+        local $ENV{PATH} = '.';
+        is(eval { `$echo 1` }, undef);
+        like($@, qr/^Insecure (?:directory in )?\$ENV\{PATH}/);
+
+        # Backslash should not fool perl into thinking that this is one
+        # path.
+        local $ENV{PATH} = '/\:.';
+        is(eval { `$echo 1` }, undef);
+        like($@, qr/^Insecure (?:directory in )?\$ENV\{PATH}/);
     }
 
     SKIP: {

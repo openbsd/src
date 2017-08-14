@@ -34,7 +34,7 @@ For ease of access, the Perl manual has been split up into several sections.
 
 # This section is parsed by Porting/pod_lib.pl for use by pod/buildtoc etc
 
-flag =g  perlmodlib perlapi perlintern
+flag =g  perluniprops perlmodlib perlapi perlintern
 flag =go perltoc
 flag =ro perlcn perljp perlko perltw
 flag =   perlvms
@@ -180,7 +180,9 @@ aux c2ph h2ph h2xs perlbug pl2pm pod2html pod2man splain xsubpp
 
     perlhist		Perl history records
     perldelta		Perl changes since previous version
+    perl5241delta	Perl changes in version 5.24.1
     perl5240delta	Perl changes in version 5.24.0
+    perl5223delta	Perl changes in version 5.22.3
     perl5222delta	Perl changes in version 5.22.2
     perl5221delta	Perl changes in version 5.22.1
     perl5220delta	Perl changes in version 5.22.0

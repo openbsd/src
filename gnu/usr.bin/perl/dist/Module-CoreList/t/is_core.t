@@ -81,4 +81,4 @@ ok(! Module::CoreList->is_core("CGI", undef, 5.021), "CGI not in 5.021");
 ok(! Module::CoreList->is_core("CGI", undef, 5.021001), "CGI not in 5.021001");
 
 ok(  Module::CoreList::is_core("Config", 0, "5.020"), "Config v0+ is in core in 5.020");
-ok(  Module::CoreList::is_core("Config", undef, "5.020"), "Config v(undef) is in core in 7.020");
+ok(  Module::CoreList::is_core("Config", undef, "5.020"), "Config v(undef) is in core in 5.020");

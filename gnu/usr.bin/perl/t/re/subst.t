@@ -11,7 +11,7 @@ BEGIN {
     require './loc_tools.pl';
 }
 
-plan( tests => 270 );
+plan( tests => 271 );
 
 $_ = 'david';
 $a = s/david/rules/r;
@@ -1101,4 +1101,21 @@ SKIP: {
     pos($s) = 2;
     $s =~ s/..\G//g;
     is($s, "\x{123}", "#RT 126260 gofs");
+}
+
+SKIP: {
+    if (! locales_enabled('LC_CTYPE')) {
+        skip "Can't test locale", 1;
+    }
+
+    #  To cause breakeage, we need a locale in which \xff matches whatever
+    #  POSIX class is used in the pattern.  Easiest is C, with \W.
+    fresh_perl_is('    use POSIX qw(locale_h);
+                       setlocale(&POSIX::LC_CTYPE, "C");
+                       my $s = "\xff";
+                       $s =~ s/\W//l;
+                       print qq(ok$s\n)',
+                   "ok\n",
+                   {stderr => 1 },
+                   '[perl #129038 ] s/\xff//l no longer crashes');
 }

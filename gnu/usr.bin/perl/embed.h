@@ -1206,6 +1206,7 @@
 #define deb_stack_all()		Perl_deb_stack_all(aTHX)
 #define defelem_target(a,b)	Perl_defelem_target(aTHX_ a,b)
 #define delete_eval_scope()	Perl_delete_eval_scope(aTHX)
+#define delimcpy_no_escape	Perl_delimcpy_no_escape
 #define die_unwind(a)		Perl_die_unwind(aTHX_ a)
 #define do_aexec5(a,b,c,d,e)	Perl_do_aexec5(aTHX_ a,b,c,d,e)
 #define do_dump_pad(a,b,c,d)	Perl_do_dump_pad(aTHX_ a,b,c,d)

@@ -189,10 +189,6 @@ use File::Glob qw(:case);
     'base' => {
         'DISTRIBUTION' => 'RJBS/base-2.23.tar.gz',
         'FILES'        => q[dist/base],
-        'CUSTOMIZED'   => [
-            # https://rt.perl.org/Ticket/Display.html?id=127834
-            qw( lib/base.pm )
-        ],
     },
 
     'bignum' => {
@@ -1626,9 +1622,6 @@ use File::Glob qw(:case);
                 lib/vars{.pm,.t,_carp.t}
                 lib/vmsish.{pm,t}
                 ],
-    },
-    'openbsd' => {
-        'FILES'      => q[lib/Config_git.pl],
     },
 );
 

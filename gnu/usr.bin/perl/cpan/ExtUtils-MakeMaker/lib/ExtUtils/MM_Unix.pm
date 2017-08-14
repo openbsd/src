@@ -933,7 +933,7 @@ OTHERLDFLAGS = '.$ld_opt.$otherldflags.'
 INST_DYNAMIC_DEP = '.$inst_dynamic_dep.'
 INST_DYNAMIC_FIX = '.$ld_fix.'
 
-$(INST_DYNAMIC): $(OBJECT) $(MYEXTLIB) $(BOOTSTRAP) $(INST_ARCHAUTODIR)$(DFSEP).exists $(EXPORT_LIST) $(PERL_ARCHIVEDEP) $(PERL_ARCHIVE_AFTER) $(INST_DYNAMIC_DEP)
+$(INST_DYNAMIC): $(OBJECT) $(MYEXTLIB) $(INST_ARCHAUTODIR)$(DFSEP).exists $(EXPORT_LIST) $(PERL_ARCHIVEDEP) $(PERL_ARCHIVE_AFTER) $(INST_DYNAMIC_DEP)
 ');
     if ($armaybe ne ':'){
 	$ldfrom = 'tmp$(LIB_EXT)';
@@ -985,7 +985,7 @@ MAKE
 
     push @m, <<'MAKE';
 	$(CHMOD) $(PERM_RWX) $@
-	$(NOECHO) $(RM_RF) $(INST_BOOT)
+	$(NOECHO) $(RM_RF) $(BOOTSTRAP)
 	- $(CP_NONEMPTY) $(BOOTSTRAP) $(INST_BOOT) $(PERM_RW)
 MAKE
 
@@ -2049,8 +2049,7 @@ Called by init_main.  Initializes PERL_*
 sub init_PERM {
     my($self) = shift;
 
-    my $perm_dir = $self->{PERL_CORE} ? 770 : 755;
-    $self->{PERM_DIR} = $perm_dir  unless defined $self->{PERM_DIR};
+    $self->{PERM_DIR} = 755  unless defined $self->{PERM_DIR};
     $self->{PERM_RW}  = 644  unless defined $self->{PERM_RW};
     $self->{PERM_RWX} = 755  unless defined $self->{PERM_RWX};
 

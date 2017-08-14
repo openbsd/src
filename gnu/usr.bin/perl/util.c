@@ -524,15 +524,17 @@ Free_t   Perl_mfree (Malloc_t where)
 
 /* copy a string up to some (non-backslashed) delimiter, if any */
 
-char *
-Perl_delimcpy(char *to, const char *toend, const char *from, const char *fromend, int delim, I32 *retlen)
+static char *
+S_delimcpy(char *to, const char *toend, const char *from,
+	   const char *fromend, int delim, I32 *retlen,
+	   const bool allow_escape)
 {
     I32 tolen;
 
     PERL_ARGS_ASSERT_DELIMCPY;
 
     for (tolen = 0; from < fromend; from++, tolen++) {
-	if (*from == '\\') {
+	if (allow_escape && *from == '\\') {
 	    if (from[1] != delim) {
 		if (to < toend)
 		    *to++ = *from;
@@ -549,6 +551,23 @@ Perl_delimcpy(char *to, const char *toend, const char *from, const char *fromend
 	*to = '\0';
     *retlen = tolen;
     return (char *)from;
+}
+
+char *
+Perl_delimcpy(char *to, const char *toend, const char *from, const char *fromend, int delim, I32 *retlen)
+{
+    PERL_ARGS_ASSERT_DELIMCPY;
+
+    return S_delimcpy(to, toend, from, fromend, delim, retlen, 1);
+}
+
+char *
+Perl_delimcpy_no_escape(char *to, const char *toend, const char *from,
+			const char *fromend, int delim, I32 *retlen)
+{
+    PERL_ARGS_ASSERT_DELIMCPY_NO_ESCAPE;
+
+    return S_delimcpy(to, toend, from, fromend, delim, retlen, 0);
 }
 
 /* return ptr to little string in big string, NULL if not found */
@@ -4630,9 +4649,6 @@ Perl_parse_unicode_opts(pTHX_ const char **popt)
 U32
 Perl_seed(pTHX)
 {
-#if defined(__OpenBSD__)
-	return arc4random();
-#else
     /*
      * This is really just a quick hack which grabs various garbage
      * values.  It really should be a real hash algorithm which
@@ -4701,7 +4717,6 @@ Perl_seed(pTHX)
     u += SEED_C5 * (U32)PTR2UV(&when);
 #endif
     return u;
-#endif
 }
 
 void

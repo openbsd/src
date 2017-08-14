@@ -344,6 +344,10 @@ Ap	|I32	|debstackptrs
 pR	|SV *	|defelem_target	|NN SV *sv|NULLOK MAGIC *mg
 Anp	|char*	|delimcpy	|NN char* to|NN const char* toend|NN const char* from \
 				|NN const char* fromend|int delim|NN I32* retlen
+np	|char*	|delimcpy_no_escape|NN char* to|NN const char* toend \
+				   |NN const char* from \
+				   |NN const char* fromend|int delim \
+				   |NN I32* retlen
 : Used in op.c, perl.c
 pM	|void	|delete_eval_scope
 Aprd    |OP*    |die_sv         |NN SV *baseex

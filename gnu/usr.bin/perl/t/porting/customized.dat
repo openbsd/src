@@ -1,4 +1,3 @@
-Digest::MD5 cpan/Digest-MD5/t/files.t f8fe234035918d3b7324eba05f73e7e903a45ca0
 Archive::Tar cpan/Archive-Tar/bin/ptar 5e9f3c6f565114193d98847ed8569cd0010c229c
 Archive::Tar cpan/Archive-Tar/bin/ptardiff 5a9f4c01a0390bf98da7e63f1c0bbf5bc74d12c7
 Archive::Tar cpan/Archive-Tar/bin/ptargrep eb74056c434acf314ac5a122e33bdd2ef99e6edb
@@ -43,7 +42,7 @@ ExtUtils::MakeMaker cpan/ExtUtils-MakeMaker/lib/ExtUtils/MM_MacOS.pm 1f5eb772eed
 ExtUtils::MakeMaker cpan/ExtUtils-MakeMaker/lib/ExtUtils/MM_NW5.pm de777d7809c0d73e5d4622a29921731c7e5dff48
 ExtUtils::MakeMaker cpan/ExtUtils-MakeMaker/lib/ExtUtils/MM_OS2.pm 01e8f08a82b5304009574e3ac0892b4066ff7639
 ExtUtils::MakeMaker cpan/ExtUtils-MakeMaker/lib/ExtUtils/MM_QNX.pm 5340052b58557a6764f5ac9f8b807fefec404a06
-ExtUtils::MakeMaker cpan/ExtUtils-MakeMaker/lib/ExtUtils/MM_Unix.pm 20a9e08add92f04ee97084dbc48876c18622613b
+ExtUtils::MakeMaker cpan/ExtUtils-MakeMaker/lib/ExtUtils/MM_Unix.pm 3c3b93f431b0a51b9592b3d69624dbf5409f6f74
 ExtUtils::MakeMaker cpan/ExtUtils-MakeMaker/lib/ExtUtils/MM_UWIN.pm 40397f4cd2d49700b80b4ef490da98add24c5b37
 ExtUtils::MakeMaker cpan/ExtUtils-MakeMaker/lib/ExtUtils/MM_VMS.pm 147e97fbabb74841f0733dbd5d1b9f3fa51f87c1
 ExtUtils::MakeMaker cpan/ExtUtils-MakeMaker/lib/ExtUtils/MM_VOS.pm 3f13ed7045ff3443bcb4dd6c95c98b9bd705820f
@@ -160,8 +159,6 @@ Test::Harness cpan/Test-Harness/lib/TAP/Parser/YAMLish/Reader.pm 76771092dd2b87a
 Test::Harness cpan/Test-Harness/lib/TAP/Parser/YAMLish/Writer.pm bf1fbfff9720330886651f183959a5db56daeea0
 Test::Harness cpan/Test-Harness/lib/Test/Harness.pm da2d76ba673372da129060c9d0adb8cf0d91f9f7
 autodie cpan/autodie/t/mkdir.t 9e70d2282a3cc7d76a78bf8144fccba20fb37dac
-base dist/base/lib/base.pm 8db115a702f759526b031f90cc572d97086978a6
-version vutil.c 45ff345c3d8424ba63e130a223848f5b336bd87b
 bignum cpan/bignum/lib/bigint.pm 56330354995409dab5073ea92d749f8727e265db
 bignum cpan/bignum/lib/bignum.pm e999973f78e6be12282c11bb6328246b31a9576b
 bignum cpan/bignum/lib/bigrat.pm 7fccc9df30e43dbbae6e5ea91b26c8046545c9a9

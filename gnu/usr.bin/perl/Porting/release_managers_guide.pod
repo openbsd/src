@@ -173,7 +173,7 @@ which has a F<public_html> directory to share files with.
 If you use Dropbox, you can append "raw=1" as a parameter to their usual
 sharing link to allow direct download (albeit with redirects).
 
-=head3 git clone of https://github.com/perlorg/perlweb
+=head3 git clone of L<https://github.com/perlorg/perlweb>
 
 For updating the L<http://dev.perl.org> web pages, either a Github account or
 sweet-talking somebody with a Github account into obedience is needed. This
@@ -244,6 +244,15 @@ and maint are synchronised with a particular CPAN module, but one might
 have some extra changes.
 
 =head3 How to sync a CPAN module with a cpanE<sol> distro
+
+In most cases, once a new version of a distribution shipped with core has been
+uploaded to CPAN, the core version thereof can be synchronized automatically
+with the program F<Porting/sync-with-cpan>.  (But see the comments at the
+beginning of that program.  In particular, it has not yet been exercised on
+Windows as much as it has on Unix-like platforms.)
+
+If, however, F<Porting/sync-with-cpan> does not provide good results, follow
+the steps below.
 
 =over 4
 
@@ -326,12 +335,6 @@ If everything is ok, commit the changes.
 For entries with a non-simple C<FILES> section, or with a C<MAP>, you
 may have to take more steps than listed above.
 
-F<Porting/sync-with-cpan> is a script that automates most of the steps
-above; but see the comments at the beginning of the file.  In particular,
-it has not yet been exercised on Windows, but will certainly require a set
-of Unix tools such as Cygwin, and steps that run C<make> will need to run
-C<nmake> instead.
-
 =head3 dual-life CPAN module stability
 
 Ensure dual-life CPAN modules are stable, which comes down to:
@@ -370,14 +373,14 @@ fix.
 =head3 monitor CPAN testers for failures
 
 For any release except a BLEAD-POINT: Examine the relevant analysis report(s)
-at http://analysis.cpantesters.org/beforemaintrelease to see how the impending
-release is performing compared to previous releases with regard to building
-and testing CPAN modules.
+at L<http://analysis.cpantesters.org/beforemaintrelease> to see how the
+impending release is performing compared to previous releases with
+regard to building and testing CPAN modules.
 
 That page accepts a query parameter, C<pair> that takes a pair of
 colon-delimited versions to use for comparison.  For example:
 
-http://analysis.cpantesters.org/beforemaintrelease?pair=5.20.2:5.22.0%20RC1
+L<http://analysis.cpantesters.org/beforemaintrelease?pair=5.20.2:5.22.0%20RC1>
 
 =head3 update perldelta
 
@@ -597,9 +600,23 @@ C<$Module::CoreList::Utils::VERSION> should always be equal to
 C<$Module::CoreList::VERSION>. If necessary, bump those two versions to match
 before proceeding.
 
-The files to modify are: F<dist/Module-CoreList/lib/Module/CoreList.pm>,
-F<dist/Module-CoreList/lib/Module/CoreList/Utils.pm> and
-F<dist/Module-CoreList/lib/Module/CoreList/TieHashDelta.pm>.
+The files to modify are:
+
+=over 4
+
+=item *
+
+F<dist/Module-CoreList/lib/Module/CoreList.pm>
+
+=item *
+
+F<dist/Module-CoreList/lib/Module/CoreList/Utils.pm>
+
+=item *
+
+F<dist/Module-CoreList/lib/Module/CoreList/TieHashDelta.pm>
+
+=back
 
 =head4 Update C<Module::CoreList> with module version data for the new release.
 
@@ -627,7 +644,7 @@ modules on CPAN. It can use a full, local CPAN mirror and/or fall back
 on HTTP::Tiny to fetch package metadata remotely.
 
 (If you'd prefer to have a full CPAN mirror, see
-http://www.cpan.org/misc/cpan-faq.html#How_mirror_CPAN)
+L<http://www.cpan.org/misc/cpan-faq.html#How_mirror_CPAN>)
 
 Then change to your perl checkout, and if necessary,
 
@@ -722,7 +739,7 @@ formatting, e.g.
     $ ./perl -Ilib ext/Pod-Html/bin/pod2html pod/perldelta.pod > \
         /tmp/perldelta.html
 
-Another good HTML preview option is http://search.cpan.org/pod2html
+Another good HTML preview option is L<http://search.cpan.org/pod2html>
 
 If you make changes, be sure to commit them.
 
@@ -793,12 +810,14 @@ then configure and build perl so that you have a Makefile and porting tools:
 For the first RC for a MAINT release, copy in the latest
 F<pod/perlhist.pod> from blead; this will include details of newer
 releases in all branches. In theory, blead's version should be a strict
-superset of the one in this branch, but it's probably safest to diff them
-first to ensure that there's nothing in this branch that was forgotten
-from blead:
+superset of the one in this branch, but it's probably safest to examine the
+changes first, to ensure that there's nothing in this branch that was
+forgotten from blead. An easy way to do that is with C<< git checkout -p >>,
+to selectively apply any changes from the blead version to your current
+branch:
 
-    $ diff pod/perlhist.pod ..../blead/pod/perlhist.pod
-    $ cp  ..../blead/pod/perlhist.pod pod/
+    $ git fetch origin
+    $ git checkout -p origin/blead pod/perlhist.pod
     $ git commit -m 'sync perlhist from blead' pod/perlhist.pod
 
 =head3 update perlhist.pod
@@ -966,10 +985,10 @@ your own tarball testing, below.
 
 Check that basic configuration and tests work on each test machine:
 
-    $ ./Configure -des && make all test
+    $ ./Configure -des && make all minitest test
 
     # Or for a development release:
-    $ ./Configure -Dusedevel -des && make all test
+    $ ./Configure -Dusedevel -des && make all minitest test
 
 =head4 Run the test harness and install
 
@@ -1020,6 +1039,11 @@ Bootstrap the CPAN client on the clean install:
     $ bin/cpan5.xx.x
 
 =head4 Install the Inline module with CPAN and test it
+
+If you're using C<local::lib>, you should reset your environment before
+performing these actions:
+
+    $ unset PERL5LIB PERL_MB_OPT PERL_LOCAL_LIB_ROOT PERL_MM_OPT
 
 Try installing a popular CPAN module that's reasonably complex and that
 has dependencies; for example:
@@ -1394,7 +1418,7 @@ Thanks for releasing perl!
 
 =head2 Building a release - the day after
 
-=for checklist skip BLEAD-FINAL, MAINT, RC
+=for checklist skip BLEAD-FINAL MAINT RC
 
 =head3 update Module::CoreList
 
@@ -1526,7 +1550,7 @@ will make life easier for the next release manager.
 =head1 SOURCE
 
 Based on
-http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2009-05/msg00608.html,
+L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2009-05/msg00608.html>,
 plus a whole bunch of other sources, including private correspondence.
 
 =cut

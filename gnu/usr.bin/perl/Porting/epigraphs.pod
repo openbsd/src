@@ -17,6 +17,102 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.27.1 - Rona Munro, Doctor Who: Survival
+
+L<Announced on 2017-06-20 by Eric Herman|http://www.nntp.perl.org/group/perl.perl5.porters/2017/06/msg245055.html>
+
+  There are worlds out there where the sky is burning,
+  where the sea's asleep and the rivers dream,
+  people made of smoke and cities made of song.
+  Somewhere there's danger,
+  somewhere there's injustice
+  and somewhere else the tea is getting cold.
+  Come on, Ace, we've got work to do.
+
+=head2 v5.27.0 - Bertrand Russell, The Road to Happiness
+
+L<Announced on 2017-05-31 by Sawyer X|http://www.nntp.perl.org/group/perl.perl5.porters/2017/05/msg244580.html>
+
+  People who have theories as to how one should live tend to forget the
+  limitations of nature. If your way of life involves constant
+  restraint of impulse for the sake of some one supreme aim that you
+  have set yourself, it is likely that the aim will become increasingly
+  distasteful because of the efforts that it demands; impulse, denied
+  its normal outlets, will find others, probably in spite; pleasure, if
+  you allow yourself any at all, will be dissociated from the main
+  current of your life, and will become Bacchic and frivolous. Such
+  pleasure brings no happiness, but only a deeper despair.
+
+    -- Bertrand Russell, The Road to Happiness
+
+=head2 v5.26.0 - Nine Simone, Ain't Got No / I Got Life
+
+L<Announced on 2017-05-30 by Sawyer X|http://www.nntp.perl.org/group/perl.perl5.porters/2017/05/msg244573.html>
+
+  I've got the life
+  And I'm gonna keep it
+  I've got the life
+  And nobody's gonna take it away
+  I've got the life
+
+=head2 v5.26.0-RC2 - Richard Condon, The Manchurian Candidate
+
+L<Announced on 2017-05-23 by Sawyer X|http://www.nntp.perl.org/group/perl.perl5.porters/2017/05/msg244511.html>
+
+  Amateur psychiatric prognosis can be fascinating when there is
+  absolutely nothing else to do.
+
+=head2 v5.26.0-RC1 - Thomas Paine, Common Sense
+
+L<Announced on 2017-05-11 by Sawyer X|http://www.nntp.perl.org/group/perl.perl5.porters/2017/05/msg244337.html>
+
+  A long habit of not thinking a thing WRONG, gives it a superficial
+  appearance of being RIGHT, and raises at first a formidable outcry in
+  defense of custom. But the tumult soon subsides. Time makes more
+  converts than reason.
+
+=head2 v5.25.12 - Kurt Vonnegut, Slaughterhouse-Five
+
+L<Announced on 2017-04-20 by Sawyer X|http://www.nntp.perl.org/group/perl.perl5.porters/2017/04/msg244146.html>
+
+  I have told my sons that they are not under any circumstances to take
+  part in massacres, and that the news of massacres of enemies is not
+  to fill them with satisfaction or glee.
+
+  I have also told them not to work for companies which make massacre
+  machinery, and to express contempt for people who think we need
+  machinery like that.
+
+=head2 v5.25.11 - Daniel Kahneman, Thinking, Fast and Slow
+
+L<Announced on 2017-03-20 by Sawyer X|http://www.nntp.perl.org/group/perl.perl5.porters/2017/03/msg243624.html>
+
+  Subjective confidence in a judgment is not a reasoned evaluation of
+  the probability that this judgment is correct. Confidence is a
+  feeling, which reflects the coherence of the information and the
+  cognitive ease of processing it. It is wise to take admissions of
+  uncertainty seriously, but declarations of high confidence mainly
+  tell you that an individual has constructed a coherent story in his
+  mind, not necessarily that the story is true.
+
+=head2 v5.25.10 - Erich Fried, 1968
+
+L<Announced on 2017-02-20 by Renee Bäcker|https://www.nntp.perl.org/group/perl.perl5.porters/2017/02/msg243173.html>
+
+  He who wants the world to remain as it is
+  doesn't want it to remain.
+
+=head2 v5.25.9 - A. A. Milne, "Winnie-the-Pooh", 1926
+
+L<Announced on 2017-01-20 by Abigail|http://www.nntp.perl.org/group/perl.perl5.porters/2017/01/msg242405.html>
+
+  Pooh always liked a little something at eleven o'clock in the
+  morning, and he was very glad to see Rabbit getting out the plates
+  and mugs; and when Rabbit said, "Honey or condensed milk with
+  your bread?" he was so excited that he said, "Both," and then,
+  so as not to seem greedy, he added, "But don't bother about the
+  bread, please."
+
 =head2 v5.25.8 - Langston Hughes, So long
 
 L<Announced on 2016-12-20 by Sawyer X|http://www.nntp.perl.org/group/perl.perl5.porters/2016/12/msg241739.html>
@@ -36,12 +132,12 @@ L<Announced on 2016-12-20 by Sawyer X|http://www.nntp.perl.org/group/perl.perl5.
 
 L<Announced on 2016-11-20 by Chad 'Exodist' Granum|http://www.nntp.perl.org/group/perl.perl5.porters/2016/11/msg241120.html>
 
-  Of Beren and L�thien
+  Of Beren and Lúthien
 
   Among the tales of sorrow and of ruin that come down to us from the darkness of
   those days there are yet some in which amid weeping there is joy and under the
   shadow of death light that endures. And of these histories most fair still in
-  the ears of the Elves is the tale of Beren and L�thien. Of their lives was made
+  the ears of the Elves is the tale of Beren and Lúthien. Of their lives was made
   the Lay of Leithian, Release from Bondage, which is the longest save one of the
   songs concerning the world of old; but here is told in fewer words and without
   song.
@@ -192,6 +288,62 @@ L<Announced on 2016-05-09 by Ricardo Signes|http://www.nntp.perl.org/group/perl.
     Wide fields of asphodel fore’er,
   To find that the utmost reward
     Of daring should be still to dare.
+
+=head2 v5.24.2-RC1 - Roald Dahl, "The Three Little Pigs"
+
+L<Announced on 2017-07-01 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2017/07/msg245292.html>
+
+  The animal I really dig
+  Above all others is the pig.
+  Pigs are noble. Pigs are clever,
+  Pig are courteous. However,
+  Now and then, to break this rule,
+  One meets a pig who is a fool.
+  What, for example, would you say
+  If strolling through the woods one day,
+  Right there in front of you you saw
+  A pig who'd built his house of STRAW?
+  The Wolf who saw it licked his lips,
+  And said, 'That pig has had his chips.'
+
+=head2 v5.24.1 - Charles Dodgson [as "Lewis Carroll"], "The Hunting of the Snark", Fit 4: The Hunting
+
+L<Announced on 2017-01-14 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2017/01/msg242259.html>
+
+  The Bellman looked uffish, and wrinkled his brow.
+    'If only you'd spoken before!
+  It's excessively awkward to mention it now,
+    With the Snark, so to speak, at the door!
+
+  'We should all of us grieve, as you well may believe,
+    If you never were met with again -
+  But surely, my man, when the voyage began,
+    You might have suggested it then?
+
+  'It's excessively awkward to mention it now -
+    As I think I've already remarked.'
+  And the man they called 'Hi!' replied, with a sigh,
+    'I informed you the day we embarked.
+
+  'You may charge me with murder - or want of sense -
+    (We are all of us weak at times):
+  But the slightest approach to a false pretence
+    Was never among my crimes!
+
+  'I said it in Hebrew - I said it in Dutch -
+    I said it in German and Greek:
+  But I wholly forgot (and it vexes me much)
+    That English is what you speak!'
+
+  ''Tis a pitiful tale,' said the Bellman, whose face
+    Had grown longer at every word:
+  'But, now that you've stated the whole of your case,
+    More debate would be simply absurd.
+
+  'The rest of my speech' (he exclaimed to his men)
+    'You shall hear when I've leisure to speak it.
+  But the Snark is at hand, let me tell you again!
+    'Tis your glorious duty to seek it!
 
 =head2 v5.24.1-RC5 - John Milton, ed. Gordon Campbell, "Paradise Regained", Book IV
 
@@ -680,6 +832,61 @@ L<Announced on 2015-06-20 by Ricardo Signes|http://www.nntp.perl.org/group/perl.
   To be just like them
   They sing while you slave and I just get bored
   I ain't gonna work on Maggie's farm no more
+
+=head2 v5.22.4-RC1 - Roald Dahl, "Little Red Riding Hood and the Wolf"
+
+L<Announced on 2017-07-01 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2017/07/msg245293.html>
+
+  As soon as Wolf began to feel
+  That he would like a decent meal,
+  He went and knocked on Grandma's door.
+  When Grandma opened it, she saw
+  The sharp white teeth, the horrid grin,
+  And Wolfie said, 'May I come in?'
+  Poor Grandmamma was terrified,
+  'He's going to eat me up!' she cried.
+  And she was absolutely right.
+  He ate her up in one big bite.
+
+=head2 v5.22.3 - Charles Dodgson [as "Lewis Carroll"], "Phantasmagoria", Canto 6: Discomfyture
+
+L<Announced on 2017-01-14 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2017/01/msg242258.html>
+
+  As one who strives a hill to climb,
+    Who never climbed before:
+  Who finds it, in a little time,
+  Grow every moment less sublime,
+    And votes the thing a bore:
+
+  Yet, having once begun to try,
+    Dares not desert his quest,
+  But, climbing, ever keeps his eye
+  On one small hut against the sky
+    Wherein he hopes to rest:
+
+  Who climbs till nerve and force are spent,
+    With many a puff and pant:
+  Who still, as rises the ascent,
+  In language grows more violent,
+    Although in breath more scant:
+
+  Who, climbing, gains at length the place
+    That crowns the upward track:
+  And, entering with unsteady pace,
+  Receives a buffet in the face
+    That lands him on his back:
+
+  And feels himself, like one in sleep,
+    Glide swiftly down again,
+  A helpless weight, from steep to steep,
+  Till, with a headlong giddy sweep,
+    He drops upon the plain -
+
+  So I, that had resolved to bring
+    Conviction to a ghost,
+  And found it quite a different thing
+  From any human arguing,
+    Yet dared not quit my post.
 
 =head2 v5.22.3-RC5 - John Milton, ed. Gordon Campbell, "Paradise Regained", Book II
 

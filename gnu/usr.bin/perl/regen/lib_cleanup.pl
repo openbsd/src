@@ -74,12 +74,6 @@ foreach my $file (@ext) {
                 $package = $1;
                 last;
             }
-            elsif (/^\s*package\s*$/) {
-                # If they're hiding their package name, we ignore them
-                ++$ignore{"/$path"};
-                $package='';
-                last;
-            }
         }
         close $fh
             or die "Can't close $file: $!";
