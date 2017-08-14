@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.14 2017/08/11 20:47:21 mpi Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.15 2017/08/14 19:57:05 uwe Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -502,7 +502,7 @@ exit:
 }
 
 /*
- * print <symbol name>
+ * pprint <symbol name>
  */
 void
 db_ctf_pprint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
