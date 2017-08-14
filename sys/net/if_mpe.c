@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.61 2017/05/30 16:16:47 deraadt Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.62 2017/08/14 16:14:02 reyk Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -392,7 +392,7 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 #if NBPFILTER > 0
-	if (ifp && ifp->if_bpf)
+	if (ifp->if_bpf)
 		bpf_mtap_af(ifp->if_bpf, AF_INET, m, BPF_DIRECTION_IN);
 #endif
 
@@ -424,7 +424,7 @@ mpe_input6(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 #if NBPFILTER > 0
-	if (ifp && ifp->if_bpf)
+	if (ifp->if_bpf)
 		bpf_mtap_af(ifp->if_bpf, AF_INET6, m, BPF_DIRECTION_IN);
 #endif
 
