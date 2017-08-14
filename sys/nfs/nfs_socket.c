@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.123 2017/08/11 21:24:20 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.124 2017/08/14 16:35:55 tedu Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -240,6 +240,11 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	struct sockaddr_in *sin;
 	struct mbuf *m;
 
+	if (!(nmp->nm_sotype == SOCK_DGRAM || nmp->nm_sotype == SOCK_STREAM)) {
+		error = EINVAL;
+		goto bad;
+	}
+
 	nmp->nm_so = NULL;
 	saddr = mtod(nmp->nm_nam, struct sockaddr *);
 	error = socreate(saddr->sa_family, &nmp->nm_so, nmp->nm_sotype, 
@@ -347,13 +352,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		sndreserve = nmp->nm_wsize + NFS_MAXPKTHDR;
 		rcvreserve = (max(nmp->nm_rsize, nmp->nm_readdirsize) +
 		    NFS_MAXPKTHDR) * 2;
-	} else if (nmp->nm_sotype == SOCK_SEQPACKET) {
-		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR) * 2;
-		rcvreserve = (max(nmp->nm_rsize, nmp->nm_readdirsize) +
-		    NFS_MAXPKTHDR) * 2;
-	} else {
-		if (nmp->nm_sotype != SOCK_STREAM)
-			panic("nfscon sotype");
+	} else if (nmp->nm_sotype == SOCK_STREAM) {
 		if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
 			MGET(m, M_WAIT, MT_SOOPTS);
 			*mtod(m, int32_t *) = 1;
@@ -478,10 +477,7 @@ nfs_send(struct socket *so, struct mbuf *nam, struct mbuf *top,
 		sendnam = NULL;
 	else
 		sendnam = nam;
-	if (so->so_type == SOCK_SEQPACKET)
-		flags = MSG_EOR;
-	else
-		flags = 0;
+	flags = 0;
 
 	error = sosend(so, sendnam, NULL, top, NULL, flags);
 	if (error) {
