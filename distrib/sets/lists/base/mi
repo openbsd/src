@@ -639,7 +639,7 @@
 ./usr/lib/libpanel.so.6.0
 ./usr/lib/libpanelw.so.6.0
 ./usr/lib/libpcap.so.8.3
-./usr/lib/libperl.so.18.0
+./usr/lib/libperl.so.18.1
 ./usr/lib/libpthread.so.23.0
 ./usr/lib/libradius.so.1.0
 ./usr/lib/libreadline.so.4.0
@@ -1469,8 +1469,10 @@
 ./usr/libdata/perl5/pod/perl5220delta.pod
 ./usr/libdata/perl5/pod/perl5221delta.pod
 ./usr/libdata/perl5/pod/perl5222delta.pod
+./usr/libdata/perl5/pod/perl5223delta.pod
 ./usr/libdata/perl5/pod/perl5240delta.pod
 ./usr/libdata/perl5/pod/perl5241delta.pod
+./usr/libdata/perl5/pod/perl5242delta.pod
 ./usr/libdata/perl5/pod/perl561delta.pod
 ./usr/libdata/perl5/pod/perl56delta.pod
 ./usr/libdata/perl5/pod/perl581delta.pod
