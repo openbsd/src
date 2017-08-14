@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.270 2017/08/11 20:50:15 mpi Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.271 2017/08/14 19:50:31 uwe Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -477,6 +477,11 @@ main(void *framep)
 	/* Configure root/swap devices */
 	diskconf();
 
+#ifdef DDB
+	/* Make debug symbols available in ddb. */
+	db_ctf_init();
+#endif
+
 	if (mountroot == NULL || ((*mountroot)() != 0))
 		panic("cannot mount root");
 
@@ -547,10 +552,6 @@ main(void *framep)
 #endif
 
 	config_process_deferred_mountroot();
-
-#ifdef DDB
-	db_ctf_init();
-#endif
 
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!
