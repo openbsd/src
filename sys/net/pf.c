@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1040 2017/08/13 16:57:20 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.1041 2017/08/14 15:48:29 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -383,6 +383,14 @@ pf_set_protostate(struct pf_state *s, int which, u_int8_t newstate)
 		s->dst.state = newstate;
 	if (which == PF_PEER_DST)
 		return;
+
+	if (s->src.state == newstate)
+		return;
+	if (s->key[PF_SK_STACK]->proto == IPPROTO_TCP &&
+	    !(TCPS_HAVEESTABLISHED(s->src.state) ||
+	    s->src.state == TCPS_CLOSED) &&
+	    (TCPS_HAVEESTABLISHED(newstate) || newstate == TCPS_CLOSED))
+		pf_status.states_halfopen--;
 
 	s->src.state = newstate;
 }
@@ -1346,6 +1354,9 @@ pf_remove_state(struct pf_state *cur)
 		    TH_RST|TH_ACK, 0, 0, 0, 1, cur->tag,
 		    cur->key[PF_SK_WIRE]->rdomain);
 	}
+	if (cur->key[PF_SK_STACK]->proto == IPPROTO_TCP)
+		pf_set_protostate(cur, PF_PEER_BOTH, TCPS_CLOSED);
+
 	RB_REMOVE(pf_state_tree_id, &tree_id, cur);
 #if NPFLOW > 0
 	if (cur->state_flags & PFSTATE_PFLOW)
@@ -3975,6 +3986,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 		pf_set_protostate(s, PF_PEER_SRC, TCPS_SYN_SENT);
 		pf_set_protostate(s, PF_PEER_DST, TCPS_CLOSED);
 		s->timeout = PFTM_TCP_FIRST_PACKET;
+		pf_status.states_halfopen++;
 		break;
 	case IPPROTO_UDP:
 		pf_set_protostate(s, PF_PEER_SRC, PFUDPS_SINGLE);
@@ -4731,8 +4743,6 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 					addlog("\n");
 				}
 				/* XXX make sure it's the same direction ?? */
-				pf_set_protostate(*state, PF_PEER_BOTH,
-				    TCPS_CLOSED);
 				pf_remove_state(*state);
 				*state = NULL;
 				pd->m->m_pkthdr.pf.inp = inp;

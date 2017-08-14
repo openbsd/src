@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.463 2017/08/13 16:57:20 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.464 2017/08/14 15:48:29 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1296,6 +1296,7 @@ struct pf_status {
 	time_t		since;
 	u_int32_t	running;
 	u_int32_t	states;
+	u_int32_t	states_halfopen;
 	u_int32_t	src_nodes;
 	u_int32_t	debug;
 	u_int32_t	hostid;
