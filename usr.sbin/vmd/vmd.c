@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.65 2017/08/13 16:45:07 jasper Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.66 2017/08/14 17:20:59 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -945,6 +945,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	uint32_t		 rng;
 	unsigned int		 i;
 	struct vmd_switch	*sw;
+	char			*s;
 
 	errno = 0;
 	*ret_vm = NULL;
@@ -991,6 +992,18 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	} else if (strlen(vcp->vcp_name) == 0) {
 		log_warnx("invalid VM name");
 		goto fail;
+	} else if (*vcp->vcp_name == '-' || *vcp->vcp_name == '.' ||
+		   *vcp->vcp_name == '_') {
+		log_warnx("Invalid VM name");
+		goto fail;
+	} else {
+		for (s = vcp->vcp_name; *s != '\0'; ++s) {
+			if (!(isalnum(*s) || *s == '.' || *s == '-' ||
+			      *s == '_')) {
+				log_warnx("Invalid VM name");
+				goto fail;
+			}
+		}
 	}
 
 	if ((vm = calloc(1, sizeof(*vm))) == NULL)
