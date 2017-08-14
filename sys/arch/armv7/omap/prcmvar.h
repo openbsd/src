@@ -1,4 +1,4 @@
-/* $OpenBSD: prcmvar.h,v 1.6 2016/07/18 15:03:01 jsg Exp $ */
+/* $OpenBSD: prcmvar.h,v 1.7 2017/08/14 21:46:02 ians Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -54,6 +54,7 @@ enum PRCM_MODULES {
 	PRCM_I2C1,
 	PRCM_I2C2,
 	PRCM_I2C3,
+	PRCM_LCDC,
 };
 
 #define PRCM_REG_MAX	6

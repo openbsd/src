@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.87 2017/07/25 20:39:12 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.88 2017/08/14 21:46:02 ians Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -81,6 +81,9 @@ sdmmc*		at ommmc?		# SD/MMC bus
 
 omehci*		at fdt?			# EHCI
 usb*		at omehci?
+nxphdmi*	at iic?			# TDA19988 HDMI PHY
+amdisplay*	at fdt?			# AM335x LCD controller
+wsdisplay*	at amdisplay?
 
 # Sunxi A1x/A20 SoC
 sxiintc*	at fdt?			# A1x interrupt controller

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.20 2017/03/01 04:34:09 jsg Exp $
+#	$OpenBSD: files.omap,v 1.21 2017/08/14 21:46:02 ians Exp $
 
 define omap {}
 device omap: omap
@@ -86,6 +86,10 @@ device omdisplay: wsemuldisplaydev, rasops16
 attach omdisplay at omap
 file arch/armv7/omap/omdisplay.c		omdisplay
 
+device amdisplay: wsemuldisplaydev, rasops16
+attach amdisplay at fdt
+file arch/armv7/omap/amdisplay.c		amdisplay
+
 # MCSPI - spi 
 device mcspi 
 attach mcspi at omap
@@ -95,3 +99,9 @@ file	arch/armv7/omap/mcspi.c			mcspi
 device oaudio: audio
 attach oaudio at omap				# configure after Atlas Driver
 file arch/armv7/omap/beagle_audio.c		oaudio
+
+# TDA19988 HDMI PHY
+device nxphdmi
+attach nxphdmi at i2c
+file	arch/armv7/omap/nxphdmi.c		nxphdmi
+

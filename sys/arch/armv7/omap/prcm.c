@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.11 2016/07/18 15:03:01 jsg Exp $ */
+/* $OpenBSD: prcm.c,v 1.12 2017/08/14 21:46:02 ians Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -75,7 +75,9 @@ uint32_t prcm_fmask_mask[PRCM_REG_MAX];
 uint32_t prcm_imask_addr[PRCM_REG_MAX];
 uint32_t prcm_fmask_addr[PRCM_REG_MAX];
 
-#define SYS_CLK		13 /* SYS_CLK speed in MHz */
+#define SYS_CLK			13    /* SYS_CLK speed in MHz */
+#define PRCM_AM335X_MASTER_OSC	24000 /* KHz */
+
 
 struct prcm_softc {
 	struct device		sc_dev;
@@ -240,6 +242,47 @@ prcm_am335x_setclock(struct prcm_softc *sc, int clock, int speed)
 		reg |=0x02;
 		bus_space_write_4(sc->sc_iot, sc->sc_prcm,
 		    PRCM_AM335X_CLKSEL_TIMER3_CLK, reg);
+	} else if (clock == 3) { /* DISP M1 */
+		oreg = bus_space_read_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_CLKMODE);
+		oreg &= ~0x7;
+		oreg |= 0x4;
+		bus_space_write_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_CLKMODE, oreg);
+		while(!(bus_space_read_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_IDLEST
+		    & 0x10)));
+
+		oreg = bus_space_read_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_CLKSEL);
+		oreg &= 0xFFF800FF;
+		oreg |= (speed & 0x7FF) << 8;
+		bus_space_write_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_CLKSEL, oreg);
+
+		oreg = bus_space_read_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_CLKMODE);
+		oreg |= 0x7;
+		bus_space_write_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_CLKMODE, oreg);
+		while(!(bus_space_read_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_IDLEST
+		    & 0x10)));
+	} else if (clock == 4) { /* DISP N */
+		oreg = bus_space_read_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_CLKMODE);
+		oreg &= ~0x7;
+		oreg |= 0x4;
+		bus_space_write_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_CLKMODE, oreg);
+		while(!(bus_space_read_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_IDLEST
+		    & 0x10)));
+
+		oreg = bus_space_read_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_CLKSEL);
+		oreg &= 0xFFFFFF80;
+		oreg |= speed & 0x7F;
+		bus_space_write_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_CLKSEL, oreg);
+
+		oreg = bus_space_read_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_CLKMODE);
+		oreg |= 0x7;
+		bus_space_write_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_CLKMODE, oreg);
+		while(!(bus_space_read_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_IDLEST
+		    & 0x10)));
+	} else if (clock == 5) { /* DISP M2 */
+		oreg = bus_space_read_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_M2);
+		oreg &= ~(0x1F);
+		oreg |= speed & 0x1F;
+		bus_space_write_4(sc->sc_iot, sc->sc_prcm, PRCM_AM335X_DISP_M2, oreg);
 	}
 }
 
@@ -336,6 +379,8 @@ prcm_am335x_clkctrl(int mod)
 		return PRCM_AM335X_I2C1_CLKCTRL;
 	case PRCM_I2C2:
 		return PRCM_AM335X_I2C2_CLKCTRL;
+	case PRCM_LCDC:
+		return PRCM_AM335X_LCDC_CLKCTRL;
 	default:
 		panic("%s: module not found\n", __func__);
 	}
