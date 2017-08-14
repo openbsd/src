@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.115 2017/06/13 18:13:18 sf Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.116 2017/08/14 22:43:56 sf Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1305,7 +1305,7 @@ msdosfs_mkdir(void *v)
 	/*
 	 * Allocate a cluster to hold the about to be created directory.
 	 */
-	error = clusteralloc(pmp, 0, 1, CLUST_EOFE, &newcluster, NULL);
+	error = clusteralloc(pmp, 0, 1, &newcluster, NULL);
 	if (error)
 		goto bad2;
 

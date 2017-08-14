@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.58 2017/04/20 14:13:00 visa Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.59 2017/08/14 22:43:56 sf Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -324,7 +324,7 @@ retry:
 
 		nvp->v_type = VDIR;
 		if (ldep->de_StartCluster != MSDOSFSROOT) {
-			error = pcbmap(ldep, 0xffff, 0, &size, 0);
+			error = pcbmap(ldep, CLUST_END, 0, &size, 0);
 			if (error == E2BIG) {
 				ldep->de_FileSize = de_cn2off(pmp, size);
 				error = 0;

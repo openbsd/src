@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.29 2017/08/13 23:36:27 sf Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.30 2017/08/14 22:43:56 sf Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -714,11 +714,12 @@ chainalloc(struct msdosfsmount *pmp, uint32_t start, uint32_t count,
  */
 int
 clusteralloc(struct msdosfsmount *pmp, uint32_t start, uint32_t count,
-    uint32_t fillwith, uint32_t *retcluster, uint32_t *got)
+    uint32_t *retcluster, uint32_t *got)
 {
 	uint32_t idx;
 	uint32_t len, newst, foundl, cn, l;
 	uint32_t foundcn = 0; /* XXX: foundcn could be used uninitialized */
+	uint32_t fillwith = CLUST_EOFE;
 	u_int map;
 
 #ifdef MSDOSFS_DEBUG
@@ -949,7 +950,7 @@ extendfile(struct denode *dep, uint32_t count, struct buf **bpp, uint32_t *ncp,
 	if (dep->de_fc[FC_LASTFC].fc_frcn == FCE_EMPTY &&
 	    dep->de_StartCluster != 0) {
 		fc_lfcempty++;
-		error = pcbmap(dep, 0xffff, 0, &cn, 0);
+		error = pcbmap(dep, CLUST_END, 0, &cn, 0);
 		/* we expect it to return E2BIG */
 		if (error != E2BIG)
 			return (error);
@@ -976,7 +977,7 @@ extendfile(struct denode *dep, uint32_t count, struct buf **bpp, uint32_t *ncp,
 			cn = 0;
 		else
 			cn = dep->de_fc[FC_LASTFC].fc_fsrcn + 1;
-		error = clusteralloc(pmp, cn, count, CLUST_EOFE, &cn, &got);
+		error = clusteralloc(pmp, cn, count, &cn, &got);
 		if (error)
 			return (error);
 
