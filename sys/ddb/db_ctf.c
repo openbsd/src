@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.15 2017/08/14 19:57:05 uwe Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.16 2017/08/14 19:58:32 uwe Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -304,7 +304,7 @@ db_ctf_type_by_index(uint16_t index)
  * Pretty print `addr'.
  */
 void
-db_ctf_pprintf(const struct ctf_type *ctt, vaddr_t addr)
+db_ctf_pprint(const struct ctf_type *ctt, vaddr_t addr)
 {
 	const struct ctf_type	*ref;
 	uint16_t		 kind;
@@ -333,7 +333,7 @@ db_ctf_pprintf(const struct ctf_type *ctt, vaddr_t addr)
 	case CTF_K_CONST:
 	case CTF_K_RESTRICT:
 		ref = db_ctf_type_by_index(ctt->ctt_type);
-		db_ctf_pprintf(ref, addr);
+		db_ctf_pprint(ref, addr);
 		break;
 	case CTF_K_UNKNOWN:
 	case CTF_K_FORWARD:
@@ -374,7 +374,7 @@ db_ctf_pprint_struct(const struct ctf_type *ctt, vaddr_t addr)
 			if (name != NULL)
 				db_printf("%s = ", name);
 			ref = db_ctf_type_by_index(ctm->ctm_type);
-			db_ctf_pprintf(ref, addr + ctm->ctm_offset / 8);
+			db_ctf_pprint(ref, addr + ctm->ctm_offset / 8);
 			if (i < vlen - 1)
 				db_printf(", ");
 		}
@@ -389,7 +389,7 @@ db_ctf_pprint_struct(const struct ctf_type *ctt, vaddr_t addr)
 			if (name != NULL)
 				db_printf("%s = ", name);
 			ref = db_ctf_type_by_index(ctlm->ctlm_type);
-			db_ctf_pprintf(ref, addr +
+			db_ctf_pprint(ref, addr +
 			    CTF_LMEM_OFFSET(ctlm) / 8);
 			if (i < vlen - 1)
 				db_printf(", ");
@@ -535,6 +535,6 @@ db_ctf_pprint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	}
 
 	db_printf("%s:\t", db_tok_string);
-	db_ctf_pprintf(ctt, addr);
+	db_ctf_pprint(ctt, addr);
 	db_printf("\n");
 }
