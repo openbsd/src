@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.61 2017/08/12 19:46:02 mpi Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.62 2017/08/14 01:35:04 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -1519,6 +1519,12 @@ typedef enum {
 #define pci_enable_device(x)	0
 #define pci_disable_device(x)
 
+static inline int
+vga_client_register(struct pci_dev *a, void *b, void *c, void *d)
+{
+	return -ENODEV;
+}
+
 #if defined(__amd64__) || defined(__i386__)
 
 #define AGP_USER_MEMORY			0
@@ -1549,12 +1555,6 @@ pci_dma_mapping_error(struct pci_dev *pdev, dma_addr_t dma_addr)
 
 void vga_get_uninterruptible(struct pci_dev *, int);
 void vga_put(struct pci_dev *, int);
-
-static inline int
-vga_client_register(struct pci_dev *a, void *b, void *c, void *d)
-{
-	return -ENODEV;
-}
 
 #define vga_switcheroo_register_client(a, b, c)	0
 #define vga_switcheroo_unregister_client(a)
