@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.31 2017/07/15 07:33:56 jmc Exp $
+.\"	$OpenBSD: vmctl.8,v 1.32 2017/08/14 17:52:05 jasper Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2017 $
+.Dd $Mdocdate: August 14 2017 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -121,6 +121,9 @@ in
 .Xr vm.conf 5
 for more information.
 .El
+The VM can only consist of alphanumeric characters, including
+a '.', '-' or '_'.
+However it cannot start with '.', '-' or '_'.
 .It Cm status Op Ar id
 Lists VMs running on the host, optionally listing just the selected VM
 .Ar id .
