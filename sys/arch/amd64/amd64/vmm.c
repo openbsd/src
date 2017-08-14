@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.162 2017/08/12 19:56:08 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.163 2017/08/14 06:24:53 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -45,8 +45,7 @@
 /* #define VMM_DEBUG */
 
 #ifdef VMM_DEBUG
-int vmm_debug = 0;
-#define DPRINTF(x...)	do { if (vmm_debug) printf(x); } while(0)
+#define DPRINTF(x...)	do { printf(x); } while(0)
 #else
 #define DPRINTF(x...)
 #endif /* VMM_DEBUG */
