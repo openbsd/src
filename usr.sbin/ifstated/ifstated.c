@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.58 2017/08/08 14:09:38 rob Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.59 2017/08/14 03:15:28 rob Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -656,9 +656,6 @@ remove_action(struct ifsd_action *action, struct ifsd_state *state)
 		return;
 
 	switch (action->type) {
-	case IFSD_ACTION_LOG:
-		free(action->act.logmessage);
-		break;
 	case IFSD_ACTION_COMMAND:
 		free(action->act.command);
 		break;
