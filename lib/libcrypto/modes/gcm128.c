@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.17 2017/08/13 17:46:24 bcook Exp $ */
+/* $OpenBSD: gcm128.c,v 1.18 2017/08/14 05:29:32 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -305,21 +305,21 @@ static void gcm_init_4bit(u128 Htable[16], u64 H[2])
 	 * ARM assembler expects specific dword order in Htable.
 	 */
 	{
-	int j;
-
+		int j;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	for (j=0;j<16;++j) {
-		V = Htable[j];
-		Htable[j].hi = V.lo;
-		Htable[j].lo = V.hi;
-	}
+		for (j=0;j<16;++j) {
+			V = Htable[j];
+			Htable[j].hi = V.lo;
+			Htable[j].lo = V.hi;
+		}
 #else /* BIG_ENDIAN */
-	for (j=0;j<16;++j) {
-		V = Htable[j];
-		Htable[j].hi = V.lo<<32|V.lo>>32;
-		Htable[j].lo = V.hi<<32|V.hi>>32;
-	}
+		for (j=0;j<16;++j) {
+			V = Htable[j];
+			Htable[j].hi = V.lo<<32|V.lo>>32;
+			Htable[j].lo = V.hi<<32|V.hi>>32;
+		}
 #endif
+	}
 #endif
 }
 
@@ -453,7 +453,7 @@ static void gcm_ghash_4bit(u64 Xi[2],const u128 Htable[16],
      * [should] give ~50% improvement... One could have PACK()-ed
      * the rem_8bit even here, but the priority is to minimize
      * cache footprint...
-     */ 
+     */
     u128 Hshr4[16];	/* Htable shifted right by 4 bits */
     u8   Hshl4[16];	/* Htable shifted left  by 4 bits */
     static const unsigned short rem_8bit[256] = {
