@@ -8,7 +8,7 @@ BEGIN {
     }
 }
 
-use Test::More 0.82 tests => 12;
+use Test::More tests => 12;
 use t::Watchdog;
 
 use Config;
@@ -24,13 +24,13 @@ SKIP: {
     $tick = 0; Time::HiRes::ualarm(10_000); while ($tick == 0) { }
     my $three = CORE::time;
     ok $one == $two || $two == $three
-	or note "slept too long, $one $two $three";
-    note "tick = $tick, one = $one, two = $two, three = $three";
+	or print("# slept too long, $one $two $three\n");
+    print("# tick = $tick, one = $one, two = $two, three = $three\n");
 
     $tick = 0; Time::HiRes::ualarm(10_000, 10_000); while ($tick < 3) { }
     ok 1;
     Time::HiRes::ualarm(0);
-    note "tick = $tick, one = $one, two = $two, three = $three";
+    print("# tick = $tick, one = $one, two = $two, three = $three\n");
 }
 
 eval { Time::HiRes::ualarm(-4) };
@@ -59,24 +59,24 @@ for my $n (100_000, 1_100_000, 2_200_000, 4_300_000) {
 	my $alarmed = 0;
 	local $SIG{ ALRM } = sub { $alarmed++ };
 	my $t0 = Time::HiRes::time();
-	note "t0 = $t0";
-	note "ualarm($n)";
+	print("# t0 = $t0\n");
+	print("# ualarm($n)\n");
 	Time::HiRes::ualarm($n); 1 while $alarmed == 0;
 	my $t1 = Time::HiRes::time();
-	note "t1 = $t1";
+	print("# t1 = $t1\n");
 	my $dt = $t1 - $t0;
-	note "dt = $dt";
+	print("# dt = $dt\n");
 	my $r = $dt / ($n/1e6);
-	note "r = $r";
+	print("# r = $r\n");
 	$ok =
 	    ($n < 1_000_000 || # Too much noise.
 	     ($r >= 0.8 && $r <= 1.6));
 	last if $ok;
 	my $nap = bellish(3, 15);
-	note sprintf "Retrying in %.1f seconds...\n", $nap;
+	printf("# Retrying in %.1f seconds...\n", $nap);
 	Time::HiRes::sleep($nap);
     }
-    ok $ok or note "ualarm($n) close enough";
+    ok $ok or print("# ualarm($n) close enough\n");
 }
 
 {
@@ -93,12 +93,12 @@ for my $n (100_000, 1_100_000, 2_200_000, 4_300_000) {
     } while $t1 - $t0 <= 0.3;
     my $got1 = Time::HiRes::ualarm(0);
 
-    note "t0 = $t0";
-    note "got0 = $got0";
-    note "t1 = $t1";
-    note "t1 - t0 = ", ($t1 - $t0);
-    note "got1 = $got1";
-    ok $got0 == 0 or note $got0;
+    print("# t0 = $t0\n");
+    print("# got0 = $got0\n");
+    print("# t1 = $t1\n");
+    printf("# t1 - t0 = %s\n", ($t1 - $t0));
+    print("# got1 = $got1\n");
+    ok $got0 == 0 or print("# $got0\n");
     SKIP: {
 	skip "alarm interval exceeded", 2 if $t1 - $t0 >= 0.5;
 	ok $got1 > 0;
@@ -106,7 +106,7 @@ for my $n (100_000, 1_100_000, 2_200_000, 4_300_000) {
     }
     ok $got1 < 300_000;
     my $got2 = Time::HiRes::ualarm(0);
-    ok $got2 == 0 or note $got2;
+    ok $got2 == 0 or print("# $got2\n");
 }
 
 1;

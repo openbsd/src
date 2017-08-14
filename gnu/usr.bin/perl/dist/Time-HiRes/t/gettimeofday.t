@@ -8,26 +8,26 @@ BEGIN {
     }
 }
 
-use Test::More 0.82 tests => 6;
+use Test::More tests => 6;
 use t::Watchdog;
 
 my @one = Time::HiRes::gettimeofday();
-note 'gettimeofday returned ', 0+@one, ' args';
+printf("# gettimeofday returned %d args\n", 0+@one);
 ok @one == 2;
-ok $one[0] > 850_000_000 or note "@one too small";
+ok $one[0] > 850_000_000 or print("# @one too small\n");
 
 sleep 1;
 
 my @two = Time::HiRes::gettimeofday();
 ok $two[0] > $one[0] || ($two[0] == $one[0] && $two[1] > $one[1])
-	or note "@two is not greater than @one";
+	or print("# @two is not greater than @one\n");
 
 my $f = Time::HiRes::time();
-ok $f > 850_000_000 or note "$f too small";
-ok $f - $two[0] < 2 or note "$f - $two[0] >= 2";
+ok $f > 850_000_000 or print("# $f too small\n");
+ok $f - $two[0] < 2 or print("# $f - $two[0] >= 2\n");
 
 my $r = [Time::HiRes::gettimeofday()];
 my $g = Time::HiRes::tv_interval $r;
-ok $g < 2 or note $g;
+ok $g < 2 or print("# $g\n");
 
 1;

@@ -1,6 +1,6 @@
 use strict;
 
-use Test::More 0.82 tests => 2;
+use Test::More tests => 2;
 use t::Watchdog;
 
 BEGIN { require_ok "Time::HiRes"; }
@@ -16,8 +16,8 @@ SKIP: {
     # (CORE::time() may be rounding down, up, or closest),
     # but allow 10% of slop.
     ok abs($s) / $n <= 1.10
-	or note "Time::HiRes::time() not close to CORE::time()";
-    note "s = $s, n = $n, s/n = ", abs($s)/$n;
+	or print("# Time::HiRes::time() not close to CORE::time()\n");
+    printf("# s = $s, n = $n, s/n = %s\n", abs($s)/$n);
 }
 
 1;

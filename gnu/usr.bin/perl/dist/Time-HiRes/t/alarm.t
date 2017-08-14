@@ -1,6 +1,6 @@
 use strict;
 
-use Test::More 0.82 tests => 10;
+use Test::More tests => 10;
 use t::Watchdog;
 
 BEGIN { require_ok "Time::HiRes"; }
@@ -29,12 +29,14 @@ SKIP: {
 
     my ($r, $i, $not, $ok);
 
+    $not = "";
+
     $r = [Time::HiRes::gettimeofday()];
     $i = 5;
     my $oldaction;
     if ($use_sigaction) {
 	$oldaction = new POSIX::SigAction;
-	note sprintf "sigaction tick, ALRM = %d", &POSIX::SIGALRM;
+	printf("# sigaction tick, ALRM = %d\n", &POSIX::SIGALRM);
 
 	# Perl's deferred signals may be too wimpy to break through
 	# a restartable select(), so use POSIX::sigaction if available.
@@ -44,7 +46,7 @@ SKIP: {
 			 $oldaction)
 	    or die "Error setting SIGALRM handler with sigaction: $!\n";
     } else {
-	note "SIG tick";
+	print("# SIG tick\n");
 	$SIG{ALRM} = "tick";
     }
 
@@ -56,8 +58,8 @@ SKIP: {
 	    Time::HiRes::alarm(0.3);
 	    select (undef, undef, undef, 3);
 	    my $ival = Time::HiRes::tv_interval ($r);
-	    note "Select returned! $i $ival";
-	    note abs($ival/3 - 1);
+	    print("# Select returned! $i $ival\n");
+	    printf("# %s\n", abs($ival/3 - 1));
 	    # Whether select() gets restarted after signals is
 	    # implementation dependent.  If it is restarted, we
 	    # will get about 3.3 seconds: 3 from the select, 0.3
@@ -86,7 +88,7 @@ SKIP: {
     sub tick {
 	$i--;
 	my $ival = Time::HiRes::tv_interval ($r);
-	note "Tick! $i $ival";
+	print("# Tick! $i $ival\n");
 	my $exp = 0.3 * (5 - $i);
 	if ($exp == 0) {
 	    $not = "tick: divisor became zero";
@@ -106,8 +108,8 @@ SKIP: {
 	Time::HiRes::alarm(0); # can't cancel usig %SIG
     }
 
+    print("# $not\n");
     ok !$not;
-    note $not || $ok;
 }
 
 SKIP: {
@@ -126,7 +128,7 @@ SKIP: {
     # http://groups.google.com/group/perl.perl5.porters/browse_thread/thread/adaffaaf939b042e/20dafc298df737f0%2320dafc298df737f0?sa=X&oi=groupsr&start=0&num=3
     # Perl changes [18765] and [18770], perl bug [perl #20920]
 
-    note "Finding delay loop...";
+    print("# Finding delay loop...\n");
 
     my $T = 0.01;
     my $DelayN = 1024;
@@ -137,7 +139,7 @@ SKIP: {
 	 for ($i = 0; $i < $DelayN; $i++) { }
 	 my $t1 = Time::HiRes::time();
 	 my $dt = $t1 - $t0;
-	 note "N = $DelayN, t1 = $t1, t0 = $t0, dt = $dt";
+	 print("# N = $DelayN, t1 = $t1, t0 = $t0, dt = $dt\n");
 	 last N if $dt > $T;
 	 $DelayN *= 2;
      } while (1);
@@ -169,7 +171,7 @@ SKIP: {
 
     $SIG{ALRM} = sub {
 	$a++;
-	note "Alarm $a - ", Time::HiRes::time();
+	printf("# Alarm $a - %s\n", Time::HiRes::time());
 	Time::HiRes::alarm(0) if $a >= $A; # Disarm the alarm.
 	$Delay->(2); # Try burning CPU at least for 2T seconds.
     }; 
@@ -204,18 +206,18 @@ SKIP: {
 	my $alrm = 0;
 	$SIG{ALRM} = sub { $alrm++ };
 	my $got = Time::HiRes::alarm(2.7);
-	ok $got == 0 or note $got;
+	ok $got == 0 or print("# $got\n");
 
 	my $t0 = Time::HiRes::time();
 	1 while Time::HiRes::time() - $t0 <= 1;
 
 	$got = Time::HiRes::alarm(0);
-	ok $got > 0 && $got < 1.8 or note $got;
+	ok $got > 0 && $got < 1.8 or print("# $got\n");
 
-	ok $alrm == 0 or note $alrm;
+	ok $alrm == 0 or print("# $alrm\n");
 
 	$got = Time::HiRes::alarm(0);
-	ok $got == 0 or note $got;
+	ok $got == 0 or print("# $got\n");
     }
 }
 
