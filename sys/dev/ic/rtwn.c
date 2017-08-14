@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.26 2017/07/08 14:26:23 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.27 2017/08/14 07:50:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -494,20 +494,20 @@ rtwn_efuse_read(struct rtwn_softc *sc, uint8_t *rom, size_t size)
 		    (reg & 0x1f) == 0x0f) {
 			tmp = (reg & 0xe0) >> 5;
 			reg = rtwn_efuse_read_1(sc, addr);
+			addr++;
 			if ((reg & 0x0f) != 0x0f)
 				off = ((reg & 0xf0) >> 1) | tmp;
-			addr++;
+			else
+				continue;
 		} else
 			off = reg >> 4;
 		msk = reg & 0xf;
 		for (i = 0; i < 4; i++) {
 			if (msk & (1 << i))
 				continue;
-			rom[off * 8 + i * 2 + 0] =
-			    rtwn_efuse_read_1(sc, addr);
+			rom[off * 8 + i * 2 + 0] = rtwn_efuse_read_1(sc, addr);
 			addr++;
-			rom[off * 8 + i * 2 + 1] =
-			    rtwn_efuse_read_1(sc, addr);
+			rom[off * 8 + i * 2 + 1] = rtwn_efuse_read_1(sc, addr);
 			addr++;
 		}
 	}
