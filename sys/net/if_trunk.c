@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.133 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.134 2017/08/14 08:31:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1491,7 +1491,6 @@ trunk_bcast_start(struct trunk_softc *tr, struct mbuf *m0)
 {
 	int			 active_ports = 0;
 	int			 errors = 0;
-	int			 ret;
 	struct trunk_port	*tp, *last = NULL;
 	struct mbuf		*m;
 
@@ -1504,13 +1503,11 @@ trunk_bcast_start(struct trunk_softc *tr, struct mbuf *m0)
 		if (last != NULL) {
 			m = m_copym(m0, 0, M_COPYALL, M_DONTWAIT);
 			if (m == NULL) {
-				ret = ENOBUFS;
 				errors++;
 				break;
 			}
 
-			ret = if_enqueue(last->tp_if, m);
-			if (ret != 0)
+			if (if_enqueue(last->tp_if, m) != 0)
 				errors++;
 		}
 		last = tp;
@@ -1520,12 +1517,11 @@ trunk_bcast_start(struct trunk_softc *tr, struct mbuf *m0)
 		return (ENOENT);
 	}
 
-	ret = if_enqueue(last->tp_if, m0);
-	if (ret != 0)
+	if (if_enqueue(last->tp_if, m0) != 0)
 		errors++;
 
 	if (errors == active_ports)
-		return (ret);
+		return (ENOBUFS);
 
 	return (0);
 }
