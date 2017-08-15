@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.sh,v 1.12 2014/07/05 07:18:33 jsg Exp $
+#	$OpenBSD: genassym.sh,v 1.13 2017/08/15 01:53:06 tedu Exp $
 #	$NetBSD: genassym.sh,v 1.9 1998/04/25 19:48:27 matthias Exp $
 
 #
@@ -38,12 +38,12 @@ else
 	ccode=0
 fi
 
-TMPC=`mktemp /tmp/genassym_c.XXXXXXXXXX` || exit 1
-TMP=`mktemp /tmp/genassym.XXXXXXXXXX` || {
-	rm -f ${TMPC}
-	exit 1
-}
-trap "rm -f $TMPC $TMP" 0 1 2 3 15
+WRKDIR=`mktemp -d /tmp/genassym_XXXXXXXXXX` || exit 1
+
+TMPC=${WRKDIR}/genassym.c
+TMP=${WRKDIR}/genassym
+
+trap "rm -rf $WRKDIR" 0 1 2 3 15
 
 $awk '
 BEGIN {
