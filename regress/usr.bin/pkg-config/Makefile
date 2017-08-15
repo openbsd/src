@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.54 2017/07/09 22:43:07 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.55 2017/08/15 00:23:44 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -85,7 +85,9 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		variables-2 \
 		variables-3 \
 		variables-4 \
-		variables-5
+		variables-5 \
+		filter-system-dirs-1 \
+		filter-system-dirs-2
 
 PKG_CONFIG?=	/usr/bin/pkg-config
 PCONFIG =	PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}
@@ -586,6 +588,18 @@ variables-5:
 	# Test --variable
 	@echo ' -lfoo-1' > ${WANT}
 	@${VPCONFIG} --libs variables
+	@diff -u ${WANT} ${GOT}
+
+filter-system-dirs-1:
+	# Test removing -I/usr/include as a system directory
+	@echo '-DFILTER' > ${WANT}
+	@${VPCONFIG} --cflags filter
+	@diff -u ${WANT} ${GOT}
+
+filter-system-dirs-2:
+	# Test removing -L/usr/lib as a system directory
+	@echo '-lfilter' > ${WANT}
+	@${VPCONFIG} --libs filter
 	@diff -u ${WANT} ${GOT}
 
 clean:
