@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.66 2017/08/14 17:20:59 jasper Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.67 2017/08/15 15:10:35 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -206,7 +206,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		} else {
 		}
 		vmr.vmr_id = vid.vid_id;
-		log_debug("%s: sending fd to vmctl", __func__);
+		log_debug("%s: sending fd to vmm", __func__);
 		proc_compose_imsg(ps, PROC_VMM, -1, imsg->hdr.type,
 		    imsg->hdr.peerid, imsg->fd, &vid, sizeof(vid));
 		break;
@@ -231,7 +231,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			    __func__);
 			res = ENOENT;
 			close(imsg->fd);
-			cmd = IMSG_VMDOP_SEND_VM_RESPONSE;
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 			break;
 		}
 		if (atomicio(read, imsg->fd, &vmc, sizeof(vmc)) !=
@@ -255,7 +255,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		} else {
 			vm->vm_received = 1;
 			config_setvm(ps, vm, imsg->hdr.peerid, vmc.vmc_uid);
-			log_debug("%s: sending fd to vmctl", __func__);
+			log_debug("%s: sending fd to vmm", __func__);
 			proc_compose_imsg(ps, PROC_VMM, -1,
 			    IMSG_VMDOP_RECEIVE_VM_END, vm->vm_vmid, imsg->fd,
 			    NULL, 0);

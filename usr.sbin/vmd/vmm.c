@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.71 2017/07/15 05:05:36 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.72 2017/08/15 15:10:35 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -263,6 +263,9 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		vm->vm_receive_fd = imsg->fd;
 		res = vmm_start_vm(imsg, &id);
+		/* Check if the ID can be mapped correctly */
+		if ((id = vm_id2vmid(id, NULL)) == 0)
+			res = ENOENT;
 		cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		break;
 	default:
