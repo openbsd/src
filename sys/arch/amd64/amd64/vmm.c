@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.164 2017/08/14 18:50:58 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.165 2017/08/15 15:54:41 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -167,6 +167,7 @@ int vmx_handle_inout(struct vcpu *);
 int svm_handle_hlt(struct vcpu *);
 int vmx_handle_hlt(struct vcpu *);
 int vmm_inject_ud(struct vcpu *);
+int vmm_inject_db(struct vcpu *);
 void vmx_handle_intr(struct vcpu *);
 void vmx_handle_intwin(struct vcpu *);
 void vmx_handle_misc_enable_msr(struct vcpu *);
@@ -4271,8 +4272,17 @@ svm_handle_exit(struct vcpu *vcpu)
 		return (EINVAL);
 	}
 
-	if (update_rip)
+	if (update_rip) {
 		vmcb->v_rip = vcpu->vc_gueststate.vg_rip;
+
+		if (rflags & PSL_T) {
+			if (vmm_inject_db(vcpu)) {
+				printf("%s: can't inject #DB exception to "
+				    "guest", __func__);
+				return (EINVAL);
+			}
+		}
+	}
 
 	/* Enable SVME in EFER (must always be set) */
 	vmcb->v_efer |= EFER_SVME;
@@ -4389,6 +4399,14 @@ vmx_handle_exit(struct vcpu *vcpu)
 			    __func__);
 			return (EINVAL);
 		}
+
+		if (rflags & PSL_T) {
+			if (vmm_inject_db(vcpu)) {
+				printf("%s: can't inject #DB exception to "
+				    "guest", __func__);
+				return (EINVAL);
+			}
+		}
 	}
 
 	return (ret);
@@ -4411,6 +4429,27 @@ vmm_inject_ud(struct vcpu *vcpu)
 	DPRINTF("%s: injecting #UD at guest %rip 0x%llx\n", __func__,
 	    vcpu->vc_gueststate.vg_rip);
 	vcpu->vc_event = VMM_EX_UD;
+	
+	return (0);
+}
+
+/*
+ * vmm_inject_db
+ *
+ * Injects a #DB exception into the guest VCPU.
+ *
+ * Parameters:
+ *  vcpu: vcpu to inject into
+ *
+ * Return values:
+ *  Always 0
+ */
+int
+vmm_inject_db(struct vcpu *vcpu)
+{
+	DPRINTF("%s: injecting #DB at guest %rip 0x%llx\n", __func__,
+	    vcpu->vc_gueststate.vg_rip);
+	vcpu->vc_event = VMM_EX_DB;
 	
 	return (0);
 }
