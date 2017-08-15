@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.210 2017/08/11 19:53:02 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.211 2017/08/15 06:08:52 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1517,32 +1517,6 @@ in6_matchlen(struct in6_addr *src, struct in6_addr *dst)
 		} else
 			match += 8;
 	return match;
-}
-
-int
-in6_are_prefix_equal(struct in6_addr *p1, struct in6_addr *p2, int len)
-{
-	int bytelen, bitlen;
-
-	/* sanity check */
-	if (0 > len || len > 128) {
-		log(LOG_ERR, "in6_are_prefix_equal: invalid prefix length(%d)\n",
-		    len);
-		return (0);
-	}
-
-	bytelen = len / 8;
-	bitlen = len % 8;
-
-	if (bcmp(&p1->s6_addr, &p2->s6_addr, bytelen))
-		return (0);
-	/* len == 128 is ok because bitlen == 0 then */
-	if (bitlen != 0 &&
-	    p1->s6_addr[bytelen] >> (8 - bitlen) !=
-	    p2->s6_addr[bytelen] >> (8 - bitlen))
-		return (0);
-
-	return (1);
 }
 
 void
