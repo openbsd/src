@@ -1,7 +1,6 @@
-/* $OpenBSD: uselocale.c,v 1.1 2017/08/10 14:45:42 schwarze Exp $ */
+/* $OpenBSD: uselocale.c,v 1.2 2017/08/15 23:46:51 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
- * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,93 +21,96 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
+/* Keep in sync with /usr/src/lib/libc/locale/rune.h. */
 #define	_LOCALE_NONE	 (locale_t)0
-#define _LOCALE_C	 (locale_t)1
-#define _LOCALE_UTF8	 (locale_t)2
-#define _LOCALE_BAD	 (locale_t)3
+#define	_LOCALE_C	 (locale_t)1
+#define	_LOCALE_UTF8	 (locale_t)2
+#define	_LOCALE_BAD	 (locale_t)3
 
-#define	SWITCH_SIGNAL	 1
-#define SWITCH_WAIT	 2
+/* Options for switch_thread() below. */
+#define	SWITCH_SIGNAL	 1	/* Call pthread_cond_signal(3). */
+#define	SWITCH_WAIT	 2	/* Call pthread_cond_timedwait(3). */
+
+/* Options for TESTFUNC(). */
+#define	TOPT_ERR	 (1 << 0)
+#define	TOPT_STR	 (1 << 1)
 
 /*
- * test helpers for __LINE__
+ * Generate one test function for a specific interface.
+ * Fn =		function name
+ * Ft =		function return type
+ * FUNCPARA =	function parameter list with types and names
+ * FUNCARGS =	function argument list, names only, no types
+ * Af =		format string to print the arguments
+ * Rf =		format string to print the return value
+ * Op =		options for the test function, see above
+ * line =	source code line number in this test file
+ * ee =		expected error number
+ * er =		expected return value
+ * ar =		actual return value
+ * errno =	actual error number (global)
  */
-#define test_newlocale(_e, _ee, _m, _l) \
-	_test_newlocale(_e, _ee, _m, _l, __LINE__)
-#define	test_duplocale(_e, _ee, _l) _test_duplocale(_e, _ee, _l, __LINE__)
-#define	test_uselocale(_e, _ee, _l) _test_uselocale(_e, _ee, _l, __LINE__)
-#define test_setlocale(_e, _c, _l) _test_setlocale(_e, _c, _l, __LINE__)
-#define test_MB_CUR_MAX(_e) _test_MB_CUR_MAX(_e, __LINE__)
-
-
-static void
-_test_newlocale(locale_t expected, int exp_err,
-    int mask, const char *locname, int line)
-{
-	locale_t result = newlocale(mask, locname, _LOCALE_NONE);
-
-	if (result != expected)
-		errx(1, "[%d] newlocale(%d, \"%s\")=\"%d\" [expected: \"%d\"]",
-		    line, mask, locname, (int)result, (int)expected);
-	if (errno != exp_err)
-		errx(1, "[%d] newlocale(%d, \"%s\") errno=\"%d\" [expected:"
-		    " \"%d\"]", line, mask, locname, errno, exp_err);
-	errno = 0;
+#define	TESTFUNC(Fn, Ft, Af, Rf, Op)					\
+static void								\
+_test_##Fn(int line, int ee, Ft er, FUNCPARA)				\
+{									\
+	Ft ar;								\
+	errno = 0;							\
+	ar = Fn(FUNCARGS);						\
+	if (Op & TOPT_STR) {						\
+		if (er == (Ft)NULL)					\
+			er = (Ft)"NULL";				\
+		if (ar == (Ft)NULL)					\
+			ar = (Ft)"NULL";				\
+	}								\
+	if (Op & TOPT_STR ? strcmp((const char *)er, (const char *)ar)	\
+	    : ar != er)							\
+		errx(1, "[%d] %s(" Af ")=" Rf " [exp: " Rf "]",		\
+		    line, #Fn, FUNCARGS, ar, er);			\
+	if (Op & TOPT_ERR && errno != ee)				\
+		errx(1, "[%d] %s(" Af ") errno=%d [exp: %d]",		\
+		    line, #Fn, FUNCARGS, errno, ee);			\
 }
 
-static void
-_test_duplocale(locale_t expected, int exp_err, locale_t oldloc, int line)
-{
-	locale_t result = duplocale(oldloc);
+/*
+ * Test functions for all tested interfaces.
+ */
+#define	FUNCPARA	int mask, const char *locname
+#define	FUNCARGS	mask, locname, _LOCALE_NONE
+TESTFUNC(newlocale, locale_t, "%d, %s, %p", "%p", TOPT_ERR)
 
-	if (result != expected)
-		errx(1, "[%d] duplocale(%d)=\"%d\" [expected: \"%d\"]",
-		    line, (int)oldloc, (int)result, (int)expected);
-	if (errno != exp_err)
-		errx(1, "[%d] duplocale(%d) errno=\"%d\" [expected:"
-		    " \"%d\"]", line, (int)oldloc, errno, exp_err);
-	errno = 0;
-}
+#define	FUNCPARA	locale_t locale
+#define	FUNCARGS	locale
+TESTFUNC(duplocale, locale_t, "%p", "%p", TOPT_ERR)
+TESTFUNC(uselocale, locale_t, "%p", "%p", TOPT_ERR)
 
-static void
-_test_uselocale(locale_t expected, int exp_err, locale_t newloc, int line)
-{
-	locale_t result = uselocale(newloc);
-
-	if (result != expected)
-		errx(1, "[%d] uselocale(%d)=\"%d\" [expected: \"%d\"]",
-		    line, (int)newloc, (int)result, (int)expected);
-	if (errno != exp_err)
-		errx(1, "[%d] uselocale(%d) errno=\"%d\" [expected:"
-		    " \"%d\"]", line, (int)newloc, errno, exp_err);
-	errno = 0;
-}
+#define	FUNCPARA	int category, char *locname
+#define	FUNCARGS	category, locname
+TESTFUNC(setlocale, const char *, "%d, %s", "%s", TOPT_STR)
 
 static void
-_test_setlocale(const char *expected, int category, char *locale, int line)
+_test_MB_CUR_MAX(int line, int ee, size_t ar)
 {
-	const char *result = setlocale(category, locale);
-
-	if (expected == NULL)
-		expected = "(null)";
-	if (result == NULL)
-		result = "(null)";
-	if (strcmp(expected, result) != 0)
-		errx(1, "[%d] setlocale(%d, \"%s\")=\"%s\" [expected: \"%s\"]",
-		    line, category, locale, result, expected);
-	errno = 0;
+	if (MB_CUR_MAX != ar)
+		errx(1, "[%d] MB_CUR_MAX=%zd [exp: %zd]",
+		    line, MB_CUR_MAX, ar);
 }
 
-static void
-_test_MB_CUR_MAX(size_t expected, int line)
-{
-	if (MB_CUR_MAX != expected)
-		errx(1, "[%d] MB_CUR_MAX=%ld [expected %ld]", 
-			line, MB_CUR_MAX, expected);
-}
+/*
+ * Test macros:
+ * TEST_R(funcname, er, arguments) if you expect errno == 0.
+ * TEST_ER(funcname, ee, er, arguments) otherwise.
+ */
+#define	TEST_R(Fn, ...)		_test_##Fn(__LINE__, 0, __VA_ARGS__)
+#define	TEST_ER(Fn, ...)	_test_##Fn(__LINE__, __VA_ARGS__)
 
+/*
+ * SWITCH_SIGNAL wakes the other thread.
+ * SWITCH_WAIT goes to sleep.
+ * Both can be combined.
+ * The step argument is used for error reporting only.
+ */
 static void
 switch_thread(int step, int flags)
 {
@@ -154,67 +156,67 @@ static void *
 child_func(void *arg)
 {
 	/* Test invalid newlocale(3) arguments. */
-	test_newlocale(_LOCALE_NONE, EINVAL, LC_CTYPE_MASK, NULL);
-	test_MB_CUR_MAX(1);
-	test_newlocale(_LOCALE_NONE, EINVAL, LC_ALL_MASK + 1, "C.UTF-8");
-	test_MB_CUR_MAX(1);
-	test_newlocale(_LOCALE_NONE, ENOENT, LC_COLLATE_MASK, "C.INV");
-	test_MB_CUR_MAX(1);
+	TEST_ER(newlocale, EINVAL, _LOCALE_NONE, LC_CTYPE_MASK, NULL);
+	TEST_R(MB_CUR_MAX, 1);
+	TEST_ER(newlocale, EINVAL, _LOCALE_NONE, LC_ALL_MASK + 1, "C.UTF-8");
+	TEST_R(MB_CUR_MAX, 1);
+	TEST_ER(newlocale, ENOENT, _LOCALE_NONE, LC_COLLATE_MASK, "C.INV");
+	TEST_R(MB_CUR_MAX, 1);
 	setenv("LC_TIME", "C.INV", 1);
-	test_newlocale(_LOCALE_NONE, ENOENT, LC_TIME_MASK, "");
+	TEST_ER(newlocale, ENOENT, _LOCALE_NONE, LC_TIME_MASK, "");
 	unsetenv("LC_TIME");
-	test_MB_CUR_MAX(1);
+	TEST_R(MB_CUR_MAX, 1);
 	setenv("LC_CTYPE", "C.INV", 1);
-	test_newlocale(_LOCALE_NONE, ENOENT, LC_CTYPE_MASK, "");
-	test_MB_CUR_MAX(1);
+	TEST_ER(newlocale, ENOENT, _LOCALE_NONE, LC_CTYPE_MASK, "");
+	TEST_R(MB_CUR_MAX, 1);
 
 	/* Test duplocale(3). */
-	test_duplocale(_LOCALE_NONE, EINVAL, _LOCALE_UTF8);
-	test_duplocale(_LOCALE_C, 0, _LOCALE_C);
-	test_duplocale(_LOCALE_C, 0, LC_GLOBAL_LOCALE);
+	TEST_ER(duplocale, EINVAL, _LOCALE_NONE, _LOCALE_UTF8);
+	TEST_R(duplocale, _LOCALE_C, _LOCALE_C);
+	TEST_R(duplocale, _LOCALE_C, LC_GLOBAL_LOCALE);
 
 	/* Test premature UTF-8 uselocale(3). */
-	test_uselocale(_LOCALE_NONE, EINVAL, _LOCALE_UTF8);
-	test_MB_CUR_MAX(1);
-	test_uselocale(LC_GLOBAL_LOCALE, 0, _LOCALE_NONE);
+	TEST_ER(uselocale, EINVAL, _LOCALE_NONE, _LOCALE_UTF8);
+	TEST_R(MB_CUR_MAX, 1);
+	TEST_R(uselocale, LC_GLOBAL_LOCALE, _LOCALE_NONE);
 
 	/* Test UTF-8 initialization. */
 	setenv("LC_CTYPE", "C.UTF-8", 1);
-	test_newlocale(_LOCALE_UTF8, 0, LC_CTYPE_MASK, "");
+	TEST_R(newlocale, _LOCALE_UTF8, LC_CTYPE_MASK, "");
 	unsetenv("LC_CTYPE");
-	test_MB_CUR_MAX(1);
-	test_duplocale(_LOCALE_UTF8, 0, _LOCALE_UTF8);
+	TEST_R(MB_CUR_MAX, 1);
+	TEST_R(duplocale, _LOCALE_UTF8, _LOCALE_UTF8);
 
 	/* Test invalid uselocale(3) argument. */
-	test_uselocale(_LOCALE_NONE, EINVAL, _LOCALE_BAD);
-	test_MB_CUR_MAX(1);
-	test_uselocale(LC_GLOBAL_LOCALE, 0, _LOCALE_NONE);
+	TEST_ER(uselocale, EINVAL, _LOCALE_NONE, _LOCALE_BAD);
+	TEST_R(MB_CUR_MAX, 1);
+	TEST_R(uselocale, LC_GLOBAL_LOCALE, _LOCALE_NONE);
 
 	/* Test switching the thread locale. */
-	test_uselocale(LC_GLOBAL_LOCALE, 0, _LOCALE_UTF8);
-	test_MB_CUR_MAX(4);
-	test_uselocale(_LOCALE_UTF8, 0, _LOCALE_NONE);
+	TEST_R(uselocale, LC_GLOBAL_LOCALE, _LOCALE_UTF8);
+	TEST_R(MB_CUR_MAX, 4);
+	TEST_R(uselocale, _LOCALE_UTF8, _LOCALE_NONE);
 
 	/* Test non-ctype newlocale(3). */
-	test_newlocale(_LOCALE_C, 0, LC_MESSAGES_MASK, "en_US.UTF-8");
+	TEST_R(newlocale, _LOCALE_C, LC_MESSAGES_MASK, "en_US.UTF-8");
 
 	/* Temporarily switch to the main thread. */
 	switch_thread(2, SWITCH_SIGNAL | SWITCH_WAIT);
 
 	/* Test displaying the global locale while a local one is set. */
-	test_setlocale("C/C.UTF-8/C/C/C/C", LC_ALL, NULL);
+	TEST_R(setlocale, "C/C.UTF-8/C/C/C/C", LC_ALL, NULL);
 
 	/* Test switching the thread locale back. */
-	test_MB_CUR_MAX(4);
-	test_duplocale(_LOCALE_UTF8, 0, LC_GLOBAL_LOCALE);
-	test_uselocale(_LOCALE_UTF8, 0, _LOCALE_C);
-	test_MB_CUR_MAX(1);
-	test_uselocale(_LOCALE_C, 0, _LOCALE_NONE);
+	TEST_R(MB_CUR_MAX, 4);
+	TEST_R(duplocale, _LOCALE_UTF8, LC_GLOBAL_LOCALE);
+	TEST_R(uselocale, _LOCALE_UTF8, _LOCALE_C);
+	TEST_R(MB_CUR_MAX, 1);
+	TEST_R(uselocale, _LOCALE_C, _LOCALE_NONE);
 
 	/* Test switching back to the global locale. */
-	test_uselocale(_LOCALE_C, 0, LC_GLOBAL_LOCALE);
-	test_MB_CUR_MAX(4);
-	test_uselocale(LC_GLOBAL_LOCALE, 0, _LOCALE_NONE);
+	TEST_R(uselocale, _LOCALE_C, LC_GLOBAL_LOCALE);
+	TEST_R(MB_CUR_MAX, 4);
+	TEST_R(uselocale, LC_GLOBAL_LOCALE, _LOCALE_NONE);
 
 	/* Hand control back to the main thread. */
 	switch_thread(4, SWITCH_SIGNAL);
@@ -243,13 +245,13 @@ main(void)
 	switch_thread(1, SWITCH_WAIT);
 
 	/* Check that the global locale is undisturbed. */
-	test_setlocale("C", LC_ALL, NULL);
-	test_MB_CUR_MAX(1);
+	TEST_R(setlocale, "C", LC_ALL, NULL);
+	TEST_R(MB_CUR_MAX, 1);
 
 	/* Test setting the globale locale. */
-	test_setlocale("C.UTF-8", LC_CTYPE, "C.UTF-8");
-	test_MB_CUR_MAX(4);
-	test_uselocale(LC_GLOBAL_LOCALE, 0, _LOCALE_NONE);
+	TEST_R(setlocale, "C.UTF-8", LC_CTYPE, "C.UTF-8");
+	TEST_R(MB_CUR_MAX, 4);
+	TEST_R(uselocale, LC_GLOBAL_LOCALE, _LOCALE_NONE);
 
 	/* Let the child do some more tests, then clean up. */
 	switch_thread(3, SWITCH_SIGNAL);
