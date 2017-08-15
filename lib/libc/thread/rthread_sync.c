@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.2 2017/08/15 06:38:41 guenther Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.3 2017/08/15 07:06:29 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -57,7 +57,7 @@ pthread_mutex_init(pthread_mutex_t *mutexp, const pthread_mutexattr_t *attr)
 
 	return (0);
 }
-DEF_STD(pthread_mutex_init);
+DEF_STRONG(pthread_mutex_init);
 
 int
 pthread_mutex_destroy(pthread_mutex_t *mutexp)
@@ -79,7 +79,7 @@ pthread_mutex_destroy(pthread_mutex_t *mutexp)
 	}
 	return (0);
 }
-DEF_STD(pthread_mutex_destroy);
+DEF_STRONG(pthread_mutex_destroy);
 
 static int
 _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait,
@@ -170,7 +170,7 @@ pthread_mutex_lock(pthread_mutex_t *p)
 {
 	return (_rthread_mutex_lock(p, 0, NULL));
 }
-DEF_STD(pthread_mutex_lock);
+DEF_STRONG(pthread_mutex_lock);
 
 int
 pthread_mutex_trylock(pthread_mutex_t *p)
@@ -235,7 +235,7 @@ pthread_mutex_unlock(pthread_mutex_t *mutexp)
 
 	return (0);
 }
-DEF_STD(pthread_mutex_unlock);
+DEF_STRONG(pthread_mutex_unlock);
 
 /*
  * condition variables
@@ -258,7 +258,7 @@ pthread_cond_init(pthread_cond_t *condp, const pthread_condattr_t *attr)
 
 	return (0);
 }
-DEF_STD(pthread_cond_init);
+DEF_STRONG(pthread_cond_init);
 
 int
 pthread_cond_destroy(pthread_cond_t *condp)
@@ -280,7 +280,7 @@ pthread_cond_destroy(pthread_cond_t *condp)
 
 	return (0);
 }
-DEF_STD(pthread_cond_destroy);
+DEF_STRONG(pthread_cond_destroy);
 
 int
 pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
@@ -573,7 +573,7 @@ pthread_cond_wait(pthread_cond_t *condp, pthread_mutex_t *mutexp)
 
 	return (0);
 }
-DEF_STD(pthread_cond_wait);
+DEF_STRONG(pthread_cond_wait);
 
 
 int
@@ -623,7 +623,7 @@ pthread_cond_signal(pthread_cond_t *condp)
 
 	return (0);
 }
-DEF_STD(pthread_cond_signal);
+DEF_STRONG(pthread_cond_signal);
 
 int
 pthread_cond_broadcast(pthread_cond_t *condp)
@@ -689,4 +689,4 @@ pthread_cond_broadcast(pthread_cond_t *condp)
 
 	return (0);
 }
-DEF_STD(pthread_cond_broadcast);
+DEF_STRONG(pthread_cond_broadcast);

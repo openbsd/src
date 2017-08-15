@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_tls.c,v 1.2 2017/08/15 06:38:41 guenther Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.3 2017/08/15 07:06:29 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -56,7 +56,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void*))
 
 	return (0);
 }
-DEF_STD(pthread_key_create);
+DEF_STRONG(pthread_key_create);
 
 int
 pthread_key_delete(pthread_key_t key)
@@ -135,7 +135,7 @@ pthread_getspecific(pthread_key_t key)
 
 	return (rs->data);
 }
-DEF_STD(pthread_getspecific);
+DEF_STRONG(pthread_getspecific);
 
 int
 pthread_setspecific(pthread_key_t key, const void *data)
@@ -152,7 +152,7 @@ pthread_setspecific(pthread_key_t key, const void *data)
 
 	return (0);
 }
-DEF_STD(pthread_setspecific);
+DEF_STRONG(pthread_setspecific);
 
 void
 _rthread_tls_destructors(pthread_t thread)
