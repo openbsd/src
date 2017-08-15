@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.63 2016/04/29 14:40:36 beck Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.64 2017/08/15 02:27:51 tedu Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -100,12 +100,12 @@ ndinitat(struct nameidata *ndp, u_long op, u_long flags,
     enum uio_seg segflg, int dirfd, const char *namep, struct proc *p)
 {
 	memset(ndp, 0, sizeof(*ndp));
-	(ndp)->ni_cnd.cn_nameiop = op;
-	(ndp)->ni_cnd.cn_flags = flags;
-	(ndp)->ni_segflg = segflg;
-	(ndp)->ni_dirfd = dirfd;
-	(ndp)->ni_dirp = namep;
-	(ndp)->ni_cnd.cn_proc = p;
+	ndp->ni_cnd.cn_nameiop = op;
+	ndp->ni_cnd.cn_flags = flags;
+	ndp->ni_segflg = segflg;
+	ndp->ni_dirfd = dirfd;
+	ndp->ni_dirp = namep;
+	ndp->ni_cnd.cn_proc = p;
 }
 
 /*
