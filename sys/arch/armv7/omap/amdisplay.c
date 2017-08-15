@@ -180,7 +180,7 @@ amdisplay_attach(struct device *parent, struct device *self, void *args)
 	struct wsemuldisplaydev_attach_args wsaa;
 	struct edid_info edid;
 	uint64_t pel_clk;
-	uint32_t irq, reg;
+	uint32_t reg;
 	uint8_t *edid_buf;
 	int stride, i = 0;
 
@@ -200,9 +200,8 @@ amdisplay_attach(struct device *parent, struct device *self, void *args)
 	    |  (0x2 << LCD_SYSCONFIG_IDLEMODE_SHAMT);
 	HWRITE4(sc, LCD_SYSCONFIG, reg);
 
-	irq = faa->fa_intr[0];
-	sc->sc_ih = arm_intr_establish(irq, IPL_BIO, amdisplay_intr, sc,
-	    DEVNAME(sc));
+	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_BIO,
+	    amdisplay_intr, sc, DEVNAME(sc));
 
 	printf("\n");
 
