@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.1 2017/08/15 06:13:24 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.2 2017/08/15 06:38:41 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -26,16 +26,15 @@
 #pragma weak _DYNAMIC
 #endif
 
-#include <stdlib.h>
-#include <unistd.h>
+#include <dlfcn.h>
+#include <errno.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <dlfcn.h>
 #include <tib.h>
-
-#include <pthread.h>
+#include <unistd.h>
 
 #include "cancel.h"		/* in libc/include */
 #include "thread_private.h"

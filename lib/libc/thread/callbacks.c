@@ -14,10 +14,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
 #include <signal.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "thread_private.h"
 
 void

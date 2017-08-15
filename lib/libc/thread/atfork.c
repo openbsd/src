@@ -1,4 +1,4 @@
-/*	$OpenBSD: atfork.c,v 1.2 2015/11/10 04:14:03 guenther Exp $ */
+/*	$OpenBSD: atfork.c,v 1.3 2017/08/15 06:38:41 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -31,8 +31,8 @@
  */
 
 #include <errno.h>
-#include <stdlib.h>
 #include <pthread.h>
+#include <stdlib.h>
 
 #include "thread_private.h"
 #include "atfork.h"

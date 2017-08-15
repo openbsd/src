@@ -1,11 +1,11 @@
-/* $OpenBSD: rthread_debug.c,v 1.1 2017/08/15 06:13:24 guenther Exp $ */
+/* $OpenBSD: rthread_debug.c,v 1.2 2017/08/15 06:38:41 guenther Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
 #include <pthread.h>
 #include <stdarg.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "rthread.h"

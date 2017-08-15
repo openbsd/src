@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_file.c,v 1.1 2017/08/15 06:13:24 guenther Exp $	*/
+/*	$OpenBSD: rthread_file.c,v 1.2 2017/08/15 06:38:41 guenther Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -37,11 +37,13 @@
  * level too.
  *
  */
+
+#include <sys/queue.h>
+#include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/queue.h>
-#include <pthread.h>
+
 #include "rthread.h"
 #include "rthread_cb.h"
 
