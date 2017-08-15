@@ -1,4 +1,4 @@
-#	$OpenBSD: Proc.pm,v 1.4 2016/05/03 19:13:04 bluhm Exp $
+#	$OpenBSD: Proc.pm,v 1.5 2017/08/15 04:11:20 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -43,7 +43,7 @@ END {
 sub new {
 	my $class = shift;
 	my $self = { @_ };
-	$self->{down} ||= $self->{alarm} ? "Alarm" : "Shutdown";
+	$self->{down} ||= $self->{alarm} ? "Alarm $class" : "Shutdown $class";
 	$self->{func} && ref($self->{func}) eq 'CODE'
 	    or croak "$class func not given";
 	$self->{logfile}
@@ -80,7 +80,7 @@ sub run {
 	print STDERR $self->{up}, "\n";
 	alarm($self->{alarm}) if $self->{alarm};
 	$self->{func}->($self);
-	print STDERR "Shutdown", "\n";
+	print STDERR "Shutdown ", ref($self), "\n";
 
 	IO::Handle::flush(\*STDOUT);
 	IO::Handle::flush(\*STDERR);
@@ -117,7 +117,7 @@ sub loggrep {
 		if ($self->{alarm} && $kid > 0 &&
 		    WIFSIGNALED($status) && WTERMSIG($status) == 14 ) {
 			# child killed by SIGALRM as expected
-			print {$self->{log}} "Alarm", "\n";
+			print {$self->{log}} "Alarm ", ref($self), "\n";
 		} elsif ($kid > 0 && $status != 0) {
 			# child terminated with failure
 			die ref($self), " child status: $status $code";

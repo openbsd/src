@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.5 2015/07/28 12:31:29 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.6 2017/08/15 04:11:20 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -55,10 +55,10 @@ sub write_datagram {
 		$self->{toport} = $port;
 		print STDERR "send to: $addr $port\n";
 
-		send(STDIN, $out, 0, $to)
+		send(STDOUT, $out, 0, $to)
 		    or die ref($self), " send to failed: $!";
 	} else {
-		send(STDIN, $out, 0)
+		send(STDOUT, $out, 0)
 		    or die ref($self), " send failed: $!";
 	}
 
@@ -96,6 +96,36 @@ sub read_datagram {
 	} else {
 		print STDERR "<<< $in";
 	}
+}
+
+sub write_read_datagram {
+	my $self = shift;
+	write_datagram($self);
+	read_datagram($self);
+}
+
+sub read_write_datagram {
+	my $self = shift;
+	read_datagram($self);
+	$self->{toaddr} = $self->{fromaddr};
+	$self->{toport} = $self->{fromport};
+	write_datagram($self);
+}
+
+sub read_write_packet {
+	my $self = shift;
+
+	my $packet;
+	read_datagram($self, \$packet);
+	my $hexin = unpack("H*", $packet);
+	print STDERR "<<< $hexin\n";
+
+	$packet =~ s/Client|Server/Packet/;
+	$self->{toaddr} = $self->{fromaddr};
+	$self->{toport} = $self->{fromport};
+	write_datagram($self, $packet);
+	my $hexout = unpack("H*", $packet);
+	print STDERR ">>> $hexout\n";
 }
 
 sub in_cksum {
@@ -184,15 +214,15 @@ sub read_icmp_echo {
 ########################################################################
 
 sub check_logs {
-	my ($c, $s, %args) = @_;
+	my ($c, $r, $s, %args) = @_;
 
 	return if $args{nocheck};
 
-	check_inout($c, $s, %args);
+	check_inout($c, $r, $s, %args);
 }
 
 sub check_inout {
-	my ($c, $s, %args) = @_;
+	my ($c, $r, $s, %args) = @_;
 
 	if ($args{client} && !$args{client}{nocheck}) {
 		my $out = $args{client}{out} || "Client";
@@ -202,13 +232,25 @@ sub check_inout {
 		$c->loggrep(qr/^<<< $in/) or die "no client input"
 		    unless $args{client}{noin};
 	}
+	if ($args{packet} && !$args{packet}{nocheck}) {
+		my $hex;
+		my $in = $args{packet}{in} || $args{packet}{noin}
+		    or die "no packet input regex";
+		$hex = unpack("H*", $in);
+		$r->loggrep(qr/Packet: <<< .*$hex/) or die "no packet input"
+		    unless $args{packet}{noin};
+		my $out = $args{packet}{out} || "Packet";
+		$hex = unpack("H*", $out);
+		$r->loggrep(qr/Packet: >>> .*$hex/) or die "no packet output"
+		    unless $args{packet}{noout};
+	}
 	if ($args{server} && !$args{server}{nocheck}) {
-		my $out = $args{server}{out} || "Server";
-		$s->loggrep(qr/^>>> $out/) or die "no server output"
-		    unless $args{server}{noout};
 		my $in = $args{server}{in} || "Client";
 		$s->loggrep(qr/^<<< $in/) or die "no server input"
 		    unless $args{server}{noin};
+		my $out = $args{server}{out} || "Server";
+		$s->loggrep(qr/^>>> $out/) or die "no server output"
+		    unless $args{server}{noout};
 	}
 }
 

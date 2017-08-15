@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.7 2016/11/15 16:00:50 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.8 2017/08/15 04:11:20 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -33,6 +33,7 @@ use Socket6;
 use Client;
 use Server;
 use Remote;
+use Packet;
 require 'funcs.pl';
 
 sub usage {
@@ -85,21 +86,21 @@ if (@ARGV == 5 && $mode eq "auto") {
 	usage();
 }
 
-my($c, $l, $r, $s, $logfile);
-my $divert	= $args{divert} || "to";
-my $local	= $divert eq "to" ? "client" : "server";
-my $remote	= $divert eq "to" ? "server" : "client";
+my $divert = $args{divert};
+my ($local, $remote) = ("client", "server");
+($local, $remote) = ($remote, $local) if $mode eq "divert";
+($local, $remote) = ($remote, $local) if $divert =~ /reply|out/;
+my ($srcaddr, $dstaddr)	= @ARGV[0,1];
+($srcaddr, $dstaddr) = ($dstaddr, $srcaddr) if $mode eq "divert";
+($srcaddr, $dstaddr) = ($dstaddr, $srcaddr) if $divert =~ /reply|out/;
+
+my ($logfile, $packetlog);
 if ($mode eq "divert") {
-	$local		= $divert eq "to" ? "server" : "client";
-	$remote		= $divert eq "to" ? "client" : "server";
 	$logfile	= dirname($0)."/remote.log";
-}
-my $srcaddr	= $ARGV[0];
-my $dstaddr	= $ARGV[1];
-if ($mode eq "divert" xor $divert eq "reply") {
-	($srcaddr, $dstaddr) = ($dstaddr, $srcaddr);
+	$packetlog	= dirname($0)."/packet.log";
 }
 
+my ($c, $l, $r, $s);
 if ($local eq "server") {
 	$l = $s = Server->new(
 	    %args,
@@ -108,7 +109,8 @@ if ($local eq "server") {
 	    af			=> $af,
 	    domain		=> $domain,
 	    protocol		=> $protocol,
-	    listenaddr		=> $mode ne "divert" ? $ARGV[0] :
+	    listenaddr		=>
+		$mode ne "divert" || $divert =~ /packet/ ? $ARGV[0] :
 		$af eq "inet" ? "127.0.0.1" : "::1",
 	    listenport		=> $serverport || $bindport,
 	    srcaddr		=> $srcaddr,
@@ -119,6 +121,7 @@ if ($mode eq "auto") {
 	$r = Remote->new(
 	    %args,
 	    opts		=> \%opts,
+	    down		=> $args{packet} && "Shutdown Packet",
 	    logfile		=> "$remote.log",
 	    testfile		=> $test,
 	    af			=> $af,
@@ -164,6 +167,33 @@ if ($mode eq "divert") {
 	};
 	copy($log, \*STDERR);
 
+	my ($p, $plog);
+	$p = Packet->new(
+	    %args,
+	    %{$args{packet}},
+	    logfile		=> $packetlog,
+	    af			=> $af,
+	    domain		=> $domain,
+	    bindport		=> 666,
+	) if $args{packet};
+
+	if ($p) {
+		open($plog, '<', $p->{logfile})
+		    or die "Remote packet log file open failed: $!";
+		$SIG{__DIE__} = sub {
+			die @_ if $^S;
+			copy($log, \*STDERR);
+			copy_prefix(ref $p, $plog, \*STDERR);
+			warn @_;
+			exit 255;
+		};
+		copy_prefix(ref $p, $plog, \*STDERR);
+		$p->run;
+		copy_prefix(ref $p, $plog, \*STDERR);
+		$p->up;
+		copy_prefix(ref $p, $plog, \*STDERR);
+	}
+
 	my @cmd = qw(pfctl -a regress -f -);
 	my $pf;
 	do { local $> = 0; open($pf, '|-', @cmd) }
@@ -172,15 +202,20 @@ if ($mode eq "divert") {
 		my $port = $protocol =~ /^(tcp|udp)$/ ?
 		    "port $s->{listenport}" : "";
 		my $divertport = $port || "port 1";  # XXX bad pf syntax
+		my $divertcommand = $divert =~ /packet/ ?
+		    "divert-packet port 666" :
+		    "divert-to $s->{listenaddr} $divertport";
 		print $pf "pass in log $af proto $protocol ".
-		    "from $ARGV[1] to $ARGV[0] $port ".
-		    "divert-to $s->{listenaddr} $divertport ".
+		    "from $ARGV[1] to $ARGV[0] $port $divertcommand ".
 		    "label regress\n";
-	} else {
+	}
+	if ($local eq "client") {
 		my $port = $protocol =~ /^(tcp|udp)$/ ?
 		    "port $ARGV[2]" : "";
+		my $divertcommand = $divert =~ /packet/ ?
+		    "divert-packet port 666" : "divert-reply";
 		print $pf "pass out log $af proto $protocol ".
-		    "from $c->{bindaddr} to $ARGV[1] $port divert-reply ".
+		    "from $c->{bindaddr} to $ARGV[1] $port $divertcommand ".
 		    "label regress\n";
 	}
 	close($pf) or die $! ?
@@ -200,6 +235,12 @@ if ($mode eq "divert") {
 	$l->down;
 	copy($log, \*STDERR);
 
+	if ($p) {
+		copy_prefix(ref $p, $plog, \*STDERR);
+		$p->down;
+		copy_prefix(ref $p, $plog, \*STDERR);
+	}
+
 	exit;
 }
 
@@ -208,7 +249,18 @@ $c->run->up if $c;
 $s->up if $s;
 
 $c->down if $c;
-$r->down if $r;
+# remote side has 20 seconds timeout, wait longer than that here
+$r->down(30) if $r;
 $s->down if $s;
 
-check_logs($c || $r, $s || $r, %args);
+check_logs($c || $r, $r, $s || $r, %args);
+
+sub copy_prefix {
+	my ($prefix, $src, $dst) = @_;
+
+	local $_;
+	while (defined($_ = <$src>)) {
+		chomp;
+		print $dst "$prefix: $_\n" if length;
+	}
+}

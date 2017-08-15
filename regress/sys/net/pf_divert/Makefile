@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2016/11/16 16:00:41 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.16 2017/08/15 04:11:20 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -51,6 +51,8 @@ regress:
 
 # Automatically generate regress targets from test cases in directory.
 
+PERLS =			Client.pm Packet.pm Proc.pm Remote.pm Server.pm \
+			funcs.pl remote.pl
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
 TARGETS ?=		inet-args-tcp-to inet6-args-tcp-to \
 			inet-args-tcp-reply inet6-args-tcp-reply \
@@ -84,7 +86,10 @@ TARGETS ?=		inet-args-tcp-to inet6-args-tcp-to \
 			inet-reuse-rip-reply-reply-to inet6-reuse-rip-reply-reply-to \
 			inet-reuse-rip-reply-to-to inet6-reuse-rip-reply-to-to \
 			inet-reuse-rip-reply-to-reply inet6-reuse-rip-reply-to-reply \
-			inet-reuse-rip-reply-to-reply-to inet6-reuse-rip-reply-to-reply-to
+			inet-reuse-rip-reply-to-reply-to inet6-reuse-rip-reply-to-reply-to \
+			inet-args-udp-packet-in inet-args-udp-packet-out \
+			inet-args-udp-packet-in-init inet-args-udp-packet-in-resp \
+			inet-args-udp-packet-out-init inet-args-udp-packet-out-resp
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 CLEANFILES +=		*.log *.port ktrace.out stamp-*
 
@@ -133,7 +138,11 @@ run-regress-${inet}-reuse-rip-to-reply-to:
 .for a in ${ARGS}
 run-regress-${inet}-${a:R}: ${a}
 	@echo '\n======== $@ ========'
+.if ${@:M*-packet-*}
+	time ${SUDO} SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}remote.pl -f ${inet} ${LOCAL_${addr}} ${REMOTE_${addr}} ${REMOTE_SSH} ${PERLPATH}${a}
+.else
 	time ${SUDO} SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}remote.pl -f ${inet} ${LOCAL_${addr}} ${FAKE_${addr}} ${REMOTE_SSH} ${PERLPATH}${a}
+.endif
 .endfor
 
 .for proto in tcp udp rip
@@ -176,7 +185,10 @@ run-regress-${inet}-reuse-${proto}-${first}-${second}:
 # make perl syntax check for all args files
 syntax: stamp-syntax
 
-stamp-syntax: ${ARGS}
+stamp-syntax: ${PERLS} ${ARGS}
+.for p in ${PERLS}
+	@perl -c ${PERLINC} ${PERLPATH}$p
+.endfor
 .for a in ${ARGS}
 	@perl -c ${PERLPATH}$a
 .endfor
