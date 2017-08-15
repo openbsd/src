@@ -1,6 +1,10 @@
-# $OpenBSD: Makefile.inc,v 1.2 2017/05/29 13:49:40 bluhm Exp $
+# $OpenBSD: Makefile.inc,v 1.3 2017/08/15 17:16:39 sf Exp $
 
-TESTS=		create read mmap
+PERL_REQUIRE != perl -e 'eval { require File::Slurp } or print $$@'
+
+TESTS1=		create read mmap
+TESTS2=		many_files_root many_files_subdir file_write
+TESTS= ${TESTS1} ${TESTS2}
 
 FILEOPS_MNT=	/mnt/regress-fileops
 FILEOPS_PROG=	${.OBJDIR}/../fileops
@@ -12,7 +16,7 @@ CLEANFILES=	diskimage stamp-*
 .PHONY: disk mount unconfig clean
 
 disk: unconfig
-	dd if=/dev/urandom of=diskimage bs=1M count=32
+	dd if=/dev/urandom of=diskimage bs=1M count=64
 	vnconfig vnd0 diskimage
 	${NEWFS} /dev/rvnd0c
 
@@ -34,12 +38,26 @@ stamp-setup:
 ${.OBJDIR}/../fileops:
 	${.MAKE} -C ${.CURDIR}/.. fileops
 
-.for t in ${TESTS}
+.for t in ${TESTS1}
 REGRESS_TARGETS+=	run-regress-${t}
 run-regress-${t}: stamp-setup ${.OBJDIR}/../fileops
 	@echo '\n======== $@ ========'
 	cd ${FILEOPS_MNT} && \
 	    ${FILEOPS_PROG} ${t} ${FILEOPS_MNT}/file
+.endfor
+
+.for t in ${TESTS2}
+REGRESS_TARGETS+=	run-regress-${t}
+.if ! empty(PERL_REQUIRE)
+run-regress-${t}:
+	@echo "${PERL_REQUIRE}"
+	@echo "Install the p5-File-Slurp package to run the fileops ${t} subtest"
+	@echo SKIPPED
+.else
+run-regress-${t}: stamp-setup
+	@echo '\n======== $@ ========'
+	perl ${.CURDIR}/../fileops2.pl ${t} ${FILEOPS_MNT}
+.endif
 .endfor
 
 REGRESS_TARGETS+=	run-regress-cleanup
