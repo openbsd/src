@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: ctfstrip,v 1.7 2017/08/14 20:09:17 jasper Exp $
+# $OpenBSD: ctfstrip,v 1.8 2017/08/15 15:48:10 jasper Exp $
 #
 # Copyright (c) 2017 Martin Pieuchot
 #
@@ -39,7 +39,7 @@ for arg in "$@"; do
 	-S)	STRIPFLAG=-g; shift; continue;;
 	esac
 	shift
-	set -- "$@" "$INFILE"
+	set -- "$@" "$arg"
 	INFILE="$arg"
 done
 
@@ -53,17 +53,17 @@ TMPFILE=$(mktemp /tmp/.ctf.XXXXXXXXXX)
 
 # Extract kernel version
 if [ -z "${INFILE##bsd*}" ]; then
-	LABEL=`what $INFILE | sed -n '$s/^   //p'`
+	LABEL=`what "$INFILE" | sed -n '$s/^   //p'`
 fi
 
 # If ctfstrip was passed a file that lacks useful debug sections, ctfconv will fail.
 # So try to run ctfconv and silently fallback to plain strip(1) if that failed.
-ctfconv -o ${TMPFILE} -l "${LABEL}" ${INFILE} 2> /dev/null
+ctfconv -o ${TMPFILE} -l "${LABEL}" "${INFILE}" 2> /dev/null
 
 if [ $? -eq 0 ]; then
-        objcopy --add-section .SUNW_ctf=${TMPFILE} ${STRIPFLAG} ${INFILE} ${OUTFILE}
+        objcopy --add-section .SUNW_ctf=${TMPFILE} ${STRIPFLAG} "${INFILE}" "${OUTFILE}"
 else
-        strip ${STRIPFLAG} $@ -o ${OUTFILE} ${INFILE}
+        strip ${STRIPFLAG} -o "${OUTFILE}" "$@"
 fi
 
 rm -f ${TMPFILE}
