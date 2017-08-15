@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.29 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.30 2017/08/15 00:26:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -33,7 +33,7 @@
 #include <machine/asm.h>
 
 	.text
-	.align  4
+	.align  16,0xcc
 	.globl  _dl_start
 	.type   _dl_start,@function
 _dl_start:
@@ -89,7 +89,7 @@ _dl_start:
 #define DL_SYSCALL(n) DL_SYSCALL2(n,n)
 #define DL_SYSCALL2(n,c)					\
 	.section	".text"					;\
-	.align		4					;\
+	.align		16,0xcc					;\
 	.global		__CONCAT(_dl_,n)			;\
 	.type		__CONCAT(_dl_,n),@function		;\
 __CONCAT(_dl_,n):						;\
@@ -100,7 +100,7 @@ __CONCAT(_dl_,n):						;\
 #define DL_SYSCALL(n) DL_SYSCALL2(n,n)
 #define DL_SYSCALL2(n,c)					\
 	.section	".text"					;\
-	.align		4					;\
+	.align		16,0xcc					;\
 	.global		__CONCAT(_dl_,n)			;\
 	.type		__CONCAT(_dl_,n),@function		;\
 __CONCAT(_dl_,n):						;\
@@ -111,7 +111,7 @@ __CONCAT(_dl_,n):						;\
 DL_SYSCALL(close)
 
 	.section	".text"
-	.align		4
+	.align		16,0xcc
 	.global _dl_exit
 	.type _dl_exit,@function
 _dl_exit:
@@ -145,7 +145,7 @@ DL_SYSCALL(thrkill)
 	ret
 
 
-	.align 4
+	.align 16,0xcc
 	.global _dl_bind_start
 	.type _dl_bind_start,@function
 _dl_bind_start:
