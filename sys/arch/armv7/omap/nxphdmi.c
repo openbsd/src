@@ -69,10 +69,10 @@
 #define	REGPAGE(reg)		(((reg) >> 8) & 0xff)
 #define	REGADDR(reg)		((reg) & 0xff)
 
-#define TDA_VERSION		MKREG(0x00, 0x00)
-#define TDA_MAIN_CNTRL0		MKREG(0x00, 0x01)
-#define 	MAIN_CNTRL0_SR		(1 << 0)
-#define TDA_VERSION_MSB		MKREG(0x00, 0x02)
+#define	TDA_VERSION		MKREG(0x00, 0x00)
+#define	TDA_MAIN_CNTRL0		MKREG(0x00, 0x01)
+#define		MAIN_CNTRL0_SR		(1 << 0)
+#define	TDA_VERSION_MSB		MKREG(0x00, 0x02)
 #define	TDA_SOFTRESET		MKREG(0x00, 0x0a)
 #define		SOFTRESET_I2C		(1 << 1)
 #define		SOFTRESET_AUDIO		(1 << 0)
@@ -103,7 +103,7 @@
 #define	TDA_VIP_CNTRL_5		MKREG(0x00, 0x25)
 #define		VIP_CNTRL_5_SP_CNT(n)	(((n) & 3) << 1)
 #define	TDA_MUX_VP_VIP_OUT	MKREG(0x00, 0x27)
-#define TDA_MAT_CONTRL		MKREG(0x00, 0x80)
+#define	TDA_MAT_CONTRL		MKREG(0x00, 0x80)
 #define		MAT_CONTRL_MAT_BP	(1 << 2)
 #define	TDA_VIDFORMAT		MKREG(0x00, 0xa0)
 #define	TDA_REFPIX_MSB		MKREG(0x00, 0xa1)
@@ -229,7 +229,7 @@
 #define		CEC_FRO_IM_CLK_CTRL_IMCLK_SEL	(1 << 1)
 
 /*  EDID reading */ 
-#define EDID_LENGTH		0x80
+#define	EDID_LENGTH		0x80
 #define	MAX_READ_ATTEMPTS	100
 
 /*  EDID fields */
@@ -246,12 +246,11 @@
 #define	EDID_RATIO_9x16		3
 
 /* NXP TDA19988 slave addrs. */
-#define TDA_HDMI		0x70
-#define TDA_CEC			0x34
+#define	TDA_HDMI		0x70
+#define	TDA_CEC			0x34
 
 /* debug/etc macros */
 #define DEVNAME(s)		((s)->sc_dev.dv_xname)
-//#ifdef I2CDEBUG
 #ifdef NXPTDA_DEBUG
 int nxphdmi_debug = 1;
 #define DPRINTF(n,s)	do { if ((n) <= nxphdmi_debug) printf s; } while (0)
@@ -300,7 +299,7 @@ nxphdmi_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (strcmp(ia->ia_name, "nxp,tda998x") == 0)
-	    return 1;
+		return 1;
 
 	return 0;
 }
@@ -319,11 +318,11 @@ nxphdmi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_curpage = 0xff;
 
 	if (!node) {
-	    printf(": not configured\n");
-	    return;
+		printf(": not configured\n");
+		return;
 	} else if ((pinctrl_byname(node, "default") == -1)) {
-	    printf(": not configured\n");
-	    return;
+		printf(": not configured\n");
+		return;
 	}
 
 	iic_acquire_bus(sc->sc_tag, 0);
@@ -335,9 +334,9 @@ nxphdmi_attach(struct device *parent, struct device *self, void *aux)
 	delay(1000);
 
 	if (!(nxphdmi_reset(sc)))
-	    DPRINTF(3,("%s: software reset OK\n", DEVNAME(sc)));
+		DPRINTF(3,("%s: software reset OK\n", DEVNAME(sc)));
 	else
-	    DPRINTF(3,("%s: software reset failed!\n", DEVNAME(sc)));
+		DPRINTF(3,("%s: software reset failed!\n", DEVNAME(sc)));
 
 	/*  PLL registers common configuration */
 	nxphdmi_write(sc, TDA_PLL_SERIAL_1, 0x00);
@@ -363,25 +362,25 @@ nxphdmi_attach(struct device *parent, struct device *self, void *aux)
 	version &= ~0x30;
 
 	if (!res) {
-	    DPRINTF(3,("%s: ", DEVNAME(sc)));
-	    printf(": rev 0x%04x\n", version);
+		DPRINTF(3,("%s: ", DEVNAME(sc)));
+		printf(": rev 0x%04x\n", version);
 	} else {
-	    DPRINTF(3,("%s: ", DEVNAME(sc)));
-	    printf(": failed to enable HDMI core, exiting...\n");
-	    iic_release_bus(sc->sc_tag, 0);
-	    return;
+		DPRINTF(3,("%s: ", DEVNAME(sc)));
+		printf(": failed to enable HDMI core, exiting...\n");
+		iic_release_bus(sc->sc_tag, 0);
+		return;
 	}
 
 	nxphdmi_write(sc, TDA_DDC_CTRL, DDC_ENABLE);
 	nxphdmi_write(sc, TDA_TX3, 39);
 
-    	nxphdmi_cec_write(sc, TDA_CEC_FRO_IM_CLK_CTRL,
+	nxphdmi_cec_write(sc, TDA_CEC_FRO_IM_CLK_CTRL,
 	    CEC_FRO_IM_CLK_CTRL_GHOST_DIS | CEC_FRO_IM_CLK_CTRL_IMCLK_SEL);
 
 	if (nxphdmi_read_edid(sc)) {
-	    DPRINTF(3,("%s: failed to read EDID bits, exiting!\n",
-		DEVNAME(sc)));
-	    return;
+		DPRINTF(3,("%s: failed to read EDID bits, exiting!\n",
+		    DEVNAME(sc)));
+		return;
 	}
 
 	/*  Default values for RGB 4:4:4 mapping */
@@ -529,7 +528,7 @@ nxphdmi_set_page(struct nxphdmi_softc *sc, uint8_t page)
 	uint8_t sendbuf[] = { TDA_CURPAGE_ADDR, page };
 
 	if (sc->sc_curpage == page)
-	    return ret;
+		return ret;
 
 	if ((ret = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, TDA_HDMI,
 	    &sendbuf, sizeof(sendbuf), NULL, 0, 0))) {
@@ -563,17 +562,17 @@ nxphdmi_read_edid(struct nxphdmi_softc *sc)
 	nxphdmi_write(sc, TDA_EDID_CTRL, 0);
 
 	for (; i < MAX_READ_ATTEMPTS; i++) {
-	    nxphdmi_read(sc, TDA_INT_FLAGS_2, &reg);
-	    if (reg & INT_FLAGS_2_EDID_BLK_RD) {
-		DPRINTF(3,("%s: EDID-ready IRQ fired\n", DEVNAME(sc)));
-		break;
-	    }
+		nxphdmi_read(sc, TDA_INT_FLAGS_2, &reg);
+		if (reg & INT_FLAGS_2_EDID_BLK_RD) {
+			DPRINTF(3,("%s: EDID-ready IRQ fired\n", DEVNAME(sc)));
+			break;
+		}
 	}
 
 	if (i == MAX_READ_ATTEMPTS) {
-	    printf("%s: no display detected\n", DEVNAME(sc));
-	    ret = ENXIO;
-	    return ret;
+		printf("%s: no display detected\n", DEVNAME(sc));
+		ret = ENXIO;
+		return ret;
 	}
 
 	nxphdmi_set_page(sc, 0x09);
@@ -581,12 +580,12 @@ nxphdmi_read_edid(struct nxphdmi_softc *sc)
 	reg = 0x00;
 	DPRINTF(1,("%s: ------------- EDID -------------", DEVNAME(sc)));
 	for (i = 0; i < EDID_LENGTH; i++) {
-	    iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, TDA_HDMI, &reg, 1,
-		&sc->sc_edid[i], 1, 0);
-	    if (!(i % 16))
-		DPRINTF(1,("\n%s: ", DEVNAME(sc)));
-	    DPRINTF(1,("%02x", sc->sc_edid[i]));
-	    reg++;
+		iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, TDA_HDMI, &reg, 1,
+		    &sc->sc_edid[i], 1, 0);
+		if (!(i % 16))
+			DPRINTF(1,("\n%s: ", DEVNAME(sc)));
+		DPRINTF(1,("%02x", sc->sc_edid[i]));
+		reg++;
 	}
 	DPRINTF(1,("\n%s: --------------------------------\n", DEVNAME(sc)));
 
@@ -641,7 +640,7 @@ nxphdmi_init_encoder(struct nxphdmi_softc *sc, struct videomode *mode)
 	ref_pix = hs_pix_start + 3;
 
 	if (mode->flags & VID_HSKEW)
-	    ref_pix += mode->hsync_end - mode->hsync_start;
+		ref_pix += mode->hsync_end - mode->hsync_start;
 
 	if ((mode->flags & VID_INTERLACE) == 0) {
 		ref_line = 1 + mode->vsync_start - mode->vdisplay;
@@ -770,10 +769,10 @@ nxphdmi_get_edid(uint8_t *buf, int buflen)
 	struct nxphdmi_softc *sc = nxphdmi_cd.cd_devs[0];
 
 	if (buflen < EDID_LENGTH || sc->sc_edid == NULL)
-	    return -1;
+		return -1;
 
 	for (i = 0; i < EDID_LENGTH; i++)
-	    buf[i] = sc->sc_edid[i];
+		buf[i] = sc->sc_edid[i];
 
 	return ret;
 }
