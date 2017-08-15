@@ -46,11 +46,11 @@ int lcd_dbg_thresh = 20;
 
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
 
-#define LCD_MAX_PELCLK 170000	/* KHz */
-#define LCD_MASTER_OSC 24000000 /* Hz */
-#define LCD_M1_MAX     2048
-#define LCD_M2_MAX     31
-#define LCD_N_MAX      128
+#define LCD_MAX_PELCLK	170000		/* KHz */
+#define LCD_MASTER_OSC	24000000	/* Hz */
+#define LCD_M1_MAX	2048
+#define LCD_M2_MAX	31
+#define LCD_N_MAX	128
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -69,9 +69,9 @@ struct amdisplay_softc {
 	void			*sc_ih;
 
 	int			sc_flags;
-#define LCD_RESET_PENDING (1 << 0)
-#define LCD_MODE_COMPAT	  (1 << 1)
-#define LCD_MODE_ALLOC	  (1 << 2)
+#define LCD_RESET_PENDING	(1 << 0)
+#define LCD_MODE_COMPAT		(1 << 1)
+#define LCD_MODE_ALLOC		(1 << 2)
 
 	struct edid_info	*sc_edid;
 	struct videomode	*sc_active_mode;
@@ -89,35 +89,35 @@ struct amdisplay_softc {
 	struct wsscreen_descr	*sc_scrlist[1];
 };
 
-int  amdisplay_match(struct device *, void *, void *);
-void amdisplay_attach(struct device *, struct device *, void *);
-int  amdisplay_detach(struct device *, int);
-int  amdisplay_activate(struct device *, int);
-int  amdisplay_intr(void *);
+int	amdisplay_match(struct device *, void *, void *);
+void	amdisplay_attach(struct device *, struct device *, void *);
+int	amdisplay_detach(struct device *, int);
+int	amdisplay_activate(struct device *, int);
+int	amdisplay_intr(void *);
 
-int     amdisplay_ioctl(void *, u_long, caddr_t, int, struct proc *);
-paddr_t amdisplay_mmap(void *, off_t, int);
-int     amdisplay_alloc_screen(void *, const struct wsscreen_descr *,
-	void **, int *, int *, long *);
+int	amdisplay_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	amdisplay_mmap(void *, off_t, int);
+int	amdisplay_alloc_screen(void *, const struct wsscreen_descr *,
+	    void **, int *, int *, long *);
 
-int  amdisplay_setup_dma(struct amdisplay_softc *);
-void amdisplay_conf_crt_timings(struct amdisplay_softc *);
-void amdisplay_calc_freq(uint64_t);
+int	amdisplay_setup_dma(struct amdisplay_softc *);
+void	amdisplay_conf_crt_timings(struct amdisplay_softc *);
+void	amdisplay_calc_freq(uint64_t);
 
 struct wsdisplay_accessops amdisplay_accessops = {
 	.ioctl = amdisplay_ioctl,
 	.mmap = amdisplay_mmap,
 	.alloc_screen = amdisplay_alloc_screen,
-	.free_screen =	rasops_free_screen,
-	.show_screen = 	rasops_show_screen,
-	.getchar = 	rasops_getchar,
-	.load_font = 	rasops_load_font,
-	.list_font = 	rasops_list_font,
+	.free_screen = rasops_free_screen,
+	.show_screen = rasops_show_screen,
+	.getchar = rasops_getchar,
+	.load_font = rasops_load_font,
+	.list_font = rasops_list_font,
 };
 
 struct cfattach amdisplay_ca = {
 	sizeof(struct amdisplay_softc), amdisplay_match, amdisplay_attach,
-	    amdisplay_detach
+	amdisplay_detach
 };
 
 struct cfdriver amdisplay_cd = {
@@ -148,12 +148,12 @@ dumpregs(struct amdisplay_softc *sc)
 	preg(LCD_LCDDMA_CTRL, str(AMDISPLAY_LCDDMA_CTRL), sc);
 
 	/* accessing these regs is liable to occur during CPU lockout period */
-	#if 0
+#if 0
 	preg(LCD_LCDDMA_FB0_BASE, str(AMDISPLAY_LCDDMA_FB0_BASE), sc);
 	preg(LCD_LCDDMA_FB0_CEILING, str(AMDISPLAY_LCDDMA_FB0_CEILING), sc);
 	preg(LCD_LCDDMA_FB1_BASE, str(AMDISPLAY_LCDDMA_FB1_BASE), sc);
 	preg(LCD_LCDDMA_FB1_CEILING, str(AMDISPLAY_LCDDMA_FB1_CEILING), sc);
-	#endif
+#endif
 
 	preg(LCD_SYSCONFIG, str(AMDISPLAY_SYSCONFIG), sc);
 	preg(LCD_IRQSTATUS_RAW, str(AMDISPLAY_IRQSTATUS_RAW), sc);
@@ -228,12 +228,12 @@ amdisplay_attach(struct device *parent, struct device *self, void *args)
 
 	/* determine max supported resolution our clock signal can handle */
 	for (; i < edid.edid_nmodes - 1; i++) {
-	    if (edid.edid_modes[i].dot_clock < LCD_MAX_PELCLK
-		&& edid.edid_modes[i].dot_clock > pel_clk) {
-		pel_clk = edid.edid_modes[i].dot_clock;
-		memcpy(sc->sc_active_mode, &edid.edid_modes[i],
-		    sizeof(struct videomode));
-	    }
+		if (edid.edid_modes[i].dot_clock < LCD_MAX_PELCLK &&
+		    edid.edid_modes[i].dot_clock > pel_clk) {
+			pel_clk = edid.edid_modes[i].dot_clock;
+			memcpy(sc->sc_active_mode, &edid.edid_modes[i],
+			    sizeof(struct videomode));
+		}
 	}
 
 	i = 0;
@@ -248,35 +248,35 @@ amdisplay_attach(struct device *parent, struct device *self, void *args)
 
 	/* configure DMA framebuffer */
 	if (amdisplay_setup_dma(sc)) {
-	    printf("%s: couldn't allocate DMA framebuffer\n", DEVNAME(sc));
-	    free(edid_buf, M_DEVBUF, EDID_LENGTH);
-	    amdisplay_detach(self, 0);
-	    return;
+		printf("%s: couldn't allocate DMA framebuffer\n", DEVNAME(sc));
+		free(edid_buf, M_DEVBUF, EDID_LENGTH);
+		amdisplay_detach(self, 0);
+		return;
 	}
 
 	/* setup rasops */
 	stride = sc->sc_active_mode->hdisplay * sc->sc_active_depth / 8;
 
-	sc->sc_ro.ri_depth  = sc->sc_active_depth;
-	sc->sc_ro.ri_width  = sc->sc_active_mode->hdisplay;
+	sc->sc_ro.ri_depth = sc->sc_active_depth;
+	sc->sc_ro.ri_width = sc->sc_active_mode->hdisplay;
 	sc->sc_ro.ri_height = sc->sc_active_mode->vdisplay;
 	sc->sc_ro.ri_stride = stride;
-	sc->sc_ro.ri_bits   = sc->sc_fb0;
-	
-	sc->sc_ro.ri_rpos   = 0;
-	sc->sc_ro.ri_rnum   = 5;
-	sc->sc_ro.ri_gpos   = 5;
-	sc->sc_ro.ri_gnum   = 6;
-	sc->sc_ro.ri_bpos   = 11;
-	sc->sc_ro.ri_bnum   = 5;
-	sc->sc_ro.ri_hw     = sc;
-	sc->sc_ro.ri_flg    = RI_CENTER | RI_VCONS | RI_WRONLY |
-			      RI_CLEAR | RI_FULLCLEAR;
+	sc->sc_ro.ri_bits = sc->sc_fb0;
+
+	sc->sc_ro.ri_rpos = 0;
+	sc->sc_ro.ri_rnum = 5;
+	sc->sc_ro.ri_gpos = 5;
+	sc->sc_ro.ri_gnum = 6;
+	sc->sc_ro.ri_bpos = 11;
+	sc->sc_ro.ri_bnum = 5;
+	sc->sc_ro.ri_hw = sc;
+	sc->sc_ro.ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY |
+	    RI_CLEAR | RI_FULLCLEAR;
 
 	if (rasops_init(&sc->sc_ro, 200, 200)) {
-	    printf("%s: no rasops\n", DEVNAME(sc));
-	    amdisplay_detach(self, 0);
-	    return;
+		printf("%s: no rasops\n", DEVNAME(sc));
+		amdisplay_detach(self, 0);
+		return;
 	}
 
 	/* ensure controller is off */
@@ -378,13 +378,13 @@ amdisplay_detach(struct device *self, int flags)
 	struct amdisplay_softc *sc = (struct amdisplay_softc *)self;
 
 	if (sc->sc_edid)
-	    free(sc->sc_edid, M_DEVBUF, sizeof(struct edid_info));
+		free(sc->sc_edid, M_DEVBUF, sizeof(struct edid_info));
 
 	if (ISSET(sc->sc_flags, LCD_MODE_ALLOC))
-	    free(sc->sc_active_mode, M_DEVBUF, sizeof(struct videomode));
+		free(sc->sc_active_mode, M_DEVBUF, sizeof(struct videomode));
 
 	if (!sc->sc_fb0)
-	    return 0;
+		return 0;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_fb0_dma, 0, sc->sc_fb_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
@@ -409,39 +409,39 @@ amdisplay_intr(void *arg)
 	DPRINTF(25, ("%s: intr 0x%08x\n", DEVNAME(sc), reg));
 
 	if (ISSET(reg, LCD_IRQ_PL)) {
-	    DPRINTF(10, ("%s: palette loaded, irq: 0x%08x\n",
-		DEVNAME(sc), reg));
-	    HCLR4(sc, LCD_RASTER_CTRL, LCD_RASTER_CTRL_LCDEN);
-	    delay(100);
-	    HCLR4(sc, LCD_RASTER_CTRL, LCD_RASTER_CTRL_PALMODE);
-	    HSET4(sc, LCD_RASTER_CTRL, 0x02 << LCD_RASTER_CTRL_PALMODE_SHAMT);
-	    HSET4(sc, LCD_RASTER_CTRL, LCD_RASTER_CTRL_LCDEN);
-	} if (ISSET(reg, LCD_IRQ_FUF)) { 
-	    DPRINTF(15, ("%s: FIFO underflow\n", DEVNAME(sc)));
-	} if (ISSET(reg, LCD_IRQ_SYNC)) {
-	    sc->sc_flags |= LCD_RESET_PENDING;
-	    DPRINTF(18, ("%s: sync lost\n", DEVNAME(sc)));
-	} if (ISSET(reg, LCD_IRQ_RR_DONE)) { 
-	    DPRINTF(21, ("%s: frame done\n", DEVNAME(sc)));
-	    HWRITE4(sc, LCD_LCDDMA_FB0, sc->sc_fb0_dma_segs[0].ds_addr);
-	    HWRITE4(sc, LCD_LCDDMA_FB0_CEIL, (sc->sc_fb0_dma_segs[0].ds_addr
-		+ sc->sc_fb_size) - 1);
-	} if (ISSET(reg, LCD_IRQ_EOF0)) {
-	    DPRINTF(21, ("%s: framebuffer 0 done\n", DEVNAME(sc)));
-	} if (ISSET(reg, LCD_IRQ_EOF1)) {
-	    DPRINTF(21, ("%s: framebuffer 1 done\n", DEVNAME(sc)));
-	} if (ISSET(reg, LCD_IRQ_DONE)) {
-	    if (ISSET(sc->sc_flags, LCD_RESET_PENDING)) {
-		HWRITE4(sc, LCD_IRQSTATUS, 0xFFFFFFFF);
-		HSET4(sc, LCD_CLKC_RESET, LCD_CLKC_RESET_MAIN_RST);
-		delay(10);
-		HCLR4(sc, LCD_CLKC_RESET, LCD_CLKC_RESET_MAIN_RST);
+		DPRINTF(10, ("%s: palette loaded, irq: 0x%08x\n",
+		    DEVNAME(sc), reg));
+		HCLR4(sc, LCD_RASTER_CTRL, LCD_RASTER_CTRL_LCDEN);
+		delay(100);
+		HCLR4(sc, LCD_RASTER_CTRL, LCD_RASTER_CTRL_PALMODE);
+		HSET4(sc, LCD_RASTER_CTRL, 0x02 << LCD_RASTER_CTRL_PALMODE_SHAMT);
 		HSET4(sc, LCD_RASTER_CTRL, LCD_RASTER_CTRL_LCDEN);
-		sc->sc_flags &= ~LCD_RESET_PENDING;
-	    }
-	    DPRINTF(15, ("%s: last frame done\n", DEVNAME(sc)));
+	} if (ISSET(reg, LCD_IRQ_FUF)) { 
+		DPRINTF(15, ("%s: FIFO underflow\n", DEVNAME(sc)));
+	} if (ISSET(reg, LCD_IRQ_SYNC)) {
+		sc->sc_flags |= LCD_RESET_PENDING;
+		DPRINTF(18, ("%s: sync lost\n", DEVNAME(sc)));
+	} if (ISSET(reg, LCD_IRQ_RR_DONE)) { 
+		DPRINTF(21, ("%s: frame done\n", DEVNAME(sc)));
+		HWRITE4(sc, LCD_LCDDMA_FB0, sc->sc_fb0_dma_segs[0].ds_addr);
+		HWRITE4(sc, LCD_LCDDMA_FB0_CEIL, (sc->sc_fb0_dma_segs[0].ds_addr
+		    + sc->sc_fb_size) - 1);
+	} if (ISSET(reg, LCD_IRQ_EOF0)) {
+		DPRINTF(21, ("%s: framebuffer 0 done\n", DEVNAME(sc)));
+	} if (ISSET(reg, LCD_IRQ_EOF1)) {
+		DPRINTF(21, ("%s: framebuffer 1 done\n", DEVNAME(sc)));
+	} if (ISSET(reg, LCD_IRQ_DONE)) {
+		if (ISSET(sc->sc_flags, LCD_RESET_PENDING)) {
+			HWRITE4(sc, LCD_IRQSTATUS, 0xFFFFFFFF);
+			HSET4(sc, LCD_CLKC_RESET, LCD_CLKC_RESET_MAIN_RST);
+			delay(10);
+			HCLR4(sc, LCD_CLKC_RESET, LCD_CLKC_RESET_MAIN_RST);
+			HSET4(sc, LCD_RASTER_CTRL, LCD_RASTER_CTRL_LCDEN);
+			sc->sc_flags &= ~LCD_RESET_PENDING;
+		}
+		DPRINTF(15, ("%s: last frame done\n", DEVNAME(sc)));
 	} if (ISSET(reg, LCD_IRQ_ACB)) {
-	    DPRINTF(15, ("%s: AC bias event\n", DEVNAME(sc)));
+		DPRINTF(15, ("%s: AC bias event\n", DEVNAME(sc)));
 	}
 
 	HWRITE4(sc, LCD_IRQ_END, 0);
@@ -455,7 +455,7 @@ amdisplay_setup_dma(struct amdisplay_softc *sc)
 	bus_size_t bsize;
 
 	bsize = (sc->sc_active_mode->hdisplay * sc->sc_active_mode->vdisplay
-	      * sc->sc_active_depth) >> 3;
+	    * sc->sc_active_depth) >> 3;
 
 	sc->sc_fb_size = bsize;
 	sc->sc_fb_dma_nsegs = 1;
@@ -504,9 +504,9 @@ amdisplay_conf_crt_timings(struct amdisplay_softc *sc)
 	vbp = (m->vtotal - m->vsync_end);
 	vfp = (m->vsync_start - m->vdisplay);
 	vsw = (m->vsync_end - m->vsync_start) - 1;
-	
+
 	height = m->vdisplay - 1;
-	width  = m->hdisplay - 1;
+	width = m->hdisplay - 1;
 
 	/* Horizontal back porch */
 	timing0 |= (hbp & 0xff) << LCD_RASTER_TIMING_0_HBP_SHAMT;
@@ -539,9 +539,9 @@ amdisplay_conf_crt_timings(struct amdisplay_softc *sc)
 	timing2 |= (0xff << LCD_RASTER_TIMING_2_ACBI_SHAMT);
 
 	if (!ISSET(m->flags, VID_NHSYNC))
-	    timing2 |= LCD_RASTER_TIMING_2_IHS;
+		timing2 |= LCD_RASTER_TIMING_2_IHS;
 	if (!ISSET(m->flags, VID_NVSYNC))
-	    timing2 |= LCD_RASTER_TIMING_2_IVS;
+		timing2 |= LCD_RASTER_TIMING_2_IVS;
 
 	HWRITE4(sc, LCD_RASTER_TIMING_0, timing0);
 	HWRITE4(sc, LCD_RASTER_TIMING_1, timing1);
@@ -555,16 +555,16 @@ amdisplay_calc_freq(uint64_t freq)
 
 	min_delta = freq;
 	for (i = 1; i < LCD_M1_MAX; i++) {
-	    for (j = 1; j < LCD_N_MAX; j++) {
-		delta = abs(freq - i * (LCD_MASTER_OSC / j));
-		if (delta < min_delta) {
-		    mul = i;
-		    div = j;
-		    min_delta = delta;
+		for (j = 1; j < LCD_N_MAX; j++) {
+			delta = abs(freq - i * (LCD_MASTER_OSC / j));
+			if (delta < min_delta) {
+				mul = i;
+				div = j;
+				min_delta = delta;
+			}
+			if (min_delta == 0)
+				break;
 		}
-		if (min_delta == 0)
-		    break;
-	    }
 	}
 	div--;
 
@@ -615,7 +615,6 @@ amdisplay_ioctl(void *sconf, u_long cmd, caddr_t data, int flat, struct proc *p)
 		break;
 	default:
 		return -1;
-
 	}
 
 	return 0;
@@ -628,7 +627,7 @@ amdisplay_mmap(void *sconf, off_t off, int prot)
 	struct amdisplay_softc *sc = ri->ri_hw;
 
 	if (off < 0 || off >= sc->sc_fb_size)
-	    return -1;
+		return -1;
 
 	return bus_dmamem_mmap(sc->sc_dmat, &sc->sc_fb0_dma_segs[0],
 	    sc->sc_fb_dma_nsegs, off, prot, BUS_DMA_COHERENT);
@@ -636,8 +635,7 @@ amdisplay_mmap(void *sconf, off_t off, int prot)
 
 int
 amdisplay_alloc_screen(void *sconf, const struct wsscreen_descr *type,
-	void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, long *attrp)
 {
 	return rasops_alloc_screen(sconf, cookiep, curxp, curyp, attrp);
 }
-

@@ -131,7 +131,7 @@
 #define LCD_IRQ_RR_DONE (1 << 1)
 #define LCD_IRQ_DONE    (1 << 0)
 
-/* EDID reading */ 
+/* EDID reading */
 #define EDID_LENGTH     0x80
 
 /* phandle for pin muxing */
