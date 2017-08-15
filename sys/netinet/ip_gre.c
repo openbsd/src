@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.65 2017/05/30 07:50:37 mpi Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.66 2017/08/15 17:47:15 bluhm Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -424,9 +424,7 @@ gre_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			if (inp)
 				ina_dst = &inp->inp_laddr;
 		} else if (nam) {
-			sin4 = mtod(nam, struct sockaddr_in *);
-			if (nam->m_len == sizeof(struct sockaddr_in) &&
-			    sin4->sin_family == AF_INET)
+			if (in_nam2sin(nam, &sin4) == 0)
 				ina_dst = &sin4->sin_addr;
 		}
 		if (ina_dst != NULL &&

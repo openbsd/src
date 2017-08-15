@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.152 2017/06/26 09:32:32 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.153 2017/08/15 17:47:15 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -219,42 +219,34 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * Send initial segment on connection.
 	 */
 	case PRU_CONNECT:
-		switch (mtod(nam, struct sockaddr *)->sa_family) {
-		case AF_INET: {
-			struct in_addr *addr =
-			    &mtod(nam, struct sockaddr_in *)->sin_addr;
-
-			if ((addr->s_addr == INADDR_ANY) ||
-			    (addr->s_addr == INADDR_BROADCAST) ||
-			    IN_MULTICAST(addr->s_addr) ||
-			    in_broadcast(*addr, inp->inp_rtableid)) {
-				error = EINVAL;
-				break;
-			}
-
-			error = in_pcbconnect(inp, nam);
-			break;
-		}
 #ifdef INET6
-		case AF_INET6: {
-			struct in6_addr *addr6 =
-			    &mtod(nam, struct sockaddr_in6 *)->sin6_addr;
+		if (inp->inp_flags & INP_IPV6) {
+			struct sockaddr_in6 *sin6;
 
-			if (IN6_IS_ADDR_UNSPECIFIED(addr6) ||
-			    IN6_IS_ADDR_MULTICAST(addr6)) {
+			if ((error = in6_nam2sin6(nam, &sin6)))
+				break;
+			if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) ||
+			    IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
 				error = EINVAL;
 				break;
 			}
-
 			error = in6_pcbconnect(inp, nam);
-			break;
-		}
+		} else
 #endif /* INET6 */
-		default:
-			error = EAFNOSUPPORT;
-			break;
-		}
+		{
+			struct sockaddr_in *sin;
 
+			if ((error = in_nam2sin(nam, &sin)))
+				break;
+			if ((sin->sin_addr.s_addr == INADDR_ANY) ||
+			    (sin->sin_addr.s_addr == INADDR_BROADCAST) ||
+			    IN_MULTICAST(sin->sin_addr.s_addr) ||
+			    in_broadcast(sin->sin_addr, inp->inp_rtableid)) {
+				error = EINVAL;
+				break;
+			}
+			error = in_pcbconnect(inp, nam);
+		}
 		if (error)
 			break;
 

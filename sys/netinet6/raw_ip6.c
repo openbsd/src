@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.116 2017/08/11 19:53:02 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.117 2017/08/15 17:47:15 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -659,36 +659,31 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_SEND:
 	{
-		struct sockaddr_in6 tmp;
-		struct sockaddr_in6 *dst;
+		struct sockaddr_in6 dst;
 
 		/* always copy sockaddr to avoid overwrites */
+		memset(&dst, 0, sizeof(dst));
+		dst.sin6_family = AF_INET6;
+		dst.sin6_len = sizeof(dst);
 		if (so->so_state & SS_ISCONNECTED) {
 			if (nam) {
 				error = EISCONN;
 				break;
 			}
-			/* XXX */
-			bzero(&tmp, sizeof(tmp));
-			tmp.sin6_family = AF_INET6;
-			tmp.sin6_len = sizeof(struct sockaddr_in6);
-			memcpy(&tmp.sin6_addr, &in6p->inp_faddr6,
-			    sizeof(struct in6_addr));
-			dst = &tmp;
+			dst.sin6_addr = in6p->inp_faddr6;
 		} else {
+			struct sockaddr_in6 *addr6;
+
 			if (nam == NULL) {
 				error = ENOTCONN;
 				break;
 			}
-			if (nam->m_len != sizeof(tmp)) {
-				error = EINVAL;
+			if ((error = in6_nam2sin6(nam, &addr6)))
 				break;
-			}
-
-			tmp = *mtod(nam, struct sockaddr_in6 *);
-			dst = &tmp;
+			dst.sin6_addr = addr6->sin6_addr;
+			dst.sin6_scope_id = addr6->sin6_scope_id;
 		}
-		error = rip6_output(m, so, sin6tosa(dst), control);
+		error = rip6_output(m, so, sin6tosa(&dst), control);
 		m = NULL;
 		break;
 	}
