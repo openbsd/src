@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.55 2017/08/15 00:23:44 jasper Exp $
+#	$OpenBSD: Makefile,v 1.56 2017/08/15 01:22:05 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -87,7 +87,8 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		variables-4 \
 		variables-5 \
 		filter-system-dirs-1 \
-		filter-system-dirs-2
+		filter-system-dirs-2 \
+		filter-system-dirs-3
 
 PKG_CONFIG?=	/usr/bin/pkg-config
 PCONFIG =	PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}
@@ -598,8 +599,14 @@ filter-system-dirs-1:
 
 filter-system-dirs-2:
 	# Test removing -L/usr/lib as a system directory
-	@echo '-lfilter' > ${WANT}
+	@echo ' -lfilter' > ${WANT}
 	@${VPCONFIG} --libs filter
+	@diff -u ${WANT} ${GOT}
+
+filter-system-dirs-3:
+	# Test removing -L/usr/lib as a system directory (static)
+	@echo ' -lfilter -lprivate-filter' > ${WANT}
+	@${VPCONFIG} --static --libs filter
 	@diff -u ${WANT} ${GOT}
 
 clean:
