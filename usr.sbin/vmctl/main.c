@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2017/07/15 05:05:36 pd Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2017/08/15 15:51:54 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -414,7 +414,7 @@ parse_disk(struct parse_result *res, char *word)
 }
 
 int
-parse_vmid(struct parse_result *res, char *word)
+parse_vmid(struct parse_result *res, char *word, int needname)
 {
 	const char	*error;
 	uint32_t	 id;
@@ -425,35 +425,13 @@ parse_vmid(struct parse_result *res, char *word)
 	}
 	id = strtonum(word, 0, UINT32_MAX, &error);
 	if (error == NULL) {
-		res->id = id;
-		res->name = NULL;
-	} else {
-		if (strlen(word) >= VMM_MAX_NAME_LEN) {
-			warnx("name too long");
+		if (needname) {
+			warnx("invalid vm name");
 			return (-1);
+		} else {
+			res->id = id;
+			res->name = NULL;
 		}
-		res->id = 0;
-		if ((res->name = strdup(word)) == NULL)
-			errx(1, "strdup");
-	}
-
-	return (0);
-}
-
-int
-parse_vmname(struct parse_result *res, char *word)
-{
-	const char	*error;
-	uint32_t	 id;
-
-	if (word == NULL) {
-		warnx("missing vmid argument");
-		return (-1);
-	}
-	id = strtonum(word, 0, UINT32_MAX, &error);
-	if (error == NULL) {
-		warnx("invalid vm name");
-		return (-1);
 	} else {
 		if (strlen(word) >= VMM_MAX_NAME_LEN) {
 			warnx("name too long");
@@ -512,7 +490,7 @@ int
 ctl_status(struct parse_result *res, int argc, char *argv[])
 {
 	if (argc == 2) {
-		if (parse_vmid(res, argv[1]) == -1)
+		if (parse_vmid(res, argv[1], 0) == -1)
 			errx(1, "invalid id: %s", argv[1]);
 	} else if (argc > 2)
 		ctl_usage(res->ctl);
@@ -587,7 +565,7 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 	if (argc < 2)
 		ctl_usage(res->ctl);
 
-	if (parse_vmid(res, argv[1]) == -1)
+	if (parse_vmid(res, argv[1], 0) == -1)
 		errx(1, "invalid id: %s", argv[1]);
 
 	argc--;
@@ -653,7 +631,7 @@ int
 ctl_stop(struct parse_result *res, int argc, char *argv[])
 {
 	if (argc == 2) {
-		if (parse_vmid(res, argv[1]) == -1)
+		if (parse_vmid(res, argv[1], 0) == -1)
 			errx(1, "invalid id: %s", argv[1]);
 	} else if (argc != 2)
 		ctl_usage(res->ctl);
@@ -665,7 +643,7 @@ int
 ctl_console(struct parse_result *res, int argc, char *argv[])
 {
 	if (argc == 2) {
-		if (parse_vmid(res, argv[1]) == -1)
+		if (parse_vmid(res, argv[1], 0) == -1)
 			errx(1, "invalid id: %s", argv[1]);
 	} else if (argc != 2)
 		ctl_usage(res->ctl);
@@ -677,7 +655,7 @@ int
 ctl_pause(struct parse_result *res, int argc, char *argv[])
 {
 	if (argc == 2) {
-		if (parse_vmid(res, argv[1]) == -1)
+		if (parse_vmid(res, argv[1], 0) == -1)
 			errx(1, "invalid id: %s", argv[1]);
 	} else if (argc != 2)
 		ctl_usage(res->ctl);
@@ -689,7 +667,7 @@ int
 ctl_unpause(struct parse_result *res, int argc, char *argv[])
 {
 	if (argc == 2) {
-		if (parse_vmid(res, argv[1]) == -1)
+		if (parse_vmid(res, argv[1], 0) == -1)
 			errx(1, "invalid id: %s", argv[1]);
 	} else if (argc != 2)
 		ctl_usage(res->ctl);
@@ -703,7 +681,7 @@ ctl_send(struct parse_result *res, int argc, char *argv[])
 	if (pledge("stdio unix sendfd", NULL) == -1)
 		err(1, "pledge");
 	if (argc == 2) {
-		if (parse_vmid(res, argv[1]) == -1)
+		if (parse_vmid(res, argv[1], 0) == -1)
 			errx(1, "invalid id: %s", argv[1]);
 	} else if (argc != 2)
 		ctl_usage(res->ctl);
@@ -717,7 +695,7 @@ ctl_receive(struct parse_result *res, int argc, char *argv[])
 	if (pledge("stdio unix sendfd", NULL) == -1)
 		err(1, "pledge");
 	if (argc == 2) {
-		if (parse_vmname(res, argv[1]) == -1)
+		if (parse_vmid(res, argv[1], 1) == -1)
 			errx(1, "invalid id: %s", argv[1]);
 	} else if (argc != 2)
 		ctl_usage(res->ctl);

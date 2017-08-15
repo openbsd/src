@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.16 2017/07/15 05:05:36 pd Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.17 2017/08/15 15:51:54 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -73,8 +73,7 @@ int	 parse_ifs(struct parse_result *, char *, int);
 int	 parse_network(struct parse_result *, char *);
 int	 parse_size(struct parse_result *, char *, long long);
 int	 parse_disk(struct parse_result *, char *);
-int	 parse_vmid(struct parse_result *, char *);
-int	 parse_vmname(struct parse_result *, char *);
+int	 parse_vmid(struct parse_result *, char *, int);
 void	 parse_free(struct parse_result *);
 int	 parse(int, char *[]);
 __dead void
