@@ -1,4 +1,4 @@
-/* $OpenBSD: uselocale.c,v 1.4 2017/08/16 13:23:56 schwarze Exp $ */
+/* $OpenBSD: uselocale.c,v 1.5 2017/08/16 13:52:50 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -264,6 +264,14 @@ child_func(void *arg)
 	TEST_ER(uselocale, EINVAL, _LOCALE_NONE, _LOCALE_BAD);
 	TEST_R(MB_CUR_MAX, 1);
 	TEST_R(uselocale, LC_GLOBAL_LOCALE, _LOCALE_NONE);
+	TEST_R(nl_langinfo, "US-ASCII", CODESET);
+	TEST_R(nl_langinfo_l, "UTF-8", CODESET, _LOCALE_UTF8);
+	TEST_R(iswalpha, 0, 0x00E9);
+	TEST_R(iswalpha_l, 1, 0x00E9, _LOCALE_UTF8);
+	TEST_R(towupper, 0x00E9, 0x00E9);
+	TEST_R(towupper_l, 0x00C9, 0x00E9, _LOCALE_UTF8);
+	TEST_R(wcscasecmp, *s1 - *s2, s1, s2);
+	TEST_R(wcscasecmp_l, 0, s1, s2, _LOCALE_UTF8);
 
 	/* Test switching the thread locale. */
 	TEST_R(uselocale, LC_GLOBAL_LOCALE, _LOCALE_UTF8);
@@ -375,6 +383,12 @@ child_func(void *arg)
 		errx(1, "child: main clobbered strerror_l");
 	free(selc);
 
+	/* Check that the C locale works even while all is set to UTF-8. */
+	TEST_R(nl_langinfo_l, "US-ASCII", CODESET, _LOCALE_C);
+	TEST_R(iswalpha_l, 0, 0x00E9, _LOCALE_C);
+	TEST_R(towupper_l, 0x00E9, 0x00E9, _LOCALE_C);
+	TEST_R(wcscasecmp_l, *s1 - *s2, s1, s2, _LOCALE_C);
+
 	/* Test displaying the global locale while a local one is set. */
 	TEST_R(setlocale, "C/C.UTF-8/C/C/C/C", LC_ALL, NULL);
 
@@ -385,10 +399,26 @@ child_func(void *arg)
 	TEST_R(MB_CUR_MAX, 1);
 	TEST_R(uselocale, _LOCALE_C, _LOCALE_NONE);
 
+	/* Check that UTF-8 works even with a C thread locale. */
+	TEST_R(nl_langinfo, "US-ASCII", CODESET);
+	TEST_R(nl_langinfo_l, "UTF-8", CODESET, _LOCALE_UTF8);
+	TEST_R(iswalpha, 0, 0x0153);
+	TEST_R(iswalpha_l, 1, 0x0153, _LOCALE_UTF8);
+	TEST_R(towupper, 0x0153, 0x0153);
+	TEST_R(towupper_l, 0x0152, 0x0153, _LOCALE_UTF8);
+	TEST_R(wcsncasecmp, *s3 - *s4, s3, s4, 2);
+	TEST_R(wcsncasecmp_l, 0, s3, s4, 2, _LOCALE_UTF8);
+
 	/* Test switching back to the global locale. */
 	TEST_R(uselocale, _LOCALE_C, LC_GLOBAL_LOCALE);
 	TEST_R(MB_CUR_MAX, 4);
 	TEST_R(uselocale, LC_GLOBAL_LOCALE, _LOCALE_NONE);
+
+	/* Check that the global locale takes effect even in a thread. */
+	TEST_R(nl_langinfo, "UTF-8", CODESET);
+	TEST_R(iswalpha, 1, 0x0153);
+	TEST_R(towupper, 0x0152, 0x0153);
+	TEST_R(wcscasecmp, 0, s1, s2);
 
 	/* Hand control back to the main thread. */
 	switch_thread(4, SWITCH_SIGNAL);
@@ -420,6 +450,11 @@ main(void)
 	/* Check that the global locale is undisturbed. */
 	TEST_R(setlocale, "C", LC_ALL, NULL);
 	TEST_R(MB_CUR_MAX, 1);
+
+	/* Check that *_l(3) works without any locale installed. */
+	TEST_R(nl_langinfo_l, "UTF-8", CODESET, _LOCALE_UTF8);
+	TEST_R(iswalpha_l, 1, 0x00E9, _LOCALE_UTF8);
+	TEST_R(towupper_l, 0x00C9, 0x00E9, _LOCALE_UTF8);
 
 	/* Test setting the globale locale. */
 	TEST_R(setlocale, "C.UTF-8", LC_CTYPE, "C.UTF-8");
