@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.798 2017/08/02 11:10:48 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.799 2017/08/16 11:46:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -77,11 +77,11 @@ struct tmuxproc;
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-/* Bell option values. */
-#define BELL_NONE 0
-#define BELL_ANY 1
-#define BELL_CURRENT 2
-#define BELL_OTHER 3
+/* Alert option values. */
+#define ALERT_NONE 0
+#define ALERT_ANY 1
+#define ALERT_CURRENT 2
+#define ALERT_OTHER 3
 
 /* Visual option values. */
 #define VISUAL_OFF 0
