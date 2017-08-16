@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.126 2017/05/08 20:24:03 patrick Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.127 2017/08/16 14:19:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -743,6 +743,8 @@ pfr_validate_addr(struct pfr_addr *ad)
 		return (-1);
 	if (ad->pfra_fback)
 		return (-1);
+	if (ad->pfra_type >= PFRKE_MAX)
+		return (-1);
 	return (0);
 }
 
@@ -822,6 +824,9 @@ pfr_create_kentry(struct pfr_addr *ad)
 {
 	struct pfr_kentry_all	*ke;
 
+	if (ad->pfra_type >= PFRKE_MAX)
+		panic("unknown pfra_type %d", ad->pfra_type);
+
 	ke = pool_get(&pfr_kentry_pl[ad->pfra_type], PR_NOWAIT | PR_ZERO);
 	if (ke == NULL)
 		return (NULL);
@@ -843,9 +848,6 @@ pfr_create_kentry(struct pfr_addr *ad)
 			ke->pfrke_rkif = pfi_kif_get(ad->pfra_ifname);
 		if (ke->pfrke_rkif)
 			pfi_kif_ref(ke->pfrke_rkif, PFI_KIF_REF_ROUTE);
-		break;
-	default:
-		panic("unknown pfrke_type %d", ke->pfrke_type);
 		break;
 	}
 
