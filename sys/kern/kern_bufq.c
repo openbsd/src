@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.31 2015/08/28 00:03:53 deraadt Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.32 2017/08/16 17:52:17 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -78,7 +78,7 @@ bufq_init(struct bufq *bq, int type)
 {
 	u_int hi = BUFQ_HI, low = BUFQ_LOW;
 
-	if (type > BUFQ_HOWMANY)
+	if (type >= BUFQ_HOWMANY)
 		panic("bufq_init: type %i unknown", type);
 
 	/*
