@@ -1,4 +1,6 @@
-.\" Copyright (c) 2017 Ian Sutton <ian@ce.gl>$
+.\"	$OpenBSD: amdisplay.4,v 1.2 2017/08/16 05:51:46 jmc Exp $
+.\"
+.\" Copyright (c) 2017 Ian Sutton <ian@ce.gl>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2017 $
+.Dd $Mdocdate: August 16 2017 $
 .Dt AMDISPLAY 4 armv7
 .Os
 .Sh NAME
@@ -29,10 +31,10 @@ The
 driver supports the LCD controller integrated in Texas Instruments' line of
 AM335x SoCs.
 The LCDC reads a framebuffer from memory via DMA and scans it out
-at the proper frequency to suit a display (along with the nessecary
-hsync/vsync/etc signals) to a PHY transmitter.
-The BeagleBone Black uses
-NXP/Freescale's TDA19988 HDMI transmitter which is additionally supported by the
+at the proper frequency to suit a display (along with the neccesary
+hsync/vsync/etc. signals) to a PHY transmitter.
+The BeagleBone Black uses NXP/Freescale's TDA19988 HDMI transmitter,
+which is additionally supported by the
 .Nm nxphdmi
 driver.
 .Sh SEE ALSO
@@ -42,9 +44,8 @@ driver.
 .Sh HISTORY
 The
 .Nm
-driver does not appear in
-.Ox 6.1
-currently.
+driver first appeared in
+.Ox 6.2 .
 .Sh AUTHORS
 .An -nosplit
 The
@@ -55,19 +56,21 @@ The
 .Nm nxphdmi
 driver was written by
 .An Oleksandr Tymoshenko Aq Mt gonzo@freebsd.org
-and later ported to OpenBSD.
+and later ported to
+.Ox .
 .Sh CAVEATS
 On the BeagleBone Black, the LCDC and onboard eMMC NAND chip share the same set
 of pads such that only one can be wired and used at a time.
-If you wish to boot from or use the onboard storage, you must disable
+To boot from or use the onboard storage, disable
 .Nm
 via
 .Xr config 8
-in your kernel.
+in the kernel.
 .Pp
-Display must be attached at boot time, otherwise
+A display must be attached at boot time, otherwise
 .Nm
 will fail to configure.
+.Pp
 Hotplugging is not supported.
 .Pp
-Only 16 bit color depth is supported due to a silicon bug.
+Only 16-bit color depth is supported due to a silicon bug.
