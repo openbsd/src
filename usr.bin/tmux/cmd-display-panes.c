@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.19 2017/04/22 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.20 2017/08/16 12:12:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -37,8 +37,8 @@ const struct cmd_entry cmd_display_panes_entry = {
 	.name = "display-panes",
 	.alias = "displayp",
 
-	.args = { "t:", 0, 1 },
-	.usage = CMD_TARGET_CLIENT_USAGE,
+	.args = { "d:t:", 0, 1 },
+	.usage = "[-d duration] " CMD_TARGET_CLIENT_USAGE,
 
 	.flags = CMD_AFTERHOOK,
 	.exec = cmd_display_panes_exec
@@ -49,6 +49,9 @@ cmd_display_panes_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args	*args = self->args;
 	struct client	*c;
+	struct session	*s;
+	u_int		 delay;
+	char		*cause;
 
 	if ((c = cmd_find_client(item, args_get(args, 't'), 0)) == NULL)
 		return (CMD_RETURN_ERROR);
@@ -61,8 +64,18 @@ cmd_display_panes_exec(struct cmd *self, struct cmdq_item *item)
 		c->identify_callback_data = xstrdup(args->argv[0]);
 	else
 		c->identify_callback_data = xstrdup("select-pane -t '%%'");
+	s = c->session;
 
-	server_client_set_identify(c);
+	if (args_has(args, 'd')) {
+		delay = args_strtonum(args, 'd', 0, UINT_MAX, &cause);
+		if (cause != NULL) {
+			cmdq_error(item, "delay %s", cause);
+			free(cause);
+			return (CMD_RETURN_ERROR);
+		}
+	} else
+		delay = options_get_number(s->options, "display-panes-time");
+	server_client_set_identify(c, delay);
 
 	return (CMD_RETURN_NORMAL);
 }
