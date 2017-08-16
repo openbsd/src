@@ -1,4 +1,4 @@
-/* $OpenBSD: uselocale.c,v 1.3 2017/08/16 01:40:30 schwarze Exp $ */
+/* $OpenBSD: uselocale.c,v 1.4 2017/08/16 13:23:56 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <langinfo.h>
@@ -22,6 +23,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 #include <wctype.h>
 
 /* Keep in sync with /usr/src/lib/libc/locale/rune.h. */
@@ -99,6 +101,16 @@ TESTFUNC(nl_langinfo, const char *, "%ld", "%s", TOPT_STR)
 #define	FUNCARGS	item, locale
 TESTFUNC(nl_langinfo_l, const char *, "%ld, %p", "%s", TOPT_STR)
 
+#define	FUNCPARA	int c
+#define	FUNCARGS	c
+TESTFUNC(isalpha, int, "0x%.2x", "%d", 0)
+TESTFUNC(tolower, int, "0x%.2x", "0x%.2x", 0)
+
+#define	FUNCPARA	int c, locale_t locale
+#define	FUNCARGS	c, locale
+TESTFUNC(isalpha_l, int, "0x%.2x, %p", "%d", 0)
+TESTFUNC(tolower_l, int, "0x%.2x, %p", "0x%.2x", 0)
+
 #define	FUNCPARA	wint_t wc
 #define	FUNCARGS	wc
 TESTFUNC(iswalpha, int, "U+%.4X", "%d", 0)
@@ -108,6 +120,39 @@ TESTFUNC(towupper, wint_t, "U+%.4X", "U+%.4X", 0)
 #define	FUNCARGS	wc, locale
 TESTFUNC(iswalpha_l, int, "U+%.4X, %p", "%d", 0)
 TESTFUNC(towupper_l, wint_t, "U+%.4X, %p", "U+%.4X", 0)
+
+#define	FUNCPARA	wint_t wc, wctype_t charclass
+#define	FUNCARGS	wc, charclass
+TESTFUNC(iswctype, int, "U+%.4X, %p", "%d", 0)
+
+#define	FUNCPARA	wint_t wc, wctype_t charclass, locale_t locale
+#define	FUNCARGS	wc, charclass, locale
+TESTFUNC(iswctype_l, int, "U+%.4X, %p, %p", "%d", 0)
+
+#define	FUNCPARA	wint_t wc, wctrans_t charmap
+#define	FUNCARGS	wc, charmap
+TESTFUNC(towctrans, wint_t, "U+%.4X, %p", "U+%.4X", 0)
+
+#define	FUNCPARA	wint_t wc, wctrans_t charmap, locale_t locale
+#define	FUNCARGS	wc, charmap, locale
+TESTFUNC(towctrans_l, wint_t, "U+%.4X, %p, %p", "U+%.4X", 0)
+
+#define	FUNCPARA	const wchar_t *s1, const wchar_t *s2
+#define	FUNCARGS	s1, s2
+TESTFUNC(wcscasecmp, int, "%ls, %ls", "%d", 0)
+
+#define	FUNCPARA	const wchar_t *s1, const wchar_t *s2, locale_t locale
+#define	FUNCARGS	s1, s2, locale
+TESTFUNC(wcscasecmp_l, int, "%ls, %ls, %p", "%d", 0)
+
+#define	FUNCPARA	const wchar_t *s1, const wchar_t *s2, size_t len
+#define	FUNCARGS	s1, s2, len
+TESTFUNC(wcsncasecmp, int, "%ls, %ls, %zu", "%d", 0)
+
+#define	FUNCPARA	const wchar_t *s1, const wchar_t *s2, size_t len, \
+			locale_t locale
+#define	FUNCARGS	s1, s2, len, locale
+TESTFUNC(wcsncasecmp_l, int, "%ls, %ls, %zu, %p", "%d", 0)
 
 static void
 _test_MB_CUR_MAX(int line, int ee, size_t ar)
@@ -175,6 +220,14 @@ switch_thread(int step, int flags)
 static void *
 child_func(void *arg)
 {
+	const wchar_t	 s1[] = { 0x00C7, 0x00E0, 0x0000 }; 
+	const wchar_t	 s2[] = { 0x00E7, 0x00C0, 0x0000 };
+	const wchar_t	 s3[] = { 0x00C9, 0x0074, 0x00C9, 0x0000 }; 
+	const wchar_t	 s4[] = { 0x00E9, 0x0054, 0x00CC, 0x0000 }; 
+	wctype_t	 wctyg, wctyu, wctyc;
+	wctrans_t	 wctrg, wctru, wctrc;
+	char		*sego, *segc, *selo, *selc;
+
 	/* Test invalid newlocale(3) arguments. */
 	TEST_ER(newlocale, EINVAL, _LOCALE_NONE, LC_CTYPE_MASK, NULL);
 	TEST_R(MB_CUR_MAX, 1);
@@ -219,15 +272,28 @@ child_func(void *arg)
 	TEST_R(nl_langinfo, "UTF-8", CODESET);
 	TEST_R(nl_langinfo_l, "UTF-8", CODESET, _LOCALE_UTF8);
 	TEST_R(nl_langinfo_l, "US-ASCII", CODESET, _LOCALE_C);
+	TEST_R(isalpha, _L, 0x65);  /* e */
+	TEST_R(isalpha_l, _L, 0x65, _LOCALE_UTF8);
+	TEST_R(isalpha_l, _L, 0x65, _LOCALE_C);
+	TEST_R(isalpha_l, _L, 0x65, _LOCALE_C);
+	TEST_R(isalpha, 0, 0x30);  /* 0 */
+	TEST_R(isalpha_l, 0, 0x30, _LOCALE_UTF8);
+	TEST_R(isalpha_l, 0, 0x30, _LOCALE_C);
+	TEST_R(tolower, 0x61, 0x41);  /* A */
+	TEST_R(tolower_l, 0x61, 0x41, _LOCALE_UTF8);
+	TEST_R(tolower_l, 0x61, 0x41, _LOCALE_C);
+	TEST_R(tolower, 0x40, 0x40);  /* @ */
+	TEST_R(tolower_l, 0x40, 0x40, _LOCALE_UTF8);
+	TEST_R(tolower_l, 0x40, 0x40, _LOCALE_C);
 	TEST_R(iswalpha, 1, 0x00E9);  /* e accent aigu */
 	TEST_R(iswalpha_l, 1, 0x00E9, _LOCALE_UTF8);
 	TEST_R(iswalpha_l, 0, 0x00E9, _LOCALE_C);
 	TEST_R(iswalpha, 1, 0x0153);  /* ligature oe */
 	TEST_R(iswalpha_l, 1, 0x0153, _LOCALE_UTF8);
 	TEST_R(iswalpha_l, 0, 0x0153, _LOCALE_C);
-	TEST_R(iswalpha, 0, 0x2205);  /* for all */
-	TEST_R(iswalpha_l, 0, 0x2205, _LOCALE_UTF8);
-	TEST_R(iswalpha_l, 0, 0x2205, _LOCALE_C);
+	TEST_R(iswalpha, 0, 0x2200);  /* for all */
+	TEST_R(iswalpha_l, 0, 0x2200, _LOCALE_UTF8);
+	TEST_R(iswalpha_l, 0, 0x2200, _LOCALE_C);
 	TEST_R(towupper, 0x00C9, 0x00E9);
 	TEST_R(towupper_l, 0x00C9, 0x00E9, _LOCALE_UTF8);
 	TEST_R(towupper_l, 0x00E9, 0x00E9, _LOCALE_C);
@@ -237,12 +303,77 @@ child_func(void *arg)
 	TEST_R(towupper, 0x2205, 0x2205);
 	TEST_R(towupper_l, 0x2205, 0x2205, _LOCALE_UTF8);
 	TEST_R(towupper_l, 0x2205, 0x2205, _LOCALE_C);
+	wctyg = wctype("upper");
+	if (wctyg == NULL)
+		errx(1, "wctype(upper) == NULL");
+	wctyu = wctype_l("upper", _LOCALE_UTF8);
+	if (wctyu == NULL)
+		errx(1, "wctype_l(upper, UTF-8) == NULL");
+	if (wctyg != wctyu)
+		errx(1, "wctype global != UTF-8");
+	wctyc = wctype_l("upper", _LOCALE_C);
+	if (wctyc == NULL)
+		errx(1, "wctype_l(upper, C) == NULL");
+	if (wctyg == wctyc)
+		errx(1, "wctype global == C");
+	TEST_R(iswctype, 1, 0x00D0, wctyg);  /* Eth */
+	TEST_R(iswctype_l, 1, 0x00D0, wctyu, _LOCALE_UTF8);
+	TEST_R(iswctype_l, 0, 0x00D0, wctyc, _LOCALE_C);
+	TEST_R(iswctype, 1, 0x0393, wctyg);  /* Gamma */
+	TEST_R(iswctype_l, 1, 0x0393, wctyu, _LOCALE_UTF8);
+	TEST_R(iswctype_l, 0, 0x0393, wctyc, _LOCALE_C);
+	TEST_R(iswctype, 0, 0x2205, wctyg);  /* empty set */
+	TEST_R(iswctype_l, 0, 0x2205, wctyu, _LOCALE_UTF8);
+	TEST_R(iswctype_l, 0, 0x2205, wctyc, _LOCALE_C);
+	wctrg = wctrans("tolower");
+	if (wctrg == NULL)
+		errx(1, "wctrans(tolower) == NULL");
+	wctru = wctrans_l("tolower", _LOCALE_UTF8);
+	if (wctru == NULL)
+		errx(1, "wctrans(tolower, UTF-8) == NULL");
+	if (wctrg != wctru)
+		errx(1, "wctrans global != UTF-8");
+	wctrc = wctrans_l("tolower", _LOCALE_C);
+	if (wctrc == NULL)
+		errx(1, "wctrans(tolower, C) == NULL");
+	if (wctrg == wctrc)
+		errx(1, "wctrans global == C");
+	TEST_R(towctrans, 0x00FE, 0x00DE, wctrg);  /* Thorn */
+	TEST_R(towctrans_l, 0x00FE, 0x00DE, wctru, _LOCALE_UTF8);
+	TEST_R(towctrans_l, 0x00DE, 0x00DE, wctrc, _LOCALE_C);
+	TEST_R(towctrans, 0x03C6, 0x03A6, wctrg);  /* Phi */
+	TEST_R(towctrans_l, 0x03C6, 0x03A6, wctru, _LOCALE_UTF8);
+	TEST_R(towctrans_l, 0x03A6, 0x03A6, wctrc, _LOCALE_C);
+	TEST_R(towctrans, 0x2207, 0x2207, wctrg);  /* Nabla */
+	TEST_R(towctrans_l, 0x2207, 0x2207, wctru, _LOCALE_UTF8);
+	TEST_R(towctrans_l, 0x2207, 0x2207, wctrc, _LOCALE_C);
+	TEST_R(wcscasecmp, 0, s1, s2);
+	TEST_R(wcscasecmp_l, 0, s1, s2, _LOCALE_UTF8);
+	TEST_R(wcscasecmp_l, *s1 - *s2, s1, s2, _LOCALE_C);
+	TEST_R(wcsncasecmp, 0, s3, s4, 2);
+	TEST_R(wcsncasecmp_l, 0, s3, s4, 2, _LOCALE_UTF8);
+	TEST_R(wcsncasecmp_l, *s3 - *s4, s3, s4, 2, _LOCALE_C);
 
 	/* Test non-ctype newlocale(3). */
 	TEST_R(newlocale, _LOCALE_C, LC_MESSAGES_MASK, "en_US.UTF-8");
 
+	/* Test strerror(3). */
+	sego = strerror(EPERM);
+	segc = strdup(sego);
+	selo = strerror_l(ENOENT, _LOCALE_C);
+	selc = strdup(selo);
+	if (strcmp(sego, segc) != 0)
+		errx(1, "child: strerror_l clobbered strerror");
+	free(segc);
+	sego = strerror(ESRCH);
+	if (strcmp(selo, selc) != 0)
+		errx(1, "child: strerror clobbered strerror_l");
+	
 	/* Temporarily switch to the main thread. */
 	switch_thread(2, SWITCH_SIGNAL | SWITCH_WAIT);
+	if (strcmp(selo, selc) != 0)
+		errx(1, "child: main clobbered strerror_l");
+	free(selc);
 
 	/* Test displaying the global locale while a local one is set. */
 	TEST_R(setlocale, "C/C.UTF-8/C/C/C/C", LC_ALL, NULL);
@@ -268,6 +399,7 @@ int
 main(void)
 {
 	pthread_t	 child_thread;
+	char		*sego, *segc, *selo, *selc;
 	int		 irc;
 
 	/* Initialize environment. */
@@ -293,6 +425,19 @@ main(void)
 	TEST_R(setlocale, "C.UTF-8", LC_CTYPE, "C.UTF-8");
 	TEST_R(MB_CUR_MAX, 4);
 	TEST_R(uselocale, LC_GLOBAL_LOCALE, _LOCALE_NONE);
+
+	/* Test strerror(3). */
+	sego = strerror(EINTR);
+	segc = strdup(sego);
+	selo = strerror_l(EIO, _LOCALE_C);
+	selc = strdup(selo);
+	if (strcmp(sego, segc) != 0)
+		errx(1, "main: strerror_l clobbered strerror");
+	free(segc);
+	sego = strerror(ENXIO);
+	if (strcmp(selo, selc) != 0)
+		errx(1, "main: strerror clobbered strerror_l");
+	free(selc);
 
 	/* Let the child do some more tests, then clean up. */
 	switch_thread(3, SWITCH_SIGNAL);
