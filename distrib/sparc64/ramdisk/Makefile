@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2017/07/25 13:32:14 robert Exp $
+#	$OpenBSD: Makefile,v 1.34 2017/08/16 14:41:21 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -63,6 +63,7 @@ ${FLOPPY}:	bsd.gz ${BOOT} /usr/
 ${BSD_RD}: ${CBIN} ${IMAGE} bsd elfrdsetroot
 	cp bsd ${BSD_RD}
 	${.OBJDIR}/elfrdsetroot ${BSD_RD} < ${IMAGE}
+	strip -R .SUNW_ctf ${BSD_RD}
 
 ${IMAGE}: ${CBIN}
 	rm -rf $@.d
