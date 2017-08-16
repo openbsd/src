@@ -1,10 +1,10 @@
-.\"	$OpenBSD: expr.1,v 1.23 2015/01/16 15:30:10 schwarze Exp $
+.\"	$OpenBSD: expr.1,v 1.24 2017/08/16 20:10:58 schwarze Exp $
 .\"	$NetBSD: expr.1,v 1.9 1995/04/28 23:27:13 jtc Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: January 16 2015 $
+.Dd $Mdocdate: August 16 2017 $
 .Dt EXPR 1
 .Os
 .Sh NAME
@@ -39,16 +39,17 @@ Returns the evaluation of
 if neither expression evaluates to an empty string or zero;
 otherwise, returns zero.
 .It Ar expr1 Li "{=, >, >=, <, <=, !=}" Ar expr2
-Returns the results of integer comparison if both arguments are integers;
-otherwise, returns the results of string comparison using the locale-specific
-collation sequence.
+Returns the results of integer comparison if both arguments are
+decimal integers; otherwise, returns the results of string comparison
+using the locale-specific collation sequence.
 The result of each comparison is 1 if the specified relation is true,
 or 0 if the relation is false.
 .It Ar expr1 Li "{+, -}" Ar expr2
-Returns the results of addition or subtraction of integer-valued arguments.
+Returns the results of addition or subtraction of decimal integer-valued
+arguments.
 .It Ar expr1 Li "{*, /, %}" Ar expr2
 Returns the results of multiplication, integer division, or remainder of
-integer-valued arguments.
+decimal integer-valued arguments.
 .It Ar expr1 Li \&: Ar expr2
 The
 .Ql \&:
