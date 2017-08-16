@@ -1,4 +1,4 @@
-/* $OpenBSD: strtol.c,v 1.2 2015/01/16 16:18:07 deraadt Exp $ */
+/* $OpenBSD: strtol.c,v 1.3 2017/08/16 18:52:01 millert Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,8 +64,9 @@ _dl_strtol(const char *nptr, char **endptr, int base)
 		if (c == '+')
 			c = *s++;
 	}
-	if ((base == 0 || base == 16) &&
-	    c == '0' && (*s == 'x' || *s == 'X')) {
+	if ((base == 0 || base == 16) && c == '0' &&
+	    (*s == 'x' || *s == 'X') && ((s[1] >= '0' && s[1] <= '9') ||
+	    (s[1] >= 'A' && s[1] <= 'F') || (s[1] >= 'a' && s[1] <= 'f'))) {
 		c = s[1];
 		s += 2;
 		base = 16;
