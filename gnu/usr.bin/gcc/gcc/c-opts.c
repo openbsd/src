@@ -520,6 +520,15 @@ c_common_init_options (lang)
     warn_sign_compare = -1;
 }
 
+static char *bad_option;
+
+void
+do_final_options ()
+{
+	if (bad_option)
+	  error ("unrecognized command line option %s", bad_option);
+}
+
 /* Handle one command-line option in (argc, argv).
    Can be called multiple times, to handle multiple sets of options.
    Returns number of strings consumed.  */
@@ -576,7 +585,14 @@ c_common_decode_option (argc, argv)
   lang_flag = lang_flags[(c_language << 1) + flag_objc];
   opt_index = find_opt (opt + 1, lang_flag);
   if (opt_index == N_OPTS)
-    goto done;
+    {
+      if (result == 0 && !on && opt[1] == 'W')
+	{
+	  bad_option = argv[0];
+	  result = 1;
+	}
+      goto done;
+    }
 
   result = 1;
   option = &cl_options[opt_index];

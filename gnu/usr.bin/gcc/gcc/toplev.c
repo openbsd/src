@@ -5519,6 +5519,8 @@ do_compile ()
 
    It is not safe to call this function more than once.  */
 
+extern void do_final_options ();
+
 int
 toplev_main (argc, argv)
      int argc;
@@ -5536,7 +5538,10 @@ toplev_main (argc, argv)
     do_compile ();
 
   if (errorcount || sorrycount)
-    return (FATAL_EXIT_CODE);
+    {
+      do_final_options ();
+      return (FATAL_EXIT_CODE);
+    }
 
   return (SUCCESS_EXIT_CODE);
 }
