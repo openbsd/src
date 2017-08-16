@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.48 2016/09/03 14:25:27 bluhm Exp $	*/
+/*	$OpenBSD: param.h,v 1.49 2017/08/16 18:34:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,7 +63,7 @@
 #define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
 #define	PGOFSET		PAGE_MASK		/* byte offset into page */
 
-#define	UPAGES		2			/* pages of u-area */
+#define	UPAGES		3			/* pages of u-area */
 #define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */
 #define	USPACE_ALIGN	0			/* u-area alignment 0-none */
 
