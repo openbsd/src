@@ -1,4 +1,4 @@
-/* $OpenBSD: uselocale.c,v 1.2 2017/08/15 23:46:51 schwarze Exp $ */
+/* $OpenBSD: uselocale.c,v 1.3 2017/08/16 01:40:30 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -17,10 +17,12 @@
 
 #include <err.h>
 #include <errno.h>
+#include <langinfo.h>
 #include <locale.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wctype.h>
 
 /* Keep in sync with /usr/src/lib/libc/locale/rune.h. */
 #define	_LOCALE_NONE	 (locale_t)0
@@ -88,6 +90,24 @@ TESTFUNC(uselocale, locale_t, "%p", "%p", TOPT_ERR)
 #define	FUNCPARA	int category, char *locname
 #define	FUNCARGS	category, locname
 TESTFUNC(setlocale, const char *, "%d, %s", "%s", TOPT_STR)
+
+#define	FUNCPARA	nl_item item
+#define	FUNCARGS	item
+TESTFUNC(nl_langinfo, const char *, "%ld", "%s", TOPT_STR)
+
+#define	FUNCPARA	nl_item item, locale_t locale
+#define	FUNCARGS	item, locale
+TESTFUNC(nl_langinfo_l, const char *, "%ld, %p", "%s", TOPT_STR)
+
+#define	FUNCPARA	wint_t wc
+#define	FUNCARGS	wc
+TESTFUNC(iswalpha, int, "U+%.4X", "%d", 0)
+TESTFUNC(towupper, wint_t, "U+%.4X", "U+%.4X", 0)
+
+#define	FUNCPARA	wint_t wc, locale_t locale
+#define	FUNCARGS	wc, locale
+TESTFUNC(iswalpha_l, int, "U+%.4X, %p", "%d", 0)
+TESTFUNC(towupper_l, wint_t, "U+%.4X, %p", "U+%.4X", 0)
 
 static void
 _test_MB_CUR_MAX(int line, int ee, size_t ar)
@@ -196,6 +216,27 @@ child_func(void *arg)
 	TEST_R(uselocale, LC_GLOBAL_LOCALE, _LOCALE_UTF8);
 	TEST_R(MB_CUR_MAX, 4);
 	TEST_R(uselocale, _LOCALE_UTF8, _LOCALE_NONE);
+	TEST_R(nl_langinfo, "UTF-8", CODESET);
+	TEST_R(nl_langinfo_l, "UTF-8", CODESET, _LOCALE_UTF8);
+	TEST_R(nl_langinfo_l, "US-ASCII", CODESET, _LOCALE_C);
+	TEST_R(iswalpha, 1, 0x00E9);  /* e accent aigu */
+	TEST_R(iswalpha_l, 1, 0x00E9, _LOCALE_UTF8);
+	TEST_R(iswalpha_l, 0, 0x00E9, _LOCALE_C);
+	TEST_R(iswalpha, 1, 0x0153);  /* ligature oe */
+	TEST_R(iswalpha_l, 1, 0x0153, _LOCALE_UTF8);
+	TEST_R(iswalpha_l, 0, 0x0153, _LOCALE_C);
+	TEST_R(iswalpha, 0, 0x2205);  /* for all */
+	TEST_R(iswalpha_l, 0, 0x2205, _LOCALE_UTF8);
+	TEST_R(iswalpha_l, 0, 0x2205, _LOCALE_C);
+	TEST_R(towupper, 0x00C9, 0x00E9);
+	TEST_R(towupper_l, 0x00C9, 0x00E9, _LOCALE_UTF8);
+	TEST_R(towupper_l, 0x00E9, 0x00E9, _LOCALE_C);
+	TEST_R(towupper, 0x0152, 0x0153);
+	TEST_R(towupper_l, 0x0152, 0x0153, _LOCALE_UTF8);
+	TEST_R(towupper_l, 0x0153, 0x0153, _LOCALE_C);
+	TEST_R(towupper, 0x2205, 0x2205);
+	TEST_R(towupper_l, 0x2205, 0x2205, _LOCALE_UTF8);
+	TEST_R(towupper_l, 0x2205, 0x2205, _LOCALE_C);
 
 	/* Test non-ctype newlocale(3). */
 	TEST_R(newlocale, _LOCALE_C, LC_MESSAGES_MASK, "en_US.UTF-8");
