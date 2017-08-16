@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.27 2017/08/14 07:50:32 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.28 2017/08/16 01:26:46 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1885,7 +1885,7 @@ rtwn_write_txpower(struct rtwn_softc *sc, int chain,
 	    SM(R92C_TXAGC_MCS05,  power[RTWN_POWER_MCS( 5)]) |
 	    SM(R92C_TXAGC_MCS06,  power[RTWN_POWER_MCS( 6)]) |
 	    SM(R92C_TXAGC_MCS07,  power[RTWN_POWER_MCS( 7)]));
-	if (chain != 0) {
+	if (sc->ntxchains > 1) {
 		rtwn_bb_write(sc, R92C_TXAGC_MCS11_MCS08(chain),
 		    SM(R92C_TXAGC_MCS08,  power[RTWN_POWER_MCS( 8)]) |
 		    SM(R92C_TXAGC_MCS09,  power[RTWN_POWER_MCS( 9)]) |
@@ -2129,9 +2129,11 @@ rtwn_set_chan(struct rtwn_softc *sc, struct ieee80211_channel *c,
 		reg = (reg & ~0x00000c00) | (prichlo ? 1 : 2) << 10;
 		rtwn_bb_write(sc, R92C_OFDM1_LSTF, reg);
 
-		rtwn_bb_write(sc, R92C_FPGA0_ANAPARAM2,
-		    rtwn_bb_read(sc, R92C_FPGA0_ANAPARAM2) &
-		    ~R92C_FPGA0_ANAPARAM2_CBW20);
+		if (!(sc->chip & RTWN_CHIP_88E)) {
+			rtwn_bb_write(sc, R92C_FPGA0_ANAPARAM2,
+			    rtwn_bb_read(sc, R92C_FPGA0_ANAPARAM2) &
+			    ~R92C_FPGA0_ANAPARAM2_CBW20);
+		}
 
 		reg = rtwn_bb_read(sc, 0x818);
 		reg = (reg & ~0x0c000000) | (prichlo ? 2 : 1) << 26;
@@ -2837,7 +2839,7 @@ rtwn_init(struct ifnet *ifp)
 	else
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 	return (0);
- fail:
+fail:
 	rtwn_stop(ifp);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.73 2017/08/12 14:08:44 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.74 2017/08/16 01:26:46 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2004,7 +2004,7 @@ urtwn_init(void *cookie)
 	 */
 	if (sc->sc_sc.chip & RTWN_CHIP_88E)
 		urtwn_write_1(sc, R88E_TX_RPT_CTRL, (urtwn_read_1(sc,
-		    R88E_TX_RPT_CTRL) & ~0) | R88E_TX_RPT1_ENA);
+		    R88E_TX_RPT_CTRL) & ~0) | R88E_TX_RPT_CTRL_EN);
 
 	return (0);
 }
