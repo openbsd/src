@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.121 2017/08/17 07:35:19 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.122 2017/08/17 20:18:02 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -75,20 +75,24 @@ missing patches" 2
 # - ignore new (nonexistent) files
 # - ignore rollback tarball: create_rollback() will handle the failure
 # - compute total size of all files per fs, simpler and less margin for error
-# - if we install a kernel, double /bsd size (duplicate it in the list) when
-#   /bsd.syspatchXX is not present (create_rollback will copy it from /bsd)
+#   (instead of computing before installing each file)
+# - if we install a kernel, double /bsd size (duplicate it in the list) when:
+#   - we are on an MP system (to check /bsd size instead of nonexistent /bsd.mp)
+#   - /bsd.syspatchXX is not present (create_rollback will copy it from /bsd)
 checkfs()
 {
 	local _d _dev _df _files="${@}" _ret _sz
 	[[ -n ${_files} ]]
 
-	if echo "${_files}" | grep -Eq '(^|[[:blank:]]+)bsd([[:blank:]]+|$)'
-	then
-		[[ -f /bsd.syspatch${_OSrev} ]] || _files="bsd ${_files}"
+	# XXX use shell substitution when available: bsd.mp -> bsd
+	if echo "${_files}" |
+		grep -Eq '(^|[[:blank:]]+)bs(d|d.mp)([[:blank:]]+|$)'; then
+		${_BSDMP} || [[ ! -f /bsd.syspatch${_OSrev} ]] &&
+			_files="bsd ${_files}"
 	fi
 
 	set +e # ignore errors due to:
-	# - nonexistent files (i.e. syspatch is installing new files)
+	# - nonexistent files (e.g. /bsd.mp or syspatch is installing new files)
 	# - broken interpolation due to bogus devices like remote filesystems
 	eval $(cd / &&
 		stat -qf "_dev=\"\${_dev} %Sd\" %Sd=\"\${%Sd:+\${%Sd}\+}%Uz\"" \
