@@ -1,4 +1,4 @@
-/* $OpenBSD: alerts.c,v 1.23 2017/08/16 11:46:08 nicm Exp $ */
+/* $OpenBSD: alerts.c,v 1.24 2017/08/17 08:37:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -90,8 +90,10 @@ alerts_check_session(struct session *s)
 static int
 alerts_enabled(struct window *w, int flags)
 {
-	if (flags & WINDOW_BELL)
-		return (1);
+	if (flags & WINDOW_BELL) {
+		if (options_get_number(w->options, "monitor-bell"))
+			return (1);
+	}
 	if (flags & WINDOW_ACTIVITY) {
 		if (options_get_number(w->options, "monitor-activity"))
 			return (1);
@@ -163,6 +165,8 @@ alerts_check_bell(struct window *w)
 	struct session	*s;
 
 	if (~w->flags & WINDOW_BELL)
+		return (0);
+	if (!options_get_number(w->options, "monitor-bell"))
 		return (0);
 
 	TAILQ_FOREACH(wl, &w->winlinks, wentry)
