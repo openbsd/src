@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.29 2017/07/22 16:48:21 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.30 2017/08/17 06:01:05 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -47,6 +47,8 @@ void	ieee80211_recv_4way_msg2(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *,
 	    const u_int8_t *);
 #endif
+int	ieee80211_must_update_group_key(struct ieee80211_key *, const uint8_t *,
+	    int);
 void	ieee80211_recv_4way_msg3(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 #ifndef IEEE80211_STA_ONLY
@@ -261,6 +263,9 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 	ieee80211_derive_ptk(ni->ni_rsnakms, ni->ni_pmk, ni->ni_macaddr,
 	    ic->ic_myaddr, ni->ni_nonce, ic->ic_nonce, &tptk);
 
+	/* We are now expecting a new pairwise key. */
+	ni->ni_flags |= IEEE80211_NODE_RSN_NEW_PTK;
+
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: received msg %d/%d of the %s handshake from %s\n",
 		    ic->ic_if.if_xname, 1, 4, "4-way",
@@ -334,6 +339,14 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 	(void)ieee80211_send_4way_msg3(ic, ni);
 }
 #endif	/* IEEE80211_STA_ONLY */
+
+int
+ieee80211_must_update_group_key(struct ieee80211_key *k, const uint8_t *gtk,
+    int len)
+{
+	return (k->k_cipher == IEEE80211_CIPHER_NONE || k->k_len != len ||
+	    memcmp(k->k_key, gtk, len) != 0);
+}
 
 /*
  * Process Message 3 of the 4-Way Handshake (sent by Authenticator).
@@ -515,7 +528,8 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	if (ieee80211_send_4way_msg4(ic, ni) != 0)
 		return;	/* ..authenticator will retry */
 
-	if (ni->ni_rsncipher != IEEE80211_CIPHER_USEGROUP) {
+	if (ni->ni_rsncipher != IEEE80211_CIPHER_USEGROUP &&
+	    (ni->ni_flags & IEEE80211_NODE_RSN_NEW_PTK)) {
 		u_int64_t prsc;
 
 		/* check that key length matches that of pairwise cipher */
@@ -538,9 +552,13 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 			reason = IEEE80211_REASON_AUTH_LEAVE;
 			goto deauth;
 		}
+		ni->ni_flags &= ~IEEE80211_NODE_RSN_NEW_PTK;
 		ni->ni_flags &= ~IEEE80211_NODE_TXRXPROT;
 		ni->ni_flags |= IEEE80211_NODE_RXPROT;
-	}
+	} else if (ni->ni_rsncipher != IEEE80211_CIPHER_USEGROUP)
+		printf("%s: unexpected pairwise key update received from %s\n",
+		    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
+
 	if (gtk != NULL) {
 		u_int8_t kid;
 
@@ -553,20 +571,24 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		/* map GTK to 802.11 key */
 		kid = gtk[6] & 3;
 		k = &ic->ic_nw_keys[kid];
-		memset(k, 0, sizeof(*k));
-		k->k_id = kid;	/* 0-3 */
-		k->k_cipher = ni->ni_rsngroupcipher;
-		k->k_flags = IEEE80211_KEY_GROUP;
-		if (gtk[6] & (1 << 2))
-			k->k_flags |= IEEE80211_KEY_TX;
-		k->k_rsc[0] = LE_READ_6(key->rsc);
-		k->k_len = keylen;
-		memcpy(k->k_key, &gtk[8], k->k_len);
-		/* install the GTK */
-		if ((*ic->ic_set_key)(ic, ni, k) != 0) {
-			reason = IEEE80211_REASON_AUTH_LEAVE;
-			goto deauth;
-		}
+		if (ieee80211_must_update_group_key(k, &gtk[8], keylen)) {
+			memset(k, 0, sizeof(*k));
+			k->k_id = kid;	/* 0-3 */
+			k->k_cipher = ni->ni_rsngroupcipher;
+			k->k_flags = IEEE80211_KEY_GROUP;
+			if (gtk[6] & (1 << 2))
+				k->k_flags |= IEEE80211_KEY_TX;
+			k->k_rsc[0] = LE_READ_6(key->rsc);
+			k->k_len = keylen;
+			memcpy(k->k_key, &gtk[8], k->k_len);
+			/* install the GTK */
+			if ((*ic->ic_set_key)(ic, ni, k) != 0) {
+				reason = IEEE80211_REASON_AUTH_LEAVE;
+				goto deauth;
+			}
+		} else
+			printf("%s: reused group key update received from %s\n",
+			    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
 	}
 	if (igtk != NULL) {	/* implies MFP && gtk != NULL */
 		u_int16_t kid;
@@ -584,18 +606,22 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		}
 		/* map IGTK to 802.11 key */
 		k = &ic->ic_nw_keys[kid];
-		memset(k, 0, sizeof(*k));
-		k->k_id = kid;	/* either 4 or 5 */
-		k->k_cipher = ni->ni_rsngroupmgmtcipher;
-		k->k_flags = IEEE80211_KEY_IGTK;
-		k->k_mgmt_rsc = LE_READ_6(&igtk[8]);	/* IPN */
-		k->k_len = 16;
-		memcpy(k->k_key, &igtk[14], k->k_len);
-		/* install the IGTK */
-		if ((*ic->ic_set_key)(ic, ni, k) != 0) {
-			reason = IEEE80211_REASON_AUTH_LEAVE;
-			goto deauth;
-		}
+		if (ieee80211_must_update_group_key(k, &igtk[14], 16)) {
+			memset(k, 0, sizeof(*k));
+			k->k_id = kid;	/* either 4 or 5 */
+			k->k_cipher = ni->ni_rsngroupmgmtcipher;
+			k->k_flags = IEEE80211_KEY_IGTK;
+			k->k_mgmt_rsc = LE_READ_6(&igtk[8]);	/* IPN */
+			k->k_len = 16;
+			memcpy(k->k_key, &igtk[14], k->k_len);
+			/* install the IGTK */
+			if ((*ic->ic_set_key)(ic, ni, k) != 0) {
+				reason = IEEE80211_REASON_AUTH_LEAVE;
+				goto deauth;
+			}
+		} else
+			printf("%s: reused group key update received from %s\n",
+			    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
 	}
 	if (info & EAPOL_KEY_INSTALL)
 		ni->ni_flags |= IEEE80211_NODE_TXRXPROT;
@@ -821,20 +847,24 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	/* map GTK to 802.11 key */
 	kid = gtk[6] & 3;
 	k = &ic->ic_nw_keys[kid];
-	memset(k, 0, sizeof(*k));
-	k->k_id = kid;	/* 0-3 */
-	k->k_cipher = ni->ni_rsngroupcipher;
-	k->k_flags = IEEE80211_KEY_GROUP;
-	if (gtk[6] & (1 << 2))
-		k->k_flags |= IEEE80211_KEY_TX;
-	k->k_rsc[0] = LE_READ_6(key->rsc);
-	k->k_len = keylen;
-	memcpy(k->k_key, &gtk[8], k->k_len);
-	/* install the GTK */
-	if ((*ic->ic_set_key)(ic, ni, k) != 0) {
-		reason = IEEE80211_REASON_AUTH_LEAVE;
-		goto deauth;
-	}
+	if (ieee80211_must_update_group_key(k, &gtk[8], keylen)) {
+		memset(k, 0, sizeof(*k));
+		k->k_id = kid;	/* 0-3 */
+		k->k_cipher = ni->ni_rsngroupcipher;
+		k->k_flags = IEEE80211_KEY_GROUP;
+		if (gtk[6] & (1 << 2))
+			k->k_flags |= IEEE80211_KEY_TX;
+		k->k_rsc[0] = LE_READ_6(key->rsc);
+		k->k_len = keylen;
+		memcpy(k->k_key, &gtk[8], k->k_len);
+		/* install the GTK */
+		if ((*ic->ic_set_key)(ic, ni, k) != 0) {
+			reason = IEEE80211_REASON_AUTH_LEAVE;
+			goto deauth;
+		}
+	} else
+		printf("%s: reused group key update received from %s\n",
+		    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
 	if (igtk != NULL) {	/* implies MFP */
 		/* check that the IGTK KDE is valid */
 		if (igtk[1] != 4 + 24) {
@@ -849,18 +879,22 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 		}
 		/* map IGTK to 802.11 key */
 		k = &ic->ic_nw_keys[kid];
-		memset(k, 0, sizeof(*k));
-		k->k_id = kid;	/* either 4 or 5 */
-		k->k_cipher = ni->ni_rsngroupmgmtcipher;
-		k->k_flags = IEEE80211_KEY_IGTK;
-		k->k_mgmt_rsc = LE_READ_6(&igtk[8]);	/* IPN */
-		k->k_len = 16;
-		memcpy(k->k_key, &igtk[14], k->k_len);
-		/* install the IGTK */
-		if ((*ic->ic_set_key)(ic, ni, k) != 0) {
-			reason = IEEE80211_REASON_AUTH_LEAVE;
-			goto deauth;
-		}
+		if (ieee80211_must_update_group_key(k, &igtk[14], 16)) {
+			memset(k, 0, sizeof(*k));
+			k->k_id = kid;	/* either 4 or 5 */
+			k->k_cipher = ni->ni_rsngroupmgmtcipher;
+			k->k_flags = IEEE80211_KEY_IGTK;
+			k->k_mgmt_rsc = LE_READ_6(&igtk[8]);	/* IPN */
+			k->k_len = 16;
+			memcpy(k->k_key, &igtk[14], k->k_len);
+			/* install the IGTK */
+			if ((*ic->ic_set_key)(ic, ni, k) != 0) {
+				reason = IEEE80211_REASON_AUTH_LEAVE;
+				goto deauth;
+			}
+		} else
+			printf("%s: reused group key update received from %s\n",
+			    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
 	}
 	if (info & EAPOL_KEY_SECURE) {
 #ifndef IEEE80211_STA_ONLY
@@ -901,6 +935,7 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 	u_int16_t info;
 	u_int8_t kid;
 	int keylen;
+	const uint8_t *gtk;
 
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode != IEEE80211_M_STA &&
@@ -946,23 +981,27 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 	/* map GTK to 802.11 key */
 	kid = (info >> EAPOL_KEY_WPA_KID_SHIFT) & 3;
 	k = &ic->ic_nw_keys[kid];
-	memset(k, 0, sizeof(*k));
-	k->k_id = kid;	/* 0-3 */
-	k->k_cipher = ni->ni_rsngroupcipher;
-	k->k_flags = IEEE80211_KEY_GROUP;
-	if (info & EAPOL_KEY_WPA_TX)
-		k->k_flags |= IEEE80211_KEY_TX;
-	k->k_rsc[0] = LE_READ_6(key->rsc);
-	k->k_len = keylen;
-	/* key data field contains the GTK */
-	memcpy(k->k_key, &key[1], k->k_len);
-	/* install the GTK */
-	if ((*ic->ic_set_key)(ic, ni, k) != 0) {
-		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
-		    IEEE80211_REASON_AUTH_LEAVE);
-		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-		return;
-	}
+	gtk = (const uint8_t *)&key[1]; /* key data field contains the GTK */
+	if (ieee80211_must_update_group_key(k, gtk, keylen)) {
+		memset(k, 0, sizeof(*k));
+		k->k_id = kid;	/* 0-3 */
+		k->k_cipher = ni->ni_rsngroupcipher;
+		k->k_flags = IEEE80211_KEY_GROUP;
+		if (info & EAPOL_KEY_WPA_TX)
+			k->k_flags |= IEEE80211_KEY_TX;
+		k->k_rsc[0] = LE_READ_6(key->rsc);
+		k->k_len = keylen;
+		memcpy(k->k_key, gtk, k->k_len);
+		/* install the GTK */
+		if ((*ic->ic_set_key)(ic, ni, k) != 0) {
+			IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+			    IEEE80211_REASON_AUTH_LEAVE);
+			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+			return;
+		}
+	} else
+		printf("%s: reused group key update received from %s\n",
+		    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
 	if (info & EAPOL_KEY_SECURE) {
 #ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
