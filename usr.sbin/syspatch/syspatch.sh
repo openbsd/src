@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.122 2017/08/17 20:18:02 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.123 2017/08/17 20:32:14 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -95,8 +95,9 @@ checkfs()
 	# - nonexistent files (e.g. /bsd.mp or syspatch is installing new files)
 	# - broken interpolation due to bogus devices like remote filesystems
 	eval $(cd / &&
-		stat -qf "_dev=\"\${_dev} %Sd\" %Sd=\"\${%Sd:+\${%Sd}\+}%Uz\"" \
-			${_files}) 2>/dev/null || _ret=$?
+		stat -qf "_dev=\"\${_dev} %Sd\";
+			local %Sd=\"\${%Sd:+\${%Sd}\+}%Uz\"" ${_files}) \
+			2>/dev/null || _ret=$?
 	set -e
 	[[ ${_ret} == 127 ]] && sp_err "Remote filesystem, aborting" 
 
