@@ -1,4 +1,4 @@
-/* $OpenBSD: filter.c,v 1.7 2016/12/18 06:11:23 krw Exp $ */
+/* $OpenBSD: filter.c,v 1.8 2017/08/17 19:27:48 tedu Exp $ */
 
 /* filter - postprocessing of flex output through filters */
 
@@ -50,10 +50,9 @@ filter_create_ext(struct filter * chain, const char *cmd,
 	va_list ap;
 
 	/* allocate and initialize new filter */
-	f = malloc(sizeof(struct filter));
+	f = calloc(sizeof(struct filter), 1);
 	if (!f)
-		flexerror(_("malloc failed (f) in filter_create_ext"));
-	memset(f, 0, sizeof(*f));
+		flexerror(_("calloc failed (f) in filter_create_ext"));
 	f->filter_func = NULL;
 	f->extra = NULL;
 	f->next = NULL;
@@ -103,10 +102,9 @@ filter_create_int(struct filter * chain,
 	struct filter *f;
 
 	/* allocate and initialize new filter */
-	f = malloc(sizeof(struct filter));
+	f = calloc(sizeof(struct filter), 1);
 	if (!f)
-		flexerror(_("malloc failed in filter_create_int"));
-	memset(f, 0, sizeof(*f));
+		flexerror(_("calloc failed in filter_create_int"));
 	f->next = NULL;
 	f->argc = 0;
 	f->argv = NULL;
