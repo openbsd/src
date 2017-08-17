@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.19 2017/02/12 04:55:08 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.20 2017/08/17 20:47:49 tom Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -70,14 +70,6 @@ int process_read_fpregs	(struct proc *p, struct fpreg *regs);
 extern void proc_trampoline	(void);
 
 /*
- * Special compilation symbols:
- *
- * STACKCHECKS - Fill undefined and supervisor stacks with a known pattern
- *		 on forking and check the pattern on exit, reporting
- *		 the amount of stack used.
- */
-
-/*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
@@ -115,15 +107,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	pcb->pcb_un.un_32.pcb32_und_sp = (u_int)p2->p_addr +
 	    USPACE_UNDEF_STACK_TOP;
 	pcb->pcb_un.un_32.pcb32_sp = (u_int)p2->p_addr + USPACE_SVC_STACK_TOP;
-
-#ifdef STACKCHECKS
-	/* Fill the undefined stack with a known pattern */
-	memset(((u_char *)p2->p_addr) + USPACE_UNDEF_STACK_BOTTOM, 0xdd,
-	    (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM));
-	/* Fill the kernel stack with a known pattern */
-	memset(((u_char *)p2->p_addr) + USPACE_SVC_STACK_BOTTOM, 0xdd,
-	    (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM));
-#endif	/* STACKCHECKS */
 
 	pmap_activate(p2);
 

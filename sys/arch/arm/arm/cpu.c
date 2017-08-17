@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.39 2017/07/25 07:53:27 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.40 2017/08/17 20:47:49 tom Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -304,15 +304,6 @@ cpu_alloc_idle_pcb(struct cpu_info *ci)
 	/* Set up the undefined stack for the process. */
 	pcb->pcb_un.un_32.pcb32_und_sp = uaddr + USPACE_UNDEF_STACK_TOP;
 	pcb->pcb_un.un_32.pcb32_sp = uaddr + USPACE_SVC_STACK_TOP;
-
-#ifdef STACKCHECKS
-	/* Fill the undefined stack with a known pattern */
-	memset(((u_char *)uaddr) + USPACE_UNDEF_STACK_BOTTOM, 0xdd,
-	    (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM));
-	/* Fill the kernel stack with a known pattern */
-	memset(((u_char *)uaddr) + USPACE_SVC_STACK_BOTTOM, 0xdd,
-	    (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM));
-#endif	/* STACKCHECKS */
 
 	pcb->pcb_tf = tf =
 	    (struct trapframe *)pcb->pcb_un.un_32.pcb32_sp - 1;
