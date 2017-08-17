@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.156 2017/07/12 06:26:33 natano Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.157 2017/08/17 19:44:27 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -396,9 +396,6 @@ extern void (*cpu_idle_enter_fcn)(void);
 extern void (*cpu_idle_cycle_fcn)(void);
 extern void (*cpu_idle_leave_fcn)(void);
 
-/* apm.c */
-extern int cpu_apmwarn;
-
 extern int cpuspeed;
 
 #if !defined(SMALL_KERNEL)
@@ -516,9 +513,7 @@ int	cpu_paenable(void *);
 #define CPU_CPUVENDOR		6	/* cpuid vendor string */
 #define CPU_CPUID		7	/* cpuid */
 #define CPU_CPUFEATURE		8	/* cpuid features */
-#define CPU_APMWARN		9	/* APM battery warning percentage */
 #define CPU_KBDRESET		10	/* keyboard reset under pcvt */
-#define CPU_APMHALT		11	/* halt -p hack */
 #define CPU_OSFXSR		13	/* uses FXSAVE/FXRSTOR */
 #define CPU_SSE			14	/* supports SSE */
 #define CPU_SSE2		15	/* supports SSE2 */
@@ -537,9 +532,9 @@ int	cpu_paenable(void *);
 	{ "cpuvendor", CTLTYPE_STRING }, \
 	{ "cpuid", CTLTYPE_INT }, \
 	{ "cpufeature", CTLTYPE_INT }, \
-	{ "apmwarn", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "kbdreset", CTLTYPE_INT }, \
-	{ "apmhalt", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "osfxsr", CTLTYPE_INT }, \
 	{ "sse", CTLTYPE_INT }, \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.604 2017/07/12 06:26:32 natano Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.605 2017/08/17 19:44:27 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -185,12 +185,6 @@ void (*cpu_idle_leave_fcn)(void) = NULL;
 void (*cpu_idle_cycle_fcn)(void) = NULL;
 void (*cpu_idle_enter_fcn)(void) = NULL;
 
-/*
- * Declare these as initialized data so we can patch them.
- */
-#if NAPM > 0
-int	cpu_apmhalt = 0;	/* sysctl'd to 1 for halt -p hack */
-#endif
 
 struct uvm_constraint_range  isa_constraint = { 0x0, 0x00ffffffUL };
 struct uvm_constraint_range  dma_constraint = { 0x0, 0xffffffffUL };
@@ -2694,19 +2688,8 @@ haltsys:
 			 * try to turn the system off.
 			 */
 			delay(500000);
-			/*
-			 * It's been reported that the following bit of code
-			 * is required on most systems <mickey@openbsd.org>
-			 * but cause powerdown problem on other systems
-			 * <smcho@tsp.korea.ac.kr>.  Use sysctl to set
-			 * apmhalt to a non-zero value to skip the offending
-			 * code.
-			 */
-			if (!cpu_apmhalt) {
-				apm_set_powstate(APM_DEV_DISK(0xff),
-						 APM_SYS_OFF);
-				delay(500000);
-			}
+			apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
+			delay(500000);
 			rv = apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
 			if (rv == 0 || rv == ENXIO) {
 				delay(500000);
@@ -3529,12 +3512,6 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdint(oldp, oldlenp, newp, cpu_id));
 	case CPU_CPUFEATURE:
 		return (sysctl_rdint(oldp, oldlenp, newp, curcpu()->ci_feature_flags));
-#if NAPM > 0
-	case CPU_APMWARN:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmwarn));
-	case CPU_APMHALT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmhalt));
-#endif
 	case CPU_KBDRESET:
 		if (securelevel > 0)
 			return (sysctl_rdint(oldp, oldlenp, newp,

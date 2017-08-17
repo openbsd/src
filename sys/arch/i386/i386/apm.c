@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.116 2016/10/08 05:49:08 guenther Exp $	*/
+/*	$OpenBSD: apm.c,v 1.117 2017/08/17 19:44:27 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -106,12 +106,6 @@ int	filt_apmread(struct knote *kn, long hint);
 struct filterops apmread_filtops = {
 	1, NULL, filt_apmrdetach, filt_apmread
 };
-
-/* battery percentage at where we get verbose in our warnings.  This
- * value can be changed using sysctl(8), value machdep.apmwarn.
- * Setting it to zero kills all warnings
- */
-int	cpu_apmwarn = 10;
 
 #define	APM_RESUME_HOLDOFF	3
 
