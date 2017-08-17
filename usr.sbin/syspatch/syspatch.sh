@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.120 2017/08/02 05:58:29 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.121 2017/08/17 07:35:19 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -292,7 +292,7 @@ _MIRROR="${_MIRROR}/syspatch/${_KERNV[0]}/$(machine)"
 
 (($(sysctl -n hw.ncpufound) > 1)) && _BSDMP=true || _BSDMP=false
 _PDIR="/var/syspatch"
-_TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
+_TMP=$(mktemp -d -p ${TMPDIR:-/tmp} syspatch.XXXXXXXXXX)
 
 readonly _BSDMP _KERNV _MIRROR _OSrev _PDIR _TMP
 
