@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.38 2017/05/25 03:19:39 dlg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.39 2017/08/17 20:50:51 tom Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -157,7 +157,7 @@ char cpu_forkname[] = "cpu_fork()";
  * For normal processes this is child_return(), which causes the
  * child to go directly to user level with an apparent return value
  * of 0 from fork(), while the parent process returns normally.
- * For kernel threads this will be a function that never return.
+ * For kernel threads this will be a function that never returns.
  *
  * An alternate user-level stack or TCB can be requested by passing
  * a non-NULL value; these are poked into the PCB so they're in

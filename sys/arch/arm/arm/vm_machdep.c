@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.20 2017/08/17 20:47:49 tom Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.21 2017/08/17 20:50:51 tom Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ extern void proc_trampoline	(void);
  * For normal processes this is child_return(), which causes the
  * child to go directly to user level with an apparent return value
  * of 0 from fork(), while the parent process returns normally.
- * For kernel threads this will be a function that never return.
+ * For kernel threads this will be a function that never returns.
  *
  * An alternate user-level stack or TCB can be requested by passing
  * a non-NULL value; these are poked into the PCB so they're in
