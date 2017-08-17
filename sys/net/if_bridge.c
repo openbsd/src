@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.297 2017/05/16 12:24:01 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.298 2017/08/17 10:14:08 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1406,7 +1406,7 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 		switch (af) {
 		case AF_INET:
 			if (m->m_pkthdr.len - hlen < 2 * sizeof(u_int32_t))
-				break;
+				goto skiplookup;
 
 			ip = mtod(m, struct ip *);
 			proto = ip->ip_p;
@@ -1427,7 +1427,7 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 #ifdef INET6
 		case AF_INET6:
 			if (m->m_pkthdr.len - hlen < 2 * sizeof(u_int32_t))
-				break;
+				goto skiplookup;
 
 			ip6 = mtod(m, struct ip6_hdr *);
 
