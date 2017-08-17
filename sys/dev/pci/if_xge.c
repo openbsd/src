@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.76 2017/06/09 14:34:10 mikeb Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.77 2017/08/17 12:46:32 jsg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -407,7 +407,6 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->xge_type == XGE_TYPE_XENA) {
 		/* Save PCI config space */
 		for (i = 0; i < XGE_PCISIZE_XENA; i += 4)
-			sc->sc_pciregs[i/4] = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
 			sc->sc_pciregs[i/4] = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
 	}
 
