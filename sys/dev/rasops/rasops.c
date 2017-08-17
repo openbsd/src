@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.46 2017/08/13 22:28:23 kettenis Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.47 2017/08/17 20:21:53 kettenis Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -150,7 +150,7 @@ int	rasops_copyrows_rotated(void *, int, int, int);
 int	rasops_erasecols_rotated(void *, int, int, int, long);
 int	rasops_eraserows_rotated(void *, int, int, long);
 int	rasops_putchar_rotated(void *, int, int, u_int, long);
-void	rasops_rotate_font(int *);
+void	rasops_rotate_font(int *, int);
 
 /*
  * List of all rotated fonts
@@ -218,8 +218,9 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 		 * Pick the rotated version of this font. This will create it
 		 * if necessary.
 		 */
-		if (ri->ri_flg & RI_ROTATE_CW)
-			rasops_rotate_font(&cookie);
+		if (ri->ri_flg & (RI_ROTATE_CW | RI_ROTATE_CCW))
+			rasops_rotate_font(&cookie,
+			    ISSET(ri->ri_flg, RI_ROTATE_CCW));
 #endif
 
 		if (wsfont_lock(cookie, &ri->ri_font,
@@ -341,7 +342,7 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 		ri->ri_emuwidth--;
 
 #if NRASOPS_ROTATION > 0
-	if (ri->ri_flg & RI_ROTATE_CW) {
+	if (ri->ri_flg & (RI_ROTATE_CW | RI_ROTATE_CCW)) {
 		ri->ri_rows = ri->ri_emuwidth / ri->ri_font->fontwidth;
 		ri->ri_cols = ri->ri_emuheight / ri->ri_font->fontheight;
 	} else
@@ -460,7 +461,7 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	}
 
 #if NRASOPS_ROTATION > 0
-	if (ri->ri_flg & RI_ROTATE_CW) {
+	if (ri->ri_flg & (RI_ROTATE_CW | RI_ROTATE_CCW)) {
 		ri->ri_real_ops = ri->ri_ops;
 		ri->ri_ops.copycols = rasops_copycols_rotated;
 		ri->ri_ops.copyrows = rasops_copyrows_rotated;
@@ -958,7 +959,11 @@ rasops_do_cursor(struct rasops_info *ri)
 		/* Rotate rows/columns */
 		row = ri->ri_ccol;
 		col = ri->ri_rows - ri->ri_crow - 1;
-	} else
+	} else if (ri->ri_flg & RI_ROTATE_CCW) {
+		/* Rotate rows/columns */
+		row = ri->ri_cols - ri->ri_ccol - 1;
+		col = ri->ri_crow;
+	} else		
 #endif
 	{
 		row = ri->ri_crow;
@@ -1153,7 +1158,7 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 #include <sys/malloc.h>
 
 void
-rasops_rotate_font(int *cookie)
+rasops_rotate_font(int *cookie, int ccw)
 {
 	struct rotatedfont *f;
 	int ncookie;
@@ -1169,7 +1174,7 @@ rasops_rotate_font(int *cookie)
 	 * We did not find a rotated version of this font. Ask the wsfont
 	 * code to compute one for us.
 	 */
-	if ((ncookie = wsfont_rotate(*cookie)) == -1)
+	if ((ncookie = wsfont_rotate(*cookie, ccw)) == -1)
 		return;
 
 	f = malloc(sizeof(struct rotatedfont), M_DEVBUF, M_WAITOK);
@@ -1230,15 +1235,18 @@ rasops_putchar_rotated(void *cookie, int row, int col, u_int uc, long attr)
 
 	ri = (struct rasops_info *)cookie;
 
+	if (ri->ri_flg & RI_ROTATE_CW)
+		row = ri->ri_rows - row - 1;
+	else
+		col = ri->ri_cols - col - 1;
+
 	/* Do rotated char sans (side)underline */
-	rc = ri->ri_real_ops.putchar(cookie, col, ri->ri_rows - row - 1, uc,
-	    attr & ~1);
+	rc = ri->ri_real_ops.putchar(cookie, col, row, uc, attr & ~1);
 	if (rc != 0)
 		return rc;
 
 	/* Do rotated underline */
-	rp = ri->ri_bits + col * ri->ri_yscale + (ri->ri_rows - row - 1) * 
-	    ri->ri_xscale;
+	rp = ri->ri_bits + col * ri->ri_yscale + row * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
 
 	/* XXX this assumes 16-bit color depth */

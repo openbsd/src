@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.18 2016/12/15 19:18:41 fcambus Exp $ */
+/*	$OpenBSD: rasops.h,v 1.19 2017/08/17 20:21:53 kettenis Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -52,10 +52,11 @@ struct wsdisplay_font;
 #define	RI_CLEARMARGINS	0x0020	/* clear display margins on startup */
 #define RI_CENTER	0x0040	/* center onscreen output */
 #define RI_CURSORCLIP	0x0080	/* cursor is currently clipped */
-#define	RI_ROTATE_CW	0x0100	/* display is rotated, quarter clockwise */
-#define RI_CFGDONE	0x0200	/* rasops_reconfig() completed successfully */
-#define RI_VCONS	0x0400	/* virtual consoles */
-#define RI_WRONLY	0x0800	/* avoid framebuffer reads */
+#define RI_ROTATE_CW	0x0100	/* display is rotated, 90 deg clockwise */
+#define RI_ROTATE_CCW	0x0200	/* display is rotated, 90 deg anti-clockwise */
+#define RI_CFGDONE	0x0400	/* rasops_reconfig() completed successfully */
+#define RI_VCONS	0x0800	/* virtual consoles */
+#define RI_WRONLY	0x1000	/* avoid framebuffer reads */
 
 struct rasops_screen;
 
