@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.230 2017/03/06 08:16:24 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.231 2017/08/17 07:32:09 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -405,7 +405,7 @@ sm_merge_loop() {
 	_tomerge=true
 	while ${_tomerge}; do
 		cp -p ${COMPFILE} ${COMPFILE}.merged
-		sdiff -as -w $(tput -T ${TERM:=vt100} cols) -o ${COMPFILE}.merged \
+		sdiff -as -w $(tput -T ${TERM:-vt100} cols) -o ${COMPFILE}.merged \
 			${TARGET} ${COMPFILE}
 		_instmerged=v
 		while [[ ${_instmerged} == v ]]; do
@@ -626,11 +626,11 @@ shift $(( OPTIND -1 ))
 # global constants
 _BKPDIR=/var/sysmerge/backups
 _RELINT=$(uname -r | tr -d '.') || exit 1
-_TMPROOT=$(mktemp -d -p /tmp sysmerge.XXXXXXXXXX) || exit 1
+_TMPROOT=$(mktemp -d -p ${TMPDIR:-/tmp} sysmerge.XXXXXXXXXX) || exit 1
 readonly _BKPDIR _RELINT _TMPROOT
 
-[[ -z ${VISUAL} ]] && EDITOR=${EDITOR:=/usr/bin/vi} || EDITOR=${VISUAL}
-PAGER=${PAGER:=/usr/bin/more}
+[[ -z ${VISUAL} ]] && EDITOR=${EDITOR:-/usr/bin/vi} || EDITOR=${VISUAL}
+PAGER=${PAGER:-/usr/bin/more}
 
 mkdir -p ${_TMPROOT} || sm_error "cannot create ${_TMPROOT}"
 cd ${_TMPROOT} || sm_error "cannot enter ${_TMPROOT}"
