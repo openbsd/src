@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.331 2017/08/09 10:15:31 dcoppa Exp $ */
+/* $OpenBSD: acpi.c,v 1.332 2017/08/17 05:16:27 stsp Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2879,8 +2879,8 @@ acpi_foundhid(struct aml_node *node, void *arg)
 #endif
 
 	if (!node->parent->attached) {
-		config_found(self, &aaa, acpi_print);
 		node->parent->attached = 1;
+		config_found(self, &aaa, acpi_print);
 	}
 
 	return (0);
