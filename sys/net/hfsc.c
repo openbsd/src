@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.45 2017/08/17 18:14:39 mikeb Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.46 2017/08/17 18:22:43 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -208,6 +208,7 @@ struct hfsc_class	*hfsc_nextclass(struct hfsc_class *);
 void		 hfsc_cl_purge(struct hfsc_if *, struct hfsc_class *,
 		     struct mbuf_list *);
 
+void		 hfsc_update_sc(struct hfsc_if *, struct hfsc_class *, int);
 void		 hfsc_deferred(void *);
 void		 hfsc_update_cfmin(struct hfsc_class *);
 void		 hfsc_set_active(struct hfsc_if *, struct hfsc_class *, int);
@@ -886,8 +887,7 @@ hfsc_deq_begin(struct ifqueue *ifq, void **cookiep)
 	m = hfsc_class_deq_begin(cl, &free_ml);
 	ifq_mfreeml(ifq, &free_ml);
 	if (m == NULL) {
-		/* the class becomes passive */
-		hfsc_set_passive(hif, cl);
+		hfsc_update_sc(hif, cl, 0);
 		return (NULL);
 	}
 
@@ -899,10 +899,18 @@ hfsc_deq_begin(struct ifqueue *ifq, void **cookiep)
 void
 hfsc_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
 {
-	struct mbuf_list free_ml = MBUF_LIST_INITIALIZER();
 	struct hfsc_if *hif = ifq->ifq_q;
 	struct hfsc_class *cl = cookie;
-	struct mbuf *m0;
+
+	hfsc_class_deq_commit(cl, m);
+	hfsc_update_sc(hif, cl, m->m_pkthdr.len);
+
+	PKTCNTR_INC(&cl->cl_stats.xmit_cnt, m->m_pkthdr.len);
+}
+
+void
+hfsc_update_sc(struct hfsc_if *hif, struct hfsc_class *cl, int len)
+{
 	int next_len, realtime = 0;
 	u_int64_t cur_time = hif->hif_microtime;
 
@@ -910,13 +918,9 @@ hfsc_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
 	if (cl->cl_rsc != NULL)
 		realtime = (cl->cl_e <= cur_time);
 
-	hfsc_class_deq_commit(cl, m);
-
-	PKTCNTR_INC(&cl->cl_stats.xmit_cnt, m->m_pkthdr.len);
-
-	hfsc_update_vf(cl, m->m_pkthdr.len, cur_time);
+	hfsc_update_vf(cl, len, cur_time);
 	if (realtime)
-		cl->cl_cumul += m->m_pkthdr.len;
+		cl->cl_cumul += len;
 
 	if (hfsc_class_qlength(cl) > 0) {
 		/*
@@ -925,9 +929,11 @@ hfsc_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
 		 * be used with an external queue manager.
 		 */
 		if (cl->cl_rsc != NULL) {
+			struct mbuf *m0;
+
 			/* update ed */
-			m0 = hfsc_class_deq_begin(cl, &free_ml);
-			ifq_mfreeml(ifq, &free_ml);
+			KASSERT(cl->cl_qops == pfq_hfsc_ops);
+			m0 = MBUF_LIST_FIRST(&cl->cl_q.q);
 			next_len = m0->m_pkthdr.len;
 
 			if (realtime)
