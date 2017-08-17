@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.44 2017/07/24 15:20:46 mikeb Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.45 2017/08/17 18:14:39 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -586,10 +586,9 @@ void *
 hfsc_alloc(unsigned int idx, void *q)
 {
 	struct hfsc_if *hif = q;
+
 	KASSERT(idx == 0); /* when hfsc is enabled we only use the first ifq */
 	KASSERT(hif != NULL);
-
-	timeout_add(&hif->hif_defer, 1);
 	return (hif);
 }
 
@@ -827,8 +826,11 @@ hfsc_enq(struct ifqueue *ifq, struct mbuf *m)
 	dm = hfsc_class_enqueue(cl, m);
 
 	/* successfully queued. */
-	if (dm != m && hfsc_class_qlength(cl) == 1)
+	if (dm != m && hfsc_class_qlength(cl) == 1) {
 		hfsc_set_active(hif, cl, m->m_pkthdr.len);
+		if (!timeout_pending(&hif->hif_defer))
+			timeout_add(&hif->hif_defer, 1);
+	}
 
 	/* drop occurred. */
 	if (dm != NULL)
@@ -946,16 +948,18 @@ hfsc_deferred(void *arg)
 	struct ifqueue *ifq = &ifp->if_snd;
 	struct hfsc_if *hif;
 
-	KERNEL_ASSERT_LOCKED();
-	KASSERT(HFSC_ENABLED(ifq));
+	if (!HFSC_ENABLED(ifq))
+		return;
 
 	if (!ifq_empty(ifq))
 		ifq_start(ifq);
 
-	hif = ifq->ifq_q;
-
+	hif = ifq_q_enter(&ifp->if_snd, ifq_hfsc_ops);
+	if (hif == NULL)
+		return;
 	/* XXX HRTIMER nearest virtual/fit time is likely less than 1/HZ. */
 	timeout_add(&hif->hif_defer, 1);
+	ifq_q_leave(&ifp->if_snd, hif);
 }
 
 void
