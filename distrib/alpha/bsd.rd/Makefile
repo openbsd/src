@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2017/08/12 19:41:16 jasper Exp $
+#	$OpenBSD: Makefile,v 1.27 2017/08/17 05:24:09 jasper Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -29,6 +29,7 @@ bsd.rd:	bsd.rd_unz
 bsd.rd_unz: bsd ${IMAGE} rdsetroot
 	cp bsd bsd.rd_unz
 	${.OBJDIR}/rdsetroot bsd.rd_unz ${IMAGE}
+	strip -R .SUNW_ctf bsd.rd_unz
 
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/alpha/compile/${RAMDISK} && \
