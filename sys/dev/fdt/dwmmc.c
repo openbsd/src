@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.6 2017/08/04 08:18:31 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.7 2017/08/17 11:26:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -189,7 +189,7 @@ dwmmc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return (OF_is_compatible(faa->fa_node, "rockchip,rk3288-dw-mshc") |
+	return (OF_is_compatible(faa->fa_node, "rockchip,rk3288-dw-mshc") ||
 	    OF_is_compatible(faa->fa_node, "samsung,exynos5420-dw-mshc"));
 }
 
