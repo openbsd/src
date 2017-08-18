@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.14 2015/08/27 05:48:40 deraadt Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.15 2017/08/18 12:15:35 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -267,6 +267,9 @@ gpioclose(dev_t dev, int flag, int mode, struct proc *p)
 	struct gpio_softc *sc;
 
 	sc = (struct gpio_softc *)device_lookup(&gpio_cd, minor(dev));
+	if (sc == NULL)
+		return (ENXIO);
+
 	sc->sc_opened = 0;
 
 	return (0);
@@ -299,6 +302,9 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int pin, value, flags, npins, found;
 
 	sc = (struct gpio_softc *)device_lookup(&gpio_cd, minor(dev));
+	if (sc == NULL)
+		return (ENXIO);
+
 	gc = sc->sc_gc;
 
 	switch (cmd) {
