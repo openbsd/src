@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.84 2017/08/18 20:19:36 fcambus Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.85 2017/08/18 21:29:59 deraadt Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -514,8 +514,6 @@ struct wsdisplay_font {
 #define	WSDISPLAY_FONTORDER_R2L		2
 	void *cookie;
 	void *data;
-	void *zdata;
-	u_int zdata_len;
 };
 #define WSDISPLAYIO_LDFONT	_IOW ('W', 77, struct wsdisplay_font)
 #define	WSDISPLAYIO_LSFONT	_IOWR('W', 78, struct wsdisplay_font)
