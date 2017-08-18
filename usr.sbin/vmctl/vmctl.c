@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.37 2017/08/14 21:41:49 jasper Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.38 2017/08/18 07:01:29 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -183,6 +183,8 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
  *   0     : Message successfully processed
  *   EINVAL: Invalid or unexpected response from vmd
  *   EIO   : vm_start command failed
+ *   ENOENT: a specified component of the VM could not be found (disk image,
+ *    BIOS firmware image, etc)
  */
 int
 vm_start_complete(struct imsg *imsg, int *ret, int autoconnect)
@@ -194,11 +196,17 @@ vm_start_complete(struct imsg *imsg, int *ret, int autoconnect)
 		vmr = (struct vmop_result *)imsg->data;
 		res = vmr->vmr_result;
 		if (res) {
-			errno = res;
-			if (res == ENOENT) {
+			switch (res) {
+			case VMD_BIOS_MISSING:
+				warnx("vmm bios firmware file not found.");
+				*ret = ENOENT;
+				break;
+			case VMD_DISK_MISSING:
 				warnx("could not find specified disk image(s)");
 				*ret = ENOENT;
-			} else {
+				break;
+			default:
+				errno = res;
 				warn("start vm command failed");
 				*ret = EIO;
 			}

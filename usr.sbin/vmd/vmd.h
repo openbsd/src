@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.58 2017/07/15 05:05:36 pd Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.59 2017/08/18 07:01:29 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -49,6 +49,10 @@
 #define NR_BACKLOG		5
 #define VMD_SWITCH_TYPE		"bridge"
 #define VM_DEFAULT_MEMORY	512
+
+/* vmd -> vmctl error codes */
+#define VMD_BIOS_MISSING	1001
+#define VMD_DISK_MISSING	1002
 
 /* 100.64.0.0/10 from rfc6598 (IPv4 Prefix for Shared Address Space) */
 #define VMD_DHCP_PREFIX		"100.64.0.0/10"

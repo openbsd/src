@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.32 2017/07/15 05:05:36 pd Exp $	*/
+/*	$OpenBSD: config.c,v 1.33 2017/08/18 07:01:29 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -218,6 +218,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		    (kernfd = open(VM_DEFAULT_BIOS, O_RDONLY)) == -1) {
 			log_warn("%s: can't open %s", __func__,
 			    VM_DEFAULT_BIOS);
+			errno = VMD_BIOS_MISSING;
 			goto fail;
 		}
 	}
@@ -228,6 +229,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		    open(vcp->vcp_disks[i], O_RDWR)) == -1) {
 			log_warn("%s: can't open disk %s", __func__,
 			    vcp->vcp_disks[i]);
+			errno = VMD_DISK_MISSING;
 			goto fail;
 		}
 	}
