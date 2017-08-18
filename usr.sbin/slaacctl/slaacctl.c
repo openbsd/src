@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.9 2017/08/18 18:42:20 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.10 2017/08/18 18:42:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -300,6 +300,7 @@ show_interface_msg(struct imsg *imsg)
 		    NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV))
 			err(1, "cannot get router IP");
 
+		printf("\t\trouter: %s\n", hbuf);
 		printf("\t\tid: %4lld, state: %15s\n",
 		    cei_dfr_proposal->id, cei_dfr_proposal->state);
 		printf("\t\trouter lifetime: %10u\n",
