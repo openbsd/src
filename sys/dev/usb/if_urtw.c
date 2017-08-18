@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.65 2017/07/03 09:21:09 kevlo Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.66 2017/08/18 00:49:51 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -1007,11 +1007,10 @@ urtw_media_change(struct ifnet *ifp)
 	if (error != ENETRESET)
 		return (error);
 
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-	    (IFF_UP | IFF_RUNNING))
-		sc->sc_init(ifp);
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
+		error = sc->sc_init(ifp);
 
-	return (0);
+	return (error);
 }
 
 int
@@ -2218,7 +2217,6 @@ urtw_init(struct ifnet *ifp)
 	struct urtw_rf *rf = &sc->sc_rf;
 	struct ieee80211com *ic = &sc->sc_ic;
 	usbd_status error;
-	int ret;
 
 	urtw_stop(ifp, 0);
 
@@ -2284,10 +2282,10 @@ urtw_init(struct ifnet *ifp)
 		error = urtw_open_pipes(sc);
 		if (error != 0)
 			goto fail;
-		ret = urtw_alloc_rx_data_list(sc);
+		error = urtw_alloc_rx_data_list(sc);
 		if (error != 0)
 			goto fail;
-		ret = urtw_alloc_tx_data_list(sc);
+		error = urtw_alloc_tx_data_list(sc);
 		if (error != 0)
 			goto fail;
 		sc->sc_flags |= URTW_INIT_ONCE;
