@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.10 2017/08/18 18:42:58 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.11 2017/08/18 18:43:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -268,19 +268,25 @@ show_interface_msg(struct imsg *imsg)
 		printf("\t\tid: %4lld, state: %15s, privacy: %s\n",
 		    cei_addr_proposal->id, cei_addr_proposal->state,
 		    cei_addr_proposal->privacy ? "y" : "n");
-		if (cei_addr_proposal->vltime == ND6_INFINITE_LIFETIME)
-			printf("\t\tvltime: %10s, ", "infinity");
-		else
-			printf("\t\tvltime: %10u, ", cei_addr_proposal->vltime);
-		if (cei_addr_proposal->pltime == ND6_INFINITE_LIFETIME)
-			printf("pltime: %10s\n", "infinity");
-		else
-			printf("pltime: %10u\n", cei_addr_proposal->pltime);
 
 		if (clock_gettime(CLOCK_MONOTONIC, &now))
 			err(1, "clock_gettime");
 
 		timespecsub(&now, &cei_addr_proposal->uptime, &diff);
+
+		if (cei_addr_proposal->vltime == ND6_INFINITE_LIFETIME)
+			printf("\t\tvltime: %10s, ", "infinity");
+		else
+			printf("\t\tvltime: %10u, ", cei_addr_proposal->vltime);
+		if (cei_addr_proposal->pltime == ND6_INFINITE_LIFETIME)
+			printf("pltime: %10s", "infinity");
+		else
+			printf("pltime: %10u", cei_addr_proposal->pltime);
+		if (cei_addr_proposal->next_timeout != 0)
+			printf(", timeout: %10llds\n",
+			    cei_addr_proposal->next_timeout - diff.tv_sec);
+		else
+			printf("\n");
 
 		t = localtime(&cei_addr_proposal->when.tv_sec);
 		strftime(whenbuf, sizeof(whenbuf), "%F %T", t);
@@ -313,7 +319,12 @@ show_interface_msg(struct imsg *imsg)
 
 		t = localtime(&cei_dfr_proposal->when.tv_sec);
 		strftime(whenbuf, sizeof(whenbuf), "%F %T", t);
-		printf("\t\tupdated: %s; %llds ago\n", whenbuf, diff.tv_sec);
+		printf("\t\tupdated: %s; %llds ago", whenbuf, diff.tv_sec);
+		if (cei_dfr_proposal->next_timeout != 0)
+			printf(", timeout: %10llds\n",
+			    cei_dfr_proposal->next_timeout - diff.tv_sec);
+		else
+			printf("\n");
 
 		break;
 	case IMSG_CTL_END:
