@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.66 2017/08/16 18:34:10 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.67 2017/08/18 16:53:02 tom Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -91,7 +91,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)p2->p_addr + USPACE - 16 -
-	    (arc4random_uniform(PAGE_SIZE) & ~_STACKALIGNBYTES);
+	    (arc4random() & PAGE_MASK & ~_STACKALIGNBYTES);
 
 	p2->p_md.md_tss_sel = tss_alloc(pcb);
 

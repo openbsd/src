@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.37 2017/08/16 18:34:08 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.38 2017/08/18 16:53:02 tom Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 
 	/* Record where this process's kernel stack is */
 	pcb->pcb_kstack = (u_int64_t)p2->p_addr + USPACE - 16 -
-	    (arc4random_uniform(PAGE_SIZE) & ~_STACKALIGNBYTES);
+	    (arc4random() & PAGE_MASK & ~_STACKALIGNBYTES);
 
 	/*
 	 * Copy the trapframe.
