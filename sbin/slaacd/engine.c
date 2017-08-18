@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.11 2017/08/05 13:02:33 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.12 2017/08/18 07:45:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -167,7 +167,7 @@ struct address_proposal {
 	struct event			 timer;
 	int64_t				 id;
 	enum proposal_state		 state;
-	int				 next_timeout;
+	time_t				 next_timeout;
 	int				 timeout_count;
 	struct timespec			 when;
 	struct timespec			 uptime;
@@ -187,7 +187,7 @@ struct dfr_proposal {
 	struct event			 timer;
 	int64_t				 id;
 	enum proposal_state		 state;
-	int				 next_timeout;
+	time_t				 next_timeout;
 	int				 timeout_count;
 	struct timespec			 when;
 	struct timespec			 uptime;
@@ -1497,7 +1497,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 			    0) {
 				found = 1;
 				if (real_lifetime(&dfr_proposal->uptime,
-				    dfr_proposal->router_lifetime) >=
+				    dfr_proposal->router_lifetime) >
 				    ra->router_lifetime)
 					log_warnx("ignoring router "
 					    "advertisement that lowers router "
@@ -1644,7 +1644,7 @@ configure_address(struct address_proposal *addr_proposal)
 {
 	struct imsg_configure_address	 address;
 	struct timeval			 tv;
-	uint32_t			 lifetime;
+	time_t				 lifetime;
 
 	if (addr_proposal->pltime > MAX_RTR_SOLICITATIONS *
 	    (RTR_SOLICITATION_INTERVAL + 1))
@@ -1659,6 +1659,8 @@ configure_address(struct address_proposal *addr_proposal)
 		tv.tv_sec = addr_proposal->next_timeout;
 		tv.tv_usec = arc4random_uniform(1000000);
 		evtimer_add(&addr_proposal->timer, &tv);
+		log_debug("%s: %d, scheduling new timeout in %llds.%06ld",
+		    __func__, addr_proposal->if_index, tv.tv_sec, tv.tv_usec);
 	} else
 		addr_proposal->next_timeout = 0;
 
@@ -1781,12 +1783,17 @@ configure_dfr(struct dfr_proposal *dfr_proposal)
 	struct timeval			 tv;
 	enum proposal_state		 prev_state;
 
-	dfr_proposal->next_timeout = dfr_proposal->router_lifetime -
-	    MAX_RTR_SOLICITATIONS * (RTR_SOLICITATION_INTERVAL + 1);
-
-	tv.tv_sec = dfr_proposal->next_timeout;
-	tv.tv_usec = arc4random_uniform(1000000);
-	evtimer_add(&dfr_proposal->timer, &tv);
+	if (dfr_proposal->router_lifetime > MAX_RTR_SOLICITATIONS *
+	    (RTR_SOLICITATION_INTERVAL + 1)) {
+		dfr_proposal->next_timeout = dfr_proposal->router_lifetime -
+		    MAX_RTR_SOLICITATIONS * (RTR_SOLICITATION_INTERVAL + 1);
+		tv.tv_sec = dfr_proposal->next_timeout;
+		tv.tv_usec = arc4random_uniform(1000000);
+		evtimer_add(&dfr_proposal->timer, &tv);
+		log_debug("%s: %d, scheduling new timeout in %llds.%06ld",
+		    __func__, dfr_proposal->if_index, tv.tv_sec, tv.tv_usec);
+	} else
+		dfr_proposal->next_timeout = 0;
 
 	prev_state = dfr_proposal->state;
 
