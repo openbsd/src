@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Ian Sutton <ian@ce.gl>
+ * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
