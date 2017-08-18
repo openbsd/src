@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1032 2017/08/08 07:14:05 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1033 2017/08/18 16:57:48 jcs Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1919,7 +1919,7 @@ donetconfig() {
 	if ifconfig dhcp >/dev/null 2>&1 && [[ $NIFS == 1 && -n $_dn ]]; then
 		echo "Using DNS domainname $resp"
 	else
-		ask "DNS domain name? (e.g. 'bar.com')" "$resp"
+		ask "DNS domain name? (e.g. 'example.com')" "$resp"
 	fi
 	hostname "$(hostname -s).$resp"
 
