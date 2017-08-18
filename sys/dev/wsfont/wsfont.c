@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.49 2017/08/17 20:21:53 kettenis Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.50 2017/08/18 20:19:36 fcambus Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -39,6 +39,8 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
+
+#include <lib/libz/zlib.h>
 
 #include "wsfont_glue.h"	/* NRASOPS_ROTATION */
 
@@ -155,6 +157,7 @@ static const u_char reverse[256] = {
 #endif
 
 static struct font *wsfont_find0(int);
+static int wsfont_inflate(struct wsdisplay_font *);
 
 #ifdef INCLUDE_FONT_BIT_ENDIANNESS_SWAP_CODE
 
@@ -528,6 +531,12 @@ wsfont_lock(int cookie, struct wsdisplay_font **ptr, int bitorder,
 	s = splhigh();
 
 	if ((ent = wsfont_find0(cookie)) != NULL) {
+		/* Decompress font data if necessary */
+		if (ent->font->data == NULL &&
+		    ent->font->zdata && ent->font->zdata_len)
+			if (wsfont_inflate(ent->font))
+				return -1;
+
 		if (bitorder && bitorder != ent->font->bitorder) {
 #ifdef INCLUDE_FONT_BIT_ENDIANNESS_SWAP_CODE
 			if (ent->lockcount) {
@@ -752,4 +761,38 @@ wsfont_map_unichar(struct wsdisplay_font *font, int c)
 #endif	/* !SMALL_KERNEL */
 
 	return (-1);
+}
+
+/*
+ * Inflate a compressed font
+ */
+static int
+wsfont_inflate(struct wsdisplay_font *font) {
+	int fontdata_len = font->fontheight * font->stride * font->numchars;
+	z_stream zstream;
+
+	font->data = malloc(fontdata_len, M_DEVBUF, M_WAITOK);
+	if (font->data == NULL)
+		return ENOMEM;
+
+	memset(&zstream, 0, sizeof(zstream));
+	zstream.next_in = font->zdata;
+	zstream.avail_in = font->zdata_len;
+	zstream.next_out = font->data;
+	zstream.avail_out = fontdata_len;
+	zstream.opaque = Z_NULL;
+
+	if (inflateInit(&zstream) != Z_OK)
+		return -1;
+
+	if (inflate(&zstream, Z_FINISH) != Z_STREAM_END)
+		return -1;
+
+	if (inflateEnd(&zstream) != Z_OK)
+		return -1;
+
+	if (zstream.total_out != fontdata_len)
+		return -1;
+
+	return 0;
 }
