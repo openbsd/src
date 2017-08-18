@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.25 2017/01/12 16:32:28 stsp Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.26 2017/08/18 11:00:38 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -426,7 +426,7 @@ ar9380_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 	if (AR_SREV_9485(sc))
 		ar9485_init_swreg(sc);
 	else
-		ar9485_init_swreg(sc);
+		ar9380_init_swreg(sc);
 
 	/* Apply tuning capabilities. */
 	if (AR_SREV_9485(sc) &&
