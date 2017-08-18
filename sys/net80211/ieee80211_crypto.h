@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.24 2016/12/17 18:35:54 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.25 2017/08/18 17:30:12 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -111,6 +111,7 @@ struct	ieee80211_node;
 void	ieee80211_crypto_attach(struct ifnet *);
 void	ieee80211_crypto_detach(struct ifnet *);
 
+void	ieee80211_crypto_clear_groupkeys(struct ieee80211com *);
 struct	ieee80211_key *ieee80211_get_txkey(struct ieee80211com *,
 	    const struct ieee80211_frame *, struct ieee80211_node *);
 struct	ieee80211_key *ieee80211_get_rxkey(struct ieee80211com *,

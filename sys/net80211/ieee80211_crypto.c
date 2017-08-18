@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.70 2017/05/02 17:07:06 mikeb Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.71 2017/08/18 17:30:12 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -74,13 +74,11 @@ ieee80211_crypto_attach(struct ifnet *ifp)
 #endif
 }
 
-
 void
 ieee80211_crypto_detach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 	struct ieee80211_pmk *pmk;
-	int i;
 
 	/* purge the PMKSA cache */
 	while ((pmk = TAILQ_FIRST(&ic->ic_pmksa)) != NULL) {
@@ -90,12 +88,7 @@ ieee80211_crypto_detach(struct ifnet *ifp)
 	}
 
 	/* clear all group keys from memory */
-	for (i = 0; i < IEEE80211_GROUP_NKID; i++) {
-		struct ieee80211_key *k = &ic->ic_nw_keys[i];
-		if (k->k_cipher != IEEE80211_CIPHER_NONE)
-			(*ic->ic_delete_key)(ic, NULL, k);
-		explicit_bzero(k, sizeof(*k));
-	}
+	ieee80211_crypto_clear_groupkeys(ic);
 
 	/* clear pre-shared key from memory */
 	explicit_bzero(ic->ic_psk, IEEE80211_PMK_LEN);
@@ -103,6 +96,19 @@ ieee80211_crypto_detach(struct ifnet *ifp)
 #ifndef IEEE80211_STA_ONLY
 	timeout_del(&ic->ic_tkip_micfail_timeout);
 #endif
+}
+
+void
+ieee80211_crypto_clear_groupkeys(struct ieee80211com *ic)
+{
+	int i;
+
+	for (i = 0; i < IEEE80211_GROUP_NKID; i++) {
+		struct ieee80211_key *k = &ic->ic_nw_keys[i];
+		if (k->k_cipher != IEEE80211_CIPHER_NONE)
+			(*ic->ic_delete_key)(ic, NULL, k);
+		explicit_bzero(k, sizeof(*k));
+	}
 }
 
 /*
