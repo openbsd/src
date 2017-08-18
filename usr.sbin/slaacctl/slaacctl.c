@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.8 2017/08/18 16:32:06 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.9 2017/08/18 18:42:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -218,8 +218,7 @@ show_interface_msg(struct imsg *imsg)
 		t = localtime(&cei_ra->when.tv_sec);
 		strftime(whenbuf, sizeof(whenbuf), "%F %T", t);
 		printf("\tRouter Advertisement from %s\n", hbuf);
-		printf("\t\treceived: %s.%09ld; %lld.%09lds ago\n",
-		    whenbuf, cei_ra->when.tv_nsec, diff.tv_sec, diff.tv_nsec);
+		printf("\t\treceived: %s; %llds ago\n", whenbuf, diff.tv_sec);
 		printf("\t\tCur Hop Limit: %3u, M: %d, O: %d, Router Lifetime:"
 		    " %5us\n", cei_ra->curhoplimit, cei_ra->managed ? 1: 0,
 		    cei_ra->other ? 1 : 0, cei_ra->router_lifetime);
@@ -285,9 +284,7 @@ show_interface_msg(struct imsg *imsg)
 
 		t = localtime(&cei_addr_proposal->when.tv_sec);
 		strftime(whenbuf, sizeof(whenbuf), "%F %T", t);
-		printf("\t\tupdated: %s.%09ld; %lld.%09lds ago\n",
-		    whenbuf, cei_addr_proposal->when.tv_nsec, diff.tv_sec,
-		    diff.tv_nsec);
+		printf("\t\tupdated: %s; %llds ago\n", whenbuf, diff.tv_sec);
 		printf("\t\t%s, %s/%u\n", hbuf, inet_ntop(AF_INET6,
 		    &cei_addr_proposal->prefix, ntopbuf, INET6_ADDRSTRLEN),
 		    cei_addr_proposal->prefix_len);
@@ -315,9 +312,7 @@ show_interface_msg(struct imsg *imsg)
 
 		t = localtime(&cei_dfr_proposal->when.tv_sec);
 		strftime(whenbuf, sizeof(whenbuf), "%F %T", t);
-		printf("\t\tupdated: %s.%09ld; %lld.%09lds ago\n",
-		    whenbuf, cei_dfr_proposal->when.tv_nsec, diff.tv_sec,
-		    diff.tv_nsec);
+		printf("\t\tupdated: %s; %llds ago\n", whenbuf, diff.tv_sec);
 
 		break;
 	case IMSG_CTL_END:
