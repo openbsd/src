@@ -1,4 +1,4 @@
-/*	$OpenBSD: tireg.h,v 1.4 2014/08/20 01:02:02 dlg Exp $	*/
+/*	$OpenBSD: tireg.h,v 1.5 2017/08/18 09:22:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -903,35 +903,48 @@ struct ti_cmd_desc {
  * Utility macros to make issuing commands a little simpler. Assumes
  * that 'sc' and 'cmd' are in local scope.
  */
-#define TI_DO_CMD(x, y, z)		\
-	cmd.ti_cmdx = (((x) << 24) | ((y) << 12) | ((z))); \
-	ti_cmd(sc, &cmd);
+#define TI_DO_CMD(x, y, z)					\
+do {								\
+	cmd.ti_cmdx = (((x) << 24) | ((y) << 12) | ((z)));	\
+	ti_cmd(sc, &cmd);					\
+} while (0)
 
-#define TI_DO_CMD_EXT(x, y, z, v, w)	\
-	cmd.ti_cmdx = (((x) << 24) | ((y) << 12) | ((z))); \
-	ti_cmd_ext(sc, &cmd, v, w);
+#define TI_DO_CMD_EXT(x, y, z, v, w)				\
+do {								\
+	cmd.ti_cmdx = (((x) << 24) | ((y) << 12) | ((z)));	\
+	ti_cmd_ext(sc, &cmd, v, w);				\
+} while (0)
 
 /*
  * Other utility macros.
  */
-#define TI_INC(x, y)	(x) = (x + 1) % y
+#define TI_INC(x, y)						\
+do {								\
+	(x) = (x + 1) % y;					\
+} while (0)
 
-#define TI_UPDATE_JUMBOPROD(x, y)					\
-	if (x->ti_hwrev == TI_HWREV_TIGON) {				\
+#define TI_UPDATE_JUMBOPROD(x, y)				\
+do {								\
+	if (x->ti_hwrev == TI_HWREV_TIGON) {			\
 		TI_DO_CMD(TI_CMD_SET_RX_JUMBO_PROD_IDX, 0, y);	\
-	} else {							\
-		CSR_WRITE_4(x, TI_MB_JUMBORXPROD_IDX, y);		\
-	}
+	} else {						\
+		CSR_WRITE_4(x, TI_MB_JUMBORXPROD_IDX, y);	\
+	}							\
+} while (0)
 
-#define TI_UPDATE_MINIPROD(x, y)					\
-		CSR_WRITE_4(x, TI_MB_MINIRXPROD_IDX, y);
+#define TI_UPDATE_MINIPROD(x, y)				\
+do {								\
+		CSR_WRITE_4(x, TI_MB_MINIRXPROD_IDX, y);	\
+} while (0)
 
-#define TI_UPDATE_STDPROD(x, y)						\
-	if (x->ti_hwrev == TI_HWREV_TIGON) {				\
-		TI_DO_CMD(TI_CMD_SET_RX_PROD_IDX, 0, y);		\
-	} else {							\
-		CSR_WRITE_4(x, TI_MB_STDRXPROD_IDX, y);			\
-	}
+#define TI_UPDATE_STDPROD(x, y)					\
+do {								\
+	if (x->ti_hwrev == TI_HWREV_TIGON) {			\
+		TI_DO_CMD(TI_CMD_SET_RX_PROD_IDX, 0, y);	\
+	} else {						\
+		CSR_WRITE_4(x, TI_MB_STDRXPROD_IDX, y);		\
+	}							\
+} while (0)
 
 
 /*
