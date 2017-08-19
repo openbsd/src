@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.7 2017/08/19 11:13:38 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.8 2017/08/19 11:14:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -709,8 +709,9 @@ void
 configure_gateway(struct imsg_configure_dfr *dfr, uint8_t rtm_type)
 {
 	struct rt_msghdr		 rtm;
+	struct sockaddr_rtlabel		 rl;
 	struct sockaddr_in6		 dst, gw, mask;
-	struct iovec			 iov[8];
+	struct iovec			 iov[10];
 	long				 pad = 0;
 	int				 iovcnt = 0, padlen;
 
@@ -723,7 +724,7 @@ configure_gateway(struct imsg_configure_dfr *dfr, uint8_t rtm_type)
 	rtm.rtm_index = dfr->if_index;
 	rtm.rtm_seq = ++rtm_seq;
 	rtm.rtm_priority = RTP_DEFAULT;
-	rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
+	rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_LABEL;
 	rtm.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
 
 	iov[iovcnt].iov_base = &rtm;
@@ -763,6 +764,20 @@ configure_gateway(struct imsg_configure_dfr *dfr, uint8_t rtm_type)
 	iov[iovcnt++].iov_len = sizeof(mask);
 	rtm.rtm_msglen += sizeof(mask);
 	padlen = ROUNDUP(sizeof(mask)) - sizeof(mask);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	memset(&rl, 0, sizeof(rl));
+	rl.sr_len = sizeof(rl);
+	rl.sr_family = AF_UNSPEC;
+	(void)snprintf(rl.sr_label, sizeof(rl.sr_label), "%s", "slaacd");
+	iov[iovcnt].iov_base = &rl;
+	iov[iovcnt++].iov_len = sizeof(rl);
+	rtm.rtm_msglen += sizeof(rl);
+	padlen = ROUNDUP(sizeof(rl)) - sizeof(rl);
 	if (padlen > 0) {
 		iov[iovcnt].iov_base = &pad;
 		iov[iovcnt++].iov_len = padlen;
