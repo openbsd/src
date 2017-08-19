@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set1_groups.3,v 1.1 2017/08/12 14:09:34 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set1_groups.3,v 1.2 2017/08/19 19:36:39 schwarze Exp $
 .\"	OpenSSL SSL_CTX_set1_curves.pod de4d764e Nov 9 14:51:06 2016 +0000
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 12 2017 $
+.Dd $Mdocdate: August 19 2017 $
 .Dt SSL_CTX_SET1_GROUPS 3
 .Os
 .Sh NAME
@@ -115,7 +115,7 @@ to the
 .Fa glistlen
 groups in the array
 .Fa glist .
-The array consist of group NIDs in preference order.
+The array consists of group NIDs in preference order.
 For a TLS client, the groups are used directly in the supported groups
 extension.
 For a TLS server, the groups are used to determine the set of shared
@@ -159,3 +159,5 @@ All these functions return 1 for success or 0 for failure.
 .Sh HISTORY
 The curve functions first appeared in OpenSSL 1.0.2
 and the group functions in OpenSSL 1.1.1.
+Both have been available since
+.Ox 6.1 .
