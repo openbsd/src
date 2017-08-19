@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.43 2017/08/19 12:34:41 visa Exp $
+#	$OpenBSD: Makefile.octeon,v 1.44 2017/08/19 12:38:21 visa Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -48,7 +48,7 @@ DEBUG?=		-g
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
-LINKFLAGS=	-e start -T ld.script -Ttext=${LINK_ADDRESS} -nopie
+LINKFLAGS=	-e start -T ld.script -Ttext=${LINK_ADDRESS} --warn-common -nopie
 STRIPFLAGS=	-g -x
 
 .if ${IDENT:M-DDDB_STRUCT}
