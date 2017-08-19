@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_log1p.S,v 1.5 2016/09/12 19:47:02 guenther Exp $ */
+/*	$OpenBSD: s_log1p.S,v 1.6 2017/08/19 18:27:19 deraadt Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -51,7 +51,7 @@ ENTRY(log1p)
 	jne	use_fyl2x
 	jmp	use_fyl2xp1
 
-	.align	4
+	.align	4,0xcc
 use_fyl2x:
 	fldln2
 	fldl	4(%esp)
@@ -60,7 +60,7 @@ use_fyl2x:
 	fyl2x
 	ret
 
-	.align	4
+	.align	4,0xcc
 use_fyl2xp1:
 	fldln2
 	fldl	4(%esp)

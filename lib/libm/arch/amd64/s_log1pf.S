@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_log1pf.S,v 1.4 2016/09/12 19:47:01 guenther Exp $ */
+/*	$OpenBSD: s_log1pf.S,v 1.5 2017/08/19 18:27:19 deraadt Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -39,8 +39,6 @@
  * 
  */
 
-.text
-	.align	4
 ENTRY(log1pf)
 	XMM_ONE_ARG_FLOAT_PROLOGUE
 	flds	ARG_FLOAT_ONE
@@ -56,7 +54,7 @@ ENTRY(log1pf)
 	jne	use_fyl2x
 	jmp	use_fyl2xp1
 
-	.align	4
+	.align	4,0xcc
 use_fyl2x:
 	fldln2
 	flds	ARG_FLOAT_ONE
@@ -66,7 +64,7 @@ use_fyl2x:
 	XMM_FLOAT_EPILOGUE
 	ret
 
-	.align	4
+	.align	4,0xcc
 use_fyl2xp1:
 	fldln2
 	flds	ARG_FLOAT_ONE
