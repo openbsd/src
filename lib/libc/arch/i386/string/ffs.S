@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.4 2015/08/31 02:53:56 guenther Exp $ */
+/*	$OpenBSD: ffs.S,v 1.5 2017/08/19 18:25:50 deraadt Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -12,7 +12,7 @@ ENTRY(ffs)
 	incl	%eax			/* bits numbered from 1, not 0 */
 	ret
 
-	.align 2
+	.align 2,0xcc
 L1:	xorl	%eax,%eax		/* clear result */
 	ret
 END_WEAK(ffs)
