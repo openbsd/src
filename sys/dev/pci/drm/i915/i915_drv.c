@@ -2287,6 +2287,8 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	inteldrm_init_backlight(dev_priv);
 
 	ri->ri_flg = RI_CENTER | RI_WRONLY | RI_VCONS | RI_CLEAR;
+	if (ri->ri_width < ri->ri_height)
+		ri->ri_flg |= RI_ROTATE_CCW;
 	ri->ri_hw = dev_priv;
 	rasops_init(ri, 160, 160);
 
@@ -2308,6 +2310,13 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	if (console) {
 		long defattr;
+
+		/*
+		 * Clear the entire screen if we're doing rotation to
+		 * make sure no unrotated content survives.
+		 */
+		if (ri->ri_flg & RI_ROTATE_CCW)
+			memset(ri->ri_bits, 0, ri->ri_height * ri->ri_stride);
 
 		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&inteldrm_stdscreen, ri->ri_active,
