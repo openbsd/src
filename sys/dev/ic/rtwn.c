@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.28 2017/08/16 01:26:46 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.29 2017/08/19 10:04:14 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -115,7 +115,6 @@ int		rtwn_r88e_ra_init(struct rtwn_softc *, u_int8_t, u_int32_t,
 void		rtwn_tsf_sync_enable(struct rtwn_softc *);
 void		rtwn_set_led(struct rtwn_softc *, int, int);
 void		rtwn_update_short_preamble(struct ieee80211com *);
-void		rtwn_update_avgrssi(struct rtwn_softc *, int, int8_t);
 int8_t		rtwn_r88e_get_rssi(struct rtwn_softc *, int, void *);
 void		rtwn_watchdog(struct ifnet *);
 void		rtwn_fw_reset(struct rtwn_softc *);
