@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.12 2016/05/07 19:05:21 guenther Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.13 2017/08/19 18:24:06 deraadt Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -41,10 +41,8 @@
 __curbrk:	.long	_end
 	END(__curbrk)
 	.type	__curbrk,@object
-	.text
 
 	.weak	sbrk
-
 ENTRY(sbrk)
 #ifdef __PIC__
 	movl	4(%esp),%ecx
