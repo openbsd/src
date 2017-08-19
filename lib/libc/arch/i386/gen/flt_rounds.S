@@ -1,4 +1,4 @@
-/* $OpenBSD: flt_rounds.S,v 1.5 2015/10/27 05:54:49 guenther Exp $ */
+/* $OpenBSD: flt_rounds.S,v 1.6 2017/08/19 18:23:00 deraadt Exp $ */
 /*
  * Written by J.T. Conklin, Apr 4, 1995
  * Public domain.
@@ -6,7 +6,7 @@
 
 #include "SYS.h"
 
-	.text
+	.section .rodata
 	.align 2
 _map:
 	.byte 1		/* round to nearest */

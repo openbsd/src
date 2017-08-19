@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.S,v 1.6 2015/11/14 21:53:03 guenther Exp $	*/
+/*	$OpenBSD: flt_rounds.S,v 1.7 2017/08/19 18:23:00 deraadt Exp $	*/
 /*	$NetBSD: flt_rounds.S,v 1.2 2002/06/06 23:04:35 fvdl Exp $	*/
 
 /*
@@ -8,8 +8,7 @@
 
 #include "DEFS.h"
 
-	.text
-	_ALIGN_TEXT
+	.section .rodata
 _map:
 	.byte 1		/* round to nearest */
 	.byte 3		/* round to negative infinity */
