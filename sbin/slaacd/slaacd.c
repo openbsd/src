@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.6 2017/08/12 16:31:09 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.7 2017/08/19 11:13:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -758,7 +758,7 @@ configure_gateway(struct imsg_configure_dfr *dfr, uint8_t rtm_type)
 
 	memset(&mask, 0, sizeof(mask));
 	mask.sin6_family = AF_INET6;
-	mask.sin6_len = 0;//sizeof(struct sockaddr_in6);
+	mask.sin6_len = sizeof(struct sockaddr_in6);
 	iov[iovcnt].iov_base = &mask;
 	iov[iovcnt++].iov_len = sizeof(mask);
 	rtm.rtm_msglen += sizeof(mask);
