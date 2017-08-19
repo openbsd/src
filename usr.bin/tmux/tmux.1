@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.574 2017/08/17 08:37:38 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.575 2017/08/19 20:40:16 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 17 2017 $
+.Dd $Mdocdate: August 19 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2912,7 +2912,7 @@ and so on.
 .Pp
 For example:
 .Bd -literal -offset indent
-set -s user-keys[0] '\e[5;30012~'
+set -s user-keys[0] "\ee[5;30012~"
 bind User0 resize-pane -L 3
 .Ed
 .It Xo Ic visual-activity
