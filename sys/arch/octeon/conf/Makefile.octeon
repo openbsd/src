@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.44 2017/08/19 12:38:21 visa Exp $
+#	$OpenBSD: Makefile.octeon,v 1.45 2017/08/19 12:52:32 visa Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -49,7 +49,6 @@ COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
 LINKFLAGS=	-e start -T ld.script -Ttext=${LINK_ADDRESS} --warn-common -nopie
-STRIPFLAGS=	-g -x
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
@@ -88,7 +87,7 @@ SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
 SYSTEM_LD_TAIL=	@${SIZE} $@
 
 .if ${DEBUG} == "-g"
-LINKFLAGS+=	-S
+STRIPFLAGS=	-S
 SYSTEM_LD_TAIL+=; umask 007; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
