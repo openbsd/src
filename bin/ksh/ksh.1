@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.192 2017/08/11 23:10:55 guenther Exp $
+.\"	$OpenBSD: ksh.1,v 1.193 2017/08/19 06:19:42 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: August 11 2017 $
+.Dd $Mdocdate: August 19 2017 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1619,11 +1619,11 @@ if
 .Ev HISTFILE
 contains a history list from a previous session.
 .It Li \e$
-The default prompt i.e.\&
-.Sq # \&
+The default prompt character i.e.\&
+.Sq #
 if the effective UID is 0,
 otherwise
-.Sq $ \& .
+.Sq $ .
 Since the shell interprets
 .Sq $
 as a special character within double quotes,
