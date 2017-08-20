@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.166 2017/08/20 04:56:41 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.167 2017/08/20 05:14:16 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3658,8 +3658,9 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	if (vrp->vrp_continue) {
 		switch (vcpu->vc_gueststate.vg_exit_reason) {
 		case VMX_EXIT_IO:
-			vcpu->vc_gueststate.vg_rax =
-			    vcpu->vc_exit.vei.vei_data;
+			if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN)
+				vcpu->vc_gueststate.vg_rax =
+				    vcpu->vc_exit.vei.vei_data;
 			break;
 		case VMX_EXIT_HLT:
 			break;
@@ -5687,9 +5688,11 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 	if (vrp->vrp_continue) {
 		switch (vcpu->vc_gueststate.vg_exit_reason) {
 		case SVM_VMEXIT_IOIO:
-			vcpu->vc_gueststate.vg_rax =
-			    vcpu->vc_exit.vei.vei_data;
-			vmcb->v_rax = vcpu->vc_gueststate.vg_rax;
+			if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN) {
+				vcpu->vc_gueststate.vg_rax =
+				    vcpu->vc_exit.vei.vei_data;
+				vmcb->v_rax = vcpu->vc_gueststate.vg_rax;
+			}
 		}
 	}
 
