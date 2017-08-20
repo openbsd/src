@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.513 2017/07/18 19:31:20 zhuk Exp $
+#	$OpenBSD: rc,v 1.514 2017/08/20 19:45:37 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -337,13 +337,13 @@ if [[ $1 == shutdown ]]; then
 	if (($(sysctl -n kern.securelevel) == 0)); then
 		echo 'single user: not running shutdown scripts'
 	else
-		pkg_scripts=${pkg_scripts%%*( )}
-		if [[ -n $pkg_scripts ]]; then
+		set -A _d -- $pkg_scripts
+		_i=${#_d[*]}
+		if ((_i)); then
 			echo -n 'stopping package daemons:'
-			while [[ -n $pkg_scripts ]]; do
-				_d=${pkg_scripts##* }
-				pkg_scripts=${pkg_scripts%%*( )$_d}
-				[[ -x /etc/rc.d/$_d ]] && /etc/rc.d/$_d stop
+			while ((--_i >= 0)); do
+				[[ -x /etc/rc.d/${_d[_i]} ]] &&
+					/etc/rc.d/${_d[_i]} stop
 			done
 			echo '.'
 		fi
