@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.51 2017/08/10 16:59:04 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.52 2017/08/20 05:16:58 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -663,7 +663,10 @@ vioblk_notifyq(struct vioblk_dev *dev)
 				log_warnx("fl vioblk: error writing vio ring");
 			}
 			break;
-		case VIRTIO_BLK_T_GET_ID:
+		default:
+			log_warnx("%s: unsupported command 0x%x", __func__,
+			    cmd.type);
+
 			ds_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
 			ds_desc = &desc[ds_desc_idx];
 
@@ -690,10 +693,6 @@ vioblk_notifyq(struct vioblk_dev *dev)
 				log_warnx("%s: get id : error writing vio ring",
 				    __func__);
 			}
-			break;
-		default:
-			log_warnx("%s: unknown command 0x%x", __func__,
-			    cmd.type);
 			break;
 		}
 
