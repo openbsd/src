@@ -1,4 +1,5 @@
-/*	$OpenBSD: sync.S,v 1.2 2015/12/26 15:51:57 visa Exp $	*/
+/*	$OpenBSD: sync.S,v 1.3 2017/08/20 11:12:42 visa Exp $	*/
+
 /*
  * Copyright (c) 2015 Visa Hankala
  *
@@ -65,12 +66,14 @@ n:
 
 #define SYNC_FETCH_AND_OP(op, n, ll, sc, inst, neg) \
 LEAF(__sync_fetch_and_##op##_##n); \
+	sync; \
 1:	##ll	$v0, ($a0); \
 	##inst	$v1, $v0, $a1; \
 	##neg; \
 	##sc	$v1, ($a0); \
 	beq	$v1, $0, 1b; \
 	 nop; \
+	sync; \
 	j	$ra; \
 	 nop; \
 END(__sync_fetch_and_##op##_##n)
@@ -94,6 +97,7 @@ LEAF(__sync_fetch_and_##op##_##n); \
 	SYNC_EMUL_INIT(amask, vmask); \
 	sll	$a1, $a1, $t0;		/* Align the parameter. */ \
 	and	$a1, $a1, $t1;		/* Normalize the parameter. */ \
+	sync; \
 1:	ll	$v0, ($a0); \
 	##inst	$v1, $v0, $a1; \
 	##neg; \
@@ -103,6 +107,7 @@ LEAF(__sync_fetch_and_##op##_##n); \
 	sc	$v1, ($a0); \
 	beq	$v1, $0, 1b; \
 	 nop; \
+	sync; \
 	and	$v0, $v0, $t1;		/* Get the old value. */ \
 	j	$ra; \
 	 srl	$v0, $v0, $t0;		/* Remove the shift. */ \
@@ -128,6 +133,7 @@ SYNC_FETCH_AND_OP_EMUL(nand, 1, and, NEG_v1, 3, 0xff)
 
 #define SYNC_OP_AND_FETCH(op, n, ll, sc, inst, neg) \
 LEAF(__sync_##op##_and_fetch_##n); \
+	sync; \
 1:	##ll	$v0, ($a0); \
 	##inst	$v0, $v0, $a1; \
 	##neg; \
@@ -135,6 +141,7 @@ LEAF(__sync_##op##_and_fetch_##n); \
 	##sc	$v1, ($a0); \
 	beq	$v1, $0, 1b; \
 	 nop; \
+	sync; \
 	j	$ra; \
 	 nop; \
 END(__sync_##op##_and_fetch_##n)
@@ -158,6 +165,7 @@ LEAF(__sync_##op##_and_fetch_##n); \
 	SYNC_EMUL_INIT(amask, vmask); \
 	sll	$a1, $a1, $t0;		/* Align the parameter. */ \
 	and	$a1, $a1, $t1;		/* Normalize the parameter. */ \
+	sync; \
 1:	ll	$v0, ($a0); \
 	##inst	$v1, $v0, $a1; \
 	##neg; \
@@ -168,6 +176,7 @@ LEAF(__sync_##op##_and_fetch_##n); \
 	sc	$v1, ($a0); \
 	beq	$v1, $0, 1b; \
 	 nop; \
+	sync; \
 	j	$ra; \
 	 srl	$v0, $t3, $t0;		/* Remove the shift. */ \
 END(__sync_##op##_and_fetch_##n)
@@ -193,12 +202,14 @@ SYNC_OP_AND_FETCH_EMUL(nand, 1, and, NEG_v1, 3, 0xff)
 #define SYNC_BOOL_COMPARE_AND_SWAP(n, ll, sc, trunc) \
 LEAF(__sync_bool_compare_and_swap_##n); \
 	trunc; \
+	sync; \
 1:	##ll	$v0, ($a0); \
 	bne	$v0, $a1, 2f; \
 	 move	$v1, $a2; \
 	##sc	$v1, ($a0); \
 	beq	$v1, $0, 1b; \
 	 nop; \
+	sync; \
 	j	$ra; \
 	 li	$v0, 1; \
 2:	j	$ra; \
@@ -217,6 +228,7 @@ LEAF(__sync_bool_compare_and_swap_##n); \
 	sll	$a2, $a2, $t0; \
 	and	$a2, $a2, $t1; \
 	/* Do the update. */ \
+	sync; \
 1:	ll	$v0, ($a0); \
 	and	$v1, $v0, $t1;		/* Get the old value. */ \
 	bne	$v1, $a1, 2f; \
@@ -225,6 +237,7 @@ LEAF(__sync_bool_compare_and_swap_##n); \
 	sc	$v1, ($a0); \
 	beq	$v1, $0, 1b; \
 	 nop; \
+	sync; \
 	j	$ra; \
 	 li	$v0, 1; \
 2:	j	$ra; \
@@ -241,12 +254,14 @@ SYNC_BOOL_COMPARE_AND_SWAP_EMUL(1, 3, 0xff)
 #define SYNC_VAL_COMPARE_AND_SWAP(n, ll, sc, trunc) \
 LEAF(__sync_val_compare_and_swap_##n); \
 	trunc; \
+	sync; \
 1:	##ll	$v0, ($a0); \
 	bne	$v0, $a1, 2f; \
 	 move	$v1, $a2; \
 	##sc	$v1, ($a0); \
 	beq	$v1, $0, 1b; \
 	 nop; \
+	sync; \
 2:	j	$ra; \
 	 nop; \
 END(__sync_val_compare_and_swap_##n)
@@ -263,6 +278,7 @@ LEAF(__sync_val_compare_and_swap_##n); \
 	sll	$a2, $a2, $t0; \
 	and	$a2, $a2, $t1; \
 	/* Do the update. */ \
+	sync; \
 1:	ll	$v0, ($a0); \
 	and	$t3, $v0, $t1;		/* Get the old value. */ \
 	bne	$t3, $a1, 2f; \
@@ -271,6 +287,7 @@ LEAF(__sync_val_compare_and_swap_##n); \
 	sc	$v1, ($a0); \
 	beq	$v1, $0, 1b; \
 	 nop; \
+	sync; \
 2:	j	$ra; \
 	 srl	$v0, $t3, $t0;		/* Remove the shift. */ \
 END(__sync_val_compare_and_swap_##n)
@@ -284,11 +301,13 @@ SYNC_VAL_COMPARE_AND_SWAP_EMUL(1, 3, 0xff)
 
 #define SYNC_LOCK_TEST_AND_SET(n, ll, sc) \
 LEAF(__sync_lock_test_and_set_##n); \
+	sync; \
 1:	move	$v1, $a1; \
 	##ll	$v0, ($a0); \
 	##sc	$v1, ($a0); \
 	beq	$v1, $0, 1b; \
 	 nop; \
+	sync; \
 	j	$ra; \
 	 nop; \
 END(__sync_lock_test_and_set_##n)
@@ -301,12 +320,14 @@ LEAF(__sync_lock_test_and_set_##n); \
 	SYNC_EMUL_INIT(amask, vmask); \
 	sll	$a1, $a1, $t0;		/* Align the parameter. */ \
 	and	$a1, $a1, $t1;		/* Normalize the parameter. */ \
+	sync; \
 1:	ll	$v0, ($a0); \
 	and	$v1, $v0, $t2;		/* Clear the old value. */ \
 	or	$v1, $v1, $a1;		/* Insert the new value. */ \
 	sc	$v1, ($a0); \
 	beq	$v1, $0, 1b; \
 	 nop; \
+	sync; \
 	and	$v0, $v0, $t1;		/* Get the old value. */ \
 	j	$ra; \
 	 srl	$v0, $v0, $t0;		/* Remove the shift. */ \
