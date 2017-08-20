@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.29 2017/08/19 10:04:14 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.30 2017/08/20 14:53:06 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -89,6 +89,18 @@ int rtwn_debug = 0;
 #define DPRINTFN(n, x)
 #endif
 
+/* Registers to save and restore during IQ calibration. */
+struct rtwn_iq_cal_regs {
+	uint32_t	adda[16];
+	uint8_t		txpause;
+	uint8_t		bcn_ctrl;
+	uint8_t		bcn_ctrl1;
+	uint32_t	gpio_muxcfg;
+	uint32_t	ofdm0_trxpathena;
+	uint32_t	ofdm0_trmuxpar;
+	uint32_t	fpga0_rfifacesw1;
+};
+
 void		rtwn_write_1(struct rtwn_softc *, uint16_t, uint8_t);
 void		rtwn_write_2(struct rtwn_softc *, uint16_t, uint16_t);
 void		rtwn_write_4(struct rtwn_softc *, uint16_t, uint32_t);
@@ -145,7 +157,7 @@ void		rtwn_set_chan(struct rtwn_softc *,
 int		rtwn_iq_calib_chain(struct rtwn_softc *, int, uint16_t[2],
 		    uint16_t[2]);
 void		rtwn_iq_calib_run(struct rtwn_softc *, int, uint16_t[2][2],
-		    uint16_t[2][2]);
+    		    uint16_t rx[2][2], struct rtwn_iq_cal_regs *);
 int		rtwn_iq_calib_compare_results(uint16_t[2][2], uint16_t[2][2],
 		    uint16_t[2][2], uint16_t[2][2], int);
 void		rtwn_iq_calib_write_results(struct rtwn_softc *, uint16_t[2],
@@ -2226,19 +2238,8 @@ rtwn_iq_calib_chain(struct rtwn_softc *sc, int chain, uint16_t tx[2],
 
 void
 rtwn_iq_calib_run(struct rtwn_softc *sc, int n, uint16_t tx[2][2],
-    uint16_t rx[2][2])
+    uint16_t rx[2][2], struct rtwn_iq_cal_regs *iq_cal_regs)
 {
-	/* Registers to save and restore during IQ calibration. */
-	struct iq_cal_regs {
-		uint32_t	adda[16];
-		uint8_t		txpause;
-		uint8_t		bcn_ctrl;
-		uint8_t		bcn_ctrl1;
-		uint32_t	gpio_muxcfg;
-		uint32_t	ofdm0_trxpathena;
-		uint32_t	ofdm0_trmuxpar;
-		uint32_t	fpga0_rfifacesw1;
-	} iq_cal_regs;
 	static const uint16_t reg_adda[16] = {
 		0x85c, 0xe6c, 0xe70, 0xe74,
 		0xe78, 0xe7c, 0xe80, 0xe84,
@@ -2250,12 +2251,12 @@ rtwn_iq_calib_run(struct rtwn_softc *sc, int n, uint16_t tx[2][2],
 
 	if (n == 0) {
 		for (i = 0; i < nitems(reg_adda); i++)
-			iq_cal_regs.adda[i] = rtwn_bb_read(sc, reg_adda[i]);
+			iq_cal_regs->adda[i] = rtwn_bb_read(sc, reg_adda[i]);
 
-		iq_cal_regs.txpause = rtwn_read_1(sc, R92C_TXPAUSE);
-		iq_cal_regs.bcn_ctrl = rtwn_read_1(sc, R92C_BCN_CTRL);
-		iq_cal_regs.bcn_ctrl1 = rtwn_read_1(sc, R92C_BCN_CTRL1);
-		iq_cal_regs.gpio_muxcfg = rtwn_read_4(sc, R92C_GPIO_MUXCFG);
+		iq_cal_regs->txpause = rtwn_read_1(sc, R92C_TXPAUSE);
+		iq_cal_regs->bcn_ctrl = rtwn_read_1(sc, R92C_BCN_CTRL);
+		iq_cal_regs->bcn_ctrl1 = rtwn_read_1(sc, R92C_BCN_CTRL1);
+		iq_cal_regs->gpio_muxcfg = rtwn_read_4(sc, R92C_GPIO_MUXCFG);
 	}
 
 	if (sc->ntxchains == 1) {
@@ -2276,11 +2277,11 @@ rtwn_iq_calib_run(struct rtwn_softc *sc, int n, uint16_t tx[2][2],
 	}
 
 	if (n == 0) {
-		iq_cal_regs.ofdm0_trxpathena =
+		iq_cal_regs->ofdm0_trxpathena =
 		    rtwn_bb_read(sc, R92C_OFDM0_TRXPATHENA);
-		iq_cal_regs.ofdm0_trmuxpar =
+		iq_cal_regs->ofdm0_trmuxpar =
 		    rtwn_bb_read(sc, R92C_OFDM0_TRMUXPAR);
-		iq_cal_regs.fpga0_rfifacesw1 =
+		iq_cal_regs->fpga0_rfifacesw1 =
 		    rtwn_bb_read(sc, R92C_FPGA0_RFIFACESW(1));
 	}
 
@@ -2294,11 +2295,11 @@ rtwn_iq_calib_run(struct rtwn_softc *sc, int n, uint16_t tx[2][2],
 
 	rtwn_write_1(sc, R92C_TXPAUSE, 0x3f);
 	rtwn_write_1(sc, R92C_BCN_CTRL,
-	    iq_cal_regs.bcn_ctrl & ~(R92C_BCN_CTRL_EN_BCN));
+	    iq_cal_regs->bcn_ctrl & ~(R92C_BCN_CTRL_EN_BCN));
 	rtwn_write_1(sc, R92C_BCN_CTRL1,
-	    iq_cal_regs.bcn_ctrl1 & ~(R92C_BCN_CTRL_EN_BCN));
+	    iq_cal_regs->bcn_ctrl1 & ~(R92C_BCN_CTRL_EN_BCN));
 	rtwn_write_1(sc, R92C_GPIO_MUXCFG,
-	    iq_cal_regs.gpio_muxcfg & ~(R92C_GPIO_MUXCFG_ENBT));
+	    iq_cal_regs->gpio_muxcfg & ~(R92C_GPIO_MUXCFG_ENBT));
 
 	rtwn_bb_write(sc, 0x0b68, 0x00080000);
 	if (sc->ntxchains > 1)
@@ -2352,10 +2353,10 @@ rtwn_iq_calib_run(struct rtwn_softc *sc, int n, uint16_t tx[2][2],
 	}
 
 	rtwn_bb_write(sc, R92C_OFDM0_TRXPATHENA,
-	    iq_cal_regs.ofdm0_trxpathena); 
+	    iq_cal_regs->ofdm0_trxpathena); 
 	rtwn_bb_write(sc, R92C_FPGA0_RFIFACESW(1),
-	    iq_cal_regs.fpga0_rfifacesw1);
-	rtwn_bb_write(sc, R92C_OFDM0_TRMUXPAR, iq_cal_regs.ofdm0_trmuxpar);
+	    iq_cal_regs->fpga0_rfifacesw1);
+	rtwn_bb_write(sc, R92C_OFDM0_TRMUXPAR, iq_cal_regs->ofdm0_trmuxpar);
 
 	rtwn_bb_write(sc, 0x0e28, 0x00);
 	rtwn_bb_write(sc, R92C_LSSI_PARAM(0), 0x00032ed3);
@@ -2369,12 +2370,12 @@ rtwn_iq_calib_run(struct rtwn_softc *sc, int n, uint16_t tx[2][2],
 		}
 
 		for (i = 0; i < nitems(reg_adda); i++)
-			rtwn_bb_write(sc, reg_adda[i], iq_cal_regs.adda[i]);
+			rtwn_bb_write(sc, reg_adda[i], iq_cal_regs->adda[i]);
 
-		rtwn_write_1(sc, R92C_TXPAUSE, iq_cal_regs.txpause);
-		rtwn_write_1(sc, R92C_BCN_CTRL, iq_cal_regs.bcn_ctrl);
-		rtwn_write_1(sc, R92C_BCN_CTRL1, iq_cal_regs.bcn_ctrl1);
-		rtwn_write_4(sc, R92C_GPIO_MUXCFG, iq_cal_regs.gpio_muxcfg);
+		rtwn_write_1(sc, R92C_TXPAUSE, iq_cal_regs->txpause);
+		rtwn_write_1(sc, R92C_BCN_CTRL, iq_cal_regs->bcn_ctrl);
+		rtwn_write_1(sc, R92C_BCN_CTRL1, iq_cal_regs->bcn_ctrl1);
+		rtwn_write_4(sc, R92C_GPIO_MUXCFG, iq_cal_regs->gpio_muxcfg);
 	}
 }
 
@@ -2485,14 +2486,16 @@ rtwn_iq_calib(struct rtwn_softc *sc)
 {
 	uint16_t tx[RTWN_IQ_CAL_NRUN][2][2], rx[RTWN_IQ_CAL_NRUN][2][2];
 	int n, valid;
+	struct rtwn_iq_cal_regs regs;
 
 	/* FIXME IQ calib breaks Rx on USB devices. */
 	if (sc->chip & RTWN_CHIP_USB)
 		return;
 
 	valid = 0;
+	memset(&regs, 0, sizeof(regs));
 	for (n = 0; n < RTWN_IQ_CAL_NRUN; n++) {
-		rtwn_iq_calib_run(sc, n, tx[n], rx[n]);
+		rtwn_iq_calib_run(sc, n, tx[n], rx[n], &regs);
 
 		if (n == 0)
 			continue;
