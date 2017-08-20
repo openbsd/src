@@ -1,5 +1,5 @@
-.\"	$OpenBSD: UI_get_string_type.3,v 1.2 2017/03/26 12:31:27 jmc Exp $
-.\"	OpenSSL UI_STRING.pod 2ca2e917 Mar 20 16:25:22 2017 -0400
+.\"	$OpenBSD: UI_get_string_type.3,v 1.3 2017/08/20 22:24:30 schwarze Exp $
+.\"	OpenSSL UI_STRING.pod e9c9971b Jul 1 18:28:50 2017 +0200
 .\"
 .\" This file was written by Richard Levitte <levitte@openssl.org>
 .\" Copyright (c) 2017 The OpenSSL Project.  All rights reserved.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 26 2017 $
+.Dd $Mdocdate: August 20 2017 $
 .Dt UI_GET_STRING_TYPE 3
 .Os
 .Sh NAME
@@ -237,7 +237,7 @@ type UI strings, or
 for any other type.
 .Pp
 .Fn UI_get0_result_string
-returns the UI string action description string for
+returns the UI string result buffer for
 .Dv UIT_PROMPT
 and
 .Dv UIT_VERIFY
