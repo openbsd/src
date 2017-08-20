@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile.000,v 1.1 2016/09/03 21:43:25 robert Exp $
+# $OpenBSD: Makefile.000,v 1.2 2017/08/20 13:36:30 ajacoutot Exp $
 
 # Set ERRATA to match the errata on the mirrors
-ERRATA=	000_dummy
+ERRATA = 000_dummy
 
 # Set BUILD to the type of the errata so that it can be built properly
 # 	src - run make targets in the specified subdir(s) for base
