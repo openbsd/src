@@ -1663,6 +1663,7 @@
 ./usr/share/man/man2/write.2
 ./usr/share/man/man3/ACCESS_DESCRIPTION_new.3
 ./usr/share/man/man3/ASN1_OBJECT_new.3
+./usr/share/man/man3/ASN1_STRING_TABLE_add.3
 ./usr/share/man/man3/ASN1_STRING_length.3
 ./usr/share/man/man3/ASN1_STRING_new.3
 ./usr/share/man/man3/ASN1_STRING_print_ex.3
@@ -1781,6 +1782,7 @@
 ./usr/share/man/man3/EVP_PKEY_encrypt.3
 ./usr/share/man/man3/EVP_PKEY_get_default_digest_nid.3
 ./usr/share/man/man3/EVP_PKEY_keygen.3
+./usr/share/man/man3/EVP_PKEY_meth_get0_info.3
 ./usr/share/man/man3/EVP_PKEY_new.3
 ./usr/share/man/man3/EVP_PKEY_print_private.3
 ./usr/share/man/man3/EVP_PKEY_set1_RSA.3
@@ -2347,6 +2349,7 @@
 ./usr/share/man/man3/labs.3
 ./usr/share/man/man3/ldexp.3
 ./usr/share/man/man3/ldiv.3
+./usr/share/man/man3/legacy_coding.3
 ./usr/share/man/man3/lgamma.3
 ./usr/share/man/man3/lh_new.3
 ./usr/share/man/man3/lh_stats.3
