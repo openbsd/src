@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.30 2017/08/20 14:53:06 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.31 2017/08/20 15:05:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2487,10 +2487,6 @@ rtwn_iq_calib(struct rtwn_softc *sc)
 	uint16_t tx[RTWN_IQ_CAL_NRUN][2][2], rx[RTWN_IQ_CAL_NRUN][2][2];
 	int n, valid;
 	struct rtwn_iq_cal_regs regs;
-
-	/* FIXME IQ calib breaks Rx on USB devices. */
-	if (sc->chip & RTWN_CHIP_USB)
-		return;
 
 	valid = 0;
 	memset(&regs, 0, sizeof(regs));
