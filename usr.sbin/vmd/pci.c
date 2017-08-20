@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.20 2017/08/10 17:11:47 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.21 2017/08/20 05:15:39 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -269,7 +269,7 @@ pci_handle_io(struct vm_run_params *vrp)
 		log_warnx("%s: no pci i/o function for reg 0x%llx",
 		    __progname, (uint64_t)reg);
 		/* Reads from undefined ports return 0xFF */
-		if (dir == 1)
+		if (dir == VEI_DIR_IN)
 			set_return_data(vei, 0xFFFFFFFF);
 	}
 
@@ -331,31 +331,37 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		    vei->vei.vei_data == 0xffffffff) {
 			/*
 			 * Compute BAR index:
-			 * o = 0x10 -> baridx = 1
-			 * o = 0x14 -> baridx = 2
-			 * o = 0x18 -> baridx = 3
-			 * o = 0x1c -> baridx = 4
-			 * o = 0x20 -> baridx = 5
-			 * o = 0x24 -> baridx = 6
+			 * o = 0x10 -> baridx = 0
+			 * o = 0x14 -> baridx = 1
+			 * o = 0x18 -> baridx = 2
+			 * o = 0x1c -> baridx = 3
+			 * o = 0x20 -> baridx = 4
+			 * o = 0x24 -> baridx = 5
 			 */
-			baridx = (o / 4) - 3;
-			if (pci.pci_devices[d].pd_bar_ct >= baridx)
+			baridx = (o / 4) - 4;
+			if (baridx < pci.pci_devices[d].pd_bar_ct)
 				vei->vei.vei_data = 0xfffff000;
 			else
 				vei->vei.vei_data = 0;
 		}
 
+		/* IOBAR registers must have bit 0 set */
+		if (o >= 0x10 && o <= 0x24) {
+			baridx = (o / 4) - 4;
+			if (baridx < pci.pci_devices[d].pd_bar_ct &&
+			    pci.pci_devices[d].pd_bartype[baridx] ==
+			    PCI_BAR_TYPE_IO)
+				vei->vei.vei_data |= 1;
+		}
+
 		/*
 		 * Discard writes to "option rom base address" as none of our
-		 * emulated devices have PCI option roms.
+		 * emulated devices have PCI option roms. Accept any other
+		 * writes and copy data to config space registers.
 		 */
 		if (o != PCI_EXROMADDR_0)
 			get_input_data(vei,
 			    &pci.pci_devices[d].pd_cfg_space[o / 4]);
-
-		/* IOBAR registers must have bit 0 set */
-		if (o == 0x10)
-			pci.pci_devices[d].pd_cfg_space[o / 4] |= 1;
 	} else {
 		/*
 		 * vei_dir == VEI_DIR_IN : in instruction
