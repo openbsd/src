@@ -353,6 +353,8 @@
 ./usr/bin/crontab
 ./usr/bin/csplit
 ./usr/bin/ctags
+./usr/bin/ctfconv
+./usr/bin/ctfstrip
 ./usr/bin/cu
 ./usr/bin/cut
 ./usr/bin/cvs

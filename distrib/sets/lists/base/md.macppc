@@ -64,6 +64,7 @@
 ./sbin/kbd
 ./sbin/pdisk
 ./sbin/wsconsctl
+./usr/bin/objcopy
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
