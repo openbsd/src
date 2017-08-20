@@ -1,0 +1,92 @@
+.\"	$OpenBSD: ASN1_STRING_TABLE_add.3,v 1.1 2017/08/20 15:01:20 schwarze Exp $
+.\"	OpenSSL ASN1_STRING_TABLE_add.pod 7b608d08 Jul 27 01:18:50 2017 +0800
+.\"
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: August 20 2017 $
+.Dt ASN1_STRING_TABLE_ADD 3
+.Os
+.Sh NAME
+.Nm ASN1_STRING_TABLE_add ,
+.Nm ASN1_STRING_TABLE_get ,
+.Nm ASN1_STRING_TABLE_cleanup
+.Nd maintain the global ASN.1 string table
+.Sh SYNOPSIS
+.In openssl/asn1.h
+.Ft int
+.Fo ASN1_STRING_TABLE_add
+.Fa "int nid"
+.Fa "long minsize"
+.Fa "long maxsize"
+.Fa "unsigned long mask"
+.Fa "unsigned long flags"
+.Fc
+.Ft ASN1_STRING_TABLE *
+.Fo ASN1_STRING_TABLE_get
+.Fa "int nid"
+.Fc
+.Ft void
+.Fn ASN1_STRING_TABLE_cleanup void
+.Sh DESCRIPTION
+The ASN.1 string table is a unique global object.
+Each entry is of the type
+.Vt ASN1_STRING_TABLE
+and contains information about one NID object.
+Some entries are predefined according to RFC 3280 appendix A.1.
+.Pp
+The function
+.Fn ASN1_STRING_TABLE_add
+changes the existing entry for
+.Fa nid
+or, if there is none, allocates a new entry.
+Each field of the entry is modified according to the function argument
+of the same name.
+The
+.Fa minsize
+and
+.Fa maxsize
+arguments overwrite the existing fields unless they are \-1.
+The
+.Fa mask
+argument always overwrites the existing field.
+The bits set in the
+.Fa flags
+argument are OR'ed into the existing field.
+No useful flags are currently defined, so passing 0 is recommended.
+.Pp
+The function
+.Fn ASN1_STRING_TABLE_get
+retrieves the entry for 
+.Fa nid .
+.Pp
+The function
+.Fn ASN1_STRING_TABLE_cleanup
+removes and frees all entries except the predefined ones.
+.Sh RETURN VALUES
+.Fn ASN1_STRING_TABLE_add
+returns 1 on success or 0 if an error occurred.
+.Pp
+.Fn ASN1_STRING_TABLE_get
+returns a valid
+.Vt ASN1_STRING_TABLE
+structure or
+.Dv NULL
+if nothing is found.
+.Sh SEE ALSO
+.Xr ASN1_OBJECT_new 3 ,
+.Xr ERR_get_error 3 ,
+.Xr OBJ_nid2obj 3
+.Sh BUGS
+Most aspects of the semantics considerably differ from OpenSSL.
