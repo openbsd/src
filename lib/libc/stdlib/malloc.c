@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.228 2017/07/10 09:44:16 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.229 2017/08/20 11:06:16 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -293,12 +293,8 @@ wrterror(struct dir_info *d, char *msg, ...)
 	writev(STDERR_FILENO, iov, 3);
 
 #ifdef MALLOC_STATS
-	if (mopts.malloc_stats) {
-		int i;
-
-		for (i = 0; i < _MALLOC_MUTEXES; i++)
-			malloc_dump(STDERR_FILENO, i, mopts.malloc_pool[i]);
-	}
+	if (mopts.malloc_stats)
+		malloc_gdump(STDERR_FILENO);
 #endif /* MALLOC_STATS */
 
 	errno = saved_errno;
@@ -2080,7 +2076,7 @@ err:
 #ifdef MALLOC_STATS
 
 struct malloc_leak {
-	void (*f)();
+	void *f;
 	size_t total_size;
 	int count;
 };
