@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.18 2017/08/14 03:15:28 rob Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.19 2017/08/20 17:49:29 rob Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -41,7 +41,7 @@ struct ifsd_ifstate {
 #define IFSD_LINKUP		2
 	int				 prevstate;
 	u_int32_t			 refcount;
-	u_short				 ifindex;
+	char				 ifname[IFNAMSIZ];
 };
 
 struct ifsd_external {
