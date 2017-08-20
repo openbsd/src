@@ -1,0 +1,112 @@
+.\"	$OpenBSD: PEM_bytes_read_bio.3,v 1.1 2017/08/20 20:15:13 schwarze Exp $
+.\"	OpenSSL PEM_bytes_read_bio.pod 7671342e Feb 29 15:47:12 2016 -0600
+.\"
+.\" This file was written by Benjamin Kaduk <bkaduk at akamai dot com>.
+.\" Copyright (c) 2017 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: August 20 2017 $
+.Dt PEM_BYTES_READ_BIO 3
+.Os
+.Sh NAME
+.Nm PEM_bytes_read_bio
+.Nd read a PEM-encoded data structure from a BIO
+.Sh SYNOPSIS
+.In openssl/pem.h
+.Ft int
+.Fo PEM_bytes_read_bio
+.Fa "unsigned char **pdata"
+.Fa "long *plen"
+.Fa "char **pnm"
+.Fa "const char *name"
+.Fa "BIO *bp"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Sh DESCRIPTION
+.Fn PEM_bytes_read_bio
+reads PEM-formatted (RFC 1421) data from the BIO
+.Fa bp
+for the data type given in
+.Fa name
+(RSA PRIVATE KEY, CERTIFICATE, etc.).
+If multiple PEM-encoded data structures are present in the same stream,
+.Fn PEM_bytes_read_bio
+will skip non-matching data types and continue reading.
+Non-PEM data present in the stream may cause an error.
+.Pp
+The PEM header may indicate that the following data is encrypted; if so,
+the data will be decrypted, waiting on user input to supply a passphrase
+if needed.
+The password callback
+.Fa cb
+and rock
+.Fa u
+are used to obtain the decryption passphrase, if applicable.
+.Pp
+Some data types have compatibility aliases, such as a file containing
+X509 CERTIFICATE matching a request for the deprecated type CERTIFICATE.
+The actual type indicated by the file is returned in
+.Em *pnm
+if
+.Fa pnm
+is
+.Pf non- Dv NULL .
+The caller must free the storage pointed to by
+.Em *pnm .
+.Pp
+The returned data is the DER-encoded form of the requested type, in
+.Em *pdata
+with length
+.Em *plen .
+The caller must free the storage pointed to by
+.Em *pdata .
+.Sh RETURN VALUES
+.Fn PEM_bytes_read_bio
+returns 1 for success or 0 for failure.
+.Sh SEE ALSO
+.Xr PEM_read 3 ,
+.Xr PEM_read_bio_PrivateKey 3
