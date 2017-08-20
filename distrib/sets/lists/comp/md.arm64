@@ -1,5 +1,4 @@
 ./usr/bin/addr2line
-./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/arm64
 ./usr/include/arm64/_float.h

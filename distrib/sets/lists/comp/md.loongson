@@ -1,7 +1,6 @@
 ./usr/bin/addr2line
 ./usr/bin/as
 ./usr/bin/gdb
-./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/ieeefp.h
 ./usr/include/loongson

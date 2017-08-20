@@ -2,9 +2,7 @@
 ./usr/bin/c++
 ./usr/bin/c++filt
 ./usr/bin/cpp
-./usr/bin/ctfconv
 ./usr/bin/ctfdump
-./usr/bin/ctfstrip
 ./usr/bin/flex
 ./usr/bin/flex++
 ./usr/bin/gprof
