@@ -1,6 +1,9 @@
-# $OpenBSD: Makefile.inc,v 1.5 2016/11/04 18:12:13 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.6 2017/08/20 17:53:13 espie Exp $
 
 # i386-specific libcrypto build rules
+
+# all i386 code generators use these
+EXTRA_PL =  ${LCRYPTO_SRC}/perlasm/x86gas.pl ${LCRYPTO_SRC}/perlasm/x86asm.pl
 
 # aes
 CFLAGS+= -DAES_ASM
@@ -55,7 +58,7 @@ SSLASM+= whrlpool wp-mmx
 .for dir f in ${SSLASM}
 SRCS+=	${f}.S
 GENERATED+=${f}.S
-${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl ${LCRYPTO_SRC}/perlasm/x86gas.pl
+${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl ${EXTRA_PL}
 	/usr/bin/perl -I${LCRYPTO_SRC}/perlasm -I${LCRYPTO_SRC}/${dir}/asm \
 		${LCRYPTO_SRC}/${dir}/asm/${f}.pl \
 		    openbsd-elf ${CFLAGS} 386 ${PICFLAG} > ${.TARGET}
@@ -65,6 +68,6 @@ CFLAGS+= -DOPENSSL_CPUID_OBJ
 SRCS+=	x86cpuid.S
 GENERATED+=x86cpuid.S
 
-x86cpuid.S: ${LCRYPTO_SRC}/x86cpuid.pl ${LCRYPTO_SRC}/perlasm/x86gas.pl
+x86cpuid.S: ${LCRYPTO_SRC}/x86cpuid.pl ${EXTRA_PL}
 	/usr/bin/perl -I${LCRYPTO_SRC}/perlasm ${LCRYPTO_SRC}/x86cpuid.pl \
 		openbsd-elf ${CFLAGS} 386 ${PICFLAG} > ${.TARGET}

@@ -1,6 +1,9 @@
-# $OpenBSD: Makefile.inc,v 1.7 2016/11/11 03:49:14 beck Exp $
+# $OpenBSD: Makefile.inc,v 1.8 2017/08/20 17:53:13 espie Exp $
 
 # amd64-specific libcrypto build rules
+
+# all amd64 code generators use this
+EXTRA_PL =	${LCRYPTO_SRC}/perlasm/x86_64-xlate.pl
 
 # aes
 CFLAGS+= -DAES_ASM
@@ -49,13 +52,13 @@ SSLASM+= sha sha1-x86_64
 CFLAGS+= -DSHA256_ASM
 SRCS+= sha256-x86_64.S
 GENERATED+= sha256-x86_64.S
-sha256-x86_64.S: ${LCRYPTO_SRC}/sha/asm/sha512-x86_64.pl
+sha256-x86_64.S: ${LCRYPTO_SRC}/sha/asm/sha512-x86_64.pl ${EXTRA_PL}
 	cd ${LCRYPTO_SRC}/sha/asm ; \
 		/usr/bin/perl ./sha512-x86_64.pl ${.OBJDIR}/${.TARGET}
 CFLAGS+= -DSHA512_ASM
 SRCS+= sha512-x86_64.S
 GENERATED+= sha512-x86_64.S
-sha512-x86_64.S: ${LCRYPTO_SRC}/sha/asm/sha512-x86_64.pl
+sha512-x86_64.S: ${LCRYPTO_SRC}/sha/asm/sha512-x86_64.pl ${EXTRA_PL}
 	cd ${LCRYPTO_SRC}/sha/asm ; \
 		/usr/bin/perl ./sha512-x86_64.pl ${.OBJDIR}/${.TARGET}
 # whrlpool
@@ -65,7 +68,7 @@ SSLASM+= whrlpool wp-x86_64
 .for dir f in ${SSLASM}
 SRCS+=	${f}.S
 GENERATED+=${f}.S
-${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl
+${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl ${EXTRA_PL}
 	(cd ${LCRYPTO_SRC}/${dir} ; \
 		/usr/bin/perl ./asm/${f}.pl openbsd) > ${.TARGET}
 .endfor
@@ -74,6 +77,6 @@ CFLAGS+= -DOPENSSL_CPUID_OBJ
 SRCS+=	x86_64cpuid.S x86_64-gcc.c
 GENERATED+=x86_64cpuid.S
 
-x86_64cpuid.S: ${LCRYPTO_SRC}/x86_64cpuid.pl
+x86_64cpuid.S: ${LCRYPTO_SRC}/x86_64cpuid.pl ${EXTRA_PL}
 	(cd ${LCRYPTO_SRC}/${dir} ; \
 		/usr/bin/perl ./x86_64cpuid.pl) > ${.TARGET}

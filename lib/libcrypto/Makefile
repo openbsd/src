@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.21 2017/08/13 19:42:33 doug Exp $
+# $OpenBSD: Makefile,v 1.22 2017/08/20 17:53:12 espie Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -419,11 +419,11 @@ GENERATED=obj_mac.h obj_dat.h
 CLEANFILES+=${GENERATED} obj_mac.num.tmp
 SSL_OBJECTS=${LCRYPTO_SRC}/objects
 
-obj_mac.h: ${SSL_OBJECTS}/objects.h ${SSL_OBJECTS}/obj_mac.num ${SSL_OBJECTS}/objects.txt
+obj_mac.h: ${SSL_OBJECTS}/objects.h ${SSL_OBJECTS}/obj_mac.num ${SSL_OBJECTS}/objects.txt ${SSL_OBJECTS}/objects.pl
 	cat ${SSL_OBJECTS}/obj_mac.num > obj_mac.num.tmp
 	/usr/bin/perl ${SSL_OBJECTS}/objects.pl ${SSL_OBJECTS}/objects.txt obj_mac.num.tmp obj_mac.h
 
-obj_dat.h: obj_mac.h
+obj_dat.h: obj_mac.h ${SSL_OBJECTS}/obj_dat.pl
 	/usr/bin/perl ${SSL_OBJECTS}/obj_dat.pl obj_mac.h obj_dat.h
 
 .if exists (${.CURDIR}/arch/${MACHINE_CPU}/Makefile.inc)
