@@ -1,5 +1,5 @@
-.\"	$OpenBSD: SSL_CTX_flush_sessions.3,v 1.2 2016/11/30 13:19:54 schwarze Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\"	$OpenBSD: SSL_CTX_flush_sessions.3,v 1.3 2017/08/21 07:45:09 schwarze Exp $
+.\"	OpenSSL SSL_CTX_flush_sessions.pod 1722496f Jun 8 15:18:38 2017 -0400
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
 .\" Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
@@ -48,19 +48,16 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2016 $
+.Dd $Mdocdate: August 21 2017 $
 .Dt SSL_CTX_FLUSH_SESSIONS 3
 .Os
 .Sh NAME
-.Nm SSL_CTX_flush_sessions ,
-.Nm SSL_flush_sessions
+.Nm SSL_CTX_flush_sessions
 .Nd remove expired sessions
 .Sh SYNOPSIS
 .In openssl/ssl.h
 .Ft void
 .Fn SSL_CTX_flush_sessions "SSL_CTX *ctx" "long tm"
-.Ft void
-.Fn SSL_flush_sessions "SSL_CTX *ctx" "long tm"
 .Sh DESCRIPTION
 .Fn SSL_CTX_flush_sessions
 causes a run through the session cache of
@@ -68,10 +65,6 @@ causes a run through the session cache of
 to remove sessions expired at time
 .Fa tm .
 .Pp
-.Fn SSL_flush_sessions
-is a synonym for
-.Fn SSL_CTX_flush_sessions .
-.Sh NOTES
 If enabled, the internal session cache will collect all sessions established
 up to the specified maximum number (see
 .Xr SSL_CTX_sess_set_cache_size 3 ) .
@@ -96,7 +89,6 @@ When a session is found and removed, the
 .Va remove_session_cb
 is however called to synchronize with the external cache (see
 .Xr SSL_CTX_sess_set_get_cb 3 ) .
-.Sh RETURN VALUES
 .Sh SEE ALSO
 .Xr ssl 3 ,
 .Xr SSL_CTX_sess_set_get_cb 3 ,
