@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.204 2017/07/26 10:21:24 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.205 2017/08/21 15:41:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -453,6 +453,17 @@ main(int argc, char *argv[])
 			} else
 				passthrough(resp->file, fd,
 				    conf.output.synopsisonly);
+
+			if (ferror(stdout)) {
+				if (tag_files != NULL) {
+					warn("%s", tag_files->ofn);
+					tag_unlink();
+					tag_files = NULL;
+				} else
+					warn("stdout");
+				rc = MANDOCLEVEL_SYSERR;
+				break;
+			}
 
 			if (argc > 1 && curp.outtype <= OUTT_UTF8) {
 				if (curp.outdata == NULL)
