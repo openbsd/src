@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.217 2017/07/28 02:14:56 rob Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.218 2017/08/21 14:40:07 florian Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1305,6 +1305,8 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 	if ((p->p_p->ps_pledge & PLEDGE_ROUTE)) {
 		switch (com) {
 		case SIOCGIFADDR:
+		case SIOCGIFAFLAG_IN6:
+		case SIOCGIFALIFETIME_IN6:
 		case SIOCGIFDESCR:
 		case SIOCGIFFLAGS:
 		case SIOCGIFMETRIC:
