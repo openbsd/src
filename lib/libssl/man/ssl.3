@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.3,v 1.10 2017/08/19 23:45:10 schwarze Exp $
+.\"	$OpenBSD: ssl.3,v 1.11 2017/08/21 10:10:25 schwarze Exp $
 .\"	OpenSSL e330f55d Nov 11 00:51:04 2016 +0100
 .\"
 .\" This file was written by Ralf S. Engelschall <rse@openssl.org>,
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 19 2017 $
+.Dd $Mdocdate: August 21 2017 $
 .Dt SSL 3
 .Os
 .Sh NAME
@@ -285,6 +285,7 @@ I/O:
 .Pp
 Accessors:
 .Xr SSL_copy_session_id 3 ,
+.Xr SSL_export_keying_material 3 ,
 .Xr SSL_get_SSL_CTX 3 ,
 .Xr SSL_get_certificate 3 ,
 .Xr SSL_get_default_timeout 3 ,
