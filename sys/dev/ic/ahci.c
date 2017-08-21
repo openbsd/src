@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.31 2017/08/13 15:00:29 mlarkin Exp $ */
+/*	$OpenBSD: ahci.c,v 1.32 2017/08/21 21:43:46 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -72,6 +72,7 @@ void			ahci_enable_interrupts(struct ahci_port *);
 
 int			ahci_init(struct ahci_softc *);
 int			ahci_port_alloc(struct ahci_softc *, u_int);
+void			ahci_port_detect(struct ahci_softc *, u_int);
 void			ahci_port_free(struct ahci_softc *, u_int);
 int			ahci_port_init(struct ahci_softc *, u_int);
 
@@ -79,7 +80,12 @@ int			ahci_default_port_start(struct ahci_port *, int);
 int			ahci_port_stop(struct ahci_port *, int);
 int			ahci_port_clo(struct ahci_port *);
 int			ahci_port_softreset(struct ahci_port *);
+void			ahci_port_comreset(struct ahci_port *);
 int			ahci_port_portreset(struct ahci_port *, int);
+void			ahci_port_portreset_start(struct ahci_port *);
+int			ahci_port_portreset_poll(struct ahci_port *);
+void			ahci_port_portreset_wait(struct ahci_port *);
+int			ahci_port_portreset_finish(struct ahci_port *, int);
 int			ahci_port_signature(struct ahci_port *);
 int			ahci_pmp_port_softreset(struct ahci_port *, int);
 int			ahci_pmp_port_portreset(struct ahci_port *, int);
@@ -173,7 +179,7 @@ ahci_attach(struct ahci_softc *sc)
 {
 	struct atascsi_attach_args	aaa;
 	u_int32_t			pi;
-	int				i;
+	int				i, j, done;
 
 	if (sc->sc_port_start == NULL)
 		sc->sc_port_start = ahci_default_port_start;
@@ -268,6 +274,37 @@ noccc:
 
 		if (ahci_port_alloc(sc, i) == ENOMEM)
 			goto freeports;
+
+		if (sc->sc_ports[i] != NULL)
+			ahci_port_portreset_start(sc->sc_ports[i]);
+	}
+
+	/*
+	 * Poll for device detection until all ports report a device, or one
+	 * second has elapsed.
+	 */
+	for (i = 0; i < 1000; i++) {
+		done = 1;
+		for (j = 0; j < AHCI_MAX_PORTS; j++) {
+			if (sc->sc_ports[j] == NULL)
+				continue;
+
+			if (ahci_port_portreset_poll(sc->sc_ports[j]))
+				done = 0;
+		}
+
+		if (done)
+			break;
+
+		delay(1000);
+	}
+
+	/*
+	 * Finish device detection on all ports that initialized.
+	 */
+	for (i = 0; i < AHCI_MAX_PORTS; i++) {
+		if (sc->sc_ports[i] != NULL)
+			ahci_port_detect(sc, i);
 	}
 
 	memset(&aaa, 0, sizeof(aaa));
@@ -446,7 +483,6 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	u_int32_t			cmd;
 	struct ahci_cmd_hdr		*hdr;
 	struct ahci_cmd_table		*table;
-	const char			*speed;
 	int				i, rc = ENOMEM;
 
 	ap = malloc(sizeof(*ap), M_DEVBUF, M_NOWAIT | M_ZERO);
@@ -594,10 +630,25 @@ nomem:
 
 	/* Wait for ICC change to complete */
 	ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_ICC, 1);
+	rc = 0;
 
-	/* Reset port */
-	rc = ahci_port_portreset(ap, 1);
+freeport:
+	if (rc != 0)
+		ahci_port_free(sc, port);
+reterr:
+	return (rc);
+}
 
+void
+ahci_port_detect(struct ahci_softc *sc, u_int port)
+{
+	struct ahci_port		*ap;
+	const char			*speed;
+	int				rc;
+
+	ap = sc->sc_ports[port];
+
+	rc = ahci_port_portreset_finish(ap, 1);
 	switch (rc) {
 	case ENODEV:
 		switch (ahci_pread(ap, AHCI_PREG_SSTS) & AHCI_PREG_SSTS_DET) {
@@ -667,12 +718,9 @@ nomem:
 	ahci_write(sc, AHCI_REG_IS, 1 << port);
 
 	ahci_enable_interrupts(ap);
-
 freeport:
 	if (rc != 0)
 		ahci_port_free(sc, port);
-reterr:
-	return (rc);
 }
 
 void
@@ -1372,25 +1420,12 @@ err:
 }
 
 /* AHCI port reset, Section 10.4.2 */
-int
-ahci_port_portreset(struct ahci_port *ap, int pmp)
+
+void
+ahci_port_comreset(struct ahci_port *ap)
 {
-	u_int32_t			cmd, r;
-	int				rc, s, retries = 0;
+	u_int32_t			r;
 
-	s = splbio();
-	DPRINTF(AHCI_D_VERBOSE, "%s: port reset\n", PORTNAME(ap));
-
-	/* Save previous command register state */
-	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
-
-	/* Clear ST, ignoring failure */
-	ahci_port_stop(ap, 0);
-
-	/* Perform device detection */
-	ahci_pwrite(ap, AHCI_PREG_SCTL, 0);
-retry:
-	delay(10000);
 	r = AHCI_PREG_SCTL_IPM_DISABLED | AHCI_PREG_SCTL_DET_INIT;
 	if ((ap->ap_sc->sc_dev.dv_cfdata->cf_flags & 0x01) != 0) {
 		DPRINTF(AHCI_D_VERBOSE, "%s: forcing GEN1\n", PORTNAME(ap));
@@ -1403,10 +1438,58 @@ retry:
 	r |= AHCI_PREG_SCTL_DET_NONE;
 	ahci_pwrite(ap, AHCI_PREG_SCTL, r);
 	delay(10000);
+}
 
-	/* Wait for device to be detected and communications established */
-	if (ahci_pwait_eq(ap, AHCI_PREG_SSTS, AHCI_PREG_SSTS_DET,
-	    AHCI_PREG_SSTS_DET_DEV, 1)) {
+void
+ahci_port_portreset_start(struct ahci_port *ap)
+{
+	int				s;
+
+	s = splbio();
+	DPRINTF(AHCI_D_VERBOSE, "%s: port reset\n", PORTNAME(ap));
+
+	/* Save previous command register state */
+	ap->ap_saved_cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
+
+	/* Clear ST, ignoring failure */
+	ahci_port_stop(ap, 0);
+
+	/* Perform device detection */
+	ahci_pwrite(ap, AHCI_PREG_SCTL, 0);
+	delay(10000);
+	ahci_port_comreset(ap);
+	splx(s);
+}
+
+int
+ahci_port_portreset_poll(struct ahci_port *ap)
+{
+	if ((ahci_pread(ap, AHCI_PREG_SSTS) & AHCI_PREG_SSTS_DET) !=
+	    AHCI_PREG_SSTS_DET_DEV)
+		return (EAGAIN);
+	return (0);
+}
+
+void
+ahci_port_portreset_wait(struct ahci_port *ap)
+{
+	int				i;
+
+	for (i = 0; i < 1000; i++) {
+		if (ahci_port_portreset_poll(ap) == 0)
+			break;
+		delay(1000);
+	}
+}
+
+int
+ahci_port_portreset_finish(struct ahci_port *ap, int pmp)
+{
+	int				rc, s, retries = 0;
+
+	s = splbio();
+retry:
+	if (ahci_port_portreset_poll(ap)) {
 		rc = ENODEV;
 		if (ahci_pread(ap, AHCI_PREG_SSTS) & AHCI_PREG_SSTS_DET) {
 			/* this may be a port multiplier with no device
@@ -1427,6 +1510,8 @@ retry:
 			 */
 			if (retries == 0) {
 				retries = 1;
+				ahci_port_comreset(ap);
+				ahci_port_portreset_wait(ap);
 				goto retry;
 			}
 			rc = EBUSY;
@@ -1436,17 +1521,31 @@ retry:
 	}
 
 	if (pmp != 0) {
-		if (ahci_port_detect_pmp(ap) != 0) {
-			rc = EBUSY;
+		if (ahci_port_detect_pmp(ap)) {
+			/* reset again without pmp support */
+			pmp = 0;
+			retries = 0;
+			ahci_port_comreset(ap);
+			ahci_port_portreset_wait(ap);
+			goto retry;
 		}
 	}
 
 err:
 	/* Restore preserved port state */
-	ahci_pwrite(ap, AHCI_PREG_CMD, cmd);
+	ahci_pwrite(ap, AHCI_PREG_CMD, ap->ap_saved_cmd);
+	ap->ap_saved_cmd = 0;
 	splx(s);
 
 	return (rc);
+}
+
+int
+ahci_port_portreset(struct ahci_port *ap, int pmp)
+{
+	ahci_port_portreset_start(ap);
+	ahci_port_portreset_wait(ap);
+	return (ahci_port_portreset_finish(ap, pmp));
 }
 
 int
@@ -1642,7 +1741,7 @@ ahci_port_detect_pmp(struct ahci_port *ap)
 
 		ahci_enable_interrupts(ap);
 
-		ahci_port_portreset(ap, 0);
+		rc = pmp_rc;
 	}
 
 	return (rc);
