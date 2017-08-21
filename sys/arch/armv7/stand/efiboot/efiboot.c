@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.18 2017/08/07 19:34:53 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.19 2017/08/21 20:05:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -38,9 +38,15 @@
 EFI_SYSTEM_TABLE	*ST;
 EFI_BOOT_SERVICES	*BS;
 EFI_RUNTIME_SERVICES	*RS;
-EFI_HANDLE		 IH;
+EFI_HANDLE		 IH, efi_bootdp;
 
-EFI_HANDLE		 efi_bootdp;
+EFI_PHYSICAL_ADDRESS	 heap;
+UINTN			 heapsiz = 1 * 1024 * 1024;
+EFI_MEMORY_DESCRIPTOR	*mmap;
+UINTN			 mmap_key;
+UINTN			 mmap_ndesc;
+UINTN			 mmap_descsiz;
+UINT32			 mmap_version;
 
 static EFI_GUID		 imgp_guid = LOADED_IMAGE_PROTOCOL;
 static EFI_GUID		 blkio_guid = BLOCK_IO_PROTOCOL;
@@ -48,6 +54,8 @@ static EFI_GUID		 devp_guid = DEVICE_PATH_PROTOCOL;
 
 static int efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
 static int efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
+static void efi_heap_init(void);
+static void efi_memprobe_internal(void);
 static void efi_timer_init(void);
 static void efi_timer_cleanup(void);
 
@@ -145,9 +153,6 @@ efi_cons_putc(dev_t dev, int c)
 
 	conout->OutputString(conout, buf);
 }
-
-EFI_PHYSICAL_ADDRESS	 heap;
-UINTN			 heapsiz = 1 * 1024 * 1024;
 
 static void
 efi_heap_init(void)
@@ -284,7 +289,8 @@ efi_makebootargs(char *bootargs, uint32_t *board_id)
 {
 	void *fdt = NULL;
 	u_char bootduid[8];
-	u_char zero[8];
+	u_char zero[8] = { 0 };
+	uint64_t uefi_system_table = htobe64((uintptr_t)ST);
 	void *node;
 	size_t len;
 	int i;
@@ -306,12 +312,21 @@ efi_makebootargs(char *bootargs, uint32_t *board_id)
 	fdt_node_add_property(node, "bootargs", bootargs, len);
 
 	/* Pass DUID of the boot disk. */
-	memset(&zero, 0, sizeof(zero));
 	memcpy(&bootduid, diskinfo.disklabel.d_uid, sizeof(bootduid));
 	if (memcmp(bootduid, zero, sizeof(bootduid)) != 0) {
 		fdt_node_add_property(node, "openbsd,bootduid", bootduid,
 		    sizeof(bootduid));
 	}
+
+	/* Pass EFI system table. */
+	fdt_node_add_property(node, "openbsd,uefi-system-table",
+	    &uefi_system_table, sizeof(uefi_system_table));
+
+	/* Placeholders for EFI memory map. */
+	fdt_node_add_property(node, "openbsd,uefi-mmap-start", zero, 8);
+	fdt_node_add_property(node, "openbsd,uefi-mmap-size", zero, 4);
+	fdt_node_add_property(node, "openbsd,uefi-mmap-desc-size", zero, 4);
+	fdt_node_add_property(node, "openbsd,uefi-mmap-desc-ver", zero, 4);
 
 	fdt_finalize();
 
@@ -324,6 +339,32 @@ efi_makebootargs(char *bootargs, uint32_t *board_id)
 	}
 
 	return fdt;
+}
+
+void
+efi_updatefdt(void)
+{
+	uint64_t uefi_mmap_start = htobe64((uintptr_t)mmap);
+	uint32_t uefi_mmap_size = htobe32(mmap_ndesc * mmap_descsiz);
+	uint32_t uefi_mmap_desc_size = htobe32(mmap_descsiz);
+	uint32_t uefi_mmap_desc_ver = htobe32(mmap_version);
+	void *node;
+
+	node = fdt_find_node("/chosen");
+	if (!node)
+		return;
+
+	/* Pass EFI memory map. */
+	fdt_node_set_property(node, "openbsd,uefi-mmap-start",
+	    &uefi_mmap_start, sizeof(uefi_mmap_start));
+	fdt_node_set_property(node, "openbsd,uefi-mmap-size",
+	    &uefi_mmap_size, sizeof(uefi_mmap_size));
+	fdt_node_set_property(node, "openbsd,uefi-mmap-desc-size",
+	    &uefi_mmap_desc_size, sizeof(uefi_mmap_desc_size));
+	fdt_node_set_property(node, "openbsd,uefi-mmap-desc-ver",
+	    &uefi_mmap_desc_ver, sizeof(uefi_mmap_desc_ver));
+
+	fdt_finalize();
 }
 
 u_long efi_loadaddr;
@@ -361,9 +402,21 @@ machdep(void)
 void
 efi_cleanup(void)
 {
+	int		 retry;
+	EFI_STATUS	 status;
+
 	efi_timer_cleanup();
 
-	BS->ExitBootServices(NULL, 0);
+	/* retry once in case of failure */
+	for (retry = 1; retry >= 0; retry--) {
+		efi_memprobe_internal();	/* sync the current map */
+		efi_updatefdt();
+		status = EFI_CALL(BS->ExitBootServices, IH, mmap_key);
+		if (status == EFI_SUCCESS)
+			break;
+		if (retry == 0)
+			panic("ExitBootServices failed (%d)", status);
+	}
 }
 
 void
@@ -541,6 +594,34 @@ devopen(struct open_file *f, const char *fname, char **file)
 	f->f_dev = dp;
 
 	return (*dp->dv_open)(f, unit, part);
+}
+
+static void
+efi_memprobe_internal(void)
+{
+	EFI_STATUS		 status;
+	UINTN			 mapkey, mmsiz, siz;
+	UINT32			 mmver;
+	EFI_MEMORY_DESCRIPTOR	*mm;
+	int			 n;
+
+	free(mmap, mmap_ndesc * mmap_descsiz);
+
+	siz = 0;
+	status = EFI_CALL(BS->GetMemoryMap, &siz, NULL, &mapkey, &mmsiz,
+	    &mmver);
+	if (status != EFI_BUFFER_TOO_SMALL)
+		panic("cannot get the size of memory map");
+	mm = alloc(siz);
+	status = EFI_CALL(BS->GetMemoryMap, &siz, mm, &mapkey, &mmsiz, &mmver);
+	if (status != EFI_SUCCESS)
+		panic("cannot get the memory map");
+	n = siz / mmsiz;
+	mmap = mm;
+	mmap_key = mapkey;
+	mmap_ndesc = n;
+	mmap_descsiz = mmsiz;
+	mmap_version = mmver;
 }
 
 /*
