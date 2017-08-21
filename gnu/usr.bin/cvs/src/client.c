@@ -4833,7 +4833,7 @@ start_rsh_server (tofdp, fromfdp)
     char *cvs_rsh = getenv ("CVS_RSH");
     char *cvs_server = getenv ("CVS_SERVER");
     int i = 0;
-    /* This needs to fit "rsh", "-b", "-l", "USER", "host",
+    /* This needs to fit "rsh", "-b", "-l", "USER", "--", "host",
        "cmd (w/ args)", and NULL.  We leave some room to grow. */
     char *rsh_argv[10];
 
@@ -4880,6 +4880,7 @@ start_rsh_server (tofdp, fromfdp)
 	rsh_argv[i++] = current_parsed_root->username;
     }
 
+    rsh_argv[i++] = "--";
     rsh_argv[i++] = current_parsed_root->hostname;
     rsh_argv[i++] = cvs_server;
     rsh_argv[i++] = "server";
@@ -4943,7 +4944,6 @@ start_rsh_server (tofdp, fromfdp)
 	char **p = argv;
 
 	*p++ = cvs_rsh;
-	*p++ = current_parsed_root->hostname;
 
 	/* If the login names differ between client and server
 	 * pass it on to rsh.
@@ -4954,6 +4954,8 @@ start_rsh_server (tofdp, fromfdp)
 	    *p++ = current_parsed_root->username;
 	}
 
+	*p++ = "--";
+	*p++ = current_parsed_root->hostname;
 	*p++ = command;
 	*p++ = NULL;
 
