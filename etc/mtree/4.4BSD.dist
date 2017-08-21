@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.298 2017/04/26 14:53:11 sthen Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.299 2017/08/21 20:52:06 rpe Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -412,6 +412,10 @@ usr
     # ./usr/share
     share
         calendar
+        ..
+
+        # ./usr/share/compile
+        compile
         ..
 
         # ./usr/share/dict
