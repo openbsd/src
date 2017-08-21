@@ -443,6 +443,58 @@ struct vm_rwregs_params {
 #define VMM_IOC_READREGS _IOWR('V', 7, struct vm_rwregs_params) /* Get registers */
 #define VMM_IOC_WRITEREGS _IOW('V', 8, struct vm_rwregs_params) /* Set registers */
 
+/* CPUID masks */
+/*
+ * clone host capabilities minus:
+ *  debug store (CPUIDECX_DTES64, CPUIDECX_DSCPL, CPUID_DS)
+ *  monitor/mwait (CPUIDECX_MWAIT)
+ *  vmx (CPUIDECX_VMX)
+ *  smx (CPUIDECX_SMX)
+ *  speedstep (CPUIDECX_EST)
+ *  thermal (CPUIDECX_TM2, CPUID_ACPI, CPUID_TM)
+ *  context id (CPUIDECX_CNXTID)
+ *  silicon debug (CPUIDECX_SDBG)
+ *  xTPR (CPUIDECX_XTPR)
+ *  perf/debug (CPUIDECX_PDCM)
+ *  pcid (CPUIDECX_PCID)
+ *  direct cache access (CPUIDECX_DCA)
+ *  x2APIC (CPUIDECX_X2APIC)
+ *  apic deadline (CPUIDECX_DEADLINE)
+ *  timestamp (CPUID_TSC)
+ *  apic (CPUID_APIC)
+ *  psn (CPUID_PSN)
+ *  self snoop (CPUID_SS)
+ *  hyperthreading (CPUID_HTT)
+ *  pending break enabled (CPUID_PBE)
+ *  MTRR (CPUID_MTRR)
+ *  PAT (CPUID_PAT)
+ */
+#define VMM_CPUIDECX_MASK ~(CPUIDECX_EST | CPUIDECX_TM2 | \
+    CPUIDECX_MWAIT | CPUIDECX_PDCM | CPUIDECX_VMX | CPUIDECX_DTES64 | \
+    CPUIDECX_DSCPL | CPUIDECX_SMX | CPUIDECX_CNXTID | CPUIDECX_SDBG | \
+    CPUIDECX_XTPR | CPUIDECX_PCID | CPUIDECX_DCA | CPUIDECX_X2APIC | \
+    CPUIDECX_DEADLINE)
+#define VMM_CPUIDEDX_MASK ~(CPUID_ACPI | CPUID_TM | CPUID_TSC | \
+      CPUID_HTT | CPUID_DS | CPUID_APIC | CPUID_PSN | CPUID_SS | CPUID_PBE | \
+      CPUID_MTRR | CPUID_PAT)
+
+
+/*
+ * SEFF flags - copy from host minus:
+ *  SGX (SEFF0EBX_SGX)
+ *  HLE (SEFF0EBX_HLE)
+ *  INVPCID (SEFF0EBX_INVPCID)
+ *  RTM (SEFF0EBX_RTM)
+ *  PQM (SEFF0EBX_PQM)
+ *  MPX (SEFF0EBX_MPX)
+ *  PCOMMIT (SEFF0EBX_PCOMMIT)
+ *  PT (SEFF0EBX_PT)
+ */
+#define VMM_SEFF0EBX_MASK ~(SEFF0EBX_SGX | SEFF0EBX_HLE | SEFF0EBX_INVPCID | \
+    SEFF0EBX_RTM | SEFF0EBX_PQM | SEFF0EBX_MPX | \
+    SEFF0EBX_PCOMMIT | SEFF0EBX_PT)
+#define VMM_SEFF0ECX_MASK 0xFFFFFFFF
+
 #ifdef _KERNEL
 
 #define VMX_FAIL_LAUNCH_UNKNOWN 1

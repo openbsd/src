@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.30 2017/05/11 08:00:41 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.31 2017/08/21 00:38:24 pd Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4265,47 +4265,10 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		/* mask off host's APIC ID, reset to vcpu id */
 		*ebx = cpu_miscinfo & 0x00FFFFFF;
 		*ebx |= (vcpu->vc_id & 0xFF) << 24;
-		/*
-		 * clone host capabilities minus:
-		 *  debug store (CPUIDECX_DTES64, CPUIDECX_DSCPL, CPUID_DS)
-		 *  monitor/mwait (CPUIDECX_MWAIT)
-		 *  vmx (CPUIDECX_VMX)
-		 *  smx (CPUIDECX_SMX)
-		 *  speedstep (CPUIDECX_EST)
-		 *  thermal (CPUIDECX_TM2, CPUID_ACPI, CPUID_TM)
-		 *  context id (CPUIDECX_CNXTID)
-		 *  silicon debug (CPUIDECX_SDBG)
-		 *  xTPR (CPUIDECX_XTPR)
-		 *  perf/debug (CPUIDECX_PDCM)
-		 *  pcid (CPUIDECX_PCID)
-		 *  direct cache access (CPUIDECX_DCA)
-		 *  x2APIC (CPUIDECX_X2APIC)
-		 *  apic deadline (CPUIDECX_DEADLINE)
-		 *  timestamp (CPUID_TSC)
-		 *  apic (CPUID_APIC)
-		 *  psn (CPUID_PSN)
-		 *  self snoop (CPUID_SS)
-		 *  hyperthreading (CPUID_HTT)
-		 *  pending break enabled (CPUID_PBE)
-		 *  MTRR (CPUID_MTRR)
-		 *  PAT (CPUID_PAT)
-		 * plus:
-		 *  hypervisor (CPUIDECX_HV)
-		 */
 		*ecx = (cpu_ecxfeature | CPUIDECX_HV) &
-		    ~(CPUIDECX_EST | CPUIDECX_TM2 |
-		    CPUIDECX_MWAIT | CPUIDECX_PDCM |
-		    CPUIDECX_VMX | CPUIDECX_DTES64 |
-		    CPUIDECX_DSCPL | CPUIDECX_SMX |
-		    CPUIDECX_CNXTID | CPUIDECX_SDBG |
-		    CPUIDECX_XTPR |
-		    CPUIDECX_PCID | CPUIDECX_DCA |
-		    CPUIDECX_X2APIC | CPUIDECX_DEADLINE);
+		    VMM_CPUIDECX_MASK;
 		*edx = curcpu()->ci_feature_flags &
-		    ~(CPUID_ACPI | CPUID_TM | CPUID_TSC |
-		      CPUID_HTT | CPUID_DS | CPUID_APIC |
-		      CPUID_PSN | CPUID_SS | CPUID_PBE |
-		      CPUID_MTRR | CPUID_PAT);
+		    VMM_CPUIDEDX_MASK;
 		break;
 	case 0x02:	/* Cache and TLB information */
 		DPRINTF("%s: function 0x02 (cache/TLB) not supported\n",
@@ -4349,23 +4312,11 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		break;
 	case 0x07:	/* SEFF */
 		if (*ecx == 0) {
-			/*
-			 * SEFF flags - copy from host minus:
-			 *  SGX (SEFF0EBX_SGX)
-			 *  HLE (SEFF0EBX_HLE)
-			 *  INVPCID (SEFF0EBX_INVPCID)
-			 *  RTM (SEFF0EBX_RTM)
-			 *  PQM (SEFF0EBX_PQM)
-			 *  MPX (SEFF0EBX_MPX)
-			 *  PCOMMIT (SEFF0EBX_PCOMMIT)
-			 *  PT (SEFF0EBX_PT)
-			 */
 			*eax = 0;	/* Highest subleaf supported */
 			*ebx = curcpu()->ci_feature_sefflags_ebx &
-			    ~(SEFF0EBX_SGX | SEFF0EBX_HLE | SEFF0EBX_INVPCID |
-			      SEFF0EBX_RTM | SEFF0EBX_PQM | SEFF0EBX_MPX |
-			      SEFF0EBX_PCOMMIT | SEFF0EBX_PT);
-			*ecx = curcpu()->ci_feature_sefflags_ecx;
+			    VMM_SEFF0EBX_MASK;
+			*ecx = curcpu()->ci_feature_sefflags_ecx &
+			    VMM_SEFF0ECX_MASK;
 			*edx = 0;
 		} else {
 			/* Unsupported subleaf */
