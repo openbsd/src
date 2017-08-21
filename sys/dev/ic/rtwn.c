@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.31 2017/08/20 15:05:32 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.32 2017/08/21 03:02:54 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -526,7 +526,7 @@ rtwn_efuse_read(struct rtwn_softc *sc, uint8_t *rom, size_t size)
 	if (rtwn_debug >= 2) {
 		/* Dump ROM content. */
 		printf("\n");
-		for (i = 0; i < size); i++)
+		for (i = 0; i < size; i++)
 			printf("%02x:", rom[i]);
 		printf("\n");
 	}
