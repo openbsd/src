@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: diff.sh,v 1.4 2017/08/21 08:33:48 ajacoutot Exp $
+# $OpenBSD: diff.sh,v 1.5 2017/08/21 15:02:58 ajacoutot Exp $
 #
 # Copyright (c) 2017 Robert Nagy <robert@openbsd.org>
 #
@@ -31,6 +31,9 @@ do
 			cmp -s ${_o} ${_n} 34 34 || echo ${_n}
 			;;
 		1|3p)
+			# Needed for perl(1) because Pod::Man adds the build
+			# date in the man page; e.g. /usr/share/man1/pod2html.1:
+			# .TH POD2HTML 1 "2017-07-29" "perl v5.24.1"
 			_onm=$(mktemp)
 			_nnm=$(mktemp)
 			trap 'rm -f ${_onm} ${_nnm}' EXIT
