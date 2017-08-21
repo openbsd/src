@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.514 2017/08/20 19:45:37 rpe Exp $
+#	$OpenBSD: rc,v 1.515 2017/08/21 21:24:11 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -215,46 +215,6 @@ reorder_libs() {
 		echo ' done.'
 	fi
 }
-
-# Re-link the kernel, placing the objects in a random order.
-# Replace current with relinked kernel and inform root about it.
-reorder_kernel() (
-	local _dkdev=$(df /usr/share | sed '1d;s/ .*//')
-
-	# Skip if /usr/share is on a nfs mounted filesystem.
-	[[ $(mount | grep "^$_dkdev") == *" type nfs "* ]] && return
-
-	_compile=/usr/share/compile
-	_kernel=$(sysctl -n kern.osversion)
-	_kernel=${_kernel%#*}
-	_log=$_compile/$_kernel/relink.log
-	_sha256=/var/db/kernel.SHA256
-
-	mkdir -m 700 -p $_compile/$_kernel
-	exec 1>$_log
-	exec 2>&1
-
-	trap 'trap - EXIT; logger -st /etc/rc \
-		"kernel relinking failed; see $_log" >>/dev/console 2>&1' ERR
-	trap 'logger -t /etc/rc "kernel relinking done"' EXIT
-	set -e
-
-	if [[ -f $_compile.tgz ]]; then
-		rm -rf $_compile/$_kernel/*
-		exec 1>$_log
-		tar -C $_compile -xzf $_compile.tgz $_kernel
-		rm -f $_compile.tgz
-	fi
-
-	sha256 -C $_sha256 /bsd
-
-	cd $_compile/$_kernel
-	make newbsd
-	make newinstall
-
-	echo "\nKernel has been relinked and is active on next reboot.\n"
-	cat $_sha256
-)
 
 # Run rc.* script and email output to root.
 # Usage: run_upgrade_script firsttime|sysmerge
@@ -626,7 +586,9 @@ echo -n 'starting local daemons:'
 start_daemon apmd sensorsd hotplugd watchdogd cron wsmoused xenodm
 echo '.'
 
-reorder_kernel &
+# Re-link the kernel, placing the objects in a random order.
+# Replace current with relinked kernel and inform root about it.
+/usr/libexec/reorder_kernel &
 
 date
 exit 0
