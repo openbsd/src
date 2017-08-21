@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.194 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.195 2017/08/21 14:38:32 jsg Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -957,7 +957,7 @@ uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
 		return (USBD_INVAL);
 	}
 
-	if (sc->sc_fmtgrp_idx > UVIDEO_MAX_FORMAT) {
+	if (sc->sc_fmtgrp_idx >= UVIDEO_MAX_FORMAT) {
 		printf("%s: too many format descriptors found!\n", DEVNAME(sc));
 		return (USBD_INVAL);
 	}
@@ -999,7 +999,7 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 		return (USBD_INVAL);
 	}
 
-	if (sc->sc_fmtgrp_idx > UVIDEO_MAX_FORMAT) {
+	if (sc->sc_fmtgrp_idx >= UVIDEO_MAX_FORMAT) {
 		printf("%s: too many format descriptors found!\n", DEVNAME(sc));
 		return (USBD_INVAL);
 	}
