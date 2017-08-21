@@ -30,9 +30,14 @@
  * RK3399 clocks.
  */
 
+#define RK3399_PLL_ALPLL		1
+#define RK3399_PLL_ABPLL		2
+#define RK3399_PLL_DPLL			3
 #define RK3399_PLL_CPLL			4
 #define RK3399_PLL_GPLL			5
 #define RK3399_PLL_NPLL			6
+#define RK3399_ARMCLKL			8
+#define RK3399_ARMCLKB			9
 
 #define RK3399_CLK_SDMMC		76
 #define RK3399_CLK_EMMC			78

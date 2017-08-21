@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.9 2017/08/07 22:20:39 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.10 2017/08/21 21:02:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -34,6 +34,9 @@
 #define RK3288_CRU_CLKSEL_CON(i)	(0x0060 + (i) * 4)
 
 /* RK3399 registers */
+#define RK3399_CRU_LPLL_CON(i)		(0x0000 + (i) * 4)
+#define RK3399_CRU_BPLL_CON(i)		(0x0020 + (i) * 4)
+#define RK3399_CRU_DPLL_CON(i)		(0x0020 + (i) * 4)
 #define RK3399_CRU_CPLL_CON(i)		(0x0060 + (i) * 4)
 #define RK3399_CRU_GPLL_CON(i)		(0x0080 + (i) * 4)
 #define RK3399_CRU_NPLL_CON(i)		(0x00a0 + (i) * 4)
@@ -73,6 +76,8 @@ struct cfdriver rkclock_cd = {
 	NULL, "rkclock", DV_DULL
 };
 
+struct rkclock_softc *rkclock_cpuspeed_sc;
+
 uint32_t rk3288_get_frequency(void *, uint32_t *);
 int	rk3288_set_frequency(void *, uint32_t *, uint32_t);
 void	rk3288_enable(void *, uint32_t *, int);
@@ -82,6 +87,7 @@ uint32_t rk3399_get_frequency(void *, uint32_t *);
 int	rk3399_set_frequency(void *, uint32_t *, uint32_t);
 void	rk3399_enable(void *, uint32_t *, int);
 void	rk3399_reset(void *, uint32_t *, int);
+int	rk3399_cpuspeed(int *);
 
 uint32_t rk3399_pmu_get_frequency(void *, uint32_t *);
 int	rk3399_pmu_set_frequency(void *, uint32_t *, uint32_t);
@@ -94,6 +100,7 @@ struct rkclock_compat {
 	uint32_t (*get_frequency)(void *, uint32_t *);
 	int	(*set_frequency)(void *, uint32_t *, uint32_t);
 	void	(*reset)(void *, uint32_t *, int);
+	int	(*cpuspeed)(int *);
 };
 
 struct rkclock_compat rkclock_compat[] = {
@@ -105,7 +112,8 @@ struct rkclock_compat rkclock_compat[] = {
 	{
 		"rockchip,rk3399-cru",
 		rk3399_enable, rk3399_get_frequency,
-		rk3399_set_frequency, rk3399_reset
+		rk3399_set_frequency, rk3399_reset,
+		rk3399_cpuspeed
 	},
 	{
 		"rockchip,rk3399-pmucru",
@@ -158,6 +166,10 @@ rkclock_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_cd.cd_set_frequency =
 			    rkclock_compat[i].set_frequency;
 			sc->sc_rd.rd_reset = rkclock_compat[i].reset;
+			if (rkclock_compat[i].cpuspeed) {
+				rkclock_cpuspeed_sc = sc;
+				cpu_cpuspeed = rkclock_compat[i].cpuspeed;
+			}
 			break;
 		}
 	}
@@ -316,15 +328,50 @@ uint32_t
 rk3399_get_pll(struct rkclock_softc *sc, bus_size_t base)
 {
 	uint32_t fbdiv, postdiv1, postdiv2, refdiv;
+	uint32_t pll_work_mode;
 	uint32_t reg;
 
-	reg = HREAD4(sc, base);
+	reg = HREAD4(sc, base + 0x000c);
+	pll_work_mode = (reg >> 8) & 0x3;
+	if (pll_work_mode == 0)
+		return 24000000;
+	if (pll_work_mode == 2)
+		return 32768;
+
+	reg = HREAD4(sc, base + 0x0000);
 	fbdiv = reg & 0xfff;
-	reg = HREAD4(sc, base + 4);
+	reg = HREAD4(sc, base + 0x0004);
 	postdiv2 = (reg >> 12) & 0x7;
 	postdiv1 = (reg >> 8) & 0x7;
 	refdiv = reg & 0x3f;
 	return 24000000ULL * fbdiv / refdiv / postdiv1 / postdiv2;
+}
+
+uint32_t
+rk3399_get_armclk(struct rkclock_softc *sc, bus_size_t clksel)
+{
+	uint32_t reg, mux, div_con;
+	uint32_t idx;
+
+	reg = HREAD4(sc, clksel);
+	mux = (reg >> 6) & 0x3;
+	div_con = reg & 0x1f;
+	switch (mux) {
+	case 0:
+		idx = RK3399_PLL_ALPLL;
+		break;
+	case 1:
+		idx = RK3399_PLL_ABPLL;
+		break;
+	case 2:
+		idx = RK3399_PLL_DPLL;
+		break;
+	case 3:
+		idx = RK3399_PLL_GPLL;
+		break;
+	}
+	
+	return rk3399_get_frequency(sc, &idx) / (div_con + 1);
 }
 
 uint32_t
@@ -335,15 +382,27 @@ rk3399_get_frequency(void *cookie, uint32_t *cells)
 	uint32_t reg, mux, div_con;
 
 	switch (idx) {
+	case RK3399_PLL_ALPLL:
+		return rk3399_get_pll(sc, RK3399_CRU_LPLL_CON(0));
+	case RK3399_PLL_ABPLL:
+		return rk3399_get_pll(sc, RK3399_CRU_BPLL_CON(0));
+	case RK3399_PLL_DPLL:
+		return rk3399_get_pll(sc, RK3399_CRU_DPLL_CON(0));
 	case RK3399_PLL_CPLL:
 		return rk3399_get_pll(sc, RK3399_CRU_CPLL_CON(0));
 	case RK3399_PLL_GPLL:
 		return rk3399_get_pll(sc, RK3399_CRU_GPLL_CON(0));
 	case RK3399_PLL_NPLL:
 		return rk3399_get_pll(sc, RK3399_CRU_NPLL_CON(0));
+	case RK3399_ARMCLKL:
+		return rk3399_get_armclk(sc, RK3399_CRU_CLKSEL_CON(0));
+		break;
+	case RK3399_ARMCLKB:
+		return rk3399_get_armclk(sc, RK3399_CRU_CLKSEL_CON(2));
+		break;
 	case RK3399_CLK_SDMMC:
 		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(16));
-		mux = (reg >> 8) & 0x3;
+		mux = (reg >> 8) & 0x7;
 		div_con = reg & 0x7f;
 		switch (mux) {
 		case 0:
@@ -470,6 +529,15 @@ rk3399_reset(void *cookie, uint32_t *cells, int on)
 
 	HWRITE4(sc, RK3399_CRU_SOFTRST_CON(idx / 16),
 	    mask << 16 | (on ? mask : 0));
+}
+
+int
+rk3399_cpuspeed(int *freq)
+{
+	uint32_t idx = RK3399_ARMCLKL;
+
+	*freq = rk3399_get_frequency(rkclock_cpuspeed_sc, &idx) / 1000000;
+	return 0;
 }
 
 uint32_t
