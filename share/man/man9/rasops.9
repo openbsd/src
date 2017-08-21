@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rasops.9,v 1.17 2017/01/18 20:07:40 fcambus Exp $
+.\"	$OpenBSD: rasops.9,v 1.18 2017/08/21 11:49:50 fcambus Exp $
 .\"     $NetBSD: rasops.9,v 1.4 2002/02/13 08:18:50 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 18 2017 $
+.Dd $Mdocdate: August 21 2017 $
 .Dt RASOPS 9
 .Os
 .Sh NAME
@@ -153,6 +153,8 @@ Center the text area.
 .\" Cursor is currently clipped
 .It RI_ROTATE_CW
 Rotate the text display quarter clockwise.
+.It RI_ROTATE_CCW
+Rotate the text display quarter counter-clockwise.
 .It RI_CFGDONE
 .Fn rasops_reconfig
 completed successfully
