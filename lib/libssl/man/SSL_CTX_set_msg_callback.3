@@ -1,5 +1,6 @@
-.\"	$OpenBSD: SSL_CTX_set_msg_callback.3,v 1.2 2016/12/01 15:26:11 schwarze Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\"	$OpenBSD: SSL_CTX_set_msg_callback.3,v 1.3 2017/08/21 09:07:08 schwarze Exp $
+.\"	OpenSSL SSL_CTX_set_msg_callback.pod e9b77246 Jan 20 19:58:49 2017 +0100
+.\"	OpenSSL SSL_CTX_set_msg_callback.pod b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Bodo Moeller <bodo@openssl.org>.
 .\" Copyright (c) 2001, 2014, 2016 The OpenSSL Project.  All rights reserved.
@@ -48,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 1 2016 $
+.Dd $Mdocdate: August 21 2017 $
 .Dt SSL_CTX_SET_MSG_CALLBACK 3
 .Os
 .Sh NAME
@@ -117,24 +118,22 @@ This flag is 0 when a protocol message has been received and 1 when a protocol
 message has been sent.
 .It Fa version
 The protocol version according to which the protocol message is
-interpreted by the library.
-Currently, this is one of
-.Dv SSL2_VERSION ,
-.Dv SSL3_VERSION
-and
-.Dv TLS1_VERSION
-(for SSL 2.0, SSL 3.0 and TLS 1.0, respectively).
+interpreted by the library, such as
+.Dv TLS1_VERSION ,
+.Dv TLS1_1_VERSION ,
+.Dv TLS1_2_VERSION ,
+or
+.Dv DTLS1_VERSION .
 .It Fa content_type
-In the case of SSL 2.0, this is always 0.
-In the case of SSL 3.0 or TLS 1.0, this is one of the
+This is one of the
 .Em ContentType
 values defined in the protocol specification
 .Po
-.Dq change_cipher_spec(20) ,
-.Dq alert(21) ,
-.Dq handshake(22) ;
+.Dv SSL3_RT_CHANGE_CIPHER_SPEC ,
+.Dv SSL3_RT_ALERT ,
+.Dv SSL3_RT_HANDSHAKE ,
 but never
-.Dq application_data(23)
+.Dv SSL3_RT_APPLICATION_DATA
 because the callback will only be called for protocol messages.
 .Pc
 .It Fa buf , Fa len
