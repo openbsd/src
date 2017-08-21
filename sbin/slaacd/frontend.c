@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.6 2017/08/12 07:39:55 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.7 2017/08/21 14:47:21 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -79,7 +79,7 @@ struct nd_router_solicit	 rs;
 struct nd_opt_hdr		 nd_opt_hdr;
 struct ether_addr		 nd_opt_source_link_addr;
 struct sockaddr_in6		 dst;
-int		 icmp6sock, routesock, xflagssock;
+int				 icmp6sock, routesock, ioctlsock;
 
 struct icmp6_ev {
 	struct event		 ev;
@@ -145,7 +145,7 @@ frontend(int debug, int verbose, char *sockname)
 	if ((routesock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
 		fatal("route socket");
 
-	if ((xflagssock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+	if ((ioctlsock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 		fatal("socket");
 
 	if (setgroups(1, &pw->pw_gid) ||
@@ -470,7 +470,7 @@ get_flags(char *if_name)
 	struct ifreq		 ifr;
 
 	(void) strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
-	if (ioctl(xflagssock, SIOCGIFFLAGS, (caddr_t)&ifr) < 0)
+	if (ioctl(ioctlsock, SIOCGIFFLAGS, (caddr_t)&ifr) < 0)
 		fatal("SIOCGIFFLAGS");
 	return ifr.ifr_flags;
 }
@@ -481,7 +481,7 @@ get_xflags(char *if_name)
 	struct ifreq		 ifr;
 
 	(void) strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
-	if (ioctl(xflagssock, SIOCGIFXFLAGS, (caddr_t)&ifr) < 0)
+	if (ioctl(ioctlsock, SIOCGIFXFLAGS, (caddr_t)&ifr) < 0)
 		fatal("SIOCGIFXFLAGS");
 	return ifr.ifr_flags;
 }
