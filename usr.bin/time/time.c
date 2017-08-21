@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.24 2017/07/22 17:01:09 schwarze Exp $	*/
+/*	$OpenBSD: time.c,v 1.25 2017/08/21 13:38:02 schwarze Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -67,7 +67,6 @@ main(int argc, char *argv[])
 			break;
 		default:
 			usage();
-			/* NOTREACHED */
 		}
 	}
 
@@ -80,14 +79,12 @@ main(int argc, char *argv[])
 	clock_gettime(CLOCK_MONOTONIC, &before);
 	switch(pid = vfork()) {
 	case -1:			/* error */
-		perror("time");
-		exit(1);
-		/* NOTREACHED */
+		warn("fork");
+		return 1;
 	case 0:				/* child */
 		execvp(*argv, argv);
-		perror(*argv);
+		warn("%s", *argv);
 		_exit((errno == ENOENT) ? 127 : 126);
-		/* NOTREACHED */
 	}
 
 	/* parent */
@@ -168,11 +165,11 @@ main(int argc, char *argv[])
 
 	if (exitonsig) {
 		if (signal(exitonsig, SIG_DFL) == SIG_ERR)
-			perror("signal");
+			return 128 + exitonsig;
 		else
-			kill(getpid(), exitonsig);
+			raise(exitonsig);
 	}
-	exit(WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_FAILURE);
+	return WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_FAILURE;
 }
 
 __dead void
