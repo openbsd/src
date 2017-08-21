@@ -1,0 +1,66 @@
+$OpenBSD: README,v 1.1 2017/08/21 08:26:40 ajacoutot Exp $
+
+Notes about the syspatch(8) build process
+=========================================
+
+The syspatch(8) build system will eventually be properly documented in its own
+man(1) page but until things settle and the framework is robust, this file will
+be used as a quick reminder.
+
+Requirements for the build machine
+----------------------------------
+
+- ${FAKEROOT} must be a local mount point with the no perm mount option set and
+  be owned by ${BUILDUSER} with a mode of 0700. It should be big enough to
+  contain one full release per syspatch (~30G).
+
+- ${SRCDIR} and ${XSRCDIR} must be checked out using the OPENBSD_X_X_BASE
+  release tag.
+
+- Timezone must be set to "Canada/Mountain".
+
+Requirements for the fakeroot
+-----------------------------
+
+Before building the first syspatch, the same release used on the build machine
+must be extracted under a subdirectory of ${FAKEROOT} to allow clean comparison
+and find differing files between patched releases.
+
+e.g.
+FAKEROOT=/fakeroot
+FAKE=${FAKEROOT}/syspatch/61-000_release
+RELEASEDIR=/path/to/sets
+mkdir -p ${FAKE}
+install -m 0700 ${RELEASEDIR}/bsd{,.mp} ${FAKE}
+for set in base comp game man xbase xshare xfont xserv; do
+	tar xzphf ${RELEASEDIR}/${set}$(uname -r | tr -d '.').tgz -C ${FAKE}
+done
+mkdir -m 700 -p ${FAKE}/usr/share/compile/GENERIC{,.MP}
+tar -C ${FAKE}/usr/share/compile -xzf ${FAKE}/usr/share/compile.tgz
+rm ${FAKE}/usr/share/compile.tgz
+
+Building a syspatch
+-------------------
+
+When building a xenocara syspatch, make sure to set XSRCDIR to the directory
+where the xenocara checkout was made.
+    # export XSRCDIR=/usr/xenocara
+
+Everything is done as root under ${BSDSRCDIR}/distrib/syspatch/.
+
+Before building the first syspatch, the obj directory must be created.
+    # FAKEROOT=/fakeroot make -f Makefile.000 obj
+
+Each syspatch requires its own Makefile numbered after the patch level.
+    # cp Makefile.000 Makefile.001
+    # ${EDITOR} Makefile.001
+    -> set the ERRATA name and BUILD type
+
+The patched release can now be built.
+    # FAKEROOT=/fakeroot make -f Makefile.001 001_dummy/.plist
+    # ${EDITOR} obj/001_dummy/.plist
+    -> edit the plist to make sure it only contains files we want to end up in
+       the syspatch(8) tarball
+
+At last, a syspatch(8) can be created.
+    # FAKEROOT=/fakeroot make -f Makefile.001 syspatch
