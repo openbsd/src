@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.46 2017/08/20 17:49:29 rob Exp $	*/
+/*	$OpenBSD: parse.y,v 1.47 2017/08/21 17:38:55 rob Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -192,8 +192,6 @@ action		: RUN STRING		{
 				err(1, "action: calloc");
 			action->type = IFSD_ACTION_COMMAND;
 			action->act.command = $2;
-			if (action->act.command == NULL)
-				err(1, "action: strdup");
 			TAILQ_INSERT_TAIL(&curaction->act.c.actions,
 			    action, entries);
 		}
@@ -686,7 +684,7 @@ pushfile(const char *name, int secret)
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		warn("malloc");
+		warn("strdup");
 		free(nfile);
 		return (NULL);
 	}
