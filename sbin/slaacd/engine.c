@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.12 2017/08/18 07:45:03 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.13 2017/08/21 14:44:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -67,7 +67,6 @@
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
-#include <netdb.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stddef.h>
@@ -258,7 +257,6 @@ void			 find_prefix(struct slaacd_iface *, struct
 			     radv_prefix **);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 uint32_t		 real_lifetime(struct timespec *, uint32_t);
-const char		 *sin6_to_str(struct sockaddr_in6 *);
 
 struct imsgev		*iev_frontend;
 struct imsgev		*iev_main;
@@ -2189,19 +2187,4 @@ real_lifetime(struct timespec *received_uptime, uint32_t ltime)
 		remaining = 0;
 
 	return (remaining);
-}
-
-const char*
-sin6_to_str(struct sockaddr_in6 *sin6)
-{
-	static char hbuf[NI_MAXHOST];
-	int error;
-
-	error = getnameinfo((struct sockaddr *)sin6, sin6->sin6_len, hbuf,
-	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
-	if (error) {
-		log_warnx("%s", gai_strerror(error));
-		strlcpy(hbuf, "unknown", sizeof(hbuf));
-	}
-	return hbuf;
 }

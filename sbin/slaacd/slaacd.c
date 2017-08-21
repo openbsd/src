@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.8 2017/08/19 11:14:04 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.9 2017/08/21 14:44:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
+#include <netdb.h>
 #include <pwd.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -799,3 +800,20 @@ delete_gateway(struct imsg_configure_dfr *dfr)
 {
 	configure_gateway(dfr, RTM_DELETE);
 }
+
+#ifndef	SMALL
+const char*
+sin6_to_str(struct sockaddr_in6 *sin6)
+{
+	static char hbuf[NI_MAXHOST];
+	int error;
+
+	error = getnameinfo((struct sockaddr *)sin6, sin6->sin6_len, hbuf,
+	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
+	if (error) {
+		log_warnx("%s", gai_strerror(error));
+		strlcpy(hbuf, "unknown", sizeof(hbuf));
+	}
+	return hbuf;
+}
+#endif	/* SMALL */
