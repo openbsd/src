@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.51 2017/06/15 13:48:42 bcallah Exp $ */
+/* $OpenBSD: gnum4.c,v 1.52 2017/08/21 21:41:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -630,7 +630,7 @@ void
 doesyscmd(const char *cmd)
 {
 	int p[2];
-	pid_t pid, cpid;
+	pid_t cpid;
 	char *argv[4];
 	int cc;
 	int status;
@@ -668,8 +668,10 @@ doesyscmd(const char *cmd)
 		} while (cc > 0 || (cc == -1 && errno == EINTR));
 
 		(void) close(p[0]);
-		while ((pid = wait(&status)) != cpid && pid >= 0)
-			continue;
+		while (waitpid(cpid, &status, 0) == -1) {
+			if (errno != EINTR)
+				break;
+		}
 		pbstr(getstring());
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.45 2017/08/10 14:26:31 tb Exp $	*/
+/*	$OpenBSD: io.c,v 1.46 2017/08/21 21:41:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -385,6 +385,7 @@ closecal(FILE *fp)
 	struct stat sbuf;
 	int nread, pdes[2], status;
 	char buf[1024];
+	pid_t pid;
 
 	if (!doall)
 		return;
@@ -394,7 +395,7 @@ closecal(FILE *fp)
 		goto done;
 	if (pipe(pdes) < 0)
 		goto done;
-	switch (vfork()) {
+	switch ((pid = vfork())) {
 	case -1:			/* error */
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
@@ -421,8 +422,10 @@ closecal(FILE *fp)
 		(void)write(pdes[1], buf, nread);
 	(void)close(pdes[1]);
 done:	(void)fclose(fp);
-	while (wait(&status) >= 0)
-		;
+	while (waitpid(pid, &status, 0) == -1) {
+		if (errno != EINTR)
+			break;
+	}
 }
 
 

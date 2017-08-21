@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.7 2015/12/05 13:22:32 claudio Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.8 2017/08/21 21:41:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -61,7 +61,7 @@ struct auth_groupcheck_args {
 	size_t	grouplen;
 };
 
-static void	 module_bsdauth_main(int, int);
+static pid_t	 module_bsdauth_main(int, int);
 static void	 module_bsdauth_config_set(void *, const char *, int,
 		    char * const *);
 static void	 module_bsdauth_userpass(void *, u_int, const char *,
@@ -82,12 +82,13 @@ main(int argc, char *argv[])
 	struct imsg	 imsg;
 	ssize_t		 n;
 	size_t		 datalen;
+	pid_t		 pid;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pairsock) == -1)
 		err(EXIT_FAILURE, "socketpair");
 
 	pipe_chld = pairsock[1];
-	module_bsdauth_main(pairsock[0], pairsock[1]);
+	pid = module_bsdauth_main(pairsock[0], pairsock[1]);
 
 	/*
 	 * Privileged process
@@ -201,12 +202,15 @@ group_done:
 		imsg_flush(&ibuf);
 	}
 	imsg_clear(&ibuf);
-	wait(&status);
 
+	while (waitpid(pid, &status, 0) == -1) {
+		if (errno != EINTR)
+			break;
+	}
 	exit(WEXITSTATUS(status));
 }
 
-static void
+static pid_t
 module_bsdauth_main(int pipe_prnt, int pipe_chld)
 {
 	int			 i;
@@ -219,7 +223,7 @@ module_bsdauth_main(int pipe_prnt, int pipe_chld)
 
 	if (pid > 0) {
 		close(pipe_prnt);
-		return;
+		return (pid);
 	}
 	close(pipe_chld);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.77 2016/10/18 20:07:35 kettenis Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.78 2017/08/21 21:41:13 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -277,9 +277,10 @@ editit(const char *pathname)
 		execv(_PATH_BSHELL, argp);
 		_exit(127);
 	}
-	while (waitpid(pid, &st, 0) == -1)
+	while (waitpid(pid, &st, 0) == -1) {
 		if (errno != EINTR)
 			goto fail;
+	}
 	if (!WIFEXITED(st))
 		errno = EINTR;
 	else
@@ -317,12 +318,13 @@ int
 sendmail(const char *pathname)
 {
 	int filedes[2];
+	pid_t pid;
 
 	if (pipe(filedes) == -1) {
 		warn("pipe: unsent report in %s", pathname);
 		return (-1);
 	}
-	switch (fork()) {
+	switch ((pid = fork())) {
 	case -1:
 		warn("fork error: unsent report in %s",
 		    pathname);
@@ -349,7 +351,10 @@ sendmail(const char *pathname)
 			return (-1);
 		}
 		close(filedes[1]);
-		wait(NULL);
+		while (waitpid(pid, NULL, 0) == -1) {
+			if (errno != EINTR)
+				break;
+		}
 		break;
 	}
 	return (0);

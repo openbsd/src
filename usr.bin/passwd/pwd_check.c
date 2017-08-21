@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_check.c,v 1.15 2015/12/09 19:39:10 mmcc Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.16 2017/08/21 21:41:13 deraadt Exp $	*/
 
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
@@ -138,12 +138,14 @@ pwd_check(login_cap_t *lc, char *password)
 				err(1, "pledge");
 
 			for (i = 0; i < sizeof(patterns) / sizeof(*patterns); i++) {
+				int ret;
+
 				if (regcomp(&rgx, patterns[i].match,
 				    patterns[i].flags) != 0)
 					continue;
-				res = regexec(&rgx, password, 0, NULL, 0);
+				ret = regexec(&rgx, password, 0, NULL, 0);
 				regfree(&rgx);
-				if (res == 0) {
+				if (ret == 0) {
 					printf("%s\n", patterns[i].response);
 					exit(1);
 				}
@@ -181,8 +183,11 @@ pwd_check(login_cap_t *lc, char *password)
 	}
 
 	/* get the return value from the child */
-	wait(&child);
-	if (WIFEXITED(child) && WEXITSTATUS(child) == 0) {
+	while (waitpid(child, &res, 0) == -1) {
+		if (errno != EINTR)
+			break;
+	}
+	if (WIFEXITED(res) && WEXITSTATUS(res) == 0) {
 		free(checker);
 		return (1);
 	}

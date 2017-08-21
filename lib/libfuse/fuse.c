@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.28 2016/05/24 19:24:46 okan Exp $ */
+/* $OpenBSD: fuse.c,v 1.29 2017/08/21 21:41:13 deraadt Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -294,7 +294,7 @@ ifuse_get_signal(unused int num)
 		child = fork();
 
 		if (child < 0)
-			return ;
+			return;
 
 		f = sigse->args;
 		if (child == 0) {
@@ -304,7 +304,10 @@ ifuse_get_signal(unused int num)
 		}
 
 		fuse_loop(f);
-		wait(&status);
+		while (waitpid(child, &status, 0) == -1) {
+			if (errno != EINTR)
+				break;
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.22 2015/11/16 03:03:28 deraadt Exp $	*/
+/*	$OpenBSD: tput.c,v 1.23 2017/08/21 21:41:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -52,6 +52,7 @@
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
+#include <errno.h>
 #include <limits.h>
 #include <string.h>
 
@@ -269,9 +270,10 @@ init(void)
 	size_t len;
 	char *buf;
 	int wstatus;
+	pid_t pid;
 
 	if (init_prog && !issetugid()) {
-		switch (vfork()) {
+		switch (pid = vfork()) {
 		case -1:
 			err(4, "vfork");
 			break;
@@ -281,7 +283,10 @@ init(void)
 			_exit(127);
 			break;
 		default:
-			wait(&wstatus);
+			while (waitpid(pid, &wstatus, 0) == -1) {
+				if (errno != EINTR)
+					break;
+			}
 			/* parent */
 			break;
 		}
