@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.16 2017/08/21 08:45:38 ajacoutot Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.17 2017/08/21 08:46:33 ajacoutot Exp $
 #
 # Copyright (c) 2016-2017 Robert Nagy <robert@openbsd.org>
 #
@@ -196,9 +196,6 @@ ${ERRATA}/.plist: ${_BUILD_COOKIE}
 	'${.CURDIR}/diff.sh ${EPREV_PATH} ${FAKE} \
 		done > ${.TARGET}' || \
 		{ echo "***>   unable to create list of files";	\
-		exit 1; };
-	@su ${BUILDUSER} -c 'echo ${SYSPATCH_DIR}/${ERRATA}.patch.sig >> ${.OBJDIR}/${ERRATA}/.plist' || \
-		{ echo "***>   unable to add syspatch to list of files"; \
 		exit 1; };
 	@su ${BUILDUSER} -c 'sed -i "s,^${FAKEROOT}/syspatch/${OSrev}-[^/]*/,,g" ${.TARGET}' 
 
