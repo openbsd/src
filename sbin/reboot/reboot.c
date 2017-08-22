@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.37 2017/06/16 06:46:54 natano Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.38 2017/08/22 00:30:16 sf Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -56,6 +56,17 @@ extern char *__progname;
 int	dohalt;
 
 #define _PATH_RC	"/etc/rc"
+
+static void
+sleep_while_procs(int seconds)
+{
+	while (seconds > 0) {
+		if (kill(-1, 0) == -1 && errno == ESRCH)
+			return;
+		sleep(1);
+		seconds--;
+	}
+}
 
 int
 main(int argc, char *argv[])
@@ -232,10 +243,10 @@ main(int argc, char *argv[])
 	 * buffers on their way.  Wait 5 seconds between the SIGTERM and
 	 * the SIGKILL to give everybody a chance.
 	 */
-	sleep(2);
+	sleep_while_procs(2);
 	if (!nflag)
 		sync();
-	sleep(3);
+	sleep_while_procs(3);
 
 	for (i = 1;; ++i) {
 		if (kill(-1, SIGKILL) == -1) {
@@ -247,7 +258,7 @@ main(int argc, char *argv[])
 			warnx("WARNING: some process(es) wouldn't die");
 			break;
 		}
-		(void)sleep(2 * i);
+		sleep_while_procs(2 * i);
 	}
 
 	reboot(howto);
