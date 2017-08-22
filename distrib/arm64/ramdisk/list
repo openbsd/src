@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.4 2017/07/08 15:42:46 florian Exp $
+#	$OpenBSD: list,v 1.5 2017/08/22 23:20:00 jsg Exp $
 
 SRCDIRS distrib/special
 
@@ -123,5 +123,7 @@ COPY	/usr/local/share/raspberrypi-firmware/boot/bootcode.bin usr/mdec/rpi/bootco
 COPY	/usr/local/share/raspberrypi-firmware/boot/start.elf usr/mdec/rpi/start.elf
 COPY	/usr/local/share/raspberrypi-firmware/boot/fixup.dat usr/mdec/rpi/fixup.dat
 COPY	/usr/local/share/u-boot/rpi_3/u-boot.bin usr/mdec/rpi/u-boot.bin
+
+COPY	/usr/local/share/u-boot/pine64_plus/u-boot-sunxi-with-spl.bin usr/mdec/pine64/u-boot-sunxi-with-spl.bin
 
 TZ

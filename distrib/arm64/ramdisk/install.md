@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 2017/07/28 18:15:44 rpe Exp $
+#	$OpenBSD: install.md,v 1.7 2017/08/22 23:20:00 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,23 +38,35 @@ MOUNT_ARGS_msdos="-o-l"
 md_installboot() {
 	local _disk=/dev/$1 _mdec _plat
 
+	case $(sysctl -n hw.product) in
+	*Pine64*)			_plat=pine64;;
+	*'Raspberry Pi'*)		_plat=rpi;;
+	esac
+
 	# Mount MSDOS partition, extract U-Boot and copy UEFI boot program
 	mount ${MOUNT_ARGS_msdos} ${_disk}i /mnt/mnt
 	mkdir -p /mnt/mnt/efi/boot
 	cp /mnt/usr/mdec/BOOTAA64.EFI /mnt/mnt/efi/boot/bootaa64.efi
 	echo bootaa64.efi > /mnt/mnt/efi/boot/startup.nsh
 
-	_plat=rpi
 	_mdec=/usr/mdec/$_plat
 
-	cp $_mdec/{bootcode.bin,start.elf,fixup.dat,*.dtb} /mnt/mnt/
-	cp $_mdec/u-boot.bin /mnt/mnt/
-	cat > /mnt/mnt/config.txt<<-__EOT
-		arm_control=0x200
-		enable_uart=1
-		device_tree_address=0x100
-		kernel=u-boot.bin
-	__EOT
+	case $_plat in
+	pine64)
+		dd if=$_mdec/u-boot-sunxi-with-spl.bin of=${_disk}c \
+		    bs=1024 seek=8 >/dev/null 2>&1
+		;;
+	rpi)
+		cp $_mdec/{bootcode.bin,start.elf,fixup.dat,*.dtb} /mnt/mnt/
+		cp $_mdec/u-boot.bin /mnt/mnt/
+		cat > /mnt/mnt/config.txt<<-__EOT
+			arm_control=0x200
+			enable_uart=1
+			device_tree_address=0x100
+			kernel=u-boot.bin
+		__EOT
+		;;
+	esac
 }
 
 md_prep_fdisk() {
