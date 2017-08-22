@@ -1,4 +1,4 @@
-.\"	$OpenBSD: buffercache.9,v 1.11 2017/02/28 19:36:14 natano Exp $
+.\"	$OpenBSD: buffercache.9,v 1.12 2017/08/22 00:18:56 sf Exp $
 .\"     $NetBSD: buffercache.9,v 1.13 2004/06/25 15:31:37 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
@@ -102,12 +102,13 @@
 .\"
 .\"
 .\" ------------------------------------------------------------
-.Dd $Mdocdate: February 28 2017 $
+.Dd $Mdocdate: August 22 2017 $
 .Dt BUFFERCACHE 9
 .Os
 .Sh NAME
 .Nm buffercache ,
 .Nm bread ,
+.Nm bread_cluster ,
 .Nm breadn ,
 .Nm bwrite ,
 .Nm bawrite ,
@@ -124,6 +125,9 @@
 .In sys/buf.h
 .Ft int
 .Fn bread "struct vnode *vp" "daddr_t blkno" "int size" \
+"struct buf **bpp"
+.Ft int
+.Fn bread_cluster "struct vnode *vp" "daddr_t blkno" "int size" \
 "struct buf **bpp"
 .Ft int
 .Fn breadn "struct vnode *vp" "daddr_t blkno" "int size" \
@@ -163,6 +167,11 @@ In addition to describing a cached block, a
 .Em buf
 structure is also used to describe an I/O request as a part of
 the disk driver interface.
+.Pp
+The block size used for logical block numbers depends on the type of the
+given vnode.
+For file vnodes, this is f_iosize of the underlying filesystem.
+For block device vnodes, this will usually be DEV_BSIZE.
 .\" XXX struct buf, B_ flags, MP locks, etc.
 .\" XXX free list, hash queue, etc.
 .\" ------------------------------------------------------------
@@ -183,6 +192,10 @@ calls
 to allocate a buffer with enough pages for
 .Fa size
 and reads the specified disk block into it.
+.Pp
+.Fn bread
+always returns a buffer, even if it returns an error due to an I/O
+error.
 .Pp
 The buffer returned by
 .Fn bread
@@ -221,6 +234,30 @@ and
 .Fa nrablks .
 The read-ahead blocks aren't returned, but are available in cache for
 future accesses.
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.It Xo
+.Fo bread_cluster
+.Fa "vp"
+.Fa "blkno"
+.Fa "size"
+.Fa "bpp"
+.Fc
+.Xc
+Read a block of size
+.Fa "size"
+corresponding to
+.Fa vp
+and
+.Fa blkno ,
+with readahead.
+If neither the first block nor a part of the next MAXBSIZE bytes is already
+in the buffer cache,
+.Fn bread_cluster
+will perform a read-ahead of MAXBSIZE bytes in a single I/O operation.
+This is currently more efficient than
+.Fn breadn .
+The read-ahead data isn't returned, but is available in cache for
+future access.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn bwrite "bp"
 Write a block.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.183 2017/07/12 11:13:22 mikeb Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.184 2017/08/22 00:18:56 sf Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -568,6 +568,12 @@ bread_cluster_callback(struct buf *bp)
 	}
 }
 
+/*
+ * Read-ahead multiple disk blocks, but make sure only one (big) I/O
+ * request is sent to the disk.
+ * XXX This should probably be dropped and breadn should instead be optimized
+ * XXX to do fewer I/O requests.
+ */
 int
 bread_cluster(struct vnode *vp, daddr_t blkno, int size, struct buf **rbpp)
 {
@@ -1023,6 +1029,9 @@ geteblk(size_t size)
 
 /*
  * Allocate a buffer.
+ * If vp is given, put it into the buffer cache for that vnode.
+ * If size != 0, allocate memory and call buf_map().
+ * If there is already a buffer for the given vnode/blkno, return NULL.
  */
 struct buf *
 buf_get(struct vnode *vp, daddr_t blkno, size_t size)
