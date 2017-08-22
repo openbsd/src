@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.318 2017/08/11 21:24:20 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.319 2017/08/22 15:02:34 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1802,6 +1802,8 @@ ip_send_dispatch(void *xmq)
 	if (ml_empty(&ml))
 		return;
 
+	NET_LOCK();
+
 #ifdef IPSEC
 	/*
 	 * IPsec is not ready to run without KERNEL_LOCK().  So all
@@ -1810,12 +1812,13 @@ ip_send_dispatch(void *xmq)
 	 */
 	extern int ipsec_in_use;
 	if (ipsec_in_use) {
+		NET_UNLOCK();
 		KERNEL_LOCK();
+		NET_LOCK();
 		locked = 1;
 	}
 #endif /* IPSEC */
 
-	NET_LOCK();
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		ip_output(m, NULL, NULL, 0, NULL, NULL, 0);
 	}

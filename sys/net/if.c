@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.511 2017/08/12 20:27:28 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.512 2017/08/22 15:02:34 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -887,19 +887,6 @@ if_input_process(void *xifidx)
 	if (!ISSET(ifp->if_xflags, IFXF_CLONED))
 		add_net_randomness(ml_len(&ml));
 
-#ifdef IPSEC
-	/*
-	 * IPsec is not ready to run without KERNEL_LOCK().  So all
-	 * the traffic on your machine is punished if you have IPsec
-	 * enabled.
-	 */
-	extern int ipsec_in_use;
-	if (ipsec_in_use) {
-		KERNEL_LOCK();
-		locked = 1;
-	}
-#endif /* IPSEC */
-
 	/*
 	 * We grab the NET_LOCK() before processing any packet to
 	 * ensure there's no contention on the routing table lock.
@@ -914,6 +901,22 @@ if_input_process(void *xifidx)
 	 */
 	NET_LOCK();
 	s = splnet();
+
+#ifdef IPSEC
+	/*
+	 * IPsec is not ready to run without KERNEL_LOCK().  So all
+	 * the traffic on your machine is punished if you have IPsec
+	 * enabled.
+	 */
+	extern int ipsec_in_use;
+	if (ipsec_in_use) {
+		NET_UNLOCK();
+		KERNEL_LOCK();
+		NET_LOCK();
+		locked = 1;
+	}
+#endif /* IPSEC */
+
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		/*
 		 * Pass this mbuf to all input handlers of its

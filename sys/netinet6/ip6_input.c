@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.201 2017/08/11 21:24:20 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.202 2017/08/22 15:02:34 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1450,6 +1450,8 @@ ip6_send_dispatch(void *xmq)
 	if (ml_empty(&ml))
 		return;
 
+	NET_LOCK();
+
 #ifdef IPSEC
 	/*
 	 * IPsec is not ready to run without KERNEL_LOCK().  So all
@@ -1458,12 +1460,13 @@ ip6_send_dispatch(void *xmq)
 	 */
 	extern int ipsec_in_use;
 	if (ipsec_in_use) {
+		NET_UNLOCK();
 		KERNEL_LOCK();
+		NET_LOCK();
 		locked = 1;
 	}
 #endif /* IPSEC */
 
-	NET_LOCK();
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL);
 	}
