@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.21 2014/09/09 03:41:08 guenther Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.22 2017/08/22 15:04:18 bluhm Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -575,46 +575,44 @@ printsub(char direction,	/* '<' or '>' */
 		fprintf(NetTrace, "INFO ");
 	    env_common:
 		{
-		    int noquote = 2;
+		    int quote = 0;
 		    for (i = 2; i < length; i++ ) {
 			switch (pointer[i]) {
 			case NEW_ENV_VALUE:
-				fprintf(NetTrace, "\" VALUE " + noquote);
-			    noquote = 2;
+			    fprintf(NetTrace, "%sVALUE ", quote ? "\" " : "");
+			    quote = 0;
 			    break;
 
 			case NEW_ENV_VAR:
-				fprintf(NetTrace, "\" VAR " + noquote);
-			    noquote = 2;
+			    fprintf(NetTrace, "%sVAR ", quote ? "\" " : "");
+			    quote = 0;
 			    break;
 
 			case ENV_ESC:
-			    fprintf(NetTrace, "\" ESC " + noquote);
-			    noquote = 2;
+			    fprintf(NetTrace, "%sESC ", quote ? "\" " : "");
+			    quote = 0;
 			    break;
 
 			case ENV_USERVAR:
-			    fprintf(NetTrace, "\" USERVAR " + noquote);
-			    noquote = 2;
+			    fprintf(NetTrace, "%sUSERVAR ", quote ? "\" " : "");
+			    quote = 0;
 			    break;
 
 			default:
 			    if (isprint((unsigned char)pointer[i]) &&
 				pointer[i] != '"') {
-				if (noquote) {
-				    putc('"', NetTrace);
-				    noquote = 0;
-				}
-				putc(pointer[i], NetTrace);
+				    fprintf(NetTrace, "%s%c",
+					quote ? "" : "\"", pointer[i]);
+				    quote = 1;
 			    } else {
-				fprintf(NetTrace, "\" %03o " + noquote,
-							pointer[i]);
-				noquote = 2;
+				    fprintf(NetTrace, "%s%03o ",
+					quote ? "\" " : "", pointer[i]);
+				    quote = 0;
 			    }
 			    break;
 			}
 		    }
-		    if (!noquote)
+		    if (quote)
 			putc('"', NetTrace);
 		    break;
 		}
