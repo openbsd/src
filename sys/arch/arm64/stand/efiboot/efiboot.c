@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.11 2017/08/07 19:34:53 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.12 2017/08/22 17:18:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -38,11 +38,11 @@
 EFI_SYSTEM_TABLE	*ST;
 EFI_BOOT_SERVICES	*BS;
 EFI_RUNTIME_SERVICES	*RS;
-EFI_HANDLE		 IH, efi_bootdp = NULL;
+EFI_HANDLE		 IH, efi_bootdp;
 
 EFI_PHYSICAL_ADDRESS	 heap;
 UINTN			 heapsiz = 1 * 1024 * 1024;
-EFI_MEMORY_DESCRIPTOR	*mmap = NULL;
+EFI_MEMORY_DESCRIPTOR	*mmap;
 UINTN			 mmap_key;
 UINTN			 mmap_ndesc;
 UINTN			 mmap_descsiz;
@@ -54,10 +54,10 @@ static EFI_GUID		 devp_guid = DEVICE_PATH_PROTOCOL;
 
 static int efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
 static int efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
-static void	 efi_heap_init(void);
-static void	 efi_memprobe_internal(void);
-static void	 efi_timer_init(void);
-static void	 efi_timer_cleanup(void);
+static void efi_heap_init(void);
+static void efi_memprobe_internal(void);
+static void efi_timer_init(void);
+static void efi_timer_cleanup(void);
 static EFI_STATUS efi_memprobe_find(UINTN, UINTN, EFI_PHYSICAL_ADDRESS *);
 
 EFI_STATUS
