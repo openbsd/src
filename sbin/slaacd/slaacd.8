@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slaacd.8,v 1.1 2017/06/03 10:00:29 florian Exp $
+.\"	$OpenBSD: slaacd.8,v 1.2 2017/08/22 13:58:00 florian Exp $
 .\"
 .\" Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2017 $
+.Dd $Mdocdate: August 22 2017 $
 .Dt SLAACD 8
 .Os
 .Sh NAME
@@ -65,8 +65,8 @@ Use an alternate location for the default control socket.
 Produce more verbose output.
 .El
 .Sh FILES
-.Bl -tag -width "/var/run/slaacd.sockXX" -compact
-.It Pa /var/run/slaacd.sock
+.Bl -tag -width "/dev/slaacd.sockXX" -compact
+.It Pa /dev/slaacd.sock
 .Ux Ns -domain
 socket used for communication with
 .Xr slaacctl 8 .
