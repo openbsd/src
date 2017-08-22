@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.82 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.83 2017/08/22 10:41:59 mestre Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -1063,13 +1063,17 @@ int
 ac97_mixer_set_port(struct ac97_codec_if *codec_if, mixer_ctrl_t *cp)
 {
 	struct ac97_softc *as = (struct ac97_softc *)codec_if;
-	struct ac97_source_info *si = &as->source_info[cp->dev];
+	struct ac97_source_info *si;
 	u_int16_t mask;
 	u_int16_t val, newval;
 	int error, spdif;
 
-	if (cp->dev < 0 || cp->dev >= as->num_source_info ||
-	    cp->type == AUDIO_MIXER_CLASS || cp->type != si->type)
+	if (cp->dev < 0 || cp->dev >= as->num_source_info)
+		return (EINVAL);
+
+	si = &as->source_info[cp->dev];
+
+	if (cp->type == AUDIO_MIXER_CLASS || cp->type != si->type)
 		return (EINVAL);
 
 	spdif = si->req_feature == CHECK_SPDIF &&
@@ -1340,12 +1344,16 @@ int
 ac97_mixer_get_port(struct ac97_codec_if *codec_if, mixer_ctrl_t *cp)
 {
 	struct ac97_softc *as = (struct ac97_softc *)codec_if;
-	struct ac97_source_info *si = &as->source_info[cp->dev];
+	struct ac97_source_info *si;
 	u_int16_t mask;
 	u_int16_t val;
 
-	if (cp->dev < 0 || cp->dev >= as->num_source_info ||
-	    cp->type != si->type)
+	if (cp->dev < 0 || cp->dev >= as->num_source_info)
+		return (EINVAL);
+
+	si = &as->source_info[cp->dev];
+
+	if (cp->type != si->type)
 		return (EINVAL);
 
 	ac97_read(as, si->reg, &val);
