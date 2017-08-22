@@ -1,4 +1,4 @@
-# $OpenBSD: subr.sh,v 1.6 2017/07/22 13:50:54 anton Exp $
+# $OpenBSD: subr.sh,v 1.7 2017/08/22 20:14:57 anton Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
@@ -18,7 +18,7 @@
 testseq() {
 	stdin=$1
 	exp=$(echo "$2")
-	act=$(echo -n "$stdin" | ./edit -p "$PS1" ksh -r)
+	act=$(echo -n "$stdin" | ./edit -p "$PS1" ${KSH:-/bin/ksh} -r)
 	[ $? = 0 ] && [ "$exp" = "$act" ] && return 0
 
 	echo input:
