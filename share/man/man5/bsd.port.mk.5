@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.465 2017/07/12 22:52:54 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.466 2017/08/22 10:40:27 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 12 2017 $
+.Dd $Mdocdate: August 22 2017 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1213,7 +1213,7 @@ Defaults to
 .Sq no ,
 which does not compute a checksum at all.
 .It Ev CHOSEN_COMPILER
-Usually read-only.
+Read-only.
 Compiler suite chosen by the
 .Ev COMPILER
 mechanism.
@@ -1249,32 +1249,45 @@ If the current
 version is >= this version then a notice
 will be displayed instead of the port being built.
 .It Ev COMPILER
-Select a somewhat more recent compiler than gcc 4.2.1.
-Set to a list containing
-.Sq base
-(clang compiler in base),
-.Sq clang
-(clang compiler in ports),
-or
-.Sq gcc
-(gcc 4.9 from ports).
-The first compiler that matches criteria
-.Po
-.Ev MODCLANG_ARCHS
-or
+Select preferred compiler.
+First element in the list that matches will be chosen.
+.Bl -tag -width ports-gccxx
+.It base-gcc
+gcc 4.2 compiler from base
+.It base-clang
+clang compiler from base
+.It gcc3
+gcc 3 compiler from base
+.It ports-gcc
+gcc 4.9 compiler from ports
+(heeds
 .Ev MODGCC4_ARCHS
-from respective modules
-.Pc
-will be chosen.
-On an architecture using
-.Xr clang 1
-as the default compiler,
-clang from the base system will always be chosen,
-so it is not necessary to list
-.Sq base
-unless it's the only suitable compiler.
+from the module)
+.It ports-clang
+clang compiler from ports
+(heeds
+.Ev MODCLANG_ARCHS
+from the module)
+.El
 .Pp
-Common reasons for using
+The first compiler that matches criteria will be chosen.
+On clang-based architectures, even though gcc is still compiled in base,
+.Sq base-gcc
+never matches.
+.Pp
+Defaults to base compilers, e.g.,
+.Sq base-clang base-gcc gcc3 .
+.Pp
+As a transition mechanism,
+.Sq gcc
+is a shortcut for
+.Sq base-clang ports-gcc
+and
+.Sq clang
+is a shortcut for
+.Sq base-clang ports-clang .
+.Pp
+Common reasons for explicitly setting
 .Ev COMPILER
 will most often be C++11 support, thread-local-storage support (emulated),
 atomic operations on some arches, sometimes assembler support, ABI
@@ -1288,12 +1301,15 @@ in effect,
 and
 .Ev MODCLANG_ARCHS
 default to
-.Sq * .
+.Sq ${GCC49_ARCHS}
+and
+.Sq ${LLVM_ARCHS}
+respectively.
+.Pp
+.Ev ONLY_FOR_ARCHS
+will also be set if applicable.
 .It Ev COMPILER_LANGS
-If
-.Ev COMPILER
-is in effect,
-the value of
+The value of
 .Ev COMPILER_LANGS
 will be added to the respective module's supported langs.
 Defaults to
