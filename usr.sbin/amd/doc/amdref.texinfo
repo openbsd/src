@@ -36,7 +36,7 @@
 @c OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 @c
 @c	from: @(#)amdref.texinfo	8.1 (Berkeley) 6/6/93
-@c	$Id: amdref.texinfo,v 1.13 2015/01/21 09:47:15 guenther Exp $
+@c	$Id: amdref.texinfo,v 1.14 2017/08/22 16:59:40 schwarze Exp $
 @c
 @setfilename amdref.info
 @c @setfilename /usr/local/emacs/info/amd
@@ -1045,9 +1045,9 @@ To allow generic location specifications @i{Amd} does variable expansion
 on each location and also on some of the option strings.  Any option or
 selector appearing in the form @code{$@dfn{var}} is replaced by the
 current value of that option or selector.  For example, if the value of
-@code{$@{key@}} was @samp{bin}, @code{$@{autodir@}} was @samp{/a} and
+@code{$@{key@}} was @samp{bin}, @code{$@{autodir@}} was @samp{/tmp_mnt} and
 @code{$@{fs@}} was `@t{$@{autodir@}}@t{/local/}@t{$@{key@}}' then
-after expansion @code{$@{fs@}} would have the value @samp{/a/local/bin}.
+after expansion @code{$@{fs@}} would have the value @samp{/tmp_mnt/local/bin}.
 Any environment variable can be accessed in a similar way.@refill
 
 Two pathname operators are available when expanding a variable.  If the
@@ -1330,9 +1330,9 @@ The @samp{fs} option defaults to
 @samp{rhost} defaults to the local host name (@code{$@{host@}}) and
 @samp{rfs} defaults to the value of @code{$@{path@}}, which is the full
 path of the requested file; @samp{/home/foo} in the example above
-(@pxref{Selectors}).  @code{$@{autodir@}} defaults to @samp{/a} but may
-be changed with the ``-a'' command line option.  Sun's automounter
-defaults to @samp{/tmp_mnt}.  Note that there is no @samp{/} between
+(@pxref{Selectors}).  @code{$@{autodir@}} defaults to @samp{/tmp_mnt}
+but may be changed with the ``-a'' command line option.
+Note that there is no @samp{/} between
 the @code{$@{rhost@}} and @code{$@{rfs@}} since @code{$@{rfs@}} begins
 with a @samp{/}.@refill
 
@@ -1542,7 +1542,7 @@ command line.
 @cindex Setting the default mount directory
 
 Specifies the default mount directory.  This option changes the variable
-@code{$@{autodir@}} which otherwise defaults to @file{/a}.  For example,
+@code{$@{autodir@}} which otherwise defaults to @file{/tmp_mnt}.  For example,
 some sites prefer @file{/amd}.
 
 @example
@@ -2642,8 +2642,8 @@ For example:
 /            root   "root"                    sky:(pid75)
 /homes       toplvl /usr/local/etc/amd.homes  /homes
 /home        toplvl /usr/local/etc/amd.home   /home
-/homes/jsp   nfs    charm:/home/charm         /a/charm/home/charm/jsp
-/homes/phjk  nfs    toytown:/home/toytown     /a/toytown/home/toytown/ai/phjk
+/homes/jsp   nfs    charm:/home/charm         /tmp_mnt/charm/home/charm/jsp
+/homes/phjk  nfs    toytown:/home/toytown     /tmp_mnt/toytown/home/toytown/ai/phjk
 @end example
 
 @noindent
@@ -2737,13 +2737,13 @@ any error which has occured.
 For example:
 
 @example
-"root"           truth:(pid602)     root   1 localhost is up
-hesiod.home      /home              toplvl 1 localhost is up
-hesiod.vol       /vol               toplvl 1 localhost is up
-hesiod.homes     /homes             toplvl 1 localhost is up
-amy:/home/amy    /a/amy/home/amy    nfs    5 amy is up
-swan:/home/swan  /a/swan/home/swan  nfs    0 swan is up (Permission denied)
-ex:/home/ex      /a/ex/home/ex      nfs    0 ex is down
+"root"           truth:(pid602)           root   1 localhost is up
+hesiod.home      /home                    toplvl 1 localhost is up
+hesiod.vol       /vol                     toplvl 1 localhost is up
+hesiod.homes     /homes                   toplvl 1 localhost is up
+amy:/home/amy    /tmp_mnt/amy/home/amy    nfs    5 amy is up
+swan:/home/swan  /tmp_mnt/swan/home/swan  nfs    0 swan is up (Permission denied)
+ex:/home/ex      /tmp_mnt/ex/home/ex      nfs    0 ex is down
 @end example
 
 When the reference count is zero the filesystem is not mounted but
@@ -2982,11 +2982,11 @@ By combining two other features of @i{Amd} it can be greatly simplified.
 First the UFS partitions should be mounted under the control of
 @samp{/etc/fstab}, taking care that they are mounted in the same place
 that @i{Amd} would have automounted them.  In most cases this would be
-something like @samp{/a/@dfn{host}/home/@dfn{host}} and
+something like @samp{/tmp_mnt/@dfn{host}/home/@dfn{host}} and
 @samp{/etc/fstab} on host @samp{charm} would have a line:@refill
 
 @example
-/dev/xy0g /a/charm/home/charm 4.2 rw,nosuid,grpid 1 5
+/dev/xy0g /tmp_mnt/charm/home/charm 4.2 rw,nosuid,grpid 1 5
 @end example
 
 The map can then be changed to:
@@ -3131,7 +3131,7 @@ different @samp{bin}, @samp{etc}, @samp{lib} and @samp{ucb}
 sub-directories for each machine architecture.  For example,
 @samp{/vol/r+d/bin} for a Sun-4 would be stored in the sub-directory
 @samp{bin/sun4} of the filesystem @samp{/usr/r+d}.  When it was accessed
-a symbolic link pointing to @samp{/a/gould/usr/r+d/bin/sun4} would be
+a symbolic link pointing to @samp{/tmp_mnt/gould/usr/r+d/bin/sun4} would be
 returned.@refill
 
 @example
