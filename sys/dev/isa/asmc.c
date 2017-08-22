@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.31 2017/02/14 15:47:12 jcs Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.32 2017/08/22 11:00:39 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -665,7 +665,7 @@ asmc_init(struct asmc_softc *sc)
 	int i, r;
 
 	/* number of temperature sensors depends on product */
-	for (i = 0; sc->sc_prod->pr_temp[i] && i < ASMC_MAXTEMP; i++)
+	for (i = 0; i < ASMC_MAXTEMP && sc->sc_prod->pr_temp[i]; i++)
 		if ((r = asmc_temp(sc, i, 1)) && r != ASMC_NOTFOUND)
 			printf("%s: read temp %d failed (0x%x)\n",
 			    sc->sc_dev.dv_xname, i, r);
@@ -707,7 +707,7 @@ asmc_update(void *arg)
 	struct asmc_softc *sc = arg;
 	int i;
 
-	for (i = 0; sc->sc_prod->pr_temp[i] && i < ASMC_MAXTEMP; i++)
+	for (i = 0; i < ASMC_MAXTEMP && sc->sc_prod->pr_temp[i]; i++)
 		if (!(sc->sc_sensor_temp[i].flags & SENSOR_FINVALID))
 			asmc_temp(sc, i, 0);
 	for (i = 0; i < sc->sc_nfans && i < ASMC_MAXFAN; i++)
