@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.158 2017/08/10 19:20:43 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.159 2017/08/22 09:13:36 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1014,9 +1014,10 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 			goto out;
 	} else
 		valsize = 0;
+	m = m_get(M_WAIT, MT_SOOPTS);
 	so = fp->f_data;
 	s = solock(so);
-	error = sogetopt(so, SCARG(uap, level), SCARG(uap, name), &m);
+	error = sogetopt(so, SCARG(uap, level), SCARG(uap, name), m);
 	sounlock(s);
 	if (error == 0 && SCARG(uap, val) && valsize && m != NULL) {
 		if (valsize > m->m_len)
@@ -1026,9 +1027,9 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 			error = copyout(&valsize,
 			    SCARG(uap, avalsize), sizeof (valsize));
 	}
+	m_free(m);
 out:
 	FRELE(fp, p);
-	m_free(m);
 	return (error);
 }
 

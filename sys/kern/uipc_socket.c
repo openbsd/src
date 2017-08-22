@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.201 2017/08/10 19:20:43 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.202 2017/08/22 09:13:36 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1755,30 +1755,24 @@ bad:
 }
 
 int
-sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
+sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 {
 	int error = 0;
-	struct mbuf *m;
 
 	soassertlocked(so);
 
 	if (level != SOL_SOCKET) {
 		if (so->so_proto->pr_ctloutput) {
-			m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = 0;
 
 			error = (*so->so_proto->pr_ctloutput)(PRCO_GETOPT, so,
 			    level, optname, m);
-			if (error) {
-				m_free(m);
+			if (error)
 				return (error);
-			}
-			*mp = m;
 			return (0);
 		} else
 			return (ENOPROTOOPT);
 	} else {
-		m = m_get(M_WAIT, MT_SOOPTS);
 		m->m_len = sizeof (int);
 
 		switch (optname) {
@@ -1856,13 +1850,10 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 				level = dom->dom_protosw->pr_protocol;
 				error = (*so->so_proto->pr_ctloutput)
 				    (PRCO_GETOPT, so, level, optname, m);
-				if (error) {
-					(void)m_free(m);
+				if (error)
 					return (error);
-				}
 				break;
 			}
-			(void)m_free(m);
 			return (ENOPROTOOPT);
 
 #ifdef SOCKET_SPLICE
@@ -1887,17 +1878,13 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 					    &(unp->unp_connid), m->m_len);
 					break;
 				}
-				(void)m_free(m);
 				return (ENOTCONN);
 			}
-			(void)m_free(m);
 			return (EOPNOTSUPP);
 
 		default:
-			(void)m_free(m);
 			return (ENOPROTOOPT);
 		}
-		*mp = m;
 		return (0);
 	}
 }
