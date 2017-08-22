@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.47 2017/08/17 20:21:53 kettenis Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.48 2017/08/22 12:24:45 fcambus Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -661,8 +661,8 @@ rasops_copyrows(void *cookie, int src, int dst, int num)
 /*
  * Copy columns. This is slow, and hard to optimize due to alignment,
  * and the fact that we have to copy both left->right and right->left.
- * We simply cop-out here and use bcopy(), since it handles all of
- * these cases anyway.
+ * We simply cop-out here and use either memmove() or slow_bcopy(),
+ * since they handle all of these cases anyway.
  */
 int
 rasops_copycols(void *cookie, int row, int src, int dst, int num)
