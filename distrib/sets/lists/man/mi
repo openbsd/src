@@ -1145,6 +1145,7 @@
 ./usr/share/man/man4/arc.4
 ./usr/share/man/man4/arcofi.4
 ./usr/share/man/man4/armv7/agtimer.4
+./usr/share/man/man4/armv7/amdisplay.4
 ./usr/share/man/man4/armv7/ampintc.4
 ./usr/share/man/man4/armv7/amptimer.4
 ./usr/share/man/man4/armv7/armliicc.4
