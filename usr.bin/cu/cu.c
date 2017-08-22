@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.24 2015/10/16 07:01:53 deraadt Exp $ */
+/* $OpenBSD: cu.c,v 1.25 2017/08/22 16:32:37 mestre Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -162,6 +162,8 @@ main(int argc, char **argv)
 	line_fd = open(line_path, flags);
 	if (line_fd < 0)
 		err(1, "open(\"%s\")", line_path);
+	if (!isatty(line_fd))
+		err(1, "%s", line_path);
 	if (ioctl(line_fd, TIOCEXCL) != 0)
 		err(1, "ioctl(TIOCEXCL)");
 	if (tcgetattr(line_fd, &line_tio) != 0)
