@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.90 2017/08/13 07:52:17 florian Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.91 2017/08/22 01:44:09 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ static void
 rtsock_cb(int fd, short event, void *arg)
 {
 	int n, type, ifindex = 0, oldifflags, plen;
-	char *next;
+	char *rtm;
 	u_char ifname[IF_NAMESIZE];
 	struct prefix *prefix;
 	struct rainfo *rai;
@@ -319,22 +319,22 @@ rtsock_cb(int fd, short event, void *arg)
 	log_debug("received a routing message "
 	    "(type = %d, len = %d)", rtmsg_type(rtsockbuf), n);
 
-	next = rtsockbuf;
-	if (validate_msg(next) == -1)
+	rtm = rtsockbuf;
+	if (validate_msg(rtm) == -1)
 		return;
 
-	type = rtmsg_type(next);
+	type = rtmsg_type(rtm);
 	switch (type) {
 	case RTM_ADD:
 	case RTM_DELETE:
-		ifindex = get_rtm_ifindex(next);
+		ifindex = get_rtm_ifindex(rtm);
 		break;
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
-		ifindex = get_ifam_ifindex(next);
+		ifindex = get_ifam_ifindex(rtm);
 		break;
 	case RTM_IFINFO:
-		ifindex = get_ifm_ifindex(next);
+		ifindex = get_ifm_ifindex(rtm);
 		break;
 	default:
 		/* should not reach here */
@@ -360,8 +360,8 @@ rtsock_cb(int fd, short event, void *arg)
 		if (sflag)
 			break;	/* we aren't interested in prefixes  */
 
-		addr = get_addr(next);
-		plen = get_prefixlen(next);
+		addr = get_addr(rtm);
+		plen = get_prefixlen(rtm);
 		/* sanity check for plen */
 		/* as RFC2373, prefixlen is at least 4 */
 		if (plen < 4 || plen > 127) {
@@ -389,8 +389,8 @@ rtsock_cb(int fd, short event, void *arg)
 		if (sflag)
 			break;
 
-		addr = get_addr(next);
-		plen = get_prefixlen(next);
+		addr = get_addr(rtm);
+		plen = get_prefixlen(rtm);
 		/* sanity check for plen */
 		/* as RFC2373, prefixlen is at least 4 */
 		if (plen < 4 || plen > 127) {
@@ -417,7 +417,7 @@ rtsock_cb(int fd, short event, void *arg)
 			if_getflags(ifindex, iflist[ifindex]->ifm_flags);
 		break;
 	case RTM_IFINFO:
-		iflist[ifindex]->ifm_flags = get_ifm_flags(next);
+		iflist[ifindex]->ifm_flags = get_ifm_flags(rtm);
 		break;
 	default:
 		/* should not reach here */
