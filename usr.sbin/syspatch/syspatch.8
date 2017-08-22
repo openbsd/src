@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syspatch.8,v 1.18 2017/05/09 12:23:04 ajacoutot Exp $
+.\"	$OpenBSD: syspatch.8,v 1.19 2017/08/22 13:32:50 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 9 2017 $
+.Dd $Mdocdate: August 22 2017 $
 .Dt SYSPATCH 8
 .Os
 .Sh NAME
@@ -33,9 +33,9 @@ When run without any options,
 .Nm syspatch
 will apply
 .Em all
-missing patches by saving the original release kernel if needed, creating a
-rollback tarball containing the files it is about to replace, then extracting
-and installing all files contained in the syspatch tarball.
+missing patches, creating a rollback tarball containing the files it is about
+to replace, then extracting and installing all files contained in the syspatch
+tarball.
 Patches are cumulative and as such it is not possible to install only a subset
 of them.
 .Pp
@@ -52,11 +52,7 @@ Revert all patches.
 Revert the most recently installed patch.
 .El
 .Sh FILES
-.Bl -tag -width "/bsd.syspatch${OSrev}" -compact
-.It Pa /bsd.syspatch${OSrev}
-Backup of the original
-.Pa /bsd
-release kernel.
+.Bl -tag -width "/etc/installurl" -compact
 .It Pa /etc/installurl
 .Ox
 mirror top-level URL for fetching patches.
