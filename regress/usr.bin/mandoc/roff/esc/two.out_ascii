@@ -5,22 +5,26 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
      lines: | | _ | / \
-     markers: +o <> [] <= => @ # _|
+     markers: +o <> [] <= => @ # <cr>
      legal: (C) (R) tm
      punctuation: -- - -
      quotes: ,, , ` ' ' " << >> < >
      brackets: [ ] { } < > | ,- { -. } -'
      arrows: <- -> <= => <=>
-     logical: ^ v ~ 3 -) .:. .:. |
-     mathematical: + - -+ +- . x -:- / * <= >= << >> = != == !== =~ ~ ~~ ~= oc
-     {} E (= =) (^) U \/ |~ ~| |_ _| oo N I R a
+     logical: ^ v ~ <there exists> <such that> <therefore> <therefore> |
+     mathematical: + - -+ +- . x / / * <= >= << >> = != == !== =~ ~ ~~ ~=
+     <proportional to> {} <element of> <proper subset> <proper superset>
+     <intersection> <union> <sqrt> |~ ~| |_ _| <infinity> <Aleph> <Im> <Re>
+     <del>
      ligatures: ff fi fl ffi ffl AE ae OE oe IJ ij
      accents: " ^ ' ` '` , " v o ~ , ^ ~
      accented and special letters: 'A 'E 'I 'O 'U 'a 'e 'i 'o 'u `A `E `I `O `U `a `e `i `o `u ~A ~N
-     ~O ~a ~n ~o "A "E "I "O "U "a "e "i "o "u "y ^A ^E ^I ^O ^U ^a ^e ^i ^o ^u ,C ,c /L /l /O /o oA oa -D i
+     ~O ~a ~n ~o "A "E "I "O "U "a "e "i "o "u "y ^A ^E ^I ^O ^U ^a ^e ^i ^o ^u ,C ,c /L /l /O /o oA oa Dh i
      currency: $ /c EUR EUR =Y <<
-     units: ' ,u
-     greek letters: A B  E Z H  I K /\ M N  O TT P T Y  X IY _O a B y d e ,C n -0
-     i k >\ ,u v ,E o -n p -o ~t u |o x |u w -0 |o +p e s
+     units: ' <micro>
+     greek letters: A B  E Z H  I K <Lambda> M N  O <Pi> P T Y  X <Psi>
+     <Omega> <alpha> <beta> <gamma> <delta> <epsilon> <zeta> <eta> <theta>
+     <iota> <kappa> <lambda> <mu> <nu> <xi> o <pi> <rho> <sigma> <tau>
+     <upsilon> <phi> <chi> <psi> <omega> <theta> <phi> +p <epsilon> <sigma>
 
 OpenBSD                          July 4, 2017                          OpenBSD

@@ -11,6 +11,7 @@ DDEESSCCRRIIPPTTIIOONN
        ¤¤   CURRENCY SIGN
        ¥¥   YEN SIGN
        ¦¦   BROKEN BAR
+       §§   SECTION SIGN
        ¨¨   DIAERESIS
        ©©   COPYRIGHT SIGN
        ªª   FEMININE ORDINAL INDICATOR
@@ -18,11 +19,13 @@ DDEESSCCRRIIPPTTIIOONN
        ¬¬¬  NOT SIGN
        ­    SOFT HYPHEN
        ®®   REGISTERED SIGN
+       °°   DEGREE SIGN
        ±±±  PLUS-MINUS SIGN
        ²²   SUPERSCRIPT TWO
        ³³   SUPERSCRIPT THREE
        ´´´  ACUTE ACCENT
        µµ   MICRO SIGN
+       ¶¶   PILCROW SIGN
        ··   MIDDLE DOT
        ¸¸   CEDILLA
        ¹¹   SUPERSCRIPT ONE
@@ -77,6 +80,7 @@ DDEESSCCRRIIPPTTIIOONN
        íí   LATIN SMALL LETTER I WITH ACUTE
        îî   LATIN SMALL LETTER I WITH CIRCUMFLEX
        ïï   LATIN SMALL LETTER I WITH DIAERESIS
+       ðð   LATIN SMALL LETTER ETH
        ññ   LATIN SMALL LETTER N WITH TILDE
        òò   LATIN SMALL LETTER O WITH GRAVE
        óó   LATIN SMALL LETTER O WITH ACUTE

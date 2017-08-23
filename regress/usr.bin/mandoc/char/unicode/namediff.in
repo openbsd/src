@@ -1,4 +1,4 @@
-.\" $OpenBSD: namediff.in,v 1.6 2017/07/04 14:53:23 schwarze Exp $
+.\" $OpenBSD: namediff.in,v 1.7 2017/08/23 10:59:53 schwarze Exp $
 .TH CHAR-UNICODE-NAMEDIFF 1 "October 27, 2014"
 .SH NAME
 char-unicode-namediff \- Unicode characters having named escapes
@@ -7,15 +7,11 @@ char-unicode-namediff \- Unicode characters having named escapes
 BEGINTEST
 \[u0237]\(.j LATIN SMALL LETTER DOTLESS J
 \[u02D9]\(a. DOT ABOVE
-\[u0393]\(*G GREEK CAPITAL LETTER GAMMA
-\[u03A3]\(*S GREEK CAPITAL LETTER SIGMA
 \[u203E]\(rn OVERLINE
 \[u210F]\[hbar]\(-h PLANCK CONSTANT OVER TWO PI
 \[u2118]\(wp SCRIPT CAPITAL P
 \[u2195]\(va UP DOWN ARROW
 \[u21D5]\(vA UP DOWN DOUBLE ARROW
-\[u2207]\(gr NABLA
-\[u2209]\(nm NOT AN ELEMENT OF
 \[u220F]\[product] N-ARY PRODUCT
 \[u2210]\[coproduct] N-ARY COPRODUCT
 \[u2211]\[sum] N-ARY SUMMATION

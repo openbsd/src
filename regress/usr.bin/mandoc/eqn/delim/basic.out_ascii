@@ -4,6 +4,7 @@ NNAAMMEE
      ddeelliimm--bbaassiicc - inline eqn delimiters
 
 DDEESSCCRRIIPPTTIIOONN
-     initial text a inline B y inline <delta> e inline ,C final text
+     initial text <alpha> inline <beta> <gamma> inline <delta> <epsilon>
+     inline <zeta> final text
 
 OpenBSD                          July 4, 2017                          OpenBSD
