@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.128 2016/03/15 18:04:57 jca Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.129 2017/08/23 05:13:01 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -877,7 +877,7 @@ atascsi_disk_vpd_ata(struct scsi_xfer *xs)
 	    MIN(strlen("atascsi"), sizeof(pg.sat_product)));
 	memset(pg.sat_revision, ' ', sizeof(pg.sat_revision));
 	memcpy(pg.sat_revision, osrelease,
-	    MIN(strlen(osrelease), sizeof(pg.sat_product)));
+	    MIN(strlen(osrelease), sizeof(pg.sat_revision)));
 
 	/* XXX device signature */
 
