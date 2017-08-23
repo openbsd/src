@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.14 2017/08/23 10:45:35 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.15 2017/08/23 10:46:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -220,6 +220,7 @@ void			 engine_dispatch_main(int, short, void *);
 #ifndef	SMALL
 void			 send_interface_info(struct slaacd_iface *, pid_t);
 void			 engine_showinfo_ctl(struct imsg *, uint32_t);
+void			 debug_log_ra(struct imsg_ra *);
 #endif	/* SMALL */
 struct slaacd_iface	*get_slaacd_iface_by_id(uint32_t);
 void			 remove_slaacd_iface(uint32_t);
@@ -238,7 +239,6 @@ void			 gen_dfr_proposal(struct slaacd_iface *, struct
 void			 configure_dfr(struct dfr_proposal *);
 void			 free_dfr_proposal(struct dfr_proposal *);
 void			 withdraw_dfr(struct dfr_proposal *);
-void			 debug_log_ra(struct imsg_ra *);
 char			*parse_dnssl(char *, int);
 void			 update_iface_ra(struct slaacd_iface *, struct radv *);
 void			 send_proposal(struct imsg_proposal *);
@@ -1228,6 +1228,7 @@ in6_prefixlen2mask(struct in6_addr *maskp, int len)
 		maskp->s6_addr[bytelen] = maskarray[bitlen - 1];
 }
 
+#ifndef	SMALL
 void
 debug_log_ra(struct imsg_ra *ra)
 {
@@ -1420,6 +1421,7 @@ debug_log_ra(struct imsg_ra *ra)
 		p += nd_opt_hdr->nd_opt_len * 8 - 2;
 	}
 }
+#endif	/* SMALL */
 
 char*
 parse_dnssl(char* data, int datalen)
