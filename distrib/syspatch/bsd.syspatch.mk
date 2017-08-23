@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.17 2017/08/21 08:46:33 ajacoutot Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.18 2017/08/23 13:13:37 ajacoutot Exp $
 #
 # Copyright (c) 2016-2017 Robert Nagy <robert@openbsd.org>
 #
@@ -49,6 +49,7 @@ PATCH_ARGS=	-d ${SRCDIR} -z .orig --forward --quiet -E ${PATCH_STRIP}
 # miscellaneous variables
 SYSPATCH_DIR=	${FAKE}/var/syspatch/${SYSPATCH_SHRT}
 FAKE=		${FAKEROOT}/syspatch/${SYSPATCH_SHRT}
+KERNEL=		$$(sysctl -n kern.osversion | cut -d '\#' -f 1)
 SUBDIR?=
 
 _PATCH_COOKIE=	${ERRATA}/.patch_done
@@ -175,6 +176,9 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE} ${_FAKE_COOKIE}
 		exit 1; }; \
 	fi; exit 0
 .  endfor
+# install newly built kernel on the build machine
+	@cd ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/${KERNEL} && \
+		make install
 .endif
 	@su ${BUILDUSER} -c 'touch $@'
 .endif
