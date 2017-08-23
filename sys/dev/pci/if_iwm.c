@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.211 2017/08/13 18:08:03 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.212 2017/08/23 13:05:12 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5643,7 +5643,7 @@ iwm_run(struct iwm_softc *sc)
 
 	err = iwm_power_update_device(sc);
 	if (err) {
-		printf("%s: could send power command (error %d)\n",
+		printf("%s: could not send power command (error %d)\n",
 		    DEVNAME(sc), err);
 		return err;
 	}
@@ -6313,7 +6313,7 @@ iwm_init_hw(struct iwm_softc *sc)
 
 	err = iwm_power_update_device(sc);
 	if (err) {
-		printf("%s: could send power command (error %d)\n",
+		printf("%s: could not send power command (error %d)\n",
 		    DEVNAME(sc), err);
 		goto err;
 	}
