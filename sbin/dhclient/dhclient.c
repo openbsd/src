@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.494 2017/08/14 22:12:59 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.495 2017/08/23 08:50:56 jca Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2546,7 +2546,7 @@ take_charge(struct interface_info *ifi, int routefd)
 			fatal("routefd poll");
 		}
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
-			fatalx("routed poll error");
+			fatalx("routefd poll error");
 		if (nfds == 0 || (fds[0].revents & POLLIN) == 0)
 			continue;
 		routehandler(ifi, routefd);
