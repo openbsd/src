@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.6 2017/05/02 15:13:20 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.7 2017/08/23 12:58:00 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -37,6 +37,7 @@ int mainbus_match_status(struct device *, void *, void *);
 void mainbus_attach_cpus(struct device *, cfmatch_t);
 int mainbus_match_primary(struct device *, void *, void *);
 int mainbus_match_secondary(struct device *, void *, void *);
+void mainbus_attach_framebuffer(struct device *);
 
 struct mainbus_softc {
 	struct device		 sc_dev;
@@ -135,6 +136,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	for (node = OF_child(sc->sc_node); node != 0; node = OF_peer(node))
 		mainbus_attach_node(self, node, NULL);
 	
+	mainbus_attach_framebuffer(self);
+
 	/* Attach secondary CPUs. */
 	mainbus_attach_cpus(self, mainbus_match_secondary);
 }
@@ -267,4 +270,16 @@ mainbus_match_secondary(struct device *parent, void *match, void *aux)
 		return 0;
 
 	return (*cf->cf_attach->ca_match)(parent, match, aux);
+}
+
+void
+mainbus_attach_framebuffer(struct device *self)
+{
+	int node = OF_finddevice("/chosen");
+
+	if (node == 0)
+		return;
+
+	for (node = OF_child(node); node != 0; node = OF_peer(node))
+		mainbus_attach_node(self, node, NULL);
 }
