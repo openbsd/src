@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.h,v 1.2 2017/05/07 11:07:48 kettenis Exp $	*/
+/*	$OpenBSD: fdt.h,v 1.3 2017/08/23 18:03:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -57,8 +57,11 @@ void	*fdt_child_node(void *);
 char	*fdt_node_name(void *);
 void	*fdt_find_node(char *);
 int	 fdt_node_property(void *, char *, char **);
+int	 fdt_node_property_int(void *, char *, int *);
+int	 fdt_node_property_ints(void *, char *, int *, int);
 int	 fdt_node_set_property(void *, char *, void *, int);
 int	 fdt_node_add_property(void *, char *, void *, int);
+int	 fdt_node_add_node(void *, char *, void **);
 void	*fdt_parent_node(void *);
 int	 fdt_node_is_compatible(void *, const char *);
 #ifdef DEBUG
