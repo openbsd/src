@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.10 2017/08/21 21:02:12 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.11 2017/08/23 21:34:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -40,6 +40,10 @@
 #define RK3399_CRU_CPLL_CON(i)		(0x0060 + (i) * 4)
 #define RK3399_CRU_GPLL_CON(i)		(0x0080 + (i) * 4)
 #define RK3399_CRU_NPLL_CON(i)		(0x00a0 + (i) * 4)
+#define  RK3399_CRU_PLL_PLL_WORK_MODE_MASK	(0x3 << 8)
+#define  RK3399_CRU_PLL_PLL_WORK_MODE_SLOW	(0x0 << 8)
+#define  RK3399_CRU_PLL_PLL_WORK_MODE_NORMAL	(0x1 << 8)
+#define  RK3399_CRU_PLL_PLL_WORK_MODE_DEEP_SLOW	(0x2 << 8)
 #define RK3399_CRU_CLKSEL_CON(i)	(0x0100 + (i) * 4)
 #define RK3399_CRU_CLKGATE_CON(i)	(0x0300 + (i) * 4)
 #define RK3399_CRU_SOFTRST_CON(i)	(0x0400 + (i) * 4)
@@ -83,6 +87,7 @@ int	rk3288_set_frequency(void *, uint32_t *, uint32_t);
 void	rk3288_enable(void *, uint32_t *, int);
 void	rk3288_reset(void *, uint32_t *, int);
 
+void	rk3399_init(struct rkclock_softc *);
 uint32_t rk3399_get_frequency(void *, uint32_t *);
 int	rk3399_set_frequency(void *, uint32_t *, uint32_t);
 void	rk3399_enable(void *, uint32_t *, int);
@@ -96,27 +101,26 @@ void	rk3399_pmu_reset(void *, uint32_t *, int);
 
 struct rkclock_compat {
 	const char *compat;
+	void	(*init)(struct rkclock_softc *);
 	void	(*enable)(void *, uint32_t *, int);
 	uint32_t (*get_frequency)(void *, uint32_t *);
 	int	(*set_frequency)(void *, uint32_t *, uint32_t);
 	void	(*reset)(void *, uint32_t *, int);
-	int	(*cpuspeed)(int *);
 };
 
 struct rkclock_compat rkclock_compat[] = {
 	{
-		"rockchip,rk3288-cru",
+		"rockchip,rk3288-cru", NULL,
 		rk3288_enable, rk3288_get_frequency,
 		rk3288_set_frequency, rk3288_reset
 	},
 	{
-		"rockchip,rk3399-cru",
+		"rockchip,rk3399-cru", rk3399_init,
 		rk3399_enable, rk3399_get_frequency,
 		rk3399_set_frequency, rk3399_reset,
-		rk3399_cpuspeed
 	},
 	{
-		"rockchip,rk3399-pmucru",
+		"rockchip,rk3399-pmucru", NULL,
 		rk3399_pmu_enable, rk3399_pmu_get_frequency,
 		rk3399_pmu_set_frequency, rk3399_pmu_reset
 	}
@@ -160,26 +164,24 @@ rkclock_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < nitems(rkclock_compat); i++) {
 		if (OF_is_compatible(faa->fa_node, rkclock_compat[i].compat)) {
-			sc->sc_cd.cd_enable = rkclock_compat[i].enable;
-			sc->sc_cd.cd_get_frequency =
-			    rkclock_compat[i].get_frequency;
-			sc->sc_cd.cd_set_frequency =
-			    rkclock_compat[i].set_frequency;
-			sc->sc_rd.rd_reset = rkclock_compat[i].reset;
-			if (rkclock_compat[i].cpuspeed) {
-				rkclock_cpuspeed_sc = sc;
-				cpu_cpuspeed = rkclock_compat[i].cpuspeed;
-			}
 			break;
 		}
 	}
+	KASSERT(i < nitems(rkclock_compat));
+
+	if (rkclock_compat[i].init)
+		rkclock_compat[i].init(sc);
 
 	sc->sc_cd.cd_node = faa->fa_node;
 	sc->sc_cd.cd_cookie = sc;
+	sc->sc_cd.cd_enable = rkclock_compat[i].enable;
+	sc->sc_cd.cd_get_frequency = rkclock_compat[i].get_frequency;
+	sc->sc_cd.cd_set_frequency = rkclock_compat[i].set_frequency;
 	clock_register(&sc->sc_cd);
 
 	sc->sc_rd.rd_node = faa->fa_node;
 	sc->sc_rd.rd_cookie = sc;
+	sc->sc_rd.rd_reset = rkclock_compat[i].reset;
 	reset_register(&sc->sc_rd);
 }
 
@@ -324,6 +326,20 @@ rk3288_reset(void *cookie, uint32_t *cells, int on)
  * Rockchip RK3399 
  */
 
+void
+rk3399_init(struct rkclock_softc *sc)
+{
+	rkclock_cpuspeed_sc = sc;
+	cpu_cpuspeed = rk3399_cpuspeed;
+
+#ifdef MULTIPROCESSOR
+	/* Switch PLL of the "big" cluster into normal mode. */
+	HWRITE4(sc, RK3399_CRU_BPLL_CON(3),
+	    RK3399_CRU_PLL_PLL_WORK_MODE_MASK << 16 |
+	    RK3399_CRU_PLL_PLL_WORK_MODE_NORMAL);
+#endif
+}
+
 uint32_t
 rk3399_get_pll(struct rkclock_softc *sc, bus_size_t base)
 {
@@ -332,10 +348,10 @@ rk3399_get_pll(struct rkclock_softc *sc, bus_size_t base)
 	uint32_t reg;
 
 	reg = HREAD4(sc, base + 0x000c);
-	pll_work_mode = (reg >> 8) & 0x3;
-	if (pll_work_mode == 0)
+	pll_work_mode = reg & RK3399_CRU_PLL_PLL_WORK_MODE_MASK;
+	if (pll_work_mode == RK3399_CRU_PLL_PLL_WORK_MODE_SLOW)
 		return 24000000;
-	if (pll_work_mode == 2)
+	if (pll_work_mode == RK3399_CRU_PLL_PLL_WORK_MODE_DEEP_SLOW)
 		return 32768;
 
 	reg = HREAD4(sc, base + 0x0000);
