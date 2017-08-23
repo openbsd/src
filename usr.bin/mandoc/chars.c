@@ -1,4 +1,4 @@
-/*	$OpenBSD: chars.c,v 1.42 2017/08/23 10:50:11 schwarze Exp $ */
+/*	$OpenBSD: chars.c,v 1.43 2017/08/23 13:01:22 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -213,9 +213,9 @@ static struct ln lines[] = {
 	{ "mo",			"<element\037of>", 0x2208 },
 	{ "nm",			"<not\037element\037of>", 0x2209 },
 	{ "sb",			"<proper\037subset>", 0x2282 },
-	{ "nb",			"(!=",		0x2284	},
+	{ "nb",			"<not\037subset>", 0x2284 },
 	{ "sp",			"<proper\037superset>", 0x2283 },
-	{ "nc",			"!=)",		0x2285	},
+	{ "nc",			"<not\037superset>", 0x2285 },
 	{ "ib",			"<subset\037or\037equal>", 0x2286 },
 	{ "ip",			"<superset\037or\037equal>", 0x2287 },
 	{ "ca",			"<intersection>", 0x2229 },
@@ -223,13 +223,13 @@ static struct ln lines[] = {
 	{ "/_",			"<angle>",	0x2220	},
 	{ "pp",			"<perpendicular>", 0x22a5 },
 	{ "is",			"<integral>",	0x222b	},
-	{ "integral",		"'\b,\bI",	0x222b	},
-	{ "sum",		"E",		0x2211	},
-	{ "product",		"TT",		0x220f	},
-	{ "coproduct",		"U",		0x2210	},
+	{ "integral",		"<integral>",	0x222b	},
+	{ "sum",		"<sum>",	0x2211	},
+	{ "product",		"<product>",	0x220f	},
+	{ "coproduct",		"<coproduct>",	0x2210	},
 	{ "gr",			"<nabla>",	0x2207	},
 	{ "sr",			"<sqrt>",	0x221a	},
-	{ "sqrt",		"\\/",		0x221a	},
+	{ "sqrt",		"<sqrt>",	0x221a	},
 	{ "lc",			"|~",		0x2308	},
 	{ "rc",			"~|",		0x2309	},
 	{ "lf",			"|_",		0x230a	},
