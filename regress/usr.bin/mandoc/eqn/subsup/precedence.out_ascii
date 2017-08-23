@@ -4,6 +4,6 @@ NNAAMMEE
      ssuubbssuupp--pprreecceeddeennccee - precedence of subscripts and superscripts
 
 DDEESSCCRRIIPPTTIIOONN
-     initial text (_x^)_(1_)^2- + (_e~)^((_x^)__s<->) ; I_II^_I + I^(II__I) final text
+     initial text (_x^)_(1_)^2- + (_e~)^((_x^)__s<->); I_II^_I + I^(II__I) final text
 
 OpenBSD                          July 6, 2017                          OpenBSD
