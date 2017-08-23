@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.9 2017/08/21 14:44:26 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.10 2017/08/23 10:48:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -65,6 +65,7 @@ const char* imsg_type_name[] = {
 	"IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSALS",
 	"IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSAL",
 	"IMSG_CTL_END",
+	"IMSG_UPDATE_ADDRESS",
 	"IMSG_CTL_SEND_SOLICITATION",
 	"IMSG_SOCKET_IPC",
 	"IMSG_STARTUP",
@@ -374,6 +375,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 	ssize_t			 n;
 	int			 shut = 0;
 #ifndef	SMALL
+	struct imsg_addrinfo	 imsg_addrinfo;
 	int			 verbose;
 #endif	/* SMALL */
 
@@ -404,6 +406,16 @@ main_dispatch_frontend(int fd, short event, void *bula)
 			/* Already checked by frontend. */
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
+			break;
+		case IMSG_UPDATE_ADDRESS:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(imsg_addrinfo))
+				fatal("%s: IMSG_UPDATE_ADDRESS wrong length: "
+				    "%d", __func__, imsg.hdr.len);
+			memcpy(&imsg_addrinfo, imsg.data,
+			    sizeof(imsg_addrinfo));
+			main_imsg_compose_engine(IMSG_UPDATE_ADDRESS, 0,
+			    &imsg_addrinfo, sizeof(imsg_addrinfo));
 			break;
 #endif	/* SMALL */
 		case IMSG_UPDATE_IF:

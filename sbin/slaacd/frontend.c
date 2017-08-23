@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.7 2017/08/21 14:47:21 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.8 2017/08/23 10:48:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -34,6 +34,8 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netinet6/nd6.h>
+#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
@@ -69,6 +71,9 @@ int		 get_flags(char *);
 int		 get_xflags(char *);
 void		 get_lladdr(char *, struct ether_addr *, struct sockaddr_in6 *);
 void		 send_solicitation(uint32_t);
+#ifndef	SMALL
+void		 update_autoconf_addresses(uint32_t, char*);
+#endif	/* SMALL */
 
 struct imsgev			*iev_main;
 struct imsgev			*iev_engine;
@@ -513,6 +518,102 @@ update_iface(uint32_t if_index, char* if_name)
 	    sizeof(imsg_ifinfo));
 }
 
+#ifndef	SMALL
+void
+update_autoconf_addresses(uint32_t if_index, char* if_name)
+{
+	struct in6_ifreq	 ifr6;
+	struct imsg_addrinfo	 imsg_addrinfo;
+	struct ifaddrs		*ifap, *ifa;
+	struct in6_addrlifetime *lifetime;
+	struct sockaddr_in6	*sin6;
+	time_t			 t;
+	int			 xflags;
+
+	xflags = get_xflags(if_name);
+
+	if (!(xflags & IFXF_AUTOCONF6))
+		return;
+
+	memset(&imsg_addrinfo, 0, sizeof(imsg_addrinfo));
+	imsg_addrinfo.if_index = if_index;
+	get_lladdr(if_name, &imsg_addrinfo.hw_address,
+	    &imsg_addrinfo.ll_address);
+
+	if (getifaddrs(&ifap) != 0)
+		fatal("getifaddrs");
+
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		if (strcmp(if_name, ifa->ifa_name) != 0)
+			continue;
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+		if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+			continue;
+
+		log_debug("%s: IP: %s", __func__, sin6_to_str(sin6));
+		imsg_addrinfo.addr = *sin6;
+
+		memset(&ifr6, 0, sizeof(ifr6));
+		(void) strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
+		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
+
+		if (ioctl(ioctlsock, SIOCGIFAFLAG_IN6, (caddr_t)&ifr6) < 0) {
+			log_warn("SIOCGIFAFLAG_IN6");
+			continue;
+		}
+
+		if (!(ifr6.ifr_ifru.ifru_flags6 & (IN6_IFF_AUTOCONF |
+		    IN6_IFF_PRIVACY)))
+			continue;
+
+		imsg_addrinfo.privacy = ifr6.ifr_ifru.ifru_flags6 &
+		    IN6_IFF_PRIVACY ? 1 : 0;
+
+		memset(&ifr6, 0, sizeof(ifr6));
+		(void) strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
+		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
+		
+		if (ioctl(ioctlsock, SIOCGIFNETMASK_IN6, (caddr_t)&ifr6) < 0) {
+			log_warn("SIOCGIFNETMASK_IN6");
+			continue;
+		}
+
+		imsg_addrinfo.mask = ((struct sockaddr_in6 *)&ifr6.ifr_addr)
+		    ->sin6_addr;
+
+		memset(&ifr6, 0, sizeof(ifr6));
+		(void) strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
+		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
+		lifetime = &ifr6.ifr_ifru.ifru_lifetime;
+
+		if (ioctl(ioctlsock, SIOCGIFALIFETIME_IN6, (caddr_t)&ifr6) <
+		    0) {
+			log_warn("SIOCGIFALIFETIME_IN6");
+			continue;
+		}
+
+		imsg_addrinfo.vltime = ND6_INFINITE_LIFETIME;
+		imsg_addrinfo.pltime = ND6_INFINITE_LIFETIME;
+		t = time(NULL);
+
+		if (lifetime->ia6t_preferred)
+			imsg_addrinfo.pltime = lifetime->ia6t_preferred < t ? 0
+			    : lifetime->ia6t_preferred - t;
+
+		if (lifetime->ia6t_expire)
+			imsg_addrinfo.vltime = lifetime->ia6t_expire < t ? 0 :
+			    lifetime->ia6t_expire - t;
+
+		frontend_imsg_compose_main(IMSG_UPDATE_ADDRESS, 0,
+		    &imsg_addrinfo, sizeof(imsg_addrinfo));
+
+	}
+	freeifaddrs(ifap);
+}
+#endif	/* SMALL */
+
 void
 frontend_startup(void)
 {
@@ -525,8 +626,12 @@ frontend_startup(void)
 		fatalx("if_nameindex");
 
 	for(ifnidx = ifnidxp; ifnidx->if_index !=0 && ifnidx->if_name != NULL;
-	    ifnidx++)
+	    ifnidx++) {
 		update_iface(ifnidx->if_index, ifnidx->if_name);
+#ifndef	SMALL
+		update_autoconf_addresses(ifnidx->if_index, ifnidx->if_name);
+#endif	/* SMALL */
+	}
 
 	if_freenameindex(ifnidxp);
 }
@@ -596,8 +701,13 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 				if_index = ifm->ifm_index;
 				frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0,
 				    0, &if_index, sizeof(if_index));
-			} else
+			} else {
 				update_iface(ifm->ifm_index, if_name);
+#ifndef	SMALL
+				update_autoconf_addresses(ifm->ifm_index,
+				    if_name);
+#endif	/* SMALL */
+			}
 		}
 		break;
 	case RTM_NEWADDR:

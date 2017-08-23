@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.15 2017/08/23 10:46:40 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.16 2017/08/23 10:48:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -221,6 +221,7 @@ void			 engine_dispatch_main(int, short, void *);
 void			 send_interface_info(struct slaacd_iface *, pid_t);
 void			 engine_showinfo_ctl(struct imsg *, uint32_t);
 void			 debug_log_ra(struct imsg_ra *);
+int			 in6_mask2prefixlen(struct in6_addr *);
 #endif	/* SMALL */
 struct slaacd_iface	*get_slaacd_iface_by_id(uint32_t);
 void			 remove_slaacd_iface(uint32_t);
@@ -541,6 +542,11 @@ engine_dispatch_main(int fd, short event, void *bula)
 	struct slaacd_iface	*iface;
 	ssize_t			 n;
 	int			 shut = 0;
+#ifndef	SMALL
+	struct imsg_addrinfo	 imsg_addrinfo;
+	struct address_proposal	*addr_proposal = NULL;
+	size_t			 i;
+#endif	/* SMALL */
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -661,6 +667,67 @@ engine_dispatch_main(int fd, short event, void *bula)
 				    sizeof(struct sockaddr_in6));
 			}
 			break;
+#ifndef	SMALL
+		case IMSG_UPDATE_ADDRESS:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(imsg_addrinfo))
+				fatal("%s: IMSG_UPDATE_ADDRESS wrong length: "
+				    "%d", __func__, imsg.hdr.len);
+
+			memcpy(&imsg_addrinfo, imsg.data,
+			    sizeof(imsg_addrinfo));
+
+			iface = get_slaacd_iface_by_id(imsg_addrinfo.if_index);
+			if (iface == NULL)
+				break;
+
+			log_debug("%s: IMSG_UPDATE_ADDRESS", __func__);
+
+			addr_proposal = find_address_proposal_by_addr(iface,
+			    &imsg_addrinfo.addr);
+			if (addr_proposal)
+				break;
+
+			if ((addr_proposal = calloc(1,
+			    sizeof(*addr_proposal))) == NULL)
+				fatal("calloc");
+			evtimer_set(&addr_proposal->timer,
+			    address_proposal_timeout, addr_proposal);
+			addr_proposal->id = ++proposal_id;
+			addr_proposal->state = PROPOSAL_CONFIGURED;
+			addr_proposal->vltime = imsg_addrinfo.vltime;
+			addr_proposal->pltime = imsg_addrinfo.pltime;
+			addr_proposal->timeout_count = 0;
+
+			timeout_from_lifetime(addr_proposal);
+
+			if (clock_gettime(CLOCK_REALTIME, &addr_proposal->when))
+				fatal("clock_gettime");
+			if (clock_gettime(CLOCK_MONOTONIC,
+			    &addr_proposal->uptime))
+				fatal("clock_gettime");
+			addr_proposal->if_index = imsg_addrinfo.if_index;
+			memcpy(&addr_proposal->hw_address,
+			    &imsg_addrinfo.hw_address,
+			    sizeof(addr_proposal->hw_address));
+			addr_proposal->addr = imsg_addrinfo.addr;
+			addr_proposal->mask = imsg_addrinfo.mask;
+			addr_proposal->prefix = addr_proposal->addr.sin6_addr;
+
+			for (i = 0; i < sizeof(addr_proposal->prefix.s6_addr) /
+			    sizeof(addr_proposal->prefix.s6_addr[0]); i++)
+				addr_proposal->prefix.s6_addr[i] &=
+				    addr_proposal->mask.s6_addr[i];
+
+			addr_proposal->privacy = imsg_addrinfo.privacy;
+			addr_proposal->prefix_len =
+			    in6_mask2prefixlen(&addr_proposal->mask);
+
+			LIST_INSERT_HEAD(&iface->addr_proposals,
+			    addr_proposal, entries);
+
+			break;
+#endif	/* SMALL */
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
@@ -1229,6 +1296,31 @@ in6_prefixlen2mask(struct in6_addr *maskp, int len)
 }
 
 #ifndef	SMALL
+/* from kame via ifconfig, where it's called prefix() */
+int
+in6_mask2prefixlen(struct in6_addr *in6)
+{
+	u_char *nam = (u_char *)in6;
+	int byte, bit, plen = 0, size = sizeof(struct in6_addr);
+
+	for (byte = 0; byte < size; byte++, plen += 8)
+		if (nam[byte] != 0xff)
+			break;
+	if (byte == size)
+		return (plen);
+	for (bit = 7; bit != 0; bit--, plen++)
+		if (!(nam[byte] & (1 << bit)))
+			break;
+	for (; bit != 0; bit--)
+		if (nam[byte] & (1 << bit))
+			return (0);
+	byte++;
+	for (; byte < size; byte++)
+		if (nam[byte])
+			return (0);
+	return (plen);
+}
+
 void
 debug_log_ra(struct imsg_ra *ra)
 {

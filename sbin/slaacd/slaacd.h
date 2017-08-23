@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.8 2017/08/21 14:44:26 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.9 2017/08/23 10:48:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -54,6 +54,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSALS,
 	IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSAL,
 	IMSG_CTL_END,
+	IMSG_UPDATE_ADDRESS,
 #endif	/* SMALL */
 	IMSG_CTL_SEND_SOLICITATION,
 	IMSG_SOCKET_IPC,
@@ -150,6 +151,17 @@ struct ctl_engine_info_dfr_proposal {
 	struct sockaddr_in6	 addr;
 	uint32_t		 router_lifetime;
 	char			 rpref[sizeof("MEDIUM")];
+};
+
+struct imsg_addrinfo {
+	uint32_t		if_index;
+	struct ether_addr	hw_address;
+	struct sockaddr_in6	ll_address;
+	struct sockaddr_in6	addr;
+	struct in6_addr		mask;
+	int			privacy;
+	uint32_t		vltime;
+	uint32_t		pltime;
 };
 #endif	/* SMALL */
 
