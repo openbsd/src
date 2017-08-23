@@ -1,4 +1,4 @@
-/* $OpenBSD: alerts.c,v 1.25 2017/08/23 09:14:21 nicm Exp $ */
+/* $OpenBSD: alerts.c,v 1.26 2017/08/23 09:16:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -195,8 +195,10 @@ alerts_check_bell(struct window *w)
 		wl->session->flags &= ~SESSION_ALERTED;
 
 	TAILQ_FOREACH(wl, &w->winlinks, wentry) {
-		if (wl->flags & WINLINK_BELL)
-			continue;
+		/*
+		 * Bells are allowed even if there is an existing bell (so do
+		 * not check WINLINK_BELL).
+		 */
 		s = wl->session;
 		if (s->curw != wl)
 			wl->flags |= WINLINK_BELL;
