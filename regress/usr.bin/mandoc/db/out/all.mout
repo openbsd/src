@@ -103,6 +103,7 @@ man1/xr.1
 >>> empty
 
 >>> badname0
+/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/empty.1
 
 >>> badname
 /usr/obj/regress/usr.bin/mandoc/db/run/man/man1/empty.1
@@ -110,6 +111,7 @@ man1/xr.1
 /usr/obj/regress/usr.bin/mandoc/db/run/man/man1/third.1
 
 >>> badsect0
+/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/empty.1
 
 >>> badsect
 /usr/obj/regress/usr.bin/mandoc/db/run/man/man1/empty.1
@@ -130,9 +132,8 @@ second, empty(1) - (NULL)
 third, empty(1) - no title
 
 >>> badfile0
-/usr/obj/regress/usr.bin/mandoc/db/run/man/(NULL)
+/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/empty.1
 
 >>> badfile
 /usr/obj/regress/usr.bin/mandoc/db/run/man/man1/empty.1
-/usr/obj/regress/usr.bin/mandoc/db/run/man/(NULL)
 /usr/obj/regress/usr.bin/mandoc/db/run/man/man1/third.1

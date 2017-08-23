@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2017/05/17 22:46:44 schwarze Exp $
+# $OpenBSD: Makefile,v 1.7 2017/08/23 12:25:02 schwarze Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 #
@@ -78,7 +78,8 @@ diff.merr: all.merr
 cleandir: cleandir_local
 
 cleandir_local:
-	rm -rf man
+	rm -rf man onepage.dir twopages.dir threepages.dir \
+		threemacros.dir threearch.dir
 
 
 # === RUNNING DBM_DUMP =================================================
@@ -115,8 +116,9 @@ onepage.db onepage.mout: ${.CURDIR}/../man/empty.1
 	@cp ${.CURDIR}/../man/empty.1 man/man1/
 	@makewhatis man
 	@man -kM man title > onepage.mout
-	@mv man/mandoc.db onepage.db
-	@rm -rf man
+	@cp man/mandoc.db onepage.db
+	@rm -rf onepage.dir
+	@mv man onepage.dir
 
 twopages.db twopages.mout: ${.CURDIR}/../man/empty.1
 	@rm -rf man
@@ -127,8 +129,9 @@ twopages.db twopages.mout: ${.CURDIR}/../man/empty.1
 	@(echo "> second"; man -wM man second | sed 's#.*/man/##'; \
 	  echo "> empty"; man -wM man empty | sed 's#.*/man/##') \
 	  > twopages.mout
-	@mv man/mandoc.db twopages.db
-	@rm -rf man
+	@cp man/mandoc.db twopages.db
+	@rm -rf twopages.dir
+	@mv man twopages.dir
 
 threepages.db threepages.mout: ${.CURDIR}/../man/empty.1
 	@rm -rf man
@@ -141,8 +144,9 @@ threepages.db threepages.mout: ${.CURDIR}/../man/empty.1
 	  echo "> third"; man -wM man third | sed 's#.*/man/##'; \
 	  echo "> empty"; man -wM man empty | sed 's#.*/man/##') \
 	  > threepages.mout
-	@mv man/mandoc.db threepages.db
-	@rm -rf man
+	@cp man/mandoc.db threepages.db
+	@rm -rf threepages.dir
+	@mv man threepages.dir
 
 threemacros.db threemacros.mout: ${.CURDIR}/../man/empty.1
 	@rm -rf man
@@ -153,8 +157,9 @@ threemacros.db threemacros.mout: ${.CURDIR}/../man/empty.1
 	@makewhatis man
 	@(echo "> Xr=one"; man -kwM man Xr=one | sed 's#.*/man/##'; \
 	  echo "> Xr~^t"; man -kM man -O Xr Xr~^t;) > threemacros.mout
-	@mv man/mandoc.db threemacros.db
-	@rm -rf man
+	@cp man/mandoc.db threemacros.db
+	@rm -rf threemacros.dir
+	@mv man threemacros.dir
 
 sortpages.db sortpages.mout: makeinodes ${.CURDIR}/../man/empty.1
 	@rm -rf man
@@ -249,8 +254,9 @@ threearch.db threearch.mout: ${.CURDIR}/../man/empty.1
 	  echo "> i386"; man -wM man -S i386 empty | sed 's#.*/man/##'; \
 	  echo "> sgi"; man -wM man -S sgi empty | sed 's#.*/man/##') \
 	  > threearch.mout
-	@mv man/mandoc.db threearch.db
-	@rm -rf man
+	@cp man/mandoc.db threearch.db
+	@rm -rf threearch.dir
+	@mv man threearch.dir
 
 fn.db fn.mout: ${.CURDIR}/../man/fn.3
 	@rm -rf man
@@ -316,72 +322,70 @@ xr.db xr.mout: ${.CURDIR}/../man/xr.1
 
 badname0.mout badname0.merr: badname0.db
 	@rm -rf man
-	@mkdir man
+	@cp -pR onepage.dir man
 	@cp badname0.db man/mandoc.db
-	@if man -wM man empty > badname0.mout 2> badname0.merr; \
-		then false; else test $$? -eq 5; fi
+	@man -wM man empty > badname0.mout 2> badname0.merr
 	@rm -rf man
 
 badname.mout badname.merr: badname.db
 	@rm -rf man
-	@mkdir man
+	@cp -pR threepages.dir man
 	@cp badname.db man/mandoc.db
 	@man -wM man empty > badname.mout 2> badname.merr
 	@rm -rf man
 
 badsect0.mout badsect0.merr: badsect0.db
 	@rm -rf man
-	@mkdir man
+	@cp -pR onepage.dir man
 	@cp badsect0.db man/mandoc.db
-	@if man -wM man -s 1 empty > badsect0.mout 2> badsect0.merr; \
-		then false; else test $$? -eq 5; fi
+	@man -wM man -s 1 empty > badsect0.mout 2> badsect0.merr
 	@rm -rf man
 
 badsect.mout badsect.merr: badsect.db
 	@rm -rf man
-	@mkdir man
+	@cp -pR threepages.dir man
 	@cp badsect.db man/mandoc.db
 	@man -wM man -s 1 empty > badsect.mout 2> badsect.merr
 	@rm -rf man
 
 badarch0.mout badarch0.merr: badarch0.db
 	@rm -rf man
-	@mkdir man
+	@cp -pR threearch.dir man
 	@cp badarch0.db man/mandoc.db
 	@man -wM man -S amd64 empty > badarch0.mout 2> badarch0.merr
 	@rm -rf man
 
 badarch.mout badarch.merr: badarch.db
 	@rm -rf man
-	@mkdir man
+	@cp -pR threearch.dir man
 	@cp badarch.db man/mandoc.db
 	@man -wM man -S i386 empty > badarch.mout 2> badarch.merr
 	@rm -rf man
 
 baddesc0.mout baddesc0.merr: baddesc0.db
 	@rm -rf man
-	@mkdir man
+	@cp -pR onepage.dir man
 	@cp baddesc0.db man/mandoc.db
 	@man -kM man empty > baddesc0.mout 2> baddesc0.merr
 	@rm -rf man
 
 baddesc.mout baddesc0.merr: baddesc.db
 	@rm -rf man
-	@mkdir man
+	@cp -pR threepages.dir man
 	@cp baddesc.db man/mandoc.db
 	@man -kM man empty > baddesc.mout 2> baddesc.merr
 	@rm -rf man
 
 badfile0.mout badfile0.merr: badfile0.db
 	@rm -rf man
-	@mkdir man
+	@cp -pR onepage.dir man
 	@cp badfile0.db man/mandoc.db
 	@man -wM man empty > badfile0.mout 2> badfile0.merr
 	@rm -rf man
 
 badfile.mout badfile.merr: badfile.db
 	@rm -rf man
-	@mkdir man
+	@cp -pR threepages.dir man
 	@cp badfile.db man/mandoc.db
 	@man -wM man empty > badfile.mout 2> badfile.merr
 	@rm -rf man
