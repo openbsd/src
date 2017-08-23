@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.126 2017/07/12 14:36:57 mikeb Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.127 2017/08/23 10:10:56 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1265,7 +1265,7 @@ txp_start(struct ifnet *ifp)
 	struct txp_frag_desc *fxd;
 	struct mbuf *m;
 	struct txp_swdesc *sd;
-	u_int32_t firstprod, firstcnt, prod, cnt, i;
+	u_int32_t prod, cnt, i;
 
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
@@ -1280,9 +1280,6 @@ txp_start(struct ifnet *ifp)
 		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
-
-		firstprod = prod;
-		firstcnt = cnt;
 
 		sd = sc->sc_txd + prod;
 		sd->sd_mbuf = m;
@@ -1401,8 +1398,8 @@ txp_start(struct ifnet *ifp)
 
 oactive:
 	ifq_set_oactive(&ifp->if_snd);
-	r->r_prod = firstprod;
-	r->r_cnt = firstcnt;
+	r->r_prod = prod;
+	r->r_cnt = cnt;
 }
 
 /*
