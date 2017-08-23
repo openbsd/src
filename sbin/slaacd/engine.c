@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.17 2017/08/23 14:05:26 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.18 2017/08/23 15:49:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -999,9 +999,10 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 	const char		*hbuf;
 	uint8_t			*p;
 
-#if 0
-	debug_log_ra(ra);
-#endif
+#ifndef	SMALL
+	if (log_getverbose() > 1)
+		debug_log_ra(ra);
+#endif	/* SMALL */
 
 	hbuf = sin6_to_str(&ra->from);
 	if (!IN6_IS_ADDR_LINKLOCAL(&ra->from.sin6_addr)) {

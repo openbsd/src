@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.9 2017/08/23 10:48:01 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.10 2017/08/23 15:49:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -20,9 +20,6 @@
 
 #define	SLAACD_SOCKET		"/dev/slaacd.sock"
 #define SLAACD_USER		"_slaacd"
-
-#define OPT_VERBOSE	0x00000001
-#define OPT_VERBOSE2	0x00000002
 
 /* MAXDNAME from arpa/namesr.h */
 #define SLAACD_MAX_DNSSL	1025
@@ -190,8 +187,6 @@ struct imsg_ra {
 	ssize_t			len;
 	uint8_t			packet[1500];
 };
-
-extern uint32_t	 cmd_opts;
 
 /* slaacd.c */
 int		main_imsg_compose_frontend(int, pid_t, void *, uint16_t);

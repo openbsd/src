@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.10 2017/08/23 10:48:01 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.11 2017/08/23 15:49:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -105,8 +105,6 @@ struct imsgev		*iev_engine;
 pid_t	 frontend_pid;
 pid_t	 engine_pid;
 
-uint32_t cmd_opts;
-
 int	 routesock, ioctl_sock;
 
 char	*csock;
@@ -149,6 +147,7 @@ main(int argc, char *argv[])
 	struct event	 ev_sigint, ev_sigterm, ev_sighup;
 	int		 ch;
 	int		 debug = 0, engine_flag = 0, frontend_flag = 0;
+	int		 verbose = 0;
 	char		*saved_argv0;
 	int		 pipe_main2frontend[2];
 	int		 pipe_main2engine[2];
@@ -177,9 +176,7 @@ main(int argc, char *argv[])
 			csock = optarg;
 			break;
 		case 'v':
-			if (cmd_opts & OPT_VERBOSE)
-				cmd_opts |= OPT_VERBOSE2;
-			cmd_opts |= OPT_VERBOSE;
+			verbose++;
 			break;
 		default:
 			usage();
@@ -192,9 +189,9 @@ main(int argc, char *argv[])
 		usage();
 
 	if (engine_flag)
-		engine(debug, cmd_opts & OPT_VERBOSE);
+		engine(debug, verbose);
 	else if (frontend_flag)
-		frontend(debug, cmd_opts & OPT_VERBOSE, csock);
+		frontend(debug, verbose, csock);
 
 	/* Check for root privileges. */
 	if (geteuid())
@@ -205,7 +202,7 @@ main(int argc, char *argv[])
 		errx(1, "unknown user %s", SLAACD_USER);
 
 	log_init(debug, LOG_DAEMON);
-	log_setverbose(cmd_opts & OPT_VERBOSE);
+	log_setverbose(verbose);
 
 	if (!debug)
 		daemon(1, 0);
@@ -221,9 +218,9 @@ main(int argc, char *argv[])
 
 	/* Start children. */
 	engine_pid = start_child(PROC_ENGINE, saved_argv0, pipe_main2engine[1],
-	    debug, cmd_opts & OPT_VERBOSE, NULL);
+	    debug, verbose, NULL);
 	frontend_pid = start_child(PROC_FRONTEND, saved_argv0,
-	    pipe_main2frontend[1], debug, cmd_opts & OPT_VERBOSE, csock);
+	    pipe_main2frontend[1], debug, verbose, csock);
 
 	slaacd_process = PROC_MAIN;
 
@@ -323,7 +320,7 @@ main_shutdown(void)
 static pid_t
 start_child(int p, char *argv0, int fd, int debug, int verbose, char *sockname)
 {
-	char	*argv[7];
+	char	*argv[8];
 	int	 argc = 0;
 	pid_t	 pid;
 
@@ -354,6 +351,8 @@ start_child(int p, char *argv0, int fd, int debug, int verbose, char *sockname)
 	if (debug)
 		argv[argc++] = "-d";
 	if (verbose)
+		argv[argc++] = "-v";
+	if (verbose > 1)
 		argv[argc++] = "-v";
 	if (sockname) {
 		argv[argc++] = "-s";
