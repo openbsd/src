@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.74 2017/08/16 01:26:46 kevlo Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.75 2017/08/23 09:25:17 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1126,7 +1126,6 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 
 		tap->wr_flags = 0;
 		/* Map HW rate index to 802.11 rate. */
-		tap->wr_flags = 2;
 		if (!(rxdw3 & R92C_RXDW3_HT)) {
 			switch (rate) {
 			/* CCK. */
@@ -1144,6 +1143,8 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 			case 10: tap->wr_rate =  96; break;
 			case 11: tap->wr_rate = 108; break;
 			}
+			if (rate <= 3)
+				tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 		} else if (rate >= 12) {	/* MCS0~15. */
 			/* Bit 7 set means HT MCS instead of rate. */
 			tap->wr_rate = 0x80 | (rate - 12);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.32 2017/08/21 03:02:54 jsg Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.33 2017/08/23 09:25:17 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1236,19 +1236,21 @@ rtwn_update_avgrssi(struct rtwn_softc *sc, int rate, int8_t rssi)
 		pwdb = 100;
 	else
 		pwdb = 100 + rssi;
-	if (rate <= 3) {
-		/* CCK gain is smaller than OFDM/MCS gain. */
-		pwdb += 6;
-		if (pwdb > 100)
-			pwdb = 100;
-		if (pwdb <= 14)
-			pwdb -= 4;
-		else if (pwdb <= 26)
-			pwdb -= 8;
-		else if (pwdb <= 34)
-			pwdb -= 6;
-		else if (pwdb <= 42)
-			pwdb -= 2;
+	if (sc->chip & (RTWN_CHIP_92C | RTWN_CHIP_88C)) {
+		if (rate <= 3) {
+			/* CCK gain is smaller than OFDM/MCS gain. */
+			pwdb += 6;
+			if (pwdb > 100)
+				pwdb = 100;
+			if (pwdb <= 14)
+				pwdb -= 4;
+			else if (pwdb <= 26)
+				pwdb -= 8;
+			else if (pwdb <= 34)
+				pwdb -= 6;
+			else if (pwdb <= 42)
+				pwdb -= 2;
+		}
 	}
 	if (sc->avg_pwdb == -1)	/* Init. */
 		sc->avg_pwdb = pwdb;
@@ -1291,50 +1293,23 @@ rtwn_get_rssi(struct rtwn_softc *sc, int rate, void *physt)
 int8_t
 rtwn_r88e_get_rssi(struct rtwn_softc *sc, int rate, void *physt)
 {
-	struct r92c_rx_phystat *phy;
-	struct r88e_rx_cck *cck;
-	uint8_t cck_agc_rpt, lna_idx, vga_idx;
+	static const int8_t cckoff[] = { 20, 14, 10, -4, -16, -22, -38, -40 };
+	struct r88e_rx_phystat *phy;
+	uint8_t rpt;
 	int8_t rssi;
 
-	rssi = 0;
+	phy = (struct r88e_rx_phystat *)physt;
+
 	if (rate <= 3) {
-		cck = (struct r88e_rx_cck *)physt;
-		cck_agc_rpt = cck->agc_rpt;
-		lna_idx = (cck_agc_rpt & 0xe0) >> 5;
-		vga_idx = cck_agc_rpt & 0x1f; 
-		switch (lna_idx) {
-		case 7:
-			if (vga_idx <= 27)
-				rssi = -100 + 2* (27 - vga_idx);
-			else
-				rssi = -100;
-			break;
-		case 6:
-			rssi = -48 + 2 * (2 - vga_idx);
-			break;
-		case 5:
-			rssi = -42 + 2 * (7 - vga_idx);
-			break;
-		case 4:
-			rssi = -36 + 2 * (7 - vga_idx);
-			break;
-		case 3:
-			rssi = -24 + 2 * (7 - vga_idx);
-			break;
-		case 2:
-			rssi = -12 + 2 * (5 - vga_idx);
-			break;
-		case 1:
-			rssi = 8 - (2 * vga_idx);
-			break;
-		case 0:
-			rssi = 14 - (2 * vga_idx);
-			break;
+		rpt = (phy->agc_rpt >> 5) & 0x7;
+		rssi = (phy->agc_rpt & 0x1f) << 1;
+		if (sc->sc_flags & RTWN_FLAG_CCK_HIPWR) {
+			if (rpt == 2)
+				rssi -= 6;
 		}
-		rssi += 6;
+		rssi = (phy->agc_rpt & 0x1f) > 27 ? -94 : cckoff[rpt] - rssi;
 	} else {	/* OFDM/HT. */
-		phy = (struct r92c_rx_phystat *)physt;
-		rssi = ((le32toh(phy->phydw1) >> 1) & 0x7f) - 110;
+		rssi = ((le32toh(phy->sq_rpt) >> 1) & 0x7f) - 110;
 	}
 	return (rssi);
 }

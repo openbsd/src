@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.13 2017/08/16 01:26:46 kevlo Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.14 2017/08/23 09:25:17 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1157,22 +1157,23 @@ struct r88e_tx_rpt_ccx {
 	uint8_t		rptb7;
 } __packed;
 
-struct r88e_rx_cck {
+struct r88e_rx_phystat {
 	uint8_t		path_agc[2];
-	uint8_t		sig_qual;
+	uint8_t		ch_corr[2];
+	uint8_t		sq_rpt;
 	uint8_t		agc_rpt;
 	uint8_t		rpt_b;
 	uint8_t		reserved1;
 	uint8_t		noise_power;
-	uint8_t		path_cfotail[2];
+	int8_t		path_cfotail[2];
 	uint8_t		pcts_mask[2];
-	uint8_t		stream_rxevm[2];
+	int8_t		stream_rxevm[2];
 	uint8_t		path_rxsnr[2];
 	uint8_t		noise_power_db_lsb;
 	uint8_t		reserved2[3];
 	uint8_t		stream_csi[2];
 	uint8_t		stream_target_csi[2];
-	uint8_t		sig_evm;
+	int8_t		sig_evm;
 	uint8_t		reserved3;
 	uint8_t		reserved4;
 } __packed;
@@ -1222,6 +1223,12 @@ struct r92c_rx_desc_usb {
 #define R92C_RXDW3_RATE_S	0
 #define R92C_RXDW3_HT		0x00000040
 #define R92C_RXDW3_HTC		0x00000400
+#define R88E_RXDW3_RPT_M	0x0000c000
+#define R88E_RXDW3_RPT_S	14
+#define R88E_RXDW3_RPT_RX	0
+#define R88E_RXDW3_RPT_TX1	1
+#define R88E_RXDW3_RPT_TX2	2
+#define R88E_RXDW3_RPT_HIS	3
 
 /* Tx MAC descriptor. */
 
@@ -1293,13 +1300,6 @@ struct r92c_tx_desc_usb {
 
 #define R88E_TXDW2_AGGBK	0x00010000
 #define R92C_TXDW2_CCX_RPT	0x00080000
-
-#define R88E_RXDW3_RPT_M	0x0000c000
-#define R88E_RXDW3_RPT_S	14
-#define R88E_RXDW3_RPT_RX	0
-#define R88E_RXDW3_RPT_TX1	1
-#define R88E_RXDW3_RPT_TX2	2
-#define R88E_RXDW3_RPT_HIS	3
 
 #define R92C_TXDW4_RTSRATE_M	0x0000001f
 #define R92C_TXDW4_RTSRATE_S	0
