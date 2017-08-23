@@ -24,6 +24,17 @@ TODO: {
    ) or die "Cannot socket() - $@";
 
    ok( $sock->getsockopt( SOL_SOCKET, SO_REUSEADDR ), 'SO_REUSEADDR set' );
+
+   $sock = IO::Socket::IP->new(
+      LocalHost => "127.0.0.1",
+      Type      => SOCK_STREAM,
+      Listen    => 1,
+      Sockopts  => [
+         [ SOL_SOCKET, SO_REUSEADDR ],
+      ],
+   ) or die "Cannot socket() - $@";
+
+   ok( $sock->getsockopt( SOL_SOCKET, SO_REUSEADDR ), 'SO_REUSEADDR set via Sockopts' );
 }
 
 SKIP: {
