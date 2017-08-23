@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.19 2017/05/30 21:44:59 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.20 2017/08/23 09:14:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -191,7 +191,7 @@ args_print(struct args *args)
 int
 args_has(struct args *args, u_char ch)
 {
-	return (args_find(args, ch) == NULL ? 0 : 1);
+	return (args_find(args, ch) != NULL);
 }
 
 /* Set argument value in the arguments tree. */
