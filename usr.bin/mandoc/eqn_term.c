@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn_term.c,v 1.9 2017/07/08 14:51:01 schwarze Exp $ */
+/*	$OpenBSD: eqn_term.c,v 1.10 2017/08/23 20:02:48 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,7 +66,16 @@ eqn_box(struct termp *p, const struct eqn_box *bp)
 	     ((bp->parent->type == EQN_LIST && bp->expectargs == 1) ||
 	      (bp->parent->type == EQN_SUBEXPR &&
 	       bp->pos != EQNPOS_SQRT)))))) {
-		if (bp->parent->type == EQN_SUBEXPR && bp->prev != NULL)
+		if ((bp->parent->type == EQN_SUBEXPR && bp->prev != NULL) ||
+		    (bp->type == EQN_LIST &&
+		     bp->first != NULL &&
+		     bp->first->type != EQN_PILE &&
+		     bp->first->type != EQN_MATRIX &&
+		     bp->prev != NULL &&
+		     (bp->prev->type == EQN_LIST ||
+		      (bp->prev->type == EQN_TEXT &&
+		       (*bp->prev->text == '\\' ||
+		        isalpha((unsigned char)*bp->prev->text))))))
 			p->flags |= TERMP_NOSPACE;
 		term_word(p, bp->left != NULL ? bp->left : "(");
 		p->flags |= TERMP_NOSPACE;
@@ -96,9 +106,9 @@ eqn_box(struct termp *p, const struct eqn_box *bp)
 		term_word(p, bp->pos == EQNPOS_OVER ? "/" :
 		    (bp->pos == EQNPOS_SUP ||
 		     bp->pos == EQNPOS_TO) ? "^" : "_");
-		p->flags |= TERMP_NOSPACE;
 		child = child->next;
 		if (child != NULL) {
+			p->flags |= TERMP_NOSPACE;
 			eqn_box(p, child);
 			if (bp->pos == EQNPOS_FROMTO ||
 			    bp->pos == EQNPOS_SUBSUP) {
