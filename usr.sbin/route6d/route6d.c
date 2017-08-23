@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.91 2016/08/05 11:38:00 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.92 2017/08/23 11:25:07 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -1531,167 +1531,165 @@ rtrecv(void)
 		log_debug("");
 	}
 
-	for (p = buf; p - buf < len; p += ((struct rt_msghdr *)p)->rtm_msglen) {
-		/* safety against bogus message */
-		if (((struct rt_msghdr *)p)->rtm_msglen <= 0) {
-			log_debug("bogus rtmsg: length=%d",
-				((struct rt_msghdr *)p)->rtm_msglen);
-			break;
-		}
-		if (((struct rt_msghdr *)p)->rtm_version != RTM_VERSION)
-			continue;
+	p = buf;
+	/* safety against bogus message */
+	if (((struct rt_msghdr *)p)->rtm_msglen <= 0) {
+		log_debug("bogus rtmsg: length=%d",
+		    ((struct rt_msghdr *)p)->rtm_msglen);
+		return;
+	}
+	if (((struct rt_msghdr *)p)->rtm_version != RTM_VERSION)
+		return;
 
-		rtm = NULL;
-		ifam = NULL;
-		ifm = NULL;
-		switch (((struct rt_msghdr *)p)->rtm_type) {
-		case RTM_NEWADDR:
-		case RTM_DELADDR:
-			ifam = (struct ifa_msghdr *)p;
-			addrs = ifam->ifam_addrs;
-			q = (char *)(ifam + 1);
-			break;
-		case RTM_IFINFO:
-			ifm = (struct if_msghdr *)p;
-			addrs = ifm->ifm_addrs;
-			q = (char *)(ifm + 1);
-			break;
-		default:
-			rtm = (struct rt_msghdr *)p;
-			addrs = rtm->rtm_addrs;
-			q = (char *)(p + rtm->rtm_hdrlen);
-			if (rtm->rtm_pid == pid) {
+	rtm = NULL;
+	ifam = NULL;
+	ifm = NULL;
+	switch (((struct rt_msghdr *)p)->rtm_type) {
+	case RTM_NEWADDR:
+	case RTM_DELADDR:
+		ifam = (struct ifa_msghdr *)p;
+		addrs = ifam->ifam_addrs;
+		q = (char *)(ifam + 1);
+		break;
+	case RTM_IFINFO:
+		ifm = (struct if_msghdr *)p;
+		addrs = ifm->ifm_addrs;
+		q = (char *)(ifm + 1);
+		break;
+	default:
+		rtm = (struct rt_msghdr *)p;
+		addrs = rtm->rtm_addrs;
+		q = (char *)(p + rtm->rtm_hdrlen);
+		if (rtm->rtm_pid == pid) {
 #if 0
-				log_debug("rtmsg looped back to me, ignored");
+			log_debug("rtmsg looped back to me, ignored");
 #endif
-				continue;
-			}
+			return;
+		}
+		break;
+	}
+	memset(&rta, 0, sizeof(rta));
+	for (i = 0; i < RTAX_MAX; i++) {
+		if (addrs & (1 << i)) {
+			rta[i] = (struct sockaddr_in6 *)q;
+			q += ROUNDUP(rta[i]->sin6_len);
+		}
+	}
+
+	log_debug("rtsock: %s (addrs=%x)",
+	    rttypes((struct rt_msghdr *)p), addrs);
+	if (dflag >= 2) {
+		for (i = 0;
+		     i < ((struct rt_msghdr *)p)->rtm_msglen;
+		     i++) {
+			log_enqueue("%02x ", p[i] & 0xff);
+			if (i % 16 == 15)
+				log_debug("");
+		}
+		log_debug("");
+	}
+	/*
+	 * Easy ones first.
+	 *
+	 * We may be able to optimize by using ifm->ifm_index or
+	 * ifam->ifam_index.  For simplicity we don't do that here.
+	 */
+	switch (((struct rt_msghdr *)p)->rtm_type) {
+	case RTM_NEWADDR:
+	case RTM_IFINFO:
+		iface++;
+		return;
+	case RTM_ADD:
+		rtable++;
+		return;
+	case RTM_LOSING:
+	case RTM_MISS:
+	case RTM_RESOLVE:
+	case RTM_GET:
+	case RTM_LOCK:
+		/* nothing to be done here */
+		log_debug("\tnothing to be done, ignored");
+		return;
+	}
+
+#if 0
+	if (rta[RTAX_DST] == NULL) {
+		log_debug("\tno destination, ignored");
+		return;
+	}
+	if (rta[RTAX_DST]->sin6_family != AF_INET6) {
+		log_debug("\taf mismatch, ignored");
+		return;
+	}
+	if (IN6_IS_ADDR_LINKLOCAL(&rta[RTAX_DST]->sin6_addr)) {
+		log_debug("\tlinklocal destination, ignored");
+		return;
+	}
+	if (IN6_ARE_ADDR_EQUAL(&rta[RTAX_DST]->sin6_addr, &in6addr_loopback)) {
+		log_debug("\tloopback destination, ignored");
+		return;		/* Loopback */
+	}
+	if (IN6_IS_ADDR_MULTICAST(&rta[RTAX_DST]->sin6_addr)) {
+		log_debug("\tmulticast destination, ignored");
+		return;
+	}
+#endif
+
+	/* hard ones */
+	switch (((struct rt_msghdr *)p)->rtm_type) {
+	case RTM_NEWADDR:
+	case RTM_IFINFO:
+	case RTM_ADD:
+	case RTM_LOSING:
+	case RTM_MISS:
+	case RTM_RESOLVE:
+	case RTM_GET:
+	case RTM_LOCK:
+		/* should already be handled */
+		fatalx("rtrecv: never reach here");
+		/*NOTREACHED*/
+	case RTM_DELETE:
+		if (!rta[RTAX_DST] || !rta[RTAX_GATEWAY]) {
+			log_debug("\tsome of dst/gw/netmask are "
+			    "unavailable, ignored");
 			break;
 		}
-		memset(&rta, 0, sizeof(rta));
-		for (i = 0; i < RTAX_MAX; i++) {
-			if (addrs & (1 << i)) {
-				rta[i] = (struct sockaddr_in6 *)q;
-				q += ROUNDUP(rta[i]->sin6_len);
-			}
+		if ((rtm->rtm_flags & RTF_HOST) != 0) {
+			mask.sin6_len = sizeof(mask);
+			memset(&mask.sin6_addr, 0xff,
+			    sizeof(mask.sin6_addr));
+			rta[RTAX_NETMASK] = &mask;
+		} else if (!rta[RTAX_NETMASK]) {
+			log_debug("\tsome of dst/gw/netmask are "
+			    "unavailable, ignored");
+			break;
 		}
-
-		log_debug("rtsock: %s (addrs=%x)",
-			rttypes((struct rt_msghdr *)p), addrs);
- 		if (dflag >= 2) {
- 			for (i = 0;
- 			     i < ((struct rt_msghdr *)p)->rtm_msglen;
- 			     i++) {
-				log_enqueue("%02x ", p[i] & 0xff);
-				if (i % 16 == 15)
-					log_debug("");
-			}
-			log_debug("");
+		if (rt_del(rta[RTAX_DST], rta[RTAX_GATEWAY],
+			rta[RTAX_NETMASK]) == 0) {
+			rtable++;	/*just to be sure*/
 		}
-		/*
-		 * Easy ones first.
-		 *
-		 * We may be able to optimize by using ifm->ifm_index or
-		 * ifam->ifam_index.  For simplicity we don't do that here.
-		 */
-		switch (((struct rt_msghdr *)p)->rtm_type) {
-		case RTM_NEWADDR:
-		case RTM_IFINFO:
+		break;
+	case RTM_CHANGE:
+	case RTM_REDIRECT:
+		log_debug("\tnot supported yet, ignored");
+		break;
+	case RTM_DELADDR:
+		if (!rta[RTAX_NETMASK] || !rta[RTAX_IFA]) {
+			log_debug("\tno netmask or ifa given, ignored");
+			break;
+		}
+		if (ifam->ifam_index < nindex2ifc)
+			ifcp = index2ifc[ifam->ifam_index];
+		else
+			ifcp = NULL;
+		if (!ifcp) {
+			log_debug("\tinvalid ifam_index %d, ignored",
+			    ifam->ifam_index);
+			break;
+		}
+		if (!rt_deladdr(ifcp, rta[RTAX_IFA], rta[RTAX_NETMASK]))
 			iface++;
-			continue;
-		case RTM_ADD:
-			rtable++;
-			continue;
-		case RTM_LOSING:
-		case RTM_MISS:
-		case RTM_RESOLVE:
-		case RTM_GET:
-		case RTM_LOCK:
-			/* nothing to be done here */
-			log_debug("\tnothing to be done, ignored");
-			continue;
-		}
-
-#if 0
-		if (rta[RTAX_DST] == NULL) {
-			log_debug("\tno destination, ignored");
-			continue;	
-		}
-		if (rta[RTAX_DST]->sin6_family != AF_INET6) {
-			log_debug("\taf mismatch, ignored");
-			continue;
-		}
-		if (IN6_IS_ADDR_LINKLOCAL(&rta[RTAX_DST]->sin6_addr)) {
-			log_debug("\tlinklocal destination, ignored");
-			continue;
-		}
-		if (IN6_ARE_ADDR_EQUAL(&rta[RTAX_DST]->sin6_addr, &in6addr_loopback)) {
-			log_debug("\tloopback destination, ignored");
-			continue;		/* Loopback */
-		}
-		if (IN6_IS_ADDR_MULTICAST(&rta[RTAX_DST]->sin6_addr)) {
-			log_debug("\tmulticast destination, ignored");
-			continue;
-		}
-#endif
-
-		/* hard ones */
-		switch (((struct rt_msghdr *)p)->rtm_type) {
-		case RTM_NEWADDR:
-		case RTM_IFINFO:
-		case RTM_ADD:
-		case RTM_LOSING:
-		case RTM_MISS:
-		case RTM_RESOLVE:
-		case RTM_GET:
-		case RTM_LOCK:
-			/* should already be handled */
-			fatalx("rtrecv: never reach here");
-			/*NOTREACHED*/
-		case RTM_DELETE:
-			if (!rta[RTAX_DST] || !rta[RTAX_GATEWAY]) {
-				log_debug("\tsome of dst/gw/netmask are "
-				    "unavailable, ignored");
-				break;
-			}
-			if ((rtm->rtm_flags & RTF_HOST) != 0) {
-				mask.sin6_len = sizeof(mask);
-				memset(&mask.sin6_addr, 0xff,
-				    sizeof(mask.sin6_addr));
-				rta[RTAX_NETMASK] = &mask;
-			} else if (!rta[RTAX_NETMASK]) {
-				log_debug("\tsome of dst/gw/netmask are "
-				    "unavailable, ignored");
-				break;
-			}
-			if (rt_del(rta[RTAX_DST], rta[RTAX_GATEWAY],
-			    rta[RTAX_NETMASK]) == 0) {
-				rtable++;	/*just to be sure*/
-			}
-			break;
-		case RTM_CHANGE:
-		case RTM_REDIRECT:
-			log_debug("\tnot supported yet, ignored");
-			break;
-		case RTM_DELADDR:
-			if (!rta[RTAX_NETMASK] || !rta[RTAX_IFA]) {
-				log_debug("\tno netmask or ifa given, ignored");
-				break;
-			}
-			if (ifam->ifam_index < nindex2ifc)
-				ifcp = index2ifc[ifam->ifam_index];
-			else
-				ifcp = NULL;
-			if (!ifcp) {
-				log_debug("\tinvalid ifam_index %d, ignored",
-					ifam->ifam_index);
-				break;
-			}
-			if (!rt_deladdr(ifcp, rta[RTAX_IFA], rta[RTAX_NETMASK]))
-				iface++;
-			break;
-		}
-
+		break;
 	}
 
 	if (iface) {
