@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.13 2017/08/21 14:44:26 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.14 2017/08/23 10:45:35 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -230,6 +230,7 @@ void			 gen_addr(struct slaacd_iface *, struct radv_prefix *,
 void			 gen_address_proposal(struct slaacd_iface *, struct
 			     radv *, struct radv_prefix *, int);
 void			 free_address_proposal(struct address_proposal *);
+void			 timeout_from_lifetime(struct address_proposal *);
 void			 configure_address(struct address_proposal *);
 void			 in6_prefixlen2mask(struct in6_addr *, int len);
 void			 gen_dfr_proposal(struct slaacd_iface *, struct
@@ -1638,11 +1639,12 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 }
 
 void
-configure_address(struct address_proposal *addr_proposal)
+timeout_from_lifetime(struct address_proposal *addr_proposal)
 {
-	struct imsg_configure_address	 address;
-	struct timeval			 tv;
-	time_t				 lifetime;
+	struct timeval	 tv;
+	time_t		 lifetime;
+
+	addr_proposal->next_timeout = 0;
 
 	if (addr_proposal->pltime > MAX_RTR_SOLICITATIONS *
 	    (RTR_SOLICITATION_INTERVAL + 1))
@@ -1659,8 +1661,13 @@ configure_address(struct address_proposal *addr_proposal)
 		evtimer_add(&addr_proposal->timer, &tv);
 		log_debug("%s: %d, scheduling new timeout in %llds.%06ld",
 		    __func__, addr_proposal->if_index, tv.tv_sec, tv.tv_usec);
-	} else
-		addr_proposal->next_timeout = 0;
+	}
+}
+
+void
+configure_address(struct address_proposal *addr_proposal)
+{
+	struct imsg_configure_address	 address;
 
 	addr_proposal->state = PROPOSAL_CONFIGURED;
 
