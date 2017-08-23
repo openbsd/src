@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn_term.c,v 1.12 2017/08/23 20:48:56 schwarze Exp $ */
+/*	$OpenBSD: eqn_term.c,v 1.13 2017/08/23 21:56:04 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -94,8 +94,10 @@ eqn_box(struct termp *p, const struct eqn_box *bp)
 			p->flags |= TERMP_NOSPACE;
 		term_word(p, bp->text);
 		if ((cp = strchr(bp->text, '\0')) > bp->text &&
-		    ((cp[-1] == '-' && bp->prev == NULL) ||
-		     strchr("\"'([{", cp[-1]) != NULL))
+		    (strchr("\"'([{", cp[-1]) != NULL ||
+		     (bp->prev == NULL && (cp[-1] == '-' ||
+		      (cp >= bp->text + 5 &&
+		       strcmp(cp - 5, "\\[mi]") == 0)))))
 			p->flags |= TERMP_NOSPACE;
 	}
 
