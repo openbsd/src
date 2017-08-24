@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2017/07/10 21:30:37 espie Exp $
+#	$OpenBSD: Makefile,v 1.8 2017/08/24 09:00:50 otto Exp $
 
 PROG =	rpc.lockd
 SRCS =	nlm_prot_svc.c lockd.c lockd_lock.c procs.c
@@ -7,7 +7,7 @@ MAN =	rpc.lockd.8
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc
 
-CFLAGS+= -I. -DSYSLOG
+CFLAGS+= -I. -DSYSLOG -Wno-enum-conversion
 
 CLEANFILES= nlm_prot_svc.c nlm_prot.h
 
