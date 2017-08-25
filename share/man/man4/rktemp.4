@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rktemp.4,v 1.1 2017/08/25 11:17:35 kettenis Exp $
+.\"	$OpenBSD: rktemp.4,v 1.2 2017/08/25 14:25:39 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -26,9 +26,9 @@
 The
 .Nm
 driver provides support for the temperature sensor found on the
-Rockchp RK3399 SoC.
+Rockchip RK3399 SoC.
 It configures the SoC to reset itself if the temperature raises above
-a certian temperature to protect it from damage caused by overheating.
+a certain temperature to protect it from damage caused by overheating.
 .Pp
 Sensor values are made available through the
 .Xr sysctl 8
