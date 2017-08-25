@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.3 2017/08/12 00:13:13 rob Exp $
+# $OpenBSD: snmpd.sh,v 1.4 2017/08/25 00:16:56 rob Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@2keys.ca>
 # *
@@ -59,6 +59,8 @@ skip() {
 
 # # # # # CONFIG ONE # # # # #
 
+echo "\nConfiguration: default community strings, trap receiver, trap handle\n"
+
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (1) for snmpd regression testing
 listen_addr="127.0.0.1"
@@ -81,11 +83,12 @@ sleep ${SLEEP}
 # pf (also checks "oid all" which obtains privileged kernel data
 
 pf_enabled="$(pfctl -si | grep ^Status | awk '{ print $2 }' | tr [A-Z] [a-z])"
-enabled="$(snmpctl snmp walk localhost oid all | grep -vi parameters | \
-   grep -i pfrunning | awk -F= '{ print $2 }')"
-if [ ${PF[$enabled]} != ${PF[enabled]} ]
+snmpctl_command="snmpctl snmp walk localhost oid all"
+echo ======= $snmpctl_command
+enabled="$(eval $snmpctl_command | grep -vi parameters | grep -i pfrunning | awk -F= '{ print $2 }')"
+if [ "${PF[$enabled]}" != "${PF[enabled]}" ]
 then
-	if [ ${PF[$enabled]} != ${PF[disabled]} ]
+	if [ "${PF[$enabled]}" != "${PF[disabled]}" ]
 	then
 		echo "Retrieval of pf status failed."
 		FAILED=1
@@ -95,9 +98,10 @@ fi
 # hostname
 
 sys_name=$(hostname)
-name="$(snmpctl snmp get localhost oid 1.3.6.1.2.1.1.5.0 | \
-   awk -F= '{ print $2 }' | sed 's/"//g')"
-if [ $name != $sys_name ]
+snmpctl_command="snmpctl snmp get localhost oid 1.3.6.1.2.1.1.5.0"
+echo ======= $snmpctl_command
+name="$(eval $snmpctl_command | awk -F= '{ print $2 }' | sed 's/"//g')"
+if [ "$name" != "$sys_name" ]
 then
 	echo "Retrieval of hostname failed."
 	FAILED=1
@@ -106,8 +110,9 @@ fi
 # carp allow
 
 carp="$(sysctl net.inet.carp.allow | awk -F= '{ print $2 }')"
-carp_allow="$(snmpctl snmp get localhost oid 1.3.6.1.4.1.30155.6.1.1.0 | \
-   awk -F= '{ print $2 }')"
+snmpctl_command="snmpctl snmp get localhost oid 1.3.6.1.4.1.30155.6.1.1.0"
+echo ======= $snmpctl_command
+carp_allow="$(eval $snmpctl_command | awk -F= '{ print $2 }')"
 if [ "$carp" -ne "$carp_allow" ]
 then
 	echo "Retrieval of carp.allow failed."
@@ -117,8 +122,9 @@ fi
 # carp allow with default ro community string
 
 carp="$(sysctl net.inet.carp.allow | awk -F= '{ print $2 }')"
-carp_allow="$(snmpctl snmp get localhost community public \
-   oid 1.3.6.1.4.1.30155.6.1.1.0 | awk -F= '{ print $2 }')"
+snmpctl_command="snmpctl snmp get localhost community public oid 1.3.6.1.4.1.30155.6.1.1.0"
+echo ======= $snmpctl_command
+carp_allow="$(eval $snmpctl_command | awk -F= '{ print $2 }')"
 if [ "$carp" -ne "$carp_allow" ]
 then
 	echo "Retrieval of carp.allow with default ro cummunity string failed."
@@ -128,9 +134,11 @@ fi
 # trap handler with command execution
 
 rm -f ${TMPFILE}
-snmpctl trap send 1.2.3.4
+snmpctl_command="snmpctl trap send 1.2.3.4"
+echo ======= $snmpctl_command
+eval $snmpctl_command
 sleep ${SLEEP}
-if [ ! -f ${TMPFILE} ]
+if [ ! -f "${TMPFILE}" ]
 then
 	echo "Trap handler test failed."
 	FAILED=1
@@ -139,10 +147,12 @@ fi
 # system.sysContact set with default rw community string
 
 puffy="puffy@openbsd.org"
-snmpset -c private -v 1 localhost system.sysContact.0 s $puffy \
-   > /dev/null 2>&1
-contact="$(snmpctl snmp get localhost oid 1.3.6.1.2.1.1.4.0 | \
-   awk -F= '{ print $2 }' | sed 's/"//g')"
+snmpset_command="snmpset -c private -v 1 localhost system.sysContact.0 s $puffy"
+echo ======= $snmpset_command
+eval $snmpset_command > /dev/null 2>&1
+snmpctl_command="snmpctl snmp get localhost oid 1.3.6.1.2.1.1.4.0"
+echo ======= $snmpctl_command
+contact="$(eval $snmpctl_command | awk -F= '{ print $2 }' | sed 's/"//g')"
 if [ "$contact" !=  "$puffy" ]
 then
 	echo "Setting with default rw community string failed."
@@ -153,6 +163,7 @@ kill $(pgrep snmpd) >/dev/null 2>&1
 wait
 
 # # # # # CONFIG TWO # # # # #
+echo "\nConfiguration: seclevel auth\n"
 
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (2) for snmpd regression testing
@@ -174,7 +185,9 @@ sleep ${SLEEP}
 
 # make sure we can't get an oid with deault community string
 
-snmpctl snmp get localhost oid 1.3.6.1.2.1.1.5.0 > /dev/null 2>&1
+snmpctl_command="snmpctl snmp get localhost oid 1.3.6.1.2.1.1.5.0"
+echo ======= $snmpctl_command
+eval $snmpctl_command > /dev/null 2>&1
 if [ $? -eq 0 ]
 then
 	echo "Non-defaut ro community string test failed."
@@ -184,8 +197,10 @@ fi
 # get with SHA authentication
 
 os="$(uname -s)"
-system="$(snmpget -Oq -l authNoPriv -u hans -a SHA -A password123 localhost \
-   system.sysDescr.0 | awk '{ print $2 }')"
+snmpget_command="snmpget -Oq -l authNoPriv -u hans -a SHA -A password123 \
+   localhost system.sysDescr.0"
+echo ======= $snmpget_command
+system="$(eval $snmpget_command | awk '{ print $2 }')"
 if [ "$system" != "$os" ]
 then
 	echo "Retrieval test with seclevel auth and SHA failed."
@@ -196,6 +211,7 @@ kill $(pgrep snmpd) >/dev/null 2>&1
 wait
 
 # # # # # CONFIG THREE # # # # #
+echo "\nConfiguration: seclevel enc\n"
 
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (3) for snmpd regression testing
@@ -218,8 +234,10 @@ sleep ${SLEEP}
 # get with SHA authentication and AES encryption
 
 os="$(uname -s)"
-system="$(snmpget -Oq -l authPriv -u hans -a SHA -A password123 -x AES \
-   -X 321drowssap localhost system.sysDescr.0 | awk '{ print $2 }')"
+snmpget_command="snmpget -Oq -l authPriv -u hans -a SHA -A password123 -x AES \
+   -X 321drowssap localhost system.sysDescr.0"
+echo ======= $snmpget_command
+system="$(eval $snmpget_command | awk '{ print $2 }')"
 if [ "$system" != "$os" ]
 then
 	echo "seclevel auth with SHA failed"
@@ -230,6 +248,7 @@ kill $(pgrep snmpd) >/dev/null 2>&1
 wait
 
 # # # # # CONFIG FOUR # # # # #
+echo "\nConfiguration: non-default community strings, custom oids\n"
 
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (4) for snmpd regression testing
@@ -255,8 +274,10 @@ sleep ${SLEEP}
 # carp allow with non-default ro community string
 
 carp="$(sysctl net.inet.carp.allow | awk -F= '{ print $2 }')"
-carp_allow="$(snmpctl snmp get localhost community non-default-ro \
-   oid 1.3.6.1.4.1.30155.6.1.1.0 | awk -F= '{ print $2 }')"
+snmpctl_command="snmpctl snmp get localhost community non-default-ro \
+   oid 1.3.6.1.4.1.30155.6.1.1.0"
+echo ======= $snmpctl_command
+carp_allow="$(eval $snmpctl_command | awk -F= '{ print $2 }')"
 if [ "$carp" -ne "$carp_allow" ]
 then
 	echo "Retrieval test with default ro cummunity string failed."
@@ -266,10 +287,14 @@ fi
 # system.sysContact set with non-default rw/ro community strings
 
 puffy="puffy@openbsd.org"
-snmpset -c non-default-rw -v 1 localhost system.sysContact.0 s $puffy \
-   > /dev/null 2>&1
-contact="$(snmpctl snmp get localhost community non-default-ro \
-   oid 1.3.6.1.2.1.1.4.0 | awk -F= '{ print $2 }' | sed 's/"//g')"
+snmpset_command="snmpset -c non-default-rw -v 1 localhost system.sysContact.0 \
+   s $puffy"
+echo ======= $snmpset_command
+eval $snmpset_command > /dev/null 2>&1
+snmpctl_command="snmpctl snmp get localhost community non-default-ro \
+   oid 1.3.6.1.2.1.1.4.0"
+echo ======= $snmpctl_command
+contact="$(eval $snmpctl_command | awk -F= '{ print $2 }' | sed 's/"//g')"
 if [ "$contact" !=  "$puffy" ]
 then
 	echo "Setting with default rw community string failed."
@@ -278,25 +303,31 @@ fi
 
 # custom oids, with a ro that we should not be able to set
 
-string="$(snmpctl snmp get localhost community non-default-rw \
-   oid 1.3.6.1.4.1.30155.42.1.0 | awk -F= '{ print $2 }' | sed 's/"//g')"
+snmpctl_command="snmpctl snmp get localhost community non-default-rw \
+   oid 1.3.6.1.4.1.30155.42.1.0"
+echo ======= $snmpctl_command
+string="$(eval $snmpctl_command | awk -F= '{ print $2 }' | sed 's/"//g')"
 if [ "$string" !=  "humppa" ]
 then
 	echo "couldn't get customer oid string"
 	FAILED=1
 fi
 
-integer="$(snmpctl snmp get localhost community non-default-rw \
-   oid 1.3.6.1.4.1.30155.42.2.0 | awk -F= '{ print $2 }' | sed 's/"//g')"
+snmpctl_command="snmpctl snmp get localhost community non-default-rw \
+   oid 1.3.6.1.4.1.30155.42.2.0"
+echo ======= $snmpctl_command
+integer="$(eval $snmpctl_command | awk -F= '{ print $2 }' | sed 's/"//g')"
 if [ $integer -ne  1 ]
 then
 	echo "Retrieval of customer oid integer failed."
 	FAILED=1
 fi
 
-snmpset -c non-default-rw -v 1 localhost 1.3.6.1.4.1.30155.42.1 s "bula" \
-   > /dev/null 2>&1
-if [ $? -eq 0 ]
+snmpset_command="snmpset -c non-default-rw -v 1 localhost \
+   1.3.6.1.4.1.30155.42.1.0 s \"bula\""
+echo ======= $snmpset_command
+eval $snmpset_command > /dev/null 2>&1
+if [ $? -eq 0  ]
 then
 	echo "Setting of a ro custom oid test unexpectedly succeeded."
 	fail=1
@@ -305,7 +336,7 @@ fi
 kill $(pgrep snmpd) >/dev/null 2>&1
 
 case $FAILED in
-0)	echo PASSED
+0)	echo
 	cleanup
 	exit 0
 	;;
