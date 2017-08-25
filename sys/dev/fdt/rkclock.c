@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.11 2017/08/23 21:34:46 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.12 2017/08/25 10:29:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -504,6 +504,7 @@ rk3399_enable(void *cookie, uint32_t *cells, int on)
 	switch (idx) {
 	case RK3399_CLK_SDMMC:
 	case RK3399_CLK_EMMC:
+	case RK3399_CLK_TSADC:
 	case RK3399_CLK_UART0:
 	case RK3399_CLK_UART1:
 	case RK3399_CLK_UART2:
@@ -522,6 +523,7 @@ rk3399_enable(void *cookie, uint32_t *cells, int on)
 	case RK3399_ACLK_USB3OTG0:
 	case RK3399_ACLK_USB3OTG1:
 	case RK3399_ACLK_USB3_GRF:
+	case RK3399_PCLK_TSADC:
 	case RK3399_PCLK_GMAC:
 	case RK3399_HCLK_HOST0:
 	case RK3399_HCLK_HOST0_ARB:
