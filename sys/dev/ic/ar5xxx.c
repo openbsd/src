@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.61 2017/08/22 08:49:23 mestre Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.62 2017/08/25 10:04:36 tb Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -513,6 +513,10 @@ ar5k_printver(enum ar5k_srev_type type, u_int32_t val)
 		if (names[i].sr_type != type ||
 		    names[i].sr_val == AR5K_SREV_UNKNOWN)
 			continue;
+		/*
+		 * The final iteration has names[i].sr_val == AR5K_SREV_UNKNOWN,
+		 * so there is no out-of-bounds access with names[i + 1] below.
+		 */
 		if ((val & 0xff) < names[i + 1].sr_val) {
 			name = names[i].sr_name;
 			break;
