@@ -115,6 +115,8 @@
 ./usr/include/dev/eisa/eisareg.h
 ./usr/include/dev/eisa/eisavar.h
 ./usr/include/dev/fdt
+./usr/include/dev/fdt/if_mvnetareg.h
+./usr/include/dev/fdt/mvmdiovar.h
 ./usr/include/dev/fdt/rkclock_clocks.h
 ./usr/include/dev/fdt/sunxireg.h
 ./usr/include/dev/fdt/sxiccmu_clocks.h
