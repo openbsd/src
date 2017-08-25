@@ -1,4 +1,4 @@
-.\"     $OpenBSD: divert.4,v 1.16 2015/09/10 17:55:21 schwarze Exp $
+.\"     $OpenBSD: divert.4,v 1.17 2017/08/25 16:11:01 bluhm Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2012-2014 Lawrence Teo <lteo@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: August 25 2017 $
 .Dt DIVERT 4
 .Os
 .Sh NAME
@@ -58,9 +58,6 @@ should not be confused with
 or
 .Ar divert-reply ,
 which do not use divert sockets.
-.Xr pf 4
-reassembles TCP streams by default (if IP reassembly is not disabled)
-before sending them to the divert sockets.
 If there are no divert sockets listening, the packets are dropped.
 .Pp
 Packets can be read via
@@ -71,10 +68,16 @@ or
 from the divert socket.
 The application that is processing the packets can then reinject them into the
 kernel.
-After being reinjected, inbound and outbound packets are treated differently.
-Inbound packets are added to the relevant input queue and a soft interrupt is
-scheduled to signal that a new packet is ready to be processed; outbound ones
-are processed directly by the relevant IPv4/IPv6 output function.
+With
+.Xr recvfrom 2 ,
+an interface IP address is passed if it is an inbound packet.
+Outbound packets provide the unspecified address.
+When reinjecting, use this address as argument to
+.Xr sendto 2 .
+This allows the kernel to guess the original incoming interface and
+and process it as an incoming packet.
+If no interface IP address is given, the reinjected packet is treated
+as an outgoing packet.
 Since the userspace application could have modified the packets, upon
 reinjection basic sanity checks are done to ensure that the packets are still
 valid.
@@ -86,12 +89,16 @@ Writing to a divert socket can be achieved using
 and it will skip
 .Xr pf 4
 filters to avoid loops.
+Note that this means that a reinjected inbound packet will also not
+run through the pf out rules after being forwarded.
 A diverted packet that is not reinjected into the kernel stack is lost.
 .Pp
 Receive and send divert socket buffer space can be tuned through
 .Xr sysctl 8 .
 .Xr netstat 1
 shows information relevant to divert sockets.
+Note that the default is 64k and too short to handle full sized UDP
+packets.
 .Pp
 The IP_DIVERTFL socket option on the IPPROTO_IP level controls
 whether both inbound and outbound packets are diverted (the default)
@@ -102,6 +109,12 @@ Valid values are
 for the direction of the initial packet of a flow, and
 .Dv IPPROTO_DIVERT_RESP
 for the direction of the response packets.
+The direction is relative to the packet direction.
+So for pf out rules, it is the other way around.
+If one filter is active, it specifies which packets should not be
+diverted.
+Both directions can be combined as bit fields, but then the traffic
+is not filtered; not using the P_DIVERTFL option has the same effect.
 .Sh EXAMPLES
 The following PF rule queues outbound IPv4 packets to TCP port 80,
 as well as the return traffic, on the em0 interface to divert port 700:
