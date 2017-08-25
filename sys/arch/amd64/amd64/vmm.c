@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.168 2017/08/20 21:15:32 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.169 2017/08/25 06:34:51 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4427,7 +4427,7 @@ vmx_handle_exit(struct vcpu *vcpu)
 int
 vmm_inject_ud(struct vcpu *vcpu)
 {
-	DPRINTF("%s: injecting #UD at guest %rip 0x%llx\n", __func__,
+	DPRINTF("%s: injecting #UD at guest %%rip 0x%llx\n", __func__,
 	    vcpu->vc_gueststate.vg_rip);
 	vcpu->vc_event = VMM_EX_UD;
 	
@@ -4448,7 +4448,7 @@ vmm_inject_ud(struct vcpu *vcpu)
 int
 vmm_inject_db(struct vcpu *vcpu)
 {
-	DPRINTF("%s: injecting #DB at guest %rip 0x%llx\n", __func__,
+	DPRINTF("%s: injecting #DB at guest %%rip 0x%llx\n", __func__,
 	    vcpu->vc_gueststate.vg_rip);
 	vcpu->vc_event = VMM_EX_DB;
 	
@@ -7330,9 +7330,9 @@ vmm_decode_cr0(uint64_t cr0)
 	DPRINTF("(");
 	for (i = 0; i < 11; i++)
 		if (cr0 & cr0_info[i].vrdi_bit)
-			DPRINTF("%c", cr0_info[i].vrdi_present);
+			DPRINTF("%s", cr0_info[i].vrdi_present);
 		else
-			DPRINTF("%c", cr0_info[i].vrdi_absent);
+			DPRINTF("%s", cr0_info[i].vrdi_absent);
 	
 	DPRINTF(")\n");
 }
@@ -7358,9 +7358,9 @@ vmm_decode_cr3(uint64_t cr3)
 		DPRINTF("(");
 		for (i = 0 ; i < 2 ; i++)
 			if (cr3 & cr3_info[i].vrdi_bit)
-				DPRINTF("%c", cr3_info[i].vrdi_present);
+				DPRINTF("%s", cr3_info[i].vrdi_present);
 			else
-				DPRINTF("%c", cr3_info[i].vrdi_absent);
+				DPRINTF("%s", cr3_info[i].vrdi_absent);
 
 		DPRINTF(")\n");
 	} else {
@@ -7398,9 +7398,9 @@ vmm_decode_cr4(uint64_t cr4)
 	DPRINTF("(");
 	for (i = 0; i < 19; i++)
 		if (cr4 & cr4_info[i].vrdi_bit)
-			DPRINTF("%c", cr4_info[i].vrdi_present);
+			DPRINTF("%s", cr4_info[i].vrdi_present);
 		else
-			DPRINTF("%c", cr4_info[i].vrdi_absent);
+			DPRINTF("%s", cr4_info[i].vrdi_absent);
 	
 	DPRINTF(")\n");
 }
@@ -7419,9 +7419,9 @@ vmm_decode_apicbase_msr_value(uint64_t apicbase)
 	DPRINTF("(");
 	for (i = 0; i < 3; i++)
 		if (apicbase & apicbase_info[i].vrdi_bit)
-			DPRINTF("%c", apicbase_info[i].vrdi_present);
+			DPRINTF("%s", apicbase_info[i].vrdi_present);
 		else
-			DPRINTF("%c", apicbase_info[i].vrdi_absent);
+			DPRINTF("%s", apicbase_info[i].vrdi_absent);
 	
 	DPRINTF(")\n");
 }
@@ -7441,9 +7441,9 @@ vmm_decode_ia32_fc_value(uint64_t fcr)
 	DPRINTF("(");
 	for (i = 0; i < 4; i++)
 		if (fcr & fcr_info[i].vrdi_bit)
-			DPRINTF("%c", fcr_info[i].vrdi_present);
+			DPRINTF("%s", fcr_info[i].vrdi_present);
 		else
-			DPRINTF("%c", fcr_info[i].vrdi_absent);
+			DPRINTF("%s", fcr_info[i].vrdi_absent);
 
 	if (fcr & IA32_FEATURE_CONTROL_SENTER_EN)
 		DPRINTF(" [SENTER param = 0x%llx]",
@@ -7466,9 +7466,9 @@ vmm_decode_mtrrcap_value(uint64_t val)
 	DPRINTF("(");
 	for (i = 0; i < 3; i++)
 		if (val & mtrrcap_info[i].vrdi_bit)
-			DPRINTF("%c", mtrrcap_info[i].vrdi_present);
+			DPRINTF("%s", mtrrcap_info[i].vrdi_present);
 		else
-			DPRINTF("%c", mtrrcap_info[i].vrdi_absent);
+			DPRINTF("%s", mtrrcap_info[i].vrdi_absent);
 
 	if (val & MTRRcap_FIXED)
 		DPRINTF(" [nr fixed ranges = 0x%llx]",
@@ -7503,9 +7503,9 @@ vmm_decode_mtrrdeftype_value(uint64_t mtrrdeftype)
 	DPRINTF("(");
 	for (i = 0; i < 2; i++)
 		if (mtrrdeftype & mtrrdeftype_info[i].vrdi_bit)
-			DPRINTF("%c", mtrrdeftype_info[i].vrdi_present);
+			DPRINTF("%s", mtrrdeftype_info[i].vrdi_present);
 		else
-			DPRINTF("%c", mtrrdeftype_info[i].vrdi_absent);
+			DPRINTF("%s", mtrrdeftype_info[i].vrdi_absent);
 
 	DPRINTF("type = ");
 	type = mtrr2mrt(mtrrdeftype & 0xff);
@@ -7539,9 +7539,9 @@ vmm_decode_efer_value(uint64_t efer)
 	DPRINTF("(");
 	for (i = 0; i < 4; i++)
 		if (efer & efer_info[i].vrdi_bit)
-			DPRINTF("%c", efer_info[i].vrdi_present);
+			DPRINTF("%s", efer_info[i].vrdi_present);
 		else
-			DPRINTF("%c", efer_info[i].vrdi_absent);
+			DPRINTF("%s", efer_info[i].vrdi_absent);
 
 	DPRINTF(")\n");
 }
