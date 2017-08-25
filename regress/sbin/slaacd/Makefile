@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2017/08/25 17:02:13 florian Exp $
+#	$OpenBSD: Makefile,v 1.2 2017/08/25 20:10:17 florian Exp $
 
 # The following ports must be installed:
 #
@@ -46,29 +46,31 @@ PYTHON =	python2.7 ${.CURDIR}/
 .endif
 
 setup:
-	@ifconfig ${PAIR1} rdomain ${RTABLE} 10.11.12.1/24 up
-	@ifconfig ${PAIR2} rdomain ${RTABLE} 10.11.12.2/24 up
-	@ifconfig ${PAIR1} rdomain ${RTABLE} patch ${PAIR2}
-	@ifconfig ${PAIR1} inet6 rdomain ${RTABLE} eui64
-	@ifconfig ${PAIR2} inet6 rdomain ${RTABLE} eui64
-	@ifconfig ${PAIR2} inet6 rdomain ${RTABLE} autoconf
-	@route -nq -T ${RTABLE} add -host default 10.11.12.1 -reject
-	@route -T ${RTABLE} exec slaacd -s ${CTR_SOCK}
+	@echo '\n======== $@ ========'
+	ifconfig ${PAIR1} rdomain ${RTABLE} 10.11.12.1/24 up
+	ifconfig ${PAIR2} rdomain ${RTABLE} 10.11.12.2/24 up
+	ifconfig ${PAIR1} rdomain ${RTABLE} patch ${PAIR2}
+	ifconfig ${PAIR1} inet6 rdomain ${RTABLE} eui64
+	ifconfig ${PAIR2} inet6 rdomain ${RTABLE} eui64
+	ifconfig ${PAIR2} inet6 rdomain ${RTABLE} autoconf
+	route -nq -T ${RTABLE} add -host default 10.11.12.1 -reject
+	route -T ${RTABLE} exec slaacd -s ${CTR_SOCK}
 
 cleanup:
-	@pkill -T ${RTABLE} -xf "slaacd -s ${CTR_SOCK}" || true
+	@echo '\n======== $@ ========'
+	pkill -T ${RTABLE} -xf "slaacd -s ${CTR_SOCK}" || true
 .for iface in ${PAIR1} ${PAIR2}
-	@ifconfig ${iface} destroy 2>/dev/null || true
+	ifconfig ${iface} destroy 2>/dev/null || true
 .endfor
 
 TARGETS	+=	send-solicitation
 run-regress-send-solicitation: cleanup setup
 	@echo '\n======== $@ ========'
-	@route -T${RTABLE} exec ${PYTHON}sniff_sol.py ${CTR_SOCK}
+	route -T${RTABLE} exec ${PYTHON}sniff_sol.py ${CTR_SOCK}
 
 TARGETS	+=	cleanup
 run-regress-cleanup: cleanup
-	@echo '\n======== $@ ========'
+
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
