@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.49 2017/06/29 17:17:28 deraadt Exp $	*/
+/*	$OpenBSD: vector.S,v 1.50 2017/08/25 19:28:48 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -125,6 +125,7 @@ IDTVEC(trap07)
 	INTRENTRY
 	sti
 	cld
+	SMAP_CLAC
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
 	INTRFASTEXIT
@@ -246,6 +247,7 @@ NENTRY(alltraps)
 	sti
 calltrap:
 	cld
+	SMAP_CLAC
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
@@ -364,6 +366,7 @@ IDTVEC(resume_lapic_ipi)
 	movl	$IPL_IPI,CPUVAR(ILEVEL)
         sti
 	cld
+	SMAP_CLAC
 	pushq	%rbx
 	call	_C_LABEL(x86_ipi_handler)
 	jmp	_C_LABEL(Xdoreti)
@@ -447,6 +450,7 @@ IDTVEC(resume_lapic_ltimer)
 	movl	$IPL_CLOCK,CPUVAR(ILEVEL)
 	sti
 	cld
+	SMAP_CLAC
 	pushq	%rbx
 	xorq	%rdi,%rdi
 	call	_C_LABEL(lapic_clockintr)
@@ -481,6 +485,7 @@ IDTVEC(resume_xen_upcall)
 	movl	$IPL_NET,CPUVAR(ILEVEL)
 	sti
 	cld
+	SMAP_CLAC
 	pushq	%rbx
 	call	_C_LABEL(xen_intr)
 	jmp	_C_LABEL(Xdoreti)
@@ -515,6 +520,7 @@ IDTVEC(resume_hyperv_upcall)
 	movl	$IPL_NET,CPUVAR(ILEVEL)
 	sti
 	cld
+	SMAP_CLAC
 	pushq	%rbx
 	call	_C_LABEL(hv_intr)
 	jmp	_C_LABEL(Xdoreti)
@@ -564,6 +570,7 @@ IDTVEC(intr_##name##num)						;\
 	movl	%ebx,CPUVAR(ILEVEL)					;\
 	sti								;\
 	cld								;\
+	SMAP_CLAC							;\
 	incl	CPUVAR(IDEPTH)						;\
 	movq	IS_HANDLERS(%r14),%rbx					;\
 6:									\

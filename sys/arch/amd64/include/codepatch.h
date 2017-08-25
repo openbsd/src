@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.h,v 1.3 2017/07/01 19:38:41 sf Exp $    */
+/*      $OpenBSD: codepatch.h,v 1.4 2017/08/25 19:28:48 guenther Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -50,5 +50,22 @@ void codepatch_call(uint16_t tag, void *func);
 #define CPTAG_STAC		1
 #define CPTAG_CLAC		2
 #define CPTAG_EOI		3
+
+/*
+ * As stac/clac SMAP instructions are 3 bytes, we want the fastest
+ * 3 byte nop sequence possible here.  This will be replaced by
+ * stac/clac instructions if SMAP is detected after booting.
+ *
+ * This would be 'nop (%rax)' if binutils could cope.
+ * Intel documents multi-byte NOP sequences as being available
+ * on all family 0x6 and 0xf processors (ie 686+)
+ */
+#define SMAP_NOP	.byte 0x0f, 0x1f, 0x00
+#define SMAP_STAC	CODEPATCH_START			;\
+			SMAP_NOP			;\
+			CODEPATCH_END(CPTAG_STAC)
+#define SMAP_CLAC	CODEPATCH_START			;\
+			SMAP_NOP			;\
+			CODEPATCH_END(CPTAG_CLAC)
 
 #endif /* _MACHINE_CODEPATCH_H_ */

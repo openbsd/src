@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.132 2017/07/20 18:22:25 bluhm Exp $	*/
+/*	$OpenBSD: trap.c,v 1.133 2017/08/25 19:28:48 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -142,6 +142,15 @@ trap(struct trapframe *frame)
 		    frame->tf_trapno, frame->tf_err, frame->tf_eip,
 		    frame->tf_cs, frame->tf_eflags, rcr2(), lapic_tpr);
 		printf("curproc %p\n", curproc);
+	}
+#endif
+#ifdef DIAGNOSTIC
+	if (curcpu()->ci_feature_sefflags_ebx & SEFF0EBX_SMAP) {
+		u_int ef = read_eflags();
+		if (ef & PSL_AC) {
+			write_eflags(ef & ~PSL_AC);
+			panic("%s: AC set on entry", "trap");
+		}
 	}
 #endif
 
@@ -536,6 +545,16 @@ syscall(struct trapframe *frame)
 	if (!USERMODE(frame->tf_cs, frame->tf_eflags))
 		panic("syscall");
 #endif
+#ifdef DIAGNOSTIC
+	if (curcpu()->ci_feature_sefflags_ebx & SEFF0EBX_SMAP) {
+		u_int ef = read_eflags();
+		if (ef & PSL_AC) {
+			write_eflags(ef & ~PSL_AC);
+			panic("%s: AC set on entry", "syscall");
+		}
+	}
+#endif
+
 	p = curproc;
 	p->p_md.md_regs = frame;
 	code = frame->tf_eax;
