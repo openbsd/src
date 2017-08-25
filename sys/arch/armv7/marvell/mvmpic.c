@@ -1,3 +1,4 @@
+/* $OpenBSD: mvmpic.c,v 1.2 2017/08/25 21:57:12 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
