@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.10 2017/07/27 20:25:27 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.11 2017/08/25 20:57:35 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -353,39 +353,43 @@ static inline int
 chk_scroll_state(struct wstpad *tp)
 {
 	if (tp->contacts != tp->prev_contacts || tp->btns || tp->btns_sync) {
-		tp->scroll.acc_dx = 0;
-		tp->scroll.acc_dy = 0;
+		tp->scroll.dz = 0;
+		tp->scroll.dw = 0;
 		return (0);
 	}
-	return ((tp->dx || tp->dy) && tp->t->matches >= STABLE);
+	return (tp->dx || tp->dy);
 }
 
 void
 wstpad_scroll(struct wstpad *tp, int dx, int dy, u_int *cmds)
 {
-	int sign = 0;
+	int sign;
 
 	/* Scrolling is either horizontal or vertical, but not both. */
-	if (dy) {
-		tp->scroll.acc_dy += dy;
-		if (tp->scroll.acc_dy <= -tp->scroll.vdist)
-			sign = 1;
-		else if (tp->scroll.acc_dy >= tp->scroll.vdist)
-			sign = -1;
-		if (sign) {
-			tp->scroll.acc_dy += sign * tp->scroll.vdist;
-			tp->scroll.dz = sign;
+
+	sign = (dy > 0) - (dy < 0);
+	if (sign) {
+		if (tp->scroll.dz != -sign) {
+			if (tp->t->matches < STABLE)
+				return;
+			tp->scroll.dz = -sign;
+			tp->scroll.acc_dy = -tp->scroll.vdist / 2;
+		}
+		tp->scroll.acc_dy += abs(dy);
+		if (tp->scroll.acc_dy >= 0) {
+			tp->scroll.acc_dy -= tp->scroll.vdist;
 			*cmds |= 1 << VSCROLL;
 		}
-	} else if (dx) {
-		tp->scroll.acc_dx += dx;
-		if (tp->scroll.acc_dx <= -tp->scroll.hdist)
-			sign = -1;
-		else if (tp->scroll.acc_dx >= tp->scroll.hdist)
-			sign = 1;
-		if (sign) {
-			tp->scroll.acc_dx -= sign * tp->scroll.hdist;
+	} else if ((sign = (dx > 0) - (dx < 0))) {
+		if (tp->scroll.dw != sign) {
+			if (tp->t->matches < STABLE)
+				return;
 			tp->scroll.dw = sign;
+			tp->scroll.acc_dx = -tp->scroll.hdist / 2;
+		}
+		tp->scroll.acc_dx += abs(dx);
+		if (tp->scroll.acc_dx >= 0) {
+			tp->scroll.acc_dx -= tp->scroll.hdist;
 			*cmds |= 1 << HSCROLL;
 		}
 	}
@@ -405,19 +409,20 @@ wstpad_f2scroll(struct wsmouseinput *input, u_int *cmds)
 	dy = NORTH(dir) || SOUTH(dir) ? tp->dy : 0;
 	dx = EAST(dir) || WEST(dir) ? tp->dx : 0;
 
-	if ((dx || dy) && IS_MT(tp)) {
-		t2 = get_2nd_touch(input);
-		if (t2 == NULL || t2->matches < STABLE)
-			return;
-		dir = t2->dir;
-		if ((dy > 0 && !NORTH(dir)) || (dy < 0 && !SOUTH(dir)))
-			return;
-		if ((dx > 0 && !EAST(dir)) || (dx < 0 && !WEST(dir)))
-			return;
+	if (dx || dy) {
+		if (IS_MT(tp)) {
+			t2 = get_2nd_touch(input);
+			if (t2 == NULL)
+				return;
+			dir = t2->dir;
+			if ((dy > 0 && !NORTH(dir)) || (dy < 0 && !SOUTH(dir)))
+				return;
+			if ((dx > 0 && !EAST(dir)) || (dx < 0 && !WEST(dir)))
+				return;
+		}
+		wstpad_scroll(tp, dx, dy, cmds);
+		set_freeze_ts(tp, 0, FREEZE_MS);
 	}
-
-	wstpad_scroll(tp, dx, dy, cmds);
-	set_freeze_ts(tp, 0, FREEZE_MS);
 }
 
 void
@@ -1315,8 +1320,8 @@ wstpad_configure(struct wsmouseinput *input)
 		tp->tap.clicktime = TAP_CLICKTIME_DEFAULT;
 		tp->tap.locktime = TAP_LOCKTIME_DEFAULT;
 
-		tp->scroll.hdist = 5 * h_unit;
-		tp->scroll.vdist = 5 * v_unit;
+		tp->scroll.hdist = 4 * h_unit;
+		tp->scroll.vdist = 4 * v_unit;
 		tp->tap.maxdist = 3 * h_unit;
 	}
 
