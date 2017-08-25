@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.22 2017/08/25 10:29:54 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.23 2017/08/25 20:00:35 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -107,3 +107,7 @@ file	dev/fdt/dwmmc.c			dwmmc
 device	dwdog
 attach	dwdog at fdt
 file	dev/fdt/dwdog.c			dwdog
+
+device	mvpinctrl
+attach	mvpinctrl at fdt
+file	dev/fdt/mvpinctrl.c		mvpinctrl

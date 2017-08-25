@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.83 2017/07/25 20:39:12 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.84 2017/08/25 20:00:34 patrick Exp $
 
 machine		armv7 arm
 
@@ -146,6 +146,7 @@ mvmbus*		at fdt?
 mvxhci*		at fdt?
 usb*		at mvxhci?
 mvahci*		at fdt?
+mvpinctrl*	at fdt?
 
 # Rockchip SoCs
 rkclock*	at fdt? early 1

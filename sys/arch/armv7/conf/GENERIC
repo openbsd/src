@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.88 2017/08/14 21:46:02 ians Exp $
+#	$OpenBSD: GENERIC,v 1.89 2017/08/25 20:00:34 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -152,6 +152,7 @@ mvmbus*		at fdt?
 mvxhci*		at fdt?
 usb*		at mvxhci?
 mvahci*		at fdt?
+mvpinctrl*	at fdt?
 
 # Rockchip SoCs
 rkclock*	at fdt? early 1
