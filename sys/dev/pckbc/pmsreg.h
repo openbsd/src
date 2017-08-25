@@ -1,4 +1,4 @@
-/* $OpenBSD: pmsreg.h,v 1.13 2015/09/05 14:02:21 bru Exp $ */
+/* $OpenBSD: pmsreg.h,v 1.14 2017/08/25 19:44:21 bru Exp $ */
 /* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
 
 #ifndef SYS_DEV_PCKBC_PMSREG_H
@@ -73,7 +73,8 @@
 #define SYNAPTICS_QUE_RESOLUTION		0x08
 #define SYNAPTICS_QUE_EXT_MODEL			0x09
 #define SYNAPTICS_QUE_EXT_CAPABILITIES		0x0c
-#define SYNAPTICS_QUE_EXT_DIMENSIONS		0x0d
+#define SYNAPTICS_QUE_EXT_MAX_COORDS		0x0d
+#define SYNAPTICS_QUE_EXT_MIN_COORDS		0x0f
 #define SYNAPTICS_QUE_EXT2_CAPABILITIES		0x10
 
 #define SYNAPTICS_CMD_SET_MODE			0x14
@@ -137,13 +138,14 @@
 /* Extended Capability bits */
 #define SYNAPTICS_EXT_CAP_CLICKPAD		(1 << 20)
 #define SYNAPTICS_EXT_CAP_ADV_GESTURE		(1 << 19)
-#define SYNAPTICS_EXT_CAP_MAX_DIMENSIONS	(1 << 17)
+#define SYNAPTICS_EXT_CAP_MAX_COORDS		(1 << 17)
+#define SYNAPTICS_EXT_CAP_MIN_COORDS		(1 << 13)
 #define SYNAPTICS_EXT_CAP_CLICKPAD_2BTN		(1 << 8)
 
-/* Extended Dimensions */
-#define SYNAPTICS_DIM_X(d)			((((d) & 0xff0000) >> 11) | \
+/* Coordinate Limits */
+#define SYNAPTICS_X_LIMIT(d)			((((d) & 0xff0000) >> 11) | \
 						 (((d) & 0xf00) >> 7))
-#define SYNAPTICS_DIM_Y(d)			((((d) & 0xff) << 5) | \
+#define SYNAPTICS_Y_LIMIT(d)			((((d) & 0xff) << 5) | \
 						 (((d) & 0xf000) >> 11))
 
 /* Extended Capability 2 */

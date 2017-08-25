@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.78 2017/07/21 20:10:10 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.79 2017/08/25 19:44:21 bru Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -84,7 +84,6 @@ struct synaptics_softc {
 	int identify;
 	int capabilities, ext_capabilities, ext2_capabilities;
 	int model, ext_model;
-	int resolution, dimension;
 	int modes;
 
 	int mode;
@@ -907,6 +906,7 @@ synaptics_get_hwinfo(struct pms_softc *sc)
 {
 	struct synaptics_softc *syn = sc->synaptics;
 	struct wsmousehw *hw;
+	int resolution, max_coords, min_coords;
 
 	hw = wsmouse_get_hw(sc->sc_wsmousedev);
 
@@ -925,12 +925,18 @@ synaptics_get_hwinfo(struct pms_softc *sc)
 		&syn->ext_capabilities))
 		return (-1);
 	if ((SYNAPTICS_ID_MAJOR(syn->identify) >= 4) &&
-	    synaptics_query(sc, SYNAPTICS_QUE_RESOLUTION, &syn->resolution))
+	    synaptics_query(sc, SYNAPTICS_QUE_RESOLUTION, &resolution))
 		return (-1);
 	if ((SYNAPTICS_CAP_EXTENDED_QUERIES(syn->capabilities) >= 5) &&
-	    (syn->ext_capabilities & SYNAPTICS_EXT_CAP_MAX_DIMENSIONS) &&
-	    synaptics_query(sc, SYNAPTICS_QUE_EXT_DIMENSIONS, &syn->dimension))
+	    (syn->ext_capabilities & SYNAPTICS_EXT_CAP_MAX_COORDS) &&
+	    synaptics_query(sc, SYNAPTICS_QUE_EXT_MAX_COORDS, &max_coords))
 		return (-1);
+	if ((SYNAPTICS_CAP_EXTENDED_QUERIES(syn->capabilities) >= 7 ||
+	    SYNAPTICS_ID_FULL(syn->identify) == 0x801) &&
+	    (syn->ext_capabilities & SYNAPTICS_EXT_CAP_MIN_COORDS) &&
+	    synaptics_query(sc, SYNAPTICS_QUE_EXT_MIN_COORDS, &min_coords))
+		return (-1);
+
 	if (SYNAPTICS_ID_FULL(syn->identify) >= 0x705) {
 		if (synaptics_query(sc, SYNAPTICS_QUE_MODES, &syn->modes))
 			return (-1);
@@ -950,16 +956,19 @@ synaptics_get_hwinfo(struct pms_softc *sc)
 	hw->hw_type = (syn->ext_capabilities & SYNAPTICS_EXT_CAP_CLICKPAD)
 	    ? WSMOUSEHW_CLICKPAD : WSMOUSEHW_TOUCHPAD;
 
-	if (syn->resolution & SYNAPTICS_RESOLUTION_VALID) {
-		hw->h_res = SYNAPTICS_RESOLUTION_X(syn->resolution);
-		hw->v_res = SYNAPTICS_RESOLUTION_Y(syn->resolution);
+	if (resolution & SYNAPTICS_RESOLUTION_VALID) {
+		hw->h_res = SYNAPTICS_RESOLUTION_X(resolution);
+		hw->v_res = SYNAPTICS_RESOLUTION_Y(resolution);
 	}
-	hw->x_min = SYNAPTICS_XMIN_BEZEL;
-	hw->y_min = SYNAPTICS_YMIN_BEZEL;
-	hw->x_max = (syn->dimension) ?
-	    SYNAPTICS_DIM_X(syn->dimension) : SYNAPTICS_XMAX_BEZEL;
-	hw->y_max = (syn->dimension) ?
-	    SYNAPTICS_DIM_Y(syn->dimension) : SYNAPTICS_YMAX_BEZEL;
+
+	hw->x_min = (min_coords ?
+	    SYNAPTICS_X_LIMIT(min_coords) : SYNAPTICS_XMIN_BEZEL);
+	hw->y_min = (min_coords ?
+	    SYNAPTICS_Y_LIMIT(min_coords) : SYNAPTICS_YMIN_BEZEL);
+	hw->x_max = (max_coords ?
+	    SYNAPTICS_X_LIMIT(max_coords) : SYNAPTICS_XMAX_BEZEL);
+	hw->y_max = (max_coords ?
+	    SYNAPTICS_Y_LIMIT(max_coords) : SYNAPTICS_YMAX_BEZEL);
 
 	hw->contacts_max = SYNAPTICS_MAX_FINGERS;
 
