@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: reorder_kernel.sh,v 1.2 2017/08/25 18:27:41 rpe Exp $
+# $OpenBSD: reorder_kernel.sh,v 1.3 2017/08/25 18:59:55 rpe Exp $
 #
 # Copyright (c) 2017 Robert Peichaer <rpe@openbsd.org>
 #
@@ -17,6 +17,8 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 set -o errexit
+
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 
 # Skip if /usr/share is on a nfs mounted filesystem.
 DISK_DEV=$(df /usr/share | sed '1d;s/ .*//')
