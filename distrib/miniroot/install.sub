@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1034 2017/08/24 15:21:56 tb Exp $
+#	$OpenBSD: install.sub,v 1.1035 2017/08/25 18:21:30 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1569,7 +1569,7 @@ install_files() {
 		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f"
 		case $_fsrc in
 		*.tgz)	$_unpriv ftp -D Installing -Vmo - "$_fsrc" |
-				tar -zxphf - -C /mnt
+				tar -zxphf - -C /mnt &&
 			if [[ $_f == ?(x)base*.tgz && $MODE == install ]]; then
 				ftp -D Extracting -Vmo - \
 				file:///mnt/var/sysmerge/${_f%%base*}etc.tgz |
