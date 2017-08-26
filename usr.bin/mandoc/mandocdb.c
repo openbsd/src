@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.202 2017/07/28 14:46:46 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.203 2017/08/26 12:59:13 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -2079,7 +2079,7 @@ dbprune(struct dba *dba)
 static void
 dbwrite(struct dba *dba)
 {
-	char		 tfn[32];
+	char		 tfn[33];
 	int		 status;
 	pid_t		 child;
 
@@ -2153,26 +2153,9 @@ dbwrite(struct dba *dba)
 	}
 
 out:
+	unlink(tfn);
 	*strrchr(tfn, '/') = '\0';
-	switch (child = fork()) {
-	case -1:
-		exitcode = (int)MANDOCLEVEL_SYSERR;
-		say("", "&fork rm");
-		return;
-	case 0:
-		execlp("rm", "rm", "-rf", tfn, (char *)NULL);
-		say("", "&exec rm");
-		exit((int)MANDOCLEVEL_SYSERR);
-	default:
-		break;
-	}
-	if (waitpid(child, &status, 0) == -1) {
-		exitcode = (int)MANDOCLEVEL_SYSERR;
-		say("", "&wait rm");
-	} else if (WIFSIGNALED(status) || WEXITSTATUS(status)) {
-		exitcode = (int)MANDOCLEVEL_SYSERR;
-		say("", "%s: Cannot remove temporary directory", tfn);
-	}
+	rmdir(tfn);
 }
 
 static int
