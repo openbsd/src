@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.676 2017/08/14 05:50:37 stsp Exp $
+$OpenBSD: usbdevs,v 1.677 2017/08/26 12:45:16 abieber Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3268,6 +3268,7 @@ product OQO ETHER01		0x8150	model 01 Ethernet
  * product ID allocations
  */
 product OPENMOKO2 ONERNG	0x6086	Moonbase Otago OneRNG
+product OPENMOKO2 CHAOSKEY	0x60c6	Altusmetrum ChaosKey 1.0
 
 /* Oregon Scientific */
 product OREGONSCI OWL_CM160	0xca05	OWL CM-160
