@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.97 2017/07/31 14:53:56 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.98 2017/08/26 13:53:46 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -350,7 +350,8 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 	bootcpu_hwinfo.type = (prid >> 8) & 0xff;
 	bootcpu_hwinfo.c1prid = 0;	/* No FPU */
 
-	bootcpu_hwinfo.tlbsize = 1 + ((cp0_get_config_1() >> 25) & 0x3f);
+	bootcpu_hwinfo.tlbsize = 1 + ((cp0_get_config_1() & CONFIG1_MMUSize1)
+	    >> CONFIG1_MMUSize1_SHIFT);
 	if (cp0_get_config_3() & CONFIG3_M) {
 		config4 = cp0_get_config_4();
 		if (((config4 & CONFIG4_MMUExtDef) >>

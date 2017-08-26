@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_mips64r2.c,v 1.2 2016/01/05 05:27:54 visa Exp $	*/
+/*	$OpenBSD: cache_mips64r2.c,v 1.3 2017/08/26 13:53:46 visa Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -24,6 +24,7 @@
 #include <sys/systm.h>
 
 #include <mips64/cache.h>
+#include <mips64/mips_cpu.h>
 #include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
@@ -64,17 +65,17 @@ mips64r2_ConfigCache(struct cpu_info *ci)
 
 	cfg = cp0_get_config_1();
 
-	a = 1 + ((cfg >> 7) & 0x07);
-	l = (cfg >> 10) & 0x07;
-	s = (cfg >> 13) & 0x07;
+	a = 1 + ((cfg & CONFIG1_DA) >> CONFIG1_DA_SHIFT);
+	l = (cfg & CONFIG1_DL) >> CONFIG1_DL_SHIFT;
+	s = (cfg & CONFIG1_DS) >> CONFIG1_DS_SHIFT;
 	ci->ci_l1data.linesize = 2 << l;
 	ci->ci_l1data.setsize = (64 << s) * ci->ci_l1data.linesize;
 	ci->ci_l1data.sets = a;
 	ci->ci_l1data.size = ci->ci_l1data.sets * ci->ci_l1data.setsize;
 
-	a = 1 + ((cfg >> 16) & 0x07);
-	l = (cfg >> 19) & 0x07;
-	s = (cfg >> 22) & 0x07;
+	a = 1 + ((cfg & CONFIG1_IA) >> CONFIG1_IA_SHIFT);
+	l = (cfg & CONFIG1_IL) >> CONFIG1_IL_SHIFT;
+	s = (cfg & CONFIG1_IS) >> CONFIG1_IS_SHIFT;
 	ci->ci_l1inst.linesize = 2 << l;
 	ci->ci_l1inst.setsize = (64 << s) * ci->ci_l1inst.linesize;
 	ci->ci_l1inst.sets = a;
