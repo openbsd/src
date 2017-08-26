@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.14 2017/08/13 11:45:22 jsg Exp $
+dnl	$OpenBSD: prep,v 1.15 2017/08/26 13:25:17 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -90,3 +90,8 @@ Install on systems without a supported miniroot:
 
  	dd if=/usr/local/share/u-boot/board/u-boot-with-spl.bin \
  	    of=/dev/sdXc seek=64
+
+  For systems based on Marvell ARMADA 38x SoCs:
+
+ 	dd if=/usr/local/share/u-boot/board/u-boot-spl.kwb \
+ 	    of=/dev/sdXc bs=512 seek=1
