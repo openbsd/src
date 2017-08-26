@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.13 2017/08/26 13:30:21 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.14 2017/08/26 16:24:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -419,37 +419,37 @@ rk3399_set_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
 	 * Linux kernel.
 	 */
 	switch (freq) {
-	case 2208000000:
-	case 2184000000:
-	case 2088000000:
-	case 2040000000:
-	case 2016000000:
-	case 1992000000:
-	case 1896000000:
-	case 1800000000:
-	case 1704000000:
-	case 1608000000:
-	case 1512000000:
-	case 1488000000:
-	case 1416000000:
-	case 1200000000:
+	case 2208000000U:
+	case 2184000000U:
+	case 2088000000U:
+	case 2040000000U:
+	case 2016000000U:
+	case 1992000000U:
+	case 1896000000U:
+	case 1800000000U:
+	case 1704000000U:
+	case 1608000000U:
+	case 1512000000U:
+	case 1488000000U:
+	case 1416000000U:
+	case 1200000000U:
 		postdiv1 = postdiv2 = refdiv = 1;
 		break;
-	case 1008000000:
-	case 816000000:
-	case 696000000:
+	case 1008000000U:
+	case 816000000U:
+	case 696000000U:
 		postdiv1 = 2; postdiv2 = refdiv = 1;
 		break;
-	case 600000000:
+	case 600000000U:
 		postdiv1 = 3; postdiv2 = refdiv = 1;
 		break;
-	case 408000000:
+	case 408000000U:
 		postdiv1 = postdiv2 = 2; refdiv = 1;
 		break;
-	case 216000000:
+	case 216000000U:
 		postdiv1 = 4; postdiv2 = 2; refdiv = 1;
 		break;
-	case 96000000:
+	case 96000000U:
 		postdiv1 = postdiv2 = 4; refdiv = 1;
 		break;
 	default:
