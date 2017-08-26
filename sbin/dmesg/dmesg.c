@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.27 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.28 2017/08/26 08:53:20 tom Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -96,7 +96,8 @@ main(int argc, char *argv[])
 		mib[1] = startupmsgs ? KERN_CONSBUFSIZE : KERN_MSGBUFSIZE;
 		len = sizeof(msgbufsize);
 		if (sysctl(mib, 2, &msgbufsize, &len, NULL, 0))
-			err(1, "sysctl: KERN_MSGBUFSIZE");
+			err(1, "sysctl: %s", startupmsgs ? "KERN_CONSBUFSIZE" :
+			    "KERN_MSGBUFSIZE");
 
 		msgbufsize += sizeof(struct msgbuf) - 1;
 		bufdata = calloc(1, msgbufsize);
@@ -106,7 +107,8 @@ main(int argc, char *argv[])
 		mib[1] = startupmsgs ? KERN_CONSBUF : KERN_MSGBUF;
 		len = msgbufsize;
 		if (sysctl(mib, 2, bufdata, &len, NULL, 0))
-			err(1, "sysctl: KERN_MSGBUF");
+			err(1, "sysctl: %s",
+			    startupmsgs ? "KERN_CONSBUF" : "KERN_MSGBUF");
 
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
