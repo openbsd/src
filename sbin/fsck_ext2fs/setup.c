@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.30 2016/04/28 12:17:15 krw Exp $	*/
+/*	$OpenBSD: setup.c,v 1.31 2017/08/26 06:32:06 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ setup(char *dev)
 	/*
 	 * Check and potentially fix certain fields in the super block.
 	 */
-	if ((sblock.e2fs.e2fs_rbcount < 0) ||
+	if (/* (sblock.e2fs.e2fs_rbcount < 0) || */
 			(sblock.e2fs.e2fs_rbcount > sblock.e2fs.e2fs_bcount)) {
 		pfatal("IMPOSSIBLE RESERVED BLOCK COUNT=%d IN SUPERBLOCK",
 			sblock.e2fs.e2fs_rbcount);

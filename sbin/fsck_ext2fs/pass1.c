@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.16 2015/08/20 22:02:20 deraadt Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.17 2017/08/26 06:32:06 otto Exp $	*/
 /*	$NetBSD: pass1.c,v 1.9 2000/01/31 11:40:12 bouyer Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		 * will detect any garbage after symlink string.
 		 */
 		if (inosize(dp) < EXT2_MAXSYMLINKLEN ||
-		    (EXT2_MAXSYMLINKLEN == 0 && dp->e2di_blocks == 0)) {
+		    (EXT2_MAXSYMLINKLEN == 0 && htole32(dp->e2di_nblock) == 0)) {
 			ndb = howmany(inosize(dp), sizeof(u_int32_t));
 			if (ndb > NDADDR) {
 				j = ndb - NDADDR;
