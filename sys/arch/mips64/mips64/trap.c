@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.127 2017/07/22 18:33:51 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.128 2017/08/26 15:21:48 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -465,6 +465,7 @@ fault_common_no_miss:
 		struct sysent *callp;
 		unsigned int code;
 		register_t tpc;
+		uint32_t branch = 0;
 		int error, numarg, numsys;
 		struct args {
 			register_t i[8];
@@ -475,10 +476,17 @@ fault_common_no_miss:
 
 		/* compute next PC after syscall instruction */
 		tpc = trapframe->pc; /* Remember if restart */
-		if (trapframe->cause & CR_BR_DELAY)
+		if (trapframe->cause & CR_BR_DELAY) {
+			/* Get the branch instruction. */
+			if (copyin32((const void *)locr0->pc, &branch) != 0) {
+				signal = SIGBUS;
+				sicode = BUS_OBJERR;
+				break;
+			}
+
 			locr0->pc = MipsEmulateBranch(locr0,
-			    trapframe->pc, 0, 0);
-		else
+			    trapframe->pc, 0, branch);
+		} else
 			locr0->pc += 4;
 		callp = p->p_p->ps_emul->e_sysent;
 		numsys = p->p_p->ps_emul->e_nsysent;
@@ -578,14 +586,24 @@ fault_common_no_miss:
 
 	case T_BREAK+T_USER:
 	    {
-		caddr_t va;
-		u_int32_t instr;
 		struct trapframe *locr0 = p->p_md.md_regs;
+		caddr_t va;
+		uint32_t branch = 0;
+		uint32_t instr;
 
 		/* compute address of break instruction */
 		va = (caddr_t)trapframe->pc;
-		if (trapframe->cause & CR_BR_DELAY)
+		if (trapframe->cause & CR_BR_DELAY) {
 			va += 4;
+
+			/* Read branch instruction. */
+			if (copyin32((const void *)trapframe->pc,
+			    &branch) != 0) {
+				signal = SIGBUS;
+				sicode = BUS_OBJERR;
+				break;
+			}
+		}
 
 		/* read break instruction */
 		copyin(va, &instr, sizeof(int32_t));
@@ -597,7 +615,7 @@ fault_common_no_miss:
 			/* skip instruction */
 			if (trapframe->cause & CR_BR_DELAY)
 				locr0->pc = MipsEmulateBranch(locr0,
-				    trapframe->pc, 0, 0);
+				    trapframe->pc, 0, branch);
 			else
 				locr0->pc += 4;
 			break;
@@ -607,7 +625,7 @@ fault_common_no_miss:
 			/* skip instruction */
 			if (trapframe->cause & CR_BR_DELAY)
 				locr0->pc = MipsEmulateBranch(locr0,
-				    trapframe->pc, 0, 0);
+				    trapframe->pc, 0, branch);
 			else
 				locr0->pc += 4;
 			break;
@@ -685,20 +703,31 @@ fault_common_no_miss:
 
 	case T_TRAP+T_USER:
 	    {
-		caddr_t va;
-		u_int32_t instr;
 		struct trapframe *locr0 = p->p_md.md_regs;
+		caddr_t va;
+		uint32_t branch = 0;
+		uint32_t instr;
 
 		/* compute address of trap instruction */
 		va = (caddr_t)trapframe->pc;
-		if (trapframe->cause & CR_BR_DELAY)
+		if (trapframe->cause & CR_BR_DELAY) {
 			va += 4;
+
+			/* Read branch instruction. */
+			if (copyin32((const void *)trapframe->pc,
+			    &branch) != 0) {
+				signal = SIGBUS;
+				sicode = BUS_OBJERR;
+				break;
+			}
+		}
+
 		/* read break instruction */
 		copyin(va, &instr, sizeof(int32_t));
 
 		if (trapframe->cause & CR_BR_DELAY)
 			locr0->pc = MipsEmulateBranch(locr0,
-			    trapframe->pc, 0, 0);
+			    trapframe->pc, 0, branch);
 		else
 			locr0->pc += 4;
 		/*
@@ -721,12 +750,22 @@ fault_common_no_miss:
 	    {
 		register_t *regs = (register_t *)trapframe;
 		caddr_t va;
+		uint32_t branch = 0;
 		InstFmt inst;
 
 		/* Compute the instruction's address. */
 		va = (caddr_t)trapframe->pc;
-		if (trapframe->cause & CR_BR_DELAY)
+		if (trapframe->cause & CR_BR_DELAY) {
 			va += 4;
+
+			/* Get the branch instruction. */
+			if (copyin32((const void *)trapframe->pc,
+			    &branch) != 0) {
+				signal = SIGBUS;
+				sicode = BUS_OBJERR;
+				break;
+			}
+		}
 
 		/* Get the faulting instruction. */
 		if (copyin32((void *)va, &inst.word) != 0) {
@@ -746,7 +785,7 @@ fault_common_no_miss:
 			/* Figure out where to continue. */
 			if (trapframe->cause & CR_BR_DELAY)
 				trapframe->pc = MipsEmulateBranch(trapframe,
-				    trapframe->pc, 0, 0);
+				    trapframe->pc, 0, branch);
 			else
 				trapframe->pc += 4;
 			return;
@@ -951,10 +990,7 @@ MipsEmulateBranch(struct trapframe *tf, vaddr_t instPC, uint32_t fsr,
 #define	GetBranchDest(InstPtr, inst) \
 	    (InstPtr + 4 + ((short)inst.IType.imm << 2))
 
-	if (curinst != 0)
-		inst = *(InstFmt *)&curinst;
-	else
-		inst = *(InstFmt *)instPC;
+	inst.word = curinst;
 
 	regsPtr[ZERO] = 0;	/* Make sure zero is 0x0 */
 

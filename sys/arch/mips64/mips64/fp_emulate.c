@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.15 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.16 2017/08/26 15:21:48 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -134,6 +134,7 @@ MipsFPTrap(struct trapframe *tf)
 	union sigval sv;
 	vaddr_t pc;
 	uint32_t fsr, excbits;
+	uint32_t branch = 0;
 	uint32_t insn;
 	InstFmt inst;
 	int sig = 0;
@@ -193,6 +194,15 @@ MipsFPTrap(struct trapframe *tf)
 		goto deliver;
 	}
 	inst = *(InstFmt *)&insn;
+
+	if (tf->cause & CR_BR_DELAY) {
+		if (copyin32((const void *)tf->pc, &branch) != 0) {
+			sig = SIGBUS;
+			fault_type = BUS_OBJERR;
+			sv.sival_ptr = (void *)tf->pc;
+			goto deliver;
+		}
+	}
 
 	/*
 	 * Emulate the instruction.
@@ -366,7 +376,8 @@ deliver:
 				 * only used to decide whether to branch or not
 				 * if the faulting instruction was BC1[FT].
 				 */
-				tf->pc = MipsEmulateBranch(tf, tf->pc, fsr, 0);
+				tf->pc = MipsEmulateBranch(tf, tf->pc, fsr,
+				    branch);
 			} else
 				tf->pc += 4;
 		}
