@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.140 2017/08/26 15:31:00 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.141 2017/08/26 15:36:25 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -50,7 +50,7 @@
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
-void	get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info);
+void	get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void	add_route(struct in_addr, struct in_addr, struct in_addr, int);
 void	flush_routes(void);
 int	delete_addresses(char *, struct in_addr, struct in_addr);
