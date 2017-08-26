@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.495 2017/08/23 08:50:56 jca Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.496 2017/08/26 14:45:57 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1985,7 +1985,11 @@ go_daemon(void)
 	/* Stop logging to stderr. */
 	log_perror = 0;
 	log_init(0, LOG_DAEMON);
+#ifdef DEBUG
+	log_setverbose(1);
+#else
 	log_setverbose(0);
+#endif	/* DEBUG */
 
 	if (rdaemon(nullfd) == -1)
 		fatal("Cannot daemonize");
