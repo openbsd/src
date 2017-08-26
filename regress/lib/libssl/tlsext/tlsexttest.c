@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.12 2017/08/12 23:39:24 beck Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.13 2017/08/26 20:23:46 doug Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -72,6 +72,383 @@ do {								\
 	fprintf(stderr, "[%s:%d] FAIL: ", __FILE__, __LINE__);	\
 	fprintf(stderr, msg, ##__VA_ARGS__);			\
 } while(0)
+
+/*
+ * Supported Application-Layer Protocol Negotiation - RFC 7301
+ *
+ * There are already extensive unit tests for this so this just
+ * tests the state info.
+ */
+
+const uint8_t tlsext_alpn_multiple_protos_val[] = {
+	/* opaque ProtocolName<1..2^8-1> -- 'http/1.1' */
+	0x08, /* len */
+	0x68, 0x74, 0x74, 0x70, 0x2f, 0x31, 0x2e, 0x31,
+	/* opaque ProtocolName<1..2^8-1> -- 'stun.nat' */
+	0x09, /* len */
+	0x73, 0x74, 0x75, 0x6e, 0x2e, 0x74, 0x75, 0x72, 0x6e
+};
+
+const uint8_t tlsext_alpn_multiple_protos[] = {
+	/* ProtocolName protocol_name_list<2..2^16-1> -- ALPN names */
+	0x00, 0x13, /* len of all names */
+	/* opaque ProtocolName<1..2^8-1> -- 'http/1.1' */
+	0x08, /* len */
+	0x68, 0x74, 0x74, 0x70, 0x2f, 0x31, 0x2e, 0x31,
+	/* opaque ProtocolName<1..2^8-1> -- 'stun.nat' */
+	0x09, /* len */
+	0x73, 0x74, 0x75, 0x6e, 0x2e, 0x74, 0x75, 0x72, 0x6e
+};
+
+const uint8_t tlsext_alpn_single_proto_val[] = {
+	/* opaque ProtocolName<1..2^8-1> -- 'http/1.1' */
+	0x08, /* len */
+	0x68, 0x74, 0x74, 0x70, 0x2f, 0x31, 0x2e, 0x31
+};
+
+const uint8_t tlsext_alpn_single_proto_name[] = {
+	0x68, 0x74, 0x74, 0x70, 0x2f, 0x31, 0x2e, 0x31 /* 'http/1.1' */
+};
+
+const uint8_t tlsext_alpn_single_proto[] = {
+	/* ProtocolName protocol_name_list<2..2^16-1> -- ALPN names */
+	0x00, 0x09, /* len of all names */
+	/* opaque ProtocolName<1..2^8-1> -- 'http/1.1' */
+	0x08, /* len */
+	0x68, 0x74, 0x74, 0x70, 0x2f, 0x31, 0x2e, 0x31
+};
+
+static int
+test_tlsext_alpn_clienthello(void)
+{
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	uint8_t *data = NULL;
+	CBB cbb;
+	CBS cbs;
+	int failure, alert;
+	size_t dlen;
+
+	CBB_init(&cbb, 0);
+
+	failure = 1;
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	/* By default, we don't need this */
+	if (tlsext_alpn_clienthello_needs(ssl)) {
+		FAIL("clienthello should not need ALPN by default");
+		goto err;
+	}
+
+	/*
+	 * Prereqs:
+	 * 1) Set s->internal->alpn_client_proto_list
+	 *    - Using SSL_set_alpn_protos()
+	 * 2) We have not finished or renegotiated.
+	 *    - S3I(s)->tmp.finish_md_len == 0
+	 */
+	if (SSL_set_alpn_protos(ssl, tlsext_alpn_single_proto_val,
+	    sizeof(tlsext_alpn_single_proto_val)) != 0) {
+		FAIL("should be able to set ALPN to http/1.1");
+		goto err;
+	}
+	if (!tlsext_alpn_clienthello_needs(ssl)) {
+		FAIL("clienthello should need ALPN by now");
+		goto err;
+	}
+
+	/* Make sure we can build the clienthello with a single proto. */
+
+	if (!tlsext_alpn_clienthello_build(ssl, &cbb)) {
+		FAIL("clienthello failed to build ALPN\n");
+		goto err;
+	}
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_alpn_single_proto)) {
+		FAIL("got clienthello ALPN with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_alpn_single_proto));
+		compare_data(data, dlen, tlsext_alpn_single_proto,
+		    sizeof(tlsext_alpn_single_proto));
+		goto err;
+	}
+	if (memcmp(data, tlsext_alpn_single_proto, dlen) != 0) {
+		FAIL("clienthello ALPN differs:\n");
+		compare_data(data, dlen, tlsext_alpn_single_proto,
+		    sizeof(tlsext_alpn_single_proto));
+		goto err;
+	}
+
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+	free(data);
+	data = NULL;
+
+	/* Make sure we can parse the single proto. */
+
+	CBS_init(&cbs, tlsext_alpn_single_proto,
+	    sizeof(tlsext_alpn_single_proto));
+	if (!tlsext_alpn_clienthello_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse ALPN");
+		goto err;
+	}
+
+	if (ssl->internal->alpn_client_proto_list_len !=
+	    sizeof(tlsext_alpn_single_proto_val)) {
+		FAIL("got clienthello ALPN with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_alpn_single_proto_val));
+		compare_data(ssl->internal->alpn_client_proto_list,
+		    ssl->internal->alpn_client_proto_list_len,
+		    tlsext_alpn_single_proto_val,
+		    sizeof(tlsext_alpn_single_proto_val));
+		goto err;
+	}
+	if (memcmp(ssl->internal->alpn_client_proto_list,
+	    tlsext_alpn_single_proto_val,
+	    sizeof(tlsext_alpn_single_proto_val)) != 0) {
+		FAIL("clienthello ALPN differs:\n");
+		compare_data(data, dlen, tlsext_alpn_single_proto_val,
+		    sizeof(tlsext_alpn_single_proto_val));
+		goto err;
+	}
+
+	/* Make sure we can build the clienthello with multiple entries. */
+
+	if (SSL_set_alpn_protos(ssl, tlsext_alpn_multiple_protos_val,
+	    sizeof(tlsext_alpn_multiple_protos_val)) != 0) {
+		FAIL("should be able to set ALPN to http/1.1");
+		goto err;
+	}
+	if (!tlsext_alpn_clienthello_needs(ssl)) {
+		FAIL("clienthello should need ALPN by now");
+		goto err;
+	}
+
+	if (!tlsext_alpn_clienthello_build(ssl, &cbb)) {
+		FAIL("clienthello failed to build ALPN\n");
+		goto err;
+	}
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_alpn_multiple_protos)) {
+		FAIL("got clienthello ALPN with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_alpn_multiple_protos));
+		compare_data(data, dlen, tlsext_alpn_multiple_protos,
+		    sizeof(tlsext_alpn_multiple_protos));
+		goto err;
+	}
+	if (memcmp(data, tlsext_alpn_multiple_protos, dlen) != 0) {
+		FAIL("clienthello ALPN differs:\n");
+		compare_data(data, dlen, tlsext_alpn_multiple_protos,
+		    sizeof(tlsext_alpn_multiple_protos));
+		goto err;
+	}
+
+	/* Make sure we can parse multiple protos */
+
+	CBS_init(&cbs, tlsext_alpn_multiple_protos,
+	    sizeof(tlsext_alpn_multiple_protos));
+	if (!tlsext_alpn_clienthello_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse ALPN");
+		goto err;
+	}
+
+	if (ssl->internal->alpn_client_proto_list_len !=
+	    sizeof(tlsext_alpn_multiple_protos_val)) {
+		FAIL("got clienthello ALPN with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_alpn_multiple_protos_val));
+		compare_data(ssl->internal->alpn_client_proto_list,
+		    ssl->internal->alpn_client_proto_list_len,
+		    tlsext_alpn_multiple_protos_val,
+		    sizeof(tlsext_alpn_multiple_protos_val));
+		goto err;
+	}
+	if (memcmp(ssl->internal->alpn_client_proto_list,
+	    tlsext_alpn_multiple_protos_val,
+	    sizeof(tlsext_alpn_multiple_protos_val)) != 0) {
+		FAIL("clienthello ALPN differs:\n");
+		compare_data(data, dlen, tlsext_alpn_multiple_protos_val,
+		    sizeof(tlsext_alpn_multiple_protos_val));
+		goto err;
+	}
+
+	/* Make sure we can remove the list and avoid ALPN */
+
+	free(ssl->internal->alpn_client_proto_list);
+	ssl->internal->alpn_client_proto_list = NULL;
+	ssl->internal->alpn_client_proto_list_len = 0;
+
+	if (tlsext_alpn_clienthello_needs(ssl)) {
+		FAIL("clienthello should need ALPN by default");
+		goto err;
+	}
+
+	failure = 0;
+
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
+static int
+test_tlsext_alpn_serverhello(void)
+{
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	uint8_t *data = NULL;
+	CBB cbb;
+	CBS cbs;
+	int failure, alert;
+	size_t dlen;
+
+	CBB_init(&cbb, 0);
+
+	failure = 1;
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	/* By default, ALPN isn't needed. */
+	if (tlsext_alpn_serverhello_needs(ssl)) {
+		FAIL("serverhello should not need ALPN by default\n");
+		goto err;
+	}
+
+	/*
+	 * The server has a single ALPN selection which is set by
+	 * SSL_CTX_set_alpn_select_cb() and calls SSL_select_next_proto().
+	 *
+	 * This will be a plain name and separate length.
+	 */
+	if ((S3I(ssl)->alpn_selected = malloc(sizeof(tlsext_alpn_single_proto_name))) == NULL) {
+		errx(1, "failed to malloc");
+	}
+	memcpy(S3I(ssl)->alpn_selected, tlsext_alpn_single_proto_name,
+	    sizeof(tlsext_alpn_single_proto_name));
+	S3I(ssl)->alpn_selected_len = sizeof(tlsext_alpn_single_proto_name);
+
+	if (!tlsext_alpn_serverhello_needs(ssl)) {
+		FAIL("serverhello should need ALPN after a protocol is selected\n");
+		goto err;
+	}
+
+	/* Make sure we can build a serverhello with one protocol */
+
+	if (!tlsext_alpn_serverhello_build(ssl, &cbb)) {
+		FAIL("serverhello should be able to build a response");
+		goto err;
+	}
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_alpn_single_proto)) {
+		FAIL("got clienthello ALPN with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_alpn_single_proto));
+		compare_data(data, dlen, tlsext_alpn_single_proto,
+		    sizeof(tlsext_alpn_single_proto));
+		goto err;
+	}
+	if (memcmp(data, tlsext_alpn_single_proto, dlen) != 0) {
+		FAIL("clienthello ALPN differs:\n");
+		compare_data(data, dlen, tlsext_alpn_single_proto,
+		    sizeof(tlsext_alpn_single_proto));
+		goto err;
+	}
+
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+	free(data);
+	data = NULL;
+
+	/* Make sure we can parse the single proto. */
+
+	CBS_init(&cbs, tlsext_alpn_single_proto,
+	    sizeof(tlsext_alpn_single_proto));
+
+	/* Shouldn't be able to parse without requesting */
+	if (tlsext_alpn_serverhello_parse(ssl, &cbs, &alert)) {
+		FAIL("Should only parse serverhello if we requested it");
+		goto err;
+	}
+
+	/* Should be able to parse once requested. */
+	if (SSL_set_alpn_protos(ssl, tlsext_alpn_single_proto_val,
+	    sizeof(tlsext_alpn_single_proto_val)) != 0) {
+		FAIL("should be able to set ALPN to http/1.1");
+		goto err;
+	}
+	if (!tlsext_alpn_serverhello_parse(ssl, &cbs, &alert)) {
+		FAIL("Should be able to parse serverhello when we request it");
+		goto err;
+	}
+
+	if (S3I(ssl)->alpn_selected_len !=
+	    sizeof(tlsext_alpn_single_proto_name)) {
+		FAIL("got serverhello ALPN with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_alpn_single_proto_name));
+		compare_data(S3I(ssl)->alpn_selected,
+		    S3I(ssl)->alpn_selected_len,
+		    tlsext_alpn_single_proto_name,
+		    sizeof(tlsext_alpn_single_proto_name));
+		goto err;
+	}
+	if (memcmp(S3I(ssl)->alpn_selected,
+	    tlsext_alpn_single_proto_name,
+	    sizeof(tlsext_alpn_single_proto_name)) != 0) {
+		FAIL("serverhello ALPN differs:\n");
+		compare_data(S3I(ssl)->alpn_selected,
+		    S3I(ssl)->alpn_selected_len,
+		    tlsext_alpn_single_proto_name,
+		    sizeof(tlsext_alpn_single_proto_name));
+		goto err;
+	}
+
+	/*
+	 * We should NOT be able to build a serverhello with multiple
+	 * protocol names.  However, the existing code did not check for this
+	 * case because it is passed in as an encoded value.
+	 */
+
+	/* Make sure we can remove the list and avoid ALPN */
+
+	free(S3I(ssl)->alpn_selected);
+	S3I(ssl)->alpn_selected = NULL;
+	S3I(ssl)->alpn_selected_len = 0;
+
+	if (tlsext_alpn_serverhello_needs(ssl)) {
+		FAIL("serverhello should need ALPN by default");
+		goto err;
+	}
+
+	failure = 0;
+
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+
+}
 
 /*
  * Supported Elliptic Curves - RFC 4492 section 5.1.1.
@@ -1885,6 +2262,9 @@ main(int argc, char **argv)
 	int failed = 0;
 
 	SSL_library_init();
+
+	failed |= test_tlsext_alpn_clienthello();
+	failed |= test_tlsext_alpn_serverhello();
 
 	failed |= test_tlsext_ec_clienthello();
 	failed |= test_tlsext_ec_serverhello();

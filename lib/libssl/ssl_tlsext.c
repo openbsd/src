@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.10 2017/08/23 15:39:38 doug Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.11 2017/08/26 20:23:46 doug Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -23,6 +23,144 @@
 #include "bytestring.h"
 #include "ssl_tlsext.h"
 
+/*
+ * Supported Application-Layer Protocol Negotiation - RFC 7301
+ */
+
+int
+tlsext_alpn_clienthello_needs(SSL *s)
+{
+	/* ALPN protos have been specified and this is the initial handshake */
+	return s->internal->alpn_client_proto_list != NULL &&
+	    S3I(s)->tmp.finish_md_len == 0;
+}
+
+int
+tlsext_alpn_clienthello_build(SSL *s, CBB *cbb)
+{
+	CBB protolist;
+
+	if (!CBB_add_u16_length_prefixed(cbb, &protolist))
+		return 0;
+
+	if (!CBB_add_bytes(&protolist, s->internal->alpn_client_proto_list,
+	    s->internal->alpn_client_proto_list_len))
+		return 0;
+
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
+}
+
+int
+tlsext_alpn_clienthello_parse(SSL *s, CBS *cbs, int *alert)
+{
+	CBS proto_name_list, alpn;
+	const unsigned char *selected;
+	unsigned char selected_len;
+	int r;
+
+	if (s->ctx->internal->alpn_select_cb == NULL)
+		return 1;
+
+	if (!CBS_get_u16_length_prefixed(cbs, &alpn))
+		goto err;
+	if (CBS_len(&alpn) < 2)
+		goto err;
+	if (CBS_len(cbs) != 0)
+		goto err;
+
+	CBS_dup(&alpn, &proto_name_list);
+	while (CBS_len(&proto_name_list) > 0) {
+		CBS proto_name;
+
+		if (!CBS_get_u8_length_prefixed(&proto_name_list, &proto_name))
+			goto err;
+		if (CBS_len(&proto_name) == 0)
+			goto err;
+	}
+
+	r = s->ctx->internal->alpn_select_cb(s, &selected, &selected_len,
+	    CBS_data(&alpn), CBS_len(&alpn),
+	    s->ctx->internal->alpn_select_cb_arg);
+	if (r == SSL_TLSEXT_ERR_OK) {
+		free(S3I(s)->alpn_selected);
+		if ((S3I(s)->alpn_selected = malloc(selected_len)) == NULL) {
+			*alert = SSL_AD_INTERNAL_ERROR;
+			return 0;
+		}
+		memcpy(S3I(s)->alpn_selected, selected, selected_len);
+		S3I(s)->alpn_selected_len = selected_len;
+	}
+
+	return 1;
+
+ err:
+	*alert = SSL_AD_DECODE_ERROR;
+	return 0;
+}
+
+int
+tlsext_alpn_serverhello_needs(SSL *s)
+{
+	return S3I(s)->alpn_selected != NULL;
+}
+
+int
+tlsext_alpn_serverhello_build(SSL *s, CBB *cbb)
+{
+	CBB list, selected;
+
+	if (!CBB_add_u16_length_prefixed(cbb, &list))
+		return 0;
+
+	if (!CBB_add_u8_length_prefixed(&list, &selected))
+		return 0;
+
+	if (!CBB_add_bytes(&selected, S3I(s)->alpn_selected,
+	    S3I(s)->alpn_selected_len))
+		return 0;
+
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
+}
+
+int
+tlsext_alpn_serverhello_parse(SSL *s, CBS *cbs, int *alert)
+{
+	CBS list, proto;
+
+	if (s->internal->alpn_client_proto_list == NULL) {
+		*alert = TLS1_AD_UNSUPPORTED_EXTENSION;
+		return 0;
+	}
+
+	if (!CBS_get_u16_length_prefixed(cbs, &list))
+		goto err;
+	if (CBS_len(cbs) != 0)
+		goto err;
+
+	if (!CBS_get_u8_length_prefixed(&list, &proto))
+		goto err;
+
+	if (CBS_len(&list) != 0)
+		goto err;
+	if (CBS_len(&proto) == 0)
+		goto err;
+
+	if (!CBS_stow(&proto, &(S3I(s)->alpn_selected),
+	    &(S3I(s)->alpn_selected_len)))
+		goto err;
+
+	return 1;
+
+ err:
+	*alert = TLS1_AD_DECODE_ERROR;
+	return 0;
+}
 
 /*
  * Supported Elliptic Curves - RFC 4492 section 5.1.1
@@ -918,6 +1056,15 @@ static struct tls_extension tls_extensions[] = {
 		.serverhello_needs = tlsext_sigalgs_serverhello_needs,
 		.serverhello_build = tlsext_sigalgs_serverhello_build,
 		.serverhello_parse = tlsext_sigalgs_serverhello_parse,
+	},
+	{
+		.type = TLSEXT_TYPE_application_layer_protocol_negotiation,
+		.clienthello_needs = tlsext_alpn_clienthello_needs,
+		.clienthello_build = tlsext_alpn_clienthello_build,
+		.clienthello_parse = tlsext_alpn_clienthello_parse,
+		.serverhello_needs = tlsext_alpn_serverhello_needs,
+		.serverhello_build = tlsext_alpn_serverhello_build,
+		.serverhello_parse = tlsext_alpn_serverhello_parse,
 	},
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.190 2017/08/12 21:47:59 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.191 2017/08/26 20:23:46 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -864,7 +864,7 @@ typedef struct ssl3_state_internal_st {
 	 * processed.
 	 */
 	unsigned char *alpn_selected;
-	unsigned int alpn_selected_len;
+	size_t alpn_selected_len;
 } SSL3_STATE_INTERNAL;
 #define S3I(s) (s->s3->internal)
 

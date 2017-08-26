@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.134 2017/08/13 21:10:42 bcook Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.135 2017/08/26 20:23:46 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -687,19 +687,6 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		return NULL;
 	ret += len;
 
-	if (s->internal->alpn_client_proto_list != NULL &&
-	    S3I(s)->tmp.finish_md_len == 0) {
-		if ((size_t)(limit - ret) <
-		    6 + s->internal->alpn_client_proto_list_len)
-			return (NULL);
-		s2n(TLSEXT_TYPE_application_layer_protocol_negotiation, ret);
-		s2n(2 + s->internal->alpn_client_proto_list_len, ret);
-		s2n(s->internal->alpn_client_proto_list_len, ret);
-		memcpy(ret, s->internal->alpn_client_proto_list,
-		    s->internal->alpn_client_proto_list_len);
-		ret += s->internal->alpn_client_proto_list_len;
-	}
-
 #ifndef OPENSSL_NO_SRTP
 	if (SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s)) {
 		int el;
@@ -778,90 +765,11 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	}
 #endif
 
-	if (S3I(s)->alpn_selected != NULL) {
-		const unsigned char *selected = S3I(s)->alpn_selected;
-		unsigned int len = S3I(s)->alpn_selected_len;
-
-		if ((long)(limit - ret - 4 - 2 - 1 - len) < 0)
-			return (NULL);
-		s2n(TLSEXT_TYPE_application_layer_protocol_negotiation, ret);
-		s2n(3 + len, ret);
-		s2n(1 + len, ret);
-		*ret++ = len;
-		memcpy(ret, selected, len);
-		ret += len;
-	}
-
 	if ((extdatalen = ret - p - 2) == 0)
 		return p;
 
 	s2n(extdatalen, p);
 	return ret;
-}
-
-/*
- * tls1_alpn_handle_client_hello is called to process the ALPN extension in a
- * ClientHello.
- *   data: the contents of the extension, not including the type and length.
- *   data_len: the number of bytes in data.
- *   al: a pointer to the alert value to send in the event of a non-zero
- *       return.
- *   returns: 1 on success.
- */
-static int
-tls1_alpn_handle_client_hello(SSL *s, const unsigned char *data,
-    unsigned int data_len, int *al)
-{
-	CBS cbs, proto_name_list, alpn;
-	const unsigned char *selected;
-	unsigned char selected_len;
-	int r;
-
-	if (s->ctx->internal->alpn_select_cb == NULL)
-		return (1);
-
-	if (data_len < 2)
-		goto parse_error;
-
-	CBS_init(&cbs, data, data_len);
-
-	/*
-	 * data should contain a uint16 length followed by a series of 8-bit,
-	 * length-prefixed strings.
-	 */
-	if (!CBS_get_u16_length_prefixed(&cbs, &alpn) ||
-	    CBS_len(&alpn) < 2 ||
-	    CBS_len(&cbs) != 0)
-		goto parse_error;
-
-	/* Validate data before sending to callback. */
-	CBS_dup(&alpn, &proto_name_list);
-	while (CBS_len(&proto_name_list) > 0) {
-		CBS proto_name;
-
-		if (!CBS_get_u8_length_prefixed(&proto_name_list, &proto_name) ||
-		    CBS_len(&proto_name) == 0)
-			goto parse_error;
-	}
-
-	r = s->ctx->internal->alpn_select_cb(s, &selected, &selected_len,
-	    CBS_data(&alpn), CBS_len(&alpn),
-	    s->ctx->internal->alpn_select_cb_arg);
-	if (r == SSL_TLSEXT_ERR_OK) {
-		free(S3I(s)->alpn_selected);
-		if ((S3I(s)->alpn_selected = malloc(selected_len)) == NULL) {
-			*al = SSL_AD_INTERNAL_ERROR;
-			return (-1);
-		}
-		memcpy(S3I(s)->alpn_selected, selected, selected_len);
-		S3I(s)->alpn_selected_len = selected_len;
-	}
-
-	return (1);
-
-parse_error:
-	*al = SSL_AD_DECODE_ERROR;
-	return (0);
 }
 
 int
@@ -907,14 +815,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 		if (!tlsext_clienthello_parse_one(s, &cbs, type, al))
 			return 0;
 
-		if (type ==
-		    TLSEXT_TYPE_application_layer_protocol_negotiation &&
-		    s->ctx->internal->alpn_select_cb != NULL &&
-		    S3I(s)->tmp.finish_md_len == 0) {
-			if (tls1_alpn_handle_client_hello(s, data,
-			    size, al) != 1)
-				return (0);
-		}
 		/* session ticket processed earlier */
 #ifndef OPENSSL_NO_SRTP
 		else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_use_srtp) {
@@ -988,44 +888,6 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 		if (!tlsext_serverhello_parse_one(s, &cbs, type, al))
 			return 0;
 
-		if (type == TLSEXT_TYPE_application_layer_protocol_negotiation) {
-			unsigned int len;
-
-			/* We must have requested it. */
-			if (s->internal->alpn_client_proto_list == NULL) {
-				*al = TLS1_AD_UNSUPPORTED_EXTENSION;
-				return 0;
-			}
-			if (size < 4) {
-				*al = TLS1_AD_DECODE_ERROR;
-				return (0);
-			}
-
-			/* The extension data consists of:
-			 *   uint16 list_length
-			 *   uint8 proto_length;
-			 *   uint8 proto[proto_length]; */
-			len = ((unsigned int)data[0]) << 8 |
-			    ((unsigned int)data[1]);
-			if (len != (unsigned int)size - 2) {
-				*al = TLS1_AD_DECODE_ERROR;
-				return (0);
-			}
-			len = data[2];
-			if (len != (unsigned int)size - 3) {
-				*al = TLS1_AD_DECODE_ERROR;
-				return (0);
-			}
-			free(S3I(s)->alpn_selected);
-			S3I(s)->alpn_selected = malloc(len);
-			if (S3I(s)->alpn_selected == NULL) {
-				*al = TLS1_AD_INTERNAL_ERROR;
-				return (0);
-			}
-			memcpy(S3I(s)->alpn_selected, data + 3, len);
-			S3I(s)->alpn_selected_len = len;
-
-		}
 #ifndef OPENSSL_NO_SRTP
 		else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_use_srtp) {
 			if (ssl_parse_serverhello_use_srtp_ext(s, data,
