@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.204 2017/08/26 15:55:41 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.205 2017/08/26 20:38:09 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -2114,7 +2114,7 @@ dbwrite(struct dba *dba)
 		say("", "&%s", tfn);
 		return;
 	}
-	cp1 = cp2 = NULL;
+	cp1 = cp2 = MAP_FAILED;
 	fd1 = fd2 = -1;
 	(void)strlcat(tfn, "/" MANDOC_DB, sizeof(tfn));
 	if (dba_write(tfn, dba) == -1) {
@@ -2140,12 +2140,12 @@ dbwrite(struct dba *dba)
 	if (sb1.st_size != sb2.st_size)
 		goto err;
 	if ((cp1 = mmap(NULL, sb1.st_size, PROT_READ, MAP_PRIVATE,
-	    fd1, 0)) == NULL) {
+	    fd1, 0)) == MAP_FAILED) {
 		say(MANDOC_DB, "&mmap");
 		goto err;
 	}
 	if ((cp2 = mmap(NULL, sb2.st_size, PROT_READ, MAP_PRIVATE,
-	    fd2, 0)) == NULL) {
+	    fd2, 0)) == MAP_FAILED) {
 		say(tfn, "&mmap");
 		goto err;
 	}
@@ -2159,9 +2159,9 @@ err:
 	say(MANDOC_DB, "Data changed, but cannot replace database");
 
 out:
-	if (cp1 != NULL)
+	if (cp1 != MAP_FAILED)
 		munmap(cp1, sb1.st_size);
-	if (cp2 != NULL)
+	if (cp2 != MAP_FAILED)
 		munmap(cp2, sb2.st_size);
 	if (fd1 != -1)
 		close(fd1);
