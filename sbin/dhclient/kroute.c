@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.139 2017/08/18 15:06:11 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.140 2017/08/26 15:31:00 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -50,7 +50,7 @@
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
-void	populate_rti_info(struct sockaddr **, struct rt_msghdr *);
+void	get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info);
 void	add_route(struct in_addr, struct in_addr, struct in_addr, int);
 void	flush_routes(void);
 int	delete_addresses(char *, struct in_addr, struct in_addr);
@@ -743,19 +743,16 @@ done:
 }
 
 /*
- * populate_rti_info populates the rti_info with pointers to the
+ * get_rtaddrs populates the rti_info with pointers to the
  * sockaddr's contained in a rtm message.
  */
 void
-populate_rti_info(struct sockaddr **rti_info, struct rt_msghdr *rtm)
+get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 {
-	struct sockaddr	*sa;
-	int		 i;
-
-	sa = (struct sockaddr *)((char *)(rtm) + rtm->rtm_hdrlen);
+	int	i;
 
 	for (i = 0; i < RTAX_MAX; i++) {
-		if (rtm->rtm_addrs & (1 << i)) {
+		if (addrs & (1 << i)) {
 			rti_info[i] = sa;
 			sa = (struct sockaddr *)((char *)(sa) +
 			    ROUNDUP(sa->sa_len));
