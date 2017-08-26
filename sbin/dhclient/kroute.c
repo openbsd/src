@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.141 2017/08/26 15:36:25 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.142 2017/08/26 18:52:56 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -285,7 +285,7 @@ priv_add_route(char *name, int rdomain, int routefd,
 	struct iovec		 iov[5];
 	struct rt_msghdr	 rtm;
 	struct sockaddr_in	 dest, gateway, mask;
-	int			 i, index, iovcnt = 0;
+	int			 index, iovcnt = 0;
 
 	index = if_nametoindex(name);
 	if (index == 0)
@@ -337,19 +337,15 @@ priv_add_route(char *name, int rdomain, int routefd,
 	iov[iovcnt].iov_base = &mask;
 	iov[iovcnt++].iov_len = sizeof(mask);
 
-	/* Check for EEXIST since other dhclient may not be done. */
-	for (i = 0; i < 5; i++) {
-		if (writev(routefd, iov, iovcnt) != -1)
-			break;
-		if (i == 4) {
+	if (writev(routefd, iov, iovcnt) == -1) {
+		if (errno != EEXIST || log_getverbose() != 0) {
 			strlcpy(destbuf, inet_ntoa(imsg->dest),
 			    sizeof(destbuf));
 			strlcpy(maskbuf, inet_ntoa(imsg->netmask),
 			    sizeof(maskbuf));
 			log_warn("failed to add route (%s/%s via %s)",
 			    destbuf, maskbuf, inet_ntoa(imsg->gateway));
-		} else if (errno == EEXIST || errno == ENETUNREACH)
-			sleep(1);
+		}
 	}
 }
 
