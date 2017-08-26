@@ -1,4 +1,5 @@
-.\"	$OpenBSD: erf.3,v 1.15 2016/04/26 19:49:22 tb Exp $
+'\" e
+.\"	$OpenBSD: erf.3,v 1.16 2017/08/26 17:04:28 schwarze Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +29,7 @@
 .\"
 .\"     from: @(#)erf.3	6.4 (Berkeley) 4/20/91
 .\"
-.Dd $Mdocdate: April 26 2016 $
+.Dd $Mdocdate: August 26 2017 $
 .Dt ERFC 3
 .Os
 .Sh NAME
@@ -59,7 +60,7 @@ These functions calculate the error function of
 .Pp
 The
 .Fn erf
-calculates the error function of x, and
+function calculates the error function of x, and
 the
 .Fn erff
 and
@@ -67,12 +68,11 @@ and
 functions are single and double precision versions of
 .Fn erf .
 The error function is defined as:
-.Bd -filled -offset indent
-.if n \{\
-erf(x) = 2/sqrt(pi)*\|integral from 0 to x of exp(\-t*t) dt. \}
-.if t \{\
-erf\|(x) :=
-(2/\(sr pi)\|\(is\d\s8\z0\s10\u\u\s8x\s10\d\|exp(\-t\u\s82\s10\d)\|dt. \}
+.Bd -unfilled -offset indent
+.EQ
+roman erf left ( x right ) =
+2 over sqrt pi int from 0 to x e sup {- t sup 2} dt
+.EN
 .Ed
 .Pp
 The

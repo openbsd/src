@@ -1,4 +1,5 @@
-.\"	$OpenBSD: lgamma.3,v 1.27 2016/04/26 19:49:22 tb Exp $
+'\" e
+.\"	$OpenBSD: lgamma.3,v 1.28 2017/08/26 17:04:28 schwarze Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +29,7 @@
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
 .\"
-.Dd $Mdocdate: April 26 2016 $
+.Dd $Mdocdate: August 26 2017 $
 .Dt LGAMMA 3
 .Os
 .Sh NAME
@@ -67,16 +68,20 @@
 .Fn tgammal "long double x"
 .Sh DESCRIPTION
 .Fn lgamma x
-.if t \{\
 returns ln\||\(*G(x)| where
-.Bd -unfilled -offset indent
-\(*G(x) = \(is\d\s8\z0\s10\u\u\s8\(if\s10\d t\u\s8x\-1\s10\d e\u\s8\-t\s10\d dt	for x > 0 and
+.Bd -filled -offset indent
+.EQ
+GAMMA left ( x right ) =
+int from 0 to inf t sup {x - 1} e sup -t dt
+.EN
+\ \ \ for x > 0 and
 .br
-\(*G(x) = \(*p/(\(*G(1\-x)\|sin(\(*px))	for x < 1.
+.EQ
+GAMMA left ( x right ) =
+pi over { GAMMA left ( 1 - x right ) sin left ( pi x right ) }
+.EN
+\ \ \ for x < 1.
 .Ed
-.\}
-.if n \
-returns ln\||\(*G(x)|.
 .Pp
 The external integer
 .Va signgam
