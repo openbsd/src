@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.89 2017/08/15 01:29:23 jasper Exp $
+# $OpenBSD: pkg-config,v 1.90 2017/08/26 09:03:51 jsg Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -477,7 +477,7 @@ sub do_cflags
 	foreach my $pkg (@$list) {
 		my $l = $configs{$pkg}->get_property('Cflags', $variables);
 		foreach (@$l) {
-			unless ($_ =~ /-I\/usr\/include/) {
+			unless ($_ =~ /-I\/usr\/include\/*$/) {
 				push(@$cflags, $_);
 			}
 		}
@@ -513,14 +513,14 @@ sub do_libs
 	foreach my $pkg (@$list) {
 		my $l = $configs{$pkg}->get_property('Libs', $variables);
 		foreach (@$l) {
-			unless ($_ =~ /-L\/usr\/lib/) {
+			unless ($_ =~ /-L\/usr\/lib\/*$/) {
 				push(@$libs, $_);
 			}
 		}
 		if ($mode{static}) {
 			my $lp = $configs{$pkg}->get_property('Libs.private', $variables);
 			foreach (@$lp) {
-				unless ($_ =~ /-L\/usr\/lib/) {
+				unless ($_ =~ /-L\/usr\/lib\/*/) {
 			   		push(@$libs, $_);
 				}
 			}
