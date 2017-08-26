@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.56 2017/08/15 01:22:05 jasper Exp $
+#	$OpenBSD: Makefile,v 1.57 2017/08/26 09:07:52 jsg Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -88,7 +88,10 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		variables-5 \
 		filter-system-dirs-1 \
 		filter-system-dirs-2 \
-		filter-system-dirs-3
+		filter-system-dirs-3 \
+		filter-system-dirs-4 \
+		filter-system-dirs-5 \
+		filter-system-dirs-6
 
 PKG_CONFIG?=	/usr/bin/pkg-config
 PCONFIG =	PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}
@@ -607,6 +610,24 @@ filter-system-dirs-3:
 	# Test removing -L/usr/lib as a system directory (static)
 	@echo ' -lfilter -lprivate-filter' > ${WANT}
 	@${VPCONFIG} --static --libs filter
+	@diff -u ${WANT} ${GOT}
+
+filter-system-dirs-4:
+	# Test not removing -I/usr/include/filter as a system directory
+	@echo '-I/usr/include/filter -DFILTER' > ${WANT}
+	@${VPCONFIG} --cflags filter2
+	@diff -u ${WANT} ${GOT}
+
+filter-system-dirs-5:
+	# Test not removing -L/usr/lib/filter as a system directory
+	@echo '-L/usr/lib/filter -lfilter' > ${WANT}
+	@${VPCONFIG} --libs filter2
+	@diff -u ${WANT} ${GOT}
+
+filter-system-dirs-6:
+	# Test not removing -L/usr/lib/filter as a system directory (static)
+	@echo '-L/usr/lib/filter -lfilter -lprivate-filter' > ${WANT}
+	@${VPCONFIG} --static --libs filter2
 	@diff -u ${WANT} ${GOT}
 
 clean:
