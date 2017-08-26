@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.12 2017/08/25 10:29:54 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.13 2017/08/26 13:30:21 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -40,11 +40,30 @@
 #define RK3399_CRU_CPLL_CON(i)		(0x0060 + (i) * 4)
 #define RK3399_CRU_GPLL_CON(i)		(0x0080 + (i) * 4)
 #define RK3399_CRU_NPLL_CON(i)		(0x00a0 + (i) * 4)
+#define  RK3399_CRU_PLL_FBDIV_MASK		(0xfff << 0)
+#define  RK3399_CRU_PLL_FBDIV_SHIFT		0
+#define  RK3399_CRU_PLL_POSTDIV2_MASK		(0x7 << 12)
+#define  RK3399_CRU_PLL_POSTDIV2_SHIFT		12
+#define  RK3399_CRU_PLL_POSTDIV1_MASK		(0x7 << 8)
+#define  RK3399_CRU_PLL_POSTDIV1_SHIFT		8
+#define  RK3399_CRU_PLL_REFDIV_MASK		(0x3f << 0)
+#define  RK3399_CRU_PLL_REFDIV_SHIFT		0
 #define  RK3399_CRU_PLL_PLL_WORK_MODE_MASK	(0x3 << 8)
 #define  RK3399_CRU_PLL_PLL_WORK_MODE_SLOW	(0x0 << 8)
 #define  RK3399_CRU_PLL_PLL_WORK_MODE_NORMAL	(0x1 << 8)
 #define  RK3399_CRU_PLL_PLL_WORK_MODE_DEEP_SLOW	(0x2 << 8)
+#define  RK3399_CRU_PLL_PLL_LOCK		(1U << 31)
 #define RK3399_CRU_CLKSEL_CON(i)	(0x0100 + (i) * 4)
+#define  RK3399_CRU_ACLKM_CORE_DIV_CON_MASK	(0x1f << 8)
+#define  RK3399_CRU_ACLKM_CORE_DIV_CON_SHIFT	8
+#define  RK3399_CRU_CORE_PLL_SEL_MASK		(0x3 << 6)
+#define  RK3399_CRU_CORE_PLL_SEL_SHIFT		6
+#define  RK3399_CRU_CLK_CORE_DIV_CON_MASK	(0x1f << 0)
+#define  RK3399_CRU_CLK_CORE_DIV_CON_SHIFT	0
+#define  RK3399_CRU_PCLK_DBG_DIV_CON_MASK	(0x1f << 8)
+#define  RK3399_CRU_PCLK_DBG_DIV_CON_SHIFT	8
+#define  RK3399_CRU_ATCLK_CORE_DIV_CON_MASK	(0x1f << 0)
+#define  RK3399_CRU_ATCLK_CORE_DIV_CON_SHIFT	0
 #define RK3399_CRU_CLKGATE_CON(i)	(0x0300 + (i) * 4)
 #define RK3399_CRU_SOFTRST_CON(i)	(0x0400 + (i) * 4)
 #define RK3399_CRU_SDMMC_CON(i)		(0x0580 + (i) * 4)
@@ -329,15 +348,35 @@ rk3288_reset(void *cookie, uint32_t *cells, int on)
 void
 rk3399_init(struct rkclock_softc *sc)
 {
+	int node;
+
 	rkclock_cpuspeed_sc = sc;
 	cpu_cpuspeed = rk3399_cpuspeed;
 
+	/*
+	 * Since the hardware comes up with a really conservative CPU
+	 * clock frequency, and U-Boot doesn't set it to a more
+	 * reasonable default, try to do so here.  These defaults were
+	 * chosen assuming that the voltage for both clusters is at
+	 * least 1.0 V.  Only do this on the Firefly-RK3399 for now
+	 * where this is likely to be true given the default voltages
+	 * for the regulators on that board.
+	 */
+	node = OF_finddevice("/");
+	if (OF_is_compatible(node, "firefly,firefly-rk3399")) {
+		uint32_t idx;
+		
+		/* Run the "LITTLE" cluster at 1.2 GHz. */
+		idx = RK3399_ARMCLKL;
+		rk3399_set_frequency(sc, &idx, 1200000000);
+
 #ifdef MULTIPROCESSOR
-	/* Switch PLL of the "big" cluster into normal mode. */
-	HWRITE4(sc, RK3399_CRU_BPLL_CON(3),
-	    RK3399_CRU_PLL_PLL_WORK_MODE_MASK << 16 |
-	    RK3399_CRU_PLL_PLL_WORK_MODE_NORMAL);
+		/* Switch PLL of the "big" cluster into normal mode. */
+		HWRITE4(sc, RK3399_CRU_BPLL_CON(3),
+		    RK3399_CRU_PLL_PLL_WORK_MODE_MASK << 16 |
+		    RK3399_CRU_PLL_PLL_WORK_MODE_NORMAL);
 #endif
+	}
 }
 
 uint32_t
@@ -355,12 +394,119 @@ rk3399_get_pll(struct rkclock_softc *sc, bus_size_t base)
 		return 32768;
 
 	reg = HREAD4(sc, base + 0x0000);
-	fbdiv = reg & 0xfff;
+	fbdiv = (reg & RK3399_CRU_PLL_FBDIV_MASK) >>
+	    RK3399_CRU_PLL_FBDIV_SHIFT;
 	reg = HREAD4(sc, base + 0x0004);
-	postdiv2 = (reg >> 12) & 0x7;
-	postdiv1 = (reg >> 8) & 0x7;
-	refdiv = reg & 0x3f;
+	postdiv2 = (reg & RK3399_CRU_PLL_POSTDIV2_MASK) >>
+	    RK3399_CRU_PLL_POSTDIV2_SHIFT;
+	postdiv1 = (reg & RK3399_CRU_PLL_POSTDIV1_MASK) >>
+	    RK3399_CRU_PLL_POSTDIV1_SHIFT;
+	refdiv = (reg & RK3399_CRU_PLL_REFDIV_MASK) >>
+	    RK3399_CRU_PLL_REFDIV_SHIFT;
 	return 24000000ULL * fbdiv / refdiv / postdiv1 / postdiv2;
+}
+
+int
+rk3399_set_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
+{
+	uint32_t fbdiv, postdiv1, postdiv2, refdiv;
+
+	/*
+	 * It is not clear whether all combinations of the clock
+	 * dividers result in a stable clock.  Therefore this function
+	 * only supports a limited set of PLL clock rates.  For now
+	 * this set covers all the CPU frequencies supported by the
+	 * Linux kernel.
+	 */
+	switch (freq) {
+	case 2208000000:
+	case 2184000000:
+	case 2088000000:
+	case 2040000000:
+	case 2016000000:
+	case 1992000000:
+	case 1896000000:
+	case 1800000000:
+	case 1704000000:
+	case 1608000000:
+	case 1512000000:
+	case 1488000000:
+	case 1416000000:
+	case 1200000000:
+		postdiv1 = postdiv2 = refdiv = 1;
+		break;
+	case 1008000000:
+	case 816000000:
+	case 696000000:
+		postdiv1 = 2; postdiv2 = refdiv = 1;
+		break;
+	case 600000000:
+		postdiv1 = 3; postdiv2 = refdiv = 1;
+		break;
+	case 408000000:
+		postdiv1 = postdiv2 = 2; refdiv = 1;
+		break;
+	case 216000000:
+		postdiv1 = 4; postdiv2 = 2; refdiv = 1;
+		break;
+	case 96000000:
+		postdiv1 = postdiv2 = 4; refdiv = 1;
+		break;
+	default:
+		printf("%s: %d MHz\n", __func__, freq);
+		return -1;
+	}
+
+	/* Calculate feedback divider. */
+	fbdiv = freq * postdiv1 * postdiv2 * refdiv / 24000000;
+
+	/*
+	 * Select slow mode to guarantee a stable clock while we're
+	 * adjusting the PLL.
+	 */
+	HWRITE4(sc, base + 0x000c,
+	    RK3399_CRU_PLL_PLL_WORK_MODE_MASK << 16 |
+	    RK3399_CRU_PLL_PLL_WORK_MODE_SLOW);
+
+	/* Set PLL rate. */
+	HWRITE4(sc, base + 0x0000,
+	    RK3399_CRU_PLL_FBDIV_MASK << 16 |
+	    fbdiv << RK3399_CRU_PLL_FBDIV_SHIFT);
+	HWRITE4(sc, base + 0x0004,
+	    RK3399_CRU_PLL_POSTDIV2_MASK << 16 |
+	    postdiv2 << RK3399_CRU_PLL_POSTDIV2_SHIFT |
+	    RK3399_CRU_PLL_POSTDIV1_MASK << 16 |
+	    postdiv1 << RK3399_CRU_PLL_POSTDIV1_SHIFT |
+	    RK3399_CRU_PLL_REFDIV_MASK << 16 |
+	    refdiv << RK3399_CRU_PLL_REFDIV_SHIFT);
+
+	/* Wait for PLL to stabilize. */
+	while ((HREAD4(sc, base + 0x0008) & RK3399_CRU_PLL_PLL_LOCK) == 0)
+		delay(10);
+
+	/* Switch back to normal mode. */
+	HWRITE4(sc, base + 0x000c,
+	    RK3399_CRU_PLL_PLL_WORK_MODE_MASK << 16 |
+	    RK3399_CRU_PLL_PLL_WORK_MODE_NORMAL);
+
+	return 0;
+}
+
+uint32_t
+rk3399_armclk_parent(uint32_t mux)
+{
+	switch (mux) {
+	case 0:
+		return RK3399_PLL_ALPLL;
+	case 1:
+		return RK3399_PLL_ABPLL;
+	case 2:
+		return RK3399_PLL_DPLL;
+	case 3:
+		return RK3399_PLL_GPLL;
+	}
+
+	return 0;
 }
 
 uint32_t
@@ -370,24 +516,67 @@ rk3399_get_armclk(struct rkclock_softc *sc, bus_size_t clksel)
 	uint32_t idx;
 
 	reg = HREAD4(sc, clksel);
-	mux = (reg >> 6) & 0x3;
-	div_con = reg & 0x1f;
-	switch (mux) {
-	case 0:
-		idx = RK3399_PLL_ALPLL;
-		break;
-	case 1:
-		idx = RK3399_PLL_ABPLL;
-		break;
-	case 2:
-		idx = RK3399_PLL_DPLL;
-		break;
-	case 3:
-		idx = RK3399_PLL_GPLL;
-		break;
-	}
+	mux = (reg & RK3399_CRU_CORE_PLL_SEL_MASK) >>
+	    RK3399_CRU_CORE_PLL_SEL_SHIFT;
+	div_con = (reg & RK3399_CRU_CLK_CORE_DIV_CON_MASK) >>
+	    RK3399_CRU_CLK_CORE_DIV_CON_SHIFT;
+	idx = rk3399_armclk_parent(mux);
 	
 	return rk3399_get_frequency(sc, &idx) / (div_con + 1);
+}
+
+int
+rk3399_set_armclk(struct rkclock_softc *sc, bus_size_t clksel, uint32_t freq)
+{
+	uint32_t reg, mux;
+	uint32_t old_freq, div;
+	uint32_t idx;
+
+	old_freq = rk3399_get_armclk(sc, clksel);
+	if (freq == old_freq)
+		return 0;
+
+	reg = HREAD4(sc, clksel);
+	mux = (reg & RK3399_CRU_CORE_PLL_SEL_MASK) >>
+	    RK3399_CRU_CORE_PLL_SEL_SHIFT;
+	idx = rk3399_armclk_parent(mux);
+
+	/* Keep the atclk_core and pclk_dbg clocks at or below 200 MHz. */
+	div = 1;
+	while (freq / (div + 1) > 200000000)
+		div++;
+
+	/* When ramping up, set clock dividers first. */
+	if (freq > old_freq) {
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(0),
+		    RK3399_CRU_CLK_CORE_DIV_CON_MASK << 16 |
+		    0 << RK3399_CRU_CLK_CORE_DIV_CON_SHIFT |
+		    RK3399_CRU_ACLKM_CORE_DIV_CON_MASK << 16 |
+		    1 << RK3399_CRU_ACLKM_CORE_DIV_CON_SHIFT);
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(1),
+		    RK3399_CRU_PCLK_DBG_DIV_CON_MASK << 16 |
+		    div << RK3399_CRU_PCLK_DBG_DIV_CON_SHIFT |
+		    RK3399_CRU_ATCLK_CORE_DIV_CON_MASK << 16 |
+		    div << RK3399_CRU_ATCLK_CORE_DIV_CON_SHIFT);
+	}
+
+	rk3399_set_frequency(sc, &idx, freq);
+
+	/* When ramping dowm, set clock dividers last. */
+	if (freq < old_freq) {
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(0),
+		    RK3399_CRU_CLK_CORE_DIV_CON_MASK << 16 |
+		    0 << RK3399_CRU_CLK_CORE_DIV_CON_SHIFT |
+		    RK3399_CRU_ACLKM_CORE_DIV_CON_MASK << 16 |
+		    1 << RK3399_CRU_ACLKM_CORE_DIV_CON_SHIFT);
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(1),
+		    RK3399_CRU_PCLK_DBG_DIV_CON_MASK << 16 |
+		    div << RK3399_CRU_PCLK_DBG_DIV_CON_SHIFT |
+		    RK3399_CRU_ATCLK_CORE_DIV_CON_MASK << 16 |
+		    div << RK3399_CRU_ATCLK_CORE_DIV_CON_SHIFT);
+	}
+	
+	return 0;
 }
 
 uint32_t
@@ -490,7 +679,19 @@ rk3399_get_frequency(void *cookie, uint32_t *cells)
 int
 rk3399_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 {
+	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case RK3399_PLL_ALPLL:
+		return rk3399_set_pll(sc, RK3399_CRU_LPLL_CON(0), freq);
+	case RK3399_PLL_ABPLL:
+		return rk3399_set_pll(sc, RK3399_CRU_BPLL_CON(0), freq);
+	case RK3399_ARMCLKL:
+		return rk3399_set_armclk(sc, RK3399_CRU_CLKSEL_CON(0), freq);
+	case RK3399_ARMCLKB:
+		return rk3399_set_armclk(sc, RK3399_CRU_CLKSEL_CON(2), freq);
+	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
 	return -1;
@@ -557,6 +758,8 @@ rk3399_cpuspeed(int *freq)
 	*freq = rk3399_get_frequency(rkclock_cpuspeed_sc, &idx) / 1000000;
 	return 0;
 }
+
+/* PMUCRU */
 
 uint32_t
 rk3399_pmu_get_frequency(void *cookie, uint32_t *cells)
