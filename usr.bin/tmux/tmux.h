@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.800 2017/08/16 12:12:54 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.801 2017/08/27 08:33:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -361,6 +361,7 @@ enum tty_code_code {
 	TTYC_KIC6,
 	TTYC_KIC7,
 	TTYC_KICH1,
+	TTYC_KIND,
 	TTYC_KLFT2,
 	TTYC_KLFT3,
 	TTYC_KLFT4,
@@ -382,6 +383,7 @@ enum tty_code_code {
 	TTYC_KPRV5,
 	TTYC_KPRV6,
 	TTYC_KPRV7,
+	TTYC_KRI,
 	TTYC_KRIT2,
 	TTYC_KRIT3,
 	TTYC_KRIT4,
