@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.19 2017/08/09 03:44:33 jsg Exp $ */
+/* $OpenBSD: machdep.c,v 1.20 2017/08/27 11:03:59 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -398,6 +398,8 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_lr = pack->ep_entry;
 	tf->tf_elr = pack->ep_entry; /* ??? */
 	tf->tf_spsr = PSR_M_EL0t;
+
+	retval[1] = 0;
 }
 
 void
