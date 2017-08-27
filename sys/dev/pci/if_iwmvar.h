@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.33 2017/08/13 15:34:54 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.34 2017/08/27 12:38:23 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -286,6 +286,7 @@ struct iwm_rx_ring {
 #define IWM_FLAG_BINDING_ACTIVE	0x10	/* MAC->PHY binding added to firmware */
 #define IWM_FLAG_STA_ACTIVE	0x20	/* AP added to firmware station table */
 #define IWM_FLAG_TE_ACTIVE	0x40	/* time event is scheduled */
+#define IWM_FLAG_HW_ERR		0x80	/* hardware error occurred */
 
 struct iwm_ucode_status {
 	uint32_t uc_error_event_table;

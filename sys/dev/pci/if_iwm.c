@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.212 2017/08/23 13:05:12 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.213 2017/08/27 12:38:23 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6517,6 +6517,7 @@ iwm_stop(struct ifnet *ifp)
 	sc->sc_flags &= ~IWM_FLAG_BINDING_ACTIVE;
 	sc->sc_flags &= ~IWM_FLAG_STA_ACTIVE;
 	sc->sc_flags &= ~IWM_FLAG_TE_ACTIVE;
+	sc->sc_flags &= ~IWM_FLAG_HW_ERR;
 
 	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 
@@ -7169,7 +7170,6 @@ int
 iwm_intr(void *arg)
 {
 	struct iwm_softc *sc = arg;
-	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
 	int handled = 0;
 	int r1, r2, rv = 0;
 	int isperiodic = 0;
@@ -7218,6 +7218,15 @@ iwm_intr(void *arg)
 	/* ignored */
 	handled |= (r1 & (IWM_CSR_INT_BIT_ALIVE /*| IWM_CSR_INT_BIT_SCD*/));
 
+	if (r1 & IWM_CSR_INT_BIT_RF_KILL) {
+		handled |= IWM_CSR_INT_BIT_RF_KILL;
+		if (iwm_check_rfkill(sc)) {
+			task_add(systq, &sc->init_task);
+			rv = 1;
+			goto out;
+		}
+	}
+
 	if (r1 & IWM_CSR_INT_BIT_SW_ERR) {
 #ifdef IWM_DEBUG
 		int i;
@@ -7238,7 +7247,6 @@ iwm_intr(void *arg)
 #endif
 
 		printf("%s: fatal firmware error\n", DEVNAME(sc));
-		iwm_stop(ifp);
 		task_add(systq, &sc->init_task);
 		rv = 1;
 		goto out;
@@ -7248,7 +7256,8 @@ iwm_intr(void *arg)
 	if (r1 & IWM_CSR_INT_BIT_HW_ERR) {
 		handled |= IWM_CSR_INT_BIT_HW_ERR;
 		printf("%s: hardware error, stopping device \n", DEVNAME(sc));
-		iwm_stop(ifp);
+		sc->sc_flags |= IWM_FLAG_HW_ERR;
+		task_add(systq, &sc->init_task);
 		rv = 1;
 		goto out;
 	}
@@ -7260,13 +7269,6 @@ iwm_intr(void *arg)
 
 		sc->sc_fw_chunk_done = 1;
 		wakeup(&sc->sc_fw);
-	}
-
-	if (r1 & IWM_CSR_INT_BIT_RF_KILL) {
-		handled |= IWM_CSR_INT_BIT_RF_KILL;
-		if (iwm_check_rfkill(sc) && (ifp->if_flags & IFF_UP)) {
-			iwm_stop(ifp);
-		}
 	}
 
 	if (r1 & IWM_CSR_INT_BIT_RX_PERIODIC) {
@@ -7739,23 +7741,27 @@ iwm_init_task(void *arg1)
 {
 	struct iwm_softc *sc = arg1;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int s;
+	int s = splnet();
 	int generation = sc->sc_generation;
+	int fatal = (sc->sc_flags & (IWM_FLAG_HW_ERR | IWM_FLAG_RFKILL));
 
 	rw_enter_write(&sc->ioctl_rwl);
 	if (generation != sc->sc_generation) {
 		rw_exit(&sc->ioctl_rwl);
+		splx(s);
 		return;
 	}
-	s = splnet();
 
 	if (ifp->if_flags & IFF_RUNNING)
 		iwm_stop(ifp);
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
+	else
+		sc->sc_flags &= ~IWM_FLAG_HW_ERR;
+
+	if (!fatal && (ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
 		iwm_init(ifp);
 
-	splx(s);
 	rw_exit(&sc->ioctl_rwl);
+	splx(s);
 }
 
 int
@@ -7778,9 +7784,12 @@ iwm_activate(struct device *self, int act)
 	int err = 0;
 
 	switch (act) {
-	case DVACT_SUSPEND:
-		if (ifp->if_flags & IFF_RUNNING)
+	case DVACT_QUIESCE:
+		if (ifp->if_flags & IFF_RUNNING) {
+			rw_enter_write(&sc->ioctl_rwl);
 			iwm_stop(ifp);
+			rw_exit(&sc->ioctl_rwl);
+		}
 		break;
 	case DVACT_RESUME:
 		err = iwm_resume(sc);
