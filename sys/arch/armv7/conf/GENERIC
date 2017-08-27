@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.91 2017/08/25 20:09:34 patrick Exp $
+#	$OpenBSD: GENERIC,v 1.92 2017/08/27 21:23:49 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -110,6 +110,9 @@ sysreg*		at fdt?
 pluart*		at fdt?
 plrtc*		at fdt?
 virtio*		at fdt?
+
+sdhc*		at fdt?
+sdmmc*		at sdhc?
 
 psci*		at fdt?
 syscon*		at fdt?
