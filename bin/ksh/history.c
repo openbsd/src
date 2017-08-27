@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.65 2017/08/26 12:34:32 jca Exp $	*/
+/*	$OpenBSD: history.c,v 1.66 2017/08/27 17:10:32 jca Exp $	*/
 
 /*
  * command history
@@ -434,6 +434,20 @@ histbackup(void)
 	}
 }
 
+static void
+histreset(void)
+{
+	char **hp;
+
+	for (hp = history; hp <= histptr; hp++) {
+		afree(*hp, APERM);
+		*hp = NULL;
+	}
+
+	histptr = history - 1;
+	hist_source->line = 0;
+}
+
 /*
  * Return the current position.
  */
@@ -513,7 +527,13 @@ sethistsize(int n)
 
 		/* save most recent history */
 		if (offset > n - 1) {
+			char **hp;
+
 			offset = n - 1;
+			for (hp = history; hp < histptr - offset; hp++) {
+				afree(*hp, APERM);
+				*hp = NULL;
+			}
 			memmove(history, histptr - offset, n * sizeof(char *));
 		}
 
@@ -544,9 +564,7 @@ sethistfile(const char *name)
 	if (hname) {
 		afree(hname, APERM);
 		hname = NULL;
-		/* let's reset the history */
-		histptr = history - 1;
-		hist_source->line = 0;
+		histreset();
 	}
 
 	history_close();
@@ -603,9 +621,7 @@ histsave(int lno, const char *cmd, int dowrite)
 			if (timespeccmp(&sb.st_mtim, &last_sb.st_mtim, ==))
 				; /* file is unchanged */
 			else {
-				/* reset history */
-				histptr = history - 1;
-				hist_source->line = 0;
+				histreset();
 				history_load(hist_source);
 			}
 		}
