@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.39 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.40 2017/08/27 21:59:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -269,62 +269,3 @@ NESTED_NOPROFILE(_dl_bind_secureplt, 0, 168, ra, 0, 0)
 	lda	sp, 160(sp)
 	jmp	zero, (pv)
 END(_dl_bind_secureplt)
-
-
-/*
- * In reality these are not leaves, but they are stubs which does not need
- * further register saving.
- */
-
-#define	DL_SYSCALL(n)			DL_SYSCALL2(n,n)
-#define	DL_SYSCALL_NOERR(n)		DL_SYSCALL2_NOERR(n,n)
-#define	DL_SYSCALL2(n,c)						\
-LEAF_NOPROFILE(_dl_##n, irrelevant);					\
-	CALLSYS_NOERROR(c);						\
-	beq	a3, 1f;							\
-	jmp	zero, _dl_cerror;					\
-1:									\
-	RET;								\
-END(_dl_##n)
-#define	DL_SYSCALL2_NOERR(n,c)						\
-LEAF_NOPROFILE(_dl_##n, irrelevant);					\
-	CALLSYS_NOERROR(c);						\
-	RET;								\
-END(_dl_##n)
-
-_dl_cerror:
-	subq	zero, v0, v0	/* return -errno */
-	RET
-
-/* _dl_mmap() is special, as it needs to insert the syscall padding argument */
-LEAF_NOPROFILE(_dl_mmap, 6)
-	lda	sp, -8(sp)
-	stq	a5, 0(sp)
-	CALLSYS_NOERROR(mmap)
-	lda	sp, 8(sp)
-	beq	a3, 1f
-	jmp	zero, _dl_cerror
-1:
-	RET
-END(_dl_mmap)
-
-DL_SYSCALL(close)
-DL_SYSCALL_NOERR(exit)
-DL_SYSCALL(fstat)
-DL_SYSCALL2(getcwd,__getcwd)
-DL_SYSCALL(getdents)
-DL_SYSCALL(getentropy)
-DL_SYSCALL(sendsyslog)
-DL_SYSCALL(pledge)
-DL_SYSCALL_NOERR(issetugid)
-DL_SYSCALL_NOERR(getthrid)
-DL_SYSCALL(mprotect)
-DL_SYSCALL(munmap)
-DL_SYSCALL(open)
-DL_SYSCALL(read)
-DL_SYSCALL(readlink)
-DL_SYSCALL2(_syscall,__syscall)
-DL_SYSCALL(sysctl)
-DL_SYSCALL(thrkill)
-DL_SYSCALL(utrace)
-DL_SYSCALL(write)

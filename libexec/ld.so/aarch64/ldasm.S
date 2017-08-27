@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.3 2017/06/04 14:26:27 patrick Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.4 2017/08/27 21:59:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 Dale Rahn
@@ -29,7 +29,6 @@
 #define DL_DATA_SIZE	(16 * 8)	/* XXX */
 #include <machine/asm.h>
 #include <sys/syscall.h>
-#include <SYS.h>
 
 ENTRY(_dl_start)
 	mov	x29, sp
@@ -110,57 +109,6 @@ ENTRY(_dl_bind_start)
 	ldmia	sp!, {r0-r4,sl,fp,lr}
 	mov	pc, ip
 #endif
-
-	/* STUB */
-
-
-/* ld.so SYSCALLS */
-
-#define DL_SYSCALL(n) DL_SYSCALL2(n,n)
-#define DL_SYSCALL2(n,c)					\
-	.global		__CONCAT(_dl_,n)		;\
-	.type		__CONCAT(_dl_,n)%function	;\
-__CONCAT(_dl_,n):					;\
-	SYSTRAP(c)					;\
-	bcs	.L_cerr					;\
-	ret
-
-	.section	".text"
-	.align		4
-DL_SYSCALL(close)
-
-
-	.global		_dl_exit
-	.type		_dl_exit%function
-_dl_exit:
-	SYSTRAP(exit)
-	1:
-		b 1b
-
-DL_SYSCALL(issetugid)
-DL_SYSCALL(getthrid)
-DL_SYSCALL2(_syscall,__syscall)
-DL_SYSCALL(munmap)
-DL_SYSCALL(mprotect)
-DL_SYSCALL(open)
-DL_SYSCALL(read)
-DL_SYSCALL(write)
-DL_SYSCALL(fstat)
-DL_SYSCALL(readlink)
-DL_SYSCALL(utrace)
-DL_SYSCALL(getentropy)
-DL_SYSCALL(sendsyslog)
-DL_SYSCALL(pledge)
-DL_SYSCALL2(getcwd,__getcwd)
-DL_SYSCALL(sysctl)
-DL_SYSCALL2(set_tcb,__set_tcb)
-DL_SYSCALL(thrkill)
-
-DL_SYSCALL(getdents)
-
-.L_cerr:
-	neg	w0, w0		/* r0 = -errno */
-	ret
 
 ENTRY(_rtld_tlsdesc)
 	ldr	x0, [x0, #8]

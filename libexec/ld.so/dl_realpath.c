@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_realpath.c,v 1.4 2016/08/28 04:08:59 guenther Exp $ */
+/*	$OpenBSD: dl_realpath.c,v 1.5 2017/08/27 21:59:49 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Constantin S. Svintsoff <kostik@iclub.nsu.ru>
  *
@@ -75,7 +75,7 @@ _dl_realpath(const char *path, char *resolved)
 		resolved_len = 1;
 		left_len = _dl_strlcpy(left, path + 1, sizeof(left));
 	} else {
-		if (_dl_getcwd(resolved, PATH_MAX) <= 0) {
+		if (_dl___getcwd(resolved, PATH_MAX) <= 0) {
 			if (mem_allocated)
 				_dl_free(resolved);
 			else

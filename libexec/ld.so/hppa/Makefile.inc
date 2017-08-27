@@ -1,6 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2004/05/25 21:48:00 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2017/08/27 21:59:52 deraadt Exp $
 
 CFLAGS += -fpic
 AFLAGS += -fpic
-#ELF_LDFLAGS=-t
 LDADD=	`$(CC) -print-libgcc-file-name`

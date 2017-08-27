@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.64 2017/08/19 17:28:32 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.65 2017/08/27 21:59:49 deraadt Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -20,6 +20,18 @@ SRCS=	ldasm.S boot.c loader.c resolve.c dlfcn.c dl_printf.c rtld_machine.c
 SRCS+=	path.c util.c sod.c strsep.c strtol.c dir.c library_subr.c
 SRCS+=	dl_realpath.c dl_uname.c dl_dirname.c strlcat.c strlen.c trace.c
 SRCS+=	malloc.c reallocarray.c tib.c
+
+syscall=__syscall close exit fstat __getcwd getdents getentropy getthrid \
+	issetugid mprotect munmap open pledge read readlink sendsyslog \
+	__set_tcb sysctl thrkill utrace write
+
+.for _i in ${syscall}
+OBJS+=dl_${_i}.o
+dl_${_i}.o: SYS.h
+	printf '#include "SYS.h"\nDL_SYSCALL(${_i})\n' | \
+	    ${CC} ${DEBUG} -c -fPIC ${CFLAGS:M-[ID]*} ${CFLAGS:M-pipe} ${AINC} -P \
+	    -x assembler-with-cpp - ${DFLAGS} -MF ${.TARGET:R}.d -o ${.TARGET}
+.endfor
 
 .if (${MACHINE_ARCH} == "i386")
 SRCS+=	library_mquery.c

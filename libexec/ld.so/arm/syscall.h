@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.25 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: syscall.h,v 1.26 2017/08/27 21:59:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -43,7 +43,7 @@ __dead
 void	_dl_exit(int);
 int	_dl_issetugid(void);
 int	_dl_getthrid(void);
-long	_dl__syscall(quad_t, ...);
+long	_dl___syscall(quad_t, ...);
 int	_dl_mprotect(const void *, size_t, int);
 int	_dl_munmap(const void *, size_t);
 int	_dl_open(const char *, int);
@@ -53,18 +53,18 @@ ssize_t	_dl_getdents(int, char *, size_t);
 int	_dl_sysctl(const int *, u_int, void *, size_t *, void *, size_t);
 ssize_t	_dl_readlink(const char *, char *, size_t);
 int	_dl_pledge(const char *, const char **);
-int	_dl_getcwd(char *, size_t);
+int	_dl___getcwd(char *, size_t);
 int	_dl_utrace(const char *, const void *, size_t);
 int	_dl_getentropy(char *, size_t);
 int	_dl_sendsyslog(const char *, size_t, int);
-void	_dl_set_tcb(void *);
+void	_dl___set_tcb(void *);
 __dead
 void	_dl_thrkill(pid_t, int, void *);
 
 static inline void *
 _dl_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
-	return (void *)_dl__syscall(SYS_mmap, addr, len, prot,
+	return (void *)_dl___syscall(SYS_mmap, addr, len, prot,
 	    flags, fd, 0, offset);
 }
 

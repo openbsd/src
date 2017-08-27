@@ -1,7 +1,7 @@
-/*	$OpenBSD: ldasm.S,v 1.26 2017/08/27 21:59:52 deraadt Exp $ */
+/*	$OpenBSD: SYS.h,v 1.1 2017/08/27 21:59:52 deraadt Exp $ */
 
 /*
- * Copyright (c) 2004 Dale Rahn
+ * Copyright (c) 2006 Dale Rahn
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,66 +26,29 @@
  *
  */
 
-#define DL_DATA_SIZE	(16 * 4)	/* XXX */
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-ENTRY(_dl_start)
-	mov	fp, sp
-	mov	r5, sp
-	mov	lr, r6				@ save lr
-	sub	sp, sp, #4+4+DL_DATA_SIZE
-	add	r7, sp, #4			@ dl_data
+#define SYSTRAP(x)					\
+	mov.l	903f, r0;				\
+	.word	0xc380;	/* trapa #0x80; */		\
+	bra	904f;					\
+	 nop;						\
+	.align	2;					\
+ 903:	.long	(SYS_ ## x);				\
+ 904:
 
-	mov	r0, fp				@ original stack
-	mov	r1, r7				@ dl_data
+#define DL_SYSCALL(n)					\
+	.global		__CONCAT(_dl_,n)		;\
+	.type		__CONCAT(_dl_,n)%function	;\
+__CONCAT(_dl_,n):					;\
+	SYSTRAP(n)					;\
+	bf	.L_cerr					;\
+	 nop						;\
+	rts						;\
+	 nop
 
-	ldr	r8, .L_GOT			@ calculate address of GOT...
-1:	add	r8, pc, r8			@ into r8
-
-	ldr	r2, .L__DYNAMIC			@ &_DYNAMIC
-	add	r2, r2, r8 
-
-	bl	_dl_boot_bind
-
-	add	r0, r5, #4			@ argv
-	ldr	r1, [r5, #0x0]			@ envp
-	add	r1, r1, #2
-	add	r1, fp, r1, lsl #2
-	ldr	r2, [r7, #7*4]			@ loff from dl_data
-	mov	r3, r7				@ dl_data
-	bl	_dl_boot
-
-	mov	sp, fp
-	mov	fp, #0
-	mov	lr, r6
-
-	mov	r1, r0
-	ldr	r0, .L_dl_dtors
-	add	r0, r0, r8 
-	mov	pc, r1
-.L_GOT:
-	.long	_GLOBAL_OFFSET_TABLE_-(1b+8)
-.L__DYNAMIC:
-	.long	_DYNAMIC(GOTOFF)
-.L_dl_dtors:
-	.long	_dl_dtors(GOTOFF)
-
-
-ENTRY(_dl_bind_start)
-	/*
-	 * ip is pointer to got entry for this relocation
-	 * lr is pointer to pltgot[2], which is entry -1 of got plt reloc.
-	 * return address is on stack
-	 */
-	stmdb	sp!, {r0-r4,sl,fp}
-
-	sub	r1, ip, lr		/* r1 = 4 * (n + 1) */
-	sub	r1, r1, #4		/* r1 = 4 * n */
-	mov	r1, r1, lsr #2		/* r1 = n */
-
-	ldr	r0, [lr, #-4]
-	bl	_dl_bind
-	mov	ip, r0
-	ldmia	sp!, {r0-r4,sl,fp,lr}
-	mov	pc, ip
+.L_cerr:
+	neg	r0, r0
+	rts
+	 nop

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.22 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.23 2017/08/27 21:59:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -28,8 +28,6 @@
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
-#define __cerror	_dl_cerror
-#include <SYS.h>
 
 /* Stack at this stage is:
  * struct stack {
@@ -129,43 +127,3 @@ _dl_bind_start:
 	move	t9, v0
 	jr	t9
 	.end	_dl_bind_start
-
-#define	DL_SYSCALL(n)		DL_SYSCALL2(n,n)
-#define	DL_SYSCALL_NOERR(n)	DL_SYSCALL2_NOERR(n,n)
-#define	DL_SYSCALL2(n,c)						\
-NLEAF(_dl_##n,0)							\
-	__DO_SYSCALL(c);						\
-	bnez	a3, _dl_cerror;						\
-	j	ra;							\
-END(_dl_##n)
-#define	DL_SYSCALL2_NOERR(n,c)						\
-NLEAF(_dl_##n,0)							\
-	__DO_SYSCALL(c);						\
-	j	ra;							\
-END(_dl_##n)
-
-_dl_cerror:
-	subu	v0, zero, v0
-	j	ra
-
-DL_SYSCALL(close)
-DL_SYSCALL_NOERR(exit)
-DL_SYSCALL(fstat)
-DL_SYSCALL2(getcwd,__getcwd)
-DL_SYSCALL(getdents)
-DL_SYSCALL(getentropy)
-DL_SYSCALL(sendsyslog)
-DL_SYSCALL(pledge)
-DL_SYSCALL_NOERR(issetugid)
-DL_SYSCALL_NOERR(getthrid)
-DL_SYSCALL(mprotect)
-DL_SYSCALL(munmap)
-DL_SYSCALL(open)
-DL_SYSCALL(read)
-DL_SYSCALL(readlink)
-DL_SYSCALL2(_syscall,__syscall)
-DL_SYSCALL2_NOERR(set_tcb,__set_tcb)
-DL_SYSCALL(sysctl)
-DL_SYSCALL(utrace)
-DL_SYSCALL(write)
-DL_SYSCALL(thrkill)

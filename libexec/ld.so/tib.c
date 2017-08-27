@@ -32,7 +32,7 @@
 #include "syscall.h"
 
 /* If we need the syscall, use our local syscall definition */
-#define	__set_tcb(tcb)	_dl_set_tcb(tcb)
+#define	__set_tcb(tcb)	_dl___set_tcb(tcb)
 
 __dso_hidden void *allocate_tib(size_t);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.24 2017/01/24 07:48:37 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.25 2017/08/27 21:59:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -43,8 +43,6 @@
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
-#define __cerror	_dl_cerror
-#include <SYS.h>
 
 /*
  * ld.so entry point.
@@ -152,53 +150,7 @@ ENTRY(_dl_bind_start)
 	 addu	%r31, %r31, REG_SIZE + PLT_FRAME_SIZE
 END(_dl_bind_start)
 
-/* ld.so SYSCALLS */
-
-/*
- * m88k syscall return ABI requires the same amount of ASM
- * whether or not the syscall can possibly fail, so there's
- * no benefit to a DL_SYSCALL_NOERR() macro.
- */
-#define DL_SYSCALL(n)	DL_SYSCALL2(n,n)
-#define DL_SYSCALL2(n,c)				\
-	__ENTRY(_dl_,n);				\
-	__DO_SYSCALL(c);				\
-	br	_dl_cerror;				\
-	jmp	%r1;					\
-	END(_dl_##n)
-
-ENTRY(_dl_exit)
-	__DO_SYSCALL(exit)
-1:	br	1b
-END(_dl_exit)
-
-DL_SYSCALL(close)
-DL_SYSCALL(issetugid)
-DL_SYSCALL(getthrid)
-DL_SYSCALL2(_syscall,__syscall)
-DL_SYSCALL(munmap)
-DL_SYSCALL(mprotect)
-DL_SYSCALL(open)
-DL_SYSCALL(read)
-DL_SYSCALL(write)
-DL_SYSCALL(fstat)
-DL_SYSCALL(readlink)
-DL_SYSCALL(utrace)
-DL_SYSCALL(getentropy)
-DL_SYSCALL(sendsyslog)
-DL_SYSCALL(pledge)
-DL_SYSCALL2(getcwd,__getcwd)
-DL_SYSCALL(sysctl)
-DL_SYSCALL(getdents)
-DL_SYSCALL(thrkill)
-
-ENTRY(_dl_cerror)
-	jmp.n	%r1
-	 subu	%r2, %r0, %r2
-END(_dl_cerror)
-
 ENTRY(_dl_cacheflush)
 	tb0	0, %r0, 451
-	br	_dl_cerror		| never hit
 	jmp	%r1
 END(_dl_cacheflush)

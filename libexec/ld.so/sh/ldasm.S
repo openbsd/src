@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.28 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.29 2017/08/27 21:59:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -29,7 +29,6 @@
 #define DL_DATA_SIZE	(16 * 4)	/* XXX */
 #include <machine/asm.h>
 #include <sys/syscall.h>
-#include <SYS.h>
 
 ENTRY(_dl_start)
 	mov	r15, r12		// save for later 
@@ -131,69 +130,3 @@ ENTRY(_dl_bind_start)
 .L_dl_bind:
 	.long	_dl_bind-.L_call_dl_bind
 	.size _dl_bind_start, .-dl_bind_start
-
-
-	/* STUB */
-
-
-/* ld.so SYSCALLS */
-
-#define DL_SYSCALL(n) DL_SYSCALL2(n,n)
-#define DL_SYSCALL2(n,c)				\
-	.global		__CONCAT(_dl_,n)		;\
-	.type		__CONCAT(_dl_,n)%function	;\
-__CONCAT(_dl_,n):					;\
-	SYSTRAP(c)					;\
-	bf	.L_cerr					;\
-	 nop						;\
-	rts						;\
-	 nop
-
-#define DL_SYSCALL_NOERR(n) DL_SYSCALL2_NOERR(n,n)
-#define DL_SYSCALL2_NOERR(n,c)				\
-	.global		__CONCAT(_dl_,n)		;\
-	.type		__CONCAT(_dl_,n)%function	;\
-__CONCAT(_dl_,n):					;\
-	SYSTRAP(c)					;\
-	rts						;\
-	 nop
-
-
-	.section	".text"
-	.align		4
-DL_SYSCALL(close)
-
-
-	.global		_dl_exit
-	.type		_dl_exit%function
-_dl_exit:
-	SYSTRAP(exit)
-1:
-	bra 1b
-	 nop
-
-DL_SYSCALL_NOERR(issetugid)
-DL_SYSCALL_NOERR(getthrid)
-DL_SYSCALL(thrkill)
-DL_SYSCALL2(_syscall,__syscall)
-DL_SYSCALL(munmap)
-DL_SYSCALL(mprotect)
-DL_SYSCALL(open)
-DL_SYSCALL(read)
-
-.L_cerr:
-	neg	r0, r0
-	rts
-	 nop
-
-DL_SYSCALL(write)
-DL_SYSCALL(fstat)
-DL_SYSCALL(readlink)
-DL_SYSCALL(utrace)
-DL_SYSCALL(getentropy)
-DL_SYSCALL(sendsyslog)
-DL_SYSCALL(pledge)
-DL_SYSCALL2(getcwd,__getcwd)
-DL_SYSCALL(sysctl)
-DL_SYSCALL(getdents)
-

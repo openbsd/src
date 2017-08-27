@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.31 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.32 2017/08/27 21:59:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -121,44 +121,3 @@ ENTRY(_dl_bind_start)
 
 	addi	1,1,72
 	bctr
-
-#define	DL_SYSCALL(n)		DL_SYSCALL2(n,n)
-#define	DL_SYSCALL_NOERR(n)	DL_SYSCALL2_NOERR(n,n)
-#define	DL_SYSCALL2(n,c)						\
-ENTRY(_dl_##n)								\
-	li	0, SYS_##c;						\
-	sc;								\
-	cmpwi	0, 0;							\
-	beqlr+;								\
-	b	_dl_cerror
-#define	DL_SYSCALL2_NOERR(n,c)						\
-ENTRY(_dl_##n)								\
-	li	0, SYS_##c;						\
-	sc;								\
-	blr
-
-_dl_cerror:
-	neg	3, 3
-	blr
-
-DL_SYSCALL(close)
-DL_SYSCALL_NOERR(exit)
-DL_SYSCALL(fstat)
-DL_SYSCALL2(getcwd,__getcwd)
-DL_SYSCALL(getdents)
-DL_SYSCALL(getentropy)
-DL_SYSCALL(sendsyslog)
-DL_SYSCALL(pledge)
-DL_SYSCALL_NOERR(issetugid)
-DL_SYSCALL_NOERR(getthrid)
-DL_SYSCALL(mmap)
-DL_SYSCALL(mprotect)
-DL_SYSCALL(munmap)
-DL_SYSCALL(open)
-DL_SYSCALL(read)
-DL_SYSCALL(readlink)
-DL_SYSCALL2(_syscall,__syscall)
-DL_SYSCALL(sysctl)
-DL_SYSCALL(thrkill)
-DL_SYSCALL(utrace)
-DL_SYSCALL(write)

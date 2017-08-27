@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.27 2017/08/15 00:26:02 deraadt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.28 2017/08/27 21:59:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -30,7 +30,6 @@
 
 #define DL_DATA_SIZE	(16*8)	 /* 16 * sizeof(ELF_Addr) */
 #define DL_LOFF_OFFSET	(7*8)	/* index 7 */
-#include <sys/syscall.h>
 #include <machine/asm.h>
 
 	.text
@@ -66,48 +65,6 @@ _dl_start:
 	leaq	_dl_dtors(%rip), %rdx	# %rdx = cleanup
 	movq	%r12, %rsp
 	jmp	*%rax
-
-	.section	".text"
-
-#define	DL_SYSCALL(n) DL_SYSCALL2(n,n)
-#define	DL_SYSCALL2(n,c) \
-	.global	__CONCAT(_dl_,n)		;\
-	.type	__CONCAT(_dl_,n), @function	;\
-	.align	16,0xcc				;\
-__CONCAT(_dl_,n):				;\
-	movl	$(__CONCAT(SYS_,c)), %eax	;\
-	movq	%rcx, %r10			;\
-	syscall					;\
-	jb	1f				;\
-	ret
-
-DL_SYSCALL(open)
-DL_SYSCALL(fstat)
-DL_SYSCALL(read)
-DL_SYSCALL(write)
-DL_SYSCALL(close)
-DL_SYSCALL(issetugid)
-DL_SYSCALL(getthrid)
-DL_SYSCALL(getdents)
-DL_SYSCALL(mprotect)
-DL_SYSCALL(munmap)
-DL_SYSCALL(exit)
-DL_SYSCALL(readlink)
-DL_SYSCALL(utrace)
-DL_SYSCALL(getentropy)
-DL_SYSCALL(sendsyslog)
-DL_SYSCALL(pledge)
-DL_SYSCALL2(getcwd,__getcwd)
-DL_SYSCALL2(set_tcb,__set_tcb)
-DL_SYSCALL2(_syscall,__syscall)
-DL_SYSCALL(sysctl)
-DL_SYSCALL(thrkill)
-
-1:
-	/* error: result = -errno; - handled here. */
-	neg	%rax
-	ret
-
 
 	.align 16,0xcc
 	.global _dl_bind_start
@@ -186,4 +143,3 @@ _dl_bind_start:
 	.cfi_adjust_cfa_offset	-8
 	ret
 	.cfi_endproc
-

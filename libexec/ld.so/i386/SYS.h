@@ -1,7 +1,8 @@
-/*	$OpenBSD: syscall.h,v 1.38 2017/08/27 21:59:52 deraadt Exp $ */
+/*	$OpenBSD: SYS.h,v 1.1 2017/08/27 21:59:52 deraadt Exp $ */
 
 /*
- * Copyright (c) 2001 Niklas Hallqvist
+ * Copyright (c) 2002 Dale Rahn
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,45 +27,21 @@
  *
  */
 
-#ifndef __DL_SYSCALL_H__
-#define __DL_SYSCALL_H__
-
 #include <sys/syscall.h>
-#include <sys/stat.h>
+#include <machine/asm.h>
 
-#ifndef _dl_MAX_ERRNO
-#define _dl_MAX_ERRNO 512L
-#endif
-#define _dl_mmap_error(__res) \
-    ((long)__res < 0 && (long)__res >= -_dl_MAX_ERRNO)
+#define DL_SYSCALL(n)						\
+	.section	".text"					;\
+	.align		16,0xcc					;\
+	.global		__CONCAT(_dl_,n)			;\
+	.type		__CONCAT(_dl_,n),@function		;\
+__CONCAT(_dl_,n):						;\
+	movl $__CONCAT(SYS_, n),%eax;				;\
+	int $0x80						;\
+	jb	.L_cerr						;\
+	ret
 
-int	_dl_close(int);
-__dead
-void	_dl_exit(int);
-int	_dl_issetugid(void);
-int	_dl_getthrid(void);
-long	_dl___syscall(quad_t, ...);
-int	_dl_mprotect(const void *, size_t, int);
-int	_dl_munmap(const void *, size_t);
-int	_dl_open(const char *, int);
-ssize_t	_dl_read(int, const char *, size_t);
-int	_dl_fstat(int, struct stat *);
-ssize_t	_dl_getdents(int, char *, size_t);
-int	_dl_sysctl(const int *, u_int, void *, size_t *, void *, size_t);
-ssize_t	_dl_readlink(const char *, char *, size_t);
-int	_dl_pledge(const char *, const char **);
-int	_dl___getcwd(char *, size_t);
-int	_dl_utrace(const char *, const void *, size_t);
-int	_dl_getentropy(char *, size_t);
-int	_dl_sendsyslog(const char *, size_t, int);
-__dead
-void	_dl_thrkill(pid_t, int, void *);
-
-static inline void *
-_dl_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
-{
-	return (void *)_dl___syscall(SYS_mmap, addr, len, prot,
-	    flags, fd, 0, offset);
-}
-
-#endif /*__DL_SYSCALL_H__*/
+.L_cerr:
+	/* error: result = -errno; - handled here. */
+	neg	%eax
+	ret
