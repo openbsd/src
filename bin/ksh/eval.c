@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.53 2017/07/04 11:46:15 anton Exp $	*/
+/*	$OpenBSD: eval.c,v 1.54 2017/08/27 00:29:04 nayden Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -1076,7 +1076,6 @@ globit(XString *xs,	/* dest string */
 		int len;
 		int prefix_len;
 
-		/* xp = *xpp;	   copy_non_glob() may have re-alloc'd xs */
 		*xp = '\0';
 		prefix_len = Xlength(*xs, xp);
 		dirp = opendir(prefix_len ? Xstring(*xs, xp) : ".");
@@ -1107,47 +1106,6 @@ globit(XString *xs,	/* dest string */
 	if (np != NULL)
 		*--np = odirsep;
 }
-
-#if 0
-/* Check if p contains something that needs globbing; if it does, 0 is
- * returned; if not, p is copied into xs/xp after stripping any MAGICs
- */
-static int	copy_non_glob(XString *xs, char **xpp, char *p);
-static int
-copy_non_glob(XString *xs, char **xpp, char *p)
-{
-	char *xp;
-	int len = strlen(p);
-
-	XcheckN(*xs, *xpp, len);
-	xp = *xpp;
-	for (; *p; p++) {
-		if (ISMAGIC(*p)) {
-			int c = *++p;
-
-			if (c == '*' || c == '?')
-				return 0;
-			if (*p == '[') {
-				char *q = p + 1;
-
-				if (ISMAGIC(*q) && q[1] == '!')
-					q += 2;
-				if (ISMAGIC(*q) && q[1] == ']')
-					q += 2;
-				for (; *q; q++)
-					if (ISMAGIC(*q) && *++q == ']')
-						return 0;
-				/* pass a literal [ through */
-			}
-			/* must be a MAGIC-MAGIC, or MAGIC-!, MAGIC--, etc. */
-		}
-		*xp++ = *p;
-	}
-	*xp = '\0';
-	*xpp = xp;
-	return 1;
-}
-#endif /* 0 */
 
 /* remove MAGIC from string */
 char *
