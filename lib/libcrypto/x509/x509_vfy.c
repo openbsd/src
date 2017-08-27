@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.65 2017/08/13 19:47:49 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.66 2017/08/27 01:39:26 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -142,6 +142,8 @@ static int X509_cmp_time_internal(const ASN1_TIME *ctm, time_t *cmp_time,
     int clamp_notafter);
 
 static int internal_verify(X509_STORE_CTX *ctx);
+
+int ASN1_time_tm_clamp_notafter(struct tm *tm);
 
 static int
 null_callback(int ok, X509_STORE_CTX *e)

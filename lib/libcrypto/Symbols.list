@@ -214,6 +214,7 @@ ASN1_template_free
 ASN1_template_i2d
 ASN1_template_new
 ASN1_time_parse
+ASN1_time_tm_clamp_notafter
 ASN1_time_tm_cmp
 ASN1_unpack_string
 AUTHORITY_INFO_ACCESS_free
