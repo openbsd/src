@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.37 2017/08/09 05:53:11 jsg Exp $ */
+/* $OpenBSD: pmap.c,v 1.38 2017/08/27 19:33:02 drahn Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -769,8 +769,7 @@ pmap_zero_page(struct vm_page *pg)
 
 	pmap_kenter_pa(zero_page, pa, PROT_READ|PROT_WRITE);
 
-	/* XXX use better zero operation? */
-	bzero((void *)zero_page, PAGE_SIZE);
+	pagezero_cache(zero_page);
 
 	pmap_kremove_pg(zero_page);
 }

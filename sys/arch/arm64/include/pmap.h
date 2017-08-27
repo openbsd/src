@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.5 2017/05/10 21:58:55 kettenis Exp $ */
+/* $OpenBSD: pmap.h,v 1.6 2017/08/27 19:33:02 drahn Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -58,6 +58,8 @@ void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 extern paddr_t zero_page;
 extern paddr_t copy_src_page;
 extern paddr_t copy_dst_page;
+
+void pagezero_cache(vaddr_t);
 
 /*
  * Pmap stuff
