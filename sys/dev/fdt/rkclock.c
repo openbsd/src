@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.14 2017/08/26 16:24:27 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.15 2017/08/27 09:51:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -68,6 +68,9 @@
 #define RK3399_CRU_SOFTRST_CON(i)	(0x0400 + (i) * 4)
 #define RK3399_CRU_SDMMC_CON(i)		(0x0580 + (i) * 4)
 
+#define RK3399_PMUCRU_PPLL_CON(i)	(0x0000 + (i) * 4)
+#define RK3399_PMUCRU_CLKSEL_CON(i)	(0x0080 + (i) * 4)
+
 #include "rkclock_clocks.h"
 
 #define HREAD4(sc, reg)							\
@@ -113,6 +116,7 @@ void	rk3399_enable(void *, uint32_t *, int);
 void	rk3399_reset(void *, uint32_t *, int);
 int	rk3399_cpuspeed(int *);
 
+void	rk3399_pmu_init(struct rkclock_softc *);
 uint32_t rk3399_pmu_get_frequency(void *, uint32_t *);
 int	rk3399_pmu_set_frequency(void *, uint32_t *, uint32_t);
 void	rk3399_pmu_enable(void *, uint32_t *, int);
@@ -139,7 +143,7 @@ struct rkclock_compat rkclock_compat[] = {
 		rk3399_set_frequency, rk3399_reset,
 	},
 	{
-		"rockchip,rk3399-pmucru", NULL,
+		"rockchip,rk3399-pmucru", rk3399_pmu_init,
 		rk3399_pmu_enable, rk3399_pmu_get_frequency,
 		rk3399_pmu_set_frequency, rk3399_pmu_reset
 	}
@@ -345,6 +349,9 @@ rk3288_reset(void *cookie, uint32_t *cells, int on)
  * Rockchip RK3399 
  */
 
+/* Some of our parent clocks live in the PMUCRU. */
+struct rkclock_softc *rk3399_pmucru_sc;
+
 void
 rk3399_init(struct rkclock_softc *sc)
 {
@@ -352,6 +359,9 @@ rk3399_init(struct rkclock_softc *sc)
 
 	rkclock_cpuspeed_sc = sc;
 	cpu_cpuspeed = rk3399_cpuspeed;
+
+	/* PMUCRU instance should attach before us. */
+	KASSERT(rk3399_pmucru_sc != NULL);
 
 	/*
 	 * Since the hardware comes up with a really conservative CPU
@@ -580,6 +590,26 @@ rk3399_set_armclk(struct rkclock_softc *sc, bus_size_t clksel, uint32_t freq)
 }
 
 uint32_t
+rk3399_get_i2c(struct rkclock_softc *sc, size_t base, int shift)
+{
+	uint32_t reg, mux, div_con;
+	uint32_t idx, freq;
+
+	reg = HREAD4(sc, base);
+	mux = (reg >> (7 + shift)) & 0x1;
+	div_con = (reg >> shift) & 0x7f;
+	if (mux == 1) {
+		idx = RK3399_PLL_PPLL;
+		freq = rk3399_pmu_get_frequency(rk3399_pmucru_sc, &idx);
+	} else {
+		idx = RK3399_PLL_CPLL;
+		freq = rk3399_get_frequency(sc, &idx);
+	}
+
+	return freq / (div_con + 1);
+}
+
+uint32_t
 rk3399_get_frequency(void *cookie, uint32_t *cells)
 {
 	struct rkclock_softc *sc = cookie;
@@ -601,10 +631,20 @@ rk3399_get_frequency(void *cookie, uint32_t *cells)
 		return rk3399_get_pll(sc, RK3399_CRU_NPLL_CON(0));
 	case RK3399_ARMCLKL:
 		return rk3399_get_armclk(sc, RK3399_CRU_CLKSEL_CON(0));
-		break;
 	case RK3399_ARMCLKB:
 		return rk3399_get_armclk(sc, RK3399_CRU_CLKSEL_CON(2));
-		break;
+	case RK3399_CLK_I2C1:
+		return rk3399_get_i2c(sc, RK3399_CRU_CLKSEL_CON(61), 0);
+	case RK3399_CLK_I2C2:
+		return rk3399_get_i2c(sc, RK3399_CRU_CLKSEL_CON(62), 0);
+	case RK3399_CLK_I2C3:
+		return rk3399_get_i2c(sc, RK3399_CRU_CLKSEL_CON(63), 0);
+	case RK3399_CLK_I2C5:
+		return rk3399_get_i2c(sc, RK3399_CRU_CLKSEL_CON(61), 8);
+	case RK3399_CLK_I2C6:
+		return rk3399_get_i2c(sc, RK3399_CRU_CLKSEL_CON(61), 8);
+	case RK3399_CLK_I2C7:
+		return rk3399_get_i2c(sc, RK3399_CRU_CLKSEL_CON(61), 8);
 	case RK3399_CLK_SDMMC:
 		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(16));
 		mux = (reg >> 8) & 0x7;
@@ -666,7 +706,7 @@ rk3399_get_frequency(void *cookie, uint32_t *cells)
 		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(13));
 		mux = (reg >> 15) & 0x1;
 		div_con = (reg >> 8) & 0x1f;
-		idx = mux ? RK3399_PLL_GPLL : RK3399_PLL_GPLL;
+		idx = mux ? RK3399_PLL_CPLL : RK3399_PLL_GPLL;
 		return rk3399_get_frequency(sc, &idx) / (div_con + 1);
 	default:
 		break;
@@ -703,6 +743,12 @@ rk3399_enable(void *cookie, uint32_t *cells, int on)
 	uint32_t idx = cells[0];
 
 	switch (idx) {
+	case RK3399_CLK_I2C1:
+	case RK3399_CLK_I2C2:
+	case RK3399_CLK_I2C3:
+	case RK3399_CLK_I2C5:
+	case RK3399_CLK_I2C6:
+	case RK3399_CLK_I2C7:
 	case RK3399_CLK_SDMMC:
 	case RK3399_CLK_EMMC:
 	case RK3399_CLK_TSADC:
@@ -724,6 +770,12 @@ rk3399_enable(void *cookie, uint32_t *cells, int on)
 	case RK3399_ACLK_USB3OTG0:
 	case RK3399_ACLK_USB3OTG1:
 	case RK3399_ACLK_USB3_GRF:
+	case RK3399_PCLK_I2C1:
+	case RK3399_PCLK_I2C2:
+	case RK3399_PCLK_I2C3:
+	case RK3399_PCLK_I2C5:
+	case RK3399_PCLK_I2C6:
+	case RK3399_PCLK_I2C7:
 	case RK3399_PCLK_TSADC:
 	case RK3399_PCLK_GMAC:
 	case RK3399_HCLK_HOST0:
@@ -761,10 +813,42 @@ rk3399_cpuspeed(int *freq)
 
 /* PMUCRU */
 
+void
+rk3399_pmu_init(struct rkclock_softc *sc)
+{
+	rk3399_pmucru_sc = sc;
+}
+
+uint32_t
+rk3399_pmu_get_i2c(struct rkclock_softc *sc, size_t base, int shift)
+{
+	uint32_t reg, div_con;
+	uint32_t idx;
+
+	reg = HREAD4(sc, base);
+	div_con = (reg >> shift) & 0x7f;
+	idx = RK3399_PLL_PPLL;
+	return rk3399_get_frequency(sc, &idx) / (div_con + 1);
+}
+
 uint32_t
 rk3399_pmu_get_frequency(void *cookie, uint32_t *cells)
 {
+	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case RK3399_PLL_PPLL:
+		return rk3399_get_pll(sc, RK3399_PMUCRU_PPLL_CON(0));
+	case RK3399_CLK_I2C0:
+		return rk3399_pmu_get_i2c(sc, RK3399_PMUCRU_CLKSEL_CON(2), 0);
+	case RK3399_CLK_I2C4:
+		return rk3399_pmu_get_i2c(sc, RK3399_PMUCRU_CLKSEL_CON(3), 0);
+	case RK3399_CLK_I2C8:
+		return rk3399_pmu_get_i2c(sc, RK3399_PMUCRU_CLKSEL_CON(2), 8);
+	default:
+		break;
+	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
 	return 0;
@@ -784,7 +868,19 @@ rk3399_pmu_enable(void *cookie, uint32_t *cells, int on)
 {
 	uint32_t idx = cells[0];
 
-	printf("%s: 0x%08x\n", __func__, idx);
+	switch (idx) {
+	case RK3399_CLK_I2C0:
+	case RK3399_CLK_I2C4:
+	case RK3399_CLK_I2C8:
+	case RK3399_PCLK_I2C0:
+	case RK3399_PCLK_I2C4:
+	case RK3399_PCLK_I2C8:
+		/* Enabled by default. */
+		break;
+	default:
+		printf("%s: 0x%08x\n", __func__, idx);
+		break;
+	}
 }
 
 void
