@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.14 2017/08/27 02:17:51 beck Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.15 2017/08/27 02:58:04 doug Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2257,6 +2257,400 @@ test_tlsext_sessionticket_serverhello(void)
 	return (failure);
 }
 
+#ifndef OPENSSL_NO_SRTP
+/*
+ * Supported Secure Real-time Transport Protocol (RFC 5764 section 4.1.1)
+ */
+
+/* Colon separated string values */
+const char *tlsext_srtp_single_profile = "SRTP_AES128_CM_SHA1_80";
+const char *tlsext_srtp_multiple_profiles = "SRTP_AES128_CM_SHA1_80:SRTP_AES128_CM_SHA1_32";
+
+const char *tlsext_srtp_aes128cmsha80 = "SRTP_AES128_CM_SHA1_80";
+const char *tlsext_srtp_aes128cmsha32 = "SRTP_AES128_CM_SHA1_32";
+
+const uint8_t tlsext_srtp_single[] = {
+	/* SRTPProtectionProfile SRTPProtectionProfiles<2..2^16-1> */
+	0x00, 0x02, /* len */
+	0x00, 0x01, /* SRTP_AES128_CM_SHA1_80 */
+	0x00        /* opaque srtp_mki<0..255> */
+};
+
+const uint8_t tlsext_srtp_multiple[] = {
+	/* SRTPProtectionProfile SRTPProtectionProfiles<2..2^16-1> */
+	0x00, 0x04, /* len */
+	0x00, 0x01, /* SRTP_AES128_CM_SHA1_80 */
+	0x00, 0x02, /* SRTP_AES128_CM_SHA1_32 */
+	0x00	/* opaque srtp_mki<0..255> */
+};
+
+const uint8_t tlsext_srtp_multiple_invalid[] = {
+	/* SRTPProtectionProfile SRTPProtectionProfiles<2..2^16-1> */
+	0x00, 0x04, /* len */
+	0x00, 0x08, /* arbitrary value not found in known profiles */
+	0x00, 0x09, /* arbitrary value not found in known profiles */
+	0x00	/* opaque srtp_mki<0..255> */
+};
+
+const uint8_t tlsext_srtp_single_invalid[] = {
+	/* SRTPProtectionProfile SRTPProtectionProfiles<2..2^16-1> */
+	0x00, 0x02, /* len */
+	0x00, 0x08, /* arbitrary value not found in known profiles */
+	0x00	/* opaque srtp_mki<0..255> */
+};
+
+const uint8_t tlsext_srtp_multiple_one_valid[] = {
+	/* SRTPProtectionProfile SRTPProtectionProfiles<2..2^16-1> */
+	0x00, 0x04, /* len */
+	0x00, 0x08, /* arbitrary value not found in known profiles */
+	0x00, 0x02, /* SRTP_AES128_CM_SHA1_32 */
+	0x00	    /* opaque srtp_mki<0..255> */
+};
+
+static int
+test_tlsext_srtp_clienthello(void)
+{
+	SRTP_PROTECTION_PROFILE *prof;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	uint8_t *data = NULL;
+	CBB cbb;
+	CBS cbs;
+	int failure, alert;
+	size_t dlen;
+
+	CBB_init(&cbb, 0);
+
+	failure = 1;
+
+	/* SRTP is for DTLS */
+	if ((ssl_ctx = SSL_CTX_new(DTLSv1_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	/* By default, we don't need this */
+	if (tlsext_srtp_clienthello_needs(ssl)) {
+		FAIL("clienthello should not need SRTP by default\n");
+		goto err;
+	}
+
+	if (SSL_set_tlsext_use_srtp(ssl, tlsext_srtp_single_profile) != 0) {
+		FAIL("should be able to set a single SRTP\n");
+		goto err;
+	}
+	if (!tlsext_srtp_clienthello_needs(ssl)) {
+		FAIL("clienthello should need SRTP\n");
+		goto err;
+	}
+
+	/* Make sure we can build the clienthello with a single profile. */
+
+	if (!tlsext_srtp_clienthello_build(ssl, &cbb)) {
+		FAIL("clienthello failed to build SRTP\n");
+		goto err;
+	}
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_srtp_single)) {
+		FAIL("got clienthello SRTP with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_srtp_single));
+		compare_data(data, dlen, tlsext_srtp_single,
+		    sizeof(tlsext_srtp_single));
+		goto err;
+	}
+	if (memcmp(data, tlsext_srtp_single, dlen) != 0) {
+		FAIL("clienthello SRTP differs:\n");
+		compare_data(data, dlen, tlsext_srtp_single,
+		    sizeof(tlsext_srtp_single));
+		goto err;
+	}
+
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+	free(data);
+	data = NULL;
+
+	/* Make sure we can parse the single profile. */
+
+	if (SSL_get_selected_srtp_profile(ssl) != NULL) {
+		FAIL("SRTP profile should not be set yet\n");
+		goto err;
+	}
+
+	CBS_init(&cbs, tlsext_srtp_single, sizeof(tlsext_srtp_single));
+	if (!tlsext_srtp_clienthello_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse SRTP\n");
+		goto err;
+	}
+
+	if ((prof = SSL_get_selected_srtp_profile(ssl)) == NULL) {
+		FAIL("SRTP profile should be set now\n");
+		goto err;
+	}
+	if (strcmp(prof->name, tlsext_srtp_aes128cmsha80) != 0) {
+		FAIL("SRTP profile was not set properly\n");
+		goto err;
+	}
+
+	if (!tlsext_srtp_serverhello_needs(ssl)) {
+		FAIL("should send server extension when profile selected\n");
+		goto err;
+	}
+
+	/* Make sure we can build the clienthello with multiple entries. */
+
+	if (SSL_set_tlsext_use_srtp(ssl, tlsext_srtp_multiple_profiles) != 0) {
+		FAIL("should be able to set SRTP to multiple profiles\n");
+		goto err;
+	}
+	if (!tlsext_srtp_clienthello_needs(ssl)) {
+		FAIL("clienthello should need SRTP by now\n");
+		goto err;
+	}
+
+	if (!tlsext_srtp_clienthello_build(ssl, &cbb)) {
+		FAIL("clienthello failed to build SRTP\n");
+		goto err;
+	}
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_srtp_multiple)) {
+		FAIL("got clienthello SRTP with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_srtp_multiple));
+		compare_data(data, dlen, tlsext_srtp_multiple,
+		    sizeof(tlsext_srtp_multiple));
+		goto err;
+	}
+	if (memcmp(data, tlsext_srtp_multiple, dlen) != 0) {
+		FAIL("clienthello SRTP differs:\n");
+		compare_data(data, dlen, tlsext_srtp_multiple,
+		    sizeof(tlsext_srtp_multiple));
+		goto err;
+	}
+
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+	free(data);
+	data = NULL;
+
+	/* Make sure we can parse multiple profiles (selects server preferred) */
+
+	ssl->internal->srtp_profile = NULL;
+
+	CBS_init(&cbs, tlsext_srtp_multiple,
+	    sizeof(tlsext_srtp_multiple));
+	if (!tlsext_srtp_clienthello_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse SRTP\n");
+		goto err;
+	}
+
+	if ((prof = SSL_get_selected_srtp_profile(ssl)) == NULL) {
+		FAIL("SRTP profile should be set now\n");
+		goto err;
+	}
+	if (strcmp(prof->name, tlsext_srtp_aes128cmsha80) != 0) {
+		FAIL("SRTP profile was not set properly\n");
+		goto err;
+	}
+
+	if (!tlsext_srtp_serverhello_needs(ssl)) {
+		FAIL("should send server extension when profile selected\n");
+		goto err;
+	}
+
+	/*
+	 * Make sure we can parse the clienthello with multiple entries
+	 * where one is unknown.
+	 */
+	ssl->internal->srtp_profile = NULL;
+
+	CBS_init(&cbs, tlsext_srtp_multiple_one_valid,
+	    sizeof(tlsext_srtp_multiple_one_valid));
+	if (!tlsext_srtp_clienthello_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse SRTP\n");
+		goto err;
+	}
+
+	if ((prof = SSL_get_selected_srtp_profile(ssl)) == NULL) {
+		FAIL("SRTP profile should be set now\n");
+		goto err;
+	}
+	if (strcmp(prof->name, tlsext_srtp_aes128cmsha32) != 0) {
+		FAIL("SRTP profile was not set properly\n");
+		goto err;
+	}
+
+	if (!tlsext_srtp_serverhello_needs(ssl)) {
+		FAIL("should send server extension when profile selected\n");
+		goto err;
+	}
+
+	/* Make sure we fall back to negotiated when none work. */
+
+	ssl->internal->srtp_profile = NULL;
+
+	CBS_init(&cbs, tlsext_srtp_multiple_invalid,
+	    sizeof(tlsext_srtp_multiple_invalid));
+	if (!tlsext_srtp_clienthello_parse(ssl, &cbs, &alert)) {
+		FAIL("should be able to fall back to negotiated\n");
+		goto err;
+	}
+
+	/* If we fallback, the server should NOT send the extension. */
+	if (SSL_get_selected_srtp_profile(ssl) != NULL) {
+		FAIL("should not have selected a profile when none found\n");
+		goto err;
+	}
+	if (tlsext_srtp_serverhello_needs(ssl)) {
+		FAIL("should not send server tlsext when no profile found\n");
+		goto err;
+	}
+
+	failure = 0;
+
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
+static int
+test_tlsext_srtp_serverhello(void)
+{
+	SRTP_PROTECTION_PROFILE *prof;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	uint8_t *data = NULL;
+	CBB cbb;
+	CBS cbs;
+	int failure, alert;
+	size_t dlen;
+
+	CBB_init(&cbb, 0);
+
+	failure = 1;
+
+	/* SRTP is for DTLS */
+	if ((ssl_ctx = SSL_CTX_new(DTLSv1_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	/* By default, we don't need this */
+	if (tlsext_srtp_serverhello_needs(ssl)) {
+		FAIL("serverhello should not need SRTP by default\n");
+		goto err;
+	}
+
+	if (srtp_find_profile_by_name((char *)tlsext_srtp_aes128cmsha80, &prof,
+	    strlen(tlsext_srtp_aes128cmsha80))) {
+		FAIL("should be able to find the given profile\n");
+		goto err;
+	}
+	ssl->internal->srtp_profile = prof;
+	if (!tlsext_srtp_serverhello_needs(ssl)) {
+		FAIL("serverhello should need SRTP by now\n");
+		goto err;
+	}
+
+	/* Make sure we can build the serverhello with a single profile. */
+
+	if (!tlsext_srtp_serverhello_build(ssl, &cbb)) {
+		FAIL("serverhello failed to build SRTP\n");
+		goto err;
+	}
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_srtp_single)) {
+		FAIL("got serverhello SRTP with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_srtp_single));
+		compare_data(data, dlen, tlsext_srtp_single,
+		    sizeof(tlsext_srtp_single));
+		goto err;
+	}
+	if (memcmp(data, tlsext_srtp_single, dlen) != 0) {
+		FAIL("serverhello SRTP differs:\n");
+		compare_data(data, dlen, tlsext_srtp_single,
+		    sizeof(tlsext_srtp_single));
+		goto err;
+	}
+
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+	free(data);
+	data = NULL;
+
+	/* Make sure we can parse the single profile. */
+	ssl->internal->srtp_profile = NULL;
+
+	if (SSL_get_selected_srtp_profile(ssl) != NULL) {
+		FAIL("SRTP profile should not be set yet\n");
+		goto err;
+	}
+
+	/* Setup the environment as if a client sent a list of profiles. */
+	if (SSL_set_tlsext_use_srtp(ssl, tlsext_srtp_multiple_profiles) != 0) {
+		FAIL("should be able to set multiple profiles in SRTP\n");
+		goto err;
+	}
+
+	CBS_init(&cbs, tlsext_srtp_single, sizeof(tlsext_srtp_single));
+	if (!tlsext_srtp_serverhello_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse SRTP\n");
+		goto err;
+	}
+
+	if ((prof = SSL_get_selected_srtp_profile(ssl)) == NULL) {
+		FAIL("SRTP profile should be set now\n");
+		goto err;
+	}
+	if (strcmp(prof->name, tlsext_srtp_aes128cmsha80) != 0) {
+		FAIL("SRTP profile was not set properly\n");
+		goto err;
+	}
+
+	/* Make sure we cannot parse multiple profiles */
+	ssl->internal->srtp_profile = NULL;
+
+	CBS_init(&cbs, tlsext_srtp_multiple,
+	    sizeof(tlsext_srtp_multiple));
+	if (tlsext_srtp_serverhello_parse(ssl, &cbs, &alert)) {
+		FAIL("should not find multiple entries from the server\n");
+		goto err;
+	}
+
+	/* Make sure we cannot parse a serverhello with unknown profile */
+	ssl->internal->srtp_profile = NULL;
+
+	CBS_init(&cbs, tlsext_srtp_single_invalid,
+	    sizeof(tlsext_srtp_single_invalid));
+	if (tlsext_srtp_serverhello_parse(ssl, &cbs, &alert)) {
+		FAIL("should not be able to parse this\n");
+		goto err;
+	}
+
+	failure = 0;
+
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+#endif /* OPENSSL_NO_SRTP */
+
 int
 main(int argc, char **argv)
 {
@@ -2287,6 +2681,13 @@ main(int argc, char **argv)
 
 	failed |= test_tlsext_sessionticket_clienthello();
 	failed |= test_tlsext_sessionticket_serverhello();
+
+#ifndef OPENSSL_NO_SRTP
+	failed |= test_tlsext_srtp_clienthello();
+	failed |= test_tlsext_srtp_serverhello();
+#else
+	fprintf(stderr, "Skipping SRTP tests due to OPENSSL_NO_SRTP\n");
+#endif
 
 	return (failed);
 }

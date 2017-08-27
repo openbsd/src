@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.9 2017/08/26 20:23:46 doug Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.10 2017/08/27 02:58:04 doug Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -71,6 +71,15 @@ int tlsext_sessionticket_clienthello_parse(SSL *s, CBS *cbs, int *alert);
 int tlsext_sessionticket_serverhello_needs(SSL *s);
 int tlsext_sessionticket_serverhello_build(SSL *s, CBB *cbb);
 int tlsext_sessionticket_serverhello_parse(SSL *s, CBS *cbs, int *alert);
+
+#ifndef OPENSSL_NO_SRTP
+int tlsext_srtp_clienthello_needs(SSL *s);
+int tlsext_srtp_clienthello_build(SSL *s, CBB *cbb);
+int tlsext_srtp_clienthello_parse(SSL *s, CBS *cbs, int *alert);
+int tlsext_srtp_serverhello_needs(SSL *s);
+int tlsext_srtp_serverhello_build(SSL *s, CBB *cbb);
+int tlsext_srtp_serverhello_parse(SSL *s, CBS *cbs, int *alert);
+#endif
 
 int tlsext_clienthello_build(SSL *s, CBB *cbb);
 int tlsext_clienthello_parse_one(SSL *s, CBS *cbs, uint16_t tlsext_type,

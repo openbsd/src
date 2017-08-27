@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.135 2017/08/26 20:23:46 doug Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.136 2017/08/27 02:58:04 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -687,26 +687,6 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		return NULL;
 	ret += len;
 
-#ifndef OPENSSL_NO_SRTP
-	if (SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s)) {
-		int el;
-
-		ssl_add_clienthello_use_srtp_ext(s, 0, &el, 0);
-
-		if ((size_t)(limit - ret) < 4 + el)
-			return NULL;
-
-		s2n(TLSEXT_TYPE_use_srtp, ret);
-		s2n(el, ret);
-
-		if (ssl_add_clienthello_use_srtp_ext(s, ret, &el, el)) {
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			return NULL;
-		}
-		ret += el;
-	}
-#endif
-
 	if ((extdatalen = ret - p - 2) == 0)
 		return p;
 
@@ -744,26 +724,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	 * Currently the server should not respond with a SupportedCurves
 	 * extension.
 	 */
-
-#ifndef OPENSSL_NO_SRTP
-	if (SSL_IS_DTLS(s) && s->internal->srtp_profile) {
-		int el;
-
-		ssl_add_serverhello_use_srtp_ext(s, 0, &el, 0);
-
-		if ((size_t)(limit - ret) < 4 + el)
-			return NULL;
-
-		s2n(TLSEXT_TYPE_use_srtp, ret);
-		s2n(el, ret);
-
-		if (ssl_add_serverhello_use_srtp_ext(s, ret, &el, el)) {
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			return NULL;
-		}
-		ret += el;
-	}
-#endif
 
 	if ((extdatalen = ret - p - 2) == 0)
 		return p;
@@ -814,14 +774,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 		CBS_init(&cbs, data, size);
 		if (!tlsext_clienthello_parse_one(s, &cbs, type, al))
 			return 0;
-
-		/* session ticket processed earlier */
-#ifndef OPENSSL_NO_SRTP
-		else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_use_srtp) {
-			if (ssl_parse_clienthello_use_srtp_ext(s, data, size, al))
-				return 0;
-		}
-#endif
 
 		data += size;
 	}
@@ -887,14 +839,6 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
 		CBS_init(&cbs, data, size);
 		if (!tlsext_serverhello_parse_one(s, &cbs, type, al))
 			return 0;
-
-#ifndef OPENSSL_NO_SRTP
-		else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_use_srtp) {
-			if (ssl_parse_serverhello_use_srtp_ext(s, data,
-			    size, al))
-				return 0;
-		}
-#endif
 
 		data += size;
 
