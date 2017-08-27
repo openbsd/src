@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.13 2017/08/26 20:23:46 doug Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.14 2017/08/27 02:17:51 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -495,7 +495,8 @@ test_tlsext_ec_clienthello(void)
 
 	failure = 1;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
