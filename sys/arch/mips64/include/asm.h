@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.24 2017/06/29 17:36:16 deraadt Exp $ */
+/*	$OpenBSD: asm.h,v 1.25 2017/08/27 04:32:29 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -335,6 +335,17 @@ x: ;				\
 /*
  * Hazards
  */
+
+#ifdef CPU_OCTEON
+/*
+ * OCTEON clears hazards in hardware.
+ */
+#define	MFC0_HAZARD		/* nothing */
+#define	MTC0_HAZARD		/* nothing */
+#define	MTC0_SR_IE_HAZARD	/* nothing */
+#define	MTC0_SR_CU_HAZARD	/* nothing */
+#define	TLB_HAZARD		/* nothing */
+#endif
 
 #ifdef CPU_RM7000
 /*
