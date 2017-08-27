@@ -665,6 +665,7 @@
 ./usr/lib/pkgconfig/openssl.pc
 ./usr/lib/pkgconfig/zlib.pc
 ./usr/libdata
+./usr/libdata/ld.so.a
 ./usr/libdata/cvs
 ./usr/libdata/cvs/contrib
 ./usr/libdata/cvs/contrib/README
