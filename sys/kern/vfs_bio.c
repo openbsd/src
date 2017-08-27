@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.184 2017/08/22 00:18:56 sf Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.185 2017/08/27 01:59:30 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -1592,10 +1592,18 @@ chillbufs(struct bufcache *cache, struct bufqueue *queue, int64_t *queuepages)
 	int64_t limit, pages;
 
 	/*
-	 * The warm and hot queues are allowed to be up to one third each.
+	 * We limit the hot queue to be small, with a max of 4096 pages.
+	 * We limit the warm queue to half the cache size.
+	 *
 	 * We impose a minimum size of 96 to prevent too much "wobbling".
 	 */
-	limit = cache->cachepages / 3;
+	if (queue == &cache->hotqueue)
+		limit = min(cache->cachepages / 20, 4096);
+	else if (queue == &cache->warmqueue)
+		limit = (cache->cachepages / 2);
+	else
+		panic("chillbufs: invalid queue");
+
 	if (*queuepages > 96 && *queuepages > limit) {
 		bp = TAILQ_FIRST(queue);
 		if (!bp)
