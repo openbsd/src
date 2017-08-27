@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.9 2017/08/23 09:39:11 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.10 2017/08/27 09:08:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -870,6 +870,15 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 	case 'v':
 		mtd->preview = !mtd->preview;
 		mode_tree_build(mtd);
+
+		/*
+		 * If the current line would now be off screen now the preview
+		 * is on, reset the the offset to the last visible line.
+		 */
+		if (mtd->preview && mtd->current > mtd->height - 1) {
+			mtd->offset = mtd->current - mtd->height;
+			mtd->current--;
+		}
 		break;
 	}
 	return (0);
