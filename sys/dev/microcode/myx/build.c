@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.4 2014/07/12 19:01:49 tedu Exp $	*/
+/*	$OpenBSD: build.c,v 1.5 2017/08/27 08:15:48 otto Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -46,7 +46,7 @@ myx_build_firmware(u_int8_t *fw, size_t len, size_t ulen, const char *file)
 
 	f = fopen(file, "w");
 	if (f == NULL)
-		err(1, file);
+		err(1, "%s", file);
 
 	ufw = malloc(ulen);
 	if (ufw == NULL)
