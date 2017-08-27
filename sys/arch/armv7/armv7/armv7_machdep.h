@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.h,v 1.12 2016/10/25 00:04:59 jsg Exp $	*/
+/*	$OpenBSD: armv7_machdep.h,v 1.13 2017/08/27 12:42:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -18,15 +18,12 @@
 #ifndef __PLATFORMVAR_H__
 #define __PLATFORMVAR_H__
 
-extern int stdout_node;
-
 void platform_init(void);
 void platform_powerdown(void);
 void platform_watchdog_reset(void);
 void platform_init_cons(void);
 void platform_init_mainbus(struct device *);
 struct board_dev *platform_board_devs();
-void *fdt_find_cons(const char *);
 extern void (*cpuresetfn)(void);
 extern void (*powerdownfn)(void);
 

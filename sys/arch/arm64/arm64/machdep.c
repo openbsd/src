@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.20 2017/08/27 11:03:59 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.21 2017/08/27 12:42:22 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -197,8 +197,10 @@ fdt_find_cons(const char *name)
 
 extern void	com_fdt_init_cons(void);
 extern void	pluart_init_cons(void);
+extern void	simplefb_init_cons(bus_space_tag_t);
+
 void
-consinit()
+consinit(void)
 {
 	static int consinit_called = 0;
 
@@ -209,6 +211,7 @@ consinit()
 
 	com_fdt_init_cons();
 	pluart_init_cons();
+	simplefb_init_cons(&arm64_bs_tag);
 }
 
 void

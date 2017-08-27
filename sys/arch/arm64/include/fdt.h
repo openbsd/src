@@ -1,4 +1,4 @@
-/* $OpenBSD: fdt.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: fdt.h,v 1.2 2017/08/27 12:42:22 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -33,5 +33,9 @@ struct fdt_attach_args {
 	int			 fa_acells;
 	int			 fa_scells;
 };
+
+extern int stdout_node;
+
+void *fdt_find_cons(const char *);
 
 #endif /* __ARM_FDT_H__ */
