@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.28 2017/08/27 21:59:52 deraadt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.29 2017/08/28 14:12:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -42,7 +42,7 @@ _dl_start:
 	subq	$8, %rsp		# align stack
 	andq	$~15, %rsp
 	addq	$8, %rsp
-	
+
 	pushq	%rbx			# save ps_strings
 	subq	$DL_DATA_SIZE, %rsp	# allocate dl_data
 

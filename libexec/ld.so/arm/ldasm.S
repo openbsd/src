@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.26 2017/08/27 21:59:52 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.27 2017/08/28 14:12:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -44,7 +44,7 @@ ENTRY(_dl_start)
 1:	add	r8, pc, r8			@ into r8
 
 	ldr	r2, .L__DYNAMIC			@ &_DYNAMIC
-	add	r2, r2, r8 
+	add	r2, r2, r8
 
 	bl	_dl_boot_bind
 
@@ -62,7 +62,7 @@ ENTRY(_dl_start)
 
 	mov	r1, r0
 	ldr	r0, .L_dl_dtors
-	add	r0, r0, r8 
+	add	r0, r0, r8
 	mov	pc, r1
 .L_GOT:
 	.long	_GLOBAL_OFFSET_TABLE_-(1b+8)
