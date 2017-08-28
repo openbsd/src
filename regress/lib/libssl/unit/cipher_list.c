@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_list.c,v 1.5 2017/01/23 06:49:31 beck Exp $	*/
+/*	$OpenBSD: cipher_list.c,v 1.6 2017/08/28 17:32:04 jsing Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
@@ -44,18 +44,18 @@
 #include "tests.h"
 
 static uint8_t cipher_bytes[] = {
-	0xcc, 0x14,	/* ECDHE-ECDSA-CHACHA20-POLY1305 */
-	0xcc, 0x13,	/* ECDHE-RSA-CHACHA20-POLY1305 */
-	0xcc, 0x15,	/* DHE-RSA-CHACHA20-POLY1305 */
+	0xcc, 0xa8,	/* ECDHE-ECDSA-CHACHA20-POLY1305 */
+	0xcc, 0xa9,	/* ECDHE-RSA-CHACHA20-POLY1305 */
+	0xcc, 0xaa,	/* DHE-RSA-CHACHA20-POLY1305 */
 	0x00, 0x9c,	/* AES128-GCM-SHA256 */
 	0x00, 0x3d,	/* AES256-SHA256 */
 	0x00, 0x09,	/* DES-CBC-SHA */
 };
 
 static uint16_t cipher_values[] = {
-	0xcc14,		/* ECDHE-ECDSA-CHACHA20-POLY1305 */
-	0xcc13,		/* ECDHE-RSA-CHACHA20-POLY1305 */
-	0xcc15,		/* DHE-RSA-CHACHA20-POLY1305 */
+	0xcca8,		/* ECDHE-ECDSA-CHACHA20-POLY1305 */
+	0xcca9,		/* ECDHE-RSA-CHACHA20-POLY1305 */
+	0xccaa,		/* DHE-RSA-CHACHA20-POLY1305 */
 	0x009c,		/* AES128-GCM-SHA256 */
 	0x003d,		/* AES256-SHA256 */
 	0x0009,		/* DES-CBC-SHA */
