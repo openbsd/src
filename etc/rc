@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.515 2017/08/21 21:24:11 rpe Exp $
+#	$OpenBSD: rc,v 1.516 2017/08/28 06:56:54 ajacoutot Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -224,6 +224,7 @@ run_upgrade_script() {
 	[[ -n $_suffix ]] || return 1
 
 	if [[ -f /etc/rc.$_suffix ]]; then
+		echo "running rc.$_suffix"
 		mv /etc/rc.$_suffix /etc/rc.$_suffix.run
 		. /etc/rc.$_suffix.run 2>&1 | tee /dev/tty |
 			mail -Es "$(hostname) rc.$_suffix output" root >/dev/null
