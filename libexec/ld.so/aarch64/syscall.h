@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.4 2017/08/27 21:59:51 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.5 2017/08/28 03:14:01 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -57,7 +57,7 @@ int	_dl___getcwd(char *, size_t);
 int	_dl_utrace(const char *, const void *, size_t);
 int	_dl_getentropy(char *, size_t);
 int	_dl_sendsyslog(const char *, size_t, int);
-void	_dl_set_tcb(void *);
+void	_dl___set_tcb(void *);
 __dead
 void	_dl_thrkill(pid_t, int, void *);
 
