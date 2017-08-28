@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1823 2017/07/16 13:41:58 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1825 2017/08/28 09:43:18 stsp Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -11972,6 +11972,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Braswell AHCI",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BSW_AUDIO,
+	    "Braswell LPE Audio",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CHV_IGD_1,
 	    "HD Graphics",
 	},
@@ -11990,6 +11994,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BSW_XHCI,
 	    "Braswell xHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BSW_USB_OTG,
+	    "Braswell USB OTG",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BSW_ISP,
