@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.160 2017/06/01 08:08:24 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.161 2017/08/28 19:33:20 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -881,7 +881,7 @@ cvs_yesno(void)
  * else, 0 or -1 if an error occur.
  */
 int
-cvs_exec(char *prog, const char *in, int needwait)
+cvs_exec(char *prog, char *in, int needwait)
 {
 	pid_t pid;
 	size_t size;

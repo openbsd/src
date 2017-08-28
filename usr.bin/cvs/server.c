@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.104 2015/12/09 17:55:42 mmcc Exp $	*/
+/*	$OpenBSD: server.c,v 1.105 2017/08/28 19:33:20 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -786,7 +786,7 @@ cvs_server_update_entry(const char *resp, struct cvs_file *cf)
 }
 
 void
-cvs_server_set_sticky(const char *dir, const char *tag)
+cvs_server_set_sticky(const char *dir, char *tag)
 {
 	char fpath[PATH_MAX];
 	char repo[PATH_MAX];

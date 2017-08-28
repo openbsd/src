@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.40 2017/06/01 08:08:24 joris Exp $	*/
+/*	$OpenBSD: init.c,v 1.41 2017/08/28 19:33:20 otto Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -40,11 +40,11 @@
 void	cvs_init_local(void);
 
 static void init_mkdir(const char *, mode_t);
-static void init_mkfile(char *, const char **);
+static void init_mkfile(char *, char **);
 
 struct cvsroot_file {
 	char			*cf_path;
-	const char		**cf_content;
+	char			**cf_content;
 };
 
 static const struct cvsroot_file cvsroot_files[] = {
@@ -139,13 +139,13 @@ init_mkdir(const char *path, mode_t mode)
 }
 
 static void
-init_mkfile(char *path, const char **content)
+init_mkfile(char *path, char **content)
 {
 	BUF *b;
 	size_t len;
 	int fd, openflags, rcsflags;
 	char rpath[PATH_MAX];
-	const char **p;
+	char **p;
 	RCSFILE *file;
 
 	openflags = O_WRONLY | O_CREAT | O_EXCL;

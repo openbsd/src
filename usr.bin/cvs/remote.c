@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.31 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: remote.c,v 1.32 2017/08/28 19:33:20 otto Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -57,7 +57,7 @@ cvs_remote_get_request_info(const char *request)
 }
 
 void
-cvs_remote_output(const char *data)
+cvs_remote_output(char *data)
 {
 	FILE *out;
 	size_t len;

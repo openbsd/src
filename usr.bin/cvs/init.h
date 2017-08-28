@@ -1,4 +1,4 @@
-/*      $OpenBSD: init.h,v 1.2 2009/03/23 17:53:17 joris Exp $       */
+/*      $OpenBSD: init.h,v 1.3 2017/08/28 19:33:20 otto Exp $       */
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -18,7 +18,7 @@
 #ifndef INIT_H
 #define INIT_H
 
-const char *config_contents[] = {
+char *config_contents[] = {
 	"# Set name of the local tag to use in addition to `Id'\n",
 	"#tag=OpenBSD\n",
 	"# Set default file creation mode mask\n",
