@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.36 2017/08/27 22:09:21 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.37 2017/08/28 11:16:04 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -251,6 +251,9 @@ cd*		at scsibus?
 st*		at scsibus?
 ch*		at scsibus?
 uk*		at scsibus?
+
+# I2C devices
+rkpmic*		at iic?			# RK808 PMIC
 
 # 1-Wire devices
 option	ONEWIREVERBOSE

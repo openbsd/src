@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.34 2017/08/27 22:09:21 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.35 2017/08/28 11:16:04 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -191,6 +191,9 @@ cd*		at scsibus?
 st*		at scsibus?
 ch*		at scsibus?
 uk*		at scsibus?
+
+# I2C devices
+rkpmic*		at iic?			# RK808 PMIC
 
 pseudo-device	loop 1
 pseudo-device	bpfilter 1
