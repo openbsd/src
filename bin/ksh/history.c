@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.67 2017/08/28 19:39:13 jca Exp $	*/
+/*	$OpenBSD: history.c,v 1.68 2017/08/28 19:41:55 jca Exp $	*/
 
 /*
  * command history
@@ -439,10 +439,8 @@ histreset(void)
 {
 	char **hp;
 
-	for (hp = history; hp <= histptr; hp++) {
+	for (hp = history; hp <= histptr; hp++)
 		afree(*hp, APERM);
-		*hp = NULL;
-	}
 
 	histptr = history - 1;
 	hist_source->line = 0;
@@ -530,10 +528,8 @@ sethistsize(int n)
 			char **hp;
 
 			offset = n - 1;
-			for (hp = history; hp < histptr - offset; hp++) {
+			for (hp = history; hp < histptr - offset; hp++)
 				afree(*hp, APERM);
-				*hp = NULL;
-			}
 			memmove(history, histptr - offset, n * sizeof(char *));
 		}
 
