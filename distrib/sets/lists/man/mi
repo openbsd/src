@@ -1775,7 +1775,6 @@
 ./usr/share/man/man4/twe.4
 ./usr/share/man/man4/txp.4
 ./usr/share/man/man4/txphy.4
-./usr/share/man/man4/ualea.4
 ./usr/share/man/man4/uark.4
 ./usr/share/man/man4/uath.4
 ./usr/share/man/man4/uaudio.4
@@ -1828,6 +1827,7 @@
 ./usr/share/man/man4/url.4
 ./usr/share/man/man4/urlphy.4
 ./usr/share/man/man4/urndis.4
+./usr/share/man/man4/urng.4
 ./usr/share/man/man4/urtw.4
 ./usr/share/man/man4/urtwn.4
 ./usr/share/man/man4/usb.4

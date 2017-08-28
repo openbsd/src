@@ -665,11 +665,11 @@
 ./usr/lib/pkgconfig/openssl.pc
 ./usr/lib/pkgconfig/zlib.pc
 ./usr/libdata
-./usr/libdata/ld.so.a
 ./usr/libdata/cvs
 ./usr/libdata/cvs/contrib
 ./usr/libdata/cvs/contrib/README
 ./usr/libdata/cvs/contrib/intro.doc
+./usr/libdata/ld.so.a
 ./usr/libdata/perl5
 ./usr/libdata/perl5/AnyDBM_File.pm
 ./usr/libdata/perl5/App
