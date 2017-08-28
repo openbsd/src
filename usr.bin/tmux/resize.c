@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.23 2017/05/10 16:48:36 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.24 2017/08/28 12:36:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -159,6 +159,8 @@ recalculate_sizes(void)
 			if (w->active == wp)
 			       break;
 		}
+		if (w->active == w->last)
+			w->last = NULL;
 
 		server_redraw_window(w);
 		notify_window("window-layout-changed", w);
