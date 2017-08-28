@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.19 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.20 2017/08/28 17:41:59 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -466,8 +466,6 @@ pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 		int pm;
 		if (!strcmp(value, "pkcs1"))
 			pm = RSA_PKCS1_PADDING;
-		else if (!strcmp(value, "sslv23"))
-			pm = RSA_SSLV23_PADDING;
 		else if (!strcmp(value, "none"))
 			pm = RSA_NO_PADDING;
 		else if (!strcmp(value, "oeap"))

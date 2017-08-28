@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.29 2016/09/04 17:25:27 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.30 2017/08/28 17:41:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -242,7 +242,6 @@ struct rsa_st {
 #define EVP_PKEY_CTRL_GET_RSA_MGF1_MD		(EVP_PKEY_ALG_CTRL + 8)
 
 #define RSA_PKCS1_PADDING	1
-#define RSA_SSLV23_PADDING	2
 #define RSA_NO_PADDING		3
 #define RSA_PKCS1_OAEP_PADDING	4
 #define RSA_X931_PADDING	5
@@ -367,10 +366,6 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
     const unsigned char *f, int fl, int rsa_len,
     const unsigned char *p, int pl);
-int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
-    const unsigned char *f, int fl);
-int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
-    const unsigned char *f, int fl, int rsa_len);
 int RSA_padding_add_none(unsigned char *to, int tlen,
     const unsigned char *f, int fl);
 int RSA_padding_check_none(unsigned char *to, int tlen,
@@ -464,13 +459,11 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1		 148
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1		 108
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2		 109
-#define RSA_F_RSA_PADDING_ADD_SSLV23			 110
 #define RSA_F_RSA_PADDING_ADD_X931			 127
 #define RSA_F_RSA_PADDING_CHECK_NONE			 111
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP		 122
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1		 112
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2		 113
-#define RSA_F_RSA_PADDING_CHECK_SSLV23			 114
 #define RSA_F_RSA_PADDING_CHECK_X931			 128
 #define RSA_F_RSA_PRINT					 115
 #define RSA_F_RSA_PRINT_FP				 116

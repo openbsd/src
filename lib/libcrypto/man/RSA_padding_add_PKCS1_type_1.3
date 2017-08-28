@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_padding_add_PKCS1_type_1.3,v 1.5 2017/08/20 20:45:18 schwarze Exp $
+.\"	$OpenBSD: RSA_padding_add_PKCS1_type_1.3,v 1.6 2017/08/28 17:41:59 jsing Exp $
 .\"	OpenSSL 1e3f62a3 Jul 17 16:47:13 2017 +0200
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 20 2017 $
+.Dd $Mdocdate: August 28 2017 $
 .Dt RSA_PADDING_ADD_PKCS1_TYPE_1 3
 .Os
 .Sh NAME
@@ -58,8 +58,6 @@
 .Nm RSA_padding_check_PKCS1_type_2 ,
 .Nm RSA_padding_add_PKCS1_OAEP ,
 .Nm RSA_padding_check_PKCS1_OAEP ,
-.Nm RSA_padding_add_SSLv23 ,
-.Nm RSA_padding_check_SSLv23 ,
 .Nm RSA_padding_add_none ,
 .Nm RSA_padding_check_none
 .Nd asymmetric encryption padding
@@ -115,21 +113,6 @@
 .Fa "int pl"
 .Fc
 .Ft int
-.Fo RSA_padding_add_SSLv23
-.Fa "unsigned char *to"
-.Fa "int tlen"
-.Fa "unsigned char *f"
-.Fa "int fl"
-.Fc
-.Ft int
-.Fo RSA_padding_check_SSLv23
-.Fa "unsigned char *to"
-.Fa "int tlen"
-.Fa "unsigned char *f"
-.Fa "int fl"
-.Fa "int rsa_len"
-.Fc
-.Ft int
 .Fo RSA_padding_add_none
 .Fa "unsigned char *to"
 .Fa "int tlen"
@@ -181,8 +164,6 @@ used for signatures
 PKCS #1 v2.0 EME-PKCS1-v1_5 (PKCS #1 v1.5 block type 2)
 .It PKCS1_OAEP
 PKCS #1 v2.0 EME-OAEP
-.It SSLv23
-PKCS #1 EME-PKCS1-v1_5 with SSL-specific modification
 .It none
 simply copy the data
 .El
@@ -235,8 +216,6 @@ Error codes can be obtained by calling
 .Fn RSA_padding_check_PKCS1_type_1 ,
 .Fn RSA_padding_add_PKCS1_type_2 ,
 .Fn RSA_padding_check_PKCS1_type_2 ,
-.Fn RSA_padding_add_SSLv23 ,
-.Fn RSA_padding_check_SSLv23 ,
 .Fn RSA_padding_add_none ,
 and
 .Fn RSA_padding_check_none

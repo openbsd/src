@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.49 2017/05/02 03:59:45 deraadt Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.50 2017/08/28 17:41:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -200,9 +200,6 @@ RSA_eay_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
 		i = RSA_padding_add_PKCS1_OAEP(buf, num, from, flen, NULL, 0);
 		break;
 #endif
-	case RSA_SSLV23_PADDING:
-		i = RSA_padding_add_SSLv23(buf, num, from, flen);
-		break;
 	case RSA_NO_PADDING:
 		i = RSA_padding_add_none(buf, num, from, flen);
 		break;
@@ -383,7 +380,6 @@ RSA_eay_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
 	case RSA_NO_PADDING:
 		i = RSA_padding_add_none(buf, num, from, flen);
 		break;
-	case RSA_SSLV23_PADDING:
 	default:
 		RSAerror(RSA_R_UNKNOWN_PADDING_TYPE);
 		goto err;
@@ -573,9 +569,6 @@ RSA_eay_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
 		r = RSA_padding_check_PKCS1_OAEP(to, num, buf, j, num, NULL, 0);
 		break;
 #endif
-	case RSA_SSLV23_PADDING:
-		r = RSA_padding_check_SSLv23(to, num, buf, j, num);
-		break;
 	case RSA_NO_PADDING:
 		r = RSA_padding_check_none(to, num, buf, j, num);
 		break;
