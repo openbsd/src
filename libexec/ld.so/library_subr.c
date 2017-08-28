@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.47 2017/01/24 07:48:36 guenther Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.48 2017/08/28 14:06:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -380,7 +380,7 @@ again:
 		if (hint != NULL)
 			goto done;
 	} else {
-		/* 
+		/*
 		 * If DT_RUNPATH wasn't set then first check DT_RPATH,
 		 * followed by the main program's DT_RPATH.
 		 */

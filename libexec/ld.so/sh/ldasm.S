@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.29 2017/08/27 21:59:52 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.30 2017/08/28 14:06:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -31,7 +31,7 @@
 #include <sys/syscall.h>
 
 ENTRY(_dl_start)
-	mov	r15, r12		// save for later 
+	mov	r15, r12		// save for later
 	mov	r15, r4			// sp
 	add	#-(4+4+DL_DATA_SIZE), r15
 	mov	r15, r5			// dl_data
@@ -51,7 +51,7 @@ ENTRY(_dl_start)
 	mov.l	@r12, r5
 	add	#2, r5
 	shll2	r5
-	add	r12, r5			// envp 
+	add	r12, r5			// envp
 	mov	r15, r7			// dl_data
 	mov	r7, r6
 	add	#(7*4), r6

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.59 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.60 2017/08/28 14:06:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -421,7 +421,7 @@ _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
 	 * be used by other threads even while it's being updated.
 	 * This is made slightly more complicated by kbind, for which
 	 * we need to pass them to the kernel in the order they get
-	 * written.  To that end, we store the word to overwrite the 
+	 * written.  To that end, we store the word to overwrite the
 	 * ba,a,pt at *where1, and the words to overwrite the nops at
 	 * where2[0], where2[1], ...
 	 *
@@ -512,7 +512,7 @@ _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
 		return (2);
 	} else if (value < (1L<<42)) {
 		/*
-		 * Target 42bits or smaller. 
+		 * Target 42bits or smaller.
 		 * We can generate this pattern:
 		 *
 		 * The resulting code in the jump slot is:

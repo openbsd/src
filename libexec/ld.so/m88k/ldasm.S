@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.25 2017/08/27 21:59:52 deraadt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.26 2017/08/28 14:06:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -145,7 +145,7 @@ ENTRY(_dl_bind_start)
 	ld.d	%r4,  %r31, 4 * 2
 	ld.d	%r2,  %r31, 4 * 0
 	ld	%r1,  %r31, REG_SIZE + R1_OFFSET
-	
+
 	jmp.n	%r11
 	 addu	%r31, %r31, REG_SIZE + PLT_FRAME_SIZE
 END(_dl_bind_start)
