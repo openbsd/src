@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.69 2017/08/09 21:27:24 claudio Exp $ */
+/* $OpenBSD: tls.c,v 1.70 2017/08/28 13:58:02 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -235,7 +235,10 @@ tls_new(void)
 		return (NULL);
 
 	tls_reset(ctx);
-	tls_configure(ctx, tls_config_default);
+	if (tls_configure(ctx, tls_config_default) == -1) {
+		free(ctx);
+		return NULL;
+	}
 
 	return (ctx);
 }
