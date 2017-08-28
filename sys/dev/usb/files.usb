@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.131 2016/09/12 08:12:06 mpi Exp $
+#	$OpenBSD: files.usb,v 1.132 2017/08/28 19:31:57 jasper Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -167,15 +167,15 @@ attach	uoakv at uhidbus
 file	dev/usb/uoakv.c			uoakv
 
 # Misc
-# Araneus Alea II TRNG
-device	ualea
-attach	ualea at uhub
-file	dev/usb/ualea.c			ualea
-
 # Moonbase Otago OneRNG TRNG
 device	uonerng
 attach	uonerng at uhub
 file	dev/usb/uonerng.c		uonerng
+
+# USB Random Number Generator
+device	urng
+attach	urng at uhub
+file	dev/usb/urng.c
 
 # Gude Expert mouseCLOCK DCF77 time signal station receiver
 device	udcf

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.656 2017/08/25 11:17:35 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.657 2017/08/28 19:31:57 jasper Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -61,7 +61,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	stp.4 sv.4 switch.4 sym.4 tcic.4 tcp.4 termios.4 tht.4 ti.4 tl.4 \
 	tlphy.4 thmc.4 tpm.4 tqphy.4 trm.4 trunk.4 tsl.4 tty.4 tun.4 tap.4 \
 	twe.4 \
-	txp.4 txphy.4 ualea.4 uaudio.4 uark.4 uath.4 ubcmtp.4 uberry.4 ubsa.4 \
+	txp.4 txphy.4 uaudio.4 uark.4 uath.4 ubcmtp.4 uberry.4 ubsa.4 \
 	ubsec.4 \
 	ucom.4 uchcom.4 ucycom.4 uslhcom.4 udav.4 udcf.4 udl.4 udp.4 udsbr.4 \
 	uftdi.4 ugen.4 ugl.4 ugold.4 uguru.4 uhci.4 uhid.4 uhidev.4 uipaq.4 \
@@ -69,7 +69,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	ukphy.4 ulpt.4 umass.4 umb.4 umbg.4 umcs.4 umct.4 umidi.4 umodem.4 \
 	ums.4 umsm.4 unix.4 uonerng.4 uow.4 uoaklux.4 uoakrh.4 uoakv.4 upd.4 \
 	upgt.4 upl.4 uplcom.4 ural.4 ure.4 url.4 urlphy.4 \
-	urndis.4 urtw.4 urtwn.4 usb.4 uscom.4 uslcom.4 usps.4 \
+	urndis.4 urng.4 urtw.4 urtwn.4 usb.4 uscom.4 uslcom.4 usps.4 \
 	uthum.4 uticom.4 utpms.4 utwitch.4 utrh.4 uts.4 utvfu.4 uvideo.4 \
 	uvisor.4 uvscom.4 uwacom.4 \
 	vether.4 vga.4 vgafb.4 vge.4 \

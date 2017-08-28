@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.183 2017/03/22 06:09:31 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.184 2017/08/28 19:31:57 jasper Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2017 $
+.Dd $Mdocdate: August 28 2017 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -288,8 +288,6 @@ USB Mobile Broadband Interface Model (MBIM)
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 12n -offset ind -compact
-.It Xr ualea 4
-Araneus Alea II USB TRNG
 .It Xr uberry 4
 Research In Motion BlackBerry
 .It Xr ugen 4
@@ -304,6 +302,8 @@ Moonbase Otago OneRNG TRNG
 Maxim/Dallas DS2490 USB 1-Wire adapter
 .It Xr upl 4
 Prolific based host-to-host adapters
+.It Xr urng 4
+USB Random Number Generator devices
 .It Xr usps 4
 USPS composite AC power and temperature sensor
 .It Xr uts 4

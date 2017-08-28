@@ -1,7 +1,7 @@
-.\"	$OpenBSD: ualea.4,v 1.1 2015/04/16 08:56:53 mpi Exp $
+.\"	$OpenBSD: urng.4,v 1.1 2017/08/28 19:31:57 jasper Exp $
 .\"
-.\" Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
 .\" Copyright (c) 2015 Sean Levy <attila@stalphonsos.com>
+.\" Copyright (c) 2017 Jasper Lievisse Adriaanse <jasper@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,29 +15,36 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 16 2015 $
-.Dt UALEA 4
+.Dd $Mdocdate: August 28 2017 $
+.Dt URNG 4
 .Os
 .Sh NAME
-.Nm ualea
-.Nd Araneus Alea II USB TRNG
+.Nm urng
+.Nd USB Random Number Generator devices
 .Sh SYNOPSIS
-.Cd "ualea* at uhub?"
+.Cd "urng* at uhub?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Araneus Alea II, a USB true random
-number generator (TRNG).
-It delivers 100kbit/sec of hardware-generated entropy.
+driver provides support for various true random number generator
+(TRNG) devices connected via USB.
 .Nm
-reads raw entropy from the Alea II and uses
-.Xr add_true_randomness 9
-to add it to the system entropy pool.
+reads raw entropy from the device at a (hardware dependent) interval
+and stirs it into the system entropy pool with
+.Xr add_true_randomness 9 .
+.Sh HARDWARE
+The following devices are supported by this driver:
 .Pp
+.Bl -tag -width "Altusmetrum"
+.It Araneus Alea II
+Capable of delivering 100kbit/sec of hardware-generated entropy.
 The product documentation states that the USB interface used by the
 Alea II is the same as that used by its predecessor the Alea I;
 theoretically this means that the Alea I should work but this has not
 been tested.
+.It Altusmetrum ChaosKey 1.0
+This device is capable of providing entropy at 10Mbit/s.
+.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr usb 4 ,
@@ -46,9 +53,11 @@ been tested.
 The
 .Nm
 driver first appeared in
-.Ox 5.7 .
+.Ox 6.2 .
 .Sh AUTHORS
 The
 .Nm
 driver was written by
+.An Aaron Bieber Aq Mt abieber@openbsd.org ,
+.An Jasper Lievisse Adriaanse Aq Mt jasper@openbsd.org ,
 .An Sean Levy Aq Mt attila@stalphonsos.com .

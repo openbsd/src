@@ -1,8 +1,11 @@
-/*	$OpenBSD: ualea.c,v 1.2 2015/04/17 07:17:51 mpi Exp $ */
+/*	$OpenBSD: urng.c,v 1.1 2017/08/28 19:31:57 jasper Exp $ */
+
 /*
- * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
- * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
+ * Copyright (c) 2017 Jasper Lievisse Adriaanse <jasper@openbsd.org>
+ * Copyright (c) 2017 Aaron Bieber <abieber@openbsd.org>
  * Copyright (C) 2015 Sean Levy <attila@stalphonsos.com>
+ * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
+ * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,10 +21,11 @@
  */
 
 /*
- * Alea II TRNG.  Produces 100kbit/sec of entropy by black magic
- *
- * Product information in English can be found here:
- *     http://www.araneus.fi/products/alea2/en/
+ * Universal TRNG driver for a collection of TRNG devices:
+ * - ChaosKey TRNG
+ *   http://altusmetrum.org/ChaosKey/
+ * - Alea II TRNG.  Produces 100kbit/sec of entropy by black magic
+ *   http://www.araneus.fi/products/alea2/en/
  */
 
 #include <sys/param.h>
@@ -35,56 +39,78 @@
 
 #include <dev/rndvar.h>
 
-#define ALEA_IFACE		0
-#define ALEA_ENDPOINT		1
-#define ALEA_MSECS		100
-#define ALEA_READ_TIMEOUT	5000
-#define ALEA_BUFSIZ		128
-
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
-struct ualea_softc {
-	struct	device sc_dev;
-	struct	usbd_device *sc_udev;
-	struct	usbd_pipe *sc_pipe;
-	struct	timeout sc_timeout;
-	struct	usb_task sc_task;
-	struct	usbd_xfer *sc_xfer;
-	int	*sc_buf;
+#ifdef URNG_DEBUG
+#define DPRINTF(x)	printf x
+#else
+#define DPRINTF(x)
+#endif
+
+struct urng_chip {
+	int	bufsiz;
+	int	endpoint;
+	int	iface;
+	int	msecs;
+	int	read_timeout;
 };
 
-int ualea_match(struct device *, void *, void *);
-void ualea_attach(struct device *, struct device *, void *);
-int ualea_detach(struct device *, int);
-void ualea_task(void *);
-void ualea_timeout(void *);
-
-struct cfdriver ualea_cd = {
-	NULL, "ualea", DV_DULL
+struct urng_softc {
+	struct  device sc_dev;
+	struct  usbd_device *sc_udev;
+	struct  usbd_pipe *sc_pipe;
+	struct  timeout sc_timeout;
+	struct  usb_task sc_task;
+	struct  usbd_xfer *sc_xfer;
+	struct	urng_chip sc_chip;
+	int     *sc_buf;
 };
 
-const struct cfattach ualea_ca = {
-	sizeof(struct ualea_softc), ualea_match, ualea_attach, ualea_detach
+int urng_match(struct device *, void *, void *);
+void urng_attach(struct device *, struct device *, void *);
+int urng_detach(struct device *, int);
+void urng_task(void *);
+void urng_timeout(void *);
+
+struct cfdriver urng_cd = {
+	NULL, "urng", DV_DULL
 };
+
+const struct cfattach urng_ca = {
+	sizeof(struct urng_softc), urng_match, urng_attach, urng_detach
+};
+
+struct urng_type {
+	struct usb_devno	urng_dev;
+	struct urng_chip	urng_chip;
+};
+
+static const struct urng_type urng_devs[] = {
+	{ { USB_VENDOR_OPENMOKO2, USB_PRODUCT_OPENMOKO2_CHAOSKEY },
+	  {64, 6, 0, 100, 5000} },
+	{ { USB_VENDOR_ARANEUS, USB_PRODUCT_ARANEUS_ALEA },
+	  {128, 1, 0, 100, 5000} },
+};
+#define urng_lookup(v, p) ((struct urng_type *)usb_lookup(urng_devs, v, p))
 
 int
-ualea_match(struct device *parent, void *match, void *aux)
+urng_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
-	if ((uaa->vendor == USB_VENDOR_ARANEUS) &&
-	    (uaa->product == USB_PRODUCT_ARANEUS_ALEA) &&
-	    (uaa->ifaceno == ALEA_IFACE))
+
+	if (urng_lookup(uaa->vendor, uaa->product) != NULL)
 		return (UMATCH_VENDOR_PRODUCT);
+
 	return (UMATCH_NONE);
 }
 
 void
-ualea_attach(struct device *parent, struct device *self, void *aux)
+urng_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ualea_softc *sc = (struct ualea_softc *)self;
+	struct urng_softc *sc = (struct urng_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -93,6 +119,16 @@ ualea_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 
 	sc->sc_udev = uaa->device;
+	sc->sc_chip = urng_lookup(uaa->vendor, uaa->product)->urng_chip;
+
+	DPRINTF(("%s: bufsiz: %d, endpoint: %d iface: %d, msecs: %d, read_timeout: %d\n",
+		DEVNAME(sc),
+		sc->sc_chip.bufsiz,
+		sc->sc_chip.endpoint,
+		sc->sc_chip.iface,
+		sc->sc_chip.msecs,
+		sc->sc_chip.read_timeout));
+
 	id = usbd_get_interface_descriptor(uaa->iface);
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(uaa->iface, i);
@@ -103,42 +139,49 @@ ualea_attach(struct device *parent, struct device *self, void *aux)
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
-		    UE_GET_ADDR(ed->bEndpointAddress) == ALEA_ENDPOINT) {
+		    UE_GET_ADDR(ed->bEndpointAddress) == sc->sc_chip.endpoint) {
 			ep_ibulk = ed->bEndpointAddress;
 			break;
 		}
 	}
+
 	if (ep_ibulk == -1) {
 		printf("%s: missing endpoint\n", DEVNAME(sc));
 		return;
 	}
+
 	error = usbd_open_pipe(uaa->iface, ep_ibulk, USBD_EXCLUSIVE_USE,
 		    &sc->sc_pipe);
 	if (error) {
 		printf("%s: failed to open bulk-in pipe: %s\n",
-		    DEVNAME(sc), usbd_errstr(error));
+				DEVNAME(sc), usbd_errstr(error));
 		return;
 	}
+
 	sc->sc_xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (sc->sc_xfer == NULL) {
 		printf("%s: could not alloc xfer\n", DEVNAME(sc));
 		return;
 	}
-	sc->sc_buf = usbd_alloc_buffer(sc->sc_xfer, ALEA_BUFSIZ);
+
+	sc->sc_buf = usbd_alloc_buffer(sc->sc_xfer, sc->sc_chip.bufsiz);
 	if (sc->sc_buf == NULL) {
 		printf("%s: could not alloc %d-byte buffer\n", DEVNAME(sc),
-		    ALEA_BUFSIZ);
+				sc->sc_chip.bufsiz);
 		return;
 	}
-	usb_init_task(&sc->sc_task, ualea_task, sc, USB_TASK_TYPE_GENERIC);
-	timeout_set(&sc->sc_timeout, ualea_timeout, sc);
+
+	usb_init_task(&sc->sc_task, urng_task, sc, USB_TASK_TYPE_GENERIC);
+	timeout_set(&sc->sc_timeout, urng_timeout, sc);
 	usb_add_task(sc->sc_udev, &sc->sc_task);
+
+	return;
 }
 
 int
-ualea_detach(struct device *self, int flags)
+urng_detach(struct device *self, int flags)
 {
-	struct ualea_softc *sc = (struct ualea_softc *)self;
+	struct urng_softc *sc = (struct urng_softc *)self;
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	if (timeout_initialized(&sc->sc_timeout))
@@ -151,45 +194,44 @@ ualea_detach(struct device *self, int flags)
 	return (0);
 }
 
+
 void
-ualea_task(void *arg)
+urng_task(void *arg)
 {
-	struct ualea_softc *sc = (struct ualea_softc *)arg;
+	struct urng_softc *sc = (struct urng_softc *)arg;
 	usbd_status error;
 	u_int32_t len, i;
 
 	usbd_setup_xfer(sc->sc_xfer, sc->sc_pipe, NULL, sc->sc_buf,
-	    ALEA_BUFSIZ, USBD_SHORT_XFER_OK | USBD_SYNCHRONOUS,
-	    ALEA_READ_TIMEOUT, NULL);
+	    sc->sc_chip.bufsiz, USBD_SHORT_XFER_OK | USBD_SYNCHRONOUS,
+	    sc->sc_chip.read_timeout, NULL);
+
 	error = usbd_transfer(sc->sc_xfer);
 	if (error) {
 		printf("%s: xfer failed: %s\n", DEVNAME(sc),
 		    usbd_errstr(error));
 		goto bail;
 	}
+
 	usbd_get_xfer_status(sc->sc_xfer, NULL, NULL, &len, NULL);
 	if (len < sizeof(int)) {
 		printf("%s: xfer too short (%u bytes) - dropping\n",
 		    DEVNAME(sc), len);
 		goto bail;
 	}
+
 	len /= sizeof(int);
-	/*
-	 * A random(|ness) koan:
-	 *   children chug entropy like thirsty rhinos
-	 *     surfing at the mall
-	 *    privacy died in their hands
-	 */
-	for (i = 0; i < len; i++)
+	for (i = 0; i < len; i++) {
 		add_true_randomness(sc->sc_buf[i]);
+	}
 bail:
-	timeout_add_msec(&sc->sc_timeout, ALEA_MSECS);
+	timeout_add_msec(&sc->sc_timeout, sc->sc_chip.msecs);
 }
 
 void
-ualea_timeout(void *arg)
+urng_timeout(void *arg)
 {
-	struct ualea_softc *sc = arg;
+        struct urng_softc *sc = arg;
 
-	usb_add_task(sc->sc_udev, &sc->sc_task);
+        usb_add_task(sc->sc_udev, &sc->sc_task);
 }
