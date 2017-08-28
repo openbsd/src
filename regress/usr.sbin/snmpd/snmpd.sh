@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.4 2017/08/25 00:16:56 rob Exp $
+# $OpenBSD: snmpd.sh,v 1.5 2017/08/28 22:05:44 rob Exp $
 #/*
-# * Copyright (c) Rob Pierce <rob@2keys.ca>
+# * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
 # * Permission to use, copy, modify, and distribute this software for any
 # * purpose with or without fee is hereby granted, provided that the above
