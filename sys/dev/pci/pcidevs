@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1824 2017/08/04 22:37:42 uaa Exp $
+$OpenBSD: pcidevs,v 1.1825 2017/08/28 09:43:18 stsp Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3614,11 +3614,13 @@ product INTEL BRASWELL_SMB	0x2292	Braswell SMBus
 product INTEL BSW_TXE		0x2298	Braswell TXE
 product INTEL BSW_PCU_LPC	0x229c	Braswell PCU LPC
 product INTEL BSW_AHCI		0x22a3	Braswell AHCI
+product INTEL BSW_AUDIO		0x22a8	Braswell LPE Audio
 product INTEL CHV_IGD_1		0x22b0	HD Graphics
 product INTEL CHV_IGD_2		0x22b1	HD Graphics
 product INTEL CHV_IGD_3		0x22b2	HD Graphics
 product INTEL CHV_IGD_4		0x22b3	HD Graphics
 product INTEL BSW_XHCI		0x22b5	Braswell xHCI
+product INTEL BSW_USB_OTG	0x22b7	Braswell USB OTG
 product INTEL BSW_ISP		0x22b8	Braswell Camera ISP
 product INTEL BSW_SIO_DMA_1	0x22c0	Braswell SIO DMA
 product INTEL BSW_SIO_I2C_1	0x22c1	Braswell SIO I2C
