@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.85 2017/05/16 04:55:27 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.86 2017/08/28 17:50:58 jsing Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: May 16 2017 $
+.Dd $Mdocdate: August 28 2017 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3508,7 +3508,7 @@ Print the public/private key components in plain text.
 .Op Fl in Ar file
 .Op Fl inkey Ar file
 .Op Fl keyform Cm der | pem
-.Op Fl oaep | pkcs | raw | ssl
+.Op Fl oaep | pkcs | raw
 .Op Fl out Ar file
 .Op Fl pubin
 .Op Fl sign
@@ -3543,7 +3543,7 @@ The input key file; by default an RSA private key.
 The private key format.
 The default is
 .Cm pem .
-.It Fl oaep | pkcs | raw | ssl
+.It Fl oaep | pkcs | raw
 The padding to use:
 PKCS#1 OAEP, PKCS#1 v1.5 (the default), or no padding, respectively.
 For signatures, only
