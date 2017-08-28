@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.317 2017/05/31 16:31:55 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.318 2017/08/28 18:52:25 millert Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2463,12 +2463,8 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct rcs_lines *lines,
 				 * trailing whitespaces of our prefix.
 				 */
 				lp = xcalloc(1, sizeof(*lp));
-				lp->l_line = xcalloc(strlen(sprefix) +
-				    line->l_line + line->l_len - end + 1, 1);
-				strlcpy(lp->l_line, sprefix,
-				    strlen(sprefix) + 1);
-				memcpy(lp->l_line + strlen(sprefix),
-				    end, line->l_line + line->l_len - end);
+				xasprintf((char **)&lp->l_line, "%s%s",
+				    sprefix, end);
 				lp->l_len = strlen(lp->l_line);
 				TAILQ_INSERT_AFTER(&(lines->l_lines), cur, lp,
 				    l_list);
