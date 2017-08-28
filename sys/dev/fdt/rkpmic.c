@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.1 2017/08/28 11:16:04 kettenis Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.2 2017/08/28 19:11:08 jasper Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -114,7 +114,7 @@ rkpmic_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 
 	/*
 	 * The RTC thinks November has 31 days.  Match what Linux does
-	 * and undu the damage by considering the calenders to be in
+	 * and undo the damage by considering the calenders to be in
 	 * sync on January 1st 2016.
 	 */
 	secs = clock_ymdhms_to_secs(&dt);
@@ -133,7 +133,7 @@ rkpmic_settime(struct todr_chip_handle *handle, struct timeval *tv)
 	time_t secs;
 
 	/*
-	 * Take care of the November 31st brandamage here as well.
+	 * Take care of the November 31st braindamage here as well.
 	 * Don't try to be clever, just do the conversion in two
 	 * steps, first taking care of November 31 in previous years,
 	 * and then taking care of days in December of the current
@@ -254,7 +254,7 @@ rkpmic_clock_write(struct rkpmic_softc *sc, struct clock_ymdhms *dt)
 	error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
 	    &cmd, sizeof(cmd), regs, RK808_NRTC_REGS, I2C_F_POLL);
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
-	
+
 	/* Restart RTC. */
 	rkpmic_reg_write(sc, RK808_RTC_CTRL, 0);
 
