@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.168 2017/08/13 17:04:36 doug Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.169 2017/08/28 17:36:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1588,30 +1588,6 @@ found:
 	*out = (unsigned char *) result + 1;
 	*outlen = result[0];
 	return (status);
-}
-
-/* SSL_get0_next_proto_negotiated is deprecated. */
-void
-SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
-    unsigned *len)
-{
-	*data = NULL;
-	*len = 0;
-}
-
-/* SSL_CTX_set_next_protos_advertised_cb is deprecated. */
-void
-SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *ctx, int (*cb) (SSL *ssl,
-    const unsigned char **out, unsigned int *outlen, void *arg), void *arg)
-{
-}
-
-/* SSL_CTX_set_next_proto_select_cb is deprecated. */
-void
-SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx, int (*cb) (SSL *s,
-    unsigned char **out, unsigned char *outlen, const unsigned char *in,
-    unsigned int inlen, void *arg), void *arg)
-{
 }
 
 /*
