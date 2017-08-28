@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.96 2017/03/10 16:03:27 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.97 2017/08/28 16:37:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -388,7 +388,7 @@ static const SSL_CIPHER cipher_aliases[] = {
 	},
 	{
 		.name = SSL_TXT_CHACHA20,
-		.algorithm_enc = SSL_CHACHA20POLY1305|SSL_CHACHA20POLY1305_OLD,
+		.algorithm_enc = SSL_CHACHA20POLY1305,
 	},
 
 	/* MAC aliases */
@@ -689,9 +689,6 @@ ssl_cipher_get_evp_aead(const SSL_SESSION *s, const EVP_AEAD **aead)
 #endif
 	case SSL_CHACHA20POLY1305:
 		*aead = EVP_aead_chacha20_poly1305();
-		return 1;
-	case SSL_CHACHA20POLY1305_OLD:
-		*aead = EVP_aead_chacha20_poly1305_old();
 		return 1;
 	default:
 		break;
@@ -1394,16 +1391,12 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		    CIPHER_ADD, -1, &head, &tail);
 		ssl_cipher_apply_rule(0, 0, 0, SSL_CHACHA20POLY1305,
 		    0, 0, 0, CIPHER_ADD, -1, &head, &tail);
-		ssl_cipher_apply_rule(0, 0, 0, SSL_CHACHA20POLY1305_OLD,
-		    0, 0, 0, CIPHER_ADD, -1, &head, &tail);
 	} else {
 		/*
 		 * CHACHA20 is fast and safe on all hardware and is thus our
 		 * preferred symmetric cipher, with AES second.
 		 */
 		ssl_cipher_apply_rule(0, 0, 0, SSL_CHACHA20POLY1305,
-		    0, 0, 0, CIPHER_ADD, -1, &head, &tail);
-		ssl_cipher_apply_rule(0, 0, 0, SSL_CHACHA20POLY1305_OLD,
 		    0, 0, 0, CIPHER_ADD, -1, &head, &tail);
 		ssl_cipher_apply_rule(0, 0, 0, SSL_AES, 0, 0, 0,
 		    CIPHER_ADD, -1, &head, &tail);
@@ -1627,9 +1620,6 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_CHACHA20POLY1305:
 		enc = "ChaCha20-Poly1305";
-		break;
-	case SSL_CHACHA20POLY1305_OLD:
-		enc = "ChaCha20-Poly1305-Old";
 		break;
 	case SSL_eGOST2814789CNT:
 		enc = "GOST-28178-89-CNT";
