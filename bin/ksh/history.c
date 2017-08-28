@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.66 2017/08/27 17:10:32 jca Exp $	*/
+/*	$OpenBSD: history.c,v 1.67 2017/08/28 19:39:13 jca Exp $	*/
 
 /*
  * command history
@@ -771,8 +771,7 @@ hist_init(Source *s)
 static void
 history_write(void)
 {
-	char		*cmd, *encoded;
-	int		i;
+	char		**hp, *encoded;
 
 	/* see if file has grown over 25% */
 	if (line_co < histsize + (histsize / 4))
@@ -784,12 +783,8 @@ history_write(void)
 		bi_errorf("failed to rewrite history file - %s",
 		    strerror(errno));
 	}
-	for (i = 0; i < histsize; i++) {
-		cmd = history[i];
-		if (cmd == NULL)
-			break;
-
-		if (stravis(&encoded, cmd, VIS_SAFE | VIS_NL) != -1) {
+	for (hp = history; hp <= histptr; hp++) {
+		if (stravis(&encoded, *hp, VIS_SAFE | VIS_NL) != -1) {
 			if (fprintf(histfh, "%s\n", encoded) == -1) {
 				free(encoded);
 				return;
