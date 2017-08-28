@@ -7,6 +7,7 @@
 # define OPENSSL_NO_KRB5
 # define OPENSSL_NO_MD2
 # define OPENSSL_NO_MDC2
+# define OPENSSL_NO_NEXTPROTONEG
 # define OPENSSL_NO_PSK
 # define OPENSSL_NO_RC5
 # define OPENSSL_NO_RFC3779
