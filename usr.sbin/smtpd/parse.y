@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.197 2017/07/11 06:08:40 natano Exp $	*/
+/*	$OpenBSD: parse.y,v 1.198 2017/08/28 06:00:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -480,7 +480,7 @@ opt_if_listen : INET4 {
 			}
 			listen_opts.options |= LO_PORT;
 
-			if ($2 <= 0 || $2 >= (int)USHRT_MAX) {
+			if ($2 <= 0 || $2 > (int)USHRT_MAX) {
 				yyerror("invalid port: %" PRId64, $2);
 				YYERROR;
 			}
