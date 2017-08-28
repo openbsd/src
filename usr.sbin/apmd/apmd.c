@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.79 2015/11/16 17:35:05 tedu Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.80 2017/08/28 16:16:58 tedu Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -56,6 +56,9 @@
 #define TRUE 1
 #define FALSE 0
 
+#define AUTO_SUSPEND 1
+#define AUTO_HIBERNATE 2
+
 const char apmdev[] = _PATH_APM_CTLDEV;
 const char sockfile[] = _PATH_APM_SOCKET;
 
@@ -94,8 +97,8 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-AadHLs] [-f devname] [-S sockname] [-t seconds]\n",
-	    __progname);
+	    "usage: %s [-AadHLs] [-f devname] [-S sockname] [-t seconds] "
+		"[-Z percent] [-z percent]\n", __progname);
 	exit(1);
 }
 
@@ -348,6 +351,8 @@ main(int argc, char *argv[])
 {
 	const char *fname = apmdev;
 	int ctl_fd, sock_fd, ch, suspends, standbys, hibernates, resumes;
+	int autoaction = 0;
+	int autolimit = 0;
 	int statonly = 0;
 	int powerstatus = 0, powerbak = 0, powerchange = 0;
 	int noacsleep = 0;
@@ -355,13 +360,14 @@ main(int argc, char *argv[])
 	struct apm_power_info pinfo;
 	time_t apmtimeout = 0;
 	const char *sockname = sockfile;
+	const char *errstr;
 	int kq, nchanges;
 	struct kevent ev[2];
 	int ncpu_mib[2] = { CTL_HW, HW_NCPU };
 	int ncpu;
 	size_t ncpu_sz = sizeof(ncpu);
 
-	while ((ch = getopt(argc, argv, "aACdHLsf:t:S:")) != -1)
+	while ((ch = getopt(argc, argv, "aACdHLsf:t:S:z:Z:")) != -1)
 		switch(ch) {
 		case 'a':
 			noacsleep = 1;
@@ -401,6 +407,20 @@ main(int argc, char *argv[])
 				usage();
 			doperf = PERF_MANUAL;
 			setperfpolicy("high");
+			break;
+		case 'Z':
+			autoaction = AUTO_HIBERNATE;
+			autolimit = strtonum(optarg, 1, 100, &errstr);
+			if (errstr != NULL)
+				errc(1, EINVAL, "%s percentage: %s", errstr,
+				    optarg);
+			break;
+		case 'z':
+			autoaction = AUTO_SUSPEND;
+			autolimit = strtonum(optarg, 1, 100, &errstr);
+			if (errstr != NULL)
+				errc(1, EINVAL, "%s percentage: %s", errstr,
+				    optarg);
 			break;
 		case '?':
 		default:
@@ -479,6 +499,21 @@ main(int argc, char *argv[])
 			if (powerstatus != powerbak) {
 				powerstatus = powerbak;
 				powerchange = 1;
+			}
+
+			if (!powerstatus && autoaction &&
+			    autolimit > (int)pinfo.battery_life) {
+				syslog(LOG_NOTICE,
+				    "estimated battery life %d%%, "
+				    "autoaction limit set to %d%% .",
+				    pinfo.battery_life,
+				    autolimit
+				);
+
+				if (autoaction == AUTO_SUSPEND)
+					suspend(ctl_fd);
+				else
+					hibernate(ctl_fd);
 			}
 		}
 
