@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.17 2017/05/11 02:26:39 jsg Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.18 2017/08/28 17:48:02 jsing Exp $ */
 
 /*
  * Copyright (c) 2015 Reyk Floter <reyk@openbsd.org>
@@ -32,14 +32,7 @@
 #include "evp_locl.h"
 
 #define POLY1305_TAG_LEN 16
-#define CHACHA20_NONCE_LEN_OLD 8
 
-/*
- * The informational RFC 7539, "ChaCha20 and Poly1305 for IETF Protocols",
- * introduced a modified AEAD construction that is incompatible with the
- * common style that has been already used in TLS.  The IETF version also
- * adds a constant (salt) that is prepended to the nonce.
- */
 #define CHACHA20_CONSTANT_LEN 4
 #define CHACHA20_IV_LEN 8
 #define CHACHA20_NONCE_LEN (CHACHA20_CONSTANT_LEN + CHACHA20_IV_LEN)
@@ -155,35 +148,20 @@ aead_chacha20_poly1305_seal(const EVP_AEAD_CTX *ctx, unsigned char *out,
 		return 0;
 	}
 
-	if (nonce_len == CHACHA20_NONCE_LEN_OLD) {
-		/* Google's draft-agl-tls-chacha20poly1305-04, Nov 2013 */
+	ctr = (uint64_t)(nonce[0] | nonce[1] << 8 |
+	    nonce[2] << 16 | nonce[3] << 24) << 32;
+	iv = nonce + CHACHA20_CONSTANT_LEN;
 
-		memset(poly1305_key, 0, sizeof(poly1305_key));
-		CRYPTO_chacha_20(poly1305_key, poly1305_key,
-		    sizeof(poly1305_key), c20_ctx->key, nonce, 0);
+	memset(poly1305_key, 0, sizeof(poly1305_key));
+	CRYPTO_chacha_20(poly1305_key, poly1305_key,
+	    sizeof(poly1305_key), c20_ctx->key, iv, ctr);
 
-		CRYPTO_poly1305_init(&poly1305, poly1305_key);
-		poly1305_update_with_length(&poly1305, ad, ad_len);
-		CRYPTO_chacha_20(out, in, in_len, c20_ctx->key, nonce, 1);
-		poly1305_update_with_length(&poly1305, out, in_len);
-	} else if (nonce_len == CHACHA20_NONCE_LEN) {
-		/* RFC 7539, May 2015 */
-
-		ctr = (uint64_t)(nonce[0] | nonce[1] << 8 |
-		    nonce[2] << 16 | nonce[3] << 24) << 32;
-		iv = nonce + CHACHA20_CONSTANT_LEN;
-
-		memset(poly1305_key, 0, sizeof(poly1305_key));
-		CRYPTO_chacha_20(poly1305_key, poly1305_key,
-		    sizeof(poly1305_key), c20_ctx->key, iv, ctr);
-
-		CRYPTO_poly1305_init(&poly1305, poly1305_key);
-		poly1305_update_with_pad16(&poly1305, ad, ad_len);
-		CRYPTO_chacha_20(out, in, in_len, c20_ctx->key, iv, ctr + 1);
-		poly1305_update_with_pad16(&poly1305, out, in_len);
-		poly1305_update_with_length(&poly1305, NULL, ad_len);
-		poly1305_update_with_length(&poly1305, NULL, in_len);
-	}
+	CRYPTO_poly1305_init(&poly1305, poly1305_key);
+	poly1305_update_with_pad16(&poly1305, ad, ad_len);
+	CRYPTO_chacha_20(out, in, in_len, c20_ctx->key, iv, ctr + 1);
+	poly1305_update_with_pad16(&poly1305, out, in_len);
+	poly1305_update_with_length(&poly1305, NULL, ad_len);
+	poly1305_update_with_length(&poly1305, NULL, in_len);
 
 	if (c20_ctx->tag_len != POLY1305_TAG_LEN) {
 		unsigned char tag[POLY1305_TAG_LEN];
@@ -242,33 +220,19 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 		return 0;
 	}
 
-	if (nonce_len == CHACHA20_NONCE_LEN_OLD) {
-		/* Google's draft-agl-tls-chacha20poly1305-04, Nov 2013 */
+	ctr = (uint64_t)(nonce[0] | nonce[1] << 8 |
+	    nonce[2] << 16 | nonce[3] << 24) << 32;
+	iv = nonce + CHACHA20_CONSTANT_LEN;
 
-		memset(poly1305_key, 0, sizeof(poly1305_key));
-		CRYPTO_chacha_20(poly1305_key, poly1305_key,
-		    sizeof(poly1305_key), c20_ctx->key, nonce, 0);
+	memset(poly1305_key, 0, sizeof(poly1305_key));
+	CRYPTO_chacha_20(poly1305_key, poly1305_key,
+	    sizeof(poly1305_key), c20_ctx->key, iv, ctr);
 
-		CRYPTO_poly1305_init(&poly1305, poly1305_key);
-		poly1305_update_with_length(&poly1305, ad, ad_len);
-		poly1305_update_with_length(&poly1305, in, plaintext_len);
-	} else if (nonce_len == CHACHA20_NONCE_LEN) {
-		/* RFC 7539, May 2015 */
-
-		ctr = (uint64_t)(nonce[0] | nonce[1] << 8 |
-		    nonce[2] << 16 | nonce[3] << 24) << 32;
-		iv = nonce + CHACHA20_CONSTANT_LEN;
-
-		memset(poly1305_key, 0, sizeof(poly1305_key));
-		CRYPTO_chacha_20(poly1305_key, poly1305_key,
-		    sizeof(poly1305_key), c20_ctx->key, iv, ctr);
-
-		CRYPTO_poly1305_init(&poly1305, poly1305_key);
-		poly1305_update_with_pad16(&poly1305, ad, ad_len);
-		poly1305_update_with_pad16(&poly1305, in, plaintext_len);
-		poly1305_update_with_length(&poly1305, NULL, ad_len);
-		poly1305_update_with_length(&poly1305, NULL, plaintext_len);
-	}
+	CRYPTO_poly1305_init(&poly1305, poly1305_key);
+	poly1305_update_with_pad16(&poly1305, ad, ad_len);
+	poly1305_update_with_pad16(&poly1305, in, plaintext_len);
+	poly1305_update_with_length(&poly1305, NULL, ad_len);
+	poly1305_update_with_length(&poly1305, NULL, plaintext_len);
 
 	CRYPTO_poly1305_finish(&poly1305, mac);
 
@@ -282,21 +246,10 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
+/* RFC 7539 */
 static const EVP_AEAD aead_chacha20_poly1305 = {
 	.key_len = 32,
 	.nonce_len = CHACHA20_NONCE_LEN,
-	.overhead = POLY1305_TAG_LEN,
-	.max_tag_len = POLY1305_TAG_LEN,
-
-	.init = aead_chacha20_poly1305_init,
-	.cleanup = aead_chacha20_poly1305_cleanup,
-	.seal = aead_chacha20_poly1305_seal,
-	.open = aead_chacha20_poly1305_open,
-};
-
-static const EVP_AEAD aead_chacha20_poly1305_old = {
-	.key_len = 32,
-	.nonce_len = CHACHA20_NONCE_LEN_OLD,
 	.overhead = POLY1305_TAG_LEN,
 	.max_tag_len = POLY1305_TAG_LEN,
 
@@ -310,12 +263,6 @@ const EVP_AEAD *
 EVP_aead_chacha20_poly1305()
 {
 	return &aead_chacha20_poly1305;
-}
-
-const EVP_AEAD *
-EVP_aead_chacha20_poly1305_old()
-{
-	return &aead_chacha20_poly1305_old;
 }
 
 #endif  /* !OPENSSL_NO_CHACHA && !OPENSSL_NO_POLY1305 */

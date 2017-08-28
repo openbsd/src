@@ -1401,7 +1401,6 @@ EVP_add_digest
 EVP_aead_aes_128_gcm
 EVP_aead_aes_256_gcm
 EVP_aead_chacha20_poly1305
-EVP_aead_chacha20_poly1305_old
 EVP_aes_128_cbc
 EVP_aes_128_cbc_hmac_sha1
 EVP_aes_128_ccm
