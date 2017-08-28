@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.28 2017/04/06 17:00:53 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.29 2017/08/28 23:45:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -137,7 +137,7 @@ sdmmc_io_scan(struct sdmmc_softc *sc)
 	sf0->number = 0;
 	if (sdmmc_set_relative_addr(sc, sf0) != 0) {
 		printf("%s: can't set I/O RCA\n", DEVNAME(sc));
-		SET(sf0->flags, SFF_ERROR);
+		sdmmc_function_free(sf0);
 		return;
 	}
 	sc->sc_fn0 = sf0;
