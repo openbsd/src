@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.124 2017/08/22 13:32:50 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.125 2017/08/28 09:53:14 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -182,6 +182,12 @@ ls_missing()
 	done | sort -V
 }
 
+reorder_kernel()
+{
+	echo "Relinking to create unique kernel..."
+	/usr/libexec/reorder_kernel
+}
+
 rollback_patch()
 {
 	local _edir _file _files _patch _ret=0
@@ -254,7 +260,7 @@ _KARL=false
 
 readonly _BSDMP _KERNV _MIRROR _OSrev _PDIR _TMP
 
-trap 'set +e; ${_KARL} && /usr/libexec/reorder_kernel; rm -rf "${_TMP}"' EXIT
+trap 'set +e; ${_KARL} && reorder_kernel; rm -rf "${_TMP}"' EXIT
 trap exit HUP INT TERM
 
 while getopts clRr arg; do
