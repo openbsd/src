@@ -621,8 +621,8 @@
 ./usr/lib
 ./usr/lib/libc.so.89.6
 ./usr/lib/libc.so.89.6.a
-./usr/lib/libcrypto.so.41.2
-./usr/lib/libcrypto.so.41.2.a
+./usr/lib/libcrypto.so.42.0
+./usr/lib/libcrypto.so.42.0.a
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
 ./usr/lib/libevent.so.4.1
@@ -648,10 +648,10 @@
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.6.1
-./usr/lib/libssl.so.43.3
+./usr/lib/libssl.so.44.0
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
-./usr/lib/libtls.so.15.8
+./usr/lib/libtls.so.16.0
 ./usr/lib/libusbhid.so.7.0
 ./usr/lib/libutil.so.12.2
 ./usr/lib/libz.so.5.0
