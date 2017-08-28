@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.159 2017/08/28 16:37:04 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.160 2017/08/28 18:12:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1040,7 +1040,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_enc = SSL_3DES,
 		.algorithm_mac = SSL_SHA1,
 		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
+		.algo_strength = SSL_MEDIUM,
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 112,
 		.alg_bits = 168,
