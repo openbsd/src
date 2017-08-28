@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.173 2016/09/04 10:22:06 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.174 2017/08/28 19:32:53 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -120,7 +120,7 @@ ure*	at uhub?		# Realtek RTL8152 based adapters
 rsu*	at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 
 # untested USB devices
-ualea*	at uhub?		# Araneus Alea II TRNG
+urng*	at uhub?		# USB Random Number Generator
 uonerng* at uhub?		# Moonbase Otago OneRNG
 umodem*	at uhub?		# USB Modems/Serial
 ucom*	at umodem?

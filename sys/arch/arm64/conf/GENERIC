@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.37 2017/08/28 11:16:04 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.38 2017/08/28 19:32:53 jasper Exp $
 #
 # GENERIC machine description file
 #
@@ -135,7 +135,7 @@ usb*		at xhci?
 # USB devices
 uhub*		at usb?			# USB Hubs
 uhub*		at uhub?		# USB Hubs
-ualea*		at uhub?		# Araneus Alea II TRNG
+urng*		at uhub?		# USB Random Number Generator
 uonerng*	at uhub?		# Moonbase Otago OneRNG
 umodem*		at uhub?		# USB Modems/Serial
 ucom*		at umodem?
