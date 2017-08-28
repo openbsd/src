@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.13 2017/08/13 19:47:49 beck Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.14 2017/08/28 17:42:47 jsing Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -30,7 +30,8 @@
 #define UTCTIME_LENGTH 13
 
 int
-ASN1_time_tm_cmp(struct tm *tm1, struct tm *tm2) {
+ASN1_time_tm_cmp(struct tm *tm1, struct tm *tm2)
+{
 	if (tm1->tm_year < tm2->tm_year)
 		return (-1);
 	if (tm1->tm_year > tm2->tm_year)
