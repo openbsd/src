@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.7 2016/12/18 18:28:39 krw Exp $	*/
+/*	$OpenBSD: build.c,v 1.8 2017/08/28 05:46:44 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -47,10 +47,10 @@ main(int argc, char *argv[])
 
 	bcopy(kue_code_seg, &kf->data[0],
 	    sizeof(kue_code_seg));
-	bcopy(kue_fix_seg, &kf->data[sizeof(kue_code_seg)],
+	bcopy(kue_fix_seg, &kf->data[0] + sizeof(kue_code_seg),
 	    sizeof(kue_fix_seg));
 	bcopy(kue_trig_seg,
-	    &kf->data[sizeof(kue_code_seg) + sizeof(kue_fix_seg)],
+	    &kf->data[0] + sizeof(kue_code_seg) + sizeof(kue_fix_seg),
 	    sizeof(kue_trig_seg));
 
 	printf("creating %s length %d [%zu+%zu+%zu]\n",

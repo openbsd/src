@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.7 2016/12/18 18:28:39 krw Exp $	*/
+/*	$OpenBSD: build.c,v 1.8 2017/08/28 05:46:44 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -57,13 +57,13 @@ main(int argc, char *argv[])
 	bcopy(yds_dsp_mcode, &yf->data[0], sizeof(yds_dsp_mcode));
 	hswapn((u_int32_t *)&yf->data[0], sizeof(yds_dsp_mcode));
 
-	bcopy(yds_ds1_ctrl_mcode, &yf->data[sizeof(yds_dsp_mcode)],
+	bcopy(yds_ds1_ctrl_mcode, &yf->data[0] + sizeof(yds_dsp_mcode),
 	    sizeof(yds_ds1_ctrl_mcode));
 	hswapn((u_int32_t *)&yf->data[sizeof(yds_dsp_mcode)],
 	    sizeof(yds_ds1_ctrl_mcode));
 
 	bcopy(yds_ds1e_ctrl_mcode,
-	    &yf->data[sizeof(yds_dsp_mcode) + sizeof(yds_ds1_ctrl_mcode)],
+	    &yf->data[0] + sizeof(yds_dsp_mcode) + sizeof(yds_ds1_ctrl_mcode),
 	    sizeof(yds_ds1e_ctrl_mcode));
 	hswapn((u_int32_t *)&yf->data[sizeof(yds_dsp_mcode) +
 	    sizeof(yds_ds1_ctrl_mcode)],
