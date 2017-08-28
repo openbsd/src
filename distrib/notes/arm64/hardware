@@ -1,7 +1,13 @@
-dnl	$OpenBSD: hardware,v 1.4 2017/04/02 06:02:19 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.5 2017/08/28 04:44:38 jsg Exp $
 The following machines are targeted by OpenBSD/MACHINE:
-	AMD Seattle Development Board
-	Pine64
-	Raspberry Pi 3
-	SoftIron OverDrive 1000
-	SoftIron OverDrive 3000
+
+	Allwinner A64/H5
+		Pine 64/64+
+		Orange Pi PC2
+	AMD Opteron A1100 (Seattle)
+		AMD Seattle Development Board
+		SoftIron OverDrive 1000
+	Broadcom BCM2837
+		Raspberry Pi 3
+	Rockchip RK3399
+		Firefly-RK3399
