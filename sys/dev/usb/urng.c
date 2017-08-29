@@ -1,4 +1,4 @@
-/*	$OpenBSD: urng.c,v 1.1 2017/08/28 19:31:57 jasper Exp $ */
+/*	$OpenBSD: urng.c,v 1.2 2017/08/29 17:39:22 jasper Exp $ */
 
 /*
  * Copyright (c) 2017 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -58,7 +58,7 @@ struct urng_chip {
 struct urng_softc {
 	struct  device sc_dev;
 	struct  usbd_device *sc_udev;
-	struct  usbd_pipe *sc_pipe;
+	struct  usbd_pipe *sc_outpipe;
 	struct  timeout sc_timeout;
 	struct  usb_task sc_task;
 	struct  usbd_xfer *sc_xfer;
@@ -151,7 +151,7 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	error = usbd_open_pipe(uaa->iface, ep_ibulk, USBD_EXCLUSIVE_USE,
-		    &sc->sc_pipe);
+		    &sc->sc_outpipe);
 	if (error) {
 		printf("%s: failed to open bulk-in pipe: %s\n",
 				DEVNAME(sc), usbd_errstr(error));
@@ -188,8 +188,8 @@ urng_detach(struct device *self, int flags)
 		timeout_del(&sc->sc_timeout);
 	if (sc->sc_xfer)
 		usbd_free_xfer(sc->sc_xfer);
-	if (sc->sc_pipe != NULL)
-		usbd_close_pipe(sc->sc_pipe);
+	if (sc->sc_outpipe != NULL)
+		usbd_close_pipe(sc->sc_outpipe);
 
 	return (0);
 }
@@ -202,7 +202,7 @@ urng_task(void *arg)
 	usbd_status error;
 	u_int32_t len, i;
 
-	usbd_setup_xfer(sc->sc_xfer, sc->sc_pipe, NULL, sc->sc_buf,
+	usbd_setup_xfer(sc->sc_xfer, sc->sc_outpipe, NULL, sc->sc_buf,
 	    sc->sc_chip.bufsiz, USBD_SHORT_XFER_OK | USBD_SYNCHRONOUS,
 	    sc->sc_chip.read_timeout, NULL);
 
