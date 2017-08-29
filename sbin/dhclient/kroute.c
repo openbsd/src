@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.142 2017/08/26 18:52:56 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.143 2017/08/29 13:21:30 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -163,40 +163,51 @@ priv_flush_routes(int index, int routefd, int rdomain)
 	free(buf);
 }
 
+int
+extract_classless_route(uint8_t *rtstatic, unsigned int rtstatic_len,
+    in_addr_t *dest, in_addr_t *netmask, in_addr_t *gateway)
+{
+	unsigned int	 bits, bytes, len;
+
+	if (rtstatic[0] > 32)
+		return -1;
+
+	bits = rtstatic[0];
+	bytes = (bits + 7) / 8;
+	len = 1 + bytes + sizeof(*gateway);
+	if (len > rtstatic_len)
+		return -1;
+
+	memcpy(dest, &rtstatic[1], bytes);
+	if (bits == 0)
+		*netmask = INADDR_ANY;
+	else
+		*netmask = htonl(0xffffffff << (32 - bits));
+	*dest &= *netmask;
+	memcpy(gateway, &rtstatic[1 +  bytes], sizeof(*gateway));
+
+	return len;
+}
+
 void
 set_routes(struct in_addr addr, struct in_addr addrmask, uint8_t *rtstatic,
     unsigned int rtstatic_len)
 {
 	const struct in_addr	 any = { INADDR_ANY };
 	struct in_addr		 dest, gateway, netmask;
-	unsigned int		 i, bits, bytes;
+	unsigned int		 i;
+	int			 len;
 
 	flush_routes();
 
 	/* Add classless static routes. */
 	i = 0;
 	while (i < rtstatic_len) {
-		bits = rtstatic[i++];
-		bytes = (bits + 7) / 8;
-
-		if (bytes > sizeof(netmask.s_addr))
+		len = extract_classless_route(&rtstatic[i], rtstatic_len - i,
+		    &dest.s_addr, &netmask.s_addr, &gateway.s_addr);
+		if (len <= 0)
 			return;
-		else if (i + bytes > rtstatic_len)
-			return;
-
-		if (bits != 0)
-			netmask.s_addr = htonl(0xffffffff << (32 - bits));
-		else
-			netmask.s_addr = INADDR_ANY;
-
-		memcpy(&dest, &rtstatic[i], bytes);
-		dest.s_addr = dest.s_addr & netmask.s_addr;
-		i += bytes;
-
-		if (i + sizeof(gateway) > rtstatic_len)
-			return;
-		memcpy(&gateway.s_addr, &rtstatic[i], sizeof(gateway.s_addr));
-		i += sizeof(gateway.s_addr);
+		i += len;
 
 		if (gateway.s_addr == INADDR_ANY) {
 			/*

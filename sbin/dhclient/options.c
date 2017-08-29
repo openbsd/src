@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.102 2017/08/28 17:33:42 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.103 2017/08/29 13:21:30 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -588,43 +588,34 @@ pretty_print_classless_routes(unsigned char *src, size_t srclen,
     unsigned char *buf, size_t buflen)
 {
 	char		 bitsbuf[5];	/* to hold "/nn " */
-	struct in_addr	 net, gateway;
-	unsigned int	 bytes;
-	int		 bits, rslt;
+	struct in_addr	 dest, netmask, gateway;
+	unsigned int	 i;
+	int		 len, rslt;
 
-	while (srclen) {
-		bits = *src;
-		src++;
-		srclen--;
+	i = 0;
+	while (i < srclen) {
+		len = extract_classless_route(&src[i], srclen - i,
+		    &dest.s_addr, &netmask.s_addr, &gateway.s_addr);
+		if (len <= 0)
+			goto bad;
+		i += len;
 
-		bytes = (bits + 7) / 8;
-		if (srclen < (bytes + sizeof(gateway.s_addr)) ||
-		    bytes > sizeof(net.s_addr))
-			goto toobig;
-		rslt = snprintf(bitsbuf, sizeof(bitsbuf), "/%d ", bits);
+		rslt = snprintf(bitsbuf, sizeof(bitsbuf), "/%d ",
+		    33 - ffs(netmask.s_addr));
 		if (rslt == -1 || (unsigned int)rslt >= sizeof(bitsbuf))
-			goto toobig;
-
-		memset(&net, 0, sizeof(net));
-		memcpy(&net.s_addr, src, bytes);
-		src += bytes;
-		srclen -= bytes;
-
-		memcpy(&gateway.s_addr, src, sizeof(gateway.s_addr));
-		src += sizeof(gateway.s_addr);
-		srclen -= sizeof(gateway.s_addr);
+			goto bad;
 
 		if (strlen(buf) > 0)
 			strlcat(buf, ", ", buflen);
-		strlcat(buf, inet_ntoa(net), buflen);
+		strlcat(buf, inet_ntoa(dest), buflen);
 		strlcat(buf, bitsbuf, buflen);
 		if (strlcat(buf, inet_ntoa(gateway), buflen) >= buflen)
-			goto toobig;
+			goto bad;
 	}
 
 	return;
 
-toobig:
+bad:
 	memset(buf, 0, buflen);
 }
 
