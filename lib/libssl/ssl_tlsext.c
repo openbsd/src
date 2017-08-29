@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.13 2017/08/29 17:24:12 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.14 2017/08/29 19:20:13 doug Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -776,6 +776,11 @@ tlsext_ocsp_clienthello_parse(SSL *s, CBS *cbs, int *alert)
 	if (status_type != TLSEXT_STATUSTYPE_ocsp) {
 		/* ignore unknown status types */
 		s->tlsext_status_type = -1;
+
+		if (!CBS_skip(cbs, CBS_len(cbs))) {
+			*alert = TLS1_AD_INTERNAL_ERROR;
+			return 0;
+		}
 		return 1;
 	}
 	s->tlsext_status_type = status_type;
