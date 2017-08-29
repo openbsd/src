@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.12 2017/08/27 02:58:04 doug Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.13 2017/08/29 17:24:12 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -61,9 +61,6 @@ tlsext_alpn_clienthello_parse(SSL *s, CBS *cbs, int *alert)
 	unsigned char selected_len;
 	int r;
 
-	if (s->ctx->internal->alpn_select_cb == NULL)
-		return 1;
-
 	if (!CBS_get_u16_length_prefixed(cbs, &alpn))
 		goto err;
 	if (CBS_len(&alpn) < 2)
@@ -80,6 +77,9 @@ tlsext_alpn_clienthello_parse(SSL *s, CBS *cbs, int *alert)
 		if (CBS_len(&proto_name) == 0)
 			goto err;
 	}
+
+	if (s->ctx->internal->alpn_select_cb == NULL)
+		return 1;
 
 	r = s->ctx->internal->alpn_select_cb(s, &selected, &selected_len,
 	    CBS_data(&alpn), CBS_len(&alpn),
