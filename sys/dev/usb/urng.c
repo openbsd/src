@@ -1,4 +1,4 @@
-/*	$OpenBSD: urng.c,v 1.2 2017/08/29 17:39:22 jasper Exp $ */
+/*	$OpenBSD: urng.c,v 1.3 2017/08/29 20:06:30 jasper Exp $ */
 
 /*
  * Copyright (c) 2017 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -31,6 +31,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/time.h>
 #include <sys/timeout.h>
 
 #include <dev/usb/usb.h>
@@ -45,6 +46,14 @@
 #define DPRINTF(x)	printf x
 #else
 #define DPRINTF(x)
+#endif
+
+/*
+ * Define URNG_MEASURE_RATE to periodically log rate at which we provide
+ * random data to the kernel.
+ */
+#ifdef URNG_MEASURE_RATE
+#define URNG_RATE_SECONDS 30
 #endif
 
 struct urng_chip {
@@ -64,6 +73,12 @@ struct urng_softc {
 	struct  usbd_xfer *sc_xfer;
 	struct	urng_chip sc_chip;
 	int     *sc_buf;
+#ifdef URNG_MEASURE_RATE
+	struct	timeval sc_start;
+	struct	timeval sc_cur;
+	int	sc_counted_bytes;
+	u_char	sc_first_run;
+#endif
 };
 
 int urng_match(struct device *, void *, void *);
@@ -120,6 +135,9 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_udev = uaa->device;
 	sc->sc_chip = urng_lookup(uaa->vendor, uaa->product)->urng_chip;
+#ifdef URNG_MEASURE_RATE
+	sc->sc_first_run = 1;
+#endif
 
 	DPRINTF(("%s: bufsiz: %d, endpoint: %d iface: %d, msecs: %d, read_timeout: %d\n",
 		DEVNAME(sc),
@@ -201,6 +219,10 @@ urng_task(void *arg)
 	struct urng_softc *sc = (struct urng_softc *)arg;
 	usbd_status error;
 	u_int32_t len, i;
+#ifdef URNG_MEASURE_RATE
+	time_t elapsed;
+	int rate;
+#endif
 
 	usbd_setup_xfer(sc->sc_xfer, sc->sc_outpipe, NULL, sc->sc_buf,
 	    sc->sc_chip.bufsiz, USBD_SHORT_XFER_OK | USBD_SYNCHRONOUS,
@@ -220,11 +242,35 @@ urng_task(void *arg)
 		goto bail;
 	}
 
+#ifdef URNG_MEASURE_RATE
+	if (sc->sc_first_run) {
+		sc->sc_counted_bytes = 0;
+		getmicrotime(&(sc->sc_start));
+	}
+	sc->sc_counted_bytes += len;
+	getmicrotime(&(sc->sc_cur));
+	elapsed = sc->sc_cur.tv_sec - sc->sc_start.tv_sec;
+	if (elapsed >= URNG_RATE_SECONDS) {
+		rate = (8 * sc->sc_counted_bytes) / (elapsed * 1024);
+		printf("%s: transfer rate = %d kb/s\n", DEVNAME(sc), rate);
+
+		/* set up for next measurement */
+		sc->sc_counted_bytes = 0;
+		getmicrotime(&(sc->sc_start));
+	}
+#endif
+
 	len /= sizeof(int);
 	for (i = 0; i < len; i++) {
 		add_true_randomness(sc->sc_buf[i]);
 	}
 bail:
+#ifdef URNG_MEASURE_RATE
+	if (sc->sc_first_run) {
+		sc->sc_first_run = 0;
+	}
+#endif
+
 	timeout_add_msec(&sc->sc_timeout, sc->sc_chip.msecs);
 }
 
