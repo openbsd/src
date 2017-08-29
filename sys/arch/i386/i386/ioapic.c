@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.39 2017/08/08 15:53:55 visa Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.40 2017/08/29 15:19:57 deraadt Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -352,9 +352,10 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	 * In case the APIC is not initialized to the correct ID
 	 * do it now.
 	 */
-	if (mp_verbose && apic_id != sc->sc_apicid) {
-		printf("%s: misconfigured as apic %d",
-		    sc->sc_pic.pic_name, apic_id);
+	if (apic_id != sc->sc_apicid) {
+		if (mp_verbose)
+			printf("%s: misconfigured as apic %d",
+			    sc->sc_pic.pic_name, apic_id);
 		ioapic_set_id(sc);
 	}
 #if 0

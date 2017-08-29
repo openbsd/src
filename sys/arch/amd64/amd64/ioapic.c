@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.26 2017/08/08 15:53:55 visa Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.27 2017/08/29 15:19:57 deraadt Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -356,9 +356,10 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	 * Maybe we should record the original ID for interrupt
 	 * mapping later ...
 	 */
-	if (mp_verbose && apic_id != sc->sc_apicid) {
-		printf("%s: misconfigured as apic %d",
-		    sc->sc_pic.pic_name, apic_id);
+	if (apic_id != sc->sc_apicid) {
+		if (mp_verbose)
+			printf("%s: misconfigured as apic %d",
+			    sc->sc_pic.pic_name, apic_id);
 		ioapic_set_id(sc);
 	}
 #if 0
