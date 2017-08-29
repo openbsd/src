@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.188 2017/04/13 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.189 2017/08/29 02:51:27 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -521,7 +521,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		atomic_clearbits_int(&pr->ps_flags, PS_SUGIDEXEC);
 
 	atomic_clearbits_int(&pr->ps_flags, PS_PLEDGE);
-	pledge_dropwpaths(pr);
 
 	/*
 	 * deal with set[ug]id.

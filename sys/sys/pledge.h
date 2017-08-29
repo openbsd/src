@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.31 2017/04/20 15:21:51 deraadt Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.32 2017/08/29 02:51:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -117,7 +117,6 @@ int	pledge_fail(struct proc *, int, uint64_t);
 struct mbuf;
 struct nameidata;
 int	pledge_namei(struct proc *, struct nameidata *, char *);
-int	pledge_namei_wlpath(struct proc *, struct nameidata *);
 int	pledge_sendfd(struct proc *p, struct file *);
 int	pledge_recvfd(struct proc *p, struct file *);
 int	pledge_sysctl(struct proc *p, int namelen, int *name, void *new);
@@ -134,19 +133,6 @@ int	pledge_fcntl(struct proc *p, int cmd);
 int	pledge_swapctl(struct proc *p);
 int	pledge_kill(struct proc *p, pid_t pid);
 int	pledge_protexec(struct proc *p, int prot);
-
-#define PLEDGE_MAXPATHS	8192
-
-struct whitepaths {
-	size_t	wl_size;
-	int	wl_count;
-	int	wl_ref;
-	struct whitepath {
-		char		*name;
-		size_t		len;
-	} wl_paths[0];
-};
-void	pledge_dropwpaths(struct process *);
 
 #endif /* _KERNEL */
 

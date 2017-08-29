@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.197 2017/04/20 12:59:36 visa Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.198 2017/08/29 02:51:27 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -253,9 +253,6 @@ process_new(struct proc *p, struct process *parent, int flags)
 		pr->ps_vmspace = uvmspace_share(parent);
 	else
 		pr->ps_vmspace = uvmspace_fork(parent);
-
-	if (pr->ps_pledgepaths)
-		pr->ps_pledgepaths->wl_ref++;
 
 	if (parent->ps_flags & PS_PROFIL)
 		startprofclock(pr);

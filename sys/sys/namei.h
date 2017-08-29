@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.33 2016/09/16 03:21:16 dlg Exp $	*/
+/*	$OpenBSD: namei.h,v 1.34 2017/08/29 02:51:27 deraadt Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -70,13 +70,6 @@ struct nameidata {
 	size_t	ni_pathlen;		/* remaining chars in path */
 	char	*ni_next;		/* next location in pathname */
 	u_long	ni_loopcnt;		/* count of symlinks encountered */
-
-	char	*ni_p_path;		/* component path for pledge */
-	size_t	ni_p_size;		/* allocated size of pledge path */
-	size_t	ni_p_length;		/* length of pledge path */
-	char	*ni_p_next;		/* start of next component in pledge path */
-	char	*ni_p_prev;		/* previous component in pledge path */
-
 	/*
 	 * Lookup parameters: this structure describes the subset of
 	 * information from the nameidata structure that is passed

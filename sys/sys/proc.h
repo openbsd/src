@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.239 2017/04/28 13:50:55 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.240 2017/08/29 02:51:27 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -89,7 +89,6 @@ struct exec_package;
 struct proc;
 struct ps_strings;
 struct uvm_object;
-struct whitepaths;
 union sigval;
 
 struct	emul {
@@ -221,7 +220,6 @@ struct process {
 	u_short	ps_acflag;		/* Accounting flags. */
 
 	uint64_t ps_pledge;
-	struct whitepaths *ps_pledgepaths;
 
 	int64_t ps_kbind_cookie;
 	u_long  ps_kbind_addr;
