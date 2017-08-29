@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.126 2017/08/29 10:18:07 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.127 2017/08/29 10:21:23 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -182,12 +182,6 @@ ls_missing()
 	done | sort -V
 }
 
-reorder_kernel()
-{
-	echo "Relinking to create unique kernel..."
-	/usr/libexec/reorder_kernel
-}
-
 rollback_patch()
 {
 	local _edir _file _files _patch _ret=0
@@ -219,6 +213,30 @@ rollback_patch()
 	echo ${_files} | grep -Eqv \
 		'(^|[[:blank:]]+)usr/share/compile/GENERI(C|C.MP)/[[:print:]]+([[:blank:]]+|$)' ||
 		_KARL=true
+}
+
+trap_handler()
+{
+	local _ret
+
+	set +e # we're trapped
+	rm -rf "${_TMP}"
+
+	# in case a patch added a new directory (install -D)
+	if [[ -n ${_PATCHES} ]]; then
+		mtree -qdef /etc/mtree/4.4BSD.dist -p / -U >/dev/null
+		[[ -f /var/sysmerge/xetc.tgz ]] &&
+			mtree -qdef /etc/mtree/BSD.x11.dist -p / -U >/dev/null
+	fi
+
+	if ${_KARL}; then
+		echo -n "Relinking to create unique kernel..."
+		if /usr/libexec/reorder_kernel; then
+			echo " done."
+		else
+			_ret=$?; echo " failed!"; exit ${_ret}
+		fi
+	fi
 }
 
 unpriv()
@@ -260,7 +278,7 @@ _KARL=false
 
 readonly _BSDMP _KERNV _MIRROR _OSrev _PDIR _TMP
 
-trap 'set +e; ${_KARL} && reorder_kernel; rm -rf "${_TMP}"' EXIT
+trap 'trap_handler' EXIT
 trap exit HUP INT TERM
 
 while getopts clRr arg; do
@@ -289,10 +307,4 @@ if ((OPTIND == 1)); then
 	for _PATCH in ${_PATCHES}; do
 		apply_patch ${_OSrev}-${_PATCH}
 	done
-	# in case a patch added a new directory (install -D)
-	if [[ -n ${_PATCHES} ]]; then
-		mtree -qdef /etc/mtree/4.4BSD.dist -p / -U >/dev/null
-		[[ ! -f /var/sysmerge/xetc.tgz ]] ||
-			mtree -qdef /etc/mtree/BSD.x11.dist -p / -U >/dev/null
-	fi
 fi
