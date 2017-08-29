@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.122 2015/10/21 16:06:57 millert Exp $	*/
+/*	$OpenBSD: co.c,v 1.123 2017/08/29 16:47:33 otto Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -511,14 +511,17 @@ checkout_err_nobranch(RCSFILE *file, const char *author, const char *date,
 	if (!(flags & CO_STATE))
 		state = NULL;
 
-	warnx("%s: No revision on branch has%s%s%s%s%s%s.",
+	warnx("%s: No revision on branch has %s%s%s%s%s%s%s%s.",
 	    file->rf_path,
-	    date ? " a date before " : "",
+	    date ? "a date before " : "",
 	    date ? date : "",
-	    author ? " and author " + (date ? 0:4) : "",
+	    (date && author) ? " and " : "",
+	    author ? "author " : "",
 	    author ? author : "",
-	    state  ? " and state " + (date || author ? 0:4) : "",
-	    state  ? state : "");
+	    ((date || author) && state) ? " and " : "",
+	    state ? "state " : "",
+	    state ? state : "");
+
 }
 
 /*

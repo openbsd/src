@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.45 2016/07/04 01:39:12 millert Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.46 2017/08/29 16:47:33 otto Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -365,7 +365,7 @@ rcs_rev_select(RCSFILE *file, const char *range)
 {
 	int i;
 	u_int nrev;
-	char *ep;
+	const char *ep;
 	char *lstr, *rstr;
 	struct rcs_delta *rdp;
 	struct rcs_argvector *revargv, *revrange;
