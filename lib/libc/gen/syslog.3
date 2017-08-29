@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.33 2016/03/30 06:58:06 jmc Exp $
+.\"	$OpenBSD: syslog.3,v 1.34 2017/08/29 18:23:01 millert Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 30 2016 $
+.Dd $Mdocdate: August 29 2017 $
 .Dt SYSLOG 3
 .Os
 .Sh NAME
@@ -173,9 +173,7 @@ The
 .Fa level
 (ORed with the
 .Fa facility )
-is selected from the following
-.Em ordered
-(high to low) list:
+is selected from the following list, ordered by decreasing importance:
 .Bl -tag -width LOG_AUTHPRIV
 .It Dv LOG_EMERG
 A panic condition.
@@ -300,7 +298,9 @@ the mask for all priorities up to and including
 .Fa toppri
 is given by the macro
 .Fn LOG_UPTO toppri .
-The default allows all priorities to be logged.
+The default allows all priorities to be logged, which
+corresponds to
+.Li setlogmask(LOG_UPTO(LOG_DEBUG)) .
 .Pp
 The
 .Fn setlogmask_r
