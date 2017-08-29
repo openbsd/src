@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.15 2017/08/27 02:58:04 doug Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.16 2017/08/29 17:24:59 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -198,6 +198,10 @@ test_tlsext_alpn_clienthello(void)
 		FAIL("failed to parse ALPN");
 		goto err;
 	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		goto err;
+	}
 
 	if (ssl->internal->alpn_client_proto_list_len !=
 	    sizeof(tlsext_alpn_single_proto_val)) {
@@ -259,6 +263,10 @@ test_tlsext_alpn_clienthello(void)
 	    sizeof(tlsext_alpn_multiple_protos));
 	if (!tlsext_alpn_clienthello_parse(ssl, &cbs, &alert)) {
 		FAIL("failed to parse ALPN");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
 		goto err;
 	}
 
@@ -396,6 +404,10 @@ test_tlsext_alpn_serverhello(void)
 	}
 	if (!tlsext_alpn_serverhello_parse(ssl, &cbs, &alert)) {
 		FAIL("Should be able to parse serverhello when we request it");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
 		goto err;
 	}
 
@@ -597,6 +609,10 @@ test_tlsext_ec_clienthello(void)
 		FAIL("failed to parse clienthello Ellipticcurves\n");
 		goto err;
 	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		goto err;
+	}
 
 	if (SSI(ssl)->tlsext_supportedgroups_length !=
 	    sizeof(tlsext_ec_clienthello_secp384r1_val) / sizeof(uint16_t)) {
@@ -691,6 +707,10 @@ test_tlsext_ec_clienthello(void)
 	    sizeof(tlsext_ec_clienthello_nistp192and224));
 	if (!tlsext_ec_clienthello_parse(ssl, &cbs, &alert)) {
 		FAIL("failed to parse clienthello Ellipticcurves\n");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
 		goto err;
 	}
 
@@ -895,6 +915,10 @@ test_tlsext_ecpf_clienthello(void)
 		FAIL("failed to parse clienthello ECPointFormats\n");
 		goto err;
 	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		goto err;
+	}
 
 	if (SSI(ssl)->tlsext_ecpointformatlist_length !=
 	    sizeof(tlsext_ecpf_hello_uncompressed_val)) {
@@ -982,6 +1006,10 @@ test_tlsext_ecpf_clienthello(void)
 	    sizeof(tlsext_ecpf_hello_prefer_order));
 	if (!tlsext_ecpf_clienthello_parse(ssl, &cbs, &alert)) {
 		FAIL("failed to parse clienthello ECPointFormats\n");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
 		goto err;
 	}
 
@@ -1100,6 +1128,10 @@ test_tlsext_ecpf_serverhello(void)
 		FAIL("must include uncompressed in serverhello ECPointFormats\n");
 		goto err;
 	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		goto err;
+	}
 
 	/*
 	 * Test with a custom order that replaces the default uncompressed.
@@ -1182,6 +1214,10 @@ test_tlsext_ecpf_serverhello(void)
 	    sizeof(tlsext_ecpf_hello_prefer_order));
 	if (!tlsext_ecpf_serverhello_parse(ssl, &cbs, &alert)) {
 		FAIL("failed to parse serverhello ECPointFormats\n");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
 		goto err;
 	}
 
@@ -1308,6 +1344,10 @@ test_tlsext_ri_clienthello(void)
 		FAIL("failed to parse clienthello RI\n");
 		goto err;
 	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		goto err;
+	}
 
 	if (S3I(ssl)->renegotiate_seen != 1) {
 		FAIL("renegotiate seen not set\n");
@@ -1415,6 +1455,10 @@ test_tlsext_ri_serverhello(void)
 	CBS_init(&cbs, tlsext_ri_serverhello, sizeof(tlsext_ri_serverhello));
 	if (!tlsext_ri_serverhello_parse(ssl, &cbs, &alert)) {
 		FAIL("failed to parse serverhello RI\n");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
 		goto err;
 	}
 
@@ -1534,6 +1578,10 @@ test_tlsext_sigalgs_clienthello(void)
 		failure = 1;
 		goto done;
 	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		goto done;
+	}
 
 	if (ssl->cert->pkeys[SSL_PKEY_RSA_SIGN].digest != EVP_sha512()) {
 		fprintf(stderr, "FAIL: RSA sign digest mismatch\n");
@@ -1601,7 +1649,7 @@ test_tlsext_sigalgs_serverhello(void)
 
 	CBS_init(&cbs, tlsext_sigalgs_clienthello, sizeof(tlsext_sigalgs_clienthello));
 	if (tlsext_sigalgs_serverhello_parse(ssl, &cbs, &alert)) {
-		fprintf(stderr, "FAIL: failed to parse serverhello sigalgs\n");
+		fprintf(stderr, "FAIL: serverhello should not parse sigalgs\n");
 		failure = 1;
 		goto done;
 	}
@@ -1697,6 +1745,10 @@ test_tlsext_sni_clienthello(void)
 	CBS_init(&cbs, tlsext_sni_clienthello, sizeof(tlsext_sni_clienthello));
 	if (!tlsext_sni_clienthello_parse(ssl, &cbs, &alert)) {
 		FAIL("failed to parse clienthello SNI\n");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
 		goto err;
 	}
 
@@ -1810,6 +1862,10 @@ test_tlsext_sni_serverhello(void)
 		FAIL("failed to parse serverhello SNI\n");
 		goto err;
 	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		goto err;
+	}
 
 	if (ssl->session->tlsext_hostname == NULL) {
 		FAIL("no tlsext_hostname after serverhello SNI\n");
@@ -1896,6 +1952,10 @@ test_tlsext_ocsp_clienthello(void)
 	    sizeof(tls_ocsp_clienthello_default));
 	if (!tlsext_ocsp_clienthello_parse(ssl, &cbs, &alert)) {
 		FAIL("failed to parse ocsp clienthello\n");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
 		goto err;
 	}
 
@@ -2385,6 +2445,10 @@ test_tlsext_srtp_clienthello(void)
 		FAIL("failed to parse SRTP\n");
 		goto err;
 	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		goto err;
+	}
 
 	if ((prof = SSL_get_selected_srtp_profile(ssl)) == NULL) {
 		FAIL("SRTP profile should be set now\n");
@@ -2448,6 +2512,10 @@ test_tlsext_srtp_clienthello(void)
 		FAIL("failed to parse SRTP\n");
 		goto err;
 	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		goto err;
+	}
 
 	if ((prof = SSL_get_selected_srtp_profile(ssl)) == NULL) {
 		FAIL("SRTP profile should be set now\n");
@@ -2475,6 +2543,10 @@ test_tlsext_srtp_clienthello(void)
 		FAIL("failed to parse SRTP\n");
 		goto err;
 	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		goto err;
+	}
 
 	if ((prof = SSL_get_selected_srtp_profile(ssl)) == NULL) {
 		FAIL("SRTP profile should be set now\n");
@@ -2498,6 +2570,10 @@ test_tlsext_srtp_clienthello(void)
 	    sizeof(tlsext_srtp_multiple_invalid));
 	if (!tlsext_srtp_clienthello_parse(ssl, &cbs, &alert)) {
 		FAIL("should be able to fall back to negotiated\n");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
 		goto err;
 	}
 
@@ -2607,6 +2683,10 @@ test_tlsext_srtp_serverhello(void)
 	CBS_init(&cbs, tlsext_srtp_single, sizeof(tlsext_srtp_single));
 	if (!tlsext_srtp_serverhello_parse(ssl, &cbs, &alert)) {
 		FAIL("failed to parse SRTP\n");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
 		goto err;
 	}
 
