@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.132 2017/08/28 19:31:57 jasper Exp $
+#	$OpenBSD: files.usb,v 1.133 2017/08/29 03:35:11 deraadt Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -175,7 +175,7 @@ file	dev/usb/uonerng.c		uonerng
 # USB Random Number Generator
 device	urng
 attach	urng at uhub
-file	dev/usb/urng.c
+file	dev/usb/urng.c			urng
 
 # Gude Expert mouseCLOCK DCF77 time signal station receiver
 device	udcf
