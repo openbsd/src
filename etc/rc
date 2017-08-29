@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.516 2017/08/28 06:56:54 ajacoutot Exp $
+#	$OpenBSD: rc,v 1.517 2017/08/29 16:56:13 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -186,19 +186,31 @@ reorder_libs() {
 	done
 	_libas=${_libas# }
 
-	for _liba in $_libas; do
-		_tmpdir=$(mktemp -dq /tmp/_librebuild.XXXXXXXXXXXX) && (
-			set -o errexit
-			_lib=${_liba#/usr/lib/}
-			_lib=${_lib%.a}
-			cd $_tmpdir
-			ar x ${_liba}
+	for _liba in /usr/libdata/ld.so.a $_libas; do
+		_tmpdir=$(mktemp -dq /tmp/_librebuild.XXXXXXXXXXXX) &&
+		(
+		set -o errexit
+		_install='install -F -S -o root -g bin -m 0444'
+		_lib=${_liba##*/}
+		_lib=${_lib%.a}
+		cd $_tmpdir
+		ar x $_liba
+		if [[ $_lib == ld.so ]]; then
+			ld -g -x -e _dl_start \
+			    --version-script=Symbols.map --shared -Bsymbolic \
+			    --no-undefined -o ld.so.test $(ls *.o | sort -R)
+			chmod u+x test-ld.so
+			[[ $(./test-ld.so ok) == './test-ld.so: ok!' ]]
+			$_install /usr/libexec/ld.so /usr/libexec/ld.so.save
+			$_install ld.so.test /usr/libexec/ld.so
+		else
 			cc -shared -o $_lib $(ls *.so | sort -R) $(cat .ldadd)
 			[[ -s $_lib ]] && file $_lib | fgrep -q 'shared object'
 			LD_BIND_NOW=1 LD_LIBRARY_PATH=$_tmpdir awk 'BEGIN {exit 0}'
 			LD_BIND_NOW=1 LD_LIBRARY_PATH=$_tmpdir openssl \
 			    x509 -in /etc/ssl/cert.pem -out /dev/null
-			install -F -S -o root -g bin -m 0444 $_lib /usr/lib/$_lib
+			$_install $_lib ${_liba%/*}/$_lib
+		fi
 		) || { _error=true; break; }
 	done
 
