@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.16 2017/08/14 08:01:14 eric Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.17 2017/08/29 07:37:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -73,7 +73,8 @@ static int
 table_static_config(struct table *t)
 {
 	FILE	*fp;
-	char	*buf = NULL;
+	char	*buf = NULL, *p;
+	int	 lineno = 0;
 	size_t	 sz = 0;
 	ssize_t	 flen;
 	char	*keyp;
@@ -90,14 +91,47 @@ table_static_config(struct table *t)
 	}
 
 	while ((flen = getline(&buf, &sz, fp)) != -1) {
+		lineno++;
 		if (buf[flen - 1] == '\n')
-			buf[flen - 1] = '\0';
+			buf[--flen] = '\0';
 
 		keyp = buf;
-		while (isspace((unsigned char)*keyp))
+		while (isspace((unsigned char)*keyp)) {
 			++keyp;
-		if (*keyp == '\0' || *keyp == '#')
+			--flen;
+		}
+		if (*keyp == '\0')
 			continue;
+		while (isspace((unsigned char)keyp[flen - 1]))
+			keyp[--flen] = '\0';
+		if (*keyp == '#') {
+			if (t->t_type == T_NONE) {
+				keyp++;
+				while (isspace((unsigned char)*keyp))
+					++keyp;
+				if (!strcmp(keyp, "@list"))
+					t->t_type = T_LIST;
+			}
+			continue;
+		}
+
+		if (t->t_type == T_NONE) {
+			for (p = keyp; *p; p++) {
+				if (*p == ' ' || *p == '\t' || *p == ':') {
+					t->t_type = T_HASH;
+					break;
+				}
+			}
+			if (t->t_type == T_NONE)
+				t->t_type = T_LIST;
+		}
+
+		if (t->t_type == T_LIST) {
+			table_add(t, keyp, NULL);
+			continue;
+		}
+
+		/* T_HASH */
 		valp = keyp;
 		strsep(&valp, " \t:");
 		if (valp) {
@@ -111,18 +145,20 @@ table_static_config(struct table *t)
 			if (*valp == '\0')
 				valp = NULL;
 		}
-
-		if (t->t_type == 0)
-			t->t_type = (valp == keyp || valp == NULL) ? T_LIST :
-			    T_HASH;
-
-		if ((valp == keyp || valp == NULL) && t->t_type == T_LIST)
-			table_add(t, keyp, NULL);
-		else if ((valp != keyp && valp != NULL) && t->t_type == T_HASH)
-			table_add(t, keyp, valp);
-		else
+		if (valp == NULL) {
+			log_warnx("%s: invalid map entry line %d", t->t_config,
+			    lineno);
 			goto end;
+		}
+
+		table_add(t, keyp, valp);
 	}
+
+	if (ferror(fp)) {
+		log_warn("%s: getline", t->t_config);
+		goto end;
+	}
+
 	/* Accept empty alias files; treat them as hashes */
 	if (t->t_type == T_NONE && t->t_backend->services & K_ALIAS)
 	    t->t_type = T_HASH;
