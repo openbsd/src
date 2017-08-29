@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.346 2017/08/01 19:01:08 benno Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.347 2017/08/29 20:06:51 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2366,7 +2366,7 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 		printf("%uM HT ", nr->nr_max_rxrate);
 	} else if (nr->nr_rxmcs[0] != 0) {
 		for (i = IEEE80211_HT_NUM_MCS - 1; i >= 0; i--) {
-			if (isset(nr->nr_rxmcs, i))
+			if (nr->nr_rxmcs[i / 8] & (1 << (i / 10)))
 				break;
 		}
 		printf("HT-MCS%d ", i);
