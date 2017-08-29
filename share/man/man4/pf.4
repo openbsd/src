@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.87 2017/05/30 19:38:47 henning Exp $
+.\"	$OpenBSD: pf.4,v 1.88 2017/08/29 02:16:56 lteo Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 30 2017 $
+.Dd $Mdocdate: August 29 2017 $
 .Dt PF 4
 .Os
 .Sh NAME
@@ -94,8 +94,8 @@ struct pfioc_rule {
 	u_int32_t	action;
 	u_int32_t	ticket;
 	u_int32_t	nr;
-	char		anchor[MAXPATHLEN];
-	char		anchor_call[MAXPATHLEN];
+	char		anchor[PATH_MAX];
+	char		anchor_call[PATH_MAX];
 	struct pf_rule	rule;
 };
 .Ed
@@ -186,7 +186,7 @@ for the queue specified by
 .Bd -literal
 struct pfioc_ruleset {
 	u_int32_t	 nr;
-	char		 path[MAXPATHLEN];
+	char		 path[PATH_MAX];
 	char		 name[PF_ANCHOR_NAME_SIZE];
 };
 .Ed
@@ -272,12 +272,13 @@ struct pf_status {
 	time_t		since;
 	u_int32_t	running;
 	u_int32_t	states;
+	u_int32_t	states_halfopen;
 	u_int32_t	src_nodes;
 	u_int32_t	debug;
 	u_int32_t	hostid;
 	u_int32_t	reass;			/* reassembly */
 	char		ifname[IFNAMSIZ];
-	u_int8_t	pf_chksum[MD5_DIGEST_LENGTH];
+	u_int8_t	pf_chksum[PF_MD5_DIGEST_LENGTH];
 };
 .Ed
 .It Dv DIOCCLRSTATUS
@@ -462,7 +463,7 @@ On exit,
 contains the number of tables effectively created.
 .Bd -literal
 struct pfr_table {
-	char		pfrt_anchor[MAXPATHLEN];
+	char		pfrt_anchor[PATH_MAX];
 	char		pfrt_name[PF_TABLE_NAME_SIZE];
 	u_int32_t	pfrt_flags;
 	u_int8_t	pfrt_fback;
@@ -746,7 +747,7 @@ struct pfioc_trans {
 	int		 esize;	/* size of each element in bytes */
 	struct pfioc_trans_e {
 		int		type;
-		char		anchor[MAXPATHLEN];
+		char		anchor[PATH_MAX];
 		u_int32_t	ticket;
 	}		*array;
 };
