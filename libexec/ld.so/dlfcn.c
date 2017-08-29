@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.97 2017/05/08 02:34:01 guenther Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.98 2017/08/29 15:25:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -378,7 +378,7 @@ _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
 
 	for (i = 0; fmt[i]; i++) {
 		if (fmt[i] != '%' && fmt[i] != '\\') {
-			_dl_fdprintf(fd, "%c", fmt[i]);
+			_dl_dprintf(fd, "%c", fmt[i]);
 			continue;
 		}
 		if (fmt[i] == '%') {
@@ -387,46 +387,46 @@ _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
 			case '\0':
 				return;
 			case '%':
-				_dl_fdprintf(fd, "%c", '%');
+				_dl_dprintf(fd, "%c", '%');
 				break;
 			case 'A':
-				_dl_fdprintf(fd, "%s", _dl_traceprog ?
+				_dl_dprintf(fd, "%s", _dl_traceprog ?
 				    _dl_traceprog : "");
 				break;
 			case 'a':
-				_dl_fdprintf(fd, "%s", __progname);
+				_dl_dprintf(fd, "%s", __progname);
 				break;
 			case 'e':
-				_dl_fdprintf(fd, "%lX",
+				_dl_dprintf(fd, "%lX",
 				    (void *)(object->load_base +
 				    object->load_size));
 				break;
 			case 'g':
-				_dl_fdprintf(fd, "%d", object->grprefcount);
+				_dl_dprintf(fd, "%d", object->grprefcount);
 				break;
 			case 'm':
-				_dl_fdprintf(fd, "%d", object->sod.sod_major);
+				_dl_dprintf(fd, "%d", object->sod.sod_major);
 				break;
 			case 'n':
-				_dl_fdprintf(fd, "%d", object->sod.sod_minor);
+				_dl_dprintf(fd, "%d", object->sod.sod_minor);
 				break;
 			case 'O':
-				_dl_fdprintf(fd, "%d", object->opencount);
+				_dl_dprintf(fd, "%d", object->opencount);
 				break;
 			case 'o':
-				_dl_fdprintf(fd, "%s", object->sod.sod_name);
+				_dl_dprintf(fd, "%s", object->sod.sod_name);
 				break;
 			case 'p':
-				_dl_fdprintf(fd, "%s", object->load_name);
+				_dl_dprintf(fd, "%s", object->load_name);
 				break;
 			case 'r':
-				_dl_fdprintf(fd, "%d", object->refcount);
+				_dl_dprintf(fd, "%d", object->refcount);
 				break;
 			case 't':
-				_dl_fdprintf(fd, "%s", objtypename);
+				_dl_dprintf(fd, "%s", objtypename);
 				break;
 			case 'x':
-				_dl_fdprintf(fd, "%lX", object->load_base);
+				_dl_dprintf(fd, "%lX", object->load_base);
 				break;
 			}
 		}
@@ -436,16 +436,16 @@ _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
 			case '\0':
 				return;
 			case 'n':
-				_dl_fdprintf(fd, "%c", '\n');
+				_dl_dprintf(fd, "%c", '\n');
 				break;
 			case 'r':
-				_dl_fdprintf(fd, "%c", '\r');
+				_dl_dprintf(fd, "%c", '\r');
 				break;
 			case 't':
-				_dl_fdprintf(fd, "%c", '\t');
+				_dl_dprintf(fd, "%c", '\t');
 				break;
 			default:
-				_dl_fdprintf(fd, "%c", fmt[i]);
+				_dl_dprintf(fd, "%c", fmt[i]);
 				break;
 			}
 		}
@@ -478,7 +478,7 @@ _dl_show_objects(void)
 	    "\t%x %e %t %O    %r   %g      %p\n";
 
 	if (_dl_tracefmt1 == NULL && _dl_tracefmt2 == NULL)
-		_dl_fdprintf(outputfd, "\tStart   %s End     %s Type Open Ref GrpRef Name\n",
+		_dl_dprintf(outputfd, "\tStart   %s End     %s Type Open Ref GrpRef Name\n",
 		    pad, pad);
 
 	if (_dl_tracelib) {
