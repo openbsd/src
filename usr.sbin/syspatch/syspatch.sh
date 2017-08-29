@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.125 2017/08/28 09:53:14 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.126 2017/08/29 10:18:07 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -67,8 +67,8 @@ apply_patch()
 		'(^|[[:blank:]]+)usr/share/compile/GENERI(C|C.MP)/[[:print:]]+([[:blank:]]+|$)' ||
 		_KARL=true
 
-	${_upself} && sp_err "syspatch updated itself, run it again to install \
-missing patches" 2
+	! ${_upself} || sp_err "syspatch updated itself, run it again to \
+install missing patches" 2
 }
 
 # quick-and-dirty filesystem status and size checks:
