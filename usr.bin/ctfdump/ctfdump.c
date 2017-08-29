@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.4 2017/08/11 20:42:59 jasper Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.5 2017/08/29 21:10:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/exec_elf.h>

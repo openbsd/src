@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmboot.c,v 1.3 2016/11/26 20:03:42 reyk Exp $	*/
+/*	$OpenBSD: vmboot.c,v 1.4 2017/08/29 21:10:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE roundup */
 #include <sys/reboot.h>
 #include <sys/time.h>
 #include <sys/stat.h>

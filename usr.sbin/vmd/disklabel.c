@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.1 2016/11/26 20:03:42 reyk Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.2 2017/08/29 21:10:20 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.3 1994/10/26 05:44:42 cgd Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
  *	@(#)disklabel.c	8.1 (Berkeley) 6/11/93
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/disklabel.h>
 #include "vmboot.h"
 

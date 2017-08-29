@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-enc.c,v 1.15 2016/04/04 16:26:00 sthen Exp $	*/
+/*	$OpenBSD: print-enc.c,v 1.16 2017/08/29 21:10:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -21,7 +21,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/file.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.7 2017/08/12 19:00:08 jasper Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.8 2017/08/29 21:10:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/exec_elf.h>

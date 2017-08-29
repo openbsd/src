@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.4 2017/08/11 16:55:46 mpi Exp $ */
+/*	$OpenBSD: parse.c,v 1.5 2017/08/29 21:10:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -21,13 +21,13 @@
  * DWARF to IT (internal type) representation parser.
  */
 
-#include <sys/param.h>
-#include <sys/types.h>
+#include <sys/param.h>	/* nitems() */
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/ctf.h>
 
 #include <assert.h>
+#include <limits.h>
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>

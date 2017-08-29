@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.2 2017/08/11 15:00:00 jasper Exp $ */
+/*	$OpenBSD: elf.c,v 1.3 2017/08/29 21:10:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/exec_elf.h>
 
 #include <machine/reloc.h>
