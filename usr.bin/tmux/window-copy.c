@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.181 2017/08/23 09:18:22 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.182 2017/08/29 20:26:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1508,10 +1508,17 @@ window_copy_update_selection(struct window_pane *wp, int may_redraw)
 		 * of lines, and redraw just past that in both directions
 		 */
 		cy = data->cy;
-		if (sy < cy)
-			window_copy_redraw_lines(wp, sy, cy - sy + 1);
-		else
-			window_copy_redraw_lines(wp, cy, sy - cy + 1);
+		if (data->cursordrag == CURSORDRAG_ENDSEL) {
+			if (sy < cy)
+				window_copy_redraw_lines(wp, sy, cy - sy + 1);
+			else
+				window_copy_redraw_lines(wp, cy, sy - cy + 1);
+		} else {
+			if (endsy < cy)
+				window_copy_redraw_lines(wp, endsy, cy - endsy + 1);
+			else
+				window_copy_redraw_lines(wp, cy, endsy - cy + 1);
+		}
 	}
 
 	return (1);
