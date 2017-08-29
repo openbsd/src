@@ -1,4 +1,4 @@
-.\"	$OpenBSD: urng.4,v 1.1 2017/08/28 19:31:57 jasper Exp $
+.\"	$OpenBSD: urng.4,v 1.2 2017/08/29 06:12:36 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Sean Levy <attila@stalphonsos.com>
 .\" Copyright (c) 2017 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 28 2017 $
+.Dd $Mdocdate: August 29 2017 $
 .Dt URNG 4
 .Os
 .Sh NAME
@@ -34,7 +34,6 @@ and stirs it into the system entropy pool with
 .Xr add_true_randomness 9 .
 .Sh HARDWARE
 The following devices are supported by this driver:
-.Pp
 .Bl -tag -width "Altusmetrum"
 .It Araneus Alea II
 Capable of delivering 100kbit/sec of hardware-generated entropy.
@@ -60,4 +59,5 @@ The
 driver was written by
 .An Aaron Bieber Aq Mt abieber@openbsd.org ,
 .An Jasper Lievisse Adriaanse Aq Mt jasper@openbsd.org ,
+and
 .An Sean Levy Aq Mt attila@stalphonsos.com .
