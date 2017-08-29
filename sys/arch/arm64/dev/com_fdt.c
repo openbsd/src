@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.2 2017/01/20 08:03:21 patrick Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.3 2017/08/29 13:33:03 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -29,7 +29,6 @@
 #include <dev/cons.h>
 
 #include <arm64/arm64/arm64var.h>
-#include <arm64/arm64/arm64_machdep.h>
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>

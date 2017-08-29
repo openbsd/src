@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.4 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.5 2017/08/29 13:33:03 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -40,8 +40,6 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 #include <arm/armv7/armv7var.h>
-#include <armv7/armv7/armv7var.h>
-#include <armv7/armv7/armv7_machdep.h>
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>

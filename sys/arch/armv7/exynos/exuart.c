@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.11 2017/04/30 13:04:49 mpi Exp $ */
+/* $OpenBSD: exuart.c,v 1.12 2017/08/29 13:33:03 jsg Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -40,8 +40,6 @@
 #include <arm/armv7/armv7var.h>
 #include <armv7/exynos/exuartreg.h>
 #include <armv7/exynos/exuartvar.h>
-#include <armv7/armv7/armv7var.h>
-#include <armv7/armv7/armv7_machdep.h>
 #include <armv7/exynos/exclockvar.h>
 
 #include <dev/ofw/fdt.h>

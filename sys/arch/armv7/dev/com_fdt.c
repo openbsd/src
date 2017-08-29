@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.9 2016/08/22 09:37:27 kettenis Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.10 2017/08/29 13:33:03 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -30,9 +30,6 @@
 
 /* pick up armv7_a4x_bs_tag */
 #include <arch/arm/armv7/armv7var.h>
-
-#include <armv7/armv7/armv7var.h>
-#include <armv7/armv7/armv7_machdep.h>
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
