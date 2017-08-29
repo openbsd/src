@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.110 2017/07/12 09:07:52 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.111 2017/08/29 09:18:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -164,7 +164,7 @@ server_lock_client(struct client *c)
 		return;
 
 	cmd = options_get_string(c->session->options, "lock-command");
-	if (strlen(cmd) + 1 > MAX_IMSGSIZE - IMSG_HEADER_SIZE)
+	if (*cmd == '\0' || strlen(cmd) + 1 > MAX_IMSGSIZE - IMSG_HEADER_SIZE)
 		return;
 
 	tty_stop_tty(&c->tty);
