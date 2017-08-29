@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.70 2017/06/25 17:28:39 anton Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.71 2017/08/29 23:04:50 jca Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -18,7 +18,6 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1449,19 +1448,12 @@ x_bind(const char *a1, const char *a2,
 void
 x_init_emacs(void)
 {
-	char *locale;
-
 	x_tty = 1;
 	ainit(AEDIT);
 	x_nextcmd = -1;
 
-	/* Determine if we can translate meta key or use 8-bit AscII
-	 * XXX - It would be nice if there was a locale attribute to
-	 * determine if the locale is 7-bit or not.
-	 */
-	locale = setlocale(LC_CTYPE, NULL);
-	if (locale == NULL || !strcmp(locale, "C") || !strcmp(locale, "POSIX"))
-		Flag(FEMACSUSEMETA) = 1;
+	/* XXX unused */
+	Flag(FEMACSUSEMETA) = 1;
 
 	/* new keybinding stuff */
 	TAILQ_INIT(&kblist);
