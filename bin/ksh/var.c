@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.57 2016/09/08 15:50:50 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.58 2017/08/30 10:18:48 jca Exp $	*/
 
 #include <sys/stat.h>
 
@@ -976,10 +976,8 @@ setspec(struct tbl *vp)
 		change_flag(FPOSIX, OF_SPECIAL, 1);
 		break;
 	case V_TMPDIR:
-		if (tmpdir) {
-			afree(tmpdir, APERM);
-			tmpdir = NULL;
-		}
+		afree(tmpdir, APERM);
+		tmpdir = NULL;
 		/* Use tmpdir iff it is an absolute path, is writable and
 		 * searchable and is a directory...
 		 */
@@ -1075,10 +1073,8 @@ unsetspec(struct tbl *vp)
 		break;
 	case V_TMPDIR:
 		/* should not become unspecial */
-		if (tmpdir) {
-			afree(tmpdir, APERM);
-			tmpdir = NULL;
-		}
+		afree(tmpdir, APERM);
+		tmpdir = NULL;
 		break;
 	case V_MAIL:
 		mbset(NULL);
