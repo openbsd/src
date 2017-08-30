@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.34 2017/08/30 06:42:21 anton Exp $	*/
+/*	$OpenBSD: file.c,v 1.35 2017/08/30 06:57:48 anton Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -777,6 +777,8 @@ tenex(Char *inputline, int inputline_size)
 	cl.fdout = SHOUT;
 	cl.buf = buf;
 	cl.size = sizeof(buf);
+	if (inputline_size < cl.size)
+		cl.size = inputline_size;
 	if (tio->c_lflag & ALTWERASE)
 		cl.flags |= CL_ALTWERASE;
 	if (needprompt) {
