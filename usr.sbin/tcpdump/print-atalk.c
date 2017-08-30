@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.32 2017/06/14 20:48:54 akfaew Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.33 2017/08/30 09:23:00 otto Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -477,7 +477,7 @@ print_cstring(const char *cp, const u_char *ep)
 	length = *cp++;
 
 	/* Spec says string can be at most 32 bytes long */
-	if (length < 0 || length > 32) {
+	if (length > 32) {
 		(void)printf("[len=%d]", length);
 		return (0);
 	}

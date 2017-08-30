@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-wb.c,v 1.9 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-wb.c,v 1.10 2017/08/30 09:23:00 otto Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -180,7 +180,7 @@ wb_id(const struct pkt_id *id, u_int len)
 
 	printf(" wb-id:");
 	len -= sizeof(*id);
-	if (len < 0 || (u_char *)(id + 1) > snapend)
+	if ((u_char *)(id + 1) > snapend)
 		return (-1);
 
 	printf(" %u/%s:%u (max %u/%s:%u) ",
@@ -336,7 +336,7 @@ wb_rrep(const struct pkt_rrep *rrep, u_int len)
 
 	printf(" wb-rrep:");
 	len -= sizeof(*rrep);
-	if (len < 0 || (u_char *)(rrep + 1) > snapend)
+	if ((u_char *)(rrep + 1) > snapend)
 		return (-1);
 
 	printf(" for %s %s:%u<%u:%u>",
@@ -357,7 +357,7 @@ wb_drawop(const struct pkt_dop *dop, u_int len)
 {
 	printf(" wb-dop:");
 	len -= sizeof(*dop);
-	if (len < 0 || (u_char *)(dop + 1) > snapend)
+	if ((u_char *)(dop + 1) > snapend)
 		return (-1);
 
 	printf(" %s:%u<%u:%u>",
@@ -382,7 +382,7 @@ wb_print(const void *hdr, u_int len)
 
 	ph = (const struct pkt_hdr *)hdr;
 	len -= sizeof(*ph);
-	if (len < 0 || (u_char *)(ph + 1) <= snapend) {
+	if ((u_char *)(ph + 1) <= snapend) {
 		if (ph->ph_flags)
 			printf("*");
 		switch (ph->ph_type) {

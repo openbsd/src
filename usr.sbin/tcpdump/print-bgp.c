@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.24 2017/07/26 08:18:28 job Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.25 2017/08/30 09:23:00 otto Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -368,7 +368,7 @@ decode_prefix4(const u_char *pd, char *buf, u_int buflen)
 		       * enough bytes of address to contain this many bits
 		       */
 	plen = pd[0];
-	if (plen < 0 || 32 < plen)
+	if (32 < plen)
 		return -1;
 	memset(&addr, 0, sizeof(addr));
 	TCHECK2(pd[1], (plen + 7) / 8);
@@ -397,7 +397,7 @@ decode_prefix6(const u_char *pd, char *buf, u_int buflen)
 
 	TCHECK(pd[0]);
 	plen = pd[0];
-	if (plen < 0 || 128 < plen)
+	if (128 < plen)
 		return -1;
 
 	memset(&addr, 0, sizeof(addr));
