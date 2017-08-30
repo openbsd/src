@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.496 2017/08/26 14:45:57 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.497 2017/08/30 18:06:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -235,31 +235,30 @@ interface_status(char *name)
 {
 	struct ifaddrs	*ifap, *ifa;
 	struct if_data	*ifdata;
+	int		 ret;
 
 	if (getifaddrs(&ifap) != 0)
 		fatalx("getifaddrs failed");
 
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
-		    (ifa->ifa_flags & IFF_POINTOPOINT))
-			continue;
-
-		if (strcmp(name, ifa->ifa_name) != 0)
-			continue;
-
-		if (ifa->ifa_addr->sa_family != AF_LINK)
-			continue;
-
-		if ((ifa->ifa_flags & (IFF_UP|IFF_RUNNING)) !=
-		    (IFF_UP|IFF_RUNNING))
-			return 0;
-
-		ifdata = ifa->ifa_data;
-
-		return LINK_STATE_IS_UP(ifdata->ifi_link_state);
+		if (strcmp(name, ifa->ifa_name) == 0 &&
+		    (ifa->ifa_flags & IFF_LOOPBACK) == 0 &&
+		    (ifa->ifa_flags & IFF_POINTOPOINT) == 0 &&
+		    ifa->ifa_addr->sa_family == AF_LINK)
+			break;
 	}
 
-	return 0;
+	if (ifa == NULL ||
+	    (ifa->ifa_flags & IFF_UP) == 0 ||
+	    (ifa->ifa_flags & IFF_RUNNING) == 0) {
+		ret = 0;
+	} else {
+		ifdata = ifa->ifa_data;
+		ret = LINK_STATE_IS_UP(ifdata->ifi_link_state);
+	}
+
+	freeifaddrs(ifap);
+	return ret;
 }
 
 void
