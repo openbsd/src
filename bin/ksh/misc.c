@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.58 2017/08/30 17:02:53 jca Exp $	*/
+/*	$OpenBSD: misc.c,v 1.59 2017/08/30 17:15:36 jca Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -186,8 +186,10 @@ option(const char *n)
 
 	for (i = 0; i < NELEM(options); i++)
 		if (options[i].name && strcmp(options[i].name, n) == 0) {
+#ifdef EMACS
 			if (i == FEMACSUSEMETA)
 				warningf(true, "%s: deprecated option", n);
+#endif
 			return i;
 		}
 
@@ -230,8 +232,10 @@ printoptions(int verbose)
 		shprintf("Current option settings\n");
 
 		for (i = n = oi.opt_width = 0; i < NELEM(options); i++) {
+#ifdef EMACS
 			if (i == FEMACSUSEMETA)
 				continue;
+#endif
 			if (options[i].name) {
 				len = strlen(options[i].name);
 				oi.opts[n].name = options[i].name;
@@ -246,8 +250,10 @@ printoptions(int verbose)
 		/* short version ala ksh93 */
 		shprintf("set");
 		for (i = 0; i < NELEM(options); i++) {
+#ifdef EMACS
 			if (i == FEMACSUSEMETA)
 				continue;
+#endif
 			if (options[i].name)
 				shprintf(" %co %s",
 					 Flag(i) ? '-' : '+',
