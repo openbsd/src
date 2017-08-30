@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.58 2017/08/30 10:18:48 jca Exp $	*/
+/*	$OpenBSD: var.c,v 1.59 2017/08/30 17:08:45 jca Exp $	*/
 
 #include <sys/stat.h>
 
@@ -98,6 +98,7 @@ initvar(void)
 		{ "POSIXLY_CORRECT",	V_POSIXLY_CORRECT },
 		{ "TMPDIR",		V_TMPDIR },
 #ifdef HISTORY
+		{ "HISTCONTROL",	V_HISTCONTROL },
 		{ "HISTFILE",		V_HISTFILE },
 		{ "HISTSIZE",		V_HISTSIZE },
 #endif /* HISTORY */
@@ -991,6 +992,9 @@ setspec(struct tbl *vp)
 		}
 		break;
 #ifdef HISTORY
+	case V_HISTCONTROL:
+		sethistcontrol(str_val(vp));
+		break;
 	case V_HISTSIZE:
 		vp->flag &= ~SPECIAL;
 		sethistsize((int) intval(vp));
@@ -1082,6 +1086,11 @@ unsetspec(struct tbl *vp)
 	case V_MAILPATH:
 		mpset(NULL);
 		break;
+#ifdef HISTORY
+	case V_HISTCONTROL:
+		sethistcontrol(NULL);
+		break;
+#endif
 	case V_LINENO:
 	case V_MAILCHECK:	/* at&t ksh leaves previous value in place */
 	case V_RANDOM:

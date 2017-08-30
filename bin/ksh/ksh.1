@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.194 2017/08/30 17:02:53 jca Exp $
+.\"	$OpenBSD: ksh.1,v 1.195 2017/08/30 17:08:45 jca Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -1407,6 +1407,15 @@ It is also searched when a command can't be found using
 See
 .Sx Functions
 below for more information.
+.It Ev HISTCONTROL
+A colon separated list of history settings.
+If
+.Li ignoredups
+is present, lines identical to the previous history line will not be saved.
+If
+.Li ignorespace
+is present, lines starting with a space will not be saved.
+Unknown settings are ignored.
 .It Ev HISTFILE
 The name of the file used to store command history.
 When assigned to, history is loaded from the specified file.

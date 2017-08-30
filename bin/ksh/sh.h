@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.62 2017/08/30 17:02:53 jca Exp $	*/
+/*	$OpenBSD: sh.h,v 1.63 2017/08/30 17:08:45 jca Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -457,6 +457,7 @@ void	hist_finish(void);
 void	histsave(int, const char *, int);
 #ifdef HISTORY
 int	c_fc(char **);
+void	sethistcontrol(const char *);
 void	sethistsize(int);
 void	sethistfile(const char *);
 char **	histpos(void);

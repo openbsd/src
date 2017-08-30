@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.h,v 1.11 2015/10/10 07:35:16 nicm Exp $	*/
+/*	$OpenBSD: table.h,v 1.12 2017/08/30 17:08:45 jca Exp $	*/
 
 /* $From: table.h,v 1.3 1994/05/31 13:34:34 michael Exp $ */
 
@@ -160,15 +160,16 @@ extern const struct builtin shbuiltins [], kshbuiltins [];
 #define	V_MAILPATH		6
 #define	V_MAILCHECK		7
 #define	V_RANDOM		8
-#define V_HISTSIZE		9
-#define V_HISTFILE		10
-#define V_VISUAL		11
-#define V_EDITOR		12
-#define V_COLUMNS		13
-#define V_POSIXLY_CORRECT	14
-#define V_TMOUT			15
-#define V_TMPDIR		16
-#define V_LINENO		17
+#define	V_HISTCONTROL		9
+#define	V_HISTSIZE		10
+#define	V_HISTFILE		11
+#define	V_VISUAL		12
+#define	V_EDITOR		13
+#define	V_COLUMNS		14
+#define	V_POSIXLY_CORRECT	15
+#define	V_TMOUT			16
+#define	V_TMPDIR		17
+#define	V_LINENO		18
 
 /* values for set_prompt() */
 #define PS1	0		/* command */

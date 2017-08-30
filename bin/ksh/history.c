@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.68 2017/08/28 19:41:55 jca Exp $	*/
+/*	$OpenBSD: history.c,v 1.69 2017/08/30 17:08:45 jca Exp $	*/
 
 /*
  * command history
@@ -42,6 +42,8 @@ static FILE	*histfh;
 static char   **current;	/* current position in history[] */
 static char    *hname;		/* current name of history file */
 static int	hstarted;	/* set after hist_init() called */
+static int	ignoredups;	/* ditch duplicated history lines? */
+static int	ignorespace;	/* ditch lines starting with a space? */
 static Source	*hist_source;
 static uint32_t	line_co;
 
@@ -513,6 +515,28 @@ findhistrel(const char *str)
 	return start + rec + 1;
 }
 
+void
+sethistcontrol(const char *str)
+{
+	char *spec, *tok, *state;
+
+	ignorespace = 0;
+	ignoredups = 0;
+
+	if (str == NULL)
+		return;
+
+	spec = str_save(str, ATEMP);
+	for (tok = strtok_r(spec, ":", &state); tok != NULL;
+	     tok = strtok_r(NULL, ":", &state)) {
+		if (strcmp(tok, "ignoredups") == 0)
+			ignoredups = 1;
+		else if (strcmp(tok, "ignorespace") == 0)
+			ignorespace = 1;
+	}
+	afree(spec, ATEMP);
+}
+
 /*
  *	set history
  *	this means reallocating the dataspace
@@ -608,6 +632,18 @@ histsave(int lno, const char *cmd, int dowrite)
 {
 	char		*c, *cp;
 
+	if (ignorespace && cmd[0] == ' ')
+		return;
+
+	c = str_save(cmd, APERM);
+	if ((cp = strrchr(c, '\n')) != NULL)
+		*cp = '\0';
+
+	if (ignoredups && histptr >= history && strcmp(*histptr, c) == 0) {
+		afree(c, APERM);
+		return;
+	}
+
 	if (dowrite && histfh) {
 #ifndef SMALL
 		struct stat	sb;
@@ -623,10 +659,6 @@ histsave(int lno, const char *cmd, int dowrite)
 		}
 #endif
 	}
-
-	c = str_save(cmd, APERM);
-	if ((cp = strrchr(c, '\n')) != NULL)
-		*cp = '\0';
 
 	if (histptr < history + histsize - 1)
 		histptr++;
