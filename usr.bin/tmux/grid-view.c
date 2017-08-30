@@ -1,4 +1,4 @@
-/* $OpenBSD: grid-view.c,v 1.29 2017/05/12 13:00:56 nicm Exp $ */
+/* $OpenBSD: grid-view.c,v 1.30 2017/08/30 18:13:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -75,7 +75,7 @@ grid_view_clear_history(struct grid *gd, u_int bg)
 
 	/* Scroll the lines into the history. */
 	for (yy = 0; yy < last; yy++) {
-		grid_collect_history(gd, bg);
+		grid_collect_history(gd);
 		grid_scroll_history(gd, bg);
 	}
 	if (last < gd->sy)
@@ -100,7 +100,7 @@ grid_view_scroll_region_up(struct grid *gd, u_int rupper, u_int rlower,
     u_int bg)
 {
 	if (gd->flags & GRID_HISTORY) {
-		grid_collect_history(gd, bg);
+		grid_collect_history(gd);
 		if (rupper == 0 && rlower == gd->sy - 1)
 			grid_scroll_history(gd, bg);
 		else {

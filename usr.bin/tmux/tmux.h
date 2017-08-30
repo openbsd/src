@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.803 2017/08/30 10:33:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.804 2017/08/30 18:13:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1973,7 +1973,7 @@ int	 grid_cells_equal(const struct grid_cell *, const struct grid_cell *);
 struct grid *grid_create(u_int, u_int, u_int);
 void	 grid_destroy(struct grid *);
 int	 grid_compare(struct grid *, struct grid *);
-void	 grid_collect_history(struct grid *, u_int);
+void	 grid_collect_history(struct grid *);
 void	 grid_scroll_history(struct grid *, u_int);
 void	 grid_scroll_history_region(struct grid *, u_int, u_int, u_int);
 void	 grid_clear_history(struct grid *);
