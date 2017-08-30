@@ -1,4 +1,4 @@
-/*	$OpenBSD: urng.c,v 1.3 2017/08/29 20:06:30 jasper Exp $ */
+/*	$OpenBSD: urng.c,v 1.4 2017/08/30 22:12:19 abieber Exp $ */
 
 /*
  * Copyright (c) 2017 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -102,7 +102,7 @@ struct urng_type {
 
 static const struct urng_type urng_devs[] = {
 	{ { USB_VENDOR_OPENMOKO2, USB_PRODUCT_OPENMOKO2_CHAOSKEY },
-	  {64, 6, 0, 100, 5000} },
+	  {64, 5, 0, 100, 5000} },
 	{ { USB_VENDOR_ARANEUS, USB_PRODUCT_ARANEUS_ALEA },
 	  {128, 1, 0, 100, 5000} },
 };
@@ -131,7 +131,7 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	int ep_ibulk = -1;
 	usbd_status error;
-	int i;
+	int i, ep_addr;
 
 	sc->sc_udev = uaa->device;
 	sc->sc_chip = urng_lookup(uaa->vendor, uaa->product)->urng_chip;
@@ -156,10 +156,16 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
-		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
-		    UE_GET_ADDR(ed->bEndpointAddress) == sc->sc_chip.endpoint) {
-			ep_ibulk = ed->bEndpointAddress;
-			break;
+		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
+		    	ep_addr = UE_GET_ADDR(ed->bEndpointAddress);
+
+			DPRINTF(("%s: bulk endpoint %d\n",
+			    DEVNAME(sc), ep_addr));
+
+			if (ep_addr == sc->sc_chip.endpoint) {
+				ep_ibulk = ed->bEndpointAddress;
+				break;
+			}
 		}
 	}
 
