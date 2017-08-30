@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.3 2017/08/13 00:13:07 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.4 2017/08/30 16:21:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -445,7 +445,8 @@ sxipio_attach_gpio(struct device *parent)
 	struct gpiobus_attach_args gba;
 	uint32_t reg;
 	int port, pin;
-	int cfg, state;
+	int off, mux;
+	int state;
 	int i;
 
 	for (i = 0; i < sc->sc_npins; i++) {
@@ -459,10 +460,11 @@ sxipio_attach_gpio(struct device *parent)
 
 		/* Get pin configuration. */
 		reg = SXIREAD4(sc, SXIPIO_CFG(port, pin));
-		cfg = (reg >> (pin & 0x7)) & 0x7;
+		off = (pin & 0x7) << 2;
+		mux = (reg >> off) & 0x7;
 
 		/* Skip pins that have been assigned other functions. */
-		if (cfg != SXIPIO_GPIO_IN && cfg != SXIPIO_GPIO_OUT)
+		if (mux != SXIPIO_GPIO_IN && mux != SXIPIO_GPIO_OUT)
 			continue;
 
 		/* Get pin state. */
@@ -472,7 +474,7 @@ sxipio_attach_gpio(struct device *parent)
 		sc->sc_gpio_pins[port][pin].pin_caps =
 		    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
 		sc->sc_gpio_pins[port][pin].pin_flags =
-		    GPIO_PIN_SET | (cfg ? GPIO_PIN_OUTPUT : GPIO_PIN_INPUT);
+		    GPIO_PIN_SET | (mux ? GPIO_PIN_OUTPUT : GPIO_PIN_INPUT);
 		sc->sc_gpio_pins[port][pin].pin_state = state;
 		sc->sc_gpio_pins[port][pin].pin_num = pin;
 	}
