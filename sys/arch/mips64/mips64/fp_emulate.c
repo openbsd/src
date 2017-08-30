@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.16 2017/08/26 15:21:48 visa Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.17 2017/08/30 15:54:33 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -188,7 +188,7 @@ MipsFPTrap(struct trapframe *tf)
 	 * if it does, it's probably not your lucky day.
 	 */
 
-	if (copyin((void *)pc, &insn, sizeof insn) != 0) {
+	if (copyin32((const void *)pc, &insn) != 0) {
 		sig = SIGBUS;
 		fault_type = BUS_OBJERR;
 		goto deliver;
@@ -1613,8 +1613,7 @@ nofpu_emulate_cop1(struct proc *p, struct trapframe *tf, uint32_t insn,
 			 */
 			/* inline MipsEmulateBranch(tf, tf->pc, tf->fsr, insn)*/
 			dest = tf->pc + 4 + ((short)inst.IType.imm << 2);
-			if (copyin((const void *)(tf->pc + 4), &dinsn,
-			    sizeof dinsn)) {
+			if (copyin32((const void *)(tf->pc + 4), &dinsn) != 0) {
 				sv->sival_ptr = (void *)(tf->pc + 4);
 				return SIGSEGV;
 			}

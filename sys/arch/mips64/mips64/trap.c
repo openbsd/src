@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.128 2017/08/26 15:21:48 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.129 2017/08/30 15:54:33 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -606,7 +606,11 @@ fault_common_no_miss:
 		}
 
 		/* read break instruction */
-		copyin(va, &instr, sizeof(int32_t));
+		if (copyin32((const void *)va, &instr) != 0) {
+			signal = SIGBUS;
+			sicode = BUS_OBJERR;
+			break;
+		}
 
 		switch ((instr & BREAK_VAL_MASK) >> BREAK_VAL_SHIFT) {
 		case 6:	/* gcc range error */
@@ -723,7 +727,11 @@ fault_common_no_miss:
 		}
 
 		/* read break instruction */
-		copyin(va, &instr, sizeof(int32_t));
+		if (copyin32((const void *)va, &instr) != 0) {
+			signal = SIGBUS;
+			sicode = BUS_OBJERR;
+			break;
+		}
 
 		if (trapframe->cause & CR_BR_DELAY)
 			locr0->pc = MipsEmulateBranch(locr0,
@@ -768,7 +776,7 @@ fault_common_no_miss:
 		}
 
 		/* Get the faulting instruction. */
-		if (copyin32((void *)va, &inst.word) != 0) {
+		if (copyin32((const void *)va, &inst.word) != 0) {
 			signal = SIGBUS;
 			sicode = BUS_OBJERR;
 			break;
