@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.42 2016/03/30 20:51:59 millert Exp $	*/
+/*	$OpenBSD: server.c,v 1.43 2017/08/30 07:43:52 otto Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -244,7 +244,7 @@ fchog(int fd, char *file, char *owner, char *group, int mode)
 	} else
 		gid = gr->gr_gid;
 
-	if (userid && gid >= 0 && gid != primegid) {
+	if (userid && gid != (gid_t)-1 && gid != primegid) {
 		if (gr)
 			for (i = 0; gr->gr_mem[i] != NULL; i++)
 				if (strcmp(locuser, gr->gr_mem[i]) == 0)
