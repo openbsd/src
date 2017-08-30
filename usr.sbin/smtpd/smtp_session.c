@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.307 2017/08/30 07:11:25 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.308 2017/08/30 11:09:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -172,6 +172,7 @@ static int smtp_parse_mail_args(struct smtp_session *, char *);
 static int smtp_parse_rcpt_args(struct smtp_session *, char *);
 static void smtp_rfc4954_auth_plain(struct smtp_session *, char *);
 static void smtp_rfc4954_auth_login(struct smtp_session *, char *);
+static void smtp_message_fd(struct smtp_session *, int);
 static void smtp_message_end(struct smtp_session *);
 static int smtp_message_printf(struct smtp_session *, const char *, ...);
 static void smtp_free(struct smtp_session *, const char *);
@@ -211,7 +212,6 @@ static struct tree wait_lka_ptr;
 static struct tree wait_lka_helo;
 static struct tree wait_lka_mail;
 static struct tree wait_lka_rcpt;
-static struct tree wait_filter;
 static struct tree wait_filter_data;
 static struct tree wait_parent_auth;
 static struct tree wait_queue_msg;
@@ -600,7 +600,6 @@ smtp_session_init(void)
 		tree_init(&wait_lka_helo);
 		tree_init(&wait_lka_mail);
 		tree_init(&wait_lka_rcpt);
-		tree_init(&wait_filter);
 		tree_init(&wait_filter_data);
 		tree_init(&wait_parent_auth);
 		tree_init(&wait_queue_msg);
@@ -794,8 +793,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 
 		log_debug("smtp: %p: fd %d from queue", s, imsg->fd);
 
-		tree_xset(&wait_filter, s->id, s);
-		smtp_filter_fd(s->id, imsg->fd);
+		smtp_message_fd(s, imsg->fd);
 		return;
 
 	case IMSG_QUEUE_ENVELOPE_SUBMIT:
@@ -995,18 +993,14 @@ smtp_tls_verified(struct smtp_session *s)
 }
 
 void
-smtp_filter_fd(uint64_t id, int fd)
+smtp_message_fd(struct smtp_session *s, int fd)
 {
-	struct smtp_session	*s;
-	X509			*x;
-
-	s = tree_xpop(&wait_filter, id);
+	X509 *x;
 
 	log_debug("smtp: %p: fd %d from filter", s, fd);
 
-	if (fd == -1 || (s->tx->ofile = fdopen(fd, "w")) == NULL) {
-		if (fd != -1)
-			close(fd);
+	if ((s->tx->ofile = fdopen(fd, "w")) == NULL) {
+		close(fd);
 		smtp_reply(s, "421 %s: Temporary Error",
 		    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 		smtp_enter_state(s, STATE_QUIT);
