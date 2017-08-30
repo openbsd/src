@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.306 2017/08/30 06:43:42 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.307 2017/08/30 07:11:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -189,7 +189,7 @@ static void smtp_queue_open_message(struct smtp_session *);
 static void smtp_queue_commit(struct smtp_session *);
 static void smtp_queue_rollback(struct smtp_session *);
 
-static void smtp_filter_dataline(struct smtp_session *, const char *);
+static void smtp_dataline(struct smtp_session *, const char *);
 
 static struct { int code; const char *cmd; } commands[] = {
 	{ CMD_HELO,		"HELO" },
@@ -1117,7 +1117,7 @@ smtp_io(struct io *io, int evt, void *arg)
 
 		/* Message body */
 		if (s->state == STATE_BODY && strcmp(line, ".")) {
-			smtp_filter_dataline(s, line);
+			smtp_dataline(s, line);
 			goto nextline;
 		}
 
@@ -2321,7 +2321,7 @@ smtp_queue_rollback(struct smtp_session *s)
 }
 
 static void
-smtp_filter_dataline(struct smtp_session *s, const char *line)
+smtp_dataline(struct smtp_session *s, const char *line)
 {
 	int	ret;
 
