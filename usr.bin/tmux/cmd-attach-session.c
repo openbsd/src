@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.73 2017/04/22 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.74 2017/08/30 10:33:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -90,9 +90,9 @@ cmd_attach_session(struct cmdq_item *item, const char *tflag, int dflag,
 			window_set_active_pane(wp->window, wp);
 		session_set_current(s, wl);
 		if (wp != NULL)
-			cmd_find_from_winlink_pane(current, wl, wp);
+			cmd_find_from_winlink_pane(current, wl, wp, 0);
 		else
-			cmd_find_from_winlink(current, wl);
+			cmd_find_from_winlink(current, wl, 0);
 	}
 
 	if (cflag != NULL) {

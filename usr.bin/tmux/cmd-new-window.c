@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.71 2017/07/21 09:17:19 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.72 2017/08/30 10:33:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -133,7 +133,7 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 	}
 	if (!detached) {
 		session_select(s, wl->idx);
-		cmd_find_from_winlink(current, wl);
+		cmd_find_from_winlink(current, wl, 0);
 		server_redraw_session_group(s);
 	} else
 		server_status_session_group(s);
@@ -146,7 +146,7 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 		free(cp);
 	}
 
-	cmd_find_from_winlink(&fs, wl);
+	cmd_find_from_winlink(&fs, wl, 0);
 	hooks_insert(s->hooks, item, &fs, "after-new-window");
 
 	free(to_free);

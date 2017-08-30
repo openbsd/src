@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rotate-window.c,v 1.24 2017/05/09 11:00:48 nicm Exp $ */
+/* $OpenBSD: cmd-rotate-window.c,v 1.25 2017/08/30 10:33:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -78,7 +78,7 @@ cmd_rotate_window_exec(struct cmd *self, struct cmdq_item *item)
 		if ((wp = TAILQ_PREV(w->active, window_panes, entry)) == NULL)
 			wp = TAILQ_LAST(&w->panes, window_panes);
 		window_set_active_pane(w, wp);
-		cmd_find_from_winlink_pane(current, wl, wp);
+		cmd_find_from_winlink_pane(current, wl, wp, 0);
 		server_redraw_window(w);
 	} else {
 		wp = TAILQ_FIRST(&w->panes);
@@ -106,7 +106,7 @@ cmd_rotate_window_exec(struct cmd *self, struct cmdq_item *item)
 		if ((wp = TAILQ_NEXT(w->active, entry)) == NULL)
 			wp = TAILQ_FIRST(&w->panes);
 		window_set_active_pane(w, wp);
-		cmd_find_from_winlink_pane(current, wl, wp);
+		cmd_find_from_winlink_pane(current, wl, wp, 0);
 		server_redraw_window(w);
 	}
 

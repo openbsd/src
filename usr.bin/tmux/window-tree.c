@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.16 2017/08/09 13:44:36 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.17 2017/08/30 10:33:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -874,7 +874,7 @@ window_tree_get_target(struct window_tree_itemdata *item,
 	if (target == NULL)
 		cmd_find_clear_state(fs, 0);
 	else
-		cmd_find_from_winlink_pane(fs, wl, wp);
+		cmd_find_from_winlink_pane(fs, wl, wp, 0);
 	return (target);
 }
 

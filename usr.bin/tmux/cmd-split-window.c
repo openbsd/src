@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.86 2017/07/21 09:17:19 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.87 2017/08/30 10:33:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -158,7 +158,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	if (!args_has(args, 'd')) {
 		window_set_active_pane(w, new_wp);
 		session_select(s, wl->idx);
-		cmd_find_from_session(current, s);
+		cmd_find_from_session(current, s, 0);
 		server_redraw_session(s);
 	} else
 		server_status_session(s);
@@ -172,7 +172,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	}
 	notify_window("window-layout-changed", w);
 
-	cmd_find_from_winlink_pane(&fs, wl, new_wp);
+	cmd_find_from_winlink_pane(&fs, wl, new_wp, 0);
 	hooks_insert(s->hooks, item, &fs, "after-split-window");
 
 	free(to_free);

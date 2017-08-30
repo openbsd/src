@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.242 2017/08/16 12:12:54 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.243 2017/08/30 10:33:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -877,8 +877,8 @@ server_client_handle_key(struct client *c, key_code key)
 		m->valid = 0;
 
 	/* Find affected pane. */
-	if (!KEYC_IS_MOUSE(key) || cmd_find_from_mouse(&fs, m) != 0)
-		cmd_find_from_session(&fs, s);
+	if (!KEYC_IS_MOUSE(key) || cmd_find_from_mouse(&fs, m, 0) != 0)
+		cmd_find_from_session(&fs, s, 0);
 	wp = fs.wp;
 
 	/* Forward mouse keys if disabled. */

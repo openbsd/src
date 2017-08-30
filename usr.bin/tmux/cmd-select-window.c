@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-window.c,v 1.21 2017/08/08 09:21:20 nicm Exp $ */
+/* $OpenBSD: cmd-select-window.c,v 1.22 2017/08/30 10:33:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -117,7 +117,7 @@ cmd_select_window_exec(struct cmd *self, struct cmdq_item *item)
 				return (CMD_RETURN_ERROR);
 			}
 		}
-		cmd_find_from_session(current, s);
+		cmd_find_from_session(current, s, 0);
 		server_redraw_session(s);
 		hooks_insert(s->hooks, item, current, "after-select-window");
 	} else {
@@ -131,10 +131,10 @@ cmd_select_window_exec(struct cmd *self, struct cmdq_item *item)
 				return (-1);
 			}
 			if (current->s == s)
-				cmd_find_from_session(current, s);
+				cmd_find_from_session(current, s, 0);
 			server_redraw_session(s);
 		} else if (session_select(s, wl->idx) == 0) {
-			cmd_find_from_session(current, s);
+			cmd_find_from_session(current, s, 0);
 			server_redraw_session(s);
 		}
 		hooks_insert(s->hooks, item, current, "after-select-window");

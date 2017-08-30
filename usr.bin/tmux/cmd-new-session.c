@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.108 2017/07/21 09:17:19 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.109 2017/08/30 10:33:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -325,10 +325,10 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 
 	if (!detached) {
 		c->flags |= CLIENT_ATTACHED;
-		cmd_find_from_session(&item->shared->current, s);
+		cmd_find_from_session(&item->shared->current, s, 0);
 	}
 
-	cmd_find_from_session(&fs, s);
+	cmd_find_from_session(&fs, s, 0);
 	hooks_insert(s->hooks, item, &fs, "after-new-session");
 
 	free(to_free);
