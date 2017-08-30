@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.133 2017/08/28 17:36:58 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.134 2017/08/30 16:24:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -752,11 +752,17 @@ void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
 void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
     int (*app_verify_cookie_cb)(SSL *ssl, unsigned char *cookie,
     unsigned int cookie_len));
+void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *s, int (*cb)(SSL *ssl,
+    const unsigned char **out, unsigned int *outlen, void *arg), void *arg);
+void SSL_CTX_set_next_proto_select_cb(SSL_CTX *s, int (*cb)(SSL *ssl,
+    unsigned char **out, unsigned char *outlen, const unsigned char *in,
+    unsigned int inlen, void *arg), void *arg);
 
-/* NPN support function used by ALPN */
 int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
     const unsigned char *in, unsigned int inlen, const unsigned char *client,
     unsigned int client_len);
+void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
+    unsigned *len);
 
 #define OPENSSL_NPN_UNSUPPORTED	0
 #define OPENSSL_NPN_NEGOTIATED	1
