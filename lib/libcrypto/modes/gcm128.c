@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.18 2017/08/14 05:29:32 bcook Exp $ */
+/* $OpenBSD: gcm128.c,v 1.19 2017/08/30 12:09:02 inoguchi Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -1184,7 +1184,7 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 
 			(*block)(ctx->Yi.c,ctx->EKi.c,key);
 			++ctr;
-#ifdef BYTE_ORDER == LITTLE_ENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN
 #ifdef BSWAP4
 			ctx->Yi.d[3] = BSWAP4(ctr);
 #else
