@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.305 2017/08/13 11:10:30 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.306 2017/08/30 06:43:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -189,12 +189,6 @@ static void smtp_queue_open_message(struct smtp_session *);
 static void smtp_queue_commit(struct smtp_session *);
 static void smtp_queue_rollback(struct smtp_session *);
 
-static void smtp_filter_connect(struct smtp_session *, struct sockaddr *);
-static void smtp_filter_eom(struct smtp_session *);
-static void smtp_filter_helo(struct smtp_session *);
-static void smtp_filter_mail(struct smtp_session *);
-static void smtp_filter_rcpt(struct smtp_session *);
-static void smtp_filter_data(struct smtp_session *);
 static void smtp_filter_dataline(struct smtp_session *, const char *);
 
 static struct { int code; const char *cmd; } commands[] = {
@@ -1001,150 +995,6 @@ smtp_tls_verified(struct smtp_session *s)
 }
 
 void
-smtp_filter_response(uint64_t id, int query, int status, uint32_t code,
-    const char *line)
-{
-	struct smtp_session	*s;
-	struct ca_cert_req_msg	 req_ca_cert;
-
-	s = tree_xpop(&wait_filter, id);
-
-	if (status == FILTER_CLOSE) {
-		code = code ? code : 421;
-		line = line ? line : "Temporary failure";
-		smtp_reply(s, "%d %s", code, line);
-		smtp_enter_state(s, STATE_QUIT);
-		return;
-	}
-
-	switch (query) {
-
-	case QUERY_CONNECT:
-		if (status != FILTER_OK) {
-			log_info("%016"PRIx64" smtp "
-			    "event=closed address=%s host=%s reason=filter-reject",
-			    s->id, ss_to_text(&s->ss), s->hostname);
-			smtp_free(s, "rejected by filter");
-			return;
-		}
-
-		if (s->listener->flags & F_SMTPS) {
-			req_ca_cert.reqid = s->id;
-			if (s->listener->pki_name[0]) {
-				(void)strlcpy(req_ca_cert.name, s->listener->pki_name,
-				    sizeof req_ca_cert.name);
-				req_ca_cert.fallback = 0;
-			}
-			else {
-				(void)strlcpy(req_ca_cert.name, s->smtpname,
-				    sizeof req_ca_cert.name);
-				req_ca_cert.fallback = 1;
-			}
-			m_compose(p_lka, IMSG_SMTP_TLS_INIT, 0, 0, -1,
-			    &req_ca_cert, sizeof(req_ca_cert));
-			tree_xset(&wait_ssl_init, s->id, s);
-			return;
-		}
-		smtp_send_banner(s);
-		return;
-
-	case QUERY_HELO:
-		if (status != FILTER_OK) {
-			code = code ? code : 530;
-			line = line ? line : "Hello rejected";
-			smtp_reply(s, "%d %s", code, line);
-			return;
-		}
-
-		smtp_enter_state(s, STATE_HELO);
-		smtp_reply(s, "250%c%s Hello %s [%s], pleased to meet you",
-		    (s->flags & SF_EHLO) ? '-' : ' ',
-		    s->smtpname,
-		    s->helo,
-		    ss_to_text(&s->ss));
-
-		if (s->flags & SF_EHLO) {
-			smtp_reply(s, "250-8BITMIME");
-			smtp_reply(s, "250-ENHANCEDSTATUSCODES");
-			smtp_reply(s, "250-SIZE %zu", env->sc_maxsize);
-			if (ADVERTISE_EXT_DSN(s))
-				smtp_reply(s, "250-DSN");
-			if (ADVERTISE_TLS(s))
-				smtp_reply(s, "250-STARTTLS");
-			if (ADVERTISE_AUTH(s))
-				smtp_reply(s, "250-AUTH PLAIN LOGIN");
-			smtp_reply(s, "250 HELP");
-		}
-		return;
-
-	case QUERY_MAIL:
-		if (status != FILTER_OK) {
-			smtp_tx_free(s->tx);
-			code = code ? code : 530;
-			line = line ? line : "Sender rejected";
-			smtp_reply(s, "%d %s", code, line);
-			return;
-		}
-
-		/* only check sendertable if defined and user has authenticated */
-		if (s->flags & SF_AUTHENTICATED && s->listener->sendertable[0]) {
-			m_create(p_lka, IMSG_SMTP_CHECK_SENDER, 0, 0, -1);
-			m_add_id(p_lka, s->id);
-			m_add_string(p_lka, s->listener->sendertable);
-			m_add_string(p_lka, s->username);
-			m_add_mailaddr(p_lka, &s->tx->evp.sender);
-			m_close(p_lka);
-			tree_xset(&wait_lka_mail, s->id, s);
-		}
-		else
-			smtp_queue_create_message(s);
-		return;
-
-	case QUERY_RCPT:
-		if (status != FILTER_OK) {
-			code = code ? code : 530;
-			line = line ? line : "Recipient rejected";
-			smtp_reply(s, "%d %s", code, line);
-			return;
-		}
-
-		m_create(p_lka, IMSG_SMTP_EXPAND_RCPT, 0, 0, -1);
-		m_add_id(p_lka, s->id);
-		m_add_envelope(p_lka, &s->tx->evp);
-		m_close(p_lka);
-		tree_xset(&wait_lka_rcpt, s->id, s);
-		return;
-
-	case QUERY_DATA:
-		if (status != FILTER_OK) {
-			code = code ? code : 530;
-			line = line ? line : "Message rejected";
-			smtp_reply(s, "%d %s", code, line);
-			return;
-		}
-		smtp_queue_open_message(s);
-		return;
-
-	case QUERY_EOM:
-		if (status != FILTER_OK) {
-			tree_pop(&wait_filter_data, s->id);
-			smtp_queue_rollback(s);
-			smtp_tx_free(s->tx);
-			code = code ? code : 530;
-			line = line ? line : "Message rejected";
-			smtp_reply(s, "%d %s", code, line);
-			smtp_enter_state(s, STATE_HELO);
-			return;
-		}
-		smtp_message_end(s);
-		return;
-
-	default:
-		log_warn("smtp: bad mfa query type %d", query);
-	}
-}
-
-void
 smtp_filter_fd(uint64_t id, int fd)
 {
 	struct smtp_session	*s;
@@ -1461,7 +1311,7 @@ smtp_data_io_done(struct smtp_session *s)
 		smtp_enter_state(s, STATE_HELO);
 	}
 	else {
-		smtp_filter_eom(s);
+		smtp_message_end(s);
 	}
 }
 
@@ -1543,7 +1393,25 @@ smtp_command(struct smtp_session *s, char *line)
 			s->flags |= SF_8BITMIME;
 		}
 
-		smtp_filter_helo(s);
+		smtp_enter_state(s, STATE_HELO);
+		smtp_reply(s, "250%c%s Hello %s [%s], pleased to meet you",
+		    (s->flags & SF_EHLO) ? '-' : ' ',
+		    s->smtpname,
+		    s->helo,
+		    ss_to_text(&s->ss));
+
+		if (s->flags & SF_EHLO) {
+			smtp_reply(s, "250-8BITMIME");
+			smtp_reply(s, "250-ENHANCEDSTATUSCODES");
+			smtp_reply(s, "250-SIZE %zu", env->sc_maxsize);
+			if (ADVERTISE_EXT_DSN(s))
+				smtp_reply(s, "250-DSN");
+			if (ADVERTISE_TLS(s))
+				smtp_reply(s, "250-STARTTLS");
+			if (ADVERTISE_AUTH(s))
+				smtp_reply(s, "250-AUTH PLAIN LOGIN");
+			smtp_reply(s, "250 HELP");
+		}
 		break;
 	/*
 	 * SETUP
@@ -1680,7 +1548,18 @@ smtp_command(struct smtp_session *s, char *line)
 			break;
 		}
 
-		smtp_filter_mail(s);
+		/* only check sendertable if defined and user has authenticated */
+		if (s->flags & SF_AUTHENTICATED && s->listener->sendertable[0]) {
+			m_create(p_lka, IMSG_SMTP_CHECK_SENDER, 0, 0, -1);
+			m_add_id(p_lka, s->id);
+			m_add_string(p_lka, s->listener->sendertable);
+			m_add_string(p_lka, s->username);
+			m_add_mailaddr(p_lka, &s->tx->evp.sender);
+			m_close(p_lka);
+			tree_xset(&wait_lka_mail, s->id, s);
+		}
+		else
+			smtp_queue_create_message(s);
 		break;
 	/*
 	 * TRANSACTION
@@ -1710,7 +1589,11 @@ smtp_command(struct smtp_session *s, char *line)
 		if (args && smtp_parse_rcpt_args(s, args) == -1)
 			break;
 
-		smtp_filter_rcpt(s);
+		m_create(p_lka, IMSG_SMTP_EXPAND_RCPT, 0, 0, -1);
+		m_add_id(p_lka, s->id);
+		m_add_envelope(p_lka, &s->tx->evp);
+		m_close(p_lka);
+		tree_xset(&wait_lka_rcpt, s->id, s);
 		break;
 
 	case CMD_RSET:
@@ -1745,7 +1628,7 @@ smtp_command(struct smtp_session *s, char *line)
 			break;
 		}
 
-		smtp_filter_data(s);
+		smtp_queue_open_message(s);
 		break;
 	/*
 	 * ANY
@@ -2023,6 +1906,7 @@ smtp_lookup_servername(struct smtp_session *s)
 static void
 smtp_connected(struct smtp_session *s)
 {
+	struct ca_cert_req_msg	req_ca_cert;
 	struct sockaddr_storage	ss;
 	socklen_t		sl;
 
@@ -2037,7 +1921,25 @@ smtp_connected(struct smtp_session *s)
 		return;
 	}
 
-	smtp_filter_connect(s, (struct sockaddr *)&ss);
+	if (s->listener->flags & F_SMTPS) {
+		req_ca_cert.reqid = s->id;
+		if (s->listener->pki_name[0]) {
+			(void)strlcpy(req_ca_cert.name, s->listener->pki_name,
+			    sizeof req_ca_cert.name);
+			req_ca_cert.fallback = 0;
+		}
+		else {
+			(void)strlcpy(req_ca_cert.name, s->smtpname,
+			    sizeof req_ca_cert.name);
+			req_ca_cert.fallback = 1;
+		}
+		m_compose(p_lka, IMSG_SMTP_TLS_INIT, 0, 0, -1,
+		    &req_ca_cert, sizeof(req_ca_cert));
+		tree_xset(&wait_ssl_init, s->id, s);
+		return;
+	}
+
+	smtp_send_banner(s);
 }
 
 static void
@@ -2416,48 +2318,6 @@ smtp_queue_rollback(struct smtp_session *s)
 	m_create(p_queue, IMSG_SMTP_MESSAGE_ROLLBACK, 0, 0, -1);
 	m_add_msgid(p_queue, s->tx->msgid);
 	m_close(p_queue);
-}
-
-static void
-smtp_filter_connect(struct smtp_session *s, struct sockaddr *sa)
-{
-	tree_xset(&wait_filter, s->id, s);
-	smtp_filter_response(s->id, QUERY_CONNECT, FILTER_OK, 0, NULL);
-}
-
-static void
-smtp_filter_eom(struct smtp_session *s)
-{
-	tree_xset(&wait_filter, s->id, s);
-	smtp_filter_response(s->id, QUERY_EOM, FILTER_OK, 0, NULL);
-}
-
-static void
-smtp_filter_helo(struct smtp_session *s)
-{
-	tree_xset(&wait_filter, s->id, s);
-	smtp_filter_response(s->id, QUERY_HELO, FILTER_OK, 0, NULL);
-}
-
-static void
-smtp_filter_mail(struct smtp_session *s)
-{
-	tree_xset(&wait_filter, s->id, s);
-	smtp_filter_response(s->id, QUERY_MAIL, FILTER_OK, 0, NULL);
-}
-
-static void
-smtp_filter_rcpt(struct smtp_session *s)
-{
-	tree_xset(&wait_filter, s->id, s);
-	smtp_filter_response(s->id, QUERY_RCPT, FILTER_OK, 0, NULL);
-}
-
-static void
-smtp_filter_data(struct smtp_session *s)
-{
-	tree_xset(&wait_filter, s->id, s);
-	smtp_filter_response(s->id, QUERY_DATA, FILTER_OK, 0, NULL);
 }
 
 static void
