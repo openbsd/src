@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.136 2017/08/27 02:58:04 doug Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.137 2017/08/30 16:44:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -664,16 +664,13 @@ tls12_get_req_sig_algs(SSL *s, unsigned char **sigalgs, size_t *sigalgs_len)
 unsigned char *
 ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 {
-	int extdatalen = 0;
-	unsigned char *ret = p;
 	size_t len;
 	CBB cbb;
 
-	ret += 2;
-	if (ret >= limit)
-		return NULL; /* this really never occurs, but ... */
+	if (p >= limit)
+		return NULL;
 
-	if (!CBB_init_fixed(&cbb, ret, limit - ret))
+	if (!CBB_init_fixed(&cbb, p, limit - p))
 		return NULL;
 	if (!tlsext_clienthello_build(s, &cbb)) {
 		CBB_cleanup(&cbb);
@@ -683,30 +680,20 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		CBB_cleanup(&cbb);
 		return NULL;
 	}
-	if (len > (limit - ret))
-		return NULL;
-	ret += len;
 
-	if ((extdatalen = ret - p - 2) == 0)
-		return p;
-
-	s2n(extdatalen, p);
-	return ret;
+	return (p + len);
 }
 
 unsigned char *
 ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 {
-	int extdatalen = 0;
-	unsigned char *ret = p;
 	size_t len;
 	CBB cbb;
 
-	ret += 2;
-	if (ret >= limit)
-		return NULL; /* this really never occurs, but ... */
+	if (p >= limit)
+		return NULL;
 
-	if (!CBB_init_fixed(&cbb, ret, limit - ret))
+	if (!CBB_init_fixed(&cbb, p, limit - p))
 		return NULL;
 	if (!tlsext_serverhello_build(s, &cbb)) {
 		CBB_cleanup(&cbb);
@@ -716,20 +703,8 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		CBB_cleanup(&cbb);
 		return NULL;
 	}
-	if (len > (limit - ret))
-		return NULL;
-	ret += len;
 
-	/*
-	 * Currently the server should not respond with a SupportedCurves
-	 * extension.
-	 */
-
-	if ((extdatalen = ret - p - 2) == 0)
-		return p;
-
-	s2n(extdatalen, p);
-	return ret;
+	return (p + len);
 }
 
 int

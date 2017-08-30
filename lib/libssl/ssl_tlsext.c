@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.14 2017/08/29 19:20:13 doug Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.15 2017/08/30 16:44:37 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1300,11 +1300,12 @@ static struct tls_extension tls_extensions[] = {
 int
 tlsext_clienthello_build(SSL *s, CBB *cbb)
 {
+	CBB extensions, extension_data;
 	struct tls_extension *tlsext;
-	CBB extension_data;
 	size_t i;
 
-	memset(&extension_data, 0, sizeof(extension_data));
+	if (!CBB_add_u16_length_prefixed(cbb, &extensions))
+		return 0;
 
 	for (i = 0; i < N_TLS_EXTENSIONS; i++) {
 		tlsext = &tls_extensions[i];
@@ -1312,15 +1313,16 @@ tlsext_clienthello_build(SSL *s, CBB *cbb)
 		if (!tlsext->clienthello_needs(s))
 			continue;
 
-		if (!CBB_add_u16(cbb, tlsext->type))
+		if (!CBB_add_u16(&extensions, tlsext->type))
 			return 0;
-		if (!CBB_add_u16_length_prefixed(cbb, &extension_data))
+		if (!CBB_add_u16_length_prefixed(&extensions, &extension_data))
 			return 0;
 		if (!tls_extensions[i].clienthello_build(s, &extension_data))
 			return 0;
-		if (!CBB_flush(cbb))
-			return 0;
 	}
+
+	if (!CBB_flush(cbb))
+		return 0;
 
 	return 1;
 }
@@ -1353,11 +1355,12 @@ tlsext_clienthello_parse_one(SSL *s, CBS *cbs, uint16_t type, int *alert)
 int
 tlsext_serverhello_build(SSL *s, CBB *cbb)
 {
+	CBB extensions, extension_data;
 	struct tls_extension *tlsext;
-	CBB extension_data;
 	size_t i;
 
-	memset(&extension_data, 0, sizeof(extension_data));
+	if (!CBB_add_u16_length_prefixed(cbb, &extensions))
+		return 0;
 
 	for (i = 0; i < N_TLS_EXTENSIONS; i++) {
 		tlsext = &tls_extensions[i];
@@ -1365,15 +1368,16 @@ tlsext_serverhello_build(SSL *s, CBB *cbb)
 		if (!tlsext->serverhello_needs(s))
 			continue;
 
-		if (!CBB_add_u16(cbb, tlsext->type))
+		if (!CBB_add_u16(&extensions, tlsext->type))
 			return 0;
-		if (!CBB_add_u16_length_prefixed(cbb, &extension_data))
+		if (!CBB_add_u16_length_prefixed(&extensions, &extension_data))
 			return 0;
 		if (!tlsext->serverhello_build(s, &extension_data))
 			return 0;
-		if (!CBB_flush(cbb))
-			return 0;
 	}
+
+	if (!CBB_flush(cbb))
+		return 0;
 
 	return 1;
 }
