@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.29 2017/07/22 09:37:21 anton Exp $	*/
+/*	$OpenBSD: csh.h,v 1.30 2017/08/30 06:42:21 anton Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -108,6 +108,7 @@ bool    timflg;			/* Time the next waited for command */
 bool    havhash;		/* path hashing is available */
 
 bool    filec;			/* doing filename expansion */
+bool    needprompt;		/* print prompt, used by filec */
 
 /*
  * Global i/o info
