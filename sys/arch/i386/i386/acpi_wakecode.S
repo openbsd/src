@@ -594,6 +594,11 @@ NENTRY(acpi_savecpu)
 	movl	%esi, .Lacpi_saved_esi
 	movl	%edi, .Lacpi_saved_edi
 	movl	%esp, .Lacpi_saved_esp
+	/*
+	 * acpi_protected_mode_resume performs restores inline, so undo own
+	 * ret
+	 */
+	addl	$0x4, .Lacpi_saved_esp
 
 	pushfl
 	popl	.Lacpi_saved_fl

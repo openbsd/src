@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.40 2017/06/28 07:16:58 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.41 2017/08/30 23:40:22 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -671,6 +671,10 @@ NENTRY(acpi_savecpu)
 	movq	%rsi, .Lacpi_saved_rsi
 	movq	%rdi, .Lacpi_saved_rdi
 	movq	%rsp, .Lacpi_saved_rsp
+	/*
+	 * acpi_protected_mode_resume performs restores inline, so undo own
+	 * ret
+	 */
 	addq	$0x8, .Lacpi_saved_rsp
 
 	movq	%r8, .Lacpi_saved_r8
