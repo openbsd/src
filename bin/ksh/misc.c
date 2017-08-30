@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.57 2017/07/04 11:46:15 anton Exp $	*/
+/*	$OpenBSD: misc.c,v 1.58 2017/08/30 17:02:53 jca Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -129,7 +129,7 @@ const struct option options[] = {
 	{ "csh-history",  0,		OF_ANY }, /* non-standard */
 #ifdef EMACS
 	{ "emacs",	  0,		OF_ANY },
-	{ "emacs-usemeta",  0,		OF_ANY }, /* non-standard */
+	{ "emacs-usemeta",  0,		OF_ANY }, /* XXX delete after 6.2 */
 #endif
 	{ "errexit",	'e',		OF_ANY },
 #ifdef EMACS
@@ -185,8 +185,11 @@ option(const char *n)
 	int i;
 
 	for (i = 0; i < NELEM(options); i++)
-		if (options[i].name && strcmp(options[i].name, n) == 0)
+		if (options[i].name && strcmp(options[i].name, n) == 0) {
+			if (i == FEMACSUSEMETA)
+				warningf(true, "%s: deprecated option", n);
 			return i;
+		}
 
 	return -1;
 }
@@ -226,7 +229,9 @@ printoptions(int verbose)
 		/* verbose version */
 		shprintf("Current option settings\n");
 
-		for (i = n = oi.opt_width = 0; i < NELEM(options); i++)
+		for (i = n = oi.opt_width = 0; i < NELEM(options); i++) {
+			if (i == FEMACSUSEMETA)
+				continue;
 			if (options[i].name) {
 				len = strlen(options[i].name);
 				oi.opts[n].name = options[i].name;
@@ -234,16 +239,20 @@ printoptions(int verbose)
 				if (len > oi.opt_width)
 					oi.opt_width = len;
 			}
+		}
 		print_columns(shl_stdout, n, options_fmt_entry, &oi,
 		    oi.opt_width + 5, 1);
 	} else {
 		/* short version ala ksh93 */
 		shprintf("set");
-		for (i = 0; i < NELEM(options); i++)
+		for (i = 0; i < NELEM(options); i++) {
+			if (i == FEMACSUSEMETA)
+				continue;
 			if (options[i].name)
 				shprintf(" %co %s",
 					 Flag(i) ? '-' : '+',
 					 options[i].name);
+		}
 		shprintf("\n");
 	}
 }
