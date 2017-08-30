@@ -1,4 +1,4 @@
-/* $OpenBSD: filter.c,v 1.8 2017/08/17 19:27:48 tedu Exp $ */
+/* $OpenBSD: filter.c,v 1.9 2017/08/30 02:54:07 lteo Exp $ */
 
 /* filter - postprocessing of flex output through filters */
 
@@ -174,9 +174,7 @@ filter_apply_chain(struct filter * chain)
 
 		/* run as a filter, either internally or by exec */
 		if (chain->filter_func) {
-			int r;
-
-			if ((r = chain->filter_func(chain)) == -1)
+			if (chain->filter_func(chain) == -1)
 				flexfatal(_("filter_func failed"));
 			exit(0);
 		} else {
