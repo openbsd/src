@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.383 2017/07/24 12:32:32 gsoares Exp $ */
+/* $OpenBSD: softraid.c,v 1.384 2017/08/30 12:43:18 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4864,6 +4864,11 @@ sr_sensors_refresh(void *arg)
 
 		case BIOC_SVDEGRADED:
 			sv->sv_sensor.value = SENSOR_DRIVE_PFAIL;
+			sv->sv_sensor.status = SENSOR_S_WARN;
+			break;
+
+		case BIOC_SVREBUILD:
+			sv->sv_sensor.value = SENSOR_DRIVE_REBUILD;
 			sv->sv_sensor.status = SENSOR_S_WARN;
 			break;
 
