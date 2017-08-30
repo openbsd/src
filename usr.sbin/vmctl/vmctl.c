@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.39 2017/08/29 21:10:20 deraadt Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.40 2017/08/30 05:36:23 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* PAGE_SIZE */
 #include <sys/queue.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
@@ -231,7 +230,13 @@ send_vm(uint32_t id, const char *name)
 {
 	struct vmop_id vid;
 	int fds[2], readn, writen;
-	char buf[PAGE_SIZE];
+	long pagesz;
+	char *buf;
+
+	pagesz = getpagesize();
+	buf = malloc(pagesz);
+	if (buf == NULL)
+		errx(1, "%s: memory allocation failure", __func__);
 
 	memset(&vid, 0, sizeof(vid));
 	vid.vid_id = id;
@@ -244,7 +249,7 @@ send_vm(uint32_t id, const char *name)
 				&vid, sizeof(vid));
 		imsg_flush(ibuf);
 		while (1) {
-			readn = atomicio(read, fds[1], buf, sizeof(buf));
+			readn = atomicio(read, fds[1], buf, pagesz);
 			if (!readn)
 				break;
 			writen = atomicio(vwrite, STDOUT_FILENO, buf,
@@ -257,6 +262,8 @@ send_vm(uint32_t id, const char *name)
 		else
 			warnx("sent vm %s successfully", vid.vid_name);
 	}
+
+	free(buf);
 }
 
 void
@@ -264,7 +271,13 @@ vm_receive(uint32_t id, const char *name)
 {
 	struct vmop_id vid;
 	int fds[2], readn, writen;
-	char buf[PAGE_SIZE];
+	long pagesz;
+	char *buf;
+
+	pagesz = getpagesize();
+	buf = malloc(pagesz);
+	if (buf == NULL)
+		errx(1, "%s: memory allocation failure", __func__);
 
 	memset(&vid, 0, sizeof(vid));
 	if (name != NULL)
@@ -276,7 +289,7 @@ vm_receive(uint32_t id, const char *name)
 		    &vid, sizeof(vid));
 		imsg_flush(ibuf);
 		while (1) {
-			readn = atomicio(read, STDIN_FILENO, buf, sizeof(buf));
+			readn = atomicio(read, STDIN_FILENO, buf, pagesz);
 			if (!readn) {
 				close(fds[1]);
 				break;
@@ -286,6 +299,8 @@ vm_receive(uint32_t id, const char *name)
 				break;
 		}
 	}
+
+	free(buf);
 }
 
 void
