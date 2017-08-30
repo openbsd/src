@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: ifstated,v 1.6 2017/08/28 22:05:44 rob Exp $
+# $OpenBSD: ifstated,v 1.7 2017/08/30 16:14:52 rob Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -123,6 +123,8 @@ changing state to demoted
 changing state to primary
 changing state to demoted
 changing state to primary
+changing state to demoted
+changing state to primary
 changing state to primary
 EOF
 
@@ -132,6 +134,11 @@ sleep ${SLEEP}
 ifconfig carp${VHIDA} down
 sleep ${SLEEP}
 ifconfig carp${VHIDA} up
+sleep ${SLEEP}
+ifconfig carp${VHIDA} destroy
+sleep ${SLEEP}
+ifconfig carp${VHIDA} inet ${PREFIX}.${VHIDA} netmask 255.255.255.0 broadcast \
+   ${PREFIX}.255 vhid ${VHIDA} carpdev ${NIC}
 sleep ${SLEEP}
 ifconfig carp${VHIDB} destroy
 sleep ${SLEEP}
