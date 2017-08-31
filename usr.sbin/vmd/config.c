@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.33 2017/08/18 07:01:29 mlarkin Exp $	*/
+/*	$OpenBSD: config.c,v 1.34 2017/08/31 06:23:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/uio.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 
 #include <net/if.h>
@@ -157,6 +158,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	struct vmd_if		*vif;
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
+	struct stat		 stat_buf;
 	unsigned int		 i;
 	int			 fd = -1, vmboot = 0;
 	int			 kernfd = -1, *diskfds = NULL, *tapfds = NULL;
@@ -225,6 +227,19 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 
 	/* Open disk images for child */
 	for (i = 0 ; i < vcp->vcp_ndisks; i++) {
+                /* Stat disk[i] to ensure it is a regular file */
+                if (stat(vcp->vcp_disks[i], &stat_buf) == -1) {
+			log_warn("%s: can't open disk %s", __func__,
+			    vcp->vcp_disks[i]);
+			errno = VMD_DISK_MISSING;
+			goto fail;
+                }
+                if (S_ISREG(stat_buf.st_mode) == 0) {
+			log_warn("%s: disk %s is not a regular file", __func__,
+			    vcp->vcp_disks[i]);
+			errno = VMD_DISK_INVALID;
+			goto fail;
+                }
 		if ((diskfds[i] =
 		    open(vcp->vcp_disks[i], O_RDWR)) == -1) {
 			log_warn("%s: can't open disk %s", __func__,
