@@ -1,4 +1,4 @@
-#	$OpenBSD: history.t,v 1.2 2016/09/27 15:35:34 bluhm Exp $
+#	$OpenBSD: history.t,v 1.3 2017/08/31 06:55:01 anton Exp $
 
 # Not tested yet:
 #	- commands in history file are not numbered negatively
@@ -556,4 +556,64 @@ expected-stdout:
 		echo a new line
 expected-stderr-pattern:
 	/^X+echo FOOBAR def\necho a new line\nX*$/m
+---
+
+name: history-ignoredups-1
+description:
+	Duplicate subsequent commands are ignored.
+arguments: !-i!
+env-setup: !ENV=./Env!HISTFILE=hist.file!HISTCONTROL=ignoredups!
+file-setup: file 644 "Env"
+	PS1=X
+stdin:
+	echo a
+	echo a
+	fc -l
+expected-stdout:
+	a
+	a
+	2	echo a
+expected-stderr-pattern:
+	/^X*$/m
+---
+
+name: history-ignorespace-1
+description:
+	A command prefixed with space is discarded from history.
+arguments: !-i!
+env-setup: !ENV=./Env!HISTFILE=hist.file!HISTCONTROL=ignorespace!
+file-setup: file 644 "Env"
+	PS1=X
+stdin:
+	echo a
+	 echo b
+	fc -l
+expected-stdout:
+	a
+	b
+	2	echo a
+expected-stderr-pattern:
+	/^X*$/m
+---
+
+name: history-histcontrol-1
+description:
+	Both ignoredups and ignorespace can be specified.
+	Unrecognized and empty options are ignored.
+arguments: !-i!
+env-setup: !ENV=./Env!HISTFILE=hist.file!HISTCONTROL=ignoredups:ignorespace:foo::!
+file-setup: file 644 "Env"
+	PS1=X
+stdin:
+	echo a
+	 echo b
+	echo a
+	fc -l
+expected-stdout:
+	a
+	b
+	a
+	3	echo a
+expected-stderr-pattern:
+	/^X*$/m
 ---
