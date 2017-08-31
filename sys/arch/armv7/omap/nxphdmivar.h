@@ -1,3 +1,4 @@
+/* $OpenBSD: nxphdmivar.h,v 1.3 2017/08/31 21:39:25 ians Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  *
