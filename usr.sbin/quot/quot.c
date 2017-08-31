@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.28 2015/11/12 22:33:07 deraadt Exp $	*/
+/*	$OpenBSD: quot.c,v 1.29 2017/08/31 12:03:02 otto Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -469,7 +469,7 @@ donames(int fd, struct fs *super, char *name)
 	ungetc(c, stdin);
 	inode1 = -1;
 	while (scanf("%llu", &inode) == 1) {
-		if (inode < 0 || inode > maxino) {
+		if (inode > maxino) {
 #ifndef	COMPAT
 			fprintf(stderr, "invalid inode %llu\n",
 			    (unsigned long long)inode);

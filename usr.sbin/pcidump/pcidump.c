@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.45 2017/06/16 05:19:15 jsg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.46 2017/08/31 12:03:02 otto Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -20,7 +20,7 @@
 #include <sys/ioctl.h>
 #include <sys/pciio.h>
 
-#include <stdio.h>	/* need NULL for <dev/pci/*.h> */
+#include <stdio.h>	/* need NULL for dev/pci/ headers */
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.2 2016/10/22 22:20:24 natano Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.3 2017/08/31 12:03:02 otto Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.35 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -133,7 +133,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	 */
 	if (ddep->de_fndcnt > 0) {
 		u_int8_t chksum = winChksum(ndep->deName);
-		const u_char *un = (const u_char *)cnp->cn_nameptr;
+		u_char *un = cnp->cn_nameptr;
 		int unlen = cnp->cn_namelen;
 		u_long xhavecnt;
 

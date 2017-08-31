@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.38 2017/01/21 08:33:51 krw Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.39 2017/08/31 12:03:02 otto Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -946,7 +946,7 @@ fixup_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
     /* Check for byte-swappers */
     while (--rno >= 0) {
 	--n; --p; --b; --s;
-	if (*s || abs(ntohl(n->tr_vifout) - ntohl(p->tr_vifout)) > 100000) {
+	if (*s || ntohl(n->tr_vifout) - ntohl(p->tr_vifout) > 100000) {
 	    /* This host sends byteswapped reports; swap 'em */
 	    if (!*s) {
 		*s = 1;
