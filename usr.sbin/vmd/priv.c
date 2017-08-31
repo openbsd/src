@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.10 2017/08/11 16:33:01 reyk Exp $	*/
+/*	$OpenBSD: priv.c,v 1.11 2017/08/31 09:00:46 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -458,11 +458,11 @@ vm_priv_addr(struct address *h, uint32_t vmid, int idx, int isvm)
 	prefix = ss2sin(&h->ss)->sin_addr.s_addr;
 	mask = prefixlen2mask(h->prefixlen);
 
-	/* 2. Encode the VM ID as a per-VM subnet range N, 10.64.N.0/24. */
+	/* 2. Encode the VM ID as a per-VM subnet range N, 100.64.N.0/24. */
 	addr = vmid << 8;
 
 	/*
-	 * 3. Assign a /31 subnet M per VM interface, 10.64.N.M/31.
+	 * 3. Assign a /31 subnet M per VM interface, 100.64.N.M/31.
 	 * Each subnet contains exactly two IP addresses; skip the
 	 * first subnet to avoid a gateway address ending with .0.
 	 */
