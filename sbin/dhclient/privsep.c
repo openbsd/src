@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.66 2017/08/13 17:57:32 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.67 2017/08/31 17:01:48 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -80,10 +81,12 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 			break;
 
 		case IMSG_FLUSH_ROUTES:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE)
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct imsg_flush_routes))
 				log_warnx("bad IMSG_FLUSH_ROUTES");
 			else
-				priv_flush_routes(index, routefd, rdomain);
+				priv_flush_routes(index, routefd, rdomain,
+				    imsg.data);
 			break;
 
 		case IMSG_ADD_ROUTE:

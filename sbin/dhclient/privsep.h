@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.55 2017/08/13 17:57:32 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.56 2017/08/31 17:01:48 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,11 @@ struct imsg_set_address {
 	struct	in_addr mask;
 };
 
+struct imsg_flush_routes {
+	uint8_t		rtstatic[RTSTATIC_LEN];
+	unsigned int	rtstatic_len;
+};
+
 struct imsg_add_route {
 	struct in_addr	dest;
 	struct in_addr	netmask;
@@ -52,7 +57,7 @@ void	dispatch_imsg(char *, int, int, int, struct imsgbuf *);
 int	default_route_index(int, int);
 
 void	priv_add_route(char *, int, int, struct imsg_add_route *);
-void	priv_flush_routes(int, int, int);
+void	priv_flush_routes(int, int, int, struct imsg_flush_routes *);
 
 void	priv_write_resolv_conf(char *);
 
