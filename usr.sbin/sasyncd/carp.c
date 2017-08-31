@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.15 2016/08/27 04:21:08 guenther Exp $	*/
+/*	$OpenBSD: carp.c,v 1.16 2017/08/31 16:19:22 otto Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -154,7 +154,7 @@ carp_state_name(enum RUNSTATE state)
 {
 	static const char	*carpstate[] = CARPSTATES;
 
-	if (state < 0 || state > FAIL)
+	if ((unsigned)state > FAIL)
 		state = FAIL;
 	return carpstate[state];
 }
@@ -163,7 +163,7 @@ void
 carp_update_state(enum RUNSTATE current_state)
 {
 
-	if (current_state < 0 || current_state > FAIL) {
+	if ((unsigned)current_state > FAIL) {
 		log_err("carp_update_state: invalid carp state, abort");
 		cfgstate.runstate = FAIL;
 		return;
