@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.69 2017/08/30 17:08:45 jca Exp $	*/
+/*	$OpenBSD: history.c,v 1.70 2017/08/31 11:10:03 jca Exp $	*/
 
 /*
  * command history
@@ -639,6 +639,10 @@ histsave(int lno, const char *cmd, int dowrite)
 	if ((cp = strrchr(c, '\n')) != NULL)
 		*cp = '\0';
 
+	/*
+	 * XXX to properly check for duplicated lines we should first reload
+	 * the histfile if needed
+	 */
 	if (ignoredups && histptr >= history && strcmp(*histptr, c) == 0) {
 		afree(c, APERM);
 		return;
