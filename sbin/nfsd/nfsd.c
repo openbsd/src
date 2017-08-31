@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.36 2016/06/07 01:29:38 tedu Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.37 2017/08/31 06:50:56 mestre Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -64,7 +64,11 @@
 
 /* Global defs */
 #ifdef DEBUG
-#define	syslog(e, s)	fprintf(stderr,(s))
+#define	syslog(e, s, ...)			\
+do {						\
+	fprintf(stderr, (s), ##__VA_ARGS__);	\
+	fprintf(stderr, "\n");			\
+} while (0)
 int	debug = 1;
 #else
 int	debug = 0;
@@ -163,13 +167,15 @@ main(int argc, char *argv[])
 		if (udpflag &&
 		    (!pmap_set(RPCPROG_NFS, 2, IPPROTO_UDP, NFS_PORT) ||
 		     !pmap_set(RPCPROG_NFS, 3, IPPROTO_UDP, NFS_PORT))) {
-			syslog(LOG_ERR, "can't register with portmap for UDP (%m).");
+			syslog(LOG_ERR, "can't register with portmap for UDP (%s).",
+			    strerror(errno));
 			return (1);
 		}
 		if (tcpflag &&
 		    (!pmap_set(RPCPROG_NFS, 2, IPPROTO_TCP, NFS_PORT) ||
 		     !pmap_set(RPCPROG_NFS, 3, IPPROTO_TCP, NFS_PORT))) {
-			syslog(LOG_ERR, "can't register with portmap for TCP (%m).");
+			syslog(LOG_ERR, "can't register with portmap for TCP (%s).",
+			    strerror(errno));
 			return (1);
 		}
 		return (0);
@@ -182,7 +188,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < nfsdcnt; i++) {
 		switch (fork()) {
 		case -1:
-			syslog(LOG_ERR, "fork: %m");
+			syslog(LOG_ERR, "fork: %s", strerror(errno));
 			return (1);
 		case 0:
 			break;
@@ -193,7 +199,7 @@ main(int argc, char *argv[])
 		setproctitle("server");
 		nsd.nsd_nfsd = NULL;
 		if (nfssvc(NFSSVC_NFSD, &nsd) < 0) {
-			syslog(LOG_ERR, "nfssvc: %m");
+			syslog(LOG_ERR, "nfssvc: %s", strerror(errno));
 			return (1);
 		}
 		return (0);
@@ -240,7 +246,7 @@ main(int argc, char *argv[])
 		}
 		if (setsockopt(tcpsock,
 		    SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
-			syslog(LOG_ERR, "setsockopt SO_REUSEADDR: %m");
+			syslog(LOG_ERR, "setsockopt SO_REUSEADDR: %s", strerror(errno));
 		memset(&inetaddr, 0, sizeof inetaddr);
 		inetaddr.sin_family = AF_INET;
 		inetaddr.sin_addr.s_addr = INADDR_ANY;
@@ -284,7 +290,7 @@ main(int argc, char *argv[])
 		if (connect_type_cnt > 1) {
 			ret = poll(&pfd, 1, INFTIM);
 			if (ret < 1) {
-				syslog(LOG_ERR, "poll failed: %m");
+				syslog(LOG_ERR, "poll failed: %s", strerror(errno));
 				return (1);
 			}
 				
@@ -297,14 +303,14 @@ main(int argc, char *argv[])
 				if (errno == EWOULDBLOCK || errno == EINTR ||
 				    errno == ECONNABORTED)
 					continue;
-				syslog(LOG_ERR, "accept failed: %m");
+				syslog(LOG_ERR, "accept failed: %s", strerror(errno));
 				return (1);
 			}
 			memset(inetpeer.sin_zero, 0, sizeof(inetpeer.sin_zero));
 			if (setsockopt(msgsock, SOL_SOCKET,
 			    SO_KEEPALIVE, &on, sizeof(on)) < 0)
 				syslog(LOG_ERR,
-				    "setsockopt SO_KEEPALIVE: %m");
+				    "setsockopt SO_KEEPALIVE: %s", strerror(errno));
 			nfsdargs.sock = msgsock;
 			nfsdargs.name = (caddr_t)&inetpeer;
 			nfsdargs.namelen = sizeof(inetpeer);
