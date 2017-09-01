@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.17 2016/03/06 19:42:27 mpi Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.18 2017/09/01 13:16:47 visa Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -40,7 +40,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.17 2016/03/06 19:42:27 mpi Exp $
+ *	$Id: process_machdep.c,v 1.18 2017/09/01 13:16:47 visa Exp $
  */
 
 /*
@@ -79,9 +79,7 @@
 #define	REGSIZE (sizeof(struct trapframe) - sizeof(register_t))
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_read_regs(struct proc *p, struct reg *regs)
 {
 	struct cpu_info *ci = curcpu();
 
@@ -96,9 +94,7 @@ process_read_regs(p, regs)
 #ifdef	PTRACE
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_write_regs(struct proc *p, struct reg *regs)
 {
 	struct cpu_info *ci = curcpu();
 	register_t sr, ic, ipl;
@@ -120,9 +116,7 @@ process_write_regs(p, regs)
 /* process_sstep is in trap.c */
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
+process_set_pc(struct proc *p, caddr_t addr)
 {
 	p->p_md.md_regs->pc = (register_t)addr;
 	return (0);

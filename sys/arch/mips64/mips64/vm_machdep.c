@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.35 2017/04/13 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.36 2017/09/01 13:16:47 visa Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -142,8 +142,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
  * cpu_exit is called as the last action during exit.
  */
 void
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(struct proc *p)
 {
 	struct cpu_info *ci = curcpu();
 
@@ -165,9 +164,7 @@ extern vm_map_t phys_map;
  */
 
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t uva, kva;
 	vsize_t sz, off;
@@ -207,9 +204,7 @@ vmapbuf(bp, len)
  * We also invalidate the TLB entries and restore the original b_addr.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vsize_t sz;
 	vaddr_t addr;

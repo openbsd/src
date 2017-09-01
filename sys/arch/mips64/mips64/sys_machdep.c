@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.8 2014/04/03 08:07:16 mpi Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.9 2017/09/01 13:16:47 visa Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,10 +60,7 @@
 int	mips64_cacheflush(struct proc *, struct mips64_cacheflush_args *);
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;
