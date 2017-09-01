@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.32 2017/08/14 17:52:05 jasper Exp $
+.\"	$OpenBSD: vmctl.8,v 1.33 2017/09/01 03:37:35 mlarkin Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2017 $
+.Dd $Mdocdate: September 1 2017 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -107,6 +107,12 @@ Add a local network interface.
 will auto-generate an IPv4 subnet for the interface,
 configure a gateway address on the VM host side,
 and run a simple DHCP (BOOTP) server for the VM.
+See
+.Sx LOCAL INTERFACES
+below for more information on how addresses are calculated and assigned when
+using the
+.Fl L
+option.
 .It Fl m Ar size
 Memory
 .Ar size
@@ -121,9 +127,10 @@ in
 .Xr vm.conf 5
 for more information.
 .El
-The VM can only consist of alphanumeric characters, including
-a '.', '-' or '_'.
-However it cannot start with '.', '-' or '_'.
+.Pp
+Note that the VM name supplied to the 'start' command can only consist of
+alphanumeric characters, including '.', '-', and '_'. The name cannot start
+with '.', '-' or '_'.
 .It Cm status Op Ar id
 Lists VMs running on the host, optionally listing just the selected VM
 .Ar id .
@@ -156,6 +163,67 @@ tap interfaces, such as bridging (via
 or using
 .Xr pf 4
 nat-to rules to create private or host-side NATed networks, as desired.
+.Sh LOCAL INTERFACES
+Local interfaces can be used to easily configure VM networking without
+needing to manually assign network addresses.
+A local interface is added
+to a VM using the -L option to the 'vmctl start' command and results in the
+addition of a
+.Xr vio 4
+interface inside the VM and a corresponding
+.Xr tap 4
+interface on the host.
+When using local interfaces,
+.Xr vmd 8
+will provide DHCP services to the guest VM and offer addresses selected
+from the 100.64.0.0/10 IPv4 range.
+From within the 100.64.0.0/10
+range,
+.Xr vmd 8
+allocates a pair of addresses for the guest-side
+.Xr vio 4
+and host-side
+.Xr tap 4
+interfaces as follows:
+.Pp
+For the first local interface:
+.Bl -bullet -compact
+.It
+The host (tapX) address is assigned 100.64.n.2,
+where 'n' is the numeric VM ID visible in the 'vmctl status' command
+.It
+The guest (vio0) address is assigned 100.64.n.3
+.El
+.Pp
+For the second and subsequent local interface(s):
+.Bl -bullet -compact
+.It
+The second local interface uses 100.64.n.4 and 100.64.n.5 for the
+host (tapX) and guest (vio1) interfaces, respectively.
+.It
+Subsequent local interfaces are numbered similarly, continuing with 100.64.n.6
+and 100.64.n.7, etc
+.El
+.Pp
+Multiple -L options can be provided to the 'vmctl start' command, if more than
+one interface is desired.
+Local interfaces are assigned to the VM before
+any other interfaces specified with the -i option (thus, local interfaces,
+if requested, are numbered starting at vio0 inside the guest VM).
+.Pp
+When using local interfaces, the DHCP configuration offered to the guest VM
+specifies a default route to the corresponding host
+.Xr tap 4
+interface.
+Guest VM traffic can optionally be NATed through the host
+with an entry in the host machine's
+.Pa /etc/pf.conf
+similar to the following (if desired):
+.Bd -literal -offset indent
+pass out on $ext_if from 100.64.0.0/10 to any nat-to $ext_if
+.Ed
+.Pp
+If NATing is desired, the net.inet.ip.forwarding sysctl must also be set to 1.
 .Sh FILES
 .Bl -tag -width "/etc/var/run/vmd.sockXX" -compact
 .It Pa /etc/vm.conf
@@ -215,6 +283,7 @@ Terminate VM number 1:
 .Xr vmm 4 ,
 .Xr vm.conf 5 ,
 .Xr rc.conf 8 ,
+.Xr sysctl 8 ,
 .Xr vmd 8
 .Sh HISTORY
 The
