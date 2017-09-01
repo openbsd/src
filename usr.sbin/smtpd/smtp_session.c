@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.309 2017/09/01 07:06:41 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.310 2017/09/01 20:49:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -116,10 +116,8 @@ struct smtp_tx {
 	FILE			*ofile;
 	int			 hdrdone;
 	int			 rcvcount;
-	int			 dataeom;
 
 	int			 msgflags;
-	int			 msgcode;
 
 	int			 skiphdr;
 	struct rfc2822_parser	 rfc2822_parser;
@@ -164,7 +162,6 @@ static void smtp_connected(struct smtp_session *);
 static void smtp_send_banner(struct smtp_session *);
 static void smtp_tls_verified(struct smtp_session *);
 static void smtp_io(struct io *, int, void *);
-static void smtp_data_io_done(struct smtp_session *);
 static void smtp_enter_state(struct smtp_session *, int);
 static void smtp_reply(struct smtp_session *, char *, ...);
 static void smtp_command(struct smtp_session *, char *);
@@ -1130,8 +1127,7 @@ smtp_io(struct io *io, int evt, void *arg)
 
 			io_set_write(io);
 
-			s->tx->dataeom = 1;
-			smtp_data_io_done(s);
+			smtp_message_end(s);
 			return;
 		}
 
@@ -1268,38 +1264,6 @@ smtp_tx_free(struct smtp_tx *tx)
 	tx->session->tx = NULL;
 
 	free(tx);
-}
-
-static void
-smtp_data_io_done(struct smtp_session *s)
-{
-	log_debug("debug: smtp: %p: data io done (%zu bytes)", s, s->tx->odatalen);
-
-	if (s->tx->msgflags & MF_ERROR) {
-		smtp_queue_rollback(s);
-
-		if (s->tx->msgflags & MF_ERROR_SIZE)
-			smtp_reply(s, "554 Message too big");
-		else if (s->tx->msgflags & MF_ERROR_LOOP)
-			smtp_reply(s, "500 %s %s: Loop detected",
-				esc_code(ESC_STATUS_PERMFAIL, ESC_ROUTING_LOOP_DETECTED),
-				esc_description(ESC_ROUTING_LOOP_DETECTED));
-                else if (s->tx->msgflags & MF_ERROR_RESOURCES)
-                        smtp_reply(s, "421 %s: Temporary Error",
-                            esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
-                else if (s->tx->msgflags & MF_ERROR_MALFORMED)
-                        smtp_reply(s, "550 %s %s: Message is not RFC 2822 compliant",
-                            esc_code(ESC_STATUS_PERMFAIL,
-				ESC_DELIVERY_NOT_AUTHORIZED_MESSAGE_REFUSED),
-                            esc_description(ESC_DELIVERY_NOT_AUTHORIZED_MESSAGE_REFUSED));
-		else if (s->tx->msgflags)
-			smtp_reply(s, "421 Internal server error");
-		smtp_tx_free(s->tx);
-		smtp_enter_state(s, STATE_HELO);
-	}
-	else {
-		smtp_message_end(s);
-	}
 }
 
 static void
@@ -1952,12 +1916,26 @@ smtp_message_end(struct smtp_session *s)
 
 	if (s->tx->msgflags & MF_ERROR) {
 		smtp_queue_rollback(s);
+
 		if (s->tx->msgflags & MF_ERROR_SIZE)
 			smtp_reply(s, "554 %s %s: Transaction failed, message too big",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_MESSAGE_TOO_BIG_FOR_SYSTEM),
 			    esc_description(ESC_MESSAGE_TOO_BIG_FOR_SYSTEM));
-		else
-			smtp_reply(s, "%d Message rejected", s->tx->msgcode);
+		else if (s->tx->msgflags & MF_ERROR_LOOP)
+			smtp_reply(s, "500 %s %s: Loop detected",
+				esc_code(ESC_STATUS_PERMFAIL, ESC_ROUTING_LOOP_DETECTED),
+				esc_description(ESC_ROUTING_LOOP_DETECTED));
+                else if (s->tx->msgflags & MF_ERROR_RESOURCES)
+                        smtp_reply(s, "421 %s: Temporary Error",
+                            esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
+                else if (s->tx->msgflags & MF_ERROR_MALFORMED)
+                        smtp_reply(s, "550 %s %s: Message is not RFC 2822 compliant",
+                            esc_code(ESC_STATUS_PERMFAIL,
+				ESC_DELIVERY_NOT_AUTHORIZED_MESSAGE_REFUSED),
+                            esc_description(ESC_DELIVERY_NOT_AUTHORIZED_MESSAGE_REFUSED));
+		else if (s->tx->msgflags)
+			smtp_reply(s, "421 Internal server error");
+
 		smtp_tx_free(s->tx);
 		smtp_enter_state(s, STATE_HELO);
 		return;
