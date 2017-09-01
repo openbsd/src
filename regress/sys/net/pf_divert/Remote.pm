@@ -1,4 +1,4 @@
-#	$OpenBSD: Remote.pm,v 1.8 2017/08/15 04:11:20 bluhm Exp $
+#	$OpenBSD: Remote.pm,v 1.9 2017/09/01 17:44:00 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -46,7 +46,7 @@ sub new {
 
 sub up {
 	my $self = Proc::up(shift, @_);
-	my $timeout = shift || 10;
+	my $timeout = shift || 20;
 	if ($self->{connect}) {
 		$self->loggrep(qr/^Connected$/, $timeout)
 		    or croak ref($self), " no Connected in $self->{logfile} ".
