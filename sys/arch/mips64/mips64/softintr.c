@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.19 2015/09/02 13:53:55 deraadt Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.20 2017/09/01 13:07:28 visa Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -49,8 +49,6 @@
 #endif
 
 struct soft_intrq soft_intrq[SI_NQUEUES];
-
-void	netintr(void);
 
 /*
  * Initialize the software interrupt system.
