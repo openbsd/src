@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.497 2017/08/30 18:06:10 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.498 2017/09/01 19:23:50 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1353,7 +1353,7 @@ state_panic(struct interface_info *ifi)
 	log_info("No acceptable DHCPOFFERS received.");
 
 	ifi->offer = get_recorded_lease(ifi);
-	if (ifi->offer) {
+	if (ifi->offer != NULL) {
 		ifi->state = S_REQUESTING;
 		bind_lease(ifi);
 		return;
@@ -1408,7 +1408,7 @@ send_request(struct interface_info *ifi)
 	 */
 	if (ifi->state != S_REQUESTING &&
 	    cur_time > ifi->active->expiry) {
-		if (ifi->active)
+		if (ifi->active != NULL)
 			delete_address(ifi->active->address);
 		ifi->state = S_INIT;
 		state_init(ifi);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.103 2017/08/29 13:21:30 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.104 2017/09/01 19:23:50 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -718,7 +718,7 @@ pretty_print_domain_search(unsigned char *src, size_t srclen)
 	offset = 0;
 	while (offset < srclen) {
 		cursor = domain_search + strlen(domain_search);
-		if (domain_search[0]) {
+		if (domain_search[0] != '\0') {
 			*cursor = ' ';
 			expanded_len++;
 		}
