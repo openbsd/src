@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.39 2017/03/04 17:51:20 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.40 2017/09/01 14:04:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -101,6 +101,9 @@ void	 ieee80211_print_essid(u_int8_t *, u_int);
 void	 ieee80211_print_country(u_int8_t *, u_int);
 void	 ieee80211_print_htcaps(u_int8_t *, u_int);
 void	 ieee80211_print_htop(u_int8_t *, u_int);
+void	 ieee80211_print_rsncipher(u_int8_t []);
+void	 ieee80211_print_akm(u_int8_t []);
+void	 ieee80211_print_rsn(u_int8_t *, u_int);
 int	 ieee80211_print_beacon(struct ieee80211_frame *, u_int);
 int	 ieee80211_print_assocreq(struct ieee80211_frame *, u_int);
 int	 ieee80211_print_elements(uint8_t *);
@@ -601,6 +604,193 @@ ieee80211_print_htop(u_int8_t *data, u_int len)
 	printf(">");
 }
 
+void
+ieee80211_print_rsncipher(uint8_t selector[4])
+{
+	if (memcmp(selector, MICROSOFT_OUI, 3) != 0 &&
+	    memcmp(selector, IEEE80211_OUI, 3) != 0) {
+		printf("0x%x%x%x%x", selector[0], selector[1], selector[2],
+		     selector[3]);
+	    	return;
+	}
+
+	/* See 802.11-2012 Table 8-99 */
+	switch (selector[3]) {
+	case 0:	/* use group data cipher suite */
+		printf("usegroup");
+		break;
+	case 1:	/* WEP-40 */
+		printf("wep40");
+		break;
+	case 2:	/* TKIP */
+		printf("tkip");
+		break;
+	case 4:	/* CCMP (RSNA default) */
+		printf("ccmp");
+		break;
+	case 5:	/* WEP-104 */
+		printf("wep104");
+		break;
+	case 6:	/* BIP */
+		printf("bip");
+		break;
+	default:
+		printf("%d", selector[3]);
+		break;
+	}
+}
+
+void
+ieee80211_print_akm(uint8_t selector[4])
+{
+	if (memcmp(selector, MICROSOFT_OUI, 3) != 0 &&
+	    memcmp(selector, IEEE80211_OUI, 3) != 0) {
+		printf("0x%x%x%x%x", selector[0], selector[1], selector[2],
+		     selector[3]);
+	    	return;
+	}
+
+	switch (selector[3]) {
+	case 1:
+		printf("802.1x");
+		break;
+	case 2:
+		printf("PSK");
+		break;
+	case 5:
+		printf("SHA256-802.1x");
+		break;
+	case 6:
+		printf("SHA256-PSK");
+		break;
+	default:
+		printf("%d", selector[3]);
+		break;
+	}
+}
+
+/* Caller checks len */
+void
+ieee80211_print_rsn(u_int8_t *data, u_int len)
+{
+	uint16_t version, nciphers, nakms, rsncap, npmk;
+	int i, j;
+	uint8_t selector[4];
+
+	if (len < 2) {
+		ieee80211_print_element(data, len);
+		return;
+	}
+
+	version = (data[0]) | (data[1] << 8);
+	printf("=<version %d", version);
+
+	if (len < 6) {
+		printf(">");
+		return;
+	}
+
+	data += 2;
+	printf(",groupcipher ");
+	for (i = 0; i < 4; i++)
+		selector[i] = data[i];
+	ieee80211_print_rsncipher(selector);
+
+	if (len < 8) {
+		printf(">");
+		return;
+	}
+
+	data += 4;
+	nciphers = (data[0]) | ((data[1]) << 8);
+	data += 2;
+
+	if (len < 8 + (nciphers * 4)) {
+		printf(">");
+		return;
+	}
+
+	printf(",cipher%s ", nciphers > 1 ? "s" : "");
+	for (i = 0; i < nciphers; i++) {
+		for (j = 0; j < 4; j++)
+			selector[j] = data[i + j];
+		ieee80211_print_rsncipher(selector);
+		if (i < nciphers - 1)
+			printf(" ");
+		data += 4;
+	}
+
+	if (len < 8 + (nciphers * 4) + 2) {
+		printf(">");
+		return;
+	}
+
+	nakms = (data[0]) | ((data[1]) << 8);
+	data += 2;
+
+	if (len < 8 + (nciphers * 4) + 2 + (nakms * 4)) {
+		printf(">");
+		return;
+	}
+
+	printf(",akm%s ", nakms > 1 ? "s" : "");
+	for (i = 0; i < nciphers; i++) {
+		for (j = 0; j < 4; j++)
+			selector[j] = data[i + j];
+		ieee80211_print_akm(selector);
+		if (i < nciphers - 1)
+			printf(" ");
+		data += 4;
+	}
+
+	if (len < 8 + (nciphers * 4) + 2 + (nakms * 4) + 2) {
+		printf(">");
+		return;
+	}
+
+	rsncap = (data[0]) | ((data[1]) << 8);
+	printf(",rsncap 0x%x", rsncap);
+	data += 2;
+
+	if (len < 8 + (nciphers * 4) + 2 + (nakms * 4) + 2 + 2) {
+		printf(">");
+		return;
+	}
+
+	npmk = (data[0]) | ((data[1]) << 8);
+	data += 2;
+
+	if (len < 8 + (nciphers * 4) + 2 + (nakms * 4) + 2 + 2 +
+	    (npmk * IEEE80211_PMKID_LEN)) {
+		printf(">");
+		return;
+	}
+
+	if (npmk >= 1)
+		printf(",pmkid%s ", npmk > 1 ? "s" : "");
+	for (i = 0; i < npmk; i++) {
+		printf("0x");
+		for (j = 0; j < IEEE80211_PMKID_LEN; j++)
+			printf("%x", data[i + j]);
+		if (i < npmk - 1)
+			printf(" ");
+		data += IEEE80211_PMKID_LEN;
+	}
+
+	if (len < 8 + (nciphers * 4) + 2 + (nakms * 4) + 2 + 2 +
+	    (npmk * IEEE80211_PMKID_LEN) + 4) {
+		printf(">");
+		return;
+	}
+
+	printf(",integrity-groupcipher ");
+	for (i = 0; i < 4; i++)
+		selector[i] = data[i];
+	ieee80211_print_rsncipher(selector);
+
+	printf(">");
+}
+
 int
 ieee80211_print_beacon(struct ieee80211_frame *wh, u_int len)
 {
@@ -746,7 +936,7 @@ ieee80211_print_elements(uint8_t *frm)
 		case IEEE80211_ELEMID_RSN:
 			printf(", rsn");
 			if (vflag)
-				ieee80211_print_element(data, len);
+				ieee80211_print_rsn(data, len);
 			break;
 		case IEEE80211_ELEMID_XRATES:
 			printf(", xrates");
