@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.319 2017/08/22 15:02:34 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.320 2017/09/01 15:38:12 visa Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -998,12 +998,11 @@ dropfrag:
 void
 ip_freef(struct ipq *fp)
 {
-	struct ipqent *q, *p;
+	struct ipqent *q;
 
-	for (q = LIST_FIRST(&fp->ipq_fragq); q != NULL; q = p) {
-		p = LIST_NEXT(q, ipqe_q);
-		m_freem(q->ipqe_m);
+	while ((q = LIST_FIRST(&fp->ipq_fragq)) != NULL) {
 		LIST_REMOVE(q, ipqe_q);
+		m_freem(q->ipqe_m);
 		pool_put(&ipqent_pool, q);
 		ip_frags--;
 	}
@@ -1023,8 +1022,7 @@ ip_slowtimo(void)
 
 	NET_ASSERT_LOCKED();
 
-	for (fp = LIST_FIRST(&ipq); fp != NULL; fp = nfp) {
-		nfp = LIST_NEXT(fp, ipq_q);
+	LIST_FOREACH_SAFE(fp, &ipq, ipq_q, nfp) {
 		if (--fp->ipq_ttl == 0) {
 			ipstat_inc(ips_fragtimeout);
 			ip_freef(fp);
