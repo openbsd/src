@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.15 2017/08/26 13:25:17 jsg Exp $
+dnl	$OpenBSD: prep,v 1.16 2017/09/01 04:40:40 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -26,9 +26,9 @@ Booting from an SD card:
   
   Use the dd(1) utility to copy the miniroot to the hard drive.
   The command would likely be, under OpenBSD:
-  	dd if=miniroot-beagle-{:--:}OSrev.fs of=/dev/rsd1c
+  	dd if=miniroot-am335x-{:--:}OSrev.fs of=/dev/rsd1c
   
-  When you have connected the BeagleBoard to you computer, a command such
+  When you have connected the BeagleBone to your computer, a command such
   as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
   should connect you to the board's console.
   
@@ -61,7 +61,7 @@ Install on systems without a supported miniroot:
   To do so first install the u-boot-arm and dtb packages.  Write one of the
   provided miniroot images to an SD card:
 
- 	dd if=miniroot-beagle-{:--:}OSrev.fs of=/dev/rsdXc
+ 	dd if=miniroot-am335x-{:--:}OSrev.fs of=/dev/rsdXc
 
   Add a board specific DTB file:
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.30 2017/07/08 15:42:46 florian Exp $
+#	$OpenBSD: list,v 1.31 2017/09/01 04:40:40 jsg Exp $
 
 SRCDIRS distrib/special
 
@@ -126,12 +126,6 @@ COPY	/usr/local/share/dtb/arm/am335x-boneblack.dtb	usr/mdec/am335x/am335x-bonebl
 COPY	/usr/local/share/dtb/arm/am335x-bonegreen.dtb	usr/mdec/am335x/am335x-bonegreen.dtb
 COPY	/usr/local/share/dtb/arm/am335x-evm.dtb		usr/mdec/am335x/am335x-evm.dtb
 COPY	/usr/local/share/dtb/arm/am335x-evmsk.dtb	usr/mdec/am335x/am335x-evmsk.dtb
-
-COPY	/usr/local/share/u-boot/omap3_beagle/MLO	usr/mdec/beagle/MLO
-COPY	/usr/local/share/u-boot/omap3_beagle/u-boot.img	usr/mdec/beagle/u-boot.img
-COPY	/usr/local/share/dtb/arm/omap3-beagle-xm-ab.dtb	usr/mdec/beagle/omap3-beagle-xm-ab.dtb
-COPY	/usr/local/share/dtb/arm/omap3-beagle-xm.dtb	usr/mdec/beagle/omap3-beagle-xm.dtb
-COPY	/usr/local/share/dtb/arm/omap3-beagle.dtb	usr/mdec/beagle/omap3-beagle.dtb
 
 COPY	/usr/local/share/u-boot/Cubieboard2/u-boot-sunxi-with-spl.bin	usr/mdec/cubie/u-boot-sunxi-with-spl.bin
 COPY	/usr/local/share/dtb/arm/sun7i-a20-cubieboard2.dtb	usr/mdec/cubie/sun7i-a20-cubieboard2.dtb

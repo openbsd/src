@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.47 2017/08/22 23:27:52 jsg Exp $
+#	$OpenBSD: install.md,v 1.48 2017/09/01 04:40:40 jsg Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,7 +39,6 @@ md_installboot() {
 
 	case $(sysctl -n hw.product) in
 	*AM335x*)			_plat=am335x;;
-	*'OMAP3 BeagleBoard'*)		_plat=beagle;;
 	*OMAP4*)			_plat=panda;;
 	*'Cubietech Cubieboard2'*)	_plat=cubie;;
 	*Cubox-i*|*HummingBoard*)	_plat=cubox;;
@@ -56,7 +55,7 @@ md_installboot() {
 	_mdec=/usr/mdec/$_plat
 
 	case $_plat in
-	am335x|beagle|panda)
+	am335x|panda)
 		cp $_mdec/{MLO,u-boot.img,*.dtb} /mnt/mnt/
 		;;
 	cubox|wandboard)
