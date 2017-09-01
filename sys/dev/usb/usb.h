@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.58 2017/03/29 00:18:51 jsg Exp $ */
+/*	$OpenBSD: usb.h,v 1.59 2017/09/01 16:38:14 stsp Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -274,6 +274,9 @@ struct usb_endpoint_ss_comp_descriptor {
 	uByte		bDescriptorType;
 	uByte		bMaxBurst;
 	uByte		bmAttributes;
+#define UCE_BULK_MAX_STREAMS(a)	((a) & 0xff)
+#define UCE_ISOC_MULT(a)	((a) & 0x0c)
+#define UCE_ISOC_SSP_ISO(a)	((a) & 0x80)
 	uWord		wBytesPerInterval;
 } __packed;
 typedef struct usb_endpoint_ss_comp_descriptor
