@@ -8172,11 +8172,11 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 	if test "$FNOSTRICTALIASING" = "yes"; then
 		{ echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
-	STD_CWARNINGS="$STD_CWARNINGS -W -Wall -Wmissing-prototypes -Wcast-qual -Wwrite-strings -Wformat -Wpointer-arith -fno-strict-aliasing"
+	STD_CWARNINGS="$STD_CWARNINGS -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wmissing-prototypes -Wcast-qual -Wwrite-strings -Wformat -Wpointer-arith -fno-strict-aliasing"
 	else
 		{ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
-	STD_CWARNINGS="$STD_CWARNINGS -W -Wall -Wmissing-prototypes -Wcast-qual -Wwrite-strings -Wformat -Wpointer-arith"
+	STD_CWARNINGS="$STD_CWARNINGS -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wmissing-prototypes -Wcast-qual -Wwrite-strings -Wformat -Wpointer-arith"
 	fi
 	case "$host" in
 	*-hp-hpux*)
