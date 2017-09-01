@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.308 2017/08/30 11:09:02 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.309 2017/09/01 07:06:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -212,7 +212,6 @@ static struct tree wait_lka_ptr;
 static struct tree wait_lka_helo;
 static struct tree wait_lka_mail;
 static struct tree wait_lka_rcpt;
-static struct tree wait_filter_data;
 static struct tree wait_parent_auth;
 static struct tree wait_queue_msg;
 static struct tree wait_queue_fd;
@@ -600,7 +599,6 @@ smtp_session_init(void)
 		tree_init(&wait_lka_helo);
 		tree_init(&wait_lka_mail);
 		tree_init(&wait_lka_rcpt);
-		tree_init(&wait_filter_data);
 		tree_init(&wait_parent_auth);
 		tree_init(&wait_queue_msg);
 		tree_init(&wait_queue_fd);
@@ -1052,8 +1050,6 @@ smtp_message_fd(struct smtp_session *s, int fd)
 	smtp_enter_state(s, STATE_BODY);
 	smtp_reply(s, "354 Enter mail, end with \".\""
 	    " on a line by itself");
-
-	tree_xset(&wait_filter_data, s->id, s);
 }
 
 static void
@@ -1280,9 +1276,6 @@ smtp_data_io_done(struct smtp_session *s)
 	log_debug("debug: smtp: %p: data io done (%zu bytes)", s, s->tx->odatalen);
 
 	if (s->tx->msgflags & MF_ERROR) {
-
-		tree_pop(&wait_filter_data, s->id);
-
 		smtp_queue_rollback(s);
 
 		if (s->tx->msgflags & MF_ERROR_SIZE)
@@ -1957,8 +1950,6 @@ smtp_message_end(struct smtp_session *s)
 {
 	log_debug("debug: %p: end of message, msgflags=0x%04x", s, s->tx->msgflags);
 
-	tree_xpop(&wait_filter_data, s->id);
-
 	if (s->tx->msgflags & MF_ERROR) {
 		smtp_queue_rollback(s);
 		if (s->tx->msgflags & MF_ERROR_SIZE)
@@ -2061,8 +2052,6 @@ static void
 smtp_free(struct smtp_session *s, const char * reason)
 {
 	log_debug("debug: smtp: %p: deleting session: %s", s, reason);
-
-	tree_pop(&wait_filter_data, s->id);
 
 	if (s->tx) {
 		if (s->tx->msgid)
