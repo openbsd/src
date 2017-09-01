@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.117 2017/08/15 17:47:15 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.118 2017/09/01 15:05:31 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -525,8 +525,6 @@ rip6_ctloutput(int op, struct socket *so, int level, int optname,
 				break;
 			}
 
-			if (op == PRCO_SETOPT)
-				(void)m_free(m);
 			return (error);
 
 #ifdef MROUTING
@@ -538,7 +536,6 @@ rip6_ctloutput(int op, struct socket *so, int level, int optname,
 		case MRT6_DEL_MFC:
 			if (op == PRCO_SETOPT) {
 				error = ip6_mrouter_set(optname, so, m);
-				m_free(m);
 			} else if (op == PRCO_GETOPT)
 				error = ip6_mrouter_get(optname, so, m);
 			else
@@ -559,8 +556,6 @@ rip6_ctloutput(int op, struct socket *so, int level, int optname,
 		return (icmp6_ctloutput(op, so, level, optname, m));
 
 	default:
-		if (op == PRCO_SETOPT)
-			m_free(m);
 		return EINVAL;
 	}
 }

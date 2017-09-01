@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.248 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.249 2017/09/01 15:05:31 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -276,12 +276,8 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 	int error = 0;
 	unsigned int tid;
 
-	if (level != AF_ROUTE) {
-		error = EINVAL;
-		if (op == PRCO_SETOPT && m)
-			m_free(m);
-		return (error);
-	}
+	if (level != AF_ROUTE)
+		return (EINVAL);
 
 	switch (op) {
 	case PRCO_SETOPT:
@@ -307,7 +303,6 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 			error = ENOPROTOOPT;
 			break;
 		}
-		m_free(m);
 		break;
 	case PRCO_GETOPT:
 		switch (optname) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.153 2017/08/15 17:47:15 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.154 2017/09/01 15:05:31 mpi Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -437,11 +437,8 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 	int i;
 
 	inp = sotoinpcb(so);
-	if (inp == NULL) {
-		if (op == PRCO_SETOPT)
-			(void) m_free(m);
+	if (inp == NULL)
 		return (ECONNRESET);
-	}
 	if (level != IPPROTO_TCP) {
 		switch (so->so_proto->pr_domain->dom_family) {
 #ifdef INET6
@@ -547,7 +544,6 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			error = ENOPROTOOPT;
 			break;
 		}
-		m_free(m);
 		break;
 
 	case PRCO_GETOPT:

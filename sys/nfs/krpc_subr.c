@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.31 2017/08/10 19:20:43 mpi Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.32 2017/09/01 15:05:31 mpi Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -242,6 +242,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	s = solock(so);
 	error = sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m);
 	sounlock(s);
+	m_freem(m);
 	if (error)
 		goto out;
 
@@ -257,6 +258,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 		s = solock(so);
 		error = sosetopt(so, SOL_SOCKET, SO_BROADCAST, m);
 		sounlock(s);
+		m_freem(m);
 		if (error)
 			goto out;
 	}
@@ -273,6 +275,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
 	sounlock(s);
+	m_freem(mopt);
 	if (error)
 		goto out;
 
@@ -299,6 +302,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
 	sounlock(s);
+	m_freem(mopt);
 	if (error)
 		goto out;
 

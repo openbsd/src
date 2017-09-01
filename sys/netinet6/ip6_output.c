@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.231 2017/05/09 09:32:21 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.232 2017/09/01 15:05:31 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1045,11 +1045,8 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 	privileged = (inp->inp_socket->so_state & SS_PRIV);
 	uproto = (int)so->so_proto->pr_protocol;
 
-	if (level != IPPROTO_IPV6) {
-		if (op == PRCO_SETOPT)
-			m_free(m);
+	if (level != IPPROTO_IPV6)
 		return (EINVAL);
-	}
 
 	switch (op) {
 	case PRCO_SETOPT:
@@ -1378,7 +1375,6 @@ do { \
 			error = ENOPROTOOPT;
 			break;
 		}
-		m_free(m);
 		break;
 
 	case PRCO_GETOPT:
@@ -1590,11 +1586,8 @@ ip6_raw_ctloutput(int op, struct socket *so, int level, int optname,
 	const int icmp6off = offsetof(struct icmp6_hdr, icmp6_cksum);
 	struct inpcb *inp = sotoinpcb(so);
 
-	if (level != IPPROTO_IPV6) {
-		if (op == PRCO_SETOPT)
-			(void)m_free(m);
+	if (level != IPPROTO_IPV6)
 		return (EINVAL);
-	}
 
 	switch (optname) {
 	case IPV6_CHECKSUM:
@@ -1643,9 +1636,6 @@ ip6_raw_ctloutput(int op, struct socket *so, int level, int optname,
 		error = ENOPROTOOPT;
 		break;
 	}
-
-	if (op == PRCO_SETOPT)
-		(void)m_free(m);
 
 	return (error);
 }

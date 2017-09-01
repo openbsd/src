@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.101 2017/08/11 19:53:02 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.102 2017/09/01 15:05:31 mpi Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -301,11 +301,8 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 	int error = 0;
 	int dir;
 
-	if (level != IPPROTO_IP) {
-		if (op == PRCO_SETOPT)
-			(void) m_free(m);
+	if (level != IPPROTO_IP)
 		return (EINVAL);
-	}
 
 	switch (optname) {
 
@@ -318,7 +315,6 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 				inp->inp_flags |= INP_HDRINCL;
 			else
 				inp->inp_flags &= ~INP_HDRINCL;
-			m_free(m);
 		} else {
 			m->m_len = sizeof(int);
 			*mtod(m, int *) = inp->inp_flags & INP_HDRINCL;
@@ -353,8 +349,6 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 		}
 
-		if (op == PRCO_SETOPT)
-			(void)m_free(m);
 		return (error);
 
 	case MRT_INIT:
@@ -381,8 +375,6 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 		}
 		return (error);
 #else
-		if (op == PRCO_SETOPT)
-			m_free(m);
 		return (EOPNOTSUPP);
 #endif
 	}

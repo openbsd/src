@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.125 2017/08/14 16:56:57 tedu Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.126 2017/09/01 15:05:31 mpi Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -270,6 +270,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		s = solock(so);
 		error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
 		sounlock(s);
+		m_freem(mopt);
 		if (error)
 			goto bad;
 
@@ -294,6 +295,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		s = solock(so);
 		error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
 		sounlock(s);
+		m_freem(mopt);
 		if (error)
 			goto bad;
 	}
@@ -358,12 +360,14 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 			*mtod(m, int32_t *) = 1;
 			m->m_len = sizeof(int32_t);
 			sosetopt(so, SOL_SOCKET, SO_KEEPALIVE, m);
+			m_freem(m);
 		}
 		if (so->so_proto->pr_protocol == IPPROTO_TCP) {
 			MGET(m, M_WAIT, MT_SOOPTS);
 			*mtod(m, int32_t *) = 1;
 			m->m_len = sizeof(int32_t);
 			sosetopt(so, IPPROTO_TCP, TCP_NODELAY, m);
+			m_freem(m);
 		}
 		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR +
 		    sizeof (u_int32_t)) * 2;

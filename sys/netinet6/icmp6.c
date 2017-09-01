@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.215 2017/08/10 02:26:26 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.216 2017/09/01 15:05:31 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1687,11 +1687,8 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
 	int error = 0;
 	struct inpcb *in6p = sotoinpcb(so);
 
-	if (level != IPPROTO_ICMPV6) {
-		if (op == PRCO_SETOPT)
-			(void)m_free(m);
+	if (level != IPPROTO_ICMPV6)
 		return EINVAL;
-	}
 
 	switch (op) {
 	case PRCO_SETOPT:
@@ -1719,7 +1716,6 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
 			error = ENOPROTOOPT;
 			break;
 		}
-		m_freem(m);
 		break;
 
 	case PRCO_GETOPT:

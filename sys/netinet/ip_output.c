@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.340 2017/05/29 14:36:22 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.341 2017/09/01 15:05:31 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -72,6 +72,8 @@
 #endif
 #endif /* IPSEC */
 
+int ip_pcbopts(struct mbuf **, struct mbuf *);
+int ip_setmoptions(int, struct ip_moptions **, struct mbuf *, u_int);
 void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 static __inline u_int16_t __attribute__((__unused__))
     in_cksum_phdr(u_int32_t, u_int32_t, u_int32_t);
@@ -849,8 +851,6 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 
 	if (level != IPPROTO_IP) {
 		error = EINVAL;
-		if (op == PRCO_SETOPT)
-			(void) m_free(m);
 	} else switch (op) {
 	case PRCO_SETOPT:
 		switch (optname) {
@@ -1067,7 +1067,6 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			error = ENOPROTOOPT;
 			break;
 		}
-		m_free(m);
 		break;
 
 	case PRCO_GETOPT:
@@ -1234,12 +1233,11 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 		/*
 		 * Only turning off any previous options.
 		 */
-		m_free(m);
 		return (0);
 	}
 
 	if (m->m_len % sizeof(int32_t))
-		goto bad;
+		return (EINVAL);
 
 	/*
 	 * IP first-hop destination address will be stored before
@@ -1247,7 +1245,7 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 	 * and clear it when none present.
 	 */
 	if (m->m_data + m->m_len + sizeof(struct in_addr) >= &m->m_dat[MLEN])
-		goto bad;
+		return (EINVAL);
 	cnt = m->m_len;
 	m->m_len += sizeof(struct in_addr);
 	cp = mtod(m, u_char *) + sizeof(struct in_addr);
@@ -1262,10 +1260,10 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 			optlen = 1;
 		else {
 			if (cnt < IPOPT_OLEN + sizeof(*cp))
-				goto bad;
+				return (EINVAL);
 			optlen = cp[IPOPT_OLEN];
 			if (optlen < IPOPT_OLEN  + sizeof(*cp) || optlen > cnt)
-				goto bad;
+				return (EINVAL);
 		}
 		switch (opt) {
 
@@ -1283,7 +1281,7 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 			 * actual IP option, but is stored before the options.
 			 */
 			if (optlen < IPOPT_MINOFF - 1 + sizeof(struct in_addr))
-				goto bad;
+				return (EINVAL);
 			m->m_len -= sizeof(struct in_addr);
 			cnt -= sizeof(struct in_addr);
 			optlen -= sizeof(struct in_addr);
@@ -1305,13 +1303,12 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 		}
 	}
 	if (m->m_len > MAX_IPOPTLEN + sizeof(struct in_addr))
-		goto bad;
-	*pcbopt = m;
-	return (0);
+		return (EINVAL);
+	*pcbopt = m_dup_pkt(m, 0, M_NOWAIT);
+	if (*pcbopt == NULL)
+		return (ENOBUFS);
 
-bad:
-	(void)m_free(m);
-	return (EINVAL);
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.110 2017/08/09 14:22:58 mpi Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.111 2017/09/01 15:05:31 mpi Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -265,6 +265,7 @@ nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 		*mtod(m, int32_t *) = 1;
 		m->m_len = sizeof(int32_t);
 		sosetopt(so, SOL_SOCKET, SO_KEEPALIVE, m);
+		m_freem(m);
 	}
 	if (so->so_proto->pr_domain->dom_family == AF_INET &&
 	    so->so_proto->pr_protocol == IPPROTO_TCP) {
@@ -272,6 +273,7 @@ nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 		*mtod(m, int32_t *) = 1;
 		m->m_len = sizeof(int32_t);
 		sosetopt(so, IPPROTO_TCP, TCP_NODELAY, m);
+		m_freem(m);
 	}
 	so->so_rcv.sb_flags &= ~SB_NOINTR;
 	so->so_rcv.sb_timeo = 0;
