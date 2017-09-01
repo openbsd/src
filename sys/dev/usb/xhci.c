@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.74 2017/07/30 19:24:18 kettenis Exp $ */
+/* $OpenBSD: xhci.c,v 1.75 2017/09/01 16:01:27 stsp Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -2571,7 +2571,7 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 	/* We'll do the first TRB once we're finished with the chain. */
 	trb0 = xhci_xfer_get_trb(sc, xfer, &toggle0, (ntrb == 1));
 
-	remain = xfer->length - len0;
+	remain = xfer->length;
 	paddr += len0;
 	len = min(remain, XHCI_TRB_MAXSIZE);
 
