@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.15 2017/08/27 09:51:14 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.16 2017/09/02 08:35:08 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -231,7 +231,7 @@ rk3288_get_frequency(void *cookie, uint32_t *cells)
 {
 	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
-	uint32_t reg, mux, div_con;
+	uint32_t reg, mux, div_con, aclk_div_con;
 
 	switch (idx) {
 	case RK3288_PLL_CPLL:
@@ -291,6 +291,33 @@ rk3288_get_frequency(void *cookie, uint32_t *cells)
 		if (mux == 2)
 			return 24000000 / (div_con + 1);
 		break;
+	case RK3288_PCLK_I2C0:
+	case RK3288_PCLK_I2C2:
+		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(1));
+		mux = (reg >> 15) & 0x1;
+		/* pd_bus_pclk_div_con */
+		div_con = (reg >> 12) & 0x7;
+		if (mux == 1)
+			idx = RK3288_PLL_GPLL;
+		else
+			idx = RK3288_PLL_CPLL;
+		return rk3288_get_frequency(sc, &idx) / (div_con + 1);
+	case RK3288_PCLK_I2C1:
+	case RK3288_PCLK_I2C3:
+	case RK3288_PCLK_I2C4:
+	case RK3288_PCLK_I2C5:
+		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(10));
+		mux = (reg >> 15) & 0x1;
+		/* peri_pclk_div_con */
+		div_con = (reg >> 12) & 0x3;
+		/* peri_aclk_div_con */
+		aclk_div_con = reg & 0xf;
+		if (mux == 1)
+			idx = RK3288_PLL_GPLL;
+		else
+			idx = RK3288_PLL_CPLL;
+		return (rk3288_get_frequency(sc, &idx) / (aclk_div_con + 1)) >>
+		    div_con;
 	default:
 		break;
 	}
@@ -327,6 +354,12 @@ rk3288_enable(void *cookie, uint32_t *cells, int on)
 	case RK3288_CLK_MAC:
 	case RK3288_ACLK_GMAC:
 	case RK3288_PCLK_GMAC:
+	case RK3288_PCLK_I2C0:
+	case RK3288_PCLK_I2C1:
+	case RK3288_PCLK_I2C2:
+	case RK3288_PCLK_I2C3:
+	case RK3288_PCLK_I2C4:
+	case RK3288_PCLK_I2C5:
 	case RK3288_HCLK_HOST0:
 	case RK3288_HCLK_SDMMC:
 		/* Enabled by default. */
