@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.5 2017/07/18 00:53:45 jsg Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.6 2017/09/02 21:44:52 patrick Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -683,7 +683,14 @@ sxiccmu_ccu_get_frequency(void *cookie, uint32_t *cells)
 uint32_t
 sxiccmu_a64_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 {
+	uint32_t parent;
+	uint32_t reg, div;
+
 	switch (idx) {
+	case A64_CLK_LOSC:
+		return clock_get_frequency(sc->sc_node, "losc");
+	case A64_CLK_HOSC:
+		return clock_get_frequency(sc->sc_node, "hosc");
 	case A64_CLK_PLL_PERIPH0:
 		/* Not hardcoded, but recommended. */
 		return 600000000;
@@ -692,6 +699,42 @@ sxiccmu_a64_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 	case A64_CLK_APB2:
 		/* XXX Controlled by a MUX. */
 		return 24000000;
+	case A64_CLK_AHB1:
+		reg = SXIREAD4(sc, CCU_AHB1_APB1_CFG_REG);
+		div = CCU_AHB1_CLK_DIV_RATIO(reg);
+		switch (reg & CCU_AHB1_CLK_SRC_SEL) {
+		case CCU_AHB1_CLK_SRC_SEL_LOSC:
+			parent = A64_CLK_LOSC;
+			break;
+		case CCU_AHB1_CLK_SRC_SEL_OSC24M:
+			parent = A64_CLK_HOSC;
+			break;
+		case CCU_AHB1_CLK_SRC_SEL_AXI:
+			parent = A64_CLK_AXI;
+			break;
+		case CCU_AHB1_CLK_SRC_SEL_PERIPH0:
+			parent = A64_CLK_PLL_PERIPH0;
+			div *= CCU_AHB1_PRE_DIV(reg);
+			break;
+		default:
+			return 0;
+		}
+		return sxiccmu_ccu_get_frequency(sc, &parent) / div;
+	case A64_CLK_AHB2:
+		reg = SXIREAD4(sc, CCU_AHB2_CFG_REG);
+		switch (reg & CCU_AHB2_CLK_CFG) {
+		case 0:
+			parent = A64_CLK_AHB1;
+			div = 1;
+			break;
+		case 1:
+			parent = A64_CLK_PLL_PERIPH0;
+			div = 2;
+			break;
+		default:
+			return 0;
+		}
+		return sxiccmu_ccu_get_frequency(sc, &parent) / div;
 	}
 
 	printf("%s: 0x%08x\n", __func__, idx);

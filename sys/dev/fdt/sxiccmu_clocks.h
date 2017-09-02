@@ -8,11 +8,18 @@
 #define A64_CLK_PLL_PERIPH0	11
 #define A64_CLK_PLL_PERIPH0_2X	12
 
+#define A64_CLK_AXI		22
+#define A64_CLK_APB		23
+#define A64_CLK_AHB1		24
+#define A64_CLK_APB1		25
 #define A64_CLK_APB2		26
+#define A64_CLK_AHB2		27
 
 #define A64_CLK_BUS_MMC0	31
 #define A64_CLK_BUS_MMC1	32
 #define A64_CLK_BUS_MMC2	33
+
+#define A64_CLK_BUS_EMAC	36
 
 #define A64_CLK_BUS_EHCI0	42
 #define A64_CLK_BUS_EHCI1	43
@@ -36,10 +43,14 @@
 #define A64_CLK_USB_PHY0	86
 #define A64_CLK_USB_PHY1	87
 
+#define A64_CLK_LOSC		254
+#define A64_CLK_HOSC		253
+
 struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 	[A64_CLK_BUS_MMC0] =  { 0x0060, 8 },
 	[A64_CLK_BUS_MMC1] =  { 0x0060, 9 },
 	[A64_CLK_BUS_MMC2] =  { 0x0060, 10 },
+	[A64_CLK_BUS_EMAC] =  { 0x0060, 17, A64_CLK_AHB2 },
 	[A64_CLK_BUS_EHCI0] = { 0x0060, 24 },
 	[A64_CLK_BUS_EHCI1] = { 0x0060, 25 },
 	[A64_CLK_BUS_OHCI0] = { 0x0060, 28 },
@@ -142,6 +153,8 @@ struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
 #define A64_RST_BUS_MMC1	9
 #define A64_RST_BUS_MMC2	10
 
+#define A64_RST_BUS_EMAC	13
+
 #define A64_RST_BUS_EHCI0	19
 #define A64_RST_BUS_EHCI1	20
 #define A64_RST_BUS_OHCI0	21
@@ -153,6 +166,7 @@ struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 	[A64_RST_BUS_MMC0] =  { 0x02c0, 8 },
 	[A64_RST_BUS_MMC1] =  { 0x02c0, 9 },
 	[A64_RST_BUS_MMC2] =  { 0x02c0, 10 },
+	[A64_RST_BUS_EMAC] =  { 0x02c0, 17 },
 	[A64_RST_BUS_EHCI0] = { 0x02c0, 24 },
 	[A64_RST_BUS_EHCI1] = { 0x02c0, 25 },
 	[A64_RST_BUS_OHCI0] = { 0x02c0, 28 },
