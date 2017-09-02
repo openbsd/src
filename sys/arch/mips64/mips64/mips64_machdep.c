@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.24 2017/09/01 13:16:47 visa Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.25 2017/09/02 15:56:29 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -152,9 +152,8 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	p->p_md.md_regs->t9 = pack->ep_entry & ~3; /* abicall req */
 	p->p_md.md_regs->sr = protosr | (idle_mask & SR_INT_MASK);
 	p->p_md.md_regs->ic = (idle_mask << 8) & IC_INT_MASK;
-#ifndef FPUEMUL
-	p->p_md.md_flags &= ~MDP_FPUSED;
-#endif
+	if (CPU_HAS_FPU(ci))
+		p->p_md.md_flags &= ~MDP_FPUSED;
 	if (ci->ci_fpuproc == p)
 		ci->ci_fpuproc = NULL;
 
@@ -165,8 +164,12 @@ int
 exec_md_map(struct proc *p, struct exec_package *pack)
 {
 #ifdef FPUEMUL
-	int rc;
+	struct cpu_info *ci = curcpu();
 	vaddr_t va;
+	int rc;
+
+	if (CPU_HAS_FPU(ci))
+		return 0;
 
 	/*
 	 * If we are running with FPU instruction emulation, we need

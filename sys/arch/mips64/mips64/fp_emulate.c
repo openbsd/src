@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.17 2017/08/30 15:54:33 visa Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.18 2017/09/02 15:56:29 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -133,6 +133,7 @@ MipsFPTrap(struct trapframe *tf)
 	struct proc *p = ci->ci_curproc;
 	union sigval sv;
 	vaddr_t pc;
+	register_t sr;
 	uint32_t fsr, excbits;
 	uint32_t branch = 0;
 	uint32_t insn;
@@ -141,11 +142,7 @@ MipsFPTrap(struct trapframe *tf)
 	int fault_type = SI_NOINFO;
 	int update_pcb = 0;
 	int emulate = 0;
-#ifdef FPUEMUL
 	int skip_insn = 1;
-#else
-	register_t sr;
-#endif
 
 	KDASSERT(tf == p->p_md.md_regs);
 
@@ -153,35 +150,35 @@ MipsFPTrap(struct trapframe *tf)
 	if (tf->cause & CR_BR_DELAY)
 		pc += 4;
 
-#ifndef FPUEMUL
-	/*
-	 * Enable FPU, and read its status register.
-	 */
+	if (CPU_HAS_FPU(ci)) {
+		/*
+		 * Enable FPU, and read its status register.
+		 */
 
-	sr = getsr();
-	setsr(sr | SR_COP_1_BIT);
+		sr = getsr();
+		setsr(sr | SR_COP_1_BIT);
 
-	__asm__ volatile ("cfc1 %0, $31" : "=r" (fsr));
-	__asm__ volatile ("cfc1 %0, $31" : "=r" (fsr));
+		__asm__ volatile ("cfc1 %0, $31" : "=r" (fsr));
+		__asm__ volatile ("cfc1 %0, $31" : "=r" (fsr));
 
-	/*
-	 * If this is not an unimplemented operation, but a genuine
-	 * FPU exception, signal the process.
-	 */
+		/*
+		 * If this is not an unimplemented operation, but a genuine
+		 * FPU exception, signal the process.
+		 */
 
-	if ((fsr & FPCSR_C_E) == 0) {
-		sig = SIGFPE;
-		goto deliver;
-	}
-#else
+		if ((fsr & FPCSR_C_E) == 0) {
+			sig = SIGFPE;
+			goto deliver;
+		}
+	} else {
 #ifdef CPU_OCTEON
-	/*
-	 * SR_FR_32 is hardwired to zero on Octeon; make sure it is
-	 * set in the emulation view of the FPU state.
-	 */
-	tf->sr |= SR_FR_32;
+		/*
+		 * SR_FR_32 is hardwired to zero on Octeon; make sure it is
+		 * set in the emulation view of the FPU state.
+		 */
+		tf->sr |= SR_FR_32;
 #endif
-#endif	/* FPUEMUL */
+	}
 
 	/*
 	 * Get the faulting instruction.  This should not fail, and
@@ -191,6 +188,7 @@ MipsFPTrap(struct trapframe *tf)
 	if (copyin32((const void *)pc, &insn) != 0) {
 		sig = SIGBUS;
 		fault_type = BUS_OBJERR;
+		sv.sival_ptr = (void *)pc;
 		goto deliver;
 	}
 	inst = *(InstFmt *)&insn;
@@ -238,7 +236,8 @@ MipsFPTrap(struct trapframe *tf)
 			 * This instruction should not require emulation,
 			 * unless there is no FPU.
 			 */
-			emulate = 1;
+			if (!CPU_HAS_FPU(ci))
+				emulate = 1;
 			break;
 		}
 		break;
@@ -250,15 +249,14 @@ MipsFPTrap(struct trapframe *tf)
 		 * These instructions should not require emulation,
 		 * unless there is no FPU.
 		 */
-		emulate = 1;
+		if (!CPU_HAS_FPU(ci))
+			emulate = 1;
 		break;
 #endif
 	case OP_COP1:
 		switch (inst.RType.rs) {
 		case OP_BC:
-#ifdef FPUEMUL
 			skip_insn = 0;
-#endif
 			/* FALLTHROUGH */
 		case OP_MF:
 		case OP_DMF:
@@ -270,9 +268,8 @@ MipsFPTrap(struct trapframe *tf)
 			 * These instructions should not require emulation,
 			 * unless there is no FPU.
 			 */
-#ifdef FPUEMUL
-			emulate = 1;
-#endif
+			if (!CPU_HAS_FPU(ci))
+				emulate = 1;
 			break;
 		default:
 			emulate = 1;
@@ -293,7 +290,8 @@ MipsFPTrap(struct trapframe *tf)
 				 * These instructions should not require
 				 * emulation, unless there is no FPU.
 				 */
-				emulate = 1;
+				if (!CPU_HAS_FPU(ci))
+					emulate = 1;
 				break;
 #endif
 			default:
@@ -314,10 +312,11 @@ MipsFPTrap(struct trapframe *tf)
 	}
 
 	if (emulate) {
-#ifndef FPUEMUL
-		KASSERT(p == ci->ci_fpuproc);
-		save_fpu();
-#endif
+		if (CPU_HAS_FPU(ci)) {
+			KASSERT(p == ci->ci_fpuproc);
+			save_fpu();
+		}
+
 		update_pcb = 1;
 
 		sig = fpu_emulate(p, tf, insn, &sv);
@@ -354,10 +353,12 @@ deliver:
 		break;
 #ifdef FPUEMUL
 	case SIGBUS:
-		fault_type = BUS_ADRALN;
+		if (fault_type == SI_NOINFO)
+			fault_type = BUS_ADRALN;
 		break;
 	case SIGSEGV:
-		fault_type = SEGV_MAPERR;
+		if (fault_type == SI_NOINFO)
+			fault_type = SEGV_MAPERR;
 		break;
 #endif
 	}
@@ -365,9 +366,7 @@ deliver:
 	/*
 	 * Skip the instruction, unless we are delivering SIGILL.
 	 */
-#ifdef FPUEMUL
-	if (skip_insn) {
-#endif
+	if (CPU_HAS_FPU(ci) || skip_insn) {
 		if (sig != SIGILL) {
 			if (tf->cause & CR_BR_DELAY) {
 				/*
@@ -381,9 +380,7 @@ deliver:
 			} else
 				tf->pc += 4;
 		}
-#ifdef FPUEMUL
 	}
-#endif
 
 	/*
 	 * Update the FPU status register.
@@ -399,16 +396,15 @@ deliver:
 	fsr &= ~FPCSR_C_MASK;
 	if (update_pcb)
 		tf->fsr = fsr;
-#ifndef FPUEMUL
-	__asm__ volatile ("ctc1 %0, $31" :: "r" (fsr));
-	/* disable fpu before returning to trap() */
-	setsr(sr);
-#endif
+
+	if (CPU_HAS_FPU(ci)) {
+		__asm__ volatile ("ctc1 %0, $31" :: "r" (fsr));
+		/* disable fpu before returning to trap() */
+		setsr(sr);
+	}
 
 	if (sig != 0) {
-#ifdef FPUEMUL
 		if (sig != SIGBUS && sig != SIGSEGV)
-#endif
 			sv.sival_ptr = (void *)pc;
 		KERNEL_LOCK();
 		trapsignal(p, sig, 0, fault_type, sv);
@@ -429,10 +425,24 @@ fpu_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
 	tf->zero = 0;	/* not written by trap code */
 
 	inst = *(InstFmt *)&insn;
+
+	if (CPU_HAS_FPU(p->p_cpu)) {
+		switch (inst.FRType.op) {
+		default:
+			break;
+		case OP_COP1:
+			return fpu_emulate_cop1(p, tf, insn);
+		case OP_COP1X:
+			return fpu_emulate_cop1x(p, tf, insn);
+		}
+
+		return SIGILL;
+	}
+
+#ifdef FPUEMUL
 	switch (inst.FRType.op) {
 	default:
 		break;
-#ifdef FPUEMUL
 	case OP_SPECIAL:
 		return nofpu_emulate_movci(tf, insn);
 	case OP_LDC1:
@@ -440,10 +450,8 @@ fpu_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
 	case OP_SDC1:
 	case OP_SWC1:
 		return nofpu_emulate_loadstore(p, tf, insn, sv);
-#endif
 	case OP_COP1:
 		switch (inst.RType.rs) {
-#ifdef FPUEMUL
 		case OP_MF:
 		case OP_DMF:
 		case OP_CF:
@@ -452,14 +460,12 @@ fpu_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
 		case OP_CT:
 		case OP_BC:
 			return nofpu_emulate_cop1(p, tf, insn, sv);
-#endif
 		default:
 			return fpu_emulate_cop1(p, tf, insn);
 		}
 		break;
 	case OP_COP1X:
 		switch (inst.FQType.op4) {
-#ifdef FPUEMUL
 		default:
 			switch (inst.FRType.func) {
 			case OP_LDXC1:
@@ -477,12 +483,9 @@ fpu_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
 		case OP_NMADD:
 		case OP_NMSUB:
 			return fpu_emulate_cop1x(p, tf, insn);
-#else
-		default:
-			return fpu_emulate_cop1x(p, tf, insn);
-#endif
 		}
 	}
+#endif
 
 	return SIGILL;
 }

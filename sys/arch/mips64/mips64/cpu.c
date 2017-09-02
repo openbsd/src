@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.68 2017/05/24 13:33:00 visa Exp $ */
+/*	$OpenBSD: cpu.c,v 1.69 2017/09/02 15:56:29 visa Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -421,8 +421,10 @@ cpu_switchto(struct proc *oldproc, struct proc *newproc)
 void
 enable_fpu(struct proc *p)
 {
-#ifndef FPUEMUL
 	struct cpu_info *ci = curcpu();
+
+	if (!CPU_HAS_FPU(ci))
+		return;
 
 	if (p->p_md.md_regs->sr & SR_FR_32)
 		MipsSwitchFPState(ci->ci_fpuproc, p->p_md.md_regs);
@@ -433,15 +435,16 @@ enable_fpu(struct proc *p)
 	ci->ci_fpuproc = p;
 	p->p_md.md_regs->sr |= SR_COP_1_BIT;
 	p->p_md.md_flags |= MDP_FPUSED;
-#endif
 }
 
 void
 save_fpu(void)
 {
-#ifndef FPUEMUL
 	struct cpu_info *ci = curcpu();
 	struct proc *p;
+
+	if (!CPU_HAS_FPU(ci))
+		return;
 
 	KASSERT(ci->ci_fpuproc);
 	p = ci->ci_fpuproc;
@@ -449,7 +452,6 @@ save_fpu(void)
 		MipsSaveCurFPState(p);
 	else
 		MipsSaveCurFPState16(p);
-#endif
 }
 
 #ifdef MULTIPROCESSOR

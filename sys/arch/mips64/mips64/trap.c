@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.129 2017/08/30 15:54:33 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.130 2017/09/02 15:56:29 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -661,7 +661,8 @@ fault_common_no_miss:
 			 * If this is a genuine FP emulation break,
 			 * resume execution to our branch destination.
 			 */
-			if ((p->p_md.md_flags & MDP_FPUSED) != 0 &&
+			if (!CPU_HAS_FPU(ci) &&
+			    (p->p_md.md_flags & MDP_FPUSED) != 0 &&
 			    p->p_md.md_fppgva + 4 == (vaddr_t)va) {
 				struct vm_map *map = &p->p_vmspace->vm_map;
 
@@ -815,11 +816,10 @@ fault_common_no_miss:
 			sicode = ILL_ILLOPC;
 			break;
 		}
-#ifdef FPUEMUL
-		MipsFPTrap(trapframe);
-#else
-		enable_fpu(p);
-#endif
+		if (CPU_HAS_FPU(ci))
+			enable_fpu(p);
+		else
+			MipsFPTrap(trapframe);
 		return;
 
 	case T_FPE:
@@ -895,7 +895,7 @@ fault_common_no_miss:
 	 * original delay slot address - userland is not supposed to
 	 * know anything about emulation bowels.
 	 */
-	if ((p->p_md.md_flags & MDP_FPUSED) != 0 &&
+	if (!CPU_HAS_FPU(ci) && (p->p_md.md_flags & MDP_FPUSED) != 0 &&
 	    trapframe->badvaddr == p->p_md.md_fppgva)
 		trapframe->badvaddr = p->p_md.md_fpslotva;
 #endif
