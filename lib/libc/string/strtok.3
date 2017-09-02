@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strtok.3,v 1.22 2017/08/31 10:57:47 jca Exp $
+.\"	$OpenBSD: strtok.3,v 1.23 2017/09/02 13:56:44 schwarze Exp $
 .\"
 .\" Copyright (c) 1988, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 31 2017 $
+.Dd $Mdocdate: September 2 2017 $
 .Dt STRTOK 3
 .Os
 .Sh NAME
@@ -86,9 +86,8 @@ The
 and
 .Fn strtok_r
 functions return a pointer to the beginning of each subsequent token
-in the string, after replacing the separator character itself with an
-.Tn ASCII NUL
-character.
+in the string, after replacing the separator character itself with
+a NUL character.
 When no more tokens remain, a null pointer is returned.
 .Sh EXAMPLES
 The following will construct an array of pointers to each individual word in
