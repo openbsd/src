@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.48 2017/06/29 16:49:59 martijn Exp $	*/
+/*	$OpenBSD: vi.c,v 1.49 2017/09/02 18:53:53 deraadt Exp $	*/
 
 /*
  *	vi command editing
@@ -1542,7 +1542,7 @@ forwword(int argcnt)
 				skip_space = 1;
 				continue;
 			} else if (skip_space)
-				break; 
+				break;
 			if (uc & 0x80)
 				continue;
 			if (want_letnum == -1)
