@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.1 2017/08/21 08:26:40 ajacoutot Exp $
+$OpenBSD: README,v 1.2 2017/09/03 09:42:03 ajacoutot Exp $
 
 Notes about the syspatch(8) build process
 =========================================
@@ -64,3 +64,9 @@ The patched release can now be built.
 
 At last, a syspatch(8) can be created.
     # FAKEROOT=/fakeroot make -f Makefile.001 syspatch
+
+Patches are incremental and must be built in order. In case an errata does not
+apply to the current architecture and to prevent a gap in the numbering, the
+"previous" fakeroot must be created manually by copying the previous one.
+e.g.
+    # cp -Rp /fakeroot/syspatch/61-010_perl /fakeroot/syspatch/61-011_sti
