@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.19 2017/08/30 12:09:02 inoguchi Exp $ */
+/* $OpenBSD: gcm128.c,v 1.20 2017/09/03 13:07:34 inoguchi Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -224,7 +224,7 @@ static void gcm_gmult_8bit(u64 Xi[2], const u128 Htable[256])
 		rem  = (size_t)Z.lo&0xff;
 		Z.lo = (Z.hi<<56)|(Z.lo>>8);
 		Z.hi = (Z.hi>>8);
-#ifdef _LP64
+#if SIZE_MAX == 0xffffffffffffffff
 		Z.hi ^= rem_8bit[rem];
 #else
 		Z.hi ^= (u64)rem_8bit[rem]<<32;
@@ -347,7 +347,7 @@ static void gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16])
 		rem  = (size_t)Z.lo&0xf;
 		Z.lo = (Z.hi<<60)|(Z.lo>>4);
 		Z.hi = (Z.hi>>4);
-#ifdef _LP64
+#if SIZE_MAX == 0xffffffffffffffff
 		Z.hi ^= rem_4bit[rem];
 #else
 		Z.hi ^= (u64)rem_4bit[rem]<<32;
@@ -364,7 +364,7 @@ static void gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16])
 		rem  = (size_t)Z.lo&0xf;
 		Z.lo = (Z.hi<<60)|(Z.lo>>4);
 		Z.hi = (Z.hi>>4);
-#ifdef _LP64
+#if SIZE_MAX == 0xffffffffffffffff
 		Z.hi ^= rem_4bit[rem];
 #else
 		Z.hi ^= (u64)rem_4bit[rem]<<32;
@@ -421,7 +421,7 @@ static void gcm_ghash_4bit(u64 Xi[2],const u128 Htable[16],
 		rem  = (size_t)Z.lo&0xf;
 		Z.lo = (Z.hi<<60)|(Z.lo>>4);
 		Z.hi = (Z.hi>>4);
-#ifdef _LP64
+#if SIZE_MAX == 0xffffffffffffffff
 		Z.hi ^= rem_4bit[rem];
 #else
 		Z.hi ^= (u64)rem_4bit[rem]<<32;
@@ -439,7 +439,7 @@ static void gcm_ghash_4bit(u64 Xi[2],const u128 Htable[16],
 		rem  = (size_t)Z.lo&0xf;
 		Z.lo = (Z.hi<<60)|(Z.lo>>4);
 		Z.hi = (Z.hi>>4);
-#ifdef _LP64
+#if SIZE_MAX == 0xffffffffffffffff
 		Z.hi ^= rem_4bit[rem];
 #else
 		Z.hi ^= (u64)rem_4bit[rem]<<32;
@@ -588,7 +588,7 @@ static void gcm_gmult_1bit(u64 Xi[2],const u64 H[2])
 
 	for (j=0; j<16/sizeof(long); ++j) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef _LP64
+#if SIZE_MAX == 0xffffffffffffffff
 #ifdef BSWAP8
 			X = (long)(BSWAP8(xi[j]));
 #else
