@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.14 2017/08/23 09:25:17 kevlo Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.15 2017/09/03 16:20:09 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1593,7 +1593,6 @@ static const uint32_t rtl8192ce_bb_vals[] = {
 
 static const uint32_t rtl8192ce_bb_vals_2t[] = {
 	0x0011800f, 0x00ffdb83, 0x80040002, 0x00000003, 0x0000fc00,
-	0x0011800d, 0x00ffdb83, 0x80040002, 0x00000003, 0x0000fc00,
 	0x0000000a, 0x10005388, 0x020c3d10, 0x02200385, 0x00000000,
 	0x01000100, 0x00390004, 0x01000100, 0x00390004, 0x27272727,
 	0x27272727, 0x27272727, 0x27272727, 0x00010000, 0x00010000,
