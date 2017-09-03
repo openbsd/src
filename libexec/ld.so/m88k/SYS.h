@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1 2017/08/27 21:59:52 deraadt Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.2 2017/09/03 00:14:07 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -44,6 +44,10 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
+#define	__CONCAT(p,x)		p##x
+#define	__ENTRY(p,x)		ENTRY(__CONCAT(p,x))
+#define	__SYSCALLNAME(p,x)	__CONCAT(p,x)
+
 #define	__DO_SYSCALL(x)					\
 	or %r13, %r0, __SYSCALLNAME(SYS_,x);		\
 	tb0 0, %r0, 450
@@ -59,8 +63,3 @@
 	br	_dl_cerror;				\
 	jmp	%r1;					\
 	END(_dl_##n)
-
-ENTRY(_dl_cerror)
-	jmp.n	%r1
-	 subu	%r2, %r0, %r2
-END(_dl_cerror)

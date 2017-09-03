@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.26 2017/08/28 14:06:22 deraadt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.27 2017/09/03 00:14:07 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -91,7 +91,7 @@ ENTRY(_dl_start)
 	addu	%r31, %r31, DL_DATA_SIZE
 	bsr	1f			| the following instruction is skipped
 	bcnd	eq0, %r0, _dl_dtors	| but gives us the pc-relative offset
-1:	ld.hu	%r5, %r1, 2		| fetch branch offset (low 16 bits)
+1:	ld.h	%r5, %r1, 2		| fetch branch offset (low 16 bits)
 	jmp.n	%r2
 	 lda	%r5, %r1[%r5]		| cleanup
 END(_dl_start)
@@ -150,7 +150,13 @@ ENTRY(_dl_bind_start)
 	 addu	%r31, %r31, REG_SIZE + PLT_FRAME_SIZE
 END(_dl_bind_start)
 
+ENTRY(_dl_cerror)
+	jmp.n	%r1
+	 subu	%r2, %r0, %r2
+END(_dl_cerror)
+
 ENTRY(_dl_cacheflush)
 	tb0	0, %r0, 451
+	br	_dl_cerror		| never hit
 	jmp	%r1
 END(_dl_cacheflush)
