@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.50 2016/03/21 13:35:00 tb Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.51 2017/09/03 11:52:01 jca Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -99,7 +99,7 @@ c_cd(char **wp)
 		return 1;
 	}
 
-	Xinit(xs, xp, PATH, ATEMP);
+	Xinit(xs, xp, PATH_MAX, ATEMP);
 	/* xp will have a bogus value after make_path() - set it to 0
 	 * so that if it's used, it will cause a dump
 	 */
