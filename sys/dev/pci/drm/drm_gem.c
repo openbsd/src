@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_gem.c,v 1.4 2017/07/01 16:00:25 kettenis Exp $	*/
+/*	$OpenBSD: drm_gem.c,v 1.5 2017/09/03 13:28:54 jsg Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -829,12 +829,12 @@ drm_gem_object_release_handle(int id, void *ptr, void *data)
 	struct drm_gem_object *obj = ptr;
 	struct drm_device *dev = obj->dev;
 
+	if (dev->driver->gem_close_object)
+		dev->driver->gem_close_object(obj, file_priv);
+
 	if (drm_core_check_feature(dev, DRIVER_PRIME))
 		drm_gem_remove_prime_handles(obj, file_priv);
 	drm_vma_node_revoke(&obj->vma_node, file_priv->filp);
-
-	if (dev->driver->gem_close_object)
-		dev->driver->gem_close_object(obj, file_priv);
 
 	drm_gem_object_handle_unreference_unlocked(obj);
 
