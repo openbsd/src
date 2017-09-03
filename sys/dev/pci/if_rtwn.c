@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.29 2017/06/16 14:57:51 kevlo Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.30 2017/09/03 16:20:46 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -19,7 +19,7 @@
  */
 
 /*
- * PCI front-end for Realtek RTL8188CE driver.
+ * PCI front-end for Realtek RTL8188CE/RTL8192CE driver.
  */
 
 #include "bpfilter.h"
@@ -201,7 +201,8 @@ extern int rtwn_debug;
 #define	RTWN_PCI_MMBA		0x18	/* memory mapped base */
 
 static const struct pci_matchid rtwn_pci_devices[] = {
-	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RT8188 }
+	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RT8188 },
+	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RTL8192CE }
 };
 
 int		rtwn_pci_match(struct device *, void *, void *);
@@ -372,7 +373,7 @@ rtwn_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sc.sc_ops.cancel_scan = rtwn_cancel_scan;
 	sc->sc_sc.sc_ops.wait_async = rtwn_wait_async;
 
-	sc->sc_sc.chip = RTWN_CHIP_88C | RTWN_CHIP_PCI;
+	sc->sc_sc.chip = RTWN_CHIP_88C | RTWN_CHIP_92C | RTWN_CHIP_PCI;
 
 	error = rtwn_attach(&sc->sc_dev, &sc->sc_sc);
 	if (error != 0) {
