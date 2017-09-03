@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.20 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.21 2017/09/03 20:03:58 sf Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -57,6 +57,7 @@
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/timeout.h>
+#include <sys/kthread.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -79,6 +80,8 @@
 /* controller driver configuration */
 int fdcprobe(struct device *, void *, void *);
 void fdcattach(struct device *, struct device *, void *);
+void fdcattach_deferred(void *);
+void fdc_create_kthread(void *);
 
 struct cfattach fdc_ca = {
 	sizeof(struct fdc_softc), fdcprobe, fdcattach
@@ -139,8 +142,6 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh;
 	bus_space_handle_t ioh_ctl;
 	struct isa_attach_args *ia = aux;
-	struct fdc_attach_args fa;
-	int type;
 
 	iot = ia->ia_iot;
 
@@ -162,6 +163,22 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 
 	fdc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, fdcintr, fdc, fdc->sc_dev.dv_xname);
+
+	kthread_create_deferred(fdc_create_kthread, fdc);
+}
+
+void
+fdc_create_kthread(void *arg)
+{
+	kthread_create(fdcattach_deferred, arg, NULL, "fdcattach");
+}
+
+void
+fdcattach_deferred(void *arg)
+{
+	struct fdc_softc *fdc = arg;
+	struct fdc_attach_args fa;
+	int type;
 
 #if defined(__i386__) || defined(__amd64__)
 	/*
@@ -187,8 +204,9 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 		else
 #endif
 			fa.fa_deftype = NULL;		/* unknown */
-		(void)config_found(self, (void *)&fa, fddprint);
+		(void)config_found(&fdc->sc_dev, (void *)&fa, fddprint);
 	}
+	kthread_exit(0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.104 2017/05/04 22:47:27 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.105 2017/09/03 20:03:58 sf Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -210,11 +210,11 @@ fdprobe(struct device *parent, void *match, void *aux)
 	/* select drive and turn on motor */
 	bus_space_write_1(iot, ioh, fdout, drive | FDO_FRST | FDO_MOEN(drive));
 	/* wait for motor to spin up */
-	delay(250000);
+	tsleep(fdc, 0, "fdprobe", 250 * hz / 1000);
 	out_fdc(iot, ioh, NE7CMD_RECAL);
 	out_fdc(iot, ioh, drive);
 	/* wait for recalibrate */
-	delay(2000000);
+	tsleep(fdc, 0, "fdprobe", 2000 * hz / 1000);
 	out_fdc(iot, ioh, NE7CMD_SENSEI);
 	n = fdcresult(fdc);
 #ifdef FD_DEBUG
@@ -228,7 +228,7 @@ fdprobe(struct device *parent, void *match, void *aux)
 #endif
 
 	/* turn off motor */
-	delay(250000);
+	tsleep(fdc, 0, "fdprobe", 250 * hz / 1000);
 	bus_space_write_1(iot, ioh, fdout, FDO_FRST);
 
 	/* flags & 0x20 forces the drive to be found even if it won't probe */
