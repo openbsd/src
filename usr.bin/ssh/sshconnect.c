@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect.c,v 1.284 2017/09/01 05:53:56 djm Exp $ */
+/* $OpenBSD: sshconnect.c,v 1.285 2017/09/03 23:33:13 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -863,7 +863,8 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 		if (readonly || want_cert)
 			goto fail;
 		/* The host is new. */
-		if (options.strict_host_key_checking == 1) {
+		if (options.strict_host_key_checking ==
+		    SSH_STRICT_HOSTKEY_YES) {
 			/*
 			 * User has requested strict host key checking.  We
 			 * will not add the host key automatically.  The only
@@ -872,7 +873,8 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 			error("No %s host key is known for %.200s and you "
 			    "have requested strict checking.", type, host);
 			goto fail;
-		} else if (options.strict_host_key_checking == 2) {
+		} else if (options.strict_host_key_checking ==
+		    SSH_STRICT_HOSTKEY_ASK) {
 			char msg1[1024], msg2[1024];
 
 			if (show_other_keys(host_hostkeys, host_key))
@@ -916,8 +918,8 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 			hostkey_trusted = 1; /* user explicitly confirmed */
 		}
 		/*
-		 * If not in strict mode, add the key automatically to the
-		 * local known_hosts file.
+		 * If in "new" or "off" strict mode, add the key automatically
+		 * to the local known_hosts file.
 		 */
 		if (options.check_host_ip && ip_status == HOST_NEW) {
 			snprintf(hostline, sizeof(hostline), "%s,%s", host, ip);
@@ -959,7 +961,8 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 		 * If strict host key checking is in use, the user will have
 		 * to edit the key manually and we can only abort.
 		 */
-		if (options.strict_host_key_checking) {
+		if (options.strict_host_key_checking !=
+		    SSH_STRICT_HOSTKEY_OFF) {
 			error("%s host key for %.200s was revoked and you have "
 			    "requested strict checking.", type, host);
 			goto fail;
@@ -1012,7 +1015,8 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 		 * If strict host key checking is in use, the user will have
 		 * to edit the key manually and we can only abort.
 		 */
-		if (options.strict_host_key_checking) {
+		if (options.strict_host_key_checking !=
+		    SSH_STRICT_HOSTKEY_OFF) {
 			error("%s host key for %.200s has changed and you have "
 			    "requested strict checking.", type, host);
 			goto fail;
@@ -1099,15 +1103,17 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 			    "\nMatching host key in %s:%lu",
 			    host_found->file, host_found->line);
 		}
-		if (options.strict_host_key_checking == 1) {
-			logit("%s", msg);
-			error("Exiting, you have requested strict checking.");
-			goto fail;
-		} else if (options.strict_host_key_checking == 2) {
+		if (options.strict_host_key_checking ==
+		    SSH_STRICT_HOSTKEY_ASK) {
 			strlcat(msg, "\nAre you sure you want "
 			    "to continue connecting (yes/no)? ", sizeof(msg));
 			if (!confirm(msg))
 				goto fail;
+		} else if (options.strict_host_key_checking !=
+		    SSH_STRICT_HOSTKEY_OFF) {
+			logit("%s", msg);
+			error("Exiting, you have requested strict checking.");
+			goto fail;
 		} else {
 			logit("%s", msg);
 		}
