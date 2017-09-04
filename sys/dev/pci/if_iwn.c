@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.191 2017/08/13 15:04:47 tb Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.192 2017/09/04 09:12:35 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -4930,6 +4930,14 @@ iwn_auth(struct iwn_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return error;
 	}
+
+	/* 
+	 * Make sure the firmware gets to see a beacon before we send
+	 * the auth request. Otherwise the Tx attempt can fail due to
+	 * the firmware's built-in regulatory domain enforcement.
+	 */
+	DELAY(ni->ni_intval * 3 * IEEE80211_DUR_TU);
+
 	return 0;
 }
 
