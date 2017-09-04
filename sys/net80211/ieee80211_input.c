@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.195 2017/08/04 17:31:05 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.196 2017/09/04 09:11:46 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1582,6 +1582,14 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 			    ic->ic_curmode == IEEE80211_MODE_11A ||
 			    (capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME));
 		}
+
+		/* 
+		 * Reset management timer. If it is non-zero in RUN state, the
+		 * driver sent a probe request after a missed beacon event.
+		 * This probe response indicates the AP is still serving us
+		 * so don't allow ieee80211_watchdog() to move us into SCAN.
+		 */
+		 ic->ic_mgt_timer = 0;
 	}
 	/*
 	 * We do not try to update EDCA parameters if QoS was not negotiated
