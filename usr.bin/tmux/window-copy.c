@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.182 2017/08/29 20:26:25 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.183 2017/09/04 09:18:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2454,7 +2454,7 @@ window_copy_move_mouse(struct mouse_event *m)
 	if (wp == NULL || wp->mode != &window_copy_mode)
 		return;
 
-	if (cmd_mouse_at(wp, m, &x, &y, 1) != 0)
+	if (cmd_mouse_at(wp, m, &x, &y, 0) != 0)
 		return;
 
 	window_copy_update_cursor(wp, x, y);
