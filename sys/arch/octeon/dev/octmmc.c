@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.4 2017/07/10 16:17:51 visa Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.5 2017/09/04 16:25:46 visa Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Visa Hankala
@@ -47,6 +47,7 @@
 #define OCTMMC_MAX_DMASEG		(1u << 18)
 #define OCTMMC_MAX_FREQ			52000		/* in kHz */
 #define OCTMMC_MAX_BUSES		4
+#define OCTMMC_MAX_INTRS		4
 
 #define DEF_STS_MASK			0xe4390080ul
 #define PIO_STS_MASK			0x00b00000ul
@@ -81,14 +82,18 @@ struct octmmc_softc {
 	bus_space_handle_t	 sc_dma_ioh;
 	bus_dma_tag_t		 sc_dmat;
 	bus_dmamap_t		 sc_dma_data;
-	void			*sc_cmd_ih;
-	void			*sc_dma_ih;
+	void			*sc_ihs[OCTMMC_MAX_INTRS];
+	int			 sc_nihs;
 
 	struct octmmc_bus	 sc_buses[OCTMMC_MAX_BUSES];
 	struct octmmc_bus	*sc_current_bus;
 
 	uint64_t		 sc_current_switch;
 	uint64_t		 sc_intr_status;
+
+	int			 sc_hwrev;
+#define OCTMMC_HWREV_6130			0
+#define OCTMMC_HWREV_7890			1
 };
 
 int	 octmmc_match(struct device *, void *, void *);
@@ -134,6 +139,9 @@ struct sdmmc_chip_functions octmmc_funcs = {
 	.exec_command	= octmmc_exec_command,
 };
 
+static const int octmmc_6130_interrupts[] = { 0, 1, -1 };
+static const int octmmc_7890_interrupts[] = { 1, 2, 3, 4, -1 };
+
 struct rwlock octmmc_lock = RWLOCK_INITIALIZER("octmmclk");
 
 int
@@ -141,7 +149,8 @@ octmmc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *fa = aux;
 
-	return OF_is_compatible(fa->fa_node, "cavium,octeon-6130-mmc");
+	return OF_is_compatible(fa->fa_node, "cavium,octeon-6130-mmc") ||
+	    OF_is_compatible(fa->fa_node, "cavium,octeon-7890-mmc");
 }
 
 void
@@ -151,9 +160,19 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *fa = aux;
 	struct octmmc_softc *sc = (struct octmmc_softc *)self;
 	struct octmmc_bus *bus;
+	void *ih;
+	const int *interrupts;
 	uint64_t reg;
 	uint32_t bus_id, bus_width;
-	int node;
+	int i, node;
+
+	if (OF_is_compatible(fa->fa_node, "cavium,octeon-7890-mmc")) {
+		sc->sc_hwrev = OCTMMC_HWREV_7890;
+		interrupts = octmmc_7890_interrupts;
+	} else {
+		sc->sc_hwrev = OCTMMC_HWREV_6130;
+		interrupts = octmmc_6130_interrupts;
+	}
 
 	if (fa->fa_nreg < 2) {
 		printf(": expected 2 IO spaces, got %d\n", fa->fa_nreg);
@@ -187,12 +206,17 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 	reg = MMC_RD_8(sc, MIO_EMM_INT);
 	MMC_WR_8(sc, MIO_EMM_INT, reg);
 
-	sc->sc_cmd_ih = octeon_intr_establish_fdt_idx(fa->fa_node, 0, IPL_SDMMC,
-	    octmmc_intr, sc, DEVNAME(sc));
-	sc->sc_dma_ih = octeon_intr_establish_fdt_idx(fa->fa_node, 1, IPL_SDMMC,
-	    octmmc_intr, sc, DEVNAME(sc));
-	if (sc->sc_cmd_ih == NULL || sc->sc_dma_ih == NULL)
-		goto error;
+	for (i = 0; interrupts[i] != -1; i++) {
+		KASSERT(i < OCTMMC_MAX_INTRS);
+		ih = octeon_intr_establish_fdt_idx(fa->fa_node, interrupts[i],
+		    IPL_SDMMC, octmmc_intr, sc, DEVNAME(sc));
+		if (ih == NULL) {
+			printf(": could not establish interrupt %d\n", i);
+			goto error;
+		}
+		sc->sc_ihs[i] = ih;
+		sc->sc_nihs++;
+	}
 
 	printf("\n");
 
@@ -249,10 +273,8 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 error:
-	if (sc->sc_dma_ih != NULL)
-		octeon_intr_disestablish_fdt(sc->sc_dma_ih);
-	if (sc->sc_cmd_ih != NULL)
-		octeon_intr_disestablish_fdt(sc->sc_cmd_ih);
+	for (i = 0; i < sc->sc_nihs; i++)
+		octeon_intr_disestablish_fdt(sc->sc_ihs[i]);
 	if (sc->sc_dma_data != NULL)
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dma_data);
 	if (sc->sc_dma_ioh != 0)
@@ -351,10 +373,18 @@ octmmc_init_bus(struct octmmc_bus *bus)
 
 	octmmc_acquire(bus);
 
-	/* Enable interrupts. */
-	MMC_WR_8(sc, MIO_EMM_INT_EN,
-	    MIO_EMM_INT_CMD_ERR | MIO_EMM_INT_CMD_DONE |
-	    MIO_EMM_INT_DMA_ERR | MIO_EMM_INT_DMA_DONE);
+	/*
+	 * Enable interrupts.
+	 *
+	 * The mask register is present only on the revision 6130 controller
+	 * where interrupt causes share an interrupt vector.
+	 * The 7890 controller has a separate vector for each interrupt cause.
+	 */
+	if (sc->sc_hwrev == OCTMMC_HWREV_6130) {
+		MMC_WR_8(sc, MIO_EMM_INT_EN,
+		    MIO_EMM_INT_CMD_ERR | MIO_EMM_INT_CMD_DONE |
+		    MIO_EMM_INT_DMA_ERR | MIO_EMM_INT_DMA_DONE);
+	}
 
 	MMC_WR_8(sc, MIO_EMM_STS_MASK, DEF_STS_MASK);
 
@@ -583,8 +613,12 @@ octmmc_exec_dma(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 		dmacfg |= MIO_NDF_DMA_CFG_RW;
 	dmacfg |= (sc->sc_dma_data->dm_segs[0].ds_len / sizeof(uint64_t) - 1)
 	    << MIO_NDF_DMA_CFG_SIZE_SHIFT;
-	dmacfg |= sc->sc_dma_data->dm_segs[0].ds_addr;
+	if (sc->sc_hwrev == OCTMMC_HWREV_6130)
+		dmacfg |= sc->sc_dma_data->dm_segs[0].ds_addr;
 	DMA_WR_8(sc, MIO_NDF_DMA_CFG, dmacfg);
+	if (sc->sc_hwrev == OCTMMC_HWREV_7890)
+		DMA_WR_8(sc, MIO_NDF_DMA_ADR,
+		    sc->sc_dma_data->dm_segs[0].ds_addr);
 
 	/* Prepare and issue the command. */
 	dmacmd = MIO_EMM_DMA_DMA_VAL | MIO_EMM_DMA_MULTI | MIO_EMM_DMA_SECTOR;

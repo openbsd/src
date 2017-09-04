@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmcreg.h,v 1.1 2016/12/21 13:59:57 visa Exp $	*/
+/*	$OpenBSD: octmmcreg.h,v 1.2 2017/09/04 16:25:46 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -152,5 +152,6 @@
 #define   MIO_NDF_DMA_CFG_SIZE			0x00fffff000000000ull
 #define   MIO_NDF_DMA_CFG_SIZE_SHIFT		36
 #define   MIO_NDF_DMA_CFG_ADDR			0x0000000fffffffffull
+#define MIO_NDF_DMA_ADR			0x08
 
 #endif /* !_OCTMMCREG_H_ */
