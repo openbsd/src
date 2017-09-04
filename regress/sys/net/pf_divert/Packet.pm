@@ -1,4 +1,4 @@
-#	$OpenBSD: Packet.pm,v 1.1 2017/08/15 04:11:20 bluhm Exp $
+#	$OpenBSD: Packet.pm,v 1.2 2017/09/04 22:40:01 bluhm Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -58,8 +58,10 @@ sub new {
 	my $divertdir = 0;
 	$divertdir |= IPPROTO_DIVERT_INIT if $self->{divertinit};
 	$divertdir |= IPPROTO_DIVERT_RESP if $self->{divertresp};
+	my $level = $self->{af} eq "inet" ? IPPROTO_IP :
+	    $self->{af} eq "inet6" ? IPPROTO_IPV6 : undef;
 	if ($divertdir) {
-		setsockopt($ds, IPPROTO_IP, IP_DIVERTFL, pack('i', $divertdir))
+		setsockopt($ds, $level, IP_DIVERTFL, pack('i', $divertdir))
 		    or die ref($self), " set divert flag failed: $!";
 	}
 	$self->{ds} = $ds;
