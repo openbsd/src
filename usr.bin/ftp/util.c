@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.84 2017/01/21 08:33:07 krw Exp $	*/
+/*	$OpenBSD: util.c,v 1.85 2017/09/05 05:37:35 jca Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -784,8 +784,10 @@ progressmeter(int flag, const char *filename)
 	ratio = MINIMUM(ratio, 100);
 	if (!verbose && flag == -1) {
 		filename = basename(filename);
-		if (filename != NULL)
+		if (filename != NULL) {
+			free(title);
 			title = strdup(filename);
+		}
 	}
 
 	buf[0] = 0;
