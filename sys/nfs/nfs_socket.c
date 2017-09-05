@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.126 2017/09/01 15:05:31 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.127 2017/09/05 08:02:48 mpi Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -238,20 +238,28 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	int s, error, rcvreserve, sndreserve;
 	struct sockaddr *saddr;
 	struct sockaddr_in *sin;
-	struct mbuf *m;
+	struct mbuf *nam = NULL, *mopt = NULL;
 
-	if (!(nmp->nm_sotype == SOCK_DGRAM || nmp->nm_sotype == SOCK_STREAM)) {
-		error = EINVAL;
-		goto bad;
-	}
+	if (!(nmp->nm_sotype == SOCK_DGRAM || nmp->nm_sotype == SOCK_STREAM))
+		return (EINVAL);
 
 	nmp->nm_so = NULL;
 	saddr = mtod(nmp->nm_nam, struct sockaddr *);
 	error = socreate(saddr->sa_family, &nmp->nm_so, nmp->nm_sotype, 
 	    nmp->nm_soproto);
-	if (error)
-		goto bad;
+	if (error) {
+		nfs_disconnect(nmp);
+		return (error);
+	}
+
+	/* Allocate mbufs possibly waiting before grabbing the socket lock. */
+	if (nmp->nm_sotype == SOCK_STREAM || saddr->sa_family == AF_INET)
+		MGET(mopt, M_WAIT, MT_SOOPTS);
+	if (saddr->sa_family == AF_INET)
+		MGET(nam, M_WAIT, MT_SONAME);
+
 	so = nmp->nm_so;
+	s = solock(so);
 	nmp->nm_soflags = so->so_proto->pr_flags;
 
 	/*
@@ -260,42 +268,29 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	 * disclosure through UDP port capture.
 	 */
 	if (saddr->sa_family == AF_INET) {
-		struct mbuf *mopt;
 		int *ip;
 
-		MGET(mopt, M_WAIT, MT_SOOPTS);
 		mopt->m_len = sizeof(int);
 		ip = mtod(mopt, int *);
 		*ip = IP_PORTRANGE_LOW;
-		s = solock(so);
 		error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
-		sounlock(s);
-		m_freem(mopt);
 		if (error)
 			goto bad;
 
-		MGET(m, M_WAIT, MT_SONAME);
-		sin = mtod(m, struct sockaddr_in *);
+		sin = mtod(nam, struct sockaddr_in *);
 		memset(sin, 0, sizeof(*sin));
-		sin->sin_len = m->m_len = sizeof(struct sockaddr_in);
+		sin->sin_len = nam->m_len = sizeof(struct sockaddr_in);
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = INADDR_ANY;
 		sin->sin_port = htons(0);
-		s = solock(so);
-		error = sobind(so, m, &proc0);
-		sounlock(s);
-		m_freem(m);
+		error = sobind(so, nam, &proc0);
 		if (error)
 			goto bad;
 
-		MGET(mopt, M_WAIT, MT_SOOPTS);
 		mopt->m_len = sizeof(int);
 		ip = mtod(mopt, int *);
 		*ip = IP_PORTRANGE_DEFAULT;
-		s = solock(so);
 		error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
-		sounlock(s);
-		m_freem(mopt);
 		if (error)
 			goto bad;
 	}
@@ -310,12 +305,9 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 			goto bad;
 		}
 	} else {
-		s = solock(so);
 		error = soconnect(so, nmp->nm_nam);
-		if (error) {
-			sounlock(s);
+		if (error)
 			goto bad;
-		}
 
 		/*
 		 * Wait for the connection to complete. Cribbed from the
@@ -328,23 +320,19 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 			    so->so_error == 0 && rep &&
 			    (error = nfs_sigintr(nmp, rep, rep->r_procp)) != 0){
 				so->so_state &= ~SS_ISCONNECTING;
-				sounlock(s);
 				goto bad;
 			}
 		}
 		if (so->so_error) {
 			error = so->so_error;
 			so->so_error = 0;
-			sounlock(s);
 			goto bad;
 		}
-		sounlock(s);
 	}
 	/*
 	 * Always set receive timeout to detect server crash and reconnect.
 	 * Otherwise, we can get stuck in soreceive forever.
 	 */
-	s = solock(so);
 	so->so_rcv.sb_timeo = (5 * hz);
 	if (nmp->nm_flag & (NFSMNT_SOFT | NFSMNT_INT))
 		so->so_snd.sb_timeo = (5 * hz);
@@ -356,18 +344,14 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		    NFS_MAXPKTHDR) * 2;
 	} else if (nmp->nm_sotype == SOCK_STREAM) {
 		if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
-			MGET(m, M_WAIT, MT_SOOPTS);
-			*mtod(m, int32_t *) = 1;
-			m->m_len = sizeof(int32_t);
-			sosetopt(so, SOL_SOCKET, SO_KEEPALIVE, m);
-			m_freem(m);
+			*mtod(mopt, int32_t *) = 1;
+			mopt->m_len = sizeof(int32_t);
+			sosetopt(so, SOL_SOCKET, SO_KEEPALIVE, mopt);
 		}
 		if (so->so_proto->pr_protocol == IPPROTO_TCP) {
-			MGET(m, M_WAIT, MT_SOOPTS);
-			*mtod(m, int32_t *) = 1;
-			m->m_len = sizeof(int32_t);
-			sosetopt(so, IPPROTO_TCP, TCP_NODELAY, m);
-			m_freem(m);
+			*mtod(mopt, int32_t *) = 1;
+			mopt->m_len = sizeof(int32_t);
+			sosetopt(so, IPPROTO_TCP, TCP_NODELAY, mopt);
 		}
 		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR +
 		    sizeof (u_int32_t)) * 2;
@@ -375,11 +359,14 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		    sizeof (u_int32_t)) * 2;
 	}
 	error = soreserve(so, sndreserve, rcvreserve);
-	sounlock(s);
 	if (error)
 		goto bad;
 	so->so_rcv.sb_flags |= SB_NOINTR;
 	so->so_snd.sb_flags |= SB_NOINTR;
+	sounlock(s);
+
+	m_freem(mopt);
+	m_freem(nam);
 
 	/* Initialize other non-zero congestion variables */
 	nfs_init_rtt(nmp);
@@ -389,6 +376,11 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	return (0);
 
 bad:
+	sounlock(s);
+
+	m_freem(mopt);
+	m_freem(nam);
+
 	nfs_disconnect(nmp);
 	return (error);
 }
