@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.87 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: udl.c,v 1.88 2017/09/05 12:22:23 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -1312,7 +1312,7 @@ udl_select_chip(struct udl_softc *sc)
 
 		s = &serialnum[0];
 		n = len / 2 - 1;
-		for (i = 0; i < n && i < USB_MAX_STRING_LEN; i++) {
+		for (i = 0; i < n && i < nitems(us.bString); i++) {
 			c = UGETW(us.bString[i]);
 			/* Convert from Unicode, handle buggy strings. */
 			if ((c & 0xff00) == 0)
