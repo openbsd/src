@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.62 2017/06/20 13:51:46 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.63 2017/09/05 12:02:21 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -877,7 +877,9 @@ ieee80211_next_mode(struct ifnet *ifp)
 		if (ic->ic_curmode == IEEE80211_MODE_11N)
 			continue;
 
-		if (ic->ic_curmode >= IEEE80211_MODE_MAX) {
+		/* Always scan in AUTO mode if the driver scans all bands. */
+		if (ic->ic_curmode >= IEEE80211_MODE_MAX ||
+		    (ic->ic_caps & IEEE80211_C_SCANALLBAND)) {
 			ic->ic_curmode = IEEE80211_MODE_AUTO;
 			break;
 		}
