@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.118 2017/09/01 15:05:31 mpi Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.119 2017/09/05 07:59:11 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -570,7 +570,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct inpcb *in6p = sotoinpcb(so);
 	int error = 0;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
 
 	if (req == PRU_CONTROL)
 		return (in6_control(so, (u_long)m, (caddr_t)nam,

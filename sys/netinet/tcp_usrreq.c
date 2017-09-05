@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.154 2017/09/01 15:05:31 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.155 2017/09/05 07:59:11 mpi Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	int error = 0;
 	short ostate;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
 
 	if (req == PRU_CONTROL) {
 #ifdef INET6

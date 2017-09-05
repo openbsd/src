@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.239 2017/08/11 19:53:02 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.240 2017/09/05 07:59:11 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1060,7 +1060,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	struct inpcb *inp;
 	int error = 0;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
 
 	if (req == PRU_CONTROL) {
 #ifdef INET6
