@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.366 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.367 2017/09/05 10:56:04 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1550,6 +1550,7 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 {
 	struct ifnet *ifp = arg;
 	struct sockaddr_in6 sa_mask;
+	int error;
 
 	if (rt->rt_ifidx != ifp->if_index)
 		return (0);
@@ -1561,38 +1562,37 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 	}
 
 	if (LINK_STATE_IS_UP(ifp->if_link_state) && ifp->if_flags & IFF_UP) {
-		if (!(rt->rt_flags & RTF_UP)) {
-			/* bring route up */
-			rt->rt_flags |= RTF_UP;
-			rtable_mpath_reprio(id, rt_key(rt),
-			    rt_plen2mask(rt, &sa_mask),
-			    rt->rt_priority & RTP_MASK, rt);
-		}
-	} else {
-		if (rt->rt_flags & RTF_UP) {
-			/*
-			 * Remove redirected and cloned routes (mainly ARP)
-			 * from down interfaces so we have a chance to get
-			 * new routes from a better source.
-			 */
-			if (ISSET(rt->rt_flags, RTF_CLONED|RTF_DYNAMIC) &&
-			    !ISSET(rt->rt_flags, RTF_CACHED|RTF_BFD)) {
-				int error;
+		if (ISSET(rt->rt_flags, RTF_UP))
+			return (0);
 
-				if ((error = rtdeletemsg(rt, ifp, id)))
-					return (error);
-				return (EAGAIN);
-			}
-			/* take route down */
-			rt->rt_flags &= ~RTF_UP;
-			rtable_mpath_reprio(id, rt_key(rt),
-			    rt_plen2mask(rt, &sa_mask),
-			    rt->rt_priority | RTP_DOWN, rt);
+		/* bring route up */
+		rt->rt_flags |= RTF_UP;
+		error = rtable_mpath_reprio(id, rt_key(rt),
+		    rt_plen2mask(rt, &sa_mask), rt->rt_priority & RTP_MASK, rt);
+	} else {
+		/*
+		 * Remove redirected and cloned routes (mainly ARP)
+		 * from down interfaces so we have a chance to get
+		 * new routes from a better source.
+		 */
+		if (ISSET(rt->rt_flags, RTF_CLONED|RTF_DYNAMIC) &&
+		    !ISSET(rt->rt_flags, RTF_CACHED|RTF_BFD)) {
+			if ((error = rtdeletemsg(rt, ifp, id)))
+				return (error);
+			return (EAGAIN);
 		}
+
+		if (!ISSET(rt->rt_flags, RTF_UP))
+			return (0);
+
+		/* take route down */
+		rt->rt_flags &= ~RTF_UP;
+		error = rtable_mpath_reprio(id, rt_key(rt),
+		    rt_plen2mask(rt, &sa_mask), rt->rt_priority | RTP_DOWN, rt);
 	}
 	if_group_routechange(rt_key(rt), rt_plen2mask(rt, &sa_mask));
 
-	return (0);
+	return (error);
 }
 
 struct sockaddr *

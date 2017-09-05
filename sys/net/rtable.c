@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.61 2017/07/30 18:18:08 florian Exp $ */
+/*	$OpenBSD: rtable.c,v 1.62 2017/09/05 10:56:04 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -751,6 +751,7 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 		rt->rt_priority = prio;
 		rtable_mpath_insert(an, rt);
 		rtfree(rt);
+		error = EAGAIN;
 	}
 	rw_exit_write(&ar->ar_lock);
 
