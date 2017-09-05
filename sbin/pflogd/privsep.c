@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.27 2017/08/12 16:31:09 florian Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.28 2017/09/05 15:41:25 brynet Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -40,6 +40,7 @@
 #include "pflogd.h"
 
 enum cmd_types {
+	PRIV_INIT_PCAP,		/* init pcap fdpass bpf */
 	PRIV_SET_SNAPLEN,	/* set the snaplength */
 	PRIV_MOVE_LOG,		/* move logfile away */
 	PRIV_OPEN_LOG,		/* open logfile for appending */
@@ -59,18 +60,17 @@ static int  set_snaplen(int snap);
 static int  move_log(const char *name);
 
 extern char *filename;
+extern char *interface;
+extern char errbuf[PCAP_ERRBUF_SIZE];
 extern pcap_t *hpcap;
 
 /* based on syslogd privsep */
-int
-priv_init(void)
+void
+priv_init(int argc, char *argv[])
 {
-	int i, bpfd = -1, socks[2], cmd;
-	int snaplen, ret, olderrno;
+	int i, nargc, socks[2];
 	struct passwd *pw;
-
-	for (i = 1; i < _NSIG; i++)
-		signal(i, SIG_DFL);
+	char childnum[11], **privargv;
 
 	/* Create sockets */
 	if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, socks) == -1)
@@ -103,8 +103,45 @@ priv_init(void)
 			err(1, "setresuid() failed");
 		close(socks[0]);
 		priv_fd = socks[1];
-		return 0;
+		return;
 	}
+	close(socks[1]);
+
+	if (dup2(socks[0], 3) == -1)
+		err(1, "dup2 priv sock failed");
+	closefrom(4);
+
+	snprintf(childnum, sizeof(childnum), "%d", child_pid);
+	if ((privargv = reallocarray(NULL, argc + 3, sizeof(char *))) == NULL)
+		err(1, "alloc priv argv failed");
+	nargc = 0;
+	privargv[nargc++] = argv[0];
+	privargv[nargc++] = "-P";
+	privargv[nargc++] = childnum;
+	for (i = 1; i < argc; i++)
+		privargv[nargc++] = argv[i];
+	privargv[nargc] = NULL;
+	execvp(privargv[0], privargv);
+	err(1, "exec priv '%s' failed", privargv[0]);
+}
+
+__dead void
+priv_exec(int child, int argc, char *argv[])
+{
+	int i, fd = -1, bpfd = -1, sock, cmd;
+	int snaplen, ret, olderrno;
+	unsigned int buflen;
+
+	if (argc <= 2 || strcmp("-P", argv[1]) != 0)
+		errx(1, "exec without priv");
+
+	sock = 3;
+	closefrom(4);
+
+	child_pid = child;
+
+	for (i = 1; i < _NSIG; i++)
+		signal(i, SIG_DFL);
 
 	/* Father */
 	/* Pass ALRM/TERM/HUP/INT/QUIT through to child, and accept CHLD */
@@ -116,7 +153,6 @@ priv_init(void)
 	signal(SIGCHLD, sig_chld);
 
 	setproctitle("[priv]");
-	close(socks[1]);
 
 #if 0
 	/* This needs to do bpf ioctl */
@@ -125,13 +161,31 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 #endif
 
 	while (!gotsig_chld) {
-		if (may_read(socks[0], &cmd, sizeof(int)))
+		if (may_read(sock, &cmd, sizeof(int)))
 			break;
 		switch (cmd) {
+		case PRIV_INIT_PCAP:
+			logmsg(LOG_DEBUG,
+			    "[priv]: msg PRIV_INIT_PCAP received");
+			/* initialize pcap */
+			if (hpcap != NULL || init_pcap()) {
+				logmsg(LOG_ERR, "[priv]: Exiting, init failed");
+				_exit(1);
+			}
+			buflen = hpcap->bufsize; /* BIOCGBLEN for unpriv proc */
+			must_write(sock, &buflen, sizeof(unsigned int));
+			fd = pcap_fileno(hpcap);
+			send_fd(sock, fd);
+			if (fd < 0) {
+				logmsg(LOG_ERR, "[priv]: Exiting, init failed");
+				_exit(1);
+			}
+			break;
+
 		case PRIV_SET_SNAPLEN:
 			logmsg(LOG_DEBUG,
 			    "[priv]: msg PRIV_SET_SNAPLENGTH received");
-			must_read(socks[0], &snaplen, sizeof(int));
+			must_read(sock, &snaplen, sizeof(int));
 
 			ret = set_snaplen(snaplen);
 			if (ret) {
@@ -140,7 +194,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 				   snaplen);
 			}
 
-			must_write(socks[0], &ret, sizeof(int));
+			must_write(sock, &ret, sizeof(int));
 			break;
 
 		case PRIV_OPEN_LOG:
@@ -155,7 +209,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 			    O_RDWR|O_CREAT|O_APPEND|O_NONBLOCK|O_NOFOLLOW,
 			    0600);
 			olderrno = errno;
-			send_fd(socks[0], bpfd);
+			send_fd(sock, bpfd);
 			if (bpfd < 0)
 				logmsg(LOG_NOTICE,
 				    "[priv]: failed to open %s: %s",
@@ -166,7 +220,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 			logmsg(LOG_DEBUG,
 			    "[priv]: msg PRIV_MOVE_LOG received");
 			ret = move_log(filename);
-			must_write(socks[0], &ret, sizeof(int));
+			must_write(sock, &ret, sizeof(int));
 			break;
 
 		default:
@@ -176,7 +230,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 		}
 	}
 
-	_exit(1);
+	exit(1);
 }
 
 /* this is called from parent */
@@ -229,6 +283,46 @@ move_log(const char *name)
 
 	logmsg(LOG_NOTICE,
 	       "[priv]: log file %s moved to %s", name, ren);
+
+	return (0);
+}
+
+
+/* receive bpf fd from privileged process using fdpass and init pcap */
+int
+priv_init_pcap(int snaplen)
+{
+	int cmd, fd;
+	unsigned int buflen;
+
+	if (priv_fd < 0)
+		errx(1, "%s: called from privileged portion", __func__);
+
+	cmd = PRIV_INIT_PCAP;
+
+	must_write(priv_fd, &cmd, sizeof(int));
+	must_read(priv_fd, &buflen, sizeof(unsigned int));
+	fd = receive_fd(priv_fd);
+	if (fd < 0)
+		return (-1);
+
+	/* XXX temporary until pcap_open_live_fd API */
+	hpcap = pcap_create(interface, errbuf);
+	if (hpcap == NULL)
+		return (-1);
+
+	/* XXX copies from pcap_open_live/pcap_activate */
+	hpcap->fd = fd;
+	pcap_set_snaplen(hpcap, snaplen);
+	pcap_set_promisc(hpcap, 1);
+	pcap_set_timeout(hpcap, PCAP_TO_MS);
+	hpcap->oldstyle = 1;
+	hpcap->linktype = DLT_PFLOG;
+	hpcap->bufsize = buflen; /* XXX bpf BIOCGBLEN */
+	hpcap->buffer = malloc(hpcap->bufsize);
+	if (hpcap->buffer == NULL)
+		return (-1);
+	hpcap->activated = 1;
 
 	return (0);
 }

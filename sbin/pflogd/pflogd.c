@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.54 2017/07/23 14:28:22 jca Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.55 2017/09/05 15:41:25 brynet Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -54,6 +54,7 @@ pcap_t *hpcap;
 static FILE *dpcap;
 
 int Debug = 0;
+static int privchild = 0;
 static int snaplen = DEF_SNAPLEN;
 static int cur_snaplen = DEF_SNAPLEN;
 
@@ -73,7 +74,6 @@ void  dump_packet(u_char *, const struct pcap_pkthdr *, const u_char *);
 void  dump_packet_nobuf(u_char *, const struct pcap_pkthdr *, const u_char *);
 int   flush_buffer(FILE *);
 int   if_exists(char *);
-int   init_pcap(void);
 void  logmsg(int, const char *, ...);
 void  purge_buffer(void);
 int   reset_dump(int);
@@ -214,8 +214,6 @@ init_pcap(void)
 	}
 
 	set_pcap_filter();
-
-	cur_snaplen = snaplen = pcap_snapshot(hpcap);
 
 	/* lock */
 	if (ioctl(pcap_fileno(hpcap), BIOCLOCK) < 0) {
@@ -542,9 +540,7 @@ main(int argc, char **argv)
 
 	ret = 0;
 
-	closefrom(STDERR_FILENO + 1);
-
-	while ((ch = getopt(argc, argv, "Dxd:f:i:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "Dxd:f:i:P:s:")) != -1) {
 		switch (ch) {
 		case 'D':
 			Debug = 1;
@@ -560,6 +556,11 @@ main(int argc, char **argv)
 		case 'i':
 			interface = optarg;
 			break;
+		case 'P': /* used internally, exec the parent */
+			privchild = strtonum(optarg, 2, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "priv child %s: %s", errstr, optarg);
+			break;
 		case 's':
 			snaplen = strtonum(optarg, 0, PFLOGD_MAXSNAPLEN,
 			    &errstr);
@@ -567,6 +568,7 @@ main(int argc, char **argv)
 				snaplen = DEF_SNAPLEN;
 			if (errstr)
 				snaplen = PFLOGD_MAXSNAPLEN;
+			cur_snaplen = snaplen;
 			break;
 		case 'x':
 			Xflag = 1;
@@ -606,23 +608,16 @@ main(int argc, char **argv)
 		if (filter == NULL)
 			logmsg(LOG_NOTICE, "Failed to form filter expression");
 	}
+	argc += optind;
+	argv -= optind;
 
-	/* initialize pcap before dropping privileges */
-	if (init_pcap()) {
-		logmsg(LOG_ERR, "Exiting, init failure");
-		exit(1);
-	}
+	if (privchild > 1)
+		priv_exec(privchild, argc, argv);
 
 	/* Privilege separation begins here */
-	if (priv_init()) {
-		logmsg(LOG_ERR, "unable to privsep");
-		exit(1);
-	}
+	priv_init(argc, argv);
 
-	/*
-	 * XXX needs wpath cpath rpath, for try_reset_dump() ?
-	 */
-	if (pledge("stdio rpath wpath cpath unix recvfd", NULL) == -1)
+	if (pledge("stdio recvfd", NULL) == -1)
 		err(1, "pledge");
 
 	setproctitle("[initializing]");
@@ -633,6 +628,9 @@ main(int argc, char **argv)
 	signal(SIGALRM, sig_alrm);
 	signal(SIGHUP, sig_hup);
 	alarm(delay);
+
+	if (priv_init_pcap(snaplen))
+		errx(1, "priv_init_pcap failed");
 
 	buffer = malloc(PFLOGD_BUFSIZE);
 
