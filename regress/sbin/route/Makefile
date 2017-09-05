@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.19 2017/08/10 13:08:39 mpi Exp $
+# $OpenBSD: Makefile,v 1.20 2017/09/05 10:53:02 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -328,6 +328,24 @@ n=	29
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
 	! ${RCMD} change -expire 30 192.0.2.1 192.0.2.2
+
+
+#
+n=	30
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${SUDO} ifconfig vether99 rdomain ${RDOMAIN} lladdr fe:e1:ba:d4:c8:1d up
+	${SUDO} ifconfig vlan99 rdomain ${RDOMAIN} parent vether99 vnetid 3 up
+	${SUDO} ifconfig vether99 10.1.254.56/14
+	${SUDO} ifconfig vlan99 inet alias 10.1.255.1/14 
+	${SUDO} ifconfig vlan99 inet alias 10.1.255.2/14 
+	${SUDO} ifconfig vlan99 inet alias 10.1.255.3/14
+	${SUDO} ifconfig vlan99 down
+	${RCMD} show -inet 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+	${SUDO} ifconfig vlan99 destroy
+	${SUDO} ifconfig vether99 destroy
+
 
 REGRESS_TARGETS=netmask ${RTTEST_TARGETS}
 REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
