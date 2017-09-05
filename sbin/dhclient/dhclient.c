@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.498 2017/09/01 19:23:50 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.499 2017/09/05 10:56:02 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -960,6 +960,7 @@ dhcpnak(struct interface_info *ifi, struct option_data *options, char *info)
 	}
 
 	log_info("%s", info);
+	delete_address(ifi->active->address);
 
 	/* XXX Do we really want to remove a NAK'd lease from the database? */
 	if (ifi->active->is_static == 0) {
@@ -1403,13 +1404,11 @@ send_request(struct interface_info *ifi)
 	}
 
 	/*
-	 * If the lease has expired, relinquish the address and go back to the
-	 * INIT state.
+	 * If the lease has expired go back to the INIT state.
 	 */
 	if (ifi->state != S_REQUESTING &&
 	    cur_time > ifi->active->expiry) {
-		if (ifi->active != NULL)
-			delete_address(ifi->active->address);
+		ifi->active = NULL;
 		ifi->state = S_INIT;
 		state_init(ifi);
 		return;
