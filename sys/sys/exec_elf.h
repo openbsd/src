@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.74 2017/05/30 15:39:05 mpi Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.75 2017/09/05 06:35:19 mpi Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -527,9 +527,6 @@ typedef struct {
 #define DF_1_NODEFLIB	0x00000800
 #define DF_1_NODUMP	0x00001000
 #define DF_1_CONLFAT	0x00002000
-
-/* Standard ELF hashing function */
-unsigned int elf_hash(const unsigned char *name);
 
 /*
  * Note header
