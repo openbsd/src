@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.21 2017/09/05 11:03:08 mpi Exp $
+# $OpenBSD: Makefile,v 1.22 2017/09/05 11:14:47 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -346,6 +346,16 @@ rttest${n}:
 	${SUDO} ifconfig vlan99 destroy
 	${SUDO} ifconfig vether99 destroy
 
+# Check that routes are inserted respecting their priority order
+n=	31
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add -mpath 192.0.3/24 -priority 13 192.0.2.3
+	${RCMD} add -mpath 192.0.3/24 -priority 11 192.0.2.1
+	${RCMD} add -mpath 192.0.3/24 -priority 14 192.0.2.4
+	${RCMD} add -mpath 192.0.3/24 -priority 12 192.0.2.2
+	${RCMD} show -inet 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
 REGRESS_TARGETS=netmask ${RTTEST_TARGETS}
 REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
