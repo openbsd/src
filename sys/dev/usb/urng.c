@@ -1,4 +1,4 @@
-/*	$OpenBSD: urng.c,v 1.4 2017/08/30 22:12:19 abieber Exp $ */
+/*	$OpenBSD: urng.c,v 1.5 2017/09/05 18:34:08 jasper Exp $ */
 
 /*
  * Copyright (c) 2017 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -212,8 +212,10 @@ urng_detach(struct device *self, int flags)
 		timeout_del(&sc->sc_timeout);
 	if (sc->sc_xfer)
 		usbd_free_xfer(sc->sc_xfer);
-	if (sc->sc_outpipe != NULL)
+	if (sc->sc_outpipe != NULL) {
 		usbd_close_pipe(sc->sc_outpipe);
+		sc->sc_outpipe = NULL;
+	}
 
 	return (0);
 }
