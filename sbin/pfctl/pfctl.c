@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.348 2017/08/11 22:30:38 benno Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.349 2017/09/05 22:15:32 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1572,7 +1572,6 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	RB_INIT(&pf_anchors);
 	memset(&pf_main_anchor, 0, sizeof(pf_main_anchor));
 	pf_init_ruleset(&pf_main_anchor.ruleset);
-	pf_main_anchor.ruleset.anchor = &pf_main_anchor;
 	if (trans == NULL) {
 		bzero(&buf, sizeof(buf));
 		buf.pfrb_type = PFRB_TRANS;

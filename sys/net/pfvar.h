@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.465 2017/08/14 15:58:16 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.466 2017/09/05 22:15:32 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -463,6 +463,7 @@ union pf_rule_ptr {
 };
 
 #define	PF_ANCHOR_NAME_SIZE	 64
+#define	PF_ANCHOR_MAXPATH	(MAXPATHLEN - PF_ANCHOR_NAME_SIZE - 1)
 
 struct pf_rule {
 	struct pf_rule_addr	 src;
@@ -1855,6 +1856,8 @@ void			 pf_anchor_remove(struct pf_rule *);
 void			 pf_remove_if_empty_ruleset(struct pf_ruleset *);
 struct pf_anchor	*pf_find_anchor(const char *);
 struct pf_ruleset	*pf_find_ruleset(const char *);
+struct pf_ruleset 	*pf_get_leaf_ruleset(char *, char **);
+struct pf_anchor 	*pf_create_anchor(struct pf_anchor *, const char *);
 struct pf_ruleset	*pf_find_or_create_ruleset(const char *);
 void			 pf_rs_initialize(void);
 
