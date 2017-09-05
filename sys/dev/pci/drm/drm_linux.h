@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.62 2017/08/14 01:35:04 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.63 2017/09/05 03:06:26 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -279,7 +279,6 @@ struct module;
 #define ERESTARTSYS	EINTR
 #define ETIME		ETIMEDOUT
 #define EREMOTEIO	EIO
-#define EPROTO		EIO
 #define ENOTSUPP	ENOTSUP
 #define ENODATA		ENOTSUP
 #define ECHRNG		EINVAL

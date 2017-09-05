@@ -1,4 +1,4 @@
-/*	$OpenBSD: errlist.c,v 1.18 2015/10/24 10:42:02 bluhm Exp $ */
+/*	$OpenBSD: errlist.c,v 1.19 2017/09/05 03:06:26 jsg Exp $ */
 /*
  * Copyright (c) 1982, 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -142,6 +142,10 @@ const char *const sys_errlist[] = {
 	"Identifier removed",			/* 89 - EIDRM */
 	"No message of desired type",		/* 90 - ENOMSG */
 	"Not supported",			/* 91 - ENOTSUP */
+	"Bad message",				/* 92 - EBADMSG */
+	"State not recoverable",		/* 93 - ENOTRECOVERABLE */
+	"Previous owner died",			/* 94 - EOWNERDEAD */
+	"Protocol error",			/* 95 - EPROTO */
 };
 const int sys_nerr = { sizeof sys_errlist/sizeof sys_errlist[0] };
 #if 0
