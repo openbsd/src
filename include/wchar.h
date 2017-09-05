@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.30 2016/09/09 18:12:37 millert Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.31 2017/09/05 03:16:13 schwarze Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -96,6 +96,13 @@ typedef	__size_t	size_t;
 #define	WCHAR_MAX	0x7fffffff
 #endif
 
+#if __POSIX_VISIBLE >= 200809
+#ifndef	_LOCALE_T_DEFINED_
+#define	_LOCALE_T_DEFINED_
+typedef void	*locale_t;
+#endif
+#endif
+
 __BEGIN_DECLS
 wint_t	btowc(int);
 size_t	mbrlen(const char * __restrict, size_t, mbstate_t * __restrict);
@@ -155,9 +162,13 @@ unsigned long int wcstoul(const wchar_t * __restrict, wchar_t ** __restrict,
 #if __POSIX_VISIBLE >= 200809
 FILE *open_wmemstream(wchar_t **, size_t *);
 
+int wcscoll_l(const wchar_t *, const wchar_t *, locale_t);
 wchar_t	*wcsdup(const wchar_t *);
 int wcscasecmp(const wchar_t *, const wchar_t *);
+int wcscasecmp_l(const wchar_t *, const wchar_t *, locale_t);
 int wcsncasecmp(const wchar_t *, const wchar_t *, size_t);
+int wcsncasecmp_l(const wchar_t *, const wchar_t *, size_t, locale_t);
+size_t wcsxfrm_l(wchar_t *, const wchar_t *, size_t, locale_t);
 
 size_t mbsnrtowcs(wchar_t * __restrict, const char ** __restrict, size_t,
     size_t, mbstate_t * __restrict)

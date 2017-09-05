@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.3 2015/09/10 18:13:46 guenther Exp $	*/
+/*	$OpenBSD: string.h,v 1.4 2017/09/05 03:16:13 schwarze Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -42,21 +42,25 @@ PROTO_DEPRECATED(rindex);
 PROTO_DEPRECATED(stpcpy);
 PROTO_NORMAL(stpncpy);
 PROTO_NORMAL(strcasecmp);
+PROTO_DEPRECATED(strcasecmp_l);
 PROTO_NORMAL(strcasestr);
 PROTO_STD_DEPRECATED(strcat);
 PROTO_NORMAL(strchr);
 PROTO_NORMAL(strcmp);
 PROTO_NORMAL(strcoll);
+PROTO_DEPRECATED(strcoll_l);
 PROTO_STD_DEPRECATED(strcpy);
 PROTO_NORMAL(strcspn);
 PROTO_NORMAL(strdup);
 PROTO_NORMAL(strerror);
+PROTO_DEPRECATED(strerror_l);
 PROTO_NORMAL(strerror_r);
 PROTO_NORMAL(strlcat);
 PROTO_NORMAL(strlcpy);
 PROTO_NORMAL(strlen);
 PROTO_NORMAL(strmode);
 PROTO_NORMAL(strncasecmp);
+PROTO_DEPRECATED(strncasecmp_l);
 PROTO_NORMAL(strncat);
 PROTO_NORMAL(strncmp);
 PROTO_NORMAL(strncpy);
@@ -71,6 +75,7 @@ PROTO_NORMAL(strstr);
 PROTO_NORMAL(strtok);
 PROTO_NORMAL(strtok_r);
 PROTO_NORMAL(strxfrm);
+PROTO_DEPRECATED(strxfrm_l);
 PROTO_NORMAL(timingsafe_bcmp);
 PROTO_NORMAL(timingsafe_memcmp);
 

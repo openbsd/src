@@ -1,4 +1,4 @@
-/*	$OpenBSD: multibyte_citrus.c,v 1.7 2016/09/05 09:47:03 schwarze Exp $ */
+/*	$OpenBSD: multibyte_citrus.c,v 1.8 2017/09/05 03:16:13 schwarze Exp $ */
 /*	$NetBSD: multibyte_amd1.c,v 1.7 2009/01/11 02:46:28 christos Exp $ */
 
 /*-
@@ -37,7 +37,7 @@
 int
 mbsinit(const mbstate_t *ps)
 {
-	if (ps == NULL || __mb_cur_max == 1)
+	if (ps == NULL || __mb_cur_max() == 1)
 		return 1;
 	return _citrus_utf8_ctype_mbsinit(ps);
 }
@@ -50,7 +50,7 @@ mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 
 	if (ps == NULL)
 		ps = &mbs;
-	if (__mb_cur_max == 1)
+	if (__mb_cur_max() == 1)
 		return _citrus_none_ctype_mbrtowc(pwc, s, n);
 	return _citrus_utf8_ctype_mbrtowc(pwc, s, n, ps);
 }
@@ -75,7 +75,7 @@ mbsnrtowcs(wchar_t *dst, const char **src, size_t nmc, size_t len,
 
 	if (ps == NULL)
 		ps = &mbs;
-	if (__mb_cur_max == 1)
+	if (__mb_cur_max() == 1)
 		return _citrus_none_ctype_mbsnrtowcs(dst, src, nmc, len);
 	return _citrus_utf8_ctype_mbsnrtowcs(dst, src, nmc, len, ps);
 }
@@ -88,7 +88,7 @@ wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 
 	if (ps == NULL)
 		ps = &mbs;
-	if (__mb_cur_max == 1)
+	if (__mb_cur_max() == 1)
 		return _citrus_none_ctype_wcrtomb(s, wc);
 	return _citrus_utf8_ctype_wcrtomb(s, wc, ps);
 }
@@ -113,7 +113,7 @@ wcsnrtombs(char *dst, const wchar_t **src, size_t nwc, size_t len,
 
 	if (ps == NULL)
 		ps = &mbs;
-	if (__mb_cur_max == 1)
+	if (__mb_cur_max() == 1)
 		return _citrus_none_ctype_wcsnrtombs(dst, src, nwc, len);
 	return _citrus_utf8_ctype_wcsnrtombs(dst, src, nwc, len, ps);
 }

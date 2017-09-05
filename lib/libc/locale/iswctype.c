@@ -1,4 +1,4 @@
-/*	$OpenBSD: iswctype.c,v 1.6 2015/09/13 11:38:08 guenther Exp $ */
+/*	$OpenBSD: iswctype.c,v 1.7 2017/09/05 03:16:13 schwarze Exp $ */
 /*	$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*
@@ -53,10 +53,10 @@ static inline wint_t __tolower_w(wint_t);
 static inline _RuneType
 __runetype_w(wint_t c)
 {
-	_RuneLocale *rl = _CurrentRuneLocale;
+	_RuneLocale *rl = _CurrentRuneLocale();
 
 	return (_RUNE_ISCACHED(c) ?
-		rl->rl_runetype[c] : ___runetype_mb(c));
+		rl->rl_runetype[c] : ___runetype_mb(c, rl));
 }
 
 static inline int
@@ -68,13 +68,13 @@ __isctype_w(wint_t c, _RuneType f)
 static inline wint_t
 __toupper_w(wint_t c)
 {
-	return (_towctrans(c, _wctrans_upper(_CurrentRuneLocale)));
+	return (_towctrans(c, _wctrans_upper(_CurrentRuneLocale())));
 }
 
 static inline wint_t
 __tolower_w(wint_t c)
 {
-	return (_towctrans(c, _wctrans_lower(_CurrentRuneLocale)));
+	return (_towctrans(c, _wctrans_lower(_CurrentRuneLocale())));
 }
 
 int
@@ -177,7 +177,7 @@ wctrans_t
 wctrans(const char *charclass)
 {
 	int i;
-	_RuneLocale *rl = _CurrentRuneLocale;
+	_RuneLocale *rl = _CurrentRuneLocale();
 
 	if (rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_name==NULL)
 		_wctrans_init(rl);
@@ -198,12 +198,13 @@ towctrans(wint_t c, wctrans_t desc)
 	}
 	return (_towctrans(c, (_WCTransEntry *)desc));
 }
+DEF_STRONG(towctrans);
 
 wctype_t
 wctype(const char *property)
 {
 	int i;
-	_RuneLocale *rl = _CurrentRuneLocale;
+	_RuneLocale *rl = _CurrentRuneLocale();
 
 	for (i=0; i<_WCTYPE_NINDEXES; i++)
 		if (!strcmp(rl->rl_wctype[i].te_name, property))

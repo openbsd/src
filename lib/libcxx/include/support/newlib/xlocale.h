@@ -16,8 +16,10 @@
 #include <clocale>
 #include <cwctype>
 #include <ctype.h>
+#ifndef __OpenBSD__
 #include <support/xlocale/__nop_locale_mgmt.h>
 #include <support/xlocale/__posix_l_fallback.h>
+#endif
 #include <support/xlocale/__strtonum_fallback.h>
 
 #endif // _NEWLIB_VERSION

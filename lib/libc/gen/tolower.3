@@ -1,6 +1,7 @@
-.\"	$OpenBSD: tolower.3,v 1.13 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: tolower.3,v 1.14 2017/09/05 03:16:13 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1991 The Regents of the University of California.
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
@@ -31,11 +32,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: September 5 2017 $
 .Dt TOLOWER 3
 .Os
 .Sh NAME
 .Nm tolower ,
+.Nm tolower_l ,
 .Nm _tolower
 .Nd upper case to lower case letter conversion
 .Sh SYNOPSIS
@@ -43,37 +45,49 @@
 .Ft int
 .Fn tolower "int c"
 .Ft int
+.Fn tolower_l "int c" "locale_t locale"
+.Ft int
 .Fn _tolower "int c"
 .Sh DESCRIPTION
 The
 .Fn tolower
-function converts an upper-case letter to the corresponding lower-case
+and
+.Fn tolower_l
+functions convert an upper-case letter to the corresponding lower-case
 letter.
 The
 .Fn _tolower
 function is identical to
 .Fn tolower
 except that
-.Ar c
+.Fa c
 must be an upper-case letter.
+.Pp
+.Ox
+always uses the C locale for these functions,
+ignoring the global locale, the thread-specific locale, and the
+.Fa locale
+argument.
 .Sh RETURN VALUES
 If the argument to the
 .Fn tolower
+or
+.Fn tolower_l
 function is an upper-case letter, the corresponding lower-case letter
 is returned if there is one; otherwise the argument is returned unchanged.
 If the argument to the
 .Fn _tolower
 function is an upper-case letter, the corresponding lower-case letter
 is returned; otherwise the output is undefined.
-.\" In the
-.\" .Em ``C''
-.\" locale,
-.\" .Fn tolower
-.\" maps only the characters for which
-.\" .Xr isupper
-.\" is true to the corresponding characters for which
-.\" .Xr islower
-.\" is true.
+.Sh ENVIRONMENT
+On systems supporting non-ASCII single-byte character encodings,
+the results of
+.Fn tolower
+and
+.Fn _tolower
+may depend on the
+.Ev LC_CTYPE
+.Xr locale 1 .
 .Sh SEE ALSO
 .Xr isalnum 3 ,
 .Xr isalpha 3 ,
@@ -91,6 +105,7 @@ is returned; otherwise the output is undefined.
 .Xr stdio 3 ,
 .Xr toascii 3 ,
 .Xr toupper 3 ,
+.Xr towlower 3 ,
 .Xr ascii 7
 .Sh STANDARDS
 The
@@ -98,10 +113,29 @@ The
 and
 .Fn _tolower
 functions conform to
-.St -ansiC .
+.St -ansiC ,
+and
+.Fn tolower_l
+to
+.St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Fn tolower
+function first appeared in
+.At v7
+and acquired the current semantics in
+.At III ,
+where
+.Fn _tolower
+first appeared.
+.Pp
+The
+.Fn tolower_l
+function has been available since
+.Ox 6.2 .
 .Sh CAVEATS
-The argument to
-.Nm
+The argument
+.Fa c
 must be
 .Dv EOF
 or representable as an

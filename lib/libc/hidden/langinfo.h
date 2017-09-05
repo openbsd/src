@@ -1,4 +1,4 @@
-/*	$OpenBSD: langinfo.h,v 1.1 2015/09/14 12:22:49 guenther Exp $	*/
+/*	$OpenBSD: langinfo.h,v 1.2 2017/09/05 03:16:13 schwarze Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -21,5 +21,6 @@
 #include_next <langinfo.h>
 
 PROTO_NORMAL(nl_langinfo);
+PROTO_DEPRECATED(nl_langinfo_l);
 
 #endif	/* _LIBC_LANGINFO_H_ */

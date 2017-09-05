@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.29 2016/09/09 18:12:37 millert Exp $	*/
+/*	$OpenBSD: time.h,v 1.30 2017/09/05 03:16:13 schwarze Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -99,6 +99,13 @@ typedef	__pid_t		pid_t;
 #endif
 #endif
 
+#if __POSIX_VISIBLE >= 200809
+#ifndef	_LOCALE_T_DEFINED_
+#define	_LOCALE_T_DEFINED_
+typedef void	*locale_t;
+#endif
+#endif
+
 struct tm {
 	int	tm_sec;		/* seconds after the minute [0-60] */
 	int	tm_min;		/* minutes after the hour [0-59] */
@@ -158,6 +165,12 @@ int nanosleep(const struct timespec *, struct timespec *);
 
 #if __POSIX_VISIBLE >= 200112
 int clock_getcpuclockid(pid_t, clockid_t *);
+#endif
+
+#if __POSIX_VISIBLE >= 200809
+size_t strftime_l(char *__restrict, size_t, const char *__restrict,
+		const struct tm *__restrict, locale_t)
+		__attribute__ ((__bounded__(__string__,1,2)));
 #endif
 
 #if __BSD_VISIBLE

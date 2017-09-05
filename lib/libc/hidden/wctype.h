@@ -1,4 +1,4 @@
-/*	$OpenBSD: wctype.h,v 1.1 2015/09/13 11:38:08 guenther Exp $	*/
+/*	$OpenBSD: wctype.h,v 1.2 2017/09/05 03:16:13 schwarze Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -21,22 +21,40 @@
 #include_next <wctype.h>
 
 PROTO_STD_DEPRECATED(iswalnum);
+PROTO_DEPRECATED(iswalnum_l);
 PROTO_STD_DEPRECATED(iswalpha);
+PROTO_DEPRECATED(iswalpha_l);
 PROTO_STD_DEPRECATED(iswblank);
+PROTO_DEPRECATED(iswblank_l);
 PROTO_STD_DEPRECATED(iswcntrl);
+PROTO_DEPRECATED(iswcntrl_l);
 PROTO_STD_DEPRECATED(iswctype);
+PROTO_DEPRECATED(iswctype_l);
 PROTO_STD_DEPRECATED(iswdigit);
+PROTO_DEPRECATED(iswdigit_l);
 PROTO_STD_DEPRECATED(iswgraph);
+PROTO_DEPRECATED(iswgraph_l);
 PROTO_STD_DEPRECATED(iswlower);
+PROTO_DEPRECATED(iswlower_l);
 PROTO_STD_DEPRECATED(iswprint);
+PROTO_DEPRECATED(iswprint_l);
 PROTO_STD_DEPRECATED(iswpunct);
+PROTO_DEPRECATED(iswpunct_l);
 PROTO_NORMAL(iswspace);
+PROTO_DEPRECATED(iswspace_l);
 PROTO_NORMAL(iswupper);
+PROTO_DEPRECATED(iswupper_l);
 PROTO_STD_DEPRECATED(iswxdigit);
-PROTO_STD_DEPRECATED(towctrans);
+PROTO_DEPRECATED(iswxdigit_l);
+PROTO_NORMAL(towctrans);
+PROTO_DEPRECATED(towctrans_l);
 PROTO_NORMAL(towlower);
+PROTO_NORMAL(towlower_l);
 PROTO_STD_DEPRECATED(towupper);
+PROTO_DEPRECATED(towupper_l);
 PROTO_STD_DEPRECATED(wctrans);
+PROTO_DEPRECATED(wctrans_l);
 PROTO_STD_DEPRECATED(wctype);
+PROTO_DEPRECATED(wctype_l);
 
 #endif /* !_LIBC_WCTYPE_H_ */

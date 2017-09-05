@@ -1,7 +1,8 @@
-.\" $OpenBSD: iswctype.3,v 1.4 2014/11/30 15:54:18 schwarze Exp $
+.\" $OpenBSD: iswctype.3,v 1.5 2017/09/05 03:16:13 schwarze Exp $
 .\" $NetBSD: iswctype.3,v 1.5 2003/04/16 13:34:40 wiz Exp $
 .\"
-.\" Copyright (c)2003 Citrus Project,
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2003 Citrus Project
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -25,74 +26,70 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2014 $
+.Dd $Mdocdate: September 5 2017 $
 .Dt ISWCTYPE 3
 .Os
-.\" ----------------------------------------------------------------------
 .Sh NAME
-.Nm iswctype
-.Nd test a character for character class identifier
-.\" ----------------------------------------------------------------------
+.Nm iswctype ,
+.Nm iswctype_l
+.Nd test whether a wide character belongs to a character class
 .Sh SYNOPSIS
 .In wctype.h
 .Ft int
 .Fn iswctype "wint_t wc" "wctype_t charclass"
-.\" ----------------------------------------------------------------------
+.Ft int
+.Fn iswctype_l "wint_t wc" "wctype_t charclass" "locale_t locale"
 .Sh DESCRIPTION
-The
-.Fn iswctype
-function returns a boolean value that indicates whether a wide character
+These functions test whether the wide character
 .Fa wc
-is in
+belongs to
 .Fa charclass .
 .Pp
-The behaviour of the
-.Fn iswctype
-is undefined if the
-.Fn iswctype
-function is called with an invalid
+The behaviour is undefined if
 .Fa charclass
-(changes of
-.Dv LC_CTYPE
-category invalidate
-.Fa charclass )
-or invalid wide character
-.Fa wc .
-.Pp
-The behaviour of the
-.Fn iswctype
-is affected by the
-.Dv LC_CTYPE
-category of the current locale.
-.\" ----------------------------------------------------------------------
+or
+.Fa wc
+is invalid.
+When
+.Fa charclass
+is retrieved with
+.Xr wctype 3 ,
+it becomes invalid when the thread-specific character encoding locale
+is changed with
+.Xr uselocale 3
+or when the global character encoding locale is changed with
+.Xr setlocale 3 .
+When
+.Fa charclass
+is retrieved with
+.Xr wctype_l 3 ,
+it is only valid for use with the same
+.Fa locale
+argument.
 .Sh RETURN VALUES
-The
-.Fn iswcttype
-returns:
-.Bl -tag -width 012345678901
-.It 0
-.Fa wc
-is not in
-.Fa charclass .
-.It non-zero
-.Fa wc
-is in
-.Fa charclass .
-.El
-.\" ----------------------------------------------------------------------
-.Sh ERRORS
-No errors are defined.
-.\" ----------------------------------------------------------------------
+These functions return zero if the character tests false
+or non-zero if the character tests true.
 .Sh SEE ALSO
+.Xr iswalnum 3 ,
+.Xr newlocale 3 ,
 .Xr setlocale 3 ,
 .Xr towctrans 3 ,
-.Xr wctrans 3 ,
 .Xr wctype 3
-.\" ----------------------------------------------------------------------
 .Sh STANDARDS
 The
 .Fn iswctype
 function conforms to
-.\" .St -isoC-amd1 .
-ISO/IEC 9899/AMD1:1995
-.Pq Dq ISO C90, Amendment 1 .
+.St -isoC-amd1 ,
+and
+.Fn iswctype_l
+to
+.St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Fn iswctype
+function has been available since
+.Ox 3.8 ,
+and
+.Fn iswctype_l
+since
+.Ox 6.2 .

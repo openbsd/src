@@ -1,4 +1,4 @@
-/*	$OpenBSD: wctype.h,v 1.5 2006/01/06 18:53:04 millert Exp $	*/
+/*	$OpenBSD: wctype.h,v 1.6 2017/09/05 03:16:13 schwarze Exp $	*/
 /*	$NetBSD: wctype.h,v 1.5 2003/03/02 22:18:11 tshiozak Exp $	*/
 
 /*-
@@ -54,6 +54,13 @@ typedef	__wctype_t	wctype_t;
 #define	WEOF	((wint_t)-1)
 #endif
 
+#if __POSIX_VISIBLE >= 200809
+#ifndef	_LOCALE_T_DEFINED_
+#define	_LOCALE_T_DEFINED_
+typedef void	*locale_t;
+#endif
+#endif
+
 __BEGIN_DECLS
 int	iswalnum(wint_t);
 int	iswalpha(wint_t);
@@ -73,6 +80,28 @@ wint_t	towlower(wint_t);
 wint_t	towupper(wint_t);
 wctrans_t wctrans(const char *);
 wctype_t wctype(const char *);
+
+#if __POSIX_VISIBLE >= 200809
+int	iswalnum_l(wint_t, locale_t);
+int	iswalpha_l(wint_t, locale_t);
+int	iswblank_l(wint_t, locale_t);
+int	iswcntrl_l(wint_t, locale_t);
+int	iswdigit_l(wint_t, locale_t);
+int	iswgraph_l(wint_t, locale_t);
+int	iswlower_l(wint_t, locale_t);
+int	iswprint_l(wint_t, locale_t);
+int	iswpunct_l(wint_t, locale_t);
+int	iswspace_l(wint_t, locale_t);
+int	iswupper_l(wint_t, locale_t);
+int	iswxdigit_l(wint_t, locale_t);
+int	iswctype_l(wint_t, wctype_t, locale_t);
+wint_t	towctrans_l(wint_t, wctrans_t, locale_t);
+wint_t	towlower_l(wint_t, locale_t);
+wint_t	towupper_l(wint_t, locale_t);
+wctrans_t wctrans_l(const char *, locale_t);
+wctype_t wctype_l(const char *, locale_t);
+#endif
+
 __END_DECLS
 
 #endif		/* _WCTYPE_H_ */

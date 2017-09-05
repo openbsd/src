@@ -1,4 +1,7 @@
+.\"	$OpenBSD: strcoll.3,v 1.10 2017/09/05 03:16:13 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
@@ -29,45 +32,69 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcoll.3,v 1.9 2013/06/05 03:39:23 tedu Exp $
-.\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: September 5 2017 $
 .Dt STRCOLL 3
 .Os
 .Sh NAME
-.Nm strcoll
+.Nm strcoll ,
+.Nm strcoll_l
 .Nd compare strings according to current collation
 .Sh SYNOPSIS
 .In string.h
 .Ft int
 .Fn strcoll "const char *s1" "const char *s2"
+.Ft int
+.Fn strcoll_l "const char *s1" "const char *s2" "locale_t locale"
 .Sh DESCRIPTION
 The
 .Fn strcoll
-function lexicographically compares the NUL-terminated strings
+and
+.Fn strcoll_l
+functions lexicographically compare the NUL-terminated strings
 .Fa s1
 and
 .Fa s2
 according to the current locale collation
-and returns an integer greater than, equal to, or less than 0,
+and return an integer greater than, equal to, or less than 0,
 according to whether
 .Fa s1
 is greater than, equal to, or less than
 .Fa s2 .
-.Sh SEE ALSO
-.Xr bcmp 3 ,
-.Xr memcmp 3 ,
-.Xr setlocale 3 ,
-.Xr strcasecmp 3 ,
+.Pp
+On
+.Ox ,
+they have the same effect as
 .Xr strcmp 3 ,
-.Xr strxfrm 3
+and the global locale, the thread-specific locale, and the
+.Fa locale
+argument are ignored.
+.Sh ENVIRONMENT
+On other operating systems, the behaviour of
+.Fn strcoll
+may depend on the
+.Dv LC_CTYPE
+.Xr locale 1 .
+.Sh SEE ALSO
+.Xr newlocale 3 ,
+.Xr setlocale 3 ,
+.Xr strcmp 3 ,
+.Xr strxfrm 3 ,
+.Xr wcscoll 3
 .Sh STANDARDS
 The
 .Fn strcoll
 function conforms to
-.St -ansiC .
+.St -ansiC ,
+and
+.Fn strcoll_l
+to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn strcoll
-function first appeared in
-.Bx 4.3 Reno .
+function has been available since
+.Bx 4.3 Reno ,
+and
+.Fn strcoll_l
+since
+.Ox 6.2 .

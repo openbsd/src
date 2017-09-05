@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.3 2016/09/06 19:56:36 guenther Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.4 2017/09/05 03:16:13 schwarze Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -37,22 +37,57 @@ __only_inline int	isascii(int _c);
 __only_inline int	toascii(int _c);
 __only_inline int	_tolower(int _c);
 __only_inline int	_toupper(int _c);
+
+#ifndef	_LOCALE_T_DEFINED_
+#define	_LOCALE_T_DEFINED_
+typedef void	*locale_t;
+#endif
+
+__only_inline int	isalnum_l(int _c, locale_t _l);
+__only_inline int	isalpha_l(int _c, locale_t _l);
+__only_inline int	iscntrl_l(int _c, locale_t _l);
+__only_inline int	isdigit_l(int _c, locale_t _l);
+__only_inline int	isgraph_l(int _c, locale_t _l);
+__only_inline int	islower_l(int _c, locale_t _l);
+__only_inline int	isprint_l(int _c, locale_t _l);
+__only_inline int	ispunct_l(int _c, locale_t _l);
+__only_inline int	isspace_l(int _c, locale_t _l);
+__only_inline int	isupper_l(int _c, locale_t _l);
+__only_inline int	isxdigit_l(int _c, locale_t _l);
+__only_inline int	tolower_l(int _c, locale_t _l);
+__only_inline int	toupper_l(int _c, locale_t _l);
+__only_inline int	isblank_l(int _c, locale_t _l);
+
 PROTO_NORMAL(isalnum);
+PROTO_DEPRECATED(isalnum_l);
 PROTO_NORMAL(isalpha);
-PROTO_NORMAL(iscntrl);
-PROTO_NORMAL(isdigit);
-PROTO_NORMAL(isgraph);
-PROTO_NORMAL(islower);
-PROTO_NORMAL(isprint);
-PROTO_NORMAL(ispunct);
-PROTO_NORMAL(isspace);
-PROTO_NORMAL(isupper);
-PROTO_NORMAL(isxdigit);
-PROTO_NORMAL(tolower);
-PROTO_NORMAL(toupper);
-PROTO_NORMAL(isblank);
+PROTO_DEPRECATED(isalpha_l);
 PROTO_NORMAL(isascii);
+PROTO_NORMAL(isblank);
+PROTO_DEPRECATED(isblank_l);
+PROTO_NORMAL(iscntrl);
+PROTO_DEPRECATED(iscntrl_l);
+PROTO_NORMAL(isdigit);
+PROTO_DEPRECATED(isdigit_l);
+PROTO_NORMAL(isgraph);
+PROTO_DEPRECATED(isgraph_l);
+PROTO_NORMAL(islower);
+PROTO_DEPRECATED(islower_l);
+PROTO_NORMAL(isprint);
+PROTO_DEPRECATED(isprint_l);
+PROTO_NORMAL(ispunct);
+PROTO_DEPRECATED(ispunct_l);
+PROTO_NORMAL(isspace);
+PROTO_DEPRECATED(isspace_l);
+PROTO_NORMAL(isupper);
+PROTO_DEPRECATED(isupper_l);
+PROTO_NORMAL(isxdigit);
+PROTO_DEPRECATED(isxdigit_l);
 PROTO_DEPRECATED(toascii);
+PROTO_NORMAL(tolower);
+PROTO_DEPRECATED(tolower_l);
+PROTO_NORMAL(toupper);
+PROTO_DEPRECATED(toupper_l);
 PROTO_STD_DEPRECATED(_tolower);
 PROTO_STD_DEPRECATED(_toupper);
 

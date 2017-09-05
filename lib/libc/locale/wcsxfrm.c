@@ -1,6 +1,5 @@
-/*	$OpenBSD: wcsxfrm.c,v 1.2 2012/12/05 23:20:00 deraadt Exp $ */
-/*	$OpenBSD: wcsxfrm.c,v 1.2 2012/12/05 23:20:00 deraadt Exp $	*/
-/*	$NetBSD: multibyte_sb.c,v 1.4 2003/08/07 16:43:04 agc Exp $	*/
+/*	$OpenBSD: wcsxfrm.c,v 1.3 2017/09/05 03:16:13 schwarze Exp $ */
+/*	$NetBSD: multibyte_sb.c,v 1.4 2003/08/07 16:43:04 agc Exp $ */
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -40,3 +39,4 @@ wcsxfrm(wchar_t *dest, const wchar_t *src, size_t n)
 		return wcslen(src);
 	return wcslcpy(dest, src, n);
 }
+DEF_STRONG(wcsxfrm);

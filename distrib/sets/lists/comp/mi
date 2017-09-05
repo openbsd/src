@@ -2417,6 +2417,7 @@
 ./usr/share/man/man3/nan.3
 ./usr/share/man/man3/ndbm.3
 ./usr/share/man/man3/nextafter.3
+./usr/share/man/man3/newlocale.3
 ./usr/share/man/man3/nice.3
 ./usr/share/man/man3/nl_langinfo.3
 ./usr/share/man/man3/nlist.3
@@ -2656,6 +2657,7 @@
 ./usr/share/man/man3/ungetwc.3
 ./usr/share/man/man3/unvis.3
 ./usr/share/man/man3/usbhid.3
+./usr/share/man/man3/uselocale.3
 ./usr/share/man/man3/usleep.3
 ./usr/share/man/man3/utime.3
 ./usr/share/man/man3/uucplock.3
@@ -2667,6 +2669,7 @@
 ./usr/share/man/man3/wcscat.3
 ./usr/share/man/man3/wcschr.3
 ./usr/share/man/man3/wcscmp.3
+./usr/share/man/man3/wcscoll.3
 ./usr/share/man/man3/wcscpy.3
 ./usr/share/man/man3/wcscspn.3
 ./usr/share/man/man3/wcsdup.3
@@ -2683,6 +2686,7 @@
 ./usr/share/man/man3/wcstol.3
 ./usr/share/man/man3/wcstombs.3
 ./usr/share/man/man3/wcswidth.3
+./usr/share/man/man3/wcsxfrm.3
 ./usr/share/man/man3/wctob.3
 ./usr/share/man/man3/wctomb.3
 ./usr/share/man/man3/wctrans.3

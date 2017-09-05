@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.11 2017/05/20 12:48:56 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.12 2017/09/05 03:16:13 schwarze Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -46,10 +46,10 @@ extern char **environ;
 extern char *__progname;
 
 #if 0
-extern PROTO_NORMAL(__mb_cur_max);
 /*extern PROTO_NORMAL(suboptarg);*/
 #endif
 
+PROTO_NORMAL(__mb_cur_max);
 PROTO_STD_DEPRECATED(_Exit);
 PROTO_DEPRECATED(a64l);
 PROTO_NORMAL(abort);

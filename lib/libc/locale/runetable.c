@@ -268,5 +268,3 @@ _RuneLocale _DefaultRuneLocale = {
     },
     NULL
 };
-
-_RuneLocale *_CurrentRuneLocale = &_DefaultRuneLocale;

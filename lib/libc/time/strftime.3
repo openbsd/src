@@ -1,3 +1,5 @@
+.\"	$OpenBSD: strftime.3,v 1.37 2017/09/05 03:16:14 schwarze Exp $
+.\"
 .\" Copyright (c) 1989, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -30,22 +32,33 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
-.\"	$OpenBSD: strftime.3,v 1.36 2016/02/08 20:29:11 jmc Exp $
 .\"
-.Dd $Mdocdate: February 8 2016 $
+.Dd $Mdocdate: September 5 2017 $
 .Dt STRFTIME 3
 .Os
 .Sh NAME
-.Nm strftime
+.Nm strftime ,
+.Nm strftime_l
 .Nd format date and time
 .Sh SYNOPSIS
 .In time.h
 .Ft size_t
-.Fn strftime "char *buf" "size_t maxsize" "const char *format" "const struct tm *timeptr"
+.Fo strftime
+.Fa "char *buf"
+.Fa "size_t maxsize"
+.Fa "const char *format"
+.Fa "const struct tm *timeptr"
+.Fc
+.Ft size_t
+.Fo strftime_l
+.Fa "char *buf"
+.Fa "size_t maxsize"
+.Fa "const char *format"
+.Fa "const struct tm *timeptr"
+.Fa "locale_t locale"
+.Fc
 .Sh DESCRIPTION
-The
-.Fn strftime
-function formats the information from
+These functions format the information from
 .Fa timeptr
 (as described in
 .Xr mktime 3 )
@@ -191,6 +204,13 @@ is replaced by the date and time in
 .Xr date 1
 format.
 .El
+.Pp
+The
+.Ox
+implementation always uses the C locale and ignores
+the global locale, the thread-specific locale, and the
+.Fa locale
+argument.
 .Sh RETURN VALUES
 If the total number of resulting characters, including the terminating
 NUL character, is not more than
@@ -199,6 +219,12 @@ NUL character, is not more than
 returns the number of characters placed in the array, not counting the
 terminating NUL.
 Otherwise, zero is returned.
+.Sh ENVIRONMENT
+On other operating systems, the behaviour of
+.Fn strftime
+may depend on the
+.Dv LC_TIME
+.Xr locale 1 .
 .Sh SEE ALSO
 .Xr date 1 ,
 .Xr printf 1 ,
@@ -215,6 +241,10 @@ The
 function
 conforms to
 .St -isoC-99 ,
+and
+.Fn strftime_l
+to
+.St -p1003.1-2008 ,
 except that the
 .Ql E
 and
@@ -253,7 +283,11 @@ first appeared in
 The
 .Fn strftime
 function has been available since
-.Bx 4.3 Reno .
+.Bx 4.3 Reno ,
+and
+.Fn strftime_l
+since
+.Ox 6.2 .
 .Sh AUTHORS
 .An Keith Bostic
 implemented the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.3 2015/09/12 16:23:14 guenther Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.4 2017/09/05 03:16:13 schwarze Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -53,6 +53,7 @@ PROTO_NORMAL(wcscat);
 PROTO_NORMAL(wcschr);
 PROTO_NORMAL(wcscmp);
 PROTO_STD_DEPRECATED(wcscoll);
+PROTO_DEPRECATED(wcscoll_l);
 PROTO_STD_DEPRECATED(wcscpy);
 PROTO_NORMAL(wcscspn);
 PROTO_NORMAL(wcsdup);
@@ -80,7 +81,8 @@ PROTO_NORMAL(wcstoul);
 PROTO_NORMAL(wcstoull);
 PROTO_DEPRECATED(wcswcs);
 PROTO_NORMAL(wcswidth);
-PROTO_STD_DEPRECATED(wcsxfrm);
+PROTO_NORMAL(wcsxfrm);
+PROTO_DEPRECATED(wcsxfrm_l);
 PROTO_NORMAL(wctob);
 PROTO_NORMAL(wcwidth);
 PROTO_NORMAL(wmemchr);

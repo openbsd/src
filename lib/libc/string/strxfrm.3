@@ -1,4 +1,7 @@
+.\"	$OpenBSD: strxfrm.3,v 1.11 2017/09/05 03:16:13 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
@@ -29,24 +32,27 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strxfrm.3,v 1.10 2013/06/05 03:39:23 tedu Exp $
-.\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: September 5 2017 $
 .Dt STRXFRM 3
 .Os
 .Sh NAME
-.Nm strxfrm
+.Nm strxfrm ,
+.Nm strxfrm_l
 .Nd transform a string under locale
 .Sh SYNOPSIS
 .In string.h
 .Ft size_t
 .Fn strxfrm "char *dst" "const char *src" "size_t n"
+.Ft size_t
+.Fn strxfrm_l "char *dst" "const char *src" "size_t n" "locale_t locale"
 .Sh DESCRIPTION
 The idea of
 .Fn strxfrm
+and
+.Fn strxfrm_l
 is to
 .Dq un-localize
-a string: the function transforms
+a string: the functions transform
 .Ar src ,
 storing the result in
 .Ar dst ,
@@ -55,25 +61,42 @@ such that
 on transformed strings returns what
 .Xr strcoll 3
 on the original untransformed strings would return.
+.Pp
+On
+.Ox ,
+both have the same effect as
+.Xr strlcpy 3 ,
+and the global locale, the thread-specific locale, and the
+.Fa locale
+argument are ignored.
+.Sh ENVIRONMENT
+On other operating systems, the behaviour of
+.Fn strxfrm
+may depend on the
+.Dv LC_CTYPE
+.Xr locale 1 .
 .Sh SEE ALSO
-.Xr bcmp 3 ,
-.Xr memcmp 3 ,
+.Xr newlocale 3 ,
 .Xr setlocale 3 ,
-.Xr strcasecmp 3 ,
 .Xr strcmp 3 ,
-.Xr strcoll 3
+.Xr strcoll 3 ,
+.Xr strlcpy 3 ,
+.Xr wcsxfrm 3
 .Sh STANDARDS
 The
 .Fn strxfrm
 function conforms to
-.St -ansiC .
+.St -ansiC ,
+and
+.Fn strxfrm_l
+to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn strxfrm
-function first appeared in
-.Bx 4.3 Reno .
-.Sh BUGS
-Since locales are not fully implemented on
-.Ox ,
-.Fn strxfrm
-just returns a copy of the original string.
+function has been available since
+.Bx 4.3 Reno ,
+and
+.Fn strxfrm_l
+since
+.Ox 6.2 .

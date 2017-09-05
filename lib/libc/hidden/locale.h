@@ -1,4 +1,4 @@
-/*	$OpenBSD: locale.h,v 1.1 2015/09/14 12:21:03 guenther Exp $	*/
+/*	$OpenBSD: locale.h,v 1.2 2017/09/05 03:16:13 schwarze Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,7 +20,11 @@
 
 #include_next <locale.h>
 
+PROTO_DEPRECATED(duplocale);
+PROTO_DEPRECATED(freelocale);
 PROTO_NORMAL(localeconv);
+PROTO_DEPRECATED(newlocale);
 PROTO_NORMAL(setlocale);
+PROTO_DEPRECATED(uselocale);
 
 #endif /* _LIBC_LOCALE_H_ */

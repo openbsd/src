@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.31 2016/09/09 18:12:37 millert Exp $	*/
+/*	$OpenBSD: string.h,v 1.32 2017/09/05 03:16:13 schwarze Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -52,6 +52,13 @@
 typedef	__size_t	size_t;
 #endif
 
+#if __POSIX_VISIBLE >= 200809
+#ifndef _LOCALE_T_DEFINED_
+#define _LOCALE_T_DEFINED_
+typedef void	*locale_t;
+#endif
+#endif
+
 __BEGIN_DECLS
 void	*memchr(const void *, int, size_t);
 int	 memcmp(const void *, const void *, size_t);
@@ -102,9 +109,13 @@ char	*strdup(const char *);
 #if __POSIX_VISIBLE >= 200809
 char	*stpcpy(char *__restrict, const char *__restrict);
 char	*stpncpy(char *__restrict, const char *__restrict, size_t);
+int	 strcoll_l(const char *, const char *, locale_t);
+char	*strerror_l(int, locale_t);
 char	*strndup(const char *, size_t);
 size_t	 strnlen(const char *, size_t);
 char	*strsignal(int);
+size_t	 strxfrm_l(char *__restrict, const char *__restrict, size_t, locale_t)
+		__attribute__ ((__bounded__(__string__,1,3)));
 #endif
 
 #if __BSD_VISIBLE

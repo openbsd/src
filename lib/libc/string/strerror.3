@@ -1,4 +1,7 @@
+.\"	$OpenBSD: strerror.3,v 1.15 2017/09/05 03:16:13 schwarze Exp $
+.\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
@@ -29,46 +32,61 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strerror.3,v 1.14 2014/11/30 21:21:59 schwarze Exp $
-.\"
-.Dd $Mdocdate: November 30 2014 $
+.Dd $Mdocdate: September 5 2017 $
 .Dt STRERROR 3
 .Os
 .Sh NAME
 .Nm strerror ,
+.Nm strerror_l ,
 .Nm strerror_r
 .Nd get error message string
 .Sh SYNOPSIS
 .In string.h
 .Ft char *
 .Fn strerror "int errnum"
+.Ft char *
+.Fn strerror_l "int errnum" "locale_t locale"
 .Ft int
 .Fn strerror_r "int errnum" "char *strerrbuf" "size_t buflen"
 .Sh DESCRIPTION
-The
-.Fn strerror
-and
-.Fn strerror_r
-functions map the error number
+These functions map the error number
 .Fa errnum
-to a language-dependent error message string.
+to an error message string.
 .Pp
 .Fn strerror
-returns a string containing a maximum of
+and
+.Fn strerror_l
+return a string containing a maximum of
 .Dv NL_TEXTMAX
 characters, including the trailing NUL.
-This string is not to be modified by the calling program,
-but may be overwritten by subsequent calls to
-.Fn strerror .
+This string is not to be modified by the calling program.
+The string returned by
+.Fn strerror
+may be overwritten by subsequent calls to
+.Fn strerror
+in any thread.
+The string returned by
+.Fn strerror_l
+may be overwritten by subsequent calls to
+.Fn strerror_l
+in the same thread.
 .Pp
 .Fn strerror_r
 is a thread safe version of
 .Fn strerror
 that places the error message in the specified buffer
 .Fa strerrbuf .
+.Pp
+On
+.Ox ,
+the global locale, the thread-specific locale, and the
+.Fa locale
+argument are ignored.
 .Sh RETURN VALUES
 .Fn strerror
-returns a pointer to the error message string.
+and
+.Fn strerror_l
+return a pointer to the error message string.
 If an error occurs, the error code is stored in
 .Va errno .
 .Pp
@@ -77,11 +95,16 @@ returns zero upon successful completion.
 If an error occurs, the error code is stored in
 .Va errno
 and the error code is returned.
-.Sh ERRORS
+.Sh ENVIRONMENT
+On other operating systems, the behaviour of
 .Fn strerror
 and
 .Fn strerror_r
-may fail if:
+may depend on the
+.Dv LC_MESSAGES
+.Xr locale 1 .
+.Sh ERRORS
+All these functions may fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 .Fa errnum
@@ -91,7 +114,7 @@ The returned error string will consist of an error message that includes
 .El
 .Pp
 .Fn strerror_r
-may fail if:
+may also fail if:
 .Bl -tag -width Er
 .It Bq Er ERANGE
 The error message is larger than
@@ -101,6 +124,7 @@ The message will be truncated to fit.
 .El
 .Sh SEE ALSO
 .Xr intro 2 ,
+.Xr newlocale 3 ,
 .Xr perror 3 ,
 .Xr setlocale 3
 .Sh STANDARDS
@@ -109,15 +133,20 @@ The
 function conforms to
 .St -isoC-99 .
 The
+.Fn strerror_l
+and
 .Fn strerror_r
-function conforms to
+functions conform to
 .St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn strerror
-function first appeared in
-.Bx 4.3 Reno .
-The
+function has been available since
+.Bx 4.3 Reno ,
 .Fn strerror_r
-function first appeared in
-.Ox 3.3 .
+since
+.Ox 3.3 ,
+and
+.Fn strerror_l
+since
+.Ox 6.2 .

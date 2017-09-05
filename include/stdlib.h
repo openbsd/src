@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.71 2017/05/11 11:52:18 tom Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.72 2017/09/05 03:16:13 schwarze Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -82,8 +82,7 @@ typedef struct {
 
 #define	RAND_MAX	0x7fffffff
 
-extern size_t	__mb_cur_max;
-#define	MB_CUR_MAX	__mb_cur_max
+#define	MB_CUR_MAX	__mb_cur_max()
 
 /*
  * Some header files may define an abs macro.
@@ -132,7 +131,7 @@ unsigned long
 	 strtoul(const char *__restrict, char **__restrict, int);
 int	 system(const char *);
 
-/* these are currently just stubs */
+size_t	 __mb_cur_max(void);
 int	 mblen(const char *, size_t);
 size_t	 mbstowcs(wchar_t *, const char *, size_t);
 int	 wctomb(char *, wchar_t);

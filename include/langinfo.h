@@ -1,4 +1,4 @@
-/*	$OpenBSD: langinfo.h,v 1.7 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: langinfo.h,v 1.8 2017/09/05 03:16:13 schwarze Exp $	*/
 /*	$NetBSD: langinfo.h,v 1.3 1995/04/28 23:30:54 jtc Exp $	*/
 
 /*
@@ -70,8 +70,19 @@
 
 #define CODESET		51	/* Codeset name */
 
+#if __POSIX_VISIBLE >= 200809
+#ifndef	_LOCALE_T_DEFINED_
+#define	_LOCALE_T_DEFINED_
+typedef void	*locale_t;
+#endif
+#endif
+
 __BEGIN_DECLS
 char *nl_langinfo(nl_item);
+
+#if __POSIX_VISIBLE >= 200809
+char *nl_langinfo_l(nl_item, locale_t);
+#endif
 __END_DECLS
 
 #endif	/* _LANGINFO_H_ */

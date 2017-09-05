@@ -1,8 +1,8 @@
-.\" $OpenBSD: towctrans.3,v 1.2 2007/05/31 19:19:29 jmc Exp $
-.\"
+.\" $OpenBSD: towctrans.3,v 1.3 2017/09/05 03:16:13 schwarze Exp $
 .\" $NetBSD: towctrans.3,v 1.5 2004/01/24 16:58:54 wiz Exp $
 .\"
-.\" Copyright (c)2003 Citrus Project,
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2003 Citrus Project
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,61 +26,72 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 5 2017 $
 .Dt TOWCTRANS 3
 .Os
-.\" ----------------------------------------------------------------------
 .Sh NAME
-.Nm towctrans
+.Nm towctrans ,
+.Nm towctrans_l
 .Nd convert a wide character with a specified map
-.\" ----------------------------------------------------------------------
 .Sh SYNOPSIS
 .In wctype.h
 .Ft wint_t
 .Fn towctrans "wint_t wc" "wctrans_t charmap"
-.\" ----------------------------------------------------------------------
+.Ft wint_t
+.Fn towctrans_l "wint_t wc" "wctrans_t charmap" "locale_t locale"
 .Sh DESCRIPTION
-The
-.Fn towctrans
-function converts a wide character
+These functions convert the wide character
 .Fa wc
 with a character mapping
 .Fa charmap .
 .Pp
-The behaviour of
-.Fn towctrans
-is undefined if the
-.Fn towctrans
-function is called with an invalid
+The behaviour is undefined if
 .Fa charmap
-(changes of
-.Dv LC_CTYPE
-category invalidate
-.Fa charmap )
-or invalid wide character
-.Fa wc .
-.Pp
-The behaviour of
-.Fn towctrans
-is affected by the
-.Dv LC_CTYPE
-category of the current locale.
-.\" ----------------------------------------------------------------------
+or
+.Fa wc
+is invalid.
+When
+.Fa charmap
+is retrieved with
+.Xr wctrans 3 ,
+it becomes invalid when the thread-specific character encoding locale
+is changed with
+.Xr uselocale 3
+or when the global character encoding locale is changed with
+.Xr setlocale 3 .
+When
+.Fa charmap
+is retrieved with
+.Xr wctrans_l 3 ,
+it is only valid for use with the same
+.Fa locale
+argument.
 .Sh RETURN VALUES
-.Fn towctrans
-returns the resulting character of the conversion.
-.\" ----------------------------------------------------------------------
-.Sh ERRORS
-No errors are defined.
-.\" ----------------------------------------------------------------------
+These functions return the resulting wide character, or
+.Fa wc
+if there is no corresponding character in
+.Fa charmap .
 .Sh SEE ALSO
 .Xr iswctype 3 ,
+.Xr newlocale 3 ,
 .Xr setlocale 3 ,
-.Xr wctrans 3 ,
-.Xr wctype 3
-.\" ----------------------------------------------------------------------
+.Xr towlower 3 ,
+.Xr wctrans 3
 .Sh STANDARDS
 The
 .Fn towctrans
 function conforms to
-.St -isoC-amd1 .
+.St -isoC-amd1 ,
+and
+.Fn towctrans_l
+to
+.St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Fn towctrans
+function has been available since
+.Ox 3.8 ,
+and
+.Fn towctrans_l
+since
+.Ox 6.2 .

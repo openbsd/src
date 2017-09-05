@@ -1,4 +1,4 @@
-/*	$OpenBSD: ___runetype_mb.c,v 1.2 2012/12/05 23:20:00 deraadt Exp $ */
+/*	$OpenBSD: ___runetype_mb.c,v 1.3 2017/09/05 03:16:13 schwarze Exp $ */
 /*	$NetBSD: ___runetype_mb.c,v 1.10 2005/02/10 19:19:57 tnozaki Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #include "rune_local.h"
 
 _RuneType
-___runetype_mb(wint_t c)
+___runetype_mb(wint_t c, _RuneLocale *rl)
 {
 	rune_t c0;
 	uint32_t x;
@@ -49,7 +49,7 @@ ___runetype_mb(wint_t c)
 		return (0U);
 
 	c0 = (rune_t)c; /* XXX assumes wint_t = int */
-	rr = &_CurrentRuneLocale->rl_runetype_ext;
+	rr = &rl->rl_runetype_ext;
 	base = rr->rr_rune_ranges;
 	for (x = rr->rr_nranges; x; x >>= 1) {
 		re = base + (x >> 1);

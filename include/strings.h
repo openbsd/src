@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.h,v 1.4 2015/11/20 23:40:32 millert Exp $	*/
+/*	$OpenBSD: strings.h,v 1.5 2017/09/05 03:16:13 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,6 +47,13 @@
 typedef	__size_t	size_t;
 #endif
 
+#if __POSIX_VISIBLE >= 200809
+#ifndef	_LOCALE_T_DEFINED_
+#define	_LOCALE_T_DEFINED_
+typedef void	*locale_t;
+#endif
+#endif
+
 __BEGIN_DECLS
 #if __BSD_VISIBLE || (__XPG_VISIBLE >= 420 && __POSIX_VISIBLE <= 200112)
 /*
@@ -66,6 +73,8 @@ char	*rindex(const char *, int);
 int	 ffs(int);
 int	 strcasecmp(const char *, const char *);
 int	 strncasecmp(const char *, const char *, size_t);
+int	 strcasecmp_l(const char *, const char *, locale_t);
+int	 strncasecmp_l(const char *, const char *, size_t, locale_t);
 #endif
 __END_DECLS
 

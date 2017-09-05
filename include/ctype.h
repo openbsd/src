@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.24 2014/05/26 01:49:36 guenther Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.25 2017/09/05 03:16:13 schwarze Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -51,6 +51,13 @@
 #define	_X	0x40
 #define	_B	0x80
 
+#if __POSIX_VISIBLE >= 200809
+#ifndef	_LOCALE_T_DEFINED_
+#define	_LOCALE_T_DEFINED_
+typedef void	*locale_t;
+#endif
+#endif
+
 __BEGIN_DECLS
 
 extern const char	*_ctype_;
@@ -84,9 +91,26 @@ int	_tolower(int);
 int	_toupper(int);
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE */
 
+#if __POSIX_VISIBLE >= 200809
+int	isalnum_l(int, locale_t);
+int	isalpha_l(int, locale_t);
+int	isblank_l(int, locale_t);
+int	iscntrl_l(int, locale_t);
+int	isdigit_l(int, locale_t);
+int	isgraph_l(int, locale_t);
+int	islower_l(int, locale_t);
+int	isprint_l(int, locale_t);
+int	ispunct_l(int, locale_t);
+int	isspace_l(int, locale_t);
+int	isupper_l(int, locale_t);
+int	isxdigit_l(int, locale_t);
+int	tolower_l(int, locale_t);
+int	toupper_l(int, locale_t);
+#endif
+
 #endif /* __GNUC__ || _ANSI_LIBRARY */
 
-#if !defined(_ANSI_LIBRARY)
+#if !defined(_ANSI_LIBRARY) && !defined(__cplusplus)
 
 __only_inline int isalnum(int _c)
 {
@@ -186,6 +210,92 @@ __only_inline int _toupper(int _c)
 	return (_c - 'a' + 'A');
 }
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE */
+
+#if __POSIX_VISIBLE >= 200809
+__only_inline int
+isalnum_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return isalnum(_c);
+}
+
+__only_inline int
+isalpha_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return isalpha(_c);
+}
+
+__only_inline int
+isblank_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return isblank(_c);
+}
+
+__only_inline int
+iscntrl_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return iscntrl(_c);
+}
+
+__only_inline int
+isdigit_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return isdigit(_c);
+}
+
+__only_inline int
+isgraph_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return isgraph(_c);
+}
+
+__only_inline int
+islower_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return islower(_c);
+}
+
+__only_inline int
+isprint_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return isprint(_c);
+}
+
+__only_inline int
+ispunct_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return ispunct(_c);
+}
+
+__only_inline int
+isspace_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return isspace(_c);
+}
+
+__only_inline int
+isupper_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return isupper(_c);
+}
+
+__only_inline int
+isxdigit_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return isxdigit(_c);
+}
+
+__only_inline int
+tolower_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return tolower(_c);
+}
+
+__only_inline int
+toupper_l(int _c, locale_t _l __attribute__((__unused__)))
+{
+	return toupper(_c);
+}
+#endif /* __POSIX_VISIBLE >= 200809 */
 
 #endif /* !_ANSI_LIBRARY */
 

@@ -1,7 +1,8 @@
-.\"	$OpenBSD: strcasecmp.3,v 1.13 2015/11/24 09:14:35 daniel Exp $
+.\"	$OpenBSD: strcasecmp.3,v 1.14 2017/09/05 03:16:13 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Chris Torek.
@@ -31,25 +32,43 @@
 .\"
 .\"     @(#)strcasecmp.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: November 24 2015 $
+.Dd $Mdocdate: September 5 2017 $
 .Dt STRCASECMP 3
 .Os
 .Sh NAME
 .Nm strcasecmp ,
-.Nm strncasecmp
+.Nm strcasecmp_l ,
+.Nm strncasecmp ,
+.Nm strncasecmp_l
 .Nd compare strings, ignoring case
 .Sh SYNOPSIS
 .In strings.h
 .Ft int
-.Fn strcasecmp "const char *s1" "const char *s2"
+.Fo strcasecmp
+.Fa "const char *s1"
+.Fa "const char *s2"
+.Fc
 .Ft int
-.Fn strncasecmp "const char *s1" "const char *s2" "size_t len"
+.Fo strcasecmp_l
+.Fa "const char *s1"
+.Fa "const char *s2"
+.Fa "locale_t locale"
+.Fc
+.Ft int
+.Fo strncasecmp
+.Fa "const char *s1"
+.Fa "const char *s2"
+.Fa "size_t len"
+.Fc
+.Ft int
+.Fo strncasecmp_l
+.Fa "const char *s1"
+.Fa "const char *s2"
+.Fa "size_t len"
+.Fa "locale_t locale"
+.Fc
 .Sh DESCRIPTION
-The
-.Fn strcasecmp
-and
-.Fn strncasecmp
-functions compare the NUL-terminated strings
+These functions compare the NUL-terminated strings
 .Fa s1
 and
 .Fa s2
@@ -66,27 +85,44 @@ is greater than
 .Ql \e0 .
 .Pp
 .Fn strncasecmp
-compares at most
+and
+.Fn strncasecmp_l
+compare at most
 .Fa len
 characters.
+.Pp
+On
+.Ox ,
+these functions always use the C locale and ignore
+the global locale, the thread-specific locale, and the
+.Fa locale
+argument.
+.Sh ENVIRONMENT
+On other operating systems, the behaviour of
+.Fn strcasecmp
+and
+.Fn strncasecmp
+may depend on the
+.Dv LC_CTYPE
+.Xr locale 1 .
 .Sh SEE ALSO
-.Xr bcmp 3 ,
-.Xr memcmp 3 ,
 .Xr strcmp 3 ,
 .Xr strcoll 3 ,
 .Xr strxfrm 3 ,
 .Xr wcscasecmp 3
 .Sh STANDARDS
-The
-.Fn strcasecmp
-and
-.Fn strncasecmp
-functions conform to
+These functions conform to
 .St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn strcasecmp
 and
 .Fn strncasecmp
-functions first appeared in
-.Bx 4.3 Tahoe .
+functions have been available since
+.Bx 4.3 Tahoe ,
+and
+.Fn strcasecmp_l
+and
+.Fn strncasecmp_l
+since
+.Ox 6.2 .

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locale.h,v 1.10 2016/09/09 18:12:37 millert Exp $	*/
+/*	$OpenBSD: locale.h,v 1.11 2017/09/05 03:16:13 schwarze Exp $	*/
 /*	$NetBSD: locale.h,v 1.6 1994/10/26 00:56:02 cgd Exp $	*/
 
 /*
@@ -76,9 +76,37 @@ struct lconv {
 
 #include <sys/cdefs.h>
 
+#if __POSIX_VISIBLE >= 200809
+
+#ifndef	_LOCALE_T_DEFINED_
+#define	_LOCALE_T_DEFINED_
+typedef void	*locale_t;
+#endif
+
+#define	LC_COLLATE_MASK		(1 << LC_COLLATE)
+#define	LC_CTYPE_MASK		(1 << LC_CTYPE)
+#define	LC_MONETARY_MASK	(1 << LC_MONETARY)
+#define	LC_NUMERIC_MASK		(1 << LC_NUMERIC)
+#define	LC_TIME_MASK		(1 << LC_TIME)
+#define	LC_MESSAGES_MASK	(1 << LC_MESSAGES)
+
+#define	LC_ALL_MASK		((1 << _LC_LAST) - 2)
+
+#define	LC_GLOBAL_LOCALE	((locale_t)-1)
+
+#endif /* __POSIX_VISIBLE >= 200809 */
+
+
 __BEGIN_DECLS
 struct lconv	*localeconv(void);
 char		*setlocale(int, const char *);
+
+#if __POSIX_VISIBLE >= 200809
+locale_t	 duplocale(locale_t);
+void		 freelocale(locale_t);
+locale_t	 newlocale(int, const char *, locale_t);
+locale_t	 uselocale(locale_t);
+#endif
 __END_DECLS
 
 #endif /* _LOCALE_H_ */

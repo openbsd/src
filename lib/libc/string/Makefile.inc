@@ -1,17 +1,17 @@
-#	$OpenBSD: Makefile.inc,v 1.38 2016/03/30 06:38:41 jmc Exp $
+#	$OpenBSD: Makefile.inc,v 1.39 2017/09/05 03:16:13 schwarze Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
 
 SRCS+=	explicit_bzero.c memccpy.c memmem.c memrchr.c stpcpy.c stpncpy.c \
-	strcasecmp.c strcasestr.c strcoll.c strdup.c \
-	strerror.c strerror_r.c strmode.c strndup.c strnlen.c \
-	strsignal.c strtok.c strxfrm.c \
+	strcasecmp.c strcasecmp_l.c strcasestr.c strcoll.c strcoll_l.c \
+	strdup.c strerror.c strerror_l.c strerror_r.c strmode.c \
+	strndup.c strnlen.c strsignal.c strtok.c strxfrm.c strxfrm_l.c \
 	timingsafe_bcmp.c timingsafe_memcmp.c \
 	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
 	wcslen.c wcsncat.c wcsncmp.c wcsncpy.c wcspbrk.c wcsrchr.c wcsspn.c \
 	wcsstr.c wcstok.c wcswcs.c wcswidth.c wmemchr.c wmemcmp.c wmemcpy.c \
-	wmemmove.c wmemset.c wcsdup.c wcscasecmp.c
+	wmemmove.c wmemset.c wcsdup.c wcscasecmp.c wcscasecmp_l.c
 
 # machine-dependent net sources
 # ../arch/ARCH/Makefile.inc must include sources for:

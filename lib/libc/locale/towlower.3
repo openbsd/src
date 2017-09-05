@@ -1,4 +1,4 @@
-.\"	$OpenBSD: towlower.3,v 1.5 2014/04/07 17:57:56 schwarze Exp $
+.\"	$OpenBSD: towlower.3,v 1.6 2017/09/05 03:16:13 schwarze Exp $
 .\"	$NetBSD: towlower.3,v 1.7 2003/09/08 17:54:31 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991 The Regents of the University of California.
@@ -34,38 +34,88 @@
 .\"
 .\"	@(#)tolower.3	5.2 (Berkeley) 6/29/91
 .\"
-.Dd $Mdocdate: April 7 2014 $
+.Dd $Mdocdate: September 5 2017 $
 .Dt TOWLOWER 3
 .Os
 .Sh NAME
 .Nm towlower ,
-.Nm towupper
+.Nm towlower_l ,
+.Nm towupper ,
+.Nm towupper_l
 .Nd wide-character case letter conversion utilities
 .Sh SYNOPSIS
 .In wctype.h
 .Ft wint_t
 .Fn towlower "wint_t wc"
 .Ft wint_t
+.Fn towlower_l "wint_t wc" "locale_t locale"
+.Ft wint_t
 .Fn towupper "wint_t wc"
+.Ft wint_t
+.Fn towupper_l "wint_t wc" "locale_t locale"
 .Sh DESCRIPTION
 The
 .Fn towlower
-function converts an upper-case wide character to the corresponding lower-case
-letter.
+and
+.Fn towlower_l
+functions convert an upper-case wide character
+to the corresponding lower-case letter.
 The
 .Fn towupper
-function converts an lower-case wide character to the corresponding upper-case
-letter.
+and
+.Fn towupper_l
+functions convert a lower-case wide character
+to the corresponding upper-case letter.
+.Pp
+The functions
+.Fn towlower_l
+and
+.Fn towupper_l
+use the specified
+.Fa locale ,
+whereas
+.Fn towlower
+and
+.Fn towupper
+use the thread-specific locale set with
+.Xr uselocale 3 ,
+falling back to the global locale set with
+.Xr setlocale 3 .
 .Sh RETURN VALUES
-If the argument is an upper/lower-case letter, the
-.Fn tolower
-function returns the corresponding counterpart if there is
-one; otherwise the argument is returned unchanged.
+These functions return the corresponding character, if any.
+Otherwise,
+.Fa wc
+is returned unchanged.
 .Sh SEE ALSO
+.Xr iswlower 3 ,
 .Xr tolower 3 ,
-.Xr toupper 3
+.Xr toupper 3 ,
+.Xr towctrans 3
 .Sh STANDARDS
-The functions conform to
+The functions
+.Fn towlower
+and
+.Fn towupper
+conform to
 .St -isoC-amd1
 and
-.St -isoC-99 .
+.St -isoC-99 ,
+and
+.Fn towlower_l
+and
+.Fn towupper_l
+to
+.St -p1003.1-2008 .
+.Sh HISTORY
+The functions
+.Fn towlower
+and
+.Fn towupper
+have been available since
+.Ox 3.8 ,
+and
+.Fn towlower_l
+and
+.Fn towupper_l
+since
+.Ox 6.2 .

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nl_langinfo.c,v 1.8 2016/05/23 00:05:15 guenther Exp $ */
+/*	$OpenBSD: nl_langinfo.c,v 1.9 2017/09/05 03:16:13 schwarze Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -102,7 +102,7 @@ nl_langinfo(nl_item item)
 		s = "";
 		break;
 	case CODESET:
-		s = _CurrentRuneLocale->rl_codeset;
+		s = _CurrentRuneLocale()->rl_codeset;
 		if (!s)
 			s = "";
 		break;

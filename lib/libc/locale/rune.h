@@ -1,4 +1,4 @@
-/*	$OpenBSD: rune.h,v 1.3 2016/05/23 00:05:15 guenther Exp $ */
+/*	$OpenBSD: rune.h,v 1.4 2017/09/05 03:16:13 schwarze Exp $ */
 /*	$NetBSD: rune.h,v 1.9 2003/08/07 16:43:04 agc Exp $	*/
 
 /*-
@@ -38,9 +38,14 @@
 #ifndef	_RUNE_H_
 #define	_RUNE_H_
 
+#include <locale.h>
 #include <stdio.h>
 #include <wchar.h>
 #include "runetype.h"
+
+#define	_LOCALE_NONE	(locale_t)0
+#define	_LOCALE_C	(locale_t)1
+#define	_LOCALE_UTF8	(locale_t)2
 
 /*
  * map _RTYPE_x to _CTYPE_x
@@ -70,12 +75,13 @@
 #define	_CTYPE_SW2	_RUNETYPE_SW2
 #define	_CTYPE_SW3	_RUNETYPE_SW3
 
-/*
- * global variables
- */
 __BEGIN_HIDDEN_DECLS
-extern _RuneLocale _DefaultRuneLocale;
-extern _RuneLocale *_CurrentRuneLocale;
+extern _RuneLocale	 _DefaultRuneLocale;
+extern _RuneLocale	*_Utf8RuneLocale;
+extern _RuneLocale	*_GlobalRuneLocale;
+
+_RuneLocale		*_CurrentRuneLocale(void);
+const char		*_get_locname(int, const char *);
 __END_HIDDEN_DECLS
 
 #endif	/*! _RUNE_H_ */
