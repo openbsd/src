@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.20 2017/09/05 10:53:02 mpi Exp $
+# $OpenBSD: Makefile,v 1.21 2017/09/05 11:03:08 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -330,7 +330,7 @@ rttest${n}:
 	! ${RCMD} change -expire 30 192.0.2.1 192.0.2.2
 
 
-#
+# Ensure that all MPATH routes on vlan99 are taken down
 n=	30
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
