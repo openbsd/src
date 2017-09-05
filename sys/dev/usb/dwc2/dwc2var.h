@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.18 2017/02/12 17:41:17 visa Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.19 2017/09/05 14:01:03 otto Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -143,7 +143,6 @@ dwc2_root_intr(dwc2_softc_t *sc)
 // XXX compat
 
 #define	ENOSR		90
-#define	EPROTO		96
 
 #ifndef mstohz
 #define mstohz(ms) \
