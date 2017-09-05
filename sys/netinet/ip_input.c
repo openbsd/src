@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.320 2017/09/01 15:38:12 visa Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.321 2017/09/05 00:58:16 visa Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
+#include <sys/mutex.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -83,8 +84,6 @@
 #include <netinet/ip_carp.h>
 #endif
 
-struct ipqhead ipq;
-
 int encdebug = 0;
 int ipsec_keep_invalid = IPSEC_DEFAULT_EMBRYONIC_SA_TIMEOUT;
 int ipsec_require_pfs = IPSEC_DEFAULT_PFS;
@@ -113,6 +112,12 @@ u_int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
 int	ip_directedbcast = 0;
 
 struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
+
+/* Protects `ipq' and `ip_frags'. */
+struct mutex	ipq_mutex = MUTEX_INITIALIZER(IPL_SOFTNET);
+
+/* IP reassembly queue */
+LIST_HEAD(, ipq) ipq;
 
 /* Keep track of memory used for reassembly */
 int	ip_maxqueue = 300;
@@ -516,8 +521,6 @@ ip_local(struct mbuf **mp, int *offp, int nxt, int af)
 	struct ipqent *ipqe;
 	int mff, hlen;
 
-	KERNEL_ASSERT_LOCKED();
-
 	hlen = ip->ip_hl << 2;
 
 	/*
@@ -531,10 +534,12 @@ ip_local(struct mbuf **mp, int *offp, int nxt, int af)
 		if (m->m_flags & M_EXT) {		/* XXX */
 			if ((m = *mp = m_pullup(m, hlen)) == NULL) {
 				ipstat_inc(ips_toosmall);
-				goto bad;
+				return IPPROTO_DONE;
 			}
 			ip = mtod(m, struct ip *);
 		}
+
+		mtx_enter(&ipq_mutex);
 
 		/*
 		 * Look for queue of fragments
@@ -601,6 +606,8 @@ found:
 		} else
 			if (fp)
 				ip_freef(fp);
+
+		mtx_leave(&ipq_mutex);
 	}
 
 	*offp = hlen;
@@ -610,6 +617,7 @@ found:
 		nxt = ip_deliver(mp, offp, nxt, AF_INET);
 	return nxt;
  bad:
+	mtx_leave(&ipq_mutex);
 	m_freemp(mp);
 	return IPPROTO_DONE;
 }
@@ -822,6 +830,8 @@ ip_reass(struct ipqent *ipqe, struct ipq *fp)
 	int i, next;
 	u_int8_t ecn, ecn0;
 
+	MUTEX_ASSERT_LOCKED(&ipq_mutex);
+
 	/*
 	 * Presence of header sizes in mbufs
 	 * would confuse code below.
@@ -1000,6 +1010,8 @@ ip_freef(struct ipq *fp)
 {
 	struct ipqent *q;
 
+	MUTEX_ASSERT_LOCKED(&ipq_mutex);
+
 	while ((q = LIST_FIRST(&fp->ipq_fragq)) != NULL) {
 		LIST_REMOVE(q, ipqe_q);
 		m_freem(q->ipqe_m);
@@ -1013,21 +1025,20 @@ ip_freef(struct ipq *fp)
 /*
  * IP timer processing;
  * if a timer expires on a reassembly queue, discard it.
- * clear the forwarding cache, there might be a better route.
  */
 void
 ip_slowtimo(void)
 {
 	struct ipq *fp, *nfp;
 
-	NET_ASSERT_LOCKED();
-
+	mtx_enter(&ipq_mutex);
 	LIST_FOREACH_SAFE(fp, &ipq, ipq_q, nfp) {
 		if (--fp->ipq_ttl == 0) {
 			ipstat_inc(ips_fragtimeout);
 			ip_freef(fp);
 		}
 	}
+	mtx_leave(&ipq_mutex);
 }
 
 /*
@@ -1036,10 +1047,12 @@ ip_slowtimo(void)
 void
 ip_drain(void)
 {
+	mtx_enter(&ipq_mutex);
 	while (!LIST_EMPTY(&ipq)) {
 		ipstat_inc(ips_fragdropped);
 		ip_freef(LIST_FIRST(&ipq));
 	}
+	mtx_leave(&ipq_mutex);
 }
 
 /*
@@ -1050,7 +1063,8 @@ ip_flush(void)
 {
 	int max = 50;
 
-	/* ipq already locked */
+	MUTEX_ASSERT_LOCKED(&ipq_mutex);
+
 	while (!LIST_EMPTY(&ipq) && ip_frags > ip_maxqueue * 3 / 4 && --max) {
 		ipstat_inc(ips_fragdropped);
 		ip_freef(LIST_FIRST(&ipq));
