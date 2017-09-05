@@ -1,7 +1,6 @@
-/*	$OpenBSD: rthread_once.c,v 1.1 2011/12/21 23:59:03 guenther Exp $ */
+/*	$OpenBSD: spinlock.h,v 1.1 2017/09/05 02:40:54 guenther Exp $	*/
 /*
- * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
- * All Rights Reserved.
+ * Copyright (c) 2017 Philip Guenther <guenther@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,17 +15,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <pthread.h>
+#ifndef	_LIBC_MACHINE_SPINLOCK_H_
+#define	_LIBC_MACHINE_SPINLOCK_H_
 
-int
-pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
-{
-	pthread_mutex_lock(&once_control->mutex);
-	if (once_control->state == PTHREAD_NEEDS_INIT) {
-		init_routine();
-		once_control->state = PTHREAD_DONE_INIT;
-	}
-	pthread_mutex_unlock(&once_control->mutex);
+#include_next <machine/spinlock.h>
 
-	return (0);
-}
+__BEGIN_HIDDEN_DECLS
+int	_atomic_lock(volatile _atomic_lock_t *);
+__END_HIDDEN_DECLS
+
+#endif /* !_LIBC_MACHINE_SPINLOCK_H_ */

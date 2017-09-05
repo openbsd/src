@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_stack.c,v 1.16 2016/09/04 10:13:35 akfaew Exp $ */
+/* $OpenBSD: rthread_stack.c,v 1.17 2017/09/05 02:40:54 guenther Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -33,7 +33,7 @@ _rthread_alloc_stack(pthread_t thread)
 	/* if the request uses the defaults, try to reuse one */
 	if (thread->attr.stack_addr == NULL &&
 	    thread->attr.stack_size == RTHREAD_STACK_SIZE_DEF &&
-	    thread->attr.guard_size == _rthread_attr_default.guard_size) {
+	    thread->attr.guard_size == _thread_pagesize) {
 		_spinlock(&def_stacks_lock);
 		stack = SLIST_FIRST(&def_stacks);
 		if (stack != NULL) {
@@ -123,7 +123,7 @@ void
 _rthread_free_stack(struct stack *stack)
 {
 	if (stack->len == RTHREAD_STACK_SIZE_DEF + stack->guardsize &&
-	    stack->guardsize == _rthread_attr_default.guard_size) {
+	    stack->guardsize == _thread_pagesize) {
 		_spinlock(&def_stacks_lock);
 		SLIST_INSERT_HEAD(&def_stacks, stack, link);
 		_spinunlock(&def_stacks_lock);

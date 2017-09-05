@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.3 2017/08/15 07:06:29 guenther Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.4 2017/09/05 02:40:54 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -280,7 +280,6 @@ pthread_cond_destroy(pthread_cond_t *condp)
 
 	return (0);
 }
-DEF_STRONG(pthread_cond_destroy);
 
 int
 pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
@@ -573,7 +572,6 @@ pthread_cond_wait(pthread_cond_t *condp, pthread_mutex_t *mutexp)
 
 	return (0);
 }
-DEF_STRONG(pthread_cond_wait);
 
 
 int
@@ -623,7 +621,6 @@ pthread_cond_signal(pthread_cond_t *condp)
 
 	return (0);
 }
-DEF_STRONG(pthread_cond_signal);
 
 int
 pthread_cond_broadcast(pthread_cond_t *condp)
@@ -689,4 +686,3 @@ pthread_cond_broadcast(pthread_cond_t *condp)
 
 	return (0);
 }
-DEF_STRONG(pthread_cond_broadcast);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.3 2016/04/15 21:06:23 guenther Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.4 2017/09/05 02:40:54 guenther Exp $	*/
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  *
@@ -53,36 +53,17 @@ PROTO_STD_DEPRECATED(pthread_barrierattr_setpshared);
 PROTO_STD_DEPRECATED(pthread_cancel);
 PROTO_STD_DEPRECATED(pthread_cleanup_pop);
 PROTO_STD_DEPRECATED(pthread_cleanup_push);
-PROTO_NORMAL(pthread_cond_broadcast);
-PROTO_NORMAL(pthread_cond_destroy);
-PROTO_NORMAL(pthread_cond_init);
-PROTO_NORMAL(pthread_cond_signal);
-PROTO_STD_DEPRECATED(pthread_cond_timedwait);
-PROTO_NORMAL(pthread_cond_wait);
-PROTO_STD_DEPRECATED(pthread_condattr_destroy);
 PROTO_STD_DEPRECATED(pthread_condattr_getclock);
-PROTO_STD_DEPRECATED(pthread_condattr_init);
 PROTO_STD_DEPRECATED(pthread_condattr_setclock);
 PROTO_STD_DEPRECATED(pthread_create);
 PROTO_STD_DEPRECATED(pthread_detach);
-PROTO_STD_DEPRECATED(pthread_equal);
-PROTO_NORMAL(pthread_exit);
 PROTO_STD_DEPRECATED(pthread_getconcurrency);
 PROTO_STD_DEPRECATED(pthread_getcpuclockid);
 PROTO_STD_DEPRECATED(pthread_getschedparam);
-PROTO_NORMAL(pthread_getspecific);
 PROTO_STD_DEPRECATED(pthread_join);
-PROTO_NORMAL(pthread_key_create);
-PROTO_STD_DEPRECATED(pthread_key_delete);
 PROTO_STD_DEPRECATED(pthread_kill);
-PROTO_NORMAL(pthread_mutex_destroy);
 PROTO_STD_DEPRECATED(pthread_mutex_getprioceiling);
-PROTO_NORMAL(pthread_mutex_init);
-PROTO_NORMAL(pthread_mutex_lock);
 PROTO_STD_DEPRECATED(pthread_mutex_setprioceiling);
-PROTO_STD_DEPRECATED(pthread_mutex_timedlock);
-PROTO_STD_DEPRECATED(pthread_mutex_trylock);
-PROTO_NORMAL(pthread_mutex_unlock);
 PROTO_STD_DEPRECATED(pthread_mutexattr_destroy);
 PROTO_STD_DEPRECATED(pthread_mutexattr_getprioceiling);
 PROTO_STD_DEPRECATED(pthread_mutexattr_getprotocol);
@@ -91,7 +72,6 @@ PROTO_STD_DEPRECATED(pthread_mutexattr_init);
 PROTO_STD_DEPRECATED(pthread_mutexattr_setprioceiling);
 PROTO_STD_DEPRECATED(pthread_mutexattr_setprotocol);
 PROTO_STD_DEPRECATED(pthread_mutexattr_settype);
-PROTO_STD_DEPRECATED(pthread_once);
 PROTO_STD_DEPRECATED(pthread_rwlock_destroy);
 PROTO_NORMAL(pthread_rwlock_init);
 PROTO_STD_DEPRECATED(pthread_rwlock_rdlock);
@@ -105,12 +85,10 @@ PROTO_STD_DEPRECATED(pthread_rwlockattr_destroy);
 PROTO_STD_DEPRECATED(pthread_rwlockattr_getpshared);
 PROTO_STD_DEPRECATED(pthread_rwlockattr_init);
 PROTO_STD_DEPRECATED(pthread_rwlockattr_setpshared);
-PROTO_NORMAL(pthread_self);
 PROTO_NORMAL(pthread_setcancelstate);
 PROTO_STD_DEPRECATED(pthread_setcanceltype);
 PROTO_STD_DEPRECATED(pthread_setconcurrency);
 PROTO_STD_DEPRECATED(pthread_setschedparam);
-PROTO_NORMAL(pthread_setspecific);
 PROTO_STD_DEPRECATED(pthread_spin_destroy);
 PROTO_STD_DEPRECATED(pthread_spin_init);
 PROTO_STD_DEPRECATED(pthread_spin_lock);

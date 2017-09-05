@@ -1,14 +1,5 @@
 {
 	global:
-		/* symbols that no one should be using currently */
-		_init;
-		_fini;
-		__data_start;
-		__bss_start;
-		_edata;
-		_end;
-		__end;
-
 		/* pthread implementation */
 		pthread_attr_destroy;
 		pthread_attr_getdetachstate;
@@ -40,38 +31,17 @@
 		pthread_cancel;
 		pthread_cleanup_pop;
 		pthread_cleanup_push;
-		pthread_cond_broadcast;
-		pthread_cond_destroy;
-		pthread_cond_init;
-		pthread_cond_signal;
-		pthread_cond_timedwait;
-		pthread_cond_wait;
-		pthread_condattr_destroy;
-		pthread_condattr_getclock;
-		pthread_condattr_init;
-		pthread_condattr_setclock;
 		pthread_create;
 		pthread_detach;
-		pthread_equal;
-		pthread_exit;
 		pthread_getconcurrency;
 		pthread_getcpuclockid;
 		pthread_getprio;
 		pthread_getschedparam;
-		pthread_getspecific;
 		pthread_join;
-		pthread_key_create;
-		pthread_key_delete;
 		pthread_kill;
 		pthread_main_np;
-		pthread_mutex_destroy;
 		pthread_mutex_getprioceiling;
-		pthread_mutex_init;
-		pthread_mutex_lock;
 		pthread_mutex_setprioceiling;
-		pthread_mutex_timedlock;
-		pthread_mutex_trylock;
-		pthread_mutex_unlock;
 		pthread_mutexattr_destroy;
 		pthread_mutexattr_getkind_np;
 		pthread_mutexattr_getprioceiling;
@@ -82,7 +52,6 @@
 		pthread_mutexattr_setprioceiling;
 		pthread_mutexattr_setprotocol;
 		pthread_mutexattr_settype;
-		pthread_once;
 		pthread_rwlock_destroy;
 		pthread_rwlock_init;
 		pthread_rwlock_rdlock;
@@ -96,14 +65,12 @@
 		pthread_rwlockattr_getpshared;
 		pthread_rwlockattr_init;
 		pthread_rwlockattr_setpshared;
-		pthread_self;
 		pthread_set_name_np;
 		pthread_setcancelstate;
 		pthread_setcanceltype;
 		pthread_setconcurrency;
 		pthread_setprio;
 		pthread_setschedparam;
-		pthread_setspecific;
 		pthread_spin_destroy;
 		pthread_spin_init;
 		pthread_spin_lock;
@@ -128,9 +95,6 @@
 
 		/* used for debugging & regress */
 		_thread_dump_info;
-
-		/* other overrides of libc */
-		_atomic_lock;
 
 		_dlctl;
 	local:

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.47 2017/07/04 14:33:43 visa Exp $
+#	$OpenBSD: Makefile,v 1.48 2017/09/05 02:40:54 guenther Exp $
 
 LIB=pthread
 LIBCSRCDIR=	${.CURDIR}/../libc
@@ -22,16 +22,11 @@ SRCS=	rthread.c \
 	rthread_attr.c \
 	rthread_barrier.c \
 	rthread_barrier_attr.c \
-	rthread_condattr.c \
-	rthread_debug.c \
-	rthread_file.c \
 	rthread_fork.c \
 	rthread_getcpuclockid.c \
-	rthread_libc.c \
 	rthread_mutex_prio.c \
 	rthread_mutexattr.c \
 	rthread_np.c \
-	rthread_once.c \
 	rthread_rwlock.c \
 	rthread_rwlockattr.c \
 	rthread_sched.c \
@@ -39,19 +34,7 @@ SRCS=	rthread.c \
 	rthread_sig.c \
 	rthread_stack.c \
 	rthread_spin_lock.c \
-	rthread_tls.c \
 	sched_prio.c
-
-.if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "mips64" || ${MACHINE_ARCH} == "mips64el"
-CFLAGS+= -DFUTEX
-SRCS+=	rthread_mutex.c \
-	rthread_cond.c
-.else
-SRCS+=	rthread_sync.c
-.endif
-
-OBJS+= _atomic_lock.o
 
 SRCDIR= ${.CURDIR}/../libpthread
 .include "${SRCDIR}/include/Makefile.inc"

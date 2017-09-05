@@ -1,4 +1,4 @@
-/*	$OpenBSD: synch.h,v 1.1 2017/08/15 06:13:24 guenther Exp $ */
+/*	$OpenBSD: synch.h,v 1.2 2017/09/05 02:40:54 guenther Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot
  *
@@ -18,8 +18,6 @@
 #include <sys/atomic.h>
 #include <sys/time.h>
 #include <sys/futex.h>
-
-REDIRECT_SYSCALL(futex);
 
 static inline int
 _wake(volatile uint32_t *p, int n)

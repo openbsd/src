@@ -25,6 +25,7 @@ __thrsigdivert
 __thrsleep
 __thrwakeup
 _exit
+_thread_canceled
 _thread_sys___get_tcb
 _thread_sys___getcwd
 _thread_sys___semctl
@@ -1613,9 +1614,38 @@ tcsetattr
 tcsetpgrp
 
 /* thread */
+_rthread_debug
+_spinlock
+_spinlocktry
+_spinunlock
 _thread_atfork
+_thread_dofork
 _thread_set_callbacks
 pthread_atfork
+pthread_cond_broadcast
+pthread_cond_destroy
+pthread_cond_init
+pthread_cond_signal
+pthread_cond_timedwait
+pthread_cond_wait
+pthread_condattr_destroy
+pthread_condattr_getclock
+pthread_condattr_init
+pthread_condattr_setclock
+pthread_equal
+pthread_exit
+pthread_getspecific
+pthread_key_create
+pthread_key_delete
+pthread_mutex_destroy
+pthread_mutex_init
+pthread_mutex_lock
+pthread_mutex_timedlock
+pthread_mutex_trylock
+pthread_mutex_unlock
+pthread_once
+pthread_self
+pthread_setspecific
 
 /* time */
 asctime

@@ -1,4 +1,4 @@
-/* $OpenBSD: spinlock.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: spinlock.h,v 1.2 2017/09/05 02:40:54 guenther Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -21,9 +21,5 @@
 #define _ATOMIC_LOCK_UNLOCKED	(0)
 #define _ATOMIC_LOCK_LOCKED	(1)
 typedef int _atomic_lock_t;
-
-#ifndef _KERNEL
-int _atomic_lock(volatile _atomic_lock_t *);
-#endif
 
 #endif

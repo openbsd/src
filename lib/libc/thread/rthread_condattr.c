@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_condattr.c,v 1.2 2017/08/15 06:38:41 guenther Exp $ */
+/*	$OpenBSD: rthread_condattr.c,v 1.3 2017/09/05 02:40:54 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -20,12 +20,9 @@
  * Condition Variable Attributes
  */
 
-#include <assert.h>
 #include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #include "rthread.h"
 

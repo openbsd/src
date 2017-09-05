@@ -24,4 +24,4 @@ _thread_canceled(void)
 		_thread_cb.tc_canceled();
 	exit(0);
 }
-
+DEF_STRONG(_thread_canceled);

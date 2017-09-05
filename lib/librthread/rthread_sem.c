@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.25 2016/09/04 10:13:35 akfaew Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.26 2017/09/05 02:40:54 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -171,6 +171,9 @@ int
 sem_destroy(sem_t *semp)
 {
 	sem_t sem;
+
+	if (!_threads_ready)		 /* for SEM_MMAP_SIZE */
+		_rthread_init();
 
 	if (!semp || !(sem = *semp)) {
 		errno = EINVAL;

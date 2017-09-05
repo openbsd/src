@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_cb.h,v 1.2 2016/09/01 10:41:02 otto Exp $ */
+/*	$OpenBSD: rthread_cb.h,v 1.3 2017/09/05 02:40:54 guenther Exp $ */
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  * All Rights Reserved.
@@ -16,26 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-
 __BEGIN_HIDDEN_DECLS
 pid_t	_thread_fork(void);
 pid_t	_thread_vfork(void);
-void	_thread_flockfile(FILE *);
-int	_thread_ftrylockfile(FILE *);
-void	_thread_funlockfile(FILE *);
-void	_thread_malloc_lock(int);
-void	_thread_malloc_unlock(int);
-void	_thread_atexit_lock(void);
-void	_thread_atexit_unlock(void);
-void	_thread_atfork_lock(void);
-void	_thread_atfork_unlock(void);
-void	_thread_arc4_lock(void);
-void	_thread_arc4_unlock(void);
-void	_thread_mutex_lock(void **);
-void	_thread_mutex_unlock(void **);
-void	_thread_mutex_destroy(void **);
-void	_thread_tag_lock(void **);
-void	_thread_tag_unlock(void **);
-void	*_thread_tag_storage(void **, void *, size_t, void *);
 __END_HIDDEN_DECLS

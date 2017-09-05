@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.62 2017/08/01 08:57:48 kettenis Exp $ */
+/*	$OpenBSD: rthread.h,v 1.63 2017/09/05 02:40:54 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -27,17 +27,17 @@
  * THE MACHINE DEPENDENT CERROR CODE HAS HARD CODED OFFSETS INTO PTHREAD_T!
  */
 
-#include <sys/queue.h>
+#ifndef _RTHREAD_H_
+#define _RTHREAD_H_
+
 #include <semaphore.h>
-#include <machine/spinlock.h>
+#include "thread_private.h"
 
 #ifdef __LP64__
 #define RTHREAD_STACK_SIZE_DEF (512 * 1024)
 #else
 #define RTHREAD_STACK_SIZE_DEF (256 * 1024)
 #endif
-
-#define	_SPINLOCK_UNLOCKED _ATOMIC_LOCK_UNLOCKED
 
 struct stack {
 	SLIST_ENTRY(stack)	link;	/* link for free default stacks */
@@ -48,59 +48,9 @@ struct stack {
 	size_t	len;			/* total size of allocated stack */
 };
 
-struct __sem {
-	_atomic_lock_t lock;
-	volatile int waitcount;
-	volatile int value;
-	int shared;
-};
+#define	PTHREAD_MIN_PRIORITY	0
+#define	PTHREAD_MAX_PRIORITY	31
 
-TAILQ_HEAD(pthread_queue, pthread);
-
-#ifdef FUTEX
-
-struct pthread_mutex {
-	volatile unsigned int lock;
-	int type;
-	pthread_t owner;
-	int count;
-	int prioceiling;
-};
-
-struct pthread_cond {
-	volatile unsigned int seq;
-	clockid_t clock;
-	struct pthread_mutex *mutex;
-};
-
-#else
-
-struct pthread_mutex {
-	_atomic_lock_t lock;
-	struct pthread_queue lockers;
-	int type;
-	pthread_t owner;
-	int count;
-	int prioceiling;
-};
-
-struct pthread_cond {
-	_atomic_lock_t lock;
-	struct pthread_queue waiters;
-	struct pthread_mutex *mutex;
-	clockid_t clock;
-};
-#endif /* FUTEX */
-
-struct pthread_mutex_attr {
-	int ma_type;
-	int ma_protocol;
-	int ma_prioceiling;
-};
-
-struct pthread_cond_attr {
-	clockid_t ca_clock;
-};
 
 struct pthread_rwlock {
 	_atomic_lock_t lock;
@@ -111,37 +61,6 @@ struct pthread_rwlock {
 
 struct pthread_rwlockattr {
 	int pshared;
-};
-
-struct pthread_attr {
-	void *stack_addr;
-	size_t stack_size;
-	size_t guard_size;
-	int detach_state;
-	int contention_scope;
-	int sched_policy;
-	struct sched_param sched_param;
-	int sched_inherit;
-};
-
-#define	PTHREAD_MIN_PRIORITY	0
-#define	PTHREAD_MAX_PRIORITY	31
-
-struct rthread_key {
-	int used;
-	void (*destructor)(void *);
-};
-
-struct rthread_storage {
-	int keyid;
-	struct rthread_storage *next;
-	void *data;
-};
-
-struct rthread_cleanup_fn {
-	void (*fn)(void *);
-	void *arg;
-	struct rthread_cleanup_fn *next;
 };
 
 struct pthread_barrier {
@@ -162,61 +81,20 @@ struct pthread_spinlock {
 	pthread_t owner;
 };
 
-struct tib;
-struct pthread {
-	struct __sem donesem;
-	unsigned int flags;
-	_atomic_lock_t flags_lock;
-	struct tib *tib;
-	void *retval;
-	void *(*fn)(void *);
-	void *arg;
-	char name[32];
-	struct stack *stack;
-	LIST_ENTRY(pthread) threads;
-	TAILQ_ENTRY(pthread) waiting;
-	pthread_cond_t blocking_cond;
-	struct pthread_attr attr;
-	struct rthread_storage *local_storage;
-	struct rthread_cleanup_fn *cleanup_fns;
-	int myerrno;
-
-	/* cancel received in a delayed cancel block? */
-	int delayed_cancel;
-};
-/* flags in pthread->flags */
-#define	THREAD_DONE		0x001
-#define	THREAD_DETACHED		0x002
-
-/* flags in tib->tib_thread_flags */
-#define	TIB_THREAD_ASYNC_CANCEL		0x001
-#define	TIB_THREAD_INITIAL_STACK	0x002	/* has stack from exec */
-
-#define ENTER_DELAYED_CANCEL_POINT(tib, self)				\
-	(self)->delayed_cancel = 0;					\
-	ENTER_CANCEL_POINT_INNER(tib, 1, 1)
 
 #define	ROUND_TO_PAGE(size) \
 	(((size) + (_thread_pagesize - 1)) & ~(_thread_pagesize - 1))
 
 __BEGIN_HIDDEN_DECLS
-void	_spinlock(volatile _atomic_lock_t *);
-int	_spinlocktry(volatile _atomic_lock_t *);
-void	_spinunlock(volatile _atomic_lock_t *);
 int	_sem_wait(sem_t, int, const struct timespec *, int *);
 int	_sem_post(sem_t);
 
 void	_rthread_init(void);
 struct stack *_rthread_alloc_stack(pthread_t);
 void	_rthread_free_stack(struct stack *);
-void	_rthread_tls_destructors(pthread_t);
-void	_rthread_debug(int, const char *, ...)
-		__attribute__((__format__ (printf, 2, 3)));
-void	_rthread_debug_init(void);
 #ifndef NO_PIC
 void	_rthread_dl_lock(int what);
 #endif
-void	_thread_malloc_reinit(void);
 
 extern int _threads_ready;
 extern size_t _thread_pagesize;
@@ -227,10 +105,6 @@ __END_HIDDEN_DECLS
 
 void	_thread_dump_info(void);
 
-/* syscalls not declared in system headers */
 #define REDIRECT_SYSCALL(x)		typeof(x) x asm("_thread_sys_"#x)
-void	__threxit(pid_t *);
-int	__thrsleep(const volatile void *, clockid_t, const struct timespec *,
-	    volatile void *, const int *);
-int	__thrwakeup(const volatile void *, int n);
-int	__thrsigdivert(sigset_t, siginfo_t *, const struct timespec *);
+
+#endif /* _RTHREAD_H_ */

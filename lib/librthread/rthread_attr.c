@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.22 2016/05/07 19:05:22 guenther Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.23 2017/09/05 02:40:54 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -143,6 +143,9 @@ pthread_attr_getstacksize(const pthread_attr_t *attrp, size_t *stacksize)
 int
 pthread_attr_setstacksize(pthread_attr_t *attrp, size_t stacksize)
 {
+	if (!_threads_ready)		/* for ROUND_TO_PAGE */
+		_rthread_init();
+
 	if (stacksize < PTHREAD_STACK_MIN ||
 	    stacksize > ROUND_TO_PAGE(stacksize))
 		return (EINVAL);
@@ -162,6 +165,9 @@ pthread_attr_getstackaddr(const pthread_attr_t *attrp, void **stackaddr)
 int
 pthread_attr_setstackaddr(pthread_attr_t *attrp, void *stackaddr)
 {
+	if (!_threads_ready)
+		_rthread_init();		/* for _thread_pagesize */
+
 	if (stackaddr == NULL || (uintptr_t)stackaddr & (_thread_pagesize - 1))
 		return (EINVAL);
 	(*attrp)->stack_addr = stackaddr;

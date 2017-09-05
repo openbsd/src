@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.95 2017/07/27 16:35:08 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.96 2017/09/05 02:40:54 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -38,7 +38,6 @@
 #include <pthread.h>
 
 #include "cancel.h"		/* in libc/include */
-#include "thread_private.h"
 #include "rthread.h"
 #include "rthread_cb.h"
 
@@ -87,24 +86,6 @@ struct pthread_attr _rthread_attr_default = {
 /*
  * internal support functions
  */
-void
-_spinlock(volatile _atomic_lock_t *lock)
-{
-	while (_atomic_lock(lock))
-		sched_yield();
-}
-
-int
-_spinlocktry(volatile _atomic_lock_t *lock)
-{
-	return 0 == _atomic_lock(lock);
-}
-
-void
-_spinunlock(volatile _atomic_lock_t *lock)
-{
-	*lock = _ATOMIC_LOCK_UNLOCKED;
-}
 
 static void
 _rthread_start(void *v)
@@ -169,29 +150,56 @@ multi_threaded_tcb(void)
 }
 #endif /* TCB_HAVE_MD_GET */
 
-void
-_thread_canceled(void)
+static void
+_rthread_free(pthread_t thread)
 {
-	pthread_exit(PTHREAD_CANCELED);
+	_spinlock(&_thread_gc_lock);
+	TAILQ_INSERT_TAIL(&_thread_gc_list, thread, waiting);
+	_spinunlock(&_thread_gc_lock);
+}
+
+static void
+_thread_release(pthread_t thread)
+{
+	_spinlock(&_thread_lock);
+	LIST_REMOVE(thread, threads);
+	_spinunlock(&_thread_lock);
+
+	_spinlock(&thread->flags_lock);
+	if (thread->flags & THREAD_DETACHED) {
+		_spinunlock(&thread->flags_lock);
+		_rthread_free(thread);
+	} else {
+		thread->flags |= THREAD_DONE;
+		_spinunlock(&thread->flags_lock);
+		_sem_post(&thread->donesem);
+	}
+}
+
+static void
+_thread_key_zero(int key)
+{
+	pthread_t thread;
+	struct rthread_storage *rs;
+
+	LIST_FOREACH(thread, &_thread_list, threads) {
+		for (rs = thread->local_storage; rs; rs = rs->next) {
+			if (rs->keyid == key)
+				rs->data = NULL;
+		}
+	}
 }
 
 void
 _rthread_init(void)
 {
-	pthread_t thread = &_initial_thread;
-	struct tib *tib;
+	pthread_t thread = pthread_self();
 	struct sigaction sa;
 
-	tib = TIB_GET();
-	tib->tib_thread = thread;
-	thread->tib = tib;
+	if (_threads_ready)
+		return;
 
-	thread->donesem.lock = _SPINLOCK_UNLOCKED;
-	tib->tib_thread_flags = TIB_THREAD_INITIAL_STACK;
-	thread->flags_lock = _SPINLOCK_UNLOCKED;
-	strlcpy(thread->name, "Main process", sizeof(thread->name));
 	LIST_INSERT_HEAD(&_thread_list, thread, threads);
-	_rthread_debug_init();
 
 	_thread_pagesize = (size_t)sysconf(_SC_PAGESIZE);
 	_rthread_attr_default.guard_size = _thread_pagesize;
@@ -205,26 +213,10 @@ _rthread_init(void)
 		cb.tc_errnoptr		= multi_threaded_errnoptr;
 		cb.tc_tcb		= multi_threaded_tcb;
 #endif
-		cb.tc_canceled		= _thread_canceled;
-		cb.tc_flockfile		= _thread_flockfile;
-		cb.tc_ftrylockfile	= _thread_ftrylockfile;
-		cb.tc_funlockfile	= _thread_funlockfile;
-		cb.tc_malloc_lock	= _thread_malloc_lock;
-		cb.tc_malloc_unlock	= _thread_malloc_unlock;
-		cb.tc_atexit_lock	= _thread_atexit_lock;
-		cb.tc_atexit_unlock	= _thread_atexit_unlock;
-		cb.tc_atfork_lock	= _thread_atfork_lock;
-		cb.tc_atfork_unlock	= _thread_atfork_unlock;
-		cb.tc_arc4_lock		= _thread_arc4_lock;
-		cb.tc_arc4_unlock	= _thread_arc4_unlock;
-		cb.tc_mutex_lock	= _thread_mutex_lock;
-		cb.tc_mutex_unlock	= _thread_mutex_unlock;
-		cb.tc_mutex_destroy	= _thread_mutex_destroy;
-		cb.tc_tag_lock		= _thread_tag_lock;
-		cb.tc_tag_unlock	= _thread_tag_unlock;
-		cb.tc_tag_storage	= _thread_tag_storage;
 		cb.tc_fork		= _thread_fork;
 		cb.tc_vfork		= _thread_vfork;
+		cb.tc_thread_release	= _thread_release;
+		cb.tc_thread_key_zero	= _thread_key_zero;
 		_thread_set_callbacks(&cb, sizeof(cb));
 	}
 
@@ -251,27 +243,6 @@ _rthread_init(void)
 
 	_rthread_debug(1, "rthread init\n");
 }
-
-static void
-_rthread_free(pthread_t thread)
-{
-	_spinlock(&_thread_gc_lock);
-	TAILQ_INSERT_TAIL(&_thread_gc_list, thread, waiting);
-	_spinunlock(&_thread_gc_lock);
-}
-
-/*
- * real pthread functions
- */
-pthread_t
-pthread_self(void)
-{
-	if (!_threads_ready)
-		_rthread_init();
-
-	return (TIB_GET()->tib_thread);
-}
-DEF_STD(pthread_self);
 
 static void
 _rthread_reaper(void)
@@ -301,55 +272,9 @@ restart:
 	_spinunlock(&_thread_gc_lock);
 }
 
-void
-pthread_exit(void *retval)
-{
-	struct rthread_cleanup_fn *clfn;
-	struct tib *tib = TIB_GET();
-	pthread_t thread;
-
-	if (!_threads_ready)
-		_rthread_init();
-	thread = tib->tib_thread;
-
-	if (tib->tib_cantcancel & CANCEL_DYING) {
-		/*
-		 * Called pthread_exit() from destructor or cancelation
-		 * handler: blow up.  XXX write something to stderr?
-		 */
-		abort();
-		//_exit(42);
-	}
-
-	tib->tib_cantcancel |= CANCEL_DYING;
-
-	thread->retval = retval;
-
-	for (clfn = thread->cleanup_fns; clfn; ) {
-		struct rthread_cleanup_fn *oclfn = clfn;
-		clfn = clfn->next;
-		oclfn->fn(oclfn->arg);
-		free(oclfn);
-	}
-	_rthread_tls_destructors(thread);
-	_spinlock(&_thread_lock);
-	LIST_REMOVE(thread, threads);
-	_spinunlock(&_thread_lock);
-
-	_spinlock(&thread->flags_lock);
-	if (thread->flags & THREAD_DETACHED) {
-		_spinunlock(&thread->flags_lock);
-		_rthread_free(thread);
-	} else {
-		thread->flags |= THREAD_DONE;
-		_spinunlock(&thread->flags_lock);
-		_sem_post(&thread->donesem);
-	}
-
-	__threxit(&tib->tib_tid);
-	for(;;);
-}
-DEF_STD(pthread_exit);
+/*
+ * real pthread functions
+ */
 
 int
 pthread_join(pthread_t thread, void **retval)
@@ -497,12 +422,6 @@ pthread_kill(pthread_t thread, int sig)
 	if (thrkill(tib->tib_tid, sig, TIB_TO_TCB(tib)))
 		return (errno);
 	return (0);
-}
-
-int
-pthread_equal(pthread_t t1, pthread_t t2)
-{
-	return (t1 == t2);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cancel.h,v 1.4 2017/04/20 17:16:32 visa Exp $ */
+/*	$OpenBSD: cancel.h,v 1.5 2017/09/05 02:40:54 guenther Exp $ */
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -21,10 +21,12 @@
 #include <tib.h>
 #include "thread_private.h"
 
-__BEGIN_HIDDEN_DECLS
 /* process a cancel request at a cancel point */
 __dead void	_thread_canceled(void);
-__END_HIDDEN_DECLS
+
+#ifdef __LIBC__
+PROTO_NORMAL(_thread_canceled);
+#endif
 
 #if defined(__LIBC__) && !defined(TCB_HAVE_MD_GET)
 /*

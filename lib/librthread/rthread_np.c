@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.19 2016/05/07 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.20 2017/09/05 02:40:54 guenther Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -79,6 +79,9 @@ pthread_stackseg_np(pthread_t thread, stack_t *sinfo)
 		static struct _ps_strings _ps;
 		static struct rlimit rl;
 		static int gotself;
+
+		if (!_threads_ready)		/* for ROUND_TO_PAGE */
+			_rthread_init();
 
 		if (gotself == 0) {
 			int mib[2];

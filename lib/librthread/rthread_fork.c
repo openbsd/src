@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.21 2017/07/30 19:48:30 tedu Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.22 2017/09/05 02:40:54 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -38,11 +38,10 @@
 
 #include <errno.h>
 #include <pthread.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <tib.h>
 #include <unistd.h>
-
-#include "thread_private.h"	/* in libc/include */
 
 #include "rthread.h"
 #include "rthread_cb.h"
@@ -57,7 +56,6 @@ _dofork(pid_t (*sys_fork)(void))
 {
 	pthread_t me;
 	pid_t newid;
-	int i;
 	extern int _post_threaded;
 
 	if (!_threads_ready)
@@ -77,20 +75,7 @@ _dofork(pid_t (*sys_fork)(void))
 		_rthread_dl_lock(0);
 #endif
 
-	_thread_atexit_lock();
-	for (i = 0; i < _MALLOC_MUTEXES; i++)
-		_thread_malloc_lock(i);
-	_thread_arc4_lock();
-
-	newid = sys_fork();
-
-	_thread_arc4_unlock();
-	if (newid == 0)
-		_thread_malloc_reinit();
-	else
-		for (i = 0; i < _MALLOC_MUTEXES; i++)
-			_thread_malloc_unlock(i);
-	_thread_atexit_unlock();
+	newid = _thread_dofork(sys_fork);
 
 	if (newid == 0) {
 		struct tib *tib = me->tib;

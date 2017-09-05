@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_tls.c,v 1.3 2017/08/15 07:06:29 guenther Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.4 2017/09/05 02:40:54 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -23,7 +23,16 @@
 #include <pthread.h>
 #include <stdlib.h>
 
+#include <pthread.h>
+#include <stdlib.h>
+
 #include "rthread.h"
+
+
+struct rthread_key {
+	int used;
+	void (*destructor)(void *);
+};
 
 static struct rthread_key rkeys[PTHREAD_KEYS_MAX];
 static _atomic_lock_t rkeyslock = _SPINLOCK_UNLOCKED;
@@ -61,7 +70,6 @@ DEF_STRONG(pthread_key_create);
 int
 pthread_key_delete(pthread_key_t key)
 {
-	pthread_t thread;
 	struct rthread_storage *rs;
 	int rv = 0;
 
@@ -76,14 +84,14 @@ pthread_key_delete(pthread_key_t key)
 
 	rkeys[key].used = 0;
 	rkeys[key].destructor = NULL;
-	_spinlock(&_thread_lock);
-	LIST_FOREACH(thread, &_thread_list, threads) {
-		for (rs = thread->local_storage; rs; rs = rs->next) {
+	if (_thread_cb.tc_thread_key_zero != NULL)
+		_thread_cb.tc_thread_key_zero(key);
+	else {
+		for (rs = _initial_thread.local_storage; rs; rs = rs->next) {
 			if (rs->keyid == key)
 				rs->data = NULL;
 		}
 	}
-	_spinunlock(&_thread_lock);
 
 out:
 	_spinunlock(&rkeyslock);

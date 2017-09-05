@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sched.c,v 1.13 2015/04/29 06:01:37 guenther Exp $ */
+/*	$OpenBSD: rthread_sched.c,v 1.14 2017/09/05 02:40:54 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -32,6 +32,9 @@ int
 pthread_getschedparam(pthread_t thread, int *policy,
     struct sched_param *param)
 {
+	if (!_threads_ready)
+		_rthread_init();
+
 	*policy = thread->attr.sched_policy;
 	if (param)
 		*param = thread->attr.sched_param;
@@ -43,6 +46,9 @@ int
 pthread_setschedparam(pthread_t thread, int policy,
     const struct sched_param *param)
 {
+	if (!_threads_ready)
+		_rthread_init();
+
 	/* XXX return ENOTSUP for SCHED_{FIFO,RR}? */
 	if (policy != SCHED_OTHER && policy != SCHED_FIFO &&
 	    policy != SCHED_RR)
@@ -114,12 +120,18 @@ pthread_attr_setinheritsched(pthread_attr_t *attrp, int inherit)
 int
 pthread_getprio(pthread_t thread)
 {
+	if (!_threads_ready)
+		_rthread_init();
+
 	return (thread->attr.sched_param.sched_priority);
 }
 
 int
 pthread_setprio(pthread_t thread, int priority)
 {
+	if (!_threads_ready)
+		_rthread_init();
+
 	thread->attr.sched_param.sched_priority = priority;
 
 	return (0);

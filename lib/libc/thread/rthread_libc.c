@@ -1,14 +1,10 @@
-/* $OpenBSD: rthread_libc.c,v 1.1 2017/08/15 06:13:24 guenther Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.2 2017/09/05 02:40:54 guenther Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
-
-#include <sys/time.h>
 
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "thread_private.h"	/* in libc/include */
 
 #include "rthread.h"
 #include "rthread_cb.h"
@@ -195,7 +191,7 @@ _thread_malloc_unlock(int i)
 	pthread_mutex_unlock(&malloc_mutex[i]);
 }
 
-void
+static void
 _thread_malloc_reinit(void)
 {
 	int i;
@@ -260,3 +256,28 @@ _thread_arc4_unlock(void)
 {
 	_spinunlock(&arc4_lock);
 }
+
+pid_t
+_thread_dofork(pid_t (*sys_fork)(void))
+{
+	int i;
+	pid_t newid;
+
+	_thread_atexit_lock();
+	for (i = 0; i < _MALLOC_MUTEXES; i++)
+		_thread_malloc_lock(i);
+	_thread_arc4_lock();
+
+	newid = sys_fork();
+
+	_thread_arc4_unlock();
+	if (newid == 0)
+		_thread_malloc_reinit();
+	else
+		for (i = 0; i < _MALLOC_MUTEXES; i++)
+			_thread_malloc_unlock(i);
+	_thread_atexit_unlock();
+
+	return newid;
+}
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_cb.h,v 1.1 2017/08/15 06:13:24 guenther Exp $ */
+/*	$OpenBSD: rthread_cb.h,v 1.2 2017/09/05 02:40:54 guenther Exp $ */
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  * All Rights Reserved.
@@ -19,8 +19,6 @@
 #include <stdio.h>
 
 __BEGIN_HIDDEN_DECLS
-pid_t	_thread_fork(void);
-pid_t	_thread_vfork(void);
 void	_thread_flockfile(FILE *);
 int	_thread_ftrylockfile(FILE *);
 void	_thread_funlockfile(FILE *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spinlock.h,v 1.5 2013/06/04 04:27:57 miod Exp $	*/
+/*	$OpenBSD: spinlock.h,v 1.6 2017/09/05 02:40:54 guenther Exp $	*/
 /*	$NetBSD: lock.h,v 1.10 2006/01/03 01:29:46 uwe Exp $	*/
 
 /*-
@@ -38,10 +38,6 @@
 #define	_SH_SPINLOCK_H_
 
 typedef unsigned char _atomic_lock_t;
-
-#ifndef _KERNEL
-int _atomic_lock(volatile _atomic_lock_t *);
-#endif
 
 #define	_ATOMIC_LOCK_LOCKED	0x80
 #define	_ATOMIC_LOCK_UNLOCKED	0x00
