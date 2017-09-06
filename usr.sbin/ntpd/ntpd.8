@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.40 2015/10/30 16:41:53 reyk Exp $
+.\" $OpenBSD: ntpd.8,v 1.41 2017/09/06 19:43:46 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 30 2015 $
+.Dd $Mdocdate: September 6 2017 $
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -99,11 +99,10 @@ adjusts the clock frequency using the
 system call to compensate for systematic drift.
 .Pp
 .Nm
-is usually started at boot time, and can be enabled by
-setting
+is started at boot time by default via
 .Va ntpd_flags
 in
-.Pa /etc/rc.conf.local .
+.Pa /etc/rc.conf .
 See
 .Xr rc 8
 and
