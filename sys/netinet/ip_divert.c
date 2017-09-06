@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.50 2017/09/05 07:59:11 mpi Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.51 2017/09/06 00:05:02 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -61,8 +61,6 @@ int *divertctl_vars[DIVERTCTL_MAXID] = DIVERTCTL_VARS;
 
 int divbhashsize = DIVERTHASHSIZE;
 
-static struct sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
-
 int	divert_output(struct inpcb *, struct mbuf *, struct mbuf *,
 	    struct mbuf *);
 void
@@ -78,18 +76,14 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 {
 	struct sockaddr_in *sin;
 	struct socket *so;
-	struct ifaddr *ifa;
-	int error = 0, min_hdrlen = 0, dir;
+	int error, min_hdrlen = 0, dir;
 	struct ip *ip;
 	u_int16_t off;
 
-	m->m_pkthdr.ph_ifidx = 0;
-	m->m_nextpkt = NULL;
-	m->m_pkthdr.ph_rtableid = inp->inp_rtableid;
-
 	m_freem(control);
 
-	sin = mtod(nam, struct sockaddr_in *);
+	if ((error = in_nam2sin(nam, &sin)))
+		goto fail;
 	so = inp->inp_socket;
 
 	/* Do basic sanity checks. */
@@ -133,14 +127,17 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED_PACKET;
 
 	if (dir == PF_IN) {
-		ipaddr.sin_addr = sin->sin_addr;
-		/* XXXSMP ifa_ifwithaddr() is not safe. */
-		ifa = ifa_ifwithaddr(sintosa(&ipaddr), m->m_pkthdr.ph_rtableid);
-		if (ifa == NULL) {
+		struct rtentry *rt;
+		struct ifnet *ifp;
+
+		rt = rtalloc(sintosa(sin), 0, inp->inp_rtableid);
+		if (!rtisvalid(rt) || !ISSET(rt->rt_flags, RTF_LOCAL)) {
+			rtfree(rt);
 			error = EADDRNOTAVAIL;
 			goto fail;
 		}
-		m->m_pkthdr.ph_ifidx = ifa->ifa_ifp->if_index;
+		m->m_pkthdr.ph_ifidx = rt->rt_ifidx;
+		rtfree(rt);
 
 		/*
 		 * Recalculate IP and protocol checksums for the inbound packet
@@ -151,9 +148,16 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		ip->ip_sum = in_cksum(m, off);
 		in_proto_cksum_out(m, NULL);
 
-		/* XXXSMP ``ifa'' is not reference counted. */
-		ipv4_input(ifa->ifa_ifp, m);
+		ifp = if_get(m->m_pkthdr.ph_ifidx);
+		if (ifp == NULL) {
+			error = ENETDOWN;
+			goto fail;
+		}
+		ipv4_input(ifp, m);
+		if_put(ifp);
 	} else {
+		m->m_pkthdr.ph_rtableid = inp->inp_rtableid;
+
 		error = ip_output(m, NULL, &inp->inp_route,
 		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL, 0);
 		if (error == EACCES)	/* translate pf(4) error for userland */
