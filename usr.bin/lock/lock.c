@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.40 2017/07/08 22:27:17 tedu Exp $	*/
+/*	$OpenBSD: lock.c,v 1.41 2017/09/06 21:02:31 tb Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ main(int argc, char *argv[])
 			}
 		} else if (crypt_checkpass(s, hash) == 0) {
 			explicit_bzero(s, sizeof(s));
-			explicit_bzero(s1, sizeof(s1));
+			explicit_bzero(hash, sizeof(hash));
 			break;
 		}
 		putc('\a', stderr);
