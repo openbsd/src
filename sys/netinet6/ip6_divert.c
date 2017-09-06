@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.50 2017/09/05 07:59:11 mpi Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.51 2017/09/06 11:43:04 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -62,8 +62,6 @@ int *divert6ctl_vars[DIVERT6CTL_MAXID] = DIVERT6CTL_VARS;
 
 int divb6hashsize = DIVERTHASHSIZE;
 
-static struct sockaddr_in6 ip6addr = { sizeof(ip6addr), AF_INET6 };
-
 int	divert6_output(struct inpcb *, struct mbuf *, struct mbuf *,
 	    struct mbuf *);
 
@@ -79,17 +77,13 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control)
 {
 	struct sockaddr_in6 *sin6;
-	struct ifaddr *ifa;
-	int error = 0, min_hdrlen = 0, nxt = 0, off, dir;
+	int error, min_hdrlen, nxt, off, dir;
 	struct ip6_hdr *ip6;
-
-	m->m_pkthdr.ph_ifidx = 0;
-	m->m_nextpkt = NULL;
-	m->m_pkthdr.ph_rtableid = inp->inp_rtableid;
 
 	m_freem(control);
 
-	sin6 = mtod(nam, struct sockaddr_in6 *);
+	if ((error = in6_nam2sin6(nam, &sin6)))
+		goto fail;
 
 	/* Do basic sanity checks. */
 	if (m->m_pkthdr.len < sizeof(struct ip6_hdr))
@@ -129,7 +123,7 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 		break;
 	default:
-		/* nothing */
+		min_hdrlen = 0;
 		break;
 	}
 	if (min_hdrlen && m->m_pkthdr.len < off + min_hdrlen)
@@ -138,15 +132,17 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED_PACKET;
 
 	if (dir == PF_IN) {
-		ip6addr.sin6_addr = sin6->sin6_addr;
-		/* XXXSMP ``ifa'' is not reference counted. */
-		ifa = ifa_ifwithaddr(sin6tosa(&ip6addr),
-		    m->m_pkthdr.ph_rtableid);
-		if (ifa == NULL) {
+		struct rtentry *rt;
+		struct ifnet *ifp;
+
+		rt = rtalloc(sin6tosa(sin6), 0, inp->inp_rtableid);
+		if (!rtisvalid(rt) || !ISSET(rt->rt_flags, RTF_LOCAL)) {
+			rtfree(rt);
 			error = EADDRNOTAVAIL;
 			goto fail;
 		}
-		m->m_pkthdr.ph_ifidx = ifa->ifa_ifp->if_index;
+		m->m_pkthdr.ph_ifidx = rt->rt_ifidx;
+		rtfree(rt);
 
 		/*
 		 * Recalculate the protocol checksum for the inbound packet
@@ -155,9 +151,16 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		 */
 		in6_proto_cksum_out(m, NULL);
 
-		/* XXXSMP ``ifa'' is not reference counted. */
-		ipv6_input(ifa->ifa_ifp, m);
+		ifp = if_get(m->m_pkthdr.ph_ifidx);
+		if (ifp == NULL) {
+			error = ENETDOWN;
+			goto fail;
+		}
+		ipv6_input(ifp, m);
+		if_put(ifp);
 	} else {
+		m->m_pkthdr.ph_rtableid = inp->inp_rtableid;
+
 		error = ip6_output(m, NULL, &inp->inp_route6,
 		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL);
 	}

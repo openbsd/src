@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.51 2017/09/06 00:05:02 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.52 2017/09/06 11:43:04 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -75,16 +75,13 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control)
 {
 	struct sockaddr_in *sin;
-	struct socket *so;
-	int error, min_hdrlen = 0, dir;
+	int error, min_hdrlen, off, dir;
 	struct ip *ip;
-	u_int16_t off;
 
 	m_freem(control);
 
 	if ((error = in_nam2sin(nam, &sin)))
 		goto fail;
-	so = inp->inp_socket;
 
 	/* Do basic sanity checks. */
 	if (m->m_pkthdr.len < sizeof(struct ip))
@@ -118,7 +115,7 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 		break;
 	default:
-		/* nothing */
+		min_hdrlen = 0;
 		break;
 	}
 	if (min_hdrlen && m->m_pkthdr.len < off + min_hdrlen)
