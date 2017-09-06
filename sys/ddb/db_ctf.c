@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.18 2017/09/06 09:48:08 dlg Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.19 2017/09/06 09:49:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -469,7 +469,7 @@ db_ctf_pprint_ptr(const struct ctf_type *ctt, vaddr_t addr)
 	if (name != NULL)
 		db_printf("(%s%s *)", modif, name);
 
-	ptr = (unsigned long)db_get_value(addr, sizeof(unsigned long), 0);
+	ptr = (unsigned long)db_get_value(addr, sizeof(ptr), 0);
 
 	db_printf("0x%lx", ptr);
 }
