@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.41 2017/07/22 21:06:17 jcs Exp $ */
+/* $OpenBSD: acpidev.h,v 1.42 2017/09/06 13:01:48 jcs Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -50,9 +50,9 @@
  * 	OEM Information			//ASCIIZ
  * }
  *
- * _BIX (Battery InFormation Extended)
+ * _BIX (Battery Information Extended)
  * Arguments: none
- * Results  : package _BIX (Battery InFormation Extended)
+ * Results  : package _BIX (Battery Information Extended)
  * Package {
  * 	// ASCIIZ is ASCII character string terminated with a 0x00.
  *	Revision			//Integer
