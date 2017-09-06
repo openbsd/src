@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.30 2016/08/26 04:11:16 guenther Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.31 2017/09/06 17:24:22 otto Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -251,7 +251,7 @@ rd_ln_nm(ARCHD *arcn)
 int
 cpio_id(char *blk, int size)
 {
-	if ((size < sizeof(HD_CPIO)) ||
+	if ((size < (int)sizeof(HD_CPIO)) ||
 	    (strncmp(blk, AMAGIC, sizeof(AMAGIC) - 1) != 0))
 		return(-1);
 	return(0);
@@ -488,7 +488,7 @@ cpio_wr(ARCHD *arcn)
 int
 vcpio_id(char *blk, int size)
 {
-	if ((size < sizeof(HD_VCPIO)) ||
+	if ((size < (int)sizeof(HD_VCPIO)) ||
 	    (strncmp(blk, AVMAGIC, sizeof(AVMAGIC) - 1) != 0))
 		return(-1);
 	return(0);
@@ -505,7 +505,7 @@ vcpio_id(char *blk, int size)
 int
 crc_id(char *blk, int size)
 {
-	if ((size < sizeof(HD_VCPIO)) ||
+	if ((size < (int)sizeof(HD_VCPIO)) ||
 	    (strncmp(blk, AVCMAGIC, sizeof(AVCMAGIC) - 1) != 0))
 		return(-1);
 	return(0);
@@ -799,7 +799,7 @@ vcpio_wr(ARCHD *arcn)
 int
 bcpio_id(char *blk, int size)
 {
-	if (size < sizeof(HD_BCPIO))
+	if (size < (int)sizeof(HD_BCPIO))
 		return(-1);
 
 	/*
