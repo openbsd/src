@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.16 2017/08/14 19:58:32 uwe Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.17 2017/09/06 04:47:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -55,6 +55,7 @@ static const char	*db_ctf_off2name(uint32_t);
 static Elf_Sym		*db_ctf_idx2sym(size_t *, uint8_t);
 static char		*db_ctf_decompress(const char *, size_t, off_t);
 
+const struct ctf_type	*db_ctf_type_by_name(const char *, unsigned int);
 const struct ctf_type	*db_ctf_type_by_symbol(Elf_Sym *);
 const struct ctf_type	*db_ctf_type_by_index(uint16_t);
 void			 db_ctf_pprint_struct(const struct ctf_type *, vaddr_t);
@@ -266,6 +267,41 @@ db_ctf_type_by_symbol(Elf_Sym *st)
 	}
 
 	return NULL;
+}
+
+const struct ctf_type *
+db_ctf_type_by_name(const char *name, unsigned int kind)
+{
+	struct ctf_header	*cth;
+	const struct ctf_type   *ctt;
+	const char		*tname;
+	uint32_t		 off, toff;
+
+	if (!db_ctf.ctf_found)
+		return (NULL);
+
+	cth = db_ctf.cth;
+
+	for (off = cth->cth_typeoff; off < cth->cth_stroff; off += toff) {
+		ctt = (struct ctf_type *)(db_ctf.data + off);
+		toff = db_ctf_type_len(ctt);
+		if (toff == 0) {
+			db_printf("incorrect type at offset %u", off);
+			break;
+		}
+
+		if (CTF_INFO_KIND(ctt->ctt_info) != kind)
+			continue;
+
+		tname = db_ctf_off2name(ctt->ctt_name);
+		if (tname == NULL)
+			continue;
+
+		if (strcmp(name, tname) == 0)
+			return (ctt);
+	}
+
+	return (NULL);
 }
 
 /*
@@ -537,4 +573,56 @@ db_ctf_pprint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	db_printf("%s:\t", db_tok_string);
 	db_ctf_pprint(ctt, addr);
 	db_printf("\n");
+}
+
+/*
+ * show struct <struct name> [addr]: displays the data starting at addr
+ * (`dot' if unspecified) as a struct of the given type.
+ */
+void
+db_ctf_show_struct(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modifiers)
+{
+	const struct ctf_type *ctt;
+	const char *name;
+	uint64_t sz;
+	int t;
+
+	/*
+	 * Read the struct name from the debugger input.
+	 */
+	t = db_read_token();
+	if (t != tIDENT) {
+		db_printf("Bad struct name\n");
+		db_flush_lex();
+		return;
+	}
+	name = db_tok_string;
+
+	ctt = db_ctf_type_by_name(name, CTF_K_STRUCT);
+	if (ctt == NULL) {
+		db_printf("unknown struct %s\n", name);
+		db_flush_lex();
+		return;
+	}
+
+	/*
+	 * Read the address, if any, from the debugger input.
+	 * In that case, update `dot' value.
+	 */
+	if (db_expression(&addr)) {
+		db_dot = (db_addr_t)addr;
+		db_last_addr = db_dot;
+	} else
+		addr = (db_expr_t)db_dot;
+
+	db_skip_to_eol();
+
+	/*
+	 * Display the structure contents.
+	 */
+	sz = (ctt->ctt_size <= CTF_MAX_SIZE) ?
+	    ctt->ctt_size : CTF_TYPE_LSIZE(ctt);
+	db_printf("struct %s at %p (%llu bytes) ", name, (void *)addr, sz);
+	db_ctf_pprint_struct(ctt, addr);
 }

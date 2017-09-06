@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.75 2017/08/14 19:57:05 uwe Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.76 2017/09/06 04:47:26 dlg Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ void	db_dmesg_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_show_panic_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_bcstats_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_struct_offset_cmd(db_expr_t, int, db_expr_t, char *);
-void	db_struct_layout_cmd(db_expr_t, int, db_expr_t, char *);
+void	db_ctf_show_struct(db_expr_t, int, db_expr_t, char *);
 void	db_show_regs(db_expr_t, boolean_t, db_expr_t, char *);
 void	db_write_cmd(db_expr_t, boolean_t, db_expr_t, char *);
 void	db_witness_display(db_expr_t, int, db_expr_t, char *);
@@ -590,9 +590,7 @@ struct db_command db_show_cmds[] = {
 	{ "proc",	db_proc_print_cmd,	0,	NULL },
 	{ "registers",	db_show_regs,		0,	NULL },
 	{ "socket",	db_socket_print_cmd,	0,	NULL },
-#ifdef DDB_STRUCT
-	{ "struct",	db_struct_layout_cmd,	CS_OWN,	NULL },
-#endif
+	{ "struct",	db_ctf_show_struct,	CS_OWN,	NULL },
 	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
 	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },

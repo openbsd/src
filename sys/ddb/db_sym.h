@@ -96,6 +96,5 @@ bool db_dwarf_line_at_pc(const char *, size_t, uintptr_t,
 struct ctf_type;
 
 int			 db_ctf_func_numargs(Elf_Sym *);
-const struct ctf_type	*db_ctf_type_by_name(char *);
 
 #endif /* _DDB_DB_SYM_H_ */
