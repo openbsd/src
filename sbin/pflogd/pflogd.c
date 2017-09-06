@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.55 2017/09/05 15:41:25 brynet Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.56 2017/09/06 12:43:16 brynet Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -686,7 +686,6 @@ main(int argc, char **argv)
 		}
 	}
 
-	logmsg(LOG_NOTICE, "Exiting");
 	if (dpcap) {
 		flush_buffer(dpcap);
 		fclose(dpcap);

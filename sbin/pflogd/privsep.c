@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.28 2017/09/05 15:41:25 brynet Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.29 2017/09/06 12:43:16 brynet Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -49,10 +49,7 @@ enum cmd_types {
 static int priv_fd = -1;
 static volatile pid_t child_pid = -1;
 
-volatile sig_atomic_t gotsig_chld = 0;
-
 static void sig_pass_to_chld(int);
-static void sig_chld(int);
 static int  may_read(int, void *, size_t);
 static void must_read(int, void *, size_t);
 static void must_write(int, void *, size_t);
@@ -150,7 +147,6 @@ priv_exec(int child, int argc, char *argv[])
 	signal(SIGHUP,  sig_pass_to_chld);
 	signal(SIGINT,  sig_pass_to_chld);
 	signal(SIGQUIT, sig_pass_to_chld);
-	signal(SIGCHLD, sig_chld);
 
 	setproctitle("[priv]");
 
@@ -160,7 +156,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 		err(1, "pledge");
 #endif
 
-	while (!gotsig_chld) {
+	while (1) {
 		if (may_read(sock, &cmd, sizeof(int)))
 			break;
 		switch (cmd) {
@@ -393,13 +389,6 @@ sig_pass_to_chld(int sig)
 	if (child_pid != -1)
 		kill(child_pid, sig);
 	errno = oerrno;
-}
-
-/* if parent gets a SIGCHLD, it will exit */
-static void
-sig_chld(int sig)
-{
-	gotsig_chld = 1;
 }
 
 /* Read all data or return 1 for error.  */
