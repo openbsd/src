@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.384 2017/08/30 12:43:18 patrick Exp $ */
+/* $OpenBSD: softraid.c,v 1.385 2017/09/06 21:08:01 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1658,7 +1658,7 @@ sr_meta_native_attach(struct sr_discipline *sd, int force)
 			not_sr++;
 	}
 
-	if (sr && not_sr) {
+	if (sr && not_sr && !force) {
 		sr_error(sc, "not all chunks are of the native metadata "
 		    "format");
 		goto bad;
