@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx_pci.c,v 1.13 2016/04/26 00:21:27 jsg Exp $	*/
+/*	$OpenBSD: rtsx_pci.c,v 1.14 2017/09/06 13:07:38 jcs Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -27,7 +27,8 @@
 #include <dev/ic/rtsxvar.h>
 #include <dev/sdmmc/sdmmcvar.h>
 
-#define RTSX_PCI_BAR 	0x10
+#define RTSX_PCI_BAR 		0x10
+#define RTSX_PCI_BAR_525A 	0x14
 
 struct rtsx_pci_softc {
 	struct rtsx_softc sc;
@@ -61,6 +62,7 @@ rtsx_pci_match(struct device *parent, void *match, void *aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5229 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS522A ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5249 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS525A ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTL8402 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTL8411 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTL8411B)
@@ -80,6 +82,7 @@ rtsx_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh;
 	bus_size_t size;
 	int flags;
+	int bar = RTSX_PCI_BAR;
 
 	if ((pci_conf_read(pa->pa_pc, pa->pa_tag, RTSX_CFG_PCI)
 	    & RTSX_CFG_ASIC) != 0) {
@@ -101,32 +104,35 @@ rtsx_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s\n", intrstr);
 
-	if (pci_mem_find(pa->pa_pc, pa->pa_tag, RTSX_PCI_BAR,
-	    NULL, NULL, NULL) != 0) {
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_REALTEK_RTS5209:
+		flags = RTSX_F_5209;
+		break;
+	case PCI_PRODUCT_REALTEK_RTS5229:
+	case PCI_PRODUCT_REALTEK_RTS5249:
+		flags = RTSX_F_5229;
+		break;
+	case PCI_PRODUCT_REALTEK_RTS525A:
+		flags = RTSX_F_525A;
+		bar = RTSX_PCI_BAR_525A;
+		break;
+	default:
+		flags = 0;
+		break;
+	}
+
+	if (pci_mem_find(pa->pa_pc, pa->pa_tag, bar, NULL, NULL, NULL) != 0) {
 		printf("%s: can't find registers\n", sc->sc.sc_dev.dv_xname);
 	    	return;
 	}
 
-	if (pci_mapreg_map(pa, RTSX_PCI_BAR, PCI_MAPREG_TYPE_MEM, 0,
-	    &iot, &ioh, NULL, &size, 0)) {
+	if (pci_mapreg_map(pa, bar, PCI_MAPREG_TYPE_MEM, 0, &iot, &ioh, NULL,
+	    &size, 0)) {
 		printf("%s: can't map registers\n", sc->sc.sc_dev.dv_xname);
 		return;
 	}
 
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_REALTEK_RTS5209:
-			flags = RTSX_F_5209;
-			break;
-		case PCI_PRODUCT_REALTEK_RTS5229:
-		case PCI_PRODUCT_REALTEK_RTS5249:
-			flags = RTSX_F_5229;
-			break;
-		default:
-			flags = 0;
-			break;
-	}
 
 	if (rtsx_attach(&sc->sc, iot, ioh, size, pa->pa_dmat, flags) != 0)
 		printf("%s: can't initialize chip\n", sc->sc.sc_dev.dv_xname);

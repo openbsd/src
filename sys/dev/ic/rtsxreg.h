@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsxreg.h,v 1.3 2013/11/26 20:33:16 deraadt Exp $	*/
+/*	$OpenBSD: rtsxreg.h,v 1.4 2017/09/06 13:07:38 jcs Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -500,6 +500,14 @@
 #define	RTSX_SD30_DRIVE_SEL_MASK	0x07
 
 #define	RTSX_DUMMY_REG		0xFE90
+
+#define	RTSX_LDO_VCC_CFG1	0xFF73
+#define	RTSX_LDO_VCC_REF_TUNE_MASK	0x30
+#define	RTSX_LDO_VCC_REF_1V2		0x20
+#define	RTSX_LDO_VCC_TUNE_MASK		0x07
+#define	RTSX_LDO_VCC_1V8		0x04
+#define	RTSX_LDO_VCC_3V3		0x07
+#define	RTSX_LDO_VCC_LMT_EN		0x08
 
 #define	RTSX_SG_INT		0x04
 #define	RTSX_SG_END		0x02
