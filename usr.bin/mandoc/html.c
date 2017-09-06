@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.89 2017/07/15 17:57:46 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.90 2017/09/06 16:24:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -248,6 +248,8 @@ html_make_id(const struct roff_node *n)
 
 	buf = NULL;
 	deroff(&buf, n);
+	if (buf == NULL)
+		return NULL;
 
 	/* http://www.w3.org/TR/html5/dom.html#the-id-attribute */
 
