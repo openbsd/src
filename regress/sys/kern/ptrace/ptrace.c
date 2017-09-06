@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.c,v 1.3 2014/01/22 00:36:31 guenther Exp $	*/
+/*	$OpenBSD: ptrace.c,v 1.4 2017/09/06 04:20:12 guenther Exp $	*/
 /*
  * Copyright (c) 2005 Artur Grabowski <art@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <err.h>
 
 static void
 usage(void)
@@ -44,7 +45,7 @@ main(int argc, char **argv)
 	pid_t pid;
 	char *m;
 	int ps;
-	int status, req;
+	int status;
 	int ret;
 
 	ps = getpagesize();
@@ -115,7 +116,7 @@ main(int argc, char **argv)
 	}
 
 	if (!write) {
-		int i, req;
+		int req;
 
 		if (I) {
 			char foo[1024];
@@ -131,7 +132,7 @@ main(int argc, char **argv)
 
 			if (ptrace(PT_IO, pid, (caddr_t)&piod, 0) == -1) {
 				warn("ptrace(PT_IO)");
-				if (errno == EFAULT)
+				if (errno == EACCES)
 					ret = 1;
 				else
 					ret = -1;
