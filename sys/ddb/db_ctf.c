@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.17 2017/09/06 04:47:26 dlg Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.18 2017/09/06 09:48:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -31,6 +31,7 @@
 #include <ddb/db_lex.h>
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_access.h>
 
 #include <sys/exec_elf.h>
 #include <sys/ctf.h>
@@ -440,6 +441,7 @@ db_ctf_pprint_ptr(const struct ctf_type *ctt, vaddr_t addr)
 	const char		*name, *modif = "";
 	const struct ctf_type	*ref;
 	uint16_t		 kind;
+	unsigned long		 ptr;
 
 	ref = db_ctf_type_by_index(ctt->ctt_type);
 	kind = CTF_INFO_KIND(ref->ctt_info);
@@ -467,7 +469,9 @@ db_ctf_pprint_ptr(const struct ctf_type *ctt, vaddr_t addr)
 	if (name != NULL)
 		db_printf("(%s%s *)", modif, name);
 
-	db_printf("0x%lx", addr);
+	ptr = (unsigned long)db_get_value(addr, sizeof(unsigned long), 0);
+
+	db_printf("0x%lx", ptr);
 }
 
 static const char *
