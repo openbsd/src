@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.243 2017/08/30 10:33:57 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.244 2017/09/06 07:12:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1069,7 +1069,7 @@ server_client_resize_force(struct window_pane *wp)
 	memset(&ws, 0, sizeof ws);
 	ws.ws_col = wp->sx;
 	ws.ws_row = wp->sy - 1;
-	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
+	if (wp->fd != -1 && ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
 		fatal("ioctl failed");
 	log_debug("%s: %%%u forcing resize", __func__, wp->id);
 
@@ -1095,7 +1095,7 @@ server_client_resize_event(__unused int fd, __unused short events, void *data)
 	memset(&ws, 0, sizeof ws);
 	ws.ws_col = wp->sx;
 	ws.ws_row = wp->sy;
-	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
+	if (wp->fd != -1 && ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
 		fatal("ioctl failed");
 	log_debug("%s: %%%u resize to %u,%u", __func__, wp->id, wp->sx, wp->sy);
 
