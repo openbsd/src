@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitoshiba.c,v 1.8 2017/02/28 10:39:07 natano Exp $ */
+/* $OpenBSD: acpitoshiba.c,v 1.9 2017/09/07 11:23:17 bluhm Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
@@ -381,7 +381,7 @@ int
 toshiba_hotkey(struct aml_node *node, int notify, void *arg)
 {
 	struct acpitoshiba_softc *sc = arg;
-	int event, ret;
+	int event, ret = HCI_FAILURE;
 
 	event = toshiba_read_events(sc);
 	if (!event)
