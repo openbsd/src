@@ -27,11 +27,11 @@ for p in permute:
 	    ICMPv6EchoRequest(id=eid, data=payload)
 	frag=[]
 	fid=pid & 0xffffffff
-	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/ \
+	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/
 	    str(packet)[40:48])
-	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=1, m=1)/ \
+	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=1, m=1)/
 	    str(packet)[48:56])
-	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=2)/ \
+	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=2)/
 	    str(packet)[56:64])
 	eth=[]
 	for i in range(3):

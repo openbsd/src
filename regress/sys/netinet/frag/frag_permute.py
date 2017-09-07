@@ -27,11 +27,11 @@ for p in permute:
 	    ICMP(type='echo-request', id=eid)/payload
 	frag=[]
 	fid=pid & 0xffff
-	frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid, \
+	frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
 	    flags='MF')/str(packet)[20:28])
-	frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid, \
-	    flags='MF', frag=1)/str(packet)[28:36])
-	frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid, \
+	frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
+	    frag=1, flags='MF')/str(packet)[28:36])
+	frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
 	    frag=2)/str(packet)[36:48])
 	eth=[]
 	for i in range(3):

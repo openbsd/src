@@ -19,10 +19,10 @@ packet=IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/ \
     UDP(sport=uport, dport=7)/payload
 frag=[]
 fid=pid & 0xffff
-frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=17, id=fid, flags='MF')/ \
-    str(packet)[20:36])
-frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=17, id=fid, frag=2)/ \
-    str(packet)[36:44])
+frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=17, id=fid,
+    flags='MF')/str(packet)[20:36])
+frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=17, id=fid,
+    frag=2)/str(packet)[36:44])
 eth=[]
 for f in frag:
 	eth.append(Ether(src=LOCAL_MAC, dst=REMOTE_MAC)/f)

@@ -2,9 +2,9 @@
 
 print "ping6 fragment with mf=1 that overlaps fragment with mf=0 at the end"
 
-#      |---------|
-#           |XXXX|
-# |----|
+#           |----|
+#      |XXXXXXXXX|
+# |---------|
 
 import os
 from addr import *
@@ -17,9 +17,9 @@ packet=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/ \
     ICMPv6EchoRequest(id=eid, data=payload)
 frag=[]
 fid=pid & 0xffffffff
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=1)/str(packet)[48:64])
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1, offset=2)/str(packet)[56:64])
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/str(packet)[40:48])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=2)/str(packet)[56:64])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=1, m=1)/str(packet)[48:64])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/str(packet)[40:56])
 eth=[]
 for f in frag:
 	pkt=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/f

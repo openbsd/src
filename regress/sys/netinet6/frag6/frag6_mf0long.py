@@ -3,7 +3,7 @@
 print "ping6 fragment that overlaps longer than the last fragment with m=0"
 
 #      |---------|
-#           |XXXXXXXXX|
+#                |XXXX|
 # |----|
 
 import os
@@ -19,8 +19,7 @@ packet=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/ \
 frag=[]
 fid=pid & 0xffffffff
 frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=1)/str(packet)[48:64])
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=2)/ \
-    (str(packet)+dummy)[56:72])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=3)/dummy)
 frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/str(packet)[40:48])
 eth=[]
 for f in frag:

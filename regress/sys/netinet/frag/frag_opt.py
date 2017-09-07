@@ -2,8 +2,8 @@
 
 print "ping fragments with IP option"
 
-# |OOOO--------|
-#              |----|
+# OO|--------|
+#          OO|----|
 
 import os
 from addr import *
@@ -16,10 +16,10 @@ packet=IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/ \
     ICMP(type='echo-request', id=eid)/payload
 frag=[]
 fid=pid & 0xffff
-frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid, flags='MF',
-    options=IPOption_NOP())/str(packet)[20:36])
-frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid, frag=2)/ \
-    str(packet)[36:44])
+frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
+    flags='MF', options=IPOption_NOP())/str(packet)[20:36])
+frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
+    frag=2, options=IPOption_NOP())/str(packet)[36:44])
 eth=[]
 for f in frag:
 	eth.append(Ether(src=LOCAL_MAC, dst=REMOTE_MAC)/f)

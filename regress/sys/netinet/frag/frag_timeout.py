@@ -23,13 +23,13 @@ fid=pid & 0xffff
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
     flags='MF')/str(packet)[20:28])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    flags='MF', frag=1)/str(packet)[28:36])
+    frag=1, flags='MF')/str(packet)[28:36])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    flags='MF', frag=2)/str(packet)[36:44])
+    frag=2, flags='MF')/str(packet)[36:44])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    flags='MF', frag=3)/str(packet)[44:52])
+    frag=3, flags='MF')/str(packet)[44:52])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    flags='MF', frag=4)/str(packet)[52:60])
+    frag=4, flags='MF')/str(packet)[52:60])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
     frag=5)/str(packet)[60:68])
 eth=[]
@@ -38,9 +38,9 @@ for f in frag:
 
 if os.fork() == 0:
 	time.sleep(1)
-        for e in eth:
-                sendp(e, iface=LOCAL_IF)
-                time.sleep(15)
+	for e in eth:
+		sendp(e, iface=LOCAL_IF)
+		time.sleep(15)
 	os._exit(0)
 
 ans=sniff(iface=LOCAL_IF, timeout=90, filter=

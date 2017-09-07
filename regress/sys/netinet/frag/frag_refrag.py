@@ -27,11 +27,11 @@ offset=2
 chunk=4
 while 40+8*(offset+chunk) < len(payload):
 	frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-	    flags='MF', frag=offset)/
+	    frag=offset, flags='MF')/
 	    str(packet)[20+(8*offset):20+8*(offset+chunk)])
 	offset+=chunk
-frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid, frag=offset)/
-    str(packet)[20+(8*offset):])
+frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
+	frag=offset)/str(packet)[20+(8*offset):])
 eth=[]
 for f in frag:
 	eth.append(Ether(src=LOCAL_MAC, dst=REMOTE_MAC)/f)

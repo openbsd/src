@@ -1,10 +1,10 @@
 #!/usr/local/bin/python2.7
 
-print "ping fragment that overlaps the second fragment with its tail"
+print "ping fragment head that overlaps the first fragment completely"
 
-#           |----|
-#      |XXXX|
 # |---------|
+#      |XXXX|
+#           |----|
 
 import os
 from addr import *
@@ -19,11 +19,11 @@ packet=IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/ \
 frag=[]
 fid=pid & 0xffff
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    frag=2)/str(packet)[36:44])
+    flags='MF')/str(packet)[20:36])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
     frag=1, flags='MF')/dummy)
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    flags='MF')/str(packet)[20:36])
+    frag=2)/str(packet)[36:44])
 eth=[]
 for f in frag:
 	eth.append(Ether(src=LOCAL_MAC, dst=REMOTE_MAC)/f)
