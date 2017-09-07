@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.321 2017/09/05 00:58:16 visa Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.322 2017/09/07 10:54:49 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -545,14 +545,13 @@ ip_local(struct mbuf **mp, int *offp, int nxt, int af)
 		 * Look for queue of fragments
 		 * of this datagram.
 		 */
-		LIST_FOREACH(fp, &ipq, ipq_q)
+		LIST_FOREACH(fp, &ipq, ipq_q) {
 			if (ip->ip_id == fp->ipq_id &&
 			    ip->ip_src.s_addr == fp->ipq_src.s_addr &&
 			    ip->ip_dst.s_addr == fp->ipq_dst.s_addr &&
 			    ip->ip_p == fp->ipq_p)
-				goto found;
-		fp = 0;
-found:
+				break;
+		}
 
 		/*
 		 * Adjust ip_len to not reflect header,
