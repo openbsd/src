@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2017/07/07 23:15:27 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.21 2017/09/07 19:04:23 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -35,8 +35,8 @@ LOCAL_IF ?=	em1
 LOCAL_MAC ?=	00:1b:21:0e:6e:8e
 REMOTE_MAC ?=	00:04:23:b0:68:8e
 
-LOCAL_ADDR ?=	fdd7:e83e:66bc:81::21
-REMOTE_ADDR ?=	fdd7:e83e:66bc:81::22
+LOCAL_ADDR6 ?=	fdd7:e83e:66bc:81::21
+REMOTE_ADDR6 ?=	fdd7:e83e:66bc:81::22
 
 REMOTE_SSH ?=
 
