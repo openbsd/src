@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.70 2017/08/31 11:10:03 jca Exp $	*/
+/*	$OpenBSD: history.c,v 1.71 2017/09/07 19:08:32 jca Exp $	*/
 
 /*
  * command history
@@ -39,6 +39,7 @@ static char   **hist_get_oldest(void);
 static void	histbackup(void);
 
 static FILE	*histfh;
+static char   **histbase;	/* actual start of the history[] allocation */
 static char   **current;	/* current position in history[] */
 static char    *hname;		/* current name of history file */
 static int	hstarted;	/* set after hist_init() called */
@@ -557,8 +558,9 @@ sethistsize(int n)
 			memmove(history, histptr - offset, n * sizeof(char *));
 		}
 
-		history = areallocarray(history, n, sizeof(char *), APERM);
 		histsize = n;
+		histbase = areallocarray(histbase, n + 1, sizeof(char *), APERM);
+		history = histbase + 1;
 		histptr = history + offset;
 	}
 }
@@ -597,9 +599,15 @@ sethistfile(const char *name)
 void
 init_histvec(void)
 {
-	if (history == NULL) {
+	if (histbase == NULL) {
 		histsize = HISTORYSIZE;
-		history = areallocarray(NULL, histsize, sizeof(char *), APERM);
+		/*
+		 * allocate one extra element so that histptr always
+		 * lies within array bounds
+		 */
+		histbase = areallocarray(NULL, histsize + 1, sizeof(char *),
+		    APERM);
+		history = histbase + 1;
 		histptr = history - 1;
 	}
 }
