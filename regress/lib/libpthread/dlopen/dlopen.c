@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlopen.c,v 1.1 2016/05/10 03:59:55 guenther Exp $ */
+/*	$OpenBSD: dlopen.c,v 1.2 2017/09/07 21:35:35 guenther Exp $ */
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  *
@@ -663,7 +663,8 @@ main(int argc, char **argv)
 
 	/* look up all the functions.  The cast here isn't strictly portable */
 	for (f = functions; f->name != NULL; f++) {
-		if ((*(void **)f->callback = dlsym(handle, f->name)) == NULL)
+		if ((*(void **)f->callback = dlsym(handle, f->name)) == NULL &&
+		    (*(void **)f->callback = dlsym(RTLD_DEFAULT, f->name)) == NULL)
 			errx(1, "dlsym %s: %s", f->name, dlerror());
 	}
 
