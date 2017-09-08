@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.79 2016/11/16 13:47:27 reyk Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.80 2017/09/08 19:10:57 brynet Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -217,6 +217,10 @@ main(int argc, char **argv)
 		program_name = cp + 1;
 	else
 		program_name = argv[0];
+
+	/* '-P' used internally, exec privileged portion */
+	if (argc >= 2 && strcmp("-P", argv[1]) == 0)
+		priv_exec(argc, argv);
 
 	if (priv_init(argc, argv))
 		error("Failed to setup privsep");

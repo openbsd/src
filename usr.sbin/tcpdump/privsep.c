@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.45 2017/06/14 20:48:54 akfaew Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.46 2017/09/08 19:10:57 brynet Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -33,6 +33,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
@@ -132,13 +133,10 @@ static void	logmsg(int, const char *, ...);
 int
 priv_init(int argc, char **argv)
 {
-	int bpfd = -1;
-	int i, socks[2], cmd, nflag = 0;
+	int i, nargc, socks[2];
 	struct passwd *pw;
-	char *cmdbuf, *infile = NULL;
-	char *RFileName = NULL;
-	char *WFileName = NULL;
 	sigset_t allsigs, oset;
+	char **privargv;
 
 	closefrom(STDERR_FILENO + 1);
 	for (i = 1; i < _NSIG; i++)
@@ -188,14 +186,45 @@ priv_init(int argc, char **argv)
 
 		return (0);
 	}
+	close(socks[1]);
 
-	sigprocmask(SIG_SETMASK, &oset, NULL);
+	if (dup2(socks[0], 3) == -1)
+		err(1, "dup2 priv sock failed");
+	closefrom(4);
+
+	if ((privargv = reallocarray(NULL, argc + 2, sizeof(char *))) == NULL)
+		err(1, "alloc priv argv failed");
+	nargc = 0;
+	privargv[nargc++] = argv[0];
+	privargv[nargc++] = "-P";
+	for (i = 1; i < argc; i++)
+		privargv[nargc++] = argv[i];
+	privargv[nargc] = NULL;
+	execvp(privargv[0], privargv);
+	err(1, "exec priv '%s' failed", privargv[0]);
+}
+
+__dead void
+priv_exec(int argc, char *argv[])
+{
+	int bpfd = -1;
+	int i, sock, cmd, nflag = 0, Pflag = 0;
+	char *cmdbuf, *infile = NULL;
+	char *RFileName = NULL;
+	char *WFileName = NULL;
+
+	sock = 3;
+
+	closefrom(4);
+	for (i = 1; i < _NSIG; i++)
+		signal(i, SIG_DFL);
+
 	signal(SIGINT, SIG_IGN);
 
 	/* parse the arguments for required options */
 	opterr = 0;
 	while ((i = getopt(argc, argv,
-	    "ac:D:deE:fF:i:lLnNOopqr:s:StT:vw:xXy:Y")) != -1) {
+	    "ac:D:deE:fF:i:lLnNOopPqr:s:StT:vw:xXy:Y")) != -1) {
 		switch (i) {
 		case 'n':
 			nflag++;
@@ -213,11 +242,18 @@ priv_init(int argc, char **argv)
 			infile = optarg;
 			break;
 
+		case 'P':
+			Pflag = 1;
+			break;
+
 		default:
 			/* nothing */
 			break;
 		}
 	}
+
+	if (!Pflag)
+		errx(1, "exec without priv");
 
 	if (RFileName != NULL) {
 		if (strcmp(RFileName, "-") != 0)
@@ -245,31 +281,30 @@ priv_init(int argc, char **argv)
 		cmdbuf = copy_argv(&argv[optind]);
 
 	setproctitle("[priv]");
-	close(socks[1]);
 
 	for (;;) {
-		if (may_read(socks[0], &cmd, sizeof(int)))
+		if (may_read(sock, &cmd, sizeof(int)))
 			break;
 		switch (cmd) {
 		case PRIV_OPEN_BPF:
 			test_state(cmd, STATE_BPF);
-			impl_open_bpf(socks[0], &bpfd);
+			impl_open_bpf(sock, &bpfd);
 			break;
 		case PRIV_OPEN_DUMP:
 			test_state(cmd, STATE_BPF);
-			impl_open_dump(socks[0], RFileName);
+			impl_open_dump(sock, RFileName);
 			break;
 		case PRIV_OPEN_OUTPUT:
 			test_state(cmd, STATE_RUN);
-			impl_open_output(socks[0], WFileName);
+			impl_open_output(sock, WFileName);
 			break;
 		case PRIV_SETFILTER:
 			test_state(cmd, STATE_FILTER);
-			impl_setfilter(socks[0], cmdbuf, &bpfd);
+			impl_setfilter(sock, cmdbuf, &bpfd);
 			break;
 		case PRIV_INIT_DONE:
 			test_state(cmd, STATE_RUN);
-			impl_init_done(socks[0], &bpfd);
+			impl_init_done(sock, &bpfd);
 
 			if (pledge("stdio rpath inet unix dns recvfd bpf", NULL) == -1)
 				err(1, "pledge");
@@ -277,45 +312,45 @@ priv_init(int argc, char **argv)
 			break;
 		case PRIV_GETHOSTBYADDR:
 			test_state(cmd, STATE_RUN);
-			impl_gethostbyaddr(socks[0]);
+			impl_gethostbyaddr(sock);
 			break;
 		case PRIV_ETHER_NTOHOST:
 			test_state(cmd, cur_state);
-			impl_ether_ntohost(socks[0]);
+			impl_ether_ntohost(sock);
 			break;
 		case PRIV_GETRPCBYNUMBER:
 			test_state(cmd, STATE_RUN);
-			impl_getrpcbynumber(socks[0]);
+			impl_getrpcbynumber(sock);
 			break;
 		case PRIV_GETSERVENTRIES:
 			test_state(cmd, STATE_FILTER);
-			impl_getserventries(socks[0]);
+			impl_getserventries(sock);
 			break;
 		case PRIV_GETPROTOENTRIES:
 			test_state(cmd, STATE_FILTER);
-			impl_getprotoentries(socks[0]);
+			impl_getprotoentries(sock);
 			break;
 		case PRIV_LOCALTIME:
 			test_state(cmd, STATE_RUN);
-			impl_localtime(socks[0]);
+			impl_localtime(sock);
 			break;
 		case PRIV_GETLINES:
 			test_state(cmd, STATE_RUN);
-			impl_getlines(socks[0]);
+			impl_getlines(sock);
 			break;
 		case PRIV_PCAP_STATS:
 			test_state(cmd, STATE_RUN);
-			impl_pcap_stats(socks[0], &bpfd);
+			impl_pcap_stats(sock, &bpfd);
 			break;
 		default:
 			logmsg(LOG_ERR, "[priv]: unknown command %d", cmd);
-			_exit(1);
+			exit(1);
 			/* NOTREACHED */
 		}
 	}
 
 	/* NOTREACHED */
-	_exit(0);
+	exit(0);
 }
 
 static void
