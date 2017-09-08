@@ -1,4 +1,4 @@
-/*	$OpenBSD: asio.c,v 1.10 2003/06/27 01:50:52 jason Exp $	*/
+/*	$OpenBSD: asio.c,v 1.11 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -35,7 +35,6 @@
  * Driver for Aurora 210SJ serial ports.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

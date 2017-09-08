@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.61 2017/06/06 11:39:55 mpi Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.62 2017/09/08 05:36:53 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -93,7 +93,6 @@
 
 #include "pf.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>

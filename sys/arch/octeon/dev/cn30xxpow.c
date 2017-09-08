@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpow.c,v 1.9 2017/04/30 04:32:58 visa Exp $	*/
+/*	$OpenBSD: cn30xxpow.c,v 1.10 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -28,7 +28,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/kernel.h>				/* hz */
 #include <sys/malloc.h>
 

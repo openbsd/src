@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.12 2017/08/14 21:46:02 ians Exp $ */
+/* $OpenBSD: prcm.c,v 1.13 2017/09/08 05:36:51 deraadt Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -48,7 +48,6 @@
  * Driver for the Power, Reset and Clock Management Module (PRCM).
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

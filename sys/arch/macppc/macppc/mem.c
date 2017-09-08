@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.24 2016/09/25 15:23:37 deraadt Exp $	*/
+/*	$OpenBSD: mem.c,v 1.25 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -47,7 +47,6 @@
 #include <sys/ioccom.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
-#include <sys/types.h>
 
 #include <machine/cpu.h>
 

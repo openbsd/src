@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.6 2017/09/02 21:44:52 patrick Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.7 2017/09/08 05:36:52 deraadt Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -17,7 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

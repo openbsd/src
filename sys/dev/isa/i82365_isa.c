@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.22 2010/09/07 16:21:43 deraadt Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.23 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

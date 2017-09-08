@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_prom.c,v 1.7 2015/07/17 16:13:26 miod Exp $	*/
+/*	$OpenBSD: if_prom.c,v 1.8 2017/09/08 05:36:51 deraadt Exp $	*/
 /*	$NetBSD: if_prom.c,v 1.9 1997/04/06 08:41:26 cgd Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 
 #include <netinet/in.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.36 2017/02/01 16:46:57 bluhm Exp $	*/
+/*	$OpenBSD: cy.c,v 1.37 2017/09/08 05:36:52 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -50,7 +50,6 @@
  *
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>

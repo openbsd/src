@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.38 2016/09/19 06:46:44 ratchov Exp $ */
+/* $OpenBSD: auixp.c,v 1.39 2017/09/08 05:36:52 deraadt Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -50,9 +50,8 @@
 
 /*#define DEBUG_AUIXP*/
 
-#include <sys/types.h>
-#include <sys/errno.h>
 #include <sys/param.h>
+#include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>

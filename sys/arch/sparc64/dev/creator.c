@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.50 2015/12/11 16:07:01 mpi Exp $	*/
+/*	$OpenBSD: creator.c,v 1.51 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -26,7 +26,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

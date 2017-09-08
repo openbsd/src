@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwmcode.c,v 1.7 2015/03/14 03:38:47 jsg Exp $ */
+/*	$OpenBSD: adwmcode.c,v 1.8 2017/09/08 05:36:52 deraadt Exp $ */
 /*      $NetBSD: adwmcode.c,v 1.5 2000/05/27 18:24:50 dante Exp $        */
 
 /*
@@ -48,7 +48,6 @@
  */
 
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_up1000.c,v 1.17 2015/08/15 19:18:27 miod Exp $	*/
+/*	$OpenBSD: pci_up1000.c,v 1.18 2017/09/08 05:36:51 deraadt Exp $	*/
 /* $NetBSD: pci_up1000.c,v 1.6 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*-
@@ -30,7 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>

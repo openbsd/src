@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmtimer.c,v 1.6 2015/01/22 14:33:01 krw Exp $	*/
+/*	$OpenBSD: dmtimer.c,v 1.7 2017/09/08 05:36:51 deraadt Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -22,7 +22,6 @@
  *	low power mode.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.226 2017/05/29 07:47:13 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.227 2017/09/08 05:36:53 deraadt Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
  * Detailed SCSI error printing Copyright 1997 by Matthew Jacob.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

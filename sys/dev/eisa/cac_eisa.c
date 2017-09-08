@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac_eisa.c,v 1.4 2009/06/02 11:38:21 deraadt Exp $	*/
+/*	$OpenBSD: cac_eisa.c,v 1.5 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: cac_eisa.c,v 1.1 2000/09/01 12:15:20 ad Exp $	*/
 
 /*-
@@ -61,7 +61,6 @@
  * EISA front-end for cac(4) driver.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

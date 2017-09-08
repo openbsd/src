@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.8 2015/09/08 10:21:50 deraadt Exp $	*/
+/*	$OpenBSD: impact.c,v 1.9 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2012 Miodrag Vallat.
@@ -49,7 +49,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/types.h>
 #include <sys/malloc.h>
 
 #include <machine/bus.h>

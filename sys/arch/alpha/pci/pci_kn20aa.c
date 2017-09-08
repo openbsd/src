@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.28 2015/07/26 05:09:44 miod Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.29 2017/09/08 05:36:51 deraadt Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -28,7 +28,6 @@
  * rights to redistribute these changes.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_id.c,v 1.12 2016/10/03 12:33:21 mpi Exp $	*/
+/*	$OpenBSD: ip6_id.c,v 1.13 2017/09/08 05:36:53 deraadt Exp $	*/
 /*	$NetBSD: ip6_id.c,v 1.7 2003/09/13 21:32:59 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 
@@ -81,7 +81,6 @@
  * This avoids reuse issues caused by reseeding.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>

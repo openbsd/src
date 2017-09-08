@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.16 2016/08/30 12:24:07 jsg Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.17 2017/09/08 05:36:52 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/sensors.h>
 
 #include <machine/bus.h>

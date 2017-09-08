@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000.c,v 1.11 2015/07/26 05:09:44 miod Exp $ */
+/* $OpenBSD: pci_1000.c,v 1.12 2017/09/08 05:36:51 deraadt Exp $ */
 /* $NetBSD: pci_1000.c,v 1.12 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -59,7 +59,6 @@
  * rights to redistribute these changes.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.55 2016/10/22 17:48:41 patrick Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.56 2017/09/08 05:36:51 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -175,7 +175,6 @@
  *       in a significant slow-down if both processes are in tight loops.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>

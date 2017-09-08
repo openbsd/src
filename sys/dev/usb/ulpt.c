@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.54 2017/03/26 15:31:15 deraadt Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.55 2017/09/08 05:36:52 deraadt Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -44,7 +44,6 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
-#include <sys/types.h>
 #include <sys/malloc.h>
 
 #include <dev/usb/usb.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.12 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.13 2017/09/08 05:36:53 deraadt Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/systm.h>

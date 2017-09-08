@@ -1,4 +1,4 @@
-/* $OpenBSD: am335x.c,v 1.10 2017/03/01 05:10:05 jsg Exp $ */
+/* $OpenBSD: am335x.c,v 1.11 2017/09/08 05:36:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -17,7 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <machine/bus.h>
 

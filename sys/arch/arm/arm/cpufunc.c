@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.51 2017/04/24 18:15:16 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.52 2017/09/08 05:36:51 deraadt Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
  * Created      : 30/01/97
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 

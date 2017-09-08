@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw_pci.c,v 1.17 2015/03/14 03:38:48 jsg Exp $ */
+/*	$OpenBSD: adw_pci.c,v 1.18 2017/09/08 05:36:52 deraadt Exp $ */
 /* $NetBSD: adw_pci.c,v 1.7 2000/05/26 15:13:46 dante Exp $	 */
 
 /*
@@ -41,7 +41,6 @@
  *	ASB-3940U3W-00	- Bus-Master PCI Ultra3-Wide (253 CDB)
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.48 2017/06/04 19:23:20 naddy Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.49 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
  */
 #include "bpfilter.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>

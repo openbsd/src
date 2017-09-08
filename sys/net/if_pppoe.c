@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.64 2017/08/11 21:24:19 mpi Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.65 2017/09/08 05:36:53 deraadt Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -36,7 +36,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/types.h>
 #include <sys/timeout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>

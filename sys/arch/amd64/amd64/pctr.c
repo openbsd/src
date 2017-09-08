@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.7 2016/04/14 07:00:24 mlarkin Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.8 2017/09/08 05:36:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov
@@ -26,7 +26,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/ioccom.h>

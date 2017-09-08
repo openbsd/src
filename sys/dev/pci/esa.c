@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.32 2016/12/12 06:47:22 ratchov Exp $	*/
+/*	$OpenBSD: esa.c,v 1.33 2017/09/08 05:36:52 deraadt Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -43,7 +43,6 @@
  * driver.
  */
 
-#include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/systm.h>

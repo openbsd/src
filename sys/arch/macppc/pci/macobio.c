@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.21 2015/04/02 11:12:24 mpi Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.22 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -32,7 +32,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

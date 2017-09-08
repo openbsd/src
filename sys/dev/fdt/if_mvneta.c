@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.1 2017/08/25 20:09:34 patrick Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.2 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -37,7 +37,6 @@
 #include <sys/mutex.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
-#include <sys/types.h>
 #include <uvm/uvm_extern.h>
 #include <sys/mbuf.h>
 

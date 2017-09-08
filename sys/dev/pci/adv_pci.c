@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv_pci.c,v 1.11 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: adv_pci.c,v 1.12 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: adv_pci.c,v 1.5 1998/09/26 15:52:55 dante Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
  *     2. This board has been sold by Iomega as a Jaz Jet PCI adapter.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>

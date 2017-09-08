@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_isa.c,v 1.12 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: uha_isa.c,v 1.13 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: uha_isa.c,v 1.5 1996/10/21 22:41:21 thorpej Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

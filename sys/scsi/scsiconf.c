@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.195 2016/03/12 15:16:04 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.196 2017/09/08 05:36:53 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 #include "bio.h"
 #include "mpath.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>

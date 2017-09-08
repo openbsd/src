@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt_eisa.c,v 1.4 2008/05/13 02:24:08 brad Exp $	*/
+/*	$OpenBSD: dpt_eisa.c,v 1.5 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: dpt_eisa.c,v 1.2 1999/10/18 21:59:19 ad Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
  * EISA front-end for DPT EATA SCSI driver.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

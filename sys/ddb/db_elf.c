@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.27 2017/08/10 19:39:38 mpi Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.28 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -31,9 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/stdint.h>
 #include <sys/param.h>
+#include <sys/stdint.h>
 #include <sys/systm.h>
 #include <sys/exec.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_poison.c,v 1.13 2015/03/14 03:38:50 jsg Exp $ */
+/*	$OpenBSD: subr_poison.c,v 1.14 2017/09/08 05:36:53 deraadt Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 
 #include <uvm/uvm_extern.h>

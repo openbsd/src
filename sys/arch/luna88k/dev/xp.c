@@ -1,4 +1,4 @@
-/* $OpenBSD: xp.c,v 1.2 2017/01/09 08:46:13 aoyama Exp $ */
+/* $OpenBSD: xp.c,v 1.3 2017/09/08 05:36:52 deraadt Exp $ */
 /* $NetBSD: xp.c,v 1.1 2016/12/03 17:38:02 tsutsui Exp $ */
 
 /*-
@@ -36,7 +36,6 @@
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/errno.h>
-#include <sys/types.h>
 
 #include <uvm/uvm_extern.h>
 

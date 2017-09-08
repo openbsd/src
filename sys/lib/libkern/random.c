@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.9 2014/01/19 12:45:36 deraadt Exp $	*/
+/*	$OpenBSD: random.c,v 1.10 2017/09/08 05:36:53 deraadt Exp $	*/
 /*	$NetBSD: random.c,v 1.2 1994/10/26 06:42:42 cgd Exp $	*/
 
 /*-
@@ -33,7 +33,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 
 #include <lib/libkern/libkern.h>
 

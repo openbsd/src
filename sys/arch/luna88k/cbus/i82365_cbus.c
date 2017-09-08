@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_cbus.c,v 1.4 2017/03/16 18:13:43 miod Exp $	*/
+/*	$OpenBSD: i82365_cbus.c,v 1.5 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
  *  based on OpenBSD:src/sys/dev/isa/i82365_isa{,subr}.c
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

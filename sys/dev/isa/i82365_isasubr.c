@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.24 2013/07/14 15:18:36 kettenis Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.25 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -32,7 +32,6 @@
  */
 
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

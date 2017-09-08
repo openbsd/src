@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.51 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.52 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -49,13 +49,12 @@
  * - DSP FX patches (to make fx like chipmunk)
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/param.h>
 #include <sys/audioio.h>
 
 #include <dev/pci/pcireg.h>

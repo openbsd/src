@@ -1,4 +1,4 @@
-/*	$OpenBSD: odyssey.c,v 1.11 2014/03/09 10:01:25 miod Exp $ */
+/*	$OpenBSD: odyssey.c,v 1.12 2017/09/08 05:36:52 deraadt Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -29,7 +29,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/types.h>
 #include <sys/malloc.h>
 
 #include <machine/autoconf.h>

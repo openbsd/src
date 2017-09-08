@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd64errata.c,v 1.8 2017/07/24 15:31:14 robert Exp $	*/
+/*	$OpenBSD: amd64errata.c,v 1.9 2017/09/08 05:36:51 deraadt Exp $	*/
 /*	$NetBSD: errata.c,v 1.6 2007/02/05 21:05:45 ad Exp $	*/
 
 /*-
@@ -43,8 +43,6 @@
  */
 
 #include <sys/param.h>
-
-#include <sys/types.h>
 #include <sys/systm.h>
 
 #include <machine/cpu.h>

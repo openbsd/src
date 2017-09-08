@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.7 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: power.c,v 1.8 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Martin Reindl.
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

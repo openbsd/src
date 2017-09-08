@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.47 2016/06/06 07:09:44 mpi Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.48 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

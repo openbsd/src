@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_rrip.c,v 1.13 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: cd9660_rrip.c,v 1.14 2017/09/08 05:36:53 deraadt Exp $	*/
 /*	$NetBSD: cd9660_rrip.c,v 1.17 1997/01/24 00:27:32 cgd Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/time.h>
 
 #include <isofs/cd9660/iso.h>

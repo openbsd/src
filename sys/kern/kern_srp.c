@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_srp.c,v 1.11 2016/09/15 02:00:16 dlg Exp $ */
+/*	$OpenBSD: kern_srp.c,v 1.12 2017/09/08 05:36:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>
 #include <sys/srp.h>

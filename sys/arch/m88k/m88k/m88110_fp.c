@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110_fp.c,v 1.10 2014/06/09 16:26:32 miod Exp $	*/
+/*	$OpenBSD: m88110_fp.c,v 1.11 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, Miodrag Vallat.
@@ -17,7 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>

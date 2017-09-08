@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf_ebus.c,v 1.5 2008/12/15 22:33:06 kettenis Exp $	*/
+/*	$OpenBSD: uperf_ebus.c,v 1.6 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -31,7 +31,6 @@
  *
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

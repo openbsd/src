@@ -1,4 +1,4 @@
-/* $OpenBSD: ast.c,v 1.3 2017/04/29 17:07:09 kettenis Exp $ */
+/* $OpenBSD: ast.c,v 1.4 2017/09/08 05:36:51 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/types.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>

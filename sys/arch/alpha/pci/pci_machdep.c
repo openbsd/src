@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.20 2015/07/26 05:09:44 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.21 2017/09/08 05:36:51 deraadt Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.7 1996/11/19 04:57:32 cgd Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
  * Machine-specific functions for PCI autoconfiguration.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>

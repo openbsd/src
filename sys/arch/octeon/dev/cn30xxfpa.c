@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpa.c,v 1.6 2015/11/19 14:08:09 visa Exp $	*/
+/*	$OpenBSD: cn30xxfpa.c,v 1.7 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -30,7 +30,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/malloc.h>
 
 #include <machine/bus.h>

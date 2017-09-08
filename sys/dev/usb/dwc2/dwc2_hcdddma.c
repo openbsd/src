@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdddma.c,v 1.13 2017/06/29 17:36:16 deraadt Exp $	*/
+/*	$OpenBSD: dwc2_hcdddma.c,v 1.14 2017/09/08 05:36:53 deraadt Exp $	*/
 /*	$NetBSD: dwc2_hcdddma.c,v 1.6 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #if 0

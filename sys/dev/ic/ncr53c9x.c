@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.63 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.64 2017/09/08 05:36:52 deraadt Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -65,7 +65,6 @@
  * Charles Hannum (mycroft@duality.gnu.ai.mit.edu).  Thanks a million!
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

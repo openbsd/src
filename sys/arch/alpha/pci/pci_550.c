@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.23 2015/07/26 05:09:44 miod Exp $ */
+/* $OpenBSD: pci_550.c,v 1.24 2017/09/08 05:36:51 deraadt Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -58,7 +58,6 @@
  * rights to redistribute these changes.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>

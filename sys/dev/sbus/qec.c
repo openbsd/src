@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.13 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: qec.c,v 1.14 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: qec.c,v 1.12 2000/12/04 20:12:55 fvdl Exp $ */
 
 /*-
@@ -30,7 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

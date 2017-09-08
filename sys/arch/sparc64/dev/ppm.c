@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppm.c,v 1.1 2006/06/02 04:46:01 jason Exp $	*/
+/*	$OpenBSD: ppm.c,v 1.2 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -26,7 +26,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.165 2017/08/11 21:24:19 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.166 2017/09/08 05:36:53 deraadt Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -70,7 +70,6 @@
 
 #include "pf.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>

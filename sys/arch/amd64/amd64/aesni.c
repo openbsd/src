@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.41 2017/05/02 11:47:49 mikeb Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.42 2017/09/08 05:36:51 deraadt Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -22,7 +22,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
-#include <sys/types.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.37 2015/09/08 07:12:56 deraadt Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.38 2017/09/08 05:36:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -28,7 +28,6 @@
 
 /* AMD POWERNOW K7 driver */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>

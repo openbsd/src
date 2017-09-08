@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.51 2017/08/18 21:30:01 deraadt Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.52 2017/09/08 05:36:53 deraadt Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -30,7 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>

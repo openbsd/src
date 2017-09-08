@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.2 2014/07/02 18:44:09 miod Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.3 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2014, Miodrag Vallat.
@@ -22,7 +22,6 @@
  * code.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/proc.h>
 

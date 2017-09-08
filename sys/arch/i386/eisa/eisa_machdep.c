@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.c,v 1.16 2016/07/16 06:08:52 mlarkin Exp $	*/
+/*	$OpenBSD: eisa_machdep.c,v 1.17 2017/09/08 05:36:51 deraadt Exp $	*/
 /*	$NetBSD: eisa_machdep.c,v 1.10.22.2 2000/06/25 19:36:58 sommerfeld Exp $	*/
 
 /*-
@@ -65,7 +65,6 @@
  * Machine-specific functions for EISA autoconfiguration.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsi64854.c,v 1.10 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: lsi64854.c,v 1.11 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: lsi64854.c,v 1.18 2001/06/04 20:56:51 mrg Exp $ */
 
 /*-
@@ -30,7 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

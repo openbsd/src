@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.42 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: wds.c,v 1.43 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -57,7 +57,6 @@
  * so they decided to delete the copyright that file had on it.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

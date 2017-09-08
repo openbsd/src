@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.36 2017/07/19 12:25:34 claudio Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.37 2017/09/08 05:36:52 deraadt Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -40,7 +40,6 @@
 #include <sys/param.h>
 #include <sys/endian.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>

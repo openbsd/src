@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.273 2017/05/29 14:08:49 sf Exp $	*/
+/*	$OpenBSD: sd.c,v 1.274 2017/09/08 05:36:53 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -48,7 +48,6 @@
  */
 
 #include <sys/stdint.h>
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>

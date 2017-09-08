@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.19 2017/09/06 09:49:35 dlg Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.20 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -17,9 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/stdint.h>
 #include <sys/param.h>
+#include <sys/stdint.h>
 #include <sys/systm.h>
 #include <sys/exec.h>
 

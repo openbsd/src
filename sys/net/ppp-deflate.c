@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp-deflate.c,v 1.13 2017/06/19 17:58:49 bluhm Exp $	*/
+/*	$OpenBSD: ppp-deflate.c,v 1.14 2017/09/08 05:36:53 deraadt Exp $	*/
 /*	$NetBSD: ppp-deflate.c,v 1.1 1996/03/15 02:28:09 paulus Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <net/ppp_defs.h>

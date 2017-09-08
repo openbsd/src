@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_percpu.c,v 1.7 2017/02/05 16:23:38 jca Exp $ */
+/*	$OpenBSD: subr_percpu.c,v 1.8 2017/09/08 05:36:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/systm.h>
 #include <sys/pool.h>
 #include <sys/malloc.h>
-#include <sys/types.h>
 
 #include <sys/percpu.h>
 

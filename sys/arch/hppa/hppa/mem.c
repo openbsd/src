@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.2 2016/09/25 15:23:37 deraadt Exp $	*/
+/*	$OpenBSD: mem.c,v 1.3 2017/09/08 05:36:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -77,7 +77,6 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
-#include <sys/types.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>

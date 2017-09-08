@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf.c,v 1.7 2016/12/20 13:47:38 jsg Exp $	*/
+/*	$OpenBSD: uperf.c,v 1.8 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -31,7 +31,6 @@
  *
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

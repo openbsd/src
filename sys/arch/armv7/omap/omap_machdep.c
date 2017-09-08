@@ -1,4 +1,4 @@
-/*	$OpenBSD: omap_machdep.c,v 1.11 2016/10/25 00:04:59 jsg Exp $	*/
+/*	$OpenBSD: omap_machdep.c,v 1.12 2017/09/08 05:36:51 deraadt Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -16,7 +16,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/termios.h>

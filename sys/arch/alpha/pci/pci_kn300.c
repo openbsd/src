@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_kn300.c,v 1.7 2015/07/26 05:09:44 miod Exp $ */
+/* $OpenBSD: pci_kn300.c,v 1.8 2017/09/08 05:36:51 deraadt Exp $ */
 /* $NetBSD: pci_kn300.c,v 1.28 2005/12/11 12:16:17 christos Exp $ */
 
 /*
@@ -31,7 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>

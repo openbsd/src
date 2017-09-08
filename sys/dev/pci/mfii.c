@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.43 2017/04/08 02:57:25 deraadt Exp $ */
+/* $OpenBSD: mfii.c,v 1.44 2017/09/08 05:36:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/types.h>
 #include <sys/pool.h>
 #include <sys/task.h>
 #include <sys/atomic.h>

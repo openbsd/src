@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.7 2014/07/11 08:18:31 guenther Exp $	*/
+/*	$OpenBSD: power.c,v 1.8 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -30,7 +30,6 @@
  * Driver for power-button device on U5, U10, etc.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.51 2017/01/25 08:23:50 tom Exp $	*/
+/*	$OpenBSD: clock.c,v 1.52 2017/09/08 05:36:51 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -85,7 +85,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /*
  * Primitive clock interrupt routines.
  */
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>

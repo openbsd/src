@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.33 2017/04/30 16:45:46 mpi Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.34 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
  * There are others too.  Thanks, everyone.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.34 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.35 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -35,7 +35,6 @@
 #include <sys/param.h>
 #include <sys/endian.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>

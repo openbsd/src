@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.4 2014/06/20 14:08:11 rapha Exp $ */
+/* $OpenBSD: gptimer.c,v 1.5 2017/09/08 05:36:51 deraadt Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -21,7 +21,6 @@
  *	low power mode.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

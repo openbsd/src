@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysbutton.c,v 1.5 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: sysbutton.c,v 1.6 2017/09/08 05:36:52 deraadt Exp $	*/
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd.org>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>

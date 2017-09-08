@@ -1,4 +1,4 @@
-/*	$OpenBSD: advlib.c,v 1.14 2013/11/15 16:46:27 brad Exp $	*/
+/*	$OpenBSD: advlib.c,v 1.15 2017/09/08 05:36:52 deraadt Exp $	*/
 /*      $NetBSD: advlib.c,v 1.7 1998/10/28 20:39:46 dante Exp $        */
 
 /*
@@ -46,7 +46,6 @@
  *
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipi.c,v 1.4 2011/01/14 13:20:06 jsing Exp $	*/
+/*	$OpenBSD: ipi.c,v 1.5 2017/09/08 05:36:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/mutex.h>
 

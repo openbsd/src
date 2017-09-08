@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.55 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.56 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -98,7 +98,6 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <sys/types.h>
 #include <sys/device.h>
 
 #include <machine/intr.h>

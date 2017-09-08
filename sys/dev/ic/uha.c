@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.25 2017/07/26 03:36:19 deraadt Exp $	*/
+/*	$OpenBSD: uha.c,v 1.26 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -54,7 +54,6 @@
  * slight mod to make work with 34F as well: Wed Jun  2 18:05:48 WST 1993
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

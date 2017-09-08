@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.44 2014/05/10 12:15:19 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.45 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -44,7 +44,6 @@ int sparc_pci_debug = 0x0;
 #define DPRINTF(l, s)	do { } while (0)
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>

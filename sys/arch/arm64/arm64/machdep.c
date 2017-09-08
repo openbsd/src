@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.21 2017/08/27 12:42:22 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.22 2017/09/08 05:36:51 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/timetc.h>
 #include <sys/sched.h>

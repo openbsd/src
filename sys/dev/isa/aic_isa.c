@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_isa.c,v 1.7 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: aic_isa.c,v 1.8 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
  * Charles Hannum (mycroft@duality.gnu.ai.mit.edu).  Thanks a million!
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

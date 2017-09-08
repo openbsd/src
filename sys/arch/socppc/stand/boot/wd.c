@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.9 2015/10/01 20:28:12 krw Exp $	*/
+/*	$OpenBSD: wd.c,v 1.10 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: wd.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -31,7 +31,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/stdint.h>
 
 #include "libsa.h"

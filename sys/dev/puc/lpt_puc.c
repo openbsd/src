@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_puc.c,v 1.8 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: lpt_puc.c,v 1.9 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: lpt_puc.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
  * Author: Christopher G. Demetriou, May 17, 1998.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

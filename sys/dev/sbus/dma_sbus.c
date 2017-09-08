@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma_sbus.c,v 1.16 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: dma_sbus.c,v 1.17 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: dma_sbus.c,v 1.5 2000/07/09 20:57:42 pk Exp $ */
 
 /*-
@@ -54,7 +54,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

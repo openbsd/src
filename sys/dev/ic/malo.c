@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.114 2017/04/04 04:38:31 deraadt Exp $ */
+/*	$OpenBSD: malo.c,v 1.115 2017/09/08 05:36:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -20,7 +20,6 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/types.h>
 
 #include <sys/device.h>
 #include <sys/kernel.h>

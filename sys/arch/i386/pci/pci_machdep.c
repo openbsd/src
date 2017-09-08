@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.81 2015/09/01 06:01:24 deraadt Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.82 2017/09/08 05:36:51 deraadt Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -73,7 +73,6 @@
  * as defined section 3.6.4.1, `Generating Configuration Cycles'.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>

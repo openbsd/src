@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.19 2016/09/19 21:18:35 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.20 2017/09/08 05:36:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -25,7 +25,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 

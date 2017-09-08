@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_pci.c,v 1.11 2010/09/07 16:21:44 deraadt Exp $ */
+/*	$OpenBSD: i82365_pci.c,v 1.12 2017/09/08 05:36:52 deraadt Exp $ */
 /*	$NetBSD: i82365_pci.c,v 1.11 2000/02/24 03:42:44 itohy Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
  * XXX this driver frontend is *very* i386 dependent and should be relocated
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

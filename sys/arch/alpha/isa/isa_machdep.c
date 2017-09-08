@@ -1,4 +1,4 @@
-/* $OpenBSD: isa_machdep.c,v 1.13 2006/02/12 21:09:08 miod Exp $ */
+/* $OpenBSD: isa_machdep.c,v 1.14 2017/09/08 05:36:51 deraadt Exp $ */
 /* $NetBSD: isa_machdep.c,v 1.12 1998/08/07 10:26:39 drochner Exp $ */
 
 /*
@@ -32,7 +32,6 @@
  * Machine-specific functions for ISA autoconfiguration.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>

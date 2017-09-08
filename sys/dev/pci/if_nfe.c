@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.119 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.120 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -25,7 +25,6 @@
 #include <sys/param.h>
 #include <sys/endian.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>

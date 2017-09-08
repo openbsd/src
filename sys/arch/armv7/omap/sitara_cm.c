@@ -1,4 +1,4 @@
-/* $OpenBSD: sitara_cm.c,v 1.4 2016/08/12 03:22:41 jsg Exp $ */
+/* $OpenBSD: sitara_cm.c,v 1.5 2017/09/08 05:36:51 deraadt Exp $ */
 /* $NetBSD: sitara_cm.c,v 1.1 2013/04/17 14:31:02 bouyer Exp $ */
 /*
  * Copyright (c) 2010
@@ -47,7 +47,6 @@
  * call ti_padconf_devmap to be located somewhere in the kernel.
  *
  */
-#include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>

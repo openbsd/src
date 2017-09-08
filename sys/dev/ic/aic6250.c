@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6250.c,v 1.3 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: aic6250.c,v 1.4 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2013 Miodrag Vallat.
@@ -105,7 +105,6 @@
 
 /* End of customizable parameters */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

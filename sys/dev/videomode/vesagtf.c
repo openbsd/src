@@ -151,18 +151,16 @@
 
 
 #ifdef	_KERNEL
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/vesagtf.h>
 #else
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include "videomode.h"
 #include "vesagtf.h"
-
+#include <stdio.h>
+#include <stdlib.h>
 void print_xf86_mode(struct videomode *m);
 #endif
 

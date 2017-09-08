@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgivol.c,v 1.23 2014/07/12 19:01:49 tedu Exp $	*/
+/*	$OpenBSD: sgivol.c,v 1.24 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: sgivol.c,v 1.8 2003/11/08 04:59:00 sekiya Exp $	*/
 
 /*-
@@ -44,7 +44,6 @@
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/dkio.h>
 
 /*

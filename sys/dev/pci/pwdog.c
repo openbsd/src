@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwdog.c,v 1.9 2014/12/10 12:27:57 mikeb Exp $ */
+/*	$OpenBSD: pwdog.c,v 1.10 2017/09/08 05:36:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>

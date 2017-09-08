@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.83 2017/08/12 20:27:28 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.84 2017/09/08 05:36:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -19,9 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/malloc.h>
 #include <sys/param.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.20 2015/09/19 21:07:04 semarie Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.21 2017/09/08 05:36:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -26,7 +26,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
