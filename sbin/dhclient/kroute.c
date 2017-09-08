@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.144 2017/08/31 17:01:48 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.145 2017/09/08 13:49:00 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -50,12 +50,12 @@
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
-void	get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
-void	add_route(struct in_addr, struct in_addr, struct in_addr, int);
-void	flush_routes(uint8_t *, unsigned int);
-int	delete_addresses(char *, struct in_addr, struct in_addr);
-char	*get_routes(int, size_t *);
-int	route_in_rtstatic(struct rt_msghdr *, uint8_t *, unsigned int);
+void		 get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
+void		 add_route(struct in_addr, struct in_addr, struct in_addr, int);
+void		 flush_routes(uint8_t *, unsigned int);
+int		 delete_addresses(char *, struct in_addr, struct in_addr);
+char		*get_routes(int, size_t *);
+unsigned int	 route_in_rtstatic(struct rt_msghdr *, uint8_t *, unsigned int);
 
 char *
 get_routes(int rdomain, size_t *len)
@@ -140,6 +140,7 @@ priv_flush_routes(int index, int routefd, int rdomain,
 	struct rt_msghdr		*rtm;
 	size_t				 len;
 	ssize_t				 rlen;
+	unsigned int			 pos;
 
 	buf = get_routes(rdomain, &len);
 	if (buf == NULL)
@@ -160,8 +161,8 @@ priv_flush_routes(int index, int routefd, int rdomain,
 			continue;
 
 		/* Don't bother deleting a route we're going to add. */
-		if (route_in_rtstatic(rtm, imsg->rtstatic, imsg->rtstatic_len)
-		    == 0)
+		pos = route_in_rtstatic(rtm, imsg->rtstatic, imsg->rtstatic_len);
+		if (pos < imsg->rtstatic_len)
 			continue;
 
 		rtm->rtm_type = RTM_DELETE;
@@ -783,7 +784,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 	}
 }
 
-int
+unsigned int
 route_in_rtstatic(struct rt_msghdr *rtm, uint8_t *rtstatic,
     unsigned int rtstatic_len)
 {
@@ -804,11 +805,11 @@ route_in_rtstatic(struct rt_msghdr *rtm, uint8_t *rtstatic,
 	gateway = rti_info[RTAX_GATEWAY];
 
 	if (dst == NULL || netmask == NULL || gateway == NULL)
-		return 1;
+		return rtstatic_len;
 
 	if (dst->sa_family != AF_INET || netmask->sa_family != AF_INET ||
 	    gateway->sa_family != AF_INET)
-		return 1;
+		return rtstatic_len;
 
 	dstaddr = ((struct sockaddr_in *)dst)->sin_addr.s_addr;
 	netmaskaddr = ((struct sockaddr_in *)netmask)->sin_addr.s_addr;
@@ -822,13 +823,14 @@ route_in_rtstatic(struct rt_msghdr *rtm, uint8_t *rtstatic,
 		    &rtstaticgatewayaddr);
 		if (len <= 0)
 			break;
-		i += len;
 
 		if (dstaddr == rtstaticdstaddr &&
 		    netmaskaddr == rtstaticnetmaskaddr &&
 		    gatewayaddr == rtstaticgatewayaddr)
-			return 0;
+			return i;
+
+		i += len;
 	}
 
-	return 1;
+	return rtstatic_len;
 }
