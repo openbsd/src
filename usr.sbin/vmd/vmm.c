@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.73 2017/09/08 06:24:31 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.74 2017/09/08 06:56:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -505,7 +505,7 @@ vmm_dispatch_vm(int fd, short event, void *arg)
  * supplied vm_terminate_params structure (vtp->vtp_vm_id)
  *
  * Parameters
- *  vtp: vm_create_params struct containing the ID of the VM to terminate
+ *  vtp: vm_terminate_params struct containing the ID of the VM to terminate
  *
  * Return values:
  *  0: success
