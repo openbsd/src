@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.42 2017/08/31 09:15:31 mlarkin Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.43 2017/09/08 06:43:47 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -206,7 +206,7 @@ vm_start_complete(struct imsg *imsg, int *ret, int autoconnect)
 				break;
 			case VMD_DISK_INVALID:
 				warnx("specified disk image(s) are "
-                                        "not regular files");
+				    "not regular files");
 				*ret = ENOENT;
 				break;
 			default:
