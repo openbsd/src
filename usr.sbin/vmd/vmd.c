@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.68 2017/08/20 21:15:32 pd Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.69 2017/09/08 06:24:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -372,6 +372,8 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 		IMSG_SIZE_CHECK(imsg, &vmr);
 		memcpy(&vmr, imsg->data, sizeof(vmr));
+		log_debug("%s: forwarding TERMINATE VM for vm id %d",
+		    __func__, vmr.vmr_id);
 		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
 		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
 			break;
@@ -392,15 +394,24 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_TERMINATE_VM_EVENT:
 		IMSG_SIZE_CHECK(imsg, &vmr);
 		memcpy(&vmr, imsg->data, sizeof(vmr));
+		log_debug("%s: handling TERMINATE_EVENT for vm id %d",
+		    __func__, vmr.vmr_id);
 		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
 			break;
 		if (vmr.vmr_result == 0) {
-			if (vm->vm_from_config)
+			if (vm->vm_from_config) {
+				log_debug("%s: about to stop vm id %d",
+				    __func__, vm->vm_vmid);
 				vm_stop(vm, 0);
-			else
+			} else {
+				log_debug("%s: about to remove vm %d",
+				    __func__, vm->vm_vmid);
 				vm_remove(vm);
+			}
 		} else if (vmr.vmr_result == EAGAIN) {
 			/* Stop VM instance but keep the tty open */
+			log_debug("%s: about to stop vm id %d with tty open",
+			    __func__, vm->vm_vmid);
 			vm_stop(vm, 1);
 			config_setvm(ps, vm, (uint32_t)-1, 0);
 		}
@@ -425,6 +436,8 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		if (proc_compose_imsg(ps, PROC_CONTROL, -1, imsg->hdr.type,
 		    imsg->hdr.peerid, -1, &vir, sizeof(vir)) == -1) {
+			log_debug("%s: GET_INFO_VM failed for vm %d, removing",
+			    __func__, vm->vm_vmid);
 			vm_remove(vm);
 			return (-1);
 		}
@@ -453,6 +466,8 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 				    IMSG_VMDOP_GET_INFO_VM_DATA,
 				    imsg->hdr.peerid, -1, &vir,
 				    sizeof(vir)) == -1) {
+					log_debug("%s: GET_INFO_VM_END failed",
+					    __func__);
 					vm_remove(vm);
 					return (-1);
 				}
@@ -592,6 +607,7 @@ vmd_sighdlr(int sig, short event, void *arg)
 {
 	if (privsep_process != PROC_PARENT)
 		return;
+	log_debug("%s: handling signal", __func__);
 
 	switch (sig) {
 	case SIGHUP:
@@ -862,8 +878,11 @@ vmd_reload(unsigned int reset, const char *filename)
 
 		if (reload) {
 			TAILQ_FOREACH_SAFE(vm, env->vmd_vms, vm_entry, next_vm) {
-				if (vm->vm_running == 0)
+				if (vm->vm_running == 0) {
+					log_debug("%s: calling vm_remove",
+					    __func__);
 					vm_remove(vm);
+				}
 			}
 
 			/* Update shared global configuration in all children */
@@ -914,6 +933,7 @@ vmd_shutdown(void)
 {
 	struct vmd_vm *vm, *vm_next;
 
+	log_debug("%s: performing shutdown", __func__);
 	TAILQ_FOREACH_SAFE(vm, env->vmd_vms, vm_entry, vm_next) {
 		vm_remove(vm);
 	}
@@ -1011,6 +1031,7 @@ vm_stop(struct vmd_vm *vm, int keeptty)
 	if (vm == NULL)
 		return;
 
+	log_debug("%s: stopping vm %d", __func__, vm->vm_vmid);
 	vm->vm_running = 0;
 	vm->vm_shutdown = 0;
 
@@ -1051,7 +1072,10 @@ vm_remove(struct vmd_vm *vm)
 	if (vm == NULL)
 		return;
 
+	log_debug("%s: removing vm id %d from running config",
+	    __func__, vm->vm_vmid);
 	TAILQ_REMOVE(env->vmd_vms, vm, vm_entry);
+	log_debug("%s: calling vm_stop", __func__);
 	vm_stop(vm, 0);
 	free(vm);
 }
@@ -1178,6 +1202,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	/* Assign a new internal Id if not specified */
 	vm->vm_vmid = id == 0 ? env->vmd_nvm : id;
 
+	log_debug("%s: registering vm %d", __func__, vm->vm_vmid);
 	TAILQ_INSERT_TAIL(env->vmd_vms, vm, vm_entry);
 
 	*ret_vm = vm;

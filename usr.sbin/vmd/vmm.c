@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.72 2017/08/15 15:10:35 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.73 2017/09/08 06:24:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -146,6 +146,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &vtp);
 		memcpy(&vtp, imsg->data, sizeof(vtp));
 		id = vtp.vtp_vm_id;
+		log_debug("%s: recv'ed TERMINATE_VM for %d", __func__, id);
 
 		if (id == 0) {
 			res = ENOENT;
@@ -278,8 +279,11 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_START_VM_RESPONSE:
 		if (res != 0) {
 			/* Remove local reference if it exists */
-			if ((vm = vm_getbyvmid(imsg->hdr.peerid)) != NULL)
+			if ((vm = vm_getbyvmid(imsg->hdr.peerid)) != NULL) {
+				log_debug("%s: removing vm, START_VM_RESPONSE",
+				    __func__);
 				vm_remove(vm);
+			}
 		}
 		if (id == 0)
 			id = imsg->hdr.peerid;
@@ -314,6 +318,7 @@ vmm_sighdlr(int sig, short event, void *arg)
 	struct vmd_vm *vm;
 	struct vm_terminate_params vtp;
 
+	log_debug("%s: handling signal", __func__);
 	switch (sig) {
 	case SIGCHLD:
 		do {
@@ -355,6 +360,7 @@ vmm_sighdlr(int sig, short event, void *arg)
 					log_warnx("could not terminate VM %u",
 					    vm->vm_vmid);
 
+				log_debug("%s: calling vm_remove", __func__);
 				vm_remove(vm);
 			} else
 				fatalx("unexpected cause of SIGCHLD");
@@ -381,6 +387,7 @@ vmm_shutdown(void)
 
 		/* XXX suspend or request graceful shutdown */
 		(void)terminate_vm(&vtp);
+		log_debug("%s: calling vm_remove", __func__);
 		vm_remove(vm);
 	}
 }
@@ -465,8 +472,10 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 		case IMSG_VMDOP_SEND_VM_RESPONSE:
 			IMSG_SIZE_CHECK(&imsg, &vmr);
 			memcpy(&vmr, imsg.data, sizeof(vmr));
-			if(!vmr.vmr_result)
+			if(!vmr.vmr_result) {
+				log_debug("%s: calling vm_remove", __func__);
 				vm_remove(vm);
+			}
 		case IMSG_VMDOP_PAUSE_VM_RESPONSE:
 		case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
 			for (i = 0; i < sizeof(procs); i++) {
@@ -639,6 +648,7 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id)
 	return (0);
 
  err:
+	log_debug("%s: calling vm_remove", __func__);
 	vm_remove(vm);
 
 	return (ret);

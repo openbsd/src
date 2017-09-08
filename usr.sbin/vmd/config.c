@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.34 2017/08/31 06:23:37 mlarkin Exp $	*/
+/*	$OpenBSD: config.c,v 1.35 2017/09/08 06:24:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -81,14 +81,18 @@ config_purge(struct vmd *env, unsigned int reset)
 	struct vmd_switch	*vsw;
 	unsigned int		 what;
 
+	log_debug("%s: purging vms and switches from running config",
+	    __func__);
 	/* Reset global configuration (prefix was verified before) */
 	(void)host(VMD_DHCP_PREFIX, &env->vmd_cfg.cfg_localprefix);
 
 	/* Reset other configuration */
 	what = ps->ps_what[privsep_process] & reset;
 	if (what & CONFIG_VMS && env->vmd_vms != NULL) {
-		while ((vm = TAILQ_FIRST(env->vmd_vms)) != NULL)
+		while ((vm = TAILQ_FIRST(env->vmd_vms)) != NULL) {
+			log_debug("%s: calling vm_remove", __func__);
 			vm_remove(vm);
+                }
 		env->vmd_nvm = 0;
 	}
 	if (what & CONFIG_SWITCHES && env->vmd_switches != NULL) {
@@ -104,6 +108,7 @@ config_setconfig(struct vmd *env)
 	struct privsep	*ps = &env->vmd_ps;
 	unsigned int	 id;
 
+	log_debug("%s: setting config", __func__);
 	for (id = 0; id < PROC_MAX; id++) {
 		if (id == privsep_process)
 			continue;
@@ -117,6 +122,7 @@ config_setconfig(struct vmd *env)
 int
 config_getconfig(struct vmd *env, struct imsg *imsg)
 {
+	log_debug("%s: retrieving config", __func__);
 	IMSG_SIZE_CHECK(imsg, &env->vmd_cfg);
 	memcpy(&env->vmd_cfg, imsg->data, sizeof(env->vmd_cfg));
 
@@ -129,6 +135,7 @@ config_setreset(struct vmd *env, unsigned int reset)
 	struct privsep	*ps = &env->vmd_ps;
 	unsigned int	 id;
 
+	log_debug("%s: resetting state", __func__);
 	for (id = 0; id < PROC_MAX; id++) {
 		if ((reset & ps->ps_what[id]) == 0 ||
 		    id == privsep_process)
@@ -147,6 +154,7 @@ config_getreset(struct vmd *env, struct imsg *imsg)
 	IMSG_SIZE_CHECK(imsg, &mode);
 	memcpy(&mode, imsg->data, sizeof(mode));
 
+	log_debug("%s: resetting state", __func__);
 	config_purge(env, mode);
 
 	return (0);
@@ -374,6 +382,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		free(tapfds);
 	}
 
+	log_debug("%s: calling vm_remove", __func__);
 	vm_remove(vm);
 	errno = saved_errno;
 	if (errno == 0)
@@ -406,6 +415,7 @@ config_getvm(struct privsep *ps, struct imsg *imsg)
 		imsg->fd = -1;
 	}
 
+	log_debug("%s: calling vm_remove", __func__);
 	vm_remove(vm);
 	if (errno == 0)
 		errno = EINVAL;
