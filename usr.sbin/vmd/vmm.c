@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.74 2017/09/08 06:56:54 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.75 2017/09/08 07:08:49 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -150,29 +150,45 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 		if (id == 0) {
 			res = ENOENT;
-		} else if ((vm = vm_getbyvmid(id)) != NULL &&
-		    vm->vm_shutdown == 0) {
-			log_debug("%s: sending shutdown request to vm %d",
-			    __func__, id);
+		} else if ((vm = vm_getbyvmid(id)) != NULL) {
+			if (vm->vm_shutdown == 0) {
+				log_debug("%s: sending shutdown req to vm %d",
+				    __func__, id);
 
-			/*
-			 * Request reboot but mark the VM as shutting down.
-			 * This way we can terminate the VM after the triple
-			 * fault instead of reboot and avoid being stuck in
-			 * the ACPI-less powerdown ("press any key to reboot")
-			 * of the VM.
-			 */
-			vm->vm_shutdown = 1;
-			if (imsg_compose_event(&vm->vm_iev,
-			    IMSG_VMDOP_VM_REBOOT, 0, 0, -1, NULL, 0) == -1)
-				res = errno;
-			else
-				res = 0;
+				/*
+				 * Request reboot but mark the VM as shutting
+				 * down. This way we can terminate the VM after
+				 * the triple fault instead of reboot and 
+				 * avoid being stuck in the ACPI-less powerdown
+				 * ("press any key to reboot") of the VM.
+				 */
+				vm->vm_shutdown = 1;
+				if (imsg_compose_event(&vm->vm_iev,
+				    IMSG_VMDOP_VM_REBOOT,
+				    0, 0, -1, NULL, 0) == -1)
+					res = errno;
+				else
+					res = 0;
+			} else {
+				/* in the process of shutting down... */
+				log_debug("%s: performing a forced shutdown",
+				    __func__);
+				vtp.vtp_vm_id = vm_vmid2id(vm->vm_vmid, vm);
+				/* ensure vm_id isn't 0 */
+				if (vtp.vtp_vm_id != 0) {
+					res = terminate_vm(&vtp);
+					vm_remove(vm);
+				} else {
+					log_debug("%s: no vm running anymore",
+					    __func__);
+					res = VMD_VM_STOP_INVALID;
+				}
+			}
 		} else {
-			/* Terminate VMs that are unknown or shutting down */
-			vtp.vtp_vm_id = vm_vmid2id(vm->vm_vmid, vm);
-			res = terminate_vm(&vtp);
-			vm_remove(vm);
+			/* vm doesn't exist, cannot stop vm */
+			log_debug("%s: cannot stop vm that is not running",
+			    __func__);
+			res = VMD_VM_STOP_INVALID;
 		}
 		cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 		break;
@@ -346,6 +362,8 @@ vmm_sighdlr(int sig, short event, void *arg)
 
 				vmid = vm->vm_params.vmc_params.vcp_id;
 				vtp.vtp_vm_id = vmid;
+				log_debug("%s: attempting to terminate vm %d",
+				    __func__, vm->vm_vmid);
 				if (terminate_vm(&vtp) == 0) {
 					memset(&vmr, 0, sizeof(vmr));
 					vmr.vmr_result = ret;
@@ -515,6 +533,7 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 int
 terminate_vm(struct vm_terminate_params *vtp)
 {
+	log_debug("%s: terminating vmid %d", __func__, vtp->vtp_vm_id);
 	if (ioctl(env->vmd_fd, VMM_IOC_TERM, vtp) < 0)
 		return (errno);
 

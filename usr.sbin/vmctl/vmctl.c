@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.43 2017/09/08 06:43:47 mlarkin Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.44 2017/09/08 07:08:49 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -439,12 +439,19 @@ terminate_vm_complete(struct imsg *imsg, int *ret)
 		vmr = (struct vmop_result *)imsg->data;
 		res = vmr->vmr_result;
 		if (res) {
-			errno = res;
-			if (res == ENOENT)
+			switch (res) {
+			case VMD_VM_STOP_INVALID:
+				warnx("cannot stop vm that is not running");
+				*ret = EINVAL;
+				break;
+			case ENOENT:
 				warnx("vm not found");
-			else
+				*ret = EIO;
+				break;
+			default:
 				warn("terminate vm command failed");
-			*ret = EIO;
+				*ret = EIO;
+			}
 		} else {
 			warnx("sent request to terminate vm %d", vmr->vmr_id);
 			*ret = 0;
@@ -453,6 +460,7 @@ terminate_vm_complete(struct imsg *imsg, int *ret)
 		warnx("unexpected response received from vmd");
 		*ret = EINVAL;
 	}
+	errno = *ret;
 
 	return (1);
 }

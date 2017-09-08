@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.61 2017/08/31 06:23:37 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.62 2017/09/08 07:08:49 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -54,6 +54,7 @@
 #define VMD_BIOS_MISSING	1001
 #define VMD_DISK_MISSING	1002
 #define VMD_DISK_INVALID	1003
+#define VMD_VM_STOP_INVALID	1004
 
 /* 100.64.0.0/10 from rfc6598 (IPv4 Prefix for Shared Address Space) */
 #define VMD_DHCP_PREFIX		"100.64.0.0/10"
