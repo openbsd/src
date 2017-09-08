@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.311 2017/09/08 07:34:50 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.312 2017/09/08 16:51:22 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -990,7 +990,7 @@ smtp_message_fd(struct smtp_session *s, int fd)
 {
 	X509 *x;
 
-	log_debug("smtp: %p: fd %d from filter", s, fd);
+	log_debug("smtp: %p: message fd %d", s, fd);
 
 	if ((s->tx->ofile = fdopen(fd, "w")) == NULL) {
 		close(fd);

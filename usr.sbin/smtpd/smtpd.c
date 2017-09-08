@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.289 2017/05/12 20:15:52 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.290 2017/09/08 16:51:22 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1696,8 +1696,6 @@ proc_name(enum smtp_proc_type proc)
 		return "pony";
 	case PROC_CA:
 		return "ca";
-	case PROC_FILTER:
-		return "filter-proc";
 	case PROC_CLIENT:
 		return "client-proc";
 	default:

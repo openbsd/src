@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.31 2016/09/03 16:06:26 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.32 2017/09/08 16:51:22 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -20,8 +20,6 @@
 #ifndef	_SMTPD_API_H_
 #define	_SMTPD_API_H_
 
-#define	FILTER_API_VERSION	 52
-
 struct mailaddr {
 	char	user[SMTPD_MAXLOCALPARTSIZE];
 	char	domain[SMTPD_MAXDOMAINPARTSIZE];
@@ -38,62 +36,6 @@ struct tree {
 struct dict {
 	struct _dict	dict;
 	size_t		count;
-};
-
-enum filter_status {
-	FILTER_OK,
-	FILTER_FAIL,
-	FILTER_CLOSE,
-};
-
-enum filter_imsg {
-	IMSG_FILTER_REGISTER,
-	IMSG_FILTER_EVENT,
-	IMSG_FILTER_QUERY,
-	IMSG_FILTER_PIPE,
-	IMSG_FILTER_RESPONSE
-};
-
-/* XXX - server side requires mfa_session.c update on filter_event */
-enum filter_event_type {
-	EVENT_CONNECT,
-	EVENT_RESET,
-	EVENT_DISCONNECT,
-	EVENT_TX_BEGIN,
-	EVENT_TX_COMMIT,
-	EVENT_TX_ROLLBACK,
-};
-
-/* XXX - server side requires mfa_session.c update on filter_hook changes */
-enum filter_query_type {
-	QUERY_CONNECT,
-	QUERY_HELO,
-	QUERY_MAIL,
-	QUERY_RCPT,
-	QUERY_DATA,
-	QUERY_EOM,
-	QUERY_DATALINE,
-};
-
-/* XXX - server side requires mfa_session.c update on filter_hook changes */
-enum filter_hook_type {
-	HOOK_CONNECT		= 1 << 0,
-	HOOK_HELO		= 1 << 1,
-	HOOK_MAIL		= 1 << 2,
-	HOOK_RCPT		= 1 << 3,
-	HOOK_DATA		= 1 << 4,
-	HOOK_EOM		= 1 << 5,
-	HOOK_RESET		= 1 << 6,
-	HOOK_DISCONNECT		= 1 << 7,
-	HOOK_COMMIT		= 1 << 8,
-	HOOK_ROLLBACK		= 1 << 9,
-	HOOK_DATALINE		= 1 << 10,
-};
-
-struct filter_connect {
-	struct sockaddr_storage	 local;
-	struct sockaddr_storage	 remote;
-	const char		*hostname;
 };
 
 #define PROC_QUEUE_API_VERSION	2
@@ -323,34 +265,6 @@ void dict_merge(struct dict *, struct dict *);
 const char *esc_code(enum enhanced_status_class, enum enhanced_status_code);
 const char *esc_description(enum enhanced_status_code);
 
-
-/* filter_api.c */
-void filter_api_setugid(uid_t, gid_t);
-void filter_api_set_chroot(const char *);
-void filter_api_no_chroot(void);
-void filter_api_set_udata(uint64_t, void *);
-void *filter_api_get_udata(uint64_t);
-
-void filter_api_loop(void);
-int filter_api_accept(uint64_t);
-int filter_api_reject(uint64_t, enum filter_status);
-int filter_api_reject_code(uint64_t, enum filter_status, uint32_t,
-    const char *);
-void filter_api_writeln(uint64_t, const char *);
-const char *filter_api_sockaddr_to_text(const struct sockaddr *);
-const char *filter_api_mailaddr_to_text(const struct mailaddr *);
-
-void filter_api_on_connect(int(*)(uint64_t, struct filter_connect *));
-void filter_api_on_helo(int(*)(uint64_t, const char *));
-void filter_api_on_mail(int(*)(uint64_t, struct mailaddr *));
-void filter_api_on_rcpt(int(*)(uint64_t, struct mailaddr *));
-void filter_api_on_data(int(*)(uint64_t));
-void filter_api_on_dataline(void(*)(uint64_t, const char *));
-void filter_api_on_eom(int(*)(uint64_t, size_t));
-void filter_api_on_reset(void(*)(uint64_t));
-void filter_api_on_disconnect(void(*)(uint64_t));
-void filter_api_on_commit(void(*)(uint64_t));
-void filter_api_on_rollback(void(*)(uint64_t));
 
 /* queue */
 void queue_api_on_close(int(*)(void));
