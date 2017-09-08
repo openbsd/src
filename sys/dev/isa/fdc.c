@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.21 2017/09/03 20:03:58 sf Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.22 2017/09/08 08:37:52 sf Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -170,7 +170,11 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 void
 fdc_create_kthread(void *arg)
 {
-	kthread_create(fdcattach_deferred, arg, NULL, "fdcattach");
+	struct fdc_softc *sc = arg;
+	if (kthread_create(fdcattach_deferred, arg, NULL, "fdcattach") != 0) {
+		printf("%s: failed to create kernel thread, disabled\n",
+                    sc->sc_dev.dv_xname);
+	}
 }
 
 void
