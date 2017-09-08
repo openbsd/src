@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.56 2017/09/06 12:43:16 brynet Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.57 2017/09/08 13:34:29 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -592,7 +592,7 @@ main(int argc, char **argv)
 	}
 
 	if (!Debug) {
-		openlog("pflogd", LOG_PID | LOG_CONS, LOG_DAEMON);
+		openlog("pflogd", LOG_PID, LOG_DAEMON);
 		if (daemon(0, 0)) {
 			logmsg(LOG_WARNING, "Failed to become daemon: %s",
 			    strerror(errno));
@@ -686,6 +686,7 @@ main(int argc, char **argv)
 		}
 	}
 
+	logmsg(LOG_NOTICE, "Exiting");
 	if (dpcap) {
 		flush_buffer(dpcap);
 		fclose(dpcap);
