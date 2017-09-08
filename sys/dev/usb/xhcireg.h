@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.11 2015/01/18 20:35:11 mpi Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.12 2017/09/08 10:25:19 stsp Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -295,6 +295,7 @@ struct xhci_epctx {
 #define XHCI_EPCTX_GET_LSA(x)		(((x) >> 15) & 0x1)
 #define XHCI_EPCTX_SET_IVAL(x)		(((x) & 0xff) << 16)
 #define XHCI_EPCTX_GET_IVAL(x)		(((x) >> 16) & 0xFF)
+#define XHCI_EPCTX_MAX_IVAL		15 /* Poll rates: 2^(n-1) * 0.125us */
 
 	 uint32_t		info_hi;
 #define XHCI_EPCTX_SET_CERR(x)		(((x) & 0x3) << 1)
@@ -351,14 +352,18 @@ struct xhci_trb {
 #define XHCI_TRB_CHAIN		(1 << 4)	/* Chained with next TRB */
 #define XHCI_TRB_IOC		(1 << 5)	/* Interrupt On Completion */
 #define XHCI_TRB_IDT		(1 << 6)	/* Immediate DaTa */
-#define XHCI_TRB_BSR		(1 << 9)
+#define XHCI_TRB_ISOC_TBC(x)	(((x) & 0x3) << 7) /* Transfer Burst Count */
+#define XHCI_TRB_BSR		(1 << 9)	/* Block Set Address Request */
+#define XHCI_TRB_ISOC_BEI	(1 << 9)	/* Block Event Interrupt */
 #define XHCI_TRB_DIR_IN		(1 << 16)
 #define XHCI_TRB_TRT_OUT	(2 << 16)
 #define XHCI_TRB_TRT_IN		(3 << 16)
 #define XHCI_TRB_GET_EP(x)	(((x) >> 16) & 0x1f)
 #define XHCI_TRB_SET_EP(x)	(((x) & 0x1f) << 16)
+#define XHCI_TRB_ISOC_TLBPC(x)	(((x) & 0xf) << 16)
 #define XHCI_TRB_GET_SLOT(x)	(((x) >> 24) & 0xff)
 #define XHCI_TRB_SET_SLOT(x)	(((x) & 0xff) << 24)
+#define XHCI_TRB_SIA		(1U << 31)
 } __packed;
 
 #define XHCI_TRB_FLAGS_BITMASK						\
