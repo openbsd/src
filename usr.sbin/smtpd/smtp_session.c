@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.310 2017/09/01 20:49:49 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.311 2017/09/08 07:34:50 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -71,15 +71,15 @@ enum session_flags {
 	SF_BADINPUT		= 0x0080,
 };
 
-enum message_flags {
-	MF_QUEUE_ENVELOPE_FAIL	= 0x00001,
-	MF_ERROR_SIZE		= 0x01000,
-	MF_ERROR_IO		= 0x02000,
-	MF_ERROR_LOOP		= 0x04000,
-	MF_ERROR_MALFORMED     	= 0x08000,
-	MF_ERROR_RESOURCES     	= 0x10000,
+enum {
+	TX_OK = 0,
+	TX_ERROR_ENVELOPE,
+	TX_ERROR_SIZE,
+	TX_ERROR_IO,
+	TX_ERROR_LOOP,
+	TX_ERROR_MALFORMED,
+	TX_ERROR_RESOURCES
 };
-#define MF_ERROR	(MF_ERROR_SIZE | MF_ERROR_IO | MF_ERROR_LOOP | MF_ERROR_MALFORMED | MF_ERROR_RESOURCES)
 
 enum smtp_command {
 	CMD_HELO = 0,
@@ -111,14 +111,12 @@ struct smtp_tx {
 	size_t			 destcount;
 	TAILQ_HEAD(, smtp_rcpt)	 rcpts;
 
+	int			 error;
 	size_t			 datain;
 	size_t			 odatalen;
 	FILE			*ofile;
 	int			 hdrdone;
 	int			 rcvcount;
-
-	int			 msgflags;
-
 	int			 skiphdr;
 	struct rfc2822_parser	 rfc2822_parser;
 };
@@ -801,7 +799,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			s->tx->destcount++;
 		}
 		else
-			s->tx->msgflags |= MF_QUEUE_ENVELOPE_FAIL;
+			s->tx->error = TX_ERROR_ENVELOPE;
 		m_end(&m);
 		return;
 
@@ -813,7 +811,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		if (!success)
 			fatalx("commit evp failed: not supposed to happen");
 		s = tree_xpop(&wait_lka_rcpt, reqid);
-		if (s->tx->msgflags & MF_QUEUE_ENVELOPE_FAIL) {
+		if (s->tx->error) {
 			/*
 			 * If an envelope failed, we can't cancel the last
 			 * RCPT only so we must cancel the whole transaction
@@ -1912,39 +1910,48 @@ smtp_enter_state(struct smtp_session *s, int newstate)
 static void
 smtp_message_end(struct smtp_session *s)
 {
-	log_debug("debug: %p: end of message, msgflags=0x%04x", s, s->tx->msgflags);
-
-	if (s->tx->msgflags & MF_ERROR) {
-		smtp_queue_rollback(s);
-
-		if (s->tx->msgflags & MF_ERROR_SIZE)
-			smtp_reply(s, "554 %s %s: Transaction failed, message too big",
-			    esc_code(ESC_STATUS_PERMFAIL, ESC_MESSAGE_TOO_BIG_FOR_SYSTEM),
-			    esc_description(ESC_MESSAGE_TOO_BIG_FOR_SYSTEM));
-		else if (s->tx->msgflags & MF_ERROR_LOOP)
-			smtp_reply(s, "500 %s %s: Loop detected",
-				esc_code(ESC_STATUS_PERMFAIL, ESC_ROUTING_LOOP_DETECTED),
-				esc_description(ESC_ROUTING_LOOP_DETECTED));
-                else if (s->tx->msgflags & MF_ERROR_RESOURCES)
-                        smtp_reply(s, "421 %s: Temporary Error",
-                            esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
-                else if (s->tx->msgflags & MF_ERROR_MALFORMED)
-                        smtp_reply(s, "550 %s %s: Message is not RFC 2822 compliant",
-                            esc_code(ESC_STATUS_PERMFAIL,
-				ESC_DELIVERY_NOT_AUTHORIZED_MESSAGE_REFUSED),
-                            esc_description(ESC_DELIVERY_NOT_AUTHORIZED_MESSAGE_REFUSED));
-		else if (s->tx->msgflags)
-			smtp_reply(s, "421 Internal server error");
-
-		smtp_tx_free(s->tx);
-		smtp_enter_state(s, STATE_HELO);
-		return;
-	}
+	log_debug("debug: %p: end of message, error=%d", s, s->tx->error);
 
 	fclose(s->tx->ofile);
 	s->tx->ofile = NULL;
 
-	smtp_queue_commit(s);
+	switch(s->tx->error) {
+	case TX_OK:
+		smtp_queue_commit(s);
+		return;		
+
+	case TX_ERROR_SIZE:
+		smtp_reply(s, "554 %s %s: Transaction failed, message too big",
+		    esc_code(ESC_STATUS_PERMFAIL, ESC_MESSAGE_TOO_BIG_FOR_SYSTEM),
+		    esc_description(ESC_MESSAGE_TOO_BIG_FOR_SYSTEM));
+		break;
+
+	case TX_ERROR_LOOP:
+		smtp_reply(s, "500 %s %s: Loop detected",
+		   esc_code(ESC_STATUS_PERMFAIL, ESC_ROUTING_LOOP_DETECTED),
+		   esc_description(ESC_ROUTING_LOOP_DETECTED));
+		break;
+
+	case TX_ERROR_MALFORMED:
+		smtp_reply(s, "550 %s %s: Message is not RFC 2822 compliant",
+		    esc_code(ESC_STATUS_PERMFAIL, ESC_DELIVERY_NOT_AUTHORIZED_MESSAGE_REFUSED),
+		    esc_description(ESC_DELIVERY_NOT_AUTHORIZED_MESSAGE_REFUSED));
+		break;
+
+	case TX_ERROR_IO:
+	case TX_ERROR_RESOURCES:
+		smtp_reply(s, "421 %s: Temporary Error",
+		    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
+		break;
+
+	default:
+		/* fatal? */
+		smtp_reply(s, "421 Internal server error");
+	}
+
+	smtp_queue_rollback(s);
+	smtp_tx_free(s->tx);
+	smtp_enter_state(s, STATE_HELO);
 }
 
 static int
@@ -1953,7 +1960,7 @@ smtp_message_printf(struct smtp_session *s, const char *fmt, ...)
 	va_list	ap;
 	int	len;
 
-	if (s->tx->msgflags & MF_ERROR)
+	if (s->tx->error)
 		return -1;
 
 	va_start(ap, fmt);
@@ -1962,7 +1969,7 @@ smtp_message_printf(struct smtp_session *s, const char *fmt, ...)
 
 	if (len < 0) {
 		log_warn("smtp-in: session %016"PRIx64": vfprintf", s->id);
-		s->tx->msgflags |= MF_ERROR_IO;
+		s->tx->error = TX_ERROR_IO;
 	}
 	else
 		s->tx->odatalen += len;
@@ -2288,8 +2295,8 @@ smtp_dataline(struct smtp_session *s, const char *line)
 
 	log_trace(TRACE_SMTP, "<<< [MSG] %s", line);
 
-	/* ignore data line if an error flag is set */
-	if (s->tx->msgflags & MF_ERROR)
+	/* ignore data line if an error is set */
+	if (s->tx->error)
 		return;
 
 	/* escape lines starting with a '.' */
@@ -2299,7 +2306,7 @@ smtp_dataline(struct smtp_session *s, const char *line)
 	/* account for newline */
 	s->tx->datain += strlen(line) + 1;
 	if (s->tx->datain > env->sc_maxsize) {
-		s->tx->msgflags |= MF_ERROR_SIZE;
+		s->tx->error = TX_ERROR_SIZE;
 		return;
 	}
 
@@ -2320,7 +2327,7 @@ smtp_dataline(struct smtp_session *s, const char *line)
 		if (strncasecmp("Received: ", line, 10) == 0)
 			s->tx->rcvcount++;
 		if (s->tx->rcvcount == MAX_HOPS_COUNT) {
-			s->tx->msgflags |= MF_ERROR_LOOP;
+			s->tx->error = TX_ERROR_LOOP;
 			log_warnx("warn: loop detected");
 			return;
 		}
@@ -2331,12 +2338,12 @@ smtp_dataline(struct smtp_session *s, const char *line)
 
 	ret = rfc2822_parser_feed(&s->tx->rfc2822_parser, line);
 	if (ret == -1) {
-		s->tx->msgflags |= MF_ERROR_RESOURCES;
+		s->tx->error = TX_ERROR_RESOURCES;
 		return;
 	}
 
 	if (ret == 0) {
-		s->tx->msgflags |= MF_ERROR_MALFORMED;
+		s->tx->error = TX_ERROR_MALFORMED;
 		return;
 	}
 }
