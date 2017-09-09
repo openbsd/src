@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.29 2017/09/06 12:43:16 brynet Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.30 2017/09/09 13:02:52 brynet Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -63,26 +63,20 @@ extern pcap_t *hpcap;
 
 /* based on syslogd privsep */
 void
-priv_init(int argc, char *argv[])
+priv_init(int Pflag, int argc, char *argv[])
 {
-	int i, nargc, socks[2];
+	int i, fd = -1, bpfd = -1, nargc, socks[2], cmd;
+	int snaplen, ret, olderrno;
 	struct passwd *pw;
-	char childnum[11], **privargv;
-
-	/* Create sockets */
-	if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, socks) == -1)
-		err(1, "socketpair() failed");
+	char **nargv;
+	unsigned int buflen;
 
 	pw = getpwnam("_pflogd");
 	if (pw == NULL)
 		errx(1, "unknown user _pflogd");
 	endpwent();
 
-	child_pid = fork();
-	if (child_pid < 0)
-		err(1, "fork() failed");
-
-	if (!child_pid) {
+	if (Pflag) {
 		gid_t gidset[1];
 
 		/* Child - drop privileges and return */
@@ -98,50 +92,39 @@ priv_init(int argc, char *argv[])
 			err(1, "setgroups() failed");
 		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
 			err(1, "setresuid() failed");
-		close(socks[0]);
-		priv_fd = socks[1];
+		priv_fd = 3;
 		return;
+	}
+
+	/* Create sockets */
+	if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, socks) == -1)
+		err(1, "socketpair() failed");
+
+	child_pid = fork();
+	if (child_pid < 0)
+		err(1, "fork() failed");
+
+	if (!child_pid) {
+		close(socks[0]);
+		if (dup2(socks[1], 3) == -1)
+			err(1, "dup2 unpriv sock failed");
+		close(socks[1]);
+		if ((nargv = reallocarray(NULL, argc + 2,
+		    sizeof(char *))) == NULL)
+			err(1, "alloc unpriv argv failed");
+		nargc = 0;
+		nargv[nargc++] = argv[0];
+		nargv[nargc++] = "-P";
+		for (i = 1; i < argc; i++)
+			nargv[nargc++] = argv[i];
+		nargv[nargc] = NULL;
+		execvp(nargv[0], nargv);
+		err(1, "exec unpriv '%s' failed", nargv[0]);
 	}
 	close(socks[1]);
 
-	if (dup2(socks[0], 3) == -1)
-		err(1, "dup2 priv sock failed");
-	closefrom(4);
-
-	snprintf(childnum, sizeof(childnum), "%d", child_pid);
-	if ((privargv = reallocarray(NULL, argc + 3, sizeof(char *))) == NULL)
-		err(1, "alloc priv argv failed");
-	nargc = 0;
-	privargv[nargc++] = argv[0];
-	privargv[nargc++] = "-P";
-	privargv[nargc++] = childnum;
-	for (i = 1; i < argc; i++)
-		privargv[nargc++] = argv[i];
-	privargv[nargc] = NULL;
-	execvp(privargv[0], privargv);
-	err(1, "exec priv '%s' failed", privargv[0]);
-}
-
-__dead void
-priv_exec(int child, int argc, char *argv[])
-{
-	int i, fd = -1, bpfd = -1, sock, cmd;
-	int snaplen, ret, olderrno;
-	unsigned int buflen;
-
-	if (argc <= 2 || strcmp("-P", argv[1]) != 0)
-		errx(1, "exec without priv");
-
-	sock = 3;
-	closefrom(4);
-
-	child_pid = child;
-
-	for (i = 1; i < _NSIG; i++)
-		signal(i, SIG_DFL);
-
 	/* Father */
-	/* Pass ALRM/TERM/HUP/INT/QUIT through to child, and accept CHLD */
+	/* Pass ALRM/TERM/HUP/INT/QUIT through to child */
 	signal(SIGALRM, sig_pass_to_chld);
 	signal(SIGTERM, sig_pass_to_chld);
 	signal(SIGHUP,  sig_pass_to_chld);
@@ -157,7 +140,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 #endif
 
 	while (1) {
-		if (may_read(sock, &cmd, sizeof(int)))
+		if (may_read(socks[0], &cmd, sizeof(int)))
 			break;
 		switch (cmd) {
 		case PRIV_INIT_PCAP:
@@ -169,9 +152,9 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 				_exit(1);
 			}
 			buflen = hpcap->bufsize; /* BIOCGBLEN for unpriv proc */
-			must_write(sock, &buflen, sizeof(unsigned int));
+			must_write(socks[0], &buflen, sizeof(unsigned int));
 			fd = pcap_fileno(hpcap);
-			send_fd(sock, fd);
+			send_fd(socks[0], fd);
 			if (fd < 0) {
 				logmsg(LOG_ERR, "[priv]: Exiting, init failed");
 				_exit(1);
@@ -181,7 +164,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 		case PRIV_SET_SNAPLEN:
 			logmsg(LOG_DEBUG,
 			    "[priv]: msg PRIV_SET_SNAPLENGTH received");
-			must_read(sock, &snaplen, sizeof(int));
+			must_read(socks[0], &snaplen, sizeof(int));
 
 			ret = set_snaplen(snaplen);
 			if (ret) {
@@ -190,7 +173,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 				   snaplen);
 			}
 
-			must_write(sock, &ret, sizeof(int));
+			must_write(socks[0], &ret, sizeof(int));
 			break;
 
 		case PRIV_OPEN_LOG:
@@ -205,7 +188,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 			    O_RDWR|O_CREAT|O_APPEND|O_NONBLOCK|O_NOFOLLOW,
 			    0600);
 			olderrno = errno;
-			send_fd(sock, bpfd);
+			send_fd(socks[0], bpfd);
 			if (bpfd < 0)
 				logmsg(LOG_NOTICE,
 				    "[priv]: failed to open %s: %s",
@@ -216,7 +199,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 			logmsg(LOG_DEBUG,
 			    "[priv]: msg PRIV_MOVE_LOG received");
 			ret = move_log(filename);
-			must_write(sock, &ret, sizeof(int));
+			must_write(socks[0], &ret, sizeof(int));
 			break;
 
 		default:

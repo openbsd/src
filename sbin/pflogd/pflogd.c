@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.57 2017/09/08 13:34:29 bluhm Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.58 2017/09/09 13:02:52 brynet Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -54,7 +54,6 @@ pcap_t *hpcap;
 static FILE *dpcap;
 
 int Debug = 0;
-static int privchild = 0;
 static int snaplen = DEF_SNAPLEN;
 static int cur_snaplen = DEF_SNAPLEN;
 
@@ -534,13 +533,13 @@ dump_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 int
 main(int argc, char **argv)
 {
-	int ch, np, ret, Xflag = 0;
+	int ch, np, ret, Pflag = 0, Xflag = 0;
 	pcap_handler phandler = dump_packet;
 	const char *errstr = NULL;
 
 	ret = 0;
 
-	while ((ch = getopt(argc, argv, "Dxd:f:i:P:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "Dxd:f:i:Ps:")) != -1) {
 		switch (ch) {
 		case 'D':
 			Debug = 1;
@@ -556,10 +555,9 @@ main(int argc, char **argv)
 		case 'i':
 			interface = optarg;
 			break;
-		case 'P': /* used internally, exec the parent */
-			privchild = strtonum(optarg, 2, INT_MAX, &errstr);
-			if (errstr)
-				errx(1, "priv child %s: %s", errstr, optarg);
+		case 'P': /* used internally, exec the child */
+			if (strcmp("-P", argv[1]) == 0)
+				Pflag = 1;
 			break;
 		case 's':
 			snaplen = strtonum(optarg, 0, PFLOGD_MAXSNAPLEN,
@@ -593,9 +591,12 @@ main(int argc, char **argv)
 
 	if (!Debug) {
 		openlog("pflogd", LOG_PID, LOG_DAEMON);
-		if (daemon(0, 0)) {
-			logmsg(LOG_WARNING, "Failed to become daemon: %s",
-			    strerror(errno));
+		if (!Pflag) {
+			if (daemon(0, 0)) {
+				logmsg(LOG_WARNING,
+				    "Failed to become daemon: %s",
+				    strerror(errno));
+			}
 		}
 	}
 
@@ -611,11 +612,8 @@ main(int argc, char **argv)
 	argc += optind;
 	argv -= optind;
 
-	if (privchild > 1)
-		priv_exec(privchild, argc, argv);
-
 	/* Privilege separation begins here */
-	priv_init(argc, argv);
+	priv_init(Pflag, argc, argv);
 
 	if (pledge("stdio recvfd", NULL) == -1)
 		err(1, "pledge");
