@@ -1,4 +1,4 @@
-#	$OpenBSD: OpenBSD-Pledge.t,v 1.2 2016/07/03 01:07:58 afresh1 Exp $	#
+#	$OpenBSD: OpenBSD-Pledge.t,v 1.3 2017/09/09 14:53:57 afresh1 Exp $	#
 ## no critic 'version'
 ## no critic 'package'
 # Before 'make install' is performed this script should be runnable with
@@ -10,6 +10,7 @@ use strict;
 use warnings;
 
 use Fcntl qw( O_RDONLY O_WRONLY );
+use File::Temp;
 
 use Config;
 my %sig_num;
@@ -47,11 +48,13 @@ sub xspledge_ok ($$)    ## no critic 'prototypes'
 
 	my $ok = 0;
 	foreach my $pledge ( q{}, $name ) {
+		my $dir = File::Temp->newdir('OpenBSD-Pledge-XXXXXXXXX');
 		my $pid = fork // die "Unable to fork for $name: $!\n";
 
 		if ( !$pid ) {
-			OpenBSD::Pledge::_pledge( "abort", undef );  # non fatal
-			OpenBSD::Pledge::_pledge( "stdio $pledge", undef )
+			chdir($dir);
+			OpenBSD::Pledge::_pledge( "abort" );  # non fatal
+			OpenBSD::Pledge::_pledge( "stdio $pledge" )
 			    || die "[$name] $!\n";
 			$code->();
 			exit;
@@ -66,48 +69,12 @@ sub xspledge_ok ($$)    ## no critic 'prototypes'
 			$ok += is $? & 127, $sig_num{ABRT},
 			    "[$name] ABRT without pledge";
 		}
-
-		unlink 'perl.core';
 	}
 	return $ok == 2;
 }
 xspledge_ok rpath => sub { sysopen my $fh, '/dev/random', O_RDONLY };
 xspledge_ok wpath => sub { sysopen my $fh, 'FOO',         O_WRONLY };
 xspledge_ok cpath => sub { mkdir q{/} };
-
-#########################
-# _PLEDGE with rpath
-#########################
-
-eval { OpenBSD::Pledge::_pledge( q{}, {} ) } && fail "Should have died";
-like $@, qr/not an ARRAY reference/ms, "Correct error for non arrayref";
-
-TODO:
-{
-local $TODO = 'Path support is disabled for now';
-	my $pid = fork // die "Unable to fork: $!\n";
-
-	if ( !$pid ) {
-		OpenBSD::Pledge::_pledge( "stdio rpath",
-			[ "/tmp", "/usr/bin/perl" ] )
-		    || die "Path pledge failed: $!\n";
-
-		-e "/tmp"          or die "# Can't read /tmp\n";
-		-e "/usr"          or die "# Can't read /usr\n";
-		-e "/usr/bin"      or die "# Can't read /usr/bin\n";
-		-e "/usr/bin/perl" or die "# Can't read /usr/bin/perl\n";
-
-		-e "/usr/bin/awk" and die "# Can't read /usr/bin/awk\n";
-		-e "/usr/local"   and die "# Can read /usr/local\n";
-		-e "/var"         and die "# Can read /var\n";
-		-e "/var/log"     and die "# Can read /var/log\n";
-
-		exit;
-	}
-
-	waitpid $pid, 0;
-	is $?, 0, "OK with pledge";
-}
 
 #########################
 # PLEDGE
@@ -119,12 +86,12 @@ local $TODO = 'Path support is disabled for now';
 	use warnings 'redefine';
 
 	OpenBSD::Pledge::pledge(qw( foo bar foo baz ));
-	OpenBSD::Pledge::pledge( qw( foo qux baz quux ), ["/tmp"] );
+	OpenBSD::Pledge::pledge( qw( foo qux baz quux ));
 
 	is_deeply \@calls,
 	    [
-		[ "bar baz foo stdio", undef ],
-		[ "baz foo quux qux stdio", ["/tmp"] ],
+		[ "bar baz foo stdio" ],
+		[ "baz foo quux qux stdio" ],
 	    ],
 	    "Sorted and unique promises, plus stdio";
 }

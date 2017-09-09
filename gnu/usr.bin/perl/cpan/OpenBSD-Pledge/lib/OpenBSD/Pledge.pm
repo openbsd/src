@@ -1,4 +1,4 @@
-#	$OpenBSD: Pledge.pm,v 1.2 2016/07/03 01:07:57 afresh1 Exp $	#
+#	$OpenBSD: Pledge.pm,v 1.3 2017/09/09 14:53:57 afresh1 Exp $	#
 package OpenBSD::Pledge;
 
 use 5.020002;
@@ -10,7 +10,7 @@ our %EXPORT_TAGS = ( 'all' => [qw( pledge pledgenames )] );
 our @EXPORT_OK   = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT      = qw( pledge );                           ## no critic 'export'
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 require XSLoader;
 XSLoader::load( 'OpenBSD::Pledge', $VERSION );
@@ -19,14 +19,11 @@ sub pledge
 {
 	my (@promises) = @_;
 
-	my $paths;
-	$paths = pop @promises if @promises and ref $promises[-1] eq 'ARRAY';
-
 	my %seen;
 	my $promises = join q{ },
 	    sort grep { !$seen{$_}++ } ( 'stdio', @promises );
 
-	return _pledge( $promises, $paths );
+	return _pledge( $promises );
 }
 
 1;
@@ -41,14 +38,15 @@ OpenBSD::Pledge - Perl interface to OpenBSD pledge(2)
 =head1 SYNOPSIS
 
   use OpenBSD::Pledge;
-  my $file = "/usr/share/dict/words";
-  pledge(qw( rpath ), [$file]) || die "Unable to pledge: $!";
 
-  open my $fh, '<', $file or die "Unable to open $file: $!\n";
-  while ( readline($fh) ) {
-    print if /pledge/i;
-  }
+  my $file = "/usr/share/dict/words";
+  pledge( qw( rpath ) ) || die "Unable to pledge: $!";
+  open my $fh, '<', $file or die "Unable to open $file: $!";
+
+  pledge() || die "Unable to pledge again: $!";
+  print grep { /pledge/i } readline($fh);
   close $fh;
+
 
 =head1 DESCRIPTION
 
@@ -58,32 +56,30 @@ Once you promise that your program will only use certain syscalls
 the kernel will kill the program if it attempts to call any other
 interfaces.
 
-=head2 EXPORT
+=head1 EXPORT
 
 Exports L</pledge> by default.
 
 C<:all> will also export L</pledgenames>
 
-=head1 METHODS
+=head1 FUNCTIONS
 
-=head2 pledge(@promises, [\@paths])
+=head2 pledge
 
-With L<pledge(2)> you can promise what abilities your program will need.
-You can pledge multiple times with more restrictive promises,
-but abilities can never be regained.
+Perl interface to L<pledge(2)>.
 
-This interface always promises C<stdio> because L<perl(1)> itself uses some of
-the provided system calls.
+	pledge(@promises)
 
-You can supply an optional array reference of paths to be used as a whitelist,
-all other paths will appear not to exist.
-You may only limit the paths once.
+The "stdio" promise is always implied,
+as L<perl(1)> itself is useless without it.
 
-Returns true on success, returns false and sets C<$!> on failure.
+Returns true on success, returns false and sets $! on failure
 
 =head2 pledgenames
 
 Returns a list of the possible promises you can pass to L</pledge>.
+
+=back
 
 =head1 BUGS AND LIMITATIONS
 
