@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.145 2017/09/08 13:49:00 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.146 2017/09/09 15:07:59 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -179,28 +179,35 @@ priv_flush_routes(int index, int routefd, int rdomain,
 	free(buf);
 }
 
-int
+unsigned int
 extract_classless_route(uint8_t *rtstatic, unsigned int rtstatic_len,
     in_addr_t *dest, in_addr_t *netmask, in_addr_t *gateway)
 {
 	unsigned int	 bits, bytes, len;
 
 	if (rtstatic[0] > 32)
-		return -1;
+		return 0;
 
 	bits = rtstatic[0];
 	bytes = (bits + 7) / 8;
 	len = 1 + bytes + sizeof(*gateway);
 	if (len > rtstatic_len)
-		return -1;
+		return 0;
 
-	memcpy(dest, &rtstatic[1], bytes);
-	if (bits == 0)
-		*netmask = INADDR_ANY;
-	else
-		*netmask = htonl(0xffffffff << (32 - bits));
-	*dest &= *netmask;
-	memcpy(gateway, &rtstatic[1 +  bytes], sizeof(*gateway));
+	if (dest != NULL)
+		memcpy(dest, &rtstatic[1], bytes);
+
+	if (netmask != NULL) {
+		if (bits == 0)
+			*netmask = INADDR_ANY;
+		else
+			*netmask = htonl(0xffffffff << (32 - bits));
+		if (dest != NULL)
+			*dest &= *netmask;
+	}
+
+	if (gateway != NULL)
+		memcpy(gateway, &rtstatic[1 +  bytes], sizeof(*gateway));
 
 	return len;
 }
@@ -211,8 +218,7 @@ set_routes(struct in_addr addr, struct in_addr addrmask, uint8_t *rtstatic,
 {
 	const struct in_addr	 any = { INADDR_ANY };
 	struct in_addr		 dest, gateway, netmask;
-	unsigned int		 i;
-	int			 len;
+	unsigned int		 i, len;
 
 	flush_routes(rtstatic, rtstatic_len);
 
@@ -221,7 +227,7 @@ set_routes(struct in_addr addr, struct in_addr addrmask, uint8_t *rtstatic,
 	while (i < rtstatic_len) {
 		len = extract_classless_route(&rtstatic[i], rtstatic_len - i,
 		    &dest.s_addr, &netmask.s_addr, &gateway.s_addr);
-		if (len <= 0)
+		if (len == 0)
 			return;
 		i += len;
 
@@ -793,8 +799,7 @@ route_in_rtstatic(struct rt_msghdr *rtm, uint8_t *rtstatic,
 	in_addr_t		 dstaddr, netmaskaddr, gatewayaddr;
 	in_addr_t		 rtstaticdstaddr, rtstaticnetmaskaddr;
 	in_addr_t		 rtstaticgatewayaddr;
-	unsigned int		 i;
-	int			 len;
+	unsigned int		 i, len;
 
 	get_rtaddrs(rtm->rtm_addrs,
 	    (struct sockaddr *)((char *)(rtm) + rtm->rtm_hdrlen),
@@ -821,7 +826,7 @@ route_in_rtstatic(struct rt_msghdr *rtm, uint8_t *rtstatic,
 		len = extract_classless_route(&rtstatic[i], rtstatic_len - i,
 		    &rtstaticdstaddr, &rtstaticnetmaskaddr,
 		    &rtstaticgatewayaddr);
-		if (len <= 0)
+		if (len == 0)
 			break;
 
 		if (dstaddr == rtstaticdstaddr &&
