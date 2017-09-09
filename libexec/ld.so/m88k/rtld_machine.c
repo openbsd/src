@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.20 2017/02/15 21:18:52 miod Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.21 2017/09/09 02:22:48 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -306,11 +306,15 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	    plt_end != 0) {
 		plt_start += object->obj_base;
 		plt_end += object->obj_base;
+		/*
+		 * XXX We round to page granularity, which means
+		 * the cacheflush trap handler will operate on
+		 * entire pages.  Maybe we should pass the true
+		 * start+size and let the trap handler decide whether
+		 * to do full pages or only the applicable cachelines?
+		 */
 		plt_start = ELF_TRUNC(plt_start, _dl_pagesz);
 		plt_size = ELF_ROUND(plt_end, _dl_pagesz) - plt_start;
-
-		_dl_mprotect((void *)plt_start, plt_size,
-		    PROT_READ | PROT_WRITE);
 	} else
 		plt_size = 0;
 
@@ -344,8 +348,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		 * otherwise I$ might have stale information.
 		 */
 		_dl_cacheflush(plt_start, plt_size);
-		_dl_mprotect((void *)plt_start, plt_size,
-		    PROT_READ | PROT_EXEC);
 	}
 
 	return (fails);
