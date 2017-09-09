@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.58 2015/12/11 20:21:23 mmcc Exp $	*/
+/*	$OpenBSD: line.c,v 1.59 2017/09/09 13:10:28 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -264,7 +264,8 @@ lnewline_at(struct line *lp1, int doto)
 		for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 			if (wp->w_linep == lp1)
 				wp->w_linep = lp2;
-			if (wp->w_dotline >= tcurwpdotline)
+			if (wp->w_dotline >= tcurwpdotline && 
+			    wp->w_bufp == curwp->w_bufp)
 				wp->w_dotline++;
 		}
 		undo_add_boundary(FFRAND, 1);
@@ -292,7 +293,8 @@ lnewline_at(struct line *lp1, int doto)
 			wp->w_dotp = lp2;
 			wp->w_doto -= doto;
 			wp->w_dotline++;
-		} else if (wp->w_dotline > tcurwpdotline)
+		} else if (wp->w_dotline > tcurwpdotline &&
+		    wp->w_bufp == curwp->w_bufp)
 			wp->w_dotline++;
 		if (wp->w_markp == lp1 && wp->w_marko >= doto) {
 			wp->w_markp = lp2;
