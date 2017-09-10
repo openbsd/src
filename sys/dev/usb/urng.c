@@ -1,4 +1,4 @@
-/*	$OpenBSD: urng.c,v 1.5 2017/09/05 18:34:08 jasper Exp $ */
+/*	$OpenBSD: urng.c,v 1.6 2017/09/10 13:10:05 jasper Exp $ */
 
 /*
  * Copyright (c) 2017 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -65,19 +65,19 @@ struct urng_chip {
 };
 
 struct urng_softc {
-	struct  device sc_dev;
-	struct  usbd_device *sc_udev;
-	struct  usbd_pipe *sc_outpipe;
-	struct  timeout sc_timeout;
-	struct  usb_task sc_task;
-	struct  usbd_xfer *sc_xfer;
-	struct	urng_chip sc_chip;
-	int     *sc_buf;
+	struct  device		 sc_dev;
+	struct  usbd_device	*sc_udev;
+	struct  usbd_pipe	*sc_outpipe;
+	struct  timeout 	 sc_timeout;
+	struct  usb_task	 sc_task;
+	struct  usbd_xfer	*sc_xfer;
+	struct	urng_chip	 sc_chip;
+	int     		*sc_buf;
 #ifdef URNG_MEASURE_RATE
-	struct	timeval sc_start;
-	struct	timeval sc_cur;
-	int	sc_counted_bytes;
-	u_char	sc_first_run;
+	struct	timeval		 sc_start;
+	struct	timeval 	 sc_cur;
+	int			 sc_counted_bytes;
+	u_char			 sc_first_run;
 #endif
 };
 
@@ -153,7 +153,7 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 		if (ed == NULL) {
 			printf("%s: failed to get endpoint %d descriptor\n",
 			    DEVNAME(sc), i);
-			return;
+			goto fail;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -171,7 +171,7 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 
 	if (ep_ibulk == -1) {
 		printf("%s: missing endpoint\n", DEVNAME(sc));
-		return;
+		goto fail;
 	}
 
 	error = usbd_open_pipe(uaa->iface, ep_ibulk, USBD_EXCLUSIVE_USE,
@@ -179,20 +179,20 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 	if (error) {
 		printf("%s: failed to open bulk-in pipe: %s\n",
 				DEVNAME(sc), usbd_errstr(error));
-		return;
+		goto fail;
 	}
 
 	sc->sc_xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (sc->sc_xfer == NULL) {
 		printf("%s: could not alloc xfer\n", DEVNAME(sc));
-		return;
+		goto fail;
 	}
 
 	sc->sc_buf = usbd_alloc_buffer(sc->sc_xfer, sc->sc_chip.bufsiz);
 	if (sc->sc_buf == NULL) {
 		printf("%s: could not alloc %d-byte buffer\n", DEVNAME(sc),
 				sc->sc_chip.bufsiz);
-		return;
+		goto fail;
 	}
 
 	usb_init_task(&sc->sc_task, urng_task, sc, USB_TASK_TYPE_GENERIC);
@@ -200,6 +200,9 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 	usb_add_task(sc->sc_udev, &sc->sc_task);
 
 	return;
+
+fail:
+	usbd_deactivate(sc->sc_udev);
 }
 
 int
@@ -208,10 +211,15 @@ urng_detach(struct device *self, int flags)
 	struct urng_softc *sc = (struct urng_softc *)self;
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
+
 	if (timeout_initialized(&sc->sc_timeout))
 		timeout_del(&sc->sc_timeout);
-	if (sc->sc_xfer)
+
+	if (sc->sc_xfer != NULL) {
 		usbd_free_xfer(sc->sc_xfer);
+		sc->sc_xfer = NULL;
+	}
+
 	if (sc->sc_outpipe != NULL) {
 		usbd_close_pipe(sc->sc_outpipe);
 		sc->sc_outpipe = NULL;
