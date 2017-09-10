@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.41 2016/08/26 04:19:28 guenther Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.42 2017/09/10 18:16:03 guenther Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -553,6 +553,9 @@ fn_match(char *pattern, char *string, char **pend)
 				return (-1);
 			break;
 		case '\\':
+			if ((c = *pattern++) == '\0')
+				return (-1);
+			/* FALLTHROUGH */
 		default:
 			if (c != *string++)
 				return (-1);
