@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.127 2017/08/29 09:28:45 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.128 2017/09/10 08:01:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -433,7 +433,7 @@ static const struct input_state input_state_rename_string = {
 /* consume_st state definition. */
 static const struct input_state input_state_consume_st = {
 	"consume_st",
-	NULL, NULL,
+	input_enter_rename, NULL, /* rename also waits for ST */
 	input_state_consume_st_table
 };
 
