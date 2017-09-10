@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.75 2017/08/30 18:13:47 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.76 2017/09/10 14:36:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -92,6 +92,48 @@ grid_need_extended_cell(const struct grid_cell_entry *gce,
 	if ((gc->fg & COLOUR_FLAG_RGB) || (gc->bg & COLOUR_FLAG_RGB))
 		return (1);
 	return (0);
+}
+
+/* Free up unused extended cells. */
+static void
+grid_compact_line(struct grid_line *gl)
+{
+	int			 new_extdsize = 0;
+	struct grid_cell	*new_extddata;
+	struct grid_cell_entry	*gce;
+	struct grid_cell	*gc;
+	u_int			 px, idx;
+
+	if (gl->extdsize == 0)
+		return;
+
+	for (px = 0; px < gl->cellsize; px++) {
+		gce = &gl->celldata[px];
+		if (gce->flags & GRID_FLAG_EXTENDED)
+			new_extdsize++;
+	}
+
+	if (new_extdsize == 0) {
+		free(gl->extddata);
+		gl->extddata = NULL;
+		gl->extdsize = 0;
+		return;
+	}
+	new_extddata = xreallocarray(NULL, new_extdsize, sizeof *gl->extddata);
+
+	idx = 0;
+	for (px = 0; px < gl->cellsize; px++) {
+		gce = &gl->celldata[px];
+		if (gce->flags & GRID_FLAG_EXTENDED) {
+			gc = &gl->extddata[gce->offset];
+			memcpy(&new_extddata[idx], gc, sizeof *gc);
+			gce->offset = idx++;
+		}
+	}
+
+	free(gl->extddata);
+	gl->extddata = new_extddata;
+	gl->extdsize = new_extdsize;
 }
 
 /* Set cell as extended. */
@@ -285,6 +327,7 @@ grid_scroll_history(struct grid *gd, u_int bg)
 	grid_empty_line(gd, yy, bg);
 
 	gd->hscrolled++;
+	grid_compact_line(&gd->linedata[gd->hsize]);
 	gd->hsize++;
 }
 
