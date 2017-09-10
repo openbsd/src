@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.h,v 1.5 2017/09/05 03:16:13 schwarze Exp $	*/
+/*	$OpenBSD: strings.h,v 1.6 2017/09/10 21:50:36 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,6 +73,8 @@ char	*rindex(const char *, int);
 int	 ffs(int);
 int	 strcasecmp(const char *, const char *);
 int	 strncasecmp(const char *, const char *, size_t);
+#endif
+#if __POSIX_VISIBLE >= 200809
 int	 strcasecmp_l(const char *, const char *, locale_t);
 int	 strncasecmp_l(const char *, const char *, size_t, locale_t);
 #endif
