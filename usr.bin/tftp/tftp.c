@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.24 2014/10/21 06:15:16 dlg Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.25 2017/09/10 07:29:39 tb Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <netdb.h>
 
@@ -83,8 +84,8 @@ extern int			 opt_tsize;
 extern int			 opt_tout;
 extern int			 opt_blksize;
 
-struct timeval	tstart;
-struct timeval	tstop;
+struct timespec	tstart;
+struct timespec	tstop;
 unsigned int	segment_size = SEGSIZE;
 unsigned int	packet_size = SEGSIZE + 4;
 
@@ -548,13 +549,13 @@ tpacket(const char *s, struct tftphdr *tp, int n)
 static void
 startclock(void)
 {
-	(void)gettimeofday(&tstart, NULL);
+	clock_gettime(CLOCK_MONOTONIC, &tstart);
 }
 
 static void
 stopclock(void)
 {
-	(void)gettimeofday(&tstop, NULL);
+	clock_gettime(CLOCK_MONOTONIC, &tstop);
 }
 
 static void
@@ -563,8 +564,8 @@ printstats(const char *direction, unsigned long amount)
 	double	delta;
 
 	/* compute delta in 1/10's second units */
-	delta = ((tstop.tv_sec * 10.) + (tstop.tv_usec / 100000)) -
-	    ((tstart.tv_sec * 10.) + (tstart.tv_usec / 100000));
+	delta = ((tstop.tv_sec * 10.) + (tstop.tv_nsec / 100000000)) -
+	    ((tstart.tv_sec * 10.) + (tstart.tv_nsec / 100000000));
 	delta = delta / 10.;	/* back to seconds */
 	printf("%s %lu bytes in %.1f seconds", direction, amount, delta);
 	if (verbose)
