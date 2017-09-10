@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcflow.c,v 1.5 2005/08/05 13:03:00 espie Exp $ */
+/*	$OpenBSD: tcflow.c,v 1.6 2017/09/10 18:20:00 guenther Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,8 @@ tcflow(int fd, int action)
 		if (tcgetattr(fd, &term) == -1)
 			return (-1);
 		c = term.c_cc[action == TCIOFF ? VSTOP : VSTART];
-		if (c != _POSIX_VDISABLE && write(fd, &c, sizeof(c)) == -1)
+		if (c != _POSIX_VDISABLE &&
+		    HIDDEN(write)(fd, &c, sizeof(c)) == -1)
 			return (-1);
 		return (0);
 	default:

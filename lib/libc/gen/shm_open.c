@@ -1,4 +1,4 @@
-/* $OpenBSD: shm_open.c,v 1.8 2015/12/10 13:03:22 tedu Exp $ */
+/* $OpenBSD: shm_open.c,v 1.9 2017/09/10 18:20:00 guenther Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -61,16 +61,16 @@ shm_open(const char *path, int flags, mode_t mode)
 
 	makeshmpath(path, shmpath, sizeof(shmpath));
 
-	fd = open(shmpath, flags, mode);
+	fd = HIDDEN(open)(shmpath, flags, mode);
 	if (fd == -1)
 		return -1;
 	if (fstat(fd, &sb) == -1 || !S_ISREG(sb.st_mode)) {
-		close(fd);
+		HIDDEN(close)(fd);
 		errno = EINVAL;
 		return -1;
 	}
 	if (sb.st_uid != geteuid()) {
-		close(fd);
+		HIDDEN(close)(fd);
 		errno = EPERM;
 		return -1;
 	}

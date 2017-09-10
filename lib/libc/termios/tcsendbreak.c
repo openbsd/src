@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcsendbreak.c,v 1.9 2015/11/01 03:45:29 guenther Exp $ */
+/*	$OpenBSD: tcsendbreak.c,v 1.10 2017/09/10 18:20:00 guenther Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ tcsendbreak(int fd, int len)
 
 	if (ioctl(fd, TIOCSBRK, 0) == -1)
 		return (-1);
-	(void)nanosleep(&sleepytime, NULL);
+	HIDDEN(nanosleep)(&sleepytime, NULL);
 	if (ioctl(fd, TIOCCBRK, 0) == -1)
 		return (-1);
 	return (0);
