@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.22 2015/02/08 23:40:34 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.23 2017/09/10 11:30:43 tom Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov, Aleksey Lomovtsev
@@ -165,11 +165,9 @@ pctr_cpu_creds(void)
 	/* Get the architecture */
 	mib[0] = CTL_HW;
 	mib[1] = HW_MACHINE;
-	len = sizeof(arch) - 1;
-	bzero(arch, sizeof(arch));
+	len = sizeof(arch);
 	if (sysctl(mib, 2, arch, &len, NULL, 0) == -1)
 		err(1, "HW_MACHINE");
-	arch[len] = '\0';
 
 	if (strcmp(arch, "i386") == 0)
 		atype = ARCH_I386;
@@ -194,11 +192,9 @@ pctr_cpu_creds(void)
 	/* Get the processor vendor */
 	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_CPUVENDOR;
-	len = sizeof(vendor) - 1;
-	bzero(vendor, sizeof(vendor));
+	len = sizeof(vendor);
 	if (sysctl(mib, 2, vendor, &len, NULL, 0) == -1)
 		err(1, "CPU_CPUVENDOR");
-	vendor[len] = '\0';
 
 	switch (atype) {
 	case ARCH_I386:
