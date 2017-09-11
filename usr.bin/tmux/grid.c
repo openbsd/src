@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.76 2017/09/10 14:36:12 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.77 2017/09/11 06:40:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -292,12 +292,14 @@ grid_collect_history(struct grid *gd)
 {
 	u_int	ny;
 
-	if (gd->hsize < gd->hlimit)
+	if (gd->hsize == 0 || gd->hsize < gd->hlimit)
 		return;
 
 	ny = gd->hlimit / 10;
 	if (ny < 1)
 		ny = 1;
+	if (ny > gd->hsize)
+		ny = gd->hsize;
 
 	/*
 	 * Free the lines from 0 to ny then move the remaining lines over
