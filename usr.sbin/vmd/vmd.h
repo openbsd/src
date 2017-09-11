@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.62 2017/09/08 07:08:49 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.63 2017/09/11 23:25:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -34,6 +34,10 @@
 
 #ifndef VMD_H
 #define VMD_H
+
+#define SET(_v, _m)		((_v) |= (_m))
+#define CLR(_v, _m)		((_v) &= ~(_m))
+#define ISSET(_v, _m)		((_v) & (_m))
 
 #define VMD_USER		"_vmd"
 #define VMD_CONF		"/etc/vm.conf"
