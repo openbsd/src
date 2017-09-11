@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttylog.c,v 1.5 2015/12/30 13:15:52 bluhm Exp $	*/
+/*	$OpenBSD: ttylog.c,v 1.6 2017/09/11 18:21:08 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Alexander Bluhm <bluhm@openbsd.org>
@@ -215,7 +215,7 @@ void
 iostdin(int sig)
 {
 	char buf[8192];
-	size_t n;
+	ssize_t n;
 
 	fprintf(lg, "signal iostdin %d\n", sig);
 	if ((n = read(0, buf, sizeof(buf))) < 0)
