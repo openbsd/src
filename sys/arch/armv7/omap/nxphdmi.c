@@ -1,4 +1,4 @@
-/* $OpenBSD: nxphdmi.c,v 1.4 2017/08/31 21:39:25 ians Exp $ */
+/* $OpenBSD: nxphdmi.c,v 1.5 2017/09/11 05:44:22 jsg Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  * All rights reserved.
@@ -769,7 +769,7 @@ nxphdmi_get_edid(uint8_t *buf, int buflen)
 	int ret = 0, i;
 	struct nxphdmi_softc *sc = nxphdmi_cd.cd_devs[0];
 
-	if (buflen < EDID_LENGTH || sc->sc_edid == NULL)
+	if (buflen < EDID_LENGTH)
 		return -1;
 
 	for (i = 0; i < EDID_LENGTH; i++)
