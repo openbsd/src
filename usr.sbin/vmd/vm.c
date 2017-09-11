@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.24 2017/08/20 21:15:32 pd Exp $	*/
+/*	$OpenBSD: vm.c,v 1.25 2017/09/11 23:32:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1561,6 +1561,29 @@ find_gpa_range(struct vm_create_params *vcp, paddr_t gpa, size_t len)
 	return (vmr);
 }
 
+void *
+vaddr_mem(paddr_t gpa, size_t len)
+{
+	struct vm_create_params *vcp = &current_vm->vm_params.vmc_params;
+	size_t i;
+	struct vm_mem_range *vmr;
+	paddr_t gpend = gpa + len;
+
+	/* Find the first vm_mem_range that contains gpa */
+	for (i = 0; i < vcp->vcp_nmemranges; i++) {
+		vmr = &vcp->vcp_memranges[i];
+		if (gpa < vmr->vmr_gpa)
+			continue;
+
+		if (gpend >= vmr->vmr_gpa + vmr->vmr_size)
+			continue;
+
+		return ((char *)vmr->vmr_va + (gpa - vmr->vmr_gpa));
+	}
+
+	return (NULL);
+}
+
 /*
  * write_mem
  *
@@ -1656,6 +1679,43 @@ read_mem(paddr_t src, void *buf, size_t len)
 	}
 
 	return (0);
+}
+
+int
+iovec_mem(paddr_t src, size_t len, struct iovec *iov, int iovcnt)
+{
+	size_t n, off;
+	struct vm_mem_range *vmr;
+	int niov = 0;
+
+	vmr = find_gpa_range(&current_vm->vm_params.vmc_params, src, len);
+	if (vmr == NULL) {
+		errno = EINVAL;
+		return (-1);
+	}
+
+	off = src - vmr->vmr_gpa;
+	while (len > 0) {
+		if (niov == iovcnt) {
+			errno = ENOMEM;
+			return (-1);
+		}
+
+		n = vmr->vmr_size - off;
+		if (len < n)
+			n = len;
+
+		iov[niov].iov_base = (char *)vmr->vmr_va + off;
+		iov[niov].iov_len = n;
+
+		niov++;
+
+		len -= n;
+		off = 0;
+		vmr++;
+	}
+
+	return (niov);
 }
 
 /*
