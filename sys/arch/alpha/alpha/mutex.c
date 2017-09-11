@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.18 2017/05/29 14:19:49 mpi Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.19 2017/09/11 09:52:15 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -39,16 +39,38 @@ void
 __mtx_init(struct mutex *mtx, int wantipl)
 {
 	mtx->mtx_owner = NULL;
-	mtx->mtx_oldipl = IPL_NONE;
 	mtx->mtx_wantipl = wantipl;
+	mtx->mtx_oldipl = IPL_NONE;
 }
 
 #ifdef MULTIPROCESSOR
+#ifdef MP_LOCKDEBUG
+#ifndef DDB
+#error "MP_LOCKDEBUG requires DDB"
+#endif
+
+/* CPU-dependent timing, needs this to be settable from ddb. */
+extern int __mp_lock_spinout;
+#endif
+
 void
 __mtx_enter(struct mutex *mtx)
 {
-	while (__mtx_enter_try(mtx) == 0)
+#ifdef MP_LOCKDEBUG
+	int nticks = __mp_lock_spinout;
+#endif
+
+	while (__mtx_enter_try(mtx) == 0) {
 		CPU_BUSY_CYCLE();
+
+#ifdef MP_LOCKDEBUG
+		if (--nticks == 0) {
+			db_printf("%s: %p lock spun out", __func__, mtx);
+			db_enter();
+			nticks = __mp_lock_spinout;
+		}
+#endif
+	}
 }
 
 int
@@ -90,6 +112,7 @@ __mtx_enter(struct mutex *mtx)
 	if (__predict_false(mtx->mtx_owner == ci))
 		panic("mtx %p: locking against myself", mtx);
 #endif
+
 	if (mtx->mtx_wantipl != IPL_NONE)
 		mtx->mtx_oldipl = splraise(mtx->mtx_wantipl);
 

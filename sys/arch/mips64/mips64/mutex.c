@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.6 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.7 2017/09/11 09:52:15 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -43,7 +43,6 @@ __mtx_init(struct mutex *mtx, int wantipl)
 }
 
 #ifdef MULTIPROCESSOR
-
 #ifdef MP_LOCKDEBUG
 #ifndef DDB
 #error "MP_LOCKDEBUG requires DDB"
@@ -61,9 +60,11 @@ __mtx_enter(struct mutex *mtx)
 #endif
 
 	while (__mtx_enter_try(mtx) == 0) {
+		CPU_BUSY_CYCLE();
+
 #ifdef MP_LOCKDEBUG
 		if (--nticks == 0) {
-			db_printf("%s(%p): lock spun out", __func__, mtx);
+			db_printf("%s: %p lock spun out", __func__, mtx);
 			db_enter();
 			nticks = __mp_lock_spinout;
 		}
@@ -76,8 +77,8 @@ __mtx_enter_try(struct mutex *mtx)
 {
 	struct cpu_info *owner, *ci = curcpu();
 	int s;
-	
- 	if (mtx->mtx_wantipl != IPL_NONE)
+
+	if (mtx->mtx_wantipl != IPL_NONE)
 		s = splraise(mtx->mtx_wantipl);
 
 	owner = atomic_cas_ptr(&mtx->mtx_owner, NULL, ci);
