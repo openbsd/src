@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.18 2017/05/02 14:45:26 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.19 2017/09/11 05:38:51 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -253,7 +253,7 @@ mainbus_match_primary(struct device *parent, void *match, void *aux)
 	struct cfdata *cf = match;
 	uint32_t mpidr;
 
-	__asm volatile("mrc p15, 0, %0, c0, c0, 5" : "=r " (mpidr));
+	__asm volatile("mrc p15, 0, %0, c0, c0, 5" : "=r" (mpidr));
 
 	if (fa->fa_nreg < 1 || fa->fa_reg[0].addr != (mpidr & MPIDR_AFF))
 		return 0;
@@ -268,7 +268,7 @@ mainbus_match_secondary(struct device *parent, void *match, void *aux)
 	struct cfdata *cf = match;
 	uint32_t mpidr;
 
-	__asm volatile("mrc p15, 0, %0, c0, c0, 5" : "=r " (mpidr));
+	__asm volatile("mrc p15, 0, %0, c0, c0, 5" : "=r" (mpidr));
 
 	if (fa->fa_nreg < 1 || fa->fa_reg[0].addr == (mpidr & MPIDR_AFF))
 		return 0;
