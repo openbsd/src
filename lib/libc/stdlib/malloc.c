@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.229 2017/08/20 11:06:16 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.230 2017/09/11 18:32:31 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1065,16 +1065,16 @@ find_chunknum(struct dir_info *d, struct region_info *r, void *ptr, int check)
 
 	/* Find the chunk number on the page */
 	chunknum = ((uintptr_t)ptr & MALLOC_PAGEMASK) >> info->shift;
-	if (check && info->size > 0) {
-		validate_canary(d, ptr, info->bits[info->offset + chunknum],
-		    info->size);
-	}
 
 	if ((uintptr_t)ptr & ((1U << (info->shift)) - 1))
 		wrterror(d, "modified chunk-pointer %p", ptr);
 	if (info->bits[chunknum / MALLOC_BITS] &
 	    (1U << (chunknum % MALLOC_BITS)))
 		wrterror(d, "chunk is already free %p", ptr);
+	if (check && info->size > 0) {
+		validate_canary(d, ptr, info->bits[info->offset + chunknum],
+		    info->size);
+	}
 	return chunknum;
 }
 
