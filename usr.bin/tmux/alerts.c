@@ -1,4 +1,4 @@
-/* $OpenBSD: alerts.c,v 1.26 2017/08/23 09:16:39 nicm Exp $ */
+/* $OpenBSD: alerts.c,v 1.27 2017/09/11 20:11:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -142,7 +142,8 @@ alerts_reset(struct window *w)
 	struct timeval	tv;
 
 	w->flags &= ~WINDOW_SILENCE;
-	event_del(&w->alerts_timer);
+	if (event_initialized(&w->alerts_timer))
+		event_del(&w->alerts_timer);
 
 	timerclear(&tv);
 	tv.tv_sec = options_get_number(w->options, "monitor-silence");
