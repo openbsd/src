@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.578 2017/09/04 09:18:51 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.579 2017/09/11 06:53:06 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 4 2017 $
+.Dd $Mdocdate: September 11 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1403,7 +1403,9 @@ specifies the initial sort order: one of
 or
 .Ql activity .
 .Fl f
-specifies an initial filter.
+specifies an initial filter: the filter is a format - if it evaluates to zero,
+the item in the list is not shown, otherwise it is shown.
+If a filter would lead to an empty list, it is ignored.
 .Fl F
 specifies the format for each item in the list.
 .Fl N
@@ -1460,7 +1462,9 @@ specifies the initial sort order: one of
 or
 .Ql time .
 .Fl f
-specifies an initial filter.
+specifies an initial filter: the filter is a format - if it evaluates to zero,
+the item in the list is not shown, otherwise it is shown.
+If a filter would lead to an empty list, it is ignored.
 .Fl F
 specifies the format for each item in the tree.
 .Fl N
@@ -4111,7 +4115,9 @@ specifies the initial sort order: one of
 or
 .Ql size .
 .Fl f
-specifies an initial filter.
+specifies an initial filter: the filter is a format - if it evaluates to zero,
+the item in the list is not shown, otherwise it is shown.
+If a filter would lead to an empty list, it is ignored.
 .Fl F
 specifies the format for each item in the list.
 .Fl N
