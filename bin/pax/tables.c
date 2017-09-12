@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.51 2017/03/16 03:53:37 deraadt Exp $	*/
+/*	$OpenBSD: tables.c,v 1.52 2017/09/12 17:11:11 otto Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -1036,7 +1036,7 @@ add_name(char *oname, int onamelen, char *nname)
  */
 
 void
-sub_name(char *oname, int *onamelen, size_t onamesize)
+sub_name(char *oname, int *onamelen, int onamesize)
 {
 	NAMT *pt;
 	u_int indx;
