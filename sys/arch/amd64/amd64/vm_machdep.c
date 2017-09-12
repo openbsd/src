@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.39 2017/09/12 02:56:54 dlg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.40 2017/09/12 02:58:08 dlg Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@
 #include <machine/fpu.h>
 #include <machine/tcb.h>
 
-void setredzone(struct proc *);
+void setguardpage(struct proc *);
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -110,7 +110,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_kstack - 1;
 	*tf = *p1->p_md.md_regs;
 
-	setredzone(p2);
+	setguardpage(p2);
 
 	/*
 	 * If specified, give the child a different stack and/or TCB
@@ -150,7 +150,7 @@ cpu_exit(struct proc *p)
  * Set a red zone in the kernel stack after the u. area.
  */
 void
-setredzone(struct proc *p)
+setguardpage(struct proc *p)
 {
 	pmap_remove(pmap_kernel(), (vaddr_t)p->p_addr + PAGE_SIZE,
 	    (vaddr_t)p->p_addr + 2 * PAGE_SIZE);
