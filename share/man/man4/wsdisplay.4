@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsdisplay.4,v 1.51 2016/09/01 12:24:56 jmc Exp $
+.\" $OpenBSD: wsdisplay.4,v 1.52 2017/09/12 14:29:35 schwarze Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .\"
 .\" Copyright (c) 2005, Miodrag Vallat.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 1 2016 $
+.Dd $Mdocdate: September 12 2017 $
 .Dt WSDISPLAY 4
 .Os
 .Sh NAME
@@ -144,11 +144,11 @@ driver or by devices which use it.
 Their definitions are found in
 .In dev/wscons/wsconsio.h .
 .Bl -tag -width 4n
-.It Dv WSDISPLAYIO_GTYPE Pq Li u_int
+.It Dv WSDISPLAYIO_GTYPE Fa u_int
 Retrieve the type of the display.
 The list of types is in
 .In dev/wscons/wsconsio.h .
-.It Dv WSDISPLAYIO_GINFO Pq Li "struct wsdisplay_fbinfo"
+.It Dv WSDISPLAYIO_GINFO Fa "struct wsdisplay_fbinfo"
 Retrieve basic information about a framebuffer display.
 The returned structure is as follows:
 .Bd -literal -offset indent
@@ -174,7 +174,7 @@ indicates the number of color map entries accessible through
 and
 .Dv WSDISPLAYIO_PUTCMAP .
 This call is likely to be unavailable on text-only displays.
-.It Dv WSDISPLAYIO_GETCMAP Pq Li "struct wsdisplay_cmap"
+.It Dv WSDISPLAYIO_GETCMAP Fa "struct wsdisplay_cmap"
 Retrieve the current color map from the display.
 This call needs the
 following structure set up beforehand:
@@ -206,7 +206,7 @@ color map.
 On all displays that support this call, values range from 0 for minimum
 intensity to 255 for maximum intensity, even if the display does not use
 eight bits internally to represent intensity.
-.It Dv WSDISPLAYIO_PUTCMAP Pq Li "struct wsdisplay_cmap"
+.It Dv WSDISPLAYIO_PUTCMAP Fa "struct wsdisplay_cmap"
 Change the display's color map.
 The argument structure is the same as for
 .Dv WSDISPLAYIO_GETCMAP ,
@@ -217,7 +217,7 @@ and
 .Va blue
 are taken as pointers to the values to use to set the color map.
 This call is not available on displays with fixed color maps.
-.It Dv WSDISPLAYIO_GVIDEO Pq Li u_int
+.It Dv WSDISPLAYIO_GVIDEO Fa u_int
 Get the current state of the display's video output.
 Possible values are:
 .Bl -tag -width 21n
@@ -226,12 +226,12 @@ The display is blanked.
 .It Dv WSDISPLAYIO_VIDEO_ON
 The display is enabled.
 .El
-.It Dv WSDISPLAYIO_SVIDEO Pq Li u_int
+.It Dv WSDISPLAYIO_SVIDEO Fa u_int
 Set the state of the display's video output.
 See
 .Dv WSDISPLAYIO_GVIDEO
 above for possible values.
-.It Dv WSDISPLAYIO_GCURPOS Pq Li "struct wsdisplay_curpos"
+.It Dv WSDISPLAYIO_GCURPOS Fa "struct wsdisplay_curpos"
 Retrieve the current position of the hardware cursor.
 The returned structure
 is as follows:
@@ -248,13 +248,13 @@ and
 members count the number of pixels right and down, respectively, from
 the top-left corner of the display to the hot spot of the cursor.
 This call is not available on displays without a hardware cursor.
-.It Dv WSDISPLAYIO_SCURPOS Pq Li "struct wsdisplay_curpos"
+.It Dv WSDISPLAYIO_SCURPOS Fa "struct wsdisplay_curpos"
 Set the current cursor position.
 The argument structure, and its semantics,
 are the same as for
 .Dv WSDISPLAYIO_GCURPOS .
 This call is not available on displays without a hardware cursor.
-.It Dv WSDISPLAYIO_GCURMAX Pq Li "struct wsdisplay_curpos"
+.It Dv WSDISPLAYIO_GCURMAX Fa "struct wsdisplay_curpos"
 Retrieve the maximum size of cursor supported by the display.
 The
 .Va x
@@ -263,7 +263,7 @@ and
 members of the returned structure indicate the maximum number of pixel rows
 and columns, respectively, in a hardware cursor on this display.
 This call is not available on displays without a hardware cursor.
-.It Dv WSDISPLAYIO_GCURSOR Pq Li "struct wsdisplay_cursor"
+.It Dv WSDISPLAYIO_GCURSOR Fa "struct wsdisplay_cursor"
 Retrieve some or all of the hardware cursor's attributes.
 The argument structure is as follows:
 .Bd -literal -offset indent
@@ -345,7 +345,7 @@ which are pointers should be initialized to
 .Dv NULL
 if not otherwise used.
 This call is not available on displays without a hardware cursor.
-.It Dv WSDISPLAYIO_SCURSOR Pq Li "struct wsdisplay_cursor"
+.It Dv WSDISPLAYIO_SCURSOR Fa "struct wsdisplay_cursor"
 Set some or all of the hardware cursor's attributes.
 The argument structure is the same as for
 .Dv WSDISPLAYIO_GCURSOR .
@@ -393,7 +393,7 @@ Do all of the above.
 .El
 .Pp
 This call is not available on displays without a hardware cursor.
-.It Dv WSDISPLAYIO_GMODE Pq Li u_int
+.It Dv WSDISPLAYIO_GMODE Fa u_int
 Get the current mode of the display.
 Possible results include:
 .Bl -tag -width 4n
@@ -404,11 +404,11 @@ The display is in mapped (graphics) mode.
 .It Dv WSDISPLAYIO_MODE_DUMBFB
 The display is in mapped (frame buffer) mode.
 .El
-.It Dv WSDISPLAYIO_SMODE Pq Li u_int
+.It Dv WSDISPLAYIO_SMODE Fa u_int
 Set the current mode of the display.
 For possible arguments, see
 .Dv WSDISPLAYIO_GMODE .
-.It Dv WSDISPLAYIO_LDFONT Pq Li struct wsdisplay_font
+.It Dv WSDISPLAYIO_LDFONT Fa "struct wsdisplay_font"
 Loads a font specified by the wsdisplay_font structure.
 .Bd -literal -offset indent
 struct wsdisplay_font {
@@ -480,15 +480,15 @@ field contains the font character data to be loaded.
 The
 .Va cookie
 field is reserved for internal purposes.
-.It Dv WSDISPLAYIO_LSFONT Pq Li struct wsdisplay_font
+.It Dv WSDISPLAYIO_LSFONT Fa "struct wsdisplay_font"
 Retrieves the data for a loaded font into the wsdisplay_font structure.
 The
 .Va index
 field is set to the font resource to query.
 For the argument structure, see
 .Dv WSDISPLAYIO_LDFONT .
-.\" WSDISPLAYIO_DELFONT Pq Li struct wsdisplay_font
-.It WSDISPLAYIO_USEFONT Pq Li struct wsdisplay_font
+.\" Dv WSDISPLAYIO_DELFONT Fa "struct wsdisplay_font"
+.It Dv WSDISPLAYIO_USEFONT Fa "struct wsdisplay_font"
 Selects the font specified in the
 .Va name
 field.
@@ -497,7 +497,7 @@ An empty
 selects the next available font.
 For the argument structure, see
 .Dv WSDISPLAYIO_LDFONT .
-.It Dv WSDISPLAYIO_GBURNER Pq Li struct wsdisplay_burner
+.It Dv WSDISPLAYIO_GBURNER Fa "struct wsdisplay_burner"
 Retrieves the state of the screen burner.
 The returned structure is as follows:
 .Bd -literal -offset indent
@@ -534,11 +534,11 @@ Monitor display output activity.
 .El
 .Pp
 If none of the activity source flags are set, the screen burner is disabled.
-.It Dv WSDISPLAYIO_SBURNER Pq Li struct wsdisplay_burner
+.It Dv WSDISPLAYIO_SBURNER Fa "struct wsdisplay_burner"
 Sets the state of the screen burner.
 The argument structure, and its semantics, are the same as for
 .Dv WSDISPLAYIO_GBURNER .
-.It Dv WSDISPLAYIO_ADDSCREEN Pq Li struct wsdisplay_addscreendata
+.It Dv WSDISPLAYIO_ADDSCREEN Fa "struct wsdisplay_addscreendata"
 Creates a new screen.
 .Bd -literal -offset indent
 struct wsdisplay_addscreendata {
@@ -570,7 +570,7 @@ Dumb terminal.
 .El
 .Pp
 An empty string will select the default emulation.
-.It Dv WSDISPLAYIO_DELSCREEN Pq Li struct wsdisplay_delscreendata
+.It Dv WSDISPLAYIO_DELSCREEN Fa "struct wsdisplay_delscreendata"
 Deletes an existing screen.
 .Bd -literal -offset indent
 struct wsdisplay_delscreendata {
@@ -591,7 +591,7 @@ Force deletion of screen even if in use by a userspace program.
 .It Dv WSDISPLAY_DELSCR_QUIET
 Don't report deletion to console.
 .El
-.It Dv WSDISPLAYIO_GETSCREEN Pq Li struct wsdisplay_addscreendata
+.It Dv WSDISPLAYIO_GETSCREEN Fa "struct wsdisplay_addscreendata"
 Returns information on the screen indicated by
 .Va idx
 or the current screen if
@@ -599,14 +599,14 @@ or the current screen if
 is -1.
 The screen and emulation types are returned in the same structure
 .Pq see Dv WSDISPLAYIO_GETPARAM .
-.It Dv WSDISPLAYIO_SETSCREEN Pq Li u_int
+.It Dv WSDISPLAYIO_SETSCREEN Fa u_int
 Switch to the screen with the given index.
-.It Dv WSDISPLAYIO_WSMOUSED Pq Li struct wscons_event
+.It Dv WSDISPLAYIO_WSMOUSED Fa "struct wscons_event"
 This call is used by the
 .Xr wsmoused 8
 daemon to inject mouse events gathered from serial mice, as well as
 various control events.
-.It Dv WSDISPLAYIO_GETPARAM Pq Li struct wsdisplay_param
+.It Dv WSDISPLAYIO_GETPARAM Fa "struct wsdisplay_param"
 Retrieves the state of a display parameter.
 This call needs the following structure set up beforehand:
 .Bd -literal -offset indent
@@ -638,7 +638,7 @@ specify the allowed range for the value, while
 .Va curval
 specifies the current setting.
 Not all parameters are supported by all display drivers.
-.It Dv WSDISPLAYIO_SETPARAM Pq Li struct wsdisplay_param
+.It Dv WSDISPLAYIO_SETPARAM Fa "struct wsdisplay_param"
 Sets a display parameter.
 The argument structure is the same as for
 .Dv WSDISPLAYIO_GETPARAM ,
@@ -648,7 +648,7 @@ and
 .Va curval
 members filled in.
 Not all parameters are supported by all display drivers.
-.It Dv WSDISPLAYIO_LINEBYTES Pq Li u_int
+.It Dv WSDISPLAYIO_LINEBYTES Fa u_int
 Get the number of bytes per row when the device is in
 .Dv WSDISPLAYIO_MODE_DUMBFB
 mode.
