@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.184 2017/08/28 19:31:57 jasper Exp $
+.\"	$OpenBSD: usb.4,v 1.185 2017/09/12 15:01:21 schwarze Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 28 2017 $
+.Dd $Mdocdate: September 12 2017 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -60,9 +60,8 @@
 .In dev/usb/usbhid.h
 .Sh DESCRIPTION
 .Ox
-provides machine-independent bus support and drivers for Universal Serial Bus
-.Pq Tn USB
-devices.
+provides machine-independent bus support and drivers for Universal
+Serial Bus (USB) devices.
 .Pp
 The
 .Ox
@@ -76,41 +75,27 @@ The controller attaches to a physical bus (like
 .Xr pci 4
 or
 .Xr cardbus 4 ) .
-The
-.Tn USB
-bus attaches to the controller and the root hub attaches to the
-.Tn USB
-bus.
+The USB bus attaches to the controller and the root hub attaches
+to the USB bus.
 Devices, which may include further hubs, attach to the root hub.
-The attachment forms the same tree structure as the physical
-.Tn USB
+The attachment forms the same tree structure as the physical USB
 device tree.
-For each
-.Tn USB
-device there may be additional drivers attached to it.
+For each USB device there may be additional drivers attached to it.
 .Pp
 The
 .Cm uhub
-driver controls
-.Tn USB
-hubs and must always be present since there is at least one root hub in any
-.Tn USB
-system.
+driver controls USB hubs and must always be present since there is
+at least one root hub in any USB system.
 .Pp
 The
 .Cm flags
-are used to specify if the devices on the
-.Tn USB
-bus should be probed
+are used to specify if the devices on the USB bus should be probed
 early in the boot process.
 If the
 .Cm flags
-are specified with a value of 1, the
-.Tn USB
-bus will be probed when the
-.Tn USB
-host device is attached instead of waiting
-until kernel processes start running.
+are specified with a value of 1, the USB bus will be probed when
+the USB host device is attached instead of waiting until kernel
+processes start running.
 .Pp
 .Ox
 provides support for the following devices.
@@ -118,8 +103,7 @@ Note that not all architectures support all devices.
 .Ss Storage devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr umass 4
-.Tn USB
-Mass Storage Devices, e.g., external disk drives
+USB Mass Storage Devices, e.g., external disk drives
 .El
 .Ss Wired network interfaces
 .Bl -tag -width 12n -offset ind -compact
@@ -257,11 +241,9 @@ Generic driver for Human Interface Devices
 .It Xr uhidev 4
 Base driver for all Human Interface Devices
 .It Xr ukbd 4
-.Tn USB
-keyboards that follow the boot protocol
+USB keyboards that follow the boot protocol
 .It Xr ums 4
-.Tn USB
-HID mouse, touchscreen and digitiser devices
+USB HID mouse, touchscreen and digitiser devices
 .It Xr uoaklux 4
 Toradex OAK USB illuminance sensor
 .It Xr uoakrh 4
@@ -310,18 +292,12 @@ USPS composite AC power and temperature sensor
 USB touchscreen support
 .El
 .Sh INTRODUCTION TO USB
-There are different versions of the
-.Tn USB
+There are different versions of the USB
 which provide different speeds.
-.Tn USB
-3 can operate up to 5.0Gb/s.
-.Tn USB
-2 operates at 480Mb/s, while
-.Tn USB
-versions 1 and 1.1 operate at 12 Mb/s and 1.5 Mb/s for low speed devices.
-Each
-.Tn USB
-has a host controller that is the master of the bus;
+USB 3 can operate up to 5.0Gb/s.
+USB 2 operates at 480Mb/s, while USB versions 1 and 1.1 operate at
+12 Mb/s and 1.5 Mb/s for low speed devices.
+Each USB has a host controller that is the master of the bus;
 all other devices on the bus only speak when spoken to.
 .Pp
 There can be up to 127 devices (apart from the host controller)
@@ -380,9 +356,7 @@ according to its physical position in the device tree.
 The last three locators can be used to pin down a particular
 device according to what device it actually is.
 .Pp
-The bus enumeration of the
-.Tn USB
-bus proceeds in several steps:
+The bus enumeration of the USB bus proceeds in several steps:
 .Bl -enum
 .It
 Any device-specific driver can attach to the device.
@@ -395,14 +369,11 @@ drivers can attach.
 If any interface driver attached in a certain
 configuration, the iteration over configurations is stopped.
 .It
-If still no drivers have been found, the generic
-.Tn USB
-driver can attach.
+If still no drivers have been found, the generic USB driver can attach.
 .El
 .Sh USB CONTROLLER INTERFACE
-Use the following to get access to the
-.Tn USB
-specific structures and defines:
+Use the following to get access to the USB specific structures
+and defines:
 .Bd -literal -offset indent
 #include <dev/usb/usb.h>
 .Ed
@@ -412,15 +383,14 @@ The
 device can be opened and a few operations can be performed on it.
 The
 .Xr poll 2
-system call will say that I/O is possible on the controller device when a
-.Tn USB
-device has been connected or disconnected to the bus.
+system call will say that I/O is possible on the controller device
+when a USB device has been connected or disconnected to the bus.
 .Pp
 The following
 .Xr ioctl 2
 commands are supported on the controller device:
 .Bl -tag -width xxxxxx
-.It Dv USB_DEVICEINFO (struct usb_device_info *)
+.It Dv USB_DEVICEINFO Fa "struct usb_device_info"
 This command can be used to retrieve some information about a device
 on the bus.
 The
@@ -515,7 +485,7 @@ field contains the addresses of the connected devices.
 If no device is connected to a port, one of the
 .Dv USB_PORT_*
 values indicates its status.
-.It Dv USB_DEVICESTATS (struct usb_device_stats *)
+.It Dv USB_DEVICESTATS Fa "struct usb_device_stats"
 This command retrieves statistics about the controller.
 .Bd -unfilled
 struct usb_device_stats {
@@ -529,7 +499,7 @@ field is indexed by the transfer kind, i.e.\&
 .Dv UE_* ,
 and indicates how many transfers of each kind have been completed
 by the controller.
-.It Dv USB_DEVICE_GET_DDESC (struct usb_device_ddesc *)
+.It Dv USB_DEVICE_GET_DDESC Fa "struct usb_device_ddesc"
 This command can be used to retrieve the device descriptor
 of a device on the bus.
 The
@@ -550,7 +520,7 @@ field contains the device unit number.
 The
 .Va udd_desc
 field contains the device descriptor structure.
-.It Dv USB_DEVICE_GET_CDESC (struct usb_device_cdesc *)
+.It Dv USB_DEVICE_GET_CDESC Fa "struct usb_device_cdesc"
 This command can be used to retrieve the configuration descriptor for the
 given configuration of a device on the bus.
 The
@@ -578,7 +548,7 @@ field contains the device unit number.
 The
 .Va udc_desc
 field contains the configuration descriptor structure.
-.It Dv USB_DEVICE_GET_FDESC (struct usb_device_fdesc *)
+.It Dv USB_DEVICE_GET_FDESC Fa "struct usb_device_fdesc"
 This command can be used to retrieve all descriptors for the
 given configuration of a device on the bus.
 The
@@ -617,7 +587,7 @@ field contains the device unit number.
 The
 .Va udf_data
 field contains all descriptors.
-.It Dv USB_REQUEST (struct usb_ctl_request *)
+.It Dv USB_REQUEST Fa "struct usb_ctl_request"
 This command can be used to execute arbitrary requests on the control pipe.
 This is
 .Em DANGEROUS
@@ -667,11 +637,8 @@ The include file
 contains definitions for the types used by the various
 .Xr ioctl 2
 calls.
-The naming convention of the fields for the various
-.Tn USB
-descriptors exactly follows the naming in the
-.Tn USB
-specification.
+The naming convention of the fields for the various USB descriptors
+exactly follows the naming in the USB specification.
 Byte sized fields can be accessed directly, but word (16-bit)
 sized fields must be accessed by the
 .Fn UGETW field
@@ -686,8 +653,7 @@ macros to handle byte order and alignment properly.
 The include file
 .In dev/usb/usbhid.h
 similarly contains the definitions for
-Human Interface Devices
-.Pq Tn HID .
+Human Interface Devices (HID).
 .Sh SEE ALSO
 .Xr usbhidaction 1 ,
 .Xr usbhidctl 1 ,
@@ -700,9 +666,7 @@ Human Interface Devices
 .Xr config 8 ,
 .Xr usbdevs 8
 .Pp
-The
-.Tn USB
-specifications can be found at
+The USB specifications can be found at
 .Lk http://www.usb.org/developers/docs/
 .Sh HISTORY
 The
