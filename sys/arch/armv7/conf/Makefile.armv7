@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.34 2017/08/12 20:26:11 mpi Exp $
+#	$OpenBSD: Makefile.armv7,v 1.35 2017/09/12 08:23:42 mpi Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -42,12 +42,6 @@ COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
 LINKFLAGS=	-T ld.script --warn-common -nopie
-
-.if ${IDENT:M-DDDB_STRUCT}
-DB_STRUCTINFO=	db_structinfo.h
-.else
-DB_STRUCTINFO=
-.endif
 
 HOSTCC?=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
@@ -139,18 +133,13 @@ vers.o: ${SYSTEM_DEP:Ngap.o}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 clean:
-	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* ${DB_STRUCTINFO} \
+	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* \
 	    gap.link ld.script lorder makegap.sh param.c
 
 cleandir: clean
 	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c
 
 depend obj:
-
-db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.pl
-	${CC} ${CFLAGS} ${CPPFLAGS} -MT $@ -gstabs -c $S/ddb/db_structinfo.c
-	objdump -g db_structinfo.o | perl $S/ddb/parse_structinfo.pl > $@
-	rm -f db_structinfo.o
 
 locore0.o: ${_machdir}/${_mach}/locore0.S assym.h
 in_cksum_arm.o fiq_subr.o bcopyinout.o copystr.o sigcode.o: assym.h
@@ -163,21 +152,6 @@ newinstall:
 	    sha256 -h /var/db/kernel.SHA256 /bsd
 
 install: update-link newinstall
-
-# pull in the dependency information
-.if !empty(DB_STRUCTINFO) && !exists(${DB_STRUCTINFO})
- ${SYSTEM_OBJ}: ${DB_STRUCTINFO}
-.endif
-.ifnmake clean
-. for o in ${SYSTEM_OBJ:Ngap.o} assym.h ${DB_STRUCTINFO}
-.  if exists(${o:R}.d)
-.   include "${o:R}.d"
-.  elif exists($o)
-    .PHONY: $o
-.  endif
-. endfor
-.endif
-
 
 # until we get native booting working, put this in the tree.
 KERNADDR_OMAP=0x80300000

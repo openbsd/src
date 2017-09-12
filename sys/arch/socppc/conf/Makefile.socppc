@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.socppc,v 1.56 2017/08/12 20:26:11 mpi Exp $
+#	$OpenBSD: Makefile.socppc,v 1.57 2017/09/12 08:23:42 mpi Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -40,12 +40,6 @@ COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-N -Ttext 200000 -e start --warn-common -nopie
-
-.if ${IDENT:M-DDDB_STRUCT}
-DB_STRUCTINFO=	db_structinfo.h
-.else
-DB_STRUCTINFO=
-.endif
 
 HOSTCC?=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
@@ -118,17 +112,12 @@ vers.o: ${SYSTEM_DEP:Ngap.o}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 clean:
-	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* ${DB_STRUCTINFO} param.c
+	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* param.c
 
 cleandir: clean
 	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c
 
 depend obj:
-
-db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.pl
-	${CC} ${CFLAGS} ${CPPFLAGS} -MT $@ -gstabs -c $S/ddb/db_structinfo.c
-	objdump -g db_structinfo.o | perl $S/ddb/parse_structinfo.pl > $@
-	rm -f db_structinfo.o
 
 locore.o: ${_machdir}/${_mach}/locore.S assym.h
 mutex.o: assym.h
@@ -142,20 +131,6 @@ install-kernel-${MACHINE_NAME}:
 	cmp -s bsd /bsd || ln -f /bsd /obsd
 	umask 077; cp bsd /nbsd
 	mv /nbsd /bsd
-.endif
-
-# pull in the dependency information
-.if !empty(DB_STRUCTINFO) && !exists(${DB_STRUCTINFO})
- ${SYSTEM_OBJ}: ${DB_STRUCTINFO}
-.endif
-.ifnmake clean
-. for o in ${SYSTEM_OBJ:Ngap.o} assym.h ${DB_STRUCTINFO}
-.  if exists(${o:R}.d)
-.   include "${o:R}.d"
-.  elif exists($o)
-    .PHONY: $o
-.  endif
-. endfor
 .endif
 
 %RULES
