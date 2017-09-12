@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.230 2017/09/11 18:32:31 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.231 2017/09/12 18:36:30 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -2000,7 +2000,7 @@ omemalign(struct dir_info *pool, size_t alignment, size_t sz, int zero_fill,
 	psz = PAGEROUND(sz);
 
 	p = mapalign(pool, alignment, psz, zero_fill);
-	if (p == NULL) {
+	if (p == MAP_FAILED) {
 		errno = ENOMEM;
 		return NULL;
 	}
