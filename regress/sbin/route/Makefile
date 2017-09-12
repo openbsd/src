@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.22 2017/09/05 11:14:47 mpi Exp $
+# $OpenBSD: Makefile,v 1.23 2017/09/12 08:43:14 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -120,8 +120,8 @@ rttest${n}:
 	${RCMD} add -priority 18 10.8.1/24 192.0.2.3
 	${SUDO} ifconfig lo10002 down
 	! ${RCMD} add -priority 17 10.8.1/24 192.0.2.2
-	@# Work around a race that mess up the route reference counts
-	@sleep .1
+	# Wait until SRP reference count are dropped
+	sleep .1
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
@@ -341,6 +341,8 @@ rttest${n}:
 	${SUDO} ifconfig vlan99 inet alias 10.1.255.2/14 
 	${SUDO} ifconfig vlan99 inet alias 10.1.255.3/14
 	${SUDO} ifconfig vlan99 down
+	# Wait until SRP reference count are dropped
+	sleep .1
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 	${SUDO} ifconfig vlan99 destroy
