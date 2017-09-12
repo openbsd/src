@@ -1,4 +1,4 @@
-/*	$OpenBSD: urng.c,v 1.6 2017/09/10 13:10:05 jasper Exp $ */
+/*	$OpenBSD: urng.c,v 1.7 2017/09/12 19:14:35 jasper Exp $ */
 
 /*
  * Copyright (c) 2017 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -67,12 +67,13 @@ struct urng_chip {
 struct urng_softc {
 	struct  device		 sc_dev;
 	struct  usbd_device	*sc_udev;
-	struct  usbd_pipe	*sc_outpipe;
+	struct  usbd_pipe	*sc_inpipe;
 	struct  timeout 	 sc_timeout;
 	struct  usb_task	 sc_task;
 	struct  usbd_xfer	*sc_xfer;
 	struct	urng_chip	 sc_chip;
 	int     		*sc_buf;
+	int			 sc_product;
 #ifdef URNG_MEASURE_RATE
 	struct	timeval		 sc_start;
 	struct	timeval 	 sc_cur;
@@ -135,6 +136,7 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_udev = uaa->device;
 	sc->sc_chip = urng_lookup(uaa->vendor, uaa->product)->urng_chip;
+	sc->sc_product = uaa->product;
 #ifdef URNG_MEASURE_RATE
 	sc->sc_first_run = 1;
 #endif
@@ -170,12 +172,12 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (ep_ibulk == -1) {
-		printf("%s: missing endpoint\n", DEVNAME(sc));
+		printf("%s: missing bulk input endpoint\n", DEVNAME(sc));
 		goto fail;
 	}
 
 	error = usbd_open_pipe(uaa->iface, ep_ibulk, USBD_EXCLUSIVE_USE,
-		    &sc->sc_outpipe);
+		    &sc->sc_inpipe);
 	if (error) {
 		printf("%s: failed to open bulk-in pipe: %s\n",
 				DEVNAME(sc), usbd_errstr(error));
@@ -220,9 +222,9 @@ urng_detach(struct device *self, int flags)
 		sc->sc_xfer = NULL;
 	}
 
-	if (sc->sc_outpipe != NULL) {
-		usbd_close_pipe(sc->sc_outpipe);
-		sc->sc_outpipe = NULL;
+	if (sc->sc_inpipe != NULL) {
+		usbd_close_pipe(sc->sc_inpipe);
+		sc->sc_inpipe = NULL;
 	}
 
 	return (0);
@@ -240,7 +242,7 @@ urng_task(void *arg)
 	int rate;
 #endif
 
-	usbd_setup_xfer(sc->sc_xfer, sc->sc_outpipe, NULL, sc->sc_buf,
+	usbd_setup_xfer(sc->sc_xfer, sc->sc_inpipe, NULL, sc->sc_buf,
 	    sc->sc_chip.bufsiz, USBD_SHORT_XFER_OK | USBD_SYNCHRONOUS,
 	    sc->sc_chip.read_timeout, NULL);
 
@@ -293,7 +295,7 @@ bail:
 void
 urng_timeout(void *arg)
 {
-        struct urng_softc *sc = arg;
+	struct urng_softc *sc = arg;
 
-        usb_add_task(sc->sc_udev, &sc->sc_task);
+	usb_add_task(sc->sc_udev, &sc->sc_task);
 }
