@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mem.4,v 1.2 2007/05/31 19:19:54 jmc Exp $
+.\"	$OpenBSD: mem.4,v 1.3 2017/09/12 02:22:15 schwarze Exp $
 .\"
 .\" Copyright (c) 2004, Miodrag Vallat.
 .\"
@@ -23,7 +23,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 12 2017 $
 .Dt MEM 4 hppa
 .Os
 .Sh NAME
@@ -50,13 +50,13 @@ Access to kernel virtual addresses not currently mapped to memory will fail.
 On hppa, the physical memory range is always contiguous and starts at
 address 0; kernel virtual memory begins at address 0 as well.
 .Pp
-The writeability of the
-.Pa /dev/mem
-and
-.Pa /dev/kmem
-special files are controlled by the system
-.Xr securelevel 7 ,
-in addition to the filesystem permissions.
+Even with sufficient file system permissions,
+these devices can only be opened when the
+.Xr securelevel 7
+is insecure or when the
+.Va kern.allowkmem
+.Xr sysctl 3
+variable is set.
 .Sh FILES
 .Bl -tag -width /dev/kmem -compact
 .It Pa /dev/mem

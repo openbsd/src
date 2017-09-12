@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mem.4,v 1.4 2007/05/31 19:19:57 jmc Exp $
+.\"	$OpenBSD: mem.4,v 1.5 2017/09/12 02:22:16 schwarze Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .\"
 .\"     from: @(#)mem.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 12 2017 $
 .Dt MEM 4 sparc64
 .Os
 .Sh NAME
@@ -56,15 +56,20 @@ Kernel virtual memory is accessed via the file
 in the same manner as
 .Pa /dev/mem .
 Only kernel virtual addresses that are currently mapped to memory are allowed.
-.Sh SPARC64
+.Pp
 On the
 sparc64,
 physical memory may be discontiguous;
 kernel virtual memory begins at
 .Li 0x001000000 .
 .Pp
-Writeability of these devices is controlled by the system
-.Xr securelevel 7 .
+Even with sufficient file system permissions,
+these devices can only be opened when the
+.Xr securelevel 7
+is insecure or when the
+.Va kern.allowkmem
+.Xr sysctl 3
+variable is set.
 .Sh FILES
 .Bl -tag -width /dev/kmem -compact
 .It /dev/mem
