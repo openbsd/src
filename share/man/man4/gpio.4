@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpio.4,v 1.25 2017/01/23 03:01:41 jsg Exp $
+.\"	$OpenBSD: gpio.4,v 1.26 2017/09/12 14:57:15 schwarze Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 23 2017 $
+.Dd $Mdocdate: September 12 2017 $
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ The following structures and constants are defined in the
 .In sys/gpio.h
 header file:
 .Bl -tag -width XXXX
-.It Dv GPIOINFO (struct gpio_info)
+.It Dv GPIOINFO Fa "struct gpio_info"
 Returns information about the GPIO
 controller in the
 .Fa gpio_info
@@ -75,7 +75,7 @@ struct gpio_info {
 	int gpio_npins;		/* total number of pins available */
 };
 .Ed
-.It Dv GPIOPINREAD (struct gpio_pin_op)
+.It Dv GPIOPINREAD Fa "struct gpio_pin_op"
 Returns the input pin value in the
 .Fa gpio_pin_op
 structure:
@@ -94,7 +94,7 @@ The
 or
 .Fa gp_pin
 field must be set before calling.
-.It Dv GPIOPINWRITE (struct gpio_pin_op)
+.It Dv GPIOPINWRITE Fa "struct gpio_pin_op"
 Writes the output value to the pin.
 The value set in the
 .Fa gp_value
@@ -106,11 +106,11 @@ field must be either
 On return, the
 .Fa gp_value
 field contains the old pin state.
-.It Dv GPIOPINTOGGLE (struct gpio_pin_op)
+.It Dv GPIOPINTOGGLE Fa "struct gpio_pin_op"
 Toggles the pin output value, i.e. changes it to the opposite.
 .Fa gp_value
 field is ignored and on return contains the old pin state.
-.It Dv GPIOPINSET (struct gpio_pin_set)
+.It Dv GPIOPINSET Fa "struct gpio_pin_set"
 Changes pin configuration flags with the new ones provided in the
 .Fa gpio_pin_set
 structure:
@@ -163,10 +163,10 @@ If no flags are specified, the pin configuration stays unchanged.
 Only GPIO pins that have been set using
 .Ar GPIOPINSET
 will be accessible at securelevels greater than 0.
-.It Dv GPIOPINUNSET (struct gpio_pin_set)
+.It Dv GPIOPINUNSET Fa "struct gpio_pin_set"
 Unset the specified pin, i.e. clear its name and make it inaccessible
 at securelevels greater than 0.
-.It Dv GPIOATTACH (struct gpio_attach)
+.It Dv GPIOATTACH Fa "struct gpio_attach"
 Attach the device described in the
 .Fa gpio_attach
 structure on this gpio device.
@@ -177,7 +177,7 @@ struct gpio_attach {
 	u_int32_t ga_mask;	/* binary mask */
 };
 .Ed
-.It Dv GPIODETACH (struct gpio_attach)
+.It Dv GPIODETACH Fa "struct gpio_attach"
 Detach a device from this gpio device that was previously attached using the
 .Dv GPIOATTACH
 .Xr ioctl 2 .
