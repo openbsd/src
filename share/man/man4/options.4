@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.250 2017/05/27 08:03:29 claudio Exp $
+.\"	$OpenBSD: options.4,v 1.251 2017/09/12 08:27:44 mpi Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: May 27 2017 $
+.Dd $Mdocdate: September 12 2017 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ configuration options that may be specified in a kernel config file.
 See
 .Xr config 8
 for information on how to configure and build kernels.
-.Em Note:
+.Em Note :
 options are passed to the compile process as
 .Fl D
 flags to the C compiler.
@@ -90,10 +90,6 @@ Allows a break into the kernel debugger during boot.
 Useful when debugging problems that can cause
 .Xr init 8
 to fail.
-.It Cd option DDB_STRUCT
-Compiles in symbolic information about the various data structures used by the
-kernel, for use within the kernel debugger.
-This option is currently not supported on alpha and m88k based platforms.
 .It Cd option DEBUG
 Turns on miscellaneous kernel debugging.
 Since options are turned into preprocessor defines (see above),

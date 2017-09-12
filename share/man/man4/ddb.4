@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.89 2017/08/14 21:31:00 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.90 2017/09/12 08:27:44 mpi Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: August 14 2017 $
+.Dd $Mdocdate: September 12 2017 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -348,7 +348,7 @@ is set to
 .Ar addr
 plus the size of values written.
 .Pp
-.Sy Warning:
+.Sy Warning :
 since there is no delimiter between expressions, the
 command may not parse as you expect.
 It is best to enclose each expression in parentheses.
@@ -430,7 +430,7 @@ If the
 modifier is specified, print each instruction at each step.
 Otherwise, only print the last instruction.
 .Pp
-.Sy Warning:
+.Sy Warning :
 depending on machine type, it may not be possible to
 single-step through some low-level code paths.
 On machines with software-emulated single-stepping (e.g., alpha),
@@ -458,7 +458,7 @@ If the
 .Cm /c
 modifier is given, instructions are counted while executing.
 .Pp
-.Sy Warning:
+.Sy Warning :
 when counting with
 .Cm /c ,
 .Nm
@@ -483,7 +483,7 @@ argument defaults to 4.
 If you specify a wrong space address, the request is rejected
 with an error message.
 .Pp
-.Sy Warning:
+.Sy Warning :
 attempts to watch wired kernel memory
 may cause an unrecoverable error on some systems (e.g., i386).
 .\" --------------------
@@ -569,7 +569,7 @@ If
 .Ar count
 is omitted, all frames are printed.
 .Pp
-.Sy Warning:
+.Sy Warning :
 user space stack trace is valid
 only if the machine dependent code supports it.
 .\" --------------------
@@ -733,17 +733,6 @@ If the
 modifier is specified the complete object is printed.
 .\" --------------------
 .It Xo
-.Ic show offset
-.Ar offset
-.Xc
-Prints a list of the known kernel structure fields which occur at the given
-.Ar offset
-from the beginning of the struct, as well as their size.
-The
-.Cm option DDB_STRUCT
-is required for this command to be available.
-.\" --------------------
-.It Xo
 .Ic show page
 .Op Cm /f
 .Ar addr
@@ -814,9 +803,6 @@ as a struct
 .Ar name .
 Nested structures and bit fields are not printed.
 Character arrays are printed as bytes.
-The
-.Cm option DDB_STRUCT
-is required for this command to be available.
 .\" --------------------
 .It Ic show uvmexp
 Displays a selection of uvm counters and statistics.
