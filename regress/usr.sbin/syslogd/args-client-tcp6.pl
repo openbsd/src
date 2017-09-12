@@ -23,7 +23,6 @@ our %args = (
 	options => ["-T", "[::1]:514"],
 	fstat => {
 	    qr/^root .* internet/ => 0,
-	    qr/^_syslogd .* internet/ => 3,
 	    qr/ internet6 stream tcp \w+ \[::1\]:514$/ => 1,
 	},
     },

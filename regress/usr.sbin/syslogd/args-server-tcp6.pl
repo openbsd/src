@@ -4,6 +4,7 @@
 # The server receives the message on its TCP socket.
 # Find the message in client, file, pipe, syslogd, server log.
 # Check that syslogd and server log contain ::1 address.
+# Check that with TCP server all other sockets are closed.
 
 use strict;
 use warnings;
@@ -15,6 +16,10 @@ our %args = (
 	loggrep => {
 	    qr/Logging to FORWTCP \@tcp:\/\/\[::1\]:\d+/ => '>=4',
 	    get_testgrep() => 1,
+	},
+	fstat => {
+	    qr/stream tcp/ => 1,
+	    qr/^_syslogd .* internet6 stream tcp / => 1,
 	},
     },
     server => {

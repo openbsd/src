@@ -4,6 +4,7 @@
 # The server receives the message on its TLS socket.
 # Find the message in client, file, pipe, syslogd, server log.
 # Check that syslogd and server log contain 127.0.0.1 address.
+# Check that with TLS server all other sockets are closed.
 
 use strict;
 use warnings;
@@ -15,6 +16,10 @@ our %args = (
 	loggrep => {
 	    qr/Logging to FORWTLS \@tls:\/\/127.0.0.1:\d+/ => '>=4',
 	    get_testgrep() => 1,
+	},
+	fstat => {
+	    qr/stream tcp/ => 1,
+	    qr/^_syslogd .* internet stream tcp / => 1,
 	},
     },
     server => {

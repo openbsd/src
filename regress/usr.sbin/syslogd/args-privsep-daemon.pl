@@ -13,6 +13,7 @@ use warnings;
 
 our %args = (
     syslogd => {
+	options => ["-u"],
 	daemon => 1,
 	nopipe => 1,
 	noconsole => 1,

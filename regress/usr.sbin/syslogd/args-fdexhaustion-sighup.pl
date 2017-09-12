@@ -20,6 +20,7 @@ our %args = (
 	loggrep => { get_between2loggrep() },
     },
     syslogd => {
+	options => ["-u"],
 	conf => join("", map { "*.*\t\$objdir/file-$_.log\n" } 0..19),
 	rlimit => {
 	    RLIMIT_NOFILE => 30,

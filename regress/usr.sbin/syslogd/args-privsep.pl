@@ -11,6 +11,7 @@ use warnings;
 
 our %args = (
     syslogd => {
+	options => ["-u"],
 	up => qr/fork\+exec done/,
 	nopipe => 1,
 	noconsole => 1,

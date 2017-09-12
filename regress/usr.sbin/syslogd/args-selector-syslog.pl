@@ -8,6 +8,7 @@
 
 use strict;
 use warnings;
+use Socket;
 use Sys::Syslog;
 
 my %selector2messages = (

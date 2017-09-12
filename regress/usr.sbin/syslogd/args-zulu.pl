@@ -8,6 +8,7 @@
 
 use strict;
 use warnings;
+use Socket;
 use Sys::Hostname;
 
 (my $host = hostname()) =~ s/\..*//;

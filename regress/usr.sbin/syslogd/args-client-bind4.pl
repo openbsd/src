@@ -19,7 +19,6 @@ our %args = (
 	options => ["-U", "127.0.0.1"],
 	fstat => {
 	    qr/^root .* internet/ => 0,
-	    qr/^_syslogd .* internet/ => 3,
 	    qr/ internet dgram udp 127.0.0.1:514$/ => 1,
 	},
     },

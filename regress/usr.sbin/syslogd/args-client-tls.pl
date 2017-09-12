@@ -23,7 +23,6 @@ our %args = (
 	options => ["-S", "localhost"],
 	fstat => {
 	    qr/^root .* internet/ => 0,
-	    qr/^_syslogd .* internet/ => 3,
 	    qr/ internet6? stream tcp \w+ (127.0.0.1|\[::1\]):6514$/ => 1,
 	},
 	ktrace => {

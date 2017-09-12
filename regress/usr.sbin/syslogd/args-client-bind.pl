@@ -23,7 +23,6 @@ our %args = (
 	options => ["-U", "localhost"],
 	fstat => {
 	    qr/^root .* internet/ => 0,
-	    qr/^_syslogd .* internet/ => 3,
 	    qr/ internet6? dgram udp (127.0.0.1|\[::1\]):514$/ => 1,
 	},
     },
