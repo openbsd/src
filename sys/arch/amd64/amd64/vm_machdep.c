@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.38 2017/08/18 16:53:02 tom Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.39 2017/09/12 02:56:54 dlg Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -152,11 +152,9 @@ cpu_exit(struct proc *p)
 void
 setredzone(struct proc *p)
 {
-#if 0
 	pmap_remove(pmap_kernel(), (vaddr_t)p->p_addr + PAGE_SIZE,
 	    (vaddr_t)p->p_addr + 2 * PAGE_SIZE);
 	pmap_update(pmap_kernel());
-#endif
 }
 
 /*
