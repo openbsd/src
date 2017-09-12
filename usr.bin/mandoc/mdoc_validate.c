@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.267 2017/08/02 13:28:35 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.268 2017/09/12 18:20:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1899,7 +1899,10 @@ post_root(POST_ARGS)
 			arch++;
 		if (*arch == NULL) {
 			n = mdoc->first->child;
-			while (n->tok != MDOC_Dt)
+			while (n->tok != MDOC_Dt ||
+			    n->child == NULL ||
+			    n->child->next == NULL ||
+			    n->child->next->next == NULL)
 				n = n->next;
 			n = n->child->next->next;
 			mandoc_vmsg(MANDOCERR_ARCH_BAD,
