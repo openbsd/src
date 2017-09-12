@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsdisplay.4,v 1.52 2017/09/12 14:29:35 schwarze Exp $
+.\" $OpenBSD: wsdisplay.4,v 1.53 2017/09/12 14:36:46 schwarze Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .\"
 .\" Copyright (c) 2005, Miodrag Vallat.
@@ -98,8 +98,8 @@ Screens are set up or deleted through the
 control device (preferably using the
 .Xr wsconscfg 8
 utility).
-Alternatively, the compile-time option
-.Cm WSDISPLAY_DEFAULTSCREENS=N
+Alternatively, the compile-time
+.Cd "option WSDISPLAY_DEFAULTSCREENS=N"
 will set up N screens of the display driver's default type and using
 the system's default terminal emulator at autoconfiguration time.
 .Pp
@@ -200,7 +200,7 @@ and
 .Va blue
 members should each point to an array of
 .Va count
-.Li u_char Ns s .
+.Vt u_char Ns s .
 On return, these will be filled in with the appropriate entries from the
 color map.
 On all displays that support this call, values range from 0 for minimum
@@ -323,7 +323,7 @@ This means that
 and
 .Va cmap . Ns Va blue
 must each point to at least enough space to hold two
-.Li u_char Ns s .
+.Vt u_char Ns s .
 .It Dv WSDISPLAY_CURSOR_DOSHAPE
 Get
 .Va size , image ,
@@ -340,7 +340,7 @@ Get all of the above.
 .Pp
 The device may elect to return information that was not requested by the user,
 so those elements of
-.Li "struct wsdisplay_cursor"
+.Vt struct wsdisplay_cursor
 which are pointers should be initialized to
 .Dv NULL
 if not otherwise used.
