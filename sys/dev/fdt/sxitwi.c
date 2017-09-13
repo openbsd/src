@@ -1,4 +1,4 @@
-/* $OpenBSD: sxitwi.c,v 1.1 2017/07/23 19:26:03 kettenis Exp $ */
+/* $OpenBSD: sxitwi.c,v 1.2 2017/09/13 20:26:26 patrick Exp $ */
 /*	$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -178,7 +178,7 @@ sxitwi_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return (OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-i2c") |
+	return (OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-i2c") ||
 	    OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-i2c"));
 }
 
