@@ -16,79 +16,65 @@ our %args = (
     client => {
 	connectproto => "none",
 	redo => [
-	    {
+	    { connect => {
 		proto  => "udp",
 		domain => AF_INET,
 		addr   => "127.0.0.1",
 		port   => 514,
-	    },
-	    {
+	    }},
+	    { connect => {
 		proto  => "udp",
 		domain => AF_INET,
 		addr   => "127.0.0.1",
 		port   => 513,
-	    },
-	    {
+	    }},
+	    { connect => {
 		proto  => "udp",
 		domain => AF_INET6,
 		addr   => "::1",
 		port   => 514,
-	    },
-	    {
+	    }},
+	    { connect => {
 		proto  => "tcp",
 		domain => AF_INET,
 		addr   => "127.0.0.1",
 		port   => 514,
-	    },
-	    {
+	    }},
+	    { connect => {
 		proto  => "tcp",
 		domain => AF_INET6,
 		addr   => "::1",
 		port   => 513,
-	    },
-	    {
+	    }},
+	    { connect => {
 		proto  => "tcp",
 		domain => AF_INET6,
 		addr   => "::1",
 		port   => 514,
-	    },
-	    {
+	    }},
+	    { connect => {
 		proto  => "tls",
 		domain => AF_INET6,
 		addr   => "::1",
 		port   => 6514,
-	    },
-	    {
+	    }},
+	    { connect => {
 		proto  => "tls",
 		domain => AF_INET,
 		addr   => "127.0.0.1",
 		port   => 6514,
-	    },
-	    {
+	    }},
+	    { connect => {
 		proto  => "tls",
 		domain => AF_INET,
 		addr   => "127.0.0.1",
 		port   => 6515,
-	    },
+	    }},
 	],
-	func => sub {
+	func => sub { redo_connect(shift, sub {
 	    my $self = shift;
 	    write_message($self, "client proto: ". $self->{connectproto});
-	    close($self->{cs}) if $self->{cs};
-	    if (my $connect = shift @{$self->{redo}}) {
-		$self->{connectproto}  = $connect->{proto};
-		$self->{connectdomain} = $connect->{domain};
-		$self->{connectaddr}   = $connect->{addr};
-		$self->{connectport}   = $connect->{port};
-	    } else {
-		delete $self->{connectdomain};
-		$self->{logsock} = { type => "native" };
-		setlogsock($self->{logsock})
-		    or die ref($self), " setlogsock failed: $!";
-		write_log($self);
-		undef $self->{redo};
-	    }
-	},
+	})},
 	loggrep => {
 	    qr/connect sock: (127.0.0.1|::1) \d+/ => 9,
 	    get_testgrep() => 1,

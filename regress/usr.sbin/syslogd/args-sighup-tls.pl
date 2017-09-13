@@ -37,13 +37,8 @@ our %args = (
     },
     server => {
 	listen => { domain => AF_INET, proto => "tls", addr => "127.0.0.1" },
-	redo => 0,
-	func => sub { read_between2logs(shift, sub {
+	func => sub { accept_between2logs(shift, sub {
 	    my $self = shift;
-	    if ($self->{redo}) {
-		    $self->{redo}--;
-		    return;
-	    }
 	    ${$self->{syslogd}}->rotate();
 	    ${$self->{syslogd}}->kill_syslogd('HUP');
 	    ${$self->{syslogd}}->loggrep("syslogd: restarted", 5)
@@ -51,7 +46,6 @@ our %args = (
 	    print STDERR "Signal\n";
 	    # regenerate fstat file
 	    ${$self->{syslogd}}->fstat();
-	    $self->{redo}++;
 	})},
 	loggrep => {
 	    get_between2loggrep(),

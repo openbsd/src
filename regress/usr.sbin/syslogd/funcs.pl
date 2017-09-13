@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.32 2017/04/07 15:49:46 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.33 2017/09/13 00:35:53 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -193,6 +193,47 @@ sub write_tcp {
 	print STDERR "<<< $msg\n";
 }
 
+sub redo_connect {
+	my $self = shift;
+	my $func = shift;
+
+	$func->($self, @_);
+	if ($self->{cs}) {
+		# wait for possible icmp errors, port is open
+		sleep .1;
+		close(delete $self->{cs})
+		    or die ref($self), " close failed: $!";
+	}
+	if (my $redo = shift @{$self->{redo}}) {
+		if (my $connect = $redo->{connect}) {
+			delete $self->{logsock};
+			$self->{connectdomain} = $connect->{domain};
+			$self->{connectaddr}   = $connect->{addr};
+			$self->{connectproto}  = $connect->{proto};
+			$self->{connectport}   = $connect->{port};
+		} elsif (my $logsock = $redo->{logsock}) {
+			delete $self->{connectdomain};
+			delete $self->{connectaddr};
+			delete $self->{connectproto};
+			delete $self->{connectport};
+			$self->{logsock} = $logsock;
+		} else {
+			die ref($self), " no connect or logsock in redo";
+		}
+	} else {
+		delete $self->{connectdomain};
+		delete $self->{connectaddr};
+		delete $self->{connectproto};
+		delete $self->{connectport};
+		$self->{logsock} = { type => "native" };
+		setlogsock($self->{logsock})
+		    or die ref($self), " setlogsock failed: $!";
+		sleep .1;
+		write_log($self);
+		undef $self->{redo};
+	}
+}
+
 ########################################################################
 # Server funcs
 ########################################################################
@@ -207,11 +248,22 @@ sub read_between2logs {
 	my $self = shift;
 	my $func = shift;
 
+	read_message($self, $firstlog);
+	$func->($self, @_);
+	read_message($self, $testlog);
+	read_message($self, $downlog);
+}
+
+sub accept_between2logs {
+	my $self = shift;
+	my $func = shift;
+
 	unless ($self->{redo}) {
 		read_message($self, $firstlog);
-	}
-	$func->($self, @_);
-	unless ($self->{redo}) {
+		$func->($self, @_);
+		$self->{redo} = 1;
+	} else {
+		$self->{redo} = 0;
 		read_message($self, $testlog);
 		read_message($self, $downlog);
 	}

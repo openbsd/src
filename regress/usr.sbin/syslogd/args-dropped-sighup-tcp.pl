@@ -34,13 +34,8 @@ our %args = (
     server => {
 	listen => { domain => AF_UNSPEC, proto => "tcp", addr => "localhost" },
 	rcvbuf => 2**12,
-	redo => 0,
-	func => sub { read_between2logs(shift, sub {
+	func => sub { accept_between2logs(shift, sub {
 	    my $self = shift;
-	    if ($self->{redo}) {
-		    $self->{redo}--;
-		    return;
-	    }
 	    ${$self->{syslogd}}->loggrep(get_thirdlog(), 20)
 		or die ref($self), " syslogd did not receive third log";
 	    ${$self->{syslogd}}->kill_syslogd('HUP');
@@ -48,7 +43,6 @@ our %args = (
 		or die ref($self), " no 'syslogd: restarted' between logs";
 	    # syslogd has shut down, read from kernel socket buffer
 	    read_log($self);
-	    $self->{redo}++;
 	})},
 	loggrep => {
 	    get_between2loggrep(),

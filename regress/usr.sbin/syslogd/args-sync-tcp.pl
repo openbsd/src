@@ -40,13 +40,8 @@ our %args = (
     server => {
 	listen => { domain => AF_INET, proto => "tcp", addr => "127.0.0.1" },
 	rcvbuf => 2**12,
-	redo => 0,
-	func => sub { read_between2logs(shift, sub {
+	func => sub { accept_between2logs(shift, sub {
 	    my $self = shift;
-	    if ($self->{redo}) {
-		$self->{redo}--;
-		return;
-	    }
 	    # read slowly to get output buffer out of sync
 	    foreach (1..10) {
 		print STDERR ">>> ". scalar <STDIN>;
@@ -57,7 +52,6 @@ our %args = (
 		or die ref($self), " syslogd did not receive third log";
 	    shutdown(\*STDOUT, 1)
 		or die "shutdown write failed: $!";
-	    $self->{redo}++;
 	})},
 	loggrep => {
 	    qr/Accepted/ => 2,

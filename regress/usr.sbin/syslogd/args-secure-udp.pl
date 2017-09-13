@@ -13,43 +13,29 @@ our %args = (
     client => {
 	connectaddr => "none",
 	redo => [
-	    {
+	    { connect => {
 		domain => AF_INET,
 		addr   => "127.0.0.1",
-	    },
-	    {
+		proto  => "udp",
+		port   => "514",
+	    }},
+	    { connect => {
 		domain => AF_INET,
 		addr   => "127.0.0.1",
-	    },
-	    {
+		proto  => "udp",
+		port   => "514",
+	    }},
+	    { connect => {
 		domain => AF_INET6,
 		addr   => "::1",
-	    },
+		proto  => "udp",
+		port   => "514",
+	    }},
 	],
-	func => sub {
+	func => sub { redo_connect(shift, sub {
 	    my $self = shift;
 	    write_message($self, "client addr: ". $self->{connectaddr});
-	    if ($self->{cs}) {
-		# wait for possible icmp errors, port is open
-		sleep .1;
-		close($self->{cs})
-		    or die ref($self), " close failed: $!";
-	    };
-	    if (my $connect = shift @{$self->{redo}}) {
-		$self->{connectdomain} = $connect->{domain};
-		$self->{connectaddr}   = $connect->{addr};
-		$self->{connectproto}  = "udp";
-		$self->{connectport}   = "514";
-	    } else {
-		delete $self->{connectdomain};
-		$self->{logsock} = { type => "native" };
-		setlogsock($self->{logsock})
-		    or die ref($self), " setlogsock failed: $!";
-		sleep .1;
-		write_log($self);
-		undef $self->{redo};
-	    }
-	},
+	})},
 	loggrep => {
 	    qr/client addr:/ => 4,
 	    get_testgrep() => 1,
