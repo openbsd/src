@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.35 2017/09/08 06:24:31 mlarkin Exp $	*/
+/*	$OpenBSD: config.c,v 1.36 2017/09/14 10:07:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -92,7 +92,7 @@ config_purge(struct vmd *env, unsigned int reset)
 		while ((vm = TAILQ_FIRST(env->vmd_vms)) != NULL) {
 			log_debug("%s: calling vm_remove", __func__);
 			vm_remove(vm);
-                }
+		}
 		env->vmd_nvm = 0;
 	}
 	if (what & CONFIG_SWITCHES && env->vmd_switches != NULL) {
@@ -204,16 +204,18 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 
 	if (!vm->vm_received) {
 		if (strlen(vcp->vcp_kernel)) {
-			/* Boot kernel from disk image if path matches the root
-			 * disk */
+			/*
+			 * Boot kernel from disk image if path matches the
+			 * root disk.
+			 */
 			if (vcp->vcp_ndisks &&
 			    strcmp(vcp->vcp_kernel, vcp->vcp_disks[0]) == 0)
 				vmboot = 1;
 			/* Open external kernel for child */
-			else if ((kernfd = open(vcp->vcp_kernel, O_RDONLY)) ==
-			    -1) {
-				log_warn("%s: can't open kernel/BIOS boot image\
-						%s", __func__, vcp->vcp_kernel);
+			else if ((kernfd =
+			    open(vcp->vcp_kernel, O_RDONLY)) == -1) {
+				log_warn("%s: can't open kernel or BIOS "
+				    "boot image %s", __func__, vcp->vcp_kernel);
 				goto fail;
 			}
 		}
@@ -236,18 +238,18 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	/* Open disk images for child */
 	for (i = 0 ; i < vcp->vcp_ndisks; i++) {
                 /* Stat disk[i] to ensure it is a regular file */
-                if (stat(vcp->vcp_disks[i], &stat_buf) == -1) {
+		if (stat(vcp->vcp_disks[i], &stat_buf) == -1) {
 			log_warn("%s: can't open disk %s", __func__,
 			    vcp->vcp_disks[i]);
 			errno = VMD_DISK_MISSING;
 			goto fail;
-                }
-                if (S_ISREG(stat_buf.st_mode) == 0) {
+		}
+		if (S_ISREG(stat_buf.st_mode) == 0) {
 			log_warn("%s: disk %s is not a regular file", __func__,
 			    vcp->vcp_disks[i]);
 			errno = VMD_DISK_INVALID;
 			goto fail;
-                }
+		}
 		if ((diskfds[i] =
 		    open(vcp->vcp_disks[i], O_RDWR)) == -1) {
 			log_warn("%s: can't open disk %s", __func__,
