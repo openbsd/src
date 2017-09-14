@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.371 2017/08/11 16:02:53 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.372 2017/09/14 18:16:28 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1330,8 +1330,8 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 
 	peer->prefix_rcvd_update++;
 	/* add original path to the Adj-RIB-In */
-	path_update(&ribs[0].rib, peer, asp, prefix, prefixlen);
-	peer->prefix_cnt++;
+	if (path_update(&ribs[0].rib, peer, asp, prefix, prefixlen))
+		peer->prefix_cnt++;
 
 	for (i = 1; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
