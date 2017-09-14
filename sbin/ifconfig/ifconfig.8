@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.287 2017/06/09 01:36:05 dlg Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.288 2017/09/14 13:02:12 benno Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 9 2017 $
+.Dd $Mdocdate: September 14 2017 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -295,7 +295,11 @@ on the given interface and remove all configured
 .Xr inet6 4
 addresses, including the link-local ones.
 This is the default.
-To turn inet6 on, use eui64, use autoconf or assign any inet6 address.
+To turn inet6 on, use
+.Cm eui64
+or
+.Cm autoconf ,
+or assign any inet6 address.
 .It Cm instance Ar minst
 Set the media instance to
 .Ar minst .
@@ -1084,13 +1088,16 @@ Set the IPv6 anycast address bit.
 .It Cm -anycast
 Clear the IPv6 anycast address bit.
 .It Cm autoconf
-Enable stateless autoconfiguration (SLAAC),
-automatically configuring IPv6 addresses.
-In this mode,
-router advertisements are accepted
-and periodic router solicitations are sent.
+Set the
+.Sy AUTOCONF6
+flag on the interface.
+The address autoconfiguration daemon
+.Xr slaacd 8
+automatically configures IPv6 addresses for interfaces with this flag.
 .It Cm -autoconf
-Disable autoconfiguration.
+Unset the
+.Sy AUTOCONF6
+flag on the interface.
 .It Cm autoconfprivacy
 Enable privacy extensions for stateless IPv6 address autoconfiguration
 (RFC 4941) on the interface.
@@ -1742,6 +1749,7 @@ tried to alter an interface's configuration.
 .Xr hosts 5 ,
 .Xr networks 5 ,
 .Xr rc 8 ,
+.Xr slaacd 8 ,
 .Xr tcpdump 8
 .Sh HISTORY
 The
