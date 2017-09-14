@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.105 2017/09/09 15:07:59 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.106 2017/09/14 00:10:17 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -458,8 +458,7 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 		if (options[code].data == NULL) {
 			t = calloc(1, len + 1);
 			if (t == NULL)
-				fatalx("Can't allocate storage for option %s.",
-				    name);
+				fatal("option %s", name);
 			/*
 			 * Copy and NUL-terminate the option (in case
 			 * it's an ASCII string).
@@ -475,8 +474,7 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 			 */
 			t = calloc(1, len + options[code].len + 1);
 			if (t == NULL)
-				fatalx("Can't expand storage for option %s.",
-				    name);
+				fatal("option %s concat", name);
 			memcpy(t, options[code].data, options[code].len);
 			memcpy(t + options[code].len, &s[2], len);
 			options[code].len += len;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.63 2017/07/24 16:17:35 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.64 2017/09/14 00:10:17 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -72,12 +72,12 @@ get_bpf_sock(char *name)
 	int		sock;
 
 	if ((sock = open("/dev/bpf", O_RDWR | O_CLOEXEC)) == -1)
-		fatal("Can't open bpf");
+		fatal("open(/dev/bpf)");
 
 	/* Set the BPF device to point at this interface. */
 	strlcpy(ifr.ifr_name, name, IFNAMSIZ);
 	if (ioctl(sock, BIOCSETIF, &ifr) == -1)
-		fatal("Can't attach interface %s to /dev/bpf", name);
+		fatal("BIOCSETIF");
 
 	return sock;
 }
@@ -91,7 +91,7 @@ get_udp_sock(int rdomain)
 	 * Use raw socket for unicast send.
 	 */
 	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_UDP)) == -1)
-		fatal("socket(SOCK_RAW)");
+		fatal("socket(AF_INET, SOCK_RAW)");
 	if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &on,
 	    sizeof(on)) == -1)
 		fatal("setsockopt(IP_HDRINCL)");
@@ -186,12 +186,12 @@ configure_bpf_sock(int bfdesc)
 
 	/* Make sure the BPF version is in range. */
 	if (ioctl(bfdesc, BIOCVERSION, &v) == -1)
-		fatal("Can't get BPF version");
+		fatal("BIOCVERSION");
 
 	if (v.bv_major != BPF_MAJOR_VERSION ||
 	    v.bv_minor < BPF_MINOR_VERSION)
-		fatalx("Kernel BPF version out of range - recompile "
-		    "dhclient!");
+		fatalx("kernel BPF version out of range - recompile "
+		    "dhclient");
 
 	/*
 	 * Set immediate mode so that reads return as soon as a packet
@@ -199,14 +199,14 @@ configure_bpf_sock(int bfdesc)
 	 * with packets.
 	 */
 	if (ioctl(bfdesc, BIOCIMMEDIATE, &flag) == -1)
-		fatal("Can't set immediate mode on bpf device");
+		fatal("BIOCIMMEDIATE");
 
 	if (ioctl(bfdesc, BIOCSFILDROP, &flag) == -1)
-		fatal("Can't set filter-drop mode on bpf device");
+		fatal("BIOCSFILDROP");
 
 	/* Get the required BPF buffer length from the kernel. */
 	if (ioctl(bfdesc, BIOCGBLEN, &sz) == -1)
-		fatal("Can't get bpf buffer length");
+		fatal("BIOCGBLEN");
 
 	/* Set up the bpf filter program structure. */
 	p.bf_len = dhcp_bpf_filter_len;
@@ -220,7 +220,7 @@ configure_bpf_sock(int bfdesc)
 	dhcp_bpf_filter[8].k = LOCAL_PORT;
 
 	if (ioctl(bfdesc, BIOCSETF, &p) == -1)
-		fatal("Can't install packet filter program");
+		fatal("BIOCSETF");
 
 	/* Set up the bpf write filter program structure. */
 	p.bf_len = dhcp_bpf_wfilter_len;
@@ -230,10 +230,10 @@ configure_bpf_sock(int bfdesc)
 		dhcp_bpf_wfilter[7].k = htons(IP_MF|IP_OFFMASK);
 
 	if (ioctl(bfdesc, BIOCSETWF, &p) == -1)
-		fatal("Can't install write filter program");
+		fatal("BIOCSETWF");
 
 	if (ioctl(bfdesc, BIOCLOCK, NULL) == -1)
-		fatal("Cannot lock bpf");
+		fatal("BIOCLOCK");
 
 	return sz;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.499 2017/09/05 10:56:02 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.500 2017/09/14 00:10:17 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -238,7 +238,7 @@ interface_status(char *name)
 	int		 ret;
 
 	if (getifaddrs(&ifap) != 0)
-		fatalx("getifaddrs failed");
+		fatal("getifaddrs");
 
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if (strcmp(name, ifa->ifa_name) == 0 &&
@@ -270,7 +270,7 @@ get_hw_address(struct interface_info *ifi)
 	int			 found;
 
 	if (getifaddrs(&ifap) != 0)
-		fatalx("getifaddrs failed");
+		fatal("getifaddrs");
 
 	found = 0;
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
@@ -318,7 +318,7 @@ routehandler(struct interface_info *ifi, int routefd)
 
 	rtmmsg = calloc(1, 2048);
 	if (rtmmsg == NULL)
-		fatalx("No memory for rtmmsg");
+		fatal("rtmmsg");
 
 	do {
 		n = read(routefd, rtmmsg, 2048);
@@ -424,7 +424,7 @@ done:
 
 die:
 	if (rslt == -1)
-		fatalx("no memory for errmsg");
+		fatal("errmsg");
 	fatalx("%s", errmsg);
 }
 
@@ -510,9 +510,9 @@ main(int argc, char *argv[])
 
 	ifi = calloc(1, sizeof(*ifi));
 	if (ifi == NULL)
-		fatalx("ifi calloc");
+		fatal("ifi");
 	if ((ioctlfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		fatal("Can't create socket to do ioctl");
+		fatal("socket(AF_INET, SOCK_DGRAM)");
 	get_ifname(ifi, ioctlfd, argv[0]);
 	ifi->index = if_nametoindex(ifi->name);
 	if (ifi->index == 0)
@@ -534,25 +534,25 @@ main(int argc, char *argv[])
 
 	/* Put us into the correct rdomain */
 	if (setrtable(ifi->rdomain) == -1)
-		fatal("setting routing table to %u", ifi->rdomain);
+		fatal("setrtable(%u)", ifi->rdomain);
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
 	    PF_UNSPEC, socket_fd) == -1)
 		fatal("socketpair");
 
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
-		fatal("cannot open %s", _PATH_DEVNULL);
+		fatal("open(%s)", _PATH_DEVNULL);
 
 	fork_privchld(ifi, socket_fd[0], socket_fd[1]);
 
 	close(socket_fd[0]);
 	if ((unpriv_ibuf = malloc(sizeof(*unpriv_ibuf))) == NULL)
-		fatalx("no memory for unpriv_ibuf");
+		fatal("unpriv_ibuf");
 	imsg_init(unpriv_ibuf, socket_fd[1]);
 
 	config = calloc(1, sizeof(*config));
 	if (config == NULL)
-		fatalx("config calloc");
+		fatal("config");
 
 	read_client_conf(ifi->name);
 
@@ -568,7 +568,7 @@ main(int argc, char *argv[])
 
 	if (path_dhclient_db == NULL && asprintf(&path_dhclient_db, "%s.%s",
 	    _PATH_DHCLIENT_DB, ifi->name) == -1)
-		fatalx("asprintf");
+		fatal("path_dhclient_db");
 
 	/* 2nd stage (post fork) config setup. */
 	if (ignore_list != NULL)
@@ -577,22 +577,22 @@ main(int argc, char *argv[])
 	tailfd = open(tail_path, O_RDONLY);
 	if (tailfd == -1) {
 		if (errno != ENOENT)
-			fatal("Cannot open %s", tail_path);
+			fatal("open(%s)", tail_path);
 	} else if (fstat(tailfd, &sb) == -1) {
-		fatal("Cannot stat %s", tail_path);
+		fatal("fstat(%s)", tail_path);
 	} else {
 		if (sb.st_size > 0 && sb.st_size < LLONG_MAX) {
 			config->resolv_tail = calloc(1, sb.st_size + 1);
 			if (config->resolv_tail == NULL) {
-				fatalx("no memory for %s contents", tail_path);
+				fatal("%s contents", tail_path);
 			}
 			tailn = read(tailfd, config->resolv_tail, sb.st_size);
 			if (tailn == -1)
-				fatal("Couldn't read %s", tail_path);
+				fatal("read(%s)", tail_path);
 			else if (tailn == 0)
-				fatalx("Got no data from %s", tail_path);
+				fatalx("got no data from %s", tail_path);
 			else if (tailn != sb.st_size)
-				fatalx("Short read of %s", tail_path);
+				fatalx("short read of %s", tail_path);
 		}
 		close(tailfd);
 	}
@@ -627,10 +627,10 @@ main(int argc, char *argv[])
 
 	if ((fd = open(path_dhclient_db,
 	    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640)) == -1)
-		fatal("can't open and lock %s", path_dhclient_db);
+		fatal("open(%s)", path_dhclient_db);
 	read_client_leases(ifi->name, &ifi->leases);
 	if ((leaseFile = fopen(path_dhclient_db, "w")) == NULL)
-		fatal("can't open %s", path_dhclient_db);
+		fatal("fopen(%s)", path_dhclient_db);
 	rewrite_client_leases(ifi);
 	close(fd);
 
@@ -643,7 +643,7 @@ main(int argc, char *argv[])
 
 	if (strlen(path_option_db) != 0) {
 		if ((optionDB = fopen(path_option_db, "a")) == NULL)
-			fatal("can't open %s", path_option_db);
+			fatal("fopen(%s)", path_option_db);
 	}
 
 	/* Register the interface. */
@@ -652,31 +652,30 @@ main(int argc, char *argv[])
 	ifi->rbuf_max = configure_bpf_sock(ifi->bfdesc);
 	ifi->rbuf = malloc(ifi->rbuf_max);
 	if (ifi->rbuf == NULL)
-		fatalx("Can't allocate %lu bytes for bpf input buffer.",
-		    (unsigned long)ifi->rbuf_max);
+		fatal("bpf input buffer");
 	ifi->rbuf_offset = 0;
 	ifi->rbuf_len = 0;
 
 	if (chroot(_PATH_VAREMPTY) == -1)
-		fatalx("chroot");
+		fatal("chroot(%s)", _PATH_VAREMPTY);
 	if (chdir("/") == -1)
-		fatalx("chdir(\"/\")");
+		fatal("chdir(\"/\")");
 
 	if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
-		fatalx("setresgid");
+		fatal("setresgid");
 	if (setgroups(1, &pw->pw_gid) == -1)
-		fatalx("setgroups");
+		fatal("setgroups");
 	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
-		fatalx("setresuid");
+		fatal("setresuid");
 
 	endpwent();
 
 	if (daemonize != 0) {
 		if (pledge("stdio inet dns route proc", NULL) == -1)
-			fatalx("pledge");
+			fatal("pledge");
 	} else {
 		if (pledge("stdio inet dns route", NULL) == -1)
-			fatalx("pledge");
+			fatal("pledge");
 	}
 
 	setproctitle("%s", ifi->name);
@@ -1526,7 +1525,7 @@ make_discover(struct interface_info *ifi, struct client_lease *lease)
 	i = pack_options(ifi->sent_packet.options, 576 - DHCP_FIXED_LEN,
 	    options);
 	if (i == -1 || packet->options[i] != DHO_END)
-		fatalx("options do not fit in DHCPDISCOVER packet.");
+		fatalx("options do not fit in DHCPDISCOVER packet");
 	ifi->sent_packet_length = DHCP_FIXED_NON_UDP+i+1;
 	if (ifi->sent_packet_length < BOOTP_MIN_LEN)
 		ifi->sent_packet_length = BOOTP_MIN_LEN;
@@ -1603,7 +1602,7 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 	i = pack_options(ifi->sent_packet.options, 576 - DHCP_FIXED_LEN,
 	    options);
 	if (i == -1 || packet->options[i] != DHO_END)
-		fatalx("options do not fit in DHCPREQUEST packet.");
+		fatalx("options do not fit in DHCPREQUEST packet");
 	ifi->sent_packet_length = DHCP_FIXED_NON_UDP+i+1;
 	if (ifi->sent_packet_length < BOOTP_MIN_LEN)
 		ifi->sent_packet_length = BOOTP_MIN_LEN;
@@ -1676,7 +1675,7 @@ make_decline(struct interface_info *ifi, struct client_lease *lease)
 	i = pack_options(ifi->sent_packet.options, 576 - DHCP_FIXED_LEN,
 	    options);
 	if (i == -1 || packet->options[i] != DHO_END)
-		fatalx("options do not fit in DHCPDECLINE packet.");
+		fatalx("options do not fit in DHCPDECLINE packet");
 	ifi->sent_packet_length = DHCP_FIXED_NON_UDP+i+1;
 	if (ifi->sent_packet_length < BOOTP_MIN_LEN)
 		ifi->sent_packet_length = BOOTP_MIN_LEN;
@@ -1800,7 +1799,7 @@ lease_as_proposal(struct client_lease *lease)
 
 	proposal = calloc(1, sizeof(*proposal));
 	if (proposal == NULL)
-		fatal("No memory for lease_as_proposal");
+		fatal("proposal");
 
 	proposal->ifa = lease->address;
 	proposal->addrs |= RTA_IFA;
@@ -1990,7 +1989,7 @@ go_daemon(void)
 #endif	/* DEBUG */
 
 	if (rdaemon(nullfd) == -1)
-		fatal("Cannot daemonize");
+		fatal("daemonize");
 
 	signal(SIGHUP, sighdlr);
 	signal(SIGPIPE, SIG_IGN);
@@ -2070,7 +2069,7 @@ res_hnok_list(const char *names)
 
 	dupnames = inputstring = strdup(names);
 	if (inputstring == NULL)
-		fatalx("Cannot copy domain name list");
+		fatal("domain name list");
 
 	count = 0;
 	while ((hn = strsep(&inputstring, " \t")) != NULL) {
@@ -2098,7 +2097,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 
 	switch (fork()) {
 	case -1:
-		fatalx("cannot fork");
+		fatal("fork");
 		break;
 	case 0:
 		break;
@@ -2107,7 +2106,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	}
 
 	if (chdir("/") == -1)
-		fatalx("chdir(\"/\")");
+		fatal("chdir(\"/\")");
 
 	setproctitle("%s [priv]", ifi->name);
 
@@ -2116,14 +2115,14 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	close(fd2);
 
 	if ((priv_ibuf = malloc(sizeof(*priv_ibuf))) == NULL)
-		fatalx("no memory for priv_ibuf");
+		fatal("priv_ibuf");
 
 	imsg_init(priv_ibuf, fd);
 
 	if ((ioctlfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		fatal("socket open failed");
+		fatal("socket(AF_INEt, SOCK_DGRAM)");
 	if ((routefd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
-		fatal("opening socket to flush routes");
+		fatal("socket(AF_ROUTE, SOCK_RAW)");
 
 	while (quit == 0) {
 		pfd[0].fd = priv_ibuf->fd;
@@ -2168,7 +2167,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 		log_warnx("%s; restarting.", strsignal(quit));
 		signal(SIGHUP, SIG_IGN); /* will be restored after exec */
 		execvp(saved_argv[0], saved_argv);
-		fatal("RESTART FAILED: '%s'", saved_argv[0]);
+		fatal("execvp(%s)", saved_argv[0]);
 	}
 
 	if (quit != INTERNALSIG)
@@ -2187,16 +2186,13 @@ get_ifname(struct interface_info *ifi, int ioctlfd, char *arg)
 	if (strcmp(arg, "egress") == 0) {
 		memset(&ifgr, 0, sizeof(ifgr));
 		strlcpy(ifgr.ifgr_name, "egress", sizeof(ifgr.ifgr_name));
-		if (ioctl(ioctlfd, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1) {
-			if (errno == ENOENT)
-				fatalx("no interface in group egress found");
-			fatal("ioctl SIOCGIFGMEMB");
-		}
+		if (ioctl(ioctlfd, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
+			fatal("SIOCGIFGMEMB");
 		len = ifgr.ifgr_len;
 		if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
-			fatalx("get_ifname");
+			fatalx("ifgr_groups");
 		if (ioctl(ioctlfd, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
-			fatal("ioctl SIOCGIFGMEMB");
+			fatal("SIOCGIFGMEMB");
 
 		arg = NULL;
 		for (ifg = ifgr.ifgr_groups; ifg && len >= sizeof(*ifg); ifg++) {
@@ -2207,11 +2203,11 @@ get_ifname(struct interface_info *ifi, int ioctlfd, char *arg)
 		}
 
 		if (strlcpy(ifi->name, arg, IFNAMSIZ) >= IFNAMSIZ)
-			fatal("Interface name too long");
+			fatalx("interface name too long");
 
 		free(ifgr.ifgr_groups);
 	} else if (strlcpy(ifi->name, arg, IFNAMSIZ) >= IFNAMSIZ)
-		fatalx("Interface name too long");
+		fatalx("nterface name too long");
 }
 
 struct client_lease *
@@ -2222,7 +2218,7 @@ apply_defaults(struct client_lease *lease)
 
 	newlease = clone_lease(lease);
 	if (newlease == NULL)
-		fatalx("Unable to clone lease");
+		fatalx("unable to clone lease");
 
 	if (config->filename != NULL) {
 		free(newlease->filename);
@@ -2337,7 +2333,7 @@ cleanup:
 		free_client_lease(newlease);
 	}
 
-	fatalx("Unable to apply defaults");
+	fatalx("unable to apply defaults");
 	/* NOTREACHED */
 
 	return NULL;
@@ -2528,7 +2524,7 @@ take_charge(struct interface_info *ifi, int routefd)
 	retries = 0;
 	while ((ifi->flags & IFI_IN_CHARGE) == 0) {
 		if (write(routefd, &rtm, sizeof(rtm)) == -1)
-			fatal("tried to take charge");
+			fatal("write(routefd)");
 		time(&cur_time);
 		if ((cur_time - start_time) > 3) {
 			if (++retries <= 3) {
@@ -2545,10 +2541,10 @@ take_charge(struct interface_info *ifi, int routefd)
 		if (nfds == -1) {
 			if (errno == EINTR)
 				continue;
-			fatal("routefd poll");
+			fatal("poll(routefd)");
 		}
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
-			fatalx("routefd poll error");
+			fatal("routefd revents");
 		if (nfds == 0 || (fds[0].revents & POLLIN) == 0)
 			continue;
 		routehandler(ifi, routefd);
@@ -2608,7 +2604,7 @@ set_default_client_identifier(struct interface_info *ifi)
 	if (opt->len == 0 && opt->data == NULL) {
 		opt->data = calloc(1, ETHER_ADDR_LEN + 1);
 		if (opt->data == NULL)
-			fatalx("no memory for default client identifier");
+			fatal("default client identifier");
 		opt->data[0] = HTYPE_ETHER;
 		memcpy(&opt->data[1], ifi->hw_address.ether_addr_octet,
 		    ETHER_ADDR_LEN);

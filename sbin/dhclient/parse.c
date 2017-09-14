@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.61 2017/07/24 16:17:35 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.62 2017/09/14 00:10:17 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -150,7 +150,7 @@ parse_string(FILE *cfile, unsigned int *len)
 	}
 	s = malloc(i+1);
 	if (s == NULL)
-		fatalx("no memory for string %s.", val);
+		fatal("unvis string %s", val);
 	memcpy(s, unvisbuf, i+1);	/* Copy the terminating NUL. */
 	if (len != NULL)
 		*len = i;

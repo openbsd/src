@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.140 2017/08/31 17:01:48 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.141 2017/09/14 00:10:17 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -292,7 +292,7 @@ packethandler(struct interface_info *ifi)
 	rslt = asprintf(&info, "%s from %s (%s)", type, inet_ntoa(ifrom),
 	    ether_ntoa(&hfrom));
 	if (rslt == -1)
-		fatalx("no memory for info string");
+		fatal("info string");
 
 	if (handler != NULL)
 		(*handler)(ifi, options, info);
