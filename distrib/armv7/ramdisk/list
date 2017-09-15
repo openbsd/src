@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.31 2017/09/01 04:40:40 jsg Exp $
+#	$OpenBSD: list,v 1.32 2017/09/15 16:34:25 jsg Exp $
 
 SRCDIRS distrib/special
 
@@ -123,9 +123,13 @@ COPY	/usr/local/share/u-boot/am335x_boneblack/MLO	usr/mdec/am335x/MLO
 COPY	/usr/local/share/u-boot/am335x_boneblack/u-boot.img	usr/mdec/am335x/u-boot.img
 COPY	/usr/local/share/dtb/arm/am335x-bone.dtb	usr/mdec/am335x/am335x-bone.dtb
 COPY	/usr/local/share/dtb/arm/am335x-boneblack.dtb	usr/mdec/am335x/am335x-boneblack.dtb
+COPY	/usr/local/share/dtb/arm/am335x-boneblack-wireless.dtb	usr/mdec/am335x/am335x-boneblack-wireless.dtb
+COPY	/usr/local/share/dtb/arm/am335x-boneblue.dtb	usr/mdec/am335x/am335x-boneblue.dtb
 COPY	/usr/local/share/dtb/arm/am335x-bonegreen.dtb	usr/mdec/am335x/am335x-bonegreen.dtb
+COPY	/usr/local/share/dtb/arm/am335x-bonegreen-wireless.dtb	usr/mdec/am335x/am335x-bonegreen-wireless.dtb
 COPY	/usr/local/share/dtb/arm/am335x-evm.dtb		usr/mdec/am335x/am335x-evm.dtb
 COPY	/usr/local/share/dtb/arm/am335x-evmsk.dtb	usr/mdec/am335x/am335x-evmsk.dtb
+COPY	/usr/local/share/dtb/arm/am335x-icev2.dtb	usr/mdec/am335x/am335x-icev2.dtb
 
 COPY	/usr/local/share/u-boot/Cubieboard2/u-boot-sunxi-with-spl.bin	usr/mdec/cubie/u-boot-sunxi-with-spl.bin
 COPY	/usr/local/share/dtb/arm/sun7i-a20-cubieboard2.dtb	usr/mdec/cubie/sun7i-a20-cubieboard2.dtb
