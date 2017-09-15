@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.40 2015/12/16 19:44:42 tb Exp $	*/
+/*	$OpenBSD: run.c,v 1.41 2017/09/15 14:19:56 ajacoutot Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1545,7 +1545,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		break;
 	case FXOR:
 		if (nextarg == 0) {
-			WARNING("or requires two arguments; returning 0");
+			WARNING("xor requires two arguments; returning 0");
 			u = 0;
 			break;
 		}
@@ -1556,7 +1556,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		break;
 	case FLSHIFT:
 		if (nextarg == 0) {
-			WARNING("or requires two arguments; returning 0");
+			WARNING("lshift requires two arguments; returning 0");
 			u = 0;
 			break;
 		}
@@ -1567,7 +1567,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		break;
 	case FRSHIFT:
 		if (nextarg == 0) {
-			WARNING("or requires two arguments; returning 0");
+			WARNING("rshift requires two arguments; returning 0");
 			u = 0;
 			break;
 		}
