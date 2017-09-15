@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.11 2017/08/14 19:46:44 jasper Exp $ */
+/* $OpenBSD: ns8250.c,v 1.12 2017/09/15 02:35:39 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -446,11 +446,7 @@ vcpu_process_com_msr(union vm_exit *vei)
 /*
  * vcpu_process_com_scr
  *
- * Emulate in/out instructions to the com1 (ns8250) UART scratch register. The
- * scratch register is sometimes used to distinguish an 8250 from a 16450,
- * and/or used to distinguish submodels of the 8250 (eg 8250A, 8250B). We
- * simulate an "original" 8250 by forcing the scratch register to return data
- * on read that is different from what was written.
+ * Emulate in/out instructions to the com1 (ns8250) UART scratch register.
  *
  * Parameters:
  *  vei: vm exit information from vmm(4) containing information on the in/out
@@ -470,11 +466,9 @@ vcpu_process_com_scr(union vm_exit *vei)
 		/*
 		 * vei_dir == VEI_DIR_IN : in instruction
 		 *
-		 * Read from SCR. To make sure we don't accidentally simulate
-		 * a real scratch register, we negate what was written on
-		 * subsequent readback.
+		 * Read from SCR
 		 */
-		set_return_data(vei, ~com1_dev.regs.scr);
+		set_return_data(vei, com1_dev.regs.scr);
 	}
 }
 
