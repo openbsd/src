@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.204 2017/09/11 17:09:09 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.205 2017/09/15 11:50:39 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -57,6 +57,7 @@
 #define RELAY_ONHOLD		0x01
 #define RELAY_HOLDQ		0x02
 
+static void mta_handle_envelope(struct envelope *);
 static void mta_query_mx(struct mta_relay *);
 static void mta_query_secret(struct mta_relay *);
 static void mta_query_preference(struct mta_relay *);
@@ -177,7 +178,6 @@ void
 mta_imsg(struct mproc *p, struct imsg *imsg)
 {
 	struct mta_relay	*relay;
-	struct mta_task		*task;
 	struct mta_domain	*domain;
 	struct mta_host		*host;
 	struct mta_route	*route;
@@ -185,7 +185,6 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 	struct mta_mx		*mx, *imx;
 	struct mta_source	*source;
 	struct hoststat		*hs;
-	struct mta_envelope	*e;
 	struct sockaddr_storage	 ss;
 	struct envelope		 evp;
 	struct msg		 m;
@@ -206,83 +205,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			m_msg(&m, imsg);
 			m_get_envelope(&m, &evp);
 			m_end(&m);
-
-			relay = mta_relay(&evp);
-			/* ignore if we don't know the limits yet */
-			if (relay->limits &&
-			    relay->ntask >= (size_t)relay->limits->task_hiwat) {
-				if (!(relay->state & RELAY_ONHOLD)) {
-					log_info("smtp-out: hiwat reached on %s: holding envelopes",
-					    mta_relay_to_text(relay));
-					relay->state |= RELAY_ONHOLD;
-				}
-			}
-
-			/*
-			 * If the relay has too many pending tasks, tell the
-			 * scheduler to hold it until further notice
-			 */
-			if (relay->state & RELAY_ONHOLD) {
-				relay->state |= RELAY_HOLDQ;
-				m_create(p_queue, IMSG_MTA_DELIVERY_HOLD, 0, 0, -1);
-				m_add_evpid(p_queue, evp.id);
-				m_add_id(p_queue, relay->id);
-				m_close(p_queue);
-				mta_relay_unref(relay); /* from here */
-				return;
-			}
-
-			task = NULL;
-			TAILQ_FOREACH(task, &relay->tasks, entry)
-				if (task->msgid == evpid_to_msgid(evp.id))
-					break;
-
-			if (task == NULL) {
-				task = xmalloc(sizeof *task, "mta_task");
-				TAILQ_INIT(&task->envelopes);
-				task->relay = relay;
-				relay->ntask += 1;
-				TAILQ_INSERT_TAIL(&relay->tasks, task, entry);
-				task->msgid = evpid_to_msgid(evp.id);
-				if (evp.sender.user[0] || evp.sender.domain[0])
-					(void)snprintf(buf, sizeof buf, "%s@%s",
-					    evp.sender.user, evp.sender.domain);
-				else
-					buf[0] = '\0';
-				task->sender = xstrdup(buf, "mta_task:sender");
-				stat_increment("mta.task", 1);
-			}
-
-			e = xcalloc(1, sizeof *e, "mta_envelope");
-			e->id = evp.id;
-			e->creation = evp.creation;
-			(void)snprintf(buf, sizeof buf, "%s@%s",
-			    evp.dest.user, evp.dest.domain);
-			e->dest = xstrdup(buf, "mta_envelope:dest");
-			(void)snprintf(buf, sizeof buf, "%s@%s",
-			    evp.rcpt.user, evp.rcpt.domain);
-			if (strcmp(buf, e->dest))
-				e->rcpt = xstrdup(buf, "mta_envelope:rcpt");
-			e->task = task;
-			if (evp.dsn_orcpt.user[0] && evp.dsn_orcpt.domain[0]) {
-				(void)snprintf(buf, sizeof buf, "%s@%s",
-			    	    evp.dsn_orcpt.user, evp.dsn_orcpt.domain);
-				e->dsn_orcpt = xstrdup(buf,
-				    "mta_envelope:dsn_orcpt");
-			}
-			(void)strlcpy(e->dsn_envid, evp.dsn_envid,
-			    sizeof e->dsn_envid);
-			e->dsn_notify = evp.dsn_notify;
-			e->dsn_ret = evp.dsn_ret;
-
-			TAILQ_INSERT_TAIL(&task->envelopes, e, entry);
-			log_debug("debug: mta: received evp:%016" PRIx64
-			    " for <%s>", e->id, e->dest);
-
-			stat_increment("mta.envelope", 1);
-
-			mta_drain(relay);
-			mta_relay_unref(relay); /* from here */
+			mta_handle_envelope(&evp);
 			return;
 
 		case IMSG_MTA_OPEN_MESSAGE:
@@ -692,6 +615,92 @@ mta_route_next_task(struct mta_relay *relay, struct mta_route *route)
 	}
 
 	return (task);
+}
+
+static void
+mta_handle_envelope(struct envelope *evp)
+{
+	struct mta_relay	*relay;
+	struct mta_task		*task;
+	struct mta_envelope	*e;
+	char			 buf[LINE_MAX];
+
+	relay = mta_relay(evp);
+	/* ignore if we don't know the limits yet */
+	if (relay->limits &&
+	    relay->ntask >= (size_t)relay->limits->task_hiwat) {
+		if (!(relay->state & RELAY_ONHOLD)) {
+			log_info("smtp-out: hiwat reached on %s: holding envelopes",
+			    mta_relay_to_text(relay));
+			relay->state |= RELAY_ONHOLD;
+		}
+	}
+
+	/*
+	 * If the relay has too many pending tasks, tell the
+	 * scheduler to hold it until further notice
+	 */
+	if (relay->state & RELAY_ONHOLD) {
+		relay->state |= RELAY_HOLDQ;
+		m_create(p_queue, IMSG_MTA_DELIVERY_HOLD, 0, 0, -1);
+		m_add_evpid(p_queue, evp->id);
+		m_add_id(p_queue, relay->id);
+		m_close(p_queue);
+		mta_relay_unref(relay); /* from here */
+		return;
+	}
+
+	task = NULL;
+	TAILQ_FOREACH(task, &relay->tasks, entry)
+		if (task->msgid == evpid_to_msgid(evp->id))
+			break;
+
+	if (task == NULL) {
+		task = xmalloc(sizeof *task, "mta_task");
+		TAILQ_INIT(&task->envelopes);
+		task->relay = relay;
+		relay->ntask += 1;
+		TAILQ_INSERT_TAIL(&relay->tasks, task, entry);
+		task->msgid = evpid_to_msgid(evp->id);
+		if (evp->sender.user[0] || evp->sender.domain[0])
+			(void)snprintf(buf, sizeof buf, "%s@%s",
+			    evp->sender.user, evp->sender.domain);
+		else
+			buf[0] = '\0';
+		task->sender = xstrdup(buf, "mta_task:sender");
+		stat_increment("mta.task", 1);
+	}
+
+	e = xcalloc(1, sizeof *e, "mta_envelope");
+	e->id = evp->id;
+	e->creation = evp->creation;
+	(void)snprintf(buf, sizeof buf, "%s@%s",
+	    evp->dest.user, evp->dest.domain);
+	e->dest = xstrdup(buf, "mta_envelope:dest");
+	(void)snprintf(buf, sizeof buf, "%s@%s",
+	    evp->rcpt.user, evp->rcpt.domain);
+	if (strcmp(buf, e->dest))
+		e->rcpt = xstrdup(buf, "mta_envelope:rcpt");
+	e->task = task;
+	if (evp->dsn_orcpt.user[0] && evp->dsn_orcpt.domain[0]) {
+		(void)snprintf(buf, sizeof buf, "%s@%s",
+	    	    evp->dsn_orcpt.user, evp->dsn_orcpt.domain);
+		e->dsn_orcpt = xstrdup(buf,
+		    "mta_envelope:dsn_orcpt");
+	}
+	(void)strlcpy(e->dsn_envid, evp->dsn_envid,
+	    sizeof e->dsn_envid);
+	e->dsn_notify = evp->dsn_notify;
+	e->dsn_ret = evp->dsn_ret;
+
+	TAILQ_INSERT_TAIL(&task->envelopes, e, entry);
+	log_debug("debug: mta: received evp:%016" PRIx64
+	    " for <%s>", e->id, e->dest);
+
+	stat_increment("mta.envelope", 1);
+
+	mta_drain(relay);
+	mta_relay_unref(relay); /* from here */
 }
 
 static void
