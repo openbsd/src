@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.248 2017/05/27 16:41:10 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.249 2017/09/15 18:13:05 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -804,12 +804,13 @@ m_adj(struct mbuf *mp, int req_len)
 	struct mbuf *m;
 	int count;
 
-	if ((m = mp) == NULL)
+	if (mp == NULL)
 		return;
 	if (len >= 0) {
 		/*
 		 * Trim from head.
 		 */
+		m = mp;
 		while (m != NULL && len > 0) {
 			if (m->m_len <= len) {
 				len -= m->m_len;
@@ -833,6 +834,7 @@ m_adj(struct mbuf *mp, int req_len)
 		 */
 		len = -len;
 		count = 0;
+		m = mp;
 		for (;;) {
 			count += m->m_len;
 			if (m->m_next == NULL)
@@ -853,15 +855,16 @@ m_adj(struct mbuf *mp, int req_len)
 		 * Find the mbuf with last data, adjust its length,
 		 * and toss data from remaining mbufs on chain.
 		 */
+		if (mp->m_flags & M_PKTHDR)
+			mp->m_pkthdr.len = count;
 		m = mp;
-		if (m->m_flags & M_PKTHDR)
-			m->m_pkthdr.len = count;
-		for (; m; m = m->m_next) {
+		for (;;) {
 			if (m->m_len >= count) {
 				m->m_len = count;
 				break;
 			}
 			count -= m->m_len;
+			m = m->m_next;
 		}
 		while ((m = m->m_next) != NULL)
 			m->m_len = 0;
