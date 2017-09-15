@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.147 2017/09/14 00:10:17 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.148 2017/09/15 15:22:14 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -35,6 +35,7 @@
 #include <ifaddrs.h>
 #include <imsg.h>
 #include <limits.h>
+#include <poll.h>
 #include <resolv.h>
 #include <signal.h>
 #include <stdio.h>
@@ -606,11 +607,14 @@ priv_write_resolv_conf(char *contents)
 
 /*
  * default_route_index returns the index of the interface which the
- * default route is on.
+ * default route (a.k.a. 0.0.0.0/0) is on.
  */
 int
 default_route_index(int rdomain, int routefd)
 {
+	struct pollfd		 fds[1];
+	time_t			 start_time, cur_time;
+	int			 nfds;
 	struct iovec		 iov[3];
 	struct sockaddr_in	 sin;
 	struct {
@@ -619,50 +623,65 @@ default_route_index(int rdomain, int routefd)
 	} m_rtmsg;
 	pid_t			 pid;
 	ssize_t			 len;
-	int			 seq, iovcnt = 0;
-
-	/* Build RTM header */
+	int			 seq;
 
 	memset(&m_rtmsg, 0, sizeof(m_rtmsg));
-
 	m_rtmsg.m_rtm.rtm_version = RTM_VERSION;
 	m_rtmsg.m_rtm.rtm_type = RTM_GET;
-	m_rtmsg.m_rtm.rtm_seq = seq = arc4random();
 	m_rtmsg.m_rtm.rtm_tableid = rdomain;
+	m_rtmsg.m_rtm.rtm_seq = seq = arc4random();
 	m_rtmsg.m_rtm.rtm_addrs = RTA_DST | RTA_NETMASK;
+	m_rtmsg.m_rtm.rtm_msglen = sizeof(struct rt_msghdr) +
+	    2 * sizeof(struct sockaddr_in);
 
-	iov[iovcnt].iov_base = &m_rtmsg.m_rtm;
-	iov[iovcnt++].iov_len = sizeof(m_rtmsg.m_rtm);
-
-	/* Ask for route to 0.0.0.0/0 (a.k.a. the default route). */
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 
-	iov[iovcnt].iov_base = &sin;
-	iov[iovcnt++].iov_len = sizeof(sin);
-	iov[iovcnt].iov_base = &sin;
-	iov[iovcnt++].iov_len = sizeof(sin);
-
-	m_rtmsg.m_rtm.rtm_msglen = sizeof(m_rtmsg.m_rtm) + 2 * sizeof(sin);
-
-	if (writev(routefd, iov, iovcnt) == -1) {
-		if (errno != ESRCH)
-			log_warn("RTM_GET of default route");
-		goto done;
-	}
+	iov[0].iov_base = &m_rtmsg.m_rtm;
+	iov[0].iov_len = sizeof(m_rtmsg.m_rtm);
+	iov[1].iov_base = &sin;
+	iov[1].iov_len = sizeof(sin);
+	iov[2].iov_base = &sin;
+	iov[2].iov_len = sizeof(sin);
 
 	pid = getpid();
+	if (time(&start_time) == -1)
+		fatal("start time");
+
+	if (writev(routefd, iov, 3) == -1) {
+		log_warn("RTM_GET of default route");
+		return 0;
+	}
 
 	do {
+		if (time(&cur_time) == -1)
+			fatal("current time");
+		fds[0].fd = routefd;
+		fds[0].events = POLLIN;
+		nfds = poll(fds, 1, 3);
+		if (nfds == -1) {
+			if (errno == EINTR)
+				continue;
+			log_warn("default route poll");
+			break;
+		}
+		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
+			log_warnx("default route revents");
+			break;
+		}
+		if (nfds == 0 || (fds[0].revents & POLLIN) == 0)
+			continue;
+
 		len = read(routefd, &m_rtmsg, sizeof(m_rtmsg));
 		if (len == -1) {
 			log_warn("get default route read");
-			goto done;
+			break;
 		} else if (len == 0) {
 			log_warnx("no data from default route read");
-			goto done;
+			break;
 		}
+
 		if (m_rtmsg.m_rtm.rtm_version == RTM_VERSION &&
 		    m_rtmsg.m_rtm.rtm_type == RTM_GET &&
 		    m_rtmsg.m_rtm.rtm_pid == pid &&
@@ -670,13 +689,12 @@ default_route_index(int rdomain, int routefd)
 			if (m_rtmsg.m_rtm.rtm_errno != 0) {
 				log_warnx("default route read rtm: %s",
 				    strerror(m_rtmsg.m_rtm.rtm_errno));
-				goto done;
+				break;
 			}
 			return m_rtmsg.m_rtm.rtm_index;
 		}
-	} while (1);
+	} while ((cur_time - start_time) <= 3);
 
-done:
 	return 0;
 }
 
