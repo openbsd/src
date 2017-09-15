@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.76 2017/09/14 10:07:17 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.77 2017/09/15 02:36:29 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -334,7 +334,7 @@ vmm_sighdlr(int sig, short event, void *arg)
 	struct vmd_vm *vm;
 	struct vm_terminate_params vtp;
 
-	log_debug("%s: handling signal", __func__);
+	log_debug("%s: handling signal %d", __func__, sig);
 	switch (sig) {
 	case SIGCHLD:
 		do {
