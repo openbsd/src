@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2017/09/07 19:04:23 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.22 2017/09/15 14:03:14 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -133,7 +133,13 @@ REGRESS_TARGETS +=	run-regress-${sp}-ping6 run-regress-${sp}-fragping6 \
 
 # After running the tests, turn on pf on remote machine.
 # This is the expected default configuration.
-REGRESS_TARGETS +=	stamp-pf
+
+cleanup-pf:
+	rm -f stamp-stack stamp-pf
+	ssh ${IPS_SSH} ${SUDO} pfctl -a regress -Fa
+	-ssh ${REMOTE_SSH} ${SUDO} pfctl -e || true
+
+REGRESS_TARGETS +=	cleanup-pf
 
 CLEANFILES +=		addr.py *.pyc *.log stamp-*
 

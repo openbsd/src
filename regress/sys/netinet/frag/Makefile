@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2017/09/07 15:09:00 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2017/09/15 14:03:14 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -98,14 +98,17 @@ REGRESS_TARGETS =
 FRAG_SCRIPTS !!=	cd ${.CURDIR} && ls -1 frag*.py
 
 run-regress-stack-frag_mf0long.py:
+	@echo '\n======== $@ ========'
 	# the stack allows fragments with data behind a fragment without MF
 	@echo DISABLED
 
 run-regress-stack-frag_mf0short.py:
+	@echo '\n======== $@ ========'
 	# the stack allows fragments without MF ending before other fragments
 	@echo DISABLED
 
 run-regress-stack-frag_mf1end.py:
+	@echo '\n======== $@ ========'
 	# the stack allows fragments with MF together with fragments without MF
 	@echo DISABLED
 
@@ -145,7 +148,13 @@ REGRESS_TARGETS +=	run-regress-${sp}-ping run-regress-${sp}-fragping \
 
 # After running the tests, turn on pf on remote machine.
 # This is the expected default configuration.
-REGRESS_TARGETS +=	stamp-pf
+
+cleanup-pf:
+	rm -f stamp-stack stamp-pf
+	ssh ${IPS_SSH} ${SUDO} pfctl -a regress -Fa
+	-ssh ${REMOTE_SSH} ${SUDO} pfctl -e || true
+
+REGRESS_TARGETS +=	cleanup-pf
 
 CLEANFILES +=		addr.py *.pyc *.log stamp-*
 
