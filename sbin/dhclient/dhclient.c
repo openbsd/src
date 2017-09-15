@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.500 2017/09/14 00:10:17 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.501 2017/09/15 11:40:05 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -171,7 +171,7 @@ void append_statement(char *, size_t, char *, char *);
 
 struct client_lease *packet_to_lease(struct interface_info *,
     struct option_data *);
-void go_daemon(void);
+void go_daemon(const char *);
 int rdaemon(int);
 void	take_charge(struct interface_info *, int);
 void	set_default_client_identifier(struct interface_info *);
@@ -299,7 +299,7 @@ get_hw_address(struct interface_info *ifi)
 	}
 
 	if (found == 0)
-		fatalx("%s: no such interface", ifi->name);
+		fatalx("no such interface");
 
 	freeifaddrs(ifap);
 }
@@ -312,9 +312,9 @@ routehandler(struct interface_info *ifi, int routefd)
 	struct if_msghdr		*ifm;
 	struct if_announcemsghdr	*ifan;
 	struct ifa_msghdr		*ifam;
-	char				*errmsg, *rtmmsg;
+	char				*rtmmsg;
 	ssize_t				 n;
-	int				 linkstat, rslt;
+	int				 linkstat;
 
 	rtmmsg = calloc(1, 2048);
 	if (rtmmsg == NULL)
@@ -339,13 +339,9 @@ routehandler(struct interface_info *ifi, int routefd)
 		if ((rtm->rtm_flags & RTF_PROTO3) != 0) {
 			if (rtm->rtm_seq == (int32_t)ifi->xid) {
 				ifi->flags |= IFI_IN_CHARGE;
-			} else if ((ifi->flags & IFI_IN_CHARGE) != 0) {
-				rslt = asprintf(&errmsg, "yielding "
-				    "responsibility for %s",
-				    ifi->name);
-				goto die;
-			}
-			goto done;
+				goto done;
+			} else if ((ifi->flags & IFI_IN_CHARGE) != 0)
+				fatal("yielding responsibility");
 		}
 		break;
 	case RTM_DESYNC:
@@ -355,10 +351,8 @@ routehandler(struct interface_info *ifi, int routefd)
 		ifm = (struct if_msghdr *)rtm;
 		if (ifm->ifm_index != ifi->index)
 			break;
-		if ((rtm->rtm_flags & RTF_UP) == 0) {
-			rslt = asprintf(&errmsg, "%s down", ifi->name);
-			goto die;
-		}
+		if ((rtm->rtm_flags & RTF_UP) == 0)
+			fatal("down");
 
 		if ((ifi->flags & IFI_VALID_LLADDR) != 0) {
 			memcpy(&hw, &ifi->hw_address, sizeof(hw));
@@ -395,10 +389,8 @@ routehandler(struct interface_info *ifi, int routefd)
 	case RTM_IFANNOUNCE:
 		ifan = (struct if_announcemsghdr *)rtm;
 		if (ifan->ifan_what == IFAN_DEPARTURE &&
-		    ifan->ifan_index == ifi->index) {
-			rslt = asprintf(&errmsg, "%s departured", ifi->name);
-			goto die;
-		}
+		    ifan->ifan_index == ifi->index)
+			fatal("departed");
 		break;
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
@@ -421,11 +413,6 @@ routehandler(struct interface_info *ifi, int routefd)
 done:
 	free(rtmmsg);
 	return;
-
-die:
-	if (rslt == -1)
-		fatal("errmsg");
-	fatalx("%s", errmsg);
 }
 
 char **saved_argv;
@@ -514,9 +501,11 @@ main(int argc, char *argv[])
 	if ((ioctlfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		fatal("socket(AF_INET, SOCK_DGRAM)");
 	get_ifname(ifi, ioctlfd, argv[0]);
+	setproctitle("%s", ifi->name);
+	log_procinit(ifi->name);
 	ifi->index = if_nametoindex(ifi->name);
 	if (ifi->index == 0)
-		fatalx("%s: no such interface", ifi->name);
+		fatalx("no such interface");
 	get_hw_address(ifi);
 
 	tzset();
@@ -678,7 +667,6 @@ main(int argc, char *argv[])
 			fatal("pledge");
 	}
 
-	setproctitle("%s", ifi->name);
 	time(&ifi->startup_time);
 
 	if (ifi->linkstat != 0) {
@@ -740,7 +728,7 @@ state_preboot(struct interface_info *ifi)
 		set_timeout(ifi, 1, state_reboot);
 	} else {
 		if (interval > config->link_timeout)
-			go_daemon();
+			go_daemon(ifi->name);
 		ifi->state = S_PREBOOT;
 		set_timeout(ifi, 1, state_preboot);
 	}
@@ -1033,7 +1021,7 @@ newlease:
 	log_info("bound to %s -- renewal in %lld seconds.",
 	    inet_ntoa(ifi->active->address),
 	    (long long)(ifi->active->renewal - time(NULL)));
-	go_daemon();
+	go_daemon(ifi->name);
 	rewrite_option_db(ifi->name, ifi->active, lease);
 	free_client_lease(lease);
 	free(active_proposal);
@@ -1365,7 +1353,7 @@ state_panic(struct interface_info *ifi)
 	log_info("No working leases in persistent database - sleeping.");
 	ifi->state = S_INIT;
 	set_timeout(ifi, config->retry_interval, state_init);
-	go_daemon();
+	go_daemon(ifi->name);
 }
 
 void
@@ -1970,7 +1958,7 @@ lease_as_string(char *ifname, char *type, struct client_lease *lease)
 }
 
 void
-go_daemon(void)
+go_daemon(const char *name)
 {
 	static int	 state = 0;
 
@@ -1979,18 +1967,20 @@ go_daemon(void)
 
 	state = 1;
 
+	if (rdaemon(nullfd) == -1)
+		fatal("daemonize");
+
 	/* Stop logging to stderr. */
 	log_perror = 0;
 	log_init(0, LOG_DAEMON);
+	log_procinit(name);
 #ifdef DEBUG
 	log_setverbose(1);
 #else
 	log_setverbose(0);
 #endif	/* DEBUG */
 
-	if (rdaemon(nullfd) == -1)
-		fatal("daemonize");
-
+	setproctitle("%s", name);
 	signal(SIGHUP, sighdlr);
 	signal(SIGPIPE, SIG_IGN);
 }
@@ -2092,8 +2082,9 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 {
 	struct pollfd	 pfd[1];
 	struct imsgbuf	*priv_ibuf;
+	char		*privname;
 	ssize_t		 n;
-	int		 ioctlfd, routefd, nfds;
+	int		 ioctlfd, routefd, nfds, rslt;
 
 	switch (fork()) {
 	case -1:
@@ -2108,9 +2099,13 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
 
-	setproctitle("%s [priv]", ifi->name);
+	go_daemon(ifi->name);
 
-	go_daemon();
+	rslt = asprintf(&privname, "%s [priv]", ifi->name);
+	if (rslt == -1)
+		fatal("priv process name");
+	setproctitle("%s", privname);
+	log_procinit(privname);
 
 	close(fd2);
 
@@ -2531,8 +2526,7 @@ take_charge(struct interface_info *ifi, int routefd)
 				if (time(&start_time) == -1)
 					fatal("time");
 			} else {
-				fatalx("failed to take charge of %s",
-				    ifi->name);
+				fatalx("failed to take charge");
 			}
 		}
 		fds[0].fd = routefd;
