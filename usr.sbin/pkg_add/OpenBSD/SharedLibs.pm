@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.58 2017/02/10 02:10:22 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.59 2017/09/16 12:04:13 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -131,7 +131,7 @@ sub report_problem
 	} elsif (!defined $approx) {
  		$r = "| not found anywhere\n";
 	} else {
-		for my $bad (@$approx) {
+		for my $bad (sort {$a->compare($b)} @$approx) {
 			my $ouch = $spec->no_match($bad, $base);
 			$ouch //= "not reachable";
 			$r .= "| ".$bad->to_string." (".$bad->origin."): ".

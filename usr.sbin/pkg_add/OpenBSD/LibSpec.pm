@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.17 2017/02/10 02:10:22 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.18 2017/09/16 12:04:13 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -19,7 +19,6 @@ use strict;
 use warnings;
 
 package OpenBSD::LibObject;
-
 
 sub key
 {
@@ -79,6 +78,18 @@ sub lookup
 		}
 	}
 	return $r;
+}
+
+sub compare
+{
+	my ($a, $b) = @_;
+	if ($a->key ne $b->key) {
+		return $a->key cmp $b->key;
+	}
+	if ($a->major != $b->major) {
+		return $a->major <=> $b->major;
+	}
+	return $a->minor <=> $b->minor;
 }
 
 package OpenBSD::BadLib;
@@ -303,19 +314,6 @@ sub match
 {
 	my ($spec, $library, $base) = @_;
 	return !$spec->no_match($library, $base);
-}
-
-sub compare
-{
-	my ($a, $b) = @_;
-
-	if ($a->key ne $b->key) {
-		return undef;
-	}
-	if ($a->major != $b->major) {
-		return $a->major <=> $b->major;
-	}
-	return $a->minor <=> $b->minor;
 }
 
 1;
