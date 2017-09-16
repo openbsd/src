@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.52 2017/09/12 17:11:11 otto Exp $	*/
+/*	$OpenBSD: tables.c,v 1.53 2017/09/16 07:42:34 otto Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -292,7 +292,7 @@ chk_lnk(ARCHD *arcn)
 			arcn->ln_nlen = strlcpy(arcn->ln_name, pt->name,
 				sizeof(arcn->ln_name));
 			/* XXX truncate? */
-			if (arcn->nlen >= sizeof(arcn->name))
+			if ((size_t)arcn->nlen >= sizeof(arcn->name))
 				arcn->nlen = sizeof(arcn->name) - 1;
 			if (arcn->type == PAX_REG)
 				arcn->type = PAX_HRG;

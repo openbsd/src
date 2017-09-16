@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.42 2017/09/10 18:16:03 guenther Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.43 2017/09/16 07:42:34 otto Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -797,7 +797,7 @@ tty_rename(ARCHD *arcn)
 	tty_prnt("Processing continues, name changed to: %s\n", tmpname);
 	res = add_name(arcn->name, arcn->nlen, tmpname);
 	arcn->nlen = strlcpy(arcn->name, tmpname, sizeof(arcn->name));
-	if (arcn->nlen >= sizeof(arcn->name))
+	if ((size_t)arcn->nlen >= sizeof(arcn->name))
 		arcn->nlen = sizeof(arcn->name) - 1; /* XXX truncate? */
 	if (res < 0)
 		return(-1);

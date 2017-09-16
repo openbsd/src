@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.40 2016/08/26 04:17:48 guenther Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.41 2017/09/16 07:42:34 otto Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -511,7 +511,7 @@ next_file(ARCHD *arcn)
 	 * copy file name, set file name length
 	 */
 	arcn->nlen = strlcpy(arcn->name, ftent->fts_path, sizeof(arcn->name));
-	if (arcn->nlen >= sizeof(arcn->name))
+	if ((size_t)arcn->nlen >= sizeof(arcn->name))
 		arcn->nlen = sizeof(arcn->name) - 1; /* XXX truncate? */
 	arcn->org_name = ftent->fts_path;
 	return(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.65 2017/09/12 17:11:11 otto Exp $	*/
+/*	$OpenBSD: tar.c,v 1.66 2017/09/16 07:42:34 otto Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -550,7 +550,7 @@ tar_wr(ARCHD *arcn)
 	case PAX_SLK:
 	case PAX_HLK:
 	case PAX_HRG:
-		if (arcn->ln_nlen > sizeof(hd->linkname)) {
+		if ((size_t)arcn->ln_nlen > sizeof(hd->linkname)) {
 			paxwarn(1, "Link name too long for tar %s",
 			    arcn->ln_name);
 			return(1);
@@ -568,7 +568,7 @@ tar_wr(ARCHD *arcn)
 	len = arcn->nlen;
 	if (arcn->type == PAX_DIR)
 		++len;
-	if (len > sizeof(hd->name)) {
+	if ((size_t)len > sizeof(hd->name)) {
 		paxwarn(1, "File name too long for tar %s", arcn->name);
 		return(1);
 	}
@@ -941,7 +941,8 @@ ustar_wr(ARCHD *arcn)
 	/*
 	 * check the length of the linkname
 	 */
-	if (PAX_IS_LINK(arcn->type) && (arcn->ln_nlen > sizeof(hd->linkname))) {
+	if (PAX_IS_LINK(arcn->type) &&
+	    ((size_t)arcn->ln_nlen > sizeof(hd->linkname))) {
 		paxwarn(1, "Link name too long for ustar %s", arcn->ln_name);
 		return(1);
 	}
