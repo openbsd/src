@@ -1,4 +1,4 @@
-/* $OpenBSD: yubikey.c,v 1.5 2014/10/08 04:47:20 deraadt Exp $ */
+/* $OpenBSD: yubikey.c,v 1.6 2017/09/16 08:07:15 anton Exp $ */
 
 /*
  * Written by Simon Josefsson <simon@josefsson.org>.
@@ -329,7 +329,8 @@ yubikey_parse(const uint8_t *password, const uint8_t key[YUBIKEY_KEY_SIZE],
 {
 	wchar_t *wpassword, *pp;
 	char token[YUBIKEY_TOKEN_SIZE + 1], *lc_ctype;
-	int len;
+	size_t len;
+	int rc = 0;
 
 	if (index < 0 || index >= YUBIKEY_KEYMAP_COUNT)
 		return -1;
@@ -338,26 +339,34 @@ yubikey_parse(const uint8_t *password, const uint8_t key[YUBIKEY_KEY_SIZE],
 	pp = wpassword = reallocarray(NULL, len + 1, sizeof(wchar_t));
 	if (pp == NULL)
 		return ENOMEM;
-	
+
 	memset(out, 0, sizeof(*out));
 	memset(token, 0, YUBIKEY_TOKEN_SIZE + 1);
 
 	lc_ctype = getenv("LC_CTYPE");
 	setlocale(LC_CTYPE, lc_ctype ? lc_ctype : "C.UTF-8");
 	len = mbstowcs(wpassword, password, len);
-	if (len < 0) {
-		return errno;
+	if (len == (size_t)-1) {
+		rc = errno;
+		goto ret;
 	}
 	setlocale(LC_CTYPE, "C");
 
 	if (len > YUBIKEY_TOKEN_SIZE)
 		pp = pp + len - YUBIKEY_TOKEN_SIZE;
-	if (len < YUBIKEY_TOKEN_SIZE)
-		return EMSGSIZE;
-	
-	if (yubikey_keymap_decode(pp, token, index))
-		return EINVAL;
+	if (len < YUBIKEY_TOKEN_SIZE) {
+		rc = EMSGSIZE;
+		goto ret;
+	}
+
+	if (yubikey_keymap_decode(pp, token, index)) {
+		rc = EINVAL;
+		goto ret;
+	}
 	yubikey_modhex_decode((void *)out, token, sizeof(*out));
 	yubikey_aes_decrypt((void *)out, key);
-	return 0;
+
+ret:
+	freezero(wpassword, (len + 1) * sizeof(wchar_t));
+	return rc;
 }
