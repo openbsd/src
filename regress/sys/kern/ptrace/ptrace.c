@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.c,v 1.4 2017/09/06 04:20:12 guenther Exp $	*/
+/*	$OpenBSD: ptrace.c,v 1.5 2017/09/16 02:03:40 guenther Exp $	*/
 /*
  * Copyright (c) 2005 Artur Grabowski <art@openbsd.org>
  *
@@ -132,7 +132,7 @@ main(int argc, char **argv)
 
 			if (ptrace(PT_IO, pid, (caddr_t)&piod, 0) == -1) {
 				warn("ptrace(PT_IO)");
-				if (errno == EACCES)
+				if (errno == EFAULT)
 					ret = 1;
 				else
 					ret = -1;

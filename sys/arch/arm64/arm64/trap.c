@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.10 2017/08/14 21:53:34 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.11 2017/09/16 02:03:40 guenther Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -210,7 +210,6 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 		} else {
 			if (curcpu()->ci_idepth == 0 &&
 			    pcb->pcb_onfault != 0) {
-				frame->tf_x[0] = error;
 				frame->tf_elr = (register_t)pcb->pcb_onfault;
 				return;
 			}

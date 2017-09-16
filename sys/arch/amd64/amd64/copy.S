@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.S,v 1.10 2017/08/25 19:28:48 guenther Exp $	*/
+/*	$OpenBSD: copy.S,v 1.11 2017/09/16 02:03:40 guenther Exp $	*/
 /*	$NetBSD: copy.S,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*
@@ -107,10 +107,10 @@ ENTRY(copyout)
 	
 	movq	%rdi,%rdx
 	addq	%rax,%rdx
-	jc	_C_LABEL(copy_efault)
+	jc	_C_LABEL(copy_fault)
 	movq	$VM_MAXUSER_ADDRESS,%r8
 	cmpq	%r8,%rdx
-	ja	_C_LABEL(copy_efault)
+	ja	_C_LABEL(copy_fault)
 
 	movq	CPUVAR(CURPCB),%rdx
 	leaq	_C_LABEL(copy_fault)(%rip),%r11
@@ -145,10 +145,10 @@ ENTRY(copyin)
 
 	movq	%rsi,%rdx
 	addq	%rax,%rdx
-	jc	_C_LABEL(copy_efault)
+	jc	_C_LABEL(copy_fault)
 	movq	$VM_MAXUSER_ADDRESS,%r8
 	cmpq	%r8,%rdx
-	ja	_C_LABEL(copy_efault)
+	ja	_C_LABEL(copy_fault)
 
 3:	/* bcopy(%rsi, %rdi, %rax); */
 	movq	%rax,%rcx
@@ -171,13 +171,11 @@ ENTRY(copyin)
 	xorl	%eax,%eax
 	ret
 
-NENTRY(copy_efault)
-	movq	$EFAULT,%rax
-
 NENTRY(copy_fault)
 	SMAP_CLAC
 	movq	CPUVAR(CURPCB),%rdx
 	popq	PCB_ONFAULT(%rdx)
+	movl	$EFAULT,%eax
 	ret
 
 ENTRY(copyoutstr)
@@ -194,7 +192,7 @@ ENTRY(copyoutstr)
 	 */
 	movq	$VM_MAXUSER_ADDRESS,%rax
 	subq	%rdi,%rax
-	jbe	_C_LABEL(copystr_efault)	/* die if CF == 1 || ZF == 1 */
+	jbe	_C_LABEL(copystr_fault)		/* die if CF == 1 || ZF == 1 */
 	cmpq	%rdx,%rax
 	jae	1f
 	movq	%rax,%rdx
@@ -217,8 +215,8 @@ ENTRY(copyoutstr)
 2:	/* rdx is zero -- return EFAULT or ENAMETOOLONG. */
 	movq	$VM_MAXUSER_ADDRESS,%r11
 	cmpq	%r11,%rdi
-	jae	_C_LABEL(copystr_efault)
-	movq	$ENAMETOOLONG,%rax
+	jae	_C_LABEL(copystr_fault)
+	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 
 ENTRY(copyinstr)
@@ -236,7 +234,7 @@ ENTRY(copyinstr)
 	 */
 	movq	$VM_MAXUSER_ADDRESS,%rax
 	subq	%rsi,%rax
-	jbe	_C_LABEL(copystr_efault)	/* die if CF == 1 || ZF == 1 */
+	jbe	_C_LABEL(copystr_fault)		/* die if CF == 1 || ZF == 1 */
 	cmpq	%rdx,%rax
 	jae	1f
 	movq	%rax,%rdx
@@ -259,14 +257,12 @@ ENTRY(copyinstr)
 2:	/* edx is zero -- return EFAULT or ENAMETOOLONG. */
 	movq	$VM_MAXUSER_ADDRESS,%r11
 	cmpq	%r11,%rsi
-	jae	_C_LABEL(copystr_efault)
-	movq	$ENAMETOOLONG,%rax
+	jae	_C_LABEL(copystr_fault)
+	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 
-ENTRY(copystr_efault)
-	movl	$EFAULT,%eax
-
 ENTRY(copystr_fault)
+	movl	$EFAULT,%eax
 copystr_return:
 	SMAP_CLAC
 	/* Set *lencopied and return %eax. */

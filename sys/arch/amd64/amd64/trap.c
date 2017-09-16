@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.57 2017/08/25 19:28:48 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.58 2017/09/16 02:03:40 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -211,10 +211,8 @@ trap(struct trapframe *frame)
 			goto we_re_toast;
 		/* Check for copyin/copyout fault. */
 		if (pcb->pcb_onfault != 0) {
-			error = EFAULT;
 copyfault:
 			frame->tf_rip = (u_int64_t)pcb->pcb_onfault;
-			frame->tf_rax = error;
 			return;
 		}
 
