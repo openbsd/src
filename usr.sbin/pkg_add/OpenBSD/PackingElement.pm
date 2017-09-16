@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.246 2017/05/15 15:14:11 schwarze Exp $
+# $OpenBSD: PackingElement.pm,v 1.247 2017/09/16 11:36:25 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1020,6 +1020,13 @@ sub category() { "url" }
 sub write_no_sig()
 {
 }
+
+package OpenBSD::PackingElement::Version;
+our @ISA=qw(OpenBSD::PackingElement::Unique);
+
+sub keyword() { "version" }
+__PACKAGE__->register_with_factory;
+sub category() { "version" }
 
 package OpenBSD::PackingElement::Conflict;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
