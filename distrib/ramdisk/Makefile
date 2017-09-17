@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.50 2017/08/12 19:41:16 jasper Exp $
+#	$OpenBSD: Makefile,v 1.51 2017/09/17 16:34:03 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -25,8 +25,6 @@ RDSETROOT_EXT_SRC=${.CURDIR}/../common/elf32.c ${.CURDIR}/../common/elf64.c
 CRUNCHGENOPTS?=-E
 KERNEL?=	RAMDISK
 UTILS?=		${.CURDIR}/../miniroot
-STRIP?=		strip
-STRIPOPTS?=	-R .SUNW_ctf
 
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list.local
 MTREE=		${UTILS}/mtree.conf
@@ -81,7 +79,7 @@ bsd:
 bsd.rd:	bsd ${IMAGE} rdsetroot
 	cp bsd bsd.rd
 	${.OBJDIR}/rdsetroot bsd.rd ${IMAGE}
-	${STRIP} ${STRIPOPTS} bsd.rd
+	strip -R .SUNW_ctf bsd.rd
 
 bsd.gz:	bsd.rd
 	${GZIPCMD} ${GZIPFLAGS} < bsd.rd > bsd.gz
