@@ -28,11 +28,11 @@ our %args = (
 	loggrep => {
 	    # If not in startup, each failed PRIV_OPEN_LOG is logged
 	    # to tty, so PRIV_OPEN_TTY fails again.
-	    qr/syslogd: receive_fd: recvmsg: Message too long/ => '>='.(4+2*3),
+	    qr/syslogd: receive_fd: recvmsg: Message too long/ => '>='.(4+2*4),
 	    # During first initialization the lockpipe is open.  When
 	    # SIGHUP happens it is closed and one more file can be opened.
-	    qr/X FILE:/ => 1+15+1+16,
-	    qr/X UNUSED:/ => 5+4,
+	    qr/X FILE:/ => 1+14+1+15,
+	    qr/X UNUSED:/ => 6+5,
 	},
     },
     server => {
@@ -50,8 +50,8 @@ our %args = (
 	},
     },
     multifile => [
-	(map { { loggrep => get_testgrep() } } 0..15),
-	(map { { loggrep => { qr/./s => 0 } } } 16..19),
+	(map { { loggrep => get_testgrep() } } 0..14),
+	(map { { loggrep => { qr/./s => 0 } } } 15..19),
     ],
     user => {
 	loggrep => {

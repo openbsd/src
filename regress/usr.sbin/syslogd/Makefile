@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2017/09/13 00:35:53 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.21 2017/09/17 23:56:03 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -27,6 +27,7 @@ regress:
 
 # Automatically generate regress targets from test cases in directory.
 
+PROGS =			ttylog
 PERLS =			Client.pm Proc.pm RSyslogd.pm Server.pm \
 			Syslogc.pm   Syslogd.pm funcs.pl syslogd.pl
 ARGS !=			cd ${.CURDIR} && ls args-*.pl

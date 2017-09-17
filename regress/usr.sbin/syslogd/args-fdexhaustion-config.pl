@@ -6,6 +6,7 @@
 # The server receives the message on its UDP socket.
 # Find the message in client, file, pipe, syslogd, server log.
 # Check the error messages and multiple log file content.
+# Check that the error messages appear on the console.
 
 use strict;
 use warnings;
@@ -17,16 +18,22 @@ our %args = (
 	    RLIMIT_NOFILE => 30,
 	},
 	loggrep => {
-	    qr/syslogd: receive_fd: recvmsg: Message too long/ => 5*2,
+	    qr/syslogd: receive_fd: recvmsg: Message too long/ => 6,
 	    # One file is opened by test default config, 20 by multifile.
-	    qr/X FILE:/ => 1+15,
-	    qr/X UNUSED:/ => 5,
+	    qr/X FILE:/ => 1+14,
+	    qr/X UNUSED:/ => 6,
 	},
     },
     multifile => [
-	(map { { loggrep => get_testgrep() } } 0..14),
-	(map { { loggrep => { qr/./s => 0 } } } 15..19),
+	(map { { loggrep => get_testgrep() } } 0..13),
+	(map { { loggrep => { qr/./s => 0 } } } 14..19),
     ],
+    console => {
+	loggrep => {
+	    get_testgrep() => 1,
+	    qr/priv_open_log .*: Message too long/ => 6,
+	}
+    }
 );
 
 1;
