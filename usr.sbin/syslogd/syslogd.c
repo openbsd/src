@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.246 2017/09/12 15:17:20 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.247 2017/09/17 22:25:21 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -2045,7 +2045,6 @@ fprintlog(struct filed *f, int flags, char *msg)
 				break;
 			}
 
-			(void)close(f->f_file);
 			/*
 			 * Check for errors on TTY's or program pipes.
 			 * Errors happen due to loss of tty or died programs.
@@ -2056,7 +2055,10 @@ fprintlog(struct filed *f, int flags, char *msg)
 				 * This can happen when logging to a locked tty.
 				 */
 				break;
-			} else if ((e == EIO || e == EBADF) &&
+			}
+
+			(void)close(f->f_file);
+			if ((e == EIO || e == EBADF) &&
 			    f->f_type != F_FILE && f->f_type != F_PIPE &&
 			    !retryonce) {
 				f->f_file = priv_open_tty(f->f_un.f_fname);
