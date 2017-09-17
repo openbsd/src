@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2017/08/17 05:24:09 jasper Exp $
+#	$OpenBSD: Makefile,v 1.28 2017/09/17 16:33:07 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -6,7 +6,7 @@ TOP=		${.CURDIR}/..
 IMAGE=		ramdisk${REV}.fs
 
 STRIP?=		strip
-STRIPOPTS?=	-R .SUNW_ctf
+STRIPOPTS?=	-R .SUNW_ctf -R .shstrtab
 GZIPCMD?=	gzip
 GZIPFLAGS?=	-9fn
 
@@ -29,7 +29,7 @@ bsd.rd:	bsd.rd_unz
 bsd.rd_unz: bsd ${IMAGE} rdsetroot
 	cp bsd bsd.rd_unz
 	${.OBJDIR}/rdsetroot bsd.rd_unz ${IMAGE}
-	strip -R .SUNW_ctf bsd.rd_unz
+	strip -R .SUNW_ctf -R .shstrtab bsd.rd_unz
 
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/alpha/compile/${RAMDISK} && \

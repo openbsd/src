@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.14 2017/08/12 19:41:16 jasper Exp $
+#	$OpenBSD: Makefile.inc,v 1.15 2017/09/17 16:33:08 deraadt Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -11,7 +11,7 @@ LISTS?=		${.CURDIR}/../common/list
 CRUNCHCONF?=	${CBIN}.conf
 MTREE=		${UTILS}/mtree.conf
 STRIP=		strip
-STRIPOPTS?=	-R .eh_frame -R .SUNW_ctf
+STRIPOPTS?=	-R .eh_frame -R .SUNW_ctf -R .shstrtab
 
 ${CRUNCHCONF}: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
