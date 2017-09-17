@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.141 2017/09/14 00:10:17 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.142 2017/09/17 21:20:23 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -130,23 +130,23 @@ dispatch(struct interface_info *ifi, int routefd)
 		if (nfds == -1) {
 			if (errno == EINTR)
 				continue;
-			log_warn("dispatch poll");
+			log_warn("%s: dispatch poll", log_procname);
 			quit = INTERNALSIG;
 			continue;
 		}
 
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			log_warnx("bfdesc poll error");
+			log_warnx("%s: bfdesc poll error", log_procname);
 			quit = INTERNALSIG;
 			continue;
 		}
 		if ((fds[1].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			log_warnx("routefd poll error");
+			log_warnx("%s: routefd poll error", log_procname);
 			quit = INTERNALSIG;
 			continue;
 		}
 		if ((fds[2].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			log_warnx("unpriv_ibuf poll error");
+			log_warnx("%s: unpriv_ibuf poll error", log_procname);
 			quit = INTERNALSIG;
 			continue;
 		}
@@ -192,7 +192,7 @@ packethandler(struct interface_info *ifi)
 			fatalx("%s too many receive_packet failures",
 			    ifi->name);
 		else
-			log_warn("%s receive_packet failed", ifi->name);
+			log_warn("%s receive_packet failed", log_procname);
 		return;
 	}
 	ifi->errors = 0;
@@ -204,15 +204,15 @@ packethandler(struct interface_info *ifi)
 
 	if (packet->hlen != ETHER_ADDR_LEN) {
 #ifdef DEBUG
-		log_debug("Discarding packet with hlen != %s (%u)",
-		    ifi->name, packet->hlen);
+		log_debug("%s: discarding packet with hlen == %u", log_procname,
+		    packet->hlen);
 #endif	/* DEBUG */
 		return;
 	} else if (memcmp(&ifi->hw_address, packet->chaddr,
 	    sizeof(ifi->hw_address))) {
 #ifdef DEBUG
-		log_debug("Discarding packet with chaddr != %s (%s)",
-		    ifi->name,
+		log_debug("%s: discarding packet with chaddr == %s",
+		    log_procname,
 		    ether_ntoa((struct ether_addr *)packet->chaddr));
 #endif	/* DEBUG */
 		return;
@@ -220,8 +220,8 @@ packethandler(struct interface_info *ifi)
 
 	if (ifi->xid != packet->xid) {
 #ifdef DEBUG
-		log_debug("Discarding packet with XID != %u (%u)", ifi->xid,
-		    packet->xid);
+		log_debug("%s: discarding packet with XID != %u (%u)",
+		    log_procname, ifi->xid, packet->xid);
 #endif	/* DEBUG */
 		return;
 	}
@@ -229,8 +229,8 @@ packethandler(struct interface_info *ifi)
 	TAILQ_FOREACH(ap, &config->reject_list, next)
 	    if (ifrom.s_addr == ap->addr.s_addr) {
 #ifdef DEBUG
-		    log_debug("Discarding packet from address on reject "
-			"list (%s)", inet_ntoa(ifrom));
+		    log_debug("%s: discarding packet from address on reject "
+			"list (%s)", log_procname, inet_ntoa(ifrom));
 #endif	/* DEBUG */
 		    return;
 	    }
@@ -247,8 +247,8 @@ packethandler(struct interface_info *ifi)
 	    memcmp(options[i].data, config->send_options[i].data,
 	    options[i].len) != 0)) {
 #ifdef DEBUG
-		log_debug("Discarding packet with client-identifier "
-		    "'%s'", pretty_print_option(i, &options[i], 0));
+		log_debug("%s: discarding packet with client-identifier %s'",
+		    log_procname, pretty_print_option(i, &options[i], 0));
 #endif	/* DEBUG */
 		return;
 	}
@@ -274,8 +274,8 @@ packethandler(struct interface_info *ifi)
 			break;
 		default:
 #ifdef DEBUG
-			log_debug("Discarding DHCP packet of unknown type "
-			    "(%d)", options[i].data[0]);
+			log_debug("%s: discarding DHCP packet of unknown type "
+			    "(%d)", log_procname, options[i].data[0]);
 #endif	/* DEBUG */
 			return;
 		}
@@ -284,7 +284,8 @@ packethandler(struct interface_info *ifi)
 		type = "BOOTREPLY";
 	} else {
 #ifdef DEBUG
-		log_debug("Discarding packet which is neither DHCP nor BOOTP");
+		log_debug("%s: discarding packet which is neither DHCP nor "
+		    "BOOTP", log_procname);
 #endif	/* DEBUG */
 		return;
 	}
@@ -313,7 +314,8 @@ flush_unpriv_ibuf(const char *who)
 			if (quit == 0)
 				quit = INTERNALSIG;
 			if (errno != EPIPE && errno != 0)
-				log_warn("%s: msgbuf_write", who);
+				log_warn("%s: %s: msgbuf_write", log_procname,
+				    who);
 			break;
 		}
 	}
@@ -345,5 +347,5 @@ sendhup(void)
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_HUP, 0, 0, -1, NULL, 0);
 	if (rslt == -1)
-		log_warn("sendhup: imsg_compose");
+		log_warn("%s: sendhup: imsg_compose", log_procname);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.64 2017/09/14 00:10:17 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.65 2017/09/17 21:20:23 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -308,8 +308,8 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to)
 	}
 
 	if (result == -1)
-		log_warn("send_packet");
-	return result ;
+		log_warn("%s: send_packet", log_procname);
+	return result;
 }
 
 ssize_t

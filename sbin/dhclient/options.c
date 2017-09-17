@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.106 2017/09/14 00:10:17 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.107 2017/09/17 21:20:23 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -430,12 +430,13 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 			if (s + 1 + len < end) {
 				; /* option data is all there. */
 			} else {
-				log_warnx("option %s (%d) larger than buffer.",
-				    name, len);
+				log_warnx("%s: option %s (%d) larger than "
+				    "buffer", log_procname, name, len);
 				return 0;
 			}
 		} else {
-			log_warnx("option %s has no length field.", name);
+			log_warnx("%s: option %s has no length field",
+			    log_procname, name);
 			return 0;
 		}
 
@@ -642,8 +643,8 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 			/* This is a pointer to another list of labels. */
 			if (i + 1 >= srclen) {
 				/* The pointer is truncated. */
-				log_warnx("Truncated pointer in DHCP Domain "
-				    "Search option.");
+				log_warnx("%s: truncated pointer in DHCP "
+				    "Domain Search option", log_procname);
 				return -1;
 			}
 
@@ -653,8 +654,9 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 				 * The pointer must indicates a prior
 				 * occurance.
 				 */
-				log_warnx("Invalid forward pointer in DHCP "
-				    "Domain Search option compression.");
+				log_warnx("%s: invalid forward pointer in DHCP "
+				    "Domain Search option compression",
+				    log_procname);
 				return -1;
 			}
 
@@ -666,8 +668,8 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 			return domain_name_len;
 		}
 		if (i + label_len + 1 > srclen) {
-			log_warnx("Truncated label in DHCP Domain Search "
-			    "option.");
+			log_warnx("%s: truncated label in DHCP Domain Search "
+			    "option", log_procname);
 			return -1;
 		}
 		/*
@@ -678,7 +680,8 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 
 		if (strlen(domain_search) + domain_name_len >=
 		    DHCP_DOMAIN_SEARCH_LEN) {
-			log_warnx("Domain search list too long.");
+			log_warnx("%s: domain search list too long",
+			    log_procname);
 			return -1;
 		}
 
@@ -691,7 +694,7 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 		cursor += label_len + 1;
 	}
 
-	log_warnx("Truncated DHCP Domain Search option.");
+	log_warnx("%s: truncated DHCP Domain Search option", log_procname);
 
 	return -1;
 }
@@ -759,7 +762,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 
 	/* Code should be between 0 and 255. */
 	if (code > 255) {
-		log_warnx("pretty_print_option: bad code %d", code);
+		log_warnx("%s: pretty_print_option: bad code %d", log_procname, code);
 		goto done;
 	}
 
@@ -785,8 +788,8 @@ pretty_print_option(unsigned int code, struct option_data *option,
 	/* Figure out the size of the data. */
 	for (i = 0; fmt[i]; i++) {
 		if (numhunk == 0) {
-			log_warnx("%s: Excess information in format string: "
-			    "%s", name, &fmt[i]);
+			log_warnx("%s: %s: Excess information in format "
+			    "string: %s", log_procname, name, &fmt[i]);
 			goto done;
 		}
 		numelem++;
@@ -797,8 +800,9 @@ pretty_print_option(unsigned int code, struct option_data *option,
 			fmtbuf[i] = 0;
 			numhunk = 0;
 			if (hunksize == 0) {
-				log_warnx("%s: no size indicator before A"
-				    " in format string: %s", name, fmt);
+				log_warnx("%s: %s: no size indicator before A"
+				    " in format string: %s", log_procname,
+				    name, fmt);
 				goto done;
 			}
 			break;
@@ -836,22 +840,22 @@ pretty_print_option(unsigned int code, struct option_data *option,
 		case 'e':
 			break;
 		default:
-			log_warnx("%s: garbage in format string: %s", name,
-			    &fmt[i]);
+			log_warnx("%s: %s: garbage in format string: %s",
+			    log_procname, name, &fmt[i]);
 			goto done;
 		}
 	}
 
 	/* Check for too few bytes. */
 	if (hunksize > len) {
-		log_warnx("%s: expecting at least %d bytes; got %d", name,
-		    hunksize, len);
+		log_warnx("%s: %s: expecting at least %d bytes; got %d",
+		    log_procname, name, hunksize, len);
 		goto done;
 	}
 	/* Check for too many bytes. */
 	if (numhunk == -1 && hunksize < len) {
-		log_warnx("%s: expecting only %d bytes: got %d", name,
-		    hunksize, len);
+		log_warnx("%s: %s: expecting only %d bytes: got %d",
+		    log_procname, name, hunksize, len);
 		goto done;
 	}
 
@@ -860,8 +864,8 @@ pretty_print_option(unsigned int code, struct option_data *option,
 		numhunk = len / hunksize;
 	/* See if we got an exact number of hunks. */
 	if (numhunk > 0 && numhunk * hunksize != len) {
-		log_warnx("%s: expecting %d bytes: got %d", name,
-		    numhunk * hunksize, len);
+		log_warnx("%s: %s: expecting %d bytes: got %d", log_procname,
+		    name, numhunk * hunksize, len);
 		goto done;
 	}
 
@@ -918,8 +922,8 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				dp++;
 				break;
 			default:
-				log_warnx("Unexpected format code %c",
-				    fmtbuf[j]);
+				log_warnx("%s: unexpected format code %c",
+				    log_procname, fmtbuf[j]);
 				goto toobig;
 			}
 			if (opcount >= opleft || opcount == -1)
