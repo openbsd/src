@@ -1,4 +1,4 @@
-/* $OpenBSD: setprogname.c,v 1.5 2016/03/13 18:34:20 guenther Exp $ */
+/* $OpenBSD: setprogname.c,v 1.6 2017/09/17 06:38:03 otto Exp $ */
 /*
  * Copyright (c) 2013 Antoine Jacoutot <ajacoutot@openbsd.org>
  *
@@ -21,11 +21,11 @@
 void
 setprogname(const char *progname)
 {
-	const char *tmpn;
+	char *tmpn;
 
 	tmpn = strrchr(progname, '/');
 	if (tmpn == NULL)
-		__progname = progname;
+		__progname = (char *)progname;
 	else
 		__progname = tmpn + 1;
 }
