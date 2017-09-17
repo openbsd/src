@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.99 2017/09/02 15:56:29 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.100 2017/09/17 06:10:53 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -906,8 +906,6 @@ hw_cpu_hatch(struct cpu_info *ci)
 	 */
 	Octeon_ConfigCache(ci);
 	Mips_SyncCache(ci);
-
-	printf("cpu%lu launched\n", cpu_number());
 
 	(*md_startclock)(ci);
 	ncpus++;
