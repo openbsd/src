@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.53 2017/09/08 04:48:55 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.54 2017/09/17 23:07:56 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1699,6 +1699,7 @@ virtio_init(struct vmd_vm *vm, int *child_disks, int *child_taps)
 	viornd.vq[0].vq_usedoffset = VIRTQUEUE_ALIGN(
 	    sizeof(struct vring_desc) * VIORND_QUEUE_SIZE
 	    + sizeof(uint16_t) * (2 + VIORND_QUEUE_SIZE));
+	viornd.pci_id = id;
 
 	if (vcp->vcp_ndisks > 0) {
 		nr_vioblk = vcp->vcp_ndisks;
@@ -1741,6 +1742,7 @@ virtio_init(struct vmd_vm *vm, int *child_disks, int *child_taps)
 			vioblk[i].sz = sz / 512;
 			vioblk[i].cfg.device_feature = VIRTIO_BLK_F_SIZE_MAX;
 			vioblk[i].max_xfer = 1048576;
+			vioblk[i].pci_id = id;
 		}
 	}
 
@@ -1818,6 +1820,7 @@ virtio_init(struct vmd_vm *vm, int *child_disks, int *child_taps)
 			vionet[i].local =
 			    vmc->vmc_ifflags[i] & VMIFF_LOCAL ? 1 : 0;
 			vionet[i].idx = i;
+			vionet[i].pci_id = id;
 
 			log_debug("%s: vm \"%s\" vio%u lladdr %s%s%s",
 			    __func__, vcp->vcp_name, i,
@@ -1850,6 +1853,7 @@ virtio_init(struct vmd_vm *vm, int *child_disks, int *child_taps)
 	    VMMCI_F_SYNCRTC;
 	vmmci.vm_id = vcp->vcp_id;
 	vmmci.irq = pci_get_dev_irq(id);
+	vmmci.pci_id = id;
 
 	evtimer_set(&vmmci.timeout, vmmci_timeout, NULL);
 }
@@ -1857,27 +1861,14 @@ virtio_init(struct vmd_vm *vm, int *child_disks, int *child_taps)
 int
 vmmci_restore(int fd, uint32_t vm_id)
 {
-	uint8_t id;
-
 	log_debug("%s: receiving vmmci", __func__);
 	if (atomicio(read, fd, &vmmci, sizeof(vmmci)) != sizeof(vmmci)) {
 		log_warnx("%s: error reading vmmci from fd", __func__);
 		return (-1);
 	}
 
-	if (pci_add_device(&id, PCI_VENDOR_OPENBSD,
-	    PCI_PRODUCT_OPENBSD_CONTROL,
-	    PCI_CLASS_COMMUNICATIONS,
-	    PCI_SUBCLASS_COMMUNICATIONS_MISC,
-	    PCI_VENDOR_OPENBSD,
-	    PCI_PRODUCT_VIRTIO_VMMCI, 1, NULL)) {
-		log_warnx("%s: can't add PCI vmm control device",
-		    __progname);
-		return (-1);
-	}
-
-	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, vmmci_io, NULL)) {
-		log_warnx("%s: can't add bar for vmm control device",
+	if (pci_set_bar_fn(vmmci.pci_id, 0, vmmci_io, NULL)) {
+		log_warnx("%s: can't set bar fn for vmm control device",
 		    __progname);
 		return (-1);
 	}
@@ -1890,25 +1881,13 @@ vmmci_restore(int fd, uint32_t vm_id)
 int
 viornd_restore(int fd)
 {
-	uint8_t id;
-
 	log_debug("%s: receiving viornd", __func__);
 	if (atomicio(read, fd, &viornd, sizeof(viornd)) != sizeof(viornd)) {
 		log_warnx("%s: error reading viornd from fd", __func__);
 		return (-1);
 	}
-	if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
-	    PCI_PRODUCT_QUMRANET_VIO_RNG, PCI_CLASS_SYSTEM,
-	    PCI_SUBCLASS_SYSTEM_MISC,
-	    PCI_VENDOR_OPENBSD,
-	    PCI_PRODUCT_VIRTIO_ENTROPY, 1, NULL)) {
-		log_warnx("%s: can't add PCI virtio rng device",
-		    __progname);
-		return (-1);
-	}
-
-	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_rnd_io, NULL)) {
-		log_warnx("%s: can't add bar for virtio rng device",
+	if (pci_set_bar_fn(viornd.pci_id, 0, virtio_rnd_io, NULL)) {
+		log_warnx("%s: can't set bar fn for virtio rng device",
 		    __progname);
 		return (-1);
 	}
@@ -1920,7 +1899,7 @@ vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params *vcp = &vmc->vmc_params;
-	uint8_t i, id;
+	uint8_t i;
 	int ret;
 
 	nr_vionet = vcp->vcp_nnics;
@@ -1942,19 +1921,9 @@ vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
 
 		/* Virtio network */
 		for (i = 0; i < vcp->vcp_nnics; i++) {
-			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
-			    PCI_PRODUCT_QUMRANET_VIO_NET, PCI_CLASS_SYSTEM,
-			    PCI_SUBCLASS_SYSTEM_MISC,
-			    PCI_VENDOR_OPENBSD,
-			    PCI_PRODUCT_VIRTIO_NETWORK, 1, NULL)) {
-				log_warnx("%s: can't add PCI virtio net device",
-				    __progname);
-				return (-1);
-			}
-
-			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_net_io,
+			if (pci_set_bar_fn(vionet[i].pci_id, 0, virtio_net_io,
 			    &vionet[i])) {
-				log_warnx("%s: can't add bar for virtio net "
+				log_warnx("%s: can't set bar fn for virtio net "
 				    "device", __progname);
 				return (-1);
 			}
@@ -1989,7 +1958,7 @@ vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
 int
 vioblk_restore(int fd, struct vm_create_params *vcp, int *child_disks)
 {
-	uint8_t i, id;
+	uint8_t i;
 	off_t sz;
 
 	nr_vioblk = vcp->vcp_ndisks;
@@ -2009,19 +1978,9 @@ vioblk_restore(int fd, struct vm_create_params *vcp, int *child_disks)
 		if ((sz = lseek(child_disks[i], 0, SEEK_END)) == -1)
 			continue;
 
-		if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
-		    PCI_PRODUCT_QUMRANET_VIO_BLOCK,
-		    PCI_CLASS_MASS_STORAGE,
-		    PCI_SUBCLASS_MASS_STORAGE_SCSI,
-		    PCI_VENDOR_OPENBSD,
-		    PCI_PRODUCT_VIRTIO_BLOCK, 1, NULL)) {
-			log_warnx("%s: can't add PCI virtio block "
-			    "device", __progname);
-			return (-1);
-		}
-		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_blk_io,
+		if (pci_set_bar_fn(vioblk[i].pci_id, 0, virtio_blk_io,
 		    &vioblk[i])) {
-			log_warnx("%s: can't add bar for virtio block "
+			log_warnx("%s: can't set bar fn for virtio block "
 			    "device", __progname);
 			return (-1);
 		}

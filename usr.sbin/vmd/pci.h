@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.6 2017/07/06 06:19:15 mlarkin Exp $	*/
+/*	$OpenBSD: pci.h,v 1.7 2017/09/17 23:07:56 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -89,4 +89,7 @@ void pci_init(void);
 int pci_add_device(uint8_t *, uint16_t, uint16_t, uint8_t, uint8_t, uint16_t,
     uint16_t, uint8_t, pci_cs_fn_t);
 int pci_add_bar(uint8_t, uint32_t, void *, void *);
+int pci_set_bar_fn(uint8_t, uint8_t, void *, void *);
 uint8_t pci_get_dev_irq(uint8_t);
+int pci_dump(int);
+int pci_restore(int);
