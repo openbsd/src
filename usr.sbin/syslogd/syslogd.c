@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.247 2017/09/17 22:25:21 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.248 2017/09/17 23:49:14 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -483,6 +483,10 @@ main(int argc, char *argv[])
 	consfile.f_type = F_CONSOLE;
 	(void)strlcpy(consfile.f_un.f_fname, ctty,
 	    sizeof(consfile.f_un.f_fname));
+	consfile.f_file = open(consfile.f_un.f_fname, O_WRONLY|O_NONBLOCK, 0);
+	if (consfile.f_file == -1)
+		log_warn("open %s", consfile.f_un.f_fname);
+
 	(void)gethostname(LocalHostName, sizeof(LocalHostName));
 	if ((p = strchr(LocalHostName, '.')) != NULL) {
 		*p++ = '\0';
@@ -1780,16 +1784,14 @@ logline(int pri, int flags, char *from, char *msg)
 	/* log the message to the particular outputs */
 	if (!Initialized) {
 		f = &consfile;
-		f->f_file = priv_open_tty(ctty);
-
-		if (f->f_file >= 0) {
+		if (f->f_type == F_CONSOLE) {
 			strlcpy(f->f_lasttime, timestamp,
 			    sizeof(f->f_lasttime));
 			strlcpy(f->f_prevhost, from,
 			    sizeof(f->f_prevhost));
 			fprintlog(f, flags, msg);
-			(void)close(f->f_file);
-			f->f_file = -1;
+			/* May be set to F_UNUSED, try again next time. */
+			f->f_type = F_CONSOLE;
 		}
 		return;
 	}
