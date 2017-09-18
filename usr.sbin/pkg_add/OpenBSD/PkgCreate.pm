@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.123 2016/10/03 13:17:30 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.124 2017/09/18 13:01:10 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -82,6 +82,7 @@ sub handle_options
 {
 	my $state = shift;
 
+	$state->{system_version} = 0;
 	$state->{opt} = {
 	    'f' =>
 		    sub {
@@ -95,16 +96,23 @@ sub handle_options
 			    my $d = shift;
 			    $state->{dependencies}{$d} = 1;
 		    },
+	    'V' => sub {
+			    my $d = shift;
+			    if ($d !~ m/^\d+$/) {
+			    	$state->usage("-V number");
+			    }
+			    $state->{system_version} += $d;
+		    },
 	    'W' => sub {
 			    my $w = shift;
 			    $state->{wantlib}{$w} = 1;
 		    },
 	};
 	$state->{no_exports} = 1;
-	$state->SUPER::handle_options('p:f:d:M:U:A:B:P:W:qQ',
+	$state->SUPER::handle_options('p:f:d:M:U:A:B:P:V:W:qQ',
 	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
-	    '[-U undisplayfile] [-W wantedlib]',
+	    '[-U undisplayfile] [-V n] [-W wantedlib]',
 	    '[-d desc -D COMMENT=value -f packinglist -p prefix]',
 	    'pkg-name');
 
@@ -114,7 +122,6 @@ sub handle_options
 	} 
 
 	$state->{base} = $base;
-
 }
 
 package OpenBSD::PkgCreate;
@@ -1184,6 +1191,10 @@ sub add_elements
 		OpenBSD::PackingElement::LocalBase->add($plist, $state->opt('L'));
 	}
 	$self->add_extra_info($plist, $state);
+	if ($state->{system_version}) {
+		OpenBSD::PackingElement::Version->add($plist, 
+		    $state->{system_version});
+    	}
 }
 
 sub cant_read_fragment

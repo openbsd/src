@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.18 2015/03/26 22:07:58 kili Exp $
+# $OpenBSD: Signature.pm,v 1.19 2017/09/18 13:01:10 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -62,6 +62,26 @@ sub signature
 	}
 }
 
+package OpenBSD::PackingElement::Version;
+
+sub signature
+{
+	my ($self, $hash) = @_;
+	$hash->{VERSION} = $self;
+}
+
+sub long_string
+{
+	my $self = shift;
+	return $self->{name};
+}
+
+sub compare
+{
+	my ($a, $b) = @_;
+	return $a->{name} <=> $b->{name};
+}
+
 package OpenBSD::Signature;
 sub from_plist
 {
@@ -69,6 +89,8 @@ sub from_plist
 
 	my $k = {};
 	$plist->visit('signature', $k);
+
+	$k->{VERSION} //= OpenBSD::PackingElement::Version->new(0);
 
 	if ($plist->has('always-update')) {
 		return $class->always->new($plist->pkgname, $k, $plist);
