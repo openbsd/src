@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.502 2017/09/17 21:20:23 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.503 2017/09/18 00:00:57 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1749,7 +1749,8 @@ rewrite_client_leases(struct interface_info *ifi)
 		if (leasestr != NULL)
 			fprintf(leaseFile, "%s", leasestr);
 		else
-			log_warnx("cannot make lease into string");
+			log_warnx("%s: cannot make lease into string",
+			    log_procname);
 	}
 
 	fflush(leaseFile);
@@ -1974,7 +1975,7 @@ lease_as_string(char *ifname, char *type, struct client_lease *lease)
 	if (rslt >= sizeof(string))
 		return NULL;
 
-	return  string ;
+	return  string;
 }
 
 void
