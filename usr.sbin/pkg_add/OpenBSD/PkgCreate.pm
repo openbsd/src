@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.124 2017/09/18 13:01:10 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.125 2017/09/18 13:40:32 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -99,7 +99,7 @@ sub handle_options
 	    'V' => sub {
 			    my $d = shift;
 			    if ($d !~ m/^\d+$/) {
-			    	$state->usage("-V number");
+			    	$state->usage("-V option requires a number");
 			    }
 			    $state->{system_version} += $d;
 		    },
@@ -699,6 +699,9 @@ package OpenBSD::PackingElement::Arch;
 sub is_forbidden() { 1 }
 
 package OpenBSD::PackingElement::LocalBase;
+sub is_forbidden() { 1 }
+
+package OpenBSD::PackingElement::Version;
 sub is_forbidden() { 1 }
 
 package OpenBSD::PackingElement::Fragment;
