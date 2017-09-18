@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.106 2017/03/11 18:24:55 schwarze Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.107 2017/09/18 14:10:11 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: March 11 2017 $
+.Dd $Mdocdate: September 18 2017 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Op Fl M Ar displayfile
 .Op Fl P Ar pkgpath : Ns Ar pkgspec : Ns Ar default
 .Op Fl U Ar undisplayfile
+.Op Fl V Ar n
 .Op Fl W Ar libspec
 .Fl d Ar desc
 .Fl D Ar COMMENT Ns = Ns Ar value
@@ -224,6 +225,18 @@ Display the file (using
 .Xr more 1 )
 when deinstalling the package.
 Useful for reminders about stuff to clean up.
+.It Fl V Ar n
+Adds
+.Ar n
+to the
+.Sq global system version
+of the package
+.Po see
+.Xr package 5
+.Pc .
+The default value of 0 is not recorded, thus packages without
+.Cm @version
+have an implicit version of 0.
 .It Fl v
 Turn on verbose output.
 .It Fl W Ar libspec

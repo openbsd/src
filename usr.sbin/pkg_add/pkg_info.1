@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.56 2017/02/27 21:53:11 rpe Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.57 2017/09/18 14:10:11 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: February 27 2017 $
+.Dd $Mdocdate: September 18 2017 $
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -169,7 +169,8 @@ Exit status will be augmented by 2 if none of the packages do match.
 Show the update signature for each package.
 The
 .Sq update signature
-is a unique tag showing the package name, and the version number
+is a unique tag showing the package name, a global version number,
+and the version number
 of every run time dependency and shared library used to build this package.
 .It Fl s
 Show an estimate of the total size of each package.

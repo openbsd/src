@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.25 2016/10/05 14:59:19 espie Exp $
+.\"	$OpenBSD: package.5,v 1.26 2017/09/18 14:10:11 espie Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: October 5 2016 $
+.Dd $Mdocdate: September 18 2017 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -220,6 +220,14 @@ Starting with
 .Xr pkg_create 1
 will migrate timestamps from the tarball meta-info to the packing-list
 to better create unchanging archive chunks.
+.Pp
+.It Cm @version Ar number
+Record a global (system) version number for the package.
+This is built adding together
+.Fl V
+options from
+.Xr pkg_create 1 ,
+and triggers updates when it changes.
 .Pp
 .It Cm @wantlib Ar libspec
 Record a library requirement declared using the option
