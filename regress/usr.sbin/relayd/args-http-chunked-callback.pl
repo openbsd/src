@@ -15,6 +15,9 @@ PUT /4/3 HTTP/1.1
 Host: foo.bar
 Transfer-Encoding: chunked
 
+EOF
+	    ${$self->{server}}->up;
+	    print <<'EOF';
 4
 123
 
@@ -45,7 +48,8 @@ EOF
 	},
     },
     server => {
-	func => \&http_server,
+	down => "Server missing chunk size",
+	func => sub { errignore(@_); http_server(@_); },
 	nocheck => 1,
     },
     lengths => \@lengths,
