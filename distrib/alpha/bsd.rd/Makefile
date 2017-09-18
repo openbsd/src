@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile,v 1.28 2017/09/17 16:33:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.29 2017/09/18 20:09:34 jasper Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		ramdisk${REV}.fs
 
-STRIP?=		strip
 STRIPOPTS?=	-R .SUNW_ctf -R .shstrtab
 GZIPCMD?=	gzip
 GZIPFLAGS?=	-9fn
@@ -23,7 +22,7 @@ MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=8192
 
 bsd.rd:	bsd.rd_unz
 	objcopy -Sg -R .comment bsd.rd_unz bsd.strip
-	${STRIP} ${STRIPOPTS} bsd.strip
+	strip ${STRIPOPTS} bsd.strip
 	${GZIPCMD} -c ${GZIPFLAGS} bsd.strip > bsd.rd
 
 bsd.rd_unz: bsd ${IMAGE} rdsetroot

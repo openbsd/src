@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.33 2017/09/17 16:33:08 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.34 2017/09/18 20:09:34 jasper Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -14,7 +14,6 @@ VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
 
-STRIP?=		strip
 STRIPOPTS?=	-R .SUNW_ctf -R .shstrtab
 GZIPCMD?=	gzip
 GZIPFLAGS?=	-9fn
