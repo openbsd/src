@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2017/08/16 14:41:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.29 2017/09/18 20:13:53 jasper Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,7 +20,6 @@ VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 
-GZIPCMD?=	gzip
 GZIPFLAGS?=	-9nv
 GZIPEXT?=	.gz
 
@@ -41,7 +40,7 @@ all ${IMAGE}:
 all:	${FLOPPY} ${BSD_RD}
 
 bsd.gz:	bsd.rd
-	${GZIPCMD} ${GZIPFLAGS} < bsd.rd > bsd.gz
+	gzip ${GZIPFLAGS} < bsd.rd > bsd.gz
 
 ${FLOPPY}:	bsd.gz ${BOOT} /usr/
 	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYSIZE}

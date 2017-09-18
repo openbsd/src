@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 2017/09/18 20:09:34 jasper Exp $
+#	$OpenBSD: Makefile,v 1.35 2017/09/18 20:13:53 jasper Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -9,7 +9,6 @@ LISTS?=		${.CURDIR}/list
 UTILS?=		${TOP}/../miniroot
 
 STRIPOPTS?=	-R .SUNW_ctf
-GZIPCMD?=	gzip
 GZIPFLAGS?=	-9fn
 MTREE=		${UTILS}/mtree.conf
 
@@ -23,7 +22,7 @@ MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
 bsd.rd:	bsd.rd_unz
 	objcopy -Sg -R .comment bsd.rd_unz bsd.strip
 	strip ${STRIPOPTS} bsd.strip
-	${GZIPCMD} -c ${GZIPFLAGS} bsd.strip > bsd.rd
+	gzip -c ${GZIPFLAGS} bsd.strip > bsd.rd
 
 bsd.rd_unz: bsd ${IMAGE} rdsetroot
 	cp bsd bsd.rd_unz

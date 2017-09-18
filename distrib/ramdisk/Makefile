@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.51 2017/09/17 16:34:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.52 2017/09/18 20:13:52 jasper Exp $
 
 REV=		${OSrev}
 
@@ -82,7 +82,7 @@ bsd.rd:	bsd ${IMAGE} rdsetroot
 	strip -R .SUNW_ctf bsd.rd
 
 bsd.gz:	bsd.rd
-	${GZIPCMD} ${GZIPFLAGS} < bsd.rd > bsd.gz
+	gzip ${GZIPFLAGS} < bsd.rd > bsd.gz
 
 rdsetroot: ${.CURDIR}/../common/elfrdsetroot.c ${RDSETROOT_EXT_SRC}
 	${HOSTCC} ${HOSTCCFLAGS} -o rdsetroot ${RDSETROOT_EXT_SRC} \
