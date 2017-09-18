@@ -1,4 +1,4 @@
-.\"	$OpenBSD: directory.3,v 1.24 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: directory.3,v 1.25 2017/09/18 15:57:02 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: September 18 2017 $
 .Dt OPENDIR 3
 .Os
 .Sh NAME
@@ -129,6 +129,9 @@ must be large enough for a dirent with a
 array member containing at least
 .Dv NAME_MAX
 plus one elements.
+.Fn readdir_r
+returns 0 on success, or an error number if an error occurs; see
+.Sx ERRORS .
 On successful return, the pointer returned at
 .Fa "*result"
 will have the same value as the argument
@@ -200,12 +203,12 @@ if (dirp) {
 	while ((dp = readdir(dirp)) != NULL)
 		if (dp->d_namlen == len &&
 		    !strcmp(dp->d_name, name)) {
-			(void)closedir(dirp);
-			return (FOUND);
+			closedir(dirp);
+			return FOUND;
 		}
-	(void)closedir(dirp);
+	closedir(dirp);
 }
-return (NOT_FOUND);
+return NOT_FOUND;
 .Ed
 .Sh ERRORS
 The
