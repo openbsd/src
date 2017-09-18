@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.h,v 1.34 2015/01/16 06:39:58 deraadt Exp $	 */
+/* $OpenBSD: exchange.h,v 1.35 2017/09/18 07:42:52 mpi Exp $	 */
 /* $EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	 */
 
 /*
@@ -54,6 +54,9 @@ struct sa;
 struct exchange {
 	/* Link to exchanges with the same hash value.  */
 	LIST_ENTRY(exchange) link;
+
+	/* This exchange is linked to the global exchange list. */
+	int		linked;
 
 	/* A name of the SAs this exchange will result in.  XXX non unique?  */
 	char           *name;
@@ -229,10 +232,10 @@ extern void     exchange_free(struct exchange *);
 extern void     exchange_free_aca_list(struct exchange *);
 extern void     exchange_establish(char *name, void (*)(struct exchange *,
 		    void *, int), void *, int);
-extern void	exchange_establish_p1(struct transport *, u_int8_t, u_int32_t,
+extern int	exchange_establish_p1(struct transport *, u_int8_t, u_int32_t,
 		    char *, void *, void (*)(struct exchange *, void *, int),
 		    void *, int);
-extern void     exchange_establish_p2(struct sa *, u_int8_t, char *, void *,
+extern int      exchange_establish_p2(struct sa *, u_int8_t, char *, void *,
 		    void (*)(struct exchange *, void *, int), void *);
 extern int      exchange_gen_nonce(struct message *, size_t);
 extern void     exchange_init(void);
