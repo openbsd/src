@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.14 2017/05/08 09:08:40 reyk Exp $ */
+/* $OpenBSD: i8259.c,v 1.15 2017/09/18 00:05:15 dlg Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -24,10 +24,12 @@
 #include <machine/vmmvar.h>
 
 #include <unistd.h>
+#include <pthread.h>
 #include "proc.h"
 #include "i8259.h"
 #include "vmm.h"
 #include "atomicio.h"
+#include "vmd.h"
 
 struct i8259 {
 	uint8_t irr;
@@ -51,6 +53,7 @@ struct i8259 {
 
 /* Master and slave PICs */
 struct i8259 pics[2];
+pthread_mutex_t pic_mtx;
 
 /*
  * i8259_pic_name
@@ -85,6 +88,9 @@ i8259_init(void)
 	memset(&pics, 0, sizeof(pics));
 	pics[MASTER].cur_icw = 1;
 	pics[SLAVE].cur_icw = 1;
+
+	if (pthread_mutex_init(&pic_mtx, NULL) != 0)
+		fatalx("unable to create pic mutex");
 }
 
 /*
@@ -98,17 +104,15 @@ i8259_init(void)
 uint8_t
 i8259_is_pending(void)
 {
-	uint8_t pending = 0;
 	uint8_t master_pending;
 	uint8_t slave_pending;
 
+	mutex_lock(&pic_mtx);
 	master_pending = pics[MASTER].irr & ~(pics[MASTER].imr | (1 << 2));
 	slave_pending = pics[SLAVE].irr & ~pics[SLAVE].imr;
+	mutex_unlock(&pic_mtx);
 
-	if (master_pending || slave_pending)
-		pending = 1;
-
-	return pending;
+	return (master_pending || slave_pending);
 }
 
 /*
@@ -129,9 +133,11 @@ i8259_ack(void)
 
 	ret = 0xFFFF;
 
+	mutex_lock(&pic_mtx);
+
 	if (pics[MASTER].asserted == 0 && pics[SLAVE].asserted == 0) {
 		log_warnx("%s: i8259 ack without assert?", __func__);
-		return (ret);
+		goto ret;
 	}
 
 	high_prio_m = pics[MASTER].lowest_pri + 1;
@@ -153,7 +159,8 @@ i8259_ack(void)
 			if (pics[MASTER].irr == 0)
 				pics[MASTER].asserted = 0;
 
-			return i + pics[MASTER].vec;
+			ret = i + pics[MASTER].vec;
+			goto ret;
 		}
 
 		i++;
@@ -181,8 +188,7 @@ i8259_ack(void)
 			}
 
 			ret = i + pics[SLAVE].vec;
-
-			return ret;
+			goto ret;
 		}
 
 		i++;
@@ -192,7 +198,9 @@ i8259_ack(void)
 	} while (i != high_prio_s);
 
 	log_warnx("%s: ack without pending irq?", __func__);
-	return (0xFFFF);
+ret:
+	mutex_unlock(&pic_mtx);
+	return (ret);
 }
 
 /*
@@ -206,23 +214,24 @@ i8259_ack(void)
 void
 i8259_assert_irq(uint8_t irq)
 {
+	mutex_lock(&pic_mtx);
 	if (irq <= 7) {
-		if (pics[MASTER].imr & (1 << irq))
-			return;
-
-		pics[MASTER].irr |= (1 << irq);
-		pics[MASTER].asserted = 1;
+		if (!ISSET(pics[MASTER].imr, 1 << irq)) {
+			SET(pics[MASTER].irr, 1 << irq);
+			pics[MASTER].asserted = 1;
+		}
 	} else {
-		if (pics[SLAVE].imr & (1 << (irq - 8)))
-			return;
+		irq -= 8;
+		if (!ISSET(pics[SLAVE].imr, 1 << irq)) {
+			SET(pics[SLAVE].irr, irq);
+			pics[SLAVE].asserted = 1;
 
-		pics[SLAVE].irr |= (1 << (irq - 8));
-		pics[SLAVE].asserted = 1;
-
-		/* Assert cascade IRQ on master PIC */
-		pics[MASTER].irr |= (1 << 2);
-		pics[MASTER].asserted = 1;
+			/* Assert cascade IRQ on master PIC */
+			SET(pics[MASTER].irr, 1 << 2);
+			pics[MASTER].asserted = 1;
+		}
 	}
+	mutex_unlock(&pic_mtx);
 }
 
 /*
@@ -236,15 +245,18 @@ i8259_assert_irq(uint8_t irq)
 void
 i8259_deassert_irq(uint8_t irq)
 {
+	mutex_lock(&pic_mtx);
 	if (irq <= 7)
-		pics[MASTER].irr &= ~(1 << irq);
+		CLR(pics[MASTER].irr, 1 << irq);
 	else {
-		pics[SLAVE].irr &= ~(1 << (irq - 8));
+		irq -= 8;
+		CLR(pics[SLAVE].irr, 1 << irq);
 
 		/* Deassert cascade IRQ on master if no IRQs on slave */
 		if (pics[SLAVE].irr == 0)
-			pics[MASTER].irr &= ~(1 << 2);
+			CLR(pics[MASTER].irr, 1 << 2);
 	}
+	mutex_unlock(&pic_mtx);
 }
 
 /*
@@ -583,10 +595,12 @@ i8259_io_write(union vm_exit *vei)
 		fatal("%s: invalid port 0x%x", __func__, port);
 	}
 
+	mutex_lock(&pic_mtx);
 	if (port == IO_ICU1 + 1 || port == IO_ICU2 + 1)
 		i8259_write_datareg(n, data);
 	else
 		i8259_write_cmdreg(n, data);
+	mutex_unlock(&pic_mtx);
 }
 
 /*
@@ -605,6 +619,7 @@ i8259_io_read(union vm_exit *vei)
 {
 	uint16_t port = vei->vei.vei_port;
 	uint8_t n = 0;
+	uint8_t rv;
 
 	switch (port) {
 	case IO_ICU1:
@@ -619,10 +634,14 @@ i8259_io_read(union vm_exit *vei)
 		fatal("%s: invalid port 0x%x", __func__, port);
 	}
 
+	mutex_lock(&pic_mtx);
 	if (port == IO_ICU1 + 1 || port == IO_ICU2 + 1)
-		return i8259_read_datareg(n);
+		rv = i8259_read_datareg(n);
 	else
-		return i8259_read_cmdreg(n);
+		rv = i8259_read_cmdreg(n);
+	mutex_unlock(&pic_mtx);
+
+	return (rv);
 }
 
 /*
@@ -669,5 +688,9 @@ i8259_restore(int fd)
 		log_warnx("%s: error reading PIC from fd", __func__);
 		return (-1);
 	}
+
+	if (pthread_mutex_init(&pic_mtx, NULL) != 0)
+		fatalx("unable to create pic mutex");
+
 	return (0);
 }
