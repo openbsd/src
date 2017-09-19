@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2017/09/18 20:13:53 jasper Exp $
+#	$OpenBSD: Makefile,v 1.30 2017/09/19 19:23:57 jasper Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -21,7 +21,6 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 
 GZIPFLAGS?=	-9nv
-GZIPEXT?=	.gz
 
 PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
