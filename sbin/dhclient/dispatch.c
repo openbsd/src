@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.142 2017/09/17 21:20:23 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.143 2017/09/19 12:33:52 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -73,7 +73,7 @@
 
 
 void packethandler(struct interface_info *ifi);
-void flush_unpriv_ibuf(const char *);
+void flush_unpriv_ibuf(void);
 
 /*
  * Loop waiting for packets, timeouts or routing messages.
@@ -162,7 +162,7 @@ dispatch(struct interface_info *ifi, int routefd)
 		if ((fds[1].revents & POLLIN) != 0)
 			routehandler(ifi, routefd);
 		if ((fds[2].revents & POLLOUT) != 0)
-			flush_unpriv_ibuf("dispatch");
+			flush_unpriv_ibuf();
 		if ((fds[2].revents & POLLIN) != 0)
 			quit = INTERNALSIG;
 	}
@@ -305,7 +305,7 @@ packethandler(struct interface_info *ifi)
  * flush_unpriv_ibuf stuffs queued messages into the imsg socket.
  */
 void
-flush_unpriv_ibuf(const char *who)
+flush_unpriv_ibuf(void)
 {
 	while (unpriv_ibuf->w.queued) {
 		if (msgbuf_write(&unpriv_ibuf->w) <= 0) {
@@ -314,8 +314,8 @@ flush_unpriv_ibuf(const char *who)
 			if (quit == 0)
 				quit = INTERNALSIG;
 			if (errno != EPIPE && errno != 0)
-				log_warn("%s: %s: msgbuf_write", log_procname,
-				    who);
+				log_warn("%s: msgbuf_write(unpriv_ibuf)",
+				    log_procname);
 			break;
 		}
 	}
