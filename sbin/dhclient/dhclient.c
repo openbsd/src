@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.503 2017/09/18 00:00:57 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.504 2017/09/19 13:09:15 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1334,15 +1334,13 @@ send_discover(struct interface_info *ifi)
 		packet->secs = htons(UINT16_MAX);
 	ifi->secs = packet->secs;
 
-	log_info("%s: DHCPDISCOVER - interval %lld", log_procname,
-	    (long long)ifi->interval);
 
 	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast);
-	if (rslt == -1 && errno == EAFNOSUPPORT) {
-		log_warnx("%s: dhclient cannot be used", log_procname);
-		quit = INTERNALSIG;
-	} else
-		set_timeout(ifi, ifi->interval, send_discover);
+	if (rslt != -1)
+		log_info("%s: DHCPDISCOVER - interval %lld", log_procname,
+		    (long long)ifi->interval);
+
+	set_timeout(ifi, ifi->interval, send_discover);
 }
 
 /*
@@ -1377,6 +1375,7 @@ send_request(struct interface_info *ifi)
 	struct sockaddr_in	 destination;
 	struct in_addr		 from;
 	struct dhcp_packet	*packet = &ifi->sent_packet;
+	ssize_t			 rslt;
 	time_t			 cur_time;
 	int			 interval;
 
@@ -1466,10 +1465,11 @@ send_request(struct interface_info *ifi)
 			packet->secs = htons(UINT16_MAX);
 	}
 
-	log_info("%s: DHCPREQUEST to %s", log_procname,
-	    inet_ntoa(destination.sin_addr));
 
-	send_packet(ifi, from, destination.sin_addr);
+	rslt = send_packet(ifi, from, destination.sin_addr);
+	if (rslt != -1)
+		log_info("%s: DHCPREQUEST to %s", log_procname,
+		    inet_ntoa(destination.sin_addr));
 
 	set_timeout(ifi, ifi->interval, send_request);
 }
@@ -1477,9 +1477,11 @@ send_request(struct interface_info *ifi)
 void
 send_decline(struct interface_info *ifi)
 {
-	log_info("%s: DHCPDECLINE", log_procname);
+	ssize_t		rslt;
 
-	send_packet(ifi, inaddr_any, inaddr_broadcast);
+	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast);
+	if (rslt != -1)
+		log_info("%s: DHCPDECLINE", log_procname);
 }
 
 void

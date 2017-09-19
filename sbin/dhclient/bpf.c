@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.65 2017/09/17 21:20:23 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.66 2017/09/19 13:09:15 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -249,7 +249,8 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to)
 	struct msghdr		 msg;
 	struct dhcp_packet	*packet = &ifi->sent_packet;
 	ssize_t			 result;
-	int			 iovcnt = 0, len = ifi->sent_packet_length;
+	unsigned int		 iovcnt = 0, i, total;
+	int			 len = ifi->sent_packet_length;
 
 	memset(&dest, 0, sizeof(dest));
 	dest.sin_family = AF_INET;
@@ -296,8 +297,19 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to)
 	iov[iovcnt].iov_len = len;
 	iovcnt++;
 
+	total = 0;
+	for (i = 0; i < iovcnt; i++)
+		total += iov[i].iov_len;
+
 	if (to.s_addr == INADDR_BROADCAST) {
 		result = writev(ifi->bfdesc, iov, iovcnt);
+		if (result == -1)
+			log_warn("%s: writev(bfdesc)", log_procname);
+		else if (result < total) {
+			result = -1;
+			log_warnx("%s, writev(bfdesc): %zd of %u bytes",
+			    log_procname, result, total);
+		}
 	} else {
 		memset(&msg, 0, sizeof(msg));
 		msg.msg_name = (struct sockaddr *)&dest;
@@ -305,10 +317,15 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to)
 		msg.msg_iov = iov;
 		msg.msg_iovlen = iovcnt;
 		result = sendmsg(ifi->ufdesc, &msg, 0);
+		if (result == -1)
+			log_warn("%s: sendmsg(ufdesc)", log_procname);
+		else if (result < total) {
+			result = -1;
+			log_warnx("%s, sendmsg(ufdesc): %zd of %u bytes",
+			    log_procname, result, total);
+		}
 	}
 
-	if (result == -1)
-		log_warn("%s: send_packet", log_procname);
 	return result;
 }
 
