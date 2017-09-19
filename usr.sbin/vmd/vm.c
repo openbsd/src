@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.27 2017/09/17 23:07:56 pd Exp $	*/
+/*	$OpenBSD: vm.c,v 1.28 2017/09/19 06:22:30 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -495,6 +495,7 @@ send_vm(int fd, struct vm_create_params *vcp)
 	unsigned int		   flags = 0;
 	unsigned int		   i;
 	int			   ret = 0;
+	size_t			   sz; 
 
 	if (dump_send_header(fd)) {
 		log_info("%s: failed to send vm dump header", __func__);
@@ -517,10 +518,11 @@ send_vm(int fd, struct vm_create_params *vcp)
 	vrp.vrwp_vm_id = vcp->vcp_id;
 	vrp.vrwp_mask = VM_RWREGS_ALL;
 
-	if ((ret = atomicio(vwrite, fd, vmc,
-	    sizeof(struct vmop_create_params)) !=
-	    sizeof(struct vmop_create_params)))
+	sz = atomicio(vwrite, fd, vmc,sizeof(struct vmop_create_params));
+	if (sz != sizeof(struct vmop_create_params)) {
+		ret = -1;
 		goto err;
+	}
 
 	for (i = 0; i < vcp->vcp_ncpus; i++) {
 		vrp.vrwp_vcpu_id = i;
@@ -528,10 +530,12 @@ send_vm(int fd, struct vm_create_params *vcp)
 			log_warn("%s: readregs failed", __func__);
 			goto err;
 		}
-		if ((ret = atomicio(vwrite, fd, &vrp,
-		    sizeof(struct vm_rwregs_params))) !=
-		    sizeof(struct vm_rwregs_params)) {
+
+		sz = atomicio(vwrite, fd, &vrp,
+		    sizeof(struct vm_rwregs_params));
+		if (sz != sizeof(struct vm_rwregs_params)) {
 			log_warn("%s: dumping registers failed", __func__);
+			ret = -1;
 			goto err;
 		}
 	}
