@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.1 2017/03/09 20:04:21 kettenis Exp $	*/
+/*	$OpenBSD: syscon.c,v 1.2 2017/09/19 15:37:47 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -30,10 +30,12 @@ extern void (*cpuresetfn)(void);
 extern void (*powerdownfn)(void);
 
 struct syscon_softc {
-	struct device	sc_dev;
-	uint32_t	sc_regmap;
-	bus_size_t	sc_offset;
-	uint32_t	sc_mask;
+	struct device		sc_dev;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	uint32_t		sc_regmap;
+	bus_size_t		sc_offset;
+	uint32_t		sc_mask;
 };
 
 struct syscon_softc *syscon_reboot_sc;
@@ -58,8 +60,9 @@ syscon_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return (OF_is_compatible(faa->fa_node, "syscon-reboot") ||
-	    OF_is_compatible(faa->fa_node, "syscon-poweroff"));
+	return OF_is_compatible(faa->fa_node, "syscon") ||
+	    OF_is_compatible(faa->fa_node, "syscon-reboot") ||
+	    OF_is_compatible(faa->fa_node, "syscon-poweroff");
 }
 
 void
@@ -68,25 +71,47 @@ syscon_attach(struct device *parent, struct device *self, void *aux)
 	struct syscon_softc *sc = (struct syscon_softc *)self;
 	struct fdt_attach_args *faa = aux;
 
-	printf("\n");
+	if (OF_is_compatible(faa->fa_node, "syscon")) {
+		if (faa->fa_nreg < 1) {
+			printf(": no registers\n");
+			return;
+		}
 
-	sc->sc_regmap = OF_getpropint(faa->fa_node, "regmap", 0);
-	if (sc->sc_regmap == 0)
-		return;
+		sc->sc_iot = faa->fa_iot;
 
-	if (OF_getproplen(faa->fa_node, "offset") != sizeof(uint32_t) ||
-	    OF_getproplen(faa->fa_node, "mask") != sizeof(uint32_t))
-		return;
+		if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+		    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
+			printf(": can't map registers\n");
+			return;
+		}
 
-	sc->sc_offset = OF_getpropint(faa->fa_node, "offset", 0);
-	sc->sc_mask = OF_getpropint(faa->fa_node, "mask", 0);
+		regmap_register(faa->fa_node, sc->sc_iot, sc->sc_ioh,
+		    faa->fa_reg[0].size);
+		printf("\n");
+	}
 
-	if (OF_is_compatible(faa->fa_node, "syscon-reboot")) {
-		syscon_reboot_sc = sc;
-		cpuresetfn = syscon_reset;
-	} else {
-		syscon_poweroff_sc = sc;
-		powerdownfn = syscon_powerdown;
+	if (OF_is_compatible(faa->fa_node, "syscon-reboot") ||
+	    OF_is_compatible(faa->fa_node, "syscon-poweroff")) {
+		printf("\n");
+
+		sc->sc_regmap = OF_getpropint(faa->fa_node, "regmap", 0);
+		if (sc->sc_regmap == 0)
+			return;
+
+		if (OF_getproplen(faa->fa_node, "offset") != sizeof(uint32_t) ||
+		    OF_getproplen(faa->fa_node, "mask") != sizeof(uint32_t))
+			return;
+
+		sc->sc_offset = OF_getpropint(faa->fa_node, "offset", 0);
+		sc->sc_mask = OF_getpropint(faa->fa_node, "mask", 0);
+
+		if (OF_is_compatible(faa->fa_node, "syscon-reboot")) {
+			syscon_reboot_sc = sc;
+			cpuresetfn = syscon_reset;
+		} else if (OF_is_compatible(faa->fa_node, "syscon-poweroff")) {
+			syscon_poweroff_sc = sc;
+			powerdownfn = syscon_powerdown;
+		}
 	}
 }
 
