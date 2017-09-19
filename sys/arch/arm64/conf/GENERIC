@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.38 2017/08/28 19:32:53 jasper Exp $
+# $OpenBSD: GENERIC,v 1.39 2017/09/19 15:39:23 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -65,6 +65,7 @@ com*		at fdt?
 pluart*		at fdt?		# onboard uarts
 plrtc*		at fdt?
 psci*		at fdt?
+syscon*		at fdt?
 
 virtio*		at fdt?
 virtio*		at pci?

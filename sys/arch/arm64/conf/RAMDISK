@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.35 2017/08/28 11:16:04 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.36 2017/09/19 15:39:23 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -76,6 +76,7 @@ com*		at fdt?
 pluart*		at fdt?		# onboard uarts
 plrtc*		at fdt?
 psci*		at fdt?
+syscon*		at fdt?
 
 virtio*		at fdt?
 virtio*		at pci?
