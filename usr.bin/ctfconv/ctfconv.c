@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.8 2017/08/29 21:10:20 deraadt Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.9 2017/09/19 08:28:57 jsg Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -180,10 +180,12 @@ convert(const char *path)
 	}
 	if (fstat(fd, &st) == -1) {
 		warn("fstat %s", path);
+		close(fd);
 		return 1;
 	}
 	if ((uintmax_t)st.st_size > SIZE_MAX) {
 		warnx("file too big to fit memory");
+		close(fd);
 		return 1;
 	}
 
