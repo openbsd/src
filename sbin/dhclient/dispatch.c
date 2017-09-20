@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.145 2017/09/20 18:28:14 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.146 2017/09/20 22:05:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -106,8 +106,8 @@ dispatch(struct interface_info *ifi, int routefd)
 			 */
 			howlong = ifi->timeout - cur_time;
 			if (howlong > INT_MAX / 1000)
-					howlong = INT_MAX / 1000;
-				to_msec = howlong * 1000;
+				howlong = INT_MAX / 1000;
+			to_msec = howlong * 1000;
 		} else
 			to_msec = -1;
 

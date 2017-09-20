@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.509 2017/09/20 19:21:00 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.510 2017/09/20 22:05:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1241,8 +1241,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	    packet->sname[0]) {
 		lease->server_name = malloc(DHCP_SNAME_LEN + 1);
 		if (lease->server_name == NULL) {
-			log_warnx("%s: lease declined - no memory for SNAME",
-			    log_procname);
+			log_warn("%s: lease declined - SNAME", log_procname);
 			goto decline;
 		}
 		memcpy(lease->server_name, packet->sname, DHCP_SNAME_LEN);
@@ -1261,8 +1260,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 		/* Don't count on the NUL terminator. */
 		lease->filename = malloc(DHCP_FILE_LEN + 1);
 		if (lease->filename == NULL) {
-			log_warnx("%s: lease declined - no memory for filename",
-			    log_procname);
+			log_warn("%s: lease declined - filename", log_procname);
 			goto decline;
 		}
 		memcpy(lease->filename, packet->file, DHCP_FILE_LEN);
