@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.67 2017/09/20 15:02:47 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.68 2017/09/20 15:14:52 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -239,7 +239,8 @@ configure_bpf_sock(int bfdesc)
 }
 
 ssize_t
-send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to)
+send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to,
+    const char *desc)
 {
 	struct iovec		 iov[4];
 	struct sockaddr_in	 dest;
@@ -304,11 +305,11 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to)
 	if (to.s_addr == INADDR_BROADCAST) {
 		result = writev(ifi->bfdesc, iov, iovcnt);
 		if (result == -1)
-			log_warn("%s: writev(bfdesc)", log_procname);
+			log_warn("%s: writev(%s)", log_procname, desc);
 		else if (result < total) {
 			result = -1;
-			log_warnx("%s, writev(bfdesc): %zd of %u bytes",
-			    log_procname, result, total);
+			log_warnx("%s, writev(%s): %zd of %u bytes",
+			    log_procname, desc, result, total);
 		}
 	} else {
 		memset(&msg, 0, sizeof(msg));
@@ -318,11 +319,11 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to)
 		msg.msg_iovlen = iovcnt;
 		result = sendmsg(ifi->ufdesc, &msg, 0);
 		if (result == -1)
-			log_warn("%s: sendmsg(ufdesc)", log_procname);
+			log_warn("%s: sendmsg(%s)", log_procname, desc);
 		else if (result < total) {
 			result = -1;
-			log_warnx("%s, sendmsg(ufdesc): %zd of %u bytes",
-			    log_procname, result, total);
+			log_warnx("%s, sendmsg(%s): %zd of %u bytes",
+			    log_procname, desc, result, total);
 		}
 	}
 

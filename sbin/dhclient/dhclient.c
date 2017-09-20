@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.505 2017/09/20 15:02:47 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.506 2017/09/20 15:14:52 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1335,7 +1335,7 @@ send_discover(struct interface_info *ifi)
 	ifi->secs = packet->secs;
 
 
-	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast);
+	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast, "DHCPDISCOVER");
 	if (rslt != -1)
 		log_info("%s: DHCPDISCOVER - interval %lld", log_procname,
 		    (long long)ifi->interval);
@@ -1466,7 +1466,7 @@ send_request(struct interface_info *ifi)
 	}
 
 
-	rslt = send_packet(ifi, from, destination.sin_addr);
+	rslt = send_packet(ifi, from, destination.sin_addr, "DHCPREQUEST");
 	if (rslt != -1)
 		log_info("%s: DHCPREQUEST to %s", log_procname,
 		    inet_ntoa(destination.sin_addr));
@@ -1479,7 +1479,7 @@ send_decline(struct interface_info *ifi)
 {
 	ssize_t		rslt;
 
-	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast);
+	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast, "DHCPDECLINE");
 	if (rslt != -1)
 		log_info("%s: DHCPDECLINE", log_procname);
 }
