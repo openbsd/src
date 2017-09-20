@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.143 2017/09/19 12:33:52 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.144 2017/09/20 15:31:29 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -189,8 +189,7 @@ packethandler(struct interface_info *ifi)
 	if ((result = receive_packet(ifi, &from, &hfrom)) == -1) {
 		ifi->errors++;
 		if (ifi->errors > 20)
-			fatalx("%s too many receive_packet failures",
-			    ifi->name);
+			fatalx("too many receive_packet failures");
 		else
 			log_warn("%s receive_packet failed", log_procname);
 		return;
