@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.504 2017/09/19 13:09:15 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.505 2017/09/20 15:02:47 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1536,7 +1536,7 @@ make_discover(struct interface_info *ifi, struct client_lease *lease)
 		ifi->sent_packet_length = BOOTP_MIN_LEN;
 
 	packet->op = BOOTREQUEST;
-	packet->htype = HTYPE_ETHER ;
+	packet->htype = HTYPE_ETHER;
 	packet->hlen = ETHER_ADDR_LEN;
 	packet->hops = 0;
 	packet->xid = ifi->xid;
@@ -1613,7 +1613,7 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 		ifi->sent_packet_length = BOOTP_MIN_LEN;
 
 	packet->op = BOOTREQUEST;
-	packet->htype = HTYPE_ETHER ;
+	packet->htype = HTYPE_ETHER;
 	packet->hlen = ETHER_ADDR_LEN;
 	packet->hops = 0;
 	packet->xid = ifi->xid;
@@ -1686,7 +1686,7 @@ make_decline(struct interface_info *ifi, struct client_lease *lease)
 		ifi->sent_packet_length = BOOTP_MIN_LEN;
 
 	packet->op = BOOTREQUEST;
-	packet->htype = HTYPE_ETHER ;
+	packet->htype = HTYPE_ETHER;
 	packet->hlen = ETHER_ADDR_LEN;
 	packet->hops = 0;
 	packet->xid = ifi->xid;
@@ -1977,7 +1977,7 @@ lease_as_string(char *ifname, char *type, struct client_lease *lease)
 	if (rslt >= sizeof(string))
 		return NULL;
 
-	return  string;
+	return string;
 }
 
 void
