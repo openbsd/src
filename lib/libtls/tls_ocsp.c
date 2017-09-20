@@ -173,8 +173,11 @@ tls_ocsp_setup_from_peer(struct tls *ctx)
 	}
 
 	ocsp_urls = X509_get1_ocsp(ocsp->main_cert);
-	if (ocsp_urls == NULL)
+	if (ocsp_urls == NULL) {
+		tls_set_errorx(ctx, "no OCSP URLs in peer certificate");
 		goto failed;
+	}
+
 	ocsp->ocsp_url = strdup(sk_OPENSSL_STRING_value(ocsp_urls, 0));
 	if (ocsp->ocsp_url == NULL) {
 		tls_set_errorx(ctx, "out of memory");
