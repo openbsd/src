@@ -1,4 +1,4 @@
-/* $OpenBSD: imxocotp.c,v 1.4 2016/09/23 17:59:17 kettenis Exp $ */
+/* $OpenBSD: imxocotp.c,v 1.5 2017/09/20 11:21:58 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -64,7 +64,10 @@ imxocotp_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "fsl,imx6q-ocotp");
+	if (OF_is_compatible(faa->fa_node, "fsl,imx6q-ocotp"))
+		return 10;	/* Must beat syscon(4). */
+
+	return 0;
 }
 
 void
