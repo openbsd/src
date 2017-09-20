@@ -1,4 +1,4 @@
-.\"	$OpenBSD: write.2,v 1.39 2015/02/05 02:33:09 schwarze Exp $
+.\"	$OpenBSD: write.2,v 1.40 2017/09/20 18:41:55 schwarze Exp $
 .\"	$NetBSD: write.2,v 1.6 1995/02/27 12:39:43 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)write.2	8.5 (Berkeley) 4/2/94
 .\"
-.Dd $Mdocdate: February 5 2015 $
+.Dd $Mdocdate: September 20 2017 $
 .Dt WRITE 2
 .Os
 .Sh NAME
@@ -155,6 +155,18 @@ is returned.
 Otherwise, a \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
+.Sh EXAMPLES
+The typical loop allowing partial writes looks like this:
+.Bd -literal
+const char *buf;
+size_t bsz, off;
+ssize_t nw;
+int d;
+
+for (off = 0; off < bsz; off += nw)
+	if ((nw = write(d, buf + off, bsz - off)) == 0 || nw == -1)
+		err(1, "write");
+.Ed
 .Sh ERRORS
 .Fn write ,
 .Fn pwrite ,
@@ -309,21 +321,11 @@ function call appeared in
 .At v2 .
 .Sh CAVEATS
 Error checks should explicitly test for \-1.
-Code such as
-.Bd -literal -offset indent
-while ((nr = write(fd, buf, sizeof(buf))) > 0)
-.Ed
-.Pp
-is not maximally portable, as some platforms allow for
+On some platforms, if
 .Fa nbytes
-to range between
+is larger than
 .Dv SSIZE_MAX
-and
+but smaller than
 .Dv SIZE_MAX
-\- 2, in which case the return value of an error-free
-.Fn write
+\- 2, the return value of an error-free call 
 may appear as a negative number distinct from \-1.
-Proper loops should use
-.Bd -literal -offset indent
-while ((nr = write(fd, buf, sizeof(buf))) != -1 && nr != 0)
-.Ed
