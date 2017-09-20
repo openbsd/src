@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.150 2017/09/20 16:09:42 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.151 2017/09/20 16:34:29 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -469,7 +469,7 @@ priv_delete_address(char *name, int ioctlfd, struct imsg_delete_address *imsg)
 	/* SIOCDIFADDR will result in a RTM_DELADDR message we must catch! */
 	if (ioctl(ioctlfd, SIOCDIFADDR, &ifaliasreq) == -1) {
 		if (errno != EADDRNOTAVAIL)
-			log_warn("%s: SIOCDIFADDR failed (%s)", log_procname,
+			log_warn("%s: SIOCDIFADDR %s", log_procname,
 			    inet_ntoa(imsg->addr));
 	}
 }
@@ -511,7 +511,7 @@ priv_set_mtu(char *name, int ioctlfd, struct imsg_set_mtu *imsg)
 	ifr.ifr_mtu = imsg->mtu;
 
 	if (ioctl(ioctlfd, SIOCSIFMTU, &ifr) == -1)
-		log_warn("%s: SIOCSIFMTU failed (%d)", log_procname, imsg->mtu);
+		log_warn("%s: SIOCSIFMTU %d", log_procname, imsg->mtu);
 }
 
 /*
@@ -562,7 +562,7 @@ priv_set_address(char *name, int ioctlfd, struct imsg_set_address *imsg)
 	/* No need to set broadcast address. Kernel can figure it out. */
 
 	if (ioctl(ioctlfd, SIOCAIFADDR, &ifaliasreq) == -1)
-		log_warn("%s: SIOCAIFADDR failed (%s)", log_procname,
+		log_warn("%s: SIOCAIFADDR %s", log_procname,
 		    inet_ntoa(imsg->addr));
 }
 
