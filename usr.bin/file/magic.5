@@ -1,4 +1,4 @@
-.\" $OpenBSD: magic.5,v 1.17 2016/04/24 07:02:07 jmc Exp $
+.\" $OpenBSD: magic.5,v 1.18 2017/09/20 10:03:34 jmc Exp $
 .\"
 .\" @(#)$FreeBSD: src/usr.bin/file/magic.5,v 1.11 2000/03/01 12:19:39 sheldonh Exp $
 .\"
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 24 2016 $
+.Dd $Mdocdate: September 20 2017 $
 .Dt MAGIC 5
 .Os
 .\" install as magic.4 on USG, magic.5 on V7, Berkeley and Linux systems.
@@ -41,10 +41,9 @@
 This manual page documents the format of the magic file as
 used by the
 .Xr file 1
-command, version 4.24.
-The
+command.
 .Xr file 1
-command identifies the type of a file using,
+identifies the type of a file using,
 among other tests,
 a test for whether the file contains certain
 .Dq "magic patterns" .
@@ -218,6 +217,28 @@ This is intended to be used with the test
 .Em x
 (which is always true) and a message that is to be used if there are
 no other matches.
+.It Dv clear
+This test is always true and clears the match flag for that level.
+It is intended to be used with the default test.
+.It Dv name
+Define a named magic instance that can be called from another
+.Dv use
+magic entry, like a subroutine call.
+Named instance direct magic offsets are relative to the offset of the
+previous matched entry, but indirect offsets are relative to the
+beginning of the file as usual.
+Named magic entries always match.
+.It Dv use
+Recursively call the named magic starting from the current offset.
+If the name of the referenced instance begins with a
+.Dv ^
+then the endianness of the magic is switched; if the magic mentioned
+.Dv leshort
+for example,
+it is treated as
+.Dv beshort
+and vice versa.
+This is useful to avoid duplicating the rules for different endianness.
 .El
 .Pp
 Each top-level magic pattern (see below for an explanation of levels)
