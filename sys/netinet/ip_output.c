@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.341 2017/09/01 15:05:31 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.342 2017/09/20 16:22:02 visa Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1304,7 +1304,7 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 	}
 	if (m->m_len > MAX_IPOPTLEN + sizeof(struct in_addr))
 		return (EINVAL);
-	*pcbopt = m_dup_pkt(m, 0, M_NOWAIT);
+	*pcbopt = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 	if (*pcbopt == NULL)
 		return (ENOBUFS);
 
