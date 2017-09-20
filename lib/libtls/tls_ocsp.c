@@ -346,7 +346,7 @@ tls_ocsp_stapling_cb(SSL *ssl, void *arg)
 	memcpy(ocsp_staple, ctx->config->keypair->ocsp_staple,
 	    ctx->config->keypair->ocsp_staple_len);
 	if (SSL_set_tlsext_status_ocsp_resp(ctx->ssl_conn, ocsp_staple,
-		ctx->config->keypair->ocsp_staple_len) != 1)
+	    ctx->config->keypair->ocsp_staple_len) != 1)
 		goto err;
 
 	ret = SSL_TLSEXT_ERR_OK;
