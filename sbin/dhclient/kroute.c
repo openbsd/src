@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.152 2017/09/20 18:28:14 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.153 2017/09/20 19:21:00 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -380,9 +380,8 @@ priv_add_route(char *name, int rdomain, int routefd,
 			    sizeof(destbuf));
 			strlcpy(maskbuf, inet_ntoa(imsg->netmask),
 			    sizeof(maskbuf));
-			log_warn("%s: failed to add route (%s/%s via %s)",
-			    log_procname, destbuf, maskbuf,
-			    inet_ntoa(imsg->gateway));
+			log_warn("%s: add route %s/%s via %s", log_procname,
+			    destbuf, maskbuf, inet_ntoa(imsg->gateway));
 		}
 	}
 }

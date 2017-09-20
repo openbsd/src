@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.70 2017/09/17 21:20:23 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.71 2017/09/20 19:21:00 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -121,8 +121,7 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 				if (sz > 0) {
 					resolv_conf = malloc(sz);
 					if (resolv_conf == NULL)
-						log_warnx("%s: no memory for "
-						    "resolv_conf",
+						log_warn("%s: resolv_conf",
 						    log_procname);
 					else
 						strlcpy(resolv_conf,

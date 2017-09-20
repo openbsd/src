@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.508 2017/09/20 18:28:14 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.509 2017/09/20 19:21:00 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -346,7 +346,7 @@ routehandler(struct interface_info *ifi, int routefd)
 		}
 		break;
 	case RTM_DESYNC:
-		log_warnx("%s: route socket buffer overflow", log_procname);
+		log_warnx("%s: RTM_DESYNC", log_procname);
 		break;
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
@@ -369,7 +369,7 @@ routehandler(struct interface_info *ifi, int routefd)
 		linkstat = interface_status(ifi->name);
 		if (linkstat != ifi->linkstat) {
 #ifdef DEBUG
-			log_debug("%s: link state %s -> %s", log_procname,
+			log_debug("%s: link %s -> %s", log_procname,
 			    (ifi->linkstat != 0) ? "up" : "down",
 			    (linkstat != 0) ? "up" : "down");
 #endif	/* DEBUG */
@@ -1110,7 +1110,7 @@ addressinuse(char *name, struct in_addr address, char *ifname)
 	int			 used = 0;
 
 	if (getifaddrs(&ifap) != 0) {
-		log_warn("%s: addressinuse: getifaddrs", log_procname);
+		log_warn("%s: getifaddrs", log_procname);
 		return 0;
 	}
 
@@ -1150,8 +1150,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 
 	lease = calloc(1, sizeof(*lease));
 	if (lease == NULL) {
-		log_warnx("%s: lease declined - no memory for lease",
-		    log_procname);
+		log_warn("%s: lease", log_procname);
 		return NULL;
 	}
 
@@ -2566,7 +2565,7 @@ take_charge(struct interface_info *ifi, int routefd)
 			fatal("poll(routefd)");
 		}
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
-			fatal("routefd revents");
+			fatal("routefd: ERR|HUP|NVAL");
 		if (nfds == 0 || (fds[0].revents & POLLIN) == 0)
 			continue;
 		routehandler(ifi, routefd);
