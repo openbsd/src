@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.68 2017/09/20 15:14:52 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.69 2017/09/20 18:28:14 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -336,7 +336,8 @@ receive_packet(struct interface_info *ifi, struct sockaddr_in *from,
 {
 	struct bpf_hdr		 hdr;
 	struct dhcp_packet	*packet = &ifi->recv_packet;
-	int			 length = 0, offset = 0;
+	ssize_t			 length = 0;
+	int			 offset = 0;
 
 	/*
 	 * All this complexity is because BPF doesn't guarantee that
@@ -352,8 +353,11 @@ receive_packet(struct interface_info *ifi, struct sockaddr_in *from,
 		/* If the buffer is empty, fill it. */
 		if (ifi->rbuf_offset >= ifi->rbuf_len) {
 			length = read(ifi->bfdesc, ifi->rbuf, ifi->rbuf_max);
-			if (length <= 0)
-				return  length ;
+			if (length == -1) {
+				log_warn("%s: read(bfdesc)", log_procname);
+				return length;
+			} else if (length == 0)
+				return length;
 			ifi->rbuf_offset = 0;
 			ifi->rbuf_len = length;
 		}
