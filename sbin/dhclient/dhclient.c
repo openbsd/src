@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.506 2017/09/20 15:14:52 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.507 2017/09/20 16:09:42 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2215,7 +2215,8 @@ get_ifname(struct interface_info *ifi, int ioctlfd, char *arg)
 			fatal("SIOCGIFGMEMB");
 
 		arg = NULL;
-		for (ifg = ifgr.ifgr_groups; ifg && len >= sizeof(*ifg); ifg++) {
+		for (ifg = ifgr.ifgr_groups; ifg && len >= sizeof(*ifg);
+		    ifg++) {
 			len -= sizeof(*ifg);
 			if (arg != NULL)
 				fatalx("too many interfaces in group egress");

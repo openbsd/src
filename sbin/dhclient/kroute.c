@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.149 2017/09/17 21:20:23 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.150 2017/09/20 16:09:42 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -163,7 +163,8 @@ priv_flush_routes(int index, int routefd, int rdomain,
 			continue;
 
 		/* Don't bother deleting a route we're going to add. */
-		pos = route_in_rtstatic(rtm, imsg->rtstatic, imsg->rtstatic_len);
+		pos = route_in_rtstatic(rtm, imsg->rtstatic,
+		    imsg->rtstatic_len);
 		if (pos < imsg->rtstatic_len)
 			continue;
 

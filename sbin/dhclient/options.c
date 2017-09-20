@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.107 2017/09/17 21:20:23 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.108 2017/09/20 16:09:42 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -762,7 +762,8 @@ pretty_print_option(unsigned int code, struct option_data *option,
 
 	/* Code should be between 0 and 255. */
 	if (code > 255) {
-		log_warnx("%s: pretty_print_option: bad code %d", log_procname, code);
+		log_warnx("%s: pretty_print_option: bad code %d", log_procname,
+		    code);
 		goto done;
 	}
 
@@ -788,7 +789,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 	/* Figure out the size of the data. */
 	for (i = 0; fmt[i]; i++) {
 		if (numhunk == 0) {
-			log_warnx("%s: %s: Excess information in format "
+			log_warnx("%s: %s: excess information in format "
 			    "string: %s", log_procname, name, &fmt[i]);
 			goto done;
 		}
@@ -975,11 +976,13 @@ unpack_options(struct dhcp_packet *packet)
 		/* DHCP packets can also use overload areas for options. */
 		if (options[DHO_DHCP_MESSAGE_TYPE].data != NULL &&
 		    options[DHO_DHCP_OPTION_OVERLOAD].data != NULL) {
-			if ((options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1) != 0)
+			if ((options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1) !=
+			    0)
 				parse_option_buffer(options,
 				    (unsigned char *)packet->file,
 				    sizeof(packet->file));
-			if ((options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2) != 0)
+			if ((options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2) !=
+			    0)
 				parse_option_buffer(options,
 				    (unsigned char *)packet->sname,
 				    sizeof(packet->sname));
