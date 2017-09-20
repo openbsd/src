@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.41 2017/08/10 18:18:30 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.42 2017/09/20 17:05:17 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -50,7 +50,9 @@ tls_server_conn(struct tls *ctx)
 	conn_ctx->flags |= TLS_SERVER_CONN;
 
 	ctx->config->refcount++;
+
 	conn_ctx->config = ctx->config;
+	conn_ctx->keypair = ctx->config->keypair;
 
 	return (conn_ctx);
 }
@@ -112,6 +114,7 @@ tls_servername_cb(SSL *ssl, int *al, void *arg)
 		    &match) == -1)
 			goto err;
 		if (match) {
+			conn_ctx->keypair = sni_ctx->keypair;
 			SSL_set_SSL_CTX(conn_ctx->ssl_conn, sni_ctx->ssl_ctx);
 			return (SSL_TLSEXT_ERR_OK);
 		}
@@ -341,6 +344,7 @@ tls_configure_server_sni(struct tls *ctx)
 			tls_set_errorx(ctx, "out of memory");
 			goto err;
 		}
+		(*sni_ctx)->keypair = kp;
 		if (tls_configure_server_ssl(ctx, &(*sni_ctx)->ssl_ctx, kp) == -1)
 			goto err;
 		if (tls_keypair_load_cert(kp, &ctx->error,

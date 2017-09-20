@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.64 2017/08/10 18:18:30 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.65 2017/09/20 17:05:17 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -157,12 +157,16 @@ struct tls_ocsp {
 struct tls_sni_ctx {
 	struct tls_sni_ctx *next;
 
+	struct tls_keypair *keypair;
+
 	SSL_CTX *ssl_ctx;
 	X509 *ssl_cert;
 };
 
 struct tls {
 	struct tls_config *config;
+	struct tls_keypair *keypair;
+
 	struct tls_error error;
 
 	uint32_t flags;
