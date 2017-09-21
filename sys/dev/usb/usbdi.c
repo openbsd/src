@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.95 2017/05/15 10:52:08 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.96 2017/09/21 07:44:06 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -718,7 +718,10 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	int polling = pipe->device->bus->use_polling;
 	int status, flags;
 
+#if 0
+	/* XXX ohci_intr1() calls usb_transfer_complete() for RHSC. */
 	splsoftassert(IPL_SOFTUSB);
+#endif
 
 	DPRINTFN(5, ("usb_transfer_complete: pipe=%p xfer=%p status=%d "
 		     "actlen=%d\n", pipe, xfer, xfer->status, xfer->actlen));
