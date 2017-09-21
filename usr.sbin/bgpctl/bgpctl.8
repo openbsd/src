@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.77 2017/05/29 21:27:36 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.78 2017/09/21 14:47:51 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 29 2017 $
+.Dd $Mdocdate: September 21 2017 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -141,7 +141,7 @@ all, even if it announced the route refresh capability.
 .Ar peer
 may be the neighbor's address or description.
 .It Cm neighbor Ar peer Cm up
-Take the BGP session to the specified neighbor up.
+Bring the BGP session to the specified neighbor up.
 .Ar peer
 may be the neighbor's address or description.
 .It Cm network add Ar prefix Op Ar arguments
