@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.94 2017/08/28 19:32:53 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.95 2017/09/21 12:11:29 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -95,6 +95,7 @@ sxidog*		at fdt?			# watchdog timer
 sxirtc*		at fdt?			# Real Time Clock
 sxie*		at fdt?
 dwge*		at fdt?
+dwxe*		at fdt?
 sxiahci*	at fdt?			# AHCI/SATA
 sximmc*		at fdt?			# SD/MMC card controller
 sdmmc*		at sximmc?		# SD/MMC bus
