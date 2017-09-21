@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.510 2017/09/20 22:05:10 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.511 2017/09/21 15:07:54 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1159,7 +1159,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 		if (options[i].len == 0)
 			continue;
 		name = code_to_name(i);
-		if (unknown_ok == 0 && strncmp("option-", name, 7) != 0) {
+		if (unknown_ok == 0 && strncmp("option-", name, 7) == 0) {
 			log_warnx("%s: lease declined - unknown option %d",
 			    log_procname, i);
 			goto decline;
