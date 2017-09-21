@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.39 2017/09/19 15:39:23 patrick Exp $
+# $OpenBSD: GENERIC,v 1.40 2017/09/21 12:01:52 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -104,6 +104,7 @@ sxiccmu*	at fdt? early 1	# Clock Control Module/Unit
 sxirtc*		at fdt?		# Real Time Clock
 sximmc*		at fdt?		# SD/MMC card controller
 sdmmc*		at sximmc?	# SD/MMC bus
+dwxe*		at fdt?
 
 # PCI
 ppb*		at pci?			# PCI-PCI bridges
