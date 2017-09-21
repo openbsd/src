@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remote.5,v 1.25 2015/04/24 18:06:54 nicm Exp $
+.\"	$OpenBSD: remote.5,v 1.26 2017/09/21 07:51:43 anton Exp $
 .\"	$NetBSD: remote.5,v 1.4 1997/04/20 00:05:27 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)remote.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: April 24 2015 $
+.Dd $Mdocdate: September 21 2017 $
 .Dt REMOTE 5
 .Os
 .Sh NAME
@@ -76,7 +76,8 @@ a connection to the remote host.
 This is a decimal number.
 The default baud rate is 9600 baud.
 .It Sy \&dv
-(str)Device to open to establish a connection.
+(str)
+Device to open to establish a connection.
 If this file refers to a terminal line,
 .Xr cu 1
 attempts to perform an exclusive open on the device to ensure only
