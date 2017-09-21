@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.511 2017/09/21 15:07:54 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.512 2017/09/21 15:23:25 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1160,8 +1160,8 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 			continue;
 		name = code_to_name(i);
 		if (unknown_ok == 0 && strncmp("option-", name, 7) == 0) {
-			log_warnx("%s: lease declined - unknown option %d",
-			    log_procname, i);
+			log_warnx("%s: unknown option %s",
+			    log_procname, name);
 			goto decline;
 		}
 		pretty = pretty_print_option(i, &options[i], 0);
@@ -1173,8 +1173,8 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 			buf = pretty_print_domain_search(options[i].data,
 			    options[i].len);
 			if (buf == NULL || res_hnok_list(buf) == 0) {
-				log_warnx("%s: ignoring %s in offer - invalid "
-				    "host name(s)", log_procname, name);
+				log_warnx("%s: invalid host name in %s",
+				    log_procname, name);
 				continue;
 			}
 			break;
@@ -1186,16 +1186,16 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 			 * entries in the resolv.conf 'search' statement.
 			 */
 			if (res_hnok_list(pretty) == 0) {
-				log_warnx("%s: ignoring %s in offer - invalid "
-				    "host name(s)", log_procname, name);
+				log_warnx("%s: invalid host name in %s",
+				    log_procname, name);
 				continue;
 			}
 			break;
 		case DHO_HOST_NAME:
 		case DHO_NIS_DOMAIN:
 			if (res_hnok(pretty) == 0) {
-				log_warnx("%s: ignoring %s in offer - invalid "
-				    "host name", log_procname, name);
+				log_warnx("%s: invalid host name in %s",
+				    log_procname, name);
 				continue;
 			}
 			break;
@@ -1213,8 +1213,8 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	for (i = 0; i < config->required_option_count; i++) {
 		if (lease->options[config->required_options[i]].len == 0) {
 			name = code_to_name(i);
-			log_warnx("%s: lease declined - %s required but "
-			    "missing", log_procname, name);
+			log_warnx("%s: %s required but missing", log_procname,
+			    name);
 			goto decline;
 		}
 	}
@@ -1227,8 +1227,8 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	memset(ifname, 0, sizeof(ifname));
 	if (addressinuse(ifi->name, lease->address, ifname) != 0 &&
 	    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0) {
-		log_warnx("%s: lease declined - %s already configured on %s",
-		    log_procname, inet_ntoa(lease->address), ifname);
+		log_warnx("%s: %s already configured on %s", log_procname,
+		    inet_ntoa(lease->address), ifname);
 		goto decline;
 	}
 
@@ -1241,14 +1241,14 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	    packet->sname[0]) {
 		lease->server_name = malloc(DHCP_SNAME_LEN + 1);
 		if (lease->server_name == NULL) {
-			log_warn("%s: lease declined - SNAME", log_procname);
+			log_warn("%s: SNAME", log_procname);
 			goto decline;
 		}
 		memcpy(lease->server_name, packet->sname, DHCP_SNAME_LEN);
 		lease->server_name[DHCP_SNAME_LEN] = '\0';
 		if (res_hnok(lease->server_name) == 0) {
-			log_warnx("%s: lease declined - invalid host name in "
-			    "SNAME", log_procname);
+			log_warnx("%s: invalid host name in SNAME",
+			    log_procname);
 			goto decline;
 		}
 	}
@@ -1260,7 +1260,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 		/* Don't count on the NUL terminator. */
 		lease->filename = malloc(DHCP_FILE_LEN + 1);
 		if (lease->filename == NULL) {
-			log_warn("%s: lease declined - filename", log_procname);
+			log_warn("%s: filename", log_procname);
 			goto decline;
 		}
 		memcpy(lease->filename, packet->file, DHCP_FILE_LEN);
