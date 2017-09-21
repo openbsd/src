@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxuart.c,v 1.10 2017/07/03 08:17:20 visa Exp $	*/
+/*	$OpenBSD: cn30xxuart.c,v 1.11 2017/09/21 12:50:20 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -245,5 +245,8 @@ void
 uartbus_write_1(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t off,
     uint8_t value)
 {
-	*(volatile uint64_t *)(handle + (off << 3)) = value;
+	volatile uint64_t *reg = (uint64_t *)(handle + (off << 3));
+
+	*reg = value;
+	(void)*reg;
 }
