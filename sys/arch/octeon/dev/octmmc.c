@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.6 2017/09/22 14:17:52 visa Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.7 2017/09/22 14:41:37 visa Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Visa Hankala
@@ -570,6 +570,7 @@ octmmc_exec_dma(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 	struct octmmc_softc *sc = bus->bus_hc;
 	uint64_t dmacfg, dmacmd, status;
 	paddr_t locked_block = 0;
+	int bounce = 0;
 	int s;
 
 	if (cmd->c_datalen > OCTMMC_MAX_DMASEG) {
@@ -577,24 +578,28 @@ octmmc_exec_dma(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 		return;
 	}
 
-	cmd->c_error = bus_dmamap_load(sc->sc_dmat, sc->sc_dma_data,
-	    sc->sc_bounce_buf, cmd->c_datalen, NULL, BUS_DMA_WAITOK);
-	if (cmd->c_error != 0)
-		return;
+	/*
+	 * Attempt to use the buffer directly for DMA. In case the region
+	 * is not physically contiguous, bounce the data.
+	 */
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dma_data, cmd->c_data,
+	    cmd->c_datalen, NULL, BUS_DMA_WAITOK)) {
+		cmd->c_error = bus_dmamap_load(sc->sc_dmat, sc->sc_dma_data,
+		    sc->sc_bounce_buf, cmd->c_datalen, NULL, BUS_DMA_WAITOK);
+		if (cmd->c_error != 0)
+			return;
+
+		bounce = 1;
+		if (!ISSET(cmd->c_flags, SCF_CMD_READ))
+			memcpy(sc->sc_bounce_buf, cmd->c_data, cmd->c_datalen);
+	}
 
 	s = splsdmmc();
 	octmmc_acquire(bus);
 
-	/* Sync the buffer before DMA. */
-	if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_data, 0, cmd->c_datalen,
-		    BUS_DMASYNC_PREREAD);
-	} else {
-		/* Copy data to the bounce buffer. */
-		memcpy(sc->sc_bounce_buf, cmd->c_data, cmd->c_datalen);
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_data, 0, cmd->c_datalen,
-		    BUS_DMASYNC_PREWRITE);
-	}
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_data, 0, cmd->c_datalen,
+	    ISSET(cmd->c_flags, SCF_CMD_READ) ? BUS_DMASYNC_PREREAD :
+	    BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * According to Linux, the DMA hardware has a silicon bug that can
@@ -683,16 +688,12 @@ wait_intr:
 	if (ISSET(cmd->c_flags, SCF_RSP_PRESENT))
 		octmmc_get_response(sc, cmd);
 
-	/* Sync the buffer after DMA. */
-	if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_data, 0, cmd->c_datalen,
-		    BUS_DMASYNC_POSTREAD);
-		/* Copy data from the bounce buffer. */
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_data, 0, cmd->c_datalen,
+	    ISSET(cmd->c_flags, SCF_CMD_READ) ? BUS_DMASYNC_POSTREAD :
+	    BUS_DMASYNC_POSTWRITE);
+
+	if (bounce && ISSET(cmd->c_flags, SCF_CMD_READ))
 		memcpy(cmd->c_data, sc->sc_bounce_buf, cmd->c_datalen);
-	} else {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_data, 0, cmd->c_datalen,
-		    BUS_DMASYNC_POSTWRITE);
-	}
 
 unload_dma:
 	if (locked_block != 0)
