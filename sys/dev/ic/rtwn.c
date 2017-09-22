@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.33 2017/08/23 09:25:17 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.34 2017/09/22 13:41:56 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -126,7 +126,10 @@ int		rtwn_r88e_ra_init(struct rtwn_softc *, u_int8_t, u_int32_t,
 		    int, uint32_t, int);
 void		rtwn_tsf_sync_enable(struct rtwn_softc *);
 void		rtwn_set_led(struct rtwn_softc *, int, int);
+void		rtwn_set_nettype(struct rtwn_softc *, enum ieee80211_opmode);
 void		rtwn_update_short_preamble(struct ieee80211com *);
+void		rtwn_r92c_update_short_preamble(struct rtwn_softc *);
+void		rtwn_r88e_update_short_preamble(struct rtwn_softc *);
 int8_t		rtwn_r88e_get_rssi(struct rtwn_softc *, int, void *);
 void		rtwn_watchdog(struct ifnet *);
 void		rtwn_fw_reset(struct rtwn_softc *);
@@ -815,7 +818,7 @@ rtwn_tsf_sync_enable(struct rtwn_softc *sc)
 	    rtwn_read_1(sc, R92C_BCN_CTRL) & ~R92C_BCN_CTRL_EN_BCN);
 
 	/* Set initial TSF. */
-	memcpy(&tsf, ni->ni_tstamp, 8);
+	memcpy(&tsf, ni->ni_tstamp, sizeof(tsf));
 	tsf = letoh64(tsf);
 	tsf = tsf - (tsf % (ni->ni_intval * IEEE80211_DUR_TU));
 	tsf -= IEEE80211_DUR_TU;
@@ -861,6 +864,27 @@ rtwn_set_led(struct rtwn_softc *sc, int led, int on)
 		}
 	}
 	sc->ledlink = on;	/* Save LED state. */
+}
+
+void
+rtwn_set_nettype(struct rtwn_softc *sc, enum ieee80211_opmode opmode)
+{
+	uint8_t msr;
+
+	msr = rtwn_read_1(sc, R92C_MSR) & ~R92C_MSR_NETTYPE_MASK;
+
+	switch (opmode) {
+	case IEEE80211_M_MONITOR:
+		msr |= R92C_MSR_NETTYPE_NOLINK;
+		break;
+	case IEEE80211_M_STA:
+		msr |= R92C_MSR_NETTYPE_INFRA;
+		break;
+	default:
+		break;
+	}
+
+	rtwn_write_1(sc, R92C_MSR, msr);
 }
 
 void
@@ -920,9 +944,7 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		rtwn_set_led(sc, RTWN_LED_LINK, 0);
 
 		/* Set media status to 'No Link'. */
-		reg = rtwn_read_4(sc, R92C_CR);
-		reg = RW(reg, R92C_CR_NETTYPE, R92C_CR_NETTYPE_NOLINK);
-		rtwn_write_4(sc, R92C_CR, reg);
+		rtwn_set_nettype(sc, IEEE80211_M_MONITOR);
 
 		/* Stop Rx of data frames. */
 		rtwn_write_2(sc, R92C_RXFLTMAP2, 0);
@@ -973,7 +995,9 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		/* Pause AC Tx queues. */
 		rtwn_write_1(sc, R92C_TXPAUSE,
-		    rtwn_read_1(sc, R92C_TXPAUSE) | 0x0f);
+		    rtwn_read_1(sc, R92C_TXPAUSE) | R92C_TXPAUSE_AC_VO |
+		    R92C_TXPAUSE_AC_VI | R92C_TXPAUSE_AC_BE |
+		    R92C_TXPAUSE_AC_BK);
 
 		rtwn_set_chan(sc, ic->ic_bss->ni_chan, NULL);
 		sc->sc_ops.next_scan(sc->sc_ops.cookie);
@@ -1009,9 +1033,7 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		ni = ic->ic_bss;
 
 		/* Set media status to 'Associated'. */
-		reg = rtwn_read_4(sc, R92C_CR);
-		reg = RW(reg, R92C_CR_NETTYPE, R92C_CR_NETTYPE_INFRA);
-		rtwn_write_4(sc, R92C_CR, reg);
+		rtwn_set_nettype(sc, IEEE80211_M_STA);
 
 		/* Set BSSID. */
 		rtwn_write_4(sc, R92C_BSSID + 0, LE_READ_4(&ni->ni_bssid[0]));
@@ -1029,7 +1051,7 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		rtwn_write_2(sc, R92C_RXFLTMAP2, 0xffff);
 
 		/* Flush all AC queues. */
-		rtwn_write_1(sc, R92C_TXPAUSE, 0);
+		rtwn_write_1(sc, R92C_TXPAUSE, ~R92C_TXPAUSE_ALL);
 
 		/* Set beacon interval. */
 		rtwn_write_2(sc, R92C_BCN_INTERVAL, ni->ni_intval);
@@ -1067,14 +1089,37 @@ void
 rtwn_update_short_preamble(struct ieee80211com *ic)
 {
 	struct rtwn_softc *sc = ic->ic_softc;
+
+	if (sc->chip & RTWN_CHIP_88E)
+		rtwn_r88e_update_short_preamble(sc);
+	else
+		rtwn_r92c_update_short_preamble(sc);
+}
+
+void
+rtwn_r92c_update_short_preamble(struct rtwn_softc *sc)
+{
 	uint32_t reg;
 
 	reg = rtwn_read_4(sc, R92C_RRSR);
-	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
+	if (sc->sc_ic.ic_flags & IEEE80211_F_SHPREAMBLE)
 		reg |= R92C_RRSR_SHORT;
 	else
 		reg &= ~R92C_RRSR_SHORT;
 	rtwn_write_4(sc, R92C_RRSR, reg);
+}
+
+void
+rtwn_r88e_update_short_preamble(struct rtwn_softc *sc)
+{
+	uint32_t reg;
+
+	reg = rtwn_read_4(sc, R92C_WMAC_TRXPTCL_CTL);
+	if (sc->sc_ic.ic_flags & IEEE80211_F_SHPREAMBLE)
+		reg |= R92C_WMAC_TRXPTCL_CTL_SHORT;
+	else
+		reg &= ~R92C_WMAC_TRXPTCL_CTL_SHORT;
+	rtwn_write_4(sc, R92C_WMAC_TRXPTCL_CTL, reg);
 }
 
 void
@@ -2268,7 +2313,9 @@ rtwn_iq_calib_run(struct rtwn_softc *sc, int n, uint16_t tx[2][2],
 		rtwn_bb_write(sc, R92C_LSSI_PARAM(1), 0x00010000);
 	}
 
-	rtwn_write_1(sc, R92C_TXPAUSE, 0x3f);
+	rtwn_write_1(sc, R92C_TXPAUSE, R92C_TXPAUSE_AC_VO |
+	    R92C_TXPAUSE_AC_VI | R92C_TXPAUSE_AC_BE | R92C_TXPAUSE_AC_BK |
+	    R92C_TXPAUSE_MGNT | R92C_TXPAUSE_HIGH);
 	rtwn_write_1(sc, R92C_BCN_CTRL,
 	    iq_cal_regs->bcn_ctrl & ~(R92C_BCN_CTRL_EN_BCN));
 	rtwn_write_1(sc, R92C_BCN_CTRL1,
@@ -2507,7 +2554,7 @@ rtwn_lc_calib(struct rtwn_softc *sc)
 		}
 	} else {
 		/* Block all Tx queues. */
-		rtwn_write_1(sc, R92C_TXPAUSE, 0xff);
+		rtwn_write_1(sc, R92C_TXPAUSE, R92C_TXPAUSE_ALL);
 	}
 	/* Start calibration. */
 	rtwn_rf_write(sc, 0, R92C_RF_CHNLBW,
@@ -2525,7 +2572,7 @@ rtwn_lc_calib(struct rtwn_softc *sc)
 			rtwn_rf_write(sc, i, R92C_RF_AC, rf_ac[i]);
 	} else {
 		/* Unblock all Tx queues. */
-		rtwn_write_1(sc, R92C_TXPAUSE, 0x00);
+		rtwn_write_1(sc, R92C_TXPAUSE, ~R92C_TXPAUSE_ALL);
 	}
 }
 
@@ -2664,9 +2711,7 @@ rtwn_init(struct ifnet *ifp)
 		rtwn_write_1(sc, R92C_MACID + i, ic->ic_myaddr[i]);
 
 	/* Set initial network type. */
-	reg = rtwn_read_4(sc, R92C_CR);
-	reg = RW(reg, R92C_CR_NETTYPE, R92C_CR_NETTYPE_INFRA);
-	rtwn_write_4(sc, R92C_CR, reg);
+	rtwn_set_nettype(sc, IEEE80211_M_MONITOR);
 
 	rtwn_rxfilter_init(sc);
 
