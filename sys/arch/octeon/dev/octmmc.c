@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.5 2017/09/04 16:25:46 visa Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.6 2017/09/22 14:17:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Visa Hankala
@@ -44,7 +44,7 @@
 
 #define OCTMMC_BLOCK_SIZE		512
 #define OCTMMC_CMD_TIMEOUT		5		/* in seconds */
-#define OCTMMC_MAX_DMASEG		(1u << 18)
+#define OCTMMC_MAX_DMASEG		MIN(MAXPHYS, (1u << 18))
 #define OCTMMC_MAX_FREQ			52000		/* in kHz */
 #define OCTMMC_MAX_BUSES		4
 #define OCTMMC_MAX_INTRS		4
@@ -82,6 +82,8 @@ struct octmmc_softc {
 	bus_space_handle_t	 sc_dma_ioh;
 	bus_dma_tag_t		 sc_dmat;
 	bus_dmamap_t		 sc_dma_data;
+	caddr_t			 sc_bounce_buf;
+	bus_dma_segment_t	 sc_bounce_seg;
 	void			*sc_ihs[OCTMMC_MAX_INTRS];
 	int			 sc_nihs;
 
@@ -164,7 +166,7 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 	const int *interrupts;
 	uint64_t reg;
 	uint32_t bus_id, bus_width;
-	int i, node;
+	int i, node, rsegs;
 
 	if (OF_is_compatible(fa->fa_node, "cavium,octeon-7890-mmc")) {
 		sc->sc_hwrev = OCTMMC_HWREV_7890;
@@ -191,10 +193,22 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": could not map DMA registers\n");
 		goto error;
 	}
-	if (bus_dmamap_create(sc->sc_dmat, OCTMMC_MAX_DMASEG, 1,
-	    OCTMMC_MAX_DMASEG, 0, BUS_DMA_NOWAIT, &sc->sc_dma_data)) {
-		printf(": could not create data dmamap\n");
+	if (bus_dmamem_alloc(sc->sc_dmat, OCTMMC_MAX_DMASEG, 0, 0,
+	    &sc->sc_bounce_seg, 1, &rsegs, BUS_DMA_NOWAIT)) {
+		printf(": could not allocate bounce buffer\n");
 		goto error;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_bounce_seg, rsegs,
+	    OCTMMC_MAX_DMASEG, &sc->sc_bounce_buf,
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
+		printf(": could not map bounce buffer\n");
+		goto error_free;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, OCTMMC_MAX_DMASEG, 1,
+	    OCTMMC_MAX_DMASEG, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+	    &sc->sc_dma_data)) {
+		printf(": could not create data dmamap\n");
+		goto error_unmap;
 	}
 
 	/* Disable all buses. */
@@ -212,7 +226,7 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 		    IPL_SDMMC, octmmc_intr, sc, DEVNAME(sc));
 		if (ih == NULL) {
 			printf(": could not establish interrupt %d\n", i);
-			goto error;
+			goto error_intr;
 		}
 		sc->sc_ihs[i] = ih;
 		sc->sc_nihs++;
@@ -272,9 +286,14 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 	}
 	return;
 
-error:
+error_intr:
 	for (i = 0; i < sc->sc_nihs; i++)
 		octeon_intr_disestablish_fdt(sc->sc_ihs[i]);
+error_unmap:
+	bus_dmamem_unmap(sc->sc_dmat, sc->sc_bounce_buf, OCTMMC_MAX_DMASEG);
+error_free:
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_bounce_seg, rsegs);
+error:
 	if (sc->sc_dma_data != NULL)
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dma_data);
 	if (sc->sc_dma_ioh != 0)
@@ -551,28 +570,17 @@ octmmc_exec_dma(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 	struct octmmc_softc *sc = bus->bus_hc;
 	uint64_t dmacfg, dmacmd, status;
 	paddr_t locked_block = 0;
-	caddr_t kva;
-	bus_dma_segment_t segs;
-	int rsegs, s;
+	int s;
 
 	if (cmd->c_datalen > OCTMMC_MAX_DMASEG) {
 		cmd->c_error = ENOMEM;
 		return;
 	}
 
-	/* Acquire a physically contiguous buffer for DMA. */
-	cmd->c_error = bus_dmamem_alloc(sc->sc_dmat, cmd->c_datalen, 0, 0,
-	    &segs, 1, &rsegs, BUS_DMA_WAITOK);
+	cmd->c_error = bus_dmamap_load(sc->sc_dmat, sc->sc_dma_data,
+	    sc->sc_bounce_buf, cmd->c_datalen, NULL, BUS_DMA_WAITOK);
 	if (cmd->c_error != 0)
 		return;
-	cmd->c_error = bus_dmamem_map(sc->sc_dmat, &segs, rsegs, cmd->c_datalen,
-	    &kva, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
-	if (cmd->c_error != 0)
-		goto free_dma;
-	cmd->c_error = bus_dmamap_load(sc->sc_dmat, sc->sc_dma_data, kva,
-	    cmd->c_datalen, NULL, BUS_DMA_WAITOK);
-	if (cmd->c_error != 0)
-		goto unmap_dma;
 
 	s = splsdmmc();
 	octmmc_acquire(bus);
@@ -583,7 +591,7 @@ octmmc_exec_dma(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 		    BUS_DMASYNC_PREREAD);
 	} else {
 		/* Copy data to the bounce buffer. */
-		memcpy(kva, cmd->c_data, cmd->c_datalen);
+		memcpy(sc->sc_bounce_buf, cmd->c_data, cmd->c_datalen);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_data, 0, cmd->c_datalen,
 		    BUS_DMASYNC_PREWRITE);
 	}
@@ -680,7 +688,7 @@ wait_intr:
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_data, 0, cmd->c_datalen,
 		    BUS_DMASYNC_POSTREAD);
 		/* Copy data from the bounce buffer. */
-		memcpy(cmd->c_data, kva, cmd->c_datalen);
+		memcpy(cmd->c_data, sc->sc_bounce_buf, cmd->c_datalen);
 	} else {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_data, 0, cmd->c_datalen,
 		    BUS_DMASYNC_POSTWRITE);
@@ -695,10 +703,6 @@ unload_dma:
 	splx(s);
 
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_dma_data);
-unmap_dma:
-	bus_dmamem_unmap(sc->sc_dmat, kva, cmd->c_datalen);
-free_dma:
-	bus_dmamem_free(sc->sc_dmat, &segs, rsegs);
 }
 
 void
