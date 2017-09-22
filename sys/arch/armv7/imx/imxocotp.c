@@ -1,4 +1,4 @@
-/* $OpenBSD: imxocotp.c,v 1.5 2017/09/20 11:21:58 kettenis Exp $ */
+/* $OpenBSD: imxocotp.c,v 1.6 2017/09/22 09:34:23 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -85,21 +85,6 @@ imxocotp_attach(struct device *parent, struct device *self, void *aux)
 
 	imxocotp_sc = sc;
 	printf("\n");
-}
-
-void
-imxocotp_get_ethernet_address(u_int8_t* mac)
-{
-	uint32_t value;
-
-	value = bus_space_read_4(imxocotp_sc->sc_iot, imxocotp_sc->sc_ioh, OCOTP_MAC0);
-	mac[5] = value & 0xff;
-	mac[4] = (value >> 8) & 0xff;
-	mac[3] = (value >> 16) & 0xff;
-	mac[2] = (value >> 24) & 0xff;
-	value = bus_space_read_4(imxocotp_sc->sc_iot, imxocotp_sc->sc_ioh, OCOTP_MAC1);
-	mac[1] = value & 0xff;
-	mac[0] = (value >> 8) & 0xff;
 }
 
 uint32_t
