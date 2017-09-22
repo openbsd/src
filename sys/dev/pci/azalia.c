@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.237 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.238 2017/09/22 06:33:44 tb Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -696,23 +696,12 @@ azalia_shutdown(void *v)
 {
 	azalia_t *az = (azalia_t *)v;
 	uint32_t gctl;
-	codec_t *codec;
-	int i;
 
 	/* disable unsolicited response */
 	gctl = AZ_READ_4(az, GCTL);
 	AZ_WRITE_4(az, GCTL, gctl & ~(HDA_GCTL_UNSOL));
 
 	timeout_del(&az->unsol_to);
-
-	/* power off all codecs */
-	for (i = 0; i < az->ncodecs; i++) {
-		codec = &az->codecs[i];
-		if (codec->audiofunc < 0)
-			continue;
-		azalia_comresp(codec, codec->audiofunc, CORB_SET_POWER_STATE,
-		    CORB_PS_D3, NULL);
-	}
 
 	/* halt CORB/RIRB */
 	azalia_halt_corb(az);
@@ -989,10 +978,20 @@ int
 azalia_halt_corb(azalia_t *az)
 {
 	uint8_t corbctl;
+	codec_t *codec;
 	int i;
 
 	corbctl = AZ_READ_1(az, CORBCTL);
 	if (corbctl & HDA_CORBCTL_CORBRUN) { /* running? */
+		/* power off all codecs */
+		for (i = 0; i < az->ncodecs; i++) {
+			codec = &az->codecs[i];
+			if (codec->audiofunc < 0)
+				continue;
+			azalia_comresp(codec, codec->audiofunc,
+			    CORB_SET_POWER_STATE, CORB_PS_D3, NULL);
+		}
+
 		AZ_WRITE_1(az, CORBCTL, corbctl & ~HDA_CORBCTL_CORBRUN);
 		for (i = 5000; i > 0; i--) {
 			DELAY(10);
