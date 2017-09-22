@@ -1,4 +1,4 @@
-/* $OpenBSD: alerts.c,v 1.27 2017/09/11 20:11:45 nicm Exp $ */
+/* $OpenBSD: alerts.c,v 1.28 2017/09/22 09:04:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -141,9 +141,11 @@ alerts_reset(struct window *w)
 {
 	struct timeval	tv;
 
+	if (!event_initialized(&w->alerts_timer))
+		evtimer_set(&w->alerts_timer, alerts_timer, w);
+
 	w->flags &= ~WINDOW_SILENCE;
-	if (event_initialized(&w->alerts_timer))
-		event_del(&w->alerts_timer);
+	event_del(&w->alerts_timer);
 
 	timerclear(&tv);
 	tv.tv_sec = options_get_number(w->options, "monitor-silence");
@@ -157,9 +159,6 @@ void
 alerts_queue(struct window *w, int flags)
 {
 	alerts_reset(w);
-
-	if (!event_initialized(&w->alerts_timer))
-		evtimer_set(&w->alerts_timer, alerts_timer, w);
 
 	if ((w->flags & flags) != flags) {
 		w->flags |= flags;
