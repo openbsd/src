@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.99 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.100 2017/09/22 13:44:00 kevlo Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -2986,7 +2986,7 @@ rtw_compute_duration(struct ieee80211_frame *wh, int len, uint32_t flags,
 	int ack, rc;
 	int firstlen, hdrlen, lastlen, lastlen0, npkt, overlen, paylen;
 
-	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
+	if (ieee80211_has_addr4(wh))
 		hdrlen = sizeof(struct ieee80211_frame_addr4);
 	else
 		hdrlen = sizeof(struct ieee80211_frame);

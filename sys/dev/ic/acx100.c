@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.26 2015/11/24 13:45:06 mpi Exp $ */
+/*	$OpenBSD: acx100.c,v 1.27 2017/09/22 13:44:00 kevlo Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -720,7 +720,7 @@ acx100_proc_wep_rxbuf(struct acx_softc *sc, struct mbuf *m, int *len)
 	 */
 	f = mtod(m, struct ieee80211_frame *);
 
-	if ((f->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
+	if (ieee80211_has_addr4(f))
 		mac_hdrlen = sizeof(struct ieee80211_frame_addr4);
 	else
 		mac_hdrlen = sizeof(struct ieee80211_frame);
