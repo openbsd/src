@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.512 2017/09/21 15:23:25 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.513 2017/09/22 14:04:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -104,7 +104,6 @@ char path_option_db[PATH_MAX];
 int log_perror = 1;
 int nullfd = -1;
 int daemonize = 1;
-int unknown_ok = 1;
 
 volatile sig_atomic_t quit;
 
@@ -446,7 +445,7 @@ main(int argc, char *argv[])
 	log_setverbose(1);
 
 	q_flag = d_flag = 0;
-	while ((ch = getopt(argc, argv, "c:di:l:L:qu")) != -1)
+	while ((ch = getopt(argc, argv, "c:di:l:L:q")) != -1)
 		switch (ch) {
 		case 'c':
 			path_dhclient_conf = optarg;
@@ -475,9 +474,6 @@ main(int argc, char *argv[])
 			break;
 		case 'q':
 			q_flag = 1;
-			break;
-		case 'u':
-			unknown_ok = 0;
 			break;
 		default:
 			usage();
@@ -694,7 +690,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-d | -q] [-u] [-c file] [-i options] [-L file] "
+	    "usage: %s [-d | -q] [-c file] [-i options] [-L file] "
 	    "[-l file] interface\n", __progname);
 	exit(1);
 }
@@ -1159,11 +1155,6 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 		if (options[i].len == 0)
 			continue;
 		name = code_to_name(i);
-		if (unknown_ok == 0 && strncmp("option-", name, 7) == 0) {
-			log_warnx("%s: unknown option %s",
-			    log_procname, name);
-			goto decline;
-		}
 		pretty = pretty_print_option(i, &options[i], 0);
 		if (strlen(pretty) == 0)
 			continue;
