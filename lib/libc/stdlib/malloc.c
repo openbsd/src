@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.231 2017/09/12 18:36:30 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.232 2017/09/23 15:13:12 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -179,7 +179,7 @@ struct chunk_info {
 struct malloc_readonly {
 	struct dir_info *malloc_pool[_MALLOC_MUTEXES];	/* Main bookkeeping information */
 	int	malloc_mt;		/* multi-threaded mode? */
-	int	malloc_freenow;		/* Free quickly - disable chunk rnd */
+	int	malloc_freecheck;	/* Extensive double free check */
 	int	malloc_freeunmap;	/* mprotect free pages PROT_NONE? */
 	int	malloc_junk;		/* junk fill? */
 	int	malloc_realloc;		/* always realloc? */
@@ -520,11 +520,11 @@ omalloc_parseopt(char opt)
 		break;
 #endif /* MALLOC_STATS */
 	case 'f':
-		mopts.malloc_freenow = 0;
+		mopts.malloc_freecheck = 0;
 		mopts.malloc_freeunmap = 0;
 		break;
 	case 'F':
-		mopts.malloc_freenow = 1;
+		mopts.malloc_freecheck = 1;
 		mopts.malloc_freeunmap = 1;
 		break;
 	case 'g':
@@ -605,7 +605,7 @@ omalloc_init(void)
 		for (; p != NULL && *p != '\0'; p++) {
 			switch (*p) {
 			case 'S':
-				for (q = "CGJ"; *q != '\0'; q++)
+				for (q = "CFGJ"; *q != '\0'; q++)
 					omalloc_parseopt(*q);
 				mopts.malloc_cache = 0;
 				break;
@@ -1046,10 +1046,12 @@ validate_canary(struct dir_info *d, u_char *ptr, size_t sz, size_t allocated)
 	q = p + check_sz;
 
 	while (p < q) {
-		if (*p++ != SOME_JUNK) {
-			wrterror(d, "chunk canary corrupted %p %#tx@%#zx",
-			    ptr, p - ptr - 1, sz);
+		if (*p != SOME_JUNK) {
+			wrterror(d, "chunk canary corrupted %p %#tx@%#zx%s",
+			    ptr, p - ptr, sz, *p == SOME_FREEJUNK ?
+			        " (double free?)" : "");
 		}
+		p++;
 	}
 }
 
@@ -1381,13 +1383,18 @@ ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
 		unmap(pool, p, PAGEROUND(sz), clear);
 		delete(pool, r);
 	} else {
-		void *tmp;
-		int i;
+		/* Validate and optionally canary check */
+		find_chunknum(pool, r, p, mopts.chunk_canaries);
+		if (!clear) {
+			void *tmp;
+			int i;
 
-		/* Delayed free or canaries? Extra check */
-		if (!mopts.malloc_freenow || mopts.chunk_canaries)
-			find_chunknum(pool, r, p, mopts.chunk_canaries);
-		if (!clear && !mopts.malloc_freenow) {
+			if (mopts.malloc_freecheck) {
+				for (i = 0; i <= MALLOC_DELAYED_CHUNK_MASK; i++)
+					if (p == pool->delayed_chunks[i])
+						wrterror(pool,
+						    "double free %p", p);
+			}
 			if (mopts.malloc_junk && sz > 0)
 				memset(p, SOME_FREEJUNK, sz);
 			i = getrbyte(pool) & MALLOC_DELAYED_CHUNK_MASK;
@@ -1395,13 +1402,11 @@ ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
 			p = pool->delayed_chunks[i];
 			if (tmp == p)
 				wrterror(pool, "double free %p", tmp);
+			pool->delayed_chunks[i] = tmp;
 			if (mopts.malloc_junk)
 				validate_junk(pool, p);
-			pool->delayed_chunks[i] = tmp;
-		} else {
-			if ((clear || mopts.malloc_junk) && sz > 0)
-				memset(p, clear ? 0 : SOME_FREEJUNK, sz);
-		}
+		} else if (sz > 0)
+			memset(p, 0, sz);
 		if (p != NULL) {
 			r = find(pool, p);
 			if (r == NULL)
@@ -2348,7 +2353,7 @@ malloc_exit(void)
 		snprintf(buf, sizeof(buf),
 		    "MT=%d I=%d F=%d U=%d J=%d R=%d X=%d C=%d cache=%u G=%zu\n",
 		    mopts.malloc_mt, mopts.internal_funcs,
-		    mopts.malloc_freenow,
+		    mopts.malloc_freecheck,
 		    mopts.malloc_freeunmap, mopts.malloc_junk,
 		    mopts.malloc_realloc, mopts.malloc_xmalloc,
 		    mopts.chunk_canaries, mopts.malloc_cache,
