@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.7 2017/09/22 14:41:37 visa Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.8 2017/09/23 04:56:42 visa Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Visa Hankala
@@ -578,6 +578,9 @@ octmmc_exec_dma(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 		return;
 	}
 
+	s = splsdmmc();
+	octmmc_acquire(bus);
+
 	/*
 	 * Attempt to use the buffer directly for DMA. In case the region
 	 * is not physically contiguous, bounce the data.
@@ -587,15 +590,12 @@ octmmc_exec_dma(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 		cmd->c_error = bus_dmamap_load(sc->sc_dmat, sc->sc_dma_data,
 		    sc->sc_bounce_buf, cmd->c_datalen, NULL, BUS_DMA_WAITOK);
 		if (cmd->c_error != 0)
-			return;
+			goto dma_out;
 
 		bounce = 1;
 		if (!ISSET(cmd->c_flags, SCF_CMD_READ))
 			memcpy(sc->sc_bounce_buf, cmd->c_data, cmd->c_datalen);
 	}
-
-	s = splsdmmc();
-	octmmc_acquire(bus);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_data, 0, cmd->c_datalen,
 	    ISSET(cmd->c_flags, SCF_CMD_READ) ? BUS_DMASYNC_PREREAD :
@@ -700,10 +700,11 @@ unload_dma:
 		Octeon_unlock_secondary_cache(curcpu(), locked_block,
 		    OCTMMC_BLOCK_SIZE);
 
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dma_data);
+
+dma_out:
 	octmmc_release(bus);
 	splx(s);
-
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_dma_data);
 }
 
 void
