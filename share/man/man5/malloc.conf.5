@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.conf.5,v 1.11 2016/10/31 10:07:18 otto Exp $
+.\"	$OpenBSD: malloc.conf.5,v 1.12 2017/09/23 15:13:34 otto Exp $
 .\"
 .\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
 .\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 31 2016 $
+.Dd $Mdocdate: September 23 2017 $
 .Dt MALLOC.CONF 5
 .Os
 .Sh NAME
@@ -56,18 +56,11 @@ at exit.
 This option requires the library to have been compiled with -DMALLOC_STATS in
 order to have any effect.
 .It Cm F
-.Dq Freeguard .
-Enable use after free detection.
+.Dq Freecheck .
+Enable more extensive double free and use after free detection.
+All chunks in the delayed free list will be checked for double frees.
 Unused pages on the freelist are read and write protected to
 cause a segmentation fault upon access.
-This will also switch off the delayed freeing of chunks,
-reducing random behaviour but detecting double
-.Xr free 3
-calls as early as possible.
-This option is intended for debugging rather than improved security
-(use the
-.Cm U
-option for security).
 .It Cm G
 .Dq Guard .
 Enable guard pages.
