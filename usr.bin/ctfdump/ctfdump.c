@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.6 2017/09/19 08:28:57 jsg Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.7 2017/09/23 12:24:31 uwe Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -56,6 +56,7 @@ uint32_t	 ctf_dump_type(struct ctf_header *, const char *, off_t,
 		     uint32_t, uint32_t);
 const char	*ctf_kind2name(uint16_t);
 const char	*ctf_enc2name(uint16_t);
+const char	*ctf_fpenc2name(uint16_t);
 const char	*ctf_off2name(struct ctf_header *, const char *, off_t,
 		     uint32_t);
 
@@ -448,8 +449,9 @@ ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
 	case CTF_K_FLOAT:
 		eob = *((uint32_t *)(p + toff));
 		toff += sizeof(uint32_t);
-		printf(" encoding=0x%x offset=%u bits=%u",
-		    CTF_FP_ENCODING(eob), CTF_FP_OFFSET(eob), CTF_FP_BITS(eob));
+		printf(" encoding=%s offset=%u bits=%u",
+		    ctf_fpenc2name(CTF_FP_ENCODING(eob)), CTF_FP_OFFSET(eob),
+		    CTF_FP_BITS(eob));
 		break;
 	case CTF_K_ARRAY:
 		cta = (struct ctf_array *)(p + toff);
@@ -550,6 +552,20 @@ ctf_enc2name(uint16_t enc)
 		return "VARARGS";
 
 	if (enc > 0 && enc < nitems(enc_name))
+		return enc_name[enc - 1];
+
+	snprintf(invalid, sizeof(invalid), "0x%x", enc);
+	return invalid;
+}
+
+const char *
+ctf_fpenc2name(uint16_t enc)
+{
+	static const char *enc_name[] = { "SINGLE", "DOUBLE", NULL, NULL,
+	    NULL, "LDOUBLE" };
+	static char invalid[7];
+
+	if (enc > 0 && enc <= nitems(enc_name) && enc_name[enc - 1] != NULL)
 		return enc_name[enc - 1];
 
 	snprintf(invalid, sizeof(invalid), "0x%x", enc);
