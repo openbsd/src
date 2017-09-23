@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.7 2017/09/23 12:24:31 uwe Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.8 2017/09/23 12:25:39 uwe Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -551,7 +551,7 @@ ctf_enc2name(uint16_t enc)
 	if (enc == CTF_INT_VARARGS)
 		return "VARARGS";
 
-	if (enc > 0 && enc < nitems(enc_name))
+	if (enc > 0 && enc <= nitems(enc_name))
 		return enc_name[enc - 1];
 
 	snprintf(invalid, sizeof(invalid), "0x%x", enc);
