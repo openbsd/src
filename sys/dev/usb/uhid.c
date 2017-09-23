@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.68 2017/07/20 16:54:45 mpi Exp $ */
+/*	$OpenBSD: uhid.c,v 1.69 2017/09/23 06:12:14 mpi Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -359,6 +359,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 
 	switch (cmd) {
 	case FIONBIO:
+	case FIOASYNC:
 		/* All handled in the upper FS layer. */
 		break;
 
