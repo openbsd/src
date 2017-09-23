@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.97 2017/09/12 08:16:13 mpi Exp $
+# $OpenBSD: Makefile.cross,v 1.98 2017/09/23 12:35:52 patrick Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -231,19 +231,22 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 ${CROSSGCC}:		${CROSSBINUTILS}
 .if ${COMPILER_VERSION:L} == "clang"
 	(cd ${.CURDIR}/gnu/usr.bin/clang; \
-	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    MACHINE_ARCH=${TARGET_ARCH} \
-	    ${MAKE} obj)
-	(cd ${.CURDIR}/gnu/usr.bin/clang; \
 	    CC=${CC} CXX=${CXX} \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    MACHINE_ARCH=${TARGET_ARCH} \
 	    ${MAKE} all)
 	(cd ${.CURDIR}/gnu/usr.bin/clang; \
 	    DESTDIR=${CROSSDIR} \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    MACHINE_ARCH=${TARGET_ARCH} \
 	    ${MAKE} install)
+	(cd ${.CURDIR}/gnu/usr.bin/clang; \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    MACHINE_ARCH=${TARGET_ARCH} \
+	    ${MAKE} clean)
 	mv ${CROSSDIR}/usr/bin/clang ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang
 	mv ${CROSSDIR}/usr/bin/clang++ ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang++
 	mv ${CROSSDIR}/usr/bin/ld ${CROSSDIR}/usr/bin/${TARGET_CANON}-ld
