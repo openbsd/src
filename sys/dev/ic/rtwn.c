@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.34 2017/09/22 13:41:56 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.35 2017/09/23 13:57:41 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1051,7 +1051,7 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		rtwn_write_2(sc, R92C_RXFLTMAP2, 0xffff);
 
 		/* Flush all AC queues. */
-		rtwn_write_1(sc, R92C_TXPAUSE, ~R92C_TXPAUSE_ALL);
+		rtwn_write_1(sc, R92C_TXPAUSE, 0x00);
 
 		/* Set beacon interval. */
 		rtwn_write_2(sc, R92C_BCN_INTERVAL, ni->ni_intval);
@@ -2572,7 +2572,7 @@ rtwn_lc_calib(struct rtwn_softc *sc)
 			rtwn_rf_write(sc, i, R92C_RF_AC, rf_ac[i]);
 	} else {
 		/* Unblock all Tx queues. */
-		rtwn_write_1(sc, R92C_TXPAUSE, ~R92C_TXPAUSE_ALL);
+		rtwn_write_1(sc, R92C_TXPAUSE, 0x00);
 	}
 }
 
