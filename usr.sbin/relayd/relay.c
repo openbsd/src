@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.226 2017/08/28 17:31:00 bluhm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.227 2017/09/23 11:56:57 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1679,8 +1679,10 @@ relay_close(struct rsession *con, const char *msg)
 		(void)print_host(&con->se_in.ss, ibuf, sizeof(ibuf));
 		(void)print_host(&con->se_out.ss, obuf, sizeof(obuf));
 		if (EVBUFFER_LENGTH(con->se_log) &&
-		    evbuffer_add_printf(con->se_log, "\r\n") != -1)
-			ptr = evbuffer_readline(con->se_log);
+		    evbuffer_add_printf(con->se_log, "\r\n") != -1) {
+			ptr = evbuffer_readln(con->se_log, NULL,
+			    EVBUFFER_EOL_CRLF);
+		}
 		log_info("relay %s, "
 		    "session %d (%d active), %s, %s -> %s:%d, "
 		    "%s%s%s", rlay->rl_conf.name, con->se_id, relay_sessions,

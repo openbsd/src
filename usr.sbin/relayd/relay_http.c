@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.66 2017/05/28 10:39:15 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.67 2017/09/23 11:56:57 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -169,14 +169,16 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		goto done;
 	}
 
-	while (!cre->done && (line = evbuffer_readline(src)) != NULL) {
-		linelen = strlen(line);
+	while (!cre->done) {
+		line = evbuffer_readln(src, &linelen, EVBUFFER_EOL_CRLF);
+		if (line == NULL)
+			break;
 
 		/*
 		 * An empty line indicates the end of the request.
 		 * libevent already stripped the \r\n for us.
 		 */
-		if (!linelen) {
+		if (linelen == 0) {
 			cre->done = 1;
 			free(line);
 			break;
@@ -594,7 +596,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	char			*line;
 	long long		 llval;
-	size_t			 size;
+	size_t			 size, linelen;
 
 	getmonotime(&con->se_tv_last);
 	cre->timedout = 0;
@@ -625,13 +627,13 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	}
 	switch (cre->toread) {
 	case TOREAD_HTTP_CHUNK_LENGTH:
-		line = evbuffer_readline(src);
+		line = evbuffer_readln(src, &linelen, EVBUFFER_EOL_CRLF);
 		if (line == NULL) {
 			/* Ignore empty line, continue */
 			bufferevent_enable(bev, EV_READ);
 			return;
 		}
-		if (strlen(line) == 0) {
+		if (linelen == 0) {
 			free(line);
 			goto next;
 		}
@@ -660,7 +662,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 		break;
 	case TOREAD_HTTP_CHUNK_TRAILER:
 		/* Last chunk is 0 bytes followed by trailer and empty line */
-		line = evbuffer_readline(src);
+		line = evbuffer_readln(src, &linelen, EVBUFFER_EOL_CRLF);
 		if (line == NULL) {
 			/* Ignore empty line, continue */
 			bufferevent_enable(bev, EV_READ);
@@ -671,7 +673,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 			free(line);
 			goto fail;
 		}
-		if (strlen(line) == 0) {
+		if (linelen == 0) {
 			/* Switch to HTTP header mode */
 			cre->toread = TOREAD_HTTP_HEADER;
 			bev->readcb = relay_read_http;
@@ -680,7 +682,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 		break;
 	case 0:
 		/* Chunk is terminated by an empty newline */
-		line = evbuffer_readline(src);
+		line = evbuffer_readln(src, &linelen, EVBUFFER_EOL_CRLF);
 		free(line);
 		if (relay_bufferevent_print(cre->dst, "\r\n") == -1)
 			goto fail;
