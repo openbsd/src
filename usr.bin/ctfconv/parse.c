@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.6 2017/09/24 08:44:14 jsg Exp $ */
+/*	$OpenBSD: parse.c,v 1.7 2017/09/24 09:14:25 jsg Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -606,6 +606,8 @@ cu_parse(struct dwcu *dcu, struct itype_queue *cutq, struct ioff_tree *cuot)
 			break;
 		case DW_TAG_base_type:
 			it = parse_base(die, psz);
+			if (it == NULL)
+				continue;
 			break;
 		case DW_TAG_const_type:
 			it = parse_refers(die, psz, CTF_K_CONST);
