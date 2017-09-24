@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.5 2017/08/29 21:10:20 deraadt Exp $ */
+/*	$OpenBSD: parse.c,v 1.6 2017/09/24 08:44:14 jsg Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -1298,13 +1298,17 @@ dav2str(struct dwaval *dav)
 {
 	const char *str = NULL;
 	extern const char *dstrbuf;
+	extern size_t dstrlen;
 
 	switch (dav->dav_dat->dat_form) {
 	case DW_FORM_string:
 		str = dav->dav_str;
 		break;
 	case DW_FORM_strp:
-		str = dstrbuf + dav->dav_u32;
+		if (dav->dav_u32 >= dstrlen)
+			str = NULL;
+		else
+			str = dstrbuf + dav->dav_u32;
 		break;
 	default:
 		break;
