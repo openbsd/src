@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.15 2017/08/30 16:44:37 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.16 2017/09/25 17:51:49 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -719,16 +719,14 @@ tlsext_ocsp_clienthello_needs(SSL *s)
 int
 tlsext_ocsp_clienthello_build(SSL *s, CBB *cbb)
 {
-	CBB ocsp_respid_list, respid, exts;
+	CBB respid_list, respid, exts;
 	unsigned char *ext_data;
 	size_t ext_len;
 	int i;
 
 	if (!CBB_add_u8(cbb, TLSEXT_STATUSTYPE_ocsp))
 		return 0;
-	if (!CBB_add_u16_length_prefixed(cbb, &ocsp_respid_list))
-		return 0;
-	if (!CBB_add_u16_length_prefixed(cbb, &exts))
+	if (!CBB_add_u16_length_prefixed(cbb, &respid_list))
 		return 0;
 	for (i = 0; i < sk_OCSP_RESPID_num(s->internal->tlsext_ocsp_ids); i++) {
 		unsigned char *respid_data;
@@ -740,13 +738,15 @@ tlsext_ocsp_clienthello_build(SSL *s, CBB *cbb)
 			return 0;
 		if ((id_len = i2d_OCSP_RESPID(id, NULL)) == -1)
 			return 0;
-		if (!CBB_add_u16_length_prefixed(&ocsp_respid_list, &respid))
+		if (!CBB_add_u16_length_prefixed(&respid_list, &respid))
 			return 0;
 		if (!CBB_add_space(&respid, &respid_data, id_len))
 			return 0;
 		if ((i2d_OCSP_RESPID(id, &respid_data)) != id_len)
 			return 0;
 	}
+	if (!CBB_add_u16_length_prefixed(cbb, &exts))
+		return 0;
 	if ((ext_len = i2d_X509_EXTENSIONS(s->internal->tlsext_ocsp_exts,
 	    NULL)) == -1)
 		return 0;
