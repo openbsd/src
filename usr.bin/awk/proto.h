@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.9 2011/09/28 19:27:18 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.10 2017/09/25 17:36:35 krw Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -133,7 +133,7 @@ extern	void	fpecatch(int);
 extern	void	bracecheck(void);
 extern	void	bcheck2(int, int, int);
 extern	void	SYNTAX(const char *, ...);
-extern	void	FATAL(const char *, ...);
+extern	__dead void	FATAL(const char *, ...);
 extern	void	WARNING(const char *, ...);
 extern	void	error(void);
 extern	void	eprint(void);
