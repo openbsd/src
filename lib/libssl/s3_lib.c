@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.160 2017/08/28 18:12:10 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.161 2017/09/25 18:04:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1852,6 +1852,7 @@ _SSL_get_tlsext_status_exts(SSL *s, STACK_OF(X509_EXTENSION) **exts)
 static int
 _SSL_set_tlsext_status_exts(SSL *s, STACK_OF(X509_EXTENSION) *exts)
 {
+	/* XXX - leak... */
 	s->internal->tlsext_ocsp_exts = exts;
 	return 1;
 }
@@ -1866,6 +1867,7 @@ _SSL_get_tlsext_status_ids(SSL *s, STACK_OF(OCSP_RESPID) **ids)
 static int
 _SSL_set_tlsext_status_ids(SSL *s, STACK_OF(OCSP_RESPID) *ids)
 {
+	/* XXX - leak... */
 	s->internal->tlsext_ocsp_ids = ids;
 	return 1;
 }
