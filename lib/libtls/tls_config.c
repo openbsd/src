@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.43 2017/08/10 18:18:30 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.44 2017/09/25 18:07:03 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -310,6 +310,9 @@ tls_config_parse_protocols(uint32_t *protocols, const char *protostr)
 	uint32_t proto, protos = 0;
 	char *s, *p, *q;
 	int negate;
+
+	if (protostr == NULL)
+		return TLS_PROTOCOLS_DEFAULT;
 
 	if ((s = strdup(protostr)) == NULL)
 		return (-1);
