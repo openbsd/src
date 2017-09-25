@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.52 2017/08/08 14:23:23 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.53 2017/09/25 23:00:33 espie Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -374,7 +374,7 @@ int
 sys_sendsyslog(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sendsyslog_args /* {
-		syscallarg(const void *) buf;
+		syscallarg(const char *) buf;
 		syscallarg(size_t) nbyte;
 		syscallarg(int) flags;
 	} */ *uap = v;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendsyslog.2,v 1.9 2017/07/18 22:22:19 bluhm Exp $
+.\"	$OpenBSD: sendsyslog.2,v 1.10 2017/09/25 23:00:33 espie Exp $
 .\"
 .\" Copyright (c) 2014 Theo de Raadt
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 18 2017 $
+.Dd $Mdocdate: September 25 2017 $
 .Dt SENDSYSLOG 2
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .In sys/syslog.h
 .In sys/types.h
 .Ft int
-.Fn sendsyslog "const void *msg" "size_t len" "int flags"
+.Fn sendsyslog "const char *msg" "size_t len" "int flags"
 .Sh DESCRIPTION
 The
 .Fn sendsyslog

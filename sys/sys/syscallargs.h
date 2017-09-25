@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.190 2017/08/12 00:04:06 tedu Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.191 2017/09/25 23:00:33 espie Exp $	*/
 
 /*
  * System call argument lists.
@@ -563,7 +563,7 @@ struct sys_sigsuspend_args {
 };
 
 struct sys_sendsyslog_args {
-	syscallarg(const void *) buf;
+	syscallarg(const char *) buf;
 	syscallarg(size_t) nbyte;
 	syscallarg(int) flags;
 };

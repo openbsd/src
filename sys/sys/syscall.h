@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.187 2017/08/12 00:04:06 tedu Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.188 2017/09/25 23:00:33 espie Exp $	*/
 
 /*
  * System call numbers.
@@ -339,7 +339,7 @@
 /* syscall: "sigsuspend" ret: "int" args: "int" */
 #define	SYS_sigsuspend	111
 
-/* syscall: "sendsyslog" ret: "int" args: "const void *" "size_t" "int" */
+/* syscall: "sendsyslog" ret: "int" args: "const char *" "size_t" "int" */
 #define	SYS_sendsyslog	112
 
 /* syscall: "fktrace" ret: "int" args: "int" "int" "int" "pid_t" */
