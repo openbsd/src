@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.16 2017/09/25 17:51:49 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.17 2017/09/25 18:02:27 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -764,11 +764,9 @@ int
 tlsext_ocsp_clienthello_parse(SSL *s, CBS *cbs, int *alert)
 {
 	int failure = SSL_AD_DECODE_ERROR;
-	unsigned char *respid_data = NULL;
-	unsigned char *ext_data = NULL;
-	size_t ext_len, respid_len;
+	CBS respid_list, respid, exts;
+	const unsigned char *p;
 	uint8_t status_type;
-	CBS respids, exts;
 	int ret = 0;
 
 	if (!CBS_get_u8(cbs, &status_type))
@@ -784,13 +782,13 @@ tlsext_ocsp_clienthello_parse(SSL *s, CBS *cbs, int *alert)
 		return 1;
 	}
 	s->tlsext_status_type = status_type;
-	if (!CBS_get_u16_length_prefixed(cbs, &respids))
+	if (!CBS_get_u16_length_prefixed(cbs, &respid_list))
 		goto err;
 
 	/* XXX */
 	sk_OCSP_RESPID_pop_free(s->internal->tlsext_ocsp_ids, OCSP_RESPID_free);
 	s->internal->tlsext_ocsp_ids = NULL;
-	if (CBS_len(cbs) > 0) {
+	if (CBS_len(&respid_list) > 0) {
 		s->internal->tlsext_ocsp_ids = sk_OCSP_RESPID_new_null();
 		if (s->internal->tlsext_ocsp_ids == NULL) {
 			failure = SSL_AD_INTERNAL_ERROR;
@@ -798,43 +796,39 @@ tlsext_ocsp_clienthello_parse(SSL *s, CBS *cbs, int *alert)
 		}
 	}
 
-	while (CBS_len(&respids) > 0) {
-		OCSP_RESPID *id = NULL;
+	while (CBS_len(&respid_list) > 0) {
+		OCSP_RESPID *id;
 
-		if (!CBS_stow(cbs, &respid_data, &respid_len))
+		if (!CBS_get_u16_length_prefixed(&respid_list, &respid))
 			goto err;
-		if ((id = d2i_OCSP_RESPID(NULL,
-		    (const unsigned char **)&respid_data, respid_len)) == NULL)
+		p = CBS_data(&respid);
+		if ((id = d2i_OCSP_RESPID(NULL, &p, CBS_len(&respid))) == NULL)
 			goto err;
 		if (!sk_OCSP_RESPID_push(s->internal->tlsext_ocsp_ids, id)) {
 			failure = SSL_AD_INTERNAL_ERROR;
 			OCSP_RESPID_free(id);
 			goto err;
 		}
-		free(respid_data);
-		respid_data = NULL;
 	}
 
 	/* Read in request_extensions */
 	if (!CBS_get_u16_length_prefixed(cbs, &exts))
 		goto err;
-	if (!CBS_stow(&exts, &ext_data, &ext_len))
-		goto err;
-	if (ext_len > 0) {
+	if (CBS_len(&exts) > 0) {
 		sk_X509_EXTENSION_pop_free(s->internal->tlsext_ocsp_exts,
 		    X509_EXTENSION_free);
+		p = CBS_data(&exts);
 		if ((s->internal->tlsext_ocsp_exts = d2i_X509_EXTENSIONS(NULL,
-		    (const unsigned char **)&ext_data, ext_len)) == NULL)
+		    &p, CBS_len(&exts))) == NULL)
 			goto err;
 	}
+
 	/* should be nothing left */
 	if (CBS_len(cbs) > 0)
 		goto err;
 
 	ret = 1;
  err:
-	free(respid_data);
-	free(ext_data);
 	if (ret == 0)
 		*alert = failure;
 	return ret;
