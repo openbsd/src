@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.7 2015/12/30 23:49:00 rpe Exp $
+dnl	$OpenBSD: contents,v 1.8 2017/09/25 10:47:46 jsg Exp $
 TopPart
 
 OpenBSDdistsets
@@ -16,18 +16,18 @@ dnl	boot		The OpenBSD/MACHINE bootloader.
 
 DistributionDescription(eight)
 
-OpenBSDbase(57530500,191070055)
+OpenBSDbase(87906598,236605440)
 
-OpenBSDcomp(53310881,201759778)
+OpenBSDcomp(50902411,199677952)
 
-OpenBSDgame(2794598,6766057)
+OpenBSDgame(2789438,7450624)
 
-OpenBSDman(9187792,35915669)
+OpenBSDman(7329479,31414272)
 
-OpenBSDxbase(10284090,33816381)
+OpenBSDxbase(16897661,65677312)
 
-OpenBSDxfont(39923099,52042863)
+OpenBSDxfont(40294650,59377664)
 
-OpenBSDxserv(1654655,4470857)
+OpenBSDxserv(5164889,15851520)
 
-OpenBSDxshare(4407483,24364104)
+OpenBSDxshare(4524731,30216192)

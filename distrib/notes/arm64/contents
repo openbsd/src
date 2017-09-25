@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.4 2017/03/19 03:40:05 jsg Exp $
+dnl	$OpenBSD: contents,v 1.5 2017/09/25 10:47:46 jsg Exp $
 TopPart
 
 OpenBSDminiroot
@@ -13,18 +13,18 @@ dnl OpenBSDcd
 
 DistributionDescription(eight)
 
-OpenBSDbase(76760853,275861504)
+OpenBSDbase(92997156,284219392)
 
-OpenBSDcomp(53092371,181450752)
+OpenBSDcomp(57727901,212260864)
 
-OpenBSDgame(2776792,9347072)
+OpenBSDgame(2768356,9330688)
 
-OpenBSDman(7348949,31436800)
+OpenBSDman(7322823,31395840)
 
-OpenBSDxbase(16467754,71276544)
+OpenBSDxbase(16439912,71249920)
 
-OpenBSDxfont(40302803,59377664)
+OpenBSDxfont(40291103,59377664)
 
-OpenBSDxserv(6505048,18481152)
+OpenBSDxserv(6446904,18399232)
 
-OpenBSDxshare(4515455,30203904)
+OpenBSDxshare(4524534,30216192)
