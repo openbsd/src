@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.46 2017/08/21 21:41:13 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.47 2017/09/25 19:13:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -385,7 +385,7 @@ closecal(FILE *fp)
 	struct stat sbuf;
 	int nread, pdes[2], status;
 	char buf[1024];
-	pid_t pid;
+	pid_t pid = -1;
 
 	if (!doall)
 		return;
@@ -422,9 +422,11 @@ closecal(FILE *fp)
 		(void)write(pdes[1], buf, nread);
 	(void)close(pdes[1]);
 done:	(void)fclose(fp);
-	while (waitpid(pid, &status, 0) == -1) {
-		if (errno != EINTR)
-			break;
+	if (pid != -1) {
+		while (waitpid(pid, &status, 0) == -1) {
+			if (errno != EINTR)
+				break;
+		}
 	}
 }
 
