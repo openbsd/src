@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.163 2017/03/07 08:00:23 sunil Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.164 2017/09/25 11:04:54 krw Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -189,7 +189,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	const char * volatile savefile;
 	char * volatile proxyurl = NULL;
 	char *credentials = NULL;
-	volatile int s = -1, out;
+	volatile int s = -1, out = -1;
 	volatile sig_t oldintr, oldinti;
 	FILE *fin = NULL;
 	off_t hashbytes;
