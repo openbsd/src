@@ -1,4 +1,4 @@
-/* $OpenBSD: drm.h,v 1.24 2017/07/08 19:36:58 kettenis Exp $ */
+/* $OpenBSD: drm.h,v 1.25 2017/09/26 06:43:15 jsg Exp $ */
 /**
  * \file drm.h
  * Header for the Direct Rendering Manager
@@ -721,7 +721,7 @@ struct drm_pciinfo {
 };
 #endif
 
-#include <dev/pci/drm/drm_mode.h>
+#include "drm_mode.h"
 
 #define DRM_IOCTL_BASE			'd'
 #define DRM_IO(nr)			_IO(DRM_IOCTL_BASE,nr)
