@@ -1,4 +1,4 @@
-/*	$OpenBSD: generate.c,v 1.3 2017/08/11 16:28:30 mpi Exp $ */
+/*	$OpenBSD: generate.c,v 1.4 2017/09/26 08:16:18 mpi Exp $ */
 
 /*
  * Copyright (c) 2017 Martin Pieuchot
@@ -346,7 +346,7 @@ generate(const char *path, const char *label, int compress)
 	ssize_t			 ctflen;
 	struct ctf_header	 cth;
 	struct imcs		 imcs;
-	int			 error, fd;
+	int			 error = 0, fd;
 
 	memset(&cth, 0, sizeof(cth));
 
@@ -408,7 +408,7 @@ generate(const char *path, const char *label, int compress)
 
 	close(fd);
 	free(ctfdata);
-	return 0;
+	return error;
 }
 
 #ifdef ZLIB
