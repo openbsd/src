@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.349 2017/09/05 22:15:32 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.350 2017/09/26 20:23:32 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2516,8 +2516,8 @@ main(int argc, char *argv[])
 			pfctl_clear_stats(dev, ifaceopt, opts);
 			break;
 		case 'a':
-			pfctl_clear_rules(dev, opts, anchorname);
 			pfctl_clear_tables(anchorname, opts);
+			pfctl_clear_rules(dev, opts, anchorname);
 			if (ifaceopt && *ifaceopt) {
 				warnx("don't specify an interface with -Fall");
 				usage();
