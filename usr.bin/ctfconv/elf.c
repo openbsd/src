@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.3 2017/08/29 21:10:20 deraadt Exp $ */
+/*	$OpenBSD: elf.c,v 1.4 2017/09/26 09:40:28 jsg Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -136,7 +136,7 @@ elf_getsymtab(const char *p, const char *shstab, size_t shstabsz,
 }
 
 ssize_t
-elf_getsection(char *p, const char *sname, const char *shstab,
+elf_getsection(char *p, size_t filesize, const char *sname, const char *shstab,
     size_t shstabsz, const char **psdata, size_t *pssz)
 {
 	Elf_Ehdr	*eh = (Elf_Ehdr *)p;
@@ -154,6 +154,9 @@ elf_getsection(char *p, const char *sname, const char *shstab,
 		sh = (Elf_Shdr *)(p + eh->e_shoff + i * eh->e_shentsize);
 
 		if ((sh->sh_link >= eh->e_shnum) || (sh->sh_name >= shstabsz))
+			continue;
+
+		if (sh->sh_offset >= filesize)
 			continue;
 
 		if (strncmp(shstab + sh->sh_name, sname, snlen) == 0) {

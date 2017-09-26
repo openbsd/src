@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.9 2017/09/19 08:28:57 jsg Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.10 2017/09/26 09:40:28 jsg Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -60,7 +60,7 @@ int		 iself(const char *, size_t);
 int		 elf_getshstab(const char *, size_t, const char **, size_t *);
 ssize_t		 elf_getsymtab(const char *, const char *, size_t,
 		     const Elf_Sym **, size_t *);
-ssize_t		 elf_getsection(char *, const char *, const char *,
+ssize_t		 elf_getsection(char *, size_t, const char *, const char *,
 		     size_t, const char **, size_t *);
 
 /* parse.c */
@@ -225,25 +225,25 @@ elf_convert(char *p, size_t filesize)
 		warnx("symbol table not found");
 
 	/* Find string table location and size. */
-	if (elf_getsection(p, ELF_STRTAB, shstab, shstabsz, &strtab,
+	if (elf_getsection(p, filesize, ELF_STRTAB, shstab, shstabsz, &strtab,
 	    &strtabsz) == -1)
 		warnx("string table not found");
 
 	/* Find abbreviation location and size. */
-	if (elf_getsection(p, DEBUG_ABBREV, shstab, shstabsz, &abbuf,
+	if (elf_getsection(p, filesize, DEBUG_ABBREV, shstab, shstabsz, &abbuf,
 	    &ablen) == -1) {
 		warnx("%s section not found", DEBUG_ABBREV);
 		return 1;
 	}
 
-	if (elf_getsection(p, DEBUG_INFO, shstab, shstabsz, &infobuf,
+	if (elf_getsection(p, filesize, DEBUG_INFO, shstab, shstabsz, &infobuf,
 	    &infolen) == -1) {
 		warnx("%s section not found", DEBUG_INFO);
 		return 1;
 	}
 
 	/* Find string table location and size. */
-	if (elf_getsection(p, DEBUG_STR, shstab, shstabsz, &dstrbuf,
+	if (elf_getsection(p, filesize, DEBUG_STR, shstab, shstabsz, &dstrbuf,
 	    &dstrlen) == -1)
 		warnx("%s section not found", DEBUG_STR);
 
