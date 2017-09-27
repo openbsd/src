@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.22 2016/10/19 16:39:02 tb Exp $ */
+/*	$OpenBSD: ukc.c,v 1.23 2017/09/27 15:14:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -115,9 +115,9 @@ ukc(char *file, char *outfile, int uflag, int force)
 	if (force == 0 && outfile == NULL)
 		printf("WARNING no output file specified\n");
 
-	if (nl[IA_EXTRALOC].n_type == 0 || nl[I_NEXTRALOC].n_type == 0 ||
-	    nl[I_UEXTRALOC].n_type == 0 || nl[I_HISTLEN].n_type == 0 ||
-	    nl[CA_HISTORY].n_type == 0) {
+	if (nl[IA_EXTRALOC].n_type == 0 || nl[I_REXTRALOC].n_type == 0 ||
+	    nl[I_TEXTRALOC].n_type == 0 ||
+	    nl[I_HISTLEN].n_type == 0 || nl[CA_HISTORY].n_type == 0) {
 		printf("\
 WARNING this kernel doesn't contain all information needed!\n\
 WARNING the commands add and change might not work.\n");

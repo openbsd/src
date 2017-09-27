@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.22 2016/10/27 14:32:10 tb Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.23 2017/09/27 15:14:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -65,10 +65,20 @@ get_locnames(int idx)
 }
 
 static long *
-get_extraloc(int idx)
+get_extraloc(int nslots)
 {
-	return((long *)(adjust((caddr_t)nl[IA_EXTRALOC].n_value) +
-	    idx * sizeof(long)));
+	long *extralocp, *locp;
+	int *rextralocp, *textralocp;
+
+	extralocp = (long *)adjust((caddr_t)nl[IA_EXTRALOC].n_value);
+	rextralocp = (int *)adjust((caddr_t)nl[I_REXTRALOC].n_value);
+	textralocp = (int *)adjust((caddr_t)nl[I_TEXTRALOC].n_value);
+	if (*rextralocp < nslots)
+		return (NULL);
+
+	locp = &extralocp[*textralocp - *rextralocp];
+	*rextralocp -= nslots;
+	return locp;
 }
 
 static char *
@@ -374,7 +384,7 @@ void
 change(int devno)
 {
 	int	i, share = 0;
-	long	*j = NULL, *k = NULL, *l;
+	long	*j = NULL, *l = NULL;
 	struct cfdata *cd, *c;
 	struct pdevinit *pi;
 	short	*ln, *lk;
@@ -417,16 +427,14 @@ change(int devno)
 			}
 			lk = ln;
 
-			j = (long *)adjust((caddr_t)nl[I_NEXTRALOC].n_value);
-			k = (long *)adjust((caddr_t)nl[I_UEXTRALOC].n_value);
-			if ((i + *k) > *j) {
+			j = l = get_extraloc(i);
+			if (l == NULL) {
 				printf("Not enough space to change device.\n");
 				return;
 			}
-
-			j = l = get_extraloc(*k);
-			bcopy(adjust((caddr_t)cd->cf_loc),
-			    l, sizeof(long) * i);
+			if (i)
+				bcopy(adjust((caddr_t)cd->cf_loc), l,
+				    sizeof(long) * i);
 		}
 
 		while (*ln != -1) {
@@ -438,10 +446,9 @@ change(int devno)
 		modify("flags", &cd->cf_flags);
 
 		if (share) {
-			if (bcmp(adjust((caddr_t)cd->cf_loc), j,
-			    sizeof(long) * i)) {
+			if (bcmp(adjust((caddr_t)cd->cf_loc),
+			    j, sizeof(long) * i)) {
 				cd->cf_loc = (long *)readjust((caddr_t)j);
-				*k = *k + i;
 			}
 		}
 
@@ -478,7 +485,7 @@ void
 change_history(int devno, char *str)
 {
 	int	i, share = 0;
-	long	*j = NULL, *k = NULL, *l;
+	long	*j = NULL, *l = NULL;
 	struct cfdata *cd, *c;
 	struct pdevinit *pi;
 	short	*ln, *lk;
@@ -519,16 +526,14 @@ change_history(int devno, char *str)
 			}
 			lk = ln;
 
-			j = (long *)adjust((caddr_t)nl[I_NEXTRALOC].n_value);
-			k = (long *)adjust((caddr_t)nl[I_UEXTRALOC].n_value);
-			if ((i + *k) > *j) {
+			j = l = get_extraloc(i);
+			if (l == NULL) {
 				printf("Not enough space to change device.\n");
 				return;
 			}
-
-			j = l = get_extraloc(*k);
-			bcopy(adjust((caddr_t)cd->cf_loc),
-			    l, sizeof(long) * i);
+			if (i)
+				bcopy(adjust((caddr_t)cd->cf_loc), l,
+				    sizeof(long) * i);
 		}
 
 		while (*ln != -1) {
@@ -557,7 +562,6 @@ change_history(int devno, char *str)
 			if (bcmp(adjust((caddr_t)cd->cf_loc),
 			    j, sizeof(long) * i)) {
 				cd->cf_loc = (long *)readjust((caddr_t)j);
-				*k = *k + i;
 			}
 		}
 

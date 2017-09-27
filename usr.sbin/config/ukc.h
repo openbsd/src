@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.h,v 1.13 2015/09/21 14:45:14 guenther Exp $ */
+/*	$OpenBSD: ukc.h,v 1.14 2017/09/27 15:14:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -37,8 +37,8 @@
 #define P_KERNEL_TEXT	7
 #define P_VERSION	8
 #define IA_EXTRALOC	9
-#define I_NEXTRALOC	10
-#define I_UEXTRALOC	11
+#define I_REXTRALOC	10
+#define I_TEXTRALOC	11
 #define	I_HISTLEN	12
 #define	CA_HISTORY	13
 #define TZ_TZ		14
@@ -62,8 +62,8 @@ struct nlist nl[] = {
 	{ "_kernel_text" },
 	{ "_version" },
 	{ "_extraloc" },
-	{ "_nextraloc" },
-	{ "_uextraloc" },
+	{ "_rextraloc" },
+	{ "_textraloc" },
 	{ "_userconf_histlen" },
 	{ "_userconf_history" },
 	{ "_tz" },
@@ -86,8 +86,8 @@ struct nlist knl[] = {
 	{ "_kernel_text" },
 	{ "_version" },
 	{ "_extraloc" },
-	{ "_nextraloc" },
-	{ "_uextraloc" },
+	{ "_rextraloc" },
+	{ "_textraloc" },
 	{ "_userconf_histlen" },
 	{ "_userconf_history" },
 	{ "_tz" },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.36 2016/10/27 14:33:30 tb Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.37 2017/09/27 15:14:51 deraadt Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -181,9 +181,9 @@ static long loc[%d] = {", locators.used) < 0)
 	return (fprintf(fp, "\n#ifndef MAXEXTRALOC\n\
 #define MAXEXTRALOC 32\n\
 #endif\n\
-long extraloc[MAXEXTRALOC] = { -1 };\n\
-int nextraloc = MAXEXTRALOC;\n\
-int uextraloc = 0;\n") < 0);
+long extraloc[MAXEXTRALOC] = { -1 }; /* extra locator space */\n\
+int rextraloc = MAXEXTRALOC; /* remaining extra locators */\n\
+const int textraloc = MAXEXTRALOC; /* total extra relocators */\n") < 0);
 }
 
 static int nlocnames, maxlocnames = 8;
