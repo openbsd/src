@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.16 2015/05/18 19:59:27 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.17 2017/09/27 05:43:55 guenther Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -111,6 +111,8 @@ amd64_set_fsbase(struct proc *p, void *args)
 	if ((error = copyin(args, &base, sizeof(base))) != 0)
 		return (error);
 
+	if (TCB_INVALID(base))
+		return EINVAL;
 	tcb_set(p, base);
 	return 0;
 }
