@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.248 2017/09/17 23:49:14 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.249 2017/09/27 15:09:48 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -566,6 +566,7 @@ main(int argc, char *argv[])
 	if ((fd_klog = open(_PATH_KLOG, O_RDONLY, 0)) == -1) {
 		log_warn("open %s", _PATH_KLOG);
 	} else if (fd_sendsys != -1) {
+		/* Use /dev/klog to register sendsyslog(2) receiver. */
 		if (ioctl(fd_klog, LIOCSFD, &pair[1]) == -1)
 			log_warn("ioctl klog LIOCSFD sendsyslog");
 	}

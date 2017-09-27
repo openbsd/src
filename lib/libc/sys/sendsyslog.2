@@ -1,5 +1,6 @@
-.\"	$OpenBSD: sendsyslog.2,v 1.10 2017/09/25 23:00:33 espie Exp $
+.\"	$OpenBSD: sendsyslog.2,v 1.11 2017/09/27 15:09:48 bluhm Exp $
 .\"
+.\" Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 .\" Copyright (c) 2014 Theo de Raadt
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -14,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 25 2017 $
+.Dd $Mdocdate: September 27 2017 $
 .Dt SENDSYSLOG 2
 .Os
 .Sh NAME
@@ -54,6 +55,22 @@ fails, dropped messages are counted.
 When
 .Xr syslogd 8
 works again, a warning with the counter and error number is logged.
+.Pp
+To receive messages from the kernel,
+.Xr syslogd 8
+has to create a datagram socket pair and register one end.
+This registration is done by opening the
+.Pa /dev/klog
+device and passing one file descriptor of the socket pair as argument
+to
+.Xr ioctl 2 Dv LIOCSFD
+invoked on the klog file descriptor.
+After that the messages can be be read from the other end of the
+socket pair.
+By utilizing
+.Pa /dev/klog
+the access to log messages is limited to processes that may open
+this device.
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
