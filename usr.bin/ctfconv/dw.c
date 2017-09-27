@@ -1,4 +1,4 @@
-/*	$OpenBSD: dw.c,v 1.3 2017/09/04 12:56:01 anton Exp $ */
+/*	$OpenBSD: dw.c,v 1.4 2017/09/27 08:59:38 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot
@@ -648,8 +648,17 @@ dw_loc_parse(struct dwbuf *dwbuf, uint8_t *pop, uint64_t *poper1,
 		*pop = op;
 
 	switch (op) {
+	case DW_OP_constu:
 	case DW_OP_plus_uconst:
+	case DW_OP_regx:
+	case DW_OP_piece:
 		dw_read_uleb128(dwbuf, &oper1);
+		break;
+
+	case DW_OP_consts:
+	case DW_OP_breg0 ... DW_OP_breg31:
+	case DW_OP_fbreg:
+		dw_read_sleb128(dwbuf, &oper1);
 		break;
 	default:
 		return ENOTSUP;
