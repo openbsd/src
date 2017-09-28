@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.513 2017/09/22 14:04:13 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.514 2017/09/28 21:25:49 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -858,7 +858,7 @@ void
 dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
 {
 	struct client_lease	*lease;
-	time_t			 stop_selecting;
+	time_t			 cur_time, stop_selecting;
 
 	if (ifi->state != S_SELECTING) {
 #ifdef DEBUG
@@ -868,6 +868,7 @@ dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
 		return;
 	}
 
+	time(&cur_time);
 	log_info("%s: %s", log_procname, info);
 
 	lease = packet_to_lease(ifi, options);
@@ -888,10 +889,10 @@ dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
 
 	/* Figure out when we're supposed to stop selecting. */
 	stop_selecting = ifi->first_sending + config->select_interval;
-	if (stop_selecting <= time(NULL))
+	if (stop_selecting <= cur_time)
 		state_selecting(ifi);
 	else
-		set_timeout(ifi, stop_selecting, state_selecting);
+		set_timeout(ifi, stop_selecting - cur_time, state_selecting);
 }
 
 void
