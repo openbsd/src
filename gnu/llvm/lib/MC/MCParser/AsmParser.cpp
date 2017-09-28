@@ -732,6 +732,8 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
   HadError = false;
   AsmCond StartingCondState = TheCondState;
 
+  StringRef Filename = getContext().getMainFileName();
+
   // If we are generating dwarf for assembly source files save the initial text
   // section and generate a .file directive.
   if (getContext().getGenDwarfForAssembly()) {
@@ -745,8 +747,11 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
     assert(InsertResult && ".text section should not have debug info yet");
     (void)InsertResult;
     getContext().setGenDwarfFileNumber(getStreamer().EmitDwarfFileDirective(
-        0, StringRef(), getContext().getMainFileName()));
+        0, StringRef(), Filename));
   }
+
+  if (!Filename.empty() && (Filename.compare(StringRef("-")) != 0))
+    Out.EmitFileDirective(Filename);
 
   // While we have input, parse each statement.
   while (Lexer.isNot(AsmToken::Eof)) {
