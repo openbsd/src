@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.22 2017/09/12 08:23:42 mpi Exp $
+#	$OpenBSD: Makefile.arm64,v 1.23 2017/09/28 16:16:34 patrick Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -153,6 +153,17 @@ newinstall:
 	    sha256 -h /var/db/kernel.SHA256 /bsd
 
 install: update-link newinstall
+
+# pull in the dependency information
+.ifnmake clean
+. for o in ${SYSTEM_OBJ:Ngap.o} assym.h
+.  if exists(${o:R}.d)
+.   include "${o:R}.d"
+.  elif exists($o)
+    .PHONY: $o
+.  endif
+. endfor
+.endif
 
 ## for qemu this is where ram is located
 RAM_ADDR?=0x40000000

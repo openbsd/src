@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.93 2017/09/12 08:23:42 mpi Exp $
+#	$OpenBSD: Makefile.amd64,v 1.94 2017/09/28 16:16:34 patrick Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -152,5 +152,16 @@ newinstall:
 	    sha256 -h /var/db/kernel.SHA256 /bsd
 
 install: update-link newinstall
+
+# pull in the dependency information
+.ifnmake clean
+. for o in ${SYSTEM_OBJ:Ngap.o} assym.h
+.  if exists(${o:R}.d)
+.   include "${o:R}.d"
+.  elif exists($o)
+    .PHONY: $o
+.  endif
+. endfor
+.endif
 
 %RULES
