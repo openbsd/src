@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.192 2017/09/04 09:12:35 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.193 2017/09/28 16:17:30 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -223,7 +223,7 @@ uint16_t	iwn_get_active_dwell_time(struct iwn_softc *, uint16_t, uint8_t);
 uint16_t	iwn_limit_dwell(struct iwn_softc *, uint16_t);
 uint16_t	iwn_get_passive_dwell_time(struct iwn_softc *, uint16_t);
 int		iwn_scan(struct iwn_softc *, uint16_t);
-int		iwn_auth(struct iwn_softc *);
+int		iwn_auth(struct iwn_softc *, int);
 int		iwn_run(struct iwn_softc *);
 int		iwn_set_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
@@ -1790,7 +1790,7 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		sc->rxon.filter &= ~htole32(IWN_FILTER_BSS);
 		sc->calib.state = IWN_CALIB_STATE_INIT;
 
-		if ((error = iwn_auth(sc)) != 0) {
+		if ((error = iwn_auth(sc, arg)) != 0) {
 			printf("%s: could not move to auth state\n",
 			    sc->sc_dev.dv_xname);
 			return error;
@@ -4870,7 +4870,7 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 }
 
 int
-iwn_auth(struct iwn_softc *sc)
+iwn_auth(struct iwn_softc *sc, int arg)
 {
 	struct iwn_ops *ops = &sc->ops;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -4935,8 +4935,11 @@ iwn_auth(struct iwn_softc *sc)
 	 * Make sure the firmware gets to see a beacon before we send
 	 * the auth request. Otherwise the Tx attempt can fail due to
 	 * the firmware's built-in regulatory domain enforcement.
+	 * Don't delay if we're here because of an incoming frame (arg != -1)
+	 * or if we're already waiting for a response (ic_mgt_timer != 0).
 	 */
-	DELAY(ni->ni_intval * 3 * IEEE80211_DUR_TU);
+	if (arg == -1 && ic->ic_mgt_timer == 0)
+		DELAY(ni->ni_intval * 3 * IEEE80211_DUR_TU);
 
 	return 0;
 }
