@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.5 2017/08/13 11:20:53 jsg Exp $
+dnl	$OpenBSD: prep,v 1.6 2017/09/29 05:37:55 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -36,7 +36,8 @@ Running EFI payloads with U-Boot:
 
 If the U-Boot target supports "distro_bootcmd" efiboot will automatically
 be loaded by placing bootaa64.efi into /efi/boot/bootaa64.efi on a FAT
-filesystem.  With dtb files placed in in /, /dtbs/, or /dtb/current/.
+filesystem.  With dtb files placed in in /vendor/, /dtbs/vendor/, or
+/dtb/current/vendor/.
 
 If the U-Boot target supports bootefi but not automatically finding it with
 "distro_bootcmd" then it must be loaded manually or by U-Boot commands or
@@ -61,7 +62,8 @@ Install on systems without a supported miniroot:
   Add a board specific DTB file:
 
  	mount /dev/sdXi /mnt
- 	cp /usr/local/share/dtb/arm64/vendor/board.dtb /mnt/
+	mkdir /mnt/vendor
+ 	cp /usr/local/share/dtb/arm64/vendor/board.dtb /mnt/vendor/
  	umount /mnt
 
   For systems based on Allwinner Axx Socs:
