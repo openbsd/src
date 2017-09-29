@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.134 2017/09/15 02:33:34 mlarkin Exp $	*/
+/*	$OpenBSD: trap.c,v 1.135 2017/09/29 18:59:09 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -130,7 +130,7 @@ trap(struct trapframe *frame)
 	/* SIGSEGV and SIGBUS need this */
 	if (frame->tf_err & PGEX_W) {
 		vftype = PROT_WRITE;
-		ftype = PROT_READ | PROT_WRITE;
+		ftype = PROT_WRITE;
 	} else if (frame->tf_err & PGEX_I) {
 		ftype = vftype = PROT_EXEC;
 	} else
