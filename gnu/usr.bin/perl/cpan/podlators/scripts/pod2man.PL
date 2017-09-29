@@ -73,6 +73,7 @@ my $stdin;
 # Parse our options, trying to retain backward compatibility with pod2man but
 # allowing short forms as well.  --lax is currently ignored.
 my %options;
+$options{utf8} = 1;
 Getopt::Long::config ('bundling_override');
 GetOptions (\%options, 'center|c=s', 'date|d=s', 'errors=s', 'fixed=s',
             'fixedbold=s', 'fixeditalic=s', 'fixedbolditalic=s', 'help|h',
