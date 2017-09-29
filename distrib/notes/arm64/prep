@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.6 2017/09/29 05:37:55 jsg Exp $
+dnl	$OpenBSD: prep,v 1.7 2017/09/29 05:44:33 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -59,7 +59,8 @@ Install on systems without a supported miniroot:
 
  	dd if=miniroot{:--:}OSrev.fs of=/dev/rsdXc bs=1m
 
-  Add a board specific DTB file:
+  Add a board specific DTB file (Allwinner and Rockchip U-Boot images
+  come with a default DTB):
 
  	mount /dev/sdXi /mnt
 	mkdir /mnt/vendor
