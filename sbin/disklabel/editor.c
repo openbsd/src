@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.307 2017/05/19 12:54:30 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.308 2017/09/29 18:32:09 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -516,7 +516,7 @@ done:
  * Allocate all disk space according to standard recommendations for a
  * root disk.
  */
-void
+int
 editor_allocspace(struct disklabel *lp_org)
 {
 	struct disklabel *lp, label;
@@ -596,7 +596,7 @@ again:
 			if (++index < alloc_table_nitems)
 				goto again;
 			else
-				return;
+				return 1;
 		}
 		partno = j;
 		pp = &lp->d_partitions[j];
@@ -659,7 +659,7 @@ cylinderalign:
 			if (++index < alloc_table_nitems)
 				goto again;
 			else
-				return;
+				return 1;
 		}
 
 		/* Everything seems ok so configure the partition. */
@@ -689,6 +689,7 @@ cylinderalign:
 
 	free(alloc);
 	memcpy(lp_org, lp, sizeof(struct disklabel));
+	return 0;
 }
 
 /*

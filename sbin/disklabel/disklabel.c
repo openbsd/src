@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.225 2017/03/04 07:26:42 otto Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.226 2017/09/29 18:32:09 otto Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -225,7 +225,9 @@ main(int argc, char *argv[])
 
 		if (autotable != NULL)
 			parse_autotable(autotable);
-		parselabel();
+		error = parselabel();
+		if (op == WRITE && aflag && error)
+			errx(1, "autoalloc failed");
 	} else if (argc == 2 || argc == 3) {
 		/* Ensure f is a disk device before pledging. */
 		if (ioctl(f, DIOCGDINFO, &lab) < 0)
@@ -380,7 +382,7 @@ readlabel(int f)
 	}
 }
 
-void
+int
 parselabel(void)
 {
 	char *partname, *partduid;
@@ -411,7 +413,8 @@ parselabel(void)
 	free(partname);
 
 	if (aflag)
-		editor_allocspace(&lab);
+		return editor_allocspace(&lab);
+	return 0;
 }
 
 void
