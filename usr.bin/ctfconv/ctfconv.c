@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.10 2017/09/26 09:40:28 jsg Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.11 2017/09/29 09:30:42 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -51,6 +51,7 @@ int		 convert(const char *);
 int		 generate(const char *, const char *, int);
 int		 elf_convert(char *, size_t);
 void		 elf_sort(void);
+struct itype	*find_symb(struct itype *, size_t);
 void		 dump_type(struct itype *);
 void		 dump_func(struct itype *, int *);
 void		 dump_obj(struct itype *, int *);
@@ -255,6 +256,37 @@ elf_convert(char *p, size_t filesize)
 	return 0;
 }
 
+struct itype *
+find_symb(struct itype *tmp, size_t stroff)
+{
+	struct itype		*it;
+	char 			*sname, *p;
+
+	if (strtab == NULL || stroff >= strtabsz)
+		return NULL;
+
+	/*
+	 * Skip local suffix
+	 *
+	 * FIXME: only skip local copies.
+	 */
+	sname = xstrdup(strtab + stroff);
+	if ((p = strtok(sname, ".")) == NULL) {
+		free(sname);
+		return NULL;
+	}
+
+	strlcpy(tmp->it_name, p, ITNAME_MAX);
+	free(sname);
+	it = RB_FIND(isymb_tree, &isymbt, tmp);
+
+	/* Restore original name */
+	if (it == NULL)
+		strlcpy(tmp->it_name, (strtab + stroff), ITNAME_MAX);
+
+	return it;
+}
+
 void
 elf_sort(void)
 {
@@ -264,7 +296,6 @@ elf_sort(void)
 	memset(&tmp, 0, sizeof(tmp));
 	for (i = 0; i < nsymb; i++) {
 		const Elf_Sym	*st = &symtab[i];
-		char 		*sname;
 
 		if (st->st_shndx == SHN_UNDEF || st->st_shndx == SHN_COMMON)
 			continue;
@@ -280,17 +311,7 @@ elf_sort(void)
 			continue;
 		}
 
-		/*
-		 * Skip local suffix
-		 *
-		 * FIXME: only skip local copies.
-		 */
-		sname = xstrdup(strtab + st->st_name);
-		strlcpy(tmp.it_name, strtok(sname, "."), ITNAME_MAX);
-		it = RB_FIND(isymb_tree, &isymbt, &tmp);
-		strlcpy(tmp.it_name, (strtab + st->st_name), ITNAME_MAX);
-		free(sname);
-
+		it = find_symb(&tmp, st->st_name);
 		if (it == NULL) {
 			/* Insert 'unknown' entry to match symbol order. */
 			it = it_dup(&tmp);
