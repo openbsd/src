@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.90 2017/09/12 08:27:44 mpi Exp $
+.\"	$OpenBSD: ddb.4,v 1.91 2017/09/29 09:36:04 mpi Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: September 12 2017 $
+.Dd $Mdocdate: September 29 2017 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -541,6 +541,13 @@ The
 .Ic next
 command is a synonym for
 .Ic match .
+.\" --------------------
+.It Ic kill Ar pid
+Send an uncatchable
+.Dv SIGABRT
+signal to the process specified by the
+.Ar pid
+argument.
 .\" --------------------
 .It Xo
 .Ic trace

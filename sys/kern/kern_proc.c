@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.76 2017/02/04 07:42:52 guenther Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.77 2017/09/29 09:36:04 mpi Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -438,6 +438,28 @@ proc_printit(struct proc *p, const char *modif,
 #include <machine/db_machdep.h>
 
 #include <ddb/db_output.h>
+
+void
+db_kill_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	struct process *pr;
+	struct sigaction sa;
+	struct proc *p;
+
+	pr = prfind(addr);
+	if (pr == NULL) {
+		db_printf("%ld: No such process", addr);
+		return;
+	}
+
+	p = TAILQ_FIRST(&pr->ps_threads);
+
+	/* Send uncatchable SIGABRT for coredump */
+	memset(&sa, 0, sizeof sa);
+	sa.sa_handler = SIG_DFL;
+	setsigvec(p, SIGABRT, &sa);
+	psignal(p, SIGABRT);
+}
 
 void
 db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)

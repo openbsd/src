@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.h,v 1.19 2017/01/09 17:58:44 mpi Exp $	*/
+/*	$OpenBSD: db_interface.h,v 1.20 2017/09/29 09:36:04 mpi Exp $	*/
 /*	$NetBSD: db_interface.h,v 1.1 1996/02/05 01:57:03 christos Exp $	*/
 
 /*
@@ -40,6 +40,7 @@ void db_stack_trace_print(db_expr_t, int, db_expr_t, char *,
 db_addr_t db_disasm(db_addr_t, boolean_t);
 
 /* kern/kern_proc.c */
+void db_kill_cmd(db_expr_t, int, db_expr_t, char *);
 void db_show_all_procs(db_expr_t, int, db_expr_t, char *);
 
 /* kern/kern_timeout.c */
