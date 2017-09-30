@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.1 2017/09/21 12:01:52 patrick Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.2 2017/09/30 18:11:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -369,7 +369,7 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = faa->fa_dmat;
 
 	/* Lookup PHY. */
-	phy = OF_getpropint(faa->fa_node, "phy", 0);
+	phy = OF_getpropint(faa->fa_node, "phy-handle", 0);
 	node = OF_getnodebyphandle(phy);
 	if (node)
 		phyloc = OF_getpropint(node, "reg", phyloc);
