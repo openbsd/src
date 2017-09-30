@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.5 2017/09/29 16:05:53 jsg Exp $ */
+/*	$OpenBSD: elf.c,v 1.6 2017/09/30 10:15:59 jsg Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -125,6 +125,9 @@ elf_getsymtab(const char *p, size_t filesize, const char *shstab,
 		if ((sh->sh_offset + sh->sh_size) > filesize)
 			continue;
 
+		if (sh->sh_entsize == 0)
+			continue;
+
 		if (strncmp(shstab + sh->sh_name, ELF_SYMTAB, snlen) == 0) {
 			if (symtab != NULL)
 				*symtab = (Elf_Sym *)(p + sh->sh_offset);
@@ -154,6 +157,9 @@ elf_getsection(char *p, size_t filesize, const char *sname, const char *shstab,
 
 	/* Find the given section. */
 	for (i = 0; i < eh->e_shnum; i++) {
+		if ((eh->e_shoff + i * eh->e_shentsize) > filesize)
+			continue;
+
 		sh = (Elf_Shdr *)(p + eh->e_shoff + i * eh->e_shentsize);
 
 		if ((sh->sh_link >= eh->e_shnum) || (sh->sh_name >= shstabsz))
@@ -242,12 +248,18 @@ elf_reloc_apply(const char *p, size_t filesize, const char *shstab,
 
 	/* Apply possible relocation. */
 	for (i = 0; i < eh->e_shnum; i++) {
+		if ((eh->e_shoff + i * eh->e_shentsize) > filesize)
+			continue;
+
 		sh = (Elf_Shdr *)(p + eh->e_shoff + i * eh->e_shentsize);
 
 		if (sh->sh_size == 0)
 			continue;
 
 		if ((sh->sh_info != sidx) || (sh->sh_link != symtabidx))
+			continue;
+
+		if ((sh->sh_offset + sh->sh_size) > filesize)
 			continue;
 
 		switch (sh->sh_type) {
@@ -258,6 +270,8 @@ elf_reloc_apply(const char *p, size_t filesize, const char *shstab,
 				rtyp = ELF_R_TYPE(rela[j].r_info);
 				roff = rela[j].r_offset;
 				if (rsym >= nsymb)
+					continue;
+				if (roff >= filesize)
 					continue;
 				sym = &symtab[rsym];
 				value = sym->st_value + rela[j].r_addend;
@@ -276,6 +290,8 @@ elf_reloc_apply(const char *p, size_t filesize, const char *shstab,
 				rtyp = ELF_R_TYPE(rel[j].r_info);
 				roff = rel[j].r_offset;
 				if (rsym >= nsymb)
+					continue;
+				if (roff >= filesize)
 					continue;
 				sym = &symtab[rsym];
 				value = sym->st_value;
