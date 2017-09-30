@@ -43,9 +43,11 @@
  * be moved to FW_FAILED.
  */
 
+#define I915_CSR_KBL "i915/kbl_dmc_ver1.bin"
 #define I915_CSR_SKL "i915/skl_dmc_ver1.bin"
 #define I915_CSR_BXT "i915/bxt_dmc_ver1.bin"
 
+MODULE_FIRMWARE(I915_CSR_KBL);
 MODULE_FIRMWARE(I915_CSR_SKL);
 MODULE_FIRMWARE(I915_CSR_BXT);
 
@@ -180,6 +182,14 @@ struct stepping_info {
 	char substepping;
 };
 
+/*
+ * Kabylake derivated from Skylake H0, so SKL H0
+ * is the right firmware for KBL A0 (revid 0).
+ */
+static const struct stepping_info kbl_stepping_info[] = {
+	{'H', '0'}, {'I', '0'}
+};
+
 static const struct stepping_info skl_stepping_info[] = {
 		{'A', '0'}, {'B', '0'}, {'C', '0'},
 		{'D', '0'}, {'E', '0'}, {'F', '0'},
@@ -194,7 +204,10 @@ static struct stepping_info bxt_stepping_info[] = {
 
 static char intel_get_stepping(struct drm_device *dev)
 {
-	if (IS_SKYLAKE(dev) && (dev->pdev->revision <
+	if (IS_KABYLAKE(dev) && (dev->pdev->revision <
+			ARRAY_SIZE(kbl_stepping_info)))
+		return kbl_stepping_info[dev->pdev->revision].stepping;
+	else if (IS_SKYLAKE(dev) && (dev->pdev->revision <
 			ARRAY_SIZE(skl_stepping_info)))
 		return skl_stepping_info[dev->pdev->revision].stepping;
 	else if (IS_BROXTON(dev) && (dev->pdev->revision <
@@ -206,7 +219,10 @@ static char intel_get_stepping(struct drm_device *dev)
 
 static char intel_get_substepping(struct drm_device *dev)
 {
-	if (IS_SKYLAKE(dev) && (dev->pdev->revision <
+	if (IS_KABYLAKE(dev) && (dev->pdev->revision <
+			ARRAY_SIZE(kbl_stepping_info)))
+		return kbl_stepping_info[dev->pdev->revision].substepping;
+	else if (IS_SKYLAKE(dev) && (dev->pdev->revision <
 			ARRAY_SIZE(skl_stepping_info)))
 		return skl_stepping_info[dev->pdev->revision].substepping;
 	else if (IS_BROXTON(dev) && (dev->pdev->revision <
@@ -435,7 +451,9 @@ void intel_csr_ucode_init(struct drm_device *dev)
 	if (!HAS_CSR(dev))
 		return;
 
-	if (IS_SKYLAKE(dev))
+	if (IS_KABYLAKE(dev))
+		csr->fw_path = I915_CSR_KBL;
+	else if (IS_SKYLAKE(dev))
 		csr->fw_path = I915_CSR_SKL;
 	else if (IS_BROXTON(dev_priv))
 		csr->fw_path = I915_CSR_BXT;

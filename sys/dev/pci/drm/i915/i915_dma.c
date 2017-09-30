@@ -712,7 +712,8 @@ static void gen9_sseu_info_init(struct drm_device *dev)
 	 * supports EU power gating on devices with more than one EU
 	 * pair per subslice.
 	*/
-	info->has_slice_pg = (IS_SKYLAKE(dev) && (info->slice_total > 1));
+	info->has_slice_pg = ((IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) &&
+			       (info->slice_total > 1));
 	info->has_subslice_pg = (IS_BROXTON(dev) && (info->subslice_total > 1));
 	info->has_eu_pg = (info->eu_per_subslice > 2);
 }
@@ -858,6 +859,37 @@ static void intel_device_info_runtime_init(struct drm_device *dev)
 			DRM_INFO("Display fused off, disabling\n");
 			info->num_pipes = 0;
 		}
+	} else if (info->num_pipes > 0 && INTEL_INFO(dev)->gen == 9) {
+		u32 dfsm = I915_READ(SKL_DFSM);
+		u8 disabled_mask = 0;
+		bool invalid;
+		int num_bits;
+
+		if (dfsm & SKL_DFSM_PIPE_A_DISABLE)
+			disabled_mask |= BIT(PIPE_A);
+		if (dfsm & SKL_DFSM_PIPE_B_DISABLE)
+			disabled_mask |= BIT(PIPE_B);
+		if (dfsm & SKL_DFSM_PIPE_C_DISABLE)
+			disabled_mask |= BIT(PIPE_C);
+
+		num_bits = hweight8(disabled_mask);
+
+		switch (disabled_mask) {
+		case BIT(PIPE_A):
+		case BIT(PIPE_B):
+		case BIT(PIPE_A) | BIT(PIPE_B):
+		case BIT(PIPE_A) | BIT(PIPE_C):
+			invalid = true;
+			break;
+		default:
+			invalid = false;
+		}
+
+		if (num_bits > info->num_pipes || invalid)
+			DRM_ERROR("invalid pipe fuse configuration: 0x%x\n",
+				  disabled_mask);
+		else
+			info->num_pipes -= num_bits;
 	}
 
 	/* Initialize slice/subslice/EU info */

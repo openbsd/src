@@ -1779,7 +1779,8 @@ intel_panel_init_backlight_funcs(struct intel_panel *panel)
 		panel->backlight.disable = bxt_disable_backlight;
 		panel->backlight.set = bxt_set_backlight;
 		panel->backlight.get = bxt_get_backlight;
-	} else if (HAS_PCH_LPT(dev) || HAS_PCH_SPT(dev)) {
+	} else if (HAS_PCH_LPT(dev_priv) || HAS_PCH_SPT(dev_priv) ||
+		   HAS_PCH_KBP(dev_priv)) {
 		panel->backlight.setup = lpt_setup_backlight;
 		panel->backlight.enable = lpt_enable_backlight;
 		panel->backlight.disable = lpt_disable_backlight;

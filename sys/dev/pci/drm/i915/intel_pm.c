@@ -4436,7 +4436,7 @@ static void gen6_set_rps(struct drm_device *dev, u8 val)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	/* WaGsvDisableTurbo: Workaround to disable turbo on BXT A* */
-	if (IS_BROXTON(dev) && (INTEL_REVID(dev) < BXT_REVID_B0))
+	if (IS_BXT_REVID(dev, 0, BXT_REVID_A1))
 		return;
 
 	WARN_ON(!mutex_is_locked(&dev_priv->rps.hw_lock));
@@ -4712,7 +4712,8 @@ static void gen6_init_rps_frequencies(struct drm_device *dev)
 	dev_priv->rps.max_freq		= dev_priv->rps.rp0_freq;
 
 	dev_priv->rps.efficient_freq = dev_priv->rps.rp1_freq;
-	if (IS_HASWELL(dev) || IS_BROADWELL(dev) || IS_SKYLAKE(dev)) {
+	if (IS_HASWELL(dev) || IS_BROADWELL(dev) ||
+	    IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) {
 		ret = sandybridge_pcode_read(dev_priv,
 					HSW_PCODE_DYNAMIC_DUTY_CYCLE_CONTROL,
 					&ddcc_status);
@@ -4724,7 +4725,7 @@ static void gen6_init_rps_frequencies(struct drm_device *dev)
 					dev_priv->rps.max_freq);
 	}
 
-	if (IS_SKYLAKE(dev)) {
+	if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) {
 		/* Store the frequency values in 16.66 MHZ units, which is
 		   the natural hardware unit for SKL */
 		dev_priv->rps.rp0_freq *= GEN9_FREQ_SCALER;
@@ -4761,7 +4762,7 @@ static void gen9_enable_rps(struct drm_device *dev)
 	gen6_init_rps_frequencies(dev);
 
 	/* WaGsvDisableTurbo: Workaround to disable turbo on BXT A* */
-	if (IS_BROXTON(dev) && (INTEL_REVID(dev) < BXT_REVID_B0)) {
+	if (IS_BXT_REVID(dev, 0, BXT_REVID_A1)) {
 		intel_uncore_forcewake_put(dev_priv, FORCEWAKE_ALL);
 		return;
 	}
@@ -4829,8 +4830,8 @@ static void gen9_enable_rc6(struct drm_device *dev)
 	DRM_INFO("RC6 %s\n", (rc6_mask & GEN6_RC_CTL_RC6_ENABLE) ?
 			"on" : "off");
 	/* WaRsUseTimeoutMode */
-	if ((IS_SKYLAKE(dev) && INTEL_REVID(dev) <= SKL_REVID_D0) ||
-	    (IS_BROXTON(dev) && INTEL_REVID(dev) <= BXT_REVID_A0)) {
+	if (IS_SKL_REVID(dev, 0, SKL_REVID_D0) ||
+	    IS_BXT_REVID(dev, 0, BXT_REVID_A0)) {
 		I915_WRITE(GEN6_RC6_THRESHOLD, 625); /* 800us */
 		I915_WRITE(GEN6_RC_CONTROL, GEN6_RC_CTL_HW_ENABLE |
 			   GEN7_RC_CTL_TO_MODE |
@@ -4846,8 +4847,9 @@ static void gen9_enable_rc6(struct drm_device *dev)
 	 * 3b: Enable Coarse Power Gating only when RC6 is enabled.
 	 * WaRsDisableCoarsePowerGating:skl,bxt - Render/Media PG need to be disabled with RC6.
 	 */
-	if ((IS_BROXTON(dev) && (INTEL_REVID(dev) < BXT_REVID_B0)) ||
-	    ((IS_SKL_GT3(dev) || IS_SKL_GT4(dev)) && (INTEL_REVID(dev) <= SKL_REVID_F0)))
+	if (IS_BXT_REVID(dev, 0, BXT_REVID_A1) ||
+	    ((IS_SKL_GT3(dev) || IS_SKL_GT4(dev)) &&
+	     IS_SKL_REVID(dev, 0, SKL_REVID_E0)))
 		I915_WRITE(GEN9_PG_ENABLE, 0);
 	else
 		I915_WRITE(GEN9_PG_ENABLE, (rc6_mask & GEN6_RC_CTL_RC6_ENABLE) ?
@@ -5085,7 +5087,7 @@ static void __gen6_update_ring_freq(struct drm_device *dev)
 	/* convert DDR frequency from units of 266.6MHz to bandwidth */
 	min_ring_freq = mult_frac(min_ring_freq, 8, 3);
 
-	if (IS_SKYLAKE(dev)) {
+	if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) {
 		/* Convert GT frequency to 50 HZ units */
 		min_gpu_freq = dev_priv->rps.min_freq / GEN9_FREQ_SCALER;
 		max_gpu_freq = dev_priv->rps.max_freq / GEN9_FREQ_SCALER;
@@ -5103,7 +5105,7 @@ static void __gen6_update_ring_freq(struct drm_device *dev)
 		int diff = max_gpu_freq - gpu_freq;
 		unsigned int ia_freq = 0, ring_freq = 0;
 
-		if (IS_SKYLAKE(dev)) {
+		if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) {
 			/*
 			 * ring_freq = 2 * GT. ring_freq is in 100MHz units
 			 * No floor required for ring frequency on SKL.
@@ -6237,7 +6239,7 @@ static void intel_gen6_powersave_work(struct work_struct *work)
 	} else if (INTEL_INFO(dev)->gen >= 9) {
 		gen9_enable_rc6(dev);
 		gen9_enable_rps(dev);
-		if (IS_SKYLAKE(dev))
+		if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev))
 			__gen6_update_ring_freq(dev);
 	} else if (IS_BROADWELL(dev)) {
 		gen8_enable_rps(dev);
@@ -6376,9 +6378,11 @@ static void ironlake_init_clock_gating(struct drm_device *dev)
 		   (I915_READ(ILK_DISPLAY_CHICKEN2) |
 		    ILK_DPARB_GATE | ILK_VSDPFD_FULL));
 	dspclk_gate |= ILK_DPARBUNIT_CLOCK_GATE_ENABLE;
-	I915_WRITE(DISP_ARB_CTL,
-		   (I915_READ(DISP_ARB_CTL) |
-		    DISP_FBC_WM_DIS));
+
+	/* WaFbcWakeMemOn:skl,bxt,kbl */
+	I915_WRITE(DISP_ARB_CTL, I915_READ(DISP_ARB_CTL) |
+		   DISP_FBC_WM_DIS |
+		   DISP_FBC_MEMORY_WAKE);
 
 	ilk_init_lp_watermarks(dev);
 

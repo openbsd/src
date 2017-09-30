@@ -4363,7 +4363,7 @@ int i915_gem_set_caching_ioctl(struct drm_device *dev, void *data,
 		 * cacheline, whereas normally such cachelines would get
 		 * invalidated.
 		 */
-		if (IS_BROXTON(dev) && INTEL_REVID(dev) < BXT_REVID_B0)
+		if (IS_BXT_REVID(dev, 0, BXT_REVID_A1))
 			return -ENODEV;
 
 		level = I915_CACHE_LLC;

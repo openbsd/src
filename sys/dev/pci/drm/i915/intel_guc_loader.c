@@ -66,6 +66,9 @@
 #define I915_SKL_GUC_UCODE "i915/skl_guc_ver4.bin"
 MODULE_FIRMWARE(I915_SKL_GUC_UCODE);
 
+#define I915_KBL_GUC_UCODE "i915/kbl_guc_ver9_14.bin"
+MODULE_FIRMWARE(I915_KBL_GUC_UCODE);
+
 /* User-friendly representation of an enum */
 const char *intel_guc_fw_status_repr(enum intel_guc_fw_status status)
 {
@@ -326,8 +329,8 @@ static int guc_ucode_xfer(struct drm_i915_private *dev_priv)
 	I915_WRITE(GUC_SHIM_CONTROL, GUC_SHIM_CONTROL_VALUE);
 
 	/* WaDisableMinuteIaClockGating:skl,bxt */
-	if ((IS_SKYLAKE(dev) && INTEL_REVID(dev) <= SKL_REVID_B0) ||
-	    (IS_BROXTON(dev) && INTEL_REVID(dev) == BXT_REVID_A0)) {
+	if (IS_SKL_REVID(dev, 0, SKL_REVID_B0) ||
+	    IS_BXT_REVID(dev, 0, BXT_REVID_A1)) {
 		I915_WRITE(GUC_SHIM_CONTROL, (I915_READ(GUC_SHIM_CONTROL) &
 					      ~GUC_ENABLE_MIA_CLOCK_GATING));
 	}
@@ -565,7 +568,11 @@ void intel_guc_ucode_init(struct drm_device *dev)
 		fw_path = I915_SKL_GUC_UCODE;
 		guc_fw->guc_fw_major_wanted = 4;
 		guc_fw->guc_fw_minor_wanted = 3;
-	} else {
+	} else if (IS_KABYLAKE(dev)) {
+		fw_path = I915_KBL_GUC_UCODE;
+		guc_fw->guc_fw_major_wanted = 9;
+		guc_fw->guc_fw_minor_wanted = 14;
+        } else {
 		i915.enable_guc_submission = false;
 		fw_path = "";	/* unknown device */
 	}

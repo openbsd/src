@@ -56,7 +56,8 @@ int i915_gem_stolen_insert_node_in_range(struct drm_i915_private *dev_priv,
 
 	/* See the comment at the drm_mm_init() call for more about this check.
 	 * WaSkipStolenMemoryFirstPage:bdw,chv (incomplete) */
-	if (INTEL_INFO(dev_priv)->gen == 8 && start < 4096)
+	if (start < 4096 && (IS_GEN8(dev_priv) ||
+			IS_KBL_REVID(dev_priv, 0, KBL_REVID_A0)))
 		start = 4096;
 
 	mutex_lock(&dev_priv->mm.stolen_lock);
@@ -448,7 +449,8 @@ int i915_gem_init_stolen(struct drm_device *dev)
 					 &reserved_size);
 		break;
 	default:
-		if (IS_BROADWELL(dev_priv) || IS_SKYLAKE(dev_priv))
+		if (IS_BROADWELL(dev_priv) ||
+		    IS_SKYLAKE(dev_priv) || IS_KABYLAKE(dev))
 			bdw_get_stolen_reserved(dev_priv, &reserved_base,
 						&reserved_size);
 		else

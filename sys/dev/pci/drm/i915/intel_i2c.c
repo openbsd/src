@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_i2c.c,v 1.11 2017/07/03 13:26:04 naddy Exp $	*/
+/*	$OpenBSD: intel_i2c.c,v 1.12 2017/09/30 07:36:56 robert Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -112,7 +112,7 @@ static const struct gmbus_pin *get_gmbus_pin(struct drm_i915_private *dev_priv,
 {
 	if (IS_BROXTON(dev_priv))
 		return &gmbus_pins_bxt[pin];
-	else if (IS_SKYLAKE(dev_priv))
+	else if (IS_SKYLAKE(dev_priv) || IS_KABYLAKE(dev_priv))
 		return &gmbus_pins_skl[pin];
 	else if (IS_BROADWELL(dev_priv))
 		return &gmbus_pins_bdw[pin];
@@ -127,7 +127,7 @@ bool intel_gmbus_is_valid_pin(struct drm_i915_private *dev_priv,
 
 	if (IS_BROXTON(dev_priv))
 		size = ARRAY_SIZE(gmbus_pins_bxt);
-	else if (IS_SKYLAKE(dev_priv))
+	else if (IS_SKYLAKE(dev_priv) || IS_KABYLAKE(dev_priv))
 		size = ARRAY_SIZE(gmbus_pins_skl);
 	else if (IS_BROADWELL(dev_priv))
 		size = ARRAY_SIZE(gmbus_pins_bdw);

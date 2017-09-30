@@ -1024,7 +1024,7 @@ intel_dp_aux_init(struct intel_dp *intel_dp, struct intel_connector *connector)
 	/* On SKL we don't have Aux for port E so we rely on VBT to set
 	 * a proper alternate aux channel.
 	 */
-	if (IS_SKYLAKE(dev) && port == PORT_E) {
+	if ((IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) && port == PORT_E) {
 		switch (info->alternate_aux_channel) {
 		case DP_AUX_B:
 			porte_aux_ctl_reg = DPB_AUX_CH_CTL;
@@ -1199,7 +1199,7 @@ intel_dp_sink_rates(struct intel_dp *intel_dp, const int **sink_rates)
 static bool intel_dp_source_supports_hbr2(struct drm_device *dev)
 {
 	/* WaDisableHBR2:skl */
-	if (IS_SKYLAKE(dev) && INTEL_REVID(dev) <= SKL_REVID_B0)
+	if (IS_SKL_REVID(dev, 0, SKL_REVID_B0))
 		return false;
 
 	if ((IS_HASWELL(dev) && !IS_HSW_ULX(dev)) || IS_BROADWELL(dev) ||
@@ -1217,7 +1217,7 @@ intel_dp_source_rates(struct drm_device *dev, const int **source_rates)
 	if (IS_BROXTON(dev)) {
 		*source_rates = bxt_rates;
 		size = ARRAY_SIZE(bxt_rates);
-	} else if (IS_SKYLAKE(dev)) {
+	} else if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) {
 		*source_rates = skl_rates;
 		size = ARRAY_SIZE(skl_rates);
 	} else {
@@ -1537,7 +1537,7 @@ found:
 				&pipe_config->dp_m2_n2);
 	}
 
-	if (IS_SKYLAKE(dev) && is_edp(intel_dp))
+	if ((IS_SKYLAKE(dev)  || IS_KABYLAKE(dev)) && is_edp(intel_dp))
 		skl_edp_set_pll_config(pipe_config);
 	else if (IS_BROXTON(dev))
 		/* handled in ddi */;
@@ -6056,7 +6056,7 @@ intel_dp_init_connector(struct intel_digital_port *intel_dig_port,
 		break;
 	case PORT_B:
 		intel_encoder->hpd_pin = HPD_PORT_B;
-		if (IS_BROXTON(dev_priv) && (INTEL_REVID(dev) < BXT_REVID_B0))
+		if (IS_BXT_REVID(dev, 0, BXT_REVID_A1))
 			intel_encoder->hpd_pin = HPD_PORT_A;
 		break;
 	case PORT_C:

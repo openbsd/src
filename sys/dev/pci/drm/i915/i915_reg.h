@@ -1585,6 +1585,12 @@ enum skl_disp_power_wells {
 
 #define GEN7_TLB_RD_ADDR	0x4700
 
+#define GAMT_CHKN_BIT_REG	0x4ab8
+#define   GAMT_CHKN_DISABLE_DYNAMIC_CREDIT_SHARING     (1<<28)
+
+#define GEN9_GAMT_ECO_REG_RW_IA	0x4ab0
+#define   GAMT_ECO_ENABLE_IN_PLACE_DECOMPRESS	(1<<18)
+
 #if 0
 #define PRB0_TAIL	0x02030
 #define PRB0_HEAD	0x02034
@@ -1706,6 +1712,10 @@ enum skl_disp_power_wells {
 #define   GEN6_TD_FOUR_ROW_DISPATCH_DISABLE		(1 << 5)
 #define   GEN9_IZ_HASHING_MASK(slice)			(0x3 << ((slice) * 2))
 #define   GEN9_IZ_HASHING(slice, val)			((val) << ((slice) * 2))
+
+/* chicken reg for WaConextSwitchWithConcurrentTLBInvalidate */
+#define GEN9_CSFE_CHICKEN1_RCS 0x20D4
+#define   GEN9_PREEMPT_GPGPU_SYNC_SWITCH_DISABLE (1 << 2)
 
 #define GFX_MODE	0x02520
 #define GFX_MODE_GEN7	0x0229c
@@ -5897,6 +5907,7 @@ enum skl_disp_power_wells {
 #define CHICKEN_PIPESL_1(pipe) _PIPE(pipe, _CHICKEN_PIPESL_1_A, _CHICKEN_PIPESL_1_B)
 
 #define DISP_ARB_CTL	0x45000
+#define  DISP_FBC_MEMORY_WAKE		(1<<31)
 #define  DISP_TILE_SURFACE_SWIZZLING	(1<<13)
 #define  DISP_FBC_WM_DIS		(1<<15)
 #define DISP_ARB_CTL2	0x45004
@@ -5916,6 +5927,9 @@ enum skl_disp_power_wells {
 #define SKL_DFSM_CDCLK_LIMIT_540	(1 << 23)
 #define SKL_DFSM_CDCLK_LIMIT_450	(2 << 23)
 #define SKL_DFSM_CDCLK_LIMIT_337_5	(3 << 23)
+#define SKL_DFSM_PIPE_A_DISABLE		(1 << 30)
+#define SKL_DFSM_PIPE_B_DISABLE		(1 << 21)
+#define SKL_DFSM_PIPE_C_DISABLE		(1 << 28)
 
 #define FF_SLICE_CS_CHICKEN2			0x20e4
 #define  GEN9_TSG_BARRIER_ACK_DISABLE		(1<<8)
@@ -5925,6 +5939,7 @@ enum skl_disp_power_wells {
 # define GEN7_CSC1_RHWO_OPT_DISABLE_IN_RCC	((1<<10) | (1<<26))
 # define GEN9_RHWO_OPTIMIZATION_DISABLE		(1<<14)
 #define COMMON_SLICE_CHICKEN2			0x7014
+# define GEN8_SBE_DISABLE_REPLAY_BUF_OPTIMIZATION (1<<8)
 # define GEN8_CSC2_SBE_VUE_CACHE_CONSERVATIVE	(1<<0)
 
 #define HIZ_CHICKEN					0x7018
@@ -6761,6 +6776,7 @@ enum skl_disp_power_wells {
 
 #define GEN7_UCGCTL4				0x940c
 #define  GEN7_L3BANK2X_CLOCK_GATE_DISABLE	(1<<25)
+#define  GEN8_EU_GAUNIT_CLOCK_GATE_DISABLE	(1<<14)
 
 #define GEN6_RCGCTL1				0x9410
 #define GEN6_RCGCTL2				0x9414
