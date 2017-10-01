@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.2 2017/09/30 18:11:46 kettenis Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.3 2017/10/01 06:42:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1239,6 +1239,7 @@ dwxe_alloc_mbuf(struct dwxe_softc *sc, bus_dmamap_t map)
 	if (!m)
 		return (NULL);
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
+	m_adj(m, ETHER_ALIGN);
 
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT) != 0) {
 		printf("%s: could not load mbuf DMA map", DEVNAME(sc));
@@ -1267,7 +1268,7 @@ dwxe_fill_rx_ring(struct dwxe_softc *sc)
 			break;
 
 		rxd = &sc->sc_rxdesc[sc->sc_rx_prod];
-		rxd->sd_len = MCLBYTES - 1;
+		rxd->sd_len = rxb->tb_map->dm_segs[0].ds_len - 1;
 		rxd->sd_addr = rxb->tb_map->dm_segs[0].ds_addr;
 		rxd->sd_status = DWXE_RX_DESC_CTL;
 
