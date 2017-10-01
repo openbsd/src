@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.3 2017/08/09 03:06:55 jsg Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.4 2017/10/01 17:05:50 naddy Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*-
@@ -61,7 +61,7 @@
 #define	DFLSSIZ		((paddr_t)2*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		((paddr_t)8*1024*1024)		/* max stack size */
+#define	MAXSSIZ		((paddr_t)32*1024*1024)		/* max stack size */
 #endif
 
 #define	STACKGAP_RANDOM	256*1024
