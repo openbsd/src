@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.249 2017/09/27 15:09:48 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.250 2017/10/02 12:24:03 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1957,6 +1957,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
 		    f->f_un.f_forw.f_addr.ss_len) != l) {
 			switch (errno) {
+			case EADDRNOTAVAIL:
 			case EHOSTDOWN:
 			case EHOSTUNREACH:
 			case ENETDOWN:
