@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.87 2017/07/06 06:17:04 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.88 2017/10/03 17:36:40 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -690,6 +690,15 @@ _C_LABEL(doreti_iret):
 	addq	$TF_RIP,%rsp
 	iretq
 #endif /* !defined(GPROF) && defined(DDBPROF) */
+
+ENTRY(xrstor_user)
+	movq	%rsi, %rdx
+	movl	%esi, %eax
+	shrq	$32, %rdx
+	.globl	xrstor_fault
+xrstor_fault:
+	xrstor	(%rdi)
+	ret
 
 ENTRY(pagezero)
 	movq    $-PAGE_SIZE,%rdx
