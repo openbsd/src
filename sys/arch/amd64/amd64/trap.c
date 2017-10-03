@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.59 2017/10/03 17:36:40 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.60 2017/10/03 22:06:19 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -211,6 +211,7 @@ trap(struct trapframe *frame)
 		 */
 		if (frame->tf_rip == (u_int64_t)xrstor_fault && p != NULL) {
 			fpusave_proc(p, 0);
+			frame->tf_rip = 0;	/* Hide kernel address */
 			goto user_trap;
 		}
 	case T_SEGNPFLT:
