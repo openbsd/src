@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.129 2017/06/02 01:47:36 dlg Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.130 2017/10/03 15:37:58 ajacoutot Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1162,6 +1162,14 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_1;
 	}
 	DPRINTFN(2, ("mskc_attach: allocate interrupt\n"));
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_MARVELL) {
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_MARVELL_YUKON_8036:
+		case PCI_PRODUCT_MARVELL_YUKON_8053:
+			pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
+		}
+	}
 
 	/* Allocate interrupt */
 	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
