@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.135 2017/09/29 18:59:09 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.136 2017/10/04 17:41:01 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -120,7 +120,7 @@ trap(struct trapframe *frame)
 	    resume_pop_fs[], resume_pop_gs[];
 	struct trapframe *vframe;
 	int resume;
-	vm_prot_t vftype, ftype;
+	vm_prot_t ftype;
 	union sigval sv;
 	caddr_t onfault;
 	uint32_t cr2;
@@ -129,12 +129,11 @@ trap(struct trapframe *frame)
 
 	/* SIGSEGV and SIGBUS need this */
 	if (frame->tf_err & PGEX_W) {
-		vftype = PROT_WRITE;
 		ftype = PROT_WRITE;
 	} else if (frame->tf_err & PGEX_I) {
-		ftype = vftype = PROT_EXEC;
+		ftype = PROT_EXEC;
 	} else
-		ftype = vftype = PROT_READ;
+		ftype = PROT_READ;
 
 #ifdef DEBUG
 	if (trapdebug) {
@@ -281,14 +280,14 @@ trap(struct trapframe *frame)
 		}
 
 		sv.sival_int = frame->tf_eip;
-		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+		trapsignal(p, SIGSEGV, type &~ T_USER, SEGV_MAPERR, sv);
 		KERNEL_UNLOCK();
 		goto out;
 
 	case T_TSSFLT|T_USER:
 		sv.sival_int = frame->tf_eip;
 		KERNEL_LOCK();
-		trapsignal(p, SIGBUS, vftype, BUS_OBJERR, sv);
+		trapsignal(p, SIGBUS, type &~ T_USER, BUS_OBJERR, sv);
 		KERNEL_UNLOCK();
 		goto out;
 
@@ -296,14 +295,14 @@ trap(struct trapframe *frame)
 	case T_STKFLT|T_USER:
 		sv.sival_int = frame->tf_eip;
 		KERNEL_LOCK();
-		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+		trapsignal(p, SIGSEGV, type &~ T_USER, SEGV_MAPERR, sv);
 		KERNEL_UNLOCK();
 		goto out;
 
 	case T_ALIGNFLT|T_USER:
 		sv.sival_int = frame->tf_eip;
 		KERNEL_LOCK();
-		trapsignal(p, SIGBUS, vftype, BUS_ADRALN, sv);
+		trapsignal(p, SIGBUS, type &~ T_USER, BUS_ADRALN, sv);
 		KERNEL_UNLOCK();
 		goto out;
 
@@ -452,7 +451,7 @@ trap(struct trapframe *frame)
 			sicode = BUS_OBJERR;
 		}
 		sv.sival_int = fa;
-		trapsignal(p, signal, vftype, sicode, sv);
+		trapsignal(p, signal, type &~ T_USER, sicode, sv);
 		KERNEL_UNLOCK();
 		break;
 	}
