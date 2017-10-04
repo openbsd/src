@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inetd.8,v 1.40 2015/11/14 01:22:04 jmc Exp $
+.\"	$OpenBSD: inetd.8,v 1.41 2017/10/04 19:52:26 jca Exp $
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
 .\"
-.Dd $Mdocdate: November 14 2015 $
+.Dd $Mdocdate: October 4 2017 $
 .Dt INETD 8
 .Os
 .Sh NAME
@@ -174,14 +174,10 @@ sockets this field specifies the path name of the socket.
 The
 .Em socket type
 should be one of
-.Dq stream ,
-.Dq dgram ,
-.Dq raw ,
-.Dq rdm ,
+.Dq stream
 or
-.Dq seqpacket ,
-depending on whether the socket is a stream, datagram, raw,
-reliably delivered message, or sequenced packet socket.
+.Dq dgram ,
+depending on whether the socket is a stream or datagram socket.
 .Pp
 The
 .Em protocol

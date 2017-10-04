@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.155 2017/10/04 18:08:26 benno Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.156 2017/10/04 19:52:26 jca Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -55,7 +55,7 @@
  * a space or tab.  All fields must be present in each entry.
  *
  *	service name			must be in /etc/services
- *	socket type			stream/dgram/raw/rdm/seqpacket
+ *	socket type			stream/dgram
  *	protocol			must be in /etc/protocols
  *	wait/nowait[.max]		single-threaded/multi-threaded, max #
  *	user[.group] or user[:group]	user/group to run daemon as
@@ -64,7 +64,7 @@
  *
  * For RPC services
  *      service name/version            must be in /etc/rpc
- *	socket type			stream/dgram/raw/rdm/seqpacket
+ *	socket type			stream/dgram
  *	protocol			must be in /etc/protocols
  *	wait/nowait[.max]		single-threaded/multi-threaded
  *	user[.group] or user[:group]	user to run daemon as
@@ -1103,12 +1103,6 @@ more:
 		sep->se_socktype = SOCK_STREAM;
 	else if (strcmp(arg, "dgram") == 0)
 		sep->se_socktype = SOCK_DGRAM;
-	else if (strcmp(arg, "rdm") == 0)
-		sep->se_socktype = SOCK_RDM;
-	else if (strcmp(arg, "seqpacket") == 0)
-		sep->se_socktype = SOCK_SEQPACKET;
-	else if (strcmp(arg, "raw") == 0)
-		sep->se_socktype = SOCK_RAW;
 	else
 		sep->se_socktype = -1;
 
