@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:35 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:09 patrick Exp $
 
 LIB=	LLVMSelectionDAG
 NOPIC=
@@ -21,6 +21,7 @@ SRCS=	DAGCombiner.cpp \
 	ScheduleDAGRRList.cpp \
 	ScheduleDAGSDNodes.cpp \
 	SelectionDAG.cpp \
+	SelectionDAGAddressAnalysis.cpp \
 	SelectionDAGBuilder.cpp \
 	SelectionDAGDumper.cpp \
 	SelectionDAGISel.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:34 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2017/10/04 20:57:09 patrick Exp $
 
 LIB=	LLVMAArch64Desc
 NOPIC=
@@ -16,7 +16,9 @@ SRCS=	AArch64AsmBackend.cpp \
 	AArch64MCCodeEmitter.cpp \
 	AArch64MCExpr.cpp \
 	AArch64MCTargetDesc.cpp \
-	AArch64TargetStreamer.cpp
+	AArch64TargetStreamer.cpp \
+	AArch64WinCOFFObjectWriter.cpp \
+	AArch64WinCOFFStreamer.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Target/AArch64/MCTargetDesc
 

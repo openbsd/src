@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:36 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:10 patrick Exp $
 
 LIB=	lldCore
 NOPROFILE=
@@ -14,6 +14,7 @@ SRCS=	DefinedAtom.cpp \
 	Reproduce.cpp \
 	Resolver.cpp \
 	SymbolTable.cpp \
+	TargetOptionsCommandFlags.cpp \
 	Writer.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/tools/lld/lib/Core

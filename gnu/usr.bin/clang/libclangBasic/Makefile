@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:36 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:10 patrick Exp $
 
 LIB=	clangBasic
 NOPIC=
@@ -18,6 +18,7 @@ SRCS=	Attributes.cpp \
 	FileSystemStatCache.cpp \
 	IdentifierTable.cpp \
 	LangOptions.cpp \
+	MemoryBufferCache.cpp \
 	Module.cpp \
 	ObjCRuntime.cpp \
 	OpenMPKinds.cpp \
@@ -32,7 +33,8 @@ SRCS=	Attributes.cpp \
 	Version.cpp \
 	VersionTuple.cpp \
 	VirtualFileSystem.cpp \
-	Warnings.cpp
+	Warnings.cpp \
+	XRayLists.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/tools/clang/lib/Basic
 

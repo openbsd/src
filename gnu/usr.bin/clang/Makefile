@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2017/01/25 07:29:30 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2017/10/04 20:57:09 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ SUBDIR+=libLLVMSelectionDAG
 SUBDIR+=libLLVMAsmPrinter
 # only required by llc
 #SUBDIR+=libLLVMMIRParser
+SUBDIR+=libLLVMBinaryFormat
 SUBDIR+=libLLVMBitReader
 SUBDIR+=libLLVMBitWriter
 SUBDIR+=libLLVMTransformUtils

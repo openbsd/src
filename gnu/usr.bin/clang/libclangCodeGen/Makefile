@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/07/09 15:28:36 espie Exp $
+# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:10 patrick Exp $
 
 LIB=	clangCodeGen
 NOPIC=
@@ -12,7 +12,6 @@ SRCS=	BackendUtil.cpp \
 	CGBlocks.cpp \
 	CGBuiltin.cpp \
 	CGCUDANV.cpp \
-	CGCUDABuiltin.cpp \
 	CGCUDARuntime.cpp \
 	CGCXX.cpp \
 	CGCXXABI.cpp \
@@ -30,6 +29,7 @@ SRCS=	BackendUtil.cpp \
 	CGExprComplex.cpp \
 	CGExprConstant.cpp \
 	CGExprScalar.cpp \
+	CGGPUBuiltin.cpp \
 	CGLoopInfo.cpp \
 	CGObjC.cpp \
 	CGObjCGNU.cpp \
@@ -50,8 +50,10 @@ SRCS=	BackendUtil.cpp \
 	CodeGenPGO.cpp \
 	CodeGenTBAA.cpp \
 	CodeGenTypes.cpp \
+	ConstantInitBuilder.cpp \
 	CoverageMappingGen.cpp \
 	ItaniumCXXABI.cpp \
+	MacroPPCallbacks.cpp \
 	MicrosoftCXXABI.cpp \
 	ModuleBuilder.cpp \
 	ObjectFilePCHContainerOperations.cpp \

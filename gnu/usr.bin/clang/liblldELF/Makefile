@@ -1,25 +1,37 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:36 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:10 patrick Exp $
 
 LIB=	lldELF
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/tools/lld/include
+CPPFLAGS+=	-I${LLVM_SRCS}/tools/lld/ELF
 
 .include <bsd.own.mk>
-SRCS=	Driver.cpp \
+SRCS=	AArch64.cpp \
+	AMDGPU.cpp \
+	ARM.cpp \
+	AVR.cpp \
+	Driver.cpp \
 	DriverUtils.cpp \
 	EhFrame.cpp \
 	Error.cpp \
+	Filesystem.cpp \
 	GdbIndex.cpp \
 	ICF.cpp \
 	InputFiles.cpp \
 	InputSection.cpp \
 	LinkerScript.cpp \
 	LTO.cpp \
+	MapFile.cpp \
 	MarkLive.cpp \
 	Mips.cpp \
+	MipsArchTree.cpp \
 	OutputSections.cpp \
+	PPC.cpp \
+	PPC64.cpp \
 	Relocations.cpp \
+	SPARCV9.cpp \
+	ScriptLexer.cpp \
 	ScriptParser.cpp \
 	Strings.cpp \
 	SymbolTable.cpp \
@@ -27,9 +39,12 @@ SRCS=	Driver.cpp \
 	SyntheticSections.cpp \
 	Target.cpp \
 	Thunks.cpp \
-	Writer.cpp
+	Writer.cpp \
+	X86.cpp \
+	X86_64.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/tools/lld/ELF
+.PATH:	${.CURDIR}/../../../llvm/tools/lld/ELF/Arch
 
 Driver.o: Options.inc
 

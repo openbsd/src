@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:34 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:09 patrick Exp $
 
 .include <bsd.own.mk>
 
 TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen
 CLANG_INC=${.CURDIR}/../../../../../llvm/tools/clang/include
 
-GEN= AttrParserStringSwitches.inc
+GEN= AttrParserStringSwitches.inc AttrSubMatchRulesParserStringSwitches.inc
 
 all: ${GEN}
 
@@ -17,6 +17,11 @@ clean cleandir:
 
 AttrParserStringSwitches.inc: ${CLANG_INC}/clang/Basic/Attr.td
 	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-parser-string-switches \
+		-o ${.TARGET} ${.ALLSRC}
+
+AttrSubMatchRulesParserStringSwitches.inc: ${CLANG_INC}/clang/Basic/Attr.td
+	${TBLGEN} -I${CLANG_INC} \
+		-gen-clang-attr-subject-match-rules-parser-string-switches \
 		-o ${.TARGET} ${.ALLSRC}
 
 .include <bsd.obj.mk>

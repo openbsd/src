@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:34 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:09 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ GEN+=DiagnosticCommentKinds.inc DiagnosticCommonKinds.inc
 GEN+=DiagnosticDriverKinds.inc DiagnosticFrontendKinds.inc DiagnosticGroups.inc
 GEN+=DiagnosticIndexName.inc DiagnosticLexKinds.inc DiagnosticParseKinds.inc
 GEN+=DiagnosticSemaKinds.inc DiagnosticSerializationKinds.inc arm_neon.inc
-GEN+=AttrHasAttributeImpl.inc
+GEN+=AttrHasAttributeImpl.inc AttrSubMatchRulesList.inc
 
 all: ${GEN}
 
@@ -40,6 +40,10 @@ DiagnosticIndexName.inc: ${CLANG_INC}/clang/Basic/Diagnostic.td
 AttrHasAttributeImpl.inc: ${CLANG_INC}/clang/Basic/Attr.td
 	${TBLGEN} -I${CLANG_INC} \
 		-gen-clang-attr-has-attribute-impl -o ${.TARGET} ${.ALLSRC}
+
+AttrSubMatchRulesList.inc: ${CLANG_INC}/clang/Basic/Attr.td
+	${TBLGEN} -I${CLANG_INC} \
+		-gen-clang-attr-subject-match-rule-list -o ${.TARGET} ${.ALLSRC}
 
 arm_neon.inc: ${CLANG_INC}/clang/Basic/arm_neon.td
 	${TBLGEN} -gen-arm-neon-sema -o ${.TARGET} ${.ALLSRC}

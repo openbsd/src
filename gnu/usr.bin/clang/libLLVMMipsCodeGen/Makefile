@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:35 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2017/10/04 20:57:09 patrick Exp $
 
 LIB=	LLVMMipsCodeGen
 NOPIC=
@@ -7,7 +7,8 @@ NOPROFILE=
 CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/Mips -I${LLVM_SRCS}/lib/Target/Mips
 
 .include <bsd.own.mk>
-SRCS=	Mips16FrameLowering.cpp \
+SRCS=	MicroMipsSizeReduction.cpp \
+	Mips16FrameLowering.cpp \
 	Mips16HardFloat.cpp \
 	Mips16HardFloatInfo.cpp \
 	Mips16InstrInfo.cpp \

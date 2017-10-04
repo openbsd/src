@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/07/09 15:28:35 espie Exp $
+# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
 
 LIB=	LLVMCodeGen
 NOPIC=
@@ -13,6 +13,7 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	Analysis.cpp \
 	AtomicExpandPass.cpp \
 	BasicTargetTransformInfo.cpp \
+	BranchCoalescing.cpp \
 	BranchFolding.cpp \
 	BranchRelaxation.cpp \
 	CalcSpillWeights.cpp \
@@ -30,7 +31,12 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	ExecutionDepsFix.cpp \
 	ExpandISelPseudos.cpp \
 	ExpandPostRAPseudos.cpp \
+	ExpandReductions.cpp \
+	FEntryInserter.cpp \
+	LazyMachineBlockFrequencyInfo.cpp \
 	LiveDebugValues.cpp \
+	LiveRangeShrink.cpp \
+	LiveRegUnits.cpp \
 	FaultMaps.cpp \
 	FuncletLayout.cpp \
 	GCMetadata.cpp \
@@ -69,6 +75,7 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	MachineCopyPropagation.cpp \
 	MachineDominators.cpp \
 	MachineDominanceFrontier.cpp \
+	MachineFrameInfo.cpp \
 	MachineFunction.cpp \
 	MachineFunctionPass.cpp \
 	MachineFunctionPrinterPass.cpp \
@@ -78,6 +85,8 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	MachineLoopInfo.cpp \
 	MachineModuleInfo.cpp \
 	MachineModuleInfoImpls.cpp \
+	MachineOptimizationRemarkEmitter.cpp \
+	MachineOutliner.cpp \
 	MachinePassRegistry.cpp \
 	MachinePipeliner.cpp \
 	MachinePostDominators.cpp \
@@ -88,6 +97,7 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	MachineSink.cpp \
 	MachineTraceMetrics.cpp \
 	MachineVerifier.cpp \
+	MacroFusion.cpp \
 	MIRPrinter.cpp \
 	MIRPrintingPass.cpp \
 	OptimizePHIs.cpp \
@@ -119,6 +129,7 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	SafeStack.cpp \
 	SafeStackColoring.cpp \
 	SafeStackLayout.cpp \
+	ScalarizeMaskedMemIntrin.cpp \
 	ScheduleDAG.cpp \
 	ScheduleDAGInstrs.cpp \
 	ScheduleDAGPrinter.cpp \

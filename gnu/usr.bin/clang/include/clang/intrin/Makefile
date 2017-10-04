@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.12 2017/07/09 15:28:34 espie Exp $
+# $OpenBSD: Makefile,v 1.13 2017/10/04 20:57:09 patrick Exp $
 
 .include <bsd.own.mk>
 
-LLVM_V=			4.0.0
+LLVM_V=			5.0.0
 CLANG_INTR_INCDIR=	/usr/lib/clang/${LLVM_V}/include
 
 TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen
@@ -40,11 +40,13 @@ HEADERS+=	adxintrin.h \
 		avx512vlcdintrin.h \
 		avx512vldqintrin.h \
 		avx512vlintrin.h \
+		avx512vpopcntdqintrin.h \
 		avxintrin.h \
 		bmi2intrin.h \
 		bmiintrin.h \
 		cpuid.h \
 		clflushoptintrin.h \
+		clzerointrin.h \
 		emmintrin.h \
 		f16cintrin.h \
 		fma4intrin.h \
@@ -52,6 +54,7 @@ HEADERS+=	adxintrin.h \
 		fxsrintrin.h \
 		ia32intrin.h \
 		immintrin.h \
+		lwpintrin.h \
 		lzcntintrin.h \
 		mm3dnow.h \
 		mmintrin.h \

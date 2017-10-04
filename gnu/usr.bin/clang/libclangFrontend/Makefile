@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:36 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2017/10/04 20:57:10 patrick Exp $
 
 LIB=	clangFrontend
 NOPIC=
@@ -32,6 +32,7 @@ SRCS=	ASTConsumers.cpp \
 	ModuleDependencyCollector.cpp \
 	MultiplexConsumer.cpp \
 	PCHContainerOperations.cpp \
+	PrecompiledPreamble.cpp \
 	PrintPreprocessedOutput.cpp \
 	SerializedDiagnosticPrinter.cpp \
 	SerializedDiagnosticReader.cpp \

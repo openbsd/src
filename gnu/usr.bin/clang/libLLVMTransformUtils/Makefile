@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/07/09 15:28:35 espie Exp $
+# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
 
 LIB=	LLVMTransformUtils
 NOPIC=
@@ -42,10 +42,11 @@ SRCS=	ASanStackFrameLayout.cpp \
 	LowerInvoke.cpp \
 	LowerSwitch.cpp \
 	Mem2Reg.cpp \
-	MemorySSA.cpp \
 	MetaRenamer.cpp \
 	ModuleUtils.cpp \
 	NameAnonGlobals.cpp \
+	OrderedInstructions.cpp \
+	PredicateInfo.cpp \
 	PromoteMemoryToRegister.cpp \
 	SSAUpdater.cpp \
 	SanitizerStats.cpp \
@@ -57,6 +58,7 @@ SRCS=	ASanStackFrameLayout.cpp \
 	SymbolRewriter.cpp \
 	UnifyFunctionExitNodes.cpp \
 	Utils.cpp \
+	VNCoercion.cpp \
 	ValueMapper.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Transforms/Utils

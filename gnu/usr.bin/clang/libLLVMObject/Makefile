@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/07/09 15:28:35 espie Exp $
+# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
 
 LIB=	LLVMObject
 NOPIC=
@@ -16,16 +16,17 @@ SRCS=	Archive.cpp \
 	ELFObjectFile.cpp \
 	Error.cpp \
 	IRObjectFile.cpp \
+	IRSymtab.cpp \
 	MachOObjectFile.cpp \
 	MachOUniversal.cpp \
-	ModuleSummaryIndexObjectFile.cpp \
 	ModuleSymbolTable.cpp \
 	Object.cpp \
 	ObjectFile.cpp \
 	RecordStreamer.cpp \
 	SymbolicFile.cpp \
 	SymbolSize.cpp \
-	WasmObjectFile.cpp
+	WasmObjectFile.cpp \
+	WindowsResource.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Object
 

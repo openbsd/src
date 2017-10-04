@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/07/09 15:28:34 espie Exp $
+# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
 
 PROG=	clang-tblgen
 NOMAN=
@@ -10,10 +10,11 @@ SRCS=	ClangASTNodesEmitter.cpp \
 	ClangCommentHTMLNamedCharacterReferenceEmitter.cpp \
 	ClangCommentHTMLTagsEmitter.cpp \
 	ClangDiagnosticsEmitter.cpp \
+	ClangOptionDocEmitter.cpp \
 	ClangSACheckersEmitter.cpp \
 	NeonEmitter.cpp \
 	TableGen.cpp
-	
+
 .PATH:	${.CURDIR}/../../../llvm/tools/clang/utils/TableGen
 
 LLVM_LIBDEPS=	LLVMTableGen LLVMSupport

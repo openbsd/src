@@ -18,6 +18,8 @@
 /* Define to 1 if you have the `backtrace' function. */
 /* #undef HAVE_BACKTRACE */
 
+/* #undef BACKTRACE_HEADER */
+
 /* Define to 1 if you have the <CrashReporterClient.h> header file. */
 #undef HAVE_CRASHREPORTERCLIENT_H
 
@@ -53,11 +55,11 @@
 /* Define if dlopen() is available on this platform. */
 #define HAVE_DLOPEN 1
 
+/* Define if dladdr() is available on this platform. */
+#define HAVE_DLADDR 1
+
 /* Define to 1 if you have the <errno.h> header file. */
 #define HAVE_ERRNO_H 1
-
-/* Define to 1 if you have the <execinfo.h> header file. */
-/* #define HAVE_EXECINFO_H 1 */
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
@@ -350,35 +352,14 @@
 /* Host triple LLVM will be executed on */
 /* #define LLVM_HOST_TRIPLE "amd64-unknown-openbsd6.0" */
 
-/* LLVM architecture name for the native architecture, if available */
-/* #define LLVM_NATIVE_ARCH X86 */
-
-/* LLVM name for the native AsmParser init function, if available */
-/* #define LLVM_NATIVE_ASMPARSER LLVMInitializeX86AsmParser */
-
-/* LLVM name for the native AsmPrinter init function, if available */
-/* #define LLVM_NATIVE_ASMPRINTER LLVMInitializeX86AsmPrinter */
-
-/* LLVM name for the native Disassembler init function, if available */
-/* #define LLVM_NATIVE_DISASSEMBLER LLVMInitializeX86Disassembler */
-
-/* LLVM name for the native Target init function, if available */
-/* #define LLVM_NATIVE_TARGET LLVMInitializeX86Target */
-
-/* LLVM name for the native TargetInfo init function, if available */
-/* #define LLVM_NATIVE_TARGETINFO LLVMInitializeX86TargetInfo */
-
-/* LLVM name for the native target MC init function, if available */
-/* #define LLVM_NATIVE_TARGETMC LLVMInitializeX86TargetMC */
-
 /* Define if this is Unixish platform */
 #define LLVM_ON_UNIX 1
 
 /* Define if this is Win32ish platform */
 /* #undef LLVM_ON_WIN32 */
 
-/* Installation prefix directory */
-/* #define LLVM_PREFIX "/usr/local" */
+/* Define if overriding target triple is enabled */
+/* #undef LLVM_TARGET_TRIPLE_ENV */
 
 /* Define if we have the Intel JIT API runtime support library */
 #define LLVM_USE_INTEL_JITEVENTS 0
@@ -388,6 +369,9 @@
 
 /* LLVM version information */
 /* #undef LLVM_VERSION_INFO */
+
+/* Whether tools show host and target info when invoked with --version */
+#define LLVM_VERSION_PRINTER_SHOW_HOST_TARGET_INFO 1
 
 /* Major version of the LLVM API */
 #define LLVM_VERSION_MAJOR 4
@@ -399,7 +383,7 @@
 #define LLVM_VERSION_PATCH 0
 
 /* LLVM version string */
-#define LLVM_VERSION_STRING "4.0.0"
+#define LLVM_VERSION_STRING "5.0.0"
 
 /* Define to the extension used for shared libraries, say, ".so". */
 #define LTDL_SHLIB_EXT ".so"
@@ -411,13 +395,13 @@
 #define PACKAGE_NAME "LLVM"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "LLVM 4.0.0"
+#define PACKAGE_STRING "LLVM 5.0.0"
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.0.0"
+#define PACKAGE_VERSION "5.0.0"
 
 /* Define to the vendor of this package. */
 /* #undef PACKAGE_VENDOR */

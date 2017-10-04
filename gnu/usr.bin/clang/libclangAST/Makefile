@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:36 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2017/10/04 20:57:10 patrick Exp $
 
 LIB=	clangAST
 NOPIC=
@@ -13,6 +13,7 @@ SRCS=	APValue.cpp \
 	ASTDiagnostic.cpp \
 	ASTDumper.cpp \
 	ASTImporter.cpp \
+	ASTStructuralEquivalence.cpp \
 	ASTTypeTraits.cpp \
 	AttrImpl.cpp \
 	CXXInheritance.cpp \
@@ -46,6 +47,7 @@ SRCS=	APValue.cpp \
 	MicrosoftMangle.cpp \
 	NestedNameSpecifier.cpp \
 	NSAPI.cpp \
+	ODRHash.cpp \
 	OpenMPClause.cpp \
 	ParentMap.cpp \
 	RawCommentList.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2017/07/27 10:23:25 espie Exp $
+# $OpenBSD: Makefile,v 1.11 2017/10/04 20:57:10 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -58,6 +58,7 @@ LLVM_LIBDEPS=	lldELF \
 		${BACKEND_ASMPRINTER} \
 		LLVMMC \
 		${BACKEND_UTILS} \
+		LLVMBinaryFormat \
 		LLVMCore \
 		LLVMSupport
 
