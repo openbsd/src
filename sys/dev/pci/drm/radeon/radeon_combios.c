@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_combios.c,v 1.8 2015/04/18 14:47:35 jsg Exp $	*/
+/*	$OpenBSD: radeon_combios.c,v 1.9 2017/10/04 21:00:34 patrick Exp $	*/
 /*
  * Copyright 2004 ATI Technologies Inc., Markham, Ontario
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -419,10 +419,10 @@ radeon_bios_get_hardcoded_edid(struct radeon_device *rdev)
 	return NULL;
 }
 
-static struct radeon_i2c_bus_rec combios_setup_i2c_bus(struct radeon_device *rdev,
-						       enum radeon_combios_ddc ddc,
-						       u32 clk_mask,
-						       u32 data_mask)
+static inline struct radeon_i2c_bus_rec combios_setup_i2c_bus(struct radeon_device *rdev,
+							      enum radeon_combios_ddc ddc,
+							      u32 clk_mask,
+							      u32 data_mask)
 {
 	struct radeon_i2c_bus_rec i2c;
 	int ddc_line = 0;
