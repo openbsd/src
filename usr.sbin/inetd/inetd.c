@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.157 2017/10/04 20:15:52 jca Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.158 2017/10/04 23:56:48 jca Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -1752,22 +1752,16 @@ spawn(int ctrl, short events, void *xsep)
 		return;
 	}
 
-	if (sep->se_family == AF_UNIX) {
-		if (pledge("stdio rpath cpath getpw inet proc exec id", NULL) == -1)
-			err(1, "pledge");
-	} else {
-		if (pledge("stdio rpath getpw inet proc exec id", NULL) == -1)
-			err(1, "pledge");
-	}
-
 	if (pid && sep->se_wait) {
 		sep->se_wait = pid;
 		event_del(&sep->se_event);
 	}
 	if (pid == 0) {
-		if (sep->se_bi)
+		if (sep->se_bi) {
+			if (dofork && pledge("stdio inet", NULL) == -1)
+				err(1, "pledge");
 			(*sep->se_bi->bi_fn)(ctrl, sep);
-		else {
+		} else {
 			if ((pwd = getpwnam(sep->se_user)) == NULL) {
 				syslog(LOG_ERR,
 				    "getpwnam: %s: No such user",
