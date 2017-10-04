@@ -342,7 +342,7 @@ static void getTargetFeatures(const ToolChain &TC, const llvm::Triple &Triple,
     break;
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
-    aarch64::getAArch64TargetFeatures(D, Args, Features);
+    aarch64::getAArch64TargetFeatures(D, Triple, Args, Features);
     break;
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:
@@ -2304,9 +2304,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       OFastEnabled ? options::OPT_Ofast : options::OPT_fstrict_aliasing;
   // We turn strict aliasing off by default if we're in CL mode, since MSVC
   // doesn't do any TBAA.
-  bool TBAAOnByDefault = !getToolChain().getDriver().IsCLMode();
+  bool StrictAliasingDefault = !getToolChain().getDriver().IsCLMode();
+  // We also turn off strict aliasing on OpenBSD.
+  if (getToolChain().getTriple().isOSOpenBSD())
+    StrictAliasingDefault = false;
   if (!Args.hasFlag(options::OPT_fstrict_aliasing, StrictAliasingAliasOption,
-                    options::OPT_fno_strict_aliasing, TBAAOnByDefault))
+                    options::OPT_fno_strict_aliasing, StrictAliasingDefault))
     CmdArgs.push_back("-relaxed-aliasing");
   if (!Args.hasFlag(options::OPT_fstruct_path_tbaa,
                     options::OPT_fno_struct_path_tbaa))
@@ -3292,7 +3295,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                       options::OPT_fno_strict_overflow)) {
     if (A->getOption().matches(options::OPT_fno_strict_overflow))
       CmdArgs.push_back("-fwrapv");
-  }
+  } else if (getToolChain().getTriple().isOSOpenBSD())
+    CmdArgs.push_back("-fwrapv");
 
   if (Arg *A = Args.getLastArg(options::OPT_freroll_loops,
                                options::OPT_fno_reroll_loops))
@@ -4233,6 +4237,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                      options::OPT_fno_rewrite_imports, false);
   if (RewriteImports)
     CmdArgs.push_back("-frewrite-imports");
+
+  // Disable some builtins on OpenBSD because they are just not
+  // right...
+  if (getToolChain().getTriple().isOSOpenBSD()) {
+    CmdArgs.push_back("-fno-builtin-malloc");
+    CmdArgs.push_back("-fno-builtin-calloc");
+    CmdArgs.push_back("-fno-builtin-realloc");
+    CmdArgs.push_back("-fno-builtin-valloc");
+    CmdArgs.push_back("-fno-builtin-free");
+    CmdArgs.push_back("-fno-builtin-strdup");
+    CmdArgs.push_back("-fno-builtin-strndup");
+  }
 
   // Enable rewrite includes if the user's asked for it or if we're generating
   // diagnostics.

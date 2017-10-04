@@ -21,7 +21,7 @@ class MCAsmInfoELF : public MCAsmInfo {
 protected:
   /// Targets which have non-executable stacks by default can set this to false
   /// to disable the special section which requests a non-executable stack.
-  bool UsesNonexecutableStackSection = true;
+  bool UsesNonexecutableStackSection = false;
 
   MCAsmInfoELF();
 };
