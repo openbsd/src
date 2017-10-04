@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.156 2017/10/04 17:37:16 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.157 2017/10/04 17:59:41 benno Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -54,6 +54,9 @@ id=`basename "${d}"`
 #		change	/X.X/macppc/bsd.rd
 #	usr.bin/signify/signify.1
 #		change the version in the EXAMPLES section
+#
+# When adding -beta, create a new www/<version>.html so devs can
+# start adding to it. When removing -beta, roll errata pages.
 #
 # -current and -beta tagging:
 #	For release, select STATUS ""
