@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.156 2017/10/04 19:52:26 jca Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.157 2017/10/04 20:15:52 jca Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -444,7 +444,6 @@ dg_badinput(struct sockaddr *sa)
 	case AF_INET:
 		in.s_addr = ntohl(((struct sockaddr_in *)sa)->sin_addr.s_addr);
 		port = ntohs(((struct sockaddr_in *)sa)->sin_port);
-	v4chk:
 		if (IN_MULTICAST(in.s_addr))
 			goto bad;
 		switch ((in.s_addr & 0xff000000) >> 24) {
@@ -460,16 +459,12 @@ dg_badinput(struct sockaddr *sa)
 		if (IN6_IS_ADDR_MULTICAST(in6) || IN6_IS_ADDR_UNSPECIFIED(in6))
 			goto bad;
 		/*
-		 * OpenBSD does not support IPv4 mapped address (RFC2553
-		 * inbound behavior) at all.  We should drop it.
+		 * OpenBSD does not support IPv4-mapped and
+		 * IPv4-compatible IPv6 addresses (RFC2553). We should
+		 * drop the packet.
 		 */
-		if (IN6_IS_ADDR_V4MAPPED(in6))
+		if (IN6_IS_ADDR_V4MAPPED(in6) || IN6_IS_ADDR_V4COMPAT(in6))
 			goto bad;
-		if (IN6_IS_ADDR_V4COMPAT(in6)) {
-			memcpy(&in, &in6->s6_addr[12], sizeof(in));
-			in.s_addr = ntohl(in.s_addr);
-			goto v4chk;
-		}
 		break;
 	default:
 		/* Unsupported AF */
