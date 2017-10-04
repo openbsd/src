@@ -1,15 +1,16 @@
 ========================
-LLVM 4.0.0 Release Notes
+LLVM 5.0.0 Release Notes
 ========================
 
 .. contents::
     :local:
 
+
 Introduction
 ============
 
 This document contains the release notes for the LLVM Compiler Infrastructure,
-release 4.0.0.  Here we describe the status of LLVM, including major improvements
+release 5.0.0.  Here we describe the status of LLVM, including major improvements
 from the previous release, improvements in various subprojects of LLVM, and
 some of the current users of the code.  All LLVM releases may be downloaded
 from the `LLVM releases web site <http://llvm.org/releases/>`_.
@@ -20,276 +21,229 @@ have questions or comments, the `LLVM Developer's Mailing List
 <http://lists.llvm.org/mailman/listinfo/llvm-dev>`_ is a good place to send
 them.
 
-New Versioning Scheme
-=====================
-Starting with this release, LLVM is using a
-`new versioning scheme <http://blog.llvm.org/2016/12/llvms-new-versioning-scheme.html>`_,
-increasing the major version number with each major release. Stable updates to
-this release will be versioned 4.0.x, and the next major release, six months
-from now, will be version 5.0.0.
-
 Non-comprehensive list of changes in this release
 =================================================
-* The minimum compiler version required for building LLVM has been raised to
-  4.8 for GCC and 2015 for Visual Studio.
 
-* The C API functions ``LLVMAddFunctionAttr``, ``LLVMGetFunctionAttr``,
-  ``LLVMRemoveFunctionAttr``, ``LLVMAddAttribute``, ``LLVMRemoveAttribute``,
-  ``LLVMGetAttribute``, ``LLVMAddInstrAttribute`` and
-  ``LLVMRemoveInstrAttribute`` have been removed.
+* LLVM's ``WeakVH`` has been renamed to ``WeakTrackingVH`` and a new ``WeakVH``
+  has been introduced.  The new ``WeakVH`` nulls itself out on deletion, but
+  does not track values across RAUW.
 
-* The C API enum ``LLVMAttribute`` has been deleted.
+* A new library named ``BinaryFormat`` has been created which holds a collection
+  of code which previously lived in ``Support``.  This includes the
+  ``file_magic`` structure and ``identify_magic`` functions, as well as all the
+  structure and type definitions for DWARF, ELF, COFF, WASM, and MachO file
+  formats.
 
-* The definition and uses of ``LLVM_ATRIBUTE_UNUSED_RESULT`` in the LLVM source
-  were replaced with ``LLVM_NODISCARD``, which matches the C++17 ``[[nodiscard]]``
-  semantics rather than gcc's ``__attribute__((warn_unused_result))``.
+* The tool ``llvm-pdbdump`` has been renamed ``llvm-pdbutil`` to better reflect
+  its nature as a general purpose PDB manipulation / diagnostics tool that does
+  more than just dumping contents.
 
-* The Timer related APIs now expect a Name and Description. When upgrading code
-  the previously used names should become descriptions and a short name in the
-  style of a programming language identifier should be added.
+* The ``BBVectorize`` pass has been removed. It was fully replaced and no
+  longer used back in 2014 but we didn't get around to removing it. Now it is
+  gone. The SLP vectorizer is the suggested non-loop vectorization pass.
 
-* LLVM now handles ``invariant.group`` across different basic blocks, which makes
-  it possible to devirtualize virtual calls inside loops.
+* A new tool opt-viewer.py has been added to visualize optimization remarks in
+  HTML.  The tool processes the YAML files produced by clang with the
+  -fsave-optimization-record option.
 
-* The aggressive dead code elimination phase ("adce") now removes
-  branches which do not effect program behavior. Loops are retained by
-  default since they may be infinite but these can also be removed
-  with LLVM option ``-adce-remove-loops`` when the loop body otherwise has
-  no live operations.
+* A new CMake macro ``LLVM_REVERSE_ITERATION`` has been added. If enabled, all
+  supported unordered LLVM containers would be iterated in reverse order. This
+  is useful for uncovering non-determinism caused by iteration of unordered
+  containers. Currently, it supports reverse iteration of SmallPtrSet and
+  DenseMap.
 
-* The llvm-cov tool can now export coverage data as json. Its html output mode
-  has also improved.
+* A new tool ``llvm-dlltool`` has been added to create short import libraries
+  from GNU style definition files. The tool utilizes the PE COFF SPEC Import
+  Library Format and PE COFF Auxiliary Weak Externals Format to achieve
+  compatibility with LLD and MSVC LINK.
 
-Improvements to ThinLTO (-flto=thin)
-------------------------------------
-Integration with profile data (PGO). When available, profile data
-enables more accurate function importing decisions, as well as
-cross-module indirect call promotion.
 
-Significant build-time and binary-size improvements when compiling with
-debug info (-g).
+Changes to the LLVM IR
+----------------------
 
-LLVM Coroutines
----------------
+* The datalayout string may now indicate an address space to use for
+  the pointer type of ``alloca`` rather than the default of 0.
 
-Experimental support for :doc:`Coroutines` was added, which can be enabled
-with ``-enable-coroutines`` in ``opt`` the command tool or using the
-``addCoroutinePassesToExtensionPoints`` API when building the optimization
-pipeline.
+* Added ``speculatable`` attribute indicating a function which has no
+  side-effects which could inhibit hoisting of calls.
 
-For more information on LLVM Coroutines and the LLVM implementation, see
-`2016 LLVM Developers’ Meeting talk on LLVM Coroutines
-<http://llvm.org/devmtg/2016-11/#talk4>`_.
-
-Regcall and Vectorcall Calling Conventions
---------------------------------------------------
-
-Support was added for ``_regcall`` calling convention.
-Existing ``__vectorcall`` calling convention support was extended to include
-correct handling of HVAs.
-
-The ``__vectorcall`` calling convention was introduced by Microsoft to
-enhance register usage when passing parameters.
-For more information please read `__vectorcall documentation
-<https://msdn.microsoft.com/en-us/library/dn375768.aspx>`_.
-
-The ``__regcall`` calling convention was introduced by Intel to
-optimize parameter transfer on function call.
-This calling convention ensures that as many values as possible are
-passed or returned in registers.
-For more information please read `__regcall documentation
-<https://software.intel.com/en-us/node/693069>`_.
-
-Code Generation Testing
------------------------
-
-Passes that work on the machine instruction representation can be tested with
-the .mir serialization format. ``llc`` supports the ``-run-pass``,
-``-stop-after``, ``-stop-before``, ``-start-after``, ``-start-before`` to
-run a single pass of the code generation pipeline, or to stop or start the code
-generation pipeline at a given point.
-
-Additional information can be found in the :doc:`MIRLangRef`. The format is
-used by the tests ending in ``.mir`` in the ``test/CodeGen`` directory.
-
-This feature is available since 2015. It is used more often lately and was not
-mentioned in the release notes yet.
-
-Intrusive list API overhaul
----------------------------
-
-The intrusive list infrastructure was substantially rewritten over the last
-couple of releases, primarily to excise undefined behaviour.  The biggest
-changes landed in this release.
-
-* ``simple_ilist<T>`` is a lower-level intrusive list that never takes
-  ownership of its nodes.  New intrusive-list clients should consider using it
-  instead of ``ilist<T>``.
-
-  * ``ilist_tag<class>`` allows a single data type to be inserted into two
-    parallel intrusive lists.  A type can inherit twice from ``ilist_node``,
-    first using ``ilist_node<T,ilist_tag<A>>`` (enabling insertion into
-    ``simple_ilist<T,ilist_tag<A>>``) and second using
-    ``ilist_node<T,ilist_tag<B>>`` (enabling insertion into
-    ``simple_ilist<T,ilist_tag<B>>``), where ``A`` and ``B`` are arbitrary
-    types.
-
-  * ``ilist_sentinel_tracking<bool>`` controls whether an iterator knows
-    whether it's pointing at the sentinel (``end()``).  By default, sentinel
-    tracking is on when ABI-breaking checks are enabled, and off otherwise;
-    this is used for an assertion when dereferencing ``end()`` (this assertion
-    triggered often in practice, and many backend bugs were fixed).  Explicitly
-    turning on sentinel tracking also enables ``iterator::isEnd()``.  This is
-    used by ``MachineInstrBundleIterator`` to iterate over bundles.
-
-* ``ilist<T>`` is built on top of ``simple_ilist<T>``, and supports the same
-  configuration options.  As before (and unlike ``simple_ilist<T>``),
-  ``ilist<T>`` takes ownership of its nodes.  However, it no longer supports
-  *allocating* nodes, and is now equivalent to ``iplist<T>``.  ``iplist<T>``
-  will likely be removed in the future.
-
-  * ``ilist<T>`` now always uses ``ilist_traits<T>``.  Instead of passing a
-    custom traits class in via a template parameter, clients that want to
-    customize the traits should specialize ``ilist_traits<T>``.  Clients that
-    want to avoid ownership can specialize ``ilist_alloc_traits<T>`` to inherit
-    from ``ilist_noalloc_traits<T>`` (or to do something funky); clients that
-    need callbacks can specialize ``ilist_callback_traits<T>`` directly.
-
-* The underlying data structure is now a simple recursive linked list.  The
-  sentinel node contains only a "next" (``begin()``) and "prev" (``rbegin()``)
-  pointer and is stored in the same allocation as ``simple_ilist<T>``.
-  Previously, it was malloc-allocated on-demand by default, although the
-  now-defunct ``ilist_sentinel_traits<T>`` was sometimes specialized to avoid
-  this.
-
-* The ``reverse_iterator`` class no longer uses ``std::reverse_iterator``.
-  Instead, it now has a handle to the same node that it dereferences to.
-  Reverse iterators now have the same iterator invalidation semantics as
-  forward iterators.
-
-  * ``iterator`` and ``reverse_iterator`` have explicit conversion constructors
-    that match ``std::reverse_iterator``'s off-by-one semantics, so that
-    reversing the end points of an iterator range results in the same range
-    (albeit in reverse).  I.e., ``reverse_iterator(begin())`` equals
-    ``rend()``.
-
-  * ``iterator::getReverse()`` and ``reverse_iterator::getReverse()`` return an
-    iterator that dereferences to the *same* node.  I.e.,
-    ``begin().getReverse()`` equals ``--rend()``.
-
-  * ``ilist_node<T>::getIterator()`` and
-    ``ilist_node<T>::getReverseIterator()`` return the forward and reverse
-    iterators that dereference to the current node.  I.e.,
-    ``begin()->getIterator()`` equals ``begin()`` and
-    ``rbegin()->getReverseIterator()`` equals ``rbegin()``.
-
-* ``iterator`` now stores an ``ilist_node_base*`` instead of a ``T*``.  The
-  implicit conversions between ``ilist<T>::iterator`` and ``T*`` have been
-  removed.  Clients may use ``N->getIterator()`` (if not ``nullptr``) or
-  ``&*I`` (if not ``end()``); alternatively, clients may refactor to use
-  references for known-good nodes.
-
-Changes to the ARM Targets
+Changes to the Arm Targets
 --------------------------
 
-**During this release the AArch64 target has:**
+During this release the AArch64 target has:
 
-* Gained support for ILP32 relocations.
-* Gained support for XRay.
-* Made even more progress on GlobalISel. There is still some work left before
-  it is production-ready though.
-* Refined the support for Qualcomm's Falkor and Samsung's Exynos CPUs.
-* Learned a few new tricks for lowering multiplications by constants, folding
-  spilled/refilled copies etc.
+* A much improved Global ISel at O0.
+* Support for ARMv8.1 8.2 and 8.3 instructions.
+* New scheduler information for ThunderX2.
+* Some SVE type changes but not much more than that.
+* Made instruction fusion more aggressive, resulting in speedups
+  for code making use of AArch64 AES instructions. AES fusion has been
+  enabled for most Cortex-A cores and the AArch64MacroFusion pass was moved
+  to the generic MacroFusion pass.
+* Added preferred function alignments for most Cortex-A cores.
+* OpenMP "offload-to-self" base support.
 
-**During this release the ARM target has:**
+During this release the ARM target has:
 
-* Gained support for ROPI (read-only position independence) and RWPI
-  (read-write position independence), which can be used to remove the need for
-  a dynamic linker.
-* Gained support for execute-only code, which is placed in pages without read
-  permissions.
-* Gained a machine scheduler for Cortex-R52.
-* Gained support for XRay.
-* Gained Thumb1 implementations for several compiler-rt builtins. It also
-  has some support for building the builtins for HF targets.
-* Started using the generic bitreverse intrinsic instead of rbit.
-* Gained very basic support for GlobalISel.
-
-A lot of work has also been done in LLD for ARM, which now supports more
-relocations and TLS.
-
-Note: From the next release (5.0), the "vulcan" target will be renamed to
-"thunderx2t99", including command line options, assembly directives, etc. This
-release (4.0) will be the last one to accept "vulcan" as its name.
-
-Changes to the AVR Target
------------------------------
-
-This marks the first release where the AVR backend has been completely merged
-from a fork into LLVM trunk. The backend is still marked experimental, but
-is generally quite usable. All downstream development has halted on
-`GitHub <https://github.com/avr-llvm/llvm>`_, and changes now go directly into
-LLVM trunk.
-
-* Instruction selector and pseudo instruction expansion pass landed
-* `read_register` and `write_register` intrinsics are now supported
-* Support stack stores greater than 63-bytes from the bottom of the stack
-* A number of assertion errors have been fixed
-* Support stores to `undef` locations
-* Very basic support for the target has been added to clang
-* Small optimizations to some 16-bit boolean expressions
-
-Most of the work behind the scenes has been on correctness of generated
-assembly, and also fixing some assertions we would hit on some well-formed
-inputs.
+* Improved, but still mostly broken, Global ISel.
+* Scheduling models update, new schedule for Cortex-A57.
+* Hardware breakpoint support in LLDB.
+* New assembler error handling, with spelling corrections and multiple
+  suggestions on how to fix problems.
+* Improved mixed ARM/Thumb code generation. Some cases in which wrong
+  relocations were emitted have been fixed.
+* Added initial support for mixed ARM/Thumb link-time optimization, using the
+  thumb-mode target feature.
 
 Changes to the MIPS Target
+--------------------------
+
+* The microMIPS64R6 backend is deprecated and will be removed in the next
+  release.
+
+* The MIPS backend now directly supports vector types for arguments and return
+  values (previously this required ABI specific LLVM IR).
+
+* Added documentation for how the MIPS backend handles address lowering.
+
+* Added a GCC compatible option -m(no-)madd4 to control the generation of four
+  operand multiply addition/subtraction instructions.
+
+* Added basic support for the XRay instrumentation system.
+
+* Added support for more assembly aliases and macros.
+
+* Added support for the ``micromips`` and ``nomicromips`` function attributes
+  which control micromips code generation on a per function basis.
+
+* Added the ``long-calls`` feature for non-pic environments. This feature is
+  used where the callee is out of range of the caller using a standard call
+  sequence. It must be enabled specifically.
+
+* Added support for performing microMIPS code generation via function
+  attributes.
+
+* Added experimental support for the static relocation model for the N64 ABI.
+
+* Added partial support for the MT ASE.
+
+* Added basic support for code size reduction for microMIPS.
+
+* Fixed numerous bugs including: multi-precision arithmetic support, various
+  vectorization bugs, debug information for thread local variables, debug
+  sections lacking the correct flags, crashing when disassembling sections
+  whose size is not a multiple of two or four.
+
+
+Changes to the PowerPC Target
 -----------------------------
 
-**During this release the MIPS target has:**
+* Additional support and exploitation of POWER ISA 3.0: vabsdub, vabsduh,
+  vabsduw, modsw, moduw, modsd, modud, lxv, stxv, vextublx, vextubrx, vextuhlx,
+  vextuhrx, vextuwlx, vextuwrx, vextsb2w, vextsb2d, vextsh2w, vextsh2d, and
+  vextsw2d
 
-* IAS is now enabled by default for Debian mips64el.
-* Added support for the two operand form for many instructions.
-* Added the following macros: unaligned load/store, seq, double word load/store for O32.
-* Improved the parsing of complex memory offset expressions.
-* Enabled the integrated assembler by default for Debian mips64el.
-* Added a generic scheduler based on the interAptiv CPU.
-* Added support for thread local relocations.
-* Added recip, rsqrt, evp, dvp, synci instructions in IAS.
-* Optimized the generation of constants from some cases.
+* Implemented Optimal Code Sequences from The PowerPC Compiler Writer's Guide.
 
-**The following issues have been fixed:**
+* Enable -fomit-frame-pointer by default.
 
-* Thread local debug information is correctly recorded.
-* MSA intrinsics are now range checked.
-* Fixed an issue with MSA and the no-odd-spreg abi.
-* Fixed some corner cases in handling forbidden slots for MIPSR6.
-* Fixed an issue with jumps not being converted to relative branches for assembly.
-* Fixed the handling of local symbols and jal instruction.
-* N32/N64 no longer have their relocation tables sorted as per their ABIs.
-* Fixed a crash when half-precision floating point conversion MSA intrinsics are used.
-* Fixed several crashes involving FastISel.
-* Corrected the corrected definitions for aui/daui/dahi/dati for MIPSR6.
+* Improved handling of bit reverse intrinsic.
+
+* Improved handling of memcpy and memcmp functions.
+
+* Improved handling of branches with static branch hints.
+
+* Improved codegen for atomic load_acquire.
+
+* Improved block placement during code layout
+
+* Many improvements to instruction selection and code generation
+
 
 Changes to the X86 Target
 -------------------------
 
-**During this release the X86 target has:**
+* Added initial AMD Ryzen (znver1) scheduler support.
 
-* Added support AMD Ryzen (znver1) CPUs.
-* Gained support for using VEX encoding on AVX-512 CPUs to reduce code size when possible.
-* Improved AVX-512 codegen.
+* Added support for Intel Goldmont CPUs.
 
-Changes to the OCaml bindings
+* Add support for avx512vpopcntdq instructions.
+
+* Added heuristics to convert CMOV into branches when it may be profitable.
+
+* More aggressive inlining of memcmp calls.
+
+* Improve vXi64 shuffles on 32-bit targets.
+
+* Improved use of PMOVMSKB for any_of/all_of comparision reductions.
+
+* Improved Silvermont, Sandybridge, and Jaguar (btver2) schedulers.
+
+* Improved support for AVX512 vector rotations.
+
+* Added support for AMD Lightweight Profiling (LWP) instructions.
+
+* Avoid using slow LEA instructions.
+
+* Use alternative sequences for multiply by constant.
+
+* Improved lowering of strided shuffles.
+
+* Improved the AVX512 cost model used by the vectorizer.
+
+* Fix scalar code performance when AVX512 is enabled by making i1's illegal.
+
+* Fixed many inline assembly bugs.
+
+* Preliminary support for tracing NetBSD processes and core files with a single
+  thread in LLDB.
+
+Changes to the AMDGPU Target
 -----------------------------
 
-* The attribute API was completely overhauled, following the changes
-  to the C API.
+* Initial gfx9 support
+
+Changes to the AVR Target
+-----------------------------
+
+This release consists mainly of bugfixes and implementations of features
+required for compiling basic Rust programs.
+
+* Enable the branch relaxation pass so that we don't crash on large
+  stack load/stores
+
+* Add support for lowering bit-rotations to the native ``ror`` and ``rol``
+  instructions
+
+* Fix bug where function pointers were treated as pointers to RAM and not
+  pointers to program memory
+
+* Fix broken code generation for shift-by-variable expressions
+
+* Support zero-sized types in argument lists; this is impossible in C,
+  but possible in Rust
 
 
-External Open Source Projects Using LLVM 4.0.0
-==============================================
+Changes to the C API
+--------------------
+
+* Deprecated the ``LLVMAddBBVectorizePass`` interface since the ``BBVectorize``
+  pass has been removed. It is now a no-op and will be removed in the next
+  release. Use ``LLVMAddSLPVectorizePass`` instead to get the supported SLP
+  vectorizer.
+
+
+External Open Source Projects Using LLVM 5
+==========================================
+
+Zig Programming Language
+------------------------
+
+`Zig <http://ziglang.org>`_  is an open-source programming language designed
+for robustness, optimality, and clarity. It integrates closely with C and is
+intended to eventually take the place of C. It uses LLVM to produce highly
+optimized native code and to cross-compile for any target out of the box. Zig
+is in alpha; with a beta release expected in September.
 
 LDC - the LLVM-based D compiler
 -------------------------------
@@ -305,34 +259,6 @@ combined with LLVM as backend to produce efficient native code. LDC targets
 x86/x86_64 systems like Linux, OS X, FreeBSD and Windows and also Linux on ARM
 and PowerPC (32/64 bit). Ports to other architectures like AArch64 and MIPS64
 are underway.
-
-Portable Computing Language (pocl)
-----------------------------------
-
-In addition to producing an easily portable open source OpenCL
-implementation, another major goal of `pocl <http://pocl.sourceforge.net/>`_
-is improving performance portability of OpenCL programs with
-compiler optimizations, reducing the need for target-dependent manual
-optimizations. An important part of pocl is a set of LLVM passes used to
-statically parallelize multiple work-items with the kernel compiler, even in
-the presence of work-group barriers. This enables static parallelization of
-the fine-grained static concurrency in the work groups in multiple ways.
-
-TTA-based Co-design Environment (TCE)
--------------------------------------
-
-`TCE <http://tce.cs.tut.fi/>`_ is a toolset for designing customized
-processors based on the Transport Triggered Architecture (TTA).
-The toolset provides a complete co-design flow from C/C++
-programs down to synthesizable VHDL/Verilog and parallel program binaries.
-Processor customization points include register files, function units,
-supported operations, and the interconnection network.
-
-TCE uses Clang and LLVM for C/C++/OpenCL C language support, target independent
-optimizations and also for parts of code generation. It generates new
-LLVM-based code generators "on the fly" for the designed TTA processors and
-loads them in to the compiler backend as runtime libraries to avoid
-per-target recompilation of larger parts of the compiler chain.
 
 
 Additional Information

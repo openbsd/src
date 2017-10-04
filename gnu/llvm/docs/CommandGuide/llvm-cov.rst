@@ -262,6 +262,12 @@ OPTIONS
  The demangler is expected to read a newline-separated list of symbols from
  stdin and write a newline-separated list of the same length to stdout.
 
+.. option:: -num-threads=N, -j=N
+
+ Use N threads to write file reports (only applicable when -output-dir is
+ specified). When N=0, llvm-cov auto-detects an appropriate number of threads to
+ use. This is the default.
+
 .. option:: -line-coverage-gt=<N>
 
  Show code coverage only for functions with line coverage greater than the
@@ -321,6 +327,10 @@ OPTIONS
  It is an error to specify an architecture that is not included in the
  universal binary or to use an architecture that does not match a
  non-universal binary.
+
+.. option:: -show-functions
+
+ Show coverage summaries for each function.
 
 .. program:: llvm-cov export
 

@@ -19,8 +19,6 @@
 
 using namespace llvm;
 
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(DIBuilder, LLVMDIBuilderRef)
-
 LLVMDIBuilderRef LLVMNewDIBuilder(LLVMModuleRef mref) {
   Module *m = unwrap(mref);
   return wrap(new DIBuilder(*m));
@@ -119,7 +117,8 @@ LLVMMetadataRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef Dref,
                                                const char *Name) {
   DIBuilder *D = unwrap(Dref);
   return wrap(D->createPointerType(unwrap<DIType>(PointeeType), SizeInBits,
-                                   AlignInBits, Name));
+                                   AlignInBits, /* DWARFAddressSpace */ None,
+                                   Name));
 }
 
 LLVMMetadataRef

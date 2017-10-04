@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:   llvm
 " Maintainer: The LLVM team, http://llvm.org/
-" Version:      $Revision: 1.1.1.3 $
+" Version:      $Revision: 1.1.1.4 $
 
 if version < 600
   syntax clear
@@ -54,6 +54,7 @@ syn keyword llvmKeyword
       \ atomic
       \ available_externally
       \ blockaddress
+      \ builtin
       \ byval
       \ c
       \ catch
@@ -105,10 +106,12 @@ syn keyword llvmKeyword
       \ naked
       \ nest
       \ noalias
+      \ nobuiltin
       \ nocapture
       \ noimplicitfloat
       \ noinline
       \ nonlazybind
+      \ nonnull
       \ norecurse
       \ noredzone
       \ noreturn
@@ -123,6 +126,7 @@ syn keyword llvmKeyword
       \ readnone
       \ readonly
       \ release
+      \ returned
       \ returns_twice
       \ sanitize_address
       \ sanitize_memory
@@ -133,6 +137,7 @@ syn keyword llvmKeyword
       \ signext
       \ singlethread
       \ source_filename
+      \ speculatable
       \ spir_func
       \ spir_kernel
       \ sret
@@ -156,7 +161,7 @@ syn keyword llvmKeyword
       \ within
       \ writeonly
       \ x86_64_sysvcc
-      \ x86_64_win64cc
+      \ win64cc
       \ x86_fastcallcc
       \ x86_stdcallcc
       \ x86_thiscallcc

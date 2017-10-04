@@ -22,8 +22,8 @@
 #include <windows.h>
 #pragma optimize("", off)
 #else  /* ITT_PLATFORM==ITT_PLATFORM_WIN */
-#include <pthread.h>
 #include <dlfcn.h>
+#include <pthread.h>
 #include <stdint.h>
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #include <malloc.h>
@@ -31,7 +31,7 @@
 
 #include "jitprofiling.h"
 
-static const char rcsid[] = "\n@(#) $Revision: 1.1.1.1 $\n";
+static const char rcsid[] = "\n@(#) $Revision: 1.1.1.2 $\n";
 
 #define DLL_ENVIRONMENT_VAR             "VS_PROFILER"
 
