@@ -1,4 +1,4 @@
-/*     $OpenBSD: kern.ldscript,v 1.5 2017/03/22 10:47:29 kettenis Exp $         */
+/*     $OpenBSD: kern.ldscript,v 1.6 2017/10/04 21:04:56 patrick Exp $         */
 /*     $NetBSD: ldscript.evbarm,v 1.2 2003/03/05 23:54:22 thorpej Exp $        */
 
 OUTPUT_ARCH(aarch64)
@@ -45,6 +45,10 @@ SECTIONS
 	{
 		*(.openbsd.randomdata)
 	} :openbsd_randomize :data
+	.got :
+	{
+		*(.got .got.*)
+	} :data
 	.data :
 	{
 		*(.data .data.*)
