@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.34 2017/08/27 12:38:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.35 2017/10/04 18:00:12 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -287,6 +287,7 @@ struct iwm_rx_ring {
 #define IWM_FLAG_STA_ACTIVE	0x20	/* AP added to firmware station table */
 #define IWM_FLAG_TE_ACTIVE	0x40	/* time event is scheduled */
 #define IWM_FLAG_HW_ERR		0x80	/* hardware error occurred */
+#define IWM_FLAG_SHUTDOWN	0x100	/* shutting down; new tasks forbidden */
 
 struct iwm_ucode_status {
 	uint32_t uc_error_event_table;
@@ -358,7 +359,8 @@ struct iwm_softc {
 	struct timeout sc_calib_to;
 	struct timeout sc_led_blink_to;
 
-	struct task		init_task;
+	struct task		init_task; /* NB: not reference-counted */
+	struct refcnt		task_refs;
 	struct task		newstate_task;
 	struct task		setrates_task;
 	enum ieee80211_state	ns_nstate;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.213 2017/08/27 12:38:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.214 2017/10/04 18:00:12 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -120,6 +120,7 @@
 #include <sys/systm.h>
 #include <sys/endian.h>
 
+#include <sys/refcnt.h>
 #include <sys/task.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -430,6 +431,8 @@ void	iwm_mac_ctxt_cmd_fill_sta(struct iwm_softc *, struct iwm_node *,
 	    struct iwm_mac_data_sta *, int);
 int	iwm_mac_ctxt_cmd(struct iwm_softc *, struct iwm_node *, uint32_t, int);
 int	iwm_update_quotas(struct iwm_softc *, struct iwm_node *, int);
+void	iwm_add_task(struct iwm_softc *, struct taskq *, struct task *);
+void	iwm_del_task(struct iwm_softc *, struct taskq *, struct task *);
 int	iwm_scan(struct iwm_softc *);
 int	iwm_auth(struct iwm_softc *);
 int	iwm_deauth(struct iwm_softc *);
@@ -2571,13 +2574,22 @@ iwm_htprot_task(void *arg)
 	struct iwm_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_node *in = (void *)ic->ic_bss;
-	int err;
+	int err, s = splnet();
+
+	if (sc->sc_flags & IWM_FLAG_SHUTDOWN) {
+		refcnt_rele_wake(&sc->task_refs);
+		splx(s);
+		return;
+	}
 
 	/* This call updates HT protection based on in->in_ni.ni_htop1. */
 	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 1);
 	if (err)
 		printf("%s: could not change HT protection: error %d\n",
 		    DEVNAME(sc), err);
+
+	refcnt_rele_wake(&sc->task_refs);
+	splx(s);
 }
 
 /*
@@ -2590,7 +2602,7 @@ iwm_update_htprot(struct ieee80211com *ic, struct ieee80211_node *ni)
 	struct iwm_softc *sc = ic->ic_softc;
 
 	/* assumes that ni == ic->ic_bss */
-	task_add(systq, &sc->htprot_task);
+	iwm_add_task(sc, systq, &sc->htprot_task);
 }
 
 void
@@ -2599,11 +2611,21 @@ iwm_ba_task(void *arg)
 	struct iwm_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
+	int s = splnet();
+
+	if (sc->sc_flags & IWM_FLAG_SHUTDOWN) {
+		refcnt_rele_wake(&sc->task_refs);
+		splx(s);
+		return;
+	}
 	
 	if (sc->ba_start)
 		iwm_sta_rx_agg(sc, ni, sc->ba_tid, sc->ba_ssn, 1);
 	else
 		iwm_sta_rx_agg(sc, ni, sc->ba_tid, 0, 0);
+
+	refcnt_rele_wake(&sc->task_refs);
+	splx(s);
 }
 
 /*
@@ -2623,7 +2645,7 @@ iwm_ampdu_rx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
 	sc->ba_start = 1;
 	sc->ba_tid = tid;
 	sc->ba_ssn = htole16(ba->ba_winstart);
-	task_add(systq, &sc->ba_task);
+	iwm_add_task(sc, systq, &sc->ba_task);
 
 	return EBUSY;
 }
@@ -2640,7 +2662,7 @@ iwm_ampdu_rx_stop(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	sc->ba_start = 0;
 	sc->ba_tid = tid;
-	task_add(systq, &sc->ba_task);
+	iwm_add_task(sc, systq, &sc->ba_task);
 }
 
 void
@@ -3562,7 +3584,7 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 		 * the firwmare's LQ rate table from process context.
 		 */
 		if (omcs != ni->ni_txmcs)
-			task_add(systq, &sc->setrates_task);
+			iwm_add_task(sc, systq, &sc->setrates_task);
 	}
 
 	if (txfail)
@@ -5408,6 +5430,29 @@ iwm_update_quotas(struct iwm_softc *sc, struct iwm_node *in, int running)
 	    sizeof(cmd), &cmd);
 }
 
+void
+iwm_add_task(struct iwm_softc *sc, struct taskq *taskq, struct task *task)
+{
+	int s = splnet();
+
+	if (sc->sc_flags & IWM_FLAG_SHUTDOWN) {
+		splx(s);
+		return;
+	}
+
+	refcnt_take(&sc->task_refs);
+	if (!task_add(taskq, task))
+		refcnt_rele_wake(&sc->task_refs);
+	splx(s);
+}
+
+void
+iwm_del_task(struct iwm_softc *sc, struct taskq *taskq, struct task *task)
+{
+	if (task_del(taskq, task))
+		refcnt_rele(&sc->task_refs);
+}
+
 int
 iwm_scan(struct iwm_softc *sc)
 {
@@ -5756,7 +5801,7 @@ iwm_calib_timeout(void *arg)
 		 * the firwmare's LQ rate table from process context.
 		 */
 		if (otxrate != ni->ni_txrate)
-			task_add(systq, &sc->setrates_task);
+			iwm_add_task(sc, systq, &sc->setrates_task);
 	}
 	splx(s);
 
@@ -5769,9 +5814,18 @@ iwm_setrates_task(void *arg)
 	struct iwm_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_node *in = (struct iwm_node *)ic->ic_bss;
+	int s = splnet();
+
+	if (sc->sc_flags & IWM_FLAG_SHUTDOWN) {
+		refcnt_rele_wake(&sc->task_refs);
+		splx(s);
+		return;
+	}
 
 	/* Update rates table based on new TX rate determined by AMRR. */
 	iwm_setrates(in);
+	refcnt_rele_wake(&sc->task_refs);
+	splx(s);
 }
 
 void
@@ -5930,7 +5984,9 @@ iwm_newstate_task(void *psc)
 	    ieee80211_state_name[ostate],
 	    ieee80211_state_name[nstate]));
 
-	if (nstate == ostate) {
+	if (nstate == ostate || (sc->sc_flags & IWM_FLAG_SHUTDOWN)) {
+		/* No-op state change or iwm_stop() is waiting for us. */
+		refcnt_rele_wake(&sc->task_refs);
 		splx(s);
 		return;
 	}
@@ -5963,6 +6019,13 @@ iwm_newstate_task(void *psc)
 		case IEEE80211_S_INIT:
 			break;
 		}
+
+		/* Die now if iwm_stop() was called while we were sleeping. */
+		if (sc->sc_flags & IWM_FLAG_SHUTDOWN) {
+			refcnt_rele_wake(&sc->task_refs);
+			splx(s);
+			return;
+		}
 	}
 
 	switch (nstate) {
@@ -5973,6 +6036,7 @@ iwm_newstate_task(void *psc)
 		err = iwm_scan(sc);
 		if (err)
 			break;
+		refcnt_rele_wake(&sc->task_refs);
 		splx(s);
 		return;
 
@@ -5987,14 +6051,12 @@ iwm_newstate_task(void *psc)
 	case IEEE80211_S_RUN:
 		err = iwm_run(sc);
 		break;
-
-	default:
-		break;
 	}
 
 out:
-	if (err == 0)
+	if (err == 0 && (sc->sc_flags & IWM_FLAG_SHUTDOWN) == 0)
 		sc->sc_newstate(ic, nstate, arg);
+	refcnt_rele_wake(&sc->task_refs);
 	splx(s);
 }
 
@@ -6005,14 +6067,18 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct iwm_softc *sc = ifp->if_softc;
 	struct iwm_node *in = (void *)ic->ic_bss;
 
-	timeout_del(&sc->sc_calib_to);
-	if (ic->ic_state == IEEE80211_S_RUN)
+	if (ic->ic_state == IEEE80211_S_RUN) {
+		timeout_del(&sc->sc_calib_to);
 		ieee80211_mira_cancel_timeouts(&in->in_mn);
+		iwm_del_task(sc, systq, &sc->setrates_task);
+		iwm_del_task(sc, systq, &sc->ba_task);
+		iwm_del_task(sc, systq, &sc->htprot_task);
+	}
 
 	sc->ns_nstate = nstate;
 	sc->ns_arg = arg;
 
-	task_add(sc->sc_nswq, &sc->newstate_task);
+	iwm_add_task(sc, sc->sc_nswq, &sc->newstate_task);
 
 	return 0;
 }
@@ -6391,11 +6457,17 @@ iwm_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int err, generation;
 
-	sc->sc_generation++;
+	rw_assert_wrlock(&sc->ioctl_rwl);
+
+	generation = ++sc->sc_generation;
+
+	KASSERT(sc->task_refs.refs == 0);
+	refcnt_init(&sc->task_refs);
 
 	err = iwm_init_hw(sc);
 	if (err) {
-		iwm_stop(ifp);
+		if (generation == sc->sc_generation)
+			iwm_stop(ifp);
 		return err;
 	}
 
@@ -6408,7 +6480,6 @@ iwm_init(struct ifnet *ifp)
 	 * ieee80211_begin_scan() ends up scheduling iwm_newstate_task().
 	 * Wait until the transition to SCAN state has completed.
 	 */
-	generation = sc->sc_generation;
 	do {
 		err = tsleep(&ic->ic_state, PCATCH, "iwminit", hz);
 		if (generation != sc->sc_generation)
@@ -6495,6 +6566,23 @@ iwm_stop(struct ifnet *ifp)
 	struct iwm_node *in = (void *)ic->ic_bss;
 	int s = splnet();
 
+	rw_assert_wrlock(&sc->ioctl_rwl);
+
+	sc->sc_flags |= IWM_FLAG_SHUTDOWN; /* Disallow new tasks. */
+
+	/* Cancel scheduled tasks and let any stale tasks finish up. */
+	task_del(systq, &sc->init_task);
+	iwm_del_task(sc, sc->sc_nswq, &sc->newstate_task);
+	iwm_del_task(sc, systq, &sc->setrates_task);
+	iwm_del_task(sc, systq, &sc->ba_task);
+	iwm_del_task(sc, systq, &sc->htprot_task);
+	KASSERT(sc->task_refs.refs >= 1);
+	refcnt_finalize(&sc->task_refs, "iwmstop");
+
+	iwm_stop_device(sc);
+
+	/* Reset soft state. */
+
 	sc->sc_generation++;
 	if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST)
 		wakeup(&ic->ic_scan_lock);
@@ -6504,13 +6592,7 @@ iwm_stop(struct ifnet *ifp)
 
 	in->in_phyctxt = NULL;
 	if (ic->ic_state == IEEE80211_S_RUN)
-		ieee80211_mira_cancel_timeouts(&in->in_mn);
-
-	task_del(systq, &sc->init_task);
-	task_del(sc->sc_nswq, &sc->newstate_task);
-	task_del(systq, &sc->setrates_task);
-	task_del(systq, &sc->ba_task);
-	task_del(systq, &sc->htprot_task);
+		ieee80211_mira_cancel_timeouts(&in->in_mn); /* XXX refcount? */
 
 	sc->sc_flags &= ~IWM_FLAG_SCANNING;
 	sc->sc_flags &= ~IWM_FLAG_MAC_ACTIVE;
@@ -6518,13 +6600,13 @@ iwm_stop(struct ifnet *ifp)
 	sc->sc_flags &= ~IWM_FLAG_STA_ACTIVE;
 	sc->sc_flags &= ~IWM_FLAG_TE_ACTIVE;
 	sc->sc_flags &= ~IWM_FLAG_HW_ERR;
+	sc->sc_flags &= ~IWM_FLAG_SHUTDOWN;
 
 	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 
-	timeout_del(&sc->sc_calib_to);
+	timeout_del(&sc->sc_calib_to); /* XXX refcount? */
 	iwm_led_blink_stop(sc);
 	ifp->if_timer = sc->sc_tx_timer = 0;
-	iwm_stop_device(sc);
 
 	splx(s);
 }
@@ -6541,7 +6623,8 @@ iwm_watchdog(struct ifnet *ifp)
 #ifdef IWM_DEBUG
 			iwm_nic_error(sc);
 #endif
-			task_add(systq, &sc->init_task);
+			if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) == 0)
+				task_add(systq, &sc->init_task);
 			ifp->if_oerrors++;
 			return;
 		}
@@ -7247,7 +7330,8 @@ iwm_intr(void *arg)
 #endif
 
 		printf("%s: fatal firmware error\n", DEVNAME(sc));
-		task_add(systq, &sc->init_task);
+		if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) == 0)
+			task_add(systq, &sc->init_task);
 		rv = 1;
 		goto out;
 
@@ -7256,8 +7340,10 @@ iwm_intr(void *arg)
 	if (r1 & IWM_CSR_INT_BIT_HW_ERR) {
 		handled |= IWM_CSR_INT_BIT_HW_ERR;
 		printf("%s: hardware error, stopping device \n", DEVNAME(sc));
-		sc->sc_flags |= IWM_FLAG_HW_ERR;
-		task_add(systq, &sc->init_task);
+		if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) == 0) {
+			sc->sc_flags |= IWM_FLAG_HW_ERR;
+			task_add(systq, &sc->init_task);
+		}
 		rv = 1;
 		goto out;
 	}
