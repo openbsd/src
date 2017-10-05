@@ -127,7 +127,6 @@ struct chunk_info {
 
 struct malloc_readonly {
 	struct dir_info *g_pool;	/* Main bookkeeping information */
-	int	malloc_freenow;		/* Free quickly - disable chunk rnd */
 	int	malloc_freeunmap;	/* mprotect free pages PROT_NONE? */
 	int	malloc_junk;		/* junk fill? */
 	int	chunk_canaries;		/* use canaries after chunks? */
@@ -454,7 +453,7 @@ alloc_chunk_info(struct dir_info *d, int bits)
 
 	if (LIST_EMPTY(&d->chunk_info_list[bits])) {
 		char *q;
-		int i;
+		size_t i;
 
 		q = MMAP(MALLOC_PAGESIZE);
 		q = MMAP_ERROR(q);
@@ -722,7 +721,7 @@ malloc_bytes(struct dir_info *d, size_t argsize)
 }
 
 static void
-validate_canary(struct dir_info *d, u_char *ptr, size_t sz, size_t allocated)
+validate_canary(u_char *ptr, size_t sz, size_t allocated)
 {
 	size_t check_sz = allocated - sz;
 	u_char *p, *q;
@@ -750,7 +749,7 @@ find_chunknum(struct dir_info *d, struct region_info *r, void *ptr, int check)
 	/* Find the chunk number on the page */
 	chunknum = ((uintptr_t)ptr & MALLOC_PAGEMASK) >> info->shift;
 	if (check && info->size > 0) {
-		validate_canary(d, ptr, info->bits[info->offset + chunknum],
+		validate_canary(ptr, info->bits[info->offset + chunknum],
 		    info->size);
 	}
 
@@ -950,7 +949,7 @@ ofree(void *p)
 			if (r->p != p)
 				wrterror("bogus pointer");
 			if (mopts.chunk_canaries)
-				validate_canary(g_pool, p,
+				validate_canary(p,
 				    sz - mopts.malloc_guard,
 				    PAGEROUND(sz - mopts.malloc_guard));
 		} else {
@@ -979,24 +978,19 @@ ofree(void *p)
 		void *tmp;
 		int i;
 
-		/* Delayed free or canaries? Extra check! */
-		if (!mopts.malloc_freenow || mopts.chunk_canaries)
-			find_chunknum(g_pool, r, p, mopts.chunk_canaries);
-		if (!mopts.malloc_freenow) {
-			if (mopts.malloc_junk && sz > 0)
-				_dl_memset(p, SOME_FREEJUNK, sz);
-			i = getrbyte(g_pool) & MALLOC_DELAYED_CHUNK_MASK;
-			tmp = p;
-			p = g_pool->delayed_chunks[i];
-			if (tmp == p)
+		find_chunknum(g_pool, r, p, mopts.chunk_canaries);
+		for (i = 0; i <= MALLOC_DELAYED_CHUNK_MASK; i++) {
+			if (p == g_pool->delayed_chunks[i])
 				wrterror("double free");
-			if (mopts.malloc_junk)
-				validate_junk(g_pool, p);
-			g_pool->delayed_chunks[i] = tmp;
-		} else {
-			if (mopts.malloc_junk && sz > 0)
-				_dl_memset(p, SOME_FREEJUNK, sz);
 		}
+		if (mopts.malloc_junk && sz > 0)
+			_dl_memset(p, SOME_FREEJUNK, sz);
+		i = getrbyte(g_pool) & MALLOC_DELAYED_CHUNK_MASK;
+		tmp = p;
+		p = g_pool->delayed_chunks[i];
+		g_pool->delayed_chunks[i] = tmp;
+		if (mopts.malloc_junk)
+			validate_junk(g_pool, p);
 		if (p != NULL) {
 			r = find(g_pool, p);
 			if (r == NULL)
