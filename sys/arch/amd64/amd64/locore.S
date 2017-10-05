@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.89 2017/10/04 02:10:33 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.90 2017/10/05 06:18:10 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -115,7 +115,6 @@
 #include <machine/param.h>
 #include <machine/segments.h>
 #include <machine/specialreg.h>
-#include <machine/trap.h>
 #include <machine/frameasm.h>
 
 #if NLAPIC > 0

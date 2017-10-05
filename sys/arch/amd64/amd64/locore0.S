@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.2 2017/07/06 06:17:04 deraadt Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.3 2017/10/05 06:18:10 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -107,20 +107,10 @@
 #include "assym.h"
 #include "lapic.h"
 #include "ksyms.h"
-#include "xen.h"
-#include "hyperv.h"
-
-#include <sys/syscall.h>
 
 #include <machine/param.h>
 #include <machine/segments.h>
 #include <machine/specialreg.h>
-#include <machine/trap.h>
-#include <machine/frameasm.h>
-
-#if NLAPIC > 0
-#include <machine/i82489reg.h>
-#endif
 
 /*
  * override user-land alignment before including asm.h
