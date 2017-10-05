@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.171 2017/10/05 06:22:54 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.172 2017/10/05 06:27:57 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4849,7 +4849,6 @@ vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 
 	/*
 	 * XXX this is the place to place handling of the must1,must0 bits
-	 *     and the cr0 write shadow
 	 */
 
 	/* CR0 must always have NE set */
@@ -4868,7 +4867,7 @@ vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 	 * If the guest has enabled paging, then the IA32_VMX_IA32E_MODE_GUEST
 	 * control must be set to the same as EFER_LME.
 	 */
-	msr_store = (struct vmx_msr_store *) vcpu->vc_vmx_msr_exit_save_va;
+	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
 
 	if (vmread(VMCS_ENTRY_CTLS, &ectls)) {
 		printf("%s: can't read entry controls", __func__);
@@ -4907,7 +4906,6 @@ vmx_handle_cr4_write(struct vcpu *vcpu, uint64_t r)
 {
 	/*
 	 * XXX this is the place to place handling of the must1,must0 bits
-	 *     and the cr4 write shadow
 	 */
 
 	/* CR4_VMXE must always be enabled */
@@ -4956,8 +4954,6 @@ vmx_handle_cr(struct vcpu *vcpu)
 
 	switch (dir) {
 	case CR_WRITE:
-		DPRINTF("%s: mov to cr%d @ %llx, data=%llx\n", __func__, crnum,
-		    vcpu->vc_gueststate.vg_rip, r);
 		if (crnum == 0 || crnum == 4) {
 			switch (reg) {
 			case 0: r = vcpu->vc_gueststate.vg_rax; break;
@@ -4982,6 +4978,8 @@ vmx_handle_cr(struct vcpu *vcpu)
 			case 14: r = vcpu->vc_gueststate.vg_r14; break;
 			case 15: r = vcpu->vc_gueststate.vg_r15; break;
 			}
+			DPRINTF("%s: mov to cr%d @ %llx, data=%llx\n", __func__, crnum,
+			    vcpu->vc_gueststate.vg_rip, r);
 		}
 
 		if (crnum == 0)
@@ -5280,7 +5278,6 @@ svm_handle_msr(struct vcpu *vcpu)
 	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
 
-	/* XXX log the access for now, to be able to identify unknown MSRs */
 	if (vmcb->v_exitinfo1 == 1) {
 		if (*rcx == MSR_EFER) {
 			vmcb->v_efer = *rax | EFER_SVME;
