@@ -1,4 +1,4 @@
-.\"	$OpenBSD: connect.2,v 1.32 2017/03/02 22:12:02 benno Exp $
+.\"	$OpenBSD: connect.2,v 1.33 2017/10/05 12:30:16 bluhm Exp $
 .\"	$NetBSD: connect.2,v 1.8 1995/10/12 15:40:48 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)connect.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 2 2017 $
+.Dd $Mdocdate: October 5 2017 $
 .Dt CONNECT 2
 .Os
 .Sh NAME
@@ -162,7 +162,7 @@ is not a valid descriptor.
 .Fa s
 is not a socket.
 .It Bq Er EADDRNOTAVAIL
-The specified address is not available on this machine.
+No suitable address is available on the local machine.
 .It Bq Er EAFNOSUPPORT
 Addresses in the specified address family cannot be used with this socket.
 .It Bq Er EISCONN
