@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.25 2014/12/10 12:27:57 mikeb Exp $	*/
+/*	$OpenBSD: lom.c,v 1.26 2017/10/05 22:40:08 bluhm Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -788,7 +788,7 @@ lom2_intr(void *arg)
 		return (1);
 	}
 
-	KASSERT(sc->sc_state = LOM_STATE_DATA);
+	KASSERT(sc->sc_state == LOM_STATE_DATA);
 	lc->lc_data = obr;
 
 	TAILQ_REMOVE(&sc->sc_queue, lc, lc_next);
