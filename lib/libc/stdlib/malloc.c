@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.233 2017/10/05 04:41:43 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.234 2017/10/05 04:44:49 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -733,7 +733,7 @@ alloc_chunk_info(struct dir_info *d, int bits)
 
 	if (LIST_EMPTY(&d->chunk_info_list[bits])) {
 		char *q;
-		int i;
+		size_t i;
 
 		q = MMAP(MALLOC_PAGESIZE);
 		if (q == MAP_FAILED)
@@ -1456,8 +1456,9 @@ freezero(void *ptr, size_t sz)
 	if (ptr == NULL)
 		return;
 
-	if (!mopts.internal_funcs)
-		return freezero_p(ptr, sz);
+	if (!mopts.internal_funcs) {
+		freezero_p(ptr, sz);
+	}
 
 	d = getpool();
 	if (d == NULL)
