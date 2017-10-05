@@ -25,7 +25,7 @@ our %args = (
 	    RLIMIT_NOFILE => 30,
 	},
 	loggrep => {
-	    qr/syslogd: receive_fd: recvmsg: Message too long/ => 7,
+	    qr/syslogd: receive_fd: recvmsg: Message too long/ => 7+1,
 	    # One file is opened by test default config, 20 by multifile.
 	    qr/X FILE:/ => 1+13,
 	    qr/X UNUSED:/ => 7,
