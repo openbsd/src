@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1036 2017/10/04 18:19:33 tb Exp $
+#	$OpenBSD: install.sub,v 1.1037 2017/10/05 19:42:52 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1791,7 +1791,7 @@ install_cdrom() {
 # Install sets from disk.
 # Ask for the disk device containing the set files.
 install_disk() {
-	if ! ask_yn "Is the disk partition already mounted?"; then
+	if ! ask_yn "Is the disk partition already mounted?" yes; then
 		ask_which "disk" "contains the $MODE media" \
 			'$(bsort $(get_dkdevs))' \
 			'$(bsort $(rmel $ROOTDISK $(get_dkdevs)))'
