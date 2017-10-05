@@ -1,6 +1,7 @@
-/*	$OpenBSD: syslogd.h,v 1.31 2017/08/08 14:23:23 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.32 2017/10/05 16:15:24 bluhm Exp $ */
 
 /*
+ * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
