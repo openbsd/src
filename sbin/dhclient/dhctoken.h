@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhctoken.h,v 1.12 2017/07/09 12:38:47 krw Exp $	*/
+/*	$OpenBSD: dhctoken.h,v 1.13 2017/10/05 14:19:16 krw Exp $	*/
 
 /* Tokens for config file lexer and parser. */
 
@@ -62,7 +62,6 @@
 #define TOK_REBIND		278
 #define TOK_EXPIRE		279
 #define TOK_BOOTP		280
-#define TOK_DENY		281
 #define TOK_DEFAULT		282
 #define TOK_REBOOT		286
 #define TOK_BACKOFF_CUTOFF	287
