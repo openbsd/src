@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.82 2017/09/08 08:45:27 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.83 2017/10/05 13:43:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -162,13 +162,13 @@ key_bindings_init(void)
 		"bind ! break-pane",
 		"bind '\"' split-window",
 		"bind '#' list-buffers",
-		"bind '$' command-prompt -I'#S' \"rename-session '%%'\"",
+		"bind '$' command-prompt -I'#S' \"rename-session -- '%%'\"",
 		"bind % split-window -h",
 		"bind & confirm-before -p\"kill-window #W? (y/n)\" kill-window",
 		"bind \"'\" command-prompt -pindex \"select-window -t ':%%'\"",
 		"bind ( switch-client -p",
 		"bind ) switch-client -n",
-		"bind , command-prompt -I'#W' \"rename-window '%%'\"",
+		"bind , command-prompt -I'#W' \"rename-window -- '%%'\"",
 		"bind - delete-buffer",
 		"bind . command-prompt \"move-window -t '%%'\"",
 		"bind 0 select-window -t:=0",
@@ -192,7 +192,7 @@ key_bindings_init(void)
 		"bind ] paste-buffer",
 		"bind c new-window",
 		"bind d detach-client",
-		"bind f command-prompt \"find-window '%%'\"",
+		"bind f command-prompt \"find-window -- '%%'\"",
 		"bind i display-message",
 		"bind l last-window",
 		"bind m select-pane -m",
