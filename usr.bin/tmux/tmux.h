@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.804 2017/08/30 18:13:47 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.805 2017/10/05 13:29:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -660,8 +660,10 @@ struct screen_sel {
 };
 
 /* Virtual screen. */
+struct screen_titles;
 struct screen {
 	char			*title;
+	struct screen_titles	*titles;
 
 	struct grid		*grid;		/* grid data */
 
@@ -2082,6 +2084,8 @@ void	 screen_reset_tabs(struct screen *);
 void	 screen_set_cursor_style(struct screen *, u_int);
 void	 screen_set_cursor_colour(struct screen *, const char *);
 void	 screen_set_title(struct screen *, const char *);
+void	 screen_push_title(struct screen *);
+void	 screen_pop_title(struct screen *);
 void	 screen_resize(struct screen *, u_int, u_int, int);
 void	 screen_set_selection(struct screen *,
 	     u_int, u_int, u_int, u_int, u_int, struct grid_cell *);
