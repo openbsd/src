@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.2 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.3 2017/10/05 06:32:26 patrick Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -194,7 +194,7 @@ int mvneta_encap(struct mvneta_softc *, struct mbuf *, uint32_t *);
 void mvneta_rx_proc(struct mvneta_softc *);
 void mvneta_tx_proc(struct mvneta_softc *);
 uint8_t mvneta_crc8(const uint8_t *, size_t);
-void mvneta_filter_setup(struct mvneta_softc *);
+void mvneta_iff(struct mvneta_softc *);
 
 struct mvneta_dmamem *mvneta_dmamem_alloc(struct mvneta_softc *,
     bus_size_t, bus_size_t);
@@ -780,9 +780,8 @@ mvneta_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	}
 
 	if (error == ENETRESET) {
-		if (ifp->if_flags & IFF_RUNNING) {
-			mvneta_filter_setup(sc);
-		}
+		if (ifp->if_flags & IFF_RUNNING)
+			mvneta_iff(sc);
 		error = 0;
 	}
 
@@ -877,7 +876,8 @@ mvneta_up(struct mvneta_softc *sc)
 
 	mvneta_enaddr_write(sc);
 
-	mvneta_filter_setup(sc);
+	/* Program promiscuous mode and multicast filters. */
+	mvneta_iff(sc);
 
 	if (!sc->sc_fixed_link)
 		mii_mediachg(&sc->sc_mii);
@@ -1350,7 +1350,7 @@ mvneta_crc8(const uint8_t *data, size_t size)
 CTASSERT(MVNETA_NDFSMT == MVNETA_NDFOMT);
 
 void
-mvneta_filter_setup(struct mvneta_softc *sc)
+mvneta_iff(struct mvneta_softc *sc)
 {
 	struct arpcom *ac = &sc->sc_ac;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
@@ -1361,37 +1361,17 @@ mvneta_filter_setup(struct mvneta_softc *sc)
 	int i;
 	const uint8_t special[ETHER_ADDR_LEN] = {0x01,0x00,0x5e,0x00,0x00,0x00};
 
+	pxc = MVNETA_READ(sc, MVNETA_PXC);
+	pxc &= ~(MVNETA_PXC_RB | MVNETA_PXC_RBIP | MVNETA_PXC_RBARP | MVNETA_PXC_UPM);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 	memset(dfut, 0, sizeof(dfut));
 	memset(dfsmt, 0, sizeof(dfsmt));
 	memset(dfomt, 0, sizeof(dfomt));
 
-	if (ifp->if_flags & (IFF_ALLMULTI|IFF_PROMISC)) {
-		goto allmulti;
-	}
-
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			/* ranges are complex and somewhat rare */
-			goto allmulti;
-		}
-		/* chip handles some IPv4 multicast specially */
-		if (memcmp(enm->enm_addrlo, special, 5) == 0) {
-			i = enm->enm_addrlo[5];
-			dfsmt[i>>2] |=
-			    MVNETA_DF(i&3, MVNETA_DF_QUEUE(0) | MVNETA_DF_PASS);
-		} else {
-			i = mvneta_crc8(enm->enm_addrlo, ETHER_ADDR_LEN);
-			dfomt[i>>2] |=
-			    MVNETA_DF(i&3, MVNETA_DF_QUEUE(0) | MVNETA_DF_PASS);
-		}
-
-		ETHER_NEXT_MULTI(step, enm);
-	}
-	goto set;
-
-allmulti:
-	if (ifp->if_flags & (IFF_ALLMULTI|IFF_PROMISC)) {
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			pxc |= MVNETA_PXC_UPM;
 		for (i = 0; i < MVNETA_NDFSMT; i++) {
 			dfsmt[i] = dfomt[i] =
 			    MVNETA_DF(0, MVNETA_DF_QUEUE(0) | MVNETA_DF_PASS) |
@@ -1399,18 +1379,24 @@ allmulti:
 			    MVNETA_DF(2, MVNETA_DF_QUEUE(0) | MVNETA_DF_PASS) |
 			    MVNETA_DF(3, MVNETA_DF_QUEUE(0) | MVNETA_DF_PASS);
 		}
+	} else {
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			/* chip handles some IPv4 multicast specially */
+			if (memcmp(enm->enm_addrlo, special, 5) == 0) {
+				i = enm->enm_addrlo[5];
+				dfsmt[i>>2] |=
+				    MVNETA_DF(i&3, MVNETA_DF_QUEUE(0) | MVNETA_DF_PASS);
+			} else {
+				i = mvneta_crc8(enm->enm_addrlo, ETHER_ADDR_LEN);
+				dfomt[i>>2] |=
+				    MVNETA_DF(i&3, MVNETA_DF_QUEUE(0) | MVNETA_DF_PASS);
+			}
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 
-set:
-	pxc = MVNETA_READ(sc, MVNETA_PXC);
-	pxc &= ~MVNETA_PXC_UPM;
-	pxc |= MVNETA_PXC_RB | MVNETA_PXC_RBIP | MVNETA_PXC_RBARP;
-	if (ifp->if_flags & IFF_BROADCAST) {
-		pxc &= ~(MVNETA_PXC_RB | MVNETA_PXC_RBIP | MVNETA_PXC_RBARP);
-	}
-	if (ifp->if_flags & IFF_PROMISC) {
-		pxc |= MVNETA_PXC_UPM;
-	}
 	MVNETA_WRITE(sc, MVNETA_PXC, pxc);
 
 	/* Set Destination Address Filter Unicast Table */
