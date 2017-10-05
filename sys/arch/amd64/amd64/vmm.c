@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.172 2017/10/05 06:27:57 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.173 2017/10/05 06:35:44 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5473,6 +5473,8 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 			*rbx = 0;
 			*rcx = 0;
 			*rdx = 0;
+		} else {
+			CPUID_LEAF(*rax, *rcx, eax, ebx, ecx, edx);
 			*rax = eax;
 			*rbx = ebx;
 			*rcx = ecx;
