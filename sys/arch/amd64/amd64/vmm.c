@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.170 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.171 2017/10/05 06:22:54 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4371,7 +4371,7 @@ vmx_handle_exit(struct vcpu *vcpu)
 		update_rip = 0;
 		break;
 	default:
-		DPRINTF("%s: unhandled exit %lld (%s)\n", __func__,
+		DPRINTF("%s: unhandled exit 0x%llx (%s)\n", __func__,
 		    exit_reason, vmx_exit_reason_decode(exit_reason));
 		return (EINVAL);
 	}
