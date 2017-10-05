@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.8 2017/09/23 12:25:39 uwe Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.9 2017/10/05 02:59:39 jsg Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -66,9 +66,9 @@ const char	*elf_idx2sym(size_t *, uint8_t);
 /* elf.c */
 int		 iself(const char *, size_t);
 int		 elf_getshstab(const char *, size_t, const char **, size_t *);
-ssize_t		 elf_getsymtab(const char *, const char *, size_t,
-		     const Elf_Sym **, size_t *);
-ssize_t		 elf_getsection(char *, const char *, const char *,
+ssize_t		 elf_getsymtab(const char *, size_t filesize, const char *,
+		     size_t, const Elf_Sym **, size_t *);
+ssize_t		 elf_getsection(char *, size_t, const char *, const char *,
 		     size_t, const char **, size_t *);
 
 char		*decompress(const char *, size_t, off_t);
@@ -201,11 +201,11 @@ elf_dump(char *p, size_t filesize, uint8_t flags)
 		return 1;
 
 	/* Find symbol table location and number of symbols. */
-	if (elf_getsymtab(p, shstab, shstabsz, &symtab, &nsymb) == -1)
+	if (elf_getsymtab(p, filesize, shstab, shstabsz, &symtab, &nsymb) == -1)
 		warnx("symbol table not found");
 
 	/* Find string table location and size. */
-	if (elf_getsection(p, ELF_STRTAB, shstab, shstabsz, &strtab,
+	if (elf_getsection(p, filesize, ELF_STRTAB, shstab, shstabsz, &strtab,
 	    &strtabsz) == -1)
 		warnx("string table not found");
 
