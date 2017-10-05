@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.10 2017/09/13 14:19:57 anton Exp $
+.\" $OpenBSD: clang-local.1,v 1.11 2017/10/05 15:13:43 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 13 2017 $
+.Dd $Mdocdate: October 5 2017 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -26,6 +26,12 @@ On
 .Ox ,
 the LLVM/clang compiler exhibits the following characteristics:
 .Bl -dash
+.It
+.Nm clang
+does not search under
+.Pa /usr/local
+for include files or libraries:
+as a system compiler, it only searches the system paths by default.
 .It
 .Nm clang
 comes with stack protection enabled by default, equivalent to the
