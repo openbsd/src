@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.9 2017/10/05 02:59:39 jsg Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.10 2017/10/05 03:06:14 jsg Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -181,6 +181,9 @@ elf_idx2sym(size_t *idx, uint8_t type)
 		if (ELF_ST_TYPE(st->st_info) != type)
 			continue;
 
+		if (st->st_name >= strtabsz)
+			break;
+
 		*idx = i;
 		return strtab + st->st_name;
 	}
@@ -218,6 +221,9 @@ elf_dump(char *p, size_t filesize, uint8_t flags)
 			continue;
 
 		if (strncmp(shstab + sh->sh_name, ELF_CTF, strlen(ELF_CTF)))
+			continue;
+
+		if ((sh->sh_offset + sh->sh_size) > filesize)
 			continue;
 
 		if (!isctf(p + sh->sh_offset, sh->sh_size))
