@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.173 2017/10/05 06:35:44 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.174 2017/10/05 23:55:29 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -211,6 +211,8 @@ void vmm_decode_perf_status_value(uint64_t);
 void vmm_decode_perf_ctl_value(uint64_t);
 void vmm_decode_mtrrdeftype_value(uint64_t);
 void vmm_decode_efer_value(uint64_t);
+void vmm_decode_rflags(uint64_t);
+void vmm_decode_misc_enable_value(uint64_t);
 
 extern int mtrr2mrt(int);
 
@@ -6906,6 +6908,14 @@ vmx_vcpu_dump_regs(struct vcpu *vcpu)
 	else
 		DPRINTF("0x%016llx\n", r);
 
+	DPRINTF(" rflags=");
+	if (vmread(VMCS_GUEST_IA32_RFLAGS, &r))
+		DPRINTF("(error reading)\n");
+	else {
+		DPRINTF("0x%016llx ", r);
+		vmm_decode_rflags(r);
+	}
+
 	DPRINTF(" cr0=");
 	if (vmread(VMCS_GUEST_IA32_CR0, &r))
 		DPRINTF("(error reading)\n");
@@ -7226,6 +7236,7 @@ msr_name_decode(uint32_t msr)
 	case MSR_FSBASE: return "FSBASE";
 	case MSR_GSBASE: return "GSBASE";
 	case MSR_KERNELGSBASE: return "KGSBASE";
+	case MSR_MISC_ENABLE: return "Misc Enable";
 	default: return "Unknown MSR";
 	}
 }
@@ -7555,7 +7566,73 @@ vmm_decode_msr_value(uint64_t msr, uint64_t val)
 	case MSR_PERF_CTL: vmm_decode_perf_ctl_value(val); break;
 	case MSR_MTRRdefType: vmm_decode_mtrrdeftype_value(val); break;
 	case MSR_EFER: vmm_decode_efer_value(val); break;
+	case MSR_MISC_ENABLE: vmm_decode_misc_enable_value(val); break;
 	default: DPRINTF("\n");
 	}
+}
+
+void
+vmm_decode_rflags(uint64_t rflags)
+{
+	struct vmm_reg_debug_info rflags_info[16] = {
+		{ PSL_C,   "CF ", "cf "},
+		{ PSL_PF,  "PF ", "pf "},
+		{ PSL_AF,  "AF ", "af "},
+		{ PSL_Z,   "ZF ", "zf "},
+		{ PSL_N,   "SF ", "sf "},	/* sign flag */
+		{ PSL_T,   "TF ", "tf "},
+		{ PSL_I,   "IF ", "if "},
+		{ PSL_D,   "DF ", "df "},
+		{ PSL_V,   "OF ", "of "},	/* overflow flag */
+		{ PSL_NT,  "NT ", "nt "},
+		{ PSL_RF,  "RF ", "rf "},
+		{ PSL_VM,  "VM ", "vm "},
+		{ PSL_AC,  "AC ", "ac "},
+		{ PSL_VIF, "VIF ", "vif "},
+		{ PSL_VIP, "VIP ", "vip "},
+		{ PSL_ID,  "ID ", "id "},
+	};
+
+	uint8_t i, iopl;
+
+	DPRINTF("(");
+	for (i = 0; i < 16; i++)
+		if (rflags & rflags_info[i].vrdi_bit)
+			DPRINTF("%s", rflags_info[i].vrdi_present);
+		else
+			DPRINTF("%s", rflags_info[i].vrdi_absent);
+
+	iopl = (rflags & PSL_IOPL) >> 12;
+	DPRINTF("IOPL=%d", iopl);
+
+	DPRINTF(")\n");
+}
+
+void
+vmm_decode_misc_enable_value(uint64_t misc)
+{
+	struct vmm_reg_debug_info misc_info[10] = {
+		{ MISC_ENABLE_FAST_STRINGS,		"FSE ", "fse "},
+		{ MISC_ENABLE_TCC,			"TCC ", "tcc "},
+		{ MISC_ENABLE_PERF_MON_AVAILABLE,	"PERF ", "perf "},
+		{ MISC_ENABLE_BTS_UNAVAILABLE,		"BTSU ", "btsu "},
+		{ MISC_ENABLE_PEBS_UNAVAILABLE,		"PEBSU ", "pebsu "},
+		{ MISC_ENABLE_EIST_ENABLED,		"EIST ", "eist "},
+		{ MISC_ENABLE_ENABLE_MONITOR_FSM,	"MFSM ", "mfsm "},
+		{ MISC_ENABLE_LIMIT_CPUID_MAXVAL,	"CMAX ", "cmax "},
+		{ MISC_ENABLE_xTPR_MESSAGE_DISABLE,	"xTPRD ", "xtprd "},
+		{ MISC_ENABLE_XD_BIT_DISABLE,		"NXD", "nxd"},
+	};
+
+	uint8_t i;
+
+	DPRINTF("(");
+	for (i = 0; i < 10; i++)
+		if (misc & misc_info[i].vrdi_bit)
+			DPRINTF("%s", misc_info[i].vrdi_present);
+		else
+			DPRINTF("%s", misc_info[i].vrdi_absent);
+
+	DPRINTF(")\n");
 }
 #endif /* VMM_DEBUG */
