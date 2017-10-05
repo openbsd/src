@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.13 2017/01/09 14:44:28 mpi Exp $   */
+/*	$OpenBSD: ugold.c,v 1.14 2017/10/05 17:29:00 stsp Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
@@ -46,6 +46,7 @@
 
 #define UGOLD_TYPE_SI7005	1
 #define UGOLD_TYPE_SI7006	2
+#define UGOLD_TYPE_SHT1X	3
 
 /*
  * This driver uses three known commands for the TEMPer and TEMPerHUM
@@ -303,6 +304,9 @@ ugold_si700x_temp(int type, uint8_t msb, uint8_t lsb)
 	case UGOLD_TYPE_SI7006: /* 14bit and status bit */
 		temp = (((temp & ~3) * 21965) / 8192) - 46850;
 		break;
+	case UGOLD_TYPE_SHT1X:
+		temp = (temp * 1000) / 256;
+		break;
 	default:
 		temp = 0;
 	}
@@ -325,6 +329,9 @@ ugold_si700x_rhum(int type, uint8_t msb, uint8_t lsb, int temp)
 	case UGOLD_TYPE_SI7006: /* 14bit and status bit */
 		rhum = (((rhum & ~3) * 15625) / 8192) - 6000;
 		break;
+	case UGOLD_TYPE_SHT1X: /* 16 bit */
+		rhum = rhum * 32;
+		break;
 	default:
 		rhum = 0;
 	}
@@ -340,7 +347,8 @@ ugold_si700x_rhum(int type, uint8_t msb, uint8_t lsb, int temp)
 static void
 ugold_si700x_type(struct ugold_softc *sc, uint8_t *buf, u_int len)
 {
-	if (memcmp(buf, "TEMPerHu", len) == 0)
+	if (memcmp(buf, "TEMPerHu", len) == 0 ||
+	    memcmp(buf, "TEMPer1F", len) == 0)
 		return; /* skip equal first half of the answer */
 
 	printf("%s: %d sensor%s type ", sc->sc_hdev.sc_dev.dv_xname,
@@ -352,6 +360,9 @@ ugold_si700x_type(struct ugold_softc *sc, uint8_t *buf, u_int len)
 	} else if (memcmp(buf, "mM12V1.2", len) == 0) {
 		sc->sc_type = UGOLD_TYPE_SI7006;
 		printf("si7006 (temperature and humidity)\n");
+	} else if (memcmp(buf, "_H1V1.5F", len) == 0) {
+		sc->sc_type = UGOLD_TYPE_SHT1X;
+		printf("sht1x (temperature and humidity)\n");
 	} else {
 		sc->sc_type = -1;
 		printf("unknown\n");
