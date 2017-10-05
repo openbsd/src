@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.232 2017/09/23 15:13:12 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.233 2017/10/05 04:41:43 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -273,24 +273,15 @@ struct dir_info *getpool(void)
 static __dead void
 wrterror(struct dir_info *d, char *msg, ...)
 {
-	struct iovec	iov[3];
-	char		pidbuf[80];
-	char		buf[80];
 	int		saved_errno = errno;
 	va_list		ap;
 
-	iov[0].iov_base = pidbuf;
-	snprintf(pidbuf, sizeof(pidbuf), "%s(%d) in %s(): ", __progname,
+	dprintf(STDERR_FILENO, "%s(%d) in %s(): ", __progname,
 	    getpid(), (d != NULL && d->func) ? d->func : "unknown");
-	iov[0].iov_len = strlen(pidbuf);
-	iov[1].iov_base = buf;
 	va_start(ap, msg);
-	vsnprintf(buf, sizeof(buf), msg, ap);
+	vdprintf(STDERR_FILENO, msg, ap);
 	va_end(ap);
-	iov[1].iov_len = strlen(buf);
-	iov[2].iov_base = "\n";
-	iov[2].iov_len = 1;
-	writev(STDERR_FILENO, iov, 3);
+	dprintf(STDERR_FILENO, "\n");
 
 #ifdef MALLOC_STATS
 	if (mopts.malloc_stats)
@@ -560,9 +551,8 @@ omalloc_parseopt(char opt)
 		mopts.malloc_xmalloc = 1;
 		break;
 	default: {
-		static const char q[] = "malloc() warning: "
-		    "unknown char in MALLOC_OPTIONS\n";
-		write(STDERR_FILENO, q, sizeof(q) - 1);
+		dprintf(STDERR_FILENO, "malloc() warning: "
+                    "unknown char in MALLOC_OPTIONS\n");
 		break;
 	}
 	}
@@ -623,9 +613,8 @@ omalloc_init(void)
 
 #ifdef MALLOC_STATS
 	if (mopts.malloc_stats && (atexit(malloc_exit) == -1)) {
-		static const char q[] = "malloc() warning: atexit(2) failed."
-		    " Will not be able to dump stats on exit\n";
-		write(STDERR_FILENO, q, sizeof(q) - 1);
+		dprintf(STDERR_FILENO, "malloc() warning: atexit(2) failed."
+		    " Will not be able to dump stats on exit\n");
 	}
 #endif /* MALLOC_STATS */
 
@@ -2135,29 +2124,21 @@ putleakinfo(void *f, size_t sz, int cnt)
 static struct malloc_leak *malloc_leaks;
 
 static void
-writestr(int fd, const char *p)
-{
-	write(fd, p, strlen(p));
-}
-
-static void
 dump_leaks(int fd)
 {
 	struct leaknode *p;
-	char buf[64];
 	int i = 0;
 
-	writestr(fd, "Leak report\n");
-	writestr(fd, "                 f     sum      #    avg\n");
+	dprintf(fd, "Leak report\n");
+	dprintf(fd, "                 f     sum      #    avg\n");
 	/* XXX only one page of summary */
 	if (malloc_leaks == NULL)
 		malloc_leaks = MMAP(MALLOC_PAGESIZE);
 	if (malloc_leaks != MAP_FAILED)
 		memset(malloc_leaks, 0, MALLOC_PAGESIZE);
 	RBT_FOREACH(p, leaktree, &leakhead) {
-		snprintf(buf, sizeof(buf), "%18p %7zu %6u %6zu\n", p->d.f,
+		dprintf(fd, "%18p %7zu %6u %6zu\n", p->d.f,
 		    p->d.total_size, p->d.count, p->d.total_size / p->d.count);
-		write(fd, buf, strlen(buf));
 		if (malloc_leaks == MAP_FAILED ||
 		    i >= MALLOC_PAGESIZE / sizeof(struct malloc_leak))
 			continue;
@@ -2171,13 +2152,10 @@ dump_leaks(int fd)
 static void
 dump_chunk(int fd, struct chunk_info *p, void *f, int fromfreelist)
 {
-	char buf[64];
-
 	while (p != NULL) {
-		snprintf(buf, sizeof(buf), "chunk %18p %18p %4d %d/%d\n",
+		dprintf(fd, "chunk %18p %18p %4d %d/%d\n",
 		    p->page, ((p->bits[0] & 1) ? NULL : f),
 		    p->size, p->free, p->total);
-		write(fd, buf, strlen(buf));
 		if (!fromfreelist) {
 			if (p->bits[0] & 1)
 				putleakinfo(NULL, p->size, p->total - p->free);
@@ -2190,18 +2168,17 @@ dump_chunk(int fd, struct chunk_info *p, void *f, int fromfreelist)
 		}
 		p = LIST_NEXT(p, entries);
 		if (p != NULL)
-			writestr(fd, "        ");
+			dprintf(fd, "        ");
 	}
 }
 
 static void
 dump_free_chunk_info(int fd, struct dir_info *d)
 {
-	char buf[64];
 	int i, j, count;
 	struct chunk_info *p;
 
-	writestr(fd, "Free chunk structs:\n");
+	dprintf(fd, "Free chunk structs:\n");
 	for (i = 0; i <= MALLOC_MAXSHIFT; i++) {
 		count = 0;
 		LIST_FOREACH(p, &d->chunk_info_list[i], entries)
@@ -2210,12 +2187,11 @@ dump_free_chunk_info(int fd, struct dir_info *d)
 			p = LIST_FIRST(&d->chunk_dir[i][j]);
 			if (p == NULL && count == 0)
 				continue;
-			snprintf(buf, sizeof(buf), "%2d) %3d ", i, count);
-			write(fd, buf, strlen(buf));
+			dprintf(fd, "%2d) %3d ", i, count);
 			if (p != NULL)
 				dump_chunk(fd, p, NULL, 1);
 			else
-				write(fd, "\n", 1);
+				dprintf(fd, "\n");
 		}
 	}
 
@@ -2224,19 +2200,14 @@ dump_free_chunk_info(int fd, struct dir_info *d)
 static void
 dump_free_page_info(int fd, struct dir_info *d)
 {
-	char buf[64];
 	int i;
 
-	snprintf(buf, sizeof(buf), "Free pages cached: %zu\n",
-	    d->free_regions_size);
-	write(fd, buf, strlen(buf));
+	dprintf(fd, "Free pages cached: %zu\n", d->free_regions_size);
 	for (i = 0; i < mopts.malloc_cache; i++) {
 		if (d->free_regions[i].p != NULL) {
-			snprintf(buf, sizeof(buf), "%2d) ", i);
-			write(fd, buf, strlen(buf));
-			snprintf(buf, sizeof(buf), "free at %p: %zu\n",
+			dprintf(fd, "%2d) ", i);
+			dprintf(fd, "free at %p: %zu\n",
 			    d->free_regions[i].p, d->free_regions[i].size);
-			write(fd, buf, strlen(buf));
 		}
 	}
 }
@@ -2244,50 +2215,39 @@ dump_free_page_info(int fd, struct dir_info *d)
 static void
 malloc_dump1(int fd, int poolno, struct dir_info *d)
 {
-	char buf[100];
 	size_t i, realsize;
 
-	snprintf(buf, sizeof(buf), "Malloc dir of %s pool %d at %p\n", __progname, poolno, d);
-	write(fd, buf, strlen(buf));
+	dprintf(fd, "Malloc dir of %s pool %d at %p\n", __progname, poolno, d);
 	if (d == NULL)
 		return;
-	snprintf(buf, sizeof(buf), "Region slots free %zu/%zu\n",
+	dprintf(fd, "Region slots free %zu/%zu\n",
 		d->regions_free, d->regions_total);
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Finds %zu/%zu\n", d->finds,
+	dprintf(fd, "Finds %zu/%zu\n", d->finds,
 	    d->find_collisions);
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Inserts %zu/%zu\n", d->inserts,
+	dprintf(fd, "Inserts %zu/%zu\n", d->inserts,
 	    d->insert_collisions);
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Deletes %zu/%zu\n", d->deletes,
+	dprintf(fd, "Deletes %zu/%zu\n", d->deletes,
 	    d->delete_moves);
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Cheap reallocs %zu/%zu\n",
+	dprintf(fd, "Cheap reallocs %zu/%zu\n",
 	    d->cheap_reallocs, d->cheap_realloc_tries);
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "In use %zu\n", d->malloc_used);
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Guarded %zu\n", d->malloc_guarded);
-	write(fd, buf, strlen(buf));
+	dprintf(fd, "In use %zu\n", d->malloc_used);
+	dprintf(fd, "Guarded %zu\n", d->malloc_guarded);
 	dump_free_chunk_info(fd, d);
 	dump_free_page_info(fd, d);
-	writestr(fd,
+	dprintf(fd,
 	    "slot)  hash d  type               page                  f size [free/n]\n");
 	for (i = 0; i < d->regions_total; i++) {
 		if (d->r[i].p != NULL) {
 			size_t h = hash(d->r[i].p) &
 			    (d->regions_total - 1);
-			snprintf(buf, sizeof(buf), "%4zx) #%4zx %zd ",
+			dprintf(fd, "%4zx) #%4zx %zd ",
 			    i, h, h - i);
-			write(fd, buf, strlen(buf));
 			REALSIZE(realsize, &d->r[i]);
 			if (realsize > MALLOC_MAXCHUNK) {
 				putleakinfo(d->r[i].f, realsize, 1);
-				snprintf(buf, sizeof(buf),
+				dprintf(fd,
 				    "pages %18p %18p %zu\n", d->r[i].p,
 				    d->r[i].f, realsize);
-				write(fd, buf, strlen(buf));
 			} else
 				dump_chunk(fd,
 				    (struct chunk_info *)d->r[i].size,
@@ -2295,7 +2255,7 @@ malloc_dump1(int fd, int poolno, struct dir_info *d)
 		}
 	}
 	dump_leaks(fd);
-	write(fd, "\n", 1);
+	dprintf(fd, "\n");
 }
 
 void
@@ -2341,16 +2301,12 @@ DEF_WEAK(malloc_gdump);
 static void
 malloc_exit(void)
 {
-	static const char q[] = "malloc() warning: Couldn't dump stats\n";
 	int save_errno = errno, fd, i;
-	char buf[100];
 
 	fd = open("malloc.out", O_RDWR|O_APPEND);
 	if (fd != -1) {
-		snprintf(buf, sizeof(buf), "******** Start dump %s *******\n",
-		     __progname);
-		write(fd, buf, strlen(buf));
-		snprintf(buf, sizeof(buf),
+		dprintf(fd, "******** Start dump %s *******\n", __progname);
+		dprintf(fd,
 		    "MT=%d I=%d F=%d U=%d J=%d R=%d X=%d C=%d cache=%u G=%zu\n",
 		    mopts.malloc_mt, mopts.internal_funcs,
 		    mopts.malloc_freecheck,
@@ -2358,16 +2314,14 @@ malloc_exit(void)
 		    mopts.malloc_realloc, mopts.malloc_xmalloc,
 		    mopts.chunk_canaries, mopts.malloc_cache,
 		    mopts.malloc_guard);
-		write(fd, buf, strlen(buf));
 
 		for (i = 0; i < _MALLOC_MUTEXES; i++)
 			malloc_dump(fd, i, mopts.malloc_pool[i]);
-		snprintf(buf, sizeof(buf), "******** End dump %s *******\n",
-		    __progname);
-		write(fd, buf, strlen(buf));
+		dprintf(fd, "******** End dump %s *******\n", __progname);
 		close(fd);
 	} else
-		write(STDERR_FILENO, q, sizeof(q) - 1);
+		dprintf(STDERR_FILENO,
+		    "malloc() warning: Couldn't dump stats\n");
 	errno = save_errno;
 }
 
