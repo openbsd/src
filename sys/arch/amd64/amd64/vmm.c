@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.174 2017/10/05 23:55:29 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.175 2017/10/06 07:39:10 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -149,6 +149,7 @@ void vm_teardown(struct vm *);
 int vcpu_vmx_check_cap(struct vcpu *, uint32_t, uint32_t, int);
 int vcpu_vmx_compute_ctrl(uint64_t, uint16_t, uint32_t, uint32_t, uint32_t *);
 int vmx_get_exit_info(uint64_t *, uint64_t *);
+int vmx_load_pdptes(struct vcpu *);
 int vmx_handle_exit(struct vcpu *);
 int svm_handle_exit(struct vcpu *);
 int svm_handle_msr(struct vcpu *);
@@ -1822,9 +1823,6 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vmcb->v_efer |= EFER_SVME;
 
 	ret = vcpu_writeregs_svm(vcpu, VM_RWREGS_ALL, vrs);
-
-	vmcb->v_efer |= (EFER_LME | EFER_LMA);
-	vmcb->v_cr4 |= CR4_PAE;
 
 	/* xcr0 power on default sets bit 0 (x87 state) */
 	vcpu->vc_gueststate.vg_xcr0 = XCR0_X87;
@@ -4830,6 +4828,101 @@ vmx_handle_inout(struct vcpu *vcpu)
 }
 
 /*
+ * vmx_load_pdptes
+ *
+ * Update the PDPTEs in the VMCS with the values currently indicated by the
+ * guest CR3. This is used for 32-bit PAE guests when enabling paging.
+ *
+ * Parameters
+ *  vcpu: The vcpu whose PDPTEs should be loaded
+ *
+ * Return values:
+ *  0: if successful
+ *  EINVAL: if the PDPTEs could not be loaded
+ *  ENOMEM: memory allocation failure
+ */
+int
+vmx_load_pdptes(struct vcpu *vcpu)
+{
+	uint64_t cr3, cr3_host_phys;
+	vaddr_t cr3_host_virt;
+	pd_entry_t *pdptes;
+	int ret;
+
+	if (vmread(VMCS_GUEST_IA32_CR3, &cr3)) {
+		printf("%s: can't read guest cr3\n", __func__);
+		return (EINVAL);
+	}
+
+	if (!pmap_extract(vcpu->vc_parent->vm_map->pmap, (vaddr_t)cr3,
+	    (paddr_t *)&cr3_host_phys)) {
+		DPRINTF("%s: nonmapped guest CR3, setting PDPTEs to 0\n",
+		    __func__);
+		if (vmwrite(VMCS_GUEST_PDPTE0, 0)) {
+			printf("%s: can't write guest PDPTE0\n", __func__);
+			return (EINVAL);
+		}
+
+		if (vmwrite(VMCS_GUEST_PDPTE1, 0)) {
+			printf("%s: can't write guest PDPTE1\n", __func__);
+			return (EINVAL);
+		}
+
+		if (vmwrite(VMCS_GUEST_PDPTE2, 0)) {
+			printf("%s: can't write guest PDPTE2\n", __func__);
+			return (EINVAL);
+		}
+
+		if (vmwrite(VMCS_GUEST_PDPTE3, 0)) {
+			printf("%s: can't write guest PDPTE3\n", __func__);
+			return (EINVAL);
+		}
+		return (0);
+	}
+
+	ret = 0;
+
+	cr3_host_virt = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_waitok);
+	if (!cr3_host_virt) {
+		printf("%s: can't allocate address for guest CR3 mapping\n",
+		    __func__);
+		return (ENOMEM);
+	}
+
+	pmap_kenter_pa(cr3_host_virt, cr3_host_phys, PROT_READ);
+
+	pdptes = (pd_entry_t *)cr3_host_virt;
+	if (vmwrite(VMCS_GUEST_PDPTE0, pdptes[0])) {
+		printf("%s: can't write guest PDPTE0\n", __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+
+	if (vmwrite(VMCS_GUEST_PDPTE1, pdptes[1])) {
+		printf("%s: can't write guest PDPTE1\n", __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+
+	if (vmwrite(VMCS_GUEST_PDPTE2, pdptes[2])) {
+		printf("%s: can't write guest PDPTE2\n", __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+
+	if (vmwrite(VMCS_GUEST_PDPTE3, pdptes[3])) {
+		printf("%s: can't write guest PDPTE3\n", __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+
+exit:
+	pmap_kremove(cr3_host_virt, PAGE_SIZE);
+	km_free((void *)cr3_host_virt, PAGE_SIZE, &kv_any, &kp_none);
+	return (ret);
+}
+
+/*
  * vmx_handle_cr0_write
  *
  * Write handler for CR0. This function ensures valid values are written into
@@ -4847,11 +4940,22 @@ int
 vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 {
 	struct vmx_msr_store *msr_store;
-	uint64_t ectls;
+	uint64_t ectls, oldcr0, cr4;
+	int ret;
 
 	/*
 	 * XXX this is the place to place handling of the must1,must0 bits
 	 */
+
+	if (vmread(VMCS_GUEST_IA32_CR0, &oldcr0)) {
+		printf("%s: can't read guest cr0\n", __func__);
+		return (EINVAL);
+	}
+
+	if (vmread(VMCS_GUEST_IA32_CR4, &cr4)) {
+		printf("%s: can't read guest cr4\n", __func__);
+		return (EINVAL);
+	}
 
 	/* CR0 must always have NE set */
 	r |= CR0_NE;
@@ -4884,6 +4988,16 @@ vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 	if (vmwrite(VMCS_ENTRY_CTLS, ectls)) {
 		printf("%s: can't write entry controls", __func__);
 		return (EINVAL);
+	}
+
+	/* Load PDPTEs if PAE guest enabling paging */
+	if (!(oldcr0 & CR0_PG) && (r & CR0_PG) && (cr4 & CR4_PAE)) {
+		ret = vmx_load_pdptes(vcpu);
+
+		if (ret) {
+			printf("%s: updating PDPTEs failed\n", __func__);
+			return (ret);
+		}
 	}
 
 	return (0);
