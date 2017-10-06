@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.23 2017/08/07 19:34:53 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.24 2017/10/06 04:52:22 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -59,6 +59,8 @@ static void	 efi_heap_init(void);
 static void	 efi_memprobe_internal(void);
 static void	 efi_video_init(void);
 static void	 efi_video_reset(void);
+static EFI_STATUS
+		 efi_gop_setmode(EFI_GRAPHICS_OUTPUT *gop, int mode);
 EFI_STATUS	 efi_main(EFI_HANDLE, EFI_SYSTEM_TABLE *);
 
 void (*run_i386)(u_long, u_long, int, int, int, int, int, int, int, int)
@@ -699,6 +701,18 @@ static EFI_GUID smbios_guid = SMBIOS_TABLE_GUID;
 
 #define	efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
 
+static EFI_STATUS
+efi_gop_setmode(EFI_GRAPHICS_OUTPUT *gop, int mode)
+{
+	EFI_STATUS	status;
+
+	status = EFI_CALL(gop->SetMode, gop, mode);
+	if (EFI_ERROR(status) || gop->Mode->Mode != mode)
+		printf("GOP SetMode() failed (%d)\n", status);
+
+	return (status);
+}
+
 void
 efi_makebootargs(void)
 {
@@ -708,7 +722,7 @@ efi_makebootargs(void)
 	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION
 				*gopi;
 	bios_efiinfo_t		 ei;
-	int			 bestmode = -1;
+	int			 curmode, bestmode = -1;
 	UINTN			 sz, gopsiz, bestsiz = 0;
 	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION
 				*info;
@@ -746,9 +760,9 @@ efi_makebootargs(void)
 			}
 		}
 		if (bestmode >= 0) {
-			status = EFI_CALL(gop->SetMode, gop, bestmode);
-			if (EFI_ERROR(status) && gop->Mode->Mode != bestmode)
-				printf("GOP setmode failed(%d)\n", status);
+			curmode = gop->Mode->Mode;
+			if (efi_gop_setmode(gop, bestmode) != EFI_SUCCESS)
+				(void)efi_gop_setmode(gop, curmode);
 		}
 
 		gopi = gop->Mode->Info;
