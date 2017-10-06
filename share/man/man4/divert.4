@@ -1,4 +1,4 @@
-.\"     $OpenBSD: divert.4,v 1.17 2017/08/25 16:11:01 bluhm Exp $
+.\"     $OpenBSD: divert.4,v 1.18 2017/10/06 21:14:55 bluhm Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2012-2014 Lawrence Teo <lteo@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 25 2017 $
+.Dd $Mdocdate: October 6 2017 $
 .Dt DIVERT 4
 .Os
 .Sh NAME
@@ -99,22 +99,6 @@ Receive and send divert socket buffer space can be tuned through
 shows information relevant to divert sockets.
 Note that the default is 64k and too short to handle full sized UDP
 packets.
-.Pp
-The IP_DIVERTFL socket option on the IPPROTO_IP level controls
-whether both inbound and outbound packets are diverted (the default)
-or only packets travelling in one direction.
-It cannot be reset once set.
-Valid values are
-.Dv IPPROTO_DIVERT_INIT
-for the direction of the initial packet of a flow, and
-.Dv IPPROTO_DIVERT_RESP
-for the direction of the response packets.
-The direction is relative to the packet direction.
-So for pf out rules, it is the other way around.
-If one filter is active, it specifies which packets should not be
-diverted.
-Both directions can be combined as bit fields, but then the traffic
-is not filtered; not using the P_DIVERTFL option has the same effect.
 .Sh EXAMPLES
 The following PF rule queues outbound IPv4 packets to TCP port 80,
 as well as the return traffic, on the em0 interface to divert port 700:
@@ -216,7 +200,6 @@ main(int argc, char *argv[])
 }
 .Ed
 .Sh SEE ALSO
-.Xr setsockopt 2 ,
 .Xr socket 2 ,
 .Xr ip 4 ,
 .Xr pf.conf 5

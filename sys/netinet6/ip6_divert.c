@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.51 2017/09/06 11:43:04 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.52 2017/10/06 21:14:55 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -188,18 +188,6 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 		div6stat_inc(div6s_errors);
 		return (0);
-	}
-
-	TAILQ_FOREACH(inp, &divb6table.inpt_queue, inp_queue) {
-		if (inp->inp_lport != divert_port)
-			continue;
-		if (inp->inp_divertfl == 0)
-			break;
-		if (dir == PF_IN && !(inp->inp_divertfl & IPPROTO_DIVERT_RESP))
-			return (-1);
-		if (dir == PF_OUT && !(inp->inp_divertfl & IPPROTO_DIVERT_INIT))
-			return (-1);
-		break;
 	}
 
 	memset(&addr, 0, sizeof(addr));

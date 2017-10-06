@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.124 2017/08/11 19:53:02 bluhm Exp $	*/
+/*	$OpenBSD: in.h,v 1.125 2017/10/06 21:14:55 bluhm Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -317,11 +317,6 @@ struct ip_opts {
 						/* source address to use */
 
 #define IP_RTABLE		0x1021	/* int; routing table, see SO_RTABLE */
-#define IP_DIVERTFL		0x1022	/* int; divert direction flag opt */
-
-/* Values used by IP_DIVERTFL socket option */
-#define IPPROTO_DIVERT_RESP	0x01	/* divert response packets */
-#define IPPROTO_DIVERT_INIT	0x02	/* divert packets initial direction */
 
 #if __BSD_VISIBLE
 /*
