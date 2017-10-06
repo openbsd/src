@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.87 2017/06/20 05:34:41 mlarkin Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.88 2017/10/06 13:33:53 mikeb Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -47,8 +47,8 @@
 #include <machine/cpufunc.h>
 
 void	replacesmap(void);
-u_int64_t cpu_tsc_freq(struct cpu_info *);
-u_int64_t cpu_tsc_freq_ctr(struct cpu_info *);
+uint64_t cpu_freq(struct cpu_info *);
+void	tsc_timecounter_init(struct cpu_info *);
 #if NVMM > 0
 void	cpu_check_vmm_cap(struct cpu_info *);
 #endif /* NVMM > 0 */
@@ -56,12 +56,6 @@ void	cpu_check_vmm_cap(struct cpu_info *);
 /* sysctl wants this. */
 char cpu_model[48];
 int cpuspeed;
-
-u_int tsc_get_timecount(struct timecounter *tc);
-
-struct timecounter tsc_timecounter = {
-	tsc_get_timecount, NULL, ~0u, 0, "tsc", -1000, NULL
-};
 
 int amd64_has_xcrypt;
 #ifdef CRYPTO
@@ -387,13 +381,12 @@ via_update_sensor(void *args)
 }
 #endif
 
-u_int64_t
-cpu_tsc_freq_ctr(struct cpu_info *ci)
+uint64_t
+cpu_freq_ctr(struct cpu_info *ci)
 {
-	u_int64_t count, last_count, msr;
+	uint64_t count, last_count, msr;
 
 	if ((ci->ci_flags & CPUF_CONST_TSC) == 0 ||
-	    (ci->ci_flags & CPUF_INVAR_TSC) ||
 	    (cpu_perf_eax & CPUIDEAX_VERID) <= 1 ||
 	    CPUIDEDX_NUM_FC(cpu_perf_edx) <= 1)
 		return (0);
@@ -425,46 +418,12 @@ cpu_tsc_freq_ctr(struct cpu_info *ci)
 	return ((count - last_count) * 10);
 }
 
-u_int64_t
-cpu_tsc_freq(struct cpu_info *ci)
+uint64_t
+cpu_freq(struct cpu_info *ci)
 {
-	u_int64_t last_count, count;
-	uint32_t eax, ebx, khz, dummy;
+	uint64_t last_count, count;
 
-	if (!strcmp(cpu_vendor, "GenuineIntel") &&
-	    cpuid_level >= 0x15) {
-		eax = ebx = khz = dummy = 0;
-		CPUID(0x15, eax, ebx, khz, dummy);
-		khz /= 1000;
-		if (khz == 0) {
-			switch (ci->ci_model) {
-			case 0x4e: /* Skylake mobile */
-			case 0x5e: /* Skylake desktop */
-			case 0x8e: /* Kabylake mobile */
-			case 0x9e: /* Kabylake desktop */
-				khz = 24000; /* 24.0 Mhz */
-				break;
-			case 0x55: /* Skylake X */
-				khz = 25000; /* 25.0 Mhz */
-				break;
-			case 0x5c: /* Atom Goldmont */
-				khz = 19200; /* 19.2 Mhz */
-				break;
-			}
-		}
-		if (ebx == 0 || eax == 0)
-			count = 0;
-		else if ((count = khz * ebx / eax) != 0) {
-			/*
-			 * Using the CPUID-derived frequency increases
-			 * the quality of the TSC time counter.
-			 */
-			tsc_timecounter.tc_quality = 2000;
-			return (count * 1000);
-		}
-	}
-
-	count = cpu_tsc_freq_ctr(ci);
+	count = cpu_freq_ctr(ci);
 	if (count != 0)
 		return (count);
 
@@ -475,15 +434,10 @@ cpu_tsc_freq(struct cpu_info *ci)
 	return ((count - last_count) * 10);
 }
 
-u_int
-tsc_get_timecount(struct timecounter *tc)
-{
-	return rdtsc();
-}
-
 void
 identifycpu(struct cpu_info *ci)
 {
+	uint64_t freq = 0;
 	u_int32_t dummy, val;
 	char mycpu_model[48];
 	int i;
@@ -568,18 +522,18 @@ identifycpu(struct cpu_info *ci)
 			ci->ci_flags |= CPUF_INVAR_TSC;
 	}
 
-	ci->ci_tsc_freq = cpu_tsc_freq(ci);
+	freq = cpu_freq(ci);
 
 	amd_cpu_cacheinfo(ci);
 
 	printf("%s: %s", ci->ci_dev->dv_xname, mycpu_model);
 
-	if (ci->ci_tsc_freq != 0)
-		printf(", %llu.%02llu MHz", (ci->ci_tsc_freq + 4999) / 1000000,
-		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
+	if (freq != 0)
+		printf(", %llu.%02llu MHz", (freq + 4999) / 1000000,
+		    ((freq + 4999) / 10000) % 100);
 
 	if (ci->ci_flags & CPUF_PRIMARY) {
-		cpuspeed = (ci->ci_tsc_freq + 4999) / 1000000;
+		cpuspeed = (freq + 4999) / 1000000;
 		cpu_cpuspeed = cpu_amd64speed;
 	}
 
@@ -723,14 +677,7 @@ identifycpu(struct cpu_info *ci)
 #endif
 	}
 
-	if ((ci->ci_flags & CPUF_PRIMARY) &&
-	    (ci->ci_flags & CPUF_CONST_TSC) &&
-	    (ci->ci_flags & CPUF_INVAR_TSC)) {
-		printf("%s: TSC frequency %llu Hz\n",
-		    ci->ci_dev->dv_xname, ci->ci_tsc_freq);
-		tsc_timecounter.tc_frequency = ci->ci_tsc_freq;
-		tc_init(&tsc_timecounter);
-	}
+	tsc_timecounter_init(ci);
 
 	cpu_topology(ci);
 #if NVMM > 0

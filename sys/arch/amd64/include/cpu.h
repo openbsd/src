@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.114 2017/08/11 20:19:14 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.115 2017/10/06 13:33:53 mikeb Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -138,7 +138,6 @@ struct cpu_info {
 	u_int32_t	ci_family;
 	u_int32_t	ci_model;
 	u_int32_t	ci_cflushsz;
-	u_int64_t	ci_tsc_freq;
 
 	int		ci_inatomic;
 

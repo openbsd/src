@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.21 2015/10/06 20:49:32 matthew Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.22 2017/10/06 13:33:53 mikeb Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -264,6 +264,10 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	hpet_timecounter.tc_priv = sc;
 	hpet_timecounter.tc_name = sc->sc_dev.dv_xname;
 	tc_init(&hpet_timecounter);
+#if defined(__amd64__)
+	extern void cpu_recalibrate_tsc(struct timecounter *);
+	cpu_recalibrate_tsc(&hpet_timecounter);
+#endif
 	acpihpet_attached++;
 }
 

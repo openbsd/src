@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitimer.c,v 1.11 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: acpitimer.c,v 1.12 2017/10/06 13:33:53 mikeb Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -96,6 +96,10 @@ acpitimerattach(struct device *parent, struct device *self, void *aux)
 	acpi_timecounter.tc_priv = sc;
 	acpi_timecounter.tc_name = sc->sc_dev.dv_xname;
 	tc_init(&acpi_timecounter);
+#if defined(__amd64__)
+	extern void cpu_recalibrate_tsc(struct timecounter *);
+	cpu_recalibrate_tsc(&acpi_timecounter);
+#endif
 }
 
 

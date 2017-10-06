@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.8 2016/07/28 21:57:57 kettenis Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.9 2017/10/06 13:33:53 mikeb Exp $	*/
 /* 	$NetBSD: cpuvar.h,v 1.1 2003/03/01 18:29:28 fvdl Exp $ */
 
 /*-
@@ -96,5 +96,6 @@ void x86_ipi_init(int);
 void identifycpu(struct cpu_info *);
 void cpu_init(struct cpu_info *);
 void cpu_init_first(void);
+void cpu_adjust_tsc_freq(uint64_t (*)());
 
 #endif
