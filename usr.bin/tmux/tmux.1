@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.579 2017/09/11 06:53:06 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.580 2017/10/06 18:02:30 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 11 2017 $
+.Dd $Mdocdate: October 6 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -976,22 +976,37 @@ them with
 and
 .Em %endif
 lines.
+Additional
+.Em %elif
+and
+.Em %else
+lines may also be used.
 The argument to
 .Em %if
-is expanded as a format and if it evaluates to false
-(zero or empty), subsequent lines are ignored until
+and
+.Em %elif
+is expanded as a format and if it evaluates to false (zero or empty),
+subsequent lines are ignored until the next
+.Em %elif ,
+.Em %else
+or
 .Em %endif .
 For example:
 .Bd -literal -offset indent
 %if #{==:#{host},myhost}
 set -g status-style bg=red
+%elif #{==:#{host},myotherhost}
+set -g status-style bg=green
+%else
+set -g status-style bg=blue
 %endif
 .Ed
 .Pp
 Will change the status line to red if running on
-.Ql myhost .
-.Em %if
-may not be nested.
+.Ql myhost ,
+green if running on
+.Ql myotherhost ,
+or blue if running on another host.
 .It Ic start-server
 .D1 (alias: Ic start )
 Start the
