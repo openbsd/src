@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.19 2016/08/22 04:33:07 deraadt Exp $ */
+/* $OpenBSD: speed.c,v 1.20 2017/10/07 06:16:54 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -538,7 +538,7 @@ speed_main(int argc, char **argv)
 			doit[D_EVP] = 1;
 		} else if (argc > 0 && !strcmp(*argv, "-decrypt")) {
 			decrypt = 1;
-			j--;	/* Otherwise, -elapsed gets confused with an
+			j--;	/* Otherwise, -decrypt gets confused with an
 				 * algorithm. */
 		}
 		else if ((argc > 0) && (strcmp(*argv, "-multi") == 0)) {
@@ -553,7 +553,7 @@ speed_main(int argc, char **argv)
 				BIO_printf(bio_err, "bad multi count: %s", errstr);
 				goto end;
 			}
-			j--;	/* Otherwise, -mr gets confused with an
+			j--;	/* Otherwise, -multi gets confused with an
 				 * algorithm. */
 		}
 		else if (argc > 0 && !strcmp(*argv, "-mr")) {
