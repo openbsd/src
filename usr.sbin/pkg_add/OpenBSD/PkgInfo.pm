@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.47 2017/08/29 14:21:18 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.48 2017/10/07 10:35:34 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -596,7 +596,8 @@ sub parse_and_run
 	if ($state->opt('Q')) {
 		require OpenBSD::Search;
 
-		print "PKG_PATH=$ENV{PKG_PATH}\n" if $state->verbose;
+		$state->say("PKG_PATH=#1", $ENV{PKG_PATH} // "<undefined>")
+			if $state->verbose;
 		my $partial = OpenBSD::Search::PartialStem->new($state->opt('Q'));
 		my $r = $state->repo->match_locations($partial);
 
