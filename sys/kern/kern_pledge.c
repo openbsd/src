@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.221 2017/10/07 06:04:00 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.222 2017/10/07 06:06:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1099,6 +1099,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 				break;
 			/* FALLTHROUGH */
 		case TIOCFLUSH:		/* getty, telnet */
+		case TIOCSTART:		/* emacs, etc */
 		case TIOCGPGRP:
 		case TIOCGETA:
 		case TIOCGWINSZ:	/* ENOTTY return for non-tty */
