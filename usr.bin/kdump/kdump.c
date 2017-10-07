@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.130 2017/04/28 13:53:05 mpi Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.131 2017/10/07 19:43:21 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -246,19 +246,19 @@ main(int argc, char *argv[])
 			continue;
 		switch (ktr_header.ktr_type) {
 		case KTR_SYSCALL:
-			ktrsyscall((struct ktr_syscall *)m, ktrlen);
+			ktrsyscall(m, ktrlen);
 			break;
 		case KTR_SYSRET:
-			ktrsysret((struct ktr_sysret *)m, ktrlen);
+			ktrsysret(m, ktrlen);
 			break;
 		case KTR_NAMEI:
 			ktrnamei(m, ktrlen);
 			break;
 		case KTR_GENIO:
-			ktrgenio((struct ktr_genio *)m, ktrlen);
+			ktrgenio(m, ktrlen);
 			break;
 		case KTR_PSIG:
-			ktrpsig((struct ktr_psig *)m);
+			ktrpsig(m);
 			break;
 		case KTR_STRUCT:
 			ktrstruct(m, ktrlen);
@@ -271,7 +271,7 @@ main(int argc, char *argv[])
 			ktrexec(m, ktrlen);
 			break;
 		case KTR_PLEDGE:
-			ktrpledge((struct ktr_pledge *)m, ktrlen);
+			ktrpledge(m, ktrlen);
 			break;
 		default:
 			printf("\n");
