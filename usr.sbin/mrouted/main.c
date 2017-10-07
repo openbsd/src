@@ -135,9 +135,6 @@ usage:	fprintf(stderr,
 	(void)open("/dev/null", O_RDONLY);
 	(void)dup2(0, 1);
 	(void)dup2(0, 2);
-#ifdef SYSV
-	(void)setpgrp();
-#else
 #ifdef TIOCNOTTY
 	t = open("/dev/tty", O_RDWR);
 	if (t >= 0) {
@@ -147,7 +144,6 @@ usage:	fprintf(stderr,
 #else
 	if (setsid() < 0)
 	    perror("setsid");
-#endif
 #endif
     }
     else

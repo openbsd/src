@@ -21,9 +21,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#ifdef SYSV
-#include <sys/sockio.h>
-#endif
 #include <sys/time.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -84,12 +81,6 @@ typedef void (*ihfunc_t)(int);
 #define BIT_CLR(X,n)     ((X) &= ~(1 << (n)))
 #define BIT_TST(X,n)     ((X) & 1 << (n))
 #endif /* RSRR */
-
-#ifdef SYSV
-#define bcopy(a, b, c)	memcpy(b, a, c)
-#define bzero(s, n)	memset((s), 0, (n))
-#define signal(s,f)	sigset(s,f)
-#endif
 
 /*
  * External declarations for global variables and functions.
