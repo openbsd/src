@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.69 2017/09/08 06:24:31 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.70 2017/10/07 02:05:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -413,7 +413,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			log_debug("%s: about to stop vm id %d with tty open",
 			    __func__, vm->vm_vmid);
 			vm_stop(vm, 1);
-			config_setvm(ps, vm, (uint32_t)-1, 0);
+			config_setvm(ps, vm, (uint32_t)-1, vm->vm_uid);
 		}
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_DATA:
@@ -1061,9 +1061,10 @@ vm_stop(struct vmd_vm *vm, int keeptty)
 		close(vm->vm_kernel);
 		vm->vm_kernel = -1;
 	}
-	vm->vm_uid = 0;
-	if (!keeptty)
+	if (!keeptty) {
 		vm_closetty(vm);
+		vm->vm_uid = 0;
+	}
 }
 
 void
