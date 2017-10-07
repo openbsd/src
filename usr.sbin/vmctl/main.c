@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2017/08/15 15:51:54 jasper Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2017/10/07 19:48:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -187,7 +187,7 @@ vmmaction(struct parse_result *res)
 		    SOCK_STREAM|SOCK_CLOEXEC, 0)) == -1)
 			err(1, "socket");
 
-		bzero(&sun, sizeof(sun));
+		memset(&sun, 0, sizeof(sun));
 		sun.sun_family = AF_UNIX;
 		strlcpy(sun.sun_path, socket_name, sizeof(sun.sun_path));
 
