@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.89 2017/09/21 12:11:29 patrick Exp $
+#	$OpenBSD: RAMDISK,v 1.90 2017/10/08 07:58:23 kettenis Exp $
 
 machine		armv7 arm
 
@@ -162,6 +162,8 @@ rkclock*	at fdt? early 1
 rkgrf*		at fdt? early 1
 rkpinctrl*	at fdt? early 1
 rkgpio*		at fdt?
+rkiic*		at fdt?
+iic*		at rkiic?
 dwdog*		at fdt?
 
 axppmic*	at iic?			# axp209 pmic
@@ -169,6 +171,7 @@ crosec*		at iic?
 wskbd*		at crosec? mux 1
 pcfrtc*		at iic?
 pcxrtc*		at iic?
+rkpmic*		at iic?			# RK808 PMIC
 tpspmic*	at iic?
 
 # virtio devices
