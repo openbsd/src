@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.63 2017/09/17 22:14:53 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.64 2017/10/08 17:35:56 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -342,11 +342,13 @@ parse_hex(FILE *cfile, unsigned char *buf)
  * Dates are always in UTC; first number is day of week; next is
  * year/month/day; next is hours:minutes:seconds on a 24-hour
  * clock.
+ *
+ * XXX Will break after year 9999!
  */
 time_t
 parse_date(FILE *cfile)
 {
-	char timestr[26]; /* "w yyyy/mm/dd hh:mm:ss UTC" */
+	char		 timestr[23]; /* "wyyyy/mm/dd hh:mm:ssUTC" */
 	struct tm	 tm;
 	char		*val, *p;
 	size_t		 n;
@@ -355,45 +357,33 @@ parse_date(FILE *cfile)
 
 	memset(timestr, 0, sizeof(timestr));
 
+	guess = -1;
+	n = 0;
 	do {
-		token = peek_token(NULL, cfile);
+		token = next_token(&val, cfile);
+
 		switch (token) {
-		case TOK_NAME:
-		case TOK_NUMBER:
-		case TOK_NUMBER_OR_NAME:
-		case '/':
-		case ':':
-			token = next_token(&val, cfile);
-			n = strlcat(timestr, val, sizeof(timestr));
-			if (n >= sizeof(timestr)) {
-				/* XXX Will break after year 9999! */
-				parse_warn("time string too long");
-				skip_to_semi(cfile);
-				return 0;
-			}
+		case EOF:
+			n = sizeof(timestr);
 			break;
 		case';':
+			memset(&tm, 0, sizeof(tm));	/* 'cuz strptime ignores tm_isdt. */
+			p = strptime(timestr, DB_TIMEFMT, &tm);
+			if (p != NULL && *p == '\0')
+				guess = timegm(&tm);
 			break;
 		default:
-			parse_warn("invalid time string");
-			skip_to_semi(cfile);
-			return 0;
+			n = strlcat(timestr, val, sizeof(timestr));
+			break;
+
 		}
-	} while (token != ';');
+	} while (n < sizeof(timestr) && token != ';');
 
-	parse_semi(cfile);
-
-	memset(&tm, 0, sizeof(tm));	/* 'cuz strptime ignores tm_isdt. */
-	p = strptime(timestr, DB_TIMEFMT, &tm);
-	if (p == NULL || *p != '\0') {
-		parse_warn("unparseable time string");
-		return 0;
-	}
-
-	guess = timegm(&tm);
 	if (guess == -1) {
-		parse_warn("time could not be represented");
-		return 0;
+		guess = 0;
+		parse_warn("expecting UTC time.");
+		if (token != ';')
+			skip_to_semi(cfile);
 	}
 
 	return guess;
