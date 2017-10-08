@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmt.c,v 1.2 2016/03/30 23:34:12 bru Exp $ */
+/* $OpenBSD: hidmt.c,v 1.3 2017/10/08 10:13:42 bru Exp $ */
 /*
  * HID multitouch driver for devices conforming to Windows Precision Touchpad
  * standard
@@ -40,6 +40,70 @@
 #else
 #define DPRINTF(x)
 #endif
+
+#define HID_UNIT_CM	0x11
+#define HID_UNIT_INCH	0x13
+
+/*
+ * Calculate the horizontal or vertical resolution, in device units per
+ * millimeter.
+ *
+ * With the length unit specified by the descriptor (centimeter or inch),
+ * the result is:
+ *     (logical_maximum - logical_minimum) / ((physical_maximum -
+ *         physical_minimum) * 10^unit_exponent)
+ *
+ * The descriptors should encode the unit exponent as a signed half-byte.
+ * However, this function accepts the values from -8 to -1 in both the
+ * 4-bit format and the usual encoding.  Other values beyond the 4-bit
+ * range are treated as undefined.  Possibly a misinterpretation of
+ * section 6.2.2.7 of the HID specification (v1.11) has been turned into
+ * a standard here, see (from www.usb.org)
+ *     HUTRR39: "HID Sensor Usage Tables", sect. 3.9, 3.10, 4.2.1
+ * for an official exegesis and
+ *     https://patchwork.kernel.org/patch/3033191
+ * for details and a different view.
+ */
+int
+hidmt_get_resolution(struct hid_item *h)
+{
+	int log_extent, phy_extent, exponent;
+
+	if (h->unit != HID_UNIT_CM && h->unit != HID_UNIT_INCH)
+		return (0);
+
+	log_extent = h->logical_maximum - h->logical_minimum;
+	phy_extent = h->physical_maximum - h->physical_minimum;
+	if (log_extent <= 0 || phy_extent <= 0)
+		return (0);
+
+	exponent = h->unit_exponent;
+	if (exponent < -8 || exponent > 15)		/* See above. */
+		return (0);
+	if (exponent > 7)
+		exponent -= 16;
+
+	for (; exponent < 0 && log_extent <= INT_MAX / 10; exponent++)
+		log_extent *= 10;
+	for (; exponent > 0 && phy_extent <= INT_MAX / 10; exponent--)
+		phy_extent *= 10;
+	if (exponent != 0)
+		return (0);
+
+	if (h->unit == HID_UNIT_INCH) {			/* Map inches to mm. */
+		if ((phy_extent > INT_MAX / 127)
+		    || (log_extent > INT_MAX / 5))
+			return (0);
+		log_extent *= 5;
+		phy_extent *= 127;
+	} else {					/* Map cm to mm. */
+		if (phy_extent > INT_MAX / 10)
+			return (0);
+		phy_extent *= 10;
+	}
+
+	return (log_extent / phy_extent);
+}
 
 int
 hidmt_setup(struct device *self, struct hidmt *mt, void *desc, int dlen)
@@ -111,18 +175,18 @@ hidmt_setup(struct device *self, struct hidmt *mt, void *desc, int dlen)
 		switch (h.usage) {
 		/* contact level usages */
 		case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X):
-			if (h.physical_minimum < mt->sc_minx)
-				mt->sc_minx = h.physical_minimum;
-			if (h.physical_maximum > mt->sc_maxx)
-				mt->sc_maxx = h.physical_maximum;
-
+			if (h.logical_maximum - h.logical_minimum) {
+				mt->sc_minx = h.logical_minimum;
+				mt->sc_maxx = h.logical_maximum;
+				mt->sc_resx = hidmt_get_resolution(&h);
+			}
 			break;
 		case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y):
-			if (h.physical_minimum < mt->sc_miny)
-				mt->sc_miny = h.physical_minimum;
-			if (h.physical_maximum > mt->sc_maxy)
-				mt->sc_maxy = h.physical_maximum;
-
+			if (h.logical_maximum - h.logical_minimum) {
+				mt->sc_miny = h.logical_minimum;
+				mt->sc_maxy = h.logical_maximum;
+				mt->sc_resy = hidmt_get_resolution(&h);
+			}
 			break;
 		case HID_USAGE2(HUP_DIGITIZERS, HUD_TIP_SWITCH):
 		case HID_USAGE2(HUP_DIGITIZERS, HUD_CONFIDENCE):
@@ -162,6 +226,29 @@ hidmt_setup(struct device *self, struct hidmt *mt, void *desc, int dlen)
 }
 
 void
+hidmt_configure(struct hidmt *mt)
+{
+	struct wsmousehw *hw;
+
+	if (mt->sc_wsmousedev == NULL)
+		return;
+
+	hw = wsmouse_get_hw(mt->sc_wsmousedev);
+	hw->type = WSMOUSE_TYPE_ELANTECH;	/* see hidmt_ioctl */
+	hw->hw_type = (mt->sc_clickpad
+	    ? WSMOUSEHW_CLICKPAD : WSMOUSEHW_TOUCHPAD);
+	hw->x_min = mt->sc_minx;
+	hw->x_max = mt->sc_maxx;
+	hw->y_min = mt->sc_miny;
+	hw->y_max = mt->sc_maxy;
+	hw->h_res = mt->sc_resx;
+	hw->v_res = mt->sc_resy;
+	hw->mt_slots = HIDMT_MAX_CONTACTS;
+
+	wsmouse_configure(mt->sc_wsmousedev, NULL, 0);
+}
+
+void
 hidmt_attach(struct hidmt *mt, const struct wsmouse_accessops *ops)
 {
 	struct wsmousedev_attach_args a;
@@ -173,6 +260,7 @@ hidmt_attach(struct hidmt *mt, const struct wsmouse_accessops *ops)
 	a.accessops = ops;
 	a.accesscookie = mt->sc_device;
 	mt->sc_wsmousedev = config_found(mt->sc_device, &a, wsmousedevprint);
+	hidmt_configure(mt);
 }
 
 int
@@ -199,7 +287,7 @@ hidmt_input(struct hidmt *mt, uint8_t *data, u_int len)
 	struct hidmt_input *hi;
 	struct hidmt_contact hc;
 	int32_t d, firstu = 0;
-	int contactcount = 0, seencontacts = 0, tips = 0, i, s;
+	int contactcount = 0, seencontacts = 0, tips = 0, i, s, z;
 
 	if (len != mt->sc_rep_input_size) {
 		DPRINTF(("%s: %s: length %d not %d, ignoring\n",
@@ -240,11 +328,13 @@ hidmt_input(struct hidmt *mt, uint8_t *data, u_int len)
 		d = hid_get_udata(data, len, &hi->loc);
 
 		if (firstu && hi->usage == firstu) {
-			if (seencontacts < contactcount &&
-			    hc.contactid < HIDMT_MAX_CONTACTS) {
+			if (seencontacts < contactcount) {
 				hc.seen = 1;
-				memcpy(&mt->sc_contacts[hc.contactid], &hc,
-				    sizeof(struct hidmt_contact));
+				i = wsmouse_id_to_slot(
+				    mt->sc_wsmousedev, hc.contactid);
+				if (i >= 0)
+					memcpy(&mt->sc_contacts[i], &hc,
+					    sizeof(struct hidmt_contact));
 				seencontacts++;
 			}
 
@@ -290,14 +380,17 @@ hidmt_input(struct hidmt *mt, uint8_t *data, u_int len)
 			break;
 		}
 	}
-	if (seencontacts < contactcount && hc.contactid < HIDMT_MAX_CONTACTS) {
+	if (seencontacts < contactcount) {
 		hc.seen = 1;
-		memcpy(&mt->sc_contacts[hc.contactid], &hc,
-		    sizeof(struct hidmt_contact));
+		i = wsmouse_id_to_slot(mt->sc_wsmousedev, hc.contactid);
+		if (i >= 0)
+			memcpy(&mt->sc_contacts[i], &hc,
+			    sizeof(struct hidmt_contact));
 		seencontacts++;
 	}
 
 	s = spltty();
+	wsmouse_buttons(mt->sc_wsmousedev, mt->sc_button);
 	for (i = 0; i < HIDMT_MAX_CONTACTS; i++) {
 		if (!mt->sc_contacts[i].seen)
 			continue;
@@ -321,32 +414,14 @@ hidmt_input(struct hidmt *mt, uint8_t *data, u_int len)
 		if (mt->sc_contacts[i].tip && !mt->sc_contacts[i].confidence)
 			continue;
 
-		if (mt->sc_wsmode == WSMOUSE_NATIVE) {
-			int width = 0;
-			if (mt->sc_contacts[i].tip) {
-				width = mt->sc_contacts[i].width;
-				if (width < 50)
-					width = 50;
-			}
+		/* Report width as pressure. */
+		z = (mt->sc_contacts[i].tip
+		    ? imax(mt->sc_contacts[i].width, 50) : 0);
 
-			WSMOUSE_TOUCH(mt->sc_wsmousedev, mt->sc_button,
-			    (mt->last_x = mt->sc_contacts[i].x),
-			    (mt->last_y = mt->sc_contacts[i].y),
-			    width, tips);
-		} else {
-			WSMOUSE_INPUT(mt->sc_wsmousedev, mt->sc_button,
-			    (mt->last_x - mt->sc_contacts[i].x),
-			    (mt->last_y - mt->sc_contacts[i].y),
-			    0, 0);
-			mt->last_x = mt->sc_contacts[i].x;
-			mt->last_y = mt->sc_contacts[i].y;
-		}
-
-		/*
-		 * XXX: wscons can only handle one finger of data
-		 */
-		break;
+		wsmouse_mtstate(mt->sc_wsmousedev,
+		    i, mt->sc_contacts[i].x, mt->sc_contacts[i].y, z);
 	}
+	wsmouse_input_sync(mt->sc_wsmousedev);
 
 	splx(s);
 }
@@ -384,8 +459,8 @@ hidmt_ioctl(struct hidmt *mt, u_long cmd, caddr_t data, int flag,
 		wsmc->miny = mt->sc_miny;
 		wsmc->maxy = mt->sc_maxy;
 		wsmc->swapxy = 0;
-		wsmc->resx = 0;
-		wsmc->resy = 0;
+		wsmc->resx = mt->sc_resx;
+		wsmc->resy = mt->sc_resy;
 		break;
 
 	case WSMOUSEIO_SETMODE:
@@ -399,7 +474,8 @@ hidmt_ioctl(struct hidmt *mt, u_long cmd, caddr_t data, int flag,
 		DPRINTF(("%s: changing mode to %s\n", mt->sc_device->dv_xname,
 		    (wsmode == WSMOUSE_COMPAT ? "compat" : "native")));
 
-		mt->sc_wsmode = wsmode;
+		wsmouse_set_mode(mt->sc_wsmousedev, wsmode);
+
 		break;
 
 	default:
