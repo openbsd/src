@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2015/10/22 04:08:17 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2017/10/08 12:40:37 tb Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -64,13 +64,13 @@ int main(int argc, char *argv[])
 	setlocale(LC_ALL, "");
 	setlocale(LC_NUMERIC, "C"); /* for parsing cmdline & prog */
 
+	cmdname = __progname;
 	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1) {
 		fprintf(stderr, "%s: pledge: incorrect arguments\n",
 		    cmdname);
 		exit(1);
 	}
 
-	cmdname = __progname;
 	if (argc == 1) {
 		fprintf(stderr, "usage: %s [-safe] [-V] [-d[n]] [-F fs] "
 		    "[-v var=value] [prog | -f progfile]\n\tfile ...\n",
