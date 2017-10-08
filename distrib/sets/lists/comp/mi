@@ -2416,8 +2416,8 @@
 ./usr/share/man/man3/moncontrol.3
 ./usr/share/man/man3/nan.3
 ./usr/share/man/man3/ndbm.3
-./usr/share/man/man3/nextafter.3
 ./usr/share/man/man3/newlocale.3
+./usr/share/man/man3/nextafter.3
 ./usr/share/man/man3/nice.3
 ./usr/share/man/man3/nl_langinfo.3
 ./usr/share/man/man3/nlist.3
