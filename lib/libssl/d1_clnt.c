@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.77 2017/10/08 16:24:02 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.78 2017/10/08 16:54:28 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -196,7 +196,6 @@ dtls1_connect(SSL *s)
 	if (!SSL_in_init(s) || SSL_in_before(s))
 		SSL_clear(s);
 
-
 	for (;;) {
 		state = S3I(s)->hs.state;
 
@@ -215,7 +214,7 @@ dtls1_connect(SSL *s)
 			if (cb != NULL)
 				cb(s, SSL_CB_HANDSHAKE_START, 1);
 
-			if ((s->version & 0xff00 ) != (DTLS1_VERSION & 0xff00)) {
+			if ((s->version & 0xff00) != (DTLS1_VERSION & 0xff00)) {
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				ret = -1;
 				goto end;
@@ -248,7 +247,6 @@ dtls1_connect(SSL *s)
 			D1I(s)->send_cookie = 0;
 			s->internal->hit = 0;
 			break;
-
 
 		case SSL3_ST_CW_CLNT_HELLO_A:
 		case SSL3_ST_CW_CLNT_HELLO_B:
@@ -285,13 +283,10 @@ dtls1_connect(SSL *s)
 			ret = ssl3_get_server_hello(s);
 			if (ret <= 0)
 				goto end;
-			else {
-				if (s->internal->hit) {
-
-					S3I(s)->hs.state = SSL3_ST_CR_FINISHED_A;
-				} else
-					S3I(s)->hs.state = DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A;
-			}
+			if (s->internal->hit)
+				S3I(s)->hs.state = SSL3_ST_CR_FINISHED_A;
+			else
+				S3I(s)->hs.state = DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A;
 			s->internal->init_num = 0;
 			break;
 
@@ -323,7 +318,7 @@ dtls1_connect(SSL *s)
 				s->internal->init_num = 0;
 				break;
 			}
-			/* Check if it is anon DH. */
+			/* Check if it is anon DH/ECDH. */
 			if (!(S3I(s)->hs.new_cipher->algorithm_auth &
 			    SSL_aNULL)) {
 				ret = ssl3_get_server_certificate(s);
@@ -348,8 +343,10 @@ dtls1_connect(SSL *s)
 			S3I(s)->hs.state = SSL3_ST_CR_CERT_REQ_A;
 			s->internal->init_num = 0;
 
-			/* at this point we check that we have the
-			 * required stuff from the server */
+			/*
+			 * At this point we check that we have the
+			 * required stuff from the server.
+			 */
 			if (!ssl3_check_cert_and_algorithm(s)) {
 				ret = -1;
 				goto end;
@@ -372,11 +369,10 @@ dtls1_connect(SSL *s)
 				goto end;
 			dtls1_stop_timer(s);
 			if (S3I(s)->tmp.cert_req)
-				S3I(s)->hs.next_state = SSL3_ST_CW_CERT_A;
+				S3I(s)->hs.state = SSL3_ST_CW_CERT_A;
 			else
-				S3I(s)->hs.next_state = SSL3_ST_CW_KEY_EXCH_A;
+				S3I(s)->hs.state = SSL3_ST_CW_KEY_EXCH_A;
 			s->internal->init_num = 0;
-			S3I(s)->hs.state = S3I(s)->hs.next_state;
 			break;
 
 		case SSL3_ST_CW_CERT_A:
@@ -397,11 +393,22 @@ dtls1_connect(SSL *s)
 			ret = ssl3_send_client_key_exchange(s);
 			if (ret <= 0)
 				goto end;
-
-			/* EAY EAY EAY need to check for DH fix cert
-			 * sent back */
-			/* For TLS, cert_req is set to 2, so a cert chain
-			 * of nothing is sent, but no verify packet is sent */
+			/*
+			 * EAY EAY EAY need to check for DH fix cert
+			 * sent back
+			 */
+			/*
+			 * For TLS, cert_req is set to 2, so a cert chain
+			 * of nothing is sent, but no verify packet is sent
+			 */
+			/*
+			 * XXX: For now, we do not support client
+			 * authentication in ECDH cipher suites with
+			 * ECDH (rather than ECDSA) certificates.
+			 * We need to skip the certificate verify
+			 * message when client's ECDH public key is sent
+			 * inside the client certificate.
+			 */
 			if (S3I(s)->tmp.cert_req == 1) {
 				S3I(s)->hs.state = SSL3_ST_CW_CERT_VRFY_A;
 			} else {
@@ -447,7 +454,6 @@ dtls1_connect(SSL *s)
 				goto end;
 			}
 
-
 			dtls1_reset_seq_numbers(s, SSL3_CC_WRITE);
 			break;
 
@@ -455,25 +461,24 @@ dtls1_connect(SSL *s)
 		case SSL3_ST_CW_FINISHED_B:
 			if (!s->internal->hit)
 				dtls1_start_timer(s);
-			ret = ssl3_send_finished(s,
-			    SSL3_ST_CW_FINISHED_A, SSL3_ST_CW_FINISHED_B,
-			    TLS_MD_CLIENT_FINISH_CONST,
+			ret = ssl3_send_finished(s, SSL3_ST_CW_FINISHED_A,
+			    SSL3_ST_CW_FINISHED_B, TLS_MD_CLIENT_FINISH_CONST,
 			    TLS_MD_CLIENT_FINISH_CONST_SIZE);
 			if (ret <= 0)
 				goto end;
 			S3I(s)->hs.state = SSL3_ST_CW_FLUSH;
 
 			/* clear flags */
-			s->s3->flags&= ~SSL3_FLAGS_POP_BUFFER;
+			s->s3->flags &= ~SSL3_FLAGS_POP_BUFFER;
 			if (s->internal->hit) {
 				S3I(s)->hs.next_state = SSL_ST_OK;
-				if (s->s3->flags & SSL3_FLAGS_DELAY_CLIENT_FINISHED) {
+				if (s->s3->flags &
+				    SSL3_FLAGS_DELAY_CLIENT_FINISHED) {
 					S3I(s)->hs.state = SSL_ST_OK;
 					s->s3->flags |= SSL3_FLAGS_POP_BUFFER;
 					S3I(s)->delay_buf_pop_ret = 0;
 				}
 			} else {
-
 				/* Allow NewSessionTicket if ticket expected */
 				if (s->internal->tlsext_ticket_expected)
 					S3I(s)->hs.next_state =
@@ -517,7 +522,6 @@ dtls1_connect(SSL *s)
 			else
 				S3I(s)->hs.state = SSL_ST_OK;
 
-
 			s->internal->init_num = 0;
 			break;
 
@@ -541,8 +545,10 @@ dtls1_connect(SSL *s)
 			/* clean a few things up */
 			tls1_cleanup_key_block(s);
 
-			/* If we are not 'joining' the last two packets,
-			 * remove the buffering now */
+			/*
+			 * If we are not 'joining' the last two packets,
+			 * remove the buffering now
+			 */
 			if (!(s->s3->flags & SSL3_FLAGS_POP_BUFFER))
 				ssl_free_wbio_buffer(s);
 			/* else do it later in ssl3_write */
