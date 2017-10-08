@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_conn_version.3,v 1.5 2017/10/07 14:41:58 jsing Exp $
+.\" $OpenBSD: tls_conn_version.3,v 1.6 2017/10/08 06:56:36 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Bob Beck <beck@openbsd.org>
 .\" Copyright (c) 2016 Joel Sing <jsing@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 7 2017 $
+.Dd $Mdocdate: October 8 2017 $
 .Dt TLS_CONN_VERSION 3
 .Os
 .Sh NAME
@@ -103,7 +103,7 @@ SAN or CN that matches
 .Ar name .
 .Pp
 .Fn tls_peer_cert_chain_pem
-returns a pointer to memory containing a PEM encoded certificate chain for the
+returns a pointer to memory containing a PEM-encoded certificate chain for the
 peer certificate from
 .Ar ctx .
 .Pp
