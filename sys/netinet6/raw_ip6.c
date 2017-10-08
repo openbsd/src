@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.120 2017/10/06 21:14:55 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.121 2017/10/08 14:53:25 deraadt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -490,7 +490,9 @@ int
 rip6_ctloutput(int op, struct socket *so, int level, int optname,
     struct mbuf *m)
 {
+#ifdef MROUTING
 	int error;
+#endif
 
 	switch (level) {
 	case IPPROTO_IPV6:
