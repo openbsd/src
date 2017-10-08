@@ -2615,6 +2615,7 @@
 ./usr/share/man/man2/i386
 ./usr/share/man/man3
 ./usr/share/man/man3/loongson
+./usr/share/man/man3/octeon
 ./usr/share/man/man3/sgi
 ./usr/share/man/man3p
 ./usr/share/man/man4

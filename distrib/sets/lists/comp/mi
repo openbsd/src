@@ -2421,6 +2421,8 @@
 ./usr/share/man/man3/nice.3
 ./usr/share/man/man3/nl_langinfo.3
 ./usr/share/man/man3/nlist.3
+./usr/share/man/man3/octeon/cacheflush.3
+./usr/share/man/man3/octeon/get_fpc_csr.3
 ./usr/share/man/man3/offsetof.3
 ./usr/share/man/man3/ohash_init.3
 ./usr/share/man/man3/ohash_interval.3
