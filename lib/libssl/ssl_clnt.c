@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.17 2017/08/12 21:47:59 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.18 2017/10/08 16:42:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -176,9 +176,9 @@ static int ca_dn_cmp(const X509_NAME * const *a, const X509_NAME * const *b);
 int
 ssl3_connect(SSL *s)
 {
-	void   (*cb)(const SSL *ssl, int type, int val) = NULL;
-	int	 ret = -1;
-	int	 new_state, state, skip = 0;
+	void (*cb)(const SSL *ssl, int type, int val) = NULL;
+	int ret = -1;
+	int new_state, state, skip = 0;
 
 	ERR_clear_error();
 	errno = 0;
@@ -210,7 +210,7 @@ ssl3_connect(SSL *s)
 			if (cb != NULL)
 				cb(s, SSL_CB_HANDSHAKE_START, 1);
 
-			if ((s->version & 0xff00 ) != 0x0300) {
+			if ((s->version & 0xff00) != 0x0300) {
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				ret = -1;
 				goto end;
@@ -431,8 +431,7 @@ ssl3_connect(SSL *s)
 		case SSL3_ST_CW_FINISHED_A:
 		case SSL3_ST_CW_FINISHED_B:
 			ret = ssl3_send_finished(s, SSL3_ST_CW_FINISHED_A,
-			    SSL3_ST_CW_FINISHED_B,
-			    TLS_MD_CLIENT_FINISH_CONST,
+			    SSL3_ST_CW_FINISHED_B, TLS_MD_CLIENT_FINISH_CONST,
 			    TLS_MD_CLIENT_FINISH_CONST_SIZE);
 			if (ret <= 0)
 				goto end;
@@ -446,7 +445,7 @@ ssl3_connect(SSL *s)
 				if (s->s3->flags &
 				    SSL3_FLAGS_DELAY_CLIENT_FINISHED) {
 					S3I(s)->hs.state = SSL_ST_OK;
-					s->s3->flags|=SSL3_FLAGS_POP_BUFFER;
+					s->s3->flags |= SSL3_FLAGS_POP_BUFFER;
 					S3I(s)->delay_buf_pop_ret = 0;
 				}
 			} else {
@@ -455,8 +454,8 @@ ssl3_connect(SSL *s)
 					S3I(s)->hs.next_state =
 					    SSL3_ST_CR_SESSION_TICKET_A;
 				else
-
-				S3I(s)->hs.next_state = SSL3_ST_CR_FINISHED_A;
+					S3I(s)->hs.next_state =
+					    SSL3_ST_CR_FINISHED_A;
 			}
 			s->internal->init_num = 0;
 			break;
