@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.161 2017/09/25 18:04:08 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.162 2017/10/08 16:24:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1553,10 +1553,16 @@ ssl3_handshake_msg_finish_cbb(SSL *s, CBB *handshake)
 int
 ssl3_handshake_write(SSL *s)
 {
-	if (SSL_IS_DTLS(s))
-		return dtls1_do_write(s, SSL3_RT_HANDSHAKE);
+	return ssl3_record_write(s, SSL3_RT_HANDSHAKE);
+}
 
-	return ssl3_do_write(s, SSL3_RT_HANDSHAKE);
+int
+ssl3_record_write(SSL *s, int type)
+{
+	if (SSL_IS_DTLS(s))
+		return dtls1_do_write(s, type);
+
+	return ssl3_do_write(s, type);
 }
 
 int

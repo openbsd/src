@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.88 2017/05/07 04:22:24 beck Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.89 2017/10/08 16:24:02 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -596,9 +596,8 @@ dtls1_accept(SSL *s)
 				goto end;
 			}
 
-			ret = dtls1_send_change_cipher_spec(s,
-			SSL3_ST_SW_CHANGE_A, SSL3_ST_SW_CHANGE_B);
-
+			ret = ssl3_send_change_cipher_spec(s,
+			    SSL3_ST_SW_CHANGE_A, SSL3_ST_SW_CHANGE_B);
 			if (ret <= 0)
 				goto end;
 

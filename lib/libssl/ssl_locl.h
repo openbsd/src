@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.193 2017/08/28 16:37:04 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.194 2017/10/08 16:24:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1147,6 +1147,7 @@ int ssl3_handshake_msg_start_cbb(SSL *s, CBB *handshake, CBB *body,
     uint8_t msg_type);
 int ssl3_handshake_msg_finish_cbb(SSL *s, CBB *handshake);
 int ssl3_handshake_write(SSL *s);
+int ssl3_record_write(SSL *s, int type);
 
 void tls1_record_sequence_increment(unsigned char *seq);
 int ssl3_do_change_cipher_spec(SSL *ssl);
@@ -1166,12 +1167,13 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
     unsigned int len);
 void dtls1_set_message_header(SSL *s, unsigned char mt, unsigned long len,
     unsigned long frag_off, unsigned long frag_len);
+void dtls1_set_message_header_int(SSL *s, unsigned char mt,
+    unsigned long len, unsigned short seq_num, unsigned long frag_off,
+    unsigned long frag_len);
 
 int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len);
 int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
 
-int dtls1_send_change_cipher_spec(SSL *s, int a, int b);
-unsigned long dtls1_output_cert_chain(SSL *s, X509 *x);
 int dtls1_read_failed(SSL *s, int code);
 int dtls1_buffer_message(SSL *s, int ccs);
 int dtls1_retransmit_message(SSL *s, unsigned short seq,

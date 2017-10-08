@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.76 2017/05/07 04:22:24 beck Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.77 2017/10/08 16:24:02 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -427,7 +427,7 @@ dtls1_connect(SSL *s)
 		case SSL3_ST_CW_CHANGE_B:
 			if (!s->internal->hit)
 				dtls1_start_timer(s);
-			ret = dtls1_send_change_cipher_spec(s,
+			ret = ssl3_send_change_cipher_spec(s,
 			    SSL3_ST_CW_CHANGE_A, SSL3_ST_CW_CHANGE_B);
 			if (ret <= 0)
 				goto end;
