@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.89 2017/10/08 16:24:02 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.90 2017/10/08 16:56:51 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -219,7 +219,6 @@ dtls1_accept(SSL *s)
 		case SSL_ST_ACCEPT:
 		case SSL_ST_BEFORE|SSL_ST_ACCEPT:
 		case SSL_ST_OK|SSL_ST_ACCEPT:
-
 			s->server = 1;
 			if (cb != NULL)
 				cb(s, SSL_CB_HANDSHAKE_START, 1);
@@ -243,15 +242,16 @@ dtls1_accept(SSL *s)
 			s->internal->init_num = 0;
 
 			if (S3I(s)->hs.state != SSL_ST_RENEGOTIATE) {
-				/* Ok, we now need to push on a buffering BIO so that
-				 * the output is sent in a way that TCP likes :-)
+				/*
+				 * Ok, we now need to push on a buffering BIO
+				 * so that the output is sent in a way that
+				 * TCP likes :-)
 				 * ...but not with SCTP :-)
 				 */
 				if (!ssl_init_wbio_buffer(s, 1)) {
 					ret = -1;
 					goto end;
 				}
-
 				if (!tls1_init_finished_mac(s)) {
 					ret = -1;
 					goto end;
@@ -260,17 +260,17 @@ dtls1_accept(SSL *s)
 				S3I(s)->hs.state = SSL3_ST_SR_CLNT_HELLO_A;
 				s->ctx->internal->stats.sess_accept++;
 			} else {
-				/* S3I(s)->hs.state == SSL_ST_RENEGOTIATE,
-				 * we will just send a HelloRequest */
+				/*
+				 * S3I(s)->hs.state == SSL_ST_RENEGOTIATE,
+				 * we will just send a HelloRequest.
+				 */
 				s->ctx->internal->stats.sess_accept_renegotiate++;
 				S3I(s)->hs.state = SSL3_ST_SW_HELLO_REQ_A;
 			}
-
 			break;
 
 		case SSL3_ST_SW_HELLO_REQ_A:
 		case SSL3_ST_SW_HELLO_REQ_B:
-
 			s->internal->shutdown = 0;
 			dtls1_clear_record_buffer(s);
 			dtls1_start_timer(s);
@@ -294,7 +294,6 @@ dtls1_accept(SSL *s)
 		case SSL3_ST_SR_CLNT_HELLO_A:
 		case SSL3_ST_SR_CLNT_HELLO_B:
 		case SSL3_ST_SR_CLNT_HELLO_C:
-
 			s->internal->shutdown = 0;
 			ret = ssl3_get_client_hello(s);
 			if (ret <= 0)
@@ -330,7 +329,6 @@ dtls1_accept(SSL *s)
 
 		case DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A:
 		case DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B:
-
 			ret = dtls1_send_hello_verify_request(s);
 			if (ret <= 0)
 				goto end;
@@ -344,7 +342,6 @@ dtls1_accept(SSL *s)
 			}
 			break;
 
-
 		case SSL3_ST_SW_SRVR_HELLO_A:
 		case SSL3_ST_SW_SRVR_HELLO_B:
 			s->internal->renegotiate = 2;
@@ -352,20 +349,20 @@ dtls1_accept(SSL *s)
 			ret = ssl3_send_server_hello(s);
 			if (ret <= 0)
 				goto end;
-
 			if (s->internal->hit) {
 				if (s->internal->tlsext_ticket_expected)
 					S3I(s)->hs.state = SSL3_ST_SW_SESSION_TICKET_A;
 				else
 					S3I(s)->hs.state = SSL3_ST_SW_CHANGE_A;
-			} else
+			} else {
 				S3I(s)->hs.state = SSL3_ST_SW_CERT_A;
+			}
 			s->internal->init_num = 0;
 			break;
 
 		case SSL3_ST_SW_CERT_A:
 		case SSL3_ST_SW_CERT_B:
-			/* Check if it is anon DH. */
+			/* Check if it is anon DH or anon ECDH. */
 			if (!(S3I(s)->hs.new_cipher->algorithm_auth &
 			    SSL_aNULL)) {
 				dtls1_start_timer(s);
@@ -387,7 +384,14 @@ dtls1_accept(SSL *s)
 		case SSL3_ST_SW_KEY_EXCH_B:
 			alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
 
-			/* Only send if using a DH key exchange. */
+			/*
+			 * Only send if using a DH key exchange.
+			 *
+			 * For ECC ciphersuites, we send a ServerKeyExchange
+			 * message only if the cipher suite is ECDHE. In other
+			 * cases, the server certificate contains the server's
+			 * public key for key exchange.
+			 */
 			if (alg_k & (SSL_kDHE|SSL_kECDHE)) {
 				dtls1_start_timer(s);
 				ret = ssl3_send_server_key_exchange(s);
@@ -425,7 +429,7 @@ dtls1_accept(SSL *s)
 			    ((S3I(s)->hs.new_cipher->algorithm_auth &
 			     SSL_aNULL) && !(s->verify_mode &
 			     SSL_VERIFY_FAIL_IF_NO_PEER_CERT))) {
-				/* no cert request */
+				/* No cert request. */
 				skip = 1;
 				S3I(s)->tmp.cert_request = 0;
 				S3I(s)->hs.state = SSL3_ST_SW_SRVR_DONE_A;
@@ -452,6 +456,16 @@ dtls1_accept(SSL *s)
 			break;
 
 		case SSL3_ST_SW_FLUSH:
+			/*
+			 * This code originally checked to see if
+			 * any data was pending using BIO_CTRL_INFO
+			 * and then flushed. This caused problems
+			 * as documented in PR#1939. The proposed
+			 * fix doesn't completely resolve this issue
+			 * as buggy implementations of BIO_CTRL_PENDING
+			 * still exist. So instead we just flush
+			 * unconditionally.
+			 */
 			s->internal->rwstate = SSL_WRITING;
 			if (BIO_flush(s->wbio) <= 0) {
 				/* If the write error was fatal, stop trying */
@@ -488,10 +502,14 @@ dtls1_accept(SSL *s)
 			s->internal->init_num = 0;
 
 			if (ret == 2) {
-				/* For the ECDH ciphersuites when
+				/*
+				 * For the ECDH ciphersuites when
 				 * the client sends its ECDH pub key in
 				 * a certificate, the CertificateVerify
 				 * message is not sent.
+				 * Also for GOST ciphersuites when
+				 * the client uses its key from the certificate
+				 * for key exchange.
 				 */
 				S3I(s)->hs.state = SSL3_ST_SR_FINISHED_A;
 				s->internal->init_num = 0;
@@ -500,7 +518,6 @@ dtls1_accept(SSL *s)
 				s->internal->init_num = 0;
 				if (!s->session->peer)
 					break;
-
 				/*
 				 * For sigalgs freeze the handshake buffer
 				 * at this point and digest cached records.
@@ -541,7 +558,6 @@ dtls1_accept(SSL *s)
 
 		case SSL3_ST_SR_CERT_VRFY_A:
 		case SSL3_ST_SR_CERT_VRFY_B:
-
 			D1I(s)->change_cipher_spec_ok = 1;
 			/* we should decide if we expected this one */
 			ret = ssl3_get_cert_verify(s);
@@ -555,7 +571,7 @@ dtls1_accept(SSL *s)
 		case SSL3_ST_SR_FINISHED_B:
 			D1I(s)->change_cipher_spec_ok = 1;
 			ret = ssl3_get_finished(s, SSL3_ST_SR_FINISHED_A,
-			SSL3_ST_SR_FINISHED_B);
+			    SSL3_ST_SR_FINISHED_B);
 			if (ret <= 0)
 				goto end;
 			dtls1_stop_timer(s);
@@ -586,10 +602,8 @@ dtls1_accept(SSL *s)
 			s->internal->init_num = 0;
 			break;
 
-
 		case SSL3_ST_SW_CHANGE_A:
 		case SSL3_ST_SW_CHANGE_B:
-
 			s->session->cipher = S3I(s)->hs.new_cipher;
 			if (!tls1_setup_key_block(s)) {
 				ret = -1;
@@ -600,13 +614,11 @@ dtls1_accept(SSL *s)
 			    SSL3_ST_SW_CHANGE_A, SSL3_ST_SW_CHANGE_B);
 			if (ret <= 0)
 				goto end;
-
-
 			S3I(s)->hs.state = SSL3_ST_SW_FINISHED_A;
 			s->internal->init_num = 0;
 
 			if (!tls1_change_cipher_state(s,
-				SSL3_CHANGE_CIPHER_SERVER_WRITE)) {
+			    SSL3_CHANGE_CIPHER_SERVER_WRITE)) {
 				ret = -1;
 				goto end;
 			}
@@ -623,12 +635,10 @@ dtls1_accept(SSL *s)
 			if (ret <= 0)
 				goto end;
 			S3I(s)->hs.state = SSL3_ST_SW_FLUSH;
-			if (s->internal->hit) {
+			if (s->internal->hit)
 				S3I(s)->hs.next_state = SSL3_ST_SR_FINISHED_A;
-
-			} else {
+			else
 				S3I(s)->hs.next_state = SSL_ST_OK;
-			}
 			s->internal->init_num = 0;
 			break;
 
@@ -641,8 +651,8 @@ dtls1_accept(SSL *s)
 
 			s->internal->init_num = 0;
 
-			if (s->internal->renegotiate == 2) /* skipped if we just sent a HelloRequest */
-			{
+			/* Skipped if we just sent a HelloRequest. */
+			if (s->internal->renegotiate == 2) {
 				s->internal->renegotiate = 0;
 				s->internal->new_session = 0;
 
@@ -690,9 +700,7 @@ dtls1_accept(SSL *s)
 	}
 end:
 	/* BIO_flush(s->wbio); */
-
 	s->internal->in_handshake--;
-
 	if (cb != NULL)
 		cb(s, SSL_CB_ACCEPT_EXIT, ret);
 
