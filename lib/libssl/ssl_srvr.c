@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.22 2017/08/12 21:47:59 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.23 2017/10/08 16:46:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -170,8 +170,8 @@
 int
 ssl3_accept(SSL *s)
 {
-	unsigned long alg_k;
 	void (*cb)(const SSL *ssl, int type, int val) = NULL;
+	unsigned long alg_k;
 	int ret = -1;
 	int new_state, state, skip = 0;
 
@@ -206,7 +206,6 @@ ssl3_accept(SSL *s)
 		case SSL_ST_ACCEPT:
 		case SSL_ST_BEFORE|SSL_ST_ACCEPT:
 		case SSL_ST_OK|SSL_ST_ACCEPT:
-
 			s->server = 1;
 			if (cb != NULL)
 				cb(s, SSL_CB_HANDSHAKE_START, 1);
@@ -239,7 +238,6 @@ ssl3_accept(SSL *s)
 					ret = -1;
 					goto end;
 				}
-
 				if (!tls1_init_finished_mac(s)) {
 					ret = -1;
 					goto end;
@@ -261,7 +259,7 @@ ssl3_accept(SSL *s)
 			} else {
 				/*
 				 * S3I(s)->hs.state == SSL_ST_RENEGOTIATE,
-				 * we will just send a HelloRequest
+				 * we will just send a HelloRequest.
 				 */
 				s->ctx->internal->stats.sess_accept_renegotiate++;
 				S3I(s)->hs.state = SSL3_ST_SW_HELLO_REQ_A;
@@ -270,7 +268,6 @@ ssl3_accept(SSL *s)
 
 		case SSL3_ST_SW_HELLO_REQ_A:
 		case SSL3_ST_SW_HELLO_REQ_B:
-
 			s->internal->shutdown = 0;
 			ret = ssl3_send_hello_request(s);
 			if (ret <= 0)
@@ -292,7 +289,6 @@ ssl3_accept(SSL *s)
 		case SSL3_ST_SR_CLNT_HELLO_A:
 		case SSL3_ST_SR_CLNT_HELLO_B:
 		case SSL3_ST_SR_CLNT_HELLO_C:
-
 			s->internal->shutdown = 0;
 			if (s->internal->rwstate != SSL_X509_LOOKUP) {
 				ret = ssl3_get_client_hello(s);
@@ -315,9 +311,9 @@ ssl3_accept(SSL *s)
 					S3I(s)->hs.state = SSL3_ST_SW_SESSION_TICKET_A;
 				else
 					S3I(s)->hs.state = SSL3_ST_SW_CHANGE_A;
-			}
-			else
+			} else {
 				S3I(s)->hs.state = SSL3_ST_SW_CERT_A;
+			}
 			s->internal->init_num = 0;
 			break;
 
@@ -388,7 +384,7 @@ ssl3_accept(SSL *s)
 			    ((S3I(s)->hs.new_cipher->algorithm_auth &
 			     SSL_aNULL) && !(s->verify_mode &
 			     SSL_VERIFY_FAIL_IF_NO_PEER_CERT))) {
-				/* No cert request */
+				/* No cert request. */
 				skip = 1;
 				S3I(s)->tmp.cert_request = 0;
 				S3I(s)->hs.state = SSL3_ST_SW_SRVR_DONE_A;
@@ -419,7 +415,6 @@ ssl3_accept(SSL *s)
 			break;
 
 		case SSL3_ST_SW_FLUSH:
-
 			/*
 			 * This code originally checked to see if
 			 * any data was pending using BIO_CTRL_INFO
@@ -430,14 +425,12 @@ ssl3_accept(SSL *s)
 			 * still exist. So instead we just flush
 			 * unconditionally.
 			 */
-
 			s->internal->rwstate = SSL_WRITING;
 			if (BIO_flush(s->wbio) <= 0) {
 				ret = -1;
 				goto end;
 			}
 			s->internal->rwstate = SSL_NOTHING;
-
 			S3I(s)->hs.state = S3I(s)->hs.next_state;
 			break;
 
@@ -507,7 +500,7 @@ ssl3_accept(SSL *s)
 				    S3I(s)->tmp.cert_verify_md,
 				    sizeof(S3I(s)->tmp.cert_verify_md),
 				    NULL)) {
-				        ret = -1;
+					ret = -1;
 					goto end;
 				}
 			}
@@ -521,7 +514,6 @@ ssl3_accept(SSL *s)
 			ret = ssl3_get_cert_verify(s);
 			if (ret <= 0)
 				goto end;
-
 			S3I(s)->hs.state = SSL3_ST_SR_FINISHED_A;
 			s->internal->init_num = 0;
 			break;
@@ -560,10 +552,8 @@ ssl3_accept(SSL *s)
 			s->internal->init_num = 0;
 			break;
 
-
 		case SSL3_ST_SW_CHANGE_A:
 		case SSL3_ST_SW_CHANGE_B:
-
 			s->session->cipher = S3I(s)->hs.new_cipher;
 			if (!tls1_setup_key_block(s)) {
 				ret = -1;
@@ -572,14 +562,13 @@ ssl3_accept(SSL *s)
 
 			ret = ssl3_send_change_cipher_spec(s,
 			    SSL3_ST_SW_CHANGE_A, SSL3_ST_SW_CHANGE_B);
-
 			if (ret <= 0)
 				goto end;
 			S3I(s)->hs.state = SSL3_ST_SW_FINISHED_A;
 			s->internal->init_num = 0;
 
-			if (!tls1_change_cipher_state(
-			    s, SSL3_CHANGE_CIPHER_SERVER_WRITE)) {
+			if (!tls1_change_cipher_state(s,
+			    SSL3_CHANGE_CIPHER_SERVER_WRITE)) {
 				ret = -1;
 				goto end;
 			}
@@ -589,9 +578,9 @@ ssl3_accept(SSL *s)
 		case SSL3_ST_SW_FINISHED_A:
 		case SSL3_ST_SW_FINISHED_B:
 			ret = ssl3_send_finished(s,
-			SSL3_ST_SW_FINISHED_A, SSL3_ST_SW_FINISHED_B,
-			TLS_MD_SERVER_FINISH_CONST,
-			TLS_MD_SERVER_FINISH_CONST_SIZE);
+			    SSL3_ST_SW_FINISHED_A, SSL3_ST_SW_FINISHED_B,
+			    TLS_MD_SERVER_FINISH_CONST,
+			    TLS_MD_SERVER_FINISH_CONST_SIZE);
 			if (ret <= 0)
 				goto end;
 			S3I(s)->hs.state = SSL3_ST_SW_FLUSH;
@@ -614,7 +603,7 @@ ssl3_accept(SSL *s)
 
 			s->internal->init_num = 0;
 
-			/* skipped if we just sent a HelloRequest */
+			/* Skipped if we just sent a HelloRequest. */
 			if (s->internal->renegotiate == 2) {
 				s->internal->renegotiate = 0;
 				s->internal->new_session = 0;
@@ -658,10 +647,10 @@ ssl3_accept(SSL *s)
 	}
 end:
 	/* BIO_flush(s->wbio); */
-
 	s->internal->in_handshake--;
 	if (cb != NULL)
 		cb(s, SSL_CB_ACCEPT_EXIT, ret);
+
 	return (ret);
 }
 
