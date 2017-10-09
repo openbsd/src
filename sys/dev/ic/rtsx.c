@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.20 2017/10/09 16:12:20 stsp Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.21 2017/10/09 20:06:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -1183,7 +1183,7 @@ rtsx_xfer_adma(struct rtsx_softc *sc, struct sdmmc_command *cmd)
 	/* Initialize scatter-gather transfer descriptors. */
 	descp = (uint64_t *)sc->admabuf;
 	for (i = 0; i < cmd->c_dmamap->dm_nsegs; i++) {
-		bus_addr_t paddr = cmd->c_dmamap->dm_segs[i].ds_addr;
+		uint64_t paddr = cmd->c_dmamap->dm_segs[i].ds_addr;
 		uint64_t len = cmd->c_dmamap->dm_segs[i].ds_len;
 		uint8_t sgflags = RTSX_SG_VALID | RTSX_SG_TRANS_DATA;
 		uint64_t desc;
