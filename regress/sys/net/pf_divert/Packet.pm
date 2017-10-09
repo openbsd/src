@@ -1,4 +1,4 @@
-#	$OpenBSD: Packet.pm,v 1.2 2017/09/04 22:40:01 bluhm Exp $
+#	$OpenBSD: Packet.pm,v 1.3 2017/10/09 17:31:40 bluhm Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -26,9 +26,6 @@ use IO::Socket;
 use IO::Socket::INET6;
 
 use constant IPPROTO_DIVERT => 258;
-use constant IP_DIVERTFL => 0x1022;
-use constant IPPROTO_DIVERT_RESP => 0x1;
-use constant IPPROTO_DIVERT_INIT => 0x2;
 
 sub new {
 	my $class = shift;
@@ -55,15 +52,6 @@ sub new {
 	print $log "divert sock: ",$ds->sockhost()," ",$ds->sockport(),"\n";
 	$self->{divertaddr} = $ds->sockhost();
 	$self->{divertport} = $ds->sockport();
-	my $divertdir = 0;
-	$divertdir |= IPPROTO_DIVERT_INIT if $self->{divertinit};
-	$divertdir |= IPPROTO_DIVERT_RESP if $self->{divertresp};
-	my $level = $self->{af} eq "inet" ? IPPROTO_IP :
-	    $self->{af} eq "inet6" ? IPPROTO_IPV6 : undef;
-	if ($divertdir) {
-		setsockopt($ds, $level, IP_DIVERTFL, pack('i', $divertdir))
-		    or die ref($self), " set divert flag failed: $!";
-	}
 	$self->{ds} = $ds;
 	return $self;
 }

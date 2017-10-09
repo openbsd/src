@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2017/09/04 22:40:01 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.18 2017/10/09 17:31:40 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -88,11 +88,7 @@ TARGETS ?=		inet-args-tcp-to inet6-args-tcp-to \
 			inet-reuse-rip-reply-to-reply inet6-reuse-rip-reply-to-reply \
 			inet-reuse-rip-reply-to-reply-to inet6-reuse-rip-reply-to-reply-to \
 			inet-args-udp-packet-in inet6-args-udp-packet-in \
-			inet-args-udp-packet-out inet6-args-udp-packet-out \
-			inet-args-udp-packet-in-init inet6-args-udp-packet-in-init \
-			inet-args-udp-packet-in-resp inet6-args-udp-packet-in-resp \
-			inet-args-udp-packet-out-init inet6-args-udp-packet-out-init \
-			inet-args-udp-packet-out-resp inet6-args-udp-packet-out-resp
+			inet-args-udp-packet-out inet6-args-udp-packet-out
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 CLEANFILES +=		*.log *.port ktrace.out stamp-*
 
