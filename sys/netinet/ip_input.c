@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.322 2017/09/07 10:54:49 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.323 2017/10/09 08:35:38 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1617,26 +1617,24 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	extern struct mrtstat mrtstat;
 #endif
 
-	NET_ASSERT_LOCKED();
-
 	/* Almost all sysctl names at this level are terminal. */
 	if (namelen != 1 && name[0] != IPCTL_IFQUEUE)
 		return (ENOTDIR);
 
 	switch (name[0]) {
-#ifdef notyet
-	case IPCTL_DEFMTU:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &ip_mtu));
-#endif
 	case IPCTL_SOURCEROUTE:
 		/*
 		 * Don't allow this to change in a secure environment.
 		 */
 		if (newp && securelevel > 0)
 			return (EPERM);
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip_dosourceroute));
+		NET_LOCK();
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ip_dosourceroute);
+		NET_UNLOCK();
+		return (error);
 	case IPCTL_MTUDISC:
+		NET_LOCK();
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_mtudisc);
 		if (ip_mtudisc != 0 && ip_mtudisc_timeout_q == NULL) {
@@ -1646,25 +1644,37 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			rt_timer_queue_destroy(ip_mtudisc_timeout_q);
 			ip_mtudisc_timeout_q = NULL;
 		}
+		NET_UNLOCK();
 		return error;
 	case IPCTL_MTUDISCTIMEOUT:
+		NET_LOCK();
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		   &ip_mtudisc_timeout);
 		if (ip_mtudisc_timeout_q != NULL)
 			rt_timer_queue_change(ip_mtudisc_timeout_q,
 					      ip_mtudisc_timeout);
+		NET_UNLOCK();
 		return (error);
 	case IPCTL_IPSEC_ENC_ALGORITHM:
-		return (sysctl_tstring(oldp, oldlenp, newp, newlen,
-				       ipsec_def_enc, sizeof(ipsec_def_enc)));
+		NET_LOCK();
+		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
+				       ipsec_def_enc, sizeof(ipsec_def_enc));
+		NET_UNLOCK();
+		return (error);
 	case IPCTL_IPSEC_AUTH_ALGORITHM:
-		return (sysctl_tstring(oldp, oldlenp, newp, newlen,
+		NET_LOCK();
+		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
 				       ipsec_def_auth,
-				       sizeof(ipsec_def_auth)));
+				       sizeof(ipsec_def_auth));
+		NET_UNLOCK();
+		return (error);
 	case IPCTL_IPSEC_IPCOMP_ALGORITHM:
-		return (sysctl_tstring(oldp, oldlenp, newp, newlen,
+		NET_LOCK();
+		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
 				       ipsec_def_comp,
-				       sizeof(ipsec_def_comp)));
+				       sizeof(ipsec_def_comp));
+		NET_UNLOCK();
+		return (error);
 	case IPCTL_IFQUEUE:
 		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ipintrq));
@@ -1679,11 +1689,17 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCTL_MRTMFC:
 		if (newp)
 			return (EPERM);
-		return mrt_sysctl_mfc(oldp, oldlenp);
+		NET_LOCK();
+		error = mrt_sysctl_mfc(oldp, oldlenp);
+		NET_UNLOCK();
+		return (error);
 	case IPCTL_MRTVIF:
 		if (newp)
 			return (EPERM);
-		return mrt_sysctl_vif(oldp, oldlenp);
+		NET_LOCK();
+		error = mrt_sysctl_vif(oldp, oldlenp);
+		NET_UNLOCK();
+		return (error);
 #else
 	case IPCTL_MRTPROTO:
 	case IPCTL_MRTSTATS:
@@ -1692,9 +1708,13 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (EOPNOTSUPP);
 #endif
 	default:
-		if (name[0] < IPCTL_MAXID)
-			return (sysctl_int_arr(ipctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen));
+		if (name[0] < IPCTL_MAXID) {
+			NET_LOCK();
+			error = sysctl_int_arr(ipctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
+			return (error);
+		}
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */

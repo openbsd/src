@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.250 2017/09/05 07:59:11 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.251 2017/10/09 08:35:38 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1733,8 +1733,6 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 	struct rt_tableinfo	 tableinfo;
 	u_int			 tableid = 0;
 
-	NET_ASSERT_LOCKED();
-
 	if (new)
 		return (EPERM);
 	if (namelen < 3 || namelen > 4)
@@ -1757,6 +1755,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 	switch (w.w_op) {
 	case NET_RT_DUMP:
 	case NET_RT_FLAGS:
+		NET_LOCK();
 		for (i = 1; i <= AF_MAX; i++) {
 			if (af != 0 && af != i)
 				continue;
@@ -1767,10 +1766,13 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 			if (error)
 				break;
 		}
+		NET_UNLOCK();
 		break;
 
 	case NET_RT_IFLIST:
+		NET_LOCK();
 		error = sysctl_iflist(af, &w);
+		NET_UNLOCK();
 		break;
 
 	case NET_RT_STATS:
@@ -1786,7 +1788,9 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		    &tableinfo, sizeof(tableinfo));
 		return (error);
 	case NET_RT_IFNAMES:
+		NET_LOCK();
 		error = sysctl_ifnames(&w);
+		NET_UNLOCK();
 		break;
 	}
 	free(w.w_tmem, M_RTABLE, 0);

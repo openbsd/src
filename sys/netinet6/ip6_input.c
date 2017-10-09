@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.202 2017/08/22 15:02:34 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.203 2017/10/09 08:35:38 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1383,8 +1383,6 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 #endif
 	int error;
 
-	NET_ASSERT_LOCKED();
-
 	/* Almost all sysctl names at this level are terminal. */
 	if (namelen != 1 && name[0] != IPV6CTL_IFQUEUE)
 		return (ENOTDIR);
@@ -1398,18 +1396,27 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case IPV6CTL_MRTSTATS:
 		if (newp != NULL)
 			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &mrt6stat, sizeof(mrt6stat)));
+		NET_LOCK();
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &mrt6stat, sizeof(mrt6stat));
+		NET_UNLOCK();
+		return (error);
 	case IPV6CTL_MRTPROTO:
 		return sysctl_rdint(oldp, oldlenp, newp, ip6_mrtproto);
 	case IPV6CTL_MRTMIF:
 		if (newp)
 			return (EPERM);
-		return mrt6_sysctl_mif(oldp, oldlenp);
+		NET_LOCK();
+		error = mrt6_sysctl_mif(oldp, oldlenp);
+		NET_UNLOCK();
+		return (error);
 	case IPV6CTL_MRTMFC:
 		if (newp)
 			return (EPERM);
-		return mrt6_sysctl_mfc(oldp, oldlenp);
+		NET_LOCK();
+		error = mrt6_sysctl_mfc(oldp, oldlenp);
+		NET_UNLOCK();
+		return (error);
 #else
 	case IPV6CTL_MRTSTATS:
 	case IPV6CTL_MRTPROTO:
@@ -1418,19 +1425,25 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (EOPNOTSUPP);
 #endif
 	case IPV6CTL_MTUDISCTIMEOUT:
+		NET_LOCK();
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip6_mtudisc_timeout);
 		if (icmp6_mtudisc_timeout_q != NULL)
 			rt_timer_queue_change(icmp6_mtudisc_timeout_q,
 			    ip6_mtudisc_timeout);
+		NET_UNLOCK();
 		return (error);
 	case IPV6CTL_IFQUEUE:
 		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ip6intrq));
 	default:
-		if (name[0] < IPV6CTL_MAXID)
-			return (sysctl_int_arr(ipv6ctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen));
+		if (name[0] < IPV6CTL_MAXID) {
+			NET_LOCK();
+			error = sysctl_int_arr(ipv6ctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
+			return (error);
+		}
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */

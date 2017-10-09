@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.216 2017/09/01 15:05:31 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.217 2017/10/09 08:35:38 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1887,6 +1887,8 @@ int
 icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
+	int error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return ENOTDIR;
@@ -1896,9 +1898,13 @@ icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case ICMPV6CTL_STATS:
 		return icmp6_sysctl_icmp6stat(oldp, oldlenp, newp);
 	default:
-		if (name[0] < ICMPV6CTL_MAXID)
-			return (sysctl_int_arr(icmpv6ctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen));
+		if (name[0] < ICMPV6CTL_MAXID) {
+			NET_LOCK();
+			error = sysctl_int_arr(icmpv6ctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
+			return (error);
+		}
 		return ENOPROTOOPT;
 	}
 	/* NOTREACHED */

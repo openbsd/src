@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.512 2017/08/22 15:02:34 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.513 2017/10/09 08:35:38 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2666,10 +2666,14 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 	return ((*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr));
 }
 
+/* XXX move to kern/uipc_mbuf.c */
 int
 sysctl_mq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct mbuf_queue *mq)
 {
+	unsigned int maxlen;
+	int error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -2678,8 +2682,14 @@ sysctl_mq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case IFQCTL_LEN:
 		return (sysctl_rdint(oldp, oldlenp, newp, mq_len(mq)));
 	case IFQCTL_MAXLEN:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &mq->mq_maxlen)); /* XXX directly accessing maxlen */
+		maxlen = mq->mq_maxlen;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &maxlen);
+		if (!error && maxlen != mq->mq_maxlen) {
+			mtx_enter(&mq->mq_mtx);
+			mq->mq_maxlen = maxlen;
+			mtx_leave(&mq->mq_mtx);
+		}
+		return (error);
 	case IFQCTL_DROPS:
 		return (sysctl_rdint(oldp, oldlenp, newp, mq_drops(mq)));
 	default:

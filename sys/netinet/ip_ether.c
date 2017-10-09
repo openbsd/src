@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.86 2017/06/19 17:58:49 bluhm Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.87 2017/10/09 08:35:38 mpi Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -468,19 +468,27 @@ int
 etherip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
+	int error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
 
 	switch (name[0]) {
 	case ETHERIPCTL_ALLOW:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &etherip_allow));
+		NET_LOCK();
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &etherip_allow);
+		NET_UNLOCK();
+		return (error);
 	case ETHERIPCTL_STATS:
 		if (newp != NULL)
 			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &etheripstat, sizeof(etheripstat)));
+		NET_LOCK();
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &etheripstat, sizeof(etheripstat));
+		NET_UNLOCK();
+		return (error);
 	default:
 		return (ENOPROTOOPT);
 	}

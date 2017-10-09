@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.240 2017/09/05 07:59:11 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.241 2017/10/09 08:35:38 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1277,20 +1277,28 @@ int
 udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
+	int error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
 
 	switch (name[0]) {
 	case UDPCTL_BADDYNAMIC:
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    baddynamicports.udp, sizeof(baddynamicports.udp)));
+		NET_LOCK();
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
+		    baddynamicports.udp, sizeof(baddynamicports.udp));
+		NET_UNLOCK();
+		return (error);
 
 	case UDPCTL_ROOTONLY:
 		if (newp && securelevel > 0)
 			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    rootonlyports.udp, sizeof(rootonlyports.udp)));
+		NET_LOCK();
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
+		    rootonlyports.udp, sizeof(rootonlyports.udp));
+		NET_UNLOCK();
+		return (error);
 
 	case UDPCTL_STATS:
 		if (newp != NULL)
@@ -1299,9 +1307,13 @@ udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (udp_sysctl_udpstat(oldp, oldlenp, newp));
 
 	default:
-		if (name[0] < UDPCTL_MAXID)
-			return (sysctl_int_arr(udpctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen));
+		if (name[0] < UDPCTL_MAXID) {
+			NET_LOCK();
+			error = sysctl_int_arr(udpctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
+			return (error);
+		}
 		return (ENOPROTOOPT);
 	}
 	/* NOTREACHED */

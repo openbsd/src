@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.156 2017/07/05 11:34:10 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.157 2017/10/09 08:35:38 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -615,6 +615,8 @@ int
 esp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
+	int error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -623,12 +625,19 @@ esp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case ESPCTL_STATS:
 		if (newp != NULL)
 			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &espstat, sizeof(espstat)));
+		NET_LOCK();
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &espstat, sizeof(espstat));
+		NET_UNLOCK();
+		return (error);
 	default:
-		if (name[0] < ESPCTL_MAXID)
-			return (sysctl_int_arr(espctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen));
+		if (name[0] < ESPCTL_MAXID) {
+			NET_LOCK();
+			error = sysctl_int_arr(espctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
+			return (error);
+		}
 		return (ENOPROTOOPT);
 	}
 }
@@ -637,6 +646,8 @@ int
 ah_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
+	int error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -645,12 +656,19 @@ ah_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case AHCTL_STATS:
 		if (newp != NULL)
 			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &ahstat, sizeof(ahstat)));
+		NET_LOCK();
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &ahstat, sizeof(ahstat));
+		NET_UNLOCK();
+		return (error);
 	default:
-		if (name[0] < AHCTL_MAXID)
-			return (sysctl_int_arr(ahctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen));
+		if (name[0] < AHCTL_MAXID) {
+			NET_LOCK();
+			error = sysctl_int_arr(ahctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
+			return (error);
+		}
 		return (ENOPROTOOPT);
 	}
 }
@@ -659,6 +677,8 @@ int
 ipcomp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
+	int error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -667,12 +687,19 @@ ipcomp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCOMPCTL_STATS:
 		if (newp != NULL)
 			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &ipcompstat, sizeof(ipcompstat)));
+		NET_LOCK();
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &ipcompstat, sizeof(ipcompstat));
+		NET_UNLOCK();
+		return (error);
 	default:
-		if (name[0] < IPCOMPCTL_MAXID)
-			return (sysctl_int_arr(ipcompctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen));
+		if (name[0] < IPCOMPCTL_MAXID) {
+			NET_LOCK();
+			error = sysctl_int_arr(ipcompctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
+			return (error);
+		}
 		return (ENOPROTOOPT);
 	}
 }

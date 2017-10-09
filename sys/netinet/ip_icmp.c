@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.171 2017/08/10 02:26:26 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.172 2017/10/09 08:35:38 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -881,8 +881,6 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 {
 	int error;
 
-	NET_ASSERT_LOCKED();
-
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -890,6 +888,7 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	switch (name[0]) {
 	case ICMPCTL_REDIRTIMEOUT:
 
+		NET_LOCK();
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &icmp_redirtimeout);
 		if (icmp_redirect_timeout_q != NULL) {
@@ -903,6 +902,7 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			icmp_redirect_timeout_q =
 			    rt_timer_queue_create(icmp_redirtimeout);
 		}
+		NET_UNLOCK();
 		break;
 
 	case ICMPCTL_STATS:
@@ -911,8 +911,10 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	default:
 		if (name[0] < ICMPCTL_MAXID) {
+			NET_LOCK();
 			error = sysctl_int_arr(icmpctl_vars, name, namelen,
 			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
 			break;
 		}
 		error = ENOPROTOOPT;

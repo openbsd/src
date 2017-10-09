@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.86 2017/07/05 11:34:10 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.87 2017/10/09 08:35:38 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -592,13 +592,18 @@ int
 ipip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
+	int error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
 
 	switch (name[0]) {
 	case IPIPCTL_ALLOW:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &ipip_allow));
+		NET_LOCK();
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &ipip_allow);
+		NET_UNLOCK();
+		return (error);
 	case IPIPCTL_STATS:
 		return (ipip_sysctl_ipipstat(oldp, oldlenp, newp));
 	default:

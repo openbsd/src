@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.166 2017/09/08 05:36:53 deraadt Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.167 2017/10/09 08:35:38 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2386,8 +2386,6 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	int error = EINVAL;
 	u_int rdomain;
 
-	NET_ASSERT_LOCKED();
-
 	if (new)
 		return (EPERM);
 	if (namelen < 1)
@@ -2403,7 +2401,9 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case NET_KEY_SADB_DUMP:
 		if ((error = suser(curproc, 0)) != 0)
 			return (error);
+		NET_LOCK();
 		error = tdb_walk(rdomain, pfkeyv2_sysctl_walker, &w);
+		NET_UNLOCK();
 		if (oldp)
 			*oldlenp = w.w_where - oldp;
 		else
@@ -2411,8 +2411,10 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		break;
 
 	case NET_KEY_SPD_DUMP:
+		NET_LOCK();
 		error = pfkeyv2_ipo_walk(rdomain,
 		    pfkeyv2_sysctl_policydumper, &w);
+		NET_UNLOCK();
 		if (oldp)
 			*oldlenp = w.w_where - oldp;
 		else

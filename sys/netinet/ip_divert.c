@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.54 2017/10/06 22:08:30 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.55 2017/10/09 08:35:38 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -360,23 +360,35 @@ int
 divert_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
+	int error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
 
 	switch (name[0]) {
 	case DIVERTCTL_SENDSPACE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &divert_sendspace));
+		NET_LOCK();
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &divert_sendspace);
+		NET_UNLOCK();
+		return (error);
 	case DIVERTCTL_RECVSPACE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &divert_recvspace));
+		NET_LOCK();
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &divert_recvspace);
+		NET_UNLOCK();
+		return (error);
 	case DIVERTCTL_STATS:
 		return (divert_sysctl_divstat(oldp, oldlenp, newp));
 	default:
-		if (name[0] < DIVERTCTL_MAXID)
-			return sysctl_int_arr(divertctl_vars, name, namelen,
+		if (name[0] < DIVERTCTL_MAXID) {
+			NET_LOCK();
+			error = sysctl_int_arr(divertctl_vars, name, namelen,
 			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
+			return (error);
+		}
 
 		return (ENOPROTOOPT);
 	}

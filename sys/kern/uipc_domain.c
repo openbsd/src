@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.52 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.53 2017/10/09 08:35:38 mpi Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -207,10 +207,8 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	protocol = name[1];
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 		if (pr->pr_protocol == protocol && pr->pr_sysctl) {
-			NET_LOCK();
 			error = (*pr->pr_sysctl)(name + 2, namelen - 2,
 			    oldp, oldlenp, newp, newlen);
-			NET_UNLOCK();
 			return (error);
 		}
 	return (ENOPROTOOPT);

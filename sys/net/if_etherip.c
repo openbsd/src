@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.19 2017/06/06 11:51:13 mpi Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.20 2017/10/09 08:35:38 mpi Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -662,18 +662,26 @@ int
 ip_etherip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
+	int error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return ENOTDIR;
 
 	switch (name[0]) {
 	case ETHERIPCTL_ALLOW:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &etherip_allow);
+		NET_LOCK();
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &etherip_allow);
+		NET_UNLOCK();
+		return (error);
 	case ETHERIPCTL_STATS:
 		if (newp != NULL)
 			return EPERM;
-		return sysctl_struct(oldp, oldlenp, newp, newlen,
+		NET_LOCK();
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
 		    &etheripstat, sizeof(etheripstat));
+		NET_UNLOCK();
+		return (error);
 	default:
 		break;
 	}

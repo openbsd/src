@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.69 2017/06/19 17:58:49 bluhm Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.70 2017/10/09 08:35:38 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -680,6 +680,8 @@ int
 igmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
+	int error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -690,9 +692,13 @@ igmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			return (EPERM);
 		return (igmp_sysctl_igmpstat(oldp, oldlenp, newp));
 	default:
-		if (name[0] < IGMPCTL_MAXID)
-			return (sysctl_int_arr(igmpctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen));
+		if (name[0] < IGMPCTL_MAXID) {
+			NET_LOCK();
+			error = sysctl_int_arr(igmpctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
+			return (error);
+		}
 		return (ENOPROTOOPT);
 	}
 	/* NOTREACHED */
