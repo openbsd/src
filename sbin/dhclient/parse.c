@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.64 2017/10/08 17:35:56 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.65 2017/10/09 18:02:43 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -201,30 +201,33 @@ parse_cidr(FILE *cfile, unsigned char *cidr)
 int
 parse_ip_addr(FILE *cfile, struct in_addr *addr)
 {
-	struct in_addr	 buf;
-	int		 len, token;
+	struct in_addr	buf;
+	const char	*errstr;
+	char		*val;
+	long long	 numval;
+	unsigned int	 i;
+	int		 token;
 
-	token = '.';
-	len = 0;
-	for (token = '.'; token == '.'; token = next_token(NULL, cfile)) {
-		if (parse_decimal(cfile, (unsigned char *)&buf + len, 'B') == 0)
+	i = 0;
+	do {
+		token = next_token(&val, cfile);
+		numval = strtonum(val, 0, UINT8_MAX, &errstr);
+		if (errstr != NULL)
 			break;
-		if (++len == sizeof(buf))
-			break;
-	}
+		((uint8_t *)&buf)[i++] = numval;
+		if (i == sizeof(buf)) {
+			memcpy(addr, &buf, sizeof(*addr));
+			return 1;
+		}
+		token = next_token(NULL, cfile);
+	} while (token == '.');
 
-	if (len == 4) {
-		memcpy(addr, &buf, sizeof(*addr));
-		return 1;
-	} else if (token != '.') {
-		parse_warn("expecting '.'.");
+	parse_warn("expecting IPv4 address.");
+
+	if (token != ';')
 		skip_to_semi(cfile);
-		return 0;
-	} else {
-		parse_warn("expecting decimal value.");
-		skip_to_semi(cfile);
-		return 0;
-	}
+
+	return 0;
 }
 
 /*
