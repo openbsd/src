@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.2 2017/09/19 15:37:47 patrick Exp $	*/
+/*	$OpenBSD: syscon.c,v 1.3 2017/10/09 11:47:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -70,6 +70,7 @@ syscon_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct syscon_softc *sc = (struct syscon_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	char name[32];
 
 	if (OF_is_compatible(faa->fa_node, "syscon")) {
 		if (faa->fa_nreg < 1) {
@@ -87,6 +88,12 @@ syscon_attach(struct device *parent, struct device *self, void *aux)
 
 		regmap_register(faa->fa_node, sc->sc_iot, sc->sc_ioh,
 		    faa->fa_reg[0].size);
+
+		if (OF_getprop(faa->fa_node, "name", name, sizeof(name)) > 0) {
+			name[sizeof(name) - 1] = 0;
+			printf(": \"%s\"", name);
+		}
+
 		printf("\n");
 	}
 
