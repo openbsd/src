@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.129 2017/09/20 19:21:00 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.130 2017/10/09 21:33:11 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -275,25 +275,32 @@ parse_client_statement(FILE *cfile, char *name)
 		}
 		break;
 	case TOK_LINK_TIMEOUT:
-		parse_lease_time(cfile, &config->link_timeout);
+		if (parse_lease_time(cfile, &config->link_timeout) == 1)
+			parse_semi(cfile);
 		break;
 	case TOK_TIMEOUT:
-		parse_lease_time(cfile, &config->timeout);
+		if (parse_lease_time(cfile, &config->timeout) == 1)
+			parse_semi(cfile);
 		break;
 	case TOK_RETRY:
-		parse_lease_time(cfile, &config->retry_interval);
+		if (parse_lease_time(cfile, &config->retry_interval) == 1)
+			parse_semi(cfile);
 		break;
 	case TOK_SELECT_TIMEOUT:
-		parse_lease_time(cfile, &config->select_interval);
+		if (parse_lease_time(cfile, &config->select_interval) == 1)
+			parse_semi(cfile);
 		break;
 	case TOK_REBOOT:
-		parse_lease_time(cfile, &config->reboot_timeout);
+		if (parse_lease_time(cfile, &config->reboot_timeout) == 1)
+			parse_semi(cfile);
 		break;
 	case TOK_BACKOFF_CUTOFF:
-		parse_lease_time(cfile, &config->backoff_cutoff);
+		if (parse_lease_time(cfile, &config->backoff_cutoff) == 1)
+			parse_semi(cfile);
 		break;
 	case TOK_INITIAL_INTERVAL:
-		parse_lease_time(cfile, &config->initial_interval);
+		if (parse_lease_time(cfile, &config->initial_interval) == 1)
+			parse_semi(cfile);
 		break;
 	case TOK_INTERFACE:
 		parse_interface_declaration(cfile, name);
@@ -318,11 +325,11 @@ parse_client_statement(FILE *cfile, char *name)
 		parse_semi(cfile);
 		break;
 	case TOK_FIXED_ADDR:
-		if (parse_ip_addr(cfile, &config->address) != 0)
+		if (parse_ip_addr(cfile, &config->address) == 1)
 			parse_semi(cfile);
 		break;
 	case TOK_NEXT_SERVER:
-		if (parse_ip_addr(cfile, &config->next_server) != 0)
+		if (parse_ip_addr(cfile, &config->next_server) == 1)
 			parse_semi(cfile);
 		break;
 	default:
