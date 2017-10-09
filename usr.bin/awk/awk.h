@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.13 2008/10/06 20:38:33 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.14 2017/10/09 14:51:31 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -33,14 +33,14 @@ typedef	unsigned char uschar;
 
 #define	xfree(a)	{ if ((a) != NULL) { free((void *) (a)); (a) = NULL; } }
 
-#define	NN(p)	((p) ? (p) : "(null)")	/* guaranteed non-null for dprintf 
+#define	NN(p)	((p) ? (p) : "(null)")	/* guaranteed non-null for DPRINTF 
 */
 #define	DEBUG
 #ifdef	DEBUG
 			/* uses have to be doubly parenthesized */
-#	define	dprintf(x)	if (dbg) printf x
+#	define	DPRINTF(x)	if (dbg) printf x
 #else
-#	define	dprintf(x)
+#	define	DPRINTF(x)
 #endif
 
 extern int	compile_time;	/* 1 if compiling, 0 if running */

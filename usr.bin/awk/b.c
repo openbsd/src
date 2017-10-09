@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.18 2014/12/19 19:28:55 deraadt Exp $	*/
+/*	$OpenBSD: b.c,v 1.19 2017/10/09 14:51:31 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -327,7 +327,7 @@ char *cclenter(const char *argp)	/* add a character class */
 		i++;
 	}
 	*bp = 0;
-	dprintf( ("cclenter: in = |%s|, out = |%s|\n", op, buf) );
+	DPRINTF( ("cclenter: in = |%s|, out = |%s|\n", op, buf) );
 	xfree(op);
 	return (char *) tostring((char *) buf);
 }
@@ -611,7 +611,7 @@ Node *reparse(const char *p)	/* parses regular expression pointed to by p */
 {			/* uses relex() to scan regular expression */
 	Node *np;
 
-	dprintf( ("reparse <%s>\n", p) );
+	DPRINTF( ("reparse <%s>\n", p) );
 	lastre = prestr = (uschar *) p;	/* prestr points to string to be parsed */
 	rtok = relex();
 	/* GNU compatibility: an empty regexp matches anything */

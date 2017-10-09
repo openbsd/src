@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2017/10/08 12:40:37 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2017/10/09 14:51:31 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 				exit(0);
 			FATAL("no program given");
 		}
-		   dprintf( ("program = |%s|\n", argv[1]) );
+		   DPRINTF( ("program = |%s|\n", argv[1]) );
 		lexprog = argv[1];
 		argc--;
 		argv++;
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 	syminit();
 	compile_time = 1;
 	argv[0] = cmdname;	/* put prog name at front of arglist */
-	   dprintf( ("argc=%d, argv[0]=%s\n", argc, argv[0]) );
+	   DPRINTF( ("argc=%d, argv[0]=%s\n", argc, argv[0]) );
 	arginit(argc, argv);
 	if (!safe)
 		envinit(environ);
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
 	setlocale(LC_NUMERIC, ""); /* back to whatever it is locally */
 	if (fs)
 		*FS = qstring(fs, '\0');
-	   dprintf( ("errorflag=%d\n", errorflag) );
+	   DPRINTF( ("errorflag=%d\n", errorflag) );
 	if (errorflag == 0) {
 		compile_time = 0;
 		run(winner);
