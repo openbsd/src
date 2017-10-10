@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmt.c,v 1.3 2017/10/08 10:13:42 bru Exp $ */
+/* $OpenBSD: hidmt.c,v 1.4 2017/10/10 20:27:12 jcs Exp $ */
 /*
  * HID multitouch driver for devices conforming to Windows Precision Touchpad
  * standard
@@ -167,7 +167,7 @@ hidmt_setup(struct device *self, struct hidmt *mt, void *desc, int dlen)
 
 	hd = hid_start_parse(desc, dlen, hid_input);
 	while (hid_get_item(hd, &h)) {
-		struct hidmt_input *input;
+		struct hidmt_data *input;
 
 		if (h.report_ID != mt->sc_rep_input)
 			continue;
@@ -284,7 +284,7 @@ hidmt_set_input_mode(struct hidmt *mt, int mode)
 void
 hidmt_input(struct hidmt *mt, uint8_t *data, u_int len)
 {
-	struct hidmt_input *hi;
+	struct hidmt_data *hi;
 	struct hidmt_contact hc;
 	int32_t d, firstu = 0;
 	int contactcount = 0, seencontacts = 0, tips = 0, i, s, z;
