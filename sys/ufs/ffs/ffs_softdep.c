@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.135 2016/11/07 00:26:33 guenther Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.136 2017/10/10 11:59:35 bluhm Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -903,6 +903,14 @@ softdep_flushfiles(struct mount *oldmnt, int flags, struct proc *p)
 		    count == 0)
 			break;
 	}
+	/*
+	 * If the reboot process sleeps during the loop, the update
+	 * process may call softdep_process_worklist() and create
+	 * new dirty vnodes at the mount point.  Call ffs_flushfiles()
+	 * again after the loop has flushed all soft dependencies.
+	 */
+	if (error == 0)
+		error = ffs_flushfiles(oldmnt, flags, p);
 	/*
 	 * If we are unmounting then it is an error to fail. If we
 	 * are simply trying to downgrade to read-only, then filesystem
