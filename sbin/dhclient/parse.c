@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.67 2017/10/10 13:37:00 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.68 2017/10/10 14:01:08 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -279,6 +279,10 @@ parse_boolean(FILE *cfile, unsigned char *buf)
 			return 1;
 		}
 	}
+
+	parse_warn("expecting boolean.");
+	if (token != ';')
+		skip_to_semi(cfile);
 
 	return 0;
 }

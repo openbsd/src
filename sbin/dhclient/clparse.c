@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.130 2017/10/09 21:33:11 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.131 2017/10/10 14:01:08 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -726,11 +726,8 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				dp = buf;
 				break;
 			case 'f': /* Boolean flag. */
-				if (parse_boolean(cfile, buf) == 0) {
-					parse_warn("expecting boolean.");
-					skip_to_semi(cfile);
+				if (parse_boolean(cfile, buf) == 0)
 					return -1;
-				}
 				len = 1;
 				dp = buf;
 				break;
