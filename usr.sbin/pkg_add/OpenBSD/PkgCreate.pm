@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.125 2017/09/18 13:40:32 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.126 2017/10/10 10:20:58 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -109,8 +109,8 @@ sub handle_options
 		    },
 	};
 	$state->{no_exports} = 1;
-	$state->SUPER::handle_options('p:f:d:M:U:A:B:P:V:W:qQ',
-	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
+	$state->SUPER::handle_options('p:f:d:M:U:A:B:P:V:W:qQS',
+	    '[-nQqvSx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
 	    '[-U undisplayfile] [-V n] [-W wantedlib]',
 	    '[-d desc -D COMMENT=value -f packinglist -p prefix]',
@@ -122,6 +122,8 @@ sub handle_options
 	} 
 
 	$state->{base} = $base;
+	$state->{silent} = defined $state->opt('n') && defined $state->opt('n')
+	    || defined $state->opt('S');
 }
 
 package OpenBSD::PkgCreate;
@@ -1047,7 +1049,7 @@ sub handle_fragment
 	my $newname = $old->deduce_name($frag, $not);
 	if (defined $newname) {
 		$state->set_status("switching to $newname")
-		    if !defined $state->opt('q');
+		    unless $state->{silent};
 		return $old->new($newname);
 	}
 	return undef;
@@ -1072,7 +1074,8 @@ sub read_fragments
 		my ($stack, $cont) = @_;
 		while(my $file = pop @$stack) {
 			while (my $l = $file->readline) {
-				$state->progress->working(2048) unless $state->opt('q');
+				$state->progress->working(2048) 
+				    unless $state->{silent};
 				if ($l =~m/^(\@comment\s+\$(?:Open)BSD\$)$/o) {
 					$l = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
@@ -1119,7 +1122,7 @@ sub add_description
 	if (!defined $opt_d) {
 		$state->usage("Description required");
 	}
-	return if $state->opt('q');
+	return if defined $state->opt('q');
 
 	open(my $fh, '>', $o->fullname) or die "Can't write to DESC: $!";
 	if (defined $comment) {
@@ -1239,19 +1242,18 @@ sub create_plist
 		$pkgname = $1;
 		$pkgname =~ s/\.tgz$//o;
 	}
-	$state->say("Creating package #1", $pkgname)
-	    if !(defined $state->opt('q')) && $state->opt('v');
-	if (!$state->opt('q')) {
-		$plist->set_infodir(OpenBSD::Temp->dir);
-	}
-
-	unless (defined $state->opt('q') && defined $state->opt('n')) {
+	$plist->set_pkgname($pkgname);
+	unless ($state->{silent}) {
+		$state->say("Creating package #1", $pkgname)
+		    if defined $state->opt('v');
 		$state->set_status("reading plist");
 	}
-	$self->read_all_fragments($state, $plist);
-	$plist->set_pkgname($pkgname);
-
+	$plist->set_infodir(OpenBSD::Temp->dir);
+	if (!defined $state->opt('S')) {
+		$self->read_all_fragments($state, $plist);
+	}
 	$self->add_elements($plist, $state);
+
 	return $plist;
 }
 
@@ -1471,6 +1473,10 @@ sub parse_and_run
 	}
 
 
+	if (defined $state->opt('S')) {
+		print $plist->signature->string, "\n";
+		exit 0;
+	}
 	$plist->discover_directories($state);
 	my $ordered;
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
