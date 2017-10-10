@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fs.c,v 1.14 2015/12/30 11:40:30 jung Exp $	*/
+/*	$OpenBSD: queue_fs.c,v 1.15 2017/10/10 05:03:52 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -729,7 +729,6 @@ queue_fs_init(struct passwd *pw, int server, const char *conf)
 	char		*paths[] = { PATH_QUEUE, PATH_CORRUPT, PATH_INCOMING };
 	char		 path[PATH_MAX];
 	int		 ret;
-	struct timeval	 tv;
 
 	/* remove incoming/ if it exists */
 	if (server)
@@ -746,9 +745,8 @@ queue_fs_init(struct passwd *pw, int server, const char *conf)
 			ret = 0;
 	}
 
-	if (gettimeofday(&tv, NULL) == -1)
-		err(1, "gettimeofday");
-	TIMEVAL_TO_TIMESPEC(&tv, &startup);
+	if (clock_gettime(CLOCK_REALTIME, &startup))
+		err(1, "clock_gettime");
 
 	tree_init(&evpcount);
 
