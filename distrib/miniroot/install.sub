@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1037 2017/10/05 19:42:52 naddy Exp $
+#	$OpenBSD: install.sub,v 1.1038 2017/10/10 18:55:22 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1330,6 +1330,15 @@ sane_install() {
 #
 select_sets() {
 	local _avail=$1 _selected=$2 _f _action _col=$COLUMNS
+	local _bsd_rd _no_sets=true
+
+	if [[ $MODE == upgrade ]]; then
+		for _f in $_avail; do
+			[[ $_f != bsd* ]] && _no_sets=false
+			[[ $_f == bsd.rd* ]] && _bsd_rd=$_f
+		done
+		$_no_sets && UPGRADE_BSDRD=true _avail=$_bsd_rd _selected=$_bsd_rd
+	fi
 
 	# account for 4 spaces added to the sets list
 	let COLUMNS=_col-8
@@ -1516,6 +1525,9 @@ install_files() {
 		! $_unpriv ftp -D "$_t" -Vmo - "$_src/SHA256.sig" >"$_cfile.sig" &&
 			_issue="Cannot fetch SHA256.sig" && break
 
+		$UPGRADE_BSDRD &&
+			PUB_KEY=/mnt/etc/signify/openbsd-$((VERSION + 1))-base.pub
+
 		# Verify signature file with public keys.
 		! unpriv -f "$_cfile" \
 			signify -Vep $PUB_KEY -x "$_cfile.sig" -m "$_cfile" &&
@@ -1576,7 +1588,9 @@ install_files() {
 				tar -zxphf - -C /mnt
 			fi
 			;;
-		*)	$_unpriv ftp -D Installing -Vmo - "$_fsrc" >"/mnt/$_f"
+		*)	$UPGRADE_BSDRD && [[ $_f == bsd.rd* ]] &&
+				cp /mnt/$_f /mnt/$_f.old.$VERSION
+			$_unpriv ftp -D Installing -Vmo - "$_fsrc" >"/mnt/$_f"
 			;;
 		esac
 		if (($?)); then
@@ -1587,6 +1601,7 @@ install_files() {
 			fi
 		else
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
+			$UPGRADE_BSDRD && DEFAULTSETS=
 		fi
 		[[ -d $_tmpsrc ]] && rm -f "$_tmpsrc/$_f"
 	done
@@ -3139,6 +3154,7 @@ PUB_KEY=/etc/signify/openbsd-${VERSION}-base.pub
 ROOTDEV=
 ROOTDISK=
 SETDIR="$VNAME/$ARCH"
+UPGRADE_BSDRD=false
 V4_DHCPCONF=false
 V6_AUTOCONF=false
 WLANLIST=/tmp/i/wlanlist
