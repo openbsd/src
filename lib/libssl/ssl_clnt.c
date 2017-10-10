@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.19 2017/10/10 15:13:26 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.20 2017/10/10 15:42:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -678,10 +678,10 @@ ssl3_client_hello(SSL *s)
 		}
 		s->client_version = s->version = max_version;
 
-		if ((sess == NULL) ||
-		    (sess->ssl_version != s->version) ||
+		if (sess == NULL ||
+		    sess->ssl_version != s->version ||
 		    (!sess->session_id_length && !sess->tlsext_tick) ||
-		    (sess->internal->not_resumable)) {
+		    sess->internal->not_resumable) {
 			if (!ssl_get_new_session(s, 0))
 				goto err;
 		}
