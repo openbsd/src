@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmtvar.h,v 1.3 2017/10/10 20:27:12 jcs Exp $ */
+/* $OpenBSD: hidmtvar.h,v 1.4 2017/10/10 20:29:27 jcs Exp $ */
 /*
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
  *
@@ -61,6 +61,7 @@ struct hidmt {
 	int		sc_resx, sc_resy;
 
 	struct hidmt_contact sc_contacts[HIDMT_MAX_CONTACTS];
+	int		sc_cur_contactcount;
 	int		sc_button;
 };
 

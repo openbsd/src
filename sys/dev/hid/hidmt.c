@@ -1,9 +1,10 @@
-/* $OpenBSD: hidmt.c,v 1.4 2017/10/10 20:27:12 jcs Exp $ */
+/* $OpenBSD: hidmt.c,v 1.5 2017/10/10 20:29:27 jcs Exp $ */
 /*
  * HID multitouch driver for devices conforming to Windows Precision Touchpad
  * standard
  *
  * https://msdn.microsoft.com/en-us/library/windows/hardware/dn467314%28v=vs.85%29.aspx
+ * https://docs.microsoft.com/en-us/windows-hardware/design/component-guidelines/touchscreen-packet-reporting-modes
  *
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
  *
@@ -307,8 +308,29 @@ hidmt_input(struct hidmt *mt, uint8_t *data, u_int len)
 	 */
 	SIMPLEQ_FOREACH(hi, &mt->sc_inputs, entry) {
 		if (hi->usage == HID_USAGE2(HUP_DIGITIZERS, HUD_CONTACTCOUNT))
-			contactcount = hid_get_udata(data, len,
-			    &hi->loc);
+			contactcount = hid_get_udata(data, len, &hi->loc);
+	}
+
+	if (contactcount)
+		mt->sc_cur_contactcount = contactcount;
+	else {
+		/*
+		* "In Hybrid mode, the number of contacts that can be reported
+		* in one report is less than the maximum number of contacts
+		* that the device supports. For example, a device that supports
+		* a maximum of 4 concurrent physical contacts, can set up its
+		* top-level collection to deliver a maximum of two contacts in
+		* one report. If four contact points are present, the device
+		* can break these up into two serial reports that deliver two
+		* contacts each.
+		*
+		* "When a device delivers data in this manner, the Contact
+		* Count usage value in the first report should reflect the
+		* total number of contacts that are being delivered in the
+		* hybrid reports. The other serial reports should have a
+		* contact count of zero (0)."
+		*/
+		contactcount = mt->sc_cur_contactcount;
 	}
 
 	if (!contactcount) {
@@ -373,7 +395,8 @@ hidmt_input(struct hidmt *mt, uint8_t *data, u_int len)
 
 		/* these will only appear once per report */
 		case HID_USAGE2(HUP_DIGITIZERS, HUD_CONTACTCOUNT):
-			contactcount = d;
+			if (d)
+				contactcount = d;
 			break;
 		case HID_USAGE2(HUP_BUTTON, 0x01):
 			mt->sc_button = (d != 0);
