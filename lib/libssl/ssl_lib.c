@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.170 2017/08/30 16:24:21 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.171 2017/10/10 16:51:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1428,33 +1428,23 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p,
 }
 
 STACK_OF(SSL_CIPHER) *
-ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p, int num)
+ssl_bytes_to_cipher_list(SSL *s, CBS *cbs)
 {
-	CBS			 cbs;
-	const SSL_CIPHER	*c;
-	STACK_OF(SSL_CIPHER)	*sk = NULL;
-	unsigned long		 cipher_id;
-	uint16_t		 cipher_value, max_version;
+	STACK_OF(SSL_CIPHER) *ciphers = NULL;
+	const SSL_CIPHER *cipher;
+	uint16_t cipher_value, max_version;
+	unsigned long cipher_id;
 
-	if (s->s3)
+	if (s->s3 != NULL)
 		S3I(s)->send_connection_binding = 0;
 
-	/*
-	 * RFC 5246 section 7.4.1.2 defines the interval as [2,2^16-2].
-	 */
-	if (num < 2 || num > 0x10000 - 2) {
-		SSLerror(s, SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
-		return (NULL);
-	}
-
-	if ((sk = sk_SSL_CIPHER_new_null()) == NULL) {
+	if ((ciphers = sk_SSL_CIPHER_new_null()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	CBS_init(&cbs, p, num);
-	while (CBS_len(&cbs) > 0) {
-		if (!CBS_get_u16(&cbs, &cipher_value)) {
+	while (CBS_len(cbs) > 0) {
+		if (!CBS_get_u16(cbs, &cipher_value)) {
 			SSLerror(s, SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
 			goto err;
 		}
@@ -1495,18 +1485,18 @@ ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p, int num)
 			continue;
 		}
 
-		if ((c = ssl3_get_cipher_by_value(cipher_value)) != NULL) {
-			if (!sk_SSL_CIPHER_push(sk, c)) {
+		if ((cipher = ssl3_get_cipher_by_value(cipher_value)) != NULL) {
+			if (!sk_SSL_CIPHER_push(ciphers, cipher)) {
 				SSLerror(s, ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
 		}
 	}
 
-	return (sk);
+	return (ciphers);
 
 err:
-	sk_SSL_CIPHER_free(sk);
+	sk_SSL_CIPHER_free(ciphers);
 
 	return (NULL);
 }

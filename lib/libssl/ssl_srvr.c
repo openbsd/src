@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.23 2017/10/08 16:46:31 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.24 2017/10/10 16:51:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -872,11 +872,12 @@ ssl3_get_client_hello(SSL *s)
 
 	if (CBS_len(&cipher_suites) > 0) {
 		if ((ciphers = ssl_bytes_to_cipher_list(s,
-		    CBS_data(&cipher_suites), CBS_len(&cipher_suites))) == NULL)
+		    &cipher_suites)) == NULL)
 			goto err;
 	}
 
 	/* If it is a hit, check that the cipher is in the list */
+	/* XXX - CBS_len(&cipher_suites) will always be zero here... */
 	if (s->internal->hit && CBS_len(&cipher_suites) > 0) {
 		j = 0;
 		id = s->session->cipher->id;
