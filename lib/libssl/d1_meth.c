@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_meth.c,v 1.13 2017/01/23 13:36:13 jsing Exp $ */
+/* $OpenBSD: d1_meth.c,v 1.14 2017/10/10 15:13:26 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -73,7 +73,7 @@ static const SSL_METHOD_INTERNAL DTLSv1_method_internal_data = {
 	.ssl_clear = dtls1_clear,
 	.ssl_free = dtls1_free,
 	.ssl_accept = dtls1_accept,
-	.ssl_connect = dtls1_connect,
+	.ssl_connect = ssl3_connect,
 	.ssl_read = ssl3_read,
 	.ssl_peek = ssl3_peek,
 	.ssl_write = ssl3_write,
