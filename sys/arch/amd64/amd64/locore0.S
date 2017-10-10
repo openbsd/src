@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.3 2017/10/05 06:18:10 mlarkin Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.4 2017/10/10 07:04:05 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	/*
 	 * Load parameters from stack
-	 * (howto, bootdev, bootapiver, esym, extmem, cnvmem, ac, av)
+	 * (howto, bootdev, bootapiver, esym, extmem (unused), cnvmem, ac, av)
 	 */
 	movl	4(%esp),%eax
 	movl	%eax, RELOC(boothowto)
@@ -163,8 +163,6 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl    %eax,(%ebp)
 	movl    $KERNBASE_HI,4(%ebp)
 1:
-	movl	20(%esp), %eax
-	movl	%eax, RELOC(biosextmem)
 	movl	24(%esp), %eax
 	movl	%eax, RELOC(biosbasemem)
 

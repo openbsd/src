@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.90 2017/10/05 06:18:10 mlarkin Exp $	*/
+/*	$OpenBSD: locore.S,v 1.91 2017/10/10 07:04:05 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(bootdev)
 	.globl	_C_LABEL(bootinfo), _C_LABEL(bootinfo_size), _C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
-	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
+	.globl	_C_LABEL(biosbasemem)
 	.globl	_C_LABEL(bootapiver)
 	.globl	_C_LABEL(pg_nx)
 _C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.231 2017/07/12 06:26:32 natano Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.232 2017/10/10 07:04:05 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1284,17 +1284,16 @@ init_x86_64(paddr_t first_avail)
 /*
  * Memory on the AMD64 port is described by three different things.
  *
- * 1. biosbasemem, biosextmem - These are outdated, and should really
- *    only be used to santize the other values.  They are the things
- *    we get back from the BIOS using the legacy routines, usually
- *    only describing the lower 4GB of memory.
+ * 1. biosbasemem - This is outdated, and should really only be used to
+ *    santize the other values. Thiis is what we get back from the BIOS
+ *    using the legacy routines, describing memory below 640KB.
  *
  * 2. bios_memmap[] - This is the memory map as the bios has returned
  *    it to us.  It includes memory the kernel occupies, etc.
  *
  * 3. mem_cluster[] - This is the massaged free memory segments after
  *    taking into account the contents of bios_memmap, biosbasemem,
- *    biosextmem, and locore/machdep/pmap kernel allocations of physical
+ *    and locore/machdep/pmap kernel allocations of physical
  *    pages.
  *
  * The other thing is that the physical page *RANGE* is described by
