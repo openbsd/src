@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmtvar.h,v 1.4 2017/10/10 20:29:27 jcs Exp $ */
+/* $OpenBSD: hidmtvar.h,v 1.5 2017/10/10 20:31:50 jcs Exp $ */
 /*
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
  *
@@ -65,7 +65,7 @@ struct hidmt {
 	int		sc_button;
 };
 
-int	hidmt_set_input_mode(struct hidmt *, int);
+int	hidmt_set_input_mode(struct hidmt *, uint16_t);
 #define HIDMT_INPUT_MODE_MT	0x3
 
 void	hidmt_attach(struct hidmt *, const struct wsmouse_accessops *);

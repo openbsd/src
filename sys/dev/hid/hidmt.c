@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmt.c,v 1.5 2017/10/10 20:29:27 jcs Exp $ */
+/* $OpenBSD: hidmt.c,v 1.6 2017/10/10 20:31:50 jcs Exp $ */
 /*
  * HID multitouch driver for devices conforming to Windows Precision Touchpad
  * standard
@@ -276,10 +276,10 @@ hidmt_detach(struct hidmt *mt, int flags)
 }
 
 int
-hidmt_set_input_mode(struct hidmt *mt, int mode)
+hidmt_set_input_mode(struct hidmt *mt, uint16_t mode)
 {
 	return mt->hidev_set_report(mt->sc_device, hid_feature,
-	    mt->sc_rep_config, &mode, 1);
+	    mt->sc_rep_config, &mode, 2);
 }
 
 void
