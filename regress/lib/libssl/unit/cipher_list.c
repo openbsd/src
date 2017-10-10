@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_list.c,v 1.6 2017/08/28 17:32:04 jsing Exp $	*/
+/*	$OpenBSD: cipher_list.c,v 1.7 2017/10/10 16:52:17 jsing Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
@@ -63,20 +63,17 @@ static uint16_t cipher_values[] = {
 
 #define N_CIPHERS (sizeof(cipher_bytes) / 2)
 
-extern STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
-    const unsigned char *p, int num);
-extern int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
-    unsigned char *p, size_t len, size_t *outlen);
-
 static int
 ssl_bytes_to_list_alloc(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 {
 	SSL_CIPHER *cipher;
 	uint16_t value;
+	CBS cbs;
 	int i;
 
-	*ciphers = ssl_bytes_to_cipher_list(s, cipher_bytes,
-	    sizeof(cipher_bytes));
+	CBS_init(&cbs, cipher_bytes, sizeof(cipher_bytes));
+
+	*ciphers = ssl_bytes_to_cipher_list(s, &cbs);
 	CHECK(*ciphers != NULL);
 	CHECK(sk_SSL_CIPHER_num(*ciphers) == N_CIPHERS);
 	for (i = 0; i < sk_SSL_CIPHER_num(*ciphers); i++) {
@@ -149,25 +146,18 @@ static int
 ssl_bytes_to_list_invalid(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 {
 	uint8_t empty_cipher_bytes[] = {0};
+	CBS cbs;
 
 	sk_SSL_CIPHER_free(*ciphers);
 
 	/* Invalid length: CipherSuite is 2 bytes so it must be even */
-	*ciphers = ssl_bytes_to_cipher_list(s, cipher_bytes,
-	    sizeof(cipher_bytes) - 1);
+	CBS_init(&cbs, cipher_bytes, sizeof(cipher_bytes) - 1);
+	*ciphers = ssl_bytes_to_cipher_list(s, &cbs);
 	CHECK(*ciphers == NULL);
 
 	/* Invalid length: cipher_suites must be at least 2 */
-	*ciphers = ssl_bytes_to_cipher_list(s, empty_cipher_bytes,
-	    sizeof(empty_cipher_bytes));
-	CHECK(*ciphers == NULL);
-
-	/* Invalid length: cipher_suites must be at most 2^16-2 */
-	*ciphers = ssl_bytes_to_cipher_list(s, cipher_bytes, 0x10000);
-	CHECK(*ciphers == NULL);
-
-	/* Invalid len: prototype is signed, but it shouldn't accept len < 0 */
-	*ciphers = ssl_bytes_to_cipher_list(s, cipher_bytes, -2);
+	CBS_init(&cbs, empty_cipher_bytes, sizeof(empty_cipher_bytes));
+	*ciphers = ssl_bytes_to_cipher_list(s, &cbs);
 	CHECK(*ciphers == NULL);
 
 	return 1;
