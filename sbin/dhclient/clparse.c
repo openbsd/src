@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.131 2017/10/10 14:01:08 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.132 2017/10/11 10:14:15 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -686,42 +686,26 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				dp = (uint8_t *)&ip_addr;
 				break;
 			case 'l':	/* Signed 32-bit integer. */
-				if (parse_decimal(cfile, buf, 'l') == 0) {
-					parse_warn("expecting signed 32-bit "
-					    "integer.");
-					skip_to_semi(cfile);
+				if (parse_decimal(cfile, buf, 'l') == 0)
 					return -1;
-				}
 				len = 4;
 				dp = buf;
 				break;
 			case 'L':	/* Unsigned 32-bit integer. */
-				if (parse_decimal(cfile, buf, 'L') == 0) {
-					parse_warn("expecting unsigned 32-bit "
-					    "integer.");
-					skip_to_semi(cfile);
+				if (parse_decimal(cfile, buf, 'L') == 0)
 					return -1;
-				}
 				len = 4;
 				dp = buf;
 				break;
 			case 'S':	/* Unsigned 16-bit integer. */
-				if (parse_decimal(cfile, buf, 'S') == 0) {
-					parse_warn("expecting unsigned 16-bit "
-					    "integer.");
-					skip_to_semi(cfile);
+				if (parse_decimal(cfile, buf, 'S') == 0)
 					return -1;
-				}
 				len = 2;
 				dp = buf;
 				break;
 			case 'B':	/* Unsigned 8-bit integer. */
-				if (parse_decimal(cfile, buf, 'B') == 0) {
-					parse_warn("expecting unsigned 8-bit "
-					    "integer.");
-					skip_to_semi(cfile);
+				if (parse_decimal(cfile, buf, 'B') == 0)
 					return -1;
-				}
 				len = 1;
 				dp = buf;
 				break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.68 2017/10/10 14:01:08 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.69 2017/10/11 10:14:15 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -291,8 +291,8 @@ int
 parse_decimal(FILE *cfile, unsigned char *buf, char fmt)
 {
 	const char	*errstr;
-	char		*val;
-	int		 bytes, token;
+	char		*val, *msg;
+	int		 bytes, rslt, token;
 	long long	 numval, low, high;
 
 	token = next_token(&val, cfile);
@@ -323,13 +323,23 @@ parse_decimal(FILE *cfile, unsigned char *buf, char fmt)
 	}
 
 	numval = strtonum(val, low, high, &errstr);
-	if (errstr != NULL)
-		return 0;
+	if (errstr == NULL) {
+		numval = htobe64(numval);
+		memcpy(buf, (char *)&numval + (sizeof(numval) - bytes), bytes);
+		return 1;
+	}
 
-	numval = htobe64(numval);
-	memcpy(buf, (char *)&numval + (sizeof(numval) - bytes), bytes);
+	rslt = asprintf(&msg, "expecting integer between %lld and %lld", low,
+	    high);
+	if (rslt != -1) {
+		parse_warn(msg);
+		free(msg);
+	}
 
-	return 1;
+	if (token != ';')
+		skip_to_semi(cfile);
+
+	return 0;
 }
 
 int
