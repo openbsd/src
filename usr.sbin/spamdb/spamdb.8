@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamdb.8,v 1.18 2014/06/22 15:11:59 schwarze Exp $
+.\"	$OpenBSD: spamdb.8,v 1.19 2017/10/11 18:25:07 millert Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 22 2014 $
+.Dd $Mdocdate: October 11 2017 $
 .Dt SPAMDB 8
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Nm spamdb
 .Oo Oo Fl Tt Oc
 .Fl a Ar keys Oc
-.Oo Oo Fl Tt Oc
+.Oo Oo Fl GTt Oc
 .Fl d Ar keys Oc
 .Sh DESCRIPTION
 .Nm
@@ -49,6 +49,14 @@ updates the entry's time last seen to now.
 .It Fl d Ar keys
 Delete entries for
 .Ar keys .
+.It Fl G
+Delete the keys as GREY entries.
+See the GREYTRAPPING section of
+.Xr spamd 8
+for more information.
+Must be used in conjunction with the
+.Fl d
+option.
 .It Fl T
 Add or delete the keys as SPAMTRAP entries.
 See the GREYTRAPPING section of

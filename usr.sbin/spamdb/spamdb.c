@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.31 2016/11/29 17:21:52 mestre Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.32 2017/10/11 18:25:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -38,6 +38,7 @@
 #define WHITE 0
 #define TRAPHIT 1
 #define SPAMTRAP 2
+#define GREY 3
 
 int	dblist(DB *);
 int	dbupdate(DB *, char *, int, int);
@@ -69,10 +70,23 @@ dbupdate(DB *db, char *ip, int add, int type)
 	memset(&dbd, 0, sizeof(dbd));
 	if (!add) {
 		/* remove entry */
-		r = db->get(db, &dbk, &dbd, 0);
-		if (r == -1) {
-			warn("db->get failed");
-			goto bad;
+		if (type == GREY) {
+			for (r = db->seq(db, &dbk, &dbd, R_FIRST); !r;
+			    r = db->seq(db, &dbk, &dbd, R_NEXT)) {
+				char *cp = memchr(dbk.data, '\n', dbk.size);
+				if (cp != NULL) {
+					size_t len = cp - (char *)dbk.data;
+					if (memcmp(ip, dbk.data, len) == 0 &&
+					    ip[len] == '\0')
+						break;
+				}
+			}
+		} else {
+			r = db->get(db, &dbk, &dbd, 0);
+			if (r == -1) {
+				warn("db->get failed");
+				goto bad;
+			}
 		}
 		if (r) {
 			warnx("no entry for %s", ip);
@@ -276,13 +290,16 @@ main(int argc, char **argv)
 	HASHINFO	hashinfo;
 	DB		*db;
 
-	while ((ch = getopt(argc, argv, "adtT")) != -1) {
+	while ((ch = getopt(argc, argv, "adGtT")) != -1) {
 		switch (ch) {
 		case 'a':
 			action = 1;
 			break;
 		case 'd':
 			action = 2;
+			break;
+		case 'G':
+			type = GREY;
 			break;
 		case 't':
 			type = TRAPHIT;
@@ -320,6 +337,8 @@ main(int argc, char **argv)
 	case 0:
 		return dblist(db);
 	case 1:
+		if (type == GREY)
+			errx(2, "cannot add GREY entries");
 		for (i=0; i<argc; i++)
 			if (argv[i][0] != '\0') {
 				c++;
