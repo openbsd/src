@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.24 2017/10/10 16:51:38 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.25 2017/10/11 16:51:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,6 +166,7 @@
 #include <openssl/x509.h>
 
 #include "bytestring.h"
+#include "ssl_tlsext.h"
 
 int
 ssl3_accept(SSL *s)
@@ -1046,25 +1047,19 @@ err:
 int
 ssl3_send_server_hello(SSL *s)
 {
-	unsigned char *bufend;
-	unsigned char *p, *d;
-	CBB cbb, session_id;
-	size_t outlen;
-	int sl;
+	CBB cbb, server_hello, session_id;
+	size_t sl;
 
 	memset(&cbb, 0, sizeof(cbb));
 
-	bufend = (unsigned char *)s->internal->init_buf->data + SSL3_RT_MAX_PLAIN_LENGTH;
-
 	if (S3I(s)->hs.state == SSL3_ST_SW_SRVR_HELLO_A) {
-		d = p = ssl3_handshake_msg_start(s, SSL3_MT_SERVER_HELLO);
-
-		if (!CBB_init_fixed(&cbb, p, bufend - p))
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &server_hello,
+		    SSL3_MT_SERVER_HELLO))
 			goto err;
 
-		if (!CBB_add_u16(&cbb, s->version))
+		if (!CBB_add_u16(&server_hello, s->version))
 			goto err;
-		if (!CBB_add_bytes(&cbb, s->s3->server_random,
+		if (!CBB_add_bytes(&server_hello, s->s3->server_random,
 		    sizeof(s->s3->server_random)))
 			goto err;
 
@@ -1091,35 +1086,32 @@ ssl3_send_server_hello(SSL *s)
 			s->session->session_id_length = 0;
 
 		sl = s->session->session_id_length;
-		if (sl > (int)sizeof(s->session->session_id)) {
+		if (sl > sizeof(s->session->session_id)) {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			goto err;
 		}
-
-		if (!CBB_add_u8_length_prefixed(&cbb, &session_id))
+		if (!CBB_add_u8_length_prefixed(&server_hello, &session_id))
 			goto err;
 		if (!CBB_add_bytes(&session_id, s->session->session_id, sl))
 			goto err;
 
 		/* Cipher suite. */
-		if (!CBB_add_u16(&cbb,
+		if (!CBB_add_u16(&server_hello,
 		    ssl3_cipher_get_value(S3I(s)->hs.new_cipher)))
 			goto err;
 
-		/* Compression method. */
-		if (!CBB_add_u8(&cbb, 0))
+		/* Compression method (null). */
+		if (!CBB_add_u8(&server_hello, 0))
 			goto err;
 
-		if (!CBB_finish(&cbb, NULL, &outlen))
-			goto err;
-
-		if ((p = ssl_add_serverhello_tlsext(s, p + outlen,
-		    bufend)) == NULL) {
+		/* TLS extensions */
+		if (!tlsext_serverhello_build(s, &server_hello)) {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			goto err;
 		}
 
-		ssl3_handshake_msg_finish(s, p - d);
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
 	}
 
 	/* SSL3_ST_SW_SRVR_HELLO_B */
