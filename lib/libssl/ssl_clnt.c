@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.20 2017/10/10 15:42:32 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.21 2017/10/11 17:35:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -170,6 +170,7 @@
 #endif
 
 #include "bytestring.h"
+#include "ssl_tlsext.h"
 
 static int ca_dn_cmp(const X509_NAME * const *a, const X509_NAME * const *b);
 
@@ -662,12 +663,12 @@ end:
 int
 ssl3_client_hello(SSL *s)
 {
-	unsigned char	*bufend, *p, *d;
-	uint16_t	 max_version;
-	size_t		 outlen;
-	int		 i;
+	CBB cbb, client_hello, session_id, cookie, cipher_suites;
+	CBB compression_methods;
+	uint16_t max_version;
+	size_t sl;
 
-	bufend = (unsigned char *)s->internal->init_buf->data + SSL3_RT_MAX_PLAIN_LENGTH;
+	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == SSL3_ST_CW_CLNT_HELLO_A) {
 		SSL_SESSION *sess = s->session;
@@ -695,7 +696,9 @@ ssl3_client_hello(SSL *s)
 		if (!SSL_IS_DTLS(s) || D1I(s)->send_cookie == 0)
 			arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
 
-		d = p = ssl3_handshake_msg_start(s, SSL3_MT_CLIENT_HELLO);
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &client_hello,
+		    SSL3_MT_CLIENT_HELLO))
+			goto err;
 
 		/*
 		 * Version indicates the negotiated version: for example from
@@ -727,27 +730,27 @@ ssl3_client_hello(SSL *s)
 		 * client_version in client hello and not resetting it to
 		 * the negotiated version.
 		 */
-
-		*(p++) = s->client_version >> 8;
-		*(p++) = s->client_version & 0xff;
+		if (!CBB_add_u16(&client_hello, s->client_version))
+			goto err;
 
 		/* Random stuff */
-		memcpy(p, s->s3->client_random, SSL3_RANDOM_SIZE);
-		p += SSL3_RANDOM_SIZE;
+		if (!CBB_add_bytes(&client_hello, s->s3->client_random,
+		    sizeof(s->s3->client_random)))
+			goto err;
 
 		/* Session ID */
-		if (s->internal->new_session)
-			i = 0;
-		else
-			i = s->session->session_id_length;
-		*(p++) = i;
-		if (i != 0) {
-			if (i > (int)sizeof(s->session->session_id)) {
+		if (!CBB_add_u8_length_prefixed(&client_hello, &session_id))
+			goto err;
+		if (!s->internal->new_session &&
+		    s->session->session_id_length > 0) {
+			sl = s->session->session_id_length;
+			if (sl > sizeof(s->session->session_id)) {
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				goto err;
 			}
-			memcpy(p, s->session->session_id, i);
-			p += i;
+			if (!CBB_add_bytes(&session_id,
+			    s->session->session_id, sl))
+				goto err;
 		}
 
 		/* DTLS Cookie. */
@@ -756,33 +759,37 @@ ssl3_client_hello(SSL *s)
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				goto err;
 			}
-			*(p++) = D1I(s)->cookie_len;
-			memcpy(p, D1I(s)->cookie, D1I(s)->cookie_len);
-			p += D1I(s)->cookie_len;
+			if (!CBB_add_u8_length_prefixed(&client_hello, &cookie))
+				goto err;
+			if (!CBB_add_bytes(&cookie, D1I(s)->cookie,
+			    D1I(s)->cookie_len))
+				goto err;
 		}
 
 		/* Ciphers supported */
-		if (!ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &p[2],
-		    bufend - &p[2], &outlen))
-			goto err;
-		if (outlen == 0) {
+		if (!CBB_add_u16_length_prefixed(&client_hello, &cipher_suites))
+			return 0;
+		if (!ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s),
+		    &cipher_suites)) {
 			SSLerror(s, SSL_R_NO_CIPHERS_AVAILABLE);
 			goto err;
 		}
-		s2n(outlen, p);
-		p += outlen;
 
-		/* add in (no) COMPRESSION */
-		*(p++) = 1;
-		*(p++) = 0; /* Add the NULL method */
+		/* Add in compression methods (null) */
+		if (!CBB_add_u8_length_prefixed(&client_hello,
+		    &compression_methods))
+			goto err;
+		if (!CBB_add_u8(&compression_methods, 0))
+			goto err;
 
-		/* TLS extensions*/
-		if ((p = ssl_add_clienthello_tlsext(s, p, bufend)) == NULL) {
+		/* TLS extensions */
+		if (!tlsext_clienthello_build(s, &client_hello)) {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			goto err;
 		}
 
-		ssl3_handshake_msg_finish(s, p - d);
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_CW_CLNT_HELLO_B;
 	}
@@ -791,6 +798,8 @@ ssl3_client_hello(SSL *s)
 	return (ssl3_handshake_write(s));
 
 err:
+	CBB_cleanup(&cbb);
+
 	return (-1);
 }
 

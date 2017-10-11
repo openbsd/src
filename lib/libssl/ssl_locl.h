@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.197 2017/10/11 16:51:39 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.198 2017/10/11 17:35:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1064,9 +1064,8 @@ int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 SSL_CIPHER *OBJ_bsearch_ssl_cipher_id(SSL_CIPHER *key, SSL_CIPHER const *base, int num);
 int ssl_cipher_ptr_id_cmp(const SSL_CIPHER * const *ap,
     const SSL_CIPHER * const *bp);
+int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *ciphers, CBB *cbb);
 STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, CBS *cbs);
-int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
-    unsigned char *p, size_t maxlen, size_t *outlen);
 STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
     STACK_OF(SSL_CIPHER) **pref, STACK_OF(SSL_CIPHER) **sorted,
     const char *rule_str);
@@ -1285,9 +1284,6 @@ int tls1_ec_curve_id2nid(const uint16_t curve_id);
 uint16_t tls1_ec_nid2curve_id(const int nid);
 int tls1_check_curve(SSL *s, const uint16_t curve_id);
 int tls1_get_shared_curve(SSL *s);
-
-unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p,
-    unsigned char *limit);
 
 int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **data,
     unsigned char *d, int n, int *al);

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.138 2017/10/11 16:51:39 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.139 2017/10/11 17:35:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -659,29 +659,6 @@ tls12_get_req_sig_algs(SSL *s, unsigned char **sigalgs, size_t *sigalgs_len)
 {
 	*sigalgs = tls12_sigalgs;
 	*sigalgs_len = sizeof(tls12_sigalgs);
-}
-
-unsigned char *
-ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
-{
-	size_t len;
-	CBB cbb;
-
-	if (p >= limit)
-		return NULL;
-
-	if (!CBB_init_fixed(&cbb, p, limit - p))
-		return NULL;
-	if (!tlsext_clienthello_build(s, &cbb)) {
-		CBB_cleanup(&cbb);
-		return NULL;
-	}
-	if (!CBB_finish(&cbb, NULL, &len)) {
-		CBB_cleanup(&cbb);
-		return NULL;
-	}
-
-	return (p + len);
 }
 
 int

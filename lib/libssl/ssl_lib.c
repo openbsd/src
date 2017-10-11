@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.171 2017/10/10 16:51:38 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.172 2017/10/11 17:35:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1380,51 +1380,40 @@ SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
 }
 
 int
-ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p,
-    size_t maxlen, size_t *outlen)
+ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *ciphers, CBB *cbb)
 {
 	SSL_CIPHER *cipher;
-	int ciphers = 0;
-	CBB cbb;
+	int num_ciphers = 0;
 	int i;
 
-	*outlen = 0;
+	if (ciphers == NULL)
+		return 0;
 
-	if (sk == NULL)
-		return (0);
-
-	if (!CBB_init_fixed(&cbb, p, maxlen))
-		goto err;
-
-	for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
-		cipher = sk_SSL_CIPHER_value(sk, i);
+	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+		if ((cipher = sk_SSL_CIPHER_value(ciphers, i)) == NULL)
+			return 0;
 
 		/* Skip TLS v1.2 only ciphersuites if lower than v1.2 */
 		if ((cipher->algorithm_ssl & SSL_TLSV1_2) &&
 		    (TLS1_get_client_version(s) < TLS1_2_VERSION))
 			continue;
 
-		if (!CBB_add_u16(&cbb, ssl3_cipher_get_value(cipher)))
-			goto err;
+		if (!CBB_add_u16(cbb, ssl3_cipher_get_value(cipher)))
+			return 0;
 
-		ciphers++;
+		num_ciphers++;
 	}
 
 	/* Add SCSV if there are other ciphers and we're not renegotiating. */
-	if (ciphers > 0 && !s->internal->renegotiate) {
-		if (!CBB_add_u16(&cbb, SSL3_CK_SCSV & SSL3_CK_VALUE_MASK))
-			goto err;
+	if (num_ciphers > 0 && !s->internal->renegotiate) {
+		if (!CBB_add_u16(cbb, SSL3_CK_SCSV & SSL3_CK_VALUE_MASK))
+			return 0;
 	}
 
-	if (!CBB_finish(&cbb, NULL, outlen))
-		goto err;
+	if (!CBB_flush(cbb))
+		return 0;
 
 	return 1;
-
- err:
-	CBB_cleanup(&cbb);
-
-	return 0;
 }
 
 STACK_OF(SSL_CIPHER) *
