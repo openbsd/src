@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_list.c,v 1.7 2017/10/10 16:52:17 jsing Exp $	*/
+/*	$OpenBSD: cipher_list.c,v 1.8 2017/10/11 17:35:53 jsing Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
@@ -89,6 +89,7 @@ ssl_bytes_to_list_alloc(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 static int
 ssl_list_to_bytes_scsv(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 {
+	CBB cbb;
 	unsigned char *buf = NULL;
 	size_t buflen, outlen;
 	int ret = 0;
@@ -98,7 +99,9 @@ ssl_list_to_bytes_scsv(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 	buflen = sizeof(cipher_bytes) + 2 + 2;
 	CHECK((buf = calloc(1, buflen)) != NULL);
 
-	CHECK(ssl_cipher_list_to_bytes(s, *ciphers, buf, buflen, &outlen));
+	CHECK(CBB_init_fixed(&cbb, buf, buflen));
+	CHECK(ssl_cipher_list_to_bytes(s, *ciphers, &cbb));
+	CHECK(CBB_finish(&cbb, NULL, &outlen));
 
 	CHECK_GOTO(outlen > 0 && outlen == buflen - 2);
 	CHECK_GOTO(memcmp(buf, cipher_bytes, sizeof(cipher_bytes)) == 0);
@@ -115,6 +118,7 @@ err:
 static int
 ssl_list_to_bytes_no_scsv(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 {
+	CBB cbb;
 	unsigned char *buf = NULL;
 	size_t buflen, outlen;
 	int ret = 0;
@@ -129,7 +133,9 @@ ssl_list_to_bytes_no_scsv(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 	/* Set renegotiate so it doesn't add SCSV */
 	s->internal->renegotiate = 1;
 
-	CHECK(ssl_cipher_list_to_bytes(s, *ciphers, buf, buflen, &outlen));
+	CHECK(CBB_init_fixed(&cbb, buf, buflen));
+	CHECK(ssl_cipher_list_to_bytes(s, *ciphers, &cbb));
+	CHECK(CBB_finish(&cbb, NULL, &outlen));
 
 	CHECK_GOTO(outlen > 0 && outlen == buflen - 2);
 	CHECK_GOTO(memcmp(buf, cipher_bytes, sizeof(cipher_bytes)) == 0);
