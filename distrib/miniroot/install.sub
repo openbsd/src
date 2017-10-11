@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1038 2017/10/10 18:55:22 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1039 2017/10/11 09:02:31 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2706,7 +2706,12 @@ __EOT
 	# Email installer questions and their answers to root on next boot.
 	prep_root_mail /tmp/i/$MODE.resp "$(hostname) $MODE response file"
 
-	[[ -x /mnt/$MODE.site ]] && chroot /mnt /$MODE.site
+	if [[ -x /mnt/$MODE.site ]]; then
+		if ! chroot /mnt /$MODE.site; then
+			store_random
+			err_exit "$MODE.site failed"
+		fi
+	fi
 
 	# Store entropy for the next boot.
 	store_random
