@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.11 2017/05/31 08:23:33 yasuoka Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.12 2017/10/11 04:07:50 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -62,6 +62,7 @@ const struct cmd_table cmd_machine[] = {
 	{ "memory",	CMDT_CMD, Xmemory },
 #ifdef EFIBOOT
 	{ "video",	CMDT_CMD, Xvideo_efi },
+	{ "gop",	CMDT_CMD, Xgop_efi },
 	{ "exit",	CMDT_CMD, Xexit_efi },
 	{ "poweroff",	CMDT_CMD, Xpoweroff_efi },
 #endif

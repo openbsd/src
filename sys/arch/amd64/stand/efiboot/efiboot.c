@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.24 2017/10/06 04:52:22 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.25 2017/10/11 04:07:50 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -60,7 +60,7 @@ static void	 efi_memprobe_internal(void);
 static void	 efi_video_init(void);
 static void	 efi_video_reset(void);
 static EFI_STATUS
-		 efi_gop_setmode(EFI_GRAPHICS_OUTPUT *gop, int mode);
+		 efi_gop_setmode(int mode);
 EFI_STATUS	 efi_main(EFI_HANDLE, EFI_SYSTEM_TABLE *);
 
 void (*run_i386)(u_long, u_long, int, int, int, int, int, int, int, int)
@@ -696,13 +696,15 @@ efi_com_putc(dev_t dev, int c)
  * {EFI_,}_ACPI_20_TABLE_GUID or EFI_ACPI_TABLE_GUID means
  * ACPI 2.0 or above.
  */
-static EFI_GUID acpi_guid = ACPI_20_TABLE_GUID;
-static EFI_GUID smbios_guid = SMBIOS_TABLE_GUID;
+static EFI_GUID			 acpi_guid = ACPI_20_TABLE_GUID;
+static EFI_GUID			 smbios_guid = SMBIOS_TABLE_GUID;
+static EFI_GRAPHICS_OUTPUT	*gop;
+static int			 gopmode = -1;
 
 #define	efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
 
 static EFI_STATUS
-efi_gop_setmode(EFI_GRAPHICS_OUTPUT *gop, int mode)
+efi_gop_setmode(int mode)
 {
 	EFI_STATUS	status;
 
@@ -718,14 +720,11 @@ efi_makebootargs(void)
 {
 	int			 i;
 	EFI_STATUS		 status;
-	EFI_GRAPHICS_OUTPUT	*gop;
 	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION
 				*gopi;
 	bios_efiinfo_t		 ei;
-	int			 curmode, bestmode = -1;
+	int			 curmode;
 	UINTN			 sz, gopsiz, bestsiz = 0;
-	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION
-				*info;
 
 	memset(&ei, 0, sizeof(ei));
 	/*
@@ -748,21 +747,24 @@ efi_makebootargs(void)
 	status = EFI_CALL(BS->LocateProtocol, &gop_guid, NULL,
 	    (void **)&gop);
 	if (!EFI_ERROR(status)) {
-		for (i = 0; i < gop->Mode->MaxMode; i++) {
-			status = EFI_CALL(gop->QueryMode, gop, i, &sz, &info);
-			if (EFI_ERROR(status))
-				continue;
-			gopsiz = info->HorizontalResolution *
-			    info->VerticalResolution;
-			if (gopsiz > bestsiz) {
-				bestmode = i;
-				bestsiz = gopsiz;
+		if (gopmode < 0) {
+			for (i = 0; i < gop->Mode->MaxMode; i++) {
+				status = EFI_CALL(gop->QueryMode, gop,
+				    i, &sz, &gopi);
+				if (EFI_ERROR(status))
+					continue;
+				gopsiz = gopi->HorizontalResolution *
+				    gopi->VerticalResolution;
+				if (gopsiz > bestsiz) {
+					gopmode = i;
+					bestsiz = gopsiz;
+				}
 			}
 		}
-		if (bestmode >= 0) {
+		if (gopmode >= 0 && gopmode != gop->Mode->Mode) {
 			curmode = gop->Mode->Mode;
-			if (efi_gop_setmode(gop, bestmode) != EFI_SUCCESS)
-				(void)efi_gop_setmode(gop, curmode);
+			if (efi_gop_setmode(gopmode) != EFI_SUCCESS)
+				(void)efi_gop_setmode(curmode);
 		}
 
 		gopi = gop->Mode->Info;
@@ -882,5 +884,46 @@ int
 Xpoweroff_efi(void)
 {
 	EFI_CALL(RS->ResetSystem, EfiResetShutdown, EFI_SUCCESS, 0, NULL);
+	return (0);
+}
+
+int
+Xgop_efi(void)
+{
+	EFI_STATUS	 status;
+	int		 i, mode = -1;
+	UINTN		 sz;
+	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION
+			*gopi;
+
+	status = EFI_CALL(BS->LocateProtocol, &gop_guid, NULL,
+	    (void **)&gop);
+	if (EFI_ERROR(status))
+		return (0);
+
+	if (cmd.argc >= 2) {
+		mode = strtol(cmd.argv[1], NULL, 10);
+		if (0 <= mode && mode < gop->Mode->MaxMode) {
+			status = EFI_CALL(gop->QueryMode, gop, mode,
+			    &sz, &gopi);
+			if (!EFI_ERROR(status)) {
+				if (efi_gop_setmode(mode) == EFI_SUCCESS)
+					gopmode = mode;
+			}
+		}
+	} else {
+		for (i = 0; i < gop->Mode->MaxMode; i++) {
+			status = EFI_CALL(gop->QueryMode, gop, i, &sz, &gopi);
+			if (EFI_ERROR(status))
+				continue;
+			printf("Mode %d: %d x %d (stride = %d)\n", i,
+			    gopi->HorizontalResolution,
+			    gopi->VerticalResolution,
+			    gopi->PixelsPerScanLine);
+		}
+		printf("\n");
+	}
+	printf("Current Mode = %d\n", gop->Mode->Mode);
+
 	return (0);
 }
