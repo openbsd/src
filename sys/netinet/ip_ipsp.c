@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.226 2017/08/11 21:24:20 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.227 2017/10/11 13:44:49 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -529,9 +529,6 @@ tdb_walk(u_int rdomain, int (*walker)(struct tdb *, void *, int), void *arg)
 	return rval;
 }
 
-/*
- * Called at splsoftclock().
- */
 void
 tdb_timeout(void *v)
 {
