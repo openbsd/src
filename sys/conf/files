@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.652 2017/09/12 08:23:42 mpi Exp $
+#	$OpenBSD: files,v 1.653 2017/10/11 17:19:50 patrick Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -386,6 +386,10 @@ file	dev/ic/ar9285.c			athn
 file	dev/ic/ar9287.c			athn
 file	dev/ic/ar9003.c			athn
 file	dev/ic/ar9380.c			athn
+
+# Broadcom FullMAC 802.11 driver
+device	bwfm: ether, ifnet, ifmedia, wlan
+file	dev/ic/bwfm.c			bwfm
 
 # ADMtek ADM8211 802.11
 device	atw: ether, ifnet, ifmedia, smc93cx6, wlan

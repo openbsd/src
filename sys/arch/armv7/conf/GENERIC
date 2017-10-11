@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.96 2017/10/08 07:58:23 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.97 2017/10/11 17:19:50 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -114,6 +114,7 @@ virtio*		at fdt?
 
 sdhc*		at fdt?
 sdmmc*		at sdhc?
+#bwfm*		at sdmmc?		# Broadcom FullMAC
 
 psci*		at fdt?
 syscon*		at fdt?
@@ -294,6 +295,7 @@ video*	at utvfu?
 audio*	at utvfu?
 udl*	at uhub?		# DisplayLink USB displays
 wsdisplay* at udl?
+#bwfm*	at uhub?		# Broadcom FullMAC
 
 atphy*		at mii?			# Attansic F1 PHYs
 rgephy*		at mii?			# Realtek 8169S/8110S PHY

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sdmmc,v 1.4 2014/07/11 21:54:38 tedu Exp $
+#	$OpenBSD: files.sdmmc,v 1.5 2017/10/11 17:19:50 patrick Exp $
 #
 # Config file and device description for machine-independent SD/MMC code.
 # Included by ports that need it.
@@ -11,3 +11,6 @@ file	dev/sdmmc/sdmmc_cis.c		sdmmc
 file	dev/sdmmc/sdmmc_io.c		sdmmc
 file	dev/sdmmc/sdmmc_mem.c		sdmmc
 file	dev/sdmmc/sdmmc_scsi.c		sdmmc
+
+attach	bwfm at sdmmc with bwfm_sdio
+file	dev/sdmmc/if_bwfm_sdio.c	bwfm_sdio
