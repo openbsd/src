@@ -1,4 +1,4 @@
-/* $OpenBSD: ioasic.c,v 1.17 2010/09/20 06:33:46 matthew Exp $ */
+/* $OpenBSD: ioasic.c,v 1.18 2017/10/11 08:14:28 mpi Exp $ */
 /* $NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $ */
 
 /*-
@@ -91,6 +91,7 @@ struct cfdriver ioasic_cd = {
 
 int	ioasic_intr(void *);
 int	ioasic_intrnull(void *);
+void	ioasic_led_blink(void *);
 
 #define	C(x)	((void *)(u_long)(x))
 #define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
@@ -207,6 +208,8 @@ ioasicattach(parent, self, aux)
 	 * Try to configure each device.
 	 */
 	ioasic_attach_devs(sc, ioasic_devs, ioasic_ndevs);
+
+	ioasic_led_blink(NULL);
 }
 
 void
@@ -348,7 +351,7 @@ static const uint8_t led_pattern8[] = {
 void
 ioasic_led_blink(void *unused)
 {
-	extern int alpha_led_blink;
+	extern int alpha_led_blink;	/* machdep.c */
 	vaddr_t rw_csr;
 	u_int32_t pattern;
 	int display_loadavg;
