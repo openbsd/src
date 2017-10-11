@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.133 2017/10/11 15:06:27 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.134 2017/10/11 18:29:30 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -549,7 +549,6 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
     char *name)
 {
 	char		*val;
-	time_t		 date;
 	unsigned int	 len;
 	int		 token;
 
@@ -598,20 +597,17 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 		free(val);
 		break;
 	case TOK_RENEW:
-		if (parse_date(cfile, &date) == 0)
+		if (parse_date(cfile, &lease->renewal) == 0)
 			return;
-		lease->renewal = date;
-		return;
+		break;
 	case TOK_REBIND:
-		if (parse_date(cfile, &date) == 0)
+		if (parse_date(cfile, &lease->rebind) == 0)
 			return;
-		lease->rebind = date;
-		return;
+		break;
 	case TOK_EXPIRE:
-		if (parse_date(cfile, &date) == 0)
+		if (parse_date(cfile, &lease->expiry) == 0)
 			return;
-		lease->expiry = date;
-		return;
+		break;
 	case TOK_OPTION:
 		parse_option_decl(cfile, lease->options);
 		return;
