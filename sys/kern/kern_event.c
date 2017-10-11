@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.80 2017/10/11 08:01:10 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.81 2017/10/11 08:06:56 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -762,22 +762,24 @@ start:
 	TAILQ_INSERT_TAIL(&kq->kq_head, &marker, kn_tqe);
 	while (count) {
 		kn = TAILQ_FIRST(&kq->kq_head);
-		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 		if (kn == &marker) {
+			TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 			splx(s);
 			if (count == maxevents)
 				goto retry;
 			goto done;
 		}
+
+		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
+		kq->kq_count--;
+
 		if (kn->kn_status & KN_DISABLED) {
 			kn->kn_status &= ~KN_QUEUED;
-			kq->kq_count--;
 			continue;
 		}
 		if ((kn->kn_flags & EV_ONESHOT) == 0 &&
 		    kn->kn_fop->f_event(kn, 0) == 0) {
 			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
-			kq->kq_count--;
 			continue;
 		}
 		*kevp = kn->kn_kevent;
@@ -785,7 +787,6 @@ start:
 		nkev++;
 		if (kn->kn_flags & EV_ONESHOT) {
 			kn->kn_status &= ~KN_QUEUED;
-			kq->kq_count--;
 			splx(s);
 			kn->kn_fop->f_detach(kn);
 			knote_drop(kn, p, p->p_fd);
@@ -798,9 +799,9 @@ start:
 			if (kn->kn_flags & EV_DISPATCH)
 				kn->kn_status |= KN_DISABLED;
 			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
-			kq->kq_count--;
 		} else {
 			TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
+			kq->kq_count++;
 		}
 		count--;
 		if (nkev == KQ_NEVENTS) {
