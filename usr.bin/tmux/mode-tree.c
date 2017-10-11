@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.12 2017/10/11 08:08:16 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.13 2017/10/11 11:26:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -554,10 +554,12 @@ mode_tree_draw(struct mode_tree_data *mtd)
 		}
 
 		if (i != mtd->current) {
-			screen_write_puts(&ctx, &gc0, "%.*s", w, text);
+			screen_write_nputs(&ctx, w, &gc0, "%s", text);
 			screen_write_clearendofline(&ctx, 8);
-		} else
-			screen_write_puts(&ctx, &gc, "%-*.*s", w, w, text);
+		} else {
+			screen_write_nputs(&ctx, w, &gc, "%s", text);
+			screen_write_clearendofline(&ctx, gc.bg);
+		}
 		free(text);
 
 		if (mti->tagged) {
