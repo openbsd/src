@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.17 2017/08/30 10:33:57 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.18 2017/10/11 08:08:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -434,7 +434,10 @@ window_tree_build(void *modedata, u_int sort_type, uint64_t *tag,
 		*tag = (uint64_t)data->fs.wl;
 		break;
 	case WINDOW_TREE_PANE:
-		*tag = (uint64_t)data->fs.wp;
+		if (window_count_panes(data->fs.wl->window) == 1)
+			*tag = (uint64_t)data->fs.wl;
+		else
+			*tag = (uint64_t)data->fs.wp;
 		break;
 	}
 }
