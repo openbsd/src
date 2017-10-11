@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.70 2017/10/11 15:06:27 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.71 2017/10/11 22:57:00 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -387,7 +387,7 @@ parse_date(FILE *cfile, time_t *date)
 
 	n = 0;
 	do {
-		token = next_token(&val, cfile);
+		token = peek_token(&val, cfile);
 
 		switch (token) {
 		case EOF:
@@ -404,9 +404,11 @@ parse_date(FILE *cfile, time_t *date)
 					return 1;
 				}
 			}
+			token = next_token(NULL, cfile);
 			break;
 		default:
 			n = strlcat(timestr, val, sizeof(timestr));
+			token = next_token(NULL, cfile);
 			break;
 
 		}
