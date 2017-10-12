@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.75 2017/09/05 06:35:19 mpi Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.76 2017/10/12 09:03:15 mpi Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -187,12 +187,14 @@ typedef struct {
 #define EM_PARISC	15		/* HPPA */
 #define EM_SPARC32PLUS	18		/* Enhanced instruction set SPARC */
 #define EM_PPC		20		/* PowerPC */
+#define EM_PPC64	21		/* PowerPC 64 */
 #define EM_ARM		40		/* Advanced RISC Machines ARM */
 #define EM_ALPHA	41		/* DEC ALPHA */
-#define	EM_SH		42		/* Hitachi/Renesas Super-H */
+#define EM_SH		42		/* Hitachi/Renesas Super-H */
 #define EM_SPARCV9	43		/* SPARC version 9 */
 #define EM_IA_64	50		/* Intel IA-64 Processor */
 #define EM_AMD64	62		/* AMD64 architecture */
+#define EM_X86_64	EM_AMD64
 #define EM_VAX		75		/* DEC VAX */
 #define EM_AARCH64	183		/* ARM 64-bit architecture (AArch64) */
 
@@ -288,10 +290,18 @@ typedef struct {
 
 
 /* Section Attribute Flags - sh_flags */
-#define SHF_WRITE	0x1		/* Writable */
-#define SHF_ALLOC	0x2		/* occupies memory */
-#define SHF_EXECINSTR	0x4		/* executable */
-#define SHF_TLS		0x400		/* thread local storage */
+#define SHF_WRITE		0x1	/* Writable */
+#define SHF_ALLOC		0x2	/* occupies memory */
+#define SHF_EXECINSTR		0x4	/* executable */
+#define SHF_MERGE		0x10	/* may be merged */
+#define SHF_STRINGS		0x20	/* contains strings */
+#define SHF_INFO_LINK		0x40	/* sh_info holds section index */
+#define SHF_LINK_ORDER		0x80	/* ordering requirements */
+#define SHF_OS_NONCONFORMING	0x100	/* OS-specific processing required */
+#define SHF_GROUP		0x200	/* member of section group */
+#define SHF_TLS			0x400	/* thread local storage */
+#define SHF_COMPRESSED		0x800	/* contains compressed data */
+#define SHF_MASKOS	0x0ff00000	/* OS-specific semantics */
 #define SHF_MASKPROC	0xf0000000	/* reserved bits for processor */
 					/*  specific section attributes */
 
@@ -557,6 +567,11 @@ typedef struct {
 	Elf64_Half descsz;
 	Elf64_Half type;
 } Elf64_Note;
+
+/* Values for n_type. */
+#define NT_PRSTATUS		1	/* Process status. */
+#define NT_FPREGSET		2	/* Floating point registers. */
+#define NT_PRPSINFO		3	/* Process state info. */
 
 /*
  * OpenBSD-specific core file information.
