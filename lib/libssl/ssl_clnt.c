@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.21 2017/10/11 17:35:00 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.22 2017/10/12 16:06:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -277,7 +277,7 @@ ssl3_connect(SSL *s)
 				dtls1_start_timer(s);
 			}
 
-			ret = ssl3_client_hello(s);
+			ret = ssl3_send_client_hello(s);
 			if (ret <= 0)
 				goto end;
 
@@ -661,7 +661,7 @@ end:
 }
 
 int
-ssl3_client_hello(SSL *s)
+ssl3_send_client_hello(SSL *s)
 {
 	CBB cbb, client_hello, session_id, cookie, cipher_suites;
 	CBB compression_methods;
