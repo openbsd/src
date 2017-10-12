@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.198 2017/10/11 17:35:00 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.199 2017/10/12 15:44:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1150,11 +1150,6 @@ int ssl3_record_write(SSL *s, int type);
 void tls1_record_sequence_increment(unsigned char *seq);
 int ssl3_do_change_cipher_spec(SSL *ssl);
 
-int ssl23_read(SSL *s, void *buf, int len);
-int ssl23_peek(SSL *s, void *buf, int len);
-int ssl23_write(SSL *s, const void *buf, int len);
-long ssl23_default_timeout(void);
-
 long tls1_default_timeout(void);
 int dtls1_do_write(SSL *s, int type);
 int ssl3_packet_read(SSL *s, int plen);
@@ -1223,11 +1218,6 @@ int ssl3_send_server_done(SSL *s);
 int ssl3_get_client_certificate(SSL *s);
 int ssl3_get_client_key_exchange(SSL *s);
 int ssl3_get_cert_verify(SSL *s);
-
-int ssl23_accept(SSL *s);
-int ssl23_connect(SSL *s);
-int ssl23_read_bytes(SSL *s, int n);
-int ssl23_write_bytes(SSL *s);
 
 int tls1_new(SSL *s);
 void tls1_free(SSL *s);
