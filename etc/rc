@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.518 2017/10/10 19:07:50 rpe Exp $
+#	$OpenBSD: rc,v 1.519 2017/10/12 18:14:05 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -186,7 +186,7 @@ reorder_libs() {
 	_libas=${_libas# }
 
 	for _liba in /usr/libdata/ld.so.a $_libas; do
-		_tmpdir=$(mktemp -dq /tmp/_librebuild.XXXXXXXXXXXX) &&
+		_tmpdir=$(mktemp -dq /usr/lib/_rebuild.XXXXXXXXXXXX) &&
 		(
 		set -o errexit
 		_install='install -F -S -o root -g bin -m 0444'
@@ -213,7 +213,7 @@ reorder_libs() {
 		) || { _error=true; break; }
 	done
 
-	rm -rf /tmp/_librebuild.*
+	rm -rf /usr/lib/_rebuild.*
 
 	# Restore previous mount state if it was changed.
 	if $_remount; then
