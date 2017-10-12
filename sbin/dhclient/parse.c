@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.71 2017/10/11 22:57:00 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.72 2017/10/12 13:10:13 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -128,34 +128,33 @@ parse_semi(FILE *cfile)
 	return 1;
 }
 
-char *
-parse_string(FILE *cfile, unsigned int *len)
+int
+parse_string(FILE *cfile, unsigned int *len, char **string)
 {
 	static char	 unvisbuf[1500];
-	char		*val, *s;
+	char		*val;
 	int		 i, token;
 
 	token = next_token(&val, cfile);
-	if (token != TOK_STRING) {
-		parse_warn("expecting string.");
-		if (token != ';')
-			skip_to_semi(cfile);
-		return NULL;
+	if (token == TOK_STRING) {
+		i = strnunvis(unvisbuf, val, sizeof(unvisbuf));
+		if (i >= 0) {
+			*string = malloc(i+1);
+			if (*string == NULL)
+				fatal("unvis string %s", val);
+			memcpy(*string, unvisbuf, i+1);	/* Copy the NUL. */
+			if (len != NULL)
+				*len = i;
+			return 1;
+		}
 	}
 
-	i = strnunvis(unvisbuf, val, sizeof(unvisbuf));
-	if (i == -1) {
-		parse_warn("could not unvis string");
-		return NULL;
-	}
-	s = malloc(i+1);
-	if (s == NULL)
-		fatal("unvis string %s", val);
-	memcpy(s, unvisbuf, i+1);	/* Copy the terminating NUL. */
-	if (len != NULL)
-		*len = i;
+	parse_warn("expecting string.");
 
-	return s;
+	if (token != ';')
+		skip_to_semi(cfile);
+
+	return 0;
 }
 
 /*
