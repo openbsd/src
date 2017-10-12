@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.88 2017/08/29 02:16:56 lteo Exp $
+.\"	$OpenBSD: pf.4,v 1.89 2017/10/12 14:39:24 jmc Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 29 2017 $
+.Dd $Mdocdate: October 12 2017 $
 .Dt PF 4
 .Os
 .Sh NAME
@@ -1008,14 +1008,16 @@ command to show the hard limit of a memory pool used by the packet filter:
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
+
 #include <netinet/in.h>
 #include <net/if.h>
 #include <net/pfvar.h>
+
+#include <err.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
 
 static const struct {
 	const char	*name;
@@ -1032,10 +1034,9 @@ static const struct {
 void
 usage(void)
 {
-	extern char *__progname;
 	int i;
 
-	fprintf(stderr, "usage: %s [", __progname);
+	fprintf(stderr, "usage: %s [", getprogname());
 	for (i = 0; pf_limits[i].name; i++)
 		fprintf(stderr, "%s%s", (i > 0 ? "|" : ""), pf_limits[i].name);
 	fprintf(stderr, "]\en");
@@ -1053,7 +1054,7 @@ main(int argc, char *argv[])
 		usage();
 
 	for (i = 0; pf_limits[i].name; i++)
-		if (!strcmp(argv[1], pf_limits[i].name)) {
+		if (strcmp(argv[1], pf_limits[i].name) == 0) {
 			pool_index = pf_limits[i].index;
 			break;
 		}
@@ -1067,10 +1068,10 @@ main(int argc, char *argv[])
 	if (dev == -1)
 		err(1, "open(\e"/dev/pf\e") failed");
 
-	bzero(&pl, sizeof(struct pfioc_limit));
+	memset(&pl, 0, sizeof(struct pfioc_limit));
 	pl.index = pool_index;
 
-	if (ioctl(dev, DIOCGETLIMIT, &pl))
+	if (ioctl(dev, DIOCGETLIMIT, &pl) == -1)
 		err(1, "DIOCGETLIMIT");
 
 	printf("The %s memory pool has ", pf_limits[i].name);
@@ -1079,7 +1080,7 @@ main(int argc, char *argv[])
 	else
 		printf("a hard limit of %u entries.\en", pl.limit);
 
-	return (0);
+	return 0;
 }
 .Ed
 .Sh SEE ALSO
