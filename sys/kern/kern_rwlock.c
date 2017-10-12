@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.30 2017/08/12 23:27:44 guenther Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.31 2017/10/12 09:19:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -312,13 +312,15 @@ _rw_exit(struct rwlock *rwl LOCK_FL_VARS)
 int
 rw_status(struct rwlock *rwl)
 {
-	if (rwl->rwl_owner & RWLOCK_WRLOCK) {
-		if (RW_PROC(curproc) == RW_PROC(rwl->rwl_owner))
+	unsigned long owner = rwl->rwl_owner;
+
+	if (owner & RWLOCK_WRLOCK) {
+		if (RW_PROC(curproc) == RW_PROC(owner))
 			return RW_WRITE;
 		else
 			return RW_WRITE_OTHER;
 	}
-	if (rwl->rwl_owner)
+	if (owner)
 		return RW_READ;
 	return (0);
 }
