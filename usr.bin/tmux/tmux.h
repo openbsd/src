@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.805 2017/10/05 13:29:18 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.806 2017/10/12 11:32:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -778,6 +778,8 @@ struct window_pane {
 #define PANE_INPUTOFF 0x40
 #define PANE_CHANGED 0x80
 #define PANE_EXITED 0x100
+#define PANE_STATUSREADY 0x200
+#define PANE_STATUSDRAWN 0x400
 
 	int		 argc;
 	char	       **argv;

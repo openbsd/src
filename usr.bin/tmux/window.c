@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.205 2017/08/28 12:36:38 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.206 2017/10/12 11:32:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -908,6 +908,7 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 		free((void *)wp->cwd);
 		wp->cwd = xstrdup(cwd);
 	}
+	wp->flags &= ~(PANE_STATUSREADY|PANE_STATUSDRAWN);
 
 	cmd = cmd_stringify_argv(wp->argc, wp->argv);
 	log_debug("spawn: %s -- %s", wp->shell, cmd);
