@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.130 2017/10/12 15:26:08 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.131 2017/10/12 15:52:44 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -157,12 +157,11 @@ ls_missing()
 {
 	local _c _d _f _cmd _l="$(ls_installed)" _p _r _sha=${_TMP}/SHA256
 
-	# return inmediately if we cannot reach the mirror server
-	[[ ${_MIRROR} == @(file://*) ]] && _d="${_MIRROR#file://*}" &&
-		[[ -d ${_d%syspatch/*} ]] ||
-		unpriv ftp -MVo /dev/null ${_MIRROR%syspatch/*} >/dev/null
-
 	set +e # manually handle unpriv() errors
+	# return inmediately if we cannot reach the mirror server
+	_d="${_MIRROR#file://*}" && [[ -d ${_d%syspatch/*} ]] ||
+		unpriv ftp -MVo /dev/null ${_MIRROR%syspatch/*} >/dev/null ||
+		sp_err "Cannot access ${_MIRROR%syspatch/*}" || return
 	unpriv -f "${_sha}.sig" ftp -MVo "${_sha}.sig" "${_MIRROR}/SHA256.sig" \
 		>/dev/null 2>&1 || return 0 # nonexistent: no patch available
 	set -e
