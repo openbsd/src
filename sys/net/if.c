@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.514 2017/10/11 07:57:27 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.515 2017/10/12 09:10:52 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1823,7 +1823,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	char ifrtlabelbuf[RTLABEL_LEN];
 	int s, error = 0, oif_xflags;
 	size_t bytesdone;
-	short oif_flags;
+	unsigned short oif_flags;
 	const char *label;
 
 	switch (cmd) {
