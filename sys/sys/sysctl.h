@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.174 2017/06/14 03:00:40 dlg Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.175 2017/10/12 09:14:16 mpi Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -936,6 +936,9 @@ int sysctl_rdstruct(void *, size_t *, void *, const void *, size_t);
 int sysctl_struct(void *, size_t *, void *, size_t, void *, size_t);
 int sysctl_file(int *, u_int, char *, size_t *, struct proc *);
 int sysctl_doproc(int *, u_int, char *, size_t *);
+struct mbuf_queue;
+int sysctl_mq(int *, u_int, void *, size_t *, void *, size_t,
+    struct mbuf_queue *);
 struct rtentry;
 struct walkarg;
 int sysctl_dumpentry(struct rtentry *, void *, unsigned int);

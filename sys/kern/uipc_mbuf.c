@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.249 2017/09/15 18:13:05 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.250 2017/10/12 09:14:16 mpi Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 #include <sys/protosw.h>
 #include <sys/pool.h>
 #include <sys/percpu.h>
+#include <sys/sysctl.h>
 
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -1648,4 +1649,35 @@ mq_purge(struct mbuf_queue *mq)
 	mq_delist(mq, &ml);
 
 	return (ml_purge(&ml));
+}
+
+int
+sysctl_mq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct mbuf_queue *mq)
+{
+	unsigned int maxlen;
+	int error;
+
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case IFQCTL_LEN:
+		return (sysctl_rdint(oldp, oldlenp, newp, mq_len(mq)));
+	case IFQCTL_MAXLEN:
+		maxlen = mq->mq_maxlen;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &maxlen);
+		if (!error && maxlen != mq->mq_maxlen) {
+			mtx_enter(&mq->mq_mtx);
+			mq->mq_maxlen = maxlen;
+			mtx_leave(&mq->mq_mtx);
+		}
+		return (error);
+	case IFQCTL_DROPS:
+		return (sysctl_rdint(oldp, oldlenp, newp, mq_drops(mq)));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }

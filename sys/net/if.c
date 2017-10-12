@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.515 2017/10/12 09:10:52 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.516 2017/10/12 09:14:16 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -82,7 +82,6 @@
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/domain.h>
-#include <sys/sysctl.h>
 #include <sys/task.h>
 #include <sys/atomic.h>
 #include <sys/proc.h>
@@ -2654,38 +2653,6 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 	}
 	ifr.ifr_flags = ifp->if_flags;
 	return ((*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr));
-}
-
-/* XXX move to kern/uipc_mbuf.c */
-int
-sysctl_mq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct mbuf_queue *mq)
-{
-	unsigned int maxlen;
-	int error;
-
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
-
-	switch (name[0]) {
-	case IFQCTL_LEN:
-		return (sysctl_rdint(oldp, oldlenp, newp, mq_len(mq)));
-	case IFQCTL_MAXLEN:
-		maxlen = mq->mq_maxlen;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &maxlen);
-		if (!error && maxlen != mq->mq_maxlen) {
-			mtx_enter(&mq->mq_mtx);
-			mq->mq_maxlen = maxlen;
-			mtx_leave(&mq->mq_mtx);
-		}
-		return (error);
-	case IFQCTL_DROPS:
-		return (sysctl_rdint(oldp, oldlenp, newp, mq_drops(mq)));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 void
