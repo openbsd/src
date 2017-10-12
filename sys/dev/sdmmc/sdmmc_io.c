@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.29 2017/08/28 23:45:10 jsg Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.30 2017/10/12 11:54:37 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -220,14 +220,14 @@ sdmmc_io_function_enable(struct sdmmc_function *sf)
 	u_int8_t rv;
 	int retry = 5;
 
+	rw_assert_wrlock(&sc->sc_lock);
+
 	if (sf->number == 0)
 		return 0;	/* FN0 is always enabled */
 
-	rw_enter_write(&sc->sc_lock);
 	rv = sdmmc_io_read_1(sf0, SD_IO_CCCR_FN_ENABLE);
 	rv |= (1<<sf->number);
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_FN_ENABLE, rv);
-	rw_exit(&sc->sc_lock);
 
 	while (!sdmmc_io_function_ready(sf) && retry-- > 0)
 		tsleep(&lbolt, PPAUSE, "pause", 0);
@@ -605,11 +605,11 @@ sdmmc_intr_enable(struct sdmmc_function *sf)
 	struct sdmmc_function *sf0 = sc->sc_fn0;
 	u_int8_t imask;
 
-	rw_enter_write(&sc->sc_lock);
+	rw_assert_wrlock(&sc->sc_lock);
+
 	imask = sdmmc_io_read_1(sf0, SD_IO_CCCR_INT_ENABLE);
 	imask |= 1 << sf->number;
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_INT_ENABLE, imask);
-	rw_exit(&sc->sc_lock);
 }
 
 void
@@ -619,11 +619,11 @@ sdmmc_intr_disable(struct sdmmc_function *sf)
 	struct sdmmc_function *sf0 = sc->sc_fn0;
 	u_int8_t imask;
 
-	rw_enter_write(&sc->sc_lock);
+	rw_assert_wrlock(&sc->sc_lock);
+
 	imask = sdmmc_io_read_1(sf0, SD_IO_CCCR_INT_ENABLE);
 	imask &= ~(1 << sf->number);
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_INT_ENABLE, imask);
-	rw_exit(&sc->sc_lock);
 }
 
 /*
