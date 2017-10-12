@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.44 2015/03/19 21:48:05 bcallah Exp $	*/
+/*	$OpenBSD: grep.c,v 1.45 2017/10/12 14:12:00 florian Exp $	*/
 
 /* This file is in the public domain */
 
@@ -178,11 +178,15 @@ compile_mode(const char *name, const char *command)
 	struct buffer	*bp;
 	FILE	*fpipe;
 	char	*buf;
-	size_t	 len;
+	size_t	 sz;
+	ssize_t	 len;
 	int	 ret, n;
 	char	 cwd[NFILEN], qcmd[NFILEN];
 	char	 timestr[NTIME];
 	time_t	 t;
+
+	buf = NULL;
+	sz = 0;
 
 	n = snprintf(qcmd, sizeof(qcmd), "%s 2>&1", command);
 	if (n < 0 || n >= sizeof(qcmd))
@@ -210,15 +214,14 @@ compile_mode(const char *name, const char *command)
 		ewprintf("Problem opening pipe");
 		return (NULL);
 	}
-	/*
-	 * We know that our commands are nice and the last line will end with
-	 * a \n, so we don't need to try to deal with the last line problem
-	 * in fgetln.
-	 */
-	while ((buf = fgetln(fpipe, &len)) != NULL) {
-		buf[len - 1] = '\0';
+	while ((len = getline(&buf, &sz, fpipe)) != -1) {
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
 		addline(bp, buf);
 	}
+	free(buf);
+	if (ferror(fpipe))
+		ewprintf("Problem reading pipe");
 	ret = pclose(fpipe);
 	t = time(NULL);
 	strftime(timestr, sizeof(timestr), "%a %b %e %T %Y", localtime(&t));

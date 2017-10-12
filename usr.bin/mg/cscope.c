@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.16 2016/01/19 14:51:00 sunil Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.17 2017/10/12 14:12:00 florian Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -166,8 +166,12 @@ cscreatelist(int f, int n)
 	struct stat sb;
 	FILE *fpipe;
 	char dir[NFILEN], cmd[BUFSIZ], title[BUFSIZ], *line, *bufp;
-	size_t len;
+	size_t sz;
+	ssize_t len;
 	int clen;
+
+	line = NULL;
+	sz = 0;
 
 	if (getbufcwd(dir, sizeof(dir)) == FALSE)
 		dir[0] = '\0';
@@ -221,11 +225,14 @@ cscreatelist(int f, int n)
 	}
 	addline(bp, title);
 	addline(bp, "");
-	/* All lines are NUL terminated */
-	while ((line = fgetln(fpipe, &len)) != NULL) {
-		line[len - 1] = '\0';
+	while ((len = getline(&line, &sz, fpipe)) != -1) {
+		if (line[len - 1] == '\n')
+			line[len - 1] = '\0';
 		addline(bp, line);
 	}
+	free(line);
+	if (ferror(fpipe))
+		ewprintf("Problem reading pipe");
 	pclose(fpipe);
 	return (popbuftop(bp, WNONE));
 }
@@ -397,7 +404,11 @@ do_cscope(int i)
 	char pattern[MAX_TOKEN], cmd[BUFSIZ], title[BUFSIZ];
 	char *p, *buf;
 	int clen, nores = 0;
-	size_t len;
+	size_t sz;
+	ssize_t len;
+
+	buf = NULL;
+	sz = 0;
 
 	/* If current buffer isn't a source file just return */
 	if (fnmatch("*.[chy]", curbp->b_fname, 0) != 0) {
@@ -447,13 +458,18 @@ do_cscope(int i)
 	addline(bp, title);
 	addline(bp, "");
 	addline(bp, "-------------------------------------------------------------------------------");
-	/* All lines are NUL terminated */
-	while ((buf = fgetln(fpipe, &len)) != NULL) {
-		buf[len - 1] = '\0';
-		if (addentry(bp, buf) != TRUE)
+	while ((len = getline(&buf, &sz, fpipe)) != -1) {
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+		if (addentry(bp, buf) != TRUE) {
+			free(buf);
 			return (FALSE);
+		}
 		nores = 1;
-	};
+	}
+	free(buf);
+	if (ferror(fpipe))
+		ewprintf("Problem reading pipe");
 	pclose(fpipe);
 	addline(bp, "-------------------------------------------------------------------------------");
 	if (nores == 0)
