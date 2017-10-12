@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.136 2017/10/12 13:28:49 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.137 2017/10/12 14:55:49 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -680,15 +680,16 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				if (parse_string(cfile, &len, &val) == 0)
 					return -1;
 				if (hunkix + len + 1 > sizeof(hunkbuf)) {
+					free(val);
 					parse_warn("option data buffer "
 					    "overflow");
 					skip_to_semi(cfile);
 					return -1;
 				}
 				memcpy(&hunkbuf[hunkix], val, len + 1);
+				free(val);
 				nul_term = 1;
 				hunkix += len;
-				free(val);
 				dp = NULL;
 				break;
 			case 'I': /* IP address. */
