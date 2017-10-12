@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.135 2017/10/12 13:10:13 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.136 2017/10/12 13:28:49 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -568,8 +568,8 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 		if (rslt != 0) {
 			if (lease->is_static == 0)
 				parse_warn("wrong interface name.");
-			    skip_to_semi(cfile);
-			    return;
+			skip_to_semi(cfile);
+			return;
 		}
 		break;
 	case TOK_FIXED_ADDR:
@@ -596,12 +596,14 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 		if (parse_string(cfile, &len, &val) == 0)
 			return;
 		if (len > sizeof(lease->ssid)) {
+			free(val);
 			parse_warn("ssid > 32 bytes");
 			skip_to_semi(cfile);
 			return;
 		}
 		memset(lease->ssid, 0, sizeof(lease->ssid));
 		memcpy(lease->ssid, val, len);
+		free(val);
 		lease->ssid_len = len;
 		break;
 	case TOK_RENEW:
