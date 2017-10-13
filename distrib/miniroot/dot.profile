@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.39 2017/10/13 17:13:40 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.40 2017/10/13 17:23:01 rpe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -57,7 +57,7 @@ if [[ -z $DONEPROFILE ]]; then
 	# Start IPv6 stateless address autoconfiguration daemon.
 	[[ -x /sbin/slaacd ]] && /sbin/slaacd
 
-	# Set up some sane defaults.
+	# Set up some sane tty defaults.
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T
 
@@ -69,8 +69,9 @@ __EOT
 	# Create working directories with proper permissions in /tmp.
 	mkdir -m u=rwx,go=rx -p /tmp/{ai,i}
 
-	# Start the automatic installation if netbooted or if a response file
-	# is found in / after a timeout, but only the very first time around.
+	# Set timer to automatically start unattended installation or upgrade
+	# if netbooted or if a response file is found in / after a timeout,
+	# but only the very first time around.
 	timeout=false
 	timer_pid=
 	if [[ ! -f /tmp/ai/noai ]] && { ifconfig netboot >/dev/null 2>&1 ||
@@ -84,10 +85,10 @@ __EOT
 		trap 'exit 1' INT
 		trap 'timeout=true' TERM
 
-		# Stop monitoring background processes to avoid printing
-		# job completion notices in interactive shell mode.  This
-		# doesn't stop the "[1] <pid>" on starting a job though;
-		# that's why re redirect stdout and stderr temporarily.
+		# Stop monitoring background processes to avoid printing job
+		# completion notices in interactive shell mode. This doesn't
+		# stop the "[1] <pid>" on starting a job though; that's why
+		# stdout and stderr is redirected temporarily.
 		set +m
 		exec 3<&1 4<&2 >/dev/null 2>&1
 		(sleep 5; kill $$) &
