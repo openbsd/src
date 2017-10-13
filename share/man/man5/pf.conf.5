@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.567 2017/07/13 14:41:17 schwarze Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.568 2017/10/13 23:41:34 mikeb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2017 $
+.Dd $Mdocdate: October 13 2017 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1478,6 +1478,8 @@ The maximum bandwidth that should be assigned to a given queue can be limited
 using the
 .Cm max
 keyword.
+If such limitation isn't imposed on the root queue, borrowing can result in
+saturating the bandwidth of the outgoing interface.
 Similarly, a minimum (reserved) bandwidth can be specified:
 .Pp
 .Dl queue ssh parent std bandwidth 10M min 5M max 25M
@@ -1497,8 +1499,42 @@ and
 to represent kilobits, megabits, and gigabits per second, respectively.
 The value must not exceed the interface bandwidth.
 .Pp
-In addition to the bandwidth specifications queues support the following
-options:
+If multiple connections are assigned the same queue, they're not guaranteed
+to share the queue bandwidth fairly.
+An alternative flow queue manager can be used to achieve fair sharing by
+indicating how many simultaneous states are expected with a
+.Cm flows
+option, unless a minimum bandwidth has been specified as well.
+.Pp
+When packets are classified by the stateful inspection engine, a flow
+identifier is assigned to all packets belonging to the state thus limiting
+the number of individual flows that can be recognized by the resolution of
+a flow identifier.
+The current implementation is able to classify traffic into 32767 distinct
+flows.
+However, efficient fair sharing is observed even with a much smaller number
+of flows.
+For example on a 10Mbit/s DSL or a cable modem uplink, the following simple
+configuration can be used:
+.Bd -literal -offset 4n
+queue outq on em0 bandwidth 9M max 9M flows 1024 qlimit 1024 \e
+      default
+.Ed
+.Pp
+It's important to specify the upper bound within 90-95% of the expected
+bandwidth and raise the default queue limit.
+.Pp
+If a
+.Cm flows
+option appears without a
+.Cm bandwidth
+specification, the flow queue manager is selected as the queueing discipline
+for the corresponding interface acting as a default queue for all outgoing
+packets.
+In such scenario, queue hierarchy is not supported.
+.Pp
+In addition to the bandwidth and flow specifications queues support the
+following options:
 .Bl -tag -width xxxx
 .It Cm default
 Packets not matched by another queue are assigned to this queue.
@@ -1510,6 +1546,12 @@ If not given, it operates on all matching interfaces.
 Defines which parent queue the queue should be attached to.
 Mandatory for all queues except root queues.
 The parent queue must exist.
+.It Cm quantum Ar size
+Specifies the quantum of service for the flow queue manager.
+The lower the quantum size the more advantage is given to streams of smaller
+packets at the expense of bulk transfers.
+The default value is set to the configured Maximum Transmission Unit (MTU)
+of the specified interface.
 .It Cm qlimit Ar limit
 The maximum number of packets held in the queue.
 The default is 50.
@@ -1557,42 +1599,6 @@ pass out on em0 inet proto tcp from any to any port 22 \e
 pass out on em0 inet proto tcp from any to any port 25 \e
       set queue mail
 .Ed
-.Pp
-In addition to bandwidth management, a fair traffic sharing option
-is provided via a flow queue.
-When packets are classified by the stateful inspection engine, a flow
-identifier is assigned to all packets belonging to this state.
-Outgoing traffic is split according to these identifiers
-into individual queues and is serviced in a way that provides
-a fair share of bandwidth for all connections sharing the queue.
-.Pp
-Configuration of a flow queue is similar to a regular one,
-except flow queues don't build a hierarchy
-and thus only one flow queue may be specified per interface.
-.Pp
-The core parameter of a flow queue is the number of expected simultaneous
-connections, or
-.Cm flows ,
-limited by the resolution of the flow identifier (the current
-implementation is able to classify traffic into 32767 distinct flows).
-Thus a minimal flow queue configuration is:
-.Pp
-.Dl queue fq on em0 flows 1024
-.Pp
-Another value affecting the flow queue is a quantum of service.
-The lower the
-.Cm quantum
-the more advantage is given to streams of small packets at the expense
-of bulk transfers.
-The default value for
-.Cm quantum
-is selected based on the configured Maximum Transmission Unit (MTU)
-of the specified interface.
-.Pp
-An additional configuration option
-.Cm qlimit
-sets the queue depth shared among all flows.
-The default is 1024.
 .Sh TABLES
 Tables are named structures which can hold a collection of addresses and
 networks.
