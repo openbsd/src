@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ioasic.c,v 1.17 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_le_ioasic.c,v 1.18 2017/10/13 08:58:42 mpi Exp $	*/
 /*	$NetBSD: if_le_ioasic.c,v 1.18 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -55,6 +55,10 @@
 #include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
 
+#ifdef __alpha__
+#include <machine/rpb.h>
+#endif /* __alpha__ */
+
 struct le_ioasic_softc {
 	struct	am7990_softc sc_am7990;	/* glue to MI code */
 	struct	lereg1 *sc_r1;		/* LANCE registers */
@@ -76,6 +80,14 @@ void le_ioasic_copyfrombuf_gap2(struct lance_softc *, void *, int, int);
 void le_ioasic_copytobuf_gap16(struct lance_softc *, void *, int, int);
 void le_ioasic_copyfrombuf_gap16(struct lance_softc *, void *, int, int);
 void le_ioasic_zerobuf_gap16(struct lance_softc *, int, int);
+
+#ifdef __alpha__
+#ifdef DEC_3000_500
+int	le_ioasic_ifmedia_change(struct lance_softc *);
+void	le_ioasic_ifmedia_status(struct lance_softc *, struct ifmediareq *);
+void	le_ioasic_nocarrier(struct lance_softc *);
+#endif
+#endif /* __alpha__ */
 
 int
 le_ioasic_match(struct device *parent, void *match, void *aux)
@@ -154,6 +166,27 @@ le_ioasic_attach(struct device *parent, struct device *self, void *aux)
 	le->sc_copytobuf = le_ioasic_copytobuf_gap16;
 	le->sc_copyfrombuf = le_ioasic_copyfrombuf_gap16;
 	le->sc_zerobuf = le_ioasic_zerobuf_gap16;
+
+#ifdef __alpha__
+#ifdef DEC_3000_500
+	/*
+	 * On non-300 DEC 3000 models, both AUI and UTP are available.
+	 */
+	if (cputype == ST_DEC_3000_500) {
+		static const uint64_t media[] = {
+			IFM_ETHER | IFM_10_T,
+			IFM_ETHER | IFM_10_5,
+			IFM_ETHER | IFM_AUTO
+		};
+		le->sc_mediachange = le_ioasic_ifmedia_change;
+		le->sc_mediastatus = le_ioasic_ifmedia_status;
+		le->sc_supmedia = media;
+		le->sc_nsupmedia = nitems(media);
+		le->sc_defaultmedia = IFM_ETHER | IFM_AUTO;
+		le->sc_nocarrier = le_ioasic_nocarrier;
+	}
+#endif
+#endif /* __alpha__ */
 
 	dec_le_common_attach(&sc->sc_am7990,
 	    (u_char *)((struct ioasic_softc *)parent)->sc_base
@@ -414,3 +447,96 @@ le_ioasic_zerobuf_gap16(struct lance_softc *sc, int boff, int len)
 		xfer = min(len, 16);
 	}
 }
+
+#ifdef __alpha__
+#ifdef DEC_3000_500
+int
+le_ioasic_ifmedia_change(struct lance_softc *lsc)
+{
+	struct le_ioasic_softc *sc = (struct le_ioasic_softc *)lsc;
+	struct ifmedia *ifm = &sc->sc_am7990.lsc.sc_ifmedia;
+	bus_space_tag_t ioasic_bst =
+	    ((struct ioasic_softc *)sc->sc_am7990.lsc.sc_dev.dv_parent)->sc_bst;
+	bus_space_handle_t ioasic_bsh =
+	    ((struct ioasic_softc *)sc->sc_am7990.lsc.sc_dev.dv_parent)->sc_bsh;
+	u_int32_t ossr, ssr;
+
+	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
+		return EINVAL;
+
+	ossr = ssr = bus_space_read_4(ioasic_bst, ioasic_bsh, IOASIC_CSR);
+
+	switch (IFM_SUBTYPE(ifm->ifm_media)) {
+	case IFM_10_5:
+		ssr &= ~IOASIC_CSR_ETHERNET_UTP;
+		break;
+	case IFM_10_T:
+		ssr |= IOASIC_CSR_ETHERNET_UTP;
+		break;
+	case IFM_AUTO:
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if (ossr != ssr)
+		bus_space_write_4(ioasic_bst, ioasic_bsh, IOASIC_CSR, ssr);
+
+	return 0;
+}
+
+void
+le_ioasic_ifmedia_status(struct lance_softc *lsc, struct ifmediareq *req)
+{
+	struct le_ioasic_softc *sc = (struct le_ioasic_softc *)lsc;
+	bus_space_tag_t ioasic_bst =
+	    ((struct ioasic_softc *)sc->sc_am7990.lsc.sc_dev.dv_parent)->sc_bst;
+	bus_space_handle_t ioasic_bsh =
+	    ((struct ioasic_softc *)sc->sc_am7990.lsc.sc_dev.dv_parent)->sc_bsh;
+	u_int32_t ssr;
+
+	ssr = bus_space_read_4(ioasic_bst, ioasic_bsh, IOASIC_CSR);
+
+	if (ssr & IOASIC_CSR_ETHERNET_UTP)
+		req->ifm_active = IFM_ETHER | IFM_10_T;
+	else
+		req->ifm_active = IFM_ETHER | IFM_10_5;
+}
+
+void
+le_ioasic_nocarrier(struct lance_softc *lsc)
+{
+	struct le_ioasic_softc *sc = (struct le_ioasic_softc *)lsc;
+	bus_space_tag_t ioasic_bst =
+	    ((struct ioasic_softc *)sc->sc_am7990.lsc.sc_dev.dv_parent)->sc_bst;
+	bus_space_handle_t ioasic_bsh =
+	    ((struct ioasic_softc *)sc->sc_am7990.lsc.sc_dev.dv_parent)->sc_bsh;
+	u_int32_t ossr, ssr;
+
+	ossr = ssr = bus_space_read_4(ioasic_bst, ioasic_bsh, IOASIC_CSR);
+
+	if (ssr & IOASIC_CSR_ETHERNET_UTP) {
+		switch (IFM_SUBTYPE(lsc->sc_ifmedia.ifm_media)) {
+		case IFM_10_5:
+		case IFM_AUTO:
+			printf("%s: lost carrier on UTP port"
+			    ", switching to AUI port\n", lsc->sc_dev.dv_xname);
+			ssr ^= IOASIC_CSR_ETHERNET_UTP;
+			break;
+		}
+	} else {
+		switch (IFM_SUBTYPE(lsc->sc_ifmedia.ifm_media)) {
+		case IFM_10_T:
+		case IFM_AUTO:
+			printf("%s: lost carrier on AUI port"
+			    ", switching to UTP port\n", lsc->sc_dev.dv_xname);
+			ssr ^= IOASIC_CSR_ETHERNET_UTP;
+			break;
+		}
+	}
+
+	if (ossr != ssr)
+		bus_space_write_4(ioasic_bst, ioasic_bsh, IOASIC_CSR, ssr);
+}
+#endif
+#endif /* __alpha__ */
