@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.5 2017/09/27 05:43:55 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.6 2017/10/13 05:14:02 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -28,7 +28,7 @@ void	tcb_set(struct proc *_p, void *_newtcb);
 #define TCB_SET(p, addr)	tcb_set(p, addr)
 
 /* address must be in canonical form; requiring lower-half is okay */
-#define TCB_INVALID(addr)	((u_long)(addr) > 0x0000ffffffffffff)
+#define TCB_INVALID(addr)	((u_long)(addr) > 0x00007fffffffffff)
 
 #else /* _KERNEL */
 
