@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.22 2017/10/11 18:21:38 jasper Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.23 2017/10/13 17:32:22 jasper Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -91,7 +91,7 @@ db_ctf_init(void)
 	db_ctf.dlen = db_ctf.cth->cth_stroff + db_ctf.cth->cth_strlen;
 
 	if ((db_ctf.cth->cth_flags & CTF_F_COMPRESS) == 0) {
-		printf("unsupported non-compressed CTF section\n");
+		db_printf("unsupported non-compressed CTF section\n");
 		return;
 	}
 
@@ -557,6 +557,11 @@ db_ctf_pprint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	Elf_Sym *st;
 	const struct ctf_type *ctt;
 	int t;
+
+	if (!db_ctf.ctf_found) {
+		db_printf("No CTF data found\n");
+		db_flush_lex();
+	}
 
 	/*
 	 * Read the struct name from the debugger input.
