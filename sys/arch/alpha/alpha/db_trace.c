@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.20 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.21 2017/10/13 19:00:35 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -117,36 +117,31 @@ static __inline int regc(u_int);
 static __inline int disp(u_int);
 
 static __inline int
-sext(x)
-	u_int x;
+sext(u_int x)
 {
 	return ((x & 0x8000) ? -(-x & 0xffff) : (x & 0xffff));
 }
 
 static __inline int
-rega(x)
-	u_int x;
+rega(u_int x)
 {
 	return ((x >> 21) & 0x1f);
 }
 
 static __inline int
-regb(x)
-	u_int x;
+regb(u_int x)
 {
 	return ((x >> 16) & 0x1f);
 }
 
 static __inline int
-regc(x)
-	u_int x;
+regc(u_int x)
 {
 	return (x & 0x1f);
 }
 
 static __inline int
-disp(x)
-	u_int x;
+disp(u_int x)
 {
 	return (sext(x & 0xffff));
 }
