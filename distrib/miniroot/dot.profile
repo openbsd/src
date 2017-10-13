@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.40 2017/10/13 17:23:01 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.41 2017/10/13 17:31:26 rpe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -81,6 +81,8 @@ __EOT
 		echo "Starting non-interactive mode in 5 seconds..."
 		>/tmp/ai/noai
 
+		# Set trap handlers to remove timer if the shell is interrupted,
+		# killed or about to exit.
 		trap 'kill $timeout_pid 2>/dev/null' EXIT
 		trap 'exit 1' INT
 		trap 'timeout=true' TERM
