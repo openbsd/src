@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.23 2017/10/13 17:32:22 jasper Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.24 2017/10/13 18:11:47 jasper Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -561,6 +561,7 @@ db_ctf_pprint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	if (!db_ctf.ctf_found) {
 		db_printf("No CTF data found\n");
 		db_flush_lex();
+		return;
 	}
 
 	/*
