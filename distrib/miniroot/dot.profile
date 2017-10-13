@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.41 2017/10/13 17:31:26 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.42 2017/10/13 18:06:28 rpe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -43,12 +43,12 @@ umask 022
 # emacs-style command line editing.
 set -o emacs
 
-# Extract rootdisk from last 'root on ...' dmesg line.
-rootdisk=$(dmesg | sed -E '/^root on ([^ ]+) .*$/h;$!d;g;s//\1/')
 
 if [[ -z $DONEPROFILE ]]; then
 	DONEPROFILE=YES
 
+	# Extract rootdisk from last 'root on ...' dmesg line.
+	rootdisk=$(dmesg | sed -E '/^root on ([^ ]+) .*$/h;$!d;g;s//\1/')
 	mount -u /dev/${rootdisk:-rd0a} /
 
 	# Create a fake rc that just returns 1 and throws us back.
