@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.4 2017/10/10 07:04:05 mlarkin Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.5 2017/10/14 21:42:17 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -651,10 +651,7 @@ farjmp64:
 	.long	longmode-KERNBASE
 	.word	GSEL(GCODE_SEL, SEL_KPL)
 
-	.globl _C_LABEL(cpu_private)
-	.comm _C_LABEL(cpu_private),NBPG,NBPG
-
-/* XXX we want some guard here */
+	.align 8, 0xcc
 	.space 512
 tmpstk:
 
