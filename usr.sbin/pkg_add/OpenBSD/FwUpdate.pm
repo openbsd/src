@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.22 2017/05/29 12:28:54 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.23 2017/10/14 09:00:17 patrick Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -142,7 +142,7 @@ OpenBSD::Auto::cache(updater,
     });
 
 my %possible_drivers =  map {($_, 1)}
-    (qw(acx athn bwi ipw iwi iwm iwn malo otus pgt radeondrm rsu rtwn uath
+    (qw(acx athn bwfm bwi ipw iwi iwm iwn malo otus pgt radeondrm rsu rtwn uath
 	upgt urtwn uvideo vmm wpi));
 
 
