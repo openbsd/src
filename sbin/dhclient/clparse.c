@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.138 2017/10/13 13:53:28 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.139 2017/10/14 01:15:36 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -62,7 +62,7 @@
 
 void parse_client_statement(FILE *, char *);
 int parse_X(FILE *, uint8_t *, int);
-int parse_option_list(FILE *, uint8_t *, size_t);
+int parse_option_list(FILE *, int *, uint8_t *);
 void parse_interface_declaration(FILE *, char *);
 struct client_lease *parse_client_lease_statement(FILE *, char *);
 void parse_client_lease_declaration(FILE *, struct client_lease *, char *);
@@ -220,9 +220,8 @@ read_client_leases(char *name, struct client_lease_tq *tq)
 void
 parse_client_statement(FILE *cfile, char *name)
 {
-	uint8_t		 optlist[DHO_COUNT];
 	char		*val;
-	int		 i, count, token;
+	int		 i, token;
 
 	token = next_token(NULL, cfile);
 
@@ -256,28 +255,19 @@ parse_client_statement(FILE *cfile, char *name)
 		}
 		break;
 	case TOK_REQUEST:
-		count = parse_option_list(cfile, optlist, sizeof(optlist));
-		if (count != -1) {
-			config->requested_option_count = count;
-			memcpy(config->requested_options, optlist,
-			    sizeof(config->requested_options));
-		}
-		break;
+		if (parse_option_list(cfile, &config->requested_option_count,
+		    config->requested_options) == 1)
+			parse_semi(cfile);
+			break;
 	case TOK_REQUIRE:
-		count = parse_option_list(cfile, optlist, sizeof(optlist));
-		if (count != -1) {
-			config->required_option_count = count;
-			memcpy(config->required_options, optlist,
-			    sizeof(config->required_options));
-		}
+		if (parse_option_list(cfile, &config->required_option_count,
+		    config->required_options) == 1)
+			parse_semi(cfile);
 		break;
 	case TOK_IGNORE:
-		count = parse_option_list(cfile, optlist, sizeof(optlist));
-		if (count != -1) {
-			config->ignored_option_count = count;
-			memcpy(config->ignored_options, optlist,
-			    sizeof(config->ignored_options));
-		}
+		if (parse_option_list(cfile, &config->ignored_option_count,
+		    config->ignored_options) == 1)
+			parse_semi(cfile);
 		break;
 	case TOK_LINK_TIMEOUT:
 		if (parse_lease_time(cfile, &config->link_timeout) == 1)
@@ -399,57 +389,50 @@ parse_X(FILE *cfile, uint8_t *buf, int max)
  *		   option_list COMMA option_name
  */
 int
-parse_option_list(FILE *cfile, uint8_t *list, size_t sz)
+parse_option_list(FILE *cfile, int *count, uint8_t *optlist)
 {
+	uint8_t		 list[DHO_COUNT];
 	unsigned int	 ix, j;
 	int		 i;
 	int		 token;
 	char		*val;
 
-	memset(list, DHO_PAD, sz);
+	/* Empty list of option names is allowed, to re-init optlist. */
+	if (peek_token(NULL, cfile) == ';') {
+		memset(optlist, DHO_PAD, sizeof(list));
+		*count = 0;
+		return 1;
+	}
+
+	memset(list, DHO_PAD, sizeof(list));
 	ix = 0;
 	do {
+		/* Next token must be an option name. */
 		token = next_token(&val, cfile);
-		if (token == ';' && ix == 0) {
-			/* Empty list. */
-			return 0;
-		}
-		if (is_identifier(token) == 0) {
-			parse_warn("expecting option name.");
-			goto syntaxerror;
-		}
-		/*
-		 * 0 (DHO_PAD) and 255 (DHO_END) are not valid in option
-		 * lists.  They are not really options and it makes no sense
-		 * to request, require or ignore them.
-		 */
-
 		i = name_to_code(val);
-		if (i == DHO_END) {
-			parse_warn("expecting option name.");
-			goto syntaxerror;
-		}
-		if (ix == sz) {
-			parse_warn("too many options.");
-			goto syntaxerror;
-		}
+		if (i == DHO_END)
+			break;
+
 		/* Avoid storing duplicate options in the list. */
 		for (j = 0; j < ix && list[j] != i; j++)
 			;
 		if (j == ix)
 			list[ix++] = i;
-		token = peek_token(NULL, cfile);
-		if (token == ',')
-			token = next_token(NULL, cfile);
+
+		if (peek_token(NULL, cfile) == ';') {
+			memcpy(optlist, list, sizeof(list));
+			*count = ix;
+			return 1;
+		}
+		token = next_token(NULL, cfile);
 	} while (token == ',');
 
-	if (parse_semi(cfile) != 0)
-		return ix;
+	parse_warn("expecting comma delimited list of option names.");
 
-syntaxerror:
 	if (token != ';')
 		skip_to_semi(cfile);
-	return -1;
+
+	return 0;
 }
 
 /*
