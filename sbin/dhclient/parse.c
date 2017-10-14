@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.72 2017/10/12 13:10:13 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.73 2017/10/14 15:31:46 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -339,27 +339,6 @@ parse_decimal(FILE *cfile, unsigned char *buf, char fmt)
 		skip_to_semi(cfile);
 
 	return 0;
-}
-
-int
-parse_hex(FILE *cfile, unsigned char *buf)
-{
-	char		*val, *ep;
-	unsigned long	 ulval;
-	int		 token;
-
-	token = next_token(&val, cfile);
-
-	errno = 0;
-	ulval = strtoul(val, &ep, 16);
-	if ((val[0] == '\0' || *ep != '\0') ||
-	    (errno == ERANGE && ulval == ULONG_MAX) ||
-	    (ulval > UINT8_MAX))
-		return 0;
-
-	buf[0] = ulval;
-
-	return 1;
 }
 
 /*

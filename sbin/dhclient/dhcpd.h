@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.231 2017/10/12 13:10:13 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.232 2017/10/14 15:31:46 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -184,7 +184,6 @@ int		 parse_ip_addr(FILE *, struct in_addr *);
 int		 parse_cidr(FILE *, unsigned char *);
 int		 parse_lease_time(FILE *, time_t *);
 int		 parse_decimal(FILE *, unsigned char *, char);
-int		 parse_hex(FILE *, unsigned char *);
 int		 parse_boolean(FILE *, unsigned char *);
 int		 parse_date(FILE *, time_t *);
 void		 parse_warn(char *);

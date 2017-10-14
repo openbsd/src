@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.139 2017/10/14 01:15:36 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.140 2017/10/14 15:31:46 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -50,8 +50,12 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -60,15 +64,17 @@
 #include "dhctoken.h"
 #include "log.h"
 
-void parse_client_statement(FILE *, char *);
-int parse_X(FILE *, uint8_t *, int);
-int parse_option_list(FILE *, int *, uint8_t *);
-void parse_interface_declaration(FILE *, char *);
-struct client_lease *parse_client_lease_statement(FILE *, char *);
-void parse_client_lease_declaration(FILE *, struct client_lease *, char *);
-int parse_option_decl(FILE *, int *, struct option_data *);
-void parse_reject_statement(FILE *);
-void add_lease(struct client_lease_tq *, struct client_lease *);
+void			 parse_client_statement(FILE *, char *);
+int			 parse_hex_octets(FILE *, unsigned int *, uint8_t **);
+int			 parse_option_list(FILE *, int *, uint8_t *);
+void			 parse_interface_declaration(FILE *, char *);
+struct client_lease	*parse_client_lease_statement(FILE *, char *);
+void			 parse_client_lease_declaration(FILE *,
+    struct client_lease *, char *);
+int			 parse_option_decl(FILE *, int *, struct option_data *);
+void			 parse_reject_statement(FILE *);
+void			 add_lease(struct client_lease_tq *,
+    struct client_lease *);
 
 void
 add_lease(struct client_lease_tq *tq, struct client_lease *lease)
@@ -338,50 +344,45 @@ parse_client_statement(FILE *cfile, char *name)
 }
 
 int
-parse_X(FILE *cfile, uint8_t *buf, int max)
+parse_hex_octets(FILE *cfile, unsigned int *len, uint8_t **buf)
 {
-	int	 token;
-	char	*val;
-	int	 len;
+	static uint8_t	 	 octets[1500];
+	char			*val, *ep;
+	unsigned long		 ulval;
+	unsigned int		 i;
+	int			 token;
 
-	token = peek_token(&val, cfile);
-	if (token == TOK_NUMBER_OR_NAME) {
-		len = 0;
-		for (token = ':'; token == ':';
-		     token = next_token(NULL, cfile)) {
-			if (parse_hex(cfile, &buf[len]) == 0)
-				break;
-			if (++len == max)
-				break;
-			if (peek_token(NULL, cfile) == ';')
-				return len;
-		}
-		if (token != ':') {
-			parse_warn("expecting ':'.");
-			skip_to_semi(cfile);
-			return -1;
-		} else {
-			parse_warn("expecting hex value.");
-			skip_to_semi(cfile);
-			return -1;
-		}
-	} else if (token == TOK_STRING) {
+	i = 0;
+	do {
 		token = next_token(&val, cfile);
-		len = strlen(val);
-		if (len + 1 > max) {
-			parse_warn("string constant too long.");
-			skip_to_semi(cfile);
-			return -1;
+
+		errno = 0;
+		ulval = strtoul(val, &ep, 16);
+		if ((val[0] == '\0' || *ep != '\0') ||
+		    (errno == ERANGE && ulval == ULONG_MAX) ||
+		    (ulval > UINT8_MAX))
+			break;
+		octets[i++] = ulval;
+
+		if (peek_token(NULL, cfile) == ';') {
+			*buf = malloc(i);
+			if (*buf == NULL)
+				break;
+			memcpy(*buf, octets, i);
+			*len = i;
+			return 1;
 		}
-		memcpy(buf, val, len + 1);
-	} else {
+		if (i == sizeof(octets))
+			break;
 		token = next_token(NULL, cfile);
-		parse_warn("expecting string or hex data.");
-		if (token != ';')
-			skip_to_semi(cfile);
-		return -1;
-	}
-	return len;
+	} while (token == ':');
+
+	parse_warn("expecting colon delimited list of hex octets.");
+
+	if (token != ';')
+		skip_to_semi(cfile);
+
+	return 0;
 }
 
 /*
@@ -628,21 +629,13 @@ parse_option_decl(FILE *cfile, int *code, struct option_data *options)
 	uint8_t			*dp;
 	char			*fmt, *val;
 	unsigned int		 hunkix = 0;
-	int			 i, len, token;
+	int			 i, freedp, len, token;
 	int			 nul_term = 0;
 
 	token = next_token(&val, cfile);
-	if (is_identifier(token) == 0) {
-		parse_warn("expecting identifier.");
-		if (token != ';')
-			skip_to_semi(cfile);
-		return 0;
-	}
-
-	/* Look up the actual option info. */
 	i = name_to_code(val);
 	if (i == DHO_END) {
-		parse_warn("unknown option name.");
+		parse_warn("expecting option name.");
 		skip_to_semi(cfile);
 		return 0;
 	}
@@ -652,30 +645,23 @@ parse_option_decl(FILE *cfile, int *code, struct option_data *options)
 		for (fmt = code_to_format(i); *fmt != '\0'; fmt++) {
 			if (*fmt == 'A')
 				break;
+			freedp = 0;
 			switch (*fmt) {
 			case 'X':
-				len = parse_X(cfile, &hunkbuf[hunkix],
-				    sizeof(hunkbuf) - hunkix);
-				if (len == -1)
+				if (peek_token(NULL, cfile) == TOK_STRING) {
+					if (parse_string(cfile, &len,
+					    (char **)&dp) == 0)
+						return 0;
+				} else if (parse_hex_octets(cfile, &len, &dp)
+				    == 0)
 					return 0;
-				hunkix += len;
-				dp = NULL;
+				freedp = 1;
 				break;
 			case 't': /* Text string. */
-				if (parse_string(cfile, &len, &val) == 0)
-					return -1;
-				if (hunkix + len + 1 > sizeof(hunkbuf)) {
-					free(val);
-					parse_warn("option data buffer "
-					    "overflow");
-					skip_to_semi(cfile);
+				if (parse_string(cfile, &len, (char **)&dp)
+				    == 0)
 					return 0;
-				}
-				memcpy(&hunkbuf[hunkix], val, len + 1);
-				free(val);
-				nul_term = 1;
-				hunkix += len;
-				dp = NULL;
+				freedp = 1;
 				break;
 			case 'I': /* IP address. */
 				if (parse_ip_addr(cfile, &ip_addr) == 0)
@@ -727,6 +713,8 @@ parse_option_decl(FILE *cfile, int *code, struct option_data *options)
 			}
 			if (dp != NULL && len > 0) {
 				if (hunkix + len > sizeof(hunkbuf)) {
+					if (freedp == 1)
+						free(dp);
 					parse_warn("option data buffer "
 					    "overflow");
 					skip_to_semi(cfile);
@@ -734,6 +722,8 @@ parse_option_decl(FILE *cfile, int *code, struct option_data *options)
 				}
 				memcpy(&hunkbuf[hunkix], dp, len);
 				hunkix += len;
+				if (freedp == 1)
+					free(dp);
 			}
 		}
 		token = peek_token(NULL, cfile);
