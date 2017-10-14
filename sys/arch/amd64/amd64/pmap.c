@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.105 2017/07/24 15:31:14 robert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.106 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -105,24 +105,17 @@
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/user.h>
-#include <sys/kernel.h>
 #include <sys/mutex.h>
-#include <sys/sched.h>
 
 #include <uvm/uvm.h>
 
 #include <machine/cpu.h>
-#include <machine/specialreg.h>
 #ifdef MULTIPROCESSOR
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #endif
-
-
-#include <machine/isa_machdep.h>
 
 #include "acpi.h"
 

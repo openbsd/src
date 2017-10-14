@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.232 2017/10/10 07:04:05 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.233 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -69,19 +69,14 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
 #include <sys/extent.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
@@ -91,7 +86,7 @@
 #include <stand/boot/bootarg.h>
 
 #include <net/if.h>
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
 
@@ -100,7 +95,6 @@
 #include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
-#include <machine/specialreg.h>
 #include <machine/fpu.h>
 #include <machine/biosvar.h>
 #include <machine/mpbiosvar.h>
@@ -108,7 +102,6 @@
 #include <machine/tss.h>
 
 #include <dev/isa/isareg.h>
-#include <machine/isa_machdep.h>
 #include <dev/ic/i8042reg.h>
 
 #ifdef DDB

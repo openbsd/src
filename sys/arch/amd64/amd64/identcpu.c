@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.88 2017/10/06 13:33:53 mikeb Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.89 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
-#include <sys/timetc.h>
 
 #include "vmm.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.37 2017/10/04 02:10:33 guenther Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.38 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -34,17 +34,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/ioctl.h>
-#include <sys/device.h>
 #include <sys/signalvar.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/cpufunc.h>
@@ -52,8 +47,6 @@
 #include <machine/trap.h>
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
-
-#include <dev/isa/isavar.h>
 
 int	xrstor_user(struct savefpu *_addr, uint64_t _mask);
 void	trap(struct trapframe *);

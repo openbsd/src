@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.39 2017/03/25 22:24:01 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.40 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -40,8 +40,6 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
-
-#include <dev/isa/isareg.h>
 
 #include "pci.h"
 #include "isa.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.107 2017/08/25 19:28:48 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.108 2017/10/14 04:44:43 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -95,7 +95,6 @@
 #include <machine/vmmvar.h>
 
 #if NLAPIC > 0
-#include <machine/apicvar.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #endif

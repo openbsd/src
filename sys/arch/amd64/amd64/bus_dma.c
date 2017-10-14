@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.49 2015/12/17 17:16:04 tedu Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.50 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -88,7 +88,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>

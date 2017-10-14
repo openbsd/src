@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_machdep.c,v 1.3 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: pciide_machdep.c,v 1.4 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: pciide_machdep.c,v 1.2 1999/02/19 18:01:27 mycroft Exp $	*/
 
 /*
@@ -42,13 +42,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciidereg.h>
-#include <dev/pci/pciidevar.h>
 
 #include <dev/isa/isavar.h>
 

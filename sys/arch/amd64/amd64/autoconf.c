@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.49 2017/06/20 21:05:46 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.50 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -46,27 +46,19 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/disklabel.h>
-#include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/vnode.h>
-#include <sys/fcntl.h>
-#include <sys/dkio.h>
 #include <sys/reboot.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/timeout.h>
 #include <sys/hibernate.h>
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/biosvar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.34 2015/09/12 23:03:30 uebayasi Exp $	*/
+/*	$OpenBSD: bios.c,v 1.35 2017/10/14 04:44:43 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -17,24 +17,17 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/errno.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
-#include <machine/conf.h>
 #include <machine/biosvar.h>
 #include <machine/mpbiosvar.h>
 #include <machine/smbiosvar.h>
 
 #include <dev/isa/isareg.h>
 #include <amd64/include/isa_machdep.h>
-#include <dev/pci/pcivar.h>
-
-#include <dev/acpi/acpivar.h>
 
 #include <dev/rndvar.h>
 

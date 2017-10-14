@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.27 2016/07/28 21:57:57 kettenis Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.28 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -98,15 +98,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/specialreg.h>
 #include <machine/cpuvar.h>
-#include <machine/bus.h>
 #include <machine/biosvar.h>
 #include <machine/mpbiosvar.h>
 
@@ -116,7 +113,6 @@
 #include <machine/i82489var.h>
 
 #include <dev/isa/isareg.h>
-#include <dev/pci/pcivar.h>
 
 #ifdef X86_MPBIOS_SUPPORT_EISA
 #include <dev/eisa/eisavar.h>	/* for ELCR* def'ns */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.66 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.67 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -66,14 +66,9 @@
  */
 
 #include <sys/param.h>
-#include <sys/time.h>
 #include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 

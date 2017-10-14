@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.61 2017/10/04 02:10:33 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.62 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -74,8 +74,6 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
-#include <sys/acct.h>
-#include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>

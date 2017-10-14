@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8259.c,v 1.9 2015/09/02 13:39:23 mikeb Exp $	*/
+/*	$OpenBSD: i8259.c,v 1.10 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: i8259.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
 
 /*
@@ -71,10 +71,6 @@
  */
 
 #include <sys/param.h> 
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
-#include <sys/malloc.h>
 
 #include <dev/isa/isareg.h>
 

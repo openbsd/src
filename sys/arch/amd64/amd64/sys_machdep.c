@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.17 2017/09/27 05:43:55 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.18 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -32,24 +32,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
-#include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/uio.h>
-#include <sys/kernel.h>
-#include <sys/buf.h>
-#include <sys/signal.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <machine/cpufunc.h>
 #include <machine/psl.h>
-#include <machine/reg.h>
 #include <machine/sysarch.h>
 #include <machine/tcb.h>
 

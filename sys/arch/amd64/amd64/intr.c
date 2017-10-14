@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.49 2017/08/08 15:53:55 visa Exp $	*/
+/*	$OpenBSD: intr.c,v 1.50 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -52,14 +52,9 @@
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
-#include "ioapic.h"
 #include "lapic.h"
 #include "xen.h"
 #include "hyperv.h"
-
-#if NIOAPIC > 0
-#include <machine/mpbiosvar.h>
-#endif
 
 #if NLAPIC > 0
 #include <machine/i82489var.h>

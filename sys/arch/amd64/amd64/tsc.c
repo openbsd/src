@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.1 2017/10/06 13:33:53 mikeb Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.2 2017/10/14 04:44:43 jsg Exp $	*/
 /*
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2017 Adam Steen <adam@adamsteen.com.au>
@@ -19,7 +19,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/sysctl.h>
 #include <sys/timetc.h>
 
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.31 2016/09/25 15:23:36 deraadt Exp $ */
+/*	$OpenBSD: mem.c,v 1.32 2017/10/14 04:44:43 jsg Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -46,13 +46,10 @@
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
-#include <sys/exec.h>
 #include <sys/uio.h>
 #include <sys/ioccom.h>
 #include <sys/malloc.h>
 #include <sys/memrange.h>
-#include <sys/fcntl.h>
 
 #include <machine/cpu.h>
 

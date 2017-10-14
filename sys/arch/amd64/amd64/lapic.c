@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.48 2017/07/24 15:31:14 robert Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.49 2017/10/14 04:44:43 jsg Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -42,13 +42,10 @@
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/pmap.h>
-#include <machine/vmparam.h>
 #include <machine/mpbiosvar.h>
-#include <machine/pcb.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 
-#include <machine/apicvar.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 
