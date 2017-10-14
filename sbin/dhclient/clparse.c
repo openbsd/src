@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.140 2017/10/14 15:31:46 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.141 2017/10/14 15:40:40 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -264,7 +264,7 @@ parse_client_statement(FILE *cfile, char *name)
 		if (parse_option_list(cfile, &config->requested_option_count,
 		    config->requested_options) == 1)
 			parse_semi(cfile);
-			break;
+		break;
 	case TOK_REQUIRE:
 		if (parse_option_list(cfile, &config->required_option_count,
 		    config->required_options) == 1)
