@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.41 2015/03/19 21:18:59 kettenis Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.1 2017/10/15 23:40:33 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu

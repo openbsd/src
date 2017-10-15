@@ -1,10 +1,7 @@
-/*	$OpenBSD: semaphore.h,v 1.9 2013/03/26 14:38:08 deraadt Exp $	*/
-
-/* semaphore.h: POSIX 1003.1b semaphores */
-
-/*-
- * Copyright (c) 1996, 1997
- *	HD Associates, Inc.  All rights reserved.
+/*	$OpenBSD: pthread_np.h,v 1.1 2017/10/15 23:40:33 guenther Exp $	*/
+/*
+ * Copyright (c) 1996-98 John Birrell <jb@cimlogic.com.au>.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,15 +13,15 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by HD Associates, Inc
+ *	This product includes software developed by John Birrell.
  * 4. Neither the name of the author nor the names of any co-contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY HD ASSOCIATES AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL HD ASSOCIATES OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -32,31 +29,25 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
  */
+#ifndef _PTHREAD_NP_H_
+#define _PTHREAD_NP_H_
 
-#ifndef _SEMAPHORE_H_
-#define _SEMAPHORE_H_
+/*
+ * Non-POSIX type definitions:
+ */
+typedef void	(*pthread_switch_routine_t)(pthread_t, pthread_t);
 
-#include <sys/cdefs.h>
-
-/* Opaque type definition. */
-struct __sem;
-typedef struct __sem *sem_t;
-struct timespec;
-
-#define SEM_FAILED      ((sem_t *)0)
-
+/*
+ * Non-POSIX thread function prototype definitions:
+ */
 __BEGIN_DECLS
-int	sem_init(sem_t *, int, unsigned int);
-int	sem_destroy(sem_t *);
-sem_t  *sem_open(const char *, int, ...);
-int	sem_close(sem_t *);
-int	sem_unlink(const char *);
-int	sem_wait(sem_t *);
-int	sem_timedwait(sem_t * __restrict, const struct timespec * __restrict);
-int	sem_trywait(sem_t *);
-int	sem_post(sem_t *);
-int	sem_getvalue(sem_t * __restrict, int * __restrict);
+int pthread_mutexattr_getkind_np(pthread_mutexattr_t);
+int pthread_mutexattr_setkind_np(pthread_mutexattr_t *, int);
+void pthread_set_name_np(pthread_t, const char *);
+int pthread_stackseg_np(pthread_t, stack_t *);
+int pthread_main_np(void);
 __END_DECLS
 
-#endif /* _SEMAPHORE_H_ */
+#endif
