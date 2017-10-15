@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.48 2016/01/12 09:28:09 stsp Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.49 2017/10/15 13:06:12 stsp Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -415,6 +415,9 @@ ar5k_ar5211_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	u_int8_t mac[IEEE80211_ADDR_LEN];
 	u_int32_t data, s_seq, s_ant, s_led[3];
 	u_int i, mode, freq, ee_mode, ant[2];
+
+	/* Not used, keep for HAL compatibility */
+	*status = HAL_OK;
 
 	/*
 	 * Save some registers before a reset
