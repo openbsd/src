@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.80 2017/08/10 14:12:34 benno Exp $ */
+/*	$OpenBSD: parser.c,v 1.81 2017/10/15 20:44:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -177,6 +177,7 @@ static const struct token t_show_rib[] = {
 	{ FLAG,		"best",		F_CTL_ACTIVE,	t_show_rib},
 	{ FLAG,		"selected",	F_CTL_ACTIVE,	t_show_rib},
 	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_rib},
+	{ FLAG,		"ssv"	,	F_CTL_SSV,	t_show_rib},
 	{ FLAG,		"in",		F_CTL_ADJ_IN,	t_show_rib},
 	{ FLAG,		"out",		F_CTL_ADJ_OUT,	t_show_rib},
 	{ KEYWORD,	"neighbor",	NONE,		t_show_rib_neigh},
@@ -197,6 +198,7 @@ static const struct token t_show_mrt[] = {
 	{ ASTYPE,	"peer-as",	AS_PEER,	t_show_mrt_as},
 	{ ASTYPE,	"empty-as",	AS_EMPTY,	t_show_mrt},
 	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_mrt},
+	{ FLAG,		"ssv"	,	F_CTL_SSV,	t_show_mrt},
 	{ KEYWORD,	"neighbor",	NONE,		t_show_mrt_neigh},
 	{ KEYWORD,	"file",		NONE,		t_show_mrt_file},
 	{ FAMILY,	"",		NONE,		t_show_mrt},

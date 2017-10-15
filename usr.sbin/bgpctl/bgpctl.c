@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.199 2017/08/10 14:22:59 benno Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.200 2017/10/15 20:44:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -48,6 +48,8 @@ enum neighbor_views {
 	NV_TIMERS
 };
 
+#define EOL0(flag)	((flag & F_CTL_SSV) ? ';' : '\n')
+
 int		 main(int, char *[]);
 char		*fmt_peer(const char *, const struct bgpd_addr *, int, int);
 void		 show_summary_head(void);
@@ -79,10 +81,10 @@ void		 print_prefix(struct bgpd_addr *, u_int8_t, u_int8_t);
 const char *	 print_origin(u_int8_t, int);
 void		 print_flags(u_int8_t, int);
 int		 show_rib_summary_msg(struct imsg *);
-int		 show_rib_detail_msg(struct imsg *, int);
+int		 show_rib_detail_msg(struct imsg *, int, int);
 void		 show_rib_brief(struct ctl_show_rib *, u_char *);
-void		 show_rib_detail(struct ctl_show_rib *, u_char *, int);
-void		 show_attr(void *, u_int16_t);
+void		 show_rib_detail(struct ctl_show_rib *, u_char *, int, int);
+void		 show_attr(void *, u_int16_t, int);
 void		 show_community(u_char *, u_int16_t);
 void		 show_large_community(u_char *, u_int16_t);
 void		 show_ext_community(u_char *, u_int16_t);
@@ -472,7 +474,7 @@ main(int argc, char *argv[])
 			case SHOW_RIB:
 				if (res->flags & F_CTL_DETAIL)
 					done = show_rib_detail_msg(&imsg,
-					    nodescr);
+					    nodescr, res->flags);
 				else
 					done = show_rib_summary_msg(&imsg);
 				break;
@@ -1337,7 +1339,7 @@ show_rib_summary_msg(struct imsg *imsg)
 }
 
 int
-show_rib_detail_msg(struct imsg *imsg, int nodescr)
+show_rib_detail_msg(struct imsg *imsg, int nodescr, int flag0)
 {
 	struct ctl_show_rib	 rib;
 	u_char			*asdata;
@@ -1348,16 +1350,16 @@ show_rib_detail_msg(struct imsg *imsg, int nodescr)
 		memcpy(&rib, imsg->data, sizeof(rib));
 		asdata = imsg->data;
 		asdata += sizeof(struct ctl_show_rib);
-		show_rib_detail(&rib, asdata, nodescr);
+		show_rib_detail(&rib, asdata, nodescr, flag0);
 		break;
 	case IMSG_CTL_SHOW_RIB_ATTR:
 		ilen = imsg->hdr.len - IMSG_HEADER_SIZE;
 		if (ilen < 3)
 			errx(1, "bad IMSG_CTL_SHOW_RIB_ATTR received");
-		show_attr(imsg->data, ilen);
+		show_attr(imsg->data, ilen, flag0);
 		break;
 	case IMSG_CTL_END:
-		printf("\n");
+		printf("%c", EOL0(flag0));
 		return (1);
 	default:
 		break;
@@ -1385,19 +1387,20 @@ show_rib_brief(struct ctl_show_rib *r, u_char *asdata)
 }
 
 void
-show_rib_detail(struct ctl_show_rib *r, u_char *asdata, int nodescr)
+show_rib_detail(struct ctl_show_rib *r, u_char *asdata, int nodescr, int flag0)
 {
 	struct in_addr		 id;
 	char			*aspath, *s;
 	time_t			 now;
 
-	printf("\nBGP routing table entry for %s/%u\n",
-	    log_addr(&r->prefix), r->prefixlen);
+	printf("\nBGP routing table entry for %s/%u%c",
+	    log_addr(&r->prefix), r->prefixlen,
+	    EOL0(flag0));
 
 	if (aspath_asprint(&aspath, asdata, r->aspath_len) == -1)
 		err(1, NULL);
 	if (strlen(aspath) > 0)
-		printf("    %s\n", aspath);
+		printf("    %s%c", aspath, EOL0(flag0));
 	free(aspath);
 
 	s = fmt_peer(r->descr, &r->remote_addr, -1, nodescr);
@@ -1405,7 +1408,7 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, int nodescr)
 	printf("(via %s) from %s (", log_addr(&r->true_nexthop), s);
 	free(s);
 	id.s_addr = htonl(r->remote_id);
-	printf("%s)\n", inet_ntoa(id));
+	printf("%s)%c", inet_ntoa(id), EOL0(flag0));
 
 	printf("    Origin %s, metric %u, localpref %u, weight %u, ",
 	    print_origin(r->origin, 0), r->med, r->local_pref, r->weight);
@@ -1417,11 +1420,12 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, int nodescr)
 	else
 		now = 0;
 
-	printf("\n    Last update: %s ago\n", fmt_timeframe_core(now));
+	printf("%c    Last update: %s ago%c", EOL0(flag0),
+	    fmt_timeframe_core(now), EOL0(flag0));
 }
 
 void
-show_attr(void *b, u_int16_t len)
+show_attr(void *b, u_int16_t len, int flag0)
 {
 	char		*data = b;
 	struct in_addr	 id;
@@ -1458,22 +1462,22 @@ show_attr(void *b, u_int16_t len)
 	case ATTR_COMMUNITIES:
 		printf("    Communities: ");
 		show_community(data, alen);
-		printf("\n");
+		printf("%c", EOL0(flag0));
 		break;
 	case ATTR_LARGE_COMMUNITIES:
 		printf("    Large Communities: ");
 		show_large_community(data, alen);
-		printf("\n");
+		printf("%c", EOL0(flag0));
 		break;
 	case ATTR_AGGREGATOR:
 		memcpy(&as, data, sizeof(as));
 		memcpy(&id, data + sizeof(as), sizeof(id));
-		printf("    Aggregator: %s [%s]\n",
-		    log_as(ntohl(as)), inet_ntoa(id));
+		printf("    Aggregator: %s [%s]%c",
+		    log_as(ntohl(as)), inet_ntoa(id), EOL0(flag0));
 		break;
 	case ATTR_ORIGINATOR_ID:
 		memcpy(&id, data, sizeof(id));
-		printf("    Originator Id: %s\n", inet_ntoa(id));
+		printf("    Originator Id: %s%c", inet_ntoa(id), EOL0(flag0));
 		break;
 	case ATTR_CLUSTER_LIST:
 		printf("    Cluster ID List:");
@@ -1482,12 +1486,12 @@ show_attr(void *b, u_int16_t len)
 			memcpy(&id, data + ioff, sizeof(id));
 			printf(" %s", inet_ntoa(id));
 		}
-		printf("\n");
+		printf("%c", EOL0(flag0));
 		break;
 	case ATTR_EXT_COMMUNITIES:
 		printf("    Ext. communities: ");
 		show_ext_community(data, alen);
-		printf("\n");
+		printf("%c", EOL0(flag0));
 		break;
 	case ATTR_ATOMIC_AGGREGATE:
 		/* ignore */
@@ -1511,7 +1515,7 @@ show_attr(void *b, u_int16_t len)
 			for (i=0; i < alen; i++)
 				printf(" %02x", *(data+i) & 0xFF);
 		}
-		printf("\n");
+		printf("%c", EOL0(flag0));
 		break;
 	}
 }
@@ -1898,10 +1902,11 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 			continue;
 
 		if (req->flags & F_CTL_DETAIL) {
-			show_rib_detail(&ctl, mre->aspath, 1);
+			show_rib_detail(&ctl, mre->aspath, 1, 0);
 			for (j = 0; j < mre->nattrs; j++)
 				show_attr(mre->attrs[j].attr,
-					mre->attrs[j].attr_len);
+				    mre->attrs[j].attr_len,
+				    req->flags);
 		} else
 			show_rib_brief(&ctl, mre->aspath);
 	}

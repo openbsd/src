@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.314 2017/08/12 16:47:50 phessler Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.315 2017/10/15 20:44:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -85,6 +85,7 @@
 #define	F_CTL_ADJ_OUT		0x4000
 #define	F_CTL_ACTIVE		0x8000
 #define	F_RTLABEL		0x10000
+#define	F_CTL_SSV		0x20000	/* only used by bgpctl */
 
 /*
  * Limit the number of messages queued in the session engine.
