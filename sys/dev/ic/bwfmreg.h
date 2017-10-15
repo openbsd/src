@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.2 2017/10/15 15:21:24 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -311,6 +311,22 @@ struct bwfm_assoc_params {
 	uint8_t bssid[ETHER_ADDR_LEN];
 	uint32_t chanspec_num;
 	uint16_t chanspec_list[];
+} __packed;
+
+struct bwfm_join_pref_params {
+	uint8_t type;
+#define BWFM_JOIN_PREF_RSSI		1
+#define BWFM_JOIN_PREF_WPA		2
+#define BWFM_JOIN_PREF_BAND		3
+#define BWFM_JOIN_PREF_RSSI_DELTA	4
+	uint8_t len;
+	uint8_t rssi_gain;
+#define BWFM_JOIN_PREF_RSSI_BOOST	8
+	uint8_t band;
+#define BWFM_JOIN_PREF_BAND_AUTO	0
+#define BWFM_JOIN_PREF_BAND_5G		1
+#define BWFM_JOIN_PREF_BAND_2G		2
+#define BWFM_JOIN_PREF_BAND_ALL		3
 } __packed;
 
 struct bwfm_join_params {

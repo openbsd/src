@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.2 2017/10/15 15:21:24 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -254,13 +254,27 @@ bwfm_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t evmask[BWFM_EVENT_MASK_LEN];
 	struct bwfm_ext_join_params *params;
+	struct bwfm_join_pref_params join_pref[2];
 
 	if (bwfm_fwvar_var_set_int(sc, "mpc", 1)) {
 		printf("%s: could not set mpc\n", DEVNAME(sc));
 		return;
 	}
 
-	/* TODO: joinpref defaults */
+	/* Select target by RSSI (boost on 5GHz) */
+	join_pref[0].type = BWFM_JOIN_PREF_RSSI_DELTA;
+	join_pref[0].len = 2;
+	join_pref[0].rssi_gain = BWFM_JOIN_PREF_RSSI_BOOST;
+	join_pref[0].band = BWFM_JOIN_PREF_BAND_5G;
+	join_pref[1].type = BWFM_JOIN_PREF_RSSI;
+	join_pref[1].len = 2;
+	join_pref[1].rssi_gain = 0;
+	join_pref[1].band = 0;
+	if (bwfm_fwvar_var_set_data(sc, "join_pref", join_pref,
+	    sizeof(join_pref))) {
+		printf("%s: could not set join pref\n", DEVNAME(sc));
+		return;
+	}
 
 	if (bwfm_fwvar_var_get_data(sc, "event_msgs", evmask, sizeof(evmask))) {
 		printf("%s: could not get event mask\n", DEVNAME(sc));
