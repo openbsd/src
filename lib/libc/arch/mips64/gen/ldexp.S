@@ -1,4 +1,4 @@
-/* $OpenBSD: ldexp.S,v 1.7 2015/10/27 05:54:49 guenther Exp $ */
+/* $OpenBSD: ldexp.S,v 1.8 2017/10/15 12:07:27 visa Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -143,20 +143,20 @@ LEAF(ldexp, 0)
 	xori	t2, 1
 1:
 	dmtc1	t2, $f0			# save denormalized result (LSW)
-	bge	v1, zero, 1f		# should result be negative?
+	bge	t3, zero, 1f		# should result be negative?
 	neg.d	$f0, $f0		# negate result
 1:
 	j	ra
 7:
 	dmtc1	zero, $f0		# result is zero
-	beq	t0, zero, 1f		# is result positive?
+	bge	t3, zero, 1f		# is result positive?
 	neg.d	$f0, $f0		# negate result
 1:
 	j	ra
 8:
 	dli	t1, 0x7ff0000000000000	# result is infinity (MSW)
 	dmtc1	t1, $f0	
-	bge	v1, zero, 1f		# should result be negative infinity?
+	bge	t3, zero, 1f		# should result be negative infinity?
 	neg.d	$f0, $f0		# result is negative infinity
 1:
 	add.d	$f0, $f0		# cause overflow faults if enabled
