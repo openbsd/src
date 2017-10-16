@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.141 2017/10/14 15:40:40 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.142 2017/10/16 12:27:12 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -72,7 +72,7 @@ struct client_lease	*parse_client_lease_statement(FILE *, char *);
 void			 parse_client_lease_declaration(FILE *,
     struct client_lease *, char *);
 int			 parse_option_decl(FILE *, int *, struct option_data *);
-void			 parse_reject_statement(FILE *);
+int			 parse_reject_statement(FILE *);
 void			 add_lease(struct client_lease_tq *,
     struct client_lease *);
 
@@ -311,7 +311,8 @@ parse_client_statement(FILE *cfile, char *name)
 		    parse_client_lease_statement(cfile, name));
 		break;
 	case TOK_REJECT:
-		parse_reject_statement(cfile);
+		if (parse_reject_statement(cfile) == 1)
+			parse_semi(cfile);
 		break;
 	case TOK_FILENAME:
 		if (parse_string(cfile, NULL, &val) == 1) {
@@ -743,28 +744,25 @@ parse_option_decl(FILE *cfile, int *code, struct option_data *options)
 	return 1;
 }
 
-void
+int
 parse_reject_statement(FILE *cfile)
 {
 	struct in_addr		 addr;
 	struct reject_elem	*elem;
-	int			 token;
 
-	do {
-		if (parse_ip_addr(cfile, &addr) == 0)
-			return;
+	if (parse_ip_addr(cfile, &addr) == 0)
+		return 0;
 
-		elem = malloc(sizeof(*elem));
-		if (elem == NULL)
-			fatal("reject address");
+	TAILQ_FOREACH(elem, &config->reject_list, next) {
+		if (elem->addr.s_addr == addr.s_addr)
+			return 1;
+	}
 
-		elem->addr = addr;
-		TAILQ_INSERT_TAIL(&config->reject_list, elem, next);
+	elem = malloc(sizeof(*elem));
+	if (elem == NULL)
+		fatal("reject address");
+	elem->addr = addr;
+	TAILQ_INSERT_TAIL(&config->reject_list, elem, next);
 
-		token = peek_token(NULL, cfile);
-		if (token == ',')
-			token = next_token(NULL, cfile);
-	} while (token == ',');
-
-	parse_semi(cfile);
+	return 1;
 }
