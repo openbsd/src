@@ -1,4 +1,4 @@
-.\"	$OpenBSD: etherip.4,v 1.4 2015/12/03 18:44:41 jmc Exp $
+.\"	$OpenBSD: etherip.4,v 1.5 2017/10/16 10:20:49 mpi Exp $
 .\"
 .\" Copyright (c) 2015 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -16,7 +16,7 @@
 .\"
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: December 3 2015 $
+.Dd $Mdocdate: October 16 2017 $
 .Dt ETHERIP 4
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ This can be done using
 .Xr ifconfig 8 Ns 's
 .Ic tunnel
 command (which uses the
-.Dv SIOCSIFPHYADDR
+.Dv SIOCSLIFPHYADDR
 ioctl).
 .Pp
 The
