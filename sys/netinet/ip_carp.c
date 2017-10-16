@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.316 2017/10/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.317 2017/10/16 13:20:20 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2359,7 +2359,14 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	struct srp_ref sr;
 	int ismaster;
 
-	KASSERT(sc->sc_carpdev != NULL);
+	/*
+	 * If the parent of this carp(4) got destroyed while
+	 * `m' was being processed, silently drop it.
+	 */
+	if (sc->sc_carpdev == NULL) {
+		m_freem(m);
+		return (0);
+	}
 
 	if (sc->cur_vhe == NULL) {
 		vhe = SRPL_FIRST(&sr, &sc->carp_vhosts);
