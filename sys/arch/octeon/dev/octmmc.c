@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.8 2017/09/23 04:56:42 visa Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.9 2017/10/16 14:18:47 visa Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Visa Hankala
@@ -45,6 +45,8 @@
 #define OCTMMC_BLOCK_SIZE		512
 #define OCTMMC_CMD_TIMEOUT		5		/* in seconds */
 #define OCTMMC_MAX_DMASEG		MIN(MAXPHYS, (1u << 18))
+#define OCTMMC_MAX_NDMASEG_6130		1
+#define OCTMMC_MAX_NDMASEG_7890		16
 #define OCTMMC_MAX_FREQ			52000		/* in kHz */
 #define OCTMMC_MAX_BUSES		4
 #define OCTMMC_MAX_INTRS		4
@@ -58,6 +60,8 @@
 	bus_space_write_8((sc)->sc_iot, (sc)->sc_mmc_ioh, (reg), (val))
 #define DMA_WR_8(sc, reg, val) \
 	bus_space_write_8((sc)->sc_iot, (sc)->sc_dma_ioh, (reg), (val))
+#define FIFO_WR_8(sc, reg, val) \
+	bus_space_write_8((sc)->sc_iot, (sc)->sc_fifo_ioh, (reg), (val))
 
 #define divround(n, d) (((n) + (d) / 2) / (d))
 
@@ -80,6 +84,7 @@ struct octmmc_softc {
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_mmc_ioh;
 	bus_space_handle_t	 sc_dma_ioh;
+	bus_space_handle_t	 sc_fifo_ioh;
 	bus_dma_tag_t		 sc_dmat;
 	bus_dmamap_t		 sc_dma_data;
 	caddr_t			 sc_bounce_buf;
@@ -116,6 +121,10 @@ void	 octmmc_exec_pio(struct octmmc_bus *, struct sdmmc_command *);
 void	 octmmc_acquire(struct octmmc_bus *);
 void	 octmmc_release(struct octmmc_bus *);
 
+paddr_t	 octmmc_dma_load_6130(struct octmmc_softc *, struct sdmmc_command *);
+void	 octmmc_dma_load_7890(struct octmmc_softc *, struct sdmmc_command *);
+void	 octmmc_dma_unload_6130(struct octmmc_softc *, paddr_t);
+void	 octmmc_dma_unload_7890(struct octmmc_softc *);
 uint64_t octmmc_crtype_fixup(struct sdmmc_command *);
 void	 octmmc_get_response(struct octmmc_softc *, struct sdmmc_command *);
 int	 octmmc_init_bus(struct octmmc_bus *);
@@ -166,14 +175,17 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 	const int *interrupts;
 	uint64_t reg;
 	uint32_t bus_id, bus_width;
-	int i, node, rsegs;
+	int i, node;
+	int maxsegs, rsegs;
 
 	if (OF_is_compatible(fa->fa_node, "cavium,octeon-7890-mmc")) {
 		sc->sc_hwrev = OCTMMC_HWREV_7890;
 		interrupts = octmmc_7890_interrupts;
+		maxsegs = OCTMMC_MAX_NDMASEG_7890;
 	} else {
 		sc->sc_hwrev = OCTMMC_HWREV_6130;
 		interrupts = octmmc_6130_interrupts;
+		maxsegs = OCTMMC_MAX_NDMASEG_6130;
 	}
 
 	if (fa->fa_nreg < 2) {
@@ -193,6 +205,13 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": could not map DMA registers\n");
 		goto error;
 	}
+	if (sc->sc_hwrev == OCTMMC_HWREV_7890 &&
+	    bus_space_map(sc->sc_iot, fa->fa_reg[1].addr -
+	      MIO_EMM_DMA_FIFO_REGSIZE, MIO_EMM_DMA_FIFO_REGSIZE, 0,
+	    &sc->sc_fifo_ioh)) {
+		printf(": could not map FIFO registers\n");
+		goto error;
+	}
 	if (bus_dmamem_alloc(sc->sc_dmat, OCTMMC_MAX_DMASEG, 0, 0,
 	    &sc->sc_bounce_seg, 1, &rsegs, BUS_DMA_NOWAIT)) {
 		printf(": could not allocate bounce buffer\n");
@@ -204,7 +223,7 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": could not map bounce buffer\n");
 		goto error_free;
 	}
-	if (bus_dmamap_create(sc->sc_dmat, OCTMMC_MAX_DMASEG, 1,
+	if (bus_dmamap_create(sc->sc_dmat, OCTMMC_MAX_DMASEG, maxsegs,
 	    OCTMMC_MAX_DMASEG, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &sc->sc_dma_data)) {
 		printf(": could not create data dmamap\n");
@@ -296,6 +315,9 @@ error_free:
 error:
 	if (sc->sc_dma_data != NULL)
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dma_data);
+	if (sc->sc_fifo_ioh != 0)
+		bus_space_unmap(sc->sc_iot, sc->sc_fifo_ioh,
+		    MIO_EMM_DMA_FIFO_REGSIZE);
 	if (sc->sc_dma_ioh != 0)
 		bus_space_unmap(sc->sc_iot, sc->sc_dma_ioh, fa->fa_reg[1].size);
 	if (sc->sc_mmc_ioh != 0)
@@ -568,7 +590,7 @@ void
 octmmc_exec_dma(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 {
 	struct octmmc_softc *sc = bus->bus_hc;
-	uint64_t dmacfg, dmacmd, status;
+	uint64_t dmacmd, status;
 	paddr_t locked_block = 0;
 	int bounce = 0;
 	int s;
@@ -601,37 +623,13 @@ octmmc_exec_dma(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 	    ISSET(cmd->c_flags, SCF_CMD_READ) ? BUS_DMASYNC_PREREAD :
 	    BUS_DMASYNC_PREWRITE);
 
-	/*
-	 * According to Linux, the DMA hardware has a silicon bug that can
-	 * corrupt data. As a workaround, Linux locks the second last block
-	 * of a transfer into the L2 cache if the opcode is multi-block write
-	 * and there are more than two data blocks to write. In Linux, it is
-	 * not described under what circumstances the corruption can happen.
-	 * Lacking better information, use the same workaround here.
-	 */
-	if (cmd->c_opcode == MMC_WRITE_BLOCK_MULTIPLE &&
-	    cmd->c_datalen > OCTMMC_BLOCK_SIZE * 2) {
-		locked_block = sc->sc_dma_data->dm_segs[0].ds_addr +
-		    sc->sc_dma_data->dm_segs[0].ds_len - OCTMMC_BLOCK_SIZE * 2;
-		Octeon_lock_secondary_cache(curcpu(), locked_block,
-		    OCTMMC_BLOCK_SIZE);
-	}
+	if (sc->sc_hwrev == OCTMMC_HWREV_7890)
+		octmmc_dma_load_7890(sc, cmd);
+	else
+		locked_block = octmmc_dma_load_6130(sc, cmd);
 
 	/* Set status mask. */
 	MMC_WR_8(sc, MIO_EMM_STS_MASK, DEF_STS_MASK);
-
-	/* Set up the DMA engine. */
-	dmacfg = MIO_NDF_DMA_CFG_EN;
-	if (!ISSET(cmd->c_flags, SCF_CMD_READ))
-		dmacfg |= MIO_NDF_DMA_CFG_RW;
-	dmacfg |= (sc->sc_dma_data->dm_segs[0].ds_len / sizeof(uint64_t) - 1)
-	    << MIO_NDF_DMA_CFG_SIZE_SHIFT;
-	if (sc->sc_hwrev == OCTMMC_HWREV_6130)
-		dmacfg |= sc->sc_dma_data->dm_segs[0].ds_addr;
-	DMA_WR_8(sc, MIO_NDF_DMA_CFG, dmacfg);
-	if (sc->sc_hwrev == OCTMMC_HWREV_7890)
-		DMA_WR_8(sc, MIO_NDF_DMA_ADR,
-		    sc->sc_dma_data->dm_segs[0].ds_addr);
 
 	/* Prepare and issue the command. */
 	dmacmd = MIO_EMM_DMA_DMA_VAL | MIO_EMM_DMA_MULTI | MIO_EMM_DMA_SECTOR;
@@ -696,9 +694,10 @@ wait_intr:
 		memcpy(cmd->c_data, sc->sc_bounce_buf, cmd->c_datalen);
 
 unload_dma:
-	if (locked_block != 0)
-		Octeon_unlock_secondary_cache(curcpu(), locked_block,
-		    OCTMMC_BLOCK_SIZE);
+	if (sc->sc_hwrev == OCTMMC_HWREV_7890)
+		octmmc_dma_unload_7890(sc);
+	else
+		octmmc_dma_unload_6130(sc, locked_block);
 
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_dma_data);
 
@@ -797,6 +796,81 @@ octmmc_exec_pio(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 pio_out:
 	octmmc_release(bus);
 	splx(s);
+}
+
+paddr_t
+octmmc_dma_load_6130(struct octmmc_softc *sc, struct sdmmc_command *cmd)
+{
+	uint64_t dmacfg;
+	paddr_t locked_block = 0;
+
+	/*
+	 * According to Linux, the DMA hardware has a silicon bug that can
+	 * corrupt data. As a workaround, Linux locks the second last block
+	 * of a transfer into the L2 cache if the opcode is multi-block write
+	 * and there are more than two data blocks to write. In Linux, it is
+	 * not described under what circumstances the corruption can happen.
+	 * Lacking better information, use the same workaround here.
+	 */
+	if (cmd->c_opcode == MMC_WRITE_BLOCK_MULTIPLE &&
+	    cmd->c_datalen > OCTMMC_BLOCK_SIZE * 2) {
+		locked_block = sc->sc_dma_data->dm_segs[0].ds_addr +
+		    sc->sc_dma_data->dm_segs[0].ds_len - OCTMMC_BLOCK_SIZE * 2;
+		Octeon_lock_secondary_cache(curcpu(), locked_block,
+		    OCTMMC_BLOCK_SIZE);
+	}
+
+	/* Set up the DMA engine. */
+	dmacfg = MIO_NDF_DMA_CFG_EN;
+	if (!ISSET(cmd->c_flags, SCF_CMD_READ))
+		dmacfg |= MIO_NDF_DMA_CFG_RW;
+	dmacfg |= (sc->sc_dma_data->dm_segs[0].ds_len / sizeof(uint64_t) - 1)
+	    << MIO_NDF_DMA_CFG_SIZE_SHIFT;
+	dmacfg |= sc->sc_dma_data->dm_segs[0].ds_addr;
+	DMA_WR_8(sc, MIO_NDF_DMA_CFG, dmacfg);
+
+	return locked_block;
+}
+
+void
+octmmc_dma_unload_6130(struct octmmc_softc *sc, paddr_t locked_block)
+{
+	if (locked_block != 0)
+		Octeon_unlock_secondary_cache(curcpu(), locked_block,
+		    OCTMMC_BLOCK_SIZE);
+}
+
+void
+octmmc_dma_load_7890(struct octmmc_softc *sc, struct sdmmc_command *cmd)
+{
+	bus_dma_segment_t *seg;
+	uint64_t fifocmd;
+	int i;
+
+	/* Enable the FIFO. */
+	FIFO_WR_8(sc, MIO_EMM_DMA_FIFO_CFG, 0);
+
+	for (i = 0; i < sc->sc_dma_data->dm_nsegs; i++) {
+		seg = &sc->sc_dma_data->dm_segs[i];
+
+		fifocmd = (seg->ds_len / sizeof(uint64_t) - 1) <<
+		    MIO_EMM_DMA_FIFO_CMD_SIZE_SHIFT;
+		if (!ISSET(cmd->c_flags, SCF_CMD_READ))
+			fifocmd |= MIO_EMM_DMA_FIFO_CMD_RW;
+		if (i < sc->sc_dma_data->dm_nsegs - 1)
+			fifocmd |= MIO_EMM_DMA_FIFO_CMD_INTDIS;
+
+		/* Create a FIFO entry. */
+		FIFO_WR_8(sc, MIO_EMM_DMA_FIFO_ADR, seg->ds_addr);
+		FIFO_WR_8(sc, MIO_EMM_DMA_FIFO_CMD, fifocmd);
+	}
+}
+
+void
+octmmc_dma_unload_7890(struct octmmc_softc *sc)
+{
+	/* Disable the FIFO. */
+	FIFO_WR_8(sc, MIO_EMM_DMA_FIFO_CFG, MIO_EMM_DMA_FIFO_CFG_CLR);
 }
 
 /*
