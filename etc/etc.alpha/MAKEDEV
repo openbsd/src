@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.69 2016/09/04 15:38:59 naddy Exp 
-#	OpenBSD: MAKEDEV.common,v 1.93 2016/09/11 03:06:31 deraadt Exp 
+#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.70 2016/09/11 19:59:53 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.96 2017/10/16 20:26:52 naddy Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -281,12 +281,11 @@ rmidi*)
 	;;
 
 *random)
-	n=0
-	for pre in " " s u a
-	do
-		M ${pre}random c 34 $n 644
-		n=$(($n+1))
-	done
+	M urandom c 34 0 644
+	RMlist[${#RMlist[*]}]=random
+	MKlist[${#MKlist[*]}]=";ln -s urandom random"
+	RMlist[${#RMlist[*]}]=arandom
+	MKlist[${#MKlist[*]}]=";ln -s urandom arandom"
 	;;
 
 radio*)
