@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.295 2017/08/24 08:48:37 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.296 2017/10/16 19:30:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1038,7 +1038,7 @@ tty_write(void (*cmdfn)(struct tty *, const struct tty_ctx *),
 		ctx->xoff = wp->xoff;
 		ctx->yoff = wp->yoff;
 		if (status_at_line(c) == 0)
-			ctx->yoff++;
+			ctx->yoff += status_line_size(c->session);
 
 		cmdfn(&c->tty, ctx);
 	}
