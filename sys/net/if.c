@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.517 2017/10/16 08:19:15 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.518 2017/10/16 13:24:26 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -556,6 +556,8 @@ if_attach_queues(struct ifnet *ifp, unsigned int nqs)
 void
 if_attach_common(struct ifnet *ifp)
 {
+	KASSERT(ifp->if_ioctl != NULL);
+
 	TAILQ_INIT(&ifp->if_addrlist);
 	TAILQ_INIT(&ifp->if_maddrlist);
 
@@ -1524,11 +1526,8 @@ if_downall(void)
 		if ((ifp->if_flags & IFF_UP) == 0)
 			continue;
 		if_down(ifp);
-		if (ifp->if_ioctl) {
-			ifrq.ifr_flags = ifp->if_flags;
-			(void) (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS,
-			    (caddr_t)&ifrq);
-		}
+		ifrq.ifr_flags = ifp->if_flags;
+		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
 	}
 	NET_UNLOCK();
 }
@@ -1913,12 +1912,10 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		ifp->if_flags = (ifp->if_flags & IFF_CANTCHANGE) |
 			(ifr->ifr_flags & ~IFF_CANTCHANGE);
 
-		if (ifp->if_ioctl != NULL) {
-			error = (*ifp->if_ioctl)(ifp, cmd, data);
-			if (error != 0) {
-				ifp->if_flags = oif_flags;
-				break;
-			}
+		error = (*ifp->if_ioctl)(ifp, cmd, data);
+		if (error != 0) {
+			ifp->if_flags = oif_flags;
+			break;
 		}
 
 		if (ISSET(oif_flags ^ ifp->if_flags, IFF_UP)) {
@@ -2001,8 +1998,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFMTU:
 		if ((error = suser(p, 0)) != 0)
 			break;
-		if (ifp->if_ioctl == NULL)
-			return (EOPNOTSUPP);
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
 		if (!error)
 			rtm_ifchg(ifp);
@@ -2024,7 +2019,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFPARENT:
 	case SIOCDIFPARENT:
 		if ((error = suser(p, 0)) != 0)
-			return (error);
+			break;
 		/* FALLTHROUGH */
 	case SIOCGIFPSRCADDR:
 	case SIOCGIFPDSTADDR:
@@ -2035,8 +2030,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCGVNETID:
 	case SIOCGIFPAIR:
 	case SIOCGIFPARENT:
-		if (ifp->if_ioctl == 0)
-			return (EOPNOTSUPP);
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
 		break;
 
@@ -2085,8 +2078,10 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFPRIORITY:
 		if ((error = suser(p, 0)) != 0)
 			break;
-		if (ifr->ifr_metric < 0 || ifr->ifr_metric > 15)
-			return (EINVAL);
+		if (ifr->ifr_metric < 0 || ifr->ifr_metric > 15) {
+			error = EINVAL;
+			break;
+		}
 		ifp->if_priority = ifr->ifr_metric;
 		break;
 
@@ -2126,28 +2121,31 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 	case SIOCSIFLLADDR:
 		if ((error = suser(p, 0)))
-			return (error);
-		if (ifp->if_sadl == NULL)
-			return (EINVAL);
-		if (ifr->ifr_addr.sa_len != ETHER_ADDR_LEN)
-			return (EINVAL);
-		if (ETHER_IS_MULTICAST(ifr->ifr_addr.sa_data))
-			return (EINVAL);
+			break;
+		if ((ifp->if_sadl == NULL) ||
+		    (ifr->ifr_addr.sa_len != ETHER_ADDR_LEN) ||
+		    (ETHER_IS_MULTICAST(ifr->ifr_addr.sa_data))) {
+			error = EINVAL;
+			break;
+		}
 		switch (ifp->if_type) {
 		case IFT_ETHER:
 		case IFT_CARP:
 		case IFT_XETHER:
 		case IFT_ISO88025:
-			if_setlladdr(ifp, ifr->ifr_addr.sa_data);
 			error = (*ifp->if_ioctl)(ifp, cmd, data);
 			if (error == ENOTTY)
 				error = 0;
+			if (error == 0)
+				error = if_setlladdr(ifp,
+				    ifr->ifr_addr.sa_data);
 			break;
 		default:
-			return (ENODEV);
+			error = ENODEV;
 		}
 
-		ifnewlladdr(ifp);
+		if (error == 0)
+			ifnewlladdr(ifp);
 		break;
 
 	case SIOCGIFLLPRIO:
@@ -2157,8 +2155,10 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFLLPRIO:
 		if ((error = suser(p, 0)))
 			break;
-		if (ifr->ifr_llprio > UCHAR_MAX)
-			return (EINVAL);
+		if (ifr->ifr_llprio > UCHAR_MAX) {
+			error = EINVAL;
+			break;
+		}
 		ifp->if_llprio = ifr->ifr_llprio;
 		break;
 
@@ -2539,9 +2539,8 @@ if_setgroupattribs(caddr_t data)
 	ifg->ifg_carp_demoted += demote;
 
 	TAILQ_FOREACH(ifgm, &ifg->ifg_members, ifgm_next)
-		if (ifgm->ifgm_ifp->if_ioctl)
-			ifgm->ifgm_ifp->if_ioctl(ifgm->ifgm_ifp,
-			    SIOCSIFGATTR, data);
+		ifgm->ifgm_ifp->if_ioctl(ifgm->ifgm_ifp, SIOCSIFGATTR, data);
+
 	return (0);
 }
 
