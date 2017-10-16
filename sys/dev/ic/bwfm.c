@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.3 2017/10/16 21:10:28 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.4 2017/10/16 21:59:30 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -151,6 +151,8 @@ bwfm_attach(struct bwfm_softc *sc)
 		printf("%s: no supplicant in firmware, bailing\n", DEVNAME(sc));
 		return;
 	}
+
+	ic->ic_caps = IEEE80211_C_RSN;	/* WPA/RSN */
 
 	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
@@ -572,6 +574,7 @@ bwfm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCS80211WPAPARMS:
 	case SIOCG80211WPAPARMS:
+		error = ieee80211_ioctl(ifp, cmd, data);
 		break;
 	case SIOCS80211WPAPSK:
 		if ((error = suser(curproc, 0)) != 0)
