@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.167 2017/10/09 08:35:38 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.168 2017/10/16 08:22:25 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -80,6 +80,8 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
+#include <sys/mutex.h>
+
 #include <net/route.h>
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
@@ -148,6 +150,8 @@ struct dump_state {
 
 /* Static globals */
 static LIST_HEAD(, keycb) pfkeyv2_sockets = LIST_HEAD_INITIALIZER(keycb);
+
+struct mutex pfkeyv2_mtx = MUTEX_INITIALIZER(IPL_NONE);
 static uint32_t pfkeyv2_seq = 1;
 static int nregistered = 0;
 static int npromisc = 0;
@@ -260,11 +264,16 @@ pfkeyv2_detach(struct socket *so, struct proc *p)
 
 	LIST_REMOVE(kp, kcb_list);
 
-	if (kp->flags & PFKEYV2_SOCKETFLAGS_REGISTERED)
-		nregistered--;
+	if (kp->flags &
+	    (PFKEYV2_SOCKETFLAGS_REGISTERED|PFKEYV2_SOCKETFLAGS_PROMISC)) {
+		mtx_enter(&pfkeyv2_mtx);
+		if (kp->flags & PFKEYV2_SOCKETFLAGS_REGISTERED)
+			nregistered--;
 
-	if (kp->flags & PFKEYV2_SOCKETFLAGS_PROMISC)
-		npromisc--;
+		if (kp->flags & PFKEYV2_SOCKETFLAGS_PROMISC)
+			npromisc--;
+		mtx_leave(&pfkeyv2_mtx);
+	}
 
 	raw_detach(&kp->rcb);
 	return (0);
@@ -940,23 +949,22 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 	struct ipsec_acquire *ipa;
 	struct radix_node_head *rnh;
 	struct radix_node *rn = NULL;
-
 	struct keycb *kp, *bkp;
-
 	void *freeme = NULL, *bckptr = NULL;
 	void *headers[SADB_EXT_MAX + 1];
-
 	union sockaddr_union *sunionp;
-
 	struct tdb *sa1 = NULL, *sa2 = NULL;
-
 	struct sadb_msg *smsg;
 	struct sadb_spirange *sprng;
 	struct sadb_sa *ssa;
 	struct sadb_supported *ssup;
 	struct sadb_ident *sid, *did;
-
 	u_int rdomain;
+	int promisc;
+
+	mtx_enter(&pfkeyv2_mtx);
+	promisc = npromisc;
+	mtx_leave(&pfkeyv2_mtx);
 
 	NET_LOCK();
 
@@ -972,7 +980,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 	rdomain = kp->rdomain;
 
 	/* If we have any promiscuous listeners, send them a copy of the message */
-	if (npromisc) {
+	if (promisc) {
 		struct mbuf *packet;
 
 		if (!(freeme = malloc(sizeof(struct sadb_msg) + len, M_PFKEY,
@@ -1392,7 +1400,9 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 	case SADB_REGISTER:
 		if (!(kp->flags & PFKEYV2_SOCKETFLAGS_REGISTERED)) {
 			kp->flags |= PFKEYV2_SOCKETFLAGS_REGISTERED;
+			mtx_enter(&pfkeyv2_mtx);
 			nregistered++;
+			mtx_leave(&pfkeyv2_mtx);
 		}
 
 		i = sizeof(struct sadb_supported) + sizeof(ealgs);
@@ -1788,11 +1798,15 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 				if (j) {
 					kp->flags |=
 					    PFKEYV2_SOCKETFLAGS_PROMISC;
+					mtx_enter(&pfkeyv2_mtx);
 					npromisc++;
+					mtx_leave(&pfkeyv2_mtx);
 				} else {
 					kp->flags &=
 					    ~PFKEYV2_SOCKETFLAGS_PROMISC;
+					mtx_enter(&pfkeyv2_mtx);
 					npromisc--;
+					mtx_leave(&pfkeyv2_mtx);
 				}
 			}
 		}
@@ -1859,11 +1873,15 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	struct sadb_prop *sa_prop;
 	struct sadb_msg *smsg;
 	int rval = 0;
-	int i, j;
+	int i, j, registered;
 
+	mtx_enter(&pfkeyv2_mtx);
 	*seq = pfkeyv2_seq++;
 
-	if (!nregistered) {
+	registered = nregistered;
+	mtx_leave(&pfkeyv2_mtx);
+
+	if (!registered) {
 		rval = ESRCH;
 		goto ret;
 	}
@@ -2100,7 +2118,10 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 	smsg->sadb_msg_type = SADB_EXPIRE;
 	smsg->sadb_msg_satype = sa->tdb_satype;
 	smsg->sadb_msg_len = i / sizeof(uint64_t);
+
+	mtx_enter(&pfkeyv2_mtx);
 	smsg->sadb_msg_seq = pfkeyv2_seq++;
+	mtx_leave(&pfkeyv2_mtx);
 
 	headers[SADB_EXT_SA] = p;
 	export_sa(&p, sa);

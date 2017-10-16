@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.227 2017/10/11 13:44:49 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.228 2017/10/16 08:22:25 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -87,16 +87,14 @@ int		tdb_hash(u_int, u_int32_t, union sockaddr_union *, u_int8_t);
 
 int ipsec_in_use = 0;
 u_int64_t ipsec_last_added = 0;
-
-struct ipsec_policy_head ipsec_policy_head =
-    TAILQ_HEAD_INITIALIZER(ipsec_policy_head);
-struct ipsec_acquire_head ipsec_acquire_head =
-    TAILQ_HEAD_INITIALIZER(ipsec_acquire_head);
-
-u_int32_t ipsec_ids_next_flow = 1;	/* may not be zero */
 int ipsec_ids_idle = 100;		/* keep free ids for 100s */
+
+/* Protected by the NET_LOCK(). */
+u_int32_t ipsec_ids_next_flow = 1;	/* may not be zero */
 struct ipsec_ids_tree ipsec_ids_tree;
 struct ipsec_ids_flows ipsec_ids_flows;
+struct ipsec_policy_head ipsec_policy_head =
+    TAILQ_HEAD_INITIALIZER(ipsec_policy_head);
 
 void ipsp_ids_timeout(void *);
 static inline int ipsp_ids_cmp(const struct ipsec_ids *,
@@ -173,6 +171,7 @@ struct xformsw *xformswNXFORMSW = &xformsw[nitems(xformsw)];
 
 #define	TDB_HASHSIZE_INIT	32
 
+/* Protected by the NET_LOCK(). */
 static SIPHASH_KEY tdbkey;
 static struct tdb **tdbh = NULL;
 static struct tdb **tdbdst = NULL;
@@ -189,6 +188,8 @@ tdb_hash(u_int rdomain, u_int32_t spi, union sockaddr_union *dst,
     u_int8_t proto)
 {
 	SIPHASH_CTX ctx;
+
+	NET_ASSERT_LOCKED();
 
 	SipHash24_Init(&ctx, &tdbkey);
 	SipHash24_Update(&ctx, &rdomain, sizeof(rdomain));
@@ -336,6 +337,8 @@ gettdbbysrcdst(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 	struct tdb *tdbp;
 	union sockaddr_union su_null;
 
+	NET_ASSERT_LOCKED();
+
 	if (tdbsrc == NULL)
 		return (struct tdb *) NULL;
 
@@ -420,6 +423,8 @@ gettdbbydst(u_int rdomain, union sockaddr_union *dst, u_int8_t sproto,
 	u_int32_t hashval;
 	struct tdb *tdbp;
 
+	NET_ASSERT_LOCKED();
+
 	if (tdbdst == NULL)
 		return (struct tdb *) NULL;
 
@@ -450,6 +455,8 @@ gettdbbysrc(u_int rdomain, union sockaddr_union *src, u_int8_t sproto,
 {
 	u_int32_t hashval;
 	struct tdb *tdbp;
+
+	NET_ASSERT_LOCKED();
 
 	if (tdbsrc == NULL)
 		return (struct tdb *) NULL;
@@ -788,6 +795,8 @@ tdb_alloc(u_int rdomain)
 {
 	struct tdb *tdbp;
 
+	NET_ASSERT_LOCKED();
+
 	tdbp = malloc(sizeof(*tdbp), M_TDB, M_WAITOK | M_ZERO);
 
 	TAILQ_INIT(&tdbp->tdb_policy_head);
@@ -811,6 +820,8 @@ void
 tdb_free(struct tdb *tdbp)
 {
 	struct ipsec_policy *ipo;
+
+	NET_ASSERT_LOCKED();
 
 	if (tdbp->tdb_xform) {
 		(*(tdbp->tdb_xform->xf_zeroize))(tdbp);
@@ -944,6 +955,8 @@ ipsp_ids_insert(struct ipsec_ids *ids)
 	struct ipsec_ids *found;
 	u_int32_t start_flow;
 
+	NET_ASSERT_LOCKED();
+
 	found = RBT_INSERT(ipsec_ids_tree, &ipsec_ids_tree, ids);
 	if (found) {
 		/* if refcount was zero, then timeout is running */
@@ -976,6 +989,8 @@ struct ipsec_ids *
 ipsp_ids_lookup(u_int32_t ipsecflowinfo)
 {
 	struct ipsec_ids	key;
+
+	NET_ASSERT_LOCKED();
 
 	key.id_flow = ipsecflowinfo;
 	return RBT_FIND(ipsec_ids_flows, &ipsec_ids_flows, &key);

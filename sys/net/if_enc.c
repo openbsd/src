@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.69 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.70 2017/10/16 08:22:25 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -213,6 +213,8 @@ struct ifnet *
 enc_getif(u_int id, u_int unit)
 {
 	struct ifnet	*ifp;
+
+	NET_ASSERT_LOCKED();
 
 	/* Check if the caller wants to get a non-default enc interface */
 	if (unit > 0) {
