@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.516 2017/10/12 09:14:16 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.517 2017/10/16 08:19:15 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1816,7 +1816,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifgroupreq *ifgr;
+	struct ifgroupreq *ifgr = (struct ifgroupreq *)data;
 	struct if_afreq *ifar = (struct if_afreq *)data;
 	char ifdescrbuf[IFDESCRSIZE];
 	char ifrtlabelbuf[RTLABEL_LEN];
@@ -1857,7 +1857,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCIFAFATTACH:
 	case SIOCIFAFDETACH:
 		if ((error = suser(p, 0)) != 0)
-			return (error);
+			break;
 		switch (ifar->ifar_af) {
 		case AF_INET:
 			/* attach is a noop for AF_INET */
@@ -1873,7 +1873,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			break;
 #endif /* INET6 */
 		default:
-			return (EAFNOSUPPORT);
+			error = EAFNOSUPPORT;
 		}
 		break;
 
@@ -1908,7 +1908,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 	case SIOCSIFFLAGS:
 		if ((error = suser(p, 0)) != 0)
-			return (error);
+			break;
 
 		ifp->if_flags = (ifp->if_flags & IFF_CANTCHANGE) |
 			(ifr->ifr_flags & ~IFF_CANTCHANGE);
@@ -1933,13 +1933,13 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 	case SIOCSIFXFLAGS:
 		if ((error = suser(p, 0)) != 0)
-			return (error);
+			break;
 
 #ifdef INET6
 		if (ISSET(ifr->ifr_flags, IFXF_AUTOCONF6)) {
 			error = in6_ifattach(ifp);
 			if (error != 0)
-				return (error);
+				break;
 		}
 #endif	/* INET6 */
 
@@ -1971,7 +1971,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 				error = ifp->if_wol(ifp, 1);
 				splx(s);
 				if (error)
-					return (error);
+					break;
 			}
 			if (ISSET(ifp->if_xflags, IFXF_WOL) &&
 			    !ISSET(ifr->ifr_flags, IFXF_WOL)) {
@@ -1980,7 +1980,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 				error = ifp->if_wol(ifp, 0);
 				splx(s);
 				if (error)
-					return (error);
+					break;
 			}
 		} else if (ISSET(ifr->ifr_flags, IFXF_WOL)) {
 			ifr->ifr_flags &= ~IFXF_WOL;
@@ -1994,13 +1994,13 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 	case SIOCSIFMETRIC:
 		if ((error = suser(p, 0)) != 0)
-			return (error);
+			break;
 		ifp->if_metric = ifr->ifr_metric;
 		break;
 
 	case SIOCSIFMTU:
 		if ((error = suser(p, 0)) != 0)
-			return (error);
+			break;
 		if (ifp->if_ioctl == NULL)
 			return (EOPNOTSUPP);
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
@@ -2048,7 +2048,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 	case SIOCSIFDESCR:
 		if ((error = suser(p, 0)) != 0)
-			return (error);
+			break;
 		error = copyinstr(ifr->ifr_data, ifdescrbuf,
 		    IFDESCRSIZE, &bytesdone);
 		if (error == 0) {
@@ -2069,7 +2069,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 	case SIOCSIFRTLABEL:
 		if ((error = suser(p, 0)) != 0)
-			return (error);
+			break;
 		error = copyinstr(ifr->ifr_data, ifrtlabelbuf,
 		    RTLABEL_LEN, &bytesdone);
 		if (error == 0) {
@@ -2084,7 +2084,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 	case SIOCSIFPRIORITY:
 		if ((error = suser(p, 0)) != 0)
-			return (error);
+			break;
 		if (ifr->ifr_metric < 0 || ifr->ifr_metric > 15)
 			return (EINVAL);
 		ifp->if_priority = ifr->ifr_metric;
@@ -2096,32 +2096,32 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 	case SIOCSIFRDOMAIN:
 		if ((error = suser(p, 0)) != 0)
-			return (error);
-		if ((error = if_setrdomain(ifp, ifr->ifr_rdomainid)) != 0)
-			return (error);
+			break;
+		error = if_setrdomain(ifp, ifr->ifr_rdomainid);
 		break;
 
 	case SIOCAIFGROUP:
 		if ((error = suser(p, 0)))
-			return (error);
-		ifgr = (struct ifgroupreq *)data;
+			break;
 		if ((error = if_addgroup(ifp, ifgr->ifgr_group)))
-			return (error);
-		(*ifp->if_ioctl)(ifp, cmd, data); /* XXX error check */
+			break;
+		error = (*ifp->if_ioctl)(ifp, cmd, data);
+		if (error == ENOTTY)
+			error = 0;
 		break;
 
 	case SIOCGIFGROUP:
-		if ((error = if_getgroup(data, ifp)))
-			return (error);
+		error = if_getgroup(data, ifp);
 		break;
 
 	case SIOCDIFGROUP:
 		if ((error = suser(p, 0)))
-			return (error);
-		(*ifp->if_ioctl)(ifp, cmd, data); /* XXX error check */
-		ifgr = (struct ifgroupreq *)data;
-		if ((error = if_delgroup(ifp, ifgr->ifgr_group)))
-			return (error);
+			break;
+		error = (*ifp->if_ioctl)(ifp, cmd, data);
+		if (error == ENOTTY)
+			error = 0;
+		if (error == 0)
+			error = if_delgroup(ifp, ifgr->ifgr_group);
 		break;
 
 	case SIOCSIFLLADDR:
@@ -2156,7 +2156,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 	case SIOCSIFLLPRIO:
 		if ((error = suser(p, 0)))
-			return (error);
+			break;
 		if (ifr->ifr_llprio > UCHAR_MAX)
 			return (EINVAL);
 		ifp->if_llprio = ifr->ifr_llprio;
