@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.3 2017/10/16 21:10:28 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.4 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -144,7 +144,7 @@
 #define BWFM_MFP_REQUIRED			2
 #define BWFM_WPA_AUTH_DISABLED			(0 << 0)
 #define BWFM_WPA_AUTH_NONE			(1 << 0)
-#define BWFM_WPA_AUTH_UNSPECIFIED		(1 << 1)
+#define BWFM_WPA_AUTH_WPA_UNSPECIFIED		(1 << 1)
 #define BWFM_WPA_AUTH_WPA_PSK			(1 << 2)
 #define BWFM_WPA_AUTH_WPA2_UNSPECIFIED		(1 << 6)
 #define BWFM_WPA_AUTH_WPA2_PSK			(1 << 7)

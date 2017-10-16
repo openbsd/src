@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.4 2017/10/16 21:59:30 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -336,6 +336,8 @@ bwfm_init(struct ifnet *ifp)
 	 */
 	if (ic->ic_flags & IEEE80211_F_PSK) {
 		struct bwfm_wsec_pmk pmk;
+		uint32_t wsec = 0;
+		uint32_t wpa = 0;
 		int i;
 
 		pmk.key_len = htole16(sizeof(ic->ic_psk) << 1);
@@ -346,15 +348,36 @@ bwfm_init(struct ifnet *ifp)
 		bwfm_fwvar_cmd_set_data(sc, BWFM_C_SET_WSEC_PMK, &pmk,
 		    sizeof(pmk));
 
-		bwfm_fwvar_var_set_int(sc, "wpa_auth", BWFM_WPA_AUTH_WPA2_PSK);
-		bwfm_fwvar_var_set_int(sc, "wsec",
-		    BWFM_WSEC_TKIP | BWFM_WSEC_AES);
-		bwfm_fwvar_var_set_int(sc, "auth", BWFM_AUTH_OPEN);
+		if (ic->ic_rsnprotos & IEEE80211_PROTO_WPA) {
+			if (ic->ic_rsnakms & IEEE80211_AKM_PSK)
+				wpa |= BWFM_WPA_AUTH_WPA_PSK;
+			if (ic->ic_rsnakms & IEEE80211_AKM_8021X)
+				wpa |= BWFM_WPA_AUTH_WPA_UNSPECIFIED;
+		}
+		if (ic->ic_rsnprotos & IEEE80211_PROTO_RSN) {
+			if (ic->ic_rsnakms & IEEE80211_AKM_PSK)
+				wpa |= BWFM_WPA_AUTH_WPA2_PSK;
+			if (ic->ic_rsnakms & IEEE80211_AKM_SHA256_PSK)
+				wpa |= BWFM_WPA_AUTH_WPA2_PSK_SHA256;
+			if (ic->ic_rsnakms & IEEE80211_AKM_8021X)
+				wpa |= BWFM_WPA_AUTH_WPA2_UNSPECIFIED;
+			if (ic->ic_rsnakms & IEEE80211_AKM_SHA256_8021X)
+				wpa |= BWFM_WPA_AUTH_WPA2_1X_SHA256;
+		}
+		if (ic->ic_rsnciphers & IEEE80211_WPA_CIPHER_TKIP ||
+		    ic->ic_rsngroupcipher & IEEE80211_WPA_CIPHER_TKIP)
+			wsec |= BWFM_WSEC_TKIP;
+		if (ic->ic_rsnciphers & IEEE80211_WPA_CIPHER_CCMP ||
+		    ic->ic_rsngroupcipher & IEEE80211_WPA_CIPHER_CCMP)
+			wsec |= BWFM_WSEC_AES;
+
+		bwfm_fwvar_var_set_int(sc, "wpa_auth", wpa);
+		bwfm_fwvar_var_set_int(sc, "wsec", wsec);
 	} else {
 		bwfm_fwvar_var_set_int(sc, "wpa_auth", BWFM_WPA_AUTH_DISABLED);
 		bwfm_fwvar_var_set_int(sc, "wsec", BWFM_WSEC_NONE);
-		bwfm_fwvar_var_set_int(sc, "auth", BWFM_AUTH_OPEN);
 	}
+	bwfm_fwvar_var_set_int(sc, "auth", BWFM_AUTH_OPEN);
 	bwfm_fwvar_var_set_int(sc, "mfp", BWFM_MFP_NONE);
 
 	if (ic->ic_des_esslen && ic->ic_des_esslen < BWFM_MAX_SSID_LEN) {
