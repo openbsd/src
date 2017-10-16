@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.200 2017/10/15 20:44:21 deraadt Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.201 2017/10/16 08:39:16 job Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1359,7 +1359,7 @@ show_rib_detail_msg(struct imsg *imsg, int nodescr, int flag0)
 		show_attr(imsg->data, ilen, flag0);
 		break;
 	case IMSG_CTL_END:
-		printf("%c", EOL0(flag0));
+		printf("\n");
 		return (1);
 	default:
 		break;
