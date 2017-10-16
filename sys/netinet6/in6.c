@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.211 2017/08/15 06:08:52 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.212 2017/10/16 13:40:58 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -250,15 +250,12 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	 */
 	switch (cmd) {
 	case SIOCAIFADDR_IN6:
-	case SIOCSIFPHYADDR_IN6:
 		sa6 = &ifra->ifra_addr;
 		break;
 	case SIOCGIFADDR_IN6:
 	case SIOCGIFDSTADDR_IN6:
 	case SIOCGIFNETMASK_IN6:
 	case SIOCDIFADDR_IN6:
-	case SIOCGIFPSRCADDR_IN6:
-	case SIOCGIFPDSTADDR_IN6:
 	case SIOCGIFAFLAG_IN6:
 	case SIOCSNDFLUSH_IN6:
 	case SIOCSPFXFLUSH_IN6:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.99 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.100 2017/10/16 13:40:58 mpi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -335,33 +335,9 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCDELMULTI:
 		break;
 
-	case SIOCSIFPHYADDR:
-#ifdef INET6
-	case SIOCSIFPHYADDR_IN6:
-#endif /* INET6 */
 	case SIOCSLIFPHYADDR:
-		switch (cmd) {
-		case SIOCSIFPHYADDR:
-			src = sintosa(
-				&(((struct in_aliasreq *)data)->ifra_addr));
-			dst = sintosa(
-				&(((struct in_aliasreq *)data)->ifra_dstaddr));
-			break;
-#ifdef INET6
-		case SIOCSIFPHYADDR_IN6:
-			src = sin6tosa(
-				&(((struct in6_aliasreq *)data)->ifra_addr));
-			dst = sin6tosa(
-				&(((struct in6_aliasreq *)data)->ifra_dstaddr));
-			break;
-#endif
-		case SIOCSLIFPHYADDR:
-			src = sstosa(&(((struct if_laddrreq *)data)->addr));
-			dst = sstosa(&(((struct if_laddrreq *)data)->dstaddr));
-			break;
-		default:
-			return (EINVAL);
-		}
+		src = sstosa(&(((struct if_laddrreq *)data)->addr));
+		dst = sstosa(&(((struct if_laddrreq *)data)->dstaddr));
 
 		/* sa_family must be equal */
 		if (src->sa_family != dst->sa_family)
@@ -395,23 +371,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 		default:
 			return (EAFNOSUPPORT);
-		}
-
-		/* check sa_family looks sane for the cmd */
-		switch (cmd) {
-		case SIOCSIFPHYADDR:
-			if (src->sa_family == AF_INET)
-				break;
-			return (EAFNOSUPPORT);
-#ifdef INET6
-		case SIOCSIFPHYADDR_IN6:
-			if (src->sa_family == AF_INET6)
-				break;
-			return (EAFNOSUPPORT);
-#endif /* INET6 */
-		case SIOCSLIFPHYADDR:
-			/* checks done in the above */
-			break;
 		}
 
 		LIST_FOREACH(sc2, &gif_softc_list, gif_list) {
@@ -470,7 +429,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = 0;
 		break;
 
-#ifdef SIOCDIFPHYADDR
 	case SIOCDIFPHYADDR:
 		if (sc->gif_psrc) {
 			free((caddr_t)sc->gif_psrc, M_IFADDR, 0);
@@ -481,66 +439,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			sc->gif_pdst = NULL;
 		}
 		/* change the IFF_{UP, RUNNING} flag as well? */
-		break;
-#endif
-
-	case SIOCGIFPSRCADDR:
-#ifdef INET6
-	case SIOCGIFPSRCADDR_IN6:
-#endif /* INET6 */
-		if (sc->gif_psrc == NULL) {
-			error = EADDRNOTAVAIL;
-			goto bad;
-		}
-		src = sc->gif_psrc;
-		switch (cmd) {
-		case SIOCGIFPSRCADDR:
-			dst = &ifr->ifr_addr;
-			size = sizeof(ifr->ifr_addr);
-			break;
-#ifdef INET6
-		case SIOCGIFPSRCADDR_IN6:
-			dst = sin6tosa(
-				&(((struct in6_ifreq *)data)->ifr_addr));
-			size = sizeof(((struct in6_ifreq *)data)->ifr_addr);
-			break;
-#endif /* INET6 */
-		default:
-			error = EADDRNOTAVAIL;
-			goto bad;
-		}
-		if (src->sa_len > size)
-			return (EINVAL);
-		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
-		break;
-
-	case SIOCGIFPDSTADDR:
-#ifdef INET6
-	case SIOCGIFPDSTADDR_IN6:
-#endif /* INET6 */
-		if (sc->gif_pdst == NULL) {
-			error = EADDRNOTAVAIL;
-			goto bad;
-		}
-		src = sc->gif_pdst;
-		switch (cmd) {
-		case SIOCGIFPDSTADDR:
-			dst = &ifr->ifr_addr;
-			size = sizeof(ifr->ifr_addr);
-			break;
-#ifdef INET6
-		case SIOCGIFPDSTADDR_IN6:
-			dst = sin6tosa(&(((struct in6_ifreq *)data)->ifr_addr));
-			size = sizeof(((struct in6_ifreq *)data)->ifr_addr);
-			break;
-#endif /* INET6 */
-		default:
-			error = EADDRNOTAVAIL;
-			goto bad;
-		}
-		if (src->sa_len > size)
-			return (EINVAL);
-		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
 		break;
 
 	case SIOCGLIFPHYADDR:

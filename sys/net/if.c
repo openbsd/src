@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.518 2017/10/16 13:24:26 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.519 2017/10/16 13:40:58 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2003,11 +2003,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			rtm_ifchg(ifp);
 		break;
 
-	case SIOCSIFPHYADDR:
 	case SIOCDIFPHYADDR:
-#ifdef INET6
-	case SIOCSIFPHYADDR_IN6:
-#endif
 	case SIOCSLIFPHYADDR:
 	case SIOCSLIFPHYRTABLE:
 	case SIOCSLIFPHYTTL:
@@ -2021,8 +2017,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		if ((error = suser(p, 0)) != 0)
 			break;
 		/* FALLTHROUGH */
-	case SIOCGIFPSRCADDR:
-	case SIOCGIFPDSTADDR:
 	case SIOCGLIFPHYADDR:
 	case SIOCGLIFPHYRTABLE:
 	case SIOCGLIFPHYTTL:
