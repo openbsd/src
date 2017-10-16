@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.2 2017/10/15 15:21:24 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.3 2017/10/16 21:10:28 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -320,8 +320,18 @@ bwfm_init(struct ifnet *ifp)
 	bwfm_fwvar_var_set_int(sc, "ndoe", 0);
 	bwfm_fwvar_var_set_int(sc, "toe", 0);
 
-	bwfm_fwvar_var_set_int(sc, "mfp", 0); /* NONE */
+	/*
+	 * Use the firmware supplicant to handle the WPA handshake.
+	 * As long as we're still figuring things out this is ok, but
+	 * it would be better to handle the handshake in our stack.
+	 */
 	bwfm_fwvar_var_set_int(sc, "sup_wpa", 1);
+
+	/*
+	 * OPEN: Open or WPA/WPA2 on newer Chips/Firmware.
+	 * SHARED KEY: WEP.
+	 * AUTO: Automatic, probably for older Chips/Firmware.
+	 */
 	if (ic->ic_flags & IEEE80211_F_PSK) {
 		struct bwfm_wsec_pmk pmk;
 		int i;
@@ -334,17 +344,16 @@ bwfm_init(struct ifnet *ifp)
 		bwfm_fwvar_cmd_set_data(sc, BWFM_C_SET_WSEC_PMK, &pmk,
 		    sizeof(pmk));
 
-		bwfm_fwvar_var_set_int(sc, "wpa_auth", 0x80|0x40); /* WPA2|UNSPEC */
-		//bwfm_fwvar_var_set_int(sc, "wpa_auth", 0x4|0x2); /* WPA|UNSPEC */
-		bwfm_fwvar_var_set_int(sc, "wsec", 0x4|0x2); /* AES|TKIP */
-		//bwfm_fwvar_var_set_int(sc, "auth", 0); /* OPEN */
-		//bwfm_fwvar_var_set_int(sc, "auth", 1); /* SHARED KEY */
-		bwfm_fwvar_var_set_int(sc, "auth", 2); /* AUTO */
+		bwfm_fwvar_var_set_int(sc, "wpa_auth", BWFM_WPA_AUTH_WPA2_PSK);
+		bwfm_fwvar_var_set_int(sc, "wsec",
+		    BWFM_WSEC_TKIP | BWFM_WSEC_AES);
+		bwfm_fwvar_var_set_int(sc, "auth", BWFM_AUTH_OPEN);
 	} else {
-		bwfm_fwvar_var_set_int(sc, "wpa_auth", 0); /* WPA DISABLED */
-		bwfm_fwvar_var_set_int(sc, "wsec", 0); /* NO CIPHERS */
-		bwfm_fwvar_var_set_int(sc, "auth", 0); /* OPEN */
+		bwfm_fwvar_var_set_int(sc, "wpa_auth", BWFM_WPA_AUTH_DISABLED);
+		bwfm_fwvar_var_set_int(sc, "wsec", BWFM_WSEC_NONE);
+		bwfm_fwvar_var_set_int(sc, "auth", BWFM_AUTH_OPEN);
 	}
+	bwfm_fwvar_var_set_int(sc, "mfp", BWFM_MFP_NONE);
 
 	if (ic->ic_des_esslen && ic->ic_des_esslen < BWFM_MAX_SSID_LEN) {
 		params = malloc(sizeof(*params), M_TEMP, M_WAITOK | M_ZERO);

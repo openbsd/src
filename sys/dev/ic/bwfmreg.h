@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.2 2017/10/15 15:21:24 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.3 2017/10/16 21:10:28 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -134,6 +134,26 @@
 #define  BWFM_DMP_SLAVE_SIZE_8K			1
 #define  BWFM_DMP_SLAVE_SIZE_16K		2
 #define  BWFM_DMP_SLAVE_SIZE_DESC		3
+
+/* Security Parameters */
+#define BWFM_AUTH_OPEN				0
+#define BWFM_AUTH_SHARED_KEY			1
+#define BWFM_AUTH_AUTO				2
+#define BWFM_MFP_NONE				0
+#define BWFM_MFP_CAPABLE			1
+#define BWFM_MFP_REQUIRED			2
+#define BWFM_WPA_AUTH_DISABLED			(0 << 0)
+#define BWFM_WPA_AUTH_NONE			(1 << 0)
+#define BWFM_WPA_AUTH_UNSPECIFIED		(1 << 1)
+#define BWFM_WPA_AUTH_WPA_PSK			(1 << 2)
+#define BWFM_WPA_AUTH_WPA2_UNSPECIFIED		(1 << 6)
+#define BWFM_WPA_AUTH_WPA2_PSK			(1 << 7)
+#define BWFM_WPA_AUTH_WPA2_1X_SHA256		(1 << 12)
+#define BWFM_WPA_AUTH_WPA2_PSK_SHA256		(1 << 15)
+#define BWFM_WSEC_NONE				(0 << 0)
+#define BWFM_WSEC_WEP				(1 << 0)
+#define BWFM_WSEC_TKIP				(1 << 1)
+#define BWFM_WSEC_AES				(1 << 2)
 
 /* DCMD commands */
 #define BWFM_C_GET_VERSION			1
