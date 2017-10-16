@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.142 2017/10/16 12:27:12 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.143 2017/10/16 12:39:33 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -205,23 +205,28 @@ read_client_leases(char *name, struct client_lease_tq *tq)
 
 /*
  * client-declaration :==
- *	TOK_SEND option-decl |
- *	TOK_DEFAULT option-decl |
- *	TOK_SUPERSEDE option-decl |
- *	TOK_APPEND option-decl |
- *	TOK_PREPEND option-decl |
- *	TOK_REQUEST option-list |
- *	TOK_REQUIRE option-list |
- *	TOK_IGNORE option-list |
- *	TOK_TIMEOUT number |
- *	TOK_RETRY number |
- *	TOK_SELECT_TIMEOUT number |
- *	TOK_REBOOT number |
- *	TOK_BACKOFF_CUTOFF number |
- *	TOK_INITIAL_INTERVAL number |
- *	interface-declaration |
- *	TOK_LEASE client-lease-statement |
- *	TOK_REJECT reject-statement
+ *	TOK_APPEND option-decl			|
+ *	TOK_BACKOFF_CUTOFF number		|
+ *	TOK_DEFAULT option-decl			|
+ *	TOK_FILENAME string			|
+ *	TOK_FIXED_ADDR ip-address		|
+ *	TOK_IGNORE option-list			|
+ *	TOK_INITIAL_INTERVAL number		|
+ *	TOK_INTERFACE interface-declaration	|
+ *	TOK_LEASE client-lease-statement	|
+ *	TOK_LINK_TIMEOUT number			|
+ *	TOK_NEXT_SERVER string			|
+ *	TOK_PREPEND option-decl			|
+ *	TOK_REBOOT number			|
+ *	TOK_REJECT reject-statement		|
+ *	TOK_REQUEST option-list			|
+ *	TOK_REQUIRE option-list			|
+ *	TOK_RETRY number			|
+ *	TOK_SELECT_TIMEOUT number		|
+ *	TOK_SEND option-decl			|
+ *	TOK_SERVER_NAME string			|
+ *	TOK_SUPERSEDE option-decl		|
+ *	TOK_TIMEOUT number			|
  */
 void
 parse_client_statement(FILE *cfile, char *name)
@@ -232,8 +237,14 @@ parse_client_statement(FILE *cfile, char *name)
 	token = next_token(NULL, cfile);
 
 	switch (token) {
-	case TOK_SEND:
-		if (parse_option_decl(cfile, &i, config->send_options) == 1)
+	case TOK_APPEND:
+		if (parse_option_decl(cfile, &i, config->defaults) == 1) {
+			config->default_actions[i] = ACTION_APPEND;
+			parse_semi(cfile);
+		}
+		break;
+	case TOK_BACKOFF_CUTOFF:
+		if (parse_lease_time(cfile, &config->backoff_cutoff) == 1)
 			parse_semi(cfile);
 		break;
 	case TOK_DEFAULT:
@@ -242,61 +253,20 @@ parse_client_statement(FILE *cfile, char *name)
 			parse_semi(cfile);
 		}
 		break;
-	case TOK_SUPERSEDE:
-		if (parse_option_decl(cfile, &i, config->defaults) == 1) {
-			config->default_actions[i] = ACTION_SUPERSEDE;
+	case TOK_FILENAME:
+		if (parse_string(cfile, NULL, &val) == 1) {
+			free(config->filename);
+			config->filename = val;
 			parse_semi(cfile);
 		}
 		break;
-	case TOK_APPEND:
-		if (parse_option_decl(cfile, &i, config->defaults) == 1) {
-			config->default_actions[i] = ACTION_APPEND;
-			parse_semi(cfile);
-		}
-		break;
-	case TOK_PREPEND:
-		if (parse_option_decl(cfile, &i, config->defaults) == 1) {
-			config->default_actions[i] = ACTION_PREPEND;
-			parse_semi(cfile);
-		}
-		break;
-	case TOK_REQUEST:
-		if (parse_option_list(cfile, &config->requested_option_count,
-		    config->requested_options) == 1)
-			parse_semi(cfile);
-		break;
-	case TOK_REQUIRE:
-		if (parse_option_list(cfile, &config->required_option_count,
-		    config->required_options) == 1)
+	case TOK_FIXED_ADDR:
+		if (parse_ip_addr(cfile, &config->address) == 1)
 			parse_semi(cfile);
 		break;
 	case TOK_IGNORE:
 		if (parse_option_list(cfile, &config->ignored_option_count,
 		    config->ignored_options) == 1)
-			parse_semi(cfile);
-		break;
-	case TOK_LINK_TIMEOUT:
-		if (parse_lease_time(cfile, &config->link_timeout) == 1)
-			parse_semi(cfile);
-		break;
-	case TOK_TIMEOUT:
-		if (parse_lease_time(cfile, &config->timeout) == 1)
-			parse_semi(cfile);
-		break;
-	case TOK_RETRY:
-		if (parse_lease_time(cfile, &config->retry_interval) == 1)
-			parse_semi(cfile);
-		break;
-	case TOK_SELECT_TIMEOUT:
-		if (parse_lease_time(cfile, &config->select_interval) == 1)
-			parse_semi(cfile);
-		break;
-	case TOK_REBOOT:
-		if (parse_lease_time(cfile, &config->reboot_timeout) == 1)
-			parse_semi(cfile);
-		break;
-	case TOK_BACKOFF_CUTOFF:
-		if (parse_lease_time(cfile, &config->backoff_cutoff) == 1)
 			parse_semi(cfile);
 		break;
 	case TOK_INITIAL_INTERVAL:
@@ -310,16 +280,49 @@ parse_client_statement(FILE *cfile, char *name)
 		add_lease(&config->static_leases,
 		    parse_client_lease_statement(cfile, name));
 		break;
+	case TOK_LINK_TIMEOUT:
+		if (parse_lease_time(cfile, &config->link_timeout) == 1)
+			parse_semi(cfile);
+		break;
+	case TOK_NEXT_SERVER:
+		if (parse_ip_addr(cfile, &config->next_server) == 1)
+			parse_semi(cfile);
+		break;
+	case TOK_PREPEND:
+		if (parse_option_decl(cfile, &i, config->defaults) == 1) {
+			config->default_actions[i] = ACTION_PREPEND;
+			parse_semi(cfile);
+		}
+		break;
+	case TOK_REBOOT:
+		if (parse_lease_time(cfile, &config->reboot_timeout) == 1)
+			parse_semi(cfile);
+		break;
 	case TOK_REJECT:
 		if (parse_reject_statement(cfile) == 1)
 			parse_semi(cfile);
 		break;
-	case TOK_FILENAME:
-		if (parse_string(cfile, NULL, &val) == 1) {
-			free(config->filename);
-			config->filename = val;
+	case TOK_REQUEST:
+		if (parse_option_list(cfile, &config->requested_option_count,
+		    config->requested_options) == 1)
 			parse_semi(cfile);
-		}
+		break;
+	case TOK_REQUIRE:
+		if (parse_option_list(cfile, &config->required_option_count,
+		    config->required_options) == 1)
+			parse_semi(cfile);
+		break;
+	case TOK_RETRY:
+		if (parse_lease_time(cfile, &config->retry_interval) == 1)
+			parse_semi(cfile);
+		break;
+	case TOK_SELECT_TIMEOUT:
+		if (parse_lease_time(cfile, &config->select_interval) == 1)
+			parse_semi(cfile);
+		break;
+	case TOK_SEND:
+		if (parse_option_decl(cfile, &i, config->send_options) == 1)
+			parse_semi(cfile);
 		break;
 	case TOK_SERVER_NAME:
 		if (parse_string(cfile, NULL, &val) == 1) {
@@ -328,12 +331,14 @@ parse_client_statement(FILE *cfile, char *name)
 			parse_semi(cfile);
 		}
 		break;
-	case TOK_FIXED_ADDR:
-		if (parse_ip_addr(cfile, &config->address) == 1)
+	case TOK_SUPERSEDE:
+		if (parse_option_decl(cfile, &i, config->defaults) == 1) {
+			config->default_actions[i] = ACTION_SUPERSEDE;
 			parse_semi(cfile);
+		}
 		break;
-	case TOK_NEXT_SERVER:
-		if (parse_ip_addr(cfile, &config->next_server) == 1)
+	case TOK_TIMEOUT:
+		if (parse_lease_time(cfile, &config->timeout) == 1)
 			parse_semi(cfile);
 		break;
 	default:
@@ -526,15 +531,17 @@ parse_client_lease_statement(FILE *cfile, char *name)
 
 /*
  * client-lease-declaration :==
- *	BOOTP |
- *	INTERFACE string |
- *	FIXED_ADDR ip_address |
- *	FILENAME string |
- *	SERVER_NAME string |
- *	OPTION option-decl |
- *	RENEW time-decl |
- *	REBIND time-decl |
- *	EXPIRE time-decl
+ *	BOOTP			|
+ *	EXPIRE time-decl	|
+ *	FILENAME string		|
+ *	FIXED_ADDR ip_address	|
+ *	INTERFACE string	|
+ *	NEXT_SERVER string	|
+ *	OPTION option-decl	|
+ *	REBIND time-decl	|
+ *	RENEW time-decl		|
+ *	SERVER_NAME string	|
+ *	SSID string
  */
 void
 parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
@@ -550,6 +557,20 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 	case TOK_BOOTP:
 		/* 'bootp' is just a comment. See BOOTP_LEASE(). */
 		break;
+	case TOK_EXPIRE:
+		if (parse_date(cfile, &lease->expiry) == 0)
+			return;
+		break;
+	case TOK_FILENAME:
+		if (parse_string(cfile, NULL, &val) == 0)
+			return;
+		free(lease->filename);
+		lease->filename = val;
+		break;
+	case TOK_FIXED_ADDR:
+		if (parse_ip_addr(cfile, &lease->address) == 0)
+			return;
+		break;
 	case TOK_INTERFACE:
 		if (parse_string(cfile, NULL, &val) == 0)
 			return;
@@ -562,19 +583,21 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 			return;
 		}
 		break;
-	case TOK_FIXED_ADDR:
-		if (parse_ip_addr(cfile, &lease->address) == 0)
-			return;
-		break;
 	case TOK_NEXT_SERVER:
 		if (parse_ip_addr(cfile, &lease->next_server) == 0)
 			return;
 		break;
-	case TOK_FILENAME:
-		if (parse_string(cfile, NULL, &val) == 0)
+	case TOK_OPTION:
+		if (parse_option_decl(cfile, &i, lease->options) == 0)
 			return;
-		free(lease->filename);
-		lease->filename = val;
+		break;
+	case TOK_REBIND:
+		if (parse_date(cfile, &lease->rebind) == 0)
+			return;
+		break;
+	case TOK_RENEW:
+		if (parse_date(cfile, &lease->renewal) == 0)
+			return;
 		break;
 	case TOK_SERVER_NAME:
 		if (parse_string(cfile, NULL, &val) == 0)
@@ -595,22 +618,6 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 		memcpy(lease->ssid, val, len);
 		free(val);
 		lease->ssid_len = len;
-		break;
-	case TOK_RENEW:
-		if (parse_date(cfile, &lease->renewal) == 0)
-			return;
-		break;
-	case TOK_REBIND:
-		if (parse_date(cfile, &lease->rebind) == 0)
-			return;
-		break;
-	case TOK_EXPIRE:
-		if (parse_date(cfile, &lease->expiry) == 0)
-			return;
-		break;
-	case TOK_OPTION:
-		if (parse_option_decl(cfile, &i, lease->options) == 0)
-			return;
 		break;
 	default:
 		parse_warn("expecting lease declaration.");
