@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.48 2017/07/07 23:55:21 bluhm Exp $
+# $OpenBSD: Makefile,v 1.49 2017/10/16 01:46:09 guenther Exp $
 
 # disabled because it requires a buggy behavior that uthread had:
 #	dup2_race
@@ -18,7 +18,7 @@ SUBDIR+= barrier blocked_shutdown \
 	 group netdb pcap poll preemption preemption_float \
 	 pthread_atfork pthread_cond_timedwait pthread_create \
 	 pthread_join pthread_kill pthread_mutex \
-	 pthread_rwlock pthread_specific \
+	 pthread_once pthread_rwlock pthread_specific \
 	 readdir restart \
 	 select semaphore setjmp sigdeliver siginfo \
 	 siginterrupt signal signals signodefer sigsuspend sigwait sleep \
