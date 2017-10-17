@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.2 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.3 2017/10/17 13:58:10 mikeb Exp $	*/
 /*
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2017 Adam Steen <adam@adamsteen.com.au>
@@ -26,7 +26,7 @@
 
 #define RECALIBRATE_MAX_RETRIES		5
 #define RECALIBRATE_SMI_THRESHOLD	50000
-#define RECALIBRATE_DELAY_THRESHOLD	20
+#define RECALIBRATE_DELAY_THRESHOLD	50
 
 int		tsc_recalibrate;
 
@@ -122,7 +122,7 @@ measure_tsc_freq(struct timecounter *tc)
 {
 	uint64_t count1, count2, frequency, min_freq, tsc1, tsc2;
 	u_long ef;
-	int delay_usec, i, err1, err2, usec;
+	int delay_usec, i, err1, err2, usec, success = 0;
 
 	/* warmup the timers */
 	for (i = 0; i < 3; i++) {
@@ -155,9 +155,10 @@ measure_tsc_freq(struct timecounter *tc)
 		frequency = calculate_tsc_freq(tsc1, tsc2, usec);
 
 		min_freq = MIN(min_freq, frequency);
+		success++;
 	}
 
-	return (min_freq);
+	return (success > 1 ? min_freq : 0);
 }
 
 void
@@ -176,7 +177,7 @@ calibrate_tsc_freq(void)
 	if (tsc_is_invariant)
 		tsc_timecounter.tc_quality = 2000;
 
-	printf("%s: recalibrated TSC frequency %lld Hz\n",
+	printf("%s: recalibrated TSC frequency %llu Hz\n",
 	    reference->tc_name, tsc_timecounter.tc_frequency);
 }
 
