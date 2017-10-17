@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.204 2017/10/16 13:28:33 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.205 2017/10/17 08:41:24 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -675,12 +675,12 @@ newroute(int argc, char **argv)
 			break;
 	}
 	oerrno = errno;
-	if (!qflag) {
+	if (!qflag && (*cmd != 'g' || ret != 0)) {
 		printf("%s %s %s", cmd, ishost ? "host" : "net", dest);
 		if (*gateway) {
 			printf(": gateway %s", gateway);
 			if (attempts > 1 && ret == 0 && af == AF_INET)
-			    printf(" (%s)", inet_ntoa(so_gate.sin.sin_addr));
+			    printf(" (is)", inet_ntoa(so_gate.sin.sin_addr));
 		}
 		if (ret == 0)
 			printf("\n");
