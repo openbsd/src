@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2017/07/09 14:04:50 espie Exp $
+#	$OpenBSD: Makefile,v 1.21 2017/10/17 19:31:56 naddy Exp $
 
 
 PROG=	rdist
@@ -8,5 +8,3 @@ SRCS=	gram.y child.c client.c common.c distopt.c docmd.c expand.c \
 WARNINGS=yes
 
 .include <bsd.prog.mk>
-
-.depend: gram.c

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2017/06/01 11:18:53 naddy Exp $
+#	$OpenBSD: Makefile,v 1.29 2017/10/17 19:31:56 naddy Exp $
 
 MAN=	biosboot.8
 
@@ -12,7 +12,7 @@ LD=ld
 LDFLAGS=-nostdlib -Ttext 0 -N -x -Bstatic -nopie -znorelro
 INSTALL_STRIP=
 
-.depend biosboot.o: assym.h
+biosboot.o: assym.h
 
 ${PROG}: $(OBJS)
 	@rm -f $(PROG)

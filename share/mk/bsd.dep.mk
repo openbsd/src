@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.dep.mk,v 1.23 2017/08/12 00:03:15 guenther Exp $
+#	$OpenBSD: bsd.dep.mk,v 1.24 2017/10/17 19:31:56 naddy Exp $
 #	$NetBSD: bsd.dep.mk,v 1.12 1995/09/27 01:15:09 christos Exp $
 
 .if !target(depend)
@@ -55,7 +55,7 @@ cleandepend:
 	rm -f ${.CURDIR}/tags
 .endif
 
-CLEANFILES += ${DEPS} .depend
+CLEANFILES += ${DEPS}
 
 BUILDFIRST ?=
 BUILDAFTER ?=
