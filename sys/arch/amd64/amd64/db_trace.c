@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.34 2017/08/14 16:32:37 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.35 2017/10/17 19:23:09 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -79,20 +79,8 @@ struct db_variable * db_eregs = db_regs + nitems(db_regs);
 #define	INTERRUPT	3
 #define	AST		4
 
-int db_numargs(struct callframe *, Elf_Sym *);
 void db_nextframe(struct callframe **, db_addr_t *, long *, int,
     int (*) (const char *, ...));
-
-int
-db_numargs(struct callframe *fp, Elf_Sym *sym)
-{
-	int args;
-
-	if ((args = db_ctf_func_numargs(sym)) != -1)
-		return args;
-
-	return 6;
-}
 
 /*
  * Figure out the next frame up in the call stack.
@@ -243,14 +231,16 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			narg = 0;
 		else {
 			is_trap = NONE;
-			narg = db_numargs(frame, sym);
+			narg = db_ctf_func_numargs(sym);
+			if (narg < 0 || narg > 6)
+				narg = 6;
 		}
 
 		(*pr)("%s(", name);
 
 		if (lastframe == 0 && offset == 0 && !have_addr) {
 			/* We have a breakpoint before the frame is set up */
-			for (i = 0; i < min(6, narg); i++) {
+			for (i = 0; i < narg; i++) {
 				(*pr)("%lx", *db_reg_args[i]);
 				if (--narg != 0)
 					(*pr)(",");
@@ -261,7 +251,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			    &((struct callframe *)(ddb_regs.tf_rsp-8))->f_arg0;
 		} else {
 			argp = (unsigned long *)frame;
-			for (i = min(6, narg); i > 0; i--) {
+			for (i = narg; i > 0; i--) {
 				argp--;
 				(*pr)("%lx", db_get_value((db_addr_t)argp,
 				    sizeof(*argp), FALSE));

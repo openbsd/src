@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.29 2017/08/11 20:50:15 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.30 2017/10/17 19:23:09 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ struct db_variable *db_eregs = db_regs + nitems(db_regs);
 #define	INTERRUPT	3
 #define	AST		4
 
-int db_numargs(struct callframe *, Elf_Sym *);
+int db_i386_numargs(struct callframe *);
 void db_nextframe(struct callframe **, db_addr_t *, int *, int,
     int (*pr)(const char *, ...));
 
@@ -82,15 +82,12 @@ void db_nextframe(struct callframe **, db_addr_t *, int *, int,
  * Figure out how many arguments were passed into the frame at "fp".
  */
 int
-db_numargs(struct callframe *fp, Elf_Sym *sym)
+db_i386_numargs(struct callframe *fp)
 {
 	int	*argp;
 	int	inst;
 	int	args;
 	extern char	etext[];
-
-	if ((args = db_ctf_func_numargs(sym)) != -1)
-		return args;
 
 	argp = (int *)db_get_value((int)&fp->f_retaddr, 4, FALSE);
 	if (argp < (int *)VM_MIN_KERNEL_ADDRESS || argp > (int *)etext) {
@@ -255,7 +252,9 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			narg = 0;
 		else {
 			is_trap = NONE;
-			narg = db_numargs(frame, sym);
+			narg = db_ctf_func_numargs(sym);
+			if (narg < 0)
+				narg = db_i386_numargs(frame);
 		}
 
 		(*pr)("%s(", name);
