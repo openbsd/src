@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.20 2017/08/08 15:53:55 visa Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.21 2017/10/17 20:38:49 deraadt Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 
 #include <machine/specialreg.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined (_STANDALONE)
 
 extern int cpu_feature;
 
