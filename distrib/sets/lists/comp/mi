@@ -827,6 +827,7 @@
 ./usr/include/dirent.h
 ./usr/include/disktab.h
 ./usr/include/dlfcn.h
+./usr/include/elf.h
 ./usr/include/elf_abi.h
 ./usr/include/endian.h
 ./usr/include/err.h
