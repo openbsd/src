@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.4,v 1.31 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: random.4,v 1.32 2017/10/17 22:25:41 schwarze Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Michael Shalayeff
 .\"
@@ -23,52 +23,66 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: October 17 2017 $
 .Dt RANDOM 4
 .Os
 .Sh NAME
 .Nm random ,
-.Nm arandom
-.Nd random data source devices
+.Nm urandom
+.Nd random data source device
 .Sh SYNOPSIS
 .In sys/types.h
 .In dev/rndvar.h
 .Sh DESCRIPTION
-The various
-.Nm
-devices produce high quality random output data.
+The
+.Nm urandom
+device produces high quality pseudo-random output data without ever
+blocking, even immediately after booting.
 Entropy data is collected from system activity (such as disk, network,
-and clock device interrupts), and then used to key the
-ChaCha stream cipher to generate the output.
-All the random devices are expected to provide high quality
-pseudo-random output data.
+and clock device interrupts), and then used to key a stream cipher
+to generate the output.
 .Pp
 The
+.Nm urandom
+device is intended to be used in scripts.
+In C programs, use the
 .Xr arc4random 3
-function in userland libraries should be used instead, as it works
-without the need to access these devices every time.
+family of functions instead, which can be called in almost all
+coding environments, including
+.Xr pthreads 3 ,
+.Xr chroot 2 ,
+and
+.Xr pledge 2 ,
+and which avoids accessing a device every time.
+.Pp
+Never use
+.Pa /dev/random .
+On
+.Ox ,
+it does the same as
+.Pa /dev/urandom ,
+but on many other systems, it misbehaves.
+For example, it may block, directly return entropy instead of using
+a stream cipher, or only return data from hardware random generators.
 .Sh FILES
 .Bl -tag -width /dev/arandom -compact
-.It Pa /dev/random
-.It Pa /dev/arandom
+.It Pa /dev/urandom
 .El
 .Sh SEE ALSO
 .Xr arc4random 3 ,
-.Xr md5 3 ,
-.Xr random 3 ,
 .Xr amdpm 4 ,
 .Xr glxsb 4 ,
 .Xr pchb 4 ,
-.Xr arc4random 9 ,
-.Xr md5 9
+.Xr arc4random 9
 .Sh HISTORY
 A
 .Nm
-device first appeared in the Linux operating system.
-This is a cloned interface.
-.Pp
-ARC4 routines added by David Mazieres.
-Changed to use the ChaCha cipher in
-.Ox 5.5 .
+device first appeared in Linux in 1994.
+The
+.Nm random
+and
+.Nm urandom
+devices have been available since
+.Ox 2.0 .
 .Sh BUGS
 No randomness testing suite provided.
