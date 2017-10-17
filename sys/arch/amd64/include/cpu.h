@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.115 2017/10/06 13:33:53 mikeb Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.116 2017/10/17 14:25:35 visa Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -280,6 +280,7 @@ extern struct cpu_info cpu_info_primary;
 
 #endif	/* MULTIPROCESSOR */
 
+#include <machine/cpufunc.h>
 #include <machine/psl.h>
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.157 2017/08/17 19:44:27 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.158 2017/10/17 14:25:35 visa Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -282,6 +282,8 @@ void cpu_unidle(struct cpu_info *);
 #define CPU_BUSY_CYCLE()	do {} while (0)
 
 #endif
+
+#include <machine/cpufunc.h>
 
 #define aston(p)	((p)->p_md.md_astpending = 1)
 
