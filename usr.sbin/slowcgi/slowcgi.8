@@ -1,4 +1,4 @@
-.\"   $OpenBSD: slowcgi.8,v 1.11 2014/08/28 08:09:39 jmc Exp $
+.\"   $OpenBSD: slowcgi.8,v 1.12 2017/10/17 22:47:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 28 2014 $
+.Dd $Mdocdate: October 17 2017 $
 .Dt SLOWCGI 8
 .Os
 .Sh NAME
@@ -95,6 +95,13 @@ instead of default user www.
 .%R RFC 3875
 .%T The Common Gateway Interface (CGI) Version 1.1
 .Re
+.Sh HISTORY
+The
+.Nm
+server first appeared in
+.Ox 5.4 .
+.Sh AUTHORS
+.An Florian Obser Aq Mt florian@openbsd.org
 .Sh BUGS
 .Nm
 only implements the parts of the FastCGI standard needed to execute

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.59 2015/09/25 15:31:24 schwarze Exp $
+.\"	$OpenBSD: rcs.1,v 1.60 2017/10/17 22:47:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 25 2015 $
+.Dd $Mdocdate: October 17 2017 $
 .Dt RCS 1
 .Os
 .Sh NAME
@@ -464,12 +464,21 @@ have no effect and are provided
 for compatibility only.
 .Sh HISTORY
 The OpenRCS project is a BSD-licensed rewrite of the original
-Revision Control System.
-OpenRCS is written by Jean-Francois Brousseau, Joris Vink,
-Niall O'Higgins, and Xavier Santolaria.
+Revision Control System and first appeared in
+.Ox 4.0 .
+.Sh AUTHORS
+.An -nosplit
+OpenRCS was written by
+.An Jean-Francois Brousseau ,
+.An Joris Vink ,
+.An Niall O'Higgins ,
+and
+.An Xavier Santolaria .
 .Pp
-The original RCS code was written in large parts by Walter F. Tichy
-and Paul Eggert.
+The original RCS code was written in large parts by
+.An Walter F. Tichy
+and
+.An Paul Eggert .
 .Sh CAVEATS
 For historical reasons,
 the RCS tools do not permit whitespace between options and their arguments.
