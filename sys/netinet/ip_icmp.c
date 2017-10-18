@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.172 2017/10/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.173 2017/10/18 17:01:14 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -714,10 +714,13 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		return (EHOSTUNREACH);
 	}
 
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
+	if (m->m_pkthdr.ph_loopcnt++ >= M_MAXLOOP) {
+		m_freem(m);
+		return (ELOOP);
+	}
 	rtableid = m->m_pkthdr.ph_rtableid;
+	m_resethdr(m);
+	m->m_pkthdr.ph_rtableid = rtableid;
 
 	/*
 	 * If the incoming packet was addressed directly to us,

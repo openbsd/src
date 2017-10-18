@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.218 2017/10/18 13:16:35 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.219 2017/10/18 17:01:14 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1044,6 +1044,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	struct icmp6_hdr *icmp6;
 	struct in6_addr t, *src = NULL;
 	struct sockaddr_in6 sa6_src, sa6_dst;
+	u_int rtableid;
 
 	CTASSERT(sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) <= MHLEN);
 
@@ -1055,6 +1056,12 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		    __FILE__, __LINE__));
 		goto bad;
 	}
+
+	if (m->m_pkthdr.ph_loopcnt++ >= M_MAXLOOP)
+		goto bad;
+	rtableid = m->m_pkthdr.ph_rtableid;
+	m_resethdr(m);
+	m->m_pkthdr.ph_rtableid = rtableid;
 
 	/*
 	 * If there are extra headers between IPv6 and ICMPv6, strip
@@ -1114,7 +1121,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	 * but is possible (for example) when we encounter an error while
 	 * forwarding procedure destined to a duplicated address of ours.
 	 */
-	rt = rtalloc(sin6tosa(&sa6_dst), 0, m->m_pkthdr.ph_rtableid);
+	rt = rtalloc(sin6tosa(&sa6_dst), 0, rtableid);
 	if (rtisvalid(rt) && ISSET(rt->rt_flags, RTF_LOCAL) &&
 	    !ISSET(ifatoia6(rt->rt_ifa)->ia6_flags,
 	    IN6_IFF_ANYCAST|IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED)) {
@@ -1129,8 +1136,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		 * that we do not own.  Select a source address based on the
 		 * source address of the erroneous packet.
 		 */
-		rt = rtalloc(sin6tosa(&sa6_src), RT_RESOLVE,
-		    m->m_pkthdr.ph_rtableid);
+		rt = rtalloc(sin6tosa(&sa6_src), RT_RESOLVE, rtableid);
 		if (!rtisvalid(rt)) {
 			char addr[INET6_ADDRSTRLEN];
 
@@ -1162,9 +1168,6 @@ icmp6_reflect(struct mbuf *m, size_t off)
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
 	ip6_send(m);
 	return;
 
