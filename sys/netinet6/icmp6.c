@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.217 2017/10/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.218 2017/10/18 13:16:35 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1162,12 +1162,6 @@ icmp6_reflect(struct mbuf *m, size_t off)
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
-	/*
-	 * To avoid a "too big" situation at an intermediate router
-	 * and the path MTU discovery process, specify the IPV6_MINMTU flag.
-	 * Note that only echo and node information replies are affected,
-	 * since the length of ICMP6 errors is limited to the minimum MTU.
-	 */
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif

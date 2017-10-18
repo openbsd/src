@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.203 2017/10/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.204 2017/10/18 13:16:35 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1481,6 +1481,13 @@ ip6_send_dispatch(void *xmq)
 #endif /* IPSEC */
 
 	while ((m = ml_dequeue(&ml)) != NULL) {
+		/*
+		 * To avoid a "too big" situation at an intermediate router and
+		 * the path MTU discovery process, specify the IPV6_MINMTU
+		 * flag.  Note that only echo and node information replies are
+		 * affected, since the length of ICMP6 errors is limited to the
+		 * minimum MTU.
+		 */
 		ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL);
 	}
 	NET_UNLOCK();
