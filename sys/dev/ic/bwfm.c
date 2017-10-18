@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.6 2017/10/18 12:33:25 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1183,7 +1183,8 @@ bwfm_fwvar_cmd_get_int(struct bwfm_softc *sc, int cmd, uint32_t *data)
 {
 	int ret;
 	ret = bwfm_fwvar_cmd_get_data(sc, cmd, data, sizeof(*data));
-	*data = letoh32(*data);
+	if (!ret)
+		*data = letoh32(*data);
 	return ret;
 }
 
@@ -1205,7 +1206,8 @@ bwfm_fwvar_var_get_data(struct bwfm_softc *sc, char *name, void *data, size_t le
 	memcpy(buf + strlen(name) + 1, data, len);
 	ret = bwfm_fwvar_cmd_get_data(sc, BWFM_C_GET_VAR,
 	    buf, strlen(name) + 1 + len);
-	memcpy(data, buf, len);
+	if (!ret)
+		memcpy(data, buf, len);
 	free(buf, M_TEMP, strlen(name) + 1 + len);
 	return ret;
 }
