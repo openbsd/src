@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.76 2017/10/12 09:03:15 mpi Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.77 2017/10/18 12:08:17 mpi Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -243,6 +243,7 @@ typedef struct {
 #define SHN_HIPROC	0xff1f		/*   specific section indexes */
 #define SHN_ABS		0xfff1		/* absolute value */
 #define SHN_COMMON	0xfff2		/* common symbol */
+#define SHN_XINDEX	0xffff		/* Escape -- index stored elsewhere. */
 #define SHN_HIRESERVE	0xffff		/* upper bounds of reserved indexes */
 
 /* sh_type */
