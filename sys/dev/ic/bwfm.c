@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.10 2017/10/18 15:47:39 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.11 2017/10/18 19:59:37 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -94,6 +94,7 @@ int	 bwfm_fwvar_var_get_int(struct bwfm_softc *, char *, uint32_t *);
 int	 bwfm_fwvar_var_set_int(struct bwfm_softc *, char *, uint32_t);
 
 void	 bwfm_scan(struct bwfm_softc *);
+void	 bwfm_scan_timeout(void *);
 
 void	 bwfm_rx(struct bwfm_softc *, char *, size_t);
 void	 bwfm_rx_event(struct bwfm_softc *, char *, size_t);
@@ -444,11 +445,6 @@ bwfm_init(struct ifnet *ifp)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
-
-	if (ic->ic_scan_lock == IEEE80211_SCAN_UNLOCKED) {
-		ieee80211_clean_cached(ic);
-		bwfm_scan(sc);
-	}
 }
 
 void
@@ -618,6 +614,10 @@ bwfm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ic->ic_scan_lock == IEEE80211_SCAN_UNLOCKED) {
 			ieee80211_clean_cached(ic);
 			bwfm_scan(sc);
+			timeout_set(&sc->sc_scan_timeout,
+			    bwfm_scan_timeout, sc);
+			timeout_add_msec(&sc->sc_scan_timeout,
+			    10000);
 		}
 		/* Let the userspace process wait for completion */
 		error = tsleep(&ic->ic_scan_lock, PCATCH, "80211scan",
@@ -1320,6 +1320,16 @@ bwfm_scan(struct bwfm_softc *sc)
 }
 
 void
+bwfm_scan_timeout(void *arg)
+{
+	struct bwfm_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	DPRINTF(("%s: scan timeout\n", DEVNAME(sc)));
+	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
+	wakeup(&ic->ic_scan_lock);
+}
+
+void
 bwfm_rx(struct bwfm_softc *sc, char *buf, size_t len)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1373,6 +1383,7 @@ bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
 		struct bwfm_bss_info *bss;
 		int i;
 		if (ntohl(e->msg.status) != BWFM_E_STATUS_PARTIAL) {
+			timeout_del(&sc->sc_scan_timeout);
 			ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 			wakeup(&ic->ic_scan_lock);
 			break;
