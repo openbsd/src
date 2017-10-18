@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.7 2017/10/18 15:47:39 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.8 2017/10/18 19:18:07 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -271,21 +271,26 @@ struct bwfm_bss_info {
 	uint16_t capability;
 	uint8_t ssid_len;
 	uint8_t ssid[BWFM_MAX_SSID_LEN];
+	uint8_t pad0;
 	uint32_t nrates;
 	uint8_t rates[16];
 	uint16_t chanspec;
 	uint16_t atim_window;
 	uint8_t dtim_period;
+	uint8_t pad1;
 	uint16_t rssi;
 	uint8_t phy_noise;
 	uint8_t n_cap;
+	uint16_t pad2;
 	uint32_t nbss_cap;
 	uint8_t ctl_ch;
+	uint8_t pad3[3];
 	uint32_t reserved32[1];
 	uint8_t flags;
 	uint8_t reserved[3];
 	uint8_t basic_mcs[BWFM_MCSSET_LEN];
 	uint16_t ie_offset;
+	uint16_t pad4;
 	uint32_t ie_length;
 	uint16_t snr;
 };
@@ -337,6 +342,7 @@ struct bwfm_escan_results {
 
 struct bwfm_assoc_params {
 	uint8_t bssid[ETHER_ADDR_LEN];
+	uint16_t pad;
 	uint32_t chanspec_num;
 	uint16_t chanspec_list[];
 };
@@ -364,6 +370,7 @@ struct bwfm_join_params {
 
 struct bwfm_join_scan_params {
 	uint8_t scan_type;
+	uint8_t pad[3];
 	uint32_t nprobes;
 	uint32_t active_time;
 	uint32_t passive_time;
