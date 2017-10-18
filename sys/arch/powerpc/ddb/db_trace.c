@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.12 2017/05/30 15:39:05 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.13 2017/10/18 16:59:18 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -117,12 +117,12 @@ void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
-	db_addr_t	 lr, sp, lastsp;
+	db_addr_t	 lr, sp, lastsp, *db_fp_args;
 	db_expr_t	 offset;
 	Elf_Sym		*sym;
 	char		*name;
 	char		 c, *cp = modif;
-	int		 trace_proc = 0;
+	int		 i, narg, trace_proc = 0;
 
 	while ((c = *cp++) != 0) {
 		if (c == 'p')
@@ -156,7 +156,23 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		if (name == NULL || strcmp(name, "end") == 0) {
 			(*pr)("at 0x%lx", lr - 4);
 		} else {
-			(*pr)("%s() at ", name);
+			narg = db_ctf_func_numargs(sym);
+			if (narg < 0 || narg > 8)
+				narg = 8;
+
+			(*pr)("%s(", name);
+
+			if (narg > 0) {
+				db_fp_args = (db_addr_t *)(sp + 8);
+
+				for (i = 0; i < narg; i++) {
+					(*pr)("%lx", db_fp_args[i]);
+					if (i != (narg-1))
+						(*pr)(",");
+				}
+			}
+
+			(*pr)(") at ");
 			db_printsym(lr - 4, DB_STGY_PROC, pr);
 		}
 		(*pr)("\n");
