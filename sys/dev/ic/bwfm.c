@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.9 2017/10/18 13:00:27 mpi Exp $ */
+/* $OpenBSD: bwfm.c,v 1.10 2017/10/18 15:47:39 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1411,6 +1411,7 @@ bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni;
+	int chan;
 
 	ni = ieee80211_alloc_node(ic, bss->bssid);
 	IEEE80211_ADDR_COPY(ni->ni_macaddr, bss->bssid);
@@ -1418,6 +1419,8 @@ bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 	ni->ni_esslen = min(bss->ssid_len, sizeof(bss->ssid));
 	ni->ni_esslen = min(ni->ni_esslen, IEEE80211_NWID_LEN);
 	memcpy(ni->ni_essid, bss->ssid, ni->ni_esslen);
-	ni->ni_chan = ic->ic_ibss_chan;
+	chan = (bss->chanspec >> BWFM_CHANSPEC_CHAN_SHIFT)
+	    & BWFM_CHANSPEC_CHAN_MASK;
+	ni->ni_chan = &ic->ic_channels[chan];
 	ni->ni_rssi = letoh32(bss->rssi);
 }
