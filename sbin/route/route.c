@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.205 2017/10/17 08:41:24 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.206 2017/10/18 07:31:31 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -680,7 +680,7 @@ newroute(int argc, char **argv)
 		if (*gateway) {
 			printf(": gateway %s", gateway);
 			if (attempts > 1 && ret == 0 && af == AF_INET)
-			    printf(" (is)", inet_ntoa(so_gate.sin.sin_addr));
+			    printf(" (%s)", inet_ntoa(so_gate.sin.sin_addr));
 		}
 		if (ret == 0)
 			printf("\n");
