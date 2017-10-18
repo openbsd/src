@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.4 2017/10/16 22:27:16 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.5 2017/10/18 12:58:45 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -154,6 +154,12 @@
 #define BWFM_WSEC_WEP				(1 << 0)
 #define BWFM_WSEC_TKIP				(1 << 1)
 #define BWFM_WSEC_AES				(1 << 2)
+
+/* Channel Parameters */
+#define BWFM_BAND_AUTO				0
+#define BWFM_BAND_5G				1
+#define BWFM_BAND_2G				2
+#define BWFM_BAND_ALL				3
 
 /* DCMD commands */
 #define BWFM_C_GET_VERSION			1

@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.7 2017/10/18 12:48:53 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.8 2017/10/18 12:58:45 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -126,8 +126,8 @@ bwfm_attach(struct bwfm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	uint32_t tmp;
-	int i;
+	uint32_t bandlist[3], tmp;
+	int i, nbands, nmode, vhtmode;
 
 	if (bwfm_fwvar_cmd_get_int(sc, BWFM_C_GET_VERSION, &tmp)) {
 		printf("%s: could not read io type\n", DEVNAME(sc));
@@ -154,28 +154,64 @@ bwfm_attach(struct bwfm_softc *sc)
 
 	ic->ic_caps = IEEE80211_C_RSN;	/* WPA/RSN */
 
-	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
+	if (bwfm_fwvar_var_get_int(sc, "nmode", &nmode))
+		nmode = 0;
+	if (bwfm_fwvar_var_get_int(sc, "vhtmode", &vhtmode))
+		vhtmode = 0;
+	if (bwfm_fwvar_cmd_get_data(sc, BWFM_C_GET_BANDLIST, bandlist,
+	    sizeof(bandlist))) {
+		printf("%s: couldn't get supported band list\n", DEVNAME(sc));
+		return;
+	}
+	nbands = letoh32(bandlist[0]);
+	for (i = 1; i <= nbands && i < nitems(bandlist); i++) {
+		switch (letoh32(bandlist[i])) {
+		case BWFM_BAND_2G:
+			DPRINTF(("%s: 2G HT %d VHT %d\n",
+			    DEVNAME(sc), nmode, vhtmode));
+			ic->ic_sup_rates[IEEE80211_MODE_11B] =
+			    ieee80211_std_rateset_11b;
+			ic->ic_sup_rates[IEEE80211_MODE_11G] =
+			    ieee80211_std_rateset_11g;
+
+			for (i = 0; i < nitems(bwfm_2ghz_channels); i++) {
+				uint8_t chan = bwfm_2ghz_channels[i];
+				ic->ic_channels[chan].ic_freq =
+				    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_2GHZ);
+				ic->ic_channels[chan].ic_flags =
+				    IEEE80211_CHAN_CCK | IEEE80211_CHAN_OFDM |
+				    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
+				if (nmode)
+					ic->ic_channels[chan].ic_flags |=
+					    IEEE80211_CHAN_HT;
+			}
+			break;
+		case BWFM_BAND_5G:
+			DPRINTF(("%s: 5G HT %d VHT %d\n",
+			    DEVNAME(sc), nmode, vhtmode));
+			ic->ic_sup_rates[IEEE80211_MODE_11A] =
+			    ieee80211_std_rateset_11a;
+
+			for (i = 0; i < nitems(bwfm_5ghz_channels); i++) {
+				uint8_t chan = bwfm_5ghz_channels[i];
+				ic->ic_channels[chan].ic_freq =
+				    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_5GHZ);
+				ic->ic_channels[chan].ic_flags =
+				    IEEE80211_CHAN_A;
+				if (nmode)
+					ic->ic_channels[chan].ic_flags |=
+					    IEEE80211_CHAN_HT;
+			}
+			break;
+		default:
+			printf("%s: unsupported band 0x%x\n", DEVNAME(sc),
+			    letoh32(bandlist[i]));
+			break;
+		}
+	}
 
 	/* IBSS channel undefined for now. */
 	ic->ic_ibss_chan = &ic->ic_channels[0];
-
-	for (i = 0; i < nitems(bwfm_2ghz_channels); i++) {
-		uint8_t chan = bwfm_2ghz_channels[i];
-		ic->ic_channels[chan].ic_freq =
-		    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_2GHZ);
-		ic->ic_channels[chan].ic_flags =
-		    IEEE80211_CHAN_CCK | IEEE80211_CHAN_OFDM |
-		    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
-	}
-	for (i = 0; i < nitems(bwfm_5ghz_channels); i++) {
-		uint8_t chan = bwfm_5ghz_channels[i];
-		ic->ic_channels[chan].ic_freq =
-		    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_5GHZ);
-		ic->ic_channels[chan].ic_flags =
-		    IEEE80211_CHAN_A;
-	}
 
 	/* Init some net80211 stuff we abuse. */
 	ieee80211_node_attach(ifp);
