@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.h,v 1.8 2017/10/17 13:52:10 millert Exp $ */
+/*	$OpenBSD: sdl.h,v 1.9 2017/10/18 17:31:01 millert Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Bob Beck.  All rights reserved.
@@ -62,6 +62,7 @@ struct sdlist {
 
 int	sdl_add(char *, char *, char **, u_int, char **, u_int);
 void	sdl_del(char *);
+int	sdl_check(struct sdlist *, int, void *);
 struct sdlist **sdl_lookup(struct sdlist *, int, void *);
 
 #endif	/* _SDL_H_ */

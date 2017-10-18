@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.152 2017/10/12 16:22:33 millert Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.153 2017/10/18 17:31:01 millert Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -115,11 +115,13 @@ void     gethelo(char *, size_t, char *);
 int      read_configline(FILE *);
 void	 spamd_tls_init(void);
 void	 check_spamd_db(void);
+void	 blackcheck(int);
 
 char hostname[HOST_NAME_MAX+1];
 struct syslog_data sdata = SYSLOG_DATA_INIT;
 char *nreply = "450";
 char *spamd = "spamd IP-based SPAM blocker";
+int greyback[2];
 int greypipe[2];
 int trappipe[2];
 FILE *grey;
@@ -1226,7 +1228,8 @@ get_maxfiles(void)
 #define PFD_SYNCFD	2
 #define PFD_CONFFD	3
 #define PFD_TRAPFD	4
-#define PFD_FIRSTCON	5
+#define PFD_GREYBACK	5
+#define PFD_FIRSTCON	6
 
 int
 main(int argc, char *argv[])
@@ -1480,6 +1483,10 @@ main(int argc, char *argv[])
 			maxblack = 0;
 
 		/* open pipe to talk to greylister */
+		if (socketpair(AF_UNIX, SOCK_DGRAM, 0, greyback) == -1) {
+			syslog(LOG_ERR, "socketpair (%m)");
+			exit(1);
+		}
 		if (pipe(greypipe) == -1) {
 			syslog(LOG_ERR, "pipe (%m)");
 			exit(1);
@@ -1502,6 +1509,7 @@ main(int argc, char *argv[])
 				syslog(LOG_ERR, "fdopen (%m)");
 				_exit(1);
 			}
+			close(greyback[0]);
 			close(greypipe[0]);
 			trapfd = trappipe[0];
 			trapcfg = fdopen(trappipe[0], "r");
@@ -1528,6 +1536,7 @@ main(int argc, char *argv[])
 			goto jail;
 		}
 		/* parent - run greylister */
+		close(greyback[1]);
 		grey = fdopen(greypipe[0], "r");
 		if (grey == NULL) {
 			syslog(LOG_ERR, "fdopen (%m)");
@@ -1573,6 +1582,13 @@ jail:
 	} else {
 		pfd[PFD_SYNCFD].fd = -1;
 		pfd[PFD_SYNCFD].events = 0;
+	}
+	if (greylist) {
+		pfd[PFD_GREYBACK].fd = greyback[1];
+		pfd[PFD_GREYBACK].events = POLLIN;
+	} else {
+		pfd[PFD_GREYBACK].fd = -1;
+		pfd[PFD_GREYBACK].events = 0;
 	}
 
 	/* events and pfd entries for con[] are filled in below. */
@@ -1736,6 +1752,44 @@ jail:
 			read_configline(trapcfg);
 		if (pfd[PFD_SYNCFD].revents & (POLLIN|POLLHUP))
 			sync_recv();
+		if (pfd[PFD_GREYBACK].revents & (POLLIN|POLLHUP))
+			blackcheck(greyback[1]);
 	}
 	exit(1);
+}
+
+void
+blackcheck(int fd)
+{
+	struct sockaddr_storage ss;
+	ssize_t nread;
+	void *ia;
+	char ch;
+
+	/* Read sockaddr from greylister and look it up in the blacklists. */
+	nread = recv(fd, &ss, sizeof(ss), 0);
+	if (nread == -1) {
+		syslog(LOG_ERR, "%s: recv: %m", __func__);
+		return;
+	}
+	if (nread != sizeof(struct sockaddr_in) &&
+	    nread != sizeof(struct sockaddr_in6)) {
+		syslog(LOG_ERR, "%s: invalid size %zd", __func__, nread);
+		return;
+	}
+	if (ss.ss_family == AF_INET) {
+		ia = &((struct sockaddr_in *)&ss)->sin_addr;
+	} else if (ss.ss_family == AF_INET6) {
+		ia = &((struct sockaddr_in6 *)&ss)->sin6_addr;
+	} else {
+		syslog(LOG_ERR, "%s: bad family %d", __func__, ss.ss_family);
+		return;
+	}
+	ch = sdl_check(blacklists, ss.ss_family, ia) ? '1' : '0';
+
+	/* Send '1' for match or '0' for no match. */
+	if (send(fd, &ch, sizeof(ch), 0) == -1) {
+		syslog(LOG_ERR, "%s: send: %m", __func__);
+		return;
+	}
 }

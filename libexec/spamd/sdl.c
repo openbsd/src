@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.23 2017/10/17 13:52:10 millert Exp $ */
+/*	$OpenBSD: sdl.c,v 1.24 2017/10/18 17:31:01 millert Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Bob Beck.  All rights reserved.
@@ -428,6 +428,50 @@ sdl_lookup(struct sdlist *head, int af, void *src)
 		return (sdl_lookup_v6(head, src));
 	default:
 		return (NULL);
+	}
+}
+
+static int
+sdl_check_v4(struct sdlist *sdl, struct in_addr *src)
+{
+	while (sdl->tag != NULL) {
+		if (bsearch(src, sdl->v4.addrs, sdl->v4.naddrs,
+		    sizeof(struct sdentry_v4), match_addr_v4) != NULL)
+			return (1);
+		sdl++;
+	}
+	return (0);
+}
+
+static int
+sdl_check_v6(struct sdlist *sdl, struct sdaddr_v6 *src)
+{
+	while (sdl->tag != NULL) {
+		if (bsearch(src, sdl->v6.addrs, sdl->v6.naddrs,
+		    sizeof(struct sdentry_v6), match_addr_v6) != NULL)
+			return (1);
+		sdl++;
+	}
+	return (0);
+}
+
+/*
+ * Given an address and address family
+ * returns 1 if address is on a blacklist, else 0.
+ */
+int
+sdl_check(struct sdlist *head, int af, void *src)
+{
+	if (head == NULL)
+		return (0);
+
+	switch (af) {
+	case AF_INET:
+		return (sdl_check_v4(head, src));
+	case AF_INET6:
+		return (sdl_check_v6(head, src));
+	default:
+		return (0);
 	}
 }
 
