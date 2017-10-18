@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.4 2017/10/18 12:52:06 mikeb Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.5 2017/10/18 15:26:05 mikeb Exp $	*/
 /*
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2017 Adam Steen <adam@adamsteen.com.au>
@@ -208,8 +208,7 @@ tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 	    !(ci->ci_flags & CPUF_INVAR_TSC))
 		return;
 
-	if ((tsc_frequency = tsc_freq_cpuid(ci)) == 0)
-		tsc_frequency = cpufreq;
+	tsc_frequency = tsc_freq_cpuid(ci);
 	tsc_is_invariant = 1;
 
 	/* Newer CPUs don't require recalibration */
@@ -218,6 +217,7 @@ tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 		tsc_timecounter.tc_quality = 2000;
 	} else {
 		tsc_recalibrate = 1;
+		tsc_frequency = cpufreq;
 		calibrate_tsc_freq();
 	}
 
