@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.11 2017/10/18 19:59:37 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.12 2017/10/18 20:24:20 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -623,10 +623,6 @@ bwfm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = tsleep(&ic->ic_scan_lock, PCATCH, "80211scan",
 		    hz * IEEE80211_SCAN_TIMEOUT);
 		break;
-	case SIOCS80211WPAPARMS:
-	case SIOCG80211WPAPARMS:
-		error = ieee80211_ioctl(ifp, cmd, data);
-		break;
 	case SIOCS80211WPAPSK:
 		if ((error = suser(curproc, 0)) != 0)
 			break;
@@ -654,6 +650,12 @@ bwfm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else
 			psk->i_enabled = 0;
 		break;
+	case SIOCG80211ALLCHANS:
+	case SIOCG80211STATS:
+	case SIOCS80211WPAPARMS:
+	case SIOCG80211WPAPARMS:
+		error = ieee80211_ioctl(ifp, cmd, data);
+		break;
 	case SIOCS80211NWKEY:
 	case SIOCG80211NWKEY:
 	case SIOCS80211WMMPARMS:
@@ -666,8 +668,6 @@ bwfm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCG80211BSSID:
 	case SIOCS80211CHANNEL:
 	case SIOCG80211CHANNEL:
-	case SIOCG80211ALLCHANS:
-	case SIOCG80211STATS:
 	case SIOCS80211TXPOWER:
 	case SIOCG80211TXPOWER:
 	case SIOCS80211DELNODE:
