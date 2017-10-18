@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.8 2017/10/18 12:58:45 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.9 2017/10/18 13:00:27 mpi Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -519,14 +519,6 @@ bwfm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
-	case SIOCSIFMTU:
-		ifr = (struct ifreq *)data;
-		if (!(IEEE80211_MTU_MIN <= ifr->ifr_mtu &&
-		    ifr->ifr_mtu <= IEEE80211_MTU_MAX))
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCG80211ALLNODES:
 		na = (struct ieee80211_nodereq_all *)data;
