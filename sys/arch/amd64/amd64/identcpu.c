@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.89 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.90 2017/10/18 12:52:06 mikeb Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 void	replacesmap(void);
 uint64_t cpu_freq(struct cpu_info *);
-void	tsc_timecounter_init(struct cpu_info *);
+void	tsc_timecounter_init(struct cpu_info *, uint64_t);
 #if NVMM > 0
 void	cpu_check_vmm_cap(struct cpu_info *);
 #endif /* NVMM > 0 */
@@ -676,7 +676,7 @@ identifycpu(struct cpu_info *ci)
 #endif
 	}
 
-	tsc_timecounter_init(ci);
+	tsc_timecounter_init(ci, freq);
 
 	cpu_topology(ci);
 #if NVMM > 0
