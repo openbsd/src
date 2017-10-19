@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.5 2017/10/18 15:26:05 mikeb Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.6 2017/10/19 22:09:49 mikeb Exp $	*/
 /*
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2017 Adam Steen <adam@adamsteen.com.au>
@@ -218,6 +218,7 @@ tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 	} else {
 		tsc_recalibrate = 1;
 		tsc_frequency = cpufreq;
+		tsc_timecounter.tc_frequency = cpufreq;
 		calibrate_tsc_freq();
 	}
 
