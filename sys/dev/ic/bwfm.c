@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.12 2017/10/18 20:24:20 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.13 2017/10/19 11:16:17 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -439,9 +439,11 @@ bwfm_init(struct ifnet *ifp)
 		free(params, M_TEMP, sizeof(*params));
 	}
 
-	/* XXX: added for testing only, remove */
+#if 0
+	/* TODO: set these on proper ioctl */
 	bwfm_fwvar_var_set_int(sc, "allmulti", 1);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PROMISC, 1);
+#endif
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
