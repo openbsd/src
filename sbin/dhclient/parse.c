@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.73 2017/10/14 15:31:46 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.74 2017/10/19 13:44:31 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -98,15 +98,6 @@ skip_to_semi(FILE *cfile)
 		} else if (token == '{') {
 			brace_count++;
 		} else if (token == ';' && brace_count == 0) {
-			token = next_token(NULL, cfile);
-			return;
-		} else if (token == '\n') {
-			/*
-			 * EOL only happens when parsing
-			 * /etc/resolv.conf, and we treat it like a
-			 * semicolon because the resolv.conf file is
-			 * line-oriented.
-			 */
 			token = next_token(NULL, cfile);
 			return;
 		}
