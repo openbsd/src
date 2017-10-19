@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.59 2017/08/30 17:15:36 jca Exp $	*/
+/*	$OpenBSD: misc.c,v 1.60 2017/10/19 07:54:05 jca Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -129,7 +129,6 @@ const struct option options[] = {
 	{ "csh-history",  0,		OF_ANY }, /* non-standard */
 #ifdef EMACS
 	{ "emacs",	  0,		OF_ANY },
-	{ "emacs-usemeta",  0,		OF_ANY }, /* XXX delete after 6.2 */
 #endif
 	{ "errexit",	'e',		OF_ANY },
 #ifdef EMACS
@@ -185,13 +184,8 @@ option(const char *n)
 	int i;
 
 	for (i = 0; i < NELEM(options); i++)
-		if (options[i].name && strcmp(options[i].name, n) == 0) {
-#ifdef EMACS
-			if (i == FEMACSUSEMETA)
-				warningf(true, "%s: deprecated option", n);
-#endif
+		if (options[i].name && strcmp(options[i].name, n) == 0)
 			return i;
-		}
 
 	return -1;
 }
@@ -232,10 +226,6 @@ printoptions(int verbose)
 		shprintf("Current option settings\n");
 
 		for (i = n = oi.opt_width = 0; i < NELEM(options); i++) {
-#ifdef EMACS
-			if (i == FEMACSUSEMETA)
-				continue;
-#endif
 			if (options[i].name) {
 				len = strlen(options[i].name);
 				oi.opts[n].name = options[i].name;
@@ -250,10 +240,6 @@ printoptions(int verbose)
 		/* short version ala ksh93 */
 		shprintf("set");
 		for (i = 0; i < NELEM(options); i++) {
-#ifdef EMACS
-			if (i == FEMACSUSEMETA)
-				continue;
-#endif
 			if (options[i].name)
 				shprintf(" %co %s",
 					 Flag(i) ? '-' : '+',
