@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.2 2017/10/15 14:55:13 patrick Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.3 2017/10/19 12:35:17 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -357,10 +357,11 @@ bwfm_usb_attachhook(struct device *self)
 		if (bwfm_usb_load_microcode(sc, ucode, size) != 0) {
 			printf("%s: could not load microcode\n",
 			    DEVNAME(sc));
+			free(ucode, M_DEVBUF, size);
 			return;
 		}
 
-		free(ucode, M_DEVBUF, 0);
+		free(ucode, M_DEVBUF, size);
 
 		for (i = 0; i < 10; i++) {
 			delay(100 * 1000);
