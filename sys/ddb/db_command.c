@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.78 2017/09/29 09:36:04 mpi Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.79 2017/10/19 16:58:05 bluhm Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -399,8 +399,10 @@ db_show_all_mounts(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	if (modif[0] == 'f')
 		full = TRUE;
 
-	TAILQ_FOREACH(mp, &mountlist, mnt_list)
+	TAILQ_FOREACH(mp, &mountlist, mnt_list) {
+		db_printf("mountpoint %p\n", mp);
 		vfs_mount_print(mp, full, db_printf);
+	}
 }
 
 extern struct pool vnode_pool;
