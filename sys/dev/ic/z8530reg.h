@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530reg.h,v 1.7 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: z8530reg.h,v 1.8 2017/10/19 19:07:48 jmc Exp $	*/
 /*	$NetBSD: z8530reg.h,v 1.12 2005/12/11 12:21:29 christos Exp $ */
 
 /*
@@ -244,7 +244,7 @@
 
 /*
  * Bits in Write Register 7' (ZSWR_ENHANCED above). This register is
- * only available on the 85230. Dispite the fact it contains flags
+ * only available on the 85230. Despite the fact it contains flags
  * and not a single value, the register was named as it is read
  * via RR14. Weird.
  */
