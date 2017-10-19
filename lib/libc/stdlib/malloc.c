@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.234 2017/10/05 04:44:49 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.235 2017/10/19 16:34:33 jsing Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1458,6 +1458,7 @@ freezero(void *ptr, size_t sz)
 
 	if (!mopts.internal_funcs) {
 		freezero_p(ptr, sz);
+		return;
 	}
 
 	d = getpool();
