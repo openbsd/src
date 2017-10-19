@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.231 2017/06/23 11:18:12 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.232 2017/10/19 11:02:42 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -134,6 +134,7 @@ struct	pkthdr {
 	u_int			 ph_rtableid;	/* routing table id */
 	u_int			 ph_ifidx;	/* rcv interface index */
 	u_int8_t		 ph_loopcnt;	/* mbuf is looping in kernel */
+	u_int8_t		 ph_family;	/* af, used when queueing */
 	struct pkthdr_pf	 pf;
 };
 
