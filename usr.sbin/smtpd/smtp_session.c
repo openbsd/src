@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.312 2017/09/08 16:51:22 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.313 2017/10/19 19:50:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -999,8 +999,6 @@ smtp_message_fd(struct smtp_session *s, int fd)
 		smtp_enter_state(s, STATE_QUIT);
 		return;
 	}
-
-	s->tx->odatalen = 0;
 
 	smtp_message_printf(s, "Received: ");
 	if (!(s->listener->flags & F_MASK_SOURCE)) {
