@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.3 2017/10/19 12:35:17 patrick Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.4 2017/10/19 21:23:47 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -429,21 +429,20 @@ bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	hdr = (void *)data->buf;
 	if (len < sizeof(*hdr))
-		return;
+		goto resubmit;
 	len -= sizeof(*hdr);
 	off += sizeof(*hdr);
 	if (len < hdr->data_offset << 2)
-		return;
+		goto resubmit;
 	len -= hdr->data_offset << 2;
 	off += hdr->data_offset << 2;
 
 	bwfm_rx(&sc->sc_sc, &data->buf[off], len);
 
+resubmit:
 	usbd_setup_xfer(data->xfer, sc->sc_rx_pipeh, data, data->buf,
 	    BWFM_RXBUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
 	    bwfm_usb_rxeof);
-
-resubmit:
 	error = usbd_transfer(data->xfer);
 	if (error != 0 && error != USBD_IN_PROGRESS)
 		printf("%s: could not set up new transfer: %s\n",
