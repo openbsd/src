@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2017/03/23 12:59:32 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.18 2017/10/19 06:49:46 jsg Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -225,8 +225,8 @@ domain		: DOMAIN STRING {
 			if ((s = strdup($2)) == NULL)
 				err(EXIT_FAILURE, "strdup");
 			if (!domain_valid(s)) {
-				free(s);
 				yyerror("%s: bad domain syntax", s);
+				free(s);
 				YYERROR;
 			}
 			if ((domain = conf_new_domain(conf, s)) == NULL) {
@@ -336,6 +336,7 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 				err(EXIT_FAILURE, "strdup");
 			if (authority_find(conf, s) == NULL) {
 				yyerror("use: unknown authority");
+				free(s);
 				YYERROR;
 			}
 			domain->auth = s;
