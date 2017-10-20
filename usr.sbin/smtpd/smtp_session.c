@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.313 2017/10/19 19:50:32 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.314 2017/10/20 12:23:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -111,6 +111,7 @@ struct smtp_tx {
 	size_t			 destcount;
 	TAILQ_HEAD(, smtp_rcpt)	 rcpts;
 
+	time_t			 time;
 	int			 error;
 	size_t			 datain;
 	size_t			 odatalen;
@@ -581,7 +582,7 @@ header_missing_callback(const char *header, void *arg)
 		    generate_uid(), s->listener->hostname);
 
 	if (strcasecmp(header, "date") == 0)
-		smtp_message_printf(s, "Date: %s\n", time_to_text(time(NULL)));
+		smtp_message_printf(s, "Date: %s\n", time_to_text(s->tx->time));
 }
 
 static void
@@ -1038,7 +1039,7 @@ smtp_message_fd(struct smtp_session *s, int fd)
 		    s->tx->evp.rcpt.domain);
 	}
 
-	smtp_message_printf(s, ";\n\t%s\n", time_to_text(time(NULL)));
+	smtp_message_printf(s, ";\n\t%s\n", time_to_text(time(&s->tx->time)));
 
 	smtp_enter_state(s, STATE_BODY);
 	smtp_reply(s, "354 Enter mail, end with \".\""
