@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.44 2017/10/05 14:19:16 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.45 2017/10/20 14:55:12 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -79,9 +79,11 @@ static int ugflag;
 static char *tval;
 static char tokbuf[1500];
 
+static void eol(void);
+static void skip_to_eol(FILE *);
+
 static int get_char(FILE *);
 static int get_token(FILE *);
-static void skip_to_eol(FILE *);
 static int read_string(FILE *);
 static int read_num_or_name(int, FILE *);
 static int intern(char *, int);
@@ -109,23 +111,43 @@ new_parse(char *name)
 	tlname = name;
 }
 
+/*
+ * eol() increments the lexical line.
+ *
+ * It is split from get_char() because read_num_or_name() does *not*
+ * want the lexical line incremented when a '\n' ends the token assembly.
+ * Instead, it ungetc()'s the '\n' for the next token parse to deal with.
+ * Incrementing the lexical line in that case causes parse_warn() to
+ * generate messages that display a blank line instead of the offending
+ * token in context.
+ *
+ * Invoccations of get_char() wanting to increment the lexical line on '\n'
+ * must call eol().
+ */
+static void
+eol(void)
+{
+	if (cur_line == line1) {
+		cur_line = line2;
+		prev_line = line1;
+	} else {
+		cur_line = line1;
+		prev_line = line2;
+	}
+	line++;
+	lpos = 1;
+	cur_line[0] = 0;
+}
+
 static int
 get_char(FILE *cfile)
 {
-	int c = getc(cfile);
+	int c;
+
+	c = getc(cfile);
+
 	if (ugflag == 0) {
-		if (c == '\n') {
-			if (cur_line == line1) {
-				cur_line = line2;
-				prev_line = line1;
-			} else {
-				cur_line = line1;
-				prev_line = line2;
-			}
-			line++;
-			lpos = 1;
-			cur_line[0] = 0;
-		} else if (c != EOF) {
+		if (c != EOF && c != '\n') {
 			if ((unsigned int)lpos < sizeof(line1)) {
 				cur_line[lpos - 1] = c;
 				cur_line[lpos] = 0;
@@ -134,6 +156,7 @@ get_char(FILE *cfile)
 		}
 	} else
 		ugflag = 0;
+
 	return c;
 }
 
@@ -153,8 +176,11 @@ get_token(FILE *cfile)
 
 		c = get_char(cfile);
 
-		if (isascii(c) != 0 && isspace(c) != 0)
+		if (isascii(c) != 0 && isspace(c) != 0) {
+			if (c == '\n')
+				eol();
 			continue;
+		}
 		if (c == '#') {
 			skip_to_eol(cfile);
 			continue;
@@ -233,8 +259,10 @@ skip_to_eol(FILE *cfile)
 		c = get_char(cfile);
 		if (c == EOF)
 			return;
-		if (c == '\n')
+		if (c == '\n') {
+			eol();
 			return;
+		}
 	} while (1);
 }
 
@@ -250,6 +278,8 @@ read_string(FILE *cfile)
 	while ((c = get_char(cfile)) != EOF) {
 		if (c == '"' && bs == 0)
 			break;
+		if (c == '\n')
+			eol();
 
 		tokbuf[i++] = c;
 		if (bs != 0)
@@ -287,6 +317,7 @@ read_num_or_name(int c, FILE *cfile)
 		c = get_char(cfile);
 		if (isascii(c) == 0 || (c != '-' && c != '_' &&
 		    isalnum(c) == 0)) {
+			/* N.B.: Do not call eol()! '\n' is put back. */
 			ungetc(c, cfile);
 			ugflag = 1;
 			break;
