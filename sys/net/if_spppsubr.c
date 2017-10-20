@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.172 2017/08/15 06:08:52 florian Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.173 2017/10/20 09:35:09 mpi Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -863,12 +863,6 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			return (EINVAL);
 		}
 		ifp->if_mtu = ifr->ifr_mtu;
-		break;
-	case SIOCGIFMTU:
-		ifr->ifr_mtu = ifp->if_mtu;
-		break;
-	case SIOCGIFHARDMTU:
-		ifr->ifr_hardmtu = ifp->if_hardmtu;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.15 2017/08/11 21:24:19 mpi Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.16 2017/10/20 09:35:09 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -733,12 +733,6 @@ umb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		ifp->if_mtu = ifr->ifr_mtu;
-		break;
-	case SIOCGIFMTU:
-		ifr->ifr_mtu = ifp->if_mtu;
-		break;
-	case SIOCGIFHARDMTU:
-		ifr->ifr_hardmtu = ifp->if_hardmtu;
 		break;
 	case SIOCSIFADDR:
 	case SIOCAIFADDR:

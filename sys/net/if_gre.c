@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.87 2017/08/11 21:24:19 mpi Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.88 2017/10/20 09:35:09 mpi Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -455,12 +455,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		ifp->if_mtu = ifr->ifr_mtu;
-		break;
-	case SIOCGIFMTU:
-		ifr->ifr_mtu = sc->sc_if.if_mtu;
-		break;
-	case SIOCGIFHARDMTU:
-		ifr->ifr_hardmtu = sc->sc_if.if_hardmtu;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
