@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.212 2017/10/16 13:40:58 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.213 2017/10/20 09:38:17 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -489,8 +489,6 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		break;
 
 	default:
-		if (ifp->if_ioctl == NULL)
-			return (EOPNOTSUPP);
 		error = ((*ifp->if_ioctl)(ifp, cmd, data));
 		return (error);
 	}
@@ -1247,11 +1245,6 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp)
 		 */
 		in6m->in6m_refcnt++;
 	} else {
-		if (ifp->if_ioctl == NULL) {
-			*errorp = ENXIO; /* XXX: appropriate? */
-			return (NULL);
-		}
-
 		/*
 		 * New address; allocate a new multicast record
 		 * and link it into the interface's multicast list.

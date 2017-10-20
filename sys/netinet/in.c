@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.140 2017/08/11 19:53:02 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.141 2017/10/20 09:38:17 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -406,8 +406,6 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		break;
 
 	default:
-		if (ifp->if_ioctl == NULL)
-			return (EOPNOTSUPP);
 		error = ((*ifp->if_ioctl)(ifp, cmd, data));
 		return (error);
 	}
@@ -826,9 +824,6 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		 */
 		++inm->inm_refcnt;
 	} else {
-		if (ifp->if_ioctl == NULL)
-			return (NULL);
-
 		/*
 		 * New address; allocate a new multicast record
 		 * and link it into the interface's multicast list.
