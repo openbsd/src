@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.33 2017/09/22 14:04:13 krw Exp $
+.\" $OpenBSD: dhclient.8,v 1.34 2017/10/20 13:04:50 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" Enterprises.  To learn more about the Internet Software Consortium,
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
-.Dd $Mdocdate: September 22 2017 $
+.Dd $Mdocdate: October 20 2017 $
 .Dt DHCLIENT 8
 .Os
 .Sh NAME
@@ -118,7 +118,7 @@ will be the lease offered by the DHCP server;
 will be the modified lease bound to the interface.
 .It Fl l Ar file
 Specify an alternate location to
-.Pa /var/db/dhclient.leases. Ns Aq Ar IFNAME
+.Pa /var/db/dhclient.leases . Ns Aq Ar IFNAME
 for the leases file.
 .It Fl q
 Forces
@@ -198,7 +198,7 @@ In order to keep track of leases across system reboots and server
 restarts,
 .Nm
 keeps a list of leases it has been assigned in the
-.Pa /var/db/dhclient.leases. Ns Aq Ar IFNAME
+.Pa /var/db/dhclient.leases . Ns Aq Ar IFNAME
 file.
 .Ar IFNAME
 represents the network interface of the DHCP client
@@ -216,7 +216,7 @@ Old leases are kept around in case the DHCP server is unavailable when
 is first invoked (generally during the initial system boot
 process).
 In that event, old leases from the
-.Pa dhclient.leases. Ns Aq Ar IFNAME
+.Pa dhclient.leases . Ns Aq Ar IFNAME
 file which have not yet expired are tested, and if they are determined to
 be valid, they are used until either they expire or the DHCP server
 becomes available.
@@ -251,7 +251,7 @@ and obtaining a new lease.
 DHCP client configuration file
 .It Pa /etc/hostname.XXX
 interface-specific configuration files
-.It Pa /var/db/dhclient.leases. Ns Aq Ar IFNAME
+.It Pa /var/db/dhclient.leases . Ns Aq Ar IFNAME
 database of acquired leases
 .El
 .Sh SEE ALSO
@@ -298,6 +298,15 @@ database of acquired leases
 .%D December 2002
 .%R RFC 3442
 .%T The Classless Static Route Option for Dynamic Host Configuration Protocol (DHCP) version 4
+.Re
+.Pp
+.Rs
+.%A N. Swamy
+.%A G. Halwasia
+.%A P. Jhingram
+.%D January 2013
+.%R RFC 6842
+.%T Client Identifier Option in DHCP Server Replies
 .Re
 .Sh AUTHORS
 .An -nosplit
