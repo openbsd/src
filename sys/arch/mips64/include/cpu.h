@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.121 2017/09/02 15:56:29 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.122 2017/10/21 06:11:22 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -528,6 +528,18 @@ cp0_set_userlocal(void *value)
 	"	dmtc0	%0, $4, 2\n"
 	"	.set	pop\n"
 	: : "r" (value));
+}
+
+static inline u_long
+intr_disable(void)
+{
+	return disableintr();
+}
+
+static inline void
+intr_restore(u_long sr)
+{
+	setsr(sr);
 }
 
 /*
