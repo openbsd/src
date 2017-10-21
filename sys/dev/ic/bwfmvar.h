@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.2 2017/10/18 19:59:37 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.3 2017/10/21 20:43:20 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -106,6 +106,29 @@ struct bwfm_proto_ops {
 };
 extern struct bwfm_proto_ops bwfm_proto_bcdc_ops;
 
+struct bwfm_host_cmd {
+	void	 (*cb)(struct bwfm_softc *, void *);
+	uint8_t	 data[256];
+};
+
+struct bwfm_cmd_newstate {
+	enum ieee80211_state	 state;
+	int			 arg;
+};
+
+struct bwfm_cmd_key {
+	struct ieee80211_node	 *ni;
+	struct ieee80211_key	 *k;
+};
+
+struct bwfm_host_cmd_ring {
+#define BWFM_HOST_CMD_RING_COUNT	32
+	struct bwfm_host_cmd	 cmd[BWFM_HOST_CMD_RING_COUNT];
+	int			 cur;
+	int			 next;
+	int			 queued;
+};
+
 struct bwfm_softc {
 	struct device		 sc_dev;
 	struct ieee80211com	 sc_ic;
@@ -119,7 +142,12 @@ struct bwfm_softc {
 #define		BWFM_IO_TYPE_D11AC		2
 
 	int			 sc_tx_timer;
-	struct timeout		 sc_scan_timeout;
+
+	int			 (*sc_newstate)(struct ieee80211com *,
+				     enum ieee80211_state, int);
+	struct bwfm_host_cmd_ring sc_cmdq;
+	struct taskq		*sc_taskq;
+	struct task		 sc_task;
 };
 
 void bwfm_attach(struct bwfm_softc *);

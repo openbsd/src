@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.8 2017/10/18 19:18:07 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.9 2017/10/21 20:43:20 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -139,6 +139,13 @@
 #define BWFM_AUTH_OPEN				0
 #define BWFM_AUTH_SHARED_KEY			1
 #define BWFM_AUTH_AUTO				2
+#define BWFM_CRYPTO_ALGO_OFF			0
+#define BWFM_CRYPTO_ALGO_WEP1			1
+#define BWFM_CRYPTO_ALGO_TKIP			2
+#define BWFM_CRYPTO_ALGO_WEP128			3
+#define BWFM_CRYPTO_ALGO_AES_CCM		4
+#define BWFM_CRYPTO_ALGO_AES_RESERVED1		5
+#define BWFM_CRYPTO_ALGO_AES_RESERVED2		6
 #define BWFM_MFP_NONE				0
 #define BWFM_MFP_CAPABLE			1
 #define BWFM_MFP_REQUIRED			2
@@ -381,6 +388,27 @@ struct bwfm_ext_join_params {
 	struct bwfm_ssid ssid;
 	struct bwfm_join_scan_params scan;
 	struct bwfm_assoc_params assoc;
+};
+
+struct bwfm_wsec_key {
+	uint32_t index;
+	uint32_t len;
+	uint8_t data[32];
+	uint32_t pad_1[18];
+	uint32_t algo;
+	uint32_t flags;
+#define BWFM_WSEC_PRIMARY_KEY		(1 << 1)
+	uint32_t pad_2[3];
+	uint32_t iv_initialized;
+	uint32_t pad_3;
+	/* Rx IV */
+	struct {
+		uint32_t hi;
+		uint16_t lo;
+		uint16_t pad_4;
+	} rxiv;
+	uint32_t pad_5[2];
+	uint8_t ea[ETHER_ADDR_LEN];
 };
 
 struct bwfm_wsec_pmk {
