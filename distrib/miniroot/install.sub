@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1039 2017/10/11 09:02:31 tb Exp $
+#	$OpenBSD: install.sub,v 1.1040 2017/10/21 20:08:54 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1034,25 +1034,43 @@ v4_config() {
 	fi
 	_prompt="IPv4 address for $_if? (${_prompt}or 'none')"
 
-	ask_until "$_prompt" "$_addr"
-	case $resp in
-	none)	;;
-	dhcp)	if [[ ! -x /sbin/dhclient ]]; then
-			echo "DHCP not possible - no /sbin/dhclient."
+	while :; do
+		ask_until "$_prompt" "$_addr"
+		case $resp in
+		none)	return
+			;;
+		dhcp)	if [[ ! -x /sbin/dhclient ]]; then
+				echo "DHCP not possible - no /sbin/dhclient."
+				$AUTO && exit 1
+			else
+				dhcp_request $_if "$_name"
+				echo "dhcp" >>$_hn
+				return
+			fi
+			;;
+		*)	_addr=$resp
+			ifconfig $_if -group dhcp >/dev/null 2>&1
+			;;
+		esac
+
+		# Ask for the netmask if the user did not use CIDR notation.
+		if [[ $_addr == */* ]]; then
+			_mask=
 		else
-			dhcp_request $_if "$_name"
-			echo "dhcp" >>$_hn
+			ask_until "Netmask for $_if?" "${_mask:=255.255.255.0}"
+			_mask=$resp
 		fi
-		;;
-	*)	_addr=$resp
-		ask_until "Netmask for $_if?" "${_mask:=255.255.255.0}"
-		ifconfig $_if -group dhcp >/dev/null 2>&1
-		if ifconfig $_if inet $_addr netmask $resp up; then
-			add_hostent "$_addr" "$_name"
-			echo "inet $_addr $resp" >>$_hn
+
+		if ifconfig $_if inet $_addr ${_mask:+netmask $_mask} up; then
+			echo "inet $_addr $_mask" >>$_hn
+			add_hostent "${_addr%%/*}" "$_name"
+			break
+		else
+			_addr=
+			_mask=
+			$AUTO && exit 1
 		fi
-		;;
-	esac
+	done
 }
 
 # Obtain and output the inet6 information related to interface $1.
@@ -1112,24 +1130,47 @@ v6_config() {
 
 	ifconfig $_if inet6 >/dev/null 2>&1 && _prompt="or 'autoconf' "
 	_prompt="IPv6 address for $_if? (${_prompt}or 'none')"
-	ask_until "$_prompt" "${_addr:-none}"
 
-	case $resp in
-	none)	return
-		;;
-	autoconf)
-		ifconfig $_if inet6 >/dev/null 2>&1 ||
-			{ echo "No INET6 support."; return; }
-		ifconfig $_if inet6 autoconf && echo "inet6 autoconf" >>$_hn
-		return
-		;;
-	esac
+	while :; do
+		ask_until "$_prompt" "${_addr:-none}"
+		case $resp in
+		none)	return
+			;;
+		autoconf)
+			if ! ifconfig $_if inet6 >/dev/null 2>&1; then
+				echo "No INET6 support."
+				$AUTO && exit 1 || return
+			fi
+			if ifconfig $_if inet6 autoconf; then
+				echo "inet6 autoconf" >>$_hn
+				return
+			else
+				echo "inet6 autoconf failed."
+				$AUTO && exit 1 || return
+			fi
+			;;
+		*)	_addr=$resp
+			;;
+		esac
+	
+		# Ask for prefix lenght if the user did not use CIDR notation.
+		if [[ $_addr == */* ]]; then
+			_prefixlen=
+		else
+			ask_until "IPv6 prefix length for $_if?" "${_prefixlen:=64}"
+			_prefixlen=$resp
+		fi
 
-	_addr=$resp
-	ask_until "IPv6 prefix length for $_if?" "${_prefixlen:=64}"
-	ifconfig $_if inet6 $_addr prefixlen $resp up || return
-	echo "inet6 $_addr $resp" >>$_hn
-	add_hostent "$_addr" "$_name"
+		if ifconfig $_if inet6 $_addr ${_prefixlen:+prefixlen $_prefixlen} up; then
+			echo "inet6 $_addr $_prefixlen" >>$_hn
+			add_hostent "${_addr%%/*}" "$_name"
+			break
+		else
+			_addr=
+			_prefixlen=
+			$AUTO && exit 1
+		fi
+	done
 
 	v6_defroute $_if
 }
