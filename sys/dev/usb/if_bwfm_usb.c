@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.4 2017/10/19 21:23:47 patrick Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.5 2017/10/21 20:19:37 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -730,7 +730,9 @@ bwfm_usb_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 
 	hdr = (void *)&data->buf[len];
 	hdr->data_offset = 0;
+	hdr->priority = ieee80211_classify(&sc->sc_sc.sc_ic, m);
 	hdr->flags = BWFM_BCDC_FLAG_VER(BWFM_BCDC_FLAG_PROTO_VER);
+	hdr->flags2 = 0;
 	len += sizeof(*hdr);
 
 	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&data->buf[len]);
