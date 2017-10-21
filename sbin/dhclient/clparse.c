@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.145 2017/10/21 13:31:22 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.146 2017/10/21 14:40:13 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -67,7 +67,7 @@
 void			 parse_client_statement(FILE *, char *);
 int			 parse_hex_octets(FILE *, unsigned int *, uint8_t **);
 int			 parse_option_list(FILE *, int *, uint8_t *);
-void			 parse_interface_declaration(FILE *, char *);
+int			 parse_interface_declaration(FILE *, char *);
 int			 parse_client_lease_statement(FILE *, char *,
 	struct client_lease **);
 void			 parse_client_lease_declaration(FILE *,
@@ -279,7 +279,8 @@ parse_client_statement(FILE *cfile, char *name)
 			parse_semi(cfile);
 		break;
 	case TOK_INTERFACE:
-		parse_interface_declaration(cfile, name);
+		if (parse_interface_declaration(cfile, name) == 1)
+			;
 		break;
 	case TOK_LEASE:
 		if (parse_client_lease_statement(cfile, name, &lp) == 1)
@@ -451,7 +452,7 @@ parse_option_list(FILE *cfile, int *count, uint8_t *optlist)
  * interface-declaration :==
  *	INTERFACE string LBRACE client-declarations RBRACE
  */
-void
+int
 parse_interface_declaration(FILE *cfile, char *name)
 {
 	char	*val;
@@ -462,12 +463,12 @@ parse_interface_declaration(FILE *cfile, char *name)
 		parse_warn("expecting string.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return;
+		return 0;
 	}
 
 	if (strcmp(name, val) != 0) {
 		skip_to_semi(cfile);
-		return;
+		return 1;
 	}
 
 	token = next_token(&val, cfile);
@@ -475,20 +476,23 @@ parse_interface_declaration(FILE *cfile, char *name)
 		parse_warn("expecting '{'.");
 		if (token != ';')
 			skip_to_semi(cfile);
-		return;
+		return 0;
 	}
 
 	do {
 		token = peek_token(&val, cfile);
 		if (token == EOF) {
 			parse_warn("unterminated interface declaration.");
-			return;
+			return 0;
 		}
-		if (token == '}')
-			break;
+		if (token == '}') {
+			token = next_token(NULL, cfile);
+			return 1;
+		}
 		parse_client_statement(cfile, name);
 	} while (1);
-	token = next_token(&val, cfile);
+
+	return 0;
 }
 
 /*
