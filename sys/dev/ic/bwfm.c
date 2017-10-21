@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.13 2017/10/19 11:16:17 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.14 2017/10/21 20:43:03 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -61,7 +61,6 @@ void	 bwfm_stop(struct ifnet *);
 void	 bwfm_watchdog(struct ifnet *);
 int	 bwfm_ioctl(struct ifnet *, u_long, caddr_t);
 int	 bwfm_media_change(struct ifnet *);
-void	 bwfm_media_status(struct ifnet *, struct ifmediareq *);
 
 int	 bwfm_chip_attach(struct bwfm_softc *);
 int	 bwfm_chip_detach(struct bwfm_softc *, int);
@@ -93,8 +92,24 @@ int	 bwfm_fwvar_var_set_data(struct bwfm_softc *, char *, void *, size_t);
 int	 bwfm_fwvar_var_get_int(struct bwfm_softc *, char *, uint32_t *);
 int	 bwfm_fwvar_var_set_int(struct bwfm_softc *, char *, uint32_t);
 
+void	 bwfm_connect(struct bwfm_softc *);
 void	 bwfm_scan(struct bwfm_softc *);
-void	 bwfm_scan_timeout(void *);
+
+void	 bwfm_task(void *);
+void	 bwfm_do_async(struct bwfm_softc *,
+	     void (*)(struct bwfm_softc *, void *), void *, int);
+
+int	 bwfm_set_key(struct ieee80211com *, struct ieee80211_node *,
+	     struct ieee80211_key *);
+void	 bwfm_delete_key(struct ieee80211com *, struct ieee80211_node *,
+	     struct ieee80211_key *);
+int	 bwfm_send_mgmt(struct ieee80211com *, struct ieee80211_node *,
+	     int, int, int);
+int	 bwfm_newstate(struct ieee80211com *, enum ieee80211_state, int);
+
+void	 bwfm_set_key_cb(struct bwfm_softc *, void *);
+void	 bwfm_delete_key_cb(struct bwfm_softc *, void *);
+void	 bwfm_newstate_cb(struct bwfm_softc *, void *);
 
 void	 bwfm_rx(struct bwfm_softc *, char *, size_t);
 void	 bwfm_rx_event(struct bwfm_softc *, char *, size_t);
@@ -142,18 +157,19 @@ bwfm_attach(struct bwfm_softc *sc)
 	}
 	printf("%s: address %s\n", DEVNAME(sc), ether_sprintf(ic->ic_myaddr));
 
-	/*
-	 * This hardware is supposed to be run with wpa_supplicant, but since
-	 * we want to handle basic authentication in our stack, we _need_ to
-	 * rely on the firmware's handshake algorithm.  If it doesn't exist we
-	 * will have to think about something new.
-	 */
-	if (bwfm_fwvar_var_get_int(sc, "sup_wpa", &tmp)) {
-		printf("%s: no supplicant in firmware, bailing\n", DEVNAME(sc));
-		return;
-	}
+	/* Init host async commands ring. */
+	sc->sc_cmdq.cur = sc->sc_cmdq.next = sc->sc_cmdq.queued = 0;
+	sc->sc_taskq = taskq_create(DEVNAME(sc), 1, IPL_SOFTNET, 0);
+	task_set(&sc->sc_task, bwfm_task, sc);
 
-	ic->ic_caps = IEEE80211_C_RSN;	/* WPA/RSN */
+	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
+	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */
+	ic->ic_state = IEEE80211_S_INIT;
+
+	ic->ic_caps =
+	    IEEE80211_C_RSN | 	/* WPA/RSN */
+	    IEEE80211_C_SCANALL |	/* device scans all channels at once */
+	    IEEE80211_C_SCANALLBAND;	/* device scans all bands at once */
 
 	if (bwfm_fwvar_var_get_int(sc, "nmode", &nmode))
 		nmode = 0;
@@ -214,9 +230,6 @@ bwfm_attach(struct bwfm_softc *sc)
 	/* IBSS channel undefined for now. */
 	ic->ic_ibss_chan = &ic->ic_channels[0];
 
-	/* Init some net80211 stuff we abuse. */
-	ieee80211_node_attach(ifp);
-
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = bwfm_ioctl;
@@ -224,13 +237,16 @@ bwfm_attach(struct bwfm_softc *sc)
 	ifp->if_watchdog = bwfm_watchdog;
 	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 
-	ifmedia_init(&sc->sc_media, 0, bwfm_media_change, bwfm_media_status);
-	ifmedia_set(&sc->sc_media,
-	    IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0));
 	if_attach(ifp);
-	memcpy(((struct arpcom *)ifp)->ac_enaddr, ic->ic_myaddr,
-	    ETHER_ADDR_LEN);
-	ether_ifattach(ifp);
+	ieee80211_ifattach(ifp);
+
+	sc->sc_newstate = ic->ic_newstate;
+	ic->ic_newstate = bwfm_newstate;
+	ic->ic_send_mgmt = bwfm_send_mgmt;
+	ic->ic_set_key = bwfm_set_key;
+	ic->ic_delete_key = bwfm_delete_key;
+
+	ieee80211_media_init(ifp, bwfm_media_change, ieee80211_media_status);
 }
 
 int
@@ -238,7 +254,9 @@ bwfm_detach(struct bwfm_softc *sc, int flags)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	ether_ifdetach(ifp);
+	task_del(sc->sc_taskq, &sc->sc_task);
+	taskq_destroy(sc->sc_taskq);
+	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
 	return 0;
 }
@@ -290,9 +308,7 @@ void
 bwfm_init(struct ifnet *ifp)
 {
 	struct bwfm_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t evmask[BWFM_EVENT_MASK_LEN];
-	struct bwfm_ext_join_params *params;
 	struct bwfm_join_pref_params join_pref[2];
 
 	if (bwfm_fwvar_var_set_int(sc, "mpc", 1)) {
@@ -320,8 +336,10 @@ bwfm_init(struct ifnet *ifp)
 		return;
 	}
 	evmask[BWFM_E_IF / 8] |= 1 << (BWFM_E_IF % 8);
-	evmask[BWFM_E_ESCAN_RESULT / 8] |= 1 << (BWFM_E_ESCAN_RESULT % 8);
+	evmask[BWFM_E_LINK / 8] |= 1 << (BWFM_E_LINK % 8);
+	evmask[BWFM_E_ASSOC / 8] |= 1 << (BWFM_E_ASSOC % 8);
 	evmask[BWFM_E_SET_SSID / 8] |= 1 << (BWFM_E_SET_SSID % 8);
+	evmask[BWFM_E_ESCAN_RESULT / 8] |= 1 << (BWFM_E_ESCAN_RESULT % 8);
 	if (bwfm_fwvar_var_set_data(sc, "event_msgs", evmask, sizeof(evmask))) {
 		printf("%s: could not set event mask\n", DEVNAME(sc));
 		return;
@@ -360,84 +378,11 @@ bwfm_init(struct ifnet *ifp)
 	bwfm_fwvar_var_set_int(sc, "toe", 0);
 
 	/*
-	 * Use the firmware supplicant to handle the WPA handshake.
-	 * As long as we're still figuring things out this is ok, but
-	 * it would be better to handle the handshake in our stack.
+	 * The firmware supplicant can handle the WPA handshake for
+	 * us, but we honestly want to do this ourselves, so disable
+	 * the firmware supplicant and let our stack handle it.
 	 */
-	bwfm_fwvar_var_set_int(sc, "sup_wpa", 1);
-
-	/*
-	 * OPEN: Open or WPA/WPA2 on newer Chips/Firmware.
-	 * SHARED KEY: WEP.
-	 * AUTO: Automatic, probably for older Chips/Firmware.
-	 */
-	if (ic->ic_flags & IEEE80211_F_PSK) {
-		struct bwfm_wsec_pmk pmk;
-		uint32_t wsec = 0;
-		uint32_t wpa = 0;
-		int i;
-
-		pmk.key_len = htole16(sizeof(ic->ic_psk) << 1);
-		pmk.flags = htole16(BWFM_WSEC_PASSPHRASE);
-		for (i = 0; i < 32; i++)
-			snprintf(&pmk.key[2 * i], 3, "%02x",
-			    ic->ic_psk[i]);
-		bwfm_fwvar_cmd_set_data(sc, BWFM_C_SET_WSEC_PMK, &pmk,
-		    sizeof(pmk));
-
-		if (ic->ic_rsnprotos & IEEE80211_PROTO_WPA) {
-			if (ic->ic_rsnakms & IEEE80211_AKM_PSK)
-				wpa |= BWFM_WPA_AUTH_WPA_PSK;
-			if (ic->ic_rsnakms & IEEE80211_AKM_8021X)
-				wpa |= BWFM_WPA_AUTH_WPA_UNSPECIFIED;
-		}
-		if (ic->ic_rsnprotos & IEEE80211_PROTO_RSN) {
-			if (ic->ic_rsnakms & IEEE80211_AKM_PSK)
-				wpa |= BWFM_WPA_AUTH_WPA2_PSK;
-			if (ic->ic_rsnakms & IEEE80211_AKM_SHA256_PSK)
-				wpa |= BWFM_WPA_AUTH_WPA2_PSK_SHA256;
-			if (ic->ic_rsnakms & IEEE80211_AKM_8021X)
-				wpa |= BWFM_WPA_AUTH_WPA2_UNSPECIFIED;
-			if (ic->ic_rsnakms & IEEE80211_AKM_SHA256_8021X)
-				wpa |= BWFM_WPA_AUTH_WPA2_1X_SHA256;
-		}
-		if (ic->ic_rsnciphers & IEEE80211_WPA_CIPHER_TKIP ||
-		    ic->ic_rsngroupcipher & IEEE80211_WPA_CIPHER_TKIP)
-			wsec |= BWFM_WSEC_TKIP;
-		if (ic->ic_rsnciphers & IEEE80211_WPA_CIPHER_CCMP ||
-		    ic->ic_rsngroupcipher & IEEE80211_WPA_CIPHER_CCMP)
-			wsec |= BWFM_WSEC_AES;
-
-		bwfm_fwvar_var_set_int(sc, "wpa_auth", wpa);
-		bwfm_fwvar_var_set_int(sc, "wsec", wsec);
-	} else {
-		bwfm_fwvar_var_set_int(sc, "wpa_auth", BWFM_WPA_AUTH_DISABLED);
-		bwfm_fwvar_var_set_int(sc, "wsec", BWFM_WSEC_NONE);
-	}
-	bwfm_fwvar_var_set_int(sc, "auth", BWFM_AUTH_OPEN);
-	bwfm_fwvar_var_set_int(sc, "mfp", BWFM_MFP_NONE);
-
-	if (ic->ic_des_esslen && ic->ic_des_esslen < BWFM_MAX_SSID_LEN) {
-		params = malloc(sizeof(*params), M_TEMP, M_WAITOK | M_ZERO);
-		memcpy(params->ssid.ssid, ic->ic_des_essid, ic->ic_des_esslen);
-		params->ssid.len = htole32(ic->ic_des_esslen);
-		memset(params->assoc.bssid, 0xff, sizeof(params->assoc.bssid));
-		params->scan.scan_type = -1;
-		params->scan.nprobes = htole32(-1);
-		params->scan.active_time = htole32(-1);
-		params->scan.passive_time = htole32(-1);
-		params->scan.home_time = htole32(-1);
-		if (bwfm_fwvar_var_set_data(sc, "join", params, sizeof(*params))) {
-			struct bwfm_join_params join;
-			memset(&join, 0, sizeof(join));
-			memcpy(join.ssid.ssid, ic->ic_des_essid, ic->ic_des_esslen);
-			join.ssid.len = htole32(ic->ic_des_esslen);
-			memset(join.assoc.bssid, 0xff, sizeof(join.assoc.bssid));
-			bwfm_fwvar_cmd_set_data(sc, BWFM_C_SET_SSID, &join,
-			    sizeof(join));
-		}
-		free(params, M_TEMP, sizeof(*params));
-	}
+	bwfm_fwvar_var_set_int(sc, "sup_wpa", 0);
 
 #if 0
 	/* TODO: set these on proper ioctl */
@@ -447,6 +392,8 @@ bwfm_init(struct ifnet *ifp)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
+
+	ieee80211_begin_scan(ifp);
 }
 
 void
@@ -462,6 +409,8 @@ bwfm_stop(struct ifnet *ifp)
 
 	/* In case we were scanning, release the scan "lock". */
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
+
+	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_DOWN, 1);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, 0);
@@ -488,23 +437,13 @@ bwfm_watchdog(struct ifnet *ifp)
 int
 bwfm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct bwfm_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_nwid nwid;
-	struct ieee80211_wpapsk *psk;
-	struct ieee80211_nodereq *nr, nrbuf;
-	struct ieee80211_nodereq_all *na;
-	struct ieee80211_node *ni;
-	int s, i, error = 0;
-	uint32_t flags;
+	int s, error = 0;
 
 	s = splnet();
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		bwfm_init(ifp);
-		break;
+		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
@@ -514,167 +453,8 @@ bwfm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				bwfm_stop(ifp);
 		}
 		break;
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
-	case SIOCG80211ALLNODES:
-		na = (struct ieee80211_nodereq_all *)data;
-		na->na_nodes = i = 0;
-		ni = RBT_MIN(ieee80211_tree, &ic->ic_tree);
-		while (ni && na->na_size >=
-		    i + sizeof(struct ieee80211_nodereq)) {
-			ieee80211_node2req(ic, ni, &nrbuf);
-			error = copyout(&nrbuf, (caddr_t)na->na_node + i,
-			    sizeof(struct ieee80211_nodereq));
-			if (error)
-				break;
-			i += sizeof(struct ieee80211_nodereq);
-			na->na_nodes++;
-			ni = RBT_NEXT(ieee80211_tree, ni);
-		}
-		break;
-	case SIOCG80211FLAGS:
-		flags = ic->ic_flags;
-#ifndef IEEE80211_STA_ONLY
-		if (ic->ic_opmode != IEEE80211_M_HOSTAP)
-#endif
-			flags &= ~IEEE80211_F_HOSTAPMASK;
-		ifr->ifr_flags = flags >> IEEE80211_F_USERSHIFT;
-		break;
-	case SIOCS80211FLAGS:
-		if ((error = suser(curproc, 0)) != 0)
-			break;
-		flags = (u_int32_t)ifr->ifr_flags << IEEE80211_F_USERSHIFT;
-		if (
-#ifndef IEEE80211_STA_ONLY
-		    ic->ic_opmode != IEEE80211_M_HOSTAP &&
-#endif
-		    (flags & IEEE80211_F_HOSTAPMASK)) {
-			error = EINVAL;
-			break;
-		}
-		ic->ic_flags = (ic->ic_flags & ~IEEE80211_F_USERMASK) | flags;
-		error = ENETRESET;
-		break;
-	case SIOCG80211NODE:
-		nr = (struct ieee80211_nodereq *)data;
-		ni = ieee80211_find_node(ic, nr->nr_macaddr);
-		if (ni == NULL) {
-			error = ENOENT;
-			break;
-		}
-		ieee80211_node2req(ic, ni, nr);
-		break;
-	case SIOCS80211NODE:
-		if ((error = suser(curproc, 0)) != 0)
-			break;
-#ifndef IEEE80211_STA_ONLY
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-			error = EINVAL;
-			break;
-		}
-#endif
-		nr = (struct ieee80211_nodereq *)data;
-
-		ni = ieee80211_find_node(ic, nr->nr_macaddr);
-		if (ni == NULL)
-			ni = ieee80211_alloc_node(ic, nr->nr_macaddr);
-		if (ni == NULL) {
-			error = ENOENT;
-			break;
-		}
-
-		if (nr->nr_flags & IEEE80211_NODEREQ_COPY)
-			ieee80211_req2node(ic, nr, ni);
-		break;
-	case SIOCS80211NWID:
-		if ((error = suser(curproc, 0)) != 0)
-			break;
-		if ((error = copyin(ifr->ifr_data, &nwid, sizeof(nwid))) != 0)
-			break;
-		if (nwid.i_len > IEEE80211_NWID_LEN) {
-			error = EINVAL;
-			break;
-		}
-		memset(ic->ic_des_essid, 0, IEEE80211_NWID_LEN);
-		ic->ic_des_esslen = nwid.i_len;
-		memcpy(ic->ic_des_essid, nwid.i_nwid, nwid.i_len);
-		error = ENETRESET;
-		break;
-	case SIOCG80211NWID:
-		memset(&nwid, 0, sizeof(nwid));
-		nwid.i_len = ic->ic_des_esslen;
-		memcpy(nwid.i_nwid, ic->ic_des_essid, nwid.i_len);
-		error = copyout(&nwid, ifr->ifr_data, sizeof(nwid));
-		break;
-	case SIOCS80211SCAN:
-		if ((error = suser(curproc, 0)) != 0)
-			break;
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
-			break;
-		if (ic->ic_scan_lock == IEEE80211_SCAN_UNLOCKED) {
-			ieee80211_clean_cached(ic);
-			bwfm_scan(sc);
-			timeout_set(&sc->sc_scan_timeout,
-			    bwfm_scan_timeout, sc);
-			timeout_add_msec(&sc->sc_scan_timeout,
-			    10000);
-		}
-		/* Let the userspace process wait for completion */
-		error = tsleep(&ic->ic_scan_lock, PCATCH, "80211scan",
-		    hz * IEEE80211_SCAN_TIMEOUT);
-		break;
-	case SIOCS80211WPAPSK:
-		if ((error = suser(curproc, 0)) != 0)
-			break;
-		psk = (struct ieee80211_wpapsk *)data;
-		if (psk->i_enabled) {
-			ic->ic_flags |= IEEE80211_F_PSK;
-			memcpy(ic->ic_psk, psk->i_psk, sizeof(ic->ic_psk));
-		} else {
-			ic->ic_flags &= ~IEEE80211_F_PSK;
-			memset(ic->ic_psk, 0, sizeof(ic->ic_psk));
-		}
-		error = ENETRESET;
-		break;
-	case SIOCG80211WPAPSK:
-		psk = (struct ieee80211_wpapsk *)data;
-		if (ic->ic_flags & IEEE80211_F_PSK) {
-			psk->i_enabled = 1;
-			/* do not show any keys to non-root user */
-			if (suser(curproc, 0) != 0) {
-				psk->i_enabled = 2;
-				memset(psk->i_psk, 0, sizeof(psk->i_psk));
-				break;  /* return ok but w/o key */
-			}
-			memcpy(psk->i_psk, ic->ic_psk, sizeof(psk->i_psk));
-		} else
-			psk->i_enabled = 0;
-		break;
-	case SIOCG80211ALLCHANS:
-	case SIOCG80211STATS:
-	case SIOCS80211WPAPARMS:
-	case SIOCG80211WPAPARMS:
-		error = ieee80211_ioctl(ifp, cmd, data);
-		break;
-	case SIOCS80211NWKEY:
-	case SIOCG80211NWKEY:
-	case SIOCS80211WMMPARMS:
-	case SIOCG80211WMMPARMS:
-	case SIOCS80211KEYAVAIL:
-	case SIOCS80211KEYRUN:
-	case SIOCS80211POWER:
-	case SIOCG80211POWER:
-	case SIOCS80211BSSID:
-	case SIOCG80211BSSID:
-	case SIOCS80211CHANNEL:
-	case SIOCG80211CHANNEL:
-	case SIOCS80211TXPOWER:
-	case SIOCG80211TXPOWER:
-	case SIOCS80211DELNODE:
 	default:
-		error = ether_ioctl(ifp, &sc->sc_ic.ic_ac, cmd, data);
+		error = ieee80211_ioctl(ifp, cmd, data);
 	}
 	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
@@ -691,12 +471,18 @@ bwfm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 int
 bwfm_media_change(struct ifnet *ifp)
 {
-	return 0;
-}
+	int error;
 
-void
-bwfm_media_status(struct ifnet *ifp, struct ifmediareq *imr)
-{
+	error = ieee80211_media_change(ifp);
+	if (error != ENETRESET)
+		return error;
+
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+	    (IFF_UP | IFF_RUNNING)) {
+		bwfm_stop(ifp);
+		bwfm_init(ifp);
+	}
+	return 0;
 }
 
 /* Chip initialization (SDIO, PCIe) */
@@ -1273,14 +1059,90 @@ bwfm_fwvar_var_set_int(struct bwfm_softc *sc, char *name, uint32_t data)
 
 /* 802.11 code */
 void
-bwfm_scan(struct bwfm_softc *sc)
+bwfm_connect(struct bwfm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct bwfm_ext_join_params *params;
+	uint8_t buf[64];	/* XXX max WPA/RSN/WMM IE length */
+	uint8_t *frm;
+
+	/*
+	 * OPEN: Open or WPA/WPA2 on newer Chips/Firmware.
+	 * SHARED KEY: WEP.
+	 * AUTO: Automatic, probably for older Chips/Firmware.
+	 */
+	if (ic->ic_flags & IEEE80211_F_RSNON) {
+		uint32_t wsec = 0;
+		uint32_t wpa = 0;
+
+		/* tell firmware to add WPA/RSN IE to (re)assoc request */
+		if (ic->ic_bss->ni_rsnprotos == IEEE80211_PROTO_RSN)
+			frm = ieee80211_add_rsn(buf, ic, ic->ic_bss);
+		else
+			frm = ieee80211_add_wpa(buf, ic, ic->ic_bss);
+		bwfm_fwvar_var_set_data(sc, "wpaie", buf, frm - buf);
+
+		if (ic->ic_rsnprotos & IEEE80211_PROTO_WPA) {
+			if (ic->ic_rsnakms & IEEE80211_AKM_PSK)
+				wpa |= BWFM_WPA_AUTH_WPA_PSK;
+			if (ic->ic_rsnakms & IEEE80211_AKM_8021X)
+				wpa |= BWFM_WPA_AUTH_WPA_UNSPECIFIED;
+		}
+		if (ic->ic_rsnprotos & IEEE80211_PROTO_RSN) {
+			if (ic->ic_rsnakms & IEEE80211_AKM_PSK)
+				wpa |= BWFM_WPA_AUTH_WPA2_PSK;
+			if (ic->ic_rsnakms & IEEE80211_AKM_SHA256_PSK)
+				wpa |= BWFM_WPA_AUTH_WPA2_PSK_SHA256;
+			if (ic->ic_rsnakms & IEEE80211_AKM_8021X)
+				wpa |= BWFM_WPA_AUTH_WPA2_UNSPECIFIED;
+			if (ic->ic_rsnakms & IEEE80211_AKM_SHA256_8021X)
+				wpa |= BWFM_WPA_AUTH_WPA2_1X_SHA256;
+		}
+		if (ic->ic_rsnciphers & IEEE80211_WPA_CIPHER_TKIP ||
+		    ic->ic_rsngroupcipher & IEEE80211_WPA_CIPHER_TKIP)
+			wsec |= BWFM_WSEC_TKIP;
+		if (ic->ic_rsnciphers & IEEE80211_WPA_CIPHER_CCMP ||
+		    ic->ic_rsngroupcipher & IEEE80211_WPA_CIPHER_CCMP)
+			wsec |= BWFM_WSEC_AES;
+
+		bwfm_fwvar_var_set_int(sc, "wpa_auth", wpa);
+		bwfm_fwvar_var_set_int(sc, "wsec", wsec);
+	} else {
+		bwfm_fwvar_var_set_int(sc, "wpa_auth", BWFM_WPA_AUTH_DISABLED);
+		bwfm_fwvar_var_set_int(sc, "wsec", BWFM_WSEC_NONE);
+	}
+	bwfm_fwvar_var_set_int(sc, "auth", BWFM_AUTH_OPEN);
+	bwfm_fwvar_var_set_int(sc, "mfp", BWFM_MFP_NONE);
+
+	if (ic->ic_des_esslen && ic->ic_des_esslen < BWFM_MAX_SSID_LEN) {
+		params = malloc(sizeof(*params), M_TEMP, M_WAITOK | M_ZERO);
+		memcpy(params->ssid.ssid, ic->ic_des_essid, ic->ic_des_esslen);
+		params->ssid.len = htole32(ic->ic_des_esslen);
+		memset(params->assoc.bssid, 0xff, sizeof(params->assoc.bssid));
+		params->scan.scan_type = -1;
+		params->scan.nprobes = htole32(-1);
+		params->scan.active_time = htole32(-1);
+		params->scan.passive_time = htole32(-1);
+		params->scan.home_time = htole32(-1);
+		if (bwfm_fwvar_var_set_data(sc, "join", params, sizeof(*params))) {
+			struct bwfm_join_params join;
+			memset(&join, 0, sizeof(join));
+			memcpy(join.ssid.ssid, ic->ic_des_essid, ic->ic_des_esslen);
+			join.ssid.len = htole32(ic->ic_des_esslen);
+			memset(join.assoc.bssid, 0xff, sizeof(join.assoc.bssid));
+			bwfm_fwvar_cmd_set_data(sc, BWFM_C_SET_SSID, &join,
+			    sizeof(join));
+		}
+		free(params, M_TEMP, sizeof(*params));
+	}
+}
+
+void
+bwfm_scan(struct bwfm_softc *sc)
+{
 	struct bwfm_escan_params *params;
 	uint32_t nssid = 0, nchannel = 0;
 	size_t params_size;
-
-	ic->ic_scan_lock = IEEE80211_SCAN_LOCKED;
 
 #if 0
 	/* Active scan is used for scanning for an SSID */
@@ -1322,16 +1184,6 @@ bwfm_scan(struct bwfm_softc *sc)
 }
 
 void
-bwfm_scan_timeout(void *arg)
-{
-	struct bwfm_softc *sc = arg;
-	struct ieee80211com *ic = &sc->sc_ic;
-	DPRINTF(("%s: scan timeout\n", DEVNAME(sc)));
-	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
-	wakeup(&ic->ic_scan_lock);
-}
-
-void
 bwfm_rx(struct bwfm_softc *sc, char *buf, size_t len)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1340,8 +1192,6 @@ bwfm_rx(struct bwfm_softc *sc, char *buf, size_t len)
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	char *mb;
-
-	printf("%s: buf %p len %lu\n", __func__, buf, len);
 
 	if (len >= sizeof(e->ehdr) &&
 	    ntohs(e->ehdr.ether_type) == BWFM_ETHERTYPE_LINK_CTL &&
@@ -1365,15 +1215,26 @@ bwfm_rx(struct bwfm_softc *sc, char *buf, size_t len)
 	memcpy(mb, buf, len);
 	m->m_pkthdr.len = m->m_len = len;
 
-	ml_enqueue(&ml, m);
-	if_input(ifp, &ml);
+	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+	    len >= sizeof(e->ehdr) &&
+	    ntohs(e->ehdr.ether_type) == ETHERTYPE_PAE) {
+		ifp->if_ipackets++;
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+#endif
+		ieee80211_eapol_key_input(ic, m, ic->ic_bss);
+	} else {
+		ml_enqueue(&ml, m);
+		if_input(ifp, &ml);
+	}
 }
 
 void
 bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	//struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &ic->ic_if;
 	struct bwfm_event *e = (void *)buf;
 
 	if (ntohl(e->msg.event_type) >= BWFM_E_LAST)
@@ -1385,9 +1246,7 @@ bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
 		struct bwfm_bss_info *bss;
 		int i;
 		if (ntohl(e->msg.status) != BWFM_E_STATUS_PARTIAL) {
-			timeout_del(&sc->sc_scan_timeout);
-			ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
-			wakeup(&ic->ic_scan_lock);
+			ieee80211_end_scan(ifp);
 			break;
 		}
 		len -= sizeof(*e);
@@ -1410,6 +1269,25 @@ bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
 		}
 		break;
 		}
+	case BWFM_E_SET_SSID:
+		if (ntohl(e->msg.status) == BWFM_E_STATUS_SUCCESS)
+			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+		else
+			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		break;
+	case BWFM_E_ASSOC:
+		if (ntohl(e->msg.status) == BWFM_E_STATUS_SUCCESS)
+			ieee80211_new_state(ic, IEEE80211_S_ASSOC, -1);
+		else
+			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		break;
+	case BWFM_E_LINK:
+		if (ntohl(e->msg.status) == BWFM_E_STATUS_SUCCESS &&
+		    ntohl(e->msg.reason) == 0)
+			break;
+		/* Link status has changed */
+		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		break;
 	default:
 		printf("%s: buf %p len %lu datalen %u code %u status %u"
 		    " reason %u\n", __func__, buf, len, ntohl(e->msg.datalen),
@@ -1423,17 +1301,243 @@ void
 bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_rxinfo rxi;
+	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
-	int chan;
+	struct mbuf *m;
+	uint32_t pktlen, ieslen;
+	uint16_t iesoff;
 
-	ni = ieee80211_alloc_node(ic, bss->bssid);
-	IEEE80211_ADDR_COPY(ni->ni_macaddr, bss->bssid);
-	IEEE80211_ADDR_COPY(ni->ni_bssid, bss->bssid);
-	ni->ni_esslen = min(bss->ssid_len, sizeof(bss->ssid));
-	ni->ni_esslen = min(ni->ni_esslen, IEEE80211_NWID_LEN);
-	memcpy(ni->ni_essid, bss->ssid, ni->ni_esslen);
-	chan = (bss->chanspec >> BWFM_CHANSPEC_CHAN_SHIFT)
-	    & BWFM_CHANSPEC_CHAN_MASK;
-	ni->ni_chan = &ic->ic_channels[chan];
-	ni->ni_rssi = letoh32(bss->rssi);
+	iesoff = letoh16(bss->ie_offset);
+	ieslen = letoh32(bss->ie_length);
+	if (ieslen > len - iesoff)
+		return;
+
+	/* Build a fake beacon frame to let net80211 do all the parsing. */
+	pktlen = sizeof(*wh) + ieslen + 12;
+	if (__predict_false(pktlen > MCLBYTES))
+		return;
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (__predict_false(m == NULL))
+		return;
+	if (pktlen > MHLEN) {
+		MCLGET(m, M_DONTWAIT);
+		if (!(m->m_flags & M_EXT)) {
+			m_free(m);
+			return;
+		}
+	}
+	wh = mtod(m, struct ieee80211_frame *);
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
+	    IEEE80211_FC0_SUBTYPE_BEACON;
+	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	*(uint16_t *)wh->i_dur = 0;
+	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, bss->bssid);
+	IEEE80211_ADDR_COPY(wh->i_addr3, bss->bssid);
+	*(uint16_t *)wh->i_seq = 0;
+	memset(&wh[1], 0, 12);
+	((uint16_t *)(&wh[1]))[4] = bss->beacon_period;
+	((uint16_t *)(&wh[1]))[5] = bss->capability;
+	memcpy(((uint8_t *)&wh[1]) + 12, ((uint8_t *)bss) + iesoff, ieslen);
+
+	/* Finalize mbuf. */
+	m->m_pkthdr.len = m->m_len = pktlen;
+	ni = ieee80211_find_rxnode(ic, wh);
+	rxi.rxi_flags = 0;
+	rxi.rxi_rssi = letoh32(bss->rssi);
+	rxi.rxi_tstamp = 0;
+	ieee80211_input(ifp, m, ni, &rxi);
+	/* Node is no longer needed. */
+	ieee80211_release_node(ic, ni);
+}
+
+void
+bwfm_task(void *arg)
+{
+	struct bwfm_softc *sc = arg;
+	struct bwfm_host_cmd_ring *ring = &sc->sc_cmdq;
+	struct bwfm_host_cmd *cmd;
+	int s;
+
+	s = splsoftnet();
+	while (ring->next != ring->cur) {
+		cmd = &ring->cmd[ring->next];
+		splx(s);
+		cmd->cb(sc, cmd->data);
+		s = splsoftnet();
+		ring->queued--;
+		ring->next = (ring->next + 1) % BWFM_HOST_CMD_RING_COUNT;
+	}
+	splx(s);
+}
+
+void
+bwfm_do_async(struct bwfm_softc *sc,
+    void (*cb)(struct bwfm_softc *, void *), void *arg, int len)
+{
+	struct bwfm_host_cmd_ring *ring = &sc->sc_cmdq;
+	struct bwfm_host_cmd *cmd;
+	int s;
+
+	s = splsoftnet();
+	cmd = &ring->cmd[ring->cur];
+	cmd->cb = cb;
+	KASSERT(len <= sizeof(cmd->data));
+	memcpy(cmd->data, arg, len);
+	ring->cur = (ring->cur + 1) % BWFM_HOST_CMD_RING_COUNT;
+	task_add(sc->sc_taskq, &sc->sc_task);
+	splx(s);
+}
+
+int
+bwfm_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
+    int type, int arg1, int arg2)
+{
+#ifdef BWFM_DEBUG
+	struct bwfm_softc *sc = ic->ic_softc;
+	DPRINTF(("%s: %s\n", DEVNAME(sc), __func__));
+#endif
+	return 0;
+}
+
+int
+bwfm_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct bwfm_softc *sc = ic->ic_softc;
+	struct bwfm_cmd_key cmd;
+
+	cmd.ni = ni;
+	cmd.k = k;
+	bwfm_do_async(sc, bwfm_set_key_cb, &cmd, sizeof(cmd));
+	return 0;
+}
+
+void
+bwfm_set_key_cb(struct bwfm_softc *sc, void *arg)
+{
+	struct bwfm_cmd_key *cmd = arg;
+	struct ieee80211_key *k = cmd->k;
+	struct ieee80211_node *ni = cmd->ni;
+	struct bwfm_wsec_key key;
+	uint32_t wsec, wsec_enable;
+	int ext_key = 0;
+
+	if ((k->k_flags & IEEE80211_KEY_GROUP) == 0 &&
+	    k->k_cipher != IEEE80211_CIPHER_WEP40 &&
+	    k->k_cipher != IEEE80211_CIPHER_WEP104)
+		ext_key = 1;
+
+	memset(&key, 0, sizeof(key));
+	if (ext_key && !IEEE80211_IS_MULTICAST(ni->ni_bssid))
+		memcpy(key.ea, ni->ni_bssid, sizeof(key.ea));
+	key.index = htole32(k->k_id);
+	key.len = htole32(k->k_len);
+	memcpy(key.data, k->k_key, sizeof(key.data));
+	if (!ext_key)
+		key.flags = htole32(BWFM_WSEC_PRIMARY_KEY);
+
+	switch (k->k_cipher) {
+	case IEEE80211_CIPHER_WEP40:
+		key.algo = htole32(BWFM_CRYPTO_ALGO_WEP1);
+		wsec_enable = BWFM_WSEC_WEP;
+		break;
+	case IEEE80211_CIPHER_WEP104:
+		key.algo = htole32(BWFM_CRYPTO_ALGO_WEP128);
+		wsec_enable = BWFM_WSEC_WEP;
+		break;
+	case IEEE80211_CIPHER_TKIP:
+		key.algo = htole32(BWFM_CRYPTO_ALGO_TKIP);
+		wsec_enable = BWFM_WSEC_TKIP;
+		break;
+	case IEEE80211_CIPHER_CCMP:
+		key.algo = htole32(BWFM_CRYPTO_ALGO_AES_CCM);
+		wsec_enable = BWFM_WSEC_AES;
+		break;
+	default:
+		printf("%s: cipher %x not supported\n", DEVNAME(sc),
+		    k->k_cipher);
+		return;
+	}
+
+	bwfm_fwvar_var_set_data(sc, "wsec_key", &key, sizeof(key));
+	bwfm_fwvar_var_get_int(sc, "wsec", &wsec);
+	wsec |= wsec_enable;
+	bwfm_fwvar_var_set_int(sc, "wsec", wsec);
+}
+
+void
+bwfm_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct bwfm_softc *sc = ic->ic_softc;
+	struct bwfm_cmd_key cmd;
+
+	cmd.ni = ni;
+	cmd.k = k;
+	bwfm_do_async(sc, bwfm_delete_key_cb, &cmd, sizeof(cmd));
+}
+
+void
+bwfm_delete_key_cb(struct bwfm_softc *sc, void *arg)
+{
+	struct bwfm_cmd_key *cmd = arg;
+	struct ieee80211_key *k = cmd->k;
+	struct bwfm_wsec_key key;
+
+	memset(&key, 0, sizeof(key));
+	key.index = htole32(k->k_id);
+	key.flags = htole32(BWFM_WSEC_PRIMARY_KEY);
+	bwfm_fwvar_var_set_data(sc, "wsec_key", &key, sizeof(key));
+}
+
+int
+bwfm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
+{
+	struct bwfm_softc *sc = ic->ic_softc;
+	struct bwfm_cmd_newstate cmd;
+
+	cmd.state = nstate;
+	cmd.arg = arg;
+	bwfm_do_async(sc, bwfm_newstate_cb, &cmd, sizeof(cmd));
+	return 0;
+}
+
+void
+bwfm_newstate_cb(struct bwfm_softc *sc, void *arg)
+{
+	struct bwfm_cmd_newstate *cmd = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	enum ieee80211_state ostate, nstate;
+	int s;
+
+	s = splnet();
+	ostate = ic->ic_state;
+	nstate = cmd->state;
+	DPRINTF(("newstate %s -> %s\n",
+	    ieee80211_state_name[ostate],
+	    ieee80211_state_name[nstate]));
+
+	switch (nstate) {
+	case IEEE80211_S_SCAN:
+		bwfm_scan(sc);
+		ic->ic_state = nstate;
+		splx(s);
+		return;
+	case IEEE80211_S_AUTH:
+		ic->ic_bss->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
+		bwfm_connect(sc);
+		ic->ic_state = cmd->state;
+		if (ic->ic_flags & IEEE80211_F_RSNON)
+			ic->ic_bss->ni_rsn_supp_state = RSNA_SUPP_PTKSTART;
+		splx(s);
+		return;
+	default:
+		break;
+	}
+	sc->sc_newstate(ic, nstate, cmd->arg);
+	splx(s);
+	return;
 }
