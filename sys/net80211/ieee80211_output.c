@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.118 2017/02/02 16:47:53 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.119 2017/10/21 20:15:17 patrick Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -63,7 +63,6 @@
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_priv.h>
 
-int	ieee80211_classify(struct ieee80211com *, struct mbuf *);
 int	ieee80211_mgmt_output(struct ifnet *, struct ieee80211_node *,
 	    struct mbuf *, int);
 u_int8_t *ieee80211_add_rsn_body(u_int8_t *, struct ieee80211com *,
