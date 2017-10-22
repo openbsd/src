@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.248 2017/10/04 19:28:56 naddy Exp $
+#	$OpenBSD: GENERIC,v 1.249 2017/10/22 14:11:34 mikeb Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -45,7 +45,6 @@ option		FIFO		# FIFOs; RECOMMENDED
 option		FUSE		# FUSE
 
 option		SOCKET_SPLICE	# Socket Splicing for TCP and UDP
-option		TCP_SACK	# Selective Acknowledgements for TCP
 option		TCP_ECN		# Explicit Congestion Notification for TCP
 option		TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions
 #option		TCP_FACK	# Forward Acknowledgements for TCP

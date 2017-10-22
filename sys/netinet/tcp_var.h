@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.124 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.125 2017/10/22 14:11:34 mikeb Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -116,30 +116,24 @@ struct tcpcb {
 	tcp_seq	snd_wl2;		/* window update seg ack number */
 	tcp_seq	iss;			/* initial send sequence number */
 	u_long	snd_wnd;		/* send window */
-#if 1 /*def TCP_SACK*/
 	int	sack_enable;		/* enable SACK for this connection */
 	int	snd_numholes;		/* number of holes seen by sender */
 	struct sackhole *snd_holes;	/* linked list of holes (sorted) */
-#if 1 /*defined(TCP_SACK) && defined(TCP_FACK)*/
+#if 1 /*defined(TCP_FACK)*/
 	tcp_seq snd_fack;		/* for FACK congestion control */
 	u_long	snd_awnd;		/* snd_nxt - snd_fack + */
 					/* retransmitted data */
 	int retran_data;		/* amount of outstanding retx. data  */
 #endif /* TCP_FACK */
-#endif /* TCP_SACK */
-#if 1 /*defined(TCP_SACK) || defined(TCP_ECN)*/
 	tcp_seq snd_last;		/* for use in fast recovery */
-#endif
 /* receive sequence variables */
 	u_long	rcv_wnd;		/* receive window */
 	tcp_seq	rcv_nxt;		/* receive next */
 	tcp_seq	rcv_up;			/* receive urgent pointer */
 	tcp_seq	irs;			/* initial receive sequence number */
-#if 1 /*def TCP_SACK*/
 	tcp_seq rcv_lastsack;		/* last seq number(+1) sack'd by rcv'r*/
 	int	rcv_numsacks;		/* # distinct sack blks present */
 	struct sackblk sackblks[MAX_SACK_BLKS]; /* seq nos. of sack blocks */
-#endif
 
 /*
  * Additional variables for this implementation.
@@ -698,11 +692,9 @@ extern	int tcptv_keep_init;	/* time to keep alive the initial SYN packet */
 extern	int tcp_mssdflt;	/* default maximum segment size */
 extern	int tcp_rst_ppslim;	/* maximum outgoing RST packet per second */
 extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
-#ifdef TCP_SACK
 extern	int tcp_do_sack;	/* SACK enabled/disabled */
 extern	struct pool sackhl_pool;
 extern	int tcp_sackhole_limit;	/* max entries for tcp sack queues */
-#endif
 extern	int tcp_do_ecn;		/* RFC3168 ECN enabled/disabled? */
 extern	int tcp_do_rfc3390;	/* RFC3390 Increasing TCP's Initial Window */
 
@@ -767,7 +759,6 @@ int	 tcp_usrreq(struct socket *,
 int	 tcp_attach(struct socket *, int);
 void	 tcp_xmit_timer(struct tcpcb *, int);
 void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
-#ifdef TCP_SACK
 void	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);
 void	 tcp_update_sack_list(struct tcpcb *tp, tcp_seq, tcp_seq);
 void	 tcp_del_sackholes(struct tcpcb *, struct tcphdr *);
@@ -779,11 +770,8 @@ int	 tcp_sack_partialack(struct tcpcb *, struct tcphdr *);
 #ifdef DEBUG
 void	 tcp_print_holes(struct tcpcb *tp);
 #endif
-#endif /* TCP_SACK */
-#if defined(TCP_SACK)
 int	 tcp_newreno(struct tcpcb *, struct tcphdr *);
 u_long	 tcp_seq_subtract(u_long, u_long );
-#endif /* TCP_SACK */
 #ifdef TCP_SIGNATURE
 int	tcp_signature_apply(caddr_t, caddr_t, unsigned int);
 int	tcp_signature(struct tdb *, int, struct mbuf *, struct tcphdr *,

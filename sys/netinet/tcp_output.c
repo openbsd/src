@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.121 2017/06/26 09:32:32 mpi Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.122 2017/10/22 14:11:34 mikeb Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -96,11 +96,8 @@
 extern struct mbuf *m_copypack();
 #endif
 
-#ifdef TCP_SACK
 extern int tcprexmtthresh;
-#endif
 
-#ifdef TCP_SACK
 #ifdef TCP_SACK_DEBUG
 void tcp_print_holes(struct tcpcb *tp);
 
@@ -193,7 +190,6 @@ tcp_sack_adjust(struct tcpcb *tp)
 	tp->snd_nxt = tp->rcv_lastsack;
 	return;
 }
-#endif /* TCP_SACK */
 
 /*
  * Tcp output routine: figure out what should be sent and send it.
@@ -210,11 +206,9 @@ tcp_output(struct tcpcb *tp)
 	u_char *opt = (u_char *)optbuf;
 	unsigned int optlen, hdrlen, packetlen;
 	int idle, sendalot = 0;
-#ifdef TCP_SACK
 	int i, sack_rxmit = 0;
 	struct sackhole *p;
 	int maxburst = TCP_MAXBURST;
-#endif
 #ifdef TCP_SIGNATURE
 	unsigned int sigoff;
 #endif /* TCP_SIGNATURE */
@@ -228,10 +222,10 @@ tcp_output(struct tcpcb *tp)
 	} else
 		tp->t_flags &= ~TF_NEEDOUTPUT;
 
-#if defined(TCP_SACK) && defined(TCP_SIGNATURE) && defined(DIAGNOSTIC)
+#if defined(TCP_SIGNATURE) && defined(DIAGNOSTIC)
 	if (tp->sack_enable && (tp->t_flags & TF_SIGNATURE))
 		return (EINVAL);
-#endif /* defined(TCP_SACK) && defined(TCP_SIGNATURE) && defined(DIAGNOSTIC) */
+#endif /* defined(TCP_SIGNATURE) && defined(DIAGNOSTIC) */
 
 	/*
 	 * Determine length of data that should be transmitted,
@@ -256,7 +250,6 @@ tcp_output(struct tcpcb *tp)
 		tp->t_flags &= ~TF_LASTIDLE;
 
 again:
-#ifdef TCP_SACK
 	/*
 	 * If we've recently taken a timeout, snd_max will be greater than
 	 * snd_nxt.  There may be SACK information that allows us to avoid
@@ -264,9 +257,8 @@ again:
 	 */
 	if (tp->sack_enable && SEQ_LT(tp->snd_nxt, tp->snd_max))
 		tcp_sack_adjust(tp);
-#endif
 	off = tp->snd_nxt - tp->snd_una;
-#if defined(TCP_SACK) && defined(TCP_FACK)
+#ifdef TCP_FACK
 	/* Normally, sendable data is limited by off < tp->snd_cwnd.
 	 * But in FACK, sendable data is limited by snd_awnd < snd_cwnd,
 	 * regardless of offset.
@@ -279,7 +271,6 @@ again:
 
 	flags = tcp_outflags[tp->t_state];
 
-#ifdef TCP_SACK
 	/*
 	 * Send any SACK-generated retransmissions.  If we're explicitly trying
 	 * to send out new data (when sendalot is 1), bypass this function.
@@ -301,7 +292,6 @@ again:
 #endif
 		}
 	}
-#endif /* TCP_SACK */
 
 	sendalot = 0;
 	/*
@@ -337,24 +327,20 @@ again:
 		}
 	}
 
-#ifdef TCP_SACK
 	if (!sack_rxmit) {
-#endif
-	len = ulmin(so->so_snd.sb_cc, win) - off;
+		len = ulmin(so->so_snd.sb_cc, win) - off;
 
-#if defined(TCP_SACK) && defined(TCP_FACK)
-	/*
-	 * If we're in fast recovery (SEQ_GT(tp->snd_last, tp->snd_una)), and
-	 * amount of outstanding data (snd_awnd) is >= snd_cwnd, then
-	 * do not send data (like zero window conditions)
-	 */
-	if (tp->sack_enable && len && SEQ_GT(tp->snd_last, tp->snd_una) &&
-	    (tp->snd_awnd >= tp->snd_cwnd))
-		len = 0;
+#ifdef TCP_FACK
+		/*
+		 * If we're in fast recovery (SEQ_GT(tp->snd_last, tp->snd_una)),
+		 * and amount of outstanding data (snd_awnd) is >= snd_cwnd, then
+		 * do not send data (like zero window conditions)
+		 */
+		if (tp->sack_enable && SEQ_GT(tp->snd_last, tp->snd_una) &&
+		    len && (tp->snd_awnd >= tp->snd_cwnd))
+			len = 0;
 #endif /* TCP_FACK */
-#ifdef TCP_SACK
 	}
-#endif
 
 	if (len < 0) {
 		/*
@@ -417,10 +403,8 @@ again:
 			goto send;
 		if (SEQ_LT(tp->snd_nxt, tp->snd_max))
 			goto send;
-#ifdef TCP_SACK
 		if (sack_rxmit)
 			goto send;
-#endif
 	}
 
 	/*
@@ -462,7 +446,6 @@ again:
 	if (flags & TH_FIN &&
 	    ((tp->t_flags & TF_SENTFIN) == 0 || tp->snd_nxt == tp->snd_una))
 		goto send;
-#ifdef TCP_SACK
 	/*
 	 * In SACK, it is possible for tcp_output to fail to send a segment
 	 * after the retransmission timer has been turned off.  Make sure
@@ -474,7 +457,6 @@ again:
 		TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 		return (0);
 	}
-#endif /* TCP_SACK */
 
 	/*
 	 * TCP window updates are not reliable, rather a polling protocol
@@ -548,7 +530,6 @@ send:
 
 			if (flags & TH_ACK)
 				tcp_mss_update(tp);
-#ifdef TCP_SACK
 			/*
 			 * If this is the first SYN of connection (not a SYN
 			 * ACK), include SACK_PERMIT_HDR option.  If this is a
@@ -561,8 +542,6 @@ send:
 				    htonl(TCPOPT_SACK_PERMIT_HDR);
 				optlen += 4;
 			}
-#endif
-
 			if ((tp->t_flags & TF_REQ_SCALE) &&
 			    ((flags & TH_ACK) == 0 ||
 			    (tp->t_flags & TF_RCVD_SCALE))) {
@@ -626,7 +605,6 @@ send:
 	}
 #endif /* TCP_SIGNATURE */
 
-#ifdef TCP_SACK
 	/*
 	 * Send SACKs if necessary.  This should be the last option processed.
 	 * Only as many SACKs are sent as are permitted by the maximum options
@@ -653,7 +631,6 @@ send:
 		*olp = htonl(TCPOPT_SACK_HDR|(TCPOLEN_SACK*count+2));
 		optlen += TCPOLEN_SACK*count + 4; /* including leading NOPs */
 	}
-#endif /* TCP_SACK */
 
 #ifdef DIAGNOSTIC
 	if (optlen > MAX_TCPOPTLEN)
@@ -807,7 +784,6 @@ send:
 	else
 		th->th_seq = htonl(tp->snd_max);
 
-#ifdef TCP_SACK
 	if (sack_rxmit) {
 		/*
 		 * If sendalot was turned on (due to option stuffing), turn it
@@ -818,12 +794,11 @@ send:
 			sendalot = 0;
 		th->th_seq = htonl(p->rxmit);
 		p->rxmit += len;
-#if defined(TCP_SACK) && defined(TCP_FACK)
+#ifdef TCP_FACK
 		tp->retran_data += len;
-#endif /* TCP_FACK */
+#endif
 		tcpstat_pkt(tcps_sack_rexmits, tcps_sack_rexmit_bytes, len);
 	}
-#endif /* TCP_SACK */
 
 	th->th_ack = htonl(tp->rcv_nxt);
 	if (optlen) {
@@ -962,13 +937,11 @@ send:
 				tp->t_flags |= TF_SENTFIN;
 			}
 		}
-#ifdef TCP_SACK
 		if (tp->sack_enable) {
 			if (sack_rxmit && (p->rxmit != tp->snd_nxt)) {
 				goto timer;
 			}
 		}
-#endif
 		tp->snd_nxt += len;
 		if (SEQ_GT(tp->snd_nxt, tp->snd_max)) {
 			tp->snd_max = tp->snd_nxt;
@@ -991,7 +964,6 @@ send:
 		 * Initialize shift counter which is used for backoff
 		 * of retransmit time.
 		 */
-#ifdef TCP_SACK
  timer:
 		if (tp->sack_enable && sack_rxmit &&
 		    TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 &&
@@ -1002,7 +974,6 @@ send:
 				tp->t_rxtshift = 0;
 			}
 		}
-#endif
 
 		if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 &&
 		    tp->snd_nxt != tp->snd_una) {
@@ -1125,11 +1096,11 @@ send:
 #endif /* INET6 */
 	}
 
-#if defined(TCP_SACK) && defined(TCP_FACK)
+#ifdef TCP_FACK
 	/* Update snd_awnd to reflect the new data that was sent.  */
 	tp->snd_awnd = tcp_seq_subtract(tp->snd_max, tp->snd_fack) +
 		tp->retran_data;
-#endif /* defined(TCP_SACK) && defined(TCP_FACK) */
+#endif
 
 	if (error) {
 out:
@@ -1184,11 +1155,7 @@ out:
 	tp->last_ack_sent = tp->rcv_nxt;
 	tp->t_flags &= ~TF_ACKNOW;
 	TCP_CLEAR_DELACK(tp);
-#if defined(TCP_SACK)
 	if (sendalot && --maxburst)
-#else
-	if (sendalot)
-#endif
 		goto again;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.57 2017/08/11 21:24:20 mpi Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.58 2017/10/22 14:11:34 mikeb Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -156,7 +156,6 @@ int tcp_totbackoff = 511;	/* sum of tcp_backoff[] */
  * TCP timer processing.
  */
 
-#ifdef TCP_SACK
 void	tcp_timer_freesack(struct tcpcb *);
 
 void
@@ -177,9 +176,8 @@ tcp_timer_freesack(struct tcpcb *tp)
 	tp->snd_fack = tp->snd_una;
 	tp->retran_data = 0;
 	tp->snd_awnd = 0;
-#endif /* TCP_FACK */
+#endif
 }
-#endif /* TCP_SACK */
 
 void
 tcp_timer_rexmt(void *arg)
@@ -219,9 +217,7 @@ tcp_timer_rexmt(void *arg)
 		goto out;
 	}
 
-#ifdef TCP_SACK
 	tcp_timer_freesack(tp);
-#endif
 	if (++tp->t_rxtshift > TCP_MAXRXTSHIFT) {
 		tp->t_rxtshift = TCP_MAXRXTSHIFT;
 		tcpstat_inc(tcps_timeoutdrop);
@@ -305,13 +301,11 @@ tcp_timer_rexmt(void *arg)
 		tp->t_srtt = 0;
 	}
 	tp->snd_nxt = tp->snd_una;
-#if defined(TCP_SACK)
 	/*
 	 * Note:  We overload snd_last to function also as the
 	 * snd_last variable described in RFC 2582
 	 */
 	tp->snd_last = tp->snd_max;
-#endif /* TCP_SACK */
 	/*
 	 * If timing a segment in this window, stop the timer.
 	 */
@@ -462,9 +456,7 @@ tcp_timer_2msl(void *arg)
 	if (tp->t_flags & TF_DEAD)
 		goto out;
 
-#ifdef TCP_SACK
 	tcp_timer_freesack(tp);
-#endif
 
 	if (tp->t_state != TCPS_TIME_WAIT &&
 	    ((tcp_maxidle == 0) || ((tcp_now - tp->t_rcvtime) <= tcp_maxidle)))
