@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.35 2017/10/04 18:00:12 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.36 2017/10/22 09:51:58 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -208,10 +208,10 @@ struct iwm_nvm_data {
 /* max bufs per tfd the driver will use */
 #define IWM_MAX_CMD_TBS_PER_TFD 2
 
-struct iwm_rx_packet;
 struct iwm_host_cmd {
 	const void *data[IWM_MAX_CMD_TBS_PER_TFD];
 	struct iwm_rx_packet *resp_pkt;
+	size_t resp_pkt_len;
 	unsigned long _rx_page_addr;
 	uint32_t _rx_page_order;
 	int handler_status;
@@ -298,9 +298,6 @@ struct iwm_ucode_status {
 	int uc_intr;
 };
 
-/* sc_wantresp */
-#define IWM_CMD_RESP_IDLE	-1
-
 #define IWM_CMD_RESP_MAX PAGE_SIZE
 
 /* lower blocks contain EEPROM image and calibration data */
@@ -312,7 +309,7 @@ struct iwm_ucode_status {
 
 enum IWM_CMD_MODE {
 	IWM_CMD_ASYNC		= (1 << 0),
-	IWM_CMD_WANT_SKB	= (1 << 1),
+	IWM_CMD_WANT_RESP	= (1 << 1),
 	IWM_CMD_SEND_IN_RFKILL	= (1 << 2),
 };
 enum iwm_hcmd_dataflag {
@@ -466,8 +463,8 @@ struct iwm_softc {
 	int sc_staid;
 	int sc_nodecolor;
 
-	uint8_t sc_cmd_resp[IWM_CMD_RESP_MAX];
-	int sc_wantresp;
+	uint8_t *sc_cmd_resp_pkt[IWM_TX_RING_COUNT];
+	size_t sc_cmd_resp_len[IWM_TX_RING_COUNT];
 	int sc_nic_locks;
 
 	struct taskq *sc_nswq;
