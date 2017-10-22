@@ -1,9 +1,10 @@
-/*	$OpenBSD: if_iwm.c,v 1.215 2017/10/22 09:51:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.216 2017/10/22 09:55:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
  *   Author: Stefan Sperling <stsp@openbsd.org>
  * Copyright (c) 2014 Fixup Software Ltd.
+ * Copyright (c) 2017 Stefan Sperling <stsp@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
