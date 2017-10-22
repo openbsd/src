@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1040 2017/10/21 20:08:54 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1041 2017/10/22 08:23:20 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1041,7 +1041,7 @@ v4_config() {
 			;;
 		dhcp)	if [[ ! -x /sbin/dhclient ]]; then
 				echo "DHCP not possible - no /sbin/dhclient."
-				$AUTO && exit 1
+				$AUTO && exit 1 || continue
 			else
 				dhcp_request $_if "$_name"
 				echo "dhcp" >>$_hn
