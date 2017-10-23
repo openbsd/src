@@ -187,6 +187,7 @@ subseg_set_rest (segT seg, subsegT subseg)
 #endif
       newP->frch_frag_now = frag_alloc (&newP->frch_obstack);
       newP->frch_frag_now->fr_type = rs_fill;
+      newP->frch_cfi_data = NULL;
 
       newP->frch_root = newP->frch_last = newP->frch_frag_now;
 
