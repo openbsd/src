@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.72 2017/10/18 15:41:25 jca Exp $	*/
+/*	$OpenBSD: history.c,v 1.73 2017/10/23 15:41:39 jca Exp $	*/
 
 /*
  * command history
@@ -740,23 +740,38 @@ static void
 history_load(Source *s)
 {
 	char		*p, encoded[LINE + 1], line[LINE + 1];
+	int		 toolongseen = 0;
 
 	rewind(histfh);
+	line_co = 1;
 
 	/* just read it all; will auto resize history upon next command */
-	for (line_co = 1; ; line_co++) {
-		p = fgets(encoded, sizeof(encoded), histfh);
-		if (p == NULL || feof(histfh) || ferror(histfh))
-			break;
+	while (fgets(encoded, sizeof(encoded), histfh)) {
 		if ((p = strchr(encoded, '\n')) == NULL) {
-			bi_errorf("history file is corrupt");
-			return;
+			/* discard overlong line */
+			do {
+				/* maybe a missing trailing newline? */
+				if (strlen(encoded) != sizeof(encoded) - 1) {
+					bi_errorf("history file is corrupt");
+					return;
+				}
+			} while (fgets(encoded, sizeof(encoded), histfh)
+			    && strchr(encoded, '\n') == NULL);
+
+			if (!toolongseen) {
+				toolongseen = 1;
+				bi_errorf("ignored history line(s) longer than"
+				    " %d bytes", LINE);
+			}
+
+			continue;
 		}
 		*p = '\0';
 		s->line = line_co;
 		s->cmd_offset = line_co;
 		strunvis(line, encoded);
 		histsave(line_co, line, 0);
+		line_co++;
 	}
 
 	history_write();
