@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.73 2017/10/23 15:41:39 jca Exp $	*/
+/*	$OpenBSD: history.c,v 1.74 2017/10/23 15:43:38 jca Exp $	*/
 
 /*
  * command history
@@ -813,8 +813,6 @@ hist_init(Source *s)
 		history_close();
 		return;
 	}
-
-	rewind(histfh);
 
 	history_load(s);
 
