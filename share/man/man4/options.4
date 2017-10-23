@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.252 2017/10/22 16:04:53 job Exp $
+.\"	$OpenBSD: options.4,v 1.253 2017/10/23 03:13:58 jsg Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: October 22 2017 $
+.Dd $Mdocdate: October 23 2017 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -336,10 +336,6 @@ Makes the boot process more verbose for EISA peripherals.
 The kernel memory allocator,
 .Xr malloc 9 ,
 will keep statistics on its performance if this option is enabled.
-.It Cd option MACOBIOVERBOSE
-Makes the boot process more verbose for OBIO peripherals on the
-.Va macppc
-architecture.
 .It Cd option MULTIPROCESSOR
 On those architectures that have it, this enables multiprocessor support.
 .It Cd option PCIVERBOSE
@@ -465,9 +461,8 @@ routing daemon that supports this option in order to actually use it.
 .Sh OPERATION RELATED OPTIONS
 .Bl -ohang -compact
 .It Cd option BUFPAGES= Ns Ar value
-.It Cd option NBUF= Ns Ar value
-These options set the number of pages available for the buffer cache.
-Their default value is a machine dependent value, often calculated as
+This option sets the number of pages available for the buffer cache.
+The default value is machine dependent, often calculated as
 between 5% and 10% of total available RAM.
 .Pp
 .It Cd option DST= Ns Ar value

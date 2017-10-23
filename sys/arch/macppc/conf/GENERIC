@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.261 2017/08/28 19:32:53 jasper Exp $g
+#	$OpenBSD: GENERIC,v 1.262 2017/10/23 03:13:58 jsg Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -15,7 +15,6 @@ maxusers	80			# estimated number of users
 
 option		PCIVERBOSE
 option		USBVERBOSE
-#option		MACOBIOVERBOSE
 option		ADBVERBOSE
 option		ALTIVEC
 option		APERTURE	# in-kernel aperture driver for XFree86
