@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.46 2017/06/08 16:23:39 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.47 2017/10/23 15:15:22 jca Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -282,6 +282,10 @@ run_job(const atjob *job, int dfd, const char *atfile)
 		close(fd);
 		return;
 	}
+
+	/* Close fds opened by the parent. */
+	close(cronSock);
+	close(dfd);
 
 	/*
 	 * We don't want the main cron daemon to wait for our children--
