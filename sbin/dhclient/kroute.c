@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.153 2017/09/20 19:21:00 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.154 2017/10/23 13:31:35 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -75,7 +75,7 @@ get_routes(int rdomain, size_t *len)
 
 	buf = NULL;
 	errmsg = NULL;
-	while (1) {
+	for (;;) {
 		if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1) {
 			errmsg = "sysctl size of routes:";
 			break;

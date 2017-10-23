@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.147 2017/10/23 13:01:20 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.148 2017/10/23 13:31:35 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -163,12 +163,12 @@ read_client_conf(char *name)
 	    [config->requested_option_count++] = DHO_TFTP_SERVER;
 
 	if ((cfile = fopen(path_dhclient_conf, "r")) != NULL) {
-		do {
+		for (;;) {
 			token = peek_token(NULL, cfile);
 			if (token == EOF)
 				break;
 			parse_client_statement(cfile, name, 0);
-		} while (1);
+		}
 		fclose(cfile);
 	}
 }
@@ -192,7 +192,7 @@ read_client_leases(char *name, struct client_lease_tq *tq)
 
 	new_parse(path_dhclient_db);
 
-	do {
+	for (;;) {
 		token = next_token(NULL, cfile);
 		if (token == EOF)
 			break;
@@ -202,7 +202,7 @@ read_client_leases(char *name, struct client_lease_tq *tq)
 		}
 		if (parse_client_lease_statement(cfile, name, &lp) == 1)
 			add_lease(tq, lp);
-	} while (1);
+	}
 
 	fclose(cfile);
 }
@@ -487,7 +487,7 @@ parse_interface_declaration(FILE *cfile, char *name)
 		return 0;
 	}
 
-	do {
+	for (;;) {
 		token = peek_token(&val, cfile);
 		if (token == EOF) {
 			parse_warn("unterminated interface declaration.");
@@ -498,7 +498,7 @@ parse_interface_declaration(FILE *cfile, char *name)
 			return 1;
 		}
 		parse_client_statement(cfile, name, 1);
-	} while (1);
+	}
 
 	return 0;
 }
@@ -531,7 +531,7 @@ parse_client_lease_statement(FILE *cfile, char *name,
 	if (lease == NULL)
 		fatal("lease");
 
-	do {
+	for (;;) {
 		token = peek_token(NULL, cfile);
 		if (token == EOF) {
 			parse_warn("unterminated lease declaration.");
@@ -550,7 +550,7 @@ parse_client_lease_statement(FILE *cfile, char *name,
 			return 1;
 		}
 		parse_client_lease_declaration(cfile, lease, name);
-	} while (1);
+	}
 
 	return 0;
 }
