@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.74 2017/10/19 13:44:31 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.75 2017/10/23 13:15:57 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -243,7 +243,7 @@ parse_lease_time(FILE *cfile, time_t *timep)
 		return 1;
 	}
 
-	parse_warn("expecting unsigned 32-bit decimal value.");
+	parse_warn("expecting integer between 0 and 4294967295.");
 	if (token != ';')
 		skip_to_semi(cfile);
 
