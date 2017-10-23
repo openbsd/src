@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.233 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.234 2017/10/23 15:41:29 mikeb Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -411,13 +411,15 @@ bios_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	/* NOTREACHED */
 }
 
-/*  
+/*
  * machine dependent system variables.
- */ 
+ */
 int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
+	extern uint64_t tsc_frequency;
+	extern int tsc_is_invariant;
 	extern int amd64_has_xcrypt;
 	dev_t consdev;
 	dev_t dev;
@@ -489,6 +491,10 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			pckbc_release_console();
 		return (error);
 #endif
+	case CPU_TSCFREQ:
+		return (sysctl_rdquad(oldp, oldlenp, newp, tsc_frequency));
+	case CPU_INVARIANTTSC:
+		return (sysctl_rdint(oldp, oldlenp, newp, tsc_is_invariant));
 	default:
 		return (EOPNOTSUPP);
 	}

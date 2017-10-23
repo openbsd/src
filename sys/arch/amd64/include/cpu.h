@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.116 2017/10/17 14:25:35 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.117 2017/10/23 15:41:29 mikeb Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -427,7 +427,9 @@ void mp_setperf_init(void);
 #define CPU_XCRYPT		12	/* supports VIA xcrypt in userland */
 #define CPU_LIDACTION		14	/* action caused by lid close */
 #define CPU_FORCEUKBD		15	/* Force ukbd(4) as console keyboard */
-#define CPU_MAXID		16	/* number of valid machdep ids */
+#define CPU_TSCFREQ		16	/* TSC frequency */
+#define CPU_INVARIANTTSC	17	/* has invariant TSC */
+#define CPU_MAXID		18	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -446,6 +448,8 @@ void mp_setperf_init(void);
 	{ 0, 0 }, \
 	{ "lidaction", CTLTYPE_INT }, \
 	{ "forceukbd", CTLTYPE_INT }, \
+	{ "tscfreq", CTLTYPE_QUAD }, \
+	{ "invarianttsc", CTLTYPE_INT }, \
 }
 
 /*
