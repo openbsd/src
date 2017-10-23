@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2017/09/17 23:56:03 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.22 2017/10/23 17:37:55 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -107,6 +107,38 @@ toobig:
 sys/syscall.ph: /usr/include/sys/syscall.h
 	cd /usr/include && h2ph -h -d ${.OBJDIR} ${@:R:S/$/.h/}
 
+# Create a full file system on vnd to trigger ENOSPC error.
+
+.PHONY: disk mount unconfig
+
+disk: unconfig
+	dd if=/dev/zero of=diskimage bs=512 count=4k
+	vnconfig vnd0 diskimage
+	newfs -b 4096 -f 2048 -m 0 vnd0c
+
+mount: disk
+	mkdir -p /mnt/regress-syslogd
+	mount /dev/vnd0c /mnt/regress-syslogd
+
+unconfig:
+	-umount -f /dev/vnd0c 2>/dev/null || true
+	-rmdir /mnt/regress-syslogd 2>/dev/null || true
+	-vnconfig -u vnd0 2>/dev/null || true
+	-rm -f stamp-filesystem
+
+stamp-filesystem:
+	@echo '\n======== $@ ========'
+	${SUDO} ${.MAKE} -C ${.CURDIR} mount
+	${SUDO} chmod 1777 /mnt/regress-syslogd
+	date >$@
+
+REGRESS_TARGETS +=	cleanup-filesystem
+cleanup-filesystem:
+	@echo '\n======== $@ ========'
+	${SUDO} umount /mnt/regress-syslogd
+	${SUDO} ${.MAKE} -C ${.CURDIR} unconfig
+
+${REGRESS_TARGETS:M*filesystem*}: stamp-filesystem
 ${REGRESS_TARGETS:M*tls*}: client.crt server.crt 127.0.0.1.crt
 ${REGRESS_TARGETS:M*multilisten*}: 127.0.0.1.crt
 ${REGRESS_TARGETS:M*empty*}: empty
