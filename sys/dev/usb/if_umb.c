@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.16 2017/10/20 09:35:09 mpi Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.17 2017/10/23 15:23:13 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -896,7 +896,7 @@ umb_watchdog(struct ifnet *ifp)
 
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", DEVNAM(sc));
-	/* XXX FIXME: re-initialize device */
+	usbd_abort_pipe(sc->sc_tx_pipe);
 	return;
 }
 
@@ -1845,10 +1845,9 @@ umb_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			if (status == USBD_STALLED)
 				usbd_clear_endpoint_stall_async(sc->sc_tx_pipe);
 		}
-	} else {
-		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-			umb_start(ifp);
 	}
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+		umb_start(ifp);
 
 	splx(s);
 }
