@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.252 2017/10/05 16:34:59 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.253 2017/10/23 17:16:35 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -158,7 +158,6 @@ struct filed {
 			struct tls		*f_ctx;
 			char			*f_host;
 			int			 f_reconnectwait;
-			int			 f_dropped;
 		} f_forw;		/* forwarding address */
 		char	f_fname[PATH_MAX];
 		struct {
@@ -177,6 +176,7 @@ struct filed {
 	int	f_prevcount;			/* repetition cnt of prevline */
 	unsigned int f_repeatcount;		/* number of "repeated" msgs */
 	int	f_quick;			/* abort when matched */
+	int	f_dropped;			/* warn, dropped message */
 	time_t	f_lasterrtime;			/* last error was reported */
 };
 
@@ -242,6 +242,7 @@ const char *ClientCertfile = NULL;
 const char *ClientKeyfile = NULL;
 const char *ServerCAfile = NULL;
 int	tcpbuf_dropped = 0;	/* count messages dropped from TCP or TLS */
+int	file_dropped = 0;	/* messages dropped due to file system full */
 int	init_dropped = 0;	/* messages dropped during initialization */
 
 #define CTL_READING_CMD		1
@@ -1388,11 +1389,11 @@ tcp_writecb(struct bufferevent *bufev, void *arg)
 	log_debug("loghost \"%s\" successful write", f->f_un.f_forw.f_loghost);
 	f->f_un.f_forw.f_reconnectwait = 0;
 
-	if (f->f_un.f_forw.f_dropped > 0 &&
+	if (f->f_dropped > 0 &&
 	    EVBUFFER_LENGTH(f->f_un.f_forw.f_bufev->output) < MAX_TCPBUF) {
 		snprintf(ebuf, sizeof(ebuf), "to loghost \"%s\"",
 		    f->f_un.f_forw.f_loghost);
-		dropped_warn(&f->f_un.f_forw.f_dropped, ebuf);
+		dropped_warn(&f->f_dropped, ebuf);
 	}
 }
 
@@ -1443,7 +1444,7 @@ tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 			evbuffer_drain(bufev->output, -1);
 		log_debug("loghost \"%s\" dropped partial message",
 		    f->f_un.f_forw.f_loghost);
-		f->f_un.f_forw.f_dropped++;
+		f->f_dropped++;
 	}
 
 	tcp_connect_retry(bufev, f);
@@ -1894,6 +1895,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 	struct iovec *v;
 	int l, retryonce;
 	char line[LOG_MAXLINE + 1], repbuf[80], greetings[500];
+	char ebuf[ERRBUFSIZE];
 
 	v = iov;
 	if (f->f_type == F_WALL) {
@@ -2000,7 +2002,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		if (EVBUFFER_LENGTH(f->f_un.f_forw.f_bufev->output) >=
 		    MAX_TCPBUF) {
 			log_debug(" (dropped)");
-			f->f_un.f_forw.f_dropped++;
+			f->f_dropped++;
 			break;
 		}
 		/*
@@ -2016,7 +2018,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		    IncludeHostname ? " " : "");
 		if (l < 0) {
 			log_debug(" (dropped snprintf)");
-			f->f_un.f_forw.f_dropped++;
+			f->f_dropped++;
 			break;
 		}
 		l = evbuffer_add_printf(f->f_un.f_forw.f_bufev->output,
@@ -2028,7 +2030,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		    (char *)iov[4].iov_base);
 		if (l < 0) {
 			log_debug(" (dropped evbuffer_add_printf)");
-			f->f_un.f_forw.f_dropped++;
+			f->f_dropped++;
 			break;
 		}
 		bufferevent_enable(f->f_un.f_forw.f_bufev, EV_WRITE);
@@ -2058,11 +2060,23 @@ fprintlog(struct filed *f, int flags, char *msg)
 		if (writev(f->f_file, iov, 6) < 0) {
 			int e = errno;
 
+			/* allow to recover from file system full */
+			if ((e == EIO || e == ENOSPC) && f->f_type == F_FILE) {
+				if (f->f_dropped++ == 0) {
+					f->f_type = F_UNUSED;
+					errno = e;
+					log_warn("write to file \"%s\"",
+					    f->f_un.f_fname);
+					f->f_type = F_FILE;
+				}
+				break;
+			}
+
 			/* pipe is non-blocking. log and drop message if full */
 			if (e == EAGAIN && f->f_type == F_PIPE) {
 				if (now.tv_sec - f->f_lasterrtime > 120) {
 					f->f_lasterrtime = now.tv_sec;
-					log_warn("writev \"%s\"",
+					log_warn("write to pipe \"%s\"",
 					    f->f_un.f_fname);
 				}
 				break;
@@ -2108,8 +2122,15 @@ fprintlog(struct filed *f, int flags, char *msg)
 				errno = e;
 				log_warn("writev \"%s\"", f->f_un.f_fname);
 			}
-		} else if (flags & SYNC_FILE)
-			(void)fsync(f->f_file);
+		} else {
+			if (flags & SYNC_FILE)
+				(void)fsync(f->f_file);
+			if (f->f_dropped && f->f_type == F_FILE) {
+				snprintf(ebuf, sizeof(ebuf), "to file \"%s\"",
+				    f->f_un.f_fname);
+				dropped_warn(&f->f_dropped, ebuf);
+			}
+		}
 		break;
 
 	case F_USERS:
@@ -2226,6 +2247,7 @@ init_signalcb(int signum, short event, void *arg)
 	init();
 	log_info(LOG_INFO, "restart");
 
+	dropped_warn(&file_dropped, "to file");
 	dropped_warn(&tcpbuf_dropped, "to remote loghost");
 	log_debug("syslogd: restarted");
 }
@@ -2262,13 +2284,18 @@ die(int signo)
 		if (f->f_prevcount)
 			fprintlog(f, 0, (char *)NULL);
 		if (f->f_type == F_FORWTLS || f->f_type == F_FORWTCP) {
-			tcpbuf_dropped += f->f_un.f_forw.f_dropped +
+			tcpbuf_dropped += f->f_dropped +
 			    tcpbuf_countmsg(f->f_un.f_forw.f_bufev);
-			f->f_un.f_forw.f_dropped = 0;
+			f->f_dropped = 0;
+		}
+		if (f->f_type == F_FILE) {
+			file_dropped += f->f_dropped;
+			f->f_dropped = 0;
 		}
 	}
 	Initialized = was_initialized;
 	dropped_warn(&init_dropped, "during initialization");
+	dropped_warn(&file_dropped, "to file");
 	dropped_warn(&tcpbuf_dropped, "to remote loghost");
 
 	if (signo)
@@ -2319,11 +2346,15 @@ init(void)
 			free(f->f_un.f_forw.f_host);
 			/* FALLTHROUGH */
 		case F_FORWTCP:
-			tcpbuf_dropped += f->f_un.f_forw.f_dropped +
+			tcpbuf_dropped += f->f_dropped +
 			     tcpbuf_countmsg(f->f_un.f_forw.f_bufev);
 			bufferevent_free(f->f_un.f_forw.f_bufev);
 			/* FALLTHROUGH */
 		case F_FILE:
+			if (f->f_type == F_FILE) {
+				file_dropped += f->f_dropped;
+				f->f_dropped = 0;
+			}
 		case F_TTY:
 		case F_CONSOLE:
 		case F_PIPE:
