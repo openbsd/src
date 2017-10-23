@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.leases.5,v 1.10 2017/10/20 13:04:50 krw Exp $
+.\"	$OpenBSD: dhclient.leases.5,v 1.11 2017/10/23 13:01:20 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: October 20 2017 $
+.Dd $Mdocdate: October 23 2017 $
 .Dt DHCLIENT.LEASES 5
 .Os
 .Sh NAME
@@ -113,6 +113,9 @@ The IPv4 address is specified as a dotted quad (e.g. 12.34.56.78).
 .Pp
 .It Ic interface Qq Ar string
 The interface on which the lease is valid.
+Every lease must contain an
+.Ic interface
+declaration.
 .Pp
 .It Ic next-server Ar ip-address
 The IPv4 address of the boot server.

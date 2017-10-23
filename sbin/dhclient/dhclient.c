@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.514 2017/09/28 21:25:49 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.515 2017/10/23 13:01:20 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1701,6 +1701,7 @@ free_client_lease(struct client_lease *lease)
 	if (lease == NULL || lease->is_static)
 		return;
 
+	free(lease->interface);
 	free(lease->server_name);
 	free(lease->filename);
 	for (i = 0; i < DHO_COUNT; i++)

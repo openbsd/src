@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.146 2017/10/21 14:40:13 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.147 2017/10/23 13:01:20 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -64,7 +64,7 @@
 #include "dhctoken.h"
 #include "log.h"
 
-void			 parse_client_statement(FILE *, char *);
+void			 parse_client_statement(FILE *, char *, int);
 int			 parse_hex_octets(FILE *, unsigned int *, uint8_t **);
 int			 parse_option_list(FILE *, int *, uint8_t *);
 int			 parse_interface_declaration(FILE *, char *);
@@ -167,7 +167,7 @@ read_client_conf(char *name)
 			token = peek_token(NULL, cfile);
 			if (token == EOF)
 				break;
-			parse_client_statement(cfile, name);
+			parse_client_statement(cfile, name, 0);
 		} while (1);
 		fclose(cfile);
 	}
@@ -230,10 +230,12 @@ read_client_leases(char *name, struct client_lease_tq *tq)
  *	TOK_SEND option-decl			|
  *	TOK_SERVER_NAME string			|
  *	TOK_SUPERSEDE option-decl		|
- *	TOK_TIMEOUT number			|
+ *	TOK_TIMEOUT number
+ *
+ * If nested == 1 then TOK_INTERFACE and TOK_LEASE are not allowed.
  */
 void
-parse_client_statement(FILE *cfile, char *name)
+parse_client_statement(FILE *cfile, char *name, int nested)
 {
 	struct client_lease	*lp;
 	char			*val;
@@ -279,11 +281,17 @@ parse_client_statement(FILE *cfile, char *name)
 			parse_semi(cfile);
 		break;
 	case TOK_INTERFACE:
-		if (parse_interface_declaration(cfile, name) == 1)
+		if (nested == 1) {
+			parse_warn("expecting statement.");
+			skip_to_semi(cfile);
+		} else if (parse_interface_declaration(cfile, name) == 1)
 			;
 		break;
 	case TOK_LEASE:
-		if (parse_client_lease_statement(cfile, name, &lp) == 1)
+		if (nested == 1) {
+			parse_warn("expecting statement.");
+			skip_to_semi(cfile);
+		} else if (parse_client_lease_statement(cfile, name, &lp) == 1)
 			add_lease(&config->static_leases, lp);
 		break;
 	case TOK_LINK_TIMEOUT:
@@ -489,7 +497,7 @@ parse_interface_declaration(FILE *cfile, char *name)
 			token = next_token(NULL, cfile);
 			return 1;
 		}
-		parse_client_statement(cfile, name);
+		parse_client_statement(cfile, name, 1);
 	} while (1);
 
 	return 0;
@@ -528,11 +536,17 @@ parse_client_lease_statement(FILE *cfile, char *name,
 		if (token == EOF) {
 			parse_warn("unterminated lease declaration.");
 			free_client_lease(lease);
-			return 0;
+			break;
 		}
 		if (token == '}') {
 			token = next_token(NULL, cfile);
-			*lp = lease;
+			if (lease->interface != NULL &&
+			    strcmp(name, lease->interface) == 0)
+				*lp = lease;
+			else {
+				*lp = NULL;
+				free_client_lease(lease);
+			}
 			return 1;
 		}
 		parse_client_lease_declaration(cfile, lease, name);
@@ -561,7 +575,7 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 {
 	char		*val;
 	unsigned int	 len;
-	int		 i, rslt, token;
+	int		 i, token;
 
 	token = next_token(&val, cfile);
 
@@ -586,14 +600,8 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 	case TOK_INTERFACE:
 		if (parse_string(cfile, NULL, &val) == 0)
 			return;
-		rslt = strcmp(name, val);
-		free(val);
-		if (rslt != 0) {
-			if (lease->is_static == 0)
-				parse_warn("wrong interface name.");
-			skip_to_semi(cfile);
-			return;
-		}
+		free(lease->interface);
+		lease->interface = val;
 		break;
 	case TOK_NEXT_SERVER:
 		if (parse_ip_addr(cfile, &lease->next_server) == 0)
