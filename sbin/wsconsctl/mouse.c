@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.15 2017/08/01 23:23:44 bru Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.16 2017/10/24 09:36:13 jsg Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -141,12 +141,6 @@ mouse_put_values(int fd)
 	if (field_by_value(mouse_field_tab, &resolution)->flags & FLG_SET) {
 		if (ioctl(fd, WSMOUSEIO_SRES, &resolution) < 0) {
 			warn("WSMOUSEIO_SRES");
-			return 1;
-		}
-	}
-	if (field_by_value(mouse_field_tab, &samplerate)->flags & FLG_SET) {
-		if (ioctl(fd, WSMOUSEIO_SRATE, &samplerate) < 0) {
-			warn("WSMOUSEIO_SRATE");
 			return 1;
 		}
 	}

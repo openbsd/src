@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.71 2017/10/24 08:57:10 mpi Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.72 2017/10/24 09:36:13 jsg Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -38,10 +38,6 @@
 #include <sys/ioccom.h>
 
 /* Socket ioctl's. */
-#define	SIOCSHIWAT	 _IOW('s',  0, int)		/* set high watermark */
-#define	SIOCGHIWAT	 _IOR('s',  1, int)		/* get high watermark */
-#define	SIOCSLOWAT	 _IOW('s',  2, int)		/* set low watermark */
-#define	SIOCGLOWAT	 _IOR('s',  3, int)		/* get low watermark */
 #define	SIOCATMARK	 _IOR('s',  7, int)		/* at oob mark? */
 #define	SIOCSPGRP	 _IOW('s',  8, int)		/* set process group */
 #define	SIOCGPGRP	 _IOR('s',  9, int)		/* get process group */
@@ -73,15 +69,11 @@
 #define	SIOCSIFMEDIA	_IOWR('i', 55, struct ifreq)	/* set net media */
 #define	SIOCGIFMEDIA	_IOWR('i', 56, struct ifmediareq) /* get net media */
 
-#define SIOCSIFPHYADDR   _IOW('i', 70, struct ifaliasreq) /* set gif address */
-#define	SIOCGIFPSRCADDR	_IOWR('i', 71, struct ifreq)	/* get gif psrc addr */
-#define	SIOCGIFPDSTADDR	_IOWR('i', 72, struct ifreq)	/* get gif pdst addr */
 #define	SIOCDIFPHYADDR	 _IOW('i', 73, struct ifreq)	/* delete gif addrs */
 #define	SIOCSLIFPHYADDR	 _IOW('i', 74, struct if_laddrreq) /* set gif addrs */
 #define	SIOCGLIFPHYADDR	_IOWR('i', 75, struct if_laddrreq) /* get gif addrs */
 
 #define	SIOCBRDGADD	 _IOW('i', 60, struct ifbreq)	/* add bridge ifs */
-#define	SIOCBRDGGSIFS	_IOWR('i', 60, struct ifbreq)	/* get span ifs */
 #define	SIOCBRDGDEL	 _IOW('i', 61, struct ifbreq)	/* del bridge ifs */
 #define	SIOCBRDGGIFFLGS	_IOWR('i', 62, struct ifbreq)	/* get brdg if flags */
 #define	SIOCBRDGSIFFLGS	 _IOW('i', 63, struct ifbreq)	/* set brdg if flags */
@@ -120,15 +112,11 @@
 #define	SIOCSWGDPID	_IOWR('i', 91, struct ifbrparam)/* set datapath id */
 #define	SIOCSWSDPID	 _IOW('i', 92, struct ifbrparam)/* get datapath id */
 #define	SIOCSWGMAXGROUP	_IOWR('i', 93, struct ifbrparam)/* get max groups */
-#define	SIOCSWSMAXGROUP	 _IOW('i', 94, struct ifbrparam)/* set max groups */
 #define	SIOCSWSPORTNO	_IOWR('i', 95, struct ifbreq)	/* set port number */
 #define	SIOCSWGMAXFLOW	_IOWR('i', 96, struct ifbrparam)/* get max flow per table */
-#define	SIOCSWSMAXFLOW	 _IOW('i', 97, struct ifbrparam)/* set max flow per table */
 
 #define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */
 #define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */
-#define	SIOCSIFASYNCMAP  _IOW('i', 125, struct ifreq)	/* set ppp asyncmap */
-#define	SIOCGIFASYNCMAP _IOWR('i', 124, struct ifreq)	/* get ppp asyncmap */
 
 #define	SIOCIFCREATE	 _IOW('i', 122, struct ifreq)	/* create clone if */
 #define	SIOCIFDESTROY	 _IOW('i', 121, struct ifreq)	/* destroy clone if */

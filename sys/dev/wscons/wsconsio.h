@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.85 2017/08/18 21:29:59 deraadt Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.86 2017/10/24 09:36:13 jsg Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -244,15 +244,6 @@ struct wskbd_encoding_data {
 #define		WSMOUSE_RES_MIN		0
 #define		WSMOUSE_RES_DEFAULT	75
 #define		WSMOUSE_RES_MAX		100
-
-/* Set scale factor (num / den).  Not applicable to all mouse types. */
-#define	WSMOUSEIO_SSCALE	_IOW('W', 34, u_int[2])
-
-/* Set sample rate.  Not applicable to all mouse types. */
-#define	WSMOUSEIO_SRATE		_IOW('W', 35, u_int)
-#define		WSMOUSE_RATE_MIN	0
-#define		WSMOUSE_RATE_DEFAULT	50
-#define		WSMOUSE_RATE_MAX	100
 
 /* Set/get sample coordinates for calibration */
 #define	WSMOUSE_CALIBCOORDS_MAX		16

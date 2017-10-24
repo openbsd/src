@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.122 2017/05/29 14:05:31 sf Exp $ */
+/*	$OpenBSD: wd.c,v 1.123 2017/10/24 09:36:13 jsg Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -820,33 +820,6 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 
 		disk_unlock(&wd->sc_dk);
 		goto exit;
-
-#ifdef notyet
-	case DIOCWFORMAT:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-		{
-		struct format_op *fop;
-		struct iovec aiov;
-		struct uio auio;
-
-		fop = (struct format_op *)addr;
-		aiov.iov_base = fop->df_buf;
-		aiov.iov_len = fop->df_count;
-		auio.uio_iov = &aiov;
-		auio.uio_iovcnt = 1;
-		auio.uio_resid = fop->df_count;
-		auio.uio_segflg = UIO_USERSPACE;
-		auio.uio_offset =
-			fop->df_startblk * wd->sc_dk.dk_label->d_secsize;
-		auio.uio_procp = p;
-		error = physio(wdformat, dev, B_WRITE, minphys, &auio);
-		fop->df_count -= auio.uio_resid;
-		fop->df_reg[0] = wdc->sc_status;
-		fop->df_reg[1] = wdc->sc_error;
-		goto exit;
-		}
-#endif
 
 	case DIOCCACHESYNC:
 		if ((flag & FWRITE) == 0) {

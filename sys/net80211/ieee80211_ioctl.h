@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.29 2017/07/19 22:04:46 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.30 2017/10/24 09:36:13 jsg Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -151,18 +151,9 @@ struct ieee80211_power {
 #define	SIOCS80211POWER		 _IOW('i', 234, struct ieee80211_power)
 #define	SIOCG80211POWER		_IOWR('i', 235, struct ieee80211_power)
 
-/* authentication type */
-struct ieee80211_auth {
-	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
-	int		i_authtype;
-};
-
 #define	IEEE80211_AUTH_NONE	0
 #define	IEEE80211_AUTH_OPEN	1
 #define	IEEE80211_AUTH_SHARED	2
-
-#define	SIOCS80211AUTH		 _IOW('i', 236, struct ieee80211_auth)
-#define	SIOCG80211AUTH		_IOWR('i', 237, struct ieee80211_auth)
 
 /* channel request */
 struct ieee80211chanreq {

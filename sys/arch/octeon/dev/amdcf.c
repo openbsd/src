@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdcf.c,v 1.3 2017/05/04 22:47:27 deraadt Exp $	*/
+/*	$OpenBSD: amdcf.c,v 1.4 2017/10/24 09:36:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, Juniper Networks, Inc.
@@ -532,33 +532,6 @@ amdcfioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 
 		disk_unlock(&sc->sc_dk);
 		goto exit;
-
-#ifdef notyet
-	case DIOCWFORMAT:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-		{
-		struct format_op *fop;
-		struct iovec aiov;
-		struct uio auio;
-
-		fop = (struct format_op *)addr;
-		aiov.iov_base = fop->df_buf;
-		aiov.iov_len = fop->df_count;
-		auio.uio_iov = &aiov;
-		auio.uio_iovcnt = 1;
-		auio.uio_resid = fop->df_count;
-		auio.uio_segflg = UIO_USERSPACE;
-		auio.uio_offset =
-			fop->df_startblk * sc->sc_dk.dk_label->d_secsize;
-		auio.uio_procp = p;
-		error = physio(scformat, dev, B_WRITE, minphys, &auio);
-		fop->df_count -= auio.uio_resid;
-		fop->df_reg[0] = scc->sc_status;
-		fop->df_reg[1] = scc->sc_error;
-		goto exit;
-		}
-#endif
 
 	default:
 		error = ENOTTY;

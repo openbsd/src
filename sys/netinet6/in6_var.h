@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.69 2017/08/15 06:08:52 florian Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.70 2017/10/24 09:36:13 jsg Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -293,10 +293,6 @@ struct	in6_aliasreq {
 
 #define SIOCDIFADDR_IN6		 _IOW('i', 25, struct in6_ifreq)
 #define SIOCAIFADDR_IN6		 _IOW('i', 26, struct in6_aliasreq)
-
-#define SIOCSIFPHYADDR_IN6       _IOW('i', 70, struct in6_aliasreq)
-#define	SIOCGIFPSRCADDR_IN6	_IOWR('i', 71, struct in6_ifreq)
-#define	SIOCGIFPDSTADDR_IN6	_IOWR('i', 72, struct in6_ifreq)
 
 #define SIOCGIFAFLAG_IN6	_IOWR('i', 73, struct in6_ifreq)
 
