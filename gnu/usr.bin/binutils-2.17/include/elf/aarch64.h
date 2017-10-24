@@ -20,8 +20,8 @@
 #include "elf/reloc-macros.h"
 
 START_RELOC_NUMBERS (elf_aarch64_reloc_type )
-     RELOC_NUMBER (R_AARCH64_NONE,         256)    /* No reloc */
-     RELOC_NUMBER (R_AARCH64_ABS64,        257)    /* Direct 64 bit */
+     RELOC_NUMBER (R_AARCH64_NONE,            0)   /* No reloc */
+     RELOC_NUMBER (R_AARCH64_ABS64,         257)   /* Direct 64 bit */
      RELOC_NUMBER (R_AARCH64_COPY,         1024)   /* Copy symbol at runtime */
      RELOC_NUMBER (R_AARCH64_GLOB_DAT,     1025)   /* Create GOT entry */
      RELOC_NUMBER (R_AARCH64_JUMP_SLOT,    1026)   /* Create PLT entry */
