@@ -5869,7 +5869,6 @@
 ./usr/share/zoneinfo/Canada
 ./usr/share/zoneinfo/Canada/Atlantic
 ./usr/share/zoneinfo/Canada/Central
-./usr/share/zoneinfo/Canada/East-Saskatchewan
 ./usr/share/zoneinfo/Canada/Eastern
 ./usr/share/zoneinfo/Canada/Mountain
 ./usr/share/zoneinfo/Canada/Newfoundland
@@ -6484,7 +6483,6 @@
 ./usr/share/zoneinfo/posix/Canada
 ./usr/share/zoneinfo/posix/Canada/Atlantic
 ./usr/share/zoneinfo/posix/Canada/Central
-./usr/share/zoneinfo/posix/Canada/East-Saskatchewan
 ./usr/share/zoneinfo/posix/Canada/Eastern
 ./usr/share/zoneinfo/posix/Canada/Mountain
 ./usr/share/zoneinfo/posix/Canada/Newfoundland
@@ -7100,7 +7098,6 @@
 ./usr/share/zoneinfo/right/Canada
 ./usr/share/zoneinfo/right/Canada/Atlantic
 ./usr/share/zoneinfo/right/Canada/Central
-./usr/share/zoneinfo/right/Canada/East-Saskatchewan
 ./usr/share/zoneinfo/right/Canada/Eastern
 ./usr/share/zoneinfo/right/Canada/Mountain
 ./usr/share/zoneinfo/right/Canada/Newfoundland
