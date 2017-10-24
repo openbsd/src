@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.348 2017/10/22 14:11:34 mikeb Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.349 2017/10/24 14:49:29 mikeb Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -184,6 +184,9 @@ do { \
 		TCP_SET_DELACK(tp); \
 	if_put(ifp); \
 } while (0)
+
+void	 tcp_sack_partialack(struct tcpcb *, struct tcphdr *);
+void	 tcp_newreno_partialack(struct tcpcb *, struct tcphdr *);
 
 void	 syn_cache_put(struct syn_cache *);
 void	 syn_cache_rm(struct syn_cache *);
@@ -1666,36 +1669,14 @@ trimthenstep6:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		if (tp->sack_enable) {
-			if (tp->t_dupacks >= tcprexmtthresh) {
-				/* Check for a partial ACK */
-				if (tcp_sack_partialack(tp, th)) {
-#ifdef TCP_FACK
-					/* Force call to tcp_output */
-					if (tp->snd_awnd < tp->snd_cwnd)
-						tp->t_flags |= TF_NEEDOUTPUT;
-#else
-					tp->snd_cwnd += tp->t_maxseg;
-					tp->t_flags |= TF_NEEDOUTPUT;
-#endif /* TCP_FACK */
-				} else {
-					/* Out of fast recovery */
-					tp->snd_cwnd = tp->snd_ssthresh;
-					if (tcp_seq_subtract(tp->snd_max,
-					    th->th_ack) < tp->snd_ssthresh)
-						tp->snd_cwnd =
-						   tcp_seq_subtract(tp->snd_max,
-					           th->th_ack);
-					tp->t_dupacks = 0;
-#ifdef TCP_FACK
-					if (SEQ_GT(th->th_ack, tp->snd_fack))
-						tp->snd_fack = th->th_ack;
-#endif
-				}
-			}
-		} else {
-			if (tp->t_dupacks >= tcprexmtthresh &&
-			    !tcp_newreno(tp, th)) {
+		if (tp->t_dupacks >= tcprexmtthresh) {
+			/* Check for a partial ACK */
+			if (SEQ_LT(th->th_ack, tp->snd_last)) {
+				if (tp->sack_enable)
+					tcp_sack_partialack(tp, th);
+				else
+					tcp_newreno_partialack(tp, th);
+			} else {
 				/* Out of fast recovery */
 				tp->snd_cwnd = tp->snd_ssthresh;
 				if (tcp_seq_subtract(tp->snd_max, th->th_ack) <
@@ -1704,10 +1685,19 @@ trimthenstep6:
 					    tcp_seq_subtract(tp->snd_max,
 					    th->th_ack);
 				tp->t_dupacks = 0;
+#ifdef TCP_FACK
+				if (tp->sack_enable &&
+				    SEQ_GT(th->th_ack, tp->snd_fack))
+					tp->snd_fack = th->th_ack;
+#endif
 			}
-		}
-		if (tp->t_dupacks < tcprexmtthresh)
+		} else {
+			/*
+			 * Reset the duplicate ACK counter if we
+			 * were not in fast recovery.
+			 */
 			tp->t_dupacks = 0;
+		}
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
 			tcpstat_inc(tcps_rcvacktoomuch);
 			goto dropafterack_ratelim;
@@ -2705,32 +2695,34 @@ tcp_clean_sackreport(struct tcpcb *tp)
 }
 
 /*
- * Checks for partial ack.  If partial ack arrives, turn off retransmission
- * timer, deflate the window, do not clear tp->t_dupacks, and return 1.
- * If the ack advances at least to tp->snd_last, return 0.
+ * Partial ack handling within a sack recovery episode.  When a partial ack
+ * arrives, turn off retransmission timer, deflate the window, do not clear
+ * tp->t_dupacks.
  */
-int
+void
 tcp_sack_partialack(struct tcpcb *tp, struct tcphdr *th)
 {
-	if (SEQ_LT(th->th_ack, tp->snd_last)) {
-		/* Turn off retx. timer (will start again next segment) */
-		TCP_TIMER_DISARM(tp, TCPT_REXMT);
-		tp->t_rtttime = 0;
+	/* Turn off retx. timer (will start again next segment) */
+	TCP_TIMER_DISARM(tp, TCPT_REXMT);
+	tp->t_rtttime = 0;
 #ifndef TCP_FACK
-		/*
-		 * Partial window deflation.  This statement relies on the
-		 * fact that tp->snd_una has not been updated yet.  In FACK
-		 * hold snd_cwnd constant during fast recovery.
-		 */
-		if (tp->snd_cwnd > (th->th_ack - tp->snd_una)) {
-			tp->snd_cwnd -= th->th_ack - tp->snd_una;
-			tp->snd_cwnd += tp->t_maxseg;
-		} else
-			tp->snd_cwnd = tp->t_maxseg;
+	/*
+	 * Partial window deflation.  This statement relies on the
+	 * fact that tp->snd_una has not been updated yet.  In FACK
+	 * hold snd_cwnd constant during fast recovery.
+	 */
+	if (tp->snd_cwnd > (th->th_ack - tp->snd_una)) {
+		tp->snd_cwnd -= th->th_ack - tp->snd_una;
+		tp->snd_cwnd += tp->t_maxseg;
+	} else
+		tp->snd_cwnd = tp->t_maxseg;
+	tp->snd_cwnd += tp->t_maxseg;
+	tp->t_flags |= TF_NEEDOUTPUT;
+#else
+	/* Force call to tcp_output */
+	if (tp->snd_awnd < tp->snd_cwnd)
+		tp->t_flags |= TF_NEEDOUTPUT;
 #endif
-		return (1);
-	}
-	return (0);
 }
 
 /*
@@ -3091,48 +3083,44 @@ tcp_mss_update(struct tcpcb *tp)
 }
 
 /*
- * Checks for partial ack.  If partial ack arrives, force the retransmission
- * of the next unacknowledged segment, do not clear tp->t_dupacks, and return
- * 1.  By setting snd_nxt to ti_ack, this forces retransmission timer to
- * be started again.  If the ack advances at least to tp->snd_last, return 0.
+ * When a partial ack arrives, force the retransmission of the
+ * next unacknowledged segment.  Do not clear tp->t_dupacks.
+ * By setting snd_nxt to ti_ack, this forces retransmission timer
+ * to be started again.
  */
-int
-tcp_newreno(struct tcpcb *tp, struct tcphdr *th)
+void
+tcp_newreno_partialack(struct tcpcb *tp, struct tcphdr *th)
 {
-	if (SEQ_LT(th->th_ack, tp->snd_last)) {
-		/*
-		 * snd_una has not been updated and the socket send buffer
-		 * not yet drained of the acked data, so we have to leave
-		 * snd_una as it was to get the correct data offset in
-		 * tcp_output().
-		 */
-		tcp_seq onxt = tp->snd_nxt;
-		u_long  ocwnd = tp->snd_cwnd;
-		TCP_TIMER_DISARM(tp, TCPT_REXMT);
-		tp->t_rtttime = 0;
-		tp->snd_nxt = th->th_ack;
-		/*
-		 * Set snd_cwnd to one segment beyond acknowledged offset
-		 * (tp->snd_una not yet updated when this function is called)
-		 */
-		tp->snd_cwnd = tp->t_maxseg + (th->th_ack - tp->snd_una);
-		(void) tcp_output(tp);
-		tp->snd_cwnd = ocwnd;
-		if (SEQ_GT(onxt, tp->snd_nxt))
-			tp->snd_nxt = onxt;
-		/*
-		 * Partial window deflation.  Relies on fact that tp->snd_una
-		 * not updated yet.
-		 */
-		if (tp->snd_cwnd > th->th_ack - tp->snd_una)
-			tp->snd_cwnd -= th->th_ack - tp->snd_una;
-		else
-			tp->snd_cwnd = 0;
-		tp->snd_cwnd += tp->t_maxseg;
+	/*
+	 * snd_una has not been updated and the socket send buffer
+	 * not yet drained of the acked data, so we have to leave
+	 * snd_una as it was to get the correct data offset in
+	 * tcp_output().
+	 */
+	tcp_seq onxt = tp->snd_nxt;
+	u_long  ocwnd = tp->snd_cwnd;
 
-		return 1;
-	}
-	return 0;
+	TCP_TIMER_DISARM(tp, TCPT_REXMT);
+	tp->t_rtttime = 0;
+	tp->snd_nxt = th->th_ack;
+	/*
+	 * Set snd_cwnd to one segment beyond acknowledged offset
+	 * (tp->snd_una not yet updated when this function is called)
+	 */
+	tp->snd_cwnd = tp->t_maxseg + (th->th_ack - tp->snd_una);
+	(void)tcp_output(tp);
+	tp->snd_cwnd = ocwnd;
+	if (SEQ_GT(onxt, tp->snd_nxt))
+		tp->snd_nxt = onxt;
+	/*
+	 * Partial window deflation.  Relies on fact that tp->snd_una
+	 * not updated yet.
+	 */
+	if (tp->snd_cwnd > th->th_ack - tp->snd_una)
+		tp->snd_cwnd -= th->th_ack - tp->snd_una;
+	else
+		tp->snd_cwnd = 0;
+	tp->snd_cwnd += tp->t_maxseg;
 }
 
 int

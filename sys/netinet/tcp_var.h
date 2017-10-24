@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.125 2017/10/22 14:11:34 mikeb Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.126 2017/10/24 14:49:29 mikeb Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -766,11 +766,9 @@ void	 tcp_clean_sackreport(struct tcpcb *tp);
 void	 tcp_sack_adjust(struct tcpcb *tp);
 struct sackhole *
 	 tcp_sack_output(struct tcpcb *tp);
-int	 tcp_sack_partialack(struct tcpcb *, struct tcphdr *);
 #ifdef DEBUG
 void	 tcp_print_holes(struct tcpcb *tp);
 #endif
-int	 tcp_newreno(struct tcpcb *, struct tcphdr *);
 u_long	 tcp_seq_subtract(u_long, u_long );
 #ifdef TCP_SIGNATURE
 int	tcp_signature_apply(caddr_t, caddr_t, unsigned int);
