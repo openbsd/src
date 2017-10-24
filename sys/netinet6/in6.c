@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.213 2017/10/20 09:38:17 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.214 2017/10/24 08:57:10 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ const struct in6_addr in6mask64 = IN6MASK64;
 const struct in6_addr in6mask96 = IN6MASK96;
 const struct in6_addr in6mask128 = IN6MASK128;
 
-int in6_lifaddr_ioctl(u_long, caddr_t, struct ifnet *, int);
 int in6_ioctl(u_long, caddr_t, struct ifnet *, int);
 int in6_ifinit(struct ifnet *, struct in6_ifaddr *, int);
 void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
@@ -196,7 +195,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	case SIOCGETMIFCNT_IN6:
 		return (mrt6_ioctl(so, cmd, data));
 	}
-#endif
+#endif /* MROUTING */
 
 	return (in6_ioctl(cmd, data, ifp, privileged));
 }
@@ -224,16 +223,6 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCGIFINFO_IN6:
 	case SIOCGNBRINFO_IN6:
 		return (nd6_ioctl(cmd, data, ifp));
-	}
-
-	switch (cmd) {
-	case SIOCALIFADDR:
-	case SIOCDLIFADDR:
-		if (!privileged)
-			return (EPERM);
-		/* FALLTHROUGH */
-	case SIOCGLIFADDR:
-		return in6_lifaddr_ioctl(cmd, data, ifp, privileged);
 	}
 
 	/*
@@ -929,241 +918,6 @@ in6_unlink_ifa(struct in6_ifaddr *ia6, struct ifnet *ifp)
 	ifatrash++;
 	ia6->ia_ifp = NULL;
 	ifafree(&ia6->ia_ifa);
-}
-
-/*
- * SIOC[GAD]LIFADDR.
- *	SIOCGLIFADDR: get first address. (?)
- *	SIOCGLIFADDR with IFLR_PREFIX:
- *		get first address that matches the specified prefix.
- *	SIOCALIFADDR: add the specified address.
- *	SIOCALIFADDR with IFLR_PREFIX:
- *		add the specified prefix, filling hostid part from
- *		the first link-local address.  prefixlen must be <= 64.
- *	SIOCDLIFADDR: delete the specified address.
- *	SIOCDLIFADDR with IFLR_PREFIX:
- *		delete the first address that matches the specified prefix.
- * return values:
- *	EINVAL on invalid parameters
- *	EADDRNOTAVAIL on prefix match failed/specified address not found
- *	other values may be returned from in6_ioctl()
- *
- * NOTE: SIOCALIFADDR(with IFLR_PREFIX set) allows prefixlen less than 64.
- * this is to accommodate address naming scheme other than RFC2374,
- * in the future.
- * RFC2373 defines interface id to be 64bit, but it allows non-RFC2374
- * address encoding scheme. (see figure on page 8)
- */
-int
-in6_lifaddr_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
-{
-	struct if_laddrreq *iflr = (struct if_laddrreq *)data;
-	struct ifaddr *ifa;
-	struct sockaddr *sa;
-
-	/* sanity checks */
-	if (!data || !ifp) {
-		panic("invalid argument to in6_lifaddr_ioctl");
-		/* NOTREACHED */
-	}
-
-	switch (cmd) {
-	case SIOCGLIFADDR:
-		/* address must be specified on GET with IFLR_PREFIX */
-		if ((iflr->flags & IFLR_PREFIX) == 0)
-			break;
-		/* FALLTHROUGH */
-	case SIOCALIFADDR:
-	case SIOCDLIFADDR:
-		/* address must be specified on ADD and DELETE */
-		sa = sstosa(&iflr->addr);
-		if (sa->sa_family != AF_INET6)
-			return EINVAL;
-		if (sa->sa_len != sizeof(struct sockaddr_in6))
-			return EINVAL;
-		/* XXX need improvement */
-		sa = sstosa(&iflr->dstaddr);
-		if (sa->sa_family && sa->sa_family != AF_INET6)
-			return EINVAL;
-		if (sa->sa_len && sa->sa_len != sizeof(struct sockaddr_in6))
-			return EINVAL;
-		break;
-	default: /* shouldn't happen */
-#if 0
-		panic("invalid cmd to in6_lifaddr_ioctl");
-		/* NOTREACHED */
-#else
-		return EOPNOTSUPP;
-#endif
-	}
-	if (sizeof(struct in6_addr) * 8 < iflr->prefixlen)
-		return EINVAL;
-
-	switch (cmd) {
-	case SIOCALIFADDR:
-	    {
-		struct in6_aliasreq ifra;
-		struct in6_addr *hostid = NULL;
-		int prefixlen;
-
-		if ((iflr->flags & IFLR_PREFIX) != 0) {
-			struct sockaddr_in6 *sin6;
-
-			/*
-			 * hostid is to fill in the hostid part of the
-			 * address.  hostid points to the first link-local
-			 * address attached to the interface.
-			 */
-			ifa = &in6ifa_ifpforlinklocal(ifp, 0)->ia_ifa;
-			if (!ifa)
-				return EADDRNOTAVAIL;
-			hostid = IFA_IN6(ifa);
-
-			/* prefixlen must be <= 64. */
-			if (64 < iflr->prefixlen)
-				return EINVAL;
-			prefixlen = iflr->prefixlen;
-
-			/* hostid part must be zero. */
-			sin6 = (struct sockaddr_in6 *)&iflr->addr;
-			if (sin6->sin6_addr.s6_addr32[2] != 0
-			 || sin6->sin6_addr.s6_addr32[3] != 0) {
-				return EINVAL;
-			}
-		} else
-			prefixlen = iflr->prefixlen;
-
-		/* copy args to in6_aliasreq, perform ioctl(SIOCAIFADDR_IN6). */
-		bzero(&ifra, sizeof(ifra));
-		bcopy(iflr->iflr_name, ifra.ifra_name, sizeof(ifra.ifra_name));
-
-		bcopy(&iflr->addr, &ifra.ifra_addr, iflr->addr.ss_len);
-		if (hostid) {
-			/* fill in hostid part */
-			ifra.ifra_addr.sin6_addr.s6_addr32[2] =
-			    hostid->s6_addr32[2];
-			ifra.ifra_addr.sin6_addr.s6_addr32[3] =
-			    hostid->s6_addr32[3];
-		}
-
-		if (iflr->dstaddr.ss_family) {	/*XXX*/
-			bcopy(&iflr->dstaddr, &ifra.ifra_dstaddr,
-			    iflr->dstaddr.ss_len);
-			if (hostid) {
-				ifra.ifra_dstaddr.sin6_addr.s6_addr32[2] =
-				    hostid->s6_addr32[2];
-				ifra.ifra_dstaddr.sin6_addr.s6_addr32[3] =
-				    hostid->s6_addr32[3];
-			}
-		}
-
-		ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
-		in6_prefixlen2mask(&ifra.ifra_prefixmask.sin6_addr, prefixlen);
-
-		ifra.ifra_flags = iflr->flags & ~IFLR_PREFIX;
-		return in6_ioctl(SIOCAIFADDR_IN6, (caddr_t)&ifra, ifp,
-		    privileged);
-	    }
-	case SIOCGLIFADDR:
-	case SIOCDLIFADDR:
-	    {
-		struct in6_ifaddr *ia6;
-		struct in6_addr mask, candidate, match;
-		struct sockaddr_in6 *sin6;
-		int cmp;
-
-		bzero(&mask, sizeof(mask));
-		if (iflr->flags & IFLR_PREFIX) {
-			/* lookup a prefix rather than address. */
-			in6_prefixlen2mask(&mask, iflr->prefixlen);
-
-			sin6 = (struct sockaddr_in6 *)&iflr->addr;
-			bcopy(&sin6->sin6_addr, &match, sizeof(match));
-			match.s6_addr32[0] &= mask.s6_addr32[0];
-			match.s6_addr32[1] &= mask.s6_addr32[1];
-			match.s6_addr32[2] &= mask.s6_addr32[2];
-			match.s6_addr32[3] &= mask.s6_addr32[3];
-
-			/* if you set extra bits, that's wrong */
-			if (bcmp(&match, &sin6->sin6_addr, sizeof(match)))
-				return EINVAL;
-
-			cmp = 1;
-		} else {
-			if (cmd == SIOCGLIFADDR) {
-				/* on getting an address, take the 1st match */
-				cmp = 0;	/* XXX */
-			} else {
-				/* on deleting an address, do exact match */
-				in6_prefixlen2mask(&mask, 128);
-				sin6 = (struct sockaddr_in6 *)&iflr->addr;
-				bcopy(&sin6->sin6_addr, &match, sizeof(match));
-
-				cmp = 1;
-			}
-		}
-
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			if (ifa->ifa_addr->sa_family != AF_INET6)
-				continue;
-			if (!cmp)
-				break;
-
-			bcopy(IFA_IN6(ifa), &candidate, sizeof(candidate));
-			candidate.s6_addr32[0] &= mask.s6_addr32[0];
-			candidate.s6_addr32[1] &= mask.s6_addr32[1];
-			candidate.s6_addr32[2] &= mask.s6_addr32[2];
-			candidate.s6_addr32[3] &= mask.s6_addr32[3];
-			if (IN6_ARE_ADDR_EQUAL(&candidate, &match))
-				break;
-		}
-		if (!ifa)
-			return EADDRNOTAVAIL;
-		ia6 = ifatoia6(ifa);
-
-		if (cmd == SIOCGLIFADDR) {
-			/* fill in the if_laddrreq structure */
-			bcopy(&ia6->ia_addr, &iflr->addr, ia6->ia_addr.sin6_len);
-			if ((ifp->if_flags & IFF_POINTOPOINT) != 0) {
-				bcopy(&ia6->ia_dstaddr, &iflr->dstaddr,
-				    ia6->ia_dstaddr.sin6_len);
-			} else
-				bzero(&iflr->dstaddr, sizeof(iflr->dstaddr));
-
-			iflr->prefixlen =
-			    in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL);
-
-			iflr->flags = ia6->ia6_flags;	/*XXX*/
-
-			return 0;
-		} else {
-			struct in6_aliasreq ifra;
-
-			/* fill in6_aliasreq and do ioctl(SIOCDIFADDR_IN6) */
-			bzero(&ifra, sizeof(ifra));
-			bcopy(iflr->iflr_name, ifra.ifra_name,
-			    sizeof(ifra.ifra_name));
-
-			bcopy(&ia6->ia_addr, &ifra.ifra_addr,
-			    ia6->ia_addr.sin6_len);
-			if ((ifp->if_flags & IFF_POINTOPOINT) != 0) {
-				bcopy(&ia6->ia_dstaddr, &ifra.ifra_dstaddr,
-				    ia6->ia_dstaddr.sin6_len);
-			} else {
-				bzero(&ifra.ifra_dstaddr,
-				    sizeof(ifra.ifra_dstaddr));
-			}
-			bcopy(&ia6->ia_prefixmask, &ifra.ifra_dstaddr,
-			    ia6->ia_prefixmask.sin6_len);
-
-			ifra.ifra_flags = ia6->ia6_flags;
-			return in6_ioctl(SIOCDIFADDR_IN6, (caddr_t)&ifra, ifp,
-			    privileged);
-		}
-	    }
-	}
-
-	return EOPNOTSUPP;	/* just for safety */
 }
 
 /*
