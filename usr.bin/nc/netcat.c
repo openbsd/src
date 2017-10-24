@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.187 2017/07/15 17:27:39 jsing Exp $ */
+/* $OpenBSD: netcat.c,v 1.188 2017/10/24 17:49:35 bluhm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -563,13 +563,12 @@ main(int argc, char *argv[])
 				 * initially to wait for a caller, then use
 				 * the regular functions to talk to the caller.
 				 */
-				int rv, plen;
-				char buf[16384];
+				int rv;
+				char buf[2048];
 				struct sockaddr_storage z;
 
 				len = sizeof(z);
-				plen = 2048;
-				rv = recvfrom(s, buf, plen, MSG_PEEK,
+				rv = recvfrom(s, buf, sizeof(buf), MSG_PEEK,
 				    (struct sockaddr *)&z, &len);
 				if (rv < 0)
 					err(1, "recvfrom");
