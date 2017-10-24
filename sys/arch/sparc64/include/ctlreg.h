@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.28 2017/05/25 03:19:39 dlg Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.29 2017/10/24 17:06:51 kettenis Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -528,8 +528,8 @@ do {									\
 
 #define sparc_rd(name) sparc_rd_ ## name()
 #define GEN_RD(name)							\
-extern __inline u_int64_t sparc_rd_ ## name(void);			\
-extern __inline u_int64_t						\
+static inline u_int64_t sparc_rd_ ## name(void);			\
+static inline u_int64_t						\
 sparc_rd_ ## name()							\
 {									\
 	u_int64_t r;							\
@@ -540,8 +540,8 @@ sparc_rd_ ## name()							\
 
 #define sparc_rdpr(name) sparc_rdpr_ ## name()
 #define GEN_RDPR(name)							\
-extern __inline u_int64_t sparc_rdpr_ ## name(void);			\
-extern __inline u_int64_t						\
+static inline u_int64_t sparc_rdpr_ ## name(void);			\
+static inline u_int64_t						\
 sparc_rdpr_ ## name()							\
 {									\
 	u_int64_t r;							\
@@ -573,8 +573,8 @@ GEN_RDPR(ver);
 
 /* Generate ld*a/st*a functions for non-constant ASI's. */
 #define LDNC_GEN(tp, o)							\
-	extern __inline tp o ## _asi(paddr_t);				\
-	extern __inline tp						\
+	static inline tp o ## _asi(paddr_t);				\
+	static inline tp						\
 	o ## _asi(paddr_t va)						\
 	{								\
 		tp r;							\
@@ -585,8 +585,8 @@ GEN_RDPR(ver);
 		    : "%g0");						\
 		return (r);						\
 	}								\
-	extern __inline tp o ## _nc(paddr_t, int);			\
-	extern __inline tp						\
+	static inline tp o ## _nc(paddr_t, int);			\
+	static inline tp						\
 	o ## _nc(paddr_t va, int asi)					\
 	{								\
 		sparc_wr(asi, asi, 0);					\
@@ -626,8 +626,8 @@ LDNC_GEN(int, lda);
 #define ldxa(va, asi)	LD_GENERIC(va, asi, ldx, u_int64_t)
 
 #define STNC_GEN(tp, o)							\
-	extern __inline void o ## _asi(paddr_t, tp);			\
-	extern __inline void						\
+	static inline void o ## _asi(paddr_t, tp);			\
+	static inline void						\
 	o ## _asi(paddr_t va, tp val)					\
 	{								\
 		__asm volatile(						\
@@ -636,8 +636,8 @@ LDNC_GEN(int, lda);
 		    : "r" (val), "r" ((volatile tp *)va)		\
 		    : "memory");					\
 	}								\
-	extern __inline void o ## _nc(paddr_t, int, tp);		\
-	extern __inline void						\
+	static inline void o ## _nc(paddr_t, int, tp);		\
+	static inline void						\
 	o ## _nc(paddr_t va, int asi, tp val)				\
 	{								\
 		sparc_wr(asi, asi, 0);					\
@@ -675,23 +675,23 @@ STNC_GEN(u_int, sta);
 #define stxa(va, asi, val)	ST_GENERIC(va, asi, val, stx, u_int64_t)
 
 
-extern __inline void asi_set(int);
-extern __inline
+static inline void asi_set(int);
+static inline
 void asi_set(int asi)
 {
 	sparc_wr(asi, asi, 0);
 }
 
-extern __inline u_int8_t asi_get(void);
-extern __inline
+static inline u_int8_t asi_get(void);
+static inline
 u_int8_t asi_get(void)
 {
 	return sparc_rd(asi);
 }
 
 /* flush address from instruction cache */
-extern __inline void flush(void *);
-extern __inline
+static inline void flush(void *);
+static inline
 void flush(void *p)
 {
 	__asm volatile("flush %0"
