@@ -567,7 +567,11 @@ bool elf::isRelroSection(const OutputSection *Sec) {
   // However, if "-z now" is given, the lazy symbol resolution is
   // disabled, which enables us to put it into RELRO.
   if (Sec == InX::GotPlt->getParent())
+#ifndef __OpenBSD__
     return Config->ZNow;
+#else
+    return true;	/* kbind(2) means we can always put these in RELRO */
+#endif
 
   // .dynamic section contains data for the dynamic linker, and
   // there's no need to write to it at runtime, so it's better to put
