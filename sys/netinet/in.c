@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.142 2017/10/24 08:57:10 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.143 2017/10/24 09:30:15 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -315,8 +315,8 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 			return (EINVAL);
 		oldaddr = ia->ia_dstaddr;
 		ia->ia_dstaddr = *satosin(&ifr->ifr_dstaddr);
-		if (ifp->if_ioctl && (error = (*ifp->if_ioctl)
-					(ifp, SIOCSIFDSTADDR, (caddr_t)ia))) {
+		error = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR, (caddr_t)ia);
+		if (error) {
 			ia->ia_dstaddr = oldaddr;
 			return (error);
 		}
@@ -450,8 +450,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	if (ifp->if_ioctl &&
-	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia))) {
+	if ((error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia))) {
 		ia->ia_addr = oldaddr;
 	}
 
