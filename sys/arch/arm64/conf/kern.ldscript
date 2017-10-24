@@ -1,4 +1,4 @@
-/*     $OpenBSD: kern.ldscript,v 1.6 2017/10/04 21:04:56 patrick Exp $         */
+/*     $OpenBSD: kern.ldscript,v 1.7 2017/10/24 20:06:54 guenther Exp $         */
 /*     $NetBSD: ldscript.evbarm,v 1.2 2003/03/05 23:54:22 thorpej Exp $        */
 
 OUTPUT_ARCH(aarch64)
@@ -7,7 +7,7 @@ OUTPUT_ARCH(aarch64)
 PHDRS
 {
 	text PT_LOAD;
-	rodata PT_LOAD;
+	rodata PT_LOAD FLAGS (4);
 	data PT_LOAD;
 	openbsd_randomize PT_OPENBSD_RANDOMIZE;
 }

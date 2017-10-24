@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.7 2017/06/21 20:08:53 deraadt Exp $	*/
+/*	$OpenBSD: ld.script,v 1.8 2017/10/24 20:06:54 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -24,7 +24,7 @@ OUTPUT_ARCH(i386)
 PHDRS
 {
 	text PT_LOAD FILEHDR PHDRS;
-	rodata PT_LOAD;
+	rodata PT_LOAD FLAGS (4);
 	data PT_LOAD;
 	bss PT_LOAD;
 	openbsd_randomize PT_OPENBSD_RANDOMIZE;
