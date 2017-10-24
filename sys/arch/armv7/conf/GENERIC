@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.98 2017/10/23 17:37:51 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.99 2017/10/24 17:00:34 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -116,8 +116,8 @@ sdhc*		at fdt?
 sdmmc*		at sdhc?
 #bwfm*		at sdmmc?		# Broadcom FullMAC
 
-psci*		at fdt?
-syscon*		at fdt?
+psci*		at fdt? early 1
+syscon*		at fdt? early 1
 
 simplefb*	at fdt?
 wsdisplay*	at simplefb?
