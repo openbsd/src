@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.29 2017/08/21 21:41:13 deraadt Exp $ */
+/* $OpenBSD: fuse.c,v 1.30 2017/10/24 09:01:05 mpi Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -466,14 +466,16 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
 	struct fuse_chan *fc;
 	struct fuse *fuse;
+	char *dir;
 	int fg;
 
-	if (fuse_parse_cmdline(&args, mp, mt, &fg))
+	dir = NULL;
+	if (fuse_parse_cmdline(&args, &dir, mt, &fg))
 		goto err;
 
 	fuse_daemonize(0);
 
-	if ((fc = fuse_mount(*mp, NULL)) == NULL)
+	if ((fc = fuse_mount(dir, NULL)) == NULL)
 		goto err;
 
 	if ((fuse = fuse_new(fc, NULL, ops, size, data)) == NULL) {
@@ -481,9 +483,12 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 		goto err;
 	}
 
+	if (mp != NULL)
+		*mp = dir;
+
 	return (fuse);
 err:
-	free(*mp);
+	free(dir);
 	return (NULL);
 }
 
