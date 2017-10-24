@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.70 2017/10/07 02:05:31 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.71 2017/10/24 07:51:46 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -394,11 +394,14 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_TERMINATE_VM_EVENT:
 		IMSG_SIZE_CHECK(imsg, &vmr);
 		memcpy(&vmr, imsg->data, sizeof(vmr));
-		log_debug("%s: handling TERMINATE_EVENT for vm id %d",
-		    __func__, vmr.vmr_id);
-		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
+		log_debug("%s: handling TERMINATE_EVENT for vm id %d ret %d",
+		    __func__, vmr.vmr_id, vmr.vmr_result);
+		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL) {
+			log_debug("%s: vm %d is no longer available",
+			    __func__, vmr.vmr_id);
 			break;
-		if (vmr.vmr_result == 0) {
+		}
+		if (vmr.vmr_result != EAGAIN) {
 			if (vm->vm_from_config) {
 				log_debug("%s: about to stop vm id %d",
 				    __func__, vm->vm_vmid);
@@ -408,7 +411,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 				    __func__, vm->vm_vmid);
 				vm_remove(vm);
 			}
-		} else if (vmr.vmr_result == EAGAIN) {
+		} else {
 			/* Stop VM instance but keep the tty open */
 			log_debug("%s: about to stop vm id %d with tty open",
 			    __func__, vm->vm_vmid);
