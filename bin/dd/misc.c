@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.21 2017/08/13 02:06:42 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.22 2017/10/24 14:21:10 schwarze Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -111,9 +111,8 @@ summaryx(int notused)
 }
 
 void
-terminate(int notused)
+terminate(int signo)
 {
-
 	summary();
-	_exit(0);
+	_exit(128 + signo);
 }
