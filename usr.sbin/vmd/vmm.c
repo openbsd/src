@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.77 2017/09/15 02:36:29 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.78 2017/10/24 07:58:52 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -170,15 +170,13 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 				else
 					res = 0;
 			} else {
-				/* in the process of shutting down... */
-				log_debug("%s: performing a forced shutdown",
-				    __func__);
+				/*
+				 * VM is currently being shutdown.
+				 * Check to see if the VM process is still
+				 * active.  If not, return VMD_VM_STOP_INVALID.
+				 */
 				vtp.vtp_vm_id = vm_vmid2id(vm->vm_vmid, vm);
-				/* ensure vm_id isn't 0 */
-				if (vtp.vtp_vm_id != 0) {
-					res = terminate_vm(&vtp);
-					vm_remove(vm);
-				} else {
+				if (vtp.vtp_vm_id == 0) {
 					log_debug("%s: no vm running anymore",
 					    __func__);
 					res = VMD_VM_STOP_INVALID;
