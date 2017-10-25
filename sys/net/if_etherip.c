@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.20 2017/10/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.21 2017/10/25 09:24:09 mpi Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -363,6 +363,10 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 		return ENETUNREACH;
 	}
 
+	/*
+	 * Remove multicast and broadcast flags or encapsulated packet
+	 * ends up as multicast or broadcast packet.
+	 */
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 	M_PREPEND(m, sizeof(struct etherip_header), M_DONTWAIT);
@@ -520,6 +524,10 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 		goto drop;
 	}
 
+	/*
+	 * Remove multicast and broadcast flags or encapsulated packet
+	 * ends up as multicast or broadcast packet.
+	 */
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 	M_PREPEND(m, sizeof(struct etherip_header), M_DONTWAIT);

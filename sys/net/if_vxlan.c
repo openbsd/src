@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.62 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.63 2017/10/25 09:24:09 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -665,7 +665,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 	}
 #endif
 
-	m->m_flags &= ~(M_MCAST|M_BCAST);
+	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 #if NPF > 0
 	pf_pkt_addr_changed(m);
@@ -702,6 +702,12 @@ vxlan_encap4(struct ifnet *ifp, struct mbuf *m,
 	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
 	struct ip		*ip;
 
+	/*
+	 * Remove multicast and broadcast flags or encapsulated packet
+	 * ends up as multicast or broadcast packet.
+	 */
+	m->m_flags &= ~(M_BCAST|M_MCAST);
+
 	M_PREPEND(m, sizeof(*ip), M_DONTWAIT);
 	if (m == NULL)
 		return (NULL);
@@ -734,6 +740,12 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
 	struct ip6_hdr		*ip6;
 	struct in6_addr		*in6a;
+
+	/*
+	 * Remove multicast and broadcast flags or encapsulated packet
+	 * ends up as multicast or broadcast packet.
+	 */
+	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 	M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
 	if (m == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.100 2017/10/16 13:40:58 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.101 2017/10/25 09:24:09 mpi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -256,6 +256,7 @@ gif_encap(struct ifnet *ifp, struct mbuf **mp, sa_family_t af)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	int error = 0;
+
 	/*
 	 * Remove multicast and broadcast flags or encapsulated packet
 	 * ends up as multicast or broadcast packet.
