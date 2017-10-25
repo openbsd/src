@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.30 2017/10/24 09:01:05 mpi Exp $ */
+/* $OpenBSD: fuse.c,v 1.31 2017/10/25 09:29:46 mpi Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -426,10 +426,14 @@ fuse_parse_cmdline(struct fuse_args *args, char **mp, int *mt, unused int *fg)
 		return (-1);
 	}
 
-	*mp = strdup(opt.mp);
-	if (*mp == NULL)
-		return (-1);
-	*mt = 0;
+	if (mp != NULL) {
+		*mp = strdup(opt.mp);
+		if (*mp == NULL)
+			return (-1);
+	}
+
+	if (mt != NULL)
+		*mt = 0;
 
 	return (0);
 }
