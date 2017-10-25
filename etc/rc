@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.519 2017/10/12 18:14:05 rpe Exp $
+#	$OpenBSD: rc,v 1.520 2017/10/25 10:42:51 bluhm Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -49,16 +49,20 @@ update_limit() {
 
 # Apply sysctl.conf(5) settings.
 sysctl_conf() {
-	stripcom /etc/sysctl.conf |
-	while read _line; do
-		sysctl "$_line"
+	# do not use a pipe as limits would only be applied to the subshell
+	set -- $(stripcom /etc/sysctl.conf)
+	while [[ $# > 0 ]] ; do
+		sysctl "$1"
 
-		case $_line in
+		case "$1" in
 		kern.maxproc=*)
-			update_limit -p maxproc;;
+			update_limit -p maxproc
+			;;
 		kern.maxfiles=*)
-			update_limit -n openfiles;;
+			update_limit -n openfiles
+			;;
 		esac
+		shift
 	done
 }
 
