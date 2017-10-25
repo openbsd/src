@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.38 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.39 2017/10/25 22:29:41 mikeb Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -347,7 +347,7 @@ void
 fpu_kernel_enter(void)
 {
 	struct cpu_info	*ci = curcpu();
-	uint32_t	 cw;
+	struct savefpu	*sfp;
 	int		 s;
 
 	/*
@@ -376,10 +376,11 @@ fpu_kernel_enter(void)
 
 	/* Initialize the FPU */
 	fninit();
-	cw = __INITIAL_NPXCW__;
-	fldcw(&cw);
-	cw = __INITIAL_MXCSR__;
-	ldmxcsr(&cw);
+	sfp = &proc0.p_addr->u_pcb.pcb_savefpu;
+	memset(&sfp->fp_fxsave, 0, sizeof(sfp->fp_fxsave));
+	sfp->fp_fxsave.fx_fcw = __INITIAL_NPXCW__;
+	sfp->fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
+	fxrstor(&sfp->fp_fxsave);
 }
 
 void
