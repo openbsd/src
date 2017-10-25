@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.35 2017/06/07 23:36:43 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.36 2017/10/25 17:08:58 jca Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -182,7 +182,8 @@ process_crontab(int dfd, const char *uname, const char *fname,
 		goto next_crontab;
 	}
 
-	crontab_fd = openat(dfd, fname, O_RDONLY|O_NONBLOCK|O_NOFOLLOW);
+	crontab_fd = openat(dfd, fname,
+	    O_RDONLY|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC);
 	if (crontab_fd < 0) {
 		/* crontab not accessible?
 		 */
