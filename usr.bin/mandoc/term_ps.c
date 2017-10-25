@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ps.c,v 1.49 2017/06/07 17:38:08 schwarze Exp $ */
+/*	$OpenBSD: term_ps.c,v 1.50 2017/10/25 18:51:04 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -755,7 +755,7 @@ ps_closepage(struct termp *p)
 		ps_printf(p, "/Font <<\n");
 		for (i = 0; i < (int)TERMFONT__MAX; i++)
 			ps_printf(p, "/F%d %d 0 R\n", i, 3 + i);
-		ps_printf(p, ">>\n>>\n");
+		ps_printf(p, ">>\n>>\nendobj\n");
 
 		/* Page node. */
 		pdf_obj(p, base + 3);
@@ -820,7 +820,7 @@ ps_end(struct termp *p)
 	ps_printf(p, "<<\n");
 	ps_printf(p, "/Type /Catalog\n");
 	ps_printf(p, "/Pages 2 0 R\n");
-	ps_printf(p, ">>\n");
+	ps_printf(p, ">>\nendobj\n");
 	xref = p->ps->pdfbytes;
 	ps_printf(p, "xref\n");
 	ps_printf(p, "0 %zu\n", base + 1);
@@ -914,7 +914,7 @@ ps_begin(struct termp *p)
 			ps_printf(p, "/Subtype /Type1\n");
 			ps_printf(p, "/Name /F%d\n", i);
 			ps_printf(p, "/BaseFont /%s\n", fonts[i].name);
-			ps_printf(p, ">>\n");
+			ps_printf(p, ">>\nendobj\n");
 		}
 	}
 
