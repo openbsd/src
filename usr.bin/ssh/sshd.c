@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.494 2017/10/25 00:15:35 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.495 2017/10/25 00:17:08 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1292,6 +1292,31 @@ check_ip_options(struct ssh *ssh)
 	return;
 }
 
+/* Set the routing domain for this process */
+static void
+set_process_rdomain(struct ssh *ssh, const char *name)
+{
+	int rtable, ortable = getrtable();
+	const char *errstr;
+
+	if (name == NULL)
+		return; /* default */
+
+	if (strcmp(name, "%D") == 0) {
+		/* "expands" to routing domain of connection */
+		if ((name = ssh_packet_rdomain_in(ssh)) == NULL)
+			return;
+	}
+
+	rtable = (int)strtonum(name, 0, 255, &errstr);
+	if (errstr != NULL) /* Shouldn't happen */
+		fatal("Invalid routing domain \"%s\": %s", name, errstr);
+	if (rtable != ortable && setrtable(rtable) != 0)
+		fatal("Unable to set routing domain %d: %s",
+		    rtable, strerror(errno));
+	debug("%s: set routing domain %d (was %d)", __func__, rtable, ortable);
+}
+
 /*
  * Main program for the daemon.
  */
@@ -1909,6 +1934,9 @@ main(int ac, char **av)
 		close(startup_pipe);
 		startup_pipe = -1;
 	}
+
+	if (options.routing_domain != NULL)
+		set_process_rdomain(ssh, options.routing_domain);
 
 	/*
 	 * In privilege separation, we fork another child and prepare
