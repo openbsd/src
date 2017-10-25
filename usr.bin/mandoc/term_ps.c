@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ps.c,v 1.50 2017/10/25 18:51:04 schwarze Exp $ */
+/*	$OpenBSD: term_ps.c,v 1.51 2017/10/25 20:48:17 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -738,8 +738,6 @@ ps_closepage(struct termp *p)
 	ps_printf(p, "%s", p->ps->psmarg);
 
 	if (TERMTYPE_PS != p->type) {
-		ps_printf(p, "ET\n");
-
 		len = p->ps->pdfbytes - p->ps->pdflastpg;
 		base = p->ps->pages * 4 + p->ps->pdfbody;
 
