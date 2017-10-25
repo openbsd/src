@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.13 2017/10/11 11:26:58 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.14 2017/10/25 11:26:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -266,7 +266,7 @@ mode_tree_count_tagged(struct mode_tree_data *mtd)
 
 void
 mode_tree_each_tagged(struct mode_tree_data *mtd, void (*cb)(void *, void *,
-    key_code), key_code key, int current)
+    struct client *, key_code), struct client *c, key_code key, int current)
 {
 	struct mode_tree_item	*mti;
 	u_int			 i;
@@ -277,12 +277,12 @@ mode_tree_each_tagged(struct mode_tree_data *mtd, void (*cb)(void *, void *,
 		mti = mtd->line_list[i].item;
 		if (mti->tagged) {
 			fired = 1;
-			cb(mtd->modedata, mti->itemdata, key);
+			cb(mtd->modedata, mti->itemdata, c, key);
 		}
 	}
 	if (!fired && current) {
 		mti = mtd->line_list[mtd->current].item;
-		cb(mtd->modedata, mti->itemdata, key);
+		cb(mtd->modedata, mti->itemdata, c, key);
 	}
 }
 
