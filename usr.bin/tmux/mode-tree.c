@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.14 2017/10/25 11:26:11 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.15 2017/10/25 12:13:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -848,6 +848,7 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 		mode_tree_build(mtd);
 		break;
 	case KEYC_LEFT:
+	case 'h':
 	case '-':
 		if (line->flat || !current->expanded)
 			current = current->parent;
@@ -860,6 +861,7 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 		}
 		break;
 	case KEYC_RIGHT:
+	case 'l':
 	case '+':
 		if (line->flat || current->expanded)
 			mode_tree_down(mtd, 0);
