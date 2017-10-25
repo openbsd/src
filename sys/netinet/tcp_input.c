@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.349 2017/10/24 14:49:29 mikeb Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.350 2017/10/25 12:38:21 job Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -974,10 +974,6 @@ findpcb:
 				if (SEQ_GT(tp->snd_una, tp->snd_last))
 #endif
 				tp->snd_last = tp->snd_una;
-#ifdef TCP_FACK
-				tp->snd_fack = tp->snd_una;
-				tp->retran_data = 0;
-#endif
 				m_freem(m);
 
 				/*
@@ -1566,18 +1562,7 @@ trimthenstep6:
 				 */
 				if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0)
 					tp->t_dupacks = 0;
-#ifdef TCP_FACK
-				/*
-				 * In FACK, can enter fast rec. if the receiver
-				 * reports a reass. queue longer than 3 segs.
-				 */
-				else if (++tp->t_dupacks == tcprexmtthresh ||
-				    ((SEQ_GT(tp->snd_fack, tcprexmtthresh *
-				    tp->t_maxseg + tp->snd_una)) &&
-				    SEQ_GT(tp->snd_una, tp->snd_last))) {
-#else
 				else if (++tp->t_dupacks == tcprexmtthresh) {
-#endif /* TCP_FACK */
 					tcp_seq onxt = tp->snd_nxt;
 					u_long win =
 					    ulmin(tp->snd_wnd, tp->snd_cwnd) /
@@ -1603,15 +1588,6 @@ trimthenstep6:
 #endif
 						tcpstat_inc(tcps_cwr_frecovery);
 						tcpstat_inc(tcps_sack_recovery_episode);
-#ifdef TCP_FACK
-						tp->t_dupacks = tcprexmtthresh;
-						(void) tcp_output(tp);
-						/*
-						 * During FR, snd_cwnd is held
-						 * constant for FACK.
-						 */
-						tp->snd_cwnd = tp->snd_ssthresh;
-#else
 						/*
 						 * tcp_output() will send
 						 * oldest SACK-eligible rtx.
@@ -1619,7 +1595,6 @@ trimthenstep6:
 						(void) tcp_output(tp);
 						tp->snd_cwnd = tp->snd_ssthresh+
 					           tp->t_maxseg * tp->t_dupacks;
-#endif /* TCP_FACK */
 						goto drop;
 					}
 					TCP_TIMER_DISARM(tp, TCPT_REXMT);
@@ -1639,17 +1614,6 @@ trimthenstep6:
 						tp->snd_nxt = onxt;
 					goto drop;
 				} else if (tp->t_dupacks > tcprexmtthresh) {
-#ifdef TCP_FACK
-					/*
-					 * while (awnd < cwnd)
-					 *         sendsomething();
-					 */
-					if (tp->sack_enable) {
-						if (tp->snd_awnd < tp->snd_cwnd)
-							tcp_output(tp);
-						goto drop;
-					}
-#endif /* TCP_FACK */
 					tp->snd_cwnd += tp->t_maxseg;
 					(void) tcp_output(tp);
 					goto drop;
@@ -1685,11 +1649,6 @@ trimthenstep6:
 					    tcp_seq_subtract(tp->snd_max,
 					    th->th_ack);
 				tp->t_dupacks = 0;
-#ifdef TCP_FACK
-				if (tp->sack_enable &&
-				    SEQ_GT(th->th_ack, tp->snd_fack))
-					tp->snd_fack = th->th_ack;
-#endif
 			}
 		} else {
 			/*
@@ -1789,16 +1748,6 @@ trimthenstep6:
 #endif
 		if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 			tp->snd_nxt = tp->snd_una;
-#ifdef TCP_FACK
-		if (SEQ_GT(tp->snd_una, tp->snd_fack)) {
-			tp->snd_fack = tp->snd_una;
-			/* Update snd_awnd for partial ACK
-			 * without any SACK blocks.
-			 */
-			tp->snd_awnd = tcp_seq_subtract(tp->snd_nxt,
-				tp->snd_fack) + tp->retran_data;
-		}
-#endif
 
 		switch (tp->t_state) {
 
@@ -2467,11 +2416,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			continue; /* bad SACK fields */
 		if (SEQ_LEQ(sack.end, tp->snd_una))
 			continue; /* old block */
-#ifdef TCP_FACK
-		/* Updates snd_fack.  */
-		if (SEQ_GT(sack.end, tp->snd_fack))
-			tp->snd_fack = sack.end;
-#endif
 		if (SEQ_GT(th->th_ack, tp->snd_una)) {
 			if (SEQ_LT(sack.start, th->th_ack))
 				continue;
@@ -2520,16 +2464,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			}
 			if (SEQ_LEQ(sack.start, cur->start)) {
 				/* Data acks at least the beginning of hole */
-#ifdef TCP_FACK
-				if (SEQ_GT(sack.end, cur->rxmit))
-					tp->retran_data -=
-					    tcp_seq_subtract(cur->rxmit,
-					    cur->start);
-				else
-					tp->retran_data -=
-					    tcp_seq_subtract(sack.end,
-					    cur->start);
-#endif
 				if (SEQ_GEQ(sack.end, cur->end)) {
 					/* Acks entire hole, so delete hole */
 					if (p != cur) {
@@ -2554,12 +2488,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			}
 			/* move end of hole backward */
 			if (SEQ_GEQ(sack.end, cur->end)) {
-#ifdef TCP_FACK
-				if (SEQ_GT(cur->rxmit, sack.start))
-					tp->retran_data -=
-					    tcp_seq_subtract(cur->rxmit,
-					    sack.start);
-#endif
 				cur->end = sack.start;
 				cur->rxmit = SEQ_MIN(cur->rxmit, cur->end);
 				cur->dups++;
@@ -2580,16 +2508,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				    pool_get(&sackhl_pool, PR_NOWAIT);
 				if (temp == NULL)
 					goto done; /* ENOBUFS */
-#ifdef TCP_FACK
-				if (SEQ_GT(cur->rxmit, sack.end))
-					tp->retran_data -=
-					    tcp_seq_subtract(sack.end,
-					    sack.start);
-				else if (SEQ_GT(cur->rxmit, sack.start))
-					tp->retran_data -=
-					    tcp_seq_subtract(cur->rxmit,
-					    sack.start);
-#endif
 				temp->next = cur->next;
 				temp->start = sack.end;
 				temp->end = cur->end;
@@ -2631,21 +2549,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 		}
 	}
 done:
-#ifdef TCP_FACK
-	/*
-	 * Update retran_data and snd_awnd.  Go through the list of
-	 * holes.   Increment retran_data by (hole->rxmit - hole->start).
-	 */
-	tp->retran_data = 0;
-	cur = tp->snd_holes;
-	while (cur) {
-		tp->retran_data += cur->rxmit - cur->start;
-		cur = cur->next;
-	}
-	tp->snd_awnd = tcp_seq_subtract(tp->snd_nxt, tp->snd_fack) +
-	    tp->retran_data;
-#endif
-
 	return;
 }
 
@@ -2705,11 +2608,9 @@ tcp_sack_partialack(struct tcpcb *tp, struct tcphdr *th)
 	/* Turn off retx. timer (will start again next segment) */
 	TCP_TIMER_DISARM(tp, TCPT_REXMT);
 	tp->t_rtttime = 0;
-#ifndef TCP_FACK
 	/*
 	 * Partial window deflation.  This statement relies on the
-	 * fact that tp->snd_una has not been updated yet.  In FACK
-	 * hold snd_cwnd constant during fast recovery.
+	 * fact that tp->snd_una has not been updated yet.
 	 */
 	if (tp->snd_cwnd > (th->th_ack - tp->snd_una)) {
 		tp->snd_cwnd -= th->th_ack - tp->snd_una;
@@ -2718,11 +2619,6 @@ tcp_sack_partialack(struct tcpcb *tp, struct tcphdr *th)
 		tp->snd_cwnd = tp->t_maxseg;
 	tp->snd_cwnd += tp->t_maxseg;
 	tp->t_flags |= TF_NEEDOUTPUT;
-#else
-	/* Force call to tcp_output */
-	if (tp->snd_awnd < tp->snd_cwnd)
-		tp->t_flags |= TF_NEEDOUTPUT;
-#endif
 }
 
 /*
@@ -3703,11 +3599,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	tp->irs = sc->sc_irs;
 	tcp_sendseqinit(tp);
 	tp->snd_last = tp->snd_una;
-#ifdef TCP_FACK
-	tp->snd_fack = tp->snd_una;
-	tp->retran_data = 0;
-	tp->snd_awnd = 0;
-#endif
 #ifdef TCP_ECN
 	if (sc->sc_flags & SCF_ECN_PERMIT) {
 		tp->t_flags |= TF_ECN_PERMIT;

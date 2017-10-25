@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.58 2017/10/22 14:11:34 mikeb Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.59 2017/10/25 12:38:21 job Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -172,11 +172,6 @@ tcp_timer_freesack(struct tcpcb *tp)
 		pool_put(&sackhl_pool, p);
 	}
 	tp->snd_holes = 0;
-#ifdef TCP_FACK
-	tp->snd_fack = tp->snd_una;
-	tp->retran_data = 0;
-	tp->snd_awnd = 0;
-#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.157 2017/10/22 14:11:34 mikeb Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.158 2017/10/25 12:38:21 job Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -269,11 +269,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		tcp_set_iss_tsm(tp);
 		tcp_sendseqinit(tp);
 		tp->snd_last = tp->snd_una;
-#ifdef TCP_FACK
-		tp->snd_fack = tp->snd_una;
-		tp->retran_data = 0;
-		tp->snd_awnd = 0;
-#endif
 		error = tcp_output(tp);
 		break;
 

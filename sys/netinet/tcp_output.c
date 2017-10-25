@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.122 2017/10/22 14:11:34 mikeb Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.123 2017/10/25 12:38:21 job Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -130,17 +130,7 @@ tcp_sack_output(struct tcpcb *tp)
 		return (NULL);
 	p = tp->snd_holes;
 	while (p) {
-#ifndef TCP_FACK
 		if (p->dups >= tcprexmtthresh && SEQ_LT(p->rxmit, p->end)) {
-#else
-		/* In FACK, if p->dups is less than tcprexmtthresh, but
-		 * snd_fack advances more than tcprextmtthresh * tp->t_maxseg,
-		 * tcp_input() will try fast retransmit. This forces output.
-		 */
-		if ((p->dups >= tcprexmtthresh ||
-		     tp->t_dupacks == tcprexmtthresh) &&
-		    SEQ_LT(p->rxmit, p->end)) {
-#endif /* TCP_FACK */
 			if (SEQ_LT(p->rxmit, tp->snd_una)) {/* old SACK hole */
 				p = p->next;
 				continue;
@@ -258,15 +248,6 @@ again:
 	if (tp->sack_enable && SEQ_LT(tp->snd_nxt, tp->snd_max))
 		tcp_sack_adjust(tp);
 	off = tp->snd_nxt - tp->snd_una;
-#ifdef TCP_FACK
-	/* Normally, sendable data is limited by off < tp->snd_cwnd.
-	 * But in FACK, sendable data is limited by snd_awnd < snd_cwnd,
-	 * regardless of offset.
-	 */
-	if (tp->sack_enable && (tp->t_dupacks > tcprexmtthresh))
-		win = tp->snd_wnd;
-	else
-#endif
 	win = ulmin(tp->snd_wnd, tp->snd_cwnd);
 
 	flags = tcp_outflags[tp->t_state];
@@ -285,11 +266,8 @@ again:
 			sack_rxmit = 1;
 			/* Coalesce holes into a single retransmission */
 			len = min(tp->t_maxseg, p->end - p->rxmit);
-#ifndef TCP_FACK
-			/* in FACK, hold snd_cwnd constant during recovery */
 			if (SEQ_LT(tp->snd_una, tp->snd_last))
 				tp->snd_cwnd -= tp->t_maxseg;
-#endif
 		}
 	}
 
@@ -329,17 +307,6 @@ again:
 
 	if (!sack_rxmit) {
 		len = ulmin(so->so_snd.sb_cc, win) - off;
-
-#ifdef TCP_FACK
-		/*
-		 * If we're in fast recovery (SEQ_GT(tp->snd_last, tp->snd_una)),
-		 * and amount of outstanding data (snd_awnd) is >= snd_cwnd, then
-		 * do not send data (like zero window conditions)
-		 */
-		if (tp->sack_enable && SEQ_GT(tp->snd_last, tp->snd_una) &&
-		    len && (tp->snd_awnd >= tp->snd_cwnd))
-			len = 0;
-#endif /* TCP_FACK */
 	}
 
 	if (len < 0) {
@@ -794,9 +761,6 @@ send:
 			sendalot = 0;
 		th->th_seq = htonl(p->rxmit);
 		p->rxmit += len;
-#ifdef TCP_FACK
-		tp->retran_data += len;
-#endif
 		tcpstat_pkt(tcps_sack_rexmits, tcps_sack_rexmit_bytes, len);
 	}
 
@@ -1095,12 +1059,6 @@ send:
 		break;
 #endif /* INET6 */
 	}
-
-#ifdef TCP_FACK
-	/* Update snd_awnd to reflect the new data that was sent.  */
-	tp->snd_awnd = tcp_seq_subtract(tp->snd_max, tp->snd_fack) +
-		tp->retran_data;
-#endif
 
 	if (error) {
 out:

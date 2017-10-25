@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.249 2017/10/22 14:11:34 mikeb Exp $
+#	$OpenBSD: GENERIC,v 1.250 2017/10/25 12:38:21 job Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -47,7 +47,6 @@ option		FUSE		# FUSE
 option		SOCKET_SPLICE	# Socket Splicing for TCP and UDP
 option		TCP_ECN		# Explicit Congestion Notification for TCP
 option		TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions
-#option		TCP_FACK	# Forward Acknowledgements for TCP
 
 option		INET6		# IPv6
 option		IPSEC		# IPsec

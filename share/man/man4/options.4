@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.253 2017/10/23 03:13:58 jsg Exp $
+.\"	$OpenBSD: options.4,v 1.254 2017/10/25 12:38:21 job Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: October 23 2017 $
+.Dd $Mdocdate: October 25 2017 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -445,11 +445,6 @@ TCP to adjust the transmission rate using this signal.
 Both communication endpoints negotiate enabling
 .Em ECN
 functionality at the TCP connection establishment.
-.It Cd option TCP_FACK
-Turns on forward acknowledgements allowing a more precise estimate of
-outstanding data during the fast recovery phase by using
-.Em SACK
-information.
 .It Cd option TCP_SIGNATURE
 Turns on support for the TCP MD5 Signature option (RFC 2385).
 This is used by

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.160 2017/08/12 03:21:02 benno Exp $	*/
+/*	$OpenBSD: inet.c,v 1.161 2017/10/25 12:38:21 job Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1496,9 +1496,6 @@ tcpcb_dump(u_long off)
 	p("%lu", snd_wnd, "\n ");
 	p("%d", sack_enable, ", ");
 	p("%d", snd_numholes, ", ");
-	p("%u", snd_fack, ", ");
-	p("%lu",snd_awnd, "\n ");
-	p("%u", retran_data, ", ");
 	p("%u", snd_last, "\n ");
 	p("%u", irs, "\n ");
 	p("%u", rcv_nxt, ", ");
