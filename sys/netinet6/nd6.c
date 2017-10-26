@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.219 2017/08/11 21:24:20 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.220 2017/10/26 15:05:41 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -996,25 +996,6 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 	case SIOCGIFINFO_IN6:
 		ndi->ndi = *ND_IFINFO(ifp);
 		break;
-	case SIOCSIFINFO_FLAGS:
-		error = ENOTSUP;
-		break;
-	case SIOCSNDFLUSH_IN6:	/* XXX: the ioctl name is confusing... */
-		/* sync kernel routing table with the default router list */
-		error = ENOTSUP;
-		break;
-	case SIOCSPFXFLUSH_IN6:
-	{
-		/* flush all the prefix advertised by routers */
-		error = ENOTSUP;
-		break;
-	}
-	case SIOCSRTRFLUSH_IN6:
-	{
-		/* flush all the default routers */
-		error = ENOTSUP;
-		break;
-	}
 	case SIOCGNBRINFO_IN6:
 	{
 		struct llinfo_nd6 *ln;

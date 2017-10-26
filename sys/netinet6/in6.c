@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.215 2017/10/24 09:30:15 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.216 2017/10/26 15:05:41 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -213,13 +213,6 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		return (EOPNOTSUPP);
 
 	switch (cmd) {
-	case SIOCSNDFLUSH_IN6:
-	case SIOCSPFXFLUSH_IN6:
-	case SIOCSRTRFLUSH_IN6:
-	case SIOCSIFINFO_FLAGS:
-		if (!privileged)
-			return (EPERM);
-		/* FALLTHROUGH */
 	case SIOCGIFINFO_IN6:
 	case SIOCGNBRINFO_IN6:
 		return (nd6_ioctl(cmd, data, ifp));
@@ -241,17 +234,11 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCAIFADDR_IN6:
 		sa6 = &ifra->ifra_addr;
 		break;
-	case SIOCGIFADDR_IN6:
 	case SIOCGIFDSTADDR_IN6:
 	case SIOCGIFNETMASK_IN6:
 	case SIOCDIFADDR_IN6:
 	case SIOCGIFAFLAG_IN6:
-	case SIOCSNDFLUSH_IN6:
-	case SIOCSPFXFLUSH_IN6:
-	case SIOCSRTRFLUSH_IN6:
 	case SIOCGIFALIFETIME_IN6:
-	case SIOCGIFSTAT_IN6:
-	case SIOCGIFSTAT_ICMP6:
 		sa6 = &ifr->ifr_addr;
 		break;
 	case SIOCSIFADDR:
@@ -313,9 +300,6 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 
 		break;
 
-	case SIOCGIFADDR_IN6:
-		/* This interface is basically deprecated. use SIOCGIFCONF. */
-		/* FALLTHROUGH */
 	case SIOCGIFAFLAG_IN6:
 	case SIOCGIFNETMASK_IN6:
 	case SIOCGIFDSTADDR_IN6:
@@ -327,10 +311,6 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	}
 
 	switch (cmd) {
-
-	case SIOCGIFADDR_IN6:
-		ifr->ifr_addr = ia6->ia_addr;
-		break;
 
 	case SIOCGIFDSTADDR_IN6:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
@@ -349,10 +329,6 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCGIFAFLAG_IN6:
 		ifr->ifr_ifru.ifru_flags6 = ia6->ia6_flags;
 		break;
-
-	case SIOCGIFSTAT_IN6:
-	case SIOCGIFSTAT_ICMP6:
-		return (EOPNOTSUPP);
 
 	case SIOCGIFALIFETIME_IN6:
 		ifr->ifr_ifru.ifru_lifetime = ia6->ia6_lifetime;
