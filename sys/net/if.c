@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.519 2017/10/16 13:40:58 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.520 2017/10/26 15:13:40 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -873,9 +873,6 @@ if_input_process(void *xifidx)
 	struct ifih *ifih;
 	struct srp_ref sr;
 	int s;
-#ifdef IPSEC
-	int locked = 0;
-#endif /* IPSEC */
 
 	ifp = if_get(ifidx);
 	if (ifp == NULL)
@@ -902,22 +899,6 @@ if_input_process(void *xifidx)
 	 */
 	NET_LOCK();
 	s = splnet();
-
-#ifdef IPSEC
-	/*
-	 * IPsec is not ready to run without KERNEL_LOCK().  So all
-	 * the traffic on your machine is punished if you have IPsec
-	 * enabled.
-	 */
-	extern int ipsec_in_use;
-	if (ipsec_in_use) {
-		NET_UNLOCK();
-		KERNEL_LOCK();
-		NET_LOCK();
-		locked = 1;
-	}
-#endif /* IPSEC */
-
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		/*
 		 * Pass this mbuf to all input handlers of its
@@ -934,11 +915,6 @@ if_input_process(void *xifidx)
 	}
 	splx(s);
 	NET_UNLOCK();
-
-#ifdef IPSEC
-	if (locked)
-		KERNEL_UNLOCK();
-#endif /* IPSEC */
 out:
 	if_put(ifp);
 }

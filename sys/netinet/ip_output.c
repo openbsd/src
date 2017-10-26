@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.342 2017/09/20 16:22:02 visa Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.343 2017/10/26 15:13:40 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -233,7 +233,6 @@ reroute:
 
 #ifdef IPSEC
 	if (ipsec_in_use || inp != NULL) {
-		KERNEL_ASSERT_LOCKED();
 		/* Do we have any pending SAs to apply ? */
 		tdb = ip_output_ipsec_lookup(m, hlen, &error, inp,
 		    ipsecflowinfo);
@@ -404,7 +403,6 @@ sendit:
 	 * Check if the packet needs encapsulation.
 	 */
 	if (tdb != NULL) {
-		KERNEL_ASSERT_LOCKED();
 		/* Callee frees mbuf */
 		error = ip_output_ipsec_send(tdb, m, ifp, ro);
 		goto done;
