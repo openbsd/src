@@ -1,4 +1,4 @@
-/*     $OpenBSD: ldscript.tail,v 1.4 2009/06/27 14:44:39 drahn Exp $         */
+/*     $OpenBSD: ldscript.tail,v 1.5 2017/10/26 19:01:06 kettenis Exp $         */
   } =0
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
@@ -49,5 +49,9 @@
   _end = .;
   _bss_end__ = . ; __bss_end__ = . ; __end__ = . ;
   PROVIDE (end = .);
+  /DISCARD/ :
+  {
+    *(.ARM.exidx)
+  }
 }
 
