@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.115 2017/09/08 05:36:52 deraadt Exp $ */
+/*	$OpenBSD: malo.c,v 1.116 2017/10/26 15:00:28 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -933,7 +933,6 @@ malo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct malo_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 	uint8_t chan;
 
@@ -951,16 +950,6 @@ malo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				malo_stop(sc);
 		}
-		break;
-        case SIOCADDMULTI:
-        case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-
-		if (error == ENETRESET)
-			error = 0;
 		break;
 	case SIOCS80211CHANNEL:
 		/* allow fast channel switching in monitor mode */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.136 2017/03/29 16:42:25 stsp Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.137 2017/10/26 15:00:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1445,8 +1445,6 @@ int
 iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct iwi_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	error = rw_enter(&sc->sc_rwlock, RW_WRITE | RW_INTR);
@@ -1466,17 +1464,6 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				iwi_stop(ifp, 1);
 		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-
-		if (error == ENETRESET)
-			error = 0;
 		break;
 
 	case SIOCG80211TXPOWER:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.81 2017/07/28 10:50:56 bluhm Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.82 2017/10/26 15:00:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1532,9 +1532,6 @@ uath_watchdog(struct ifnet *ifp)
 int
 uath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct uath_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	s = splnet();
@@ -1551,16 +1548,6 @@ uath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				uath_stop(ifp, 1);
 		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-		if (error == ENETRESET)
-			error = 0;
 		break;
 
 	default:

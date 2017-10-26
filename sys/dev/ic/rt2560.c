@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.83 2017/07/03 09:21:09 kevlo Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.84 2017/10/26 15:00:28 mpi Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -2011,7 +2011,6 @@ rt2560_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct rt2560_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	s = splnet();
@@ -2030,17 +2029,6 @@ rt2560_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				rt2560_stop(ifp, 1);
 		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-
-		if (error == ENETRESET)
-			error = 0;
 		break;
 
 	case SIOCS80211CHANNEL:

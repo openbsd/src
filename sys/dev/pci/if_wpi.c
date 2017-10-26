@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.140 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.141 2017/10/26 15:00:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1968,7 +1968,6 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct wpi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	error = rw_enter(&sc->sc_rwlock, RW_WRITE | RW_INTR);
@@ -1988,17 +1987,6 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				wpi_stop(ifp, 1);
 		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-
-		if (error == ENETRESET)
-			error = 0;
 		break;
 
 	case SIOCS80211POWER:

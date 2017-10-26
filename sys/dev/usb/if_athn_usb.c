@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.47 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.48 2017/10/26 15:00:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -2121,7 +2121,6 @@ athn_usb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct athn_softc *sc = ifp->if_softc;
 	struct athn_usb_softc *usc = (struct athn_usb_softc *)sc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	if (usbd_is_dying(usc->sc_udev))
@@ -2143,15 +2142,6 @@ athn_usb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				athn_usb_stop(ifp);
 		}
-		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-		if (error == ENETRESET)
-			error = 0;
 		break;
 	case SIOCS80211CHANNEL:
 		error = ieee80211_ioctl(ifp, cmd, data);

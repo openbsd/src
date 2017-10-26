@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.123 2017/08/14 05:52:21 stsp Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.124 2017/10/26 15:00:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2593,7 +2593,6 @@ run_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct run_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	if (usbd_is_dying(sc->sc_udev))
@@ -2615,17 +2614,6 @@ run_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				run_stop(ifp, 1);
 		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-
-		if (error == ENETRESET)
-			error = 0;
 		break;
 
 	case SIOCS80211CHANNEL:

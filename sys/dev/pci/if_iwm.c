@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.216 2017/10/22 09:55:02 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.217 2017/10/26 15:00:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6650,8 +6650,6 @@ int
 iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct iwm_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, err = 0, generation = sc->sc_generation;
 
 	/*
@@ -6680,16 +6678,6 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				iwm_stop(ifp);
 		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		err = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-		if (err == ENETRESET)
-			err = 0;
 		break;
 
 	default:

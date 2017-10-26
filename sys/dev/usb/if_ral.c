@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.143 2017/07/03 09:21:09 kevlo Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.144 2017/10/26 15:00:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1299,7 +1299,6 @@ ural_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ural_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	if (usbd_is_dying(sc->sc_udev))
@@ -1323,17 +1322,6 @@ ural_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				ural_stop(ifp, 1);
 		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-
-		if (error == ENETRESET)
-			error = 0;
 		break;
 
 	case SIOCS80211CHANNEL:
