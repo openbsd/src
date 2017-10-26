@@ -1,3 +1,6 @@
+./usr/lib/libc++.so.1.0
+./usr/lib/libcompiler_rt.a
+./usr/lib/libc++abi.so.0.0
 ./etc/examples/wsconsctl.conf
 ./etc/firmware/atu-at76c503-i3863-ext
 ./etc/firmware/atu-at76c503-i3863-int
