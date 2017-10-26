@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_start.S,v 1.14 2017/06/14 13:12:49 patrick Exp $	*/
+/*	$OpenBSD: armv7_start.S,v 1.15 2017/10/26 02:48:36 jsg Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -38,7 +38,13 @@
 #undef	DOMAIN_CLIENT	/* XXX */
 #include "assym.h"
 
+#ifdef __clang__
+.arch_extension sec
+.arch_extension virt
+#define HVC	hvc	#0
+#else
 #define HVC	.word	0xe1400070		@ hvc
+#endif
 
 	.text
 
