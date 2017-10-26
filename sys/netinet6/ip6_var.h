@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.78 2017/07/13 17:17:27 florian Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.79 2017/10/26 15:39:14 visa Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -88,8 +88,6 @@ struct	ip6asfrag {
 	u_int32_t	ip6af_flow;	/* ip header flow id */
 	u_int16_t	ip6af_mff;	/* more fragment bit in frag off */
 };
-
-#define IP6_REASS_MBUF(ip6af) ((ip6af)->ip6af_m)
 
 struct	ip6_moptions {
 	LIST_HEAD(, in6_multi_mship) im6o_memberships;

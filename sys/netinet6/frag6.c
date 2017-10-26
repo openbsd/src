@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.74 2017/05/16 12:24:02 mpi Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.75 2017/10/26 15:39:14 visa Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -303,7 +303,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 		LIST_FOREACH_SAFE(af6, &q6->ip6q_asfrag, ip6af_list, naf6) {
 			if (q6->ip6q_unfrglen + af6->ip6af_off +
 			    af6->ip6af_frglen > IPV6_MAXPACKET) {
-				struct mbuf *merr = IP6_REASS_MBUF(af6);
+				struct mbuf *merr = af6->ip6af_m;
 				struct ip6_hdr *ip6err;
 				int erroff = af6->ip6af_offset;
 
@@ -337,7 +337,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 	ip6af->ip6af_off = fragoff;
 	ip6af->ip6af_frglen = frgpartlen;
 	ip6af->ip6af_offset = offset;
-	IP6_REASS_MBUF(ip6af) = m;
+	ip6af->ip6af_m = m;
 
 	if (first_frag) {
 		paf6 = NULL;
@@ -448,12 +448,12 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 	 */
 	ip6af = LIST_FIRST(&q6->ip6q_asfrag);
 	LIST_REMOVE(ip6af, ip6af_list);
-	t = m = IP6_REASS_MBUF(ip6af);
+	t = m = ip6af->ip6af_m;
 	while ((af6 = LIST_FIRST(&q6->ip6q_asfrag)) != NULL) {
 		LIST_REMOVE(af6, ip6af_list);
 		while (t->m_next)
 			t = t->m_next;
-		t->m_next = IP6_REASS_MBUF(af6);
+		t->m_next = af6->ip6af_m;
 		m_adj(t->m_next, af6->ip6af_offset);
 		free(af6, M_FTABLE, sizeof(*af6));
 	}
@@ -511,7 +511,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
  flushfrags:
 	while ((af6 = LIST_FIRST(&q6->ip6q_asfrag)) != NULL) {
 		LIST_REMOVE(af6, ip6af_list);
-		m_freem(IP6_REASS_MBUF(af6));
+		m_freem(af6->ip6af_m);
 		free(af6, M_FTABLE, sizeof(*af6));
 	}
 	ip6stat_add(ip6s_fragdropped, q6->ip6q_nfrag);
@@ -563,7 +563,7 @@ frag6_freef(struct ip6q *q6)
 	IP6Q_LOCK_CHECK();
 
 	while ((af6 = LIST_FIRST(&q6->ip6q_asfrag)) != NULL) {
-		struct mbuf *m = IP6_REASS_MBUF(af6);
+		struct mbuf *m = af6->ip6af_m;
 
 		LIST_REMOVE(af6, ip6af_list);
 
