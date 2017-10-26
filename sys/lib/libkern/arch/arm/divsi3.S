@@ -1,4 +1,4 @@
-/*	$OpenBSD: divsi3.S,v 1.4 2016/09/22 19:43:25 kettenis Exp $	*/
+/*	$OpenBSD: divsi3.S,v 1.5 2017/10/26 15:23:59 jsg Exp $	*/
 /*	$NetBSD: divsi3.S,v 1.2 2001/11/13 20:06:40 chris Exp $	*/
 
 /*
@@ -387,4 +387,6 @@ L_udivide_l1:
 	mov	pc, lr
 
 STRONG_ALIAS(__aeabi_idiv, __divsi3)
+STRONG_ALIAS(__aeabi_idivmod, __divsi3)
 STRONG_ALIAS(__aeabi_uidiv, __udivsi3)
+STRONG_ALIAS(__aeabi_uidivmod, __udivsi3)
