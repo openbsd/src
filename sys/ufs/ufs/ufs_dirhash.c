@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.39 2017/04/19 17:26:45 dhill Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.40 2017/10/26 02:38:54 guenther Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -74,12 +74,12 @@ int ufsdirhash_recycle(int wanted);
 
 struct pool		ufsdirhash_pool;
 
-#define	DIRHASHLIST_LOCK()	mtx_enter(&ufsdirhash_mtx)
-#define	DIRHASHLIST_UNLOCK()	mtx_leave(&ufsdirhash_mtx)
-#define	DIRHASH_LOCK(dh)	mtx_enter(&(dh)->dh_mtx)
-#define	DIRHASH_UNLOCK(dh)	mtx_leave(&(dh)->dh_mtx)
-#define	DIRHASH_BLKALLOC()	pool_get(&ufsdirhash_pool, PR_NOWAIT)
-#define	DIRHASH_BLKFREE(v)	pool_put(&ufsdirhash_pool, v)
+#define	DIRHASHLIST_LOCK()	rw_enter_write(&ufsdirhash_mtx)
+#define	DIRHASHLIST_UNLOCK()	rw_exit_write(&ufsdirhash_mtx)
+#define	DIRHASH_LOCK(dh)	rw_enter_write(&(dh)->dh_mtx)
+#define	DIRHASH_UNLOCK(dh)	rw_exit_write(&(dh)->dh_mtx)
+#define	DIRHASH_BLKALLOC_WAITOK()	pool_get(&ufsdirhash_pool, PR_WAITOK)
+#define	DIRHASH_BLKFREE(v)		pool_put(&ufsdirhash_pool, v)
 
 #define	mtx_assert(l, f)	/* nothing */
 #define DIRHASH_ASSERT(e, m)	KASSERT((e))
@@ -88,7 +88,7 @@ struct pool		ufsdirhash_pool;
 TAILQ_HEAD(, dirhash) ufsdirhash_list;
 
 /* Protects: ufsdirhash_list, `dh_list' field, ufs_dirhashmem. */
-struct mutex ufsdirhash_mtx;
+struct rwlock		ufsdirhash_mtx;
 
 /*
  * Locking order:
@@ -181,14 +181,14 @@ ufsdirhash_build(struct inode *ip)
 	if (dh->dh_hash == NULL || dh->dh_blkfree == NULL)
 		goto fail;
 	for (i = 0; i < narrays; i++) {
-		if ((dh->dh_hash[i] = DIRHASH_BLKALLOC()) == NULL)
+		if ((dh->dh_hash[i] = DIRHASH_BLKALLOC_WAITOK()) == NULL)
 			goto fail;
 		for (j = 0; j < DH_NBLKOFF; j++)
 			dh->dh_hash[i][j] = DIRHASH_EMPTY;
 	}
 
 	/* Initialise the hash table and block statistics. */
-	mtx_init(&dh->dh_mtx, IPL_NONE);
+	rw_init(&dh->dh_mtx, "dirhash");
 	dh->dh_narrays = narrays;
 	dh->dh_hlen = nslots;
 	dh->dh_nblk = nblocks;
@@ -1054,7 +1054,7 @@ ufsdirhash_init(void)
 {
 	pool_init(&ufsdirhash_pool, DH_NBLKOFF * sizeof(doff_t), 0, IPL_NONE,
 	    PR_WAITOK, "dirhash", NULL);
-	mtx_init(&ufsdirhash_mtx, IPL_NONE);
+	rw_init(&ufsdirhash_mtx, "dirhash_list");
 	arc4random_buf(&ufsdirhash_key, sizeof(ufsdirhash_key));
 	TAILQ_INIT(&ufsdirhash_list);
 	ufs_dirhashmaxmem = 2 * 1024 * 1024;
