@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.233 2017/10/23 13:01:20 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.234 2017/10/27 15:10:16 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -212,6 +212,10 @@ extern char			*log_procname;
 extern struct client_config	*config;
 extern struct imsgbuf		*unpriv_ibuf;
 extern volatile sig_atomic_t	 quit;
+extern int			 cmd_opts;
+#define		OPT_NOACTION	1
+#define		OPT_QUIET	2
+#define		OPT_FOREGROUND	4
 
 void		 dhcpoffer(struct interface_info *, struct option_data *,
     char *);

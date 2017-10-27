@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.515 2017/10/23 13:01:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.516 2017/10/27 15:10:16 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -103,7 +103,7 @@ char path_option_db[PATH_MAX];
 
 int log_perror = 1;
 int nullfd = -1;
-int daemonize = 1;
+int cmd_opts;
 
 volatile sig_atomic_t quit;
 
@@ -432,7 +432,7 @@ main(int argc, char *argv[])
 	ssize_t			 tailn;
 	int			 fd, socket_fd[2];
 	int			 rtfilter, ioctlfd, routefd, tailfd;
-	int			 ch, q_flag, d_flag;
+	int			 ch;
 
 	saved_argv = argv;
 
@@ -444,14 +444,13 @@ main(int argc, char *argv[])
 	log_init(log_perror, LOG_DAEMON);
 	log_setverbose(1);
 
-	q_flag = d_flag = 0;
-	while ((ch = getopt(argc, argv, "c:di:l:L:q")) != -1)
+	while ((ch = getopt(argc, argv, "c:di:l:L:nq")) != -1)
 		switch (ch) {
 		case 'c':
 			path_dhclient_conf = optarg;
 			break;
 		case 'd':
-			d_flag = 1;
+			cmd_opts |= OPT_FOREGROUND;
 			break;
 		case 'i':
 			ignore_list = optarg;
@@ -472,8 +471,11 @@ main(int argc, char *argv[])
 					    path_option_db);
 			}
 			break;
+		case 'n':
+			cmd_opts |= OPT_NOACTION;
+			break;
 		case 'q':
-			q_flag = 1;
+			cmd_opts |= OPT_QUIET;
 			break;
 		default:
 			usage();
@@ -482,13 +484,13 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1 || (q_flag != 0 && d_flag != 0))
+	if (argc != 1)
 		usage();
 
-	if (d_flag != 0)
-		daemonize = 0;
+	if ((cmd_opts & (OPT_FOREGROUND | OPT_NOACTION)) != 0)
+		cmd_opts &= ~OPT_QUIET;
 
-	if (q_flag != 0)
+	if ((cmd_opts & OPT_QUIET) != 0)
 		log_perror = 0;
 
 	log_init(log_perror, LOG_DAEMON);
@@ -543,8 +545,10 @@ main(int argc, char *argv[])
 	config = calloc(1, sizeof(*config));
 	if (config == NULL)
 		fatal("config");
-
 	read_client_conf(ifi->name);
+
+	if ((cmd_opts & OPT_NOACTION) != 0)
+		return 0;
 
 	/*
 	 * Set default client identifier, if needed, *before* reading
@@ -660,7 +664,7 @@ main(int argc, char *argv[])
 
 	endpwent();
 
-	if (daemonize != 0) {
+	if ((cmd_opts & OPT_FOREGROUND) == 0) {
 		if (pledge("stdio inet dns route proc", NULL) == -1)
 			fatal("pledge");
 	} else {
@@ -690,7 +694,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-d | -q] [-c file] [-i options] [-L file] "
+	    "usage: %s [-dnq ] [-c file] [-i options] [-L file] "
 	    "[-l file] interface\n", __progname);
 	exit(1);
 }
@@ -1973,12 +1977,12 @@ lease_as_string(char *ifname, char *type, struct client_lease *lease)
 void
 go_daemon(const char *name)
 {
-	static int	 state = 0;
+	static int	 daemonized = 0;
 
-	if (daemonize == 0 || state != 0)
+	if ((cmd_opts & OPT_FOREGROUND) != 0 || daemonized != 0)
 		return;
 
-	state = 1;
+	daemonized = 1;
 
 	if (rdaemon(nullfd) == -1)
 		fatal("daemonize");
