@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.12 2017/10/27 08:33:46 mpi Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.13 2017/10/27 09:22:20 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -349,12 +349,16 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 
 	if (flags & DUMP_FUNCTION) {
 		uint16_t		*fsp, kind, vlen;
+		uint16_t		*fstart, *fend;
 		size_t			 idx = 0, i = -1;
 		const char		*s;
 		int			 l;
 
-		fsp = (uint16_t *)(data + cth->cth_funcoff);
-		while (fsp < (uint16_t *)(data + cth->cth_typeoff)) {
+		fstart = (uint16_t *)(data + cth->cth_funcoff);
+		fend = (uint16_t *)(data + cth->cth_typeoff);
+
+		fsp = fstart;
+		while (fsp < fend) {
 			kind = CTF_INFO_KIND(*fsp);
 			vlen = CTF_INFO_VLEN(*fsp);
 			s = elf_idx2sym(&idx, STT_FUNC);
@@ -368,7 +372,7 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 			if (s != NULL)
 				printf("(%s)", s);
 			printf(" returns: %u args: (", *fsp++);
-			while (vlen-- > 0)
+			while (vlen-- > 0 && fsp < fend)
 				printf("%u%s", *fsp++, (vlen > 0) ? ", " : "");
 			printf(")\n");
 		}
