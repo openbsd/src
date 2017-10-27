@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.44 2017/03/28 19:52:03 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.45 2017/10/27 14:28:07 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -65,7 +65,7 @@ int	 ca_privkey_to_method(struct iked_id *);
 struct ibuf *
 	 ca_x509_serialize(X509 *);
 int	 ca_x509_subjectaltname_cmp(X509 *, struct iked_static_id *);
-int	 ca_x509_subjectaltname(X509 *cert, struct iked_id *);
+int	 ca_x509_subjectaltname(X509 *cert, struct iked_id *, int);
 int	 ca_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 ca_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
 
@@ -1400,34 +1400,31 @@ ca_x509_subjectaltname_cmp(X509 *cert, struct iked_static_id *id)
 {
 	struct iked_id	 sanid;
 	char		 idstr[IKED_ID_SIZE];
-	int		 ret = -1;
+	int		 ret = -1, lastpos = -1;
 
-	bzero(&sanid, sizeof(sanid));
+	while (ca_x509_subjectaltname(cert, &sanid, lastpos++) == 0) {
+		ikev2_print_id(&sanid, idstr, sizeof(idstr));
 
-	if (ca_x509_subjectaltname(cert, &sanid) != 0)
-		return (-1);
-
-	ikev2_print_id(&sanid, idstr, sizeof(idstr));
-
-	/* Compare id types, length and data */
-	if ((id->id_type != sanid.id_type) ||
-	    ((ssize_t)ibuf_size(sanid.id_buf) !=
-	    (id->id_length - id->id_offset)) ||
-	    (memcmp(id->id_data + id->id_offset,
-	    ibuf_data(sanid.id_buf),
-	    ibuf_size(sanid.id_buf)) != 0)) {
+		/* Compare id types, length and data */
+		if ((id->id_type == sanid.id_type) &&
+		    ((ssize_t)ibuf_size(sanid.id_buf) ==
+		    (id->id_length - id->id_offset)) &&
+		    (memcmp(id->id_data + id->id_offset,
+		    ibuf_data(sanid.id_buf),
+		    ibuf_size(sanid.id_buf)) == 0)) {
+			ret = 0;
+			break;
+		}
 		log_debug("%s: %s mismatched", __func__, idstr);
-		goto done;
+		bzero(&sanid, sizeof(sanid));
 	}
 
-	ret = 0;
- done:
 	ibuf_release(sanid.id_buf);
 	return (ret);
 }
 
 int
-ca_x509_subjectaltname(X509 *cert, struct iked_id *id)
+ca_x509_subjectaltname(X509 *cert, struct iked_id *id, int lastpos)
 {
 	X509_EXTENSION	*san;
 	uint8_t		 sanhdr[4], *data;
@@ -1435,7 +1432,7 @@ ca_x509_subjectaltname(X509 *cert, struct iked_id *id)
 	char		 idstr[IKED_ID_SIZE];
 
 	if ((ext = X509_get_ext_by_NID(cert,
-	    NID_subject_alt_name, -1)) == -1 ||
+	    NID_subject_alt_name, lastpos)) == -1 ||
 	    ((san = X509_get_ext(cert, ext)) == NULL)) {
 		log_debug("%s: did not find subjectAltName in certificate",
 		    __func__);
