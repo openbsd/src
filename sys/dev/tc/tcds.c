@@ -1,4 +1,4 @@
-/* $OpenBSD: tcds.c,v 1.8 2010/09/20 06:33:48 matthew Exp $ */
+/* $OpenBSD: tcds.c,v 1.9 2017/10/27 20:21:53 mpi Exp $ */
 /* $NetBSD: tcds.c,v 1.3 2001/11/13 06:26:10 lukem Exp $ */
 
 /*-
@@ -524,12 +524,7 @@ tcds_intr(arg)
 #undef PRINTINTR
 #endif
 
-	/*
-	 * XXX
-	 * The MACH source had this, with the comment:
-	 *	This is wrong, but machine keeps dying.
-	 */
-	DELAY(1);
+	tc_mb();
 
 	return (1);
 }
