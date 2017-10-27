@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: error.pl,v 1.2 2014/08/18 22:58:19 bluhm Exp $
+#	$OpenBSD: error.pl,v 1.3 2017/10/27 16:59:14 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -20,7 +20,7 @@ use warnings;
 use Errno;
 
 sub usage {
-	die "usage: error.pl test-args.pl\n";
+	die "usage: error.pl args-test.pl\n";
 }
 
 @ARGV == 1 or usage();

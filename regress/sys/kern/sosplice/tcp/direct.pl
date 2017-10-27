@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: direct.pl,v 1.2 2014/08/18 22:58:19 bluhm Exp $
+#	$OpenBSD: direct.pl,v 1.3 2017/10/27 16:59:14 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -25,7 +25,7 @@ use Server;
 require 'funcs.pl';
 
 sub usage {
-	die "usage: direct.pl [test-args.pl]\n";
+	die "usage: direct.pl [args-test.pl]\n";
 }
 
 my $testfile;

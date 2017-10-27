@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.3 2014/08/18 22:58:19 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.4 2017/10/27 16:59:14 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -31,13 +31,13 @@ require 'funcs.pl';
 sub usage {
 	die <<"EOF";
 usage:
-    remote.pl localport remoteaddr remoteport [test-args.pl]
+    remote.pl localport remoteaddr remoteport [args-test.pl]
 	Run test with local client and server.  Remote relay
 	forwarding from remoteaddr remoteport to server localport
 	has to be started manually.
-    remote.pl copy|splice listenaddr connectaddr connectport [test-args.pl]
+    remote.pl copy|splice listenaddr connectaddr connectport [args-test.pl]
 	Only start remote relay.
-    remote.pl copy|splice localaddr remoteaddr remotessh [test-args.pl]
+    remote.pl copy|splice localaddr remoteaddr remotessh [args-test.pl]
 	Run test with local client and server.  Remote relay is
 	started automatically with ssh on remotessh.
 EOF

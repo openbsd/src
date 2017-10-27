@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: relay.pl,v 1.3 2014/08/18 22:58:19 bluhm Exp $
+#	$OpenBSD: relay.pl,v 1.4 2017/10/27 16:59:14 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -26,7 +26,7 @@ use Server;
 require 'funcs.pl';
 
 sub usage {
-	die "usage: relay.pl copy|splice [test-args.pl]\n";
+	die "usage: relay.pl copy|splice [args-test.pl]\n";
 }
 
 my $testfile;
