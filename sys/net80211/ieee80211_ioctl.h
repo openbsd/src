@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.30 2017/10/24 09:36:13 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.31 2017/10/27 12:22:40 jsg Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -254,15 +254,6 @@ struct ieee80211_wpaparams {
 
 #define SIOCS80211WPAPARMS	 _IOW('i', 247, struct ieee80211_wpaparams)
 #define SIOCG80211WPAPARMS	_IOWR('i', 248, struct ieee80211_wpaparams)
-
-struct ieee80211_wmmparams {
-	char	i_name[IFNAMSIZ];		/* if_name, e.g. "wi0" */
-	int	i_enabled;
-	/* XXX more */
-};
-
-#define SIOCS80211WMMPARMS	 _IOW('i', 249, struct ieee80211_wmmparams)
-#define SIOCG80211WMMPARMS	_IOWR('i', 250, struct ieee80211_wmmparams)
 
 struct ieee80211_keyavail {
 	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */

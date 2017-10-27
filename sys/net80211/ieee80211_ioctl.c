@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.54 2017/10/26 15:00:28 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.55 2017/10/27 12:22:40 jsg Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -407,7 +407,6 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int i, error = 0;
 	struct ieee80211_nwid nwid;
 	struct ieee80211_wpapsk *psk;
-	struct ieee80211_wmmparams *wmm;
 	struct ieee80211_keyavail *ka;
 	struct ieee80211_keyrun *kr;
 	struct ieee80211_power *power;
@@ -464,24 +463,6 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCG80211NWKEY:
 		error = ieee80211_ioctl_getnwkeys(ic, (void *)data);
-		break;
-	case SIOCS80211WMMPARMS:
-		if ((error = suser(curproc, 0)) != 0)
-			break;
-		if (!(ic->ic_flags & IEEE80211_C_QOS)) {
-			error = ENODEV;
-			break;
-		}
-		wmm = (struct ieee80211_wmmparams *)data;
-		if (wmm->i_enabled)
-			ic->ic_flags |= IEEE80211_F_QOS;
-		else
-			ic->ic_flags &= ~IEEE80211_F_QOS;
-		error = ENETRESET;
-		break;
-	case SIOCG80211WMMPARMS:
-		wmm = (struct ieee80211_wmmparams *)data;
-		wmm->i_enabled = (ic->ic_flags & IEEE80211_F_QOS) ? 1 : 0;
 		break;
 	case SIOCS80211WPAPARMS:
 		if ((error = suser(curproc, 0)) != 0)
