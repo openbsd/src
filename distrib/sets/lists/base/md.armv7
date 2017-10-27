@@ -1,6 +1,3 @@
-./usr/lib/libc++.so.1.0
-./usr/lib/libcompiler_rt.a
-./usr/lib/libc++abi.so.0.0
 ./etc/examples/wsconsctl.conf
 ./etc/firmware/atu-at76c503-i3863-ext
 ./etc/firmware/atu-at76c503-i3863-int
@@ -42,6 +39,9 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd6.2/4.2.1/collect2
 ./usr/lib/gcc-lib/arm-unknown-openbsd6.2/4.2.1/libgcc.a
 ./usr/lib/gcc-lib/arm-unknown-openbsd6.2/4.2.1/specs
+./usr/lib/libc++.so.1.0
+./usr/lib/libc++abi.so.0.0
+./usr/lib/libcompiler_rt.a
 ./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/arm-openbsd
 ./usr/libdata/perl5/arm-openbsd/.packlist
