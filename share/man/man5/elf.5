@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.33 2016/09/17 17:39:34 jasper Exp $
+.\"	$OpenBSD: elf.5,v 1.34 2017/10/27 08:36:42 mpi Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -25,17 +25,17 @@
 .\"
 .\"	$FreeBSD: src/share/man/man5/elf.5,v 1.21 2001/10/01 16:09:23 ru Exp $
 .\"
-.Dd $Mdocdate: September 17 2016 $
+.Dd $Mdocdate: October 27 2017 $
 .Dt ELF 5
 .Os
 .Sh NAME
 .Nm elf
 .Nd format of ELF executable binary files
 .Sh SYNOPSIS
-.In elf_abi.h
+.In elf.h
 .Sh DESCRIPTION
 The header file
-.In elf_abi.h
+.In elf.h
 defines the format of ELF executable binary files.
 Amongst these files are
 normal executable files, relocatable object files, core files and shared
@@ -52,7 +52,7 @@ the file.
 .Pp
 Applications which wish to process ELF binary files for their native
 architecture only should include
-.In elf_abi.h
+.In elf.h
 in their source code.
 These applications should need to refer to
 all the types and structures by their generic names
