@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.234 2017/10/23 15:41:29 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.235 2017/10/27 06:48:13 yasuoka Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1252,6 +1252,8 @@ init_x86_64(paddr_t first_avail)
 	cpu_info_primary.ci_curpcb = &proc0.p_addr->u_pcb;
 
 	x86_bus_space_init();
+
+	i8254_startclock();
 
 	/*
 	 * Attach the glass console early in case we need to display a panic.
