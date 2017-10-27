@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.184 2017/10/16 08:22:25 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.185 2017/10/27 08:27:14 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -449,6 +449,8 @@ const char *ipsp_address(union sockaddr_union *, char *, socklen_t);
 /* SPD tables */
 struct radix_node_head *spd_table_add(unsigned int);
 struct radix_node_head *spd_table_get(unsigned int);
+int spd_table_walk(unsigned int,
+    int (*walker)(struct ipsec_policy *, void *, unsigned int), void *);
 
 /* TDB management routines */
 uint32_t reserve_spi(u_int, u_int32_t, u_int32_t, union sockaddr_union *,

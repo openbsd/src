@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.168 2017/10/16 08:22:25 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.169 2017/10/27 08:27:14 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -165,6 +165,7 @@ int pfkeyv2_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
 int pfkeyv2_output(struct mbuf *, struct socket *, struct sockaddr *,
     struct mbuf *);
 int pfkey_sendup(struct keycb *, struct mbuf *, int);
+int pfkeyv2_sysctl_policydumper(struct ipsec_policy *, void *, unsigned int);
 
 /*
  * Wrapper around m_devget(); copy data from contiguous buffer to mbuf
@@ -2324,24 +2325,8 @@ ret:
 }
 
 int
-pfkeyv2_ipo_walk(u_int rdomain, int (*walker)(struct ipsec_policy *, void *),
-    void *arg)
-{
-	int rval = 0;
-	struct ipsec_policy *ipo;
-
-	NET_ASSERT_LOCKED();
-
-	TAILQ_FOREACH(ipo, &ipsec_policy_head, ipo_list) {
-		if (ipo->ipo_rdomain != rdomain)
-			continue;
-		rval = walker(ipo, (void *)arg);
-	}
-	return (rval);
-}
-
-int
-pfkeyv2_sysctl_policydumper(struct ipsec_policy *ipo, void *arg)
+pfkeyv2_sysctl_policydumper(struct ipsec_policy *ipo, void *arg,
+    unsigned int tableid)
 {
 	struct pfkeyv2_sysctl_walk *w = (struct pfkeyv2_sysctl_walk *)arg;
 	void *buffer = 0;
@@ -2433,7 +2418,7 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	case NET_KEY_SPD_DUMP:
 		NET_LOCK();
-		error = pfkeyv2_ipo_walk(rdomain,
+		error = spd_table_walk(rdomain,
 		    pfkeyv2_sysctl_policydumper, &w);
 		NET_UNLOCK();
 		if (oldp)

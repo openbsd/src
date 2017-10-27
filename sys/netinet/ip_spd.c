@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.93 2017/10/16 08:22:25 mpi Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.94 2017/10/27 08:27:14 mpi Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -113,6 +113,20 @@ spd_table_add(unsigned int rtableid)
 	}
 
 	return (spd_tables[rdomain]);
+}
+
+int
+spd_table_walk(unsigned int rtableid,
+    int (*walker)(struct ipsec_policy *, void *, unsigned int), void *arg)
+{
+	struct radix_node_head *rnh;
+
+	rnh = spd_table_get(rtableid);
+	if (rnh == NULL)
+		return (0);
+
+	return (rn_walktree(rnh,
+	    (int (*)(struct radix_node *, void *, u_int))walker, arg));
 }
 
 /*
