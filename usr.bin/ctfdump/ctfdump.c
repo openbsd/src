@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.11 2017/10/16 12:58:57 mpi Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.12 2017/10/27 08:33:46 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -18,10 +18,10 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/exec_elf.h>
 #include <sys/mman.h>
 #include <sys/ctf.h>
 
+#include <elf.h>
 #include <err.h>
 #include <fcntl.h>
 #include <locale.h>

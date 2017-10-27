@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.12 2017/09/29 16:05:53 jsg Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.13 2017/10/27 08:33:46 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -18,13 +18,13 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/exec_elf.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/ctf.h>
 
 #include <assert.h>
+#include <elf.h>
 #include <err.h>
 #include <fcntl.h>
 #include <locale.h>
