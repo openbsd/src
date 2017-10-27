@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.155 2017/06/01 15:23:43 sthen Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.156 2017/10/27 14:26:35 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -4290,18 +4290,23 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 	/*
 	 *  Generate g^ir
 	 */
-	if ((dhsecret = ibuf_new(NULL, dh_getlen(group))) == NULL) {
+	if ((dhsecret = ibuf_new(NULL, dh_secretlen(group))) == NULL) {
 		log_debug("%s: failed to alloc dh secret", __func__);
 		goto done;
 	}
 	if (dh_create_shared(group, dhsecret->buf,
 	    sa->sa_dhpeer->buf) == -1) {
 		log_debug("%s: failed to get dh secret"
-		    " group %d len %d secret %zu exchange %zu", __func__,
-		    group->id, dh_getlen(group), ibuf_length(dhsecret),
-		    ibuf_length(sa->sa_dhpeer));
+		    " group %d len %d secretlen %d secret %zu exchange %zu",
+		     __func__,
+		    group->id, dh_getlen(group), dh_secretlen(group),
+		    ibuf_length(dhsecret), ibuf_length(sa->sa_dhpeer));
 		goto done;
 	}
+
+	log_debug("%s: DHSECRET with %zu bytes", __func__,
+	    ibuf_length(dhsecret));
+	print_hex(dhsecret->buf, 0, ibuf_length(dhsecret));
 
 	if (!key) {
 		/*
@@ -4725,15 +4730,16 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			log_debug("%s: no dh group for pfs", __func__);
 			goto done;
 		}
-		if ((dhsecret = ibuf_new(NULL, dh_getlen(group))) == NULL) {
+		if ((dhsecret = ibuf_new(NULL, dh_secretlen(group))) == NULL) {
 			log_debug("%s: failed to alloc dh secret", __func__);
 			goto done;
 		}
 		if (dh_create_shared(group, dhsecret->buf,
 		    kex->kex_dhpeer->buf) == -1) {
 			log_debug("%s: failed to get dh secret"
-			    " group %d len %d secret %zu exchange %zu",
-			    __func__, group->id, dh_getlen(group),
+			    " group %d len %d secretlen %d secret %zu"
+			    " exchange %zu", __func__, group->id,
+			    dh_getlen(group), dh_secretlen(group),
 			    ibuf_length(dhsecret),
 			    ibuf_length(kex->kex_dhpeer));
 			goto done;

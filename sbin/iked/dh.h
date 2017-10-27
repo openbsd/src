@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.h,v 1.10 2017/03/27 17:17:49 mikeb Exp $	*/
+/*	$OpenBSD: dh.h,v 1.11 2017/10/27 14:26:35 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -46,6 +46,7 @@ struct group {
 
 	int		(*init)(struct group *);
 	int		(*getlen)(struct group *);
+	int		(*secretlen)(struct group *);
 	int		(*exchange)(struct group *, uint8_t *);
 	int		(*shared)(struct group *, uint8_t *, uint8_t *);
 };
@@ -59,6 +60,7 @@ const struct group_id
 		*group_getid(uint32_t);
 
 int		 dh_getlen(struct group *);
+int		 dh_secretlen(struct group *);
 int		 dh_create_exchange(struct group *, uint8_t *);
 int		 dh_create_shared(struct group *, uint8_t *, uint8_t *);
 
