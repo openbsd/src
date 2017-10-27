@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.147 2017/07/18 06:19:07 mpi Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.148 2017/10/27 08:29:32 mpi Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1263,7 +1263,9 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
 			return (dv < IKE_GROUP_DESC_MODP_768 ||
 			    dv > IKE_GROUP_DESC_MODP_1536) &&
 			    (dv < IKE_GROUP_DESC_MODP_2048 ||
-			    dv > IKE_GROUP_DESC_MODP_8192);
+			    dv > IKE_GROUP_DESC_ECP_521) &&
+			    (dv < IKE_GROUP_DESC_ECP_192 ||
+			    dv > IKE_GROUP_DESC_BP_512);
 		case IKE_ATTR_GROUP_TYPE:
 			return 1;
 		case IKE_ATTR_GROUP_PRIME:
@@ -1305,7 +1307,9 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
 			return (dv < IKE_GROUP_DESC_MODP_768 ||
 			    dv > IKE_GROUP_DESC_MODP_1536) &&
 			    (dv < IKE_GROUP_DESC_MODP_2048 ||
-			    IKE_GROUP_DESC_MODP_8192 < dv);
+			    dv > IKE_GROUP_DESC_ECP_521) &&
+			    (dv < IKE_GROUP_DESC_ECP_192 ||
+			    dv > IKE_GROUP_DESC_BP_512);
 		case IPSEC_ATTR_ENCAPSULATION_MODE:
 			return dv != IPSEC_ENCAP_TUNNEL &&
 			    dv != IPSEC_ENCAP_TRANSPORT &&
