@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.68 2016/12/25 20:30:41 krw Exp $ */
+/*	$OpenBSD: nlist.c,v 1.69 2017/10/27 16:47:08 mpi Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <a.out.h>		/* pulls in nlist.h */
-#include <elf_abi.h>
+#include <elf.h>
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 

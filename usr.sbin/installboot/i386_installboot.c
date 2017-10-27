@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.30 2017/06/04 13:57:29 naddy Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.31 2017/10/27 16:47:08 mpi Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -54,7 +54,7 @@
 #include <machine/cpu.h>
 #include <machine/biosvar.h>
 
-#include <elf_abi.h>
+#include <elf.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>

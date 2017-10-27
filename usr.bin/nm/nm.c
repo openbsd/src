@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.52 2017/09/12 08:32:44 mpi Exp $	*/
+/*	$OpenBSD: nm.c,v 1.53 2017/10/27 16:47:08 mpi Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <a.out.h>
-#include <elf_abi.h>
+#include <elf.h>
 #include <ar.h>
 #include <ranlib.h>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.21 2017/07/02 19:06:12 tobias Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.22 2017/10/27 16:47:08 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <elf_abi.h>
+#include <elf.h>
 #include <err.h>
 #include <fcntl.h>
 #include <string.h>

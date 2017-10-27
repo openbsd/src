@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.10 2016/01/08 13:40:05 tb Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.11 2017/10/27 16:47:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -18,7 +18,7 @@
 
 #include <ctype.h>
 #include <curses.h>
-#include <elf_abi.h>
+#include <elf.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>

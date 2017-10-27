@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.15 2017/01/24 07:48:37 guenther Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.16 2017/10/27 16:47:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -35,7 +35,7 @@
 
 #define	MACHID	EM_PARISC		/* ELF e_machine ID value checked */
 
-#include <elf_abi.h>
+#include <elf.h>
 #include <machine/reloc.h>
 #include "syscall.h"
 #include "util.h"

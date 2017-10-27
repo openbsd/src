@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.50 2016/09/10 05:48:18 jsg Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.51 2017/10/27 16:47:08 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #include <sys/file.h>
 #include <sys/sysctl.h>
 
-#include <elf_abi.h>
+#include <elf.h>
 
 typedef struct nlist NLIST;
 #define	_strx	n_un.n_strx
