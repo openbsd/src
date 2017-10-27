@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.15 2017/08/29 13:33:03 jsg Exp $ */
+/* $OpenBSD: imxuart.c,v 1.16 2017/10/27 11:23:28 kevlo Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -91,7 +91,6 @@ struct imxuart_softc {
 int	 imxuart_match(struct device *, void *, void *);
 void	 imxuart_attach(struct device *, struct device *, void *);
 
-void imxuartcnprobe(struct consdev *cp);
 void imxuartcnprobe(struct consdev *cp);
 void imxuartcninit(struct consdev *cp);
 int imxuartcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate,

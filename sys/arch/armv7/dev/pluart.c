@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.5 2017/08/29 13:33:03 jsg Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.6 2017/10/27 11:23:28 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -165,7 +165,6 @@ struct pluart_softc {
 int  pluartprobe(struct device *parent, void *self, void *aux);
 void pluartattach(struct device *parent, struct device *self, void *aux);
 
-void pluartcnprobe(struct consdev *cp);
 void pluartcnprobe(struct consdev *cp);
 void pluartcninit(struct consdev *cp);
 int pluartcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
