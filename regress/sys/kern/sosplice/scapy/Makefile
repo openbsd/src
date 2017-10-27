@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2017/10/27 16:59:14 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2017/10/27 17:11:12 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -80,7 +80,7 @@ addr.py: Makefile
 	echo 'FAKE_NET = "${FAKE_NET}"' >>$@.tmp
 	mv $@.tmp $@
 
-SCAPYS !=		cd ${.CURDIR} && ls *.py
+SCAPYS !=		cd ${.CURDIR} && ls scapy-*.py
 TARGETS =		${SCAPYS}
 
 # Set variables so that make runs with and without obj directory.
