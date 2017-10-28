@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.446 2017/10/11 17:19:50 patrick Exp $
+#	$OpenBSD: GENERIC,v 1.447 2017/10/28 01:37:52 yasuoka Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -371,7 +371,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt*	at puc?
 
 efifb0		at mainbus?		# EFI Framebuffer
-wsdisplay0	at efifb? console 1
+wsdisplay0	at efifb? console ?
 
 ahc*	at pci?				# Adaptec 2940 SCSI controllers
 jmb*	at pci?				# JMicron JMB36x controllers
