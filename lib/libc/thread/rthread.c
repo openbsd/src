@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.4 2017/09/05 02:40:54 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.5 2017/10/28 21:23:14 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -112,7 +112,7 @@ DEF_STRONG(pthread_self);
 void
 pthread_exit(void *retval)
 {
-	struct rthread_cleanup_fn *clfn;
+	struct __thread_cleanup  *clfn;
 	struct tib *tib;
 	pthread_t thread = pthread_self();
 
@@ -131,12 +131,8 @@ pthread_exit(void *retval)
 
 	thread->retval = retval;
 
-	for (clfn = thread->cleanup_fns; clfn; ) {
-		struct rthread_cleanup_fn *oclfn = clfn;
-		clfn = clfn->next;
-		oclfn->fn(oclfn->arg);
-		free(oclfn);
-	}
+	while ((clfn = thread->cleanup_fns) != NULL)
+		_thread_cleanup_pop(1, clfn);
 	_rthread_tls_destructors(thread);
 
 	if (_thread_cb.tc_thread_release != NULL)

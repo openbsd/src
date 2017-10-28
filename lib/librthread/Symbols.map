@@ -29,8 +29,6 @@
 		pthread_barrierattr_init;
 		pthread_barrierattr_setpshared;
 		pthread_cancel;
-		pthread_cleanup_pop;
-		pthread_cleanup_push;
 		pthread_create;
 		pthread_detach;
 		pthread_getconcurrency;

@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.30 2017/09/05 02:40:54 guenther Exp $ */
+/* $OpenBSD: thread_private.h,v 1.31 2017/10/28 21:23:14 guenther Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -344,12 +344,6 @@ struct rthread_storage {
 	void *data;
 };
 
-struct rthread_cleanup_fn {
-	void (*fn)(void *);
-	void *arg;
-	struct rthread_cleanup_fn *next;
-};
-
 struct tib;
 struct stack;
 struct pthread {
@@ -367,7 +361,7 @@ struct pthread {
 	pthread_cond_t blocking_cond;
 	struct pthread_attr attr;
 	struct rthread_storage *local_storage;
-	struct rthread_cleanup_fn *cleanup_fns;
+	struct __thread_cleanup *cleanup_fns;
 
 	/* cancel received in a delayed cancel block? */
 	int delayed_cancel;
