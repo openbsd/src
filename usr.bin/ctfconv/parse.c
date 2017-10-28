@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.8 2017/10/28 09:34:17 mpi Exp $ */
+/*	$OpenBSD: parse.c,v 1.9 2017/10/28 13:23:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -61,7 +61,7 @@ struct pool it_pool, im_pool, ir_pool;
 RB_HEAD(ioff_tree, itype);
 
 /*
- * Per-type trees used to merge exsiting types with the ones of
+ * Per-type trees used to merge existing types with the ones of
  * a newly parsed CU.
  */
 RB_HEAD(itype_tree, itype)	 itypet[CTF_K_MAX];
@@ -72,7 +72,7 @@ RB_HEAD(itype_tree, itype)	 itypet[CTF_K_MAX];
  */
 struct isymb_tree	 isymbt;
 
-struct itype		*void_it;
+struct itype		*void_it;		/* no type is emited for void */
 uint16_t		 tidx, fidx, oidx;	/* type, func & object IDs */
 uint16_t		 long_tidx;		/* index of "long", for array */
 
@@ -146,6 +146,8 @@ dwarf_parse(const char *infobuf, size_t infolen, const char *abbuf,
 
 	while (dw_cu_parse(&info, &abbrev, infolen, &dcu) == 0) {
 		TAILQ_INIT(&cu_itypeq);
+
+		/* We use a tree to speed-up type resolution. */
 		RB_INIT(&cu_iofft);
 
 		/* Parse this CU */
@@ -401,9 +403,11 @@ cu_stat(void)
 	pool_dump();
 #endif
 }
+
 /*
- * Worst case it's a O(n*n) resolution lookup, with ``n'' being the number
- * of elements in ``cutq''.
+ * Iterate over all types found in a given CU.  For all non-resolved types
+ * use their DWARF relative offset to find the relative type they are pointing
+ * to.  The CU offset tree, `cuot', is used to speedup relative type lookup.
  */
 void
 cu_resolve(struct dwcu *dcu, struct itype_queue *cutq, struct ioff_tree *cuot)
@@ -417,6 +421,7 @@ cu_resolve(struct dwcu *dcu, struct itype_queue *cutq, struct ioff_tree *cuot)
 		if (!(it->it_flags & (ITF_UNRES|ITF_UNRES_MEMB)))
 			continue;
 
+		/* If this type references another one, try to find it. */
 		if (it->it_flags & ITF_UNRES) {
 			tmp.it_off = it->it_ref + off;
 			ref = RB_FIND(ioff_tree, cuot, &tmp);
@@ -427,7 +432,7 @@ cu_resolve(struct dwcu *dcu, struct itype_queue *cutq, struct ioff_tree *cuot)
 			}
 		}
 
-		/* All members need to be resolved. */
+		/* If this type has members, resolve all of them. */
 		toresolve = it->it_nelems;
 		if ((it->it_flags & ITF_UNRES_MEMB) && toresolve > 0) {
 			TAILQ_FOREACH(im, &it->it_members, im_next) {
@@ -458,6 +463,7 @@ cu_resolve(struct dwcu *dcu, struct itype_queue *cutq, struct ioff_tree *cuot)
 #endif /* defined(DEBUG) */
 	}
 
+	/* We'll reuse the tree for the next CU, so empty it. */
 	RB_FOREACH_SAFE(it, ioff_tree, cuot, ref)
 		RB_REMOVE(ioff_tree, cuot, it);
 }
