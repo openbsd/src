@@ -9,7 +9,4 @@ _fpsetmask
 _fpsetround
 _fpsetsticky
 _mcount
-_memcpy
-_stack
-end
 fabsl
