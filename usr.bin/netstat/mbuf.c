@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.39 2017/02/04 13:17:08 jsg Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.40 2017/10/28 15:25:20 mikeb Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -87,9 +87,8 @@ bool seen[256];			/* "have we seen this type yet?" */
 void
 mbpr(void)
 {
-	unsigned long totmem, totused, totmbufs;
-	int totpct;
-	int i, mib[4], npools;
+	unsigned long totmem, totpeak, totmbufs;
+	int i, maxclusters, mib[4], npools;
 	struct kinfo_pool pool;
 	struct mbtypes *mp;
 	size_t size;
@@ -98,6 +97,16 @@ mbpr(void)
 		fprintf(stderr,
 		    "%s: unexpected change to mbstat; check source\n",
 		    __progname);
+		return;
+	}
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_MAXCLUSTERS;
+	size = sizeof(maxclusters);
+
+	if (sysctl(mib, 2, &maxclusters, &size, NULL, 0) < 0) {
+		printf("Can't retrieve value of maxclusters from the "
+		    "kernel: %s\n",  strerror(errno));
 		return;
 	}
 
@@ -176,23 +185,21 @@ mbpr(void)
 			    plural(mbstat.m_mtypes[i]), i);
 		}
 	totmem = (mbpool.pr_npages * mbpool.pr_pgsize);
-	totused = mbpool.pr_nout * mbpool.pr_size;
+	totpeak = mbpool.pr_hiwat * mbpool.pr_pgsize;
 	for (i = 0; i < mclp; i++) {
-		printf("%u/%lu/%lu mbuf %d byte clusters in use"
-		    " (current/peak/max)\n",
+		printf("%u/%lu mbuf %d byte clusters in use"
+		    " (current/peak)\n",
 		    mclpools[i].pr_nout,
 		    (unsigned long)
 			(mclpools[i].pr_hiwat * mclpools[i].pr_itemsperpage),
-		    (unsigned long)
-			(mclpools[i].pr_maxpages * mclpools[i].pr_itemsperpage),
 		    mclpools[i].pr_size);
 		totmem += (mclpools[i].pr_npages * mclpools[i].pr_pgsize);
-		totused += mclpools[i].pr_nout * mclpools[i].pr_size;
+		totpeak += mclpools[i].pr_hiwat * mclpools[i].pr_pgsize;
 	}
 
-	totpct = (totmem == 0) ? 0 : (totused/(totmem / 100));
-	printf("%lu Kbytes allocated to network (%d%% in use)\n",
-	    totmem / 1024, totpct);
+	printf("%lu/%lu/%lu Kbytes allocated to network "
+	    "(current/peak/max)\n", totmem / 1024, totpeak / 1024,
+	    (unsigned long)(maxclusters * MCLBYTES) / 1024);
 	printf("%lu requests for memory denied\n", mbstat.m_drops);
 	printf("%lu requests for memory delayed\n", mbstat.m_wait);
 	printf("%lu calls to protocol drain routines\n", mbstat.m_drain);
