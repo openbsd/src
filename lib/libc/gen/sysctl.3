@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.284 2017/10/16 15:09:43 mikeb Exp $
+.\"	$OpenBSD: sysctl.3,v 1.285 2017/10/28 20:16:13 mpi Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,14 +27,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 16 2017 $
+.Dd $Mdocdate: October 28 2017 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
 .Nm sysctl
 .Nd get or set system information
 .Sh SYNOPSIS
-.In sys/param.h
+.In sys/types.h
 .In sys/sysctl.h
 .Ft int
 .Fn sysctl "const int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen"
