@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.15 2017/10/28 08:22:28 mpi Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.16 2017/10/28 09:26:16 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -250,7 +250,7 @@ isctf(const char *p, size_t filesize)
 	if (cth->cth_magic != CTF_MAGIC || cth->cth_version != CTF_VERSION)
 		return 0;
 
-	dlen = cth->cth_stroff + cth->cth_strlen;
+	dlen = (off_t)cth->cth_stroff + cth->cth_strlen;
 	if (dlen > (off_t)filesize && !(cth->cth_flags & CTF_F_COMPRESS)) {
 		warnx("bogus file size");
 		return 0;
@@ -283,9 +283,10 @@ int
 ctf_dump(const char *p, size_t size, uint8_t flags)
 {
 	struct ctf_header	*cth = (struct ctf_header *)p;
-	off_t 			 dlen = cth->cth_stroff + cth->cth_strlen;
+	off_t 			 dlen;
 	char			*data;
 
+	dlen = (off_t)cth->cth_stroff + cth->cth_strlen;
 	if (cth->cth_flags & CTF_F_COMPRESS) {
 		data = decompress(p + sizeof(*cth), size - sizeof(*cth), dlen);
 		if (data == NULL)
