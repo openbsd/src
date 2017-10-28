@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.232 2017/08/22 13:31:40 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.233 2017/10/28 07:22:56 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -340,30 +340,34 @@ sm_install() {
 }
 
 sm_add_user_grp() {
-	local _g _p _gid _u _rest
+	local _name _c _d _e _f _G _g _L _pass _s _u
 	local _gr=./etc/group
 	local _pw=./etc/master.passwd
 
 	${PKGMODE} && return
 
-	while IFS=: read -r -- _g _p _gid _rest; do
-		if ! grep -Eq "^${_g}:" /etc/group; then
-			getent group ${_gid} >/dev/null && \
-				sm_warn "Not adding group ${_g}, GID ${_gid} already exists" && \
+	while IFS=: read -r -- _name _pass _g _G; do
+		if ! getent group ${_name} >/dev/null; then
+			getent group ${_g} >/dev/null && \
+				sm_warn "Not adding group ${_name}, GID ${_g} already exists" && \
 				continue
-			echo "===> Adding the ${_g} group"
-			groupadd -g ${_gid} ${_g}
+			echo "===> Adding the ${_name} group"
+			groupadd -g ${_g} ${_name}
 		fi
 	done <${_gr}
 
-	while IFS=: read -r -- _u _p _uid _rest; do
-		if [[ ${_u} != root ]]; then
-			if ! grep -Eq "^${_u}:" /etc/master.passwd; then
-				getent passwd ${_uid} >/dev/null && \
-					sm_warn "Not adding user ${_u}, UID ${_uid} already exists" && \
+	while IFS=: read -r -- _name _pass _u _g _L _f _e _c _d _s
+	do
+		if [[ ${_name} != root ]]; then
+			if ! getent passwd ${_name} >/dev/null; then
+				getent passwd ${_u} >/dev/null && \
+					sm_warn "Not adding user ${_name}, UID ${_u} already exists" && \
 					continue
-				echo "===> Adding the ${_u} user"
-				chpass -a "${_u}:${_p}:${_uid}:${_rest}"
+				echo "===> Adding the ${_name} user"
+				[[ -z ${_L} ]] || _L="-L ${_L}"
+				useradd -c "${_c}" -d ${_d} -e ${_e} -f ${_f} \
+					-g ${_g} ${_L} -s ${_s} -u ${_u} \
+					${_name} >/dev/null
 			fi
 		fi
 	done <${_pw}
