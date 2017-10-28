@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.16 2017/10/28 09:26:16 mpi Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.17 2017/10/28 09:30:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -174,6 +174,9 @@ elf_idx2sym(size_t *idx, uint8_t type)
 {
 	const Elf_Sym	*st;
 	size_t		 i;
+
+	if (strtab == NULL)
+		return NULL;
 
 	for (i = *idx + 1; i < nsymb; i++) {
 		st = &symtab[i];
