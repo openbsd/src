@@ -6,12 +6,8 @@
  * static, or renamed it to have a leading underbar.
  */
 
-/* symbols that no one should be using currently */
-__data_start
-__bss_start
-_edata
+/* brk/sbrk need this so it can be overriden by the executable's value */
 _end
-__end
 
 /* sys */
 __get_tcb
