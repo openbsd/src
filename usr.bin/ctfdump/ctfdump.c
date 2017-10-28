@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.14 2017/10/27 09:35:22 mpi Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.15 2017/10/28 08:22:28 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -296,18 +296,18 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 
 	if (flags & DUMP_HEADER) {
 		printf("  cth_magic    = 0x%04x\n", cth->cth_magic);
-		printf("  cth_version  = %d\n", cth->cth_version);
+		printf("  cth_version  = %u\n", cth->cth_version);
 		printf("  cth_flags    = 0x%02x\n", cth->cth_flags);
 		printf("  cth_parlabel = %s\n",
 		    ctf_off2name(cth, data, dlen, cth->cth_parlabel));
 		printf("  cth_parname  = %s\n",
 		    ctf_off2name(cth, data, dlen, cth->cth_parname));
-		printf("  cth_lbloff   = %d\n", cth->cth_lbloff);
-		printf("  cth_objtoff  = %d\n", cth->cth_objtoff);
-		printf("  cth_funcoff  = %d\n", cth->cth_funcoff);
-		printf("  cth_typeoff  = %d\n", cth->cth_typeoff);
-		printf("  cth_stroff   = %d\n", cth->cth_stroff);
-		printf("  cth_strlen   = %d\n", cth->cth_strlen);
+		printf("  cth_lbloff   = %u\n", cth->cth_lbloff);
+		printf("  cth_objtoff  = %u\n", cth->cth_objtoff);
+		printf("  cth_funcoff  = %u\n", cth->cth_funcoff);
+		printf("  cth_typeoff  = %u\n", cth->cth_typeoff);
+		printf("  cth_stroff   = %u\n", cth->cth_stroff);
+		printf("  cth_strlen   = %u\n", cth->cth_strlen);
 		printf("\n");
 	}
 
