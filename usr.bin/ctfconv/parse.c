@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.7 2017/09/24 09:14:25 jsg Exp $ */
+/*	$OpenBSD: parse.c,v 1.8 2017/10/28 09:34:17 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -21,9 +21,9 @@
  * DWARF to IT (internal type) representation parser.
  */
 
-#include <sys/param.h>	/* nitems() */
 #include <sys/queue.h>
 #include <sys/tree.h>
+#include <sys/types.h>
 #include <sys/ctf.h>
 
 #include <assert.h>
@@ -45,6 +45,10 @@
 #ifndef NOPOOL
 struct pool it_pool, im_pool, ir_pool;
 #endif /* NOPOOL */
+
+#ifndef nitems
+#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 #define DPRINTF(x...)	do { /*printf(x)*/ } while (0)
 
