@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.11 2017/10/28 01:37:52 yasuoka Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.12 2017/10/28 01:48:03 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -92,7 +92,6 @@ struct efifb_softc {
 int	 efifb_match(struct device *, void *, void *);
 void	 efifb_attach(struct device *, struct device *, void *);
 void	 efifb_rasops_preinit(struct efifb *);
-void	 efifb_rasops_init(void);
 int	 efifb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	 efifb_mmap(void *, off_t, int);
 int	 efifb_alloc_screen(void *, const struct wsscreen_descr *, void **,
@@ -103,6 +102,7 @@ int	 efifb_show_screen(void *, void *, int, void (*cb) (void *, int, int),
 int	 efifb_list_font(void *, struct wsdisplay_font *);
 int	 efifb_load_font(void *, void *, struct wsdisplay_font *);
 void	 efifb_efiinfo_init(struct efifb *);
+void	 efifb_cnattach_common(void);
 
 struct cb_framebuffer *cb_find_fb(paddr_t);
 
@@ -407,7 +407,7 @@ efifb_cnattach(void)
 
 	memset(&efifb_console, 0, sizeof(efifb_console));
 	efifb_efiinfo_init(&efifb_console);
-	efifb_rasops_init();
+	efifb_cnattach_common();
 
 	return (0);
 }
@@ -422,6 +422,29 @@ efifb_efiinfo_init(struct efifb *fb)
 	fb->depth = max(fb->depth, fls(bios_efiinfo->fb_reserved_mask));
 	fb->psize = bios_efiinfo->fb_height *
 	    bios_efiinfo->fb_pixpsl * (fb->depth / 8);
+}
+void
+efifb_cnattach_common(void)
+{
+	struct efifb		*fb = &efifb_console;
+	struct rasops_info	*ri = &fb->rinfo;
+	long			 defattr = 0;
+
+	ri->ri_bits = (u_char *)PMAP_DIRECT_MAP(fb->paddr);
+
+	efifb_rasops_preinit(fb);
+
+	ri->ri_flg = RI_CLEAR | RI_CENTER | RI_WRONLY;
+	rasops_init(ri, EFIFB_HEIGHT, EFIFB_WIDTH);
+	efifb_std_descr.ncols = ri->ri_cols;
+	efifb_std_descr.nrows = ri->ri_rows;
+	efifb_std_descr.textops = &ri->ri_ops;
+	efifb_std_descr.fontwidth = ri->ri_font->fontwidth;
+	efifb_std_descr.fontheight = ri->ri_font->fontheight;
+	efifb_std_descr.capabilities = ri->ri_caps;
+
+	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&efifb_std_descr, ri, 0, 0, defattr);
 }
 
 int
@@ -461,30 +484,6 @@ efifb_cndetach(void)
 	efifb_console.detached = 1;
 }
 
-void
-efifb_rasops_init(void)
-{
-	struct efifb		*fb = &efifb_console;
-	struct rasops_info	*ri = &fb->rinfo;
-	long			 defattr = 0;
-
-	ri->ri_bits = (u_char *)PMAP_DIRECT_MAP(fb->paddr);
-
-	efifb_rasops_preinit(fb);
-
-	ri->ri_flg = RI_CLEAR | RI_CENTER | RI_WRONLY;
-	rasops_init(ri, EFIFB_HEIGHT, EFIFB_WIDTH);
-	efifb_std_descr.ncols = ri->ri_cols;
-	efifb_std_descr.nrows = ri->ri_rows;
-	efifb_std_descr.textops = &ri->ri_ops;
-	efifb_std_descr.fontwidth = ri->ri_font->fontwidth;
-	efifb_std_descr.fontheight = ri->ri_font->fontheight;
-	efifb_std_descr.capabilities = ri->ri_caps;
-
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
-	wsdisplay_cnattach(&efifb_std_descr, ri, 0, 0, defattr);
-}
-
 int
 efifb_cb_cnattach(void)
 {
@@ -501,7 +500,7 @@ efifb_cb_cnattach(void)
 	efifb_console.depth = cb_fb->bits_per_pixel;
 	efifb_console.psize = cb_fb->y_resolution * cb_fb->bytes_per_line;
 
-	efifb_rasops_init();
+	efifb_cnattach_common();
 
 	return (0);
 }
