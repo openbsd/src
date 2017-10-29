@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.33 2017/10/12 09:28:56 jmc Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.34 2017/10/29 19:11:34 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -186,10 +186,81 @@ dbupdate(DB *db, char *ip, int add, int type)
 }
 
 int
+print_entry(DBT *dbk, DBT *dbd)
+{
+	struct gdata gd;
+	char *a, *cp;
+
+	if ((dbk->size < 1) || gdcopyin(dbd, &gd) == -1) {
+		warnx("bogus size db entry - bad db file?");
+		return (1);
+	}
+	a = malloc(dbk->size + 1);
+	if (a == NULL)
+		err(1, "malloc");
+	memcpy(a, dbk->data, dbk->size);
+	a[dbk->size]='\0';
+	cp = strchr(a, '\n');
+	if (cp == NULL) {
+		/* this is a non-greylist entry */
+		switch (gd.pcount) {
+		case -1: /* spamtrap hit, with expiry time */
+			printf("TRAPPED|%s|%lld\n", a,
+			    (long long)gd.expire);
+			break;
+		case -2: /* spamtrap address */
+			printf("SPAMTRAP|%s\n", a);
+			break;
+		default: /* whitelist */
+			printf("WHITE|%s|||%lld|%lld|%lld|%d|%d\n", a,
+			    (long long)gd.first, (long long)gd.pass,
+			    (long long)gd.expire, gd.bcount,
+			    gd.pcount);
+			break;
+		}
+	} else {
+		char *helo, *from, *to;
+
+		/* greylist entry */
+		*cp = '\0';
+		helo = cp + 1;
+		from = strchr(helo, '\n');
+		if (from == NULL) {
+			warnx("No from part in grey key %s", a);
+			free(a);
+			return (1);
+		}
+		*from = '\0';
+		from++;
+		to = strchr(from, '\n');
+		if (to == NULL) {
+			/* probably old format - print it the
+			 * with an empty HELO field instead 
+			 * of erroring out.
+			 */			  
+			printf("GREY|%s|%s|%s|%s|%lld|%lld|%lld|%d|%d\n",
+			    a, "", helo, from, (long long)gd.first,
+			    (long long)gd.pass, (long long)gd.expire,
+			    gd.bcount, gd.pcount);
+		
+		} else {
+			*to = '\0';
+			to++;
+			printf("GREY|%s|%s|%s|%s|%lld|%lld|%lld|%d|%d\n",
+			    a, helo, from, to, (long long)gd.first,
+			    (long long)gd.pass, (long long)gd.expire,
+			    gd.bcount, gd.pcount);
+		}
+	}
+	free(a);
+
+	return (0);
+}
+
+int
 dblist(DB *db)
 {
 	DBT		dbk, dbd;
-	struct gdata	gd;
 	int		r;
 
 	/* walk db, list in text format */
@@ -197,80 +268,52 @@ dblist(DB *db)
 	memset(&dbd, 0, sizeof(dbd));
 	for (r = db->seq(db, &dbk, &dbd, R_FIRST); !r;
 	    r = db->seq(db, &dbk, &dbd, R_NEXT)) {
-		char *a, *cp;
-
-		if ((dbk.size < 1) || gdcopyin(&dbd, &gd) == -1) {
-			db->close(db);
-			errx(1, "bogus size db entry - bad db file?");
+		if (print_entry(&dbk, &dbd) != 0) {
+			r = -1;
+			break;
 		}
-		a = malloc(dbk.size + 1);
-		if (a == NULL)
-			err(1, "malloc");
-		memcpy(a, dbk.data, dbk.size);
-		a[dbk.size]='\0';
-		cp = strchr(a, '\n');
-		if (cp == NULL) {
-			/* this is a non-greylist entry */
-			switch (gd.pcount) {
-			case -1: /* spamtrap hit, with expiry time */
-				printf("TRAPPED|%s|%lld\n", a,
-				    (long long)gd.expire);
-				break;
-			case -2: /* spamtrap address */
-				printf("SPAMTRAP|%s\n", a);
-				break;
-			default: /* whitelist */
-				printf("WHITE|%s|||%lld|%lld|%lld|%d|%d\n", a,
-				    (long long)gd.first, (long long)gd.pass,
-				    (long long)gd.expire, gd.bcount,
-				    gd.pcount);
-				break;
-			}
-		} else {
-			char *helo, *from, *to;
-
-			/* greylist entry */
-			*cp = '\0';
-			helo = cp + 1;
-			from = strchr(helo, '\n');
-			if (from == NULL) {
-				warnx("No from part in grey key %s", a);
-				free(a);
-				goto bad;
-			}
-			*from = '\0';
-			from++;
-			to = strchr(from, '\n');
-			if (to == NULL) {
-				/* probably old format - print it the
-				 * with an empty HELO field instead 
-				 * of erroring out.
-				 */			  
-				printf("GREY|%s|%s|%s|%s|%lld|%lld|%lld|%d|%d\n",
-				    a, "", helo, from, (long long)gd.first,
-				    (long long)gd.pass, (long long)gd.expire,
-				    gd.bcount, gd.pcount);
-			
-			} else {
-				*to = '\0';
-				to++;
-				printf("GREY|%s|%s|%s|%s|%lld|%lld|%lld|%d|%d\n",
-				    a, helo, from, to, (long long)gd.first,
-				    (long long)gd.pass, (long long)gd.expire,
-				    gd.bcount, gd.pcount);
-			}
-		}
-		free(a);
 	}
 	db->close(db);
 	db = NULL;
-	return (0);
- bad:
+	return (r == -1);
+}
+
+int
+dbshow(DB *db, char **addrs)
+{
+	DBT dbk, dbd;
+	int errors = 0;
+	char *a;
+
+	/* look up each addr */
+	while ((a = *addrs) != NULL) {
+		memset(&dbk, 0, sizeof(dbk));
+		dbk.size = strlen(a);
+		dbk.data = a;
+		memset(&dbd, 0, sizeof(dbd));
+		switch (db->get(db, &dbk, &dbd, 0)) {
+		case -1:
+			warn("db->get failed");
+			errors++;
+			goto done;
+		case 0:
+			if (print_entry(&dbk, &dbd) != 0) {
+				errors++;
+				goto done;
+			}
+			break;
+		case 1:
+		default:
+			/* not found */
+			errors++;
+			break;
+		}
+		addrs++;
+	}
+ done:
 	db->close(db);
 	db = NULL;
-	errx(1, "incorrect db format entry");
-	/* NOTREACHED */
-	return (1);
+	return (errors);
 }
 
 extern char *__progname;
@@ -278,7 +321,7 @@ extern char *__progname;
 static int
 usage(void)
 {
-	fprintf(stderr, "usage: %s [[-Tt] -a keys] [[-GTt] -d keys]\n", __progname);
+	fprintf(stderr, "usage: %s [-adGTt] [keys ...]\n", __progname);
 	exit(1);
 	/* NOTREACHED */
 }
@@ -335,7 +378,10 @@ main(int argc, char **argv)
 
 	switch (action) {
 	case 0:
-		return dblist(db);
+		if (argc)
+			return dbshow(db, argv);
+		else
+			return dblist(db);
 	case 1:
 		if (type == GREY)
 			errx(2, "cannot add GREY entries");
