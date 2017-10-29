@@ -31,7 +31,7 @@ test -z "$optimize" && optimize='-O3'
 man3ext='3pm'
 test -z "$use64bitint" && use64bitint='define'
 test -z "$useithreads" && useithreads='define'
-ccflags="$ccflags -DPERL_USE_SAFE_PUTENV -U__STRICT_ANSI__"
+ccflags="$ccflags -DPERL_USE_SAFE_PUTENV -U__STRICT_ANSI__ -D_GNU_SOURCE"
 # - otherwise i686-cygwin
 archname='cygwin'
 

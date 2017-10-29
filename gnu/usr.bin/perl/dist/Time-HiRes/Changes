@@ -1,5 +1,74 @@
 Revision history for the Perl extension Time::HiRes.
 
+1.9741 [2016-11-20]
+  - C++11 compatibility: blead a914236c
+  - El Capitan compatibility: blead 45bbc013
+  - use CLOCK_REALTIME for clock_nanosleep scan: blead 56ed632c
+  - include file consistency in scans: blead 605b4dbe
+  - use clockid_t consistently: blead 2979fdf3
+  - use hv_fetchs(): blead 07e4dd7a
+  - scan for clockid_t (needed for macos Sierra): blead 69d1f2c2
+  - darwin lacks clockid_t: blead d1e7b5aa
+    [rt.cpan.org #129789]
+  - provide template for tempfile: blead 91dca83e
+  - explicit cast for clockid_t in C++11: blead 1c566547
+  - upgrade to a newer ppport (3.35)
+
+1.9740 [2016-09-25]
+  - the ext3/ext2 filesystems do not have subsecond resolution,
+    therefore skip the t/utime.t test
+    [rt.cpan.org #116127]
+
+1.9739 [2016-06-28]
+  - the upcoming macOS 10.12 (Sierra, the operating system formerly
+    known as OS X, or Darwin) has implemented the clock_gettime()
+    and clock_getres() interfaces but not the clock_nanosleep()
+
+1.9738 [2016-06-26]
+  - fix the dates in the Changes, it's not July yet
+    [rt.cpan.org #115553]
+  - in cygwin, drop the utime.t expected timestamp resolution
+  - documented for utime that the actual timestamp resolution depends
+    on the operating system and the filesystem, just like for stat
+  - looks like in gnukfreebsd 10.1 neither futimens or utimensat work
+    even though they exist, skipping utime tests there for now
+  - demodernize the Test::More use in utime.t (no subtest) to
+    better support older Perl installations
+  - for all the tests, drop the Test::More 0.82 requirement,
+    the only "modern" thing used is the note routine which
+    can be replaced with print("# ...\n") (or printf),
+    with this works back at least with Test::More 0.54 (perl 5.8.7) 
+
+1.9737 [2016-06-22]
+  - utime in HiRes.xs had dXSARGS which was unnecessary, leading
+    to two markstack pops, panic, and two-minute wait for the watchdog
+    (thanks to Dave Mitchell for the eagle-eye)
+  - even though 5.10.x should have the Perl_ck_warner, many CPAN
+    smokes proved otherwise, so requiring now at least 5.12 for
+    Perl_ck_warner use in IS_SAFE_PATHNAME() 
+
+1.9736 [2016-06-22]
+  - the IS_SAFE_PATHNAME() emulation was too modern for Perl 5.10
+  - make it so that only one value is set for -DTIME_HIRES_STAT
+    even on systems that support many options
+  - the 1.9734 (only released in blead, and as part of the development
+    release 5.25.2) fix for Darwin's clock_gettime was wrong under
+    threaded builds, leading into mutex panics in clock.t 
+  - the d_hires_utime determination was made more precise
+  - the utime.t was failing in platforms where only one of
+    futimens/utimensat was present (neither or both was okay)
+
+1.9735 [2016-06-20]
+  - Time::HiRes should override `utime` to allow setting hires
+    (futimens and utimensat support)
+    [rt.perl.org #114809]
+  - the utime patch used IS_SAFE_PATHNAME() which isn't available in
+    too old Perls, so emulate (in case the Devel::PPPort is too old)
+
+1.9734 [2016-06-17]
+  - fix Darwins with clock_gettime: blead 2d41a263
+    [rt.perl.org #128427]
+
 1.9733 [2016-04-23]
   - C90 declaration-after-statement error with darwin threads: blead de1003b4
     [rt.cpan.org #113856]
