@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.h,v 1.11 2015/10/05 13:00:04 mikeb Exp $	*/
+/*	$OpenBSD: trunklacp.h,v 1.12 2017/10/29 08:36:10 mpi Exp $	*/
 /*	$NetBSD: ieee8023ad_impl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*
@@ -206,7 +206,6 @@ struct lacp_port {
 	int			lp_flags;
 	u_int			lp_media; /* XXX redundant */
 	int			lp_timer[LACP_NTIMER];
-	struct ifmultiaddr	*lp_ifma;
 	struct mbuf_queue	lp_mq;
 
 	struct lacp_aggregator	*lp_aggregator;

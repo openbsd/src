@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.79 2017/05/31 09:17:40 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.80 2017/10/29 08:36:10 mpi Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -320,8 +320,6 @@ struct ieee80211com {
 	u_int8_t		ic_aselcaps;
 	u_int8_t		ic_dialog_token;
 	int			ic_fixed_mcs;
-
-	LIST_HEAD(, ieee80211_vap) ic_vaps;
 };
 #define	ic_if		ic_ac.ac_if
 #define	ic_softc	ic_if.if_softc
