@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_500.c,v 1.19 2015/05/19 20:28:14 miod Exp $ */
+/* $OpenBSD: tc_3000_500.c,v 1.20 2017/10/29 08:50:43 mpi Exp $ */
 /* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -311,7 +311,6 @@ tc_3000_500_fb_cnattach(turbo_slot)
 }
 #endif /* NWSDISPLAY */
 
-#if 0
 /*
  * tc_3000_500_ioslot --
  *	Set the PBS bits for devices on the TC.
@@ -337,4 +336,20 @@ tc_3000_500_ioslot(slot, flags, set)
 	tc_mb();
 	splx(s);
 }
-#endif
+
+int
+tc_3000_500_activate(struct device *self, int act)
+{
+	int rc = config_activate_children(self, act);
+	int slot;
+
+	/*
+	 * Reset all slots to non-sgmap when halting.
+	 */
+	if (act == DVACT_POWERDOWN) {
+		for (slot = 0; slot < tc_3000_500_nslots; slot++)
+			tc_3000_500_ioslot(slot, IOSLOT_S, 0);
+	}
+
+	return rc;
+}

@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_dma_3000_500.h,v 1.2 2008/06/26 05:42:09 ray Exp $ */
+/* $OpenBSD: tc_dma_3000_500.h,v 1.3 2017/10/29 08:50:43 mpi Exp $ */
 /* $NetBSD: tc_dma_3000_500.h,v 1.2 1997/06/07 00:02:19 thorpej Exp $ */
 
 /*-
@@ -34,9 +34,6 @@
 void	tc_dma_init_3000_500(int);
 bus_dma_tag_t tc_dma_get_tag_3000_500(int);
 
-int	tc_bus_dmamap_create_sgmap(bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
-void	tc_bus_dmamap_destroy_sgmap(bus_dma_tag_t, bus_dmamap_t);
 int	tc_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int);
 int	tc_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,

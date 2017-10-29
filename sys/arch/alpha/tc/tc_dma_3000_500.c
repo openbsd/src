@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_dma_3000_500.c,v 1.6 2014/12/13 21:05:32 doug Exp $ */
+/* $OpenBSD: tc_dma_3000_500.c,v 1.7 2017/10/29 08:50:43 mpi Exp $ */
 /* $NetBSD: tc_dma_3000_500.c,v 1.13 2001/07/19 06:40:03 thorpej Exp $ */
 
 /*-
@@ -41,22 +41,29 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/alpha_cpu.h>
 #include <machine/bus.h>
 
 #include <dev/tc/tcvar.h>
+#include <alpha/tc/tc_conf.h>
+#include <alpha/tc/tc_3000_500.h>
 #include <alpha/tc/tc_sgmap.h>
 #include <alpha/tc/tc_dma_3000_500.h>
 
+#define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
+
+struct alpha_sgmap tc_dma_sgmap;	/* sgmap shared by all slots */
+
 struct alpha_bus_dma_tag tc_dmat_sgmap = {
-	NULL,				/* _cookie */
+	NULL,				/* _cookie, not used */
 	0,				/* _wbase */
-	0,				/* _wsize */
+	0x1000000,			/* _wsize (256MB: 32K entries) */
 	NULL,				/* _next_window */
 	0,				/* _boundary */
-	NULL,				/* _sgmap */
-	NULL,				/* _get_tag */
-	tc_bus_dmamap_create_sgmap,
-	tc_bus_dmamap_destroy_sgmap,
+	&tc_dma_sgmap,			/* _sgmap */
+	NULL,				/* _get_tag, not used */
+	alpha_sgmap_dmamap_create,
+	alpha_sgmap_dmamap_destroy,
 	tc_bus_dmamap_load_sgmap,
 	tc_bus_dmamap_load_mbuf_sgmap,
 	tc_bus_dmamap_load_uio_sgmap,
@@ -70,29 +77,34 @@ struct alpha_bus_dma_tag tc_dmat_sgmap = {
 	_bus_dmamem_mmap,
 };
 
-struct tc_dma_slot_info {
-	struct alpha_sgmap tdsi_sgmap;		/* sgmap for slot */
-	struct alpha_bus_dma_tag tdsi_dmat;	/* dma tag for slot */
-};
-struct tc_dma_slot_info *tc_dma_slot_info;
-
 void
 tc_dma_init_3000_500(nslots)
 	int nslots;
 {
-	extern struct alpha_bus_dma_tag tc_dmat_direct;
 	int i;
+	struct alpha_bus_dma_tag *t;
 
-	/* Allocate per-slot DMA info. */
-	tc_dma_slot_info = mallocarray(nslots, sizeof(struct tc_dma_slot_info),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (tc_dma_slot_info == NULL)
-		panic("tc_dma_init: can't allocate per-slot DMA info");
-
-	/* Default all slots to direct-mapped. */
-	for (i = 0; i < nslots; i++)
-		memcpy(&tc_dma_slot_info[i].tdsi_dmat, &tc_dmat_direct,
-		    sizeof(tc_dma_slot_info[i].tdsi_dmat));
+	for (i = 0; i < nslots; i++) {
+		/*
+		 * Note that the use of sgmap on a slot is global, so we
+		 * can not afford reverting to direct dma (by making
+		 * _next_window point to the direct tag).
+		 * On the other hand, the sgmap allows for 256MB of
+		 * DMA transfers being programmed at the same time for all
+		 * the slots, which should not be a liability.
+		 */
+		tc_3000_500_ioslot(i, IOSLOT_S, !0);
+	}
+	/*
+	 * The TURBOchannel sgmap is shared by all slots.
+	 * We need a valid bus_dma_tag_t to pass alpha_sgmap_init() in order
+	 * to allocate the sgmap fill page, so pick the first.
+	 */
+	t = &tc_dmat_sgmap;
+	alpha_sgmap_init(t, t->_sgmap, "tc_sgmap",
+	    t->_wbase, 0, t->_wsize,
+	    SGMAP_PTE_SPACING * sizeof(SGMAP_PTE_TYPE),
+	    (void *)TC_3000_500_SCMAP, 0);
 }
 
 /*
@@ -102,55 +114,11 @@ bus_dma_tag_t
 tc_dma_get_tag_3000_500(slot)
 	int slot;
 {
-
-	return (&tc_dma_slot_info[slot].tdsi_dmat);
+	return &tc_dmat_sgmap;
 }
 
 /*
- * Create a TurboChannel SGMAP-mapped DMA map.
- */
-int
-tc_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
-    flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
-{
-	bus_dmamap_t map;
-	int error;
-
-	error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
-	    boundary, flags, dmamp);
-	if (error)
-		return (error);
-
-	map = *dmamp;
-
-	/* XXX BUS_DMA_ALLOCNOW */
-
-	return (error);
-}
-
-/*
- * Destroy a TurboChannel SGMAP-mapped DMA map.
- */
-void
-tc_bus_dmamap_destroy_sgmap(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-{
-
-	KASSERT(map->dm_mapsize == 0);
-
-	_bus_dmamap_destroy(t, map);
-}
-
-/*
- * Load a TurboChannel SGMAP-mapped DMA map with a linear buffer.
+ * Load a TURBOchannel SGMAP-mapped DMA map with a linear buffer.
  */
 int
 tc_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
@@ -161,14 +129,11 @@ tc_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	struct tc_dma_slot_info *tdsi = t->_cookie;
-
-	return (tc_sgmap_load(t, map, buf, buflen, p, flags,
-	    &tdsi->tdsi_sgmap));
+	return (tc_sgmap_load(t, map, buf, buflen, p, flags, t->_sgmap));
 }
 
 /*
- * Load a TurboChannel SGMAP-mapped DMA map with an mbuf chain.
+ * Load a TURBOchannel SGMAP-mapped DMA map with an mbuf chain.
  */
 int
 tc_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
@@ -177,13 +142,11 @@ tc_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
 	struct mbuf *m;
 	int flags;
 {
-	struct tc_dma_slot_info *tdsi = t->_cookie;
-
-	return (tc_sgmap_load_mbuf(t, map, m, flags, &tdsi->tdsi_sgmap));
+	return (tc_sgmap_load_mbuf(t, map, m, flags, t->_sgmap));
 }
 
 /*
- * Load a TurboChannel SGMAP-mapped DMA map with a uio.
+ * Load a TURBOchannel SGMAP-mapped DMA map with a uio.
  */
 int
 tc_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
@@ -192,13 +155,11 @@ tc_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct tc_dma_slot_info *tdsi = t->_cookie;
-
-	return (tc_sgmap_load_uio(t, map, uio, flags, &tdsi->tdsi_sgmap));
+	return (tc_sgmap_load_uio(t, map, uio, flags, t->_sgmap));
 }
 
 /*
- * Load a TurboChannel SGMAP-mapped DMA map with raw memory.
+ * Load a TURBOchannel SGMAP-mapped DMA map with raw memory.
  */
 int
 tc_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
@@ -209,27 +170,22 @@ tc_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
 	bus_size_t size;
 	int flags;
 {
-	struct tc_dma_slot_info *tdsi = t->_cookie;
-
-	return (tc_sgmap_load_raw(t, map, segs, nsegs, size, flags,
-	    &tdsi->tdsi_sgmap));
+	return (tc_sgmap_load_raw(t, map, segs, nsegs, size, flags, t->_sgmap));
 }
 
 /*
- * Unload a TurboChannel SGMAP-mapped DMA map.
+ * Unload a TURBOchannel SGMAP-mapped DMA map.
  */
 void
 tc_bus_dmamap_unload_sgmap(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	struct tc_dma_slot_info *tdsi = t->_cookie;
-
 	/*
 	 * Invalidate any SGMAP page table entries used by this
 	 * mapping.
 	 */
-	tc_sgmap_unload(t, map, &tdsi->tdsi_sgmap);
+	tc_sgmap_unload(t, map, t->_sgmap);
 
 	/*
 	 * Do the generic bits of the unload.
