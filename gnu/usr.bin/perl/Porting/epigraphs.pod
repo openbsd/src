@@ -17,6 +17,92 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.27.4 - Richard Brautigan, "All Watched Over By Machines Of Loving Grace"
+
+L<Announced on 2017-09-20 by John SJ Anderson|https://www.nntp.perl.org/group/perl.perl5.porters/2017/09/msg246371.html>
+
+  I like to think (and
+  the sooner the better!)
+  of a cybernetic meadow
+  where mammals and computers
+  live together in mutually
+  programming harmony
+  like pure water
+  touching clear sky.
+
+  I like to think
+  (right now, please!)
+  of a cybernetic forest
+  filled with pines and electronics
+  where deer stroll peacefully
+  past computers
+  as if they were flowers
+  with spinning blossoms.
+
+  I like to think
+  (it has to be!)
+  of a cybernetic ecology
+  where we are free of our labors
+  and joined back to nature,
+  returned to our mammal
+  brothers and sisters,
+  and all watched over
+  by machines of loving grace.
+
+=head2 v5.27.3 - Rodgers and Hammerstein, "You'll Never Walk Alone"
+
+L<Announced on 2017-08-21 by Matthew Horsfall|http://www.nntp.perl.org/group/perl.perl5.porters/2017/08/msg245988.html>
+
+  When you walk through a storm
+  Hold your head up high
+  And don't be afraid of the dark
+
+  At the end of a storm
+  There's a golden sky
+  And the sweet silver song of a lark
+
+  Walk on through the wind
+  Walk on through the rain
+  Though your dreams be tossed and blown
+
+  Walk on, walk on
+  With hope in your heart
+  And you'll never walk alone
+
+  You'll never walk alone
+
+  Walk on, walk on
+  With hope in your heart
+  And you'll never walk alone
+
+  You'll never walk alone
+
+=head2 v5.27.2 - Lev Grossman, Codex
+
+L<Announced on 2017-07-20 by Aaron Crane|http://www.nntp.perl.org/group/perl.perl5.porters/2017/07/msg245585.html>
+
+  He went back for another stack of books: a three-volume English legal
+  treatise; a travel guide to Tuscany from the '20s crammed with faded
+  Italian wildflowers that fluttered out from between the pages like
+  moths; a French edition of Turgeniev so decayed that it came apart in
+  his hands; a register of London society from 1863. In a way it was
+  idiotic. He was treating these books like they were holy relics. It
+  wasn't like he would ever actually read them. But there was something
+  magnetic about them, something that compelled respect, even the silly
+  ones, like the Enlightenment treatise about how lightning was caused
+  by bees. They were information, data, but not in the form he was used
+  to dealing with it. They were non-digital, nonelectrical chunks of
+  memory, not stamped out of silicon but laboriously crafted out of wood
+  pulp and ink, leather and glue. Somebody had cared enough to write
+  these things; somebody else had cared enough to buy them, possibly
+  even read them, at the very least keep them safe for 150 years,
+  sometimes longer, when they could have vanished at the touch of a
+  spark. That made them worth something, didn't it, just by itself?
+  Though most of them would have bored him rigid the second he cracked
+  them open, which there wasn't much chance of. Maybe that was what he
+  found so appealing: the sight of so many books that he'd never have to
+  read, so much work he'd never have to do.
+
 =head2 v5.27.1 - Rona Munro, Doctor Who: Survival
 
 L<Announced on 2017-06-20 by Eric Herman|http://www.nntp.perl.org/group/perl.perl5.porters/2017/06/msg245055.html>
@@ -44,6 +130,35 @@ L<Announced on 2017-05-31 by Sawyer X|http://www.nntp.perl.org/group/perl.perl5.
   pleasure brings no happiness, but only a deeper despair.
 
     -- Bertrand Russell, The Road to Happiness
+
+=head2 v5.26.1-RC1 - Samuel Taylor Coleridge, "The Rime of the Ancient Mariner"
+
+L<Announced on 2017-09-10 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2017/09/msg246202.html>
+
+  At length did cross an Albatross,
+  Thorough the fog it came;
+  As if it had been a Christian soul,
+  We hailed it in God's name.
+
+  It ate the food it ne'er had eat,
+  And round and round it flew.
+  The ice did split with a thunder-fit;
+  The helmsman steered us through!
+
+  And a good south wind sprung up behind;
+  The Albatross did follow,
+  And every day, for food or play,
+  Came to the mariner's hollo!
+
+  In mist or cloud, on mast or shroud,
+  It perched for vespers nine;
+  Whiles all the night, through fog-smoke white,
+  Glimmered the white Moon-shine.'
+
+  'God save thee, ancient Mariner!
+  From the fiends, that plague thee thus!—
+  Why look'st thou so?'—With my cross-bow
+  I shot the ALBATROSS.
 
 =head2 v5.26.0 - Nine Simone, Ain't Got No / I Got Life
 
@@ -288,6 +403,61 @@ L<Announced on 2016-05-09 by Ricardo Signes|http://www.nntp.perl.org/group/perl.
     Wide fields of asphodel fore’er,
   To find that the utmost reward
     Of daring should be still to dare.
+
+=head2 v5.24.3-RC1 - Samuel Taylor Coleridge, "The Rime of the Ancient Mariner"
+
+L<Announced on 2017-09-10 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2017/09/msg246201.html>
+
+  'And now the STORM-BLAST came, and he
+  Was tyrannous and strong:
+  He struck with his o'ertaking wings,
+  And chased us south along.
+
+  With sloping masts and dipping prow,
+  As who pursued with yell and blow
+  Still treads the shadow of his foe,
+  And forward bends his head,
+  The ship drove fast, loud roared the blast,
+  And southward aye we fled.
+
+  And now there came both mist and snow,
+  And it grew wondrous cold:
+  And ice, mast-high, came floating by,
+  As green as emerald.
+
+  And through the drifts the snowy clifts
+  Did send a dismal sheen:
+  Nor shapes of men nor beasts we ken—
+  The ice was all between.
+
+  The ice was here, the ice was there,
+  The ice was all around:
+  It cracked and growled, and roared and howled,
+  Like noises in a swound!
+
+=head2 v5.24.2 - Roald Dahl, "The Three Little Pigs"
+
+L<Announced on 2017-07-15 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2017/07/msg245527.html>
+
+  A short while later, through the wood,
+  Came striding brave Miss Riding Hood.
+  The Wolf stood there, his eyes ablaze
+  And yellowish, like mayonnaise.
+  His teeth were sharp, his gums were raw,
+  And spit was dripping from his jaw.
+  Once more the maiden's eyelid flickers.
+  She draws the pistol from her knickers.
+  Once more, she hits the vital spot,
+  And kills him with a single shot.
+  Pig, peeping through the window, stood
+  And yelled, 'Well done, Miss Riding Hood!'
+
+  Ah, Piglet, you must never trust
+  Young ladies from the upper crust.
+  For now, Miss Riding Hood, one notes,
+  Not only has two wolfskin coats,
+  But when she goes from place to place,
+  She has a PIGSKIN TRAVELLING CASE.
 
 =head2 v5.24.2-RC1 - Roald Dahl, "The Three Little Pigs"
 
@@ -832,6 +1002,28 @@ L<Announced on 2015-06-20 by Ricardo Signes|http://www.nntp.perl.org/group/perl.
   To be just like them
   They sing while you slave and I just get bored
   I ain't gonna work on Maggie's farm no more
+
+=head2 v5.22.4 - Roald Dahl, "Little Red Riding Hood and the Wolf"
+
+L<Announced on 2017-07-15 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2017/07/msg245526.html>
+
+  Then Little Red Riding Hood said, 'But Grandma,
+  what a lovely great big furry coat you have on.'
+  'That's wrong!' cried Wolf. 'Have you forgot
+  'To tell me what BIG TEETH I've got?
+  'Ah well, no matter what you say,
+  'I'm going to eat you anyway.'
+  The small girl smiles. One eyelid flickers.
+  She whips a pistol from her knickers.
+  She aims it at the creature's head
+  And bang bang bang, she shoots him dead.
+
+  A few weeks later, in the wood,
+  I came across Miss Riding Hood.
+  But what a change! No cloak of red,
+  No silly hood upon her head.
+  She said, 'Hello, and do please note
+  'My lovely furry WOLFSKIN COAT.'
 
 =head2 v5.22.4-RC1 - Roald Dahl, "Little Red Riding Hood and the Wolf"
 

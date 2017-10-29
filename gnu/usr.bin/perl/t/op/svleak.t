@@ -15,7 +15,7 @@ BEGIN {
 
 use Config;
 
-plan tests => 131;
+plan tests => 132;
 
 # run some code N times. If the number of SVs at the end of loop N is
 # greater than (N-1)*delta at the end of loop 1, we've got a leak
@@ -536,4 +536,14 @@ EOF
     sub h {}
 
     ::leak(5, 0, \&f, q{goto shouldn't leak @_});
+}
+
+# [perl #128313] POSIX warnings shouldn't leak
+{
+    no warnings 'experimental';
+    use re 'strict';
+    my $a = 'aaa';
+    my $b = 'aa';
+    sub f { $a =~ /[^.]+$b/; }
+    ::leak(2, 0, \&f, q{use re 'strict' shouldn't leak warning strings});
 }

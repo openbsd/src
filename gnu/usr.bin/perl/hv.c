@@ -2476,9 +2476,10 @@ Perl_hv_ename_delete(pTHX_ HV *hv, const char *name, U32 len, U32 flags)
 		return;
 	    }
 	if (
-	    count > 0 && (HEK_UTF8(*namep) || (flags & SVf_UTF8)) 
+	    count > 0 && ((HEK_UTF8(*namep) || (flags & SVf_UTF8)) 
                 ? hek_eq_pvn_flags(aTHX_ *namep, name, (I32)len, flags)
 	        : (HEK_LEN(*namep) == (I32)len && memEQ(HEK_KEY(*namep), name, len))
+            )
 	) {
 	    aux->xhv_name_count = -count;
 	}

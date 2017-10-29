@@ -464,7 +464,7 @@ shextract=`SH_to_target $SH`
 ## In the following dollars and backticks do not need the extra backslash.
 $spitshell >>$Makefile <<!GROK!THIS!
 
-private = preplibrary \$(CONFIGPM) \$(CONFIGPOD) lib/buildcustomize.pl
+private = preplibrary \$(CONFIGPM) \$(CONFIGPOD) git_version.h lib/buildcustomize.pl
 
 # Files to be built with variable substitution before miniperl
 # is available.
@@ -522,7 +522,7 @@ miniperl_objs = $(miniperl_objs_nodt) $(DTRACE_MINI_O)
 perllib_objs  = $(perllib_objs_nodt) $(DTRACE_PERLLIB_O)
 perlmain_objs = perlmain$(OBJ_EXT) $(DTRACE_MAIN_O)
 
-perltoc_pod_prereqs = extra.pods pod/perl5242delta.pod pod/perlapi.pod pod/perlintern.pod pod/perlmodlib.pod
+perltoc_pod_prereqs = extra.pods pod/perl5243delta.pod pod/perlapi.pod pod/perlintern.pod pod/perlmodlib.pod pod/perluniprops.pod
 generated_pods = pod/perltoc.pod $(perltoc_pod_prereqs)
 generated_headers = uudmap.h bitcount.h mg_data.h
 
@@ -607,16 +607,15 @@ $(MANIFEST_SRT):	MANIFEST $(PERL_EXE)
 
 .PHONY: all utilities
 
-# OpenBSD uses pre-generated lib/Config_git.pl and git_version.h files
 # Both git_version.h and lib/Config_git.pl are built
 # by make_patchnum.pl.
-#git_version.h: lib/Config_git.pl
-#
-#lib/Config_git.pl: $(MINIPERL_EXE) make_patchnum.pl
-#	$(MINIPERL) make_patchnum.pl
-#
-## make sure that we recompile perl.c if the git version changes
-#perl$(OBJ_EXT): git_version.h
+git_version.h: lib/Config_git.pl
+
+lib/Config_git.pl: $(MINIPERL_EXE) make_patchnum.pl
+	$(MINIPERL) make_patchnum.pl
+
+# make sure that we recompile perl.c if the git version changes
+perl$(OBJ_EXT): git_version.h
 
 !NO!SUBS!
 
@@ -782,11 +781,11 @@ CCDLFLAGS		= `echo $ccdlflags|sed -e 's@-bE:.*/perl\.exp@-bE:perl.exp@'`
 LIBPERL_NONSHR		= libperl_nonshr$(LIB_EXT)
 MINIPERL_NONSHR		= miniperl_nonshr$(EXE_EXT)
 
-#$(LIBPERL_NONSHR): $(perllib_objs)
-#	$(RMS) $(LIBPERL_NONSHR)
-#	$(AR) rc $(LIBPERL_NONSHR) $(perllib_objs)
+$(LIBPERL_NONSHR): $(perllib_objs)
+	$(RMS) $(LIBPERL_NONSHR)
+	$(AR) rc $(LIBPERL_NONSHR) $(perllib_objs)
 
-$(MINIPERL_NONSHR): miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT)  perlmini$(OBJ_EXT)
+$(MINIPERL_NONSHR): $(LIBPERL_NONSHR) miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT)  perlmini$(OBJ_EXT)
 	$(CC) $(LDFLAGS) -o $(MINIPERL_NONSHR) miniperlmain$(OBJ_EXT) \
 	    opmini$(OBJ_EXT) perlmini$(OBJ_EXT) $(LIBPERL_NONSHR) $(LIBS)
 
@@ -873,33 +872,33 @@ $(DTRACE_MAIN_O): perldtrace.d perlmain$(OBJ_EXT)
 		;;
     esac
 	$spitshell >>$Makefile <<'!NO!SUBS!'
-#$(LIBPERL): $& $(perllib_objs) $(DYNALOADER) $(LIBPERLEXPORT)
-#!NO!SUBS!
-#	case "$useshrplib" in
-#	true)
-#		$spitshell >>$Makefile <<'!NO!SUBS!'
-#	rm -f $@
-#	$(LD) -o $@ $(SHRPLDFLAGS) $(perllib_objs) $(DYNALOADER) $(libs)
-#!NO!SUBS!
-#		case "$osname" in
-#		aix)
-#			$spitshell >>$Makefile <<'!NO!SUBS!'
-#	rm -f libperl$(OBJ_EXT)
-#	mv $@ libperl$(OBJ_EXT)
-#	$(AR) qv $(LIBPERL) libperl$(OBJ_EXT)
-#!NO!SUBS!
-#			;;
-#		esac
-#		;;
-#	*)
-#		$spitshell >>$Makefile <<'!NO!SUBS!'
-#	rm -f $(LIBPERL)
-#	$(AR) rc $(LIBPERL) $(perllib_objs) $(DYNALOADER)
-#	@$(ranlib) $(LIBPERL)
-#!NO!SUBS!
-#		;;
-#	esac
-#	$spitshell >>$Makefile <<'!NO!SUBS!'
+$(LIBPERL): $& $(perllib_objs) $(DYNALOADER) $(LIBPERLEXPORT)
+!NO!SUBS!
+	case "$useshrplib" in
+	true)
+		$spitshell >>$Makefile <<'!NO!SUBS!'
+	rm -f $@
+	$(LD) -o $@ $(SHRPLDFLAGS) $(perllib_objs) $(DYNALOADER) $(libs)
+!NO!SUBS!
+		case "$osname" in
+		aix)
+			$spitshell >>$Makefile <<'!NO!SUBS!'
+	rm -f libperl$(OBJ_EXT)
+	mv $@ libperl$(OBJ_EXT)
+	$(AR) qv $(LIBPERL) libperl$(OBJ_EXT)
+!NO!SUBS!
+			;;
+		esac
+		;;
+	*)
+		$spitshell >>$Makefile <<'!NO!SUBS!'
+	rm -f $(LIBPERL)
+	$(AR) rc $(LIBPERL) $(perllib_objs) $(DYNALOADER)
+	@$(ranlib) $(LIBPERL)
+!NO!SUBS!
+		;;
+	esac
+	$spitshell >>$Makefile <<'!NO!SUBS!'
 
 # How to build executables.
 
@@ -964,6 +963,10 @@ NAMESPACEFLAGS = -force_flat_namespace
 		esac
 		$spitshell >>$Makefile <<'!NO!SUBS!'
 lib/buildcustomize.pl: $& $(miniperl_objs) write_buildcustomize.pl
+	-@rm -f miniperl.xok
+	$(CC) $(CLDFLAGS) $(NAMESPACEFLAGS) -o $(MINIPERL_EXE) \
+	    $(miniperl_objs) $(libs)
+	$(LDLIBPTH) ./miniperl$(HOST_EXE_EXT) -w -Ilib -Idist/Exporter/lib -MExporter -e '<?>' || sh -c 'echo >&2 Failed to build miniperl.  Please run make minitest; exit 1'
 	$(MINIPERL) -f write_buildcustomize.pl
 !NO!SUBS!
 		;;
@@ -1063,7 +1066,10 @@ $(CONFIGPOD): config.sh $(MINIPERL_EXE) configpm Porting/Glossary lib/Config_git
 unidatafiles $(unidatafiles) pod/perluniprops.pod: uni.data
 
 uni.data: $(MINIPERL_EXE) $(CONFIGPM) lib/unicore/mktables $(nonxs_ext)
-	touch uni.data
+	$(MINIPERL) lib/unicore/mktables -C lib/unicore -P pod -maketest -makelist -p
+#	Commented out so always runs, mktables looks at far more files than we
+#	can in this makefile to decide if needs to run or not
+#	touch uni.data
 
 # $(PERL_EXE) and ext because pod_lib.pl needs Digest::MD5
 # But also this ensures that all extensions are built before we try to scan
@@ -1079,9 +1085,9 @@ pod/perlintern.pod: $(MINIPERL_EXE) autodoc.pl embed.fnc
 pod/perlmodlib.pod: $(MINIPERL_EXE) pod/perlmodlib.PL MANIFEST
 	$(MINIPERL) pod/perlmodlib.PL -q
 
-pod/perl5242delta.pod: pod/perldelta.pod
-	$(RMS) pod/perl5242delta.pod
-	$(LNS) perldelta.pod pod/perl5242delta.pod
+pod/perl5243delta.pod: pod/perldelta.pod
+	$(RMS) pod/perl5243delta.pod
+	$(LNS) perldelta.pod pod/perl5243delta.pod
 
 extra.pods: $(MINIPERL_EXE)
 	-@test ! -f extra.pods || rm -f `cat extra.pods`
@@ -1327,7 +1333,7 @@ _mopup:
 	-rm -f *perl.xok
 	-rm -f cygwin.c libperl*.def libperl*.dll cygperl*.dll *.exe.stackdump
 	-rm -f $(PERL_EXE) $(MINIPERL_EXE) $(LIBPERL) libperl.* microperl
-	-rm -f $(DTRACE_H)
+	-rm -f config.arch config.over $(DTRACE_H)
 
 _cleaner1:
 	-cd os2; rm -f Makefile
@@ -1379,18 +1385,18 @@ _cleaner2:
 	-rmdir lib/Sys/Syslog lib/Sys lib/Sub lib/Search lib/Scalar
 	-rmdir lib/Pod/Text lib/Pod/Simple lib/Pod/Perldoc lib/PerlIO/via
 	-rmdir lib/PerlIO lib/Perl lib/Parse/CPAN lib/Parse lib/Params
-	-rmdir lib/OpenBSD lib/Net/FTP lib/Module/Load lib/Module/CoreList
-	-rmdir lib/Module lib/Memoize lib/Math/BigInt lib/Math/BigFloat
-	-rmdir lib/Math lib/MIME lib/Locale/Maketext lib/Locale/Codes
-	-rmdir lib/Locale lib/List/Util lib/List lib/JSON/PP lib/JSON lib/IPC
-	-rmdir lib/IO/Uncompress/Adapter lib/IO/Uncompress lib/IO/Socket
-	-rmdir lib/IO/Compress/Zlib lib/IO/Compress/Zip lib/IO/Compress/Gzip
-	-rmdir lib/IO/Compress/Base lib/IO/Compress/Adapter lib/IO/Compress
-	-rmdir lib/IO lib/I18N/LangTags lib/I18N lib/Hash/Util lib/Hash
-	-rmdir lib/HTTP lib/Filter/Util lib/Filter lib/File/Spec
-	-rmdir lib/ExtUtils/Typemaps lib/ExtUtils/ParseXS
-	-rmdir lib/ExtUtils/MakeMaker/version lib/ExtUtils/MakeMaker
-	-rmdir lib/ExtUtils/Liblist lib/ExtUtils/Constant lib/ExtUtils/Command
+	-rmdir lib/Net/FTP lib/Module/Load lib/Module/CoreList lib/Module
+	-rmdir lib/Memoize lib/Math/BigInt lib/Math/BigFloat lib/Math lib/MIME
+	-rmdir lib/Locale/Maketext lib/Locale/Codes lib/Locale lib/List/Util
+	-rmdir lib/List lib/JSON/PP lib/JSON lib/IPC lib/IO/Uncompress/Adapter
+	-rmdir lib/IO/Uncompress lib/IO/Socket lib/IO/Compress/Zlib
+	-rmdir lib/IO/Compress/Zip lib/IO/Compress/Gzip lib/IO/Compress/Base
+	-rmdir lib/IO/Compress/Adapter lib/IO/Compress lib/IO
+	-rmdir lib/I18N/LangTags lib/I18N lib/Hash/Util lib/Hash lib/HTTP
+	-rmdir lib/Filter/Util lib/Filter lib/File/Spec lib/ExtUtils/Typemaps
+	-rmdir lib/ExtUtils/ParseXS lib/ExtUtils/MakeMaker/version
+	-rmdir lib/ExtUtils/MakeMaker lib/ExtUtils/Liblist
+	-rmdir lib/ExtUtils/Constant lib/ExtUtils/Command
 	-rmdir lib/ExtUtils/CBuilder/Platform/Windows
 	-rmdir lib/ExtUtils/CBuilder/Platform lib/ExtUtils/CBuilder
 	-rmdir lib/Exporter lib/Encode/Unicode lib/Encode/MIME/Header

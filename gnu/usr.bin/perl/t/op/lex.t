@@ -7,7 +7,7 @@ use warnings;
 
 BEGIN { chdir 't' if -d 't'; require './test.pl'; }
 
-plan(tests => 25);
+plan(tests => 26);
 
 {
     no warnings 'deprecated';
@@ -129,7 +129,7 @@ fresh_perl_is(
   '* <null> ident'
 );
 SKIP: {
-    skip "Different output on EBCDIC (presumably)", 2 if $::IS_EBCDIC;
+    skip "Different output on EBCDIC (presumably)", 3 if $::IS_EBCDIC;
     fresh_perl_is(
       qq'"ab}"ax;&\0z\x8Ao}\x82x;', <<gibberish,
 Bareword found where operator expected at - line 1, near ""ab}"ax"
@@ -149,6 +149,13 @@ Unrecognized character \\x8A; marked by <-- HERE after }"ax;&{+z}<-- HERE near c
 gibberish
        { stderr => 1 },
       'gibberish containing &{+z} - used to crash [perl #123753]'
+    );
+    fresh_perl_is(
+      "\@{\327\n", <<\gibberisi,
+Unrecognized character \xD7; marked by <-- HERE after @{<-- HERE near column 3 at - line 1.
+gibberisi
+       { stderr => 1 },
+      '@ { \327 \n - used to garble output (or fail asan) [perl #128951]'
     );
 }
 

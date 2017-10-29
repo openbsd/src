@@ -3,6 +3,7 @@ use strict;
 BEGIN {
     require Time::HiRes;
     require Test::More;
+    require File::Temp;
     unless(&Time::HiRes::d_hires_utime) {
 	Test::More::plan(skip_all => "no hires_utime");
     }
@@ -15,6 +16,35 @@ BEGIN {
     if ($^O eq 'gnukfreebsd') {
 	Test::More::plan(skip_all => "futimens() and utimensat() not working in $^O");
     }
+    if ($^O eq 'linux' && -e '/proc/mounts') {
+        # The linux might be wrong when ext3
+        # is available in other operating systems,
+        # but then we need other methods for detecting
+        # the filesystem type of the tempfiles.
+        my ($fh, $fn) = File::Temp::tempfile( "Time-HiRes-utime-XXXXXXXXX", UNLINK => 1);
+        sub getfstype {
+            my ($fn) = @_;
+            my $cmd = "df $fn";
+            open(my $df, "$cmd |") or die "$cmd: $!";
+             my @df = <$df>;  # Assume $df[0] is header line.
+             my $dev = +(split(" ", $df[1]))[0];
+             open(my $mounts, "/proc/mounts") or die "/proc/mounts: $!";
+             while (<$mounts>) {
+                 my @m = split(" ");
+                 if ($m[0] eq $dev) { return $m[2] }
+             }
+             return;
+          }
+          my $fstype = getfstype($fn);
+          unless (defined $fstype) {
+              warn "Unknown fstype for $fn\n";
+          } else {
+              print "# fstype = $fstype\n";
+              if ($fstype eq 'ext3' || $fstype eq 'ext2') {
+                  Test::More::plan(skip_all => "fstype $fstype has no subsecond timestamps in $^O");
+            }
+        }
+    }
 }
 
 use Test::More tests => 18;
@@ -23,9 +53,16 @@ use File::Temp qw( tempfile );
 
 use Config;
 
-# Cygwin timestamps have less precision.
-my $atime = $^O eq 'cygwin' ? 1.1111111 : 1.111111111;
-my $mtime = $^O eq 'cygwin' ? 2.2222222 : 2.222222222;
+# Hope initially for nanosecond accuracy.
+my $atime = 1.111111111;
+my $mtime = 2.222222222;
+
+if ($^O eq 'cygwin') {
+   # Cygwin timestamps have less precision.
+   $atime = 1.1111111;
+   $mtime = 2.2222222;
+}
+print "# \$^O = $^O, atime = $atime, mtime = $mtime\n";
 
 print "# utime \$fh\n";
 {

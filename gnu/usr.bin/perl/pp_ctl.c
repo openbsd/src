@@ -3678,8 +3678,8 @@ PP(pp_require)
 
     if (!IS_SAFE_PATHNAME(name, len, "require")) {
         DIE(aTHX_ "Can't locate %s:   %s",
-            pv_escape(newSVpvs_flags("",SVs_TEMP),SvPVX(sv),SvCUR(sv),
-                      SvCUR(sv)*2,NULL, SvUTF8(sv)?PERL_PV_ESCAPE_UNI:0),
+            pv_escape(newSVpvs_flags("",SVs_TEMP),name,len,len*2,
+                      NULL, SvUTF8(sv)?PERL_PV_ESCAPE_UNI:0),
             Strerror(ENOENT));
     }
     TAINT_PROPER("require");

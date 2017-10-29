@@ -199,6 +199,7 @@ struct RExC_state_t {
     scan_frame *frame_head;
     scan_frame *frame_last;
     U32         frame_count;
+    AV         *warn_text;
 #ifdef ADD_TO_REGEXEC
     char 	*starttry;		/* -Dr: where regtry was called. */
 #define RExC_starttry	(pRExC_state->starttry)
@@ -222,6 +223,7 @@ struct RExC_state_t {
 #endif
     bool        seen_unfolded_sharp_s;
     bool        strict;
+    bool        study_started;
 };
 
 #define RExC_flags	(pRExC_state->flags)
@@ -288,6 +290,8 @@ struct RExC_state_t {
 #define RExC_frame_last (pRExC_state->frame_last)
 #define RExC_frame_count (pRExC_state->frame_count)
 #define RExC_strict (pRExC_state->strict)
+#define RExC_study_started      (pRExC_state->study_started)
+#define RExC_warn_text (pRExC_state->warn_text)
 
 /* Heuristic check on the complexity of the pattern: if TOO_NAUGHTY, we set
  * a flag to disable back-off on the fixed/floating substrings - if it's
@@ -4102,6 +4106,7 @@ S_study_chunk(pTHX_ RExC_state_t *pRExC_state, regnode **scanp,
     GET_RE_DEBUG_FLAGS_DECL;
 
     PERL_ARGS_ASSERT_STUDY_CHUNK;
+    RExC_study_started= 1;
 
 
     if ( depth == 0 ) {
@@ -5899,15 +5904,10 @@ Perl_re_printf( aTHX_  "LHS=%"UVuf" RHS=%"UVuf"\n",
 	/* Else: zero-length, ignore. */
 	scan = regnext(scan);
     }
-    /* If we are exiting a recursion we can unset its recursed bit
-     * and allow ourselves to enter it again - no danger of an
-     * infinite loop there.
-    if (stopparen > -1 && recursed) {
-	DEBUG_STUDYDATA("unset:", data,depth);
-        PAREN_UNSET( recursed, stopparen);
-    }
-    */
+
+  finish:
     if (frame) {
+        /* we need to unwind recursion. */
         depth = depth - 1;
 
         DEBUG_STUDYDATA("frame-end:",data,depth);
@@ -5924,7 +5924,6 @@ Perl_re_printf( aTHX_  "LHS=%"UVuf" RHS=%"UVuf"\n",
         goto fake_study_recurse;
     }
 
-  finish:
     assert(!frame);
     DEBUG_STUDYDATA("pre-fin:",data,depth);
 
@@ -6767,6 +6766,7 @@ Perl_re_op_compile(pTHX_ SV ** const patternp, int pat_count,
 #endif
     }
 
+    pRExC_state->warn_text = NULL;
     pRExC_state->code_blocks = NULL;
     pRExC_state->num_code_blocks = 0;
 
@@ -6883,6 +6883,7 @@ Perl_re_op_compile(pTHX_ SV ** const patternp, int pat_count,
     RExC_contains_locale = 0;
     RExC_contains_i = 0;
     RExC_strict = cBOOL(pm_flags & RXf_PMf_STRICT);
+    RExC_study_started = 0;
     pRExC_state->runtime_code_qr = NULL;
     RExC_frame_head= NULL;
     RExC_frame_last= NULL;
@@ -10619,7 +10620,10 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp,U32 depth)
                 RExC_seen |= REG_LOOKBEHIND_SEEN;
 		RExC_in_lookbehind++;
 		RExC_parse++;
-                assert(RExC_parse < RExC_end);
+                if (RExC_parse >= RExC_end) {
+                    vFAIL("Sequence (?... not terminated");
+                }
+
                 /* FALLTHROUGH */
 	    case '=':           /* (?=...) */
 		RExC_seen_zerolen++;
@@ -13707,8 +13711,8 @@ S_populate_ANYOF_from_invlist(pTHX_ regnode *node, SV** invlist_ptr)
  * routine. q.v. */
 #define ADD_POSIX_WARNING(p, text)  STMT_START {                            \
         if (posix_warnings) {                                               \
-            if (! warn_text) warn_text = newAV();                           \
-            av_push(warn_text, Perl_newSVpvf(aTHX_                          \
+            if (! RExC_warn_text ) RExC_warn_text = (AV *) sv_2mortal((SV *) newAV()); \
+            av_push(RExC_warn_text, Perl_newSVpvf(aTHX_                          \
                                              WARNING_PREFIX                 \
                                              text                           \
                                              REPORT_LOCATION,               \
@@ -13839,7 +13843,6 @@ S_handle_possible_posix(pTHX_ RExC_state_t *pRExC_state,
     bool has_opening_colon    = FALSE;
     int class_number          = OOB_NAMEDCLASS; /* Out-of-bounds until find
                                                    valid class */
-    AV* warn_text             = NULL;   /* any warning messages */
     const char * possible_end = NULL;   /* used for a 2nd parse pass */
     const char* name_start;             /* ptr to class name first char */
 
@@ -13854,6 +13857,9 @@ S_handle_possible_posix(pTHX_ RExC_state_t *pRExC_state,
     UV input_text[15];
 
     PERL_ARGS_ASSERT_HANDLE_POSSIBLE_POSIX;
+
+    if (posix_warnings && RExC_warn_text)
+        av_clear(RExC_warn_text);
 
     if (p >= e) {
         return NOT_MEANT_TO_BE_A_POSIX_CLASS;
@@ -14472,14 +14478,8 @@ S_handle_possible_posix(pTHX_ RExC_state_t *pRExC_state,
                 ADD_POSIX_WARNING(p, "there is no terminating ']'");
             }
 
-            if (warn_text) {
-                if (posix_warnings) {
-                    /* mortalize to avoid a leak with FATAL warnings */
-                    *posix_warnings = (AV *) sv_2mortal((SV *) warn_text);
-                }
-                else {
-                    SvREFCNT_dec_NN(warn_text);
-                }
+            if (posix_warnings && RExC_warn_text && av_top_index(RExC_warn_text) > -1) {
+                *posix_warnings = RExC_warn_text;
             }
         }
         else if (class_number != OOB_NAMEDCLASS) {
@@ -14885,8 +14885,8 @@ redo_curchar:
                 }
 
                 /* Stack the position of this undealt-with left paren */
-                fence = top_index + 1;
                 av_push(fence_stack, newSViv(fence));
+                fence = top_index + 1;
                 break;
 
             case '\\':
@@ -14967,7 +14967,12 @@ redo_curchar:
                     vFAIL("Unexpected ')'");
                 }
 
-                 /* If at least two thing on the stack, treat this as an
+                /* If nothing after the fence, is missing an operand */
+                if (top_index - fence < 0) {
+                    RExC_parse++;
+                    goto bad_syntax;
+                }
+                /* If at least two things on the stack, treat this as an
                   * operator */
                 if (top_index - fence >= 1) {
                     goto join_operators;
@@ -18244,7 +18249,9 @@ S_reginsert(pTHX_ RExC_state_t *pRExC_state, U8 op, regnode *opnd, U32 depth)
 	RExC_size += size;
 	return;
     }
-
+    assert(!RExC_study_started); /* I believe we should never use reginsert once we have started
+                                    studying. If this is wrong then we need to adjust RExC_recurse
+                                    below like we do with RExC_open_parens/RExC_close_parens. */
     src = RExC_emit;
     RExC_emit += size;
     dst = RExC_emit;
@@ -18255,7 +18262,10 @@ S_reginsert(pTHX_ RExC_state_t *pRExC_state, U8 op, regnode *opnd, U32 depth)
          * iow it is 1 more than the number of parens seen in
          * the pattern so far. */
         for ( paren=0 ; paren < RExC_npar ; paren++ ) {
-            if ( RExC_open_parens[paren] >= opnd ) {
+            /* note, RExC_open_parens[0] is the start of the
+             * regex, it can't move. RExC_close_parens[0] is the end
+             * of the regex, it *can* move. */
+            if ( paren && RExC_open_parens[paren] >= opnd ) {
                 /*DEBUG_PARSE_FMT("open"," - %d",size);*/
                 RExC_open_parens[paren] += size;
             } else {
@@ -18750,7 +18760,8 @@ Perl_regprop(pTHX_ const regexp *prog, SV *sv, const regnode *o, const regmatch_
                                                  : TRIE_BITMAP(trie)),
                                                 NULL,
                                                 NULL,
-                                                NULL
+                                                NULL,
+                                                FALSE
                                                );
             sv_catpvs(sv, "]");
         }
@@ -18849,6 +18860,8 @@ Perl_regprop(pTHX_ const regexp *prog, SV *sv, const regnode *o, const regmatch_
         /* And things that aren't in the bitmap, but are small enough to be */
         SV* bitmap_range_not_in_bitmap = NULL;
 
+        const bool inverted = flags & ANYOF_INVERT;
+
 	if (OP(o) == ANYOFL) {
             if (ANYOFL_UTF8_LOCALE_REQD(flags)) {
                 sv_catpvs(sv, "{utf8-locale-reqd}");
@@ -18893,21 +18906,37 @@ Perl_regprop(pTHX_ const regexp *prog, SV *sv, const regnode *o, const regmatch_
                                               ANYOF_BITMAP(o),
                                               bitmap_range_not_in_bitmap,
                                               only_utf8_locale_invlist,
-                                              o);
+                                              o,
+
+                                              /* Can't try inverting for a
+                                               * better display if there are
+                                               * things that haven't been
+                                               * resolved */
+                                              unresolved != NULL);
         SvREFCNT_dec(bitmap_range_not_in_bitmap);
 
         /* If there are user-defined properties which haven't been defined yet,
-         * output them, in a separate [] from the bitmap range stuff */
+         * output them.  If the result is not to be inverted, it is clearest to
+         * output them in a separate [] from the bitmap range stuff.  If the
+         * result is to be complemented, we have to show everything in one [],
+         * as the inversion applies to the whole thing.  Use {braces} to
+         * separate them from anything in the bitmap and anything above the
+         * bitmap. */
         if (unresolved) {
-            if (do_sep) {
+            if (inverted) {
+                if (! do_sep) { /* If didn't output anything in the bitmap */
+                    sv_catpvs(sv, "^");
+                }
+                sv_catpvs(sv, "{");
+            }
+            else if (do_sep) {
                 Perl_sv_catpvf(aTHX_ sv,"%s][%s",PL_colors[1],PL_colors[0]);
             }
-            if (flags & ANYOF_INVERT) {
-                sv_catpvs(sv, "^");
-            }
             sv_catsv(sv, unresolved);
-            do_sep = TRUE;
-            SvREFCNT_dec_NN(unresolved);
+            if (inverted) {
+                sv_catpvs(sv, "}");
+            }
+            do_sep = ! inverted;
         }
 
         /* And, finally, add the above-the-bitmap stuff */
@@ -18924,9 +18953,11 @@ Perl_regprop(pTHX_ const regexp *prog, SV *sv, const regnode *o, const regmatch_
                 Perl_sv_catpvf(aTHX_ sv,"%s][%s",PL_colors[1],PL_colors[0]);
             }
 
-            /* And, for easy of understanding, it is always output not-shown as
-             * complemented */
-            if (flags & ANYOF_INVERT) {
+            /* And, for easy of understanding, it is shown in the
+             * uncomplemented form if possible.  The one exception being if
+             * there are unresolved items, where the inversion has to be
+             * delayed until runtime */
+            if (inverted && ! unresolved) {
                 _invlist_invert(nonbitmap_invlist);
                 _invlist_subtract(nonbitmap_invlist, PL_InBitmap, &nonbitmap_invlist);
             }
@@ -18963,6 +18994,8 @@ Perl_regprop(pTHX_ const regexp *prog, SV *sv, const regnode *o, const regmatch_
 
         /* And finally the matching, closing ']' */
 	Perl_sv_catpvf(aTHX_ sv, "%s]", PL_colors[1]);
+
+        SvREFCNT_dec(unresolved);
     }
     else if (k == POSIXD || k == NPOSIXD) {
         U8 index = FLAGS(o) * 2;
@@ -19887,7 +19920,9 @@ S_put_charclass_bitmap_innards_common(pTHX_
 )
 {
     /* Create and return an SV containing a displayable version of the bitmap
-     * and associated information determined by the input parameters. */
+     * and associated information determined by the input parameters.  If the
+     * output would have been only the inversion indicator '^', NULL is instead
+     * returned. */
 
     SV * output;
 
@@ -19946,9 +19981,8 @@ S_put_charclass_bitmap_innards_common(pTHX_
         }
     }
 
-    /* If the only thing we output is the '^', clear it */
     if (invert && SvCUR(output) == 1) {
-        SvCUR_set(output, 0);
+        return NULL;
     }
 
     return output;
@@ -19959,7 +19993,8 @@ S_put_charclass_bitmap_innards(pTHX_ SV *sv,
                                      char *bitmap,
                                      SV *nonbitmap_invlist,
                                      SV *only_utf8_locale_invlist,
-                                     const regnode * const node)
+                                     const regnode * const node,
+                                     const bool force_as_is_display)
 {
     /* Appends to 'sv' a displayable version of the innards of the bracketed
      * character class defined by the other arguments:
@@ -19975,13 +20010,16 @@ S_put_charclass_bitmap_innards(pTHX_ SV *sv,
      *  'node' is the regex pattern node.  It is needed only when the above two
      *      parameters are not null, and is passed so that this routine can
      *      tease apart the various reasons for them.
+     *  'force_as_is_display' is TRUE if this routine should definitely NOT try
+     *      to invert things to see if that leads to a cleaner display.  If
+     *      FALSE, this routine is free to use its judgment about doing this.
      *
      * It returns TRUE if there was actually something output.  (It may be that
      * the bitmap, etc is empty.)
      *
      * When called for outputting the bitmap of a non-ANYOF node, just pass the
-     * bitmap, with the succeeding parameters set to NULL.
-     *
+     * bitmap, with the succeeding parameters set to NULL, and the final one to
+     * FALSE.
      */
 
     /* In general, it tries to display the 'cleanest' representation of the
@@ -19989,7 +20027,7 @@ S_put_charclass_bitmap_innards(pTHX_ SV *sv,
      * whether the class itself is to be inverted.  However,  there are some
      * cases where it can't try inverting, as what actually matches isn't known
      * until runtime, and hence the inversion isn't either. */
-    bool inverting_allowed = TRUE;
+    bool inverting_allowed = ! force_as_is_display;
 
     int i;
     STRLEN orig_sv_cur = SvCUR(sv);
@@ -20118,7 +20156,10 @@ S_put_charclass_bitmap_innards(pTHX_ SV *sv,
 
     /* If have to take the output as-is, just do that */
     if (! inverting_allowed) {
-        sv_catsv(sv, as_is_display);
+        if (as_is_display) {
+            sv_catsv(sv, as_is_display);
+            SvREFCNT_dec_NN(as_is_display);
+        }
     }
     else { /* But otherwise, create the output again on the inverted input, and
               use whichever version is shorter */
@@ -20176,17 +20217,19 @@ S_put_charclass_bitmap_innards(pTHX_ SV *sv,
 
         /* Use the shortest representation, taking into account our bias
          * against showing it inverted */
-        if (SvCUR(inverted_display) + inverted_bias
-            < SvCUR(as_is_display) + as_is_bias)
+        if (   inverted_display
+            && (   ! as_is_display
+                || (  SvCUR(inverted_display) + inverted_bias
+                    < SvCUR(as_is_display)    + as_is_bias)))
         {
 	    sv_catsv(sv, inverted_display);
         }
-        else {
+        else if (as_is_display) {
 	    sv_catsv(sv, as_is_display);
         }
 
-        SvREFCNT_dec_NN(as_is_display);
-        SvREFCNT_dec_NN(inverted_display);
+        SvREFCNT_dec(as_is_display);
+        SvREFCNT_dec(inverted_display);
     }
 
     SvREFCNT_dec_NN(invlist);

@@ -5239,6 +5239,20 @@ case "$usequadmath" in
 *)                    usequadmath="$undef"  ;;
 esac
 
+: Fail if both uselongdouble and usequadmath are requested
+case "$usequadmath:$uselongdouble" in
+define:define)
+	$cat <<EOM >&4
+
+*** You requested the use of the quadmath library and use
+*** of long doubles.
+***
+*** Please select one or the other.
+EOM
+	exit 1
+        ;;
+esac
+
 : Looking for optional libraries
 echo " "
 echo "Checking for optional libraries..." >&4
@@ -5457,25 +5471,6 @@ default|recommended)
 	2.[0-8]*) ;;
 	?*)	set strict-aliasing -fno-strict-aliasing
 		eval $checkccflag
-		;;
-	esac
-	case "$gccversion" in
-	1*) ;;
-	2*) ;;
-	?*) 	echo " "
-		echo "Checking if your compiler accepts -fno-delete-null-pointer-checks" 2>&1
-		echo 'int main(void) { return 0; }' > gcctest.c
-		if $cc -O2 -Werror -fno-delete-null-pointer-checks -o gcctest gcctest.c; then
-			echo "Yes, it does." 2>&1
-			case "$ccflags" in
-			*delete-null-pointer-checks*)
-				echo "Leaving current flags $ccflags alone." 2>&1
-				;;
-			*) dflt="$dflt -fno-delete-null-pointer-checks" ;;
-			esac
-		else
-			echo "Nope, it doesn't, but that's ok." 2>&1
-		fi
 		;;
 	esac
 	# For gcc, adding -pipe speeds up compilations for some, but apparently
@@ -6817,13 +6812,13 @@ yes)
 		if $contains $tlook $tf >/dev/null 2>&1; then
 			tval=true;
 		elif $test "$mistrustnm" = compile -o "$mistrustnm" = run; then
-			echo "$extern_C void *$1$tdc; void *(*(p()))$tdc { return &$1; } int main() { if(p() && p() != (void *)main) return(0); else return(1); }"> try.c;
+			echo "$extern_C void *$1$tdc; void *(*(p()))$tdc { return &$1; } int main(int argc, char **argv) { if(p() && p() != (void *)argv[0]) return(0); else return(1); }"> try.c;
 			$cc -o try $optimize $ccflags $ldflags try.c >/dev/null 2>&1 $libs && tval=true;
 			$test "$mistrustnm" = run -a -x try && { $run ./try$_exe >/dev/null 2>&1 || tval=false; };
 			$rm_try;
 		fi;
 	else
-		echo "$extern_C void *$1$tdc; void *(*(p()))$tdc { return &$1; } int main() { if(p() && p() != (void *)main) return(0); else return(1); }"> try.c;
+		echo "$extern_C void *$1$tdc; void *(*(p()))$tdc { return &$1; } int main(int argc, char **argv) { if(p() && p() != (void *)argv[0]) return(0); else return(1); }"> try.c;
 		$cc -o try $optimize $ccflags $ldflags try.c $libs >/dev/null 2>&1 && tval=true;
 		$rm_try;
 	fi;
@@ -7204,7 +7199,7 @@ case "$usequadmath" in
 $define)
 	echo "quadmath selected." >&4
 	case "$archname" in
-	*-ld*) echo "...and architecture name already has -quadmath." >&4
+	*-quadmath*) echo "...and architecture name already has -quadmath." >&4
 		;;
 	*)      archname="$archname-quadmath"
 		echo "...setting architecture name to $archname." >&4
@@ -20490,8 +20485,8 @@ $cat >try.c <<EOP
 #define DOUBLESIZE $doublesize
 #$d_longdbl HAS_LONG_DOUBLE
 #ifdef HAS_LONG_DOUBLE
-#define LONG_DOUBLESIZE $longdblsize
-#define LONG_DOUBLEKIND $longdblkind
+#define LONGDBLSIZE $longdblsize
+#define LONGDBLKIND $longdblkind
 #endif
 #$i_math I_MATH
 #ifdef I_MATH
@@ -20523,15 +20518,16 @@ int main(int argc, char *argv[]) {
 #ifdef HAS_LONG_DOUBLE
    long double ldinf = (long double)exp(1e9);
    long double ldnan = (long double)sqrt(-1.0);
-# if LONG_DOUBLEKIND == 3 || LONG_DOUBLEKIND == 4
-/* the 80-bit long doubles might have garbage in their excess bytes */
-    memset((char *)&ldinf + 10, '\0', LONG_DOUBLESIZE - 10);
-    memset((char *)&ldnan + 10, '\0', LONG_DOUBLESIZE - 10);
-# endif
+#endif
   if (argc == 2) {
     switch (argv[1][0]) {
     case '1': bytes(&dinf, sizeof(dinf)); break;
     case '2': bytes(&dnan, sizeof(dnan)); break;
+#ifdef HAS_LONG_DOUBLE
+# if LONG_DOUBLEKIND == 3 || LONG_DOUBLEKIND == 4
+/* the 80-bit long doubles might have garbage in their excess bytes */
+    memset((char *)&ldinf + 10, '\0', LONG_DOUBLESIZE - 10);
+# endif
     case '3': bytes(&ldinf, sizeof(ldinf)); break;
     case '4': bytes(&ldnan, sizeof(ldnan)); break;
 #endif
@@ -20759,9 +20755,9 @@ case "$ccflags" in
 	;;
 esac
 
-randfunc=drand48
-drand01="drand48()"
-seedfunc="srand48"
+randfunc=Perl_drand48
+drand01="Perl_drand48()"
+seedfunc="Perl_drand48_init"
 randbits=48
 randseedtype=U32
 
@@ -23383,7 +23379,7 @@ fi
 
 : add -D_FORTIFY_SOURCE if feasible and not already there
 case "$gccversion" in
-[45].*)	case "$optimize$ccflags" in
+[4567].*)	case "$optimize$ccflags" in
 	*-O*)	case "$ccflags$cppsymbols" in
 		*_FORTIFY_SOURCE=*) # Don't add it again.
 			echo "You seem to have -D_FORTIFY_SOURCE already, not adding it." >&4
@@ -23612,7 +23608,6 @@ xs_extensions=''
 find_extensions='
     for xxx in *; do
 	case "$xxx" in
-	    CVS) ;;
 	    DynaLoader|dynaload) ;;
 	    *)
 	    this_ext=`echo "$xxx" | $sed -e s/-/\\\//g`;
@@ -23850,8 +23845,6 @@ esac
 nonxs_ext=''
 for xxx in $nonxs_extensions ; do
 	case "$xxx" in
-	CVS|RCS|SCCS|.svn)
-		;;
 	VMS*)
 		;;
 	*)	nonxs_ext="$nonxs_ext $xxx"

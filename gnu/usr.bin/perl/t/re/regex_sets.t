@@ -182,6 +182,21 @@ for my $char ("٠", "٥", "٩") {
                     'qr/qr/(?[ ! ( ! (\w)])/');
 }
 
+{   # RT #129122
+    my $pat = '(?[ ( [ABC] - [B] ) + ( [abc] - [b] ) + [def] ])';
+    like("A", qr/$pat/, "'A' matches /$pat/");
+    unlike("B", qr/$pat/, "'B' doesn't match /$pat/");
+    like("C", qr/$pat/, "'C' matches /$pat/");
+    unlike("D", qr/$pat/, "'D' doesn't match /$pat/");
+    like("a", qr/$pat/, "'a' matches /$pat/");
+    unlike("b", qr/$pat/, "'b' doesn't match /$pat/");
+    like("c", qr/$pat/, "'c' matches /$pat/");
+    like("d", qr/$pat/, "'d' matches /$pat/");
+    like("e", qr/$pat/, "'e' matches /$pat/");
+    like("f", qr/$pat/, "'f' matches /$pat/");
+    unlike("g", qr/$pat/, "'g' doesn't match /$pat/");
+}
+
 done_testing();
 
 1;

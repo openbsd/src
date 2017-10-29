@@ -2177,17 +2177,11 @@ compare(const void *arg1, const void *arg2)
 void
 CPerlHost::Add(LPCSTR lpStr)
 {
-    char szBuffer[1024];
     LPSTR *lpPtr;
-    int index, length = strlen(lpStr)+1;
-
-    for(index = 0; lpStr[index] != '\0' && lpStr[index] != '='; ++index)
-	szBuffer[index] = lpStr[index];
-
-    szBuffer[index] = '\0';
+    STRLEN length = strlen(lpStr)+1;
 
     // replacing ?
-    lpPtr = Lookup(szBuffer);
+    lpPtr = Lookup(lpStr);
     if (lpPtr != NULL) {
 	// must allocate things via host memory allocation functions 
 	// rather than perl's Renew() et al, as the perl interpreter

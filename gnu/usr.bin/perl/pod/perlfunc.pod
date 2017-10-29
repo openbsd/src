@@ -1703,8 +1703,8 @@ produce, respectively
     /etc/games is no good, stopped at canasta line 123.
 
 If the output is empty and L<C<$@>|perlvar/$@> already contains a value
-(typically from a previous eval) that value is reused after appending
-C<"\t...propagated">.  This is useful for propagating exceptions:
+(typically from a previous L<C<eval>|/eval EXPR>) that value is reused after
+appending C<"\t...propagated">.  This is useful for propagating exceptions:
 
     eval { ... };
     die unless $@ =~ /Expected exception/;
@@ -4006,8 +4006,8 @@ Note that L<C<$_>|perlvar/$_> is an alias to the list value, so it can
 be used to modify the elements of the LIST.  While this is useful and
 supported, it can cause bizarre results if the elements of LIST are not
 variables.  Using a regular C<foreach> loop for this purpose would be
-clearer in most cases.  See also L<C<grep>|/grep BLOCK LIST> for an
-array composed of those items of the original list for which the BLOCK
+clearer in most cases.  See also L<C<grep>|/grep BLOCK LIST> for a
+list composed of those items of the original list for which the BLOCK
 or EXPR evaluates to true.
 
 C<{> starts both hash references and blocks, so C<map { ...> could be either

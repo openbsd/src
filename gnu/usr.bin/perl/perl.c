@@ -1835,8 +1835,6 @@ S_Internals_V(pTHX_ CV *cv)
 #  endif
 #endif
 
-#undef PERL_BUILD_DATE
-
 #ifdef PERL_BUILD_DATE
     PUSHs(Perl_newSVpvn_flags(aTHX_
 			      STR_WITH_LEN("Compiled at " PERL_BUILD_DATE),

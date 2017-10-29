@@ -28,7 +28,7 @@ our @EXPORT_OK = qw (usleep sleep ualarm alarm gettimeofday time tv_interval
 		 stat lstat utime
 		);
 
-our $VERSION = '1.9739';
+our $VERSION = '1.9741';
 our $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -559,7 +559,7 @@ VMS have emulations for it.)
 Here is an example of using C<NVtime> from C:
 
   NV (*myNVtime)(); /* Returns -1 on failure. */
-  SV **svp = hv_fetch(PL_modglobal, "Time::NVtime", 12, 0);
+  SV **svp = hv_fetchs(PL_modglobal, "Time::NVtime", 0);
   if (!svp)         croak("Time::HiRes is required");
   if (!SvIOK(*svp)) croak("Time::NVtime isn't a function pointer");
   myNVtime = INT2PTR(NV(*)(), SvIV(*svp));

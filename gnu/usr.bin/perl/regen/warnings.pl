@@ -358,8 +358,10 @@ EOM
 
   print $warn <<'EOM';
 
-#define isLEXWARN_on 	cBOOL(PL_curcop->cop_warnings != pWARN_STD)
-#define isLEXWARN_off	cBOOL(PL_curcop->cop_warnings == pWARN_STD)
+#define isLEXWARN_on \
+	cBOOL(PL_curcop && PL_curcop->cop_warnings != pWARN_STD)
+#define isLEXWARN_off \
+	cBOOL(!PL_curcop || PL_curcop->cop_warnings == pWARN_STD)
 #define isWARN_ONCE	(PL_dowarn & (G_WARN_ON|G_WARN_ONCE))
 #define isWARN_on(c,x)	(IsSet((U8 *)(c + 1), 2*(x)))
 #define isWARNf_on(c,x)	(IsSet((U8 *)(c + 1), 2*(x)+1))

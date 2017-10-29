@@ -244,7 +244,7 @@ static const char* const lex_state_names[] = {
 	if (have_x) PL_expect = x; \
 	PL_bufptr = s; \
 	PL_last_uni = PL_oldbufptr; \
-	PL_last_lop_op = f; \
+	PL_last_lop_op = (f) < 0 ? -(f) : (f); \
 	if (*s == '(') \
 	    return REPORT( (int)FUNC1 ); \
 	s = skipspace(s); \
@@ -725,7 +725,8 @@ Perl_lex_start(pTHX_ SV *line, PerlIO *rsfp, U32 flags)
 	parser->linestr = flags & LEX_START_COPIED
 			    ? SvREFCNT_inc_simple_NN(line)
 			    : newSVpvn_flags(s, len, SvUTF8(line));
-	sv_catpvn(parser->linestr, "\n;", rsfp ? 1 : 2);
+	if (!rsfp)
+	    sv_catpvs(parser->linestr, "\n;");
     } else {
 	parser->linestr = newSVpvn("\n;", rsfp ? 1 : 2);
     }
@@ -1938,7 +1939,6 @@ static int
 S_postderef(pTHX_ int const funny, char const next)
 {
     assert(funny == DOLSHARP || strchr("$@%&*", funny));
-    assert(strchr("*[{", next));
     if (next == '*') {
 	PL_expect = XOPERATOR;
 	if (PL_lex_state == LEX_INTERPNORMAL && !PL_lex_brackets) {
@@ -3539,7 +3539,7 @@ S_scan_const(pTHX_ char *start)
 			}
 
                         /* Add the (Unicode) code point to the output. */
-			if (OFFUNI_IS_INVARIANT(uv)) {
+			if (! has_utf8 || OFFUNI_IS_INVARIANT(uv)) {
 			    *d++ = (char) LATIN1_TO_NATIVE(uv);
 			}
 			else {
@@ -4107,8 +4107,11 @@ S_intuit_method(pTHX_ char *start, SV *ioname, CV *cv)
 	    tmpbuf[len] = '\0';
 	    goto bare_package;
 	}
-	indirgv = gv_fetchpvn_flags(tmpbuf, len, ( UTF ? SVf_UTF8 : 0 ), SVt_PVCV);
-	if (indirgv && GvCVu(indirgv))
+	indirgv = gv_fetchpvn_flags(tmpbuf, len,
+				    GV_NOADD_NOINIT|( UTF ? SVf_UTF8 : 0 ),
+				    SVt_PVCV);
+	if (indirgv && SvTYPE(indirgv) != SVt_NULL
+	 && (!isGV(indirgv) || GvCVu(indirgv)))
 	    return 0;
 	/* filehandle or package name makes it a method */
 	if (!cv || GvIO(indirgv) || gv_stashpvn(tmpbuf, len, UTF ? SVf_UTF8 : 0)) {
@@ -9021,6 +9024,8 @@ S_scan_ident(pTHX_ char *s, char *dest, STRLEN destlen, I32 ck_uni)
     else if (ck_uni && bracket == -1)
 	check_uni();
     if (bracket != -1) {
+        bool skip;
+        char *s2;
         /* If we were processing {...} notation then...  */
 	if (isIDFIRST_lazy_if(d,is_utf8)) {
             /* if it starts as a valid identifier, assume that it is one.
@@ -9069,13 +9074,19 @@ S_scan_ident(pTHX_ char *s, char *dest, STRLEN destlen, I32 ck_uni)
 
         if ( !tmp_copline )
             tmp_copline = CopLINE(PL_curcop);
-        if (s < PL_bufend && isSPACE(*s)) {
-            s = skipspace(s);
-        }
+        if ((skip = s < PL_bufend && isSPACE(*s)))
+            /* Avoid incrementing line numbers or resetting PL_linestart,
+               in case we have to back up.  */
+            s2 = skipspace_flags(s, LEX_NO_INCLINE);
+        else
+            s2 = s;
 	    
         /* Expect to find a closing } after consuming any trailing whitespace.
          */
-	if (*s == '}') {
+        if (*s2 == '}') {
+            /* Now increment line numbers if applicable.  */
+            if (skip)
+                s = skipspace(s);
 	    s++;
 	    if (PL_lex_state == LEX_INTERPNORMAL && !PL_lex_brackets) {
 		PL_lex_state = LEX_INTERPEND;
@@ -10617,6 +10628,14 @@ Perl_scan_num(pTHX_ const char *start, YYSTYPE* lvalp)
 #ifdef NV_MIN_EXP
                                 if (negexp
                                     && -hexfp_exp < NV_MIN_EXP - 1) {
+                                    /* NOTE: this means that the exponent
+                                     * underflow warning happens for
+                                     * the IEEE 754 subnormals (denormals),
+                                     * because DBL_MIN_EXP etc are the lowest
+                                     * possible binary (or, rather, DBL_RADIX-base)
+                                     * exponent for normals, not subnormals.
+                                     *
+                                     * This may or may not be a good thing. */
                                     Perl_ck_warner(aTHX_ packWARN(WARN_OVERFLOW),
                                                    "Hexadecimal float: exponent underflow");
                                     break;
@@ -10638,7 +10657,7 @@ Perl_scan_num(pTHX_ const char *start, YYSTYPE* lvalp)
 #ifdef HEXFP_UQUAD
                         hexfp_exp -= hexfp_frac_bits;
 #endif
-                        hexfp_mult = pow(2.0, hexfp_exp);
+                        hexfp_mult = Perl_pow(2.0, hexfp_exp);
                         hexfp = TRUE;
                         goto decimal;
                     }

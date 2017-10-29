@@ -7,7 +7,7 @@ BEGIN {
 }
 use strict;
 
-plan tests => 39;
+plan tests => 40;
 
 package aiieee;
 
@@ -138,6 +138,16 @@ for our $z (*_) {
     }
     is ref\$z, "GLOB", 'reset leaves real-globs-as-scalars as GLOBs';
     is $z, "*main::_", 'And the glob still has the right value';
+}
+
+package _128106 {
+    # Crash on non-globs in the stash.
+    sub u;    # stub without proto
+    sub v($); # proto stub
+    sub w{};  # as of 5.22, $::{w} == \&w
+    $::{x} = undef;
+    reset 'u-x';
+    ::ok (1, "no crash on non-globs in the stash");
 }
 
 # This used to crash under threaded builds, because pmops were remembering
