@@ -1,4 +1,4 @@
-/*	$OpenBSD: _memcpy.S,v 1.6 2016/08/06 19:16:09 guenther Exp $	*/
+/*	$OpenBSD: _memcpy.S,v 1.7 2017/10/29 02:21:33 guenther Exp $	*/
 /*	$NetBSD: _memcpy.S,v 1.4 2003/04/05 23:08:52 bjh21 Exp $	*/
 
 /*-
@@ -64,6 +64,8 @@
  */
 
 .syntax unified
+
+.hidden _memcpy
 
 ENTRY(_memcpy)
 	/* Determine copy direction */
@@ -462,4 +464,4 @@ ENTRY(_memcpy)
 .Lmemcpy_bsrcul1l4:
 	add	r1, r1, #1
 	b	.Lmemcpy_bl4
-END_STRONG(_memcpy)
+END(_memcpy)

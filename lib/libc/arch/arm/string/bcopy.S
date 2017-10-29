@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.S,v 1.5 2016/08/06 19:16:09 guenther Exp $	*/
+/*	$OpenBSD: bcopy.S,v 1.6 2017/10/29 02:21:33 guenther Exp $	*/
 /*	$NetBSD: bcopy.S,v 1.2 2001/07/16 05:50:06 matt Exp $	*/
 
 /*-
@@ -39,5 +39,5 @@ ENTRY(bcopy)
 	eor     r0, r1, r0 
 	eor     r1, r0, r1 
 	eor     r0, r1, r0 
-	b	_HIDDEN(_memcpy)
+	b	_memcpy
 END_WEAK(bcopy)
