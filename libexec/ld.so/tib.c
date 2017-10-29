@@ -22,8 +22,8 @@
 #define _DYN_LOADER
 
 #include <sys/types.h>
-#include <sys/exec_elf.h>
 
+#include <elf.h>
 #include <tib.h>
 
 #include "archdep.h"

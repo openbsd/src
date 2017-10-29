@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.22 2017/09/05 02:40:54 guenther Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.23 2017/10/29 08:45:53 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -32,7 +32,7 @@
 
 #ifndef NO_PIC
 #include <sys/types.h>
-#include <sys/exec_elf.h>
+#include <elf.h>
 #pragma weak _DYNAMIC
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.18 2017/01/21 08:33:51 krw Exp $ */
+/*	$OpenBSD: file.c,v 1.19 2017/10/29 08:45:53 mpi Exp $ */
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -53,7 +53,7 @@
 
 #ifndef NOELF
 #if defined(__OpenBSD__)
-#include <sys/exec_elf.h>
+#include <elf.h>
 #else
 #define NOELF
 #endif

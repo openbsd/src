@@ -3,6 +3,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
+#include <elf.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,8 +13,6 @@
 
 #include <errno.h>
 #include <limits.h>
-
-#include <sys/exec_elf.h>
 
 #include "elfrdsetroot.h"
 
