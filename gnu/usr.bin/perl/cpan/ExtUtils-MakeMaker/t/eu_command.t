@@ -151,13 +151,6 @@ BEGIN {
         is( ((stat('testdir'))[2] & 07777) & 0700,
             0100, 'change a dir to execute-only' );
 
-        # change a dir to read-only
-        @ARGV = ( '0400', 'testdir' );
-        ExtUtils::Command::chmod();
-
-        is( ((stat('testdir'))[2] & 07777) & 0700,
-            0400, 'change a dir to read-only' );
-
         # change a dir to write-only
         @ARGV = ( '0200', 'testdir' );
         ExtUtils::Command::chmod();
@@ -165,6 +158,14 @@ BEGIN {
         is( ((stat('testdir'))[2] & 07777) & 0700,
             0200, 'change a dir to write-only' );
 
+        # change a dir to read-only
+        @ARGV = ( '0400', 'testdir' );
+        ExtUtils::Command::chmod();
+
+        is( ((stat('testdir'))[2] & 07777) & 0700,
+            0400, 'change a dir to read-only' );
+
+        # remove the dir we've been playing with
         @ARGV = ('testdir');
         rm_rf;
         ok( ! -e 'testdir', 'rm_rf can delete a read-only dir' );

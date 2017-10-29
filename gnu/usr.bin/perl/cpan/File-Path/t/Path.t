@@ -3,11 +3,20 @@
 
 use strict;
 
-use Test::More tests => 127;
+use Test::More tests => 167;
 use Config;
 use Fcntl ':mode';
-use lib 't/';
-use FilePathTest;
+use lib './t';
+use FilePathTest qw(
+    _run_for_warning
+    _run_for_verbose
+    _cannot_delete_safe_mode
+    _verbose_expected
+    create_3_level_subdirs
+    cleanup_3_level_subdirs
+);
+use Errno qw(:POSIX);
+use Carp;
 
 BEGIN {
     use_ok('Cwd');
@@ -16,6 +25,13 @@ BEGIN {
 }
 
 my $Is_VMS = $^O eq 'VMS';
+
+my $fchmod_supported = 0;
+if (open my $fh, curdir()) {
+    my ($perm) = (stat($fh))[2];
+    $perm &= 07777;
+    eval { $fchmod_supported = chmod( $perm, $fh); };
+}
 
 # first check for stupid permissions second for full, so we clean up
 # behind ourselves
@@ -298,16 +314,19 @@ is($created[0], $dir, "created directory (old style 3 mode undef) cross-check");
 
 is(rmtree($dir, 0, undef), 1, "removed directory 3 verbose undef");
 
-$dir = catdir($tmp_base,'G');
-$dir = VMS::Filespec::unixify($dir) if $Is_VMS;
+SKIP: {
+    skip "fchmod of directories not supported on this platform", 3 unless $fchmod_supported;
+    $dir = catdir($tmp_base,'G');
+    $dir = VMS::Filespec::unixify($dir) if $Is_VMS;
 
-@created = mkpath($dir, undef, 0200);
+    @created = mkpath($dir, undef, 0400);
 
-is(scalar(@created), 1, "created write-only dir");
+    is(scalar(@created), 1, "created read-only dir");
 
-is($created[0], $dir, "created write-only directory cross-check");
+    is($created[0], $dir, "created read-only directory cross-check");
 
-is(rmtree($dir), 1, "removed write-only dir");
+    is(rmtree($dir), 1, "removed read-only dir");
+}
 
 # borderline new-style heuristics
 if (chdir $tmp_base) {
@@ -449,26 +468,28 @@ SKIP: {
 }
 
 SKIP : {
-    my $skip_count = 19;
+    my $skip_count = 18;
     # this test will fail on Windows, as per:
     #   http://perldoc.perl.org/perlport.html#chmod
 
     skip "Windows chmod test skipped", $skip_count
         if $^O eq 'MSWin32';
+    skip "fchmod() on directories is not supported on this platform", $skip_count
+        unless $fchmod_supported;
     my $mode;
     my $octal_mode;
     my @inputs = (
-      0777, 0700, 0070, 0007,
-      0333, 0300, 0030, 0003,
-      0111, 0100, 0010, 0001,
-      0731, 0713, 0317, 0371, 0173, 0137,
-      00 );
+      0777, 0700, 0470, 0407,
+      0433, 0400, 0430, 0403,
+      0111, 0100, 0110, 0101,
+      0731, 0713, 0317, 0371,
+      0173, 0137);
     my $input;
     my $octal_input;
-    $dir = catdir($tmp_base, 'chmod_test');
 
     foreach (@inputs) {
         $input = $_;
+        $dir = catdir($tmp_base, sprintf("chmod_test%04o", $input));
         # We can skip from here because 0 is last in the list.
         skip "Mode of 0 means assume user defaults on VMS", 1
           if ($input == 0 && $Is_VMS);
@@ -476,7 +497,11 @@ SKIP : {
         $mode = (stat($dir))[2];
         $octal_mode = S_IMODE($mode);
         $octal_input = sprintf "%04o", S_IMODE($input);
-        is($octal_mode,$input, "create a new directory with chmod $input ($octal_input)");
+        SKIP: {
+	    skip "permissions are not fully supported by the filesystem", 1
+                if (($^O eq 'MSWin32' || $^O eq 'cygwin') && ((Win32::FsType())[1] & 8) == 0);
+            is($octal_mode,$input, "create a new directory with chmod $input ($octal_input)");
+	    }
         rmtree( $dir );
     }
 }
@@ -587,29 +612,27 @@ SKIP: {
     my $dir2 = catdir( $base, 'B');
 
     {
-        my $warn;
-        $SIG{__WARN__} = sub { $warn = shift };
-
-        my @created = make_path(
-            $dir,
-            $dir2,
-            { mode => 0711, foo => 1, bar => 1 }
-        );
+        my $warn = _run_for_warning( sub {
+            my @created = make_path(
+                $dir,
+                $dir2,
+                { mode => 0711, foo => 1, bar => 1 }
+            );
+        } );
         like($warn,
-            qr/Unrecognized option\(s\) passed to make_path\(\):.*?bar.*?foo/,
+            qr/Unrecognized option\(s\) passed to mkpath\(\) or make_path\(\):.*?bar.*?foo/,
             'make_path with final hashref warned due to unrecognized options'
         );
     }
 
     {
-        my $warn;
-        $SIG{__WARN__} = sub { $warn = shift };
-
-        my @created = remove_tree(
-            $dir,
-            $dir2,
-            { foo => 1, bar => 1 }
-        );
+        my $warn = _run_for_warning( sub {
+            my @created = remove_tree(
+                $dir,
+                $dir2,
+                { foo => 1, bar => 1 }
+            );
+        } );
         like($warn,
             qr/Unrecognized option\(s\) passed to remove_tree\(\):.*?bar.*?foo/,
             'remove_tree with final hashref failed due to unrecognized options'
@@ -656,7 +679,7 @@ is(
 {
     my ($x, $message, $object, $expect, $rv, $arg, $error);
     my ($k, $v, $second_error, $third_error);
-    local $! = 2;
+    local $! = ENOENT;
     $x = $!;
 
     $message = 'message in a bottle';
@@ -728,4 +751,187 @@ is(
     ($k, $v) = %{$third_error->[0]};
     is($k, '', "key of hash is empty string, since 3rd arg was undef");
     is($v, $expect, "value of hash is 2nd arg: $message");
+}
+
+{
+    # https://rt.cpan.org/Ticket/Display.html?id=117019
+    # remove_tree(): Permit re-use of options hash without issuing a warning
+
+    my ($least_deep, $next_deepest, $deepest) =
+        create_3_level_subdirs( qw| a b c | );
+    my @created;
+    @created = File::Path::make_path($deepest, { mode => 0711 });
+    is(scalar(@created), 3, "Created 3 subdirectories");
+
+    my $x = '';
+    my $opts = { error => \$x };
+    File::Path::remove_tree($deepest, $opts);
+    ok(! -d $deepest, "directory '$deepest' removed, as expected");
+
+    my $warn;
+    $warn = _run_for_warning( sub { File::Path::remove_tree($next_deepest, $opts); } );
+    ok(! $warn, "CPAN 117019: No warning thrown when re-using \$opts");
+    ok(! -d $next_deepest, "directory '$next_deepest' removed, as expected");
+
+    $warn = _run_for_warning( sub { File::Path::remove_tree($least_deep, $opts); } );
+    ok(! $warn, "CPAN 117019: No warning thrown when re-using \$opts");
+    ok(! -d $least_deep, "directory '$least_deep' removed, as expected");
+}
+
+{
+    # Corner cases with respect to arguments provided to functions
+    my $count;
+
+    $count = remove_tree();
+    is($count, 0,
+        "If not provided with any paths, remove_tree() will return a count of 0 things deleted");
+
+    $count = remove_tree('');
+    is($count, 0,
+        "If not provided with any paths, remove_tree() will return a count of 0 things deleted");
+
+    my $warn;
+    $warn = _run_for_warning( sub { $count = rmtree(); } );
+    like($warn, qr/No root path\(s\) specified/s, "Got expected carp");
+    is($count, 0,
+        "If not provided with any paths, remove_tree() will return a count of 0 things deleted");
+
+    $warn = _run_for_warning( sub {$count = rmtree(undef); } );
+    like($warn, qr/No root path\(s\) specified/s, "Got expected carp");
+    is($count, 0,
+        "If provided only with an undefined value, remove_tree() will return a count of 0 things deleted");
+
+    $warn = _run_for_warning( sub {$count = rmtree(''); } );
+    like($warn, qr/No root path\(s\) specified/s, "Got expected carp");
+    is($count, 0,
+        "If provided with an empty string for a path, remove_tree() will return a count of 0 things deleted");
+
+    $count = make_path();
+    is($count, 0,
+        "If not provided with any paths, make_path() will return a count of 0 things created");
+
+    $count = mkpath();
+    is($count, 0,
+        "If not provided with any paths, make_path() will return a count of 0 things created");
+}
+
+SKIP: {
+    my $skip_count = 5;
+    skip "Windows will not set this error condition", $skip_count
+        if $^O eq 'MSWin32';
+
+    # mkpath() with hashref:  case of phony user
+    my ($least_deep, $next_deepest, $deepest) =
+        create_3_level_subdirs( qw| d e f | );
+    my (@created, $error);
+    my $user = join('_' => 'foobar', $$);
+    @created = mkpath($deepest, { mode => 0711, user => $user, error => \$error });
+    TODO: {
+        local $TODO = "Notwithstanding the phony 'user', mkpath will actually create subdirectories; should it?";
+        is(scalar(@created), 0, "No subdirectories created");
+    }
+    is(scalar(@$error), 1, "caught error condition" );
+    my ($file, $message) = each %{$error->[0]};
+    like($message,
+        qr/unable to map $user to a uid, ownership not changed/s,
+        "Got expected error message for phony user",
+    );
+
+    cleanup_3_level_subdirs($least_deep);
+}
+
+{
+    # mkpath() with hashref:  case of valid uid
+    my ($least_deep, $next_deepest, $deepest) =
+        create_3_level_subdirs( qw| j k l | );
+    my (@created, $error);
+    @created = mkpath($deepest, { mode => 0711, uid => $>, error => \$error });
+    is(scalar(@created), 3, "Provide valid 'uid' argument: 3 subdirectories created");
+
+    cleanup_3_level_subdirs($least_deep);
+}
+
+SKIP: {
+    my $skip_count = 3;
+    skip "getpwuid() and getgrgid() not implemented on Windows", $skip_count
+        if $^O eq 'MSWin32';
+
+    # mkpath() with hashref:  case of valid owner
+    my ($least_deep, $next_deepest, $deepest) =
+        create_3_level_subdirs( qw| m n o | );
+    my (@created, $error);
+    my $name = getpwuid($>);
+    @created = mkpath($deepest, { mode => 0711, owner => $name, error => \$error });
+    is(scalar(@created), 3, "Provide valid 'owner' argument: 3 subdirectories created");
+
+    cleanup_3_level_subdirs($least_deep);
+}
+
+SKIP: {
+    my $skip_count = 5;
+    skip "Windows will not set this error condition", $skip_count
+        if $^O eq 'MSWin32';
+
+    # mkpath() with hashref:  case of phony group
+    my ($least_deep, $next_deepest, $deepest) =
+        create_3_level_subdirs( qw| p q r | );
+    my (@created, $error);
+    my $bad_group = join('_' => 'foobarbaz', $$);
+    @created = mkpath($deepest, { mode => 0711, group => $bad_group, error => \$error });
+    TODO: {
+        local $TODO = "Notwithstanding the phony 'group', mkpath will actually create subdirectories; should it?";
+        is(scalar(@created), 0, "No subdirectories created");
+    }
+    is(scalar(@$error), 1, "caught error condition" );
+    my ($file, $message) = each %{$error->[0]};
+    like($message,
+        qr/unable to map $bad_group to a gid, group ownership not changed/s,
+        "Got expected error message for phony user",
+    );
+
+    cleanup_3_level_subdirs($least_deep);
+}
+
+{
+    # mkpath() with hashref:  case of valid group
+    my ($least_deep, $next_deepest, $deepest) =
+        create_3_level_subdirs( qw| s t u | );
+    my (@created, $error);
+    @created = mkpath($deepest, { mode => 0711, group => $(, error => \$error });
+    is(scalar(@created), 3, "Provide valid 'group' argument: 3 subdirectories created");
+
+    cleanup_3_level_subdirs($least_deep);
+}
+
+SKIP: {
+    my $skip_count = 3;
+    skip "getpwuid() and getgrgid() not implemented on Windows", $skip_count
+        if $^O eq 'MSWin32';
+
+    # mkpath() with hashref:  case of valid group
+    my ($least_deep, $next_deepest, $deepest) =
+        create_3_level_subdirs( qw| v w x | );
+    my (@created, $error);
+    my $group_name = (getgrgid($())[0];
+    @created = mkpath($deepest, { mode => 0711, group => $group_name, error => \$error });
+    is(scalar(@created), 3, "Provide valid 'group' argument: 3 subdirectories created");
+
+    cleanup_3_level_subdirs($least_deep);
+}
+
+SKIP: {
+    my $skip_count = 3;
+    skip "getpwuid() and getgrgid() not implemented on Windows", $skip_count
+        if $^O eq 'MSWin32';
+
+    # mkpath() with hashref:  case of valid owner and group
+    my ($least_deep, $next_deepest, $deepest) =
+        create_3_level_subdirs( qw| delta epsilon zeta | );
+    my (@created, $error);
+    my $name = getpwuid($>);
+    my $group_name = (getgrgid($())[0];
+    @created = mkpath($deepest, { mode => 0711, owner => $name, group => $group_name, error => \$error });
+    is(scalar(@created), 3, "Provide valid 'owner' and 'group' 'group' arguments: 3 subdirectories created");
+
+    cleanup_3_level_subdirs($least_deep);
 }

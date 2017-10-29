@@ -7,7 +7,7 @@ package IO::Socket::IP;
 # $VERSION needs to be set before  use base 'IO::Socket'
 #  - https://rt.cpan.org/Ticket/Display.html?id=92107
 BEGIN {
-   $VERSION = '0.37';
+   $VERSION = '0.39';
 }
 
 use strict;
@@ -31,7 +31,7 @@ use Socket 1.97 qw(
 my $AF_INET6 = eval { Socket::AF_INET6() }; # may not be defined
 my $AI_ADDRCONFIG = eval { Socket::AI_ADDRCONFIG() } || 0;
 use POSIX qw( dup2 );
-use Errno qw( EINVAL EINPROGRESS EISCONN ENOTCONN ETIMEDOUT EWOULDBLOCK );
+use Errno qw( EINVAL EINPROGRESS EISCONN ENOTCONN ETIMEDOUT EWOULDBLOCK EOPNOTSUPP );
 
 use constant HAVE_MSWIN32 => ( $^O eq "MSWin32" );
 
@@ -154,7 +154,7 @@ sub import
       if( setsockopt $testsock, IPPROTO_IPV6, IPV6_V6ONLY, 0 ) {
          return $can_disable_v6only = 1;
       }
-      elsif( $! == EINVAL ) {
+      elsif( $! == EINVAL || $! == EOPNOTSUPP ) {
          return $can_disable_v6only = 0;
       }
       else {
@@ -264,6 +264,22 @@ If true, set the C<SO_REUSEPORT> sockopt (not all OSes implement this sockopt)
 =item Broadcast => BOOL
 
 If true, set the C<SO_BROADCAST> sockopt
+
+=item Sockopts => ARRAY
+
+An optional array of other socket options to apply after the three listed
+above. The value is an ARRAY containing 2- or 3-element ARRAYrefs. Each inner
+array relates to a single option, giving the level and option name, and an
+optional value. If the value element is missing, it will be given the value of
+a platform-sized integer 1 constant (i.e. suitable to enable most of the
+common boolean options).
+
+For example, both options given below are equivalent to setting C<ReuseAddr>.
+
+ Sockopts => [
+    [ SOL_SOCKET, SO_REUSEADDR ],
+    [ SOL_SOCKET, SO_REUSEADDR, pack( "i", 1 ) ],
+ ]
 
 =item V6Only => BOOL
 
@@ -504,10 +520,27 @@ sub _io_socket_ip__configure
       }
    }
 
+   my $INT_1 = pack "i", 1;
+
    my @sockopts_enabled;
-   push @sockopts_enabled, SO_REUSEADDR if $arg->{ReuseAddr};
-   push @sockopts_enabled, SO_REUSEPORT if $arg->{ReusePort};
-   push @sockopts_enabled, SO_BROADCAST if $arg->{Broadcast};
+   push @sockopts_enabled, [ SOL_SOCKET, SO_REUSEADDR, $INT_1 ] if $arg->{ReuseAddr};
+   push @sockopts_enabled, [ SOL_SOCKET, SO_REUSEPORT, $INT_1 ] if $arg->{ReusePort};
+   push @sockopts_enabled, [ SOL_SOCKET, SO_BROADCAST, $INT_1 ] if $arg->{Broadcast};
+
+   if( my $sockopts = $arg->{Sockopts} ) {
+      ref $sockopts eq "ARRAY" or croak "Expected 'Sockopts' to be an ARRAY ref";
+      foreach ( @$sockopts ) {
+         ref $_ eq "ARRAY" or croak "Bad Sockopts item - expected ARRAYref";
+         @$_ >= 2 and @$_ <= 3 or
+            croak "Bad Sockopts item - expected 2 or 3 elements";
+
+         my ( $level, $optname, $value ) = @$_;
+         # TODO: consider more sanity checking on argument values
+
+         defined $value or $value = $INT_1;
+         push @sockopts_enabled, [ $level, $optname, $value ];
+      }
+   }
 
    my $blocking = $arg->{Blocking};
    defined $blocking or $blocking = 1;
@@ -607,7 +640,8 @@ sub setup
       $self->blocking( 0 ) unless ${*$self}{io_socket_ip_blocking};
 
       foreach my $sockopt ( @{ ${*$self}{io_socket_ip_sockopts} } ) {
-         $self->setsockopt( SOL_SOCKET, $sockopt, pack "i", 1 ) or ( $@ = "$!", return undef );
+         my ( $level, $optname, $value ) = @$sockopt;
+         $self->setsockopt( $level, $optname, $value ) or ( $@ = "$!", return undef );
       }
 
       if( defined ${*$self}{io_socket_ip_v6only} and defined $AF_INET6 and $info->{family} == $AF_INET6 ) {
@@ -685,6 +719,7 @@ sub connect :method
       }
       elsif( not( $err == EINPROGRESS or $err == EWOULDBLOCK ) ) {
          # Failed for some other reason
+         $self->blocking( $was_blocking );
          return undef;
       }
       elsif( !$was_blocking ) {
@@ -694,6 +729,7 @@ sub connect :method
 
       my $vec = ''; vec( $vec, $self->fileno, 1 ) = 1;
       if( !select( undef, $vec, $vec, $timeout ) ) {
+         $self->blocking( $was_blocking );
          $! = ETIMEDOUT;
          return undef;
       }

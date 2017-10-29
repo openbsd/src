@@ -139,6 +139,19 @@ sub initialize {
     return $self->SUPER::initialize;
 }
 
+# pod2text and pod2man re-use the same parser on a list of files,
+# and will lose some information if some intermediate documents produce
+# unbalanced calls to begin_cmd/end_cmd.
+# via r1.4 of OpenBSD src/gnu/usr.bin/perl/lib/Pod/PlainText.pm
+sub begin_pod {
+    my $self = shift;
+
+    $$self{VERBATIM} = 0;
+    $$self{EXCLUDE}  = 0;
+
+    return $self->SUPER::begin_pod(@_);
+}
+
 
 ############################################################################
 # Core overrides

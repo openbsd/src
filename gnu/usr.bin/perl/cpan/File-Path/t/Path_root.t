@@ -1,15 +1,17 @@
 use strict;
 use Test::More;
 use Config;
-use lib 't/';
-use FilePathTest;
+use lib './t';
+use FilePathTest qw(
+    _run_for_warning
+);
 use File::Path qw(rmtree mkpath make_path remove_tree);
 use File::Spec::Functions;
 
 
 my $prereq = prereq();
 plan skip_all  => $prereq if defined $prereq;
-plan tests     => 8;
+plan tests     => 11;
 
 my $pwent = max_u();
 my $grent = max_g();
@@ -60,21 +62,35 @@ is(scalar(@created), 1, "created a directory owned by $max_user:$max_group...");
 is($dir_uid, $max_uid, "... owned by $max_uid");
 is($dir_gid, $max_gid, "... owned by group $max_gid");
 
-SKIP: {
-  skip('Skip until RT 85878 is fixed', 1);
+{
   # invent a user and group that don't exist
   do { ++$max_user  } while ( getpwnam( $max_user ) );
   do { ++$max_group } while ( getgrnam( $max_group ) );
 
   $dir = catdir($dir_stem, 'aad');
-  my $rv = _run_for_warning( sub { make_path( $dir,
-                                              { user => $max_user,
-                                                group => $max_group } ) } );
+  my $rv = _run_for_warning( sub {
+      make_path(
+          $dir,
+          { user => $max_user, group => $max_group }
+      )
+  } );
   like( $rv,
-        qr{\Aunable to map $max_user to a uid, ownership not changed: .* at \S+ line \d+
-unable to map $max_group to a gid, group ownership not changed: .* at \S+ line \d+\b},
-        "created a directory not owned by $max_user:$max_group..."
-      );
+    qr{unable to map $max_user to a uid, ownership not changed:}s,
+    "created a directory not owned by $max_user:$max_group...",
+  );
+  like( $rv,
+    qr{unable to map $max_group to a gid, group ownership not changed:}s,
+    "created a directory not owned by $max_user:$max_group...",
+  );
+}
+
+{
+    # cleanup
+    my $x;
+    my $opts = { error => \$x };
+    remove_tree($tmp_base, $opts);
+    ok(! -d $tmp_base, "directory '$tmp_base' removed, as expected");
+    is(scalar(@{$x}), 0, "no error messages using remove_tree() with \$opts");
 }
 
 sub max_u {
