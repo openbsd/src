@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.53 2017/10/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.54 2017/10/29 14:56:36 florian Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -238,13 +238,11 @@ pfslowtimo(void *arg)
 	struct protosw *pr;
 	int i;
 
-	NET_LOCK();
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_slowtimo)
 				(*pr->pr_slowtimo)();
 	}
-	NET_UNLOCK();
 	timeout_add_msec(to, 500);
 }
 
@@ -256,12 +254,10 @@ pffasttimo(void *arg)
 	struct protosw *pr;
 	int i;
 
-	NET_LOCK();
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_fasttimo)
 				(*pr->pr_fasttimo)();
 	}
-	NET_UNLOCK();
 	timeout_add_msec(to, 200);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.76 2017/10/27 16:11:00 visa Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.77 2017/10/29 14:56:36 florian Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -610,7 +610,7 @@ frag6_slowtimo(void)
 {
 	struct ip6q *q6, *nq6;
 
-	NET_ASSERT_LOCKED();
+	NET_LOCK();
 
 	IP6Q_LOCK();
 	TAILQ_FOREACH_SAFE(q6, &frag6_queue, ip6q_queue, nq6)
@@ -630,6 +630,8 @@ frag6_slowtimo(void)
 		frag6_freef(TAILQ_LAST(&frag6_queue, ip6q_head));
 	}
 	IP6Q_UNLOCK();
+
+	NET_UNLOCK();
 }
 
 /*
