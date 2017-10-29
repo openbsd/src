@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.67 2017/07/11 15:15:47 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.68 2017/10/29 12:42:11 aoyama Exp $
 
-MAN=		gcc.1 cpp.1 gcov.1 protoize.1
+MAN=		gcc.1 cpp.1 gcov.1
 
 BINDIR=/usr/bin
 .if defined(BOOTSTRAP)
