@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.45 2017/10/27 14:28:07 patrick Exp $	*/
+/*	$OpenBSD: ca.c,v 1.46 2017/10/30 09:53:27 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1402,6 +1402,7 @@ ca_x509_subjectaltname_cmp(X509 *cert, struct iked_static_id *id)
 	char		 idstr[IKED_ID_SIZE];
 	int		 ret = -1, lastpos = -1;
 
+	bzero(&sanid, sizeof(sanid));
 	while (ca_x509_subjectaltname(cert, &sanid, lastpos++) == 0) {
 		ikev2_print_id(&sanid, idstr, sizeof(idstr));
 
@@ -1416,7 +1417,6 @@ ca_x509_subjectaltname_cmp(X509 *cert, struct iked_static_id *id)
 			break;
 		}
 		log_debug("%s: %s mismatched", __func__, idstr);
-		bzero(&sanid, sizeof(sanid));
 	}
 
 	ibuf_release(sanid.id_buf);
