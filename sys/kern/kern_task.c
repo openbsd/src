@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.19 2017/02/14 10:31:15 mpi Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.20 2017/10/30 14:01:42 visa Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -96,7 +96,7 @@ taskq_create(const char *name, unsigned int nthreads, int ipl,
 	tq->tq_name = name;
 	tq->tq_flags = flags;
 
-	mtx_init(&tq->tq_mtx, ipl);
+	mtx_init_flags(&tq->tq_mtx, ipl, name, 0);
 	TAILQ_INIT(&tq->tq_worklist);
 
 	/* try to create a thread to guarantee that tasks will be serviced */
