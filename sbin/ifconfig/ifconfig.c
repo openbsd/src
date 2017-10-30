@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.348 2017/08/29 21:10:20 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.349 2017/10/30 10:04:07 mpi Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2449,7 +2449,7 @@ process_media_commands(void)
 	ifr.ifr_media = media_current;
 
 	if (ioctl(s, SIOCSIFMEDIA, (caddr_t)&ifr) < 0)
-		;
+		err(1, "SIOCSIFMEDIA");
 }
 
 /* ARGSUSED */
