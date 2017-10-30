@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.517 2017/10/27 16:00:47 jmc Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.518 2017/10/30 16:44:18 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -636,6 +636,12 @@ main(int argc, char *argv[])
 	}
 
 	if (strlen(path_option_db) != 0) {
+		/*
+		 * Open 'a' so file is not truncated. The truncation
+		 * is done when new data is about to be written to the
+		 * file. This avoids false notifications to watchers that
+		 * network configuration changes have occurred.
+		 */
 		if ((optionDB = fopen(path_option_db, "a")) == NULL)
 			fatal("fopen(%s)", path_option_db);
 	}
@@ -1763,25 +1769,29 @@ rewrite_option_db(char *name, struct client_lease *offered,
 	if (optionDB == NULL)
 		return;
 
-	rewind(optionDB);
+	if (ftruncate(fileno(optionDB), 0) == -1) {
+		log_warn("optionDB ftruncate()");
+		return;
+	}
 
 	leasestr = lease_as_string(name, "offered", offered);
-	if (leasestr != NULL)
-		fprintf(optionDB, "%s", leasestr);
-	else
+	if (leasestr == NULL)
 		log_warnx("%s: cannot make offered lease into string",
 		    log_procname);
+	else if (fprintf(optionDB, "%s", leasestr) == -1)
+		log_warn("optionDB 'offered' fprintf()");
 
 	leasestr = lease_as_string(name, "effective", effective);
-	if (leasestr != NULL)
-		fprintf(optionDB, "%s", leasestr);
-	else
+	if (leasestr == NULL)
 		log_warnx("%s: cannot make effective lease into string",
 		    log_procname);
+	else if (fprintf(optionDB, "%s", leasestr) == -1)
+		log_warn("optionDB 'effective' fprintf()");
 
-	fflush(optionDB);
-	ftruncate(fileno(optionDB), ftello(optionDB));
-	fsync(fileno(optionDB));
+	if (fflush(optionDB) == -1)
+		log_warn("optionDB fflush()");
+	else if (fsync(fileno(optionDB)) == -1)
+		log_warn("optionDB fsync()");
 }
 
 void
