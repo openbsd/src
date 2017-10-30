@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.22 2017/08/31 06:11:45 jasper Exp $
+.\" $OpenBSD: vm.conf.5,v 1.23 2017/10/30 03:37:33 mlarkin Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 31 2017 $
+.Dd $Mdocdate: October 30 2017 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -279,11 +279,6 @@ Set the
 or
 .Xr bridge 4
 network interface of this switch.
-If not specified,
-.Ar bridge0
-will be used where the interface unit will be incremented for each switch,
-e.g.\&
-.Ar bridge0 , bridge1 , ...
 If the type is changed to
 .Ar switch0 ,
 it will be used for each following switch.
@@ -318,6 +313,7 @@ vm "vm2.example.com" {
 Create the switch "uplink" with an additional physical network interface:
 .Bd -literal -offset indent
 switch "uplink" {
+	interface bridge0
 	add em0
 }
 .Ed

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2017/05/04 08:26:06 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.30 2017/10/30 03:37:33 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -90,7 +90,6 @@ static struct vm_create_params	*vcp;
 static struct vmd_switch	*vsw;
 static struct vmd_if		*vif;
 static struct vmd_vm		*vm;
-static unsigned int		 vsw_unit;
 static char			 vsw_type[IF_NAMESIZE];
 static int			 vcp_disable;
 static size_t			 vcp_nnics;
@@ -194,12 +193,17 @@ switch		: SWITCH string			{
 			vsw->sw_id = env->vmd_nswitches + 1;
 			vsw->sw_name = $2;
 			vsw->sw_flags = VMIFF_UP;
-			snprintf(vsw->sw_ifname, sizeof(vsw->sw_ifname),
-			    "%s%u", vsw_type, vsw_unit++);
 			TAILQ_INIT(&vsw->sw_ifs);
 
 			vcp_disable = 0;
 		} '{' optnl switch_opts_l '}'	{
+			if (strnlen(vsw->sw_ifname,
+			    sizeof(vsw->sw_ifname)) == 0) {
+				yyerror("switch \"%s\" is missing interface name",
+				    vsw->sw_name);
+				YYERROR;
+			}
+
 			if (vcp_disable) {
 				log_debug("%s:%d: switch \"%s\""
 				    " skipped (disabled)",
@@ -244,13 +248,12 @@ switch_opts	: disable			{
 			vsw->sw_group = $2;
 		}
 		| INTERFACE string		{
-			if (priv_getiftype($2, vsw_type, &vsw_unit) == -1 ||
+			if (priv_getiftype($2, vsw_type, NULL) == -1 ||
 			    priv_findname(vsw_type, vmd_descsw) == -1) {
 				yyerror("invalid switch interface: %s", $2);
 				free($2);
 				YYERROR;
 			}
-			vsw_unit++;
 
 			if (strlcpy(vsw->sw_ifname, $2,
 			    sizeof(vsw->sw_ifname)) >= sizeof(vsw->sw_ifname)) {

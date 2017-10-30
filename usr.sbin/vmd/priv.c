@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.11 2017/08/31 09:00:46 mlarkin Exp $	*/
+/*	$OpenBSD: priv.c,v 1.12 2017/10/30 03:37:33 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -87,8 +87,8 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_PRIV_IFDESCR:
-	case IMSG_VMDOP_PRIV_IFCREATE:
 	case IMSG_VMDOP_PRIV_IFRDOMAIN:
+	case IMSG_VMDOP_PRIV_IFEXISTS:
 	case IMSG_VMDOP_PRIV_IFADD:
 	case IMSG_VMDOP_PRIV_IFUP:
 	case IMSG_VMDOP_PRIV_IFDOWN:
@@ -118,13 +118,6 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (ioctl(env->vmd_fd, SIOCSIFDESCR, &ifr) < 0)
 			log_warn("SIOCSIFDESCR");
 		break;
-	case IMSG_VMDOP_PRIV_IFCREATE:
-		/* Create the bridge if it doesn't exist */
-		strlcpy(ifr.ifr_name, vfr.vfr_name, sizeof(ifr.ifr_name));
-		if (ioctl(env->vmd_fd, SIOCIFCREATE, &ifr) < 0 &&
-		    errno != EEXIST)
-			log_warn("SIOCIFCREATE");
-		break;
 	case IMSG_VMDOP_PRIV_IFRDOMAIN:
 		strlcpy(ifr.ifr_name, vfr.vfr_name, sizeof(ifr.ifr_name));
 		ifr.ifr_rdomainid = vfr.vfr_id;
@@ -144,6 +137,13 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (ioctl(env->vmd_fd, SIOCBRDGADD, &ifbr) < 0 &&
 		    errno != EEXIST)
 			log_warn("SIOCBRDGADD");
+		break;
+	case IMSG_VMDOP_PRIV_IFEXISTS:
+		/* Determine if bridge/switch exists */
+		strlcpy(ifr.ifr_name, vfr.vfr_name, sizeof(ifr.ifr_name));
+		if (ioctl(env->vmd_fd, SIOCGIFFLAGS, &ifr) < 0)
+			fatalx("%s: bridge \"%s\" does not exist",
+			    __func__, vfr.vfr_name);
 		break;
 	case IMSG_VMDOP_PRIV_IFUP:
 	case IMSG_VMDOP_PRIV_IFDOWN:
@@ -319,10 +319,6 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 			log_debug("%s: interface %s add %s", __func__,
 			    vfbr.vfr_name, vfbr.vfr_value);
 
-			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFCREATE,
-			    &vfbr, sizeof(vfbr));
-			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
-			    &vfbr, sizeof(vfbr));
 			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFADD,
 			    &vfbr, sizeof(vfbr));
 		} else if (vif->vif_switch != NULL)
@@ -398,7 +394,8 @@ vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 	    sizeof(vfr.vfr_name)) >= sizeof(vfr.vfr_name))
 		return (-1);
 
-	proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFCREATE,
+	/* ensure bridge/switch exists */
+	proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFEXISTS,
 	    &vfr, sizeof(vfr));
 
 	/* Use the configured rdomain or get it from the process */
