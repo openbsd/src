@@ -865,8 +865,12 @@ parse_args (unsigned argc, char **argv)
 	  link_info.keep_memory = FALSE;
 	  break;
 	case OPTION_NO_UNDEFINED:
+#ifndef __OpenBSD__
+	  /* we don't link shared objs against libc, so -zdefs/--no-undefined
+	     usually generates false positives */
 	  link_info.unresolved_syms_in_objects
 	    = how_to_report_unresolved_symbols;
+#endif
 	  break;
 	case OPTION_ALLOW_SHLIB_UNDEFINED:
 	  link_info.unresolved_syms_in_shared_libs = RM_IGNORE;
