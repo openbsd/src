@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_eltorito.c,v 1.11 2017/10/31 13:32:40 yasuoka Exp $	*/
+/*	$OpenBSD: cd9660_eltorito.c,v 1.12 2017/10/31 13:36:23 yasuoka Exp $	*/
 /*	$NetBSD: cd9660_eltorito.c,v 1.20 2013/01/28 21:03:28 christos Exp $	*/
 
 /*
@@ -104,9 +104,11 @@ cd9660_add_boot_disk(iso9660_disk *diskStructure, const char *boot_info)
 		new_image->system = ET_SYS_PPC;
 	else if (strcmp(sysname, "macppc") == 0)
 		new_image->system = ET_SYS_MAC;
+	else if (strcmp(sysname, "efi") == 0)
+		new_image->system = ET_SYS_EFI;
 	else {
 		warnx("boot disk system must be "
-		      "i386, macppc, or powerpc");
+		      "i386, macppc, powerpc or efi");
 		free(temp);
 		free(new_image);
 		return 0;
@@ -335,12 +337,12 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 	int used_sectors;
 	int num_entries = 0;
 	int catalog_sectors;
-	struct boot_catalog_entry *x86_head, *mac_head, *ppc_head,
+	struct boot_catalog_entry *x86_head, *mac_head, *ppc_head, *efi_head,
 		*valid_entry, *default_entry, *temp, *head, **headp, *next;
 	struct cd9660_boot_image *tmp_disk;
 
 	headp = NULL;
-	x86_head = mac_head = ppc_head = NULL;
+	x86_head = mac_head = ppc_head = efi_head = NULL;
 
 	/* If there are no boot disks, don't bother building boot information */
 	if (TAILQ_EMPTY(&diskStructure->boot_images))
@@ -412,6 +414,9 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 			break;
 		case ET_SYS_MAC:
 			headp = &mac_head;
+			break;
+		case ET_SYS_EFI:
+			headp = &efi_head;
 			break;
 		default:
 			warnx("%s: internal error: unknown system type",
