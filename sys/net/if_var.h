@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.82 2017/10/12 09:14:16 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.83 2017/10/31 22:05:12 sashan Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -298,7 +298,6 @@ int		niq_enlist(struct niqueue *, struct mbuf_list *);
     sysctl_mq((_n), (_l), (_op), (_olp), (_np), (_nl), &(_niq)->ni_q)
 
 extern struct ifnet_head ifnet;
-extern struct taskq *softnettq;
 
 void	if_start(struct ifnet *);
 int	if_enqueue_try(struct ifnet *, struct mbuf *);

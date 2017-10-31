@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.82 2017/10/19 11:02:42 bluhm Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.83 2017/10/31 22:05:12 sashan Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	m->m_pkthdr.ph_family = dst->sa_family;
 	if (mq_enqueue(&ifp->if_inputqueue, m))
 		return ENOBUFS;
-	task_add(softnettq, ifp->if_inputtask);
+	task_add(net_tq(ifp->if_index), ifp->if_inputtask);
 
 	return (0);
 }

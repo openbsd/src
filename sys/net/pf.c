@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1042 2017/08/14 15:58:16 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.1043 2017/10/31 22:05:12 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1222,7 +1222,7 @@ pf_purge_expired_rules(void)
 void
 pf_purge_timeout(void *unused)
 {
-	task_add(softnettq, &pf_purge_task);
+	task_add(net_tq(0), &pf_purge_task);
 }
 
 void

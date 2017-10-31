@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.220 2017/10/26 15:05:41 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.221 2017/10/31 22:05:13 sashan Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -486,7 +486,7 @@ nd6_expire(void *unused)
 void
 nd6_expire_timer(void *unused)
 {
-	task_add(softnettq, &nd6_expire_task);
+	task_add(net_tq(0), &nd6_expire_task);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.84 2017/09/08 05:36:53 deraadt Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.85 2017/10/31 22:05:12 sashan Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -286,7 +286,7 @@ pflow_clone_destroy(struct ifnet *ifp)
 	if (timeout_initialized(&sc->sc_tmo_tmpl))
 		timeout_del(&sc->sc_tmo_tmpl);
 	pflow_flush(sc);
-	task_del(softnettq, &sc->sc_outputtask);
+	task_del(net_tq(ifp->if_index), &sc->sc_outputtask);
 	mq_purge(&sc->sc_outputqueue);
 	m_freem(sc->send_nam);
 	if (sc->so != NULL) {
@@ -1087,7 +1087,7 @@ pflow_sendout_v5(struct pflow_softc *sc)
 	h->time_sec = htonl(tv.tv_sec);			/* XXX 2038 */
 	h->time_nanosec = htonl(tv.tv_nsec);
 	if (mq_enqueue(&sc->sc_outputqueue, m) == 0)
-		task_add(softnettq, &sc->sc_outputtask);
+		task_add(net_tq(ifp->if_index), &sc->sc_outputtask);
 	return (0);
 }
 
@@ -1149,7 +1149,7 @@ pflow_sendout_ipfix(struct pflow_softc *sc, sa_family_t af)
 	sc->sc_sequence += count;
 	h10->observation_dom = htonl(PFLOW_ENGINE_TYPE);
 	if (mq_enqueue(&sc->sc_outputqueue, m) == 0)
-		task_add(softnettq, &sc->sc_outputtask);
+		task_add(net_tq(ifp->if_index), &sc->sc_outputtask);
 	return (0);
 }
 
@@ -1191,7 +1191,7 @@ pflow_sendout_ipfix_tmpl(struct pflow_softc *sc)
 
 	timeout_add_sec(&sc->sc_tmo_tmpl, PFLOW_TMPL_TIMEOUT);
 	if (mq_enqueue(&sc->sc_outputqueue, m) == 0)
-		task_add(softnettq, &sc->sc_outputtask);
+		task_add(net_tq(ifp->if_index), &sc->sc_outputtask);
 	return (0);
 }
 
