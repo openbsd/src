@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.9 2017/10/28 13:23:26 mpi Exp $ */
+/*	$OpenBSD: parse.c,v 1.10 2017/10/31 10:08:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -105,6 +105,7 @@ const char	*enc2name(unsigned short);
 
 struct itype	*it_new(uint64_t, size_t, const char *, uint32_t, uint16_t,
 		     uint64_t, uint16_t, unsigned int);
+void		 it_merge(struct itype *, struct itype *);
 void		 it_reference(struct itype *);
 void		 it_free(struct itype *);
 int		 it_cmp(struct itype *, struct itype *);
@@ -247,6 +248,30 @@ it_dup(struct itype *it)
 	return copit;
 }
 
+/*
+ * Merge the content of ``it'', the full type declaration into the
+ * forwarding representation ``fwd''.
+ */
+void
+it_merge(struct itype *fwd, struct itype *it)
+{
+	assert(fwd->it_flags & ITF_FORWARD);
+	assert(fwd->it_type == it->it_type);
+	assert(TAILQ_EMPTY(&fwd->it_members));
+	assert(SIMPLEQ_EMPTY(&it->it_refs));
+
+	fwd->it_off = it->it_off;
+	fwd->it_ref = it->it_ref;
+	fwd->it_refp = it->it_refp;
+	fwd->it_size = it->it_size;
+	fwd->it_nelems = it->it_nelems;
+	fwd->it_enc = it->it_enc;
+	fwd->it_flags = it->it_flags;
+
+	TAILQ_CONCAT(&fwd->it_members, &it->it_members, im_next);
+	assert(TAILQ_EMPTY(&it->it_members));
+}
+
 const char *
 it_name(struct itype *it)
 {
@@ -297,12 +322,6 @@ it_cmp(struct itype *a, struct itype *b)
 	int diff;
 
 	if ((diff = (a->it_type - b->it_type)) != 0)
-		return diff;
-
-	if ((diff = (a->it_size - b->it_size)) != 0)
-		return diff;
-
-	if ((diff = (a->it_nelems - b->it_nelems)) != 0)
 		return diff;
 
 	/* Match by name */
@@ -538,6 +557,11 @@ cu_merge(struct dwcu *dcu, struct itype_queue *cutq)
 						im->im_refp = prev;
 				}
 			}
+
+			/* If we first got a forward reference, complete it. */
+			if ((prev->it_flags & ITF_FORWARD) &&
+			    (old->it_flags & ITF_FORWARD) == 0)
+			    	it_merge(prev, old);
 
 			old->it_flags &= ~ITF_USED;
 		} else if (it->it_flags & ITF_USED) {
@@ -971,10 +995,15 @@ parse_struct(struct dwdie *die, size_t psz, int type, size_t off)
 	struct itype *it = NULL;
 	struct dwaval *dav;
 	const char *name = NULL;
+	unsigned int flags = 0;
 	size_t size = 0;
+	int forward = 0;
 
 	SIMPLEQ_FOREACH(dav, &die->die_avals, dav_next) {
 		switch (dav->dav_dat->dat_attr) {
+		case DW_AT_declaration:
+			forward = dav2val(dav, psz);
+			break;
 		case DW_AT_byte_size:
 			size = dav2val(dav, psz);
 			assert(size < UINT_MAX);
@@ -988,8 +1017,10 @@ parse_struct(struct dwdie *die, size_t psz, int type, size_t off)
 		}
 	}
 
-	it = it_new(++tidx, die->die_offset, name, size, 0, 0, type, 0);
 
+	if (forward)
+		flags = ITF_FORWARD;
+	it = it_new(++tidx, die->die_offset, name, size, 0, 0, type, flags);
 	subparse_member(die, psz, it, off);
 
 	return it;
@@ -1094,7 +1125,7 @@ subparse_arguments(struct dwdie *die, size_t psz, struct itype *it)
 		uint64_t tag = die->die_dab->dab_tag;
 
 		if (tag == DW_TAG_unspecified_parameters) {
-			it->it_flags |= ITF_VARARGS;
+			/* TODO */
 			continue;
 		}
 
@@ -1227,12 +1258,12 @@ parse_variable(struct dwdie *die, size_t psz)
 	struct dwaval *dav;
 	const char *name = NULL;
 	size_t ref = 0;
-	int declaration = 0;
+	int forward = 0;
 
 	SIMPLEQ_FOREACH(dav, &die->die_avals, dav_next) {
 		switch (dav->dav_dat->dat_attr) {
 		case DW_AT_declaration:
-			declaration = dav2val(dav, psz);
+			forward = dav2val(dav, psz);
 			break;
 		case DW_AT_name:
 			name = dav2str(dav);
@@ -1247,7 +1278,7 @@ parse_variable(struct dwdie *die, size_t psz)
 	}
 
 
-	if (!declaration && name != NULL) {
+	if (!forward && name != NULL) {
 		it = it_new(++oidx, die->die_offset, name, 0, 0, ref, 0,
 		    ITF_UNRES|ITF_OBJ);
 	}
