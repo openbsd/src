@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_eltorito.c,v 1.10 2017/10/31 13:29:42 yasuoka Exp $	*/
+/*	$OpenBSD: cd9660_eltorito.c,v 1.11 2017/10/31 13:32:40 yasuoka Exp $	*/
 /*	$NetBSD: cd9660_eltorito.c,v 1.20 2013/01/28 21:03:28 christos Exp $	*/
 
 /*
@@ -155,11 +155,12 @@ cd9660_add_boot_disk(iso9660_disk *diskStructure, const char *boot_info)
 			break;
 	}
 
-	if (tmp_image == NULL) {
+	if (tmp_image == NULL)
 		TAILQ_INSERT_HEAD(&diskStructure->boot_images, new_image,
 		    image_list);
-	} else
-		TAILQ_INSERT_BEFORE(tmp_image, new_image, image_list);
+	else
+		TAILQ_INSERT_AFTER(&diskStructure->boot_images, tmp_image,
+		    new_image, image_list);
 
 	new_image->serialno = diskStructure->image_serialno++;
 
