@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.37 2017/07/31 14:53:56 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.38 2017/11/01 14:29:04 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -363,13 +363,13 @@ octeon_iobdma_write_8(uint64_t value)
 static inline uint64_t
 octeon_cvmseg_read_8(size_t offset)
 {
-	return octeon_xkphys_read_8(0xffffffffffff8000ULL + offset);
+	return *(volatile uint64_t *)(0xffffffffffff8000ULL + offset);
 }
 
 static inline void
 octeon_cvmseg_write_8(size_t offset, uint64_t value)
 {
-	octeon_xkphys_write_8(0xffffffffffff8000ULL + offset, value);
+	*(volatile uint64_t *)(0xffffffffffff8000ULL + offset) = value;
 }
 
 static inline uint64_t
