@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.38 2017/11/01 14:29:04 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.39 2017/11/01 14:43:01 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -360,6 +360,12 @@ octeon_iobdma_write_8(uint64_t value)
 	*(volatile uint64_t *)addr = value;
 }
 
+static inline void
+octeon_lmtdma_write_8(off_t offset, uint64_t value)
+{
+	*(volatile uint64_t *)(0xffffffffffffa400ULL + offset) = value;
+}
+
 static inline uint64_t
 octeon_cvmseg_read_8(size_t offset)
 {
@@ -383,6 +389,29 @@ octeon_get_cycles(void)
 		_ASM_EPILOGUE
 		: [tmp]"=&r"(tmp));
 	return tmp;
+}
+
+static inline uint64_t
+octeon_get_cvmmemctl(void)
+{
+	uint64_t tmp;
+
+	__asm volatile (
+		_ASM_PROLOGUE_OCTEON
+		"	dmfc0	%[tmp], $11, 7		\n"
+		_ASM_EPILOGUE
+		: [tmp]"=r"(tmp));
+	return tmp;
+}
+
+static inline void
+octeon_set_cvmmemctl(uint64_t val)
+{
+	__asm volatile (
+		_ASM_PROLOGUE_OCTEON
+		"	dmtc0	%[tmp], $11, 7		\n"
+		_ASM_EPILOGUE
+		: : [tmp]"r"(val) : "memory");
 }
 
 static inline void

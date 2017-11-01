@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.100 2017/09/17 06:10:53 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.101 2017/11/01 14:43:01 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -80,6 +80,7 @@
 #include <dev/cons.h>
 #include <dev/ofw/fdt.h>
 
+#include <octeon/dev/cn30xxcorereg.h>
 #include <octeon/dev/cn30xxipdreg.h>
 #include <octeon/dev/iobusvar.h>
 #include <machine/octeonreg.h>
@@ -638,8 +639,22 @@ octeon_ioclock_speed(void)
 void
 octeon_tlb_init(void)
 {
+	uint64_t cvmmemctl;
 	uint32_t hwrena = 0;
 	uint32_t pgrain = 0;
+	int chipid;
+
+	chipid = octeon_get_chipid();
+	switch (octeon_model_family(chipid)) {
+	case OCTEON_MODEL_FAMILY_CN73XX:
+		/* Enable LMTDMA/LMTST transactions. */
+		cvmmemctl = octeon_get_cvmmemctl();
+		cvmmemctl |= COP_0_CVMMEMCTL_LMTENA;
+		cvmmemctl &= ~COP_0_CVMMEMCTL_LMTLINE_M;
+		cvmmemctl |= 2ull << COP_0_CVMMEMCTL_LMTLINE_S;
+		octeon_set_cvmmemctl(cvmmemctl);
+		break;
+	}
 
 	/*
 	 * If the UserLocal register is available, let userspace
