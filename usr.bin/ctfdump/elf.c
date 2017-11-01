@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.5 2017/10/27 08:33:46 mpi Exp $ */
+/*	$OpenBSD: elf.c,v 1.6 2017/11/01 15:45:28 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -172,8 +172,10 @@ elf_getsection(char *p, size_t filesize, const char *sname, const char *shstab,
 			sidx = i;
 			sdata = p + sh->sh_offset;
 			ssz = sh->sh_size;
+#ifdef needreloc
 			elf_reloc_apply(p, filesize, shstab, shstabsz, sidx,
 			    sdata, ssz);
+#endif
 			break;
 		}
 	}
