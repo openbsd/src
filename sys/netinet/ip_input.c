@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.327 2017/10/31 22:05:12 sashan Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.328 2017/11/01 06:35:38 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1839,5 +1839,5 @@ void
 ip_send(struct mbuf *m)
 {
 	mq_enqueue(&ipsend_mq, m);
-	task_add(0, &ipsend_task);
+	task_add(net_tq(0), &ipsend_task);
 }

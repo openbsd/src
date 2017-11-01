@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.206 2017/10/31 22:05:12 sashan Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.207 2017/11/01 06:35:38 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1477,5 +1477,5 @@ void
 ip6_send(struct mbuf *m)
 {
 	mq_enqueue(&ip6send_mq, m);
-	task_add(0, &ip6send_task);
+	task_add(net_tq(0), &ip6send_task);
 }
