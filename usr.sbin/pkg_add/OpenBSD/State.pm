@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.46 2017/05/29 12:28:54 espie Exp $
+# $OpenBSD: State.pm,v 1.47 2017/11/01 18:18:10 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -94,6 +94,11 @@ sub locator
 {
 	require OpenBSD::PackageLocator;
 	return "OpenBSD::PackageLocator";
+}
+
+sub cache_directory
+{
+	return undef;
 }
 
 sub new

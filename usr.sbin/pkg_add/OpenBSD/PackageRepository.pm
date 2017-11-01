@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.147 2017/10/09 15:35:06 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.148 2017/11/01 18:18:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -518,8 +518,8 @@ sub may_copy
 sub open_pipe
 {
 	my ($self, $object) = @_;
-	if (defined $ENV{'PKG_CACHE'}) {
-		$self->may_copy($object, $ENV{'PKG_CACHE'});
+	if (defined $self->{state}->cache_directory) {
+		$self->may_copy($object, $self->{state}->cache_directory);
 	}
 	my $name = $self->relative_url($object->{name});
 	if ($self->check_signed($object)) {
@@ -663,7 +663,7 @@ sub open_pipe
 {
 	my ($self, $object) = @_;
 	$self->make_error_file($object);
-	my $d = $ENV{'PKG_CACHE'};
+	my $d = $self->{state}->cache_directory;
 	if (defined $d) {
 		$object->{cache_dir} = $d;
 		if (! -d -w $d) {
