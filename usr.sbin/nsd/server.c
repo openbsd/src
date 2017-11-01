@@ -567,7 +567,7 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 {
 	struct addrinfo* addr;
 	size_t i;
-#if defined(SO_REUSEPORT) || defined(SO_REUSEADDR) || (defined(INET6) && (defined(IPV6_V6ONLY) || defined(IPV6_USE_MIN_MTU) || defined(IPV6_MTU) || defined(IP_TRANSPARENT)) || defined(IP_FREEBIND))
+#if defined(SO_REUSEPORT) || defined(SO_REUSEADDR) || (defined(INET6) && (defined(IPV6_V6ONLY) || defined(IPV6_USE_MIN_MTU) || defined(IPV6_MTU) || defined(IP_TRANSPARENT)) || defined(IP_FREEBIND) || defined(SO_BINDANY))
 	int on = 1;
 #endif
 
@@ -757,6 +757,12 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 					strerror(errno));
 			}
 #endif /* IP_TRANSPARENT */
+#ifdef SO_BINDANY
+			if (setsockopt(nsd->udp[i].s, SOL_SOCKET, SO_BINDANY, &on, sizeof(on)) < 0) {
+				log_msg(LOG_ERR, "setsockopt(...,SO_BINDANY, ...) failed for udp: %s",
+					strerror(errno));
+			}
+#endif /* SO_BINDANY */
 		}
 
 		if (bind(nsd->udp[i].s, (struct sockaddr *) addr->ai_addr, addr->ai_addrlen) != 0) {
@@ -887,6 +893,12 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 					strerror(errno));
 			}
 #endif /* IP_TRANSPARENT */
+#ifdef SO_BINDANY
+			if (setsockopt(nsd->tcp[i].s, SOL_SOCKET, SO_BINDANY, &on, sizeof(on)) < 0) {
+				log_msg(LOG_ERR, "setsockopt(...,SO_BINDANY, ...) failed for tcp: %s",
+					strerror(errno));
+			}
+#endif /* SO_BINDANY */
 		}
 
 		if (bind(nsd->tcp[i].s, (struct sockaddr *) addr->ai_addr, addr->ai_addrlen) != 0) {
