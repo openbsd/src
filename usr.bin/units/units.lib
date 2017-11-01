@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.102 2017/10/05 06:33:34 jmc Exp $
+/ $OpenBSD: units.lib,v 1.103 2017/11/01 10:06:06 jmc Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -300,51 +300,51 @@ lumen			cd sr
 lux			cd sr/m2
 
 / http://www.federalreserve.gov/releases/h10/current/
-/ as of September 22, 2017
+/ as of October 27, 2017
 $			dollar
-australiadollar		.7975 $
-brazilreal		1|3.1257 $
-canadadollar		1|1.2305 $
-chinayuan		1|6.5899 $
-denmarkkrone		1|6.2158 $
-euro			1.1969 $
-hongkongdollar		1|7.8082 $
-indiarupee		1|64.7900 $
-japanyen		1|112.0100 $
-malaysiaringgit		1|4.1960 $
-mexicopeso		1|17.7355 $
-newzealanddollar	.7343 $
-norwaykrone		1|7.7833 $
-singaporedollar		1|1.3435 $
-southafricarand		1|13.1900 $
-southkoreawon		1|1130.3900 $
-srilankarupee		1|152.7000 $
-swedenkrona		1|7.9536 $
-switzerlandfranc	1|0.9694 $
-taiwandollar		1|30.1600 $
-thailandbaht		1|33.0600 $
-unitedkingdompound	1.3531 $
+australiadollar		.7660 $
+brazilreal		1|3.2731 $
+canadadollar		1|1.2871 $
+chinayuan		1|6.6498 $
+denmarkkrone		1|6.4248 $
+euro			1.1580 $
+hongkongdollar		1|7.8044 $
+indiarupee		1|65.0400 $
+japanyen		1|113.8200 $
+malaysiaringgit		1|4.2410 $
+mexicopeso		1|19.1785 $
+newzealanddollar	.6871 $
+norwaykrone		1|8.1811 $
+singaporedollar		1|1.3672 $
+southafricarand		1|14.1725 $
+southkoreawon		1|1124.7900 $
+srilankarupee		1|153.5000 $
+swedenkrona		1|8.3803 $
+switzerlandfranc	1|0.9990 $
+taiwandollar		1|30.2300 $
+thailandbaht		1|33.2600 $
+unitedkingdompound	1.3108 $
 venezuelabolivar	1|9.9750 $
 
-/ The Economist, September 27, 2017
-argentinapeso		1|17.6 $
-chilepeso		1|634 $
-colombiapeso		1|2931 $
-czechkoruna		1|22.1 $
-egyptpound		1|17.7 $
-hungaryforint		1|265 $
-icelandkrona		1|108 $
-indonesiarupiah		1|13374 $
-israelshekel		1|3.53 $
+/ The Economist, October 25, 2017
+argentinapeso		1|17.4 $
+chilepeso		1|630 $
+colombiapeso		1|2985 $
+czechkoruna		1|21.7 $
+egyptpound		1|17.6 $
+hungaryforint		1|263 $
+icelandkrona		1|105 $
+indonesiarupiah		1|13573 $
+israelshekel		1|3.51 $
 pakistanrupee		1|105 $
-perunuevosol		1|3.27 $
-philippinespeso		1|50.9 $
-polandzloty		1|3.65 $
-russiarouble		1|57.8 $
+perunuevosol		1|3.23 $
+philippinespeso		1|51.7 $
+polandzloty		1|3.59 $
+russiarouble		1|57.7 $
 saudiarabiariyal	1|3.75 $
-turkeylira		1|3.55 $
-ukrainehryvnia		1|26.4 $
-vietnamdong		1|22732 $
+turkeylira		1|3.74 $
+ukrainehryvnia		1|26.8 $
+vietnamdong		1|22723 $
 
 / EMU currencies have constant exchange rate against Euro since 1.1.1999
 austriaschilling	1|13.7603 euro
