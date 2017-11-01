@@ -167,7 +167,7 @@ create_udp_sock(int family, int socktype, struct sockaddr* addr,
 	int freebind, int use_systemd)
 {
 	int s;
-#if defined(SO_REUSEADDR) || defined(SO_REUSEPORT) || defined(IPV6_USE_MIN_MTU)  || defined(IP_TRANSPARENT) || defined(IP_BINDANY) || defined(IP_FREEBIND) || defined (SO_BINDANY)
+#if defined(SO_REUSEADDR) || defined(SO_REUSEPORT) || defined(IPV6_USE_MIN_MTU)  || defined(IP_TRANSPARENT) || defined(IP_BINDANY) || defined(IP_FREEBIND) || defined(SO_BINDANY)
 	int on=1;
 #endif
 #ifdef IPV6_MTU
