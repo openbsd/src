@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remote.5,v 1.26 2017/09/21 07:51:43 anton Exp $
+.\"	$OpenBSD: remote.5,v 1.27 2017/11/02 17:53:12 remi Exp $
 .\"	$NetBSD: remote.5,v 1.4 1997/04/20 00:05:27 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)remote.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: September 21 2017 $
+.Dd $Mdocdate: November 2 2017 $
 .Dt REMOTE 5
 .Os
 .Sh NAME
@@ -75,6 +75,12 @@ The baud rate used in establishing
 a connection to the remote host.
 This is a decimal number.
 The default baud rate is 9600 baud.
+.It Sy \&dc
+(bool)
+This host is directly connected, and
+.Xr cu 1
+should not expect carrier detect to be high, nor should it exit if
+carrier detect drops.
 .It Sy \&dv
 (str)
 Device to open to establish a connection.
