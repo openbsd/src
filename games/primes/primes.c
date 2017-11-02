@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.23 2016/08/31 04:48:43 tb Exp $	*/
+/*	$OpenBSD: primes.c,v 1.24 2017/11/02 10:37:11 tb Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 
 #include <ctype.h>
 #include <err.h>
-#include <errno.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,10 +95,10 @@ __dead void	usage(void);
 int
 main(int argc, char *argv[])
 {
+	const char *errstr;
 	ubig start;		/* where to start generating */
 	ubig stop;		/* don't generate at or above this value */
 	int ch;
-	char *p;
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
@@ -117,43 +116,15 @@ main(int argc, char *argv[])
 	start = 0;
 	stop = BIG;
 
-	/*
-	 * Convert low and high args.  Strtoul(3) sets errno to
-	 * ERANGE if the number is too large, but, if there's
-	 * a leading minus sign it returns the negation of the
-	 * result of the conversion, which we'd rather disallow.
-	 */
 	switch (argc) {
 	case 2:
-		/* Start and stop supplied on the command line. */
-		if (argv[0][0] == '-' || argv[1][0] == '-')
-			errx(1, "negative numbers aren't permitted.");
-
-		errno = 0;
-		start = strtoul(argv[0], &p, 10);
-		if (errno)
-			err(1, "%s", argv[0]);
-		if (*p != '\0')
-			errx(1, "%s: illegal numeric format.", argv[0]);
-
-		errno = 0;
-		stop = strtoul(argv[1], &p, 10);
-		if (errno)
-			err(1, "%s", argv[1]);
-		if (*p != '\0')
-			errx(1, "%s: illegal numeric format.", argv[1]);
-		break;
-	case 1:
-		/* Start on the command line. */
-		if (argv[0][0] == '-')
-			errx(1, "negative numbers aren't permitted.");
-
-		errno = 0;
-		start = strtoul(argv[0], &p, 10);
-		if (errno)
-			err(1, "%s", argv[0]);
-		if (*p != '\0')
-			errx(1, "%s: illegal numeric format.", argv[0]);
+		stop = strtonum(argv[1], 0, BIG, &errstr);
+		if (errstr)
+			errx(1, "stop is %s: %s", errstr, argv[1]);
+	case 1:	/* FALLTHROUGH */
+		start = strtonum(argv[0], 0, BIG, &errstr);
+		if (errstr)
+			errx(1, "start is %s: %s", errstr, argv[0]);
 		break;
 	case 0:
 		start = read_num_buf();
@@ -175,6 +146,7 @@ main(int argc, char *argv[])
 ubig
 read_num_buf(void)
 {
+	const char *errstr;
 	ubig val;
 	char *p, buf[100];		/* > max number of digits. */
 
@@ -189,16 +161,9 @@ read_num_buf(void)
 			;
 		if (*p == '\0')
 			continue;
-		if (*p == '-')
-			errx(1, "negative numbers aren't permitted.");
-		errno = 0;
-		val = strtoul(buf, &p, 10);
-		if (errno)
-			err(1, "%s", buf);
-		for (; isblank((unsigned char)*p); ++p)
-			;
-		if (*p != '\0')
-			errx(1, "%s: illegal numeric format.", buf);
+		val = strtonum(buf, 0, BIG, &errstr);
+		if (errstr)
+			errx(1, "start is %s: %s", errstr, buf);
 		return (val);
 	}
 }
