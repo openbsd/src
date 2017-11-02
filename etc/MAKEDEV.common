@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.96 2017/10/16 20:26:52 naddy Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.97 2017/11/02 14:04:24 mpi Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -136,8 +136,6 @@ target(all, apm)dnl
 target(all, acpi)dnl
 twrget(all, tth, ttyh, 0, 1)dnl
 target(all, ttyA, 0, 1)dnl
-target(all, ttyB, 0, 1, 2, 3, 4, 5)dnl
-twrget(all, attyB, ttyB, 0, 1, 2, 3, 4)dnl
 twrget(all, mac_tty0, tty0, 0, 1)dnl
 twrget(all, tzs, tty, a, b, c, d)dnl
 twrget(all, czs, cua, a, b, c, d)dnl
@@ -409,8 +407,7 @@ __devitem(tty0, tty00, Standard serial port,com)dnl
 __devitem(mac_tty0, tty00, Standard serial port,zsc)dnl
 __devitem(ttyz, tty[a-d], On-board zs serial ports,zs)dnl
 __devitem(cuaz, cua[a-d], On-board zs serial ports,zs)dnl
-__devitem(ttyB, ttyB?, DEC 3000 ZS8530 ("scc") serial ports,scc)dnl
-__devitem(scc, scc*, 82530 serial interface,scc)dnl
+__devitem(ttyB, ttyB*, DEC 3000 serial ports,zs)dnl
 __devtitle(spec, Special purpose devices)dnl
 _mkdev(apm, apm*, {-M apm	c major_apm_c 0 644
 	M apmctl	c major_apm_c 8 644-})dnl

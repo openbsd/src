@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.83 2016/09/04 10:51:23 naddy Exp $	*/
+/*	$OpenBSD: conf.c,v 1.84 2017/11/02 14:04:24 mpi Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -82,8 +82,8 @@ cdev_decl(mm);
 #include "tun.h"
 #include "bpfilter.h"
 #include "ch.h"
-#include "scc.h"
-cdev_decl(scc);
+#include "zs.h"
+cdev_decl(zs);
 #include "audio.h"
 #include "video.h"
 #include "com.h"
@@ -143,7 +143,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NST,st),		/* 12: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 13: SCSI CD-ROM */
 	cdev_ch_init(NCH,ch),		/* 14: SCSI autochanger */
-	cdev_tty_init(NSCC,scc),	/* 15: scc 8530 serial interface */
+	cdev_tty_init(NZS,zs),		/* 15: Z8530 serial interface */
 	cdev_notdef(),			/* 16 was lkm */
 	cdev_notdef(),			/* 17 */
 	cdev_notdef(),			/* 18 */

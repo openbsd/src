@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_500.c,v 1.20 2017/10/29 08:50:43 mpi Exp $ */
+/* $OpenBSD: tc_3000_500.c,v 1.21 2017/11/02 14:04:24 mpi Exp $ */
 /* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -42,11 +42,6 @@
 #include <alpha/tc/tc_3000_500.h>
 
 #include "wsdisplay.h"
-#include "sfb.h"
-
-#if NSFB > 0
-extern int	sfb_cnattach(tc_addr_t);
-#endif
 
 int	tc_3000_500_intrnull(void *);
 int	tc_3000_500_fb_cnattach(u_int64_t);
@@ -290,12 +285,7 @@ tc_3000_500_fb_cnattach(turbo_slot)
 
 	if (hwrpb->rpb_variation & SV_GRAPHICS) {
 		if (output_slot == 0) {
-#if NSFB > 0
-			sfb_cnattach(KV(0x1e0000000) + 0x02000000);
-			return 0;
-#else
 			return ENXIO;
-#endif
 		}
 	} else {
 		/*

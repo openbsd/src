@@ -1,4 +1,4 @@
-#	$OpenBSD: files.tc,v 1.13 2015/05/11 06:46:22 ratchov Exp $
+#	$OpenBSD: files.tc,v 1.14 2017/11/02 14:04:24 mpi Exp $
 #	$NetBSD: files.tc,v 1.26 2001/11/28 10:21:24 lukem Exp $
 #
 # Config file and device description for machine-independent
@@ -33,10 +33,26 @@ device	tcds {[chip = -1]}
 attach	tcds at tc
 file	dev/tc/tcds.c			tcds
 
-# 53C[F]90 PMAZ single channel SCSI
+# 53C[F]90 PMAZ single or dual channel SCSI
 device	asc: ncr53c9x, scsi
 file	dev/tc/asc.c			asc
 attach	asc at tc with asc_tc
 file	dev/tc/asc_tc.c			asc_tc
 attach	asc at tcds with asc_tcds
 file	dev/tc/asc_tcds.c		asc_tcds
+
+# 8530 UARTs using the MI 8530 driver
+device	zs {[channel = -1]}
+attach	zs at ioasic with zs_ioasic
+file	dev/tc/zs_ioasic.c		zs		needs-flag
+file	dev/ic/z8530sc.c		zs
+
+device	zstty: tty
+attach	zstty at zs
+file	dev/ic/z8530tty.c		zstty		needs-flag
+
+#attach	vsms at zs with zsms
+#file	dev/tc/zsms.c			zsms
+
+#attach	lkkbd at zs with zskbd
+#file	dev/tc/zskbd.c			zskbd		needs-flag

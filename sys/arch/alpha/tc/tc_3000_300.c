@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_300.c,v 1.18 2015/05/19 20:28:14 miod Exp $ */
+/* $OpenBSD: tc_3000_300.c,v 1.19 2017/11/02 14:04:24 mpi Exp $ */
 /* $NetBSD: tc_3000_300.c,v 1.26 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -42,11 +42,6 @@
 #include <alpha/tc/tc_3000_300.h>
 
 #include "wsdisplay.h"
-#include "sfb.h"
-
-#if NSFB > 0
-extern int	sfb_cnattach(tc_addr_t);
-#endif
 
 int	tc_3000_300_intrnull(void *);
 
@@ -297,12 +292,7 @@ tc_3000_300_fb_cnattach(turbo_slot)
 	}
 
 	if (output_slot == 0) {
-#if NSFB > 0
-		sfb_cnattach(KV(0x1c0000000) + 0x02000000);
-		return 0;
-#else
 		return ENXIO;
-#endif
 	}
 
 	return tc_fb_cnattach(tc_3000_300_slots[output_slot-1].tcs_addr);

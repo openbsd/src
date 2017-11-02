@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.44 2017/07/28 18:15:44 rpe Exp $
+#       $OpenBSD: install.md,v 1.45 2017/11/02 14:04:24 mpi Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,7 +63,7 @@ md_consoleinfo() {
 	TTYS[0]=tty0
 	TTYS[1]=ttyB
 
-	for _d in com scc; do
+	for _d in com zstty; do
 		for _u in $(scan_dmesg "/^${_d}\([0-9]\) .*/s//\1/p"); do
 			if [[ $_d$_u == $CONSOLE || -z $CONSOLE ]]; then
 				CDEV=$_d$_u

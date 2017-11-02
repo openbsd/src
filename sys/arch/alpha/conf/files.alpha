@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.104 2017/06/05 17:49:06 deraadt Exp $
+#	$OpenBSD: files.alpha,v 1.105 2017/11/02 14:04:24 mpi Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -95,22 +95,7 @@ file	arch/alpha/tc/tc_3000_300.c		tcasic & dec_3000_300
 # IOASIC device and attachment defined in sys/dev/tc/files.tc
 file	arch/alpha/tc/ioasic.c			ioasic needs-flag
 
-# PMAG-B CX
-device	cfb: wsemuldisplaydev
-attach	cfb at tc
-file	arch/alpha/tc/cfb.c			cfb		needs-flag
-
-# PMAGB-B HX or CXT
-device	sfb: wsemuldisplaydev
-attach	sfb at tc
-file	arch/alpha/tc/sfb.c			sfb		needs-flag
-
-# 8530 UARTs
-device	scc
-attach	scc at ioasic
-file	arch/alpha/tc/scc.c			scc		needs-count
-
-# TC and baseboard ioasic Lance ethernet are in files.tc
+# TC, baseboard ioasic Lance ethernet and baseboard 8530 serial are in files.tc
 
 #
 # ISA Bus support
