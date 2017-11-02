@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.251 2017/10/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.252 2017/11/02 14:01:18 florian Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -174,7 +174,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct proc *p)
 {
 	struct routecb	*rop;
-	int		 af;
 	int		 error = 0;
 
 	soassertlocked(so);
@@ -198,20 +197,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			rop->flags &= ~ROUTECB_FLAG_FLUSH;
 		break;
 
-	case PRU_DETACH:
-		timeout_del(&rop->timeout);
-		af = rop->rcb.rcb_proto.sp_protocol;
-		if (af == AF_INET)
-			route_cb.ip_count--;
-		else if (af == AF_INET6)
-			route_cb.ip6_count--;
-#ifdef MPLS
-		else if (af == AF_MPLS)
-			route_cb.mpls_count--;
-#endif
-		route_cb.any_count--;
-		LIST_REMOVE(rop, rcb_list);
-		/* FALLTHROUGH */
 	default:
 		error = raw_usrreq(so, req, m, nam, control, p);
 	}
@@ -268,6 +253,33 @@ route_attach(struct socket *so, int proto)
 	LIST_INSERT_HEAD(&route_cb.rcb, rop, rcb_list);
 
 	return (0);
+}
+
+int
+route_detach(struct socket *so)
+{
+	struct routecb	*rop;
+	int		 af;
+
+	soassertlocked(so);
+
+	rop = sotoroutecb(so);
+	if (rop == NULL)
+		return (EINVAL);
+
+	timeout_del(&rop->timeout);
+	af = rop->rcb.rcb_proto.sp_protocol;
+	if (af == AF_INET)
+		route_cb.ip_count--;
+	else if (af == AF_INET6)
+		route_cb.ip6_count--;
+#ifdef MPLS
+	else if (af == AF_MPLS)
+		route_cb.mpls_count--;
+#endif
+	route_cb.any_count--;
+	LIST_REMOVE(rop, rcb_list);
+	return (raw_detach(so));
 }
 
 int
@@ -1922,6 +1934,7 @@ struct protosw routesw[] = {
   .pr_ctloutput	= route_ctloutput,
   .pr_usrreq	= route_usrreq,
   .pr_attach	= route_attach,
+  .pr_detach	= route_detach,
   .pr_init	= route_prinit,
   .pr_sysctl	= sysctl_rtable
 }

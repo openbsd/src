@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.55 2017/10/09 08:35:38 mpi Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.56 2017/11/02 14:01:18 florian Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -254,10 +254,6 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	}
 	switch (req) {
 
-	case PRU_DETACH:
-		in_pcbdetach(inp);
-		break;
-
 	case PRU_BIND:
 		error = in_pcbbind(inp, addr, p);
 		break;
@@ -331,6 +327,20 @@ divert_attach(struct socket *so, int proto)
 		return error;
 
 	sotoinpcb(so)->inp_flags |= INP_HDRINCL;
+	return (0);
+}
+
+int
+divert_detach(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	soassertlocked(so);
+
+	if (inp == NULL)
+		return (EINVAL);
+
+	in_pcbdetach(inp);
 	return (0);
 }
 

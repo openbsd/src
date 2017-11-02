@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.121 2017/10/08 14:53:25 deraadt Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.122 2017/11/02 14:01:18 florian Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -558,8 +558,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_ABORT:
 		soisdisconnected(so);
-		/* FALLTHROUGH */
-	case PRU_DETACH:
 		if (in6p == NULL)
 			panic("rip6_detach");
 #ifdef MROUTING
@@ -713,6 +711,27 @@ rip6_attach(struct socket *so, int proto)
 	}
 	ICMP6_FILTER_SETPASSALL(in6p->inp_icmp6filt);
 	return 0;
+}
+
+int
+rip6_detach(struct socket *so)
+{
+	struct inpcb *in6p = sotoinpcb(so);
+
+	soassertlocked(so);
+
+	if (in6p == NULL)
+		panic("rip6_detach");
+#ifdef MROUTING
+	if (so == ip6_mrouter[in6p->inp_rtableid])
+		ip6_mrouter_done(so);
+#endif
+	free(in6p->inp_icmp6filt, M_PCB, sizeof(struct icmp6_filter));
+	in6p->inp_icmp6filt = NULL;
+
+	in_pcbdetach(in6p);
+
+	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.241 2017/10/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.242 2017/11/02 14:01:18 florian Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1085,10 +1085,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	 */
 	switch (req) {
 
-	case PRU_DETACH:
-		in_pcbdetach(inp);
-		break;
-
 	case PRU_BIND:
 		error = in_pcbbind(inp, addr, p);
 		break;
@@ -1268,6 +1264,21 @@ udp_attach(struct socket *so, int proto)
 #endif /* INET6 */
 		sotoinpcb(so)->inp_ip.ip_ttl = ip_defttl;
 	return 0;
+}
+
+int
+udp_detach(struct socket *so)
+{
+	struct inpcb *inp;
+
+	soassertlocked(so);
+
+	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return (EINVAL);
+
+	in_pcbdetach(inp);
+	return (0);
 }
 
 /*

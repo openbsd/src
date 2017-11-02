@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.169 2017/10/27 08:27:14 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.170 2017/11/02 14:01:18 florian Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -159,7 +159,7 @@ static int npromisc = 0;
 void pfkey_init(void);
 
 int pfkeyv2_attach(struct socket *, int);
-int pfkeyv2_detach(struct socket *, struct proc *);
+int pfkeyv2_detach(struct socket *);
 int pfkeyv2_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct proc *);
 int pfkeyv2_output(struct mbuf *, struct socket *, struct sockaddr *,
@@ -192,6 +192,7 @@ static struct protosw pfkeysw[] = {
   .pr_output    = pfkeyv2_output,
   .pr_usrreq    = pfkeyv2_usrreq,
   .pr_attach    = pfkeyv2_attach,
+  .pr_detach    = pfkeyv2_detach,
   .pr_sysctl    = pfkeyv2_sysctl,
 }
 };
@@ -255,7 +256,7 @@ pfkeyv2_attach(struct socket *so, int proto)
  * Close a PF_KEYv2 socket.
  */
 int
-pfkeyv2_detach(struct socket *so, struct proc *p)
+pfkeyv2_detach(struct socket *so)
 {
 	struct keycb *kp;
 
@@ -276,7 +277,7 @@ pfkeyv2_detach(struct socket *so, struct proc *p)
 		mtx_leave(&pfkeyv2_mtx);
 	}
 
-	raw_detach(&kp->rcb);
+	raw_do_detach(&kp->rcb);
 	return (0);
 }
 
@@ -284,12 +285,7 @@ int
 pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *mbuf,
     struct mbuf *nam, struct mbuf *control, struct proc *p)
 {
-	switch (req) {
-	case PRU_DETACH:
-		return (pfkeyv2_detach(so, p));
-	default:
-		return (raw_usrreq(so, req, mbuf, nam, control, p));
-	}
+	return (raw_usrreq(so, req, mbuf, nam, control, p));
 }
 
 int

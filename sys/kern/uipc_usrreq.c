@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.119 2017/08/11 19:53:02 bluhm Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.120 2017/11/02 14:01:18 florian Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -125,10 +125,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	NET_ASSERT_UNLOCKED();
 
 	switch (req) {
-
-	case PRU_DETACH:
-		unp_detach(unp);
-		break;
 
 	case PRU_BIND:
 		error = unp_bind(unp, nam, p);
@@ -375,6 +371,21 @@ uipc_attach(struct socket *so, int proto)
 	so->so_pcb = unp;
 	getnanotime(&unp->unp_ctime);
 	LIST_INSERT_HEAD(&unp_head, unp, unp_link);
+	return (0);
+}
+
+int
+uipc_detach(struct socket *so)
+{
+	struct unpcb *unp = sotounpcb(so);
+
+	if (unp == NULL)
+		return (EINVAL);
+
+	NET_ASSERT_UNLOCKED();
+
+	unp_detach(unp);
+
 	return (0);
 }
 

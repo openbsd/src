@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.c,v 1.12 2017/07/03 19:23:47 claudio Exp $	*/
+/*	$OpenBSD: raw_cb.c,v 1.13 2017/11/02 14:01:18 florian Exp $	*/
 /*	$NetBSD: raw_cb.c,v 1.9 1996/02/13 22:00:39 christos Exp $	*/
 
 /*
@@ -76,12 +76,27 @@ raw_attach(struct socket *so, int proto)
 	return (0);
 }
 
+int
+raw_detach(struct socket *so)
+{
+	struct rawcb *rp = sotorawcb(so);
+
+	soassertlocked(so);
+
+	if (rp == NULL)
+		return (EINVAL);
+
+	raw_do_detach(rp);
+
+	return (0);
+}
+
 /*
  * Detach the raw connection block and discard
  * socket resources.
  */
 void
-raw_detach(struct rawcb *rp)
+raw_do_detach(struct rawcb *rp)
 {
 	struct socket *so = rp->rcb_socket;
 
@@ -97,5 +112,5 @@ void
 raw_disconnect(struct rawcb *rp)
 {
 	if (rp->rcb_socket->so_state & SS_NOFDREF)
-		raw_detach(rp);
+		raw_do_detach(rp);
 }

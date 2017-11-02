@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.205 2017/09/15 19:29:28 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.206 2017/11/02 14:01:18 florian Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -266,8 +266,9 @@ soclose(struct socket *so)
 	}
 drop:
 	if (so->so_pcb) {
-		int error2 = (*so->so_proto->pr_usrreq)(so, PRU_DETACH, NULL,
-		    NULL, NULL, curproc);
+		int error2;
+		KASSERT(so->so_proto->pr_detach);
+		error2 = (*so->so_proto->pr_detach)(so);
 		if (error == 0)
 			error = error2;
 	}

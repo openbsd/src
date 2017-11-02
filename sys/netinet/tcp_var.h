@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.127 2017/10/25 12:38:21 job Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.128 2017/11/02 14:01:18 florian Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -751,6 +751,7 @@ int	 tcp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	 tcp_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 int	 tcp_attach(struct socket *, int);
+int	 tcp_detach(struct socket *);
 void	 tcp_xmit_timer(struct tcpcb *, int);
 void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
 void	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);

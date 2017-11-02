@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.25 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.26 2017/11/02 14:01:18 florian Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -84,6 +84,7 @@ struct protosw {
 		    struct mbuf *, struct mbuf *, struct proc *);
 
 	int	(*pr_attach)(struct socket *, int);
+	int	(*pr_detach)(struct socket *);
 
 /* utility hooks */
 	void	(*pr_init)(void);	/* initialization hook */
@@ -123,7 +124,6 @@ struct protosw {
  * A non-zero return from usrreq gives an
  * UNIX error number which should be passed to higher level software.
  */
-#define	PRU_DETACH		1	/* detach protocol from up */
 #define	PRU_BIND		2	/* bind socket to address */
 #define	PRU_LISTEN		3	/* listen for connection */
 #define	PRU_CONNECT		4	/* establish connection to peer */

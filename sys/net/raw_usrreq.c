@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.32 2017/07/03 19:23:47 claudio Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.33 2017/11/02 14:01:18 florian Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -67,14 +67,6 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		return (EINVAL);
 	}
 	switch (req) {
-	/*
-	 * Destroy state just before socket deallocation.
-	 * Flush data or not depending on the options.
-	 */
-	case PRU_DETACH:
-		raw_detach(rp);
-		break;
-
 	case PRU_CONNECT:
 	case PRU_BIND:
 	case PRU_CONNECT2:

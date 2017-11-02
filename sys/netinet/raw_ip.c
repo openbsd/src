@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.104 2017/10/06 21:14:55 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.105 2017/11/02 14:01:18 florian Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -382,10 +382,8 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		/* FALLTHROUGH */
 	case PRU_ABORT:
 		soisdisconnected(so);
-		/* FALLTHROUGH */
-	case PRU_DETACH:
 		if (inp == NULL)
-			panic("rip_detach");
+			panic("rip_abort");
 #ifdef MROUTING
 		if (so == ip_mrouter[inp->inp_rtableid])
 			ip_mrouter_done(so);
@@ -521,4 +519,23 @@ rip_attach(struct socket *so, int proto)
 	inp = sotoinpcb(so);
 	inp->inp_ip.ip_p = proto;
 	return 0;
+}
+
+int
+rip_detach(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	soassertlocked(so);
+
+	if (inp == NULL)
+		return (EINVAL);
+
+#ifdef MROUTING
+	if (so == ip_mrouter[inp->inp_rtableid])
+		ip_mrouter_done(so);
+#endif
+	in_pcbdetach(inp);
+
+	return (0);
 }
