@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.77 2017/07/09 22:33:09 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.78 2017/11/02 18:27:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,10 +39,6 @@ static struct winlink *session_next_alert(struct winlink *);
 static struct winlink *session_previous_alert(struct winlink *);
 
 static void	session_group_remove(struct session *);
-static u_int	session_group_count(struct session_group *);
-static void	session_group_synchronize1(struct session *, struct session *);
-
-static u_int	session_group_count(struct session_group *);
 static void	session_group_synchronize1(struct session *, struct session *);
 
 RB_GENERATE(sessions, session, entry, session_cmp);
@@ -624,7 +620,7 @@ session_group_remove(struct session *s)
 }
 
 /* Count number of sessions in session group. */
-static u_int
+u_int
 session_group_count(struct session_group *sg)
 {
 	struct session	*s;
