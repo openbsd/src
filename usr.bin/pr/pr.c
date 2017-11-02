@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.39 2015/11/11 02:52:46 deraadt Exp $	*/
+/*	$OpenBSD: pr.c,v 1.40 2017/11/02 09:52:04 jca Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -124,7 +124,6 @@ char	schar;		/* text column separation character */
 int	sflag;		/* -s option for multiple columns */
 int	nohead;		/* do not write head and trailer */
 int	pgwd;		/* page width with multiple col output */
-char	*timefrmt;	/* time conversion string */
 
 /*
  * misc globals
@@ -1546,7 +1545,7 @@ nxtfile(int argc, char *argv[], char **fname, char *buf, int dt)
     /*
      * set up time field used in header
      */
-    if (strftime(buf, HDBUF, timefrmt, timeptr) == 0) {
+    if (strftime(buf, HDBUF, TIMEFMT, timeptr) == 0) {
 	++errcnt;
 	if (inf != stdin)
 	    (void)fclose(inf);
@@ -2006,7 +2005,5 @@ setup(int argc, char *argv[])
 	}
     }
 
-    if ((timefrmt = getenv("LC_TIME")) == NULL)
-	timefrmt = TIMEFMT;
     return(0);
 }
