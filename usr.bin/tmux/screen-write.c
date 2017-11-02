@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.132 2017/11/02 21:29:17 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.133 2017/11/02 22:00:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -457,7 +457,7 @@ screen_write_vline(struct screen_write_ctx *ctx, u_int ny, int top, int bottom)
 		screen_write_cursormove(ctx, cx, cy + i);
 		screen_write_putc(ctx, &gc, 'x');
 	}
-	screen_write_cursormove(ctx, cx, cy + ny);
+	screen_write_cursormove(ctx, cx, cy + ny - 1);
 	screen_write_putc(ctx, &gc, bottom ? 'v' : 'x');
 
 	screen_write_cursormove(ctx, cx, cy);
