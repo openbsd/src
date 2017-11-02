@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.17 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: s_time.c,v 1.18 2017/11/02 00:31:49 mestre Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -254,7 +254,7 @@ s_time_main(int argc, char **argv)
 	int ver;
 
 	if (single_execution) {
-		if (pledge("stdio rpath inet", NULL) == -1) {
+		if (pledge("stdio rpath inet dns", NULL) == -1) {
 			perror("pledge");
 			exit(1);
 		}
