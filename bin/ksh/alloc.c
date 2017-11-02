@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.17 2017/08/15 17:57:57 jca Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.18 2017/11/02 06:55:35 tb Exp $	*/
 
 /* Public domain, like most of the rest of ksh */
 
@@ -47,7 +47,7 @@ alloc(size_t size, Area *ap)
 	if (size > SIZE_MAX - sizeof(struct link))
 		internal_errorf(1, "unable to allocate memory");
 
-	l = calloc(1, sizeof(struct link) + size);
+	l = malloc(sizeof(struct link) + size);
 	if (l == NULL)
 		internal_errorf(1, "unable to allocate memory");
 	l->next = ap->freelist;
