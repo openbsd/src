@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.216 2017/10/26 15:05:41 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.217 2017/11/02 13:17:37 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -96,9 +96,6 @@
 #if NCARP > 0
 #include <netinet/ip_carp.h>
 #endif
-
-/* backward compatibility for a while... */
-#define COMPAT_IN6IFIOCTL
 
 /*
  * Definitions of some constant IP6 addresses.
