@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs_msdos.c,v 1.4 2017/03/28 00:08:39 jsg Exp $	*/
+/*	$OpenBSD: mkfs_msdos.c,v 1.5 2017/11/02 11:06:54 jca Exp $	*/
 /*	$NetBSD: mkfs_msdos.c,v 1.10 2016/04/03 11:00:13 mlelstv Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <util.h>
 #include <disktab.h>
 
+#include "makefs.h"
 #include "msdos/mkfs_msdos.h"
 
 #define MAXU16	  0xffff	/* maximum unsigned 16-bit quantity */
@@ -592,8 +593,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
     gettimeofday(&tv, NULL);
     now = tv.tv_sec;
     tm = localtime(&now);
-    if (!(img = malloc(bpb.bps)))
-        err(1, NULL);
+    img = emalloc(bpb.bps);
     dir = bpb.res + (bpb.spf ? bpb.spf : bpb.bspf) * bpb.nft;
     signal(SIGINFO, infohandler);
     for (lsn = 0; lsn < dir + (o.fat_type == 32 ? bpb.spc : rds); lsn++) {
