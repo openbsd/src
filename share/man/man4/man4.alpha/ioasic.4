@@ -1,4 +1,4 @@
-.\" $OpenBSD: ioasic.4,v 1.1 2017/11/02 14:04:24 mpi Exp $
+.\" $OpenBSD: ioasic.4,v 1.2 2017/11/02 15:37:58 jmc Exp $
 .\" $NetBSD: ioasic.4,v 1.4 2004/05/11 22:42:47 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Jonathan Stone.
@@ -48,15 +48,15 @@ The
 .Nm
 provides hardware DMA channels and interrupt support for several
 baseboard devices, including one
-.Nm asc
+.Xr asc 4
 SCSI device with a scatter/gather DMA channel, an mc146818-compatible
 .Nm mcclock ,
 an Am7930 audio device
-.Nm bba ,
+.Xr bba 4 ,
 two
-.Nm zs
-dual-port serial devices, and a AMD 7990 LANCE
-.Nm le
+.Xr zs 4
+dual-port serial devices, and an AMD 7990 LANCE
+.Xr le 4
 Ethernet interface.
 .Pp
 The
@@ -76,8 +76,6 @@ Support for scatter-gather DMA eliminates the need for additional copying.
 .Xr bba 4 ,
 .Xr intro 4 ,
 .Xr le 4 ,
-.Xr mcclock 4 ,
-.Xr tc 4 ,
 .Xr zs 4
 .Sh HISTORY
 The

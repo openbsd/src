@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.1 2017/11/02 14:04:24 mpi Exp $
+.\"	$OpenBSD: zs.4,v 1.2 2017/11/02 15:37:58 jmc Exp $
 .\"	$NetBSD: zstty.4,v 1.14 2011/06/07 20:22:56 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,8 +52,6 @@ keyboard and mouse.
 Only the second interface of each
 .Nm
 controller can be used as a regular serial port.
-On alpha TURBOchannel systems, the first channel of
-On alpha systems, the first channel o
 .\" The
 .\" .Nm lskbd
 .\" devices connect keyboard devices to the generic keyboard driver
@@ -62,7 +60,6 @@ On alpha systems, the first channel o
 .\" .Nm vsms
 .\" devices connect mice to the generic mouse driver
 .\" .Xr wsmouse 4 .
-.\" The remaining additional
 The
 .Nm zstty
 interfaces provide RS-423
@@ -74,13 +71,13 @@ driver supports all of the standard
 .Xr tty 4
 ioctl calls.
 The status of the DTR, RTS, CTS, and DCD signals can be queried with
-TIOCMGET command, but, due to limitations in the hardware,
-only the DTR and RTS signals can be modified with TIOCMSET, TIOCMBIC,
+the TIOCMGET command but, due to limitations in the hardware,
+only the DTR and RTS signals can be modified with the TIOCMSET, TIOCMBIC,
 and TIOCMBIS
 .Xr ioctl 2
 commands.
 .Pp
-Input and output for each line may set to any baud rate in the
+Input and output for each line may be set to any baud rate in the
 range 50 to 38400.
 .Sh FILES
 .Bl -tag -width Pa -compact
@@ -90,7 +87,6 @@ range 50 to 38400.
 .Sh DIAGNOSTICS
 .Bl -tag -width indent
 .It zs*: fifo overflow
-.br
 The on-chip
 .Dq FIFO
 has overflowed and incoming data has been lost.
@@ -98,7 +94,6 @@ This generally means the machine is not responding to
 interrupts from the ZS chip fast enough, which can be
 remedied only by using a lower baud rate.
 .It zs*: ring overflow
-.br
 The software input
 .Qq ring
 has overflowed.
