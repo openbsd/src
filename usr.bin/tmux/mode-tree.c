@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.15 2017/10/25 12:13:20 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.16 2017/11/02 21:29:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -595,7 +595,7 @@ mode_tree_draw(struct mode_tree_data *mtd)
 		box = mtd->drawcb(mtd->modedata, mti->itemdata, box_x, box_y);
 	if (box != NULL) {
 		screen_write_cursormove(&ctx, 2, h + 1);
-		screen_write_copy(&ctx, box, 0, 0, box_x, box_y, NULL, NULL);
+		screen_write_fast_copy(&ctx, box, 0, 0, box_x, box_y);
 
 		screen_free(box);
 	}
