@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.39 2017/11/01 14:43:01 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.40 2017/11/02 17:29:16 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -156,22 +156,7 @@ struct octeon_fau_map {
 #define	OCTEON_POW_QOS_XXX_6		6
 #define	OCTEON_POW_QOS_XXX_7		7
 
-#define	OCTEON_POW_GROUP_PIP		0
-#define	OCTEON_POW_GROUP_XXX_1		1
-#define	OCTEON_POW_GROUP_XXX_2		2
-#define	OCTEON_POW_GROUP_XXX_3		3
-#define	OCTEON_POW_GROUP_XXX_4		4
-#define	OCTEON_POW_GROUP_XXX_5		5
-#define	OCTEON_POW_GROUP_XXX_6		6
-#define	OCTEON_POW_GROUP_CORE1_SEND	7
-#define	OCTEON_POW_GROUP_CORE1_TASK_0	8
-#define	OCTEON_POW_GROUP_CORE1_TASK_1	9
-#define	OCTEON_POW_GROUP_CORE1_TASK_2	10
-#define	OCTEON_POW_GROUP_CORE1_TASK_3	11
-#define	OCTEON_POW_GROUP_CORE1_TASK_4	12
-#define	OCTEON_POW_GROUP_CORE1_TASK_5	13
-#define	OCTEON_POW_GROUP_CORE1_TASK_6	14
-#define	OCTEON_POW_GROUP_CORE1_TASK_7	15
+#define	OCTEON_POW_GROUP_MAX		16
 
 /*
  * Octeon board types known to work with OpenBSD/octeon.

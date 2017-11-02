@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.64 2017/05/02 13:26:49 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.65 2017/11/02 17:29:16 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -169,7 +169,6 @@ int	octeon_eth_mbuf_alloc(int);
 
 /* device driver context */
 struct	octeon_eth_softc *octeon_eth_gsc[GMX_PORT_NUNITS];
-void	*octeon_eth_pow_recv_ih;
 
 /* device parameters */
 int	octeon_eth_param_pko_cmd_w0_n2 = 1;
@@ -201,6 +200,7 @@ uint64_t octeon_eth_mac_addr = 0;
 uint32_t octeon_eth_mac_addr_offset = 0;
 
 int	octeon_eth_mbufs_to_alloc;
+int	octeon_eth_npowgroups = 0;
 
 void
 octeon_eth_buf_init(struct octeon_eth_softc *sc)
@@ -245,6 +245,11 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 
 	KASSERT(MCLBYTES >= OCTEON_POOL_SIZE_PKT + CACHE_LINE_SIZE);
 
+	if (octeon_eth_npowgroups >= OCTEON_POW_GROUP_MAX) {
+		printf(": out of POW groups\n");
+		return;
+	}
+
 	atomic_add_int(&octeon_eth_mbufs_to_alloc,
 	    octeon_eth_mbuf_alloc(OCTEON_ETH_MBUFS_PER_PORT));
 
@@ -256,6 +261,7 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gmx_port = ga->ga_gmx_port;
 	sc->sc_smi = ga->ga_smi;
 	sc->sc_phy_addr = ga->ga_phy_addr;
+	sc->sc_powgroup = octeon_eth_npowgroups++;
 
 	sc->sc_init_flag = 0;
 
@@ -323,10 +329,11 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	octeon_eth_buf_init(sc);
 #endif
 
-	if (octeon_eth_pow_recv_ih == NULL)
-		octeon_eth_pow_recv_ih = cn30xxpow_intr_establish(
-		    OCTEON_POW_GROUP_PIP, IPL_NET | IPL_MPSAFE,
-		    octeon_eth_recv_intr, NULL, NULL, cnmac_cd.cd_name);
+	sc->sc_ih = cn30xxpow_intr_establish(
+	    sc->sc_powgroup, IPL_NET | IPL_MPSAFE,
+	    octeon_eth_recv_intr, NULL, NULL, sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL)
+		panic("%s: could not set up interrupt", sc->sc_dev.dv_xname);
 }
 
 /* ---- submodules */
@@ -340,7 +347,7 @@ octeon_eth_pip_init(struct octeon_eth_softc *sc)
 	pip_aa.aa_port = sc->sc_port;
 	pip_aa.aa_regt = sc->sc_regt;
 	pip_aa.aa_tag_type = POW_TAG_TYPE_ORDERED/* XXX */;
-	pip_aa.aa_receive_group = OCTEON_POW_GROUP_PIP;
+	pip_aa.aa_receive_group = sc->sc_powgroup;
 	pip_aa.aa_ip_offset = sc->sc_ip_offset;
 	cn30xxpip_init(&pip_aa, &sc->sc_pip);
 }
@@ -1036,7 +1043,7 @@ octeon_eth_stop(struct ifnet *ifp, int disable)
 
 	cn30xxgmx_port_enable(sc->sc_gmx_port, 0);
 
-	intr_barrier(octeon_eth_pow_recv_ih);
+	intr_barrier(sc->sc_ih);
 	ifq_barrier(&ifp->if_snd);
 
 	ifq_clr_oactive(&ifp->if_snd);
@@ -1072,6 +1079,7 @@ octeon_eth_configure(struct octeon_eth_softc *sc)
 	cn30xxpko_port_config(sc->sc_pko);
 	cn30xxpko_port_enable(sc->sc_pko, 1);
 	cn30xxpip_port_config(sc->sc_pip);
+	cn30xxpow_config(sc->sc_pow, sc->sc_powgroup);
 
 	cn30xxgmx_tx_stats_rd_clr(sc->sc_gmx_port, 1);
 	cn30xxgmx_rx_stats_rd_clr(sc->sc_gmx_port, 1);
@@ -1098,8 +1106,6 @@ octeon_eth_configure_common(struct octeon_eth_softc *sc)
 
 	cn30xxipd_config(sc->sc_ipd);
 	cn30xxpko_config(sc->sc_pko);
-
-	cn30xxpow_config(sc->sc_pow, OCTEON_POW_GROUP_PIP);
 
 	/* Set padding for packets that Octeon does not recognize as IP. */
 	reg = octeon_xkphys_read_8(PIP_GBL_CFG);

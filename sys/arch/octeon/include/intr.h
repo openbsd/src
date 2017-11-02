@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.14 2017/07/28 14:51:46 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.15 2017/11/02 17:29:16 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -156,6 +156,7 @@ struct intrhand {
 	int			 ih_flags;
 #define	IH_ALLOCATED		0x01
 #define	IH_MPSAFE		0x02
+	cpuid_t			 ih_cpuid;
 };
 
 void	intr_barrier(void *);
