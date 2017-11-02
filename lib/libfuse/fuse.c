@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.31 2017/10/25 09:29:46 mpi Exp $ */
+/* $OpenBSD: fuse.c,v 1.32 2017/11/02 13:55:37 mpi Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -70,6 +70,9 @@ fuse_loop(struct fuse *fuse)
 	struct kevent ev;
 	ssize_t n;
 	int ret;
+
+	if (fuse == NULL)
+		return (-1);
 
 	fuse->fc->kq = kqueue();
 	if (fuse->fc->kq == -1)
@@ -156,6 +159,9 @@ fuse_mount(const char *dir, unused struct fuse_args *args)
 	struct fuse_chan *fc;
 	const char *errcause;
 
+	if (dir == NULL)
+		return (NULL);
+
 	fc = calloc(1, sizeof(*fc));
 	if (fc == NULL)
 		return (NULL);
@@ -197,9 +203,9 @@ bad:
 }
 
 void
-fuse_unmount(const char *dir, unused struct fuse_chan *ch)
+fuse_unmount(const char *dir, struct fuse_chan *ch)
 {
-	if (ch->dead)
+	if (ch == NULL || ch->dead)
 		return;
 
 	if (unmount(dir, MNT_UPDATE) == -1)
@@ -207,7 +213,7 @@ fuse_unmount(const char *dir, unused struct fuse_chan *ch)
 }
 
 int
-fuse_is_lib_option(unused const char *opt)
+fuse_is_lib_option(const char *opt)
 {
 	return (fuse_opt_match(fuse_core_opts, opt));
 }
@@ -215,6 +221,9 @@ fuse_is_lib_option(unused const char *opt)
 int
 fuse_chan_fd(struct fuse_chan *ch)
 {
+	if (ch == NULL)
+		return (-1);
+
 	return (ch->fd);
 }
 
@@ -233,10 +242,13 @@ fuse_loop_mt(unused struct fuse *fuse)
 struct fuse *
 fuse_new(struct fuse_chan *fc, unused struct fuse_args *args,
     const struct fuse_operations *ops, unused size_t size,
-    unused void *userdata)
+    void *userdata)
 {
 	struct fuse *fuse;
 	struct fuse_vnode *root;
+
+	if (fc == NULL || ops == NULL)
+		return (NULL);
 
 	if ((fuse = calloc(1, sizeof(*fuse))) == NULL)
 		return (NULL);
@@ -275,8 +287,11 @@ fuse_daemonize(unused int foreground)
 }
 
 void
-fuse_destroy(unused struct fuse *f)
+fuse_destroy(struct fuse *f)
 {
+	if (f == NULL)
+		return;
+
 	close(f->fc->fd);
 	free(f->fc->dir);
 	free(f->fc);
@@ -322,8 +337,11 @@ fuse_remove_signal_handlers(unused struct fuse_session *se)
 }
 
 int
-fuse_set_signal_handlers(unused struct fuse_session *se)
+fuse_set_signal_handlers(struct fuse_session *se)
 {
+	if (se == NULL)
+		return -1;
+
 	sigse = se;
 	signal(SIGHUP, ifuse_get_signal);
 	signal(SIGINT, ifuse_get_signal);
@@ -453,6 +471,9 @@ fuse_version(void)
 void
 fuse_teardown(struct fuse *fuse, char *mp)
 {
+	if (fuse == NULL || mp == NULL)
+		return;
+
 	fuse_unmount(mp, fuse->fc);
 	fuse_destroy(fuse);
 }
@@ -500,10 +521,8 @@ int
 fuse_main(int argc, char **argv, const struct fuse_operations *ops, void *data)
 {
 	struct fuse *fuse;
-	char *mp = NULL;
-	int mt;
 
-	fuse = fuse_setup(argc, argv, ops, sizeof(*ops), &mp, &mt, data);
+	fuse = fuse_setup(argc, argv, ops, sizeof(*ops), NULL, NULL, data);
 	if (!fuse)
 		return (-1);
 
