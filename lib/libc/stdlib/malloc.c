@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.235 2017/10/19 16:34:33 jsing Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.236 2017/11/02 14:01:50 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -600,7 +600,7 @@ omalloc_init(void)
 				mopts.malloc_cache = 0;
 				break;
 			case 's':
-				for (q = "cgj"; *q != '\0'; q++)
+				for (q = "cfgj"; *q != '\0'; q++)
 					omalloc_parseopt(*q);
 				mopts.malloc_cache = MALLOC_DEFAULT_CACHE;
 				break;
