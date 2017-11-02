@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.48 2017/10/05 13:29:18 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.49 2017/11/02 18:26:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -197,7 +197,8 @@ screen_resize(struct screen *s, u_int sx, u_int sy, int reflow)
 		 * is simpler and more reliable so let's do that.
 		 */
 		screen_reset_tabs(s);
-	}
+	} else
+		reflow = 0;
 
 	if (sy != screen_size_y(s))
 		screen_resize_y(s, sy);
