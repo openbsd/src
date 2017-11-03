@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.254 2017/11/03 14:10:33 florian Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.255 2017/11/03 16:23:20 florian Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -286,7 +286,7 @@ route_detach(struct socket *so)
 
 	so->so_pcb = NULL;
 	sofree(so);
-	free(&rop->rcb, M_PCB, 0);
+	free(rop, M_PCB, sizeof(struct routecb));
 
 	return (0);
 }

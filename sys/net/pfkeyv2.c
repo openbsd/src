@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.171 2017/11/03 13:01:20 florian Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.172 2017/11/03 16:23:20 florian Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -284,7 +284,7 @@ pfkeyv2_detach(struct socket *so)
 
 	so->so_pcb = NULL;
 	sofree(so);
-	free(&kp->rcb, M_PCB, 0);
+	free(kp, M_PCB, sizeof(struct keycb));
 	return (0);
 }
 
