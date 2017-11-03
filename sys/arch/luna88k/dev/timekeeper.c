@@ -1,4 +1,4 @@
-/* $OpenBSD: timekeeper.c,v 1.9 2014/06/07 11:55:35 aoyama Exp $ */
+/* $OpenBSD: timekeeper.c,v 1.10 2017/11/03 06:54:06 aoyama Exp $ */
 /* $NetBSD: timekeeper.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -58,8 +58,8 @@ struct timekeeper_softc {
 /*
  * BCD to decimal and decimal to BCD.
  */
-#define FROMBCD(x)      (((x) >> 4) * 10 + ((x) & 0xf))
-#define TOBCD(x)        (((x) / 10 * 16) + ((x) % 10))
+#define FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
+#define TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
 
 int  clock_match(struct device *, void *, void *);
 void clock_attach(struct device *, struct device *, void *);
@@ -69,7 +69,7 @@ struct cfattach clock_ca = {
 };
 
 struct cfdriver clock_cd = {
-        NULL, "clock", DV_DULL
+	NULL, "clock", DV_DULL
 };
 
 void mkclock_get(struct device *, time_t, struct clock_ymdhms *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.24 2017/03/20 19:37:54 miod Exp $ */
+/* $OpenBSD: lunafb.c,v 1.25 2017/11/03 06:54:06 aoyama Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -160,7 +160,7 @@ const struct cfattach fb_ca = {
 };
 
 struct cfdriver fb_cd = {
-        NULL, "fb", DV_DULL
+	NULL, "fb", DV_DULL
 };
 
 /* hardware plane bits; retrieved at boot, will be updated */
@@ -261,8 +261,8 @@ omfbioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		*(u_int *)data = WSDISPLAYIO_DEPTH_1;
 		break;
 
-        case WSDISPLAYIO_SETGFXMODE:
-                return omfb_set_gfxmode(sc, (struct wsdisplay_gfx_mode *)data);
+	case WSDISPLAYIO_SETGFXMODE:
+		return omfb_set_gfxmode(sc, (struct wsdisplay_gfx_mode *)data);
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
@@ -309,7 +309,7 @@ int
 omgetcmap(struct omfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	u_int index = p->index, count = p->count;
-        unsigned int cmsize;
+	unsigned int cmsize;
 	int error;
 
 	cmsize = sc->sc_dc->dc_cmsize;
@@ -339,7 +339,7 @@ omsetcmap(struct omfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	struct hwcmap cmap;
 	u_int index = p->index, count = p->count;
-        unsigned int cmsize, i;
+	unsigned int cmsize, i;
 	int error;
 
 	cmsize = sc->sc_dc->dc_cmsize;
@@ -525,43 +525,43 @@ omfb_list_font(void *v, struct wsdisplay_font *font)
 int
 omfb_set_gfxmode(struct omfb_softc *sc, struct wsdisplay_gfx_mode *wsd_gfxmode)
 {
-        /* LUNA's fb is fixed size */
-        if ((wsd_gfxmode->width != sc->sc_dc->dc_wid)
-                || (wsd_gfxmode->height != sc->sc_dc->dc_ht))
-                        return -1;
+	/* LUNA's fb is fixed size */
+	if ((wsd_gfxmode->width != sc->sc_dc->dc_wid)
+	    || (wsd_gfxmode->height != sc->sc_dc->dc_ht))
+		return -1;
 
 	/* if depth == 0, set the original hardware depth */
 	if (wsd_gfxmode->depth == 0)
 		wsd_gfxmode->depth = hwplanebits;
 
-        switch (wsd_gfxmode->depth) {
-        case 1:
+	switch (wsd_gfxmode->depth) {
+	case 1:
 		/* all frame buffer support this */
 		sc->sc_dc->dc_depth = 1;
 		sc->sc_dc->dc_cmsize = 0;
-                break;
-        case 4:
+		break;
+	case 4:
 		if ((hwplanebits == 4) || (hwplanebits == 8)) {
 			sc->sc_dc->dc_depth = 4;
 			sc->sc_dc->dc_cmsize = 16;
 			break;
 		} else
 			return -1;
-        case 8:
+	case 8:
 		if (hwplanebits == 8) {
 			sc->sc_dc->dc_depth = 8;
 			sc->sc_dc->dc_cmsize = 256;
 			break;
 		} else
 			return -1;
-        default:
-                return -1;
-        }
+	default:
+		return -1;
+	}
 
 	omfb_set_default_cmap(sc->sc_dc);
 	omfb_clear_framebuffer(sc->sc_dc);
 
-        return 0;
+	return 0;
 }
 
 /*

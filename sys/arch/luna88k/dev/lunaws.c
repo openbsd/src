@@ -1,4 +1,4 @@
-/*	$OpenBSD: lunaws.c,v 1.14 2017/06/10 12:23:00 aoyama Exp $	*/
+/*	$OpenBSD: lunaws.c,v 1.15 2017/11/03 06:54:06 aoyama Exp $	*/
 /* $NetBSD: lunaws.c,v 1.6 2002/03/17 19:40:42 atatat Exp $ */
 
 /*-
@@ -140,7 +140,7 @@ const struct cfattach ws_ca = {
 };
 
 struct cfdriver ws_cd = {
-        NULL, "ws", DV_TTY
+	NULL, "ws", DV_TTY
 };
 
 extern int  syscngetc(dev_t);
@@ -210,9 +210,9 @@ ws_submatch_kbd(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 
-        if (strcmp(cf->cf_driver->cd_name, "wskbd"))
-                return (0);
-        return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	if (strcmp(cf->cf_driver->cd_name, "wskbd"))
+		return (0);
+	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
 #if NWSMOUSE > 0
@@ -222,9 +222,9 @@ ws_submatch_mouse(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 
-        if (strcmp(cf->cf_driver->cd_name, "wsmouse"))
-                return (0);
-        return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	if (strcmp(cf->cf_driver->cd_name, "wsmouse"))
+		return (0);
+	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
 #endif

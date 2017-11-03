@@ -1,4 +1,4 @@
-/* $OpenBSD: lcd.c,v 1.9 2017/03/20 19:37:54 miod Exp $ */
+/* $OpenBSD: lcd.c,v 1.10 2017/11/03 06:54:06 aoyama Exp $ */
 /* $NetBSD: lcd.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -65,13 +65,13 @@
 
 struct pio {
 	volatile u_int8_t portA;
-        volatile unsigned : 24;
+	volatile unsigned : 24;
 	volatile u_int8_t portB;
-        volatile unsigned : 24;
+	volatile unsigned : 24;
 	volatile u_int8_t portC;
-        volatile unsigned : 24;
+	volatile unsigned : 24;
 	volatile u_int8_t cntrl;
-        volatile unsigned : 24;
+	volatile unsigned : 24;
 };
 
 /* Autoconf stuff */

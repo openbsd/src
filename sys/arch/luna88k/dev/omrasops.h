@@ -27,8 +27,8 @@
 /*
  * Replacement Rules (rops) (derived from hp300)
  */
-#define RR_CLEAR        0x0
-#define RR_COPY         0x3
+#define RR_CLEAR	0x0
+#define RR_COPY		0x3
 
 /*
  * ROP function

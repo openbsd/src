@@ -1,4 +1,4 @@
-/*	$OpenBSD: maskbits.h,v 1.2 2014/01/02 15:30:34 aoyama Exp $	*/
+/*	$OpenBSD: maskbits.h,v 1.3 2017/11/03 06:54:06 aoyama Exp $	*/
 /*	$NetBSD: maskbits.h,v 1.3 1997/03/31 07:37:28 scottr Exp $	*/
 
 /*-
@@ -74,8 +74,8 @@ do {									\
  * handle display memory images.
  */
  
-#define OMFB_MBL(x,y)        ((y) > 31 ? 0 : (x) << (y))
-#define OMFB_MBR(x,y)        ((y) > 31 ? 0 : (x) >> (y))
+#define OMFB_MBL(x,y)	((y) > 31 ? 0 : (x) << (y))
+#define OMFB_MBR(x,y)	((y) > 31 ? 0 : (x) >> (y))
 
 /*
  * And, our private version of GETBITS/PUTBITS.
@@ -118,7 +118,7 @@ do {									\
 
 #define getunalignedword(psrc, x, dst)					\
 do {									\
-        u_int32_t _tmp; 						\
-        OMFB_GETBITS(psrc, x, 32, _tmp);				\
-        dst = _tmp;							\
+	u_int32_t _tmp; 						\
+	OMFB_GETBITS(psrc, x, 32, _tmp);				\
+	dst = _tmp;							\
 } while (0)

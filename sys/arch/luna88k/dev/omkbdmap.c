@@ -1,4 +1,4 @@
-/*	$OpenBSD: omkbdmap.c,v 1.2 2013/11/16 18:31:44 miod Exp $	*/
+/*	$OpenBSD: omkbdmap.c,v 1.3 2017/11/03 06:54:06 aoyama Exp $	*/
 
 /* Partially from:
  *	$NetBSD: lunaws.c,v 1.6 2002/03/17 19:40:42 atatat Exp $
@@ -294,6 +294,6 @@ static const keysym_t omkbd_keydesc_jp[] = {
 #define	SIZE(map) (sizeof(map)/sizeof(keysym_t))
 
 const struct wscons_keydesc omkbd_keydesctab[] = {
-       { KB_JP, 0, SIZE(omkbd_keydesc_jp), omkbd_keydesc_jp, },
-       { 0, 0, 0, 0 },
+	{ KB_JP, 0, SIZE(omkbd_keydesc_jp), omkbd_keydesc_jp, },
+	{ 0, 0, 0, 0 },
 };
