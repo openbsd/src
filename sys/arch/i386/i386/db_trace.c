@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.30 2017/10/17 19:23:09 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.31 2017/11/03 11:29:46 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -257,7 +257,10 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 				narg = db_i386_numargs(frame);
 		}
 
-		(*pr)("%s(", name);
+		if (name == NULL)
+			(*pr)("%lx(", callpc);
+		else
+			(*pr)("%s(", name);
 
 		if (lastframe == 0 && offset == 0 && !have_addr) {
 			/*

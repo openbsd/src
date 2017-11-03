@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.41 2017/07/16 22:48:38 guenther Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.42 2017/11/03 11:29:46 jasper Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -256,7 +256,10 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		sym = db_search_symbol(pc, DB_STGY_ANY, &off);
 		db_symbol_values (sym, &name, NULL);
 
-		(*pr)("%s(", name);
+		if (name == NULL)
+			(*pr)("%lx(", pc);
+		else
+			(*pr)("%s(", name);
 
 		/* args */
 		nargs = 4;

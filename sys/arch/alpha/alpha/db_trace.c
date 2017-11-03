@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.21 2017/10/13 19:00:35 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.22 2017/11/03 11:29:46 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -197,12 +197,14 @@ trapframe:
 
 	while (count-- && pc >= (db_addr_t)KERNBASE && pc < (db_addr_t)&etext) {
 		db_find_sym_and_offset(pc, &name, &offset);
-		if (!name) {
-			name = "?";
+
+		if (name == NULL) {
+			(*pr)("%lx(", pc);
 			/* Limit the search for procedure start */
 			offset = 65536;
+		} else {
+			(*pr)("%s(", name);
 		}
-		(*pr)("%s(", name);
 
 		framesize = 0;
 		for (i = sizeof (int); i <= offset; i += sizeof (int)) {
