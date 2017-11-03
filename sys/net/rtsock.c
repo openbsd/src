@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.252 2017/11/02 14:01:18 florian Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.253 2017/11/03 13:01:20 florian Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -224,12 +224,16 @@ route_attach(struct socket *so, int proto)
 
 	if (curproc == NULL)
 		error = EACCES;
-	else
-		error = raw_attach(so, proto);
+	else 
+		error = soreserve(so, RAWSNDQ, RAWRCVQ);
 	if (error) {
 		free(rop, M_PCB, sizeof(struct routecb));
 		return (error);
 	}
+	rp->rcb_socket = so;
+	rp->rcb_proto.sp_family = so->so_proto->pr_domain->dom_family;
+	rp->rcb_proto.sp_protocol = proto;
+
 	rop->rtableid = curproc->p_p->ps_rtableid;
 	switch (rp->rcb_proto.sp_protocol) {
 	case AF_INET:
@@ -259,12 +263,17 @@ int
 route_detach(struct socket *so)
 {
 	struct routecb	*rop;
+	struct rawcb	*rp;
 	int		 af;
 
 	soassertlocked(so);
 
 	rop = sotoroutecb(so);
 	if (rop == NULL)
+		return (EINVAL);
+
+	rp = sotorawcb(so);
+	if (rp == NULL)
 		return (EINVAL);
 
 	timeout_del(&rop->timeout);
@@ -279,7 +288,12 @@ route_detach(struct socket *so)
 #endif
 	route_cb.any_count--;
 	LIST_REMOVE(rop, rcb_list);
-	return (raw_detach(so));
+
+	so->so_pcb = NULL;
+	sofree(so);
+	free(rp, M_PCB, 0);
+
+	return (0);
 }
 
 int

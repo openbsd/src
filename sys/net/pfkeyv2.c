@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.170 2017/11/02 14:01:18 florian Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.171 2017/11/03 13:01:20 florian Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -229,11 +229,16 @@ pfkeyv2_attach(struct socket *so, int proto)
 	rp = &kp->rcb;
 	so->so_pcb = rp;
 
-	error = raw_attach(so, proto);
+	error = soreserve(so, RAWSNDQ, RAWRCVQ);
+
 	if (error) {
 		free(kp, M_PCB, sizeof(struct keycb));
 		return (error);
 	}
+
+	rp->rcb_socket = so;
+	rp->rcb_proto.sp_family = so->so_proto->pr_domain->dom_family;
+	rp->rcb_proto.sp_protocol = proto;
 
 	so->so_options |= SO_USELOOPBACK;
 	soisconnected(so);
@@ -277,7 +282,9 @@ pfkeyv2_detach(struct socket *so)
 		mtx_leave(&pfkeyv2_mtx);
 	}
 
-	raw_do_detach(&kp->rcb);
+	so->so_pcb = NULL;
+	sofree(so);
+	free(&kp->rcb, M_PCB, 0);
 	return (0);
 }
 
