@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp.c,v 1.181 2017/10/21 23:06:24 millert Exp $ */
+/* $OpenBSD: sftp.c,v 1.182 2017/11/03 03:46:52 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -194,8 +194,6 @@ static const struct CMD cmds[] = {
 	{ "?",		I_HELP,		NOARGS	},
 	{ NULL,		-1,		-1	}
 };
-
-int interactive_loop(struct sftp_conn *, char *file1, char *file2);
 
 /* ARGSUSED */
 static void
@@ -1260,7 +1258,7 @@ parse_args(const char **cpp, int *ignore_errors, int *aflag,
 	char *cp2, **argv;
 	int base = 0;
 	long l;
-	int i, cmdnum, optidx, argc;
+	int path1_mandatory = 0, i, cmdnum, optidx, argc;
 
 	/* Skip leading whitespace */
 	cp = cp + strspn(cp, WHITESPACE);
@@ -1350,13 +1348,17 @@ parse_args(const char **cpp, int *ignore_errors, int *aflag,
 	case I_RM:
 	case I_MKDIR:
 	case I_RMDIR:
+	case I_LMKDIR:
+		path1_mandatory = 1;
+		/* FALLTHROUGH */
 	case I_CHDIR:
 	case I_LCHDIR:
-	case I_LMKDIR:
 		if ((optidx = parse_no_flags(cmd, argv, argc)) == -1)
 			return -1;
 		/* Get pathname (mandatory) */
 		if (argc - optidx < 1) {
+			if (!path1_mandatory)
+				break; /* return a NULL path1 */
 			error("You must specify a path after a %s command.",
 			    cmd);
 			return -1;
@@ -1441,7 +1443,7 @@ parse_args(const char **cpp, int *ignore_errors, int *aflag,
 
 static int
 parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd,
-    int err_abort)
+    const char *startdir, int err_abort)
 {
 	char *path1, *path2, *tmp;
 	int ignore_errors = 0, aflag = 0, fflag = 0, hflag = 0,
@@ -1521,6 +1523,8 @@ parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd,
 		err = do_rmdir(conn, path1);
 		break;
 	case I_CHDIR:
+		if (path1 == NULL || *path1 == '\0')
+			path1 = xstrdup(startdir);
 		path1 = make_absolute(path1, *pwd);
 		if ((tmp = do_realpath(conn, path1)) == NULL) {
 			err = 1;
@@ -1569,6 +1573,8 @@ parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd,
 		err = do_df(conn, path1, hflag, iflag);
 		break;
 	case I_LCHDIR:
+		if (path1 == NULL || *path1 == '\0')
+			path1 = xstrdup("~");
 		tmp = tilde_expand_filename(path1, getuid());
 		free(path1);
 		path1 = tmp;
@@ -2053,11 +2059,11 @@ complete(EditLine *el, int ch)
 	return ret;
 }
 
-int
+static int
 interactive_loop(struct sftp_conn *conn, char *file1, char *file2)
 {
 	char *remote_path;
-	char *dir = NULL;
+	char *dir = NULL, *startdir = NULL;
 	char cmd[2048];
 	int err, interactive;
 	EditLine *el = NULL;
@@ -2099,6 +2105,7 @@ interactive_loop(struct sftp_conn *conn, char *file1, char *file2)
 	remote_path = do_realpath(conn, ".");
 	if (remote_path == NULL)
 		fatal("Need cwd");
+	startdir = xstrdup(remote_path);
 
 	if (file1 != NULL) {
 		dir = xstrdup(file1);
@@ -2109,8 +2116,9 @@ interactive_loop(struct sftp_conn *conn, char *file1, char *file2)
 				mprintf("Changing to: %s\n", dir);
 			snprintf(cmd, sizeof cmd, "cd \"%s\"", dir);
 			if (parse_dispatch_command(conn, cmd,
-			    &remote_path, 1) != 0) {
+			    &remote_path, startdir, 1) != 0) {
 				free(dir);
+				free(startdir);
 				free(remote_path);
 				free(conn);
 				return (-1);
@@ -2122,8 +2130,9 @@ interactive_loop(struct sftp_conn *conn, char *file1, char *file2)
 			    file2 == NULL ? "" : " ",
 			    file2 == NULL ? "" : file2);
 			err = parse_dispatch_command(conn, cmd,
-			    &remote_path, 1);
+			    &remote_path, startdir, 1);
 			free(dir);
+			free(startdir);
 			free(remote_path);
 			free(conn);
 			return (err);
@@ -2179,11 +2188,12 @@ interactive_loop(struct sftp_conn *conn, char *file1, char *file2)
 		signal(SIGINT, cmd_interrupt);
 
 		err = parse_dispatch_command(conn, cmd, &remote_path,
-		    batchmode);
+		    startdir, batchmode);
 		if (err != 0)
 			break;
 	}
 	free(remote_path);
+	free(startdir);
 	free(conn);
 
 	if (el != NULL)
