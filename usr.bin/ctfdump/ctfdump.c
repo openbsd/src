@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.17 2017/10/28 09:30:27 mpi Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.18 2017/11/03 12:53:38 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -374,8 +374,8 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 
 			l = printf("  [%zu] FUNC ", i);
 			if (s != NULL)
-				printf("(%s)", s);
-			printf(" returns: %u args: (", *fsp++);
+				printf("(%s) ", s);
+			printf("returns: %u args: (", *fsp++);
 			while (vlen-- > 0 && fsp < fend)
 				printf("%u%s", *fsp++, (vlen > 0) ? ", " : "");
 			printf(")\n");
