@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.164 2017/08/09 06:21:04 florian Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.165 2017/11/03 14:28:57 florian Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -60,111 +60,15 @@
 int rt6_deleteroute(struct rtentry *, void *, unsigned int);
 
 /*
- * Receive Router Solicitation Message - just for routers.
- * Router solicitation/advertisement is mostly managed by userland program
- * (rtadvd) so here we have no function like nd6_ra_output().
- *
- * Based on RFC 2461
+ * Process Source Link-layer Address Options from 
+ * Router Solicitation / Advertisement Messages.
  */
 void
-nd6_rs_input(struct mbuf *m, int off, int icmp6len)
+nd6_rtr_cache(struct mbuf *m, int off, int icmp6len, int icmp6_type)
 {
 	struct ifnet *ifp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_router_solicit *nd_rs;
-	struct in6_addr saddr6 = ip6->ip6_src;
-#if 0
-	struct in6_addr daddr6 = ip6->ip6_dst;
-#endif
-	char *lladdr = NULL;
-	int lladdrlen = 0;
-#if 0
-	struct sockaddr_dl *sdl = NULL;
-	struct llinfo_nd6 *ln = NULL;
-	struct rtentry *rt = NULL;
-	int is_newentry;
-#endif
-	union nd_opts ndopts;
-	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
-
-	/* If I'm not a router, ignore it. XXX - too restrictive? */
-	if (!ip6_forwarding)
-		goto freeit;
-
-	/* Sanity checks */
-	if (ip6->ip6_hlim != 255) {
-		nd6log((LOG_ERR,
-		    "nd6_rs_input: invalid hlim (%d) from %s to %s on %u\n",
-		    ip6->ip6_hlim,
-		    inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src)),
-		    inet_ntop(AF_INET6, &ip6->ip6_dst, dst, sizeof(dst)),
-		    m->m_pkthdr.ph_ifidx));
-		goto bad;
-	}
-
-	/*
-	 * Don't update the neighbor cache, if src = ::.
-	 * This indicates that the src has no IP address assigned yet.
-	 */
-	if (IN6_IS_ADDR_UNSPECIFIED(&saddr6))
-		goto freeit;
-
-	IP6_EXTHDR_GET(nd_rs, struct nd_router_solicit *, m, off, icmp6len);
-	if (nd_rs == NULL) {
-		icmp6stat_inc(icp6s_tooshort);
-		return;
-	}
-
-	icmp6len -= sizeof(*nd_rs);
-	nd6_option_init(nd_rs + 1, icmp6len, &ndopts);
-	if (nd6_options(&ndopts) < 0) {
-		nd6log((LOG_INFO,
-		    "nd6_rs_input: invalid ND option, ignored\n"));
-		/* nd6_options have incremented stats */
-		goto freeit;
-	}
-
-	if (ndopts.nd_opts_src_lladdr) {
-		lladdr = (char *)(ndopts.nd_opts_src_lladdr + 1);
-		lladdrlen = ndopts.nd_opts_src_lladdr->nd_opt_len << 3;
-	}
-
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp == NULL)
-		goto freeit;
-
-	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
-		nd6log((LOG_INFO,
-		    "nd6_rs_input: lladdrlen mismatch for %s "
-		    "(if %d, RS packet %d)\n",
-		    inet_ntop(AF_INET6, &saddr6, src, sizeof(src)),
-		    ifp->if_addrlen, lladdrlen - 2));
-		if_put(ifp);
-		goto bad;
-	}
-
-	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_SOLICIT, 0);
-	if_put(ifp);
-
- freeit:
-	m_freem(m);
-	return;
-
- bad:
-	icmp6stat_inc(icp6s_badrs);
-	m_freem(m);
-}
-
-/*
- * Receive Router Advertisement Message.
- *
- * Based on RFC 2461
- */
-void
-nd6_ra_input(struct mbuf *m, int off, int icmp6len)
-{
-	struct ifnet *ifp;
-	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_router_advert *nd_ra;
 	struct in6_addr saddr6 = ip6->ip6_src;
 	char *lladdr = NULL;
@@ -172,35 +76,62 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	union nd_opts ndopts;
 	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
+	KASSERT(icmp6_type == ND_ROUTER_SOLICIT || icmp6_type ==
+	    ND_ROUTER_ADVERT);
+
 	/* Sanity checks */
 	if (ip6->ip6_hlim != 255) {
 		nd6log((LOG_ERR,
-		    "nd6_ra_input: invalid hlim (%d) from %s to %s on %u\n",
-		    ip6->ip6_hlim,
+		    "%s: invalid hlim (%d) from %s to %s on %u\n",
+		    __func__, ip6->ip6_hlim,
 		    inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src)),
 		    inet_ntop(AF_INET6, &ip6->ip6_dst, dst, sizeof(dst)),
 		    m->m_pkthdr.ph_ifidx));
 		goto bad;
 	}
 
-	if (!IN6_IS_ADDR_LINKLOCAL(&saddr6)) {
-		nd6log((LOG_ERR,
-		    "nd6_ra_input: src %s is not link-local\n",
-		    inet_ntop(AF_INET6, &saddr6, src, sizeof(src))));
-		goto bad;
+	switch (icmp6_type) {
+	case ND_ROUTER_SOLICIT:
+		/*
+		 * Don't update the neighbor cache, if src = ::.
+		 * This indicates that the src has no IP address assigned yet.
+		 */
+		if (IN6_IS_ADDR_UNSPECIFIED(&saddr6))
+			goto freeit;
+
+		IP6_EXTHDR_GET(nd_rs, struct nd_router_solicit *, m, off,
+		    icmp6len);
+		if (nd_rs == NULL) {
+			icmp6stat_inc(icp6s_tooshort);
+			return;
+		}
+
+		icmp6len -= sizeof(*nd_rs);
+		nd6_option_init(nd_rs + 1, icmp6len, &ndopts);
+		break;
+	case ND_ROUTER_ADVERT:
+		if (!IN6_IS_ADDR_LINKLOCAL(&saddr6)) {
+			nd6log((LOG_ERR,
+			    "%s: src %s is not link-local\n", __func__,
+			    inet_ntop(AF_INET6, &saddr6, src, sizeof(src))));
+			goto bad;
+		}
+
+		IP6_EXTHDR_GET(nd_ra, struct nd_router_advert *, m, off,
+		    icmp6len);
+		if (nd_ra == NULL) {
+			icmp6stat_inc(icp6s_tooshort);
+			return;
+		}
+
+		icmp6len -= sizeof(*nd_ra);
+		nd6_option_init(nd_ra + 1, icmp6len, &ndopts);
+		break;
 	}
 
-	IP6_EXTHDR_GET(nd_ra, struct nd_router_advert *, m, off, icmp6len);
-	if (nd_ra == NULL) {
-		icmp6stat_inc(icp6s_tooshort);
-		return;
-	}
-
-	icmp6len -= sizeof(*nd_ra);
-	nd6_option_init(nd_ra + 1, icmp6len, &ndopts);
 	if (nd6_options(&ndopts) < 0) {
 		nd6log((LOG_INFO,
-		    "nd6_ra_input: invalid ND option, ignored\n"));
+		    "%s: invalid ND option, ignored\n", __func__));
 		/* nd6_options have incremented stats */
 		goto freeit;
 	}
@@ -216,15 +147,14 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
 		nd6log((LOG_INFO,
-		    "nd6_ra_input: lladdrlen mismatch for %s "
-		    "(if %d, RA packet %d)\n",
-		    inet_ntop(AF_INET6, &saddr6, src, sizeof(src)),
+		    "%s: lladdrlen mismatch for %s (if %d, RA/RS packet %d)\n",
+		     __func__, inet_ntop(AF_INET6, &saddr6, src, sizeof(src)),
 		    ifp->if_addrlen, lladdrlen - 2));
 		if_put(ifp);
 		goto bad;
 	}
 
-	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_ADVERT, 0);
+	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, icmp6_type, 0);
 	if_put(ifp);
 
  freeit:
@@ -232,7 +162,8 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	return;
 
  bad:
-	icmp6stat_inc(icp6s_badra);
+	icmp6stat_inc(icmp6_type == ND_ROUTER_SOLICIT ? icp6s_badrs :
+	    icp6s_badra);
 	m_freem(m);
 }
 
