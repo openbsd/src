@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.c,v 1.13 2017/11/02 14:01:18 florian Exp $	*/
+/*	$OpenBSD: raw_cb.c,v 1.14 2017/11/03 12:49:42 florian Exp $	*/
 /*	$NetBSD: raw_cb.c,v 1.9 1996/02/13 22:00:39 christos Exp $	*/
 
 /*
@@ -103,14 +103,4 @@ raw_do_detach(struct rawcb *rp)
 	so->so_pcb = 0;
 	sofree(so);
 	free((caddr_t)(rp), M_PCB, 0);
-}
-
-/*
- * Disconnect and possibly release resources.
- */
-void
-raw_disconnect(struct rawcb *rp)
-{
-	if (rp->rcb_socket->so_state & SS_NOFDREF)
-		raw_do_detach(rp);
 }
