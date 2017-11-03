@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.28 2017/02/15 21:28:23 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.29 2017/11/03 17:12:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1709,6 +1709,10 @@ slot_attach(struct slot *s)
 			enc_init(&s->sub.enc, &s->par, slot_nch);
 			s->sub.encbuf =
 			    xmalloc(s->round * slot_nch * sizeof(adata_t));
+			enc_sil_do(&s->sub.enc, s->sub.buf.data, s->appbufsz);
+		} else {
+			memset(s->sub.buf.data, 0,
+			    s->appbufsz * slot_nch * sizeof(adata_t));
 		}
 
 		/*
