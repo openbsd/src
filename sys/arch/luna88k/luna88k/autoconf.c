@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.21 2014/04/22 22:58:02 aoyama Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.22 2017/11/03 09:07:54 aoyama Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -42,7 +42,7 @@
 
 #include <uvm/uvm.h>
 
-#include <machine/asm_macro.h>   /* enable/disable interrupts */
+#include <machine/asm_macro.h>	/* enable/disable interrupts */
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/vmparam.h>
@@ -61,7 +61,7 @@
 void	dumpconf(void);
 void	get_autoboot_device(void);
 
-int cold = 1;   /* 1 if still booting */
+int cold = 1;	/* 1 if still booting */
 
 void *bootaddr;
 int bootpart;
@@ -157,24 +157,24 @@ get_autoboot_device(void)
 void
 device_register(struct device *dev, void *aux)
 {
-        /*
-         * scsi: sd,cd  XXX: Can LUNA-88K boot from CD-ROM?
-         */
-        if (strcmp("sd", dev->dv_cfdata->cf_driver->cd_name) == 0 ||
-            strcmp("cd", dev->dv_cfdata->cf_driver->cd_name) == 0) {
+	/*
+	 * scsi: sd,cd  XXX: Can LUNA-88K boot from CD-ROM?
+	 */
+	if (strcmp("sd", dev->dv_cfdata->cf_driver->cd_name) == 0 ||
+	    strcmp("cd", dev->dv_cfdata->cf_driver->cd_name) == 0) {
 		struct scsi_attach_args *sa = aux;
 		struct device *spcsc;
 
 		spcsc = dev->dv_parent->dv_parent;
 
-                if (strcmp(spcsc->dv_xname, autoboot.cont) == 0 &&
+		if (strcmp(spcsc->dv_xname, autoboot.cont) == 0 &&
 		    sa->sa_sc_link->target == autoboot.targ &&
 		    sa->sa_sc_link->lun == 0) {
-                        bootdv = dev;
+			bootdv = dev;
 			bootpart = autoboot.part;
-                        return;
-                }
-        }
+			return;
+		}
+	}
 }
 
 struct nam2blk nam2blk[] = {

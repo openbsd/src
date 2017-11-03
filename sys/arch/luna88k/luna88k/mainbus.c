@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.14 2017/02/08 13:13:15 aoyama Exp $ */
+/* $OpenBSD: mainbus.c,v 1.15 2017/11/03 09:07:54 aoyama Exp $ */
 /* $NetBSD: mainbus.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -53,8 +53,8 @@ static const struct mainbus_attach_args devs[] = {
 	{ "xp",    0x71000000, 1,  LUNA_88K|LUNA_88K2 }, /* HD647180XP */
 	{ "fb",	   0xc1100000, -1, LUNA_88K|LUNA_88K2 }, /* BrookTree RAMDAC */
 	{ "spc",   0xe1000000, 3,  LUNA_88K|LUNA_88K2 }, /* MB89352 */
-	{ "spc",   0xe1000040, 3,  LUNA_88K2 },          /* ditto, LUNA-88K2 only */
-	{ "cbus",  0x91000000, 4,  LUNA_88K2 },		 /* PC-9801 extension slot */
+	{ "spc",   0xe1000040, 3,  LUNA_88K2 },	/* ditto, LUNA-88K2 only */
+	{ "cbus",  0x91000000, 4,  LUNA_88K2 },	/* PC-9801 extension slot */
 };
 
 void	mainbus_attach(struct device *, struct device *, void *);
@@ -69,7 +69,7 @@ const struct cfattach mainbus_ca = {
 };
 
 struct cfdriver mainbus_cd = {
-        NULL, "mainbus", DV_DULL, 0
+	NULL, "mainbus", DV_DULL, 0
 };
 
 int

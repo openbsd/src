@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.125 2017/05/29 14:19:50 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.126 2017/11/03 09:07:54 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -149,7 +149,7 @@ struct fuse_rom_byte {
 	u_int32_t h;
 	u_int32_t l;
 };
-#define FUSE_ROM_BYTES        (FUSE_ROM_SPACE / sizeof(struct fuse_rom_byte))
+#define FUSE_ROM_BYTES	(FUSE_ROM_SPACE / sizeof(struct fuse_rom_byte))
 char fuse_rom_data[FUSE_ROM_BYTES];
 
 #define NNVSYM		8
@@ -237,11 +237,11 @@ consinit()
 	 * Initialize the console before we print anything out.
 	 */
 	if (sysconsole == 0) {
-                syscnattach(0);
-        } else {
-                omfb_cnattach();
-                ws_cnattach();
-        }
+		syscnattach(0);
+	} else {
+		omfb_cnattach();
+		ws_cnattach();
+	}
 
 #if defined(DDB)
 	db_machine_init();
@@ -327,9 +327,9 @@ cpu_startup()
 		machtype = LUNA_88K2;
 	}
 
-        /* Determine the 'auto-boot' device from NVRAM data */
-        get_nvram_data();
-        get_autoboot_device();
+	/* Determine the 'auto-boot' device from NVRAM data */
+	get_nvram_data();
+	get_autoboot_device();
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -727,12 +727,12 @@ secondary_pre_main()
 {
 	struct cpu_info *ci;
 
-        /*
-         * Invoke the CMMU initialization routine as early as possible,
-         * so that we do not risk any memory writes to be lost during
-         * cache setup.
-         */
-        cmmu_initialize_cpu(cmmu_cpu_number());
+	/*
+	 * Invoke the CMMU initialization routine as early as possible,
+	 * so that we do not risk any memory writes to be lost during
+	 * cache setup.
+	 */
+	cmmu_initialize_cpu(cmmu_cpu_number());
 
 	/*
 	 * Now initialize your cpu_info structure.
@@ -1149,8 +1149,8 @@ get_fuse_rom_data(void)
 	for (i = 0; i < FUSE_ROM_BYTES; i++) {
 		fuse_rom_data[i] =
 		    (char)((((p->h) >> 24) & 0x000000f0) |
-		           (((p->l) >> 28) & 0x0000000f));
-		p++;                                                                            
+			   (((p->l) >> 28) & 0x0000000f));
+		p++;
 	}
 }
 
