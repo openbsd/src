@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.36 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.37 2017/11/03 16:46:17 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -634,17 +634,13 @@ cn30xxgmx_set_mac_addr(struct cn30xxgmx_port_softc *sc, uint8_t *addr)
 	return 0;
 }
 
-#define	OCTEON_ETH_USE_GMX_CAM
-
 int
 cn30xxgmx_set_filter(struct cn30xxgmx_port_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_port_ac->ac_if;
 	struct arpcom *ac = sc->sc_port_ac;
-#ifdef OCTEON_ETH_USE_GMX_CAM
 	struct ether_multi *enm;
 	struct ether_multistep step;
-#endif
 	uint64_t cam_en = 0x01ULL;
 	uint64_t ctl = 0;
 	int multi = 0;
@@ -670,7 +666,6 @@ cn30xxgmx_set_filter(struct cn30xxgmx_port_softc *sc)
 		SET(ifp->if_flags, IFF_ALLMULTI);
 		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
 	} else {
-#ifdef OCTEON_ETH_USE_GMX_CAM
 		/*
 		 * Note first entry is self MAC address; other 7 entires are
 		 * available for multicast addresses.
@@ -715,15 +710,6 @@ cn30xxgmx_set_filter(struct cn30xxgmx_port_softc *sc)
 			SET(ctl, RXN_ADR_CTL_MCST_REJECT);
 
 		OCTEON_ETH_KASSERT(enm == NULL);
-#else
-		/*
-		 * XXX
-		 * Never use DMAC filter for multicast addresses, but register
-		 * only single entry for self address.  FreeBSD code do so.
-		 */
-		SET(ifp->if_flags, IFF_ALLMULTI);
-		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
-#endif
 	}
 
 	dprintf("ctl = %llx, cam_en = %llx\n", ctl, cam_en);
@@ -1320,98 +1306,6 @@ cn30xxgmx_stats(struct cn30xxgmx_port_softc *sc)
 	tmp = _GMX_PORT_RD8(sc, GMX0_TX0_STAT9);
 	ifp->if_oerrors += (uint32_t)(tmp >> 32);
 }
-
-/* ---- DMAC filter */
-
-#ifdef notyet
-/*
- * DMAC filter configuration
- *	accept all
- *	reject 0 addrs (virtually accept all?)
- *	reject N addrs
- *	accept N addrs
- *	accept 0 addrs (virtually reject all?)
- *	reject all
- */
-
-/* XXX local namespace */
-#define	_POLICY			CN30XXGMX_FILTER_POLICY
-#define	_POLICY_ACCEPT_ALL	CN30XXGMX_FILTER_POLICY_ACCEPT_ALL
-#define	_POLICY_ACCEPT		CN30XXGMX_FILTER_POLICY_ACCEPT
-#define	_POLICY_REJECT		CN30XXGMX_FILTER_POLICY_REJECT
-#define	_POLICY_REJECT_ALL	CN30XXGMX_FILTER_POLICY_REJECT_ALL
-
-int	cn30xxgmx_setfilt_addrs(struct cn30xxgmx_port_softc *,
-	    size_t, uint8_t **);
-
-int
-cn30xxgmx_setfilt(struct cn30xxgmx_port_softc *sc, enum _POLICY policy,
-    size_t naddrs, uint8_t **addrs)
-{
-	uint64_t rx_adr_ctl;
-
-	KASSERT(policy >= _POLICY_ACCEPT_ALL);
-	KASSERT(policy <= _POLICY_REJECT_ALL);
-
-	rx_adr_ctl = _GMX_PORT_RD8(sc, GMX0_RX0_ADR_CTL);
-	CLR(rx_adr_ctl, RXN_ADR_CTL_CAM_MODE | RXN_ADR_CTL_MCST);
-
-	switch (policy) {
-	case _POLICY_ACCEPT_ALL:
-	case _POLICY_REJECT_ALL:
-		KASSERT(naddrs == 0);
-		KASSERT(addrs == NULL);
-
-		SET(rx_adr_ctl, (policy == _POLICY_ACCEPT_ALL) ?
-		    RXN_ADR_CTL_MCST_ACCEPT : RXN_ADR_CTL_MCST_REJECT);
-		break;
-	case _POLICY_ACCEPT:
-	case _POLICY_REJECT:
-		if (naddrs > CN30XXGMX_FILTER_NADDRS_MAX)
-			return E2BIG;
-		SET(rx_adr_ctl, (policy == _POLICY_ACCEPT) ?
-		    RXN_ADR_CTL_CAM_MODE : 0);
-		SET(rx_adr_ctl, RXN_ADR_CTL_MCST_AFCAM);
-		/* set GMX0_RXN_ADR_CAM_EN, GMX0_RXN_ADR_CAM[0-5] */
-		cn30xxgmx_setfilt_addrs(sc, naddrs, addrs);
-		break;
-	}
-
-	/* set GMX0_RXN_ADR_CTL[MCST] */
-	_GMX_PORT_WR8(sc, GMX0_RX0_ADR_CTL, rx_adr_ctl);
-
-	return 0;
-}
-
-int
-cn30xxgmx_setfilt_addrs(struct cn30xxgmx_port_softc *sc, size_t naddrs,
-    uint8_t **addrs)
-{
-	uint64_t rx_adr_cam_en;
-	uint64_t rx_adr_cam_addrs[CN30XXGMX_FILTER_NADDRS_MAX];
-	int i, j;
-
-	KASSERT(naddrs <= CN30XXGMX_FILTER_NADDRS_MAX);
-
-	rx_adr_cam_en = 0;
-	(void)memset(rx_adr_cam_addrs, 0, sizeof(rx_adr_cam_addrs));
-
-	for (i = 0; i < naddrs; i++) {
-		SET(rx_adr_cam_en, 1ULL << i);
-		for (j = 0; j < 6; j++)
-			SET(rx_adr_cam_addrs[j],
-			    (uint64_t)addrs[i][j] << (8 * i));
-	}
-
-	/* set GMX0_RXN_ADR_CAM_EN, GMX0_RXN_ADR_CAM[0-5] */
-	_GMX_PORT_WR8(sc, GMX0_RX0_ADR_CAM_EN, rx_adr_cam_en);
-	for (j = 0; j < 6; j++)
-		_GMX_PORT_WR8(sc, cn30xxgmx_rx_adr_cam_regs[j],
-		    rx_adr_cam_addrs[j]);
-
-	return 0;
-}
-#endif
 
 /* ---- interrupt */
 
