@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.13 2017/10/27 08:33:46 mpi Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.14 2017/11/03 12:54:50 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -416,7 +416,7 @@ dump_type(struct itype *it)
 		    (it->it_type == CTF_K_STRUCT) ? "STRUCT" : "UNION",
 		    type_name(it), it->it_size);
 		TAILQ_FOREACH(im, &it->it_members, im_next) {
-			printf("\t%s type=%u off=%zd\n",
+			printf("\t%s type=%u off=%zu\n",
 			    (im_name(im) == NULL) ? "unknown" : im_name(im),
 			    im->im_refp ? im->im_refp->it_idx : 0, im->im_off);
 		}
