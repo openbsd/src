@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.14 2017/11/03 12:54:50 mpi Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.15 2017/11/03 12:55:43 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -423,7 +423,11 @@ dump_type(struct itype *it)
 		printf("\n");
 		break;
 	case CTF_K_ENUM:
-		printf("  [%u] ENUM %s\n\n", it->it_idx, type_name(it));
+		printf("  [%u] ENUM %s\n", it->it_idx, type_name(it));
+		TAILQ_FOREACH(im, &it->it_members, im_next) {
+			printf("\t%s = %zu\n", im_name(im), im->im_ref);
+		}
+		printf("\n");
 		break;
 	case CTF_K_FUNCTION:
 		printf("  [%u] FUNCTION (%s) returns: %u args: (",
