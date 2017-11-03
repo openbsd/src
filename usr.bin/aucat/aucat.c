@@ -345,6 +345,10 @@ slot_init(struct slot *s)
 			enc_init(&s->conv, &s->afile.par, slot_nch);
 			s->convbuf =
 			    xmalloc(s->round * slot_nch * sizeof(adata_t));
+			enc_sil_do(&s->conv, s->buf.data, bufsz);
+		} else {
+			memset(s->buf.data, 0,
+			    bufsz * slot_nch * sizeof(adata_t));
 		}
 	}
 	s->pstate = SLOT_INIT;
