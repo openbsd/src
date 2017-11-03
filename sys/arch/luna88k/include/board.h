@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.14 2017/03/20 19:40:47 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.15 2017/11/03 06:55:08 aoyama Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -147,13 +147,13 @@
 #define BMAP_FN6	U(0xB1480000) 	/* bitmap function 6 */
 #define BMAP_FN7	U(0xB14C0000) 	/* bitmap function 7 */
 #define BMAP_END	U(0xB1500000) 
-#define BMAP_END24P     U(0xB1800000)   /* end of 24p framemem */
+#define BMAP_END24P	U(0xB1800000)	/* end of 24p framemem */
 #define BMAP_PALLET0	U(0xC0000000) 	/* color pallet */
 #define BMAP_PALLET1	U(0xC1000000) 	/* color pallet */
 #define BMAP_PALLET2	U(0xC1100000) 	/* color pallet */
 #define BOARD_CHECK_REG	U(0xD0000000) 	/* board check register */
 #define BMAP_CRTC	U(0xD1000000) 	/* CRTC-II */
-#define BMAP_IDENTROM   U(0xD1800000)   /* bitmap-board identify ROM */
+#define BMAP_IDENTROM	U(0xD1800000)	/* bitmap-board identify ROM */
 #define SCSI_ADDR	U(0xE1000000) 	/* SCSI address */
 #define LANCE_ADDR	U(0xF1000000) 	/* LANCE */
 
