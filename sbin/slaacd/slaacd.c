@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.11 2017/08/23 15:49:08 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.12 2017/11/03 12:28:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -737,7 +737,7 @@ configure_gateway(struct imsg_configure_dfr *dfr, uint8_t rtm_type)
 	rtm.rtm_seq = ++rtm_seq;
 	rtm.rtm_priority = RTP_DEFAULT;
 	rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_LABEL;
-	rtm.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
+	rtm.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC | RTF_MPATH;
 
 	iov[iovcnt].iov_base = &rtm;
 	iov[iovcnt++].iov_len = sizeof(rtm);
