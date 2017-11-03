@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.11 2017/11/02 22:00:42 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.12 2017/11/03 17:02:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -344,7 +344,7 @@ window_buffer_key(struct window_pane *wp, struct client *c,
 	struct window_buffer_itemdata	*item;
 	int				 finished;
 
-	finished = mode_tree_key(mtd, c, &key, m);
+	finished = mode_tree_key(mtd, c, &key, m, NULL, NULL);
 	switch (key) {
 	case 'd':
 		item = mode_tree_get_current(mtd);
