@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.253 2017/11/03 13:01:20 florian Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.254 2017/11/03 14:10:33 florian Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -263,17 +263,12 @@ int
 route_detach(struct socket *so)
 {
 	struct routecb	*rop;
-	struct rawcb	*rp;
 	int		 af;
 
 	soassertlocked(so);
 
 	rop = sotoroutecb(so);
 	if (rop == NULL)
-		return (EINVAL);
-
-	rp = sotorawcb(so);
-	if (rp == NULL)
 		return (EINVAL);
 
 	timeout_del(&rop->timeout);
@@ -291,7 +286,7 @@ route_detach(struct socket *so)
 
 	so->so_pcb = NULL;
 	sofree(so);
-	free(rp, M_PCB, 0);
+	free(&rop->rcb, M_PCB, 0);
 
 	return (0);
 }
