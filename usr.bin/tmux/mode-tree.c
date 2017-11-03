@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.19 2017/11/03 17:02:33 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.20 2017/11/03 17:11:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -745,7 +745,7 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 		if (yp != NULL)
 			*yp = y;
 		if (x > mtd->width || y > mtd->height) {
-			if (!mtd->preview || y < mtd->height)
+			if (!mtd->preview)
 				*key = KEYC_NONE;
 			return (0);
 		}
@@ -755,8 +755,11 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 				mtd->current = mtd->offset + y;
 			if (*key == KEYC_DOUBLECLICK1_PANE)
 				*key = '\r';
-			return (0);
-		}
+			else
+				*key = KEYC_NONE;
+		} else
+			*key = KEYC_NONE;
+		return (0);
 	}
 
 	line = &mtd->line_list[mtd->current];
