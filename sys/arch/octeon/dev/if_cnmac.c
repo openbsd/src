@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.65 2017/11/02 17:29:16 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.66 2017/11/04 10:59:43 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -243,7 +243,7 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 
-	KASSERT(MCLBYTES >= OCTEON_POOL_SIZE_PKT + CACHE_LINE_SIZE);
+	KASSERT(MCLBYTES >= OCTEON_POOL_SIZE_PKT + CACHELINESIZE);
 
 	if (octeon_eth_npowgroups >= OCTEON_POW_GROUP_MAX) {
 		printf(": out of POW groups\n");
@@ -625,11 +625,10 @@ octeon_eth_buf_free_work(struct octeon_eth_softc *sc, uint64_t *work)
 		addr = word3 & PIP_WQE_WORD3_ADDR;
 		back = (word3 & PIP_WQE_WORD3_BACK) >>
 		    PIP_WQE_WORD3_BACK_SHIFT;
-		pktbuf = (addr & ~(CACHE_LINE_SIZE - 1)) -
-		    back * CACHE_LINE_SIZE;
+		pktbuf = (addr & ~(CACHELINESIZE - 1)) - back * CACHELINESIZE;
 
 		cn30xxfpa_store(pktbuf, OCTEON_POOL_NO_PKT,
-		    OCTEON_POOL_SIZE_PKT / CACHE_LINE_SIZE);
+		    OCTEON_POOL_SIZE_PKT / CACHELINESIZE);
 
 		if (nbufs > 0)
 			memcpy(&word3, (void *)PHYS_TO_XKPHYS(addr -
@@ -1124,20 +1123,20 @@ octeon_eth_mbuf_alloc(int n)
 
 	while (n > 0) {
 		m = MCLGETI(NULL, M_NOWAIT, NULL,
-		    OCTEON_POOL_SIZE_PKT + CACHE_LINE_SIZE);
+		    OCTEON_POOL_SIZE_PKT + CACHELINESIZE);
 		if (m == NULL || !ISSET(m->m_flags, M_EXT)) {
 			m_freem(m);
 			break;
 		}
 
-		m->m_data = (void *)(((vaddr_t)m->m_data + CACHE_LINE_SIZE) &
-		    ~(CACHE_LINE_SIZE - 1));
+		m->m_data = (void *)(((vaddr_t)m->m_data + CACHELINESIZE) &
+		    ~(CACHELINESIZE - 1));
 		((struct mbuf **)m->m_data)[-1] = m;
 
 		pktbuf = KVTOPHYS(m->m_data);
 		m->m_pkthdr.ph_cookie = (void *)pktbuf;
 		cn30xxfpa_store(pktbuf, OCTEON_POOL_NO_PKT,
-		    OCTEON_POOL_SIZE_PKT / CACHE_LINE_SIZE);
+		    OCTEON_POOL_SIZE_PKT / CACHELINESIZE);
 
 		n--;
 	}
@@ -1167,8 +1166,7 @@ octeon_eth_recv_mbuf(struct octeon_eth_softc *sc, uint64_t *work,
 	for (i = 0; i < nbufs; i++) {
 		addr = word3 & PIP_WQE_WORD3_ADDR;
 		back = (word3 & PIP_WQE_WORD3_BACK) >> PIP_WQE_WORD3_BACK_SHIFT;
-		pktbuf = (addr & ~(CACHE_LINE_SIZE - 1)) -
-		    back * CACHE_LINE_SIZE;
+		pktbuf = (addr & ~(CACHELINESIZE - 1)) - back * CACHELINESIZE;
 		pm = (struct mbuf **)PHYS_TO_XKPHYS(pktbuf, CCA_CACHED) - 1;
 		m = *pm;
 		*pm = NULL;
