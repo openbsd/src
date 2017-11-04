@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.92 2017/09/28 16:16:34 patrick Exp $
+#	$OpenBSD: Makefile.macppc,v 1.93 2017/11/04 16:04:16 florian Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -140,12 +140,14 @@ locore0.o: ${_machdir}/${_mach}/locore0.S assym.h
 locore.o: ${_machdir}/${_mach}/locore.S assym.h
 mutex.o: assym.h
 
-newinstall:
+hardlink-obsd:
 	cmp -s bsd /bsd || ln -f /bsd /obsd
+
+newinstall:
 	umask 077 && cp bsd /nbsd && mv /nbsd /bsd && \
 	    sha256 -h /var/db/kernel.SHA256 /bsd
 
-install: update-link newinstall
+install: update-link hardlink-obsd newinstall
 
 # pull in the dependency information
 .ifnmake clean

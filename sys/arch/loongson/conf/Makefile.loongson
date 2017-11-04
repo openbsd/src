@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.68 2017/09/28 16:16:34 patrick Exp $
+#	$OpenBSD: Makefile.loongson,v 1.69 2017/11/04 16:04:16 florian Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -154,12 +154,14 @@ context.o cp0access.o exception.o locore.o: assym.h
 lcore_access.o lcore_ddb.o lcore_float.o tlbhandler.o: assym.h
 pmon32.o: assym.h
 
-newinstall:
+hardlink-obsd:
 	cmp -s bsd /bsd || ln -f /bsd /obsd
+
+newinstall:
 	umask 077 && cp bsd /nbsd && mv /nbsd /bsd && \
 	    sha256 -h /var/db/kernel.SHA256 /bsd
 
-install: update-link newinstall
+install: update-link hardlink-obsd newinstall
 
 # pull in the dependency information
 .ifnmake clean
