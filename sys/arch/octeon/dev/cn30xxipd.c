@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipd.c,v 1.9 2016/06/22 13:09:35 visa Exp $	*/
+/*	$OpenBSD: cn30xxipd.c,v 1.10 2017/11/04 11:18:17 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -132,12 +132,13 @@ cn30xxipd_config(struct cn30xxipd_softc *sc)
 	_IPD_WR8(sc, IPD_PACKET_MBUFF_SIZE_OFFSET, packet_mbuff_size);
 
 	first_next_ptr_back = 0;
-	SET(first_next_ptr_back, (sc->sc_first_mbuff_skip / 128) & IPD_1ST_NEXT_PTR_BACK_BACK);
+	SET(first_next_ptr_back, (sc->sc_first_mbuff_skip / CACHELINESIZE)
+	    & IPD_1ST_NEXT_PTR_BACK_BACK);
 	_IPD_WR8(sc, IPD_1ST_NEXT_PTR_BACK_OFFSET, first_next_ptr_back);
 
 	second_next_ptr_back = 0;
-	SET(second_next_ptr_back, (sc->sc_not_first_mbuff_skip / 128) &
-	    IPD_2ND_NEXT_PTR_BACK_BACK);
+	SET(second_next_ptr_back, (sc->sc_not_first_mbuff_skip / CACHELINESIZE)
+	    & IPD_2ND_NEXT_PTR_BACK_BACK);
 	_IPD_WR8(sc, IPD_2ND_NEXT_PTR_BACK_OFFSET, second_next_ptr_back);
 
 	sqe_fpa_queue = 0;

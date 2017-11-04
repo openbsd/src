@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpavar.h,v 1.5 2017/11/04 10:59:43 visa Exp $	*/
+/*	$OpenBSD: cn30xxfpavar.h,v 1.6 2017/11/04 11:18:17 visa Exp $	*/
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
  * All rights reserved.
@@ -106,7 +106,7 @@ cn30xxfpa_buf_put_paddr(struct cn30xxfpa_buf *fb, paddr_t paddr)
 {
 	KASSERT(paddr >= fb->fb_paddr);
 	KASSERT(paddr < fb->fb_paddr + fb->fb_len);
-	cn30xxfpa_store(paddr, fb->fb_poolno, fb->fb_size / 128);
+	cn30xxfpa_store(paddr, fb->fb_poolno, fb->fb_size / CACHELINESIZE);
 }
 
 static inline void
