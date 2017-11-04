@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.143 2017/10/24 09:30:15 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.144 2017/11/04 13:11:54 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	int newifaddr;
 
 	if (ifp == NULL)
-		return (EOPNOTSUPP);
+		return (ENXIO);
 
 	NET_ASSERT_LOCKED();
 
@@ -393,8 +393,7 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		break;
 
 	default:
-		error = ((*ifp->if_ioctl)(ifp, cmd, data));
-		return (error);
+		return (EOPNOTSUPP);
 	}
 	return (0);
 }

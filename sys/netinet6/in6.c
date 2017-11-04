@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.217 2017/11/02 13:17:37 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.218 2017/11/04 13:11:54 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -204,10 +204,11 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	struct	in6_ifaddr *ia6 = NULL;
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
 	struct sockaddr_in6 *sa6;
-	int error;
 
 	if (ifp == NULL)
-		return (EOPNOTSUPP);
+		return (ENXIO);
+
+	NET_ASSERT_LOCKED();
 
 	switch (cmd) {
 	case SIOCGIFINFO_IN6:
@@ -246,7 +247,7 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		 * Do not pass those ioctl to driver handler since they are not
 		 * properly setup. Instead just error out.
 		 */
-		return (EOPNOTSUPP);
+		return (EINVAL);
 	default:
 		sa6 = NULL;
 		break;
@@ -308,7 +309,6 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	}
 
 	switch (cmd) {
-
 	case SIOCGIFDSTADDR_IN6:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return (EINVAL);
@@ -451,8 +451,7 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		break;
 
 	default:
-		error = ((*ifp->if_ioctl)(ifp, cmd, data));
-		return (error);
+		return (EOPNOTSUPP);
 	}
 
 	return (0);

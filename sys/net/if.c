@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.521 2017/10/31 22:05:12 sashan Exp $	*/
+/*	$OpenBSD: if.c,v 1.522 2017/11/04 13:11:54 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1985,30 +1985,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			rtm_ifchg(ifp);
 		break;
 
-	case SIOCDIFPHYADDR:
-	case SIOCSLIFPHYADDR:
-	case SIOCSLIFPHYRTABLE:
-	case SIOCSLIFPHYTTL:
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	case SIOCSIFMEDIA:
-	case SIOCSVNETID:
-	case SIOCSIFPAIR:
-	case SIOCSIFPARENT:
-	case SIOCDIFPARENT:
-		if ((error = suser(p, 0)) != 0)
-			break;
-		/* FALLTHROUGH */
-	case SIOCGLIFPHYADDR:
-	case SIOCGLIFPHYRTABLE:
-	case SIOCGLIFPHYTTL:
-	case SIOCGIFMEDIA:
-	case SIOCGVNETID:
-	case SIOCGIFPAIR:
-	case SIOCGIFPARENT:
-		error = (*ifp->if_ioctl)(ifp, cmd, data);
-		break;
-
 	case SIOCGIFDESCR:
 		strlcpy(ifdescrbuf, ifp->if_description, IFDESCRSIZE);
 		error = copyoutstr(ifdescrbuf, ifr->ifr_data, IFDESCRSIZE,
@@ -2138,10 +2114,26 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		ifp->if_llprio = ifr->ifr_llprio;
 		break;
 
+	case SIOCDIFPHYADDR:
+	case SIOCSLIFPHYADDR:
+	case SIOCSLIFPHYRTABLE:
+	case SIOCSLIFPHYTTL:
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+	case SIOCSIFMEDIA:
+	case SIOCSVNETID:
+	case SIOCSIFPAIR:
+	case SIOCSIFPARENT:
+	case SIOCDIFPARENT:
+		if ((error = suser(p, 0)) != 0)
+			break;
+		/* FALLTHROUGH */
 	default:
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 			(struct mbuf *) cmd, (struct mbuf *) data,
 			(struct mbuf *) ifp, p));
+		if (error == EOPNOTSUPP)
+			error = ((*ifp->if_ioctl)(ifp, cmd, data));
 		break;
 	}
 
