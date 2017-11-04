@@ -1671,8 +1671,6 @@ _spinlock
 _spinlocktry
 _spinunlock
 _thread_atfork
-_thread_cleanup_pop
-_thread_cleanup_push
 _thread_dofork
 _thread_set_callbacks
 pthread_atfork

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2017/10/28 21:23:14 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2017/11/04 22:53:57 jca Exp $
 
 .PATH: ${LIBCSRCDIR}/thread
 
@@ -6,7 +6,6 @@ SRCS+=	callbacks.c atfork.c
 
 # threads infrastructure
 SRCS+=	rthread.c \
-	rthread_cleanup.c \
 	rthread_condattr.c \
 	rthread_debug.c \
 	rthread_file.c \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.2 2017/10/28 21:23:14 guenther Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.3 2017/11/04 22:53:57 jca Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -180,40 +180,9 @@ enum pthread_mutextype {
 #define PTHREAD_MUTEX_DEFAULT		PTHREAD_MUTEX_STRICT_NP
 
 /*
- * On-stack structure for the pthread_cleanup_{push,pop} macros
- * The actual values are xor'ed with random cookies.
- */
-struct __thread_cleanup {
-	__uintptr_t __tc_magic;
-	__uintptr_t __tc_next;
-	__uintptr_t __tc_fn;
-	__uintptr_t __tc_arg;
-};
-
-/*
- * These macro must be used in pairs in the same scope, such that
- * pthread_cleanup_push() can start a block declaring a variable and
- * pthread_cleanup_pop() closes that same block.  Any other usage
- * violates the requirements of the POSIX and Single UNIX standards.
- */
-#define	pthread_cleanup_push(cb, arg)					\
-	{	/* MATCHED BY CLOSE BRACKET IN pthread_cleanup_pop() */	\
-		struct __thread_cleanup __tc;				\
-		_thread_cleanup_push(cb, arg, &__tc);
-
-#define	pthread_cleanup_pop(execute)					\
-		_thread_cleanup_pop(execute, &__tc);			\
-	}	/* MATCHED BY OPEN BRACKET IN pthread_cleanup_push() */
-
-
-
-/*
  * Thread function prototype definitions:
  */
 __BEGIN_DECLS
-void		_thread_cleanup_pop(int _execute, struct __thread_cleanup *_tc);
-void		_thread_cleanup_push(void (*_fn)(void *), void *_arg,
-		    struct __thread_cleanup *_tc);
 int		pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
 int		pthread_attr_destroy(pthread_attr_t *);
 int		pthread_attr_getstack(const pthread_attr_t *,
@@ -228,6 +197,8 @@ int		pthread_attr_setstack(pthread_attr_t *, void *, size_t);
 int		pthread_attr_setstackaddr(pthread_attr_t *, void *);
 int		pthread_attr_setguardsize(pthread_attr_t *, size_t);
 int		pthread_attr_setdetachstate(pthread_attr_t *, int);
+void		pthread_cleanup_pop(int);
+void		pthread_cleanup_push(void (*) (void *), void *routine_arg);
 int		pthread_condattr_destroy(pthread_condattr_t *);
 int		pthread_condattr_init(pthread_condattr_t *);
 

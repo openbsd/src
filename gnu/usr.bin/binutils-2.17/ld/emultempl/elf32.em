@@ -2161,13 +2161,7 @@ cat >>e${EMULATION_NAME}.c <<EOF
 	  link_info.flags_1 |= (bfd_vma) DF_1_ORIGIN;
 	}
       else if (strcmp (optarg, "defs") == 0)
-#ifndef __OpenBSD__
-	/* we don't link shared objs against libc, so -zdefs/--no-undefined
-	   usually generates false positives */
 	link_info.unresolved_syms_in_objects = RM_GENERATE_ERROR;
-#else
-	{ }
-#endif
       else if (strcmp (optarg, "muldefs") == 0)
 	link_info.allow_multiple_definition = TRUE;
       else if (strcmp (optarg, "combreloc") == 0)

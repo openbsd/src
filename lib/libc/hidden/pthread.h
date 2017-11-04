@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.3 2017/10/28 21:23:14 guenther Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.4 2017/11/04 22:53:57 jca Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,8 +20,6 @@
 
 #include_next <pthread.h>
 
-PROTO_NORMAL(_thread_cleanup_pop);
-PROTO_NORMAL(_thread_cleanup_push);
 PROTO_STD_DEPRECATED(pthread_atfork);
 PROTO_STD_DEPRECATED(pthread_cond_broadcast);
 PROTO_STD_DEPRECATED(pthread_cond_destroy);
