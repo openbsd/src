@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.15 2017/09/08 06:24:31 mlarkin Exp $	*/
+/*	$OpenBSD: proc.c,v 1.16 2017/11/04 07:40:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -756,8 +756,6 @@ proc_compose_imsg(struct privsep *ps, enum privsep_procid id, int n,
 
 	proc_range(ps, id, &n, &m);
 	for (; n < m; n++) {
-		log_debug("%s: about to compose_event to proc %d",
-		    __func__, id);
 		if (imsg_compose_event(&ps->ps_ievs[id][n],
 		    type, peerid, ps->ps_instance + 1, fd, data, datalen) == -1)
 			return (-1);
