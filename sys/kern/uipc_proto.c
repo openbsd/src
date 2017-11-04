@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_proto.c,v 1.15 2017/11/02 14:01:18 florian Exp $	*/
+/*	$OpenBSD: uipc_proto.c,v 1.16 2017/11/04 16:48:09 mpi Exp $	*/
 /*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
 
 /*-
@@ -39,8 +39,6 @@
 #include <sys/mbuf.h>
 #include <sys/unpcb.h>
 #include <sys/socketvar.h>
-
-#include <net/raw_cb.h>
 
 /*
  * Definitions of protocols supported in the UNIX domain.
