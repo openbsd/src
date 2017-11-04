@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.66 2017/11/04 10:59:43 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.67 2017/11/04 11:01:27 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -103,6 +103,8 @@
 #define OCTEON_POOL_NWORDS_CMD	\
 	    (((uint32_t)OCTEON_POOL_SIZE_CMD / sizeof(uint64_t)) - 1)
 #define FPA_COMMAND_BUFFER_POOL_NWORDS	OCTEON_POOL_NWORDS_CMD	/* XXX */
+
+CTASSERT(MCLBYTES >= OCTEON_POOL_SIZE_PKT + CACHELINESIZE);
 
 void	octeon_eth_buf_init(struct octeon_eth_softc *);
 
@@ -242,8 +244,6 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	struct cn30xxgmx_attach_args *ga = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	uint8_t enaddr[ETHER_ADDR_LEN];
-
-	KASSERT(MCLBYTES >= OCTEON_POOL_SIZE_PKT + CACHELINESIZE);
 
 	if (octeon_eth_npowgroups >= OCTEON_POW_GROUP_MAX) {
 		printf(": out of POW groups\n");
