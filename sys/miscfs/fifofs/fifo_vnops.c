@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.58 2017/07/24 15:07:39 mpi Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.59 2017/11/04 14:13:53 mpi Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -545,8 +545,10 @@ int
 filt_fiforead(struct knote *kn, long hint)
 {
 	struct socket *so = (struct socket *)kn->kn_hook;
-	int rv;
+	int s, rv;
 
+	if (!(hint & NOTE_SUBMIT))
+		s = solock(so);
 	kn->kn_data = so->so_rcv.sb_cc;
 	if (so->so_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
@@ -555,6 +557,8 @@ filt_fiforead(struct knote *kn, long hint)
 		kn->kn_flags &= ~EV_EOF;
 		rv = (kn->kn_data > 0);
 	}
+	if (!(hint & NOTE_SUBMIT))
+		sounlock(s);
 
 	return (rv);
 }
@@ -573,8 +577,10 @@ int
 filt_fifowrite(struct knote *kn, long hint)
 {
 	struct socket *so = (struct socket *)kn->kn_hook;
-	int rv;
+	int s, rv;
 
+	if (!(hint & NOTE_SUBMIT))
+		s = solock(so);
 	kn->kn_data = sbspace(so, &so->so_snd);
 	if (so->so_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
@@ -583,6 +589,8 @@ filt_fifowrite(struct knote *kn, long hint)
 		kn->kn_flags &= ~EV_EOF;
 		rv = (kn->kn_data >= so->so_snd.sb_lowat);
 	}
+	if (!(hint & NOTE_SUBMIT))
+		sounlock(s);
 
 	return (rv);
 }

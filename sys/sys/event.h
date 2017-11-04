@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.26 2017/06/26 09:32:32 mpi Exp $	*/
+/*	$OpenBSD: event.h,v 1.27 2017/11/04 14:13:53 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -80,13 +80,6 @@ struct kevent {
 #define EV_ERROR	0x4000		/* error, data contains errno */
 
 /*
- * hint flag for in-kernel use - must not equal any existing note
- */
-#ifdef _KERNEL
-#define NOTE_SUBMIT	0x01000000		/* initial knote submission */
-#endif
-
-/*
  * data/hint flags for EVFILT_{READ|WRITE}, shared with userspace
  */
 #define NOTE_LOWAT	0x0001			/* low water mark */
@@ -128,6 +121,13 @@ SLIST_HEAD(klist, knote);
 
 #ifdef _KERNEL
 
+#define EVFILT_MARKER	0xF			/* placemarker for tailq */
+
+/*
+ * hint flag for in-kernel use - must not equal any existing note
+ */
+#define NOTE_SUBMIT	0x01000000		/* initial knote submission */
+
 #define KNOTE(list_, hint)	do { \
 					struct klist *list = (list_); \
 					if ((list) != NULL) \
@@ -164,10 +164,12 @@ struct knote {
 	} kn_ptr;
 	const struct		filterops *kn_fop;
 	void			*kn_hook;
-#define KN_ACTIVE	0x01			/* event has been triggered */
-#define KN_QUEUED	0x02			/* event is on queue */
-#define KN_DISABLED	0x04			/* event is disabled */
-#define KN_DETACHED	0x08			/* knote is detached */
+#define KN_ACTIVE	0x0001			/* event has been triggered */
+#define KN_QUEUED	0x0002			/* event is on queue */
+#define KN_DISABLED	0x0004			/* event is disabled */
+#define KN_DETACHED	0x0008			/* knote is detached */
+#define KN_PROCESSING	0x0010			/* event processing in prog */
+#define KN_WAITING	0x0020			/* waiting on processing */
 
 #define kn_id		kn_kevent.ident
 #define kn_filter	kn_kevent.filter

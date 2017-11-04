@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.81 2017/10/11 08:06:56 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.82 2017/11/04 14:13:53 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -84,6 +84,8 @@ void	knote_attach(struct knote *kn, struct filedesc *fdp);
 void	knote_drop(struct knote *kn, struct proc *p, struct filedesc *fdp);
 void	knote_enqueue(struct knote *kn);
 void	knote_dequeue(struct knote *kn);
+int	knote_acquire(struct knote *kn);
+int	knote_release(struct knote *kn);
 #define knote_alloc() ((struct knote *)pool_get(&knote_pool, PR_WAITOK))
 #define knote_free(kn) pool_put(&knote_pool, (kn))
 
@@ -759,27 +761,43 @@ start:
 		goto done;
 	}
 
+	marker.kn_filter = EVFILT_MARKER;
+	marker.kn_status = KN_PROCESSING;
 	TAILQ_INSERT_TAIL(&kq->kq_head, &marker, kn_tqe);
 	while (count) {
 		kn = TAILQ_FIRST(&kq->kq_head);
 		if (kn == &marker) {
-			TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
+			TAILQ_REMOVE(&kq->kq_head, &marker, kn_tqe);
 			splx(s);
 			if (count == maxevents)
 				goto retry;
 			goto done;
 		}
+		if (kn->kn_filter == EVFILT_MARKER) {
+			struct knote *other_marker = kn;
+
+			/* Move some other threads marker past this kn */
+			kn = TAILQ_NEXT(other_marker, kn_tqe);
+			TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
+			TAILQ_INSERT_BEFORE(other_marker, kn, kn_tqe);
+			continue;
+		}
+
+		if (!knote_acquire(kn))
+			continue;
 
 		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 		kq->kq_count--;
 
 		if (kn->kn_status & KN_DISABLED) {
 			kn->kn_status &= ~KN_QUEUED;
+			knote_release(kn);
 			continue;
 		}
 		if ((kn->kn_flags & EV_ONESHOT) == 0 &&
 		    kn->kn_fop->f_event(kn, 0) == 0) {
 			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
+			knote_release(kn);
 			continue;
 		}
 		*kevp = kn->kn_kevent;
@@ -799,9 +817,11 @@ start:
 			if (kn->kn_flags & EV_DISPATCH)
 				kn->kn_status |= KN_DISABLED;
 			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
+			knote_release(kn);
 		} else {
 			TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 			kq->kq_count++;
+			knote_release(kn);
 		}
 		count--;
 		if (nkev == KQ_NEVENTS) {
@@ -956,6 +976,41 @@ kqueue_wakeup(struct kqueue *kq)
 }
 
 /*
+ * Acquire a knote, return non-zero on success, 0 on failure.
+ *
+ * If we cannot acquire the knote we sleep and return 0.  The knote
+ * may be stale on return in this case and the caller must restart
+ * whatever loop they are in.
+ */
+int
+knote_acquire(struct knote *kn)
+{
+	if (kn->kn_status & KN_PROCESSING) {
+		kn->kn_status |= KN_WAITING;
+		tsleep(kn, 0, "kqepts", hz);
+		/* knote may be stale now */
+		return (0);
+	}
+	kn->kn_status |= KN_PROCESSING;
+	return (1);
+}
+
+/*
+ * Release an acquired knote, clearing KN_PROCESSING.
+ */
+int
+knote_release(struct knote *kn)
+{
+	if (kn->kn_status & KN_WAITING) {
+		kn->kn_status &= ~KN_WAITING;
+		wakeup(kn);
+	}
+	kn->kn_status &= ~KN_PROCESSING;
+	/* kn should not be accessed anymore */
+	return (0);
+}
+
+/*
  * activate one knote.
  */
 void
@@ -986,6 +1041,8 @@ knote_remove(struct proc *p, struct klist *list)
 	struct knote *kn;
 
 	while ((kn = SLIST_FIRST(list)) != NULL) {
+		if (!knote_acquire(kn))
+			continue;
 		kn->kn_fop->f_detach(kn);
 		knote_drop(kn, p, p->p_fd);
 	}
