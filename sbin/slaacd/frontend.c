@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.8 2017/08/23 10:48:01 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.9 2017/11/04 17:23:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -349,17 +349,14 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			 * Setup pipe and event handler to the engine
 			 * process.
 			 */
-			if (iev_engine) {
-				log_warnx("%s: received unexpected imsg fd "
+			if (iev_engine)
+				fatalx("%s: received unexpected imsg fd "
 				    "to frontend", __func__);
-				break;
-			}
-			if ((fd = imsg.fd) == -1) {
-				log_warnx("%s: expected to receive imsg fd to "
+
+			if ((fd = imsg.fd) == -1)
+				fatalx("%s: expected to receive imsg fd to "
 				   "frontend but didn't receive any",
 				   __func__);
-				break;
-			}
 
 			iev_engine = malloc(sizeof(struct imsgev));
 			if (iev_engine == NULL)
