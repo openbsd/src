@@ -711,6 +711,7 @@
 ./usr/include/dev/tc/tcdsvar.h
 ./usr/include/dev/tc/tcreg.h
 ./usr/include/dev/tc/tcvar.h
+./usr/include/dev/tc/zs_ioasicvar.h
 ./usr/include/dev/usb
 ./usr/include/dev/usb/dwc2
 ./usr/include/dev/usb/dwc2/dwc2.h
