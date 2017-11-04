@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.518 2017/10/30 16:44:18 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.519 2017/11/04 14:48:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -885,6 +885,9 @@ dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
 	if (lease != NULL) {
 		if (ifi->offer == NULL) {
 			ifi->offer = lease;
+		} else if (lease->address.s_addr ==
+		    ifi->offer->address.s_addr) {
+			/* Decline duplicate offers. */
 		} else if (lease->address.s_addr ==
 		    ifi->requested_address.s_addr) {
 			free_client_lease(ifi->offer);
