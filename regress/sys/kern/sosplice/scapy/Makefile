@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2017/10/27 17:11:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2017/11/05 13:15:36 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -12,6 +12,8 @@
 # Check wether all required python packages are installed.  If some
 # are missing print a warning and skip the tests, but do not fail.
 PYTHON_IMPORT !!= python2.7 -c 'from scapy.all import *' 2>&1 || true
+PF_ENABLED !!=	${SUDO} pfctl -si | grep '^Status: Enabled ' || true
+PF_ANCHOR !!=	${SUDO} pfctl -sr | grep '^anchor "regress" all$$' || true
 .endif
 
 .if ! empty(PYTHON_IMPORT)
@@ -27,6 +29,16 @@ regress:
 regress:
 	@echo "${PERL_REQUIRE}"
 	@echo install these perl packages for additional tests
+.endif
+
+.if ! empty(PF_ENABLED) && empty(PF_ANCHOR)
+.BEGIN:
+	@true
+regress:
+	@echo This test cannot run with pf filtering packets on localhost.
+	@echo Either disable pf or add a line 'anchor "regress"' to pf.conf.
+	@echo There the test will add a stateless rule that passes all packets.
+	@echo SKIPPED
 .endif
 
 # This test needs a manual setup of two machines
@@ -64,7 +76,7 @@ regress:
 .MAIN: all
 
 .if make (regress) || make (all)
-.BEGIN: pf.conf addr.py
+.BEGIN: addr.py
 	@echo
 	${SUDO} true
 	ssh -t ${REMOTE_SSH} true
@@ -80,6 +92,13 @@ addr.py: Makefile
 	echo 'FAKE_NET = "${FAKE_NET}"' >>$@.tmp
 	mv $@.tmp $@
 
+# load the pf rules into the kernel of the REMOTE and LOCAL machine
+stamp-pfctl:
+.if ! empty(PF_ANCHOR)
+	echo 'pass on ${LOCAL_IF} no state' | ${SUDO} pfctl -a regress -f -
+.endif
+	@date >$@
+
 SCAPYS !=		cd ${.CURDIR} && ls scapy-*.py
 TARGETS =		${SCAPYS}
 
@@ -94,10 +113,18 @@ SCAPYPATH =	${.CURDIR}/
 .endif
 
 .for s in ${SCAPYS}
-run-regress-$s: $s addr.py
+run-regress-$s: $s addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 	time SUDO=${SUDO} PYTHON="${PYTHON}" perl ${PERLINC} ${PERLPATH}scapy.pl splice ${FAKE_NET_ADDR} ${REMOTE_ADDR} ${REMOTE_SSH} ${SCAPYPATH}$s
 .endfor
+
+.if ! empty(PF_ANCHOR)
+TARGETS +=	cleanup
+run-regress-cleanup:
+	@echo '\n======== $@ ========'
+	${SUDO} pfctl -a regress -Fr
+	rm -f stamp-pfctl
+.endif
 
 CLEANFILES +=		addr.py *.pyc *.log stamp-*
 
