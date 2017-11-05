@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1043 2017/11/05 10:29:24 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1044 2017/11/05 11:16:16 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1684,11 +1684,12 @@ install_http() {
 		_iu_srv=${_iu_url#*://}
 		_iu_srv=${_iu_srv%%/*}
 		_iu_dir=${_iu_url##*$_iu_srv*(/)}
+		[[ -n $_iu_srv ]] && HTTP_SERVER=$_iu_srv
 	fi
 
 	# Get server IP address or hostname and optionally the http protocol.
 	while :; do
-		ask_until "$_prompt" "${_iu_srv:-$HTTP_SERVER}"
+		ask_until "$_prompt" "$HTTP_SERVER"
 		case $resp in
 		done)	return
 			;;
