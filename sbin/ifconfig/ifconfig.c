@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.349 2017/10/30 10:04:07 mpi Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.350 2017/11/05 22:09:26 benno Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -424,8 +424,6 @@ const struct	cmd {
 	{ "maxupd",	NEXTARG,	0,		setpfsync_maxupd },
 	{ "defer",	1,		0,		setpfsync_defer },
 	{ "-defer",	0,		0,		setpfsync_defer },
-	/* giftunnel is for backward compat */
-	{ "giftunnel",  NEXTARG2,	0,		NULL, settunnel } ,
 	{ "tunnel",	NEXTARG2,	0,		NULL, settunnel } ,
 	{ "deletetunnel",  0,		0,		deletetunnel } ,
 	{ "tunneldomain", NEXTARG,	0,		settunnelinst } ,
