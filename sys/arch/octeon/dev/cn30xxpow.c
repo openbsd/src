@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpow.c,v 1.11 2017/11/05 04:57:28 visa Exp $	*/
+/*	$OpenBSD: cn30xxpow.c,v 1.12 2017/11/05 05:08:07 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -38,8 +38,6 @@
 #include <octeon/dev/cn30xxciureg.h>	/* XXX */
 #include <octeon/dev/cn30xxpowreg.h>
 #include <octeon/dev/cn30xxpowvar.h>
-
-extern int ipflow_fastforward_disable_flags;
 
 struct cn30xxpow_intr_handle {
 	void				*pi_ih;
@@ -276,7 +274,6 @@ cn30xxpow_intr_work(struct cn30xxpow_softc *sc,
 	uint64_t count = 0;
 	int recv_cnt = MAX_RX_CNT;
 
-	/* s = splhigh(); */
 	_POW_WR8(sc, POW_PP_GRP_MSK0_OFFSET, 1ULL << pow_ih->pi_group);
 
 	if (max_recv_cnt > 0)
@@ -290,7 +287,7 @@ cn30xxpow_intr_work(struct cn30xxpow_softc *sc,
 		work = (uint64_t *)cn30xxpow_work_response_async(
 		    OCTEON_CVMSEG_OFFSET(csm_pow_intr));
 		if (work == NULL)
-			goto done;
+			return;
 		cn30xxpow_tag_sw_wait();
 		cn30xxpow_work_request_async(
 		    OCTEON_CVMSEG_OFFSET(csm_pow_intr), POW_NO_WAIT);
@@ -300,18 +297,9 @@ cn30xxpow_intr_work(struct cn30xxpow_softc *sc,
 	work = (uint64_t *)cn30xxpow_work_response_async(
 	    OCTEON_CVMSEG_OFFSET(csm_pow_intr));
 	if (work == NULL)
-		goto done;
+		return;
 
 	(*pow_ih->pi_cb)(pow_ih->pi_data, work);
-	count++;
-
-done:
-	;
-	/* KASSERT(work == NULL); */
-	/* KASSERT(count > 0); */
-
-	/* _POW_WR8(sc, POW_PP_GRP, 0)ULL; */
-	/* splx(s); */
 }
 
 int
@@ -321,14 +309,7 @@ cn30xxpow_intr(void *data)
 	struct cn30xxpow_softc *sc = pow_ih->pi_sc;
 	uint64_t wq_int_mask = 0x1ULL << pow_ih->pi_group;
 
-#if 0
-	if (ipflow_fastforward_disable_flags == 0)
-		cn30xxpow_intr_work(sc, pow_ih, -1);
-	else
-		cn30xxpow_intr_work(sc, pow_ih, recv_cnt);
-#else
 	cn30xxpow_intr_work(sc, pow_ih, recv_cnt);
-#endif
 
 	_POW_WR8(sc, POW_WQ_INT_OFFSET, wq_int_mask << POW_WQ_INT_WQ_INT_SHIFT);
 	return 1;
