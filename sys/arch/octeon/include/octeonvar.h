@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.40 2017/11/02 17:29:16 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.41 2017/11/05 04:59:09 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -361,6 +361,19 @@ static inline void
 octeon_cvmseg_write_8(size_t offset, uint64_t value)
 {
 	*(volatile uint64_t *)(0xffffffffffff8000ULL + offset) = value;
+}
+
+static inline uint32_t
+octeon_get_coreid(void)
+{
+	uint32_t coreid;
+
+	__asm volatile (
+		_ASM_PROLOGUE_OCTEON
+		"	rdhwr	%0, $0\n"
+		_ASM_EPILOGUE
+		: "=r" (coreid));
+	return coreid;
 }
 
 static inline uint64_t
