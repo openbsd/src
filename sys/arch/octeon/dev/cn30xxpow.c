@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpow.c,v 1.10 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: cn30xxpow.c,v 1.11 2017/11/05 04:57:28 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -47,24 +47,10 @@ struct cn30xxpow_intr_handle {
 	int				pi_group;
 	void				(*pi_cb)(void *, uint64_t *);
 	void				*pi_data;
-
-#ifdef OCTEON_ETH_DEBUG
-#define	_EV_PER_N	32	/* XXX */
-#define	_EV_IVAL_N	32	/* XXX */
-	int				pi_first;
-	struct timeval			pi_last;
-#endif
 };
 
 void	cn30xxpow_bootstrap(struct octeon_config *);
 
-#ifdef OCTEON_ETH_DEBUG
-void	cn30xxpow_intr_rml(void *);
-
-void	cn30xxpow_intr_debug_init(struct cn30xxpow_intr_handle *, int);
-void	cn30xxpow_intr_work_debug_ival(struct cn30xxpow_softc *,
-	    struct cn30xxpow_intr_handle *);
-#endif
 void	cn30xxpow_init(struct cn30xxpow_softc *);
 void	cn30xxpow_init_regs(struct cn30xxpow_softc *);
 int	cn30xxpow_tag_sw_poll(void);
@@ -76,16 +62,8 @@ void	cn30xxpow_intr_work(struct cn30xxpow_softc *,
 	    struct cn30xxpow_intr_handle *, int);
 int	cn30xxpow_intr(void *);
 
-#ifdef OCTEON_ETH_DEBUG
-void	cn30xxpow_dump(void);
-#endif
-
 /* XXX */
 struct cn30xxpow_softc	cn30xxpow_softc;
-
-#ifdef OCTEON_ETH_DEBUG
-struct cn30xxpow_softc *__cn30xxpow_softc;
-#endif
 
 /*
  * XXX: parameter tuning is needed: see files.octeon
@@ -189,11 +167,6 @@ cn30xxpow_bootstrap(struct octeon_config *mcp)
 	/* XXX */
 
 	cn30xxpow_init(sc);
-
-#ifdef OCTEON_ETH_DEBUG
-	__cn30xxpow_softc = sc;
-#endif
-
 }
 
 void
@@ -256,21 +229,8 @@ cn30xxpow_intr_establish(int group, int level,
 	pow_ih->pi_cb = cb;
 	pow_ih->pi_data = data;
 
-#ifdef OCTEON_ETH_DEBUG
-	cn30xxpow_intr_debug_init(pow_ih, group);
-#endif
 	return pow_ih;
 }
-
-#ifdef OCTEON_ETH_DEBUG
-
-void
-cn30xxpow_intr_debug_init(struct cn30xxpow_intr_handle *pow_ih, int group)
-{
-	pow_ih->pi_first = 1;
-
-}
-#endif
 
 void
 cn30xxpow_init(struct cn30xxpow_softc *sc)
@@ -279,10 +239,6 @@ cn30xxpow_init(struct cn30xxpow_softc *sc)
 
 	sc->sc_int_pc_base = 10000;
 	cn30xxpow_config_int_pc(sc, sc->sc_int_pc_base);
-
-#ifdef OCTEON_ETH_DEBUG
-	cn30xxpow_error_int_enable(sc, 1);
-#endif
 }
 
 void
@@ -294,47 +250,11 @@ cn30xxpow_init_regs(struct cn30xxpow_softc *sc)
 	    &sc->sc_regh);
 	if (status != 0)
 		panic("can't map %s space", "pow register");
-
-#ifdef OCTEON_ETH_DEBUG
-	_POW_WR8(sc, POW_ECC_ERR_OFFSET,
-	    POW_ECC_ERR_IOP_IE | POW_ECC_ERR_RPE_IE |
-	    POW_ECC_ERR_DBE_IE | POW_ECC_ERR_SBE_IE);
-#endif
 }
 
 /* -------------------------------------------------------------------------- */
 
 /* ---- interrupt handling */
-
-#ifdef OCTEON_ETH_DEBUG
-void
-cn30xxpow_intr_work_debug_ival(struct cn30xxpow_softc *sc,
-    struct cn30xxpow_intr_handle *pow_ih)
-{
-	struct timeval now;
-	struct timeval ival;
-
-	microtime(&now);
-	if (__predict_false(pow_ih->pi_first == 1)) {
-		pow_ih->pi_first = 0;
-		goto stat_done;
-	}
-	timersub(&now, &pow_ih->pi_last, &ival);
-	if (ival.tv_sec != 0)
-		goto stat_done;	/* XXX */
-
-stat_done:
-	pow_ih->pi_last = now;	/* struct copy */
-}
-#endif
-
-#ifdef OCTEON_ETH_DEBUG
-#define _POW_INTR_WORK_DEBUG_IVAL(sc, ih) \
-	    cn30xxpow_intr_work_debug_ival((sc), (ih))
-#else
-#define _POW_INTR_WORK_DEBUG_IVAL(sc, ih) \
-	    do {} while (0)
-#endif
 
 /*
  * Interrupt handling by fixed count.
@@ -361,8 +281,6 @@ cn30xxpow_intr_work(struct cn30xxpow_softc *sc,
 
 	if (max_recv_cnt > 0)
 		recv_cnt = max_recv_cnt - 1;
-
-	_POW_INTR_WORK_DEBUG_IVAL(sc, pow_ih);
 
 	cn30xxpow_tag_sw_wait();
 	cn30xxpow_work_request_async(OCTEON_CVMSEG_OFFSET(csm_pow_intr),
@@ -415,369 +333,3 @@ cn30xxpow_intr(void *data)
 	_POW_WR8(sc, POW_WQ_INT_OFFSET, wq_int_mask << POW_WQ_INT_WQ_INT_SHIFT);
 	return 1;
 }
-
-/* -------------------------------------------------------------------------- */
-
-/* ---- debug configuration */
-
-#ifdef OCTEON_ETH_DEBUG
-
-void
-cn30xxpow_error_int_enable(void *data, int enable)
-{
-	struct cn30xxpow_softc *sc = data;
-	uint64_t pow_error_int_xxx;
-
-	pow_error_int_xxx =
-	    POW_ECC_ERR_IOP | POW_ECC_ERR_RPE |
-	    POW_ECC_ERR_DBE | POW_ECC_ERR_SBE;
-	_POW_WR8(sc, POW_ECC_ERR_OFFSET, pow_error_int_xxx);
-	_POW_WR8(sc, POW_ECC_ERR_OFFSET, enable ? pow_error_int_xxx : 0);
-}
-
-uint64_t
-cn30xxpow_error_int_summary(void *data)
-{
-	struct cn30xxpow_softc *sc = data;
-	uint64_t summary;
-
-	summary = _POW_RD8(sc, POW_ECC_ERR_OFFSET);
-	_POW_WR8(sc, POW_ECC_ERR_OFFSET, summary);
-	return summary;
-}
-
-#endif
-
-/* -------------------------------------------------------------------------- */
-
-/* ---- debug counter */
-
-#ifdef OCTEON_ETH_DEBUG
-int	cn30xxpow_intr_rml_verbose;
-
-void
-cn30xxpow_intr_rml(void *arg)
-{
-	struct cn30xxpow_softc *sc;
-	uint64_t reg;
-
-	sc = __cn30xxpow_softc;
-	KASSERT(sc != NULL);
-	reg = cn30xxpow_error_int_summary(sc);
-	if (cn30xxpow_intr_rml_verbose)
-		printf("%s: POW_ECC_ERR=0x%016llx\n", __func__, reg);
-}
-#endif
-
-/* -------------------------------------------------------------------------- */
-
-/* ---- debug dump */
-
-#ifdef OCTEON_ETH_DEBUG
-
-void	cn30xxpow_dump_reg(void);
-void	cn30xxpow_dump_ops(void);
-
-void
-cn30xxpow_dump(void)
-{
-	cn30xxpow_dump_reg();
-	cn30xxpow_dump_ops();
-}
-
-/* ---- register dump */
-
-struct cn30xxpow_dump_reg_entry {
-	const char *name;
-	size_t offset;
-};
-
-#define	_ENTRY(x)	{ #x, x##_OFFSET }
-#define	_ENTRY_0_7(x) \
-	_ENTRY(x## 0), _ENTRY(x## 1), _ENTRY(x## 2), _ENTRY(x## 3), \
-	_ENTRY(x## 4), _ENTRY(x## 5), _ENTRY(x## 6), _ENTRY(x## 7)
-#define	_ENTRY_0_15(x) \
-	_ENTRY(x## 0), _ENTRY(x## 1), _ENTRY(x## 2), _ENTRY(x## 3), \
-	_ENTRY(x## 4), _ENTRY(x## 5), _ENTRY(x## 6), _ENTRY(x## 7), \
-	_ENTRY(x## 8), _ENTRY(x## 9), _ENTRY(x##10), _ENTRY(x##11), \
-	_ENTRY(x##12), _ENTRY(x##13), _ENTRY(x##14), _ENTRY(x##15)
-
-const struct cn30xxpow_dump_reg_entry cn30xxpow_dump_reg_entries[] = {
-	_ENTRY		(POW_PP_GRP_MSK0),
-	_ENTRY		(POW_PP_GRP_MSK1),
-	_ENTRY_0_15	(POW_WQ_INT_THR),
-	_ENTRY_0_15	(POW_WQ_INT_CNT),
-	_ENTRY_0_7	(POW_QOS_THR),
-	_ENTRY_0_7	(POW_QOS_RND),
-	_ENTRY		(POW_WQ_INT),
-	_ENTRY		(POW_WQ_INT_PC),
-	_ENTRY		(POW_NW_TIM),
-	_ENTRY		(POW_ECC_ERR),
-	_ENTRY		(POW_NOS_CNT),
-	_ENTRY_0_15	(POW_WS_PC),
-	_ENTRY_0_7	(POW_WA_PC),
-	_ENTRY_0_7	(POW_IQ_CNT),
-	_ENTRY		(POW_WA_COM_PC),
-	_ENTRY		(POW_IQ_COM_CNT),
-	_ENTRY		(POW_TS_PC),
-	_ENTRY		(POW_DS_PC),
-	_ENTRY		(POW_BIST_STAT)
-};
-
-#undef _ENTRY
-
-void
-cn30xxpow_dump_reg(void)
-{
-	struct cn30xxpow_softc *sc = __cn30xxpow_softc;
-	const struct cn30xxpow_dump_reg_entry *entry;
-	uint64_t tmp;
-	int i;
-
-	for (i = 0; i < (int)nitems(cn30xxpow_dump_reg_entries); i++) {
-		entry = &cn30xxpow_dump_reg_entries[i];
-		tmp = _POW_RD8(sc, entry->offset);
-		printf("\t%-24s: %16llx\n", entry->name, tmp);
-	}
-}
-
-/* ---- operations dump */
-
-struct cn30xxpow_dump_ops_entry {
-	const char *name;
-	uint64_t (*func)(int);
-};
-
-void	cn30xxpow_dump_ops_coreid(int);
-void	cn30xxpow_dump_ops_index(int);
-void	cn30xxpow_dump_ops_qos(int);
-void	cn30xxpow_dump_ops_grp(int);
-void	cn30xxpow_dump_ops_queue(int);
-void	cn30xxpow_dump_ops_common(const struct cn30xxpow_dump_ops_entry *,
-	    size_t, const char *, int);
-
-#define	_ENTRY_COMMON(name, prefix, x, y) \
-	{ #name "_" #x, cn30xxpow_status_by_##name##_##x }
-
-const struct cn30xxpow_dump_ops_entry cn30xxpow_dump_ops_coreid_entries[] = {
-#define	_ENTRY(x, y)	_ENTRY_COMMON(coreid, POW_STATUS_LOAD_RESULT, x, y)
-	_ENTRY(pend_tag, PEND_TAG),
-	_ENTRY(pend_wqp, PEND_WQP),
-	_ENTRY(cur_tag_next, CUR_TAG_NEXT),
-	_ENTRY(cur_tag_prev, CUR_TAG_PREV),
-	_ENTRY(cur_wqp_next, CUR_WQP_NEXT),
-	_ENTRY(cur_wqp_prev, CUR_WQP_PREV)
-#undef _ENTRY
-};
-
-const struct cn30xxpow_dump_ops_entry cn30xxpow_dump_ops_index_entries[] = {
-#define	_ENTRY(x, y)	_ENTRY_COMMON(index, POW_MEMORY_LOAD_RESULT, x, y)
-	_ENTRY(tag, TAG),
-	_ENTRY(wqp, WQP),
-	_ENTRY(desched, DESCHED)
-#undef _ENTRY
-};
-
-const struct cn30xxpow_dump_ops_entry cn30xxpow_dump_ops_qos_entries[] = {
-#define	_ENTRY(x, y)	_ENTRY_COMMON(qos, POW_IDXPTR_LOAD_RESULT_QOS, x, y)
-	_ENTRY(free_loc, FREE_LOC)
-#undef _ENTRY
-};
-
-const struct cn30xxpow_dump_ops_entry cn30xxpow_dump_ops_grp_entries[] = {
-#define	_ENTRY(x, y)	_ENTRY_COMMON(grp, POW_IDXPTR_LOAD_RESULT_GRP, x, y)
-	_ENTRY(nosched_des, NOSCHED_DES)
-#undef _ENTRY
-};
-
-const struct cn30xxpow_dump_ops_entry cn30xxpow_dump_ops_queue_entries[] = {
-#define	_ENTRY(x, y)	_ENTRY_COMMON(queue, POW_IDXPTR_LOAD_RESULT_QUEUE, x, y)
-	_ENTRY(remote_head, REMOTE_HEAD),
-	_ENTRY(remote_tail, REMOTE_TAIL)
-#undef _ENTRY
-};
-
-void
-cn30xxpow_dump_ops(void)
-{
-	int i;
-
-	/* XXX */
-	for (i = 0; i < 2/* XXX */; i++)
-		cn30xxpow_dump_ops_coreid(i);
-
-	/* XXX */
-	cn30xxpow_dump_ops_index(0);
-
-	for (i = 0; i < 8; i++)
-		cn30xxpow_dump_ops_qos(i);
-
-	for (i = 0; i < 16; i++)
-		cn30xxpow_dump_ops_grp(i);
-
-	for (i = 0; i < 16; i++)
-		cn30xxpow_dump_ops_queue(i);
-}
-
-void
-cn30xxpow_dump_ops_coreid(int coreid)
-{
-	cn30xxpow_dump_ops_common(cn30xxpow_dump_ops_coreid_entries,
-	    nitems(cn30xxpow_dump_ops_coreid_entries), "coreid", coreid);
-}
-
-void
-cn30xxpow_dump_ops_index(int index)
-{
-	cn30xxpow_dump_ops_common(cn30xxpow_dump_ops_index_entries,
-	    nitems(cn30xxpow_dump_ops_index_entries), "index", index);
-}
-
-void
-cn30xxpow_dump_ops_qos(int qos)
-{
-	cn30xxpow_dump_ops_common(cn30xxpow_dump_ops_qos_entries,
-	    nitems(cn30xxpow_dump_ops_qos_entries), "qos", qos);
-}
-
-void
-cn30xxpow_dump_ops_grp(int grp)
-{
-	cn30xxpow_dump_ops_common(cn30xxpow_dump_ops_grp_entries,
-	    nitems(cn30xxpow_dump_ops_grp_entries), "grp", grp);
-}
-
-void
-cn30xxpow_dump_ops_queue(int queue)
-{
-	cn30xxpow_dump_ops_common(cn30xxpow_dump_ops_queue_entries,
-	    nitems(cn30xxpow_dump_ops_queue_entries), "queue", queue);
-}
-
-void
-cn30xxpow_dump_ops_common(const struct cn30xxpow_dump_ops_entry *entries,
-    size_t nentries, const char *by_what, int arg)
-{
-	const struct cn30xxpow_dump_ops_entry *entry;
-	uint64_t tmp;
-	int i;
-
-	printf("%s=%d\n", by_what, arg);
-	for (i = 0; i < (int)nentries; i++) {
-		entry = &entries[i];
-		tmp = (*entry->func)(arg);
-		printf("\t%-24s: %16llx\n", entry->name, tmp);
-	}
-}
-
-#endif
-
-/* -------------------------------------------------------------------------- */
-
-/* ---- test */
-
-#ifdef OCTEON_POW_TEST
-/*
- * Standalone test entries; meant to be called from ddb.
- */
-
-void		cn30xxpow_test(void);
-void		cn30xxpow_test_dump_wqe(paddr_t);
-
-void		cn30xxpow_test_1(void);
-
-struct test_wqe {
-	uint64_t word0;
-	uint64_t word1;
-	uint64_t word2;
-	uint64_t word3;
-} __packed;
-struct test_wqe test_wqe;
-
-void
-cn30xxpow_test(void)
-{
-	cn30xxpow_test_1();
-}
-
-void
-cn30xxpow_test_1(void)
-{
-	struct test_wqe *wqe = &test_wqe;
-	int qos, grp, queue, tt;
-	uint32_t tag;
-	paddr_t ptr;
-
-	qos = 7;			/* XXX */
-	grp = queue = 15;		/* XXX */
-	tt = POW_TAG_TYPE_ORDERED;	/* XXX */
-	tag = UINT32_C(0x01234567);	/* XXX */
-
-	/* => make sure that the queue is empty */
-
-	cn30xxpow_dump_ops_qos(qos);
-	cn30xxpow_dump_ops_grp(grp);
-	printf("\n");
-
-	/*
-	 * Initialize WQE.
-	 *
-	 * word0:next is used by hardware.
-	 *
-	 * word1:qos, word1:grp, word1:tt, word1:tag must match with arguments
-	 * of the following ADDWQ transaction.
-	 */
-
-	(void)memset(wqe, 0, sizeof(*wqe));
-	wqe->word0 =
-	    __BITS64_SET(POW_WQE_WORD0_NEXT, 0);
-	wqe->word1 =
-	    __BITS64_SET(POW_WQE_WORD1_QOS, qos) |
-	    __BITS64_SET(POW_WQE_WORD1_GRP, grp) |
-	    __BITS64_SET(POW_WQE_WORD1_TT, tt) |
-	    __BITS64_SET(POW_WQE_WORD1_TAG, tag);
-
-	printf("calling ADDWQ\n");
-	cn30xxpow_ops_addwq(MIPS_KSEG0_TO_PHYS(wqe), qos, grp, tt, tag);
-
-	cn30xxpow_dump_ops_qos(qos);
-	cn30xxpow_dump_ops_grp(grp);
-	printf("\n");
-
-	/* => make sure that a WQE is added to the queue */
-
-	printf("calling GET_WORK_LOAD\n");
-	ptr = cn30xxpow_ops_get_work_load(0);
-
-	cn30xxpow_dump_ops_qos(qos);
-	cn30xxpow_dump_ops_grp(grp);
-	printf("\n");
-
-	cn30xxpow_test_dump_wqe(ptr);
-
-	/* => make sure that the WQE is in-flight (and scheduled) */
-
-	printf("calling SWTAG(NULL)\n");
-	cn30xxpow_ops_swtag(POW_TAG_TYPE_NULL, tag);
-
-	cn30xxpow_dump_ops_qos(qos);
-	cn30xxpow_dump_ops_grp(grp);
-	printf("\n");
-
-	/* => make sure that the WQE is un-scheduled (completed) */
-}
-
-void
-cn30xxpow_test_dump_wqe(paddr_t ptr)
-{
-	uint64_t word0, word1;
-
-	printf("wqe\n");
-
-	word0 = *(uint64_t *)PHYS_TO_XKPHYS(ptr, CCA_CACHED);
-	printf("\t%-24s: %16llx\n", "word0", word0);
-
-	word1 = *(uint64_t *)PHYS_TO_XKPHYS(ptr + 8, CCA_CACHED);
-	printf("\t%-24s: %16llx\n", "word1", word1);
-}
-#endif

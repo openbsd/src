@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpipvar.h,v 1.2 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: cn30xxpipvar.h,v 1.3 2017/11/05 04:57:28 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -56,15 +56,5 @@ void			cn30xxpip_prt_cfg_enable(struct cn30xxpip_softc *,
 			    uint64_t, int);
 void			cn30xxpip_stats(struct cn30xxpip_softc *,
 			    struct ifnet *, int);
-#ifdef OCTEON_ETH_DEBUG
-void	cn30xxpip_int_enable(struct cn30xxpip_softc *, int);
-void	cn30xxpip_dump(void);
-void	cn30xxpip_dump_regs(void);
-void	cn30xxpip_dump_stats(void);
 
-void	cn30xxpip_int_enable(struct cn30xxpip_softc *, int);
-uint64_t cn30xxpip_int_summary(struct cn30xxpip_softc *);
-#endif /* OCTEON_ETH_DEBUG */
-
-
-#endif
+#endif /* !_CN30XXPIPVAR_H_ */

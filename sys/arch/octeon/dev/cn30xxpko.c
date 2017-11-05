@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpko.c,v 1.5 2016/05/24 14:06:39 visa Exp $	*/
+/*	$OpenBSD: cn30xxpko.c,v 1.6 2017/11/05 04:57:28 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -39,18 +39,10 @@
 
 static inline void	cn30xxpko_op_store(uint64_t, uint64_t);
 
-#ifdef OCTEON_ETH_DEBUG
-void	cn30xxpko_intr_rml(void *);
-#endif
-
 #define	_PKO_RD8(sc, off) \
 	bus_space_read_8((sc)->sc_regt, (sc)->sc_regh, (off))
 #define	_PKO_WR8(sc, off, v) \
 	bus_space_write_8((sc)->sc_regt, (sc)->sc_regh, (off), (v))
-
-#ifdef OCTEON_ETH_DEBUG
-struct cn30xxpko_softc	*__cn30xxpko_softc;
-#endif
 
 /* ----- gloal functions */
 
@@ -78,10 +70,6 @@ cn30xxpko_init(struct cn30xxpko_attach_args *aa,
 		panic("can't map %s space", "pko register");
 
 	*rsc = sc;
-
-#ifdef OCTEON_ETH_DEBUG
-	__cn30xxpko_softc = sc;
-#endif
 }
 
 int
@@ -121,10 +109,6 @@ cn30xxpko_config(struct cn30xxpko_softc *sc)
 	SET(reg_cmd_buf, (sc->sc_cmd_buf_pool << 20) & PKO_REG_CMD_BUF_POOL);
 	SET(reg_cmd_buf, sc->sc_cmd_buf_size & PKO_REG_CMD_BUF_SIZE);
 	_PKO_WR8(sc, PKO_REG_CMD_BUF_OFFSET, reg_cmd_buf);
-
-#ifdef OCTEON_ETH_DEBUG
-	cn30xxpko_int_enable(sc, 1);
-#endif
 }
 
 int
@@ -188,40 +172,3 @@ cn30xxpko_port_config(struct cn30xxpko_softc *sc)
 
 	return 0;
 }
-
-#ifdef OCTEON_ETH_DEBUG
-int	cn30xxpko_intr_rml_verbose;
-
-void
-cn30xxpko_intr_rml(void *arg)
-{
-	struct cn30xxpko_softc *sc;
-	uint64_t reg;
-
-	sc = __cn30xxpko_softc;
-	KASSERT(sc != NULL);
-	reg = cn30xxpko_int_summary(sc);
-	if (cn30xxpko_intr_rml_verbose)
-		printf("%s: PKO_REG_ERROR=0x%016llx\n", __func__, reg);
-}
-
-void
-cn30xxpko_int_enable(struct cn30xxpko_softc *sc, int enable)
-{
-	uint64_t pko_int_xxx = 0;
-
-	pko_int_xxx = PKO_REG_ERROR_DOORBELL | PKO_REG_ERROR_PARITY;
-	_PKO_WR8(sc, PKO_REG_ERROR_OFFSET, pko_int_xxx);
-	_PKO_WR8(sc, PKO_REG_INT_MASK_OFFSET, enable ? pko_int_xxx : 0);
-}
-
-uint64_t
-cn30xxpko_int_summary(struct cn30xxpko_softc *sc)
-{
-	uint64_t summary;
-
-	summary = _PKO_RD8(sc, PKO_REG_ERROR_OFFSET);
-	_PKO_WR8(sc, PKO_REG_ERROR_OFFSET, summary);
-	return summary;
-}
-#endif
