@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2017/07/07 23:15:27 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2017/11/05 13:20:29 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -87,7 +87,7 @@ addr.py: Makefile
 	echo 'FAKE_NET = "${FAKE_NET}"' >>$@.tmp
 	mv $@.tmp $@
 
-# load the pf rules into the kernel of the REMOTE machine
+# load the pf rules into the kernel of the REMOTE and LOCAL machine
 stamp-pfctl: addr.py pf.conf
 	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
@@ -106,7 +106,7 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
 .endif
 
 TARGETS +=	challenge-ack
-run-regress-challenge-ack: stamp-pfctl
+run-regress-challenge-ack: challenge_ack.py addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 	${SUDO} ${PYTHON}challenge_ack.py
 
@@ -115,6 +115,7 @@ TARGETS +=	cleanup
 run-regress-cleanup:
 	@echo '\n======== $@ ========'
 	${SUDO} pfctl -a regress -Fr
+	rm -f stamp-pfctl
 .endif
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
