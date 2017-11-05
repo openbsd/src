@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.460 2017/06/22 16:02:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.461 2017/11/05 10:29:24 rpe Exp $
 
 .include <bsd.own.mk>
 
@@ -30,11 +30,11 @@ kernels: ${ALL_KERNELS}
 	chmod a+r ${RELEASEDIR}/$K
 .endfor
 	cd ${.CURDIR}/../sys/arch/${MACHINE}/compile/ && \
-		tar -chzf ${DESTDIR}/usr/share/compile.tgz -s ',/obj/,/,' \
+		tar -chzf ${DESTDIR}/usr/share/relink/kernel.tgz -s ',/obj/,/,' \
 		GENERIC*/obj/*.o GENERIC*/obj/Makefile \
 		GENERIC*/obj/ld.script GENERIC*/obj/makegap.sh
-	chown root:wheel ${DESTDIR}/usr/share/compile.tgz
-	chmod 644 ${DESTDIR}/usr/share/compile.tgz
+	chown root:wheel ${DESTDIR}/usr/share/relink/kernel.tgz
+	chmod 644 ${DESTDIR}/usr/share/relink/kernel.tgz
 
 # -rw-r--r--
 BINOWN= root
@@ -272,7 +272,7 @@ do-release:
 release-sets:
 	su ${BUILDUSER} -c 'exec ${MAKE} distribution'
 	su ${BUILDUSER} -c 'exec ${MAKE} kernels'
-	cp -p ${DESTDIR}/usr/share/compile.tgz /usr/share/compile.tgz
+	cp -p ${DESTDIR}/usr/share/relink/kernel.tgz /usr/share/relink/kernel.tgz
 	${MAKE} bootblocks
 	cd ${RELEASEDIR} && rm -f SHA256
 	cd ../distrib/sets && exec su ${BUILDUSER} -c 'exec sh maketars ${OSrev}'

@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.520 2017/10/25 10:42:51 bluhm Exp $
+#	$OpenBSD: rc,v 1.521 2017/11/05 10:29:24 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -162,40 +162,46 @@ make_keys() {
 
 # Re-link libraries, placing the objects in a random order.
 reorder_libs() {
-	local _dkdev _liba _libas _mp _tmpdir _remount=false _error=false
+	local _error=false _dkdev _liba _libas _mp _ro_list _tmpdir
 
 	[[ $library_aslr == NO ]] && return
 
-	# Skip if /usr/lib is on a nfs mounted filesystem.
-	_dkdev=$(df /usr/lib | sed '1d;s/ .*//')
-	_mp=$(mount | grep "^$_dkdev")
-	[[ $_mp == *' type nfs '* ]] && return
+	# Skip if /usr/lib, /usr/libexec or /usr/share/relink are on nfs mounted
+	# filesystems, otherwise record which ones are mounted read-only.
+	for _d in /usr/{lib,libexec,share/relink}; do
+		_dkdev=$(df $_d | sed '1d;s/ .*//')
+		_mp=$(mount | grep "^$_dkdev")
+		[[ $_mp == *" type nfs "* ]] && return
+		if [[ $_mp == *" type ffs "*"read-only"* &&
+			$_ro_list != *${_mp%% *}* ]]; then
+				_ro_list="$_ro_list ${_mp%% *}"
+		fi
+	done
 
 	echo -n 'reordering libraries:'
-
-	# Remount read-write, if /usr/lib is on a read-only ffs filesystem.
-	if [[ $_mp == *' type ffs '*'read-only'* ]]; then
-		if mount -u -w $_dkdev; then
-			_remount=true
-		else
+	
+	# Remount the (read-only) filessystems in _ro_list as read-write.
+	for _mp in $_ro_list; do
+		if ! mount -u -w $_mp; then
 			echo ' failed.'
 			return
 		fi
-	fi
+	done
 
 	# Only choose the latest version of the libraries.
-	for _liba in /usr/lib/lib{c,crypto}; do
+	for _liba in /usr/share/relink/usr/lib/lib{c,crypto}; do
 		_libas="$_libas $(ls $_liba.so.+([0-9.]).a | sort -rV | head -1)"
 	done
-	_libas=${_libas# }
 
-	for _liba in /usr/libdata/ld.so.a $_libas; do
-		_tmpdir=$(mktemp -dq /usr/lib/_rebuild.XXXXXXXXXXXX) &&
+	for _liba in /usr/share/relink/usr/libexec/ld.so.a $_libas; do
+		_tmpdir=$(mktemp -dq /usr/share/relink/_rebuild.XXXXXXXXXXXX) &&
 		(
 		set -o errexit
 		_install='install -F -S -o root -g bin -m 0444'
 		_lib=${_liba##*/}
 		_lib=${_lib%.a}
+		_lib_dir=${_liba#/usr/share/relink}
+		_lib_dir=${_lib_dir%/*} 
 		cd $_tmpdir
 		ar x $_liba
 		if [[ $_lib == ld.so ]]; then
@@ -205,24 +211,24 @@ reorder_libs() {
 			chmod u+x test-ld.so
 			[[ $(./test-ld.so ok) == './test-ld.so: ok!' ]]
 			$_install /usr/libexec/ld.so /usr/libexec/ld.so.save
-			$_install ld.so.test /usr/libexec/ld.so
+			$_install ld.so.test $_lib_dir/ld.so
 		else
 			cc -shared -o $_lib $(ls *.so | sort -R) $(cat .ldadd)
 			[[ -s $_lib ]] && file $_lib | fgrep -q 'shared object'
 			LD_BIND_NOW=1 LD_LIBRARY_PATH=$_tmpdir awk 'BEGIN {exit 0}'
 			LD_BIND_NOW=1 LD_LIBRARY_PATH=$_tmpdir openssl \
 			    x509 -in /etc/ssl/cert.pem -out /dev/null
-			$_install $_lib ${_liba%/*}/$_lib
+			$_install $_lib $_lib_dir/$_lib
 		fi
 		) || { _error=true; break; }
 	done
 
-	rm -rf /usr/lib/_rebuild.*
+	rm -rf /usr/share/relink/_rebuild.*
 
 	# Restore previous mount state if it was changed.
-	if $_remount; then
-		mount -u -r $_dkdev || _error=true
-	fi
+	for _mp in $_ro_list; do
+		mount -u -r $_mp || _error=true
+	done
 
 	if $_error; then
 		echo ' failed.'

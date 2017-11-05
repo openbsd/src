@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.69 2017/08/27 22:18:08 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.70 2017/11/05 10:29:24 rpe Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -82,5 +82,7 @@ ld.so.a: ${OBJS} ${.CURDIR}/Symbols.map ${test_prog}
 	ar cqD $@ $?
 
 afterinstall: ld.so.a
+	install -d -o root -g wheel -m 755 \
+	    ${DESTDIR}/usr/share/relink/usr/libexec
 	install -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-	    ld.so.a ${DESTDIR}/usr/libdata/ld.so.a
+	    ld.so.a ${DESTDIR}/usr/share/relink/usr/libexec/ld.so.a

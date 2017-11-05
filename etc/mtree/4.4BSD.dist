@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.300 2017/10/08 15:14:17 visa Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.301 2017/11/05 10:29:24 rpe Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -414,10 +414,6 @@ usr
         calendar
         ..
 
-        # ./usr/share/compile
-        compile
-        ..
-
         # ./usr/share/dict
         dict
             papers
@@ -564,6 +560,14 @@ usr
         misc
         ..
         mk
+        ..
+
+        # ./usr/share/relink
+        relink
+
+            # ./usr/share/relink/kernel
+            kernel
+            ..
         ..
         snmp
             mibs

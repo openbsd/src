@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.90 2017/08/09 06:15:29 robert Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.91 2017/11/05 10:29:24 rpe Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -288,8 +288,10 @@ realinstall:
 	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    ${FULLSHLIBNAME} ${DESTDIR}${LIBDIR}
 .if defined(LIBREBUILD)
+	${INSTALL} -d -o ${LIBOWN} -g ${LIBGRP} -m 755 \
+	   ${DESTDIR}/usr/share/relink/${LIBDIR}
 	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    ${FULLSHLIBNAME}.a ${DESTDIR}${LIBDIR}
+	    ${FULLSHLIBNAME}.a ${DESTDIR}/usr/share/relink/${LIBDIR}
 .endif
 .endif
 .if defined(LINKS) && !empty(LINKS)

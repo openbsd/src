@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: reorder_kernel.sh,v 1.3 2017/08/25 18:59:55 rpe Exp $
+# $OpenBSD: reorder_kernel.sh,v 1.4 2017/11/05 10:29:24 rpe Exp $
 #
 # Copyright (c) 2017 Robert Peichaer <rpe@openbsd.org>
 #
@@ -24,15 +24,15 @@ export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 DISK_DEV=$(df /usr/share | sed '1d;s/ .*//')
 [[ $(mount | grep "^$DISK_DEV") == *" type nfs "* ]] && exit 1
 
-COMPILE_DIR=/usr/share/compile
 KERNEL=$(sysctl -n kern.osversion)
 KERNEL=${KERNEL%#*}
-LOGFILE=$COMPILE_DIR/$KERNEL/relink.log
+KERNEL_DIR=/usr/share/relink/kernel
+LOGFILE=$KERNEL_DIR/$KERNEL/relink.log
 PROGNAME=${0##*/}
 SHA256=/var/db/kernel.SHA256
 
 # Create kernel compile dir and redirect stdout/stderr to a logfile.
-mkdir -m 700 -p $COMPILE_DIR/$KERNEL
+mkdir -m 700 -p $KERNEL_DIR/$KERNEL
 exec 1>$LOGFILE
 exec 2>&1
 
@@ -41,18 +41,18 @@ trap 'trap - EXIT; logger -st $PROGNAME \
 	"kernel relinking failed; see $LOGFILE" >>/dev/console 2>&1' ERR
 trap 'logger -t $PROGNAME "kernel relinking done"' EXIT
 
-if [[ -f $COMPILE_DIR.tgz ]]; then
-	rm -rf $COMPILE_DIR/$KERNEL/*
+if [[ -f $KERNEL_DIR.tgz ]]; then
+	rm -rf $KERNEL_DIR/$KERNEL/*
 	# The directory containing the logfile was just deleted, redirect
 	# stdout again to a new logfile.
 	exec 1>$LOGFILE
-	tar -C $COMPILE_DIR -xzf $COMPILE_DIR.tgz $KERNEL
-	rm -f $COMPILE_DIR.tgz
+	tar -C $KERNEL_DIR -xzf $KERNEL_DIR.tgz $KERNEL
+	rm -f $KERNEL_DIR.tgz
 fi
 
 sha256 -C $SHA256 /bsd
 
-cd $COMPILE_DIR/$KERNEL
+cd $KERNEL_DIR/$KERNEL
 make newbsd
 make newinstall
 

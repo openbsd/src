@@ -620,9 +620,7 @@
 ./usr/include
 ./usr/lib
 ./usr/lib/libc.so.92.0
-./usr/lib/libc.so.92.0.a
 ./usr/lib/libcrypto.so.42.0
-./usr/lib/libcrypto.so.42.0.a
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
 ./usr/lib/libevent.so.4.1
@@ -669,7 +667,6 @@
 ./usr/libdata/cvs/contrib
 ./usr/libdata/cvs/contrib/README
 ./usr/libdata/cvs/contrib/intro.doc
-./usr/libdata/ld.so.a
 ./usr/libdata/perl5
 ./usr/libdata/perl5/AnyDBM_File.pm
 ./usr/libdata/perl5/App
@@ -2579,8 +2576,6 @@
 ./usr/share/calendar/ru_RU.UTF-8/calendar.orthodox
 ./usr/share/calendar/ru_RU.UTF-8/calendar.pagan
 ./usr/share/calendar/ru_RU.UTF-8/calendar.primety
-./usr/share/compile
-./usr/share/compile.tgz
 ./usr/share/dict
 ./usr/share/dict/README
 ./usr/share/dict/american
@@ -2699,6 +2694,15 @@
 ./usr/share/mk/bsd.xconf.mk
 ./usr/share/mk/bsd.xorg.mk
 ./usr/share/mk/sys.mk
+./usr/share/relink
+./usr/share/relink/kernel
+./usr/share/relink/kernel.tgz
+./usr/share/relink/usr
+./usr/share/relink/usr/libexec
+./usr/share/relink/usr/libexec/ld.so.a
+./usr/share/relink/usr/lib
+./usr/share/relink/usr/lib/libc.so.92.0.a
+./usr/share/relink/usr/lib/libcrypto.so.42.0.a
 ./usr/share/snmp
 ./usr/share/snmp/mibs
 ./usr/share/snmp/mibs/OPENBSD-BASE-MIB.txt
