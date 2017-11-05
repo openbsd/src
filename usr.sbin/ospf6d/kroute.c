@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.52 2017/06/19 19:55:57 friehm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.53 2017/11/05 14:33:27 jca Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -369,7 +369,6 @@ kr_show_route(struct imsg *imsg)
 			return;
 		}
 		memcpy(&addr, imsg->data, sizeof(addr));
-		kr = NULL;
 		kr = kroute_match(&addr);
 		if (kr != NULL)
 			main_imsg_compose_ospfe(IMSG_CTL_KROUTE, imsg->hdr.pid,
