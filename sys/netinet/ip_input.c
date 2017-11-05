@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.328 2017/11/01 06:35:38 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.329 2017/11/05 13:19:59 florian Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1034,20 +1034,6 @@ ip_slowtimo(void)
 			ipstat_inc(ips_fragtimeout);
 			ip_freef(fp);
 		}
-	}
-	mtx_leave(&ipq_mutex);
-}
-
-/*
- * Drain off all datagram fragments.
- */
-void
-ip_drain(void)
-{
-	mtx_enter(&ipq_mutex);
-	while (!LIST_EMPTY(&ipq)) {
-		ipstat_inc(ips_fragdropped);
-		ip_freef(LIST_FIRST(&ipq));
 	}
 	mtx_leave(&ipq_mutex);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.77 2017/10/29 14:56:36 florian Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.78 2017/11/05 13:19:59 florian Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -632,21 +632,4 @@ frag6_slowtimo(void)
 	IP6Q_UNLOCK();
 
 	NET_UNLOCK();
-}
-
-/*
- * Drain off all datagram fragments.
- */
-void
-frag6_drain(void)
-{
-	struct ip6q *q6;
-
-	if (ip6q_lock_try() == 0)
-		return;
-	while ((q6 = TAILQ_FIRST(&frag6_queue)) != NULL) {
-		ip6stat_inc(ip6s_fragdropped);
-		frag6_freef(q6);
-	}
-	IP6Q_UNLOCK();
 }

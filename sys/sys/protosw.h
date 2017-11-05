@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.26 2017/11/02 14:01:18 florian Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.27 2017/11/05 13:19:59 florian Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -41,8 +41,6 @@
  * A protocol is called through the pr_init entry before any other.
  * Thereafter it is called every 200ms through the pr_fasttimo entry and
  * every 500ms through the pr_slowtimo for timer based actions.
- * The system will call the pr_drain entry if it is low on space and
- * this should throw away any non-critical data.
  *
  * Protocols pass data between themselves as chains of mbufs using
  * the pr_input and pr_output hooks.  Pr_input passes data up (towards
@@ -90,7 +88,6 @@ struct protosw {
 	void	(*pr_init)(void);	/* initialization hook */
 	void	(*pr_fasttimo)(void);	/* fast timeout (200ms) */
 	void	(*pr_slowtimo)(void);	/* slow timeout (500ms) */
-	void	(*pr_drain)(void);	/* flush any excess space possible */
 					/* sysctl for protocol */
 	int	(*pr_sysctl)(int *, u_int, void *, size_t *, void *, size_t);
 };

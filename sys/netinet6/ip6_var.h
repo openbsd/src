@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.80 2017/11/02 14:01:18 florian Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.81 2017/11/05 13:19:59 florian Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -334,7 +334,6 @@ void	frag6_init(void);
 int	frag6_input(struct mbuf **, int *, int, int);
 int	frag6_deletefraghdr(struct mbuf *, int);
 void	frag6_slowtimo(void);
-void	frag6_drain(void);
 
 void	rip6_init(void);
 int	rip6_input(struct mbuf **, int *, int, int);

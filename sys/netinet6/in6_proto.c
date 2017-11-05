@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.96 2017/11/02 14:01:18 florian Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.97 2017/11/05 13:19:59 florian Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -127,7 +127,6 @@ struct protosw inet6sw[] = {
   .pr_protocol	= IPPROTO_IPV6,
   .pr_init	= ip6_init,
   .pr_slowtimo	= frag6_slowtimo,
-  .pr_drain	= frag6_drain,
   .pr_sysctl	= ip6_sysctl
 },
 {
