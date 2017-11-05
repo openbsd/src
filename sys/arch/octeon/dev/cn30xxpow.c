@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpow.c,v 1.12 2017/11/05 05:08:07 visa Exp $	*/
+/*	$OpenBSD: cn30xxpow.c,v 1.13 2017/11/05 05:09:50 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -214,7 +214,8 @@ cn30xxpow_intr_establish(int group, int level,
 	KASSERT(group < 16);
 
 	pow_ih = malloc(sizeof(*pow_ih), M_DEVBUF, M_NOWAIT);
-	KASSERT(pow_ih != NULL);	/* XXX handle failure */
+	if (pow_ih == NULL)
+		return NULL;
 
 	pow_ih->pi_ih = octeon_intr_establish(
 	    ffs64(CIU_INTX_SUM0_WORKQ_0) - 1 + group,
@@ -222,7 +223,7 @@ cn30xxpow_intr_establish(int group, int level,
 	    cn30xxpow_intr, pow_ih, what);
 	KASSERT(pow_ih->pi_ih != NULL);
 
-	pow_ih->pi_sc = &cn30xxpow_softc;	/* XXX */
+	pow_ih->pi_sc = &cn30xxpow_softc;
 	pow_ih->pi_group = group;
 	pow_ih->pi_cb = cb;
 	pow_ih->pi_data = data;
