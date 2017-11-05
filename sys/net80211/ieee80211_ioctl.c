@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.55 2017/10/27 12:22:40 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.56 2017/11/05 17:49:11 phessler Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -439,6 +439,9 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		memset(ic->ic_des_essid, 0, IEEE80211_NWID_LEN);
 		ic->ic_des_esslen = nwid.i_len;
 		memcpy(ic->ic_des_essid, nwid.i_nwid, nwid.i_len);
+		/* disable WPA/WEP */
+		ieee80211_disable_rsn(ic);
+		ieee80211_disable_wep(ic);
 		error = ENETRESET;
 		break;
 	case SIOCG80211NWID:
