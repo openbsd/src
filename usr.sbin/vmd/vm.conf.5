@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.23 2017/10/30 03:37:33 mlarkin Exp $
+.\" $OpenBSD: vm.conf.5,v 1.24 2017/11/05 20:01:09 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 30 2017 $
+.Dd $Mdocdate: November 5 2017 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -185,7 +185,7 @@ A
 .Cm local
 interface will auto-generate an IPv4 subnet for the interface,
 configure a gateway address on the VM host side,
-and run a simple DHCP (BOOTP) server for the VM.
+and run a simple DHCP/BOOTP server for the VM.
 This option can be used for layer 3 mode without configuring a switch.
 .It Cm interfaces Ar count
 Optional minimum number of network interfaces to add to the VM.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.34 2017/09/05 22:06:49 edd Exp $
+.\"	$OpenBSD: vmctl.8,v 1.35 2017/11/05 20:01:09 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 5 2017 $
+.Dd $Mdocdate: November 5 2017 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -106,7 +106,7 @@ Add a local network interface.
 .Xr vmd 8
 will auto-generate an IPv4 subnet for the interface,
 configure a gateway address on the VM host side,
-and run a simple DHCP (BOOTP) server for the VM.
+and run a simple DHCP/BOOTP server for the VM.
 See
 .Sx LOCAL INTERFACES
 below for more information on how addresses are calculated and assigned when
