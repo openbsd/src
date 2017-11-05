@@ -3,7 +3,7 @@
  * DONT EDIT THIS FILE
  */
 
-/*	$OpenBSD: cn30xxpowreg.h,v 1.2 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: cn30xxpowreg.h,v 1.3 2017/11/05 05:17:55 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -138,8 +138,7 @@
 #define POW_BASE				0x0001670000000000ULL
 #define POW_SIZE				0x400ULL
 
-#define	POW_PP_GRP_MSK0_OFFSET			0x0ULL
-#define	POW_PP_GRP_MSK1_OFFSET			0x8ULL
+#define	POW_PP_GRP_MSK_OFFSET(core)		(0x0ULL + (core) * 8)
 #define	POW_WQ_INT_THR0_OFFSET			0x80ULL
 #define	POW_WQ_INT_THR1_OFFSET			0x88ULL
 #define	POW_WQ_INT_THR2_OFFSET			0x90ULL

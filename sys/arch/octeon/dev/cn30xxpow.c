@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpow.c,v 1.13 2017/11/05 05:09:50 visa Exp $	*/
+/*	$OpenBSD: cn30xxpow.c,v 1.14 2017/11/05 05:17:55 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -273,9 +273,10 @@ cn30xxpow_intr_work(struct cn30xxpow_softc *sc,
 {
 	uint64_t *work;
 	uint64_t count = 0;
+	uint32_t coreid = octeon_get_coreid();
 	int recv_cnt = MAX_RX_CNT;
 
-	_POW_WR8(sc, POW_PP_GRP_MSK0_OFFSET, 1ULL << pow_ih->pi_group);
+	_POW_WR8(sc, POW_PP_GRP_MSK_OFFSET(coreid), 1ULL << pow_ih->pi_group);
 
 	if (max_recv_cnt > 0)
 		recv_cnt = max_recv_cnt - 1;
