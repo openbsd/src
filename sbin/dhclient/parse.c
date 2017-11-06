@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.75 2017/10/23 13:15:57 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.76 2017/11/06 12:51:53 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -288,6 +288,11 @@ parse_decimal(FILE *cfile, unsigned char *buf, char fmt)
 	token = next_token(&val, cfile);
 
 	switch (fmt) {
+	case 't':	/* Signed 64-bit integer. */
+		low = INT64_MIN;
+		high = INT64_MAX;
+		bytes = 8;
+		break;
 	case 'l':	/* Signed 32-bit integer. */
 		low = INT32_MIN;
 		high = INT32_MAX;
