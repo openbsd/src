@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.148 2017/10/23 13:31:35 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.149 2017/11/06 13:27:19 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -582,6 +582,12 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 	switch (token) {
 	case TOK_BOOTP:
 		/* 'bootp' is just a comment. See BOOTP_LEASE(). */
+		break;
+	case TOK_EPOCH:
+		if (parse_decimal(cfile, (unsigned char *)&lease->epoch, 't')
+		    == 0)
+			return;
+		lease->epoch = betoh64(lease->epoch);
 		break;
 	case TOK_EXPIRE:
 		if (parse_date(cfile, &lease->expiry) == 0)

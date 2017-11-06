@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.519 2017/11/04 14:48:10 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.520 2017/11/06 13:27:19 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1271,6 +1271,8 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 		memcpy(lease->filename, packet->file, DHCP_FILE_LEN);
 		lease->filename[DHCP_FILE_LEN] = '\0';
 	}
+
+	time(&lease->epoch);
 	return lease;
 
 decline:
@@ -2247,6 +2249,8 @@ apply_defaults(struct client_lease *lease)
 	newlease = clone_lease(lease);
 	if (newlease == NULL)
 		fatalx("unable to clone lease");
+
+	newlease->epoch = lease->epoch;
 
 	if (config->filename != NULL) {
 		free(newlease->filename);
