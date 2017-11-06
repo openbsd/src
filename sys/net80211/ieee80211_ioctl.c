@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.56 2017/11/05 17:49:11 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.57 2017/11/06 11:34:29 phessler Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -55,8 +55,6 @@ void	 ieee80211_node2req(struct ieee80211com *,
 	    const struct ieee80211_node *, struct ieee80211_nodereq *);
 void	 ieee80211_req2node(struct ieee80211com *,
 	    const struct ieee80211_nodereq *, struct ieee80211_node *);
-void	 ieee80211_disable_wep(struct ieee80211com *); 
-void	 ieee80211_disable_rsn(struct ieee80211com *); 
 
 void
 ieee80211_node2req(struct ieee80211com *ic, const struct ieee80211_node *ni,

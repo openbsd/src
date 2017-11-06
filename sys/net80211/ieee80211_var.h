@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.80 2017/10/29 08:36:10 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.81 2017/11/06 11:34:29 phessler Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -406,6 +406,8 @@ int	ieee80211_setmode(struct ieee80211com *, enum ieee80211_phymode);
 enum ieee80211_phymode ieee80211_next_mode(struct ifnet *);
 enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
 		const struct ieee80211_channel *);
+void	ieee80211_disable_wep(struct ieee80211com *); 
+void	ieee80211_disable_rsn(struct ieee80211com *); 
 
 extern	int ieee80211_cache_size;
 
