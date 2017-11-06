@@ -93,8 +93,6 @@ void db_elf_sym_forall(db_forall_func_t db_forall_func, void *);
 bool db_dwarf_line_at_pc(const char *, size_t, uintptr_t,
     const char **, const char **, int *);
 
-struct ctf_type;
-
 int			 db_ctf_func_numargs(Elf_Sym *);
 
 #endif /* _DDB_DB_SYM_H_ */
