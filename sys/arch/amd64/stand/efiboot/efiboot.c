@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.25 2017/10/11 04:07:50 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.26 2017/11/06 08:57:34 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -94,8 +94,11 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 		for (dp = dp0; !IsDevicePathEnd(dp);
 		    dp = NextDevicePathNode(dp)) {
 			if (DevicePathType(dp) == MEDIA_DEVICE_PATH &&
-			    DevicePathSubType(dp) == MEDIA_HARDDRIVE_DP) {
-				bios_bootdev = 0x80;
+			    (DevicePathSubType(dp) == MEDIA_HARDDRIVE_DP ||
+ 			    DevicePathSubType(dp) == MEDIA_CDROM_DP)) {
+				bios_bootdev =
+				    (DevicePathSubType(dp) == MEDIA_CDROM_DP)
+				    ? 0x1e0 : 0x80;
 				efi_bootdp = dp0;
 				break;
 			}

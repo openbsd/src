@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.20 2017/07/21 01:21:42 yasuoka Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.21 2017/11/06 08:57:34 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -189,19 +189,19 @@ efi_hardprobe(void)
 	int		 n;
 	struct diskinfo	*dip, *dipt;
 	u_int		 bsdunit, type = 0;
-	u_int		 scsi= 0, ide = 0;
+	u_int		 scsi= 0, ide = 0, atapi = 0;
 	extern struct disklist_lh
 			 efi_disklist;
 
 	n = 0;
 	TAILQ_FOREACH_SAFE(dip, &efi_disklist, list, dipt) {
 		TAILQ_REMOVE(&efi_disklist, dip, list);
-		printf(" hd%u", n);
+		n = scsi + ide;
 
-		dip->bios_info.bios_number = 0x80 | n;
 		/* Try to find the label, to figure out device type */
 		if ((efi_getdisklabel(dip->efi_info, &dip->disklabel))) {
-			printf("*");
+			type = 0;
+			printf(" hd%d*", n);
 			bsdunit = ide++;
 		} else {
 			/* Best guess */
@@ -219,12 +219,25 @@ efi_hardprobe(void)
 				dip->bios_info.flags |= BDI_GOODLABEL;
 				break;
 
+			case DTYPE_ATAPI:
+				type = 6;
+				n = atapi;
+				bsdunit = atapi++;
+				dip->bios_info.flags |= BDI_GOODLABEL
+				    | BDI_EL_TORITO;
+				break;
+
 			default:
 				dip->bios_info.flags |= BDI_BADLABEL;
 				type = 0;	/* XXX Suggest IDE */
 				bsdunit = ide++;
 			}
+			printf(" %cd%d", (type == 6)? 'c' : 'h', n);
 		}
+		if (type != 6)
+			dip->bios_info.bios_number = 0x80 | n;
+		else
+			dip->bios_info.bios_number = 0xe0 | n;
 
 		dip->bios_info.checksum = 0; /* just in case */
 		/* Fill out best we can */
