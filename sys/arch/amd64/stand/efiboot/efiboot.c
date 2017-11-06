@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.26 2017/11/06 08:57:34 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.27 2017/11/06 09:08:53 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -863,22 +863,25 @@ int
 Xvideo_efi(void)
 {
 	int	 i, mode = -1;
-	char	*p;
 
-	for (i = 0; i < nitems(efi_video) && i < conout->Mode->MaxMode; i++) {
-		if (efi_video[i].cols > 0)
-			printf("Mode %d: %d x %d\n", i,
-			    efi_video[i].cols, efi_video[i].rows);
+	if (cmd.argc >= 2) {
+		mode = strtol(cmd.argv[1], NULL, 10);
+		if (0 <= mode && mode < nitems(efi_video) &&
+		    efi_video[mode].cols > 0) {
+			EFI_CALL(conout->SetMode, conout, mode);
+			efi_video_reset();
+		}
+	} else {
+		for (i = 0; i < nitems(efi_video) &&
+		    i < conout->Mode->MaxMode; i++) {
+			if (efi_video[i].cols > 0)
+				printf("Mode %d: %d x %d\n", i,
+				    efi_video[i].cols,
+				    efi_video[i].rows);
+		}
+		printf("\n");
 	}
-	if (cmd.argc == 2) {
-		p = cmd.argv[1];
-		mode = strtol(p, &p, 10);
-	}
-	printf("\nCurrent Mode = %d\n", conout->Mode->Mode);
-	if (0 <= mode && mode < i && efi_video[mode].cols > 0) {
-		EFI_CALL(conout->SetMode, conout, mode);
-		efi_video_reset();
-	}
+	printf("Current Mode = %d\n", conout->Mode->Mode);
 
 	return (0);
 }
