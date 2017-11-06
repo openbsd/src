@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.6 2017/11/01 15:45:28 mpi Exp $ */
+/*	$OpenBSD: elf.c,v 1.7 2017/11/06 14:59:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -104,14 +104,16 @@ elf_getshstab(const char *p, size_t filesize, const char **shstab,
 
 ssize_t
 elf_getsymtab(const char *p, size_t filesize, const char *shstab,
-    size_t shstabsz, const Elf_Sym **symtab, size_t *nsymb)
+    size_t shstabsz, const Elf_Sym **symtab, size_t *nsymb, const char **strtab,
+    size_t *strtabsz)
 {
 	Elf_Ehdr	*eh = (Elf_Ehdr *)p;
-	Elf_Shdr	*sh;
+	Elf_Shdr	*sh, *symsh;
 	size_t		 snlen;
 	ssize_t		 i;
 
 	snlen = strlen(ELF_SYMTAB);
+	symsh = NULL;
 
 	for (i = 0; i < eh->e_shnum; i++) {
 		sh = (Elf_Shdr *)(p + eh->e_shoff + i * eh->e_shentsize);
@@ -133,12 +135,26 @@ elf_getsymtab(const char *p, size_t filesize, const char *shstab,
 				*symtab = (Elf_Sym *)(p + sh->sh_offset);
 			if (nsymb != NULL)
 				*nsymb = (sh->sh_size / sh->sh_entsize);
+			symsh = sh;
 
-			return i;
+			break;
 		}
 	}
 
-	return -1;
+	if (symsh == NULL || (symsh->sh_link >= eh->e_shnum))
+		return -1;
+
+	sh = (Elf_Shdr *)(p + eh->e_shoff + symsh->sh_link * eh->e_shentsize);
+
+	if ((sh->sh_offset + sh->sh_size) > filesize)
+		return -1;
+
+	if (strtab != NULL)
+		*strtab = p + sh->sh_offset;
+	if (strtabsz != NULL)
+		*strtabsz = sh->sh_size;
+
+	return i;
 }
 
 ssize_t
@@ -172,10 +188,8 @@ elf_getsection(char *p, size_t filesize, const char *sname, const char *shstab,
 			sidx = i;
 			sdata = p + sh->sh_offset;
 			ssz = sh->sh_size;
-#ifdef needreloc
 			elf_reloc_apply(p, filesize, shstab, shstabsz, sidx,
 			    sdata, ssz);
-#endif
 			break;
 		}
 	}
@@ -242,7 +256,7 @@ elf_reloc_apply(const char *p, size_t filesize, const char *shstab,
 
 	/* Find symbol table location and number of symbols. */
 	symtabidx = elf_getsymtab(p, filesize, shstab, shstabsz, &symtab,
-	    &nsymb);
+	    &nsymb, NULL, NULL);
 	if (symtabidx == -1) {
 		warnx("symbol table not found");
 		return;

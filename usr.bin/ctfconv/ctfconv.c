@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.15 2017/11/03 12:55:43 mpi Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.16 2017/11/06 14:59:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -60,7 +60,7 @@ void		 dump_obj(struct itype *, int *);
 int		 iself(const char *, size_t);
 int		 elf_getshstab(const char *, size_t, const char **, size_t *);
 ssize_t		 elf_getsymtab(const char *, size_t, const char *, size_t,
-		     const Elf_Sym **, size_t *);
+		     const Elf_Sym **, size_t *, const char **, size_t *);
 ssize_t		 elf_getsection(char *, size_t, const char *, const char *,
 		     size_t, const char **, size_t *);
 
@@ -221,14 +221,10 @@ elf_convert(char *p, size_t filesize)
 	if (elf_getshstab(p, filesize, &shstab, &shstabsz))
 		return 1;
 
-	/* Find symbol table location and number of symbols. */
-	if (elf_getsymtab(p, filesize, shstab, shstabsz, &symtab, &nsymb) == -1)
+	/* Find symbol table and associated string table. */
+	if (elf_getsymtab(p, filesize, shstab, shstabsz, &symtab, &nsymb,
+	    &strtab, &strtabsz) == -1)
 		warnx("symbol table not found");
-
-	/* Find string table location and size. */
-	if (elf_getsection(p, filesize, ELF_STRTAB, shstab, shstabsz, &strtab,
-	    &strtabsz) == -1)
-		warnx("string table not found");
 
 	/* Find abbreviation location and size. */
 	if (elf_getsection(p, filesize, DEBUG_ABBREV, shstab, shstabsz, &abbuf,
