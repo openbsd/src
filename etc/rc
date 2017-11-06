@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.521 2017/11/05 10:29:24 rpe Exp $
+#	$OpenBSD: rc,v 1.522 2017/11/06 09:04:18 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -163,6 +163,7 @@ make_keys() {
 # Re-link libraries, placing the objects in a random order.
 reorder_libs() {
 	local _error=false _dkdev _liba _libas _mp _ro_list _tmpdir
+	local _relink=/usr/share/relink
 
 	[[ $library_aslr == NO ]] && return
 
@@ -189,18 +190,18 @@ reorder_libs() {
 	done
 
 	# Only choose the latest version of the libraries.
-	for _liba in /usr/share/relink/usr/lib/lib{c,crypto}; do
+	for _liba in $_relink/usr/lib/lib{c,crypto}; do
 		_libas="$_libas $(ls $_liba.so.+([0-9.]).a | sort -rV | head -1)"
 	done
 
-	for _liba in /usr/share/relink/usr/libexec/ld.so.a $_libas; do
-		_tmpdir=$(mktemp -dq /usr/share/relink/_rebuild.XXXXXXXXXXXX) &&
+	for _liba in $_relink/usr/libexec/ld.so.a $_libas; do
+		_tmpdir=$(mktemp -dq $_relink/_rebuild.XXXXXXXXXXXX) &&
 		(
 		set -o errexit
 		_install='install -F -S -o root -g bin -m 0444'
 		_lib=${_liba##*/}
 		_lib=${_lib%.a}
-		_lib_dir=${_liba#/usr/share/relink}
+		_lib_dir=${_liba#$_relink}
 		_lib_dir=${_lib_dir%/*} 
 		cd $_tmpdir
 		ar x $_liba
@@ -223,7 +224,7 @@ reorder_libs() {
 		) || { _error=true; break; }
 	done
 
-	rm -rf /usr/share/relink/_rebuild.*
+	rm -rf $_relink/_rebuild.*
 
 	# Restore previous mount state if it was changed.
 	for _mp in $_ro_list; do
