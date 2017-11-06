@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.228 2017/10/16 08:22:25 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.229 2017/11/06 15:12:43 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -889,7 +889,7 @@ tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
 		}
 	}
 
-	DPRINTF(("tdb_init(): no alg %d for spi %08x, addr %s, proto %d\n",
+	DPRINTF(("%s: no alg %d for spi %08x, addr %s, proto %d\n", __func__,
 	    alg, ntohl(tdbp->tdb_spi), ipsp_address(&tdbp->tdb_dst, buf,
 	    sizeof(buf)), tdbp->tdb_sproto));
 

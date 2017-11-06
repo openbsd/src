@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.57 2017/08/11 21:24:20 mpi Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.58 2017/11/06 15:12:43 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -94,14 +94,14 @@ ipcomp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 		break;
 
 	default:
-		DPRINTF(("ipcomp_init(): unsupported compression algorithm %d specified\n",
-		    ii->ii_compalg));
+		DPRINTF(("%s: unsupported compression algorithm %d specified\n",
+		    __func__, ii->ii_compalg));
 		return EINVAL;
 	}
 
 	tdbp->tdb_compalgxform = tcomp;
 
-	DPRINTF(("ipcomp_init(): initialized TDB with ipcomp algorithm %s\n",
+	DPRINTF(("%s: initialized TDB with ipcomp algorithm %s\n", __func__,
 	    tcomp->name));
 
 	tdbp->tdb_xform = xsp;
@@ -145,7 +145,7 @@ ipcomp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	crp = crypto_getreq(1);
 	if (crp == NULL) {
 		m_freem(m);
-		DPRINTF(("ipcomp_input(): failed to acquire crypto descriptors\n"));
+		DPRINTF(("%s: failed to acquire crypto descriptors\n", __func__));
 		ipcompstat.ipcomps_crypto++;
 		return ENOBUFS;
 	}
@@ -154,7 +154,7 @@ ipcomp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	if (tc == NULL) {
 		m_freem(m);
 		crypto_freereq(crp);
-		DPRINTF(("ipcomp_input(): failed to allocate tdb_crypto\n"));
+		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
 		ipcompstat.ipcomps_crypto++;
 		return ENOBUFS;
 	}
@@ -213,7 +213,7 @@ ipcomp_input_cb(struct cryptop *crp)
 		free(tc, M_XDATA, 0);
 		crypto_freereq(crp);
 		ipcompstat.ipcomps_crypto++;
-		DPRINTF(("ipcomp_input_cb(): bogus returned buffer from crypto\n"));
+		DPRINTF(("%s: bogus returned buffer from crypto\n", __func__));
 		return;
 	}
 
@@ -223,7 +223,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	if (tdb == NULL) {
 		free(tc, M_XDATA, 0);
 		ipcompstat.ipcomps_notdb++;
-		DPRINTF(("ipcomp_input_cb(): TDB expired while in crypto"));
+		DPRINTF(("%s: TDB expired while in crypto", __func__));
 		goto baddone;
 	}
 
@@ -258,7 +258,7 @@ ipcomp_input_cb(struct cryptop *crp)
 		}
 		free(tc, M_XDATA, 0);
 		ipcompstat.ipcomps_noxform++;
-		DPRINTF(("ipcomp_input_cb(): crypto error %d\n",
+		DPRINTF(("%s: crypto error %d\n", __func__,
 		    crp->crp_etype));
 		goto baddone;
 	}
@@ -278,7 +278,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	m1 = m_getptr(m, skip, &roff);
 	if (m1 == NULL) {
 		ipcompstat.ipcomps_hdrops++;
-		DPRINTF(("ipcomp_input_cb(): bad mbuf chain, IPCA %s/%08x\n",
+		DPRINTF(("%s: bad mbuf chain, IPCA %s/%08x\n", __func__,
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
 		goto baddone;
@@ -391,8 +391,8 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		 * worry
 		 */
 		if (m->m_pkthdr.len + hlen > IP_MAXPACKET) {
-			DPRINTF(("ipcomp_output(): packet in IPCA %s/%08x "
-			    "got too big\n", ipsp_address(&tdb->tdb_dst, buf,
+			DPRINTF(("%s: packet in IPCA %s/%08x got too big\n",
+			    __func__, ipsp_address(&tdb->tdb_dst, buf,
 			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			m_freem(m);
 			ipcompstat.ipcomps_toobig++;
@@ -404,8 +404,8 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	case AF_INET6:
 		/* Check for IPv6 maximum packet size violations */
 		if (m->m_pkthdr.len + hlen > IPV6_MAXPACKET) {
-			DPRINTF(("ipcomp_output(): packet in IPCA %s/%08x "
-			    "got too big\n", ipsp_address(&tdb->tdb_dst, buf,
+			DPRINTF(("%s: packet in IPCA %s/%08x got too big\n",
+			    __func__, ipsp_address(&tdb->tdb_dst, buf,
 			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			m_freem(m);
 			ipcompstat.ipcomps_toobig++;
@@ -415,8 +415,8 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 #endif /* INET6 */
 
 	default:
-		DPRINTF(("ipcomp_output(): unknown/unsupported protocol "
-		    "family %d, IPCA %s/%08x\n", tdb->tdb_dst.sa.sa_family,
+		DPRINTF(("%s: unknown/unsupported protocol family %d, "
+		    "IPCA %s/%08x\n", __func__, tdb->tdb_dst.sa.sa_family,
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
@@ -455,7 +455,7 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		struct mbuf *n = m_dup_pkt(m, 0, M_DONTWAIT);
 
 		if (n == NULL) {
-			DPRINTF(("ipcomp_output(): bad mbuf chain, IPCA %s/%08x\n",
+			DPRINTF(("%s: bad mbuf chain, IPCA %s/%08x\n", __func__,
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi)));
 			ipcompstat.ipcomps_hdrops++;
@@ -472,7 +472,7 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	crp = crypto_getreq(1);
 	if (crp == NULL) {
 		m_freem(m);
-		DPRINTF(("ipcomp_output(): failed to acquire crypto descriptors\n"));
+		DPRINTF(("%s: failed to acquire crypto descriptors\n", __func__));
 		ipcompstat.ipcomps_crypto++;
 		return ENOBUFS;
 	}
@@ -492,7 +492,7 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	if (tc == NULL) {
 		m_freem(m);
 		crypto_freereq(crp);
-		DPRINTF(("ipcomp_output(): failed to allocate tdb_crypto\n"));
+		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
 		ipcompstat.ipcomps_crypto++;
 		return ENOBUFS;
 	}
@@ -544,8 +544,7 @@ ipcomp_output_cb(struct cryptop *crp)
 		free(tc, M_XDATA, 0);
 		crypto_freereq(crp);
 		ipcompstat.ipcomps_crypto++;
-		DPRINTF(("ipcomp_output_cb(): bogus returned buffer from "
-		    "crypto\n"));
+		DPRINTF(("%s: bogus returned buffer from crypto\n", __func__));
 		return;
 	}
 
@@ -555,7 +554,7 @@ ipcomp_output_cb(struct cryptop *crp)
 	if (tdb == NULL) {
 		free(tc, M_XDATA, 0);
 		ipcompstat.ipcomps_notdb++;
-		DPRINTF(("ipcomp_output_cb(): TDB expired while in crypto\n"));
+		DPRINTF(("%s: TDB expired while in crypto\n", __func__));
 		goto baddone;
 	}
 
@@ -571,8 +570,7 @@ ipcomp_output_cb(struct cryptop *crp)
 		}
 		free(tc, M_XDATA, 0);
 		ipcompstat.ipcomps_noxform++;
-		DPRINTF(("ipcomp_output_cb(): crypto error %d\n",
-		    crp->crp_etype));
+		DPRINTF(("%s: crypto error %d\n", __func__, crp->crp_etype));
 		goto baddone;
 	}
 	free(tc, M_XDATA, 0);
@@ -590,8 +588,8 @@ ipcomp_output_cb(struct cryptop *crp)
 	/* Inject IPCOMP header */
 	mo = m_makespace(m, skip, IPCOMP_HLENGTH, &roff);
 	if (mo == NULL) {
-		DPRINTF(("ipcomp_output_cb(): failed to inject IPCOMP header "
-		    "for IPCA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
+		DPRINTF(("%s: failed to inject IPCOMP header for "
+		    "IPCA %s/%08x\n", __func__, ipsp_address(&tdb->tdb_dst, buf,
 		     sizeof(buf)), ntohl(tdb->tdb_spi)));
 		ipcompstat.ipcomps_wrap++;
 		goto baddone;
@@ -618,8 +616,8 @@ ipcomp_output_cb(struct cryptop *crp)
 		break;
 #endif
 	default:
-		DPRINTF(("ipcomp_output_cb(): unsupported protocol family %d, "
-		    "IPCA %s/%08x\n", tdb->tdb_dst.sa.sa_family,
+		DPRINTF(("%s: unsupported protocol family %d, IPCA %s/%08x\n",
+		    __func__, tdb->tdb_dst.sa.sa_family,
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
 		ipcompstat.ipcomps_nopf++;

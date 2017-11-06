@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.68 2017/05/18 10:56:45 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.69 2017/11/06 15:12:43 mpi Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -95,7 +95,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 	/* Sanity check. */
 	if (!tdb->tdb_xform) {
-		DPRINTF(("ipsp_process_packet(): uninitialized TDB\n"));
+		DPRINTF(("%s: uninitialized TDB\n", __func__));
 		m_freem(m);
 		return EHOSTUNREACH;
 	}

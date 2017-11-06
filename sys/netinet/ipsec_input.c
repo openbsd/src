@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.157 2017/10/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.158 2017/11/06 15:12:43 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -125,7 +125,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	    ipcompstat.ipcomps_input);
 
 	if (m == NULL) {
-		DPRINTF(("ipsec_common_input(): NULL packet received\n"));
+		DPRINTF(("%s: NULL packet received\n", __func__));
 		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops,
 		    ipcompstat.ipcomps_hdrops);
 		return EINVAL;
@@ -147,8 +147,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 			break;
 #endif /* INET6 */
 		default:
-			DPRINTF(("ipsec_common_input(): unsupported protocol "
-			    "family %d\n", af));
+			DPRINTF(("%s: unsupported protocol family %d\n",
+			    __func__, af));
 			m_freem(m);
 			IPSEC_ISTAT(espstat.esps_nopf, ahstat.ahs_nopf,
 			    ipcompstat.ipcomps_nopf);
@@ -159,7 +159,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	if ((sproto == IPPROTO_IPCOMP) && (m->m_flags & M_COMP)) {
 		m_freem(m);
 		ipcompstat.ipcomps_pdrops++;
-		DPRINTF(("ipsec_common_input(): repeated decompression\n"));
+		DPRINTF(("%s: repeated decompression\n", __func__));
 		return EINVAL;
 	}
 
@@ -167,7 +167,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 		m_freem(m);
 		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops,
 		    ipcompstat.ipcomps_hdrops);
-		DPRINTF(("ipsec_common_input(): packet too small\n"));
+		DPRINTF(("%s: packet too small\n", __func__));
 		return EINVAL;
 	}
 
@@ -219,8 +219,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 #endif /* INET6 */
 
 	default:
-		DPRINTF(("ipsec_common_input(): unsupported protocol "
-		    "family %d\n", af));
+		DPRINTF(("%s: unsupported protocol family %d\n", __func__, af));
 		m_freem(m);
 		IPSEC_ISTAT(espstat.esps_nopf, ahstat.ahs_nopf,
 		    ipcompstat.ipcomps_nopf);
@@ -230,8 +229,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	tdbp = gettdb(rtable_l2(m->m_pkthdr.ph_rtableid),
 	    spi, &dst_address, sproto);
 	if (tdbp == NULL) {
-		DPRINTF(("ipsec_common_input(): could not find SA for "
-		    "packet to %s, spi %08x\n",
+		DPRINTF(("%s: could not find SA for packet to %s, spi %08x\n",
+		    __func__,
 		    ipsp_address(&dst_address, buf, sizeof(buf)), ntohl(spi)));
 		m_freem(m);
 		IPSEC_ISTAT(espstat.esps_notdb, ahstat.ahs_notdb,
@@ -240,8 +239,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	}
 
 	if (tdbp->tdb_flags & TDBF_INVALID) {
-		DPRINTF(("ipsec_common_input(): attempted to use invalid "
-		    "SA %s/%08x/%u\n", ipsp_address(&dst_address, buf,
+		DPRINTF(("%s: attempted to use invalid SA %s/%08x/%u\n",
+		    __func__, ipsp_address(&dst_address, buf,
 		    sizeof(buf)), ntohl(spi), tdbp->tdb_sproto));
 		m_freem(m);
 		IPSEC_ISTAT(espstat.esps_invalid, ahstat.ahs_invalid,
@@ -250,8 +249,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	}
 
 	if (udpencap && !(tdbp->tdb_flags & TDBF_UDPENCAP)) {
-		DPRINTF(("ipsec_common_input(): attempted to use non-udpencap "
-		    "SA %s/%08x/%u\n", ipsp_address(&dst_address, buf,
+		DPRINTF(("%s: attempted to use non-udpencap SA %s/%08x/%u\n",
+		    __func__, ipsp_address(&dst_address, buf,
 		    sizeof(buf)), ntohl(spi), tdbp->tdb_sproto));
 		m_freem(m);
 		espstat.esps_udpinval++;
@@ -259,8 +258,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	}
 
 	if (!udpencap && (tdbp->tdb_flags & TDBF_UDPENCAP)) {
-		DPRINTF(("ipsec_common_input(): attempted to use udpencap "
-		    "SA %s/%08x/%u\n", ipsp_address(&dst_address, buf,
+		DPRINTF(("%s: attempted to use udpencap SA %s/%08x/%u\n",
+		    __func__, ipsp_address(&dst_address, buf,
 		    sizeof(buf)), ntohl(spi), tdbp->tdb_sproto));
 		m_freem(m);
 		espstat.esps_udpneeded++;
@@ -268,8 +267,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	}
 
 	if (tdbp->tdb_xform == NULL) {
-		DPRINTF(("ipsec_common_input(): attempted to use uninitialized "
-		    "SA %s/%08x/%u\n", ipsp_address(&dst_address, buf,
+		DPRINTF(("%s: attempted to use uninitialized SA %s/%08x/%u\n",
+		    __func__, ipsp_address(&dst_address, buf,
 		    sizeof(buf)), ntohl(spi), tdbp->tdb_sproto));
 		m_freem(m);
 		IPSEC_ISTAT(espstat.esps_noxform, ahstat.ahs_noxform,
@@ -280,8 +279,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	if (sproto != IPPROTO_IPCOMP) {
 		if ((encif = enc_getif(tdbp->tdb_rdomain,
 		    tdbp->tdb_tap)) == NULL) {
-			DPRINTF(("ipsec_common_input(): "
-			    "no enc%u interface for SA %s/%08x/%u\n",
+			DPRINTF(("%s: no enc%u interface for SA %s/%08x/%u\n",
+			    __func__,
 			    tdbp->tdb_tap, ipsp_address(&dst_address, buf,
 			    sizeof(buf)), ntohl(spi), tdbp->tdb_sproto));
 			m_freem(m);
@@ -357,8 +356,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	/* Fix IPv4 header */
 	if (af == AF_INET) {
 		if ((m->m_len < skip) && ((m = m_pullup(m, skip)) == NULL)) {
-			DPRINTF(("ipsec_common_input_cb(): processing failed "
-			    "for SA %s/%08x\n", ipsp_address(&tdbp->tdb_dst,
+			DPRINTF(("%s: processing failed for SA %s/%08x\n",
+			    __func__, ipsp_address(&tdbp->tdb_dst,
 			    buf, sizeof(buf)), ntohl(tdbp->tdb_spi)));
 			IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops,
 			    ipcompstat.ipcomps_hdrops);
@@ -409,8 +408,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 		if (m->m_len < sizeof(struct ip6_hdr) &&
 		    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 
-			DPRINTF(("ipsec_common_input_cb(): processing failed "
-			    "for SA %s/%08x\n", ipsp_address(&tdbp->tdb_dst,
+			DPRINTF(("%s: processing failed for SA %s/%08x\n",
+			    __func__, ipsp_address(&tdbp->tdb_dst,
 			    buf, sizeof(buf)), ntohl(tdbp->tdb_spi)));
 
 			IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops,
@@ -517,8 +516,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 		    sizeof(struct tdb_ident), M_NOWAIT);
 		if (mtag == NULL) {
 			m_freem(m);
-			DPRINTF(("ipsec_common_input_cb(): failed to "
-			    "get tag\n"));
+			DPRINTF(("%s: failed to get tag\n", __func__));
 			IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops,
 			    ipcompstat.ipcomps_hdrops);
 			return;
@@ -792,8 +790,7 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
 			tdbp->tdb_mtu = mtu;
 			tdbp->tdb_mtutimeout = time_second +
 			    ip_mtudisc_timeout;
-			DPRINTF(("ipsec_common_ctlinput: "
-			    "spi %08x mtu %d adjust %ld\n",
+			DPRINTF(("%s: spi %08x mtu %d adjust %ld\n", __func__,
 			    ntohl(tdbp->tdb_spi), tdbp->tdb_mtu,
 			    adjust));
 		}
@@ -848,8 +845,8 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 				tdbp->tdb_mtu = mtu - adjust;
 				tdbp->tdb_mtutimeout = time_second +
 				    ip_mtudisc_timeout;
-				DPRINTF(("udpencap_ctlinput: "
-				    "spi %08x mtu %d adjust %ld\n",
+				DPRINTF(("%s: spi %08x mtu %d adjust %ld\n",
+				    __func__,
 				    ntohl(tdbp->tdb_spi), tdbp->tdb_mtu,
 				    adjust));
 			}
@@ -878,7 +875,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct ip6_ext ip6e;
 
 	if (*offp < sizeof(struct ip6_hdr)) {
-		DPRINTF(("ah6_input(): bad offset\n"));
+		DPRINTF(("%s: bad offset\n", __func__));
 		ahstat.ahs_hdrops++;
 		m_freemp(mp);
 		return IPPROTO_DONE;
@@ -908,7 +905,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto, int af)
 
 		/* Malformed packet check */
 		if (protoff + l != *offp) {
-			DPRINTF(("ah6_input(): bad packet header chain\n"));
+			DPRINTF(("%s: bad packet header chain\n", __func__));
 			ahstat.ahs_hdrops++;
 			m_freemp(mp);
 			return IPPROTO_DONE;
@@ -928,7 +925,7 @@ esp6_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct ip6_ext ip6e;
 
 	if (*offp < sizeof(struct ip6_hdr)) {
-		DPRINTF(("esp6_input(): bad offset\n"));
+		DPRINTF(("%s: bad offset\n", __func__));
 		espstat.esps_hdrops++;
 		m_freemp(mp);
 		return IPPROTO_DONE;
@@ -958,7 +955,7 @@ esp6_input(struct mbuf **mp, int *offp, int proto, int af)
 
 		/* Malformed packet check */
 		if (protoff + l != *offp) {
-			DPRINTF(("esp6_input(): bad packet header chain\n"));
+			DPRINTF(("%s: bad packet header chain\n", __func__));
 			espstat.esps_hdrops++;
 			m_freemp(mp);
 			return IPPROTO_DONE;
@@ -979,7 +976,7 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct ip6_ext ip6e;
 
 	if (*offp < sizeof(struct ip6_hdr)) {
-		DPRINTF(("ipcomp6_input(): bad offset\n"));
+		DPRINTF(("%s: bad offset\n", __func__));
 		ipcompstat.ipcomps_hdrops++;
 		m_freemp(mp);
 		return IPPROTO_DONE;
@@ -1000,7 +997,7 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto, int af)
 				l = (ip6e.ip6e_len + 1) << 3;
 #ifdef DIAGNOSTIC
 			if (l <= 0)
-				panic("ipcomp6_input: l went zero or negative");
+				panic("l went zero or negative");
 #endif
 
 			nxt = ip6e.ip6e_nxt;
@@ -1008,7 +1005,7 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto, int af)
 
 		/* Malformed packet check */
 		if (protoff + l != *offp) {
-			DPRINTF(("ipcomp6_input(): bad packet header chain\n"));
+			DPRINTF(("%s: bad packet header chain\n", __func__));
 			ipcompstat.ipcomps_hdrops++;
 			m_freemp(mp);
 			return IPPROTO_DONE;
