@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.94 2017/10/27 08:27:14 mpi Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.95 2017/11/07 11:02:07 mpi Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -47,12 +47,6 @@ struct	ipsec_acquire *ipsp_pending_acquire(struct ipsec_policy *,
 	    union sockaddr_union *);
 void	ipsp_delete_acquire_timo(void *);
 void	ipsp_delete_acquire(struct ipsec_acquire *);
-
-#ifdef ENCDEBUG
-#define	DPRINTF(x)	if (encdebug) printf x
-#else
-#define	DPRINTF(x)
-#endif
 
 struct pool ipsec_policy_pool;
 struct pool ipsec_acquire_pool;
