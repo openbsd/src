@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.h,v 1.8 2017/02/07 18:18:16 bluhm Exp $ */
+/* $OpenBSD: ip_ipcomp.h,v 1.9 2017/11/07 16:51:23 visa Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -33,25 +33,25 @@
 #define _NETINET_IP_IPCOMP_H_
 
 struct ipcompstat {
-	u_int32_t	ipcomps_hdrops;	/* Packet shorter than header shows */
-	u_int32_t	ipcomps_nopf;	/* Protocol family not supported */
-	u_int32_t	ipcomps_notdb;
-	u_int32_t	ipcomps_badkcr;
-	u_int32_t	ipcomps_qfull;
-	u_int32_t	ipcomps_noxform;
-	u_int32_t	ipcomps_wrap;
-	u_int32_t	ipcomps_input;	/* Input IPcomp packets */
-	u_int32_t	ipcomps_output;	/* Output IPcomp packets */
-	u_int32_t	ipcomps_invalid;	/* Trying to use an invalid
+	uint64_t	ipcomps_hdrops;	/* Packet shorter than header shows */
+	uint64_t	ipcomps_nopf;	/* Protocol family not supported */
+	uint64_t	ipcomps_notdb;
+	uint64_t	ipcomps_badkcr;
+	uint64_t	ipcomps_qfull;
+	uint64_t	ipcomps_noxform;
+	uint64_t	ipcomps_wrap;
+	uint64_t	ipcomps_input;	/* Input IPcomp packets */
+	uint64_t	ipcomps_output;	/* Output IPcomp packets */
+	uint64_t	ipcomps_invalid;	/* Trying to use an invalid
 						 * TDB */
-	u_int64_t	ipcomps_ibytes;	/* Input bytes */
-	u_int64_t	ipcomps_obytes;	/* Output bytes */
-	u_int32_t	ipcomps_toobig;	/* Packet got larger than
+	uint64_t	ipcomps_ibytes;	/* Input bytes */
+	uint64_t	ipcomps_obytes;	/* Output bytes */
+	uint64_t	ipcomps_toobig;	/* Packet got larger than
 					 * IP_MAXPACKET */
-	u_int32_t	ipcomps_pdrops;	/* Packet blocked due to policy */
-	u_int32_t	ipcomps_crypto;	/* "Crypto" processing failure */
-	u_int32_t	ipcomps_minlen;	/* packets too short for compress */
-	u_int32_t	ipcomps_outfail;	/* Packet output failure */
+	uint64_t	ipcomps_pdrops;	/* Packet blocked due to policy */
+	uint64_t	ipcomps_crypto;	/* "Crypto" processing failure */
+	uint64_t	ipcomps_minlen;	/* packets too short for compress */
+	uint64_t	ipcomps_outfail;	/* Packet output failure */
 };
 
 /* IPCOMP header */

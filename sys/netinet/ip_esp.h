@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.44 2017/02/07 18:18:16 bluhm Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.45 2017/11/07 16:51:23 visa Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -39,30 +39,32 @@
 #define _NETINET_IP_ESP_H_
 
 struct espstat {
-    u_int32_t	esps_hdrops;	/* Packet shorter than header shows */
-    u_int32_t	esps_nopf;	/* Protocol family not supported */
-    u_int32_t	esps_notdb;
-    u_int32_t	esps_badkcr;
-    u_int32_t	esps_qfull;
-    u_int32_t	esps_noxform;
-    u_int32_t	esps_badilen;
-    u_int32_t   esps_wrap;	/* Replay counter wrapped around */
-    u_int32_t   esps_badenc;	/* Bad encryption detected */
-    u_int32_t	esps_badauth;	/* Only valid for transforms with auth */
-    u_int32_t   esps_replay;	/* Possible packet replay detected */
-    u_int32_t	esps_input;	/* Input ESP packets */
-    u_int32_t 	esps_output;	/* Output ESP packets */
-    u_int32_t	esps_invalid;	/* Trying to use an invalid TDB */
-    u_int64_t	esps_ibytes;	/* Input bytes */
-    u_int64_t	esps_obytes;	/* Output bytes */
-    u_int32_t	esps_toobig;	/* Packet got larger than IP_MAXPACKET */
-    u_int32_t	esps_pdrops;	/* Packet blocked due to policy */
-    u_int32_t	esps_crypto;	/* Crypto processing failure */
-    u_int32_t	esps_udpencin;  /* Input ESP-in-UDP packets */
-    u_int32_t	esps_udpencout; /* Output ESP-in-UDP packets */
-    u_int32_t	esps_udpinval;  /* Invalid input ESP-in-UDP packets */
-    u_int32_t	esps_udpneeded; /* Trying to use a ESP-in-UDP TDB */
-    u_int32_t	esps_outfail;	/* Packet output failure */
+	uint64_t	esps_hdrops;	/* Packet shorter than header shows */
+	uint64_t	esps_nopf;	/* Protocol family not supported */
+	uint64_t	esps_notdb;
+	uint64_t	esps_badkcr;
+	uint64_t	esps_qfull;
+	uint64_t	esps_noxform;
+	uint64_t	esps_badilen;
+	uint64_t	esps_wrap;	/* Replay counter wrapped around */
+	uint64_t	esps_badenc;	/* Bad encryption detected */
+	uint64_t	esps_badauth;	/* Only valid for transforms
+					 * with auth */
+	uint64_t	esps_replay;	/* Possible packet replay detected */
+	uint64_t	esps_input;	/* Input ESP packets */
+	uint64_t	esps_output;	/* Output ESP packets */
+	uint64_t	esps_invalid;	/* Trying to use an invalid TDB */
+	uint64_t	esps_ibytes;	/* Input bytes */
+	uint64_t	esps_obytes;	/* Output bytes */
+	uint64_t	esps_toobig;	/* Packet got larger than
+					 * IP_MAXPACKET */
+	uint64_t	esps_pdrops;	/* Packet blocked due to policy */
+	uint64_t	esps_crypto;	/* Crypto processing failure */
+	uint64_t	esps_udpencin;  /* Input ESP-in-UDP packets */
+	uint64_t	esps_udpencout; /* Output ESP-in-UDP packets */
+	uint64_t	esps_udpinval;  /* Invalid input ESP-in-UDP packets */
+	uint64_t	esps_udpneeded; /* Trying to use a ESP-in-UDP TDB */
+	uint64_t	esps_outfail;	/* Packet output failure */
 };
 
 /*
