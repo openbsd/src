@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.127 2017/11/06 10:53:34 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.128 2017/11/07 16:21:59 ajacoutot Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -122,7 +122,7 @@ sub handle_options
 	} 
 
 	$state->{base} = $base;
-	$state->{silent} = defined $state->opt('n') && defined $state->opt('q')
+	$state->{silent} = defined $state->opt('n') && defined $state->opt('n')
 	    || defined $state->opt('S');
 }
 
