@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.285 2017/10/28 20:16:13 mpi Exp $
+.\"	$OpenBSD: sysctl.3,v 1.286 2017/11/07 19:15:09 tb Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 28 2017 $
+.Dd $Mdocdate: November 7 2017 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1340,7 +1340,7 @@ The variables are as follows:
 Returns number of packet dropped.
 .It Dv IFQCTL_LEN Pq Va net.inet.ip.ifq.len
 Returns the current queue length.
-.It Dv IFQCTL_MAXLEN Pq Va bet.inet.ip.ifq.maxlen
+.It Dv IFQCTL_MAXLEN Pq Va net.inet.ip.ifq.maxlen
 Get or set the maximum number of queue length.
 .El
 .It Li ip.ipsec-allocs Pq Va net.inet.ip.ipsec-allocs
