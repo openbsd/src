@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_eltorito.c,v 1.12 2017/10/31 13:36:23 yasuoka Exp $	*/
+/*	$OpenBSD: cd9660_eltorito.c,v 1.13 2017/11/07 00:22:40 yasuoka Exp $	*/
 /*	$NetBSD: cd9660_eltorito.c,v 1.20 2013/01/28 21:03:28 christos Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ cd9660_add_boot_disk(iso9660_disk *diskStructure, const char *boot_info)
 		new_image->system = ET_SYS_EFI;
 	else {
 		warnx("boot disk system must be "
-		      "i386, macppc, powerpc or efi");
+		      "i386, macppc, powerpc, or efi");
 		free(temp);
 		free(new_image);
 		return 0;
