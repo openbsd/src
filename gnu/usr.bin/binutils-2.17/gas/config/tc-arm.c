@@ -2500,7 +2500,7 @@ s_arm_unwind_save_mmxwr (void)
 
       if (reg == FAIL)
 	{
-	  as_bad (_(reg_expected_msgs[REG_TYPE_MMXWR]));
+	  as_bad ("%s", _(reg_expected_msgs[REG_TYPE_MMXWR]));
 	  goto error;
 	}
 
@@ -2514,7 +2514,7 @@ s_arm_unwind_save_mmxwr (void)
 	  hi_reg = arm_reg_parse (&input_line_pointer, REG_TYPE_MMXWR);
 	  if (hi_reg == FAIL)
 	    {
-	      as_bad (_(reg_expected_msgs[REG_TYPE_MMXWR]));
+	      as_bad ("%s", _(reg_expected_msgs[REG_TYPE_MMXWR]));
 	      goto error;
 	    }
 	  else if (reg >= hi_reg)
@@ -2632,7 +2632,7 @@ s_arm_unwind_save_mmxwcg (void)
 
       if (reg == FAIL)
 	{
-	  as_bad (_(reg_expected_msgs[REG_TYPE_MMXWCG]));
+	  as_bad ("%s", _(reg_expected_msgs[REG_TYPE_MMXWR]));
 	  goto error;
 	}
 
@@ -2647,7 +2647,7 @@ s_arm_unwind_save_mmxwcg (void)
 	  hi_reg = arm_reg_parse (&input_line_pointer, REG_TYPE_MMXWCG);
 	  if (hi_reg == FAIL)
 	    {
-	      as_bad (_(reg_expected_msgs[REG_TYPE_MMXWCG]));
+	      as_bad ("%s", _(reg_expected_msgs[REG_TYPE_MMXWR]));
 	      goto error;
 	    }
 	  else if (reg >= hi_reg)
@@ -2745,7 +2745,7 @@ s_arm_unwind_movsp (int ignored ATTRIBUTE_UNUSED)
   reg = arm_reg_parse (&input_line_pointer, REG_TYPE_RN);
   if (reg == FAIL)
     {
-      as_bad (_(reg_expected_msgs[REG_TYPE_RN]));
+      as_bad ("%s", _(reg_expected_msgs[REG_TYPE_RN]));
       ignore_rest_of_line ();
       return;
     }
