@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.72 2017/11/07 07:37:43 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.73 2017/11/07 07:38:30 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1222,7 +1222,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
  *
  * Checks if the user represented by the 'uid' parameter is allowed to
  * manipulate the VM described by the 'vm' parameter (or connect to said VM's
- * console.
+ * console.)
  *
  * Parameters:
  *  vm: the VM whose permission is to be checked
