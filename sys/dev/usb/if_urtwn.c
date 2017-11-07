@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.75 2017/08/23 09:25:17 kevlo Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.76 2017/11/07 21:20:05 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -535,7 +535,8 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 			rx_no = ed->bEndpointAddress;
 			nrx++;
 		} else {
-			epaddr[sc->ntx] = ed->bEndpointAddress;
+			if (sc->ntx < R92C_MAX_EPOUT)
+				epaddr[sc->ntx] = ed->bEndpointAddress;
 			sc->ntx++;
 		}
 	}
