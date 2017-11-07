@@ -1,6 +1,6 @@
-#	$OpenBSD: Relay.pm,v 1.1.1.1 2013/01/03 17:36:37 bluhm Exp $
+#	$OpenBSD: Relay.pm,v 1.2 2017/11/07 22:06:17 bluhm Exp $
 
-# Copyright (c) 2010 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -95,6 +95,16 @@ sub child {
 	open(STDIN, '<&', $as)
 	    or die ref($self), " dup STDIN failed: $!";
 	print STDERR "Accepted\n";
+
+	if ($self->{clientreadable}) {
+		my $idle = 15;  # timeout
+		my $rin = '';
+		vec($rin, fileno($as), 1) = 1;
+		defined(my $n = select($rin, undef, undef, $idle))
+		    or die ref($self), " select failed: $!";
+		$idle && $n == 0
+		    and die ref($self), " select timeout";
+	}
 
 	my $cs = IO::Socket::INET6->new(
 	    Proto	=> $self->{protocol},
