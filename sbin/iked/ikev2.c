@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.156 2017/10/27 14:26:35 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.157 2017/11/08 09:35:19 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -4942,16 +4942,21 @@ ikev2_ipcomp_enable(struct iked *env, struct iked_sa *sa)
 {
 	struct iked_childsa	*other, *nother, *csa = NULL, *csb = NULL;
 	struct iked_flow	*flow, *flowa = NULL, *flowb = NULL;
+	struct iked_flow	*flowc = NULL, *flowd = NULL;
 	struct iked_flow	*nflow, *oflow;
 
 	if ((csa = calloc(1, sizeof(*csa))) == NULL ||
 	    (csb = calloc(1, sizeof(*csb))) == NULL ||
 	    (flowa = calloc(1, sizeof(*flowa))) == NULL ||
-	    (flowb = calloc(1, sizeof(*flowb))) == NULL) {
+	    (flowb = calloc(1, sizeof(*flowb))) == NULL ||
+	    (flowc = calloc(1, sizeof(*flowc))) == NULL ||
+	    (flowd = calloc(1, sizeof(*flowd))) == NULL) {
 		free(csa);
 		free(csb);
 		free(flowa);
 		free(flowb);
+		free(flowc);
+		free(flowd);
 		return (-1);
 	}
 
@@ -5039,8 +5044,9 @@ ikev2_ipcomp_enable(struct iked *env, struct iked_sa *sa)
 		}
 	}
 
-	/* setup ESP flows for gateways */
+	/* setup ESP flows for gateways (IPCOMP) */
 	flowa->flow_ipcomp = 1;
+	flowa->flow_ipproto = IPPROTO_IPCOMP;
 	flowa->flow_dir = IPSP_DIRECTION_OUT;
 	flowa->flow_saproto = IKEV2_SAPROTO_ESP;
 	flowa->flow_local = &sa->sa_local;
@@ -5054,22 +5060,36 @@ ikev2_ipcomp_enable(struct iked *env, struct iked_sa *sa)
 	    (sa->sa_local.addr_af == AF_INET) ? 32 : 128;
 	flowa->flow_ikesa = sa;
 
-	/* skip if flow already exists */
-	TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
-		if (flow_equal(flow, flowa)) {
-			free(flowa);
-			free(flowb);
-			goto done;
-		}
-	}
-
+	/* matching incoming flow */
 	memcpy(flowb, flowa, sizeof(*flowb));
 	flowb->flow_dir = IPSP_DIRECTION_IN;
 	memcpy(&flowb->flow_dst, &flowa->flow_src, sizeof(flowa->flow_src));
 	memcpy(&flowb->flow_src, &flowa->flow_dst, sizeof(flowa->flow_dst));
 
+	/* setup ESP flows for gateways (IPIP) */
+	memcpy(flowc, flowa, sizeof(*flowc));
+	flowc->flow_ipproto = IPPROTO_IPIP;
+
+	/* matching incoming flow */
+	memcpy(flowd, flowb, sizeof(*flowd));
+	flowd->flow_ipproto = IPPROTO_IPIP;
+
+	/* skip if flows already exists */
+	TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
+		if (flow_equal(flow, flowa) || flow_equal(flow, flowb) ||
+		    flow_equal(flow, flowc) || flow_equal(flow, flowd)) {
+			free(flowa);
+			free(flowb);
+			free(flowc);
+			free(flowd);
+			goto done;
+		}
+	}
+
 	TAILQ_INSERT_TAIL(&sa->sa_flows, flowa, flow_entry);
 	TAILQ_INSERT_TAIL(&sa->sa_flows, flowb, flow_entry);
+	TAILQ_INSERT_TAIL(&sa->sa_flows, flowc, flow_entry);
+	TAILQ_INSERT_TAIL(&sa->sa_flows, flowd, flow_entry);
 
  done:
 	/* make sure IPCOMP CPIs are not reused */
