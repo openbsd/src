@@ -1,6 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.8 2016/05/03 19:13:04 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.9 2017/11/08 22:14:02 bluhm Exp $
 
-# Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -331,6 +331,7 @@ sub relay_splice_stream {
 		my $splicemax = $max ? $max - $len : 0;
 		setsplice(\*STDIN, \*STDOUT, $splicemax, $idle)
 		    or die ref($self), " splice stdin to stdout failed: $!";
+		print STDERR "Spliced\n";
 
 		if ($self->{readblocking}) {
 			my $read;
@@ -378,6 +379,7 @@ sub relay_splice_datagram {
 	my $splicemax = $max || 0;
 	setsplice(\*STDIN, \*STDOUT, $splicemax, $idle)
 	    or die ref($self), " splice stdin to stdout failed: $!";
+	print STDERR "Spliced\n";
 
 	my $rin = '';
 	vec($rin, fileno(STDIN), 1) = 1;
