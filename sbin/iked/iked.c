@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.34 2017/03/23 05:29:48 jsg Exp $	*/
+/*	$OpenBSD: iked.c,v 1.35 2017/11/08 16:57:41 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -109,6 +109,11 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	argc -= optind;
+	argv += optind;
+	if (argc > 0)
+		usage();
 
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
