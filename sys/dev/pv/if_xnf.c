@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.60 2017/07/17 16:01:24 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.61 2017/11/08 00:37:18 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -1107,7 +1107,6 @@ xnf_capabilities(struct xnf_softc *sc)
 {
 	unsigned long long res;
 	const char *prop;
-	char val[32];
 	int error;
 
 	/* Query scatter-gather capability */
@@ -1153,8 +1152,6 @@ xnf_capabilities(struct xnf_softc *sc)
 
 	/* Query multiqueue capability */
 	prop = "multi-queue-max-queues";
-	if ((error = xs_getprop(sc->sc_parent, sc->sc_backend, prop, val,
-	    sizeof(val))) == 0)
 	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0
 	    && error != ENOENT)
 		goto errout;
