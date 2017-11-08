@@ -1,0 +1,4 @@
+  [] FLOAT float encoding=LDOUBLE offset=0 bits=32
+  [] INTEGER char encoding=SIGNED CHAR offset=0 bits=8
+  [] INTEGER signed encoding=SIGNED offset=0 bits=32
+  [] INTEGER void encoding=SIGNED offset=0 bits=0
