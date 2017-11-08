@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.69 2017/11/06 15:12:43 mpi Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.70 2017/11/08 16:29:20 visa Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -346,7 +346,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	if (tdb->tdb_sproto == IPPROTO_IPCOMP) {
 		if ((m->m_pkthdr.len - hlen) < tdb->tdb_compalgxform->minlen) {
 			/* No need to compress, leave the packet untouched */
-			ipcompstat.ipcomps_minlen++;
+			ipcompstat_inc(ipcomps_minlen);
 			return ipsp_process_done(m, tdb);
 		}
 	}
@@ -414,7 +414,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 		if (tdb->tdb_dst.sa.sa_family == AF_INET6)
 			m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 #endif /* INET6 */
-		espstat.esps_udpencout++;
+		espstat_inc(esps_udpencout);
 	}
 
 	switch (tdb->tdb_dst.sa.sa_family) {

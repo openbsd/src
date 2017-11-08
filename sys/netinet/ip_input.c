@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.329 2017/11/05 13:19:59 florian Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.330 2017/11/08 16:29:20 visa Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -216,6 +216,10 @@ ip_init(void)
 	strlcpy(ipsec_def_comp, IPSEC_DEFAULT_DEF_COMP, sizeof(ipsec_def_comp));
 
 	mq_init(&ipsend_mq, 64, IPL_SOFTNET);
+
+#ifdef IPSEC
+	ipsec_init();
+#endif
 }
 
 /*

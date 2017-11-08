@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.132 2017/11/06 15:12:43 mpi Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.133 2017/11/08 16:29:20 visa Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -79,8 +79,6 @@
 void	ah_output_cb(struct cryptop *);
 void	ah_input_cb(struct cryptop *);
 int	ah_massage_headers(struct mbuf **, int, int, int, int);
-
-struct ahstat ahstat;
 
 unsigned char ipseczeroes[IPSEC_ZEROES_SIZE]; /* zeroes! */
 
@@ -216,7 +214,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		*m0 = m = m_pullup(m, skip);
 		if (m == NULL) {
 			DPRINTF(("%s: m_pullup() failed\n", __func__));
-			ahstat.ahs_hdrops++;
+			ahstat_inc(ahs_hdrops);
 			return ENOBUFS;
 		}
 
@@ -238,7 +236,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				DPRINTF(("%s: illegal IPv4 option length for"
 				    " option %d\n", __func__, ptr[off]));
 
-				ahstat.ahs_hdrops++;
+				ahstat_inc(ahs_hdrops);
 				m_freem(m);
 				return EINVAL;
 			}
@@ -263,7 +261,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 					    " length for option %d\n", __func__,
 					    ptr[off]));
 
-					ahstat.ahs_hdrops++;
+					ahstat_inc(ahs_hdrops);
 					m_freem(m);
 					return EINVAL;
 				}
@@ -279,7 +277,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 					    " length for option %d\n", __func__,
 					    ptr[off]));
 
-					ahstat.ahs_hdrops++;
+					ahstat_inc(ahs_hdrops);
 					m_freem(m);
 					return EINVAL;
 				}
@@ -305,7 +303,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 					DPRINTF(("%s: illegal IPv4 option"
 					    " length for option %d\n", __func__,
 					    ptr[off]));
-					ahstat.ahs_hdrops++;
+					ahstat_inc(ahs_hdrops);
 					m_freem(m);
 					return EINVAL;
 				}
@@ -322,7 +320,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				DPRINTF(("%s: malformed IPv4 options header\n",
 				    __func__));
 
-				ahstat.ahs_hdrops++;
+				ahstat_inc(ahs_hdrops);
 				m_freem(m);
 				return EINVAL;
 			}
@@ -338,7 +336,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		/* We don't do IPv6 Jumbograms. */
 		if (ip6.ip6_plen == 0) {
 			DPRINTF(("%s: unsupported IPv6 jumbogram", __func__));
-			ahstat.ahs_hdrops++;
+			ahstat_inc(ahs_hdrops);
 			m_freem(m);
 			return EMSGSIZE;
 		}
@@ -365,7 +363,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				if (ptr == NULL) {
 					DPRINTF(("%s: failed to allocate memory"
 					    " for IPv6 headers\n", __func__));
-					ahstat.ahs_hdrops++;
+					ahstat_inc(ahs_hdrops);
 					m_freem(m);
 					return ENOBUFS;
 				}
@@ -409,7 +407,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 					/* Sanity check. */
 					if (count > off +
 					    ((ip6e->ip6e_len + 1) << 3)) {
-						ahstat.ahs_hdrops++;
+						ahstat_inc(ahs_hdrops);
 						m_freem(m);
 
 						/* Free, if we allocated. */
@@ -430,7 +428,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 					/* Sanity check. */
 					if (count >
 					    skip - sizeof(struct ip6_hdr)) {
-						ahstat.ahs_hdrops++;
+						ahstat_inc(ahs_hdrops);
 						m_freem(m);
 
 						/* Free, if we allocated. */
@@ -500,7 +498,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				    __func__, off));
 				if (alloc)
 					free(ptr, M_XDATA, 0);
-				ahstat.ahs_hdrops++;
+				ahstat_inc(ahs_hdrops);
 				m_freem(m);
 				return EINVAL;
 			}
@@ -559,14 +557,14 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			DPRINTF(("%s: replay counter wrapped for SA %s/%08x\n",
 			    __func__, ipsp_address(&tdb->tdb_dst, buf,
 			    sizeof(buf)), ntohl(tdb->tdb_spi)));
-			ahstat.ahs_wrap++;
+			ahstat_inc(ahs_wrap);
 			return ENOBUFS;
 		case 2:
 			m_freem(m);
 			DPRINTF(("%s: old packet received in SA %s/%08x\n",
 			    __func__, ipsp_address(&tdb->tdb_dst, buf,
 			    sizeof(buf)), ntohl(tdb->tdb_spi)));
-			ahstat.ahs_replay++;
+			ahstat_inc(ahs_replay);
 			return ENOBUFS;
 		case 3:
 			m_freem(m);
@@ -574,7 +572,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			    "%s/%08x\n", __func__,
 			    ipsp_address(&tdb->tdb_dst, buf,
 			    sizeof(buf)), ntohl(tdb->tdb_spi)));
-			ahstat.ahs_replay++;
+			ahstat_inc(ahs_replay);
 			return ENOBUFS;
 		default:
 			m_freem(m);
@@ -582,7 +580,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			    "checkreplaywindow() in SA %s/%08x\n", __func__,
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi)));
-			ahstat.ahs_replay++;
+			ahstat_inc(ahs_replay);
 			return ENOBUFS;
 		}
 	}
@@ -594,7 +592,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
 
-		ahstat.ahs_badauthl++;
+		ahstat_inc(ahs_badauthl);
 		m_freem(m);
 		return EACCES;
 	}
@@ -602,7 +600,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Update the counters. */
 	tdb->tdb_cur_bytes +=
 	    (m->m_pkthdr.len - skip - hl * sizeof(u_int32_t));
-	ahstat.ahs_ibytes += (m->m_pkthdr.len - skip - hl * sizeof(u_int32_t));
+	ahstat_add(ahs_ibytes, m->m_pkthdr.len - skip - hl * sizeof(u_int32_t));
 
 	/* Hard expiration. */
 	if (tdb->tdb_flags & TDBF_BYTES &&
@@ -626,7 +624,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		m_freem(m);
 		DPRINTF(("%s: failed to acquire crypto descriptors\n",
 		    __func__));
-		ahstat.ahs_crypto++;
+		ahstat_inc(ahs_crypto);
 		return ENOBUFS;
 	}
 
@@ -654,7 +652,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		m_freem(m);
 		crypto_freereq(crp);
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
-		ahstat.ahs_crypto++;
+		ahstat_inc(ahs_crypto);
 		return ENOBUFS;
 	}
 
@@ -722,7 +720,7 @@ ah_input_cb(struct cryptop *crp)
 		/* Shouldn't happen... */
 		free(tc, M_XDATA, 0);
 		crypto_freereq(crp);
-		ahstat.ahs_crypto++;
+		ahstat_inc(ahs_crypto);
 		DPRINTF(("%s: bogus returned buffer from crypto\n", __func__));
 		return;
 	}
@@ -732,7 +730,7 @@ ah_input_cb(struct cryptop *crp)
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
 		free(tc, M_XDATA, 0);
-		ahstat.ahs_notdb++;
+		ahstat_inc(ahs_notdb);
 		DPRINTF(("%s: TDB is expired while in crypto", __func__));
 		goto baddone;
 	}
@@ -750,7 +748,7 @@ ah_input_cb(struct cryptop *crp)
 			return;
 		}
 		free(tc, M_XDATA, 0);
-		ahstat.ahs_noxform++;
+		ahstat_inc(ahs_noxform);
 		DPRINTF(("%s: crypto error %d\n", __func__, crp->crp_etype));
 		goto baddone;
 	} else {
@@ -773,7 +771,7 @@ ah_input_cb(struct cryptop *crp)
 		    __func__, ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
 
-		ahstat.ahs_badauth++;
+		ahstat_inc(ahs_badauth);
 		goto baddone;
 	}
 
@@ -801,27 +799,27 @@ ah_input_cb(struct cryptop *crp)
 			DPRINTF(("%s: replay counter wrapped for SA %s/%08x\n",
 			    __func__, ipsp_address(&tdb->tdb_dst, buf,
 			    sizeof(buf)), ntohl(tdb->tdb_spi)));
-			ahstat.ahs_wrap++;
+			ahstat_inc(ahs_wrap);
 			goto baddone;
 		case 2:
 			DPRINTF(("%s: old packet received in SA %s/%08x\n",
 			    __func__, ipsp_address(&tdb->tdb_dst, buf,
 			    sizeof(buf)), ntohl(tdb->tdb_spi)));
-			ahstat.ahs_replay++;
+			ahstat_inc(ahs_replay);
 			goto baddone;
 		case 3:
 			DPRINTF(("%s): duplicate packet received in "
 			    "SA %s/%08x\n", __func__,
 			    ipsp_address(&tdb->tdb_dst, buf,
 			    sizeof(buf)), ntohl(tdb->tdb_spi)));
-			ahstat.ahs_replay++;
+			ahstat_inc(ahs_replay);
 			goto baddone;
 		default:
 			DPRINTF(("%s: bogus value from "
 			    "checkreplaywindow() in SA %s/%08x\n", __func__,
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi)));
-			ahstat.ahs_replay++;
+			ahstat_inc(ahs_replay);
 			goto baddone;
 		}
 	}
@@ -829,8 +827,8 @@ ah_input_cb(struct cryptop *crp)
 	/* Record the beginning of the AH header. */
 	m1 = m_getptr(m, skip, &roff);
 	if (m1 == NULL) {
-		ahstat.ahs_hdrops++;
 		NET_UNLOCK();
+		ahstat_inc(ahs_hdrops);
 		m_freem(m);
 
 		DPRINTF(("%s: bad mbuf chain for packet in SA %s/%08x\n",
@@ -951,7 +949,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	}
 #endif
 
-	ahstat.ahs_output++;
+	ahstat_inc(ahs_output);
 
 	/*
 	 * Check for replay counter wrap-around in automatic (not
@@ -962,7 +960,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
-		ahstat.ahs_wrap++;
+		ahstat_inc(ahs_wrap);
 		return EINVAL;
 	}
 
@@ -977,7 +975,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi)));
 			m_freem(m);
-			ahstat.ahs_toobig++;
+			ahstat_inc(ahs_toobig);
 			return EMSGSIZE;
 		}
 		break;
@@ -990,7 +988,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			    __func__, ipsp_address(&tdb->tdb_dst, buf,
 			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			m_freem(m);
-			ahstat.ahs_toobig++;
+			ahstat_inc(ahs_toobig);
 			return EMSGSIZE;
 		}
 		break;
@@ -1002,13 +1000,13 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
-		ahstat.ahs_nopf++;
+		ahstat_inc(ahs_nopf);
 		return EPFNOSUPPORT;
 	}
 
 	/* Update the counters. */
 	tdb->tdb_cur_bytes += m->m_pkthdr.len - skip;
-	ahstat.ahs_obytes += m->m_pkthdr.len - skip;
+	ahstat_add(ahs_obytes, m->m_pkthdr.len - skip);
 
 	/* Hard expiration. */
 	if (tdb->tdb_flags & TDBF_BYTES &&
@@ -1038,7 +1036,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		struct mbuf *n = m_dup_pkt(m, 0, M_DONTWAIT);
 
 		if (n == NULL) {
-			ahstat.ahs_hdrops++;
+			ahstat_inc(ahs_hdrops);
 			m_freem(m);
 			return ENOBUFS;
 		}
@@ -1055,7 +1053,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		    ntohl(tdb->tdb_spi)));
 
 		m_freem(m);
-		ahstat.ahs_hdrops++;
+		ahstat_inc(ahs_hdrops);
 		return ENOBUFS;
 	}
 
@@ -1086,7 +1084,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		m_freem(m);
 		DPRINTF(("%s: failed to acquire crypto descriptors\n",
 		    __func__));
-		ahstat.ahs_crypto++;
+		ahstat_inc(ahs_crypto);
 		return ENOBUFS;
 	}
 
@@ -1115,7 +1113,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		m_freem(m);
 		crypto_freereq(crp);
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
-		ahstat.ahs_crypto++;
+		ahstat_inc(ahs_crypto);
 		return ENOBUFS;
 	}
 
@@ -1203,7 +1201,7 @@ ah_output_cb(struct cryptop *crp)
 		/* Shouldn't happen... */
 		free(tc, M_XDATA, 0);
 		crypto_freereq(crp);
-		ahstat.ahs_crypto++;
+		ahstat_inc(ahs_crypto);
 		DPRINTF(("%s: bogus returned buffer from crypto\n", __func__));
 		return;
 	}
@@ -1213,7 +1211,7 @@ ah_output_cb(struct cryptop *crp)
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
 		free(tc, M_XDATA, 0);
-		ahstat.ahs_notdb++;
+		ahstat_inc(ahs_notdb);
 		DPRINTF(("%s: TDB is expired while in crypto\n", __func__));
 		goto baddone;
 	}
@@ -1229,7 +1227,7 @@ ah_output_cb(struct cryptop *crp)
 			return;
 		}
 		free(tc, M_XDATA, 0);
-		ahstat.ahs_noxform++;
+		ahstat_inc(ahs_noxform);
 		DPRINTF(("%s: crypto error %d\n", __func__, crp->crp_etype));
 		goto baddone;
 	}
@@ -1246,7 +1244,7 @@ ah_output_cb(struct cryptop *crp)
 	crypto_freereq(crp);
 
 	if (ipsp_process_done(m, tdb))
-		ahstat.ahs_outfail++;
+		ahstat_inc(ahs_outfail);
 	NET_UNLOCK();
 	return;
 

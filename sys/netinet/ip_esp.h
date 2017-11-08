@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.45 2017/11/07 16:51:23 visa Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.46 2017/11/08 16:29:20 visa Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -93,9 +93,57 @@ struct espstat {
 }
 
 #ifdef _KERNEL
+
+#include <sys/percpu.h>
+
+enum espstat_counters {
+	esps_hdrops,			/* Packet shorter than header shows */
+	esps_nopf,			/* Protocol family not supported */
+	esps_notdb,
+	esps_badkcr,
+	esps_qfull,
+	esps_noxform,
+	esps_badilen,
+	esps_wrap,			/* Replay counter wrapped around */
+	esps_badenc,			/* Bad encryption detected */
+	esps_badauth,			/* Only valid for transformsx
+					 * with auth */
+	esps_replay,			/* Possible packet replay detected */
+	esps_input,			/* Input ESP packets */
+	esps_output,			/* Output ESP packets */
+	esps_invalid,			/* Trying to use an invalid TDB */
+	esps_ibytes,			/* Input bytes */
+	esps_obytes,			/* Output bytes */
+	esps_toobig,			/* Packet got larger than
+					 * IP_MAXPACKET */
+	esps_pdrops,			/* Packet blocked due to policy */
+	esps_crypto,			/* Crypto processing failure */
+	esps_udpencin,  		/* Input ESP-in-UDP packets */
+	esps_udpencout, 		/* Output ESP-in-UDP packets */
+	esps_udpinval,  		/* Invalid input ESP-in-UDP packets */
+	esps_udpneeded, 		/* Trying to use a ESP-in-UDP TDB */
+	esps_outfail,			/* Packet output failure */
+
+	esps_ncounters
+};
+
+extern struct cpumem *espcounters;
+
+static inline void
+espstat_inc(enum espstat_counters c)
+{
+	counters_inc(espcounters, c);
+}
+
+static inline void
+espstat_add(enum espstat_counters c, uint64_t v)
+{
+	counters_add(espcounters, c, v);
+}
+
 extern int esp_enable;
 extern int udpencap_enable;
 extern int udpencap_port;
-extern struct espstat espstat;
+
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_ESP_H_ */

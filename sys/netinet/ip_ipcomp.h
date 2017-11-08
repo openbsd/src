@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.h,v 1.9 2017/11/07 16:51:23 visa Exp $ */
+/* $OpenBSD: ip_ipcomp.h,v 1.10 2017/11/08 16:29:20 visa Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -85,7 +85,48 @@ struct ipcomp {
 }
 
 #ifdef _KERNEL
+
+#include <sys/percpu.h>
+
+enum ipcomp_counters {
+	ipcomps_hdrops,			/* Packet shorter than header shows */
+	ipcomps_nopf,			/* Protocol family not supported */
+	ipcomps_notdb,
+	ipcomps_badkcr,
+	ipcomps_qfull,
+	ipcomps_noxform,
+	ipcomps_wrap,
+	ipcomps_input,			/* Input IPcomp packets */
+	ipcomps_output,			/* Output IPcomp packets */
+	ipcomps_invalid,		/* Trying to use an invalid
+					 * TDB */
+	ipcomps_ibytes,			/* Input bytes */
+	ipcomps_obytes,			/* Output bytes */
+	ipcomps_toobig,			/* Packet got larger than
+					 * IP_MAXPACKET */
+	ipcomps_pdrops,			/* Packet blocked due to policy */
+	ipcomps_crypto,			/* "Crypto" processing failure */
+	ipcomps_minlen,			/* packets too short for compress */
+	ipcomps_outfail,		/* Packet output failure */
+
+	ipcomps_ncounters
+};
+
+extern struct cpumem *ipcompcounters;
+
+static inline void
+ipcompstat_inc(enum ipcomp_counters c)
+{
+	counters_inc(ipcompcounters, c);
+}
+
+static inline void
+ipcompstat_add(enum ipcomp_counters c, uint64_t v)
+{
+	counters_add(ipcompcounters, c, v);
+}
+
 extern int ipcomp_enable;
-extern struct ipcompstat ipcompstat;
+
 #endif				/* _KERNEL */
 #endif	/* _NETINET_IP_IPCOMP_H_ */
