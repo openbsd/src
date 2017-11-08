@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.223 2017/07/08 16:22:29 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.224 2017/11/08 17:27:39 visa Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1325,7 +1325,7 @@ pr_ipopt(int hlen, u_char *buf)
 	s_in.sin_len = sizeof(s_in);
 	s_in.sin_family = AF_INET;
 
-	for (; hlen > sizeof(struct ip); --hlen, ++cp) {
+	for (; hlen > (int)sizeof(struct ip); --hlen, ++cp) {
 		switch (*cp) {
 		case IPOPT_EOL:
 			hlen = 0;
