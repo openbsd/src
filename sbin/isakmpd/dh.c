@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.20 2017/01/04 12:31:01 mikeb Exp $	*/
+/*	$OpenBSD: dh.c,v 1.21 2017/11/08 13:33:49 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -36,10 +36,13 @@ int	modp_create_shared(struct group *, u_int8_t *, u_int8_t *);
 
 int	ec_init(struct group *);
 int	ec_getlen(struct group *);
+int	ec_secretlen(struct group *);
 int	ec_create_exchange(struct group *, u_int8_t *);
 int	ec_create_shared(struct group *, u_int8_t *, u_int8_t *);
 
-int	ec_point2raw(struct group *, const EC_POINT *, u_int8_t *, size_t);
+#define EC_POINT2RAW_FULL	0
+#define EC_POINT2RAW_XONLY	1
+int	ec_point2raw(struct group *, const EC_POINT *, uint8_t *, size_t, int);
 EC_POINT *
 	ec_raw2point(struct group *, u_int8_t *, size_t);
 
@@ -277,6 +280,7 @@ group_get(u_int32_t id)
 	case GROUP_ECP:
 		group->init = ec_init;
 		group->getlen = ec_getlen;
+		group->secretlen = ec_secretlen;
 		group->exchange = ec_create_exchange;
 		group->shared = ec_create_shared;
 		break;
@@ -303,6 +307,15 @@ int
 dh_getlen(struct group *group)
 {
 	return (group->getlen(group));
+}
+
+int
+dh_secretlen(struct group *group)
+{
+	if (group->secretlen)
+		return (group->secretlen(group));
+	else
+		return (group->getlen(group));
 }
 
 int
@@ -412,6 +425,20 @@ ec_getlen(struct group *group)
 	return ((roundup(group->spec->bits, 8) * 2) / 8);
 }
 
+/*
+ * Note that the shared secret only includes the x value:
+ *
+ * See RFC 5903, 7. ECP Key Exchange Data Formats:
+ *   The Diffie-Hellman shared secret value consists of the x value of the
+ *   Diffie-Hellman common value.
+ * See also RFC 5903, 9. Changes from RFC 4753.
+ */
+int
+ec_secretlen(struct group *group)
+{
+	return (ec_getlen(group) / 2);
+}
+
 int
 ec_create_exchange(struct group *group, u_int8_t *buf)
 {
@@ -421,7 +448,7 @@ ec_create_exchange(struct group *group, u_int8_t *buf)
 	bzero(buf, len);
 
 	return (ec_point2raw(group, EC_KEY_get0_public_key(group->ec),
-	    buf, len));
+	    buf, len, EC_POINT2RAW_FULL));
 }
 
 int
@@ -458,7 +485,8 @@ ec_create_shared(struct group *group, u_int8_t *secret, u_int8_t *exchange)
 	if (!EC_POINT_mul(ecgroup, secretp, NULL, exchangep, privkey, NULL))
 		goto done;
 
-	ret = ec_point2raw(group, secretp, secret, ec_getlen(group));
+	ret = ec_point2raw(group, secretp, secret, ec_secretlen(group),
+	    EC_POINT2RAW_XONLY);
 
  done:
 	if (exkey != NULL)
@@ -473,7 +501,7 @@ ec_create_shared(struct group *group, u_int8_t *secret, u_int8_t *exchange)
 
 int
 ec_point2raw(struct group *group, const EC_POINT *point,
-    u_int8_t *buf, size_t len)
+    u_int8_t *buf, size_t len, int mode)
 {
 	const EC_GROUP	*ecgroup = NULL;
 	BN_CTX		*bnctx = NULL;
@@ -490,9 +518,19 @@ ec_point2raw(struct group *group, const EC_POINT *point,
 		goto done;
 
 	eclen = ec_getlen(group);
-	if (len < eclen)
+	switch (mode) {
+	case EC_POINT2RAW_XONLY:
+		xlen = eclen / 2;
+		ylen = 0;
+		break;
+	case EC_POINT2RAW_FULL:
+		xlen = ylen = eclen / 2;
+		break;
+	default:
 		goto done;
-	xlen = ylen = eclen / 2;
+	}
+	if (len < xlen + ylen)
+		goto done;
 
 	if ((ecgroup = EC_KEY_get0_group(group->ec)) == NULL)
 		goto done;
@@ -513,10 +551,12 @@ ec_point2raw(struct group *group, const EC_POINT *point,
 	if (!BN_bn2bin(x, buf + xoff))
 		goto done;
 
-	yoff = (ylen - BN_num_bytes(y)) + xlen;
-	bzero(buf + xlen, yoff - xlen);
-	if (!BN_bn2bin(y, buf + yoff))
-		goto done;
+	if (ylen > 0) {
+		yoff = (ylen - BN_num_bytes(y)) + xlen;
+		bzero(buf + xlen, yoff - xlen);
+		if (!BN_bn2bin(y, buf + yoff))
+			goto done;
+	}
 
 	ret = 0;
  done:

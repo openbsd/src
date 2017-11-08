@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.110 2015/12/10 17:27:00 mmcc Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.111 2017/11/08 13:33:49 patrick Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1398,9 +1398,9 @@ post_quick_mode(struct message *msg)
 						LOG_DBG_BUF((LOG_NEGOTIATION,
 						    90, "post_quick_mode: "
 						    "g^xy", ie->g_xy,
-						    ie->g_x_len));
+						    ie->g_xy_len));
 						prf->Update(prf->prfctx,
-						    ie->g_xy, ie->g_x_len);
+						    ie->g_xy, ie->g_xy_len);
 					}
 					LOG_DBG((LOG_NEGOTIATION, 90,
 					    "post_quick_mode: "
@@ -1902,10 +1902,11 @@ gen_g_xy(struct message *msg)
 	struct ipsec_exch *ie = exchange->data;
 
 	/* Compute Diffie-Hellman shared value.  */
-	ie->g_xy = malloc(ie->g_x_len);
+	ie->g_xy_len = dh_secretlen(ie->group);
+	ie->g_xy = malloc(ie->g_xy_len);
 	if (!ie->g_xy) {
 		log_error("gen_g_xy: malloc (%lu) failed",
-		    (unsigned long)ie->g_x_len);
+		    (unsigned long)ie->g_xy_len);
 		return;
 	}
 	if (dh_create_shared(ie->group, ie->g_xy,
@@ -1914,7 +1915,7 @@ gen_g_xy(struct message *msg)
 		return;
 	}
 	LOG_DBG_BUF((LOG_NEGOTIATION, 80, "gen_g_xy: g^xy", ie->g_xy,
-	    ie->g_x_len));
+	    ie->g_xy_len));
 }
 
 static int

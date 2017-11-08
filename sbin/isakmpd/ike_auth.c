@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.113 2015/04/21 01:44:47 jsg Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.114 2017/11/08 13:33:49 patrick Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -469,10 +469,10 @@ sig_gen_skeyid(struct exchange *exchange, size_t *sz)
 	LOG_DBG((LOG_NEGOTIATION, 80, "sig_gen_skeyid: g^xy length %lu",
 	    (unsigned long)ie->g_x_len));
 	LOG_DBG_BUF((LOG_NEGOTIATION, 80,
-	    "sig_gen_skeyid: SKEYID fed with g^xy", ie->g_xy, ie->g_x_len));
+	    "sig_gen_skeyid: SKEYID fed with g^xy", ie->g_xy, ie->g_xy_len));
 
 	prf->Init(prf->prfctx);
-	prf->Update(prf->prfctx, ie->g_xy, ie->g_x_len);
+	prf->Update(prf->prfctx, ie->g_xy, ie->g_xy_len);
 	prf->Final(skeyid, prf->prfctx);
 	prf_free(prf);
 	return skeyid;
