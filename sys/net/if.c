@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.523 2017/11/04 16:58:46 tb Exp $	*/
+/*	$OpenBSD: if.c,v 1.524 2017/11/09 09:07:01 tb Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -139,6 +139,7 @@ void	if_detached_qstart(struct ifqueue *);
 int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);
 
 int	ifioctl_get(u_long, caddr_t);
+int	ifconf(caddr_t);
 
 int	if_getgroup(caddr_t, struct ifnet *);
 int	if_getgroupmembers(caddr_t);
@@ -2108,7 +2109,7 @@ ifioctl_get(u_long cmd, caddr_t data)
 
 	switch(cmd) {
 	case SIOCGIFCONF:
-		return (ifconf(cmd, data));
+		return (ifconf(data));
 	case SIOCIFGCLONERS:
 		return (if_clone_list((struct if_clonereq *)data));
 	case SIOCGIFGMEMB:
@@ -2197,7 +2198,7 @@ ifioctl_get(u_long cmd, caddr_t data)
  * other information.
  */
 int
-ifconf(u_long cmd, caddr_t data)
+ifconf(caddr_t data)
 {
 	struct ifconf *ifc = (struct ifconf *)data;
 	struct ifnet *ifp;

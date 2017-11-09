@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.187 2017/10/31 22:05:12 sashan Exp $	*/
+/*	$OpenBSD: if.h,v 1.188 2017/11/09 09:07:01 tb Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -472,7 +472,6 @@ void	if_down(struct ifnet *);
 void	if_downall(void);
 void	if_link_state_change(struct ifnet *);
 void	if_up(struct ifnet *);
-int	ifconf(u_long, caddr_t);
 void	if_getdata(struct ifnet *, struct if_data *);
 void	ifinit(void);
 int	ifioctl(struct socket *, u_long, caddr_t, struct proc *);
