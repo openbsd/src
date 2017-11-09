@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.235 2017/11/06 13:27:19 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.236 2017/11/09 12:34:25 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -187,7 +187,6 @@ int		 parse_cidr(FILE *, unsigned char *);
 int		 parse_lease_time(FILE *, time_t *);
 int		 parse_decimal(FILE *, unsigned char *, char);
 int		 parse_boolean(FILE *, unsigned char *);
-int		 parse_date(FILE *, time_t *);
 void		 parse_warn(char *);
 
 /* bpf.c */
@@ -224,6 +223,7 @@ void		 dhcpack(struct interface_info *, struct option_data *,char *);
 void		 dhcpnak(struct interface_info *, struct option_data *,char *);
 void		 free_client_lease(struct client_lease *);
 void		 routehandler(struct interface_info *, int);
+void		 set_lease_times(struct client_lease *);
 
 /* packet.c */
 void		 assemble_eh_header(struct ether_addr, struct ether_header *);

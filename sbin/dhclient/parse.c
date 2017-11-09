@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.76 2017/11/06 12:51:53 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.77 2017/11/09 12:34:25 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -330,65 +330,6 @@ parse_decimal(FILE *cfile, unsigned char *buf, char fmt)
 		parse_warn(msg);
 		free(msg);
 	}
-
-	if (token != ';')
-		skip_to_semi(cfile);
-
-	return 0;
-}
-
-/*
- * date :== NUMBER NUMBER SLASH NUMBER SLASH NUMBER
- *		NUMBER COLON NUMBER COLON NUMBER UTC SEMI
- *
- * Dates are always in UTC; first number is day of week; next is
- * year/month/day; next is hours:minutes:seconds on a 24-hour
- * clock.
- *
- * XXX Will break after year 9999!
- */
-int
-parse_date(FILE *cfile, time_t *date)
-{
-	char		 timestr[23]; /* "wyyyy/mm/ddhh:mm:ssUTC" */
-	struct tm	 tm;
-	char		*val, *p;
-	size_t		 n;
-	time_t		 guess;
-	int		 token;
-
-	memset(timestr, 0, sizeof(timestr));
-
-	n = 0;
-	do {
-		token = peek_token(&val, cfile);
-
-		switch (token) {
-		case EOF:
-			n = sizeof(timestr);
-			break;
-		case';':
-			/* strptime() ignores tm_isdt so ensure it is 0. */
-			memset(&tm, 0, sizeof(tm));
-			p = strptime(timestr, DB_TIMEFMT, &tm);
-			if (p != NULL && *p == '\0') {
-				guess = timegm(&tm);
-				if (guess != -1) {
-					*date = guess;
-					return 1;
-				}
-			}
-			token = next_token(NULL, cfile);
-			break;
-		default:
-			n = strlcat(timestr, val, sizeof(timestr));
-			token = next_token(NULL, cfile);
-			break;
-
-		}
-	} while (n < sizeof(timestr) && token != ';');
-
-	parse_warn("expecting UTC time.");
 
 	if (token != ';')
 		skip_to_semi(cfile);

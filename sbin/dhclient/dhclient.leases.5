@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.leases.5,v 1.11 2017/10/23 13:01:20 krw Exp $
+.\"	$OpenBSD: dhclient.leases.5,v 1.12 2017/11/09 12:34:25 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: October 23 2017 $
+.Dd $Mdocdate: November 9 2017 $
 .Dt DHCLIENT.LEASES 5
 .Os
 .Sh NAME
@@ -77,21 +77,36 @@ is one of:
 The lease was acquired using the
 BOOTP protocol rather than the DHCP protocol.
 .Pp
+.It Ic epoch
+The
+.Xr time 3
+when the lease was obtained.
+This value is used to convert the values of the DHCP options
+.Ic dhcp-lease-time ,
+.Ic dhcp-renewal-time ,
+.Ic dhcp-rebinding-time
+to times.
+A value of 0 will cause
+.Ic epoch
+to be set to the current time when
+.Nm
+is processed.
+.Pp
 .It Ic expire Ar date
 .It Ic rebind Ar date
 .It Ic renew Ar date
 .Ic expire
-defines when
+is when
 .Xr dhclient 8
 will no longer use the lease to configure the interface.
 .Ic rebind
-specifies when
+is when
 .Xr dhclient 8
-begins tring to renew the lease with broadcasts to any server.
+will begin tring to renew the lease with broadcasts to any server.
 .Ic renew
-specifies when
+is when
 .Xr dhclient 8
-begins trying to renew the lease with unicasts to the originating server.
+will begin trying to renew the lease with unicasts to the originating server.
 .Pp
 Dates are specified in accordance with the
 .Xr strptime 3
@@ -102,6 +117,19 @@ format:
 For example:
 .Pp
 .Dl renew 1 2017/10/16 14:03:49 UTC
+.Pp
+.Ic expire ,
+.Ic rebind ,
+.Ic renew
+are just comments that are ignored when processing
+.Nm .
+The values used by
+.Xr dhclient 8
+are always recalculated based on
+.Ic epoch
+when
+.Nm
+is processed.
 .Pp
 .It Ic filename Qq Ar string
 The boot filename.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.520 2017/11/06 13:27:19 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.521 2017/11/09 12:34:25 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -143,8 +143,6 @@ void		 get_hw_address(struct interface_info *);
 struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
 void		 apply_ignore_list(char *);
-
-void set_lease_times(struct client_lease *);
 
 void state_preboot(struct interface_info *);
 void state_reboot(struct interface_info *);
@@ -1964,6 +1962,12 @@ lease_as_string(char *ifname, char *type, struct client_lease *lease)
 		append_statement(string, sizeof(string), " ", buf);
 	}
 
+	i = asprintf(&buf, "%lld", (long long)lease->epoch);
+	if (i == -1)
+		return NULL;
+	append_statement(string, sizeof(string), "  epoch ", buf);
+	free(buf);
+
 	rslt = strftime(timebuf, sizeof(timebuf), DB_TIMEFMT,
 	    gmtime(&lease->renewal));
 	if (rslt == 0)
@@ -2475,6 +2479,9 @@ set_lease_times(struct client_lease *lease)
 	if (time_max > UINT32_MAX)
 		time_max = UINT32_MAX;
 
+	if (lease->epoch == 0)
+		lease->epoch = cur_time;
+
 	/*
 	 * Take the server-provided times if available.  Otherwise
 	 * figure them out according to the spec.
@@ -2521,9 +2528,9 @@ set_lease_times(struct client_lease *lease)
 		lease->rebind = lease->renewal;
 
 	/* Convert lease lengths to times. */
-	lease->expiry += cur_time;
-	lease->renewal += cur_time;
-	lease->rebind += cur_time;
+	lease->expiry += lease->epoch;
+	lease->renewal += lease->epoch;
+	lease->rebind += lease->epoch;
 }
 
 void
@@ -2612,8 +2619,10 @@ get_recorded_lease(struct interface_info *ifi)
 		if (lp->is_static == 0 && lp->expiry <= cur_time)
 			continue;
 
-		if (lp->is_static != 0)
+		if (lp->is_static != 0) {
+			time(&lp->epoch);
 			set_lease_times(lp);
+		}
 		break;
 	}
 
