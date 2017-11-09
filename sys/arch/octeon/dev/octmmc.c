@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.9 2017/10/16 14:18:47 visa Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.10 2017/11/09 02:35:34 visa Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Visa Hankala
@@ -23,6 +23,7 @@
 #include <sys/device.h>
 #include <sys/endian.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/rwlock.h>
 #include <sys/kernel.h>
 
@@ -97,6 +98,7 @@ struct octmmc_softc {
 
 	uint64_t		 sc_current_switch;
 	uint64_t		 sc_intr_status;
+	struct mutex		 sc_intr_mtx;
 
 	int			 sc_hwrev;
 #define OCTMMC_HWREV_6130			0
@@ -242,7 +244,7 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; interrupts[i] != -1; i++) {
 		KASSERT(i < OCTMMC_MAX_INTRS);
 		ih = octeon_intr_establish_fdt_idx(fa->fa_node, interrupts[i],
-		    IPL_SDMMC, octmmc_intr, sc, DEVNAME(sc));
+		    IPL_SDMMC | IPL_MPSAFE, octmmc_intr, sc, DEVNAME(sc));
 		if (ih == NULL) {
 			printf(": could not establish interrupt %d\n", i);
 			goto error_intr;
@@ -255,6 +257,8 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_current_bus = NULL;
 	sc->sc_current_switch = ~0ull;
+
+	mtx_init(&sc->sc_intr_mtx, IPL_SDMMC);
 
 	for (node = OF_child(fa->fa_node); node != 0; node = OF_peer(node)) {
 		if (!OF_is_compatible(node, "cavium,octeon-6130-mmc-slot"))
@@ -452,8 +456,10 @@ octmmc_intr(void *arg)
 	    ISSET(isr, MIO_EMM_INT_CMD_ERR) ||
 	    ISSET(isr, MIO_EMM_INT_DMA_DONE) ||
 	    ISSET(isr, MIO_EMM_INT_DMA_ERR)) {
+		mtx_enter(&sc->sc_intr_mtx);
 		sc->sc_intr_status |= isr;
 		wakeup(&sc->sc_intr_status);
+		mtx_leave(&sc->sc_intr_mtx);
 	}
 
 	return 1;
@@ -631,6 +637,8 @@ octmmc_exec_dma(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 	/* Set status mask. */
 	MMC_WR_8(sc, MIO_EMM_STS_MASK, DEF_STS_MASK);
 
+	mtx_enter(&sc->sc_intr_mtx);
+
 	/* Prepare and issue the command. */
 	dmacmd = MIO_EMM_DMA_DMA_VAL | MIO_EMM_DMA_MULTI | MIO_EMM_DMA_SECTOR;
 	dmacmd |= (uint64_t)bus->bus_id << MIO_EMM_DMA_BUS_ID_SHIFT;
@@ -664,6 +672,9 @@ wait_intr:
 		}
 		cmd->c_error = EIO;
 	}
+
+	mtx_leave(&sc->sc_intr_mtx);
+
 	if (cmd->c_error != 0)
 		goto unload_dma;
 
@@ -740,6 +751,8 @@ octmmc_exec_pio(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 	/* Set status mask. */
 	MMC_WR_8(sc, MIO_EMM_STS_MASK, PIO_STS_MASK);
 
+	mtx_enter(&sc->sc_intr_mtx);
+
 	/* Issue the command. */
 	piocmd = MIO_EMM_CMD_CMD_VAL;
 	piocmd |= (uint64_t)bus->bus_id << MIO_EMM_CMD_BUS_ID_SHIFT;
@@ -750,6 +763,9 @@ octmmc_exec_pio(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 
 	cmd->c_error = octmmc_wait_intr(sc, MIO_EMM_INT_CMD_DONE,
 	    OCTMMC_CMD_TIMEOUT * hz);
+
+	mtx_leave(&sc->sc_intr_mtx);
+
 	if (cmd->c_error != 0)
 		goto pio_out;
 	if (ISSET(sc->sc_intr_status, MIO_EMM_INT_CMD_ERR)) {
@@ -938,14 +954,14 @@ octmmc_get_response(struct octmmc_softc *sc, struct sdmmc_command *cmd)
 int
 octmmc_wait_intr(struct octmmc_softc *sc, uint64_t mask, int timeout)
 {
-	splassert(IPL_SDMMC);
+	MUTEX_ASSERT_LOCKED(&sc->sc_intr_mtx);
 
 	mask |= MIO_EMM_INT_CMD_ERR | MIO_EMM_INT_DMA_ERR;
 
 	sc->sc_intr_status = 0;
 	while ((sc->sc_intr_status & mask) == 0) {
-		if (tsleep(&sc->sc_intr_status, PWAIT, "hcintr", timeout)
-		    == EWOULDBLOCK)
+		if (msleep(&sc->sc_intr_status, &sc->sc_intr_mtx, PWAIT,
+		    "hcintr", timeout) == EWOULDBLOCK)
 			return ETIMEDOUT;
 	}
 	return 0;
