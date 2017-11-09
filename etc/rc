@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.522 2017/11/06 09:04:18 rpe Exp $
+#	$OpenBSD: rc,v 1.523 2017/11/09 11:02:10 tb Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -180,7 +180,7 @@ reorder_libs() {
 	done
 
 	echo -n 'reordering libraries:'
-	
+
 	# Remount the (read-only) filessystems in _ro_list as read-write.
 	for _mp in $_ro_list; do
 		if ! mount -u -w $_mp; then
@@ -202,7 +202,7 @@ reorder_libs() {
 		_lib=${_liba##*/}
 		_lib=${_lib%.a}
 		_lib_dir=${_liba#$_relink}
-		_lib_dir=${_lib_dir%/*} 
+		_lib_dir=${_lib_dir%/*}
 		cd $_tmpdir
 		ar x $_liba
 		if [[ $_lib == ld.so ]]; then
