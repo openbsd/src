@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.132 2017/10/13 06:16:27 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.133 2017/11/09 14:59:07 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -42,8 +42,8 @@ apply_patch()
 	echo "Installing patch ${_patch##${_OSrev}-}"
 	install -d ${_edir} ${_PDIR}/${_patch}
 
-	${_BSDMP} && _s="-s @usr/share/compile/GENERIC/.*@@g" ||
-		_s="-s @usr/share/compile/GENERIC.MP/.*@@g"
+	${_BSDMP} && _s="-s @usr/share/relink/kernel/GENERIC/.*@@g" ||
+		_s="-s @usr/share/relink/kernel/GENERIC.MP/.*@@g"
 	_files="$(tar -xvzphf ${_TMP}/syspatch${_patch}.tgz -C ${_edir} ${_s})"
 
 	checkfs ${_files}
@@ -64,7 +64,7 @@ apply_patch()
 	trap exit INT
 
 	echo ${_files} | grep -Eqv \
-		'(^|[[:blank:]]+)usr/share/compile/GENERI(C|C.MP)/[[:print:]]+([[:blank:]]+|$)' ||
+		'(^|[[:blank:]]+)usr/share/relink/kernel/GENERI(C|C.MP)/[[:print:]]+([[:blank:]]+|$)' ||
 		_KARL=true
 
 	! ${_upself} || sp_err "syspatch updated itself, run it again to \
@@ -206,7 +206,7 @@ rollback_patch()
 	trap exit INT
 
 	echo ${_files} | grep -Eqv \
-		'(^|[[:blank:]]+)usr/share/compile/GENERI(C|C.MP)/[[:print:]]+([[:blank:]]+|$)' ||
+		'(^|[[:blank:]]+)usr/share/relink/kernel/GENERI(C|C.MP)/[[:print:]]+([[:blank:]]+|$)' ||
 		_KARL=true
 }
 
