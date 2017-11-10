@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.207 2017/11/01 06:35:38 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.208 2017/11/10 08:55:49 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1459,7 +1459,7 @@ ip6_send_dispatch(void *xmq)
 	if (ml_empty(&ml))
 		return;
 
-	NET_LOCK();
+	NET_RLOCK();
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		/*
 		 * To avoid a "too big" situation at an intermediate router and
@@ -1470,7 +1470,7 @@ ip6_send_dispatch(void *xmq)
 		 */
 		ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL);
 	}
-	NET_UNLOCK();
+	NET_RUNLOCK();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.524 2017/11/09 09:07:01 tb Exp $	*/
+/*	$OpenBSD: if.c,v 1.525 2017/11/10 08:55:49 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -906,7 +906,7 @@ if_input_process(void *xifidx)
 	 * to PF globals, pipex globals, unicast and multicast addresses
 	 * lists.
 	 */
-	NET_LOCK();
+	NET_RLOCK();
 	s = splnet();
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		/*
@@ -923,7 +923,7 @@ if_input_process(void *xifidx)
 			m_freem(m);
 	}
 	splx(s);
-	NET_UNLOCK();
+	NET_RUNLOCK();
 out:
 	if_put(ifp);
 }
