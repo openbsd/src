@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.26 2017/06/12 18:38:57 millert Exp $	*/
+/*	$OpenBSD: recover.c,v 1.27 2017/11/10 16:19:35 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -14,6 +14,7 @@
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
 /*
  * We include <sys/file.h>, because the open #defines were found there
@@ -107,7 +108,7 @@
 #define	VI_PHEADER	"X-vi-recover-path: "
 
 static int	 rcv_copy(SCR *, int, char *);
-static void	 rcv_email(SCR *, char *);
+static void	 rcv_email(SCR *, int);
 static char	*rcv_gets(char *, size_t, int);
 static int	 rcv_mailfile(SCR *, int, char *);
 static int	 rcv_mktemp(SCR *, char *, char *, int);
@@ -263,7 +264,7 @@ rcv_sync(SCR *sp, u_int flags)
 
 		/* REQUEST: send email. */
 		if (LF_ISSET(RCV_EMAIL))
-			rcv_email(sp, ep->rcv_mpath);
+			rcv_email(sp, ep->rcv_fd);
 	}
 
 	/*
@@ -434,7 +435,7 @@ wout:		*t2++ = '\n';
 	}
 
 	if (issync) {
-		rcv_email(sp, mpath);
+		rcv_email(sp, fd);
 		if (close(fd)) {
 werr:			msgq(sp, M_SYSERR, "Recovery file");
 			goto err;
@@ -813,12 +814,12 @@ rcv_mktemp(SCR *sp, char *path, char *dname, int perms)
  *	Send email.
  */
 static void
-rcv_email(SCR *sp, char *fname)
+rcv_email(SCR *sp, int fd)
 {
 	struct stat sb;
-	char buf[PATH_MAX * 2 + 20];
+	pid_t pid;
 
-	if (_PATH_SENDMAIL[0] != '/' || stat(_PATH_SENDMAIL, &sb))
+	if (_PATH_SENDMAIL[0] != '/' || stat(_PATH_SENDMAIL, &sb) == -1)
 		msgq_str(sp, M_SYSERR,
 		    _PATH_SENDMAIL, "not sending email: %s");
 	else {
@@ -829,8 +830,30 @@ rcv_email(SCR *sp, char *fname)
 		 * for the recipients instead of specifying them some other
 		 * way.
 		 */
-		(void)snprintf(buf, sizeof(buf),
-		    "%s -t < %s", _PATH_SENDMAIL, fname);
-		(void)system(buf);
+		switch (pid = fork()) {
+		case -1:		/* Error. */
+			msgq(sp, M_SYSERR, "fork");
+			break;
+		case 0:			/* Sendmail. */
+			if (lseek(fd, 0, SEEK_SET) == -1) {
+				msgq(sp, M_SYSERR, "lseek");
+				_exit(127);
+			}
+			if (fd != STDIN_FILENO) {
+				if (dup2(fd, STDIN_FILENO) == -1) {
+					msgq(sp, M_SYSERR, "dup2");
+					_exit(127);
+				}
+				close(fd);
+			}
+			execl(_PATH_SENDMAIL, "sendmail", "-t", (char *)NULL);
+			msgq(sp, M_SYSERR, _PATH_SENDMAIL);
+			_exit(127);
+		default:		/* Parent. */
+			while (waitpid(pid, NULL, 0) == -1 && errno == EINTR)
+				continue;
+			break;
+		}
+
 	}
 }
