@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2017/07/14 13:31:44 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.9 2017/11/10 23:29:09 naddy Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -60,7 +60,7 @@ htdocs/$d:
 	@echo '\n======== file: $d ========'
 	mkdir -m 0755 -p ${@:H}
 .if (${HTDOCS_SPARSE} != "yes")
-	dd if=/dev/arandom of=$@ count=$$(($d / 512)) bs=512
+	dd if=/dev/urandom of=$@ count=$$(($d / 512)) bs=512
 .else
 	dd of=$@ seek=$$(($d / 512)) bs=512 count=0 status=none
 .endif
