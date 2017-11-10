@@ -27,7 +27,6 @@
  */
 
 extern int etherip_allow;
-extern struct etheripstat etheripstat;
 
 struct etheripstat {
 	u_int64_t	etherips_hdrops;	/* packet shorter than header shows */

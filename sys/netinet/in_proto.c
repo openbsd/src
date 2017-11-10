@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.81 2017/11/05 13:19:59 florian Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.82 2017/11/10 02:37:14 visa Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -279,6 +279,7 @@ struct protosw inetsw[] = {
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
   .pr_detach	= rip_detach,
+  .pr_init	= etherip_init,
   .pr_sysctl	= etherip_sysctl
 },
 #endif /* NGIF */
