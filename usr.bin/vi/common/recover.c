@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.27 2017/11/10 16:19:35 millert Exp $	*/
+/*	$OpenBSD: recover.c,v 1.28 2017/11/10 16:33:11 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -112,6 +112,7 @@ static void	 rcv_email(SCR *, int);
 static char	*rcv_gets(char *, size_t, int);
 static int	 rcv_mailfile(SCR *, int, char *);
 static int	 rcv_mktemp(SCR *, char *, char *, int);
+static int	 rcv_openat(SCR *, int, const char *, int *);
 
 /*
  * rcv_tmp --
@@ -451,6 +452,59 @@ err:	if (!issync)
 }
 
 /*
+ * rcv_openat --
+ *	Open a recovery file in the specified dir and lock it.
+ *
+ * PUBLIC: int rcv_openat(SCR *, int, const char *, int *)
+ */
+static int
+rcv_openat(SCR *sp, int dfd, const char *name, int *locked)
+{
+	struct stat sb;
+	int fd, dummy;
+
+	/*
+	 * If it's readable, it's recoverable.
+	 * Note: file_lock() sets the close on exec flag for us.
+	 */
+	fd = openat(dfd, name, O_RDONLY|O_NOFOLLOW|O_NONBLOCK);
+	if (fd == -1)
+		goto bad;
+
+	/*
+	 * Real vi recovery files are created with mode 0600.
+	 * If not a regular file or the mode has changed, skip it.
+	 */
+	if (fstat(fd, &sb) == -1 || !S_ISREG(sb.st_mode) ||
+	    (sb.st_mode & ALLPERMS) != (S_IRUSR | S_IWUSR))
+		goto bad;
+
+	if (locked == NULL)
+		locked = &dummy;
+	switch ((*locked = file_lock(sp, NULL, NULL, fd, 0))) {
+	case LOCK_FAILED:
+		/*
+		 * XXX
+		 * Assume that a lock can't be acquired, but that we
+		 * should permit recovery anyway.  If this is wrong,
+		 * and someone else is using the file, we're going to
+		 * die horribly.
+		 */
+		break;
+	case LOCK_SUCCESS:
+		break;
+	case LOCK_UNAVAIL:
+		/* If it's locked, it's live. */
+		goto bad;
+	}
+	return fd;
+bad:
+	if (fd != -1)
+		close(fd);
+	return -1;
+}
+
+/*
  *	people making love
  *	never exactly the same
  *	just like a snowflake
@@ -485,29 +539,8 @@ rcv_list(SCR *sp)
 		if (strncmp(dp->d_name, "recover.", 8))
 			continue;
 
-		/*
-		 * If it's readable, it's recoverable.
-		 */
-		if ((fd = openat(dirfd(dirp), dp->d_name, O_RDONLY)) == -1)
+		if ((fd = rcv_openat(sp, dirfd(dirp), dp->d_name, NULL)) == -1)
 			continue;
-
-		switch (file_lock(sp, NULL, NULL, fd, 1)) {
-		case LOCK_FAILED:
-			/*
-			 * XXX
-			 * Assume that a lock can't be acquired, but that we
-			 * should permit recovery anyway.  If this is wrong,
-			 * and someone else is using the file, we're going to
-			 * die horribly.
-			 */
-			break;
-		case LOCK_SUCCESS:
-			break;
-		case LOCK_UNAVAIL:
-			/* If it's locked, it's live. */
-			close(fd);
-			continue;
-		}
 
 		/* Check the headers. */
 		if ((fp = fdopen(fd, "r")) == NULL) {
@@ -570,7 +603,7 @@ rcv_read(SCR *sp, FREF *frp)
 	DIR *dirp;
 	EXF *ep;
 	struct timespec rec_mtim;
-	int fd, found, locked, requested, sv_fd;
+	int fd, found, lck, requested, sv_fd;
 	char *name, *p, *t, *rp, *recp, *pathp;
 	char file[PATH_MAX], path[PATH_MAX], recpath[PATH_MAX];
 
@@ -589,43 +622,12 @@ rcv_read(SCR *sp, FREF *frp)
 	for (found = requested = 0; (dp = readdir(dirp)) != NULL;) {
 		if (strncmp(dp->d_name, "recover.", 8))
 			continue;
-		(void)snprintf(recpath,
-		    sizeof(recpath), "%s/%s", rp, dp->d_name);
-
-		/*
-		 * If it's readable, it's recoverable.  It would be very
-		 * nice to use stdio(3), but, we can't because that would
-		 * require closing and then reopening the file so that we
-		 * could have a lock and still close the FP.  Another tip
-		 * of the hat to fcntl(2).
-		 *
-		 * XXX
-		 * Should be O_RDONLY, we don't want to write it.  However,
-		 * if we're using fcntl(2), there's no way to lock a file
-		 * descriptor that's not open for writing.
-		 */
-		if ((fd = open(recpath, O_RDWR, 0)) == -1)
+		if ((size_t)snprintf(recpath, sizeof(recpath), "%s/%s",
+		    rp, dp->d_name) >= sizeof(recpath))
 			continue;
 
-		switch (file_lock(sp, NULL, NULL, fd, 1)) {
-		case LOCK_FAILED:
-			/*
-			 * XXX
-			 * Assume that a lock can't be acquired, but that we
-			 * should permit recovery anyway.  If this is wrong,
-			 * and someone else is using the file, we're going to
-			 * die horribly.
-			 */
-			locked = 0;
-			break;
-		case LOCK_SUCCESS:
-			locked = 1;
-			break;
-		case LOCK_UNAVAIL:
-			/* If it's locked, it's live. */
-			(void)close(fd);
+		if ((fd = rcv_openat(sp, dirfd(dirp), dp->d_name, &lck)) == -1)
 			continue;
-		}
 
 		/* Check the headers. */
 		if (rcv_gets(file, sizeof(file), fd) == NULL ||
@@ -730,7 +732,7 @@ next:			(void)close(fd);
 	ep = sp->ep;
 	ep->rcv_mpath = recp;
 	ep->rcv_fd = sv_fd;
-	if (!locked)
+	if (lck != LOCK_SUCCESS)
 		F_SET(frp, FR_UNLOCKED);
 
 	/* We believe the file is recoverable. */
