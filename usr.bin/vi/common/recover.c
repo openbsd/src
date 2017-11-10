@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.28 2017/11/10 16:33:11 millert Exp $	*/
+/*	$OpenBSD: recover.c,v 1.29 2017/11/10 18:25:48 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -301,8 +301,8 @@ err:		rval = 1;
 	}
 
 	/* REQUEST: end the file session. */
-	if (LF_ISSET(RCV_ENDSESSION) && file_end(sp, NULL, 1))
-		rval = 1;
+	if (LF_ISSET(RCV_ENDSESSION))
+		F_SET(sp, SC_EXIT_FORCE);
 
 	return (rval);
 }
