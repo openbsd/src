@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.73 2017/11/07 07:38:30 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.74 2017/11/11 02:50:07 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1172,10 +1172,6 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		vm->vm_ifs[i].vif_fd = -1;
 
 		if ((sw = switch_getbyname(vmc->vmc_ifswitch[i])) != NULL) {
-			/* overwrite the rdomain, if configured on the switch */
-			if (sw->sw_flags & VMIFF_RDOMAIN)
-				vmc->vmc_ifrdomain[i] = sw->sw_rdomain;
-
 			/* inherit per-interface flags from the switch */
 			vmc->vmc_ifflags[i] |= (sw->sw_flags & VMIFF_OPTMASK);
 		}
@@ -1357,19 +1353,10 @@ vm_closetty(struct vmd_vm *vm)
 void
 switch_remove(struct vmd_switch *vsw)
 {
-	struct vmd_if	*vif;
-
 	if (vsw == NULL)
 		return;
 
 	TAILQ_REMOVE(env->vmd_switches, vsw, sw_entry);
-
-	while ((vif = TAILQ_FIRST(&vsw->sw_ifs)) != NULL) {
-		free(vif->vif_name);
-		free(vif->vif_switch);
-		TAILQ_REMOVE(&vsw->sw_ifs, vif, vif_entry);
-		free(vif);
-	}
 
 	free(vsw->sw_group);
 	free(vsw->sw_name);

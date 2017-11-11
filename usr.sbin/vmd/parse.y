@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2017/10/30 03:37:33 mlarkin Exp $	*/
+/*	$OpenBSD: parse.y,v 1.31 2017/11/11 02:50:07 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -88,7 +88,6 @@ int		 parse_disk(char *);
 static struct vmop_create_params vmc;
 static struct vm_create_params	*vcp;
 static struct vmd_switch	*vsw;
-static struct vmd_if		*vif;
 static struct vmd_vm		*vm;
 static char			 vsw_type[IF_NAMESIZE];
 static int			 vcp_disable;
@@ -193,7 +192,6 @@ switch		: SWITCH string			{
 			vsw->sw_id = env->vmd_nswitches + 1;
 			vsw->sw_name = $2;
 			vsw->sw_flags = VMIFF_UP;
-			TAILQ_INIT(&vsw->sw_ifs);
 
 			vcp_disable = 0;
 		} '{' optnl switch_opts_l '}'	{
@@ -223,21 +221,6 @@ switch_opts_l	: switch_opts_l switch_opts nl
 
 switch_opts	: disable			{
 			vcp_disable = $1;
-		}
-		| ADD string			{
-			char		type[IF_NAMESIZE];
-
-			if ((vif = calloc(1, sizeof(*vif))) == NULL)
-				fatal("could not allocate interface");
-
-			if (priv_getiftype($2, type, NULL) == -1) {
-				yyerror("invalid interface: %s", $2);
-				free($2);
-				YYERROR;
-			}
-			vif->vif_name = $2;
-
-			TAILQ_INSERT_TAIL(&vsw->sw_ifs, vif, vif_entry);
 		}
 		| GROUP string			{
 			if (priv_validgroup($2) == -1) {

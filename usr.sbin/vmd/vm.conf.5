@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.24 2017/11/05 20:01:09 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.25 2017/11/11 02:50:07 mlarkin Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 5 2017 $
+.Dd $Mdocdate: November 11 2017 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -166,6 +166,11 @@ will drop packets from the VM with altered source addresses.
 .It Cm rdomain Ar rdomainid
 Attach the interface to the routing domain with the specified
 .Ar rdomainid .
+If attaching to a switch that also has a
+.Ar rdomainid
+set, the
+.Ar rdomainid
+configured for the interface takes precedence.
 .It Cm switch Ar name
 Set the virtual switch
 by
@@ -211,9 +216,7 @@ or
 .Xr switch 4 .
 The network interface for each virtual switch defined in
 .Nm
-is automatically created by
-.Xr vmd 8 ,
-but it is also possible to pre-configure switch interfaces using
+is pre-configured using
 .Xr hostname.if 5
 or
 .Xr ifconfig 8
@@ -244,12 +247,6 @@ This name can be any string, and is typically a network name.
 .Pp
 Followed by a block of parameters that is enclosed in curly brackets:
 .Bl -tag -width Ds
-.It Cm add Ar interface
-Add
-.Ar interface
-as a member of the switch.
-Any network interface can be added, typically as an uplink interface,
-but it can be a member of at most one switch.
 .It Cm enable
 Automatically configure the switch.
 This is the default if neither
@@ -285,9 +282,6 @@ it will be used for each following switch.
 .It Cm rdomain Ar rdomainid
 Set the routing domain of the switch and all of its VM interfaces to
 .Ar rdomainid .
-This overwrites the
-.Cm rdomain
-option of VM interfaces.
 .It Cm up
 Start the switch forwarding packets.
 This is the default.
@@ -314,7 +308,6 @@ Create the switch "uplink" with an additional physical network interface:
 .Bd -literal -offset indent
 switch "uplink" {
 	interface bridge0
-	add em0
 }
 .Ed
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.65 2017/10/30 03:37:33 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.66 2017/11/11 02:50:08 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -191,7 +191,6 @@ struct vmd_if {
 	unsigned int		 vif_flags;
 	TAILQ_ENTRY(vmd_if)	 vif_entry;
 };
-TAILQ_HEAD(viflist, vmd_if);
 
 struct vmd_switch {
 	uint32_t		 sw_id;
@@ -200,7 +199,6 @@ struct vmd_switch {
 	char			*sw_group;
 	unsigned int		 sw_rdomain;
 	unsigned int		 sw_flags;
-	struct viflist		 sw_ifs;
 	int			 sw_running;
 	TAILQ_ENTRY(vmd_switch)	 sw_entry;
 };

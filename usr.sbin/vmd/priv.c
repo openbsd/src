@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.12 2017/10/30 03:37:33 mlarkin Exp $	*/
+/*	$OpenBSD: priv.c,v 1.13 2017/11/11 02:50:07 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -255,9 +255,18 @@ priv_validgroup(const char *name)
 }
 
 /*
- * Called from the process peer
+ * Called from the Parent process to setup vm interface(s)
+ * - ensure the interface has the description set (tracking purposes)
+ * - if interface is to be attached to a switch, attach it
+ * - check if rdomain is set on interface and switch
+ *   - if interface only or both, use interface rdomain
+ *   - if switch only, use switch rdomain
+ * - check if group is set on interface and switch
+ *   - if interface, add it
+ *   - if switch, add it
+ * - ensure the interface is up/down
+ * - if local interface, set address
  */
-
 int
 vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 {
@@ -279,18 +288,6 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 		    sizeof(vfr.vfr_name)) >= sizeof(vfr.vfr_name))
 			return (-1);
 
-		/* Use the configured rdomain or get it from the process */
-		if (vif->vif_flags & VMIFF_RDOMAIN)
-			vfr.vfr_id = vif->vif_rdomain;
-		else
-			vfr.vfr_id = getrtable();
-		if (vfr.vfr_id != 0)
-			log_debug("%s: interface %s rdomain %u", __func__,
-			    vfr.vfr_name, vfr.vfr_id);
-
-		proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
-		    &vfr, sizeof(vfr));
-
 		/* Description can be truncated */
 		(void)snprintf(vfr.vfr_value, sizeof(vfr.vfr_value),
 		    "vm%u-if%u-%s", vm->vm_vmid, i, vcp->vcp_name);
@@ -301,8 +298,17 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 		proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFDESCR,
 		    &vfr, sizeof(vfr));
 
-		/* Add interface to bridge/switch */
-		if ((vsw = switch_getbyname(vif->vif_switch)) != NULL) {
+		/* set default rdomain */
+		vfr.vfr_id = getrtable();
+
+		vsw = switch_getbyname(vif->vif_switch);
+
+		/* Check if switch should exist */
+		if (vsw == NULL && vif->vif_switch != NULL)
+			log_warnx("switch \"%s\" not found", vif->vif_switch);
+
+		/* Add interface to switch and set proper rdomain */
+		if (vsw != NULL) {
 			memset(&vfbr, 0, sizeof(vfbr));
 
 			if (strlcpy(vfbr.vfr_name, vsw->sw_ifname,
@@ -311,18 +317,32 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 			if (strlcpy(vfbr.vfr_value, vif->vif_name,
 			    sizeof(vfbr.vfr_value)) >= sizeof(vfbr.vfr_value))
 				return (-1);
-			if (vsw->sw_flags & VMIFF_RDOMAIN)
-				vfbr.vfr_id = vsw->sw_rdomain;
-			else
-				vfbr.vfr_id = getrtable();
 
-			log_debug("%s: interface %s add %s", __func__,
-			    vfbr.vfr_name, vfbr.vfr_value);
+			log_debug("%s: switch \"%s\" interface %s add %s",
+			    __func__, vsw->sw_name, vfbr.vfr_name,
+			    vfbr.vfr_value);
 
 			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFADD,
 			    &vfbr, sizeof(vfbr));
-		} else if (vif->vif_switch != NULL)
-			log_warnx("switch %s not found", vif->vif_switch);
+
+			/* Check rdomain properties */
+			if (vif->vif_flags & VMIFF_RDOMAIN)
+				vfr.vfr_id = vif->vif_rdomain;
+			else if (vsw->sw_flags & VMIFF_RDOMAIN)
+				vfr.vfr_id = vsw->sw_rdomain;
+		} else {
+			/* No switch to attach case */
+			if (vif->vif_flags & VMIFF_RDOMAIN)
+				vfr.vfr_id = vif->vif_rdomain;
+		}
+
+		/* Set rdomain on interface */
+		if (vfr.vfr_id != 0)
+			log_debug("%s: interface %s rdomain %u", __func__,
+			    vfr.vfr_name, vfr.vfr_id);
+
+		proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
+		    &vfr, sizeof(vfr));
 
 		/* First group is defined per-interface */
 		if (vif->vif_group) {
@@ -343,7 +363,7 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 			    sizeof(vfr.vfr_value)) >= sizeof(vfr.vfr_value))
 				return (-1);
 
-			log_debug("%s: interface %s group %s switch %s",
+			log_debug("%s: interface %s group %s switch \"%s\"",
 			    __func__, vfr.vfr_name, vfr.vfr_value,
 			    vsw->sw_name);
 
@@ -356,6 +376,7 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 		    IMSG_VMDOP_PRIV_IFUP : IMSG_VMDOP_PRIV_IFDOWN,
 		    &vfr, sizeof(vfr));
 
+		/* Set interface address if it is a local interface */
 		if (vm->vm_params.vmc_ifflags[i] & VMIFF_LOCAL) {
 			sin4 = (struct sockaddr_in *)&vfr.vfr_ifra.ifra_mask;
 			sin4->sin_family = AF_INET;
@@ -382,10 +403,16 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 	return (0);
 }
 
+/*
+ * Called from the Parent process to setup underlying switch interface
+ * - ensure the interface exists
+ * - ensure the interface has the correct rdomain set
+ * - ensure the interface has the description set (tracking purposes)
+ * - ensure the interface is up/down
+ */
 int
 vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 {
-	struct vmd_if		*vif;
 	struct vmop_ifreq	 vfr;
 
 	memset(&vfr, 0, sizeof(vfr));
@@ -407,6 +434,7 @@ vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 		log_debug("%s: interface %s rdomain %u", __func__,
 		    vfr.vfr_name, vfr.vfr_id);
 
+	/* ensure switch has the correct rodmain */
 	proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
 	    &vfr, sizeof(vfr));
 
@@ -419,18 +447,6 @@ vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 
 	proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFDESCR,
 	    &vfr, sizeof(vfr));
-
-	TAILQ_FOREACH(vif, &vsw->sw_ifs, vif_entry) {
-		if (strlcpy(vfr.vfr_value, vif->vif_name,
-		    sizeof(vfr.vfr_value)) >= sizeof(vfr.vfr_value))
-			return (-1);
-
-		log_debug("%s: interface %s add %s", __func__,
-		    vfr.vfr_name, vfr.vfr_value);
-
-		proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFADD,
-		    &vfr, sizeof(vfr));
-	}
 
 	/* Set the new interface status to up or down */
 	proc_compose(ps, PROC_PRIV, (vsw->sw_flags & VMIFF_UP) ?
