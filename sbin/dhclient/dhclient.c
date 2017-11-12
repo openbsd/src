@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.521 2017/11/09 12:34:25 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.522 2017/11/12 11:18:50 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2254,8 +2254,6 @@ apply_defaults(struct client_lease *lease)
 	if (newlease == NULL)
 		fatalx("unable to clone lease");
 
-	newlease->epoch = lease->epoch;
-
 	if (config->filename != NULL) {
 		free(newlease->filename);
 		newlease->filename = strdup(config->filename);
@@ -2386,6 +2384,7 @@ clone_lease(struct client_lease *oldlease)
 	if (newlease == NULL)
 		goto cleanup;
 
+	newlease->epoch = oldlease->epoch;
 	newlease->expiry = oldlease->expiry;
 	newlease->renewal = oldlease->renewal;
 	newlease->rebind = oldlease->rebind;
