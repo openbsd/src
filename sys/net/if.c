@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.525 2017/11/10 08:55:49 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.526 2017/11/12 14:11:15 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -228,8 +228,8 @@ int	ifq_congestion;
 
 int		 netisr;
 
-#define	SOFTNET_TASKS	1
-struct taskq	*softnettq[SOFTNET_TASKS];
+#define	NET_TASKQ	1
+struct taskq	*nettqmp[NET_TASKQ];
 
 struct task if_input_task_locked = TASK_INITIALIZER(if_netisr, NULL);
 
@@ -255,10 +255,10 @@ ifinit(void)
 
 	timeout_set(&net_tick_to, net_tick, &net_tick_to);
 
-	for (i = 0; i < SOFTNET_TASKS; i++) {
-		softnettq[i] = taskq_create("softnet", 1, IPL_NET, TASKQ_MPSAFE);
-		if (softnettq[i] == NULL)
-			panic("unable to create softnet taskq");
+	for (i = 0; i < NET_TASKQ; i++) {
+		nettqmp[i] = taskq_create("softnet", 1, IPL_NET, TASKQ_MPSAFE);
+		if (nettqmp[i] == NULL)
+			panic("unable to create network taskq %d", i);
 	}
 
 	net_tick(&net_tick_to);
@@ -2925,12 +2925,19 @@ unhandled_af(int af)
 	panic("unhandled af %d", af);
 }
 
+/*
+ * XXXSMP This tunable is here to work around the fact that IPsec
+ * globals aren't ready to be accessed by multiple threads in
+ * parallel.
+ */
+int		 nettaskqs = NET_TASKQ;
+
 struct taskq *
 net_tq(unsigned int ifindex)
 {
 	struct taskq *t = NULL;
 
-	t = softnettq[ifindex % SOFTNET_TASKS];
+	t = nettqmp[ifindex % nettaskqs];
 
 	return (t);
 }

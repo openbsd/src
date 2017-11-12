@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.172 2017/11/03 16:23:20 florian Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.173 2017/11/12 14:11:15 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1767,6 +1767,14 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			}
 			TAILQ_INSERT_HEAD(&ipsec_policy_head, ipo, ipo_list);
 			ipsec_in_use++;
+			/*
+			 * XXXSMP IPsec data structures are not ready to be
+			 * accessed by multiple Network threads in parallel,
+			 * so force all packets to be processed by the first
+			 * one.
+			 */
+			extern int nettaskqs;
+			nettaskqs = 1;
 		} else {
 			ipo->ipo_last_searched = ipo->ipo_flags = 0;
 		}
