@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.186 2017/07/25 21:17:11 rpe Exp $
+#	$OpenBSD: netstart,v 1.187 2017/11/12 21:58:00 tb Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -75,7 +75,7 @@ parse_hn_line() {
 # Start a single interface.
 # Usage: ifstart if1
 ifstart() {
-	local _if=$1 _hn=$HN_DIR/hostname.$1 _cmds _i=0 _line _stat
+	local _if=$1 _hn=/etc/hostname.$1 _cmds _i=0 _line _stat
 	set -A _cmds
 
 	# Interface names must be alphanumeric only.  We check to avoid
@@ -163,7 +163,6 @@ defaultroute() {
 FUNCS_ONLY=1 . /etc/rc.d/rc.subr
 _rc_parse_conf
 
-HN_DIR=${HN_DIR:-/etc}
 PRINT_ONLY=false
 USAGE="USAGE: ${0##*/} [-n] [interface ...]"
 V4_DHCPCONF=false
