@@ -1,4 +1,4 @@
-/* $OpenBSD: sxitwi.c,v 1.2 2017/09/13 20:26:26 patrick Exp $ */
+/* $OpenBSD: sxitwi.c,v 1.3 2017/11/13 21:24:27 kettenis Exp $ */
 /*	$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -144,6 +144,7 @@ struct sxitwi_softc {
 	bus_space_handle_t	 sc_ioh;
 	int			 sc_node;
 	u_int			 sc_started;
+	u_int			 sc_twsien_iflg;
 	struct i2c_controller	 sc_ic;
 	struct rwlock		 sc_buslock;
 	void			*sc_ih;
@@ -179,6 +180,7 @@ sxitwi_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-i2c") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-i2c") ||
 	    OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-i2c"));
 }
 
@@ -205,6 +207,14 @@ sxitwi_attach(struct device *parent, struct device *self, void *aux)
 
 	rw_init(&sc->sc_buslock, sc->sc_dev.dv_xname);
 
+	/* 
+	 * On the Allwinner A31 we need to write 1 to clear a pending
+	 * interrupt.
+	 */
+	sc->sc_twsien_iflg = CONTROL_TWSIEN;
+	if (OF_is_compatible(sc->sc_node, "allwinner,sun6i-a31-i2c"))
+		sc->sc_twsien_iflg = CONTROL_IFLG;
+
 	sc->sc_started = 0;
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_acquire_bus = sxitwi_acquire_bus;
@@ -220,6 +230,7 @@ sxitwi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Enable clock */
 	clock_enable(faa->fa_node, NULL);
+	reset_deassert_all(faa->fa_node);
 
 	/*
 	 * Set clock rate to 100kHz. From the datasheet:
@@ -358,13 +369,11 @@ sxitwi_send_stop(void *v, int flags)
 {
 	struct sxitwi_softc *sc = v;
 	int retry = TWSI_RETRY_COUNT;
-	u_int control;
 
 	sc->sc_started = 0;
 
 	/* Interrupt is not generated for STAT_NRS. */
-	control = CONTROL_STOP | CONTROL_TWSIEN;
-	sxitwi_write_4(sc, TWSI_CONTROL, control);
+	sxitwi_write_4(sc, TWSI_CONTROL, CONTROL_STOP | sc->sc_twsien_iflg);
 	while (--retry > 0) {
 		if (sxitwi_read_4(sc, TWSI_STATUS) == STAT_NRS)
 			return 0;
@@ -458,7 +467,7 @@ sxitwi_wait(struct sxitwi_softc *sc, u_int control, u_int expect, int flags)
 	delay(5);
 	if (!(flags & I2C_F_POLL))
 		control |= CONTROL_INTEN;
-	sxitwi_write_4(sc, TWSI_CONTROL, control | CONTROL_TWSIEN);
+	sxitwi_write_4(sc, TWSI_CONTROL, control | sc->sc_twsien_iflg);
 
 	timo = 0;
 	do {
