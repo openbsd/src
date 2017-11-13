@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.466 2017/09/05 22:15:32 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.467 2017/11/13 11:30:11 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -317,6 +317,15 @@ struct pf_rule_addr {
 	u_int16_t		 weight;
 };
 
+struct pf_threshold {
+	u_int32_t	limit;
+#define	PF_THRESHOLD_MULT	1000
+#define	PF_THRESHOLD_MAX	0xffffffff / PF_THRESHOLD_MULT
+	u_int32_t	seconds;
+	u_int32_t	count;
+	u_int32_t	last;
+};
+
 struct pf_poolhashkey {
 	union {
 		u_int8_t		key8[16];
@@ -496,6 +505,7 @@ struct pf_rule {
 	struct pf_pool		 nat;
 	struct pf_pool		 rdr;
 	struct pf_pool		 route;
+	struct pf_threshold	 pktrate;
 
 	u_int64_t		 evaluations;
 	u_int64_t		 packets[2];
@@ -609,15 +619,6 @@ struct pf_rule {
 #define PFSTATE_ADAPT_START	6000	/* default adaptive timeout start */
 #define PFSTATE_ADAPT_END	12000	/* default adaptive timeout end */
 
-
-struct pf_threshold {
-	u_int32_t	limit;
-#define	PF_THRESHOLD_MULT	1000
-#define PF_THRESHOLD_MAX	0xffffffff / PF_THRESHOLD_MULT
-	u_int32_t	seconds;
-	u_int32_t	count;
-	u_int32_t	last;
-};
 
 struct pf_rule_item {
 	SLIST_ENTRY(pf_rule_item)	 entry;
@@ -1749,6 +1750,7 @@ int	pf_translate(struct pf_pdesc *, struct pf_addr *, u_int16_t,
 int	pf_translate_af(struct pf_pdesc *);
 void	pf_route(struct pf_pdesc *, struct pf_rule *, struct pf_state *);
 void	pf_route6(struct pf_pdesc *, struct pf_rule *, struct pf_state *);
+void	pf_init_threshold(struct pf_threshold *, u_int32_t, u_int32_t);
 
 void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);

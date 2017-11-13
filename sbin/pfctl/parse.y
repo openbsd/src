@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.663 2017/08/11 22:30:38 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.664 2017/11/13 11:30:11 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -282,6 +282,11 @@ struct filter_opts {
 		sa_family_t		 af;
 		struct pf_poolhashkey	*key;
 	}			 route;
+
+	struct {
+		u_int32_t	limit;
+		u_int32_t	seconds;
+	}			 pktrate;
 } filter_opts;
 
 struct antispoof_opts {
@@ -472,7 +477,7 @@ int	parseport(char *, struct range *r, int);
 %token	QUEUE PRIORITY QLIMIT RTABLE RDOMAIN MINIMUM BURST PARENT
 %token	LOAD RULESET_OPTIMIZATION RTABLE RDOMAIN PRIO ONCE DEFAULT
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
-%token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW
+%token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW MAXPKTRATE
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY STATEDEFAULTS ROUTE
 %token	DIVERTTO DIVERTREPLY DIVERTPACKET NATTO AFTO RDRTO RECEIVEDON NE LE GE
 %token	<v.string>		STRING
@@ -835,6 +840,8 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 			r.af = $6;
 			r.prob = $9.prob;
 			r.rtableid = $9.rtableid;
+			r.pktrate.limit = $9.pktrate.limit;
+			r.pktrate.seconds = $9.pktrate.seconds;
 
 			if ($9.tag)
 				if (strlcpy(r.tagname, $9.tag,
@@ -1618,6 +1625,8 @@ pfrule		: action dir logquick interface af proto fromto
 			}
 
 			r.tos = $8.tos;
+			r.pktrate.limit = $8.pktrate.limit;
+			r.pktrate.seconds = $8.pktrate.seconds;
 			r.keep_state = $8.keep.action;
 			o = $8.keep.options;
 
@@ -2183,6 +2192,19 @@ filter_opt	: USER uids {
 		}
 		| ONCE {
 			filter_opts.marker |= FOM_ONCE;
+		}
+		| MAXPKTRATE NUMBER '/' NUMBER {
+			if ($2 < 0 || $2 > UINT_MAX ||
+			    $4 < 0 || $4 > UINT_MAX) {
+				yyerror("only positive values permitted");
+				YYERROR;
+			}
+			if (filter_opts.pktrate.limit) {
+				yyerror("cannot respecify max-pkt-rate");
+				YYERROR;
+			}
+			filter_opts.pktrate.limit = $2;
+			filter_opts.pktrate.seconds = $4;
 		}
 		| filter_sets
 		;
@@ -5055,6 +5077,7 @@ lookup(char *s)
 		{ "matches",		MATCHES},
 		{ "max",		MAXIMUM},
 		{ "max-mss",		MAXMSS},
+		{ "max-pkt-rate",	MAXPKTRATE},
 		{ "max-src-conn",	MAXSRCCONN},
 		{ "max-src-conn-rate",	MAXSRCCONNRATE},
 		{ "max-src-nodes",	MAXSRCNODES},

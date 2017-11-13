@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1044 2017/11/13 01:24:09 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1045 2017/11/13 11:30:11 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -161,8 +161,6 @@ struct pool		 pf_src_tree_pl, pf_rule_pl, pf_queue_pl;
 struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl;
 struct pool		 pf_rule_item_pl, pf_sn_item_pl;
 
-void			 pf_init_threshold(struct pf_threshold *, u_int32_t,
-			    u_int32_t);
 void			 pf_add_threshold(struct pf_threshold *);
 int			 pf_check_threshold(struct pf_threshold *);
 int			 pf_check_tcp_cksum(struct mbuf *, int, int,
@@ -274,6 +272,13 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 		s = pf_find_state(i, k, d, m);				\
 		if (s == NULL || (s)->timeout == PFTM_PURGE)		\
 			return (PF_DROP);				\
+		if ((s)->rule.ptr->pktrate.limit && d == (s)->direction) { \
+			pf_add_threshold(&(s)->rule.ptr->pktrate);	\
+			if (pf_check_threshold(&(s)->rule.ptr->pktrate)) { \
+				s = NULL;				\
+				return (PF_DROP);			\
+			}						\
+		}							\
 		if (d == PF_OUT &&					\
 		    (((s)->rule.ptr->rt == PF_ROUTETO &&		\
 		    (s)->rule.ptr->direction == PF_OUT) ||		\
@@ -3595,6 +3600,13 @@ pf_match_rule(struct pf_test_ctx *ctx, struct pf_ruleset *ruleset)
 		    (r->prio == PF_PRIO_ZERO ? 0 : r->prio) !=
 		    ctx->pd->m->m_pkthdr.pf.prio),
 			TAILQ_NEXT(r, entries));
+
+		/* must be last! */
+		if (r->pktrate.limit) {
+			pf_add_threshold(&r->pktrate);
+			PF_TEST_ATTRIB((pf_check_threshold(&r->pktrate)),
+				TAILQ_NEXT(r, entries));
+		}
 
 		/* FALLTHROUGH */
 		if (r->tag)

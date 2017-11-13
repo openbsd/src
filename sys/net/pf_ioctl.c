@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.324 2017/10/31 22:05:12 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.325 2017/11/13 11:30:11 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1317,6 +1317,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pr->rule.rcv_kif = NULL;
 		pr->rule.anchor = NULL;
 		pr->rule.overload_tbl = NULL;
+		pr->rule.pktrate.limit /= PF_THRESHOLD_MULT;
 		bzero(&pr->rule.gcle, sizeof(pr->rule.gcle));
 		pr->rule.ruleset = NULL;
 		if (pf_anchor_copyout(ruleset, rule, pr)) {
@@ -2737,6 +2738,8 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 	to->max_src_conn = from->max_src_conn;
 	to->max_src_conn_rate.limit = from->max_src_conn_rate.limit;
 	to->max_src_conn_rate.seconds = from->max_src_conn_rate.seconds;
+	pf_init_threshold(&to->pktrate, from->pktrate.limit,
+	    from->pktrate.seconds);
 
 	if (to->qname[0] != 0) {
 		if ((to->qid = pf_qname2qid(to->qname, 0)) == 0)
