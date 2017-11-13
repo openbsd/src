@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.134 2017/11/10 08:55:49 mpi Exp $	*/
+/*	$OpenBSD: systm.h,v 1.135 2017/11/13 14:41:46 mpi Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -307,14 +307,14 @@ extern struct rwlock netlock;
 #define	NET_ASSERT_WLOCKED()						\
 do {									\
 	int _s = rw_status(&netlock);					\
-	if (_s != RW_WRITE)						\
+	if ((splassert_ctl > 0) && (_s != RW_WRITE))			\
 		splassert_fail(RW_WRITE, _s, __func__);			\
 } while (0)
 
 #define	NET_ASSERT_WUNLOCKED()						\
 do {									\
 	int _s = rw_status(&netlock);					\
-	if (_s == RW_WRITE)						\
+	if ((splassert_ctl > 0) && (_s == RW_WRITE))			\
 		splassert_fail(0, RW_WRITE, __func__);			\
 } while (0)
 
@@ -324,7 +324,7 @@ do {									\
 #define	NET_ASSERT_LOCKED()						\
 do {									\
 	int _s = rw_status(&netlock);					\
-	if (_s != RW_WRITE && _s != RW_READ)				\
+	if ((splassert_ctl > 0) && (_s != RW_WRITE && _s != RW_READ))	\
 		splassert_fail(RW_READ, _s, __func__);			\
 } while (0)
 
