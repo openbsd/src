@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.79 2017/11/07 16:47:07 visa Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.80 2017/11/13 07:16:35 mpi Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/syslog.h>
 #include <sys/pool.h>
 #include <sys/mutex.h>
 
@@ -352,29 +351,13 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 	 */
 	if (paf6 != NULL) {
 		i = (paf6->ip6af_off + paf6->ip6af_frglen) - ip6af->ip6af_off;
-		if (i > 0) {
-#if 0				/* suppress the noisy log */
-			char ip[INET6_ADDRSTRLEN];
-			log(LOG_ERR, "%d bytes of a fragment from %s "
-			    "overlaps the previous fragment\n",
-			    i,
-			    inet_ntop(AF_INET6, &q6->ip6q_src, ip, sizeof(ip)));
-#endif
+		if (i > 0)
 			goto flushfrags;
-		}
 	}
 	if (af6 != NULL) {
 		i = (ip6af->ip6af_off + ip6af->ip6af_frglen) - af6->ip6af_off;
-		if (i > 0) {
-#if 0				/* suppress the noisy log */
-			char ip[INET6_ADDRSTRLEN];
-			log(LOG_ERR, "%d bytes of a fragment from %s "
-			    "overlaps the succeeding fragment",
-			    i,
-			    inet_ntop(AF_INET6, &q6->ip6q_src, ip, sizeof(ip)));
-#endif
+		if (i > 0)
 			goto flushfrags;
-		}
 	}
 
  insert:
@@ -390,12 +373,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 		LIST_INSERT_HEAD(&q6->ip6q_asfrag, ip6af, ip6af_list);
 	frag6_nfrags++;
 	q6->ip6q_nfrag++;
-#if 0 /* xxx */
-	if (q6 != TAILQ_FIRST(&frag6_queue)) {
-		TAILQ_REMOVE(&frag6_queue, q6, ip6q_queue);
-		TAILQ_INSERT_HEAD(&frag6_queue, q6, ip6q_queue);
-	}
-#endif
 	next = 0;
 	for (paf6 = NULL, af6 = LIST_FIRST(&q6->ip6q_asfrag);
 	    af6 != NULL;
