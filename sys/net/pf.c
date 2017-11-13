@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1043 2017/10/31 22:05:12 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1044 2017/11/13 01:24:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7089,10 +7089,6 @@ pf_ouraddr(struct mbuf *m)
 	if (sk != NULL) {
 		if (sk->inp != NULL)
 			return (1);
-
-		/* If we have linked state keys it is certainly forwarded. */
-		if (sk->reverse != NULL)
-			return (0);
 	}
 
 	return (-1);
