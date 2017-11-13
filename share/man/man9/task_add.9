@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.16 2015/09/14 15:14:55 schwarze Exp $
+.\"	$OpenBSD: task_add.9,v 1.17 2017/11/13 23:52:49 dlg Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,12 +14,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: November 13 2017 $
 .Dt TASK_ADD 9
 .Os
 .Sh NAME
 .Nm taskq_create ,
 .Nm taskq_destroy ,
+.Nm taskq_barrier ,
 .Nm task_set ,
 .Nm task_add ,
 .Nm task_del ,
@@ -36,6 +37,8 @@
 .Fc
 .Ft void
 .Fn taskq_destroy "struct taskq *tq"
+.Ft void
+.Fn taskq_barrier "struct taskq *tq"
 .Ft void
 .Fn task_set "struct task *t" "void (*fn)(void *)" "void *arg"
 .Ft int
@@ -87,6 +90,15 @@ Calling
 .Fn taskq_destroy
 against the system taskq is an error and will lead to undefined
 behaviour or a system fault.
+.Pp
+.Fn taskq_barrier
+guarantees that any task that was running on the
+.Fa tq
+taskq when the barrier was called has finished by the time the barrier
+returns.
+.Fn taskq_barrier
+is only supported on taskqs serviced by 1 thread,
+and may not be called by a task running in the specified taskq.
 .Pp
 It is the responsibility of the caller to provide the
 .Fn task_set ,
@@ -163,6 +175,8 @@ argument given in
 and
 .Fn taskq_destroy
 can be called during autoconf, or from process context.
+.Fn taskq_barrier
+can be called from process context.
 .Fn task_set ,
 .Fn task_add ,
 and

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.20 2017/10/30 14:01:42 visa Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.21 2017/11/13 23:52:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/mutex.h>
 #include <sys/kthread.h>
 #include <sys/task.h>
+#include <sys/proc.h>
 
 #define TASK_ONQUEUE	1
 
@@ -68,6 +69,7 @@ struct taskq *const systqmp = &taskq_sys_mp;
 
 void	taskq_init(void); /* called in init_main.c */
 void	taskq_create_thread(void *);
+void	taskq_barrier_task(void *);
 int	taskq_sleep(const volatile void *, struct mutex *, int,
 	    const char *, int);
 int	taskq_next_work(struct taskq *, struct task *, sleepfn);
@@ -176,6 +178,30 @@ taskq_create_thread(void *arg)
 	} while (tq->tq_running < tq->tq_nthreads);
 
 	mtx_leave(&tq->tq_mtx);
+}
+
+void
+taskq_barrier(struct taskq *tq)
+{
+	struct sleep_state sls;
+	unsigned int notdone = 1;
+	struct task t = TASK_INITIALIZER(taskq_barrier_task, &notdone);
+
+	task_add(tq, &t);
+
+	while (notdone) {
+		sleep_setup(&sls, &notdone, PWAIT, "tqbar");
+		sleep_finish(&sls, notdone);
+	}
+}
+
+void
+taskq_barrier_task(void *p)
+{
+	unsigned int *notdone = p;
+
+	*notdone = 0;
+	wakeup_one(notdone);
 }
 
 void
