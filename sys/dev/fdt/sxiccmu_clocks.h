@@ -28,6 +28,10 @@
 
 #define A64_CLK_BUS_PIO		58
 
+#define A64_CLK_BUS_I2C0	63
+#define A64_CLK_BUS_I2C1	64
+#define A64_CLK_BUS_I2C2	65
+
 #define A64_CLK_BUS_UART0	67
 #define A64_CLK_BUS_UART1	68
 #define A64_CLK_BUS_UART2	69
@@ -56,6 +60,9 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 	[A64_CLK_BUS_OHCI0] = { 0x0060, 28 },
 	[A64_CLK_BUS_OHCI1] = { 0x0060, 29 },
 	[A64_CLK_BUS_PIO]   = { 0x0068, 5 },
+	[A64_CLK_BUS_I2C0]  = { 0x006c, 0, A64_CLK_APB2 },
+	[A64_CLK_BUS_I2C1]  = { 0x006c, 1, A64_CLK_APB2 },
+	[A64_CLK_BUS_I2C2]  = { 0x006c, 2, A64_CLK_APB2 },
 	[A64_CLK_BUS_UART0] = { 0x006c, 16, A64_CLK_APB2 },
 	[A64_CLK_BUS_UART1] = { 0x006c, 17, A64_CLK_APB2 },
 	[A64_CLK_BUS_UART2] = { 0x006c, 18, A64_CLK_APB2 },
@@ -95,6 +102,9 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 
 #define H3_CLK_BUS_PIO		54
 
+#define H3_CLK_BUS_I2C0		59
+#define H3_CLK_BUS_I2C1		60
+#define H3_CLK_BUS_I2C2		61
 #define H3_CLK_BUS_UART0	62
 #define H3_CLK_BUS_UART1	63
 #define H3_CLK_BUS_UART2	64
@@ -128,6 +138,9 @@ struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
 	[H3_CLK_BUS_OHCI2] = { 0x0060, 30 },
 	[H3_CLK_BUS_OHCI3] = { 0x0060, 31 },
 	[H3_CLK_BUS_PIO]   = { 0x0068, 5 },
+	[H3_CLK_BUS_I2C0]  = { 0x006c, 0, H3_CLK_APB2 },
+	[H3_CLK_BUS_I2C1]  = { 0x006c, 1, H3_CLK_APB2 },
+	[H3_CLK_BUS_I2C2]  = { 0x006c, 2, H3_CLK_APB2 },
 	[H3_CLK_BUS_UART0] = { 0x006c, 16, H3_CLK_APB2 },
 	[H3_CLK_BUS_UART1] = { 0x006c, 17, H3_CLK_APB2 },
 	[H3_CLK_BUS_UART2] = { 0x006c, 18, H3_CLK_APB2 },
@@ -160,6 +173,10 @@ struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
 #define A64_RST_BUS_OHCI0	21
 #define A64_RST_BUS_OHCI1	22
 
+#define A64_RST_BUS_I2C0	42
+#define A64_RST_BUS_I2C1	43
+#define A64_RST_BUS_I2C2	44
+
 struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 	[A64_RST_USB_PHY0] =  { 0x00cc, 0 },
 	[A64_RST_USB_PHY1] =  { 0x00cc, 1 },
@@ -171,6 +188,9 @@ struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 	[A64_RST_BUS_EHCI1] = { 0x02c0, 25 },
 	[A64_RST_BUS_OHCI0] = { 0x02c0, 28 },
 	[A64_RST_BUS_OHCI1] = { 0x02c0, 29 },
+	[A64_RST_BUS_I2C0] =  { 0x02d8, 0 },
+	[A64_RST_BUS_I2C1] =  { 0x02d8, 1 },
+	[A64_RST_BUS_I2C2] =  { 0x02d8, 2 },
 };
 
 #define H3_RST_USB_PHY0		0
@@ -195,6 +215,10 @@ struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 
 #define H3_RST_BUS_EPHY		39
 
+#define H3_RST_BUS_I2C0		46
+#define H3_RST_BUS_I2C1		47
+#define H3_RST_BUS_I2C2		48
+
 struct sxiccmu_ccu_bit sun8i_h3_resets[] = {
 	[H3_RST_USB_PHY0] =  { 0x00cc, 0 },
 	[H3_RST_USB_PHY1] =  { 0x00cc, 1 },
@@ -213,4 +237,7 @@ struct sxiccmu_ccu_bit sun8i_h3_resets[] = {
 	[H3_RST_BUS_OHCI2] = { 0x02c0, 30 },
 	[H3_RST_BUS_OHCI3] = { 0x02c0, 31 },
 	[H3_RST_BUS_EPHY]  = { 0x02c8, 2 },
+	[H3_RST_BUS_I2C0]  = { 0x02d8, 0 },
+	[H3_RST_BUS_I2C1]  = { 0x02d8, 1 },
+	[H3_RST_BUS_I2C2]  = { 0x02d8, 2 },
 };
