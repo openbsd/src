@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.173 2017/11/12 14:11:15 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.174 2017/11/13 17:00:14 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -428,12 +428,14 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 		 * Search for promiscuous listeners, skipping the
 		 * original destination.
 		 */
+		KERNEL_LOCK();
 		LIST_FOREACH(s, &pfkeyv2_sockets, kcb_list) {
 			if ((s->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
 			    (s->rcb.rcb_socket != so) &&
 			    (s->rdomain == rdomain))
 				pfkey_sendup(s, packet, 1);
 		}
+		KERNEL_UNLOCK();
 		m_freem(packet);
 		break;
 
@@ -442,6 +444,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 		 * Send the message to all registered sockets that match
 		 * the specified satype (e.g., all IPSEC-ESP negotiators)
 		 */
+		KERNEL_LOCK();
 		LIST_FOREACH(s, &pfkeyv2_sockets, kcb_list) {
 			if ((s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED) &&
 			    (s->rdomain == rdomain)) {
@@ -454,6 +457,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 				}
 			}
 		}
+		KERNEL_UNLOCK();
 		/* Free last/original copy of the packet */
 		m_freem(packet);
 
@@ -472,21 +476,25 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 			goto ret;
 
 		/* Send to all registered promiscuous listeners */
+		KERNEL_LOCK();
 		LIST_FOREACH(s, &pfkeyv2_sockets, kcb_list) {
 			if ((s->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
 			    !(s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED) &&
 			    (s->rdomain == rdomain))
 				pfkey_sendup(s, packet, 1);
 		}
+		KERNEL_UNLOCK();
 		m_freem(packet);
 		break;
 
 	case PFKEYV2_SENDMESSAGE_BROADCAST:
 		/* Send message to all sockets */
+		KERNEL_LOCK();
 		LIST_FOREACH(s, &pfkeyv2_sockets, kcb_list) {
 			if (s->rdomain == rdomain)
 				pfkey_sendup(s, packet, 1);
 		}
+		KERNEL_UNLOCK();
 		m_freem(packet);
 		break;
 	}
@@ -1010,11 +1018,13 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			goto ret;
 
 		/* Send to all promiscuous listeners */
+		KERNEL_LOCK();
 		LIST_FOREACH(bkp, &pfkeyv2_sockets, kcb_list) {
 			if ((bkp->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
 			    (bkp->rdomain == rdomain))
 				pfkey_sendup(bkp, packet, 1);
 		}
+		KERNEL_UNLOCK();
 
 		m_freem(packet);
 
@@ -1788,12 +1798,15 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			if ((rval = pfdatatopacket(message, len, &packet)) != 0)
 				goto ret;
 
-			LIST_FOREACH(bkp, &pfkeyv2_sockets, kcb_list)
+			KERNEL_LOCK();
+			LIST_FOREACH(bkp, &pfkeyv2_sockets, kcb_list) {
 				if ((bkp != kp) &&
 				    (bkp->rdomain == rdomain) &&
 				    (!smsg->sadb_msg_seq ||
 				    (smsg->sadb_msg_seq == kp->pid)))
 					pfkey_sendup(bkp, packet, 1);
+			}
+			KERNEL_UNLOCK();
 
 			m_freem(packet);
 		} else {
