@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.97 2016/09/03 17:46:19 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.98 2017/11/13 21:00:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -268,7 +268,7 @@ Xedit(char *args, struct mbr *mbr)
 		/* Fix up CHS values for LBA */
 		PRT_fix_CHS(pp);
 	} else {
-		pp->bs = getuint64("Partition offset", pp->bs, 0, disk.size);
+		pp->bs = getuint64("Partition offset", pp->bs, 0, disk.size - 1);
 		pp->ns = getuint64("Partition size",   pp->ns, 1,
 		    disk.size - pp->bs);
 
