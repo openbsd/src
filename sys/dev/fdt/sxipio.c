@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.4 2017/08/30 16:21:29 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.5 2017/11/13 09:24:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -89,6 +89,7 @@ struct sxipio_softc {
 
 #define SXIPIO_GPIO_IN		0
 #define SXIPIO_GPIO_OUT		1
+#define SXIPIO_DISABLED		7
 
 int	sxipio_match(struct device *, void *, void *);
 void	sxipio_attach(struct device *, struct device *, void *);
@@ -446,7 +447,7 @@ sxipio_attach_gpio(struct device *parent)
 	uint32_t reg;
 	int port, pin;
 	int off, mux;
-	int state;
+	int state, flags;
 	int i;
 
 	for (i = 0; i < sc->sc_npins; i++) {
@@ -464,8 +465,20 @@ sxipio_attach_gpio(struct device *parent)
 		mux = (reg >> off) & 0x7;
 
 		/* Skip pins that have been assigned other functions. */
-		if (mux != SXIPIO_GPIO_IN && mux != SXIPIO_GPIO_OUT)
+		if (mux != SXIPIO_GPIO_IN && mux != SXIPIO_GPIO_OUT &&
+		    mux != SXIPIO_DISABLED)
 			continue;
+
+		switch (mux) {
+		case SXIPIO_GPIO_IN:
+			flags = GPIO_PIN_SET | GPIO_PIN_INPUT;
+			break;
+		case SXIPIO_GPIO_OUT:
+			flags = GPIO_PIN_SET | GPIO_PIN_OUTPUT;
+			break;
+		default:
+			flags = GPIO_PIN_SET;
+		}
 
 		/* Get pin state. */
 		reg = SXIREAD4(sc, SXIPIO_DAT(port));
@@ -473,8 +486,7 @@ sxipio_attach_gpio(struct device *parent)
 
 		sc->sc_gpio_pins[port][pin].pin_caps =
 		    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
-		sc->sc_gpio_pins[port][pin].pin_flags =
-		    GPIO_PIN_SET | (mux ? GPIO_PIN_OUTPUT : GPIO_PIN_INPUT);
+		sc->sc_gpio_pins[port][pin].pin_flags = flags;
 		sc->sc_gpio_pins[port][pin].pin_state = state;
 		sc->sc_gpio_pins[port][pin].pin_num = pin;
 	}
