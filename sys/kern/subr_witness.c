@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.4 2017/08/12 03:13:23 guenther Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.5 2017/11/14 14:43:39 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from BSDI $Id: subr_witness.c,v 1.4 2017/08/12 03:13:23 guenther Exp $
- *	and BSDI $Id: subr_witness.c,v 1.4 2017/08/12 03:13:23 guenther Exp $
+ *	from BSDI $Id: subr_witness.c,v 1.5 2017/11/14 14:43:39 visa Exp $
+ *	and BSDI $Id: subr_witness.c,v 1.5 2017/11/14 14:43:39 visa Exp $
  */
 
 /*
@@ -744,8 +744,8 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 	struct witness *w, *w1;
 	int i, j, s;
 
-	if (witness_cold || witness_watch < 1 || lock->lo_witness == NULL ||
-	    panicstr != NULL)
+	if (witness_cold || witness_watch < 1 || panicstr != NULL ||
+	    (lock->lo_flags & LO_WITNESS) == 0)
 		return;
 
 	w = lock->lo_witness;
@@ -1078,8 +1078,8 @@ witness_lock(struct lock_object *lock, int flags, const char *file, int line)
 	struct witness *w;
 	int s;
 
-	if (witness_cold || witness_watch == -1 || lock->lo_witness == NULL ||
-	    panicstr != NULL)
+	if (witness_cold || witness_watch == -1 || panicstr != NULL ||
+	    (lock->lo_flags & LO_WITNESS) == 0)
 		return;
 
 	w = lock->lo_witness;
