@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.372 2017/09/14 18:16:28 phessler Exp $ */
+/*	$OpenBSD: rde.c,v 1.373 2017/11/14 22:04:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2603,7 +2603,7 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 
 	switch (addr.aid) {
 	case AID_VPN_IPv4:
-		if (rib->flags & F_RIB_LOCAL)
+		if (!(rib->flags & F_RIB_LOCAL))
 			/* not Loc-RIB, no update for VPNs */
 			break;
 
