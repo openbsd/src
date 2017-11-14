@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.91 2017/11/05 10:29:24 rpe Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.92 2017/11/14 10:02:56 kettenis Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -211,19 +211,19 @@ ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f ${.TARGET}
 .if defined(SYSPATCH_PATH)
-	${CC} -shared ${PICFLAG} -o ${.TARGET} \
+	${CC} -shared -Wl,-soname,${FULLSHLIBNAME} ${PICFLAG} -o ${.TARGET} \
 	    `readelf -Ws ${SYSPATCH_PATH}${LIBDIR}/${.TARGET} | \
 	    awk '/ FILE/{sub(".*/", "", $$NF); gsub(/\..*/, ".so", $$NF); print $$NF}' | \
 	    egrep -v "(cmll-586|libgcc2|unwind-dw2|mul(d|s|x)c3)" | awk '!x[$$0]++'` ${LDADD}
 .else
-	${CC} -shared ${PICFLAG} -o ${.TARGET} \
+	${CC} -shared -Wl,-soname,${FULLSHLIBNAME} ${PICFLAG} -o ${.TARGET} \
 	    `echo ${SOBJS} | tr ' ' '\n' | sort -R` ${LDADD}
 .endif
 
 ${FULLSHLIBNAME}.a: ${SOBJS}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\) ar
 	@rm -f ${.TARGET}
-	@echo ${PICFLAG} ${LDADD} > .ldadd
+	@echo -Wl,-soname,${FULLSHLIBNAME} ${PICFLAG} ${LDADD} > .ldadd
 	ar cqD ${FULLSHLIBNAME}.a ${SOBJS} .ldadd ${SYMBOLSMAP}
 
 # all .do files...
