@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.81 2017/10/28 14:31:29 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.82 2017/11/14 11:58:17 anton Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -850,9 +850,11 @@ pmsinput(void *vsc, int data)
 	sc->packet[sc->inputstate] = data;
 	if (sc->protocol->sync(sc, data)) {
 #ifdef DIAGNOSTIC
-		printf("%s: not in sync yet, discard input (state %d)\n",
-		    DEVNAME(sc), sc->inputstate);
+		printf("%s: not in sync yet, discard input "
+		    "(state = %d, data = %#x)\n",
+		    DEVNAME(sc), sc->inputstate, data);
 #endif
+
 		sc->inputstate = 0;
 		return;
 	}
