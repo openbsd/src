@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.hppa/MAKEDEV.md,v 1.60 2016/09/04 15:38:59 naddy Exp 
-#	OpenBSD: MAKEDEV.common,v 1.96 2017/10/16 20:26:52 naddy Exp 
+#	OpenBSD: MAKEDEV.common,v 1.98 2017/11/14 20:21:29 naddy Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -255,8 +255,6 @@ tun*)
 	M urandom c 20 0 644
 	RMlist[${#RMlist[*]}]=random
 	MKlist[${#MKlist[*]}]=";ln -s urandom random"
-	RMlist[${#RMlist[*]}]=arandom
-	MKlist[${#MKlist[*]}]=";ln -s urandom arandom"
 	;;
 
 pppx*)
