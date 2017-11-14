@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.186 2017/11/08 16:29:20 visa Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.187 2017/11/14 09:30:17 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -424,6 +424,51 @@ extern int ipsec_exp_timeout;		/* seconds/SA before it expires */
 extern int ipsec_soft_first_use;	/* seconds between 1st asso & renego */
 extern int ipsec_exp_first_use;		/* seconds between 1st asso & expire */	
 
+/*
+ * Names for IPsec sysctl objects
+ */
+#define	IPSEC_ENCDEBUG			IPCTL_ENCDEBUG			/* 12 */
+#define IPSEC_EXPIRE_ACQUIRE		IPCTL_IPSEC_EXPIRE_ACQUIRE	/* 14 */
+#define IPSEC_EMBRYONIC_SA_TIMEOUT	IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT/* 15 */
+#define IPSEC_REQUIRE_PFS		IPCTL_IPSEC_REQUIRE_PFS		/* 16 */
+#define IPSEC_SOFT_ALLOCATIONS          IPCTL_IPSEC_SOFT_ALLOCATIONS	/* 17 */
+#define IPSEC_ALLOCATIONS		IPCTL_IPSEC_ALLOCATIONS		/* 18 */
+#define IPSEC_SOFT_BYTES		IPCTL_IPSEC_SOFT_BYTES		/* 19 */
+#define IPSEC_BYTES			IPCTL_IPSEC_BYTES		/* 20 */
+#define IPSEC_TIMEOUT			IPCTL_IPSEC_TIMEOUT		/* 21 */
+#define IPSEC_SOFT_TIMEOUT		IPCTL_IPSEC_SOFT_TIMEOUT	/* 22 */
+#define IPSEC_SOFT_FIRSTUSE		IPCTL_IPSEC_SOFT_FIRSTUSE	/* 23 */
+#define IPSEC_FIRSTUSE			IPCTL_IPSEC_FIRSTUSE		/* 24 */
+#define IPSEC_MAXID	25
+
+#define	IPSECCTL_VARS { \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	&encdebug, \
+	NULL, \
+	&ipsec_expire_acquire, \
+	&ipsec_keep_invalid, \
+	&ipsec_require_pfs, \
+	&ipsec_soft_allocations, \
+	&ipsec_exp_allocations, \
+	&ipsec_soft_bytes, \
+	&ipsec_exp_bytes, \
+	&ipsec_exp_timeout, \
+	&ipsec_soft_timeout, \
+	&ipsec_soft_first_use, \
+	&ipsec_exp_first_use, \
+}
+
 extern char ipsec_def_enc[];
 extern char ipsec_def_auth[];
 extern char ipsec_def_comp[];
@@ -549,6 +594,7 @@ struct ipsec_ids *ipsp_ids_lookup(u_int32_t);
 void	ipsp_ids_free(struct ipsec_ids *);
 
 void	ipsec_init(void);
+int	ipsec_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	ipsec_common_input(struct mbuf *, int, int, int, int, int);
 void	ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int);
 int	ipsec_delete_policy(struct ipsec_policy *);

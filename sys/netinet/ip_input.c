@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.331 2017/11/10 08:55:49 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.332 2017/11/14 09:30:17 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -83,22 +83,6 @@
 #include <net/if_types.h>
 #include <netinet/ip_carp.h>
 #endif
-
-int encdebug = 0;
-int ipsec_keep_invalid = IPSEC_DEFAULT_EMBRYONIC_SA_TIMEOUT;
-int ipsec_require_pfs = IPSEC_DEFAULT_PFS;
-int ipsec_soft_allocations = IPSEC_DEFAULT_SOFT_ALLOCATIONS;
-int ipsec_exp_allocations = IPSEC_DEFAULT_EXP_ALLOCATIONS;
-int ipsec_soft_bytes = IPSEC_DEFAULT_SOFT_BYTES;
-int ipsec_exp_bytes = IPSEC_DEFAULT_EXP_BYTES;
-int ipsec_soft_timeout = IPSEC_DEFAULT_SOFT_TIMEOUT;
-int ipsec_exp_timeout = IPSEC_DEFAULT_EXP_TIMEOUT;
-int ipsec_soft_first_use = IPSEC_DEFAULT_SOFT_FIRST_USE;
-int ipsec_exp_first_use = IPSEC_DEFAULT_EXP_FIRST_USE;
-int ipsec_expire_acquire = IPSEC_DEFAULT_EXPIRE_ACQUIRE;
-char ipsec_def_enc[20];
-char ipsec_def_auth[20];
-char ipsec_def_comp[20];
 
 /* values controllable via sysctl */
 int	ipforwarding = 0;
@@ -210,10 +194,6 @@ ip_init(void)
 		DP_SET(rootonlyports.tcp, defrootonlyports_tcp[i]);
 	for (i = 0; defrootonlyports_udp[i] != 0; i++)
 		DP_SET(rootonlyports.udp, defrootonlyports_udp[i]);
-
-	strlcpy(ipsec_def_enc, IPSEC_DEFAULT_DEF_ENC, sizeof(ipsec_def_enc));
-	strlcpy(ipsec_def_auth, IPSEC_DEFAULT_DEF_AUTH, sizeof(ipsec_def_auth));
-	strlcpy(ipsec_def_comp, IPSEC_DEFAULT_DEF_COMP, sizeof(ipsec_def_comp));
 
 	mq_init(&ipsend_mq, 64, IPL_SOFTNET);
 
@@ -1643,26 +1623,25 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 					      ip_mtudisc_timeout);
 		NET_UNLOCK();
 		return (error);
+#ifdef IPSEC
+	case IPCTL_ENCDEBUG:
+	case IPCTL_IPSEC_EXPIRE_ACQUIRE:
+	case IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT:
+	case IPCTL_IPSEC_REQUIRE_PFS:
+	case IPCTL_IPSEC_SOFT_ALLOCATIONS:
+	case IPCTL_IPSEC_ALLOCATIONS:
+	case IPCTL_IPSEC_SOFT_BYTES:
+	case IPCTL_IPSEC_BYTES:
+	case IPCTL_IPSEC_TIMEOUT:
+	case IPCTL_IPSEC_SOFT_TIMEOUT:
+	case IPCTL_IPSEC_SOFT_FIRSTUSE:
+	case IPCTL_IPSEC_FIRSTUSE:
 	case IPCTL_IPSEC_ENC_ALGORITHM:
-		NET_LOCK();
-		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
-				       ipsec_def_enc, sizeof(ipsec_def_enc));
-		NET_UNLOCK();
-		return (error);
 	case IPCTL_IPSEC_AUTH_ALGORITHM:
-		NET_LOCK();
-		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
-				       ipsec_def_auth,
-				       sizeof(ipsec_def_auth));
-		NET_UNLOCK();
-		return (error);
 	case IPCTL_IPSEC_IPCOMP_ALGORITHM:
-		NET_LOCK();
-		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
-				       ipsec_def_comp,
-				       sizeof(ipsec_def_comp));
-		NET_UNLOCK();
-		return (error);
+		return (ipsec_sysctl(name, namelen, oldp, oldlenp, newp,
+		    newlen));
+#endif
 	case IPCTL_IFQUEUE:
 		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ipintrq));

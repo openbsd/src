@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.159 2017/11/08 16:29:20 visa Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.160 2017/11/14 09:30:17 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -88,6 +88,19 @@ void ipsec_common_ctlinput(u_int, int, struct sockaddr *, void *, int);
 #endif
 
 /* sysctl variables */
+int encdebug = 0;
+int ipsec_keep_invalid = IPSEC_DEFAULT_EMBRYONIC_SA_TIMEOUT;
+int ipsec_require_pfs = IPSEC_DEFAULT_PFS;
+int ipsec_soft_allocations = IPSEC_DEFAULT_SOFT_ALLOCATIONS;
+int ipsec_exp_allocations = IPSEC_DEFAULT_EXP_ALLOCATIONS;
+int ipsec_soft_bytes = IPSEC_DEFAULT_SOFT_BYTES;
+int ipsec_exp_bytes = IPSEC_DEFAULT_EXP_BYTES;
+int ipsec_soft_timeout = IPSEC_DEFAULT_SOFT_TIMEOUT;
+int ipsec_exp_timeout = IPSEC_DEFAULT_EXP_TIMEOUT;
+int ipsec_soft_first_use = IPSEC_DEFAULT_SOFT_FIRST_USE;
+int ipsec_exp_first_use = IPSEC_DEFAULT_EXP_FIRST_USE;
+int ipsec_expire_acquire = IPSEC_DEFAULT_EXPIRE_ACQUIRE;
+
 int esp_enable = 1;
 int ah_enable = 1;
 int ipcomp_enable = 0;
@@ -100,6 +113,12 @@ struct cpumem *espcounters;
 struct cpumem *ahcounters;
 struct cpumem *ipcompcounters;
 
+char ipsec_def_enc[20];
+char ipsec_def_auth[20];
+char ipsec_def_comp[20];
+
+int *ipsecctl_vars[IPSEC_MAXID] = IPSECCTL_VARS;
+
 int esp_sysctl_espstat(void *, size_t *, void *);
 int ah_sysctl_ahstat(void *, size_t *, void *);
 int ipcomp_sysctl_ipcompstat(void *, size_t *, void *);
@@ -110,6 +129,11 @@ ipsec_init(void)
 	espcounters = counters_alloc(esps_ncounters);
 	ahcounters = counters_alloc(ahs_ncounters);
 	ipcompcounters = counters_alloc(ipcomps_ncounters);
+
+	strlcpy(ipsec_def_enc, IPSEC_DEFAULT_DEF_ENC, sizeof(ipsec_def_enc));
+	strlcpy(ipsec_def_auth, IPSEC_DEFAULT_DEF_AUTH, sizeof(ipsec_def_auth));
+	strlcpy(ipsec_def_comp, IPSEC_DEFAULT_DEF_COMP, sizeof(ipsec_def_comp));
+
 }
 
 /*
@@ -609,6 +633,43 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	/* Call the appropriate IPsec transform callback. */
 	ip_deliver(&m, &skip, prot, af);
 #undef IPSEC_ISTAT
+}
+
+int
+ipsec_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen)
+{
+	int error;
+
+	switch (name[0]) {
+	case IPCTL_IPSEC_ENC_ALGORITHM:
+		NET_LOCK();
+		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
+		    ipsec_def_enc, sizeof(ipsec_def_enc));
+		NET_UNLOCK();
+		return (error);
+	case IPCTL_IPSEC_AUTH_ALGORITHM:
+		NET_LOCK();
+		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
+		    ipsec_def_auth, sizeof(ipsec_def_auth));
+		NET_UNLOCK();
+		return (error);
+	case IPCTL_IPSEC_IPCOMP_ALGORITHM:
+		NET_LOCK();
+		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
+		    ipsec_def_comp, sizeof(ipsec_def_comp));
+		NET_UNLOCK();
+		return (error);
+	default:
+		if (name[0] < IPSEC_MAXID) {
+			NET_LOCK();
+			error = sysctl_int_arr(ipsecctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
+			return (error);
+		}
+		return (EOPNOTSUPP);
+	}
 }
 
 int

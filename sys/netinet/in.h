@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.125 2017/10/06 21:14:55 bluhm Exp $	*/
+/*	$OpenBSD: in.h,v 1.126 2017/11/14 09:30:17 mpi Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -745,19 +745,19 @@ struct ip_mreq {
 	&ipport_hifirstauto, \
 	&ipport_hilastauto, \
 	&ip_maxqueue, \
-	&encdebug, \
+	NULL /* encdebug */, \
 	NULL, \
-	&ipsec_expire_acquire, \
-	&ipsec_keep_invalid, \
-	&ipsec_require_pfs, \
-	&ipsec_soft_allocations, \
-	&ipsec_exp_allocations, \
-	&ipsec_soft_bytes, \
-	&ipsec_exp_bytes, \
-	&ipsec_exp_timeout, \
-	&ipsec_soft_timeout, \
-	&ipsec_soft_first_use, \
-	&ipsec_exp_first_use, \
+	NULL /* ipsec_expire_acquire */, \
+	NULL /* ipsec_keep_invalid */, \
+	NULL /* ipsec_require_pfs */, \
+	NULL /* ipsec_soft_allocations */, \
+	NULL /* ipsec_exp_allocations */, \
+	NULL /* ipsec_soft_bytes */, \
+	NULL /* ipsec_exp_bytes */, \
+	NULL /* ipsec_exp_timeout */, \
+	NULL /* ipsec_soft_timeout */, \
+	NULL /* ipsec_soft_first_use */, \
+	NULL /* ipsec_exp_first_use */, \
 	NULL, \
 	NULL, \
 	NULL, \
