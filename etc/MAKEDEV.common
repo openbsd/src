@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.97 2017/11/02 14:04:24 mpi Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.98 2017/11/14 20:21:29 naddy Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -453,9 +453,7 @@ __devitem(switch, switch*, Switch driver)dnl
 __devitem(rnd, *random, In-kernel random data source,random)dnl
 _mkdev(rnd, *random, {-M urandom c major_rnd_c 0 644
 	RMlist[${#RMlist[*]}]=random
-	MKlist[${#MKlist[*]}]=";ln -s urandom random"
-	RMlist[${#RMlist[*]}]=arandom
-	MKlist[${#MKlist[*]}]=";ln -s urandom arandom"-})dnl
+	MKlist[${#MKlist[*]}]=";ln -s urandom random"-})dnl
 __devitem(joy, joy*, Joystick driver)dnl
 _mcdev(joy, joy*, joy, {-major_joy_c-}, 666)dnl
 __devitem(mag, magma*, Magma multiport cards,magma)dnl
