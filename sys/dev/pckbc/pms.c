@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.82 2017/11/14 11:58:17 anton Exp $ */
+/* $OpenBSD: pms.c,v 1.83 2017/11/14 12:03:42 anton Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -30,6 +30,8 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
+#include <sys/task.h>
+#include <sys/timeout.h>
 
 #include <machine/bus.h>
 
@@ -158,6 +160,12 @@ struct pms_softc {		/* driver status information */
 #define PMS_DEV_PRIMARY		0x01
 #define PMS_DEV_SECONDARY	0x02
 
+	struct task sc_rsttask;
+	struct timeout sc_rsttimo;
+	int sc_rststate;
+#define PMS_RST_COMMENCE	0x01
+#define PMS_RST_ANNOUNCED	0x02
+
 	int poll;
 	int inputstate;
 
@@ -255,6 +263,9 @@ int	pms_reset(struct pms_softc *);
 int	pms_dev_enable(struct pms_softc *);
 int	pms_dev_disable(struct pms_softc *);
 void	pms_protocol_lookup(struct pms_softc *);
+void	pms_reset_detect(struct pms_softc *, int);
+void	pms_reset_task(void *);
+void	pms_reset_timo(void *);
 
 int	pms_enable_intelli(struct pms_softc *);
 
@@ -542,6 +553,72 @@ pms_protocol_lookup(struct pms_softc *sc)
 	DPRINTF("%s: protocol type %d\n", DEVNAME(sc), sc->protocol->type);
 }
 
+/*
+ * Detect reset announcement ([0xaa, 0x0]).
+ * The sequence will be sent as input on rare occasions when the touchpad was
+ * reset due to a power failure.
+ */
+void
+pms_reset_detect(struct pms_softc *sc, int data)
+{
+	switch (sc->sc_rststate) {
+	case PMS_RST_COMMENCE:
+		if (data == 0x0) {
+			sc->sc_rststate = PMS_RST_ANNOUNCED;
+			timeout_add_msec(&sc->sc_rsttimo, 100);
+		} else if (data != PMS_RSTDONE) {
+			sc->sc_rststate = 0;
+		}
+		break;
+	default:
+		if (data == PMS_RSTDONE)
+			sc->sc_rststate = PMS_RST_COMMENCE;
+		else
+			sc->sc_rststate = 0;
+	}
+}
+
+void
+pms_reset_timo(void *v)
+{
+	struct pms_softc *sc = v;
+	int s = spltty();
+
+	/*
+	 * Do nothing if the reset was a false positive or if the device already
+	 * is disabled.
+	 */
+	if (sc->sc_rststate == PMS_RST_ANNOUNCED &&
+	    sc->sc_state != PMS_STATE_DISABLED)
+		task_add(systq, &sc->sc_rsttask);
+
+	splx(s);
+}
+
+void
+pms_reset_task(void *v)
+{
+	struct pms_softc *sc = v;
+	int s = spltty();
+
+#ifdef DIAGNOSTIC
+	printf("%s: device reset (state = %d)\n", DEVNAME(sc), sc->sc_rststate);
+#endif
+
+	rw_enter_write(&sc->sc_state_lock);
+
+	if (sc->sc_sec_wsmousedev != NULL)
+		pms_change_state(sc, PMS_STATE_DISABLED, PMS_DEV_SECONDARY);
+	pms_change_state(sc, PMS_STATE_DISABLED, PMS_DEV_PRIMARY);
+
+	pms_change_state(sc, PMS_STATE_ENABLED, PMS_DEV_PRIMARY);
+	if (sc->sc_sec_wsmousedev != NULL)
+		pms_change_state(sc, PMS_STATE_ENABLED, PMS_DEV_SECONDARY);
+
+	rw_exit_write(&sc->sc_state_lock);
+	splx(s);
+}
+
 int
 pms_enable_intelli(struct pms_softc *sc)
 {
@@ -679,6 +756,9 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 
+	task_set(&sc->sc_rsttask, pms_reset_task, sc);
+	timeout_set(&sc->sc_rsttimo, pms_reset_timo, sc);
+
 	sc->poll = 1;
 	sc->sc_dev_enable = 0;
 
@@ -737,6 +817,7 @@ pms_change_state(struct pms_softc *sc, int newstate, int dev)
 	switch (newstate) {
 	case PMS_STATE_ENABLED:
 		sc->inputstate = 0;
+		sc->sc_rststate = 0;
 
 		pckbc_slot_enable(sc->sc_kbctag, PCKBC_AUX_SLOT, 1);
 
@@ -848,6 +929,7 @@ pmsinput(void *vsc, int data)
 	}
 
 	sc->packet[sc->inputstate] = data;
+	pms_reset_detect(sc, data);
 	if (sc->protocol->sync(sc, data)) {
 #ifdef DIAGNOSTIC
 		printf("%s: not in sync yet, discard input "
