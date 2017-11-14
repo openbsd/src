@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.522 2017/11/12 11:18:50 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.523 2017/11/14 17:48:48 mpi Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1242,17 +1242,17 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	if ((lease->options[DHO_DHCP_OPTION_OVERLOAD].len == 0 ||
 	    (lease->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2) == 0) &&
 	    packet->sname[0]) {
-		lease->server_name = malloc(DHCP_SNAME_LEN + 1);
+		lease->server_name = calloc(1, DHCP_SNAME_LEN + 1);
 		if (lease->server_name == NULL) {
 			log_warn("%s: SNAME", log_procname);
 			goto decline;
 		}
 		memcpy(lease->server_name, packet->sname, DHCP_SNAME_LEN);
-		lease->server_name[DHCP_SNAME_LEN] = '\0';
 		if (res_hnok(lease->server_name) == 0) {
-			log_warnx("%s: invalid host name in SNAME",
+			log_warnx("%s: invalid host name in SNAME ignored",
 			    log_procname);
-			goto decline;
+			free(lease->server_name);
+			lease->server_name = NULL;
 		}
 	}
 
