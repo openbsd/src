@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.332 2017/08/17 05:16:27 stsp Exp $ */
+/* $OpenBSD: acpi.c,v 1.333 2017/11/14 10:17:13 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2784,9 +2784,11 @@ acpi_parsehid(struct aml_node *node, void *arg, char *outcdev, char *outdev,
 const char *acpi_skip_hids[] = {
 	"INT0800",	/* Intel 82802Firmware Hub Device */
 	"PNP0000",	/* 8259-compatible Programmable Interrupt Controller */
+	"PNP0001",	/* EISA Interrupt Controller */
 	"PNP0100",	/* PC-class System Timer */
 	"PNP0103",	/* HPET System Timer */
 	"PNP0200",	/* PC-class DMA Controller */
+	"PNP0201",	/* EISA DMA Controller */
 	"PNP0800",	/* Microsoft Sound System Compatible Device */
 	"PNP0A03",	/* PCI Bus */
 	"PNP0A08",	/* PCI Express Bus */
@@ -2801,8 +2803,13 @@ const char *acpi_skip_hids[] = {
 
 /* ISA devices for which we attach a driver later */
 const char *acpi_isa_hids[] = {
-	"PNP0303",	/* 8042 PS/2 Controller */
+	"PNP0303",	/* IBM Enhanced Keyboard (101/102-key, PS/2 Mouse) */
+	"PNP0400",	/* Standard LPT Parallel Port */
+	"PNP0401",	/* ECP Parallel Port */
 	"PNP0501",	/* 16550A-compatible COM Serial Port */
+	"PNP0700",	/* PC-class Floppy Disk Controller */
+	"PNP0F03",	/* Microsoft PS/2-style Mouse */
+	"PNP0F13",	/* PS/2 Mouse */
 	NULL
 };
 
