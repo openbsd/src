@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.80 2017/11/13 07:16:35 mpi Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.81 2017/11/14 14:46:49 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -593,8 +593,12 @@ frag6_slowtimo(void)
 
 	mtx_leave(&frag6_mutex);
 
-	while ((q6 = TAILQ_FIRST(&rmq6)) != NULL) {
-		TAILQ_REMOVE(&rmq6, q6, ip6q_queue);
-		frag6_freef(q6);
+	if (!TAILQ_EMPTY(&rmq6)) {
+		NET_LOCK();
+		while ((q6 = TAILQ_FIRST(&rmq6)) != NULL) {
+			TAILQ_REMOVE(&rmq6, q6, ip6q_queue);
+			frag6_freef(q6);
+		}
+		NET_UNLOCK();
 	}
 }
