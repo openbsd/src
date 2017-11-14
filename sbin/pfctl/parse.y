@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.664 2017/11/13 11:30:11 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.665 2017/11/14 22:17:41 sashan Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4133,7 +4133,7 @@ process_tabledef(char *name, struct table_opts *opts, int popts)
 		    &opts->init_nodes);
 	if (!(pf->opts & PF_OPT_NOACTION) &&
 	    pfctl_define_table(name, opts->flags, opts->init_addr,
-	    pf->anchor->name, &ab, pf->anchor->ruleset.tticket)) {
+	    pf->anchor->path, &ab, pf->anchor->ruleset.tticket)) {
 		yyerror("cannot define table %s: %s", name,
 		    pfr_strerror(errno));
 		goto _error;
