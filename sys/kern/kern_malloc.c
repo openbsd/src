@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.130 2017/07/10 23:49:10 dlg Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.131 2017/11/14 06:46:43 dlg Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -175,14 +175,6 @@ malloc(size_t size, int type, int flags)
 		assertwaitok();
 		if (pool_debug == 2)
 			yield();
-	}
-#endif
-
-#ifdef MALLOC_DEBUG
-	if (debug_malloc(size, type, flags, (void **)&va)) {
-		if ((flags & M_ZERO) && va != NULL)
-			memset(va, 0, size);
-		return (va);
 	}
 #endif
 
@@ -380,11 +372,6 @@ free(void *addr, int type, size_t freedsize)
 	if (addr == NULL)
 		return;
 
-#ifdef MALLOC_DEBUG
-	if (debug_free(addr, type))
-		return;
-#endif
-
 #ifdef DIAGNOSTIC
 	if (addr < (void *)kmembase || addr >= (void *)kmemlimit)
 		panic("free: non-malloced addr %p type %s", addr,
@@ -572,9 +559,6 @@ kmeminit(void)
 	}
 	for (indx = 0; indx < M_LAST; indx++)
 		kmemstats[indx].ks_limit = nkmempages * PAGE_SIZE * 6 / 10;
-#endif
-#ifdef MALLOC_DEBUG
-	debug_malloc_init();
 #endif
 }
 
