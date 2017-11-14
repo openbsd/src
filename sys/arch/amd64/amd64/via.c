@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.24 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: via.c,v 1.25 2017/11/14 13:09:22 fcambus Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 				return (ENOMEM);
 			memcpy(ses, sc->sc_sessions, sesn * sizeof(*ses));
 			explicit_bzero(sc->sc_sessions, sesn * sizeof(*ses));
-			free(sc->sc_sessions, M_DEVBUF, 0);
+			free(sc->sc_sessions, M_DEVBUF, sesn * sizeof(*ses));
 			sc->sc_sessions = ses;
 			ses = &sc->sc_sessions[sesn];
 			sc->sc_nsessions++;
@@ -284,13 +284,13 @@ viac3_crypto_freesession(u_int64_t tid)
 
 		if (swd->sw_ictx) {
 			explicit_bzero(swd->sw_ictx, axf->ctxsize);
-			free(swd->sw_ictx, M_CRYPTO_DATA, 0);
+			free(swd->sw_ictx, M_CRYPTO_DATA, axf->ctxsize);
 		}
 		if (swd->sw_octx) {
 			explicit_bzero(swd->sw_octx, axf->ctxsize);
-			free(swd->sw_octx, M_CRYPTO_DATA, 0);
+			free(swd->sw_octx, M_CRYPTO_DATA, axf->ctxsize);
 		}
-		free(swd, M_CRYPTO_DATA, 0);
+		free(swd, M_CRYPTO_DATA, sizeof(*swd));
 	}
 
 	explicit_bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
@@ -411,7 +411,7 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 
 	if (sc->op_buf != NULL) {
 		explicit_bzero(sc->op_buf, crd->crd_len);
-		free(sc->op_buf, M_DEVBUF, 0);
+		free(sc->op_buf, M_DEVBUF, crd->crd_len);
 		sc->op_buf = NULL;
 	}
 
