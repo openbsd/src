@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2017/09/15 14:03:14 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.23 2017/11/14 15:30:35 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -90,7 +90,7 @@ stamp-pf: addr.py pf.conf
 	rm -f stamp-stack stamp-pf
 	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
-	    ssh ${IPS_SSH} ${SUDO} pfctl -a regress -f -
+	    ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -f -
 	-ssh ${REMOTE_SSH} ${SUDO} pfctl -e
 	date >$@
 
@@ -136,7 +136,7 @@ REGRESS_TARGETS +=	run-regress-${sp}-ping6 run-regress-${sp}-fragping6 \
 
 cleanup-pf:
 	rm -f stamp-stack stamp-pf
-	ssh ${IPS_SSH} ${SUDO} pfctl -a regress -Fa
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -Fa
 	-ssh ${REMOTE_SSH} ${SUDO} pfctl -e || true
 
 REGRESS_TARGETS +=	cleanup-pf
@@ -167,5 +167,8 @@ check-setup-remote:
 	ssh ${REMOTE_SSH} ping6 -n -c 1 ${LOCAL_ADDR6}  # LOCAL_ADDR6
 	ssh ${REMOTE_SSH} ndp -n ${LOCAL_ADDR6} |\
 	    grep -q ' ${LOCAL_MAC} '  # LOCAL_ADDR6 LOCAL_MAC
+	ssh ${REMOTE_SSH} route -n get -inet6 ${FAKE_NET_ADDR6} |\
+	    grep -q 'gateway: ${LOCAL_ADDR6}'  # FAKE_NET_ADDR6 LOCAL_ADDR6
+	ssh ${REMOTE_SSH} netstat -na -f inet6 -p udp | fgrep ' *.7 '
 
 .include <bsd.regress.mk>
