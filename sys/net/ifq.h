@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.14 2017/11/14 00:00:35 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.15 2017/11/14 04:08:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -379,6 +379,7 @@ struct ifq_ops {
 void		 ifq_init(struct ifqueue *, struct ifnet *, unsigned int);
 void		 ifq_attach(struct ifqueue *, const struct ifq_ops *, void *);
 void		 ifq_destroy(struct ifqueue *);
+void		 ifq_add_data(struct ifqueue *, struct if_data *);
 int		 ifq_enqueue(struct ifqueue *, struct mbuf *);
 void		 ifq_start(struct ifqueue *);
 struct mbuf	*ifq_deq_begin(struct ifqueue *);

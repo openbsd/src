@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.526 2017/11/12 14:11:15 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.527 2017/11/14 04:08:11 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2277,30 +2277,14 @@ void
 if_getdata(struct ifnet *ifp, struct if_data *data)
 {
 	unsigned int i;
-	struct ifqueue *ifq;
-	uint64_t opackets = 0;
-	uint64_t obytes = 0;
-	uint64_t omcasts = 0;
-	uint64_t oqdrops = 0;
-
-	for (i = 0; i < ifp->if_nifqs; i++) {
-		ifq = ifp->if_ifqs[i];
-
-		mtx_enter(&ifq->ifq_mtx);
-		opackets += ifq->ifq_packets;
-		obytes += ifq->ifq_bytes;
-		oqdrops += ifq->ifq_qdrops;
-		omcasts += ifq->ifq_mcasts;
-		mtx_leave(&ifq->ifq_mtx);
-		/* ifq->ifq_errors */
-	}
 
 	*data = ifp->if_data;
-	data->ifi_opackets += opackets;
-	data->ifi_obytes += obytes;
-	data->ifi_oqdrops += oqdrops;
-	data->ifi_omcasts += omcasts;
-	/* ifp->if_data.ifi_oerrors */
+
+	for (i = 0; i < ifp->if_nifqs; i++) {
+		struct ifqueue *ifq = ifp->if_ifqs[i];
+
+		ifq_add_data(ifq, data);
+	}
 }
 
 /*

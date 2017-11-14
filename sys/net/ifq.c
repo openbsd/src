@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.13 2017/11/14 00:00:35 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.14 2017/11/14 04:08:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -287,6 +287,18 @@ ifq_destroy(struct ifqueue *ifq)
 	ifq->ifq_ops->ifqop_free(ifq->ifq_idx, ifq->ifq_q);
 
 	ml_purge(&ml);
+}
+
+void
+ifq_add_data(struct ifqueue *ifq, struct if_data *data)
+{
+	mtx_enter(&ifq->ifq_mtx);
+	data->ifi_opackets += ifq->ifq_packets;
+	data->ifi_obytes += ifq->ifq_bytes;
+	data->ifi_oqdrops += ifq->ifq_qdrops;
+	data->ifi_omcasts += ifq->ifq_mcasts;
+	/* ifp->if_data.ifi_oerrors */
+	mtx_leave(&ifq->ifq_mtx);
 }
 
 int
