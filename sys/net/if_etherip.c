@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.22 2017/11/10 02:37:14 visa Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.23 2017/11/15 17:30:20 jca Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -659,6 +659,20 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 	return IPPROTO_DONE;
 }
 #endif /* INET6 */
+
+int
+etherip_sysctl_etheripstat(void *oldp, size_t *oldlenp, void *newp)
+{
+	struct etheripstat etheripstat;
+
+	CTASSERT(sizeof(etheripstat) == (etherips_ncounters *
+	    sizeof(uint64_t)));
+	memset(&etheripstat, 0, sizeof etheripstat);
+	counters_read(etheripcounters, (uint64_t *)&etheripstat,
+	    etherips_ncounters);
+	return (sysctl_rdstruct(oldp, oldlenp, newp, &etheripstat,
+	    sizeof(etheripstat)));
+}
 
 int
 ip_etherip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,

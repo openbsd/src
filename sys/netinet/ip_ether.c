@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.89 2017/11/10 02:37:14 visa Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.90 2017/11/15 17:30:20 jca Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -467,43 +467,4 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 	*mp = m;
 
 	return 0;
-}
-
-int
-etherip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen)
-{
-	int error;
-
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
-
-	switch (name[0]) {
-	case ETHERIPCTL_ALLOW:
-		NET_LOCK();
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &etherip_allow);
-		NET_UNLOCK();
-		return (error);
-	case ETHERIPCTL_STATS:
-		return (etherip_sysctl_etheripstat(oldp, oldlenp, newp));
-	default:
-		return (ENOPROTOOPT);
-	}
-	/* NOTREACHED */
-}
-
-int
-etherip_sysctl_etheripstat(void *oldp, size_t *oldlenp, void *newp)
-{
-	struct etheripstat etheripstat;
-
-	CTASSERT(sizeof(etheripstat) == (etherips_ncounters *
-	    sizeof(uint64_t)));
-	memset(&etheripstat, 0, sizeof etheripstat);
-	counters_read(etheripcounters, (uint64_t *)&etheripstat,
-	    etherips_ncounters);
-	return (sysctl_rdstruct(oldp, oldlenp, newp, &etheripstat,
-	    sizeof(etheripstat)));
 }
