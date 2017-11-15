@@ -1,4 +1,23 @@
-#	$OpenBSD: Makefile,v 1.3 2017/10/18 19:41:31 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2017/11/15 15:00:04 bluhm Exp $
+
+# Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2015 Vincent Gross <vgross@openbsd.org>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+# This tests creates a routing doamin setup with bridge, vether,
+# etherip, pair.  Then ping packets are sent through these interfaces.
+# Finally the setup is destroyed.
 
 SYSCTL_ETHERIP !=	sysctl net.inet.etherip.allow
 
@@ -9,7 +28,8 @@ regress:
 	@echo SKIPPED
 .endif
 
-# configure interface numbers and routing domains
+# This test uses routing doamin and interface number 11 and 12.
+# Adjust it here, if ue want to use something else.
 N1 =		11
 N2 =		12
 NUMS =		${N1} ${N2}
@@ -21,8 +41,8 @@ CLEANFILES =	stamp-*
 
 check-interfaces:
 	# check if interfaces are busy
-.for i in ${IFS}
 .for n in ${NUMS}
+.for i in ${IFS}
 	@if ! /sbin/ifconfig ${i}${n} 2>&1 | grep -q "no such interface"; then\
 	    echo interface ${i}${n} is already used >&2; exit 1; fi
 .endfor
@@ -37,8 +57,8 @@ check-rdomains:
 
 ifconfig: check-interfaces check-rdomains
 	# create and configure interfaces
-.for i in ${IFS}
 .for n in ${NUMS}
+.for i in ${IFS}
 	${SUDO} /sbin/ifconfig ${i}${n} create rdomain ${n}
 .endfor
 .endfor
@@ -55,8 +75,8 @@ ifconfig: check-interfaces check-rdomains
 
 unconfig:
 	# destroy interfaces
-.for i in ${IFS}
 .for n in ${NUMS}
+.for i in ${IFS}
 	-${SUDO} /sbin/ifconfig ${i}${n} destroy
 .endfor
 .endfor
@@ -70,12 +90,12 @@ stamp-setup:
 REGRESS_TARGETS +=	run-regress-ping-1-2
 run-regress-ping-1-2: stamp-setup
 	@echo '\n======== $@ ========'
-	/sbin/ping -w 1 -c 1 -V ${N1} 192.168.0.2
+	/sbin/ping -n -w 1 -c 1 -V ${N1} 192.168.0.2
 
 REGRESS_TARGETS +=	run-regress-ping-2-1
 run-regress-ping-2-1: stamp-setup
 	@echo '\n======== $@ ========'
-	/sbin/ping -w 1 -c 1 -V ${N2} 192.168.0.1
+	/sbin/ping -n -w 1 -c 1 -V ${N2} 192.168.0.1
 
 REGRESS_TARGETS +=	run-regress-cleanup
 run-regress-cleanup: stamp-setup
