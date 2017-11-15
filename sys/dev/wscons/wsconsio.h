@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.86 2017/10/24 09:36:13 jsg Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.87 2017/11/15 13:25:19 anton Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -612,7 +612,6 @@ struct wsdisplay_emultype {
  */
 
 #define WSMUXIO_INJECTEVENT	_IOW('W', 96, struct wscons_event)
-#define	WSMUX_INJECTEVENT	WSMUXIO_INJECTEVENT	/* XXX compat */
 
 struct wsmux_device {
 	int type;
@@ -622,9 +621,7 @@ struct wsmux_device {
 	int idx;
 };
 #define WSMUXIO_ADD_DEVICE	_IOW('W', 97, struct wsmux_device)
-#define	WSMUX_ADD_DEVICE	WSMUXIO_ADD_DEVICE	/* XXX compat */
 #define WSMUXIO_REMOVE_DEVICE	_IOW('W', 98, struct wsmux_device)
-#define	WSMUX_REMOVE_DEVICE	WSMUXIO_REMOVE_DEVICE	/* XXX compat */
 
 #define WSMUX_MAXDEV 32
 struct wsmux_device_list {
@@ -632,6 +629,5 @@ struct wsmux_device_list {
 	struct wsmux_device devices[WSMUX_MAXDEV];
 };
 #define WSMUXIO_LIST_DEVICES	_IOWR('W', 99, struct wsmux_device_list)
-#define	WSMUX_LIST_DEVICES	WSMUXIO_LIST_DEVICES	/* XXX compat */
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */
