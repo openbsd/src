@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.65 2017/04/24 07:07:25 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.66 2017/11/15 15:45:02 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1494,7 +1494,10 @@ parse_config(const char *filename, struct iked *x_env)
 	if ((file = pushfile(filename, 1)) == NULL)
 		return (-1);
 
+	free(ocsp_url);
+
 	decouple = passive = 0;
+	ocsp_url = NULL;
 
 	if (env->sc_opts & IKED_OPT_PASSIVE)
 		passive = 1;
