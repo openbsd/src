@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.32 2017/03/11 15:16:35 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.33 2017/11/15 19:59:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -982,4 +982,62 @@ layout_close_pane(struct window_pane *wp)
 		layout_fix_panes(w, w->sx, w->sy);
 	}
 	notify_window("window-layout-changed", w);
+}
+
+int
+layout_spread_cell(struct window *w, struct layout_cell *parent)
+{
+	struct layout_cell	*lc;
+	u_int			 number, each, size;
+	int			 change, changed;
+
+	number = 0;
+	TAILQ_FOREACH (lc, &parent->cells, entry)
+	    number++;
+	if (number <= 1)
+		return (0);
+
+	if (parent->type == LAYOUT_LEFTRIGHT)
+		size = parent->sx;
+	else if (parent->type == LAYOUT_TOPBOTTOM)
+		size = parent->sy;
+	else
+		return (0);
+	each = (size - (number - 1)) / number;
+
+	changed = 0;
+	TAILQ_FOREACH (lc, &parent->cells, entry) {
+		if (TAILQ_NEXT(lc, entry) == NULL)
+			each = size - (each * (number - 1));
+		change = 0;
+		if (parent->type == LAYOUT_LEFTRIGHT) {
+			change = each - (int)lc->sx;
+			layout_resize_adjust(w, lc, LAYOUT_LEFTRIGHT, change);
+		} else if (parent->type == LAYOUT_TOPBOTTOM) {
+			change = each - (int)lc->sy;
+			layout_resize_adjust(w, lc, LAYOUT_TOPBOTTOM, change);
+		}
+		if (change != 0)
+			changed = 1;
+	}
+	return (changed);
+}
+
+void
+layout_spread_out(struct window_pane *wp)
+{
+	struct layout_cell	*parent;
+	struct window		*w = wp->window;
+
+	parent = wp->layout_cell->parent;
+	if (parent == NULL)
+		return;
+
+	do {
+		if (layout_spread_cell(w, parent)) {
+			layout_fix_offsets(parent);
+			layout_fix_panes(w, w->sx, w->sy);
+			break;
+		}
+	} while ((parent = parent->parent) != NULL);
 }
