@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.39 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.40 2017/11/15 01:11:45 dlg Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -196,6 +196,12 @@ uint64_t	ifmedia_baudrate(uint64_t);
 #define	IFM_25G_SR	49		/* 25GBase-SR */
 #define	IFM_50G_CR2	50		/* 50GBase-CR2 */
 #define	IFM_50G_KR2	51		/* 50GBase-KR2 */
+#define	IFM_25G_LR	52		/* 25GBase-LR */
+#define	IFM_25G_ER	53		/* 25GBase-ER */
+#define	IFM_10G_AOC	54		/* 10G Active Optical Cable */
+#define	IFM_25G_AOC	55		/* 25G Active Optical Cable */
+#define	IFM_40G_AOC	56		/* 40G Active Optical Cable */
+#define	IFM_100G_AOC	57		/* 100G Active Optical Cable */
 
 #define	IFM_ETH_MASTER	0x0000000000010000ULL	/* master mode (1000baseT) */
 #define	IFM_ETH_RXPAUSE	0x0000000000020000ULL	/* receive PAUSE frames */
@@ -541,6 +547,7 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_10G_KR,		"10GBASE-KR" },			\
 	{ IFM_ETHER|IFM_10G_CR1,	"10GbaseCR1" },			\
 	{ IFM_ETHER|IFM_10G_CR1,	"10GBASE-CR1" },		\
+	{ IFM_ETHER|IFM_10G_AOC,	"10G-AOC" },			\
 	{ IFM_ETHER|IFM_20G_KR2,	"20GbaseKR2" },			\
 	{ IFM_ETHER|IFM_20G_KR2,	"20GBASE-KR2" },		\
 	{ IFM_ETHER|IFM_2500_KX,	"2500baseKX" },			\
@@ -559,6 +566,7 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_1000_CX_SGMII,	"1000BASE-CX-SGMII" },		\
 	{ IFM_ETHER|IFM_40G_KR4,	"40GbaseKR4" },			\
 	{ IFM_ETHER|IFM_40G_KR4,	"40GBASE-KR4" },		\
+	{ IFM_ETHER|IFM_40G_AOC,	"40G-AOC" },			\
 	{ IFM_ETHER|IFM_10G_ER,		"10GbaseER" },			\
 	{ IFM_ETHER|IFM_10G_ER,		"10GBASE-ER" },			\
 	{ IFM_ETHER|IFM_100G_CR4,	"100GbaseCR4" },		\
@@ -569,6 +577,7 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_100G_KR4,	"100GBASE-KR4" },		\
 	{ IFM_ETHER|IFM_100G_LR4,	"100GbaseLR4" },		\
 	{ IFM_ETHER|IFM_100G_LR4,	"100GBASE-LR4" },		\
+	{ IFM_ETHER|IFM_100G_AOC,	"100G-AOC" },			\
 	{ IFM_ETHER|IFM_56G_R4,		"56GbaseR4" },			\
 	{ IFM_ETHER|IFM_56G_R4,		"56GBASE-R4" },			\
 	{ IFM_ETHER|IFM_25G_CR,		"25GbaseCR" },			\
@@ -577,6 +586,11 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_25G_KR,		"25GBASE-KR" },			\
 	{ IFM_ETHER|IFM_25G_SR,		"25GbaseSR" },			\
 	{ IFM_ETHER|IFM_25G_SR,		"25GBASE-SR" },			\
+	{ IFM_ETHER|IFM_25G_LR,		"25GbaseLR" },			\
+	{ IFM_ETHER|IFM_25G_LR,		"25GBASE-LR" },			\
+	{ IFM_ETHER|IFM_25G_ER,		"25GbaseER" },			\
+	{ IFM_ETHER|IFM_25G_ER,		"25GBASE-ER" },			\
+	{ IFM_ETHER|IFM_25G_AOC,	"25G-AOC" },			\
 	{ IFM_ETHER|IFM_50G_CR2,	"50GbaseCR2" },			\
 	{ IFM_ETHER|IFM_50G_CR2,	"50GBASE-CR2" },		\
 	{ IFM_ETHER|IFM_50G_KR2,	"50GbaseKR2" },			\
