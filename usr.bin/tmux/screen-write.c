@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.134 2017/11/03 17:02:33 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.135 2017/11/15 19:21:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -378,7 +378,8 @@ screen_write_copy(struct screen_write_ctx *ctx, struct screen *src, u_int px,
 					gc.bg = mgc->bg;
 				}
 			}
-			screen_write_cell(ctx, &gc);
+			if (xx + gc.data.width <= px + nx)
+				screen_write_cell(ctx, &gc);
 		}
 		cy++;
 		screen_write_cursormove(ctx, cx, cy);
@@ -410,6 +411,8 @@ screen_write_fast_copy(struct screen_write_ctx *ctx, struct screen *src,
 			if (xx >= gd->linedata[yy].cellsize)
 				break;
 			grid_get_cell(gd, xx, yy, &gc);
+			if (xx + gc.data.width > px + nx)
+				break;
 			if (!grid_cells_equal(&gc, &grid_default_cell))
 				grid_view_set_cell(ctx->s->grid, cx, cy, &gc);
 			cx++;
