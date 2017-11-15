@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.242 2017/07/28 13:58:52 bluhm Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.243 2017/11/15 19:03:26 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -73,7 +73,8 @@
 #define RELAY_CACHESIZE		-1	/* use default size */
 #define RELAY_NUMPROC		3
 #define RELAY_MAXHOSTS		32
-#define RELAY_MAXHEADERLENGTH	8192
+#define RELAY_MAXHEADERLENGTH	131072
+#define RELAY_DEFHEADERLENGTH	8192
 #define RELAY_STATINTERVAL	60
 #define RELAY_BACKLOG		10
 #define RELAY_MAXLOOKUPLEVELS	5
@@ -698,6 +699,7 @@ struct protocol {
 	int			 tcpbacklog;
 	u_int8_t		 tcpipttl;
 	u_int8_t		 tcpipminttl;
+	size_t			 httpheaderlen;
 	u_int8_t		 tlsflags;
 	char			 tlsciphers[768];
 	char			 tlsdhparams[128];

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.178 2017/07/11 13:00:59 bluhm Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.179 2017/11/15 19:03:26 benno Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 11 2017 $
+.Dd $Mdocdate: November 15 2017 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -990,6 +990,15 @@ The default is
 Enable the TLSv1.1 protocol.
 The default is
 .Ic no tlsv1.1 .
+.El
+.It Ic http Ar option
+Set the HTTP options and session settings.
+This is only used if HTTP is enabled in the relay.
+Valid options are:
+.Bl -tag -width Ds
+.It Ic headerlen Ar number
+Set the maximum size of all HTTP headers in bytes.
+The default value is 8192 and it is limited to a maximum of 131072.
 .El
 .El
 .Sh FILTER RULES

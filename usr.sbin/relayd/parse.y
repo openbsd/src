@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.216 2017/08/28 06:00:05 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.217 2017/11/15 19:03:26 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -164,13 +164,13 @@ typedef struct {
 
 %token	ALL APPEND BACKLOG BACKUP BUFFER CA CACHE SET CHECK CIPHERS CODE
 %token	COOKIE DEMOTE DIGEST DISABLE ERROR EXPECT PASS BLOCK EXTERNAL FILENAME
-%token	FORWARD FROM HASH HEADER HOST ICMP INCLUDE INET INET6 INTERFACE
-%token	INTERVAL IP LABEL LISTEN VALUE LOADBALANCE LOG LOOKUP METHOD MODE NAT
-%token	NO DESTINATION NODELAY NOTHING ON PARENT PATH PFTAG PORT PREFORK
-%token	PRIORITY PROTO QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST RESPONSE
-%token	RETRY QUICK RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SNMP
-%token	SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP TIMEOUT TLS TO
-%token	ROUTER RTLABEL TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE
+%token	FORWARD FROM HASH HEADER HEADERLEN HOST HTTP ICMP INCLUDE INET INET6
+%token	INTERFACE INTERVAL IP LABEL LISTEN VALUE LOADBALANCE LOG LOOKUP METHOD
+%token	MODE NAT NO DESTINATION NODELAY NOTHING ON PARENT PATH PFTAG PORT
+%token	PREFORK PRIORITY PROTO QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST
+%token	RESPONSE RETRY QUICK RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION
+%token	SNMP SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP TIMEOUT TLS
+%token	TO ROUTER RTLABEL TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDH
 %token	EDH CURVE TICKETS
 %token	<v.string>	STRING
@@ -237,11 +237,10 @@ opttlsclient	: /*empty*/	{ $$ = 0; }
 		| WITH ssltls	{ $$ = 1; }
 		;
 
-http_type	: STRING	{
+http_type	: HTTP		{ $$ = 0; }
+		| STRING	{
 			if (strcmp("https", $1) == 0) {
 				$$ = 1;
-			} else if (strcmp("http", $1) == 0) {
-				$$ = 0;
 			} else {
 				yyerror("invalid check type: %s", $1);
 				free($1);
@@ -265,10 +264,9 @@ hostname	: /* empty */		{
 
 relay_proto	: /* empty */			{ $$ = RELAY_PROTO_TCP; }
 		| TCP				{ $$ = RELAY_PROTO_TCP; }
+		| HTTP				{ $$ = RELAY_PROTO_HTTP; }
 		| STRING			{
-			if (strcmp("http", $1) == 0) {
-				$$ = RELAY_PROTO_HTTP;
-			} else if (strcmp("dns", $1) == 0) {
+			if (strcmp("dns", $1) == 0) {
 				$$ = RELAY_PROTO_DNS;
 			} else {
 				yyerror("invalid protocol type: %s", $1);
@@ -311,7 +309,15 @@ eflags		: STYLE STRING
 		}
 		;
 
-port		: PORT STRING {
+port		: PORT HTTP {
+			int p = 0;
+			$$.op = PF_OP_EQ;
+			if ((p = getservice("http")) == -1)
+				YYERROR;
+			$$.val[0] = p;
+			$$.val[1] = 0;
+		}
+		| PORT STRING {
 			char		*a, *b;
 			int		 p[2];
 
@@ -996,6 +1002,7 @@ proto		: relay_proto PROTO STRING	{
 			p->tcpflags = TCPFLAG_DEFAULT;
 			p->tlsflags = TLSFLAG_DEFAULT;
 			p->tcpbacklog = RELAY_BACKLOG;
+			p->httpheaderlen = RELAY_DEFHEADERLENGTH;
 			TAILQ_INIT(&p->rules);
 			(void)strlcpy(p->tlsciphers, TLSCIPHERS_DEFAULT,
 			    sizeof(p->tlsciphers));
@@ -1034,10 +1041,26 @@ protoptsl	: ssltls tlsflags
 		| ssltls '{' tlsflags_l '}'
 		| TCP tcpflags
 		| TCP '{' tcpflags_l '}'
+		| HTTP httpflags
+		| HTTP '{' httpflags_l '}'
 		| RETURN ERROR opteflags	{ proto->flags |= F_RETURN; }
 		| RETURN ERROR '{' eflags_l '}'	{ proto->flags |= F_RETURN; }
 		| filterrule
 		| include
+		;
+
+
+httpflags_l	: httpflags comma httpflags_l
+		| httpflags
+		;
+
+httpflags	: HEADERLEN NUMBER	{
+			if ($2 < 0 || $2 > RELAY_MAXHEADERLENGTH) {
+				yyerror("invalid headerlen: %d", $2);
+				YYERROR;
+			}
+			proto->httpheaderlen = $2;
+		}
 		;
 
 tcpflags_l	: tcpflags comma tcpflags_l
@@ -2210,7 +2233,9 @@ lookup(char *s)
 		{ "from",		FROM },
 		{ "hash",		HASH },
 		{ "header",		HEADER },
+		{ "headerlen",		HEADERLEN },
 		{ "host",		HOST },
+		{ "http",		HTTP },
 		{ "icmp",		ICMP },
 		{ "include",		INCLUDE },
 		{ "inet",		INET },
