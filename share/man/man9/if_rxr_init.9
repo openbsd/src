@@ -1,4 +1,4 @@
-.\"	$OpenBSD: if_rxr_init.9,v 1.5 2015/11/23 17:53:57 jmc Exp $
+.\"	$OpenBSD: if_rxr_init.9,v 1.6 2017/11/15 01:41:20 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: November 15 2017 $
 .Dt IF_RXR_INIT 9
 .Os
 .Sh NAME
@@ -36,9 +36,18 @@
 .Ft unsigned int
 .Fn if_rxr_inuse "struct if_rxring *rxr"
 .Ft int
-.Fn if_rxr_ioctl "struct if_rxrinfo *ifri" "const char *name" "unsigned int size" "struct if_rxring *rxr"
+.Fo if_rxr_ioctl
+.Fa "struct if_rxrinfo *ifri"
+.Fa "const char *name"
+.Fa "unsigned int size"
+.Fa "struct if_rxring *rxr"
+.Fc
 .Ft int
-.Fn if_rxr_info_ioctl "struct if_rxrinfo *ifri" "unsigned int n" "struct if_rxring_info *rings"
+.Fo if_rxr_info_ioctl
+.Fa "struct if_rxrinfo *ifri"
+.Fa "unsigned int n"
+.Fa "struct if_rxring_info *rings"
+.Fc
 .Sh DESCRIPTION
 The Interface Receive Ring accounting API provides a mechanism to
 manage the number of available descriptors on a network card's receive
