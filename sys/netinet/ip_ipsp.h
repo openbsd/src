@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.187 2017/11/14 09:30:17 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.188 2017/11/15 11:48:59 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -411,6 +411,7 @@ struct xformsw {
 extern int ipsec_in_use;
 extern u_int64_t ipsec_last_added;
 extern int ipsec_policy_pool_initialized;
+extern int encdebug;			/* enable message reporting */
 
 extern int ipsec_keep_invalid;		/* lifetime of embryonic SAs (in sec) */
 extern int ipsec_require_pfs;		/* use Perfect Forward Secrecy */

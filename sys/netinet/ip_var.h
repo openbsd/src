@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.84 2017/11/05 13:19:59 florian Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.85 2017/11/15 11:48:59 mpi Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -202,7 +202,6 @@ extern int ipport_firstauto;		/* min port for port allocation */
 extern int ipport_lastauto;		/* max port for port allocation */
 extern int ipport_hifirstauto;		/* min dynamic/private port number */
 extern int ipport_hilastauto;		/* max dynamic/private port number */
-extern int encdebug;			/* enable message reporting */
 extern int ipforwarding;		/* enable IP forwarding */
 #ifdef MROUTING
 extern int ipmforwarding;		/* enable multicast forwarding */
