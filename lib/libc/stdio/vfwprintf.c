@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwprintf.c,v 1.18 2017/08/15 00:20:39 deraadt Exp $ */
+/*	$OpenBSD: vfwprintf.c,v 1.19 2017/11/16 08:16:03 tb Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -426,7 +426,11 @@ __vfwprintf(FILE * __restrict fp, const wchar_t * __restrict fmt0, __va_list ap)
 		int hold = nextarg; \
 		if (argtable == NULL) { \
 			argtable = statargtable; \
-			__find_arguments(fmt0, orgap, &argtable, &argtablesiz); \
+			if (__find_arguments(fmt0, orgap, &argtable, \
+			    &argtablesiz) == -1) { \
+				ret = -1; \
+				goto error; \
+			} \
 		} \
 		nextarg = n2; \
 		val = GETARG(int); \
@@ -540,8 +544,11 @@ reswitch:	switch (ch) {
 				nextarg = n;
 				if (argtable == NULL) {
 					argtable = statargtable;
-					__find_arguments(fmt0, orgap,
-					    &argtable, &argtablesiz);
+					if (__find_arguments(fmt0, orgap,
+					    &argtable, &argtablesiz) == -1) {
+						ret = -1;
+						goto error;
+					}
 				}
 				goto rflag;
 			}
@@ -566,8 +573,11 @@ reswitch:	switch (ch) {
 				nextarg = n;
 				if (argtable == NULL) {
 					argtable = statargtable;
-					__find_arguments(fmt0, orgap,
-					    &argtable, &argtablesiz);
+					if (__find_arguments(fmt0, orgap,
+					    &argtable, &argtablesiz) == -1) {
+						ret = -1;
+						goto error;
+					}
 				}
 				goto rflag;
 			}
