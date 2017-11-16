@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.18 2017/01/04 12:01:22 stsp Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.19 2017/11/16 12:56:58 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -24,6 +24,10 @@
 #include "debug.h"
 #include "fuse_opt.h"
 #include "fuse_private.h"
+
+#define IFUSE_OPT_DISCARD 0
+#define IFUSE_OPT_KEEP 1
+#define IFUSE_OPT_NEED_ANOTHER_ARG 2
 
 static void
 free_argv(char **argv, int argc)
@@ -222,57 +226,66 @@ static int
 parse_opt(const struct fuse_opt *o, const char *val, void *data,
     fuse_opt_proc_t f, struct fuse_args *arg)
 {
-	int found, ret, keyval;
+	int keyval;
 	size_t idx;
 
-	ret = 0;
-	found = 0;
+	if (o == NULL)
+		return IFUSE_OPT_KEEP;
+
 	keyval = 0;
 
-	/* check if it is a key=value entry */
-	idx = strcspn(val, "=");
-	if (idx != strlen(val)) {
-		idx++;
-		keyval = 1;
-	}
-
 	for(; o->templ; o++) {
-		if ((keyval && strncmp(val, o->templ, idx) == 0) ||
-		    (!keyval && strcmp(val, o->templ) == 0)) {
+		/* check key=value or -p n */
+		idx = strcspn(o->templ, "= ");
+
+		if (strncmp(val, o->templ, idx) == 0) {
+			if (o->templ[idx] == '=') {
+				keyval = 1;
+				val = &val[idx + 1];
+			} else if (o->templ[idx] == ' ') {
+				keyval = 1;
+				if (idx == strlen(val)) {
+					/* ask for next arg to be included */
+					return IFUSE_OPT_NEED_ANOTHER_ARG;
+				} else if (strchr(o->templ, '%') != NULL) {
+					val = &val[idx];
+				}
+			}
+
 			if (o->val == FUSE_OPT_KEY_DISCARD)
-				return (1);
+				return (IFUSE_OPT_DISCARD);
+
+			if (o->val == FUSE_OPT_KEY_KEEP)
+				return (IFUSE_OPT_KEEP);
 
 			if (FUSE_OPT_IS_OPT_KEY(o)) {
-				if (keyval)
-					ret = f(data, &val[idx], o->val, arg);
-				else
-					ret = f(data, val, o->val, arg);
+				if (f == NULL)
+					return IFUSE_OPT_KEEP;
+
+				return f(data, val, o->val, arg);
+			} else if (data == NULL) {
+				return (-1);
+			} else if (strchr(o->templ, '%') == NULL) {
+				*((int *)(data + o->off)) = o->val;
+			} else if (strstr(o->templ, "%u") != NULL) {
+				*((unsigned int*)(data + o->off)) = atoi(val);
+			} else if (strstr(o->templ, "%lu") != NULL) {
+				*((unsigned long*)(data + o->off)) =
+				    strtoul(val, NULL, 0);
+			} else if (strstr(o->templ, "%s") != NULL) {
+				*((char **)(data + o->off)) = strdup(val);
+			} else {
+				/* TODO other parameterised templates */
 			}
 
-			if (o->off != ULONG_MAX && data && o->val >= 0) {
-				ret = f(data, val, o->val, arg);
-				int *addr = (int *)(data + o->off);
-				*addr = o->val;
-				ret = 0;
-			}
-
-			if (ret == -1)
-				return (ret);
-			if (ret == 1)
-				fuse_opt_add_arg(arg, val);
-			found++;
-			break;
+			return (IFUSE_OPT_DISCARD);
 		}
 	}
 
-	if (!found) {
-		ret = f(data, val, FUSE_OPT_KEY_OPT, arg);
-		if (ret == 1)
-			fuse_opt_add_arg(arg, val);
-		return (ret);
-	}
+	if (f != NULL)
+		return f(data, val, FUSE_OPT_KEY_OPT, arg);
 
-	return (ret);
+	return (IFUSE_OPT_KEEP);
 }
 
 /*
@@ -287,11 +300,12 @@ fuse_opt_parse(struct fuse_args *args, void *data,
     const struct fuse_opt *opt, fuse_opt_proc_t f)
 {
 	struct fuse_args outargs;
-	const char *arg;
-	int ret = 0;
+	const char *arg, *ap;
+	char *optlist, *tofree;
+	int ret;
 	int i;
 
-	if (!f || !args || !args->argc || !args->argv)
+	if (!args || !args->argc || !args->argv)
 		return (0);
 
 	bzero(&outargs, sizeof(outargs));
@@ -299,27 +313,67 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 
 	for (i = 1; i < args->argc; i++) {
 		arg = args->argv[i];
+		ret = 0;
 
 		/* not - and not -- */
 		if (arg[0] != '-') {
-			ret = f(data, arg, FUSE_OPT_KEY_NONOPT, &outargs);
+			if (f == NULL)
+				ret = IFUSE_OPT_KEEP;
+			else
+				ret = f(data, arg, FUSE_OPT_KEY_NONOPT, &outargs);
 
-			if (ret == 1)
+			if (ret == IFUSE_OPT_KEEP)
 				fuse_opt_add_arg(&outargs, arg);
 			if (ret == -1)
 				goto err;
 		} else if (arg[1] == 'o') {
 			if (arg[2])
 				arg += 2;	/* -ofoo,bar */
-			else
-				arg = args->argv[++i];
+			else {
+				if (++i >= args->argc)
+					goto err;
 
-			ret = parse_opt(opt, arg, data, f, &outargs);
+				arg = args->argv[i];
+			}
+
+			tofree = optlist = strdup(arg);
+			if (optlist == NULL)
+				goto err;
+
+			while ((ap = strsep(&optlist, ",")) != NULL &&
+			    ret != -1) {
+				ret = parse_opt(opt, ap, data, f, &outargs);
+				if (ret == IFUSE_OPT_KEEP) {
+					fuse_opt_add_arg(&outargs, "-o");
+					fuse_opt_add_arg(&outargs, ap);
+				}
+			}
+
+			free(tofree);
 
 			if (ret == -1)
 				goto err;
 		} else {
 			ret = parse_opt(opt, arg, data, f, &outargs);
+
+			if (ret == IFUSE_OPT_KEEP)
+				fuse_opt_add_arg(&outargs, arg);
+			else if (ret == IFUSE_OPT_NEED_ANOTHER_ARG) {
+				/* arg needs a value */
+				if (++i >= args->argc) {
+					fprintf(stderr, "fuse: missing argument after %s\n", arg);
+					goto err;
+				}
+
+				if (asprintf(&tofree, "%s%s", arg,
+				    args->argv[i]) == -1)
+					goto err;
+
+				ret = parse_opt(opt, tofree, data, f, &outargs);
+				if (ret == IFUSE_OPT_KEEP)
+					fuse_opt_add_arg(&outargs, tofree);
+				free(tofree);
+			}
 
 			if (ret == -1)
 				goto err;
@@ -333,6 +387,8 @@ err:
 	args->allocated = outargs.allocated;
 	args->argc = outargs.argc;
 	args->argv = outargs.argv;
+	if (ret != 0)
+		ret = -1;
 
 	return (ret);
 }
