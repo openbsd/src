@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.588 2017/11/15 19:59:27 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.589 2017/11/16 11:16:15 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 15 2017 $
+.Dd $Mdocdate: November 16 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1122,9 +1122,10 @@ The following commands are supported in copy mode:
 .It Li "end-of-line" Ta "$" Ta "C-e"
 .It Li "goto-line <line>" Ta ":" Ta "g"
 .It Li "halfpage-down" Ta "C-d" Ta "M-Down"
+.It Li "halfpage-down-and-cancel" Ta "" Ta ""
 .It Li "halfpage-up" Ta "C-u" Ta "M-Up"
-.It Li "history-bottom" Ta "G" Ta "M-<"
-.It Li "history-top" Ta "g" Ta "M->"
+.It Li "history-bottom" Ta "G" Ta "M->"
+.It Li "history-top" Ta "g" Ta "M-<"
 .It Li "jump-again" Ta ";" Ta ";"
 .It Li "jump-backward <to>" Ta "F" Ta "F"
 .It Li "jump-forward <to>" Ta "f" Ta "f"
@@ -1139,12 +1140,14 @@ The following commands are supported in copy mode:
 .It Li "next-word-end" Ta "e" Ta "M-f"
 .It Li "other-end" Ta "o" Ta ""
 .It Li "page-down" Ta "C-f" Ta "PageDown"
+.It Li "page-down-and-cancel" Ta "" Ta ""
 .It Li "page-up" Ta "C-b" Ta "PageUp"
 .It Li "previous-paragraph" Ta "{" Ta "M-{"
 .It Li "previous-space" Ta "B" Ta ""
 .It Li "previous-word" Ta "b" Ta "M-b"
 .It Li "rectangle-toggle" Ta "v" Ta "R"
 .It Li "scroll-down" Ta "C-e" Ta "C-Down"
+.It Li "scroll-down-and-cancel" Ta "" Ta ""
 .It Li "scroll-up" Ta "C-y" Ta "C-Up"
 .It Li "search-again" Ta "n" Ta "n"
 .It Li "search-backward <for>" Ta "?" Ta ""
@@ -1157,6 +1160,11 @@ The following commands are supported in copy mode:
 .It Li "stop-selection" Ta "" Ta ""
 .It Li "top-line" Ta "H" Ta "M-R"
 .El
+.Pp
+The
+.Ql -and-cancel
+variants of some commands exit copy mode after they have completed (for copy
+commands) or when the cursor reaches the bottom (for scrolling commands).
 .Pp
 The next and previous word keys use space and the
 .Ql - ,
