@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.329 2017/01/21 10:58:15 reyk Exp $
+#	$OpenBSD: files.pci,v 1.330 2017/11/16 18:12:27 jcs Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -806,6 +806,10 @@ file	dev/pci/xspd.c			xspd
 # VirtIO
 attach	virtio at pci with virtio_pci
 file	dev/pci/virtio_pci.c		virtio_pci
+
+# Synopsys DesignWare I2C Controller
+attach	dwiic at pci with dwiic_pci
+file	dev/pci/dwiic_pci.c		dwiic_pci
 
 include "dev/pci/files.agp"
 include "dev/pci/drm/files.drm"

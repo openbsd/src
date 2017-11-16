@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.447 2017/10/28 01:37:52 yasuoka Exp $
+#	$OpenBSD: GENERIC,v 1.448 2017/11/16 18:12:27 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -135,6 +135,7 @@ iic*	at nviic?
 amdpm*	at pci?			# AMD-7xx/8111 and NForce SMBus controller
 iic*	at amdpm?
 dwiic*	at acpi?		# DesignWare Synopsys i2c controller
+dwiic*	at pci?
 iic*	at dwiic?
 
 itherm*	at pci?			# Intel 3400 Thermal Sensor

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.333 2017/11/14 10:17:13 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.334 2017/11/16 18:12:27 jcs Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -71,7 +71,7 @@ int	acpi_hasprocfvs;
 
 #define ACPIEN_RETRIES 15
 
-void 	acpi_pci_match(struct device *, struct pci_attach_args *);
+struct aml_node *acpi_pci_match(struct device *, struct pci_attach_args *);
 pcireg_t acpi_pci_min_powerstate(pci_chipset_tag_t, pcitag_t);
 void	 acpi_pci_set_powerstate(pci_chipset_tag_t, pcitag_t, int, int);
 int	acpi_pci_notify(struct aml_node *, int, void *);
@@ -669,7 +669,7 @@ acpi_getpci(struct aml_node *node, void *arg)
 	return (1);
 }
 
-void
+struct aml_node *
 acpi_pci_match(struct device *dev, struct pci_attach_args *pa)
 {
 	struct acpi_pci *pdev;
@@ -695,7 +695,11 @@ acpi_pci_match(struct device *dev, struct pci_attach_args *pa)
 		acpi_pci_set_powerstate(pa->pa_pc, pa->pa_tag, state, 0);
 
 		aml_register_notify(pdev->node, NULL, acpi_pci_notify, pdev, 0);
+
+		return pdev->node;
 	}
+
+	return NULL;
 }
 
 pcireg_t

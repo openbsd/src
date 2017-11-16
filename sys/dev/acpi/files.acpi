@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.37 2017/02/22 16:39:56 jcs Exp $
+#	$OpenBSD: files.acpi,v 1.38 2017/11/16 18:12:27 jcs Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -127,9 +127,8 @@ attach	sdhc at acpi with sdhc_acpi
 file	dev/acpi/sdhc_acpi.c		sdhc_acpi
 
 # Synopsys DesignWare I2C controller
-device	dwiic: i2cbus
-attach	dwiic at acpi
-file	dev/acpi/dwiic.c		dwiic
+attach	dwiic at acpi with dwiic_acpi
+file	dev/acpi/dwiic_acpi.c		dwiic_acpi
 
 # Chromebook keyboard backlight
 device	acpicbkbd
