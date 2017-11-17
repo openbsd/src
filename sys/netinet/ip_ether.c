@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.95 2017/11/17 18:20:49 jca Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.96 2017/11/17 18:21:33 jca Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -66,7 +66,6 @@
 
 #ifdef MPLS
 void	mplsip_decap(struct mbuf *, int);
-#endif
 struct gif_softc	*mplsip_getgif(struct mbuf *);
 
 /*
@@ -76,11 +75,9 @@ int
 mplsip_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	switch (proto) {
-#ifdef MPLS
 	case IPPROTO_MPLS:
 		mplsip_decap(*mp, *offp);
 		return IPPROTO_DONE;
-#endif
 	default:
 		DPRINTF(("%s: dropped, unhandled protocol\n", __func__));
 		m_freemp(mp);
@@ -88,7 +85,6 @@ mplsip_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 }
 
-#ifdef MPLS
 void
 mplsip_decap(struct mbuf *m, int iphlen)
 {
@@ -136,7 +132,6 @@ mplsip_decap(struct mbuf *m, int iphlen)
 
 	mpls_input(m);
 }
-#endif
 
 struct gif_softc *
 mplsip_getgif(struct mbuf *m)
@@ -312,3 +307,4 @@ mplsip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 
 	return 0;
 }
+#endif /* MPLS */
