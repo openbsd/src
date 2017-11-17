@@ -26,8 +26,6 @@
  *   are moved here.
  */
 
-extern int etherip_allow;
-
 struct etheripstat {
 	u_int64_t	etherips_hdrops;	/* packet shorter than header shows */
 	u_int64_t	etherips_qfull;		/* bridge queue full, packet dropped */

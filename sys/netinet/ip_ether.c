@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.93 2017/11/17 14:51:48 jca Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.94 2017/11/17 14:52:51 jca Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -68,12 +68,6 @@
 void	mplsip_decap(struct mbuf *, int);
 #endif
 struct gif_softc	*etherip_getgif(struct mbuf *);
-
-/*
- * We can control the acceptance of EtherIP packets by altering the sysctl
- * net.inet.etherip.allow value. Zero means drop them, all else is acceptance.
- */
-int etherip_allow = 0;
 
 /*
  * etherip_input gets called when we receive an encapsulated packet.

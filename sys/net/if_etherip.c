@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.25 2017/11/17 14:50:17 jca Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.26 2017/11/17 14:52:50 jca Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -64,20 +64,11 @@ struct etherip_softc {
 
 LIST_HEAD(, etherip_softc) etherip_softc_list;
 
-#if 0
-/*
- * TODO:
- *   At this stage, etherip_allow and etheripstat are defined
- *   at netinet/ip_ether.c. When implementation of etherip is
- *   removed from gif(4), there are moved here.
- */
-
 /*
  * We can control the acceptance of EtherIP packets by altering the sysctl
  * net.inet.etherip.allow value. Zero means drop them, all else is acceptance.
  */
 int etherip_allow = 0;
-#endif
 
 struct cpumem *etheripcounters;
 
