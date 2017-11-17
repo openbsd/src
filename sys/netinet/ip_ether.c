@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.92 2017/11/17 14:51:13 jca Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.93 2017/11/17 14:51:48 jca Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -89,7 +89,6 @@ etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 #endif
 	default:
 		DPRINTF(("%s: dropped, unhandled protocol\n", __func__));
-		etheripstat_inc(etherips_pdrops);
 		m_freemp(mp);
 		return IPPROTO_DONE;
 	}
@@ -101,15 +100,12 @@ mplsip_decap(struct mbuf *m, int iphlen)
 {
 	struct gif_softc *sc;
 
-	etheripstat_inc(etherips_ipackets);
-
 	/*
 	 * Make sure there's at least one MPLS label worth of data after
 	 * the outer IP header.
 	 */
 	if (m->m_pkthdr.len < iphlen + sizeof(struct shim_hdr)) {
 		DPRINTF(("%s: encapsulated packet too short\n", __func__));
-		etheripstat_inc(etherips_hdrops);
 		m_freem(m);
 		return;
 	}
@@ -119,7 +115,6 @@ mplsip_decap(struct mbuf *m, int iphlen)
 		if ((m = m_pullup(m, iphlen + sizeof(struct shim_hdr))) ==
 		    NULL) {
 			DPRINTF(("%s: m_pullup() failed\n", __func__));
-			etheripstat_inc(etherips_adrops);
 			return;
 		}
 	}
@@ -130,9 +125,6 @@ mplsip_decap(struct mbuf *m, int iphlen)
 
 	/* Chop off the `outer' IP header and reschedule. */
 	m_adj(m, iphlen);
-
-	/* Statistics */
-	etheripstat_add(etherips_ibytes, m->m_pkthdr.len);
 
 	/* Reset the flags based */
 	m->m_flags &= ~(M_BCAST|M_MCAST);
@@ -190,7 +182,6 @@ etherip_getgif(struct mbuf *m)
 	default:
 		DPRINTF(("%s: invalid protocol %d\n", __func__, v));
 		m_freem(m);
-		etheripstat_inc(etherips_hdrops);
 		return NULL;
 	}
 
@@ -209,7 +200,6 @@ etherip_getgif(struct mbuf *m)
 	/* None found. */
 	if (sc == NULL) {
 		DPRINTF(("%s: no interface found\n", __func__));
-		etheripstat_inc(etherips_noifdrops);
 		m_freem(m);
 		return NULL;
 	}
@@ -232,7 +222,6 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 	    (tdb->tdb_src.sa.sa_family != AF_INET6)) {
 		DPRINTF(("%s: IP in protocol-family <%d> attempted, aborting",
 		    __func__, tdb->tdb_src.sa.sa_family));
-		etheripstat_inc(etherips_adrops);
 		m_freem(m);
 		return EINVAL;
 	}
@@ -241,7 +230,6 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 	    (tdb->tdb_dst.sa.sa_family != AF_INET6)) {
 		DPRINTF(("%s: IP in protocol-family <%d> attempted, aborting",
 		    __func__, tdb->tdb_dst.sa.sa_family));
-		etheripstat_inc(etherips_adrops);
 		m_freem(m);
 		return EINVAL;
 	}
@@ -250,7 +238,6 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 		DPRINTF(("%s: mismatch in tunnel source and destination address"
 		    " protocol families (%d/%d), aborting", __func__,
 		    tdb->tdb_src.sa.sa_family, tdb->tdb_dst.sa.sa_family));
-		etheripstat_inc(etherips_adrops);
 		m_freem(m);
 		return EINVAL;
 	}
@@ -267,7 +254,6 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 	default:
 		DPRINTF(("%s: unsupported tunnel protocol family <%d>, "
 		    "aborting", __func__, tdb->tdb_dst.sa.sa_family));
-		etheripstat_inc(etherips_adrops);
 		m_freem(m);
 		return EINVAL;
 	}
@@ -275,7 +261,6 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 	M_PREPEND(m, hlen, M_DONTWAIT);
 	if (m == NULL) {
 		DPRINTF(("%s: M_PREPEND failed\n", __func__));
-		etheripstat_inc(etherips_adrops);
 		return ENOBUFS;
 	}
 
@@ -290,10 +275,6 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 		m->m_data -= off;
 		memmove(mtod(m, caddr_t), mtod(m, caddr_t) + off, m->m_len);
 	}
-
-	/* Statistics */
-	etheripstat_pkt(etherips_opackets, etherips_obytes,
-	    m->m_pkthdr.len - hlen);
 
 	switch (tdb->tdb_dst.sa.sa_family) {
 	case AF_INET:
