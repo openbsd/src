@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.h,v 1.26 2017/11/17 14:52:51 jca Exp $ */
+/*	$OpenBSD: ip_ether.h,v 1.27 2017/11/17 18:20:49 jca Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@adk.gr)
  *
@@ -109,8 +109,8 @@ etheripstat_pkt(enum etheripstat_counters pcounter,
 
 struct tdb;
 
-int	etherip_output(struct mbuf *, struct tdb *, struct mbuf **, int);
-int	etherip_input(struct mbuf **, int *, int, int);
+int	mplsip_output(struct mbuf *, struct tdb *, struct mbuf **, int);
+int	mplsip_input(struct mbuf **, int *, int, int);
 
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_ETHER_H_ */

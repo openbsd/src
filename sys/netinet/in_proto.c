@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.85 2017/11/17 14:51:13 jca Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.86 2017/11/17 18:20:49 jca Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ struct protosw inetsw[] = {
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_MPLS,
   .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= etherip_input,
+  .pr_input	= mplsip_input,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
   .pr_detach	= rip_detach,

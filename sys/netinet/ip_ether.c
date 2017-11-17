@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.94 2017/11/17 14:52:51 jca Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.95 2017/11/17 18:20:49 jca Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -67,13 +67,13 @@
 #ifdef MPLS
 void	mplsip_decap(struct mbuf *, int);
 #endif
-struct gif_softc	*etherip_getgif(struct mbuf *);
+struct gif_softc	*mplsip_getgif(struct mbuf *);
 
 /*
- * etherip_input gets called when we receive an encapsulated packet.
+ * mplsip_input gets called when we receive an encapsulated packet.
  */
 int
-etherip_input(struct mbuf **mp, int *offp, int proto, int af)
+mplsip_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	switch (proto) {
 #ifdef MPLS
@@ -113,7 +113,7 @@ mplsip_decap(struct mbuf *m, int iphlen)
 		}
 	}
 
-	sc = etherip_getgif(m);
+	sc = mplsip_getgif(m);
 	if (sc == NULL)
 		return;
 
@@ -139,7 +139,7 @@ mplsip_decap(struct mbuf *m, int iphlen)
 #endif
 
 struct gif_softc *
-etherip_getgif(struct mbuf *m)
+mplsip_getgif(struct mbuf *m)
 {
 	union sockaddr_union ssrc, sdst;
 	struct gif_softc *sc;
@@ -202,7 +202,7 @@ etherip_getgif(struct mbuf *m)
 }
 
 int
-etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
+mplsip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 {
 	struct ip *ipo;
 #ifdef INET6
@@ -265,7 +265,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 	if ((long)mtod(m, caddr_t) & 0x03) {
 		int off = (long)mtod(m, caddr_t) & 0x03;
 		if (M_LEADINGSPACE(m) < off)
-			panic("etherip_output: no space for align fixup");
+			panic("mplsip_output: no space for align fixup");
 		m->m_data -= off;
 		memmove(mtod(m, caddr_t), mtod(m, caddr_t) + off, m->m_len);
 	}

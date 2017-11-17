@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.102 2017/11/13 14:55:47 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.103 2017/11/17 18:20:49 jca Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -587,7 +587,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 	*m0 = NULL;
 #ifdef MPLS
 	if (family == AF_MPLS)
-		error = etherip_output(m, &tdb, m0, IPPROTO_MPLS);
+		error = mplsip_output(m, &tdb, m0, IPPROTO_MPLS);
 	else
 #endif
 	error = ipip_output(m, &tdb, m0, 0, 0);
@@ -712,7 +712,7 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 	*m0 = NULL;
 #if MPLS
 	if (family == AF_MPLS)
-		error = etherip_output(m, &tdb, m0, IPPROTO_MPLS);
+		error = mplsip_output(m, &tdb, m0, IPPROTO_MPLS);
 	else
 #endif
 	error = ipip_output(m, &tdb, m0, 0, 0);
