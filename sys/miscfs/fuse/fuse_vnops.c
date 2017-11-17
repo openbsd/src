@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.33 2016/09/07 17:53:35 natano Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.34 2017/11/17 15:45:17 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -680,7 +680,7 @@ fusefs_readdir(void *v)
 	struct vnode *vp;
 	struct proc *p;
 	struct uio *uio;
-	int error = 0, eofflag = 0;
+	int error = 0, eofflag = 0, diropen = 0;
 
 	vp = ap->a_vp;
 	uio = ap->a_uio;
@@ -695,14 +695,17 @@ fusefs_readdir(void *v)
 	if (uio->uio_resid < sizeof(struct dirent))
 		return (EINVAL);
 
+	if (ip->fufh[FUFH_RDONLY].fh_type == FUFH_INVALID) {
+		error = fusefs_file_open(fmp, ip, FUFH_RDONLY, O_RDONLY, 1, p);
+		if (error)
+			return (error);
+
+		diropen = 1;
+	}
+
 	while (uio->uio_resid > 0) {
 		fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_READDIR, p);
 
-		if (ip->fufh[FUFH_RDONLY].fh_type == FUFH_INVALID) {
-			/* TODO open the file */
-			fb_delete(fbuf);
-			return (error);
-		}
 		fbuf->fb_io_fd = ip->fufh[FUFH_RDONLY].fh_id;
 		fbuf->fb_io_off = uio->uio_offset;
 		fbuf->fb_io_len = MIN(uio->uio_resid, fmp->max_read);
@@ -710,6 +713,13 @@ fusefs_readdir(void *v)
 		error = fb_queue(fmp->dev, fbuf);
 
 		if (error) {
+			/*
+			 * dirent was larger than residual space left in
+			 * buffer.
+			 */
+			if (error == ENOBUFS && fbuf->fb_len == 0)
+				error = 0;
+
 			fb_delete(fbuf);
 			break;
 		}
@@ -731,6 +741,9 @@ fusefs_readdir(void *v)
 
 	if (!error && ap->a_eofflag != NULL)
 		*ap->a_eofflag = eofflag;
+
+	if (diropen)
+		fusefs_file_close(fmp, ip, FUFH_RDONLY, O_RDONLY, 1, p);
 
 	return (error);
 }

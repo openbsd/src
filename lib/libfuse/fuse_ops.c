@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.26 2016/09/07 17:53:35 natano Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.27 2017/11/17 15:45:17 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -217,12 +217,15 @@ static int
 ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
     off_t off)
 {
+	struct fuse *f;
 	struct fuse_dirhandle *fd = dh;
+	struct fuse_vnode *v;
 	struct fusebuf *fbuf;
 	struct dirent *dir;
 	uint32_t namelen;
 	uint32_t len;
 
+	f = fd->fuse;
 	fbuf = fd->buf;
 	namelen = strnlen(name, MAXNAMLEN);
 	len = GENERIC_DIRSIZ(namelen);
@@ -242,13 +245,21 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 	if (off)
 		fd->filled = 0;
 
-	if (stbuf) {
-		dir->d_fileno = stbuf->st_ino;
+	/* TODO Add support for use_ino and readdir_ino */
+	v = get_vn_by_name_and_parent(f, (uint8_t *)name, fbuf->fb_ino);
+	if (v == NULL) {
+		if (strcmp(name, ".") == 0)
+			dir->d_fileno = fbuf->fb_ino;
+		else
+			dir->d_fileno = 0xffffffff;
+	} else
+		dir->d_fileno = v->ino;
+
+	if (stbuf)
 		dir->d_type = IFTODT(stbuf->st_mode);
-	} else {
-		dir->d_fileno = 0xffffffff;
+	else
 		dir->d_type = DT_UNKNOWN;
-	}
+
 	dir->d_reclen = len;
 	dir->d_off = off + len;		/* XXX */
 	strlcpy(dir->d_name, name, sizeof(dir->d_name));
@@ -295,7 +306,7 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 	ffi.fh = fbuf->fb_io_fd;
 	offset = fbuf->fb_io_off;
 	size = fbuf->fb_io_len;
-	startsave = 0;
+	startsave = offset;
 
 	fbuf->fb_dat = calloc(1, size);
 
@@ -314,11 +325,12 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 	if (!vn->fd->filled) {
 		vn->fd->filler = ifuse_fill_readdir;
 		vn->fd->buf = fbuf;
-		vn->fd->filled = 0;
 		vn->fd->full = 0;
 		vn->fd->size = size;
 		vn->fd->off = offset;
 		vn->fd->idx = 0;
+		vn->fd->fuse = f;
+		vn->fd->start = offset;
 		startsave = vn->fd->start;
 
 		realname = build_realname(f, vn->ino);
@@ -345,7 +357,8 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 	if (fbuf->fb_err) {
 		fbuf->fb_len = 0;
 		vn->fd->filled = 1;
-	}
+	} else if (vn->fd->full && fbuf->fb_len == 0)
+		fbuf->fb_err = -ENOBUFS;
 
 	if (fbuf->fb_len == 0)
 		free(fbuf->fb_dat);
