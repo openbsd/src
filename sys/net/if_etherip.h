@@ -68,7 +68,7 @@ struct etherip_header {
 
 #endif /* 0 */
 
-int ip_etherip_sysctl(int *, uint, void *, size_t *, void *, size_t);
+int etherip_sysctl(int *, uint, void *, size_t *, void *, size_t);
 int ip_etherip_output(struct ifnet *, struct mbuf *);
 int ip_etherip_input(struct mbuf **, int *, int, int);
 
