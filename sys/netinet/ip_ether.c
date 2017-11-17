@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.91 2017/11/17 13:36:04 jca Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.92 2017/11/17 14:51:13 jca Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -26,7 +26,6 @@
  * Ethernet-inside-IP processing (RFC3378).
  */
 
-#include "bridge.h"
 #include "pf.h"
 
 #include <sys/param.h>
@@ -50,9 +49,6 @@
 
 #include <net/if_gif.h>
 
-#if NBRIDGE > 0
-#include <net/if_bridge.h>
-#endif
 #ifdef MPLS
 #include <netmpls/mpls.h>
 #endif
@@ -68,9 +64,6 @@
 #define DPRINTF(x)
 #endif
 
-#if NBRIDGE > 0
-void	etherip_decap(struct mbuf *, int);
-#endif
 #ifdef MPLS
 void	mplsip_decap(struct mbuf *, int);
 #endif
@@ -89,18 +82,6 @@ int
 etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	switch (proto) {
-#if NBRIDGE > 0
-	case IPPROTO_ETHERIP:
-		/* If we do not accept EtherIP explicitly, drop. */
-		if (!etherip_allow && ((*mp)->m_flags & (M_AUTH|M_CONF)) == 0) {
-			DPRINTF(("%s: dropped due to policy\n", __func__));
-			etheripstat_inc(etherips_pdrops);
-			m_freemp(mp);
-			return IPPROTO_DONE;
-		}
-		etherip_decap(*mp, *offp);
-		return IPPROTO_DONE;
-#endif
 #ifdef MPLS
 	case IPPROTO_MPLS:
 		mplsip_decap(*mp, *offp);
@@ -113,87 +94,6 @@ etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 		return IPPROTO_DONE;
 	}
 }
-
-#if NBRIDGE > 0
-void
-etherip_decap(struct mbuf *m, int iphlen)
-{
-	struct etherip_header eip;
-	struct gif_softc *sc;
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-
-	etheripstat_inc(etherips_ipackets);
-
-	/*
-	 * Make sure there's at least an ethernet header's and an EtherIP
-	 * header's of worth of data after the outer IP header.
-	 */
-	if (m->m_pkthdr.len < iphlen + sizeof(struct ether_header) +
-	    sizeof(struct etherip_header)) {
-		DPRINTF(("%s: encapsulated packet too short\n", __func__));
-		etheripstat_inc(etherips_hdrops);
-		m_freem(m);
-		return;
-	}
-
-	/* Verify EtherIP version number */
-	m_copydata(m, iphlen, sizeof(struct etherip_header), (caddr_t)&eip);
-	if (eip.eip_ver == ETHERIP_VERSION) {
-		/* Correct */
-	} else {
-		DPRINTF(("%s: received EtherIP version number %d not "
-		    "supported\n", __func__, eip.eip_ver));
-		etheripstat_inc(etherips_adrops);
-		m_freem(m);
-		return;
-	}
-
-	/* Finally, the pad value must be zero. */
-	if (eip.eip_pad) {
-		DPRINTF(("%s: received EtherIP invalid pad value\n", __func__));
-		etheripstat_inc(etherips_adrops);
-		m_freem(m);
-		return;
-	}
-
-	/* Make sure the ethernet header at least is in the first mbuf. */
-	if (m->m_len < iphlen + sizeof(struct ether_header) +
-	    sizeof(struct etherip_header)) {
-		if ((m = m_pullup(m, iphlen + sizeof(struct ether_header) +
-		    sizeof(struct etherip_header))) == NULL) {
-			DPRINTF(("%s: m_pullup() failed\n", __func__));
-			etheripstat_inc(etherips_adrops);
-			return;
-		}
-	}
-
-	sc = etherip_getgif(m);
-	if (sc == NULL)
-		return;
-	if (sc->gif_if.if_bridgeport == NULL) {
-		DPRINTF(("%s: interface not part of bridge\n", __func__));
-		etheripstat_inc(etherips_noifdrops);
-		m_freem(m);
-		return;
-	}
-
-	/* Chop off the `outer' IP and EtherIP headers and reschedule. */
-	m_adj(m, iphlen + sizeof(struct etherip_header));
-
-	/* Statistics */
-	etheripstat_add(etherips_ibytes, m->m_pkthdr.len);
-
-	/* Reset the flags based on the inner packet */
-	m->m_flags &= ~(M_BCAST|M_MCAST|M_AUTH|M_CONF|M_PROTO1);
-
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
-
-	ml_enqueue(&ml, m);
-	if_input(&sc->gif_if, &ml);
-}
-#endif
 
 #ifdef MPLS
 void
@@ -324,7 +224,6 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif /* INET6 */
-	struct etherip_header eip;
 	ushort hlen;
 
 	/* Some address family sanity checks. */
@@ -372,10 +271,6 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 		m_freem(m);
 		return EINVAL;
 	}
-
-	if (proto == IPPROTO_ETHERIP)
-		/* Don't forget the EtherIP header. */
-		hlen += sizeof(struct etherip_header);
 
 	M_PREPEND(m, hlen, M_DONTWAIT);
 	if (m == NULL) {
@@ -436,24 +331,6 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 		ip6->ip6_src = tdb->tdb_src.sin6.sin6_addr;
 		break;
 #endif /* INET6 */
-	}
-
-	if (proto == IPPROTO_ETHERIP) {
-		/*
-		 * OpenBSD developers convinced IETF folk to create a
-		 * "version 3" protocol which would solve a byte order
-		 * problem -- our discussion placed "3" into the first byte.
-		 * They knew we were starting to deploy this.  When IETF
-		 * published the standard this had changed to a nibble...
-		 * but they failed to inform us.  Awesome.
-		 * 
-		 * We will transition step by step to the new model.
-		 */
-		eip.eip_ver = ETHERIP_VERSION;
-		eip.eip_res = 0;
-		eip.eip_pad = 0;
-		m_copyback(m, hlen - sizeof(struct etherip_header),
-		    sizeof(struct etherip_header), &eip, M_NOWAIT);
 	}
 
 	*mp = m;

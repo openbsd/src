@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.84 2017/11/17 13:36:04 jca Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.85 2017/11/17 14:51:13 jca Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -268,19 +268,6 @@ struct protosw inetsw[] = {
   .pr_detach	= rip_detach,
 },
 #endif
-#if NGIF > 0
-{
-  .pr_type	= SOCK_RAW,
-  .pr_domain	= &inetdomain,
-  .pr_protocol	= IPPROTO_ETHERIP,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= etherip_input,
-  .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
-},
-#endif /* NGIF */
 #if defined(MPLS) && NGIF > 0
 {
   .pr_type	= SOCK_RAW,
