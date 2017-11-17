@@ -1,4 +1,4 @@
-.\"	$OpenBSD: if_rxr_init.9,v 1.6 2017/11/15 01:41:20 dlg Exp $
+.\"	$OpenBSD: if_rxr_init.9,v 1.7 2017/11/17 03:51:32 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 15 2017 $
+.Dd $Mdocdate: November 17 2017 $
 .Dt IF_RXR_INIT 9
 .Os
 .Sh NAME
@@ -33,8 +33,12 @@
 .Fn if_rxr_get "struct if_rxring *rxr" "unsigned int max"
 .Ft void
 .Fn if_rxr_put "struct if_rxring *rxr" "unsigned int n"
+.Ft void
+.Fn if_rxr_livelocked "struct if_rxring *rxr"
 .Ft unsigned int
 .Fn if_rxr_inuse "struct if_rxring *rxr"
+.Ft unsigned int
+.Fn if_rxr_cwm "struct if_rxring *rxr"
 .Ft int
 .Fo if_rxr_ioctl
 .Fa "struct if_rxrinfo *ifri"
@@ -81,9 +85,15 @@ returns
 .Fa n
 receive descriptor slots to the ring.
 .Pp
+.Fn if_rxr_livelocked
+can signal that that receive ring is generating too much load.
+.Pp
 .Fn if_rxr_inuse
 can be used to determine how many descriptor slots have been allocated
 on the ring.
+.Pp
+.Fn if_rxr_cwm
+can be used to determine what the current watermark is for the ring.
 .Pp
 The
 .Fn if_rxr_ioctl
@@ -128,8 +138,10 @@ to fill them again.
 .Fn if_rxr_init ,
 .Fn if_rxr_get ,
 .Fn if_rxr_put ,
+.Fn if_rxr_livelocked ,
+.Fn if_rxr_inuse ,
 and
-.Fn if_rxr_inuse
+.Fn if_rxr_cwm
 can be called during autoconf, from process context, or from interrupt context.
 .Pp
 .Fn if_rxr_ioctl
@@ -150,6 +162,9 @@ requested.
 .Pp
 .Fn if_rxr_inuse
 returns the number of receive descriptor slots currently in use on the ring.
+.Pp
+.Fn if_rxr_cwm
+returns the currently allowed allocation watermark.
 .Sh SEE ALSO
 .Xr autoconf 9
 .Sh HISTORY

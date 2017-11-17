@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.528 2017/11/14 16:01:55 tb Exp $	*/
+/*	$OpenBSD: if.c,v 1.529 2017/11/17 03:51:32 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2832,6 +2832,19 @@ if_rxr_adjust_cwm(struct if_rxring *rxr)
 		rxr->rxr_cwm++;
 
 	rxr->rxr_adjusted = ticks;
+}
+
+void
+if_rxr_livelocked(struct if_rxring *rxr)
+{
+	extern int ticks;
+
+	if (ticks - rxr->rxr_adjusted >= 1) {
+		if (rxr->rxr_cwm > rxr->rxr_lwm)
+			rxr->rxr_cwm--;
+
+		rxr->rxr_adjusted = ticks;
+	}
 }
 
 u_int
