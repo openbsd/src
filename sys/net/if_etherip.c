@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.23 2017/11/15 17:30:20 jca Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.24 2017/11/17 13:36:04 jca Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -80,6 +80,8 @@ LIST_HEAD(, etherip_softc) etherip_softc_list;
 int etherip_allow = 0;
 #endif
 
+struct cpumem *etheripcounters;
+
 void etheripattach(int);
 int etherip_clone_create(struct if_clone *, int);
 int etherip_clone_destroy(struct ifnet *);
@@ -98,6 +100,7 @@ void
 etheripattach(int count)
 {
 	if_clone_attach(&etherip_cloner);
+	etheripcounters = counters_alloc(etherips_ncounters);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.83 2017/11/15 16:52:44 jca Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.84 2017/11/17 13:36:04 jca Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -279,7 +279,6 @@ struct protosw inetsw[] = {
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
   .pr_detach	= rip_detach,
-  .pr_init	= etherip_init,
 },
 #endif /* NGIF */
 #if defined(MPLS) && NGIF > 0

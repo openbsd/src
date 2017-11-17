@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.90 2017/11/15 17:30:20 jca Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.91 2017/11/17 13:36:04 jca Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -81,14 +81,6 @@ struct gif_softc	*etherip_getgif(struct mbuf *);
  * net.inet.etherip.allow value. Zero means drop them, all else is acceptance.
  */
 int etherip_allow = 0;
-
-struct cpumem *etheripcounters;
-
-void
-etherip_init(void)
-{
-	etheripcounters = counters_alloc(etherips_ncounters);
-}
 
 /*
  * etherip_input gets called when we receive an encapsulated packet.
