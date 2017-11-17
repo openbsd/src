@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.24 2017/11/17 13:36:04 jca Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.25 2017/11/17 14:50:17 jca Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -17,7 +17,6 @@
 
 #include "bpfilter.h"
 #include "pf.h"
-#include "gif.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,18 +451,9 @@ ip_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 
 	if (ifp == NULL) {
-#if NGIF > 0
-		/*
-		 * This path is nessesary for gif(4) and etherip(4) coexistence.
-		 * This is tricky but the path will be removed soon when
-		 * implementation of etherip is removed from gif(4).
-		 */
-		return etherip_input(mp, offp, proto, af);
-#else
 		etheripstat_inc(etherips_noifdrops);
 		m_freem(m);
 		return IPPROTO_DONE;
-#endif /* NGIF */
 	}
 
 	m_adj(m, *offp);
@@ -614,18 +604,9 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 
 	if (ifp == NULL) {
-#if NGIF > 0
-		/*
-		 * This path is nessesary for gif(4) and etherip(4) coexistence.
-		 * This is tricky but the path will be removed soon when
-		 * implementation of etherip is removed from gif(4).
-		 */
-		return etherip_input(mp, offp, proto, af);
-#else
 		etheripstat_inc(etherips_noifdrops);
 		m_freem(m);
 		return IPPROTO_DONE;
-#endif /* NGIF */
 	}
 
 	m_adj(m, *offp);
