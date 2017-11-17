@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.47 2017/08/20 21:15:32 pd Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.48 2017/11/17 04:44:14 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -26,6 +26,7 @@
 #define VMM_MAX_MEM_RANGES	16
 #define VMM_MAX_DISKS_PER_VM	4
 #define VMM_MAX_PATH_DISK	128
+#define VMM_MAX_PATH_CDROM	128
 #define VMM_MAX_NAME_LEN	32
 #define VMM_MAX_KERNEL_PATH	128
 #define VMM_MAX_VCPUS_PER_VM	64
@@ -419,6 +420,7 @@ struct vm_create_params {
 	size_t			vcp_nnics;
 	struct vm_mem_range	vcp_memranges[VMM_MAX_MEM_RANGES];
 	char			vcp_disks[VMM_MAX_DISKS_PER_VM][VMM_MAX_PATH_DISK];
+	char			vcp_cdrom[VMM_MAX_PATH_CDROM];
 	char			vcp_name[VMM_MAX_NAME_LEN];
 	char			vcp_kernel[VMM_MAX_KERNEL_PATH];
 	uint8_t			vcp_macs[VMM_MAX_NICS_PER_VM][6];
