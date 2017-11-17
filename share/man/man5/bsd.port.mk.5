@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.466 2017/08/22 10:40:27 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.467 2017/11/17 00:26:11 naddy Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 22 2017 $
+.Dd $Mdocdate: November 17 2017 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1277,15 +1277,6 @@ never matches.
 .Pp
 Defaults to base compilers, e.g.,
 .Sq base-clang base-gcc gcc3 .
-.Pp
-As a transition mechanism,
-.Sq gcc
-is a shortcut for
-.Sq base-clang ports-gcc
-and
-.Sq clang
-is a shortcut for
-.Sq base-clang ports-clang .
 .Pp
 Common reasons for explicitly setting
 .Ev COMPILER
