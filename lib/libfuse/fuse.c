@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.34 2017/11/04 13:17:18 mpi Exp $ */
+/* $OpenBSD: fuse.c,v 1.35 2017/11/17 15:56:12 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -31,7 +31,8 @@
 #include "fuse_private.h"
 #include "debug.h"
 
-static struct fuse_session *sigse;
+static volatile sig_atomic_t sigraised = 0;
+static volatile sig_atomic_t signum = 0;
 static struct fuse_context *ictx = NULL;
 static int max_read = FUSEBUFMAXSIZE;
 
@@ -61,6 +62,55 @@ static struct fuse_opt fuse_core_opts[] = {
 	FUSE_OPT_END
 };
 
+static void
+ifuse_sighdlr(int num)
+{
+	if (!sigraised || (num == SIGCHLD)) {
+		sigraised = 1;
+		signum = num;
+	}
+}
+
+static void
+ifuse_try_unmount(struct fuse *f)
+{
+	pid_t child;
+
+	signal(SIGCHLD, ifuse_sighdlr);
+
+	/* unmount in another thread so fuse_loop() doesn't deadlock */
+	child = fork();
+
+	if (child < 0) {
+		DPERROR(__func__);
+		return;
+	}
+
+	if (child == 0) {
+		fuse_remove_signal_handlers(fuse_get_session(f));
+		errno = 0;
+		fuse_unmount(f->fc->dir, f->fc);
+		_exit(errno);
+	}
+}
+
+static void
+ifuse_child_exit(const struct fuse *f)
+{
+	int status;
+
+	signal(SIGCHLD, SIG_DFL);
+	if (waitpid(WAIT_ANY, &status, WNOHANG) == -1)
+		fprintf(stderr, "fuse: %s\n", strerror(errno));
+
+	if (WIFEXITED(status) && (WEXITSTATUS(status) != 0))
+		fprintf(stderr, "fuse: %s: %s\n",
+			f->fc->dir, strerror(WEXITSTATUS(status)));
+
+	sigraised = 0;
+	return;
+}
+
 int
 fuse_loop(struct fuse *fuse)
 {
@@ -83,9 +133,24 @@ fuse_loop(struct fuse *fuse)
 
 	while (!fuse->fc->dead) {
 		ret = kevent(fuse->fc->kq, &fuse->fc->event, 1, &ev, 1, NULL);
-		if (ret == -1)
-			DPERROR(__func__);
-		else if (ret > 0) {
+		if (ret == -1) {
+			if (errno == EINTR) {
+				switch (signum) {
+				case SIGCHLD:
+					ifuse_child_exit(fuse);
+					break;
+				case SIGHUP:
+				case SIGINT:
+				case SIGTERM:
+					ifuse_try_unmount(fuse);
+					break;
+				default:
+					fprintf(stderr, "%s: %s\n", __func__,
+					    strsignal(signum));
+				}
+			} else
+				DPERROR(__func__);
+		} else if (ret > 0) {
 			n = read(fuse->fc->fd, &fbuf, sizeof(fbuf));
 			if (n != sizeof(fbuf)) {
 				fprintf(stderr, "%s: bad fusebuf read\n",
@@ -298,38 +363,9 @@ fuse_destroy(struct fuse *f)
 	free(f);
 }
 
-static void
-ifuse_get_signal(unused int num)
-{
-	struct fuse *f;
-	pid_t child;
-	int status;
-
-	if (sigse != NULL) {
-		child = fork();
-
-		if (child < 0)
-			return;
-
-		f = sigse->args;
-		if (child == 0) {
-			fuse_unmount(f->fc->dir, f->fc);
-			sigse = NULL;
-			exit(0);
-		}
-
-		fuse_loop(f);
-		while (waitpid(child, &status, 0) == -1) {
-			if (errno != EINTR)
-				break;
-		}
-	}
-}
-
 void
 fuse_remove_signal_handlers(unused struct fuse_session *se)
 {
-	sigse = NULL;
 	signal(SIGHUP, SIG_DFL);
 	signal(SIGINT, SIG_DFL);
 	signal(SIGTERM, SIG_DFL);
@@ -337,15 +373,11 @@ fuse_remove_signal_handlers(unused struct fuse_session *se)
 }
 
 int
-fuse_set_signal_handlers(struct fuse_session *se)
+fuse_set_signal_handlers(unused struct fuse_session *se)
 {
-	if (se == NULL)
-		return -1;
-
-	sigse = se;
-	signal(SIGHUP, ifuse_get_signal);
-	signal(SIGINT, ifuse_get_signal);
-	signal(SIGTERM, ifuse_get_signal);
+	signal(SIGHUP, ifuse_sighdlr);
+	signal(SIGINT, ifuse_sighdlr);
+	signal(SIGTERM, ifuse_sighdlr);
 	signal(SIGPIPE, SIG_IGN);
 	return (0);
 }
