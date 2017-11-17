@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.20 2017/03/12 11:44:42 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.21 2017/11/17 20:30:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -773,11 +773,9 @@ OF_getnodebyname(int handle, const char *name)
 	if (handle == 0)
 		node = fdt_find_node("/");
 
-	while (node) {
+	for (node = fdt_child_node(node); node; node = fdt_next_node(node)) {
 		if (strcmp(name, fdt_node_name(node)) == 0)
 			break;
-
-		node = fdt_next_node(node);
 	}
 
 	return node ? ((char *)node - (char *)tree.header) : 0;
