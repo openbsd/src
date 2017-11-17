@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.21 2015/12/06 12:00:16 tobias Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.22 2017/11/17 20:48:30 jca Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -404,6 +404,7 @@ extern struct option_info devnam_info;
 #define BMOVE(s, d, l)		memmove(d, s, l)
 #define BZERO(s, n)		memset(s, 0, n)
 #define EXIT(u)			quit()
+#define EXPLICIT_BZERO(s, n)	explicit_bzero(s, n)
 
 #define PRINTMSG(m, l)	{ m[l] = '\0'; syslog(LOG_INFO, "Remote message: %s", m); }
 
