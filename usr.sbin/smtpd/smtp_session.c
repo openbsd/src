@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.314 2017/10/20 12:23:36 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.315 2017/11/18 08:23:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -325,88 +325,6 @@ header_append_domain_buffer(char *buffer, char *domain, size_t len)
 }
 
 static void
-header_domain_append_callback(const struct rfc2822_header *hdr, void *arg)
-{
-	struct smtp_session    *s = arg;
-	struct rfc2822_line    *l;
-	size_t			i, j;
-	int			escape, quote, comment, skip;
-	char			buffer[APPEND_DOMAIN_BUFFER_SIZE];
-
-	if (smtp_message_printf(s, "%s:", hdr->name) == -1)
-		return;
-
-	i = j = 0;
-	escape = quote = comment = skip = 0;
-	memset(buffer, 0, sizeof buffer);
-
-	TAILQ_FOREACH(l, &hdr->lines, next) {
-		for (i = 0; i < strlen(l->buffer); ++i) {
-			if (l->buffer[i] == '(' && !escape && !quote)
-				comment++;
-			if (l->buffer[i] == '"' && !escape && !comment)
-				quote = !quote;
-			if (l->buffer[i] == ')' && !escape && !quote && comment)
-				comment--;
-			if (l->buffer[i] == '\\' && !escape && !comment && !quote)
-				escape = 1;
-			else
-				escape = 0;
-
-			/* found a separator, buffer contains a full address */
-			if (l->buffer[i] == ',' && !escape && !quote && !comment) {
-				if (!skip && j + strlen(s->listener->hostname) + 1 < sizeof buffer)
-					header_append_domain_buffer(buffer, s->listener->hostname, sizeof buffer);
-				if (smtp_message_printf(s, "%s,", buffer) == -1)
-					return;
-				j = 0;
-				skip = 0;
-				memset(buffer, 0, sizeof buffer);
-			}
-			else {
-				if (skip) {
-					if (smtp_message_printf(s, "%c",
-					    l->buffer[i]) == -1)
-						return;
-				}
-				else {
-					buffer[j++] = l->buffer[i];
-					if (j == sizeof (buffer) - 1) {
-						if (smtp_message_printf(s, "%s",
-						    buffer) != -1)
-							return;
-						skip = 1;
-						j = 0;
-						memset(buffer, 0, sizeof buffer);
-					}
-				}
-			}
-		}
-		if (skip) {
-			if (smtp_message_printf(s, "\n") == -1)
-				return;
-		}
-		else {
-			buffer[j++] = '\n';
-			if (j == sizeof (buffer) - 1) {
-				if (smtp_message_printf(s, "%s", buffer) == -1)
-					return;
-				skip = 1;
-				j = 0;
-				memset(buffer, 0, sizeof buffer);
-			}
-		}
-	}
-
-	/* end of header, if buffer is not empty we'll process it */
-	if (buffer[0]) {
-		if (j + strlen(s->listener->hostname) + 1 < sizeof buffer)
-			header_append_domain_buffer(buffer, s->listener->hostname, sizeof buffer);
-		smtp_message_printf(s, "%s", buffer);
-	}
-}
-
-static void
 header_address_rewrite_buffer(char *buffer, const char *address, size_t len)
 {
 	size_t	i;
@@ -487,7 +405,7 @@ header_address_rewrite_buffer(char *buffer, const char *address, size_t len)
 }
 
 static void
-header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
+header_domain_append_callback(const struct rfc2822_header *hdr, void *arg)
 {
 	struct smtp_session    *s = arg;
 	struct rfc2822_line    *l;
@@ -519,8 +437,12 @@ header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
 			if (l->buffer[i] == ',' && !escape && !quote && !comment) {
 				if (!skip && j + strlen(s->listener->hostname) + 1 < sizeof buffer) {
 					header_append_domain_buffer(buffer, s->listener->hostname, sizeof buffer);
-					header_address_rewrite_buffer(buffer, mailaddr_to_text(&s->tx->evp.sender),
-					    sizeof buffer);
+					if (s->flags & SF_AUTHENTICATED &&
+					    s->listener->sendertable[0] &&
+					    s->listener->flags & F_MASQUERADE &&
+					    !(strcasecmp(hdr->name, "From")))
+						header_address_rewrite_buffer(buffer, mailaddr_to_text(&s->tx->evp.sender),
+						    sizeof buffer);
 				}
 				if (smtp_message_printf(s, "%s,", buffer) == -1)
 					return;
@@ -565,8 +487,12 @@ header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
 	if (buffer[0]) {
 		if (j + strlen(s->listener->hostname) + 1 < sizeof buffer) {
 			header_append_domain_buffer(buffer, s->listener->hostname, sizeof buffer);
-			header_address_rewrite_buffer(buffer, mailaddr_to_text(&s->tx->evp.sender),
-			    sizeof buffer);
+			if (s->flags & SF_AUTHENTICATED &&
+			    s->listener->sendertable[0] &&
+			    s->listener->flags & F_MASQUERADE &&
+			    !(strcasecmp(hdr->name, "From")))
+				header_address_rewrite_buffer(buffer, mailaddr_to_text(&s->tx->evp.sender),
+				    sizeof buffer);
 		}
 		smtp_message_printf(s, "%s", buffer);
 	}
@@ -698,11 +624,6 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		switch (status) {
 		case LKA_OK:
 			smtp_queue_create_message(s);
-
-			/* sender check passed, override From callback if masquerading */
-			if (s->listener->flags & F_MASQUERADE)
-				rfc2822_header_callback(&s->tx->rfc2822_parser, "from",
-				    header_masquerade_callback, s);
 			break;
 
 		case LKA_PERMFAIL:
