@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.h,v 1.2 2016/08/21 14:41:51 kettenis Exp $	*/
+/*	$OpenBSD: ofw_regulator.h,v 1.3 2017/11/18 21:03:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -18,7 +18,21 @@
 #ifndef _DEV_OFW_REGULATOR_H_
 #define _DEV_OFW_REGULATOR_H_
 
+struct regulator_device {
+	int	rd_node;
+	void	*rd_cookie;
+	uint32_t (*rd_get_voltage)(void *);
+	int	(*rd_set_voltage)(void *, uint32_t);
+
+	LIST_ENTRY(regulator_device) rd_list;
+	uint32_t rd_phandle;
+};
+
+void	regulator_register(struct regulator_device *);
+
 int	regulator_enable(uint32_t);
 int	regulator_disable(uint32_t);
+uint32_t regulator_get_voltage(uint32_t);
+int	regulator_set_voltage(uint32_t, uint32_t);
 
 #endif /* _DEV_OFW_REGULATOR_H_ */
