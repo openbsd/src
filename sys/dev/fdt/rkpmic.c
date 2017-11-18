@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.2 2017/08/28 19:11:08 jasper Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.3 2017/11/18 20:29:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -18,8 +18,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/i2c/i2cvar.h>
@@ -42,6 +44,26 @@ extern todr_chip_handle_t todr_handle;
 
 #define RK808_NRTC_REGS	7
 
+struct rkpmic_regdata {
+	const char *name;
+	uint8_t reg, mask;
+	uint32_t base, delta;
+};
+
+struct rkpmic_regdata rk808_regdata[] = {
+	{ "DCDC_REG1", 0x2f, 0x3f, 712500, 12500 },
+	{ "DCDC_REG2", 0x33, 0x3f, 712500, 12500 },
+	{ "DCDC_REG4", 0x38, 0x0f, 1800000, 100000 },
+	{ "LDO_REG1", 0x3b, 0x1f, 1800000, 100000 },
+	{ "LDO_REG2", 0x3d, 0x1f, 1800000, 100000 },
+	{ "LDO_REG3", 0x3f, 0x0f, 800000, 100000 },
+	{ "LDO_REG4", 0x41, 0x1f, 1800000, 100000 },
+	{ "LDO_REG5", 0x43, 0x1f, 1800000, 100000 },
+	{ "LDO_REG6", 0x45, 0x1f, 800000, 100000 },
+	{ "LDO_REG7", 0x47, 0x1f, 800000, 100000 },
+	{ "LDO_REG8", 0x49, 0x1f, 1800000, 100000 },
+};
+
 struct rkpmic_softc {
 	struct device sc_dev;
 	i2c_tag_t sc_tag;
@@ -61,6 +83,7 @@ struct cfdriver rkpmic_cd = {
 	NULL, "rkpmic", DV_DULL
 };
 
+void	rkpmic_attach_regulator(struct rkpmic_softc *, int);
 uint8_t	rkpmic_reg_read(struct rkpmic_softc *, int);
 void	rkpmic_reg_write(struct rkpmic_softc *, int, uint8_t);
 int	rkpmic_clock_read(struct rkpmic_softc *, struct clock_ymdhms *);
@@ -82,6 +105,7 @@ rkpmic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rkpmic_softc *sc = (struct rkpmic_softc *)self;
 	struct i2c_attach_args *ia = aux;
+	int node = *(int *)ia->ia_cookie;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
@@ -92,6 +116,64 @@ rkpmic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.todr_gettime = rkpmic_gettime;
 	sc->sc_todr.todr_settime = rkpmic_settime;
 	todr_handle = &sc->sc_todr;
+
+	node = OF_getnodebyname(node, "regulators");
+	if (node == 0)
+		return;
+	for (node = OF_child(node); node; node = OF_peer(node))
+		rkpmic_attach_regulator(sc, node);
+}
+
+struct rkpmic_regulator {
+	struct rkpmic_softc *rr_sc;
+
+	uint8_t rr_reg, rr_mask;
+	uint32_t rr_base, rr_delta;
+
+	struct regulator_device rr_rd;
+};
+
+uint32_t rkpmic_get_voltage(void *);
+
+void
+rkpmic_attach_regulator(struct rkpmic_softc *sc, int node)
+{
+	struct rkpmic_regulator *rr;
+	char name[32];
+	int i;
+
+	name[0] = 0;
+	OF_getprop(node, "name", name, sizeof(name));
+	name[sizeof(name) - 1] = 0;
+	for (i = 0; i < nitems(rk808_regdata); i++) {
+		if (strcmp(rk808_regdata[i].name, name) == 0)
+			break;
+	}
+	if (i == nitems(rk808_regdata))
+		return;
+
+	rr = malloc(sizeof(*rr), M_DEVBUF, M_WAITOK | M_ZERO);
+	rr->rr_sc = sc;
+
+	rr->rr_reg = rk808_regdata[i].reg;
+	rr->rr_mask = rk808_regdata[i].mask;
+	rr->rr_base = rk808_regdata[i].base;
+	rr->rr_delta = rk808_regdata[i].delta;
+
+	rr->rr_rd.rd_node = node;
+	rr->rr_rd.rd_cookie = rr;
+	rr->rr_rd.rd_get_voltage = rkpmic_get_voltage;
+	regulator_register(&rr->rr_rd);
+}
+
+uint32_t
+rkpmic_get_voltage(void *cookie)
+{
+	struct rkpmic_regulator *rr = cookie;
+	uint8_t value;
+	
+	value = rkpmic_reg_read(rr->rr_sc, rr->rr_reg);
+	return rr->rr_base + (value & rr->rr_mask) * rr->rr_delta;
 }
 
 int
