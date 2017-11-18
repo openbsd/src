@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.68 2017/11/18 05:53:02 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.69 2017/11/18 06:11:58 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -169,9 +169,6 @@ void	cnmac_recv_intr(void *, uint64_t *);
 
 int	cnmac_mbuf_alloc(int);
 
-/* device driver context */
-struct	cnmac_softc *cnmac_gsc[GMX_PORT_NUNITS];
-
 /* device parameters */
 int	cnmac_param_pko_cmd_w0_n2 = 1;
 
@@ -275,8 +272,6 @@ cnmac_attach(struct device *parent, struct device *self, void *aux)
 	cnmac_board_mac_addr(enaddr);
 	printf(", address %s\n", ether_sprintf(enaddr));
 
-	cnmac_gsc[sc->sc_port] = sc;
-
 	ml_init(&sc->sc_sendq);
 	sc->sc_soft_req_thresh = 15/* XXX */;
 	sc->sc_ext_callback_cnt = 0;
@@ -330,7 +325,7 @@ cnmac_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ih = cn30xxpow_intr_establish(
 	    sc->sc_powgroup, IPL_NET | IPL_MPSAFE,
-	    cnmac_recv_intr, NULL, NULL, sc->sc_dev.dv_xname);
+	    cnmac_recv_intr, NULL, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL)
 		panic("%s: could not set up interrupt", sc->sc_dev.dv_xname);
 }
@@ -1277,23 +1272,24 @@ drop:
 void
 cnmac_recv_intr(void *data, uint64_t *work)
 {
-	struct cnmac_softc *sc;
-	int port;
-
-	OCTEON_ETH_KASSERT(work != NULL);
+	struct cnmac_softc *sc = data;
+	uint32_t port;
 
 	port = (work[1] & PIP_WQE_WORD1_IPRT) >> 42;
-
-	OCTEON_ETH_KASSERT(port < GMX_PORT_NUNITS);
-
-	sc = cnmac_gsc[port];
-
-	OCTEON_ETH_KASSERT(sc != NULL);
-	OCTEON_ETH_KASSERT(port == sc->sc_port);
-
-	/* XXX process all work queue entries anyway */
+	if (port != sc->sc_port) {
+		printf("%s: unexpected wqe port %u, should be %u\n",
+		    sc->sc_dev.dv_xname, port, sc->sc_port);
+		goto wqe_error;
+	}
 
 	(void)cnmac_recv(sc, work);
+
+	return;
+
+wqe_error:
+	printf("word0: 0x%016llx\n", work[0]);
+	printf("word1: 0x%016llx\n", work[1]);
+	panic("wqe error");
 }
 
 /* ---- tick */
