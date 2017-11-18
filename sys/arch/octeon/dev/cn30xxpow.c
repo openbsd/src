@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpow.c,v 1.14 2017/11/05 05:17:55 visa Exp $	*/
+/*	$OpenBSD: cn30xxpow.c,v 1.15 2017/11/18 11:27:37 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -51,8 +51,6 @@ void	cn30xxpow_bootstrap(struct octeon_config *);
 
 void	cn30xxpow_init(struct cn30xxpow_softc *);
 void	cn30xxpow_init_regs(struct cn30xxpow_softc *);
-int	cn30xxpow_tag_sw_poll(void);
-void	cn30xxpow_tag_sw_wait(void);
 void	cn30xxpow_config_int_pc(struct cn30xxpow_softc *, int);
 void	cn30xxpow_config_int(struct cn30xxpow_softc *, int,
 	    uint64_t, uint64_t, uint64_t);
@@ -117,39 +115,6 @@ cn30xxpow_work_response_async(uint64_t scraddr)
 	    NULL :
 	    (uint64_t *)PHYS_TO_XKPHYS(
 		result & POW_IOBDMA_GET_WORK_RESULT_ADDR, CCA_CACHED);
-}
-
-/* ---- tag switch */
-
-/*
- * "RDHWR rt, $30" returns:
- *	0 => pending bit is set
- *	1 => pending bit is clear
- */
-
-/* return 1 if pending bit is clear (ready) */
-int
-cn30xxpow_tag_sw_poll(void)
-{
-	uint64_t result;
-
-	__asm volatile (
-		"	.set	push		\n"
-		"	.set	noreorder	\n"
-		"	.set	arch=mips64r2	\n"
-		"	rdhwr	%[result], $30	\n"
-		"	.set	pop		\n"
-		: [result]"=r"(result)
-	);
-	return (int)result;
-}
-
-void
-cn30xxpow_tag_sw_wait(void)
-{
-
-	while (cn30xxpow_tag_sw_poll() == 0)
-		continue;
 }
 
 /* -------------------------------------------------------------------------- */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpowvar.h,v 1.3 2017/04/30 04:32:58 visa Exp $	*/
+/*	$OpenBSD: cn30xxpowvar.h,v 1.4 2017/11/18 11:27:37 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -45,6 +45,8 @@
 
 #define POW_WAIT	1
 #define POW_NO_WAIT	0
+
+#define POW_WORKQ_IRQ(group)		(group)
 
 /* XXX */
 struct cn30xxpow_softc {
@@ -327,6 +329,40 @@ cn30xxpow_ops_nop(void)
 		0,			/* grp (not used for NOP) */
 		0,			/* type (not used for NOP) */
 		0);			/* tag (not used for NOP) */
+}
+
+/*
+ * Check if there is a pending POW tag switch.
+ */
+static inline int
+cn30xxpow_tag_sw_pending(void)
+{
+	int result;
+
+	/*
+	 * "RDHWR rt, $30" returns:
+	 *	0 => pending bit is set
+	 *	1 => pending bit is clear
+	 */
+
+	__asm volatile (
+		"	.set	push\n"
+		"	.set	noreorder\n"
+		"	.set	arch=mips64r2\n"
+		"	rdhwr	%0, $30\n"
+		"	.set	pop\n"
+		: "=r" (result));
+	return result == 0;
+}
+
+/*
+ * Wait until there is no pending POW tag switch.
+ */
+static inline void
+cn30xxpow_tag_sw_wait(void)
+{
+	while (cn30xxpow_tag_sw_pending())
+		continue;
 }
 
 /* -------------------------------------------------------------------------- */

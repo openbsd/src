@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.69 2017/11/18 06:11:58 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.70 2017/11/18 11:27:37 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -165,7 +165,7 @@ int	cnmac_recv_mbuf(struct cnmac_softc *,
 	    uint64_t *, struct mbuf **, int *);
 int	cnmac_recv_check(struct cnmac_softc *, uint64_t);
 int	cnmac_recv(struct cnmac_softc *, uint64_t *);
-void	cnmac_recv_intr(void *, uint64_t *);
+int	cnmac_intr(void *);
 
 int	cnmac_mbuf_alloc(int);
 
@@ -323,9 +323,8 @@ cnmac_attach(struct device *parent, struct device *self, void *aux)
 
 	cnmac_buf_init(sc);
 
-	sc->sc_ih = cn30xxpow_intr_establish(
-	    sc->sc_powgroup, IPL_NET | IPL_MPSAFE,
-	    cnmac_recv_intr, NULL, sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = octeon_intr_establish(POW_WORKQ_IRQ(sc->sc_powgroup),
+	    IPL_NET | IPL_MPSAFE, cnmac_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL)
 		panic("%s: could not set up interrupt", sc->sc_dev.dv_xname);
 }
@@ -1269,22 +1268,44 @@ drop:
 	return 1;
 }
 
-void
-cnmac_recv_intr(void *data, uint64_t *work)
+int
+cnmac_intr(void *arg)
 {
-	struct cnmac_softc *sc = data;
+	struct cnmac_softc *sc = arg;
+	uint64_t *work;
+	uint64_t wqmask = 1ull << sc->sc_powgroup;
+	uint32_t coreid = octeon_get_coreid();
 	uint32_t port;
 
-	port = (work[1] & PIP_WQE_WORD1_IPRT) >> 42;
-	if (port != sc->sc_port) {
-		printf("%s: unexpected wqe port %u, should be %u\n",
-		    sc->sc_dev.dv_xname, port, sc->sc_port);
-		goto wqe_error;
+	_POW_WR8(sc->sc_pow, POW_PP_GRP_MSK_OFFSET(coreid), wqmask);
+
+	cn30xxpow_tag_sw_wait();
+	cn30xxpow_work_request_async(OCTEON_CVMSEG_OFFSET(csm_pow_intr),
+	    POW_NO_WAIT);
+
+	for (;;) {
+		work = (uint64_t *)cn30xxpow_work_response_async(
+		    OCTEON_CVMSEG_OFFSET(csm_pow_intr));
+		if (work == NULL)
+			break;
+
+		cn30xxpow_tag_sw_wait();
+		cn30xxpow_work_request_async(
+		    OCTEON_CVMSEG_OFFSET(csm_pow_intr), POW_NO_WAIT);
+
+		port = (work[1] & PIP_WQE_WORD1_IPRT) >> 42;
+		if (port != sc->sc_port) {
+			printf("%s: unexpected wqe port %u, should be %u\n",
+			    sc->sc_dev.dv_xname, port, sc->sc_port);
+			goto wqe_error;
+		}
+
+		(void)cnmac_recv(sc, work);
 	}
 
-	(void)cnmac_recv(sc, work);
+	_POW_WR8(sc->sc_pow, POW_WQ_INT_OFFSET, wqmask);
 
-	return;
+	return 1;
 
 wqe_error:
 	printf("word0: 0x%016llx\n", work[0]);
