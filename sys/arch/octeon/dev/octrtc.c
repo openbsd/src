@@ -1,4 +1,4 @@
-/*	$OpenBSD: octrtc.c,v 1.8 2017/07/29 02:50:17 visa Exp $	*/
+/*	$OpenBSD: octrtc.c,v 1.9 2017/11/18 04:59:27 visa Exp $	*/
 
 /*
  * Copyright (c) 2013, 2014 Paul Irofti.
@@ -77,6 +77,7 @@ union mio_tws_sw_twsi_reg {
 
 static const uint16_t no_rtc_boards[] = {
 	BOARD_TYPE_UBIQUITI_E100,
+	BOARD_TYPE_UBIQUITI_E110,
 	BOARD_TYPE_UBIQUITI_E200,
 	BOARD_TYPE_UBIQUITI_E300,
 	BOARD_TYPE_UBIQUITI_E1000,
