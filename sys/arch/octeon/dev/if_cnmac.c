@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.70 2017/11/18 11:27:37 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.71 2017/11/18 14:43:29 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -164,7 +164,7 @@ void	cnmac_tick_misc(void *);
 int	cnmac_recv_mbuf(struct cnmac_softc *,
 	    uint64_t *, struct mbuf **, int *);
 int	cnmac_recv_check(struct cnmac_softc *, uint64_t);
-int	cnmac_recv(struct cnmac_softc *, uint64_t *);
+int	cnmac_recv(struct cnmac_softc *, uint64_t *, struct mbuf_list *);
 int	cnmac_intr(void *);
 
 int	cnmac_mbuf_alloc(int);
@@ -1219,21 +1219,14 @@ cnmac_recv_check(struct cnmac_softc *sc, uint64_t word2)
 }
 
 int
-cnmac_recv(struct cnmac_softc *sc, uint64_t *work)
+cnmac_recv(struct cnmac_softc *sc, uint64_t *work, struct mbuf_list *ml)
 {
-	struct ifnet *ifp;
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
 	uint64_t word2;
-	int nmbuf;
-
-	OCTEON_ETH_KASSERT(sc != NULL);
-	OCTEON_ETH_KASSERT(work != NULL);
+	int nmbuf = 0;
 
 	word2 = work[2];
-	ifp = &sc->sc_arpcom.ac_if;
-
-	OCTEON_ETH_KASSERT(ifp != NULL);
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		goto drop;
@@ -1243,39 +1236,34 @@ cnmac_recv(struct cnmac_softc *sc, uint64_t *work)
 		goto drop;
 	}
 
+	/* On success, this releases the work queue entry. */
 	if (__predict_false(cnmac_recv_mbuf(sc, work, &m, &nmbuf) != 0)) {
 		ifp->if_ierrors++;
 		goto drop;
 	}
 
-	/* work[0] .. work[3] may not be valid any more */
-
-	OCTEON_ETH_KASSERT(m != NULL);
-
 	cn30xxipd_offload(word2, &m->m_pkthdr.csum_flags);
 
-	ml_enqueue(&ml, m);
-	if_input(ifp, &ml);
+	ml_enqueue(ml, m);
 
-	nmbuf = cnmac_mbuf_alloc(nmbuf);
-	if (nmbuf != 0)
-		atomic_add_int(&cnmac_mbufs_to_alloc, nmbuf);
-
-	return 0;
+	return nmbuf;
 
 drop:
 	cnmac_buf_free_work(sc, work);
-	return 1;
+	return 0;
 }
 
 int
 cnmac_intr(void *arg)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct cnmac_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	uint64_t *work;
 	uint64_t wqmask = 1ull << sc->sc_powgroup;
 	uint32_t coreid = octeon_get_coreid();
 	uint32_t port;
+	int nmbuf = 0;
 
 	_POW_WR8(sc->sc_pow, POW_PP_GRP_MSK_OFFSET(coreid), wqmask);
 
@@ -1300,10 +1288,16 @@ cnmac_intr(void *arg)
 			goto wqe_error;
 		}
 
-		(void)cnmac_recv(sc, work);
+		nmbuf += cnmac_recv(sc, work, &ml);
 	}
 
 	_POW_WR8(sc->sc_pow, POW_WQ_INT_OFFSET, wqmask);
+
+	if_input(ifp, &ml);
+
+	nmbuf = cnmac_mbuf_alloc(nmbuf);
+	if (nmbuf != 0)
+		atomic_add_int(&cnmac_mbufs_to_alloc, nmbuf);
 
 	return 1;
 
