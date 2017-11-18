@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmacvar.h,v 1.17 2017/11/02 17:29:16 visa Exp $	*/
+/*	$OpenBSD: if_cnmacvar.h,v 1.18 2017/11/18 05:53:02 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -34,10 +34,10 @@
 #define FREE_QUEUE_SIZE		GATHER_QUEUE_SIZE
 #define RECV_QUEUE_SIZE		(GATHER_QUEUE_SIZE * 2)
 
-#define OCTEON_ETH_MAX_MTU		12288
+#define CNMAC_MAX_MTU		12288
 
 /* Number of mbufs per port to keep in the packet pool */
-#define OCTEON_ETH_MBUFS_PER_PORT	256
+#define CNMAC_MBUFS_PER_PORT	256
 
 struct _send_queue_entry;
 struct cn30xxpow_softc;
@@ -51,7 +51,7 @@ struct cn30xxpow_softc;
 
 extern struct cn30xxpow_softc	cn30xxpow_softc;
 
-struct octeon_eth_softc {
+struct cnmac_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_regt;
 	bus_dma_tag_t		sc_dmat;
