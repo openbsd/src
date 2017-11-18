@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.1 2016/08/13 10:52:21 kettenis Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.2 2017/11/18 13:48:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -23,6 +23,19 @@
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/ofw_regulator.h>
+
+LIST_HEAD(, regulator_device) regulator_devices =
+	LIST_HEAD_INITIALIZER(regulator_devices);
+
+void
+regulator_register(struct regulator_device *rd)
+{
+	rd->rd_phandle = OF_getpropint(rd->rd_node, "phandle", 0);
+	if (rd->rd_phandle == 0)
+		return;
+
+	LIST_INSERT_HEAD(&regulator_devices, rd, rd_list);
+}
 
 int
 regulator_set(uint32_t phandle, int enable)
@@ -78,4 +91,44 @@ int
 regulator_disable(uint32_t phandle)
 {
 	return regulator_set(phandle, 0);
+}
+
+uint32_t
+regulator_get_voltage(uint32_t phandle)
+{
+	struct regulator_device *rd;
+	int node;
+
+	LIST_FOREACH(rd, &regulator_devices, rd_list) {
+		if (rd->rd_phandle == phandle)
+			break;
+	}
+
+	if (rd && rd->rd_get_voltage)
+		return rd->rd_get_voltage(rd->rd_cookie);
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return 0;
+
+	if (OF_is_compatible(node, "regulator-fixed"))
+		return OF_getpropint(node, "regulator-min-voltage", 0);
+
+	return 0;
+}
+
+int
+regulator_set_voltage(uint32_t phandle, uint32_t voltage)
+{
+	struct regulator_device *rd;
+
+	LIST_FOREACH(rd, &regulator_devices, rd_list) {
+		if (rd->rd_phandle == phandle)
+			break;
+	}
+
+	if (rd && rd->rd_set_voltage)
+		return rd->rd_set_voltage(rd->rd_cookie, voltage);
+
+	return -1;
 }
