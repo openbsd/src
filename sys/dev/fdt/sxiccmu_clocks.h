@@ -5,6 +5,76 @@
  * Clocks Signals
  */
 
+/* A10/A20 */
+
+#define A10_CLK_PLL_PERIPH_BASE	14
+#define A10_CLK_PLL_PERIPH	15
+
+#define A10_CLK_APB1		25
+
+#define A10_CLK_AHB_EHCI0	27
+#define A10_CLK_AHB_EHCI1	29
+#define A10_CLK_AHB_MMC0	34
+#define A10_CLK_AHB_MMC1	35
+#define A10_CLK_AHB_MMC2	36
+#define A10_CLK_AHB_MMC3	37
+#define A10_CLK_AHB_SATA	49
+#define A10_CLK_AHB_GMAC	66
+#define A10_CLK_APB0_PIO	74
+#define A10_CLK_APB1_I2C0	79
+#define A10_CLK_APB1_I2C1	80
+#define A10_CLK_APB1_I2C2	81
+#define A10_CLK_APB1_I2C3	82
+#define A10_CLK_APB1_I2C4	87
+#define A10_CLK_APB1_UART0	88
+#define A10_CLK_APB1_UART1	89
+#define A10_CLK_APB1_UART2	90
+#define A10_CLK_APB1_UART3	91
+#define A10_CLK_APB1_UART4	92
+#define A10_CLK_APB1_UART5	93
+#define A10_CLK_APB1_UART6	94
+#define A10_CLK_APB1_UART7	95
+
+#define A10_CLK_MMC0		98
+#define A10_CLK_MMC1		101
+#define A10_CLK_MMC2		104
+#define A10_CLK_MMC3		107
+#define A10_CLK_SATA		122
+#define A10_CLK_USB_PHY		125
+
+struct sxiccmu_ccu_bit sun4i_a10_gates[] = {
+	[A10_CLK_AHB_EHCI0] =  { 0x0060, 1 },
+	[A10_CLK_AHB_EHCI1] =  { 0x0060, 3 },
+	[A10_CLK_AHB_MMC0] =   { 0x0060, 8 },
+	[A10_CLK_AHB_MMC1] =   { 0x0060, 9 },
+	[A10_CLK_AHB_MMC2] =   { 0x0060, 10 },
+	[A10_CLK_AHB_MMC3] =   { 0x0060, 11 },
+	[A10_CLK_AHB_SATA] =   { 0x0060, 25 },
+	[A10_CLK_AHB_GMAC] =   { 0x0064, 17 },
+	[A10_CLK_APB0_PIO] =   { 0x0068, 5 },
+	[A10_CLK_APB1_I2C0] =  { 0x006c, 0, A10_CLK_APB1 },
+	[A10_CLK_APB1_I2C1] =  { 0x006c, 1, A10_CLK_APB1 },
+	[A10_CLK_APB1_I2C2] =  { 0x006c, 2, A10_CLK_APB1 },
+	[A10_CLK_APB1_I2C3] =  { 0x006c, 3, A10_CLK_APB1 },
+	[A10_CLK_APB1_I2C4] =  { 0x006c, 15, A10_CLK_APB1 },
+	[A10_CLK_APB1_UART0] = { 0x006c, 16, A10_CLK_APB1 },
+	[A10_CLK_APB1_UART1] = { 0x006c, 17, A10_CLK_APB1 },
+	[A10_CLK_APB1_UART2] = { 0x006c, 18, A10_CLK_APB1 },
+	[A10_CLK_APB1_UART3] = { 0x006c, 19, A10_CLK_APB1 },
+	[A10_CLK_APB1_UART4] = { 0x006c, 20, A10_CLK_APB1 },
+	[A10_CLK_APB1_UART5] = { 0x006c, 21, A10_CLK_APB1 },
+	[A10_CLK_APB1_UART6] = { 0x006c, 22, A10_CLK_APB1 },
+	[A10_CLK_APB1_UART7] = { 0x006c, 23, A10_CLK_APB1 },
+	[A10_CLK_MMC0] =       { 0x0088, 31 },
+	[A10_CLK_MMC1] =       { 0x008c, 31 },
+	[A10_CLK_MMC2] =       { 0x0090, 31 },
+	[A10_CLK_MMC3] =       { 0x0094, 31 },
+	[A10_CLK_SATA] =       { 0x00c8, 31 },
+	[A10_CLK_USB_PHY] =    { 0x00cc, 8 },
+};
+
+/* A64 */
+
 #define A64_CLK_PLL_PERIPH0	11
 #define A64_CLK_PLL_PERIPH0_2X	12
 
@@ -18,20 +88,15 @@
 #define A64_CLK_BUS_MMC0	31
 #define A64_CLK_BUS_MMC1	32
 #define A64_CLK_BUS_MMC2	33
-
 #define A64_CLK_BUS_EMAC	36
-
 #define A64_CLK_BUS_EHCI0	42
 #define A64_CLK_BUS_EHCI1	43
 #define A64_CLK_BUS_OHCI0	44
 #define A64_CLK_BUS_OHCI1	45
-
 #define A64_CLK_BUS_PIO		58
-
 #define A64_CLK_BUS_I2C0	63
 #define A64_CLK_BUS_I2C1	64
 #define A64_CLK_BUS_I2C2	65
-
 #define A64_CLK_BUS_UART0	67
 #define A64_CLK_BUS_UART1	68
 #define A64_CLK_BUS_UART2	69
@@ -41,7 +106,6 @@
 #define A64_CLK_MMC0		75
 #define A64_CLK_MMC1		76
 #define A64_CLK_MMC2		77
-
 #define A64_CLK_USB_OHCI0	91
 #define A64_CLK_USB_OHCI1	93
 #define A64_CLK_USB_PHY0	86
@@ -59,23 +123,25 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 	[A64_CLK_BUS_EHCI1] = { 0x0060, 25 },
 	[A64_CLK_BUS_OHCI0] = { 0x0060, 28 },
 	[A64_CLK_BUS_OHCI1] = { 0x0060, 29 },
-	[A64_CLK_BUS_PIO]   = { 0x0068, 5 },
-	[A64_CLK_BUS_I2C0]  = { 0x006c, 0, A64_CLK_APB2 },
-	[A64_CLK_BUS_I2C1]  = { 0x006c, 1, A64_CLK_APB2 },
-	[A64_CLK_BUS_I2C2]  = { 0x006c, 2, A64_CLK_APB2 },
+	[A64_CLK_BUS_PIO] =   { 0x0068, 5 },
+	[A64_CLK_BUS_I2C0] =  { 0x006c, 0, A64_CLK_APB2 },
+	[A64_CLK_BUS_I2C1] =  { 0x006c, 1, A64_CLK_APB2 },
+	[A64_CLK_BUS_I2C2] =  { 0x006c, 2, A64_CLK_APB2 },
 	[A64_CLK_BUS_UART0] = { 0x006c, 16, A64_CLK_APB2 },
 	[A64_CLK_BUS_UART1] = { 0x006c, 17, A64_CLK_APB2 },
 	[A64_CLK_BUS_UART2] = { 0x006c, 18, A64_CLK_APB2 },
 	[A64_CLK_BUS_UART3] = { 0x006c, 19, A64_CLK_APB2 },
 	[A64_CLK_BUS_UART4] = { 0x006c, 20, A64_CLK_APB2 },
-	[A64_CLK_MMC0]      = { 0x0088, 31 },
-	[A64_CLK_MMC1]      = { 0x008c, 31 },
-	[A64_CLK_MMC2]      = { 0x0090, 31 },
+	[A64_CLK_MMC0] =      { 0x0088, 31 },
+	[A64_CLK_MMC1] =      { 0x008c, 31 },
+	[A64_CLK_MMC2] =      { 0x0090, 31 },
 	[A64_CLK_USB_OHCI0] = { 0x00cc, 16 },
 	[A64_CLK_USB_OHCI1] = { 0x00cc, 17 },
 	[A64_CLK_USB_PHY0] =  { 0x00cc,  8 },
 	[A64_CLK_USB_PHY1] =  { 0x00cc,  9 },
 };
+
+/* H3/H5 */
 
 #define H3_CLK_PLL_PERIPH0	9
 
@@ -88,9 +154,7 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 #define H3_CLK_BUS_MMC0		22
 #define H3_CLK_BUS_MMC1		23
 #define H3_CLK_BUS_MMC2		24
-
 #define H3_CLK_BUS_EMAC		27
-
 #define H3_CLK_BUS_EHCI0	33
 #define H3_CLK_BUS_EHCI1	34
 #define H3_CLK_BUS_EHCI2	35
@@ -99,9 +163,7 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 #define H3_CLK_BUS_OHCI1	38
 #define H3_CLK_BUS_OHCI2	39
 #define H3_CLK_BUS_OHCI3	40
-
 #define H3_CLK_BUS_PIO		54
-
 #define H3_CLK_BUS_I2C0		59
 #define H3_CLK_BUS_I2C1		60
 #define H3_CLK_BUS_I2C2		61
@@ -109,13 +171,11 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 #define H3_CLK_BUS_UART1	63
 #define H3_CLK_BUS_UART2	64
 #define H3_CLK_BUS_UART3	65
-
 #define H3_CLK_BUS_EPHY		67
 
 #define H3_CLK_MMC0		71
 #define H3_CLK_MMC1		74
 #define H3_CLK_MMC2		77
-
 #define H3_CLK_USB_PHY0		88
 #define H3_CLK_USB_PHY1		89
 #define H3_CLK_USB_PHY2		90
@@ -159,6 +219,20 @@ struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
  * Reset Signals
  */
 
+/* A10 */
+
+#define A10_RST_USB_PHY0	1
+#define A10_RST_USB_PHY1	2
+#define A10_RST_USB_PHY2	3
+
+struct sxiccmu_ccu_bit sun4i_a10_resets[] = {
+	[A10_RST_USB_PHY0] = { 0x00cc, 0 },
+	[A10_RST_USB_PHY1] = { 0x00cc, 1 },
+	[A10_RST_USB_PHY2] = { 0x00cc, 2 },
+};
+
+/* A64 */
+
 #define A64_RST_USB_PHY0	0
 #define A64_RST_USB_PHY1	1
 
@@ -192,6 +266,8 @@ struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 	[A64_RST_BUS_I2C1] =  { 0x02d8, 1 },
 	[A64_RST_BUS_I2C2] =  { 0x02d8, 2 },
 };
+
+/* H3/H5 */
 
 #define H3_RST_USB_PHY0		0
 #define H3_RST_USB_PHY1		1
