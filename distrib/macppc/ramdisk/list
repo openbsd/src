@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.67 2017/07/08 15:42:47 florian Exp $
+#	$OpenBSD: list,v 1.68 2017/11/19 12:11:54 job Exp $
 
 SRCDIRS distrib/special
 
@@ -34,6 +34,7 @@ LINK	instbin					sbin/dmesg
 LINK	instbin					sbin/fdisk
 LINK	instbin					sbin/fsck
 LINK	instbin					sbin/fsck_ffs
+LINK	instbin					sbin/growfs
 LINK	instbin					sbin/ifconfig
 LINK	instbin					sbin/init
 LINK	instbin					sbin/mknod

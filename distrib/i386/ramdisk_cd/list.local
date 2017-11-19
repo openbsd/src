@@ -1,6 +1,7 @@
-# $OpenBSD: list.local,v 1.38 2017/07/08 15:42:46 florian Exp $
+# $OpenBSD: list.local,v 1.39 2017/11/19 12:11:53 job Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
+LINK	instbin					sbin/growfs
 LINK	instbin					sbin/mount_ext2fs
 LINK	instbin					sbin/mount_msdos
 LINK	instbin					sbin/mount_udf
