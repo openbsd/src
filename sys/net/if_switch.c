@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.20 2017/05/31 05:59:09 mpi Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.21 2017/11/20 10:17:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -488,7 +488,6 @@ switch_port_add(struct switch_softc *sc, struct ifbreq *req)
 {
 	struct ifnet		*ifs;
 	struct switch_port	*swpo;
-	struct ifreq		 ifreq;
 	int			 error;
 
 	if ((ifs = ifunit(req->ifbr_ifsname)) == NULL)
@@ -506,32 +505,8 @@ switch_port_add(struct switch_softc *sc, struct ifbreq *req)
 	}
 
 	if (ifs->if_type == IFT_ETHER) {
-		if ((ifs->if_flags & IFF_UP) == 0) {
-			/*
-			 * Bring interface up long enough to set
-			 * promiscuous flag, then shut it down again.
-			 */
-			strlcpy(ifreq.ifr_name, req->ifbr_ifsname, IFNAMSIZ);
-			ifs->if_flags |= IFF_UP;
-			ifreq.ifr_flags = ifs->if_flags;
-			if ((error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS,
-			    (caddr_t)&ifreq)) != 0)
-				return (error);
-
-			if ((error = ifpromisc(ifs, 1)) != 0)
-				return (error);
-			strlcpy(ifreq.ifr_name, req->ifbr_ifsname, IFNAMSIZ);
-			ifs->if_flags &= ~IFF_UP;
-			ifreq.ifr_flags = ifs->if_flags;
-			if ((error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS,
-			    (caddr_t)&ifreq)) != 0) {
-				ifpromisc(ifs, 0);
-				return (error);
-			}
-		} else {
-			if ((error = ifpromisc(ifs, 1)) != 0)
-				return (error);
-		}
+		if ((error = ifpromisc(ifs, 1)) != 0)
+			return (error);
 	}
 
 	swpo = malloc(sizeof(*swpo), M_DEVBUF, M_NOWAIT|M_ZERO);
