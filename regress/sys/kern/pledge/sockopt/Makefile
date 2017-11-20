@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/04/12 11:55:41 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2017/11/20 12:49:56 bluhm Exp $
 
 # This table lists pledge(2), socket(2), getsockopt(2), and setsockopt(2)
 # calls with their expected outcome.  The constants are compiled into
@@ -27,7 +27,8 @@ TESTS =	inet		AF_INET		SOCK_STREAM	IPPROTO_TCP	get	SOL_SOCKET	SO_ERROR		0	0		0	\
 	inet		AF_INET		SOCK_DGRAM	IPPROTO_UDP	get	IPPROTO_ICMP	0			0	1		inet	\
 	inet		AF_INET6	SOCK_DGRAM	IPPROTO_UDP	set	IPPROTO_ICMPV6	0			0	1		inet	\
 	inet		AF_INET6	SOCK_DGRAM	IPPROTO_UDP	get	IPPROTO_IPV6	IPV6_TCLASS		0	0		0	\
-	inet		AF_INET6	SOCK_DGRAM	IPPROTO_UDP	get	IPPROTO_IPV6	IPV6_V6ONLY		0	1		inet	\
+	inet		AF_INET6	SOCK_DGRAM	IPPROTO_UDP	get	IPPROTO_IPV6	IPV6_V6ONLY		1	0		0	\
+	inet		AF_INET6	SOCK_DGRAM	IPPROTO_UDP	set	IPPROTO_IPV6	IPV6_V6ONLY		0	EINVAL		0	\
 	inet		AF_INET6	SOCK_DGRAM	IPPROTO_UDP	set	IPPROTO_IPV6	IPV6_MULTICAST_LOOP	1	1		inet	\
 	inet+mcast	AF_INET6	SOCK_DGRAM	IPPROTO_UDP	set	IPPROTO_IPV6	IPV6_MULTICAST_LOOP	1	0		0	\
 	inet		AF_INET6	SOCK_DGRAM	IPPROTO_UDP	set	IPPROTO_IPV6	IPV6_JOIN_GROUP		0	1		inet	\
