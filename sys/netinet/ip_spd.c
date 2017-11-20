@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.95 2017/11/07 11:02:07 mpi Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.96 2017/11/20 10:56:52 mpi Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -111,16 +111,21 @@ spd_table_add(unsigned int rtableid)
 
 int
 spd_table_walk(unsigned int rtableid,
-    int (*walker)(struct ipsec_policy *, void *, unsigned int), void *arg)
+    int (*func)(struct ipsec_policy *, void *, unsigned int), void *arg)
 {
 	struct radix_node_head *rnh;
+	int (*walker)(struct radix_node *, void *, u_int) = (void *)func;
+	int error;
 
 	rnh = spd_table_get(rtableid);
 	if (rnh == NULL)
 		return (0);
 
-	return (rn_walktree(rnh,
-	    (int (*)(struct radix_node *, void *, u_int))walker, arg));
+	/* EGAIN means the tree changed. */
+	while ((error = rn_walktree(rnh, walker, arg)) == EAGAIN)
+		continue;
+
+	return (error);
 }
 
 /*

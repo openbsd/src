@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.174 2017/11/13 17:00:14 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.175 2017/11/20 10:56:51 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -165,6 +165,8 @@ int pfkeyv2_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
 int pfkeyv2_output(struct mbuf *, struct socket *, struct sockaddr *,
     struct mbuf *);
 int pfkey_sendup(struct keycb *, struct mbuf *, int);
+int pfkeyv2_sa_flush(struct tdb *, void *, int);
+int pfkeyv2_policy_flush(struct ipsec_policy *, void *, unsigned int);
 int pfkeyv2_sysctl_policydumper(struct ipsec_policy *, void *, unsigned int);
 
 /*
@@ -872,7 +874,7 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state, int last)
  * Delete an SA.
  */
 int
-pfkeyv2_flush_walker(struct tdb *sa, void *satype_vp, int last)
+pfkeyv2_sa_flush(struct tdb *sa, void *satype_vp, int last)
 {
 	if (!(*((u_int8_t *) satype_vp)) ||
 	    sa->tdb_satype == *((u_int8_t *) satype_vp))
@@ -957,7 +959,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 	int i, j, rval = 0, mode = PFKEYV2_SENDMESSAGE_BROADCAST;
 	int delflag = 0;
 	struct sockaddr_encap encapdst, encapnetmask;
-	struct ipsec_policy *ipo, *tmpipo;
+	struct ipsec_policy *ipo;
 	struct ipsec_acquire *ipa;
 	struct radix_node_head *rnh;
 	struct radix_node *rn = NULL;
@@ -1489,12 +1491,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 
 		switch (smsg->sadb_msg_satype) {
 		case SADB_SATYPE_UNSPEC:
-			for (ipo = TAILQ_FIRST(&ipsec_policy_head);
-			    ipo != NULL; ipo = tmpipo) {
-				tmpipo = TAILQ_NEXT(ipo, ipo_list);
-				if (ipo->ipo_rdomain == rdomain)
-					ipsec_delete_policy(ipo);
-			}
+			spd_table_walk(rdomain, pfkeyv2_policy_flush, NULL);
 			/* FALLTHROUGH */
 		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
@@ -1503,7 +1500,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 #ifdef TCP_SIGNATURE
 		case SADB_X_SATYPE_TCPSIGNATURE:
 #endif /* TCP_SIGNATURE */
-			tdb_walk(rdomain, pfkeyv2_flush_walker,
+			tdb_walk(rdomain, pfkeyv2_sa_flush,
 			    (u_int8_t *) &(smsg->sadb_msg_satype));
 
 			break;
@@ -2405,6 +2402,18 @@ pfkeyv2_sysctl_policydumper(struct ipsec_policy *ipo, void *arg,
 done:
 	if (buffer)
 		free(buffer, M_PFKEY, 0);
+	return (error);
+}
+
+int
+pfkeyv2_policy_flush(struct ipsec_policy *ipo, void *arg, unsigned int tableid)
+{
+	int error;
+
+	error = ipsec_delete_policy(ipo);
+	if (error == 0)
+		error = EAGAIN;
+
 	return (error);
 }
 
