@@ -16,13 +16,15 @@ use Config;
 # And then we need these games to avoid loading overload, as that will
 # confuse miniperl during the bootstrap of perl.
 my $Scalar_Util_loaded = eval q{ require Scalar::Util; require overload; 1 };
+# We want HiRes stat and utime if available
+BEGIN { eval q{ use Time::HiRes qw( stat utime ) } };
 our(@ISA, @EXPORT, @EXPORT_OK, $VERSION, $Too_Big, $Syscopy_is_copy);
 sub copy;
 sub syscopy;
 sub cp;
 sub mv;
 
-$VERSION = '2.31';
+$VERSION = '2.31_01';
 
 require Exporter;
 @ISA = qw(Exporter);
