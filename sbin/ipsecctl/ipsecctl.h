@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.72 2017/10/27 08:29:32 mpi Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.73 2017/11/20 10:51:24 mpi Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -29,6 +29,7 @@
 #define IPSECCTL_OPT_DELETE		0x0200
 #define IPSECCTL_OPT_MONITOR		0x0400
 #define IPSECCTL_OPT_SHOWKEY		0x0800
+#define IPSECCTL_OPT_COLLAPSE		0x1000
 
 enum {
 	ACTION_ADD, ACTION_DELETE
@@ -216,6 +217,8 @@ struct ipsec_rule {
 	TAILQ_ENTRY(ipsec_rule) rule_entry;
 	TAILQ_ENTRY(ipsec_rule) bundle_entry;
 	TAILQ_ENTRY(ipsec_rule) dst_bundle_entry;
+
+	TAILQ_HEAD(, ipsec_rule) collapsed_rules;
 
 	struct dst_bundle_queue	dst_bundle_queue;
 	char			*bundle;
