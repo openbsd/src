@@ -18,6 +18,7 @@
 #define A10_CLK_AHB_MMC1	35
 #define A10_CLK_AHB_MMC2	36
 #define A10_CLK_AHB_MMC3	37
+#define A10_CLK_AHB_EMAC	42
 #define A10_CLK_AHB_SATA	49
 #define A10_CLK_AHB_GMAC	66
 #define A10_CLK_APB0_PIO	74
@@ -49,6 +50,7 @@ struct sxiccmu_ccu_bit sun4i_a10_gates[] = {
 	[A10_CLK_AHB_MMC1] =   { 0x0060, 9 },
 	[A10_CLK_AHB_MMC2] =   { 0x0060, 10 },
 	[A10_CLK_AHB_MMC3] =   { 0x0060, 11 },
+	[A10_CLK_AHB_EMAC] =   { 0x0060, 17 },
 	[A10_CLK_AHB_SATA] =   { 0x0060, 25 },
 	[A10_CLK_AHB_GMAC] =   { 0x0064, 17 },
 	[A10_CLK_APB0_PIO] =   { 0x0068, 5 },
