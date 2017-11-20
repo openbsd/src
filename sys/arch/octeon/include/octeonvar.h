@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.43 2017/11/20 15:13:09 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.44 2017/11/20 15:20:03 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -167,6 +167,7 @@ struct octeon_fau_map {
 #define	BOARD_TYPE_UBIQUITI_E100	20002
 #define	BOARD_TYPE_UBIQUITI_E200	20003
 #define	BOARD_TYPE_UBIQUITI_E120	20004
+#define	BOARD_TYPE_UBIQUITI_E220	20005
 #define	BOARD_TYPE_UBIQUITI_E1000	20010
 #define	BOARD_TYPE_RHINOLABS_SHASTA	20012
 #define	BOARD_TYPE_DSR_500		20015
