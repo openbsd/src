@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2017/11/17 15:39:51 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2017/11/20 15:52:25 bluhm Exp $
 
 # Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -19,7 +19,15 @@
 # Also test pinging to different rdomains via pf.  Check that the
 # ttl is decremented while looping though loopback interfaces.
 
-SYSCTL_FORWARDING !=       sysctl net.inet.ip.forwarding
+# This test uses routing doamin and interface number 11 and 12.
+# Adjust it here, if you want to use something else.
+N1 =		11
+N2 =		12
+NUMS =		${N1} ${N2}
+
+.include <bsd.own.mk>
+
+SYSCTL_FORWARDING !=	sysctl net.inet.ip.forwarding
 
 .if ${SYSCTL_FORWARDING:C/.*=//} != 1
 regress:
@@ -28,11 +36,14 @@ regress:
 	@echo SKIPPED
 .endif
 
-# This test uses routing doamin and interface number 11 and 12.
-# Adjust it here, if ue want to use something else.
-N1 =		11
-N2 =		12
-NUMS =		${N1} ${N2}
+PF_SKIP_IFACE !=	${SUDO} /sbin/pfctl -sI -v | sed -n 's/ (skip)//p'
+
+.if ! empty(PF_SKIP_IFACE:Mlo*:Nlo0)
+regress:
+	@echo "${PF_SKIP_IFACE}"
+	@echo Do not set skip on interface lo, lo${N1}, or lo${N2}.
+	@echo SKIPPED
+.endif
 
 .PHONY: check-interfaces check-rdomains ifconfig unconfig
 
@@ -81,12 +92,12 @@ addr.py: Makefile
 # Load the pf rules into the kernel.
 stamp-pfctl: addr.py pf.conf stamp-setup
 	@echo '\n======== $@ ========'
-	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
-	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} pfctl -a regress -f -
+	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
+	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} /sbin/pfctl -a regress -f -
 	@date >$@
 
 # run tcpdump on lo devices
-DUMPCMD =	tcpdump -l -e -vvv -s 2048 -ni
+DUMPCMD =	/usr/sbin/tcpdump -l -e -vvv -s 2048 -ni
 
 stamp-bpf: stamp-bpf-${N1} stamp-bpf-${N2}
 	sleep 2  # XXX
@@ -97,7 +108,7 @@ stamp-bpf: stamp-bpf-${N1} stamp-bpf-${N2}
 stamp-bpf-${n}: stamp-setup
 	@echo '\n======== $@ ========'
 	rm -f lo${n}.tcpdump
-	pkill -f '^${DUMPCMD} lo${n}' || true
+	${SUDO} pkill -f '^${DUMPCMD} lo${n}' || true
 	${SUDO} ${DUMPCMD} lo${n} >lo${n}.tcpdump &
 	rm -f stamp-stop
 	@date >$@
