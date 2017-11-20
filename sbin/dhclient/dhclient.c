@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.524 2017/11/18 16:33:25 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.525 2017/11/20 13:33:58 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -166,6 +166,7 @@ void rewrite_option_db(char *, struct client_lease *, struct client_lease *);
 char *lease_as_string(char *, char *, struct client_lease *);
 struct proposal *lease_as_proposal(struct client_lease *);
 void append_statement(char *, size_t, char *, char *);
+time_t lease_expiry(struct client_lease *);
 
 struct client_lease *packet_to_lease(struct interface_info *,
     struct option_data *);
@@ -1063,8 +1064,8 @@ newlease:
 			continue;
 		if (ifi->active == lease)
 			seen = 1;
-		else if (lease->expiry <= cur_time || lease->address.s_addr ==
-		    ifi->active->address.s_addr) {
+		else if (lease_expiry(lease) < cur_time ||
+		    lease->address.s_addr == ifi->active->address.s_addr) {
 			TAILQ_REMOVE(&ifi->leases, lease, next);
 			free_client_lease(lease);
 		}
@@ -1748,7 +1749,7 @@ rewrite_client_leases(struct interface_info *ifi)
 		/* Don't write out static leases from dhclient.conf. */
 		if (lp->is_static != 0)
 			continue;
-		if (lp->expiry <= cur_time)
+		if (lease_expiry(lp) < cur_time)
 			continue;
 		leasestr = lease_as_string(ifi->name, "lease", lp);
 		if (leasestr != NULL)
@@ -2484,17 +2485,10 @@ apply_ignore_list(char *ignore_list)
 void
 set_lease_times(struct client_lease *lease)
 {
-	time_t		 cur_time, time_max;
 	uint32_t	 uint32val;
 
-	time(&cur_time);
-
-	time_max = LLONG_MAX - cur_time;
-	if (time_max > UINT32_MAX)
-		time_max = UINT32_MAX;
-
 	if (lease->epoch == 0)
-		lease->epoch = cur_time;
+		time(&lease->epoch);
 
 	/*
 	 * Take the server-provided times if available.  Otherwise
@@ -2504,21 +2498,11 @@ set_lease_times(struct client_lease *lease)
 	 * renewal == time to renew lease from server that provided it.
 	 * rebind  == time to renew lease from any server.
 	 *
-	 * 0 <= renewal <= rebind <= expiry <= time_max
+	 * 0 <= renewal <= rebind <= expiry
 	 * &&
 	 * expiry >= MIN(time_max, 60)
 	 */
-
-	lease->expiry = 43200;	/* Default to 12 hours */
-	if (lease->options[DHO_DHCP_LEASE_TIME].len == sizeof(uint32val)) {
-		memcpy(&uint32val, lease->options[DHO_DHCP_LEASE_TIME].data,
-		    sizeof(uint32val));
-		lease->expiry = ntohl(uint32val);
-		if (lease->expiry < 60)
-			lease->expiry = 60;
-	}
-	if (lease->expiry > time_max)
-		lease->expiry = time_max;
+	lease->expiry = lease_expiry(lease);
 
 	lease->renewal = lease->expiry / 2;
 	if (lease->options[DHO_DHCP_RENEWAL_TIME].len == sizeof(uint32val)) {
@@ -2542,7 +2526,6 @@ set_lease_times(struct client_lease *lease)
 		lease->rebind = lease->renewal;
 
 	/* Convert lease lengths to times. */
-	lease->expiry += lease->epoch;
 	lease->renewal += lease->epoch;
 	lease->rebind += lease->epoch;
 }
@@ -2630,7 +2613,7 @@ get_recorded_lease(struct interface_info *ifi)
 		if (addressinuse(ifi->name, lp->address, ifname) != 0 &&
 		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
 			continue;
-		if (lp->is_static == 0 && lp->expiry <= cur_time)
+		if (lease_expiry(lp) <= cur_time)
 			continue;
 
 		if (lp->is_static != 0) {
@@ -2666,4 +2649,26 @@ set_default_client_identifier(struct interface_info *ifi)
 		    ETHER_ADDR_LEN);
 		opt->len = ETHER_ADDR_LEN + 1;
 	}
+}
+
+time_t
+lease_expiry(struct client_lease *lease)
+{
+	uint32_t	expiry;
+
+	if (lease->is_static != 0)
+		return LLONG_MAX;
+
+	expiry = 43200;	/* Default to 12 hours */
+	if (lease->options[DHO_DHCP_LEASE_TIME].len == sizeof(expiry)) {
+		memcpy(&expiry, lease->options[DHO_DHCP_LEASE_TIME].data,
+		    sizeof(expiry));
+		expiry = ntohl(expiry);
+		if (expiry < 60)
+			expiry = 60;
+	}
+	if (expiry > LLONG_MAX - lease->epoch)
+		expiry = LLONG_MAX - lease->epoch;
+
+	return lease->epoch + expiry;
 }
