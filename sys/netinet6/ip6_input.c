@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.208 2017/11/10 08:55:49 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.209 2017/11/20 10:35:24 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1344,7 +1344,7 @@ ip6_lasthdr(struct mbuf *m, int off, int proto, int *nxtp)
  * System control for IP6
  */
 
-u_char	inet6ctlerrmap[PRC_NCMDS] = {
+const u_char inet6ctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
 	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.254 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.255 2017/11/20 10:35:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -658,6 +658,8 @@ pfsync_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct pfsync_subheader subh;
 	int offset, noff, len, count, mlen, flags = 0;
 	int e;
+
+	NET_ASSERT_LOCKED();
 
 	pfsyncstat_inc(pfsyncs_ipackets);
 

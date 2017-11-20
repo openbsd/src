@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.105 2017/11/02 14:01:18 florian Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.106 2017/11/20 10:35:24 mpi Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -128,6 +128,7 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 	KASSERT(af == AF_INET);
 
 	ripsrc.sin_addr = ip->ip_src;
+	NET_ASSERT_LOCKED();
 	TAILQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
 		if (inp->inp_socket->so_state & SS_CANTRCVMORE)
 			continue;
@@ -512,10 +513,11 @@ rip_attach(struct socket *so, int proto)
 	if (proto < 0 || proto >= IPPROTO_MAX)
 		return EPROTONOSUPPORT;
 
-	if ((error = soreserve(so, rip_sendspace, rip_recvspace)) ||
-	    (error = in_pcballoc(so, &rawcbtable))) {
+	if ((error = soreserve(so, rip_sendspace, rip_recvspace)))
 		return error;
-	}
+	NET_ASSERT_LOCKED();
+	if ((error = in_pcballoc(so, &rawcbtable)))
+		return error;
 	inp = sotoinpcb(so);
 	inp->inp_ip.ip_p = proto;
 	return 0;

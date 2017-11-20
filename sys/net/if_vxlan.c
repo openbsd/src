@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.63 2017/10/25 09:24:09 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.64 2017/11/20 10:35:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -611,6 +611,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 		vni = VXLAN_VNI_UNSET;
 	}
 
+	NET_ASSERT_LOCKED();
 	/* First search for a vxlan(4) interface with the packet's VNI */
 	LIST_FOREACH(sc, &vxlan_tagh[VXLAN_TAGHASH(vni)], sc_entry) {
 		if ((uh->uh_dport == sc->sc_dstport) &&

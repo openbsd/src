@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.71 2017/10/29 14:56:36 florian Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.72 2017/11/20 10:35:24 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -177,6 +177,7 @@ rti_find(struct ifnet *ifp)
 {
 	struct router_info *rti;
 
+	KERNEL_ASSERT_LOCKED();
 	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
 		if (rti->rti_ifidx == ifp->if_index)
 			return (rti);
@@ -221,7 +222,9 @@ igmp_input(struct mbuf **mp, int *offp, int proto, int af)
 		return IPPROTO_DONE;
 	}
 
+	KERNEL_LOCK();
 	proto = igmp_input_if(ifp, mp, offp, proto, af);
+	KERNEL_UNLOCK();
 	if_put(ifp);
 	return proto;
 }

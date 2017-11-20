@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.96 2017/11/17 18:21:33 jca Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.97 2017/11/20 10:35:24 mpi Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -174,6 +174,7 @@ mplsip_getgif(struct mbuf *m)
 		return NULL;
 	}
 
+	NET_ASSERT_LOCKED();
 	/* Find appropriate gif(4) interface */
 	LIST_FOREACH(sc, &gif_softc_list, gif_list) {
 		if ((sc->gif_psrc == NULL) ||

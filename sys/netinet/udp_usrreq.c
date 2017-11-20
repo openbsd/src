@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.243 2017/11/08 16:29:20 visa Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.244 2017/11/20 10:35:24 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -383,6 +383,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		 * (Algorithm copied from raw_intr().)
 		 */
 		last = NULL;
+		NET_ASSERT_LOCKED();
 		TAILQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
 			if (inp->inp_socket->so_state & SS_CANTRCVMORE)
 				continue;
@@ -564,6 +565,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 	}
 	KASSERT(sotoinpcb(inp->inp_socket) == inp);
+	soassertlocked(inp->inp_socket);
 
 #ifdef INET6
 	if (ip6 && inp->inp_ip6_minhlim &&
@@ -1254,8 +1256,11 @@ udp_attach(struct socket *so, int proto)
 	if (so->so_pcb != NULL)
 		return EINVAL;
 
-	if ((error = soreserve(so, udp_sendspace, udp_recvspace)) ||
-	    (error = in_pcballoc(so, &udbtable)))
+	if ((error = soreserve(so, udp_sendspace, udp_recvspace)))
+		return error;
+
+	NET_ASSERT_LOCKED();
+	if ((error = in_pcballoc(so, &udbtable)))
 		return error;
 #ifdef INET6
 	if (sotoinpcb(so)->inp_flags & INP_IPV6)

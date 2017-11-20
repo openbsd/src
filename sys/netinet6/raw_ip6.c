@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.122 2017/11/02 14:01:18 florian Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.123 2017/11/20 10:35:24 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -136,6 +136,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 	/* KAME hack: recover scopeid */
 	in6_recoverscope(&rip6src, &ip6->ip6_src);
 
+	NET_ASSERT_LOCKED();
 	TAILQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {
 		if (in6p->inp_socket->so_state & SS_CANTRCVMORE)
 			continue;
@@ -695,8 +696,10 @@ rip6_attach(struct socket *so, int proto)
 	if (proto < 0 || proto >= IPPROTO_MAX)
 		return EPROTONOSUPPORT;
 
-	if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) ||
-	    (error = in_pcballoc(so, &rawin6pcbtable)))
+	if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)))
+		return error;
+	NET_ASSERT_LOCKED();
+	if ((error = in_pcballoc(so, &rawin6pcbtable)))
 		return error;
 
 	in6p = sotoinpcb(so);

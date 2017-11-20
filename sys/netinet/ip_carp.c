@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.317 2017/10/16 13:20:20 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.318 2017/11/20 10:35:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -505,7 +505,9 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 	}
 	m->m_data -= iplen;
 
+	KERNEL_LOCK();
 	carp_proto_input_c(ifp, m, ch, ismulti, AF_INET);
+	KERNEL_UNLOCK();
 	return IPPROTO_DONE;
 }
 
@@ -580,7 +582,9 @@ carp6_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 	}
 	m->m_data -= *offp;
 
+	KERNEL_LOCK();
 	carp_proto_input_c(ifp, m, ch, 1, AF_INET6);
+	KERNEL_UNLOCK();
 	return IPPROTO_DONE;
 }
 #endif /* INET6 */
@@ -1514,7 +1518,7 @@ carp_lsdrop(struct mbuf *m, sa_family_t af, u_int32_t *src, u_int32_t *dst,
 		m_tag_delete(m, mtag);
 		m->m_flags &= ~M_MCAST;
 	}
-	
+
 	/*
 	 * Return without making a drop decision. This allows to clear the
 	 * M_MCAST flag and do nothing else.

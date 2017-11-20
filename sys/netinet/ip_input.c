@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.332 2017/11/14 09:30:17 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.333 2017/11/20 10:35:24 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1386,7 +1386,7 @@ ip_stripoptions(struct mbuf *m)
 	ip->ip_len = htons(ntohs(ip->ip_len) - olen);
 }
 
-int inetctlerrmap[PRC_NCMDS] = {
+const int inetctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
 	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,

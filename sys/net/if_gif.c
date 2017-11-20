@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.104 2017/11/17 20:38:33 jca Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.105 2017/11/20 10:35:24 mpi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -621,6 +621,7 @@ in_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	ip = mtod(m, struct ip *);
 
+	NET_ASSERT_LOCKED();
 	/* this code will be soon improved. */
 	LIST_FOREACH(sc, &gif_softc_list, gif_list) {
 		if (sc->gif_psrc == NULL || sc->gif_pdst == NULL ||
@@ -729,7 +730,8 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 	return 0;
 }
 
-int in6_gif_input(struct mbuf **mp, int *offp, int proto, int af)
+int
+in6_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	struct mbuf *m = *mp;
 	struct gif_softc *sc;
@@ -746,6 +748,7 @@ int in6_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 	in6_recoverscope(&src, &ip6->ip6_src);
 	in6_recoverscope(&dst, &ip6->ip6_dst);
 
+	NET_ASSERT_LOCKED();
 	LIST_FOREACH(sc, &gif_softc_list, gif_list) {
 		if (sc->gif_psrc == NULL || sc->gif_pdst == NULL ||
 		    sc->gif_psrc->sa_family != AF_INET6 ||

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.160 2017/11/14 09:30:17 mpi Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.161 2017/11/20 10:35:24 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -860,6 +860,7 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
 			return;
 
 		/* Walk the chain backwards to the first tdb */
+		NET_ASSERT_LOCKED();
 		for (; tdbp; tdbp = tdbp->tdb_inext) {
 			if (tdbp->tdb_flags & TDBF_INVALID ||
 			    (adjust = ipsec_hdrsz(tdbp)) == -1)

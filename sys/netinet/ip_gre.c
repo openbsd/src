@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.67 2017/10/09 08:35:38 mpi Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.68 2017/11/20 10:35:24 mpi Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -356,6 +356,7 @@ gre_lookup(struct mbuf *m, u_int8_t proto)
 	struct ip *ip = mtod(m, struct ip *);
 	struct gre_softc *sc;
 
+	NET_ASSERT_LOCKED();
 	LIST_FOREACH(sc, &gre_softc_list, sc_list) {
 		if ((sc->g_dst.s_addr == ip->ip_src.s_addr) &&
 		    (sc->g_src.s_addr == ip->ip_dst.s_addr) &&
