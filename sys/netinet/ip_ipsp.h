@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.188 2017/11/15 11:48:59 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.189 2017/11/20 14:14:26 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -45,10 +45,6 @@ struct m_tag;
 /* IPSP global definitions. */
 
 #include <sys/types.h>
-#ifdef _KERNEL
-#include <sys/timeout.h>
-#include <sys/tree.h>
-#endif
 #include <sys/queue.h>
 #include <netinet/in.h>
 #include <net/radix.h>
@@ -130,6 +126,8 @@ struct sockaddr_encap {
 #define	IPSP_DIRECTION_OUT	0x2
 
 #ifdef _KERNEL
+#include <sys/timeout.h>
+#include <sys/tree.h>
 
 #define	sen_data		Sen.Data
 #define	sen_ip_src		Sen.Sip4.Src
@@ -352,7 +350,6 @@ struct tdb {				/* tunnel descriptor block */
 	TAILQ_ENTRY(tdb)	tdb_sync_entry;
 };
 
-#endif /* _KERNEL */
 
 struct tdb_ident {
 	u_int32_t spi;
@@ -393,8 +390,6 @@ struct ipsecinit {
 #define	XFT_COMP	0x1000
 
 #define	IPSEC_ZEROES_SIZE	256	/* Larger than an IP6 extension hdr. */
-
-#ifdef _KERNEL
 
 struct xformsw {
 	u_short	xf_type;		/* Unique ID of xform */
