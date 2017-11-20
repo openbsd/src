@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.529 2017/11/17 03:51:32 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.530 2017/11/20 10:16:25 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2653,14 +2653,12 @@ int
 ifpromisc(struct ifnet *ifp, int pswitch)
 {
 	struct ifreq ifr;
+	unsigned short oif_flags;
+	int oif_pcount, error;
 
+	oif_flags = ifp->if_flags;
+	oif_pcount = ifp->if_pcount;
 	if (pswitch) {
-		/*
-		 * If the device is not configured up, we cannot put it in
-		 * promiscuous mode.
-		 */
-		if ((ifp->if_flags & IFF_UP) == 0)
-			return (ENETDOWN);
 		if (ifp->if_pcount++ != 0)
 			return (0);
 		ifp->if_flags |= IFF_PROMISC;
@@ -2668,17 +2666,20 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 		if (--ifp->if_pcount > 0)
 			return (0);
 		ifp->if_flags &= ~IFF_PROMISC;
-		/*
-		 * If the device is not configured up, we should not need to
-		 * turn off promiscuous mode (device should have turned it
-		 * off when interface went down; and will look at IFF_PROMISC
-		 * again next time interface comes up).
-		 */
-		if ((ifp->if_flags & IFF_UP) == 0)
-			return (0);
 	}
+
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return (0);
+
+	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_flags = ifp->if_flags;
-	return ((*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr));
+	error = ((*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr));
+	if (error) {
+		ifp->if_flags = oif_flags;
+		ifp->if_pcount = oif_pcount;
+	}
+
+	return (error);
 }
 
 void
