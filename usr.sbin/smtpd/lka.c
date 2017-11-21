@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.199 2017/05/17 14:00:06 deraadt Exp $	*/
+/*	$OpenBSD: lka.c,v 1.200 2017/11/21 12:20:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -86,294 +86,273 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	if (imsg == NULL)
 		lka_shutdown();
 
-	if (imsg->hdr.type == IMSG_MTA_DNS_HOST ||
-	    imsg->hdr.type == IMSG_MTA_DNS_PTR ||
-	    imsg->hdr.type == IMSG_SMTP_DNS_PTR ||
-	    imsg->hdr.type == IMSG_MTA_DNS_MX ||
-	    imsg->hdr.type == IMSG_MTA_DNS_MX_PREFERENCE) {
+	switch (imsg->hdr.type) {
+
+	case IMSG_MTA_DNS_HOST:
+	case IMSG_MTA_DNS_PTR:
+	case IMSG_SMTP_DNS_PTR:
+	case IMSG_MTA_DNS_MX:
+	case IMSG_MTA_DNS_MX_PREFERENCE:
 		dns_imsg(p, imsg);
 		return;
-	}
 
-	if (p->proc == PROC_PONY) {
-		switch (imsg->hdr.type) {
-		case IMSG_SMTP_CHECK_SENDER:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_string(&m, &tablename);
-			m_get_string(&m, &username);
-			m_get_mailaddr(&m, &maddr);
-			m_end(&m);
+	case IMSG_SMTP_CHECK_SENDER:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &tablename);
+		m_get_string(&m, &username);
+		m_get_mailaddr(&m, &maddr);
+		m_end(&m);
 
-			ret = lka_mailaddrmap(tablename, username, &maddr);
+		ret = lka_mailaddrmap(tablename, username, &maddr);
 
-			m_create(p, IMSG_SMTP_CHECK_SENDER, 0, 0, -1);
-			m_add_id(p, reqid);
-			m_add_int(p, ret);
-			m_close(p);
-			return;
+		m_create(p, IMSG_SMTP_CHECK_SENDER, 0, 0, -1);
+		m_add_id(p, reqid);
+		m_add_int(p, ret);
+		m_close(p);
+		return;
 
-		case IMSG_SMTP_EXPAND_RCPT:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_envelope(&m, &evp);
-			m_end(&m);
-			lka_session(reqid, &evp);
-			return;
+	case IMSG_SMTP_EXPAND_RCPT:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_envelope(&m, &evp);
+		m_end(&m);
+		lka_session(reqid, &evp);
+		return;
 
-		case IMSG_SMTP_LOOKUP_HELO:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_string(&m, &tablename);
-			m_get_sockaddr(&m, (struct sockaddr *)&ss);
-			m_end(&m);
+	case IMSG_SMTP_LOOKUP_HELO:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &tablename);
+		m_get_sockaddr(&m, (struct sockaddr *)&ss);
+		m_end(&m);
 
-			ret = lka_addrname(tablename, (struct sockaddr*)&ss,
-			    &addrname);
+		ret = lka_addrname(tablename, (struct sockaddr*)&ss,
+		    &addrname);
 
-			m_create(p, IMSG_SMTP_LOOKUP_HELO, 0, 0, -1);
-			m_add_id(p, reqid);
-			m_add_int(p, ret);
-			if (ret == LKA_OK)
-				m_add_string(p, addrname.name);
-			m_close(p);
-			return;
+		m_create(p, IMSG_SMTP_LOOKUP_HELO, 0, 0, -1);
+		m_add_id(p, reqid);
+		m_add_int(p, ret);
+		if (ret == LKA_OK)
+			m_add_string(p, addrname.name);
+		m_close(p);
+		return;
 
-		case IMSG_SMTP_TLS_INIT:
-		case IMSG_MTA_TLS_INIT:
-			req_ca_cert = imsg->data;
-			resp_ca_cert.reqid = req_ca_cert->reqid;
+	case IMSG_SMTP_TLS_INIT:
+	case IMSG_MTA_TLS_INIT:
+		req_ca_cert = imsg->data;
+		resp_ca_cert.reqid = req_ca_cert->reqid;
 
-			xlowercase(buf, req_ca_cert->name, sizeof(buf));
-			log_debug("debug: lka: looking up pki \"%s\"", buf);
-			pki = dict_get(env->sc_pki_dict, buf);
-			if (pki == NULL)
-				if (req_ca_cert->fallback)
-					pki = dict_get(env->sc_pki_dict, "*");
-			if (pki == NULL) {
-				resp_ca_cert.status = CA_FAIL;
-				m_compose(p, imsg->hdr.type, 0, 0, -1, &resp_ca_cert,
-				    sizeof(resp_ca_cert));
-				return;
-			}
-			resp_ca_cert.status = CA_OK;
-			resp_ca_cert.cert_len = pki->pki_cert_len;
-			(void)strlcpy(resp_ca_cert.name, pki->pki_name, sizeof resp_ca_cert.name);
-			iov[0].iov_base = &resp_ca_cert;
-			iov[0].iov_len = sizeof(resp_ca_cert);
-			iov[1].iov_base = pki->pki_cert;
-			iov[1].iov_len = pki->pki_cert_len;
-			m_composev(p, imsg->hdr.type, 0, 0, -1, iov, nitems(iov));
-			return;
-
-		case IMSG_SMTP_TLS_VERIFY_CERT:
-		case IMSG_MTA_TLS_VERIFY_CERT:
-			req_ca_vrfy = xmemdup(imsg->data, sizeof *req_ca_vrfy, "lka:ca_vrfy");
-			req_ca_vrfy->cert = xmemdup((char *)imsg->data +
-			    sizeof *req_ca_vrfy, req_ca_vrfy->cert_len, "lka:ca_vrfy");
-			req_ca_vrfy->chain_cert = xcalloc(req_ca_vrfy->n_chain,
-			    sizeof (unsigned char *), "lka:ca_vrfy");
-			req_ca_vrfy->chain_cert_len = xcalloc(req_ca_vrfy->n_chain,
-			    sizeof (off_t), "lka:ca_vrfy");
-			return;
-
-		case IMSG_SMTP_TLS_VERIFY_CHAIN:
-		case IMSG_MTA_TLS_VERIFY_CHAIN:
-			if (req_ca_vrfy == NULL)
-				fatalx("lka:ca_vrfy: chain without a certificate");
-			req_ca_vrfy_chain = imsg->data;
-			req_ca_vrfy->chain_cert[req_ca_vrfy->chain_offset] = xmemdup((char *)imsg->data +
-			    sizeof *req_ca_vrfy_chain, req_ca_vrfy_chain->cert_len, "lka:ca_vrfy");
-			req_ca_vrfy->chain_cert_len[req_ca_vrfy->chain_offset] = req_ca_vrfy_chain->cert_len;
-			req_ca_vrfy->chain_offset++;
-			return;
-
-		case IMSG_SMTP_TLS_VERIFY:
-		case IMSG_MTA_TLS_VERIFY:
-			if (req_ca_vrfy == NULL)
-				fatalx("lka:ca_vrfy: verify without a certificate");
-			lka_certificate_verify(imsg->hdr.type, req_ca_vrfy);
-			req_ca_vrfy = NULL;
-			return;
-
-		case IMSG_SMTP_AUTHENTICATE:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_string(&m, &tablename);
-			m_get_string(&m, &username);
-			m_get_string(&m, &password);
-			m_end(&m);
-
-			if (!tablename[0]) {
-				m_create(p_parent, IMSG_LKA_AUTHENTICATE,
-				    0, 0, -1);
-				m_add_id(p_parent, reqid);
-				m_add_string(p_parent, username);
-				m_add_string(p_parent, password);
-				m_close(p_parent);
-				return;
-			}
-
-			ret = lka_authenticate(tablename, username, password);
-
-			m_create(p, IMSG_SMTP_AUTHENTICATE, 0, 0, -1);
-			m_add_id(p, reqid);
-			m_add_int(p, ret);
-			m_close(p);
+		xlowercase(buf, req_ca_cert->name, sizeof(buf));
+		log_debug("debug: lka: looking up pki \"%s\"", buf);
+		pki = dict_get(env->sc_pki_dict, buf);
+		if (pki == NULL)
+			if (req_ca_cert->fallback)
+				pki = dict_get(env->sc_pki_dict, "*");
+		if (pki == NULL) {
+			resp_ca_cert.status = CA_FAIL;
+			m_compose(p, imsg->hdr.type, 0, 0, -1, &resp_ca_cert,
+			    sizeof(resp_ca_cert));
 			return;
 		}
-	}
+		resp_ca_cert.status = CA_OK;
+		resp_ca_cert.cert_len = pki->pki_cert_len;
+		(void)strlcpy(resp_ca_cert.name, pki->pki_name, sizeof resp_ca_cert.name);
+		iov[0].iov_base = &resp_ca_cert;
+		iov[0].iov_len = sizeof(resp_ca_cert);
+		iov[1].iov_base = pki->pki_cert;
+		iov[1].iov_len = pki->pki_cert_len;
+		m_composev(p, imsg->hdr.type, 0, 0, -1, iov, nitems(iov));
+		return;
 
-	if (p->proc == PROC_PONY) {
-		switch (imsg->hdr.type) {
-		case IMSG_MDA_LOOKUP_USERINFO:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_string(&m, &tablename);
-			m_get_string(&m, &username);
-			m_end(&m);
+	case IMSG_SMTP_TLS_VERIFY_CERT:
+	case IMSG_MTA_TLS_VERIFY_CERT:
+		req_ca_vrfy = xmemdup(imsg->data, sizeof *req_ca_vrfy, "lka:ca_vrfy");
+		req_ca_vrfy->cert = xmemdup((char *)imsg->data +
+		    sizeof *req_ca_vrfy, req_ca_vrfy->cert_len, "lka:ca_vrfy");
+		req_ca_vrfy->chain_cert = xcalloc(req_ca_vrfy->n_chain,
+		    sizeof (unsigned char *), "lka:ca_vrfy");
+		req_ca_vrfy->chain_cert_len = xcalloc(req_ca_vrfy->n_chain,
+		    sizeof (off_t), "lka:ca_vrfy");
+		return;
 
-			ret = lka_userinfo(tablename, username, &userinfo);
+	case IMSG_SMTP_TLS_VERIFY_CHAIN:
+	case IMSG_MTA_TLS_VERIFY_CHAIN:
+		if (req_ca_vrfy == NULL)
+			fatalx("lka:ca_vrfy: chain without a certificate");
+		req_ca_vrfy_chain = imsg->data;
+		req_ca_vrfy->chain_cert[req_ca_vrfy->chain_offset] = xmemdup((char *)imsg->data +
+		    sizeof *req_ca_vrfy_chain, req_ca_vrfy_chain->cert_len, "lka:ca_vrfy");
+		req_ca_vrfy->chain_cert_len[req_ca_vrfy->chain_offset] = req_ca_vrfy_chain->cert_len;
+		req_ca_vrfy->chain_offset++;
+		return;
 
-			m_create(p, IMSG_MDA_LOOKUP_USERINFO, 0, 0, -1);
-			m_add_id(p, reqid);
-			m_add_int(p, ret);
-			if (ret == LKA_OK)
-				m_add_data(p, &userinfo, sizeof(userinfo));
-			m_close(p);
+	case IMSG_SMTP_TLS_VERIFY:
+	case IMSG_MTA_TLS_VERIFY:
+		if (req_ca_vrfy == NULL)
+			fatalx("lka:ca_vrfy: verify without a certificate");
+		lka_certificate_verify(imsg->hdr.type, req_ca_vrfy);
+		req_ca_vrfy = NULL;
+		return;
+
+	case IMSG_SMTP_AUTHENTICATE:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &tablename);
+		m_get_string(&m, &username);
+		m_get_string(&m, &password);
+		m_end(&m);
+
+		if (!tablename[0]) {
+			m_create(p_parent, IMSG_LKA_AUTHENTICATE,
+			    0, 0, -1);
+			m_add_id(p_parent, reqid);
+			m_add_string(p_parent, username);
+			m_add_string(p_parent, password);
+			m_close(p_parent);
 			return;
 		}
-	}
 
-	if (p->proc == PROC_PONY) {
-		switch (imsg->hdr.type) {
+		ret = lka_authenticate(tablename, username, password);
 
-		case IMSG_MTA_LOOKUP_CREDENTIALS:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_string(&m, &tablename);
-			m_get_string(&m, &label);
-			m_end(&m);
+		m_create(p, IMSG_SMTP_AUTHENTICATE, 0, 0, -1);
+		m_add_id(p, reqid);
+		m_add_int(p, ret);
+		m_close(p);
+		return;
 
-			lka_credentials(tablename, label, buf, sizeof(buf));
+	case IMSG_MDA_LOOKUP_USERINFO:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &tablename);
+		m_get_string(&m, &username);
+		m_end(&m);
 
-			m_create(p, IMSG_MTA_LOOKUP_CREDENTIALS, 0, 0, -1);
-			m_add_id(p, reqid);
-			m_add_string(p, buf);
-			m_close(p);
-			return;
+		ret = lka_userinfo(tablename, username, &userinfo);
 
-		case IMSG_MTA_LOOKUP_SOURCE:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_string(&m, &tablename);
-			m_end(&m);
+		m_create(p, IMSG_MDA_LOOKUP_USERINFO, 0, 0, -1);
+		m_add_id(p, reqid);
+		m_add_int(p, ret);
+		if (ret == LKA_OK)
+			m_add_data(p, &userinfo, sizeof(userinfo));
+		m_close(p);
+		return;
 
-			table = table_find(tablename, NULL);
+	case IMSG_MTA_LOOKUP_CREDENTIALS:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &tablename);
+		m_get_string(&m, &label);
+		m_end(&m);
 
-			m_create(p, IMSG_MTA_LOOKUP_SOURCE, 0, 0, -1);
-			m_add_id(p, reqid);
+		lka_credentials(tablename, label, buf, sizeof(buf));
 
-			if (table == NULL) {
-				log_warn("warn: source address table %s missing",
-				    tablename);
+		m_create(p, IMSG_MTA_LOOKUP_CREDENTIALS, 0, 0, -1);
+		m_add_id(p, reqid);
+		m_add_string(p, buf);
+		m_close(p);
+		return;
+
+	case IMSG_MTA_LOOKUP_SOURCE:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &tablename);
+		m_end(&m);
+
+		table = table_find(tablename, NULL);
+
+		m_create(p, IMSG_MTA_LOOKUP_SOURCE, 0, 0, -1);
+		m_add_id(p, reqid);
+
+		if (table == NULL) {
+			log_warn("warn: source address table %s missing",
+			    tablename);
+			m_add_int(p, LKA_TEMPFAIL);
+		}
+		else {
+			ret = table_fetch(table, NULL, K_SOURCE, &lk);
+			if (ret == -1)
 				m_add_int(p, LKA_TEMPFAIL);
-			}
+			else if (ret == 0)
+				m_add_int(p, LKA_PERMFAIL);
 			else {
-				ret = table_fetch(table, NULL, K_SOURCE, &lk);
-				if (ret == -1)
-					m_add_int(p, LKA_TEMPFAIL);
-				else if (ret == 0)
-					m_add_int(p, LKA_PERMFAIL);
-				else {
-					m_add_int(p, LKA_OK);
-					m_add_sockaddr(p,
-					    (struct sockaddr *)&lk.source.addr);
-				}
+				m_add_int(p, LKA_OK);
+				m_add_sockaddr(p,
+				    (struct sockaddr *)&lk.source.addr);
 			}
-			m_close(p);
-			return;
-
-		case IMSG_MTA_LOOKUP_HELO:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_string(&m, &tablename);
-			m_get_sockaddr(&m, (struct sockaddr *)&ss);
-			m_end(&m);
-
-			ret = lka_addrname(tablename, (struct sockaddr*)&ss,
-			    &addrname);
-
-			m_create(p, IMSG_MTA_LOOKUP_HELO, 0, 0, -1);
-			m_add_id(p, reqid);
-			m_add_int(p, ret);
-			if (ret == LKA_OK)
-				m_add_string(p, addrname.name);
-			m_close(p);
-			return;
-
 		}
-	}
+		m_close(p);
+		return;
 
-	if (p->proc == PROC_PARENT) {
-		switch (imsg->hdr.type) {
-		case IMSG_CONF_START:
-			return;
+	case IMSG_MTA_LOOKUP_HELO:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &tablename);
+		m_get_sockaddr(&m, (struct sockaddr *)&ss);
+		m_end(&m);
 
-		case IMSG_CONF_END:
-			if (tracing & TRACE_TABLES)
-				table_dump_all();
+		ret = lka_addrname(tablename, (struct sockaddr*)&ss,
+		    &addrname);
 
-			/* fork & exec tables that need it */
-			table_open_all();
+		m_create(p, IMSG_MTA_LOOKUP_HELO, 0, 0, -1);
+		m_add_id(p, reqid);
+		m_add_int(p, ret);
+		if (ret == LKA_OK)
+			m_add_string(p, addrname.name);
+		m_close(p);
+		return;
 
-			/* revoke proc & exec */
-			if (pledge("stdio rpath inet dns getpw recvfd",
-				NULL) == -1)
-				err(1, "pledge");
+	case IMSG_CONF_START:
+		return;
 
-			/* Start fulfilling requests */
-			mproc_enable(p_pony);
-			return;
+	case IMSG_CONF_END:
+		if (tracing & TRACE_TABLES)
+			table_dump_all();
 
-		case IMSG_LKA_OPEN_FORWARD:
-			lka_session_forward_reply(imsg->data, imsg->fd);
-			return;
+		/* fork & exec tables that need it */
+		table_open_all();
 
-		case IMSG_LKA_AUTHENTICATE:
-			imsg->hdr.type = IMSG_SMTP_AUTHENTICATE;
-			m_forward(p_pony, imsg);
-			return;
-		}
-	}
+		/* revoke proc & exec */
+		if (pledge("stdio rpath inet dns getpw recvfd",
+			NULL) == -1)
+			err(1, "pledge");
 
-	if (p->proc == PROC_CONTROL) {
-		switch (imsg->hdr.type) {
+		/* Start fulfilling requests */
+		mproc_enable(p_pony);
+		return;
 
-		case IMSG_CTL_VERBOSE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			log_trace_verbose(v);
-			return;
+	case IMSG_LKA_OPEN_FORWARD:
+		lka_session_forward_reply(imsg->data, imsg->fd);
+		return;
 
-		case IMSG_CTL_PROFILE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			profiling = v;
-			return;
+	case IMSG_LKA_AUTHENTICATE:
+		imsg->hdr.type = IMSG_SMTP_AUTHENTICATE;
+		m_forward(p_pony, imsg);
+		return;
 
-		case IMSG_CTL_UPDATE_TABLE:
-			table = table_find(imsg->data, NULL);
-			if (table == NULL) {
-				log_warnx("warn: Lookup table not found: "
-				    "\"%s\"", (char *)imsg->data);
-				return;
-			}
-			table_update(table);
+	case IMSG_CTL_VERBOSE:
+		m_msg(&m, imsg);
+		m_get_int(&m, &v);
+		m_end(&m);
+		log_trace_verbose(v);
+		return;
+
+	case IMSG_CTL_PROFILE:
+		m_msg(&m, imsg);
+		m_get_int(&m, &v);
+		m_end(&m);
+		profiling = v;
+		return;
+
+	case IMSG_CTL_UPDATE_TABLE:
+		table = table_find(imsg->data, NULL);
+		if (table == NULL) {
+			log_warnx("warn: Lookup table not found: "
+			    "\"%s\"", (char *)imsg->data);
 			return;
 		}
+		table_update(table);
+		return;
 	}
 
 	errx(1, "lka_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));

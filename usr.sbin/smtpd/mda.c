@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.127 2017/07/31 16:45:03 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.128 2017/11/21 12:20:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -127,354 +127,343 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 	int			 n;
 	enum lka_resp_status	status;
 
-	if (p->proc == PROC_LKA) {
-		switch (imsg->hdr.type) {
-		case IMSG_MDA_LOOKUP_USERINFO:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_int(&m, (int *)&status);
-			if (status == LKA_OK)
-				m_get_data(&m, &data, &sz);
-			m_end(&m);
+	switch (imsg->hdr.type) {
+	case IMSG_MDA_LOOKUP_USERINFO:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_int(&m, (int *)&status);
+		if (status == LKA_OK)
+			m_get_data(&m, &data, &sz);
+		m_end(&m);
 
-			u = tree_xget(&users, reqid);
+		u = tree_xget(&users, reqid);
 
-			if (status == LKA_TEMPFAIL)
-				mda_fail(u, 0,
-				    "Temporary failure in user lookup",
-				    ESC_OTHER_ADDRESS_STATUS);
-			else if (status == LKA_PERMFAIL)
-				mda_fail(u, 1,
-				    "Permanent failure in user lookup",
-				    ESC_DESTINATION_MAILBOX_HAS_MOVED);
-			else {
-				if (sz != sizeof(u->userinfo))
-					fatalx("mda: userinfo size mismatch");
-				memmove(&u->userinfo, data, sz);
-				u->flags &= ~USER_WAITINFO;
-				u->flags |= USER_RUNNABLE;
-				TAILQ_INSERT_TAIL(&runnable, u, entry_runnable);
-				mda_drain();
-			}
-			return;
-		}
-	}
-
-	if (p->proc == PROC_QUEUE) {
-		switch (imsg->hdr.type) {
-
-		case IMSG_QUEUE_DELIVER:
-			m_msg(&m, imsg);
-			m_get_envelope(&m, &evp);
-			m_end(&m);
-
-			u = mda_user(&evp);
-
-			if (u->evpcount >= env->sc_mda_task_hiwat) {
-				if (!(u->flags & USER_ONHOLD)) {
-					log_debug("debug: mda: hiwat reached for "
-					    "user \"%s\": holding envelopes",
-					    mda_user_to_text(u));
-					u->flags |= USER_ONHOLD;
-				}
-			}
-
-			if (u->flags & USER_ONHOLD) {
-				u->flags |= USER_HOLDQ;
-				m_create(p_queue, IMSG_MDA_DELIVERY_HOLD,
-				    0, 0, -1);
-				m_add_evpid(p_queue, evp.id);
-				m_add_id(p_queue, u->id);
-				m_close(p_queue);
-				return;
-			}
-
-			e = mda_envelope(&evp);
-			TAILQ_INSERT_TAIL(&u->envelopes, e, entry);
-			u->evpcount += 1;
-			stat_increment("mda.pending", 1);
-
-			if (!(u->flags & USER_RUNNABLE) &&
-			    !(u->flags & USER_WAITINFO)) {
-				u->flags |= USER_RUNNABLE;
-				TAILQ_INSERT_TAIL(&runnable, u, entry_runnable);
-			}
-
+		if (status == LKA_TEMPFAIL)
+			mda_fail(u, 0,
+			    "Temporary failure in user lookup",
+			    ESC_OTHER_ADDRESS_STATUS);
+		else if (status == LKA_PERMFAIL)
+			mda_fail(u, 1,
+			    "Permanent failure in user lookup",
+			    ESC_DESTINATION_MAILBOX_HAS_MOVED);
+		else {
+			if (sz != sizeof(u->userinfo))
+				fatalx("mda: userinfo size mismatch");
+			memmove(&u->userinfo, data, sz);
+			u->flags &= ~USER_WAITINFO;
+			u->flags |= USER_RUNNABLE;
+			TAILQ_INSERT_TAIL(&runnable, u, entry_runnable);
 			mda_drain();
-			return;
+		}
+		return;
 
-		case IMSG_MDA_OPEN_MESSAGE:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_end(&m);
+	case IMSG_QUEUE_DELIVER:
+		m_msg(&m, imsg);
+		m_get_envelope(&m, &evp);
+		m_end(&m);
 
-			s = tree_xget(&sessions, reqid);
-			e = s->evp;
+		u = mda_user(&evp);
 
-			if (imsg->fd == -1) {
-				log_debug("debug: mda: cannot get message fd");
-				mda_queue_tempfail(e->id,
-				    "Cannot get message fd",
-				    ESC_OTHER_MAIL_SYSTEM_STATUS);
-				mda_log(e, "TempFail", "Cannot get message fd");
-				mda_done(s);
-				return;
+		if (u->evpcount >= env->sc_mda_task_hiwat) {
+			if (!(u->flags & USER_ONHOLD)) {
+				log_debug("debug: mda: hiwat reached for "
+				    "user \"%s\": holding envelopes",
+				    mda_user_to_text(u));
+				u->flags |= USER_ONHOLD;
 			}
+		}
 
-			log_debug("debug: mda: got message fd %d "
-			    "for session %016"PRIx64 " evpid %016"PRIx64,
-			    imsg->fd, s->id, e->id);
-
-			if ((s->datafp = fdopen(imsg->fd, "r")) == NULL) {
-				log_warn("warn: mda: fdopen");
-				close(imsg->fd);
-				mda_queue_tempfail(e->id, "fdopen failed",
-				    ESC_OTHER_MAIL_SYSTEM_STATUS);
-				mda_log(e, "TempFail", "fdopen failed");
-				mda_done(s);
-				return;
-			}
-
-			/* check delivery loop */
-			if (mda_check_loop(s->datafp, e)) {
-				log_debug("debug: mda: loop detected");
-				mda_queue_loop(e->id);
-				mda_log(e, "PermFail", "Loop detected");
-				mda_done(s);
-				return;
-			}
-
-			n = 0;
-			/* 
-			 * prepend "From " separator ... for 
-			 * A_MDA and A_FILENAME backends only
-			 */
-			if (e->method == A_MDA || e->method == A_FILENAME) {
-				time(&now);
-				if (e->sender[0])
-					n = io_printf(s->io, "From %s %s",
-					    e->sender, ctime(&now));
-				else
-					n = io_printf(s->io,
-					    "From MAILER-DAEMON@%s %s",
-					    env->sc_hostname, ctime(&now));
-			}
-			if (n != -1) {
-				/* start queueing delivery headers */
-				if (e->sender[0])
-					/* 
-					 * XXX: remove existing Return-Path,
-					 * if any
-					 */
-					n = io_printf(s->io,
-					    "Return-Path: %s\n"
-					    "Delivered-To: %s\n",
-					    e->sender,
-					    e->rcpt ? e->rcpt : e->dest);
-				else
-					n = io_printf(s->io,
-					    "Delivered-To: %s\n",
-					    e->rcpt ? e->rcpt : e->dest);
-			}
-			if (n == -1) {
-				log_warn("warn: mda: "
-				    "fail to write delivery info");
-				mda_queue_tempfail(e->id, "Out of memory",
-				    ESC_OTHER_MAIL_SYSTEM_STATUS);
-				mda_log(e, "TempFail", "Out of memory");
-				mda_done(s);
-				return;
-			}
-
-			/* request parent to fork a helper process */
-			userinfo = &s->user->userinfo;
-			memset(&deliver, 0, sizeof deliver);
-			switch (e->method) {
-			case A_MDA:
-				deliver.mode = A_MDA;
-				deliver.userinfo = *userinfo;
-				(void)strlcpy(deliver.user, userinfo->username,
-				    sizeof(deliver.user));
-				if (strlcpy(deliver.to, e->buffer,
-					sizeof(deliver.to))
-				    >= sizeof(deliver.to)) {
-					mda_queue_tempfail(e->id,
-					    "mda command too long",
-					    ESC_OTHER_MAIL_SYSTEM_STATUS);
-					mda_log(e, "TempFail",
-					    "mda command too long");
-					mda_done(s);
-					return;
-				}
-				break;
-
-			case A_MBOX:
-				/* 
-				 * MBOX is a special case as we MUST
-				 * deliver as root, just override the uid.
-				 */
-				deliver.mode = A_MBOX;
-				deliver.userinfo = *userinfo;
-				deliver.userinfo.uid = 0;
-				(void)strlcpy(deliver.user, "root",
-				    sizeof(deliver.user));
-				(void)strlcpy(deliver.from, e->sender,
-				    sizeof(deliver.from));
-				(void)strlcpy(deliver.to, userinfo->username,
-				    sizeof(deliver.to));
-				break;
-
-			case A_MAILDIR:
-				deliver.mode = A_MAILDIR;
-				deliver.userinfo = *userinfo;
-				(void)strlcpy(deliver.user, userinfo->username,
-				    sizeof(deliver.user));
-				(void)strlcpy(deliver.dest, e->dest,
-				    sizeof(deliver.dest));
-				if (strlcpy(deliver.to, e->buffer,
-					sizeof(deliver.to))
-				    >= sizeof(deliver.to)) {
-					log_warn("warn: mda: "
-					    "deliver buffer too large");
-					mda_queue_tempfail(e->id,
-					    "Maildir path too long",
-					    ESC_OTHER_MAIL_SYSTEM_STATUS);
-					mda_log(e, "TempFail",
-					    "Maildir path too long");
-					mda_done(s);
-					return;
-				}
-				break;
-
-			case A_FILENAME:
-				deliver.mode = A_FILENAME;
-				deliver.userinfo = *userinfo;
-				(void)strlcpy(deliver.user, userinfo->username,
-				    sizeof deliver.user);
-				if (strlcpy(deliver.to, e->buffer,
-					sizeof(deliver.to))
-				    >= sizeof(deliver.to)) {
-					log_warn("warn: mda: "
-					    "deliver buffer too large");
-					mda_queue_tempfail(e->id,
-					    "filename path too long",
-					    ESC_OTHER_MAIL_SYSTEM_STATUS);
-					mda_log(e, "TempFail",
-					    "filename path too long");
-					mda_done(s);
-					return;
-				}
-				break;
-
-			case A_LMTP:
-				deliver.mode = A_LMTP;
-				deliver.userinfo = *userinfo;
-				(void)strlcpy(deliver.user, e->user,
-				    sizeof(deliver.user));
-				(void)strlcpy(deliver.from, e->sender,
-				    sizeof(deliver.from));
-				(void)strlcpy(deliver.dest, e->dest,
-				    sizeof(deliver.dest));
-				if (strlcpy(deliver.to, e->buffer,
-					sizeof(deliver.to))
-				    >= sizeof(deliver.to)) {
-					log_warn("warn: mda: "
-					    "deliver buffer too large");
-					mda_queue_tempfail(e->id,
-					    "socket path too long",
-					    ESC_OTHER_MAIL_SYSTEM_STATUS);
-					mda_log(e, "TempFail",
-					    "socket path too long");
-					mda_done(s);
-					return;
-				}
-				break;
-
-			default:
-				errx(1, "mda: unknown delivery method: %d",
-				    e->method);
-			}
-
-			log_debug("debug: mda: querying mda fd "
-			    "for session %016"PRIx64 " evpid %016"PRIx64,
-			    s->id, s->evp->id);
-
-			m_create(p_parent, IMSG_MDA_FORK, 0, 0, -1);
-			m_add_id(p_parent, reqid);
-			m_add_data(p_parent, &deliver, sizeof(deliver));
-			m_close(p_parent);
+		if (u->flags & USER_ONHOLD) {
+			u->flags |= USER_HOLDQ;
+			m_create(p_queue, IMSG_MDA_DELIVERY_HOLD,
+			    0, 0, -1);
+			m_add_evpid(p_queue, evp.id);
+			m_add_id(p_queue, u->id);
+			m_close(p_queue);
 			return;
 		}
-	}
 
-	if (p->proc == PROC_PARENT) {
-		switch (imsg->hdr.type) {
-		case IMSG_MDA_FORK:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_end(&m);
+		e = mda_envelope(&evp);
+		TAILQ_INSERT_TAIL(&u->envelopes, e, entry);
+		u->evpcount += 1;
+		stat_increment("mda.pending", 1);
 
-			s = tree_xget(&sessions, reqid);
-			e = s->evp;
-			if (imsg->fd == -1) {
-				log_warn("warn: mda: fail to retrieve mda fd");
-				mda_queue_tempfail(e->id, "Cannot get mda fd",
-				    ESC_OTHER_MAIL_SYSTEM_STATUS);
-				mda_log(e, "TempFail", "Cannot get mda fd");
-				mda_done(s);
-				return;
-			}
+		if (!(u->flags & USER_RUNNABLE) &&
+		    !(u->flags & USER_WAITINFO)) {
+			u->flags |= USER_RUNNABLE;
+			TAILQ_INSERT_TAIL(&runnable, u, entry_runnable);
+		}
 
-			log_debug("debug: mda: got mda fd %d "
-			    "for session %016"PRIx64 " evpid %016"PRIx64,
-			    imsg->fd, s->id, s->evp->id);
+		mda_drain();
+		return;
 
-			io_set_nonblocking(imsg->fd);
-			io_set_fd(s->io, imsg->fd);
-			io_set_write(s->io);
-			return;
+	case IMSG_MDA_OPEN_MESSAGE:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_end(&m);
 
-		case IMSG_MDA_DONE:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_string(&m, &parent_error);
-			m_end(&m);
+		s = tree_xget(&sessions, reqid);
+		e = s->evp;
 
-			s = tree_xget(&sessions, reqid);
-			e = s->evp;
-			/*
-			 * Grab last line of mda stdout/stderr if available.
-			 */
-			out[0] = '\0';
-			if (imsg->fd != -1)
-				mda_getlastline(imsg->fd, out, sizeof(out));
-			/*
-			 * Choose between parent's description of error and
-			 * child's output, the latter having preference over
-			 * the former.
-			 */
-			error = NULL;
-			if (strcmp(parent_error, "exited okay") == 0) {
-				if (s->datafp || (s->io && io_queued(s->io)))
-					error = "mda exited prematurely";
-			} else
-				error = out[0] ? out : parent_error;
-
-			/* update queue entry */
-			if (error) {
-				mda_queue_tempfail(e->id, error,
-				    ESC_OTHER_MAIL_SYSTEM_STATUS);
-				(void)snprintf(buf, sizeof buf,
-				    "Error (%s)", error);
-				mda_log(e, "TempFail", buf);
-			}
-			else {
-				mda_queue_ok(e->id);
-				mda_log(e, "Ok", "Delivered");
-			}
+		if (imsg->fd == -1) {
+			log_debug("debug: mda: cannot get message fd");
+			mda_queue_tempfail(e->id,
+			    "Cannot get message fd",
+			    ESC_OTHER_MAIL_SYSTEM_STATUS);
+			mda_log(e, "TempFail", "Cannot get message fd");
 			mda_done(s);
 			return;
 		}
+
+		log_debug("debug: mda: got message fd %d "
+		    "for session %016"PRIx64 " evpid %016"PRIx64,
+		    imsg->fd, s->id, e->id);
+
+		if ((s->datafp = fdopen(imsg->fd, "r")) == NULL) {
+			log_warn("warn: mda: fdopen");
+			close(imsg->fd);
+			mda_queue_tempfail(e->id, "fdopen failed",
+			    ESC_OTHER_MAIL_SYSTEM_STATUS);
+			mda_log(e, "TempFail", "fdopen failed");
+			mda_done(s);
+			return;
+		}
+
+		/* check delivery loop */
+		if (mda_check_loop(s->datafp, e)) {
+			log_debug("debug: mda: loop detected");
+			mda_queue_loop(e->id);
+			mda_log(e, "PermFail", "Loop detected");
+			mda_done(s);
+			return;
+		}
+
+		n = 0;
+		/* 
+		 * prepend "From " separator ... for 
+		 * A_MDA and A_FILENAME backends only
+		 */
+		if (e->method == A_MDA || e->method == A_FILENAME) {
+			time(&now);
+			if (e->sender[0])
+				n = io_printf(s->io, "From %s %s",
+				    e->sender, ctime(&now));
+			else
+				n = io_printf(s->io,
+				    "From MAILER-DAEMON@%s %s",
+				    env->sc_hostname, ctime(&now));
+		}
+		if (n != -1) {
+			/* start queueing delivery headers */
+			if (e->sender[0])
+				/* 
+				 * XXX: remove existing Return-Path,
+				 * if any
+				 */
+				n = io_printf(s->io,
+				    "Return-Path: %s\n"
+				    "Delivered-To: %s\n",
+				    e->sender,
+				    e->rcpt ? e->rcpt : e->dest);
+			else
+				n = io_printf(s->io,
+				    "Delivered-To: %s\n",
+				    e->rcpt ? e->rcpt : e->dest);
+		}
+		if (n == -1) {
+			log_warn("warn: mda: "
+			    "fail to write delivery info");
+			mda_queue_tempfail(e->id, "Out of memory",
+			    ESC_OTHER_MAIL_SYSTEM_STATUS);
+			mda_log(e, "TempFail", "Out of memory");
+			mda_done(s);
+			return;
+		}
+
+		/* request parent to fork a helper process */
+		userinfo = &s->user->userinfo;
+		memset(&deliver, 0, sizeof deliver);
+		switch (e->method) {
+		case A_MDA:
+			deliver.mode = A_MDA;
+			deliver.userinfo = *userinfo;
+			(void)strlcpy(deliver.user, userinfo->username,
+			    sizeof(deliver.user));
+			if (strlcpy(deliver.to, e->buffer,
+				sizeof(deliver.to))
+			    >= sizeof(deliver.to)) {
+				mda_queue_tempfail(e->id,
+				    "mda command too long",
+				    ESC_OTHER_MAIL_SYSTEM_STATUS);
+				mda_log(e, "TempFail",
+				    "mda command too long");
+				mda_done(s);
+				return;
+			}
+			break;
+
+		case A_MBOX:
+			/* 
+			 * MBOX is a special case as we MUST
+			 * deliver as root, just override the uid.
+			 */
+			deliver.mode = A_MBOX;
+			deliver.userinfo = *userinfo;
+			deliver.userinfo.uid = 0;
+			(void)strlcpy(deliver.user, "root",
+			    sizeof(deliver.user));
+			(void)strlcpy(deliver.from, e->sender,
+			    sizeof(deliver.from));
+			(void)strlcpy(deliver.to, userinfo->username,
+			    sizeof(deliver.to));
+			break;
+
+		case A_MAILDIR:
+			deliver.mode = A_MAILDIR;
+			deliver.userinfo = *userinfo;
+			(void)strlcpy(deliver.user, userinfo->username,
+			    sizeof(deliver.user));
+			(void)strlcpy(deliver.dest, e->dest,
+			    sizeof(deliver.dest));
+			if (strlcpy(deliver.to, e->buffer,
+				sizeof(deliver.to))
+			    >= sizeof(deliver.to)) {
+				log_warn("warn: mda: "
+				    "deliver buffer too large");
+				mda_queue_tempfail(e->id,
+				    "Maildir path too long",
+				    ESC_OTHER_MAIL_SYSTEM_STATUS);
+				mda_log(e, "TempFail",
+				    "Maildir path too long");
+				mda_done(s);
+				return;
+			}
+			break;
+
+		case A_FILENAME:
+			deliver.mode = A_FILENAME;
+			deliver.userinfo = *userinfo;
+			(void)strlcpy(deliver.user, userinfo->username,
+			    sizeof deliver.user);
+			if (strlcpy(deliver.to, e->buffer,
+				sizeof(deliver.to))
+			    >= sizeof(deliver.to)) {
+				log_warn("warn: mda: "
+				    "deliver buffer too large");
+				mda_queue_tempfail(e->id,
+				    "filename path too long",
+				    ESC_OTHER_MAIL_SYSTEM_STATUS);
+				mda_log(e, "TempFail",
+				    "filename path too long");
+				mda_done(s);
+				return;
+			}
+			break;
+
+		case A_LMTP:
+			deliver.mode = A_LMTP;
+			deliver.userinfo = *userinfo;
+			(void)strlcpy(deliver.user, e->user,
+			    sizeof(deliver.user));
+			(void)strlcpy(deliver.from, e->sender,
+			    sizeof(deliver.from));
+			(void)strlcpy(deliver.dest, e->dest,
+			    sizeof(deliver.dest));
+			if (strlcpy(deliver.to, e->buffer,
+				sizeof(deliver.to))
+			    >= sizeof(deliver.to)) {
+				log_warn("warn: mda: "
+				    "deliver buffer too large");
+				mda_queue_tempfail(e->id,
+				    "socket path too long",
+				    ESC_OTHER_MAIL_SYSTEM_STATUS);
+				mda_log(e, "TempFail",
+				    "socket path too long");
+				mda_done(s);
+				return;
+			}
+			break;
+
+		default:
+			errx(1, "mda: unknown delivery method: %d",
+			    e->method);
+		}
+
+		log_debug("debug: mda: querying mda fd "
+		    "for session %016"PRIx64 " evpid %016"PRIx64,
+		    s->id, s->evp->id);
+
+		m_create(p_parent, IMSG_MDA_FORK, 0, 0, -1);
+		m_add_id(p_parent, reqid);
+		m_add_data(p_parent, &deliver, sizeof(deliver));
+		m_close(p_parent);
+		return;
+
+	case IMSG_MDA_FORK:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_end(&m);
+
+		s = tree_xget(&sessions, reqid);
+		e = s->evp;
+		if (imsg->fd == -1) {
+			log_warn("warn: mda: fail to retrieve mda fd");
+			mda_queue_tempfail(e->id, "Cannot get mda fd",
+			    ESC_OTHER_MAIL_SYSTEM_STATUS);
+			mda_log(e, "TempFail", "Cannot get mda fd");
+			mda_done(s);
+			return;
+		}
+
+		log_debug("debug: mda: got mda fd %d "
+		    "for session %016"PRIx64 " evpid %016"PRIx64,
+		    imsg->fd, s->id, s->evp->id);
+
+		io_set_nonblocking(imsg->fd);
+		io_set_fd(s->io, imsg->fd);
+		io_set_write(s->io);
+		return;
+
+	case IMSG_MDA_DONE:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &parent_error);
+		m_end(&m);
+
+		s = tree_xget(&sessions, reqid);
+		e = s->evp;
+		/*
+		 * Grab last line of mda stdout/stderr if available.
+		 */
+		out[0] = '\0';
+		if (imsg->fd != -1)
+			mda_getlastline(imsg->fd, out, sizeof(out));
+		/*
+		 * Choose between parent's description of error and
+		 * child's output, the latter having preference over
+		 * the former.
+		 */
+		error = NULL;
+		if (strcmp(parent_error, "exited okay") == 0) {
+			if (s->datafp || (s->io && io_queued(s->io)))
+				error = "mda exited prematurely";
+		} else
+			error = out[0] ? out : parent_error;
+
+		/* update queue entry */
+		if (error) {
+			mda_queue_tempfail(e->id, error,
+			    ESC_OTHER_MAIL_SYSTEM_STATUS);
+			(void)snprintf(buf, sizeof buf,
+			    "Error (%s)", error);
+			mda_log(e, "TempFail", buf);
+		}
+		else {
+			mda_queue_ok(e->id);
+			mda_log(e, "Ok", "Delivered");
+		}
+		mda_done(s);
+		return;
 	}
 
 	errx(1, "mda_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));

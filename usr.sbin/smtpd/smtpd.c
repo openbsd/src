@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.290 2017/09/08 16:51:22 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.291 2017/11/21 12:20:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -162,100 +162,90 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 	if (imsg == NULL)
 		fatalx("process %s socket closed", p->name);
 
-	if (p->proc == PROC_LKA) {
-		switch (imsg->hdr.type) {
-		case IMSG_LKA_OPEN_FORWARD:
-			CHECK_IMSG_DATA_SIZE(imsg, sizeof *fwreq);
-			fwreq = imsg->data;
-			fd = parent_forward_open(fwreq->user, fwreq->directory,
-			    fwreq->uid, fwreq->gid);
-			fwreq->status = 0;
-			if (fd == -1 && errno != ENOENT) {
-				if (errno == EAGAIN)
-					fwreq->status = -1;
-			}
-			else
-				fwreq->status = 1;
-			m_compose(p, IMSG_LKA_OPEN_FORWARD, 0, 0, fd,
-			    fwreq, sizeof *fwreq);
-			return;
+	switch (imsg->hdr.type) {
+	case IMSG_LKA_OPEN_FORWARD:
+		CHECK_IMSG_DATA_SIZE(imsg, sizeof *fwreq);
+		fwreq = imsg->data;
+		fd = parent_forward_open(fwreq->user, fwreq->directory,
+		    fwreq->uid, fwreq->gid);
+		fwreq->status = 0;
+		if (fd == -1 && errno != ENOENT) {
+			if (errno == EAGAIN)
+				fwreq->status = -1;
+		}
+		else
+			fwreq->status = 1;
+		m_compose(p, IMSG_LKA_OPEN_FORWARD, 0, 0, fd,
+		    fwreq, sizeof *fwreq);
+		return;
 
-		case IMSG_LKA_AUTHENTICATE:
-			/*
-			 * If we reached here, it means we want root to lookup
-			 * system user.
-			 */
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_string(&m, &username);
-			m_get_string(&m, &password);
-			m_end(&m);
+	case IMSG_LKA_AUTHENTICATE:
+		/*
+		 * If we reached here, it means we want root to lookup
+		 * system user.
+		 */
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &username);
+		m_get_string(&m, &password);
+		m_end(&m);
 
-			ret = parent_auth_user(username, password);
+		ret = parent_auth_user(username, password);
 
-			m_create(p, IMSG_LKA_AUTHENTICATE, 0, 0, -1);
-			m_add_id(p, reqid);
-			m_add_int(p, ret);
-			m_close(p);
+		m_create(p, IMSG_LKA_AUTHENTICATE, 0, 0, -1);
+		m_add_id(p, reqid);
+		m_add_int(p, ret);
+		m_close(p);
+		return;
+
+	case IMSG_MDA_FORK:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_data(&m, &data, &sz);
+		m_end(&m);
+		if (sz != sizeof(deliver))
+			fatalx("expected deliver");
+		memmove(&deliver, data, sz);
+		forkmda(p, reqid, &deliver);
+		return;
+
+	case IMSG_MDA_KILL:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &cause);
+		m_end(&m);
+
+		i = NULL;
+		while ((n = tree_iter(&children, &i, NULL, (void**)&c)))
+			if (c->type == CHILD_MDA &&
+			    c->mda_id == reqid &&
+			    c->cause == NULL)
+				break;
+		if (!n) {
+			log_debug("debug: smtpd: "
+			    "kill request: proc not found");
 			return;
 		}
-	}
 
-	if (p->proc == PROC_PONY) {
-		switch (imsg->hdr.type) {
-		case IMSG_MDA_FORK:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_data(&m, &data, &sz);
-			m_end(&m);
-			if (sz != sizeof(deliver))
-				fatalx("expected deliver");
-			memmove(&deliver, data, sz);
-			forkmda(p, reqid, &deliver);
-			return;
+		c->cause = xstrdup(cause, "parent_imsg");
+		log_debug("debug: smtpd: kill requested for %u: %s",
+		    c->pid, c->cause);
+		kill(c->pid, SIGTERM);
+		return;
 
-		case IMSG_MDA_KILL:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_string(&m, &cause);
-			m_end(&m);
+	case IMSG_CTL_VERBOSE:
+		m_msg(&m, imsg);
+		m_get_int(&m, &v);
+		m_end(&m);
+		log_trace_verbose(v);
+		return;
 
-			i = NULL;
-			while ((n = tree_iter(&children, &i, NULL, (void**)&c)))
-				if (c->type == CHILD_MDA &&
-				    c->mda_id == reqid &&
-				    c->cause == NULL)
-					break;
-			if (!n) {
-				log_debug("debug: smtpd: "
-				    "kill request: proc not found");
-				return;
-			}
-
-			c->cause = xstrdup(cause, "parent_imsg");
-			log_debug("debug: smtpd: kill requested for %u: %s",
-			    c->pid, c->cause);
-			kill(c->pid, SIGTERM);
-			return;
-		}
-	}
-
-	if (p->proc == PROC_CONTROL) {
-		switch (imsg->hdr.type) {
-		case IMSG_CTL_VERBOSE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			log_trace_verbose(v);
-			return;
-
-		case IMSG_CTL_PROFILE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			profiling = v;
-			return;
-		}
+	case IMSG_CTL_PROFILE:
+		m_msg(&m, imsg);
+		m_get_int(&m, &v);
+		m_end(&m);
+		profiling = v;
+		return;
 	}
 
 	errx(1, "parent_imsg: unexpected %s imsg from %s",

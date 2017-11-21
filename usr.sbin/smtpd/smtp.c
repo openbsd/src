@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.156 2017/05/22 13:43:15 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.157 2017/11/21 12:20:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -58,57 +58,46 @@ static size_t	maxsessions;
 void
 smtp_imsg(struct mproc *p, struct imsg *imsg)
 {
-	if (p->proc == PROC_LKA) {
-		switch (imsg->hdr.type) {
-		case IMSG_SMTP_DNS_PTR:
-		case IMSG_SMTP_CHECK_SENDER:
-		case IMSG_SMTP_EXPAND_RCPT:
-		case IMSG_SMTP_LOOKUP_HELO:
-		case IMSG_SMTP_AUTHENTICATE:
-		case IMSG_SMTP_TLS_INIT:
-		case IMSG_SMTP_TLS_VERIFY:
-			smtp_session_imsg(p, imsg);
-			return;
-		}
-	}
+	switch (imsg->hdr.type) {
+	case IMSG_SMTP_DNS_PTR:
+	case IMSG_SMTP_CHECK_SENDER:
+	case IMSG_SMTP_EXPAND_RCPT:
+	case IMSG_SMTP_LOOKUP_HELO:
+	case IMSG_SMTP_AUTHENTICATE:
+	case IMSG_SMTP_TLS_INIT:
+	case IMSG_SMTP_TLS_VERIFY:
+		smtp_session_imsg(p, imsg);
+		return;
 
-	if (p->proc == PROC_QUEUE) {
-		switch (imsg->hdr.type) {
-		case IMSG_SMTP_MESSAGE_COMMIT:
-		case IMSG_SMTP_MESSAGE_CREATE:
-		case IMSG_SMTP_MESSAGE_OPEN:
-		case IMSG_QUEUE_ENVELOPE_SUBMIT:
-		case IMSG_QUEUE_ENVELOPE_COMMIT:
-			smtp_session_imsg(p, imsg);
-			return;
+	case IMSG_SMTP_MESSAGE_COMMIT:
+	case IMSG_SMTP_MESSAGE_CREATE:
+	case IMSG_SMTP_MESSAGE_OPEN:
+	case IMSG_QUEUE_ENVELOPE_SUBMIT:
+	case IMSG_QUEUE_ENVELOPE_COMMIT:
+		smtp_session_imsg(p, imsg);
+		return;
 
-		case IMSG_QUEUE_SMTP_SESSION:
-			m_compose(p, IMSG_QUEUE_SMTP_SESSION, 0, 0,
-			    smtp_enqueue(), imsg->data,
-			    imsg->hdr.len - sizeof imsg->hdr);
-			return;
-		}
-	}
+	case IMSG_QUEUE_SMTP_SESSION:
+		m_compose(p, IMSG_QUEUE_SMTP_SESSION, 0, 0, smtp_enqueue(),
+		    imsg->data, imsg->hdr.len - sizeof imsg->hdr);
+		return;
 
-	if (p->proc == PROC_CONTROL) {
-		switch (imsg->hdr.type) {
-		case IMSG_CTL_SMTP_SESSION:
-			m_compose(p, IMSG_CTL_SMTP_SESSION, imsg->hdr.peerid, 0,
-			    smtp_enqueue(), NULL, 0);
-			return;
+	case IMSG_CTL_SMTP_SESSION:
+		m_compose(p, IMSG_CTL_SMTP_SESSION, imsg->hdr.peerid, 0,
+		    smtp_enqueue(), NULL, 0);
+		return;
 
-		case IMSG_CTL_PAUSE_SMTP:
-			log_debug("debug: smtp: pausing listening sockets");
-			smtp_pause();
-			env->sc_flags |= SMTPD_SMTP_PAUSED;
-			return;
+	case IMSG_CTL_PAUSE_SMTP:
+		log_debug("debug: smtp: pausing listening sockets");
+		smtp_pause();
+		env->sc_flags |= SMTPD_SMTP_PAUSED;
+		return;
 
-		case IMSG_CTL_RESUME_SMTP:
-			log_debug("debug: smtp: resuming listening sockets");
-			env->sc_flags &= ~SMTPD_SMTP_PAUSED;
-			smtp_resume();
-			return;
-		}
+	case IMSG_CTL_RESUME_SMTP:
+		log_debug("debug: smtp: resuming listening sockets");
+		env->sc_flags &= ~SMTPD_SMTP_PAUSED;
+		smtp_resume();
+		return;
 	}
 
 	errx(1, "smtp_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));

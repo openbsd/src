@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.183 2017/01/09 09:53:23 reyk Exp $	*/
+/*	$OpenBSD: queue.c,v 1.184 2017/11/21 12:20:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -69,489 +69,470 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 		queue_shutdown();
 
 	memset(&bounce, 0, sizeof(struct delivery_bounce));
-	if (p->proc == PROC_PONY) {
 
-		switch (imsg->hdr.type) {
-		case IMSG_SMTP_MESSAGE_CREATE:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_end(&m);
+	switch (imsg->hdr.type) {
+	case IMSG_SMTP_MESSAGE_CREATE:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_end(&m);
 
-			ret = queue_message_create(&msgid);
+		ret = queue_message_create(&msgid);
 
-			m_create(p, IMSG_SMTP_MESSAGE_CREATE, 0, 0, -1);
-			m_add_id(p, reqid);
-			if (ret == 0)
-				m_add_int(p, 0);
-			else {
-				m_add_int(p, 1);
-				m_add_msgid(p, msgid);
-			}
-			m_close(p);
-			return;
+		m_create(p, IMSG_SMTP_MESSAGE_CREATE, 0, 0, -1);
+		m_add_id(p, reqid);
+		if (ret == 0)
+			m_add_int(p, 0);
+		else {
+			m_add_int(p, 1);
+			m_add_msgid(p, msgid);
+		}
+		m_close(p);
+		return;
 
-		case IMSG_SMTP_MESSAGE_ROLLBACK:
-			m_msg(&m, imsg);
-			m_get_msgid(&m, &msgid);
-			m_end(&m);
+	case IMSG_SMTP_MESSAGE_ROLLBACK:
+		m_msg(&m, imsg);
+		m_get_msgid(&m, &msgid);
+		m_end(&m);
 
-			queue_message_delete(msgid);
+		queue_message_delete(msgid);
 
-			m_create(p_scheduler, IMSG_QUEUE_MESSAGE_ROLLBACK,
+		m_create(p_scheduler, IMSG_QUEUE_MESSAGE_ROLLBACK,
+		    0, 0, -1);
+		m_add_msgid(p_scheduler, msgid);
+		m_close(p_scheduler);
+		return;
+
+	case IMSG_SMTP_MESSAGE_COMMIT:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_msgid(&m, &msgid);
+		m_end(&m);
+
+		ret = queue_message_commit(msgid);
+
+		m_create(p, IMSG_SMTP_MESSAGE_COMMIT, 0, 0, -1);
+		m_add_id(p, reqid);
+		m_add_int(p, (ret == 0) ? 0 : 1);
+		m_close(p);
+
+		if (ret) {
+			m_create(p_scheduler, IMSG_QUEUE_MESSAGE_COMMIT,
 			    0, 0, -1);
 			m_add_msgid(p_scheduler, msgid);
 			m_close(p_scheduler);
-			return;
-
-		case IMSG_SMTP_MESSAGE_COMMIT:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_msgid(&m, &msgid);
-			m_end(&m);
-
-			ret = queue_message_commit(msgid);
-
-			m_create(p, IMSG_SMTP_MESSAGE_COMMIT, 0, 0, -1);
-			m_add_id(p, reqid);
-			m_add_int(p, (ret == 0) ? 0 : 1);
-			m_close(p);
-
-			if (ret) {
-				m_create(p_scheduler, IMSG_QUEUE_MESSAGE_COMMIT,
-				    0, 0, -1);
-				m_add_msgid(p_scheduler, msgid);
-				m_close(p_scheduler);
-			}
-			return;
-
-		case IMSG_SMTP_MESSAGE_OPEN:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_msgid(&m, &msgid);
-			m_end(&m);
-
-			fd = queue_message_fd_rw(msgid);
-
-			m_create(p, IMSG_SMTP_MESSAGE_OPEN, 0, 0, fd);
-			m_add_id(p, reqid);
-			m_add_int(p, (fd == -1) ? 0 : 1);
-			m_close(p);
-			return;
-
-		case IMSG_QUEUE_SMTP_SESSION:
-			bounce_fd(imsg->fd);
-			return;
 		}
-	}
+		return;
 
-	if (p->proc == PROC_LKA) {
-		switch (imsg->hdr.type) {
-		case IMSG_LKA_ENVELOPE_SUBMIT:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_envelope(&m, &evp);
-			m_end(&m);
+	case IMSG_SMTP_MESSAGE_OPEN:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_msgid(&m, &msgid);
+		m_end(&m);
 
-			if (evp.id == 0)
-				log_warnx("warn: imsg_queue_submit_envelope: evpid=0");
-			if (evpid_to_msgid(evp.id) == 0)
-				log_warnx("warn: imsg_queue_submit_envelope: msgid=0, "
-				    "evpid=%016"PRIx64, evp.id);
-			ret = queue_envelope_create(&evp);
-			m_create(p_pony, IMSG_QUEUE_ENVELOPE_SUBMIT, 0, 0, -1);
-			m_add_id(p_pony, reqid);
-			if (ret == 0)
-				m_add_int(p_pony, 0);
-			else {
-				m_add_int(p_pony, 1);
-				m_add_evpid(p_pony, evp.id);
-			}
-			m_close(p_pony);
-			if (ret) {
-				m_create(p_scheduler,
-				    IMSG_QUEUE_ENVELOPE_SUBMIT, 0, 0, -1);
-				m_add_envelope(p_scheduler, &evp);
-				m_close(p_scheduler);
+		fd = queue_message_fd_rw(msgid);
 
-			}
-			return;
+		m_create(p, IMSG_SMTP_MESSAGE_OPEN, 0, 0, fd);
+		m_add_id(p, reqid);
+		m_add_int(p, (fd == -1) ? 0 : 1);
+		m_close(p);
+		return;
 
-		case IMSG_LKA_ENVELOPE_COMMIT:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_end(&m);
-			m_create(p_pony, IMSG_QUEUE_ENVELOPE_COMMIT, 0, 0, -1);
-			m_add_id(p_pony, reqid);
+	case IMSG_QUEUE_SMTP_SESSION:
+		bounce_fd(imsg->fd);
+		return;
+
+	case IMSG_LKA_ENVELOPE_SUBMIT:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_envelope(&m, &evp);
+		m_end(&m);
+
+		if (evp.id == 0)
+			log_warnx("warn: imsg_queue_submit_envelope: evpid=0");
+		if (evpid_to_msgid(evp.id) == 0)
+			log_warnx("warn: imsg_queue_submit_envelope: msgid=0, "
+			    "evpid=%016"PRIx64, evp.id);
+		ret = queue_envelope_create(&evp);
+		m_create(p_pony, IMSG_QUEUE_ENVELOPE_SUBMIT, 0, 0, -1);
+		m_add_id(p_pony, reqid);
+		if (ret == 0)
+			m_add_int(p_pony, 0);
+		else {
 			m_add_int(p_pony, 1);
-			m_close(p_pony);
+			m_add_evpid(p_pony, evp.id);
+		}
+		m_close(p_pony);
+		if (ret) {
+			m_create(p_scheduler,
+			    IMSG_QUEUE_ENVELOPE_SUBMIT, 0, 0, -1);
+			m_add_envelope(p_scheduler, &evp);
+			m_close(p_scheduler);
+		}
+		return;
+
+	case IMSG_LKA_ENVELOPE_COMMIT:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_end(&m);
+		m_create(p_pony, IMSG_QUEUE_ENVELOPE_COMMIT, 0, 0, -1);
+		m_add_id(p_pony, reqid);
+		m_add_int(p_pony, 1);
+		m_close(p_pony);
+		return;
+
+	case IMSG_SCHED_ENVELOPE_REMOVE:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_end(&m);
+
+		m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_ACK, 0, 0, -1);
+		m_add_evpid(p_scheduler, evpid);
+		m_close(p_scheduler);
+
+		/* already removed by scheduler */
+		if (queue_envelope_load(evpid, &evp) == 0)
+			return;
+
+		queue_log(&evp, "Remove", "Removed by administrator");
+		queue_envelope_delete(evpid);
+		return;
+
+	case IMSG_SCHED_ENVELOPE_EXPIRE:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_end(&m);
+
+		m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_ACK, 0, 0, -1);
+		m_add_evpid(p_scheduler, evpid);
+		m_close(p_scheduler);
+
+		/* already removed by scheduler*/
+		if (queue_envelope_load(evpid, &evp) == 0)
+			return;
+
+		bounce.type = B_ERROR;
+		envelope_set_errormsg(&evp, "Envelope expired");
+		envelope_set_esc_class(&evp, ESC_STATUS_TEMPFAIL);
+		envelope_set_esc_code(&evp, ESC_DELIVERY_TIME_EXPIRED);
+		queue_bounce(&evp, &bounce);
+		queue_log(&evp, "Expire", "Envelope expired");
+		queue_envelope_delete(evpid);
+		return;
+
+	case IMSG_SCHED_ENVELOPE_BOUNCE:
+		CHECK_IMSG_DATA_SIZE(imsg, sizeof *req_bounce);
+		req_bounce = imsg->data;
+		evpid = req_bounce->evpid;
+
+		if (queue_envelope_load(evpid, &evp) == 0) {
+			log_warnx("queue: bounce: failed to load envelope");
+			m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_REMOVE, 0, 0, -1);
+			m_add_evpid(p_scheduler, evpid);
+			m_add_u32(p_scheduler, 0); /* not in-flight */
+			m_close(p_scheduler);
 			return;
 		}
-	}
+		queue_bounce(&evp, &req_bounce->bounce);
+		evp.lastbounce = req_bounce->timestamp;
+		if (!queue_envelope_update(&evp))
+			log_warnx("warn: could not update envelope %016"PRIx64, evpid);
+		return;
 
-	if (p->proc == PROC_SCHEDULER) {
-		switch (imsg->hdr.type) {
-		case IMSG_SCHED_ENVELOPE_REMOVE:
-			m_msg(&m, imsg);
-			m_get_evpid(&m, &evpid);
-			m_end(&m);
-
-			m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_ACK, 0, 0, -1);
+	case IMSG_SCHED_ENVELOPE_DELIVER:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_end(&m);
+		if (queue_envelope_load(evpid, &evp) == 0) {
+			log_warnx("queue: deliver: failed to load envelope");
+			m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_REMOVE, 0, 0, -1);
 			m_add_evpid(p_scheduler, evpid);
+			m_add_u32(p_scheduler, 1); /* in-flight */
 			m_close(p_scheduler);
-
-			/* already removed by scheduler */
-			if (queue_envelope_load(evpid, &evp) == 0)
-				return;
-
-			queue_log(&evp, "Remove", "Removed by administrator");
-			queue_envelope_delete(evpid);
 			return;
+		}
+		evp.lasttry = time(NULL);
+		m_create(p_pony, IMSG_QUEUE_DELIVER, 0, 0, -1);
+		m_add_envelope(p_pony, &evp);
+		m_close(p_pony);
+		return;
 
-		case IMSG_SCHED_ENVELOPE_EXPIRE:
-			m_msg(&m, imsg);
-			m_get_evpid(&m, &evpid);
-			m_end(&m);
+	case IMSG_SCHED_ENVELOPE_INJECT:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_end(&m);
+		bounce_add(evpid);
+		return;
 
-			m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_ACK, 0, 0, -1);
+	case IMSG_SCHED_ENVELOPE_TRANSFER:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_end(&m);
+		if (queue_envelope_load(evpid, &evp) == 0) {
+			log_warnx("queue: failed to load envelope");
+			m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_REMOVE, 0, 0, -1);
 			m_add_evpid(p_scheduler, evpid);
+			m_add_u32(p_scheduler, 1); /* in-flight */
 			m_close(p_scheduler);
-
-			/* already removed by scheduler*/
-			if (queue_envelope_load(evpid, &evp) == 0)
-				return;
-
-			bounce.type = B_ERROR;
-			envelope_set_errormsg(&evp, "Envelope expired");
-			envelope_set_esc_class(&evp, ESC_STATUS_TEMPFAIL);
-			envelope_set_esc_code(&evp, ESC_DELIVERY_TIME_EXPIRED);
-			queue_bounce(&evp, &bounce);
-			queue_log(&evp, "Expire", "Envelope expired");
-			queue_envelope_delete(evpid);
 			return;
+		}
+		evp.lasttry = time(NULL);
+		m_create(p_pony, IMSG_QUEUE_TRANSFER, 0, 0, -1);
+		m_add_envelope(p_pony, &evp);
+		m_close(p_pony);
+		return;
 
-		case IMSG_SCHED_ENVELOPE_BOUNCE:
-			CHECK_IMSG_DATA_SIZE(imsg, sizeof *req_bounce);
-			req_bounce = imsg->data;
-			evpid = req_bounce->evpid;
-
-			if (queue_envelope_load(evpid, &evp) == 0) {
-				log_warnx("queue: bounce: failed to load envelope");
-				m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_REMOVE, 0, 0, -1);
-				m_add_evpid(p_scheduler, evpid);
-				m_add_u32(p_scheduler, 0); /* not in-flight */
-				m_close(p_scheduler);
-				return;
-			}
-			queue_bounce(&evp, &req_bounce->bounce);
-			evp.lastbounce = req_bounce->timestamp;
-			if (!queue_envelope_update(&evp))
-				log_warnx("warn: could not update envelope %016"PRIx64, evpid);
+	case IMSG_CTL_LIST_ENVELOPES:
+		if (imsg->hdr.len == sizeof imsg->hdr) {
+			m_forward(p_control, imsg);
 			return;
+		}
 
-		case IMSG_SCHED_ENVELOPE_DELIVER:
-			m_msg(&m, imsg);
-			m_get_evpid(&m, &evpid);
-			m_end(&m);
-			if (queue_envelope_load(evpid, &evp) == 0) {
-				log_warnx("queue: deliver: failed to load envelope");
-				m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_REMOVE, 0, 0, -1);
-				m_add_evpid(p_scheduler, evpid);
-				m_add_u32(p_scheduler, 1); /* in-flight */
-				m_close(p_scheduler);
-				return;
-			}
-			evp.lasttry = time(NULL);
-			m_create(p_pony, IMSG_QUEUE_DELIVER, 0, 0, -1);
-			m_add_envelope(p_pony, &evp);
-			m_close(p_pony);
-			return;
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_get_int(&m, &flags);
+		m_get_time(&m, &nexttry);
+		m_end(&m);
 
-		case IMSG_SCHED_ENVELOPE_INJECT:
-			m_msg(&m, imsg);
-			m_get_evpid(&m, &evpid);
-			m_end(&m);
-			bounce_add(evpid);
-			return;
+		if (queue_envelope_load(evpid, &evp) == 0)
+			return; /* Envelope is gone, drop it */
 
-		case IMSG_SCHED_ENVELOPE_TRANSFER:
-			m_msg(&m, imsg);
-			m_get_evpid(&m, &evpid);
-			m_end(&m);
-			if (queue_envelope_load(evpid, &evp) == 0) {
-				log_warnx("queue: failed to load envelope");
-				m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_REMOVE, 0, 0, -1);
-				m_add_evpid(p_scheduler, evpid);
-				m_add_u32(p_scheduler, 1); /* in-flight */
-				m_close(p_scheduler);
-				return;
-			}
-			evp.lasttry = time(NULL);
-			m_create(p_pony, IMSG_QUEUE_TRANSFER, 0, 0, -1);
-			m_add_envelope(p_pony, &evp);
-			m_close(p_pony);
-			return;
-
-		case IMSG_CTL_LIST_ENVELOPES:
-			if (imsg->hdr.len == sizeof imsg->hdr) {
-				m_forward(p_control, imsg);
-				return;
-			}
-
-			m_msg(&m, imsg);
-			m_get_evpid(&m, &evpid);
-			m_get_int(&m, &flags);
-			m_get_time(&m, &nexttry);
-			m_end(&m);
-
-			if (queue_envelope_load(evpid, &evp) == 0)
-				return; /* Envelope is gone, drop it */
-
+		/*
+		 * XXX consistency: The envelope might already be on
+		 * its way back to the scheduler.  We need to detect
+		 * this properly and report that state.
+		 */
+		if (flags & EF_INFLIGHT) {
 			/*
-			 * XXX consistency: The envelope might already be on
-			 * its way back to the scheduler.  We need to detect
-			 * this properly and report that state.
+			 * Not exactly correct but pretty close: The
+			 * value is not recorded on the envelope unless
+			 * a tempfail occurs.
 			 */
-			if (flags & EF_INFLIGHT) {
-				/*
-				 * Not exactly correct but pretty close: The
-				 * value is not recorded on the envelope unless
-				 * a tempfail occurs.
-				 */
-				evp.lasttry = nexttry;
-			}
+			evp.lasttry = nexttry;
+		}
 
-			m_create(p_control, IMSG_CTL_LIST_ENVELOPES,
-			    imsg->hdr.peerid, 0, -1);
-			m_add_int(p_control, flags);
-			m_add_time(p_control, nexttry);
-			m_add_envelope(p_control, &evp);
-			m_close(p_control);
+		m_create(p_control, IMSG_CTL_LIST_ENVELOPES,
+		    imsg->hdr.peerid, 0, -1);
+		m_add_int(p_control, flags);
+		m_add_time(p_control, nexttry);
+		m_add_envelope(p_control, &evp);
+		m_close(p_control);
+		return;
+
+	case IMSG_MDA_OPEN_MESSAGE:
+	case IMSG_MTA_OPEN_MESSAGE:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_msgid(&m, &msgid);
+		m_end(&m);
+		fd = queue_message_fd_r(msgid);
+		m_create(p, imsg->hdr.type, 0, 0, fd);
+		m_add_id(p, reqid);
+		m_close(p);
+		return;
+
+	case IMSG_MDA_DELIVERY_OK:
+	case IMSG_MTA_DELIVERY_OK:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		if (imsg->hdr.type == IMSG_MTA_DELIVERY_OK)
+			m_get_int(&m, &mta_ext);
+		m_end(&m);
+		if (queue_envelope_load(evpid, &evp) == 0) {
+			log_warn("queue: dsn: failed to load envelope");
 			return;
 		}
-	}
-
-	if (p->proc == PROC_PONY) {
-		switch (imsg->hdr.type) {
-		case IMSG_MDA_OPEN_MESSAGE:
-		case IMSG_MTA_OPEN_MESSAGE:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_msgid(&m, &msgid);
-			m_end(&m);
-			fd = queue_message_fd_r(msgid);
-			m_create(p, imsg->hdr.type, 0, 0, fd);
-			m_add_id(p, reqid);
-			m_close(p);
-			return;
-
-		case IMSG_MDA_DELIVERY_OK:
-		case IMSG_MTA_DELIVERY_OK:
-			m_msg(&m, imsg);
-			m_get_evpid(&m, &evpid);
-			if (imsg->hdr.type == IMSG_MTA_DELIVERY_OK)
-				m_get_int(&m, &mta_ext);
-			m_end(&m);
-			if (queue_envelope_load(evpid, &evp) == 0) {
-				log_warn("queue: dsn: failed to load envelope");
-				return;
+		if (evp.dsn_notify & DSN_SUCCESS) {
+			bounce.type = B_DSN;
+			bounce.dsn_ret = evp.dsn_ret;
+			envelope_set_esc_class(&evp, ESC_STATUS_OK);
+			if (imsg->hdr.type == IMSG_MDA_DELIVERY_OK)
+				queue_bounce(&evp, &bounce);
+			else if (imsg->hdr.type == IMSG_MTA_DELIVERY_OK &&
+			    (mta_ext & MTA_EXT_DSN) == 0) {
+				bounce.mta_without_dsn = 1;
+				queue_bounce(&evp, &bounce);
 			}
-			if (evp.dsn_notify & DSN_SUCCESS) {
-				bounce.type = B_DSN;
-				bounce.dsn_ret = evp.dsn_ret;
-				envelope_set_esc_class(&evp, ESC_STATUS_OK);
-				if (imsg->hdr.type == IMSG_MDA_DELIVERY_OK)
-					queue_bounce(&evp, &bounce);
-				else if (imsg->hdr.type == IMSG_MTA_DELIVERY_OK &&
-				    (mta_ext & MTA_EXT_DSN) == 0) {
-					bounce.mta_without_dsn = 1;
-					queue_bounce(&evp, &bounce);
-				}
-			}
-			queue_envelope_delete(evpid);
-			m_create(p_scheduler, IMSG_QUEUE_DELIVERY_OK, 0, 0, -1);
+		}
+		queue_envelope_delete(evpid);
+		m_create(p_scheduler, IMSG_QUEUE_DELIVERY_OK, 0, 0, -1);
+		m_add_evpid(p_scheduler, evpid);
+		m_close(p_scheduler);
+		return;
+
+	case IMSG_MDA_DELIVERY_TEMPFAIL:
+	case IMSG_MTA_DELIVERY_TEMPFAIL:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_get_string(&m, &reason);
+		m_get_int(&m, &code);
+		m_end(&m);
+		if (queue_envelope_load(evpid, &evp) == 0) {
+			log_warnx("queue: tempfail: failed to load envelope");
+			m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_REMOVE, 0, 0, -1);
 			m_add_evpid(p_scheduler, evpid);
+			m_add_u32(p_scheduler, 1); /* in-flight */
 			m_close(p_scheduler);
 			return;
+		}
+		envelope_set_errormsg(&evp, "%s", reason);
+		envelope_set_esc_class(&evp, ESC_STATUS_TEMPFAIL);
+		envelope_set_esc_code(&evp, code);
+		evp.retry++;
+		if (!queue_envelope_update(&evp))
+			log_warnx("warn: could not update envelope %016"PRIx64, evpid);
+		m_create(p_scheduler, IMSG_QUEUE_DELIVERY_TEMPFAIL, 0, 0, -1);
+		m_add_envelope(p_scheduler, &evp);
+		m_close(p_scheduler);
+		return;
 
-		case IMSG_MDA_DELIVERY_TEMPFAIL:
-		case IMSG_MTA_DELIVERY_TEMPFAIL:
-			m_msg(&m, imsg);
-			m_get_evpid(&m, &evpid);
-			m_get_string(&m, &reason);
-			m_get_int(&m, &code);
-			m_end(&m);
-			if (queue_envelope_load(evpid, &evp) == 0) {
-				log_warnx("queue: tempfail: failed to load envelope");
-				m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_REMOVE, 0, 0, -1);
-				m_add_evpid(p_scheduler, evpid);
-				m_add_u32(p_scheduler, 1); /* in-flight */
-				m_close(p_scheduler);
-				return;
-			}
-			envelope_set_errormsg(&evp, "%s", reason);
-			envelope_set_esc_class(&evp, ESC_STATUS_TEMPFAIL);
-			envelope_set_esc_code(&evp, code);
-			evp.retry++;
-			if (!queue_envelope_update(&evp))
-				log_warnx("warn: could not update envelope %016"PRIx64, evpid);
-			m_create(p_scheduler, IMSG_QUEUE_DELIVERY_TEMPFAIL, 0, 0, -1);
-			m_add_envelope(p_scheduler, &evp);
-			m_close(p_scheduler);
-			return;
-
-		case IMSG_MDA_DELIVERY_PERMFAIL:
-		case IMSG_MTA_DELIVERY_PERMFAIL:
-			m_msg(&m, imsg);
-			m_get_evpid(&m, &evpid);
-			m_get_string(&m, &reason);
-			m_get_int(&m, &code);
-			m_end(&m);
-			if (queue_envelope_load(evpid, &evp) == 0) {
-				log_warnx("queue: permfail: failed to load envelope");
-				m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_REMOVE, 0, 0, -1);
-				m_add_evpid(p_scheduler, evpid);
-				m_add_u32(p_scheduler, 1); /* in-flight */
-				m_close(p_scheduler);
-				return;
-			}
-			bounce.type = B_ERROR;
-			envelope_set_errormsg(&evp, "%s", reason);
-			envelope_set_esc_class(&evp, ESC_STATUS_PERMFAIL);
-			envelope_set_esc_code(&evp, code);
-			queue_bounce(&evp, &bounce);
-			queue_envelope_delete(evpid);
-			m_create(p_scheduler, IMSG_QUEUE_DELIVERY_PERMFAIL, 0, 0, -1);
+	case IMSG_MDA_DELIVERY_PERMFAIL:
+	case IMSG_MTA_DELIVERY_PERMFAIL:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_get_string(&m, &reason);
+		m_get_int(&m, &code);
+		m_end(&m);
+		if (queue_envelope_load(evpid, &evp) == 0) {
+			log_warnx("queue: permfail: failed to load envelope");
+			m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_REMOVE, 0, 0, -1);
 			m_add_evpid(p_scheduler, evpid);
-			m_close(p_scheduler);
-			return;
-
-		case IMSG_MDA_DELIVERY_LOOP:
-		case IMSG_MTA_DELIVERY_LOOP:
-			m_msg(&m, imsg);
-			m_get_evpid(&m, &evpid);
-			m_end(&m);
-			if (queue_envelope_load(evpid, &evp) == 0) {
-				log_warnx("queue: loop: failed to load envelope");
-				m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_REMOVE, 0, 0, -1);
-				m_add_evpid(p_scheduler, evpid);
-				m_add_u32(p_scheduler, 1); /* in-flight */
-				m_close(p_scheduler);
-				return;
-			}
-			envelope_set_errormsg(&evp, "%s", "Loop detected");
-			envelope_set_esc_class(&evp, ESC_STATUS_TEMPFAIL);
-			envelope_set_esc_code(&evp, ESC_ROUTING_LOOP_DETECTED);
-			bounce.type = B_ERROR;
-			queue_bounce(&evp, &bounce);
-			queue_envelope_delete(evp.id);
-			m_create(p_scheduler, IMSG_QUEUE_DELIVERY_LOOP, 0, 0, -1);
-			m_add_evpid(p_scheduler, evp.id);
-			m_close(p_scheduler);
-			return;
-
-		case IMSG_MTA_DELIVERY_HOLD:
-		case IMSG_MDA_DELIVERY_HOLD:
-			imsg->hdr.type = IMSG_QUEUE_HOLDQ_HOLD;
-			m_forward(p_scheduler, imsg);
-			return;
-
-		case IMSG_MTA_SCHEDULE:
-			imsg->hdr.type = IMSG_QUEUE_ENVELOPE_SCHEDULE;
-			m_forward(p_scheduler, imsg);
-			return;
-
-		case IMSG_MTA_HOLDQ_RELEASE:
-		case IMSG_MDA_HOLDQ_RELEASE:
-			m_msg(&m, imsg);
-			m_get_id(&m, &holdq);
-			m_get_int(&m, &v);
-			m_end(&m);
-			m_create(p_scheduler, IMSG_QUEUE_HOLDQ_RELEASE, 0, 0, -1);
-			if (imsg->hdr.type == IMSG_MTA_HOLDQ_RELEASE)
-				m_add_int(p_scheduler, D_MTA);
-			else
-				m_add_int(p_scheduler, D_MDA);
-			m_add_id(p_scheduler, holdq);
-			m_add_int(p_scheduler, v);
+			m_add_u32(p_scheduler, 1); /* in-flight */
 			m_close(p_scheduler);
 			return;
 		}
-	}
+		bounce.type = B_ERROR;
+		envelope_set_errormsg(&evp, "%s", reason);
+		envelope_set_esc_class(&evp, ESC_STATUS_PERMFAIL);
+		envelope_set_esc_code(&evp, code);
+		queue_bounce(&evp, &bounce);
+		queue_envelope_delete(evpid);
+		m_create(p_scheduler, IMSG_QUEUE_DELIVERY_PERMFAIL, 0, 0, -1);
+		m_add_evpid(p_scheduler, evpid);
+		m_close(p_scheduler);
+		return;
 
-	if (p->proc == PROC_CONTROL) {
-		switch (imsg->hdr.type) {
-		case IMSG_CTL_PAUSE_MDA:
-		case IMSG_CTL_PAUSE_MTA:
-		case IMSG_CTL_RESUME_MDA:
-		case IMSG_CTL_RESUME_MTA:
-			m_forward(p_scheduler, imsg);
-			return;
-
-		case IMSG_CTL_VERBOSE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			log_trace_verbose(v);
-			return;
-
-		case IMSG_CTL_PROFILE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			profiling = v;
-			return;
-
-		case IMSG_CTL_DISCOVER_EVPID:
-			m_msg(&m, imsg);
-			m_get_evpid(&m, &evpid);
-			m_end(&m);
-			if (queue_envelope_load(evpid, &evp) == 0) {
-				log_warnx("queue: discover: failed to load "
-				    "envelope %016" PRIx64, evpid);
-				n_evp = 0;
-				m_compose(p_control, imsg->hdr.type,
-				    imsg->hdr.peerid, 0, -1,
-				    &n_evp, sizeof n_evp);
-				return;
-			}
-
-			m_create(p_scheduler, IMSG_QUEUE_DISCOVER_EVPID,
-			    0, 0, -1);
-			m_add_envelope(p_scheduler, &evp);
+	case IMSG_MDA_DELIVERY_LOOP:
+	case IMSG_MTA_DELIVERY_LOOP:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_end(&m);
+		if (queue_envelope_load(evpid, &evp) == 0) {
+			log_warnx("queue: loop: failed to load envelope");
+			m_create(p_scheduler, IMSG_QUEUE_ENVELOPE_REMOVE, 0, 0, -1);
+			m_add_evpid(p_scheduler, evpid);
+			m_add_u32(p_scheduler, 1); /* in-flight */
 			m_close(p_scheduler);
-
-			m_create(p_scheduler, IMSG_QUEUE_DISCOVER_MSGID,
-			    0, 0, -1);
-			m_add_msgid(p_scheduler, evpid_to_msgid(evpid));
-			m_close(p_scheduler);
-			n_evp = 1;
-			m_compose(p_control, imsg->hdr.type, imsg->hdr.peerid,
-			    0, -1, &n_evp, sizeof n_evp);
-			return;
-
-		case IMSG_CTL_DISCOVER_MSGID:
-			m_msg(&m, imsg);
-			m_get_msgid(&m, &msgid);
-			m_end(&m);
-			/* handle concurrent walk requests */
-			wi = xcalloc(1, sizeof *wi, "queu_imsg");
-			wi->msgid = msgid;
-			wi->peerid = imsg->hdr.peerid;
-			evtimer_set(&wi->ev, queue_msgid_walk, wi);
-			tv.tv_sec = 0;
-			tv.tv_usec = 10;
-			evtimer_add(&wi->ev, &tv);
-			return;
-
-		case IMSG_CTL_UNCORRUPT_MSGID:
-			m_msg(&m, imsg);
-			m_get_msgid(&m, &msgid);
-			m_end(&m);
-			ret = queue_message_uncorrupt(msgid);
-			m_compose(p_control, imsg->hdr.type, imsg->hdr.peerid,
-			    0, -1, &ret, sizeof ret);
 			return;
 		}
+		envelope_set_errormsg(&evp, "%s", "Loop detected");
+		envelope_set_esc_class(&evp, ESC_STATUS_TEMPFAIL);
+		envelope_set_esc_code(&evp, ESC_ROUTING_LOOP_DETECTED);
+		bounce.type = B_ERROR;
+		queue_bounce(&evp, &bounce);
+		queue_envelope_delete(evp.id);
+		m_create(p_scheduler, IMSG_QUEUE_DELIVERY_LOOP, 0, 0, -1);
+		m_add_evpid(p_scheduler, evp.id);
+		m_close(p_scheduler);
+		return;
+
+	case IMSG_MTA_DELIVERY_HOLD:
+	case IMSG_MDA_DELIVERY_HOLD:
+		imsg->hdr.type = IMSG_QUEUE_HOLDQ_HOLD;
+		m_forward(p_scheduler, imsg);
+		return;
+
+	case IMSG_MTA_SCHEDULE:
+		imsg->hdr.type = IMSG_QUEUE_ENVELOPE_SCHEDULE;
+		m_forward(p_scheduler, imsg);
+		return;
+
+	case IMSG_MTA_HOLDQ_RELEASE:
+	case IMSG_MDA_HOLDQ_RELEASE:
+		m_msg(&m, imsg);
+		m_get_id(&m, &holdq);
+		m_get_int(&m, &v);
+		m_end(&m);
+		m_create(p_scheduler, IMSG_QUEUE_HOLDQ_RELEASE, 0, 0, -1);
+		if (imsg->hdr.type == IMSG_MTA_HOLDQ_RELEASE)
+			m_add_int(p_scheduler, D_MTA);
+		else
+			m_add_int(p_scheduler, D_MDA);
+		m_add_id(p_scheduler, holdq);
+		m_add_int(p_scheduler, v);
+		m_close(p_scheduler);
+		return;
+
+	case IMSG_CTL_PAUSE_MDA:
+	case IMSG_CTL_PAUSE_MTA:
+	case IMSG_CTL_RESUME_MDA:
+	case IMSG_CTL_RESUME_MTA:
+		m_forward(p_scheduler, imsg);
+		return;
+
+	case IMSG_CTL_VERBOSE:
+		m_msg(&m, imsg);
+		m_get_int(&m, &v);
+		m_end(&m);
+		log_trace_verbose(v);
+		return;
+
+	case IMSG_CTL_PROFILE:
+		m_msg(&m, imsg);
+		m_get_int(&m, &v);
+		m_end(&m);
+		profiling = v;
+		return;
+
+	case IMSG_CTL_DISCOVER_EVPID:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_end(&m);
+		if (queue_envelope_load(evpid, &evp) == 0) {
+			log_warnx("queue: discover: failed to load "
+			    "envelope %016" PRIx64, evpid);
+			n_evp = 0;
+			m_compose(p_control, imsg->hdr.type,
+			    imsg->hdr.peerid, 0, -1,
+			    &n_evp, sizeof n_evp);
+			return;
+		}
+
+		m_create(p_scheduler, IMSG_QUEUE_DISCOVER_EVPID,
+		    0, 0, -1);
+		m_add_envelope(p_scheduler, &evp);
+		m_close(p_scheduler);
+
+		m_create(p_scheduler, IMSG_QUEUE_DISCOVER_MSGID,
+		    0, 0, -1);
+		m_add_msgid(p_scheduler, evpid_to_msgid(evpid));
+		m_close(p_scheduler);
+		n_evp = 1;
+		m_compose(p_control, imsg->hdr.type, imsg->hdr.peerid,
+		    0, -1, &n_evp, sizeof n_evp);
+		return;
+
+	case IMSG_CTL_DISCOVER_MSGID:
+		m_msg(&m, imsg);
+		m_get_msgid(&m, &msgid);
+		m_end(&m);
+		/* handle concurrent walk requests */
+		wi = xcalloc(1, sizeof *wi, "queu_imsg");
+		wi->msgid = msgid;
+		wi->peerid = imsg->hdr.peerid;
+		evtimer_set(&wi->ev, queue_msgid_walk, wi);
+		tv.tv_sec = 0;
+		tv.tv_usec = 10;
+		evtimer_add(&wi->ev, &tv);
+		return;
+
+	case IMSG_CTL_UNCORRUPT_MSGID:
+		m_msg(&m, imsg);
+		m_get_msgid(&m, &msgid);
+		m_end(&m);
+		ret = queue_message_uncorrupt(msgid);
+		m_compose(p_control, imsg->hdr.type, imsg->hdr.peerid,
+		    0, -1, &ret, sizeof ret);
+		return;
 	}
 
 	errx(1, "queue_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
