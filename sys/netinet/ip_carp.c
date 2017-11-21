@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.318 2017/11/20 10:35:24 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.319 2017/11/21 09:08:55 patrick Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -882,6 +882,8 @@ carp_clone_destroy(struct ifnet *ifp)
 
 	NET_LOCK();
 	carpdetach(sc);
+	if (sc->ah_cookie != NULL)
+		hook_disestablish(sc->sc_if.if_addrhooks, sc->ah_cookie);
 	NET_UNLOCK();
 
 	ether_ifdetach(ifp);
@@ -923,9 +925,6 @@ carpdetach(struct carp_softc *sc)
 	sc->sc_if.if_flags &= ~IFF_UP;
 	carp_setrun_all(sc, 0);
 	carp_multicast_cleanup(sc);
-
-	if (sc->ah_cookie != NULL)
-		hook_disestablish(sc->sc_if.if_addrhooks, sc->ah_cookie);
 
 	ifp0 = sc->sc_carpdev;
 	if (ifp0 == NULL)
