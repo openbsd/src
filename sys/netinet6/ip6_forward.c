@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.95 2017/06/30 11:29:15 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.96 2017/11/21 12:05:09 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -240,6 +240,8 @@ reroute:
 	 * modified by a redirect.
 	 */
 	ifp = if_get(rt->rt_ifidx);
+	if (ifp == NULL)
+		goto freecopy;
 	if (rt->rt_ifidx == m->m_pkthdr.ph_ifidx && !srcrt &&
 	    ip6_sendredirects &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
