@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.343 2017/10/26 15:13:40 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.344 2017/11/22 12:28:49 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -84,8 +84,7 @@ struct tdb *
 ip_output_ipsec_lookup(struct mbuf *m, int hlen, int *error, struct inpcb *inp,
     int ipsecflowinfo);
 int
-ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct ifnet *ifp,
-    struct route *ro);
+ip_output_ipsec_send(struct tdb *, struct mbuf *, struct route *, int);
 #endif /* IPSEC */
 
 /*
@@ -404,7 +403,8 @@ sendit:
 	 */
 	if (tdb != NULL) {
 		/* Callee frees mbuf */
-		error = ip_output_ipsec_send(tdb, m, ifp, ro);
+		error = ip_output_ipsec_send(tdb, m, ro,
+		    (flags & IP_FORWARDING) ? 1 : 0);
 		goto done;
 	}
 #endif /* IPSEC */
@@ -413,7 +413,8 @@ sendit:
 	 * Packet filter
 	 */
 #if NPF > 0
-	if (pf_test(AF_INET, PF_OUT, ifp, &m) != PF_PASS) {
+	if (pf_test(AF_INET, (flags & IP_FORWARDING) ? PF_FWD : PF_OUT,
+	    ifp, &m) != PF_PASS) {
 		error = EACCES;
 		m_freem(m);
 		goto done;
@@ -550,8 +551,7 @@ ip_output_ipsec_lookup(struct mbuf *m, int hlen, int *error, struct inpcb *inp,
 }
 
 int
-ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct ifnet *ifp,
-    struct route *ro)
+ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 {
 #if NPF > 0
 	struct ifnet *encif;
@@ -563,7 +563,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct ifnet *ifp,
 	 * Packet filter
 	 */
 	if ((encif = enc_getif(tdb->tdb_rdomain, tdb->tdb_tap)) == NULL ||
-	    pf_test(AF_INET, PF_OUT, encif, &m) != PF_PASS) {
+	    pf_test(AF_INET, fwd ? PF_FWD : PF_OUT, encif, &m) != PF_PASS) {
 		m_freem(m);
 		return EACCES;
 	}

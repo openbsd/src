@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1046 2017/11/20 10:35:24 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.1047 2017/11/22 12:28:49 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6776,6 +6776,17 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 	}
 	pd.m->m_pkthdr.pf.flags |= PF_TAG_PROCESSED;
 
+	/*
+	 * Avoid pcb-lookups from the forwarding path.  They should never
+	 * match and would cause MP locking problems.
+	 */
+	if (fwdir == PF_FWD) {
+		pd.lookup.done = -1;
+		pd.lookup.uid = UID_MAX;
+		pd.lookup.gid = GID_MAX;
+		pd.lookup.pid = NO_PID;
+	}
+
 	/* lock the lookup/write section of pf_test() */
 	PF_LOCK();
 
@@ -7072,7 +7083,8 @@ done:
 
 #ifdef INET6
 	/* if reassembled packet passed, create new fragments */
-	if (pf_status.reass && action == PF_PASS && pd.m && fwdir == PF_FWD) {
+	if (pf_status.reass && action == PF_PASS && pd.m && fwdir == PF_FWD &&
+	    pd.af == AF_INET6) {
 		struct m_tag	*mtag;
 
 		if ((mtag = m_tag_find(pd.m, PACKET_TAG_PF_REASSEMBLED, NULL)))
