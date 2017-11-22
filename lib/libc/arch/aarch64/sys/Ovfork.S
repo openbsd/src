@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.2 2017/03/18 23:41:24 kettenis Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.3 2017/11/22 20:36:02 kettenis Exp $	*/
 /*	$NetBSD: Ovfork.S,v 1.6 2003/08/07 16:42:03 agc Exp $	*/
 
 /*-
@@ -33,9 +33,6 @@
  */
 
 #include "SYS.h"
-
-	.text
-	.align	0
 
 SYSENTRY_HIDDEN(vfork)
 	mov	x2, x30

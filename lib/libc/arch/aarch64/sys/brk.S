@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.3 2017/10/28 21:31:06 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.4 2017/11/22 20:36:02 kettenis Exp $	*/
 /*	$NetBSD: brk.S,v 1.7 2003/12/26 11:23:44 martin Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 	.globl	__curbrk
 
 	.data
-	.align	0
+	.align	3
 	.type	__minbrk,#object
 __minbrk:
 	.quad	_C_LABEL(_end)
