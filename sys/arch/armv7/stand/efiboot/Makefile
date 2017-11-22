@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2017/07/04 14:54:15 espie Exp $
+#	$OpenBSD: Makefile,v 1.8 2017/11/22 21:22:40 kettenis Exp $
 
 NOMAN=		#
 
@@ -32,6 +32,7 @@ SRCS+=	ufs.c
 
 .PATH:	${S}/lib/libkern/arch/arm ${S}/lib/libkern
 SRCS+=	divsi3.S divdi3.c moddi3.c qdivrem.c strlcpy.c strlen.c
+SRCS+=	__aeabi_ldivmod.S
 
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c
