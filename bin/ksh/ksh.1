@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.195 2017/08/30 17:08:45 jca Exp $
+.\"	$OpenBSD: ksh.1,v 1.196 2017/11/22 12:17:34 anton Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: August 30 2017 $
+.Dd $Mdocdate: November 22 2017 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -4656,7 +4656,7 @@ Simply causes the character to appear as literal input.
 Most ordinary characters are bound to this.
 .It Xo backward-char:
 .Op Ar n
-.No ^B , ^XD
+.No ^B , ^X^D
 .Xc
 Moves the cursor backward
 .Ar n
@@ -4749,7 +4749,7 @@ Deletes
 characters after the cursor.
 .It Xo delete-word-backward:
 .Op Ar n
-.No ERASE , ^[^? , ^[^H , ^[h
+.No WERASE , ^[ERASE , ^W, ^[^? , ^[^H , ^[h
 .Xc
 Deletes
 .Ar n
@@ -4758,9 +4758,9 @@ words before the cursor.
 .Op Ar n
 .No ^[d
 .Xc
-Deletes characters after the cursor up to the end of
+Deletes
 .Ar n
-words.
+words after the cursor.
 .It Xo down-history:
 .Op Ar n
 .No ^N , ^XB
@@ -4830,8 +4830,6 @@ Goes to history number
 .Ar n .
 .It kill-line: KILL
 Deletes the entire input line.
-.It kill-region: ^W
-Deletes the input between the cursor and the mark.
 .It Xo kill-to-eol:
 .Op Ar n
 .No ^K
@@ -4937,6 +4935,14 @@ Inserts the most recently killed text string at the current cursor position.
 Immediately after a
 .Ic yank ,
 replaces the inserted text string with the next previously killed text string.
+.El
+.Pp
+The following editing commands lack default bindings but can be used with the
+.Ic bind
+command:
+.Bl -tag -width Ds
+.It kill-region
+Deletes the input between the cursor and the mark.
 .El
 .Ss Vi editing mode
 The vi command-line editor in

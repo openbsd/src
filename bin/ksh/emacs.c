@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.73 2017/08/30 17:02:53 jca Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.74 2017/11/22 12:17:34 anton Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1472,6 +1472,7 @@ x_init_emacs(void)
 	kb_add(x_del_back,		NULL, CTRL('?'), 0);
 	kb_add(x_del_back,		NULL, CTRL('H'), 0);
 	kb_add(x_del_char,		NULL, CTRL('['), '[', '3', '~', 0); /* delete */
+	kb_add(x_del_bword,		NULL, CTRL('W'), 0);
 	kb_add(x_del_bword,		NULL, CTRL('['), CTRL('?'), 0);
 	kb_add(x_del_bword,		NULL, CTRL('['), CTRL('H'), 0);
 	kb_add(x_del_bword,		NULL, CTRL('['), 'h', 0);
@@ -1493,7 +1494,6 @@ x_init_emacs(void)
 	kb_add(x_mv_fword,		NULL, CTRL('['), 'f', 0);
 	kb_add(x_goto_hist,		NULL, CTRL('['), 'g', 0);
 	/* kill-line */
-	kb_add(x_del_bword,		NULL, CTRL('W'), 0); /* not what man says */
 	kb_add(x_kill,			NULL, CTRL('K'), 0);
 	kb_add(x_enumerate,		NULL, CTRL('['), '?', 0);
 	kb_add(x_list_comm,		NULL, CTRL('X'), '?', 0);
@@ -1505,6 +1505,7 @@ x_init_emacs(void)
 	kb_add(x_prev_histword,		NULL, CTRL('['), '.', 0);
 	kb_add(x_prev_histword,		NULL, CTRL('['), '_', 0);
 	/* how to handle: quote: ^^ */
+	kb_add(x_literal,		NULL, CTRL('^'), 0);
 	kb_add(x_draw_line,		NULL, CTRL('L'), 0);
 	kb_add(x_search_char_back,	NULL, CTRL('['), CTRL(']'), 0);
 	kb_add(x_search_char_forw,	NULL, CTRL(']'), 0);
@@ -1516,7 +1517,6 @@ x_init_emacs(void)
 	kb_add(x_fold_upper,		NULL, CTRL('['), 'U', 0);
 	kb_add(x_fold_upper,		NULL, CTRL('['), 'u', 0);
 	kb_add(x_literal,		NULL, CTRL('V'), 0);
-	kb_add(x_literal,		NULL, CTRL('^'), 0);
 	kb_add(x_yank,			NULL, CTRL('Y'), 0);
 	kb_add(x_meta_yank,		NULL, CTRL('['), 'y', 0);
 	/* man page ends here */
