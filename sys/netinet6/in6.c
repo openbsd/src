@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.218 2017/11/04 13:11:54 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.219 2017/11/23 13:32:25 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1287,7 +1287,7 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 		 * Never use a carp address of an interface which is not
 		 * the master.
 		 */
-		if (ifp->if_type == IFT_CARP && !carp_iamatch6(ifp))
+		if (ifp->if_type == IFT_CARP && !carp_iamatch(ifp))
 			continue;
 #endif
 

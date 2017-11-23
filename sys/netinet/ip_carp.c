@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.319 2017/11/21 09:08:55 patrick Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.320 2017/11/23 13:32:25 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1351,22 +1351,6 @@ carp_iamatch(struct ifnet *ifp)
 
 	return (match);
 }
-
-#ifdef INET6
-int
-carp_iamatch6(struct ifnet *ifp)
-{
-	struct carp_softc *sc = ifp->if_softc;
-	struct carp_vhost_entry *vhe = SRPL_FIRST_LOCKED(&sc->carp_vhosts);
-
-	KERNEL_ASSERT_LOCKED(); /* touching carp_vhosts */
-
-	if (vhe->state == MASTER)
-		return (1);
-
-	return (0);
-}
-#endif /* INET6 */
 
 struct ifnet *
 carp_ourether(void *v, u_int8_t *ena)
