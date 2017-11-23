@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.208 2017/11/23 13:42:53 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.209 2017/11/23 13:45:46 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ int
 socreate(int dom, struct socket **aso, int type, int proto)
 {
 	struct proc *p = curproc;		/* XXX */
-	struct protosw *prp;
+	const struct protosw *prp;
 	struct socket *so;
 	int error, s;
 
@@ -633,7 +633,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	struct mbuf *cm;
 	u_long len, offset, moff;
 	int flags, error, s, type, uio_error = 0;
-	struct protosw *pr = so->so_proto;
+	const struct protosw *pr = so->so_proto;
 	struct mbuf *nextrecord;
 	size_t resid, orig_resid = uio->uio_resid;
 
@@ -1012,7 +1012,7 @@ release:
 int
 soshutdown(struct socket *so, int how)
 {
-	struct protosw *pr = so->so_proto;
+	const struct protosw *pr = so->so_proto;
 	int s, error = 0;
 
 	s = solock(so);
@@ -1040,7 +1040,7 @@ void
 sorflush(struct socket *so)
 {
 	struct sockbuf *sb = &so->so_rcv;
-	struct protosw *pr = so->so_proto;
+	const struct protosw *pr = so->so_proto;
 	struct socket aso;
 	int error;
 

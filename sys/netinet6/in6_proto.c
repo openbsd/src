@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.99 2017/11/17 14:51:13 jca Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.100 2017/11/23 13:45:46 mpi Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -121,7 +121,7 @@
  */
 u_char ip6_protox[IPPROTO_MAX];
 
-struct protosw inet6sw[] = {
+const struct protosw inet6sw[] = {
 {
   .pr_domain	= &inet6domain,
   .pr_protocol	= IPPROTO_IPV6,

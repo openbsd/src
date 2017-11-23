@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.209 2017/11/20 10:35:24 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.210 2017/11/23 13:45:46 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ static struct task ip6send_task =
 void
 ip6_init(void)
 {
-	struct protosw *pr;
+	const struct protosw *pr;
 	int i;
 
 	pr = pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);

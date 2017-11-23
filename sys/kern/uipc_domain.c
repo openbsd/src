@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.54 2017/10/29 14:56:36 florian Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.55 2017/11/23 13:45:46 mpi Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ void
 domaininit(void)
 {
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 	static struct timeout pffast_timeout;
 	static struct timeout pfslow_timeout;
 	int i;
@@ -118,11 +118,11 @@ pffinddomain(int family)
 	return (NULL);
 }
 
-struct protosw *
+const struct protosw *
 pffindtype(int family, int type)
 {
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 
 	dp = pffinddomain(family);
 	if (dp == NULL)
@@ -134,12 +134,12 @@ pffindtype(int family, int type)
 	return (NULL);
 }
 
-struct protosw *
+const struct protosw *
 pffindproto(int family, int protocol, int type)
 {
 	struct domain *dp;
-	struct protosw *pr;
-	struct protosw *maybe = NULL;
+	const struct protosw *pr;
+	const struct protosw *maybe = NULL;
 
 	if (family == 0)
 		return (NULL);
@@ -164,7 +164,7 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 	int error, family, protocol;
 
 	/*
@@ -218,7 +218,7 @@ void
 pfctlinput(int cmd, struct sockaddr *sa)
 {
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 	int i;
 
 	NET_ASSERT_LOCKED();
@@ -235,7 +235,7 @@ pfslowtimo(void *arg)
 {
 	struct timeout *to = (struct timeout *)arg;
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 	int i;
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
@@ -251,7 +251,7 @@ pffasttimo(void *arg)
 {
 	struct timeout *to = (struct timeout *)arg;
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 	int i;
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
