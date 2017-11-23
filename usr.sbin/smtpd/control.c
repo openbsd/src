@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.118 2017/01/09 09:53:23 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.119 2017/11/23 07:23:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -94,62 +94,33 @@ control_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 	}
 
-	if (p->proc == PROC_PONY) {
-		switch (imsg->hdr.type) {
-		case IMSG_CTL_SMTP_SESSION:
-			c = tree_get(&ctl_conns, imsg->hdr.peerid);
-			if (c == NULL)
-				return;
-			m_compose(&c->mproc, IMSG_CTL_OK, 0, 0, imsg->fd,
-			    NULL, 0);
-			return;
-		}
-	}
-	if (p->proc == PROC_SCHEDULER) {
-		switch (imsg->hdr.type) {
-		case IMSG_CTL_OK:
-		case IMSG_CTL_FAIL:
-		case IMSG_CTL_LIST_MESSAGES:
-			c = tree_get(&ctl_conns, imsg->hdr.peerid);
-			if (c == NULL)
-				return;
-			imsg->hdr.peerid = 0;
-			m_forward(&c->mproc, imsg);
-			return;
-		}
-	}
-	if (p->proc == PROC_QUEUE) {
-		switch (imsg->hdr.type) {
-		case IMSG_CTL_LIST_ENVELOPES:
-		case IMSG_CTL_DISCOVER_EVPID:
-		case IMSG_CTL_DISCOVER_MSGID:
-		case IMSG_CTL_UNCORRUPT_MSGID:
-			c = tree_get(&ctl_conns, imsg->hdr.peerid);
-			if (c == NULL)
-				return;
-			m_forward(&c->mproc, imsg);
-			return;
-		}
-	}
-	if (p->proc == PROC_PONY) {
-		switch (imsg->hdr.type) {
-		case IMSG_CTL_OK:
-		case IMSG_CTL_FAIL:
-		case IMSG_CTL_MTA_SHOW_HOSTS:
-		case IMSG_CTL_MTA_SHOW_RELAYS:
-		case IMSG_CTL_MTA_SHOW_ROUTES:
-		case IMSG_CTL_MTA_SHOW_HOSTSTATS:
-		case IMSG_CTL_MTA_SHOW_BLOCK:
-			c = tree_get(&ctl_conns, imsg->hdr.peerid);
-			if (c == NULL)
-				return;
-			imsg->hdr.peerid = 0;
-			m_forward(&c->mproc, imsg);
-			return;
-		}
-	}
-
 	switch (imsg->hdr.type) {
+	case IMSG_CTL_OK:
+	case IMSG_CTL_FAIL:
+	case IMSG_CTL_LIST_MESSAGES:
+	case IMSG_CTL_LIST_ENVELOPES:
+	case IMSG_CTL_DISCOVER_EVPID:
+	case IMSG_CTL_DISCOVER_MSGID:
+	case IMSG_CTL_UNCORRUPT_MSGID:
+	case IMSG_CTL_MTA_SHOW_HOSTS:
+	case IMSG_CTL_MTA_SHOW_RELAYS:
+	case IMSG_CTL_MTA_SHOW_ROUTES:
+	case IMSG_CTL_MTA_SHOW_HOSTSTATS:
+	case IMSG_CTL_MTA_SHOW_BLOCK:
+		c = tree_get(&ctl_conns, imsg->hdr.peerid);
+		if (c == NULL)
+			return;
+		imsg->hdr.peerid = 0;
+		m_forward(&c->mproc, imsg);
+		return;
+
+	case IMSG_CTL_SMTP_SESSION:
+		c = tree_get(&ctl_conns, imsg->hdr.peerid);
+		if (c == NULL)
+			return;
+		m_compose(&c->mproc, IMSG_CTL_OK, 0, 0, imsg->fd, NULL, 0);
+		return;
+
 	case IMSG_STAT_INCREMENT:
 		m_msg(&m, imsg);
 		m_get_string(&m, &key);
@@ -162,6 +133,7 @@ control_imsg(struct mproc *p, struct imsg *imsg)
 			stat_backend->increment(key, val.u.counter);
 		control_digest_update(key, val.u.counter, 1);
 		return;
+
 	case IMSG_STAT_DECREMENT:
 		m_msg(&m, imsg);
 		m_get_string(&m, &key);
@@ -174,6 +146,7 @@ control_imsg(struct mproc *p, struct imsg *imsg)
 			stat_backend->decrement(key, val.u.counter);
 		control_digest_update(key, val.u.counter, 0);
 		return;
+
 	case IMSG_STAT_SET:
 		m_msg(&m, imsg);
 		m_get_string(&m, &key);
