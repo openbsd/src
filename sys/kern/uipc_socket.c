@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.207 2017/11/04 14:13:53 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.208 2017/11/23 13:42:53 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -453,7 +453,7 @@ restart:
 		    (atomic || space < so->so_snd.sb_lowat))) {
 			if ((so->so_state & SS_NBIO) || (flags & MSG_DONTWAIT))
 				snderr(EWOULDBLOCK);
-			sbunlock(&so->so_snd);
+			sbunlock(so, &so->so_snd);
 			error = sbwait(so, &so->so_snd);
 			so->so_state &= ~SS_ISSENDING;
 			if (error)
@@ -497,7 +497,7 @@ restart:
 
 release:
 	so->so_state &= ~SS_ISSENDING;
-	sbunlock(&so->so_snd);
+	sbunlock(so, &so->so_snd);
 out:
 	sounlock(s);
 	m_freem(top);
@@ -736,7 +736,7 @@ restart:
 		}
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 1");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
-		sbunlock(&so->so_rcv);
+		sbunlock(so, &so->so_rcv);
 		error = sbwait(so, &so->so_rcv);
 		sounlock(s);
 		if (error)
@@ -957,7 +957,7 @@ dontblock:
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
 			error = sbwait(so, &so->so_rcv);
 			if (error) {
-				sbunlock(&so->so_rcv);
+				sbunlock(so, &so->so_rcv);
 				sounlock(s);
 				return (0);
 			}
@@ -993,7 +993,7 @@ dontblock:
 	}
 	if (orig_resid == uio->uio_resid && orig_resid &&
 	    (flags & MSG_EOR) == 0 && (so->so_state & SS_CANTRCVMORE) == 0) {
-		sbunlock(&so->so_rcv);
+		sbunlock(so, &so->so_rcv);
 		sounlock(s);
 		goto restart;
 	}
@@ -1004,7 +1004,7 @@ dontblock:
 	if (flagsp)
 		*flagsp |= flags;
 release:
-	sbunlock(&so->so_rcv);
+	sbunlock(so, &so->so_rcv);
 	sounlock(s);
 	return (error);
 }
@@ -1049,7 +1049,7 @@ sorflush(struct socket *so)
 	/* with SB_NOINTR and M_WAITOK sblock() must not fail */
 	KASSERT(error == 0);
 	socantrcvmore(so);
-	sbunlock(sb);
+	sbunlock(so, sb);
 	aso.so_proto = pr;
 	aso.so_rcv = *sb;
 	memset(sb, 0, sizeof (*sb));
@@ -1110,7 +1110,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 		}
 		if (so->so_sp->ssp_socket)
 			sounsplice(so, so->so_sp->ssp_socket, 1);
-		sbunlock(&so->so_rcv);
+		sbunlock(so, &so->so_rcv);
 		return (0);
 	}
 
@@ -1139,7 +1139,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 		return (error);
 	}
 	if ((error = sblock(so, &sosp->so_snd, M_WAITOK)) != 0) {
-		sbunlock(&so->so_rcv);
+		sbunlock(so, &so->so_rcv);
 		FRELE(fp, curproc);
 		return (error);
 	}
@@ -1183,8 +1183,8 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	}
 
  release:
-	sbunlock(&sosp->so_snd);
-	sbunlock(&so->so_rcv);
+	sbunlock(sosp, &sosp->so_snd);
+	sbunlock(so, &so->so_rcv);
 	FRELE(fp, curproc);
 	return (error);
 }

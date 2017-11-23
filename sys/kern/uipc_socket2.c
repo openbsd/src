@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.86 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.87 2017/11/23 13:42:53 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -342,7 +342,6 @@ sblock(struct socket *so, struct sockbuf *sb, int wait)
 {
 	int error, prio = (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH;
 
-	KERNEL_ASSERT_LOCKED();
 	soassertlocked(so);
 
 	if ((sb->sb_flags & SB_LOCK) == 0) {
@@ -363,9 +362,9 @@ sblock(struct socket *so, struct sockbuf *sb, int wait)
 }
 
 void
-sbunlock(struct sockbuf *sb)
+sbunlock(struct socket *so, struct sockbuf *sb)
 {
-	KERNEL_ASSERT_LOCKED();
+	soassertlocked(so);
 
 	sb->sb_flags &= ~SB_LOCK;
 	if (sb->sb_flags & SB_WANT) {

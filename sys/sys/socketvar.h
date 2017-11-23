@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.77 2017/11/04 14:13:53 mpi Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.78 2017/11/23 13:42:53 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -244,7 +244,7 @@ soreadable(struct socket *so)
 int sblock(struct socket *, struct sockbuf *, int);
 
 /* release lock on sockbuf sb */
-void sbunlock(struct sockbuf *);
+void sbunlock(struct socket *, struct sockbuf *);
 
 #define	SB_EMPTY_FIXUP(sb) do {						\
 	if ((sb)->sb_mb == NULL) {					\
