@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.30 2017/11/07 11:41:07 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.31 2017/11/23 06:26:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1514,19 +1514,19 @@ slot_new(struct dev *d, char *who, struct slotops *ops, void *arg, int mode)
 found:
 	if (!dev_ref(d))
 		return NULL;
+	if ((mode & d->mode) != mode) {
+		if (log_level >= 1) {
+			slot_log(s);
+			log_puts(": requested mode not supported\n");
+		}
+		dev_unref(d);
+		return 0;
+	}
 	s->dev = d;
 	s->ops = ops;
 	s->arg = arg;
 	s->pstate = SLOT_INIT;
 	s->tstate = MMC_OFF;
-
-	if ((mode & s->dev->mode) != mode) {
-		if (log_level >= 1) {
-			slot_log(s);
-			log_puts(": requested mode not supported\n");
-		}
-		return 0;
-	}
 	s->mode = mode;
 	aparams_init(&s->par);
 	if (s->mode & MODE_PLAY) {
