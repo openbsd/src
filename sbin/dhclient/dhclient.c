@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.525 2017/11/20 13:33:58 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.526 2017/11/23 14:19:17 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2502,7 +2502,7 @@ set_lease_times(struct client_lease *lease)
 	 * &&
 	 * expiry >= MIN(time_max, 60)
 	 */
-	lease->expiry = lease_expiry(lease);
+	lease->expiry = lease_expiry(lease) - lease->epoch;
 
 	lease->renewal = lease->expiry / 2;
 	if (lease->options[DHO_DHCP_RENEWAL_TIME].len == sizeof(uint32val)) {
@@ -2526,6 +2526,7 @@ set_lease_times(struct client_lease *lease)
 		lease->rebind = lease->renewal;
 
 	/* Convert lease lengths to times. */
+	lease->expiry += lease->epoch;
 	lease->renewal += lease->epoch;
 	lease->rebind += lease->epoch;
 }
