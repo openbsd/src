@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.40 2017/07/16 18:30:24 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.41 2017/11/23 22:59:42 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -719,6 +719,7 @@ wsmouse_mtstate(struct device *sc, int slot, int x, int y, int pressure)
 			mt->num_touches--;
 			mt->touches ^= bit;
 			mt->sync[MTS_TOUCH] |= bit;
+			mt->ptr_mask &= mt->touches;
 		}
 	}
 }
@@ -851,10 +852,10 @@ wsmouse_ptr_ctrl(struct mt_state *mt)
 	}
 
 	/*
-	 * If there is no pointer-controlling slot or it is inactive,
-	 * select a new one.
+	 * If there is no pointer-controlling slot, or if it should be
+	 * masked, select a new one.
 	 */
-	select = ((mt->ptr & mt->touches) == 0);
+	select = ((mt->ptr & mt->touches & ~mt->ptr_mask) == 0);
 
 	/* Remove slots without X/Y deltas from the cycle. */
 	updates = (mt->sync[MTS_X] | mt->sync[MTS_Y]) & ~mt->sync[MTS_TOUCH];
@@ -867,8 +868,12 @@ wsmouse_ptr_ctrl(struct mt_state *mt)
 		mt->ptr_cycle |= updates;
 	}
 	if (select) {
-		slot = (mt->ptr_cycle
-		    ? ffs(mt->ptr_cycle) - 1 : ffs(mt->touches) - 1);
+		if (mt->ptr_cycle & ~mt->ptr_mask)
+			slot = ffs(mt->ptr_cycle & ~mt->ptr_mask) - 1;
+		else if (mt->touches & ~mt->ptr_mask)
+			slot = ffs(mt->touches & ~mt->ptr_mask) - 1;
+		else
+			slot = ffs(mt->touches) - 1;
 		mt->ptr = (1 << slot);
 	}
 }

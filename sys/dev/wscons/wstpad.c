@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.11 2017/08/25 20:57:35 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.12 2017/11/23 22:59:42 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -94,6 +94,13 @@ enum tpad_cmd {
 
 #define EDGES (L_EDGE | R_EDGE | T_EDGE | B_EDGE)
 
+/*
+ * A touch is "centered" if it does not start and remain at the top
+ * edge or one of the vertical edges.  Two-finger scrolling and tapping
+ * require that at least one touch is centered.
+ */
+#define CENTERED(t) (((t)->flags & (L_EDGE | R_EDGE | T_EDGE)) == 0)
+
 enum touchstates {
 	TOUCH_NONE,
 	TOUCH_BEGIN,
@@ -149,6 +156,7 @@ struct wstpad {
 	struct tpad_touch *tpad_touches;
 
 	u_int mtcycle;
+	u_int ignore;
 
 	int dx;
 	int dy;
@@ -195,6 +203,7 @@ struct wstpad {
 	struct {
 		enum tap_state state;
 		int contacts;
+		int centered;
 		u_int button;
 		int maxdist;
 		struct timeout to;
@@ -331,7 +340,7 @@ get_2nd_touch(struct wsmouseinput *input)
 	int slot;
 
 	if (IS_MT(tp)) {
-		slot = ffs(input->mt.touches & ~input->mt.ptr);
+		slot = ffs(input->mt.touches & ~(input->mt.ptr | tp->ignore));
 		if (slot)
 			return &tp->tpad_touches[--slot];
 	}
@@ -400,9 +409,16 @@ wstpad_f2scroll(struct wsmouseinput *input, u_int *cmds)
 {
 	struct wstpad *tp = input->tp;
 	struct tpad_touch *t2;
-	int dir, dx, dy;
+	int dir, dx, dy, centered;
 
-	if (tp->contacts != 2 || !chk_scroll_state(tp))
+	if (tp->ignore == 0) {
+		if (tp->contacts != 2)
+			return;
+	} else if (tp->contacts != 3 || (tp->ignore == input->mt.ptr)) {
+		return;
+	}
+
+	if (!chk_scroll_state(tp))
 		return;
 
 	dir = tp->t->dir;
@@ -410,6 +426,7 @@ wstpad_f2scroll(struct wsmouseinput *input, u_int *cmds)
 	dx = EAST(dir) || WEST(dir) ? tp->dx : 0;
 
 	if (dx || dy) {
+		centered = CENTERED(tp->t);
 		if (IS_MT(tp)) {
 			t2 = get_2nd_touch(input);
 			if (t2 == NULL)
@@ -419,9 +436,12 @@ wstpad_f2scroll(struct wsmouseinput *input, u_int *cmds)
 				return;
 			if ((dx > 0 && !EAST(dir)) || (dx < 0 && !WEST(dir)))
 				return;
+			centered |= CENTERED(t2);
 		}
-		wstpad_scroll(tp, dx, dy, cmds);
-		set_freeze_ts(tp, 0, FREEZE_MS);
+		if (centered) {
+			wstpad_scroll(tp, dx, dy, cmds);
+			set_freeze_ts(tp, 0, FREEZE_MS);
+		}
 	}
 }
 
@@ -520,10 +540,6 @@ wstpad_is_tap(struct wstpad *tp, struct tpad_touch *t)
 	struct timespec ts;
 	int dx, dy, dist = 0;
 
-	if (t->flags & EDGES)
-		/* No tapping in the edge areas. */
-		return (0);
-
 	/*
 	 * No distance limit applies if there has been more than one contact
 	 * on a single-touch device.  We cannot use (t->x - t->orig.x) in this
@@ -544,27 +560,76 @@ wstpad_is_tap(struct wstpad *tp, struct tpad_touch *t)
 }
 
 /*
+ * Return the oldest touch in the TOUCH_END state, or NULL.
+ */
+struct tpad_touch *
+wstpad_tap_touch(struct wsmouseinput *input)
+{
+	struct wstpad *tp = input->tp;
+	struct tpad_touch *s, *t = NULL;
+	u_int lifted;
+	int slot;
+
+	if (IS_MT(tp)) {
+		lifted = (input->mt.sync[MTS_TOUCH] & ~input->mt.touches);
+		FOREACHBIT(lifted, slot) {
+			s = &tp->tpad_touches[slot];
+			if (tp->tap.state == TAP_DETECT)
+				tp->tap.centered |= CENTERED(s);
+			if (t == NULL || timespeccmp(&t->orig.time,
+			    &s->orig.time, >))
+				t = s;
+		}
+	} else {
+		if (tp->t->state == TOUCH_END) {
+			t = tp->t;
+			if (tp->tap.state == TAP_DETECT)
+				tp->tap.centered = CENTERED(t);
+		}
+	}
+
+	return (t);
+}
+
+/*
+ * If each contact in a sequence of contacts that overlap in time
+ * is a tap, a button event may be generated when the number of
+ * contacts drops to zero, or to one if there is a masked touch.
+ */
+static inline int
+tap_finished(struct wstpad *tp, int nmasked)
+{
+	return (tp->contacts == nmasked
+	    && (nmasked == 0 || !wstpad_is_tap(tp, tp->t)));
+}
+
+static inline u_int
+tap_btn(struct wstpad *tp, int nmasked)
+{
+	int n = tp->tap.contacts - nmasked;
+
+	return (n == 2 ? RIGHTBTN : (n == 3 ? MIDDLEBTN : LEFTBTN));
+}
+
+/*
  * This handler supports one-, two-, and three-finger-taps, which
  * are mapped to left-button, right-button and middle-button events,
  * respectively; moreover, it supports tap-and-drag operations with
  * "locked drags", which are finished by a timeout or a tap-to-end
  * gesture.
- * Please note that if the touch t is derived from MT input it is the
- * pointer-controlling touch.  If the state of that touch is not
- * TOUCH_UPDATE then no other touch will be in this state.
  */
 void
 wstpad_tap(struct wsmouseinput *input, u_int *cmds)
 {
 	struct wstpad *tp = input->tp;
-	struct tpad_touch *t = tp->t;
-	int err = 0;
+	struct tpad_touch *t;
+	int nmasked, err = 0;
 
 	if (tp->btns) {
 		/*
 		 * Don't process tapping while hardware buttons are being
 		 * pressed.  If the handler is not in its initial state,
-		 * the "tap button" will be released.
+		 * release the "tap button".
 		 */
 		if (tp->tap.state > TAP_IGNORE) {
 			timeout_del(&tp->tap.to);
@@ -575,37 +640,53 @@ wstpad_tap(struct wsmouseinput *input, u_int *cmds)
 		 * timeout; ignore the current touch.
 		 */
 		tp->tap.state = TAP_IGNORE;
+		tp->tap.contacts = 0;
+		tp->tap.centered = 0;
 	}
+
+	/*
+	 * If a touch from the bottom area is masked, reduce the
+	 * contact counts and ignore it.
+	 */
+	nmasked = (input->mt.ptr_mask ? 1 : 0);
+
+	/*
+	 * Only touches in the TOUCH_END state are relevant here.
+	 * t is NULL if no touch has been lifted.
+	 */
+	t = wstpad_tap_touch(input);
 
 	switch (tp->tap.state) {
 	case TAP_DETECT:
-		if (t->state == TOUCH_END) {
-			if (wstpad_is_tap(tp, t)) {
-				tp->tap.button = (tp->tap.contacts == 2
-				    ? RIGHTBTN : (tp->tap.contacts == 3
-				    ? MIDDLEBTN : LEFTBTN));
-				*cmds |= 1 << TAPBUTTON_DOWN;
-				tp->tap.state = TAP_LIFTED;
-				err = !timeout_add_msec(
-				    &tp->tap.to, tp->tap.clicktime);
-			}
-			tp->tap.contacts = 0;
-		} else if (tp->contacts != tp->tap.contacts) {
-			/* Check t before pointer-control might change. */
-			if (!wstpad_is_tap(tp, t)) {
+		if (tp->contacts > tp->tap.contacts)
+			tp->tap.contacts = tp->contacts;
+
+		if (t) {
+			if (!wstpad_is_tap(tp, t))
 				tp->tap.state = TAP_IGNORE;
+			else if (tap_finished(tp, nmasked))
+				tp->tap.state = (tp->tap.centered
+				    ? TAP_LIFTED : TAP_IGNORE);
+
+			if (tp->tap.state != TAP_DETECT) {
+				if (tp->tap.state == TAP_LIFTED) {
+					tp->tap.button = tap_btn(tp, nmasked);
+					*cmds |= 1 << TAPBUTTON_DOWN;
+					err = !timeout_add_msec(&tp->tap.to,
+					    tp->tap.clicktime);
+				}
 				tp->tap.contacts = 0;
-			} else if (tp->contacts > tp->tap.contacts) {
-				tp->tap.contacts = tp->contacts;
+				tp->tap.centered = 0;
 			}
 		}
 		break;
+
 	case TAP_IGNORE:
-		if (t->state != TOUCH_UPDATE)
+		if (tp->contacts == nmasked)
 			tp->tap.state = TAP_DETECT;
 		break;
 	case TAP_LIFTED:
-		if (t->state >= TOUCH_BEGIN) {
+		if (tp->contacts > nmasked) {
 			timeout_del(&tp->tap.to);
 			if (tp->tap.button == LEFTBTN) {
 				tp->tap.state = TAP_2ND_TOUCH;
@@ -616,43 +697,45 @@ wstpad_tap(struct wsmouseinput *input, u_int *cmds)
 		}
 		break;
 	case TAP_2ND_TOUCH:
-		if (t->state == TOUCH_END) {
+		if (t) {
 			if (wstpad_is_tap(tp, t)) {
 				*cmds |= 1 << TAPBUTTON_DOUBLECLK;
 				tp->tap.state = TAP_LIFTED;
-				err = !timeout_add_msec(
-				    &tp->tap.to, CLICKDELAY_MS);
-			} else if (tp->tap.locktime == 0) {
-				*cmds |= 1 << TAPBUTTON_UP;
-				tp->tap.state = TAP_DETECT;
-			} else {
-				tp->tap.state = TAP_LOCKED;
-				err = !timeout_add_msec(
-				    &tp->tap.to, tp->tap.locktime);
+				err = !timeout_add_msec(&tp->tap.to,
+				    CLICKDELAY_MS);
+			} else if (tp->contacts == nmasked) {
+				if (tp->tap.locktime == 0) {
+					*cmds |= 1 << TAPBUTTON_UP;
+					tp->tap.state = TAP_DETECT;
+				} else {
+					tp->tap.state = TAP_LOCKED;
+					err = !timeout_add_msec(&tp->tap.to,
+					    tp->tap.locktime);
+				}
 			}
-		} else if (tp->contacts > 1) {
+		} else if (tp->contacts != nmasked + 1) {
 			*cmds |= 1 << TAPBUTTON_UP;
 			tp->tap.state = TAP_DETECT;
 		}
 		break;
 	case TAP_LOCKED:
-		if (t->state >= TOUCH_BEGIN) {
+		if (tp->contacts > nmasked) {
 			timeout_del(&tp->tap.to);
 			tp->tap.state = TAP_NTH_TOUCH;
 		}
 		break;
 	case TAP_NTH_TOUCH:
-		if (t->state == TOUCH_END) {
+		if (t) {
 			if (wstpad_is_tap(tp, t)) {
 				/* "tap-to-end" */
 				*cmds |= 1 << TAPBUTTON_UP;
 				tp->tap.state = TAP_DETECT;
-			} else {
+			} else if (tp->contacts == nmasked) {
 				tp->tap.state = TAP_LOCKED;
-				err = !timeout_add_msec(
-				    &tp->tap.to, tp->tap.locktime);
+				err = !timeout_add_msec(&tp->tap.to,
+				    tp->tap.locktime);
 			}
-		} else if (tp->contacts > 1) {
+		} else if (tp->contacts != nmasked + 1) {
 			*cmds |= 1 << TAPBUTTON_UP;
 			tp->tap.state = TAP_DETECT;
 		}
@@ -823,7 +906,8 @@ wstpad_mt_inputs(struct wsmouseinput *input)
 	if (touches & tp->mtcycle) {
 		/*
 		 * Slot data may be synchronized separately, in any order,
-		 * or not at all if they are "inactive" and there is no delta.
+		 * or not at all if there is no delta.  Identify the touches
+		 * without deltas.
 		 */
 		inactive = input->mt.touches & ~tp->mtcycle;
 		tp->mtcycle = touches;
@@ -849,6 +933,52 @@ wstpad_mt_inputs(struct wsmouseinput *input)
 	}
 
 	clear_touchstates(input, TOUCH_END);
+}
+
+void
+wstpad_mt_masks(struct wsmouseinput *input)
+{
+	struct wstpad *tp = input->tp;
+	struct tpad_touch *t;
+	u_int mask;
+	int d, slot;
+
+	tp->ignore &= input->mt.touches;
+
+	if (tp->contacts < 2 || tp->ignore)
+		return;
+
+	/*
+	 * If there is exactly one touch in the bottom area, try to
+	 * link pointer control to other touches  (once set, the mask
+	 * will only be cleared when the touch ends).
+	 */
+	if (input->mt.ptr_mask == 0) {
+		mask = ~0;
+		FOREACHBIT(input->mt.touches, slot) {
+			t = &tp->tpad_touches[slot];
+			if (t->flags & B_EDGE) {
+				mask &= (1 << slot);
+				input->mt.ptr_mask = mask;
+			}
+		}
+	}
+
+	/*
+	 * If the pointer-controlling touch is moving stably while a masked
+	 * touch is not, treat the latter as "thumb".  It will not block
+	 * pointer movement, and wstpad_f2scroll will ignore it.
+	 */
+	if ((tp->dx || tp->dy) && (input->mt.ptr_mask & ~input->mt.ptr)) {
+		slot = ffs(input->mt.ptr_mask) - 1;
+		t = &tp->tpad_touches[slot];
+		if (t->flags & B_EDGE) {
+			d = tp->t->matches - t->matches;
+			/* Do not hamper upward scrolling. */
+			if (d > STABLE && (!NORTH(t->dir) || d > 2 * STABLE))
+				tp->ignore = input->mt.ptr_mask;
+		}
+	}
 }
 
 void
@@ -879,6 +1009,7 @@ wstpad_touch_inputs(struct wsmouseinput *input)
 			slot = ffs(input->mt.ptr) - 1;
 			tp->t = &tp->tpad_touches[slot];
 		}
+		wstpad_mt_masks(input);
 	} else {
 		t = tp->t;
 		t->x = normalize_abs(&input->filter.h, input->motion.x);
@@ -906,6 +1037,18 @@ wstpad_touch_inputs(struct wsmouseinput *input)
 		    normalize_rel(&input->filter.v, input->motion.y_delta),
 		    input->filter.ratio);
 	}
+}
+
+static inline int
+t2_ignore(struct wsmouseinput *input)
+{
+	/*
+	 * If there are two touches, do not block pointer movement if they
+	 * perform a click-and-drag action, or if the second touch is
+	 * resting in the bottom area.
+	 */
+	return (input->tp->contacts == 2 && ((input->tp->btns & PRIMARYBTN)
+	    || (input->tp->ignore & ~input->mt.ptr)));
 }
 
 void
@@ -943,14 +1086,12 @@ wstpad_process_input(struct wsmouseinput *input, struct evq_access *evq)
 		}
 	}
 
-	/* Check whether the motion deltas should be cleared. */
+	/* Check whether pointer movement should be blocked. */
 	if (tp->dx || tp->dy) {
 		if (DISABLE(tp)
 		    || (tp->t->flags & tp->freeze)
 		    || timespeccmp(&tp->time, &tp->freeze_ts, <)
-		    /* Is there more than one contact, and no click-and-drag? */
-		    || tp->contacts > 2
-		    || (tp->contacts == 2 && !(tp->btns & PRIMARYBTN))) {
+		    || (tp->contacts > 1 && !t2_ignore(input))) {
 
 			cmds |= 1 << CLEAR_MOTION_DELTAS;
 		}
@@ -1086,14 +1227,11 @@ wstpad_weak_hysteresis(int *dx, int *dy,
 {
 	*h_acc += *dx;
 	*v_acc += *dy;
-	if ((*dx > 0 && *h_acc < *dx)
-	    || (*dx < 0 && *h_acc > *dx))
+	if ((*dx > 0 && *h_acc < *dx) || (*dx < 0 && *h_acc > *dx))
 		*h_acc = *dx;
-	if ((*dy > 0 && *v_acc < *dy)
-	    || (*dy < 0 && *v_acc > *dy))
+	if ((*dy > 0 && *v_acc < *dy) || (*dy < 0 && *v_acc > *dy))
 		*v_acc = *dy;
-	if (abs(*h_acc) < h_threshold
-	    && abs(*v_acc) < v_threshold)
+	if (abs(*h_acc) < h_threshold && abs(*v_acc) < v_threshold)
 		*dx = *dy = 0;
 }
 
