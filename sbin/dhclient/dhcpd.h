@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.236 2017/11/09 12:34:25 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.237 2017/11/24 01:39:29 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -58,7 +58,7 @@ struct client_lease {
 	TAILQ_ENTRY(client_lease) next;
 	char			*interface;
 	time_t			 epoch;
-	time_t			 expiry, renewal, rebind;
+	time_t			 expiry, rebind;
 	struct in_addr		 address;
 	struct in_addr		 next_server;
 	char			*server_name;
