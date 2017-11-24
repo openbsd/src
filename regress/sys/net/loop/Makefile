@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2017/11/20 15:52:25 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2017/11/24 14:39:15 bluhm Exp $
 
 # Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -27,6 +27,7 @@ NUMS =		${N1} ${N2}
 
 .include <bsd.own.mk>
 
+.if ! (make(clean) || make(cleandir) || make(obj))
 SYSCTL_FORWARDING !=	sysctl net.inet.ip.forwarding
 
 .if ${SYSCTL_FORWARDING:C/.*=//} != 1
@@ -43,6 +44,7 @@ regress:
 	@echo "${PF_SKIP_IFACE}"
 	@echo Do not set skip on interface lo, lo${N1}, or lo${N2}.
 	@echo SKIPPED
+.endif
 .endif
 
 .PHONY: check-interfaces check-rdomains ifconfig unconfig
