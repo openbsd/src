@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.26 2016/09/22 12:55:24 mpi Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.27 2017/11/24 02:36:53 dlg Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -99,6 +99,7 @@ int timeout_add_msec(struct timeout *, int);
 int timeout_add_usec(struct timeout *, int);
 int timeout_add_nsec(struct timeout *, int);
 int timeout_del(struct timeout *);
+void timeout_barrier(struct timeout *);
 
 void timeout_startup(void);
 void timeout_adjust_ticks(int);
