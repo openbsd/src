@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.c,v 1.118 2017/10/25 00:17:08 djm Exp $ */
+/* $OpenBSD: misc.c,v 1.119 2017/11/25 06:46:22 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -1219,8 +1219,8 @@ ms_subtract_diff(struct timeval *start, int *ms)
 {
 	struct timeval diff, finish;
 
-	gettimeofday(&finish, NULL);
-	timersub(&finish, start, &diff);	
+	monotime_tv(&finish);
+	timersub(&finish, start, &diff);
 	*ms -= (diff.tv_sec * 1000) + (diff.tv_usec / 1000);
 }
 
@@ -1233,14 +1233,29 @@ ms_to_timeval(struct timeval *tv, int ms)
 	tv->tv_usec = (ms % 1000) * 1000;
 }
 
+void
+monotime_ts(struct timespec *ts)
+{
+	if (clock_gettime(CLOCK_MONOTONIC, ts) != 0)
+		fatal("clock_gettime: %s", strerror(errno));
+}
+
+void
+monotime_tv(struct timeval *tv)
+{
+	struct timespec ts;
+
+	monotime_ts(&ts);
+	tv->tv_sec = ts.tv_sec;
+	tv->tv_usec = ts.tv_nsec / 1000;
+}
+
 time_t
 monotime(void)
 {
 	struct timespec ts;
 
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
-		fatal("clock_gettime: %s", strerror(errno));
-
+	monotime_ts(&ts);
 	return (ts.tv_sec);
 }
 
@@ -1249,10 +1264,8 @@ monotime_double(void)
 {
 	struct timespec ts;
 
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
-		fatal("clock_gettime: %s", strerror(errno));
-
-	return (ts.tv_sec + (double)ts.tv_nsec / 1000000000);
+	monotime_ts(&ts);
+	return (double)ts.tv_sec + (double)ts.tv_nsec / 1000000000.0;
 }
 
 void
@@ -1274,7 +1287,7 @@ bandwidth_limit(struct bwlimit *bw, size_t read_len)
 	struct timespec ts, rm;
 
 	if (!timerisset(&bw->bwstart)) {
-		gettimeofday(&bw->bwstart, NULL);
+		monotime_tv(&bw->bwstart);
 		return;
 	}
 
@@ -1282,7 +1295,7 @@ bandwidth_limit(struct bwlimit *bw, size_t read_len)
 	if (bw->lamt < bw->thresh)
 		return;
 
-	gettimeofday(&bw->bwend, NULL);
+	monotime_tv(&bw->bwend);
 	timersub(&bw->bwend, &bw->bwstart, &bw->bwend);
 	if (!timerisset(&bw->bwend))
 		return;
@@ -1316,7 +1329,7 @@ bandwidth_limit(struct bwlimit *bw, size_t read_len)
 	}
 
 	bw->lamt = 0;
-	gettimeofday(&bw->bwstart, NULL);
+	monotime_tv(&bw->bwstart);
 }
 
 /* Make a template filename for mk[sd]temp() */
