@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.350 2017/09/26 20:23:32 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.351 2017/11/25 22:26:25 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1658,20 +1658,21 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	free(path);
 	path = NULL;
 
-	/* process "load anchor" directives that might have used queues */
-	if (!anchorname[0]) {
+	if (trans == NULL) {
+		/*
+		 * process "load anchor" directives that might have used queues
+		 */
 		if (pfctl_load_anchors(dev, &pf, t) == -1)
 			ERRX("load anchors");
 		pfctl_clear_queues(&qspecs);
 		pfctl_clear_queues(&rootqs);
-	}
 
-	if (trans == NULL && (opts & PF_OPT_NOACTION) == 0) {
-		if (!anchorname[0])
-			if (pfctl_load_options(&pf))
+		if ((opts & PF_OPT_NOACTION) == 0) {
+			if (!anchorname[0] && pfctl_load_options(&pf))
 				goto _error;
-		if (pfctl_trans(dev, t, DIOCXCOMMIT, osize))
-			ERR("DIOCXCOMMIT");
+			if (pfctl_trans(dev, t, DIOCXCOMMIT, osize))
+				ERR("DIOCXCOMMIT");
+		}
 	}
 	return (0);
 
