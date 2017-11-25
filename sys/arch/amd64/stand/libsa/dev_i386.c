@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.20 2017/05/31 08:40:32 yasuoka Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.21 2017/11/25 19:02:07 patrick Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -107,6 +107,17 @@ devboot(dev_t bootdev, char *p)
 #endif
 	int sr_boot_vol = -1;
 	int part_type = FS_UNUSED;
+
+#ifdef EFIBOOT
+	if (!bootdev) {
+		*p++ = 't';
+		*p++ = 'f';
+		*p++ = 't';
+		*p++ = 'p';
+		*p = '\0';
+		return;
+	}
+#endif
 
 #ifdef SOFTRAID
 	/*

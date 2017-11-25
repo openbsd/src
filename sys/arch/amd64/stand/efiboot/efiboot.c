@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.27 2017/11/06 09:08:53 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.28 2017/11/25 19:02:07 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -52,9 +52,8 @@ static EFI_GUID		 blkio_guid = BLOCK_IO_PROTOCOL;
 static EFI_GUID		 devp_guid = DEVICE_PATH_PROTOCOL;
 u_long			 efi_loadaddr;
 
-static int	 efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
-static int	 efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *,
-		    int);
+int	 efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
+int	 efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
 static void	 efi_heap_init(void);
 static void	 efi_memprobe_internal(void);
 static void	 efi_video_init(void);
@@ -99,6 +98,11 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 				bios_bootdev =
 				    (DevicePathSubType(dp) == MEDIA_CDROM_DP)
 				    ? 0x1e0 : 0x80;
+				efi_bootdp = dp0;
+				break;
+			} else if (DevicePathType(dp) == MESSAGING_DEVICE_PATH&&
+			    DevicePathSubType(dp) == MSG_MAC_ADDR_DP) {
+				bios_bootdev = 0x0;
 				efi_bootdp = dp0;
 				break;
 			}
@@ -233,7 +237,7 @@ next:
  * Determine the number of nodes up to, but not including, the first
  * node of the specified type.
  */
-static int
+int
 efi_device_path_depth(EFI_DEVICE_PATH *dp, int dptype)
 {
 	int	i;
@@ -246,7 +250,7 @@ efi_device_path_depth(EFI_DEVICE_PATH *dp, int dptype)
 	return (-1);
 }
 
-static int
+int
 efi_device_path_ncmp(EFI_DEVICE_PATH *dpa, EFI_DEVICE_PATH *dpb, int deptn)
 {
 	int	 i, cmp;
