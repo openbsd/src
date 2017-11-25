@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.106 2017/08/11 22:30:38 benno Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.107 2017/11/25 22:20:06 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -175,6 +175,7 @@ struct pf_opt_tbl {
 	int			 pt_rulecount;
 	int			 pt_generated;
 	u_int32_t		 pt_flags;
+	u_int32_t		 pt_refcnt;
 	struct node_tinithead	 pt_nodes;
 	struct pfr_buffer	*pt_buf;
 };
