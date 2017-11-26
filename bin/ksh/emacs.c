@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.74 2017/11/22 12:17:34 anton Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.75 2017/11/26 20:34:15 jca Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -186,7 +186,6 @@ static int	x_search_char_back(int);
 static int	x_search_hist(int);
 static int	x_set_mark(int);
 static int	x_transpose(int);
-static int	x_version(int);
 static int	x_xchg_point_mark(int);
 static int	x_yank(int);
 static int	x_comp_list(int);
@@ -243,7 +242,6 @@ static const struct x_ftab x_ftab[] = {
 	{ x_search_hist,	"search-history",		0 },
 	{ x_set_mark,		"set-mark-command",		0 },
 	{ x_transpose,		"transpose-chars",		0 },
-	{ x_version,		"version",			0 },
 	{ x_xchg_point_mark,	"exchange-point-and-mark",	0 },
 	{ x_yank,		"yank",				0 },
 	{ x_comp_list,		"complete-list",		0 },
@@ -1619,35 +1617,6 @@ x_xchg_point_mark(int c)
 	tmp = xmp;
 	xmp = xcp;
 	x_goto( tmp );
-	return KSTD;
-}
-
-static int
-x_version(int c)
-{
-	char *o_xbuf = xbuf, *o_xend = xend;
-	char *o_xbp = xbp, *o_xep = xep, *o_xcp = xcp;
-	int lim = x_lastcp() - xbp;
-
-	xbuf = xbp = xcp = (char *) ksh_version + 4;
-	xend = xep = (char *) ksh_version + 4 + strlen(ksh_version + 4);
-	x_redraw(lim);
-	x_flush();
-
-	c = x_e_getc();
-	xbuf = o_xbuf;
-	xend = o_xend;
-	xbp = o_xbp;
-	xep = o_xep;
-	xcp = o_xcp;
-	x_redraw(strlen(ksh_version));
-
-	if (c < 0)
-		return KSTD;
-	/* This is what at&t ksh seems to do...  Very bizarre */
-	if (c != ' ')
-		x_e_ungetc(c);
-
 	return KSTD;
 }
 
