@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.194 2017/11/19 13:43:06 mikeb Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.195 2017/11/26 17:06:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -266,7 +266,7 @@ rnd_put(void)
 {
 	u_int idx = rnd_event_prod++;
 
-	/* allow wrapping. caller will use xor. */
+	/* allow wrapping. caller will mix it in. */
 	return &rnd_event_space[idx & (QEVLEN - 1)];
 }
 
