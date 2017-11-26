@@ -1,4 +1,4 @@
-/*	$OpenBSD: delete.c,v 1.11 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: delete.c,v 1.12 2017/11/26 09:59:41 mestre Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -87,14 +87,16 @@ del(SCR *sp, MARK *fm, MARK *tm, int lmode)
 	if (tm->lno == fm->lno) {
 		if (db_get(sp, fm->lno, DBG_FATAL, &p, &len))
 			return (1);
-		GET_SPACE_RET(sp, bp, blen, len);
-		if (fm->cno != 0)
-			memcpy(bp, p, fm->cno);
-		memcpy(bp + fm->cno, p + (tm->cno + 1), len - (tm->cno + 1));
-		if (db_set(sp, fm->lno,
-		    bp, len - ((tm->cno - fm->cno) + 1)))
-			goto err;
-		goto done;
+		if (len != 0) {
+			GET_SPACE_RET(sp, bp, blen, len);
+			if (fm->cno != 0)
+				memcpy(bp, p, fm->cno);
+			memcpy(bp + fm->cno, p + (tm->cno + 1), len - (tm->cno + 1));
+			if (db_set(sp, fm->lno,
+			    bp, len - ((tm->cno - fm->cno) + 1)))
+				goto err;
+			goto done;
+		}
 	}
 
 	/*
