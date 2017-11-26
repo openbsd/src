@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.12 2017/11/23 22:59:42 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.13 2017/11/26 23:27:27 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -45,8 +45,14 @@
 #define IS_MT(tp) ((tp)->features & WSTPAD_MT)
 #define DISABLE(tp) ((tp)->features & WSTPAD_DISABLE)
 
-#define EDGERATIO_DEFAULT	(4096 / 16)
-#define CENTERWIDTH_DEFAULT	(4096 / 8)
+/*
+ * Ratios to the height or width of the touchpad surface, in
+ * [*.12] fixed-point format:
+ */
+#define V_EDGE_RATIO_DEFAULT	205
+#define B_EDGE_RATIO_DEFAULT	410
+#define T_EDGE_RATIO_DEFAULT	512
+#define CENTER_RATIO_DEFAULT	512
 
 #define TAP_MAXTIME_DEFAULT	180
 #define TAP_CLICKTIME_DEFAULT	180
@@ -1448,9 +1454,13 @@ wstpad_configure(struct wsmouseinput *input)
 			tp->features &= ~WSTPAD_TWOFINGERSCROLL;
 			tp->features |= WSTPAD_EDGESCROLL;
 		}
+		if (input->hw.type == WSMOUSE_TYPE_SYNAP_SBTN) {
+			tp->features &= ~WSTPAD_SOFTBUTTONS;
+			tp->features |= WSTPAD_TOPBUTTONS;
+		}
 
-		tp->params.left_edge = 0;
-		tp->params.right_edge = 0;
+		tp->params.left_edge = V_EDGE_RATIO_DEFAULT;
+		tp->params.right_edge = V_EDGE_RATIO_DEFAULT;
 		tp->params.bottom_edge = 0;
 		tp->params.top_edge = 0;
 		tp->params.center_width = 0;
@@ -1460,46 +1470,38 @@ wstpad_configure(struct wsmouseinput *input)
 
 		tp->scroll.hdist = 4 * h_unit;
 		tp->scroll.vdist = 4 * v_unit;
-		tp->tap.maxdist = 3 * h_unit;
+		tp->tap.maxdist = 4 * h_unit;
 	}
 
 	/* A touch with a flag set in this mask does not move the pointer. */
-	tp->freeze = 0;
+	tp->freeze = EDGES;
 
 	if ((ratio = tp->params.left_edge) == 0
 	    && (tp->features & WSTPAD_EDGESCROLL)
 	    && (tp->features & WSTPAD_SWAPSIDES))
-		ratio = EDGERATIO_DEFAULT;
+		ratio = V_EDGE_RATIO_DEFAULT;
 	tp->edge.left = input->hw.x_min + width * ratio / 4096;
-	if (ratio)
-		tp->freeze |= L_EDGE;
 
 	if ((ratio = tp->params.right_edge) == 0
 	    && (tp->features & WSTPAD_EDGESCROLL)
 	    && !(tp->features & WSTPAD_SWAPSIDES))
-		ratio = EDGERATIO_DEFAULT;
+		ratio = V_EDGE_RATIO_DEFAULT;
 	tp->edge.right = input->hw.x_max - width * ratio / 4096;
-	if (ratio)
-		tp->freeze |= R_EDGE;
 
 	if ((ratio = tp->params.bottom_edge) == 0
 	    && ((tp->features & WSTPAD_SOFTBUTTONS)
 	    || ((tp->features & WSTPAD_EDGESCROLL)
 	    && (tp->features & WSTPAD_HORIZSCROLL))))
-		ratio = EDGERATIO_DEFAULT;
+		ratio = B_EDGE_RATIO_DEFAULT;
 	tp->edge.bottom = input->hw.y_min + height * ratio / 4096;
-	if (ratio)
-		tp->freeze |= B_EDGE;
 
 	if ((ratio = tp->params.top_edge) == 0
 	    && (tp->features & WSTPAD_TOPBUTTONS))
-		ratio = EDGERATIO_DEFAULT;
+		ratio = B_EDGE_RATIO_DEFAULT;
 	tp->edge.top = input->hw.y_max - height * ratio / 4096;
-	if (ratio)
-		tp->freeze |= T_EDGE;
 
 	if ((ratio = abs(tp->params.center_width)) == 0)
-		ratio = CENTERWIDTH_DEFAULT;
+		ratio = CENTER_RATIO_DEFAULT;
 	tp->edge.center = (input->hw.x_min + input->hw.x_max) / 2;
 	tp->edge.center_left = tp->edge.center - width * ratio / 8192;
 	tp->edge.center_right = tp->edge.center + width * ratio / 8192;
