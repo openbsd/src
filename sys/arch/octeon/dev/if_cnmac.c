@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.72 2017/11/26 15:39:47 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.73 2017/11/26 15:44:20 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1304,6 +1304,8 @@ cnmac_intr(void *arg)
 wqe_error:
 	printf("word0: 0x%016llx\n", work[0]);
 	printf("word1: 0x%016llx\n", work[1]);
+	printf("word2: 0x%016llx\n", work[2]);
+	printf("word3: 0x%016llx\n", work[3]);
 	panic("wqe error");
 }
 
