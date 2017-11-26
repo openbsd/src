@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.527 2017/11/24 01:39:29 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.528 2017/11/26 16:17:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -168,6 +168,7 @@ struct proposal *lease_as_proposal(struct client_lease *);
 void append_statement(char *, size_t, char *, char *);
 time_t lease_expiry(struct client_lease *);
 time_t lease_renewal(struct client_lease *);
+time_t lease_rebind(struct client_lease *);
 
 struct client_lease *packet_to_lease(struct interface_info *,
     struct option_data *);
@@ -1975,7 +1976,6 @@ lease_as_string(char *ifname, char *type, struct client_lease *lease)
 	 * rather than effective times, print out lease-based times,
 	 * restore effective times.
 	 */
-	rebind = lease->rebind;
 	expiry = lease->expiry;
 	set_lease_times(lease);
 
@@ -1986,8 +1986,9 @@ lease_as_string(char *ifname, char *type, struct client_lease *lease)
 		return NULL;
 	append_statement(string, sizeof(string), "  renew ", timebuf);
 
+	rebind = lease_rebind(lease);
 	rslt = strftime(timebuf, sizeof(timebuf), DB_TIMEFMT,
-	    gmtime(&lease->rebind));
+	    gmtime(&rebind));
 	if (rslt == 0)
 		return NULL;
 	append_statement(string, sizeof(string), "  rebind ", timebuf);
@@ -1998,7 +1999,6 @@ lease_as_string(char *ifname, char *type, struct client_lease *lease)
 		return NULL;
 	append_statement(string, sizeof(string), "  expire ", timebuf);
 
-	lease->rebind = rebind;
 	lease->expiry = expiry;
 
 	rslt = strlcat(string, "}\n", sizeof(string));
@@ -2483,9 +2483,6 @@ apply_ignore_list(char *ignore_list)
 void
 set_lease_times(struct client_lease *lease)
 {
-	time_t		 renewal;
-	uint32_t	 uint32val;
-
 	if (lease->epoch == 0)
 		time(&lease->epoch);
 
@@ -2501,24 +2498,8 @@ set_lease_times(struct client_lease *lease)
 	 * &&
 	 * expiry >= MIN(time_max, 60)
 	 */
-	lease->expiry = lease_expiry(lease) - lease->epoch;
-
-	lease->rebind = (lease->expiry * 7) / 8;
-	if (lease->options[DHO_DHCP_REBINDING_TIME].len == sizeof(uint32val)) {
-		memcpy(&uint32val,
-		    lease->options[DHO_DHCP_REBINDING_TIME].data,
-		    sizeof(uint32val));
-		lease->rebind = ntohl(uint32val);
-		if (lease->rebind > lease->expiry)
-			lease->rebind = lease->expiry;
-	}
-	/* Convert lease lengths to times. */
-	lease->expiry += lease->epoch;
-	lease->rebind += lease->epoch;
-
-	renewal = lease_renewal(lease);
-	if (lease->rebind < renewal)
-		lease->rebind = renewal;
+	lease->expiry = lease_expiry(lease);
+	lease->rebind = lease_rebind(lease);
 }
 
 void
@@ -2679,6 +2660,29 @@ lease_renewal(struct client_lease *lease)
 		if (renewal > expiry)
 			renewal = expiry;
 	}
+
+	return lease->epoch + renewal;
+}
+
+time_t
+lease_rebind(struct client_lease *lease)
+{
+	time_t		expiry, renewal;
+	uint32_t	rebind;
+
+	expiry = lease_expiry(lease) - lease->epoch;
+	renewal = lease_renewal(lease) - lease->epoch;
+
+	rebind = (expiry * 7) / 8;
+	if (lease->options[DHO_DHCP_REBINDING_TIME].len == sizeof(rebind)) {
+		memcpy(&rebind, lease->options[DHO_DHCP_REBINDING_TIME].data,
+		    sizeof(rebind));
+		rebind = ntohl(rebind);
+		if (rebind > expiry)
+			rebind = expiry;
+	}
+	if (rebind < renewal)
+		rebind = renewal;
 
 	return lease->epoch + renewal;
 }
