@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.35 2017/11/17 15:56:12 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.36 2017/11/26 15:17:17 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -37,6 +37,7 @@ static struct fuse_context *ictx = NULL;
 static int max_read = FUSEBUFMAXSIZE;
 
 enum {
+	KEY_FOREGROUND,
 	KEY_HELP,
 	KEY_HELP_WITHOUT_HEADER,
 	KEY_VERSION,
@@ -53,7 +54,7 @@ static struct fuse_opt fuse_core_opts[] = {
 	FUSE_OPT_KEY("max_read=",		KEY_MAXREAD),
 	FUSE_OPT_KEY("debug",			KEY_STUB),
 	FUSE_OPT_KEY("-d",			KEY_STUB),
-	FUSE_OPT_KEY("-f",			KEY_STUB),
+	FUSE_OPT_KEY("-f",			KEY_FOREGROUND),
 	FUSE_OPT_KEY("-s",			KEY_STUB),
 	FUSE_OPT_KEY("use_ino",			KEY_STUB),
 	FUSE_OPT_KEY("big_writes",		KEY_STUB),
@@ -342,13 +343,12 @@ fuse_new(struct fuse_chan *fc, unused struct fuse_args *args,
 }
 
 int
-fuse_daemonize(unused int foreground)
+fuse_daemonize(int foreground)
 {
-#ifdef DEBUG
-	return (daemon(0,1));
-#else
+	if (foreground)
+		return (0);
+
 	return (daemon(0,0));
-#endif
 }
 
 void
@@ -387,6 +387,7 @@ dump_help(void)
 {
 	fprintf(stderr, "FUSE options:\n"
 	    "    -d   -o debug          enable debug output (implies -f)\n"
+	    "    -f                     run in foreground\n"
 	    "    -V                     print fuse version\n"
 	    "\n");
 }
@@ -408,6 +409,9 @@ ifuse_process_opt(void *data, const char *arg, int key,
 
 	switch (key) {
 		case KEY_STUB:
+			return (0);
+		case KEY_FOREGROUND:
+			opt->foreground = 1;
 			return (0);
 		case KEY_HELP:
 		case KEY_HELP_WITHOUT_HEADER:
@@ -460,7 +464,7 @@ ifuse_process_opt(void *data, const char *arg, int key,
 }
 
 int
-fuse_parse_cmdline(struct fuse_args *args, char **mp, int *mt, unused int *fg)
+fuse_parse_cmdline(struct fuse_args *args, char **mp, int *mt, int *fg)
 {
 	struct fuse_core_opt opt;
 
@@ -484,6 +488,9 @@ fuse_parse_cmdline(struct fuse_args *args, char **mp, int *mt, unused int *fg)
 
 	if (mt != NULL)
 		*mt = 0;
+
+	if (fg != NULL)
+		*fg = opt.foreground;
 
 	return (0);
 }
@@ -530,7 +537,7 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 	if (fuse_parse_cmdline(&args, &dir, mt, &fg))
 		goto err;
 
-	fuse_daemonize(0);
+	fuse_daemonize(fg);
 
 	if ((fc = fuse_mount(dir, NULL)) == NULL)
 		goto err;

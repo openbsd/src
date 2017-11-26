@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.14 2016/09/07 17:53:35 natano Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.15 2017/11/26 15:17:17 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -74,7 +74,8 @@ struct fuse_config {
 };
 
 struct fuse_core_opt {
-	char *mp;
+	char			*mp;
+	int			foreground;
 };
 
 struct fuse {
