@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.90 2017/08/10 20:13:57 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.91 2017/11/26 16:11:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -717,15 +717,6 @@ xen_intr_schedule(xen_intr_handle_t xih)
 		task_add(xi->xi_taskq, &xi->xi_task);
 }
 
-static void
-xen_barrier_task(void *arg)
-{
-	int *notdone = arg;
-
-	*notdone = 0;
-	wakeup_one(notdone);
-}
-
 /*
  * This code achieves two goals: 1) makes sure that *after* masking
  * the interrupt source we're not getting more task_adds: intr_barrier
@@ -740,9 +731,6 @@ xen_intr_barrier(xen_intr_handle_t xih)
 {
 	struct xen_softc *sc = xen_sc;
 	struct xen_intsrc *xi;
-	struct sleep_state sls;
-	int notdone = 1;
-	struct task t = TASK_INITIALIZER(xen_barrier_task, &notdone);
 
 	/*
 	 * XXX This will need to be revised once intr_barrier starts
@@ -751,11 +739,7 @@ xen_intr_barrier(xen_intr_handle_t xih)
 	intr_barrier(NULL);
 
 	if ((xi = xen_intsrc_acquire(sc, (evtchn_port_t)xih)) != NULL) {
-		task_add(xi->xi_taskq, &t);
-		while (notdone) {
-			sleep_setup(&sls, &notdone, PWAIT, "xenbar");
-			sleep_finish(&sls, notdone);
-		}
+		taskq_barrier(xi->xi_taskq);
 		xen_intsrc_release(sc, xi);
 	}
 }
