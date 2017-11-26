@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.71 2017/11/18 14:43:29 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.72 2017/11/26 15:39:47 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -291,6 +291,8 @@ cnmac_attach(struct device *parent, struct device *self, void *aux)
 	cnmac_ipd_init(sc);
 	cnmac_pko_init(sc);
 
+	cnmac_configure_common(sc);
+
 	sc->sc_gmx_port->sc_ipd = sc->sc_ipd;
 	sc->sc_gmx_port->sc_port_mii = &sc->sc_mii;
 	sc->sc_gmx_port->sc_port_ac = &sc->sc_arpcom;
@@ -342,6 +344,7 @@ cnmac_pip_init(struct cnmac_softc *sc)
 	pip_aa.aa_receive_group = sc->sc_powgroup;
 	pip_aa.aa_ip_offset = sc->sc_ip_offset;
 	cn30xxpip_init(&pip_aa, &sc->sc_pip);
+	cn30xxpip_port_config(sc->sc_pip);
 }
 
 void
@@ -1062,11 +1065,8 @@ cnmac_configure(struct cnmac_softc *sc)
 
 	cnmac_reset(sc);
 
-	cnmac_configure_common(sc);
-
 	cn30xxpko_port_config(sc->sc_pko);
 	cn30xxpko_port_enable(sc->sc_pko, 1);
-	cn30xxpip_port_config(sc->sc_pip);
 	cn30xxpow_config(sc->sc_pow, sc->sc_powgroup);
 
 	cn30xxgmx_tx_stats_rd_clr(sc->sc_gmx_port, 1);
