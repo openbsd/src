@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <sys/errno.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 
 pid_t child;
 char pp_dir1[] = "/tmp/ppdir1.XXXXXX"; /* pledgepathed */
@@ -167,7 +168,6 @@ test_chdir(int do_pp)
 	return 0;
 }
 
-
 static int
 test_rename(int do_pp)
 {
@@ -214,6 +214,39 @@ test_rename(int do_pp)
 	return (0);
 }
 
+
+static int
+test_access(int do_pp)
+{
+	if (do_pp) {
+		printf("testing access\n");
+		do_pledgepath();
+	}
+
+	PP_SHOULD_SUCCEED((pledge("stdio rpath", NULL) == -1), "pledge");
+	PP_SHOULD_SUCCEED((access(pp_file1, R_OK) == -1), "access");
+	PP_SHOULD_FAIL((access(pp_file2, R_OK) == -1), "access");
+	PP_SHOULD_SUCCEED((access(pp_dir1, R_OK) == -1), "access");
+	PP_SHOULD_FAIL((access(pp_dir2, R_OK) == -1), "access");
+
+	return 0;
+}
+
+static int
+test_chflags(int do_pp)
+{
+	if (do_pp) {
+		printf("testing chflags\n");
+		do_pledgepath();
+	}
+
+	PP_SHOULD_SUCCEED((pledge("stdio rpath", NULL) == -1), "pledge");
+	PP_SHOULD_SUCCEED((chflags(pp_file1, UF_NODUMP) == -1), "chflags");
+	PP_SHOULD_FAIL((chflags(pp_file2, UF_NODUMP) == -1), "chflags");
+
+	return 0;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -231,6 +264,8 @@ main (int argc, char *argv[])
 	failures += runcompare(test_link);
 	failures += runcompare(test_chdir);
 	failures += runcompare(test_rename);
+	failures += runcompare(test_access);
+	failures += runcompare(test_chflags);
 
 	exit(failures);
 }
