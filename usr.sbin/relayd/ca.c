@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.29 2017/11/27 21:06:25 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.30 2017/11/27 23:05:50 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -123,14 +123,14 @@ ca_launch(void)
 		if (rlay->rl_tls_cert_fd != -1) {
 			if ((buf = relay_load_fd(rlay->rl_tls_cert_fd,
 			    &len)) == NULL)
-				fatalx("ca_launch: cert");
+				fatalx("ca_launch: cert relay_load_fd");
 
 			if ((in = BIO_new_mem_buf(buf, len)) == NULL)
-				fatalx("ca_launch: cert");
+				fatalx("ca_launch: cert BIO_new_mem_buf");
 
 			if ((cert = PEM_read_bio_X509(in, NULL,
 			    NULL, NULL)) == NULL)
-				fatalx("ca_launch: cert");
+				fatalx("ca_launch: cert PEM_read_bio_X509");
 
 			hash_x509(cert, hash, sizeof(hash));
 
@@ -160,14 +160,14 @@ ca_launch(void)
 		if (rlay->rl_tls_cacert_fd != -1) {
 			if ((buf = relay_load_fd(rlay->rl_tls_cacert_fd,
 			    &len)) == NULL)
-				fatalx("ca_launch: cacert");
+				fatalx("ca_launch: cacert relay_load_fd");
 
 			if ((in = BIO_new_mem_buf(buf, len)) == NULL)
-				fatalx("ca_launch: cacert");
+				fatalx("ca_launch: cacert BIO_new_mem_buf");
 
 			if ((cert = PEM_read_bio_X509(in, NULL,
 			    NULL, NULL)) == NULL)
-				fatalx("ca_launch: cacert");
+				fatalx("ca_launch: cacert PEM_read_bio_X509");
 
 			hash_x509(cert, hash, sizeof(hash));
 
