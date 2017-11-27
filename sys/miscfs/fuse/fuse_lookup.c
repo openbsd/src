@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.16 2016/09/07 17:53:35 natano Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.17 2017/11/27 13:15:56 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -90,8 +90,13 @@ fusefs_lookup(void *v)
 
 			if ((nameiop == CREATE || nameiop == RENAME) &&
 			    (flags & ISLASTCN)) {
-				if (vdp->v_mount->mnt_flag & MNT_RDONLY)
-					return (EROFS);
+				/*
+				 * Access for write is interpreted as allowing
+				 * creation of files in the directory.
+				 */
+				if ((error = VOP_ACCESS(vdp, VWRITE, cred,
+				    cnp->cn_proc)) != 0)
+					return (error); 
 
 				cnp->cn_flags |= SAVENAME;
 
