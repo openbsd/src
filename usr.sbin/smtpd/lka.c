@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.200 2017/11/21 12:20:34 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.201 2017/11/27 08:35:59 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -345,13 +345,17 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 
 	case IMSG_CTL_UPDATE_TABLE:
+		ret = 0;
 		table = table_find(imsg->data, NULL);
 		if (table == NULL) {
 			log_warnx("warn: Lookup table not found: "
 			    "\"%s\"", (char *)imsg->data);
-			return;
-		}
-		table_update(table);
+		} else 
+			ret = table_update(table);
+
+		m_compose(p_control,
+		    (ret == 1) ? IMSG_CTL_OK : IMSG_CTL_FAIL,
+		    imsg->hdr.peerid, 0, -1, NULL, 0);
 		return;
 	}
 
