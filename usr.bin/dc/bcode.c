@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.51 2017/02/26 11:29:55 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.52 2017/11/27 21:32:33 tom Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -137,7 +137,7 @@ struct jump_entry {
 	opcode_function	f;
 };
 
-static opcode_function jump_table[UCHAR_MAX];
+static opcode_function jump_table[UCHAR_MAX + 1];
 
 static const struct jump_entry jump_table_data[] = {
 	{ ' ',	nop		},
@@ -214,8 +214,9 @@ static const struct jump_entry jump_table_data[] = {
 	{ '~',	bdivmod		}
 };
 
-#define JUMP_TABLE_DATA_SIZE \
-	(sizeof(jump_table_data)/sizeof(jump_table_data[0]))
+#ifndef nitems
+#define nitems(a)	(sizeof((a)) / sizeof((a)[0]))
+#endif
 
 /* ARGSUSED */
 static void
@@ -238,10 +239,18 @@ init_bmachine(bool extended_registers)
 	if (bmachine.reg == NULL)
 		err(1, NULL);
 
-	for (i = 0; i < UCHAR_MAX; i++)
+	for (i = 0; i < nitems(jump_table); i++)
 		jump_table[i] = unknown;
-	for (i = 0; i < JUMP_TABLE_DATA_SIZE; i++)
+
+	for (i = 0; i < nitems(jump_table_data); i++) {
+		if ((unsigned int)jump_table_data[i].ch >= nitems(jump_table))
+			errx(1, "opcode '%c' overflows jump table",
+			    jump_table_data[i].ch);
+		if (jump_table[jump_table_data[i].ch] != unknown)
+			errx(1, "opcode '%c' already assigned",
+			    jump_table_data[i].ch);
 		jump_table[jump_table_data[i].ch] = jump_table_data[i].f;
+	}
 
 	stack_init(&bmachine.stack);
 
@@ -1746,10 +1755,10 @@ eval(void)
 		(void)fprintf(stderr, "%zd =>\n", bmachine.readsp);
 #endif
 
-		if (0 <= ch && ch < UCHAR_MAX)
+		if (0 <= ch && ch < nitems(jump_table))
 			(*jump_table[ch])();
 		else
-			warnx("internal error: opcode %d", ch);
+			unknown();
 
 #ifdef DEBUGGING
 		stack_print(stderr, &bmachine.stack, "* ",
