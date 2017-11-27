@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.219 2017/11/27 21:06:26 claudio Exp $	*/
+/*	$OpenBSD: parse.y,v 1.220 2017/11/27 23:21:16 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -170,8 +170,8 @@ typedef struct {
 %token	RESPONSE RETRY QUICK RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION
 %token	SNMP SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP TIMEOUT TLS
 %token	TO ROUTER RTLABEL TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE
-%token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDH
-%token	EDH CURVE TICKETS
+%token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDHE
+%token	EDH TICKETS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table value optstring
@@ -1005,8 +1005,8 @@ proto		: relay_proto PROTO STRING	{
 			TAILQ_INIT(&p->rules);
 			(void)strlcpy(p->tlsciphers, TLSCIPHERS_DEFAULT,
 			    sizeof(p->tlsciphers));
-			(void)strlcpy(p->tlsecdhcurve, TLSECDHCURVE_DEFAULT,
-			    sizeof(p->tlsecdhcurve));
+			(void)strlcpy(p->tlsecdhecurves, TLSECDHECURVES_DEFAULT,
+			    sizeof(p->tlsecdhecurves));
 			(void)strlcpy(p->tlsdhparams, TLSDHPARAM_DEFAULT,
 			    sizeof(p->tlsdhparams));
 			if (last_proto_id == INT_MAX) {
@@ -1160,37 +1160,29 @@ tlsflags	: SESSION TICKETS { proto->tickets = 1; }
 			}
 			free($3);
 		}
-		| NO ECDH			{
-			(void)strlcpy(proto->tlsecdhcurve, "none",
-			    sizeof(proto->tlsecdhcurve));
-		}
-		| ECDH			{
-			(void)strlcpy(proto->tlsecdhcurve, "auto",
-			    sizeof(proto->tlsecdhcurve));
-		}
-		| ECDH CURVE STRING			{
+		| ECDHE STRING			{
 			struct tls_config	*tls_cfg;
 			if ((tls_cfg = tls_config_new()) == NULL) {
 				yyerror("tls_config_new failed");
-				free($3);
+				free($2);
 				YYERROR;
 			}
-			if (tls_config_set_ecdhecurve(tls_cfg, $3) != 0) {
-				yyerror("tls ecdh curve %s: %s", $3,
+			if (tls_config_set_ecdhecurves(tls_cfg, $2) != 0) {
+				yyerror("tls ecdhe %s: %s", $2,
 				    tls_config_error(tls_cfg));
 				tls_config_free(tls_cfg);
-				free($3);
+				free($2);
 				YYERROR;
 			}
 			tls_config_free(tls_cfg);
-			if (strlcpy(proto->tlsecdhcurve, $3,
-			    sizeof(proto->tlsecdhcurve)) >=
-			    sizeof(proto->tlsecdhcurve)) {
-				yyerror("tls ecdh truncated");
-				free($3);
+			if (strlcpy(proto->tlsecdhecurves, $2,
+			    sizeof(proto->tlsecdhecurves)) >=
+			    sizeof(proto->tlsecdhecurves)) {
+				yyerror("tls ecdhe curves truncated");
+				free($2);
 				YYERROR;
 			}
-			free($3);
+			free($2);
 		}
 		| CA FILENAME STRING		{
 			if (strlcpy(proto->tlsca, $3,
@@ -2225,12 +2217,11 @@ lookup(char *s)
 		{ "ciphers",		CIPHERS },
 		{ "code",		CODE },
 		{ "cookie",		COOKIE },
-		{ "curve",		CURVE },
 		{ "demote",		DEMOTE },
 		{ "destination",	DESTINATION },
 		{ "digest",		DIGEST },
 		{ "disable",		DISABLE },
-		{ "ecdh",		ECDH },
+		{ "ecdhe",		ECDHE },
 		{ "edh",		EDH },
 		{ "error",		ERROR },
 		{ "expect",		EXPECT },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.34 2017/11/27 21:06:26 claudio Exp $	*/
+/*	$OpenBSD: config.c,v 1.35 2017/11/27 23:21:16 claudio Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -100,9 +100,9 @@ config_init(struct relayd *env)
 		(void)strlcpy(env->sc_proto_default.tlsciphers,
 		    TLSCIPHERS_DEFAULT,
 		    sizeof(env->sc_proto_default.tlsciphers));
-		(void)strlcpy(env->sc_proto_default.tlsecdhcurve,
-		    TLSECDHCURVE_DEFAULT,
-		    sizeof(env->sc_proto_default.tlsecdhcurve));
+		(void)strlcpy(env->sc_proto_default.tlsecdhecurves,
+		    TLSECDHECURVES_DEFAULT,
+		    sizeof(env->sc_proto_default.tlsecdhecurves));
 		(void)strlcpy(env->sc_proto_default.tlsdhparams,
 		    TLSDHPARAM_DEFAULT,
 		    sizeof(env->sc_proto_default.tlsdhparams));

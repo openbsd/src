@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.232 2017/11/27 23:04:26 claudio Exp $	*/
+/*	$OpenBSD: relay.c,v 1.233 2017/11/27 23:21:16 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2013,9 +2013,9 @@ relay_tls_ctx_create_proto(struct protocol *proto, struct tls_config *tls_cfg)
 		    sizeof(env->sc_ticket.tt_key));
 	}
 
-	if (tls_config_set_ecdhecurve(tls_cfg, proto->tlsecdhcurve) != 0) {
-		log_warnx("failed to set ecdh curve %s: %s",
-		    proto->tlsecdhcurve, tls_config_error(tls_cfg));
+	if (tls_config_set_ecdhecurves(tls_cfg, proto->tlsecdhecurves) != 0) {
+		log_warnx("failed to set ecdhe curves %s: %s",
+		    proto->tlsecdhecurves, tls_config_error(tls_cfg));
 		return (-1);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.244 2017/11/27 21:06:26 claudio Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.245 2017/11/27 23:21:16 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -691,7 +691,7 @@ TAILQ_HEAD(relay_rules, relay_rule);
 	"\06cipher-server-preference\07client-renegotiation"
 
 #define TLSCIPHERS_DEFAULT	"HIGH:!aNULL"
-#define TLSECDHCURVE_DEFAULT	"auto"
+#define TLSECDHECURVES_DEFAULT	"default"
 #define TLSDHPARAM_DEFAULT	"none"
 
 struct relay_ticket_key {
@@ -712,7 +712,7 @@ struct protocol {
 	u_int8_t		 tlsflags;
 	char			 tlsciphers[768];
 	char			 tlsdhparams[128];
-	char			 tlsecdhcurve[128];
+	char			 tlsecdhecurves[128];
 	char			 tlsca[PATH_MAX];
 	char			 tlscacert[PATH_MAX];
 	char			 tlscakey[PATH_MAX];
