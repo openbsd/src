@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.227 2017/09/23 11:56:57 bluhm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.228 2017/11/27 03:40:04 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2326,6 +2326,9 @@ relay_tls_connected(struct ctl_relay_event *cre)
 	 * Hack libevent - we overwrite the internal bufferevent I/O
 	 * functions to handle the TLS abstraction.
 	 */
+	event_del(&cre->bev->ev_read);
+	event_del(&cre->bev->ev_write);
+
 	event_set(&cre->bev->ev_read, cre->s, EV_READ,
 	    relay_tls_readcb, cre->bev);
 	event_set(&cre->bev->ev_write, cre->s, EV_WRITE,
