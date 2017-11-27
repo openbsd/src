@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.49 2017/09/02 18:53:53 deraadt Exp $	*/
+/*	$OpenBSD: vi.c,v 1.50 2017/11/27 04:23:50 tb Exp $	*/
 
 /*
  *	vi command editing
@@ -140,7 +140,6 @@ const unsigned char	classify[128] = {
 #define VREDO		7		/* . */
 #define VLIT		8		/* ^V */
 #define VSEARCH		9		/* /, ? */
-#define VVERSION	10		/* <ESC> ^V */
 
 static char		undocbuf[LINE];
 
@@ -223,7 +222,7 @@ x_vi(char *buf, size_t len)
 				trapsig(c == edchars.intr ? SIGINT : SIGQUIT);
 				x_mode(false);
 				unwind(LSHELL);
-			} else if (c == edchars.eof && state != VVERSION) {
+			} else if (c == edchars.eof) {
 				if (es->linelen == 0) {
 					x_vi_zotc(edchars.eof);
 					c = -1;
@@ -301,14 +300,6 @@ vi_hook(int ch)
 						return -1;
 					refresh(0);
 				}
-				if (state == VVERSION) {
-					save_cbuf();
-					es->cursor = 0;
-					es->linelen = 0;
-					putbuf(ksh_version + 4,
-					    strlen(ksh_version + 4), 0);
-					refresh(0);
-				}
 			}
 		}
 		break;
@@ -321,12 +312,6 @@ vi_hook(int ch)
 			es->cbuf[es->cursor++] = ch;
 		refresh(1);
 		state = VNORMAL;
-		break;
-
-	case VVERSION:
-		restore_cbuf();
-		state = VNORMAL;
-		refresh(0);
 		break;
 
 	case VARG1:
@@ -554,8 +539,6 @@ nextstate(int ch)
 		return VXCH;
 	else if (ch == '.')
 		return VREDO;
-	else if (ch == CTRL('v'))
-		return VVERSION;
 	else if (is_cmd(ch))
 		return VCMD;
 	else
