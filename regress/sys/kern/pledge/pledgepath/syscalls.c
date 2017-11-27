@@ -76,19 +76,25 @@ test_open(int do_pp)
 {
 	char filename[256];
 	int dirfd;
+	int dirfd2;
+	int dirfd3;
 
 
 	PP_SHOULD_SUCCEED(((dirfd = open("/", O_RDONLY | O_DIRECTORY)) == -1), "open");
+	PP_SHOULD_SUCCEED(((dirfd2 = open(pp_dir2, O_RDONLY | O_DIRECTORY)) == -1), "open");
 	if (do_pp) {
-		printf("testing open\n");
+		printf("testing open and openat\n");
 		do_pledgepath();
 	}
-
 	PP_SHOULD_SUCCEED((pledge("stdio rpath cpath wpath", NULL) == -1), "pledge");
+
+	PP_SHOULD_FAIL(((dirfd3= open(pp_dir2, O_RDONLY | O_DIRECTORY)) == -1), "open");
+
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
 	PP_SHOULD_SUCCEED((openat(dirfd, "etc/hosts", O_RDONLY) == -1), "openat");
 	PP_SHOULD_FAIL((openat(dirfd, pp_file2, O_RDWR) == -1), "openat");
+	PP_SHOULD_SUCCEED((openat(dirfd2, "hooray", O_RDWR|O_CREAT) == -1), "openat");
 	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
 	(void) snprintf(filename, sizeof(filename), "%s/%s", pp_dir1, "newfile");
 	PP_SHOULD_SUCCEED((open(filename, O_RDWR|O_CREAT) == -1), "open");
@@ -321,6 +327,23 @@ test_symlink(int do_pp)
 	return 0;
 }
 
+static int
+test_chmod(int do_pp)
+{
+	if (do_pp) {
+		printf("testing chmod\n");
+		do_pledgepath();
+	}
+
+	PP_SHOULD_SUCCEED((pledge("stdio rpath wpath", NULL) == -1), "pledge");
+	PP_SHOULD_SUCCEED((chmod(pp_file1, S_IRWXU) == -1), "chmod");
+	PP_SHOULD_FAIL((chmod(pp_file1, S_IRWXU) == -1), "chmod");
+	PP_SHOULD_SUCCEED((chmod(pp_dir1, S_IRWXU) == -1), "chmod");
+	PP_SHOULD_FAIL((chmod(pp_dir2, S_IRWXU) == -1), "chmod");
+
+	return 0;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -343,6 +366,7 @@ main (int argc, char *argv[])
 	failures += runcompare(test_stat);
 	failures += runcompare(test_statfs);
 	failures += runcompare(test_symlink);
+	failures += runcompare(test_chmod);
 
 	exit(failures);
 }
