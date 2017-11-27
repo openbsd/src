@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.221 2017/10/31 22:05:13 sashan Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.222 2017/11/27 15:41:30 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -67,7 +67,8 @@
 #define ND6_RECALC_REACHTM_INTERVAL (60 * 120) /* 2 hours */
 
 /* timer values */
-time_t	nd6_expire_time	= -1;	/* at which time_uptime nd6_expire runs */
+int	nd6_timer_next	= -1;	/* at which time_uptime nd6_timer runs */
+time_t	nd6_expire_next	= -1;	/* at which time_uptime nd6_expire runs */
 int	nd6_delay	= 5;	/* delay first probe time 5 second */
 int	nd6_umaxtries	= 3;	/* maximum unicast query */
 int	nd6_mmaxtries	= 3;	/* maximum multicast query */
@@ -90,13 +91,15 @@ int	nd6_inuse, nd6_allocated;
 
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 
+void nd6_timer(void *);
 void nd6_slowtimo(void *);
 void nd6_expire(void *);
 void nd6_expire_timer(void *);
 void nd6_invalidate(struct rtentry *);
 void nd6_free(struct rtentry *);
-void nd6_llinfo_timer(void *);
+int nd6_llinfo_timer(struct rtentry *);
 
+struct timeout nd6_timer_to;
 struct timeout nd6_slowtimo_ch;
 struct timeout nd6_expire_timeout;
 struct task nd6_expire_task;
@@ -120,6 +123,7 @@ nd6_init(void)
 	nd6_init_done = 1;
 
 	/* start timer */
+	timeout_set_proc(&nd6_timer_to, nd6_timer, &nd6_timer_to);
 	timeout_set_proc(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
 	timeout_add_sec(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL);
 	timeout_set(&nd6_expire_timeout, nd6_expire_timer, NULL);
@@ -297,45 +301,66 @@ skip1:
  * ND6 timer routine to handle ND6 entries
  */
 void
-nd6_llinfo_settimer(struct llinfo_nd6 *ln, int secs)
+nd6_llinfo_settimer(struct llinfo_nd6 *ln, unsigned int secs)
 {
-	if (secs < 0) {
-		ln->ln_rt->rt_expire = 0;
-		timeout_del(&ln->ln_timer_ch);
-	} else {
-		ln->ln_rt->rt_expire = time_uptime + secs;
-		timeout_add_sec(&ln->ln_timer_ch, secs);
+	time_t expire = time_uptime + secs;
+
+	NET_ASSERT_LOCKED();
+
+	ln->ln_rt->rt_expire = expire;
+	if (!timeout_pending(&nd6_timer_to) || expire < nd6_timer_next) {
+		nd6_timer_next = expire;
+		timeout_add_sec(&nd6_timer_to, secs);
 	}
 }
 
 void
-nd6_llinfo_timer(void *arg)
+nd6_timer(void *arg)
 {
-	struct llinfo_nd6 *ln;
-	struct rtentry *rt;
-	struct sockaddr_in6 *dst;
+	struct llinfo_nd6 *ln, *nln;
+	time_t expire = time_uptime + nd6_gctimer;
+	int secs;
+
+	NET_LOCK();
+	TAILQ_FOREACH_SAFE(ln, &nd6_list, ln_list, nln) {
+		struct rtentry *rt = ln->ln_rt;
+
+		if (rt->rt_expire && rt->rt_expire <= time_uptime)
+			if (nd6_llinfo_timer(rt))
+				continue;
+
+		if (rt->rt_expire && rt->rt_expire < expire)
+			expire = rt->rt_expire;
+	}
+
+	secs = expire - time_uptime;
+	if (secs < 0)
+		secs = 0;
+	if (!TAILQ_EMPTY(&nd6_list))
+		timeout_add_sec(&nd6_timer_to, secs);
+
+	NET_UNLOCK();
+}
+
+/*
+ * ND timer state handling.
+ *
+ * Returns 1 if `rt' should no longer be used, 0 otherwise.
+ */
+int
+nd6_llinfo_timer(struct rtentry *rt)
+{
+	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
+	struct sockaddr_in6 *dst = satosin6(rt_key(rt));
 	struct ifnet *ifp;
 	struct nd_ifinfo *ndi = NULL;
 
-	NET_LOCK();
+	NET_ASSERT_LOCKED();
 
-	ln = (struct llinfo_nd6 *)arg;
+	if ((ifp = if_get(rt->rt_ifidx)) == NULL)
+		return 1;
 
-	if ((rt = ln->ln_rt) == NULL)
-		panic("ln->ln_rt == NULL");
-	if ((ifp = if_get(rt->rt_ifidx)) == NULL) {
-		NET_UNLOCK();
-		return;
-	}
 	ndi = ND_IFINFO(ifp);
-	dst = satosin6(rt_key(rt));
-
-	/* sanity check */
-	if (rt->rt_llinfo != NULL && (struct llinfo_nd6 *)rt->rt_llinfo != ln)
-		panic("rt_llinfo(%p) is not equal to ln(%p)",
-		      rt->rt_llinfo, ln);
-	if (!dst)
-		panic("dst=0 in nd6_timer(ln=%p)", ln);
 
 	switch (ln->ln_state) {
 	case ND6_LLINFO_INCOMPLETE:
@@ -408,7 +433,8 @@ nd6_llinfo_timer(void *arg)
 	}
 
 	if_put(ifp);
-	NET_UNLOCK();
+
+	return (ln == NULL);
 }
 
 void
@@ -436,16 +462,16 @@ nd6_expire_timer_update(struct in6_ifaddr *ia6)
 	 * Schedule timeout one second later so that either IFA6_IS_INVALID()
 	 * or IFA6_IS_DEPRECATED() is true.
 	 */
-	expire_time++; 
+	expire_time++;
 
-	if (!timeout_pending(&nd6_expire_timeout) || nd6_expire_time >
-	    expire_time) {
+	if (!timeout_pending(&nd6_expire_timeout) ||
+	    nd6_expire_next > expire_time) {
 		secs = expire_time - time_uptime;
-		if ( secs < 0)
+		if (secs < 0)
 			secs = 0;
 
 		timeout_add_sec(&nd6_expire_timeout, secs);
-		nd6_expire_time = expire_time;
+		nd6_expire_next = expire_time;
 	}
 }
 
@@ -852,7 +878,6 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		nd6_inuse++;
 		nd6_allocated++;
 		ln->ln_rt = rt;
-		timeout_set_proc(&ln->ln_timer_ch, nd6_llinfo_timer, ln);
 		/* this is required for "ndp" command. - shin */
 		if (req == RTM_ADD) {
 		        /*
@@ -913,14 +938,14 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		ifa = &in6ifa_ifpwithaddr(ifp,
 		    &satosin6(rt_key(rt))->sin6_addr)->ia_ifa;
 		if (ifa) {
-			nd6_llinfo_settimer(ln, -1);
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
+			rt->rt_expire = 0;
 			KASSERT(ifa == rt->rt_ifa);
 		} else if (rt->rt_flags & RTF_ANNOUNCE) {
-			nd6_llinfo_settimer(ln, -1);
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
+			rt->rt_expire = 0;
 
 			/* join solicited node multicast for proxy ND */
 			if (ifp->if_flags & IFF_MULTICAST) {
@@ -968,7 +993,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		}
 		nd6_inuse--;
 		TAILQ_REMOVE(&nd6_list, ln, ln_list);
-		nd6_llinfo_settimer(ln, -1);
+		rt->rt_expire = 0;
 		rt->rt_llinfo = NULL;
 		rt->rt_flags &= ~RTF_LLINFO;
 		m_freem(ln->ln_hold);
@@ -1195,7 +1220,7 @@ fail:
 			}
 		} else if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
 			/* probe right away */
-			nd6_llinfo_settimer((void *)ln, 0);
+			nd6_llinfo_settimer(ln, 0);
 		}
 	}
 
