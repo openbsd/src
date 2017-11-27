@@ -247,6 +247,52 @@ test_chflags(int do_pp)
 	return 0;
 }
 
+static int
+test_stat(int do_pp)
+{
+	if (do_pp) {
+		printf("testing stat\n");
+		do_pledgepath();
+	}
+	struct stat sb;
+
+	PP_SHOULD_SUCCEED((pledge("stdio rpath", NULL) == -1), "pledge");
+	PP_SHOULD_SUCCEED((stat(pp_file1, &sb) == -1), "stat");
+	PP_SHOULD_FAIL((stat(pp_file2, &sb) == -1), "stat");
+	PP_SHOULD_SUCCEED((stat(pp_dir1, &sb) == -1), "stat");
+	PP_SHOULD_FAIL((stat(pp_dir2, &sb) == -1), "stat");
+
+	return 0;
+}
+
+static int
+test_symlink(int do_pp)
+{
+	char filename[256];
+	char filename2[256];
+
+	if (do_pp) {
+		printf("testing link\n");
+		do_pledgepath();
+	}
+
+	PP_SHOULD_SUCCEED((pledge("stdio rpath cpath wpath", NULL) == -1),
+	    "pledge");
+	(void) snprintf(filename, sizeof(filename), "%s/%s", pp_dir1,
+	    "slinkpp1");
+	(void) snprintf(filename2, sizeof(filename2), "%s/%s", pp_dir2,
+	    "slinkpp2");
+	unlink(filename);
+	unlink(filename2);
+	PP_SHOULD_SUCCEED((symlink(pp_file1, filename) == -1), "symlink");
+	unlink(filename);
+	PP_SHOULD_SUCCEED((symlink(pp_file2, filename) == -1), "symlink");
+	PP_SHOULD_FAIL((symlink(pp_file1, filename2) == -1), "symlink");
+
+	return 0;
+}
+
+
 int
 main (int argc, char *argv[])
 {
@@ -266,6 +312,8 @@ main (int argc, char *argv[])
 	failures += runcompare(test_rename);
 	failures += runcompare(test_access);
 	failures += runcompare(test_chflags);
+	failures += runcompare(test_stat);
+	failures += runcompare(test_symlink);
 
 	exit(failures);
 }
