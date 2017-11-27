@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.69 2017/11/27 03:19:58 claudio Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.70 2017/11/27 16:25:50 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -328,19 +328,6 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				goto abort;
 			}
 			/*
-			 * response with a status code of 1xx
-			 * (Informational) or 204 (No Content) MUST
-			 * not have a Content-Length (rfc 7230 3.3.3)
-			 */
-			if (desc->http_method == HTTP_METHOD_RESPONSE && (
-			    ((desc->http_status >= 100 &&
-			    desc->http_status < 200) ||
-			    desc->http_status == 204))) {
-				relay_abort_http(con, 500,
-				    "Internal Server Error", 0);
-				goto abort;
-			}
-			/*
 			 * Need to read data from the client after the
 			 * HTTP header.
 			 * XXX What about non-standard clients not using
@@ -350,6 +337,23 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			cre->toread = strtonum(value, 0, LLONG_MAX, &errstr);
 			if (errstr) {
 				relay_abort_http(con, 500, errstr, 0);
+				goto abort;
+			}
+			/*
+			 * response with a status code of 1xx
+			 * (Informational) or 204 (No Content) MUST
+			 * not have a Content-Length (rfc 7230 3.3.3)
+			 * Instead we check for value != 0 because there are
+			 * servers that do not follow the rfc and send
+			 * Content-Length: 0.
+			 */
+			if (desc->http_method == HTTP_METHOD_RESPONSE && (
+			    ((desc->http_status >= 100 &&
+			    desc->http_status < 200) ||
+			    desc->http_status == 204)) &&
+			    cre->toread != 0) {
+				relay_abort_http(con, 502,
+				    "Bad Gateway", 0);
 				goto abort;
 			}
 		}
