@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.68 2017/11/15 19:03:26 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.69 2017/11/27 03:19:58 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -126,6 +126,9 @@ relay_httpdesc_init(struct ctl_relay_event *cre)
 void
 relay_httpdesc_free(struct http_descriptor *desc)
 {
+	if (desc == NULL)
+		return;
+
 	free(desc->http_path);
 	desc->http_path = NULL;
 	free(desc->http_query);
@@ -162,7 +165,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	size = EVBUFFER_LENGTH(src);
 	DPRINTF("%s: session %d: size %lu, to read %lld",
 	    __func__, con->se_id, size, cre->toread);
-	if (!size) {
+	if (size == 0) {
 		if (cre->dir == RELAY_DIR_RESPONSE)
 			return;
 		cre->toread = TOREAD_HTTP_HEADER;
@@ -1063,17 +1066,10 @@ relay_abort_http(struct rsession *con, u_int code, const char *msg,
 void
 relay_close_http(struct rsession *con)
 {
-	struct http_descriptor	*desc[2] = {
-		con->se_in.desc, con->se_out.desc
-	};
-	int			 i;
-
-	for (i = 0; i < 2; i++) {
-		if (desc[i] == NULL)
-			continue;
-		relay_httpdesc_free(desc[i]);
-		free(desc[i]);
-	}
+	relay_httpdesc_free(con->se_in.desc);
+	free(con->se_in.desc);
+	relay_httpdesc_free(con->se_out.desc);
+	free(con->se_out.desc);
 }
 
 char *
