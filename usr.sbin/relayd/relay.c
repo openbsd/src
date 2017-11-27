@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.230 2017/11/27 21:06:26 claudio Exp $	*/
+/*	$OpenBSD: relay.c,v 1.231 2017/11/27 21:09:55 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -964,6 +964,8 @@ relay_error(struct bufferevent *bev, short error, void *arg)
 	struct rsession		*con = cre->con;
 	struct evbuffer		*dst;
 
+	DPRINTF("%s: session %d: dir %d state %d toread %lld event error %x",
+		__func__, con->se_id, cre->dir, cre->state, cre->toread, error);
 	if (error & EVBUFFER_TIMEOUT) {
 		if (cre->splicelen >= 0) {
 			bufferevent_enable(bev, EV_READ);
