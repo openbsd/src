@@ -346,7 +346,7 @@ control_law(struct codel *cd, struct codel_params *cp, int64_t rts)
  *
  * The decision whether to drop the packet or not is made based
  * on the queueing delay target of 5ms and on the current queue
- * lenght in bytes which shouldn't be less than the amount of data
+ * length in bytes which shouldn't be less than the amount of data
  * that arrives in a typical interarrival time (MTU-sized packets
  * arriving spaced by the amount of time it takes to send such a
  * packet on the bottleneck).

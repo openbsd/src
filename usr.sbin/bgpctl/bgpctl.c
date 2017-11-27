@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.201 2017/10/16 08:39:16 job Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.202 2017/11/27 16:53:04 sthen Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -562,7 +562,7 @@ show_summary_msg(struct imsg *imsg, int nodescr)
 
 		a = log_as(p->conf.remote_as);
 		alen = strlen(a);
-		/* max displayed lenght of the peers name is 28 */
+		/* max displayed length of the peers name is 28 */
 		if (alen < 28) {
 			if (strlen(s) > 28 - alen)
 				s[28 - alen] = 0;

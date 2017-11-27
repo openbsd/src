@@ -1,4 +1,4 @@
-# test longer data lenght when reverse sending
+# test longer data length when reverse sending
 
 use strict;
 use warnings;
