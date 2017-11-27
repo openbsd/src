@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.529 2017/11/27 13:09:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.530 2017/11/27 13:13:19 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1909,7 +1909,7 @@ lease_as_string(char *ifname, char *type, struct client_lease *lease)
 	char			 timebuf[27];	/* 6 2017/04/08 05:47:50 UTC; */
 	struct option_data	*opt;
 	char			*buf, *name;
-	time_t			 renewal, rebind, expiry;
+	time_t			 t;
 	size_t			 rslt;
 	int			 i;
 
@@ -1971,35 +1971,23 @@ lease_as_string(char *ifname, char *type, struct client_lease *lease)
 	append_statement(string, sizeof(string), "  epoch ", buf);
 	free(buf);
 
-	/*
-	 * Save lease times, generate new ones based on lease info
-	 * rather than effective times, print out lease-based times,
-	 * restore effective times.
-	 */
-	expiry = lease->expiry;
-	set_lease_times(lease);
-
-	renewal = lease_renewal(lease);
-	rslt = strftime(timebuf, sizeof(timebuf), DB_TIMEFMT,
-	    gmtime(&renewal));
+	t = lease_renewal(lease);
+	rslt = strftime(timebuf, sizeof(timebuf), DB_TIMEFMT, gmtime(&t));
 	if (rslt == 0)
 		return NULL;
 	append_statement(string, sizeof(string), "  renew ", timebuf);
 
-	rebind = lease_rebind(lease);
-	rslt = strftime(timebuf, sizeof(timebuf), DB_TIMEFMT,
-	    gmtime(&rebind));
+	t = lease_rebind(lease);
+	rslt = strftime(timebuf, sizeof(timebuf), DB_TIMEFMT, gmtime(&t));
 	if (rslt == 0)
 		return NULL;
 	append_statement(string, sizeof(string), "  rebind ", timebuf);
 
-	rslt = strftime(timebuf, sizeof(timebuf), DB_TIMEFMT,
-	    gmtime(&lease->expiry));
+	t = lease_expiry(lease);
+	rslt = strftime(timebuf, sizeof(timebuf), DB_TIMEFMT, gmtime(&t));
 	if (rslt == 0)
 		return NULL;
 	append_statement(string, sizeof(string), "  expire ", timebuf);
-
-	lease->expiry = expiry;
 
 	rslt = strlcat(string, "}\n", sizeof(string));
 	if (rslt >= sizeof(string))
