@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.79 2017/10/19 16:58:05 bluhm Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.80 2017/11/27 09:23:44 mpi Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -352,16 +352,7 @@ db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_malloc_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-#if defined(MALLOC_DEBUG)
-	extern void debug_malloc_printit(int (*)(const char *, ...), vaddr_t);
-
-	if (!have_addr)
-		addr = 0;
-
-	debug_malloc_printit(db_printf, (vaddr_t)addr);
-#else
 	malloc_printit(db_printf);
-#endif
 }
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.115 2017/10/27 16:11:00 visa Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.116 2017/11/27 09:23:44 mpi Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 #define	M_FREE		0	/* should be on free list */
 /* 1 - free */
 #define	M_DEVBUF	2	/* device driver memory */
-#define M_DEBUG		3	/* debug chunk */
+/* 3 - free */
 #define	M_PCB		4	/* protocol control block */
 #define	M_RTABLE	5	/* routing tables */
 /* 6 - free */
@@ -187,7 +187,7 @@
 	"free",		/* 0 M_FREE */ \
 	NULL, \
 	"devbuf",	/* 2 M_DEVBUF */ \
-	"debug", 	/* 3 M_DEBUG */ \
+	NULL, \
 	"pcb",		/* 4 M_PCB */ \
 	"rtable",	/* 5 M_RTABLE */ \
 	NULL,		/* 6 */ \
@@ -403,16 +403,5 @@ void	poison_mem(void *, size_t);
 int	poison_check(void *, size_t, size_t *, uint32_t *);
 uint32_t poison_value(void *);
 
-#ifdef MALLOC_DEBUG
-int	debug_malloc(unsigned long, int, int, void **);
-int	debug_free(void *, int);
-void	debug_malloc_init(void);
-void	debug_malloc_assert_allocated(void *, const char *);
-#define DEBUG_MALLOC_ASSERT_ALLOCATED(addr) 			\
-	debug_malloc_assert_allocated(addr, __func__)
-
-void	debug_malloc_print(void);
-void	debug_malloc_printit(int (*)(const char *, ...), vaddr_t);
-#endif /* MALLOC_DEBUG */
 #endif /* _KERNEL */
 #endif /* !_SYS_MALLOC_H_ */
