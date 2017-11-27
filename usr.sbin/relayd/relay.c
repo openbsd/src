@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.231 2017/11/27 21:09:55 claudio Exp $	*/
+/*	$OpenBSD: relay.c,v 1.232 2017/11/27 23:04:26 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2580,15 +2580,14 @@ relay_load_fd(int fd, off_t *len)
 	struct stat	 st;
 	off_t		 size;
 	ssize_t		 rv;
+	int		 err;
 
 	if (fstat(fd, &st) != 0)
 		goto fail;
 	size = st.st_size;
 	if ((buf = calloc(1, size + 1)) == NULL)
 		goto fail;
-	if (lseek(fd, 0, SEEK_SET) != 0)
-		goto fail;
-	if ((rv = read(fd, buf, size)) != size)
+	if ((rv = pread(fd, buf, size, 0)) != size)
 		goto fail;
 
 	close(fd);
@@ -2597,8 +2596,10 @@ relay_load_fd(int fd, off_t *len)
 	return (buf);
 
  fail:
+	err = errno;
 	free(buf);
 	close(fd);
+	errno = err;
 	return (NULL);
 }
 
