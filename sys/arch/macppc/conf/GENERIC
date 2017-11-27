@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.262 2017/10/23 03:13:58 jsg Exp $g
+#	$OpenBSD: GENERIC,v 1.263 2017/11/27 09:03:37 mpi Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -335,6 +335,7 @@ cardbus*	at cardslot?
 pcmcia*		at cardslot?
 cbb*		at pci?
 cardslot*	at cbb?
+ne*		at pcmcia?	# PCMCIA based NE2000 ethernet
 ep*		at pcmcia?	# PCMCIA based 3C5xx ethernet
 an*		at pcmcia?	# Cisco/Aironet
 ath*		at cardbus?	# Atheros AR5k (802.11a/b/g)
