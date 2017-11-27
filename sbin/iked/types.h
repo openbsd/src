@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.28 2017/03/27 10:43:53 mikeb Exp $	*/
+/*	$OpenBSD: types.h,v 1.29 2017/11/27 18:39:35 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -59,6 +59,9 @@
 #define IKED_COOKIE_MIN		1	/* min 1 bytes */
 #define IKED_COOKIE_MAX		64	/* max 64 bytes */
 
+#define IKED_COOKIE2_MIN	8	/* min 8 bytes */
+#define IKED_COOKIE2_MAX	64	/* max 64 bytes */
+
 #define IKED_ID_SIZE		1024	/* XXX should be dynamic */
 #define IKED_PSK_SIZE		1024	/* XXX should be dynamic */
 #define IKED_MSGBUF_MAX		8192
@@ -99,6 +102,7 @@ enum imsg_type {
 	IMSG_CTL_DECOUPLE,
 	IMSG_CTL_ACTIVE,
 	IMSG_CTL_PASSIVE,
+	IMSG_CTL_MOBIKE,
 	IMSG_COMPILE,
 	IMSG_UDP_SOCKET,
 	IMSG_PFKEY_SOCKET,

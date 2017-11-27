@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.157 2017/11/08 09:35:19 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.158 2017/11/27 18:39:35 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -140,6 +140,13 @@ ssize_t	ikev2_add_sighashnotify(struct ibuf *, struct ikev2_payload **,
 ssize_t ikev2_add_nat_detection(struct iked *, struct ibuf *,
 	    struct ikev2_payload **, struct iked_message *, ssize_t);
 
+ssize_t	 ikev2_add_mobike(struct iked *, struct ibuf *,
+	    struct ikev2_payload **, ssize_t, struct iked_sa *);
+int	 ikev2_update_sa_addresses(struct iked *, struct iked_sa *);
+int	 ikev2_resp_informational(struct iked *, struct iked_sa *,
+	    struct iked_message *);
+
+
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev2_dispatch_parent },
 	{ "certstore",	PROC_CERT,	ikev2_dispatch_cert }
@@ -189,6 +196,8 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			    IKED_INITIATOR_INITIAL);
 		}
 		return (0);
+	case IMSG_CTL_MOBIKE:
+		return (config_getmobike(env, imsg));
 	case IMSG_UDP_SOCKET:
 		return (config_getsocket(env, imsg, ikev2_msg_cb));
 	case IMSG_PFKEY_SOCKET:
@@ -1585,6 +1594,30 @@ ikev2_add_ipcompnotify(struct iked *env, struct ibuf *e,
 }
 
 ssize_t
+ikev2_add_mobike(struct iked *env, struct ibuf *e,
+    struct ikev2_payload **pld, ssize_t len, struct iked_sa *sa)
+{
+	struct ikev2_notify		*n;
+	uint8_t				*ptr;
+
+	if (*pld)
+		if (ikev2_next_payload(*pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
+			return (-1);
+	if ((*pld = ikev2_add_payload(e)) == NULL)
+		return (-1);
+	len = sizeof(*n);
+	if ((ptr = ibuf_advance(e, len)) == NULL)
+		return (-1);
+	n = (struct ikev2_notify *)ptr;
+	n->n_protoid = 0;
+	n->n_spisize = 0;
+	n->n_type = htobe16(IKEV2_N_MOBIKE_SUPPORTED);
+	log_debug("%s: done", __func__);
+
+	return (len);
+}
+
+ssize_t
 ikev2_add_sighashnotify(struct ibuf *e, struct ikev2_payload **pld,
     ssize_t len)
 {
@@ -2055,6 +2088,84 @@ ikev2_add_buf(struct ibuf *buf, struct ibuf *data)
 	return (0);
 }
 
+int
+ikev2_resp_informational(struct iked *env, struct iked_sa *sa,
+    struct iked_message *msg)
+{
+	struct ikev2_notify		*n;
+	struct ikev2_payload		*pld = NULL;
+	struct ike_header		*hdr;
+	struct ibuf			*buf = NULL;
+	ssize_t				 len = 0;
+	int				 ret = -1;
+	int				 oflags = 0;
+	uint8_t				 firstpayload = IKEV2_PAYLOAD_NONE;
+
+	if (!sa_stateok(sa, IKEV2_STATE_AUTH_REQUEST) ||
+	    msg->msg_responded || msg->msg_error)
+		goto done;
+
+	if ((buf = ibuf_static()) == NULL)
+		goto done;
+	/*
+	 * Include NAT_DETECTION notification on UPDATE_SA_ADDRESSES or if
+	 * the peer did include them, too (RFC 455, 3.8).
+	 */
+	if (sa->sa_mobike &&
+	    (msg->msg_update_sa_addresses || msg->msg_natt_rcvd)) {
+		/*
+		 * XXX workaround so ikev2_msg_frompeer() fails for
+		 * XXX ikev2_nat_detection(), and the correct src/dst are
+		 * XXX used for the nat detection payload.
+		 */
+		if (msg->msg_parent == NULL)
+			goto done;
+		if ((hdr = ibuf_seek(msg->msg_parent->msg_data, 0,
+		    sizeof(*hdr))) == NULL)
+			goto done;
+		oflags = hdr->ike_flags;
+		if (sa->sa_hdr.sh_initiator)
+			hdr->ike_flags |= IKEV2_FLAG_INITIATOR;
+		else
+			hdr->ike_flags &= ~IKEV2_FLAG_INITIATOR;
+		/* NAT-T notify payloads */
+		len = ikev2_add_nat_detection(env, buf, &pld, msg, len);
+		hdr->ike_flags = oflags;	/* XXX undo workaround */
+		if (len == -1)
+			goto done;
+		firstpayload = IKEV2_PAYLOAD_NOTIFY;
+	}
+	/* Reflect COOKIE2 */
+	if (msg->msg_cookie2) {
+		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
+			goto done;
+		if ((pld = ikev2_add_payload(buf)) == NULL)
+			goto done;
+		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
+			goto done;
+		n->n_protoid = IKEV2_SAPROTO_IKE;
+		n->n_spisize = 0;
+		n->n_type = htobe16(IKEV2_N_COOKIE2);
+		if (ikev2_add_buf(buf, msg->msg_cookie2) == -1)
+			goto done;
+		len = sizeof(*n) + ibuf_size(msg->msg_cookie2);
+		log_debug("%s: added cookie2", __func__);
+		if (firstpayload == IKEV2_PAYLOAD_NONE)
+			firstpayload = IKEV2_PAYLOAD_NOTIFY;
+	}
+	/* add terminator, if there is already a payload */
+	if (firstpayload != IKEV2_PAYLOAD_NONE)
+		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONE) == -1)
+			goto done;
+	ret = ikev2_msg_send_encrypt(env, sa, &buf,
+	    IKEV2_EXCHANGE_INFORMATIONAL, firstpayload, 1);
+	if (ret != -1)
+		msg->msg_responded = 1;
+ done:
+	ibuf_release(buf);
+	return (ret);
+}
+
 void
 ikev2_resp_recv(struct iked *env, struct iked_message *msg,
     struct ike_header *hdr)
@@ -2152,13 +2263,9 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 			ikev2_send_error(env, sa, msg, hdr->ike_exchange);
 		break;
 	case IKEV2_EXCHANGE_INFORMATIONAL:
-		if (sa_stateok(sa, IKEV2_STATE_AUTH_REQUEST) &&
-		    !msg->msg_responded && !msg->msg_error) {
-			(void)ikev2_send_ike_e(env, sa, NULL,
-			    IKEV2_PAYLOAD_NONE, IKEV2_EXCHANGE_INFORMATIONAL,
-			    1);
-			msg->msg_responded = 1;
-		}
+		if (msg->msg_update_sa_addresses)
+			ikev2_update_sa_addresses(env, sa);
+		(void)ikev2_resp_informational(env, sa, msg);
 		break;
 	default:
 		break;
@@ -2449,6 +2556,11 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 	/* compression */
 	if (sa->sa_ipcomp &&
 	    (len = ikev2_add_ipcompnotify(env, e, &pld, len, sa)) == -1)
+		goto done;
+
+	/* MOBIKE */
+	if (sa->sa_mobike &&
+	    (len = ikev2_add_mobike(env, e, &pld, len, sa)) == -1)
 		goto done;
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_SA) == -1)
@@ -3151,10 +3263,13 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	nsa->sa_natt = sa->sa_natt;
 	nsa->sa_udpencap = sa->sa_udpencap;
 	nsa->sa_usekeepalive = sa->sa_usekeepalive;
+	nsa->sa_mobike = sa->sa_mobike;
 
 	/* Transfer old addresses */
 	memcpy(&nsa->sa_local, &sa->sa_local, sizeof(nsa->sa_local));
 	memcpy(&nsa->sa_peer, &sa->sa_peer, sizeof(nsa->sa_peer));
+	memcpy(&nsa->sa_peer_loaded, &sa->sa_peer_loaded,
+	    sizeof(nsa->sa_peer_loaded));
 
 	/* Transfer all Child SAs and flows from the old IKE SA */
 	for (flow = TAILQ_FIRST(&sa->sa_flows); flow != NULL;
@@ -5104,6 +5219,7 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 {
 	struct iked_childsa	*csa, *ocsa;
 	struct iked_flow	*flow, *oflow;
+	int			 peer_changed, reload;
 
 	if (sa->sa_ipcomp && sa->sa_cpi_in && sa->sa_cpi_out &&
 	    ikev2_ipcomp_enable(env, sa) == -1)
@@ -5136,9 +5252,26 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 		    print_spi(csa->csa_spi.spi, csa->csa_spi.spi_size));
 	}
 
+	peer_changed = (memcmp(&sa->sa_peer_loaded, &sa->sa_peer,
+	    sizeof(sa->sa_peer_loaded)) != 0);
+
 	TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
-		if (flow->flow_loaded)
-			continue;
+		/* re-load the flow if the peer for the flow has changed */
+		reload = 0;
+		if (flow->flow_loaded) {
+			if (!peer_changed) {
+				log_debug("%s: flow already loaded %p",
+				    __func__, flow);
+				continue;
+			}
+			RB_REMOVE(iked_flows, &env->sc_activeflows, flow);
+			/* flow might be shared w/other SA */
+			if (!flow->flow_replacing ||
+			    flow_replace(env, flow) != 0)
+				(void)pfkey_flow_delete(env->sc_pfkey, flow);
+			flow->flow_loaded = 0; /* we did RB_REMOVE */
+			reload = 1;
+		}
 
 		if (pfkey_flow_add(env->sc_pfkey, flow) != 0) {
 			log_debug("%s: failed to load flow", __func__);
@@ -5150,12 +5283,24 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 			log_debug("%s: replaced old flow %p with %p",
 			    __func__, oflow, flow);
 			oflow->flow_loaded = 0;
+			oflow->flow_replacing = 0;
 			RB_REMOVE(iked_flows, &env->sc_activeflows, oflow);
+			flow->flow_replacing = 1;
 		}
 
 		RB_INSERT(iked_flows, &env->sc_activeflows, flow);
 
-		log_debug("%s: loaded flow %p", __func__, flow);
+		log_debug("%s: %sloaded flow %p", __func__,
+		    reload ? "re" : "", flow);
+	}
+
+	/* remember the current address for ikev2_update_sa_addresses()  */
+	if (peer_changed) {
+		memcpy(&sa->sa_peer_loaded, &sa->sa_peer,
+		    sizeof(sa->sa_peer_loaded));
+		log_debug("%s: remember SA peer %s", __func__,
+		    print_host((struct sockaddr *)&sa->sa_peer_loaded.addr,
+		    NULL, 0));
 	}
 
 	return (0);
@@ -5720,4 +5865,82 @@ ikev2_cp_fixaddr(struct iked_sa *sa, struct iked_addr *addr,
 		break;
 	}
 	return (0);
+}
+
+int
+ikev2_update_sa_addresses(struct iked *env, struct iked_sa *sa)
+{
+	struct iked_childsa	*csa;
+	struct iked_flow	*flow, *oflow;
+	struct iked_message	*msg;
+
+	if (!sa_stateok(sa, IKEV2_STATE_ESTABLISHED))
+		return -1;
+
+	log_info("%s: old %s new %s", __func__,
+	    print_host((struct sockaddr *)&sa->sa_peer_loaded.addr, NULL, 0),
+	    print_host((struct sockaddr *)&sa->sa_peer.addr, NULL, 0));
+
+	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
+		if (!csa->csa_loaded)
+			continue;
+		if (pfkey_sa_update_addresses(env->sc_pfkey, csa) != 0)
+			log_debug("%s: failed to update sa", __func__);
+	}
+
+	/* delete and re-add flows */
+	TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
+		if (flow->flow_loaded) {
+			RB_REMOVE(iked_flows, &env->sc_activeflows, flow);
+			/* flow might be shared w/other SA */
+			if (!flow->flow_replacing ||
+			    flow_replace(env, flow) != 0)
+				(void)pfkey_flow_delete(env->sc_pfkey, flow);
+			flow->flow_loaded = 0;
+		}
+		/* update IPcomp flows */
+		if (flow->flow_ipcomp) {
+			struct iked_addr *addr =
+			    (flow->flow_dir == IPSP_DIRECTION_OUT) ?
+			    &flow->flow_dst :
+			    &flow->flow_src;
+			memcpy(addr, &sa->sa_peer, sizeof(sa->sa_peer));
+			socket_setport((struct sockaddr *)&addr->addr, 0);
+			addr->addr_port = 0;
+			addr->addr_mask = (addr->addr_af == AF_INET) ? 32 : 128;
+		}
+		if (pfkey_flow_add(env->sc_pfkey, flow) != 0)
+			log_debug("%s: failed to add flow %p", __func__, flow);
+		if (!flow->flow_loaded)
+			continue;
+		if ((oflow = RB_FIND(iked_flows, &env->sc_activeflows, flow))
+		    != NULL) {
+			log_debug("%s: replaced old flow %p with %p",
+			    __func__, oflow, flow);
+			oflow->flow_loaded = 0;
+			oflow->flow_replacing = 0;
+			RB_REMOVE(iked_flows, &env->sc_activeflows, oflow);
+			flow->flow_replacing = 1;
+		}
+		RB_INSERT(iked_flows, &env->sc_activeflows, flow);
+	}
+
+	/* update pending requests and responses */
+	TAILQ_FOREACH(msg, &sa->sa_requests, msg_entry) {
+		msg->msg_local = sa->sa_local.addr;
+		msg->msg_locallen = sa->sa_local.addr.ss_len;
+		msg->msg_peer = sa->sa_peer.addr;
+		msg->msg_peerlen = sa->sa_peer.addr.ss_len;
+	}
+	TAILQ_FOREACH(msg, &sa->sa_responses, msg_entry) {
+		msg->msg_local = sa->sa_local.addr;
+		msg->msg_locallen = sa->sa_local.addr.ss_len;
+		msg->msg_peer = sa->sa_peer.addr;
+		msg->msg_peerlen = sa->sa_peer.addr.ss_len;
+	}
+
+	/* Update sa_peer_loaded, to match in-kernel information */
+	memcpy(&sa->sa_peer_loaded, &sa->sa_peer, sizeof(sa->sa_peer_loaded));
+
+	return 0;
 }

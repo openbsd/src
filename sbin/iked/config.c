@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.48 2017/04/13 07:04:09 patrick Exp $	*/
+/*	$OpenBSD: config.c,v 1.49 2017/11/27 18:39:35 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -811,6 +811,29 @@ config_getcompile(struct iked *env, struct imsg *imsg)
 	policy_calc_skip_steps(&env->sc_policies);
 
 	log_debug("%s: compilation done", __func__);
+	return (0);
+}
+
+int
+config_setmobike(struct iked *env)
+{
+	unsigned int boolval;
+
+	boolval = env->sc_mobike;
+	proc_compose(&env->sc_ps, PROC_IKEV2, IMSG_CTL_MOBIKE,
+	    &boolval, sizeof(boolval));
+	return (0);
+}
+
+int
+config_getmobike(struct iked *env, struct imsg *imsg)
+{
+	unsigned int boolval;
+
+	IMSG_SIZE_CHECK(imsg, &boolval);
+	memcpy(&boolval, imsg->data, sizeof(boolval));
+	env->sc_mobike = boolval;
+	log_debug("%s: %smobike", __func__, env->sc_mobike ? "" : "no ");
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.50 2017/06/01 15:23:43 sthen Exp $
+.\" $OpenBSD: iked.conf.5,v 1.51 2017/11/27 18:39:35 patrick Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2017 $
+.Dd $Mdocdate: November 27 2017 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -136,6 +136,15 @@ This is the default.
 .It Ic set decouple
 Don't load the negotiated SAs and flows from the kernel.
 This mode is only useful for testing and debugging.
+.It Ic set mobike
+Enable MOBIKE (RFC 4555) support.
+This is the default.
+MOBIKE allows the peer IP address to be changed for IKE and IPsec SAs.
+Currently
+.Xr iked 8
+only supports MOBIKE when acting as a responder.
+.It Ic set nomobike
+Disables MOBIKE support.
 .It Ic set ocsp Ar URL
 Enable OCSP and set the URL of the OCSP responder.
 Please note that the matching responder and issuer certificates

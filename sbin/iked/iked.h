@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.115 2017/04/26 10:42:38 henning Exp $	*/
+/*	$OpenBSD: iked.h,v 1.116 2017/11/27 18:39:35 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -157,6 +157,8 @@ struct iked_flow {
 
 	RB_ENTRY(iked_flow)		 flow_node;
 	TAILQ_ENTRY(iked_flow)		 flow_entry;
+
+	int				 flow_replacing; /* cf flow_replace() */
 	int				 flow_ipcomp;
 };
 RB_HEAD(iked_flows, iked_flow);
@@ -371,6 +373,7 @@ struct iked_sa {
 #define IKED_SATYPE_LOCAL		 1		/* Local SA */
 
 	struct iked_addr		 sa_peer;
+	struct iked_addr		 sa_peer_loaded;/* MOBIKE */
 	struct iked_addr		 sa_local;
 	int				 sa_fd;
 
@@ -441,6 +444,8 @@ struct iked_sa {
 	uint16_t			 sa_cpi_out;	/* IPcomp outgoing */
 	uint16_t			 sa_cpi_in;	/* IPcomp incoming*/
 
+	int				 sa_mobike;	/* MOBIKE */
+
 	struct iked_timer		 sa_timer;	/* SA timeouts */
 #define IKED_IKE_SA_EXCHANGE_TIMEOUT	 300		/* 5 minutes */
 #define IKED_IKE_SA_REKEY_TIMEOUT	 120		/* 2 minutes */
@@ -487,6 +492,7 @@ struct iked_message {
 	int			 msg_response;
 	int			 msg_responded;
 	int			 msg_natt;
+	int			 msg_natt_rcvd;
 	int			 msg_error;
 	int			 msg_e;
 	struct iked_message	*msg_parent;
@@ -507,6 +513,10 @@ struct iked_message {
 	struct iked_id		 msg_id;
 	struct iked_id		 msg_cert;
 	struct ibuf		*msg_cookie;
+
+	/* MOBIKE */
+	int			 msg_update_sa_addresses;
+	struct ibuf		*msg_cookie2;
 
 	/* Parse stack */
 	struct iked_proposal	*msg_prop;
@@ -589,6 +599,8 @@ struct iked {
 	uint32_t			 sc_opts;
 	uint8_t				 sc_passive;
 	uint8_t				 sc_decoupled;
+
+	uint8_t				 sc_mobike;	/* MOBIKE */
 
 	struct iked_policies		 sc_policies;
 	struct iked_policy		*sc_defaultcon;
@@ -687,6 +699,8 @@ int	 config_setocsp(struct iked *);
 int	 config_getocsp(struct iked *, struct imsg *);
 int	 config_setkeys(struct iked *);
 int	 config_getkey(struct iked *, struct imsg *);
+int	 config_setmobike(struct iked *);
+int	 config_getmobike(struct iked *, struct imsg *);
 
 /* policy.c */
 void	 policy_init(struct iked *);
@@ -711,6 +725,7 @@ struct iked_childsa *
 	 childsa_lookup(struct iked_sa *, uint64_t, uint8_t);
 void	 flow_free(struct iked_flow *);
 int	 flow_equal(struct iked_flow *, struct iked_flow *);
+int	 flow_replace(struct iked *, struct iked_flow *);
 struct iked_sa *
 	 sa_lookup(struct iked *, uint64_t, uint64_t, unsigned int);
 struct iked_user *
@@ -860,6 +875,7 @@ int	 pfkey_flow_delete(int fd, struct iked_flow *);
 int	 pfkey_block(int, int, unsigned int);
 int	 pfkey_sa_init(int, struct iked_childsa *, uint32_t *);
 int	 pfkey_sa_add(int, struct iked_childsa *, struct iked_childsa *);
+int	 pfkey_sa_update_addresses(int, struct iked_childsa *);
 int	 pfkey_sa_delete(int, struct iked_childsa *);
 int	 pfkey_sa_last_used(int, struct iked_childsa *, uint64_t *);
 int	 pfkey_flush(int);

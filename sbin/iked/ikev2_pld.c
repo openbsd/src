@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.62 2017/04/13 07:04:09 patrick Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.63 2017/11/27 18:39:35 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1153,6 +1153,8 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 				msg->msg_sa->sa_usekeepalive = 1;
 		}
 		print_hex(md, 0, sizeof(md));
+		/* remember for MOBIKE */
+		msg->msg_parent->msg_natt_rcvd = 1;
 		break;
 	case IKEV2_N_AUTHENTICATION_FAILED:
 		if (!msg->msg_e) {
@@ -1291,6 +1293,66 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			msg->msg_sa->sa_ipcomp = transform;
 			msg->msg_sa->sa_cpi_out = betoh16(cpi);
 		}
+		break;
+	case IKEV2_N_MOBIKE_SUPPORTED:
+		if (!msg->msg_e) {
+			log_debug("%s: N_MOBIKE_SUPPORTED not encrypted",
+			    __func__);
+			return (-1);
+		}
+		if (len != 0) {
+			log_debug("%s: ignoring malformed mobike"
+			    " notification: %zu", __func__, len);
+			return (0);
+		}
+		if (!env->sc_mobike) {
+			log_debug("%s: mobike disabled", __func__);
+			return (0);
+		}
+		msg->msg_sa->sa_mobike = 1;
+		/* enforce natt */
+		msg->msg_sa->sa_natt = 1;
+		break;
+	case IKEV2_N_UPDATE_SA_ADDRESSES:
+		if (!msg->msg_e) {
+			log_debug("%s: N_UPDATE_SA_ADDRESSES not encrypted",
+			    __func__);
+			return (-1);
+		}
+		if (!msg->msg_sa->sa_mobike) {
+			log_debug("%s: ignoring update sa addresses"
+			    " notification w/o mobike: %zu", __func__, len);
+			return (0);
+		}
+		if (len != 0) {
+			log_debug("%s: ignoring malformed update sa addresses"
+			    " notification: %zu", __func__, len);
+			return (0);
+		}
+		msg->msg_parent->msg_update_sa_addresses = 1;
+		break;
+	case IKEV2_N_COOKIE2:
+		if (!msg->msg_e) {
+			log_debug("%s: N_COOKIE2 not encrypted",
+			    __func__);
+			return (-1);
+		}
+		if (!msg->msg_sa->sa_mobike) {
+			log_debug("%s: ignoring cookie2 notification"
+			    " w/o mobike: %zu", __func__, len);
+			return (0);
+		}
+		if (len < IKED_COOKIE2_MIN || len > IKED_COOKIE2_MAX) {
+			log_debug("%s: ignoring malformed cookie2"
+			    " notification: %zu", __func__, len);
+			return (0);
+		}
+		ibuf_release(msg->msg_cookie2);	/* should not happen */
+		if ((msg->msg_cookie2 = ibuf_new(buf, len)) == NULL) {
+			log_debug("%s: failed to get peer cookie2", __func__);
+			return (-1);
+		}
+		msg->msg_parent->msg_cookie2 = msg->msg_cookie2;
 		break;
 	case IKEV2_N_COOKIE:
 		if (msg->msg_e) {

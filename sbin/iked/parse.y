@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.66 2017/11/15 15:45:02 patrick Exp $	*/
+/*	$OpenBSD: parse.y,v 1.67 2017/11/27 18:39:35 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -99,6 +99,7 @@ static int		 debug = 0;
 static int		 rules = 0;
 static int		 passive = 0;
 static int		 decouple = 0;
+static int		 mobike = 1;
 static char		*ocsp_url = NULL;
 
 struct ipsec_xf {
@@ -384,7 +385,7 @@ typedef struct {
 %token	PASSIVE ACTIVE ANY TAG TAP PROTO LOCAL GROUP NAME CONFIG EAP USER
 %token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
 %token	INCLUDE LIFETIME BYTES INET INET6 QUICK SKIP DEFAULT
-%token	IPCOMP OCSP IKELIFETIME
+%token	IPCOMP OCSP IKELIFETIME MOBIKE NOMOBIKE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -445,6 +446,8 @@ set		: SET ACTIVE	{ passive = 0; }
 		| SET PASSIVE	{ passive = 1; }
 		| SET COUPLE	{ decouple = 0; }
 		| SET DECOUPLE	{ decouple = 1; }
+		| SET MOBIKE	{ mobike = 1; }
+		| SET NOMOBIKE	{ mobike = 0; }
 		| SET OCSP STRING		{
 			if ((ocsp_url = strdup($3)) == NULL) {
 				yyerror("cannot set ocsp_url");
@@ -1126,7 +1129,9 @@ lookup(char *s)
 		{ "ipcomp",		IPCOMP },
 		{ "lifetime",		LIFETIME },
 		{ "local",		LOCAL },
+		{ "mobike",		MOBIKE },
 		{ "name",		NAME },
+		{ "nomobike",		NOMOBIKE },
 		{ "ocsp",		OCSP },
 		{ "passive",		PASSIVE },
 		{ "peer",		PEER },
@@ -1496,6 +1501,7 @@ parse_config(const char *filename, struct iked *x_env)
 
 	free(ocsp_url);
 
+	mobike = 1;
 	decouple = passive = 0;
 	ocsp_url = NULL;
 
@@ -1508,6 +1514,7 @@ parse_config(const char *filename, struct iked *x_env)
 
 	env->sc_passive = passive ? 1 : 0;
 	env->sc_decoupled = decouple ? 1 : 0;
+	env->sc_mobike = mobike;
 	env->sc_ocsp_url = ocsp_url;
 
 	if (!rules)
