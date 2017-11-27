@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.13 2017/01/24 13:32:55 jsing Exp $ */
+/*	$Id: netproc.c,v 1.14 2017/11/27 01:58:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -325,7 +325,7 @@ sreq(struct conn *c, const char *addr, const char *req)
  * Returns non-zero on success.
  */
 static int
-donewreg(struct conn *c, const char *agreement, const struct capaths *p)
+donewreg(struct conn *c, const struct capaths *p)
 {
 	int		 rc = 0;
 	char		*req;
@@ -333,7 +333,7 @@ donewreg(struct conn *c, const char *agreement, const struct capaths *p)
 
 	dodbg("%s: new-reg", p->newreg);
 
-	if ((req = json_fmt_newreg(agreement)) == NULL)
+	if ((req = json_fmt_newreg(p->agreement)) == NULL)
 		warnx("json_fmt_newreg");
 	else if ((lc = sreq(c, p->newreg, req)) < 0)
 		warnx("%s: bad comm", p->newreg);
@@ -567,7 +567,7 @@ dofullchain(struct conn *c, const char *addr)
 int
 netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
     int newacct, int revocate, struct authority_c *authority,
-    const char *const *alts,size_t altsz, const char *agreement)
+    const char *const *alts,size_t altsz)
 {
 	int		 rc = 0;
 	size_t		 i;
@@ -673,7 +673,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 
 	/* If new, register with the CA server. */
 
-	if (newacct && ! donewreg(&c, agreement, &paths))
+	if (newacct && ! donewreg(&c, &paths))
 		goto out;
 
 	/* Pre-authorise all domains with CA server. */
