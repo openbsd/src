@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.243 2017/11/15 19:03:26 benno Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.244 2017/11/27 21:06:26 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -90,6 +90,7 @@
 #define CONFIG_ROUTES		0x10
 #define CONFIG_RTS		0x20
 #define CONFIG_CA_ENGINE	0x40
+#define CONFIG_CERTS		0x80
 #define CONFIG_ALL		0xff
 
 #define SMALL_READ_BUF_SIZE	1024
@@ -135,6 +136,14 @@ struct ctl_relaytable {
 	int		 mode;
 	u_int32_t	 flags;
 };
+
+struct ctl_relayfd {
+	objid_t		 relayid;
+	int		 type;
+};
+#define RELAY_FD_CERT	1
+#define RELAY_FD_CACERT	2
+#define RELAY_FD_CAFILE	3
 
 struct ctl_script {
 	objid_t		 host;
@@ -759,13 +768,8 @@ struct relay_config {
 	struct timeval		 timeout;
 	enum forwardmode	 fwdmode;
 	union hashkey		 hashkey;
-	off_t			 tls_cert_len;
 	off_t			 tls_key_len;
-	objid_t			 tls_keyid;
-	off_t			 tls_ca_len;
-	off_t			 tls_cacert_len;
 	off_t			 tls_cakey_len;
-	objid_t			 tls_cakeyid;
 };
 
 struct relay {
@@ -789,11 +793,11 @@ struct relay {
 	struct tls_config	*rl_tls_client_cfg;
 	struct tls		*rl_tls_ctx;
 
-	char			*rl_tls_cert;
+	int			rl_tls_cert_fd;
+	int			rl_tls_ca_fd;
+	int			rl_tls_cacert_fd;
 	char			*rl_tls_key;
 	EVP_PKEY		*rl_tls_pkey;
-	char			*rl_tls_ca;
-	char			*rl_tls_cacert;
 	X509			*rl_tls_cacertx509;
 	char			*rl_tls_cakey;
 	EVP_PKEY		*rl_tls_capkey;
@@ -960,6 +964,8 @@ enum imsg_type {
 	IMSG_CFG_RULE,
 	IMSG_CFG_RELAY,
 	IMSG_CFG_RELAY_TABLE,
+	IMSG_CFG_RELAY_CERT,
+	IMSG_CFG_RELAY_FD,
 	IMSG_CFG_DONE,
 	IMSG_CA_PRIVENC,
 	IMSG_CA_PRIVDEC,
@@ -1163,6 +1169,7 @@ void	 relay(struct privsep *, struct privsep_proc *);
 int	 relay_privinit(struct relay *);
 void	 relay_notify_done(struct host *, const char *);
 int	 relay_session_cmp(struct rsession *, struct rsession *);
+char	*relay_load_fd(int, off_t *);
 int	 relay_load_certfiles(struct relay *);
 void	 relay_close(struct rsession *, const char *);
 void	 relay_natlook(int, short, void *);
@@ -1423,5 +1430,6 @@ int	 config_getrule(struct relayd *, struct imsg *);
 int	 config_setrelay(struct relayd *, struct relay *);
 int	 config_getrelay(struct relayd *, struct imsg *);
 int	 config_getrelaytable(struct relayd *, struct imsg *);
+int	 config_getrelayfd(struct relayd *, struct imsg *);
 
 #endif /* RELAYD_H */

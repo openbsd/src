@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.229 2017/11/27 17:35:49 claudio Exp $	*/
+/*	$OpenBSD: relay.c,v 1.230 2017/11/27 21:06:26 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -81,7 +81,6 @@ void		 relay_tls_connected(struct ctl_relay_event *);
 void		 relay_tls_readcb(int, short, void *);
 void		 relay_tls_writecb(int, short, void *);
 
-char		*relay_load_file(const char *, off_t *);
 extern void	 bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 		    size_t, void *);
 
@@ -1923,6 +1922,9 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CFG_RELAY_TABLE:
 		config_getrelaytable(env, imsg);
 		break;
+	case IMSG_CFG_RELAY_FD:
+		config_getrelayfd(env, imsg);
+		break;
 	case IMSG_CFG_DONE:
 		config_getcfg(env, imsg);
 		break;
@@ -2037,6 +2039,8 @@ relay_tls_ctx_create(struct relay *rlay)
 	struct tls		*tls = NULL;
 	const char		*fake_key;
 	int			 fake_keylen;
+	char			*buf = NULL, *cabuf = NULL;
+	off_t			 len = 0, calen = 0;
 
 	if ((tls_cfg = tls_config_new()) == NULL) {
 		log_warnx("unable to allocate TLS config");
@@ -2060,13 +2064,20 @@ relay_tls_ctx_create(struct relay *rlay)
 		 */
 		tls_config_insecure_noverifyname(tls_client_cfg);
 
-		if (rlay->rl_tls_ca != NULL) {
-			if (tls_config_set_ca_mem(tls_client_cfg,
-			    rlay->rl_tls_ca, rlay->rl_conf.tls_ca_len) != 0) {
+		if (rlay->rl_tls_ca_fd != -1) {
+			if ((buf = relay_load_fd(rlay->rl_tls_ca_fd, &len)) ==
+			    NULL) {
+				log_warn("failed to read root certificates");
+				goto err;
+			}
+
+			if (tls_config_set_ca_mem(tls_client_cfg, buf, len) !=
+			    0) {
 				log_warnx("failed to set root certificates: %s",
 				    tls_config_error(tls_client_cfg));
 				goto err;
 			}
+			purge_key(&buf, len);
 		} else {
 			/* No root cert available so disable the checking */
 			tls_config_insecure_noverifycert(tls_client_cfg);
@@ -2087,31 +2098,38 @@ relay_tls_ctx_create(struct relay *rlay)
 		 */
 		tls_config_skip_private_key_check(tls_cfg);
 
-		if ((fake_keylen = ssl_ctx_fake_private_key(rlay->rl_tls_cert,
-		    rlay->rl_conf.tls_cert_len, &fake_key)) == -1) {
+		if ((buf = relay_load_fd(rlay->rl_tls_cert_fd, &len)) == NULL) {
+			log_warn("failed to load tls certificate");
+			goto err;
+		}
+
+		if ((fake_keylen = ssl_ctx_fake_private_key(buf, len,
+		    &fake_key)) == -1) {
 			/* error already printed */
 			goto err;
 		}
 
-		if (tls_config_set_keypair_ocsp_mem(tls_cfg,
-		    rlay->rl_tls_cert, rlay->rl_conf.tls_cert_len,
+		if (tls_config_set_keypair_ocsp_mem(tls_cfg, buf, len,
 		    fake_key, fake_keylen, NULL, 0) != 0) {
 			log_warnx("failed to set tls certificate: %s",
 			    tls_config_error(tls_cfg));
 			goto err;
 		}
 
-		if (rlay->rl_conf.tls_cacert_len) {
+
+		if (rlay->rl_tls_cacert_fd != -1) {
+			if ((cabuf = relay_load_fd(rlay->rl_tls_cacert_fd,
+			    &calen)) == NULL) {
+				log_warn("failed to load tls CA certificate");
+				goto err;
+			}
 			log_debug("%s: loading CA certificate", __func__);
-			if (!ssl_load_pkey(
-			    rlay->rl_tls_cacert, rlay->rl_conf.tls_cacert_len,
+			if (!ssl_load_pkey(cabuf, calen,
 			    &rlay->rl_tls_cacertx509, &rlay->rl_tls_capkey))
 				goto err;
 			/* loading certificate public key */
 			log_debug("%s: loading certificate", __func__);
-			if (!ssl_load_pkey(
-			    rlay->rl_tls_cert, rlay->rl_conf.tls_cert_len,
-			    NULL, &rlay->rl_tls_pkey))
+			if (!ssl_load_pkey(buf, len, NULL, &rlay->rl_tls_pkey))
 				goto err;
 		}
 
@@ -2128,11 +2146,15 @@ relay_tls_ctx_create(struct relay *rlay)
 		}
 		rlay->rl_tls_cfg = tls_cfg;
 		rlay->rl_tls_ctx = tls;
+
+		purge_key(&cabuf, calen);
+		purge_key(&buf, len);
 	}
 
-	/* The text versions of the keys/certs are not needed anymore */
-	purge_key(&rlay->rl_tls_cert, rlay->rl_conf.tls_cert_len);
-	purge_key(&rlay->rl_tls_cacert, rlay->rl_conf.tls_cacert_len);
+	/* The fd for the keys/certs are not needed anymore */
+	close(rlay->rl_tls_cert_fd);
+	close(rlay->rl_tls_cacert_fd);
+	close(rlay->rl_tls_ca_fd);
 
 	if (rlay->rl_tls_client_cfg == NULL)
 		tls_config_free(tls_client_cfg);
@@ -2141,6 +2163,9 @@ relay_tls_ctx_create(struct relay *rlay)
 
 	return (0);
  err:
+	purge_key(&cabuf, calen);
+	purge_key(&buf, len);
+
 	tls_config_free(tls_client_cfg);
 	tls_config_free(tls_cfg);
 	return (-1);
@@ -2547,21 +2572,21 @@ relay_cmp_af(struct sockaddr_storage *a, struct sockaddr_storage *b)
 }
 
 char *
-relay_load_file(const char *name, off_t *len)
+relay_load_fd(int fd, off_t *len)
 {
+	char		*buf = NULL;
 	struct stat	 st;
 	off_t		 size;
-	u_int8_t	*buf = NULL;
-	int		 fd;
+	ssize_t		 rv;
 
-	if ((fd = open(name, O_RDONLY)) == -1)
-		return (NULL);
 	if (fstat(fd, &st) != 0)
 		goto fail;
 	size = st.st_size;
 	if ((buf = calloc(1, size + 1)) == NULL)
 		goto fail;
-	if (read(fd, buf, size) != size)
+	if (lseek(fd, 0, SEEK_SET) != 0)
+		goto fail;
+	if ((rv = read(fd, buf, size)) != size)
 		goto fail;
 
 	close(fd);
@@ -2585,16 +2610,14 @@ relay_load_certfiles(struct relay *rlay)
 
 	if (rlay->rl_conf.flags & F_TLSCLIENT) {
 		if (strlen(proto->tlsca)) {
-			if ((rlay->rl_tls_ca =
-			    relay_load_file(proto->tlsca,
-			    &rlay->rl_conf.tls_ca_len)) == NULL)
+			if ((rlay->rl_tls_ca_fd =
+			    open(proto->tlsca, O_RDONLY)) == -1)
 				return (-1);
 			log_debug("%s: using ca %s", __func__, proto->tlsca);
 		}
 		if (strlen(proto->tlscacert)) {
-			if ((rlay->rl_tls_cacert =
-			    relay_load_file(proto->tlscacert,
-			    &rlay->rl_conf.tls_cacert_len)) == NULL)
+			if ((rlay->rl_tls_cacert_fd =
+			    open(proto->tlscacert, O_RDONLY)) == -1)
 				return (-1);
 			log_debug("%s: using ca certificate %s", __func__,
 			    proto->tlscacert);
@@ -2619,13 +2642,11 @@ relay_load_certfiles(struct relay *rlay)
 	if (snprintf(certfile, sizeof(certfile),
 	    "/etc/ssl/%s:%u.crt", hbuf, useport) == -1)
 		return (-1);
-	if ((rlay->rl_tls_cert = relay_load_file(certfile,
-	    &rlay->rl_conf.tls_cert_len)) == NULL) {
+	if ((rlay->rl_tls_cert_fd = open(certfile, O_RDONLY)) == -1) {
 		if (snprintf(certfile, sizeof(certfile),
 		    "/etc/ssl/%s.crt", hbuf) == -1)
 			return (-1);
-		if ((rlay->rl_tls_cert = relay_load_file(certfile,
-		    &rlay->rl_conf.tls_cert_len)) == NULL)
+		if ((rlay->rl_tls_cert_fd = open(certfile, O_RDONLY)) == -1)
 			return (-1);
 		useport = 0;
 	}

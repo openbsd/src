@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.218 2017/11/16 14:24:34 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.219 2017/11/27 21:06:26 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -99,7 +99,6 @@ objid_t			 last_relay_id = 0;
 objid_t			 last_proto_id = 0;
 objid_t			 last_rt_id = 0;
 objid_t			 last_nr_id = 0;
-objid_t			 last_key_id = 0;
 
 static struct rdr	*rdr = NULL;
 static struct table	*table = NULL;
@@ -1669,6 +1668,9 @@ relay		: RELAY STRING	{
 			r->rl_proto = NULL;
 			r->rl_conf.proto = EMPTY_ID;
 			r->rl_conf.dstretry = 0;
+			r->rl_tls_cert_fd = -1;
+			r->rl_tls_ca_fd = -1;
+			r->rl_tls_cacert_fd = -1;
 			TAILQ_INIT(&r->rl_tables);
 			if (last_relay_id == INT_MAX) {
 				yyerror("too many relays defined");
@@ -3201,10 +3203,8 @@ int
 relay_id(struct relay *rl)
 {
 	rl->rl_conf.id = ++last_relay_id;
-	rl->rl_conf.tls_keyid = ++last_key_id;
-	rl->rl_conf.tls_cakeyid = ++last_key_id;
 
-	if (last_relay_id == INT_MAX || last_key_id == INT_MAX)
+	if (last_relay_id == INT_MAX)
 		return (-1);
 
 	return (0);
@@ -3224,8 +3224,9 @@ relay_inherit(struct relay *ra, struct relay *rb)
 	rb->rl_conf.flags =
 	    (ra->rl_conf.flags & ~F_TLS) | (rc.flags & F_TLS);
 	if (!(rb->rl_conf.flags & F_TLS)) {
-		rb->rl_tls_cert = NULL;
-		rb->rl_conf.tls_cert_len = 0;
+		rb->rl_tls_cert_fd = -1;
+		rb->rl_tls_cacert_fd = -1;
+		rb->rl_tls_ca_fd = -1;
 		rb->rl_tls_key = NULL;
 		rb->rl_conf.tls_key_len = 0;
 	}

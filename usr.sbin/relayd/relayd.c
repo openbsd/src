@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.169 2017/05/31 04:14:34 jsg Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.170 2017/11/27 21:06:26 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -294,9 +294,7 @@ parent_configure(struct relayd *env)
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 		/* Check for TLS Inspection */
 		if ((rlay->rl_conf.flags & (F_TLS|F_TLSCLIENT)) ==
-		    (F_TLS|F_TLSCLIENT) &&
-		    rlay->rl_conf.tls_cacert_len &&
-		    rlay->rl_conf.tls_cakey_len)
+		    (F_TLS|F_TLSCLIENT) && rlay->rl_tls_cacert_fd != -1)
 			rlay->rl_conf.flags |= F_TLSINSPECT;
 
 		config_setrelay(env, rlay);
@@ -571,9 +569,7 @@ purge_relay(struct relayd *env, struct relay *rlay)
 	if (rlay->rl_dstbev != NULL)
 		bufferevent_free(rlay->rl_dstbev);
 
-	purge_key(&rlay->rl_tls_cert, rlay->rl_conf.tls_cert_len);
 	purge_key(&rlay->rl_tls_key, rlay->rl_conf.tls_key_len);
-	purge_key(&rlay->rl_tls_ca, rlay->rl_conf.tls_ca_len);
 	purge_key(&rlay->rl_tls_cakey, rlay->rl_conf.tls_cakey_len);
 
 	if (rlay->rl_tls_pkey != NULL) {
