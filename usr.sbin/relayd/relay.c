@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.228 2017/11/27 03:40:04 claudio Exp $	*/
+/*	$OpenBSD: relay.c,v 1.229 2017/11/27 17:35:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -712,10 +712,11 @@ relay_connected(int fd, short sig, void *arg)
 		    "failed to allocate output buffer event", 0);
 		return;
 	}
-	evbuffer_free(bev->output);
-	bev->output = con->se_out.output;
-	if (bev->output == NULL)
-		fatal("%s: invalid output buffer", __func__);
+	/* write pending output buffer now */
+	if (bufferevent_write_buffer(bev, con->se_out.output)) {
+		relay_abort_http(con, 500, strerror(errno), 0);
+		return;
+	}
 	con->se_out.bev = bev;
 
 	/* Initialize the TLS wrapper */
@@ -1698,7 +1699,7 @@ relay_close(struct rsession *con, const char *msg)
 	free(con->se_priv);
 	if (con->se_in.bev != NULL)
 		bufferevent_free(con->se_in.bev);
-	else if (con->se_in.output != NULL)
+	if (con->se_in.output != NULL)
 		evbuffer_free(con->se_in.output);
 	if (con->se_in.tls != NULL)
 		tls_close(con->se_in.tls);
@@ -1720,7 +1721,7 @@ relay_close(struct rsession *con, const char *msg)
 
 	if (con->se_out.bev != NULL)
 		bufferevent_free(con->se_out.bev);
-	else if (con->se_out.output != NULL)
+	if (con->se_out.output != NULL)
 		evbuffer_free(con->se_out.output);
 	if (con->se_out.tls != NULL)
 		tls_close(con->se_out.tls);
