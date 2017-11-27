@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.44 2017/09/08 05:36:52 deraadt Exp $ */
+/* $OpenBSD: mfii.c,v 1.45 2017/11/27 04:32:14 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -39,6 +39,7 @@
 #include <dev/pci/mpiireg.h>
 
 #define	MFII_BAR		0x14
+#define MFII_BAR_35		0x10
 #define	MFII_PCI_MEMSIZE	0x2000 /* 8k */
 
 #define MFII_OSTS_INTR_VALID	0x00000009
@@ -72,12 +73,14 @@ struct mfii_raid_context {
 	u_int8_t	_reserved1;
 	u_int16_t	timeout_value;
 
-	u_int8_t	reg_lock_flags;
+	u_int16_t	reg_lock_flags;
 #define MFII_RAID_CTX_RL_FLAGS_SEQNO_EN	(0x08)
 #define MFII_RAID_CTX_RL_FLAGS_CPU0	(0x00)
 #define MFII_RAID_CTX_RL_FLAGS_CPU1	(0x10)
 #define MFII_RAID_CTX_RL_FLAGS_CUDA	(0x80)
-	u_int8_t	_reserved2;
+
+#define MFII_RAID_CTX_ROUTING_FLAGS_SQN	(1 << 4)
+#define MFII_RAID_CTX_ROUTING_FLAGS_CPU0 0
 	u_int16_t	virtual_disk_target_id;
 
 	u_int64_t	reg_lock_row_lba;
@@ -219,9 +222,13 @@ struct mfii_pd_softc {
 };
 
 struct mfii_iop {
+	int bar;
+	int num_sge_loc;
+#define MFII_IOP_NUM_SGE_LOC_ORIG	0
+#define MFII_IOP_NUM_SGE_LOC_35		1
+	u_int16_t ldio_ctx_reg_lock_flags;
 	u_int8_t ldio_req_type;
 	u_int8_t ldio_ctx_type_nseg;
-	u_int8_t ldio_ctx_reg_lock_flags;
 	u_int8_t sge_flag_chain;
 	u_int8_t sge_flag_eol;
 };
@@ -418,8 +425,10 @@ mfii_dcmd_sync(struct mfii_softc *sc, struct mfii_ccb *ccb, int flags)
 #define mfii_fw_state(_sc) mfii_read((_sc), MFI_OSP)
 
 const struct mfii_iop mfii_iop_thunderbolt = {
-	MFII_REQ_TYPE_LDIO,
+	MFII_BAR,
+	MFII_IOP_NUM_SGE_LOC_ORIG,
 	0,
+	MFII_REQ_TYPE_LDIO,
 	0,
 	MFII_SGE_CHAIN_ELEMENT | MFII_SGE_ADDR_IOCPLBNTA,
 	0
@@ -429,9 +438,21 @@ const struct mfii_iop mfii_iop_thunderbolt = {
  * a lot of these values depend on us not implementing fastpath yet.
  */
 const struct mfii_iop mfii_iop_25 = {
+	MFII_BAR,
+	MFII_IOP_NUM_SGE_LOC_ORIG,
+	MFII_RAID_CTX_RL_FLAGS_CPU0, /* | MFII_RAID_CTX_RL_FLAGS_SEQNO_EN */
 	MFII_REQ_TYPE_NO_LOCK,
 	MFII_RAID_CTX_TYPE_CUDA | 0x1,
-	MFII_RAID_CTX_RL_FLAGS_CPU0, /* | MFII_RAID_CTX_RL_FLAGS_SEQNO_EN */
+	MFII_SGE_CHAIN_ELEMENT,
+	MFII_SGE_END_OF_LIST
+};
+
+const struct mfii_iop mfii_iop_35 = {
+	MFII_BAR_35,
+	MFII_IOP_NUM_SGE_LOC_35,
+	MFII_RAID_CTX_ROUTING_FLAGS_CPU0, /* | MFII_RAID_CTX_ROUTING_FLAGS_SQN */
+	MFII_REQ_TYPE_NO_LOCK,
+	MFII_RAID_CTX_TYPE_CUDA | 0x1,
 	MFII_SGE_CHAIN_ELEMENT,
 	MFII_SGE_END_OF_LIST
 };
@@ -448,7 +469,19 @@ const struct mfii_device mfii_devices[] = {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3008,
 	    &mfii_iop_25 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3108,
-	    &mfii_iop_25 }
+	    &mfii_iop_25 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3404,
+	    &mfii_iop_35 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3504,
+	    &mfii_iop_35 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3408,
+	    &mfii_iop_35 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3508,
+	    &mfii_iop_35 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3416,
+	    &mfii_iop_35 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3516,
+	    &mfii_iop_35 }
 };
 
 const struct mfii_iop *mfii_find_iop(struct pci_attach_args *);
@@ -503,7 +536,7 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->sc_abort_task, mfii_abort_task, sc);
 
 	/* wire up the bus shizz */
-	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, MFII_BAR);
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, sc->sc_iop->bar);
 	if (pci_mapreg_map(pa, MFII_BAR, memtype, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_ios, MFII_PCI_MEMSIZE)) {
 		printf(": unable to map registers\n");
@@ -1763,6 +1796,7 @@ mfii_scsi_cmd_io(struct mfii_softc *sc, struct scsi_xfer *xs)
 	struct mfii_ccb *ccb = xs->io;
 	struct mpii_msg_scsi_io *io = ccb->ccb_request;
 	struct mfii_raid_context *ctx = (struct mfii_raid_context *)(io + 1);
+	int segs;
 
 	io->dev_handle = htole16(link->target);
 	io->function = MFII_FUNCTION_LDIO_REQUEST;
@@ -1790,14 +1824,23 @@ mfii_scsi_cmd_io(struct mfii_softc *sc, struct scsi_xfer *xs)
 
 	ctx->type_nseg = sc->sc_iop->ldio_ctx_type_nseg;
 	ctx->timeout_value = htole16(0x14); /* XXX */
-	ctx->reg_lock_flags = sc->sc_iop->ldio_ctx_reg_lock_flags;
+	ctx->reg_lock_flags = htole16(sc->sc_iop->ldio_ctx_reg_lock_flags);
 	ctx->virtual_disk_target_id = htole16(link->target);
 
 	if (mfii_load_ccb(sc, ccb, ctx + 1,
 	    ISSET(xs->flags, SCSI_NOSLEEP)) != 0)
 		return (1);
 
-	ctx->num_sge = (ccb->ccb_len == 0) ? 0 : ccb->ccb_dmamap->dm_nsegs;
+	segs = (ccb->ccb_len == 0) ? 0 : ccb->ccb_dmamap->dm_nsegs;
+	switch (sc->sc_iop->num_sge_loc) {
+	case MFII_IOP_NUM_SGE_LOC_ORIG:
+		ctx->num_sge = segs;
+		break;
+	case MFII_IOP_NUM_SGE_LOC_35:
+		/* 12 bit field, but we're only using the lower 8 */
+		ctx->span_arm = segs;
+		break;
+	}
 
 	ccb->ccb_req.flags = sc->sc_iop->ldio_req_type;
 	ccb->ccb_req.smid = letoh16(ccb->ccb_smid);
