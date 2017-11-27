@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.34 2017/11/17 15:45:17 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.35 2017/11/27 12:54:13 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -1261,6 +1261,8 @@ abortit:
 		vrele(tdvp);
 	else
 		vput(tdvp);
+	if (tvp)
+		vput(tvp);
 	vrele(fdvp);
 	vrele(fvp);
 
