@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.27 2017/10/29 08:45:53 mpi Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.28 2017/11/27 03:19:00 mlarkin Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -266,7 +266,7 @@ push_pt(void)
  *  vcp: the VM create parameters, holding the exact memory map
  *  (out) vrs: register state to set on init for this kernel
  *  bootdev: the optional non-default boot device
- *  howto: optionel boot flags for the kernel
+ *  howto: optional boot flags for the kernel
  *
  * Return values:
  *  0 if successful
@@ -441,7 +441,7 @@ push_bootargs(bios_memmap_t *memmap, size_t n)
  *  bootargsz: size of boot arguments
  *  end: kernel 'end' symbol value
  *  bootdev: the optional non-default boot device
- *  howto: optionel boot flags for the kernel
+ *  howto: optional boot flags for the kernel
  *
  * Return values:
  *  size of the stack
