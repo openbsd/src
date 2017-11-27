@@ -1,6 +1,7 @@
-/*	$OpenBSD: drm_linux.h,v 1.63 2017/09/05 03:06:26 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.64 2017/11/27 16:20:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
+ * Copyright (c) 2017 Martin Pieuchot
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -552,93 +553,84 @@ typedef struct wait_queue_head wait_queue_head_t;
 static inline void
 init_waitqueue_head(wait_queue_head_t *wq)
 {
-	mtx_init(&wq->lock, IPL_NONE);
+	mtx_init(&wq->lock, IPL_TTY);
 	wq->count = 0;
 }
 
-#define wait_event(wq, condition) \
-do {						\
-	struct sleep_state sls;			\
-						\
-	KASSERT(!cold);				\
-	if (condition)				\
-		break;				\
-	atomic_inc_int(&(wq).count);		\
-	sleep_setup(&sls, &wq, 0, "drmwe");	\
-	sleep_finish(&sls, !(condition));	\
-	atomic_dec_int(&(wq).count);		\
-} while (!(condition))
+#define __wait_event_intr_timeout(wq, condition, timo, prio)		\
+({									\
+	long ret = timo;						\
+	mtx_enter(&(wq).lock);						\
+	do {								\
+		int deadline, __error;					\
+									\
+		KASSERT(!cold);						\
+		atomic_inc_int(&(wq).count);				\
+		deadline = ticks + ret;					\
+		__error = msleep(&wq, &(wq).lock, prio, "drmweti", ret); \
+		ret = deadline - ticks;					\
+		atomic_dec_int(&(wq).count);				\
+		if (__error == ERESTART || __error == EINTR) {		\
+			ret = -ERESTARTSYS;				\
+			break;						\
+		}							\
+		if (timo && (ret <= 0 || __error == EWOULDBLOCK)) { 	\
+			ret = ((condition)) ? 1 : 0;			\
+			break;						\
+ 		}							\
+	} while (ret > 0 && !(condition));				\
+	mtx_leave(&(wq).lock);						\
+	ret;								\
+})
 
-#define __wait_event_timeout(wq, condition, ret) \
+/*
+ * Sleep until `condition' gets true.
+ */
+#define wait_event(wq, condition) 		\
 do {						\
-	struct sleep_state sls;			\
-	int deadline, __error;			\
-						\
-	KASSERT(!cold);				\
-	atomic_inc_int(&(wq).count);		\
-	sleep_setup(&sls, &wq, 0, "drmwet");	\
-	sleep_setup_timeout(&sls, ret);		\
-	deadline = ticks + ret;			\
-	sleep_finish(&sls, !(condition));	\
-	ret = deadline - ticks;			\
-	__error = sleep_finish_timeout(&sls);	\
-	atomic_dec_int(&(wq).count);		\
-	if (ret < 0 || __error == EWOULDBLOCK)	\
-		ret = 0;			\
-	if (ret == 0 && (condition)) {		\
-		ret = 1;			\
-		break;				\
-	}					\
-} while (ret > 0 && !(condition))
+	if (!(condition))			\
+		__wait_event_intr_timeout(wq, condition, 0, 0); \
+} while (0)
 
+/*
+ * Sleep until `condition' gets true or `timo' expires.
+ *
+ * Returns 0 if `condition' is still false when `timo' expires or
+ * the remaining (>=1) ticks otherwise.
+ */
 #define wait_event_timeout(wq, condition, timo)	\
 ({						\
 	long __ret = timo;			\
 	if (!(condition))			\
-		__wait_event_timeout(wq, condition, __ret); \
+		__ret = __wait_event_intr_timeout(wq, condition, timo, 0); \
 	__ret;					\
 })
 
-#define __wait_event_interruptible_timeout(wq, condition, ret) \
-do {						\
-	struct sleep_state sls;			\
-	int deadline, __error, __error1;	\
-						\
-	KASSERT(!cold);				\
-	atomic_inc_int(&(wq).count);		\
-	sleep_setup(&sls, &wq, PCATCH, "drmweti"); \
-	sleep_setup_timeout(&sls, ret);		\
-	sleep_setup_signal(&sls, PCATCH);	\
-	deadline = ticks + ret;			\
-	sleep_finish(&sls, !(condition));	\
-	ret = deadline - ticks;			\
-	__error1 = sleep_finish_timeout(&sls);	\
-	__error = sleep_finish_signal(&sls);	\
-	atomic_dec_int(&(wq).count);		\
-	if (ret < 0 || __error1 == EWOULDBLOCK)	\
-		ret = 0;			\
-	if (__error == ERESTART)		\
-		ret = -ERESTARTSYS;		\
-	else if (__error)			\
-		ret = -__error;			\
-	if (ret == 0 && (condition)) {		\
-		ret = 1;			\
-		break;				\
-	}					\
-} while (ret > 0 && !(condition))
-
+/*
+ * Sleep until `condition' gets true, `timo' expires or the process
+ * receives a signal.
+ *
+ * Returns -ERESTARTSYS if interrupted by a signal.
+ * Returns 0 if `condition' is still false when `timo' expires or
+ * the remaining (>=1) ticks otherwise.
+ */
 #define wait_event_interruptible_timeout(wq, condition, timo) \
 ({						\
 	long __ret = timo;			\
 	if (!(condition))			\
-		__wait_event_interruptible_timeout(wq, condition, __ret); \
+		__ret = __wait_event_intr_timeout(wq, condition, timo, PCATCH);\
 	__ret;					\
 })
 
-#define wake_up(x)			wakeup(x)
-#define wake_up_all(x)			wakeup(x)
-#define wake_up_all_locked(x)		wakeup(x)
-#define wake_up_interruptible(x)	wakeup(x)
+#define wake_up(wq)				\
+do {						\
+	mtx_enter(&(wq)->lock);			\
+	wakeup(wq);				\
+	mtx_leave(&(wq)->lock);			\
+} while (0)
+#define wake_up_all(wq)			wake_up(wq)
+#define wake_up_all_locked(wq)		wakeup(wq)
+#define wake_up_interruptible(wq)	wake_up(wq)
 
 #define waitqueue_active(wq)		((wq)->count > 0)
 
@@ -1184,6 +1176,30 @@ kobject_put(struct kobject *obj)
 static inline void
 kobject_del(struct kobject *obj)
 {
+}
+
+#define	DEFINE_WAIT(wait)		wait_queue_head_t *wait = NULL
+
+inline void
+prepare_to_wait(wait_queue_head_t *wq, wait_queue_head_t **wait, int state)
+{
+	if (*wait == NULL) {
+		mtx_enter(&wq->lock);
+		*wait = wq;
+	}
+}
+
+inline void
+finish_wait(wait_queue_head_t *wq, wait_queue_head_t **wait)
+{
+	if (*wait)
+		mtx_leave(&wq->lock);
+}
+
+inline long
+schedule_timeout(long timeout, wait_queue_head_t **wait)
+{
+	return -msleep(*wait, &(*wait)->lock, PZERO, "schto", timeout);
 }
 
 struct idr_entry {
