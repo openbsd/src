@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.467 2017/11/13 11:30:11 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.468 2017/11/27 23:21:50 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1394,6 +1394,13 @@ struct pf_divert {
 	struct pf_addr	addr;
 	u_int16_t	port;
 	u_int16_t	rdomain;
+};
+
+enum pf_divert_types {
+	PF_DIVERT_NONE,
+	PF_DIVERT_TO,
+	PF_DIVERT_REPLY,
+	PF_DIVERT_PACKET
 };
 
 /* Fragment entries reference mbuf clusters, so base the default on that. */

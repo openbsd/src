@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.666 2017/11/25 22:26:25 sashan Exp $	*/
+/*	$OpenBSD: parse.y,v 1.667 2017/11/27 23:21:50 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -211,6 +211,7 @@ struct pool_opts {
 struct divertspec {
 	struct node_host	*addr;
 	u_int16_t		 port;
+	enum pf_divert_types	 type;
 };
 
 struct redirspec {
@@ -262,7 +263,6 @@ struct filter_opts {
 	u_int8_t		 prio;
 	u_int8_t		 set_prio[2];
 	struct divertspec	 divert;
-	struct divertspec	 divert_packet;
 	struct redirspec	 nat;
 	struct redirspec	 rdr;
 	struct redirspec	 rroute;
@@ -1913,7 +1913,6 @@ pfrule		: action dir logquick interface af proto fromto
 			}
 			if (expand_divertspec(&r, &$8.divert))
 				YYERROR;
-			r.divert_packet.port = $8.divert_packet.port;
 
 			expand_rule(&r, 0, $4, &$8.nat, &$8.rdr, &$8.rroute, $6,
 			    $7.src_os,
@@ -2044,6 +2043,11 @@ filter_opt	: USER uids {
 			filter_opts.rtableid = $2;
 		}
 		| DIVERTTO STRING PORT portplain {
+			if (filter_opts.divert.type != PF_DIVERT_NONE) {
+				yyerror("more than one divert option");
+				YYERROR;
+			}
+			filter_opts.divert.type = PF_DIVERT_TO;
 			if ((filter_opts.divert.addr = host($2, pf->opts)) == NULL) {
 				yyerror("could not parse divert address: %s",
 				    $2);
@@ -2058,9 +2062,18 @@ filter_opt	: USER uids {
 			}
 		}
 		| DIVERTREPLY {
-			filter_opts.divert.port = 1;	/* some random value */
+			if (filter_opts.divert.type != PF_DIVERT_NONE) {
+				yyerror("more than one divert option");
+				YYERROR;
+			}
+			filter_opts.divert.type = PF_DIVERT_REPLY;
 		}
 		| DIVERTPACKET PORT number {
+			if (filter_opts.divert.type != PF_DIVERT_NONE) {
+				yyerror("more than one divert option");
+				YYERROR;
+			}
+			filter_opts.divert.type = PF_DIVERT_PACKET;
 			/*
 			 * If IP reassembly was not turned off, also
 			 * forcibly enable TCP reassembly by default.
@@ -2072,8 +2085,7 @@ filter_opt	: USER uids {
 				yyerror("invalid divert port");
 				YYERROR;
 			}
-
-			filter_opts.divert_packet.port = htons($3);
+			filter_opts.divert.port = htons($3);
 		}
 		| SCRUB '(' scrub_opts ')' {
 			filter_opts.nodf = $3.nodf;
@@ -4076,10 +4088,6 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 			yyerror("divert is not supported on match rules");
 			problems++;
 		}
-		if (r->divert_packet.port) {
-			yyerror("divert is not supported on match rules");
-			problems++;
-		}
 		if (r->rt) {
 			yyerror("route-to, reply-to and dup-to "
 			   "are not supported on match rules");
@@ -4415,38 +4423,41 @@ expand_divertspec(struct pf_rule *r, struct divertspec *ds)
 {
 	struct node_host *n;
 
-	if (ds->port == 0)
+	switch (ds->type) {
+	case PF_DIVERT_NONE:
 		return (0);
-
-	r->divert.port = ds->port;
-
-	if (r->direction == PF_OUT) {
-		if (ds->addr) {
-			yyerror("address specified for outgoing divert");
+	case PF_DIVERT_TO:
+		if (r->direction == PF_OUT) {
+			yyerror("divert-to used with outgoing rule");
 			return (1);
 		}
-		bzero(&r->divert.addr, sizeof(r->divert.addr));
+		if (r->af) {
+			for (n = ds->addr; n != NULL; n = n->next)
+				if (n->af == r->af)
+					break;
+			if (n == NULL) {
+				yyerror("divert-to address family mismatch");
+				return (1);
+			}
+			r->divert.addr = n->addr.v.a.addr;
+		} else {
+			r->af = ds->addr->af;
+			r->divert.addr = ds->addr->addr.v.a.addr;
+		}
+		r->divert.port = ds->port;
 		return (0);
-	}
-
-	if (!ds->addr) {
-		yyerror("no address specified for incoming divert");
-		return (1);
-	}
-	if (r->af) {
-		for (n = ds->addr; n != NULL; n = n->next)
-			if (n->af == r->af)
-				break;
-		if (n == NULL) {
-			yyerror("address family mismatch for divert");
+	case PF_DIVERT_REPLY:
+		if (r->direction == PF_IN) {
+			yyerror("divert-reply used with incoming rule");
 			return (1);
 		}
-		r->divert.addr = n->addr.v.a.addr;
-	} else {
-		r->af = ds->addr->af;
-		r->divert.addr = ds->addr->addr.v.a.addr;
+		r->divert.port = 1;  /* some random value */
+		return (0);
+	case PF_DIVERT_PACKET:
+		r->divert_packet.port = ds->port;
+		return (0);
 	}
-	return (0);
+	return (1);
 }
 
 int
