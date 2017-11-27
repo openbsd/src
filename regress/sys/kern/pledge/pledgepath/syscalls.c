@@ -7,6 +7,8 @@
 #include <sys/errno.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/param.h>
+#include <sys/mount.h>
 
 pid_t child;
 char pp_dir1[] = "/tmp/ppdir1.XXXXXX"; /* pledgepathed */
@@ -266,13 +268,33 @@ test_stat(int do_pp)
 }
 
 static int
+test_statfs(int do_pp)
+{
+	if (do_pp) {
+		printf("testing statfs\n");
+		do_pledgepath();
+	}
+	struct statfs sb;
+
+	PP_SHOULD_SUCCEED((pledge("stdio rpath", NULL) == -1), "pledge");
+	PP_SHOULD_SUCCEED((statfs(pp_file1, &sb) == -1), "statfs");
+	PP_SHOULD_FAIL((statfs(pp_file2, &sb) == -1), "statfs");
+	PP_SHOULD_SUCCEED((statfs(pp_dir1, &sb) == -1), "statfs");
+	PP_SHOULD_FAIL((statfs(pp_dir2, &sb) == -1), "statfs");
+
+	return 0;
+}
+
+static int
 test_symlink(int do_pp)
 {
 	char filename[256];
 	char filename2[256];
+	char buf[256];
+	struct stat sb;
 
 	if (do_pp) {
-		printf("testing link\n");
+		printf("testing symlink and lstat and readlink\n");
 		do_pledgepath();
 	}
 
@@ -285,13 +307,19 @@ test_symlink(int do_pp)
 	unlink(filename);
 	unlink(filename2);
 	PP_SHOULD_SUCCEED((symlink(pp_file1, filename) == -1), "symlink");
+	PP_SHOULD_SUCCEED((lstat(filename, &sb) == -1), "lstat");
+	PP_SHOULD_SUCCEED((lstat(pp_file1, &sb) == -1), "lstat");
+	PP_SHOULD_SUCCEED((readlink(filename, buf, sizeof(buf)) == -1), "readlink");
 	unlink(filename);
 	PP_SHOULD_SUCCEED((symlink(pp_file2, filename) == -1), "symlink");
+	PP_SHOULD_SUCCEED((lstat(filename, &sb) == -1), "lstat");
+	PP_SHOULD_SUCCEED((readlink(filename, buf, sizeof(buf)) == -1), "readlink");
+	PP_SHOULD_FAIL((lstat(pp_file2, &sb) == -1), "lstat");
 	PP_SHOULD_FAIL((symlink(pp_file1, filename2) == -1), "symlink");
+	PP_SHOULD_FAIL((readlink(filename2, buf, sizeof(buf)) == -1), "readlink");
 
 	return 0;
 }
-
 
 int
 main (int argc, char *argv[])
@@ -313,6 +341,7 @@ main (int argc, char *argv[])
 	failures += runcompare(test_access);
 	failures += runcompare(test_chflags);
 	failures += runcompare(test_stat);
+	failures += runcompare(test_statfs);
 	failures += runcompare(test_symlink);
 
 	exit(failures);
