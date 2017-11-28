@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.28 2017/09/19 06:22:30 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.29 2017/11/28 23:58:30 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1091,14 +1091,14 @@ run_vm(int *child_disks, int *child_taps, struct vmop_create_params *vmc,
 		if (vrp[i] == NULL) {
 			log_warn("%s: memory allocation error - "
 			    "exiting.", __progname);
-			/* caller will exit, so skip free'ing */
+			/* caller will exit, so skip freeing */
 			return (ENOMEM);
 		}
 		vrp[i]->vrp_exit = malloc(sizeof(union vm_exit));
 		if (vrp[i]->vrp_exit == NULL) {
 			log_warn("%s: memory allocation error - "
 			    "exiting.", __progname);
-			/* caller will exit, so skip free'ing */
+			/* caller will exit, so skip freeing */
 			return (ENOMEM);
 		}
 		vrp[i]->vrp_vm_id = vcp->vcp_id;
@@ -1110,7 +1110,7 @@ run_vm(int *child_disks, int *child_taps, struct vmop_create_params *vmc,
 			return (EIO);
 		}
 
-		/* once more becuase reset_cpu changes regs */
+		/* once more because reset_cpu changes regs */
 		if (current_vm->vm_received) {
 			vregsp.vrwp_vm_id = vcp->vcp_id;
 			vregsp.vrwp_vcpu_id = i;
