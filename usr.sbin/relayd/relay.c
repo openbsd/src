@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.234 2017/11/28 00:17:56 claudio Exp $	*/
+/*	$OpenBSD: relay.c,v 1.235 2017/11/28 01:24:22 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1705,6 +1705,7 @@ relay_close(struct rsession *con, const char *msg)
 	if (con->se_in.tls != NULL)
 		tls_close(con->se_in.tls);
 	tls_free(con->se_in.tls);
+	tls_free(con->se_in.tls_ctx);
 	tls_config_free(con->se_in.tls_cfg);
 	free(con->se_in.tlscert);
 	if (con->se_in.s != -1) {
@@ -1727,6 +1728,7 @@ relay_close(struct rsession *con, const char *msg)
 	if (con->se_out.tls != NULL)
 		tls_close(con->se_out.tls);
 	tls_free(con->se_out.tls);
+	tls_free(con->se_out.tls_ctx);
 	tls_config_free(con->se_out.tls_cfg);
 	free(con->se_out.tlscert);
 	if (con->se_out.s != -1) {
@@ -2177,7 +2179,7 @@ static struct tls *
 relay_tls_inspect_create(struct relay *rlay, struct ctl_relay_event *cre)
 {
 	struct tls_config	*tls_cfg;
-	struct tls		*tls;
+	struct tls		*tls = NULL;
 	const char		*fake_key;
 	int			 fake_keylen;
 
@@ -2220,6 +2222,7 @@ relay_tls_inspect_create(struct relay *rlay, struct ctl_relay_event *cre)
 	}
 
 	cre->tls_cfg = tls_cfg;
+	cre->tls_ctx = tls;
 	return (tls);
  err:
 	tls_config_free(tls_cfg);
@@ -2248,8 +2251,6 @@ relay_tls_transaction(struct rsession *con, struct ctl_relay_event *cre)
 			errstr = "could not accept the TLS connection";
 			goto err;
 		}
-		if (cre->tlscert != NULL)
-			tls_free(tls_server);
 		flag = EV_READ;
 	} else {
 		cre->tls = tls_client();
