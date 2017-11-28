@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.161 2017/08/29 02:51:27 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.162 2017/11/28 06:09:44 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -375,7 +375,8 @@ exit1(struct proc *p, int rv, int flags)
  * modify interrupt state.  We use a simple spin lock for this
  * proclist.  We use the p_hash member to linkup to deadproc.
  */
-struct mutex deadproc_mutex = MUTEX_INITIALIZER(IPL_NONE);
+struct mutex deadproc_mutex =
+    MUTEX_INITIALIZER_FLAGS(IPL_NONE, NULL, MTX_NOWITNESS);
 struct proclist deadproc = LIST_HEAD_INITIALIZER(deadproc);
 
 /*
