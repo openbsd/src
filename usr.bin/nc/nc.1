@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.87 2017/07/15 18:11:47 jmc Exp $
+.\"     $OpenBSD: nc.1,v 1.88 2017/11/28 16:59:10 jsing Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 15 2017 $
+.Dd $Mdocdate: November 28 2017 $
 .Dt NC 1
 .Os
 .Sh NAME
@@ -233,10 +233,6 @@ Change IPv4 TOS value or TLS options.
 For TLS options
 .Ar keyword
 may be one of:
-.Ar tlsall ,
-which allows the use of all supported TLS protocols and ciphers;
-.Ar tlscompat ,
-which allows the use of all supported TLS protocols and "compat" ciphers;
 .Ar noverify ,
 which disables certificate verification;
 .Ar noname ,
@@ -246,6 +242,15 @@ which requires a client certificate on incoming connections; or
 .Ar muststaple ,
 which requires the peer to provide a valid stapled OCSP response
 with the handshake.
+The following TLS options specify a value in the form of a key=value pair:
+.Ar ciphers ,
+which allows the supported TLS ciphers to be specified (see
+.Xr tls_config_set_ciphers 3
+for further details);
+.Ar protocols ,
+which allows the supported TLS protocols to be specified (see
+.Xr tls_config_parse_protocols 3
+for further details).
 It is illegal to specify TLS options if not using TLS.
 .Pp
 For IPv4 TOS value
@@ -497,10 +502,15 @@ the source port, with a timeout of 5 seconds:
 .Pp
 .Dl $ nc -p 31337 -w 5 host.example.com 42
 .Pp
-Open a TCP connection to port 443 of www.google.ca, and negotiate TLS.
-Check for a different name in the certificate for validation.
+Open a TCP connection to port 443 of www.example.com, and negotiate TLS with
+any supported TLS protocol version and "compat" ciphers:
 .Pp
-.Dl $  nc -v -c -e adsf.au.doubleclick.net www.google.ca 443
+.Dl $ nc -cv -T protocols=all -T ciphers=compat www.example.com 443
+.Pp
+Open a TCP connection to port 443 of www.google.ca, and negotiate TLS.
+Check for a different name in the certificate for validation:
+.Pp
+.Dl $ nc -cv -e adsf.au.doubleclick.net www.google.ca 443
 .Pp
 Open a UDP connection to port 53 of host.example.com:
 .Pp

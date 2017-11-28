@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.188 2017/10/24 17:49:35 bluhm Exp $ */
+/* $OpenBSD: netcat.c,v 1.189 2017/11/28 16:59:10 jsing Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -68,12 +68,10 @@
 #define BUFSIZE		16384
 #define DEFAULT_CA_FILE	"/etc/ssl/cert.pem"
 
-#define TLS_ALL	(1 << 1)
-#define TLS_NOVERIFY	(1 << 2)
-#define TLS_NONAME	(1 << 3)
-#define TLS_CCERT	(1 << 4)
-#define TLS_MUSTSTAPLE	(1 << 5)
-#define TLS_COMPAT	(1 << 6)
+#define TLS_NOVERIFY	(1 << 1)
+#define TLS_NONAME	(1 << 2)
+#define TLS_CCERT	(1 << 3)
+#define TLS_MUSTSTAPLE	(1 << 4)
 
 /* Command Line Options */
 int	dflag;					/* detached, no stdin */
@@ -108,6 +106,8 @@ int	tls_cachanged;				/* Using non-default CA file */
 int     TLSopt;					/* TLS options */
 char	*tls_expectname;			/* required name in peer cert */
 char	*tls_expecthash;			/* required hash of peer cert */
+char	*tls_ciphers;				/* TLS ciphers */
+char	*tls_protocols;				/* TLS protocols */
 FILE	*Zflag;					/* file to save peer cert */
 
 int recvcount, recvlimit;
@@ -135,8 +135,8 @@ int	unix_bind(char *, int);
 int	unix_connect(char *);
 int	unix_listen(char *);
 void	set_common_sockopts(int, int);
-int	map_tos(char *, int *);
-int	map_tls(char *, int *);
+int	process_tos_opt(char *, int *);
+int	process_tls_opt(char *, int *);
 void	save_peer_cert(struct tls *_tls_ctx, FILE *_fp);
 void	report_connect(const struct sockaddr *, socklen_t, char *);
 void	report_tls(struct tls *tls_ctx, char * host);
@@ -161,6 +161,7 @@ main(int argc, char *argv[])
 	char unix_dg_tmp_socket_buf[UNIX_DG_TMP_SOCKET_SIZE];
 	struct tls_config *tls_cfg = NULL;
 	struct tls *tls_ctx = NULL;
+	uint32_t protocols;
 
 	ret = 1;
 	socksv = 5;
@@ -324,9 +325,9 @@ main(int argc, char *argv[])
 		case 'T':
 			errstr = NULL;
 			errno = 0;
-			if (map_tos(optarg, &Tflag))
+			if (process_tls_opt(optarg, &TLSopt))
 				break;
-			if (map_tls(optarg, &TLSopt))
+			if (process_tos_opt(optarg, &Tflag))
 				break;
 			if (strlen(optarg) > 1 && optarg[0] == '0' &&
 			    optarg[1] == 'x')
@@ -402,8 +403,6 @@ main(int argc, char *argv[])
 		errx(1, "cannot use -c and -F");
 	if (TLSopt && !usetls)
 		errx(1, "you must specify -c to use TLS options");
-	if ((TLSopt & (TLS_ALL|TLS_COMPAT)) == (TLS_ALL|TLS_COMPAT))
-		errx(1, "cannot use -T tlsall and -T tlscompat");
 	if (Cflag && !usetls)
 		errx(1, "you must specify -c to use -C");
 	if (Kflag && !usetls)
@@ -497,14 +496,12 @@ main(int argc, char *argv[])
 			errx(1, "%s", tls_config_error(tls_cfg));
 		if (oflag && tls_config_set_ocsp_staple_file(tls_cfg, oflag) == -1)
 			errx(1, "%s", tls_config_error(tls_cfg));
-		if (TLSopt & (TLS_ALL|TLS_COMPAT)) {
-			if (tls_config_set_protocols(tls_cfg,
-			    TLS_PROTOCOLS_ALL) != 0)
-				errx(1, "%s", tls_config_error(tls_cfg));
-			if (tls_config_set_ciphers(tls_cfg,
-			    (TLSopt & TLS_ALL) ? "all" : "compat") != 0)
-				errx(1, "%s", tls_config_error(tls_cfg));
-		}
+		if (tls_config_parse_protocols(&protocols, tls_protocols) == -1)
+			errx(1, "invalid TLS protocols `%s'", tls_protocols);
+		if (tls_config_set_protocols(tls_cfg, protocols) == -1)
+			errx(1, "%s", tls_config_error(tls_cfg));
+		if (tls_config_set_ciphers(tls_cfg, tls_ciphers) == -1)
+			errx(1, "%s", tls_config_error(tls_cfg));
 		if (!lflag && (TLSopt & TLS_CCERT))
 			errx(1, "clientcert is only valid with -l");
 		if (TLSopt & TLS_NONAME)
@@ -1509,7 +1506,7 @@ set_common_sockopts(int s, int af)
 }
 
 int
-map_tos(char *s, int *val)
+process_tos_opt(char *s, int *val)
 {
 	/* DiffServ Codepoints and other TOS mappings */
 	const struct toskeywords {
@@ -1557,24 +1554,41 @@ map_tos(char *s, int *val)
 }
 
 int
-map_tls(char *s, int *val)
+process_tls_opt(char *s, int *flags)
 {
+	size_t len;
+	char *v;
+
 	const struct tlskeywords {
 		const char	*keyword;
-		int		 val;
+		int		 flag;
+		char		**value;
 	} *t, tlskeywords[] = {
-		{ "tlsall",		TLS_ALL },
-		{ "noverify",		TLS_NOVERIFY },
-		{ "noname",		TLS_NONAME },
-		{ "clientcert",		TLS_CCERT},
-		{ "muststaple",		TLS_MUSTSTAPLE},
-		{ "tlscompat",		TLS_COMPAT },
-		{ NULL,			-1 },
+		{ "ciphers",		-1,			&tls_ciphers },
+		{ "clientcert",		TLS_CCERT,		NULL },
+		{ "muststaple",		TLS_MUSTSTAPLE,		NULL },
+		{ "noverify",		TLS_NOVERIFY,		NULL },
+		{ "noname",		TLS_NONAME,		NULL },
+		{ "protocols",		-1,			&tls_protocols },
+		{ NULL,			-1,			NULL },
 	};
 
+	len = strlen(s);
+	if ((v = strchr(s, '=')) != NULL) {
+		len = v - s;
+		v++;
+	}
+
 	for (t = tlskeywords; t->keyword != NULL; t++) {
-		if (strcmp(s, t->keyword) == 0) {
-			*val |= t->val;
+		if (strlen(t->keyword) == len &&
+		    strncmp(s, t->keyword, len) == 0) {
+			if (t->value != NULL) {
+				if (v == NULL)
+					errx(1, "invalid tls value `%s'", s);
+				*t->value = v;
+			} else {
+				*flags |= t->flag;
+			}
 			return 1;
 		}
 	}
