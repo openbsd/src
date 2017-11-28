@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.246 2017/11/28 01:24:22 claudio Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.247 2017/11/28 01:51:47 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -192,7 +192,8 @@ enum relay_state {
 	STATE_INIT,
 	STATE_PENDING,
 	STATE_PRECONNECT,
-	STATE_CONNECTED
+	STATE_CONNECTED,
+	STATE_DONE
 };
 
 struct ctl_relay_event {
@@ -1173,6 +1174,7 @@ int	 relay_session_cmp(struct rsession *, struct rsession *);
 char	*relay_load_fd(int, off_t *);
 int	 relay_load_certfiles(struct relay *);
 void	 relay_close(struct rsession *, const char *);
+int	 relay_reset_event(struct ctl_relay_event *);
 void	 relay_natlook(int, short, void *);
 void	 relay_session(struct rsession *);
 int	 relay_from_table(struct rsession *);

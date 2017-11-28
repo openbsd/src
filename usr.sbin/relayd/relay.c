@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.235 2017/11/28 01:24:22 claudio Exp $	*/
+/*	$OpenBSD: relay.c,v 1.236 2017/11/28 01:51:47 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1698,18 +1698,8 @@ relay_close(struct rsession *con, const char *msg)
 		(*proto->close)(con);
 
 	free(con->se_priv);
-	if (con->se_in.bev != NULL)
-		bufferevent_free(con->se_in.bev);
-	if (con->se_in.output != NULL)
-		evbuffer_free(con->se_in.output);
-	if (con->se_in.tls != NULL)
-		tls_close(con->se_in.tls);
-	tls_free(con->se_in.tls);
-	tls_free(con->se_in.tls_ctx);
-	tls_config_free(con->se_in.tls_cfg);
-	free(con->se_in.tlscert);
-	if (con->se_in.s != -1) {
-		close(con->se_in.s);
+
+	if (relay_reset_event(&con->se_in)) {
 		if (con->se_out.s == -1) {
 			/*
 			 * the output was never connected,
@@ -1720,27 +1710,18 @@ relay_close(struct rsession *con, const char *msg)
 			    __func__, relay_inflight);
 		}
 	}
+	if (con->se_in.output != NULL)
+		evbuffer_free(con->se_in.output);
 
-	if (con->se_out.bev != NULL)
-		bufferevent_free(con->se_out.bev);
-	if (con->se_out.output != NULL)
-		evbuffer_free(con->se_out.output);
-	if (con->se_out.tls != NULL)
-		tls_close(con->se_out.tls);
-	tls_free(con->se_out.tls);
-	tls_free(con->se_out.tls_ctx);
-	tls_config_free(con->se_out.tls_cfg);
-	free(con->se_out.tlscert);
-	if (con->se_out.s != -1) {
-		close(con->se_out.s);
-
+	if (relay_reset_event(&con->se_out)) {
 		/* Some file descriptors are available again. */
 		if (evtimer_pending(&rlay->rl_evt, NULL)) {
 			evtimer_del(&rlay->rl_evt);
 			event_add(&rlay->rl_ev, NULL);
 		}
 	}
-	con->se_out.state = STATE_INIT;
+	if (con->se_out.output != NULL)
+		evbuffer_free(con->se_out.output);
 
 	if (con->se_log != NULL)
 		evbuffer_free(con->se_log);
@@ -1755,6 +1736,35 @@ relay_close(struct rsession *con, const char *msg)
 
 	free(con);
 	relay_sessions--;
+}
+
+int
+relay_reset_event(struct ctl_relay_event *cre)
+{
+	int		 rv = 0;
+
+	DPRINTF("%s: state %d dir %d", __func__, cre->state, cre->dir);
+
+	if (cre->bev != NULL)
+		bufferevent_free(cre->bev);
+	if (cre->tls != NULL)
+		tls_close(cre->tls);
+	tls_free(cre->tls);
+	tls_free(cre->tls_ctx);
+	tls_config_free(cre->tls_cfg);
+	free(cre->tlscert);
+	if (cre->s != -1) {
+		close(cre->s);
+		rv = 1;
+	}
+	cre->state = STATE_DONE;
+	cre->bev = NULL;
+	cre->tls = NULL;
+	cre->tls_cfg = NULL;
+	cre->tlscert = NULL;
+	cre->s = -1;
+
+	return (rv);
 }
 
 int
