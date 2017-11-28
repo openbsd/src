@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.667 2017/11/27 23:21:50 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.668 2017/11/28 16:05:46 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4084,7 +4084,7 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 	/* Basic rule sanity check. */
 	switch (r->action) {
 	case PF_MATCH:
-		if (r->divert.port) {
+		if (r->divert.type != PF_DIVERT_NONE) {
 			yyerror("divert is not supported on match rules");
 			problems++;
 		}
@@ -4445,16 +4445,18 @@ expand_divertspec(struct pf_rule *r, struct divertspec *ds)
 			r->divert.addr = ds->addr->addr.v.a.addr;
 		}
 		r->divert.port = ds->port;
+		r->divert.type = ds->type;
 		return (0);
 	case PF_DIVERT_REPLY:
 		if (r->direction == PF_IN) {
 			yyerror("divert-reply used with incoming rule");
 			return (1);
 		}
-		r->divert.port = 1;  /* some random value */
+		r->divert.type = ds->type;
 		return (0);
 	case PF_DIVERT_PACKET:
-		r->divert_packet.port = ds->port;
+		r->divert.port = ds->port;
+		r->divert.type = ds->type;
 		return (0);
 	}
 	return (1);

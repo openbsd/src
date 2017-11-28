@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1047 2017/11/22 12:28:49 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1048 2017/11/28 16:05:46 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1380,7 +1380,8 @@ pf_remove_divert_state(struct pf_state_key *sk)
 
 	TAILQ_FOREACH(si, &sk->states, entry) {
 		if (sk == si->s->key[PF_SK_STACK] && si->s->rule.ptr &&
-		    si->s->rule.ptr->divert.port) {
+		    (si->s->rule.ptr->divert.type == PF_DIVERT_TO ||
+		    si->s->rule.ptr->divert.type == PF_DIVERT_REPLY)) {
 			pf_remove_state(si->s);
 			break;
 		}
@@ -6981,18 +6982,21 @@ done:
 	if (pd.destchg && pd.dir == PF_OUT)
 		pd.m->m_pkthdr.pf.flags |= PF_TAG_REROUTE;
 
-	if (pd.dir == PF_IN && action == PF_PASS && r->divert.port) {
+	if (pd.dir == PF_IN && action == PF_PASS &&
+	    (r->divert.type == PF_DIVERT_TO ||
+	    r->divert.type == PF_DIVERT_REPLY)) {
 		struct pf_divert *divert;
 
 		if ((divert = pf_get_divert(pd.m))) {
 			pd.m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED;
+			divert->addr = r->divert.addr;
 			divert->port = r->divert.port;
 			divert->rdomain = pd.rdomain;
-			divert->addr = r->divert.addr;
+			divert->type = r->divert.type;
 		}
 	}
 
-	if (action == PF_PASS && r->divert_packet.port)
+	if (action == PF_PASS && r->divert.type == PF_DIVERT_PACKET)
 		action = PF_DIVERT;
 
 #if NPFLOG > 0
@@ -7023,13 +7027,12 @@ done:
 	case PF_DIVERT:
 		switch (pd.af) {
 		case AF_INET:
-			if (!divert_packet(pd.m, pd.dir, r->divert_packet.port))
+			if (!divert_packet(pd.m, pd.dir, r->divert.port))
 				pd.m = NULL;
 			break;
 #ifdef INET6
 		case AF_INET6:
-			if (!divert6_packet(pd.m, pd.dir,
-			    r->divert_packet.port))
+			if (!divert6_packet(pd.m, pd.dir, r->divert.port))
 				pd.m = NULL;
 			break;
 #endif /* INET6 */

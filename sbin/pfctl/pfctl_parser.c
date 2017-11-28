@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.317 2017/11/13 11:30:11 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.318 2017/11/28 16:05:47 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1077,24 +1077,31 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 	}
 	if (r->rtableid != -1)
 		printf(" rtable %u", r->rtableid);
-	if (r->divert.port) {
-		if (PF_AZERO(&r->divert.addr, AF_INET6)) {
-			printf(" divert-reply");
-		} else {
-			/* XXX cut&paste from print_addr */
-			char buf[48];
+	switch (r->divert.type) {
+	case PF_DIVERT_NONE:
+		break;
+	case PF_DIVERT_TO: {
+		/* XXX cut&paste from print_addr */
+		char buf[48];
 
-			printf(" divert-to ");
-			if (inet_ntop(r->af, &r->divert.addr, buf,
-			    sizeof(buf)) == NULL)
-				printf("?");
-			else
-				printf("%s", buf);
-			printf(" port %u", ntohs(r->divert.port));
-		}
+		printf(" divert-to ");
+		if (inet_ntop(r->af, &r->divert.addr, buf, sizeof(buf)) == NULL)
+			printf("?");
+		else
+			printf("%s", buf);
+		printf(" port %u", ntohs(r->divert.port));
+		break;
 	}
-	if (r->divert_packet.port)
-		printf(" divert-packet port %u", ntohs(r->divert_packet.port));
+	case PF_DIVERT_REPLY:
+		printf(" divert-reply");
+		break;
+	case PF_DIVERT_PACKET:
+		printf(" divert-packet port %u", ntohs(r->divert.port));
+		break;
+	default:
+		printf(" divert ???");
+		break;
+	}
 
 	if (!anchor_call[0] && r->nat.addr.type != PF_ADDR_NONE &&
 	    r->rule_flag & PFRULE_AFTO) {
