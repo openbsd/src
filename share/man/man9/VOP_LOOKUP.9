@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.39 2017/11/28 11:17:01 helg Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.40 2017/11/28 12:06:10 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -412,9 +412,7 @@ may contain the following flags:
 .It Dv F_WAIT
 If required, block waiting to obtain an exclusive lock.
 .It Dv F_POSIX
-Follow
-.Tn POSIX
-locking semantics; see
+Follow POSIX locking semantics; see
 .Xr fcntl 2 .
 .It Dv F_FLOCK
 Follow
@@ -711,9 +709,7 @@ Upon success, zero is returned; otherwise, an appropriate error code is
 returned.
 .Pp
 .It Fn VOP_PATHCONF vp name retval
-Obtain the value of the applicable
-.Tn POSIX
-configurable pathname variable (see
+Obtain the value of the applicable POSIX configurable pathname variable (see
 .Xr pathconf 2 )
 specified by
 .Fa name
@@ -738,11 +734,9 @@ for the calling process
 The
 .Fn selrecord
 routine may be used to detect selection collisions for multiple
-processes sleeping on the same file, waiting for
-.Tn I/O
+processes sleeping on the same file, waiting for I/O
 to become possible, although all file systems currently assume that
-.Tn I/O
-is always possible.
+I/O is always possible.
 The return value specifies which operations from
 .Fa events
 were found to be ready, which may be performed without the need for
@@ -855,7 +849,7 @@ on return.
 If not
 .Dv NULL ,
 .Fa tvp
-will be unlocked on return (see 
+will be unlocked on return (see
 .Xr vput 9 ) .
 Upon success, zero is returned; otherwise, an appropriate error code is
 returned.
