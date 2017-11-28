@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ocspcheck.8,v 1.7 2017/10/17 22:47:58 schwarze Exp $
+.\"	$OpenBSD: ocspcheck.8,v 1.8 2017/11/28 23:32:00 beck Exp $
 .\"
 .\" Copyright (c) 2017 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2017 $
+.Dd $Mdocdate: November 28 2017 $
 .Dt OCSPCHECK 8
 .Os
 .Sh NAME
@@ -45,10 +45,18 @@ By default no certificates are used beyond those in the
 certificate chain provided by the
 .Ar file
 argument.
+.It Fl i Ar staplefile
+Specify an input filename from which a DER encoded OCSP response
+will be read instead of fetching it from the OCSP server.
+A filename
+of
+.Sq -
+will read the response from standard input.
 .It Fl N
 Do not use a nonce value in the OCSP request, or validate that the
 nonce was returned in the OCSP response.
-By default a nonce is always used and validated.
+By default a nonce is always used and validated when retrieving
+a response from an OCSP server. 
 The use of this flag is a security risk as it will allow OCSP
 responses to be replayed.
 It should not be used unless the OCSP server does not support the
