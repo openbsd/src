@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.17 2017/09/25 18:02:27 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.18 2017/11/28 16:46:14 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1296,6 +1296,7 @@ tlsext_clienthello_build(SSL *s, CBB *cbb)
 {
 	CBB extensions, extension_data;
 	struct tls_extension *tlsext;
+	int extensions_present = 0;
 	size_t i;
 
 	if (!CBB_add_u16_length_prefixed(cbb, &extensions))
@@ -1313,7 +1314,12 @@ tlsext_clienthello_build(SSL *s, CBB *cbb)
 			return 0;
 		if (!tls_extensions[i].clienthello_build(s, &extension_data))
 			return 0;
+
+		extensions_present = 1;
 	}
+
+	if (!extensions_present)
+		CBB_discard_child(cbb);
 
 	if (!CBB_flush(cbb))
 		return 0;
@@ -1351,6 +1357,7 @@ tlsext_serverhello_build(SSL *s, CBB *cbb)
 {
 	CBB extensions, extension_data;
 	struct tls_extension *tlsext;
+	int extensions_present = 0;
 	size_t i;
 
 	if (!CBB_add_u16_length_prefixed(cbb, &extensions))
@@ -1368,7 +1375,12 @@ tlsext_serverhello_build(SSL *s, CBB *cbb)
 			return 0;
 		if (!tlsext->serverhello_build(s, &extension_data))
 			return 0;
+
+		extensions_present = 1;
 	}
+
+	if (!extensions_present)
+		CBB_discard_child(cbb);
 
 	if (!CBB_flush(cbb))
 		return 0;
