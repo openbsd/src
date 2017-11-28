@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.34 2017/10/08 19:21:10 guenther Exp $
+.\"	$OpenBSD: ktrace.2,v 1.35 2017/11/28 06:03:41 guenther Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,12 +30,11 @@
 .\"
 .\"     @(#)ktrace.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: October 8 2017 $
+.Dd $Mdocdate: November 28 2017 $
 .Dt KTRACE 2
 .Os
 .Sh NAME
-.Nm ktrace ,
-.Nm fktrace
+.Nm ktrace
 .Nd process tracing
 .Sh SYNOPSIS
 .In sys/types.h
@@ -44,31 +43,20 @@
 .In sys/ktrace.h
 .Ft int
 .Fn ktrace "const char *tracefile" "int ops" "int trpoints" "pid_t pid"
-.Ft int
-.Fn fktrace "int tracefd" "int ops" "int trpoints" "pid_t pid"
 .Sh DESCRIPTION
 The
 .Fn ktrace
-and
-.Fn fktrace
-functions enable or disable tracing of one or more processes.
+function enables or disables tracing of one or more processes.
 Users may only trace their own processes.
 Only the superuser can trace setuid or setgid programs.
-These functions are only available on kernels compiled with the
+This function is only available on kernels compiled with the
 .Cm KTRACE
 option.
 .Pp
-For
-.Fn ktrace ,
 .Fa tracefile
 gives the pathname of the file to be used for tracing.
 The file must exist, be writable by the calling process, and
 not be a symbolic link.
-For
-.Fn fktrace ,
-an existing file descriptor
-.Fa tracefd
-gives the open file descriptor to which the trace records are written.
 If tracing points are being disabled (see
 .Dv KTROP_CLEAR
 below),
@@ -188,8 +176,6 @@ include file.
 .Rv -std
 .Sh ERRORS
 .Fn ktrace
-and
-.Fn fktrace
 will fail if:
 .Bl -tag -width EINVALAA
 .It Bq Er EINVAL
@@ -240,17 +226,6 @@ Too many symbolic links were encountered in translating the pathname.
 .Fa tracefile
 points outside the process's allocated address space.
 .El
-.Pp
-.Fn fktrace
-will fail if:
-.Bl -tag -width EINVALAA
-.It Bq Er EBADF
-.Fa tracefd
-does not refer to a valid descriptor open for writing.
-.It Bq Er EINVAL
-.Fa tracefd
-refers to a socket, pipe, or kqueue, not a file.
-.El
 .Sh SEE ALSO
 .Xr kdump 1 ,
 .Xr ktrace 1 ,
@@ -260,11 +235,3 @@ A
 .Fn ktrace
 function call first appeared in
 .Bx 4.4 .
-The
-.Fn fktrace
-function first appeared in
-.Nx 1.4 .
-It was added to
-.Ox
-in
-.Ox 6.2 .
