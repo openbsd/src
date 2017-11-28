@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.16 2017/08/29 17:24:59 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.17 2017/11/28 16:40:21 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1353,7 +1353,7 @@ test_tlsext_ri_clienthello(void)
 		FAIL("renegotiate seen not set\n");
 		goto err;
 	}
-        if (S3I(ssl)->send_connection_binding != 1) {
+	if (S3I(ssl)->send_connection_binding != 1) {
 		FAIL("send connection binding not set\n");
 		goto err;
 	}
@@ -1412,7 +1412,7 @@ test_tlsext_ri_serverhello(void)
 		goto err;
 	}
 
-        S3I(ssl)->send_connection_binding = 1;
+	S3I(ssl)->send_connection_binding = 1;
 
 	if (!tlsext_ri_serverhello_needs(ssl)) {
 		FAIL("serverhello should need RI\n");
@@ -1466,7 +1466,7 @@ test_tlsext_ri_serverhello(void)
 		FAIL("renegotiate seen not set\n");
 		goto err;
 	}
-        if (S3I(ssl)->send_connection_binding != 1) {
+	if (S3I(ssl)->send_connection_binding != 1) {
 		FAIL("send connection binding not set\n");
 		goto err;
 	}
@@ -2731,12 +2731,206 @@ test_tlsext_srtp_serverhello(void)
 }
 #endif /* OPENSSL_NO_SRTP */
 
+unsigned char tlsext_clienthello_default[] = {
+	0x00, 0x36, 0x00, 0x0b, 0x00, 0x02, 0x01, 0x00,
+	0x00, 0x0a, 0x00, 0x08, 0x00, 0x06, 0x00, 0x1d,
+	0x00, 0x17, 0x00, 0x18, 0x00, 0x23, 0x00, 0x00,
+	0x00, 0x0d, 0x00, 0x1c, 0x00, 0x1a, 0x06, 0x01,
+	0x06, 0x03, 0xef, 0xef, 0x05, 0x01, 0x05, 0x03,
+	0x04, 0x01, 0x04, 0x03, 0xee, 0xee, 0xed, 0xed,
+	0x03, 0x01, 0x03, 0x03, 0x02, 0x01, 0x02, 0x03,
+};
+
+unsigned char tlsext_clienthello_disabled[] = {};
+
+static int
+test_tlsext_clienthello_build(void)
+{
+	unsigned char *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	size_t dlen;
+	int failure;
+	CBB cbb;
+
+	failure = 1;
+
+	if (!CBB_init(&cbb, 0))
+		errx(1, "failed to create CBB");
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	if (!tlsext_clienthello_build(ssl, &cbb)) {
+		FAIL("failed to build clienthello extensions\n");
+		goto err;
+	}
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_clienthello_default)) {
+		FAIL("got clienthello extensions with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_clienthello_default));
+		compare_data(data, dlen, tlsext_clienthello_default,
+		    sizeof(tlsext_clienthello_default));
+		goto err;
+	}
+	if (memcmp(data, tlsext_clienthello_default, dlen) != 0) {
+		FAIL("clienthello extensions differs:\n");
+		compare_data(data, dlen, tlsext_clienthello_default,
+		    sizeof(tlsext_clienthello_default));
+		goto err;
+	}
+
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+
+	/* Switch to TLSv1.1, disable EC ciphers and session tickets. */
+	ssl->client_version = TLS1_1_VERSION;
+	if (!SSL_set_cipher_list(ssl, "TLSv1.2:!ECDHE:!ECDSA")) {
+		FAIL("failed to set cipher list\n");
+		goto err;
+	}
+	if ((SSL_set_options(ssl, SSL_OP_NO_TICKET) & SSL_OP_NO_TICKET) == 0) {
+		FAIL("failed to disable session tickets");
+		return 0;
+	}
+
+	if (!tlsext_clienthello_build(ssl, &cbb)) {
+		FAIL("failed to build clienthello extensions\n");
+		goto err;
+	}
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_clienthello_disabled)) {
+		FAIL("got clienthello extensions with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_clienthello_disabled));
+		compare_data(data, dlen, tlsext_clienthello_disabled,
+		    sizeof(tlsext_clienthello_disabled));
+		goto err;
+	}
+	if (memcmp(data, tlsext_clienthello_disabled, dlen) != 0) {
+		FAIL("clienthello extensions differs:\n");
+		compare_data(data, dlen, tlsext_clienthello_disabled,
+		    sizeof(tlsext_clienthello_disabled));
+		goto err;
+	}
+
+	failure = 0;
+
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
+unsigned char tlsext_serverhello_default[] = {};
+
+unsigned char tlsext_serverhello_enabled[] = {
+	0x00, 0x0d, 0xff, 0x01, 0x00, 0x01, 0x00, 0x00,
+	0x05, 0x00, 0x00, 0x00, 0x23, 0x00, 0x00,
+};
+
+static int
+test_tlsext_serverhello_build(void)
+{
+	unsigned char *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	size_t dlen;
+	int failure;
+	CBB cbb;
+
+	failure = 1;
+
+	if (!CBB_init(&cbb, 0))
+		errx(1, "failed to create CBB");
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+	if ((ssl->session = SSL_SESSION_new()) == NULL)
+		errx(1, "failed to create session");
+
+	if (!tlsext_serverhello_build(ssl, &cbb)) {
+		FAIL("failed to build serverhello extensions\n");
+		goto err;
+	}
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_serverhello_default)) {
+		FAIL("got serverhello extensions with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_serverhello_default));
+		compare_data(data, dlen, tlsext_serverhello_default,
+		    sizeof(tlsext_serverhello_default));
+		goto err;
+	}
+	if (memcmp(data, tlsext_serverhello_default, dlen) != 0) {
+		FAIL("serverhello extensions differs:\n");
+		compare_data(data, dlen, tlsext_serverhello_default,
+		    sizeof(tlsext_serverhello_default));
+		goto err;
+	}
+
+	CBB_cleanup(&cbb);
+	CBB_init(&cbb, 0);
+
+	/* Turn a few things on so we get extensions... */
+	S3I(ssl)->send_connection_binding = 1;
+	ssl->internal->tlsext_status_expected = 1;
+	ssl->internal->tlsext_ticket_expected = 1;
+
+	if (!tlsext_serverhello_build(ssl, &cbb)) {
+		FAIL("failed to build serverhello extensions\n");
+		goto err;
+	}
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_serverhello_enabled)) {
+		FAIL("got serverhello extensions with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_serverhello_enabled));
+		compare_data(data, dlen, tlsext_serverhello_enabled,
+		    sizeof(tlsext_serverhello_enabled));
+		goto err;
+	}
+	if (memcmp(data, tlsext_serverhello_enabled, dlen) != 0) {
+		FAIL("serverhello extensions differs:\n");
+		compare_data(data, dlen, tlsext_serverhello_enabled,
+		    sizeof(tlsext_serverhello_enabled));
+		goto err;
+	}
+
+	failure = 0;
+
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
 int
 main(int argc, char **argv)
 {
 	int failed = 0;
 
 	SSL_library_init();
+	SSL_load_error_strings();
 
 	failed |= test_tlsext_alpn_clienthello();
 	failed |= test_tlsext_alpn_serverhello();
@@ -2768,6 +2962,9 @@ main(int argc, char **argv)
 #else
 	fprintf(stderr, "Skipping SRTP tests due to OPENSSL_NO_SRTP\n");
 #endif
+
+	failed |= test_tlsext_clienthello_build();
+	failed |= test_tlsext_serverhello_build();
 
 	return (failed);
 }
