@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.85 2017/11/28 01:21:30 beck Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.86 2017/11/28 09:40:46 jmc Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -560,7 +560,7 @@ in use.
 The default is to not use OCSP stapling.
 If the OSCP response in
 .Ar file
-is unparseable or empty  OCSP stapling will not be used.
+is unparseable or empty, OCSP stapling will not be used.
 .It Ic protocols Ar string
 Specify the TLS protocols to enable for this server.
 If not specified, the value
