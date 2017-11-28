@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.84 2017/08/11 20:30:45 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.85 2017/11/28 01:21:30 beck Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 11 2017 $
+.Dd $Mdocdate: November 28 2017 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -558,6 +558,9 @@ OCSP server for the
 .Ar certificate
 in use.
 The default is to not use OCSP stapling.
+If the OSCP response in
+.Ar file
+is unparseable or empty  OCSP stapling will not be used.
 .It Ic protocols Ar string
 Specify the TLS protocols to enable for this server.
 If not specified, the value
