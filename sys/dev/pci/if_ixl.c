@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.1 2017/11/28 23:39:39 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.2 2017/11/28 23:47:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1085,9 +1085,6 @@ static int	ixl_phy_mask_ints(struct ixl_softc *);
 static int	ixl_get_phy_abilities(struct ixl_softc *, uint64_t *);
 static int	ixl_restart_an(struct ixl_softc *);
 static int	ixl_hmc(struct ixl_softc *);
-#if 0
-static int	ixl_add_veb(struct ixl_softc *);
-#endif
 static int	ixl_get_vsi(struct ixl_softc *);
 static int	ixl_set_vsi(struct ixl_softc *);
 static int	ixl_set_default_vsi(struct ixl_softc *);
@@ -1474,13 +1471,6 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 		/* error printed by ixl_get_link_status */
 		goto shutdown;
 	}
-
-#if 0
-	if (ixl_add_veb(sc) != 0) {
-		/* error printed by ixl_add_veb */
-		goto shutdown;
-	}
-#endif
 
 	if (ixl_dmamem_alloc(sc, &sc->sc_vsi,
 	    sizeof(struct ixl_aq_vsi_data), 8) != 0) {
@@ -3112,48 +3102,6 @@ ixl_get_link_status(struct ixl_softc *sc)
 
 	return (0);
 }
-
-#if 0
-static int
-ixl_add_veb(struct ixl_softc *sc)
-{
-	struct ixl_aq_desc iaq;
-	struct ixl_aq_veb_param *param;
-	struct ixl_aq_veb_reply *reply;
-
-	memset(&iaq, 0, sizeof(iaq));
-	iaq.iaq_opcode = htole16(IXL_AQ_OP_ADD_VEB);
-
-	param = (struct ixl_aq_veb_param *)iaq.iaq_param;
-	param->uplink_seid = sc->sc_uplink_seid;
-	param->downlink_seid = sc->sc_downlink_seid;
-	param->veb_flags = htole16(IXL_AQ_ADD_VEB_PORT_TYPE_DEFAULT |
-	    IXL_AQ_ADD_VEB_DISABLE_STATS);
-	if (sc->sc_uplink_seid != htole16(0))
-		param->veb_flags |= htole16(IXL_AQ_ADD_VEB_FLOATING);
-	param->enable_tcs = 1;
-
-	if (ixl_atq_poll(sc, &iaq, 250) != 0) {
-		printf("%s: ADD VEB timeout\n", DEVNAME(sc));
-		return (-1);
-	}
-	if (iaq.iaq_retval != htole16(IXL_AQ_RC_OK)) {
-		printf("%s: ADD VEB error %u\n", DEVNAME(sc),
-		    lemtoh16(&iaq.iaq_retval));
-		return (-1);
-	}
-
-	reply = (struct ixl_aq_veb_reply *)iaq.iaq_param;
-	sc->sc_veb_seid = reply->veb_seid;
-
-#if 1
-	printf("%s: vebs used %u free %u\n", DEVNAME(sc),
-	    lemtoh16(&reply->vebs_used), lemtoh16(&reply->vebs_free));
-#endif
-
-	return (0);
-}
-#endif
 
 static int
 ixl_get_vsi(struct ixl_softc *sc)
