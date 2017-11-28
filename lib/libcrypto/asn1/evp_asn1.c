@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_asn1.c,v 1.19 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: evp_asn1.c,v 1.20 2017/11/28 16:51:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,7 +60,7 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
-#include <openssl/asn1_mac.h>
+#include <openssl/asn1t.h>
 #include <openssl/err.h>
 
 int
@@ -78,7 +78,6 @@ ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
 	return (1);
 }
 
-/* int max_len:  for returned value    */
 int
 ASN1_TYPE_get_octetstring(ASN1_TYPE *a, unsigned char *data, int max_len)
 {
@@ -100,101 +99,99 @@ ASN1_TYPE_get_octetstring(ASN1_TYPE *a, unsigned char *data, int max_len)
 	return (ret);
 }
 
+typedef struct {
+	ASN1_INTEGER *num;
+	ASN1_OCTET_STRING *value;
+} ASN1_int_octetstring;
+
+static const ASN1_TEMPLATE ASN1_INT_OCTETSTRING_seq_tt[] = {
+	{
+		.offset = offsetof(ASN1_int_octetstring, num),
+		.field_name = "num",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.offset = offsetof(ASN1_int_octetstring, value),
+		.field_name = "value",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM ASN1_INT_OCTETSTRING_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = ASN1_INT_OCTETSTRING_seq_tt,
+	.tcount = sizeof(ASN1_INT_OCTETSTRING_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.size = sizeof(ASN1_int_octetstring),
+	.sname = "ASN1_INT_OCTETSTRING",
+};
+
 int
-ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
+ASN1_TYPE_set_int_octetstring(ASN1_TYPE *at, long num, unsigned char *data,
     int len)
 {
-	int n, size;
-	ASN1_OCTET_STRING os, *osp;
-	ASN1_INTEGER in;
-	unsigned char *p;
-	unsigned char buf[32]; /* when they have 256bit longs,
-				* I'll be in trouble */
-	in.data = buf;
-	in.length = 32;
-	os.data = data;
-	os.type = V_ASN1_OCTET_STRING;
-	os.length = len;
-	ASN1_INTEGER_set(&in, num);
-	n = i2d_ASN1_INTEGER(&in, NULL);
-	n += i2d_ASN1_bytes((ASN1_STRING *)&os, NULL, V_ASN1_OCTET_STRING,
-	    V_ASN1_UNIVERSAL);
+	ASN1_int_octetstring *ios;
+	ASN1_STRING *sp = NULL;
+	int ret = 0;
 
-	size = ASN1_object_size(1, n, V_ASN1_SEQUENCE);
+	if ((ios = (ASN1_int_octetstring *)ASN1_item_new(
+	    &ASN1_INT_OCTETSTRING_it)) == NULL)
+		goto err;
+	if ((ios->num = ASN1_INTEGER_new()) == NULL)
+		goto err;
+	if (!ASN1_INTEGER_set(ios->num, num))
+		goto err;
+	if ((ios->value = ASN1_OCTET_STRING_new()) == NULL)
+		goto err;
+	if (!ASN1_OCTET_STRING_set(ios->value, data, len))
+		goto err;
 
-	if ((osp = ASN1_STRING_new()) == NULL)
-		return (0);
-	/* Grow the 'string' */
-	if (!ASN1_STRING_set(osp, NULL, size)) {
-		ASN1_STRING_free(osp);
-		return (0);
-	}
+	if ((sp = ASN1_item_pack(ios, &ASN1_INT_OCTETSTRING_it, NULL)) == NULL)
+		goto err;
 
-	ASN1_STRING_length_set(osp, size);
-	p = ASN1_STRING_data(osp);
+	ASN1_TYPE_set(at, V_ASN1_SEQUENCE, sp);
+	sp = NULL;
 
-	ASN1_put_object(&p, 1,n, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
-	i2d_ASN1_INTEGER(&in, &p);
-	i2d_ASN1_bytes((ASN1_STRING *)&os, &p, V_ASN1_OCTET_STRING,
-	    V_ASN1_UNIVERSAL);
+	ret = 1;
 
-	ASN1_TYPE_set(a, V_ASN1_SEQUENCE, osp);
-	return (1);
+ err:
+	ASN1_item_free((ASN1_VALUE *)ios, &ASN1_INT_OCTETSTRING_it);
+	ASN1_STRING_free(sp);
+
+	return ret;
 }
 
-/* we return the actual length..., num may be missing, in which
- * case, set it to zero */
-/* int max_len:  for returned value    */
 int
-ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num, unsigned char *data,
+ASN1_TYPE_get_int_octetstring(ASN1_TYPE *at, long *num, unsigned char *data,
     int max_len)
 {
-	int ret = -1, n;
-	ASN1_INTEGER *ai = NULL;
-	ASN1_OCTET_STRING *os = NULL;
-	const unsigned char *p;
-	long length;
-	ASN1_const_CTX c;
+	ASN1_STRING *sp = at->value.sequence;
+	ASN1_int_octetstring *ios = NULL;
+	int ret = -1;
+	int len;
 
-	if ((a->type != V_ASN1_SEQUENCE) || (a->value.sequence == NULL)) {
+	if (at->type != V_ASN1_SEQUENCE || sp == NULL)
 		goto err;
-	}
-	p = ASN1_STRING_data(a->value.sequence);
-	length = ASN1_STRING_length(a->value.sequence);
 
-	c.pp = &p;
-	c.p = p;
-	c.max = p + length;
-	c.error = ASN1_R_DATA_IS_WRONG;
-
-	M_ASN1_D2I_start_sequence();
-	c.q = c.p;
-	if ((ai = d2i_ASN1_INTEGER(NULL, &c.p, c.slen)) == NULL)
-		goto err;
-	c.slen -= (c.p - c.q);
-	c.q = c.p;
-	if ((os = d2i_ASN1_OCTET_STRING(NULL, &c.p, c.slen)) == NULL)
-		goto err;
-	c.slen -= (c.p - c.q);
-	if (!M_ASN1_D2I_end_sequence())
+	if ((ios = ASN1_item_unpack(sp, &ASN1_INT_OCTETSTRING_it)) == NULL)
 		goto err;
 
 	if (num != NULL)
-		*num = ASN1_INTEGER_get(ai);
-
-	ret = ASN1_STRING_length(os);
-	if (max_len > ret)
-		n = ret;
-	else
-		n = max_len;
-
-	if (data != NULL)
-		memcpy(data, ASN1_STRING_data(os), n);
-	if (0) {
-err:
-		ASN1error(ASN1_R_DATA_IS_WRONG);
+		*num = ASN1_INTEGER_get(ios->num);
+	if (data != NULL) {
+		len = ASN1_STRING_length(ios->value);
+		if (len > max_len)
+			len = max_len;
+		memcpy(data, ASN1_STRING_data(ios->value), len);
 	}
-	ASN1_OCTET_STRING_free(os);
-	ASN1_INTEGER_free(ai);
-	return (ret);
+
+	ret = ASN1_STRING_length(ios->value);
+
+ err:
+	ASN1_item_free((ASN1_VALUE *)ios, &ASN1_INT_OCTETSTRING_it);
+
+	if (ret == -1)
+		ASN1error(ASN1_R_DATA_IS_WRONG);
+
+	return ret;
 }
