@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.308 2017/09/29 18:32:09 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.309 2017/11/28 01:54:25 benno Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -77,7 +77,7 @@ struct space_allocation alloc_big[] = {
 	{  MEG(900),         GIG(2),   5, "/usr"	},
 	{  MEG(512),         GIG(1),   3, "/usr/X11R6"	},
 	{ MEG(1200),        GIG(10),  15, "/usr/local"	},
-	{    GIG(1),         GIG(2),   2, "/usr/src"	},
+	{ MEG(1300),         GIG(2),   2, "/usr/src"	},
 	{    GIG(3),         GIG(6),   4, "/usr/obj"	},
 	{    GIG(1),       GIG(300),  35, "/home"	}
 	/* Anything beyond this leave for the user to decide */
