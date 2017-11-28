@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.98 2017/08/29 15:25:51 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.99 2017/11/28 17:19:47 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -219,6 +219,23 @@ dlctl(void *handle, int command, void *data)
 		/* made superfluous by kbind */
 		retval = 0;
 		break;
+	case DL_REFERENCE:
+	{
+		elf_object_t *obj;
+
+		obj = obj_from_addr(data);
+		if (obj == NULL) {
+			_dl_errno = DL_CANT_FIND_OBJ;
+			retval = -1;
+			break;
+		}
+		if ((obj->status & STAT_NODELETE) == 0) {
+			obj->opencount++;
+			obj->status |= STAT_NODELETE;
+		}
+		retval = 0;
+		break;
+	}
 	case 0x20:
 		_dl_show_objects();
 		retval = 0;
