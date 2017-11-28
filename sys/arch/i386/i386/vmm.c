@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.32 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: vmm.c,v 1.33 2017/11/28 14:51:34 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3718,8 +3718,11 @@ vmx_handle_hlt(struct vcpu *vcpu)
 		return (EINVAL);
 	}
 
-	/* All HLT insns are 1 byte */
-	KASSERT(insn_length == 1);
+	if (insn_length != 1) {
+		DPRINTF("%s: HLT with instruction length %d not supported\n",
+		    __func__, insn_length);
+		return (EINVAL);
+	}
 
 	vcpu->vc_gueststate.vg_eip += insn_length;
 	return (EAGAIN);
@@ -4156,8 +4159,11 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 		return (EINVAL);
 	}
 
-	/* All RDMSR instructions are 0x0F 0x32 */
-	KASSERT(insn_length == 2);
+	if (insn_length != 2) {
+		DPRINTF("%s: RDMSR with instruction length %d not "
+		    "supported\n", __func__, insn_length);
+		return (EINVAL);
+	}
 
 	eax = &vcpu->vc_gueststate.vg_eax;
 	ecx = &vcpu->vc_gueststate.vg_ecx;
@@ -4201,8 +4207,11 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 		return (EINVAL);
 	}
 
-	/* All WRMSR instructions are 0x0F 0x30 */
-	KASSERT(insn_length == 2);
+	if (insn_length != 2) {
+		DPRINTF("%s: WRMSR with instruction length %d not "
+		    "supported\n", __func__, insn_length);
+		return (EINVAL);
+	}
 
 	eax = &vcpu->vc_gueststate.vg_eax;
 	ecx = &vcpu->vc_gueststate.vg_ecx;
@@ -4243,8 +4252,11 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 			return (EINVAL);
 		}
 
-		/* All CPUID instructions are 0x0F 0xA2 */
-		KASSERT(insn_length == 2);
+		if (insn_length != 2) {
+			DPRINTF("%s: CPUID with instruction length %d not "
+			    "supported\n", __func__, insn_length);
+			return (EINVAL);
+		}
 	}
 
 	eax = &vcpu->vc_gueststate.vg_eax;
