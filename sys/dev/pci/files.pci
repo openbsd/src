@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.330 2017/11/16 18:12:27 jcs Exp $
+#	$OpenBSD: files.pci,v 1.331 2017/11/28 23:39:39 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -360,6 +360,11 @@ file	dev/pci/ixgbe_82599.c		ix
 file	dev/pci/ixgbe_x540.c		ix
 file	dev/pci/ixgbe_x550.c		ix
 file	dev/pci/ixgbe_phy.c		ix
+
+# Intel 40Gb Ethernet
+device	ixl: ether, ifnet, ifmedia
+attach	ixl at pci
+file	dev/pci/if_ixl.c		ixl
 
 # Neterion Xframe 10 Gigabit ethernet 
 device	xge: ether, ifnet, ifmedia
