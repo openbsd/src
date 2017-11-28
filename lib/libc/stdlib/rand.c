@@ -1,4 +1,4 @@
-/*	$OpenBSD: rand.c,v 1.17 2016/10/22 19:19:34 tb Exp $ */
+/*	$OpenBSD: rand.c,v 1.18 2017/11/28 06:55:49 tb Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -44,7 +44,7 @@ DEF_WEAK(rand_r);
 
 #if defined(APIWARN)
 __warn_references(rand_r,
-    "warning: rand_r() is not random, it is deterministic.");
+    "rand_r() is not random, it is deterministic.");
 #endif
 
 int
@@ -57,7 +57,7 @@ rand(void)
 
 #if defined(APIWARN)
 __warn_references(rand,
-    "warning: rand() may return deterministic values, is that what you want?");
+    "rand() may return deterministic values, is that what you want?");
 #endif
 
 void

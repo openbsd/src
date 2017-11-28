@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcscpy.c,v 1.4 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: wcscpy.c,v 1.5 2017/11/28 06:55:49 tb Exp $	*/
 /*	$NetBSD: wcscpy.c,v 1.2 2001/01/03 14:29:36 lukem Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
 
 #if defined(APIWARN)
 __warn_references(wcscpy,
-    "warning: wcscpy() is almost always misused, please use wcslcpy()");
+    "wcscpy() is almost always misused, please use wcslcpy()");
 #endif
 
 wchar_t *

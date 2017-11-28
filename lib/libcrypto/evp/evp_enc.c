@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.36 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.37 2017/11/28 06:55:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -258,7 +258,7 @@ EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 }
 
 __warn_references(EVP_CipherFinal,
-    "warning: EVP_CipherFinal is often misused, please use EVP_CipherFinal_ex and EVP_CIPHER_CTX_cleanup");
+    "EVP_CipherFinal is often misused, please use EVP_CipherFinal_ex and EVP_CIPHER_CTX_cleanup");
 
 int
 EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -368,7 +368,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 }
 
 __warn_references(EVP_EncryptFinal,
-    "warning: EVP_EncryptFinal is often misused, please use EVP_EncryptFinal_ex and EVP_CIPHER_CTX_cleanup");
+    "EVP_EncryptFinal is often misused, please use EVP_EncryptFinal_ex and EVP_CIPHER_CTX_cleanup");
 
 int
 EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -483,7 +483,7 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 }
 
 __warn_references(EVP_DecryptFinal,
-    "warning: EVP_DecryptFinal is often misused, please use EVP_DecryptFinal_ex and EVP_CIPHER_CTX_cleanup");
+    "EVP_DecryptFinal is often misused, please use EVP_DecryptFinal_ex and EVP_CIPHER_CTX_cleanup");
 
 int
 EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)

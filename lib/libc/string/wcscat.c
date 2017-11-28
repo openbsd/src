@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcscat.c,v 1.4 2015/09/12 16:23:14 guenther Exp $	*/
+/*	$OpenBSD: wcscat.c,v 1.5 2017/11/28 06:55:49 tb Exp $	*/
 /*	$NetBSD: wcscat.c,v 1.2 2001/01/03 14:29:36 lukem Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
 
 #if defined(APIWARN)
 __warn_references(wcscat,
-    "warning: wcscat() is almost always misused, please use wcslcat()");
+    "wcscat() is almost always misused, please use wcslcat()");
 #endif
 
 wchar_t *
