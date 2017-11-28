@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.17 2017/08/12 02:50:05 jsing Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.18 2017/11/28 16:34:20 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -271,6 +271,20 @@ CBB_flush(CBB *cbb)
 	return 1;
 }
 
+void
+CBB_discard_child(CBB *cbb)
+{
+	if (cbb->child == NULL)
+		return;
+
+	cbb->base->len = cbb->offset;
+	
+	cbb->child->base = NULL;
+	cbb->child = NULL;
+	cbb->pending_len_len = 0;
+	cbb->pending_is_asn1 = 0;
+	cbb->offset = 0;
+}
 
 static int
 cbb_add_length_prefixed(CBB *cbb, CBB *out_contents, size_t len_len)

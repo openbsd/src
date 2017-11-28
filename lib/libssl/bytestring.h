@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.15 2016/11/04 18:28:58 guenther Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.16 2017/11/28 16:34:20 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -392,6 +392,12 @@ int CBB_finish(CBB *cbb, uint8_t **out_data, size_t *out_len);
  * on error.
  */
 int CBB_flush(CBB *cbb);
+
+/*
+ * CBB_discard_child discards the current unflushed child of |cbb|. Neither the
+ * child's contents nor the length prefix will be included in the output.
+ */
+void CBB_discard_child(CBB *cbb);
 
 /*
  * CBB_add_u8_length_prefixed sets |*out_contents| to a new child of |cbb|. The
