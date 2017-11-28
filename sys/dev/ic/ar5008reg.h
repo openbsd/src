@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008reg.h,v 1.4 2017/01/12 16:32:28 stsp Exp $	*/
+/*	$OpenBSD: ar5008reg.h,v 1.5 2017/11/28 04:33:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -872,7 +872,7 @@ struct ar_rx_desc {
 #define AR_RXC1_BUF_LEN_S		0
 #define AR_RXC1_INTR_REQ		0x00002000
 
-/* Bits for ds_ctl2. */
+/* Bits for ds_status0. */
 #define AR_RXS0_RSSI_ANT00(x)		(((x) >>  0) & 0xff)
 #define AR_RXS0_RSSI_ANT01(x)		(((x) >>  8) & 0xff)
 #define AR_RXS0_RSSI_ANT02(x)		(((x) >> 16) & 0xff)
@@ -894,6 +894,9 @@ struct ar_rx_desc {
 #define AR_RXS3_RATE_S			2
 
 /* Bits for ds_status4. */
+#define AR_RXS0_RSSI_ANT10(x)		(((x) >>  0) & 0xff)
+#define AR_RXS0_RSSI_ANT11(x)		(((x) >>  8) & 0xff)
+#define AR_RXS0_RSSI_ANT12(x)		(((x) >> 16) & 0xff)
 #define AR_RXS4_RSSI_COMBINED_M		0xff000000
 #define AR_RXS4_RSSI_COMBINED_S		24
 
