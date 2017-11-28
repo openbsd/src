@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.30 2017/11/27 23:05:50 bluhm Exp $	*/
+/*	$OpenBSD: ca.c,v 1.31 2017/11/28 00:20:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -123,7 +123,7 @@ ca_launch(void)
 		if (rlay->rl_tls_cert_fd != -1) {
 			if ((buf = relay_load_fd(rlay->rl_tls_cert_fd,
 			    &len)) == NULL)
-				fatalx("ca_launch: cert relay_load_fd");
+				fatal("ca_launch: cert relay_load_fd");
 
 			if ((in = BIO_new_mem_buf(buf, len)) == NULL)
 				fatalx("ca_launch: cert BIO_new_mem_buf");
@@ -160,7 +160,7 @@ ca_launch(void)
 		if (rlay->rl_tls_cacert_fd != -1) {
 			if ((buf = relay_load_fd(rlay->rl_tls_cacert_fd,
 			    &len)) == NULL)
-				fatalx("ca_launch: cacert relay_load_fd");
+				fatal("ca_launch: cacert relay_load_fd");
 
 			if ((in = BIO_new_mem_buf(buf, len)) == NULL)
 				fatalx("ca_launch: cacert BIO_new_mem_buf");
