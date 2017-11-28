@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.175 2017/10/06 07:39:10 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.176 2017/11/28 14:32:45 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4148,7 +4148,8 @@ svm_handle_hlt(struct vcpu *vcpu)
  *  vcpu: The VCPU that executed the HLT instruction
  *
  * Return Values:
- *  EINVAL: An error occurred extracting information from the VMCS
+ *  EINVAL: An error occurred extracting information from the VMCS, or an
+ *   invalid HLT instruction was encountered
  *  EIO: The guest halted with interrupts disabled
  *  EAGAIN: Normal return to vmd - vmd should halt scheduling this VCPU
  *   until a virtual interrupt is ready to inject
@@ -4169,8 +4170,11 @@ vmx_handle_hlt(struct vcpu *vcpu)
 		return (EINVAL);
 	}
 
-	/* All HLT insns are 1 byte */
-	KASSERT(insn_length == 1);
+	if (insn_length != 1) {
+		DPRINTF("%s: HLT with instruction length %lld not supported\n",
+		    __func__, insn_length);
+		return (EINVAL);
+	}
 
 	if (!(rflags & PSL_I)) {
 		DPRINTF("%s: guest halted with interrupts disabled\n",
@@ -4681,6 +4685,14 @@ vmx_handle_np_fault(struct vcpu *vcpu)
  *
  * The vmm can handle certain IN/OUTS without exiting to vmd, but most of these
  * will be passed to vmd for completion.
+ *
+ * Parameters:
+ *  vcpu: The VCPU where the IN/OUT instruction occurred
+ *
+ * Return values:
+ *  0: if successful
+ *  EINVAL: an invalid IN/OUT instruction was encountered
+ *  EAGAIN: return to vmd - more processing needed in userland
  */
 int
 svm_handle_inout(struct vcpu *vcpu)
@@ -4690,7 +4702,11 @@ svm_handle_inout(struct vcpu *vcpu)
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
 
 	insn_length = vmcb->v_exitinfo2 - vmcb->v_rip;
-	KASSERT(insn_length == 1 || insn_length == 2);
+	if (insn_length != 1 && insn_length != 2) {
+		DPRINTF("%s: IN/OUT instruction with length %lld not "
+		    "supported\n", __func__, insn_length);
+		return (EINVAL);
+	}
 
 	exit_qual = vmcb->v_exitinfo1;
 
@@ -4765,6 +4781,12 @@ vmx_handle_inout(struct vcpu *vcpu)
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
+		return (EINVAL);
+	}
+
+	if (insn_length != 1 && insn_length != 2) {
+		DPRINTF("%s: IN/OUT instruction with length %lld not "
+		    "supported\n", __func__, insn_length);
 		return (EINVAL);
 	}
 
@@ -5157,8 +5179,11 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 		return (EINVAL);
 	}
 
-	/* All RDMSR instructions are 0x0F 0x32 */
-	KASSERT(insn_length == 2);
+	if (insn_length != 2) {
+		DPRINTF("%s: RDMSR with instruction length %lld not "
+		    "supported\n", __func__, insn_length);
+		return (EINVAL);
+	}
 
 	rax = &vcpu->vc_gueststate.vg_rax;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
@@ -5201,8 +5226,12 @@ vmx_handle_xsetbv(struct vcpu *vcpu)
 		return (EINVAL);
 	}
 
-	/* All XSETBV instructions are 0x0F 0x01 0xD1 */
-	KASSERT(insn_length == 3);
+	/* All XSETBV instructions are 3 bytes */
+	if (insn_length != 3) {
+		DPRINTF("%s: XSETBV with instruction length %lld not "
+		    "supported\n", __func__, insn_length);
+		return (EINVAL);
+	}
 
 	rax = &vcpu->vc_gueststate.vg_rax;
 
@@ -5342,8 +5371,11 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 		return (EINVAL);
 	}
 
-	/* All WRMSR instructions are 0x0F 0x30 */
-	KASSERT(insn_length == 2);
+	if (insn_length != 2) {
+		DPRINTF("%s: WRMSR with instruction length %lld not "
+		    "supported\n", __func__, insn_length);
+		return (EINVAL);
+	}
 
 	rax = &vcpu->vc_gueststate.vg_rax;
 	rcx = &vcpu->vc_gueststate.vg_rcx;
@@ -5387,7 +5419,7 @@ svm_handle_msr(struct vcpu *vcpu)
 	uint64_t *rax, *rcx, *rdx;
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
 
-	/* All RDMSR / WRMSR instructions are 2 bytes */
+	/* XXX: Validate RDMSR / WRMSR insn_length */
 	insn_length = 2;
 
 	rax = &vmcb->v_rax;
@@ -5445,8 +5477,11 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 			return (EINVAL);
 		}
 
-		/* All CPUID instructions are 0x0F 0xA2 */
-		KASSERT(insn_length == 2);
+		if (insn_length != 2) {
+			DPRINTF("%s: CPUID with instruction length %lld not "
+			    "supported\n", __func__, insn_length);
+			return (EINVAL);
+		}
 
 		rax = &vcpu->vc_gueststate.vg_rax;
 		msr_store =
@@ -5454,6 +5489,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		cpuid_limit = msr_store[VCPU_REGS_MISC_ENABLE].vms_data &
 		    MISC_ENABLE_LIMIT_CPUID_MAXVAL;
 	} else {
+		/* XXX: validate insn_length 2 */
 		insn_length = 2;
 		vmcb = (struct vmcb *)vcpu->vc_control_va;
 		rax = &vmcb->v_rax;
