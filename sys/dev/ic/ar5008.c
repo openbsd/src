@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.45 2017/07/17 14:25:29 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.46 2017/11/28 04:35:39 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -925,6 +925,7 @@ ar5008_rx_process(struct athn_softc *sc)
 	/* Send the frame to the 802.11 layer. */
 	rxi.rxi_flags = 0;	/* XXX */
 	rxi.rxi_rssi = MS(ds->ds_status4, AR_RXS4_RSSI_COMBINED);
+	rxi.rxi_rssi += AR_DEFAULT_NOISE_FLOOR;
 	rxi.rxi_tstamp = ds->ds_status2;
 	ieee80211_input(ifp, m, ni, &rxi);
 
@@ -1927,7 +1928,7 @@ ar5008_bb_load_noisefloor(struct athn_softc *sc)
 
 	/* Restore noisefloor values to initial (max) values. */
 	for (i = 0; i < AR_MAX_CHAINS; i++)
-		nf[i] = nf_ext[i] = -50 * 2;
+		nf[i] = nf_ext[i] = AR_DEFAULT_NOISE_FLOOR;
 	ar5008_write_noisefloor(sc, nf, nf_ext);
 }
 
