@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.33 2017/11/28 14:51:34 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.34 2017/11/28 15:06:08 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5735,9 +5735,9 @@ vmm_decode_cr0(uint32_t cr0)
 	DPRINTF("(");
 	for (i = 0; i < 11; i++)
 		if (cr0 & cr0_info[i].vrdi_bit)
-			DPRINTF(cr0_info[i].vrdi_present);
+			DPRINTF("%s", cr0_info[i].vrdi_present);
 		else
-			DPRINTF(cr0_info[i].vrdi_absent);
+			DPRINTF("%s", cr0_info[i].vrdi_absent);
 	
 	DPRINTF(")\n");
 }
@@ -5755,9 +5755,9 @@ vmm_decode_cr3(uint32_t cr3)
 	DPRINTF("(");
 	for (i = 0 ; i < 2 ; i++)
 		if (cr3 & cr3_info[i].vrdi_bit)
-			DPRINTF(cr3_info[i].vrdi_present);
+			DPRINTF("%s", cr3_info[i].vrdi_present);
 		else
-			DPRINTF(cr3_info[i].vrdi_absent);
+			DPRINTF("%s", cr3_info[i].vrdi_absent);
 
 	DPRINTF(")\n");
 }
@@ -5792,9 +5792,9 @@ vmm_decode_cr4(uint32_t cr4)
 	DPRINTF("(");
 	for (i = 0; i < 19; i++)
 		if (cr4 & cr4_info[i].vrdi_bit)
-			DPRINTF(cr4_info[i].vrdi_present);
+			DPRINTF("%s", cr4_info[i].vrdi_present);
 		else
-			DPRINTF(cr4_info[i].vrdi_absent);
+			DPRINTF("%s", cr4_info[i].vrdi_absent);
 	
 	DPRINTF(")\n");
 }
@@ -5813,9 +5813,9 @@ vmm_decode_apicbase_msr_value(uint64_t apicbase)
 	DPRINTF("(");
 	for (i = 0; i < 3; i++)
 		if (apicbase & apicbase_info[i].vrdi_bit)
-			DPRINTF(apicbase_info[i].vrdi_present);
+			DPRINTF("%s", apicbase_info[i].vrdi_present);
 		else
-			DPRINTF(apicbase_info[i].vrdi_absent);
+			DPRINTF("%s", apicbase_info[i].vrdi_absent);
 	
 	DPRINTF(")\n");
 }
@@ -5835,9 +5835,9 @@ vmm_decode_ia32_fc_value(uint64_t fcr)
 	DPRINTF("(");
 	for (i = 0; i < 4; i++)
 		if (fcr & fcr_info[i].vrdi_bit)
-			DPRINTF(fcr_info[i].vrdi_present);
+			DPRINTF("%s", fcr_info[i].vrdi_present);
 		else
-			DPRINTF(fcr_info[i].vrdi_absent);
+			DPRINTF("%s", fcr_info[i].vrdi_absent);
 
 	if (fcr & IA32_FEATURE_CONTROL_SENTER_EN)
 		DPRINTF(" [SENTER param = 0x%llx]",
@@ -5860,9 +5860,9 @@ vmm_decode_mtrrcap_value(uint64_t val)
 	DPRINTF("(");
 	for (i = 0; i < 3; i++)
 		if (val & mtrrcap_info[i].vrdi_bit)
-			DPRINTF(mtrrcap_info[i].vrdi_present);
+			DPRINTF("%s", mtrrcap_info[i].vrdi_present);
 		else
-			DPRINTF(mtrrcap_info[i].vrdi_absent);
+			DPRINTF("%s", mtrrcap_info[i].vrdi_absent);
 
 	if (val & MTRRcap_FIXED)
 		DPRINTF(" [nr fixed ranges = 0x%llx]",
@@ -5897,9 +5897,9 @@ vmm_decode_mtrrdeftype_value(uint64_t mtrrdeftype)
 	DPRINTF("(");
 	for (i = 0; i < 2; i++)
 		if (mtrrdeftype & mtrrdeftype_info[i].vrdi_bit)
-			DPRINTF(mtrrdeftype_info[i].vrdi_present);
+			DPRINTF("%s", mtrrdeftype_info[i].vrdi_present);
 		else
-			DPRINTF(mtrrdeftype_info[i].vrdi_absent);
+			DPRINTF("%s", mtrrdeftype_info[i].vrdi_absent);
 
 	DPRINTF("type = ");
 	type = mtrr2mrt(mtrrdeftype & 0xff);
@@ -5933,9 +5933,9 @@ vmm_decode_efer_value(uint64_t efer)
 	DPRINTF("(");
 	for (i = 0; i < 4; i++)
 		if (efer & efer_info[i].vrdi_bit)
-			DPRINTF(efer_info[i].vrdi_present);
+			DPRINTF("%s", efer_info[i].vrdi_present);
 		else
-			DPRINTF(efer_info[i].vrdi_absent);
+			DPRINTF("%s", efer_info[i].vrdi_absent);
 
 	DPRINTF(")\n");
 }
