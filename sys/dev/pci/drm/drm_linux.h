@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.64 2017/11/27 16:20:42 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.65 2017/11/29 03:59:34 dlg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -1180,7 +1180,7 @@ kobject_del(struct kobject *obj)
 
 #define	DEFINE_WAIT(wait)		wait_queue_head_t *wait = NULL
 
-inline void
+static inline void
 prepare_to_wait(wait_queue_head_t *wq, wait_queue_head_t **wait, int state)
 {
 	if (*wait == NULL) {
@@ -1189,14 +1189,14 @@ prepare_to_wait(wait_queue_head_t *wq, wait_queue_head_t **wait, int state)
 	}
 }
 
-inline void
+static inline void
 finish_wait(wait_queue_head_t *wq, wait_queue_head_t **wait)
 {
 	if (*wait)
 		mtx_leave(&wq->lock);
 }
 
-inline long
+static inline long
 schedule_timeout(long timeout, wait_queue_head_t **wait)
 {
 	return -msleep(*wait, &(*wait)->lock, PZERO, "schto", timeout);
