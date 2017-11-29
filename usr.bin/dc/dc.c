@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.18 2016/07/17 17:30:47 otto Exp $	*/
+/*	$OpenBSD: dc.c,v 1.19 2017/11/29 14:34:17 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -72,6 +72,11 @@ dc_main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if (argc == 0) {
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+	}
+
 	init_bmachine(extended_regs);
 	(void)setvbuf(stdout, NULL, _IOLBF, 0);
 	(void)setvbuf(stderr, NULL, _IOLBF, 0);
@@ -108,9 +113,6 @@ dc_main(int argc, char *argv[])
 		 */
 		 return (0);
 	}
-
-	if (pledge("stdio", NULL) == -1)
-		err(1, "pledge");
 
 	src_setstream(&src, stdin);
 	reset_bmachine(&src);
