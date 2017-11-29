@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.22 2017/11/28 23:32:00 beck Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.23 2017/11/29 21:15:45 jmc Exp $ */
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -498,7 +498,8 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: ocspcheck [-Nv] [-C CAfile] [-o staplefile] file\n");
+	    "usage: ocspcheck [-Nv] [-C CAfile] [-i staplefile] "
+	    "[-o staplefile] file\n");
 	exit(1);
 }
 
