@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.10 2017/08/12 16:28:01 guenther Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.11 2017/11/29 15:12:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -49,8 +49,8 @@
 	 ((flags) & MTX_DUPOK ? LO_DUPOK : 0) | \
 	 LO_INITIALIZED | (LO_CLASS_MUTEX << LO_CLASSSHIFT))
 
-#define __MTX_S(x) #x
-#define __MTX_LINE __MTX_S(__LINE__)
+#define __MTX_STRING(x) #x
+#define __MTX_S(x) __MTX_STRING(x)
 #define __MTX_NAME __FILE__ ":" __MTX_S(__LINE__)
 
 #define MTX_LO_INITIALIZER(name, flags) \
