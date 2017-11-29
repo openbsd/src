@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.3 2017/11/29 03:38:03 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.4 2017/11/29 05:09:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1087,7 +1087,6 @@ static int	ixl_restart_an(struct ixl_softc *);
 static int	ixl_hmc(struct ixl_softc *);
 static int	ixl_get_vsi(struct ixl_softc *);
 static int	ixl_set_vsi(struct ixl_softc *);
-static int	ixl_set_default_vsi(struct ixl_softc *);
 static int	ixl_get_link_status(struct ixl_softc *);
 static int	ixl_set_link_status(struct ixl_softc *,
 		    const struct ixl_aq_desc *);
@@ -1714,11 +1713,6 @@ ixl_up(struct ixl_softc *sc)
 	ixl_wr(sc, I40E_QTX_CTL(0), I40E_QTX_CTL_PF_QUEUE |
 	    (sc->sc_pf_id << I40E_QTX_CTL_PF_INDX_SHIFT));
 
-	if (ixl_set_default_vsi(sc) != 0) {
-		/* error printed by ixl_set_default_vsi */
-		goto clr;
-	}
-
 	(void)ixl_rxr_enable(sc, sc->sc_rx_ring);
 	(void)ixl_txr_enable(sc, sc->sc_tx_ring);
 
@@ -1726,10 +1720,6 @@ ixl_up(struct ixl_softc *sc)
 
 	return (0);
 
-clr:
-	ixl_txr_unconfig(sc, sc->sc_tx_ring);
-	ixl_rxr_unconfig(sc, sc->sc_rx_ring);
-	ixl_txr_free(sc, sc->sc_tx_ring);
 free_rxr:
 	ixl_rxr_free(sc, sc->sc_rx_ring);
 ret:
@@ -3199,34 +3189,6 @@ ixl_set_vsi(struct ixl_softc *sc)
 	if (iaq.iaq_retval != htole16(IXL_AQ_RC_OK)) {
 		printf("%s: UPDATE VSI error %u\n", DEVNAME(sc),
 		    lemtoh16(&iaq.iaq_retval));
-		return (-1);
-	}
-
-	return (0);
-}
-
-static int
-ixl_set_default_vsi(struct ixl_softc *sc)
-{
-	struct ixl_aq_desc iaq;
-	struct ixl_aq_vsi_promisc_param *param;
-	uint16_t retval;
-
-	memset(&iaq, 0, sizeof(iaq));
-	iaq.iaq_opcode = htole16(IXL_AQ_OP_SET_VSI_PROMISC);
-
-	param = (struct ixl_aq_vsi_promisc_param *)&iaq.iaq_param;
-	param->flags = htole16(IXL_AQ_VSI_PROMISC_FLAG_DFLT);
-	param->valid_flags = htole16(IXL_AQ_VSI_PROMISC_FLAG_DFLT);
-	param->seid = sc->sc_seid;
-
-	if (ixl_atq_poll(sc, &iaq, 250) != 0) {
-		printf("%s: SET VSI PROMISC timeout\n", DEVNAME(sc));
-		return (-1);
-	}
-	retval = lemtoh16(&iaq.iaq_retval);
-	if (retval != IXL_AQ_RC_OK) {
-		printf("%s: SET VSI PROMISC error %u\n", DEVNAME(sc), retval);
 		return (-1);
 	}
 
