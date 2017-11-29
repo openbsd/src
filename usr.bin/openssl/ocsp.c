@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.12 2017/01/21 09:29:09 deraadt Exp $ */
+/* $OpenBSD: ocsp.c,v 1.13 2017/11/29 23:47:18 guenther Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -106,7 +106,7 @@ int
 ocsp_main(int argc, char **argv)
 {
 	char **args;
-	char *host = NULL, *port = NULL, *path = "/";
+	char *host = NULL, *port = NULL, *path = NULL;
 	char *reqin = NULL, *respin = NULL;
 	char *reqout = NULL, *respout = NULL;
 	char *signfile = NULL, *keyfile = NULL;
@@ -177,7 +177,8 @@ ocsp_main(int argc, char **argv)
 			} else
 				badarg = 1;
 		} else if (!strcmp(*args, "-url")) {
-			if (args[1]) {
+			if (args[1] && host == NULL && port == NULL &&
+			    path == NULL) {
 				args++;
 				if (!OCSP_parse_url(*args, &host, &port, &path, &use_ssl)) {
 					BIO_printf(bio_err, "Error parsing URL\n");
@@ -186,13 +187,13 @@ ocsp_main(int argc, char **argv)
 			} else
 				badarg = 1;
 		} else if (!strcmp(*args, "-host")) {
-			if (args[1]) {
+			if (args[1] && use_ssl == -1) {
 				args++;
 				host = *args;
 			} else
 				badarg = 1;
 		} else if (!strcmp(*args, "-port")) {
-			if (args[1]) {
+			if (args[1] && use_ssl == -1) {
 				args++;
 				port = *args;
 			} else
@@ -331,7 +332,7 @@ ocsp_main(int argc, char **argv)
 			} else
 				badarg = 1;
 		} else if (!strcmp(*args, "-path")) {
-			if (args[1]) {
+			if (args[1] && use_ssl == -1) {
 				args++;
 				path = *args;
 			} else
@@ -629,7 +630,7 @@ redo_accept:
 		if (cbio)
 			send_ocsp_response(cbio, resp);
 	} else if (host) {
-		resp = process_responder(bio_err, req, host, path,
+		resp = process_responder(bio_err, req, host, path ? path : "/",
 		    port, use_ssl, headers, req_timeout);
 		if (!resp)
 			goto end;
