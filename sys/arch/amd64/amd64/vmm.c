@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.178 2017/11/29 02:46:10 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.179 2017/11/29 02:56:21 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4846,6 +4846,7 @@ svm_handle_inout(struct vcpu *vcpu)
 	case 0x3f8 ... 0x3ff:
 	case 0xcf8:
 	case 0xcfc ... 0xcff:
+	case 0x500 ... 0x50f:
 	case VMM_PCI_IO_BAR_BASE ... VMM_PCI_IO_BAR_END:
 		ret = EAGAIN;
 		break;
@@ -4926,6 +4927,7 @@ vmx_handle_inout(struct vcpu *vcpu)
 	case 0x3f8 ... 0x3ff:
 	case 0xcf8:
 	case 0xcfc ... 0xcff:
+	case 0x500 ... 0x50f:
 	case VMM_PCI_IO_BAR_BASE ... VMM_PCI_IO_BAR_END:
 		ret = EAGAIN;
 		break;
