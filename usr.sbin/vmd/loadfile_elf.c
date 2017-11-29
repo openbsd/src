@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.28 2017/11/27 03:19:00 mlarkin Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.29 2017/11/29 02:46:10 mlarkin Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -226,33 +226,24 @@ push_gdt(void)
 static void
 push_pt(void)
 {
-	pt_entry_t ptes[NPTE_PG];
-	uint64_t i;
+	uint64_t ptes[NPTE_PG], i;
 
-#ifdef __i386__
-	memset(ptes, 0, sizeof(ptes));
-	for (i = 0 ; i < NPTE_PG; i++) {
-		ptes[i] = PG_V | PG_PS | (NBPD * i);
-	}
-	write_mem(PML4_PAGE, ptes, PAGE_SIZE);
-#else
-	/* PML3 [0] - first 1GB */
+	/* PDPDE0 - first 1GB */
 	memset(ptes, 0, sizeof(ptes));
 	ptes[0] = PG_V | PML3_PAGE;
 	write_mem(PML4_PAGE, ptes, PAGE_SIZE);
 
-	/* PML3 [0] - first 1GB */
+	/* PDE0 - first 1GB */
 	memset(ptes, 0, sizeof(ptes));
 	ptes[0] = PG_V | PG_RW | PG_u | PML2_PAGE;
 	write_mem(PML3_PAGE, ptes, PAGE_SIZE);
 
-	/* PML2 [0..511] - first 1GB (in 2MB pages) */
+	/* First 1GB (in 2MB pages) */
 	memset(ptes, 0, sizeof(ptes));
 	for (i = 0 ; i < NPTE_PG; i++) {
-		ptes[i] = PG_V | PG_RW | PG_u | PG_PS | (NBPD_L2 * i);
+		ptes[i] = PG_V | PG_RW | PG_u | PG_PS | ((2048 * 1024) * i);
 	}
 	write_mem(PML2_PAGE, ptes, PAGE_SIZE);
-#endif
 }
 
 /*

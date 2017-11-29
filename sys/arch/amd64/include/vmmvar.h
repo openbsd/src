@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.49 2017/11/29 00:32:52 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.50 2017/11/29 02:46:10 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -384,7 +384,11 @@ struct vcpu_segment_info {
 #define VCPU_REGS_CR4	3
 #define VCPU_REGS_CR8	4
 #define VCPU_REGS_XCR0	5
-#define VCPU_REGS_NCRS	(VCPU_REGS_XCR0 + 1)
+#define VCPU_REGS_PDPTE0 6
+#define VCPU_REGS_PDPTE1 7
+#define VCPU_REGS_PDPTE2 8
+#define VCPU_REGS_PDPTE3 9
+#define VCPU_REGS_NCRS	(VCPU_REGS_PDPTE3 + 1)
 
 #define VCPU_REGS_CS		0
 #define VCPU_REGS_DS		1
