@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.91 2017/09/29 09:36:04 mpi Exp $
+.\"	$OpenBSD: ddb.4,v 1.92 2017/11/29 07:28:21 anton Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: September 29 2017 $
+.Dd $Mdocdate: November 29 2017 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -360,7 +360,9 @@ It is best to enclose each expression in parentheses.
 .Xc
 Set the named variable or register with the value of
 .Ar expr .
-Valid variable names are described below.
+For valid variable names,
+see
+.Sx VARIABLES .
 .\" --------------------
 .It Ic boot Ar how
 Reboot the machine depending on
