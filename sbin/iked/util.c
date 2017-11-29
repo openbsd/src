@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.33 2017/01/09 14:49:21 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.34 2017/11/29 01:25:11 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -654,8 +654,8 @@ print_host(struct sockaddr *sa, char *buf, size_t len)
 
 	if (getnameinfo(sa, sa->sa_len,
 	    buf, len, NULL, 0, NI_NUMERICHOST) != 0) {
-		buf[0] = '\0';
-		return (NULL);
+		strlcpy(buf, "unknown", len);
+		return (buf);
 	}
 
 	if ((port = socket_getport(sa)) != 0) {
