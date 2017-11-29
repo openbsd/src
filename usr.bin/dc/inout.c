@@ -1,4 +1,4 @@
-/*	$OpenBSD: inout.c,v 1.20 2017/02/26 11:29:55 otto Exp $	*/
+/*	$OpenBSD: inout.c,v 1.21 2017/11/29 19:12:48 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -390,22 +390,14 @@ print_value(FILE *f, const struct value *value, const char *prefix, u_int base)
 void
 print_ascii(FILE *f, const struct number *n)
 {
-	BIGNUM *v;
 	int numbits, i, ch;
 
-	v = BN_dup(n->number);
-	bn_checkp(v);
-
-	if (BN_is_negative(v))
-		BN_set_negative(v, 0);
-
-	numbits = BN_num_bytes(v) * 8;
+	numbits = BN_num_bytes(n->number) * 8;
 	while (numbits > 0) {
 		ch = 0;
 		for (i = 0; i < 8; i++)
-			ch |= BN_is_bit_set(v, numbits-i-1) << (7 - i);
+			ch |= BN_is_bit_set(n->number, numbits-i-1) << (7 - i);
 		(void)putc(ch, f);
 		numbits -= 8;
 	}
-	BN_free(v);
 }
