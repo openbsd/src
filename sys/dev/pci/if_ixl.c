@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.2 2017/11/28 23:47:25 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.3 2017/11/29 03:38:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -118,7 +118,7 @@ struct ixl_aq_desc {
 	uint32_t	iaq_param[4];
 /*	iaq_data_hi	iaq_param[2] */
 /*	iaq_data_lo	iaq_param[3] */
-} __packed __aligned(32);
+} __packed __aligned(8);
 
 /* aq commands */
 #define IXL_AQ_OP_GET_VERSION		0x0001
@@ -3070,7 +3070,7 @@ ixl_get_phy_abilities(struct ixl_softc *sc, uint64_t *phy_types_ptr)
 	phy = IXL_DMA_KVA(&idm);
 
 	phy_types = lemtoh32(&phy->phy_type);
-	phy_types |= (uint64_t)lemtoh32(&phy->phy_type_ext) << 32;
+	phy_types |= (uint64_t)phy->phy_type_ext << 32;
 
 	*phy_types_ptr = phy_types;
 
