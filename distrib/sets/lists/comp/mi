@@ -549,6 +549,7 @@
 ./usr/include/dev/pci/if_ix.h
 ./usr/include/dev/pci/if_ixgb.h
 ./usr/include/dev/pci/if_ixgb_osdep.h
+./usr/include/dev/pci/if_ixlreg.h
 ./usr/include/dev/pci/if_jmereg.h
 ./usr/include/dev/pci/if_jmevar.h
 ./usr/include/dev/pci/if_lgereg.h
