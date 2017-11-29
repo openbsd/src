@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.55 2017/11/28 17:43:45 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.56 2017/11/29 19:13:31 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -95,7 +95,6 @@ static void		bdiv(void);
 static void		bmod(void);
 static void		bdivmod(void);
 static void		bexp(void);
-static bool		bsqrt_stop(const BIGNUM *, const BIGNUM *, u_int *);
 static void		bsqrt(void);
 static void		not(void);
 static void		equal_numbers(void);
@@ -1268,28 +1267,12 @@ bexp(void)
 	free_number(p);
 }
 
-static bool
-bsqrt_stop(const BIGNUM *x, const BIGNUM *y, u_int *onecount)
-{
-	BIGNUM *r;
-	bool ret;
-
-	r = BN_new();
-	bn_checkp(r);
-	bn_check(BN_sub(r, x, y));
-	if (BN_is_one(r))
-		(*onecount)++;
-	ret = BN_is_zero(r);
-	BN_free(r);
-	return ret || *onecount > 1;
-}
-
 static void
 bsqrt(void)
 {
 	struct number	*n;
 	struct number	*r;
-	BIGNUM		*x, *y;
+	BIGNUM		*x, *y, *t;
 	u_int		scale, onecount;
 	BN_CTX		*ctx;
 
@@ -1312,14 +1295,16 @@ bsqrt(void)
 		bn_checkp(y);
 		ctx = BN_CTX_new();
 		bn_checkp(ctx);
-		for (;;) {
-			bn_checkp(BN_copy(y, x));
-			bn_check(BN_div(x, NULL, n->number, x, ctx));
-			bn_check(BN_add(x, x, y));
-			bn_check(BN_rshift1(x, x));
-			if (bsqrt_stop(x, y, &onecount))
-				break;
-		}
+		do {
+			bn_check(BN_div(y, NULL, n->number, x, ctx));
+			bn_check(BN_add(y, x, y));
+			bn_check(BN_rshift1(y, y));
+			bn_check(BN_sub(x, y, x));
+			t = x;
+			x = y;
+			y = t;
+		} while (!BN_is_zero(y) && (onecount += BN_is_one(y)) < 2);
+		bn_check(BN_sub(y, x, y));
 		r = bmalloc(sizeof(*r));
 		r->scale = scale;
 		r->number = y;
