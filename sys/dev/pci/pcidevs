@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1826 2017/11/27 01:37:39 jmatthew Exp $
+$OpenBSD: pcidevs,v 1.1827 2017/11/29 05:00:16 dlg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5296,6 +5296,16 @@ product MEINBERG PEX511		0x0105	PEX511
 product MEINBERG GPS170PCI	0x0204	GPS170PCI
 
 /* Mellanox */
+product MELLANOX MT27700	0x1013	ConnectX-4
+product MELLANOX MT27700VF	0x1014	ConnectX-4 VF
+product MELLANOX MT27710	0x1015	ConnectX-4 Lx
+product MELLANOX MT27710VF	0x1016	ConnectX-4 Lx VF
+product MELLANOX MT27800	0x1017	ConnectX-5
+product MELLANOX MT27800VF	0x1018	ConnectX-5 VF
+product MELLANOX MT28800	0x1019	ConnectX-5 Ex
+product MELLANOX MT28800VF	0x101a	ConnectX-5 Ex VF
+product MELLANOX MT28908	0x101b	ConnectX-6
+product MELLANOX MT28908VF	0x101c	ConnectX-6 VF
 product MELLANOX CONNECTX_EN	0x6368	ConnectX EN
 
 /* Mentor */
