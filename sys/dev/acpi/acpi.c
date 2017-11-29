@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.334 2017/11/16 18:12:27 jcs Exp $ */
+/* $OpenBSD: acpi.c,v 1.335 2017/11/29 22:51:01 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -832,6 +832,88 @@ acpi_pciroots_attach(struct device *dev, void *aux, cfprint_t pr)
 		pba->pba_bus = pdev->bus;
 		config_found(dev, pba, pr);
 	}
+}
+
+/* GPIO support */
+
+struct acpi_gpio_event {
+	struct aml_node *node;
+	uint16_t pin;
+};
+
+void
+acpi_gpio_event_task(void *arg0, int arg1)
+{
+	struct aml_node *node = arg0;
+	uint16_t pin = arg1;
+	char name[5];
+
+	snprintf(name, sizeof(name), "_E%.2X", pin);
+	aml_evalname(acpi_softc, node, name, 0, NULL, NULL);
+}
+
+int
+acpi_gpio_event(void *arg)
+{
+	struct acpi_gpio_event *ev = arg;
+
+	acpi_addtask(acpi_softc, acpi_gpio_event_task, ev->node, ev->pin);
+	return 1;
+}
+
+int
+acpi_gpio_parse_events(int crsidx, union acpi_resource *crs, void *arg)
+{
+	struct aml_node *devnode = arg;
+	struct aml_node *node;
+	uint16_t pin;
+
+	switch (AML_CRSTYPE(crs)) {
+	case LR_GPIO:
+		node = aml_searchname(devnode,
+		    (char *)&crs->pad[crs->lr_gpio.res_off]);
+		pin = *(uint16_t *)&crs->pad[crs->lr_gpio.pin_off];
+		if (crs->lr_gpio.type == LR_GPIO_INT &&
+		    node && node->gpio && pin < 256) {
+			struct acpi_gpio *gpio = node->gpio;
+			struct acpi_gpio_event *ev;
+
+			ev = malloc(sizeof(*ev), M_DEVBUF, M_WAITOK);
+			ev->node = devnode;
+			ev->pin = pin;
+			gpio->intr_establish(gpio->cookie, pin,
+			    crs->lr_gpio.tflags, acpi_gpio_event, ev);
+		}
+		break;
+	default:
+		printf("%s: unknown resource type %d\n", __func__,
+		    AML_CRSTYPE(crs));
+	}
+
+	return 0;
+}
+
+void
+acpi_register_gpio(struct acpi_softc *sc, struct aml_node *devnode)
+{
+	struct aml_value arg[2];
+	struct aml_node *node;
+	struct aml_value res;
+
+	/* Register GeneralPurposeIO address space. */
+	memset(&arg, 0, sizeof(arg));
+	arg[0].type = AML_OBJTYPE_INTEGER;
+	arg[0].v_integer = ACPI_OPREG_GPIO;
+	arg[1].type = AML_OBJTYPE_INTEGER;
+	arg[1].v_integer = 1;
+	node = aml_searchname(devnode, "_REG");
+	if (node && aml_evalnode(sc, node, 2, arg, NULL))
+		printf("%s: _REG failed\n", node->name);
+
+	/* Register GPIO signaled ACPI events. */
+	if (aml_evalname(sc, devnode, "_AEI", 0, NULL, &res))
+		return;
+	aml_parse_resource(&res, acpi_gpio_parse_events, devnode);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chvgpio.c,v 1.7 2017/11/29 15:22:22 kettenis Exp $	*/
+/*	$OpenBSD: chvgpio.c,v 1.8 2017/11/29 22:51:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -169,8 +169,6 @@ chvgpio_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aaa = aux;
 	struct chvgpio_softc *sc = (struct chvgpio_softc *)self;
 	struct aml_value res;
-	struct aml_value arg[2];
-	struct aml_node *node;
 	int64_t uid;
 	int i;
 
@@ -251,19 +249,11 @@ chvgpio_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(", %d pins\n", sc->sc_npins);
 
-	/* Register GeneralPurposeIO address space. */
-	memset(&arg, 0, sizeof(arg));
-	arg[0].type = AML_OBJTYPE_INTEGER;
-	arg[0].v_integer = ACPI_OPREG_GPIO;
-	arg[1].type = AML_OBJTYPE_INTEGER;
-	arg[1].v_integer = 1;
-	node = aml_searchname(sc->sc_node, "_REG");
-	if (node && aml_evalnode(sc->sc_acpi, node, 2, arg, NULL))
-		printf("%s: _REG failed\n", sc->sc_dev.dv_xname);
-
 	/* Register OEM defined address space. */
 	aml_register_regionspace(sc->sc_node, CHVGPIO_REGIONSPACE_BASE + uid,
 	    sc, chvgpio_opreg_handler);
+
+	acpi_register_gpio(sc->sc_acpi, sc->sc_node);
 	return;
 
 unmap:
