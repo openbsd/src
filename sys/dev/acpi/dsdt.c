@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.235 2017/10/12 07:24:46 anton Exp $ */
+/* $OpenBSD: dsdt.c,v 1.236 2017/11/29 15:22:22 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2208,8 +2208,6 @@ void aml_createfield(struct aml_value *, int, struct aml_value *, int, int,
 void aml_parsefieldlist(struct aml_scope *, int, int,
     struct aml_value *, struct aml_value *, int);
 
-#define GAS_PCI_CFG_SPACE_UNEVAL  0xCC
-
 int
 aml_evalhid(struct aml_node *node, struct aml_value *val)
 {
@@ -2222,7 +2220,73 @@ aml_evalhid(struct aml_node *node, struct aml_value *val)
 	return (0);
 }
 
-void aml_rwgas(struct aml_value *, int, int, struct aml_value *, int, int);
+int
+aml_opreg_sysmem_handler(void *cookie, int iodir, uint64_t address, int size,
+    uint64_t *value)
+{
+	return acpi_gasio(acpi_softc, iodir, GAS_SYSTEM_MEMORY,
+	    address, size, size, value);
+}
+
+int
+aml_opreg_sysio_handler(void *cookie, int iodir, uint64_t address, int size,
+    uint64_t *value)
+{
+	return acpi_gasio(acpi_softc, iodir, GAS_SYSTEM_IOSPACE,
+	    address, size, size, value);
+}
+
+int
+aml_opreg_pcicfg_handler(void *cookie, int iodir, uint64_t address, int size,
+    uint64_t *value)
+{
+	return acpi_gasio(acpi_softc, iodir, GAS_PCI_CFG_SPACE,
+	    address, size, size, value);
+}
+
+int
+aml_opreg_ec_handler(void *cookie, int iodir, uint64_t address, int size,
+    uint64_t *value)
+{
+	return acpi_gasio(acpi_softc, iodir, GAS_EMBEDDED,
+	    address, size, size, value);
+}
+
+struct aml_regionspace {
+	void *cookie;
+	int (*handler)(void *, int, uint64_t, int, uint64_t *);
+};
+
+struct aml_regionspace aml_regionspace[256] = {
+	[ACPI_OPREG_SYSMEM] = { NULL, aml_opreg_sysmem_handler },
+	[ACPI_OPREG_SYSIO] = { NULL, aml_opreg_sysio_handler },
+	[ACPI_OPREG_PCICFG] = { NULL, aml_opreg_pcicfg_handler },
+	[ACPI_OPREG_EC] = { NULL, aml_opreg_ec_handler },
+};
+
+void
+aml_register_regionspace(struct aml_node *node, int iospace, void *cookie,
+    int (*handler)(void *, int, uint64_t, int, uint64_t *))
+{
+	struct aml_value arg[2];
+
+	KASSERT(iospace >= 0 && iospace < 256);
+
+	aml_regionspace[iospace].cookie = cookie;
+	aml_regionspace[iospace].handler = handler;
+
+	/* Register address space. */
+	memset(&arg, 0, sizeof(arg));
+	arg[0].type = AML_OBJTYPE_INTEGER;
+	arg[0].v_integer = iospace;
+	arg[1].type = AML_OBJTYPE_INTEGER;
+	arg[1].v_integer = 1;
+	node = aml_searchname(node, "_REG");
+	if (node)
+		aml_evalnode(acpi_softc, node, 2, arg, NULL);
+}
+
+void aml_rwgen(struct aml_value *, int, int, struct aml_value *, int, int);
 void aml_rwgpio(struct aml_value *, int, int, struct aml_value *, int, int);
 void aml_rwindexfield(struct aml_value *, struct aml_value *val, int);
 void aml_rwfield(struct aml_value *, int, int, struct aml_value *, int);
@@ -2250,9 +2314,73 @@ aml_rdpciaddr(struct aml_node *pcidev, union amlpci_t *addr)
 	return (0);
 }
 
+int
+acpi_genio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
+    int access_size, int len, void *buffer)
+{
+	struct aml_regionspace *region = &aml_regionspace[iospace];
+	u_int8_t *pb;
+	int reg;
+
+	dnprintf(50, "genio: %.2x 0x%.8llx %s\n",
+	    iospace, address, (iodir == ACPI_IOWRITE) ? "write" : "read");
+
+	KASSERT((len % access_size) == 0);
+
+	pb = (u_int8_t *)buffer;
+	for (reg = 0; reg < len; reg += access_size) {
+		uint64_t value;
+		int err;
+
+		if (iodir == ACPI_IOREAD) {
+			err = region->handler(region->cookie, iodir,
+			    address + reg, access_size, &value);
+			if (err)
+				return err;
+			switch (access_size) {
+			case 1:
+				*(uint8_t *)(pb + reg) = value;
+				break;
+			case 2:
+				*(uint16_t *)(pb + reg) = value;
+				break;
+			case 4:
+				*(uint32_t *)(pb + reg) = value;
+				break;
+			default:
+				printf("%s: invalid access size %d on read\n",
+				    __func__, access_size);
+				return -1;
+			}
+		} else {
+			switch (access_size) {
+			case 1:
+				value = *(uint8_t *)(pb + reg);
+				break;
+			case 2:
+				value = *(uint16_t *)(pb + reg);
+				break;
+			case 4:
+				value = *(uint32_t *)(pb + reg);
+				break;
+			default:
+				printf("%s: invalid access size %d on write\n",
+				    __func__, access_size);
+				return -1;
+			}
+			err = region->handler(region->cookie, iodir,
+			    address + reg, access_size, &value);
+			if (err)
+				return err;
+		}
+	}
+
+	return 0;
+}
+
 /* Read/Write from opregion object */
 void
-aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
+aml_rwgen(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
     int mode, int flag)
 {
 	struct aml_value tmp;
@@ -2287,7 +2415,7 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 	bpos += ((rgn->v_opregion.iobase & (sz - 1)) << 3);
 	bpos &= ((sz << 3) - 1);
 
-	if (rgn->v_opregion.iospace == GAS_PCI_CFG_SPACE) {
+	if (rgn->v_opregion.iospace == ACPI_OPREG_PCICFG) {
 		/* Get PCI Root Address for this opregion */
 		aml_rdpciaddr(rgn->node->parent, &pi);
 	}
@@ -2296,6 +2424,9 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 	vbit = &val->v_integer;
 	tlen = roundup(bpos + blen, sz << 3);
 	type = rgn->v_opregion.iospace;
+
+	if (aml_regionspace[type].handler == NULL)
+		panic("%s: unregistered RegionSpace 0x%x\n", __func__, type);
 
 	/* Allocate temporary storage */
 	if (tlen > aml_intlen) {
@@ -2327,21 +2458,21 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 
 	if (mode == ACPI_IOREAD) {
 		/* Read bits from opregion */
-		acpi_gasio(acpi_softc, ACPI_IOREAD, type, pi.addr,
+		acpi_genio(acpi_softc, ACPI_IOREAD, type, pi.addr,
 		    sz, tlen >> 3, tbit);
 		aml_bufcpy(vbit, 0, tbit, bpos, blen);
 	} else {
 		/* Write bits to opregion */
 		if (AML_FIELD_UPDATE(flag) == AML_FIELD_PRESERVE &&
 		    (bpos != 0 || blen != tlen)) {
-			acpi_gasio(acpi_softc, ACPI_IOREAD, type, pi.addr,
+			acpi_genio(acpi_softc, ACPI_IOREAD, type, pi.addr,
 			    sz, tlen >> 3, tbit);
 		} else if (AML_FIELD_UPDATE(flag) == AML_FIELD_WRITEASONES) {
 			memset(tbit, 0xff, tmp.length);
 		}
 		/* Copy target bits, then write to region */
 		aml_bufcpy(tbit, bpos, vbit, 0, blen);
-		acpi_gasio(acpi_softc, ACPI_IOWRITE, type, pi.addr,
+		acpi_genio(acpi_softc, ACPI_IOWRITE, type, pi.addr,
 		    sz, tlen >> 3, tbit);
 
 		aml_delref(&val, "fld.write");
@@ -2473,7 +2604,7 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
 	} else if (fld->v_field.type == AMLOP_BANKFIELD) {
 		_aml_setvalue(&tmp, AML_OBJTYPE_INTEGER, fld->v_field.ref3, 0);
 		aml_rwfield(ref2, 0, aml_intlen, &tmp, ACPI_IOWRITE);
-		aml_rwgas(ref1, fld->v_field.bitpos, fld->v_field.bitlen,
+		aml_rwgen(ref1, fld->v_field.bitpos, fld->v_field.bitlen,
 		    val, mode, fld->v_field.flags);
 	} else if (fld->v_field.type == AMLOP_FIELD) {
 		switch (ref1->v_opregion.iospace) {
@@ -2481,16 +2612,9 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
 			aml_rwgpio(ref2, bpos, blen, val, mode,
 			    fld->v_field.flags);
 			break;
-		case ACPI_OPREG_SYSMEM:
-		case ACPI_OPREG_SYSIO:
-		case ACPI_OPREG_PCICFG:
-		case ACPI_OPREG_EC:
-			aml_rwgas(ref1, fld->v_field.bitpos + bpos, blen,
-			    val, mode, fld->v_field.flags);
-			break;
 		default:
-			aml_die("Unsupported RegionSpace 0x%x",
-			    ref1->v_opregion.iospace);
+			aml_rwgen(ref1, fld->v_field.bitpos + bpos, blen,
+			    val, mode, fld->v_field.flags);
 			break;
 		}
 	} else if (mode == ACPI_IOREAD) {
