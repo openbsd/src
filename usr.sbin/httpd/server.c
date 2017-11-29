@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.112 2017/11/28 01:21:30 beck Exp $	*/
+/*	$OpenBSD: server.c,v 1.113 2017/11/29 16:55:08 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -189,9 +189,9 @@ server_tls_load_ocsp(struct server *srv)
 	if ((srv->srv_conf.tls_ocsp_staple = tls_load_file(
 	    srv->srv_conf.tls_ocsp_staple_file,
 	    &srv->srv_conf.tls_ocsp_staple_len, NULL)) == NULL) {
-		log_warnx("%s: Failed to load ocsp staple from %s - ignoring", __func__,
+		log_warnx("%s: Failed to load ocsp staple from %s", __func__,
 		    srv->srv_conf.tls_ocsp_staple_file);
-		return (0);
+		return (-1);
 	}
 
 	if (srv->srv_conf.tls_ocsp_staple_len == 0) {
