@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.176 2017/11/28 14:32:45 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.177 2017/11/29 00:38:01 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1493,7 +1493,7 @@ vcpu_readregs_svm(struct vcpu *vcpu, uint64_t regmask,
 /*
  * vcpu_writeregs_vmx
  *
- * Writes 'vcpu's registers
+ * Writes VCPU registers
  *
  * Parameters:
  *  vcpu: the vcpu that has to get its registers written to
@@ -1560,7 +1560,7 @@ vcpu_writeregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
 			if (vmwrite(vmm_vmx_sreg_vmcs_fields[i].arid, ar))
 				goto errout;
 			if (vmwrite(vmm_vmx_sreg_vmcs_fields[i].baseid,
-			   sregs[i].vsi_base))
+			    sregs[i].vsi_base))
 				goto errout;
 		}
 
@@ -2093,8 +2093,10 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	ret = 0;
 	ug = 0;
 
-	if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
+	if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa)) {
+		DPRINTF("%s: error reloading VMCS\n", __func__);
 		return (EINVAL);
+	}
 
 	/* Compute Basic Entry / Exit Controls */
 	vcpu->vc_vmx_basic = rdmsr(IA32_VMX_BASIC);
@@ -2138,11 +2140,13 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	}
 
 	if (vcpu_vmx_compute_ctrl(ctrlval, ctrl, want1, want0, &pinbased)) {
+		DPRINTF("%s: error computing pinbased controls\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_PINBASED_CTLS, pinbased)) {
+		DPRINTF("%s: error setting pinbased controls\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2189,11 +2193,13 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	}
 
 	if (vcpu_vmx_compute_ctrl(ctrlval, ctrl, want1, want0, &procbased)) {
+		DPRINTF("%s: error computing procbased controls\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_PROCBASED_CTLS, procbased)) {
+		DPRINTF("%s: error setting procbased controls\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2240,11 +2246,15 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	ctrl = IA32_VMX_PROCBASED2_CTLS;
 
 	if (vcpu_vmx_compute_ctrl(ctrlval, ctrl, want1, want0, &procbased2)) {
+		DPRINTF("%s: error computing secondary procbased controls\n",
+		     __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_PROCBASED2_CTLS, procbased2)) {
+		DPRINTF("%s: error setting secondary procbased controls\n",
+		     __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2270,11 +2280,13 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	}
 
 	if (vcpu_vmx_compute_ctrl(ctrlval, ctrl, want1, want0, &exit)) {
+		DPRINTF("%s: error computing exit controls\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_EXIT_CTLS, exit)) {
+		DPRINTF("%s: error setting exit controls\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2335,8 +2347,9 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 			eptp |= IA32_EPT_PAGING_CACHE_TYPE_WB;
 		}
 
-		DPRINTF("guest eptp = 0x%llx\n", eptp);
+		DPRINTF("Guest EPTP = 0x%llx\n", eptp);
 		if (vmwrite(VMCS_GUEST_IA32_EPTP, eptp)) {
+			DPRINTF("%s: error setting guest EPTP\n", __func__);
 			ret = EINVAL;
 			goto exit;
 		}
@@ -2353,6 +2366,8 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 				goto exit;
 			}
 			if (vmwrite(VMCS_GUEST_VPID, vpid)) {
+				DPRINTF("%s: error setting guest VPID\n",
+				    __func__);
 				ret = EINVAL;
 				goto exit;
 			}
@@ -2474,50 +2489,66 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * but this is not an architectural requirement.
 	 */
 	if (vmwrite(VMCS_EXIT_MSR_STORE_COUNT, VMX_NUM_MSR_STORE)) {
+		DPRINTF("%s: error setting guest MSR exit store count\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_EXIT_MSR_LOAD_COUNT, VMX_NUM_MSR_STORE)) {
+		DPRINTF("%s: error setting guest MSR exit load count\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_ENTRY_MSR_LOAD_COUNT, VMX_NUM_MSR_STORE)) {
+		DPRINTF("%s: error setting guest MSR entry load count\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_EXIT_STORE_MSR_ADDRESS,
 	    vcpu->vc_vmx_msr_exit_save_pa)) {
+		DPRINTF("%s: error setting guest MSR exit store address\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_EXIT_LOAD_MSR_ADDRESS,
 	    vcpu->vc_vmx_msr_exit_load_pa)) {
+		DPRINTF("%s: error setting guest MSR exit load address\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_ENTRY_LOAD_MSR_ADDRESS,
 	    vcpu->vc_vmx_msr_exit_save_pa)) {
+		DPRINTF("%s: error setting guest MSR entry load address\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_MSR_BITMAP_ADDRESS,
 	    vcpu->vc_msr_bitmap_pa)) {
+		DPRINTF("%s: error setting guest MSR bitmap address\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_CR4_MASK, CR4_VMXE)) {
+		DPRINTF("%s: error setting guest CR4 mask\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_CR0_MASK, CR0_NE)) {
+		DPRINTF("%s: error setting guest CR0 mask\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2562,6 +2593,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 
 	/* Flush the VMCS */
 	if (vmclear(&vcpu->vc_control_pa)) {
+		DPRINTF("%s: vmclear failed\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2687,6 +2719,7 @@ vcpu_init_vmx(struct vcpu *vcpu)
 	/* Host CR0 */
 	cr0 = rcr0() & ~CR0_TS;
 	if (vmwrite(VMCS_HOST_IA32_CR0, cr0)) {
+		DPRINTF("%s: error writing host CR0\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2694,54 +2727,64 @@ vcpu_init_vmx(struct vcpu *vcpu)
 	/* Host CR4 */
 	cr4 = rcr4();
 	if (vmwrite(VMCS_HOST_IA32_CR4, cr4)) {
+		DPRINTF("%s: error writing host CR4\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	/* Host Segment Selectors */
 	if (vmwrite(VMCS_HOST_IA32_CS_SEL, GSEL(GCODE_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host CS selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_HOST_IA32_DS_SEL, GSEL(GDATA_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host DS selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_HOST_IA32_ES_SEL, GSEL(GDATA_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host ES selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_HOST_IA32_FS_SEL, GSEL(GDATA_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host FS selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_HOST_IA32_GS_SEL, GSEL(GDATA_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host GS selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_HOST_IA32_SS_SEL, GSEL(GDATA_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host SS selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_HOST_IA32_TR_SEL, GSYSSEL(GPROC0_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host TR selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	/* Host IDTR base */
 	if (vmwrite(VMCS_HOST_IA32_IDTR_BASE, idt_vaddr)) {
+		DPRINTF("%s: error writing host IDTR base\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	/* VMCS link */
 	if (vmwrite(VMCS_LINK_POINTER, 0xFFFFFFFFFFFFFFFF)) {
+		DPRINTF("%s: error writing VMCS link pointer\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2764,8 +2807,10 @@ exit:
 			km_free((void *)vcpu->vc_vmx_msr_entry_load_va,
 			    PAGE_SIZE, &kv_page, &kp_zero);
 	} else {
-		if (vmclear(&vcpu->vc_control_pa))
+		if (vmclear(&vcpu->vc_control_pa)) {
+			DPRINTF("%s: vmclear failed\n", __func__);
 			ret = EINVAL;
+		}
 	}
 
 	return (ret);
@@ -3310,6 +3355,12 @@ vcpu_vmx_compute_ctrl(uint64_t ctrlval, uint16_t ctrl, uint32_t want1,
  * vm_get_info
  *
  * Returns information about the VM indicated by 'vip'.
+ * Returns information about the VM indicated by 'vip'. The 'vip_size' field
+ * in the 'vip' parameter is used to indicate the size of the caller's buffer.
+ * If insufficient space exists in that buffer, the required size needed is
+ * returned in vip_size and the number of VM information structures returned
+ * in vip_info_count is set to 0. The caller should then try the ioctl again
+ * after allocating a sufficiently large buffer.
  *
  * Parameters:
  *  vip: information structure identifying the VM to queery
@@ -4992,7 +5043,7 @@ vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 		return (0);
 
 	/*
-	 * If the guest has enabled paging, then the IA32_VMX_IA32E_MODE_GUEST
+	 * Since the guest has enabled paging, then the IA32_VMX_IA32E_MODE_GUEST
 	 * control must be set to the same as EFER_LME.
 	 */
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
