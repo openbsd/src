@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.62 2017/08/14 16:14:02 reyk Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.63 2017/11/29 19:36:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -178,7 +178,6 @@ mpestart(struct ifnet *ifp0)
 			rtfree(rt);
 			continue;
 		}
-
 #if NBPFILTER > 0
 		if (ifp0->if_bpf) {
 			/* remove MPLS label before passing packet to bpf */
@@ -191,7 +190,7 @@ mpestart(struct ifnet *ifp0)
 			m->m_pkthdr.len += sizeof(struct shim_hdr);
 		}
 #endif
-		/* XXX lie, but mpls_output will only look at sa_family */
+		/* XXX lie, but mpls_output looks only at sa_family */
 		sa->sa_family = AF_MPLS;
 
 		mpls_output(ifp, m, sa, rt);
@@ -207,6 +206,7 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct shim_hdr	shim;
 	int		error;
 	int		off;
+	in_addr_t	addr;
 	u_int8_t	op = 0;
 
 #ifdef DIAGNOSTIC
@@ -223,12 +223,15 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	error = 0;
 	switch (dst->sa_family) {
 	case AF_INET:
-		if (rt && rt->rt_flags & RTF_MPLS) {
-			shim.shim_label =
-			    ((struct rt_mpls *)rt->rt_llinfo)->mpls_label;
-			shim.shim_label |= MPLS_BOS_MASK;
-			op =  ((struct rt_mpls *)rt->rt_llinfo)->mpls_operation;
+		if (!rt || !(rt->rt_flags & RTF_MPLS)) {
+			m_freem(m);
+			error = ENETUNREACH;
+			goto out;
 		}
+		shim.shim_label =
+		    ((struct rt_mpls *)rt->rt_llinfo)->mpls_label;
+		shim.shim_label |= MPLS_BOS_MASK;
+		op =  ((struct rt_mpls *)rt->rt_llinfo)->mpls_operation;
 		if (op != MPLS_OP_PUSH) {
 			m_freem(m);
 			error = ENETUNREACH;
@@ -247,8 +250,9 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			goto out;
 		}
 		*mtod(m, sa_family_t *) = AF_INET;
+		addr = satosin(rt->rt_gateway)->sin_addr.s_addr;
 		m_copyback(m, sizeof(sa_family_t), sizeof(in_addr_t),
-		    (caddr_t)&((satosin(dst)->sin_addr)), M_NOWAIT);
+		    &addr, M_NOWAIT);
 		break;
 	default:
 		m_freem(m);
@@ -320,6 +324,12 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		if (error)
 			break;
+		/*
+		 * force interface up for now,
+		 * linkstate of MPLS route is not tracked
+		 */
+		if (!ISSET(ifp->if_flags, IFF_UP))
+			if_up(ifp);
 		ifm = ifp->if_softc;
 		if (ifm->sc_smpls.smpls_label) {
 			/* remove old MPLS route */
@@ -337,6 +347,7 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCSIFRDOMAIN:
 		/* must readd the MPLS "route" for our label */
+		/* XXX does not make sense, the MPLS route is on rtable 0 */
 		ifm = ifp->if_softc;
 		if (ifr->ifr_rdomainid != ifp->if_rdomain) {
 			if (ifm->sc_smpls.smpls_label) {
