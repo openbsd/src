@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_state.c,v 1.8 2017/05/05 15:16:25 schwarze Exp $ */
+/*	$OpenBSD: mdoc_state.c,v 1.9 2017/11/29 20:04:36 schwarze Exp $ */
 /*
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -208,19 +208,24 @@ state_bd(STATE_ARGS)
 static void
 state_bl(STATE_ARGS)
 {
+	struct mdoc_arg	*args;
+	size_t		 i;
 
 	if (n->type != ROFFT_HEAD || n->parent->args == NULL)
 		return;
 
-	switch(n->parent->args->argv[0].arg) {
-	case MDOC_Diag:
-		n->norm->Bl.type = LIST_diag;
-		break;
-	case MDOC_Column:
-		n->norm->Bl.type = LIST_column;
-		break;
-	default:
-		break;
+	args = n->parent->args;
+	for (i = 0; i < args->argc; i++) {
+		switch(args->argv[i].arg) {
+		case MDOC_Diag:
+			n->norm->Bl.type = LIST_diag;
+			return;
+		case MDOC_Column:
+			n->norm->Bl.type = LIST_column;
+			return;
+		default:
+			break;
+		}
 	}
 }
 
