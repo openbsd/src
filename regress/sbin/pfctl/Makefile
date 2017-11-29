@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.228 2017/11/24 22:53:55 bluhm Exp $
+# $OpenBSD: Makefile,v 1.229 2017/11/29 00:24:32 sashan Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check whether the output matches pfNN.ok
@@ -30,6 +30,7 @@ PFIF2IP=1 2 3
 PFCHKSUM=1 2 3
 PFCMD=1
 PFCMDFAIL=1
+PFLOADANCHORS=112 113
 
 PFCTL ?=	/sbin/pfctl
 
@@ -330,6 +331,31 @@ pfchksum-update:	${PFCHKSUM_UPDATES}
 
 NODEFAULT_TARGETS+=pfchksum
 REGRESS_ROOT_TARGETS+=pfchksum
+
+.for n in ${PFLOADANCHORS}
+PFLOADANCHORS_TARGETS+=pfloadanchors${n}
+PFLOADANCHORS_UPDATES+=pfloadanchors${n}-update
+
+pfloadanchors${n}:
+	${SUDO} ${PFCTL} -a regress -v -f - < ${.CURDIR}/pf${n}.in
+	(${SUDO} ${PFCTL} -a 'regress/*' -sr | \
+	    sed -e 's/__automatic_[0-9a-f]*_.*>/__automatic_>/' ) | \
+	    diff -u ${.CURDIR}/pf${n}.ok /dev/stdin
+	${SUDO} ${PFCTL} -o none -a regress -Fr >/dev/null 2>&1
+
+pfloadanchors${n}-update:
+	${SUDO} ${PFCTL} -a regress -v -f - < ${.CURDIR}/pf${n}.in
+	(${SUDO} ${PFCTL} -a 'regress/*' -sr | \
+	    sed -e 's/__automatic_[0-9a-f]*_.*>/__automatic_>/' ) \
+	    > ${.CURDIR}/pf${n}.ok
+	${SUDO} ${PFCTL} -o none -a regress -Fr >/dev/null 2>&1
+
+.endfor
+
+pfloadanchors:		${PFLOADANCHORS_TARGETS}
+pfloadanchors-update:	${PFLOADANCHORS_UPDATES}
+
+REGRESS_TARGETS+=pfloadanchors
 
 update:	${UPDATE_TARGETS}
 
