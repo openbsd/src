@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1825 2017/08/28 09:43:18 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.1827 2017/11/29 05:00:16 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5301,6 +5301,16 @@
 #define	PCI_PRODUCT_MEINBERG_GPS170PCI	0x0204		/* GPS170PCI */
 
 /* Mellanox */
+#define	PCI_PRODUCT_MELLANOX_MT27700	0x1013		/* ConnectX-4 */
+#define	PCI_PRODUCT_MELLANOX_MT27700VF	0x1014		/* ConnectX-4 VF */
+#define	PCI_PRODUCT_MELLANOX_MT27710	0x1015		/* ConnectX-4 Lx */
+#define	PCI_PRODUCT_MELLANOX_MT27710VF	0x1016		/* ConnectX-4 Lx VF */
+#define	PCI_PRODUCT_MELLANOX_MT27800	0x1017		/* ConnectX-5 */
+#define	PCI_PRODUCT_MELLANOX_MT27800VF	0x1018		/* ConnectX-5 VF */
+#define	PCI_PRODUCT_MELLANOX_MT28800	0x1019		/* ConnectX-5 Ex */
+#define	PCI_PRODUCT_MELLANOX_MT28800VF	0x101a		/* ConnectX-5 Ex VF */
+#define	PCI_PRODUCT_MELLANOX_MT28908	0x101b		/* ConnectX-6 */
+#define	PCI_PRODUCT_MELLANOX_MT28908VF	0x101c		/* ConnectX-6 VF */
 #define	PCI_PRODUCT_MELLANOX_CONNECTX_EN	0x6368		/* ConnectX EN */
 
 /* Mentor */
