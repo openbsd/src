@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.35 2017/11/27 23:21:16 claudio Exp $	*/
+/*	$OpenBSD: config.c,v 1.36 2017/11/29 15:24:50 benno Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -44,6 +44,7 @@ config_init(struct relayd *env)
 		env->sc_conf.interval.tv_usec = 0;
 		env->sc_conf.prefork_relay = RELAY_NUMPROC;
 		env->sc_conf.statinterval.tv_sec = RELAY_STATINTERVAL;
+		env->sc_ps->ps_csock.cs_name = RELAYD_SOCKET;
 	}
 
 	ps->ps_what[PROC_PARENT] = CONFIG_ALL;

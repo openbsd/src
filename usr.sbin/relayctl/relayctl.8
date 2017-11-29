@@ -1,4 +1,4 @@
-.\" $OpenBSD: relayctl.8,v 1.32 2015/11/28 01:22:44 gsoares Exp $
+.\" $OpenBSD: relayctl.8,v 1.33 2017/11/29 15:24:50 benno Exp $
 .\"
 .\" Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2015 $
+.Dd $Mdocdate: November 29 2017 $
 .Dt RELAYCTL 8
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nd control the relay daemon
 .Sh SYNOPSIS
 .Nm
+.Op Fl s Ar socket
 .Ar command
 .Op Ar argument ...
 .Sh DESCRIPTION
@@ -31,6 +32,17 @@ The
 program controls the
 .Xr relayd 8
 daemon.
+.Pp
+The following options are available:
+.Bl -tag -width Ds
+.It Fl s Ar socket
+Use
+.Ar socket
+instead of the default
+.Pa /var/run/relayd.sock
+to communicate with
+.Xr relayd 8 .
+.El
 .Pp
 The following commands are available:
 .Bl -tag -width Ds

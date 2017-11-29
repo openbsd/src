@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.180 2017/11/27 23:21:16 claudio Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.181 2017/11/29 15:24:50 benno Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2017 $
+.Dd $Mdocdate: November 29 2017 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -163,6 +163,12 @@ will be used.
 See
 .Xr snmpd.conf 5
 for more information about SNMP configuration.
+.It Ic socket Qo Ar path Qc
+Create a control socket at
+.Ar path .
+By default
+.Pa /var/run/relayd.sock
+is used..
 .It Ic timeout Ar number
 Set the global timeout in milliseconds for checks.
 This can be overridden by the timeout value in the table definitions.

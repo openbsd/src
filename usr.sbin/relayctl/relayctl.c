@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.57 2016/09/03 14:44:21 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.58 2017/11/29 15:24:50 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -88,7 +88,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s command [argument ...]\n", __progname);
+	fprintf(stderr, "usage: %s [-s socket] command [argument ...]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -101,9 +102,25 @@ main(int argc, char *argv[])
 	int			 ctl_sock;
 	int			 done = 0;
 	int			 n, verbose = 0;
+	int			 ch;
+	const char		*sockname;
+
+	sockname = RELAYD_SOCKET;
+	while ((ch = getopt(argc, argv, "s:")) != -1) {
+		switch (ch) {
+		case 's':
+			sockname = optarg;
+			break;
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
 	/* parse options */
-	if ((res = parse(argc - 1, argv + 1)) == NULL)
+	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
 
 	/* connect to relayd control socket */
@@ -112,7 +129,9 @@ main(int argc, char *argv[])
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	(void)strlcpy(sun.sun_path, RELAYD_SOCKET, sizeof(sun.sun_path));
+	if (strlcpy(sun.sun_path, sockname, sizeof(sun.sun_path)) >=
+	    sizeof(sun.sun_path))
+		errx(1, "socket `%s' too long", sockname);
  reconnect:
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
 		/* Keep retrying if running in monitor mode */
@@ -121,7 +140,7 @@ main(int argc, char *argv[])
 			usleep(100);
 			goto reconnect;
 		}
-		err(1, "connect: %s", RELAYD_SOCKET);
+		err(1, "connect: %s", sockname);
 	}
 
 	if (pledge("stdio", NULL) == -1)
