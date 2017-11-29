@@ -53,4 +53,4 @@ L1:	rep
 	movq	%r11,%rax
 
 	ret
-END_STRONG(memset)
+END_BUILTIN(memset)

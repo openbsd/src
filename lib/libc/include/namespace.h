@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.h,v 1.10 2016/05/07 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: namespace.h,v 1.11 2017/11/29 05:13:57 guenther Exp $	*/
 
 #ifndef _LIBC_NAMESPACE_H_
 #define _LIBC_NAMESPACE_H_
@@ -154,23 +154,35 @@
 #define	DEF_CANCEL(x)		__weak_alias(x, CANCEL(x))
 #define	DEF_WRAP(x)		__weak_alias(x, WRAP(x))
 #define	DEF_SYS(x)		__strong_alias(_thread_sys_##x, HIDDEN(x))
+#ifdef __clang__
+#define	DEF_BUILTIN(x)		__asm("")
+#define	BUILTIN			__attribute__((__visibility__("protected")))
+#else
+#define	DEF_BUILTIN(x)		DEF_STRONG(x)
+#define	BUILTIN
+#endif
 
 #define	MAKE_CLONE(dst, src)	__dso_hidden typeof(dst) HIDDEN(dst) \
 				__attribute__((alias (HIDDEN_STRING(src))))
 
 
 /*
- * gcc will generate calls to the functions below.
+ * gcc and clang will generate calls to the functions below.
  * Declare and redirect them here so we always go
  * directly to our hidden aliases.
  */
 #include <sys/_types.h>
-void	*memcpy(void *__restrict, const void *__restrict, __size_t);
-void	*memset(void *, int, __size_t);
-void	__stack_smash_handler(const char [], int __attribute__((__unused__)));
+BUILTIN void	*memmove(void *, const void *, __size_t);
+BUILTIN void	*memcpy(void *__restrict, const void *__restrict, __size_t);
+BUILTIN void	*memset(void *, int, __size_t);
+BUILTIN void	__stack_smash_handler(const char [], int __unused);
+#ifndef __clang__
+PROTO_NORMAL(memmove);
 PROTO_NORMAL(memcpy);
 PROTO_NORMAL(memset);
 PROTO_NORMAL(__stack_smash_handler);
+#endif
+#undef	BUILTIN
 
 #endif  /* _LIBC_NAMESPACE_H_ */
 

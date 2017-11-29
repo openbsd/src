@@ -1,10 +1,10 @@
-/*	$OpenBSD: bzero.S,v 1.5 2015/08/31 02:53:56 guenther Exp $ */
+/*	$OpenBSD: bzero.S,v 1.6 2017/11/29 05:13:57 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 ENTRY(bzero)
 	pushl	%edi

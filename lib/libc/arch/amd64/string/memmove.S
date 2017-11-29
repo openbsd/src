@@ -51,12 +51,14 @@ ENTRY(memmove)
 	subq	%rsi,%rax
 	cmpq	%rcx,%rax	/* overlapping? */
 	jb	1f
+#ifdef memcpy_in_asm
 	jmp	2f		/* nope */
 
-// ENTRY(memcpy)
+ENTRY(memcpy)
 	movq	%rdi,%r11	/* save dest */
 	movq	%rdx,%rcx
 2:
+#endif
 	cld			/* copy forwards. */
 	shrq	$3,%rcx		/* copy by words */
 	rep
@@ -85,6 +87,8 @@ ENTRY(memmove)
 	movq	%r11,%rax
 	cld
 	ret
-// END(memcpy)
-END_STRONG(memmove)
+#ifdef memcpy_in_asm
+END_BUILTIN(memcpy)
+#endif
+END_BUILTIN(memmove)
 END_WEAK(bcopy)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcpy.c,v 1.3 2017/08/14 17:10:02 guenther Exp $ */
+/*	$OpenBSD: memcpy.c,v 1.4 2017/11/29 05:13:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -106,4 +106,4 @@ memcpy(void *dst0, const void *src0, size_t length)
 done:
 	return (dst0);
 }
-DEF_STRONG(memcpy);
+DEF_BUILTIN(memcpy);

@@ -1,10 +1,10 @@
-/* $OpenBSD: flt_rounds.S,v 1.6 2017/08/19 18:23:00 deraadt Exp $ */
+/* $OpenBSD: flt_rounds.S,v 1.7 2017/11/29 05:13:57 guenther Exp $ */
 /*
  * Written by J.T. Conklin, Apr 4, 1995
  * Public domain.
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 	.section .rodata
 	.align 2

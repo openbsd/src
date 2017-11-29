@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.S,v 1.6 2015/08/31 02:53:56 guenther Exp $	*/
+/*	$OpenBSD: memmove.S,v 1.7 2017/11/29 05:13:57 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 /*
  * Emulate bcopy() by swapping the first two arguments, and jumping
@@ -61,17 +61,20 @@ docopy:
 	subl	%esi,%eax
 	cmpl	%ecx,%eax		# overlapping?
 	jb	1f
+#ifdef memcpy_in_asm
 	jmp	docopyf			# nope
+
 /*
  * memcpy() doesn't worry about overlap and always copies forward
  */
-// ENTRY(memcpy)
+ENTRY(memcpy)
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%edi
 	movl	16(%esp),%esi
 	movl	20(%esp),%ecx
 docopyf:
+#endif
 	movl	%edi,%eax		# setup return value for memcpy/memmove
 	shrl	$2,%ecx			# copy by 32-bit words
 	rep
@@ -104,5 +107,8 @@ docopyf:
 	popl	%esi
 	cld
 	ret
-END_STRONG(memmove)
+#ifdef memcpy_in_asm
+END_BUILTIN(memcpy)
+#endif
+END_BUILTIN(memmove)
 END_WEAK(bcopy)

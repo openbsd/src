@@ -3,7 +3,7 @@
  * Public domain.
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 ENTRY(div)
 	movl	4(%esp),%eax
