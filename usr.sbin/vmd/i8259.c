@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.15 2017/09/18 00:05:15 dlg Exp $ */
+/* $OpenBSD: i8259.c,v 1.16 2017/11/29 22:08:40 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -223,7 +223,7 @@ i8259_assert_irq(uint8_t irq)
 	} else {
 		irq -= 8;
 		if (!ISSET(pics[SLAVE].imr, 1 << irq)) {
-			SET(pics[SLAVE].irr, irq);
+			SET(pics[SLAVE].irr, 1 << irq);
 			pics[SLAVE].asserted = 1;
 
 			/* Assert cascade IRQ on master PIC */
