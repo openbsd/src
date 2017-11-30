@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.27 2017/11/17 15:45:17 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.28 2017/11/30 11:29:03 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -580,53 +580,6 @@ ifuse_ops_write(struct fuse *f, struct fusebuf *fbuf)
 }
 
 static int
-ifuse_ops_create(struct fuse *f, struct fusebuf *fbuf)
-{
-	struct fuse_file_info ffi;
-	struct fuse_vnode *vn;
-	uint32_t mode;
-
-	char *realname;
-
-	DPRINTF("Opcode:\tcreate\n");
-	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
-
-	bzero(&ffi, sizeof(ffi));
-	ffi.flags = fbuf->fb_io_flags;
-	mode = fbuf->fb_io_mode;
-
-	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		free(fbuf->fb_dat);
-		return (0);
-	}
-
-	free(fbuf->fb_dat);
-	realname = build_realname(f, vn->ino);
-	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	if (f->op.create)
-		fbuf->fb_err = f->op.create(realname, mode,  &ffi);
-	else if (f->op.mknod)
-		fbuf->fb_err = f->op.mknod(realname, S_IFREG | mode, 0);
-	else
-		fbuf->fb_err = -ENOSYS;
-
-	if (!fbuf->fb_err) {
-		fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
-		fbuf->fb_ino = fbuf->fb_attr.st_ino;
-		fbuf->fb_io_mode = fbuf->fb_attr.st_mode;
-	}
-	free(realname);
-
-	return (0);
-}
-
-static int
 ifuse_ops_mkdir(struct fuse *f, struct fusebuf *fbuf)
 {
 	struct fuse_vnode *vn;
@@ -1124,9 +1077,6 @@ ifuse_exec_opcode(struct fuse *f, struct fusebuf *fbuf)
 		break;
 	case FBT_ACCESS:
 		ret = ifuse_ops_access(f, fbuf);
-		break;
-	case FBT_CREATE:
-		ret = ifuse_ops_create(f, fbuf);
 		break;
 	case FBT_SYMLINK:
 		ret = ifuse_ops_symlink(f, fbuf);

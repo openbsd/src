@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.36 2017/11/27 22:55:17 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.37 2017/11/30 11:29:03 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -211,7 +211,7 @@ fusefs_open(void *v)
 	struct fusefs_node *ip;
 	struct fusefs_mnt *fmp;
 	enum fufh_type fufh_type = FUFH_RDONLY;
-	int flags = O_RDONLY;
+	int flags;
 	int error;
 	int isdir;
 
@@ -226,22 +226,22 @@ fusefs_open(void *v)
 	if (ap->a_vp->v_type == VDIR)
 		isdir = 1;
 	else {
-		if ((ap->a_mode & FREAD) && (ap->a_mode & FWRITE)) {
+		if ((ap->a_mode & FREAD) && (ap->a_mode & FWRITE))
 			fufh_type = FUFH_RDWR;
-			flags = O_RDWR;
-		} else if (ap->a_mode  & (FWRITE)) {
+		else if (ap->a_mode  & (FWRITE))
 			fufh_type = FUFH_WRONLY;
-			flags = O_WRONLY;
-		}
 	}
 
 	/* already open i think all is ok */
 	if (ip->fufh[fufh_type].fh_type != FUFH_INVALID)
 		return (0);
 
+	/*
+	 * The file has already been created and/or truncated so FUSE dictates
+	 * that no creation and truncation flags are passed to open.
+	 */
+	flags = OFLAGS(ap->a_mode) & ~(O_CREAT|O_EXCL|O_TRUNC);
 	error = fusefs_file_open(fmp, ip, fufh_type, flags, isdir, ap->a_p);
-	if (error)
-		return (error);
 
 	return (error);
 }
@@ -904,16 +904,15 @@ fusefs_create(void *v)
 		goto out;
 	}
 
-	if (fmp->undef_op & UNDEF_CREATE) {
+	if (fmp->undef_op & UNDEF_MKNOD) {
 		error = ENOSYS;
 		goto out;
 	}
 
 	fbuf = fb_setup(cnp->cn_namelen + 1, ip->ufs_ino.i_number,
-	    FBT_CREATE, p);
+	    FBT_MKNOD, p);
 
 	fbuf->fb_io_mode = mode;
-	fbuf->fb_io_flags = O_CREAT | O_RDWR;
 
 	memcpy(fbuf->fb_dat, cnp->cn_nameptr, cnp->cn_namelen);
 	fbuf->fb_dat[cnp->cn_namelen] = '\0';
@@ -921,7 +920,7 @@ fusefs_create(void *v)
 	error = fb_queue(fmp->dev, fbuf);
 	if (error) {
 		if (error == ENOSYS)
-			fmp->undef_op |= UNDEF_CREATE;
+			fmp->undef_op |= UNDEF_MKNOD;
 
 		fb_delete(fbuf);
 		goto out;
