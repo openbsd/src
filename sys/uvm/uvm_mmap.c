@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.142 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.143 2017/11/30 00:36:10 guenther Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -459,8 +459,6 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 		/*
 		 * Old programs may not select a specific sharing type, so
 		 * default to an appropriate one.
-		 *
-		 * XXX: how does MAP_ANON fit in the picture?
 		 */
 		if ((flags & (MAP_SHARED|MAP_PRIVATE)) == 0) {
 #if defined(DEBUG)
@@ -521,7 +519,7 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 			/* MAP_PRIVATE mappings can always write to */
 			maxprot |= PROT_WRITE;
 		}
-		if ((flags & MAP_ANON) != 0 || (flags & __MAP_NOFAULT) != 0 ||
+		if ((flags & __MAP_NOFAULT) != 0 ||
 		    ((flags & MAP_PRIVATE) != 0 && (prot & PROT_WRITE) != 0)) {
 			if (p->p_rlimit[RLIMIT_DATA].rlim_cur < size ||
 			    p->p_rlimit[RLIMIT_DATA].rlim_cur - size <
@@ -533,25 +531,31 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 		error = uvm_mmapfile(&p->p_vmspace->vm_map, &addr, size, prot, maxprot,
 		    flags, vp, pos, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur, p);
 	} else {		/* MAP_ANON case */
-		/*
-		 * XXX What do we do about (MAP_SHARED|MAP_PRIVATE) == 0?
-		 */
 		if (fd != -1)
 			return EINVAL;
 
 is_anon:	/* label for SunOS style /dev/zero */
 
-		if ((flags & MAP_ANON) != 0 || (flags & __MAP_NOFAULT) != 0 ||
-		    ((flags & MAP_PRIVATE) != 0 && (prot & PROT_WRITE) != 0)) {
-			if (p->p_rlimit[RLIMIT_DATA].rlim_cur < size ||
-			    p->p_rlimit[RLIMIT_DATA].rlim_cur - size <
-			    ptoa(p->p_vmspace->vm_dused)) {
-				return ENOMEM;
-			}
+		/* __MAP_NOFAULT only makes sense with a backing object */
+		if ((flags & __MAP_NOFAULT) != 0)
+			return EINVAL;
+
+		if (p->p_rlimit[RLIMIT_DATA].rlim_cur < size ||
+		    p->p_rlimit[RLIMIT_DATA].rlim_cur - size <
+		    ptoa(p->p_vmspace->vm_dused)) {
+			return ENOMEM;
 		}
+
+		/*
+		 * We've been treating (MAP_SHARED|MAP_PRIVATE) == 0 as
+		 * MAP_PRIVATE, so make that clear.
+		 */
+		if ((flags & MAP_SHARED) == 0)
+			flags |= MAP_PRIVATE;
+
 		maxprot = PROT_MASK;
-		error = uvm_mmapanon(&p->p_vmspace->vm_map, &addr, size, prot, maxprot,
-		    flags, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur, p);
+		error = uvm_mmapanon(&p->p_vmspace->vm_map, &addr, size, prot,
+		    maxprot, flags, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur, p);
 	}
 
 	if (error == 0)

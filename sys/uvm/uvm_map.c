@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.232 2017/08/12 16:30:10 guenther Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.233 2017/11/30 00:36:10 guenther Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1064,8 +1064,6 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	entry->inheritance = inherit;
 	entry->wired_count = 0;
 	entry->advice = advice;
-	if (flags & UVM_FLAG_NOFAULT)
-		entry->etype |= UVM_ET_NOFAULT;
 	if (flags & UVM_FLAG_COPYONW) {
 		entry->etype |= UVM_ET_COPYONWRITE;
 		if ((flags & UVM_FLAG_OVERLAY) == 0)
