@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.6 2017/11/28 01:39:49 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.7 2017/11/30 00:01:50 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -361,6 +361,21 @@ test_chmod(int do_pp)
 
 	return 0;
 }
+static int
+test_exec(int do_pp)
+{
+	if (do_pp) {
+		printf("testing execve\n");
+		do_pledgepath();
+	}
+	char *argv[] = {"/usr/bin/true", NULL};
+	extern char **environ;
+
+	PP_SHOULD_SUCCEED((pledge("stdio exec", NULL) == -1), "pledge");
+	PP_SHOULD_SUCCEED((execve(argv[0], argv, environ) == -1), "execve");
+
+	return 0;
+}
 
 int
 main (int argc, char *argv[])
@@ -385,6 +400,7 @@ main (int argc, char *argv[])
 	failures += runcompare(test_statfs);
 	failures += runcompare(test_symlink);
 	failures += runcompare(test_chmod);
+	failures += runcompare(test_exec);
 
 	exit(failures);
 }
