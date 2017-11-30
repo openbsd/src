@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.116 2017/11/27 18:39:35 patrick Exp $	*/
+/*	$OpenBSD: iked.h,v 1.117 2017/11/30 12:18:44 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -508,6 +508,7 @@ struct iked_message {
 	struct iked_proposals	 msg_proposals;
 	struct iked_spi		 msg_rekey;
 	struct ibuf		*msg_nonce;	/* dh NONCE */
+	uint16_t		 msg_dhgroup;	/* dh group */
 	struct ibuf		*msg_ke;	/* dh key exchange */
 	struct iked_id		 msg_auth;	/* AUTH payload */
 	struct iked_id		 msg_id;
