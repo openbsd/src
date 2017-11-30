@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.160 2017/11/20 10:35:24 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.161 2017/11/30 15:24:50 nayden Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -557,7 +557,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 /*
  * Attach TCP protocol to socket, allocating
  * internet protocol control block, tcp control block,
- * bufer space, and entering LISTEN state if to accept connections.
+ * buffer space, and entering LISTEN state to accept connections.
  */
 int
 tcp_attach(struct socket *so, int proto)
@@ -645,7 +645,7 @@ tcp_detach(struct socket *so)
 		ostate = 0;
 
 	/*
-	 * Detache the TCP protocol from the socket.
+	 * Detach the TCP protocol from the socket.
 	 * If the protocol state is non-embryonic, then can't
 	 * do this directly: have to initiate a PRU_DISCONNECT,
 	 * which may finish later; embryonic TCB's can just
