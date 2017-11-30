@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.74 2017/11/11 02:50:07 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.75 2017/11/30 01:28:27 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1101,7 +1101,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 
 	if ((vm = vm_getbyname(vcp->vcp_name)) != NULL ||
 	    (vm = vm_getbyvmid(vcp->vcp_id)) != NULL) {
-		if (vm_checkperm(vm, uid) != 0 || vmc->vmc_flags != 0) {
+		if (vm_checkperm(vm, uid) != 0) {
 			errno = EPERM;
 			goto fail;
 		}
