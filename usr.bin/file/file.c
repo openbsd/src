@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.64 2017/07/01 21:07:13 brynet Exp $ */
+/* $OpenBSD: file.c,v 1.65 2017/11/30 11:10:07 bentley Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -515,7 +515,7 @@ static int
 try_unknown(struct input_file *inf)
 {
 	if (iflag)
-		xasprintf(&inf->result, "application/x-not-regular-file");
+		xasprintf(&inf->result, "application/octet-stream");
 	else
 		xasprintf(&inf->result, "data");
 	return (1);
