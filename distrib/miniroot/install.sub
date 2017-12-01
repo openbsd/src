@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1044 2017/11/05 11:16:16 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1045 2017/12/01 18:19:30 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2643,7 +2643,7 @@ store_random() {
 finish_up() {
 	local _dev _mp _fstype _rest _d
 	local _kernel_dir=/mnt/usr/share/relink/kernel
-	local _kernel=${MDKERNEL:-GENERIC} _syspatch_archs="amd64 i386"
+	local _kernel=${MDKERNEL:-GENERIC} _syspatch_archs="amd64 arm64 i386"
 
 	# Mount all known swap partitions.  This gives systems with little
 	# memory a better chance at running 'MAKEDEV all'.
