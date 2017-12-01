@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.225 2017/12/01 10:33:33 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.226 2017/12/01 12:40:58 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -42,10 +42,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgements:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 	This product includes software developed at the Information
- * 	Technology Division, US Naval Research Laboratory.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ *	This product includes software developed at the Information
+ *	Technology Division, US Naval Research Laboratory.
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -481,7 +481,7 @@ in_pcbpickport(u_int16_t *lport, void *laddr, int wild, struct inpcb *inp,
 	candidate = lower + arc4random_uniform(count);
 
 	do {
-		if (count-- < 0) 	/* completely used? */
+		if (count-- < 0)	/* completely used? */
 			return (EADDRNOTAVAIL);
 		++candidate;
 		if (candidate < lower || candidate > higher)
@@ -549,7 +549,7 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 #ifdef IPSEC
 	{
 		/* Cause an IPsec SA to be established. */
-	  	/* error is just ignored */
+		/* error is just ignored */
 		ipsp_spd_inp(NULL, AF_INET, 0, &error, IPSP_DIRECTION_OUT,
 		    NULL, inp, NULL);
 	}
@@ -1035,7 +1035,7 @@ int	in_pcbnotifymiss = 0;
 /*
  * The in(6)_pcbhashlookup functions are used to locate connected sockets
  * quickly:
- * 		faddr.fport <-> laddr.lport
+ *     faddr.fport <-> laddr.lport
  * No wildcard matching is done so that listening sockets are not found.
  * If the functions return NULL in(6)_pcblookup_listen can be used to
  * find a listening/bound socket that may accept the connection.
@@ -1074,8 +1074,8 @@ in_pcbhashlookup(struct inpcbtable *table, struct in_addr faddr,
 	}
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {
-		printf("in_pcbhashlookup: faddr=%08x fport=%d laddr=%08x lport=%d rdom=%d\n",
-		    ntohl(faddr.s_addr), ntohs(fport),
+		printf("%s: faddr=%08x fport=%d laddr=%08x lport=%d rdom=%d\n",
+		    __func__, ntohl(faddr.s_addr), ntohs(fport),
 		    ntohl(laddr.s_addr), ntohs(lport), rdomain);
 	}
 #endif
