@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.1 2017/11/16 18:12:27 jcs Exp $ */
+/* $OpenBSD: dwiic.c,v 1.2 2017/12/01 16:06:25 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -110,7 +110,7 @@ dwiic_i2c_print(void *aux, const char *pnp)
 	struct i2c_attach_args *ia = aux;
 
 	if (pnp != NULL)
-		printf("%s at %s", ia->ia_name, pnp);
+		printf("\"%s\" at %s", ia->ia_name, pnp);
 
 	printf(" addr 0x%x", ia->ia_addr);
 
