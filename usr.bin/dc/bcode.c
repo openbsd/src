@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.56 2017/11/29 19:13:31 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.57 2017/12/01 19:04:15 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -354,7 +354,7 @@ scale_number(BIGNUM *n, int s)
 
 	abs_scale = s > 0 ? s : -s;
 
-	if (abs_scale < sizeof(factors)/sizeof(factors[0])) {
+	if (abs_scale < nitems(factors)) {
 		if (s > 0)
 			bn_check(BN_mul_word(n, factors[abs_scale]));
 		else
@@ -390,9 +390,10 @@ split_number(const struct number *n, BIGNUM *i, BIGNUM *f)
 
 	bn_checkp(BN_copy(i, n->number));
 
-	if (n->scale == 0 && f != NULL)
-		bn_check(BN_set_word(f, 0));
-	else if (n->scale < sizeof(factors)/sizeof(factors[0])) {
+	if (n->scale == 0) {
+		if (f != NULL)
+			bn_check(BN_set_word(f, 0));
+	} else if (n->scale < nitems(factors)) {
 		rem = BN_div_word(i, factors[n->scale]);
 		if (f != NULL)
 			bn_check(BN_set_word(f, rem));
@@ -697,25 +698,56 @@ push_scale(void)
 static u_int
 count_digits(const struct number *n)
 {
-	struct number	*int_part, *fract_part;
-	u_int		i;
+	BIGNUM		*int_part, *a, *p;
+	BN_CTX		*ctx;
+	uint		d;
+	const uint64_t	c = 1292913986; /* floor(2^32 * log_10(2)) */
+	int		bits;
 
 	if (BN_is_zero(n->number))
 		return n->scale ? n->scale : 1;
 
-	int_part = new_number();
-	fract_part = new_number();
-	fract_part->scale = n->scale;
-	split_number(n, int_part->number, fract_part->number);
+	int_part = BN_new();
+	bn_checkp(int_part);
 
-	i = 0;
-	while (!BN_is_zero(int_part->number)) {
-		(void)BN_div_word(int_part->number, 10);
-		i++;
+	split_number(n, int_part, NULL);
+	bits = BN_num_bits(int_part);
+
+	if (bits == 0)
+		d = 0;
+	else {
+		/*
+		 * Estimate number of decimal digits based on number of bits.
+		 * Divide 2^32 factor out by shifting
+		 */
+		d = (c * bits) >> 32;
+
+		/* If close to a possible rounding error fix if needed */
+		if (d != (c * (bits - 1)) >> 32) {
+			ctx = BN_CTX_new();
+			bn_checkp(ctx);
+			a = BN_new();
+			bn_checkp(a);
+			p = BN_new();
+			bn_checkp(p);
+
+			bn_check(BN_set_word(a, 10));
+			bn_check(BN_set_word(p, d));
+			bn_check(BN_exp(a, a, p, ctx));
+
+			if (BN_ucmp(int_part, a) >= 0)
+				d++;
+
+			BN_CTX_free(ctx);
+			BN_free(a);
+			BN_free(p);
+		} else
+			d++;
 	}
-	free_number(int_part);
-	free_number(fract_part);
-	return i + n->scale;
+
+	BN_free(int_part);
+
+	return d + n->scale;
 }
 
 static void
