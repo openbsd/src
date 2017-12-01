@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wprintf.3,v 1.4 2014/05/13 20:51:00 jmc Exp $
+.\"	$OpenBSD: wprintf.3,v 1.5 2017/12/01 10:56:07 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 13 2014 $
+.Dd $Mdocdate: December 1 2017 $
 .Dt WPRINTF 3
 .Os
 .Sh NAME
@@ -44,18 +44,42 @@
 .In stdio.h
 .In wchar.h
 .Ft int
-.Fn fwprintf "FILE * restrict stream" "const wchar_t * restrict format" ...
+.Fo fwprintf
+.Fa "FILE * restrict stream"
+.Fa "const wchar_t * restrict format"
+.Fa ...
+.Fc
 .Ft int
-.Fn swprintf "wchar_t * restrict ws" "size_t n" "const wchar_t * restrict format" ...
+.Fo swprintf
+.Fa "wchar_t * restrict ws"
+.Fa "size_t n"
+.Fa "const wchar_t * restrict format"
+.Fa ...
+.Fc
 .Ft int
-.Fn wprintf "const wchar_t * restrict format" ...
+.Fo wprintf
+.Fa "const wchar_t * restrict format"
+.Fa ...
+.Fc
 .In stdarg.h
 .Ft int
-.Fn vfwprintf "FILE * restrict stream" "const wchar_t * restrict" "va_list ap"
+.Fo vfwprintf
+.Fa "FILE * restrict stream"
+.Fa "const wchar_t * restrict format"
+.Fa "va_list ap"
+.Fc
 .Ft int
-.Fn vswprintf "wchar_t * restrict ws" "size_t n" "const wchar_t *restrict format" "va_list ap"
+.Fo vswprintf
+.Fa "wchar_t * restrict ws"
+.Fa "size_t n"
+.Fa "const wchar_t * restrict format"
+.Fa "va_list ap"
+.Fc
 .Ft int
-.Fn vwprintf "const wchar_t * restrict format" "va_list ap"
+.Fo vwprintf
+.Fa "const wchar_t * restrict format"
+.Fa "va_list ap"
+.Fc
 .Sh DESCRIPTION
 The
 .Fn wprintf
