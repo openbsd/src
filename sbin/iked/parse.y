@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.67 2017/11/27 18:39:35 patrick Exp $	*/
+/*	$OpenBSD: parse.y,v 1.68 2017/12/01 20:19:05 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -2589,6 +2589,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 	struct iked_policy	 pol;
 	struct iked_proposal	 prop[2];
 	unsigned int		 j;
+	unsigned int		 ikepropid = 1, ipsecpropid = 1;
 	struct iked_transform	 ikexforms[64], ipsecxforms[64];
 	struct iked_flow	 flows[64];
 	static unsigned int	 policy_id = 0;
@@ -2719,7 +2720,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 	TAILQ_INIT(&pol.pol_proposals);
 	RB_INIT(&pol.pol_flows);
 
-	prop[0].prop_id = ++pol.pol_nproposals;
+	prop[0].prop_id = ikepropid++;
 	prop[0].prop_protoid = IKEV2_SAPROTO_IKE;
 	if (ike_sa == NULL || ike_sa->xfs == NULL) {
 		prop[0].prop_nxforms = ikev2_default_nike_transforms;
@@ -2750,8 +2751,9 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 		prop[0].prop_xforms = ikexforms;
 	}
 	TAILQ_INSERT_TAIL(&pol.pol_proposals, &prop[0], prop_entry);
+	pol.pol_nproposals++;
 
-	prop[1].prop_id = ++pol.pol_nproposals;
+	prop[1].prop_id = ipsecpropid++;
 	prop[1].prop_protoid = saproto;
 	if (ipsec_sa == NULL || ipsec_sa->xfs == NULL) {
 		prop[1].prop_nxforms = ikev2_default_nesp_transforms;
@@ -2790,6 +2792,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 		prop[1].prop_xforms = ipsecxforms;
 	}
 	TAILQ_INSERT_TAIL(&pol.pol_proposals, &prop[1], prop_entry);
+	pol.pol_nproposals++;
 
 	if (hosts == NULL || hosts->src == NULL || hosts->dst == NULL)
 		fatalx("create_ike: no traffic selectors/flows");
