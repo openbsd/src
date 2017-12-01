@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.31 2017/08/29 15:25:51 deraadt Exp $	*/
+/*	$OpenBSD: util.h,v 1.32 2017/12/01 23:30:05 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -41,6 +41,7 @@ void *_dl_calloc(size_t nmemb, const size_t size);
 void *_dl_realloc(void *, size_t size);
 void *_dl_reallocarray(void *, size_t nmemb, size_t size);
 void _dl_free(void *);
+void *_dl_aligned_alloc(size_t _alignment, size_t _size);
 char *_dl_strdup(const char *);
 size_t _dl_strlen(const char *);
 size_t _dl_strlcat(char *dst, const char *src, size_t siz);

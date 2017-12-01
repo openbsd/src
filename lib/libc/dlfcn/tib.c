@@ -1,4 +1,4 @@
-/*	$OpenBSD: tib.c,v 1.1 2016/05/07 19:05:22 guenther Exp $ */
+/*	$OpenBSD: tib.c,v 1.2 2017/12/01 23:30:05 guenther Exp $ */
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  *
@@ -18,7 +18,7 @@
 #include <tib.h>
 
 #ifndef PIC
-# include <stdlib.h>		/* malloc and free */
+# include <stdlib.h>		/* posix_memalign and free */
 #endif
 
 #define ELF_ROUND(x,malign)	(((x) + (malign)-1) & ~((malign)-1))
@@ -43,29 +43,31 @@ _dl_allocate_tib(size_t extra)
 #ifdef PIC
 	return NULL;			/* overriden by ld.so */
 #else
-	char *base;
+	void *base;
 	char *thread;
-	struct tib *tib;
 
 # if TLS_VARIANT == 1
-	/* round up the extra size to align the tib after it */
-	extra = ELF_ROUND(extra, sizeof(void *));
-	base = malloc(extra + sizeof(struct tib) + _static_tls_size);
-	tib = (struct tib *)(base + extra);
+	/* round up the extra size to align the TIB and TLS data after it */
+	extra = (extra <= _static_tls_align_offset) ? 0 :
+	    ELF_ROUND(extra - _static_tls_align_offset, _static_tls_align);
+	if (posix_memalign(&base, _static_tls_align, extra +
+	    _static_tls_align_offset + sizeof(struct tib) +
+	    _static_tls_size) != 0)
+		return NULL;
 	thread = base;
+	base = (char *)base + extra;
 
 # elif TLS_VARIANT == 2
-	/* round up the tib size to align the extra area after it */
-	base = malloc(ELF_ROUND(sizeof(struct tib), TIB_EXTRA_ALIGN) +
-	    extra + _static_tls_size);
-	tib = (struct tib *)(base + _static_tls_size);
-	thread = (char *)tib + ELF_ROUND(sizeof(struct tib), TIB_EXTRA_ALIGN);
+	/* round up the TIB size to align the extra area after it */
+	if (posix_memalign(&base, _static_tls_align,
+	    _static_tls_align_offset + _static_tls_size +
+	    ELF_ROUND(sizeof(struct tib), TIB_EXTRA_ALIGN) + extra) != 0)
+		return NULL;
+	thread = (char *)base + _static_tls_align_offset + _static_tls_size +
+	    ELF_ROUND(sizeof(struct tib), TIB_EXTRA_ALIGN);
 # endif
 
-	_static_tls_init(base);
-	TIB_INIT(tib, NULL, thread);
-
-	return (tib);
+	return _static_tls_init(base, thread);
 #endif /* !PIC */
 }
 
@@ -76,10 +78,12 @@ _dl_free_tib(void *tib, size_t extra)
 	size_t tib_offset;
 
 # if TLS_VARIANT == 1
-	tib_offset = ELF_ROUND(extra, sizeof(void *));
+	tib_offset = (extra <= _static_tls_align_offset) ? 0 :
+	    ELF_ROUND(extra - _static_tls_align_offset, _static_tls_align);
 # elif TLS_VARIANT == 2
 	tib_offset = _static_tls_size;
 # endif
+	tib_offset += _static_tls_align_offset;
 
 	free((char *)tib - tib_offset);
 #endif /* !PIC */

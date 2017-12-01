@@ -1105,3 +1105,122 @@ ret:
 	return r;
 }
 
+static void *
+mapalign(struct dir_info *d, size_t alignment, size_t sz, int zero_fill)
+{
+	char *p, *q;
+
+	if (alignment < MALLOC_PAGESIZE || ((alignment - 1) & alignment) != 0)
+		wrterror("mapalign bad alignment");
+	if (sz != PAGEROUND(sz))
+		wrterror("mapalign round");
+
+	/* Allocate sz + alignment bytes of memory, which must include a
+	 * subrange of size bytes that is properly aligned.  Unmap the
+	 * other bytes, and then return that subrange.
+	 */
+
+	/* We need sz + alignment to fit into a size_t. */
+	if (alignment > SIZE_MAX - sz)
+		return MAP_FAILED;
+
+	p = map(d, sz + alignment, zero_fill);
+	if (p == MAP_FAILED)
+		return MAP_FAILED;
+	q = (char *)(((uintptr_t)p + alignment - 1) & ~(alignment - 1));
+	if (q != p) {
+		if (_dl_munmap(p, q - p))
+			wrterror("munmap");
+	}
+	if (_dl_munmap(q + sz, alignment - (q - p)))
+		wrterror("munmap");
+
+	return q;
+}
+
+static void *
+omemalign(size_t alignment, size_t sz, int zero_fill)
+{
+	size_t psz;
+	void *p;
+
+	/* If between half a page and a page, avoid MALLOC_MOVE. */
+	if (sz > MALLOC_MAXCHUNK && sz < MALLOC_PAGESIZE)
+		sz = MALLOC_PAGESIZE;
+	if (alignment <= MALLOC_PAGESIZE) {
+		/*
+		 * max(size, alignment) is enough to assure the requested
+		 * alignment, since the allocator always allocates
+		 * power-of-two blocks.
+		 */
+		if (sz < alignment)
+			sz = alignment;
+		return omalloc(sz, zero_fill);
+	}
+
+	if (sz >= SIZE_MAX - mopts.malloc_guard - MALLOC_PAGESIZE) {
+		return NULL;
+	}
+
+	sz += mopts.malloc_guard;
+	psz = PAGEROUND(sz);
+
+	p = mapalign(g_pool, alignment, psz, zero_fill);
+	if (p == MAP_FAILED) {
+		return NULL;
+	}
+
+	if (insert(g_pool, p, sz)) {
+		unmap(g_pool, p, psz);
+		return NULL;
+	}
+
+	if (mopts.malloc_guard) {
+		if (_dl_mprotect((char *)p + psz - mopts.malloc_guard,
+		    mopts.malloc_guard, PROT_NONE))
+			wrterror("mprotect");
+	}
+
+	if (mopts.malloc_junk == 2) {
+		if (zero_fill)
+			_dl_memset((char *)p + sz - mopts.malloc_guard,
+			    SOME_JUNK, psz - sz);
+		else
+			_dl_memset(p, SOME_JUNK, psz - mopts.malloc_guard);
+	}
+	else if (mopts.chunk_canaries) {
+		size_t csz = psz - sz;
+
+		if (csz > CHUNK_CHECK_LENGTH)
+			csz = CHUNK_CHECK_LENGTH;
+		_dl_memset((char *)p + sz - mopts.malloc_guard,
+		    SOME_JUNK, csz);
+	}
+
+	return p;
+}
+
+void *
+_dl_aligned_alloc(size_t alignment, size_t size)
+{
+	void *r = NULL;
+	lock_cb *cb;
+
+	/* Make sure that alignment is a large enough power of 2. */
+	if (((alignment - 1) & alignment) != 0 || alignment < sizeof(void *))
+		return NULL;
+
+	cb = _dl_thread_kern_stop();
+	if (g_pool == NULL)
+		omalloc_init(&g_pool);
+	g_pool->func = "aligned_alloc():";
+	if (g_pool->active++) {
+		malloc_recurse();
+		goto ret;
+	}
+	r = omemalign(alignment, size, 0);
+	g_pool->active--;
+ret:
+	_dl_thread_kern_go(cb);
+	return r;
+}
