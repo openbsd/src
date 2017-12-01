@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.47 2017/06/08 12:37:14 tb Exp $
+.\" $OpenBSD: gre.4,v 1.48 2017/12/01 09:10:38 jmc Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2017 $
+.Dd $Mdocdate: December 1 2017 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -129,7 +129,7 @@ On Host A
 .Bd -literal -offset indent
 # route add default B
 # ifconfig greN create
-# ifconfig greN A D netmask 0xffffffff linkX up
+# ifconfig greN A D netmask 0xffffffff up
 # ifconfig greN tunnel A D
 # route add E D
 .Ed
