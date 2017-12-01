@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.244 2017/11/20 10:35:24 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.245 2017/12/01 10:33:33 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -528,20 +528,15 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		    ip->ip_dst, uh->uh_dport, m->m_pkthdr.ph_rtableid);
 	}
 	if (inp == 0) {
-		int	inpl_reverse = 0;
-		if (m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST)
-			inpl_reverse = 1;
 		udpstat_inc(udps_pcbhashmiss);
 #ifdef INET6
 		if (ip6) {
-			inp = in6_pcblookup_listen(&udbtable,
-			    &ip6->ip6_dst, uh->uh_dport, inpl_reverse, m,
-			    m->m_pkthdr.ph_rtableid);
+			inp = in6_pcblookup_listen(&udbtable, &ip6->ip6_dst,
+			    uh->uh_dport, m, m->m_pkthdr.ph_rtableid);
 		} else
 #endif /* INET6 */
-		inp = in_pcblookup_listen(&udbtable,
-		    ip->ip_dst, uh->uh_dport, inpl_reverse, m,
-		    m->m_pkthdr.ph_rtableid);
+		inp = in_pcblookup_listen(&udbtable, ip->ip_dst,
+		    uh->uh_dport, m, m->m_pkthdr.ph_rtableid);
 		if (inp == 0) {
 			udpstat_inc(udps_noport);
 			if (m->m_flags & (M_BCAST | M_MCAST)) {
@@ -801,7 +796,7 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			 * is really ours.
 			 */
 			else if (in6_pcblookup_listen(&udbtable,
-			    &sa6_src.sin6_addr, uh.uh_sport, 0,
+			    &sa6_src.sin6_addr, uh.uh_sport, NULL,
 			    rdomain))
 				valid = 1;
 #endif

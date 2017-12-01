@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.224 2017/08/11 19:53:02 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.225 2017/12/01 10:33:33 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1133,7 +1133,7 @@ in6_pcbhashlookup(struct inpcbtable *table, const struct in6_addr *faddr,
  */
 struct inpcb *
 in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
-    u_int lport_arg, int reverse, struct mbuf *m, u_int rdomain)
+    u_int lport_arg, struct mbuf *m, u_int rdomain)
 {
 	struct inpcbhead *head;
 	struct in_addr *key1, *key2;
@@ -1141,6 +1141,8 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 	u_int16_t lport = lport_arg;
 
 	rdomain = rtable_l2(rdomain);	/* convert passed rtableid to rdomain */
+	key1 = &laddr;
+	key2 = &zeroin_addr;
 #if NPF > 0
 	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
@@ -1149,15 +1151,11 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 			return (NULL);
 		key1 = key2 = &divert->addr.v4;
 		lport = divert->port;
-	} else
-#endif
-	if (reverse) {
+	} else if (m && m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST) {
 		key1 = &zeroin_addr;
 		key2 = &laddr;
-	} else {
-		key1 = &laddr;
-		key2 = &zeroin_addr;
 	}
+#endif
 
 	head = INPCBHASH(table, &zeroin_addr, 0, key1, lport, rdomain);
 	LIST_FOREACH(inp, head, inp_hash) {
@@ -1206,7 +1204,7 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 #ifdef INET6
 struct inpcb *
 in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
-    u_int lport_arg, int reverse, struct mbuf *m, u_int rtable)
+    u_int lport_arg, struct mbuf *m, u_int rtable)
 {
 	struct inpcbhead *head;
 	struct in6_addr *key1, *key2;
@@ -1214,6 +1212,8 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 	u_int16_t lport = lport_arg;
 
 	rtable = rtable_l2(rtable);	/* convert passed rtableid to rdomain */
+	key1 = laddr;
+	key2 = &zeroin6_addr;
 #if NPF > 0
 	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
@@ -1222,15 +1222,11 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 			return (NULL);
 		key1 = key2 = &divert->addr.v6;
 		lport = divert->port;
-	} else
-#endif
-	if (reverse) {
+	} else if (m && m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST) {
 		key1 = &zeroin6_addr;
 		key2 = laddr;
-	} else {
-		key1 = laddr;
-		key2 = &zeroin6_addr;
 	}
+#endif
 
 	head = IN6PCBHASH(table, &zeroin6_addr, 0, key1, lport, rtable);
 	LIST_FOREACH(inp, head, inp_hash) {
