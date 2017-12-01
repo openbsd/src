@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.23 2017/11/29 21:15:45 jmc Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.24 2017/12/01 14:42:23 visa Exp $ */
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -632,6 +632,8 @@ main(int argc, char **argv)
 		if (!validate_response(hget->bodypart, hget->bodypartsz,
 			request, castore, host, certfile))
 			exit(1);
+		instaple = hget->bodypart;
+		instaplesz = hget->bodypartsz;
 	} else {
 		size_t nr = 0;
 		instaplesz = 0;
@@ -671,9 +673,9 @@ main(int argc, char **argv)
 		(void) ftruncate(staplefd, 0);
 		w = 0;
 		written = 0;
-		while (written < hget->bodypartsz) {
-			w = write(staplefd, hget->bodypart + written,
-			    hget->bodypartsz - written);
+		while (written < instaplesz) {
+			w = write(staplefd, instaple + written,
+			    instaplesz - written);
 			if (w == -1) {
 				if (errno != EINTR && errno != EAGAIN)
 					err(1, "Write of OCSP response failed");
