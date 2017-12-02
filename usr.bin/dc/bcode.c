@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.57 2017/12/01 19:04:15 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.58 2017/12/02 12:43:18 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -705,7 +705,7 @@ count_digits(const struct number *n)
 	int		bits;
 
 	if (BN_is_zero(n->number))
-		return n->scale ? n->scale : 1;
+		return n->scale;
 
 	int_part = BN_new();
 	bn_checkp(int_part);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.32 2017/12/02 07:35:46 otto Exp $
+.\"	$OpenBSD: dc.1,v 1.33 2017/12/02 12:43:18 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -313,6 +313,7 @@ Replaces the number on the top of the stack with its length.
 The length of a string is its number of characters.
 The length of a number is its number of digits, not counting the minus sign
 and decimal point.
+The length of a zero value is its scale.
 .It Ic z
 The stack level is pushed onto the stack.
 .It Cm \&[ Ns ... Ns Cm \&]
