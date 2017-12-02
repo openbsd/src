@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.128 2017/11/07 16:21:59 ajacoutot Exp $
+# $OpenBSD: PkgCreate.pm,v 1.129 2017/12/02 00:52:47 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -890,6 +890,9 @@ sub ask_tree
 		delete $ENV{SUBPACKAGE};
 		$ENV{SUBDIR} = $dep->{pkgpath};
 		$ENV{ECHO_MSG} = ':';
+		# XXX we're already running as ${BUILD_USER}
+		# so we can't do this again
+		push(@action, 'PORTS_PRIVSEP=No');
 		exec $make ('make', @action);
 	}
 	my $plist = OpenBSD::PackingList->read($fh,
