@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.31 2017/11/28 06:51:19 otto Exp $
+.\"	$OpenBSD: dc.1,v 1.32 2017/12/02 07:35:46 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)dc.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: November 28 2017 $
+.Dd $Mdocdate: December 2 2017 $
 .Dt DC 1
 .Os
 .Sh NAME
@@ -245,7 +245,7 @@ Mark used by the
 operator.
 The
 .Ic M
-operator is a non-portable extensions, used by the
+operator is a non-portable extension, used by the
 .Xr bc 1
 command.
 .It Ic N
@@ -536,3 +536,8 @@ The current version of the
 .Nm
 utility was written by
 .An Otto Moerbeek .
+.Sh CAVEATS
+While fractional input in base 10 is always exact,
+other bases may suffer from unintuitive rounding.
+To avoid surprising results, plain integer division can be used
+instead of the corresponding floating point notation.
