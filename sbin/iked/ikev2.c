@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.161 2017/12/03 21:02:06 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.162 2017/12/03 21:02:44 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -2023,6 +2023,7 @@ ikev2_add_proposals(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
 		} else
 			nxforms = prop->prop_nxforms;
 
+		sap->sap_more = IKEV1_PAYLOAD_PROPOSAL;
 		sap->sap_proposalnr = prop->prop_id;
 		sap->sap_protoid = prop->prop_protoid;
 		sap->sap_spisize = prop->prop_localspi.spi_size;
@@ -2066,6 +2067,8 @@ ikev2_add_proposals(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
 		sap->sap_length = htobe16(saplength);
 		length += saplength;
 	}
+	if (sap != NULL)
+		sap->sap_more = IKEV1_PAYLOAD_NONE;
 
 	log_debug("%s: length %zd", __func__, length);
 
