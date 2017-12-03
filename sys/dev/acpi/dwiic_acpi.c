@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.1 2017/11/16 18:12:27 jcs Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.2 2017/12/03 19:42:20 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -359,6 +359,11 @@ dwiic_acpi_found_hid(struct aml_node *node, void *arg)
 	struct aml_value res;
 	int64_t sta;
 	char cdev[16], dev[16];
+	struct i2c_attach_args ia;
+
+	/* Skip our own _HID. */
+	if (node->parent == sc->sc_devnode)
+		return 0;
 
 	if (acpi_parsehid(node, arg, cdev, dev, 16) != 0)
 		return 0;
@@ -394,6 +399,14 @@ dwiic_acpi_found_hid(struct aml_node *node, void *arg)
 		return dwiic_acpi_found_ihidev(sc, node, dev, crs);
 	else if (dwiic_matchhids(dev, iatp_hids))
 		return dwiic_acpi_found_iatp(sc, node, dev, crs);
+
+	memset(&ia, 0, sizeof(ia));
+	ia.ia_tag = sc->sc_iba.iba_tag;
+	ia.ia_name = dev;
+	ia.ia_addr = crs.i2c_addr;
+
+	config_found(sc->sc_iic, &ia, dwiic_i2c_print);
+	node->parent->attached = 1;
 
 	return 0;
 }
