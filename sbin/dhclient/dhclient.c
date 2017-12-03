@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.530 2017/11/27 13:13:19 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.531 2017/12/03 16:09:14 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -129,7 +129,6 @@ struct proposal {
 
 void		 sighdlr(int);
 void		 usage(void);
-int		 res_hnok(const char *dn);
 int		 res_hnok_list(const char *dn);
 int		 addressinuse(char *, struct in_addr, char *);
 
@@ -2053,34 +2052,6 @@ rdaemon(int devnull)
 		(void)close(devnull);
 
 	return 0;
-}
-
-int
-res_hnok(const char *name)
-{
-	const char	*dn = name;
-	int		 pch = '.', ch = (unsigned char)*dn++;
-	int		 warn = 0;
-
-	while (ch != '\0') {
-		int nch = (unsigned char)*dn++;
-
-		if (ch == '.') {
-			;
-		} else if (pch == '.' || nch == '.' || nch == '\0') {
-			if (isalnum(ch) == 0)
-				return 0;
-		} else if (isalnum(ch) == 0 && ch != '-' && ch != '_') {
-			return 0;
-		} else if (ch == '_' && warn == 0) {
-			log_warnx("%s: warning: hostname %s contains an "
-			    "underscore which violates RFC 952", log_procname,
-			    name);
-			warn++;
-		}
-		pch = ch, ch = nch;
-	}
-	return 1;
 }
 
 /*
