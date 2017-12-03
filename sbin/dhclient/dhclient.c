@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.531 2017/12/03 16:09:14 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.532 2017/12/03 20:53:28 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -763,6 +763,8 @@ state_reboot(struct interface_info *ifi)
 		state_init(ifi);
 		return;
 	}
+	ifi->expiry = lease_expiry(ifi->active);
+	ifi->rebind = lease_rebind(ifi->active);
 
 	ifi->xid = arc4random();
 	make_request(ifi, ifi->active);
@@ -996,11 +998,22 @@ bind_lease(struct interface_info *ifi)
 	time(&cur_time);
 	lease = apply_defaults(ifi->offer);
 
-	set_lease_times(lease);
+	/*
+	 * Take the server-provided times if available.  Otherwise
+	 * figure them out according to the spec.
+	 *
+	 * expiry  == time to discard lease.
+	 * renewal == time to renew lease from server that provided it.
+	 * rebind  == time to renew lease from any server.
+	 *
+	 * 0 <= renewal <= rebind <= expiry
+	 * &&
+	 * expiry >= MIN(time_max, 60)
+	 */
+	ifi->expiry = lease_expiry(lease);
+	ifi->rebind = lease_rebind(lease);
 
-	ifi->offer->expiry = lease->expiry;
 	renewal = lease_renewal(lease) - cur_time;
-	ifi->offer->rebind = lease->rebind;
 
 	/*
 	 * A duplicate proposal once we are responsible & S_RENEWING means we
@@ -1410,8 +1423,7 @@ send_request(struct interface_info *ifi)
 	/*
 	 * If the lease has expired go back to the INIT state.
 	 */
-	if (ifi->state != S_REQUESTING &&
-	    cur_time > ifi->active->expiry) {
+	if (ifi->state != S_REQUESTING && cur_time > ifi->expiry) {
 		ifi->active = NULL;
 		ifi->state = S_INIT;
 		state_init(ifi);
@@ -1436,8 +1448,8 @@ send_request(struct interface_info *ifi)
 	 * timeout to the expiry time.
 	 */
 	if (ifi->state != S_REQUESTING && cur_time + ifi->interval >
-	    ifi->active->expiry)
-		ifi->interval = ifi->active->expiry - cur_time + 1;
+	    ifi->expiry)
+		ifi->interval = ifi->expiry - cur_time + 1;
 
 	/*
 	 * If the reboot timeout has expired, or the lease rebind time has
@@ -1447,13 +1459,13 @@ send_request(struct interface_info *ifi)
 	memset(&destination, 0, sizeof(destination));
 	if (ifi->state == S_REQUESTING ||
 	    ifi->state == S_REBOOTING ||
-	    cur_time > ifi->active->rebind ||
+	    cur_time > ifi->rebind ||
 	    interval > config->reboot_timeout)
 		destination.sin_addr.s_addr = INADDR_BROADCAST;
 	else
 		destination.sin_addr.s_addr = ifi->destination.s_addr;
 
-	if (ifi->state != S_REQUESTING)
+	if (ifi->state != S_REQUESTING && ifi->active != NULL)
 		from.s_addr = ifi->active->address.s_addr;
 	else
 		from.s_addr = INADDR_ANY;
@@ -2359,8 +2371,6 @@ clone_lease(struct client_lease *oldlease)
 		goto cleanup;
 
 	newlease->epoch = oldlease->epoch;
-	newlease->expiry = oldlease->expiry;
-	newlease->rebind = oldlease->rebind;
 	newlease->is_static = oldlease->is_static;
 	newlease->address = oldlease->address;
 	newlease->next_server = oldlease->next_server;
@@ -2437,28 +2447,6 @@ apply_ignore_list(char *ignore_list)
 
 	config->ignored_option_count = ix;
 	memcpy(config->ignored_options, list, sizeof(config->ignored_options));
-}
-
-void
-set_lease_times(struct client_lease *lease)
-{
-	if (lease->epoch == 0)
-		time(&lease->epoch);
-
-	/*
-	 * Take the server-provided times if available.  Otherwise
-	 * figure them out according to the spec.
-	 *
-	 * expiry  == time to discard lease.
-	 * renewal == time to renew lease from server that provided it.
-	 * rebind  == time to renew lease from any server.
-	 *
-	 * 0 <= renewal <= rebind <= expiry
-	 * &&
-	 * expiry >= MIN(time_max, 60)
-	 */
-	lease->expiry = lease_expiry(lease);
-	lease->rebind = lease_rebind(lease);
 }
 
 void
@@ -2547,12 +2535,14 @@ get_recorded_lease(struct interface_info *ifi)
 		if (lease_expiry(lp) <= cur_time)
 			continue;
 
-		if (lp->is_static != 0) {
-			time(&lp->epoch);
-			set_lease_times(lp);
-		}
+		if (lp->is_static != 0)
+			lp->epoch = 0;
+
 		break;
 	}
+
+	if (lp->epoch == 0)
+		time(&lp->epoch);
 
 	return lp;
 }
@@ -2603,6 +2593,7 @@ lease_expiry(struct client_lease *lease)
 
 	return lease->epoch + expiry;
 }
+
 time_t
 lease_renewal(struct client_lease *lease)
 {

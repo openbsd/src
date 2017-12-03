@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.237 2017/11/24 01:39:29 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.238 2017/12/03 20:53:28 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -58,7 +58,6 @@ struct client_lease {
 	TAILQ_ENTRY(client_lease) next;
 	char			*interface;
 	time_t			 epoch;
-	time_t			 expiry, rebind;
 	struct in_addr		 address;
 	struct in_addr		 next_server;
 	char			*server_name;
@@ -140,6 +139,7 @@ struct interface_info {
 	int			 sent_packet_length;
 	uint32_t		 xid;
 	time_t			 timeout;
+	time_t			 expiry, rebind;
 	void			(*timeout_func)(struct interface_info *);
 	uint16_t		 secs;
 	time_t			 first_sending;
@@ -223,7 +223,6 @@ void		 dhcpack(struct interface_info *, struct option_data *,char *);
 void		 dhcpnak(struct interface_info *, struct option_data *,char *);
 void		 free_client_lease(struct client_lease *);
 void		 routehandler(struct interface_info *, int);
-void		 set_lease_times(struct client_lease *);
 
 /* packet.c */
 void		 assemble_eh_header(struct ether_addr, struct ether_header *);

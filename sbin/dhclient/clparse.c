@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.150 2017/11/09 12:34:25 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.151 2017/12/03 20:53:28 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -588,7 +588,6 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 		    == 0)
 			return;
 		lease->epoch = betoh64(lease->epoch);
-		set_lease_times(lease);
 		break;
 	case TOK_EXPIRE:
 		/* 'expire' is just a comment. See 'epoch'. */
