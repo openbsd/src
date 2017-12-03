@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.33 2017/11/19 12:11:53 job Exp $
+#	$OpenBSD: list,v 1.34 2017/12/03 10:34:30 jsg Exp $
 
 SRCDIRS distrib/special
 
@@ -158,9 +158,12 @@ COPY	/usr/local/share/dtb/arm/imx6q-sabrelite.dtb	usr/mdec/nitrogen/imx6q-sabrel
 
 COPY	/usr/local/share/u-boot/wandboard/SPL		usr/mdec/wandboard/SPL
 COPY	/usr/local/share/u-boot/wandboard/u-boot.img	usr/mdec/wandboard/u-boot.img
-COPY	/usr/local/share/dtb/arm/imx6dl-wandboard-revb1.dtb	usr/mdec/wandboard/imx6dl-wandboard-revb1.dtb
 COPY	/usr/local/share/dtb/arm/imx6dl-wandboard.dtb	usr/mdec/wandboard/imx6dl-wandboard.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-wandboard-revb1.dtb	usr/mdec/wandboard/imx6q-wandboard-revb1.dtb
+COPY	/usr/local/share/dtb/arm/imx6dl-wandboard-revb1.dtb	usr/mdec/wandboard/imx6dl-wandboard-revb1.dtb
+COPY	/usr/local/share/dtb/arm/imx6dl-wandboard-revd1.dtb	usr/mdec/wandboard/imx6dl-wandboard-revd1.dtb
 COPY	/usr/local/share/dtb/arm/imx6q-wandboard.dtb	usr/mdec/wandboard/imx6q-wandboard.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-wandboard-revb1.dtb	usr/mdec/wandboard/imx6q-wandboard-revb1.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-wandboard-revd1.dtb	usr/mdec/wandboard/imx6q-wandboard-revd1.dtb
+COPY	/usr/local/share/dtb/arm/imx6qp-wandboard-revd1.dtb	usr/mdec/wandboard/imx6qp-wandboard-revd1.dtb
 
 TZ
