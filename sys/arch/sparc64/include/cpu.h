@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.91 2017/05/29 14:19:50 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.92 2017/12/03 10:55:50 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -113,7 +113,7 @@ struct cpu_info {
 	struct cpu_info		*ci_next;
 
 	struct proc		*ci_fpproc;
-	int			ci_number;
+	int			ci_cpuid;
 	int			ci_flags;
 	int			ci_upaid;
 #ifdef MULTIPROCESSOR
@@ -174,13 +174,13 @@ extern struct cpu_info *cpus;
 register struct cpu_info *__curcpu asm ("g7");
 
 #define curcpu()	(__curcpu->ci_self)
-#define cpu_number()	(__curcpu->ci_number)
+#define cpu_number()	(__curcpu->ci_cpuid)
 
-#define CPU_IS_PRIMARY(ci)	((ci)->ci_number == 0)
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
 #define CPU_INFO_ITERATOR	int
 #define CPU_INFO_FOREACH(cii, ci)					\
 	for (cii = 0, ci = cpus; ci != NULL; ci = ci->ci_next)
-#define CPU_INFO_UNIT(ci)	((ci)->ci_number)
+#define CPU_INFO_UNIT(ci)	((ci)->ci_cpuid)
 #define MAXCPUS	256
 
 void	cpu_boot_secondary_processors(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.66 2017/05/25 03:19:39 dlg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.67 2017/12/03 10:55:50 mpi Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -163,7 +163,7 @@ alloc_cpuinfo(struct mainbus_attach_args *ma)
 	 */
 	cpi->ci_next = NULL;
 	cpi->ci_curproc = NULL;
-	cpi->ci_number = ncpus++;
+	cpi->ci_cpuid = ncpus++;
 	cpi->ci_upaid = portid;
 	cpi->ci_fpproc = NULL;
 #ifdef MULTIPROCESSOR

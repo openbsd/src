@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.48 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.49 2017/12/03 10:55:50 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -341,7 +341,7 @@ db_cpuinfo_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		db_printf("%c%4d: ", (ci == curcpu()) ? '*' : ' ',
-		    ci->ci_number);
+		    ci->ci_cpuid);
 		switch(ci->ci_ddb_paused) {
 		case CI_DDB_RUNNING:
 			db_printf("running\n");
@@ -373,7 +373,7 @@ db_startproc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 	if (have_addr) {
 		for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-			if (addr == ci->ci_number) {
+			if (addr == ci->ci_cpuid) {
 				db_startcpu(ci);
 				break;
 			}
@@ -395,7 +395,7 @@ db_stopproc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 	if (have_addr) {
 		for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-			if (addr == ci->ci_number) {
+			if (addr == ci->ci_cpuid) {
 				db_stopcpu(ci);
 				break;
 			}
@@ -417,7 +417,7 @@ db_ddbproc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 	if (have_addr) {
 		for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-			if (addr == ci->ci_number && ci != curcpu()) {
+			if (addr == ci->ci_cpuid && ci != curcpu()) {
 				db_stopcpu(ci);
 				db_switch_to_cpu = ci;
 				db_switch_cpu = 1;
@@ -468,7 +468,7 @@ db_enter_ddb(void)
 	if (ddb_active_cpu == cpu_number() && db_switch_cpu) {
 		curcpu()->ci_ddb_paused = CI_DDB_SHOULDSTOP;
 		db_switch_cpu = 0;
-		ddb_active_cpu = db_switch_to_cpu->ci_number;
+		ddb_active_cpu = db_switch_to_cpu->ci_cpuid;
 		db_switch_to_cpu->ci_ddb_paused = CI_DDB_ENTERDDB;
 	}
 
