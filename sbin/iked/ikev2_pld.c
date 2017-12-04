@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.66 2017/12/04 16:57:40 patrick Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.67 2017/12/04 17:03:43 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -308,7 +308,7 @@ ikev2_validate_sa(struct iked_message *msg, size_t offset, size_t left,
 	 * total payload size.
 	 */
 	if (!sap->sap_more && left != sap_length) {
-		log_debug("%s: payload malformed: SA payload length mismatches "
+		log_debug("%s: malformed payload: SA payload length mismatches "
 		    "single proposal substructure length (%lu != %zu)",
 		    __func__, left, sap_length);
 		return (-1);
@@ -318,7 +318,7 @@ ikev2_validate_sa(struct iked_message *msg, size_t offset, size_t left,
 	 * left in the payload.
 	 */
 	if (sap->sap_more && left <= sap_length) {
-		log_debug("%s: payload malformed: SA payload too small for "
+		log_debug("%s: malformed payload: SA payload too small for "
 		    "further proposals (%zu <= %zu)", __func__,
 		    left, sap_length);
 		return (-1);
@@ -401,7 +401,7 @@ ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
 	 * be always false, but just to be sure we keep it.
 	 */
 	if (left < total) {
-		log_debug("%s: payload malformed: too long for payload "
+		log_debug("%s: malformed payload: too long for payload "
 		    "(%zu < %zu)", __func__, left, total);
 		return (-1);
 	}
@@ -448,7 +448,7 @@ ikev2_validate_xform(struct iked_message *msg, size_t offset, size_t total,
 	size_t		 xfrm_length;
 
 	if (total < sizeof(*xfrm)) {
-		log_debug("%s: payload malformed: too short for header "
+		log_debug("%s: malformed payload: too short for header "
 		    "(%zu < %zu)", __func__, total, sizeof(*xfrm));
 		return (-1);
 	}
@@ -456,8 +456,8 @@ ikev2_validate_xform(struct iked_message *msg, size_t offset, size_t total,
 
 	xfrm_length = betoh16(xfrm->xfrm_length);
 	if (xfrm_length < sizeof(*xfrm)) {
-		log_debug("%s: payload malformed: shorter than minimal header "
-		    "(%zu < %zu)", __func__, xfrm_length, sizeof(*xfrm));
+		log_debug("%s: malformed payload: shorter than minimum header "
+		    "size (%zu < %zu)", __func__, xfrm_length, sizeof(*xfrm));
 		return (-1);
 	}
 	if (total < xfrm_length) {
@@ -556,7 +556,7 @@ ikev2_validate_attr(struct iked_message *msg, size_t offset, size_t total,
 	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 
 	if (total < sizeof(*attr)) {
-		log_debug("%s: payload malformed: too short for header "
+		log_debug("%s: malformed payload: too short for header "
 		    "(%zu < %zu)", __func__, total, sizeof(*attr));
 		return (-1);
 	}
@@ -595,13 +595,13 @@ ikev2_pld_attr(struct iked *env, struct ikev2_transform *xfrm,
 		/* Type-Length-Value attribute */
 		attr_length = betoh16(attr.attr_length);
 		if (attr_length < sizeof(attr)) {
-			log_debug("%s: payload malformed: shorter than "
-			    "minimal header (%zu < %zu)", __func__,
+			log_debug("%s: malformed payload: shorter than "
+			    "minimum header size (%zu < %zu)", __func__,
 			    attr_length, sizeof(attr));
 			return (-1);
 		}
 		if (total < attr_length) {
-			log_debug("%s: payload malformed: attribute larger "
+			log_debug("%s: malformed payload: attribute larger "
 			    "than actual payload (%zu < %zu)", __func__,
 			    total, attr_length);
 			return (-1);
