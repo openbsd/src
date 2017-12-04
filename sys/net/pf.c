@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1049 2017/12/01 10:33:33 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1050 2017/12/04 15:13:12 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6602,6 +6602,14 @@ pf_setup_pdesc(struct pf_pdesc *pd, sa_family_t af, int dir,
 		case ND_NEIGHBOR_SOLICIT:
 		case ND_NEIGHBOR_ADVERT:
 			icmp_hlen = sizeof(struct nd_neighbor_solicit);
+			/* FALLTHROUGH */
+		case ND_ROUTER_SOLICIT:
+		case ND_ROUTER_ADVERT:
+		case ND_REDIRECT:
+			if (pd->ttl != 255) {
+				REASON_SET(reason, PFRES_NORM);
+				return (PF_DROP);
+			}
 			break;
 		}
 		if (icmp_hlen > sizeof(struct icmp6_hdr) &&
