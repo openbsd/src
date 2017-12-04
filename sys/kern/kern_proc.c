@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.77 2017/09/29 09:36:04 mpi Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.78 2017/12/04 09:51:03 mpi Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -466,9 +466,10 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
 	char *mode;
 	int skipzomb = 0;
+	int has_kernel_lock = 0;
 	struct proc *p;
 	struct process *pr, *ppr;
-    
+
 	if (modif[0] == 0)
 		modif[0] = 'n';			/* default == normal mode */
 
@@ -483,7 +484,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		db_printf("\t/o == show normal info for non-idle SONPROC\n");
 		return;
 	}
-	
+
 	pr = LIST_FIRST(&allprocess);
 
 	switch (*mode) {
@@ -511,6 +512,12 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		ppr = pr->ps_pptr;
 
 		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
+#ifdef MULTIPROCESSOR
+			if (__mp_lock_held(&kernel_lock, p->p_cpu))
+				has_kernel_lock = 1;
+			else
+				has_kernel_lock = 0;
+#endif
 			if (p->p_stat) {
 				if (*mode == 'o') {
 					if (p->p_stat != SONPROC)
@@ -556,10 +563,11 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 
 				case 'o':
 					db_printf("%5d  %5d  %#10x %#10x  %3d"
-					    "  %-31s\n",
+					    "%c %-31s\n",
 					    pr->ps_pid, pr->ps_ucred->cr_ruid,
 					    pr->ps_flags, p->p_flag,
 					    CPU_INFO_UNIT(p->p_cpu),
+					    has_kernel_lock ? 'K' : ' ',
 					    pr->ps_comm);
 					break;
 

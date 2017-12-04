@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.42 2017/02/14 10:31:15 mpi Exp $	*/
+/*	$OpenBSD: sched.h,v 1.43 2017/12/04 09:51:03 mpi Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -199,9 +199,12 @@ extern struct __mp_lock sched_lock;
 #define	SCHED_ASSERT_LOCKED()						\
 do {									\
 	splassert(IPL_SCHED);						\
-	KASSERT(__mp_lock_held(&sched_lock));				\
+	KASSERT(__mp_lock_held(&sched_lock, curcpu()));			\
 } while (0)
-#define	SCHED_ASSERT_UNLOCKED()	KASSERT(__mp_lock_held(&sched_lock) == 0)
+#define	SCHED_ASSERT_UNLOCKED()						\
+do {									\
+	KASSERT(__mp_lock_held(&sched_lock, curcpu()) == 0);		\
+} while (0)
 
 #define	SCHED_LOCK_INIT()	__mp_lock_init(&sched_lock)
 

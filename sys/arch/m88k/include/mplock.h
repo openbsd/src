@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.2 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.3 2017/12/04 09:51:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -61,9 +61,9 @@ __mp_acquire_count(struct __mp_lock *mpl, int count)
 }
 
 static __inline__ int
-__mp_lock_held(struct __mp_lock *mpl)
+__mp_lock_held(struct __mp_lock *mpl, struct cpu_info *ci)
 {
-	return mpl->mpl_cpu == curcpu();
+	return mpl->mpl_cpu == ci;
 }
 
 #endif

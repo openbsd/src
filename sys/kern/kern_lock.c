@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.51 2017/10/17 14:25:35 visa Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.52 2017/12/04 09:51:03 mpi Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -96,7 +96,7 @@ _kernel_lock_held(void)
 {
 	if (panicstr)
 		return 1;
-	return (__mp_lock_held(&kernel_lock));
+	return (__mp_lock_held(&kernel_lock, curcpu()));
 }
 
 #ifdef __USE_MI_MPLOCK
@@ -168,7 +168,7 @@ ___mp_lock(struct __mp_lock *mpl LOCK_FL_VARS)
 	unsigned long s;
 
 #ifdef WITNESS
-	if (!__mp_lock_held(mpl))
+	if (!__mp_lock_held(mpl, curcpu()))
 		WITNESS_CHECKORDER(&mpl->mpl_lock_obj,
 		    LOP_EXCLUSIVE | LOP_NEWORDER, file, line, NULL);
 #endif
@@ -191,7 +191,7 @@ ___mp_unlock(struct __mp_lock *mpl LOCK_FL_VARS)
 	unsigned long s;
 
 #ifdef MP_LOCKDEBUG
-	if (!__mp_lock_held(mpl)) {
+	if (!__mp_lock_held(mpl, curcpu())) {
 		db_printf("__mp_unlock(%p): not held lock\n", mpl);
 		db_enter();
 	}
@@ -244,7 +244,7 @@ ___mp_release_all_but_one(struct __mp_lock *mpl LOCK_FL_VARS)
 #endif
 
 #ifdef MP_LOCKDEBUG
-	if (!__mp_lock_held(mpl)) {
+	if (!__mp_lock_held(mpl, curcpu())) {
 		db_printf("__mp_release_all_but_one(%p): not held lock\n", mpl);
 		db_enter();
 	}
@@ -263,9 +263,9 @@ ___mp_acquire_count(struct __mp_lock *mpl, int count LOCK_FL_VARS)
 }
 
 int
-__mp_lock_held(struct __mp_lock *mpl)
+__mp_lock_held(struct __mp_lock *mpl, struct cpu_info *ci)
 {
-	struct __mp_lock_cpu *cpu = &mpl->mpl_cpus[cpu_number()];
+	struct __mp_lock_cpu *cpu = &mpl->mpl_cpus[CPU_INFO_UNIT(ci)];
 
 	return (cpu->mplc_ticket == mpl->mpl_ticket && cpu->mplc_depth > 0);
 }

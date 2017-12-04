@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.12 2017/07/16 22:48:38 guenther Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.13 2017/12/04 09:51:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -100,7 +100,7 @@ ___mp_lock(struct __mp_lock *mpl LOCK_FL_VARS)
 	int s;
 
 #ifdef WITNESS
-	if (!__mp_lock_held(mpl))
+	if (!__mp_lock_held(mpl, curcpu()))
 		WITNESS_CHECKORDER(&mpl->mpl_lock_obj,
 		    LOP_EXCLUSIVE | LOP_NEWORDER, file, line, NULL);
 #endif
@@ -225,7 +225,7 @@ ___mp_acquire_count(struct __mp_lock *mpl, int count LOCK_FL_VARS)
 }
 
 int
-__mp_lock_held(struct __mp_lock *mpl)
+__mp_lock_held(struct __mp_lock *mpl, struct cpu_info *ci)
 {
-	return mpl->mpl_cpu == curcpu();
+	return mpl->mpl_cpu == ci;
 }
