@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.83 2017/11/14 12:03:42 anton Exp $ */
+/* $OpenBSD: pms.c,v 1.84 2017/12/04 14:56:47 robert Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -215,6 +215,7 @@ static const struct alps_model {
 	{ 0x7321, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x7322, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x7325, 0xcf, ALPS_GLIDEPOINT },
+	{ 0x7331, 0x8f, ALPS_DUALPOINT },
 #if 0
 	/*
 	 * This model has a clitpad sending almost compatible PS2
