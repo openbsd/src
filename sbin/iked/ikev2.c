@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.162 2017/12/03 21:02:44 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.163 2017/12/04 14:35:03 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1965,7 +1965,7 @@ ikev2_add_proposals(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
     struct iked_proposals *proposals, uint8_t protoid, int initiator,
     int sendikespi, int skipdh)
 {
-	struct ikev2_sa_proposal	*sap;
+	struct ikev2_sa_proposal	*sap = NULL;
 	struct iked_transform		*xform;
 	struct iked_proposal		*prop;
 	struct iked_childsa		 csa;
