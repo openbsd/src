@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.102 2017/12/03 10:55:50 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.103 2017/12/04 22:06:21 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1090,9 +1090,7 @@ remap_data:
 	BDPRINTF(PDB_BOOT1, ("Done inserting mesgbuf into pmap_kernel()\r\n"));
 	
 	BDPRINTF(PDB_BOOT1, ("Inserting PROM mappings into pmap_kernel()\r\n"));
-	data = 0;
-	if (CPU_ISSUN4U || CPU_ISSUN4US)
-		data = SUN4U_TLB_EXEC;
+	data = (CPU_ISSUN4V ? SUN4V_TLB_EXEC : SUN4U_TLB_EXEC);
 	for (i = 0; i < prom_map_size; i++) {
 		if (prom_map[i].vstart && ((prom_map[i].vstart>>32) == 0)) {
 			for (j = 0; j < prom_map[i].vsize; j += NBPG) {
