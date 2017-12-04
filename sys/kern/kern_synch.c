@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.141 2017/05/18 07:08:45 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.142 2017/12/04 09:38:20 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 	KASSERT((priority & ~(PRIMASK | PCATCH)) == 0);
 
 #ifdef MULTIPROCESSOR
-	KASSERT(timo || __mp_lock_held(&kernel_lock));
+	KASSERT(timo || _kernel_lock_held());
 #endif
 
 #ifdef DDB
@@ -133,7 +133,7 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 		s = splhigh();
 		splx(safepri);
 #ifdef MULTIPROCESSOR
-		if (__mp_lock_held(&kernel_lock)) {
+		if (_kernel_lock_held()) {
 			hold_count = __mp_release_all(&kernel_lock);
 			__mp_acquire_count(&kernel_lock, hold_count);
 		}
@@ -186,7 +186,7 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 		MUTEX_OLDIPL(mtx) = safepri;
 		mtx_leave(mtx);
 #ifdef MULTIPROCESSOR
-		if (__mp_lock_held(&kernel_lock)) {
+		if (_kernel_lock_held()) {
 			hold_count = __mp_release_all(&kernel_lock);
 			__mp_acquire_count(&kernel_lock, hold_count);
 		}

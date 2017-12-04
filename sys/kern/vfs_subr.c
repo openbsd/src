@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.260 2017/07/31 16:47:03 florian Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.261 2017/12/04 09:38:20 mpi Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1688,7 +1688,7 @@ vfs_syncwait(int verbose)
 		if (verbose)
 			printf("%d ", nbusy);
 #ifdef MULTIPROCESSOR
-		if (__mp_lock_held(&kernel_lock))
+		if (_kernel_lock_held())
 			hold_count = __mp_release_all(&kernel_lock);
 		else
 			hold_count = 0;
