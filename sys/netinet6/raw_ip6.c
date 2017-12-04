@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.124 2017/11/28 16:05:46 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.125 2017/12/04 13:40:35 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -122,6 +122,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct inpcb *in6p;
 	struct inpcb *last = NULL;
+	struct in6_addr *key;
 	struct sockaddr_in6 rip6src;
 	struct mbuf *opts = NULL;
 
@@ -136,6 +137,26 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 	/* KAME hack: recover scopeid */
 	in6_recoverscope(&rip6src, &ip6->ip6_src);
 
+	key = &ip6->ip6_dst;
+#if NPF > 0
+	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+		struct pf_divert *divert;
+
+		/* XXX rdomain support */
+		divert = pf_find_divert(m);
+		KASSERT(divert != NULL);
+		switch (divert->type) {
+		case PF_DIVERT_TO:
+			key = &divert->addr.v6;
+			break;
+		case PF_DIVERT_REPLY:
+			break;
+		default:
+			panic("%s: unknown divert type %d, mbuf %p, divert %p",
+			    __func__, divert->type, m, divert);
+		}
+	}
+#endif
 	NET_ASSERT_LOCKED();
 	TAILQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {
 		if (in6p->inp_socket->so_state & SS_CANTRCVMORE)
@@ -145,23 +166,8 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		if ((in6p->inp_ipv6.ip6_nxt || proto == IPPROTO_ICMPV6) &&
 		    in6p->inp_ipv6.ip6_nxt != proto)
 			continue;
-#if NPF > 0
-		if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
-			struct pf_divert *divert;
-
-			/* XXX rdomain support */
-			if ((divert = pf_find_divert(m)) == NULL)
-				continue;
-			if (divert->type == PF_DIVERT_REPLY)
-				goto divert_reply;
-			if (!IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6,
-			    &divert->addr.v6))
-				continue;
-		} else
- divert_reply:
-#endif
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->inp_laddr6) &&
-		    !IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6, &ip6->ip6_dst))
+		    !IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6, key))
 			continue;
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->inp_faddr6) &&
 		    !IN6_ARE_ADDR_EQUAL(&in6p->inp_faddr6, &ip6->ip6_src))

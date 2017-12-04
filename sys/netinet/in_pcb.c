@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.226 2017/12/01 12:40:58 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.227 2017/12/04 13:40:34 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1147,10 +1147,19 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
 
-		if ((divert = pf_find_divert(m)) == NULL)
+		divert = pf_find_divert(m);
+		KASSERT(divert != NULL);
+		switch (divert->type) {
+		case PF_DIVERT_TO:
+			key1 = key2 = &divert->addr.v4;
+			lport = divert->port;
+			break;
+		case PF_DIVERT_REPLY:
 			return (NULL);
-		key1 = key2 = &divert->addr.v4;
-		lport = divert->port;
+		default:
+			panic("%s: unknown divert type %d, mbuf %p, divert %p",
+			    __func__, divert->type, m, divert);
+		}
 	} else if (m && m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST) {
 		key1 = &zeroin_addr;
 		key2 = &laddr;
@@ -1218,10 +1227,19 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
 
-		if ((divert = pf_find_divert(m)) == NULL)
+		divert = pf_find_divert(m);
+		KASSERT(divert != NULL);
+		switch (divert->type) {
+		case PF_DIVERT_TO:
+			key1 = key2 = &divert->addr.v6;
+			lport = divert->port;
+			break;
+		case PF_DIVERT_REPLY:
 			return (NULL);
-		key1 = key2 = &divert->addr.v6;
-		lport = divert->port;
+		default:
+			panic("%s: unknown divert type %d, mbuf %p, divert %p",
+			    __func__, divert->type, m, divert);
+		}
 	} else if (m && m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST) {
 		key1 = &zeroin6_addr;
 		key2 = laddr;

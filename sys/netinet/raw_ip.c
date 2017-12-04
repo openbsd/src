@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.107 2017/11/28 16:05:46 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.108 2017/12/04 13:40:34 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -121,6 +121,7 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct mbuf *m = *mp;
 	struct ip *ip = mtod(m, struct ip *);
 	struct inpcb *inp, *last = NULL;
+	struct in_addr *key;
 	struct mbuf *opts = NULL;
 	struct counters_ref ref;
 	uint64_t *counters;
@@ -128,6 +129,25 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 	KASSERT(af == AF_INET);
 
 	ripsrc.sin_addr = ip->ip_src;
+	key = &ip->ip_dst;
+#if NPF > 0
+	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+		struct pf_divert *divert;
+
+		divert = pf_find_divert(m);
+		KASSERT(divert != NULL);
+		switch (divert->type) {
+		case PF_DIVERT_TO:
+			key = &divert->addr.v4;
+			break;
+		case PF_DIVERT_REPLY:
+			break;
+		default:
+			panic("%s: unknown divert type %d, mbuf %p, divert %p",
+			    __func__, divert->type, m, divert);
+		}
+	}
+#endif
 	NET_ASSERT_LOCKED();
 	TAILQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
 		if (inp->inp_socket->so_state & SS_CANTRCVMORE)
@@ -142,22 +162,8 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != ip->ip_p)
 			continue;
-#if NPF > 0
-		if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
-			struct pf_divert *divert;
-
-			/* XXX rdomain support */
-			if ((divert = pf_find_divert(m)) == NULL)
-				continue;
-			if (divert->type == PF_DIVERT_REPLY)
-				goto divert_reply;
-			if (inp->inp_laddr.s_addr != divert->addr.v4.s_addr)
-				continue;
-		} else
- divert_reply:
-#endif
 		if (inp->inp_laddr.s_addr &&
-		    inp->inp_laddr.s_addr != ip->ip_dst.s_addr)
+		    inp->inp_laddr.s_addr != key->s_addr)
 			continue;
 		if (inp->inp_faddr.s_addr &&
 		    inp->inp_faddr.s_addr != ip->ip_src.s_addr)
