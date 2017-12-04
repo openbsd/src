@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.67 2017/12/04 17:03:43 patrick Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.68 2017/12/04 17:22:39 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -367,11 +367,6 @@ ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
 			log_debug("%s: malformed payload: SPI larger than "
 			    "proposal (%zu < %d)", __func__, total,
 			    sap.sap_spisize);
-			return (-1);
-		}
-		if (total < sap.sap_spisize) {
-			log_debug("%s: malformed payload: SPI too large "
-			    "(%zu < %d)", __func__, total, sap.sap_spisize);
 			return (-1);
 		}
 		switch (sap.sap_spisize) {
