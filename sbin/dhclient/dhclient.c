@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.534 2017/12/04 15:00:03 tb Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.535 2017/12/05 14:57:14 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1070,9 +1070,9 @@ newlease:
 			break;
 		if (ifi->active == NULL)
 			continue;
-		if (ifi->active->ssid_len != lease->ssid_len)
+		if (ifi->ssid_len != lease->ssid_len)
 			continue;
-		if (memcmp(ifi->active->ssid, lease->ssid, lease->ssid_len)
+		if (memcmp(ifi->ssid, lease->ssid, lease->ssid_len)
 		    != 0)
 			continue;
 		if (ifi->active == lease)
