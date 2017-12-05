@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.163 2017/12/04 14:35:03 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.164 2017/12/05 09:06:53 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1971,7 +1971,7 @@ ikev2_add_proposals(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
 	struct iked_childsa		 csa;
 	ssize_t				 length = 0, saplength, xflen;
 	uint64_t			 spi64;
-	uint32_t			 spi32, spi;
+	uint32_t			 spi32, spi = 0;
 	unsigned int			 i, xfi, nxforms;
 
 	TAILQ_FOREACH(prop, proposals, prop_entry) {
@@ -1980,14 +1980,16 @@ ikev2_add_proposals(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
 			continue;
 
 		if (protoid != IKEV2_SAPROTO_IKE && initiator) {
-			bzero(&csa, sizeof(csa));
-			csa.csa_ikesa = sa;
-			csa.csa_saproto = prop->prop_protoid;
-			csa.csa_local = &sa->sa_peer;
-			csa.csa_peer = &sa->sa_local;
+			if (spi == 0) {
+				bzero(&csa, sizeof(csa));
+				csa.csa_ikesa = sa;
+				csa.csa_saproto = prop->prop_protoid;
+				csa.csa_local = &sa->sa_peer;
+				csa.csa_peer = &sa->sa_local;
 
-			if (pfkey_sa_init(env->sc_pfkey, &csa, &spi) == -1)
-				return (-1);
+				if (pfkey_sa_init(env->sc_pfkey, &csa, &spi) == -1)
+					return (-1);
+			}
 
 			prop->prop_localspi.spi = spi;
 			prop->prop_localspi.spi_size = 4;
