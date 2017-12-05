@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.468 2017/11/23 18:20:40 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.469 2017/12/05 17:58:10 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2017 $
+.Dd $Mdocdate: December 5 2017 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -968,27 +968,6 @@ Use with
 .Ev NOT_FOR_ARCHS
 and
 .Ev ONLY_FOR_ARCHS .
-.It Ev BUILD_PACKAGES
-The actual list of packages that will be built, once architecture problems
-and pseudo-flavors have been taken into account.
-See
-.Sx FLAVORS AND MULTI_PACKAGES .
-.It Ev BROKEN
-Define only for broken ports, set to reason the port is broken.
-See also
-.Ev NO_IGNORE ,
-.Ev TRY_BROKEN .
-.It Ev BROKEN-<arch>
-Define only for ports broken on a given architecture.
-Distinct from
-.Ev ONLY_FOR_ARCHS
-and
-.Ev NOT_FOR_ARCHS ,
-which are used to mark ports for which support for some architectures
-does not exist at all, or is completely obsolete.
-.It Ev BSD_INSTALL_{PROGRAM,SCRIPT,DATA,MAN}[_DIR]
-Macros passed to make and configure invocations.
-Set based on corresponding INSTALL_* variables.
 .It Ev BUILD_DEPENDS
 List of other ports the current port needs to build correctly.
 Each item has the form
@@ -1092,6 +1071,32 @@ See
 on the subject of
 .Sq pkgpath normalisation .
 Read-only.
+.It Ev BUILD_PACKAGES
+The actual list of packages that will be built, once architecture problems
+and pseudo-flavors have been taken into account.
+See
+.Sx FLAVORS AND MULTI_PACKAGES .
+.It Ev BROKEN
+Define only for broken ports, set to reason the port is broken.
+See also
+.Ev NO_IGNORE ,
+.Ev TRY_BROKEN .
+.It Ev BUILD_USER
+User to switch to when using
+.Ev PORTS_PRIVSEP ,
+defaults to
+.Sq _pbuild .
+.It Ev BROKEN-<arch>
+Define only for ports broken on a given architecture.
+Distinct from
+.Ev ONLY_FOR_ARCHS
+and
+.Ev NOT_FOR_ARCHS ,
+which are used to mark ports for which support for some architectures
+does not exist at all, or is completely obsolete.
+.It Ev BSD_INSTALL_{PROGRAM,SCRIPT,DATA,MAN}[_DIR]
+Macros passed to make and configure invocations.
+Set based on corresponding INSTALL_* variables.
 .It Ev BULK
 User settings.
 If set to
@@ -1701,6 +1706,11 @@ It will only build them if no suitable packages are found.
 .It Ev FILESDIR
 Location of other files related to the current port.
 Default: files.
+.It Ev FETCH_USER
+User to use to fetch distfiles when using
+.Ev PORTS_PRIVSEP ,
+defaults to
+.Sq _pfetch .
 .It Ev FIX_EXTRACT_PERMISSIONS
 If
 .Sq Yes ,
@@ -2390,6 +2400,41 @@ Path used by dependencies and
 to look up package specifications.
 Defaults to
 .Pa ${PORTSDIR}:${PORTSDIR}/mystuff .
+.It Ev PORTS_PRIVSEP
+If set to
+.Sq Yes ,
+will build ports as
+.Ev BUILD_USER
+and fetch distfiles
+as
+.Ev FETCH_USER .
+.Pp
+To work fully, this does require the ports tree
+to be world-readable, and
+.Pa ${WRKDIR}
+to be world-readable as well
+.Po
+.Cm update-patches
+and friends won't work otherwise
+.Pc .
+.Pp
+Meant to use in concert with
+.Xr dpb 1 ,
+which uses the same permissions.
+Note that this means that
+.Xr doas 1
+must be configured to work within the chroot
+created by
+.Xr proot 1 .
+.Pp
+As
+.Xr dpb 1
+does its own privilege dropping when run as root,
+it will automatically override
+.Ev PORTS_PRIVSEP .
+.Pp
+User settings, defaults to
+.Sq \&No .
 .It Ev PKGDIR
 Location for packaging information (packing list, port description, messages).
 .Cm update-plist
