@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpowvar.h,v 1.4 2017/11/18 11:27:37 visa Exp $	*/
+/*	$OpenBSD: cn30xxpowvar.h,v 1.5 2017/12/05 15:26:47 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -64,16 +64,6 @@ struct cn30xxpow_attach_args {
 };
 
 void			cn30xxpow_config(struct cn30xxpow_softc *, int);
-void			*cn30xxpow_intr_establish(int, int,
-			    void (*)(void *, uint64_t *),
-			    void (*)(int *, int *, uint64_t, void *),
-			    void *, char *);
-void			cn30xxpow_error_int_enable(void *, int);
-uint64_t		cn30xxpow_error_int_summary(void *);
-int			cn30xxpow_ring_reduce(void *);
-int			cn30xxpow_ring_grow(void *);
-int			cn30xxpow_ring_size(void);
-int			cn30xxpow_ring_intr(void);
 
 #define	_POW_RD8(sc, off) \
 	bus_space_read_8((sc)->sc_regt, (sc)->sc_regh, (off))
