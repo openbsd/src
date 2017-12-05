@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.21 2016/12/20 13:40:50 jsg Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.22 2017/12/05 21:04:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -456,10 +456,21 @@ vpci_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 		    (t, t0, offset, size, flags, hp));
 	}
 
+	/* Check mappings for 64-bit-address Memory Space if appropriate. */
+	if (ss == 0x02 && offset > 0xffffffff)
+		ss = 0x03;
+
 	for (i = 0; i < pbm->vp_nrange; i++) {
-		bus_addr_t paddr;
+		bus_addr_t child, paddr;
+		bus_size_t size;
 
 		if (((pbm->vp_range[i].cspace >> 24) & 0x03) != ss)
+			continue;
+		child = pbm->vp_range[i].child_lo;
+		child |= ((bus_addr_t)pbm->vp_range[i].child_hi) << 32;
+		size = pbm->vp_range[i].size_lo;
+		size |= ((bus_size_t)pbm->vp_range[i].size_hi) << 32;
+		if (offset < child || offset >= child + size)
 			continue;
 
 		paddr = pbm->vp_range[i].phys_lo + offset;
