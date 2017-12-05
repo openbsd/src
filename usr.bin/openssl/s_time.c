@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.18 2017/11/02 00:31:49 mestre Exp $ */
+/* $OpenBSD: s_time.c,v 1.19 2017/12/05 15:02:06 jca Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -233,9 +233,9 @@ s_time_usage(void)
 #define STOP	1
 
 static double
-tm_Time_F(int s)
+tm_Time_F(int op)
 {
-	return app_tminterval(s, 1);
+	return app_timer_user(op);
 }
 
 /***********************************************************************

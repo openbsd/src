@@ -123,8 +123,8 @@
 
 #include "apps.h"
 
-static double
-real_interval(int stop)
+double
+app_timer_real(int stop)
 {
 	static struct timespec start;
 	struct timespec elapsed, now;
@@ -138,8 +138,8 @@ real_interval(int stop)
 	return 0.0;
 }
 
-static double
-user_interval(int stop)
+double
+app_timer_user(int stop)
 {
 	static struct timeval start;
 	struct timeval elapsed;
@@ -152,12 +152,6 @@ user_interval(int stop)
 	}
 	start = now.ru_utime;
 	return 0.0;
-}
-
-double
-app_tminterval(int stop, int usertime)
-{
-	return (usertime) ? user_interval(stop) : real_interval(stop);
 }
 
 int
