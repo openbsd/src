@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.c,v 1.24 2015/11/10 04:14:03 guenther Exp $ */
+/*	$OpenBSD: atexit.c,v 1.25 2017/12/05 13:45:31 kettenis Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -31,12 +31,24 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <dlfcn.h>
+#include <elf.h>
+#pragma weak _DYNAMIC
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "atexit.h"
 #include "atfork.h"
 #include "thread_private.h"
+#include "tib.h"
+
+typeof(dlctl) dlctl asm("_dlctl") __attribute__((weak));
+
+struct thread_atexit_fn {
+	void (*func)(void *);
+	void *arg;
+	struct thread_atexit_fn *next;
+};
 
 struct atexit *__atexit;
 static int restartloop;
@@ -121,6 +133,43 @@ atexit(void (*fn)(void))
 }
 DEF_STRONG(atexit);
 
+__weak_alias(__cxa_thread_atexit, __cxa_thread_atexit_impl);
+
+int
+__cxa_thread_atexit_impl(void (*func)(void *), void *arg, void *dso)
+{
+	struct thread_atexit_fn *fnp;
+	struct tib *tib = TIB_GET();
+
+	fnp = calloc(1, sizeof(struct thread_atexit_fn));
+	if (fnp == NULL)
+		return -1;
+
+	if (_DYNAMIC)
+		dlctl(NULL, DL_REFERENCE, dso);
+
+	fnp->func = func;
+	fnp->arg = arg;
+	fnp->next = tib->tib_atexit;
+	tib->tib_atexit = fnp;
+
+	return 0;
+}
+DEF_STRONG(__cxa_thread_atexit_impl);
+
+void
+_thread_finalize(void)
+{
+	struct tib *tib = TIB_GET();
+
+	while (tib->tib_atexit) {
+		struct thread_atexit_fn *fnp = tib->tib_atexit;
+		tib->tib_atexit = fnp->next;
+		fnp->func(fnp->arg);
+		free(fnp);
+	}
+}
+
 /*
  * Call all handlers registered with __cxa_atexit() for the shared
  * object owning 'dso'.
@@ -133,6 +182,9 @@ __cxa_finalize(void *dso)
 	struct atexit_fn fn;
 	int n, pgsize = getpagesize();
 	static int call_depth;
+
+	if (dso == NULL)
+		_thread_finalize();
 
 	_ATEXIT_LOCK();
 	call_depth++;

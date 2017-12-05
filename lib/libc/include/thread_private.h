@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.32 2017/11/04 22:53:57 jca Exp $ */
+/* $OpenBSD: thread_private.h,v 1.33 2017/12/05 13:45:31 kettenis Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -394,6 +394,7 @@ void	_spinunlock(volatile _atomic_lock_t *);
 void	_rthread_debug(int, const char *, ...)
 		__attribute__((__format__ (printf, 2, 3)));
 pid_t	_thread_dofork(pid_t (*_sys_fork)(void));
+void	_thread_finalize(void);
 
 /*
  * Threading syscalls not declared in system headers
