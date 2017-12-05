@@ -1,1 +1,1 @@
-strcat-2.c:: warning: warning: strcat() is almost always misused, please use strlcat()
+strcat-2.c:: warning: strcat() is almost always misused, please use strlcat()
