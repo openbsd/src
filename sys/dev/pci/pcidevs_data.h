@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1827 2017/11/29 05:00:16 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1828 2017/12/05 22:26:31 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -24316,12 +24316,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Psycho PCI",
 	},
 	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SPARC_PCIE2,
-	    "SPARC PCIE",
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SPARC_T3_PCIE,
+	    "SPARC-T3/T4 PCIE",
 	},
 	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SPARC_PCIE3,
-	    "SPARC PCIE",
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SPARC_M7_PCIE,
+	    "SPARC-M7 PCIE",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SPARC_T5_PCIE,
+	    "SPARC-T5/M5/M6 PCIE",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_MS_IIep,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1827 2017/11/29 05:00:16 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1828 2017/12/05 22:26:31 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6951,8 +6951,9 @@
 #define	PCI_PRODUCT_SUN_SCA1K	0x5455		/* Crypto 1K */
 #define	PCI_PRODUCT_SUN_SCA6K	0x5ca0		/* Crypto 6K */
 #define	PCI_PRODUCT_SUN_PSYCHO	0x8000		/* Psycho PCI */
-#define	PCI_PRODUCT_SUN_SPARC_PCIE2	0x8186		/* SPARC PCIE */
-#define	PCI_PRODUCT_SUN_SPARC_PCIE3	0x8196		/* SPARC PCIE */
+#define	PCI_PRODUCT_SUN_SPARC_T3_PCIE	0x8186		/* SPARC-T3/T4 PCIE */
+#define	PCI_PRODUCT_SUN_SPARC_M7_PCIE	0x818e		/* SPARC-M7 PCIE */
+#define	PCI_PRODUCT_SUN_SPARC_T5_PCIE	0x8196		/* SPARC-T5/M5/M6 PCIE */
 #define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
 #define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
 #define	PCI_PRODUCT_SUN_US_IIe	0xa001		/* UltraSPARC IIe PCI */
