@@ -619,7 +619,7 @@
 ./usr/games
 ./usr/include
 ./usr/lib
-./usr/lib/libc.so.92.0
+./usr/lib/libc.so.92.1
 ./usr/lib/libcrypto.so.42.0
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
@@ -2701,7 +2701,7 @@
 ./usr/share/relink/usr/libexec
 ./usr/share/relink/usr/libexec/ld.so.a
 ./usr/share/relink/usr/lib
-./usr/share/relink/usr/lib/libc.so.92.0.a
+./usr/share/relink/usr/lib/libc.so.92.1.a
 ./usr/share/relink/usr/lib/libcrypto.so.42.0.a
 ./usr/share/snmp
 ./usr/share/snmp/mibs
