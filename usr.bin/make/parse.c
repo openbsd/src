@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.118 2016/10/23 14:54:14 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.119 2017/12/05 14:35:12 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -1043,7 +1043,6 @@ strip_comments(Buffer copy, const char *line)
 	const char *p;
 
 	comment = strchr(line, '#');
-	assert(comment != line);
 	if (comment == NULL)
 		return (char *)line;
 	else {
