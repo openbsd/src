@@ -1,4 +1,4 @@
-/* $OpenBSD: util.h,v 1.32 2014/01/23 01:04:28 deraadt Exp $	 */
+/* $OpenBSD: util.h,v 1.33 2017/12/05 20:31:45 jca Exp $	 */
 /* $EOM: util.h,v 1.10 2000/10/24 13:33:39 niklas Exp $	 */
 
 /*
@@ -60,7 +60,7 @@ extern int      text2sockaddr(char *, char *, struct sockaddr **,
 		    sa_family_t, int);
 extern void     util_ntoa(char **, int, u_int8_t *);
 extern int      zero_test(const u_int8_t *, size_t);
-extern long	get_timeout(struct timeval *);
+extern long	get_timeout(struct timespec *);
 extern int	expand_string(char *, size_t, const char *, const char *);
 
 #endif				/* _UTIL_H_ */

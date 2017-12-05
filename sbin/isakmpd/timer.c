@@ -1,4 +1,4 @@
-/* $OpenBSD: timer.c,v 1.17 2015/08/20 22:02:21 deraadt Exp $	 */
+/* $OpenBSD: timer.c,v 1.18 2017/12/05 20:31:45 jca Exp $	 */
 /* $EOM: timer.c,v 1.13 2000/02/20 19:58:42 niklas Exp $	 */
 
 /*
@@ -30,6 +30,8 @@
  */
 
 #include <sys/queue.h>
+#include <sys/time.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -45,16 +47,16 @@ timer_init(void)
 }
 
 void
-timer_next_event(struct timeval **timeout)
+timer_next_event(struct timespec **timeout)
 {
-	struct timeval  now;
+	struct timespec  now;
 
 	if (TAILQ_FIRST(&events)) {
-		gettimeofday(&now, 0);
-		if (timercmp(&now, &TAILQ_FIRST(&events)->expiration, >=))
-			timerclear(*timeout);
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		if (timespeccmp(&now, &TAILQ_FIRST(&events)->expiration, >=))
+			timespecclear(*timeout);
 		else
-			timersub(&TAILQ_FIRST(&events)->expiration, &now,
+			timespecsub(&TAILQ_FIRST(&events)->expiration, &now,
 			    *timeout);
 	} else
 		*timeout = 0;
@@ -63,11 +65,12 @@ timer_next_event(struct timeval **timeout)
 void
 timer_handle_expirations(void)
 {
-	struct timeval  now;
+	struct timespec now;
 	struct event   *n;
 
-	gettimeofday(&now, 0);
-	for (n = TAILQ_FIRST(&events); n && timercmp(&now, &n->expiration, >=);
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	for (n = TAILQ_FIRST(&events);
+	    n && timespeccmp(&now, &n->expiration, >=);
 	    n = TAILQ_FIRST(&events)) {
 		LOG_DBG((LOG_TIMER, 10,
 		    "timer_handle_expirations: event %s(%p)", n->name,
@@ -80,21 +83,21 @@ timer_handle_expirations(void)
 
 struct event *
 timer_add_event(char *name, void (*func)(void *), void *arg,
-    struct timeval *expiration)
+    struct timespec *expiration)
 {
 	struct event   *ev = malloc(sizeof *ev);
 	struct event   *n;
-	struct timeval  now;
+	struct timespec now;
 
 	if (!ev)
 		return 0;
 	ev->name = name;
 	ev->func = func;
 	ev->arg = arg;
-	gettimeofday(&now, 0);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	memcpy(&ev->expiration, expiration, sizeof *expiration);
 	for (n = TAILQ_FIRST(&events);
-	    n && timercmp(expiration, &n->expiration, >=);
+	    n && timespeccmp(expiration, &n->expiration, >=);
 	    n = TAILQ_NEXT(n, link))
 		;
 	if (n) {
@@ -125,9 +128,9 @@ void
 timer_report(void)
 {
 	struct event   *ev;
-	struct timeval  now;
+	struct timespec now;
 
-	gettimeofday(&now, 0);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 
 	for (ev = TAILQ_FIRST(&events); ev; ev = TAILQ_NEXT(ev, link))
 		LOG_DBG((LOG_REPORT, 0,

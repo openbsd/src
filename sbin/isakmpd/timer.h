@@ -1,4 +1,4 @@
-/* $OpenBSD: timer.h,v 1.8 2015/01/16 06:39:59 deraadt Exp $	 */
+/* $OpenBSD: timer.h,v 1.9 2017/12/05 20:31:45 jca Exp $	 */
 /* $EOM: timer.h,v 1.6 1999/04/11 22:35:55 ho Exp $	 */
 
 /*
@@ -33,21 +33,22 @@
 #define _TIMER_H_
 
 #include <sys/queue.h>
-#include <sys/time.h>
+
+#include <time.h>
 
 struct event {
 	TAILQ_ENTRY(event) link;
 	char           *name;
 	void            (*func) (void *);
 	void           *arg;
-	struct timeval  expiration;
+	struct timespec expiration;
 };
 
 extern void     timer_init(void);
-extern void     timer_next_event(struct timeval **);
+extern void     timer_next_event(struct timespec **);
 extern void     timer_handle_expirations(void);
 extern struct event *timer_add_event(char *, void (*) (void *), void *,
-		    struct timeval *);
+		    struct timespec *);
 extern void     timer_remove_event(struct event *);
 extern void     timer_report(void);
 

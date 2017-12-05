@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.c,v 1.38 2017/08/06 13:54:04 mpi Exp $	 */
+/* $OpenBSD: connection.c,v 1.39 2017/12/05 20:31:45 jca Exp $	 */
 /* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
@@ -31,7 +31,6 @@
  */
 
 #include <sys/queue.h>
-#include <sys/time.h>
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,7 +70,7 @@ struct connection_passive {
 	/* XXX Potential additions to 'connection_passive'.  */
 	char           *isakmp_peer;
 	struct sa      *sa;	/* XXX "Soft" ref to active sa?  */
-	struct timeval  sa_expiration;	/* XXX *sa may expire.  */
+	struct timespec sa_expiration;	/* XXX *sa may expire.  */
 #endif
 };
 
@@ -144,11 +143,11 @@ connection_init(void)
 static void
 connection_checker(void *vconn)
 {
-	struct timeval  now;
+	struct timespec  now;
 	struct connection *conn = vconn;
 	char *name;
 
-	gettimeofday(&now, 0);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	now.tv_sec += conf_get_num("General", "check-interval",
 	    CHECK_INTERVAL);
 	conn->ev = timer_add_event("connection_checker",
@@ -272,7 +271,7 @@ int
 connection_setup(char *name)
 {
 	struct connection *conn = 0;
-	struct timeval  now;
+	struct timespec  now;
 
 	/* Check for trials to add duplicate connections.  */
 	if (connection_lookup(name)) {
@@ -291,7 +290,7 @@ connection_setup(char *name)
 		log_error("connection_setup: strdup (\"%s\") failed", name);
 		goto fail;
 	}
-	gettimeofday(&now, 0);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	conn->ev = timer_add_event("connection_checker", connection_checker,
 	    conn, &now);
 	if (!conn->ev) {
@@ -405,11 +404,11 @@ void
 connection_report(void)
 {
 	struct connection *conn;
-	struct timeval  now;
+	struct timespec  now;
 	struct connection_passive *pconn;
 	struct doi     *doi = doi_lookup(ISAKMP_DOI_ISAKMP);
 
-	gettimeofday(&now, 0);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	for (conn = TAILQ_FIRST(&connections); conn;
 	    conn = TAILQ_NEXT(conn, link))
 		LOG_DBG((LOG_REPORT, 0,

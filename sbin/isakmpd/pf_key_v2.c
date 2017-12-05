@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.199 2017/08/06 13:54:04 mpi Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.200 2017/12/05 20:31:45 jca Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -35,7 +35,6 @@
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 #include <sys/uio.h>
 
 #include <net/pfkeyv2.h>
@@ -204,7 +203,7 @@ pf_key_v2_read(u_int32_t seq)
 	struct sadb_msg *msg;
 	struct sadb_msg hdr;
 	struct sadb_ext *ext;
-	struct timeval	tv;
+	struct timespec	ts;
 	struct pollfd	pfd[1];
 
 	pfd[0].fd = pf_key_v2_socket;
@@ -298,9 +297,9 @@ pf_key_v2_read(u_int32_t seq)
 		 */
 		if (seq && (msg->sadb_msg_pid != (u_int32_t) getpid() ||
 		    msg->sadb_msg_seq != seq)) {
-			gettimeofday(&tv, 0);
+			clock_gettime(CLOCK_MONOTONIC, &ts);
 			timer_add_event("pf_key_v2_notify",
-			    (void (*) (void *)) pf_key_v2_notify, ret, &tv);
+			    (void (*) (void *)) pf_key_v2_notify, ret, &ts);
 			ret = 0;
 			continue;
 		}

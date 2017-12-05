@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.56 2014/12/01 23:05:18 tedu Exp $	 */
+/* $OpenBSD: ui.c,v 1.57 2017/12/05 20:31:45 jca Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -197,16 +197,16 @@ ui_conn_reinit_event(void *v)
 static void
 ui_conn_reinit(void)
 {
-	struct timeval tv;
+	struct timespec ts;
 
 	if (ui_cr_event)
 		timer_remove_event(ui_cr_event);
 
-	gettimeofday(&tv, 0);
-	tv.tv_sec += 5;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	ts.tv_sec += 5;
 
 	ui_cr_event = timer_add_event("ui_conn_reinit", ui_conn_reinit_event,
-	    0, &tv);
+	    0, &ts);
 	if (!ui_cr_event)
 		log_print("ui_conn_reinit: timer_add_event() failed. "
 		    "Connections will not be updated.");
