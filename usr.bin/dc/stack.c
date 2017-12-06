@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack.c,v 1.14 2016/03/27 15:55:13 otto Exp $	*/
+/*	$OpenBSD: stack.c,v 1.15 2017/12/06 13:48:05 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -79,9 +79,7 @@ stack_dup_value(const struct value *a, struct value *copy)
 		copy->u.num = dup_number(a->u.num);
 		break;
 	case BCODE_STRING:
-		copy->u.string = strdup(a->u.string);
-		if (copy->u.string == NULL)
-			err(1, NULL);
+		copy->u.string = bstrdup(a->u.string);
 		break;
 	}
 
