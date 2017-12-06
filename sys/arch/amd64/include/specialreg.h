@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.61 2017/08/12 19:53:37 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.62 2017/12/06 16:26:12 fcambus Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -831,7 +831,7 @@
 #define	K7_BP2_MATCH			0xde
 #define	K7_BP3_MATCH			0xdf
 
-/* VIA C3 crypto featureset: for i386_has_xcrypt */
+/* VIA C3 crypto featureset: for amd64_has_xcrypt */
 #define C3_HAS_AES			1	/* cpu has AES */
 #define C3_HAS_SHA			2	/* cpu has SHA1 & SHA256 */
 #define C3_HAS_MM			4	/* cpu has RSA instructions */
