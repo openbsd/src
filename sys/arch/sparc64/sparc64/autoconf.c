@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.128 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.129 2017/12/06 16:20:53 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -170,6 +170,8 @@ void	sun4v_set_soft_state(int, const char *);
 #define __align32 __attribute__((__aligned__(32)))
 char sun4v_soft_state_booting[] __align32 = "OpenBSD booting";
 char sun4v_soft_state_running[] __align32 = "OpenBSD running";
+
+void	sun4v_interrupt_init(void);
 #endif
 
 #ifdef DEBUG
@@ -436,6 +438,7 @@ bootstrap(int nctx)
 	if (CPU_ISSUN4V) {
 		sun4v_soft_state_init();
 		sun4v_set_soft_state(SIS_TRANSITION, sun4v_soft_state_booting);
+		sun4v_interrupt_init();
 	}
 #endif
 }
@@ -733,6 +736,7 @@ cpu_configure(void)
 
 #ifdef SUN4V
 
+#define HSVC_GROUP_INTERRUPT  0x002
 #define HSVC_GROUP_SOFT_STATE 0x003
 
 int sun4v_soft_state_initialized = 0;
@@ -765,6 +769,18 @@ sun4v_set_soft_state(int state, const char *desc)
 	if (err != H_EOK)
 		printf("soft_state_set: %d\n", err);
 }
+
+void
+sun4v_interrupt_init(void)
+{
+	uint64_t minor;
+
+	if (prom_set_sun4v_api_version(HSVC_GROUP_INTERRUPT, 3, 0, &minor))
+		return;
+	
+	sun4v_group_interrupt_major = 3;
+}
+
 #endif
 
 void

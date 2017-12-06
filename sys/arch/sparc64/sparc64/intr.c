@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.56 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: intr.c,v 1.57 2017/12/06 16:20:53 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -382,4 +382,58 @@ splassert_check(int wantipl, const char *func)
 		splassert_fail(wantipl, ci->ci_handled_intr_level, func);
 	}
 }
+#endif
+
+#ifdef SUN4V
+
+#include <machine/hypervisor.h>
+
+uint64_t sun4v_group_interrupt_major;
+
+int64_t
+sun4v_intr_devino_to_sysino(uint64_t devhandle, uint64_t devino, uint64_t *ino)
+{
+	if (sun4v_group_interrupt_major < 3)
+		return hv_intr_devino_to_sysino(devhandle, devino, ino);
+
+	*ino = devino;
+	return H_EOK;
+}
+
+int64_t
+sun4v_intr_setcookie(uint64_t devhandle, uint64_t ino, uint64_t cookie_value)
+{
+	if (sun4v_group_interrupt_major < 3)
+		return H_EOK;
+	
+	return hv_vintr_setcookie(devhandle, ino, cookie_value);
+}
+
+int64_t
+sun4v_intr_setenabled(uint64_t devhandle, uint64_t ino, uint64_t intr_enabled)
+{
+	if (sun4v_group_interrupt_major < 3)
+		return hv_intr_setenabled(ino, intr_enabled);
+
+	return hv_vintr_setenabled(devhandle, ino, intr_enabled);
+}
+
+int64_t
+sun4v_intr_setstate(uint64_t devhandle, uint64_t ino, uint64_t intr_state)
+{
+	if (sun4v_group_interrupt_major < 3)
+		return hv_intr_setstate(ino, intr_state);
+
+	return hv_vintr_setstate(devhandle, ino, intr_state);
+}
+
+int64_t
+sun4v_intr_settarget(uint64_t devhandle, uint64_t ino, uint64_t cpuid)
+{
+	if (sun4v_group_interrupt_major < 3)
+		return hv_intr_settarget(ino, cpuid);
+
+	return hv_vintr_settarget(devhandle, ino, cpuid);
+}
+
 #endif

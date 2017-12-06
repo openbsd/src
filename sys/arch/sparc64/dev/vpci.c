@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.22 2017/12/05 21:04:32 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.23 2017/12/06 16:20:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -252,12 +252,12 @@ vpci_init_msi(struct vpci_softc *sc, struct vpci_pbm *pbm)
 
 	OF_getprop(sc->sc_node, "msi-eq-to-devino",
 	    msi_eq_devino, sizeof(msi_eq_devino));
-	err = hv_intr_devino_to_sysino(pbm->vp_devhandle,
+	err = sun4v_intr_devino_to_sysino(pbm->vp_devhandle,
 	    msi_eq_devino[2], &sysino);
 	if (err != H_EOK)
 		goto disable_queue;
 
-	if (vpci_intr_establish(sc->sc_bust, sc->sc_bust, sysino,
+	if (vpci_intr_establish(pbm->vp_memt, pbm->vp_memt, sysino,
 	    IPL_HIGH, 0, vpci_msi_eq_intr, pbm, sc->sc_dv.dv_xname) == NULL)
 		goto disable_queue;
 
@@ -333,7 +333,7 @@ vpci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	int err;
 
 	if (*ihp != (pci_intr_handle_t)-1) {
-		err = hv_intr_devino_to_sysino(devhandle, devino, &sysino);
+		err = sun4v_intr_devino_to_sysino(devhandle, devino, &sysino);
 		if (err != H_EOK)
 			return (-1);
 
@@ -513,6 +513,7 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
     int level, int flags, int (*handler)(void *), void *arg, const char *what)
 {
 	struct vpci_pbm *pbm = t->cookie;
+	uint64_t devhandle = pbm->vp_devhandle;
 	uint64_t sysino = INTVEC(ihandle);
 	struct intrhand *ih;
 	int err;
@@ -560,19 +561,23 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		return (ih);
 	}
 
+	err = sun4v_intr_setcookie(devhandle, sysino, (vaddr_t)ih);
+	if (err != H_EOK)
+		return (NULL);
+
 	intr_establish(ih->ih_pil, ih);
 	ih->ih_ack = vpci_intr_ack;
 
-	err = hv_intr_settarget(sysino, ih->ih_cpu->ci_upaid);
+	err = sun4v_intr_settarget(devhandle, sysino, ih->ih_cpu->ci_upaid);
 	if (err != H_EOK)
 		return (NULL);
 
 	/* Clear pending interrupts. */
-	err = hv_intr_setstate(sysino, INTR_IDLE);
+	err = sun4v_intr_setstate(devhandle, sysino, INTR_IDLE);
 	if (err != H_EOK)
 		return (NULL);
 
-	err = hv_intr_setenabled(sysino, INTR_ENABLED);
+	err = sun4v_intr_setenabled(devhandle, sysino, INTR_ENABLED);
 	if (err != H_EOK)
 		return (NULL);
 
@@ -582,7 +587,11 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 void
 vpci_intr_ack(struct intrhand *ih)
 {
-	hv_intr_setstate(ih->ih_number, INTR_IDLE);
+	bus_space_tag_t t = ih->ih_bus;
+	struct vpci_pbm *pbm = t->cookie;
+	uint64_t devhandle = pbm->vp_devhandle;
+	
+	sun4v_intr_setstate(devhandle, ih->ih_number, INTR_IDLE);
 }
 
 void

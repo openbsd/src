@@ -1,4 +1,4 @@
-/*	$OpenBSD: vbus.c,v 1.8 2015/09/27 11:29:20 kettenis Exp $	*/
+/*	$OpenBSD: vbus.c,v 1.9 2017/12/06 16:20:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -33,6 +33,8 @@ struct vbus_softc {
 	struct device		sc_dv;
 	bus_space_tag_t		sc_bustag;
 	bus_dma_tag_t		sc_dmatag;
+
+	uint64_t		sc_devhandle;
 };
 
 int	vbus_cmp_cells(int *, int *, int *, int);
@@ -73,6 +75,7 @@ vbus_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_bustag = vbus_alloc_bus_tag(sc, ma->ma_bustag);
 	sc->sc_dmatag = ma->ma_dmatag;
+	sc->sc_devhandle = (ma->ma_reg[0].ur_paddr >> 32) & 0x0fffffff;
 	printf("\n");
 
 	for (node = OF_child(ma->ma_node); node; node = OF_peer(node)) {
@@ -174,7 +177,7 @@ vbus_intr_map(int node, int ino, uint64_t *sysino)
 			getprop(node, "reg", sizeof(*reg), &nreg, (void **)&reg);
 			devhandle = reg[0] & 0x0fffffff;
 
-			err = hv_intr_devino_to_sysino(devhandle, devino, sysino);
+			err = sun4v_intr_devino_to_sysino(devhandle, devino, sysino);
 			if (err != H_EOK)
 				return (-1);
 
@@ -192,6 +195,8 @@ void *
 vbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
     int level, int flags, int (*handler)(void *), void *arg, const char *what)
 {
+	struct vbus_softc *sc = t->cookie;
+	uint64_t devhandle = sc->sc_devhandle;
 	uint64_t sysino = INTVEC(ihandle);
 	struct intrhand *ih;
 	int err;
@@ -204,19 +209,23 @@ vbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	if (flags & BUS_INTR_ESTABLISH_MPSAFE)
 		ih->ih_mpsafe = 1;
 
+	err = sun4v_intr_setcookie(devhandle, sysino, (vaddr_t)ih);
+	if (err != H_EOK)
+		return (NULL);
+
 	intr_establish(ih->ih_pil, ih);
 	ih->ih_ack = vbus_intr_ack;
 
-	err = hv_intr_settarget(sysino, ih->ih_cpu->ci_upaid);
+	err = sun4v_intr_settarget(devhandle, sysino, ih->ih_cpu->ci_upaid);
 	if (err != H_EOK)
 		return (NULL);
 
 	/* Clear pending interrupts. */
-	err = hv_intr_setstate(sysino, INTR_IDLE);
+	err = sun4v_intr_setstate(devhandle, sysino, INTR_IDLE);
 	if (err != H_EOK)
 		return (NULL);
 
-	err = hv_intr_setenabled(sysino, INTR_ENABLED);
+	err = sun4v_intr_setenabled(devhandle, sysino, INTR_ENABLED);
 	if (err != H_EOK)
 		return (NULL);
 
@@ -226,7 +235,11 @@ vbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 void
 vbus_intr_ack(struct intrhand *ih)
 {
-	hv_intr_setstate(ih->ih_number, INTR_IDLE);
+	bus_space_tag_t t = ih->ih_bus;
+	struct vbus_softc *sc = t->cookie;
+	uint64_t devhandle = sc->sc_devhandle;
+
+	sun4v_intr_setstate(devhandle, ih->ih_number, INTR_IDLE);
 }
 
 bus_space_tag_t
