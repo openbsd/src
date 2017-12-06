@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.535 2017/12/05 14:57:14 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.536 2017/12/06 13:57:27 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -168,6 +168,7 @@ void append_statement(char *, size_t, char *, char *);
 time_t lease_expiry(struct client_lease *);
 time_t lease_renewal(struct client_lease *);
 time_t lease_rebind(struct client_lease *);
+int lease_is_static(struct client_lease *);
 
 struct client_lease *packet_to_lease(struct interface_info *,
     struct option_data *);
@@ -176,6 +177,7 @@ int rdaemon(int);
 void	take_charge(struct interface_info *, int);
 void	set_default_client_identifier(struct interface_info *);
 struct client_lease *get_recorded_lease(struct interface_info *);
+struct client_lease *get_static_lease(struct interface_info *);
 
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -427,7 +429,6 @@ main(int argc, char *argv[])
 	const char		*tail_path = "/etc/resolv.conf.tail";
 	struct interface_info	*ifi;
 	struct passwd		*pw;
-	struct client_lease	*lp, *nlp;
 	char			*ignore_list = NULL;
 	ssize_t			 tailn;
 	int			 fd, socket_fd[2];
@@ -627,13 +628,6 @@ main(int argc, char *argv[])
 		fatal("fopen(%s)", path_dhclient_db);
 	rewrite_client_leases(ifi);
 	close(fd);
-
-	/* Add the static leases to the end of the list of available leases. */
-	TAILQ_FOREACH_SAFE(lp, &config->static_leases, next, nlp) {
-		TAILQ_REMOVE(&config->static_leases, lp, next);
-		lp->is_static = 1;
-		TAILQ_INSERT_TAIL(&ifi->leases, lp, next);
-	}
 
 	if (strlen(path_option_db) != 0) {
 		/*
@@ -971,10 +965,8 @@ dhcpnak(struct interface_info *ifi, struct option_data *options, char *info)
 	delete_address(ifi->active->address);
 
 	/* XXX Do we really want to remove a NAK'd lease from the database? */
-	if (ifi->active->is_static == 0) {
-		TAILQ_REMOVE(&ifi->leases, ifi->active, next);
-		free_client_lease(ifi->active);
-	}
+	TAILQ_REMOVE(&ifi->leases, ifi->active, next);
+	free_client_lease(ifi->active);
 
 	ifi->active = NULL;
 
@@ -1066,8 +1058,6 @@ newlease:
 	 */
 	seen = 0;
 	TAILQ_FOREACH_SAFE(lease, &ifi->leases, next, pl) {
-		if (lease->is_static != 0)
-			break;
 		if (ifi->active == NULL)
 			continue;
 		if (ifi->ssid_len != lease->ssid_len)
@@ -1083,7 +1073,7 @@ newlease:
 			free_client_lease(lease);
 		}
 	}
-	if (ifi->active->is_static == 0 && seen == 0)
+	if (lease_is_static(ifi->active) == 0 && seen == 0)
 		TAILQ_INSERT_HEAD(&ifi->leases, ifi->active,  next);
 
 	/* Write out new leases file. */
@@ -1369,6 +1359,9 @@ state_panic(struct interface_info *ifi)
 	log_info("%s: no acceptable DHCPOFFERS received", log_procname);
 
 	ifi->offer = get_recorded_lease(ifi);
+	if (ifi->offer == NULL)
+		ifi->offer = get_static_lease(ifi);
+
 	if (ifi->offer != NULL) {
 		ifi->state = S_REQUESTING;
 		bind_lease(ifi);
@@ -1724,7 +1717,7 @@ free_client_lease(struct client_lease *lease)
 	int	 i;
 
 	/* Static leases are forever. */
-	if (lease == NULL || lease->is_static)
+	if (lease == NULL || lease_is_static(lease))
 		return;
 
 	free(lease->interface);
@@ -1758,9 +1751,6 @@ rewrite_client_leases(struct interface_info *ifi)
 	 */
 	time(&cur_time);
 	TAILQ_FOREACH_REVERSE(lp, &ifi->leases, client_lease_tq, next) {
-		/* Don't write out static leases from dhclient.conf. */
-		if (lp->is_static != 0)
-			continue;
 		if (lease_expiry(lp) < cur_time)
 			continue;
 		leasestr = lease_as_string(ifi->name, "lease", lp);
@@ -2349,10 +2339,8 @@ apply_defaults(struct client_lease *lease)
 	return newlease;
 
 cleanup:
-	if (newlease != NULL) {
-		newlease->is_static = 0;
-		free_client_lease(newlease);
-	}
+
+	free_client_lease(newlease);
 
 	fatalx("unable to apply defaults");
 	/* NOTREACHED */
@@ -2371,7 +2359,6 @@ clone_lease(struct client_lease *oldlease)
 		goto cleanup;
 
 	newlease->epoch = oldlease->epoch;
-	newlease->is_static = oldlease->is_static;
 	newlease->address = oldlease->address;
 	newlease->next_server = oldlease->next_server;
 	memcpy(newlease->ssid, oldlease->ssid, sizeof(newlease->ssid));
@@ -2403,10 +2390,7 @@ clone_lease(struct client_lease *oldlease)
 	return newlease;
 
 cleanup:
-	if (newlease != NULL) {
-		newlease->is_static = 0;
-		free_client_lease(newlease);
-	}
+	free_client_lease(newlease);
 
 	return NULL;
 }
@@ -2535,13 +2519,44 @@ get_recorded_lease(struct interface_info *ifi)
 		if (lease_expiry(lp) <= cur_time)
 			continue;
 
-		if (lp->is_static != 0)
-			lp->epoch = 0;
-
 		break;
 	}
 
 	if (lp != NULL && lp->epoch == 0)
+		time(&lp->epoch);
+
+	return lp;
+}
+struct client_lease *
+get_static_lease(struct interface_info *ifi)
+{
+	char			 ifname[IF_NAMESIZE];
+	time_t			 cur_time;
+	struct client_lease	*lp;
+	int			 i;
+
+	time(&cur_time);
+
+	/* Run through the list of leases and see if one can be used. */
+	i = DHO_DHCP_CLIENT_IDENTIFIER;
+	TAILQ_FOREACH(lp, &config->static_leases, next) {
+		if (lp->ssid_len != ifi->ssid_len)
+			continue;
+		if (memcmp(lp->ssid, ifi->ssid, lp->ssid_len) != 0)
+			continue;
+		if ((lp->options[i].len != 0) && ((lp->options[i].len !=
+		    config->send_options[i].len) ||
+		    memcmp(lp->options[i].data, config->send_options[i].data,
+		    lp->options[i].len)))
+			continue;
+		if (addressinuse(ifi->name, lp->address, ifname) != 0 &&
+		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
+			continue;
+
+		break;
+	}
+
+	if (lp != NULL)
 		time(&lp->epoch);
 
 	return lp;
@@ -2576,9 +2591,6 @@ time_t
 lease_expiry(struct client_lease *lease)
 {
 	uint32_t	expiry;
-
-	if (lease->is_static != 0)
-		return LLONG_MAX;
 
 	expiry = 43200;	/* Default to 12 hours */
 	if (lease->options[DHO_DHCP_LEASE_TIME].len == sizeof(expiry)) {
@@ -2635,4 +2647,17 @@ lease_rebind(struct client_lease *lease)
 		rebind = renewal;
 
 	return lease->epoch + rebind;
+}
+
+int
+lease_is_static(struct client_lease *lease)
+{
+	struct client_lease *lp;
+
+	TAILQ_FOREACH(lp, &config->static_leases, next) {
+		if (lp == lease)
+			return 1;
+	}
+
+	return 0;
 }
