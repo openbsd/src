@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.19 2017/05/03 15:49:10 reyk Exp $
+.\" $OpenBSD: imsg_init.3,v 1.20 2017/12/06 12:07:08 zhuk Exp $
 .\"
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 3 2017 $
+.Dd $Mdocdate: December 6 2017 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -176,13 +176,6 @@ In addition to this common imsg header,
 bytes of space may be reserved for attaching to this imsg.
 This space is populated using
 .Fn imsg_add .
-Additionally, the file descriptor
-.Fa fd
-may be passed over the socket to the other process.
-If
-.Fa fd
-is given, it is closed in the sending program after the message is sent.
-A value of \-1 indicates no file descriptor should be passed.
 .Fn imsg_create
 returns a pointer to a new message if it succeeds, NULL otherwise.
 .Pp
@@ -212,6 +205,13 @@ and
 .Fn imsg_close
 routines,
 except that only one ancillary data buffer can be provided.
+Additionally, the file descriptor
+.Fa fd
+may be passed over the socket to the other process.
+If
+.Fa fd
+is given, it is closed in the sending program after the message is sent.
+A value of \-1 indicates no file descriptor should be passed.
 This routine returns 1 if it succeeds, \-1 otherwise.
 .Pp
 .Fn imsg_composev
