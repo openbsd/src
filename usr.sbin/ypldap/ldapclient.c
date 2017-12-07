@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.39 2017/05/30 09:33:31 jmatthew Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.40 2017/12/07 05:06:08 zhuk Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -66,7 +66,8 @@ struct aldap *
 client_aldap_open(struct ypldap_addr_list *addr)
 {
 	int			 fd = -1;
-	struct ypldap_addr	 *p;
+	struct ypldap_addr	*p;
+	struct aldap		*al;
 
 	TAILQ_FOREACH(p, addr, next) {
 		char			 hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
@@ -90,7 +91,10 @@ client_aldap_open(struct ypldap_addr_list *addr)
 	if (fd == -1)
 		return NULL;
 
-	return aldap_init(fd);
+	al = aldap_init(fd);
+	if (al == NULL)
+		close(fd);
+	return al;
 }
 
 int
