@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.18 2016/01/07 08:51:48 jmc Exp $
+.\" $OpenBSD: sndio.7,v 1.19 2017/12/07 15:43:03 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 7 2016 $
+.Dd $Mdocdate: December 7 2017 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
@@ -74,36 +74,36 @@ type[@hostname][,unit]/devnum[.option]
 This information is used by audio and MIDI applications to determine
 how to access the audio device or MIDI port.
 .Bl -tag -width "hostname"
-.It Pa type
+.It Ar type
 The type of the audio device or MIDI port.
 Possible values are:
 .Pp
 .Bl -tag -width "midithru" -offset 3n -compact
-.It Pa rsnd
+.It Cm rsnd
 Raw
 .Xr audio 4
 device.
-.It Pa rmidi
+.It Cm rmidi
 Raw
 .Xr midi 4
 port.
-.It Pa snd
+.It Cm snd
 Audio device exposed by
 .Xr sndiod 8 .
-.It Pa midithru
+.It Cm midithru
 MIDI thru box created with
 .Xr sndiod 8 .
-.It Pa midi
+.It Cm midi
 MIDI port exposed by
 .Xr sndiod 8 .
-.It Pa default
+.It Cm default
 Default audio device or MIDI port (see below).
 .El
-.It Pa hostname
+.It Ar hostname
 The hostname or address where the remote
 .Xr sndiod 8
 server to connect to is running.
-.It Pa unit
+.It Ar unit
 The number of the
 .Xr sndiod 8
 server to connect to, corresponding to the integer specified using the
@@ -113,7 +113,7 @@ option of
 Useful only if multiple
 .Xr sndiod 8
 servers are running on the same system.
-.It Pa devnum
+.It Ar devnum
 Device number.
 For hardware audio or MIDI ports, this corresponds to
 the character device minor number.
@@ -122,7 +122,7 @@ For audio devices or MIDI ports created with
 it corresponds to the number of the corresponding
 .Fl fq
 option on the command line.
-.It Pa option
+.It Ar option
 Corresponds to the sub-device string registered using the
 .Fl s
 option of
@@ -132,31 +132,31 @@ option of
 For example:
 .Pp
 .Bl -tag -width "snd/0.rear" -offset 3n -compact
-.It Pa rsnd/0
+.It Li rsnd/0
 First hardware audio device.
-.It Pa rmidi/5
+.It Li rmidi/5
 Hardware MIDI port number 5.
-.It Pa snd/0
+.It Li snd/0
 First audio device exposed by
 .Xr sndiod 8 .
-.It Pa snd/0.rear
+.It Li snd/0.rear
 Sub-device registered with
 .Fl s Fa rear .
-.It Pa midithru/0
+.It Li midithru/0
 First MIDI thru box created with
 .Xr sndiod 8 .
 .El
 .Sh DEFAULTS
 If
-.Pa default
+.Cm default
 is used as the audio device, the program will use the
 one specified in the
 .Ev AUDIODEVICE
 environment variable.
 If it is not set, the program first tries to connect to
-.Pa snd/0 .
+.Li snd/0 .
 If that fails, it then tries to use
-.Pa rsnd/0 .
+.Li rsnd/0 .
 This allows the
 .Xr sndiod 8
 audio server to be used by default and the bare hardware as fallback;
@@ -165,15 +165,15 @@ programs don't have to be reconfigured when
 is started or stopped.
 .Pp
 If
-.Pa default
+.Cm default
 is used as the MIDI port, the program will use the
 one specified in the
 .Ev MIDIDEVICE
 environment variable.
 If it is not set, the program first tries to connect to
-.Pa midithru/0 .
+.Li midithru/0 .
 If that fails, it then tries to use
-.Pa rmidi/0 .
+.Li rmidi/0 .
 As long as
 .Xr sndiod 8
 is running, this allows programs to exchange MIDI data on
@@ -199,15 +199,18 @@ can connect to the server using the same cookie.
 .Sh ENVIRONMENT
 .Bl -tag -width "AUDIODEVICEXXX" -compact
 .It Ev AUDIODEVICE
-Audio device to use if the application provides
-no device chooser.
+Audio device that
+.Xr sio_open 3
+uses if the application provides no device chooser.
 .It Ev MIDIDEVICE
-MIDI port to use if the application provides
-no MIDI port chooser.
+MIDI port that
+.Xr mio_open 3
+uses if the application provides no MIDI port chooser.
 .El
 .Pp
-Environment variables are ignored by programs
-with the set-user-ID or set-group-ID bits set.
+These environment variables are ignored by
+.Nm
+if the program has the set-user-ID or set-group-ID bits set.
 .Sh FILES
 .Bl -tag -width "/dev/audioNXXX" -compact
 .It Pa /dev/audioN
