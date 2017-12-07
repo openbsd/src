@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.37 2017/12/07 19:03:15 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.38 2017/12/07 21:47:22 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -86,10 +86,7 @@ The default is 0 seconds, i.e. immediately use
 the first acceptable lease received.
 .It Ic timeout Ar seconds ;
 Sets the number of seconds to wait for a lease.
-If no lease is received
-the first valid lease in
-.Nm
-or in
+If no lease is received the first valid lease in
 .Xr dhclient.leases 5
 will be used.
 The default is 30 seonds.
