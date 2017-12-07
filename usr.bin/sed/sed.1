@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.50 2017/07/19 21:28:19 jmc Exp $
+.\"	$OpenBSD: sed.1,v 1.51 2017/12/07 09:52:26 martijn Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: July 19 2017 $
+.Dd $Mdocdate: December 7 2017 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -297,11 +297,11 @@ in which case they are applied only to lines that are
 .Em not
 selected by the addresses.
 .Bl -tag -width Ds
-.It [2addr] Ar function-list
+.It [2addr] Ns Ar function-list
 Execute
 .Ar function-list
 only when the pattern space is selected.
-.It Xo [1 addr] Ic a Ns \e
+.It Xo [1addr] Ns Ic a Ns \e
 .br
 .Ar text
 .Xc
@@ -317,7 +317,7 @@ Branch to the
 function with the specified
 .Ar label .
 If the label is not specified, branch to the end of the script.
-.It Xo [2addr] Ic c Ns \e
+.It Xo [2addr] Ns Ic c Ns \e
 .br
 .Ar text
 .Xc
@@ -342,7 +342,7 @@ pattern space.
 .It [2addr] Ns Ic H
 Append a newline character followed by the contents of the pattern space
 to the hold space.
-.It Xo [1addr] Ic i Ns \e
+.It Xo [1addr] Ns Ic i Ns \e
 .br
 .Ar text
 .Xc
@@ -413,8 +413,8 @@ in the pattern space.
 Any character other than backslash or newline can be used instead of
 a slash to delimit the regular expression and the replacement.
 Within the regular expression and the replacement,
-the regular expression delimiter itself can be used as
-a literal character if it is preceded by a backslash.
+the delimiter itself can be used as a literal character
+if it is preceded by a backslash.
 .Pp
 An ampersand
 .Pq Ql &
@@ -522,7 +522,7 @@ output from the
 function is formatted to the given width in columns.
 Otherwise,
 .Nm
-defaults to the terminal with, or 80 columns if the output is not a terminal.
+defaults to the terminal width, or 80 columns if the output is not a terminal.
 .El
 .Sh EXIT STATUS
 .Ex -std sed
