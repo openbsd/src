@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.68 2017/12/04 17:22:39 patrick Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.69 2017/12/07 22:47:28 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -326,10 +326,6 @@ ikev2_validate_sa(struct iked_message *msg, size_t offset, size_t left,
 	return (0);
 }
 
-/*
- * NB: This function parses both the SA header and the first proposal.
- * Additional proposals are ignored.
- */
 int
 ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, size_t offset, size_t left)
@@ -342,95 +338,97 @@ ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
 	struct iked_proposals		*props;
 	size_t				 total;
 
-	if (ikev2_validate_sa(msg, offset, left, &sap))
-		return (-1);
+	do {
+		if (ikev2_validate_sa(msg, offset, left, &sap))
+			return (-1);
 
-	if (sap.sap_more)
-		log_debug("%s: more than one proposal specified", __func__);
+		/* Assumed size of the first proposals, including SPI if present. */
+		total = (betoh16(sap.sap_length) - sizeof(sap));
 
-	/* Assumed size of the first proposals, including SPI if present. */
-	total = (betoh16(sap.sap_length) - sizeof(sap));
+		props = &msg->msg_parent->msg_proposals;
 
-	props = &msg->msg_parent->msg_proposals;
+		offset += sizeof(sap);
+		left -= sizeof(sap);
 
-	offset += sizeof(sap);
-	left -= sizeof(sap);
+		if (sap.sap_spisize) {
+			if (left < sap.sap_spisize) {
+				log_debug("%s: malformed payload: SPI larger than "
+				    "actual payload (%zu < %d)", __func__, left,
+				    sap.sap_spisize);
+				return (-1);
+			}
+			if (total < sap.sap_spisize) {
+				log_debug("%s: malformed payload: SPI larger than "
+				    "proposal (%zu < %d)", __func__, total,
+				    sap.sap_spisize);
+				return (-1);
+			}
+			switch (sap.sap_spisize) {
+			case 4:
+				memcpy(&spi32, msgbuf + offset, 4);
+				spi = betoh32(spi32);
+				break;
+			case 8:
+				memcpy(&spi64, msgbuf + offset, 8);
+				spi = betoh64(spi64);
+				break;
+			default:
+				log_debug("%s: unsupported SPI size %d",
+				    __func__, sap.sap_spisize);
+				return (-1);
+			}
 
-	if (sap.sap_spisize) {
-		if (left < sap.sap_spisize) {
-			log_debug("%s: malformed payload: SPI larger than "
-			    "actual payload (%zu < %d)", __func__, left,
-			    sap.sap_spisize);
+			offset += sap.sap_spisize;
+			left -= sap.sap_spisize;
+
+			/* Assumed size of the proposal, now without SPI. */
+			total -= sap.sap_spisize;
+		}
+
+		/*
+		 * As we verified sanity of packet headers, this check will
+		 * be always false, but just to be sure we keep it.
+		 */
+		if (left < total) {
+			log_debug("%s: malformed payload: too long for payload "
+			    "(%zu < %zu)", __func__, left, total);
 			return (-1);
 		}
-		if (total < sap.sap_spisize) {
-			log_debug("%s: malformed payload: SPI larger than "
-			    "proposal (%zu < %d)", __func__, total,
-			    sap.sap_spisize);
+
+		log_debug("%s: more %d reserved %d length %d"
+		    " proposal #%d protoid %s spisize %d xforms %d spi %s",
+		    __func__, sap.sap_more, sap.sap_reserved,
+		    betoh16(sap.sap_length), sap.sap_proposalnr,
+		    print_map(sap.sap_protoid, ikev2_saproto_map), sap.sap_spisize,
+		    sap.sap_transforms, print_spi(spi, sap.sap_spisize));
+
+		if (ikev2_msg_frompeer(msg)) {
+			if ((msg->msg_parent->msg_prop = config_add_proposal(props,
+			    sap.sap_proposalnr, sap.sap_protoid)) == NULL) {
+				log_debug("%s: invalid proposal", __func__);
+				return (-1);
+			}
+			prop = msg->msg_parent->msg_prop;
+			prop->prop_peerspi.spi = spi;
+			prop->prop_peerspi.spi_protoid = sap.sap_protoid;
+			prop->prop_peerspi.spi_size = sap.sap_spisize;
+
+			prop->prop_localspi.spi_protoid = sap.sap_protoid;
+			prop->prop_localspi.spi_size = sap.sap_spisize;
+		}
+
+		/*
+		 * Parse the attached transforms
+		 */
+		if (sap.sap_transforms &&
+		    ikev2_pld_xform(env, &sap, msg, offset, total) != 0) {
+			log_debug("%s: invalid proposal transforms", __func__);
 			return (-1);
 		}
-		switch (sap.sap_spisize) {
-		case 4:
-			memcpy(&spi32, msgbuf + offset, 4);
-			spi = betoh32(spi32);
-			break;
-		case 8:
-			memcpy(&spi64, msgbuf + offset, 8);
-			spi = betoh64(spi64);
-			break;
-		default:
-			log_debug("%s: unsupported SPI size %d",
-			    __func__, sap.sap_spisize);
-			return (-1);
-		}
 
-		offset += sap.sap_spisize;
-		left -= sap.sap_spisize;
-
-		/* Assumed size of the proposal, now without SPI. */
-		total -= sap.sap_spisize;
-	}
-
-	/*
-	 * As we verified sanity of packet headers, this check will
-	 * be always false, but just to be sure we keep it.
-	 */
-	if (left < total) {
-		log_debug("%s: malformed payload: too long for payload "
-		    "(%zu < %zu)", __func__, left, total);
-		return (-1);
-	}
-
-	log_debug("%s: more %d reserved %d length %d"
-	    " proposal #%d protoid %s spisize %d xforms %d spi %s",
-	    __func__, sap.sap_more, sap.sap_reserved,
-	    betoh16(sap.sap_length), sap.sap_proposalnr,
-	    print_map(sap.sap_protoid, ikev2_saproto_map), sap.sap_spisize,
-	    sap.sap_transforms, print_spi(spi, sap.sap_spisize));
-
-	if (ikev2_msg_frompeer(msg)) {
-		if ((msg->msg_parent->msg_prop = config_add_proposal(props,
-		    sap.sap_proposalnr, sap.sap_protoid)) == NULL) {
-			log_debug("%s: invalid proposal", __func__);
-			return (-1);
-		}
-		prop = msg->msg_parent->msg_prop;
-		prop->prop_peerspi.spi = spi;
-		prop->prop_peerspi.spi_protoid = sap.sap_protoid;
-		prop->prop_peerspi.spi_size = sap.sap_spisize;
-
-		prop->prop_localspi.spi_protoid = sap.sap_protoid;
-		prop->prop_localspi.spi_size = sap.sap_spisize;
-	}
-
-	/*
-	 * Parse the attached transforms
-	 */
-	if (sap.sap_transforms &&
-	    ikev2_pld_xform(env, &sap, msg, offset, total) != 0) {
-		log_debug("%s: invalid proposal transforms", __func__);
-		return (-1);
-	}
+		offset += total;
+		left -= total;
+	} while (sap.sap_more);
 
 	return (0);
 }
