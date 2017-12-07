@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.218 2017/12/07 14:12:39 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.219 2017/12/07 14:13:05 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5986,17 +5986,27 @@ iwm_newstate_task(void *psc)
 	    ieee80211_state_name[ostate],
 	    ieee80211_state_name[nstate]));
 
-	if (nstate == ostate || (sc->sc_flags & IWM_FLAG_SHUTDOWN)) {
-		/* No-op state change or iwm_stop() is waiting for us. */
+	if (sc->sc_flags & IWM_FLAG_SHUTDOWN) {
+		/* iwm_stop() is waiting for us. */
 		refcnt_rele_wake(&sc->task_refs);
 		splx(s);
 		return;
 	}
 
-	if (ostate == IEEE80211_S_SCAN)
-		iwm_led_blink_stop(sc);
+	if (ostate == IEEE80211_S_SCAN) {
+		if (nstate == ostate) {
+			if (sc->sc_flags & IWM_FLAG_SCANNING) {
+				refcnt_rele_wake(&sc->task_refs);
+				splx(s);
+				return;
+			}
+			/* Firmware is no longer scanning. Do another scan. */
+			goto next_scan;
+		} else
+			iwm_led_blink_stop(sc);
+	}
 
-	if (nstate < ostate) {
+	if (nstate <= ostate) {
 		switch (ostate) {
 		case IEEE80211_S_RUN:
 			err = iwm_run_stop(sc);
@@ -6035,6 +6045,7 @@ iwm_newstate_task(void *psc)
 		break;
 
 	case IEEE80211_S_SCAN:
+next_scan:
 		err = iwm_scan(sc);
 		if (err)
 			break;
