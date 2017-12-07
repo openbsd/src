@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.111 2017/11/08 13:33:49 patrick Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.112 2017/12/07 11:44:02 mpi Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -406,6 +406,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 	struct constant_map *id_map;
 	char           *protocol_id, *transform_id;
 	char           *local_id, *remote_id;
+	char           *name;
 	int             group_desc = -1, new_group_desc;
 	struct ipsec_sa *isa = msg->isakmp_sa->data;
 	struct hash    *hash = hash_get(isa->hash);
@@ -621,9 +622,40 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 					}
 					conf_free_list(life_conf);
 				}
-				attribute_set_constant(xf->field,
-				    "ENCAPSULATION_MODE", ipsec_encap_cst,
-				    IPSEC_ATTR_ENCAPSULATION_MODE, &attr);
+
+				if (proto_id == IPSEC_PROTO_IPSEC_ESP &&
+				    (exchange->flags &
+				    EXCHANGE_FLAG_NAT_T_ENABLE)) {
+					name = conf_get_str(xf->field,
+					    "ENCAPSULATION_MODE");
+					if (name) {
+						value = constant_value(
+						    ipsec_encap_cst,
+						    name);
+						switch (value) {
+						case IPSEC_ENCAP_TUNNEL:
+							value = exchange->flags & EXCHANGE_FLAG_NAT_T_DRAFT ?
+							    IPSEC_ENCAP_UDP_ENCAP_TUNNEL_DRAFT :
+							    IPSEC_ENCAP_UDP_ENCAP_TUNNEL;
+							break;
+						case IPSEC_ENCAP_TRANSPORT:
+							value = exchange->flags & EXCHANGE_FLAG_NAT_T_DRAFT ?
+							    IPSEC_ENCAP_UDP_ENCAP_TRANSPORT_DRAFT :
+							    IPSEC_ENCAP_UDP_ENCAP_TRANSPORT;
+							break;
+						}
+						attr = attribute_set_basic(
+						    attr,
+						    IPSEC_ATTR_ENCAPSULATION_MODE,
+						    value);
+					}
+				} else {
+					attribute_set_constant(xf->field,
+					    "ENCAPSULATION_MODE",
+					    ipsec_encap_cst,
+					    IPSEC_ATTR_ENCAPSULATION_MODE,
+					    &attr);
+				}
 
 				if (proto_id != IPSEC_PROTO_IPCOMP) {
 					attribute_set_constant(xf->field,
