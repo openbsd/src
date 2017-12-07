@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.17 2017/03/05 01:02:48 guenther Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.18 2017/12/07 20:38:15 deraadt Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -929,7 +929,7 @@ db_read_address(db_addr_t loc, int short_addr, int regmodrm, int rex,
 	switch (mod) {
 	case 0:
 		if (rm == 5) {
-		get_value_inc(addrp->disp, loc, 4, FALSE);
+			get_value_inc(addrp->disp, loc, 4, FALSE);
 			addrp->base = 0;
 		} else {
 			addrp->disp = 0;
