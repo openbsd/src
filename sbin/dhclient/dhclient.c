@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.537 2017/12/07 19:03:15 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.538 2017/12/07 19:17:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -854,6 +854,7 @@ state_selecting(struct interface_info *ifi)
 
 	/* Toss the lease we picked - we'll get it back in a DHCPACK. */
 	free_client_lease(ifi->offer);
+	ifi->offer = NULL;
 
 	send_request(ifi);
 }
