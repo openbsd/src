@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.151 2017/12/03 20:53:28 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.152 2017/12/07 19:03:15 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -126,7 +126,6 @@ read_client_conf(char *name)
 
 	new_parse(path_dhclient_conf);
 
-	TAILQ_INIT(&config->static_leases);
 	TAILQ_INIT(&config->reject_list);
 
 	/* Set some defaults. */
@@ -237,7 +236,6 @@ read_client_leases(char *name, struct client_lease_tq *tq)
 void
 parse_client_statement(FILE *cfile, char *name, int nested)
 {
-	struct client_lease	*lp;
 	char			*val;
 	int			 i, token;
 
@@ -288,11 +286,7 @@ parse_client_statement(FILE *cfile, char *name, int nested)
 			;
 		break;
 	case TOK_LEASE:
-		if (nested == 1) {
-			parse_warn("expecting statement.");
-			skip_to_semi(cfile);
-		} else if (parse_client_lease_statement(cfile, name, &lp) == 1)
-			add_lease(&config->static_leases, lp);
+		skip_to_semi(cfile);
 		break;
 	case TOK_LINK_TIMEOUT:
 		if (parse_lease_time(cfile, &config->link_timeout) == 1)

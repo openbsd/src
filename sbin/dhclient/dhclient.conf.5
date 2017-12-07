@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.36 2017/10/20 13:04:50 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.37 2017/12/07 19:03:15 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: October 20 2017 $
+.Dd $Mdocdate: December 7 2017 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -206,16 +206,7 @@ Apply any
 .Ar declaration
 only to the named interface.
 .Ar interface
-declarations cannot be nested and cannot contain
-.Ar lease
-declarations.
-.It Ic lease No { Ar declaration ; ... ; No }
-Define a lease that can be used when no lease is obtained from a server.
-See
-.Xr dhclient.leases 5
-for the complete description of the
-.Ic lease
-format.
+declarations cannot be nested.
 .It Ic reject Ar ip-address ;
 Discard leases from the specified address.
 If more than one

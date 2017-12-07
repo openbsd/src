@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.536 2017/12/06 13:57:27 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.537 2017/12/07 19:03:15 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -168,7 +168,6 @@ void append_statement(char *, size_t, char *, char *);
 time_t lease_expiry(struct client_lease *);
 time_t lease_renewal(struct client_lease *);
 time_t lease_rebind(struct client_lease *);
-int lease_is_static(struct client_lease *);
 
 struct client_lease *packet_to_lease(struct interface_info *,
     struct option_data *);
@@ -177,7 +176,6 @@ int rdaemon(int);
 void	take_charge(struct interface_info *, int);
 void	set_default_client_identifier(struct interface_info *);
 struct client_lease *get_recorded_lease(struct interface_info *);
-struct client_lease *get_static_lease(struct interface_info *);
 
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -1073,7 +1071,7 @@ newlease:
 			free_client_lease(lease);
 		}
 	}
-	if (lease_is_static(ifi->active) == 0 && seen == 0)
+	if (seen == 0)
 		TAILQ_INSERT_HEAD(&ifi->leases, ifi->active,  next);
 
 	/* Write out new leases file. */
@@ -1359,9 +1357,6 @@ state_panic(struct interface_info *ifi)
 	log_info("%s: no acceptable DHCPOFFERS received", log_procname);
 
 	ifi->offer = get_recorded_lease(ifi);
-	if (ifi->offer == NULL)
-		ifi->offer = get_static_lease(ifi);
-
 	if (ifi->offer != NULL) {
 		ifi->state = S_REQUESTING;
 		bind_lease(ifi);
@@ -1716,8 +1711,7 @@ free_client_lease(struct client_lease *lease)
 {
 	int	 i;
 
-	/* Static leases are forever. */
-	if (lease == NULL || lease_is_static(lease))
+	if (lease == NULL)
 		return;
 
 	free(lease->interface);
@@ -2527,40 +2521,6 @@ get_recorded_lease(struct interface_info *ifi)
 
 	return lp;
 }
-struct client_lease *
-get_static_lease(struct interface_info *ifi)
-{
-	char			 ifname[IF_NAMESIZE];
-	time_t			 cur_time;
-	struct client_lease	*lp;
-	int			 i;
-
-	time(&cur_time);
-
-	/* Run through the list of leases and see if one can be used. */
-	i = DHO_DHCP_CLIENT_IDENTIFIER;
-	TAILQ_FOREACH(lp, &config->static_leases, next) {
-		if (lp->ssid_len != ifi->ssid_len)
-			continue;
-		if (memcmp(lp->ssid, ifi->ssid, lp->ssid_len) != 0)
-			continue;
-		if ((lp->options[i].len != 0) && ((lp->options[i].len !=
-		    config->send_options[i].len) ||
-		    memcmp(lp->options[i].data, config->send_options[i].data,
-		    lp->options[i].len)))
-			continue;
-		if (addressinuse(ifi->name, lp->address, ifname) != 0 &&
-		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
-			continue;
-
-		break;
-	}
-
-	if (lp != NULL)
-		time(&lp->epoch);
-
-	return lp;
-}
 
 void
 set_default_client_identifier(struct interface_info *ifi)
@@ -2647,17 +2607,4 @@ lease_rebind(struct client_lease *lease)
 		rebind = renewal;
 
 	return lease->epoch + rebind;
-}
-
-int
-lease_is_static(struct client_lease *lease)
-{
-	struct client_lease *lp;
-
-	TAILQ_FOREACH(lp, &config->static_leases, next) {
-		if (lp == lease)
-			return 1;
-	}
-
-	return 0;
 }
