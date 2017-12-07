@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.166 2017/10/22 14:11:34 mikeb Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.167 2017/12/07 16:52:21 mikeb Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -125,6 +125,9 @@ struct pool tcpqe_pool;
 struct pool sackhl_pool;
 
 struct cpumem *tcpcounters;		/* tcp statistics */
+
+u_char   tcp_secret[16];
+SHA2_CTX tcp_secret_ctx;
 tcp_seq  tcp_iss;
 
 /*
@@ -144,6 +147,10 @@ tcp_init(void)
 	pool_sethardlimit(&sackhl_pool, tcp_sackhole_limit, NULL, 0);
 	in_pcbinit(&tcbtable, TCB_INITIAL_HASH_SIZE);
 	tcpcounters = counters_alloc(tcps_ncounters);
+
+	arc4random_buf(tcp_secret, sizeof(tcp_secret));
+	SHA512Init(&tcp_secret_ctx);
+	SHA512Update(&tcp_secret_ctx, tcp_secret, sizeof(tcp_secret));
 
 #ifdef INET6
 	/*
@@ -903,9 +910,6 @@ tcp_mtudisc_increase(struct inpcb *inp, int errno)
  * Generate new ISNs with a method based on RFC1948
  */
 #define TCP_ISS_CONN_INC 4096
-int tcp_secret_init;
-u_char tcp_secret[16];
-SHA2_CTX tcp_secret_ctx;
 
 void
 tcp_set_iss_tsm(struct tcpcb *tp)
@@ -917,12 +921,6 @@ tcp_set_iss_tsm(struct tcpcb *tp)
 	} digest;
 	u_int rdomain = rtable_l2(tp->t_inpcb->inp_rtableid);
 
-	if (tcp_secret_init == 0) {
-		arc4random_buf(tcp_secret, sizeof(tcp_secret));
-		SHA512Init(&tcp_secret_ctx);
-		SHA512Update(&tcp_secret_ctx, tcp_secret, sizeof(tcp_secret));
-		tcp_secret_init = 1;
-	}
 	ctx = tcp_secret_ctx;
 	SHA512Update(&ctx, &rdomain, sizeof(rdomain));
 	SHA512Update(&ctx, &tp->t_inpcb->inp_lport, sizeof(u_short));
