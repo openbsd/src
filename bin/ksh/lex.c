@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.71 2017/07/04 11:46:15 anton Exp $	*/
+/*	$OpenBSD: lex.c,v 1.72 2017/12/07 01:54:33 tb Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1165,7 +1165,7 @@ getsc_line(Source *s)
 #endif /* HISTORY */
 	}
 	if (interactive)
-		set_prompt(PS2, NULL);
+		set_prompt(PS2);
 }
 
 static char *
@@ -1180,7 +1180,7 @@ special_prompt_expand(char *str)
 }
 
 void
-set_prompt(int to, Source *s)
+set_prompt(int to)
 {
 	char *ps1;
 	Area *saved_atemp;

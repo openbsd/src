@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.83 2017/08/11 23:10:55 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.84 2017/12/07 01:54:33 tb Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -609,7 +609,7 @@ shell(Source *volatile s, volatile int toplevel)
 			got_sigwinch = 1;
 			j_notify();
 			mcheck();
-			set_prompt(PS1, s);
+			set_prompt(PS1);
 		}
 
 		t = compile(s);

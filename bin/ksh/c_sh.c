@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.60 2017/07/22 09:37:21 anton Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.61 2017/12/07 01:54:33 tb Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -361,7 +361,7 @@ c_read(char **wp)
 						/* set prompt in case this is
 						 * called from .profile or $ENV
 						 */
-						set_prompt(PS2, NULL);
+						set_prompt(PS2);
 						pprompt(prompt, 0);
 					}
 				} else if (c != EOF)

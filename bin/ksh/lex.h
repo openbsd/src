@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.h,v 1.16 2015/10/10 07:35:16 nicm Exp $	*/
+/*	$OpenBSD: lex.h,v 1.17 2017/12/07 01:54:33 tb Exp $	*/
 
 /*
  * Source input, lexer and parser
@@ -118,5 +118,5 @@ int	yylex(int);
 void	yyerror(const char *, ...)
 	    __attribute__((__noreturn__, __format__ (printf, 1, 2)));
 Source * pushs(int, Area *);
-void	set_prompt(int, Source *);
+void	set_prompt(int);
 void	pprompt(const char *, int);
