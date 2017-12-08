@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.42 2017/08/01 18:05:53 martijn Exp $	*/
+/*	$OpenBSD: compile.c,v 1.43 2017/12/08 18:41:59 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -277,6 +277,8 @@ nonsel:		/* Now parse the command */
 			pledge_rpath = 1;
 			p++;
 			EATSPACE();
+			if (*p == '\0')
+				error(COMPILE, "filename expected");
 			cmd->t = duptoeol(p, "read command", NULL);
 			break;
 		case BRANCH:			/* b t */
@@ -539,7 +541,6 @@ compile_flags(char *p, struct s_subst *s)
 {
 	int gn;			/* True if we have seen g or n */
 	long l;
-	char wfile[PATH_MAX], *q, *eq;
 
 	s->n = 1;				/* Default */
 	s->p = 0;
@@ -577,32 +578,17 @@ compile_flags(char *p, struct s_subst *s)
 			continue;
 		case 'w':
 			p++;
-#ifdef HISTORIC_PRACTICE
-			if (*p != ' ') {
-				warning("space missing before w wfile");
-				return (p);
-			}
-#endif
 			EATSPACE();
-			q = wfile;
-			eq = wfile + sizeof(wfile) - 1;
-			while (*p) {
-				if (*p == '\n')
-					break;
-				if (q >= eq)
-					error(COMPILE, "wfile too long");
-				*q++ = *p++;
-			}
-			*q = '\0';
-			if (q == wfile)
-				error(COMPILE, "no wfile specified");
-			s->wfile = strdup(wfile);
+			if (*p == '\0')
+				error(COMPILE, "filename expected");
+			s->wfile = duptoeol(p, "s command w flag", NULL);
+			*p = '\0';
 			if (aflag)
 				pledge_wpath = 1;
-			else if ((s->wfd = open(wfile,
+			else if ((s->wfd = open(s->wfile,
 			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 			    DEFFILEMODE)) == -1)
-				error(FATAL, "%s: %s", wfile, strerror(errno));
+				error(FATAL, "%s: %s", s->wfile, strerror(errno));
 			return (p);
 		default:
 			error(COMPILE,
