@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.57 2017/01/24 07:48:36 guenther Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.58 2017/12/08 05:25:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -332,7 +332,7 @@ retry:
 	}
 	return(object);
 fail:
-	_dl_printf("%s: rtld mmap failed mapping %s.\n", __progname, libname);
+	_dl_printf("%s: ld.so mmap failed mapping %s.\n", __progname, libname);
 	_dl_close(libfile);
 	_dl_errno = DL_CANT_MMAP;
 	_dl_load_list_free(lowld);

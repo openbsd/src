@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.171 2017/10/26 20:17:05 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.172 2017/12/08 05:25:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -412,7 +412,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 		_dl___syscall(SYS_kbind, (void *)NULL, (size_t)0, (long long)0);
 	}
 
-	DL_DEB(("rtld loading: '%s'\n", __progname));
+	DL_DEB(("ld.so loading: '%s'\n", __progname));
 
 	/* init this in runtime, not statically */
 	TAILQ_INIT(&_dlopened_child_list);
