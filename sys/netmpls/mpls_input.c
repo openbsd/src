@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.61 2017/12/08 21:08:35 deraadt Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.62 2017/12/08 21:52:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -116,6 +116,10 @@ mpls_input(struct mbuf *m)
 
 	if (ntohl(smpls->smpls_label) < MPLS_LABEL_RESERVED_MAX) {
 		m = mpls_shim_pop(m);
+		if (m == NULL) {
+			if_put(ifp);
+			return;
+		}
 		if (!hasbos) {
 			/*
 			 * RFC 4182 relaxes the position of the
@@ -195,6 +199,8 @@ do_v6:
 	switch (rt_mpls->mpls_operation) {
 	case MPLS_OP_POP:
 		m = mpls_shim_pop(m);
+		if (m == NULL)
+			goto done;
 		if (!hasbos)
 			/* just forward to gw */
 			break;
