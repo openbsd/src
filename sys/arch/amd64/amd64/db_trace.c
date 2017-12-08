@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.36 2017/11/03 11:29:46 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.37 2017/12/08 08:54:03 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -169,9 +169,11 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	struct callframe *frame, *lastframe;
 	unsigned long	*argp, *arg0;
 	db_addr_t	callpc;
+	unsigned int	cr4save = CR4_SMEP|CR4_SMAP;
 	int		is_trap = 0;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_proc = FALSE;
+	struct proc	*p;
 
 	{
 		char *cp = modif;
@@ -185,22 +187,30 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		}
 	}
 
+	if (trace_proc) {
+		p = tfind((pid_t)addr);
+		if (p == NULL) {
+			(*pr) ("not found\n");
+			return;
+		}
+	}
+
+	cr4save = rcr4();
+	if (cr4save & CR4_SMAP)
+		lcr4(cr4save & ~CR4_SMAP);
+
 	if (!have_addr) {
 		frame = (struct callframe *)ddb_regs.tf_rbp;
 		callpc = (db_addr_t)ddb_regs.tf_rip;
-	} else {
-		if (trace_proc) {
-			struct proc *p = tfind((pid_t)addr);
-			if (p == NULL) {
-				(*pr) ("not found\n");
-				return;
-			}
-			frame = (struct callframe *)p->p_addr->u_pcb.pcb_rbp;
-		} else {
-			frame = (struct callframe *)addr;
-		}
+	} else if (trace_proc) {
+		frame = (struct callframe *)p->p_addr->u_pcb.pcb_rbp;
 		callpc = (db_addr_t)
-			 db_get_value((db_addr_t)&frame->f_retaddr, 8, FALSE);
+		    db_get_value((db_addr_t)&frame->f_retaddr, 8, FALSE);
+		frame = (struct callframe *)frame->f_frame;
+	} else {
+		frame = (struct callframe *)addr;
+		callpc = (db_addr_t)
+		    db_get_value((db_addr_t)&frame->f_retaddr, 8, FALSE);
 		frame = (struct callframe *)frame->f_frame;
 	}
 
@@ -212,8 +222,13 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		db_expr_t	offset;
 		Elf_Sym *	sym;
 
-		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
-		db_symbol_values(sym, &name, NULL);
+		if (INKERNEL(frame)) {
+			sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
+			db_symbol_values(sym, &name, NULL);
+		} else {
+			sym = NULL;
+			name = NULL;
+		}
 
 		if (lastframe == 0 && sym == NULL) {
 			/* Symbol not found, peek at code */
@@ -332,6 +347,9 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		db_printsym(callpc, DB_STGY_XTRN, pr);
 		(*pr)(":\n");
 	}
+
+	if (cr4save & CR4_SMAP)
+		lcr4(cr4save);
 }
 
 void
