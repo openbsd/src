@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.70 2017/11/05 10:29:24 rpe Exp $
+#	$OpenBSD: Makefile,v 1.71 2017/12/08 05:30:16 deraadt Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -75,6 +75,8 @@ $(PROG): $(test_prog) ${VERSION_SCRIPT} $(OBJS)
 
 boot.o: boot.c
 	${COMPILE.c} -fno-stack-protector ${.IMPSRC}
+
+CLEANFILES+=	ld.so.a
 
 all: ld.so.a
 
