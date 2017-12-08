@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.24 2017/10/09 14:51:31 deraadt Exp $	*/
+/*	$OpenBSD: lib.c,v 1.25 2017/12/08 17:04:15 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -532,33 +532,25 @@ void SYNTAX(const char *fmt, ...)
 void fpecatch(int sig)
 {
 	extern Node *curnode;
-	char buf[1024];
 
-	snprintf(buf, sizeof buf, "floating point exception\n");
-	write(STDERR_FILENO, buf, strlen(buf));
+	dprintf(STDERR_FILENO, "floating point exception\n");
 
 	if (compile_time != 2 && NR && *NR > 0) {
-		snprintf(buf, sizeof buf, " input record number %d", (int) (*FNR));
-		write(STDERR_FILENO, buf, strlen(buf));
-
+		dprintf(STDERR_FILENO, " input record number %d", (int) (*FNR));
 		if (strcmp(*FILENAME, "-") != 0) {
-			snprintf(buf, sizeof buf, ", file %s", *FILENAME);
-			write(STDERR_FILENO, buf, strlen(buf));
+			dprintf(STDERR_FILENO, ", file %s", *FILENAME);
 		}
-		write(STDERR_FILENO, "\n", 1);
+		dprintf(STDERR_FILENO, "\n");
 	}
 	if (compile_time != 2 && curnode) {
-		snprintf(buf, sizeof buf, " source line number %d", curnode->lineno);
-		write(STDERR_FILENO, buf, strlen(buf));
+		dprintf(STDERR_FILENO, " source line number %d", curnode->lineno);
 	} else if (compile_time != 2 && lineno) {
-		snprintf(buf, sizeof buf, " source line number %d", lineno);
-		write(STDERR_FILENO, buf, strlen(buf));
+		dprintf(STDERR_FILENO, " source line number %d", lineno);
 	}
 	if (compile_time == 1 && cursource() != NULL) {
-		snprintf(buf, sizeof buf, " source file %s", cursource());
-		write(STDERR_FILENO, buf, strlen(buf));
+		dprintf(STDERR_FILENO, " source file %s", cursource());
 	}
-	write(STDERR_FILENO, "\n", 1);
+	dprintf(STDERR_FILENO, "\n");
 	if (dbg > 1)		/* core dump if serious debugging on */
 		abort();
 	_exit(1);

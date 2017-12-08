@@ -1,4 +1,4 @@
-/*	$OpenBSD: advcap.c,v 1.17 2015/10/25 22:36:17 jca Exp $	*/
+/*	$OpenBSD: advcap.c,v 1.18 2017/12/08 17:04:15 deraadt Exp $	*/
 /*	$KAME: advcap.c,v 1.9 2002/05/29 14:28:35 itojun Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ getent(char *bp, char *name, char *cp)
 				break;
 			}
 			if (cp >= bp + BUFSIZ) {
-				write(STDERR_FILENO, "Remcap entry too long\n", 23);
+				dprintf(STDERR_FILENO, "Remcap entry too long\n");
 				break;
 			} else
 				*cp++ = c;
@@ -187,7 +187,7 @@ tnchktc(void)
 	p = tbuf + strlen(tbuf) - 2;	/* before the last colon */
 	while (*--p != ':')
 		if (p < tbuf) {
-			write(STDERR_FILENO, "Bad remcap entry\n", 18);
+			dprintf(STDERR_FILENO, "Bad remcap entry\n");
 			return (0);
 		}
 	p++;
@@ -200,7 +200,7 @@ tnchktc(void)
 		q++;
 	*q = 0;
 	if (++hopcount > MAXHOP) {
-		write(STDERR_FILENO, "Infinite tc= loop\n", 18);
+		dprintf(STDERR_FILENO, "Infinite tc= loop\n");
 		return (0);
 	}
 	if (getent(tcbuf, tcname, remotefile) != 1) {
@@ -212,7 +212,7 @@ tnchktc(void)
 		;
 	l = p - holdtbuf + strlen(q);
 	if (l > BUFSIZ) {
-		write(STDERR_FILENO, "Remcap entry too long\n", 23);
+		dprintf(STDERR_FILENO, "Remcap entry too long\n");
 		q[BUFSIZ - (p-holdtbuf)] = 0;
 	}
 	strlcpy(p, q, holdtbuf + BUFSIZ - p);

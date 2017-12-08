@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.43 2015/11/26 19:01:47 deraadt Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.44 2017/12/08 17:04:15 deraadt Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -219,20 +219,8 @@ baduser(void)
 void
 kbintr(int signo)
 {
-	struct iovec iv[5];
-
-	iv[0].iov_base = "\n";
-	iv[0].iov_len = 1;
-	iv[1].iov_base = __progname;
-	iv[1].iov_len = strlen(__progname);
-	iv[2].iov_base = ": ";
-	iv[2].iov_len = 2;
-	iv[3].iov_base = _PATH_MASTERPASSWD;
-	iv[3].iov_len = sizeof(_PATH_MASTERPASSWD) - 1;
-	iv[4].iov_base = " unchanged\n";
-	iv[4].iov_len = 11;
-	writev(STDERR_FILENO, iv, 5);
-
+	dprintf(STDERR_FILENO, "\n%s: %s unchanged\n",
+	    __progname, _PATH_MASTERPASSWD);
 	_exit(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.80 2017/09/08 19:10:57 brynet Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.81 2017/12/08 17:04:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -513,25 +513,21 @@ cleanup(int signo)
 {
 	struct pcap_stat stat;
 	sigset_t allsigs;
-	char buf[1024];
 
 	sigfillset(&allsigs);
 	sigprocmask(SIG_BLOCK, &allsigs, NULL);
 
 	/* Can't print the summary if reading from a savefile */
-	(void)write(STDERR_FILENO, "\n", 1);
+	dprintf(STDERR_FILENO, "\n");
 	if (pd != NULL && pcap_file(pd) == NULL) {
 		if (priv_pcap_stats(&stat) < 0) {
-			(void)snprintf(buf, sizeof buf,
+			dprintf(STDERR_FILENO,
 			    "pcap_stats: %s\n", pcap_geterr(pd));
-			write(STDERR_FILENO, buf, strlen(buf));
 		} else {
-			(void)snprintf(buf, sizeof buf,
+			dprintf(STDERR_FILENO,
 			    "%u packets received by filter\n", stat.ps_recv);
-			write(STDERR_FILENO, buf, strlen(buf));
-			(void)snprintf(buf, sizeof buf,
+			dprintf(STDERR_FILENO,
 			    "%u packets dropped by kernel\n", stat.ps_drop);
-			write(STDERR_FILENO, buf, strlen(buf));
 		}
 	}
 	_exit(0);
