@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.67 2017/12/03 10:55:50 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.68 2017/12/08 19:05:33 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -192,25 +192,19 @@ alloc_cpuinfo(struct mainbus_attach_args *ma)
 }
 
 int
-cpu_match(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+cpu_match(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-#ifndef MULTIPROCESSOR
-	int portid;
-#endif
 	char buf[32];
+	int portid;
 
 	if (OF_getprop(ma->ma_node, "device_type", buf, sizeof(buf)) <= 0 ||
 	    strcmp(buf, "cpu") != 0)
 		return (0);
 
-#ifndef MULTIPROCESSOR
 	/*
-	 * On singleprocessor kernels, only match the CPU we're
-	 * running on.
+	 * Make sure we don't match more than the maximum supported
+	 * number of CPUs.  But do match the CPU we're running.
 	 */
 	portid = getpropint(ma->ma_node, "upa-portid", -1);
 	if (portid == -1)
@@ -222,11 +216,10 @@ cpu_match(parent, vcf, aux)
 	if (portid == -1)
 		return (0);
 
-	if (portid != cpus->ci_upaid)
-		return (0);
-#endif
+	if (ncpus < MAXCPUS || portid == cpus->ci_upaid)
+		return (1);
 
-	return (1);
+	return (0);
 }
 
 /*
@@ -235,10 +228,7 @@ cpu_match(parent, vcf, aux)
  * (slightly funny place to do it, but this is where it is to be found).
  */
 void
-cpu_attach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
-	void *aux;
+cpu_attach(struct device *parent, struct device *dev, void *aux)
 {
 	int node;
 	u_int clk;
