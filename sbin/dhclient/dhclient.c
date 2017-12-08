@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.538 2017/12/07 19:17:13 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.539 2017/12/08 20:17:28 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -793,8 +793,6 @@ state_init(struct interface_info *ifi)
 void
 state_selecting(struct interface_info *ifi)
 {
-	struct option_data	*option;
-
 	cancel_timeout(ifi);
 
 	if (ifi->offer == NULL) {
@@ -802,45 +800,15 @@ state_selecting(struct interface_info *ifi)
 		return;
 	}
 
+	ifi->state = S_REQUESTING;
+
 	/* If it was a BOOTREPLY, we can just take the lease right now. */
 	if (BOOTP_LEASE(ifi->offer)) {
-		/*
-		 * Set (unsigned 32 bit) options
-		 *
-		 * DHO_DHCP_LEASE_TIME (12000 seconds),
-		 * DHO_RENEWAL_TIME (8000 seconds)
-		 * DHO_REBINDING_TIME (10000 seconds)
-		 *
-		 * so bind_lease() can set the lease times. Note that the
-		 * values must be big-endian.
-		 */
-		option = &ifi->offer->options[DHO_DHCP_LEASE_TIME];
-		option->data = malloc(4);
-		if (option->data) {
-			option->len = 4;
-			memcpy(option->data, "\x00\x00\x2e\xe0", 4);
-		}
-		option = &ifi->offer->options[DHO_DHCP_RENEWAL_TIME];
-		option->data = malloc(4);
-		if (option->data) {
-			option->len = 4;
-			memcpy(option->data, "\x00\x00\x1f\x40", 4);
-		}
-		option = &ifi->offer->options[DHO_DHCP_REBINDING_TIME];
-		option->data = malloc(4);
-		if (option->data) {
-			option->len = 4;
-			memcpy(option->data, "\x00\x00\x27\x10", 4);
-		}
-
-		ifi->state = S_REQUESTING;
 		bind_lease(ifi);
-
 		return;
 	}
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
-	ifi->state = S_REQUESTING;
 	time(&ifi->first_sending);
 
 	ifi->interval = 0;
@@ -2553,7 +2521,7 @@ lease_expiry(struct client_lease *lease)
 {
 	uint32_t	expiry;
 
-	expiry = 43200;	/* Default to 12 hours */
+	expiry = 0;
 	if (lease->options[DHO_DHCP_LEASE_TIME].len == sizeof(expiry)) {
 		memcpy(&expiry, lease->options[DHO_DHCP_LEASE_TIME].data,
 		    sizeof(expiry));

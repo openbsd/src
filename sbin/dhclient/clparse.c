@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.152 2017/12/07 19:03:15 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.153 2017/12/08 20:17:28 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -121,8 +121,10 @@ add_lease(struct client_lease_tq *tq, struct client_lease *lease)
 void
 read_client_conf(char *name)
 {
-	FILE *cfile;
-	int token;
+	struct option_data	*option;
+	FILE			*cfile;
+	int			 token;
+	uint32_t		 expiry;
 
 	new_parse(path_dhclient_conf);
 
@@ -136,6 +138,24 @@ read_client_conf(char *name)
 	config->retry_interval = 1;	/* secs before asking for OFFER */
 	config->backoff_cutoff = 10;	/* max secs between packet retries */
 	config->initial_interval = 1;	/* secs before 1st retry */
+
+	/*
+	 * Set default lease length, which will determine default renewal
+	 * and rebind times.
+	 *
+	 * XXX Thus applies to both BOOTP and DHCP leases.
+	 *
+	 * DHO_DHCP_LEASE_TIME (12 hours == 43200 seconds),
+	 */
+	option = &config->defaults[DHO_DHCP_LEASE_TIME];
+	option->data = malloc(4);
+	if (option->data == NULL)
+		fatal("default lease length");
+
+	config->default_actions[DHO_DHCP_LEASE_TIME] = ACTION_DEFAULT;
+	option->len = 4;
+	expiry = htonl(43200);
+	memcpy(option->data, &expiry, 4);
 
 	config->requested_options
 	    [config->requested_option_count++] = DHO_SUBNET_MASK;
