@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.219 2017/12/07 14:13:05 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.220 2017/12/08 20:55:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3431,6 +3431,7 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct ieee80211_rxinfo rxi;
+	struct ieee80211_channel *bss_chan;
 	struct mbuf *m;
 	struct iwm_rx_phy_info *phy_info;
 	struct iwm_rx_mpdu_res_start *rx_res;
@@ -3485,7 +3486,15 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	chanidx = letoh32(phy_info->channel);
 	if (chanidx < 0 || chanidx >= nitems(ic->ic_channels))	
 		chanidx = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
+
 	ni = ieee80211_find_rxnode(ic, wh);
+	if (ni == ic->ic_bss) {
+		/* 
+		 * We may switch ic_bss's channel during scans.
+		 * Record the current channel so we can restore it later.
+		 */
+		bss_chan = ni->ni_chan;
+	}
 	ni->ni_chan = &ic->ic_channels[chanidx];
 
 	memset(&rxi, 0, sizeof(rxi));
@@ -3549,6 +3558,8 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	}
 #endif
 	ieee80211_input(IC2IFP(ic), m, ni, &rxi);
+	if (ni == ic->ic_bss)
+		ni->ni_chan = bss_chan;
 	ieee80211_release_node(ic, ni);
 }
 
