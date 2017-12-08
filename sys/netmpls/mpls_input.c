@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.64 2017/12/08 21:59:05 claudio Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.65 2017/12/08 22:10:34 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -154,6 +154,11 @@ do_v6:
 				return;
 #endif	/* INET6 */
 			case MPLS_LABEL_IMPLNULL:
+				if (m->m_len < sizeof(u_char) &&
+				    (m = m_pullup(m, sizeof(u_char))) == NULL) {
+					if_put(ifp);
+					return;
+				}
 				switch (*mtod(m, u_char *) >> 4) {
 				case IPVERSION:
 					goto do_v4;
@@ -362,7 +367,7 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 
 	for (nstk = 0; nstk < MPLS_INKERNEL_LOOP_MAX; nstk++) {
 		if (m->m_len < sizeof(*shim) &&
-		    (m = m_pullup(m, sizeof(*ip))) == NULL)
+		    (m = m_pullup(m, sizeof(*shim))) == NULL)
 			return (NULL);
 		stack[nstk] = *mtod(m, struct shim_hdr *);
 		m_adj(m, sizeof(*shim));
@@ -371,6 +376,9 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 	}
 	shim = &stack[0];
 
+	if (m->m_len < sizeof(u_char) &&
+	    (m = m_pullup(m, sizeof(u_char))) == NULL)
+		return (NULL);
 	switch (*mtod(m, u_char *) >> 4) {
 	case IPVERSION:
 		if (m->m_len < sizeof(*ip) &&
