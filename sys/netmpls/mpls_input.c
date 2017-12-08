@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.60 2017/05/30 07:50:37 mpi Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.61 2017/12/08 21:08:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -60,19 +60,29 @@ mpls_input(struct mbuf *m)
 	struct shim_hdr	*shim;
 	struct rtentry *rt;
 	struct rt_mpls *rt_mpls;
-	struct ifnet   *ifp = NULL;
+	struct ifnet   *ifp;
 	u_int8_t ttl;
 	int hasbos;
+
+	if ((ifp = if_get(m->m_pkthdr.ph_ifidx)) == NULL ||
+	    !ISSET(ifp->if_xflags, IFXF_MPLS)) {
+		m_freem(m);
+		if_put(ifp);
+		return;
+	}
 
 	/* drop all broadcast and multicast packets */
 	if (m->m_flags & (M_BCAST | M_MCAST)) {
 		m_freem(m);
+		if_put(ifp);
 		return;
 	}
 
 	if (m->m_len < sizeof(*shim))
-		if ((m = m_pullup(m, sizeof(*shim))) == NULL)
+		if ((m = m_pullup(m, sizeof(*shim))) == NULL) {
+			if_put(ifp);
 			return;
+		}
 
 	shim = mtod(m, struct shim_hdr *);
 
@@ -88,8 +98,10 @@ mpls_input(struct mbuf *m)
 	if (ttl-- <= 1) {
 		/* TTL exceeded */
 		m = mpls_do_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, 0);
-		if (m == NULL)
+		if (m == NULL) {
+			if_put(ifp);
 			return;
+		}
 		shim = mtod(m, struct shim_hdr *);
 		ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
 	}
@@ -119,11 +131,8 @@ mpls_input(struct mbuf *m)
 			switch (ntohl(smpls->smpls_label)) {
 			case MPLS_LABEL_IPV4NULL:
 do_v4:
-				if (mpls_ip_adjttl(m, ttl))
-					return;
-				ifp = if_get(m->m_pkthdr.ph_ifidx);
-				if (ifp == NULL) {
-					m_freem(m);
+				if (mpls_ip_adjttl(m, ttl)) {
+					if_put(ifp);
 					return;
 				}
 				ipv4_input(ifp, m);
@@ -132,11 +141,8 @@ do_v4:
 #ifdef INET6
 			case MPLS_LABEL_IPV6NULL:
 do_v6:
-				if (mpls_ip6_adjttl(m, ttl))
-					return;
-				ifp = if_get(m->m_pkthdr.ph_ifidx);
-				if (ifp == NULL) {
-					m_freem(m);
+				if (mpls_ip6_adjttl(m, ttl)) {
+					if_put(ifp);
 					return;
 				}
 				ipv6_input(ifp, m);
@@ -153,15 +159,19 @@ do_v6:
 #endif
 				default:
 					m_freem(m);
+					if_put(ifp);
 					return;
 				}
 			default:
 				/* Other cases are not handled for now */
 				m_freem(m);
+				if_put(ifp);
 				return;
 			}
 		}
 	}
+	if_put(ifp);
+	ifp = NULL;
 
 	rt = rtalloc(smplstosa(smpls), RT_RESOLVE, m->m_pkthdr.ph_rtableid);
 	if (rt == NULL) {
