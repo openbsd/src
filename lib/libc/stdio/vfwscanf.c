@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwscanf.c,v 1.6 2016/10/30 05:07:06 jsg Exp $ */
+/*	$OpenBSD: vfwscanf.c,v 1.7 2017/12/08 01:03:51 kevlo Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -165,7 +165,7 @@ literal:
 				goto input_failure;
 			if (wi != c) {
 				__ungetwc(wi, fp);
-				goto input_failure;
+				goto match_failure;
 			}
 			nread++;
 			continue;
