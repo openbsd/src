@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.63 2017/09/05 12:02:21 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.64 2017/12/08 21:16:01 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -70,6 +70,32 @@ struct ieee80211com_head ieee80211com_head =
 
 void ieee80211_setbasicrates(struct ieee80211com *);
 int ieee80211_findrate(struct ieee80211com *, enum ieee80211_phymode, int);
+
+void
+ieee80211_begin_bgscan(struct ifnet *ifp)
+{
+	struct ieee80211com *ic = (void *)ifp;
+
+	if ((ic->ic_flags & IEEE80211_F_BGSCAN) ||
+	    ic->ic_state != IEEE80211_S_RUN)
+		return;
+
+	if (ic->ic_bgscan_start != NULL && ic->ic_bgscan_start(ic) == 0) {
+		ic->ic_flags |= IEEE80211_F_BGSCAN;
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: begin background scan\n", ifp->if_xname);
+
+		/* Driver calls ieee80211_end_scan() when done. */
+	}
+}
+
+void
+ieee80211_bgscan_timeout(void *arg)
+{
+	struct ifnet *ifp = arg;
+
+	ieee80211_begin_bgscan(ifp);
+}
 
 void
 ieee80211_channel_init(struct ifnet *ifp)
@@ -158,6 +184,8 @@ ieee80211_ifattach(struct ifnet *ifp)
 	ifp->if_priority = IF_WIRELESS_DEFAULT_PRIORITY;
 
 	ieee80211_set_link_state(ic, LINK_STATE_DOWN);
+
+	timeout_set(&ic->ic_bgscan_timeout, ieee80211_bgscan_timeout, ifp);
 }
 
 void

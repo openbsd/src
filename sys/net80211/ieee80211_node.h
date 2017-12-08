@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.69 2017/08/17 06:01:05 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.70 2017/12/08 21:16:01 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -297,6 +297,12 @@ struct ieee80211_node {
 #define IEEE80211_NODE_SA_QUERY		0x0800	/* SA Query in progress */
 #define IEEE80211_NODE_SA_QUERY_FAILED	0x1000	/* last SA Query failed */
 #define IEEE80211_NODE_RSN_NEW_PTK	0x2000	/* expecting a new PTK */
+
+	/* If not NULL, this function gets called when ni_refcnt hits zero. */
+	void			(*ni_unref_cb)(struct ieee80211com *,
+					struct ieee80211_node *);
+	void *			ni_unref_arg;
+	size_t 			ni_unref_arg_size;
 };
 
 RBT_HEAD(ieee80211_tree, ieee80211_node);
