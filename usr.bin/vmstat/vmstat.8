@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmstat.8,v 1.38 2017/05/10 08:37:15 mpi Exp $
+.\"	$OpenBSD: vmstat.8,v 1.39 2017/12/08 09:45:05 jasper Exp $
 .\"	$NetBSD: vmstat.8,v 1.12 1996/05/10 23:19:30 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)vmstat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 10 2017 $
+.Dd $Mdocdate: December 8 2017 $
 .Dt VMSTAT 8
 .Os
 .Sh NAME
@@ -142,8 +142,6 @@ These are averaged each five seconds, and given in units per second.
 page faults
 .It Li re
 page reclaims (simulating reference bits)
-.It Li at
-pages attached (found in free list)
 .It Li pi
 pages paged in
 .It Li po
