@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.153 2017/12/08 20:17:28 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.154 2017/12/09 15:48:04 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -256,8 +256,9 @@ read_client_leases(char *name, struct client_lease_tq *tq)
 void
 parse_client_statement(FILE *cfile, char *name, int nested)
 {
+	uint8_t			 list[DHO_COUNT];
 	char			*val;
-	int			 i, token;
+	int			 i, count, token;
 
 	token = next_token(NULL, cfile);
 
@@ -290,9 +291,11 @@ parse_client_statement(FILE *cfile, char *name, int nested)
 			parse_semi(cfile);
 		break;
 	case TOK_IGNORE:
-		if (parse_option_list(cfile, &config->ignored_option_count,
-		    config->ignored_options) == 1)
+		if (parse_option_list(cfile, &count, list) == 1) {
+			for (i = 0; i < count; i++)
+				config->default_actions[list[i]] = ACTION_IGNORE;
 			parse_semi(cfile);
+		}
 		break;
 	case TOK_INITIAL_INTERVAL:
 		if (parse_lease_time(cfile, &config->initial_interval) == 1)

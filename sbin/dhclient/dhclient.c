@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.539 2017/12/08 20:17:28 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.540 2017/12/09 15:48:04 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2187,7 +2187,7 @@ struct client_lease *
 apply_defaults(struct client_lease *lease)
 {
 	struct client_lease	*newlease;
-	int			 i, j;
+	int			 i;
 
 	newlease = clone_lease(lease);
 	if (newlease == NULL)
@@ -2207,18 +2207,13 @@ apply_defaults(struct client_lease *lease)
 		newlease->next_server.s_addr = config->next_server.s_addr;
 
 	for (i = 0; i < DHO_COUNT; i++) {
-		for (j = 0; j < config->ignored_option_count; j++) {
-			if (config->ignored_options[j] == i) {
-				free(newlease->options[i].data);
-				newlease->options[i].data = NULL;
-				newlease->options[i].len = 0;
-				break;
-			}
-		}
-		if (j < config->ignored_option_count)
-			continue;
-
 		switch (config->default_actions[i]) {
+		case ACTION_IGNORE:
+			free(newlease->options[i].data);
+			newlease->options[i].data = NULL;
+			newlease->options[i].len = 0;
+			break;
+
 		case ACTION_SUPERSEDE:
 			free(newlease->options[i].data);
 			newlease->options[i].len = config->defaults[i].len;
@@ -2392,8 +2387,8 @@ apply_ignore_list(char *ignore_list)
 			list[ix++] = i;
 	}
 
-	config->ignored_option_count = ix;
-	memcpy(config->ignored_options, list, sizeof(config->ignored_options));
+	for (i = 0; i < ix; i++)
+		config->default_actions[list[i]] = ACTION_IGNORE;
 }
 
 void
