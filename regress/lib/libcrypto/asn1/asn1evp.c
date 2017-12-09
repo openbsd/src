@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1evp.c,v 1.1 2017/11/28 16:47:55 jsing Exp $ */
+/* $OpenBSD: asn1evp.c,v 1.2 2017/12/09 14:34:09 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -21,10 +21,12 @@
 
 #include <openssl/asn1.h>
 
+#define TEST_NUM 0x7fffffffL
+
 unsigned char asn1_atios[] = {
-	0x30, 0x14, 0x02, 0x08, 0x7f, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0x04, 0x08, 0x00, 0x01,
-	0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+	0x30, 0x10, 0x02, 0x04, 0x7f, 0xff, 0xff, 0xff,
+	0x04, 0x08, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+	0x06, 0x07,
 };
 
 unsigned char test_octetstring[] = {
@@ -66,7 +68,7 @@ int
 main(int argc, char **argv)
 {
 	unsigned char data[16];
-	long num = LONG_MAX;
+	long num = TEST_NUM;
 	int failed = 1;
 	ASN1_TYPE at;
 	int len;
@@ -100,8 +102,8 @@ main(int argc, char **argv)
 		fprintf(stderr, "FAIL: ASN1_TYPE_get_int_octetstring failed\n");
 		goto done;
 	}
-	if (num != LONG_MAX) {
-		fprintf(stderr, "FAIL: got num %li, want %li\n", num, LONG_MAX);
+	if (num != TEST_NUM) {
+		fprintf(stderr, "FAIL: got num %li, want %li\n", num, TEST_NUM);
 		goto done;
 	}
 	if (compare_data("octet string", data, len,
@@ -120,8 +122,8 @@ main(int argc, char **argv)
 		fprintf(stderr, "FAIL: ASN1_TYPE_get_int_octetstring failed\n");
 		goto done;
 	}
-	if (num != LONG_MAX) {
-		fprintf(stderr, "FAIL: got num %li, want %li\n", num, LONG_MAX);
+	if (num != TEST_NUM) {
+		fprintf(stderr, "FAIL: got num %li, want %li\n", num, TEST_NUM);
 		goto done;
 	}
 	if (len != sizeof(test_octetstring)) {
