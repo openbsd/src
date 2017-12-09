@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.15 2016/12/21 15:15:45 jsing Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.16 2017/12/09 07:09:25 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -101,11 +101,11 @@ sk_deep_copy(void *sk_void, void *copy_func_void, void *free_func_void)
 	void *(*copy_func)(void *) = copy_func_void;
 	void (*free_func)(void *) = free_func_void;
 	_STACK *ret = sk_dup(sk);
+	size_t i;
 
 	if (ret == NULL)
 		return NULL;
 
-	size_t i;
 	for (i = 0; i < ret->num; i++) {
 		if (ret->data[i] == NULL)
 			continue;
