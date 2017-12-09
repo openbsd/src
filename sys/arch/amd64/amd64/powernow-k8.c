@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.26 2017/09/08 05:36:51 deraadt Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.27 2017/12/09 16:39:54 fcambus Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * Copyright (c) 2004-2005 Bruno Ducrot
@@ -380,7 +380,7 @@ k8pnow_acpi_pss_changed(struct acpicpu_pss * pss, int npss)
 	if (needtran)
 		k8pnow_transition(nstate, curs);
 
-	free(cstate, M_DEVBUF, 0);
+	free(cstate, M_DEVBUF, sizeof(*cstate));
 	k8pnow_current_state = nstate;
 }
 
@@ -510,5 +510,5 @@ k8_powernow_init(struct cpu_info *ci)
 		setperf_prio = 1;
 		return;
 	}
-	free(cstate, M_DEVBUF, 0);
+	free(cstate, M_DEVBUF, sizeof(*cstate));
 }
