@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.77 2017/10/18 12:08:17 mpi Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.78 2017/12/09 06:35:08 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -288,6 +288,7 @@ typedef struct {
 #define ELF_STRTAB      ".strtab"	/* string table */
 #define ELF_SYMTAB      ".symtab"	/* symbol table */
 #define ELF_TEXT        ".text"		/* code */
+#define ELF_OPENBSDRANDOMDATA ".openbsd.randomdata" /* constant randomdata */
 
 
 /* Section Attribute Flags - sh_flags */
