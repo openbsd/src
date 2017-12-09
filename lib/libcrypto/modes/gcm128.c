@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.20 2017/09/03 13:07:34 inoguchi Exp $ */
+/* $OpenBSD: gcm128.c,v 1.21 2017/12/09 07:16:51 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -1515,13 +1515,15 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx,const unsigned char *tag,
 	alen = BSWAP8(alen);
 	clen = BSWAP8(clen);
 #else
-	u8 *p = ctx->len.c;
+	{
+		u8 *p = ctx->len.c;
 
-	ctx->len.u[0] = alen;
-	ctx->len.u[1] = clen;
+		ctx->len.u[0] = alen;
+		ctx->len.u[1] = clen;
 
-	alen = (u64)GETU32(p)  <<32|GETU32(p+4);
-	clen = (u64)GETU32(p+8)<<32|GETU32(p+12);
+		alen = (u64)GETU32(p)  <<32|GETU32(p+4);
+		clen = (u64)GETU32(p+8)<<32|GETU32(p+12);
+	}
 #endif
 #endif
 
