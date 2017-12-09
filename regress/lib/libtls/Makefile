@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2017/01/12 15:50:16 jsing Exp $
+#	$OpenBSD: Makefile,v 1.4 2017/12/09 16:43:09 jsing Exp $
 
 SUBDIR= \
+	config \
 	gotls \
 	tls \
 	verify
