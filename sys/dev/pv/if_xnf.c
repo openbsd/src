@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.61 2017/11/08 00:37:18 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.62 2017/12/09 14:00:21 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -140,8 +140,7 @@ struct xnf_tx_ring {
 } __packed;
 
 struct xnf_tx_buf {
-	uint16_t		 txb_used;
-	uint16_t		 txb_ndesc;
+	uint32_t		 txb_ndesc;
 	bus_dmamap_t		 txb_dmap;
 	struct mbuf		*txb_mbuf;
 };
@@ -595,7 +594,7 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 		do {
 			id = sc->sc_tx_next++ & (XNF_TX_DESC - 1);
 			txb = &sc->sc_tx_buf[id];
-		} while (txb->txb_used);
+		} while (txb->txb_mbuf);
 
 		if (bus_dmamap_load(sc->sc_dmat, txb->txb_dmap, m->m_data,
 		    m->m_len, NULL, flags)) {
@@ -634,7 +633,6 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 		}
 
 		txb->txb_mbuf = m;
-		txb->txb_used = 1;
 		used++;
 	}
 
@@ -666,7 +664,6 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 
 			txb->txb_mbuf = NULL;
 			txb->txb_ndesc = 0;
-			txb->txb_used = 0;
 		}
 	}
 	return (ENOBUFS);
@@ -724,7 +721,6 @@ xnf_txeof(struct xnf_softc *sc)
 
 			m_free(txb->txb_mbuf);
 			txb->txb_mbuf = NULL;
-			txb->txb_used = 0;
 			done++;
 		}
 
@@ -1082,7 +1078,6 @@ xnf_tx_ring_destroy(struct xnf_softc *sc)
 			continue;
 		m_free(sc->sc_tx_buf[i].txb_mbuf);
 		sc->sc_tx_buf[i].txb_mbuf = NULL;
-		sc->sc_tx_buf[i].txb_used = 0;
 		sc->sc_tx_buf[i].txb_ndesc = 0;
 	}
 	if (sc->sc_tx_rmap) {
