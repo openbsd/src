@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.56 2017/12/09 18:38:37 pirofti Exp $	*/
+/*	$OpenBSD: grep.c,v 1.57 2017/12/10 09:17:24 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -110,12 +110,13 @@ usage(void)
 {
 	fprintf(stderr,
 #ifdef NOZ
-	    "usage: %s [-abcEFGHhIiLlnoqRsUVvwx] [-A num] [-B num] [-C[num]]\n"
+	    "usage: %s [-abcEFGHhIiLlnoqRsUVvwx] [-A num] [-B num] [-C[num]]"
 #else
-	    "usage: %s [-abcEFGHhIiLlnoqRsUVvwxZ] [-A num] [-B num] [-C[num]]\n"
+	    "usage: %s [-abcEFGHhIiLlnoqRsUVvwxZ] [-A num] [-B num] [-C[num]]"
 #endif
-	    "\t[-e pattern] [-f file] [-m num] [--binary-files=value]\n"
-	    "\t[--context[=num]] [--line-buffered] [pattern] [file ...]\n",
+	    " [-e pattern]\n"
+	    "\t[-f file] [-m num] [--binary-files=value] [--context[=num]]\n"
+	    "\t[--line-buffered] [--max-count=num] [pattern] [file ...]\n",
 	    __progname);
 	exit(2);
 }
