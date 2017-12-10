@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.1 2017/06/03 10:00:29 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.2 2017/12/10 10:07:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -85,9 +85,7 @@ control_init(char *path)
 		return (-1);
 	}
 
-	control_state.fd = fd;
-
-	return (0);
+	return (fd);
 }
 
 int

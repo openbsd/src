@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.10 2017/08/23 15:49:08 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.11 2017/12/10 10:07:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -55,6 +55,9 @@ enum imsg_type {
 #endif	/* SMALL */
 	IMSG_CTL_SEND_SOLICITATION,
 	IMSG_SOCKET_IPC,
+	IMSG_ICMP6SOCK,
+	IMSG_ROUTESOCK,
+	IMSG_CONTROLFD,
 	IMSG_STARTUP,
 	IMSG_UPDATE_IF,
 	IMSG_REMOVE_IF,
@@ -189,8 +192,6 @@ struct imsg_ra {
 };
 
 /* slaacd.c */
-int		main_imsg_compose_frontend(int, pid_t, void *, uint16_t);
-int		main_imsg_compose_engine(int, pid_t, void *, uint16_t);
 void		imsg_event_add(struct imsgev *);
 int		imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t,
 		    int, void *, uint16_t);

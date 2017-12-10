@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.12 2017/11/03 12:28:41 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.13 2017/12/10 10:07:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -31,6 +31,7 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet6/in6_var.h>
+#include <netinet/icmp6.h>
 
 #include <err.h>
 #include <errno.h>
@@ -68,6 +69,9 @@ const char* imsg_type_name[] = {
 	"IMSG_UPDATE_ADDRESS",
 	"IMSG_CTL_SEND_SOLICITATION",
 	"IMSG_SOCKET_IPC",
+	"IMSG_ICMP6SOCK",
+	"IMSG_ROUTESOCK",
+	"IMSG_CONTROLFD",
 	"IMSG_STARTUP",
 	"IMSG_UPDATE_IF",
 	"IMSG_REMOVE_IF",
@@ -87,7 +91,7 @@ __dead void	main_shutdown(void);
 
 void	main_sig_handler(int, short, void *);
 
-static pid_t	start_child(int, char *, int, int, int, char *);
+static pid_t	start_child(int, char *, int, int, int);
 
 void	main_dispatch_frontend(int, short, void *);
 void	main_dispatch_engine(int, short, void *);
@@ -98,6 +102,9 @@ void	add_gateway(struct imsg_configure_dfr *);
 void	delete_gateway(struct imsg_configure_dfr *);
 
 static int	main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *);
+int		main_imsg_compose_frontend(int, pid_t, void *, uint16_t);
+int		main_imsg_compose_frontend_fd(int, pid_t, int);
+int		main_imsg_compose_engine(int, pid_t, void *, uint16_t);
 
 struct imsgev		*iev_frontend;
 struct imsgev		*iev_engine;
@@ -144,13 +151,17 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct event	 ev_sigint, ev_sigterm, ev_sighup;
-	int		 ch;
-	int		 debug = 0, engine_flag = 0, frontend_flag = 0;
-	int		 verbose = 0;
-	char		*saved_argv0;
-	int		 pipe_main2frontend[2];
-	int		 pipe_main2engine[2];
+	struct event		 ev_sigint, ev_sigterm, ev_sighup;
+	struct icmp6_filter	 filt;
+	int			 ch;
+	int			 debug = 0, engine_flag = 0, frontend_flag = 0;
+	int			 verbose = 0;
+	char			*saved_argv0;
+	int			 pipe_main2frontend[2];
+	int			 pipe_main2engine[2];
+	int			 icmp6sock, on = 1;
+	int			 frontend_routesock, rtfilter;
+	int			 control_fd;
 
 	csock = SLAACD_SOCKET;
 
@@ -191,7 +202,7 @@ main(int argc, char *argv[])
 	if (engine_flag)
 		engine(debug, verbose);
 	else if (frontend_flag)
-		frontend(debug, verbose, csock);
+		frontend(debug, verbose);
 
 	/* Check for root privileges. */
 	if (geteuid())
@@ -218,9 +229,9 @@ main(int argc, char *argv[])
 
 	/* Start children. */
 	engine_pid = start_child(PROC_ENGINE, saved_argv0, pipe_main2engine[1],
-	    debug, verbose, NULL);
+	    debug, verbose);
 	frontend_pid = start_child(PROC_FRONTEND, saved_argv0,
-	    pipe_main2frontend[1], debug, verbose, csock);
+	    pipe_main2frontend[1], debug, verbose);
 
 	slaacd_process = PROC_MAIN;
 
@@ -274,6 +285,42 @@ BROKEN	if (pledge("rpath stdio sendfd cpath", NULL) == -1)
 		fatal("pledge");
 #endif
 
+	if ((icmp6sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
+		fatal("ICMPv6 socket");
+
+	if (setsockopt(icmp6sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
+	    sizeof(on)) < 0)
+		fatal("IPV6_RECVPKTINFO");
+
+	if (setsockopt(icmp6sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
+	    sizeof(on)) < 0)
+		fatal("IPV6_RECVHOPLIMIT");
+
+	/* only router advertisements */
+	ICMP6_FILTER_SETBLOCKALL(&filt);
+	ICMP6_FILTER_SETPASS(ND_ROUTER_ADVERT, &filt);
+	if (setsockopt(icmp6sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
+	    sizeof(filt)) == -1)
+		fatal("ICMP6_FILTER");
+
+	main_imsg_compose_frontend_fd(IMSG_ICMP6SOCK, 0, icmp6sock);
+
+	if ((frontend_routesock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
+		fatal("route socket");
+
+	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_NEWADDR) |
+	    ROUTE_FILTER(RTM_DELADDR) | ROUTE_FILTER(RTM_PROPOSAL);
+	if (setsockopt(frontend_routesock, PF_ROUTE, ROUTE_MSGFILTER,
+	    &rtfilter, sizeof(rtfilter)) < 0)
+		fatal("setsockopt(ROUTE_MSGFILTER)");
+
+	main_imsg_compose_frontend_fd(IMSG_ROUTESOCK, 0, frontend_routesock);
+
+	if ((control_fd = control_init(csock)) == -1)
+		fatalx("control socket setup failed");
+
+	main_imsg_compose_frontend_fd(IMSG_CONTROLFD, 0, control_fd);
+
 	main_imsg_compose_frontend(IMSG_STARTUP, 0, NULL, 0);
 
 	event_dispatch();
@@ -318,7 +365,7 @@ main_shutdown(void)
 }
 
 static pid_t
-start_child(int p, char *argv0, int fd, int debug, int verbose, char *sockname)
+start_child(int p, char *argv0, int fd, int debug, int verbose)
 {
 	char	*argv[8];
 	int	 argc = 0;
@@ -354,10 +401,6 @@ start_child(int p, char *argv0, int fd, int debug, int verbose, char *sockname)
 		argv[argc++] = "-v";
 	if (verbose > 1)
 		argv[argc++] = "-v";
-	if (sockname) {
-		argv[argc++] = "-s";
-		argv[argc++] = sockname;
-	}
 	argv[argc++] = NULL;
 
 	execvp(argv0, argv);
@@ -526,6 +569,16 @@ main_imsg_compose_frontend(int type, pid_t pid, void *data, uint16_t datalen)
 	if (iev_frontend)
 		return (imsg_compose_event(iev_frontend, type, 0, pid, -1, data,
 		    datalen));
+	else
+		return (-1);
+}
+
+int
+main_imsg_compose_frontend_fd(int type, pid_t pid, int fd)
+{
+	if (iev_frontend)
+		return (imsg_compose_event(iev_frontend, type, 0, pid, fd,
+		    NULL, 0));
 	else
 		return (-1);
 }

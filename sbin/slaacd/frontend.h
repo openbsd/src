@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.h,v 1.2 2017/07/06 15:02:53 florian Exp $	*/
+/*	$OpenBSD: frontend.h,v 1.3 2017/12/10 10:07:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -20,7 +20,7 @@
 TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
 #endif	/* SMALL */
 
-void		 frontend(int, int, char *);
+void		 frontend(int, int);
 void		 frontend_dispatch_main(int, short, void *);
 void		 frontend_dispatch_engine(int, short, void *);
 int		 frontend_imsg_compose_main(int, pid_t, void *, uint16_t);
