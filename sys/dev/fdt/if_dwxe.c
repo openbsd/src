@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.4 2017/12/10 11:58:15 kettenis Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.5 2017/12/10 12:28:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -226,15 +226,16 @@ struct dwxe_desc {
 #define SYSCON_ETCS_EXT_GMII		(1 << 0)
 #define SYSCON_ETCS_INT_GMII		(2 << 0)
 #define SYSCON_EPIT			(1 << 2) /* 1: RGMII, 0: MII */
-#define SYSCON_ERXDC_MASK		0xf
+#define SYSCON_ERXDC_MASK		(0xf << 5)
 #define SYSCON_ERXDC_SHIFT		5
-#define SYSCON_ETXDC_MASK		0x7
+#define SYSCON_ETXDC_MASK		(0x7 << 10)
 #define SYSCON_ETXDC_SHIFT		10
 #define SYSCON_RMII_EN			(1 << 13) /* 1: enable RMII (overrides EPIT) */
 #define SYSCON_H3_EPHY_SELECT		(1 << 15) /* 1: internal PHY, 0: external PHY */
 #define SYSCON_H3_EPHY_SHUTDOWN		(1 << 16) /* 1: shutdown, 0: power up */
 #define SYSCON_H3_EPHY_LED_POL		(1 << 17) /* 1: active low, 0: active high */
 #define SYSCON_H3_EPHY_CLK_SEL		(1 << 18) /* 1: 24MHz, 0: 25MHz */
+#define SYSCON_H3_EPHY_ADDR_MASK	(0x1f << 20)
 #define SYSCON_H3_EPHY_ADDR_SHIFT	20
 
 struct dwxe_buf {
@@ -270,6 +271,7 @@ struct dwxe_softc {
 	struct mii_data		sc_mii;
 #define sc_media	sc_mii.mii_media
 	int			sc_link;
+	int			sc_phyloc;
 
 	struct dwxe_dmamem	*sc_txring;
 	struct dwxe_buf		*sc_txbuf;
@@ -357,7 +359,6 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct ifnet *ifp;
 	int phy, phy_supply, node;
-	int phyloc = MII_PHY_ANY;
 
 	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
@@ -372,7 +373,9 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 	phy = OF_getpropint(faa->fa_node, "phy-handle", 0);
 	node = OF_getnodebyphandle(phy);
 	if (node)
-		phyloc = OF_getpropint(node, "reg", phyloc);
+		sc->sc_phyloc = OF_getpropint(node, "reg", MII_PHY_ANY);
+	else
+		sc->sc_phyloc = MII_PHY_ANY;
 
 	pinctrl_byname(faa->fa_node, "default");
 
@@ -424,8 +427,8 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 
 	dwxe_reset(sc);
 
-	mii_attach(self, &sc->sc_mii, 0xffffffff, phyloc,
-	    MII_OFFSET_ANY, 0);
+	mii_attach(self, &sc->sc_mii, 0xffffffff, sc->sc_phyloc,
+	    MII_OFFSET_ANY, MIIF_NOISOLATE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
 		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
@@ -466,7 +469,14 @@ dwxe_phy_setup(struct dwxe_softc *sc)
 		syscon |= SYSCON_EPIT | SYSCON_ETCS_EXT_GMII;
 	else if (!strncmp(phy_mode, "mii", strlen("mii")) &&
 	    OF_is_compatible(sc->sc_node, "allwinner,sun8i-h3-emac")) {
-		panic("%s: setup internal phy", DEVNAME(sc));
+		syscon &= ~SYSCON_H3_EPHY_SHUTDOWN;
+		syscon |= SYSCON_H3_EPHY_SELECT | SYSCON_H3_EPHY_CLK_SEL;
+		if (OF_getproplen(sc->sc_node, "allwinner,leds-active-low") == 0)
+			syscon |= SYSCON_H3_EPHY_LED_POL;
+		else
+			syscon &= ~SYSCON_H3_EPHY_LED_POL;
+		syscon &= ~SYSCON_H3_EPHY_ADDR_MASK;
+		syscon |= (sc->sc_phyloc << SYSCON_H3_EPHY_ADDR_SHIFT);
 		return;
 	}
 	free(phy_mode, M_TEMP, len);
