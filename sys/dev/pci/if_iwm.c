@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.221 2017/12/08 21:16:01 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.222 2017/12/10 20:34:41 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4498,11 +4498,7 @@ iwm_power_build_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	keep_alive = roundup(keep_alive, 1000) / 1000;
 	cmd->keep_alive_seconds = htole16(keep_alive);
 
-#ifdef notyet
 	cmd->flags = htole16(IWM_POWER_FLAGS_POWER_SAVE_ENA_MSK);
-	cmd->rx_data_timeout = IWM_DEFAULT_PS_RX_DATA_TIMEOUT;
-	cmd->tx_data_timeout = IWM_DEFAULT_PS_TX_DATA_TIMEOUT;
-#endif
 }
 
 int
@@ -4530,15 +4526,11 @@ int
 iwm_power_update_device(struct iwm_softc *sc)
 {
 	struct iwm_device_power_cmd cmd = {
-#ifdef notyet
 		.flags = htole16(IWM_DEVICE_POWER_FLAGS_POWER_SAVE_ENA_MSK),
-#endif
 	};
 
 	if (!(sc->sc_capaflags & IWM_UCODE_TLV_FLAGS_DEVICE_PS_CMD))
 		return 0;
-
-	cmd.flags |= htole16(IWM_DEVICE_POWER_FLAGS_CAM_MSK);
 
 	return iwm_send_cmd_pdu(sc,
 	    IWM_POWER_TABLE_CMD, 0, sizeof(cmd), &cmd);
