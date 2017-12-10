@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.255 2017/11/03 16:23:20 florian Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.256 2017/12/10 11:25:18 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ route_attach(struct socket *so, int proto)
 
 	if (curproc == NULL)
 		error = EACCES;
-	else 
+	else
 		error = soreserve(so, RAWSNDQ, RAWRCVQ);
 	if (error) {
 		free(rop, M_PCB, sizeof(struct routecb));
@@ -694,12 +694,6 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	}
 
 	/*
-	 * Do not use goto flush before this point since the message itself
-	 * may be not consistent and could cause unexpected behaviour in other
-	 * userland clients. Use goto fail instead.
-	 */
-
-	/*
 	 * Validate RTM_PROPOSAL and pass it along or error out.
 	 */
 	if (rtm->rtm_type == RTM_PROPOSAL) {
@@ -897,7 +891,7 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		 */
 		plen = rtable_satoplen(info->rti_info[RTAX_DST]->sa_family,
 		    info->rti_info[RTAX_NETMASK]);
-		if (rt_plen(rt) != plen ) {
+		if (rt_plen(rt) != plen) {
 			error = ESRCH;
 			break;
 		}
