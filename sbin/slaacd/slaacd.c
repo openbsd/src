@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.13 2017/12/10 10:07:54 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.14 2017/12/10 17:34:05 stsp Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -161,7 +161,9 @@ main(int argc, char *argv[])
 	int			 pipe_main2engine[2];
 	int			 icmp6sock, on = 1;
 	int			 frontend_routesock, rtfilter;
+#ifndef SMALL
 	int			 control_fd;
+#endif /* SMALL */
 
 	csock = SLAACD_SOCKET;
 
@@ -316,10 +318,12 @@ BROKEN	if (pledge("rpath stdio sendfd cpath", NULL) == -1)
 
 	main_imsg_compose_frontend_fd(IMSG_ROUTESOCK, 0, frontend_routesock);
 
+#ifndef SMALL
 	if ((control_fd = control_init(csock)) == -1)
 		fatalx("control socket setup failed");
 
 	main_imsg_compose_frontend_fd(IMSG_CONTROLFD, 0, control_fd);
+#endif /* SMALL */
 
 	main_imsg_compose_frontend(IMSG_STARTUP, 0, NULL, 0);
 
