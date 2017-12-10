@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.3 2017/10/01 06:42:43 kettenis Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.4 2017/12/10 11:58:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -146,11 +146,11 @@
 #define  DWXE_MDIO_CMD_PHY_REG_SHIFT		4
 #define  DWXE_MDIO_CMD_PHY_ADDR_SHIFT		12
 #define  DWXE_MDIO_CMD_MDC_DIV_RATIO_M_SHIFT	20
-#define  DWXE_MDIO_CMD_MDC_DIV_RATIO_M_MASK	(0x7 << 20)
-#define  DWXE_MDIO_CMD_MDC_DIV_RATIO_M_16	(0 << 20)
-#define  DWXE_MDIO_CMD_MDC_DIV_RATIO_M_32	(1 << 20)
-#define  DWXE_MDIO_CMD_MDC_DIV_RATIO_M_64	(2 << 20)
-#define  DWXE_MDIO_CMD_MDC_DIV_RATIO_M_128	(3 << 20)
+#define  DWXE_MDIO_CMD_MDC_DIV_RATIO_M_MASK	0x7
+#define  DWXE_MDIO_CMD_MDC_DIV_RATIO_M_16	0
+#define  DWXE_MDIO_CMD_MDC_DIV_RATIO_M_32	1
+#define  DWXE_MDIO_CMD_MDC_DIV_RATIO_M_64	2
+#define  DWXE_MDIO_CMD_MDC_DIV_RATIO_M_128	3
 #define DWXE_MDIO_DATA		0x4C
 #define DWXE_MACADDR_HI		0x50
 #define DWXE_MACADDR_LO		0x54
