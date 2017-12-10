@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cu.1,v 1.15 2015/05/18 09:35:05 nicm Exp $
+.\"	$OpenBSD: cu.1,v 1.16 2017/12/10 01:03:46 deraadt Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 18 2015 $
+.Dd $Mdocdate: December 10 2017 $
 .Dt CU 1
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Nd serial terminal emulator
 .Sh SYNOPSIS
 .Nm
-.Op Fl d
+.Op Fl dr
 .Op Fl l Ar line
 .Op Fl s Ar speed | Fl Ar speed
 .Nm
@@ -55,6 +55,11 @@ The options are as follows:
 Specify that the line is directly connected and
 .Nm
 should not allow the driver to block waiting for a carrier to be detected.
+.It Fl r
+Starts
+.Nm
+in restricted mode.
+This prevents all local filesystem operations and command executions.
 .It Fl l Ar line
 Specify the line to use.
 Either of the forms like
@@ -114,6 +119,7 @@ process to the remote host.
 The command string sent to the local
 .Ux
 system is processed by the shell.
+This command is not allowed in restricted mode.
 .It Ic ~#
 Send a
 .Dv BREAK
@@ -132,16 +138,21 @@ file descriptors:
 1 \*(Lt-\*(Gt remote tty out
 2 \*(Lt-\*(Gt local tty stderr
 .Ed
+.Pp
+This command is not allowed in restricted mode.
 .It Ic ~D
 Deassert the data terminal ready (DTR) line briefly.
+This command is not allowed in restricted mode.
 .It Ic ~R
 Record all output from the remote system to a file.
 If the given file already exists, it is appended to.
 If no file is specified, any existing recording is stopped.
+This command is not allowed in restricted mode.
 .It Ic ~S
 Change the speed of the connection.
 .It Ic ~X
 Send a file with the XMODEM protocol.
+This command is not allowed in restricted mode.
 .It Ic ~?
 Get a summary of the tilde escapes.
 .El
