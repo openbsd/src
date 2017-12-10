@@ -516,57 +516,57 @@ _ACPI_TRMP_DATA_LABEL(.Lgdt_16_end)
 
 	.align 4, 0xcc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_ebx)
-	.long 0
+	.long 0xcccccccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_ecx)
-	.long 0
+	.long 0xcccccccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_edx)
-	.long 0
+	.long 0xcccccccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_ebp)
-	.long 0
+	.long 0xcccccccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_esi)
-	.long 0
+	.long 0xcccccccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_edi)
-	.long 0
+	.long 0xcccccccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_esp)
-	.long 0
+	.long 0xcccccccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_fl)
-	.long 0
+	.long 0xcccccccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_cr0)
-	.long 0
+	.long 0xcccccccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_cr2)
-	.long 0
+	.long 0xcccccccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_cr3)
-	.long 0
+	.long 0xcccccccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_cr4)
-	.long 0
+	.long 0xcccccccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_ret)
-	.long 0
+	.long 0xcccccccc
 
 	.align 16, 0xcc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_idt)
-	.space 6
+	.space 6, 0xcc
 
 	.align 16, 0xcc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_gdt)
-	.space 6
+	.space 6, 0xcc
 
 	.align 16, 0xcc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_ldt)
-	.short 0
+	.short 0xcccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_cs)
-	.short 0
+	.short 0xcccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_ds)
-	.short 0
+	.short 0xcccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_es)
-	.short 0
+	.short 0xcccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_fs)
-	.short 0
+	.short 0xcccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_gs)
-	.short 0
+	.short 0xcccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_ss)
-	.short 0
+	.short 0xcccc
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_tr)
-	.short 0
+	.short 0xcccc
 
 _C_LABEL(acpi_tramp_data_end):
 
