@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.59 2017/11/04 14:13:53 mpi Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.60 2017/12/10 11:31:54 mpi Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -307,10 +307,12 @@ fifo_poll(void *v)
 	struct socket *wso = ap->a_vp->v_fifoinfo->fi_writesock;
 	int events = 0;
 	int revents = 0;
+	int s;
 
 	/*
 	 * FIFOs don't support out-of-band or high priority data.
 	 */
+	s = solock(rso);
 	if (ap->a_fflag & FREAD)
 		events |= ap->a_events & (POLLIN | POLLRDNORM);
 	if (ap->a_fflag & FWRITE)
@@ -333,13 +335,14 @@ fifo_poll(void *v)
 			events = POLLIN;
 		if (events & (POLLIN | POLLRDNORM)) {
 			selrecord(ap->a_p, &rso->so_rcv.sb_sel);
-			rso->so_rcv.sb_flagsintr |= SB_SEL;
+			rso->so_rcv.sb_flags |= SB_SEL;
 		}
 		if (events & (POLLOUT | POLLWRNORM)) {
 			selrecord(ap->a_p, &wso->so_snd.sb_sel);
-			wso->so_snd.sb_flagsintr |= SB_SEL;
+			wso->so_snd.sb_flags |= SB_SEL;
 		}
 	}
+	sounlock(s);
 	return (revents);
 }
 
@@ -526,7 +529,7 @@ fifo_kqfilter(void *v)
 	ap->a_kn->kn_hook = so;
 
 	SLIST_INSERT_HEAD(&sb->sb_sel.si_note, ap->a_kn, kn_selnext);
-	sb->sb_flags |= SB_KNOTE;
+	sb->sb_flagsintr |= SB_KNOTE;
 
 	return (0);
 }
@@ -538,7 +541,7 @@ filt_fifordetach(struct knote *kn)
 
 	SLIST_REMOVE(&so->so_rcv.sb_sel.si_note, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_rcv.sb_sel.si_note))
-		so->so_rcv.sb_flags &= ~SB_KNOTE;
+		so->so_rcv.sb_flagsintr &= ~SB_KNOTE;
 }
 
 int
@@ -570,7 +573,7 @@ filt_fifowdetach(struct knote *kn)
 
 	SLIST_REMOVE(&so->so_snd.sb_sel.si_note, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_snd.sb_sel.si_note))
-		so->so_snd.sb_flags &= ~SB_KNOTE;
+		so->so_snd.sb_flagsintr &= ~SB_KNOTE;
 }
 
 int
