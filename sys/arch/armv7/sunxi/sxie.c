@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.26 2017/11/24 07:02:55 dlg Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.27 2017/12/10 04:21:55 jsg Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -51,6 +51,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 /* configuration registers */
@@ -212,6 +213,7 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct mii_data *mii;
 	struct ifnet *ifp;
+	int node, phy_supply, phy = MII_PHY_ANY;
 	int s;
 
 	if (faa->fa_nreg < 1)
@@ -229,6 +231,18 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 		panic("sxie_attach: bus_space_map sid_ioh failed!");
 
 	clock_enable_all(faa->fa_node);
+
+	/* Lookup PHY. */
+	node = OF_getnodebyphandle(OF_getpropint(faa->fa_node, "phy", 0));
+	if (node) {
+		phy = OF_getpropint(node, "reg", MII_PHY_ANY);
+
+		/* Power up PHY. */
+		phy_supply = OF_getpropint(OF_parent(node), "phy-supply", 0);
+		if (phy_supply)
+			regulator_enable(phy_supply);
+	}
+	sc->sc_phyno = phy == MII_PHY_ANY ? 1 : phy;
 
 	sxie_socware_init(sc);
 	sc->txf_inuse = 0;
@@ -260,7 +274,7 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	mii->mii_statchg = sxie_miibus_statchg;
 
 	ifmedia_init(&mii->mii_media, 0, sxie_ifm_change, sxie_ifm_status);
-	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	mii_attach(self, mii, 0xffffffff, phy, MII_OFFSET_ANY, 0);
 
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
@@ -320,8 +334,6 @@ sxie_socware_init(struct sxie_softc *sc)
 
 	if (!have_mac)
 		ether_fakeaddr(&sc->sc_ac.ac_if);
-
-	sc->sc_phyno = 1;
 }
 
 void
