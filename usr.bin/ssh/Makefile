@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.15 2010/02/09 08:55:31 markus Exp $
+#	$OpenBSD: Makefile,v 1.16 2017/12/10 19:37:57 deraadt Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	lib ssh sshd ssh-add ssh-keygen ssh-agent scp sftp-server \
+SUBDIR=	ssh sshd ssh-add ssh-keygen ssh-agent scp sftp-server \
 	ssh-keysign ssh-keyscan sftp ssh-pkcs11-helper
 
 distribution:
