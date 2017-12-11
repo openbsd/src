@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.38 2016/09/15 02:00:16 dlg Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.39 2017/12/11 05:27:40 deraadt Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -92,43 +92,53 @@ extern  const struct vfsops tmpfs_vfsops;
 /* Set up the filesystem operations for vnodes. */
 static struct vfsconf vfsconflist[] = {
 #ifdef FFS
-        { &ffs_vfsops, MOUNT_FFS, 1, 0, MNT_LOCAL, NULL },
+        { &ffs_vfsops, MOUNT_FFS, 1, 0, MNT_LOCAL, NULL,
+	    sizeof(struct ufs_args) },
 #endif
 
 #ifdef MFS
-        { &mfs_vfsops, MOUNT_MFS, 3, 0, MNT_LOCAL, NULL },
+        { &mfs_vfsops, MOUNT_MFS, 3, 0, MNT_LOCAL, NULL,
+	    sizeof(struct mfs_args) },
 #endif
 
 #ifdef EXT2FS
-	{ &ext2fs_vfsops, MOUNT_EXT2FS, 17, 0, MNT_LOCAL, NULL },
+	{ &ext2fs_vfsops, MOUNT_EXT2FS, 17, 0, MNT_LOCAL, NULL,
+	    sizeof(struct ufs_args) },
 #endif
 
 #ifdef CD9660
-        { &cd9660_vfsops, MOUNT_CD9660, 14, 0, MNT_LOCAL, NULL },
+        { &cd9660_vfsops, MOUNT_CD9660, 14, 0, MNT_LOCAL, NULL,
+	    sizeof(struct iso_args) },
 #endif
 
 #ifdef MSDOSFS
-        { &msdosfs_vfsops, MOUNT_MSDOS, 4, 0, MNT_LOCAL, NULL },
+        { &msdosfs_vfsops, MOUNT_MSDOS, 4, 0, MNT_LOCAL, NULL,
+	    sizeof(struct msdosfs_args) },
 #endif
 
 #ifdef NFSCLIENT
-        { &nfs_vfsops, MOUNT_NFS, 2, 0, 0, NULL },
+        { &nfs_vfsops, MOUNT_NFS, 2, 0, 0, NULL,
+	    sizeof(struct nfs_args) },
 #endif
 
 #ifdef NTFS
-	{ &ntfs_vfsops, MOUNT_NTFS, 6, 0, MNT_LOCAL, NULL },
+	{ &ntfs_vfsops, MOUNT_NTFS, 6, 0, MNT_LOCAL, NULL,
+	    sizeof(struct ntfs_args) },
 #endif
 
 #ifdef UDF
-	{ &udf_vfsops, MOUNT_UDF, 13, 0, MNT_LOCAL, NULL },
+	{ &udf_vfsops, MOUNT_UDF, 13, 0, MNT_LOCAL, NULL,
+	    sizeof(struct iso_args) },
 #endif
 
 #ifdef FUSE
-	{ &fusefs_vfsops, MOUNT_FUSEFS, 18, 0, MNT_LOCAL, NULL },
+	{ &fusefs_vfsops, MOUNT_FUSEFS, 18, 0, MNT_LOCAL, NULL,
+	    sizeof(struct fusefs_args) },
 #endif
 
 #ifdef TMPFS
-	{ &tmpfs_vfsops, MOUNT_TMPFS, 19, 0, MNT_LOCAL, NULL },
+	{ &tmpfs_vfsops, MOUNT_TMPFS, 19, 0, MNT_LOCAL, NULL,
+	    sizeof(struct tmpfs_args) },
 #endif
 };
 

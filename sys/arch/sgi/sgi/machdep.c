@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.156 2017/04/30 16:45:45 mpi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.157 2017/12/11 05:27:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -835,7 +835,7 @@ boot(int howto)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
-		vfs_shutdown();
+		vfs_shutdown(curproc);
 
 		if ((howto & RB_TIMEBAD) == 0) {
 			resettodr();

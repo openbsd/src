@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.185 2017/10/23 18:38:33 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.186 2017/12/11 05:27:40 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -626,7 +626,7 @@ boot(int howto)
 		extern int sparc_clock_time_is_ok;
 
 		waittime = 0;
-		vfs_shutdown();
+		vfs_shutdown(curproc);
 
 		/*
 		 * XXX

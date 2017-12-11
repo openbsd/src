@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.99 2017/05/30 10:32:53 sf Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.100 2017/12/11 05:27:40 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -162,16 +162,12 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *devvp;
-	struct ufs_args args;
+	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
 	struct m_ext2fs *fs;
 	char fname[MNAMELEN];
 	char fspec[MNAMELEN];
 	int error, flags;
-
-	error = copyin(data, &args, sizeof(struct ufs_args));
-	if (error)
-		return (error);
 
 	/*
 	 * If updating, check whether changing from read-only to
@@ -208,19 +204,21 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 				fs->e2fs.e2fs_state = E2FS_ERRORS;
 			fs->e2fs_fmod = 1;
 		}
-		if (args.fspec == NULL) {
+		if (args && args->fspec == NULL) {
 			/*
 			 * Process export requests.
 			 */
 			return (vfs_export(mp, &ump->um_export,
-			    &args.export_info));
+			    &args->export_info));
 		}
+		if (args == NULL)
+			goto success;
 	}
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	error = copyinstr(args.fspec, fspec, sizeof(fspec), NULL);
+	error = copyinstr(args->fspec, fspec, sizeof(fspec), NULL);
 	if (error)
 		goto error;
 
@@ -265,7 +263,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	strlcpy(mp->mnt_stat.f_mntfromname, fname, MNAMELEN);
 	memset(mp->mnt_stat.f_mntfromspec, 0, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
-	memcpy(&mp->mnt_stat.mount_info.ufs_args, &args, sizeof(args));
+	memcpy(&mp->mnt_stat.mount_info.ufs_args, args, sizeof(*args));
 
 	if (fs->e2fs_fmod != 0) {	/* XXX */
 		fs->e2fs_fmod = 0;

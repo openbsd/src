@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.84 2017/05/29 14:07:16 sf Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.85 2017/12/11 05:27:40 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -101,16 +101,12 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *devvp;	  /* vnode for blk device to mount */
-	struct msdosfs_args args; /* will hold data from mount request */
+	struct msdosfs_args *args = data; /* will hold data from mount request */
 	/* msdosfs specific mount control block */
 	struct msdosfsmount *pmp = NULL;
 	char fname[MNAMELEN];
 	char fspec[MNAMELEN];
 	int error, flags;
-
-	error = copyin(data, &args, sizeof(struct msdosfs_args));
-	if (error)
-		return (error);
 
 	/*
 	 * If updating, check whether changing from read-only to
@@ -147,11 +143,11 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 		    (mp->mnt_flag & MNT_WANTRDWR))
 			pmp->pm_flags &= ~MSDOSFSMNT_RONLY;
 
-		if (args.fspec == NULL) {
+		if (args && args->fspec == NULL) {
 #ifdef	__notyet__		/* doesn't work correctly with current mountd	XXX */
-			if (args.flags & MSDOSFSMNT_MNTOPT) {
+			if (args->flags & MSDOSFSMNT_MNTOPT) {
 				pmp->pm_flags &= ~MSDOSFSMNT_MNTOPT;
-				pmp->pm_flags |= args.flags & MSDOSFSMNT_MNTOPT;
+				pmp->pm_flags |= args->flags & MSDOSFSMNT_MNTOPT;
 				if (pmp->pm_flags & MSDOSFSMNT_NOWIN95)
 					pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
 			}
@@ -160,15 +156,17 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 			 * Process export requests.
 			 */
 			return (vfs_export(mp, &pmp->pm_export,
-			    &args.export_info));
+			    &args->export_info));
 		}
+		if (args == NULL)
+			return (0);
 	}
 
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	error = copyinstr(args.fspec, fspec, sizeof(fspec), NULL);
+	error = copyinstr(args->fspec, fspec, sizeof(fspec), NULL);
 	if (error)
 		goto error;
 
@@ -191,7 +189,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 	}
 
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
-		error = msdosfs_mountfs(devvp, mp, p, &args);
+		error = msdosfs_mountfs(devvp, mp, p, args);
 	else {
 		if (devvp != pmp->pm_devvp)
 			error = EINVAL;	/* XXX needs translation */
@@ -202,10 +200,10 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 		goto error_devvp;
 
 	pmp = VFSTOMSDOSFS(mp);
-	pmp->pm_gid = args.gid;
-	pmp->pm_uid = args.uid;
-	pmp->pm_mask = args.mask;
-	pmp->pm_flags |= args.flags & MSDOSFSMNT_MNTOPT;
+	pmp->pm_gid = args->gid;
+	pmp->pm_uid = args->uid;
+	pmp->pm_mask = args->mask;
+	pmp->pm_flags |= args->flags & MSDOSFSMNT_MNTOPT;
 
 	if (pmp->pm_flags & MSDOSFSMNT_NOWIN95)
 		pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
@@ -241,7 +239,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 	strlcpy(mp->mnt_stat.f_mntfromname, fname, MNAMELEN);
 	bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
-	bcopy(&args, &mp->mnt_stat.mount_info.msdosfs_args, sizeof(args));
+	bcopy(args, &mp->mnt_stat.mount_info.msdosfs_args, sizeof(*args));
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_mount(): mp %p, pmp %p, inusemap %p\n", mp,

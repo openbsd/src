@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.126 2017/11/03 09:07:54 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.127 2017/12/11 05:27:40 deraadt Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -429,7 +429,7 @@ boot(int howto)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0) {
-		vfs_shutdown();
+		vfs_shutdown(curproc);
 
 		if ((howto & RB_TIMEBAD) == 0) {
 			resettodr();

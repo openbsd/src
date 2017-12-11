@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.29 2017/04/20 14:13:00 visa Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.30 2017/12/11 05:27:40 deraadt Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -74,19 +74,14 @@ fusefs_mount(struct mount *mp, const char *path, void *data,
 {
 	struct fusefs_mnt *fmp;
 	struct fusebuf *fbuf;
-	struct fusefs_args args;
+	struct fusefs_args *args = data;
 	struct vnode *vp;
 	struct file *fp;
-	int error;
 
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	error = copyin(data, &args, sizeof(struct fusefs_args));
-	if (error)
-		return (error);
-
-	if ((fp = fd_getfile(p->p_fd, args.fd)) == NULL)
+	if ((fp = fd_getfile(p->p_fd, args->fd)) == NULL)
 		return (EBADF);
 
 	if (fp->f_type != DTYPE_VNODE)
@@ -100,8 +95,8 @@ fusefs_mount(struct mount *mp, const char *path, void *data,
 	fmp->mp = mp;
 	fmp->sess_init = 0;
 	fmp->dev = vp->v_rdev;
-	if (args.max_read > 0)
-		fmp->max_read = MIN(args.max_read, FUSEBUFMAXSIZE);
+	if (args->max_read > 0)
+		fmp->max_read = MIN(args->max_read, FUSEBUFMAXSIZE);
 	else
 		fmp->max_read = FUSEBUFMAXSIZE;
 

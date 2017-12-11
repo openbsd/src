@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.13 2017/09/08 05:36:53 deraadt Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.14 2017/12/11 05:27:40 deraadt Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ int
 tmpfs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct proc *p)
 {
-	struct tmpfs_args args;
+	struct tmpfs_args *args = data;
 	tmpfs_mount_t *tmp;
 	tmpfs_node_t *root;
 	uint64_t memlimit;
@@ -121,25 +121,25 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	if (tmpfs_mem_info(1) < TMPFS_PAGES_RESERVED)
 		return EINVAL;
 
-	error = copyin(data, &args, sizeof(struct tmpfs_args));
+	error = copyin(data, args, sizeof(struct tmpfs_args));
 	if (error)
 		return error;
-	if (args.ta_root_uid == VNOVAL || args.ta_root_gid == VNOVAL ||
-	    args.ta_root_mode == VNOVAL)
+	if (args->ta_root_uid == VNOVAL || args->ta_root_gid == VNOVAL ||
+	    args->ta_root_mode == VNOVAL)
 		return EINVAL;
 
 	/* Get the memory usage limit for this file-system. */
-	if (args.ta_size_max < PAGE_SIZE) {
+	if (args->ta_size_max < PAGE_SIZE) {
 		memlimit = UINT64_MAX;
 	} else {
-		memlimit = args.ta_size_max;
+		memlimit = args->ta_size_max;
 	}
 	KASSERT(memlimit > 0);
 
-	if (args.ta_nodes_max <= 3) {
+	if (args->ta_nodes_max <= 3) {
 		nodes = 3 + (memlimit / 1024);
 	} else {
-		nodes = args.ta_nodes_max;
+		nodes = args->ta_nodes_max;
 	}
 	nodes = MIN(nodes, INT_MAX);
 	KASSERT(nodes >= 3);
@@ -156,8 +156,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	tmpfs_mntmem_init(tmp, memlimit);
 
 	/* Allocate the root node. */
-	error = tmpfs_alloc_node(tmp, VDIR, args.ta_root_uid,
-	    args.ta_root_gid, args.ta_root_mode & ALLPERMS, NULL,
+	error = tmpfs_alloc_node(tmp, VDIR, args->ta_root_uid,
+	    args->ta_root_gid, args->ta_root_mode & ALLPERMS, NULL,
 	    VNOVAL, &root);
 	KASSERT(error == 0 && root != NULL);
 
@@ -180,7 +180,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 #endif
 	vfs_getnewfsid(mp);
 
-	mp->mnt_stat.mount_info.tmpfs_args = args;
+	mp->mnt_stat.mount_info.tmpfs_args = *args;
 
 	bzero(&mp->mnt_stat.f_mntonname, sizeof(mp->mnt_stat.f_mntonname));
 	bzero(&mp->mnt_stat.f_mntfromname, sizeof(mp->mnt_stat.f_mntfromname));
