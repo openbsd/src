@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.167 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.168 2017/12/11 17:13:34 deraadt Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -457,6 +457,7 @@ success:
 				fs->fs_flags &= ~FS_DOSOFTDEP;
 		}
 		ffs_sbupdate(ump, MNT_WAIT);
+#if 0
 		if (ronly) {
 			int force = 0;
 
@@ -467,6 +468,7 @@ success:
 			VOP_IOCTL(ump->um_devvp, DIOCCACHESYNC, &force,
 			    FWRITE, FSCRED, p);
                }
+#endif
 	}
 	return (0);
 
