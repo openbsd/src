@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.119 2017/10/21 20:15:17 patrick Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.120 2017/12/11 22:23:00 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -976,13 +976,15 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 		/* write PMKID List (only 1) */
 		memcpy(frm, ni->ni_pmkid, IEEE80211_PMKID_LEN);
 		frm += IEEE80211_PMKID_LEN;
-	} else {
-		/* no PMKID (PMKID Count=0) */
-		LE_WRITE_2(frm, 0); frm += 2;
 	}
 
 	if (!(ic->ic_caps & IEEE80211_C_MFP))
 		return frm;
+
+	if ((ni->ni_flags & IEEE80211_NODE_PMKID) == 0) {
+		/* no PMKID (PMKID Count=0) */
+		LE_WRITE_2(frm, 0); frm += 2;
+	}
 
 	/* write Group Integrity Cipher Suite field */
 	memcpy(frm, oui, 3); frm += 3;
