@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.19 2017/11/16 12:56:58 helg Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.20 2017/12/11 12:01:55 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -67,72 +67,34 @@ alloc_argv(struct fuse_args *args)
 	return (0);
 }
 
-static int
+/*
+ * Returns the number of characters that matched for bounds checking later.
+ */
+static size_t
 match_opt(const char *templ, const char *opt)
 {
-	const char *o, *t;
-	char *arg;
+	size_t sep, len;
 
-	arg = strpbrk(templ, " =");
+	len = strlen(templ);
+	sep = strcspn(templ, "=");
 
-	/* verify template */
-	t = templ;
-	if (*t == '-') {
-		t++;
-		if (*t == '-')
-			t++;
-		if (*t == 'o' || *t == '\0')
+	if (sep == len)
+		sep = strcspn(templ, " ");
+
+	/* key=, key=%, "-k ", -k % */
+	if (sep < len && (templ[sep + 1] == '\0' || templ[sep + 1] == '%')) {
+		if (strncmp(opt, templ, sep) == 0)
+			return (sep);
+		else
 			return (0);
 	}
 
-	/* skip leading -, -o, and -- in option name */
-	o = opt;
-	if (*o == '-') {
-		o++;
-		if (*o == 'o' || *o == '-')
-			o++;
-	}
+	if (strcmp(opt, templ) == 0)
+		return (len);
 
-	/* empty option name is invalid */
-	if (*o == '\0')
-		return (0);
-
-	/* match option name */
-	while (*t && *o) {
-		if (*t++ != *o++)
-			return (0);
-		if (arg && t == arg) {
-			if (*o != ' ' && *o != '=')
-				return (0);
-			o++; /* o now points at argument */
-			if (*o == '\0')
-				return (0);
-			break;
-		}
-	}
-
-	/* match argument */
-	if (arg) {
-		if (t != arg)
-			return (0);
-		t++;
-		/* does template have an argument? */
-		if (*t != '%' && *t != '\0')
-			return (0);
-		if (*t == '%' && t[1] == '\0')
-			return (0);
-		/* yes it does, consume argument in opt */
-		while (*o && *o != ' ')
-			o++;
-	} else if (*t != '\0')
-		return (0);
-
-	/* we should have consumed entire opt string */
-	if (*o != '\0')
-		return (0);
-
-	return (1);
+	return (0);
 }
+
 
 static int
 add_opt(char **opts, const char *opt)
