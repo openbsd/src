@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.68 2017/12/08 19:05:33 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.69 2017/12/11 00:15:50 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -212,11 +212,11 @@ cpu_match(struct device *parent, void *match, void *aux)
 	if (portid == -1)
 		portid = getpropint(ma->ma_node, "cpuid", -1);
 	if (portid == -1 && ma->ma_nreg > 0)
-		portid = (ma->ma_reg[0].ur_paddr >> 32) & 0xff;
+		portid = (ma->ma_reg[0].ur_paddr >> 32) & 0x0fffffff;
 	if (portid == -1)
 		return (0);
 
-	if (ncpus < MAXCPUS || portid == cpus->ci_upaid)
+	if (ncpus < MAXCPUS || portid == cpu_myid())
 		return (1);
 
 	return (0);
