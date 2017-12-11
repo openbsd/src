@@ -352,7 +352,7 @@ ___
 ___
 	}
 $code.=<<___;
-	.byte	0xf3,0xc3			# rep ret
+	retq
 .size	_x86_64_AES_encrypt,.-_x86_64_AES_encrypt
 ___
 
@@ -580,7 +580,7 @@ $code.=<<___;
 	xor	4($key),$s1
 	xor	8($key),$s2
 	xor	12($key),$s3
-	.byte	0xf3,0xc3			# rep ret
+	retq
 .size	_x86_64_AES_encrypt_compact,.-_x86_64_AES_encrypt_compact
 ___
 
@@ -925,7 +925,7 @@ ___
 ___
 	}
 $code.=<<___;
-	.byte	0xf3,0xc3			# rep ret
+	retq
 .size	_x86_64_AES_decrypt,.-_x86_64_AES_decrypt
 ___
 
@@ -1179,7 +1179,7 @@ $code.=<<___;
 	xor	4($key),$s1
 	xor	8($key),$s2
 	xor	12($key),$s3
-	.byte	0xf3,0xc3			# rep ret
+	retq
 .size	_x86_64_AES_decrypt_compact,.-_x86_64_AES_decrypt_compact
 ___
 
@@ -1496,7 +1496,7 @@ $code.=<<___;
 .Lbadpointer:
 	mov	\$-1,%rax
 .Lexit:
-	.byte	0xf3,0xc3			# rep ret
+	retq
 .size	_x86_64_AES_set_encrypt_key,.-_x86_64_AES_set_encrypt_key
 ___
 
