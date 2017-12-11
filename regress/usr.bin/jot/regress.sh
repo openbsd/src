@@ -1,4 +1,4 @@
-# $OpenBSD: regress.sh,v 1.4 2016/08/06 15:46:33 tb Exp $
+# $OpenBSD: regress.sh,v 1.5 2017/12/11 01:11:12 tb Exp $
 # $FreeBSD: head/usr.bin/jot/tests/regress.sh 208728 2010-06-02 07:47:29Z brian $
 
 JOT=${JOT-jot}
@@ -73,9 +73,14 @@ REGRESSION_TEST([[hbbh]], [[${JOT} 15 10 10 2]])
 # rand1 and rand2 test coverage (10000 is way too big: 200 should be enough)
 REGRESSION_TEST([[rand1]], [[${JOT} -r 10000 0 9 | sort -u]])
 REGRESSION_TEST([[rand2]], [[${JOT} -r 10000 9 0 | sort -u]])
+# same thing again, but divide by 10
+REGRESSION_TEST([[rand1p1]], [[${JOT} -p 1 -r 10000 0 0.9 | sort -u]])
+REGRESSION_TEST([[rand2p1]], [[${JOT} -p 1 -r 10000 0.9 0 | sort -u]])
 # rdhhh and rhdhh test if begin and ender are set to the default with jot -r
 REGRESSION_TEST([[rdhhh]], [[${JOT} -r 100 - 10 2 2>/dev/null | sort -n | head -1]])
 REGRESSION_TEST([[rhdhh]], [[${JOT} -r 100 90 - 2 2>/dev/null | sort -n | tail -1]])
+# test variant of old manpage example, as it exercises the 'use_unif = 0' path
+REGRESSION_TEST([[nonunif]], [[jot -p0 -r 10000 0.5 9.5 | sort -u]])
 
 # G: Examples from the FreeBSD manual
 REGRESSION_TEST([[n21]], [[${JOT} 21 -1 1.00]])
@@ -97,13 +102,19 @@ REGRESSION_TEST([[wg]], [[${JOT} -w "a%20gb" 10]])
 REGRESSION_TEST([[wc]], [[${JOT} -w "a%cb" 10 33 43]])
 REGRESSION_TEST([[wgd]], [[${JOT} -w "a%gb" 10 .2]])
 REGRESSION_TEST([[wu]], [[${JOT} -w "a%ub" 10]])
+REGRESSION_TEST([[wU]], [[${JOT} -w "a%Ub" 10]])
+REGRESSION_TEST([[wlu]], [[${JOT} -w "a%lub" 10]])
 REGRESSION_TEST([[wo]], [[${JOT} -w "a%ob" 10]])
+REGRESSION_TEST([[wO]], [[${JOT} -w "a%Ob" 10]])
+REGRESSION_TEST([[wlo]], [[${JOT} -w "a%lob" 10]])
 REGRESSION_TEST([[wx]], [[${JOT} -w "a%xb" 10]])
 REGRESSION_TEST([[wX1]], [[${JOT} -w "a%Xb" 10]])
 REGRESSION_TEST([[wXl]], [[${JOT} -w "a%Xb" 10 2147483648]])
 REGRESSION_TEST([[wdl]], [[${JOT} -w "a%db" 10 2147483648 2>/dev/null]])
 REGRESSION_TEST([[wxn]], [[${JOT} -w "a%xb" 10 -5 2>/dev/null]])
 REGRESSION_TEST([[wdn]], [[${JOT} -w "a%db" 10 -5]])
+#REGRESSION_TEST([[wDn]], [[${JOT} -w "a%Db" 10 -5]])
+REGRESSION_TEST([[wldn]], [[${JOT} -w "a%ldb" 10 -5]])
 REGRESSION_TEST([[wp1]], [[${JOT} -w "%%%d%%%%" 10]])
 REGRESSION_TEST([[wp2]], [[${JOT} -w "%d%%d%%" 10]])
 REGRESSION_TEST([[wp3]], [[${JOT} -w "a%%A%%%d%%B%%b" 10]])
@@ -123,5 +134,8 @@ REGRESSION_TEST([[man7]], [[${JOT} -w %ds/old/new/ 30 2 - 5]])
 REGRESSION_TEST([[man8]], [[${JOT} -b x 512]])
 REGRESSION_TEST([[man9]], [[${JOT} -s, - 10 132 4]])
 REGRESSION_TEST([[man10]], [[${JOT} -s "" -b. 80]])
+
+# J: Misc tests
+REGRESSION_TEST([[nb1]], [[{ ${JOT} -n -b1 1 && echo; }]])
 
 REGRESSION_END()
