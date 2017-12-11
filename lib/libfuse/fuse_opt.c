@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.21 2017/12/11 12:31:00 helg Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.22 2017/12/11 12:38:54 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -233,18 +233,16 @@ parse_opt(const struct fuse_opt *o, const char *opt, void *data,
 		} else if (strchr(o->templ, '%') == NULL) {
 			*((int *)(data + o->off)) = o->val;
 			ret = IFUSE_OPT_DISCARD;
-		} else if (strstr(o->templ, "%u") != NULL) {
-			*((unsigned int*)(data + o->off)) = atoi(val);
-			ret = IFUSE_OPT_DISCARD;
-		} else if (strstr(o->templ, "%lu") != NULL) {
-			*((unsigned long*)(data + o->off)) =
-			    strtoul(val, NULL, 0);
-			ret = IFUSE_OPT_DISCARD;
 		} else if (strstr(o->templ, "%s") != NULL) {
 			*((char **)(data + o->off)) = strdup(val);
 			ret = IFUSE_OPT_DISCARD;
 		} else {
-			/* TODO other parameterised templates */
+			/* All other templates, let sscanf deal with them. */
+			if (sscanf(opt, o->templ, data + o->off) != 1) {
+				fprintf(stderr, "fuse: Invalid value %s for "
+				    "option %s\n", val, o->templ);
+				return (-1);
+			}
 			ret = IFUSE_OPT_DISCARD;
 		}
 	}

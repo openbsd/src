@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <assert.h>
 #include <fuse_opt.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -25,26 +26,41 @@ struct data {
 	char	*x;
 	char	*optstring;
 	int	debug;
+	int	foreground;
 	int	noatime;
 	int	ssh_ver;
 	int	count;
 	int	cache;
+	int	set_gid;
+	int	gid;
+};
+
+enum {
+	KEY_DEBUG,
+	KEY_NOATIME,
+	KEY_PORT
 };
 
 #define DATA_OPT(o,m,v) {o, offsetof(struct data, m), v}
 
 struct fuse_opt opts[] = {
-	FUSE_OPT_KEY("-p ",				1),
-	FUSE_OPT_KEY("debug",				3),
-	FUSE_OPT_KEY("noatime",				4),
+	FUSE_OPT_KEY("noatime",		KEY_NOATIME	 ),
 
 	DATA_OPT("optstring=%s",	optstring,	0),
 	DATA_OPT("-f=%s",		fsname, 	0),
 	DATA_OPT("-x %s",		x,		0),
 	DATA_OPT("--count=%u",		count, 		0),
 	DATA_OPT("-1",			ssh_ver,	5),
-	/*DATA_OPT("cache=yes",		cache,		1),*/
+	DATA_OPT("cache=yes",		cache,		1),
 	DATA_OPT("cache=no",		cache,		0),
+	DATA_OPT("debug",		debug,		1),
+	DATA_OPT("debug",		foreground,	1),
+	FUSE_OPT_KEY("debug",		KEY_DEBUG	 ),
+	FUSE_OPT_KEY("debug",		FUSE_OPT_KEY_KEEP),
+	DATA_OPT("-p",			port,	       25),
+	FUSE_OPT_KEY("-p ",		KEY_PORT	 ),
+	DATA_OPT("gid=",		set_gid,	1),
+	DATA_OPT("gid=%o",		gid,		1),
 
 	FUSE_OPT_END
 };
@@ -52,29 +68,26 @@ struct fuse_opt opts[] = {
 int
 proc(void *data, const char *arg, int key, struct fuse_args *args)
 {
-	struct data *conf = (struct data *)data;
+	struct data *conf = data;
 
 	if (conf == NULL)
 		return (1);
 
 	switch (key)
 	{
-	case 1:
+	case KEY_PORT:
 		conf->port = atoi(&arg[2]);
 		return (0);
-	case 3:
-		conf->debug = 1;
-		return (1);
-	case 4:
+	case KEY_DEBUG:
+		conf->debug = 2;
+		return (0);
+	case KEY_NOATIME:
 		conf->noatime = 1;
 		return (1);
 	}
 
 	return (1);
 }
-
-#define TEST_DATA_INT(m, v) if (data.m != v) exit(__LINE__)
-#define TEST_DATA_STR(m, v) if (data.m == NULL || strcmp(data.m, v) != 0) exit(__LINE__)
 
 /*
  * A NULL 'args' is equivalent to an empty argument vector.
@@ -86,17 +99,17 @@ test_null_args(void) {
 
 	bzero(&data, sizeof(data));
 
-	if (fuse_opt_parse(NULL, &data, opts, proc) != 0)
-		exit(__LINE__);
+	assert(fuse_opt_parse(NULL, &data, opts, proc) == 0);
 
-	TEST_DATA_INT(port, 0);
-	TEST_DATA_INT(fsname, 0);
-	TEST_DATA_INT(x, 0);
-	TEST_DATA_INT(optstring, 0);
-	TEST_DATA_INT(debug, 0);
-	TEST_DATA_INT(noatime, 0);
-	TEST_DATA_INT(ssh_ver, 0);
-	TEST_DATA_INT(count, 0);
+	assert(data.port == 0);
+	assert(data.fsname == NULL);
+	assert(data.x == NULL);
+	assert(data.optstring == NULL);
+	assert(data.debug == 0);
+	assert(data.noatime == 0);
+	assert(data.ssh_ver == 0);
+	assert(data.count == 0);
+	assert(data.cache == 0);
 }
 
 /*
@@ -120,26 +133,24 @@ test_null_opts(void)
 
 	bzero(&data, sizeof(data));
 
-	if (fuse_opt_parse(&args, &data, NULL, proc) != 0)
-		exit(__LINE__);
+	assert(fuse_opt_parse(&args, &data, NULL, proc) == 0);
 
-	TEST_DATA_INT(port, 0);
-	TEST_DATA_INT(fsname, 0);
-	TEST_DATA_INT(x, 0);
-	TEST_DATA_INT(optstring, 0);
-	TEST_DATA_INT(debug, 0);
-	TEST_DATA_INT(noatime, 0);
-	TEST_DATA_INT(ssh_ver, 0);
-	TEST_DATA_INT(count, 0);
+	assert(data.port == 0);
+	assert(data.fsname == NULL);
+	assert(data.x == NULL);
+	assert(data.optstring == NULL);
+	assert(data.debug == 0);
+	assert(data.noatime == 0);
+	assert(data.ssh_ver == 0);
+	assert(data.count == 0);
+	assert(data.cache == 0);
+	assert(data.set_gid == 0);
+	assert(data.gid == 0);
 
-	if (args.argc != 2)
-		exit(__LINE__);
-	if (strcmp(args.argv[0], "progname") != 0)
-		exit(__LINE__);
-	if (strcmp(args.argv[1], "/mnt") != 0)
-		exit(__LINE__);
-	if (args.allocated == 0)
-		exit(__LINE__);
+	assert(args.argc == 2);
+	assert(strcmp(args.argv[0], "progname") == 0);
+	assert(strcmp(args.argv[1], "/mnt") == 0);
+	assert(args.allocated);
 
 	fuse_opt_free_args(&args);
 }
@@ -155,7 +166,7 @@ test_null_proc(void)
 
         char *argv_null_proc[] = {
                 "progname",
-                "-odebug,noatime",
+                "-odebug,noatime,gid=077",
                 "-d",
                 "-p", "22",
                 "/mnt",
@@ -165,7 +176,7 @@ test_null_proc(void)
                 "-o", "optstring=",
                 "-o", "optstring=optstring",
                 "--count=10"
-        };
+      };
 
         args.argc = sizeof(argv_null_proc) / sizeof(argv_null_proc[0]);
         args.argv = argv_null_proc;
@@ -173,38 +184,30 @@ test_null_proc(void)
 
         bzero(&data, sizeof(data));
 
-        if (fuse_opt_parse(&args, &data, opts, NULL) != 0)
-                exit(__LINE__);
+	assert(fuse_opt_parse(&args, &data, opts, NULL) == 0);
 
-        TEST_DATA_INT(port, 0);
-        TEST_DATA_STR(fsname, "filename");
-        TEST_DATA_STR(x, "xanadu");
-        TEST_DATA_STR(optstring, "optstring");
-        TEST_DATA_INT(debug, 0);
-        TEST_DATA_INT(noatime, 0);
-        TEST_DATA_INT(ssh_ver, 5);
-        TEST_DATA_INT(count, 10);
+	assert(data.port == 25);
+	assert(strcmp(data.fsname, "filename") == 0);
+	assert(strcmp(data.x, "xanadu") == 0);
+	assert(strcmp(data.optstring, "optstring") == 0);
+	assert(data.debug == 1);
+	assert(data.noatime == 0);
+	assert(data.ssh_ver == 5);
+	assert(data.count == 10);
+	assert(data.cache == 0);
+	assert(data.set_gid == 1);
+	assert(data.gid == 077);
 
-        if (args.argc != 8)
-                exit(__LINE__);
-        if (strcmp(args.argv[0], "progname") != 0)
-                exit(__LINE__);
-        if (strcmp(args.argv[1], "-o") != 0)
-                exit(__LINE__);
-        if (strcmp(args.argv[2], "debug") != 0)
-                exit(__LINE__);
-        if (strcmp(args.argv[3], "-o") != 0)
-                exit(__LINE__);
-        if (strcmp(args.argv[4], "noatime") != 0)
-                exit(__LINE__);
-	if (strcmp(args.argv[5], "-d") != 0)
-		exit(__LINE__);
-        if (strcmp(args.argv[6], "-p22") != 0)
-                exit(__LINE__);
-	if (strcmp(args.argv[7], "/mnt") != 0)
-		exit(__LINE__);
-	if (args.allocated == 0)
-		exit(__LINE__);
+	assert(args.argc == 8);
+	assert(strcmp(args.argv[0], "progname") == 0);
+	assert(strcmp(args.argv[1], "-o") == 0);
+	assert(strcmp(args.argv[2], "debug") == 0);
+	assert(strcmp(args.argv[3], "-o") == 0);
+	assert(strcmp(args.argv[4], "noatime") == 0);
+	assert(strcmp(args.argv[5], "-d") == 0);
+	assert(strcmp(args.argv[6], "-p22") == 0);
+	assert(strcmp(args.argv[7], "/mnt") == 0);
+	assert(args.allocated);
 
 	fuse_opt_free_args(&args);
 }
@@ -220,7 +223,7 @@ test_all_args(void)
 
 	char *argv[] = {
 		"progname",
-		"-odebug,noatime",
+		"-odebug,noatime,gid=077",
 		"-d",
 		"-p", "22",
 		"/mnt",
@@ -237,37 +240,29 @@ test_all_args(void)
 
 	bzero(&data, sizeof(data));
 
-	if (fuse_opt_parse(&args, &data, opts, proc) != 0)
-		exit(__LINE__);
+	assert(fuse_opt_parse(&args, &data, opts, proc) == 0);
 
-	TEST_DATA_INT(port, 22);
-	TEST_DATA_STR(fsname, "filename");
-	TEST_DATA_STR(x, "xanadu");
-	TEST_DATA_STR(optstring, "optstring");
-	TEST_DATA_INT(debug, 1);
-	TEST_DATA_INT(noatime, 1);
-	TEST_DATA_INT(ssh_ver, 5);
-	TEST_DATA_INT(count, 10);
-	TEST_DATA_INT(cache, 0);
+	assert(data.port == 22);
+	assert(strcmp(data.fsname, "filename") == 0);
+	assert(strcmp(data.x, "xanadu") == 0);
+	assert(strcmp(data.optstring, "optstring") == 0);
+	assert(data.debug == 2);
+	assert(data.noatime == 1);
+	assert(data.ssh_ver == 5);
+	assert(data.count == 10);
+	assert(data.cache == 0);
+	assert(data.set_gid == 1);
+	assert(data.gid == 077);
 
-	if (args.argc != 7)
-		exit(__LINE__);
-	if (strcmp(args.argv[0], "progname") != 0)
-		exit(__LINE__);
-	if (strcmp(args.argv[1], "-o") != 0)
-		exit(__LINE__);
-	if (strcmp(args.argv[2], "debug") != 0)
-		exit(__LINE__);
-	if (strcmp(args.argv[3], "-o") != 0)
-		exit(__LINE__);
-	if (strcmp(args.argv[4], "noatime") != 0)
-		exit(__LINE__);
-	if (strcmp(args.argv[5], "-d") != 0)
-		exit(__LINE__);
-	if (strcmp(args.argv[6], "/mnt") != 0)
-		exit(__LINE__);
-	if (args.allocated == 0)
-		exit(__LINE__);
+	assert(args.argc == 7);
+	assert(strcmp(args.argv[0], "progname") == 0);
+	assert(strcmp(args.argv[1], "-o") == 0);
+	assert(strcmp(args.argv[2], "debug") == 0);
+	assert(strcmp(args.argv[3], "-o") == 0);
+	assert(strcmp(args.argv[4], "noatime") == 0);
+	assert(strcmp(args.argv[5], "-d") == 0);
+	assert(strcmp(args.argv[6], "/mnt") == 0);
+	assert(args.allocated);
 
 	fuse_opt_free_args(&args);
 }
