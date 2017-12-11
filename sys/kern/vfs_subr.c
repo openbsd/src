@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.262 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.263 2017/12/11 14:11:22 bluhm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2220,7 +2220,7 @@ vfs_mount_print(struct mount *mp, int full,
 {
 	struct vfsconf *vfc = mp->mnt_vfc;
 	struct vnode *vp;
-	int cnt = 0;
+	int cnt;
 
 	(*pr)("flags %b\nvnodecovered %p syncer %p data %p\n",
 	    mp->mnt_flag, MNT_BITS,
@@ -2253,27 +2253,33 @@ vfs_mount_print(struct mount *mp, int full,
 
 	(*pr)("locked vnodes:");
 	/* XXX would take mountlist lock, except ddb has no context */
-	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes)
+	cnt = 0;
+	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		if (VOP_ISLOCKED(vp)) {
-			if (!LIST_NEXT(vp, v_mntvnodes))
-				(*pr)(" %p", vp);
-			else if (!(cnt++ % (72 / (sizeof(void *) * 2 + 4))))
-				(*pr)("\n\t%p", vp);
+			if (cnt == 0)
+				(*pr)("\n  %p", vp);
+			else if ((cnt % (72 / (sizeof(void *) * 2 + 4))) == 0)
+				(*pr)(",\n  %p", vp);
 			else
 				(*pr)(", %p", vp);
+			cnt++;
 		}
+	}
 	(*pr)("\n");
 
 	if (full) {
-		(*pr)("all vnodes:\n\t");
+		(*pr)("all vnodes:");
 		/* XXX would take mountlist lock, except ddb has no context */
-		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes)
-			if (!LIST_NEXT(vp, v_mntvnodes))
-				(*pr)(" %p", vp);
-			else if (!(cnt++ % (72 / (sizeof(void *) * 2 + 4))))
-				(*pr)(" %p,\n\t", vp);
+		cnt = 0;
+		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+			if (cnt == 0)
+				(*pr)("\n  %p", vp);
+			else if ((cnt % (72 / (sizeof(void *) * 2 + 4))) == 0)
+				(*pr)(",\n  %p", vp);
 			else
-				(*pr)(" %p,", vp);
+				(*pr)(", %p", vp);
+			cnt++;
+		}
 		(*pr)("\n");
 	}
 }
