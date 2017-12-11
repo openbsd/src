@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.52 2017/12/08 18:41:59 martijn Exp $
+.\"	$OpenBSD: sed.1,v 1.53 2017/12/11 13:25:57 martijn Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: December 8 2017 $
+.Dd $Mdocdate: December 11 2017 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -482,14 +482,29 @@ in the pattern space with the corresponding characters from
 .Ar string2 .
 Any character other than a backslash or newline can be used instead of
 a slash to delimit the strings.
+.Pp
 Within
 .Ar string1
 and
 .Ar string2 ,
-a backslash followed by any character other than a newline is that literal
-character, and a backslash followed by an
+a backslash followed by another backslash
+is replaced by a single backslash,
+a backslash followed by an
 .Sq n
-is replaced by a newline character.
+is replaced by a newline character,
+and a backslash followed by the delimiting character
+is replaced by that character,
+causing it to be treated literally,
+with the exception of the
+.Sq n
+character,
+which will still be treated like a newline character.
+It is an error for a backslash to not be followed by another backslash,
+.Sq n ,
+or the delimiting character,
+or for
+.Ar string1
+to contain repeating characters.
 .It [0addr] Ns Ic \&: Ns Ar label
 This function does nothing; it bears a
 .Ar label
