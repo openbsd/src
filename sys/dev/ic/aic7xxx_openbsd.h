@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.26 2016/08/17 01:17:54 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.27 2017/12/12 12:33:36 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -128,13 +128,6 @@ typedef struct pci_attach_args * ahc_dev_softc_t;
 
 #include <dev/ic/aic7xxxvar.h>
 
-/************************** Softc/SCB Platform Data ***************************/
-struct ahc_platform_data {
-};
-
-struct scb_platform_data {
-};
-
 /*
  * Some ISA devices (e.g. on a VLB) can perform 32-bit DMA.  This
  * flag is passed to bus_dmamap_create() to indicate that fact.
@@ -216,9 +209,6 @@ static __inline int ahc_perform_autosense(struct scb *);
 static __inline uint32_t ahc_get_sense_bufsize(struct ahc_softc *,
     struct scb *);
 static __inline void ahc_freeze_scb(struct scb *);
-static __inline void ahc_platform_freeze_devq(struct ahc_softc *, struct scb *);
-static __inline int  ahc_platform_abort_scbs(struct ahc_softc *, int, char,
-    int, u_int, role_t, uint32_t);
 
 static __inline
 void ahc_set_transaction_status(struct scb *scb, uint32_t status)
@@ -298,19 +288,6 @@ ahc_get_sense_bufsize(struct ahc_softc *ahc, struct scb *scb)
 static __inline void
 ahc_freeze_scb(struct scb *scb)
 {
-}
-
-static __inline void
-ahc_platform_freeze_devq(struct ahc_softc *ahc, struct scb *scb)
-{
-}
-
-static __inline int
-ahc_platform_abort_scbs(struct ahc_softc *ahc, int target,
-			char channel, int lun, u_int tag,
-			role_t role, uint32_t status)
-{
-	return (0);
 }
 
 static __inline void
@@ -408,8 +385,6 @@ void	  ahc_notify_xfer_settings_change(struct ahc_softc *,
 void	  ahc_platform_set_tags(struct ahc_softc *, struct ahc_devinfo *, int);
 
 /************************* Initialization/Teardown ****************************/
-int	  ahc_platform_alloc(struct ahc_softc *, void *);
-void	  ahc_platform_free(struct ahc_softc *);
 int	  ahc_map_int(struct ahc_softc *);
 int	  ahc_attach(struct ahc_softc *);
 int	  ahc_softc_comp(struct ahc_softc *, struct ahc_softc *);
@@ -417,11 +392,6 @@ int	  ahc_detach(struct device *, int);
 
 /****************************** Interrupts ************************************/
 int                     ahc_platform_intr(void *);
-static __inline void    ahc_platform_flushwork(struct ahc_softc *);
-static __inline void
-ahc_platform_flushwork(struct ahc_softc *ahc)
-{
-}
 
 /************************ Misc Function Declarations **************************/
 void	  ahc_done(struct ahc_softc *, struct scb *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.26 2016/08/17 01:16:11 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.27 2017/12/12 12:33:36 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -80,10 +80,6 @@
 #include <dev/microcode/aic7xxx/aic79xx_reg.h>
 
 #include <dev/ic/aic7xxx_cam.h>
-
-/************************* Forward Declarations *******************************/
-struct ahd_platform_data;
-struct scb_platform_data;
 
 /****************************** Useful Macros *********************************/
 #ifndef MAX
@@ -625,7 +621,6 @@ struct scb {
 	struct ahd_softc	 *ahd_softc;
 	scb_flag		  flags;
 	bus_dmamap_t		  dmamap;
-	struct scb_platform_data *platform_data;
 	struct map_node		 *hscb_map;
 	struct map_node		 *sg_map;
 	struct map_node		 *sense_map;
@@ -1087,11 +1082,6 @@ struct ahd_softc {
 	 */
 	ahd_mode		  saved_dst_mode;
 	ahd_mode		  saved_src_mode;
-
-	/*
-	 * Platform specific data.
-	 */
-	struct ahd_platform_data *platform_data;
 
 	/*
 	 * Platform specific device information.

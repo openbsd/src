@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.45 2016/08/17 01:16:11 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.46 2017/12/12 12:33:36 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -551,26 +551,6 @@ ahd_platform_set_tags(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 }
 
 int
-ahd_platform_alloc(struct ahd_softc *ahd, void *platform_arg)
-{
-	if (sizeof(struct ahd_platform_data) > 0) {
-		ahd->platform_data = malloc(sizeof(struct ahd_platform_data),
-		    M_DEVBUF, M_NOWAIT | M_ZERO);
-		if (ahd->platform_data == NULL)
-			return (ENOMEM);
-	}
-
-	return (0);
-}
-
-void
-ahd_platform_free(struct ahd_softc *ahd)
-{
-	if (sizeof(struct ahd_platform_data) > 0)
-		free(ahd->platform_data, M_DEVBUF, 0);
-}
-
-int
 ahd_softc_comp(struct ahd_softc *lahd, struct ahd_softc *rahd)
 {
 	/* We don't sort softcs under OpenBSD so report equal always */
@@ -731,7 +711,3 @@ ahd_platform_dump_card_state(struct ahd_softc *ahd)
 		ahd->features, ahd->flags, ahd->chip, ahd->bugs);
 }
 
-void
-ahd_platform_flushwork(struct ahd_softc *ahd)
-{
-}

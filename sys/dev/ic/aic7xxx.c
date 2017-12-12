@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.92 2016/08/17 01:17:54 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.93 2017/12/12 12:33:36 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.92 2016/08/17 01:17:54 krw Exp $
+ * $Id: aic7xxx.c,v 1.93 2017/12/12 12:33:36 krw Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -3982,7 +3982,6 @@ ahc_free(struct ahc_softc *ahc)
 		break;
 	}
 
-	ahc_platform_free(ahc);
 	ahc_fini_scbdata(ahc);
 	for (i = 0; i < AHC_NUM_TARGETS; i++) {
 		struct ahc_tmode_tstate *tstate;
@@ -4396,17 +4395,8 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 	newcount = (PAGE_SIZE / (AHC_NSEG * sizeof(struct ahc_dma_seg)));
 	newcount = MIN(newcount, (AHC_SCB_MAX_ALLOC - scb_data->numscbs));
 	for (i = 0; i < newcount; i++) {
-		struct scb_platform_data *pdata = NULL;
 		int error;
 
-		if (sizeof(*pdata) > 0) {
-			pdata = malloc(sizeof(*pdata), M_DEVBUF,
-			    M_NOWAIT | M_ZERO);
-			if (pdata == NULL)
-				break;
-		}
-
-		next_scb->platform_data = pdata;
 		next_scb->sg_map = sg_map;
 		next_scb->sg_list = segs;
 		/*
@@ -5100,8 +5090,6 @@ ahc_freeze_devq(struct ahc_softc *ahc, struct scb *scb)
 	ahc_search_qinfifo(ahc, target, channel, lun,
 			   /*tag*/SCB_LIST_NULL, ROLE_UNKNOWN,
 			   CAM_REQUEUE_REQ, SEARCH_COMPLETE);
-
-	ahc_platform_freeze_devq(ahc, scb);
 }
 
 void
@@ -5755,7 +5743,6 @@ ahc_abort_scbs(struct ahc_softc *ahc, int target, char channel,
 		}
 	}
 	ahc_outb(ahc, SCBPTR, active_scb);
-	ahc_platform_abort_scbs(ahc, target, channel, lun, tag, role, status);
 	ahc_release_untagged_queues(ahc);
 	return found;
 }

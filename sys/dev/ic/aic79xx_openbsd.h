@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.19 2015/07/17 21:42:49 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.20 2017/12/12 12:33:36 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -136,13 +136,6 @@ typedef struct pci_attach_args * ahd_dev_softc_t;
 /* This driver supports target mode */
 // #define AHD_TARGET_MODE 1
 
-/************************** Softc/SCB Platform Data ***************************/
-struct ahd_platform_data {
-};
-
-struct scb_platform_data {
-};
-
 /************************** Timer DataStructures ******************************/
 typedef struct timeout aic_timer_t;
 
@@ -232,8 +225,6 @@ void ahd_flush_device_writes(struct ahd_softc *);
 #define aic_freeze_simq(ahd)
 #define aic_release_simq(ahd)
 #define aic_freeze_scb(scb)
-#define ahd_platform_freeze_devq(ahd, scb)
-#define ahd_platform_abort_scbs(ahd, target, channel, lun, tag, role, status)
 
 void aic_platform_scb_free(struct ahd_softc *, struct scb *);
 
@@ -268,17 +259,13 @@ void	  ahd_platform_set_tags(struct ahd_softc *, struct ahd_devinfo *,
 				ahd_queue_alg);
 
 /************************* Initialization/Teardown ****************************/
-int	  ahd_platform_alloc(struct ahd_softc *, void *);
-void	  ahd_platform_free(struct ahd_softc *);
 int	  ahd_attach(struct ahd_softc *);
 int	  ahd_softc_comp(struct ahd_softc *lahd, struct ahd_softc *rahd);
 int	  ahd_detach(struct device *, int);
 
-#define	ahd_platform_init(ahd)
-
 /****************************** Interrupts ************************************/
 int			ahd_platform_intr(void *);
-void	ahd_platform_flushwork(struct ahd_softc *ahd);
+
 /************************ Misc Function Declarations **************************/
 void	  ahd_done(struct ahd_softc *, struct scb *);
 void	  ahd_send_async(struct ahd_softc *, char /*channel*/,
