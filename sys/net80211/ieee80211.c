@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.64 2017/12/08 21:16:01 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.65 2017/12/12 15:52:49 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -238,14 +238,8 @@ ieee80211_chan2ieee(struct ieee80211com *ic, const struct ieee80211_channel *c)
 		return c - ic->ic_channels;
 	else if (c == IEEE80211_CHAN_ANYC)
 		return IEEE80211_CHAN_ANY;
-	else if (c != NULL) {
-		printf("%s: invalid channel freq %u flags %x\n",
-			ifp->if_xname, c->ic_freq, c->ic_flags);
-		return 0;		/* XXX */
-	} else {
-		printf("%s: invalid channel (NULL)\n", ifp->if_xname);
-		return 0;		/* XXX */
-	}
+
+	panic("%s: bogus channel pointer", ifp->if_xname);
 }
 
 /*
