@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.197 2017/12/08 21:16:01 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.198 2017/12/12 15:57:11 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -263,18 +263,20 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		}
 		*orxseq = nrxseq;
 	}
-	if (ic->ic_state != IEEE80211_S_SCAN) {
+	if (ic->ic_state > IEEE80211_S_SCAN) {
 		ni->ni_rssi = rxi->rxi_rssi;
 		ni->ni_rstamp = rxi->rxi_tstamp;
 		ni->ni_inact = 0;
 
-		/* Cancel or start background scan based on RSSI. */
-		if ((*ic->ic_node_checkrssi)(ic, ni))
-			timeout_del(&ic->ic_bgscan_timeout);
-		else if (!timeout_pending(&ic->ic_bgscan_timeout) &&
-		    (ic->ic_flags & IEEE80211_F_BGSCAN) == 0)
-			timeout_add_msec(&ic->ic_bgscan_timeout,
-			    500 * (ic->ic_bgscan_fail + 1));
+		if (ic->ic_state == IEEE80211_S_RUN) {
+			/* Cancel or start background scan based on RSSI. */
+			if ((*ic->ic_node_checkrssi)(ic, ni))
+				timeout_del(&ic->ic_bgscan_timeout);
+			else if (!timeout_pending(&ic->ic_bgscan_timeout) &&
+			    (ic->ic_flags & IEEE80211_F_BGSCAN) == 0)
+				timeout_add_msec(&ic->ic_bgscan_timeout,
+				    500 * (ic->ic_bgscan_fail + 1));
+		}
 	}
 
 #ifndef IEEE80211_STA_ONLY
