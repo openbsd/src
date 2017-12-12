@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.34 2017/01/24 07:48:37 guenther Exp $	*/
+/*	$OpenBSD: sod.c,v 1.35 2017/12/12 15:33:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -164,8 +164,10 @@ _dl_maphints(void)
 	long		hsize = 0;
 	int		hfd;
 
-	if ((hfd = _dl_open(_PATH_LD_HINTS, O_RDONLY | O_CLOEXEC)) < 0)
+	if ((hfd = _dl_open(_PATH_LD_HINTS, O_RDONLY | O_CLOEXEC)) < 0) {
+		hfd = -1;
 		goto bad_hints;
+	}
 
 	if (_dl_fstat(hfd, &sb) != 0 || !S_ISREG(sb.st_mode) ||
 	    sb.st_size < sizeof(struct hints_header) || sb.st_size > LONG_MAX)
