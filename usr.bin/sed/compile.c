@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.44 2017/12/11 13:25:57 martijn Exp $	*/
+/*	$OpenBSD: compile.c,v 1.45 2017/12/12 12:52:01 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -603,7 +603,7 @@ static char *
 compile_tr(char *old, char **transtab)
 {
 	int i;
-	char delimiter, check[UCHAR_MAX];
+	char delimiter, check[UCHAR_MAX + 1];
 	char *new, *end;
 
 	memset(check, 0, sizeof(check));
@@ -652,7 +652,7 @@ compile_tr(char *old, char **transtab)
 		if (check[*old] == 1)
 			error(COMPILE, "Repeated character in source string");
 		check[*old] = 1;
-		(*transtab)[*old++] = *new++;
+		(*transtab)[(u_char) *old++] = *new++;
 	}
 	if (*old != '\0' || *new != '\0')
 		error(COMPILE, "transform strings are not the same length");
