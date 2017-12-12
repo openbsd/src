@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.240 2017/08/29 02:51:27 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.241 2017/12/12 01:12:34 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -220,6 +220,7 @@ struct process {
 	u_short	ps_acflag;		/* Accounting flags. */
 
 	uint64_t ps_pledge;
+	uint64_t ps_execpledge;
 
 	int64_t ps_kbind_cookie;
 	u_long  ps_kbind_addr;
@@ -262,13 +263,14 @@ struct process {
 #define	PS_NOBROADCASTKILL 0x00080000	/* Process excluded from kill -1. */
 #define	PS_PLEDGE	0x00100000	/* Has called pledge(2) */
 #define	PS_WXNEEDED	0x00200000	/* Process may violate W^X */
+#define	PS_EXECPLEDGE	0x00400000	/* Has exec pledges */
 
 #define	PS_BITS \
     ("\20" "\01CONTROLT" "\02EXEC" "\03INEXEC" "\04EXITING" "\05SUGID" \
      "\06SUGIDEXEC" "\07PPWAIT" "\010ISPWAIT" "\011PROFIL" "\012TRACED" \
      "\013WAITED" "\014COREDUMP" "\015SINGLEEXIT" "\016SINGLEUNWIND" \
      "\017NOZOMBIE" "\020STOPPED" "\021SYSTEM" "\022EMBRYO" "\023ZOMBIE" \
-     "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED")
+     "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED", "\027EXECPLEDGE")
 
 
 struct lock_list_entry;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.32 2017/08/29 02:51:27 deraadt Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.33 2017/12/12 01:12:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -59,6 +59,7 @@
 #define PLEDGE_CHOWN	0x0000000080000000ULL	/* chown(2) family */
 #define PLEDGE_CHOWNUID	0x0000000100000000ULL	/* allow owner/group changes */
 #define PLEDGE_BPF	0x0000000200000000ULL	/* bpf ioctl */
+#define PLEDGE_ERROR	0x0000000400000000ULL	/* ENOSYS instead of kill */
 
 /*
  * Bits outside PLEDGE_USERSET are used by the kernel itself
@@ -105,6 +106,7 @@ static struct {
 	{ PLEDGE_VMM,		"vmm" },
 	{ PLEDGE_CHOWNUID,	"chown" },
 	{ PLEDGE_BPF,		"bpf" },
+	{ PLEDGE_ERROR,		"error" },
 	{ 0, NULL },
 };
 #endif

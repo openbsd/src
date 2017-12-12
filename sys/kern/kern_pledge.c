@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.225 2017/12/09 06:50:32 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.226 2017/12/12 01:12:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -84,7 +84,9 @@
 #endif
 
 uint64_t pledgereq_flags(const char *req);
-int canonpath(const char *input, char *buf, size_t bufsize);
+int	 parsepledges(struct proc *p, const char *kname,
+	    const char *promises, u_int64_t *fp);
+int	 canonpath(const char *input, char *buf, size_t bufsize);
 
 /* #define DEBUG_PLEDGE */
 #ifdef DEBUG_PLEDGE
@@ -367,6 +369,7 @@ static const struct {
 	{ "dns",		PLEDGE_DNS },
 	{ "dpath",		PLEDGE_DPATH },
 	{ "drm",		PLEDGE_DRM },
+	{ "error",		PLEDGE_ERROR },
 	{ "exec",		PLEDGE_EXEC },
 	{ "fattr",		PLEDGE_FATTR | PLEDGE_CHOWN },
 	{ "flock",		PLEDGE_FLOCK },
@@ -394,66 +397,90 @@ static const struct {
 };
 
 int
+parsepledges(struct proc *p, const char *kname, const char *promises, u_int64_t *fp)
+{
+	size_t rbuflen;
+	char *rbuf, *rp, *pn;
+	u_int64_t flags = 0, f;
+	int error;
+
+	rbuf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+	error = copyinstr(promises, rbuf, MAXPATHLEN,
+	    &rbuflen);
+	if (error) {
+		free(rbuf, M_TEMP, MAXPATHLEN);
+		return (error);
+	}
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_STRUCT))
+		ktrstruct(p, kname, rbuf, rbuflen-1);
+#endif
+
+	for (rp = rbuf; rp && *rp && error == 0; rp = pn) {
+		pn = strchr(rp, ' ');	/* find terminator */
+		if (pn) {
+			while (*pn == ' ')
+				*pn++ = '\0';
+		}
+		if ((f = pledgereq_flags(rp)) == 0) {
+			free(rbuf, M_TEMP, MAXPATHLEN);
+			return (EINVAL);
+		}
+		flags |= f;
+	}
+	free(rbuf, M_TEMP, MAXPATHLEN);
+	*fp = flags;
+	return 0;
+}
+
+int
 sys_pledge(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_pledge_args /* {
-		syscallarg(const char *)request;
-		syscallarg(const char **)paths;
+		syscallarg(const char *)promises;
+		syscallarg(const char *)execpromises;
 	} */	*uap = v;
 	struct process *pr = p->p_p;
-	uint64_t flags = 0;
+	uint64_t promises, execpromises;
 	int error;
 
-	if (SCARG(uap, request)) {
-		size_t rbuflen;
-		char *rbuf, *rp, *pn;
-		uint64_t f;
-
-		rbuf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
-		error = copyinstr(SCARG(uap, request), rbuf, MAXPATHLEN,
-		    &rbuflen);
-		if (error) {
-			free(rbuf, M_TEMP, MAXPATHLEN);
+	if (SCARG(uap, promises)) {
+		error = parsepledges(p, "pledgereq",
+		    SCARG(uap, promises), &promises);
+		if (error)
 			return (error);
-		}
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_STRUCT))
-			ktrstruct(p, "pledgereq", rbuf, rbuflen-1);
-#endif
 
-		for (rp = rbuf; rp && *rp && error == 0; rp = pn) {
-			pn = strchr(rp, ' ');	/* find terminator */
-			if (pn) {
-				while (*pn == ' ')
-					*pn++ = '\0';
-			}
-
-			if ((f = pledgereq_flags(rp)) == 0) {
-				free(rbuf, M_TEMP, MAXPATHLEN);
-				return (EINVAL);
-			}
-			flags |= f;
-		}
-		free(rbuf, M_TEMP, MAXPATHLEN);
-
-		/*
-		 * if we are already pledged, allow only promises reductions.
-		 * flags doesn't contain flags outside _USERSET: they will be
-		 * relearned.
-		 */
+		/* In "error" mode, ignore promise increase requests,
+		 * but accept promise decrease requests */
 		if (ISSET(pr->ps_flags, PS_PLEDGE) &&
-		    (((flags | pr->ps_pledge) != pr->ps_pledge)))
+		    (pr->ps_pledge & PLEDGE_ERROR))
+			promises &= (pr->ps_pledge & PLEDGE_USERSET);
+
+		/* Only permit reductions */
+		if (ISSET(pr->ps_flags, PS_PLEDGE) &&
+		    (((promises | pr->ps_pledge) != pr->ps_pledge)))
+			return (EPERM);
+	}
+	if (SCARG(uap, execpromises)) {
+		error = parsepledges(p, "pledgeexecreq",
+		    SCARG(uap, execpromises), &execpromises);
+		if (error)
+			return (error);
+
+		/* Only permit reductions */
+		if (ISSET(pr->ps_flags, PS_EXECPLEDGE) &&
+		    (((execpromises | pr->ps_execpledge) != pr->ps_execpledge)))
 			return (EPERM);
 	}
 
-	if (SCARG(uap, paths))
-		return (EINVAL);
-
-	if (SCARG(uap, request)) {
-		pr->ps_pledge = flags;
+	if (SCARG(uap, promises)) {
+		pr->ps_pledge = promises;
 		pr->ps_flags |= PS_PLEDGE;
 	}
-
+	if (SCARG(uap, execpromises)) {
+		pr->ps_execpledge = execpromises;
+		pr->ps_flags |= PS_EXECPLEDGE;
+	}
 	return (0);
 }
 
@@ -489,13 +516,16 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 			codes = pledgenames[i].name;
 			break;
 		}
-	log(LOG_ERR, "%s[%d]: pledge \"%s\", syscall %d\n",
-	    p->p_p->ps_comm, p->p_p->ps_pid, codes, p->p_pledge_syscall);
-	p->p_p->ps_acflag |= APLEDGE;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PLEDGE))
 		ktrpledge(p, error, code, p->p_pledge_syscall);
 #endif
+	if (p->p_p->ps_pledge & PLEDGE_ERROR)
+		return (ENOSYS);
+
+	log(LOG_ERR, "%s[%d]: pledge \"%s\", syscall %d\n",
+	    p->p_p->ps_comm, p->p_p->ps_pid, codes, p->p_pledge_syscall);
+	p->p_p->ps_acflag |= APLEDGE;
 	/* Send uncatchable SIGABRT for coredump */
 	memset(&sa, 0, sizeof sa);
 	sa.sa_handler = SIG_DFL;
@@ -1393,6 +1423,9 @@ int
 pledge_protexec(struct proc *p, int prot)
 {
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
+		return 0;
+	/* Before kbind(2) call, ld.so and crt may create EXEC mappings */
+	if (p->p_p->ps_kbind_addr == 0 && p->p_p->ps_kbind_cookie == 0)
 		return 0;
 	if (!(p->p_p->ps_pledge & PLEDGE_PROTEXEC) && (prot & PROT_EXEC))
 		return pledge_fail(p, EPERM, PLEDGE_PROTEXEC);

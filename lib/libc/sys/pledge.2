@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.46 2017/10/22 18:26:46 tobias Exp $
+.\" $OpenBSD: pledge.2,v 1.47 2017/12/12 01:12:34 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2017 $
+.Dd $Mdocdate: December 12 2017 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .In unistd.h
 .Ft int
-.Fn pledge "const char *promises" "const char *paths[]"
+.Fn pledge "const char *promises" "const char *execpromises"
 .Sh DESCRIPTION
 The current process is forced into a restricted-service operating mode.
 A few subsets are available, roughly described as computation, memory
@@ -33,7 +33,7 @@ In general, these modes were selected by studying the operation
 of many programs using libc and other such interfaces, and setting
 .Ar promises
 or
-.Ar paths .
+.Ar execpromises .
 .Pp
 Use of
 .Fn pledge
@@ -58,7 +58,7 @@ with the
 flag.
 .Pp
 A
-.Fa promises
+.Ar promises
 value of "" restricts the process to the
 .Xr _exit 2
 system call.
@@ -68,9 +68,9 @@ with another process.
 Passing
 .Dv NULL
 to
-.Fa promises
+.Ar promises
 or
-.Fa paths
+.Ar execpromises
 specifies to not change the current value.
 .Pp
 Some system calls, when allowed, have restrictions applied to them:
@@ -143,9 +143,10 @@ support:
 system sensor readings.
 .Pp
 .It Fn pledge
-Can only reduce permissions; can only set a list of
-.Pa paths
-once.
+Can only reduce permissions for
+.Ar promises
+and
+.Ar execpromises.
 .El
 .Pp
 The
@@ -466,9 +467,15 @@ Allows a process to call
 Coupled with the
 .Va proc
 promise, this allows a process to fork and execute another program.
-The new program starts running without pledge active and hopefully
-makes a new
-.Fn pledge .
+If
+.Ar execpromises
+has been previously set the new program begins with those promises,
+unless setuid/setgid bits are set in which case execution is blocked with
+.Er EACCESS .
+Otherwise the new program starts running without pledge active,
+and hopefully makes a new
+.Fn pledge
+soon.
 .It Va prot_exec
 Allows the use of
 .Dv PROT_EXEC
@@ -552,14 +559,24 @@ for more information on using the sndio API in combination with
 .It Va bpf
 Allow
 .Dv BIOCGSTATS
-operation for statistics collection from a bpf device.
-.El
+operation for statistics collection from a
+.Xr bpf 4
+device.
+.It Va error
+Rather than killing the process upon violation, indicate error with
+.Er ENOSYS .
 .Pp
-A whitelist of permitted paths may be provided in
-.Ar paths .
-All other paths will return
-.Er ENOENT .
-At least one promise is required to be pledged in order to activate a whitelist.
+Also when
+.Fn pledge
+is called with higher
+.Ar promises
+or
+.Ar execpromises ,
+those changes will be ignored and return success.
+This is useful when a parent enforces
+.Ar execpromises
+but an execve'd child has a different idea.
+.El
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
@@ -567,37 +584,18 @@ At least one promise is required to be pledged in order to activate a whitelist.
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EFAULT
-.Fa paths
-or one of its elements, or
-.Fa promises
+.Ar promises
+or
+.Ar execpromises
 points outside the process's allocated address space.
 .It Bq Er EINVAL
 .Ar promises
 is malformed or contains invalid keywords.
-.It Bq Er ENAMETOOLONG
-An element of
-.Fa paths
-is too large, prepending
-.Fa cwd
-to it would exceed
-.Dv PATH_MAX
-bytes, or
-.Fa promises
-is too long.
 .It Bq Er EPERM
 This process is attempting to increase permissions.
-.It Bq Er E2BIG
-The
-.Ar paths
-array is too large, or the total number of bytes exceeds a
-system-imposed limit.
-The limit in the system as released is 262144 bytes
-.Pf ( Dv ARG_MAX ) .
 .El
 .Sh HISTORY
 The
 .Fn pledge
 system call first appeared in
 .Ox 5.9 .
-.Sh BUGS
-The path whitelist feature is not available at this time.
