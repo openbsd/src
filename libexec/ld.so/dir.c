@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.23 2015/01/16 16:18:07 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.24 2017/12/12 07:47:58 deraadt Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -73,7 +73,7 @@ _dl_opendir(const char *name)
 	dirp->dd_buf = _dl_malloc(dirp->dd_len);
 	if (dirp->dd_buf == NULL) {
 		_dl_free(dirp);
-		_dl_close (fd);
+		_dl_close(fd);
 		return (NULL);
 	}
 
