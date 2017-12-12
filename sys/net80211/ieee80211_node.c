@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.122 2017/12/08 21:16:01 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.123 2017/12/12 00:24:21 jcs Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -665,10 +665,12 @@ void
 ieee80211_end_scan(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
-	struct ieee80211_node *ni, *nextbs, *selbs, *curbs;
+	struct ieee80211_node *ni, *nextbs, *selbs = NULL, *curbs = NULL,
+	    *selbs2 = NULL, *selbs5 = NULL;
 	int bgscan = ((ic->ic_flags & IEEE80211_F_BGSCAN) &&
 	    ic->ic_opmode == IEEE80211_M_STA &&
 	    ic->ic_state == IEEE80211_S_RUN);
+	uint8_t min_5ghz_rssi;
 
 	if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: end %s scan\n", ifp->if_xname,
@@ -749,8 +751,6 @@ ieee80211_end_scan(struct ifnet *ifp)
 		ieee80211_next_scan(ifp);
 		return;
 	}
-	selbs = NULL;
-	curbs = NULL;
 
 	for (; ni != NULL; ni = nextbs) {
 		nextbs = RBT_NEXT(ieee80211_tree, ni);
@@ -771,31 +771,34 @@ ieee80211_end_scan(struct ifnet *ifp)
 		if (ieee80211_match_bss(ic, ni) != 0)
 			continue;
 
-		/* Pick the AP/IBSS match with the best RSSI. */
-		if (selbs == NULL)
-			selbs = ni;
-		else if ((ic->ic_caps & IEEE80211_C_SCANALLBAND) &&
-		    IEEE80211_IS_CHAN_5GHZ(selbs->ni_chan) &&
+		if ((ic->ic_caps & IEEE80211_C_SCANALLBAND) &&
 		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan) &&
-		    ni->ni_rssi > selbs->ni_rssi) {
-		    	uint8_t min_rssi;
-
-			/* 
-			 * Prefer 5GHz (with reasonable RSSI) over 2GHz since
-			 * the 5GHz band is usually less saturated.
-			 */
-			if (ic->ic_max_rssi)
-				min_rssi = IEEE80211_RSSI_THRES_RATIO_5GHZ;
-			else
-		    		min_rssi = (uint8_t)IEEE80211_RSSI_THRES_5GHZ;
-
-			if (selbs->ni_rssi >= min_rssi)
-				continue;
-		}
-
-		if (ni->ni_rssi > selbs->ni_rssi)
-			selbs = ni;
+		    (selbs2 == NULL || ni->ni_rssi > selbs2->ni_rssi))
+			selbs2 = ni;
+		else if ((ic->ic_caps & IEEE80211_C_SCANALLBAND) &&
+		    IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) &&
+		    (selbs5 == NULL || ni->ni_rssi > selbs5->ni_rssi))
+			selbs5 = ni;
 	}
+
+	if (ic->ic_max_rssi)
+		min_5ghz_rssi = IEEE80211_RSSI_THRES_RATIO_5GHZ;
+	else
+		min_5ghz_rssi = (uint8_t)IEEE80211_RSSI_THRES_5GHZ;
+
+	/*
+	 * Prefer a 5Ghz AP even if its RSSI is weaker than the best 2Ghz AP
+	 * (as long as it meets the minimum RSSI threshold) since the 5Ghz band
+	 * is usually less saturated.
+	 */
+	if (selbs5 && selbs5->ni_rssi > min_5ghz_rssi)
+		selbs = selbs5;
+	else if (selbs5 && selbs2)
+		selbs = (selbs5->ni_rssi >= selbs2->ni_rssi ? selbs5 : selbs2);
+	else if (selbs2)
+		selbs = selbs2;
+	else if (selbs5)
+		selbs = selbs5;
 
 	if (bgscan) {
 		struct ieee80211_node_switch_bss_arg *arg;
