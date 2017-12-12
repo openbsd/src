@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.230 2017/11/29 13:37:08 bluhm Exp $
+# $OpenBSD: Makefile,v 1.231 2017/12/12 19:49:19 bluhm Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check whether the output matches pfNN.ok
@@ -11,6 +11,7 @@
 # pfoptimize: as pfload, with -o flag to pfctl
 # pfopt: as target pf, but supply extra command line options
 # pfcmd: test pfctl command line parsing
+# pfloadanchors: load anchor from nested files
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 PFTESTS+=28 29 30 31 32 34 35 36 38 39 40 41 44 46 47 48 49 50
@@ -108,10 +109,9 @@ REGRESS_TARGETS+=selfpf
 UPDATE_TARGETS+=pf-update
 
 pf-include-setup:
-	-cp ${.CURDIR}/pf95.include ${.OBJDIR}
-	chmod og-rwx ${.OBJDIR}/pf95.include
-	-cp ${.CURDIR}/pf103.include ${.OBJDIR}
-	chmod og-rwx ${.OBJDIR}/pf103.include
+.for f in pf95.include pf103.include
+	[ -f ${.OBJDIR}/$f ] || ln -s ${.CURDIR}/$f ${.OBJDIR}
+.endfor
 
 .for n in ${PFSIMPLE}
 PFSIMPLE_TARGETS+=pfsimple${n}
@@ -130,15 +130,15 @@ PFLOAD_UPDATES+=pfload${n}-update
 
 pfload${n}:
 	${SUDO} ${PFCTL} -o none -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} ${PFCTL} -o none -a 'regress/*' -gvvsr | \
-	    sed -e 's/__automatic_[0-9a-f]*_/__automatic_/g' ) | \
+	${SUDO} ${PFCTL} -o none -a 'regress/*' -gvvsr | \
+	    sed -e 's/__automatic_[0-9a-f]*_/__automatic_/g' | \
 	    diff -u ${.CURDIR}/pf${n}.loaded /dev/stdin
 	${SUDO} ${PFCTL} -o none -a regress -Fr >/dev/null 2>&1
 
 pfload${n}-update:
 	${SUDO} ${PFCTL} -o none -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} ${PFCTL} -o none -a 'regress/*' -gvvsr | \
-	    sed -e 's/__automatic_[0-9a-f]*_/__automatic_/g' ) \
+	${SUDO} ${PFCTL} -o none -a 'regress/*' -gvvsr | \
+	    sed -e 's/__automatic_[0-9a-f]*_/__automatic_/g' \
 	    > ${.CURDIR}/pf${n}.loaded
 	${SUDO} ${PFCTL} -o none -a regress -Fr >/dev/null 2>&1
 
@@ -156,15 +156,15 @@ PFOPTIMIZE_UPDATES+=pfoptimize${n}-update
 
 pfoptimize${n}:
 	${SUDO} ${PFCTL} -obasic -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} ${PFCTL} -o none -a regress -gvvsr | \
-	    sed -e 's/__automatic_[0-9a-f]*_/__automatic_/g') | \
+	${SUDO} ${PFCTL} -o none -a regress -gvvsr | \
+	    sed -e 's/__automatic_[0-9a-f]*_/__automatic_/g' | \
 	    diff -u ${.CURDIR}/pf${n}.optimized /dev/stdin
 	${SUDO} ${PFCTL} -o none -a regress -Fr >/dev/null 2>&1
 
 pfoptimize${n}-update:
 	${SUDO} ${PFCTL} -obasic -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} ${PFCTL} -o none -a regress -gvvsr | \
-	    sed -e 's/__automatic_[0-9a-f]*_/__automatic_/g' ) \
+	${SUDO} ${PFCTL} -o none -a regress -gvvsr | \
+	    sed -e 's/__automatic_[0-9a-f]*_/__automatic_/g' \
 	    > ${.CURDIR}/pf${n}.optimized
 	${SUDO} ${PFCTL} -o none -a regress -Fr >/dev/null 2>&1
 
@@ -339,15 +339,15 @@ PFLOADANCHORS_UPDATES+=pfloadanchors${n}-update
 
 pfloadanchors${n}:
 	${SUDO} ${PFCTL} -a regress -v -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} ${PFCTL} -a 'regress/*' -sr | \
-	    sed -e 's/__automatic_[0-9a-f]*_.*>/__automatic_>/' ) | \
+	${SUDO} ${PFCTL} -a 'regress/*' -sr | \
+	    sed -e 's/__automatic_[0-9a-f]*_.*>/__automatic_>/' | \
 	    diff -u ${.CURDIR}/pf${n}.ok /dev/stdin
 	${SUDO} ${PFCTL} -o none -a regress -Fr >/dev/null 2>&1
 
 pfloadanchors${n}-update:
 	${SUDO} ${PFCTL} -a regress -v -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} ${PFCTL} -a 'regress/*' -sr | \
-	    sed -e 's/__automatic_[0-9a-f]*_.*>/__automatic_>/' ) \
+	${SUDO} ${PFCTL} -a 'regress/*' -sr | \
+	    sed -e 's/__automatic_[0-9a-f]*_.*>/__automatic_>/' \
 	    > ${.CURDIR}/pf${n}.ok
 	${SUDO} ${PFCTL} -o none -a regress -Fr >/dev/null 2>&1
 
@@ -355,8 +355,12 @@ pfloadanchors${n}-update:
 
 pfloadanchors:		${PFLOADANCHORS_TARGETS}
 pfloadanchors-update:	${PFLOADANCHORS_UPDATES}
+REGRESS_TARGETS+=pf-loadanchors-setup pfloadanchors
 
-REGRESS_TARGETS+=pfloadanchors
+pf-loadanchors-setup:
+.for f in pf112.one pf112.two pf113.one pf113.two
+	[ -f ${.OBJDIR}/$f ] || ln -s ${.CURDIR}/$f ${.OBJDIR}
+.endfor
 
 update:	${UPDATE_TARGETS}
 
