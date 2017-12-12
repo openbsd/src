@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.82 2017/12/08 21:16:01 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.83 2017/12/12 15:50:39 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 #define	IEEE80211_CHAN_MAX	255
 #define	IEEE80211_CHAN_ANY	0xffff		/* token for ``any channel'' */
 #define	IEEE80211_CHAN_ANYC \
-	((struct ieee80211_channel *) IEEE80211_CHAN_ANY)
+	((struct ieee80211_channel *) NULL)
 
 #define	IEEE80211_TXPOWER_MAX	100	/* max power */
 #define	IEEE80211_TXPOWER_MIN	-50	/* kill radio (if possible) */
