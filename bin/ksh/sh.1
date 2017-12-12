@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.143 2017/06/01 20:37:38 tb Exp $
+.\"	$OpenBSD: sh.1,v 1.144 2017/12/12 11:34:38 tb Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2017 $
+.Dd $Mdocdate: December 12 2017 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -2101,11 +2101,6 @@ A
 .Sq !\&
 in the prompt is expanded to the number of the next command in history
 to be typed.
-The default value is
-.Sq $\ \&
-for normal users and
-.Sq #\ \&
-for root.
 .It Ev PS2
 Newline prompt displayed in an interactive shell
 when a newline has been entered
@@ -2227,6 +2222,16 @@ built-ins should exit/return from the outermost loop if the argument
 .Ar n
 is greater than the level of loops.
 .El
+.Pp
+The default value for the
+.Ev PS1
+user prompt contains the machine's hostname,
+followed by
+.Sq $\ \&
+for normal users and
+.Sq #\ \&
+for root;
+POSIX does not include the hostname.
 .Pp
 Enabling POSIX mode changes some behaviour to make
 .Nm
