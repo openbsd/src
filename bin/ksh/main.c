@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.84 2017/12/07 01:54:33 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.85 2017/12/12 00:18:58 tb Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -316,7 +316,7 @@ main(int argc, char *argv[])
 		/* Set PS1 if it isn't set */
 		if (!(vp->flag & ISSET)) {
 			/* setstr can't fail here */
-			setstr(vp, safe_prompt, KSH_RETURN_ERROR);
+			setstr(vp, "\\h\\$ ", KSH_RETURN_ERROR);
 		}
 	}
 

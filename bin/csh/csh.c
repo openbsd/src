@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.41 2017/08/30 06:42:21 anton Exp $	*/
+/*	$OpenBSD: csh.c,v 1.42 2017/12/12 00:18:58 tb Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -401,7 +401,7 @@ main(int argc, char *argv[])
      * Set up the prompt.
      */
     if (prompt) {
-	set(STRprompt, Strsave(uid == 0 ? STRsymhash : STRsymcent));
+	set(STRprompt, Strsave(uid == 0 ? STRpromptroot : STRpromptuser));
 	/* that's a meta-questionmark */
 	set(STRprompt2, Strsave(STRmquestion));
     }
@@ -1283,7 +1283,16 @@ printprompt(void)
 	for (cp = value(STRprompt); *cp; cp++)
 	    if (*cp == HIST)
 		(void) fprintf(cshout, "%d", eventno + 1);
-	    else {
+	    else if (*cp == '%' && *(cp + 1) == 'm') {
+		char hostname[HOST_NAME_MAX + 1];
+		char *p;
+
+		gethostname(hostname, sizeof hostname);
+		if ((p = strchr(hostname, '.')) != NULL)
+		    *p = '\0';
+		fprintf(cshout, "%s", hostname);
+		cp++;
+	    } else {
 		if (*cp == '\\' && cp[1] == HIST)
 		    cp++;
 		(void) vis_fputc(*cp | QUOTE, cshout);

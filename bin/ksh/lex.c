@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.72 2017/12/07 01:54:33 tb Exp $	*/
+/*	$OpenBSD: lex.c,v 1.73 2017/12/12 00:18:58 tb Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1246,7 +1246,8 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 			cp++;
 			if (!*cp)
 				break;
-			if (Flag(FSH))
+			/* Expand \h and \$ for both, sh(1) and ksh(1) */
+			if (Flag(FSH) && !(*cp == 'h' || *cp == 'p'))
 				snprintf(strbuf, sizeof strbuf, "\\%c", *cp);
 			else switch (*cp) {
 			case 'a':	/* '\' 'a' bell */
