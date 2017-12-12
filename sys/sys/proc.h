@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.241 2017/12/12 01:12:34 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.242 2017/12/12 07:55:36 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -270,7 +270,7 @@ struct process {
      "\06SUGIDEXEC" "\07PPWAIT" "\010ISPWAIT" "\011PROFIL" "\012TRACED" \
      "\013WAITED" "\014COREDUMP" "\015SINGLEEXIT" "\016SINGLEUNWIND" \
      "\017NOZOMBIE" "\020STOPPED" "\021SYSTEM" "\022EMBRYO" "\023ZOMBIE" \
-     "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED", "\027EXECPLEDGE")
+     "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED" "\027EXECPLEDGE" )
 
 
 struct lock_list_entry;
