@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.8 2017/12/07 06:34:05 otto Exp $	*/
+/*	$OpenBSD: mem.c,v 1.9 2017/12/12 19:08:57 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -32,8 +32,7 @@ new_number(void)
 	n = bmalloc(sizeof(*n));
 	n->scale = 0;
 	n->number = BN_new();
-	if (n->number == NULL)
-		err(1, NULL);
+	bn_checkp(n->number);
 	return n;
 }
 
