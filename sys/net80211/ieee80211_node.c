@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.124 2017/12/12 13:38:10 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.125 2017/12/12 13:58:19 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -994,6 +994,9 @@ ieee80211_node_checkrssi(struct ieee80211com *ic,
     const struct ieee80211_node *ni)
 {
 	uint8_t thres;
+
+	if (ni->ni_chan == IEEE80211_CHAN_ANYC)
+		return 0;
 
 	if (ic->ic_max_rssi) {
 		thres = (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) ?
