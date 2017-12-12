@@ -1,4 +1,4 @@
-/* $OpenBSD: umac.c,v 1.15 2017/11/28 06:09:38 djm Exp $ */
+/* $OpenBSD: umac.c,v 1.16 2017/12/12 15:06:12 naddy Exp $ */
 /* -----------------------------------------------------------------------
  *
  * umac.c -- C Implementation UMAC Message Authentication
@@ -52,7 +52,9 @@
 /* --- User Switches ---------------------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
+#ifndef UMAC_OUTPUT_LEN
 #define UMAC_OUTPUT_LEN     8  /* Alowable: 4, 8, 12, 16                  */
+#endif
 /* #define FORCE_C_ONLY        1  ANSI C and 64-bit integers req'd        */
 /* #define AES_IMPLEMENTAION   1  1 = OpenSSL, 2 = Barreto, 3 = Gladman   */
 /* #define SSE2                0  Is SSE2 is available?                   */

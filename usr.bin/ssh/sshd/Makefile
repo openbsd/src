@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.91 2017/12/10 19:37:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.92 2017/12/12 15:06:12 naddy Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -7,15 +7,6 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c sshpty.c sshlogin.c servconf.c \
 	groupaccess.c auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c monitor.c monitor_wrap.c \
 	sftp-server.c sftp-common.c sandbox-pledge.c
-
-umac128.c: umac.c
-	sed \
-	    -e "s/^#define UMAC_OUTPUT_LEN     8/#define UMAC_OUTPUT_LEN 16/" \
-	    -e s/umac_new/umac128_new/g \
-	    -e s/umac_update/umac128_update/g \
-	    -e s/umac_final/umac128_final/g \
-	    -e s/umac_delete/umac128_delete/g \
-	    < ${.CURDIR}/../umac.c > ${.TARGET}
 
 SRCS+=	addrmatch.c atomicio.c authfd.c authfile.c bitmap.c blocks.c bufaux.c \
 	bufbn.c bufec.c buffer.c canohost.c chacha.c channels.c \
