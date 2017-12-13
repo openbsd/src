@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.34 2017/11/29 01:25:11 claudio Exp $	*/
+/*	$OpenBSD: util.c,v 1.35 2017/12/13 08:27:06 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -93,7 +93,7 @@ socket_setport(struct sockaddr *sa, in_port_t port)
 int
 socket_getaddr(int s, struct sockaddr_storage *ss)
 {
-	socklen_t sslen;
+	socklen_t sslen = sizeof(*ss);
 
 	return (getsockname(s, (struct sockaddr *)ss, &sslen));
 }
@@ -366,7 +366,6 @@ recvfromto(int s, void *buf, size_t len, int flags, struct sockaddr *from,
 		return (-1);
 
 	*fromlen = from->sa_len;
-	*tolen = 0;
 
 	if (getsockname(s, to, tolen) != 0)
 		*tolen = 0;
