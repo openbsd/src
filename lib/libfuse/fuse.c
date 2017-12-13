@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.36 2017/11/26 15:17:17 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.37 2017/12/13 12:30:18 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -37,6 +37,7 @@ static struct fuse_context *ictx = NULL;
 static int max_read = FUSEBUFMAXSIZE;
 
 enum {
+	KEY_DEBUG,
 	KEY_FOREGROUND,
 	KEY_HELP,
 	KEY_HELP_WITHOUT_HEADER,
@@ -52,8 +53,8 @@ static struct fuse_opt fuse_core_opts[] = {
 	FUSE_OPT_KEY("-V",			KEY_VERSION),
 	FUSE_OPT_KEY("--version",		KEY_VERSION),
 	FUSE_OPT_KEY("max_read=",		KEY_MAXREAD),
-	FUSE_OPT_KEY("debug",			KEY_STUB),
-	FUSE_OPT_KEY("-d",			KEY_STUB),
+	FUSE_OPT_KEY("debug",			KEY_DEBUG),
+	FUSE_OPT_KEY("-d",			KEY_DEBUG),
 	FUSE_OPT_KEY("-f",			KEY_FOREGROUND),
 	FUSE_OPT_KEY("-s",			KEY_STUB),
 	FUSE_OPT_KEY("use_ino",			KEY_STUB),
@@ -410,6 +411,9 @@ ifuse_process_opt(void *data, const char *arg, int key,
 	switch (key) {
 		case KEY_STUB:
 			return (0);
+		case KEY_DEBUG:
+			ifuse_debug_init();
+			/* falls through */
 		case KEY_FOREGROUND:
 			opt->foreground = 1;
 			return (0);
@@ -468,9 +472,6 @@ fuse_parse_cmdline(struct fuse_args *args, char **mp, int *mt, int *fg)
 {
 	struct fuse_core_opt opt;
 
-#ifdef DEBUG
-	ifuse_debug_init();
-#endif
 	bzero(&opt, sizeof(opt));
 	if (fuse_opt_parse(args, &opt, fuse_core_opts, ifuse_process_opt) == -1)
 		return (-1);

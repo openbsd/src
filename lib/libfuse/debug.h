@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.h,v 1.1 2013/06/03 16:00:50 tedu Exp $	*/
+/*	$OpenBSD: debug.h,v 1.2 2017/12/13 12:30:18 helg Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,7 +17,6 @@
 #ifndef _DEBUG_H_
 #define _DEBUG_H_
 
-#ifdef DEBUG
 #include <stdio.h>
 
 #define DPRINTFN(n, ...)					\
@@ -40,10 +39,5 @@
 
 void ifuse_debug_init(void);
 extern int ifuse_debug;
-#else
-#define DPRINTF(...) do {} while(0)
-#define DPRINTFN(...) do {} while(0)
-#define DPERROR(s) do {} while(0)
-#endif
 
 #endif /* _DEBUG_H_ */
