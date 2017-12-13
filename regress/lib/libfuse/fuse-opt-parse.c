@@ -33,6 +33,7 @@ struct data {
 	int	cache;
 	int	set_gid;
 	int	gid;
+	int	bad_opt;
 };
 
 enum {
@@ -86,6 +87,11 @@ proc(void *data, const char *arg, int key, struct fuse_args *args)
 		return (1);
 	}
 
+	if (strcmp("bad_opt", arg) == 0) {
+		conf->bad_opt = 1;
+		return (0);
+	}
+
 	return (1);
 }
 
@@ -110,6 +116,7 @@ test_null_args(void) {
 	assert(data.ssh_ver == 0);
 	assert(data.count == 0);
 	assert(data.cache == 0);
+	assert(data.bad_opt == 0);
 }
 
 /*
@@ -124,7 +131,8 @@ test_null_opts(void)
 
 	char *argv_null_opts[] = {
 		"progname",
-		"/mnt"
+		"/mnt",
+		"bad_opt"
 	};
 
 	args.argc = sizeof(argv_null_opts) / sizeof(argv_null_opts[0]);
@@ -146,6 +154,7 @@ test_null_opts(void)
 	assert(data.cache == 0);
 	assert(data.set_gid == 0);
 	assert(data.gid == 0);
+	assert(data.bad_opt == 1);
 
 	assert(args.argc == 2);
 	assert(strcmp(args.argv[0], "progname") == 0);
@@ -175,7 +184,8 @@ test_null_proc(void)
                 "-x", "xanadu",
                 "-o", "optstring=",
                 "-o", "optstring=optstring",
-                "--count=10"
+                "--count=10",
+		"bad_opt"
       };
 
         args.argc = sizeof(argv_null_proc) / sizeof(argv_null_proc[0]);
@@ -197,8 +207,9 @@ test_null_proc(void)
 	assert(data.cache == 0);
 	assert(data.set_gid == 1);
 	assert(data.gid == 077);
+	assert(data.bad_opt == 0);
 
-	assert(args.argc == 8);
+	assert(args.argc == 9);
 	assert(strcmp(args.argv[0], "progname") == 0);
 	assert(strcmp(args.argv[1], "-o") == 0);
 	assert(strcmp(args.argv[2], "debug") == 0);
@@ -207,6 +218,7 @@ test_null_proc(void)
 	assert(strcmp(args.argv[5], "-d") == 0);
 	assert(strcmp(args.argv[6], "-p22") == 0);
 	assert(strcmp(args.argv[7], "/mnt") == 0);
+	assert(strcmp(args.argv[8], "bad_opt") == 0);
 	assert(args.allocated);
 
 	fuse_opt_free_args(&args);
@@ -231,7 +243,8 @@ test_all_args(void)
 		"-1",
 		"-x", "xanadu",
 		"-o", "optstring=optstring,cache=no",
-		"--count=10"
+		"--count=10",
+		"bad_opt"
 	};
 
 	args.argc = sizeof(argv) / sizeof(argv[0]);
@@ -253,6 +266,7 @@ test_all_args(void)
 	assert(data.cache == 0);
 	assert(data.set_gid == 1);
 	assert(data.gid == 077);
+	assert(data.bad_opt == 1);
 
 	assert(args.argc == 7);
 	assert(strcmp(args.argv[0], "progname") == 0);

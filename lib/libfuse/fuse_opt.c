@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.22 2017/12/11 12:38:54 helg Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.23 2017/12/13 12:23:48 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -191,13 +191,10 @@ parse_opt(const struct fuse_opt *o, const char *opt, void *data,
 	int keyval, ret, found;
 	size_t sep;
 
-	if (o == NULL)
-		return (IFUSE_OPT_KEEP);
-
 	keyval = 0;
 	found = 0;
 
-	for(; o->templ; o++) {
+	for(; o != NULL && o->templ; o++) {
 		sep = match_opt(o->templ, opt);
 		if (sep == 0)
 			continue;
