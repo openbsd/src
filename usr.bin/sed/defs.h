@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.8 2017/01/20 10:26:16 krw Exp $ */
+/*	$OpenBSD: defs.h,v 1.9 2017/12/13 16:06:34 millert Exp $ */
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@ struct s_subst {
 	char *wfile;				/* NULL if no wfile */
 	int wfd;				/* Cached file descriptor */
 	regex_t *re;				/* Regular expression */
-	int maxbref;				/* Largest backreference. */
+	u_int maxbref;				/* Largest backreference. */
 	u_long linenum;				/* Line number. */
 	char *new;				/* Replacement text */
 };
