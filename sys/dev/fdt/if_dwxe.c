@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.5 2017/12/10 12:28:37 kettenis Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.6 2017/12/13 10:38:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -477,7 +477,6 @@ dwxe_phy_setup(struct dwxe_softc *sc)
 			syscon &= ~SYSCON_H3_EPHY_LED_POL;
 		syscon &= ~SYSCON_H3_EPHY_ADDR_MASK;
 		syscon |= (sc->sc_phyloc << SYSCON_H3_EPHY_ADDR_SHIFT);
-		return;
 	}
 	free(phy_mode, M_TEMP, len);
 
