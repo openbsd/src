@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.257 2017/12/13 08:54:59 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.258 2017/12/13 08:59:02 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -697,10 +697,10 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	 * Validate RTM_PROPOSAL and pass it along or error out.
 	 */
 	if (rtm->rtm_type == RTM_PROPOSAL) {
-	       if (rtm_validate_proposal(&info) == -1) {
+		if (rtm_validate_proposal(&info) == -1) {
 			error = EINVAL;
 			goto fail;
-	       }
+		}
 	} else {
 		error = rtm_output(rtm, &rt, &info, prio, tableid);
 		if (!error) {
@@ -1162,7 +1162,7 @@ route_cleargateway(struct rtentry *rt, void *arg, unsigned int rtableid)
 
 	if (ISSET(rt->rt_flags, RTF_GATEWAY) && rt->rt_gwroute == nhrt &&
 	    !ISSET(rt->rt_locks, RTV_MTU))
-                rt->rt_mtu = 0;
+		rt->rt_mtu = 0;
 
 	return (0);
 }
@@ -1486,7 +1486,7 @@ void
 rtm_addr(struct rtentry *rt, int cmd, struct ifaddr *ifa)
 {
 	struct ifnet		*ifp = ifa->ifa_ifp;
-	struct mbuf		*m = NULL;
+	struct mbuf		*m;
 	struct rt_addrinfo	 info;
 	struct ifa_msghdr	*ifam;
 
