@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.155 2017/12/13 18:45:08 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.156 2017/12/13 18:53:04 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -307,7 +307,7 @@ parse_client_statement(FILE *cfile, char *name)
 		break;
 	case TOK_LINK_TIMEOUT:
 		if (parse_lease_time(cfile, &config->link_timeout) == 1)
-				parse_semi(cfile);
+			parse_semi(cfile);
 		break;
 	case TOK_NEXT_SERVER:
 		if (parse_ip_addr(cfile, &config->next_server) == 1)
