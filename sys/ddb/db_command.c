@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.81 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.82 2017/12/13 08:34:04 mpi Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -628,6 +628,7 @@ struct db_command db_command_table[] = {
 	{ "next",	db_trace_until_matching_cmd,0,		NULL },
 	{ "match",	db_trace_until_matching_cmd,0,		NULL },
 	{ "trace",	db_stack_trace_cmd,	0,		NULL },
+	{ "bt",		db_stack_trace_cmd,	0,		NULL },
 	{ "call",	db_fncall,		CS_OWN,		NULL },
 	{ "ps",		db_show_all_procs,	0,		NULL },
 	{ "callout",	db_show_callout,	0,		NULL },
