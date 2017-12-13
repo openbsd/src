@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.46 2017/12/13 16:06:34 millert Exp $	*/
+/*	$OpenBSD: compile.c,v 1.47 2017/12/13 16:07:54 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -639,7 +639,6 @@ compile_tr(char *old, char **transtab)
 			else if (*old != delimiter && *old != '\\')
 				error(COMPILE, "Unexpected character after "
 				    "backslash");
-			
 		}
 		if (*new == '\\') {
 			new++;
@@ -649,9 +648,9 @@ compile_tr(char *old, char **transtab)
 				error(COMPILE, "Unexpected character after "
 				    "backslash");
 		}
-		if (check[*old] == 1)
+		if (check[(u_char) *old] == 1)
 			error(COMPILE, "Repeated character in source string");
-		check[*old] = 1;
+		check[(u_char) *old] = 1;
 		(*transtab)[(u_char) *old++] = *new++;
 	}
 	if (*old != '\0' || *new != '\0')
