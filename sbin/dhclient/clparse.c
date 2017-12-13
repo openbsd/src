@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.154 2017/12/09 15:48:04 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.155 2017/12/13 18:45:08 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -64,7 +64,7 @@
 #include "dhctoken.h"
 #include "log.h"
 
-void			 parse_client_statement(FILE *, char *, int);
+void			 parse_client_statement(FILE *, char *);
 int			 parse_hex_octets(FILE *, unsigned int *, uint8_t **);
 int			 parse_option_list(FILE *, int *, uint8_t *);
 int			 parse_interface_declaration(FILE *, char *);
@@ -186,7 +186,7 @@ read_client_conf(char *name)
 			token = peek_token(NULL, cfile);
 			if (token == EOF)
 				break;
-			parse_client_statement(cfile, name, 0);
+			parse_client_statement(cfile, name);
 		}
 		fclose(cfile);
 	}
@@ -236,7 +236,6 @@ read_client_leases(char *name, struct client_lease_tq *tq)
  *	TOK_IGNORE option-list			|
  *	TOK_INITIAL_INTERVAL number		|
  *	TOK_INTERFACE interface-declaration	|
- *	TOK_LEASE client-lease-statement	|
  *	TOK_LINK_TIMEOUT number			|
  *	TOK_NEXT_SERVER string			|
  *	TOK_PREPEND option-decl			|
@@ -250,11 +249,9 @@ read_client_leases(char *name, struct client_lease_tq *tq)
  *	TOK_SERVER_NAME string			|
  *	TOK_SUPERSEDE option-decl		|
  *	TOK_TIMEOUT number
- *
- * If nested == 1 then TOK_INTERFACE and TOK_LEASE are not allowed.
  */
 void
-parse_client_statement(FILE *cfile, char *name, int nested)
+parse_client_statement(FILE *cfile, char *name)
 {
 	uint8_t			 list[DHO_COUNT];
 	char			*val;
@@ -302,10 +299,7 @@ parse_client_statement(FILE *cfile, char *name, int nested)
 			parse_semi(cfile);
 		break;
 	case TOK_INTERFACE:
-		if (nested == 1) {
-			parse_warn("expecting statement.");
-			skip_to_semi(cfile);
-		} else if (parse_interface_declaration(cfile, name) == 1)
+		if (parse_interface_declaration(cfile, name) == 1)
 			;
 		break;
 	case TOK_LEASE:
@@ -313,7 +307,7 @@ parse_client_statement(FILE *cfile, char *name, int nested)
 		break;
 	case TOK_LINK_TIMEOUT:
 		if (parse_lease_time(cfile, &config->link_timeout) == 1)
-			parse_semi(cfile);
+				parse_semi(cfile);
 		break;
 	case TOK_NEXT_SERVER:
 		if (parse_ip_addr(cfile, &config->next_server) == 1)
@@ -514,7 +508,7 @@ parse_interface_declaration(FILE *cfile, char *name)
 			token = next_token(NULL, cfile);
 			return 1;
 		}
-		parse_client_statement(cfile, name, 1);
+		parse_client_statement(cfile, name);
 	}
 
 	return 0;

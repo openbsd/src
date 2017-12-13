@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.38 2017/12/07 21:47:22 jmc Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.39 2017/12/13 18:45:08 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: December 7 2017 $
+.Dd $Mdocdate: December 13 2017 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -202,8 +202,6 @@ for
 Apply any
 .Ar declaration
 only to the named interface.
-.Ar interface
-declarations cannot be nested.
 .It Ic reject Ar ip-address ;
 Discard leases from the specified address.
 If more than one
