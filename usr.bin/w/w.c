@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.63 2017/07/27 14:17:34 jca Exp $	*/
+/*	$OpenBSD: w.c,v 1.64 2017/12/14 18:03:03 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -224,7 +224,8 @@ main(int argc, char *argv[])
 
 #define HEADER	"USER    TTY FROM              LOGIN@  IDLE WHAT"
 #define WUSED	(sizeof(HEADER) - sizeof("WHAT"))
-	(void)puts(HEADER);
+	if (header)
+		(void)puts(HEADER);
 
 	kp = kvm_getprocs(kd, KERN_PROC_ALL, 0, sizeof(*kp), &nentries);
 	if (kp == NULL)
