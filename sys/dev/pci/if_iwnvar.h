@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.32 2016/12/07 15:48:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.33 2017/12/14 14:21:11 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -202,6 +202,7 @@ struct iwn_softc {
 #define IWN_FLAG_HAS_11N	(1 << 6)
 #define IWN_FLAG_ENH_SENS	(1 << 7)
 #define IWN_FLAG_ADV_BT_COEX	(1 << 8)
+#define IWN_FLAG_BGSCAN		(1 << 9)
 
 	uint8_t 		hw_type;
 
@@ -256,6 +257,8 @@ struct iwn_softc {
 	struct iwn_fw_info	fw;
 	struct iwn_calib_info	calibcmd[5];
 	uint32_t		errptr;
+
+	uint8_t			bss_node_addr[IEEE80211_ADDR_LEN];
 
 	struct iwn_rx_stat	last_rx_stat;
 	int			last_rx_valid;

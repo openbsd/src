@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.54 2017/08/12 09:13:06 stsp Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.55 2017/12/14 14:21:11 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -437,6 +437,7 @@ struct iwn_tx_cmd {
 #define IWN5000_CMD_CALIB_CONFIG	101
 #define IWN_CMD_SET_POWER_MODE		119
 #define IWN_CMD_SCAN			128
+#define IWN_CMD_SCAN_ABORT		129
 #define IWN_CMD_TXPOWER_DBM		149
 #define IWN_CMD_TXPOWER			151
 #define IWN5000_CMD_TX_ANT_CONFIG	152
@@ -823,8 +824,8 @@ struct iwn_scan_hdr {
 	uint16_t	quiet_threshold;
 	uint16_t	crc_threshold;
 	uint16_t	rxchain;
-	uint32_t	max_svc;	/* background scans */
-	uint32_t	pause_svc;	/* background scans */
+	uint32_t	max_out;	/* (in usec) background scans */
+	uint32_t	pause_scan;	/* (in usec) background scans */
 	uint32_t	flags;
 	uint32_t	filter;
 
