@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cond_init.9,v 1.1 2017/12/14 00:41:58 dlg Exp $ */
+.\"	$OpenBSD: cond_init.9,v 1.2 2017/12/14 06:43:44 jmc Exp $ */
 .\"
 .\" Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
 .\"
@@ -104,5 +104,5 @@ taskq_barrier_task(void *p)
 	 */
 
 	cond_signal(c);
-} 
+}
 .Ed
