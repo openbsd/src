@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.173 2017/10/18 17:01:14 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.174 2017/12/14 14:26:50 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -378,6 +378,12 @@ icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 #if NPF > 0
 	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		switch (icp->icmp_type) {
+		 /*
+		  * As pf_icmp_mapping() considers redirects belonging to a
+		  * diverted connection, we must include it here.
+		  */
+		case ICMP_REDIRECT:
+			/* FALLTHROUGH */
 		/*
 		 * These ICMP types map to other connections.  They must be
 		 * delivered to pr_ctlinput() also for diverted connections.
@@ -386,12 +392,11 @@ icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 		case ICMP_TIMXCEED:
 		case ICMP_PARAMPROB:
 		case ICMP_SOURCEQUENCH:
-			break;
-		 /*
-		  * Although pf_icmp_mapping() considers redirects belonging
-		  * to a diverted connection, we must process it here anyway.
-		  */
-		case ICMP_REDIRECT:
+			/*
+			 * Do not use the divert-to property of the TCP or UDP
+			 * rule when doing the PCB lookup for the raw socket.
+			 */
+			m->m_pkthdr.pf.flags &=~ PF_TAG_DIVERTED;
 			break;
 		default:
 			goto raw;
@@ -454,10 +459,6 @@ icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 			goto badcode;
 		code = PRC_QUENCH;
 	deliver:
-		/* Free packet atttributes */
-		if (m->m_flags & M_PKTHDR)
-			m_tag_delete_chain(m);
-
 		/*
 		 * Problem with datagram; advise higher level routines.
 		 */
@@ -585,10 +586,6 @@ reflect:
 		    &ip->ip_dst.s_addr, 1))
 			goto freeit;
 #endif
-		/* Free packet atttributes */
-		if (m->m_flags & M_PKTHDR)
-			m_tag_delete_chain(m);
-
 		icmpstat_inc(icps_reflect);
 		icmpstat_inc(icps_outhist + icp->icmp_type);
 		if (!icmp_reflect(m, &opts, NULL)) {
@@ -604,9 +601,6 @@ reflect:
 		struct sockaddr_in ssrc;
 		struct rtentry *newrt = NULL;
 
-		/* Free packet atttributes */
-		if (m->m_flags & M_PKTHDR)
-			m_tag_delete_chain(m);
 		if (icmp_rediraccept == 0 || ipforwarding == 1)
 			goto freeit;
 		if (code > 3)

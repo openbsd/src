@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.220 2017/11/03 14:28:57 florian Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.221 2017/12/14 14:26:50 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -431,6 +431,11 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af)
 		case ICMP6_PACKET_TOO_BIG:
 		case ICMP6_TIME_EXCEEDED:
 		case ICMP6_PARAM_PROB:
+			/*
+			 * Do not use the divert-to property of the TCP or UDP
+			 * rule when doing the PCB lookup for the raw socket.
+			 */
+			m->m_pkthdr.pf.flags &=~ PF_TAG_DIVERTED;
 			break;
 		default:
 			goto raw;
