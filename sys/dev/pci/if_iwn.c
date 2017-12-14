@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.195 2017/12/14 14:21:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.196 2017/12/14 20:12:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3254,7 +3254,8 @@ iwn_start(struct ifnet *ifp)
 			ni = m->m_pkthdr.ph_cookie;
 			goto sendit;
 		}
-		if (ic->ic_state != IEEE80211_S_RUN)
+		if (ic->ic_state != IEEE80211_S_RUN ||
+		    (ic->ic_xflags & IEEE80211_F_TX_MGMT_ONLY))
 			break;
 
 		/* Encapsulate and send data frames. */
