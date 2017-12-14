@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.263 2017/12/11 14:11:22 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.264 2017/12/14 20:20:38 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -904,11 +904,15 @@ vflush_vnode(struct vnode *vp, void *arg)
 		return (0);
 	}
 
-	if (va->flags & WRITEDEMOTE) {
-		vp->v_op = &dead_vops;
-		vp->v_tag = VT_NON;
+	/*
+	 * If set, this is allowed to ignore vnodes which don't
+	 * have changes pending to disk.
+	 * XXX Might be nice to check per-fs "inode" flags, but
+	 * generally the filesystem is sync'd already, right?
+	 */
+	if ((va->flags & IGNORECLEAN) &&
+	    LIST_EMPTY(&vp->v_dirtyblkhd))
 		return (0);
-	}
 
 #ifdef DEBUG
 	if (busyprt)

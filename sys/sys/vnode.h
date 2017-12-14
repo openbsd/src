@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.141 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.142 2017/12/14 20:20:38 deraadt Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ extern int		vttoif_tab[];
 #define	FORCECLOSE	0x0002		/* vflush: force file closeure */
 #define	WRITECLOSE	0x0004		/* vflush: only close writeable files */
 #define	DOCLOSE		0x0008		/* vclean: close active files */
-#define	WRITEDEMOTE	0x0010		/* vflush: ok if some writes remain */
+#define	IGNORECLEAN	0x0010		/* vflush: ignore clean vnodes */
 #define	V_SAVE		0x0001		/* vinvalbuf: sync file first */
 #define	V_SAVEMETA	0x0002		/* vinvalbuf: leave indirect blocks */
 
