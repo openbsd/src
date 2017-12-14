@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.37 2017/12/13 12:30:18 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.38 2017/12/14 13:11:37 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -358,6 +358,11 @@ fuse_destroy(struct fuse *f)
 	if (f == NULL)
 		return;
 
+	/*
+  	 * Even though these were allocated in fuse_mount(), we can't free them
+ 	 * in fuse_unmount() since fuse_loop() will not have terminated yet so
+ 	 * we free them here.
+ 	 */
 	close(f->fc->fd);
 	free(f->fc->dir);
 	free(f->fc);
@@ -544,6 +549,9 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 		goto err;
 
 	if ((fuse = fuse_new(fc, NULL, ops, size, data)) == NULL) {
+		fuse_unmount(dir, fc);
+		close(fc->fd);
+		free(fc->dir);
 		free(fc);
 		goto err;
 	}
