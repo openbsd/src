@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.242 2017/12/12 07:55:36 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.243 2017/12/14 00:41:58 dlg Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -556,6 +556,12 @@ struct sleep_state {
 	int sls_do_sleep;
 	int sls_sig;
 };
+
+struct cond {
+	int	c_wait;
+};
+
+#define COND_INITIALIZER()		{ 1 }
 
 #if defined(MULTIPROCESSOR)
 void	proc_trampoline_mp(void);	/* XXX */

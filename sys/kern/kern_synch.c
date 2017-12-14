@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.142 2017/12/04 09:38:20 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.143 2017/12/14 00:41:58 dlg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -702,5 +702,33 @@ refcnt_finalize(struct refcnt *r, const char *wmesg)
 		sleep_setup(&sls, r, PWAIT, wmesg);
 		refcnt = r->refs;
 		sleep_finish(&sls, refcnt);
+	}
+}
+
+void
+cond_init(struct cond *c)
+{
+	c->c_wait = 1;
+}
+
+void
+cond_signal(struct cond *c)
+{
+	c->c_wait = 0;
+
+	wakeup_one(c);
+}
+
+void
+cond_wait(struct cond *c, const char *wmesg)
+{
+	struct sleep_state sls;
+	int wait;
+
+	wait = c->c_wait;
+	while (wait) {
+		sleep_setup(&sls, c, PWAIT, wmesg);
+		wait = c->c_wait;
+		sleep_finish(&sls, wait);
 	}
 }
