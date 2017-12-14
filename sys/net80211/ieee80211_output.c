@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.121 2017/12/14 14:27:10 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.122 2017/12/14 18:52:17 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1676,13 +1676,14 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	case IEEE80211_FC0_SUBTYPE_DEAUTH:
 		if ((m = ieee80211_get_deauth(ic, ni, arg1)) == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
-
+#ifndef IEEE80211_STA_ONLY
 		if ((ifp->if_flags & IFF_DEBUG) &&
 		    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
 		    ic->ic_opmode == IEEE80211_M_IBSS))
 			printf("%s: station %s deauthenticate (reason %d)\n",
 			    ifp->if_xname, ether_sprintf(ni->ni_macaddr),
 			    arg1);
+#endif
 		break;
 
 	case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
@@ -1702,13 +1703,14 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	case IEEE80211_FC0_SUBTYPE_DISASSOC:
 		if ((m = ieee80211_get_disassoc(ic, ni, arg1)) == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
-
+#ifndef IEEE80211_STA_ONLY
 		if ((ifp->if_flags & IFF_DEBUG) &&
 		    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
 		    ic->ic_opmode == IEEE80211_M_IBSS))
 			printf("%s: station %s disassociate (reason %d)\n",
 			    ifp->if_xname, ether_sprintf(ni->ni_macaddr),
 			    arg1);
+#endif
 		break;
 
 	case IEEE80211_FC0_SUBTYPE_ACTION:
