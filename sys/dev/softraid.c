@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.385 2017/09/06 21:08:01 patrick Exp $ */
+/* $OpenBSD: softraid.c,v 1.386 2017/12/14 20:23:13 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -118,7 +118,7 @@ int			sr_ioctl_installboot(struct sr_softc *,
 void			sr_chunks_unwind(struct sr_softc *,
 			    struct sr_chunk_head *);
 void			sr_discipline_free(struct sr_discipline *);
-void			sr_discipline_shutdown(struct sr_discipline *, int);
+void			sr_discipline_shutdown(struct sr_discipline *, int, int);
 int			sr_discipline_init(struct sr_discipline *, int);
 int			sr_alloc_resources(struct sr_discipline *);
 void			sr_free_resources(struct sr_discipline *);
@@ -126,7 +126,7 @@ void			sr_set_chunk_state(struct sr_discipline *, int, int);
 void			sr_set_vol_state(struct sr_discipline *);
 
 /* utility functions */
-void			sr_shutdown(void);
+void			sr_shutdown(int);
 void			sr_uuid_generate(struct sr_uuid *);
 char			*sr_uuid_format(struct sr_uuid *);
 void			sr_uuid_print(struct sr_uuid *, int);
@@ -1836,7 +1836,7 @@ sr_detach(struct device *self, int flags)
 
 	softraid_disk_attach = NULL;
 
-	sr_shutdown();
+	sr_shutdown(0);
 
 #ifndef SMALL_KERNEL
 	if (sc->sc_sensor_task != NULL)
@@ -3597,7 +3597,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 unwind:
 	free(dt, M_DEVBUF, bc->bc_dev_list_len);
 
-	sr_discipline_shutdown(sd, 0);
+	sr_discipline_shutdown(sd, 0, 0);
 
 	if (rv == EAGAIN)
 		rv = 0;
@@ -3628,7 +3628,7 @@ sr_ioctl_deleteraid(struct sr_softc *sc, struct sr_discipline *sd,
 
 	sd->sd_deleted = 1;
 	sd->sd_meta->ssdi.ssd_vol_flags = BIOC_SCNOAUTOASSEMBLE;
-	sr_discipline_shutdown(sd, 1);
+	sr_discipline_shutdown(sd, 1, 0);
 
 	rv = 0;
 bad:
@@ -3890,7 +3890,7 @@ sr_discipline_free(struct sr_discipline *sd)
 }
 
 void
-sr_discipline_shutdown(struct sr_discipline *sd, int meta_save)
+sr_discipline_shutdown(struct sr_discipline *sd, int meta_save, int dying)
 {
 	struct sr_softc		*sc;
 	int			s;
@@ -3928,7 +3928,8 @@ sr_discipline_shutdown(struct sr_discipline *sd, int meta_save)
 #endif /* SMALL_KERNEL */
 
 	if (sd->sd_target != 0)
-		scsi_detach_lun(sc->sc_scsibus, sd->sd_target, 0, DETACH_FORCE);
+		scsi_detach_lun(sc->sc_scsibus, sd->sd_target, 0,
+		    dying ? 0 : DETACH_FORCE);
 
 	sr_chunks_unwind(sc, &sd->sd_vol.sv_chunk_list);
 
@@ -4535,7 +4536,7 @@ sr_validate_stripsize(u_int32_t b)
 }
 
 void
-sr_shutdown(void)
+sr_shutdown(int dying)
 {
 	struct sr_softc		*sc = softraid0;
 	struct sr_discipline	*sd;
@@ -4551,7 +4552,7 @@ sr_shutdown(void)
 
 	/* Shutdown disciplines in reverse attach order. */
 	while ((sd = TAILQ_LAST(&sc->sc_dis_list, sr_discipline_list)) != NULL)
-		sr_discipline_shutdown(sd, 1);
+		sr_discipline_shutdown(sd, 1, dying);
 }
 
 int
