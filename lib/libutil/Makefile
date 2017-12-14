@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.39 2016/03/30 06:38:43 jmc Exp $
+#	$OpenBSD: Makefile,v 1.40 2017/12/14 09:27:44 kettenis Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/16 07:03:28 thorpej Exp $
 
 LIB=	util
+
+VERSION_SCRIPT=	${.CURDIR}/Symbols.map
 
 HDRS=	util.h imsg.h
 SRCS=	bcrypt_pbkdf.c check_expire.c duid.c getmaxpartitions.c \
