@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.23 2017/12/13 12:23:48 helg Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.24 2017/12/14 13:23:30 jca Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -148,6 +148,7 @@ fuse_opt_add_opt_escaped(char **opts, const char *opt)
 		s++;
 		size++;
 	}
+	size++; /* trailing NUL */
 
 	if (escaped > 0) {
 		escaped_opt = malloc(size + escaped);
