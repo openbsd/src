@@ -1,11 +1,16 @@
-#	$OpenBSD: options.awk,v 1.3 2001/01/29 01:58:31 niklas Exp $
+#	$OpenBSD: options.awk,v 1.4 2017/12/14 10:02:53 martijn Exp $
 
 #	@(#)options.awk	10.1 (Berkeley) 6/8/95
- 
+
+BEGIN {
+	printf("enum {\n");
+	first = 1;
+}
 /^\/\* O_[0-9A-Z_]*/ {
-	printf("#define %s %d\n", $2, cnt++);
+	printf("\t%s%s,\n", $2, first ? " = 0" : "");
+	first = 0;
 	next;
 }
 END {
-	printf("#define O_OPTIONCOUNT %d\n", cnt);
+	printf("\tO_OPTIONCOUNT\n};\n");
 }
