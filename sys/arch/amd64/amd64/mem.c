@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.32 2017/10/14 04:44:43 jsg Exp $ */
+/*	$OpenBSD: mem.c,v 1.33 2017/12/14 03:30:43 guenther Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -45,6 +45,7 @@
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/filio.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/ioccom.h>
@@ -237,6 +238,13 @@ mmmmap(dev_t dev, off_t off, int prot)
 int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
+	switch (cmd) {
+	case FIONBIO:
+	case FIOASYNC:
+		/* handled by fd layer */
+		return 0;
+	}
+
 #ifdef MTRR
 	switch (minor(dev)) {
 	case 0:

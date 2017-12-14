@@ -1,4 +1,4 @@
-/* $OpenBSD: mem.c,v 1.32 2016/09/27 05:01:29 deraadt Exp $ */
+/* $OpenBSD: mem.c,v 1.33 2017/12/14 03:30:43 guenther Exp $ */
 /* $NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $ */
 
 /*
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/filio.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
@@ -242,5 +243,12 @@ mmmmap(dev_t dev, off_t off, int prot)
 int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
+	switch (cmd) {
+	case FIONBIO:
+	case FIOASYNC:
+		/* handled by fd layer */
+		return 0;
+	}
+
 	return (EOPNOTSUPP);
 }

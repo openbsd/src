@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.3 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: mem.c,v 1.4 2017/12/14 03:30:43 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -74,6 +74,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/filio.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
@@ -420,5 +421,12 @@ mmmmap(dev_t dev, off_t off, int prot)
 int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
+        switch (cmd) {
+        case FIONBIO:
+        case FIOASYNC:
+                /* handled by fd layer */
+                return 0;
+        }
+
 	return (EOPNOTSUPP);
 }
