@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.52 2017/12/14 00:45:16 dlg Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.53 2017/12/14 02:42:18 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -353,11 +353,9 @@ timeout_barrier(struct timeout *to)
 void
 timeout_proc_barrier(void *arg)
 {
-	int *wait = arg;
+	struct cond *c = arg;
 
-	*wait = 0;
-
-	wakeup_one(wait);
+	cond_signal(c);
 }
 
 /*
