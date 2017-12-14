@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.38 2017/12/14 13:11:37 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.39 2017/12/14 14:50:02 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -553,6 +553,12 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 		close(fc->fd);
 		free(fc->dir);
 		free(fc);
+		goto err;
+	}
+
+	if (fuse_set_signal_handlers(fuse_get_session(fuse)) == -1) {
+		fuse_unmount(dir, fc);
+		fuse_destroy(fuse);
 		goto err;
 	}
 
