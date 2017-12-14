@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.62 2016/07/10 23:06:48 tedu Exp $ */
+/*	$OpenBSD: kvm.c,v 1.63 2017/12/14 17:06:33 guenther Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -664,6 +664,7 @@ kvm_close(kvm_t *kd)
 
 	return (error);
 }
+DEF(kvm_close);
 
 /*
  * Set up state necessary to do queries on the kernel namelist
@@ -802,6 +803,7 @@ kvm_nlist(kvm_t *kd, struct nlist *nl)
 	 */
 	return ((p - nl) - nvalid);
 }
+DEF(kvm_nlist);
 
 int
 kvm_dump_inval(kvm_t *kd)
@@ -894,6 +896,7 @@ kvm_read(kvm_t *kd, u_long kva, void *buf, size_t len)
 	}
 	/* NOTREACHED */
 }
+DEF(kvm_read);
 
 ssize_t
 kvm_write(kvm_t *kd, u_long kva, const void *buf, size_t len)
