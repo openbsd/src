@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.32 2015/11/01 03:45:29 guenther Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.33 2017/12/14 16:55:44 jca Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -216,19 +216,20 @@ clntudp_call(CLIENT *cl,	/* client handle */
 	struct sockaddr_in from;
 	struct rpc_msg reply_msg;
 	XDR reply_xdrs;
-	struct timeval time_waited, start, after, tmp1, tmp2;
+	struct timespec time_waited, start, after, tmp1, tmp2, wait;
 	bool_t ok;
 	int nrefreshes = 2;	/* number of times to refresh cred */
-	struct timeval timeout;
+	struct timespec timeout;
 
 	if (cu->cu_total.tv_usec == -1)
-		timeout = utimeout;     /* use supplied timeout */
+		TIMEVAL_TO_TIMESPEC(&utimeout, &timeout);     /* use supplied timeout */
 	else
-		timeout = cu->cu_total; /* use default timeout */
+		TIMEVAL_TO_TIMESPEC(&cu->cu_total, &timeout); /* use default timeout */
 
 	pfd[0].fd = cu->cu_sock;
 	pfd[0].events = POLLIN;
-	timerclear(&time_waited);
+	timespecclear(&time_waited);
+	TIMEVAL_TO_TIMESPEC(&cu->cu_wait, &wait);
 call_again:
 	xdrs = &(cu->cu_outxdrs);
 	xdrs->x_op = XDR_ENCODE;
@@ -254,7 +255,7 @@ send_again:
 	/*
 	 * Hack to provide rpc-based message passing
 	 */
-	if (!timerisset(&timeout))
+	if (!timespecisset(&timeout))
 		return (cu->cu_error.re_status = RPC_TIMEDOUT);
 
 	/*
@@ -266,14 +267,13 @@ send_again:
 	reply_msg.acpted_rply.ar_results.where = resultsp;
 	reply_msg.acpted_rply.ar_results.proc = xresults;
 
-	gettimeofday(&start, NULL);
+	clock_gettime(CLOCK_MONOTONIC, &start);
 	for (;;) {
-		switch (poll(pfd, 1,
-		    cu->cu_wait.tv_sec * 1000 + cu->cu_wait.tv_usec / 1000)) {
+		switch (ppoll(pfd, 1, &wait, NULL)) {
 		case 0:
-			timeradd(&time_waited, &cu->cu_wait, &tmp1);
+			timespecadd(&time_waited, &wait, &tmp1);
 			time_waited = tmp1;
-			if (timercmp(&time_waited, &timeout, <))
+			if (timespeccmp(&time_waited, &timeout, <))
 				goto send_again;
 			return (cu->cu_error.re_status = RPC_TIMEDOUT);
 		case 1:
@@ -286,11 +286,11 @@ send_again:
 			/* FALLTHROUGH */
 		case -1:
 			if (errno == EINTR) {
-				gettimeofday(&after, NULL);
-				timersub(&after, &start, &tmp1);
-				timeradd(&time_waited, &tmp1, &tmp2);
+				clock_gettime(CLOCK_MONOTONIC, &after);
+				timespecsub(&after, &start, &tmp1);
+				timespecadd(&time_waited, &tmp1, &tmp2);
 				time_waited = tmp2;
-				if (timercmp(&time_waited, &timeout, <))
+				if (timespeccmp(&time_waited, &timeout, <))
 					continue;
 				return (cu->cu_error.re_status = RPC_TIMEDOUT);
 			}

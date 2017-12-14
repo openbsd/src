@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_tcp.c,v 1.37 2015/11/01 03:45:29 guenther Exp $ */
+/*	$OpenBSD: svc_tcp.c,v 1.38 2017/12/14 16:55:44 jca Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -321,7 +321,7 @@ svctcp_destroy(SVCXPRT *xprt)
  * All read operations timeout after 35 seconds.
  * A timeout is fatal for the connection.
  */
-static struct timeval wait_per_try = { 35, 0 };
+static struct timespec wait_per_try = { 35, 0 };
 
 /*
  * reads data from the tcp conection.
@@ -332,31 +332,30 @@ static int
 readtcp(SVCXPRT *xprt, caddr_t buf, int len)
 {
 	int sock = xprt->xp_sock;
-	int delta, nready;
-	struct timeval start;
-	struct timeval tmp1, tmp2;
+	int nready;
+	struct timespec start, delta, tmp1, tmp2;
 	struct pollfd pfd[1];
 
 	/*
 	 * All read operations timeout after 35 seconds.
 	 * A timeout is fatal for the connection.
 	 */
-	delta = wait_per_try.tv_sec * 1000;
-	gettimeofday(&start, NULL);
+	delta = wait_per_try;
+	clock_gettime(CLOCK_MONOTONIC, &start);
 	pfd[0].fd = sock;
 	pfd[0].events = POLLIN;
 	do {
-		nready = poll(pfd, 1, delta);
+		nready = ppoll(pfd, 1, &delta, NULL);
 		switch (nready) {
 		case -1:
 			if (errno != EINTR)
 				goto fatal_err;
-			gettimeofday(&tmp1, NULL);
-			timersub(&tmp1, &start, &tmp2);
-			timersub(&wait_per_try, &tmp2, &tmp1);
-			if (tmp1.tv_sec < 0 || !timerisset(&tmp1))
+			clock_gettime(CLOCK_MONOTONIC, &tmp1);
+			timespecsub(&tmp1, &start, &tmp2);
+			timespecsub(&wait_per_try, &tmp2, &tmp1);
+			if (tmp1.tv_sec < 0 || !timespecisset(&tmp1))
 				goto fatal_err;
-			delta = tmp1.tv_sec * 1000 + tmp1.tv_usec / 1000;
+			delta = tmp1;
 			continue;
 		case 0:
 			goto fatal_err;
