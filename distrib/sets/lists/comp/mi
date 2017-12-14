@@ -2735,6 +2735,7 @@
 ./usr/share/man/man9/bufq_init.9
 ./usr/share/man/man9/bus_dma.9
 ./usr/share/man/man9/bus_space.9
+./usr/share/man/man9/cond_init.9
 ./usr/share/man/man9/config_attach.9
 ./usr/share/man/man9/config_defer.9
 ./usr/share/man/man9/copy.9

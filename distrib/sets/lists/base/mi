@@ -651,7 +651,7 @@
 ./usr/lib/libtermlib.so.14.0
 ./usr/lib/libtls.so.16.1
 ./usr/lib/libusbhid.so.7.0
-./usr/lib/libutil.so.12.2
+./usr/lib/libutil.so.13.0
 ./usr/lib/libz.so.5.0
 ./usr/lib/locate
 ./usr/lib/locate/src.db
