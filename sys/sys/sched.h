@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.43 2017/12/04 09:51:03 mpi Exp $	*/
+/*	$OpenBSD: sched.h,v 1.44 2017/12/14 23:21:04 dlg Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -114,8 +114,6 @@ struct schedstate_percpu {
 	struct proc *spc_reaper;	/* dead proc reaper */
 #endif
 	LIST_HEAD(,proc) spc_deadproc;
-
-	volatile int spc_barrier;	/* for sched_barrier() */
 };
 
 #ifdef	_KERNEL
