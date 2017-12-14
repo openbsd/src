@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.15 2017/11/14 08:44:11 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.16 2017/12/14 00:45:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -133,9 +133,8 @@ ifq_restart_task(void *p)
 void
 ifq_barrier(struct ifqueue *ifq)
 {
-	struct sleep_state sls;
-	unsigned int notdone = 1;
-	struct task t = TASK_INITIALIZER(ifq_barrier_task, &notdone);
+	struct cond c = COND_INITIALIZER();
+	struct task t = TASK_INITIALIZER(ifq_barrier_task, &c);
 
 	/* this should only be called from converted drivers */
 	KASSERT(ISSET(ifq->ifq_if->if_xflags, IFXF_MPSAFE));
@@ -145,10 +144,7 @@ ifq_barrier(struct ifqueue *ifq)
 
 	ifq_serialize(ifq, &t);
 
-	while (notdone) {
-		sleep_setup(&sls, &notdone, PWAIT, "ifqbar");
-		sleep_finish(&sls, notdone);
-	}
+	cond_wait(&c, "ifqbar");
 }
 
 void

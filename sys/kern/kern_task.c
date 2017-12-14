@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.21 2017/11/13 23:52:49 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.22 2017/12/14 00:45:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -183,25 +183,19 @@ taskq_create_thread(void *arg)
 void
 taskq_barrier(struct taskq *tq)
 {
-	struct sleep_state sls;
-	unsigned int notdone = 1;
-	struct task t = TASK_INITIALIZER(taskq_barrier_task, &notdone);
+	struct cond c = COND_INITIALIZER();
+	struct task t = TASK_INITIALIZER(taskq_barrier_task, &c);
 
 	task_add(tq, &t);
 
-	while (notdone) {
-		sleep_setup(&sls, &notdone, PWAIT, "tqbar");
-		sleep_finish(&sls, notdone);
-	}
+	cond_wait(&c, "tqbar");
 }
 
 void
 taskq_barrier_task(void *p)
 {
-	unsigned int *notdone = p;
-
-	*notdone = 0;
-	wakeup_one(notdone);
+	struct cond *c = p;
+	cond_signal(c);
 }
 
 void
