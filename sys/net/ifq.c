@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.16 2017/12/14 00:45:16 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.17 2017/12/14 02:40:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -150,10 +150,9 @@ ifq_barrier(struct ifqueue *ifq)
 void
 ifq_barrier_task(void *p)
 {
-	unsigned int *notdone = p;
+	struct cond *c = p;
 
-	*notdone = 0;
-	wakeup_one(notdone);
+	cond_signal(c);
 }
 
 /*
