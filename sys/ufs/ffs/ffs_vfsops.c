@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.168 2017/12/11 17:13:34 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.169 2017/12/14 17:25:39 guenther Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1151,11 +1151,23 @@ ffs_sync_vnode(struct vnode *vp, void *arg) {
 	struct inode *ip;
 	int error;
 
+	if (vp->v_type == VNON)
+		return (0);
+
 	ip = VTOI(vp);
-	if (vp->v_type == VNON || 
-	    ((ip->i_flag &
+
+	/*
+	 * If unmounting or converting rw to ro, then stop deferring
+	 * timestamp writes.
+	 */
+	if (fsa->waitfor == MNT_WAIT && (ip->i_flag & IN_LAZYMOD)) {
+		ip->i_flag |= IN_MODIFIED;
+		UFS_UPDATE(ip, 1);
+	}
+
+	if ((ip->i_flag &
 		(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0	&&
-		LIST_EMPTY(&vp->v_dirtyblkhd)) ) {
+		LIST_EMPTY(&vp->v_dirtyblkhd)) {
 		return (0);
 	}
 
