@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_tcp.c,v 1.30 2017/12/14 16:55:44 jca Exp $ */
+/*	$OpenBSD: clnt_tcp.c,v 1.31 2017/12/14 18:56:22 jca Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -385,7 +385,7 @@ static int
 readtcp(struct ct_data *ct, caddr_t buf, int len)
 {
 	struct pollfd pfd[1];
-	struct timespec start, after, duration, tmp, delta, wait;
+	struct timespec start, after, duration, delta, wait;
 	int r, save_errno;
 
 	if (len == 0)
@@ -402,8 +402,7 @@ readtcp(struct ct_data *ct, caddr_t buf, int len)
 
 		clock_gettime(CLOCK_MONOTONIC, &after);
 		timespecsub(&start, &after, &duration);
-		timespecsub(&wait, &duration, &tmp);
-		delta = tmp;
+		timespecsub(&wait, &duration, &delta);
 		if (delta.tv_sec < 0 || !timespecisset(&delta))
 			r = 0;
 

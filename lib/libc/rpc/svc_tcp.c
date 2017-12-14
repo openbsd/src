@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_tcp.c,v 1.38 2017/12/14 16:55:44 jca Exp $ */
+/*	$OpenBSD: svc_tcp.c,v 1.39 2017/12/14 18:56:22 jca Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -333,7 +333,7 @@ readtcp(SVCXPRT *xprt, caddr_t buf, int len)
 {
 	int sock = xprt->xp_sock;
 	int nready;
-	struct timespec start, delta, tmp1, tmp2;
+	struct timespec start, after, duration, delta;
 	struct pollfd pfd[1];
 
 	/*
@@ -350,12 +350,11 @@ readtcp(SVCXPRT *xprt, caddr_t buf, int len)
 		case -1:
 			if (errno != EINTR)
 				goto fatal_err;
-			clock_gettime(CLOCK_MONOTONIC, &tmp1);
-			timespecsub(&tmp1, &start, &tmp2);
-			timespecsub(&wait_per_try, &tmp2, &tmp1);
-			if (tmp1.tv_sec < 0 || !timespecisset(&tmp1))
+			clock_gettime(CLOCK_MONOTONIC, &after);
+			timespecsub(&after, &start, &duration);
+			timespecsub(&wait_per_try, &duration, &delta);
+			if (delta.tv_sec < 0 || !timespecisset(&delta))
 				goto fatal_err;
-			delta = tmp1;
 			continue;
 		case 0:
 			goto fatal_err;

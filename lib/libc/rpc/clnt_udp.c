@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.33 2017/12/14 16:55:44 jca Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.34 2017/12/14 18:56:22 jca Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -216,7 +216,7 @@ clntudp_call(CLIENT *cl,	/* client handle */
 	struct sockaddr_in from;
 	struct rpc_msg reply_msg;
 	XDR reply_xdrs;
-	struct timespec time_waited, start, after, tmp1, tmp2, wait;
+	struct timespec time_waited, start, after, duration, wait;
 	bool_t ok;
 	int nrefreshes = 2;	/* number of times to refresh cred */
 	struct timespec timeout;
@@ -271,8 +271,7 @@ send_again:
 	for (;;) {
 		switch (ppoll(pfd, 1, &wait, NULL)) {
 		case 0:
-			timespecadd(&time_waited, &wait, &tmp1);
-			time_waited = tmp1;
+			timespecadd(&time_waited, &wait, &time_waited);
 			if (timespeccmp(&time_waited, &timeout, <))
 				goto send_again;
 			return (cu->cu_error.re_status = RPC_TIMEDOUT);
@@ -287,9 +286,8 @@ send_again:
 		case -1:
 			if (errno == EINTR) {
 				clock_gettime(CLOCK_MONOTONIC, &after);
-				timespecsub(&after, &start, &tmp1);
-				timespecadd(&time_waited, &tmp1, &tmp2);
-				time_waited = tmp2;
+				timespecsub(&after, &start, &duration);
+				timespecadd(&time_waited, &duration, &time_waited);
 				if (timespeccmp(&time_waited, &timeout, <))
 					continue;
 				return (cu->cu_error.re_status = RPC_TIMEDOUT);
