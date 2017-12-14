@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.123 2017/10/24 09:36:13 jsg Exp $ */
+/*	$OpenBSD: wd.c,v 1.124 2017/12/14 06:21:04 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -697,7 +697,7 @@ wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 	disk_closepart(&wd->sc_dk, part, fmt);
 
 	if (wd->sc_dk.dk_openmask == 0) {
-		wd_flushcache(wd, 0);
+		wd_flushcache(wd, AT_WAIT);
 		/* XXXX Must wait for I/O to complete! */
 	}
 
@@ -1060,11 +1060,7 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	    WDCC_FLUSHCACHE);
 	wdc_c.r_st_bmask = WDCS_DRDY;
 	wdc_c.r_st_pmask = WDCS_DRDY;
-	if (flags != 0) {
-		wdc_c.flags = AT_POLL;
-	} else {
-		wdc_c.flags = AT_WAIT;
-	}
+	wdc_c.flags = flags;
 	wdc_c.timeout = 30000; /* 30s timeout */
 	if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
 		printf("%s: flush cache command didn't complete\n",
@@ -1102,11 +1098,7 @@ wd_standby(struct wd_softc *wd, int flags)
 	wdc_c.r_command = WDCC_STANDBY_IMMED;
 	wdc_c.r_st_bmask = WDCS_DRDY;
 	wdc_c.r_st_pmask = WDCS_DRDY;
-	if (flags != 0) {
-		wdc_c.flags = AT_POLL;
-	} else {
-		wdc_c.flags = AT_WAIT;
-	}
+	wdc_c.flags = flags;
 	wdc_c.timeout = 30000; /* 30s timeout */
 	if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
 		printf("%s: standby command didn't complete\n",
