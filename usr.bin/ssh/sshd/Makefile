@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.92 2017/12/12 15:06:12 naddy Exp $
+#	$OpenBSD: Makefile,v 1.93 2017/12/14 21:07:39 naddy Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -8,7 +8,7 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c sshpty.c sshlogin.c servconf.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c monitor.c monitor_wrap.c \
 	sftp-server.c sftp-common.c sandbox-pledge.c
 
-SRCS+=	addrmatch.c atomicio.c authfd.c authfile.c bitmap.c blocks.c bufaux.c \
+SRCS+=	addrmatch.c atomicio.c authfd.c authfile.c bitmap.c bufaux.c \
 	bufbn.c bufec.c buffer.c canohost.c chacha.c channels.c \
 	cipher-chachapoly.c cipher.c compat.c crc32.c dh.c digest-openssl.c \
 	dispatch.c dns.c ed25519.c fatal.c fe25519.c ge25519.c hash.c hmac.c \

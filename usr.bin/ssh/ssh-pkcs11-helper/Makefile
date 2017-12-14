@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 2017/12/10 19:37:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2017/12/14 21:07:39 naddy Exp $
 
 .PATH:		${.CURDIR}/..
 
 SRCS=	ssh-pkcs11-helper.c ssh-pkcs11.c
-SRCS+=	addrmatch.c atomicio.c authfile.c bitmap.c blocks.c bufaux.c buffer.c \
+SRCS+=	addrmatch.c atomicio.c authfile.c bitmap.c bufaux.c buffer.c \
 	chacha.c cipher-chachapoly.c cipher.c compat.c digest-openssl.c \
 	ed25519.c fatal.c fe25519.c ge25519.c hash.c key.c krl.c log.c match.c \
 	misc.c poly1305.c readpass.c sc25519.c ssh-dss.c ssh-ecdsa.c \

@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.9 2017/12/12 15:06:12 naddy Exp $
+#	$OpenBSD: Makefile,v 1.10 2017/12/14 21:07:39 naddy Exp $
 
 .PATH:		${.CURDIR}/..
 
 SRCS=	ssh-keyscan.c
 
-SRCS+=	addrmatch.c atomicio.c blocks.c canohost.c chacha.c \
+SRCS+=	addrmatch.c atomicio.c canohost.c chacha.c \
 	cipher-chachapoly.c cipher.c cleanup.c compat.c dh.c digest-openssl.c \
 	dispatch.c ed25519.c fe25519.c ge25519.c hash.c hmac.c hostfile.c \
 	kex.c kexc25519.c kexc25519c.c kexc25519s.c kexdh.c kexdhc.c kexdhs.c \
