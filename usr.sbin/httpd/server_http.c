@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.117 2017/05/15 10:40:47 jsg Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.118 2017/12/14 21:19:47 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -875,6 +875,8 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	case 301:
 	case 302:
 	case 303:
+	case 307:
+	case 308:
 		if (msg == NULL)
 			break;
 		memset(buf, 0, sizeof(buf));
