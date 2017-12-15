@@ -1,4 +1,4 @@
-# $OpenBSD: regress.sh,v 1.6 2017/12/15 12:19:01 tb Exp $
+# $OpenBSD: regress.sh,v 1.7 2017/12/15 15:24:15 tb Exp $
 # $FreeBSD: head/usr.bin/jot/tests/regress.sh 208728 2010-06-02 07:47:29Z brian $
 
 JOT=${JOT-jot}
@@ -80,7 +80,7 @@ REGRESSION_TEST([[rand2p1]], [[${JOT} -p 1 -r 10000 0.9 0 | sort -u]])
 REGRESSION_TEST([[rdhhh]], [[${JOT} -r 100 - 10 2 2>/dev/null | sort -n | head -1]])
 REGRESSION_TEST([[rhdhh]], [[${JOT} -r 100 90 - 2 2>/dev/null | sort -n | tail -1]])
 # test variant of old manpage example, as it exercises the 'use_unif = 0' path
-REGRESSION_TEST([[nonunif]], [[jot -p0 -r 10000 0.5 9.5 | sort -u]])
+REGRESSION_TEST([[nonunif]], [[${JOT} -p0 -r 10000 0.5 9.5 | sort -u]])
 
 # G: Examples from the FreeBSD manual
 REGRESSION_TEST([[n21]], [[${JOT} 21 -1 1.00]])
