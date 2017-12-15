@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.37 2017/12/15 12:17:49 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.38 2017/12/15 13:04:11 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -426,6 +426,7 @@ getformat(void)
 				intdata = true;
 				break;
 			}
+			goto fmt_broken;
 		case 'O': case 'U':
 			/* %lO and %lU are undefined */
 			if (!longdata) {
@@ -433,11 +434,13 @@ getformat(void)
 				intdata = nosign = true;
 				break;
 			}
+			goto fmt_broken;
 		case 'c':
 			if (!(intdata | longdata)) {
 				chardata = true;
 				break;
 			}
+			/* FALLTHROUGH */
 		case 'h': case 'n': case 'p': case 'q': case 's': case 'L':
 		case '$': case '*':
 			goto fmt_broken;
