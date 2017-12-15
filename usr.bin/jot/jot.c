@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.36 2016/09/02 14:23:09 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.37 2017/12/15 12:17:49 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -420,12 +420,16 @@ getformat(void)
 			intdata = true;
 			break;
 		case 'D':
+			/* %lD is undefined */
 			if (!longdata) {
+				longdata = true; /* %D behaves as %ld */
 				intdata = true;
 				break;
 			}
 		case 'O': case 'U':
+			/* %lO and %lU are undefined */
 			if (!longdata) {
+				longdata = true; /* %O, %U behave as %lo, %lu */
 				intdata = nosign = true;
 				break;
 			}
