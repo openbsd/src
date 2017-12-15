@@ -1,4 +1,4 @@
-# $OpenBSD: regress.sh,v 1.5 2017/12/11 01:11:12 tb Exp $
+# $OpenBSD: regress.sh,v 1.6 2017/12/15 12:19:01 tb Exp $
 # $FreeBSD: head/usr.bin/jot/tests/regress.sh 208728 2010-06-02 07:47:29Z brian $
 
 JOT=${JOT-jot}
@@ -113,7 +113,7 @@ REGRESSION_TEST([[wXl]], [[${JOT} -w "a%Xb" 10 2147483648]])
 REGRESSION_TEST([[wdl]], [[${JOT} -w "a%db" 10 2147483648 2>/dev/null]])
 REGRESSION_TEST([[wxn]], [[${JOT} -w "a%xb" 10 -5 2>/dev/null]])
 REGRESSION_TEST([[wdn]], [[${JOT} -w "a%db" 10 -5]])
-#REGRESSION_TEST([[wDn]], [[${JOT} -w "a%Db" 10 -5]])
+REGRESSION_TEST([[wDn]], [[${JOT} -w "a%Db" 10 -5]])
 REGRESSION_TEST([[wldn]], [[${JOT} -w "a%ldb" 10 -5]])
 REGRESSION_TEST([[wp1]], [[${JOT} -w "%%%d%%%%" 10]])
 REGRESSION_TEST([[wp2]], [[${JOT} -w "%d%%d%%" 10]])
