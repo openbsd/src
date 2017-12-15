@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.39 2017/12/14 14:50:02 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.40 2017/12/15 12:08:22 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -401,7 +401,8 @@ dump_help(void)
 static void
 dump_version(void)
 {
-	fprintf(stderr, "FUSE library version %i\n", FUSE_VERSION);
+	fprintf(stderr, "FUSE library version: %d.%d\n", FUSE_MAJOR_VERSION,
+	    FUSE_MINOR_VERSION);
 }
 
 static int
