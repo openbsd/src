@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.10 2017/12/12 22:31:44 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.11 2017/12/15 09:15:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -241,6 +241,8 @@ uint32_t sxiccmu_osc_get_frequency(void *, uint32_t *);
 uint32_t sxiccmu_pll6_get_frequency(void *, uint32_t *);
 void	sxiccmu_pll6_enable(void *, uint32_t *, int);
 uint32_t sxiccmu_apb1_get_frequency(void *, uint32_t *);
+uint32_t sxiccmu_cpus_get_frequency(void *, uint32_t *);
+uint32_t sxiccmu_apbs_get_frequency(void *, uint32_t *);
 int	sxiccmu_gmac_set_frequency(void *, uint32_t *, uint32_t);
 int	sxiccmu_mmc_set_frequency(void *, uint32_t *, uint32_t);
 void	sxiccmu_mmc_enable(void *, uint32_t *, int);
@@ -351,6 +353,10 @@ struct sxiccmu_device sxiccmu_devices[] = {
 		.set_frequency = sxiccmu_gmac_set_frequency
 	},
 	{
+		.compat = "allwinner,sun8i-a23-apb0-clk",
+		.get_frequency = sxiccmu_apbs_get_frequency
+	},
+	{
 		.compat = "allwinner,sun8i-h3-apb0-gates-clk",
 		.get_frequency = sxiccmu_gen_get_frequency,
 		.enable = sxiccmu_gate_enable
@@ -388,6 +394,10 @@ struct sxiccmu_device sxiccmu_devices[] = {
 		.compat = "allwinner,sun9i-a80-apbs-gates-clk",
 		.get_frequency = sxiccmu_gen_get_frequency,
 		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun9i-a80-cpus-clk",
+		.get_frequency = sxiccmu_cpus_get_frequency
 	},
 	{
 		.compat = "allwinner,sun9i-a80-mmc-clk",
@@ -557,6 +567,39 @@ sxiccmu_apb1_get_frequency(void *cookie, uint32_t *cells)
 
 	freq = clock_get_frequency_idx(sc->sc_node, idx);
 	return freq / (1 << n) / (m + 1);
+}
+
+#define CCU_CPUS_CLK_SRC_SEL(x)		(((x) >> 16) & 0x3)
+#define CCU_CPUS_POST_DIV(x)		(((x) >> 8) & 0x1f)
+#define CCU_CPUS_CLK_RATIO(x)		(((x) >> 0) & 0x3)
+
+uint32_t
+sxiccmu_cpus_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct sxiccmu_clock *sc = cookie;
+	uint32_t reg, post_div, clk_ratio, freq;
+	int idx;
+
+	reg = SXIREAD4(sc, 0);
+	idx = CCU_CPUS_CLK_SRC_SEL(reg);
+	post_div = (idx == 2 ? CCU_CPUS_POST_DIV(reg): 0);
+	clk_ratio = CCU_CPUS_CLK_RATIO(reg);
+
+	freq = clock_get_frequency_idx(sc->sc_node, idx);
+	return freq / (clk_ratio + 1) / (post_div + 1);
+}
+
+#define CCU_APBS_CLK_RATIO(x)		(((x) >> 0) & 0x3)
+
+uint32_t
+sxiccmu_apbs_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct sxiccmu_clock *sc = cookie;
+	uint32_t reg, freq;
+
+	reg = SXIREAD4(sc, 0);
+	freq = clock_get_frequency(sc->sc_node, NULL);
+	return freq / (CCU_APBS_CLK_RATIO(reg) + 1);
 }
 
 #define	CCU_GMAC_CLK_PIT		(1 << 2)
