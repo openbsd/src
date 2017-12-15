@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.530 2017/11/20 10:16:25 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.531 2017/12/15 01:37:30 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -156,7 +156,6 @@ int	if_group_egress_build(void);
 
 void	if_watchdog_task(void *);
 
-void	if_input_process(void *);
 void	if_netisr(void *);
 
 #ifdef DDB
@@ -437,8 +436,6 @@ if_attachsetup(struct ifnet *ifp)
 
 	ifidx = ifp->if_index;
 
-	mq_init(&ifp->if_inputqueue, 8192, IPL_NET);
-	task_set(ifp->if_inputtask, if_input_process, (void *)ifidx);
 	task_set(ifp->if_watchdogtask, if_watchdog_task, (void *)ifidx);
 	task_set(ifp->if_linkstatetask, if_linkstate_task, (void *)ifidx);
 
@@ -563,6 +560,30 @@ if_attach_queues(struct ifnet *ifp, unsigned int nqs)
 }
 
 void
+if_attach_iqueues(struct ifnet *ifp, unsigned int niqs)
+{
+	struct ifiqueue **map;
+	struct ifiqueue *ifiq;
+	unsigned int i;
+
+	KASSERT(niqs != 0);
+
+	map = mallocarray(niqs, sizeof(*map), M_DEVBUF, M_WAITOK);
+
+	ifp->if_rcv.ifiq_softc = NULL;
+	map[0] = &ifp->if_rcv;
+
+	for (i = 1; i < niqs; i++) {
+		ifiq = malloc(sizeof(*ifiq), M_DEVBUF, M_WAITOK|M_ZERO);
+		ifiq_init(ifiq, ifp, i);
+		map[i] = ifiq;
+	}
+
+	ifp->if_iqs = map;
+	ifp->if_niqs = niqs;
+}
+
+void
 if_attach_common(struct ifnet *ifp)
 {
 	KASSERT(ifp->if_ioctl != NULL);
@@ -587,6 +608,12 @@ if_attach_common(struct ifnet *ifp)
 	ifp->if_ifqs = ifp->if_snd.ifq_ifqs;
 	ifp->if_nifqs = 1;
 
+	ifiq_init(&ifp->if_rcv, ifp, 0);
+
+	ifp->if_rcv.ifiq_ifiqs[0] = &ifp->if_rcv;
+	ifp->if_iqs = ifp->if_rcv.ifiq_ifiqs;
+	ifp->if_niqs = 1;
+
 	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks),
 	    M_TEMP, M_WAITOK);
 	TAILQ_INIT(ifp->if_addrhooks);
@@ -604,8 +631,6 @@ if_attach_common(struct ifnet *ifp)
 	ifp->if_watchdogtask = malloc(sizeof(*ifp->if_watchdogtask),
 	    M_TEMP, M_WAITOK|M_ZERO);
 	ifp->if_linkstatetask = malloc(sizeof(*ifp->if_linkstatetask),
-	    M_TEMP, M_WAITOK|M_ZERO);
-	ifp->if_inputtask = malloc(sizeof(*ifp->if_inputtask),
 	    M_TEMP, M_WAITOK|M_ZERO);
 	ifp->if_llprio = IFQ_DEFPRIO;
 
@@ -694,47 +719,7 @@ if_enqueue(struct ifnet *ifp, struct mbuf *m)
 void
 if_input(struct ifnet *ifp, struct mbuf_list *ml)
 {
-	struct mbuf *m;
-	size_t ibytes = 0;
-#if NBPFILTER > 0
-	caddr_t if_bpf;
-#endif
-
-	if (ml_empty(ml))
-		return;
-
-	MBUF_LIST_FOREACH(ml, m) {
-		m->m_pkthdr.ph_ifidx = ifp->if_index;
-		m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
-		ibytes += m->m_pkthdr.len;
-	}
-
-	ifp->if_ipackets += ml_len(ml);
-	ifp->if_ibytes += ibytes;
-
-#if NBPFILTER > 0
-	if_bpf = ifp->if_bpf;
-	if (if_bpf) {
-		struct mbuf_list ml0;
-
-		ml_init(&ml0);
-		ml_enlist(&ml0, ml);
-		ml_init(ml);
-
-		while ((m = ml_dequeue(&ml0)) != NULL) {
-			if (bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_IN))
-				m_freem(m);
-			else
-				ml_enqueue(ml, m);
-		}
-
-		if (ml_empty(ml))
-			return;
-	}
-#endif
-
-	if (mq_enlist(&ifp->if_inputqueue, ml) == 0)
-		task_add(net_tq(ifp->if_index), ifp->if_inputtask);
+	ifiq_input(&ifp->if_rcv, ml, 2048);
 }
 
 int
@@ -787,6 +772,24 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 	}
 
 	return (0);
+}
+
+int
+if_output_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
+{
+	struct ifiqueue *ifiq;
+	unsigned int flow = 0;
+
+	m->m_pkthdr.ph_family = af;
+	m->m_pkthdr.ph_ifidx = ifp->if_index;
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+
+	if (ISSET(m->m_pkthdr.ph_flowid, M_FLOWID_VALID))
+		flow = m->m_pkthdr.ph_flowid & M_FLOWID_MASK;
+
+	ifiq = ifp->if_iqs[flow % ifp->if_niqs];
+
+	return (ifiq_enqueue(ifiq, m) == 0 ? 0 : ENOBUFS);
 }
 
 struct ifih {
@@ -873,26 +876,18 @@ if_ih_remove(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *,
 }
 
 void
-if_input_process(void *xifidx)
+if_input_process(struct ifnet *ifp, struct mbuf_list *ml)
 {
-	unsigned int ifidx = (unsigned long)xifidx;
-	struct mbuf_list ml;
 	struct mbuf *m;
-	struct ifnet *ifp;
 	struct ifih *ifih;
 	struct srp_ref sr;
 	int s;
 
-	ifp = if_get(ifidx);
-	if (ifp == NULL)
+	if (ml_empty(ml))
 		return;
 
-	mq_delist(&ifp->if_inputqueue, &ml);
-	if (ml_empty(&ml))
-		goto out;
-
 	if (!ISSET(ifp->if_xflags, IFXF_CLONED))
-		add_net_randomness(ml_len(&ml));
+		add_net_randomness(ml_len(ml));
 
 	/*
 	 * We grab the NET_LOCK() before processing any packet to
@@ -908,7 +903,7 @@ if_input_process(void *xifidx)
 	 */
 	NET_RLOCK();
 	s = splnet();
-	while ((m = ml_dequeue(&ml)) != NULL) {
+	while ((m = ml_dequeue(ml)) != NULL) {
 		/*
 		 * Pass this mbuf to all input handlers of its
 		 * interface until it is consumed.
@@ -924,8 +919,6 @@ if_input_process(void *xifidx)
 	}
 	splx(s);
 	NET_RUNLOCK();
-out:
-	if_put(ifp);
 }
 
 void
@@ -1033,10 +1026,6 @@ if_detach(struct ifnet *ifp)
 	ifp->if_ioctl = if_detached_ioctl;
 	ifp->if_watchdog = NULL;
 
-	/* Remove the input task */
-	task_del(net_tq(ifp->if_index), ifp->if_inputtask);
-	mq_purge(&ifp->if_inputqueue);
-
 	/* Remove the watchdog timeout & task */
 	timeout_del(ifp->if_slowtimo);
 	task_del(net_tq(ifp->if_index), ifp->if_watchdogtask);
@@ -1090,7 +1079,6 @@ if_detach(struct ifnet *ifp)
 	free(ifp->if_slowtimo, M_TEMP, sizeof(*ifp->if_slowtimo));
 	free(ifp->if_watchdogtask, M_TEMP, sizeof(*ifp->if_watchdogtask));
 	free(ifp->if_linkstatetask, M_TEMP, sizeof(*ifp->if_linkstatetask));
-	free(ifp->if_inputtask, M_TEMP, sizeof(*ifp->if_inputtask));
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
@@ -1112,6 +1100,17 @@ if_detach(struct ifnet *ifp)
 		}
 		free(ifp->if_ifqs, M_DEVBUF,
 		    sizeof(struct ifqueue *) * ifp->if_nifqs);
+	}
+
+	for (i = 0; i < ifp->if_niqs; i++)
+		ifiq_destroy(ifp->if_iqs[i]);
+	if (ifp->if_iqs != ifp->if_rcv.ifiq_ifiqs) {
+		for (i = 1; i < ifp->if_niqs; i++) {
+			free(ifp->if_iqs[i], M_DEVBUF,
+			    sizeof(struct ifiqueue));
+		}
+		free(ifp->if_iqs, M_DEVBUF,
+		    sizeof(struct ifiqueue *) * ifp->if_niqs);
 	}
 }
 
@@ -2314,6 +2313,12 @@ if_getdata(struct ifnet *ifp, struct if_data *data)
 		struct ifqueue *ifq = ifp->if_ifqs[i];
 
 		ifq_add_data(ifq, data);
+	}
+
+	for (i = 0; i < ifp->if_niqs; i++) {
+		struct ifiqueue *ifiq = ifp->if_iqs[i];
+
+		ifiq_add_data(ifiq, data);
 	}
 }
 
