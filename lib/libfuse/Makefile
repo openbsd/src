@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2017/12/14 13:50:13 jca Exp $
+#	$OpenBSD: Makefile,v 1.13 2017/12/15 16:40:33 jca Exp $
 
 LIB=	fuse
 MAN=	fuse_main.3
@@ -16,6 +16,8 @@ CFLAGS+=	-I${.CURDIR}
 
 SRCS=	debug.c dict.c fuse.c fuse_ops.c fuse_opt.c fuse_subr.c tree.c
 HDRS=	fuse.h fuse_opt.h
+
+VERSION_SCRIPT=	${.CURDIR}/Symbols.map
 
 PC_FILES=fuse.pc
 CLEANFILES+=${PC_FILES}

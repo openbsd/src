@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.40 2017/12/15 12:08:22 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.41 2017/12/15 16:40:33 jca Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -218,6 +218,7 @@ fuse_loop(struct fuse *fuse)
 
 	return (0);
 }
+DEF(fuse_loop);
 
 struct fuse_chan *
 fuse_mount(const char *dir, unused struct fuse_args *args)
@@ -268,6 +269,7 @@ bad:
 	free(fc);
 	return (NULL);
 }
+DEF(fuse_mount);
 
 void
 fuse_unmount(const char *dir, struct fuse_chan *ch)
@@ -278,6 +280,7 @@ fuse_unmount(const char *dir, struct fuse_chan *ch)
 	if (unmount(dir, MNT_UPDATE) == -1)
 		DPERROR(__func__);
 }
+DEF(fuse_unmount);
 
 int
 fuse_is_lib_option(const char *opt)
@@ -299,6 +302,7 @@ fuse_get_session(struct fuse *f)
 {
 	return (&f->se);
 }
+DEF(fuse_get_session);
 
 int
 fuse_loop_mt(unused struct fuse *fuse)
@@ -342,6 +346,7 @@ fuse_new(struct fuse_chan *fc, unused struct fuse_args *args,
 
 	return (fuse);
 }
+DEF(fuse_new);
 
 int
 fuse_daemonize(int foreground)
@@ -351,6 +356,7 @@ fuse_daemonize(int foreground)
 
 	return (daemon(0,0));
 }
+DEF(fuse_daemonize);
 
 void
 fuse_destroy(struct fuse *f)
@@ -368,6 +374,7 @@ fuse_destroy(struct fuse *f)
 	free(f->fc);
 	free(f);
 }
+DEF(fuse_destroy);
 
 void
 fuse_remove_signal_handlers(unused struct fuse_session *se)
@@ -377,6 +384,7 @@ fuse_remove_signal_handlers(unused struct fuse_session *se)
 	signal(SIGTERM, SIG_DFL);
 	signal(SIGPIPE, SIG_DFL);
 }
+DEF(fuse_remove_signal_handlers);
 
 int
 fuse_set_signal_handlers(unused struct fuse_session *se)
@@ -501,12 +509,14 @@ fuse_parse_cmdline(struct fuse_args *args, char **mp, int *mt, int *fg)
 
 	return (0);
 }
+DEF(fuse_parse_cmdline);
 
 struct fuse_context *
 fuse_get_context(void)
 {
 	return (ictx);
 }
+DEF(fuse_get_context);
 
 int
 fuse_version(void)
@@ -571,6 +581,7 @@ err:
 	free(dir);
 	return (NULL);
 }
+DEF(fuse_setup);
 
 int
 fuse_main(int argc, char **argv, const struct fuse_operations *ops, void *data)

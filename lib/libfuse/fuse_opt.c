@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.24 2017/12/14 13:23:30 jca Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.25 2017/12/15 16:40:33 jca Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -183,6 +183,7 @@ fuse_opt_add_arg(struct fuse_args *args, const char *name)
 {
 	return (fuse_opt_insert_arg(args, args->argc, name));
 }
+DEF(fuse_opt_add_arg);
 
 static int
 parse_opt(const struct fuse_opt *o, const char *opt, void *data,
@@ -358,6 +359,7 @@ err:
 
 	return (ret);
 }
+DEF(fuse_opt_parse);
 
 int
 fuse_opt_insert_arg(struct fuse_args *args, int p, const char *name)
@@ -395,6 +397,7 @@ fuse_opt_insert_arg(struct fuse_args *args, int p, const char *name)
 	}
 	return (0);
 }
+DEF(fuse_opt_insert_arg);
 
 void
 fuse_opt_free_args(struct fuse_args *args)
@@ -407,6 +410,7 @@ fuse_opt_free_args(struct fuse_args *args)
 	args->argc = 0;
 	args->allocated = 0;
 }
+DEF(fuse_opt_free_args);
 
 int
 fuse_opt_match(const struct fuse_opt *opts, const char *opt)
@@ -424,3 +428,4 @@ fuse_opt_match(const struct fuse_opt *opts, const char *opt)
 
 	return (0);
 }
+DEF(fuse_opt_match);
