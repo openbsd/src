@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.144 2017/12/12 11:34:38 tb Exp $
+.\"	$OpenBSD: sh.1,v 1.145 2017/12/15 20:51:28 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2017 $
+.Dd $Mdocdate: December 15 2017 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -2221,8 +2221,7 @@ and
 built-ins should exit/return from the outermost loop if the argument
 .Ar n
 is greater than the level of loops.
-.El
-.Pp
+.It
 The default value for the
 .Ev PS1
 user prompt contains the machine's hostname,
@@ -2232,6 +2231,7 @@ for normal users and
 .Sq #\ \&
 for root;
 POSIX does not include the hostname.
+.El
 .Pp
 Enabling POSIX mode changes some behaviour to make
 .Nm
