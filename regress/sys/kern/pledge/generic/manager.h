@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.h,v 1.1 2015/10/09 06:44:13 semarie Exp $ */
+/*	$OpenBSD: manager.h,v 1.2 2017/12/15 14:45:51 bluhm Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -18,15 +18,15 @@
 #define _MANAGER_H_
 
 void _start_test(int *ret, const char *test_name, const char *request,
-    const char *paths[], void (*test_func)(void));
+    void (*test_func)(void));
 
-#define start_test(ret,req,paths,func) \
-    _start_test(ret,#func,req,paths,func)
+#define start_test(ret,req,func) \
+    _start_test(ret,#func,req,func)
 
-#define start_test1(ret,req,path,func) \
+#define start_test1(ret,req,func) \
     do { \
 	    const char *_paths[] = {path, NULL}; \
-	    start_test(ret,req,_paths,func); \
+	    start_test(ret,req,_func); \
     } while (0)
 
 #endif /* _MANAGER_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.c,v 1.6 2017/10/12 15:07:53 bluhm Exp $ */
+/*	$OpenBSD: manager.c,v 1.7 2017/12/15 14:45:51 bluhm Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -30,6 +30,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "manager.h"
 
 extern char *__progname;
 
@@ -194,24 +196,17 @@ drainfd(int rfd, int wfd)
 
 void
 _start_test(int *ret, const char *test_name, const char *request,
-    const char *paths[], void (*test_func)(void))
+    void (*test_func)(void))
 {
 	int fildes[2];
 	pid_t pid;
 	int status;
-	int i;
 
 	/* early print testname */
 	printf("test(%s): pledge=", test_name);
 	if (request) {
 		printf("(\"%s\",", request);
-		if (paths) {
-			printf("{");
-			for (i = 0; paths[i] != NULL; i++)
-				printf("\"%s\",", paths[i]);
-			printf("NULL})");
-		} else
-			printf("NULL)");
+		printf("NULL)");
 	} else
 		printf("skip");
 
@@ -254,7 +249,7 @@ _start_test(int *ret, const char *test_name, const char *request,
 		setsid();
 
 		/* set pledge policy */
-		if (request && pledge(request, paths) != 0)
+		if (request && pledge(request, NULL) != 0)
 			err(errno, "pledge");
 
 		/* reset errno and launch test */
