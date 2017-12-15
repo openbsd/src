@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.18 2017/12/15 01:37:30 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.19 2017/12/15 01:40:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -141,9 +141,6 @@ ifq_barrier(struct ifqueue *ifq)
 {
 	struct cond c = COND_INITIALIZER();
 	struct task t = TASK_INITIALIZER(ifq_barrier_task, &c);
-
-	/* this should only be called from converted drivers */
-	KASSERT(ISSET(ifq->ifq_if->if_xflags, IFXF_MPSAFE));
 
 	if (ifq->ifq_serializer == NULL)
 		return;
