@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.5 2016/08/06 19:16:09 guenther Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.6 2017/12/16 09:25:43 kettenis Exp $	*/
 /*	$NetBSD: bzero.S,v 1.2 2001/07/16 05:50:06 matt Exp $	*/
 
 /*-
@@ -35,5 +35,5 @@
 ENTRY(bzero)
 	mov	r2, r1
 	mov	r1, #0
-	b	_HIDDEN(memset)
+	b	_BUILTIN(memset)
 END_WEAK(bzero)
