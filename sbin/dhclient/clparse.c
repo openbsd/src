@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.156 2017/12/13 18:53:04 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.157 2017/12/16 20:47:53 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -64,13 +64,13 @@
 #include "dhctoken.h"
 #include "log.h"
 
-void			 parse_client_statement(FILE *, char *);
+void			 parse_conf_declaration(FILE *, char *);
 int			 parse_hex_octets(FILE *, unsigned int *, uint8_t **);
 int			 parse_option_list(FILE *, int *, uint8_t *);
 int			 parse_interface_declaration(FILE *, char *);
-int			 parse_client_lease_statement(FILE *, char *,
+int			 parse_lease(FILE *, char *,
 	struct client_lease **);
-void			 parse_client_lease_declaration(FILE *,
+void			 parse_lease_declaration(FILE *,
     struct client_lease *, char *);
 int			 parse_option_decl(FILE *, int *, struct option_data *);
 int			 parse_reject_statement(FILE *);
@@ -113,13 +113,13 @@ add_lease(struct client_lease_tq *tq, struct client_lease *lease)
 }
 
 /*
- * client-conf-file :== client-declarations EOF
- * client-declarations :== <nil>
- *			 | client-declaration
- *			 | client-declarations client-declaration
+ * conf :== conf_declarations EOF
+ * conf-declarations :== <nil>
+ *			 | conf-declaration
+ *			 | conf-declarations conf-declaration
  */
 void
-read_client_conf(char *name)
+read_conf(char *name)
 {
 	struct option_data	*option;
 	FILE			*cfile;
@@ -186,19 +186,20 @@ read_client_conf(char *name)
 			token = peek_token(NULL, cfile);
 			if (token == EOF)
 				break;
-			parse_client_statement(cfile, name);
+			parse_conf_declaration(cfile, name);
 		}
 		fclose(cfile);
 	}
 }
 
 /*
- * lease-file :== client-lease-statements EOF
- * client-lease-statements :== <nil>
- *		     | client-lease-statements LEASE client-lease-statement
+ * lease-db :== leases EOF
+ * leases :== <nil>
+ *	      | LEASE lease
+ *	      | leases LEASE lease
  */
 void
-read_client_leases(char *name, struct client_lease_tq *tq)
+read_lease_db(char *name, struct client_lease_tq *tq)
 {
 	struct client_lease	*lp;
 	FILE			*cfile;
@@ -206,10 +207,10 @@ read_client_leases(char *name, struct client_lease_tq *tq)
 
 	TAILQ_INIT(tq);
 
-	if ((cfile = fopen(path_dhclient_db, "r")) == NULL)
+	if ((cfile = fopen(path_lease_db, "r")) == NULL)
 		return;
 
-	new_parse(path_dhclient_db);
+	new_parse(path_lease_db);
 
 	for (;;) {
 		token = next_token(NULL, cfile);
@@ -219,7 +220,7 @@ read_client_leases(char *name, struct client_lease_tq *tq)
 			log_warnx("%s: expecting lease", log_procname);
 			break;
 		}
-		if (parse_client_lease_statement(cfile, name, &lp) == 1)
+		if (parse_lease(cfile, name, &lp) == 1)
 			add_lease(tq, lp);
 	}
 
@@ -227,7 +228,7 @@ read_client_leases(char *name, struct client_lease_tq *tq)
 }
 
 /*
- * client-declaration :==
+ * conf-declaration :==
  *	TOK_APPEND option-decl			|
  *	TOK_BACKOFF_CUTOFF number		|
  *	TOK_DEFAULT option-decl			|
@@ -251,7 +252,7 @@ read_client_leases(char *name, struct client_lease_tq *tq)
  *	TOK_TIMEOUT number
  */
 void
-parse_client_statement(FILE *cfile, char *name)
+parse_conf_declaration(FILE *cfile, char *name)
 {
 	uint8_t			 list[DHO_COUNT];
 	char			*val;
@@ -469,7 +470,7 @@ parse_option_list(FILE *cfile, int *count, uint8_t *optlist)
 
 /*
  * interface-declaration :==
- *	INTERFACE string LBRACE client-declarations RBRACE
+ *	INTERFACE string LBRACE conf-declarations RBRACE
  */
 int
 parse_interface_declaration(FILE *cfile, char *name)
@@ -508,23 +509,22 @@ parse_interface_declaration(FILE *cfile, char *name)
 			token = next_token(NULL, cfile);
 			return 1;
 		}
-		parse_client_statement(cfile, name);
+		parse_conf_declaration(cfile, name);
 	}
 
 	return 0;
 }
 
 /*
- * client-lease-statement :==
- *	RBRACE client-lease-declarations LBRACE
+ * lease :== RBRACE lease-declarations LBRACE
  *
- *	client-lease-declarations :==
+ * lease-declarations :==
  *		<nil> |
- *		client-lease-declaration |
- *		client-lease-declarations client-lease-declaration
+ *		lease-declaration |
+ *		lease-declarations lease-declaration
  */
 int
-parse_client_lease_statement(FILE *cfile, char *name,
+parse_lease(FILE *cfile, char *name,
     struct client_lease **lp)
 {
 	struct client_lease	*lease;
@@ -545,7 +545,7 @@ parse_client_lease_statement(FILE *cfile, char *name,
 	for (;;) {
 		token = peek_token(NULL, cfile);
 		if (token == EOF) {
-			parse_warn("unterminated lease declaration.");
+			parse_warn("unterminated lease.");
 			free_client_lease(lease);
 			break;
 		}
@@ -560,14 +560,14 @@ parse_client_lease_statement(FILE *cfile, char *name,
 			}
 			return 1;
 		}
-		parse_client_lease_declaration(cfile, lease, name);
+		parse_lease_declaration(cfile, lease, name);
 	}
 
 	return 0;
 }
 
 /*
- * client-lease-declaration :==
+ * lease-declaration :==
  *	BOOTP			|
  *	EXPIRE time-decl	|
  *	FILENAME string		|
@@ -581,7 +581,7 @@ parse_client_lease_statement(FILE *cfile, char *name,
  *	SSID string
  */
 void
-parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
+parse_lease_declaration(FILE *cfile, struct client_lease *lease,
     char *name)
 {
 	char		*val;

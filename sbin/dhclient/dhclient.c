@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.540 2017/12/09 15:48:04 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.541 2017/12/16 20:47:53 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -96,7 +96,7 @@
 #include "privsep.h"
 
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
-char *path_dhclient_db = NULL;
+char *path_lease_db = NULL;
 char *log_procname;
 
 char path_option_db[PATH_MAX];
@@ -160,7 +160,7 @@ void make_discover(struct interface_info *, struct client_lease *);
 void make_request(struct interface_info *, struct client_lease *);
 void make_decline(struct interface_info *, struct client_lease *);
 
-void rewrite_client_leases(struct interface_info *);
+void write_lease_db(struct interface_info *);
 void rewrite_option_db(char *, struct client_lease *, struct client_lease *);
 char *lease_as_string(char *, char *, struct client_lease *);
 struct proposal *lease_as_proposal(struct client_lease *);
@@ -455,11 +455,11 @@ main(int argc, char *argv[])
 			ignore_list = optarg;
 			break;
 		case 'l':
-			path_dhclient_db = optarg;
-			if (lstat(path_dhclient_db, &sb) != -1) {
+			path_lease_db = optarg;
+			if (lstat(path_lease_db, &sb) != -1) {
 				if (S_ISREG(sb.st_mode) == 0)
 					fatalx("'%s' is not a regular file",
-					    path_dhclient_db);
+					    path_lease_db);
 			}
 			break;
 		case 'L':
@@ -544,7 +544,7 @@ main(int argc, char *argv[])
 	config = calloc(1, sizeof(*config));
 	if (config == NULL)
 		fatal("config");
-	read_client_conf(ifi->name);
+	read_conf(ifi->name);
 
 	if ((cmd_opts & OPT_NOACTION) != 0)
 		return 0;
@@ -559,9 +559,9 @@ main(int argc, char *argv[])
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		fatalx("no such user: _dhcp");
 
-	if (path_dhclient_db == NULL && asprintf(&path_dhclient_db, "%s.%s",
-	    _PATH_DHCLIENT_DB, ifi->name) == -1)
-		fatal("path_dhclient_db");
+	if (path_lease_db == NULL && asprintf(&path_lease_db, "%s.%s",
+	    _PATH_LEASE_DB, ifi->name) == -1)
+		fatal("path_lease_db");
 
 	/* 2nd stage (post fork) config setup. */
 	if (ignore_list != NULL)
@@ -618,13 +618,13 @@ main(int argc, char *argv[])
 
 	take_charge(ifi, routefd);
 
-	if ((fd = open(path_dhclient_db,
+	if ((fd = open(path_lease_db,
 	    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640)) == -1)
-		fatal("open(%s)", path_dhclient_db);
-	read_client_leases(ifi->name, &ifi->leases);
-	if ((leaseFile = fopen(path_dhclient_db, "w")) == NULL)
-		fatal("fopen(%s)", path_dhclient_db);
-	rewrite_client_leases(ifi);
+		fatal("open(%s)", path_lease_db);
+	read_lease_db(ifi->name, &ifi->lease_db);
+	if ((leaseFile = fopen(path_lease_db, "w")) == NULL)
+		fatal("fopen(%s)", path_lease_db);
+	write_lease_db(ifi);
 	close(fd);
 
 	if (strlen(path_option_db) != 0) {
@@ -932,7 +932,7 @@ dhcpnak(struct interface_info *ifi, struct option_data *options, char *info)
 	delete_address(ifi->active->address);
 
 	/* XXX Do we really want to remove a NAK'd lease from the database? */
-	TAILQ_REMOVE(&ifi->leases, ifi->active, next);
+	TAILQ_REMOVE(&ifi->lease_db, ifi->active, next);
 	free_client_lease(ifi->active);
 
 	ifi->active = NULL;
@@ -1024,7 +1024,7 @@ newlease:
 	 * dynamic leases.
 	 */
 	seen = 0;
-	TAILQ_FOREACH_SAFE(lease, &ifi->leases, next, pl) {
+	TAILQ_FOREACH_SAFE(lease, &ifi->lease_db, next, pl) {
 		if (ifi->active == NULL)
 			continue;
 		if (ifi->ssid_len != lease->ssid_len)
@@ -1036,15 +1036,15 @@ newlease:
 			seen = 1;
 		else if (lease_expiry(lease) < cur_time ||
 		    lease->address.s_addr == ifi->active->address.s_addr) {
-			TAILQ_REMOVE(&ifi->leases, lease, next);
+			TAILQ_REMOVE(&ifi->lease_db, lease, next);
 			free_client_lease(lease);
 		}
 	}
 	if (seen == 0)
-		TAILQ_INSERT_HEAD(&ifi->leases, ifi->active,  next);
+		TAILQ_INSERT_HEAD(&ifi->lease_db, ifi->active,  next);
 
-	/* Write out new leases file. */
-	rewrite_client_leases(ifi);
+	/* Write out new lease db. */
+	write_lease_db(ifi);
 
 	ifi->state = S_BOUND;
 
@@ -1693,7 +1693,7 @@ free_client_lease(struct client_lease *lease)
 }
 
 void
-rewrite_client_leases(struct interface_info *ifi)
+write_lease_db(struct interface_info *ifi)
 {
 	struct client_lease	*lp;
 	char			*leasestr;
@@ -1713,7 +1713,7 @@ rewrite_client_leases(struct interface_info *ifi)
 	 * the chonological order required.
 	 */
 	time(&cur_time);
-	TAILQ_FOREACH_REVERSE(lp, &ifi->leases, client_lease_tq, next) {
+	TAILQ_FOREACH_REVERSE(lp, &ifi->lease_db, client_lease_tq, next) {
 		if (lease_expiry(lp) < cur_time)
 			continue;
 		leasestr = lease_as_string(ifi->name, "lease", lp);
@@ -2461,7 +2461,7 @@ get_recorded_lease(struct interface_info *ifi)
 
 	/* Run through the list of leases and see if one can be used. */
 	i = DHO_DHCP_CLIENT_IDENTIFIER;
-	TAILQ_FOREACH(lp, &ifi->leases, next) {
+	TAILQ_FOREACH(lp, &ifi->lease_db, next) {
 		if (lp->ssid_len != ifi->ssid_len)
 			continue;
 		if (memcmp(lp->ssid, ifi->ssid, lp->ssid_len) != 0)
