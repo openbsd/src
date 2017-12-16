@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.659 2017/11/30 15:06:35 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.660 2017/12/16 10:23:07 kettenis Exp $
 
-MAN=	aac.4 ac97.4 acphy.4 \
+MAN=	aac.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
 	acpibtn.4 acpicbkbd.4 acpicpu.4 acpidock.4 acpihve.4 \
 	acpiec.4 acpihpet.4 acpimadt.4 acpimcfg.4 acpiprt.4 acpipwrres.4 \
@@ -57,8 +57,8 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	sdmmc.4 sdhc.4 se.4 ses.4 \
 	sf.4 sili.4 simplefb.4 siop.4 sis.4 sk.4 sli.4 \
 	sm.4 smsc.4 softraid.4 spdmem.4 sdtemp.4 speaker.4 sppp.4 sqphy.4 \
-	st.4 ste.4 stge.4 sti.4 \
-	stp.4 sv.4 switch.4 sym.4 tcic.4 tcp.4 termios.4 tht.4 ti.4 tl.4 \
+	st.4 ste.4 stge.4 sti.4 stp.4 sv.4 switch.4 sxirsb.4 sym.4 \
+	tcic.4 tcp.4 termios.4 tht.4 ti.4 tl.4 \
 	tlphy.4 thmc.4 tpm.4 tqphy.4 trm.4 trunk.4 tsl.4 tty.4 tun.4 tap.4 \
 	twe.4 \
 	txp.4 txphy.4 uaudio.4 uark.4 uath.4 ubcmtp.4 uberry.4 ubsa.4 \
