@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.15 2017/12/16 23:32:56 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.16 2017/12/16 23:39:58 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -74,8 +74,11 @@ void	 bwfm_chip_ai_reset(struct bwfm_softc *, struct bwfm_core *,
 void	 bwfm_chip_dmp_erom_scan(struct bwfm_softc *);
 int	 bwfm_chip_dmp_get_regaddr(struct bwfm_softc *, uint32_t *,
 	     uint32_t *, uint32_t *);
+int	 bwfm_chip_cr4_set_active(struct bwfm_softc *, uint32_t);
 void	 bwfm_chip_cr4_set_passive(struct bwfm_softc *);
+int	 bwfm_chip_ca7_set_active(struct bwfm_softc *, uint32_t);
 void	 bwfm_chip_ca7_set_passive(struct bwfm_softc *);
+int	 bwfm_chip_cm3_set_active(struct bwfm_softc *);
 void	 bwfm_chip_cm3_set_passive(struct bwfm_softc *);
 
 int	 bwfm_proto_bcdc_query_dcmd(struct bwfm_softc *, int,
@@ -562,21 +565,11 @@ bwfm_chip_attach(struct bwfm_softc *sc)
 		return 1;
 	}
 
-	if (bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CR4) != NULL)
-		bwfm_chip_cr4_set_passive(sc);
-	if (bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CA7) != NULL)
-		bwfm_chip_ca7_set_passive(sc);
-	if (bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CM3) != NULL)
-		bwfm_chip_cm3_set_passive(sc);
+	bwfm_chip_set_passive(sc);
 
 	if (sc->sc_buscore_ops->bc_reset) {
 		sc->sc_buscore_ops->bc_reset(sc);
-		if (bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CR4) != NULL)
-			bwfm_chip_cr4_set_passive(sc);
-		if (bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CA7) != NULL)
-			bwfm_chip_ca7_set_passive(sc);
-		if (bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CM3) != NULL)
-			bwfm_chip_cm3_set_passive(sc);
+		bwfm_chip_set_passive(sc);
 	}
 
 	/* TODO: get raminfo */
@@ -831,6 +824,48 @@ bwfm_chip_dmp_get_regaddr(struct bwfm_softc *sc, uint32_t *erom,
 }
 
 /* Core configuration */
+int
+bwfm_chip_set_active(struct bwfm_softc *sc, uint32_t rstvec)
+{
+	if (bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CR4) != NULL)
+		return bwfm_chip_cr4_set_active(sc, rstvec);
+	if (bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CA7) != NULL)
+		return bwfm_chip_ca7_set_active(sc, rstvec);
+	if (bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CM3) != NULL)
+		return bwfm_chip_cm3_set_active(sc);
+	return 1;
+}
+
+void
+bwfm_chip_set_passive(struct bwfm_softc *sc)
+{
+	if (bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CR4) != NULL) {
+		bwfm_chip_cr4_set_passive(sc);
+		return;
+	}
+	if (bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CA7) != NULL) {
+		bwfm_chip_ca7_set_passive(sc);
+		return;
+	}
+	if (bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CM3) != NULL) {
+		bwfm_chip_cm3_set_passive(sc);
+		return;
+	}
+}
+
+int
+bwfm_chip_cr4_set_active(struct bwfm_softc *sc, uint32_t rstvec)
+{
+	struct bwfm_core *core;
+
+	sc->sc_buscore_ops->bc_activate(sc, 0);
+	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CR4);
+	sc->sc_chip.ch_core_reset(sc, core,
+	    BWFM_AGENT_IOCTL_ARMCR4_CPUHALT, 0, 0);
+
+	return 0;
+}
+
 void
 bwfm_chip_cr4_set_passive(struct bwfm_softc *sc)
 {
@@ -844,10 +879,22 @@ bwfm_chip_cr4_set_passive(struct bwfm_softc *sc)
 	    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN);
 }
 
+int
+bwfm_chip_ca7_set_active(struct bwfm_softc *sc, uint32_t rstvec)
+{
+	panic("%s: CA7 not supported", DEVNAME(sc));
+}
+
 void
 bwfm_chip_ca7_set_passive(struct bwfm_softc *sc)
 {
 	panic("%s: CA7 not supported", DEVNAME(sc));
+}
+
+int
+bwfm_chip_cm3_set_active(struct bwfm_softc *sc)
+{
+	panic("%s: cm3 not supported", DEVNAME(sc));
 }
 
 void
