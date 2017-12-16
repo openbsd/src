@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.42 2017/11/13 21:24:27 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.43 2017/12/16 14:15:56 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -101,6 +101,7 @@ sdmmc*		at dwmmc?
 sxipio*		at fdt? early 1	# GPIO pins for leds & PHYs
 gpio*		at sxipio?
 sxiccmu*	at fdt? early 1	# Clock Control Module/Unit
+sxirsb*		at fdt? early 1	# Reduced Serial Bus
 sxirtc*		at fdt?		# Real Time Clock
 sximmc*		at fdt?		# SD/MMC card controller
 sdmmc*		at sximmc?	# SD/MMC bus
