@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.2 2017/11/18 13:48:50 kettenis Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.3 2017/12/16 21:12:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -30,6 +30,18 @@ LIST_HEAD(, regulator_device) regulator_devices =
 void
 regulator_register(struct regulator_device *rd)
 {
+	rd->rd_min = OF_getpropint(rd->rd_node, "regulator-min-microvolt", 0);
+	rd->rd_max = OF_getpropint(rd->rd_node, "regulator-max-microvolt", ~0);
+	KASSERT(rd->rd_min <= rd->rd_max);
+
+	if (rd->rd_get_voltage && rd->rd_set_voltage) {
+		uint32_t voltage = rd->rd_get_voltage(rd->rd_cookie);
+		if (voltage < rd->rd_min)
+			rd->rd_set_voltage(rd->rd_cookie, rd->rd_min);
+		if (voltage > rd->rd_max)
+			rd->rd_set_voltage(rd->rd_cookie, rd->rd_max);
+	}
+
 	rd->rd_phandle = OF_getpropint(rd->rd_node, "phandle", 0);
 	if (rd->rd_phandle == 0)
 		return;
@@ -127,8 +139,12 @@ regulator_set_voltage(uint32_t phandle, uint32_t voltage)
 			break;
 	}
 
+	/* Check limits. */
+	if (rd && (voltage < rd->rd_min || voltage > rd->rd_max))
+		return EINVAL;
+
 	if (rd && rd->rd_set_voltage)
 		return rd->rd_set_voltage(rd->rd_cookie, voltage);
 
-	return -1;
+	return ENODEV;
 }
