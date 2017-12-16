@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.35 2017/08/30 06:42:21 anton Exp $       */
+/*    $OpenBSD: func.c,v 1.36 2017/12/16 10:27:21 anton Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -824,8 +824,7 @@ wfree(void)
 
 	if (wp->w_fe0)
 	    blkfree(wp->w_fe0);
-	if (wp->w_fename)
-	    free(wp->w_fename);
+	free(wp->w_fename);
 	free(wp);
     }
 }
@@ -929,8 +928,7 @@ dounsetenv(Char **v, struct command *t)
     int     i, maxi;
     static Char *name = NULL;
 
-    if (name)
-	free(name);
+    free(name);
     /*
      * Find the longest environment variable
      */
