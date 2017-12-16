@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.14 2017/10/21 20:43:03 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.15 2017/12/16 23:32:56 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -834,7 +834,14 @@ bwfm_chip_dmp_get_regaddr(struct bwfm_softc *sc, uint32_t *erom,
 void
 bwfm_chip_cr4_set_passive(struct bwfm_softc *sc)
 {
-	panic("%s: CR4 not supported", DEVNAME(sc));
+	struct bwfm_core *core;
+
+	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CR4);
+	sc->sc_chip.ch_core_disable(sc, core, 0, 0);
+	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_80211);
+	sc->sc_chip.ch_core_reset(sc, core, BWFM_AGENT_D11_IOCTL_PHYRESET |
+	    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN, BWFM_AGENT_D11_IOCTL_PHYCLOCKEN,
+	    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN);
 }
 
 void
