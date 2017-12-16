@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirsb.c,v 1.1 2017/12/16 10:22:13 kettenis Exp $	*/
+/*	$OpenBSD: sxirsb.c,v 1.2 2017/12/16 21:09:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark kettenis <kettenis@openbsd.org>
  *
@@ -236,16 +236,11 @@ sxirsb_rta(uint16_t da)
 	return 0;
 }
 
-uint16_t
-rsb_read_2(void *cookie, uint8_t rta, uint8_t addr)
+int
+sxirsb_do_trans(struct sxirsb_softc *sc)
 {
-	struct sxirsb_softc *sc = cookie;
 	uint16_t stat;
 	int timo;
-
-	HWRITE4(sc, RSB_CMD, RD16);
-	HWRITE4(sc, RSB_DAR, rta << 16);
-	HWRITE4(sc, RSB_AR, addr);
 
 	HSET4(sc, RSB_CTRL, RSB_CTRL_START_TRANS);
 	for (timo = 1000; timo > 0; timo--) {
@@ -255,8 +250,43 @@ rsb_read_2(void *cookie, uint8_t rta, uint8_t addr)
 	}
 	stat = HREAD4(sc, RSB_STAT);
 	HWRITE4(sc, RSB_STAT, stat);
-	if (timo == 0 || stat != RSB_STAT_TRANS_OVER) {
-		printf(": RD16 failed for run-time address 0x%02x\n", rta);
+	if (stat != RSB_STAT_TRANS_OVER)
+		return EIO;
+	if (timo == 0)
+		return ETIMEDOUT;
+	return 0;
+}
+
+uint8_t
+rsb_read_1(void *cookie, uint8_t rta, uint8_t addr)
+{
+	struct sxirsb_softc *sc = cookie;
+
+	HWRITE4(sc, RSB_CMD, RD8);
+	HWRITE4(sc, RSB_DAR, rta << 16);
+	HWRITE4(sc, RSB_AR, addr);
+
+	if (sxirsb_do_trans(sc)) {
+		printf("%s: RD8 failed for run-time address 0x%02x\n",
+		    sc->sc_dev.dv_xname, rta);
+		return 0xff;
+	}
+
+	return HREAD4(sc, RSB_DATA);
+}
+
+uint16_t
+rsb_read_2(void *cookie, uint8_t rta, uint8_t addr)
+{
+	struct sxirsb_softc *sc = cookie;
+
+	HWRITE4(sc, RSB_CMD, RD16);
+	HWRITE4(sc, RSB_DAR, rta << 16);
+	HWRITE4(sc, RSB_AR, addr);
+
+	if (sxirsb_do_trans(sc)) {
+		printf("%s: RD16 failed for run-time address 0x%02x\n",
+		    sc->sc_dev.dv_xname, rta);
 		return 0xff;
 	}
 
@@ -264,27 +294,35 @@ rsb_read_2(void *cookie, uint8_t rta, uint8_t addr)
 }
 
 void
+rsb_write_1(void *cookie, uint8_t rta, uint8_t addr, uint8_t data)
+{
+	struct sxirsb_softc *sc = cookie;
+
+	HWRITE4(sc, RSB_CMD, WR8);
+	HWRITE4(sc, RSB_DAR, rta << 16);
+	HWRITE4(sc, RSB_AR, addr);
+	HWRITE4(sc, RSB_DATA, data);
+
+	if (sxirsb_do_trans(sc)) {
+		printf("%s: WR8 failed for run-time address 0x%02x\n",
+		    sc->sc_dev.dv_xname, rta);
+		return;
+	}
+}
+
+void
 rsb_write_2(void *cookie, uint8_t rta, uint8_t addr, uint16_t data)
 {
 	struct sxirsb_softc *sc = cookie;
-	uint16_t stat;
-	int timo;
 
 	HWRITE4(sc, RSB_CMD, WR16);
 	HWRITE4(sc, RSB_DAR, rta << 16);
 	HWRITE4(sc, RSB_AR, addr);
 	HWRITE4(sc, RSB_DATA, data);
 
-	HSET4(sc, RSB_CTRL, RSB_CTRL_START_TRANS);
-	for (timo = 1000; timo > 0; timo--) {
-		if ((HREAD4(sc, RSB_CTRL) & RSB_CTRL_START_TRANS) == 0)
-			break;
-		delay(10);
-	}
-	stat = HREAD4(sc, RSB_STAT);
-	HWRITE4(sc, RSB_STAT, stat);
-	if (timo == 0 || stat != RSB_STAT_TRANS_OVER) {
-		printf(": WR16 failed for run-time address 0x%02x\n", rta);
+	if (sxirsb_do_trans(sc)) {
+		printf("%s: WR16 failed for run-time address 0x%02x\n",
+		    sc->sc_dev.dv_xname, rta);
 		return;
 	}
 }

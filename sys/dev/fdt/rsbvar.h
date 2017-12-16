@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsbvar.h,v 1.1 2017/12/16 10:22:13 kettenis Exp $	*/
+/*	$OpenBSD: rsbvar.h,v 1.2 2017/12/16 21:09:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark kettenis <kettenis@openbsd.org>
  *
@@ -25,5 +25,7 @@ struct rsb_attach_args {
 
 int	rsb_print(void *, const char *);
 
+uint8_t	rsb_read_1(void *, uint8_t, uint8_t);
 uint16_t rsb_read_2(void *, uint8_t, uint8_t);
+void	rsb_write_1(void *, uint8_t, uint8_t, uint8_t);
 void	rsb_write_2(void *, uint8_t, uint8_t, uint16_t);
