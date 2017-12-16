@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.27 2017/09/21 12:01:52 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.28 2017/12/16 10:22:13 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -14,6 +14,11 @@ file	dev/fdt/sxiccmu.c		sxiccmu
 device	sxipio {}: gpiobus
 attach	sxipio at fdt
 file	dev/fdt/sxipio.c		sxipio
+
+define	rsb
+device	sxirsb {}: rsb
+attach	sxirsb at fdt
+file	dev/fdt/sxirsb.c		sxirsb
 
 device	sxirtc
 attach	sxirtc at fdt
@@ -131,3 +136,7 @@ file	dev/fdt/if_mvneta.c		mvneta
 device	dwxe: ether, ifnet, mii, ifmedia
 attach	dwxe at fdt
 file	dev/fdt/if_dwxe.c		dwxe
+
+device	acrtc
+attach	acrtc at sxirsb
+file	dev/fdt/acrtc.c			acrtc

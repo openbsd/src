@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.99 2017/10/24 17:00:34 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.100 2017/12/16 10:22:13 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -91,6 +91,8 @@ sxipio*		at fdt? early 1		# GPIO pins for leds & PHYs
 gpio*		at sxipio?
 sxiccmu*	at fdt? early 1		# Clock Control Module/Unit
 sxitimer*	at fdt? early 1
+sxirsb*		at fdt? early 1		# Reduced Serial Bus
+acrtc*		at sxirsb?
 sxidog*		at fdt?			# watchdog timer
 sxirtc*		at fdt?			# Real Time Clock
 sxie*		at fdt?
