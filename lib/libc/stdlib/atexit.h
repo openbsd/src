@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.h,v 1.11 2017/12/05 13:45:31 kettenis Exp $ */
+/*	$OpenBSD: atexit.h,v 1.12 2017/12/16 20:06:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Daniel Hartmeier
@@ -39,6 +39,13 @@ struct atexit {
 		void *fn_arg;		/* argument for CXA callback */
 		void *fn_dso;		/* shared module handle */
 	} fns[1];			/* the table itself */
+};
+
+/* a chain of these are hung off each thread's TIB's tib_atexit member */
+struct thread_atexit_fn {
+	void (*func)(void *);
+	void *arg;
+	struct thread_atexit_fn *next;
 };
 
 __BEGIN_HIDDEN_DECLS
