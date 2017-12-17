@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.17 2017/12/16 23:45:16 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.18 2017/12/17 10:26:21 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -870,7 +870,7 @@ bwfm_chip_cr4_set_active(struct bwfm_softc *sc, uint32_t rstvec)
 {
 	struct bwfm_core *core;
 
-	sc->sc_buscore_ops->bc_activate(sc, 0);
+	sc->sc_buscore_ops->bc_activate(sc, rstvec);
 	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CR4);
 	sc->sc_chip.ch_core_reset(sc, core,
 	    BWFM_AGENT_IOCTL_ARMCR4_CPUHALT, 0, 0);
