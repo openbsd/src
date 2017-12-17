@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.180 2017/12/07 01:54:39 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.181 2017/12/17 19:16:02 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1644,6 +1644,7 @@ vcpu_writeregs_svm(struct vcpu *vcpu, uint64_t regmask,
 	uint64_t *gprs = vrs->vrs_gprs;
 	uint64_t *crs = vrs->vrs_crs;
 	uint16_t attr;
+	uint64_t *msrs = vrs->vrs_msrs;
 	struct vcpu_segment_info *sregs = vrs->vrs_sregs;
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
 
@@ -1722,6 +1723,10 @@ vcpu_writeregs_svm(struct vcpu *vcpu, uint64_t regmask,
 		vmcb->v_cr3 = crs[VCPU_REGS_CR3];
 		vmcb->v_cr4 = crs[VCPU_REGS_CR4];
 	}
+
+	/* The only presettable MSR via this function in SVM is EFER */
+	if (regmask & VM_RWREGS_MSRS)
+		vmcb->v_efer |= msrs[VCPU_REGS_EFER];
 
 	return (0);
 }
