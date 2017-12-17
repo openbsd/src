@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.16 2016/04/05 21:57:58 sthen Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.17 2017/12/17 18:41:17 job Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -304,12 +304,18 @@ main(void)
 			printf("<option value='%s'>%s</option>\n",
 			    cmds[i].name, cmds[i].name);
 	}
+
+	if ((req = lg_getarg("req=", query, query_length)) != NULL) {
+		/* Could be NULL */
+		argv = lg_arg2argv(req, &argc);
+	}
+
 	printf("</select>\n"
-	    "<input type='text' name='req'/>\n"
+	    "<input type='text' value='%s' name='req'/>\n"
 	    "<input type='submit' value='submit'/>\n"
 	    "</div>\n"
 	    "</form>\n"
-	    "<pre>\n");
+	    "<pre>\n", req ? req : "");
 	fflush(stdout);
 
 #ifdef DEBUG
@@ -327,10 +333,6 @@ main(void)
 	if (cmd == NULL) {
 		printf("unspecified command\n");
 		goto err;
-	}
-	if ((req = lg_getarg("req=", query, query_length)) != NULL) {
-		/* Could be NULL */
-		argv = lg_arg2argv(req, &argc);
 	}
 
 	for (i = 0; cmds[i].name != NULL; i++) {
