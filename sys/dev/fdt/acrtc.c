@@ -1,4 +1,4 @@
-/*	$OpenBSD: acrtc.c,v 1.1 2017/12/16 10:22:13 kettenis Exp $	*/
+/*	$OpenBSD: acrtc.c,v 1.2 2017/12/17 15:29:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <dev/fdt/rsbvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/clock_subr.h>
@@ -31,25 +32,34 @@
 
 extern todr_chip_handle_t todr_handle;
 
-#define RTC_CTRL		0xc7
-#define  RTC_CTRL_12H_24H_MODE	(1 << 0)
-#define RTC_SEC			0xc8
-#define RTC_MIN			0xc9
-#define RTC_HOU			0xca
-#define RTC_WEE			0xcb
-#define RTC_DAY			0xcc
-#define RTC_MON			0xcd
-#define RTC_YEA			0xce
-#define  RTC_YEA_LEAP_YEAR	(1 << 15)
-#define RTC_UPD_TRIG		0xcf
-#define  RTC_UPD_TRIG_UPDATE	(1 << 15)
+#define CK32K_OUT_CTRL1			0xc1
+#define  CK32K_OUT_CTRL_PRE_DIV_MASK	(0x7 << 5)
+#define  CK32K_OUT_CTRL_PRE_DIV_32K	(0x7 << 5)
+#define  CK32K_OUT_CTRL_MUX_SEL_MASK	(1 << 4)
+#define  CK32K_OUT_CTRL_MUX_SEL_32K	(0 << 4)
+#define  CK32K_OUT_CTRL_POST_DIV_MASK	(0x7 << 1)
+#define  CK32K_OUT_CTRL_POST_DIV_32K	(0x0 << 1)
+#define  CK32K_OUT_CTRL_ENA		(1 << 0)
+#define RTC_CTRL			0xc7
+#define  RTC_CTRL_12H_24H_MODE		(1 << 0)
+#define RTC_SEC				0xc8
+#define RTC_MIN				0xc9
+#define RTC_HOU				0xca
+#define RTC_WEE				0xcb
+#define RTC_DAY				0xcc
+#define RTC_MON				0xcd
+#define RTC_YEA				0xce
+#define  RTC_YEA_LEAP_YEAR		(1 << 15)
+#define RTC_UPD_TRIG			0xcf
+#define  RTC_UPD_TRIG_UPDATE		(1 << 15)
 
 struct acrtc_softc {
-	struct device	sc_dev;
-	void		*sc_cookie;
-	uint16_t 	sc_rta;
+	struct device		sc_dev;
+	void			*sc_cookie;
+	uint16_t 		sc_rta;
 
-	struct todr_chip_handle sc_todr;
+	struct todr_chip_handle	sc_todr;
+	struct clock_device	sc_cd;
 };
 
 int	acrtc_match(struct device *, void *, void *);
@@ -68,6 +78,8 @@ int	acrtc_clock_write(struct acrtc_softc *, struct clock_ymdhms *);
 int	acrtc_gettime(struct todr_chip_handle *, struct timeval *);
 int	acrtc_settime(struct todr_chip_handle *, struct timeval *);
 
+void	acrtc_ck32k_enable(void *, uint32_t *, int);
+
 int
 acrtc_match(struct device *parent, void *match, void *aux)
 {
@@ -83,6 +95,7 @@ acrtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acrtc_softc *sc = (struct acrtc_softc *)self;
 	struct rsb_attach_args *ra = aux;
+	int node;
 
 	sc->sc_cookie = ra->ra_cookie;
 	sc->sc_rta = ra->ra_rta;
@@ -93,6 +106,15 @@ acrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.todr_gettime = acrtc_gettime;
 	sc->sc_todr.todr_settime = acrtc_settime;
 	todr_handle = &sc->sc_todr;
+
+	node = OF_getnodebyname(ra->ra_node, "rtc");
+	if (node == 0)
+		return;
+
+	sc->sc_cd.cd_node = node;
+	sc->sc_cd.cd_cookie = sc;
+	sc->sc_cd.cd_enable = acrtc_ck32k_enable;
+	clock_register(&sc->sc_cd);
 }
 
 inline uint16_t
@@ -183,4 +205,25 @@ acrtc_clock_write(struct acrtc_softc *sc, struct clock_ymdhms *dt)
 	acrtc_write_reg(sc, RTC_CTRL, RTC_CTRL_12H_24H_MODE);
 
 	return 0;
+}
+
+void
+acrtc_ck32k_enable(void *cookie, uint32_t *cells, int on)
+{
+	struct acrtc_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint16_t reg;
+
+	reg = acrtc_read_reg(sc, CK32K_OUT_CTRL1 + idx);
+	reg &= ~CK32K_OUT_CTRL_PRE_DIV_MASK;
+	reg &= ~CK32K_OUT_CTRL_MUX_SEL_MASK;
+	reg &= ~CK32K_OUT_CTRL_POST_DIV_MASK;
+	reg |= CK32K_OUT_CTRL_PRE_DIV_32K;
+	reg |= CK32K_OUT_CTRL_MUX_SEL_32K;
+	reg |= CK32K_OUT_CTRL_POST_DIV_32K;
+	if (on)
+		reg |= CK32K_OUT_CTRL_ENA;
+	else
+		reg &= ~CK32K_OUT_CTRL_ENA;
+	acrtc_write_reg(sc, CK32K_OUT_CTRL1 + idx, reg);
 }
