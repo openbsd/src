@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.157 2017/12/16 20:47:53 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.158 2017/12/17 14:24:04 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -74,43 +74,6 @@ void			 parse_lease_declaration(FILE *,
     struct client_lease *, char *);
 int			 parse_option_decl(FILE *, int *, struct option_data *);
 int			 parse_reject_statement(FILE *);
-void			 add_lease(struct client_lease_tq *,
-    struct client_lease *);
-
-void
-add_lease(struct client_lease_tq *tq, struct client_lease *lease)
-{
-	struct client_lease	*lp, *nlp;
-
-	if (lease == NULL)
-		return;
-
-	/*
-	 * The new lease will supersede a lease with the same ssid
-	 * AND the same Client Identifier AND the same
-	 * IP address.
-	 */
-	TAILQ_FOREACH_SAFE(lp, tq, next, nlp) {
-		if (lp->ssid_len != lease->ssid_len)
-			continue;
-		if (memcmp(lp->ssid, lease->ssid, lp->ssid_len) != 0)
-			continue;
-		if ((lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len != 0) &&
-		    ((lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len !=
-		    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len) ||
-		    memcmp(lp->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
-		    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
-		    lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len)))
-			continue;
-		if (lp->address.s_addr != lease->address.s_addr)
-			continue;
-
-		TAILQ_REMOVE(tq, lp, next);
-		free_client_lease(lp);
-	}
-
-	TAILQ_INSERT_TAIL(tq, lease, next);
-}
 
 /*
  * conf :== conf_declarations EOF
@@ -195,15 +158,14 @@ read_conf(char *name)
 /*
  * lease-db :== leases EOF
  * leases :== <nil>
- *	      | LEASE lease
- *	      | leases LEASE lease
+ *	      | lease
+ *	      | leases lease
  */
 void
 read_lease_db(char *name, struct client_lease_tq *tq)
 {
-	struct client_lease	*lp;
+	struct client_lease	*lease, *lp, *nlp;
 	FILE			*cfile;
-	int			 token;
 
 	TAILQ_INIT(tq);
 
@@ -213,15 +175,35 @@ read_lease_db(char *name, struct client_lease_tq *tq)
 	new_parse(path_lease_db);
 
 	for (;;) {
-		token = next_token(NULL, cfile);
-		if (token == EOF)
-			break;
-		if (token != TOK_LEASE) {
-			log_warnx("%s: expecting lease", log_procname);
-			break;
+		if (parse_lease(cfile, name, &lease) == 1) {
+			/*
+			 * The new lease will supersede a lease with the same ssid
+			 * AND the same Client Identifier AND the same
+			 * IP address.
+			 */
+			TAILQ_FOREACH_SAFE(lp, tq, next, nlp) {
+				if (lp->ssid_len != lease->ssid_len)
+					continue;
+				if (memcmp(lp->ssid, lease->ssid, lp->ssid_len) != 0)
+					continue;
+				if ((lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len != 0) &&
+				    ((lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len !=
+				    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len) ||
+				    memcmp(lp->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
+				    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
+				    lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len)))
+					continue;
+				if (lp->address.s_addr != lease->address.s_addr)
+					continue;
+
+				TAILQ_REMOVE(tq, lp, next);
+				free_client_lease(lp);
+			}
+
+			TAILQ_INSERT_TAIL(tq, lease, next);
 		}
-		if (parse_lease(cfile, name, &lp) == 1)
-			add_lease(tq, lp);
+		if (feof(cfile) != 0)
+			break;
 	}
 
 	fclose(cfile);
@@ -516,11 +498,11 @@ parse_interface_declaration(FILE *cfile, char *name)
 }
 
 /*
- * lease :== RBRACE lease-declarations LBRACE
+ * lease :== LEASE RBRACE lease-declarations LBRACE
  *
  * lease-declarations :==
- *		<nil> |
- *		lease-declaration |
+ *		<nil>					|
+ *		lease-declaration			|
  *		lease-declarations lease-declaration
  */
 int
@@ -529,6 +511,16 @@ parse_lease(FILE *cfile, char *name,
 {
 	struct client_lease	*lease;
 	int			 token;
+
+	token = next_token(NULL, cfile);
+	if (token == EOF)
+		return 0;
+	if (token != TOK_LEASE) {
+		parse_warn("expecting lease");
+		if (token != ';')
+			skip_to_semi(cfile);
+		return 0;
+	}
 
 	token = next_token(NULL, cfile);
 	if (token != '{') {
