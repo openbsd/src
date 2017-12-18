@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.21 2017/12/18 16:44:49 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.22 2017/12/18 18:40:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -963,7 +963,57 @@ bwfm_chip_cm3_set_passive(struct bwfm_softc *sc)
 void
 bwfm_chip_socram_ramsize(struct bwfm_softc *sc, struct bwfm_core *core)
 {
-	panic("%s: socram ramsize not supported", DEVNAME(sc));
+	uint32_t coreinfo, nb, lss, banksize, bankinfo;
+	uint32_t ramsize = 0, srsize = 0;
+	int i;
+
+	if (!sc->sc_chip.ch_core_isup(sc, core))
+		sc->sc_chip.ch_core_reset(sc, core, 0, 0, 0);
+
+	coreinfo = sc->sc_buscore_ops->bc_read(sc,
+	    core->co_base + BWFM_SOCRAM_COREINFO);
+	nb = (coreinfo & BWFM_SOCRAM_COREINFO_SRNB_MASK)
+	    >> BWFM_SOCRAM_COREINFO_SRNB_SHIFT;
+
+	if (core->co_rev <= 7 || core->co_rev == 12) {
+		banksize = coreinfo & BWFM_SOCRAM_COREINFO_SRBSZ_MASK;
+		lss = (coreinfo & BWFM_SOCRAM_COREINFO_LSS_MASK)
+		    >> BWFM_SOCRAM_COREINFO_LSS_SHIFT;
+		if (lss != 0)
+			nb--;
+		ramsize = nb * (1 << (banksize + BWFM_SOCRAM_COREINFO_SRBSZ_BASE));
+		if (lss != 0)
+			ramsize += (1 << ((lss - 1) + BWFM_SOCRAM_COREINFO_SRBSZ_BASE));
+	} else {
+		for (i = 0; i < nb; i++) {
+			sc->sc_buscore_ops->bc_write(sc,
+			    core->co_base + BWFM_SOCRAM_BANKIDX,
+			    (BWFM_SOCRAM_BANKIDX_MEMTYPE_RAM <<
+			    BWFM_SOCRAM_BANKIDX_MEMTYPE_SHIFT) | i);
+			bankinfo = sc->sc_buscore_ops->bc_read(sc,
+			    core->co_base + BWFM_SOCRAM_BANKINFO);
+			banksize = ((bankinfo & BWFM_SOCRAM_BANKINFO_SZMASK) + 1)
+			    * BWFM_SOCRAM_BANKINFO_SZBASE;
+			ramsize += banksize;
+			if (bankinfo & BWFM_SOCRAM_BANKINFO_RETNTRAM_MASK)
+				srsize += banksize;
+		}
+	}
+
+	switch (sc->sc_chip.ch_chip) {
+	case BRCM_CC_4334_CHIP_ID:
+		if (sc->sc_chip.ch_chiprev < 2)
+			srsize = 32 * 1024;
+		break;
+	case BRCM_CC_43430_CHIP_ID:
+		srsize = 64 * 1024;
+		break;
+	default:
+		break;
+	}
+
+	sc->sc_chip.ch_ramsize = ramsize;
+	sc->sc_chip.ch_srsize = srsize;
 }
 
 void
@@ -975,7 +1025,7 @@ bwfm_chip_sysmem_ramsize(struct bwfm_softc *sc, struct bwfm_core *core)
 void
 bwfm_chip_tcm_ramsize(struct bwfm_softc *sc, struct bwfm_core *core)
 {
-	uint32_t cap, nab, nbb, totb, bxinfo, memsize = 0;
+	uint32_t cap, nab, nbb, totb, bxinfo, ramsize = 0;
 	int i;
 
 	cap = sc->sc_buscore_ops->bc_read(sc, core->co_base + BWFM_ARMCR4_CAP);
@@ -988,11 +1038,11 @@ bwfm_chip_tcm_ramsize(struct bwfm_softc *sc, struct bwfm_core *core)
 		    core->co_base + BWFM_ARMCR4_BANKIDX, i);
 		bxinfo = sc->sc_buscore_ops->bc_read(sc,
 		    core->co_base + BWFM_ARMCR4_BANKINFO);
-		memsize += ((bxinfo & BWFM_ARMCR4_BANKINFO_BSZ_MASK) + 1) *
+		ramsize += ((bxinfo & BWFM_ARMCR4_BANKINFO_BSZ_MASK) + 1) *
 		    BWFM_ARMCR4_BANKINFO_BSZ_MULT;
 	}
 
-	sc->sc_chip.ch_ramsize = memsize;
+	sc->sc_chip.ch_ramsize = ramsize;
 }
 
 void
