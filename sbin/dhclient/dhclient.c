@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.541 2017/12/16 20:47:53 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.542 2017/12/18 14:17:58 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1683,7 +1683,6 @@ free_client_lease(struct client_lease *lease)
 	if (lease == NULL)
 		return;
 
-	free(lease->interface);
 	free(lease->server_name);
 	free(lease->filename);
 	for (i = 0; i < DHO_COUNT; i++)
@@ -1882,11 +1881,6 @@ lease_as_string(char *ifname, char *type, struct client_lease *lease)
 	strlcat(string, type, sizeof(string));
 	strlcat(string, " {\n", sizeof(string));
 	strlcat(string, BOOTP_LEASE(lease) ? "  bootp;\n" : "", sizeof(string));
-
-	buf = pretty_print_string(ifname, strlen(ifname), 1);
-	if (buf == NULL)
-		return NULL;
-	append_statement(string, sizeof(string), "  interface ", buf);
 
 	append_statement(string, sizeof(string), "  fixed-address ",
 	    inet_ntoa(lease->address));

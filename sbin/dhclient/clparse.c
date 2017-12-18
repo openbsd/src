@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.158 2017/12/17 14:24:04 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.159 2017/12/18 14:17:58 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -543,13 +543,7 @@ parse_lease(FILE *cfile, char *name,
 		}
 		if (token == '}') {
 			token = next_token(NULL, cfile);
-			if (lease->interface != NULL &&
-			    strcmp(name, lease->interface) == 0)
-				*lp = lease;
-			else {
-				*lp = NULL;
-				free_client_lease(lease);
-			}
+			*lp = lease;
 			return 1;
 		}
 		parse_lease_declaration(cfile, lease, name);
@@ -607,11 +601,9 @@ parse_lease_declaration(FILE *cfile, struct client_lease *lease,
 			return;
 		break;
 	case TOK_INTERFACE:
-		if (parse_string(cfile, NULL, &val) == 0)
-			return;
-		free(lease->interface);
-		lease->interface = val;
-		break;
+		/* 'interface' is just a comment. */
+		skip_to_semi(cfile);
+		return;
 	case TOK_NEXT_SERVER:
 		if (parse_ip_addr(cfile, &lease->next_server) == 0)
 			return;

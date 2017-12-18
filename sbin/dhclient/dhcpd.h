@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.242 2017/12/16 20:47:53 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.243 2017/12/18 14:17:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -56,7 +56,6 @@ struct reject_elem {
 
 struct client_lease {
 	TAILQ_ENTRY(client_lease) next;
-	char			*interface;
 	time_t			 epoch;
 	struct in_addr		 address;
 	struct in_addr		 next_server;
