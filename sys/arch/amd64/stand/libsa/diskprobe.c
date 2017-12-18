@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.21 2017/11/06 08:57:34 yasuoka Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.22 2017/12/18 12:53:33 fcambus Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -94,7 +94,7 @@ floppyprobe(void)
 			if (debug)
 				printf(" <!fd%u>", i);
 #endif
-			free(dip, 0);
+			free(dip, sizeof(*dip));
 			break;
 		}
 
@@ -136,7 +136,7 @@ hardprobe(void)
 			if (debug)
 				printf(" <!hd%u>", i&0x7f);
 #endif
-			free(dip, 0);
+			free(dip, sizeof(*dip));
 			break;
 		}
 
@@ -323,7 +323,7 @@ cdprobe(void)
 #if 0
 	if (bios_getdiskinfo(cddev, &dip->bios_info)) {
 		printf(" <!cd0>");	/* XXX */
-		free(dip, 0);
+		free(dip, sizeof(*dip));
 		return;
 	}
 #endif
