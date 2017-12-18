@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.30 2017/12/18 10:50:13 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.31 2017/12/18 19:40:12 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -35,7 +35,7 @@ file	dev/fdt/sxitwi.c		sxitwi
 device	axppmic
 attach	axppmic at i2c
 attach	axppmic at sxirsb with axppmic_rsb
-file	dev/fdt/axppmic.c		axppmic_rsb
+file	dev/fdt/axppmic.c		axppmic
 
 device	bcmaux
 attach	bcmaux at fdt
