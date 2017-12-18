@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.18 2017/12/17 10:26:21 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.19 2017/12/18 00:08:28 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -882,9 +882,16 @@ void
 bwfm_chip_cr4_set_passive(struct bwfm_softc *sc)
 {
 	struct bwfm_core *core;
+	uint32_t val;
 
 	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CR4);
-	sc->sc_chip.ch_core_disable(sc, core, 0, 0);
+	val = sc->sc_buscore_ops->bc_read(sc,
+	    core->co_wrapbase + BWFM_AGENT_IOCTL);
+	sc->sc_chip.ch_core_reset(sc, core,
+	    val & BWFM_AGENT_IOCTL_ARMCR4_CPUHALT,
+	    BWFM_AGENT_IOCTL_ARMCR4_CPUHALT,
+	    BWFM_AGENT_IOCTL_ARMCR4_CPUHALT);
+
 	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_80211);
 	sc->sc_chip.ch_core_reset(sc, core, BWFM_AGENT_D11_IOCTL_PHYRESET |
 	    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN, BWFM_AGENT_D11_IOCTL_PHYCLOCKEN,
@@ -894,13 +901,34 @@ bwfm_chip_cr4_set_passive(struct bwfm_softc *sc)
 int
 bwfm_chip_ca7_set_active(struct bwfm_softc *sc, uint32_t rstvec)
 {
-	panic("%s: CA7 not supported", DEVNAME(sc));
+	struct bwfm_core *core;
+
+	sc->sc_buscore_ops->bc_activate(sc, rstvec);
+	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CA7);
+	sc->sc_chip.ch_core_reset(sc, core,
+	    BWFM_AGENT_IOCTL_ARMCR4_CPUHALT, 0, 0);
+
+	return 0;
 }
 
 void
 bwfm_chip_ca7_set_passive(struct bwfm_softc *sc)
 {
-	panic("%s: CA7 not supported", DEVNAME(sc));
+	struct bwfm_core *core;
+	uint32_t val;
+
+	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CA7);
+	val = sc->sc_buscore_ops->bc_read(sc,
+	    core->co_wrapbase + BWFM_AGENT_IOCTL);
+	sc->sc_chip.ch_core_reset(sc, core,
+	    val & BWFM_AGENT_IOCTL_ARMCR4_CPUHALT,
+	    BWFM_AGENT_IOCTL_ARMCR4_CPUHALT,
+	    BWFM_AGENT_IOCTL_ARMCR4_CPUHALT);
+
+	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_80211);
+	sc->sc_chip.ch_core_reset(sc, core, BWFM_AGENT_D11_IOCTL_PHYRESET |
+	    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN, BWFM_AGENT_D11_IOCTL_PHYCLOCKEN,
+	    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN);
 }
 
 int
