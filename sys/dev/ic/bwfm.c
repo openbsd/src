@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.20 2017/12/18 16:33:37 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.21 2017/12/18 16:44:49 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1285,7 +1285,8 @@ bwfm_connect(struct bwfm_softc *sc)
 		params = malloc(sizeof(*params), M_TEMP, M_WAITOK | M_ZERO);
 		memcpy(params->ssid.ssid, ic->ic_des_essid, ic->ic_des_esslen);
 		params->ssid.len = htole32(ic->ic_des_esslen);
-		memset(params->assoc.bssid, 0xff, sizeof(params->assoc.bssid));
+		memcpy(params->assoc.bssid, ic->ic_bss->ni_bssid,
+		    sizeof(params->assoc.bssid));
 		params->scan.scan_type = -1;
 		params->scan.nprobes = htole32(-1);
 		params->scan.active_time = htole32(-1);
@@ -1294,9 +1295,11 @@ bwfm_connect(struct bwfm_softc *sc)
 		if (bwfm_fwvar_var_set_data(sc, "join", params, sizeof(*params))) {
 			struct bwfm_join_params join;
 			memset(&join, 0, sizeof(join));
-			memcpy(join.ssid.ssid, ic->ic_des_essid, ic->ic_des_esslen);
+			memcpy(join.ssid.ssid, ic->ic_des_essid,
+			    ic->ic_des_esslen);
 			join.ssid.len = htole32(ic->ic_des_esslen);
-			memset(join.assoc.bssid, 0xff, sizeof(join.assoc.bssid));
+			memcpy(join.assoc.bssid, ic->ic_bss->ni_bssid,
+			    sizeof(join.assoc.bssid));
 			bwfm_fwvar_cmd_set_data(sc, BWFM_C_SET_SSID, &join,
 			    sizeof(join));
 		}
