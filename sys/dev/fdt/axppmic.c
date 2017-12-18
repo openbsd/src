@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.2 2017/12/18 10:50:13 kettenis Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.3 2017/12/18 20:21:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -137,7 +137,7 @@ struct axppmic_regdata axp809_regdata[] = {
 	{ NULL }
 };
 
-/* Sensors for AXP209. */
+/* Sensors for AXP209 and AXP809. */
 
 #define AXPPMIC_NSENSORS 8
 
@@ -160,6 +160,13 @@ struct axppmic_sensdata axp209_sensdata[] = {
 	{ NULL }
 };
 
+struct axppmic_sensdata axp809_sensdata[] = {
+	{ "ACIN", SENSOR_INDICATOR, 0x00, (1 << 7), (1 << 6) },
+	{ "VBUS", SENSOR_INDICATOR, 0x00, (1 << 5), (1 << 4) },
+	{ "", SENSOR_TEMP, 0x56, 5450000, 105861 },
+	{ NULL }
+};
+
 struct axppmic_device {
 	const char *name;
 	const char *chip;
@@ -171,7 +178,7 @@ struct axppmic_device axppmic_devices[] = {
 	{ "x-powers,axp152", "AXP152" },
 	{ "x-powers,axp209", "AXP209", axp209_regdata, axp209_sensdata },
 	{ "x-powers,axp806", "AXP806", axp806_regdata },
-	{ "x-powers,axp809", "AXP809", axp809_regdata }
+	{ "x-powers,axp809", "AXP809", axp809_regdata, axp809_sensdata }
 };
 
 const struct axppmic_device *
