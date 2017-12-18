@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.h,v 1.4 2017/12/16 21:12:03 kettenis Exp $	*/
+/*	$OpenBSD: ofw_regulator.h,v 1.5 2017/12/18 09:13:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -23,6 +23,7 @@ struct regulator_device {
 	void	*rd_cookie;
 	uint32_t (*rd_get_voltage)(void *);
 	int	(*rd_set_voltage)(void *, uint32_t);
+	int	(*rd_enable)(void *, int);
 
 	uint32_t rd_min, rd_max;
 

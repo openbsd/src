@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.3 2017/12/16 21:12:03 kettenis Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.4 2017/12/18 09:13:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -50,20 +50,12 @@ regulator_register(struct regulator_device *rd)
 }
 
 int
-regulator_set(uint32_t phandle, int enable)
+regulator_fixed_set(int node, int enable)
 {
 	uint32_t *gpio;
 	uint32_t startup_delay;
 	int active;
-	int node;
 	int len;
-
-	node = OF_getnodebyphandle(phandle);
-	if (node == 0)
-		return -1;
-
-	if (!OF_is_compatible(node, "regulator-fixed"))
-		return -1;
 
 	pinctrl_byname(node, "default");
 
@@ -91,6 +83,34 @@ regulator_set(uint32_t phandle, int enable)
 		delay(startup_delay);
 
 	return 0;
+}
+
+int
+regulator_set(uint32_t phandle, int enable)
+{
+	struct regulator_device *rd;
+	int node;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return ENODEV;
+
+	/* Don't mess around with regulators that are always on. */
+	if (OF_getproplen(node, "regulator-always-on") == 0)
+		return 0;
+
+	LIST_FOREACH(rd, &regulator_devices, rd_list) {
+		if (rd->rd_phandle == phandle)
+			break;
+	}
+
+	if (rd && rd->rd_enable)
+		return rd->rd_enable(rd->rd_cookie, enable);
+
+	if (OF_is_compatible(node, "regulator-fixed"))
+		return regulator_fixed_set(node, enable);
+
+	return ENODEV;
 }
 
 int
