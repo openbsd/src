@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.42 2017/12/18 11:41:41 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.43 2017/12/18 14:20:23 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -611,6 +611,7 @@ fuse_teardown(struct fuse *fuse, char *mp)
 	if (fuse == NULL || mp == NULL)
 		return;
 
+	fuse_remove_signal_handlers(fuse_get_session(fuse));
 	fuse_unmount(mp, fuse->fc);
 	fuse_destroy(fuse);
 }
