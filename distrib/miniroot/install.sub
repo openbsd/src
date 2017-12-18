@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1047 2017/12/17 18:29:56 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1048 2017/12/18 21:33:26 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2801,6 +2801,7 @@ do_install() {
 	done
 	[[ ${resp%%.*} != $(hostname -s) ]] && hostname "$resp"
 	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
+	export PS1='\h# '
 
 	echo
 
@@ -3081,6 +3082,7 @@ do_upgrade() {
 	# Set system hostname and register hostname specific site set.
 	hostname $(stripcom /tmp/i/myname)
 	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
+	export PS1='\h# '
 
 	# Configure the network.
 	enable_network
@@ -3197,6 +3199,7 @@ HTTP_LIST=/tmp/i/httplist
 HTTP_SEC=/tmp/i/httpsec
 INSTALL_METHOD=
 NIFS=0
+export PS1="$MODE# "
 PUB_KEY=/etc/signify/openbsd-${VERSION}-base.pub
 ROOTDEV=
 ROOTDISK=
