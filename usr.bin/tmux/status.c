@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.171 2017/11/02 21:29:17 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.172 2017/12/18 12:39:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -803,7 +803,7 @@ status_prompt_redraw(struct client *c)
 	struct screen		 old_status;
 	u_int			 i, offset, left, start, pcursor, pwidth, width;
 	u_int			 lines;
-	size_t			 len, off;
+	size_t			 len;
 	struct grid_cell	 gc, cursorgc;
 
 	if (c->tty.sx == 0 || c->tty.sy == 0)
@@ -819,7 +819,6 @@ status_prompt_redraw(struct client *c)
 	len = screen_write_strlen("%s", c->prompt_string);
 	if (len > c->tty.sx)
 		len = c->tty.sx;
-	off = 0;
 
 	if (c->prompt_mode == PROMPT_COMMAND)
 		style_apply(&gc, s->options, "message-command-style");
