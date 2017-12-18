@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.77 2017/05/28 10:39:15 benno Exp $	*/
+/*	$OpenBSD: hce.c,v 1.78 2017/12/18 21:45:57 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -80,8 +80,7 @@ hce_setup_events(void)
 	struct timeval	 tv;
 	struct table	*table;
 
-	if (!(TAILQ_EMPTY(env->sc_tables) ||
-	    event_initialized(&env->sc_ev))) {
+	if (!event_initialized(&env->sc_ev)) {
 		evtimer_set(&env->sc_ev, hce_launch_checks, env);
 		bzero(&tv, sizeof(tv));
 		evtimer_add(&env->sc_ev, &tv);
