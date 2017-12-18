@@ -1,4 +1,4 @@
-/*	$OpenBSD: _time.h,v 1.8 2016/09/03 15:06:06 akfaew Exp $	*/
+/*	$OpenBSD: _time.h,v 1.9 2017/12/18 05:51:53 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,6 +37,7 @@
 #define CLOCK_MONOTONIC			3
 #define CLOCK_THREAD_CPUTIME_ID		4
 #define CLOCK_UPTIME			5
+#define CLOCK_BOOTTIME			6
 
 #if __BSD_VISIBLE
 /*

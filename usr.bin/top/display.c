@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.52 2017/03/15 04:24:14 deraadt Exp $	 */
+/* $OpenBSD: display.c,v 1.53 2017/12/18 05:51:53 cheloha Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -57,7 +57,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/sysctl.h>
 
 #include "screen.h"		/* interface to screen package */
 #include "layout.h"		/* defines for screen position layout */
@@ -209,22 +208,15 @@ display_init(struct statics * statics)
 static void
 format_uptime(char *buf, size_t buflen)
 {
-	time_t now, uptime;
+	time_t uptime;
 	int days, hrs, mins;
-	int mib[2];
-	size_t size;
-	struct timeval boottime;
+	struct timespec boottime;
 
-	now = time(NULL);
 	/*
 	 * Print how long system has been up.
-	 * (Found by getting "boottime" from the kernel)
 	 */
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_BOOTTIME;
-	size = sizeof(boottime);
-	if (sysctl(mib, 2, &boottime, &size, NULL, 0) != -1) {
-		uptime = now - boottime.tv_sec;
+	if (clock_gettime(CLOCK_BOOTTIME, &boottime) != -1) {
+		uptime = boottime.tv_sec;
 		uptime += 30;
 		days = uptime / (3600 * 24);
 		uptime %= (3600 * 24);

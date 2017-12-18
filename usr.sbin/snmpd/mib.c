@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.84 2017/06/01 14:38:28 patrick Exp $	*/
+/*	$OpenBSD: mib.c,v 1.85 2017/12/18 05:51:53 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -451,18 +451,13 @@ static struct oid hr_mib[] = {
 int
 mib_hrsystemuptime(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	struct timeval   boottime;
-	int		 mib[] = { CTL_KERN, KERN_BOOTTIME };
-	time_t		 now;
-	size_t		 len;
+	struct timespec  uptime;
+	long long	 ticks;
 
-	(void)time(&now);
-	len = sizeof(boottime);
-
-	if (sysctl(mib, 2, &boottime, &len, NULL, 0) == -1)
+	if (clock_gettime(CLOCK_BOOTTIME, &uptime) == -1)
 		return (-1);
-
-	*elm = ber_add_integer(*elm, (now - boottime.tv_sec) * 100);
+	ticks = uptime.tv_sec * 100 + uptime.tv_nsec / 10000000;
+	*elm = ber_add_integer(*elm, ticks);
 	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);
 
 	return (0);
