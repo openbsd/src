@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.17 2017/12/17 18:41:17 job Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.18 2017/12/18 09:12:49 job Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -265,8 +265,8 @@ main(void)
 	    "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
 	    "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
 	    "<head>\n"
-	    "<title>%s: %s</title>\n",
-	    CONTENT_TYPE, NAME, myname);
+	    "<title>%s</title>\n",
+	    CONTENT_TYPE, myname);
 	if (stat(INC_STYLE, &st) == 0) {
 		printf("<style type='text/css'><!--\n");
 		lg_incl(INC_STYLE);
@@ -276,9 +276,6 @@ main(void)
 		printf("</head>\n"
 		    "<body>\n");
 	}
-
-	printf("<h1>%s: %s</h1>\n", NAME, myname);
-	printf("<h2>%s</h2>\n", BRIEF);
 
 	/* print a form with possible options */
 	if ((self = lg_getenv("SCRIPT_NAME", NULL)) == NULL) {
@@ -379,10 +376,9 @@ main(void)
 		printf("<hr/>\n");
 
 	printf("<div class='footer'>\n"
-	    "<small>%s - %s<br/>Copyright (c) %s</small>\n"
 	    "</div>\n"
 	    "</body>\n"
-	    "</html>\n", NAME, BRIEF, COPYRIGHT);
+	    "</html>\n");
 
 	return (ret);
 }

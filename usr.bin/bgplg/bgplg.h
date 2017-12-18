@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.h,v 1.12 2017/12/17 18:41:17 job Exp $	*/
+/*	$OpenBSD: bgplg.h,v 1.13 2017/12/18 09:12:49 job Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,8 +20,6 @@
 #define _BGPLG_H
 
 #define NAME		"bgplg"
-#define BRIEF		"a looking glass for OpenBGPD"
-#define COPYRIGHT	"2005, 2006 Reyk Floeter (reyk@openbsd.org)"
 
 #define BGPLG_TIMEOUT	60	/* 60 seconds */
 
@@ -71,7 +69,6 @@ struct cmd {
 	    { BGPCTL, "show", "neighbor", NULL } },			\
 	{ "show nexthop", 0, 0, NULL,					\
 	    { BGPCTL, "show", "nexthop", NULL } },			\
-	{ "show version", 0, 0, NULL, { NULL }, lg_show_version },	\
 	{ "traceroute", 1, 1, "&lt;address&gt;",			\
 	    { TRACEROUTE, "-ASl", NULL } },				\
 	{ "ping", 1, 1, "&lt;address&gt;",				\
@@ -84,7 +81,6 @@ struct cmd {
 	{ NULL }							\
 }
 
-int	 lg_show_version(struct cmd *, char **);
 int	 lg_help(struct cmd *, char **);
 int	 lg_exec(const char *, char **);
 int	 lg_checkperm(struct cmd *);
