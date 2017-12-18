@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.93 2017/12/16 10:22:13 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.94 2017/12/18 20:23:16 kettenis Exp $
 
 machine		armv7 arm
 
@@ -88,7 +88,8 @@ gpio*		at sxipio?
 sxiccmu*	at fdt? early 1		# Clock Control Module/Unit
 sxitimer*	at fdt? early 1
 sxirsb*		at fdt? early 1		# Reduced Serial Bus
-acrtc*		at sxirsb?
+acrtc*		at rsb?
+axppmic*	at rsb?
 sxidog*		at fdt?			# watchdog timer
 sxirtc*		at fdt?			# Real Time Clock
 sxie*		at fdt?
