@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.1 2017/12/17 18:25:25 kettenis Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.2 2017/12/18 10:50:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -19,16 +19,28 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/sensors.h>
 
+#include <dev/i2c/i2cvar.h>
 #include <dev/fdt/rsbvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
+extern void (*powerdownfn)(void);
+
+#define AXP209_SDR		0x32
+#define  AXP209_SDR_SHUTDOWN	(1 << 7)
+#define AXP209_ADC_EN1		0x82
+#define  AXP209_ADC_EN1_ACIN	(3 << 4)
+#define  AXP209_ADC_EN1_VBUS	(3 << 2)
+
 #define AXP806_REG_ADDR_EXT			0xff
 #define  AXP806_REG_ADDR_EXT_MASTER_MODE	(0 << 4)
 #define  AXP806_REG_ADDR_EXT_SLAVE_MODE		(1 << 4)
+
+/* Regulators for AXP209, AXP806 and AXP809. */
 
 struct axppmic_regdata {
 	const char *name;
@@ -36,6 +48,22 @@ struct axppmic_regdata {
 	uint8_t vreg, vmask;
 	uint32_t base, delta;
 	uint32_t base2, delta2;
+};
+
+struct axppmic_regdata axp209_regdata[] = {
+	{ "dcdc2", 0x12, (1 << 4), (1 << 4), (0 << 4),
+	  0x23, 0x3f, 700000, 25000 },
+	{ "dcdc3", 0x12, (1 << 1), (1 << 1), (0 << 1),
+	  0x27, 0x3f, 700000, 25000 },
+	/* LDO1 can't be controlled */
+	{ "ldo2", 0x12, (1 << 2), (1 << 2), (0 << 2),
+	  0x28, 0xf0, 1800000, (100000 >> 4) },
+	{ "ldo3", 0x12, (1 << 6), (1 << 6), (0 << 6),
+	  0x29, 0x7f, 700000, 25000 },
+	/* LDO4 voltage levels are complicated */
+	{ "ldo5", 0x90, 0x07, 0x03, 0x07,
+	  0x91, 0xf0, 1800000, (100000 >> 4) },
+	{ NULL }
 };
 
 struct axppmic_regdata axp806_regdata[] = {
@@ -109,13 +137,39 @@ struct axppmic_regdata axp809_regdata[] = {
 	{ NULL }
 };
 
+/* Sensors for AXP209. */
+
+#define AXPPMIC_NSENSORS 8
+
+struct axppmic_sensdata {
+	const char *name;
+	enum sensor_type type;
+	uint8_t reg;
+	uint64_t base, delta;
+};
+
+struct axppmic_sensdata axp209_sensdata[] = {
+	{ "ACIN", SENSOR_INDICATOR, 0x00, (1 << 7), (1 << 6) },
+	{ "VBUS", SENSOR_INDICATOR, 0x00, (1 << 5), (1 << 4) },
+	{ "ACIN", SENSOR_VOLTS_DC, 0x56, 0, 1700 },
+	{ "ACIN", SENSOR_AMPS, 0x58, 0, 625 },
+	{ "VBUS", SENSOR_VOLTS_DC, 0x5a, 0, 1700 },
+	{ "VBUS", SENSOR_AMPS, 0x5c, 0, 375 },
+	{ "", SENSOR_TEMP, 0x5e, 128450000, 100000 },
+	{ "APS", SENSOR_VOLTS_DC, 0x7e, 0, 1400 },
+	{ NULL }
+};
+
 struct axppmic_device {
 	const char *name;
 	const char *chip;
 	struct axppmic_regdata *regdata;
+	struct axppmic_sensdata *sensdata;
 };
 
 struct axppmic_device axppmic_devices[] = {
+	{ "x-powers,axp152", "AXP152" },
+	{ "x-powers,axp209", "AXP209", axp209_regdata, axp209_sensdata },
 	{ "x-powers,axp806", "AXP806", axp806_regdata },
 	{ "x-powers,axp809", "AXP809", axp809_regdata }
 };
@@ -136,38 +190,123 @@ axppmic_lookup(const char *name)
 struct axppmic_softc {
 	struct device	sc_dev;
 	void		*sc_cookie;
-	uint16_t 	sc_rta;
+	uint16_t 	sc_addr;
 
+	uint8_t		(*sc_read)(struct axppmic_softc *, uint8_t);
+	void		(*sc_write)(struct axppmic_softc *, uint8_t, uint8_t);
 	struct axppmic_regdata *sc_regdata;
+	struct axppmic_sensdata *sc_sensdata;
+
+	struct ksensor	sc_sensor[AXPPMIC_NSENSORS];
+	struct ksensordev sc_sensordev;
 };
 
 inline uint8_t
 axppmic_read_reg(struct axppmic_softc *sc, uint8_t reg)
 {
-	return rsb_read_1(sc->sc_cookie, sc->sc_rta, reg);
+	return sc->sc_read(sc, reg);
 }
 
 inline void
 axppmic_write_reg(struct axppmic_softc *sc, uint8_t reg, uint8_t value)
 {
-	rsb_write_1(sc->sc_cookie, sc->sc_rta, reg, value);
+	sc->sc_write(sc, reg, value);
 }
 
-int	axppmic_match(struct device *, void *, void *);
-void	axppmic_attach(struct device *, struct device *, void *);
+void	axppmic_attach_common(struct axppmic_softc *, const char *, int);
+
+/* I2C interface */
+
+int	axppmic_i2c_match(struct device *, void *, void *);
+void	axppmic_i2c_attach(struct device *, struct device *, void *);
+
+struct cfattach axppmic_ca = {
+	sizeof(struct axppmic_softc), axppmic_i2c_match, axppmic_i2c_attach
+};
+
+struct cfdriver axppmic_cd = {
+	NULL, "axppmic", DV_DULL
+};
+
+uint8_t	axppmic_i2c_read(struct axppmic_softc *, uint8_t);
+void	axppmic_i2c_write(struct axppmic_softc *, uint8_t, uint8_t);
+
+int
+axppmic_i2c_match(struct device *parent, void *match, void *aux)
+{
+	struct i2c_attach_args *ia = aux;
+
+	if (axppmic_lookup(ia->ia_name))
+		return 1;
+	return 0;
+}
+
+void
+axppmic_i2c_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct axppmic_softc *sc = (struct axppmic_softc *)self;
+	struct i2c_attach_args *ia = aux;
+	int node = *(int *)ia->ia_cookie;
+
+	sc->sc_cookie = ia->ia_tag;
+	sc->sc_addr = ia->ia_addr;
+	sc->sc_read = axppmic_i2c_read;
+	sc->sc_write = axppmic_i2c_write;
+
+	axppmic_attach_common(sc, ia->ia_name, node);
+}
+
+uint8_t
+axppmic_i2c_read(struct axppmic_softc *sc, uint8_t reg)
+{
+	i2c_tag_t tag = sc->sc_cookie;
+	int flags = cold ? I2C_F_POLL : 0;
+	int error;
+	uint8_t value;
+
+	iic_acquire_bus(tag, flags);
+	error = iic_smbus_read_byte(tag, sc->sc_addr, reg, &value, flags);
+	iic_release_bus(tag, flags);
+	if (error) {
+		printf("%s: SMBus read byte failed\n", sc->sc_dev.dv_xname);
+		return 0xff;
+	}
+
+	return value;
+}
+
+void
+axppmic_i2c_write(struct axppmic_softc *sc, uint8_t reg, uint8_t value)
+{
+	i2c_tag_t tag = sc->sc_cookie;
+	int flags = cold ? I2C_F_POLL : 0;
+	int error;
+
+	iic_acquire_bus(tag, flags);
+	error = iic_smbus_write_byte(tag, sc->sc_addr, reg, value, flags);
+	iic_release_bus(tag, flags);
+	if (error)
+		printf("%s: SMBus write byte failed\n", sc->sc_dev.dv_xname);
+}
+
+/* RSB interface */
+
+int	axppmic_rsb_match(struct device *, void *, void *);
+void	axppmic_rsb_attach(struct device *, struct device *, void *);
 
 struct cfattach axppmic_rsb_ca = {
-	sizeof(struct axppmic_softc), axppmic_match, axppmic_attach
+	sizeof(struct axppmic_softc), axppmic_rsb_match, axppmic_rsb_attach
 };
 
 struct cfdriver axppmic_rsb_cd = {
 	NULL, "axppmic", DV_DULL
 };
 
-void	axppmic_attach_regulator(struct axppmic_softc *, int);
+uint8_t	axppmic_rsb_read(struct axppmic_softc *, uint8_t);
+void	axppmic_rsb_write(struct axppmic_softc *, uint8_t, uint8_t);
 
 int
-axppmic_match(struct device *parent, void *match, void *aux)
+axppmic_rsb_match(struct device *parent, void *match, void *aux)
 {
 	struct rsb_attach_args *ra = aux;
 
@@ -177,24 +316,53 @@ axppmic_match(struct device *parent, void *match, void *aux)
 }
 
 void
-axppmic_attach(struct device *parent, struct device *self, void *aux)
+axppmic_rsb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct axppmic_softc *sc = (struct axppmic_softc *)self;
-	const struct axppmic_device *device;
 	struct rsb_attach_args *ra = aux;
-	int node;
 
 	sc->sc_cookie = ra->ra_cookie;
-	sc->sc_rta = ra->ra_rta;
+	sc->sc_addr = ra->ra_rta;
+	sc->sc_read = axppmic_rsb_read;
+	sc->sc_write = axppmic_rsb_write;
 
-	device = axppmic_lookup(ra->ra_name);
+	axppmic_attach_common(sc, ra->ra_name, ra->ra_node);
+}
+
+uint8_t
+axppmic_rsb_read(struct axppmic_softc *sc, uint8_t reg)
+{
+	return rsb_read_1(sc->sc_cookie, sc->sc_addr, reg);
+}
+
+void
+axppmic_rsb_write(struct axppmic_softc *sc, uint8_t reg, uint8_t value)
+{
+	rsb_write_1(sc->sc_cookie, sc->sc_addr, reg, value);
+}
+
+/* Common code */
+
+void	axppmic_attach_regulators(struct axppmic_softc *, int);
+void	axppmic_attach_sensors(struct axppmic_softc *);
+
+struct axppmic_softc *axppmic_sc;
+void	axp209_powerdown(void);
+
+void
+axppmic_attach_common(struct axppmic_softc *sc, const char *name, int node)
+{
+	const struct axppmic_device *device;
+
+	device = axppmic_lookup(name);
 	printf(": %s\n", device->chip);
 
 	sc->sc_regdata = device->regdata;
+	sc->sc_sensdata = device->sensdata;
 
 	/* Switch AXP806 into master or slave mode. */
-	if (strcmp(ra->ra_name, "x-powers,axp806") == 0) {
-	    if (OF_getproplen(ra->ra_node, "x-powers,master-mode") == 0) {
+	if (strcmp(name, "x-powers,axp806") == 0) {
+	    if (OF_getproplen(node, "x-powers,master-mode") == 0) {
 			axppmic_write_reg(sc, AXP806_REG_ADDR_EXT,
 			    AXP806_REG_ADDR_EXT_MASTER_MODE);
 		} else {
@@ -203,12 +371,33 @@ axppmic_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	node = OF_getnodebyname(ra->ra_node, "regulators");
-	if (node == 0)
-		return;
-	for (node = OF_child(node); node; node = OF_peer(node))
-		axppmic_attach_regulator(sc, node);
+	/* Enable data collecton on AXP209. */
+	if (strcmp(name, "x-powers,axp209") == 0) {
+		uint8_t reg;
+
+		/* Turn on sampling of ACIN and VBUS voltage and current. */
+		reg = axppmic_read_reg(sc, AXP209_ADC_EN1);
+		reg |= AXP209_ADC_EN1_ACIN;
+		reg |= AXP209_ADC_EN1_VBUS;
+		axppmic_write_reg(sc, AXP209_ADC_EN1, reg);
+	}
+
+	if (sc->sc_regdata)
+		axppmic_attach_regulators(sc, node);
+
+	if (sc->sc_sensdata)
+		axppmic_attach_sensors(sc);
+
+#ifdef __armv7__
+	if (strcmp(name, "x-powers,axp152") == 0 ||
+	    strcmp(name, "x-powers,axp209") == 0) {
+		axppmic_sc = sc;
+		powerdownfn = axp209_powerdown;
+#endif
+	}
 }
+
+/* Regulators */
 
 struct axppmic_regulator {
 	struct axppmic_softc *ar_sc;
@@ -223,9 +412,21 @@ struct axppmic_regulator {
 	struct regulator_device ar_rd;
 };
 
+void	axppmic_attach_regulator(struct axppmic_softc *, int);
 uint32_t axppmic_get_voltage(void *);
 int	axppmic_set_voltage(void *, uint32_t);
 int	axppmic_enable(void *, int);
+
+void
+axppmic_attach_regulators(struct axppmic_softc *sc, int node)
+{
+	node = OF_getnodebyname(node, "regulators");
+	if (node == 0)
+		return;
+
+	for (node = OF_child(node); node; node = OF_peer(node))
+		axppmic_attach_regulator(sc, node);
+}
 
 void
 axppmic_attach_regulator(struct axppmic_softc *sc, int node)
@@ -317,4 +518,86 @@ axppmic_enable(void *cookie, int on)
 		reg |= ar->ar_dval;
 	axppmic_write_reg(ar->ar_sc, ar->ar_ereg, reg);
 	return 0;
+}
+
+/* Sensors */
+
+void	axppmic_update_sensors(void *);
+void	axppmic_update_indicator(struct axppmic_softc *, int);
+void	axppmic_update_sensor(struct axppmic_softc *, int);
+
+void
+axppmic_attach_sensors(struct axppmic_softc *sc)
+{
+	int i;
+
+	for (i = 0; sc->sc_sensdata[i].name; i++) {
+		KASSERT(i < AXPPMIC_NSENSORS);
+
+		sc->sc_sensor[i].type = sc->sc_sensdata[i].type;
+		strlcpy(sc->sc_sensor[i].desc, sc->sc_sensdata[i].name,
+		    sizeof(sc->sc_sensor[i].desc));
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	}
+
+	axppmic_update_sensors(sc);
+	if (sensor_task_register(sc, axppmic_update_sensors, 5) == NULL) {
+		printf(", unable to register update task\n");
+		return;
+	}
+
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+	sensordev_install(&sc->sc_sensordev);
+}
+
+void
+axppmic_update_sensors(void *arg)
+{
+	struct axppmic_softc *sc = arg;
+	int i;
+
+	for (i = 0; sc->sc_sensdata[i].name; i++) {
+		if (sc->sc_sensdata[i].type == SENSOR_INDICATOR)
+			axppmic_update_indicator(sc, i);
+		else
+			axppmic_update_sensor(sc, i);
+	}
+}
+
+void
+axppmic_update_indicator(struct axppmic_softc *sc, int i)
+{
+	uint8_t reg = sc->sc_sensdata[i].reg;
+	uint8_t mask = sc->sc_sensdata[i].base;
+	uint8_t mask_ok = sc->sc_sensdata[i].delta;
+	uint8_t value;
+
+	value = axppmic_read_reg(sc, reg);
+	sc->sc_sensor[i].value = (value & mask) ? 1 : 0;
+	if (value & mask) {
+		sc->sc_sensor[i].status =
+		    (value & mask_ok) ? SENSOR_S_OK : SENSOR_S_WARN;
+	} else {
+		sc->sc_sensor[i].status = SENSOR_S_UNSPEC;
+	}
+}
+
+void
+axppmic_update_sensor(struct axppmic_softc *sc, int i)
+{
+	uint8_t reg = sc->sc_sensdata[i].reg;
+	uint64_t base = sc->sc_sensdata[i].base;
+	uint64_t delta = sc->sc_sensdata[i].delta;
+	uint16_t value;
+
+	value = axppmic_read_reg(sc, reg);
+	value = (value << 4) | axppmic_read_reg(sc, reg + 1);
+	sc->sc_sensor[i].value = base + value * delta;
+}
+
+void
+axp209_powerdown(void)
+{
+	axppmic_write_reg(axppmic_sc, AXP209_SDR, AXP209_SDR_SHUTDOWN);
 }
