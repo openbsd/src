@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.10 2017/12/16 23:45:16 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.11 2017/12/18 16:33:37 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -329,6 +329,9 @@ struct bwfm_scan_params {
 	uint8_t bss_type;
 #define DOT11_BSSTYPE_ANY		2
 	uint8_t scan_type;
+#define BWFM_SCANTYPE_ACTIVE		0
+#define BWFM_SCANTYPE_PASSIVE		1
+#define BWFM_SCANTYPE_DEFAULT		0xff
 	uint32_t nprobes;
 	uint32_t active_time;
 	uint32_t passive_time;

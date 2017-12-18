@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.19 2017/12/18 00:08:28 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.20 2017/12/18 16:33:37 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1311,12 +1311,6 @@ bwfm_scan(struct bwfm_softc *sc)
 	uint32_t nssid = 0, nchannel = 0;
 	size_t params_size;
 
-#if 0
-	/* Active scan is used for scanning for an SSID */
-	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PASSIVE_SCAN, 0);
-#endif
-	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PASSIVE_SCAN, 1);
-
 	params_size = sizeof(*params);
 	params_size += sizeof(uint32_t) * ((nchannel + 1) / 2);
 	params_size += sizeof(struct bwfm_ssid) * nssid;
@@ -1325,6 +1319,7 @@ bwfm_scan(struct bwfm_softc *sc)
 	memset(params->scan_params.bssid, 0xff,
 	    sizeof(params->scan_params.bssid));
 	params->scan_params.bss_type = 2;
+	params->scan_params.scan_type = BWFM_SCANTYPE_PASSIVE;
 	params->scan_params.nprobes = htole32(-1);
 	params->scan_params.active_time = htole32(-1);
 	params->scan_params.passive_time = htole32(-1);
