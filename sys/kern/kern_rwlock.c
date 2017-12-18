@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.32 2017/10/24 08:53:15 mpi Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.33 2017/12/18 10:05:43 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -286,6 +286,10 @@ _rw_exit(struct rwlock *rwl LOCK_FL_VARS)
 	unsigned long owner = rwl->rwl_owner;
 	int wrlock = owner & RWLOCK_WRLOCK;
 	unsigned long set;
+
+	/* Avoid deadlocks after panic */
+	if (panicstr)
+		return;
 
 	if (wrlock)
 		rw_assert_wrlock(rwl);
