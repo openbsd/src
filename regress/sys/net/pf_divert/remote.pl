@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.8 2017/08/15 04:11:20 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.9 2017/12/18 17:01:27 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -94,18 +94,22 @@ my ($srcaddr, $dstaddr)	= @ARGV[0,1];
 ($srcaddr, $dstaddr) = ($dstaddr, $srcaddr) if $mode eq "divert";
 ($srcaddr, $dstaddr) = ($dstaddr, $srcaddr) if $divert =~ /reply|out/;
 
-my ($logfile, $packetlog);
+my ($logfile, $ktracefile, $packetlog, $packetktrace);
 if ($mode eq "divert") {
 	$logfile	= dirname($0)."/remote.log";
+	$ktracefile	= dirname($0)."/remote.ktrace";
 	$packetlog	= dirname($0)."/packet.log";
+	$packetktrace	= dirname($0)."/packet.ktrace";
 }
 
 my ($c, $l, $r, $s);
 if ($local eq "server") {
 	$l = $s = Server->new(
+	    ktrace		=> $ENV{KTRACE},
 	    %args,
 	    %{$args{server}},
 	    logfile		=> $logfile,
+	    ktracefile		=> $ktracefile,
 	    af			=> $af,
 	    domain		=> $domain,
 	    protocol		=> $protocol,
@@ -123,6 +127,7 @@ if ($mode eq "auto") {
 	    opts		=> \%opts,
 	    down		=> $args{packet} && "Shutdown Packet",
 	    logfile		=> "$remote.log",
+	    ktracefile		=> "$remote.ktrace",
 	    testfile		=> $test,
 	    af			=> $af,
 	    remotessh		=> $ARGV[2],
@@ -139,9 +144,11 @@ if ($mode eq "auto") {
 }
 if ($local eq "client") {
 	$l = $c = Client->new(
+	    ktrace		=> $ENV{KTRACE},
 	    %args,
 	    %{$args{client}},
 	    logfile		=> $logfile,
+	    ktracefile		=> $ktracefile,
 	    af			=> $af,
 	    domain		=> $domain,
 	    protocol		=> $protocol,
@@ -169,9 +176,11 @@ if ($mode eq "divert") {
 
 	my ($p, $plog);
 	$p = Packet->new(
+	    ktrace		=> $ENV{KTRACE},
 	    %args,
 	    %{$args{packet}},
 	    logfile		=> $packetlog,
+	    ktracefile		=> $packetktrace,
 	    af			=> $af,
 	    domain		=> $domain,
 	    bindport		=> 666,

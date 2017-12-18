@@ -48,3 +48,11 @@ args-...-reply and args-...-reply-to tests consecutively to check
 that the pf states to not interfere.  The first run flushes the
 state, the second must get rid of the state automatically.  For TCP
 the connection in TIME_WAIT is dropped to remove the state.
+
+SUDO=sudo
+As pf and bindany need root privileges either run the tests as root
+or set this variable and run make as a regular user.
+
+KTRACE=ktrace
+Set this variable if you want a ktrace output from client and server.
+Note that ktrace is invoked after sudo as sudo would disable it.

@@ -1,6 +1,6 @@
-#	$OpenBSD: Client.pm,v 1.4 2017/08/15 04:11:20 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.5 2017/12/18 17:01:27 bluhm Exp $
 
-# Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,7 @@ use constant SO_BINDANY => 0x1000;
 sub new {
 	my $class = shift;
 	my %args = @_;
+	$args{ktracefile} ||= "client.ktrace";
 	$args{logfile} ||= "client.log";
 	$args{up} ||= "Connected";
 	$args{down} ||= $args{alarm} ? "Alarm $class" :
@@ -42,6 +43,13 @@ sub new {
 	    or croak "$class connect addr not given";
 	$self->{connectport} || $self->{protocol} !~ /^(tcp|udp)$/
 	    or croak "$class connect port not given";
+
+	if ($self->{ktrace}) {
+		unlink $self->{ktracefile};
+		my @cmd = ("ktrace", "-f", $self->{ktracefile}, "-p", $$);
+		do { local $> = 0; system(@cmd) }
+		    and die ref($self), " system '@cmd' failed: $?";
+	}
 
 	my $cs;
 	if ($self->{bindany}) {
@@ -71,6 +79,12 @@ sub new {
 		$self->{bindaddr} = $cs->sockhost();
 		$self->{bindport} = $cs->sockport();
 		$self->{cs} = $cs;
+	}
+
+	if ($self->{ktrace}) {
+		my @cmd = ("ktrace", "-c", "-f", $self->{ktracefile}, "-p", $$);
+		do { local $> = 0; system(@cmd) }
+		    and die ref($self), " system '@cmd' failed: $?";
 	}
 
 	return $self;
