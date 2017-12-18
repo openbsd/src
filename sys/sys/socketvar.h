@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.79 2017/11/23 13:45:46 mpi Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.80 2017/12/18 10:07:55 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -186,7 +186,10 @@ static inline long
 sbspace(struct socket *so, struct sockbuf *sb)
 {
 	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
+#if 0
+	/* XXXSMP kqueue_scan() calling filt_sowrite() cannot sleep. */
 	soassertlocked(so);
+#endif
 	return lmin(sb->sb_hiwat - sb->sb_cc, sb->sb_mbmax - sb->sb_mbcnt);
 }
 
