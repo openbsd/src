@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.36 2017/12/16 10:27:21 anton Exp $       */
+/*    $OpenBSD: func.c,v 1.37 2017/12/18 19:12:24 anton Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -924,11 +924,9 @@ void
 /*ARGSUSED*/
 dounsetenv(Char **v, struct command *t)
 {
-    Char  **ep, *p, *n;
+    Char  **ep, *p, *n, *name;
     int     i, maxi;
-    static Char *name = NULL;
 
-    free(name);
     /*
      * Find the longest environment variable
      */
@@ -957,7 +955,6 @@ dounsetenv(Char **v, struct command *t)
 		break;
 	    }
     free(name);
-    name = NULL;
 }
 
 void
