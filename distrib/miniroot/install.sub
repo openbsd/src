@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1048 2017/12/18 21:33:26 tb Exp $
+#	$OpenBSD: install.sub,v 1.1049 2017/12/18 22:48:28 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2762,10 +2762,12 @@ __EOT
 	cat <<__EOT
 
 CONGRATULATIONS! Your OpenBSD $MODE has been successfully completed!
+
 __EOT
 	[[ $MODE == install ]] && cat <<__EOT
 When you login to your new system the first time, please read your mail
 using the 'mail' command.
+
 __EOT
 
 	md_congrats
@@ -3201,6 +3203,7 @@ INSTALL_METHOD=
 NIFS=0
 export PS1="$MODE# "
 PUB_KEY=/etc/signify/openbsd-${VERSION}-base.pub
+REBOOT=${MDREBOOT:-reboot}
 ROOTDEV=
 ROOTDISK=
 SETDIR="$VNAME/$ARCH"
@@ -3288,9 +3291,17 @@ esac
 # automatic reboot in do_autoinstall().
 $AUTO && exit
 
-if ask_yn "Escape to shell before reboot?"; then
-	echo "To boot the new system, enter 'reboot' at the command prompt."
-	# Fall through to .profile which leaves us at the command prompt.
-else
-	exec "${MDREBOOT:-reboot}"
-fi
+_r2=${REBOOT#?}
+_r1=${REBOOT%$_r2}
+typeset -u _R1=$_r1
+
+while :; do
+	ask "Exit to (S)hell or ($_R1)$_r2?" "$REBOOT"
+	case $resp in
+	[$_r1$_R1]*)	exec "$REBOOT";;
+	[sS]*)		break;;
+	esac
+done
+
+# Fall through to .profile which leaves us at the command prompt.
+echo "To boot the new system, enter 'reboot' at the command prompt."
