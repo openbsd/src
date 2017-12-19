@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.139 2017/01/21 12:35:40 natano Exp $	*/
+/*	$OpenBSD: job.c,v 1.140 2017/12/19 13:51:13 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ static const char *
 shortened_curdir(void)
 {
 	static BUFFER buf;
-	bool first = true;
+	static bool first = true;
 	if (first) {
 		Buf_Init(&buf, 0);
 		buf_addcurdir(&buf);
