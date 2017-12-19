@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.120 2017/11/02 14:01:18 florian Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.121 2017/12/19 09:32:15 mpi Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -231,8 +231,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 		case SOCK_STREAM:
 		case SOCK_SEQPACKET:
-#define	rcv (&so2->so_rcv)
-#define	snd (&so->so_snd)
 			if (so->so_state & SS_CANTSENDMORE) {
 				error = EPIPE;
 				break;
@@ -248,22 +246,21 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			 * Wake up readers.
 			 */
 			if (control) {
-				if (sbappendcontrol(so2, rcv, m, control))
+				if (sbappendcontrol(so2, &so2->so_rcv, m,
+				    control)) {
 					control = NULL;
-				else {
+				} else {
 					error = ENOBUFS;
 					break;
 				}
 			} else if (so->so_type == SOCK_SEQPACKET)
-				sbappendrecord(so2, rcv, m);
+				sbappendrecord(so2, &so2->so_rcv, m);
 			else
-				sbappend(so2, rcv, m);
-			snd->sb_mbcnt = rcv->sb_mbcnt;
-			snd->sb_cc = rcv->sb_cc;
+				sbappend(so2, &so2->so_rcv, m);
+			so->so_snd.sb_mbcnt = so2->so_rcv.sb_mbcnt;
+			so->so_snd.sb_cc = so2->so_rcv.sb_cc;
 			sorwakeup(so2);
 			m = NULL;
-#undef snd
-#undef rcv
 			break;
 
 		default:
