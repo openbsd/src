@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.243 2017/12/14 00:41:58 dlg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.244 2017/12/19 10:04:59 stefan Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -203,7 +203,6 @@ struct process {
 	char	ps_comm[MAXCOMLEN+1];
 
 	vaddr_t	ps_strings;		/* User pointers to argv/env */
-	vaddr_t	ps_stackgap;		/* User pointer to the "stackgap" */
 	vaddr_t	ps_sigcode;		/* User pointer to the signal code */
 	vaddr_t ps_sigcoderet;		/* User pointer to sigreturn retPC */
 	u_long	ps_sigcookie;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.190 2017/12/12 01:12:34 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.191 2017/12/19 10:04:59 stefan Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -452,9 +452,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/* if an error happened, deallocate and punt */
 	if (error)
 		goto exec_abort;
-
-	/* old "stackgap" is gone now */
-	pr->ps_stackgap = 0;
 
 #ifdef MACHINE_STACK_GROWS_UP
 	pr->ps_strings = (vaddr_t)vm->vm_maxsaddr + sgap;
