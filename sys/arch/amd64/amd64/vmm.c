@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.181 2017/12/17 19:16:02 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.182 2017/12/19 18:06:41 patrick Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -223,6 +223,9 @@ struct vmm_reg_debug_info {
 	const char	*vrdi_absent;
 };
 #endif /* VMM_DEBUG */
+
+extern uint64_t tsc_frequency;
+extern int tsc_is_invariant;
 
 const char *vmm_hv_signature = VMM_HV_SIGNATURE;
 
@@ -5620,7 +5623,10 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 
 	switch (*rax) {
 	case 0x00:	/* Max level and vendor ID */
-		*rax = cpuid_level;
+		if (cpuid_level < 0x15 && tsc_is_invariant)
+			*rax = 0x15;
+		else
+			*rax = cpuid_level;
 		*rbx = *((uint32_t *)&cpu_vendor);
 		*rdx = *((uint32_t *)&cpu_vendor + 1);
 		*rcx = *((uint32_t *)&cpu_vendor + 2);
@@ -5753,7 +5759,19 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = 0;
 		break;
 	case 0x15:
-		CPUID(0x15, *rax, *rbx, *rcx, *rdx);
+		if (cpuid_level >= 0x15) {
+			CPUID(0x15, *rax, *rbx, *rcx, *rdx);
+		} else if (tsc_is_invariant) {
+			*rax = 1;
+			*rbx = 100;
+			*rcx = tsc_frequency / 100;
+			*rdx = 0;
+		} else {
+			*rax = 0;
+			*rbx = 0;
+			*rcx = 0;
+			*rdx = 0;
+		}
 		break;
 	case 0x16:	/* Processor frequency info (not supported) */
 		DPRINTF("%s: function 0x16 (frequency info) not supported\n",
