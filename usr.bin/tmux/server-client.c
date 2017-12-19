@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.245 2017/10/16 19:30:53 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.246 2017/12/19 15:00:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -161,7 +161,7 @@ server_client_is_default_key_table(struct client *c, struct key_table *table)
 }
 
 /* Create a new client. */
-void
+struct client *
 server_client_create(int fd)
 {
 	struct client	*c;
@@ -214,6 +214,7 @@ server_client_create(int fd)
 
 	TAILQ_INSERT_TAIL(&clients, c, entry);
 	log_debug("new client %p", c);
+	return (c);
 }
 
 /* Open client terminal if needed. */
@@ -1549,6 +1550,9 @@ server_client_dispatch_command(struct client *c, struct imsg *imsg)
 	struct cmd_list		 *cmdlist = NULL;
 	int			  argc;
 	char			**argv, *cause;
+
+	if (c->flags & CLIENT_EXIT)
+		return;
 
 	if (imsg->hdr.len - IMSG_HEADER_SIZE < sizeof data)
 		fatalx("bad MSG_COMMAND size");

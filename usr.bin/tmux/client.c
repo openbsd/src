@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.124 2017/12/18 22:13:36 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.125 2017/12/19 15:00:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -452,6 +452,7 @@ client_write(int fd, const char *data, size_t size)
 {
 	ssize_t	used;
 
+	log_debug("%s: %.*s", __func__, (int)size, data);
 	while (size != 0) {
 		used = write(fd, data, size);
 		if (used == -1) {
