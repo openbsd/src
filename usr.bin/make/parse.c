@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.119 2017/12/05 14:35:12 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.120 2017/12/19 20:44:53 zhuk Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -582,7 +582,7 @@ found_delimiter(const char *s)
 			if (*p == '\0')
 			    break;
 			p++;
-		} while (!ISSPACE(*p));
+		} while (*p != '\0' && !ISSPACE(*p));
 
 		/* No better match later on... */
 		if (*p == '\0')

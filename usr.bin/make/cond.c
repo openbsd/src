@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.52 2017/06/21 00:11:36 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.53 2017/12/19 20:44:53 zhuk Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -398,7 +398,7 @@ CondHandleNumber(bool doEval)
 	char *lhs;
 
 	end = condExpr;
-	while (!ISSPACE(*end) && strchr("!=><", *end) == NULL)
+	while (*end != '\0' && !ISSPACE(*end) && strchr("!=><", *end) == NULL)
 		end++;
 	lhs = Str_dupi(condExpr, end);
 	condExpr = end;
@@ -421,7 +421,7 @@ CondHandleVarSpec(bool doEval)
 		return Err;
 	condExpr += varSpecLen;
 
-	if (!ISSPACE(*condExpr) &&
+	if (*condExpr && !ISSPACE(*condExpr) &&
 		strchr("!=><", *condExpr) == NULL) {
 		BUFFER buf;
 
