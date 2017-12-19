@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.211 2017/12/18 10:07:55 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.212 2017/12/19 09:29:37 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -668,8 +668,8 @@ bad:
 	if (mp)
 		*mp = NULL;
 
-restart:
 	s = solock(so);
+restart:
 	if ((error = sblock(so, &so->so_rcv, SBLOCKWAIT(flags))) != 0) {
 		sounlock(s);
 		return (error);
@@ -738,9 +738,10 @@ restart:
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
 		sbunlock(so, &so->so_rcv);
 		error = sbwait(so, &so->so_rcv);
-		sounlock(s);
-		if (error)
+		if (error) {
+			sounlock(s);
 			return (error);
+		}
 		goto restart;
 	}
 dontblock:
@@ -994,7 +995,6 @@ dontblock:
 	if (orig_resid == uio->uio_resid && orig_resid &&
 	    (flags & MSG_EOR) == 0 && (so->so_state & SS_CANTRCVMORE) == 0) {
 		sbunlock(so, &so->so_rcv);
-		sounlock(s);
 		goto restart;
 	}
 
