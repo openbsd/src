@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.121 2017/12/19 09:32:15 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.122 2017/12/19 09:35:56 mpi Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -960,22 +960,6 @@ unp_gc(void *arg __unused)
 			unp->unp_flags |= UNP_GCMARK;
 
 			so = unp->unp_socket;
-#ifdef notdef
-			if (so->so_rcv.sb_flags & SB_LOCK) {
-				/*
-				 * This is problematical; it's not clear
-				 * we need to wait for the sockbuf to be
-				 * unlocked (on a uniprocessor, at least),
-				 * and it's also not clear what to do
-				 * if sbwait returns an error due to receipt
-				 * of a signal.  If sbwait does return
-				 * an error, we'll go into an infinite
-				 * loop.  Delete all of this for now.
-				 */
-				(void) sbwait(&so->so_rcv);
-				goto restart;
-			}
-#endif
 			unp_scan(so->so_rcv.sb_mb, unp_mark);
 		}
 	} while (unp_defer);
