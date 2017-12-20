@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.196 2017/12/14 20:12:32 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.197 2017/12/20 18:20:59 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -4741,8 +4741,11 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags, int bgscan)
 	    IWN_RXCHAIN_DRIVER_FORCE;
 	if ((flags & IEEE80211_CHAN_5GHZ) &&
 	    sc->hw_type == IWN_HW_REV_TYPE_4965) {
-		/* Ant A must be avoided in 5GHz because of an HW bug. */
-		rxchain |= IWN_RXCHAIN_FORCE_SEL(IWN_ANT_BC);
+		/* 
+		 * On 4965 ant A and C must be avoided in 5GHz because of a
+		 * HW bug which causes very weak RSSI values being reported.
+		 */
+		rxchain |= IWN_RXCHAIN_FORCE_SEL(IWN_ANT_B);
 	} else	/* Use all available RX antennas. */
 		rxchain |= IWN_RXCHAIN_FORCE_SEL(sc->rxchainmask);
 	hdr->rxchain = htole16(rxchain);
@@ -4759,9 +4762,19 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags, int bgscan)
 		rs = &ic->ic_sup_rates[IEEE80211_MODE_11A];
 	} else {
 		hdr->flags = htole32(IWN_RXON_24GHZ | IWN_RXON_AUTO);
-		/* Send probe requests at 1Mbps. */
-		tx->plcp = iwn_rates[IWN_RIDX_CCK1].plcp;
-		tx->rflags = IWN_RFLAG_CCK;
+		if (bgscan && sc->hw_type == IWN_HW_REV_TYPE_4965 &&
+		    sc->rxon.chan > 14) {
+			/* 
+			 * 4965 firmware can crash when sending probe requests
+			 * with CCK rates while associated to a 5GHz AP.
+			 * Send probe requests at 6Mbps OFDM as a workaround.
+			 */
+			tx->plcp = iwn_rates[IWN_RIDX_OFDM6].plcp;
+		} else {
+			/* Send probe requests at 1Mbps. */
+			tx->plcp = iwn_rates[IWN_RIDX_CCK1].plcp;
+			tx->rflags = IWN_RFLAG_CCK;
+		}
 		rs = &ic->ic_sup_rates[IEEE80211_MODE_11G];
 	}
 	/* Use the first valid TX antenna. */
