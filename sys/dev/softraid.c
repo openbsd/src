@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.386 2017/12/14 20:23:13 deraadt Exp $ */
+/* $OpenBSD: softraid.c,v 1.387 2017/12/20 02:02:31 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3427,6 +3427,13 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 
 	} else {
 
+		/* Ensure we are assembling the correct # of chunks. */
+		if (sd->sd_meta->ssdi.ssd_chunk_no != no_chunk) {
+			sr_error(sc, "volume chunk count does not match metadata "
+			    "chunk count");
+			goto unwind;
+		}
+			
 		/* Ensure metadata level matches requested assembly level. */
 		if (sd->sd_meta->ssdi.ssd_level != bc->bc_level) {
 			sr_error(sc, "volume level does not match metadata "
