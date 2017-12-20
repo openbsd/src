@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.542 2017/12/18 14:17:58 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.543 2017/12/20 18:51:14 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -175,6 +175,7 @@ void go_daemon(const char *);
 int rdaemon(int);
 void	take_charge(struct interface_info *, int);
 void	set_default_client_identifier(struct interface_info *);
+void	set_default_hostname(void);
 struct client_lease *get_recorded_lease(struct interface_info *);
 
 #define ROUNDUP(a) \
@@ -555,6 +556,10 @@ main(int argc, char *argv[])
 	 * and go through here again.
 	 */
 	set_default_client_identifier(ifi);
+
+	/*
+	 * Set default hostname, if needed. */
+	set_default_hostname();
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		fatalx("no such user: _dhcp");
@@ -2502,6 +2507,38 @@ set_default_client_identifier(struct interface_info *ifi)
 		memcpy(&opt->data[1], ifi->hw_address.ether_addr_octet,
 		    ETHER_ADDR_LEN);
 		opt->len = ETHER_ADDR_LEN + 1;
+	}
+}
+
+void
+set_default_hostname(void)
+{
+	char			 hn[HOST_NAME_MAX + 1], *p;
+	struct option_data	*opt;
+	int			 rslt;
+
+	/*
+	 * Check both len && data so
+	 *
+	 *     send host-name "";
+	 *
+	 * can be used to suppress sending the default host
+	 * name.
+	 */
+	opt = &config->send_options[DHO_HOST_NAME];
+	if (opt->len == 0 && opt->data == NULL) {
+		rslt = gethostname(hn, sizeof(hn));
+		if (rslt == -1) {
+			log_warn("host-name");
+			return;
+		}
+		p = strchr(hn, '.');
+		if (p != NULL)
+			*p = '\0';
+		opt->data = strdup(hn);
+		if (opt->data == NULL)
+			fatal("default host-name");
+		opt->len = strlen(opt->data);
 	}
 }
 
