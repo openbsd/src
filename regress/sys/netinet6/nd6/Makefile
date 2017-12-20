@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2017/07/07 23:15:27 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2017/12/20 23:37:56 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -61,10 +61,11 @@ REMOTE_SSH ?=
 # - response NA from interface address   to source of NS
 
 .if empty (LOCAL_IF) || empty (LOCAL_MAC) || empty (REMOTE_MAC) || \
-    empty (LOCAL_ADDR6) || empty (REMOTE_ADDR6)
+    empty (LOCAL_ADDR6) || empty (REMOTE_ADDR6) || empty (REMOTE_SSH)
 regress:
 	@echo This tests needs a remote machine to operate on.
 	@echo LOCAL_IF LOCAL_MAC REMOTE_MAC LOCAL_ADDR6 REMOTE_ADDR6
+	@echo REMOTE_SSH are empty.
 	@echo Fill out these variables for additional tests.
 	@echo SKIPPED
 .endif
