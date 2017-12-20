@@ -1,16 +1,17 @@
-/* $OpenBSD: arm64_mutex.c,v 1.2 2017/04/30 16:45:45 mpi Exp $ */
+/*	$OpenBSD: arm64_mutex.c,v 1.3 2017/12/20 11:22:29 mpi Exp $	*/
+
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
- * All rights reserved.
+ * All rights reserved. 
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Redistribution and use in source and binary forms, with or without 
+ * modification, are permitted provided that the following conditions 
+ * are met: 
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ * 1. Redistributions of source code must retain the above copyright 
+ *    notice, this list of conditions and the following disclaimer. 
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission. 
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +22,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
 #include <sys/param.h>
@@ -41,6 +42,7 @@ __mtx_init(struct mutex *mtx, int wantipl)
 	mtx->mtx_oldipl = IPL_NONE;
 }
 
+#ifdef MULTIPROCESSOR
 #ifdef MP_LOCKDEBUG
 #ifndef DDB
 #error "MP_LOCKDEBUG requires DDB"
@@ -51,30 +53,32 @@ extern int __mp_lock_spinout;
 #endif
 
 void
-mtx_enter(struct mutex *mtx)
+__mtx_enter(struct mutex *mtx)
 {
 #ifdef MP_LOCKDEBUG
-	int ticks = __mp_lock_spinout;
+	int nticks = __mp_lock_spinout;
 #endif
 
-	while (mtx_enter_try(mtx) == 0) {
+	while (__mtx_enter_try(mtx) == 0) {
+		CPU_BUSY_CYCLE();
+
 #ifdef MP_LOCKDEBUG
-		if (--ticks == 0) {
-			db_printf("%s(%p): lock spun out", __func__, mtx);
+		if (--nticks == 0) {
+			db_printf("%s: %p lock spun out", __func__, mtx);
 			db_enter();
-			ticks = __mp_lock_spinout;
+			nticks = __mp_lock_spinout;
 		}
 #endif
 	}
 }
 
 int
-mtx_enter_try(struct mutex *mtx)
+__mtx_enter_try(struct mutex *mtx)
 {
 	struct cpu_info *owner, *ci = curcpu();
 	int s;
-	
- 	if (mtx->mtx_wantipl != IPL_NONE)
+
+	if (mtx->mtx_wantipl != IPL_NONE)
 		s = splraise(mtx->mtx_wantipl);
 
 	owner = atomic_cas_ptr(&mtx->mtx_owner, NULL, ci);
@@ -83,7 +87,7 @@ mtx_enter_try(struct mutex *mtx)
 		panic("mtx %p: locking against myself", mtx);
 #endif
 	if (owner == NULL) {
-		membar_enter();
+		membar_enter_after_atomic();
 		if (mtx->mtx_wantipl != IPL_NONE)
 			mtx->mtx_oldipl = s;
 #ifdef DIAGNOSTIC
@@ -97,9 +101,37 @@ mtx_enter_try(struct mutex *mtx)
 
 	return (0);
 }
+#else
+void
+__mtx_enter(struct mutex *mtx)
+{
+	struct cpu_info *ci = curcpu();
+
+#ifdef DIAGNOSTIC
+	if (__predict_false(mtx->mtx_owner == ci))
+		panic("mtx %p: locking against myself", mtx);
+#endif
+
+	if (mtx->mtx_wantipl != IPL_NONE)
+		mtx->mtx_oldipl = splraise(mtx->mtx_wantipl);
+
+	mtx->mtx_owner = ci;
+
+#ifdef DIAGNOSTIC
+	ci->ci_mutex_level++;
+#endif
+}
+
+int
+__mtx_enter_try(struct mutex *mtx)
+{
+	__mtx_enter(mtx);
+	return (1);
+}
+#endif
 
 void
-mtx_leave(struct mutex *mtx)
+__mtx_leave(struct mutex *mtx)
 {
 	int s;
 
@@ -111,7 +143,7 @@ mtx_leave(struct mutex *mtx)
 
 	s = mtx->mtx_oldipl;
 #ifdef MULTIPROCESSOR
-	membar_exit();
+	membar_exit_before_atomic();
 #endif
 	mtx->mtx_owner = NULL;
 	if (mtx->mtx_wantipl != IPL_NONE)

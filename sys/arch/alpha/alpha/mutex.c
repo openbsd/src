@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.19 2017/09/11 09:52:15 mpi Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.20 2017/12/20 11:22:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -31,7 +31,6 @@
 #include <sys/atomic.h>
 
 #include <machine/intr.h>
-#include <machine/cpu.h>
 
 #include <ddb/db_output.h>
 
@@ -88,7 +87,7 @@ __mtx_enter_try(struct mutex *mtx)
 		panic("mtx %p: locking against myself", mtx);
 #endif
 	if (owner == NULL) {
-		membar_enter();
+		membar_enter_after_atomic();
 		if (mtx->mtx_wantipl != IPL_NONE)
 			mtx->mtx_oldipl = s;
 #ifdef DIAGNOSTIC
@@ -144,7 +143,7 @@ __mtx_leave(struct mutex *mtx)
 
 	s = mtx->mtx_oldipl;
 #ifdef MULTIPROCESSOR
-	membar_exit();
+	membar_exit_before_atomic();
 #endif
 	mtx->mtx_owner = NULL;
 	if (mtx->mtx_wantipl != IPL_NONE)
