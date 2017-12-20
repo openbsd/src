@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.58 2017/05/30 06:55:40 florian Exp $	*/
+/*	$OpenBSD: pch.c,v 1.59 2017/12/20 21:08:06 tb Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -301,14 +301,16 @@ intuit_diff_type(void)
 			    &names[OLD_FILE].exists, strippath);
 		else if (strnEQ(s, "--- ", 4)) {
 			size_t off = 4;
-			if (piece_of_git && strippath == 957)
+			if (piece_of_git && strippath == 957 &&
+			    strnEQ(s, "--- a/", 6))
 				off = 6;
 			names[NEW_FILE].path = fetchname(s + off,
 			    &names[NEW_FILE].exists, strippath);
 		} else if (strnEQ(s, "+++ ", 4)) {
 			/* pretend it is the old name */
 			size_t off = 4;
-			if (piece_of_git && strippath == 957)
+			if (piece_of_git && strippath == 957 &&
+			    strnEQ(s, "+++ b/", 6))
 				off = 6;
 			names[OLD_FILE].path = fetchname(s + off,
 			    &names[OLD_FILE].exists, strippath);
