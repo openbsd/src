@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.29 2017/03/01 19:28:48 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.30 2017/12/21 12:09:38 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -66,7 +66,7 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 	struct ether_header *eh;
 	struct ieee80211_eapol_key *key;
 	u_int16_t info;
-	int len;
+	int len, error;
 
 	M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
 	if (m == NULL)
@@ -123,7 +123,12 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 	if (info & EAPOL_KEY_KEYACK)
 		timeout_add_msec(&ni->ni_eapol_to, 100);
 #endif
-	return if_enqueue(ifp, m);
+
+	IFQ_ENQUEUE(&ifp->if_snd, m, error);
+	if (error)
+		return (error);
+	if_start(ifp);
+	return 0;
 }
 
 #ifndef IEEE80211_STA_ONLY
