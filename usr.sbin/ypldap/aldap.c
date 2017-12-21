@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.37 2017/05/30 09:33:31 jmatthew Exp $ */
-/*	$OpenBSD: aldap.c,v 1.37 2017/05/30 09:33:31 jmatthew Exp $ */
+/*	$Id: aldap.c,v 1.38 2017/12/21 05:09:56 jmatthew Exp $ */
+/*	$OpenBSD: aldap.c,v 1.38 2017/12/21 05:09:56 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -70,10 +70,11 @@ aldap_application(struct ber_element *elm)
 int
 aldap_close(struct aldap *al)
 {
-	if (al->fd != -1)
-		if (close(al->ber.fd) == -1)
-			return (-1);
-
+	if (al->tls != NULL) {
+		tls_close(al->tls);
+		tls_free(al->tls);
+	}
+	close(al->fd);
 	ber_free(&al->ber);
 	evbuffer_free(al->buf);
 	free(al);
@@ -120,7 +121,6 @@ aldap_tls(struct aldap *ldap, struct tls_config *cfg, const char *name)
 		return (-1);
 	}
 
-	ldap->fd = -1;
 	return (0);
 }
 
