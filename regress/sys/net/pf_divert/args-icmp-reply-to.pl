@@ -1,4 +1,8 @@
 # test divert-reply with icmp with out and in packet
+# create a divert-reply out rule on the remote machine
+# client sends a ICMP echo packet from the remote machine
+# kernel reflects the ICMP echo packet at the local machine
+# client receives the ICMP echo reply packet at the remote machine
 
 use strict;
 use warnings;

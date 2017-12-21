@@ -1,4 +1,7 @@
 # test divert-reply with raw ip
+# create a divert-reply out rule on the remote machine
+# client sends a proto 254 packet from the remote machine
+# server receives the proto 254 packet at the local machine
 
 use strict;
 use warnings;

@@ -1,4 +1,7 @@
 # test divert-reply with udp
+# create a divert-reply out rule on the remote machine
+# client sends a UDP packet from the remote machine
+# server receives the UDP packet at the local machine
 
 use strict;
 use warnings;

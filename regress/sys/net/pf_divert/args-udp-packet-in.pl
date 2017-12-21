@@ -1,4 +1,8 @@
 # test divert-packet input rule with udp
+# create a divert-packet in rule on the remote machine
+# client sends a UDP packet from the local machine
+# packet process reflects the UDP packet on divert socket on the remote machine
+# server receives the UDP packet at the remote machine
 
 use strict;
 use warnings;
