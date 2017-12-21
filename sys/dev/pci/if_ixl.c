@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.6 2017/12/21 01:55:44 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.7 2017/12/21 03:58:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1738,8 +1738,6 @@ ixl_up(struct ixl_softc *sc)
 		rxr = ifp->if_iqs[i]->ifiq_softc;
 		txr = ifp->if_ifqs[i]->ifq_softc;
 
-		ixl_rxfill(sc, rxr);
-
 		ixl_txr_qdis(sc, txr, 1);
 
 		ixl_rxr_config(sc, rxr);
@@ -1749,7 +1747,7 @@ ixl_up(struct ixl_softc *sc)
 		    (sc->sc_pf_id << I40E_QTX_CTL_PF_INDX_SHIFT));
 
 		ixl_wr(sc, rxr->rxr_tail, 0);
-		ixl_wr(sc, rxr->rxr_tail, rxr->rxr_prod);
+		ixl_rxfill(sc, rxr);
 
 		reg = ixl_rd(sc, I40E_QRX_ENA(i));
 		SET(reg, I40E_QRX_ENA_QENA_REQ_MASK);
@@ -1904,6 +1902,9 @@ ixl_down(struct ixl_softc *sc)
 		txr = ifp->if_ifqs[i]->ifq_softc;
 
 		ixl_txr_qdis(sc, txr, 0);
+
+		ifiq_barrier(ifp->if_iqs[i]);
+		ifq_barrier(ifp->if_ifqs[i]);
 
 		if (!timeout_del(&rxr->rxr_refill))
 			timeout_barrier(&rxr->rxr_refill);
