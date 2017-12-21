@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.4 2017/08/27 21:59:51 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.5 2017/12/21 00:32:55 kettenis Exp $ */
 
 /*
  * Copyright (c) 2016 Dale Rahn
@@ -65,50 +65,44 @@ ENTRY(_dl_start)
 
 ENTRY(_dl_bind_start)
 	/*
-	 * ip is pointer to got entry for this relocation
-	 * lr is pointer to pltgot[2], which is entry -1 of got plt reloc.
-	 * return address is on stack
+	 * x16 is pointer to pltgot[2]
+	 * x17 is available as scratch register
+	 * return address and pointer to pltgot entry for this
+	 * relocation are on the stack
 	 */
-	stp	x29, x30, [sp, #-160]!
-	stp	 x0,  x1, [sp,#16]
-	stp	 x2,  x3, [sp,#32]
-	stp	 x4,  x5, [sp,#48]
-	stp	 x6,  x7, [sp,#64]
-	stp	 x8,  x9, [sp,#80]
-	stp	x10, x11, [sp,#96]
-	stp	x12, x13, [sp,#112]
-	stp	x14, x15, [sp,#128]
-	str	x18,      [sp,#144]
+	mov x17, sp
 
-	mov	x1, x16		// reladdr
+	// save parameter/result registers
+	stp	x0, x1, [sp, #-16]!
+	stp	x2, x3, [sp, #-16]!
+	stp	x4, x5, [sp, #-16]!
+	stp	x6, x7, [sp, #-16]!
+	stp	x8, xzr, [sp, #-16]!
 
+	/*
+	 * no need to save v0-v9 as ld.so is compiled with
+	 * -march=armv8-a+nofp+nosimd and therefore doesn't touch the
+	 * SIMD and Floating-Point registers
+	 */
 
-	ldp	 x0,  x1, [sp,#16]
-	ldp	 x2,  x3, [sp,#32]
-	ldp	 x4,  x5, [sp,#48]
-	ldp	 x6,  x7, [sp,#64]
-	ldp	 x8,  x9, [sp,#80]
-	ldp	x10, x11, [sp,#96]
-	ldp	x12, x13, [sp,#112]
-	ldp	x14, x15, [sp,#128]
-	ldr	x18,      [sp,#144]
-	ldp	x29, x30, [sp], #-160
-	br x16
-
-
-#if 0
-	stmdb	sp!, {r0-r4,sl,fp}
-
-	sub	r1, ip, lr		/* r1 = 4 * (n + 1) */
-	sub	r1, r1, #4		/* r1 = 4 * n */
-	mov	r1, r1, lsr #2		/* r1 = n */
-
-	ldr	r0, [lr, #-4]
+	ldr	x0, [x16, #-8]		// object
+	ldr	x2, [x17]
+	sub	x1, x2, x16
+	sub	x1, x1, #8
+	lsr	x1, x1, #3		// relidx
 	bl	_dl_bind
-	mov	ip, r0
-	ldmia	sp!, {r0-r4,sl,fp,lr}
-	mov	pc, ip
-#endif
+	mov	x17, x0
+
+	// restore parameter/result registers
+	ldp	x8, xzr, [sp], #16
+	ldp	x6, x7, [sp], #16
+	ldp	x4, x5, [sp], #16
+	ldp	x2, x3, [sp], #16
+	ldp	x0, x1, [sp], #16
+
+	// restore LR saved by PLT stub	
+	ldp	xzr, x30, [sp], #16
+	br	x17
 
 ENTRY(_rtld_tlsdesc)
 	ldr	x0, [x0, #8]
