@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.5 2017/12/15 05:56:08 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.6 2017/12/21 01:55:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -976,8 +976,6 @@ struct ixl_tx_map {
 };
 
 struct ixl_tx_ring {
-	struct ifqueue		*txr_ifq;
-
 	unsigned int		 txr_prod;
 	unsigned int		 txr_cons;
 
@@ -994,8 +992,8 @@ struct ixl_rx_map {
 };
 
 struct ixl_rx_ring {
-/*	struct ifiqueue		*rxr_ifiq; */
 	struct ixl_softc	*rxr_sc;
+
 	struct if_rxring	 rxr_acct;
 	struct timeout		 rxr_refill;
 
@@ -1064,8 +1062,6 @@ struct ixl_softc {
 	unsigned int		 sc_tx_ring_ndescs;
 	unsigned int		 sc_rx_ring_ndescs;
 	unsigned int		 sc_nqueues;	/* 1 << sc_nqueues */
-
-	struct ixl_rx_ring	*sc_rx_ring;
 };
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
@@ -1139,7 +1135,7 @@ static int	ixl_txr_disabled(struct ixl_softc *, struct ixl_tx_ring *);
 static void	ixl_txr_unconfig(struct ixl_softc *, struct ixl_tx_ring *);
 static void	ixl_txr_clean(struct ixl_softc *, struct ixl_tx_ring *);
 static void	ixl_txr_free(struct ixl_softc *, struct ixl_tx_ring *);
-static int	ixl_txeof(struct ixl_softc *, struct ixl_tx_ring *);
+static int	ixl_txeof(struct ixl_softc *, struct ifqueue *);
 
 static struct ixl_rx_ring *
 		ixl_rxr_alloc(struct ixl_softc *, unsigned int);
@@ -1149,7 +1145,7 @@ static int	ixl_rxr_disabled(struct ixl_softc *, struct ixl_rx_ring *);
 static void	ixl_rxr_unconfig(struct ixl_softc *, struct ixl_rx_ring *);
 static void	ixl_rxr_clean(struct ixl_softc *, struct ixl_rx_ring *);
 static void	ixl_rxr_free(struct ixl_softc *, struct ixl_rx_ring *);
-static int	ixl_rxeof(struct ixl_softc *, struct ixl_rx_ring *);
+static int	ixl_rxeof(struct ixl_softc *, struct ifiqueue *);
 static void	ixl_rxfill(struct ixl_softc *, struct ixl_rx_ring *);
 static void	ixl_rxrefill(void *);
 
@@ -1552,6 +1548,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	if_attach_queues(ifp, ixl_nqueues(sc));
+	if_attach_iqueues(ifp, ixl_nqueues(sc));
 
 	ixl_wr(sc, I40E_PFINT_ICR0_ENA,
 	    I40E_PFINT_ICR0_ENA_LINK_STAT_CHANGE_MASK |
@@ -1725,20 +1722,20 @@ ixl_up(struct ixl_softc *sc)
 		if (rxr == NULL)
 			goto free;
 
-		txr = ixl_txr_alloc(sc, 0);
+		txr = ixl_txr_alloc(sc, i);
 		if (txr == NULL) {
 			ixl_rxr_free(sc, rxr);
 			goto free;
 		}
 
-		sc->sc_rx_ring = rxr;
+		ifp->if_iqs[i]->ifiq_softc = rxr;
 		ifp->if_ifqs[i]->ifq_softc = txr;
 	}
 
 	/* XXX wait 50ms from completion of last RX queue disable */
 
 	for (i = 0; i < nqueues; i++) {
-		rxr = sc->sc_rx_ring;
+		rxr = ifp->if_iqs[i]->ifiq_softc;
 		txr = ifp->if_ifqs[i]->ifq_softc;
 
 		ixl_rxfill(sc, rxr);
@@ -1764,7 +1761,7 @@ ixl_up(struct ixl_softc *sc)
 	}
 
 	for (i = 0; i < nqueues; i++) {
-		rxr = sc->sc_rx_ring;
+		rxr = ifp->if_iqs[i]->ifiq_softc;
 		txr = ifp->if_ifqs[i]->ifq_softc;
 
 		if (ixl_rxr_enabled(sc, rxr) != 0)
@@ -1816,7 +1813,7 @@ ixl_up(struct ixl_softc *sc)
 
 free:
 	for (i = 0; i < nqueues; i++) {
-		rxr = sc->sc_rx_ring;
+		rxr = ifp->if_iqs[i]->ifiq_softc;
 		txr = ifp->if_ifqs[i]->ifq_softc;
 
 		if (rxr == NULL) {
@@ -1903,7 +1900,7 @@ ixl_down(struct ixl_softc *sc)
 	/* make sure the no hw generated work is still in flight */
 	intr_barrier(sc->sc_ihc);
 	for (i = 0; i < nqueues; i++) {
-		rxr = sc->sc_rx_ring;
+		rxr = ifp->if_iqs[i]->ifiq_softc;
 		txr = ifp->if_ifqs[i]->ifq_softc;
 
 		ixl_txr_qdis(sc, txr, 0);
@@ -1916,7 +1913,7 @@ ixl_down(struct ixl_softc *sc)
 	delay(500);
 
 	for (i = 0; i < nqueues; i++) {
-		rxr = sc->sc_rx_ring;
+		rxr = ifp->if_iqs[i]->ifiq_softc;
 		txr = ifp->if_ifqs[i]->ifq_softc;
 
 		reg = ixl_rd(sc, I40E_QTX_ENA(i));
@@ -1929,7 +1926,7 @@ ixl_down(struct ixl_softc *sc)
 	}
 
 	for (i = 0; i < nqueues; i++) {
-		rxr = sc->sc_rx_ring;
+		rxr = ifp->if_iqs[i]->ifiq_softc;
 		txr = ifp->if_ifqs[i]->ifq_softc;
 
 		if (ixl_txr_disabled(sc, txr) != 0)
@@ -1949,7 +1946,7 @@ ixl_down(struct ixl_softc *sc)
 	}
 
 	for (i = 0; i < nqueues; i++) {
-		rxr = sc->sc_rx_ring;
+		rxr = ifp->if_iqs[i]->ifiq_softc;
 		txr = ifp->if_ifqs[i]->ifq_softc;
 
 		ixl_txr_unconfig(sc, txr);
@@ -1961,7 +1958,7 @@ ixl_down(struct ixl_softc *sc)
 		ixl_txr_free(sc, txr);
 		ixl_rxr_free(sc, rxr);
 
-		sc->sc_rx_ring = NULL;
+		ifp->if_iqs[i]->ifiq_softc = NULL;
 		ifp->if_ifqs[i]->ifq_softc =  NULL;
 	}
 
@@ -2269,9 +2266,9 @@ ixl_start(struct ifqueue *ifq)
 }
 
 static int
-ixl_txeof(struct ixl_softc *sc, struct ixl_tx_ring *txr)
+ixl_txeof(struct ixl_softc *sc, struct ifqueue *ifq)
 {
-	struct ifqueue *ifq = txr->txr_ifq;
+	struct ixl_tx_ring *txr = ifq->ifq_softc;
 	struct ixl_tx_desc *ring, *txd;
 	struct ixl_tx_map *txm;
 	bus_dmamap_t map;
@@ -2363,7 +2360,7 @@ ixl_rxr_alloc(struct ixl_softc *sc, unsigned int qid)
 		rxm->rxm_m = NULL;
 	}
 
-	rxr->rxr_sc = sc; /* XXX */
+	rxr->rxr_sc = sc;
 	if_rxr_init(&rxr->rxr_acct, 17, sc->sc_rx_ring_ndescs - 1);
 	timeout_set(&rxr->rxr_refill, ixl_rxrefill, rxr);
 	rxr->rxr_cons = rxr->rxr_prod = 0;
@@ -2473,7 +2470,7 @@ ixl_rxr_config(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 
 	rxq.head = htole16(0);
 	htolem64(&rxq.base,
-	    IXL_DMA_DVA(&sc->sc_rx_ring->rxr_mem) / IXL_HMC_RXQ_BASE_UNIT);
+	    IXL_DMA_DVA(&rxr->rxr_mem) / IXL_HMC_RXQ_BASE_UNIT);
 	htolem16(&rxq.qlen, sc->sc_rx_ring_ndescs);
 	rxq.dbuff = htole16(MCLBYTES / IXL_HMC_RXQ_DBUFF_UNIT);
 	rxq.hbuff = 0;
@@ -2523,8 +2520,9 @@ ixl_rxr_free(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 }
 
 static int
-ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
+ixl_rxeof(struct ixl_softc *sc, struct ifiqueue *ifiq)
 {
+	struct ixl_rx_ring *rxr = ifiq->ifiq_softc;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct ixl_rx_wb_desc_16 *ring, *rxd;
 	struct ixl_rx_map *rxm;
@@ -2685,11 +2683,11 @@ ixl_rxrefill(void *arg)
 	ixl_rxfill(sc, rxr);
 }
 
-
 static int
 ixl_intr(void *xsc)
 {
 	struct ixl_softc *sc = xsc;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint32_t icr;
 	int rv = 0;
 
@@ -2702,9 +2700,9 @@ ixl_intr(void *xsc)
 	}
 
 	if (ISSET(icr, I40E_INTR_NOTX_RX_MASK))
-		rv |= ixl_rxeof(sc, NULL);
+		rv |= ixl_rxeof(sc, ifp->if_iqs[0]);
 	if (ISSET(icr, I40E_INTR_NOTX_TX_MASK))
-		rv |= ixl_txeof(sc, NULL);
+		rv |= ixl_txeof(sc, ifp->if_ifqs[0]);
 
 	return (rv);
 }
