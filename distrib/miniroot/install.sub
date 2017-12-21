@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1049 2017/12/18 22:48:28 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1050 2017/12/21 15:14:45 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -870,13 +870,11 @@ ask_password() {
 # Support functions for donetconfig()
 # ------------------------------------------------------------------------------
 
-# Issue a DHCP request to configure interface $1 and add the host-name option to
-# /etc/dhclient.conf using $2.
+# Issue a DHCP request to configure interface $1.
 dhcp_request() {
 	local _if=$1 _hn=$2
 
 	echo "lookup file bind" >/etc/resolv.conf.tail
-	echo "send host-name \"$_hn\";" >/etc/dhclient.conf
 
 	ifconfig $_if group dhcp >/dev/null 2>&1
 
@@ -885,13 +883,11 @@ initial-interval 1;
 backoff-cutoff 2;
 reboot 5;
 timeout 10;
-send host-name "$_hn";
 __EOT
 
 	# Move configuration files to where they will be copied to the
 	# installed system. Overwrites configuration information from
 	# last successful dhcp attempt.
-	mv /etc/dhclient.conf /tmp/i/dhclient.conf
 	mv /etc/resolv.conf.tail /tmp/i/resolv.conf.tail
 }
 
@@ -1316,7 +1312,7 @@ v4_defroute() {
 	[[ -n $1 ]] && _dr=$1
 
 	# Don't ask if a default route exits and is handled by dhclient.
-	[[ -n $_dr && $2 == \"DHCLIENT && -f /tmp/i/dhclient.conf ]] && return
+	[[ -n $_dr && $2 == \"DHCLIENT ]] && return
 
 	while :; do
 		ask_until "Default IPv4 route? (IPv4 address or none)" "$_dr"
@@ -2309,7 +2305,7 @@ enable_network() {
 	local _f _gw _hn _if _trunks _svlans _vlans
 
 	# Copy any network configuration files.
-	for _f in dhclient.conf resolv.conf resolv.conf.tail; do
+	for _f in resolv.conf resolv.conf.tail; do
 		if [[ -f /mnt/etc/$_f ]]; then
 			cp /mnt/etc/$_f /etc/$_f
 		fi
@@ -3005,10 +3001,6 @@ do_install() {
 		done </tmp/i/hosts >>/mnt/etc/hosts
 		rm /tmp/i/hosts
 	fi
-
-	# Append dhclient.conf to installed dhclient.conf.
-	_f=dhclient.conf
-	[[ -f /tmp/i/$_f ]] && { cat /tmp/i/$_f >>/mnt/etc/$_f; rm /tmp/i/$_f; }
 
 	# Possible files to copy from /tmp/i/: fstab hostname.* kbdtype mygate
 	#     myname ttys boot.conf resolv.conf sysctl.conf resolv.conf.tail
