@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.28 2017/12/18 10:10:53 mpi Exp $	*/
+/*	$OpenBSD: event.h,v 1.29 2017/12/21 21:04:38 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -54,9 +54,9 @@
 struct kevent {
 	__uintptr_t	ident;		/* identifier for this event */
 	short		filter;		/* filter for event */
-	u_short		flags;
-	u_int		fflags;
-	__int64_t	data;
+	unsigned short	flags;		/* action flags for kqueue */
+	unsigned int	fflags;		/* filter flag value */
+	__int64_t	data;		/* filter data value */
 	void		*udata;		/* opaque user data identifier */
 };
 
