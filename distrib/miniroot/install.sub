@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1050 2017/12/21 15:14:45 krw Exp $
+#	$OpenBSD: install.sub,v 1.1051 2017/12/21 19:22:14 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -885,9 +885,7 @@ reboot 5;
 timeout 10;
 __EOT
 
-	# Move configuration files to where they will be copied to the
-	# installed system. Overwrites configuration information from
-	# last successful dhcp attempt.
+	# Move resolv.conf to where it will be copied to the installed system.
 	mv /etc/resolv.conf.tail /tmp/i/resolv.conf.tail
 }
 
@@ -2304,7 +2302,7 @@ ifstart() {
 enable_network() {
 	local _f _gw _hn _if _trunks _svlans _vlans
 
-	# Copy any network configuration files.
+	# Use installed network configuration files during upgrade.
 	for _f in resolv.conf resolv.conf.tail; do
 		if [[ -f /mnt/etc/$_f ]]; then
 			cp /mnt/etc/$_f /etc/$_f
