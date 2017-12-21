@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.388 2017/12/21 06:55:22 deraadt Exp $ */
+/* $OpenBSD: softraid.c,v 1.389 2017/12/21 07:29:15 tb Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1532,7 +1532,7 @@ sr_map_root(void)
 					memcpy(rootduid, sbm->sbm_root_duid,
 					    sizeof(rootduid));
 					DNPRINTF(SR_D_MISC, "%s: root duid "
-					    "mapped to %0x%0x%02x%02x"
+					    "mapped to %02x%02x%02x%02x"
 					    "%02x%02x%02x%02x\n",
 					    DEVNAME(sc), rootduid[0],
 					    rootduid[1], rootduid[2],
