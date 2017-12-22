@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.13 2017/11/26 23:27:27 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.14 2017/12/22 15:21:04 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -144,11 +144,6 @@ struct tpad_touch {
 #define WSTPAD_MT		(1 << 31)
 
 
-#define WSTPAD_TOUCHPAD_DEFAULTS (WSTPAD_TWOFINGERSCROLL)
-#define WSTPAD_CLICKPAD_DEFAULTS \
-    (WSTPAD_SOFTBUTTONS | WSTPAD_SOFTMBTN | WSTPAD_TWOFINGERSCROLL)
-
-
 struct wstpad {
 	u_int features;
 	u_int handlers;
@@ -243,6 +238,18 @@ static inline int
 normalize_rel(struct axis_filter *filter, int val)
 {
 	return (filter->inv ? -val : val);
+}
+
+static inline int
+raw_dx(struct wsmouseinput *input)
+{
+	return ((input->motion.sync & SYNC_X) ? input->motion.x_delta : 0);
+}
+
+static inline int
+raw_dy(struct wsmouseinput *input)
+{
+	return ((input->motion.sync & SYNC_Y) ? input->motion.y_delta : 0);
 }
 
 /*
@@ -385,10 +392,8 @@ wstpad_scroll(struct wstpad *tp, int dx, int dy, u_int *cmds)
 	sign = (dy > 0) - (dy < 0);
 	if (sign) {
 		if (tp->scroll.dz != -sign) {
-			if (tp->t->matches < STABLE)
-				return;
 			tp->scroll.dz = -sign;
-			tp->scroll.acc_dy = -tp->scroll.vdist / 2;
+			tp->scroll.acc_dy = -tp->scroll.vdist;
 		}
 		tp->scroll.acc_dy += abs(dy);
 		if (tp->scroll.acc_dy >= 0) {
@@ -397,10 +402,8 @@ wstpad_scroll(struct wstpad *tp, int dx, int dy, u_int *cmds)
 		}
 	} else if ((sign = (dx > 0) - (dx < 0))) {
 		if (tp->scroll.dw != sign) {
-			if (tp->t->matches < STABLE)
-				return;
 			tp->scroll.dw = sign;
-			tp->scroll.acc_dx = -tp->scroll.hdist / 2;
+			tp->scroll.acc_dx = -tp->scroll.hdist;
 		}
 		tp->scroll.acc_dx += abs(dx);
 		if (tp->scroll.acc_dx >= 0) {
@@ -446,7 +449,8 @@ wstpad_f2scroll(struct wsmouseinput *input, u_int *cmds)
 		}
 		if (centered) {
 			wstpad_scroll(tp, dx, dy, cmds);
-			set_freeze_ts(tp, 0, FREEZE_MS);
+			if (tp->t->matches > STABLE)
+				set_freeze_ts(tp, 0, FREEZE_MS);
 		}
 	}
 }
@@ -456,20 +460,18 @@ wstpad_edgescroll(struct wsmouseinput *input, u_int *cmds)
 {
 	struct wstpad *tp = input->tp;
 	struct tpad_touch *t = tp->t;
-	int dx = 0, dy = 0;
+	u_int v_edge, b_edge;
+	int dx, dy;
 
 	if (tp->contacts != 1 || !chk_scroll_state(tp))
 		return;
 
-	if (tp->features & WSTPAD_SWAPSIDES) {
-		if (t->flags & L_EDGE)
-			dy = tp->dy;
-	} else if (t->flags & R_EDGE) {
-		dy = tp->dy;
-	} else if ((t->flags & B_EDGE) &&
-	    (tp->features & WSTPAD_HORIZSCROLL)) {
-		dx = tp->dx;
-	}
+	v_edge = (tp->features & WSTPAD_SWAPSIDES) ? L_EDGE : R_EDGE;
+	b_edge = (tp->features & WSTPAD_HORIZSCROLL) ? B_EDGE : 0;
+
+	dy = (t->flags & v_edge) ? tp->dy : 0;
+	dx = (t->flags & b_edge) ? tp->dx : 0;
+
 	if (dx || dy)
 		wstpad_scroll(tp, dx, dy, cmds);
 }
@@ -994,8 +996,10 @@ wstpad_touch_inputs(struct wsmouseinput *input)
 	struct tpad_touch *t;
 	int slot;
 
-	tp->dx = normalize_rel(&input->filter.h, input->motion.dx);
-	tp->dy = normalize_rel(&input->filter.v, input->motion.dy);
+	/* Use the unfiltered deltas. */
+	tp->dx = normalize_rel(&input->filter.h, raw_dx(input));
+	tp->dy = normalize_rel(&input->filter.v, raw_dy(input));
+
 	tp->btns = input->btn.buttons;
 	tp->btns_sync = input->btn.sync;
 
@@ -1037,11 +1041,7 @@ wstpad_touch_inputs(struct wsmouseinput *input)
 			t->flags &= (~EDGES | edge_flags(tp, t->x, t->y));
 		}
 
-		/* Use unfiltered deltas for determining directions: */
-		wstpad_set_direction(t,
-		    normalize_rel(&input->filter.h, input->motion.x_delta),
-		    normalize_rel(&input->filter.v, input->motion.y_delta),
-		    input->filter.ratio);
+		wstpad_set_direction(t, tp->dx, tp->dy, input->filter.ratio);
 	}
 }
 
@@ -1093,7 +1093,7 @@ wstpad_process_input(struct wsmouseinput *input, struct evq_access *evq)
 	}
 
 	/* Check whether pointer movement should be blocked. */
-	if (tp->dx || tp->dy) {
+	if (input->motion.dx || input->motion.dy) {
 		if (DISABLE(tp)
 		    || (tp->t->flags & tp->freeze)
 		    || timespeccmp(&tp->time, &tp->freeze_ts, <)
@@ -1290,8 +1290,8 @@ wstpad_compat_convert(struct wsmouseinput *input, struct evq_access *evq)
 	if (input->flags & TRACK_INTERVAL)
 		wstpad_track_interval(input, &evq->ts);
 
-	dx = (input->motion.sync & SYNC_X) ? input->motion.x_delta : 0;
-	dy = (input->motion.sync & SYNC_Y) ? input->motion.y_delta : 0;
+	dx = raw_dx(input);
+	dy = raw_dy(input);
 
 	if ((input->touch.sync & SYNC_CONTACTS)
 	    || input->mt.ptr != input->mt.prev_ptr) {
@@ -1410,7 +1410,7 @@ int
 wstpad_configure(struct wsmouseinput *input)
 {
 	struct wstpad *tp;
-	int width, height, diag, ratio, h_res, v_res, h_unit, v_unit;
+	int width, height, diag, offset, h_res, v_res, h_unit, v_unit;
 
 	width = abs(input->hw.x_max - input->hw.x_min);
 	height = abs(input->hw.y_max - input->hw.y_min);
@@ -1446,24 +1446,29 @@ wstpad_configure(struct wsmouseinput *input)
 		wstpad_init_deceleration(input);
 
 		tp->features &= (WSTPAD_MT | WSTPAD_DISABLE);
-		if (input->hw.hw_type == WSMOUSEHW_TOUCHPAD)
-			tp->features |= WSTPAD_TOUCHPAD_DEFAULTS;
+
+		if (input->hw.contacts_max != 1)
+			tp->features |= WSTPAD_TWOFINGERSCROLL;
 		else
-			tp->features |= WSTPAD_CLICKPAD_DEFAULTS;
-		if (input->hw.contacts_max == 1) {
-			tp->features &= ~WSTPAD_TWOFINGERSCROLL;
 			tp->features |= WSTPAD_EDGESCROLL;
-		}
-		if (input->hw.type == WSMOUSE_TYPE_SYNAP_SBTN) {
-			tp->features &= ~WSTPAD_SOFTBUTTONS;
-			tp->features |= WSTPAD_TOPBUTTONS;
+
+		if (input->hw.hw_type == WSMOUSEHW_CLICKPAD) {
+			if (input->hw.type == WSMOUSE_TYPE_SYNAP_SBTN) {
+				tp->features |= WSTPAD_TOPBUTTONS;
+			} else {
+				tp->features |= WSTPAD_SOFTBUTTONS;
+				tp->features |= WSTPAD_SOFTMBTN;
+			}
 		}
 
 		tp->params.left_edge = V_EDGE_RATIO_DEFAULT;
 		tp->params.right_edge = V_EDGE_RATIO_DEFAULT;
-		tp->params.bottom_edge = 0;
-		tp->params.top_edge = 0;
-		tp->params.center_width = 0;
+		tp->params.bottom_edge = ((tp->features & WSTPAD_SOFTBUTTONS)
+		    ? B_EDGE_RATIO_DEFAULT : 0);
+		tp->params.top_edge = ((tp->features & WSTPAD_TOPBUTTONS)
+		    ? T_EDGE_RATIO_DEFAULT : 0);
+		tp->params.center_width = CENTER_RATIO_DEFAULT;
+
 		tp->tap.maxtime.tv_nsec = TAP_MAXTIME_DEFAULT * 1000000;
 		tp->tap.clicktime = TAP_CLICKTIME_DEFAULT;
 		tp->tap.locktime = TAP_LOCKTIME_DEFAULT;
@@ -1476,35 +1481,19 @@ wstpad_configure(struct wsmouseinput *input)
 	/* A touch with a flag set in this mask does not move the pointer. */
 	tp->freeze = EDGES;
 
-	if ((ratio = tp->params.left_edge) == 0
-	    && (tp->features & WSTPAD_EDGESCROLL)
-	    && (tp->features & WSTPAD_SWAPSIDES))
-		ratio = V_EDGE_RATIO_DEFAULT;
-	tp->edge.left = input->hw.x_min + width * ratio / 4096;
+	offset = width * tp->params.left_edge / 4096;
+	tp->edge.left = input->hw.x_min + offset;
+	offset = width * tp->params.right_edge / 4096;
+	tp->edge.right = input->hw.x_max - offset;
+	offset = height * tp->params.bottom_edge / 4096;
+	tp->edge.bottom = input->hw.y_min + offset;
+	offset = height * tp->params.top_edge / 4096;
+	tp->edge.top = input->hw.y_max - offset;
 
-	if ((ratio = tp->params.right_edge) == 0
-	    && (tp->features & WSTPAD_EDGESCROLL)
-	    && !(tp->features & WSTPAD_SWAPSIDES))
-		ratio = V_EDGE_RATIO_DEFAULT;
-	tp->edge.right = input->hw.x_max - width * ratio / 4096;
-
-	if ((ratio = tp->params.bottom_edge) == 0
-	    && ((tp->features & WSTPAD_SOFTBUTTONS)
-	    || ((tp->features & WSTPAD_EDGESCROLL)
-	    && (tp->features & WSTPAD_HORIZSCROLL))))
-		ratio = B_EDGE_RATIO_DEFAULT;
-	tp->edge.bottom = input->hw.y_min + height * ratio / 4096;
-
-	if ((ratio = tp->params.top_edge) == 0
-	    && (tp->features & WSTPAD_TOPBUTTONS))
-		ratio = B_EDGE_RATIO_DEFAULT;
-	tp->edge.top = input->hw.y_max - height * ratio / 4096;
-
-	if ((ratio = abs(tp->params.center_width)) == 0)
-		ratio = CENTER_RATIO_DEFAULT;
+	offset = width * abs(tp->params.center_width) / 8192;
 	tp->edge.center = (input->hw.x_min + input->hw.x_max) / 2;
-	tp->edge.center_left = tp->edge.center - width * ratio / 8192;
-	tp->edge.center_right = tp->edge.center + width * ratio / 8192;
+	tp->edge.center_left = tp->edge.center - offset;
+	tp->edge.center_right = tp->edge.center + offset;
 	tp->edge.middle = (input->hw.y_max - input->hw.y_min) / 2;
 
 	tp->handlers = 0;
