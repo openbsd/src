@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1051 2017/12/21 19:22:14 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1052 2017/12/22 19:41:49 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1298,19 +1298,19 @@ configure_ifs() {
 
 # Set up IPv4 default route.
 v4_defroute() {
-	local _dr
+	local _dr _dr_if
 
 	# Only configure a default route if an IPv4 address was configured.
 	[[ -n $(ifconfig | sed -n '/[ 	]inet .* broadcast /p') ]] || return
 
 	# Check routing table to see if a default route ($1) already exists
-	# and if it is handled by dhclient ($2).
-	set -- $(route -nv show -inet |
-		{ set -- $(grep '^default '); print $2 $9; })
-	[[ -n $1 ]] && _dr=$1
+	# and what interface it is connected to ($2).
+	set -- $(route -n show -inet |
+		sed -En 's/^default +([0-9.]+) .* ([a-z0-9]+) *$/\1 \2/p')
+	[[ -n $1 ]] && _dr=$1 _dr_if=$2
 
 	# Don't ask if a default route exits and is handled by dhclient.
-	[[ -n $_dr && $2 == \"DHCLIENT ]] && return
+	[[ -n $_dr ]] && isin "$_dr_if" $(get_ifs dhcp) && return
 
 	while :; do
 		ask_until "Default IPv4 route? (IPv4 address or none)" "$_dr"
