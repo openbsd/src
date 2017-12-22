@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.47 2017/10/16 19:30:53 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.48 2017/12/22 23:16:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "tmux.h"
@@ -299,6 +300,7 @@ screen_redraw_make_pane_status(struct client *c, struct window *w,
 	screen_write_cnputs(&ctx, outlen, &gc, "%s", out);
 	screen_write_stop(&ctx);
 
+	free(out);
 	format_free(ft);
 
 	wp->status_size = outlen;
