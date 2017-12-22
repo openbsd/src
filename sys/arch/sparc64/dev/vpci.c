@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.23 2017/12/06 16:20:53 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.24 2017/12/22 15:52:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -328,7 +328,7 @@ vpci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct vpci_pbm *pbm = pa->pa_pc->cookie;
 	uint64_t devhandle = pbm->vp_devhandle;
-	uint64_t devino = INTINO(*ihp);
+	uint64_t devino = INTVEC(*ihp);
 	uint64_t sysino;
 	int err;
 
@@ -337,7 +337,6 @@ vpci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		if (err != H_EOK)
 			return (-1);
 
-		KASSERT(sysino == INTVEC(sysino));
 		*ihp = sysino;
 		return (0);
 	}
@@ -590,8 +589,9 @@ vpci_intr_ack(struct intrhand *ih)
 	bus_space_tag_t t = ih->ih_bus;
 	struct vpci_pbm *pbm = t->cookie;
 	uint64_t devhandle = pbm->vp_devhandle;
+	uint64_t sysino = INTVEC(ih->ih_number);
 	
-	sun4v_intr_setstate(devhandle, ih->ih_number, INTR_IDLE);
+	sun4v_intr_setstate(devhandle, sysino, INTR_IDLE);
 }
 
 void

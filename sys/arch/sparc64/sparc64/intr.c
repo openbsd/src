@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.57 2017/12/06 16:20:53 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.58 2017/12/22 15:52:36 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -64,6 +64,8 @@
  * vector table and call these things directly.
  */
 struct intrhand *intrlev[MAXINTNUM];
+
+#define INTR_DEVINO	0x8000
 
 void	strayintr(const struct trapframe64 *, int);
 int	softintr(void *);
@@ -206,24 +208,21 @@ intr_establish(int level, struct intrhand *ih)
 	else
 		ih->ih_ack = NULL;
 
-	/*
-	 * Store in fast lookup table
-	 */
-#ifdef NOT_DEBUG
-	if (!ih->ih_number) {
-		printf("\nintr_establish: NULL vector fun %p arg %p pil %p",
-			  ih->ih_fun, ih->ih_arg, ih->ih_number, ih->ih_pil);
-		db_enter();
-	}
-#endif
-
-	if (ih->ih_number <= 0 || ih->ih_number >= MAXINTNUM)
-		panic("intr_establish: bad intr number %x", ih->ih_number);
-
 	if (strlen(ih->ih_name) == 0)
 		evcount_attach(&ih->ih_count, "unknown", NULL);
 	else
 		evcount_attach(&ih->ih_count, ih->ih_name, NULL);
+
+	if (ih->ih_number & INTR_DEVINO) {
+		splx(s);
+		return;
+	}
+
+	/*
+	 * Store in fast lookup table
+	 */
+	if (ih->ih_number <= 0 || ih->ih_number >= MAXINTNUM)
+		panic("intr_establish: bad intr number %x", ih->ih_number);
 
 	q = intrlev[ih->ih_number];
 	if (q == NULL) {
@@ -396,7 +395,8 @@ sun4v_intr_devino_to_sysino(uint64_t devhandle, uint64_t devino, uint64_t *ino)
 	if (sun4v_group_interrupt_major < 3)
 		return hv_intr_devino_to_sysino(devhandle, devino, ino);
 
-	*ino = devino;
+	KASSERT(INTVEC(devino) == devino);
+	*ino = devino | INTR_DEVINO;
 	return H_EOK;
 }
 

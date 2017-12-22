@@ -1,4 +1,4 @@
-/*	$OpenBSD: vbus.c,v 1.9 2017/12/06 16:20:53 kettenis Exp $	*/
+/*	$OpenBSD: vbus.c,v 1.10 2017/12/22 15:52:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -181,7 +181,6 @@ vbus_intr_map(int node, int ino, uint64_t *sysino)
 			if (err != H_EOK)
 				return (-1);
 
-			KASSERT(*sysino == INTVEC(*sysino));
 			return (0);
 		}
 		imap += address_cells + interrupt_cells + 2;
@@ -238,8 +237,9 @@ vbus_intr_ack(struct intrhand *ih)
 	bus_space_tag_t t = ih->ih_bus;
 	struct vbus_softc *sc = t->cookie;
 	uint64_t devhandle = sc->sc_devhandle;
+	uint64_t sysino = INTVEC(ih->ih_number);
 
-	sun4v_intr_setstate(devhandle, ih->ih_number, INTR_IDLE);
+	sun4v_intr_setstate(devhandle, sysino, INTR_IDLE);
 }
 
 bus_space_tag_t
