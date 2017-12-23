@@ -1,4 +1,4 @@
-/*	$OpenBSD: exehci.c,v 1.7 2017/03/10 21:26:19 kettenis Exp $ */
+/*	$OpenBSD: exehci.c,v 1.8 2017/12/23 10:23:34 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -28,8 +28,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
-
-#include <armv7/exynos/exsysregvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
@@ -73,6 +71,10 @@
 #define EHCI_CTRL_ENAINCR4		(1 << 28)
 #define EHCI_CTRL_ENAINCR8		(1 << 27)
 #define EHCI_CTRL_ENAINCR16		(1 << 26)
+
+/* SYSREG registers */
+#define USB20PHY_CFG			0x230
+#define  USB20PHY_CFG_HOST_LINK_EN	(1 << 0)
 
 /* PMU registers */
 #define USB_HOST_POWER_5250	0x708
@@ -216,8 +218,8 @@ exehci_detach(struct device *self, int flags)
 void
 exehci_setup(struct exehci_softc *sc)
 {
-	struct regmap *pmurm;
-	uint32_t pmureg;
+	struct regmap *pmurm, *sysrm;
+	uint32_t pmureg, sysreg;
 	bus_size_t offset;
 	uint32_t val;
 	int node;
@@ -229,7 +231,14 @@ exehci_setup(struct exehci_softc *sc)
 	delay(3000);
 #endif
 
-	exsysreg_usbhost_mode(1);
+	/* Enable host mode. */
+	sysreg = OF_getpropint(sc->sc_phy, "samsung,sysreg-phandle", 0);
+	sysrm = regmap_byphandle(sysreg);
+	if (sysrm) {
+		val = regmap_read_4(sysrm, USB20PHY_CFG);
+		val |= USB20PHY_CFG_HOST_LINK_EN;
+		regmap_write_4(sysrm, USB20PHY_CFG, val);
+	}
 
 	/* Power up the PHY block. */
 	pmureg = OF_getpropint(sc->sc_phy, "samsung,pmureg-phandle", 0);
