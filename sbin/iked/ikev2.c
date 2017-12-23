@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.164 2017/12/05 09:06:53 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.165 2017/12/23 10:30:54 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -844,11 +844,7 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		(void)ikev2_ike_auth_recv(env, sa, msg);
 		break;
 	case IKEV2_EXCHANGE_CREATE_CHILD_SA:
-		if (ikev2_init_create_child_sa(env, msg) != 0) {
-			if (msg->msg_error == 0)
-				msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
-			ikev2_send_error(env, sa, msg, hdr->ike_exchange);
-		}
+		(void)ikev2_init_create_child_sa(env, msg);
 		break;
 	case IKEV2_EXCHANGE_INFORMATIONAL:
 		sa->sa_stateflags &= ~IKED_REQ_INF;
@@ -4286,16 +4282,6 @@ ikev2_sa_initiator_dh(struct iked_sa *sa, struct iked_message *msg,
 	/* Initial message */
 	if (msg == NULL)
 		return (0);
-
-	/* Look for dhgroup mismatch during an IKE SA negotiation */
-	if (msg->msg_dhgroup != sa->sa_dhgroup->id) {
-		log_debug("%s: want dh %s, KE has %s", __func__,
-		    print_map(sa->sa_dhgroup->id, ikev2_xformdh_map),
-		    print_map(msg->msg_dhgroup, ikev2_xformdh_map));
-		msg->msg_error = IKEV2_N_INVALID_KE_PAYLOAD;
-		msg->msg_dhgroup = sa->sa_dhgroup->id;
-		return (-1);
-	}
 
 	if (!ibuf_length(sa->sa_dhrexchange)) {
 		if (!ibuf_length(msg->msg_ke)) {
