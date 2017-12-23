@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.14 2017/12/22 15:21:04 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.15 2017/12/23 10:50:15 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -393,7 +393,7 @@ wstpad_scroll(struct wstpad *tp, int dx, int dy, u_int *cmds)
 	if (sign) {
 		if (tp->scroll.dz != -sign) {
 			tp->scroll.dz = -sign;
-			tp->scroll.acc_dy = -tp->scroll.vdist;
+			tp->scroll.acc_dy = -tp->scroll.vdist * 2;
 		}
 		tp->scroll.acc_dy += abs(dy);
 		if (tp->scroll.acc_dy >= 0) {
@@ -403,7 +403,7 @@ wstpad_scroll(struct wstpad *tp, int dx, int dy, u_int *cmds)
 	} else if ((sign = (dx > 0) - (dx < 0))) {
 		if (tp->scroll.dw != sign) {
 			tp->scroll.dw = sign;
-			tp->scroll.acc_dx = -tp->scroll.hdist;
+			tp->scroll.acc_dx = -tp->scroll.hdist * 2;
 		}
 		tp->scroll.acc_dx += abs(dx);
 		if (tp->scroll.acc_dx >= 0) {
@@ -444,6 +444,8 @@ wstpad_f2scroll(struct wsmouseinput *input, u_int *cmds)
 			if ((dy > 0 && !NORTH(dir)) || (dy < 0 && !SOUTH(dir)))
 				return;
 			if ((dx > 0 && !EAST(dir)) || (dx < 0 && !WEST(dir)))
+				return;
+			if (t2->matches < imin(STABLE, tp->t->matches / 4))
 				return;
 			centered |= CENTERED(t2);
 		}
