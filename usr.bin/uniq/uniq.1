@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uniq.1,v 1.20 2017/12/21 10:05:59 tb Exp $
+.\"	$OpenBSD: uniq.1,v 1.21 2017/12/23 00:52:33 schwarze Exp $
 .\"	$NetBSD: uniq.1,v 1.5 1994/12/06 07:51:15 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)uniq.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: December 21 2017 $
+.Dd $Mdocdate: December 23 2017 $
 .Dt UNIQ 1
 .Os
 .Sh NAME
@@ -74,7 +74,7 @@ A field is a string of non-blank characters separated from adjacent fields
 by blanks, with blanks considered part of the following field.
 Field numbers are one based, i.e., the first field is field one.
 .It Fl i
-Case insensitive comparison of lines.
+Regard lower and upper case ASCII characters as identical.
 .It Fl s Ar chars
 Ignore the first
 .Ar chars
@@ -128,6 +128,10 @@ If unset or set to
 .Qq POSIX ,
 or an unsupported value, each byte is treated as a character,
 and only space and tab are considered blank.
+.Pp
+This variable is ignored for case comparisons.
+Lower and upper case versions of non-ASCII characters are always
+considered different.
 .El
 .Sh EXIT STATUS
 .Ex -std uniq
