@@ -1,4 +1,4 @@
-/*	$OpenBSD: pom.c,v 1.25 2016/12/01 20:08:59 fcambus Exp $	*/
+/*	$OpenBSD: pom.c,v 1.26 2017/12/23 20:53:07 cheloha Exp $	*/
 /*    $NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $      */
 
 /*
@@ -44,7 +44,6 @@
  *
  */
 
-#include <sys/time.h>
 #include <ctype.h>
 #include <err.h>
 #include <math.h>
@@ -73,8 +72,6 @@ __dead void	badformat(void);
 int
 main(int argc, char *argv[])
 {
-	struct timeval tp;
-	struct timezone tzp;
 	struct tm *GMT;
 	time_t tmpt;
 	double days, today, tomorrow;
@@ -89,11 +86,8 @@ main(int argc, char *argv[])
 		strftime(buf, sizeof(buf), "%a %Y %b %e %H:%M:%S (%Z)",
 			localtime(&tmpt));
 		printf("%s:  ", buf);
-	} else {
-		if (gettimeofday(&tp,&tzp))
-			err(1, "gettimeofday");
-		tmpt = tp.tv_sec;
-	}
+	} else
+		tmpt = time(NULL);
 	GMT = gmtime(&tmpt);
 	days = (GMT->tm_yday + 1) + ((GMT->tm_hour +
 	    (GMT->tm_min / 60.0) + (GMT->tm_sec / 3600.0)) / 24.0);
