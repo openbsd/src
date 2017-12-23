@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.47 2017/11/01 18:18:10 espie Exp $
+# $OpenBSD: State.pm,v 1.48 2017/12/23 12:35:47 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -383,7 +383,10 @@ sub fillup_names
 
 	for my $sym (keys %POSIX::) {
 		next unless $sym =~ /^SIG([A-Z].*)/;
-		$signal_name[eval "&POSIX::$sym()"] = $1;
+		my $value = eval "&POSIX::$sym()";
+		# skip over POSIX stuff we don't have like SIGRT or SIGPOLL
+		next unless defined $value;
+		$signal_name[$value] = $1;
 	}
 	# extra BSD signals
 	$signal_name[5] = 'TRAP';
