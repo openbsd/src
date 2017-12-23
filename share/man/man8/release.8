@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.90 2017/12/22 21:19:10 anton Exp $
+.\"	$OpenBSD: release.8,v 1.91 2017/12/23 16:20:21 sthen Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"	Copyright (c) 2016 Theo Buehler <tb@openbsd.org>
@@ -10,7 +10,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: December 22 2017 $
+.Dd $Mdocdate: December 23 2017 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -176,6 +176,9 @@ To build a release, it is necessary to prepare a filesystem mounted with the
 .Em noperm
 .Xr mount 8
 option.
+Either standard FFS or
+.Xr mount_mfs 8
+may be used.
 The root of this filesystem must have owner
 .Sy build
 and mode 700.
