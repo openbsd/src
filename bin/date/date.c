@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.50 2016/10/19 18:20:25 schwarze Exp $	*/
+/*	$OpenBSD: date.c,v 1.51 2017/12/23 20:58:14 cheloha Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -153,6 +153,7 @@ setthetime(char *p)
 	struct tm *lt;
 	struct timeval tv;
 	char *dot, *t;
+	time_t now;
 	int yearset = 0;
 
 	for (t = p, dot = NULL; *t; ++t) {
@@ -225,15 +226,12 @@ setthetime(char *p)
 
 	/* set the time */
 	if (slidetime) {
-		struct timeval tv_current;
-
-		if (gettimeofday(&tv_current, NULL) == -1)
-			err(1, "Could not get local time of day");
-
-		tv.tv_sec = tval - tv_current.tv_sec;
+		if ((now = time(NULL)) == -1)
+			err(1, "time");
+		tv.tv_sec = tval - now;
 		tv.tv_usec = 0;
 		if (adjtime(&tv, NULL) == -1)
-			errx(1, "adjtime");
+			err(1, "adjtime");
 	} else {
 #ifndef SMALL
 		logwtmp("|", "date", "");
