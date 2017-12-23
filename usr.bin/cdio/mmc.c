@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmc.c,v 1.30 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: mmc.c,v 1.31 2017/12/23 20:04:23 cheloha Exp $	*/
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/limits.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/scsiio.h>
 #include <sys/param.h>	/* setbit, isset */
@@ -27,6 +28,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include "extern.h"
 
@@ -433,7 +435,7 @@ writetao(struct track_head *thp)
 int
 writetrack(struct track_info *tr, int track)
 {
-	struct timeval tv, otv, atv;
+	struct timespec ts, ots, ats;
 	u_char databuf[65536], nblk;
 	u_int end_lba, lba, tmp;
 	scsireq_t scr;
@@ -451,9 +453,9 @@ writetrack(struct track_info *tr, int track)
 	scr.senselen = SENSEBUFLEN;
 	scr.flags = SCCMD_ESCAPE|SCCMD_WRITE;
 
-	timerclear(&otv);
-	atv.tv_sec = 1;
-	atv.tv_usec = 0;
+	timespecclear(&ots);
+	ats.tv_sec = 1;
+	ats.tv_nsec = 0;
 
 	if (get_nwa(&lba) != SCCMD_OK) {
 		warnx("cannot get next writable address");
@@ -500,13 +502,13 @@ again:
 			}
 			lba += nblk;
 
-			gettimeofday(&tv, NULL);
-			if (lba == end_lba || timercmp(&tv, &otv, >)) {
+			clock_gettime(CLOCK_MONOTONIC, &ts);
+			if (lba == end_lba || timespeccmp(&ts, &ots, >)) {
 				fprintf(stderr,
 				    "\rtrack %02d '%c' %08u/%08u %3d%%",
 				    track, tr->type,
 				    lba, end_lba, 100 * lba / end_lba);
-				timeradd(&tv, &atv, &otv);
+				timespecadd(&ts, &ats, &ots);
 			}
 			tmp = htobe32(lba); /* update lba in cdb */
 			memcpy(&scr.cmd[2], &tmp, sizeof(tmp));

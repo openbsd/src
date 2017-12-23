@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.85 2017/09/05 05:37:35 jca Exp $	*/
+/*	$OpenBSD: util.c,v 1.86 2017/12/23 20:04:23 cheloha Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -744,7 +744,7 @@ updateprogressmeter(int signo)
  *   with flag = 0
  * - After the transfer, call with flag = 1
  */
-static struct timeval start;
+static struct timespec start;
 
 char *action;
 
@@ -757,21 +757,21 @@ progressmeter(int flag, const char *filename)
 	 */
 	static const char prefixes[] = " KMGTP";
 
-	static struct timeval lastupdate;
+	static struct timespec lastupdate;
 	static off_t lastsize;
 	static char *title = NULL;
-	struct timeval now, td, wait;
+	struct timespec now, td, wait;
 	off_t cursize, abbrevsize;
 	double elapsed;
 	int ratio, barlength, i, remaining, overhead = 30;
 	char buf[512];
 
 	if (flag == -1) {
-		(void)gettimeofday(&start, NULL);
+		clock_gettime(CLOCK_MONOTONIC, &start);
 		lastupdate = start;
 		lastsize = restart_point;
 	}
-	(void)gettimeofday(&now, NULL);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	if (!progress || filesize < 0)
 		return;
 	cursize = bytes + restart_point;
@@ -851,19 +851,19 @@ progressmeter(int flag, const char *filename)
 	    " %5lld %c%c ", (long long)abbrevsize, prefixes[i],
 	    prefixes[i] == ' ' ? ' ' : 'B');
 
-	timersub(&now, &lastupdate, &wait);
+	timespecsub(&now, &lastupdate, &wait);
 	if (cursize > lastsize) {
 		lastupdate = now;
 		lastsize = cursize;
 		if (wait.tv_sec >= STALLTIME) {	/* fudge out stalled time */
 			start.tv_sec += wait.tv_sec;
-			start.tv_usec += wait.tv_usec;
+			start.tv_nsec += wait.tv_nsec;
 		}
 		wait.tv_sec = 0;
 	}
 
-	timersub(&now, &start, &td);
-	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
+	timespecsub(&now, &start, &td);
+	elapsed = td.tv_sec + (td.tv_nsec / 1000000000.0);
 
 	if (flag == 1) {
 		i = (int)elapsed / 3600;
@@ -921,7 +921,7 @@ progressmeter(int flag, const char *filename)
 void
 ptransfer(int siginfo)
 {
-	struct timeval now, td;
+	struct timespec now, td;
 	double elapsed;
 	off_t bs;
 	int meg, remaining, hh;
@@ -930,9 +930,9 @@ ptransfer(int siginfo)
 	if (!verbose && !siginfo)
 		return;
 
-	(void)gettimeofday(&now, NULL);
-	timersub(&now, &start, &td);
-	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	timespecsub(&now, &start, &td);
+	elapsed = td.tv_sec + (td.tv_nsec / 1000000000.0);
 	bs = bytes / (elapsed == 0.0 ? 1 : elapsed);
 	meg = 0;
 	if (bs > (1024 * 1024))

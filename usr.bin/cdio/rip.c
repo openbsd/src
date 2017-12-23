@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.c,v 1.16 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: rip.c,v 1.17 2017/12/23 20:04:23 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
@@ -23,6 +23,7 @@
 #include <sys/ioctl.h>
 #include <sys/scsiio.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
@@ -37,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "extern.h"
@@ -362,7 +364,7 @@ read_data_sector(u_int32_t lba, u_char *sec, u_int32_t secsize)
 int
 read_track(struct track *ti)
 {
-	struct timeval tv, otv, atv;
+	struct timespec ts, ots, ats;
 	u_int32_t i, blksize, n_sec;
 	u_char *sec;
 	int error;
@@ -373,18 +375,18 @@ read_track(struct track *ti)
 	if (sec == NULL)
 		return (-1);
 
-	timerclear(&otv);
-	atv.tv_sec = 1;
-	atv.tv_usec = 0;
+	timespecclear(&ots);
+	ats.tv_sec = 1;
+	ats.tv_nsec = 0;
 
 	for (i = 0; i < n_sec; ) {
-		gettimeofday(&tv, NULL);
-		if (timercmp(&tv, &otv, >)) {
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		if (timespeccmp(&ts, &ots, >)) {
 			fprintf(stderr, "\rtrack %u '%c' %08u/%08u %3u%%",
 			    ti->track,
 			    (ti->isaudio) ? 'a' : 'd', i, n_sec,
 			    100 * i / n_sec);
-			timeradd(&tv, &atv, &otv);
+			timespecadd(&ts, &ats, &ots);
 		}
 
 		error = read_data_sector(i + ti->start_lba, sec, blksize);
