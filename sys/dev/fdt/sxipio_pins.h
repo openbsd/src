@@ -3559,7 +3559,6 @@ struct sxipio_pin sun8i_h3_pins[] = {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
 		{ "sim", 2 },
-		{ "pwm1", 3 },
 		{ "irq", 6 },
 	} },
 	{ SXIPIO_PIN(A, 7), {
@@ -4074,13 +4073,13 @@ struct sxipio_pin sun8i_h3_r_pins[] = {
 	{ SXIPIO_PIN(L, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
-		{ "s_twi", 2 },
+		{ "s_i2c", 2 },
 		{ "irq", 6 },
 	} },
 	{ SXIPIO_PIN(L, 1), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
-		{ "s_twi", 2 },
+		{ "s_i2c", 2 },
 		{ "irq", 6 },
 	} },
 	{ SXIPIO_PIN(L, 2), {
