@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.25 2017/11/14 13:09:22 fcambus Exp $	*/
+/*	$OpenBSD: via.c,v 1.26 2017/12/24 16:19:27 fcambus Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -366,7 +366,7 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 				memcpy(crp->crp_buf + crd->crd_inject,
 				    sc->op_iv, 16);
 			if (err)
-				return (err);
+				goto errout;
 		}
 	} else {
 		sc->op_cw[0] = ses->ses_cw0 | C3_CRYPT_CWLO_DECRYPT;
@@ -409,6 +409,7 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		memcpy(crp->crp_buf + crd->crd_skip, sc->op_buf,
 		    crd->crd_len);
 
+ errout:
 	if (sc->op_buf != NULL) {
 		explicit_bzero(sc->op_buf, crd->crd_len);
 		free(sc->op_buf, M_DEVBUF, crd->crd_len);
