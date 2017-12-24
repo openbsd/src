@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.25 2017/12/21 10:05:59 tb Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.26 2017/12/24 00:11:43 tb Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ main(int argc, char *argv[])
 		}
 
 		/* If different, print; set previous to new value. */
-		if ((!iflag && strcmp(t1, t2)) || strcasecmp(t1, t2)) {
+		if ((iflag ? strcasecmp : strcmp)(t1, t2)) {
 			show(ofp, prevline);
 			t1 = prevline;
 			prevline = thisline;
