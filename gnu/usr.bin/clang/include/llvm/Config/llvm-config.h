@@ -64,16 +64,16 @@
 #define LLVM_USE_OPROFILE 0
 
 /* Major version of the LLVM API */
-#define LLVM_VERSION_MAJOR 4
+#define LLVM_VERSION_MAJOR 5
 
 /* Minor version of the LLVM API */
 #define LLVM_VERSION_MINOR 0
 
 /* Patch version of the LLVM API */
-#define LLVM_VERSION_PATCH 0
+#define LLVM_VERSION_PATCH 1
 
 /* LLVM version string */
-#define LLVM_VERSION_STRING "5.0.0"
+#define LLVM_VERSION_STRING "5.0.1"
 
 /* Define if we link Polly to the tools */
 /* #undef LINK_POLLY_INTO_TOOLS */
