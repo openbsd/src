@@ -1,4 +1,4 @@
-/*	$OpenBSD: pom.c,v 1.27 2017/12/24 16:59:50 cheloha Exp $	*/
+/*	$OpenBSD: pom.c,v 1.28 2017/12/24 22:12:49 cheloha Exp $	*/
 /*    $NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $      */
 
 /*
@@ -75,17 +75,21 @@ main(int argc, char *argv[])
 	struct tm *GMT;
 	time_t tmpt;
 	double days, today, tomorrow;
-	int cnt;
+	int cnt, principal, usertime;
 	char buf[1024];
+	char *descriptor, *name;
+
+	principal = 1;
+	usertime = 0;
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
 	if (argc > 1) {
+		usertime = 1;
 		tmpt = parsetime(argv[1]);
 		strftime(buf, sizeof(buf), "%a %Y %b %e %H:%M:%S (%Z)",
 			localtime(&tmpt));
-		printf("%s:  ", buf);
 	} else
 		tmpt = time(NULL);
 	GMT = gmtime(&tmpt);
@@ -97,27 +101,36 @@ main(int argc, char *argv[])
 	for (cnt = GMT->tm_year; cnt < EPOCH; ++cnt)
 		days -= isleap(cnt + 1900) ? 366 : 365;
 	today = potm(days);
-	(void)printf("The Moon is ");
 	if (lround(today) == 100)
-		(void)printf("Full\n");
+		name = "Full";
 	else if (lround(today) == 0)
-		(void)printf("New\n");
+		name = "New";
 	else {
 		tomorrow = potm(days + 1);
-		if (lround(today) == 50)
-			(void)printf("%s\n", tomorrow > today ?
-			    "at the First Quarter" : "at the Last Quarter");
-		else {
-			(void)printf("%s ", tomorrow > today ?
-			    "Waxing" : "Waning");
+		if (lround(today) == 50) {
+			if (tomorrow > today)
+				name = "at the First Quarter";
+			else
+				name = "at the Last Quarter";
+		} else {
+			principal = 0;
+			if (tomorrow > today)
+				descriptor = "Waxing";
+			else
+				descriptor = "Waning";
 			if (today > 50.0)
-				(void)printf("Gibbous (%1.0f%% of Full)\n",
-				    today);
+				name = "Gibbous";
 			else /* (today < 50.0) */
-				(void)printf("Crescent (%1.0f%% of Full)\n",
-				    today);
+				name = "Crescent";
 		}
 	}
+	if (usertime)
+		printf("%s:  ", buf);
+	printf("The Moon is ");
+	if (principal)
+		printf("%s\n", name);
+	else
+		printf("%s %s (%1.0f%% of Full)\n", descriptor, name, today);
 	return 0;
 }
 
