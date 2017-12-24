@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.11 2017/12/15 09:15:36 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.12 2017/12/24 18:24:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -755,6 +755,67 @@ sxiccmu_ccu_get_frequency(void *cookie, uint32_t *cells)
 	return sc->sc_get_frequency(sc, idx);
 }
 
+/* Allwinner A10/A20 */
+#define A10_PLL1_CFG_REG		0x0000
+#define A10_PLL1_OUT_EXT_DIVP(x)	(((x) >> 16) & 0x3)
+#define A10_PLL1_FACTOR_N(x)		(((x) >> 8) & 0x1f)
+#define A10_PLL1_FACTOR_K(x)		(((x) >> 4) & 0x3)
+#define A10_PLL1_FACTOR_M(x)		(((x) >> 0) & 0x3)
+#define A10_CPU_AHB_APB0_CFG_REG	0x0054
+#define A10_CPU_CLK_SRC_SEL		(0x3 << 16)
+#define A10_CPU_CLK_SRC_SEL_LOSC	(0x0 << 16)
+#define A10_CPU_CLK_SRC_SEL_OSC24M	(0x1 << 16)
+#define A10_CPU_CLK_SRC_SEL_PLL1	(0x2 << 16)
+#define A10_CPU_CLK_SRC_SEL_200MHZ	(0x3 << 16)
+
+uint32_t
+sxiccmu_a10_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
+{
+	uint32_t parent;
+	uint32_t reg, k, m, n, p;
+
+	switch (idx) {
+	case A10_CLK_LOSC:
+		return clock_get_frequency(sc->sc_node, "losc");
+	case A10_CLK_HOSC:
+		return clock_get_frequency(sc->sc_node, "hosc");
+	case A10_CLK_PLL_CORE:
+		reg = SXIREAD4(sc, A10_PLL1_CFG_REG);
+		k = A10_PLL1_FACTOR_K(reg) + 1;
+		m = A10_PLL1_FACTOR_M(reg) + 1;
+		n = A10_PLL1_FACTOR_N(reg);
+		p = 1 << A10_PLL1_OUT_EXT_DIVP(reg);
+		return (24000000 * n * k) / (m * p);
+	case A10_CLK_PLL_PERIPH_BASE:
+		/* Not hardcoded, but recommended. */
+		return 600000000;
+	case A10_CLK_PLL_PERIPH:
+		return sxiccmu_a10_get_frequency(sc, A10_CLK_PLL_PERIPH_BASE) * 2;
+	case A10_CLK_CPU:
+		reg = SXIREAD4(sc, A10_CPU_AHB_APB0_CFG_REG);
+		switch (reg & A10_CPU_CLK_SRC_SEL) {
+		case A10_CPU_CLK_SRC_SEL_LOSC:
+			parent = A10_CLK_LOSC;
+			break;
+		case A10_CPU_CLK_SRC_SEL_OSC24M:
+			parent = A10_CLK_HOSC;
+			break;
+		case A10_CPU_CLK_SRC_SEL_PLL1:
+			parent = A10_CLK_PLL_CORE;
+			break;
+		case A10_CPU_CLK_SRC_SEL_200MHZ:
+			return 200000000;
+		}
+		return sxiccmu_ccu_get_frequency(sc, &parent);
+	case A10_CLK_APB1:
+		/* XXX Controlled by a MUX. */
+		return 24000000;
+	}
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return 0;
+}
+
 /* Allwinner H3/A64 */
 #define CCU_AHB1_APB1_CFG_REG		0x0054
 #define CCU_AHB1_CLK_SRC_SEL		(3 << 12)
@@ -766,24 +827,6 @@ sxiccmu_ccu_get_frequency(void *cookie, uint32_t *cells)
 #define CCU_AHB1_CLK_DIV_RATIO(x)	(1 << (((x) >> 4) & 3))
 #define CCU_AHB2_CFG_REG		0x005c
 #define CCU_AHB2_CLK_CFG		(3 << 0)
-
-uint32_t
-sxiccmu_a10_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
-{
-	switch (idx) {
-	case A10_CLK_PLL_PERIPH_BASE:
-		/* Not hardcoded, but recommended. */
-		return 600000000;
-	case A10_CLK_PLL_PERIPH:
-		return sxiccmu_a10_get_frequency(sc, A10_CLK_PLL_PERIPH_BASE) * 2;
-	case A10_CLK_APB1:
-		/* XXX Controlled by a MUX. */
-		return 24000000;
-	}
-
-	printf("%s: 0x%08x\n", __func__, idx);
-	return 0;
-}
 
 uint32_t
 sxiccmu_a64_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)

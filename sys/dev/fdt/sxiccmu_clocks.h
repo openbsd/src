@@ -7,9 +7,12 @@
 
 /* A10/A20 */
 
+#define A10_CLK_HOSC		1
+#define A10_CLK_PLL_CORE	2
 #define A10_CLK_PLL_PERIPH_BASE	14
 #define A10_CLK_PLL_PERIPH	15
 
+#define A10_CLK_CPU		20
 #define A10_CLK_APB1		25
 
 #define A10_CLK_AHB_EHCI0	27
@@ -42,6 +45,8 @@
 #define A10_CLK_MMC3		107
 #define A10_CLK_SATA		122
 #define A10_CLK_USB_PHY		125
+
+#define A10_CLK_LOSC		254
 
 struct sxiccmu_ccu_bit sun4i_a10_gates[] = {
 	[A10_CLK_AHB_EHCI0] =  { 0x0060, 1 },
