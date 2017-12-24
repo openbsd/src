@@ -1,4 +1,4 @@
-/*	$OpenBSD: pom.c,v 1.26 2017/12/23 20:53:07 cheloha Exp $	*/
+/*	$OpenBSD: pom.c,v 1.27 2017/12/24 16:59:50 cheloha Exp $	*/
 /*    $NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $      */
 
 /*
@@ -96,28 +96,24 @@ main(int argc, char *argv[])
 	/* Selected time could be before EPOCH */
 	for (cnt = GMT->tm_year; cnt < EPOCH; ++cnt)
 		days -= isleap(cnt + 1900) ? 366 : 365;
-	today = potm(days) + 0.5;
+	today = potm(days);
 	(void)printf("The Moon is ");
-	if ((int)today == 100)
+	if (lround(today) == 100)
 		(void)printf("Full\n");
-	else if (!(int)today)
+	else if (lround(today) == 0)
 		(void)printf("New\n");
 	else {
 		tomorrow = potm(days + 1);
-		if ((int)today == 50)
+		if (lround(today) == 50)
 			(void)printf("%s\n", tomorrow > today ?
 			    "at the First Quarter" : "at the Last Quarter");
-			/* today is 0.5 too big, but it doesn't matter here
-			 * since the phase is changing fast enough
-			 */
 		else {
-			today -= 0.5;		/* Now it might matter */
 			(void)printf("%s ", tomorrow > today ?
 			    "Waxing" : "Waning");
-			if (today > 50)
+			if (today > 50.0)
 				(void)printf("Gibbous (%1.0f%% of Full)\n",
 				    today);
-			else if (today < 50)
+			else /* (today < 50.0) */
 				(void)printf("Crescent (%1.0f%% of Full)\n",
 				    today);
 		}
@@ -178,13 +174,9 @@ dtor(double deg)
 void
 adj360(double *deg)
 {
-	for (;;)
-		if (*deg < 0.0)
-			*deg += 360.0;
-		else if (*deg > 360.0)
-			*deg -= 360.0;
-		else
-			break;
+	*deg = fmod(*deg, 360.0);
+	if (*deg < 0.0)
+		*deg += 360.0;
 }
 
 #define	ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
