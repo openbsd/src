@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.7 2017/08/20 04:22:57 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.8 2017/12/24 19:42:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -20,9 +20,12 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/sysctl.h>
+
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
 
 /* CPU Identification */
@@ -87,6 +90,7 @@ const struct implementers {
 };
 
 char cpu_model[64];
+int cpu_node;
 
 int	cpu_match(struct device *, void *, void *);
 void	cpu_attach(struct device *, struct device *, void *);
@@ -143,6 +147,8 @@ cpu_identify(struct cpu_info *ci)
 	}
 }
 
+int	cpu_clockspeed(int *);
+
 int
 cpu_match(struct device *parent, void *cfdata, void *aux)
 {
@@ -172,9 +178,21 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 
 		printf(":");
 		cpu_identify(ci);
+		
+		if (OF_getproplen(faa->fa_node, "clocks") > 0) {
+			cpu_node = faa->fa_node;
+			cpu_cpuspeed = cpu_clockspeed;
+		}
 	} else {
 		printf(": not configured");
 	}
 
 	printf("\n");
+}
+
+int
+cpu_clockspeed(int *freq)
+{
+	*freq = clock_get_frequency(cpu_node, NULL) / 1000000;
+	return 0;
 }
