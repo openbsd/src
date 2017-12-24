@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1050 2017/12/04 15:13:12 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1051 2017/12/24 14:18:19 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -249,6 +249,8 @@ void			 pf_state_key_link(struct pf_state_key *,
 			    struct pf_state_key *);
 void			 pf_inpcb_unlink_state_key(struct inpcb *);
 void			 pf_state_key_unlink_reverse(struct pf_state_key *);
+void			 pf_state_key_link_inpcb(struct pf_state_key *,
+			    struct inpcb *);
 
 #if NPFLOG > 0
 void			 pf_log_matches(struct pf_pdesc *, struct pf_rule *,
@@ -1085,8 +1087,9 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir,
 		if (dir == PF_OUT && pkt_sk &&
 		    pf_compare_state_keys(pkt_sk, sk, kif, dir) == 0)
 			pf_state_key_link(sk, pkt_sk);
-		else if (dir == PF_OUT)
-			pf_inp_link(m, m->m_pkthdr.pf.inp);
+		else if (dir == PF_OUT && m->m_pkthdr.pf.inp &&
+		    !m->m_pkthdr.pf.inp->inp_pf_sk && !sk->inp)
+			pf_state_key_link_inpcb(sk, m->m_pkthdr.pf.inp);
 	}
 
 	/* remove firewall data from outbound packet */
@@ -7259,6 +7262,15 @@ void
 pf_pkt_state_key_ref(struct mbuf *m)
 {
 	pf_state_key_ref(m->m_pkthdr.pf.statekey);
+}
+
+void
+pf_state_key_link_inpcb(struct pf_state_key *sk, struct inpcb *inp)
+{
+	KASSERT(sk->inp == NULL);
+	sk->inp = inp;
+	KASSERT(inp->inp_pf_sk == NULL);
+	inp->inp_pf_sk = pf_state_key_ref(sk);
 }
 
 void
