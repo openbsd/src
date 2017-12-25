@@ -1,4 +1,4 @@
-/*	$OpenBSD: siphash.c,v 1.6 2017/04/12 17:41:49 deraadt Exp $ */
+/*	$OpenBSD: siphash.c,v 1.7 2017/12/25 02:11:19 tedu Exp $ */
 
 /*-
  * Copyright (c) 2013 Andre Oppermann <andre@FreeBSD.org>
@@ -104,7 +104,7 @@ SipHash_Update(SIPHASH_CTX *ctx, int rc, int rf, const void *src, size_t len)
 	}
 
 	if (len > 0)
-		memcpy(&ctx->buf[used], ptr, len);
+		memcpy(ctx->buf, ptr, len);
 }
 DEF_WEAK(SipHash_Update);
 
