@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2017/09/08 19:04:00 naddy Exp $
+# $OpenBSD: Makefile,v 1.11 2017/12/26 20:59:44 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -41,6 +41,8 @@ GEN_SRCS=	absvdi2 \
 		ashrdi3 \
 		ashrti3 \
 		atomic \
+		bswapdi2 \
+		bswapsi2 \
 		clear_cache \
 		clzdi2 \
 		clzsi2 \
@@ -71,6 +73,7 @@ GEN_SRCS=	absvdi2 \
 		extendsfdf2 \
 		extendhfsf2 \
 		ffsdi2 \
+		ffssi2 \
 		ffsti2 \
 		fixdfdi \
 		fixdfsi \
@@ -195,8 +198,10 @@ SRCS+=	comparetf2.c \
 	fixunstfti.c \
 	floatditf.c \
 	floatsitf.c \
-	floatunsitf.c \
+	floattitf.c \
 	floatunditf.c \
+	floatunsitf.c \
+	floatuntitf.c \
 	multc3.c \
 	trunctfdf2.c \
 	trunctfsf2.c
@@ -220,8 +225,6 @@ SRCS+=	aeabi_cdcmp.S \
 	aeabi_memset.S \
 	aeabi_uidivmod.S \
 	aeabi_uldivmod.S \
-	bswapdi2.S \
-	bswapsi2.S \
 	switch16.S \
 	switch32.S \
 	switch8.S \
