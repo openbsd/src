@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2017/12/18 17:01:27 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.20 2017/12/26 17:03:46 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -151,12 +151,23 @@ run-regress-${inet}-${a:R}: ${a}
 .endif
 .endfor
 
+STATE_EXIST_tcp_to =		!
+STATE_EXIST_udp_to =
+STATE_EXIST_rip_to =
+STATE_EXIST_tcp_reply =		!
+STATE_EXIST_udp_reply =		!
+STATE_EXIST_rip_reply =		!
+STATE_EXIST_tcp_reply-to =	!
+STATE_EXIST_udp_reply-to =	!
+STATE_EXIST_rip_reply-to =	!
+
 .for proto in tcp udp rip
 
 .for  first second  in  to to  to reply  to reply-to  reply to  reply reply  reply reply-to  reply-to to  reply-to reply  reply-to reply-to
 
 run-regress-${inet}-reuse-${proto}-${first}-${second}:
 	@echo '\n======== $@ ========'
+	# create state with ${first} divert rule
 	time ${SUDO} SUDO=${SUDO} KTRACE=${KTRACE} \
 	    perl ${PERLINC} ${PERLPATH}remote.pl -f ${inet} \
 	    ${LOCAL_${addr}} ${FAKE_${addr}} ${REMOTE_SSH} \
@@ -164,38 +175,60 @@ run-regress-${inet}-reuse-${proto}-${first}-${second}:
 	sed -n '/^connect peer:/s/.* //p' client.log >client.port
 	sed -n '/^connect sock:/s/.* //p' client.log >server.port
 .if "tcp" == ${proto}
-.if "reply" == ${first}
+	# drop client tcp socket still in time wait to allow reuse
+.if "reply" == ${first} || "reply-to" == ${first}
 	${SUDO} tcpdrop \
 	    ${LOCAL_${addr}} `cat client.port` \
 	    ${FAKE_${addr}} `cat server.port`
-.endif
-.if "to" == ${first}
+.else # "to" == ${first}
+	# tcp socket is in time wait so state must still exist
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | \
+	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat client.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat server.port`'\]? '
 	ssh ${REMOTE_SSH} ${SUDO} tcpdrop \
 	    ${FAKE_${addr}} `cat client.port` \
 	    ${LOCAL_${addr}} `cat server.port`
+	# divert-to state disappeared when the tcp socket was dropped
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | ! \
+	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat client.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat server.port`'\]? '
 .endif
 .endif
+.if "to" == ${first}
+.if "tcp" == ${proto}
+	# divert-to state has disappeared as tcp socket is always connected
+.else
+	# divert-to state still exists as the socket is unconnected
+.endif
+.else
+	# divert-reply state has disappeared when the connected socket closed
+.endif
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | ${STATE_EXIST_${proto}_${first}} \
+	    egrep ' (tcp|udp|254) ${FAKE_${addr}}[][0-9:]* .. ${LOCAL_${addr}}[][0-9:]* '
+	# create state again with ${second} divert rule
 	time ${SUDO} SUDO=${SUDO} KTRACE=${KTRACE} \
 	    perl ${PERLINC} ${PERLPATH}remote.pl ${inet} \
 	    ${LOCAL_${addr}} ${FAKE_${addr}} ${REMOTE_SSH} \
 	    `cat client.port` `cat server.port` \
 	    ${PERLPATH}args-${proto}-${second}.pl
 .if "tcp" == ${proto}
-.if "reply" == ${second}
+.if "reply" == ${second} || "reply-to" == ${second}
+	# drop client tcp socket still in time wait to clean up
 	${SUDO} tcpdrop \
 	    ${LOCAL_${addr}} `cat server.port` \
 	    ${FAKE_${addr}} `cat client.port`
-.endif
-.if "to" == ${second}
+.else # "to" == ${second}
+	# dropping the server tcp socket in time wait must remove the state
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | \
 	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat server.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat client.port`'\]? '
 	ssh ${REMOTE_SSH} ${SUDO} tcpdrop \
 	    ${FAKE_${addr}} `cat server.port` \
 	    ${LOCAL_${addr}} `cat client.port`
-	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | \
-	    ! egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat server.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat client.port`'\]? '
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | ! \
+	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat server.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat client.port`'\]? '
 .endif
 .endif
+	# states must disappear after connected socket has been closed
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | ${STATE_EXIST_${proto}_${second}} \
+	    egrep ' (tcp|udp|254) ${FAKE_${addr}}[][0-9:]* .. ${LOCAL_${addr}}[][0-9:]* '
 
 .endfor
 .endfor
