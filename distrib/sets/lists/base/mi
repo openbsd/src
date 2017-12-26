@@ -645,7 +645,7 @@
 ./usr/lib/libreadline.so.4.0
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
-./usr/lib/libsndio.so.6.1
+./usr/lib/libsndio.so.7.0
 ./usr/lib/libssl.so.44.1
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
