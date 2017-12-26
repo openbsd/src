@@ -80,6 +80,54 @@ struct sxiccmu_ccu_bit sun4i_a10_gates[] = {
 	[A10_CLK_USB_PHY] =    { 0x00cc, 8 },
 };
 
+/* A23/A33 */
+
+#define A23_CLK_PLL_PERIPH	10
+
+#define A23_CLK_AXI		19
+#define A23_CLK_AHB1		20
+#define A23_CLK_APB1		21
+#define A23_CLK_APB2		22
+
+#define A23_CLK_BUS_MMC0	26
+#define A23_CLK_BUS_MMC1	27
+#define A23_CLK_BUS_MMC2	28
+#define A23_CLK_BUS_EHCI	35
+#define A23_CLK_BUS_OHCI	36
+#define A23_CLK_BUS_PIO		48
+#define A23_CLK_BUS_I2C0	51
+#define A23_CLK_BUS_I2C1	52
+#define A23_CLK_BUS_I2C2	53
+#define A23_CLK_BUS_UART0	54
+#define A23_CLK_BUS_UART1	55
+#define A23_CLK_BUS_UART2	56
+#define A23_CLK_BUS_UART3	57
+#define A23_CLK_BUS_UART4	58
+
+#define A23_CLK_MMC0		60
+#define A23_CLK_MMC1		63
+#define A23_CLK_MMC2		66
+
+struct sxiccmu_ccu_bit sun8i_a23_gates[] = {
+	[A23_CLK_BUS_MMC0] =  { 0x0060, 8 },
+	[A23_CLK_BUS_MMC1] =  { 0x0060, 9 },
+	[A23_CLK_BUS_MMC2] =  { 0x0060, 10 },
+	[A23_CLK_BUS_EHCI] =  { 0x0060, 26 },
+	[A23_CLK_BUS_OHCI] =  { 0x0060, 29 },
+	[A23_CLK_BUS_PIO] =   { 0x0068, 5 },
+	[A23_CLK_BUS_I2C0] =  { 0x006c, 0, A23_CLK_APB2 },
+	[A23_CLK_BUS_I2C1] =  { 0x006c, 1, A23_CLK_APB2 },
+	[A23_CLK_BUS_I2C2] =  { 0x006c, 2, A23_CLK_APB2 },
+	[A23_CLK_BUS_UART0] = { 0x006c, 16, A23_CLK_APB2 },
+	[A23_CLK_BUS_UART1] = { 0x006c, 17, A23_CLK_APB2 },
+	[A23_CLK_BUS_UART2] = { 0x006c, 18, A23_CLK_APB2 },
+	[A23_CLK_BUS_UART3] = { 0x006c, 19, A23_CLK_APB2 },
+	[A23_CLK_BUS_UART4] = { 0x006c, 20, A23_CLK_APB2 },
+	[A23_CLK_MMC0] =      { 0x0088, 31 },
+	[A23_CLK_MMC1] =      { 0x008c, 31 },
+	[A23_CLK_MMC2] =      { 0x0090, 31 },
+};
+
 /* A64 */
 
 #define A64_CLK_PLL_PERIPH0	11
@@ -307,6 +355,38 @@ struct sxiccmu_ccu_bit sun4i_a10_resets[] = {
 	[A10_RST_USB_PHY0] = { 0x00cc, 0 },
 	[A10_RST_USB_PHY1] = { 0x00cc, 1 },
 	[A10_RST_USB_PHY2] = { 0x00cc, 2 },
+};
+
+/* A23/A33 */
+
+#define A23_RST_USB_PHY0	0
+#define A23_RST_USB_PHY1	1
+
+#define A23_RST_BUS_MMC0	7
+#define A23_RST_BUS_MMC1	8
+#define A23_RST_BUS_MMC2	9
+
+#define A23_RST_BUS_EHCI	16
+#define A23_RST_BUS_OHCI	17
+
+#define A23_RST_BUS_I2C0	32
+#define A23_RST_BUS_I2C1	33
+#define A23_RST_BUS_I2C2	34
+
+#define A23_CLK_HOSC		253
+#define A23_CLK_LOSC		254
+
+struct sxiccmu_ccu_bit sun8i_a23_resets[] = {
+	[A23_RST_USB_PHY0] =  { 0x00cc, 0 },
+	[A23_RST_USB_PHY1] =  { 0x00cc, 1 },
+	[A23_RST_BUS_MMC0] =  { 0x02c0, 8 },
+	[A23_RST_BUS_MMC1] =  { 0x02c0, 9 },
+	[A23_RST_BUS_MMC2] =  { 0x02c0, 10 },
+	[A23_RST_BUS_EHCI] =  { 0x02c0, 26 },
+	[A23_RST_BUS_OHCI] =  { 0x02c0, 29 },
+	[A23_RST_BUS_I2C0] =  { 0x02d8, 0 },
+	[A23_RST_BUS_I2C1] =  { 0x02d8, 1 },
+	[A23_RST_BUS_I2C2] =  { 0x02d8, 2 },
 };
 
 /* A64 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.12 2017/12/24 18:24:06 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.13 2017/12/26 09:31:51 kevlo Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -88,6 +88,8 @@ void	sxiccmu_ccu_reset(void *, uint32_t *, int);
 
 uint32_t sxiccmu_a10_get_frequency(struct sxiccmu_softc *, uint32_t);
 int	sxiccmu_a10_set_frequency(struct sxiccmu_softc *, uint32_t, uint32_t);
+uint32_t sxiccmu_a23_get_frequency(struct sxiccmu_softc *, uint32_t);
+int	sxiccmu_a23_set_frequency(struct sxiccmu_softc *, uint32_t, uint32_t);
 uint32_t sxiccmu_a64_get_frequency(struct sxiccmu_softc *, uint32_t);
 int	sxiccmu_a64_set_frequency(struct sxiccmu_softc *, uint32_t, uint32_t);
 uint32_t sxiccmu_a80_get_frequency(struct sxiccmu_softc *, uint32_t);
@@ -110,6 +112,8 @@ sxiccmu_match(struct device *parent, void *match, void *aux)
 		    OF_is_compatible(node, "allwinner,sun5i-a10s") ||
 		    OF_is_compatible(node, "allwinner,sun5i-r8") ||
 		    OF_is_compatible(node, "allwinner,sun7i-a20") ||
+		    OF_is_compatible(node, "allwinner,sun8i-a23") ||
+		    OF_is_compatible(node, "allwinner,sun8i-a33") ||
 		    OF_is_compatible(node, "allwinner,sun8i-h3") ||
 		    OF_is_compatible(node, "allwinner,sun9i-a80") ||
 		    OF_is_compatible(node, "allwinner,sun50i-a64") ||
@@ -118,6 +122,8 @@ sxiccmu_match(struct device *parent, void *match, void *aux)
 
 	return (OF_is_compatible(node, "allwinner,sun4i-a10-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun7i-a20-ccu") ||
+	    OF_is_compatible(node, "allwinner,sun8i-a23-ccu") ||
+	    OF_is_compatible(node, "allwinner,sun8i-a33-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun8i-h3-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun9i-a80-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun9i-a80-usb-clks") ||
@@ -150,6 +156,15 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_nresets = nitems(sun4i_a10_resets);
 		sc->sc_get_frequency = sxiccmu_a10_get_frequency;
 		sc->sc_set_frequency = sxiccmu_a10_set_frequency;
+	} else if (OF_is_compatible(node, "allwinner,sun8i-a23-ccu") ||
+	    OF_is_compatible(node, "allwinner,sun8i-a33-ccu")) {
+		KASSERT(faa->fa_nreg > 0);
+		sc->sc_gates = sun8i_a23_gates;
+		sc->sc_ngates = nitems(sun8i_a23_gates);
+		sc->sc_resets = sun8i_a23_resets;
+		sc->sc_nresets = nitems(sun8i_a23_resets);
+		sc->sc_get_frequency = sxiccmu_a23_get_frequency;
+		sc->sc_set_frequency = sxiccmu_a23_set_frequency;
 	} else if (OF_is_compatible(node, "allwinner,sun8i-h3-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun50i-h5-ccu")) {
 		KASSERT(faa->fa_nreg > 0);
@@ -355,6 +370,32 @@ struct sxiccmu_device sxiccmu_devices[] = {
 	{
 		.compat = "allwinner,sun8i-a23-apb0-clk",
 		.get_frequency = sxiccmu_apbs_get_frequency
+	},
+	{
+		.compat = "allwinner,sun8i-a23-ahb1-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun8i-a23-apb0-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun8i-a23-apb1-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun8i-a23-apb2-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun8i-a23-usb-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable,
+		.reset = sxiccmu_reset
 	},
 	{
 		.compat = "allwinner,sun8i-h3-apb0-gates-clk",
@@ -829,6 +870,50 @@ sxiccmu_a10_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 #define CCU_AHB2_CLK_CFG		(3 << 0)
 
 uint32_t
+sxiccmu_a23_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
+{
+	uint32_t parent;
+	uint32_t reg, div;
+
+	switch (idx) {
+	case A23_CLK_LOSC:
+		return clock_get_frequency(sc->sc_node, "losc");
+	case A23_CLK_HOSC:
+		return clock_get_frequency(sc->sc_node, "hosc");
+	case A23_CLK_PLL_PERIPH:
+		/* Not hardcoded, but recommended. */
+		return 600000000;
+	case A23_CLK_APB2:
+		/* XXX Controlled by a MUX. */
+		return 24000000;
+	case A23_CLK_AHB1:
+		reg = SXIREAD4(sc, CCU_AHB1_APB1_CFG_REG);
+		div = CCU_AHB1_CLK_DIV_RATIO(reg);
+		switch (reg & CCU_AHB1_CLK_SRC_SEL) {
+		case CCU_AHB1_CLK_SRC_SEL_LOSC:
+			parent = A23_CLK_LOSC;
+			break;
+		case CCU_AHB1_CLK_SRC_SEL_OSC24M:
+			parent = A23_CLK_HOSC;
+			break;
+		case CCU_AHB1_CLK_SRC_SEL_AXI:
+			parent = A23_CLK_AXI;
+			break;
+		case CCU_AHB1_CLK_SRC_SEL_PERIPH0:
+			parent = A23_CLK_PLL_PERIPH;
+			div *= CCU_AHB1_PRE_DIV(reg);
+			break;
+		default:
+			return 0;
+		}
+		return sxiccmu_ccu_get_frequency(sc, &parent) / div;
+	}
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return 0;
+}
+
+uint32_t
 sxiccmu_a64_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 {
 	uint32_t parent;
@@ -995,6 +1080,28 @@ sxiccmu_a10_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
 		bus_space_subregion(sc->sc_iot, sc->sc_ioh,
 		    sc->sc_gates[idx].reg, 4, &clock.sc_ioh);
 		parent = A10_CLK_PLL_PERIPH;
+		parent_freq = sxiccmu_ccu_get_frequency(sc, &parent);
+		return sxiccmu_mmc_do_set_frequency(&clock, freq, parent_freq);
+	}
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return -1;
+}
+
+int
+sxiccmu_a23_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
+{
+	struct sxiccmu_clock clock;
+	uint32_t parent, parent_freq;
+
+	switch (idx) {
+	case A23_CLK_MMC0:
+	case A23_CLK_MMC1:
+	case A23_CLK_MMC2:
+		clock.sc_iot = sc->sc_iot;
+		bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_gates[idx].reg, 4, &clock.sc_ioh);
+		parent = A23_CLK_PLL_PERIPH;
 		parent_freq = sxiccmu_ccu_get_frequency(sc, &parent);
 		return sxiccmu_mmc_do_set_frequency(&clock, freq, parent_freq);
 	}
