@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.22 2017/12/18 18:40:50 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.23 2017/12/26 00:51:29 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -150,7 +150,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	uint32_t bandlist[3], tmp;
-	int i, nbands, nmode, vhtmode;
+	int i, j, nbands, nmode, vhtmode;
 
 	if (bwfm_fwvar_cmd_get_int(sc, BWFM_C_GET_VERSION, &tmp)) {
 		printf("%s: could not read io type\n", DEVNAME(sc));
@@ -198,8 +198,8 @@ bwfm_attach(struct bwfm_softc *sc)
 			ic->ic_sup_rates[IEEE80211_MODE_11G] =
 			    ieee80211_std_rateset_11g;
 
-			for (i = 0; i < nitems(bwfm_2ghz_channels); i++) {
-				uint8_t chan = bwfm_2ghz_channels[i];
+			for (j = 0; j < nitems(bwfm_2ghz_channels); j++) {
+				uint8_t chan = bwfm_2ghz_channels[j];
 				ic->ic_channels[chan].ic_freq =
 				    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_2GHZ);
 				ic->ic_channels[chan].ic_flags =
@@ -216,8 +216,8 @@ bwfm_attach(struct bwfm_softc *sc)
 			ic->ic_sup_rates[IEEE80211_MODE_11A] =
 			    ieee80211_std_rateset_11a;
 
-			for (i = 0; i < nitems(bwfm_5ghz_channels); i++) {
-				uint8_t chan = bwfm_5ghz_channels[i];
+			for (j = 0; j < nitems(bwfm_5ghz_channels); j++) {
+				uint8_t chan = bwfm_5ghz_channels[j];
 				ic->ic_channels[chan].ic_freq =
 				    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_5GHZ);
 				ic->ic_channels[chan].ic_flags =
