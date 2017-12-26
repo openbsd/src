@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1830 2017/12/23 18:34:54 mlarkin Exp 
+ *	OpenBSD: pcidevs,v 1.1831 2017/12/26 23:47:17 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8716,12 +8716,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "89HPES4T4",
 	},
 	{
-	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_89HPES5T5ZB,
-	    "89HPES5T5ZB",
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_89HPES5T5,
+	    "89HPES5T5",
 	},
 	{
 	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_89HPES24T3G2,
 	    "89HPES24T3G2",
+	},
+	{
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_89HPES64H16G2,
+	    "89HPES64H16G2",
+	},
+	{
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_89HPES48H12G2,
+	    "89HPES48H12G2",
 	},
 	{
 	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_89H64H16G3,
