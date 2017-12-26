@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.23 2015/12/14 13:59:42 tb Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.24 2017/12/26 19:10:31 millert Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -89,7 +89,6 @@ static const struct t_op b_ops [] = {
 	{"",	TO_NONOP }
 };
 
-static int	test_stat(const char *, struct stat *);
 static int	test_eaccess(const char *, int);
 static int	test_oexpr(Test_env *, int);
 static int	test_aexpr(Test_env *, int);
@@ -241,39 +240,39 @@ test_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2,
 	case TO_FILEX: /* -x */
 		return test_eaccess(opnd1, X_OK) == 0;
 	case TO_FILAXST: /* -a */
-		return test_stat(opnd1, &b1) == 0;
+		return stat(opnd1, &b1) == 0;
 	case TO_FILEXST: /* -e */
 		/* at&t ksh does not appear to do the /dev/fd/ thing for
 		 * this (unless the os itself handles it)
 		 */
 		return stat(opnd1, &b1) == 0;
 	case TO_FILREG: /* -r */
-		return test_stat(opnd1, &b1) == 0 && S_ISREG(b1.st_mode);
+		return stat(opnd1, &b1) == 0 && S_ISREG(b1.st_mode);
 	case TO_FILID: /* -d */
-		return test_stat(opnd1, &b1) == 0 && S_ISDIR(b1.st_mode);
+		return stat(opnd1, &b1) == 0 && S_ISDIR(b1.st_mode);
 	case TO_FILCDEV: /* -c */
-		return test_stat(opnd1, &b1) == 0 && S_ISCHR(b1.st_mode);
+		return stat(opnd1, &b1) == 0 && S_ISCHR(b1.st_mode);
 	case TO_FILBDEV: /* -b */
-		return test_stat(opnd1, &b1) == 0 && S_ISBLK(b1.st_mode);
+		return stat(opnd1, &b1) == 0 && S_ISBLK(b1.st_mode);
 	case TO_FILFIFO: /* -p */
-		return test_stat(opnd1, &b1) == 0 && S_ISFIFO(b1.st_mode);
+		return stat(opnd1, &b1) == 0 && S_ISFIFO(b1.st_mode);
 	case TO_FILSYM: /* -h -L */
 		return lstat(opnd1, &b1) == 0 && S_ISLNK(b1.st_mode);
 	case TO_FILSOCK: /* -S */
-		return test_stat(opnd1, &b1) == 0 && S_ISSOCK(b1.st_mode);
+		return stat(opnd1, &b1) == 0 && S_ISSOCK(b1.st_mode);
 	case TO_FILCDF:/* -H HP context dependent files (directories) */
 		return 0;
 	case TO_FILSETU: /* -u */
-		return test_stat(opnd1, &b1) == 0 &&
+		return stat(opnd1, &b1) == 0 &&
 		    (b1.st_mode & S_ISUID) == S_ISUID;
 	case TO_FILSETG: /* -g */
-		return test_stat(opnd1, &b1) == 0 &&
+		return stat(opnd1, &b1) == 0 &&
 		    (b1.st_mode & S_ISGID) == S_ISGID;
 	case TO_FILSTCK: /* -k */
-		return test_stat(opnd1, &b1) == 0 &&
+		return stat(opnd1, &b1) == 0 &&
 		    (b1.st_mode & S_ISVTX) == S_ISVTX;
 	case TO_FILGZ: /* -s */
-		return test_stat(opnd1, &b1) == 0 && b1.st_size > 0L;
+		return stat(opnd1, &b1) == 0 && b1.st_size > 0L;
 	case TO_FILTT: /* -t */
 		if (opnd1 && !bi_getn(opnd1, &res)) {
 			te->flags |= TEF_ERROR;
@@ -284,9 +283,9 @@ test_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2,
 		}
 		return res;
 	case TO_FILUID: /* -O */
-		return test_stat(opnd1, &b1) == 0 && b1.st_uid == ksheuid;
+		return stat(opnd1, &b1) == 0 && b1.st_uid == ksheuid;
 	case TO_FILGID: /* -G */
-		return test_stat(opnd1, &b1) == 0 && b1.st_gid == getegid();
+		return stat(opnd1, &b1) == 0 && b1.st_gid == getegid();
 	/*
 	 * Binary Operators
 	 */
@@ -360,27 +359,19 @@ test_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2,
 	return 1;
 }
 
-/* Nasty kludge to handle Korn's bizarre /dev/fd hack */
-static int
-test_stat(const char *path, struct stat *statb)
-{
-	return stat(path, statb);
-}
-
-/* Routine to handle Korn's /dev/fd hack, and to deal with X_OK on
- * non-directories when running as root.
+/* Routine to deal with X_OK on non-directories when running as root.
  */
 static int
-test_eaccess(const char *path, int mode)
+test_eaccess(const char *path, int amode)
 {
 	int res;
 
-	res = access(path, mode);
+	res = access(path, amode);
 	/*
 	 * On most (all?) unixes, access() says everything is executable for
 	 * root - avoid this on files by using stat().
 	 */
-	if (res == 0 && ksheuid == 0 && (mode & X_OK)) {
+	if (res == 0 && ksheuid == 0 && (amode & X_OK)) {
 		struct stat statb;
 
 		if (stat(path, &statb) < 0)
