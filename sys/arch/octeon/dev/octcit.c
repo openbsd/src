@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcit.c,v 1.2 2017/08/09 15:10:38 visa Exp $	*/
+/*	$OpenBSD: octcit.c,v 1.3 2017/12/27 13:14:42 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -286,6 +286,7 @@ octcit_intr_establish_intsn(int intsn, int level, int flags,
 
 	val = CIU3_ISC_CTL_EN | (CIU3_IDT(ci->ci_cpuid, 0) <<
 	    CIU3_ISC_CTL_IDT_SHIFT);
+	CIU3_WR_8(sc, CIU3_ISC_W1C(intsn), CIU3_ISC_W1C_EN);
 	CIU3_WR_8(sc, CIU3_ISC_CTL(intsn), val);
 	(void)CIU3_RD_8(sc, CIU3_ISC_CTL(intsn));
 
@@ -515,6 +516,7 @@ octcit_ipi_establish(int (*func)(void *), cpuid_t cpuid)
 
 	intsn = MBOX_INTSN(cpuid);
 	val = CIU3_ISC_CTL_EN | (CIU3_IDT(cpuid, 1) << CIU3_ISC_CTL_IDT_SHIFT);
+	CIU3_WR_8(sc, CIU3_ISC_W1C(intsn), CIU3_ISC_W1C_EN);
 	CIU3_WR_8(sc, CIU3_ISC_CTL(intsn), val);
 	(void)CIU3_RD_8(sc, CIU3_ISC_CTL(intsn));
 
