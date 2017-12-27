@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.51 2017/09/03 11:52:01 jca Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.52 2017/12/27 13:02:57 millert Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -941,8 +941,8 @@ c_alias(char **wp)
 				afree(ap->val.s, APERM);
 			}
 			/* ignore values for -t (at&t ksh does this) */
-			newval = tflag ? search(alias, path, X_OK, NULL) :
-			    val;
+			newval = tflag ? search(alias, search_path, X_OK, NULL)
+			    : val;
 			if (newval) {
 				ap->val.s = str_save(newval, APERM);
 				ap->flag |= ALLOC|ISSET;
@@ -1184,7 +1184,7 @@ c_kill(char **wp)
 					shprintf("%s%s", p, sigtraps[i].name);
 			shprintf("\n");
 		} else {
-			int mess_width = 0, w, i;
+			int mess_width = 0, w;
 			struct kill_info ki = {
 				.num_width = 1,
 				.name_width = 0,

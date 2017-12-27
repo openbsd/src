@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.69 2017/12/18 20:30:14 anton Exp $	*/
+/*	$OpenBSD: exec.c,v 1.70 2017/12/27 13:02:57 millert Exp $	*/
 
 /*
  * execute command tree
@@ -707,7 +707,7 @@ scriptexec(struct op *tp, char **ap)
 
 	shell = str_val(global("EXECSHELL"));
 	if (shell && *shell)
-		shell = search(shell, path, X_OK, NULL);
+		shell = search(shell, search_path, X_OK, NULL);
 	if (!shell || !*shell)
 		shell = _PATH_BSHELL;
 
@@ -900,8 +900,8 @@ findcom(const char *name, int flags)
 			}
 			tp->flag = DEFINED;	/* make ~ISSET */
 		}
-		npath = search(name, flags & FC_DEFPATH ? def_path : path,
-		    X_OK, &tp->u2.errno_);
+		npath = search(name, flags & FC_DEFPATH ? def_path :
+		    search_path, X_OK, &tp->u2.errno_);
 		if (npath) {
 			if (tp == &temp) {
 				tp->val.s = npath;

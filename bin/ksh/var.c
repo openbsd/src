@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.59 2017/08/30 17:08:45 jca Exp $	*/
+/*	$OpenBSD: var.c,v 1.60 2017/12/27 13:02:57 millert Exp $	*/
 
 #include <sys/stat.h>
 
@@ -525,11 +525,11 @@ formatstr(struct tbl *vp, const char *s)
 		int slen;
 
 		if (vp->flag & RJUST) {
-			const char *q = s + olen;
-			/* strip trailing spaces (at&t ksh uses q[-1] == ' ') */
-			while (q > s && isspace((unsigned char)q[-1]))
-				--q;
-			slen = q - s;
+			const char *r = s + olen;
+			/* strip trailing spaces (at&t ksh uses r[-1] == ' ') */
+			while (r > s && isspace((unsigned char)r[-1]))
+				--r;
+			slen = r - s;
 			if (slen > vp->u2.field) {
 				s += slen - vp->u2.field;
 				slen = vp->u2.field;
@@ -960,8 +960,8 @@ setspec(struct tbl *vp)
 
 	switch (special(vp->name)) {
 	case V_PATH:
-		afree(path, APERM);
-		path = str_save(str_val(vp), APERM);
+		afree(search_path, APERM);
+		search_path = str_save(str_val(vp), APERM);
 		flushcom(1);	/* clear tracked aliases */
 		break;
 	case V_IFS:
@@ -1067,8 +1067,8 @@ unsetspec(struct tbl *vp)
 {
 	switch (special(vp->name)) {
 	case V_PATH:
-		afree(path, APERM);
-		path = str_save(def_path, APERM);
+		afree(search_path, APERM);
+		search_path = str_save(def_path, APERM);
 		flushcom(1);	/* clear tracked aliases */
 		break;
 	case V_IFS:

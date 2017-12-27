@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.65 2017/10/19 07:54:05 jca Exp $	*/
+/*	$OpenBSD: sh.h,v 1.66 2017/12/27 13:02:57 millert Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -124,7 +124,7 @@ struct option {
     char	c;	/* character flag (if any) */
     short	flags;	/* OF_* */
 };
-extern const struct option options[];
+extern const struct option sh_options[];
 
 /*
  * flags (the order of these enums MUST match the order in misc.c(options[]))

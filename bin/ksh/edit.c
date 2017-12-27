@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.57 2016/09/08 12:12:40 nicm Exp $	*/
+/*	$OpenBSD: edit.c,v 1.58 2017/12/27 13:02:57 millert Exp $	*/
 
 /*
  * Command line editing - common code
@@ -229,7 +229,7 @@ set_editmode(const char *ed)
 	if ((rcp = strrchr(ed, '/')))
 		ed = ++rcp;
 	for (i = 0; i < NELEM(edit_flags); i++)
-		if (strstr(ed, options[(int) edit_flags[i]].name)) {
+		if (strstr(ed, sh_options[(int) edit_flags[i]].name)) {
 			change_flag(edit_flags[i], OF_SPECIAL, 1);
 			return;
 		}
@@ -459,7 +459,7 @@ x_command_glob(int flags, const char *str, int slen, char ***wordsp)
 	for (l = genv->loc; l; l = l->next)
 		glob_table(pat, &w, &l->funs);
 
-	glob_path(flags, pat, &w, path);
+	glob_path(flags, pat, &w, search_path);
 	if ((fpath = str_val(global("FPATH"))) != null)
 		glob_path(flags, pat, &w, fpath);
 

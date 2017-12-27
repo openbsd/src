@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.60 2017/10/19 07:54:05 jca Exp $	*/
+/*	$OpenBSD: misc.c,v 1.61 2017/12/27 13:02:57 millert Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -115,7 +115,7 @@ Xcheck_grow_(XString *xsp, char *xp, int more)
 	return xsp->beg + (xp - old_beg);
 }
 
-const struct option options[] = {
+const struct option sh_options[] = {
 	/* Special cases (see parse_args()): -A, -o, -s.
 	 * Options are sorted by their longnames - the order of these
 	 * entries MUST match the order of sh_flag F* enumerations in sh.h.
@@ -183,8 +183,8 @@ option(const char *n)
 {
 	int i;
 
-	for (i = 0; i < NELEM(options); i++)
-		if (options[i].name && strcmp(options[i].name, n) == 0)
+	for (i = 0; i < NELEM(sh_options); i++)
+		if (sh_options[i].name && strcmp(sh_options[i].name, n) == 0)
 			return i;
 
 	return -1;
@@ -195,7 +195,7 @@ struct options_info {
 	struct {
 		const char *name;
 		int	flag;
-	} opts[NELEM(options)];
+	} opts[NELEM(sh_options)];
 };
 
 static char *options_fmt_entry(void *arg, int i, char *buf, int buflen);
@@ -225,10 +225,10 @@ printoptions(int verbose)
 		/* verbose version */
 		shprintf("Current option settings\n");
 
-		for (i = n = oi.opt_width = 0; i < NELEM(options); i++) {
-			if (options[i].name) {
-				len = strlen(options[i].name);
-				oi.opts[n].name = options[i].name;
+		for (i = n = oi.opt_width = 0; i < NELEM(sh_options); i++) {
+			if (sh_options[i].name) {
+				len = strlen(sh_options[i].name);
+				oi.opts[n].name = sh_options[i].name;
 				oi.opts[n++].flag = i;
 				if (len > oi.opt_width)
 					oi.opt_width = len;
@@ -239,11 +239,11 @@ printoptions(int verbose)
 	} else {
 		/* short version ala ksh93 */
 		shprintf("set");
-		for (i = 0; i < NELEM(options); i++) {
-			if (options[i].name)
+		for (i = 0; i < NELEM(sh_options); i++) {
+			if (sh_options[i].name)
 				shprintf(" %co %s",
 					 Flag(i) ? '-' : '+',
-					 options[i].name);
+					 sh_options[i].name);
 		}
 		shprintf("\n");
 	}
@@ -256,9 +256,9 @@ getoptions(void)
 	char m[(int) FNFLAGS + 1];
 	char *cp = m;
 
-	for (i = 0; i < NELEM(options); i++)
-		if (options[i].c && Flag(i))
-			*cp++ = options[i].c;
+	for (i = 0; i < NELEM(sh_options); i++)
+		if (sh_options[i].c && Flag(i))
+			*cp++ = sh_options[i].c;
 	*cp = 0;
 	return str_save(m, ATEMP);
 }
@@ -328,8 +328,8 @@ parse_args(char **argv,
     int what,			/* OF_CMDLINE or OF_SET */
     int *setargsp)
 {
-	static char cmd_opts[NELEM(options) + 3]; /* o:\0 */
-	static char set_opts[NELEM(options) + 5]; /* Ao;s\0 */
+	static char cmd_opts[NELEM(sh_options) + 3]; /* o:\0 */
+	static char set_opts[NELEM(sh_options) + 5]; /* Ao;s\0 */
 	char *opts;
 	char *array = NULL;
 	Getopt go;
@@ -345,12 +345,12 @@ parse_args(char **argv,
 		/* see set_opts[] declaration */
 		strlcpy(set_opts, "A:o;s", sizeof set_opts);
 		q = set_opts + strlen(set_opts);
-		for (i = 0; i < NELEM(options); i++) {
-			if (options[i].c) {
-				if (options[i].flags & OF_CMDLINE)
-					*p++ = options[i].c;
-				if (options[i].flags & OF_SET)
-					*q++ = options[i].c;
+		for (i = 0; i < NELEM(sh_options); i++) {
+			if (sh_options[i].c) {
+				if (sh_options[i].flags & OF_CMDLINE)
+					*p++ = sh_options[i].c;
+				if (sh_options[i].flags & OF_SET)
+					*q++ = sh_options[i].c;
 			}
 		}
 		*p = '\0';
@@ -395,7 +395,7 @@ parse_args(char **argv,
 				 * if the output of "set +o" is to be used.
 				 */
 				;
-			else if (i >= 0 && (options[i].flags & what))
+			else if (i >= 0 && (sh_options[i].flags & what))
 				change_flag((enum sh_flag) i, what, set);
 			else {
 				bi_errorf("%s: bad option", go.optarg);
@@ -412,14 +412,14 @@ parse_args(char **argv,
 				sortargs = 1;
 				break;
 			}
-			for (i = 0; i < NELEM(options); i++)
-				if (optc == options[i].c &&
-				    (what & options[i].flags)) {
+			for (i = 0; i < NELEM(sh_options); i++)
+				if (optc == sh_options[i].c &&
+				    (what & sh_options[i].flags)) {
 					change_flag((enum sh_flag) i, what,
 					    set);
 					break;
 				}
-			if (i == NELEM(options)) {
+			if (i == NELEM(sh_options)) {
 				internal_errorf(1, "parse_args: `%c'", optc);
 				return -1; /* not reached */
 			}
