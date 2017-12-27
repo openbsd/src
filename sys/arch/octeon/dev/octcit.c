@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcit.c,v 1.3 2017/12/27 13:14:42 visa Exp $	*/
+/*	$OpenBSD: octcit.c,v 1.4 2017/12/27 13:16:53 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -244,7 +244,8 @@ void *
 octcit_intr_establish(int irq, int level, int (*func)(void *), void *arg,
     const char *name)
 {
-	return octcit_intr_establish_intsn(irq, level, 0, func, arg, name);
+	return octcit_intr_establish_intsn(irq, level, CIH_EDGE, func, arg,
+	    name);
 }
 
 void *
