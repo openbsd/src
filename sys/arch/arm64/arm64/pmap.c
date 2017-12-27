@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.39 2017/12/23 15:04:46 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.40 2017/12/27 14:13:05 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -133,6 +133,10 @@ vaddr_t pmap_map_stolen(vaddr_t);
 void pmap_physload_avail(void);
 extern caddr_t msgbufaddr;
 
+char *memhook;
+vaddr_t zero_page;
+vaddr_t copy_src_page;
+vaddr_t copy_dst_page;
 
 /* XXX - panic on pool get failures? */
 struct pool pmap_pmap_pool;
@@ -1201,6 +1205,9 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 
 	printf("all mapped\n");
 
+	memhook = (char *)vstart;
+	vstart += PAGE_SIZE;
+
 	return vstart;
 }
 
@@ -1649,11 +1656,6 @@ void
 pmap_update(pmap_t pm)
 {
 }
-
-char *memhook;
-vaddr_t zero_page;
-vaddr_t copy_src_page;
-vaddr_t copy_dst_page;
 
 int
 pmap_is_referenced(struct vm_page *pg)
