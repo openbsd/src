@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.21 2017/11/17 20:30:43 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.22 2017/12/27 11:40:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -876,6 +876,19 @@ OF_getpropintarray(int handle, char *prop, uint32_t *buf, int buflen)
 		buf[i] = betoh32(buf[i]);
 
 	return len;
+}
+
+uint64_t
+OF_getpropint64(int handle, char *prop, uint64_t defval)
+{
+	uint64_t val;
+	int len;
+	
+	len = OF_getprop(handle, prop, &val, sizeof(val));
+	if (len != sizeof(val))
+		return defval;
+
+	return betoh64(val);
 }
 
 int
