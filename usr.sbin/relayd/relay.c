@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.236 2017/11/28 01:51:47 claudio Exp $	*/
+/*	$OpenBSD: relay.c,v 1.237 2017/12/27 15:53:30 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -661,6 +661,7 @@ relay_connected(int fd, short sig, void *arg)
 	evbuffercb		 outwr = relay_write;
 	struct bufferevent	*bev;
 	struct ctl_relay_event	*out = &con->se_out;
+	char			*msg;
 	socklen_t		 len;
 	int			 error;
 
@@ -670,12 +671,22 @@ relay_connected(int fd, short sig, void *arg)
 	}
 
 	len = sizeof(error);
-	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error,
-	    &len) == -1 || error) {
-		if (error)
-			errno = error;
-		relay_abort_http(con, 500, "socket error", 0);
+	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
+		relay_abort_http(con, 500, "getsockopt failed", 0);
 		return;
+	}
+	if (error) {
+		errno = error;
+		if (asprintf(&msg, "socket error: %s",
+		    strerror(error)) >= 0) {
+			relay_abort_http(con, 500, msg, 0);
+			free(msg);
+			return;
+		} else {
+			relay_abort_http(con, 500,
+			    "socket error and asprintf failed", 0);
+			return;
+		}
 	}
 
 	if ((rlay->rl_conf.flags & F_TLSCLIENT) && (out->tls == NULL)) {
