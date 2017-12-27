@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.172 2017/12/18 12:39:34 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.173 2017/12/27 13:55:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -659,9 +659,10 @@ status_message_redraw(struct client *c)
 	memcpy(&old_status, &c->status, sizeof old_status);
 
 	lines = status_line_size(c->session);
-	if (lines <= 1)
+	if (lines <= 1) {
+		lines = 1;
 		screen_init(&c->status, c->tty.sx, 1, 0);
-	else
+	} else
 		screen_init(&c->status, c->tty.sx, lines, 0);
 
 	len = screen_write_strlen("%s", c->message_string);
@@ -811,9 +812,10 @@ status_prompt_redraw(struct client *c)
 	memcpy(&old_status, &c->status, sizeof old_status);
 
 	lines = status_line_size(c->session);
-	if (lines <= 1)
+	if (lines <= 1) {
+		lines = 1;
 		screen_init(&c->status, c->tty.sx, 1, 0);
-	else
+	} else
 		screen_init(&c->status, c->tty.sx, lines, 0);
 
 	len = screen_write_strlen("%s", c->prompt_string);
