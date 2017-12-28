@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.16 2017/09/02 08:35:08 jsg Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.17 2017/12/28 15:06:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -29,6 +29,7 @@
 #include <dev/ofw/fdt.h>
 
 /* RK3288 registers */
+#define RK3288_CRU_APLL_CON(i)		(0x0000 + (i) * 4)
 #define RK3288_CRU_CPLL_CON(i)		(0x0020 + (i) * 4)
 #define RK3288_CRU_GPLL_CON(i)		(0x0030 + (i) * 4)
 #define RK3288_CRU_CLKSEL_CON(i)	(0x0060 + (i) * 4)
@@ -234,10 +235,18 @@ rk3288_get_frequency(void *cookie, uint32_t *cells)
 	uint32_t reg, mux, div_con, aclk_div_con;
 
 	switch (idx) {
+	case RK3288_PLL_APLL:
+		return rk3288_get_pll(sc, RK3288_CRU_APLL_CON(0));
 	case RK3288_PLL_CPLL:
 		return rk3288_get_pll(sc, RK3288_CRU_CPLL_CON(0));
 	case RK3288_PLL_GPLL:
 		return rk3288_get_pll(sc, RK3288_CRU_GPLL_CON(0));
+	case RK3288_ARMCLK:
+		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(0));
+		mux = (reg >> 15) & 0x1;
+		div_con = (reg >> 8) & 0x1f;
+		idx = mux ? RK3288_PLL_APLL : RK3288_PLL_GPLL;
+		return rk3288_get_frequency(sc, &idx) / (div_con + 1);
 	case RK3288_CLK_SDMMC:
 		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(11));
 		mux = (reg >> 6) & 0x3;

@@ -4,8 +4,10 @@
  * RK3288 clocks.
  */
 
+#define RK3288_PLL_APLL			1
 #define RK3288_PLL_CPLL			3
 #define RK3288_PLL_GPLL			4
+#define RK3288_ARMCLK			6
 
 #define RK3288_CLK_SDMMC		68
 #define RK3288_CLK_UART0		77
