@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.115 2017/11/03 12:22:10 steven Exp $
+.\" $OpenBSD: ports.7,v 1.116 2017/12/28 04:42:40 cheloha Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: November 3 2017 $
+.Dd $Mdocdate: December 28 2017 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -435,47 +435,8 @@ normally as
 In particular, it can take advantage of machine clusters (same architecture
 and same installation), and of multi-core machines.
 .Pp
-A few remarks may save a lot of time:
-.Bl -bullet
-.It
-The default limits in
-.Xr login.conf 5
-are inappropriate for bulk builds.
-.Va maxproc , openfiles , datasize
-should be cranked way up, especially for parallel builds.
-For instance, a lot of C++-based ports will require a
-.Va datasize
-over 1G.
-.It
-Cluster builds should have shared
-.Ev PORTSDIR
-and local
-.Ev WRKOBJDIR .
-If possible, dedicated
-.Ev WRKOBJDIR
-partitions mounted
-.Sq noatime,async
-will help.
-.It
-As far as possible, the log directory should be local to the machine running
-.Xr dpb 1 .
-.It
-A full bulk will fetch over 20G of distfiles and create over 17G of packages.
-The largest work directories are about 10G each.
-.It
-Take notice of
-.Ev CHECKSUM_PACKAGES
-in
-.Xr bsd.port.mk 5 .
-This can be set to
-.Sq ftp
-during official package builds to compute partial sha256 checksum files.
-.Pp
-At the end of the build, just
-.Bd -literal -offset indent
-cd ${PORTSDIR}/packages/${MACHINE_ARCH}/cksums && cat * >sha256
-.Ed
-.El
+For more detailed information, see
+.Xr bulk 8 .
 .Sh NETWORK CONFIGURATION
 The variables pertaining to network access have been marshalled into
 .Pa ${PORTSDIR}/infrastructure/templates/network.conf.template .
