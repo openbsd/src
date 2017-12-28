@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.17 2017/11/28 16:40:21 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.18 2017/12/28 12:52:45 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2835,8 +2835,9 @@ test_tlsext_clienthello_build(void)
 unsigned char tlsext_serverhello_default[] = {};
 
 unsigned char tlsext_serverhello_enabled[] = {
-	0x00, 0x0d, 0xff, 0x01, 0x00, 0x01, 0x00, 0x00,
-	0x05, 0x00, 0x00, 0x00, 0x23, 0x00, 0x00,
+	0x00, 0x13, 0xff, 0x01, 0x00, 0x01, 0x00, 0x00,
+	0x05, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x02, 0x01,
+	0x00, 0x00, 0x23, 0x00, 0x00,
 };
 
 static int
@@ -2860,6 +2861,9 @@ test_tlsext_serverhello_build(void)
 		errx(1, "failed to create SSL");
 	if ((ssl->session = SSL_SESSION_new()) == NULL)
 		errx(1, "failed to create session");
+
+	S3I(ssl)->hs.new_cipher =
+	    ssl3_get_cipher_by_id(TLS1_CK_RSA_WITH_AES_128_SHA256);
 
 	if (!tlsext_serverhello_build(ssl, &cbb)) {
 		FAIL("failed to build serverhello extensions\n");
@@ -2888,8 +2892,15 @@ test_tlsext_serverhello_build(void)
 
 	/* Turn a few things on so we get extensions... */
 	S3I(ssl)->send_connection_binding = 1;
+	S3I(ssl)->hs.new_cipher =
+	    ssl3_get_cipher_by_id(TLS1_CK_ECDHE_RSA_WITH_AES_128_SHA256);
 	ssl->internal->tlsext_status_expected = 1;
 	ssl->internal->tlsext_ticket_expected = 1;
+	if ((SSI(ssl)->tlsext_ecpointformatlist = malloc(1)) == NULL)
+		errx(1, "malloc failed");
+	SSI(ssl)->tlsext_ecpointformatlist_length = 1;
+	SSI(ssl)->tlsext_ecpointformatlist[0] =
+	    TLSEXT_ECPOINTFORMAT_uncompressed;
 
 	if (!tlsext_serverhello_build(ssl, &cbb)) {
 		FAIL("failed to build serverhello extensions\n");
