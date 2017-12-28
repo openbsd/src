@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.13 2017/12/26 09:31:51 kevlo Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.14 2017/12/28 18:11:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -96,6 +96,7 @@ uint32_t sxiccmu_a80_get_frequency(struct sxiccmu_softc *, uint32_t);
 int	sxiccmu_a80_set_frequency(struct sxiccmu_softc *, uint32_t, uint32_t);
 uint32_t sxiccmu_h3_get_frequency(struct sxiccmu_softc *, uint32_t);
 int	sxiccmu_h3_set_frequency(struct sxiccmu_softc *, uint32_t, uint32_t);
+uint32_t sxiccmu_h3_r_get_frequency(struct sxiccmu_softc *, uint32_t);
 uint32_t sxiccmu_nop_get_frequency(struct sxiccmu_softc *, uint32_t);
 int	sxiccmu_nop_set_frequency(struct sxiccmu_softc *, uint32_t, uint32_t);
 
@@ -125,6 +126,7 @@ sxiccmu_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(node, "allwinner,sun8i-a23-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun8i-a33-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun8i-h3-ccu") ||
+	    OF_is_compatible(node, "allwinner,sun8i-h3-r-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun9i-a80-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun9i-a80-usb-clks") ||
 	    OF_is_compatible(node, "allwinner,sun9i-a80-mmc-config-clk") ||
@@ -174,6 +176,14 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_nresets = nitems(sun8i_h3_resets);
 		sc->sc_get_frequency = sxiccmu_h3_get_frequency;
 		sc->sc_set_frequency = sxiccmu_h3_set_frequency;
+	} else if (OF_is_compatible(node, "allwinner,sun8i-h3-r-ccu")) {
+		KASSERT(faa->fa_nreg > 0);
+		sc->sc_gates = sun8i_h3_r_gates;
+		sc->sc_ngates = nitems(sun8i_h3_r_gates);
+		sc->sc_resets = sun8i_h3_r_resets;
+		sc->sc_nresets = nitems(sun8i_h3_r_resets);
+		sc->sc_get_frequency = sxiccmu_h3_r_get_frequency;
+		sc->sc_set_frequency = sxiccmu_nop_set_frequency;
 	} else if (OF_is_compatible(node, "allwinner,sun9i-a80-ccu")) {
 		KASSERT(faa->fa_nreg > 0);
 		sc->sc_gates = sun9i_a80_gates;
@@ -1042,6 +1052,54 @@ sxiccmu_h3_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 		default:
 			return 0;
 		}
+		return sxiccmu_ccu_get_frequency(sc, &parent) / div;
+	}
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return 0;
+}
+
+#define H3_AHB0_CLK_REG			0x0000
+#define H3_AHB0_CLK_SRC_SEL		(0x3 << 16)
+#define H3_AHB0_CLK_SRC_SEL_OSC32K	(0x0 << 16)
+#define H3_AHB0_CLK_SRC_SEL_OSC24M	(0x1 << 16)
+#define H3_AHB0_CLK_SRC_SEL_PLL_PERIPH0	(0x2 << 16)
+#define H3_AHB0_CLK_SRC_SEL_IOSC	(0x3 << 16)
+#define H3_AHB0_CLK_PRE_DIV(x)		((((x) >> 8) & 0x1f) + 1)
+#define H3_AHB0_CLK_RATIO(x)		(1 << (((x) >> 4) & 3))
+#define H3_APB0_CFG_REG			0x000c
+#define H3_APB0_CLK_RATIO(x)		(1 << ((x) & 1))
+
+uint32_t
+sxiccmu_h3_r_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
+{
+	uint32_t parent;
+	uint32_t reg, div;
+	uint32_t freq;
+
+	switch (idx) {
+	case H3_R_CLK_AHB0:
+		reg = SXIREAD4(sc, H3_AHB0_CLK_REG);
+		switch (reg & H3_AHB0_CLK_SRC_SEL) {
+		case H3_AHB0_CLK_SRC_SEL_OSC32K:
+			freq = clock_get_frequency(sc->sc_node, "losc");
+			break;
+		case H3_AHB0_CLK_SRC_SEL_OSC24M:
+			freq = clock_get_frequency(sc->sc_node, "hosc");
+			break;
+		case H3_AHB0_CLK_SRC_SEL_PLL_PERIPH0:
+			freq = clock_get_frequency(sc->sc_node, "pll-periph");
+			break;
+		case H3_AHB0_CLK_SRC_SEL_IOSC:
+			freq = clock_get_frequency(sc->sc_node, "iosc");
+			break;
+		}
+		div = H3_AHB0_CLK_PRE_DIV(reg) * H3_AHB0_CLK_RATIO(reg);
+		return freq / div;
+	case H3_R_CLK_APB0:
+		reg = SXIREAD4(sc, H3_APB0_CFG_REG);
+		div = H3_APB0_CLK_RATIO(reg);
+		parent = H3_R_CLK_AHB0;
 		return sxiccmu_ccu_get_frequency(sc, &parent) / div;
 	}
 
