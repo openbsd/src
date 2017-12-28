@@ -1,4 +1,4 @@
-/* $OpenBSD: sxitwi.c,v 1.3 2017/11/13 21:24:27 kettenis Exp $ */
+/* $OpenBSD: sxitwi.c,v 1.4 2017/12/28 17:50:57 tom Exp $ */
 /*	$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -70,10 +70,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/rwlock.h>
-
-#include <sys/param.h>
-#include <sys/device.h>
-#include <sys/systm.h>
 
 #define	_I2C_PRIVATE
 #include <dev/i2c/i2cvar.h>
