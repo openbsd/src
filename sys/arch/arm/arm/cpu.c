@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.42 2017/12/24 19:43:51 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.43 2017/12/29 14:45:15 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -339,4 +339,4 @@ intr_barrier(void *ih)
 	sched_barrier(NULL);
 }
 
-/* End of cpu.c */
+int	(*cpu_on_fn)(register_t, register_t);
