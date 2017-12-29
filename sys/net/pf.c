@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1052 2017/12/28 11:37:44 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1053 2017/12/29 17:05:25 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -245,12 +245,17 @@ int			 pf_match_rule(struct pf_test_ctx *,
 void			 pf_counters_inc(int, struct pf_pdesc *,
 			    struct pf_state *, struct pf_rule *,
 			    struct pf_rule *);
-void			 pf_state_key_link(struct pf_state_key *,
+
+int			 pf_state_key_isvalid(struct pf_state_key *);
+struct pf_state_key	*pf_state_key_ref(struct pf_state_key *);
+void			 pf_state_key_unref(struct pf_state_key *);
+void			 pf_state_key_link_reverse(struct pf_state_key *,
 			    struct pf_state_key *);
-void			 pf_inpcb_unlink_state_key(struct inpcb *);
 void			 pf_state_key_unlink_reverse(struct pf_state_key *);
 void			 pf_state_key_link_inpcb(struct pf_state_key *,
 			    struct inpcb *);
+void			 pf_state_key_unlink_inpcb(struct pf_state_key *);
+void			 pf_inpcb_unlink_state_key(struct inpcb *);
 
 #if NPFLOG > 0
 void			 pf_log_matches(struct pf_pdesc *, struct pf_rule *,
@@ -805,8 +810,7 @@ pf_state_key_detach(struct pf_state *s, int idx)
 		RB_REMOVE(pf_state_tree, &pf_statetbl, sk);
 		sk->removed = 1;
 		pf_state_key_unlink_reverse(sk);
-		pf_inpcb_unlink_state_key(sk->inp);
-		sk->inp = NULL;
+		pf_state_key_unlink_inpcb(sk);
 		pf_state_key_unref(sk);
 	}
 }
@@ -1060,7 +1064,7 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir,
 		pkt_sk = m->m_pkthdr.pf.statekey;
 
 		if (!pf_state_key_isvalid(pkt_sk)) {
-			pf_pkt_unlink_state_key(m);
+			pf_mbuf_unlink_state_key(m);
 			pkt_sk = NULL;
 		}
 
@@ -1086,7 +1090,7 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir,
 			return (NULL);
 		if (dir == PF_OUT && pkt_sk &&
 		    pf_compare_state_keys(pkt_sk, sk, kif, dir) == 0)
-			pf_state_key_link(sk, pkt_sk);
+			pf_state_key_link_reverse(sk, pkt_sk);
 		else if (dir == PF_OUT && m->m_pkthdr.pf.inp &&
 		    !m->m_pkthdr.pf.inp->inp_pf_sk && !sk->inp)
 			pf_state_key_link_inpcb(sk, m->m_pkthdr.pf.inp);
@@ -7143,7 +7147,7 @@ pf_ouraddr(struct mbuf *m)
 void
 pf_pkt_addr_changed(struct mbuf *m)
 {
-	pf_pkt_unlink_state_key(m);
+	pf_mbuf_unlink_state_key(m);
 	m->m_pkthdr.pf.inp = NULL;
 }
 
@@ -7154,7 +7158,7 @@ pf_inp_lookup(struct mbuf *m)
 	struct pf_state_key *sk = m->m_pkthdr.pf.statekey;
 
 	if (!pf_state_key_isvalid(sk))
-		pf_pkt_unlink_state_key(m);
+		pf_mbuf_unlink_state_key(m);
 	else
 		inp = m->m_pkthdr.pf.statekey->inp;
 
@@ -7170,7 +7174,7 @@ pf_inp_link(struct mbuf *m, struct inpcb *inp)
 	struct pf_state_key *sk = m->m_pkthdr.pf.statekey;
 
 	if (!pf_state_key_isvalid(sk)) {
-		pf_pkt_unlink_state_key(m);
+		pf_mbuf_unlink_state_key(m);
 		return;
 	}
 
@@ -7179,32 +7183,29 @@ pf_inp_link(struct mbuf *m, struct inpcb *inp)
 	 * state, which might be just being marked as deleted by another
 	 * thread.
 	 */
-	if (inp && !sk->inp && !inp->inp_pf_sk) {
-		sk->inp = inp;
-		inp->inp_pf_sk = pf_state_key_ref(sk);
-	}
+	if (inp && !sk->inp && !inp->inp_pf_sk)
+		pf_state_key_link_inpcb(sk, inp);
+
 	/* The statekey has finished finding the inp, it is no longer needed. */
-	pf_pkt_unlink_state_key(m);
+	pf_mbuf_unlink_state_key(m);
 }
 
 void
 pf_inp_unlink(struct inpcb *inp)
 {
-	if (inp->inp_pf_sk) {
-		inp->inp_pf_sk->inp = NULL;
-		pf_inpcb_unlink_state_key(inp);
-	}
+	pf_inpcb_unlink_state_key(inp);
 }
 
 void
-pf_state_key_link(struct pf_state_key *sk, struct pf_state_key *pkt_sk)
+pf_state_key_link_reverse(struct pf_state_key *sk, struct pf_state_key *skrev)
 {
 	/*
 	 * Assert will not wire as long as we are called by pf_find_state()
 	 */
-	KASSERT((pkt_sk->reverse == NULL) && (sk->reverse == NULL));
-	pkt_sk->reverse = pf_state_key_ref(sk);
-	sk->reverse = pf_state_key_ref(pkt_sk);
+	KASSERT(sk->reverse == NULL);
+	sk->reverse = pf_state_key_ref(skrev);
+	KASSERT(skrev->reverse == NULL);
+	skrev->reverse = pf_state_key_ref(sk);
 }
 
 #if NPFLOG > 0
@@ -7236,7 +7237,7 @@ pf_state_key_ref(struct pf_state_key *sk)
 void
 pf_state_key_unref(struct pf_state_key *sk)
 {
-	if ((sk != NULL) && PF_REF_RELE(sk->refcnt)) {
+	if (PF_REF_RELE(sk->refcnt)) {
 		/* state key must be removed from tree */
 		KASSERT(!pf_state_key_isvalid(sk));
 		/* state key must be unlinked from reverse key */
@@ -7254,16 +7255,20 @@ pf_state_key_isvalid(struct pf_state_key *sk)
 }
 
 void
-pf_pkt_unlink_state_key(struct mbuf *m)
+pf_mbuf_unlink_state_key(struct mbuf *m)
 {
-	pf_state_key_unref(m->m_pkthdr.pf.statekey);
-	m->m_pkthdr.pf.statekey = NULL;
+	struct pf_state_key *sk = m->m_pkthdr.pf.statekey;
+
+	if (sk != NULL) {
+		m->m_pkthdr.pf.statekey = NULL;
+		pf_state_key_unref(sk);
+	}
 }
 
 void
-pf_pkt_state_key_ref(struct mbuf *m)
+pf_mbuf_link_state_key(struct mbuf *m, struct pf_state_key *sk)
 {
-	pf_state_key_ref(m->m_pkthdr.pf.statekey);
+	m->m_pkthdr.pf.statekey = pf_state_key_ref(sk);
 }
 
 void
@@ -7278,19 +7283,39 @@ pf_state_key_link_inpcb(struct pf_state_key *sk, struct inpcb *inp)
 void
 pf_inpcb_unlink_state_key(struct inpcb *inp)
 {
-	if (inp != NULL) {
-		pf_state_key_unref(inp->inp_pf_sk);
+	struct pf_state_key *sk = inp->inp_pf_sk;
+
+	if (sk != NULL) {
+		KASSERT(sk->inp == inp);
+		sk->inp = NULL;
 		inp->inp_pf_sk = NULL;
+		pf_state_key_unref(sk);
+	}
+}
+
+void
+pf_state_key_unlink_inpcb(struct pf_state_key *sk)
+{
+	struct inpcb *inp = sk->inp;
+
+	if (inp != NULL) {
+		KASSERT(inp->inp_pf_sk == sk);
+		sk->inp = NULL;
+		inp->inp_pf_sk = NULL;
+		pf_state_key_unref(sk);
 	}
 }
 
 void
 pf_state_key_unlink_reverse(struct pf_state_key *sk)
 {
-	if ((sk != NULL) && (sk->reverse != NULL)) {
-		pf_state_key_unref(sk->reverse->reverse);
-		sk->reverse->reverse = NULL;
-		pf_state_key_unref(sk->reverse);
+	struct pf_state_key *skrev = sk->reverse;
+
+	if (skrev != NULL) {
+		KASSERT(skrev->reverse == sk);
 		sk->reverse = NULL;
+		skrev->reverse = NULL;
+		pf_state_key_unref(skrev);
+		pf_state_key_unref(sk);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.531 2017/12/15 01:37:30 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.532 2017/12/29 17:05:25 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -697,7 +697,7 @@ if_enqueue(struct ifnet *ifp, struct mbuf *m)
 #endif
 
 #if NPF > 0
-	pf_pkt_unlink_state_key(m);
+	pf_pkt_addr_changed(m);
 #endif	/* NPF > 0 */
 
 	/*
