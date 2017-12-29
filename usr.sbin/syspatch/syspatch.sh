@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.133 2017/11/09 14:59:07 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.134 2017/12/29 18:56:36 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -251,6 +251,8 @@ unpriv()
 
 [[ $@ == @(|-[[:alpha:]]) ]] || usage; [[ $@ == @(|-(c|R|r)) ]] &&
 	(($(id -u) != 0)) && sp_err "${0##*/}: need root privileges"
+[[ $@ == @(|-(R|r)) ]] && pgrep -qxf '/bin/ksh .*reorder_kernel' &&
+	sp_err "${0##*/}: cannot apply patches while reorder_kernel is running"
 
 # only run on release (not -current nor -stable)
 set -A _KERNV -- $(sysctl -n kern.version |
