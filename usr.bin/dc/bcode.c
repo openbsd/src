@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.61 2017/12/12 19:07:10 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.62 2017/12/29 08:16:55 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -1178,11 +1178,11 @@ bexp(void)
 		bn_checkp(f);
 		split_number(p, i, f);
 		if (!BN_is_zero(f))
-			warnx("Runtime warning: non-zero fractional part in exponent");
-		BN_free(i);
+			warnx("Runtime warning: non-zero fractional part "
+			    "in exponent");
+		BN_free(p->number);
+		p->number = i;
 		BN_free(f);
-
-		normalize(p, 0);
 	}
 
 	neg = BN_is_negative(p->number);
