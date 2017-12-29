@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1053 2017/12/29 17:05:25 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1054 2017/12/29 23:55:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7268,6 +7268,7 @@ pf_mbuf_unlink_state_key(struct mbuf *m)
 void
 pf_mbuf_link_state_key(struct mbuf *m, struct pf_state_key *sk)
 {
+	KASSERT(m->m_pkthdr.pf.statekey == NULL);
 	m->m_pkthdr.pf.statekey = pf_state_key_ref(sk);
 }
 

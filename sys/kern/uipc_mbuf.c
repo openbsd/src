@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.251 2017/12/29 17:05:25 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.252 2017/12/29 23:55:22 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1325,6 +1325,7 @@ m_dup_pkthdr(struct mbuf *to, struct mbuf *from, int wait)
 	to->m_pkthdr = from->m_pkthdr;
 
 #if NPF > 0
+	to->m_pkthdr.pf.statekey = NULL;
 	pf_mbuf_link_state_key(to, from->m_pkthdr.pf.statekey);
 #endif	/* NPF > 0 */
 
