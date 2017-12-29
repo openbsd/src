@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.18 2017/12/29 13:52:52 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.19 2017/12/29 15:53:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -114,8 +114,6 @@ struct cfdriver rkclock_cd = {
 	NULL, "rkclock", DV_DULL
 };
 
-struct rkclock_softc *rkclock_cpuspeed_sc;
-
 void	rk3288_init(struct rkclock_softc *);
 uint32_t rk3288_get_frequency(void *, uint32_t *);
 int	rk3288_set_frequency(void *, uint32_t *, uint32_t);
@@ -127,7 +125,6 @@ uint32_t rk3399_get_frequency(void *, uint32_t *);
 int	rk3399_set_frequency(void *, uint32_t *, uint32_t);
 void	rk3399_enable(void *, uint32_t *, int);
 void	rk3399_reset(void *, uint32_t *, int);
-int	rk3399_cpuspeed(int *);
 
 void	rk3399_pmu_init(struct rkclock_softc *);
 uint32_t rk3399_pmu_get_frequency(void *, uint32_t *);
@@ -532,9 +529,6 @@ void
 rk3399_init(struct rkclock_softc *sc)
 {
 	int node;
-
-	rkclock_cpuspeed_sc = sc;
-	cpu_cpuspeed = rk3399_cpuspeed;
 
 	/* PMUCRU instance should attach before us. */
 	KASSERT(rk3399_pmucru_sc != NULL);
@@ -976,15 +970,6 @@ rk3399_reset(void *cookie, uint32_t *cells, int on)
 
 	HWRITE4(sc, RK3399_CRU_SOFTRST_CON(idx / 16),
 	    mask << 16 | (on ? mask : 0));
-}
-
-int
-rk3399_cpuspeed(int *freq)
-{
-	uint32_t idx = RK3399_ARMCLKL;
-
-	*freq = rk3399_get_frequency(rkclock_cpuspeed_sc, &idx) / 1000000;
-	return 0;
 }
 
 /* PMUCRU */
