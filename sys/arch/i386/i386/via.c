@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.39 2017/12/24 16:19:27 fcambus Exp $	*/
+/*	$OpenBSD: via.c,v 1.40 2017/12/29 13:24:11 fcambus Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -21,18 +21,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
-#include <sys/kernel.h>
-#include <sys/exec.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/timeout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/extent.h>
-#include <sys/sysctl.h>
 
 #ifdef CRYPTO
 #include <crypto/cryptodev.h>
@@ -41,17 +32,8 @@
 #include <crypto/cryptosoft.h>
 #endif
 
-#include <uvm/uvm_extern.h>
-
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
-#include <machine/gdt.h>
-#include <machine/pio.h>
-#include <machine/bus.h>
-#include <machine/psl.h>
-#include <machine/reg.h>
 #include <machine/specialreg.h>
-#include <machine/biosvar.h>
 
 #include <dev/rndvar.h>
 
