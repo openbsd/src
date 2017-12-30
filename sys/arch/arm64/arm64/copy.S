@@ -1,4 +1,4 @@
-/* $OpenBSD: copy.S,v 1.3 2017/02/15 21:39:50 patrick Exp $ */
+/* $OpenBSD: copy.S,v 1.4 2017/12/30 10:20:34 kettenis Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -58,6 +58,28 @@ ENTRY(copyin)
 .Lcopyfault:
 	mov	x0, #EFAULT
 	ldr	x4, [x3, #(PCB_ONFAULT)]
+	ret
+
+/*
+ * x0 = user space address
+ * x1 = kernel space address
+ *
+ * Atomically copies a 32-bit word from user space to kernel space
+ *
+ * XXX should this assert that address spaces are correct for each address?
+ */
+ENTRY(copyin32)
+	mrs	x3, tpidr_el1			// load cpuinfo
+	ldr	x3, [x3, #(CI_CURPCB)]
+	ldr	x4, [x3, #(PCB_ONFAULT)]
+	adr	x5, .Lcopyfault
+	str	x5, [x3, #(PCB_ONFAULT)]	// set handler
+
+	ldtr	w6, [x0]
+	str	w6, [x1]
+
+	str	x4, [x3, #(PCB_ONFAULT)]	// clear handler
+	mov	x0, xzr
 	ret
 
 /*
