@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.conf.5,v 1.12 2017/09/23 15:13:34 otto Exp $
+.\"	$OpenBSD: malloc.conf.5,v 1.13 2017/12/30 07:35:02 otto Exp $
 .\"
 .\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
 .\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 23 2017 $
+.Dd $Mdocdate: December 30 2017 $
 .Dt MALLOC.CONF 5
 .Os
 .Sh NAME
@@ -73,11 +73,11 @@ Increase the junk level by one if it is smaller than 2.
 .Dq Less junking .
 Decrease the junk level by one if it is larger than 0.
 Junking writes some junk bytes into the area allocated.
-Currently junk is bytes of 0xdb when allocating;
+Junk is bytes of 0xdb when allocating;
 freed chunks are filled with 0xdf.
 By default the junk level is 1: small chunks are always junked
 and the first part of pages is junked after free.
-After a delay (if not switched off by the F option),
+After a delay,
 the filling pattern is validated and the process is aborted if the pattern
 was modified.
 If the junk level is zero, no junking is performed.
@@ -116,7 +116,7 @@ malloc_options = "X";
 Note that this will cause code that is supposed to handle
 out-of-memory conditions gracefully to abort instead.
 .It Cm <
-.Dq Half the cache size .
+.Dq Halve the cache size .
 Decrease the size of the free page cache by a factor of two.
 .It Cm >
 .Dq Double the cache size .
