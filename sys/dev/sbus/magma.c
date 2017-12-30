@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.26 2016/03/14 18:01:18 stefan Exp $	*/
+/*	$OpenBSD: magma.c,v 1.27 2017/12/30 23:08:29 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -36,7 +36,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/tty.h>

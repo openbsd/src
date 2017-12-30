@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.170 2017/12/14 20:20:38 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.171 2017/12/30 23:08:29 guenther Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/mbuf.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>

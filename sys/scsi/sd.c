@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.274 2017/09/08 05:36:53 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.275 2017/12/30 23:08:29 guenther Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.141 2017/04/09 18:14:39 dhill Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.142 2017/12/30 23:08:29 guenther Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/extent.h>
 #include <sys/mount.h>
 #include <sys/pool.h>

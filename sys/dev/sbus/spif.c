@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.19 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: spif.c,v 1.20 2017/12/30 23:08:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -41,7 +41,7 @@
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>

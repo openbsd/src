@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.96 2017/07/21 20:13:41 ians Exp $ */
+/*	$OpenBSD: ugen.c,v 1.97 2017/12/30 23:08:29 guenther Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -41,7 +41,7 @@
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/selinfo.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>

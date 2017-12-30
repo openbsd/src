@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.30 2017/10/24 09:36:13 jsg Exp $ */
+/*	$OpenBSD: octcf.c,v 1.31 2017/12/30 23:08:29 guenther Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -58,7 +58,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mutex.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.100 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.101 2017/12/30 23:08:29 guenther Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <sys/buf.h>
 #include <sys/disk.h>
 #include <sys/mbuf.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>

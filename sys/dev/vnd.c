@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.165 2017/07/19 14:54:29 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.166 2017/12/30 23:08:29 guenther Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 #include <sys/disk.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/dkio.h>

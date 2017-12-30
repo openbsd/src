@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.33 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: sab.c,v 1.34 2017/12/30 23:08:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -39,7 +39,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>

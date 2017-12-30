@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.141 2017/09/07 11:32:14 bluhm Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.142 2017/12/30 23:08:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -79,7 +79,7 @@
 #include <sys/syslog.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
 #include <sys/signalvar.h>

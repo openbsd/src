@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.164 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.165 2017/12/30 23:08:29 guenther Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <sys/kernel.h>

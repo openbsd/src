@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.65 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: ucom.c,v 1.66 2017/12/30 23:08:29 guenther Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/selinfo.h>
 #include <sys/vnode.h>
 #include <sys/device.h>

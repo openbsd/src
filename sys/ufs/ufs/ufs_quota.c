@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.39 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.40 2017/12/30 23:08:29 guenther Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>

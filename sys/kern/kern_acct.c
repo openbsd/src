@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.33 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.34 2017/12/30 23:08:29 guenther Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/namei.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.20 2016/09/06 08:13:23 tedu Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.21 2017/12/30 23:08:29 guenther Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #include <sys/tty.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 
 
 #define cttyvp(p) \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd.c,v 1.12 2015/09/11 20:43:23 dlg Exp $	*/
+/*	$OpenBSD: rd.c,v 1.13 2017/12/30 23:08:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Matthew Dempsky <matthew@dempsky.org>
@@ -27,7 +27,7 @@
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/stat.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/dkio.h>
