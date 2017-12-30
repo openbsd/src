@@ -1,4 +1,4 @@
-/* $OpenBSD: sxitwi.c,v 1.4 2017/12/28 17:50:57 tom Exp $ */
+/* $OpenBSD: sxitwi.c,v 1.5 2017/12/30 19:04:00 kettenis Exp $ */
 /*	$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -209,7 +209,7 @@ sxitwi_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_twsien_iflg = CONTROL_TWSIEN;
 	if (OF_is_compatible(sc->sc_node, "allwinner,sun6i-a31-i2c"))
-		sc->sc_twsien_iflg = CONTROL_IFLG;
+		sc->sc_twsien_iflg |= CONTROL_IFLG;
 
 	sc->sc_started = 0;
 	sc->sc_ic.ic_cookie = sc;
