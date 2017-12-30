@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.40 2017/12/30 07:19:05 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.41 2017/12/30 07:21:10 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -438,9 +438,6 @@ getformat(void)
 				chardata = true;
 				break;
 			}
-			/* FALLTHROUGH */
-		case 'h': case 'n': case 'p': case 'q': case 's': case 'L':
-		case '$': case '*':
 			goto fmt_broken;
 		case 'f': case 'e': case 'g': case 'E': case 'G':
 			if (!longdata)
