@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.14 2017/12/28 18:11:13 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.15 2017/12/30 12:45:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -79,7 +79,7 @@ struct cfdriver sxiccmu_cd = {
 	NULL, "sxiccmu", DV_DULL
 };
 
-void sxiccmu_attach_clock(struct sxiccmu_softc *, int);
+void sxiccmu_attach_clock(struct sxiccmu_softc *, int, int);
 
 uint32_t sxiccmu_ccu_get_frequency(void *, uint32_t *);
 int	sxiccmu_ccu_set_frequency(void *, uint32_t *, uint32_t);
@@ -124,6 +124,7 @@ sxiccmu_match(struct device *parent, void *match, void *aux)
 	return (OF_is_compatible(node, "allwinner,sun4i-a10-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun7i-a20-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun8i-a23-ccu") ||
+	    OF_is_compatible(node, "allwinner,sun8i-a23-prcm") ||
 	    OF_is_compatible(node, "allwinner,sun8i-a33-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun8i-h3-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun8i-h3-r-ccu") ||
@@ -218,7 +219,7 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_set_frequency = sxiccmu_a64_set_frequency;
 	} else {
 		for (node = OF_child(node); node; node = OF_peer(node))
-			sxiccmu_attach_clock(sc, node);
+			sxiccmu_attach_clock(sc, node, faa->fa_nreg);
 	}
 
 	if (sc->sc_gates) {
@@ -259,6 +260,7 @@ struct sxiccmu_device {
 	int	(*set_frequency)(void *, uint32_t *, uint32_t);
 	void	(*enable)(void *, uint32_t *, int);
 	void	(*reset)(void *, uint32_t *, int);
+	bus_size_t offset;
 };
 
 uint32_t sxiccmu_gen_get_frequency(void *, uint32_t *);
@@ -356,7 +358,8 @@ struct sxiccmu_device sxiccmu_devices[] = {
 	},
 	{
 		.compat = "allwinner,sun6i-a31-clock-reset",
-		.reset = sxiccmu_reset
+		.reset = sxiccmu_reset,
+		.offset = 0x00b0
 	},
 	{
 		.compat = "allwinner,sun7i-a20-ahb-gates-clk",
@@ -379,7 +382,8 @@ struct sxiccmu_device sxiccmu_devices[] = {
 	},
 	{
 		.compat = "allwinner,sun8i-a23-apb0-clk",
-		.get_frequency = sxiccmu_apbs_get_frequency
+		.get_frequency = sxiccmu_apbs_get_frequency,
+		.offset = 0x000c
 	},
 	{
 		.compat = "allwinner,sun8i-a23-ahb1-gates-clk",
@@ -389,7 +393,8 @@ struct sxiccmu_device sxiccmu_devices[] = {
 	{
 		.compat = "allwinner,sun8i-a23-apb0-gates-clk",
 		.get_frequency = sxiccmu_gen_get_frequency,
-		.enable = sxiccmu_gate_enable
+		.enable = sxiccmu_gate_enable,
+		.offset = 0x0028
 	},
 	{
 		.compat = "allwinner,sun8i-a23-apb1-gates-clk",
@@ -470,11 +475,11 @@ struct sxiccmu_device sxiccmu_devices[] = {
 };
 
 void
-sxiccmu_attach_clock(struct sxiccmu_softc *sc, int node)
+sxiccmu_attach_clock(struct sxiccmu_softc *sc, int node, int nreg)
 {
 	struct sxiccmu_clock *clock;
 	uint32_t reg[2];
-	int i;
+	int i, error = ENODEV;
 
 	for (i = 0; i < nitems(sxiccmu_devices); i++)
 		if (OF_is_compatible(node, sxiccmu_devices[i].compat))
@@ -485,14 +490,18 @@ sxiccmu_attach_clock(struct sxiccmu_softc *sc, int node)
 	clock = malloc(sizeof(*clock), M_DEVBUF, M_WAITOK);
 	clock->sc_node = node;
 
+	clock->sc_iot = sc->sc_iot;
 	if (OF_getpropintarray(node, "reg", reg, sizeof(reg)) == sizeof(reg)) {
-		clock->sc_iot = sc->sc_iot;
-		if (bus_space_map(clock->sc_iot, reg[0], reg[1], 0,
-		    &clock->sc_ioh)) {
-			printf("%s: can't map registers", sc->sc_dev.dv_xname);
-			free(clock, M_DEVBUF, sizeof(*clock));
-			return;
-		}
+		error = bus_space_map(clock->sc_iot, reg[0], reg[1], 0,
+		    &clock->sc_ioh);
+	} else if (nreg > 0) {
+		error = bus_space_subregion(clock->sc_iot, sc->sc_ioh,
+		    sxiccmu_devices[i].offset, 4, &clock->sc_ioh);
+	}
+	if (error) {
+		printf("%s: can't map registers", sc->sc_dev.dv_xname);
+		free(clock, M_DEVBUF, sizeof(*clock));
+		return;
 	}
 
 	clock->sc_cd.cd_node = node;
