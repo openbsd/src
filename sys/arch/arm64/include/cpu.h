@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: cpu.h,v 1.2 2017/12/30 08:39:49 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -144,6 +144,7 @@ extern struct cpu_info *cpu_info[MAXCPUS];
 void cpu_boot_secondary_processors(void);
 #endif /* !MULTIPROCESSOR */
 
+#define CPU_BUSY_CYCLE()	__asm volatile("yield" : : : "memory")
 
 #define curpcb		curcpu()->ci_curpcb
 
@@ -247,6 +248,18 @@ disable_irq_daif_ret()
 
 #define restore_interrupts(old_daif)					\
 	restore_daif(old_daif)
+
+static inline u_long
+intr_disable(void)
+{
+	return disable_irq_daif_ret();
+}
+
+static inline void
+intr_restore(u_long daif)
+{
+	restore_daif(daif);
+}
 
 void	delay (unsigned);
 #define	DELAY(x)	delay(x)
