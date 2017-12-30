@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.37 2017/07/18 18:45:44 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.38 2017/12/30 13:34:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -338,7 +338,7 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Determine the base clock frequency. (2.2.24)
 	 */
-	sc->clkbase = clock_get_frequency(faa->fa_node, "per");
+	sc->clkbase = clock_get_frequency(faa->fa_node, "per") / 1000;
 
 	printf("%s: %d MHz base clock\n", DEVNAME(sc), sc->clkbase / 1000);
 

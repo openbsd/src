@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.9 2017/07/18 15:06:37 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.10 2017/12/30 13:34:56 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -156,8 +156,8 @@
 #define CCM_PMU_MISC1_LVDSCLK1_OBEN		(1 << 10)
 #define CCM_PMU_MISC1_LVDSCLK1_IBEN		(1 << 12)
 
-#define HCLK_FREQ				24000
-#define PLL3_80M				80000
+#define HCLK_FREQ				24000000
+#define PLL3_80M				80000000
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -226,20 +226,18 @@ struct cfdriver imxccm_cd = {
 	NULL, "imxccm", DV_DULL
 };
 
-int imxccm_cpuspeed(int *);
-unsigned int imxccm_decode_pll(enum clocks, unsigned int);
-unsigned int imxccm_get_pll2_pfd(unsigned int);
-unsigned int imxccm_get_pll3_pfd(unsigned int);
-unsigned int imxccm_get_armclk(void);
+uint32_t imxccm_decode_pll(enum clocks, uint32_t);
+uint32_t imxccm_get_pll2_pfd(unsigned int);
+uint32_t imxccm_get_pll3_pfd(unsigned int);
+uint32_t imxccm_get_armclk(void);
 void imxccm_armclk_set_parent(enum clocks);
-void imxccm_armclk_set_freq(unsigned int);
-unsigned int imxccm_get_usdhx(int x);
-unsigned int imxccm_get_periphclk(void);
-unsigned int imxccm_get_fecclk(void);
-unsigned int imxccm_get_ahbclk(void);
-unsigned int imxccm_get_ipgclk(void);
-unsigned int imxccm_get_ipg_perclk(void);
-unsigned int imxccm_get_uartclk(void);
+uint32_t imxccm_get_usdhx(int x);
+uint32_t imxccm_get_periphclk(void);
+uint32_t imxccm_get_fecclk(void);
+uint32_t imxccm_get_ahbclk(void);
+uint32_t imxccm_get_ipgclk(void);
+uint32_t imxccm_get_ipg_perclk(void);
+uint32_t imxccm_get_uartclk(void);
 void imxccm_enable(void *, uint32_t *, int);
 uint32_t imxccm_get_frequency(void *, uint32_t *);
 void imxccm_disable_usb1_chrg_detect(void);
@@ -287,7 +285,7 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": imx6 rev 1.%d CPU freq: %d MHz",
 	    HREAD4(sc, CCM_ANALOG_DIGPROG) & CCM_ANALOG_DIGPROG_MINOR_MASK,
-	    imxccm_get_armclk() / 1000);
+	    imxccm_get_armclk() / 1000000);
 
 	printf("\n");
 
@@ -296,19 +294,10 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cd.cd_enable = imxccm_enable;
 	sc->sc_cd.cd_get_frequency = imxccm_get_frequency;
 	clock_register(&sc->sc_cd);
-
-	cpu_cpuspeed = imxccm_cpuspeed;
 }
 
-int
-imxccm_cpuspeed(int *freq)
-{
-	*freq = imxccm_get_armclk() / 1000;
-	return (0);
-}
-
-unsigned int
-imxccm_decode_pll(enum clocks pll, unsigned int freq)
+uint32_t
+imxccm_decode_pll(enum clocks pll, uint32_t freq)
 {
 	struct imxccm_softc *sc = imxccm_sc;
 	uint32_t div;
@@ -334,25 +323,25 @@ imxccm_decode_pll(enum clocks pll, unsigned int freq)
 	}
 }
 
-unsigned int
+uint32_t
 imxccm_get_pll2_pfd(unsigned int pfd)
 {
 	struct imxccm_softc *sc = imxccm_sc;
 
-	return imxccm_decode_pll(SYS_PLL2, HCLK_FREQ) * 18
+	return imxccm_decode_pll(SYS_PLL2, HCLK_FREQ) * 18ULL
 	    / CCM_ANALOG_PFD_528_PFDx_FRAC(HREAD4(sc, CCM_ANALOG_PFD_528), pfd);
 }
 
-unsigned int
+uint32_t
 imxccm_get_pll3_pfd(unsigned int pfd)
 {
 	struct imxccm_softc *sc = imxccm_sc;
 
-	return imxccm_decode_pll(USB1_PLL3, HCLK_FREQ) * 18
+	return imxccm_decode_pll(USB1_PLL3, HCLK_FREQ) * 18ULL
 	    / CCM_ANALOG_PFD_480_PFDx_FRAC(HREAD4(sc, CCM_ANALOG_PFD_480), pfd);
 }
 
-unsigned int
+uint32_t
 imxccm_get_armclk(void)
 {
 	struct imxccm_softc *sc = imxccm_sc;
@@ -397,14 +386,6 @@ imxccm_armclk_set_parent(enum clocks clock)
 	}
 }
 
-void
-imxccm_armclk_set_freq(unsigned int freq)
-{
-	if (freq > 1296000 || freq < 648000)
-		panic("%s: frequency must be between 648MHz and 1296MHz!",
-		    __func__);
-}
-
 unsigned int
 imxccm_get_usdhx(int x)
 {
@@ -427,7 +408,7 @@ imxccm_get_usdhx(int x)
 	return clkroot / (podf + 1);
 }
 
-unsigned int
+uint32_t
 imxccm_get_uartclk(void)
 {
 	struct imxccm_softc *sc = imxccm_sc;
@@ -438,7 +419,7 @@ imxccm_get_uartclk(void)
 	return clkroot / (podf + 1);
 }
 
-unsigned int
+uint32_t
 imxccm_get_periphclk(void)
 {
 	struct imxccm_softc *sc = imxccm_sc;
@@ -472,7 +453,7 @@ imxccm_get_periphclk(void)
 	}
 }
 
-unsigned int
+uint32_t
 imxccm_get_fecclk(void)
 {
 	struct imxccm_softc *sc = imxccm_sc;
@@ -494,10 +475,10 @@ imxccm_get_fecclk(void)
 		break;
 	}
 
-	return 500000 / div ;
+	return 500000000 / div ;
 }
 
-unsigned int
+uint32_t
 imxccm_get_ahbclk(void)
 {
 	struct imxccm_softc *sc = imxccm_sc;
@@ -508,7 +489,7 @@ imxccm_get_ahbclk(void)
 	return imxccm_get_periphclk() / (ahb_podf + 1);
 }
 
-unsigned int
+uint32_t
 imxccm_get_ipgclk(void)
 {
 	struct imxccm_softc *sc = imxccm_sc;
@@ -519,7 +500,7 @@ imxccm_get_ipgclk(void)
 	return imxccm_get_ahbclk() / (ipg_podf + 1);
 }
 
-unsigned int
+uint32_t
 imxccm_get_ipg_perclk(void)
 {
 	struct imxccm_softc *sc = imxccm_sc;
@@ -580,6 +561,8 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 
 	if (sc->sc_gates == imx6ul_gates) {
 		switch (idx) {
+		case IMX6UL_CLK_ARM:
+			return imxccm_get_armclk();
 		case IMX6UL_CLK_IPG:
 			return imxccm_get_ipgclk();
 		case IMX6UL_CLK_PERCLK:
@@ -592,6 +575,8 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 		}
 	} else {
 		switch (idx) {
+		case IMX6_CLK_ARM:
+			return imxccm_get_armclk();
 		case IMX6_CLK_IPG:
 			return imxccm_get_ipgclk();
 		case IMX6_CLK_IPG_PER:

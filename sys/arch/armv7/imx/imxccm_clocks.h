@@ -6,6 +6,7 @@
 
 #define IMX6_CLK_IPG		0x3e
 #define IMX6_CLK_IPG_PER	0x3f
+#define IMX6_CLK_ARM		0x68
 #define IMX6_CLK_I2C1		0x7d
 #define IMX6_CLK_I2C2		0x7e
 #define IMX6_CLK_I2C3		0x7f
@@ -34,6 +35,7 @@ struct imxccm_gate imx6_gates[] = {
  * i.MX6UL clocks.
  */
 
+#define IMX6UL_CLK_ARM		0x5d
 #define IMX6UL_CLK_PERCLK	0x63
 #define IMX6UL_CLK_IPG		0x64
 #define IMX6UL_CLK_GPT1_BUS	0x98

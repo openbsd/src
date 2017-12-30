@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.16 2017/10/27 11:23:28 kevlo Exp $ */
+/* $OpenBSD: imxuart.c,v 1.17 2017/12/30 13:34:56 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -548,7 +548,7 @@ imxuartopen(dev_t dev, int flag, int mode, struct proc *p)
 
 		/* formula: clk / (rfdiv * 1600) */
 		bus_space_write_2(iot, ioh, IMXUART_UBMR,
-		    (clock_get_frequency(sc->sc_node, "per") * 1000) / 1600);
+		    clock_get_frequency(sc->sc_node, "per") / 1600);
 
 		SET(sc->sc_ucr1, IMXUART_CR1_EN|IMXUART_CR1_RRDYEN);
 		SET(sc->sc_ucr2, IMXUART_CR2_TXEN|IMXUART_CR2_RXEN);

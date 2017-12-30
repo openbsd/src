@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.13 2017/03/06 06:44:46 kettenis Exp $ */
+/* $OpenBSD: imxiic.c,v 1.14 2017/12/30 13:34:56 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -166,7 +166,7 @@ imxiic_setspeed(struct imxiic_softc *sc, u_int speed)
 		uint32_t div;
 		int i;
 
-		i2c_clk_rate = clock_get_frequency(sc->sc_node, NULL);
+		i2c_clk_rate = clock_get_frequency(sc->sc_node, NULL) / 1000;
 		div = (i2c_clk_rate + speed - 1) / speed;
 		if (div < imxiic_clk_div[0][0])
 			i = 0;
