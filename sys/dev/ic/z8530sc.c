@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530sc.c,v 1.7 2013/04/21 14:44:16 sebastia Exp $	*/
+/*	$OpenBSD: z8530sc.c,v 1.8 2017/12/30 20:46:59 guenther Exp $	*/
 /*	$NetBSD: z8530sc.c,v 1.30 2009/05/22 03:51:30 mrg Exp $	*/
 
 /*
@@ -96,7 +96,6 @@
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/time.h>

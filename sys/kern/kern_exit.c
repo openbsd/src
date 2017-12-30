@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.162 2017/11/28 06:09:44 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.163 2017/12/30 20:47:00 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
-#include <sys/file.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.102 2017/12/11 05:27:40 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.103 2017/12/30 20:46:59 guenther Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -47,7 +47,6 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/msgbuf.h>
 #include <sys/tty.h>
 #include <sys/user.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.3 2015/09/01 08:44:34 mpi Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.4 2017/12/30 20:46:59 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>

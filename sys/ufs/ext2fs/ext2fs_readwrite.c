@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.40 2016/03/01 21:00:56 natano Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.41 2017/12/30 20:47:00 guenther Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
 #include <sys/kernel.h>
-#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/mount.h>

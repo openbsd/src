@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.22 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.23 2017/12/30 20:46:59 guenther Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.36 2017/05/05 12:54:47 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.37 2017/12/30 20:46:59 guenther Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/vnode.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.182 2017/12/11 05:27:40 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.183 2017/12/30 20:46:59 guenther Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -69,7 +69,6 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/timeout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.26 2015/05/15 13:32:08 jsg Exp $	*/
+/*	$OpenBSD: hil.c,v 1.27 2017/12/30 20:46:59 guenther Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * All rights reserved.
@@ -68,7 +68,6 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>

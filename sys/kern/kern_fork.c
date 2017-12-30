@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.201 2017/12/12 01:12:34 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.202 2017/12/30 20:47:00 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -49,7 +49,6 @@
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/vmmeter.h>
-#include <sys/file.h>
 #include <sys/acct.h>
 #include <sys/ktrace.h>
 #include <sys/sched.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.111 2017/02/22 11:42:46 mpi Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.112 2017/12/30 20:47:00 guenther Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -58,7 +58,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/file.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>

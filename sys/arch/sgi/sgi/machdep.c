@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.157 2017/12/11 05:27:40 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.158 2017/12/30 20:46:59 guenther Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -32,7 +32,6 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
 #include <sys/exec.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.78 2017/12/04 09:51:03 mpi Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.79 2017/12/30 20:47:00 guenther Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/buf.h>
 #include <sys/acct.h>
 #include <sys/wait.h>
-#include <sys/file.h>
 #include <ufs/ufs/quota.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: zs_ioasic.c,v 1.1 2017/11/02 14:04:24 mpi Exp $ */
+/* $OpenBSD: zs_ioasic.c,v 1.2 2017/12/30 20:46:59 guenther Exp $ */
 /* $NetBSD: zs_ioasic.c,v 1.40 2009/05/12 13:21:22 cegger Exp $ */
 
 /*-
@@ -50,7 +50,6 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>

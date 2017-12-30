@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.186 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.187 2017/12/30 20:46:59 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -83,7 +83,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>

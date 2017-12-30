@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.91 2017/04/30 16:45:46 mpi Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.92 2017/12/30 20:47:00 guenther Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -45,7 +45,6 @@
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/vnode.h>
-#include <sys/file.h>
 #include <sys/tty.h>
 #include <sys/tprintf.h>
 #include <sys/syslog.h>

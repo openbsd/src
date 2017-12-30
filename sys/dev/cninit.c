@@ -1,4 +1,4 @@
-/*	$OpenBSD: cninit.c,v 1.14 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: cninit.c,v 1.15 2017/12/30 20:46:59 guenther Exp $	*/
 /*	$NetBSD: cninit.c,v 1.2 1995/04/11 22:08:10 pk Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/file.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
 

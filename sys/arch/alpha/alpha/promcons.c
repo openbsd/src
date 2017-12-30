@@ -1,4 +1,4 @@
-/*	$OpenBSD: promcons.c,v 1.17 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: promcons.c,v 1.18 2017/12/30 20:46:59 guenther Exp $	*/
 /*	$NetBSD: promcons.c,v 1.5 1996/11/13 22:20:55 cgd Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 #include <sys/tty.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
