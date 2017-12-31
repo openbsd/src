@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.16 2017/12/30 16:30:37 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.17 2017/12/31 10:54:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -1020,20 +1020,56 @@ sxiccmu_a80_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 	return 0;
 }
 
+/* Allwinner H3/H5 */
+#define H3_PLL_CPUX_CTRL_REG		0x0000
+#define H3_PLL_CPUX_OUT_EXT_DIVP(x)	(((x) >> 16) & 0x3)
+#define H3_PLL_CPUX_FACTOR_N(x)		(((x) >> 8) & 0x1f)
+#define H3_PLL_CPUX_FACTOR_K(x)		(((x) >> 4) & 0x3)
+#define H3_PLL_CPUX_FACTOR_M(x)		(((x) >> 0) & 0x3)
+#define H3_CPUX_AXI_CFG_REG		0x0050
+#define H3_CPUX_CLK_SRC_SEL		(0x3 << 16)
+#define H3_CPUX_CLK_SRC_SEL_LOSC	(0x0 << 16)
+#define H3_CPUX_CLK_SRC_SEL_OSC24M	(0x1 << 16)
+#define H3_CPUX_CLK_SRC_SEL_PLL_CPUX	(0x2 << 16)
+
 uint32_t
 sxiccmu_h3_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 {
 	uint32_t parent;
 	uint32_t reg, div;
+	uint32_t k, m, n, p;
 
 	switch (idx) {
 	case H3_CLK_LOSC:
 		return clock_get_frequency(sc->sc_node, "losc");
 	case H3_CLK_HOSC:
 		return clock_get_frequency(sc->sc_node, "hosc");
+	case H3_CLK_PLL_CPUX:
+		reg = SXIREAD4(sc, H3_PLL_CPUX_CTRL_REG);
+		k = H3_PLL_CPUX_FACTOR_K(reg) + 1;
+		m = H3_PLL_CPUX_FACTOR_M(reg) + 1;
+		n = H3_PLL_CPUX_FACTOR_N(reg) + 1;
+		p = 1 << H3_PLL_CPUX_OUT_EXT_DIVP(reg);
+		return (24000000 * n * k) / (m * p);
 	case H3_CLK_PLL_PERIPH0:
 		/* Not hardcoded, but recommended. */
 		return 600000000;
+	case H3_CLK_CPUX:
+		reg = SXIREAD4(sc, H3_CPUX_AXI_CFG_REG);
+		switch (reg & H3_CPUX_CLK_SRC_SEL) {
+		case H3_CPUX_CLK_SRC_SEL_LOSC:
+			parent = H3_CLK_LOSC;
+			break;
+		case H3_CPUX_CLK_SRC_SEL_OSC24M:
+			parent = H3_CLK_HOSC;
+			break;
+		case H3_CPUX_CLK_SRC_SEL_PLL_CPUX:
+			parent = H3_CLK_PLL_CPUX;
+			break;
+		default:
+			return 0;
+		}
+		return sxiccmu_ccu_get_frequency(sc, &parent);
 	case H3_CLK_APB2:
 		/* XXX Controlled by a MUX. */
 		return 24000000;

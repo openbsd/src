@@ -269,8 +269,10 @@ struct sxiccmu_ccu_bit sun9i_a80_mmc_gates[] = {
 
 /* H3/H5 */
 
+#define H3_CLK_PLL_CPUX		0
 #define H3_CLK_PLL_PERIPH0	9
 
+#define H3_CLK_CPUX		14
 #define H3_CLK_AXI		15
 #define H3_CLK_AHB1		16
 #define H3_CLK_APB1		17
