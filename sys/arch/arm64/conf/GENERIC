@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.44 2017/12/17 12:57:32 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.45 2017/12/31 11:14:31 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -111,6 +111,7 @@ sximmc*		at fdt?		# SD/MMC card controller
 sdmmc*		at sximmc?	# SD/MMC bus
 sxitwi*		at fdt?		# I2C controller
 iic*		at sxitwi?	# I2C bus
+sypwr*		at iic?		# Silergy SY8106A
 dwxe*		at fdt?
 
 # PCI
