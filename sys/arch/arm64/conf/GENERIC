@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.45 2017/12/31 11:14:31 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.46 2017/12/31 13:54:48 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -109,6 +109,7 @@ sxirsb*		at fdt? early 1	# Reduced Serial Bus
 sxirtc*		at fdt?		# Real Time Clock
 sximmc*		at fdt?		# SD/MMC card controller
 sdmmc*		at sximmc?	# SD/MMC bus
+sxitemp*	at fdt?		# Temperature sensor
 sxitwi*		at fdt?		# I2C controller
 iic*		at sxitwi?	# I2C bus
 sypwr*		at iic?		# Silergy SY8106A
