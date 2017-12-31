@@ -1,4 +1,4 @@
-/* $OpenBSD: locore0.S,v 1.2 2017/08/06 20:05:24 kettenis Exp $ */
+/* $OpenBSD: locore0.S,v 1.3 2017/12/31 08:42:04 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -486,8 +486,8 @@ build_l1_block_pagetable:
 	/* Build the L1 block entry */
 	lsl	x12, x7, #2
 	orr	x12, x12, #L1_BLOCK
-	orr	x12, x12, #(ATTR_AF)
-	orr	x12, x12, ATTR_SH(SH_INNER)
+	orr	x12, x12, #(ATTR_nG | ATTR_AF | ATTR_SH(SH_INNER))
+	orr	x12, x12, #ATTR_UXN
 
 	/* Only use the output address bits */
 	lsr	x9, x9, #L1_SHIFT
@@ -525,8 +525,8 @@ build_l2_block_pagetable:
 	/* Build the L2 block entry */
 	lsl	x12, x7, #2
 	orr	x12, x12, #L2_BLOCK
-	orr	x12, x12, #(ATTR_AF)
-	orr	x12, x12, ATTR_SH(SH_INNER)
+	orr	x12, x12, #(ATTR_nG | ATTR_AF | ATTR_SH(SH_INNER))
+	orr	x12, x12, #ATTR_UXN
 
 	/* Only use the output address bits */
 	lsr	x9, x9, #L2_SHIFT

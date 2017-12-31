@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.19 2017/08/08 21:52:41 drahn Exp $ */
+/* $OpenBSD: locore.S,v 1.20 2017/12/31 08:42:04 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -82,8 +82,10 @@ pagetable:
 	.space	PAGE_SIZE * 2	// allocate 2 pages for pmapvp2
 pagetable_l1_ttbr1:
 	.space	PAGE_SIZE * 2	// allocate 2 pages for pmapvp1
+	.globl pagetable_l1_ttbr0
 pagetable_l1_ttbr0:
 	.space	PAGE_SIZE * 2	// allocate 2 pages, reused later in pmap
+	.globl pagetable_l0_ttbr0
 pagetable_l0_ttbr0:
 	.space	PAGE_SIZE
 	.globl	pagetable_end

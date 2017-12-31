@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.40 2017/12/27 14:13:05 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.41 2017/12/31 08:42:04 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -2016,6 +2016,23 @@ pmap_show_mapping(uint64_t va)
 	pted = vp3->vp[VP_IDX3(va)];
 	printf("  pted = %p lp3 = %llx idx3 off  %x\n",
 		pted, vp3->l3[VP_IDX3(va)], VP_IDX3(va)*8);
+}
+
+void
+pmap_map_early(paddr_t spa, psize_t len)
+{
+	extern pd_entry_t pagetable_l0_ttbr0[];
+	extern pd_entry_t pagetable_l1_ttbr0[];
+	paddr_t pa, epa = spa + len;
+
+	for (pa = spa & ~(L1_SIZE - 1); pa < epa; pa += L1_SIZE) {
+		if (pagetable_l0_ttbr0[VP_IDX0(pa)] == 0)
+			panic("%s: outside existing L0 entry", __func__);
+
+		pagetable_l1_ttbr0[VP_IDX1(pa)] = pa | L1_BLOCK |
+		    ATTR_IDX(PTE_ATTR_WB) | ATTR_SH(SH_INNER) |
+		    ATTR_nG | ATTR_UXN | ATTR_AF | ATTR_AP(0);
+	}
 }
 
 #define NUM_ASID (1 << 16)

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.6 2017/08/27 19:33:02 drahn Exp $ */
+/* $OpenBSD: pmap.h,v 1.7 2017/12/31 08:42:04 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -95,9 +95,7 @@ struct pv_entry;
 #define pmap_unuse_final(p)		do { /* nothing */ } while (0)
 int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t, int);
 void pmap_postinit(void);
-void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
-void	pmap_map_entry(vaddr_t, vaddr_t, paddr_t, int, int);
-vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, int, int);
+void	pmap_map_early(paddr_t, psize_t);
 
 #ifndef _LOCORE
 
