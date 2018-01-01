@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.75 2017/11/21 17:57:41 tb Exp $	*/
+/*	$OpenBSD: history.c,v 1.76 2018/01/01 19:45:56 millert Exp $	*/
 
 /*
  * command history
@@ -545,7 +545,7 @@ sethistcontrol(const char *str)
 void
 sethistsize(int n)
 {
-	if (n > 0 && n != histsize) {
+	if (n > 0 && (uint32_t)n != histsize) {
 		int offset = histptr - history;
 
 		/* save most recent history */

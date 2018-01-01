@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.h,v 1.12 2015/11/08 17:52:43 mmcc Exp $	*/
+/*	$OpenBSD: expand.h,v 1.13 2018/01/01 19:45:56 millert Exp $	*/
 
 /*
  * Expanding strings
@@ -46,7 +46,7 @@ typedef char * XStringP;
 
 /* check if there are at least n bytes left */
 #define	XcheckN(xs, xp, n) do { \
-		    int more = ((xp) + (n)) - (xs).end; \
+		    size_t more = ((xp) + (n)) - (xs).end; \
 		    if (more > 0) \
 			xp = Xcheck_grow_(&xs, xp, more); \
 		} while (0)
@@ -68,7 +68,7 @@ typedef char * XStringP;
 #define	Xsavepos(xs, xp) ((xp) - (xs).beg)
 #define	Xrestpos(xs, xp, n) ((xs).beg + (n))
 
-char *	Xcheck_grow_(XString *xsp, char *xp, int more);
+char *	Xcheck_grow_(XString *xsp, char *xp, size_t more);
 
 /*
  * expandable vector of generic pointers

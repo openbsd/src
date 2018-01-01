@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.50 2017/11/27 04:23:50 tb Exp $	*/
+/*	$OpenBSD: vi.c,v 1.51 2018/01/01 19:45:56 millert Exp $	*/
 
 /*
  *	vi command editing
@@ -238,7 +238,7 @@ x_vi(char *buf, size_t len)
 
 	x_putc('\r'); x_putc('\n'); x_flush();
 
-	if (c == -1 || len <= es->linelen)
+	if (c == -1 || len <= (size_t)es->linelen)
 		return -1;
 
 	if (es->cbuf != buf)
