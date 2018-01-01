@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.1 2017/12/24 19:50:56 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.2 2018/01/01 22:41:03 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -128,6 +128,7 @@ struct bwfm_pci_softc {
 	uint32_t		 sc_console_base_addr;
 	uint32_t		 sc_console_buf_addr;
 	uint32_t		 sc_console_buf_size;
+	uint32_t		 sc_console_readidx;
 
 	uint16_t		 sc_max_flowrings;
 	uint16_t		 sc_max_submissionrings;
@@ -233,6 +234,7 @@ int		 bwfm_pci_buscore_reset(struct bwfm_softc *);
 void		 bwfm_pci_buscore_activate(struct bwfm_softc *, uint32_t);
 
 int		 bwfm_pci_txdata(struct bwfm_softc *, struct mbuf *);
+void		 bwfm_pci_debug_console(struct bwfm_pci_softc *);
 
 int		 bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *, int,
 		    int, char *, size_t *);
@@ -599,6 +601,11 @@ bwfm_pci_attachhook(struct device *self)
 	if_rxr_init(&sc->sc_event_ring, 8, 8);
 	if_rxr_init(&sc->sc_rxbuf_ring, 2, sc->sc_max_rxbufpost);
 	bwfm_pci_fill_rx_rings(sc);
+
+#ifdef BWFM_DEBUG
+	sc->sc_console_readidx = 0;
+	bwfm_pci_debug_console(sc);
+#endif
 
 	sc->sc_ioctl_poll = 1;
 	sc->sc_sc.sc_bus_ops = &bwfm_pci_bus_ops;
@@ -1290,6 +1297,26 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 	return ENOBUFS;
 }
 
+void
+bwfm_pci_debug_console(struct bwfm_pci_softc *sc)
+{
+	uint32_t newidx = bus_space_read_4(sc->sc_tcm_iot, sc->sc_tcm_ioh,
+	    sc->sc_console_base_addr + BWFM_CONSOLE_WRITEIDX);
+
+	if (newidx != sc->sc_console_readidx)
+		printf("BWFM CONSOLE: ");
+	while (newidx != sc->sc_console_readidx) {
+		uint8_t ch = bus_space_read_1(sc->sc_tcm_iot, sc->sc_tcm_ioh,
+		    sc->sc_console_buf_addr + sc->sc_console_readidx);
+		sc->sc_console_readidx++;
+		if (sc->sc_console_readidx == sc->sc_console_buf_size)
+			sc->sc_console_readidx = 0;
+		if (ch == '\r')
+			continue;
+		printf("%c", ch);
+	}
+}
+
 int
 bwfm_pci_intr(void *v)
 {
@@ -1314,23 +1341,8 @@ bwfm_pci_intr(void *v)
 		bwfm_pci_ring_rx(sc, &sc->sc_ctrl_complete);
 	}
 
-#if 0
-	{
-		uint32_t newidx = bus_space_read_4(sc->sc_tcm_iot, sc->sc_tcm_ioh,
-		    sc->sc_console_base_addr + BWFM_CONSOLE_WRITEIDX);
-		uint32_t readidx = 0;
-
-		while (newidx != readidx) {
-			uint8_t ch = bus_space_read_1(sc->sc_tcm_iot, sc->sc_tcm_ioh,
-			    sc->sc_console_buf_addr + readidx);
-			readidx++;
-			if (readidx == sc->sc_console_buf_size)
-				readidx = 0;
-			if (ch == '\r')
-				continue;
-			printf("%c", ch);
-		}
-	}
+#ifdef BWFM_DEBUG
+	bwfm_pci_debug_console(sc);
 #endif
 
 	bwfm_pci_intr_enable(sc);
