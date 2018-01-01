@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethertype.h,v 1.8 2014/04/11 04:08:58 lteo Exp $	*/
+/*	$OpenBSD: ethertype.h,v 1.9 2018/01/01 19:41:01 denis Exp $	*/
 /*	$NetBSD: ethertype.h,v 1.2 1995/03/06 11:38:17 mycroft Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
 #define ETHERTYPE_8021Q		0x8100
 #endif
 #ifndef ETHERTYPE_IPV6
-#define ETHERTYPE_IPV6		0x80f3
+#define ETHERTYPE_IPV6		0x86dd
 #endif
 #ifndef	ETHERTYPE_LOOPBACK
 #define	ETHERTYPE_LOOPBACK	0x9000
