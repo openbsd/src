@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.173 2017/12/27 13:55:42 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.174 2018/01/01 11:03:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1339,6 +1339,7 @@ process_key:
 		break;
 	case '\033': /* Escape */
 	case '\003': /* C-c */
+	case '\007': /* C-g */
 		if (c->prompt_inputcb(c, c->prompt_data, NULL, 1) == 0)
 			status_prompt_clear(c);
 		break;
