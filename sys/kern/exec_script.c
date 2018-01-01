@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.40 2017/02/11 19:51:06 guenther Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.41 2018/01/01 08:55:43 florian Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -264,11 +264,13 @@ fail:
 	pool_put(&namei_pool, epp->ep_ndp->ni_cnd.cn_pnbuf);
 
 	/* free the fake arg list, because we're not returning it */
-	if ((tmpsap = shellargp) != NULL) {
-		while (*tmpsap != NULL) {
-			free(*tmpsap, M_EXEC, 0);
-			tmpsap++;
-		}
+	if (shellargp != NULL) {
+		free(shellargp[0], M_EXEC, shellnamelen + 1);
+		if (shellargp[2] != NULL) {
+			free(shellargp[1], M_EXEC, shellarglen + 1);
+			free(shellargp[2], M_EXEC, MAXPATHLEN);
+		} else
+			free(shellargp[1], M_EXEC, MAXPATHLEN);
 		free(shellargp, M_EXEC, 4 * sizeof(char *));
 	}
 
