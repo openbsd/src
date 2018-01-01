@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.191 2017/12/19 10:04:59 stefan Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.192 2018/01/01 09:01:21 florian Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -252,14 +252,13 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 #endif
 	struct process *pr = p->p_p;
 	long argc, envc;
-	size_t len, sgap;
+	size_t len, sgap, dstsize;
 #ifdef MACHINE_STACK_GROWS_UP
 	size_t slen;
 #endif
 	char *stack;
 	struct ps_strings arginfo;
 	struct vmspace *vm;
-	char **tmpfap;
 	extern struct emul emul_native;
 	struct vnode *otvp;
 
@@ -307,21 +306,23 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	dp = argp;
 	argc = 0;
 
-	/* copy the fake args list, if there's one, freeing it as we go */
+	/*
+	 * Copy the fake args list, if there's one, freeing it as we go.
+	 * exec_script_makecmds() allocates either 2 or 3 fake args bounded
+	 * by MAXINTERP + MAXPATHLEN < NCARGS so no overflow can happen.
+	 */
 	if (pack.ep_flags & EXEC_HASARGL) {
-		tmpfap = pack.ep_fa;
-		while (*tmpfap != NULL) {
-			char *cp;
-
-			cp = *tmpfap;
-			while (*cp)
-				*dp++ = *cp++;
-			*dp++ = '\0';
-
-			free(*tmpfap, M_EXEC, 0);
-			tmpfap++; argc++;
+		dstsize = NCARGS;
+		for(; pack.ep_fa[argc] != NULL; argc++) {
+			len = strlcpy(dp, pack.ep_fa[argc], dstsize);
+			len++;
+			dp += len; dstsize -= len;
+			if (pack.ep_fa[argc+1] != NULL)
+				free(pack.ep_fa[argc], M_EXEC, len);
+			else
+				free(pack.ep_fa[argc], M_EXEC, MAXPATHLEN);
 		}
-		free(pack.ep_fa, M_EXEC, 0);
+		free(pack.ep_fa, M_EXEC, 4 * sizeof(char *));
 		pack.ep_flags &= ~EXEC_HASARGL;
 	}
 
