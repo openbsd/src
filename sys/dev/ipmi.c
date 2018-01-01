@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.99 2017/09/08 05:36:52 deraadt Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.100 2018/01/01 16:16:23 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -1652,7 +1652,7 @@ ipmi_match(struct device *parent, void *match, void *aux)
 		return (0);
 
 	/* XXX local softc is wrong wrong wrong */
-	sc = malloc(sizeof(*sc), M_TEMP, M_NOWAIT | M_ZERO);
+	sc = malloc(sizeof(*sc), M_TEMP, M_WAITOK | M_ZERO);
 	mtx_init(&sc->sc_cmd_mtx, IPL_NONE);
 	strlcpy(sc->sc_dev.dv_xname, "ipmi0", sizeof(sc->sc_dev.dv_xname));
 
