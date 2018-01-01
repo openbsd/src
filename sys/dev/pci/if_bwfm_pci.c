@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.2 2018/01/01 22:41:03 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.3 2018/01/01 22:41:56 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -597,9 +597,15 @@ bwfm_pci_attachhook(struct device *self)
 		    BWFM_NUM_TX_DESCS, MSGBUF_MAX_PKT_SIZE, 0, BUS_DMA_WAITOK,
 		    &sc->sc_tx_pkts.pkts[i].bb_map);
 
+	/*
+	 * For whatever reason, could also be a bug somewhere in this
+	 * driver, the firmware needs a bunch of RX buffers otherwise
+	 * it won't send any RX complete messages.  64 buffers don't
+	 * suffice, but 128 buffers are enough.
+	 */
+	if_rxr_init(&sc->sc_rxbuf_ring, 128, sc->sc_max_rxbufpost);
 	if_rxr_init(&sc->sc_ioctl_ring, 8, 8);
 	if_rxr_init(&sc->sc_event_ring, 8, 8);
-	if_rxr_init(&sc->sc_rxbuf_ring, 2, sc->sc_max_rxbufpost);
 	bwfm_pci_fill_rx_rings(sc);
 
 #ifdef BWFM_DEBUG
@@ -810,11 +816,11 @@ bwfm_pci_pktid_free(struct bwfm_pci_softc *sc, struct bwfm_pci_pkts *pkts,
 void
 bwfm_pci_fill_rx_rings(struct bwfm_pci_softc *sc)
 {
+	bwfm_pci_fill_rx_buf_ring(sc);
 	bwfm_pci_fill_rx_ioctl_ring(sc, &sc->sc_ioctl_ring,
 	    MSGBUF_TYPE_IOCTLRESP_BUF_POST);
 	bwfm_pci_fill_rx_ioctl_ring(sc, &sc->sc_event_ring,
 	    MSGBUF_TYPE_EVENT_BUF_POST);
-	bwfm_pci_fill_rx_buf_ring(sc);
 }
 
 void
@@ -1133,6 +1139,7 @@ void
 bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf)
 {
 	struct msgbuf_ioctl_resp_hdr *resp;
+	struct msgbuf_rx_complete *rx;
 	struct msgbuf_rx_event *event;
 	struct msgbuf_common_hdr *msg;
 	struct mbuf *m;
@@ -1161,6 +1168,21 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf)
 		bwfm_rx(&sc->sc_sc, mtod(m, char *), letoh16(event->event_data_len));
 		m_freem(m);
 		if_rxr_put(&sc->sc_event_ring, 1);
+		bwfm_pci_fill_rx_rings(sc);
+		break;
+	case MSGBUF_TYPE_RX_CMPLT:
+		rx = (struct msgbuf_rx_complete*)buf;
+		m = bwfm_pci_pktid_free(sc, &sc->sc_rx_pkts,
+		    letoh32(rx->msg.request_id));
+		if (m == NULL)
+			break;
+		if (letoh16(rx->data_offset))
+			m_adj(m, letoh16(rx->data_offset));
+		else if (sc->sc_rx_dataoffset)
+			m_adj(m, sc->sc_rx_dataoffset);
+		bwfm_rx(&sc->sc_sc, mtod(m, char *), letoh16(rx->data_len));
+		m_freem(m);
+		if_rxr_put(&sc->sc_rxbuf_ring, 1);
 		bwfm_pci_fill_rx_rings(sc);
 		break;
 	default:
