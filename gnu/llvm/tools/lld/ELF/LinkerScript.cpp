@@ -732,6 +732,10 @@ void LinkerScript::adjustSectionsBeforeSorting() {
       continue;
     if (OutputSection *Sec = Cmd->Sec) {
       Flags = Sec->Flags;
+
+      // Handle align (e.g. ".foo : ALIGN(16) { ... }").
+      if (Cmd->AlignExpr)
+        Sec->updateAlignment(Cmd->AlignExpr().getValue());
       continue;
     }
 
@@ -742,18 +746,18 @@ void LinkerScript::adjustSectionsBeforeSorting() {
     OutSec->SectionIndex = I;
     Cmd->Sec = OutSec;
     SecToCommand[OutSec] = Cmd;
+
+    // Handle align (e.g. ".foo : ALIGN(16) { ... }").
+    if (Cmd->AlignExpr)
+      Cmd->Sec->updateAlignment(Cmd->AlignExpr().getValue());
   }
 }
 
 void LinkerScript::adjustSectionsAfterSorting() {
   // Try and find an appropriate memory region to assign offsets in.
   for (BaseCommand *Base : Opt.Commands) {
-    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base)) {
+    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
       Cmd->MemRegion = findMemoryRegion(Cmd);
-      // Handle align (e.g. ".foo : ALIGN(16) { ... }").
-      if (Cmd->AlignExpr)
-        Cmd->Sec->updateAlignment(Cmd->AlignExpr().getValue());
-    }
   }
 
   // If output section command doesn't specify any segments,
