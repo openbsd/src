@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.31 2017/11/28 00:20:23 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.32 2018/01/01 15:01:09 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -266,9 +266,15 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			break;
 		}
 
+		if (cko.cko_tlen == -1) {
+			char buf[256];
+			log_warnx("%s: %s", __func__,
+			    ERR_error_string(ERR_get_error(), buf));
+		}
+
 		iov[c].iov_base = &cko;
 		iov[c++].iov_len = sizeof(cko);
-		if (cko.cko_tlen) {
+		if (cko.cko_tlen > 0) {
 			iov[c].iov_base = to;
 			iov[c++].iov_len = cko.cko_tlen;
 		}
@@ -381,12 +387,12 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 
 			IMSG_SIZE_CHECK(&imsg, (&cko));
 			memcpy(&cko, imsg.data, sizeof(cko));
-			if (IMSG_DATA_SIZE(&imsg) !=
-			    (sizeof(cko) + cko.cko_tlen))
-				fatalx("data size");
 
 			ret = cko.cko_tlen;
-			if (ret) {
+			if (ret > 0) {
+				if (IMSG_DATA_SIZE(&imsg) !=
+				    (sizeof(cko) + ret))
+					fatalx("data size");
 				toptr = (u_char *)imsg.data + sizeof(cko);
 				memcpy(to, toptr, ret);
 			}
