@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.368 2017/11/29 19:15:48 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.369 2018/01/02 12:57:30 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -159,6 +159,7 @@ int	rtflushclone1(struct rtentry *, void *, u_int);
 void	rtflushclone(unsigned int, struct rtentry *);
 int	rt_ifa_purge_walker(struct rtentry *, void *, unsigned int);
 struct rtentry *rt_match(struct sockaddr *, uint32_t *, int, unsigned int);
+struct rtentry *rt_clone(struct rtentry *, struct sockaddr *, unsigned int);
 struct sockaddr *rt_plentosa(sa_family_t, int, struct sockaddr_in6 *);
 
 #ifdef DDB
@@ -228,44 +229,51 @@ rtisvalid(struct rtentry *rt)
 struct rtentry *
 rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 {
-	struct rtentry		*rt0, *rt = NULL;
-	int			 error = 0;
-
-	NET_ASSERT_LOCKED();
+	struct rtentry		*rt = NULL;
 
 	rt = rtable_match(tableid, dst, src);
-	if (rt != NULL) {
-		if ((rt->rt_flags & RTF_CLONING) && ISSET(flags, RT_RESOLVE)) {
-			struct rt_addrinfo	 info;
-
-			rt0 = rt;
-
-			memset(&info, 0, sizeof(info));
-			info.rti_info[RTAX_DST] = dst;
-
-			KERNEL_LOCK();
-			/*
-			 * The priority of cloned route should be different
-			 * to avoid conflict with /32 cloning routes.
-			 *
-			 * It should also be higher to let the ARP layer find
-			 * cloned routes instead of the cloning one.
-			 */
-			error = rtrequest(RTM_RESOLVE, &info,
-			    rt->rt_priority - 1, &rt, tableid);
-			if (error) {
-				rtm_miss(RTM_MISS, &info, 0, RTP_NONE, 0,
-				    error, tableid);
-			} else {
-				/* Inform listeners of the new route */
-				rtm_send(rt, RTM_ADD, 0, tableid);
-				rtfree(rt0);
-			}
-			KERNEL_UNLOCK();
-		}
-		rt->rt_use++;
-	} else
+	if (rt == NULL) {
 		rtstat_inc(rts_unreach);
+		return (NULL);
+	}
+
+	if (ISSET(rt->rt_flags, RTF_CLONING) && ISSET(flags, RT_RESOLVE))
+		rt = rt_clone(rt, dst, tableid);
+
+	rt->rt_use++;
+	return (rt);
+}
+
+struct rtentry *
+rt_clone(struct rtentry *rt, struct sockaddr *dst, unsigned int rtableid)
+{
+	struct rt_addrinfo	 info;
+	struct rtentry		*rt0;
+	int			 error = 0;
+
+	rt0 = rt;
+
+	memset(&info, 0, sizeof(info));
+	info.rti_info[RTAX_DST] = dst;
+
+	KERNEL_LOCK();
+	/*
+	 * The priority of cloned route should be different
+	 * to avoid conflict with /32 cloning routes.
+	 *
+	 * It should also be higher to let the ARP layer find
+	 * cloned routes instead of the cloning one.
+	 */
+	error = rtrequest(RTM_RESOLVE, &info, rt->rt_priority - 1, &rt,
+	    rtableid);
+	if (error) {
+		rtm_miss(RTM_MISS, &info, 0, RTP_NONE, 0, error, rtableid);
+	} else {
+		/* Inform listeners of the new route */
+		rtm_send(rt, RTM_ADD, 0, rtableid);
+		rtfree(rt0);
+	}
+	KERNEL_UNLOCK();
 	return (rt);
 }
 
