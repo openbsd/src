@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.212 2017/12/19 09:29:37 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.213 2018/01/02 12:54:07 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1052,12 +1052,8 @@ sorflush(struct socket *so)
 	sbunlock(so, sb);
 	aso.so_proto = pr;
 	aso.so_rcv = *sb;
-	memset(sb, 0, sizeof (*sb));
-	/* XXX - the memset stomps all over so_rcv */
-	if (aso.so_rcv.sb_flagsintr & SB_KNOTE) {
-		sb->sb_sel.si_note = aso.so_rcv.sb_sel.si_note;
-		sb->sb_flagsintr = SB_KNOTE;
-	}
+	memset(&sb->sb_startzero, 0,
+	     (caddr_t)&sb->sb_endzero - (caddr_t)&sb->sb_startzero);
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
 		(*pr->pr_domain->dom_dispose)(aso.so_rcv.sb_mb);
 	sbrelease(&aso, &aso.so_rcv);

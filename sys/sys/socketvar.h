@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.80 2017/12/18 10:07:55 mpi Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.81 2018/01/02 12:54:07 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -98,6 +98,8 @@ struct socket {
  * Variables for socket buffering.
  */
 	struct	sockbuf {
+/* The following fields are all zeroed on flush. */
+#define	sb_startzero	sb_cc
 		u_long	sb_cc;		/* actual chars in buffer */
 		u_long	sb_datacc;	/* data only chars in buffer */
 		u_long	sb_hiwat;	/* max actual char count */
@@ -109,10 +111,12 @@ struct socket {
 		struct mbuf *sb_mbtail;	/* the last mbuf in the chain */
 		struct mbuf *sb_lastrecord;/* first mbuf of last record in
 					      socket buffer */
-		struct	selinfo sb_sel;	/* process selecting read/write */
-		int	sb_flagsintr;	/* flags, changed during interrupt */
-		short	sb_flags;	/* flags, see below */
 		u_short	sb_timeo;	/* timeout for read/write */
+		short	sb_flags;	/* flags, see below */
+/* End area that is zeroed on flush. */
+#define	sb_endzero	sb_flags
+		int	sb_flagsintr;	/* flags, changed atomically */
+		struct	selinfo sb_sel;	/* process selecting read/write */
 	} so_rcv, so_snd;
 #define	SB_MAX		(2*1024*1024)	/* default for max chars in sockbuf */
 #define	SB_LOCK		0x01		/* lock on data queue */
