@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.34 2017/12/31 13:54:09 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.35 2018/01/02 22:33:17 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -117,6 +117,10 @@ file	dev/fdt/rkpmic.c		rkpmic
 device	rkpinctrl: fdt
 attach	rkpinctrl at fdt
 file	dev/fdt/rkpinctrl.c		rkpinctrl
+
+device	rkpcie: pcibus
+attach	rkpcie at fdt
+file	dev/fdt/rkpcie.c		rkpcie
 
 device	rktemp
 attach	rktemp at fdt
