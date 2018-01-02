@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.113 2017/02/09 22:21:53 jca Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.114 2018/01/02 06:38:45 guenther Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -57,6 +57,7 @@
 #include <stdint.h>
 #include <endian.h>
 #include <err.h>
+#include <fcntl.h>
 #include <kvm.h>
 #include <limits.h>
 #include <nlist.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.160 2017/09/01 15:05:31 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.161 2018/01/02 06:38:45 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/proc.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>

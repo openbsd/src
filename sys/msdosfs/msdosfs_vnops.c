@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.116 2017/08/14 22:43:56 sf Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.117 2018/01/02 06:38:45 guenther Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -53,7 +53,8 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/resourcevar.h>	/* defines plimit structure in proc struct */
-#include <sys/file.h>		/* define FWRITE ... */
+#include <sys/fcntl.h>		/* define FWRITE ... */
+#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>

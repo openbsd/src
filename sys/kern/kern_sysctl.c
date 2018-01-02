@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.330 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.331 2018/01/02 06:38:45 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -47,6 +47,7 @@
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/vnode.h>

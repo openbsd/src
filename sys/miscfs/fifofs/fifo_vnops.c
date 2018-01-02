@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.61 2017/12/18 10:07:55 mpi Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.62 2018/01/02 06:38:45 guenther Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/socketvar.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/event.h>
 #include <sys/errno.h>

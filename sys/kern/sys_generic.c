@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.115 2017/06/26 09:32:31 mpi Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.116 2018/01/02 06:38:45 guenther Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>

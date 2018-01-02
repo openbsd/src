@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.192 2018/01/01 09:01:21 florian Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.193 2018/01/02 06:38:45 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -43,6 +43,7 @@
 #include <sys/pool.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/acct.h>
 #include <sys/exec.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.41 2018/01/01 08:55:43 florian Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.42 2018/01/02 06:38:45 guenther Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/vnode.h>
 #include <sys/lock.h>
 #include <sys/namei.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/exec.h>

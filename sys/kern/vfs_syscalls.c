@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.273 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.274 2018/01/02 06:38:45 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/sysctl.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/lock.h>
