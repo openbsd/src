@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.160 2018/01/01 15:07:58 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.161 2018/01/02 00:13:27 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -76,11 +76,11 @@ int			 parse_option_decl(FILE *, int *, struct option_data *);
 int			 parse_reject_statement(FILE *);
 
 /*
- * conf :== conf_declarations EOF
- * conf-declarations :==
+ * conf :== conf-decl EOF
+ * conf-decl :==
  *	  <nil>
- *	| conf-declaration
- *	| conf-declarations conf-declaration
+ *	| conf-decl
+ *	| conf-decl conf-decl
  */
 void
 read_conf(char *name)
@@ -212,30 +212,31 @@ read_lease_db(char *name, struct client_lease_tq *tq)
 }
 
 /*
- * conf-declaration :==
- *	  APPEND		option-decl	 SEMI
- *	| BACKOFF_CUTOFF	number		 SEMI
- *	| DEFAULT		option-decl	 SEMI
- *	| FILENAME		string		 SEMI
- *	| FIXED_ADDR		ip-address	 SEMI
- *	| IGNORE		option-list	 SEMI
- *	| INITIAL_INTERVAL	number		 SEMI
- *	| INTERFACE		interface-decl
- *	| LINK_TIMEOUT		number		 SEMI
- *	| NEXT_SERVER		string		 SEMI
- *	| PREPEND		option-decl	 SEMI
- *	| REBOOT		number		 SEMI
- *	| REJECT		ip-address	 SEMI
- *	| REQUEST		option-list	 SEMI
- *	| REQUIRE		option-list	 SEMI
- *	| RETRY			number		 SEMI
- *	| SELECT_TIMEOUT	number		 SEMI
- *	| SEND			option-decl	 SEMI
- *	| SERVER_NAME		string		 SEMI
- *	| SUPERSEDE		option-decl	 SEMI
- *	| TIMEOUT		number		 SEMI
+ * conf-decl :==
+ *	  simple-conf-decl SEMI
+ *	| interface-decl
  *
- * NOTE: INTERFACE does not terminate with a SEMI
+ * simple-conf-decl :==
+ *	  APPEND		option-decl
+ *	| BACKOFF_CUTOFF	number
+ *	| DEFAULT		option-decl
+ *	| FILENAME		string
+ *	| FIXED_ADDR		ip-address
+ *	| IGNORE		option-list
+ *	| INITIAL_INTERVAL	number
+ *	| LINK_TIMEOUT		number
+ *	| NEXT_SERVER		string
+ *	| PREPEND		option-decl
+ *	| REBOOT		number
+ *	| REJECT		ip-address
+ *	| REQUEST		option-list
+ *	| REQUIRE		option-list
+ *	| RETRY			number
+ *	| SELECT_TIMEOUT	number
+ *	| SEND			option-decl
+ *	| SERVER_NAME		string
+ *	| SUPERSEDE		option-decl
+ *	| TIMEOUT		number
  */
 void
 parse_conf_declaration(FILE *cfile, char *name)
@@ -405,8 +406,12 @@ parse_hex_octets(FILE *cfile, unsigned int *len, uint8_t **buf)
 
 /*
  * option-list :==
- *	  option_name
- *	| option_list COMMA option_name
+ *	  <nil>
+ *	| simple-option-list
+ *
+ * simple-option-list :=
+ *	| option-name
+ *	| simple-option-list COMMA option-name
  */
 int
 parse_option_list(FILE *cfile, int *count, uint8_t *optlist)
@@ -456,8 +461,8 @@ parse_option_list(FILE *cfile, int *count, uint8_t *optlist)
 }
 
 /*
- * interface-declaration :==
- *	INTERFACE string LBRACE lease-declarations RBRACE
+ * interface-decl :==
+ *	INTERFACE string LBRACE conf-decl RBRACE
  */
 int
 parse_interface_declaration(FILE *cfile, char *name)
@@ -503,12 +508,12 @@ parse_interface_declaration(FILE *cfile, char *name)
 }
 
 /*
- * lease :== LEASE RBRACE lease-declarations LBRACE
+ * lease :== LEASE RBRACE lease-decl LBRACE
  *
- * lease-declarations :==
+ * lease-decl :==
  *	  <nil>
- *	| lease-declaration
- *	| lease-declarations lease-declaration
+ *	| lease-decl
+ *	| lease-decl lease-decl
  */
 int
 parse_lease(FILE *cfile, char *name,
@@ -558,19 +563,22 @@ parse_lease(FILE *cfile, char *name,
 }
 
 /*
- * lease-declaration :==
- *	  BOOTP				SEMI
- *	| EPOCH		number		SEMI
- *	| EXPIRE	time-decl	SEMI
- *	| FILENAME	string		SEMI
- *	| FIXED_ADDR	ip_address	SEMI
- *	| INTERFACE	string		SEMI
- *	| NEXT_SERVER	string		SEMI
- *	| OPTION	option-decl	SEMI
- *	| REBIND	time-decl	SEMI
- *	| RENEW		time-decl	SEMI
- *	| SERVER_NAME	string		SEMI
- *	| SSID		string		SEMI
+ * lease-decl :==
+ *	  simple-lease-decl SEMI
+ *
+ * simple-lease-decl :=
+ *	  BOOTP
+ *	| EPOCH		number
+ *	| EXPIRE	time-decl
+ *	| FILENAME	string
+ *	| FIXED_ADDR	ip_address
+ *	| INTERFACE	string
+ *	| NEXT_SERVER	string
+ *	| OPTION	option-decl
+ *	| REBIND	time-decl
+ *	| RENEW		time-decl
+ *	| SERVER_NAME	string
+ *	| SSID		string
  */
 void
 parse_lease_declaration(FILE *cfile, struct client_lease *lease,
@@ -653,6 +661,10 @@ parse_lease_declaration(FILE *cfile, struct client_lease *lease,
 	parse_semi(cfile);
 }
 
+/*
+ * option-decl :=
+ *	option-name option-value
+ */
 int
 parse_option_decl(FILE *cfile, int *code, struct option_data *options)
 {
