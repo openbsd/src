@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1831 2017/12/26 23:47:17 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1832 2018/01/02 21:23:13 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -339,6 +339,7 @@
 #define	PCI_VENDOR_FRESCO	0x1b73		/* Fresco Logic */
 #define	PCI_VENDOR_WCH2	0x1c00		/* Nanjing QinHeng Electronics */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
+#define	PCI_VENDOR_ROCKCHIP	0x1d87		/* Rockchip */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
 #define	PCI_VENDOR_TEHUTI	0x1fc9		/* Tehuti Networks */
 #define	PCI_VENDOR_SUNIX2	0x1fd4		/* Sunix */
@@ -6731,6 +6732,9 @@
 #define	PCI_PRODUCT_RICOH_R5U823	0xe823		/* 5U823 SD/MMC */
 #define	PCI_PRODUCT_RICOH_R5U832	0xe832		/* 5U832 Firewire */
 #define	PCI_PRODUCT_RICOH_R5U852	0xe852		/* 5U852 SD/MMC */
+
+/* Rockchip products */
+#define	PCI_PRODUCT_ROCKCHIP_RK3399_RC	0x0100		/* RK3399 Root Complex */
 
 /* Rockwell products */
 #define	PCI_PRODUCT_ROCKWELL_RS56SP_PCI11P1	0x2005		/* RS56/SP-PCI11P1 Modem */
