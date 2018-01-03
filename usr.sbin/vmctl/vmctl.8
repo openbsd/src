@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.36 2018/01/03 05:39:56 ccardenas Exp $
+.\"	$OpenBSD: vmctl.8,v 1.37 2018/01/03 08:17:18 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -82,13 +82,15 @@ Send a VM with the specified
 .Ar id
 to standard output and terminate it.
 .It Xo Cm start Ar name
-.Op Fl Lc
+.Op Fl cL
 .Op Fl b Ar path
-.Op Fl r Ar path
 .Op Fl d Ar path
 .Op Fl i Ar count
 .Op Fl m Ar size
 .Op Fl n Ar switch
+.Bk -words
+.Op Fl r Ar path
+.Ek
 .Xc
 Starts a VM defined by the specified name and parameters:
 .Bl -tag -width "-i count"
@@ -128,9 +130,11 @@ in
 .Xr vm.conf 5
 for more information.
 .It Fl r Ar path
-ISO image file for virtual CD-ROM. This image file will be available in the
-selected VM as a SCSI CD-ROM device attached to a virtio SCSI adapter (eg.
-.Xr vioscsi 4 )
+ISO image file for virtual CD-ROM.
+This image file will be available in the
+selected VM as a SCSI CD-ROM device attached to a virtio SCSI adapter
+(e.g.\&
+.Xr vioscsi 4 ) .
 .El
 .Pp
 Note that the VM name supplied to the 'start' command can only consist of
