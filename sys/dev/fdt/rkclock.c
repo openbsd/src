@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.19 2017/12/29 15:53:09 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.20 2018/01/03 20:41:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -529,6 +529,7 @@ void
 rk3399_init(struct rkclock_softc *sc)
 {
 	int node;
+	int i;
 
 	/* PMUCRU instance should attach before us. */
 	KASSERT(rk3399_pmucru_sc != NULL);
@@ -556,6 +557,14 @@ rk3399_init(struct rkclock_softc *sc)
 		    RK3399_CRU_PLL_PLL_WORK_MODE_MASK << 16 |
 		    RK3399_CRU_PLL_PLL_WORK_MODE_NORMAL);
 #endif
+	}
+
+	/* The code below assumes all clocks are enabled.  Check this!. */
+	for (i = 0; i <= 34; i++) {
+		if (HREAD4(sc, RK3399_CRU_CLKGATE_CON(i)) != 0x00000000) {
+			printf("CRU_CLKGATE_CON%d: 0x%08x\n", i,
+			    HREAD4(sc, RK3399_CRU_CLKGATE_CON(i)));
+		}
 	}
 }
 
@@ -912,53 +921,12 @@ rk3399_enable(void *cookie, uint32_t *cells, int on)
 {
 	uint32_t idx = cells[0];
 
-	switch (idx) {
-	case RK3399_CLK_I2C1:
-	case RK3399_CLK_I2C2:
-	case RK3399_CLK_I2C3:
-	case RK3399_CLK_I2C5:
-	case RK3399_CLK_I2C6:
-	case RK3399_CLK_I2C7:
-	case RK3399_CLK_SDMMC:
-	case RK3399_CLK_EMMC:
-	case RK3399_CLK_TSADC:
-	case RK3399_CLK_UART0:
-	case RK3399_CLK_UART1:
-	case RK3399_CLK_UART2:
-	case RK3399_CLK_UART3:
-	case RK3399_CLK_MAC_RX:
-	case RK3399_CLK_MAC_TX:
-	case RK3399_CLK_MAC:
-	case RK3399_CLK_USB3OTG0_REF:
-	case RK3399_CLK_USB3OTG1_REF:
-	case RK3399_CLK_USB3OTG0_SUSPEND:
-	case RK3399_CLK_USB3OTG1_SUSPEND:
-	case RK3399_CLK_SDMMC_DRV:
-	case RK3399_CLK_SDMMC_SAMPLE:
-	case RK3399_ACLK_EMMC:
-	case RK3399_ACLK_GMAC:
-	case RK3399_ACLK_USB3OTG0:
-	case RK3399_ACLK_USB3OTG1:
-	case RK3399_ACLK_USB3_GRF:
-	case RK3399_PCLK_I2C1:
-	case RK3399_PCLK_I2C2:
-	case RK3399_PCLK_I2C3:
-	case RK3399_PCLK_I2C5:
-	case RK3399_PCLK_I2C6:
-	case RK3399_PCLK_I2C7:
-	case RK3399_PCLK_TSADC:
-	case RK3399_PCLK_GMAC:
-	case RK3399_HCLK_HOST0:
-	case RK3399_HCLK_HOST0_ARB:
-	case RK3399_HCLK_HOST1:
-	case RK3399_HCLK_HOST1_ARB:
-	case RK3399_HCLK_SDMMC:
-		/* Enabled by default. */
-		break;
-	default:
+	/*
+	 * All clocks are enabled by default, so there is nothing for
+	 * us to do until we start disabling clocks.
+	 */
+	if (!on)
 		printf("%s: 0x%08x\n", __func__, idx);
-		break;
-	}
 }
 
 void
