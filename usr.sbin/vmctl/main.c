@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2017/10/07 19:48:30 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2018/01/03 05:39:56 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -69,7 +69,7 @@ struct ctl_command ctl_commands[] = {
 	{ "reload",	CMD_RELOAD,	ctl_reload,	"" },
 	{ "reset",	CMD_RESET,	ctl_reset,	"[all|vms|switches]" },
 	{ "start",	CMD_START,	ctl_start,	"\"name\""
-	    " [-Lc] [-b image] [-m size]\n"
+	    " [-Lc] [-b image] [-r image] [-m size]\n"
 	    "\t\t[-n switch] [-i count] [-d disk]*" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "stop",	CMD_STOP,	ctl_stop,	"id" },
@@ -203,7 +203,8 @@ vmmaction(struct parse_result *res)
 	switch (res->action) {
 	case CMD_START:
 		ret = vm_start(res->id, res->name, res->size, res->nifs,
-		    res->nets, res->ndisks, res->disks, res->path);
+		    res->nets, res->ndisks, res->disks, res->path,
+		    res->isopath);
 		if (ret) {
 			errno = ret;
 			err(1, "start VM operation failed");
@@ -324,6 +325,7 @@ parse_free(struct parse_result *res)
 
 	free(res->name);
 	free(res->path);
+	free(res->isopath);
 	for (i = 0; i < res->ndisks; i++)
 		free(res->disks[i]);
 	free(res->disks);
@@ -571,7 +573,7 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 	argc--;
 	argv++;
 
-	while ((ch = getopt(argc, argv, "b:cLm:n:d:i:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:r:cLm:n:d:i:")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (res->path)
@@ -579,6 +581,14 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 			if (realpath(optarg, path) == NULL)
 				err(1, "invalid boot image path");
 			if ((res->path = strdup(path)) == NULL)
+				errx(1, "strdup");
+			break;
+		case 'r':
+			if (res->isopath)
+				errx(1, "iso image specified multiple times");
+			if (realpath(optarg, path) == NULL)
+				err(1, "invalid iso image path");
+			if ((res->isopath = strdup(path)) == NULL)
 				errx(1, "strdup");
 			break;
 		case 'c':

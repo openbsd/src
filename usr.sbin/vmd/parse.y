@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.31 2017/11/11 02:50:07 mlarkin Exp $	*/
+/*	$OpenBSD: parse.y,v 1.32 2018/01/03 05:39:56 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -113,8 +113,8 @@ typedef struct {
 
 
 %token	INCLUDE ERROR
-%token	ADD BOOT DISABLE DISK DOWN ENABLE GROUP INTERFACE LLADDR LOCAL LOCKED
-%token	MEMORY NIFS OWNER PATH PREFIX RDOMAIN SIZE SWITCH UP VM VMID
+%token	ADD BOOT CDROM DISABLE DISK DOWN ENABLE GROUP INTERFACE LLADDR LOCAL
+%token	LOCKED MEMORY NIFS OWNER PATH PREFIX RDOMAIN SIZE SWITCH UP VM VMID
 %token	<v.number>	NUMBER
 %token	<v.string>	STRING
 %type	<v.lladdr>	lladdr
@@ -388,6 +388,23 @@ vm_opts		: disable			{
 			free($2);
 			vmc.vmc_flags |= VMOP_CREATE_KERNEL;
 		}
+		| CDROM string			{
+			if (vcp->vcp_cdrom[0] != '\0') {
+				yyerror("cdrom specified more than once");
+				free($2);
+				YYERROR;
+
+			}
+			if (strlcpy(vcp->vcp_cdrom, $2,
+			    sizeof(vcp->vcp_cdrom)) >=
+			    sizeof(vcp->vcp_cdrom)) {
+				yyerror("cdrom name too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			vmc.vmc_flags |= VMOP_CREATE_CDROM;
+		}
 		| NIFS NUMBER			{
 			if (vcp->vcp_nnics != 0) {
 				yyerror("interfaces specified more than once");
@@ -632,6 +649,7 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "add",		ADD },
 		{ "boot",		BOOT },
+		{ "cdrom",		CDROM },
 		{ "disable",		DISABLE },
 		{ "disk",		DISK },
 		{ "down",		DOWN },

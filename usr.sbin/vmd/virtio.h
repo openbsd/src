@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.21 2017/09/17 23:07:56 pd Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.22 2018/01/03 05:39:56 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -28,6 +28,9 @@
 #define VIOBLK_QUEUE_SIZE	128
 #define VIOBLK_QUEUE_MASK	(VIOBLK_QUEUE_SIZE - 1)
 
+#define VIOSCSI_QUEUE_SIZE	128
+#define VIOSCSI_QUEUE_MASK	(VIOSCSI_QUEUE_SIZE - 1)
+
 #define VIONET_QUEUE_SIZE	128
 #define VIONET_QUEUE_MASK	(VIONET_QUEUE_SIZE - 1)
 
@@ -35,8 +38,13 @@
 #define VMMCI_TIMEOUT		3
 #define VMMCI_SHUTDOWN_TIMEOUT	30
 
-/* All the devices we support have either 1 or 2 queues */
-#define VIRTIO_MAX_QUEUES	2
+/* All the devices we support have either 1, 2 or 3 queues */
+/* viornd - 1 queue
+ * vioblk - 1 queue
+ * vionet - 2 queues
+ * vioscsi - 3 queues
+ */
+#define VIRTIO_MAX_QUEUES	3
 
 /*
  * This struct stores notifications from a virtio driver. There is
@@ -111,6 +119,31 @@ struct vioblk_dev {
 	uint8_t pci_id;
 };
 
+/* vioscsi will use at least 3 queues - 5.6.2 Virtqueues
+ * Current implementation will use 3
+ * 0 - control
+ * 1 - event
+ * 2 - requests
+ */
+struct vioscsi_dev {
+	struct virtio_io_cfg cfg;
+
+	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
+
+	/* is the device locked */
+	int locked;
+	int fd;
+	/* size of iso file in bytes */
+	uint64_t sz;
+	/* last block address read */
+	uint64_t lba;
+	/* number of blocks represented in iso */
+	uint64_t n_blocks;
+	uint32_t max_xfer;
+
+	uint8_t pci_id;
+};
+
 struct vionet_dev {
 	pthread_mutex_t mutex;
 	struct event event;
@@ -167,10 +200,18 @@ struct vmmci_dev {
 	uint8_t pci_id;
 };
 
+struct ioinfo {
+	uint8_t *buf;
+	ssize_t len;
+	off_t offset;
+	int fd;
+	int error;
+};
+
 /* virtio.c */
-void virtio_init(struct vmd_vm *, int *, int *);
+void virtio_init(struct vmd_vm *, int, int *, int *);
 int virtio_dump(int);
-int virtio_restore(int, struct vmd_vm *, int *, int *);
+int virtio_restore(int, struct vmd_vm *, int, int *, int *);
 uint32_t vring_size(uint32_t);
 
 int virtio_rnd_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
@@ -205,6 +246,14 @@ void vmmci_ack(unsigned int);
 void vmmci_timeout(int, short, void *);
 
 const char *vioblk_cmd_name(uint32_t);
+int vioscsi_dump(int);
+int vioscsi_restore(int, struct vm_create_params *, int);
 
 /* dhcp.c */
 ssize_t dhcp_request(struct vionet_dev *, char *, size_t, char **);
+
+/* vioscsi.c */
+int vioscsi_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
+void vioscsi_update_qs(struct vioscsi_dev *);
+void vioscsi_update_qa(struct vioscsi_dev *);
+int vioscsi_notifyq(struct vioscsi_dev *);

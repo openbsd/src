@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.44 2017/09/08 07:08:49 mlarkin Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.45 2018/01/03 05:39:56 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -61,6 +61,7 @@ int info_console;
  *  ndisks: number of disk images
  *  disks: disk image file names
  *  kernel: kernel image to load
+ *  iso: iso image file
  *
  * Return:
  *  0 if the request to start the VM was sent successfully.
@@ -68,7 +69,7 @@ int info_console;
  */
 int
 vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
-    char **nics, int ndisks, char **disks, char *kernel)
+    char **nics, int ndisks, char **disks, char *kernel, char *iso)
 {
 	struct vmop_create_params *vmc;
 	struct vm_create_params *vcp;
@@ -84,6 +85,8 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
 		flags |= VMOP_CREATE_DISK;
 	if (kernel)
 		flags |= VMOP_CREATE_KERNEL;
+	if (iso)
+		flags |= VMOP_CREATE_CDROM;
 	if (flags != 0) {
 		if (memsize < 1)
 			memsize = VM_DEFAULT_MEMORY;
@@ -155,6 +158,9 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
 	if (kernel != NULL)
 		strlcpy(vcp->vcp_kernel, kernel, VMM_MAX_KERNEL_PATH);
 
+	if (iso != NULL)
+		strlcpy(vcp->vcp_cdrom, iso, VMM_MAX_PATH_CDROM);
+
 	imsg_compose(ibuf, IMSG_VMDOP_START_VM_REQUEST, 0, 0, -1,
 	    vmc, sizeof(struct vmop_create_params));
 
@@ -207,6 +213,15 @@ vm_start_complete(struct imsg *imsg, int *ret, int autoconnect)
 			case VMD_DISK_INVALID:
 				warnx("specified disk image(s) are "
 				    "not regular files");
+				*ret = ENOENT;
+				break;
+			case VMD_CDROM_MISSING:
+				warnx("could not find specified iso image");
+				*ret = ENOENT;
+				break;
+			case VMD_CDROM_INVALID:
+				warnx("specified iso image is "
+				    "not a regular file");
 				*ret = ENOENT;
 				break;
 			default:

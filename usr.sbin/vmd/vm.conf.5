@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.26 2017/11/11 07:36:56 jmc Exp $
+.\" $OpenBSD: vm.conf.5,v 1.27 2018/01/03 05:39:56 ccardenas Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 11 2017 $
+.Dd $Mdocdate: January 3 2018 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -119,6 +119,8 @@ Followed by a block of parameters that is enclosed in curly brackets:
 Kernel or BIOS image to load when booting the VM.
 If not specified, the default is to boot using the BIOS image in
 .Pa /etc/firmware/vmm-bios .
+.It Cm cdrom Ar path
+ISO image file.
 .It Cm enable
 Automatically start the VM.
 This is the default if neither

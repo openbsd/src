@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.66 2017/11/11 02:50:08 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.67 2018/01/03 05:39:56 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -59,6 +59,8 @@
 #define VMD_DISK_MISSING	1002
 #define VMD_DISK_INVALID	1003
 #define VMD_VM_STOP_INVALID	1004
+#define VMD_CDROM_MISSING	1005
+#define VMD_CDROM_INVALID	1006
 
 /* 100.64.0.0/10 from rfc6598 (IPv4 Prefix for Shared Address Space) */
 #define VMD_DHCP_PREFIX		"100.64.0.0/10"
@@ -71,6 +73,7 @@
 
 enum imsg_type {
 	IMSG_VMDOP_START_VM_REQUEST = IMSG_PROC_MAX,
+	IMSG_VMDOP_START_VM_CDROM,
 	IMSG_VMDOP_START_VM_DISK,
 	IMSG_VMDOP_START_VM_IF,
 	IMSG_VMDOP_START_VM_END,
@@ -139,6 +142,7 @@ struct vmop_create_params {
 #define VMOP_CREATE_MEMORY	0x02
 #define VMOP_CREATE_NETWORK	0x04
 #define VMOP_CREATE_DISK	0x08
+#define VMOP_CREATE_CDROM	0x10
 
 	/* userland-only part of the create params */
 	unsigned int		 vmc_ifflags[VMM_MAX_NICS_PER_VM];
@@ -209,6 +213,7 @@ struct vmd_vm {
 	pid_t			 vm_pid;
 	uint32_t		 vm_vmid;
 	int			 vm_kernel;
+	int			 vm_cdrom;
 	int			 vm_disks[VMM_MAX_DISKS_PER_VM];
 	struct vmd_if		 vm_ifs[VMM_MAX_NICS_PER_VM];
 	char			*vm_ttyname;
@@ -354,6 +359,7 @@ int	 config_setvm(struct privsep *, struct vmd_vm *, uint32_t, uid_t);
 int	 config_getvm(struct privsep *, struct imsg *);
 int	 config_getdisk(struct privsep *, struct imsg *);
 int	 config_getif(struct privsep *, struct imsg *);
+int	 config_getcdrom(struct privsep *, struct imsg *);
 
 /* vmboot.c */
 FILE	*vmboot_open(int, int, struct vmboot_params *);

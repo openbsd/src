@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.35 2017/11/05 20:01:09 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.36 2018/01/03 05:39:56 ccardenas Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 5 2017 $
+.Dd $Mdocdate: January 3 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -84,6 +84,7 @@ to standard output and terminate it.
 .It Xo Cm start Ar name
 .Op Fl Lc
 .Op Fl b Ar path
+.Op Fl r Ar path
 .Op Fl d Ar path
 .Op Fl i Ar count
 .Op Fl m Ar size
@@ -126,6 +127,10 @@ See
 in
 .Xr vm.conf 5
 for more information.
+.It Fl r Ar path
+ISO image file for virtual CD-ROM. This image file will be available in the
+selected VM as a SCSI CD-ROM device attached to a virtio SCSI adapter (eg.
+.Xr vioscsi 4 )
 .El
 .Pp
 Note that the VM name supplied to the 'start' command can only consist of

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.78 2017/10/24 07:58:52 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.79 2018/01/03 05:39:56 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -116,6 +116,13 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
 		res = config_getvm(ps, imsg);
+		if (res == -1) {
+			res = errno;
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		}
+		break;
+	case IMSG_VMDOP_START_VM_CDROM:
+		res = config_getcdrom(ps, imsg);
 		if (res == -1) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
@@ -634,6 +641,9 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id)
 
 		close(vm->vm_kernel);
 		vm->vm_kernel = -1;
+
+		close(vm->vm_cdrom);
+		vm->vm_cdrom = -1;
 
 		close(vm->vm_tty);
 		vm->vm_tty = -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.76 2017/12/06 13:29:02 abieber Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.77 2018/01/03 05:39:56 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1064,6 +1064,10 @@ vm_stop(struct vmd_vm *vm, int keeptty)
 		close(vm->vm_kernel);
 		vm->vm_kernel = -1;
 	}
+	if (vm->vm_cdrom != -1) {
+		close(vm->vm_cdrom);
+		vm->vm_cdrom = -1;
+	}
 	if (!keeptty) {
 		vm_closetty(vm);
 		vm->vm_uid = 0;
@@ -1194,6 +1198,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		}
 	}
 	vm->vm_kernel = -1;
+	vm->vm_cdrom = -1;
 	vm->vm_iev.ibuf.fd = -1;
 
 	if (++env->vmd_nvm == 0)
