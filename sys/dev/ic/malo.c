@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.116 2017/10/26 15:00:28 mpi Exp $ */
+/*	$OpenBSD: malo.c,v 1.117 2018/01/03 23:11:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -620,7 +620,7 @@ malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring, int count)
 			goto fail;
 		}
 
-		desc->status = htole16(1);
+		desc->status = 1;
 		desc->physdata = htole32(data->map->dm_segs->ds_addr);
 		desc->physnext = htole32(ring->physaddr +
 		    (i + 1) % count * sizeof(struct malo_rx_desc));
