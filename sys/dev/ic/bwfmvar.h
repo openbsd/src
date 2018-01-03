@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.5 2017/12/16 23:39:58 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.6 2018/01/03 21:01:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -160,4 +160,4 @@ int bwfm_chip_set_active(struct bwfm_softc *, uint32_t);
 void bwfm_chip_set_passive(struct bwfm_softc *);
 struct bwfm_core *bwfm_chip_get_core(struct bwfm_softc *, int);
 struct bwfm_core *bwfm_chip_get_pmu(struct bwfm_softc *);
-void bwfm_rx(struct bwfm_softc *, char *, size_t);
+void bwfm_rx(struct bwfm_softc *, struct mbuf *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.23 2017/12/26 00:51:29 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.24 2018/01/03 21:01:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -118,7 +118,7 @@ void	 bwfm_set_key_cb(struct bwfm_softc *, void *);
 void	 bwfm_delete_key_cb(struct bwfm_softc *, void *);
 void	 bwfm_newstate_cb(struct bwfm_softc *, void *);
 
-void	 bwfm_rx(struct bwfm_softc *, char *, size_t);
+void	 bwfm_rx(struct bwfm_softc *, struct mbuf *);
 void	 bwfm_rx_event(struct bwfm_softc *, char *, size_t);
 void	 bwfm_scan_node(struct bwfm_softc *, struct bwfm_bss_info *, size_t);
 
@@ -1399,39 +1399,21 @@ bwfm_scan(struct bwfm_softc *sc)
 }
 
 void
-bwfm_rx(struct bwfm_softc *sc, char *buf, size_t len)
+bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	struct bwfm_event *e = (void *)buf;
+	struct bwfm_event *e = mtod(m, struct bwfm_event *);
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	struct mbuf *m;
-	char *mb;
 
-	if (len >= sizeof(e->ehdr) &&
+	if (m->m_len >= sizeof(e->ehdr) &&
 	    ntohs(e->ehdr.ether_type) == BWFM_ETHERTYPE_LINK_CTL &&
 	    memcmp(BWFM_BRCM_OUI, e->hdr.oui, sizeof(e->hdr.oui)) == 0 &&
 	    ntohs(e->hdr.usr_subtype) == BWFM_BRCM_SUBTYPE_EVENT)
-		bwfm_rx_event(sc, buf, len);
-
-	if (__predict_false(len > MCLBYTES))
-		return;
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (__predict_false(m == NULL))
-		return;
-	if (len > MHLEN) {
-		MCLGET(m, M_DONTWAIT);
-		if (!(m->m_flags & M_EXT)) {
-			m_free(m);
-			return;
-		}
-	}
-	mb = mtod(m, char *);
-	memcpy(mb, buf, len);
-	m->m_pkthdr.len = m->m_len = len;
+		bwfm_rx_event(sc, mtod(m, char *), m->m_len);
 
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
-	    len >= sizeof(e->ehdr) &&
+	    m->m_len >= sizeof(e->ehdr) &&
 	    ntohs(e->ehdr.ether_type) == ETHERTYPE_PAE) {
 		ifp->if_ipackets++;
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.5 2017/10/21 20:19:37 patrick Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.6 2018/01/03 21:01:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -200,6 +200,7 @@ int		 bwfm_usb_txdata(struct bwfm_softc *, struct mbuf *);
 int		 bwfm_usb_txctl(struct bwfm_softc *, char *, size_t);
 int		 bwfm_usb_rxctl(struct bwfm_softc *, char *, size_t *);
 
+struct mbuf *	 bwfm_usb_newbuf(void);
 void		 bwfm_usb_rxeof(struct usbd_xfer *, void *, usbd_status);
 void		 bwfm_usb_txeof(struct usbd_xfer *, void *, usbd_status);
 
@@ -404,6 +405,27 @@ bwfm_usb_attachhook(struct device *self)
 	bwfm_attach(&sc->sc_sc);
 }
 
+struct mbuf *
+bwfm_usb_newbuf(void)
+{
+	struct mbuf *m;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+	return (NULL);
+
+	MCLGET(m, M_DONTWAIT);
+	if (!(m->m_flags & M_EXT)) {
+		m_freem(m);
+		return (NULL);
+	}
+
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
+	m_adj(m, ETHER_ALIGN);
+
+	return (m);
+}
+
 void
 bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
@@ -412,6 +434,7 @@ bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct bwfm_proto_bcdc_hdr *hdr;
 	usbd_status error;
 	uint32_t len, off;
+	struct mbuf *m;
 
 	DPRINTFN(2, ("%s: %s status %s\n", DEVNAME(sc), __func__,
 	    usbd_errstr(status)));
@@ -437,7 +460,13 @@ bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	len -= hdr->data_offset << 2;
 	off += hdr->data_offset << 2;
 
-	bwfm_rx(&sc->sc_sc, &data->buf[off], len);
+	m = bwfm_usb_newbuf();
+	if (m == NULL)
+		goto resubmit;
+
+	memcpy(mtod(m, char *), data->buf + off, len);
+	m->m_len = m->m_pkthdr.len = len;
+	bwfm_rx(&sc->sc_sc, m);
 
 resubmit:
 	usbd_setup_xfer(data->xfer, sc->sc_rx_pipeh, data, data->buf,
