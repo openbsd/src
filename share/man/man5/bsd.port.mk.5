@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.470 2017/12/05 19:40:16 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.471 2018/01/03 08:43:09 bentley Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 5 2017 $
+.Dd $Mdocdate: January 3 2018 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2660,7 +2660,7 @@ If set to true,
 .Cm checksum
 will analyze ${CHECKSUM_FILE}, and try retrieving files with the correct
 checksum off
-.Lk ftp.openbsd.org ,
+.Lk https://ftp.openbsd.org ,
 in the directory
 .Pa /pub/OpenBSD/distfiles/$cipher/$value/$file .
 .It Ev REORDER_DEPENDENCIES
