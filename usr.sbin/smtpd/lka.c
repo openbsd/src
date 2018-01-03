@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.201 2017/11/27 08:35:59 sunil Exp $	*/
+/*	$OpenBSD: lka.c,v 1.202 2018/01/03 11:12:21 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -436,7 +436,6 @@ static int
 lka_authenticate(const char *tablename, const char *user, const char *password)
 {
 	struct table		*table;
-	char			*cpass;
 	union lookup		 lk;
 
 	log_debug("debug: lka: authenticating for %s:%s", tablename, user);
@@ -455,10 +454,7 @@ lka_authenticate(const char *tablename, const char *user, const char *password)
 	case 0:
 		return (LKA_PERMFAIL);
 	default:
-		cpass = crypt(password, lk.creds.password);
-		if (cpass == NULL)
-			return (LKA_PERMFAIL);
-		if (!strcmp(lk.creds.password, cpass))
+		if (crypt_checkpass(password, lk.creds.password) == 0)
 			return (LKA_OK);
 		return (LKA_PERMFAIL);
 	}
