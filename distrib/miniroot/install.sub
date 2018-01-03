@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1052 2017/12/22 19:41:49 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1053 2018/01/03 10:22:38 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3175,7 +3175,7 @@ done
 #	MDXDM       - ask if xdm should be started if set to 'y'
 #	NCPU	    - the number of cpus for mp capable arches
 #	MDKERNEL    - the name of the boot kernel
-#	MDREBOOT    - the command to either reboot or halt the system
+#	MDHALT      - default to 'halt' at the end of installs if set to 'y'
 . install.md
 
 # Start listener process looking for dmesg changes.
@@ -3193,7 +3193,6 @@ INSTALL_METHOD=
 NIFS=0
 export PS1="$MODE# "
 PUB_KEY=/etc/signify/openbsd-${VERSION}-base.pub
-REBOOT=${MDREBOOT:-reboot}
 ROOTDEV=
 ROOTDISK=
 SETDIR="$VNAME/$ARCH"
@@ -3281,15 +3280,15 @@ esac
 # automatic reboot in do_autoinstall().
 $AUTO && exit
 
-_r2=${REBOOT#?}
-_r1=${REBOOT%$_r2}
-typeset -u _R1=$_r1
+_d=reboot
+[[ $MODE == install && $MDHALT == y ]] && _d=halt
 
 while :; do
-	ask "Exit to (S)hell or ($_R1)$_r2?" "$REBOOT"
+	ask "Exit to (S)hell, (H)alt or (R)eboot?" "$_d"
 	case $resp in
-	[$_r1$_R1]*)	exec "$REBOOT";;
-	[sS]*)		break;;
+	[hH]*)	exec halt;;
+	[rR]*)	exec reboot;;
+	[sS]*)	break;;
 	esac
 done
 
