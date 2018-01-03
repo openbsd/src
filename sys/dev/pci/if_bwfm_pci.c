@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.3 2018/01/01 22:41:56 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.4 2018/01/03 08:43:10 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -752,7 +752,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, bdm->bdm_map);
 bdmfree:
-	free(bdm, M_DEVBUF, 0);
+	free(bdm, M_DEVBUF, sizeof(*bdm));
 
 	return (NULL);
 }
@@ -763,7 +763,7 @@ bwfm_pci_dmamem_free(struct bwfm_pci_softc *sc, struct bwfm_pci_dmamem *bdm)
 	bus_dmamem_unmap(sc->sc_dmat, bdm->bdm_kva, bdm->bdm_size);
 	bus_dmamem_free(sc->sc_dmat, &bdm->bdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, bdm->bdm_map);
-	free(bdm, M_DEVBUF, 0);
+	free(bdm, M_DEVBUF, sizeof(*bdm));
 }
 
 /*
