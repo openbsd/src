@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.66 2017/07/24 11:00:01 friehm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.67 2018/01/03 19:39:07 denis Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -259,7 +259,7 @@ kr_change(struct kroute *kr)
 
 	if (ldp_addrisset(kn->r.af, &kn->r.nexthop) &&
 	    kn->r.remote_label != NO_LABEL) {
-		if (send_rtmsg(kr_state.fd, RTM_CHANGE, &kn->r, AF_INET) == -1)
+		if (send_rtmsg(kr_state.fd, RTM_CHANGE, &kn->r, kn->r.af) == -1)
 			return (-1);
 	}
 
@@ -305,7 +305,7 @@ kr_delete(struct kroute *kr)
 	kn->r.remote_label = NO_LABEL;
 
 	if (update &&
-	    send_rtmsg(kr_state.fd, RTM_CHANGE, &kn->r, AF_INET) == -1)
+	    send_rtmsg(kr_state.fd, RTM_CHANGE, &kn->r, kn->r.af) == -1)
 		return (-1);
 
 	return (0);
@@ -346,7 +346,7 @@ kr_fib_couple(void)
 			if (ldp_addrisset(kn->r.af, &kn->r.nexthop) &&
 			    kn->r.remote_label != NO_LABEL) {
 				send_rtmsg(kr_state.fd, RTM_CHANGE,
-				    &kn->r, AF_INET);
+				    &kn->r, kn->r.af);
 			}
 		}
 	}
@@ -387,7 +387,7 @@ kr_fib_decouple(void)
 				rl = kn->r.remote_label;
 				kn->r.remote_label = NO_LABEL;
 				send_rtmsg(kr_state.fd, RTM_CHANGE,
-				    &kn->r, AF_INET);
+				    &kn->r, kn->r.af);
 				kn->r.remote_label = rl;
 			}
 		}
@@ -708,8 +708,7 @@ kroute_uninstall(struct kroute_node *kn)
 {
 	/* kill MPLS LSP if one was installed */
 	if (kn->r.flags & F_LDPD_INSERTED)
-		if (send_rtmsg(kr_state.fd, RTM_DELETE, &kn->r, AF_MPLS) ==
-		    -1)
+		if (send_rtmsg(kr_state.fd, RTM_DELETE, &kn->r, AF_MPLS) == -1)
 			return (-1);
 
 	return (0);
@@ -1311,6 +1310,146 @@ send_rtmsg_v4(int fd, int action, struct kroute *kr, int family)
 static int
 send_rtmsg_v6(int fd, int action, struct kroute *kr, int family)
 {
+	struct iovec		iov[5];
+	struct rt_msghdr	hdr;
+	struct sockaddr_mpls	label_in, label_out;
+	struct sockaddr_in6	dst, mask, nexthop;
+	int			iovcnt = 0;
+
+	if (kr_state.fib_sync == 0)
+		return (0);
+
+	/*
+	 * Reserved labels (implicit and explicit NULL) should not be added
+	 * to the FIB.
+	 */
+	if (family == AF_MPLS && kr->local_label < MPLS_LABEL_RESERVED_MAX)
+		return (0);
+
+	/* initialize header */
+	memset(&hdr, 0, sizeof(hdr));
+	hdr.rtm_version = RTM_VERSION;
+
+	hdr.rtm_type = action;
+	hdr.rtm_flags = RTF_UP;
+	hdr.rtm_fmask = RTF_MPLS;
+	hdr.rtm_seq = kr_state.rtseq++;	/* overflow doesn't matter */
+	hdr.rtm_msglen = sizeof(hdr);
+	hdr.rtm_hdrlen = sizeof(struct rt_msghdr);
+	hdr.rtm_priority = kr->priority;
+	hdr.rtm_tableid = kr_state.rdomain;	/* rtableid */
+	/* adjust iovec */
+	iov[iovcnt].iov_base = &hdr;
+	iov[iovcnt++].iov_len = sizeof(hdr);
+
+	if (family == AF_MPLS) {
+		memset(&label_in, 0, sizeof(label_in));
+		label_in.smpls_len = sizeof(label_in);
+		label_in.smpls_family = AF_MPLS;
+		label_in.smpls_label =
+		    htonl(kr->local_label << MPLS_LABEL_OFFSET);
+		/* adjust header */
+		hdr.rtm_flags |= RTF_MPLS | RTF_MPATH;
+		hdr.rtm_addrs |= RTA_DST;
+		hdr.rtm_msglen += sizeof(label_in);
+		/* adjust iovec */
+		iov[iovcnt].iov_base = &label_in;
+		iov[iovcnt++].iov_len = sizeof(label_in);
+	} else {
+		memset(&dst, 0, sizeof(dst));
+		dst.sin6_len = sizeof(dst);
+		dst.sin6_family = AF_INET6;
+		dst.sin6_addr = kr->prefix.v6;
+		/* adjust header */
+		hdr.rtm_addrs |= RTA_DST;
+		hdr.rtm_msglen += ROUNDUP(sizeof(dst));
+		/* adjust iovec */
+		iov[iovcnt].iov_base = &dst;
+		iov[iovcnt++].iov_len = ROUNDUP(sizeof(dst));
+	}
+
+	memset(&nexthop, 0, sizeof(nexthop));
+	nexthop.sin6_len = sizeof(nexthop);
+	nexthop.sin6_family = AF_INET6;
+	nexthop.sin6_addr = kr->nexthop.v6;
+	nexthop.sin6_scope_id = kr->ifindex;
+	/*
+	 * XXX we should set the sin6_scope_id but the kernel
+	 * XXX does not expect it that way. It must be fiddled
+	 * XXX into the sin6_addr. Welcome to the typical
+	 * XXX IPv6 insanity and all without wine bottles.
+	 */
+	embedscope(&nexthop);
+
+	/* adjust header */
+	hdr.rtm_flags |= RTF_GATEWAY;
+	hdr.rtm_addrs |= RTA_GATEWAY;
+	hdr.rtm_msglen += ROUNDUP(sizeof(nexthop));
+	/* adjust iovec */
+	iov[iovcnt].iov_base = &nexthop;
+	iov[iovcnt++].iov_len = ROUNDUP(sizeof(nexthop));
+
+	if (family == AF_INET6) {
+		memset(&mask, 0, sizeof(mask));
+		mask.sin6_len = sizeof(mask);
+		mask.sin6_family = AF_INET6;
+		mask.sin6_addr = *prefixlen2mask6(kr->prefixlen);
+		/* adjust header */
+		if (kr->prefixlen == 128)
+			hdr.rtm_flags |= RTF_HOST;
+		hdr.rtm_addrs |= RTA_NETMASK;
+		hdr.rtm_msglen += ROUNDUP(sizeof(mask));
+		/* adjust iovec */
+		iov[iovcnt].iov_base = &mask;
+		iov[iovcnt++].iov_len = ROUNDUP(sizeof(mask));
+	}
+
+	/* If action is RTM_DELETE we have to get rid of MPLS infos */
+	if (kr->remote_label != NO_LABEL && action != RTM_DELETE) {
+		memset(&label_out, 0, sizeof(label_out));
+		label_out.smpls_len = sizeof(label_out);
+		label_out.smpls_family = AF_MPLS;
+		label_out.smpls_label =
+		    htonl(kr->remote_label << MPLS_LABEL_OFFSET);
+		/* adjust header */
+		hdr.rtm_addrs |= RTA_SRC;
+		hdr.rtm_flags |= RTF_MPLS;
+		hdr.rtm_msglen += sizeof(label_out);
+		/* adjust iovec */
+		iov[iovcnt].iov_base = &label_out;
+		iov[iovcnt++].iov_len = sizeof(label_out);
+
+		if (kr->remote_label == MPLS_LABEL_IMPLNULL) {
+			if (family == AF_MPLS)
+				hdr.rtm_mpls = MPLS_OP_POP;
+			else
+				return (0);
+		} else {
+			if (family == AF_MPLS)
+				hdr.rtm_mpls = MPLS_OP_SWAP;
+			else
+				hdr.rtm_mpls = MPLS_OP_PUSH;
+		}
+	}
+
+ retry:
+	if (writev(fd, iov, iovcnt) == -1) {
+		if (errno == ESRCH) {
+			if (hdr.rtm_type == RTM_CHANGE && family == AF_MPLS) {
+				hdr.rtm_type = RTM_ADD;
+				goto retry;
+			} else if (hdr.rtm_type == RTM_DELETE) {
+				log_info("route %s/%u vanished before delete",
+				    log_addr(kr->af, &kr->prefix),
+				    kr->prefixlen);
+				return (-1);
+			}
+		}
+		log_warn("%s action %u, af %s, prefix %s/%u", __func__,
+		    hdr.rtm_type, af_name(family), log_addr(kr->af,
+		    &kr->prefix), kr->prefixlen);
+		return (-1);
+	}
 	return (0);
 }
 
