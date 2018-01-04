@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.20 2018/01/02 07:08:10 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.21 2018/01/04 11:02:57 tb Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -70,15 +70,8 @@ struct priq {
 void	ifq_start_task(void *);
 void	ifq_restart_task(void *);
 void	ifq_barrier_task(void *);
-void	ifq_bundle_task(void *);
 
 #define TASK_ONQUEUE 0x1
-
-static inline void
-ifq_run_start(struct ifqueue *ifq)
-{
-	ifq_serialize(ifq, &ifq->ifq_start);
-}
 
 void
 ifq_serialize(struct ifqueue *ifq, struct task *t)
@@ -121,16 +114,6 @@ ifq_is_serialized(struct ifqueue *ifq)
 }
 
 void
-ifq_start(struct ifqueue *ifq)
-{
-	if (ifq_len(ifq) >= min(4, ifq->ifq_maxlen)) {
-		task_del(ifq->ifq_softnet, &ifq->ifq_bundle);
-		ifq_run_start(ifq);
-	} else
-		task_add(ifq->ifq_softnet, &ifq->ifq_bundle);
-}
-
-void
 ifq_start_task(void *p)
 {
 	struct ifqueue *ifq = p;
@@ -154,30 +137,10 @@ ifq_restart_task(void *p)
 }
 
 void
-ifq_bundle_task(void *p)
-{
-	struct ifqueue *ifq = p;
-
-	ifq_run_start(ifq);
-}
-
-void
 ifq_barrier(struct ifqueue *ifq)
 {
 	struct cond c = COND_INITIALIZER();
 	struct task t = TASK_INITIALIZER(ifq_barrier_task, &c);
-
-	if (!task_del(ifq->ifq_softnet, &ifq->ifq_bundle)) {
-		int netlocked = (rw_status(&netlock) == RW_WRITE);
-
-		if (netlocked) /* XXXSMP breaks atomicity */
-			NET_UNLOCK();
-
-		taskq_barrier(ifq->ifq_softnet);
-
-		if (netlocked)
-			NET_LOCK();
-	}
 
 	if (ifq->ifq_serializer == NULL)
 		return;
@@ -203,7 +166,6 @@ void
 ifq_init(struct ifqueue *ifq, struct ifnet *ifp, unsigned int idx)
 {
 	ifq->ifq_if = ifp;
-	ifq->ifq_softnet = net_tq(ifp->if_index);
 	ifq->ifq_softc = NULL;
 
 	mtx_init(&ifq->ifq_mtx, IPL_NET);
@@ -225,7 +187,6 @@ ifq_init(struct ifqueue *ifq, struct ifnet *ifp, unsigned int idx)
 	mtx_init(&ifq->ifq_task_mtx, IPL_NET);
 	TAILQ_INIT(&ifq->ifq_task_list);
 	ifq->ifq_serializer = NULL;
-	task_set(&ifq->ifq_bundle, ifq_bundle_task, ifq);
 
 	task_set(&ifq->ifq_start, ifq_start_task, ifq);
 	task_set(&ifq->ifq_restart, ifq_restart_task, ifq);
@@ -276,8 +237,6 @@ void
 ifq_destroy(struct ifqueue *ifq)
 {
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-
-	ifq_barrier(ifq); /* ensure nothing is running with the ifq */
 
 	/* don't need to lock because this is the last use of the ifq */
 
