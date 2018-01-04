@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.39 2016/03/15 03:17:51 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.40 2018/01/04 11:03:48 mpi Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -136,7 +136,6 @@ member	ih_next
 endif
 
 struct mutex
-member	mtx_lock
 member	mtx_wantipl
 member	mtx_oldipl
 member	mtx_owner

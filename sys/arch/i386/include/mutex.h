@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.9 2017/04/20 13:57:29 visa Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.10 2018/01/04 11:03:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -29,15 +29,10 @@
 
 #include <sys/_lock.h>
 
-/*
- * XXX - we don't really need the mtx_lock field, we can use mtx_oldipl
- *	 as the lock to save some space.
- */
 struct mutex {
-	volatile int mtx_lock;
 	int mtx_wantipl;
 	int mtx_oldipl;
-	void *mtx_owner;
+	volatile void *mtx_owner;
 #ifdef WITNESS
 	struct lock_object mtx_lock_obj;
 #endif
@@ -59,10 +54,10 @@ struct mutex {
 
 #ifdef WITNESS
 #define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
-	{ 0, __MUTEX_IPL(ipl), 0, NULL, MTX_LO_INITIALIZER(name, flags) }
+	{ __MUTEX_IPL((ipl)), 0, NULL, MTX_LO_INITIALIZER(name, flags) }
 #else
 #define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
-	{ 0, __MUTEX_IPL(ipl), 0, NULL }
+	{ __MUTEX_IPL((ipl)), 0, NULL }
 #endif
 
 void __mtx_init(struct mutex *, int);

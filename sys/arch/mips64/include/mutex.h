@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.2 2017/04/20 13:57:30 visa Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.3 2018/01/04 11:03:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -31,7 +31,7 @@
 #include <sys/_lock.h>
 
 struct mutex {
-	void *mtx_owner;
+	volatile void *mtx_owner;
 	int mtx_wantipl;
 	int mtx_oldipl;
 #ifdef WITNESS

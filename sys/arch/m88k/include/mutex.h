@@ -1,6 +1,6 @@
 #ifndef _M88K_MUTEX_H_
 #define _M88K_MUTEX_H_
-/*	$OpenBSD: mutex.h,v 1.5 2017/04/20 13:57:29 visa Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.6 2018/01/04 11:03:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -33,7 +33,7 @@ struct mutex {
 	volatile int mtx_lock;	/* mutex.S relies upon this field being first */
 	int mtx_wantipl;
 	int mtx_oldipl;
-	void *mtx_owner;
+	volatile void *mtx_owner;
 #ifdef WITNESS
 	struct lock_object mtx_lock_obj;
 #endif
