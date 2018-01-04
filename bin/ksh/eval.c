@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.55 2018/01/01 19:45:56 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.56 2018/01/04 19:06:16 millert Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -1114,11 +1114,10 @@ debunk(char *dp, const char *sp, size_t dlen)
 	char *d, *s;
 
 	if ((s = strchr(sp, MAGIC))) {
-		size_t slen = s - sp;
-		if (slen >= dlen)
+		if (s - sp >= dlen)
 			return dp;
-		memcpy(dp, sp, slen);
-		for (d = dp + slen; *s && (d < dp + dlen); s++)
+		memcpy(dp, sp, s - sp);
+		for (d = dp + (s - sp); *s && (d - dp < dlen); s++)
 			if (!ISMAGIC(*s) || !(*++s & 0x80) ||
 			    !strchr("*+?@! ", *s & 0x7f))
 				*d++ = *s;
@@ -1126,7 +1125,7 @@ debunk(char *dp, const char *sp, size_t dlen)
 				/* extended pattern operators: *+?@! */
 				if ((*s & 0x7f) != ' ')
 					*d++ = *s & 0x7f;
-				if (d < dp + dlen)
+				if (d - dp < dlen)
 					*d++ = '(';
 			}
 		*d = '\0';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.59 2018/01/01 19:45:56 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.60 2018/01/04 19:06:16 millert Exp $	*/
 
 /*
  * Command line editing - common code
@@ -224,13 +224,13 @@ set_editmode(const char *ed)
 #endif
 	};
 	char *rcp;
-	unsigned int ele;
+	int i;
 
 	if ((rcp = strrchr(ed, '/')))
 		ed = ++rcp;
-	for (ele = 0; ele < NELEM(edit_flags); ele++)
-		if (strstr(ed, sh_options[(int) edit_flags[ele]].name)) {
-			change_flag(edit_flags[ele], OF_SPECIAL, 1);
+	for (i = 0; i < NELEM(edit_flags); i++)
+		if (strstr(ed, sh_options[(int) edit_flags[i]].name)) {
+			change_flag(edit_flags[i], OF_SPECIAL, 1);
 			return;
 		}
 }

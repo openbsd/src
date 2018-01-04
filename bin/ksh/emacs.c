@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.78 2018/01/01 19:45:56 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.79 2018/01/04 19:06:16 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1249,7 +1249,7 @@ static char *
 kb_decode(const char *s)
 {
 	static char		l[LINE + 1];
-	unsigned int		i, at = 0;
+	int			i, at = 0;
 
 	l[0] = '\0';
 	for (i = 0; i < strlen(s); i++) {
@@ -1292,7 +1292,7 @@ kb_del(struct kb_entry *k)
 static struct kb_entry *
 kb_add_string(void *func, void *args, char *str)
 {
-	unsigned int		i, count;
+	int			i, count;
 	struct kb_entry		*k;
 	struct x_ftab		*xf = NULL;
 
@@ -1362,7 +1362,7 @@ x_bind(const char *a1, const char *a2,
 	int macro,		/* bind -m */
 	int list)		/* bind -l */
 {
-	unsigned int		i;
+	int			i;
 	struct kb_entry		*k, *kb;
 	char			in[LINE + 1];
 

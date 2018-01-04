@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.61 2018/01/01 19:45:56 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.62 2018/01/04 19:06:16 millert Exp $	*/
 
 #include <sys/stat.h>
 
@@ -306,7 +306,7 @@ str_val(struct tbl *vp)
 		    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" :
 		    "0123456789abcdefghijklmnopqrstuvwxyz";
 		unsigned long n;
-		unsigned int base;
+		int base;
 
 		s = strbuf + sizeof(strbuf);
 		if (vp->flag & INT_U)
@@ -997,7 +997,7 @@ setspec(struct tbl *vp)
 		break;
 	case V_HISTSIZE:
 		vp->flag &= ~SPECIAL;
-		sethistsize(intval(vp));
+		sethistsize((int) intval(vp));
 		vp->flag |= SPECIAL;
 		break;
 	case V_HISTFILE:

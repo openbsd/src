@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2018/01/01 19:45:56 millert Exp $
+#	$OpenBSD: Makefile,v 1.37 2018/01/04 19:06:16 millert Exp $
 
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c eval.c \
@@ -6,8 +6,7 @@ SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c eval.c \
 	misc.c path.c shf.c syn.c table.c trap.c tree.c tty.c var.c \
 	version.c vi.c
 
-WARNINGS=yes
-DEFS=	-DEMACS -DVI
+DEFS=	-Wall -Wshadow -DEMACS -DVI
 CFLAGS+=${DEFS} -I. -I${.CURDIR} -I${.CURDIR}/../../lib/libc/gen
 MAN=	ksh.1 sh.1
 

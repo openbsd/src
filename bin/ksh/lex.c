@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.75 2018/01/01 19:45:56 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.76 2018/01/04 19:06:16 millert Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -98,9 +98,9 @@ YYSTYPE	yylval;		/* result from yylex */
 struct ioword *heres[HERES], **herep;
 char	ident[IDENT+1];
 
-char   **history;	/* saved commands */
-char   **histptr;	/* last history item */
-uint32_t histsize;	/* history size */
+char  **history;	/* saved commands */
+char  **histptr;	/* last history item */
+int	histsize;	/* history size */
 
 /* optimized getsc_bn() */
 #define getsc()		(*source->str != '\0' && *source->str != '\\' \
