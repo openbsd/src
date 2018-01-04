@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.88 2017/12/21 21:03:49 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.89 2018/01/04 20:38:12 jmc Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 21 2017 $
+.Dd $Mdocdate: January 4 2018 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -556,11 +556,16 @@ The
 should contain a DER-format OCSP response retrieved from an
 OCSP server for the
 .Ar certificate
-in use.
-The default is to not use OCSP stapling.
+in use,
+and can be created using
+.Xr ocspcheck 8 .
+The path to
+.Ar file
+is not relative to the chroot.
 If the OCSP response in
 .Ar file
 is empty, OCSP stapling will not be used.
+The default is to not use OCSP stapling.
 .It Ic protocols Ar string
 Specify the TLS protocols to enable for this server.
 If not specified, the value
