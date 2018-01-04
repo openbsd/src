@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.24 2018/01/03 21:01:16 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.25 2018/01/04 23:34:06 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -344,6 +344,7 @@ bwfm_init(struct ifnet *ifp)
 	}
 	evmask[BWFM_E_IF / 8] |= 1 << (BWFM_E_IF % 8);
 	evmask[BWFM_E_LINK / 8] |= 1 << (BWFM_E_LINK % 8);
+	evmask[BWFM_E_AUTH / 8] |= 1 << (BWFM_E_AUTH % 8);
 	evmask[BWFM_E_ASSOC / 8] |= 1 << (BWFM_E_ASSOC % 8);
 	evmask[BWFM_E_SET_SSID / 8] |= 1 << (BWFM_E_SET_SSID % 8);
 	evmask[BWFM_E_ESCAN_RESULT / 8] |= 1 << (BWFM_E_ESCAN_RESULT % 8);
@@ -1467,14 +1468,18 @@ bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
 		break;
 		}
 	case BWFM_E_SET_SSID:
+		if (ntohl(e->msg.status) != BWFM_E_STATUS_SUCCESS)
+			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		break;
+	case BWFM_E_AUTH:
 		if (ntohl(e->msg.status) == BWFM_E_STATUS_SUCCESS)
-			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+			ieee80211_new_state(ic, IEEE80211_S_ASSOC, -1);
 		else
 			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		break;
 	case BWFM_E_ASSOC:
 		if (ntohl(e->msg.status) == BWFM_E_STATUS_SUCCESS)
-			ieee80211_new_state(ic, IEEE80211_S_ASSOC, -1);
+			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 		else
 			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		break;
