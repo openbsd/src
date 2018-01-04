@@ -16,3 +16,7 @@ __floatunsisf (USItype u)
   else
     return (SFtype) s;
 }
+
+#ifdef __ARM_EABI__
+__asm__ (".globl\t__aeabi_ui2f\n.set\t__aeabi_ui2f, __floatunsisf\n");
+#endif

@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.29 2016/09/01 11:03:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.30 2018/01/04 19:46:31 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -124,8 +124,13 @@ LIB2FUNCS_EXTRA = qrnnd.asm
 CFLAGS+=	-Dinhibit_libc -fno-inline
 LIB1ASMSRC =	lib1funcs.asm
 LIB1ASMFUNCS =  _dvmd_tls _bb_init_func
+LIB1ASMFUNCS+=	_aeabi_lcmp _aeabi_ulcmp _aeabi_ldivmod _aeabi_uldivmod
+LIB1ASMFUNCS+=	_cmpsf2 _fixunssfsi _negsf2
+LIB1ASMFUNCS+=	_cmpdf2 _fixunsdfsi _negdf2
 LIB2FUNCS_EXTRA = floatunsidf.c floatunsisf.c
 LIB2ADDEH =	unwind-arm.c libunwind.S pr-support.c unwind-c.c
+SWFLOATFUNCS =	
+DWFLOATFUNCS =	_floatundisf _floatundidf
 
 # Not now
 #LIB1ASMFUNCS =  _udivsi3 _divsi3 _umodsi3 _modsi3 _dvmd_tls _bb_init_func
