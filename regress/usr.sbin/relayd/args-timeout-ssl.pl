@@ -15,10 +15,17 @@ our %args = (
 	down => "Broken pipe",
 	timefile => "",
 	nocheck => 1,
+	ssl => 1,
+	loggrep => 'Issuer.*/OU=relayd/',
     },
     relayd => {
 	relay => [ "session timeout 3" ],
-	loggrep => { qr/(buffer event|splice) timeout/ => 1 },
+	loggrep => { qr/buffer event timeout/ => 1 },
+	forwardssl => 1,
+	listenssl => 1,
+    },
+    server => {
+	ssl => 1,
     },
     len => 5,
 );
