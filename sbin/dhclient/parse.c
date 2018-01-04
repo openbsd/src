@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.77 2017/11/09 12:34:25 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.78 2018/01/04 02:27:55 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -278,7 +278,7 @@ parse_boolean(FILE *cfile, unsigned char *buf)
 }
 
 int
-parse_decimal(FILE *cfile, unsigned char *buf, char fmt)
+parse_number(FILE *cfile, unsigned char *buf, char fmt)
 {
 	const char	*errstr;
 	char		*val, *msg;

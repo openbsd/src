@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.161 2018/01/02 00:13:27 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.162 2018/01/04 02:27:55 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -595,7 +595,7 @@ parse_lease_declaration(FILE *cfile, struct client_lease *lease,
 		/* 'bootp' is just a comment. See BOOTP_LEASE(). */
 		break;
 	case TOK_EPOCH:
-		if (parse_decimal(cfile, (unsigned char *)&lease->epoch, 't')
+		if (parse_number(cfile, (unsigned char *)&lease->epoch, 't')
 		    == 0)
 			return;
 		lease->epoch = betoh64(lease->epoch);
@@ -714,25 +714,25 @@ parse_option_decl(FILE *cfile, int *code, struct option_data *options)
 				dp = (uint8_t *)&ip_addr;
 				break;
 			case 'l':	/* Signed 32-bit integer. */
-				if (parse_decimal(cfile, buf, 'l') == 0)
+				if (parse_number(cfile, buf, 'l') == 0)
 					return 0;
 				len = 4;
 				dp = buf;
 				break;
 			case 'L':	/* Unsigned 32-bit integer. */
-				if (parse_decimal(cfile, buf, 'L') == 0)
+				if (parse_number(cfile, buf, 'L') == 0)
 					return 0;
 				len = 4;
 				dp = buf;
 				break;
 			case 'S':	/* Unsigned 16-bit integer. */
-				if (parse_decimal(cfile, buf, 'S') == 0)
+				if (parse_number(cfile, buf, 'S') == 0)
 					return 0;
 				len = 2;
 				dp = buf;
 				break;
 			case 'B':	/* Unsigned 8-bit integer. */
-				if (parse_decimal(cfile, buf, 'B') == 0)
+				if (parse_number(cfile, buf, 'B') == 0)
 					return 0;
 				len = 1;
 				dp = buf;
