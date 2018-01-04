@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.38 2018/01/03 05:39:56 ccardenas Exp $	*/
+/*	$OpenBSD: config.c,v 1.39 2018/01/04 15:19:56 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -262,23 +262,23 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	/* Open disk images for child */
 	for (i = 0 ; i < vcp->vcp_ndisks; i++) {
                 /* Stat disk[i] to ensure it is a regular file */
-		if (stat(vcp->vcp_disks[i], &stat_buf) == -1) {
+		if ((diskfds[i] =
+		    open(vcp->vcp_disks[i], O_RDWR)) == -1) {
 			log_warn("%s: can't open disk %s", __func__,
 			    vcp->vcp_disks[i]);
 			errno = VMD_DISK_MISSING;
+			goto fail;
+		}
+		if (fstat(diskfds[i], &stat_buf) == -1) {
+			log_warn("%s: can't open disk %s", __func__,
+			    vcp->vcp_disks[i]);
+			errno = VMD_DISK_INVALID;
 			goto fail;
 		}
 		if (S_ISREG(stat_buf.st_mode) == 0) {
 			log_warn("%s: disk %s is not a regular file", __func__,
 			    vcp->vcp_disks[i]);
 			errno = VMD_DISK_INVALID;
-			goto fail;
-		}
-		if ((diskfds[i] =
-		    open(vcp->vcp_disks[i], O_RDWR)) == -1) {
-			log_warn("%s: can't open disk %s", __func__,
-			    vcp->vcp_disks[i]);
-			errno = VMD_DISK_MISSING;
 			goto fail;
 		}
 	}
