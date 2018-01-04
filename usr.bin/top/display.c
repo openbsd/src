@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.53 2017/12/18 05:51:53 cheloha Exp $	 */
+/* $OpenBSD: display.c,v 1.54 2018/01/04 17:44:20 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -205,6 +205,7 @@ display_init(struct statics * statics)
 	/* return number of lines available */
 	return (display_lines);
 }
+
 static void
 format_uptime(char *buf, size_t buflen)
 {
