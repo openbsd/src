@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.86 2018/01/02 12:52:17 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.87 2018/01/04 10:48:02 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/refcnt.h>
 #include <sys/task.h>
 #include <sys/time.h>
+#include <sys/timeout.h>
 
 #include <net/ifq.h>
 
@@ -73,7 +74,6 @@
  */
 
 struct rtentry;
-struct timeout;
 struct ifnet;
 struct task;
 
@@ -142,9 +142,9 @@ struct ifnet {				/* and the entries */
 	u_short	if_rtlabelid;		/* [c] next route label */
 	uint8_t if_priority;		/* [c] route priority offset */
 	uint8_t if_llprio;		/* [N] link layer priority */
-	struct	timeout *if_slowtimo;	/* [I] watchdog timeout */
-	struct	task *if_watchdogtask;	/* [I] watchdog task */
-	struct	task *if_linkstatetask; /* [I] task to do route updates */
+	struct	timeout if_slowtimo;	/* [I] watchdog timeout */
+	struct	task if_watchdogtask;	/* [I] watchdog task */
+	struct	task if_linkstatetask;	/* [I] task to do route updates */
 
 	/* procedure handles */
 	SRPL_HEAD(, ifih) if_inputs;	/* input routines (dequeue) */

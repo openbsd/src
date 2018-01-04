@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.533 2018/01/02 12:52:17 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.534 2018/01/04 10:48:02 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -428,7 +428,7 @@ if_attachsetup(struct ifnet *ifp)
 	pfi_attach_ifnet(ifp);
 #endif
 
-	timeout_set(ifp->if_slowtimo, if_slowtimo, ifp);
+	timeout_set(&ifp->if_slowtimo, if_slowtimo, ifp);
 	if_slowtimo(ifp);
 
 	if_idxmap_insert(ifp);
@@ -436,8 +436,8 @@ if_attachsetup(struct ifnet *ifp)
 
 	ifidx = ifp->if_index;
 
-	task_set(ifp->if_watchdogtask, if_watchdog_task, (void *)ifidx);
-	task_set(ifp->if_linkstatetask, if_linkstate_task, (void *)ifidx);
+	task_set(&ifp->if_watchdogtask, if_watchdog_task, (void *)ifidx);
+	task_set(&ifp->if_linkstatetask, if_linkstate_task, (void *)ifidx);
 
 	/* Announce the interface. */
 	rtm_ifannounce(ifp, IFAN_ARRIVAL);
@@ -626,12 +626,6 @@ if_attach_common(struct ifnet *ifp)
 
 	if (ifp->if_rtrequest == NULL)
 		ifp->if_rtrequest = if_rtrequest_dummy;
-	ifp->if_slowtimo = malloc(sizeof(*ifp->if_slowtimo), M_TEMP,
-	    M_WAITOK|M_ZERO);
-	ifp->if_watchdogtask = malloc(sizeof(*ifp->if_watchdogtask),
-	    M_TEMP, M_WAITOK|M_ZERO);
-	ifp->if_linkstatetask = malloc(sizeof(*ifp->if_linkstatetask),
-	    M_TEMP, M_WAITOK|M_ZERO);
 	ifp->if_llprio = IFQ_DEFPRIO;
 
 	SRPL_INIT(&ifp->if_inputs);
@@ -1027,11 +1021,11 @@ if_detach(struct ifnet *ifp)
 	ifp->if_watchdog = NULL;
 
 	/* Remove the watchdog timeout & task */
-	timeout_del(ifp->if_slowtimo);
-	task_del(net_tq(ifp->if_index), ifp->if_watchdogtask);
+	timeout_del(&ifp->if_slowtimo);
+	task_del(net_tq(ifp->if_index), &ifp->if_watchdogtask);
 
 	/* Remove the link state task */
-	task_del(net_tq(ifp->if_index), ifp->if_linkstatetask);
+	task_del(net_tq(ifp->if_index), &ifp->if_linkstatetask);
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);
@@ -1075,10 +1069,6 @@ if_detach(struct ifnet *ifp)
 	free(ifp->if_addrhooks, M_TEMP, 0);
 	free(ifp->if_linkstatehooks, M_TEMP, 0);
 	free(ifp->if_detachhooks, M_TEMP, 0);
-
-	free(ifp->if_slowtimo, M_TEMP, sizeof(*ifp->if_slowtimo));
-	free(ifp->if_watchdogtask, M_TEMP, sizeof(*ifp->if_watchdogtask));
-	free(ifp->if_linkstatetask, M_TEMP, sizeof(*ifp->if_linkstatetask));
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
@@ -1591,7 +1581,7 @@ if_linkstate(struct ifnet *ifp)
 void
 if_link_state_change(struct ifnet *ifp)
 {
-	task_add(net_tq(ifp->if_index), ifp->if_linkstatetask);
+	task_add(net_tq(ifp->if_index), &ifp->if_linkstatetask);
 }
 
 /*
@@ -1607,8 +1597,8 @@ if_slowtimo(void *arg)
 
 	if (ifp->if_watchdog) {
 		if (ifp->if_timer > 0 && --ifp->if_timer == 0)
-			task_add(net_tq(ifp->if_index), ifp->if_watchdogtask);
-		timeout_add(ifp->if_slowtimo, hz / IFNET_SLOWHZ);
+			task_add(net_tq(ifp->if_index), &ifp->if_watchdogtask);
+		timeout_add(&ifp->if_slowtimo, hz / IFNET_SLOWHZ);
 	}
 	splx(s);
 }
