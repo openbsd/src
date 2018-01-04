@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.33 2015/12/09 21:41:50 naddy Exp $	 */
+/* $OpenBSD: crypto.c,v 1.34 2018/01/04 14:21:00 mpi Exp $	 */
 /* $EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	 */
 
 /*
@@ -301,7 +301,7 @@ crypto_decrypt(struct keystate *ks, u_int8_t *buf, u_int16_t len)
 	/*
 	 * XXX There is controversy about the correctness of updating the IV
 	 * like this.
-         */
+ 	*/
 	memcpy(ks->liv, buf + len - ks->xf->blocksize, ks->xf->blocksize);
 	ks->xf->decrypt(ks, buf, len);
 	LOG_DBG_BUF((LOG_CRYPTO, 70, "crypto_decrypt: after decryption", buf,

@@ -1,4 +1,4 @@
-/* $OpenBSD: dnssec.c,v 1.25 2015/08/20 22:02:21 deraadt Exp $	 */
+/* $OpenBSD: dnssec.c,v 1.26 2018/01/04 14:21:00 mpi Exp $	 */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -191,7 +191,7 @@ dns_get_key(int type, struct message *msg, int *keylen)
 	 * Find a key with the wanted algorithm, if any.
 	 * XXX If there are several keys present, we currently only find the
 	 * first.
-         */
+ 	*/
 	for (i = 0; i < rr->rri_nrdatas && key_rr.datalen == 0; i++) {
 		key_rr.flags = ntohs((u_int16_t) * rr->rri_rdatas[i].rdi_data);
 		key_rr.protocol = *(rr->rri_rdatas[i].rdi_data + 2);

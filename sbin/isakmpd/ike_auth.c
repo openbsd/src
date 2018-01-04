@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.114 2017/11/08 13:33:49 patrick Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.115 2018/01/04 14:21:00 mpi Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -348,7 +348,7 @@ pre_shared_gen_skeyid(struct exchange *exchange, size_t *sz)
 	 * case in Aggressive mode), try to find the preshared key in the
 	 * section of the initiator's Phase 1 ID.  This allows us to do
 	 * mobile user support with preshared keys.
-         */
+ 	*/
 	if (!exchange->initiator && exchange->id_i) {
 		switch (exchange->id_i[0]) {
 		case IPSEC_ID_IPV4_ADDR:
@@ -387,7 +387,7 @@ pre_shared_gen_skeyid(struct exchange *exchange, size_t *sz)
 	/*
 	 * Get the pre-shared key for our peer. This will work even if the key
 	 * has been passed to us through a mechanism like PFKEYv2.
-         */
+ 	*/
 	key = ike_auth_get_key(IKE_AUTH_PRE_SHARED, exchange->name,
 	    (char *)buf, &keylen);
 	free(buf);
@@ -587,7 +587,7 @@ rsa_sig_decode_hash(struct message *msg)
 	 * XXX Assume we should use the same kind of certification as the
 	 * remote...  moreover, just use the first CERT payload to decide what
 	 * to use.
-         */
+ 	*/
 	p = payload_first(msg, ISAKMP_PAYLOAD_CERT);
 	if (!p)
 		handler = cert_get(ISAKMP_CERTENC_KEYNOTE);
@@ -601,7 +601,7 @@ rsa_sig_decode_hash(struct message *msg)
 	/*
 	 * We need the policy session initialized now, so we can add
 	 * credentials etc.
-         */
+ 	*/
 	exchange->policy_id = kn_init();
 	if (exchange->policy_id == -1) {
 		log_print("rsa_sig_decode_hash: failed to initialize policy "
@@ -640,7 +640,7 @@ rsa_sig_decode_hash(struct message *msg)
 	 * Walk over potential CERT payloads in this message.
 	 * XXX I believe this is the wrong spot for this.  CERTs can appear
 	 * anytime.
-         */
+ 	*/
 	TAILQ_FOREACH(p, &msg->payload[ISAKMP_PAYLOAD_CERT], link) {
 		p->flags |= PL_MARK;
 

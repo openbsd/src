@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_aggressive.c,v 1.11 2010/06/29 19:50:16 reyk Exp $	 */
+/* $OpenBSD: ike_aggressive.c,v 1.12 2018/01/04 14:21:00 mpi Exp $	 */
 /* $EOM: ike_aggressive.c,v 1.4 2000/01/31 22:33:45 niklas Exp $	 */
 
 /*
@@ -119,7 +119,7 @@ initiator_send_AUTH(struct message *msg)
 	 * INITIAL-CONTACT in phase 1, thus contradicting what we learned
 	 * above.  I will bring this up in the IPsec list.  For now we don't
 	 * do INITIAL-CONTACT at all when using aggressive mode.
-         */
+ 	*/
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.62 2014/10/25 03:18:13 lteo Exp $	 */
+/* $OpenBSD: log.c,v 1.63 2018/01/04 14:21:00 mpi Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -233,7 +233,7 @@ log_debug(int cls, int level, const char *fmt, ...)
 	/*
 	 * If we are not debugging this class, or the level is too low, just
 	 * return.
-         */
+ 	*/
 	if (cls >= 0 && (log_level[cls] == 0 || level > log_level[cls]))
 		return;
 	va_start(ap, fmt);
@@ -251,7 +251,7 @@ log_debug_buf(int cls, int level, const char *header, const u_int8_t *buf,
 	/*
 	 * If we are not debugging this class, or the level is too low, just
 	 * return.
-         */
+ 	*/
 	if (cls >= 0 && (log_level[cls] == 0 || level > log_level[cls]))
 		return;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.52 2015/03/26 12:21:37 mikeb Exp $	 */
+/* $OpenBSD: sa.h,v 1.53 2018/01/04 14:21:00 mpi Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -77,7 +77,7 @@ struct proto {
 	/*
 	 * The chosen transform, only valid while the incoming SA payload that
 	 * held it is available for duplicate testing.
-         */
+ 	*/
 	struct payload *chosen;
 
 	/* The chosen transform's ID.  */
@@ -107,7 +107,7 @@ struct sa {
 	/*
 	 * When several SA's are being negotiated in one message we connect
 	 * them through this link.
-         */
+ 	*/
 	TAILQ_ENTRY(sa) next;
 
 	/*
@@ -164,14 +164,14 @@ struct sa {
 	/*
 	 * The key used to authenticate phase 1, in printable format, used
 	 * only by KeyNote.
-         */
+ 	*/
 	char           *keynote_key;
 
 	/*
 	 * Certificates or other information from Phase 1; these are copied
 	 * from the exchange, so look at exchange.h for an explanation of
 	 * their use.
-         */
+ 	*/
 	int             recv_certtype, recv_keytype;
 	/* Certificate received from peer, native format.  */
 	void           *recv_cert;
@@ -181,7 +181,7 @@ struct sa {
 	/*
 	 * Certificates or other information we used to authenticate to the
 	 * peer, Phase 1.
-         */
+ 	*/
 	int             sent_certtype;
 	/* Certificate (to be) sent to peer, native format.  */
 	void           *sent_cert;

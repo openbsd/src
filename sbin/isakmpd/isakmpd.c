@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.105 2017/12/05 20:31:45 jca Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.106 2018/01/04 14:21:00 mpi Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -286,7 +286,7 @@ set_slave_signals(void)
 	/*
 	 * Do a clean daemon shutdown on TERM/INT. These signals must be
 	 * initialized before monitor_init(). INT is only used with '-d'.
-         */
+ 	*/
 	signal(SIGTERM, daemon_shutdown_now);
 	if (debug == 1)		/* i.e '-dd' will skip this.  */
 		signal(SIGINT, daemon_shutdown_now);

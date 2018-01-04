@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.c,v 1.39 2017/12/05 20:31:45 jca Exp $	 */
+/* $OpenBSD: connection.c,v 1.40 2018/01/04 14:21:00 mpi Exp $	 */
 /* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
@@ -91,7 +91,7 @@ connection_init(void)
 	 * Passive connections normally include: all "active" connections that
 	 * are not flagged "Active-Only", plus all connections listed in
 	 * the 'Passive-Connections' list.
-         */
+ 	*/
 	TAILQ_INIT(&connections);
 	TAILQ_INIT(&connections_passive);
 
