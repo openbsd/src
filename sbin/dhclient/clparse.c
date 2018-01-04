@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.163 2018/01/04 03:02:05 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.164 2018/01/04 18:26:04 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -64,13 +64,13 @@
 #include "dhctoken.h"
 #include "log.h"
 
-void			 parse_conf_declaration(FILE *, char *);
+void			 parse_conf_decl(FILE *, char *);
 int			 parse_hex_octets(FILE *, unsigned int *, uint8_t **);
 int			 parse_option_list(FILE *, int *, uint8_t *);
-int			 parse_interface_declaration(FILE *, char *);
+int			 parse_interface_decl(FILE *, char *);
 int			 parse_lease(FILE *, char *,
 	struct client_lease **);
-void			 parse_lease_declaration(FILE *,
+void			 parse_lease_decl(FILE *,
     struct client_lease *, char *);
 int			 parse_option_decl(FILE *, int *, struct option_data *);
 int			 parse_reject_statement(FILE *);
@@ -150,7 +150,7 @@ read_conf(char *name)
 			token = peek_token(NULL, cfile);
 			if (token == EOF)
 				break;
-			parse_conf_declaration(cfile, name);
+			parse_conf_decl(cfile, name);
 		}
 		fclose(cfile);
 	}
@@ -239,7 +239,7 @@ read_lease_db(char *name, struct client_lease_tq *tq)
  *	| TIMEOUT		number
  */
 void
-parse_conf_declaration(FILE *cfile, char *name)
+parse_conf_decl(FILE *cfile, char *name)
 {
 	uint8_t			 list[DHO_COUNT];
 	char			*val;
@@ -292,7 +292,7 @@ parse_conf_declaration(FILE *cfile, char *name)
 		}
 		break;
 	case TOK_INTERFACE:
-		if (parse_interface_declaration(cfile, name) == 1)
+		if (parse_interface_decl(cfile, name) == 1)
 			;
 		break;
 	case TOK_LEASE:
@@ -480,7 +480,7 @@ parse_option_list(FILE *cfile, int *count, uint8_t *optlist)
  *	INTERFACE string LBRACE conf-decl RBRACE
  */
 int
-parse_interface_declaration(FILE *cfile, char *name)
+parse_interface_decl(FILE *cfile, char *name)
 {
 	char	*val;
 	int	 token;
@@ -516,7 +516,7 @@ parse_interface_declaration(FILE *cfile, char *name)
 			token = next_token(NULL, cfile);
 			return 1;
 		}
-		parse_conf_declaration(cfile, name);
+		parse_conf_decl(cfile, name);
 	}
 
 	return 0;
@@ -571,7 +571,7 @@ parse_lease(FILE *cfile, char *name,
 			*lp = lease;
 			return 1;
 		}
-		parse_lease_declaration(cfile, lease, name);
+		parse_lease_decl(cfile, lease, name);
 	}
 
 	return 0;
@@ -596,8 +596,7 @@ parse_lease(FILE *cfile, char *name,
  *	| SSID		string
  */
 void
-parse_lease_declaration(FILE *cfile, struct client_lease *lease,
-    char *name)
+parse_lease_decl(FILE *cfile, struct client_lease *lease, char *name)
 {
 	char		*val;
 	unsigned int	 len;
