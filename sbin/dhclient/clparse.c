@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.162 2018/01/04 02:27:55 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.163 2018/01/04 03:02:05 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -244,6 +244,7 @@ parse_conf_declaration(FILE *cfile, char *name)
 	uint8_t			 list[DHO_COUNT];
 	char			*val;
 	int			 i, count, token;
+	uint32_t		 t;
 
 	token = next_token(NULL, cfile);
 
@@ -255,8 +256,10 @@ parse_conf_declaration(FILE *cfile, char *name)
 		}
 		break;
 	case TOK_BACKOFF_CUTOFF:
-		if (parse_lease_time(cfile, &config->backoff_cutoff) == 1)
+		if (parse_number(cfile, (unsigned char *)&t, 'L') == 1) {
+			config->backoff_cutoff = ntohl(t);
 			parse_semi(cfile);
+		}
 		break;
 	case TOK_DEFAULT:
 		if (parse_option_decl(cfile, &i, config->defaults) == 1) {
@@ -283,8 +286,10 @@ parse_conf_declaration(FILE *cfile, char *name)
 		}
 		break;
 	case TOK_INITIAL_INTERVAL:
-		if (parse_lease_time(cfile, &config->initial_interval) == 1)
+		if (parse_number(cfile, (unsigned char *)&t, 'L') == 1) {
+			config->initial_interval = ntohl(t);
 			parse_semi(cfile);
+		}
 		break;
 	case TOK_INTERFACE:
 		if (parse_interface_declaration(cfile, name) == 1)
@@ -294,8 +299,10 @@ parse_conf_declaration(FILE *cfile, char *name)
 		skip_to_semi(cfile);
 		break;
 	case TOK_LINK_TIMEOUT:
-		if (parse_lease_time(cfile, &config->link_timeout) == 1)
+		if (parse_number(cfile, (unsigned char *)&t, 'L') == 1) {
+			config->link_timeout = ntohl(t);
 			parse_semi(cfile);
+		}
 		break;
 	case TOK_NEXT_SERVER:
 		if (parse_ip_addr(cfile, &config->next_server) == 1)
@@ -308,8 +315,10 @@ parse_conf_declaration(FILE *cfile, char *name)
 		}
 		break;
 	case TOK_REBOOT:
-		if (parse_lease_time(cfile, &config->reboot_timeout) == 1)
+		if (parse_number(cfile, (unsigned char *)&t, 'L') == 1) {
+			config->reboot_timeout = ntohl(t);
 			parse_semi(cfile);
+		}
 		break;
 	case TOK_REJECT:
 		if (parse_reject_statement(cfile) == 1)
@@ -326,12 +335,16 @@ parse_conf_declaration(FILE *cfile, char *name)
 			parse_semi(cfile);
 		break;
 	case TOK_RETRY:
-		if (parse_lease_time(cfile, &config->retry_interval) == 1)
+		if (parse_number(cfile, (unsigned char *)&t, 'L') == 1) {
+			config->retry_interval = ntohl(t);
 			parse_semi(cfile);
+		}
 		break;
 	case TOK_SELECT_TIMEOUT:
-		if (parse_lease_time(cfile, &config->select_interval) == 1)
+		if (parse_number(cfile, (unsigned char *)&t, 'L') == 1) {
+			config->select_interval = ntohl(t);
 			parse_semi(cfile);
+		}
 		break;
 	case TOK_SEND:
 		if (parse_option_decl(cfile, &i, config->send_options) == 1)
@@ -351,8 +364,10 @@ parse_conf_declaration(FILE *cfile, char *name)
 		}
 		break;
 	case TOK_TIMEOUT:
-		if (parse_lease_time(cfile, &config->timeout) == 1)
+		if (parse_number(cfile, (unsigned char *)&t, 'L') == 1) {
+			config->timeout = ntohl(t);
 			parse_semi(cfile);
+		}
 		break;
 	default:
 		parse_warn("expecting statement.");
