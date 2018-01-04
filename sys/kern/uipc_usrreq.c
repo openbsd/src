@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.122 2017/12/19 09:35:56 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.123 2018/01/04 10:45:30 mpi Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -170,8 +170,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 		case SOCK_STREAM:
 		case SOCK_SEQPACKET:
-#define	rcv (&so->so_rcv)
-#define snd (&so2->so_snd)
 			if (unp->unp_conn == NULL)
 				break;
 			so2 = unp->unp_conn->unp_socket;
@@ -179,11 +177,9 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			 * Adjust backpressure on sender
 			 * and wakeup any waiting to write.
 			 */
-			snd->sb_mbcnt = rcv->sb_mbcnt;
-			snd->sb_cc = rcv->sb_cc;
+			so2->so_snd.sb_mbcnt = so->so_rcv.sb_mbcnt;
+			so2->so_snd.sb_cc = so->so_rcv.sb_cc;
 			sowwakeup(so2);
-#undef snd
-#undef rcv
 			break;
 
 		default:
