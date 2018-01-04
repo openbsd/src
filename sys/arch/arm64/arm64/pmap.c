@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.41 2017/12/31 08:42:04 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.42 2018/01/04 14:30:08 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -186,14 +186,14 @@ VP_IDX3(vaddr_t va)
 }
 
 const uint64_t ap_bits_user[8] = {
-	[PROT_NONE]			= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AP(2),
-	[PROT_READ]			= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(3),
-	[PROT_WRITE]			= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(1),
-	[PROT_WRITE|PROT_READ]		= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(1),
-	[PROT_EXEC]			= ATTR_nG|ATTR_PXN|ATTR_AF|ATTR_AP(2),
-	[PROT_EXEC|PROT_READ]		= ATTR_nG|ATTR_PXN|ATTR_AF|ATTR_AP(3),
-	[PROT_EXEC|PROT_WRITE]		= ATTR_nG|ATTR_PXN|ATTR_AF|ATTR_AP(1),
-	[PROT_EXEC|PROT_WRITE|PROT_READ]= ATTR_nG|ATTR_PXN|ATTR_AF|ATTR_AP(1),
+	[PROT_NONE]				= ATTR_PXN|ATTR_UXN|ATTR_AP(2),
+	[PROT_READ]				= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(3),
+	[PROT_WRITE]				= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(1),
+	[PROT_WRITE|PROT_READ]			= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(1),
+	[PROT_EXEC]				= ATTR_PXN|ATTR_AF|ATTR_AP(2),
+	[PROT_EXEC|PROT_READ]			= ATTR_PXN|ATTR_AF|ATTR_AP(3),
+	[PROT_EXEC|PROT_WRITE]			= ATTR_PXN|ATTR_AF|ATTR_AP(1),
+	[PROT_EXEC|PROT_WRITE|PROT_READ]	= ATTR_PXN|ATTR_AF|ATTR_AP(1),
 };
 
 const uint64_t ap_bits_kern[8] = {
@@ -1081,6 +1081,7 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 	pt1pa = pmap_steal_avail(sizeof(struct pmapvp1), Lx_TABLE_ALIGN, &va);
 	vp1 = (struct pmapvp1 *)pt1pa;
 	pmap_kernel()->pm_vp.l1 = (struct pmapvp1 *)va;
+	pmap_kernel()->pm_privileged = 1;
 	pmap_kernel()->pm_asid = 0;
 
 	/* allocate Lx entries */
@@ -1204,6 +1205,8 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 	switch_mmu_kernel_table(pt1pa);
 
 	printf("all mapped\n");
+
+	curcpu()->ci_curpm = pmap_kernel();
 
 	memhook = (char *)vstart;
 	vstart += PAGE_SIZE;
@@ -1496,11 +1499,13 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 		panic("pmap_pte_insert: invalid cache mode");
 	}
 
-	/* kernel mappings are global, so nG should not be set */
-	if (pm == pmap_kernel())
+	if (pm->pm_privileged)
 		access_bits = ap_bits_kern[pted->pted_pte & PROT_MASK];
 	else
 		access_bits = ap_bits_user[pted->pted_pte & PROT_MASK];
+
+	if (pted->pted_va < VM_MIN_KERNEL_ADDRESS)
+		access_bits |= ATTR_nG;
 
 	pte = (pted->pted_pte & PTE_RPGN) | attr | access_bits | L3_P;
 	*pl3 = pte;

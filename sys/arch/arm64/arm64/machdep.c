@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.23 2017/12/11 05:27:40 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.24 2018/01/04 14:30:08 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -755,6 +755,7 @@ initarm(struct arm64_bootparams *abp)
 	paddr_t memstart, memend;
 	void *config = abp->arg2;
 	void *fdt = NULL;
+	EFI_PHYSICAL_ADDRESS system_table = 0;
 	int (*map_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 	int (*map_a4x_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
@@ -794,6 +795,10 @@ initarm(struct arm64_bootparams *abp)
 		len = fdt_node_property(node, "openbsd,uefi-mmap-desc-ver", &prop);
 		if (len == sizeof(mmap_desc_ver))
 			mmap_desc_ver = bemtoh32((uint32_t *)prop);
+
+		len = fdt_node_property(node, "openbsd,uefi-system-table", &prop);
+		if (len == sizeof(system_table))
+			system_table = bemtoh64((uint64_t *)prop);
 	}
 
 	/* Set the pcpu data, this is needed by pmap_bootstrap */
@@ -874,7 +879,7 @@ initarm(struct arm64_bootparams *abp)
 
 		for (va = vstart, csize = size; csize > 0;
 		    csize -= PAGE_SIZE, va += PAGE_SIZE, pa += PAGE_SIZE)
-			pmap_kenter_cache(va, pa, PROT_READ, PMAP_CACHE_WB);
+			pmap_kenter_cache(va, pa, PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
 
 		mmap = (void *)vstart;
 		vstart += size;
@@ -912,6 +917,69 @@ initarm(struct arm64_bootparams *abp)
 	arm64_bs_tag._space_map = map_func_save;
 	arm64_a4x_bs_tag._space_map = map_a4x_func_save;
 
+	/* Remap EFI runtime. */
+	if (mmap_start != 0 && system_table != 0) {
+		EFI_SYSTEM_TABLE *st = (EFI_SYSTEM_TABLE *)system_table;
+		EFI_RUNTIME_SERVICES *rs;
+		EFI_STATUS status;
+		EFI_MEMORY_DESCRIPTOR *src;
+		EFI_MEMORY_DESCRIPTOR *dst;
+		EFI_PHYSICAL_ADDRESS phys_start = ~0ULL;
+		EFI_VIRTUAL_ADDRESS virt_start;
+		vsize_t space;
+		int i, count = 0;
+		paddr_t pa;
+
+		/*
+		 * Pick a random address somewhere in the lower half
+		 * of the usable virtual address space.
+		 */
+		space = 3 * (VM_MAX_ADDRESS - VM_MIN_ADDRESS) / 4;
+		virt_start = VM_MIN_ADDRESS +
+		    ((vsize_t)arc4random_uniform(space >> PAGE_SHIFT) << PAGE_SHIFT);
+
+		/* Make sure the EFI system table is mapped. */
+		pmap_map_early(system_table, sizeof(EFI_SYSTEM_TABLE));
+		rs = st->RuntimeServices;
+
+		/* Make sure memory for EFI runtime services is mapped. */
+		src = mmap;
+		for (i = 0; i < mmap_size / mmap_desc_size; i++) {
+			if (src->Attribute & EFI_MEMORY_RUNTIME) {
+				pmap_map_early(src->PhysicalStart,
+				    src->NumberOfPages * PAGE_SIZE);
+				if (phys_start > src->PhysicalStart)
+					phys_start = src->PhysicalStart;
+				count++;
+			}
+			src = NextMemoryDescriptor(src, mmap_desc_size);
+		}
+
+		/* Allocate memory descriptors for new mappings. */
+		pa = pmap_steal_avail(count * mmap_desc_size,
+		    mmap_desc_size, NULL);
+		memset((void *)pa, 0, count * mmap_desc_size);
+
+		src = mmap;
+		dst = (EFI_MEMORY_DESCRIPTOR *)pa;
+		for (i = 0; i < mmap_size / mmap_desc_size; i++) {
+			if (src->Attribute & EFI_MEMORY_RUNTIME) {
+				src->VirtualStart = virt_start +
+				    (src->PhysicalStart - phys_start);
+				memcpy(dst, src, mmap_desc_size);
+				dst = NextMemoryDescriptor(dst, mmap_desc_size);
+			}
+			src = NextMemoryDescriptor(src, mmap_desc_size);
+		}
+
+		/* Install new mappings. */
+		dst = (EFI_MEMORY_DESCRIPTOR *)pa;
+		status = rs->SetVirtualAddressMap(count * mmap_desc_size,
+		    mmap_desc_size, mmap_desc_ver, dst);
+		if (status != EFI_SUCCESS)
+			printf("SetVirtualAddressMap failed: %lu\n", status);
+	}
+
 	/* XXX */
 	pmap_avail_fixup();
 
@@ -923,6 +991,7 @@ initarm(struct arm64_bootparams *abp)
 
 	/* Make all other physical memory available to UVM. */
 	if (mmap && mmap_desc_ver == EFI_MEMORY_DESCRIPTOR_VERSION) {
+		EFI_MEMORY_DESCRIPTOR *desc = mmap;
 		int i;
 
 		/*
@@ -933,20 +1002,20 @@ initarm(struct arm64_bootparams *abp)
 		 */
 		for (i = 0; i < mmap_size / mmap_desc_size; i++) {
 			printf("type 0x%x pa 0x%llx va 0x%llx pages 0x%llx attr 0x%llx\n",
-			    mmap->Type, mmap->PhysicalStart,
-			    mmap->VirtualStart, mmap->NumberOfPages,
-			    mmap->Attribute);
-			if (mmap->Type == EfiConventionalMemory &&
-			    mmap->NumberOfPages >= 16) {
-				uvm_page_physload(atop(mmap->PhysicalStart),
-				    atop(mmap->PhysicalStart) +
-				    mmap->NumberOfPages,
-				    atop(mmap->PhysicalStart),
-				    atop(mmap->PhysicalStart) +
-				    mmap->NumberOfPages, 0);
-				physmem += mmap->NumberOfPages;
+			    desc->Type, desc->PhysicalStart,
+			    desc->VirtualStart, desc->NumberOfPages,
+			    desc->Attribute);
+			if (desc->Type == EfiConventionalMemory &&
+			    desc->NumberOfPages >= 16) {
+				uvm_page_physload(atop(desc->PhysicalStart),
+				    atop(desc->PhysicalStart) +
+				    desc->NumberOfPages,
+				    atop(desc->PhysicalStart),
+				    atop(desc->PhysicalStart) +
+				    desc->NumberOfPages, 0);
+				physmem += desc->NumberOfPages;
 			}
-			mmap = NextMemoryDescriptor(mmap, mmap_desc_size);
+			desc = NextMemoryDescriptor(desc, mmap_desc_size);
 		}
 	} else {
 		paddr_t start, end;
