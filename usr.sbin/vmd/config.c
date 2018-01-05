@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.39 2018/01/04 15:19:56 ccardenas Exp $	*/
+/*	$OpenBSD: config.c,v 1.40 2018/01/05 13:34:52 jca Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -252,7 +252,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			goto fail;
 		}
 		if (S_ISREG(stat_buf.st_mode) == 0) {
-			log_warn("%s: cdrom %s is not a regular file", __func__,
+			log_warnx("%s: cdrom %s is not a regular file", __func__,
 			    vcp->vcp_cdrom);
 			errno = VMD_CDROM_INVALID;
 			goto fail;
@@ -276,7 +276,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			goto fail;
 		}
 		if (S_ISREG(stat_buf.st_mode) == 0) {
-			log_warn("%s: disk %s is not a regular file", __func__,
+			log_warnx("%s: disk %s is not a regular file", __func__,
 			    vcp->vcp_disks[i]);
 			errno = VMD_DISK_INVALID;
 			goto fail;
