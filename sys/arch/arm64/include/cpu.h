@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.2 2017/12/30 08:39:49 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.3 2018/01/05 17:42:35 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
 
@@ -35,13 +36,8 @@
  */
 
 #include <machine/intr.h>
-#ifndef _LOCORE
 #include <machine/frame.h>
-#endif	/* !_LOCORE */
-
 #include <machine/armreg.h>
-
-#ifndef _LOCORE
 
 /* All the CLKF_* macros take a struct clockframe * as an argument. */
 
@@ -79,6 +75,7 @@ void	arm32_vector_init(vaddr_t, int);
 
 #include <sys/device.h>
 #include <sys/sched.h>
+
 struct cpu_info {
 	struct device		*ci_dev; /* Device corresponding to this CPU */
 	struct cpu_info		*ci_next;
@@ -264,8 +261,6 @@ intr_restore(u_long daif)
 void	delay (unsigned);
 #define	DELAY(x)	delay(x)
 
-#endif	/* !_LOCORE */
-
 #endif /* _KERNEL */
 
 #ifdef MULTIPROCESSOR
@@ -273,5 +268,3 @@ void	delay (unsigned);
 #endif /* MULTIPROCESSOR */
 
 #endif /* !_MACHINE_CPU_H_ */
-
-/* End of cpu.h */
