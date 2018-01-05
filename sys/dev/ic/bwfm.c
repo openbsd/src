@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.26 2018/01/05 19:06:37 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.27 2018/01/05 23:13:04 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1412,8 +1412,17 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
 	if (m->m_len >= sizeof(e->ehdr) &&
 	    ntohs(e->ehdr.ether_type) == BWFM_ETHERTYPE_LINK_CTL &&
 	    memcmp(BWFM_BRCM_OUI, e->hdr.oui, sizeof(e->hdr.oui)) == 0 &&
-	    ntohs(e->hdr.usr_subtype) == BWFM_BRCM_SUBTYPE_EVENT)
+	    ntohs(e->hdr.usr_subtype) == BWFM_BRCM_SUBTYPE_EVENT) {
 		bwfm_rx_event(sc, mtod(m, char *), m->m_len);
+		m_freem(m);
+		return;
+	}
+
+	/* Drop network packets if we are not in RUN state. */
+	if (ic->ic_state != IEEE80211_S_RUN) {
+		m_freem(m);
+		return;
+	}
 
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    m->m_len >= sizeof(e->ehdr) &&
