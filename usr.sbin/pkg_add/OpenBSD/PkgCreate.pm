@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.129 2017/12/02 00:52:47 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.130 2018/01/05 13:39:55 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1091,7 +1091,7 @@ sub read_fragments
 				}
 				my $s = $subst->do($l);
 				if ($fast) {
-					next unless $s =~ m/^\@(?:cwd|lib|depend|wantlib)\b/o || $s =~ m/lib.*\.a$/o;
+					next unless $s =~ m/^\@(?:cwd|lib|libset|depend|wantlib)\b/o || $s =~ m/lib.*\.a$/o;
 				}
 	# XXX some things, like @comment no checksum, don't produce an object
 				my $o = &$cont($s);
