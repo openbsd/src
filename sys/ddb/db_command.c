@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.82 2017/12/13 08:34:04 mpi Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.83 2018/01/05 11:10:25 pirofti Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <ddb/db_watch.h>
 #include <ddb/db_run.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_var.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_extern.h>
@@ -491,6 +492,11 @@ db_show_panic_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	if (panicstr)
 		db_printf("%s\n", panicstr);
+	else if (faultstr) {
+		db_printf("kernel page fault\n");
+		db_printf("%s\n", faultstr);
+		db_stack_trace_print(addr, have_addr, 1, modif, db_printf);
+	}
 	else
 		db_printf("the kernel did not panic\n");	/* yet */
 }
