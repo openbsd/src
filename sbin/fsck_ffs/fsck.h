@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.31 2015/01/19 18:20:47 deraadt Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.32 2018/01/05 09:33:47 otto Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ extern long numdirs, listmax, inplast;
 long	secsize;		/* actual disk sector size */
 char	nflag;			/* assume a no response */
 char	yflag;			/* assume a yes response */
-int	bflag;			/* location of alternate super block */
+daddr_t	bflag;			/* location of alternate super block */
 int	debug;			/* output debugging info */
 int	cvtlevel;		/* convert to newer file system format */
 char    usedsoftdep;            /* just fix soft dependency inconsistencies */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.63 2016/09/09 15:37:15 tb Exp $	*/
+/*	$OpenBSD: setup.c,v 1.64 2018/01/05 09:33:47 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ setup(char *dev, int isfsdb)
 		}
 found:
 		doskipclean = 0;
-		pwarn("USING ALTERNATE SUPERBLOCK AT %d\n", bflag);
+		pwarn("USING ALTERNATE SUPERBLOCK AT %lld\n", (long long)bflag);
 	}
 	if (debug)
 		printf("clean = %d\n", sblock.fs_clean);

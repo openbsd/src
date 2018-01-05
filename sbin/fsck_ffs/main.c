@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.50 2016/09/09 15:37:15 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.51 2018/01/05 09:33:47 otto Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 volatile sig_atomic_t returntosingle;
 
-int	argtoi(int, char *, char *, int);
+long long argtoi(int, char *, char *, int);
 int	checkfilesys(char *, char *, long, int);
 int	main(int, char *[]);
 
@@ -78,7 +78,8 @@ main(int argc, char *argv[])
 		case 'b':
 			skipclean = 0;
 			bflag = argtoi('b', "number", optarg, 10);
-			printf("Alternate super block location: %d\n", bflag);
+			printf("Alternate super block location: %lld\n",
+			    (long long)bflag);
 			break;
 
 		case 'c':
@@ -140,13 +141,13 @@ main(int argc, char *argv[])
 	exit(ret);
 }
 
-int
+long long
 argtoi(int flag, char *req, char *str, int base)
 {
 	char *cp;
-	int ret;
+	long long ret;
 
-	ret = (int)strtol(str, &cp, base);
+	ret = strtoll(str, &cp, base);
 	if (cp == str || *cp)
 		errexit("-%c flag requires a %s\n", flag, req);
 	return (ret);
