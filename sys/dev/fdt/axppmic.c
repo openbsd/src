@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.4 2017/12/26 17:16:33 kettenis Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.5 2018/01/05 22:04:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -40,7 +40,7 @@ extern void (*powerdownfn)(void);
 #define  AXP806_REG_ADDR_EXT_MASTER_MODE	(0 << 4)
 #define  AXP806_REG_ADDR_EXT_SLAVE_MODE		(1 << 4)
 
-/* Regulators for AXP209, AXP806 and AXP809. */
+/* Regulators for AXP209, AXP221, AXP806 and AXP809. */
 
 struct axppmic_regdata {
 	const char *name;
@@ -63,6 +63,47 @@ struct axppmic_regdata axp209_regdata[] = {
 	/* LDO4 voltage levels are complicated */
 	{ "ldo5", 0x90, 0x07, 0x03, 0x07,
 	  0x91, 0xf0, 1800000, (100000 >> 4) },
+	{ NULL }
+};
+
+struct axppmic_regdata axp221_regdata[] = {
+	{ "dcdc1", 0x10, (1 << 1), (1 << 1), (0 << 1),
+	  0x21, 0x1f, 1600000, 100000 },
+	{ "dcdc2", 0x10, (1 << 2), (1 << 2), (0 << 2),
+	  0x22, 0x3f, 600000, 20000 },
+	{ "dcdc3", 0x10, (1 << 3), (1 << 3), (0 << 3),
+	  0x23, 0x3f, 600000, 20000 },
+	{ "dcdc4", 0x10, (1 << 4), (1 << 4), (0 << 4),
+	  0x24, 0x3f, 600000, 20000 },
+	{ "dcdc5", 0x10, (1 << 5), (1 << 5), (0 << 5),
+	  0x25, 0x1f, 1000000, 50000 },
+	{ "dc1sw", 0x12, (1 << 7), (1 << 7), (0 << 7) },
+	{ "dc5ldo", 0x10, (1 << 0), (1 << 0), (0 << 0),
+	  0x1c, 0x07, 700000, 100000 },
+	{ "aldo1", 0x10, (1 << 6), (1 << 6), (0 << 6),
+	  0x28, 0x1f, 700000, 100000 },
+	{ "aldo2", 0x10, (1 << 7), (1 << 7), (0 << 7),
+	  0x29, 0x1f, 700000, 100000 },
+	{ "aldo3", 0x13, (1 << 7), (1 << 7), (0 << 7),
+	  0x2a, 0x1f, 700000, 100000 },
+	{ "dldo1", 0x12, (1 << 3), (1 << 3), (0 << 3),
+	  0x15, 0x1f, 700000, 100000 },
+	{ "dldo2", 0x12, (1 << 4), (1 << 4), (0 << 4),
+	  0x16, 0x1f, 700000, 100000 },
+	{ "dldo3", 0x12, (1 << 5), (1 << 5), (0 << 5),
+	  0x17, 0x1f, 700000, 100000 },
+	{ "dldo4", 0x12, (1 << 6), (1 << 6), (0 << 6),
+	  0x18, 0x1f, 700000, 100000 },
+	{ "eldo1", 0x12, (1 << 0), (1 << 0), (0 << 0),
+	  0x19, 0x1f, 700000, 100000 },
+	{ "eldo2", 0x12, (1 << 1), (1 << 1), (0 << 1),
+	  0x1a, 0x1f, 700000, 100000 },
+	{ "eldo3", 0x12, (1 << 2), (1 << 2), (0 << 2),
+	  0x1b, 0x1f, 700000, 100000 },
+	{ "ldo_io0", 0x90, 0x07, 0x03, 0x04,
+	  0x91, 0x1f, 700000, 100000 },
+	{ "ldo_io1", 0x92, 0x07, 0x03, 0x04,
+	  0x93, 0x1f, 700000, 100000 },
 	{ NULL }
 };
 
@@ -137,7 +178,7 @@ struct axppmic_regdata axp809_regdata[] = {
 	{ NULL }
 };
 
-/* Sensors for AXP209 and AXP809. */
+/* Sensors for AXP209 and AXP221/AXP809. */
 
 #define AXPPMIC_NSENSORS 8
 
@@ -160,7 +201,7 @@ struct axppmic_sensdata axp209_sensdata[] = {
 	{ NULL }
 };
 
-struct axppmic_sensdata axp809_sensdata[] = {
+struct axppmic_sensdata axp221_sensdata[] = {
 	{ "ACIN", SENSOR_INDICATOR, 0x00, (1 << 7), (1 << 6) },
 	{ "VBUS", SENSOR_INDICATOR, 0x00, (1 << 5), (1 << 4) },
 	{ "", SENSOR_TEMP, 0x56, 5450000, 105861 },
@@ -177,8 +218,10 @@ struct axppmic_device {
 struct axppmic_device axppmic_devices[] = {
 	{ "x-powers,axp152", "AXP152" },
 	{ "x-powers,axp209", "AXP209", axp209_regdata, axp209_sensdata },
+	{ "x-powers,axp221", "AXP221", axp221_regdata, axp221_sensdata },
+	{ "x-powers,axp223", "AXP223", axp221_regdata, axp221_sensdata },
 	{ "x-powers,axp806", "AXP806", axp806_regdata },
-	{ "x-powers,axp809", "AXP809", axp809_regdata, axp809_sensdata }
+	{ "x-powers,axp809", "AXP809", axp809_regdata, axp221_sensdata }
 };
 
 const struct axppmic_device *
@@ -275,7 +318,8 @@ axppmic_i2c_read(struct axppmic_softc *sc, uint8_t reg)
 	error = iic_smbus_read_byte(tag, sc->sc_addr, reg, &value, flags);
 	iic_release_bus(tag, flags);
 	if (error) {
-		printf("%s: SMBus read byte failed\n", sc->sc_dev.dv_xname);
+		printf("%s: SMBus read byte from 0x%02x failed\n",
+		    sc->sc_dev.dv_xname, reg);
 		return 0xff;
 	}
 
@@ -293,7 +337,8 @@ axppmic_i2c_write(struct axppmic_softc *sc, uint8_t reg, uint8_t value)
 	error = iic_smbus_write_byte(tag, sc->sc_addr, reg, value, flags);
 	iic_release_bus(tag, flags);
 	if (error)
-		printf("%s: SMBus write byte failed\n", sc->sc_dev.dv_xname);
+		printf("%s: SMBus write byte to 0x%02x failed\n",
+		    sc->sc_dev.dv_xname, reg);
 }
 
 /* RSB interface */
