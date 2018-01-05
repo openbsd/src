@@ -4056,11 +4056,11 @@ intel_dp_probe_oui(struct intel_dp *intel_dp)
 		return;
 
 	if (intel_dp_dpcd_read_wake(&intel_dp->aux, DP_SINK_OUI, buf, 3) == 3)
-		DRM_DEBUG_KMS("Sink OUI: %02hx%02hx%02hx\n",
+		DRM_DEBUG_KMS("Sink OUI: %02x%02x%02x\n",
 			      buf[0], buf[1], buf[2]);
 
 	if (intel_dp_dpcd_read_wake(&intel_dp->aux, DP_BRANCH_OUI, buf, 3) == 3)
-		DRM_DEBUG_KMS("Branch OUI: %02hx%02hx%02hx\n",
+		DRM_DEBUG_KMS("Branch OUI: %02x%02x%02x\n",
 			      buf[0], buf[1], buf[2]);
 }
 
