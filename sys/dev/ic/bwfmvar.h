@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.6 2018/01/03 21:01:16 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.7 2018/01/05 23:30:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -124,6 +124,12 @@ struct bwfm_cmd_key {
 	struct ieee80211_key	 *k;
 };
 
+struct bwfm_cmd_flowring_create {
+	uint32_t		 flowid;
+	uint8_t			 da[ETHER_ADDR_LEN];
+	uint8_t			 sa[ETHER_ADDR_LEN];
+};
+
 struct bwfm_host_cmd_ring {
 #define BWFM_HOST_CMD_RING_COUNT	32
 	struct bwfm_host_cmd	 cmd[BWFM_HOST_CMD_RING_COUNT];
@@ -161,3 +167,5 @@ void bwfm_chip_set_passive(struct bwfm_softc *);
 struct bwfm_core *bwfm_chip_get_core(struct bwfm_softc *, int);
 struct bwfm_core *bwfm_chip_get_pmu(struct bwfm_softc *);
 void bwfm_rx(struct bwfm_softc *, struct mbuf *);
+void bwfm_do_async(struct bwfm_softc *, void (*)(struct bwfm_softc *, void *),
+    void *, int);
