@@ -1,4 +1,4 @@
-/*      $OpenBSD: agentx.c,v 1.10 2015/12/05 06:42:18 mmcc Exp $    */
+/*      $OpenBSD: agentx.c,v 1.11 2018/01/05 08:13:32 mpi Exp $    */
 /*
  * Copyright (c) 2013,2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
+#include <sys/queue.h>
 #include <sys/uio.h>
 #include <sys/un.h>
 

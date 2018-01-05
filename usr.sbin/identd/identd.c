@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.38 2017/07/04 01:09:42 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.39 2018/01/05 08:13:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -19,7 +19,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/uio.h>

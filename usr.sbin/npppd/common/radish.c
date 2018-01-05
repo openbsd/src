@@ -1,4 +1,4 @@
-/*	$OpenBSD: radish.c,v 1.5 2017/05/30 17:52:05 yasuoka Exp $ */
+/*	$OpenBSD: radish.c,v 1.6 2018/01/05 08:13:31 mpi Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -41,7 +41,6 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
