@@ -370,6 +370,7 @@ struct sxiccmu_ccu_bit sun8i_h3_r_gates[] = {
 #define R40_CLK_BUS_MMC1	33
 #define R40_CLK_BUS_MMC2	34
 #define R40_CLK_BUS_MMC3	35
+#define R40_CLK_BUS_SATA	45
 #define R40_CLK_BUS_EHCI0	47
 #define R40_CLK_BUS_EHCI1	48
 #define R40_CLK_BUS_EHCI2	49
@@ -397,6 +398,7 @@ struct sxiccmu_ccu_bit sun8i_h3_r_gates[] = {
 #define R40_CLK_MMC1		108
 #define R40_CLK_MMC2		109
 #define R40_CLK_MMC3		110
+#define R40_CLK_SATA		123
 #define R40_CLK_USB_PHY0	124
 #define R40_CLK_USB_PHY1	125
 #define R40_CLK_USB_PHY2	126
@@ -406,6 +408,7 @@ struct sxiccmu_ccu_bit sun8i_r40_gates[] = {
 	[R40_CLK_BUS_MMC1] =  { 0x0060, 9 },
 	[R40_CLK_BUS_MMC2] =  { 0x0060, 10 },
 	[R40_CLK_BUS_MMC3] =  { 0x0060, 11 },
+	[R40_CLK_BUS_SATA] =  { 0x0060, 24 },
 	[R40_CLK_BUS_EHCI0] = { 0x0060, 26 },
 	[R40_CLK_BUS_EHCI1] = { 0x0060, 27 },
 	[R40_CLK_BUS_EHCI2] = { 0x0060, 28 },
@@ -432,6 +435,7 @@ struct sxiccmu_ccu_bit sun8i_r40_gates[] = {
 	[R40_CLK_MMC1]      = { 0x008c, 31 },
 	[R40_CLK_MMC2]      = { 0x0090, 31 },
 	[R40_CLK_MMC3]      = { 0x0094, 31 },
+	[R40_CLK_SATA]      = { 0x00c8, 31 },
 	[R40_CLK_USB_PHY0]  = { 0x00cc, 8 },
 	[R40_CLK_USB_PHY1]  = { 0x00cc, 9 },
 	[R40_CLK_USB_PHY2]  = { 0x00cc, 10 },
@@ -636,6 +640,7 @@ struct sxiccmu_ccu_bit sun8i_h3_r_resets[] = {
 #define R40_RST_BUS_MMC1	9
 #define R40_RST_BUS_MMC2	10
 #define R40_RST_BUS_MMC3	11
+#define R40_RST_BUS_SATA	21
 #define R40_RST_BUS_EHCI0	23
 #define R40_RST_BUS_EHCI1	24
 #define R40_RST_BUS_EHCI2	25
@@ -665,6 +670,7 @@ struct sxiccmu_ccu_bit sun8i_r40_resets[] = {
 	[R40_RST_BUS_MMC1] =  { 0x02c0, 9 },
 	[R40_RST_BUS_MMC2] =  { 0x02c0, 10 },
 	[R40_RST_BUS_MMC3] =  { 0x02c0, 11 },
+	[R40_RST_BUS_SATA] =  { 0x02c0, 24 },
 	[R40_RST_BUS_EHCI0] = { 0x02c0, 26 },
 	[R40_RST_BUS_EHCI1] = { 0x02c0, 27 },
 	[R40_RST_BUS_EHCI2] = { 0x02c0, 28 },
