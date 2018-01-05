@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.165 2018/01/04 19:52:30 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.166 2018/01/05 15:03:09 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -67,18 +67,17 @@
 void	parse_conf_decl(FILE *, char *);
 int	parse_hex_octets(FILE *, unsigned int *, uint8_t **);
 int	parse_option_list(FILE *, int *, uint8_t *);
-int	parse_interface_decl(FILE *, char *);
+int	parse_interface(FILE *, char *);
 int	parse_lease(FILE *, char *,struct client_lease **);
 void	parse_lease_decl(FILE *,struct client_lease *, char *);
-int	parse_option_decl(FILE *, int *, struct option_data *);
+int	parse_option(FILE *, int *, struct option_data *);
 int	parse_reject_statement(FILE *);
 
 /*
- * conf :== conf-decl EOF
- * conf-decl :==
+ * conf-decls :==
  *	  <nil>
  *	| conf-decl
- *	| conf-decl conf-decl
+ *	| conf-decls conf-decl
  */
 void
 read_conf(char *name)
@@ -155,7 +154,6 @@ read_conf(char *name)
 }
 
 /*
- * lease-db :== leases EOF
  * leases :==
  *	  <nil>
  *	| lease
@@ -211,30 +209,27 @@ read_lease_db(char *name, struct client_lease_tq *tq)
 
 /*
  * conf-decl :==
- *	  simple-conf-decl SEMI
- *	| interface-decl
- *
- * simple-conf-decl :==
- *	  APPEND		option-decl
- *	| BACKOFF_CUTOFF	number
- *	| DEFAULT		option-decl
- *	| FILENAME		string
- *	| FIXED_ADDR		ip-address
- *	| IGNORE		option-list
- *	| INITIAL_INTERVAL	number
- *	| LINK_TIMEOUT		number
- *	| NEXT_SERVER		string
- *	| PREPEND		option-decl
- *	| REBOOT		number
- *	| REJECT		ip-address
- *	| REQUEST		option-list
- *	| REQUIRE		option-list
- *	| RETRY			number
- *	| SELECT_TIMEOUT	number
- *	| SEND			option-decl
- *	| SERVER_NAME		string
- *	| SUPERSEDE		option-decl
- *	| TIMEOUT		number
+ *	  APPEND		option SEMI
+ *	| BACKOFF_CUTOFF	number SEMI
+ *	| DEFAULT		option SEMI
+ *	| FILENAME		string SEMI
+ *	| FIXED_ADDR		ip-address SEMI
+ *	| IGNORE		option-name-list SEMI
+ *	| INITIAL_INTERVAL	number SEMI
+ *	| INTERFACE		interface
+ *	| LINK_TIMEOUT		number SEMI
+ *	| NEXT_SERVER		string SEMI
+ *	| PREPEND		option SEMI
+ *	| REBOOT		number SEMI
+ *	| REJECT		ip-address SEMI
+ *	| REQUEST		option-name-list SEMI
+ *	| REQUIRE		option-name-list SEMI
+ *	| RETRY			number SEMI
+ *	| SELECT_TIMEOUT	number SEMI
+ *	| SEND			option SEMI
+ *	| SERVER_NAME		string SEMI
+ *	| SUPERSEDE		option SEMI
+ *	| TIMEOUT		number SEMI
  */
 void
 parse_conf_decl(FILE *cfile, char *name)
@@ -248,7 +243,7 @@ parse_conf_decl(FILE *cfile, char *name)
 
 	switch (token) {
 	case TOK_APPEND:
-		if (parse_option_decl(cfile, &i, config->defaults) == 1) {
+		if (parse_option(cfile, &i, config->defaults) == 1) {
 			config->default_actions[i] = ACTION_APPEND;
 			parse_semi(cfile);
 		}
@@ -260,7 +255,7 @@ parse_conf_decl(FILE *cfile, char *name)
 		}
 		break;
 	case TOK_DEFAULT:
-		if (parse_option_decl(cfile, &i, config->defaults) == 1) {
+		if (parse_option(cfile, &i, config->defaults) == 1) {
 			config->default_actions[i] = ACTION_DEFAULT;
 			parse_semi(cfile);
 		}
@@ -290,7 +285,7 @@ parse_conf_decl(FILE *cfile, char *name)
 		}
 		break;
 	case TOK_INTERFACE:
-		if (parse_interface_decl(cfile, name) == 1)
+		if (parse_interface(cfile, name) == 1)
 			;
 		break;
 	case TOK_LEASE:
@@ -307,7 +302,7 @@ parse_conf_decl(FILE *cfile, char *name)
 			parse_semi(cfile);
 		break;
 	case TOK_PREPEND:
-		if (parse_option_decl(cfile, &i, config->defaults) == 1) {
+		if (parse_option(cfile, &i, config->defaults) == 1) {
 			config->default_actions[i] = ACTION_PREPEND;
 			parse_semi(cfile);
 		}
@@ -345,7 +340,7 @@ parse_conf_decl(FILE *cfile, char *name)
 		}
 		break;
 	case TOK_SEND:
-		if (parse_option_decl(cfile, &i, config->send_options) == 1)
+		if (parse_option(cfile, &i, config->send_options) == 1)
 			parse_semi(cfile);
 		break;
 	case TOK_SERVER_NAME:
@@ -356,7 +351,7 @@ parse_conf_decl(FILE *cfile, char *name)
 		}
 		break;
 	case TOK_SUPERSEDE:
-		if (parse_option_decl(cfile, &i, config->defaults) == 1) {
+		if (parse_option(cfile, &i, config->defaults) == 1) {
 			config->default_actions[i] = ACTION_SUPERSEDE;
 			parse_semi(cfile);
 		}
@@ -420,11 +415,8 @@ parse_hex_octets(FILE *cfile, unsigned int *len, uint8_t **buf)
 /*
  * option-list :==
  *	  <nil>
- *	| simple-option-list
- *
- * simple-option-list :=
  *	| option-name
- *	| simple-option-list COMMA option-name
+ *	| option-list COMMA option-name
  */
 int
 parse_option_list(FILE *cfile, int *count, uint8_t *optlist)
@@ -474,11 +466,11 @@ parse_option_list(FILE *cfile, int *count, uint8_t *optlist)
 }
 
 /*
- * interface-decl :==
- *	INTERFACE string LBRACE conf-decl RBRACE
+ * interface :==
+ *	string LBRACE conf-decls RBRACE
  */
 int
-parse_interface_decl(FILE *cfile, char *name)
+parse_interface(FILE *cfile, char *name)
 {
 	char	*val;
 	int	 token;
@@ -521,12 +513,12 @@ parse_interface_decl(FILE *cfile, char *name)
 }
 
 /*
- * lease :== LEASE RBRACE lease-decl LBRACE
+ * lease :== LEASE RBRACE lease-decls LBRACE
  *
- * lease-decl :==
+ * lease-decls :==
  *	  <nil>
  *	| lease-decl
- *	| lease-decl lease-decl
+ *	| lease-decls lease-decl
  */
 int
 parse_lease(FILE *cfile, char *name,
@@ -577,21 +569,18 @@ parse_lease(FILE *cfile, char *name,
 
 /*
  * lease-decl :==
- *	  simple-lease-decl SEMI
- *
- * simple-lease-decl :=
- *	  BOOTP
- *	| EPOCH		number
- *	| EXPIRE	time-decl
- *	| FILENAME	string
- *	| FIXED_ADDR	ip_address
- *	| INTERFACE	string
- *	| NEXT_SERVER	string
- *	| OPTION	option-decl
- *	| REBIND	time-decl
- *	| RENEW		time-decl
- *	| SERVER_NAME	string
- *	| SSID		string
+ *	  BOOTP		SEMI
+ *	| EPOCH		number SEMI
+ *	| EXPIRE	<skip to semi> SEMI
+ *	| FILENAME	string SEMI
+ *	| FIXED_ADDR	ip_address SEMI
+ *	| INTERFACE	string SEMI
+ *	| NEXT_SERVER	string SEMI
+ *	| OPTION	option SEMI
+ *	| REBIND	<skip to semi> SEMI
+ *	| RENEW		<skip to semi> SEMI
+ *	| SERVER_NAME	string SEMI
+ *	| SSID		string SEMI
  */
 void
 parse_lease_decl(FILE *cfile, struct client_lease *lease, char *name)
@@ -635,7 +624,7 @@ parse_lease_decl(FILE *cfile, struct client_lease *lease, char *name)
 			return;
 		break;
 	case TOK_OPTION:
-		if (parse_option_decl(cfile, &i, lease->options) == 0)
+		if (parse_option(cfile, &i, lease->options) == 0)
 			return;
 		break;
 	case TOK_REBIND:
@@ -671,14 +660,28 @@ parse_lease_decl(FILE *cfile, struct client_lease *lease, char *name)
 	}
 
 	parse_semi(cfile);
-}
+ }
 
 /*
- * option-decl :=
+ * option :==
  *	option-name option-value
+ *
+ * option-value :==
+ *	  text
+ *	| hex-octets
+ *	| signed-32
+ *	| unsigned-32
+ *	| unsigned-16
+ *	| unsigned-8
+ *	| flag
+ *	| ip-address
+ *	| ip-address-array
+ *	| ip-address-pair-array
+ *	| uint16-array
+ *	| cidr-ip-address-array
  */
 int
-parse_option_decl(FILE *cfile, int *code, struct option_data *options)
+parse_option(FILE *cfile, int *code, struct option_data *options)
 {
 	uint8_t			 hunkbuf[1024], cidr[5], buf[4];
 	struct in_addr		 ip_addr;
