@@ -1,4 +1,4 @@
-/*	$OpenBSD: siphash.c,v 1.4 2017/04/12 18:35:50 florian Exp $ */
+/*	$OpenBSD: siphash.c,v 1.5 2018/01/05 19:05:09 mikeb Exp $ */
 
 /*-
  * Copyright (c) 2013 Andre Oppermann <andre@FreeBSD.org>
@@ -102,7 +102,7 @@ SipHash_Update(SIPHASH_CTX *ctx, int rc, int rf, const void *src, size_t len)
 	}
 
 	if (len > 0)
-		memcpy(&ctx->buf[used], ptr, len);
+		memcpy(ctx->buf, ptr, len);
 }
 
 void
