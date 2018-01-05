@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.54 2018/01/04 19:06:16 millert Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.55 2018/01/05 15:44:31 jca Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -1068,7 +1068,6 @@ c_jobs(char **wp)
 	return rv;
 }
 
-#ifdef JOBS
 int
 c_fgbg(char **wp)
 {
@@ -1092,7 +1091,6 @@ c_fgbg(char **wp)
 	 */
 	return (bg || Flag(FPOSIX)) ? 0 : rv;
 }
-#endif
 
 struct kill_info {
 	int num_width;
@@ -1398,10 +1396,8 @@ const struct builtin kshbuiltins [] = {
 	{"=typeset", c_typeset},
 	{"+unalias", c_unalias},
 	{"whence", c_whence},
-#ifdef JOBS
 	{"+bg", c_fgbg},
 	{"+fg", c_fgbg},
-#endif
 #ifdef EMACS
 	{"bind", c_bind},
 #endif

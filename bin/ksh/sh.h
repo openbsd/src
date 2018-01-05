@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.66 2017/12/27 13:02:57 millert Exp $	*/
+/*	$OpenBSD: sh.h,v 1.67 2018/01/05 15:44:31 jca Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -155,9 +155,7 @@ enum sh_flag {
 	FNOGLOB,	/* -f: don't do file globbing */
 	FNOHUP,		/* -H: don't kill running jobs when login shell exits */
 	FNOLOG,		/* don't save functions in history (ignored) */
-#ifdef	JOBS
 	FNOTIFY,	/* -b: asynchronous job completion notification */
-#endif
 	FNOUNSET,	/* -u: using an unset var is an error */
 	FPHYSICAL,	/* -o physical: don't do logical cd's/pwd's */
 	FPOSIX,		/* -o posix: be posixly correct */

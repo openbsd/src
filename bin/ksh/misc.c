@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.63 2018/01/04 19:06:16 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.64 2018/01/05 15:44:31 jca Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -139,19 +139,13 @@ const struct option sh_options[] = {
 	{ "keyword",	'k',		OF_ANY },
 	{ "login",	'l',	    OF_CMDLINE },
 	{ "markdirs",	'X',		OF_ANY },
-#ifdef JOBS
 	{ "monitor",	'm',		OF_ANY },
-#else /* JOBS */
-	{ NULL,	'm',		     0 }, /* so FMONITOR not ifdef'd */
-#endif /* JOBS */
 	{ "noclobber",	'C',		OF_ANY },
 	{ "noexec",	'n',		OF_ANY },
 	{ "noglob",	'f',		OF_ANY },
 	{ "nohup",	  0,		OF_ANY },
 	{ "nolog",	  0,		OF_ANY }, /* no effect */
-#ifdef	JOBS
 	{ "notify",	'b',		OF_ANY },
-#endif	/* JOBS */
 	{ "nounset",	'u',		OF_ANY },
 	{ "physical",	  0,		OF_ANY }, /* non-standard */
 	{ "posix",	  0,		OF_ANY }, /* non-standard */
@@ -273,12 +267,10 @@ change_flag(enum sh_flag f,
 
 	oldval = Flag(f);
 	Flag(f) = newval;
-#ifdef JOBS
 	if (f == FMONITOR) {
 		if (what != OF_CMDLINE && newval != oldval)
 			j_change();
 	} else
-#endif /* JOBS */
 #ifdef EDIT
 	if (0
 # ifdef VI

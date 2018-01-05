@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.85 2017/12/12 00:18:58 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.86 2018/01/05 15:44:31 jca Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -91,9 +91,7 @@ static const char *initcoms [] = {
 	 /* Standard ksh aliases */
 	  "hash=alias -t",	/* not "alias -t --": hash -r needs to work */
 	  "type=whence -v",
-#ifdef JOBS
 	  "stop=kill -STOP",
-#endif
 	  "autoload=typeset -fu",
 	  "functions=typeset -f",
 #ifdef HISTORY

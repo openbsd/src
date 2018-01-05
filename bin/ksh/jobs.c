@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.56 2018/01/05 13:21:52 tb Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.57 2018/01/05 15:44:31 jca Exp $	*/
 
 /*
  * Process and job control
@@ -86,10 +86,8 @@ struct job {
 	Proc	*proc_list;	/* process list */
 	Proc	*last_proc;	/* last process in list */
 	Coproc_id coproc_id;	/* 0 or id of coprocess output pipe */
-#ifdef JOBS
 	struct termios ttystate;/* saved tty state for stopped jobs */
 	pid_t	saved_ttypgrp;	/* saved tty process group for stopped jobs */
-#endif /* JOBS */
 };
 
 /* Flags for j_waitj() */
@@ -127,13 +125,11 @@ static int		child_max;	/* CHILD_MAX */
 /* held_sigchld is set if sigchld occurs before a job is completely started */
 static volatile sig_atomic_t held_sigchld;
 
-#ifdef JOBS
 static struct shf	*shl_j;
 static int		ttypgrp_ok;	/* set if can use tty pgrps */
 static pid_t		restore_ttypgrp = -1;
 static pid_t		our_pgrp;
 static int const	tt_sigs[] = { SIGTSTP, SIGTTIN, SIGTTOU };
-#endif /* JOBS */
 
 static void		j_set_async(Job *);
 static void		j_startjob(Job *);
@@ -163,7 +159,6 @@ j_init(int mflagset)
 	setsig(&sigtraps[SIGCHLD], j_sigchld,
 	    SS_RESTORE_ORIG|SS_FORCE|SS_SHTRAP);
 
-#ifdef JOBS
 	if (!mflagset && Flag(FTALKING))
 		Flag(FMONITOR) = 1;
 
@@ -189,10 +184,8 @@ j_init(int mflagset)
 	/* j_change() calls tty_init() */
 	if (Flag(FMONITOR))
 		j_change();
-	else
-#endif /* JOBS */
-		if (Flag(FTALKING))
-			tty_init(true);
+	else if (Flag(FTALKING))
+		tty_init(true);
 }
 
 /* suspend the shell */
@@ -267,21 +260,18 @@ j_exit(void)
 				kill_job(j, SIGHUP);
 			else
 				killpg(j->pgrp, SIGHUP);
-#ifdef JOBS
 			if (j->state == PSTOPPED) {
 				if (j->pgrp == 0)
 					kill_job(j, SIGCONT);
 				else
 					killpg(j->pgrp, SIGCONT);
 			}
-#endif /* JOBS */
 		}
 	}
 	if (killed)
 		sleep(1);
 	j_notify();
 
-#ifdef JOBS
 	if (kshpid == procpid && restore_ttypgrp >= 0) {
 		/* Need to restore the tty pgrp to what it was when the
 		 * shell started up, so that the process that started us
@@ -297,10 +287,8 @@ j_exit(void)
 		Flag(FMONITOR) = 0;
 		j_change();
 	}
-#endif /* JOBS */
 }
 
-#ifdef JOBS
 /* turn job control on or off according to Flag(FMONITOR) */
 void
 j_change(void)
@@ -389,7 +377,6 @@ j_change(void)
 			tty_close();
 	}
 }
-#endif /* JOBS */
 
 /* execute tree in child subprocess */
 int
@@ -472,7 +459,6 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 	else
 		p->pid = i;
 
-#ifdef JOBS
 	/* job control set up */
 	if (Flag(FMONITOR) && !(flags&XXCOM)) {
 		int	dotty = 0;
@@ -493,7 +479,6 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 		if (ttypgrp_ok && dotty && !(flags & XBGND))
 			tcsetpgrp(tty_fd, j->pgrp);
 	}
-#endif /* JOBS */
 
 	/* used to close pipe input fd */
 	if (close_fd >= 0 && (((flags & XPCLOSE) && !ischild) ||
@@ -505,7 +490,6 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 			coproc_cleanup(false);
 		sigprocmask(SIG_SETMASK, &omask, NULL);
 		cleanup_parents_env();
-#ifdef JOBS
 		/* If FMONITOR or FTALKING is set, these signals are ignored,
 		 * if neither FMONITOR nor FTALKING are set, the signals have
 		 * their inherited values.
@@ -515,7 +499,6 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 				setsig(&sigtraps[tt_sigs[i]], SIG_DFL,
 				    SS_RESTORE_DFL|SS_FORCE);
 		}
-#endif /* JOBS */
 		if (Flag(FBGNICE) && (flags & XBGND))
 			nice(4);
 		if ((flags & XBGND) && !Flag(FMONITOR)) {
@@ -533,10 +516,8 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 		}
 		remove_job(j, "child");	/* in case of `jobs` command */
 		nzombie = 0;
-#ifdef JOBS
 		ttypgrp_ok = 0;
 		Flag(FMONITOR) = 0;
-#endif /* JOBS */
 		Flag(FTALKING) = 0;
 		tty_close();
 		cleartraps();
@@ -550,12 +531,10 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 	/* Ensure next child gets a (slightly) different $RANDOM sequence */
 	change_random();
 	if (!(flags & XPIPEO)) {	/* last process in a job */
-#ifdef JOBS
 		/* YYY: Is this needed? (see also YYY above)
 		   if (Flag(FMONITOR) && !(flags&(XXCOM|XBGND)))
 			tcsetpgrp(tty_fd, j->pgrp);
 		*/
-#endif /* JOBS */
 		j_startjob(j);
 		if (flags & XCOPROC) {
 			j->coproc_id = coproc.id;
@@ -697,10 +676,8 @@ j_kill(const char *cp, int sig)
 			rv = 1;
 		}
 	} else {
-#ifdef JOBS
 		if (j->state == PSTOPPED && (sig == SIGTERM || sig == SIGHUP))
 			(void) killpg(j->pgrp, SIGCONT);
-#endif /* JOBS */
 		if (killpg(j->pgrp, sig) < 0) {
 			bi_errorf("%s: %s", cp, strerror(errno));
 			rv = 1;
@@ -712,7 +689,6 @@ j_kill(const char *cp, int sig)
 	return rv;
 }
 
-#ifdef JOBS
 /* fg and bg built-ins: called only if Flag(FMONITOR) set */
 int
 j_resume(const char *cp, int bg)
@@ -759,7 +735,6 @@ j_resume(const char *cp, int bg)
 	if (bg)
 		j_set_async(j);
 	else {
-# ifdef JOBS
 		/* attach tty to job */
 		if (j->state == PRUNNING) {
 			if (ttypgrp_ok && (j->flags & JF_SAVEDTTY))
@@ -779,7 +754,6 @@ j_resume(const char *cp, int bg)
 				return 1;
 			}
 		}
-# endif /* JOBS */
 		j->flags |= JF_FG;
 		j->flags &= ~JF_KNOWN;
 		if (j == async_job)
@@ -791,7 +765,6 @@ j_resume(const char *cp, int bg)
 
 		if (!bg) {
 			j->flags &= ~JF_FG;
-# ifdef JOBS
 			if (ttypgrp_ok && (j->flags & JF_SAVEDTTY))
 				tcsetattr(tty_fd, TCSADRAIN, &tty_state);
 			if (ttypgrp_ok && tcsetpgrp(tty_fd, our_pgrp) < 0) {
@@ -800,7 +773,6 @@ j_resume(const char *cp, int bg)
 				    tty_fd, (int) our_pgrp,
 				    strerror(errno));
 			}
-# endif /* JOBS */
 		}
 		sigprocmask(SIG_SETMASK, &omask, NULL);
 		bi_errorf("cannot continue job %s: %s",
@@ -808,17 +780,14 @@ j_resume(const char *cp, int bg)
 		return 1;
 	}
 	if (!bg) {
-# ifdef JOBS
 		if (ttypgrp_ok) {
 			j->flags &= ~(JF_SAVEDTTY | JF_SAVEDTTYPGRP);
 		}
-# endif /* JOBS */
 		rv = j_waitj(j, JW_NONE, "jw:resume");
 	}
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	return rv;
 }
-#endif /* JOBS */
 
 /* are there any running or stopped jobs ? */
 int
@@ -828,10 +797,8 @@ j_stopped_running(void)
 	int	which = 0;
 
 	for (j = job_list; j != NULL; j = j->next) {
-#ifdef JOBS
 		if (j->ppid == procpid && j->state == PSTOPPED)
 			which |= 1;
-#endif /* JOBS */
 		if (Flag(FLOGIN) && !Flag(FNOHUP) && procpid == kshpid &&
 		    j->ppid == procpid && j->state == PRUNNING)
 			which |= 2;
@@ -919,10 +886,8 @@ j_notify(void)
 
 	sigprocmask(SIG_BLOCK, &sm_sigchld, &omask);
 	for (j = job_list; j; j = j->next) {
-#ifdef JOBS
 		if (Flag(FMONITOR) && (j->flags & JF_CHANGED))
 			j_print(j, JP_MEDIUM, shl_out);
-#endif /* JOBS */
 		/* Remove job after doing reports so there aren't
 		 * multiple +/- jobs.
 		 */
@@ -1053,7 +1018,6 @@ j_waitj(Job *j,
 		int	status;
 
 		j->flags &= ~JF_FG;
-#ifdef JOBS
 		if (Flag(FMONITOR) && ttypgrp_ok && j->pgrp) {
 			/*
 			 * Save the tty's current pgrp so it can be restored
@@ -1080,7 +1044,6 @@ j_waitj(Job *j,
 				tcgetattr(tty_fd, &j->ttystate);
 			}
 		}
-#endif /* JOBS */
 		if (tty_fd >= 0) {
 			/* Only restore tty settings if job was originally
 			 * started in the foreground.  Problems can be
@@ -1110,7 +1073,6 @@ j_waitj(Job *j,
 					j->flags &= ~JF_USETTYMODE;
 			}
 		}
-#ifdef JOBS
 		/* If it looks like user hit ^C to kill a job, pretend we got
 		 * one too to break out of for loops, etc.  (at&t ksh does this
 		 * even when not monitoring, but this doesn't make sense since
@@ -1121,7 +1083,6 @@ j_waitj(Job *j,
 		    WIFSIGNALED(status) &&
 		    (sigtraps[WTERMSIG(status)].flags & TF_TTY_INTR))
 			trapsig(WTERMSIG(status));
-#endif /* JOBS */
 	}
 
 	j_usrtime = j->usrtime;
@@ -1195,12 +1156,9 @@ found:
 		timersub(&j->systime, &ru0.ru_stime, &j->systime);
 		ru0 = ru1;
 		p->status = status;
-#ifdef JOBS
 		if (WIFSTOPPED(status))
 			p->state = PSTOPPED;
-		else
-#endif /* JOBS */
-		if (WIFSIGNALED(status))
+		else if (WIFSIGNALED(status))
 			p->state = PSIGNALLED;
 		else
 			p->state = PEXITED;
@@ -1278,7 +1236,6 @@ check_job(Job *j)
 	}
 
 	j->flags |= JF_CHANGED;
-#ifdef JOBS
 	if (Flag(FMONITOR) && !(j->flags & JF_XXCOM)) {
 		/* Only put stopped jobs at the front to avoid confusing
 		 * the user (don't want finished jobs effecting %+ or %-)
@@ -1307,7 +1264,6 @@ check_job(Job *j)
 				remove_job(j, "notify");
 		}
 	}
-#endif /* JOBS */
 	if (!Flag(FMONITOR) && !(j->flags & (JF_WAITING|JF_FG)) &&
 	    j->state != PSTOPPED) {
 		if (j == async_job || (j->flags & JF_KNOWN)) {
