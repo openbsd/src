@@ -1,4 +1,4 @@
-/* $OpenBSD: sxitwi.c,v 1.5 2017/12/30 19:04:00 kettenis Exp $ */
+/* $OpenBSD: sxitwi.c,v 1.6 2018/01/05 12:46:13 kettenis Exp $ */
 /*	$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -127,12 +127,6 @@
 #define	STAT_NRS	0xf8	/* No relevant status */
 
 #define	SOFTRESET_VAL		0		/* reset value */
-
-#define	TWSI_RETRY_COUNT	1000		/* retry loop count */
-#define	TWSI_RETRY_DELAY	1		/* retry delay */
-#define	TWSI_STAT_DELAY		1		/* poll status delay */
-#define	TWSI_READ_DELAY		2		/* read delay */
-#define	TWSI_WRITE_DELAY	2		/* write delay */
 
 struct sxitwi_softc {
 	struct device		 sc_dev;
@@ -291,21 +285,13 @@ sxitwi_bus_scan(struct device *self, struct i2cbus_attach_args *iba, void *arg)
 u_int
 sxitwi_read_4(struct sxitwi_softc *sc, u_int reg)
 {
-	u_int val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg);
-
-	delay(TWSI_READ_DELAY);
-
-	return val;
+	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg);
 }
 
 void
 sxitwi_write_4(struct sxitwi_softc *sc, u_int reg, u_int val)
 {
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, reg, val);
-
-	delay(TWSI_WRITE_DELAY);
-
-	return;
 }
 
 int
@@ -317,7 +303,6 @@ sxitwi_intr(void *arg)
 	val = sxitwi_read_4(sc, TWSI_CONTROL);
 	if (val & CONTROL_IFLG) {
 		sxitwi_write_4(sc, TWSI_CONTROL, val & ~CONTROL_INTEN);
-		wakeup(&sc->sc_dev);
 		return 1;
 	}
 	return 0;
@@ -364,19 +349,15 @@ int
 sxitwi_send_stop(void *v, int flags)
 {
 	struct sxitwi_softc *sc = v;
-	int retry = TWSI_RETRY_COUNT;
 
 	sc->sc_started = 0;
 
-	/* Interrupt is not generated for STAT_NRS. */
+	/*
+	 * No need to wait; the controller doesn't transmit the next
+	 * START condition until the bus is free.
+	 */
 	sxitwi_write_4(sc, TWSI_CONTROL, CONTROL_STOP | sc->sc_twsien_iflg);
-	while (--retry > 0) {
-		if (sxitwi_read_4(sc, TWSI_STATUS) == STAT_NRS)
-			return 0;
-		delay(TWSI_STAT_DELAY);
-	}
-
-	return -1;
+	return 0;
 }
 
 int
@@ -458,30 +439,21 @@ int
 sxitwi_wait(struct sxitwi_softc *sc, u_int control, u_int expect, int flags)
 {
 	u_int status;
-	int timo, error = 0;
+	int timo;
 
-	delay(5);
-	if (!(flags & I2C_F_POLL))
-		control |= CONTROL_INTEN;
 	sxitwi_write_4(sc, TWSI_CONTROL, control | sc->sc_twsien_iflg);
 
-	timo = 0;
-	do {
+	for (timo = 10000; timo > 0; timo--) {
 		control = sxitwi_read_4(sc, TWSI_CONTROL);
 		if (control & CONTROL_IFLG)
 			break;
-		if (flags & I2C_F_POLL)
-			delay(TWSI_RETRY_DELAY);
-		else {
-			error = tsleep(&sc->sc_dev, PWAIT, "sxitwi", 100);
-			if (error)
-				return error;
-		}
-	} while (++timo < 1000000);
+		delay(1);
+	}
+	if (timo == 0)
+		return ETIMEDOUT;
 
 	status = sxitwi_read_4(sc, TWSI_STATUS);
 	if (status != expect)
 		return EIO;
-
-	return error;
+	return 0;
 }
