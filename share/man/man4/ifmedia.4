@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifmedia.4,v 1.22 2016/01/12 09:28:09 stsp Exp $
+.\"	$OpenBSD: ifmedia.4,v 1.23 2018/01/05 14:34:43 jmc Exp $
 .\"	$NetBSD: ifmedia.4,v 1.14 2001/06/30 17:57:56 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 12 2016 $
+.Dd $Mdocdate: January 5 2018 $
 .Dt IFMEDIA 4
 .Os
 .Sh NAME
@@ -217,7 +217,7 @@ Dual-attached station vs. Single-attached station.
 .Sh MEDIA TYPES AND OPTIONS FOR IEEE802.11 WIRELESS LAN
 The following media types are defined for IEEE802.11 Wireless LAN:
 .Pp
-.Bl -tag -offset indent -width IFM_IEEE80211_OFDM22 -compact
+.Bl -tag -offset indent -width IFM_IEEE80211_HT_MSCx -compact
 .It Dv IFM_IEEE80211_FH1
 Frequency Hopping 1Mbps.
 [FH1]
@@ -266,6 +266,8 @@ OFDM 54Mbps.
 .It Dv IFM_IEEE80211_OFDM72
 OFDM 72Mbps.
 [OFDM72]
+.It Dv IFM_IEEE80211_HT_MSCx
+HT OFDM MCS x (where x is in the range 0 - 31, inclusive).
 .El
 .Pp
 The following media options are defined for IEEE802.11 Wireless LAN:
@@ -303,6 +305,9 @@ The following media modes are defined for IEEE802.11 Wireless LAN:
 .It Dv IFM_IEEE80211_FH
 2GHz, GFSK mode.
 [fh]
+.It Dv IFM_IEEE70211_11N
+11n/HT 2GHz/5GHz
+[11n]
 .El
 .Pp
 The channels detailed below are defined for IEEE802.11 Wireless LAN.
