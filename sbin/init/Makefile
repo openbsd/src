@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.9 2015/09/25 16:09:09 tedu Exp $
+#	$OpenBSD: Makefile,v 1.10 2018/01/06 16:26:12 millert Exp $
 
 PROG=	init
 MAN=	init.8
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
-CFLAGS+=-DDEBUGSHELL -DSECURE -DLOGIN_CAP
+CFLAGS+=-DDEBUGSHELL -DSECURE
 
 .include <bsd.prog.mk>

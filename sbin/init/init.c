@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.65 2017/06/16 06:46:54 natano Exp $	*/
+/*	$OpenBSD: init.c,v 1.66 2018/01/06 16:26:12 millert Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <login_cap.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -59,10 +60,6 @@
 #ifdef SECURE
 #include <pwd.h>
 #include <readpassphrase.h>
-#endif
-
-#ifdef LOGIN_CAP
-#include <login_cap.h>
 #endif
 
 #include "pathnames.h"
@@ -177,15 +174,10 @@ pid_t start_getty(session_t *);
 void transition_handler(int);
 void alrm_handler(int);
 void setsecuritylevel(int);
+void setprocresources(char *);
 int getsecuritylevel(void);
 int setupargv(session_t *, struct ttyent *);
 int clang;
-
-#ifdef LOGIN_CAP
-void setprocresources(char *);
-#else
-#define setprocresources(p)
-#endif
 
 void clear_session_logs(session_t *);
 
@@ -1442,7 +1434,6 @@ f_death(void)
 	return single_user;
 }
 
-#ifdef LOGIN_CAP
 void
 setprocresources(char *class)
 {
@@ -1454,4 +1445,3 @@ setprocresources(char *class)
 		login_close(lc);
 	}
 }
-#endif
