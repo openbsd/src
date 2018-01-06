@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.60 2018/01/06 07:59:27 sunil Exp $
+.\" $OpenBSD: smtpctl.8,v 1.61 2018/01/06 09:16:37 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -246,7 +246,7 @@ Displays runtime statistics concerning
 .It Cm show status
 Shows if MTA, MDA and SMTP systems are currently running or paused.
 .It Cm spf walk
-Recursively lookup SPF records for the domains read from stdin.
+Recursively look up SPF records for the domains read from stdin.
 For example:
 .Bd -literal -offset indent
 # smtpctl spf walk < domains.txt
