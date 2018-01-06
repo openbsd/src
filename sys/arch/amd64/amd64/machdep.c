@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.236 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.237 2018/01/06 22:03:12 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -999,25 +999,27 @@ dumpsys(void)
 
 /*
  * Force the userspace FS.base to be reloaded from the PCB on return from
- * the kernel, and reset most the segment registers (%ds, %es, and %fs)
+ * the kernel, and reset the segment registers (%ds, %es, %fs, and %gs)
  * to their expected userspace value.
  */
 void
 reset_segs(void)
 {
 	/*
-	 * Segment registers (%ds, %es, %fs, %gs) aren't in the trapframe.
-	 * %gs is reset on return to userspace to avoid having to deal with
-	 * swapgs; others are reset on context switch and here.  This
-	 * operates like the cpu_switchto() sequence: if we haven't reset
-	 * %[def]s already, do so now.
-	 */
+	 * This operates like the cpu_switchto() sequence: if we
+	 * haven't reset %[defg]s already, do so now.
+	*/
 	if (curcpu()->ci_flags & CPUF_USERSEGS) {
 		curcpu()->ci_flags &= ~CPUF_USERSEGS;
 		__asm volatile(
 		    "movw %%ax,%%ds\n\t"
 		    "movw %%ax,%%es\n\t"
-		    "movw %%ax,%%fs" : : "a"(GSEL(GUDATA_SEL, SEL_UPL)));
+		    "movw %%ax,%%fs\n\t"
+		    "cli\n\t"		/* block intr when on user GS.base */
+		    "swapgs\n\t"	/* swap from kernel to user GS.base */
+		    "movw %%ax,%%gs\n\t"/* set %gs to UDATA and GS.base to 0 */
+		    "swapgs\n\t"	/* back to kernel GS.base */
+		    "sti" : : "a"(GSEL(GUDATA_SEL, SEL_UPL)));
 	}
 }
 

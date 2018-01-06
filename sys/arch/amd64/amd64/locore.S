@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.91 2017/10/10 07:04:05 mlarkin Exp $	*/
+/*	$OpenBSD: locore.S,v 1.92 2018/01/06 22:03:12 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -369,11 +369,15 @@ switch_exited:
 	btrl	$CPUF_USERSEGS_BIT, CPUVAR(FLAGS)
 	jnc	restore_saved
 
-	/* set %ds, %es, and %fs to expected value to prevent info leak */
+	/* set %ds, %es, %fs, and %gs to expected value to prevent info leak */
 	movw	$(GSEL(GUDATA_SEL, SEL_UPL)),%ax
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%fs
+	cli			/* block interrupts when on user GS.base */
+	swapgs			/* switch from kernel to user GS.base */
+	movw	%ax,%gs		/* set %gs to UDATA and GS.base to 0 */
+	swapgs			/* back to kernel GS.base */
 
 restore_saved:
 	/*
