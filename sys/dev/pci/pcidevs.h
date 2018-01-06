@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1832 2018/01/02 21:23:13 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1833 2018/01/06 20:14:01 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6969,6 +6969,7 @@
 #define	PCI_PRODUCT_SMI_SM811	0x0811		/* LynxE+ */
 #define	PCI_PRODUCT_SMI_SM820	0x0820		/* Lynx3D */
 #define	PCI_PRODUCT_SMI_SM910	0x0910		/* 910 */
+#define	PCI_PRODUCT_SMI_SM2260	0x2260		/* SM2260 NVMe */
 
 /* SMSC products */
 #define	PCI_PRODUCT_SMSC_VICTORY66_IDE_1	0x9130		/* Victory66 IDE */
