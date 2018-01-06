@@ -1,4 +1,4 @@
-/* $OpenBSD: sxitwi.c,v 1.6 2018/01/05 12:46:13 kettenis Exp $ */
+/* $OpenBSD: sxitwi.c,v 1.7 2018/01/06 11:23:14 kettenis Exp $ */
 /*	$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -180,9 +180,32 @@ sxitwi_attach(struct device *parent, struct device *self, void *aux)
 	struct sxitwi_softc *sc = (struct sxitwi_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct i2cbus_attach_args iba;
+	uint32_t freq, parent_freq;
+	uint32_t m, n;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
+		return;
+	}
+
+	/*
+	 * Calculate clock dividers up front such that we can bail out
+	 * early if the desired clock rate can't be obtained.  Make
+	 * sure the bus clock rate is never above the desired rate.
+	 */
+	parent_freq = clock_get_frequency(faa->fa_node, NULL);
+	freq = OF_getpropint(faa->fa_node, "clock-frequency", 100000);
+	if (parent_freq == 0) {
+		printf(": unknown clock frequency\n");
+		return;
+	}
+	n = 0, m = 0;
+	while ((freq * (1 << n) * 16 * 10) < parent_freq)
+		n++;
+	while ((freq * (1 << n) * (m + 1) * 10) < parent_freq)
+		m++;
+	if (n > 8 || m > 16) {
+		printf(": clock frequency too high\n");
 		return;
 	}
 
@@ -222,12 +245,8 @@ sxitwi_attach(struct device *parent, struct device *self, void *aux)
 	clock_enable(faa->fa_node, NULL);
 	reset_deassert_all(faa->fa_node);
 
-	/*
-	 * Set clock rate to 100kHz. From the datasheet:
-	 *   For 100Khz standard speed 2Wire, CLK_N=2, CLK_M=11
-	 *   F0=48M/2^2=12Mhz, F1=F0/(10*(11+1)) = 0.1Mhz
-	 */
-	sxitwi_write_4(sc, TWI_CCR_REG, (11 << 3) | (2 << 0));
+	/* Set clock rate. */
+	sxitwi_write_4(sc, TWI_CCR_REG, (m << 3) | (n << 0));
 
 	/* Put the controller into Soft Reset. */
 	sxitwi_write_4(sc, TWSI_SOFTRESET, SOFTRESET_VAL);
