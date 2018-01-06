@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.12 2015/02/10 22:04:00 miod Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.13 2018/01/06 21:35:45 stsp Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -248,6 +248,14 @@ vldcp_rx_intr(void *arg)
 		switch (rx_state) {
 		case LDC_CHANNEL_DOWN:
 			DPRINTF(("Rx link down\n"));
+			if (rx_head == rx_tail)
+				break;
+			/* Discard and ack pending I/O. */
+			DPRINTF(("setting rx qhead to %lld\n", rx_tail));
+			err = hv_ldc_rx_set_qhead(lc->lc_id, rx_tail);
+			if (err == H_EOK)
+				break;
+			printf("%s: hv_ldc_rx_set_qhead %d\n", __func__, err);
 			break;
 		case LDC_CHANNEL_UP:
 			DPRINTF(("Rx link up\n"));
