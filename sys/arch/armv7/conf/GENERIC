@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.105 2018/01/06 11:48:06 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.106 2018/01/06 13:05:20 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -107,6 +107,7 @@ usb*		at ehci?	#flags 0x1
 #ohci*		at sunxi?
 #usb*		at ohci?
 sxitemp*	at fdt?			# Temperature sensor
+sxits*		at fdt?			# Touchpad controller
 sxitwi*		at fdt?			# Two-Wire Serial Interface
 iic*		at sxitwi?		# I2C bus
 
