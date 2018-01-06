@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.62 2018/01/04 19:06:16 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.63 2018/01/06 16:28:58 millert Exp $	*/
 
 #include <sys/stat.h>
 
@@ -306,7 +306,7 @@ str_val(struct tbl *vp)
 		    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" :
 		    "0123456789abcdefghijklmnopqrstuvwxyz";
 		unsigned long n;
-		int base;
+		unsigned int base;
 
 		s = strbuf + sizeof(strbuf);
 		if (vp->flag & INT_U)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.55 2018/01/05 15:44:31 jca Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.56 2018/01/06 16:28:58 millert Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -1192,7 +1192,8 @@ c_kill(char **wp)
 				ki.num_width++;
 
 			for (i = 0; i < NSIG; i++) {
-				w = sigtraps[i].name ? strlen(sigtraps[i].name) :
+				w = sigtraps[i].name ?
+				    (int)strlen(sigtraps[i].name) :
 				    ki.num_width;
 				if (w > ki.name_width)
 					ki.name_width = w;

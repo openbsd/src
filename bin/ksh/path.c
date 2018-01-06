@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.21 2018/01/04 19:06:16 millert Exp $	*/
+/*	$OpenBSD: path.c,v 1.22 2018/01/06 16:28:58 millert Exp $	*/
 
 #include <sys/stat.h>
 
@@ -228,7 +228,7 @@ do_phys_path(XString *xsp, char *xp, const char *path)
 			p++;
 		if (!*p)
 			break;
-		len = (q = strchr(p, '/')) ? q - p : strlen(p);
+		len = (q = strchr(p, '/')) ? (size_t)(q - p) : strlen(p);
 		if (len == 1 && p[0] == '.')
 			continue;
 		if (len == 2 && p[0] == '.' && p[1] == '.') {

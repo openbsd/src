@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.79 2018/01/04 19:06:16 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.80 2018/01/06 16:28:58 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1249,7 +1249,7 @@ static char *
 kb_decode(const char *s)
 {
 	static char		l[LINE + 1];
-	int			i, at = 0;
+	unsigned int		i, at = 0;
 
 	l[0] = '\0';
 	for (i = 0; i < strlen(s); i++) {
@@ -1292,13 +1292,13 @@ kb_del(struct kb_entry *k)
 static struct kb_entry *
 kb_add_string(void *func, void *args, char *str)
 {
-	int			i, count;
+	unsigned int		ele, count;
 	struct kb_entry		*k;
 	struct x_ftab		*xf = NULL;
 
-	for (i = 0; i < NELEM(x_ftab); i++)
-		if (x_ftab[i].xf_func == func) {
-			xf = (struct x_ftab *)&x_ftab[i];
+	for (ele = 0; ele < NELEM(x_ftab); ele++)
+		if (x_ftab[ele].xf_func == func) {
+			xf = (struct x_ftab *)&x_ftab[ele];
 			break;
 		}
 	if (xf == NULL)
@@ -1328,11 +1328,10 @@ static struct kb_entry *
 kb_add(void *func, void *args, ...)
 {
 	va_list			ap;
-	int			i, count;
+	unsigned int		i, count = 0;
 	char			l[LINE + 1];
 
 	va_start(ap, args);
-	count = 0;
 	while (va_arg(ap, unsigned int) != 0)
 		count++;
 	va_end(ap);
@@ -1362,7 +1361,7 @@ x_bind(const char *a1, const char *a2,
 	int macro,		/* bind -m */
 	int list)		/* bind -l */
 {
-	int			i;
+	unsigned int		i;
 	struct kb_entry		*k, *kb;
 	char			in[LINE + 1];
 

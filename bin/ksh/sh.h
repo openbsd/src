@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.67 2018/01/05 15:44:31 jca Exp $	*/
+/*	$OpenBSD: sh.h,v 1.68 2018/01/06 16:28:58 millert Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -13,6 +13,7 @@
 #include <limits.h>
 #include <setjmp.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <signal.h>
 #include <stdbool.h>
 

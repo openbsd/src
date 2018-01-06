@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.64 2018/01/05 15:44:31 jca Exp $	*/
+/*	$OpenBSD: misc.c,v 1.65 2018/01/06 16:28:58 millert Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -105,7 +105,7 @@ str_nsave(const char *s, int n, Area *ap)
 
 /* called from expand.h:XcheckN() to grow buffer */
 char *
-Xcheck_grow_(XString *xsp, char *xp, int more)
+Xcheck_grow_(XString *xsp, char *xp, size_t more)
 {
 	char *old_beg = xsp->beg;
 
@@ -175,11 +175,11 @@ const struct option sh_options[] = {
 int
 option(const char *n)
 {
-	int i;
+	unsigned int ele;
 
-	for (i = 0; i < NELEM(sh_options); i++)
-		if (sh_options[i].name && strcmp(sh_options[i].name, n) == 0)
-			return i;
+	for (ele = 0; ele < NELEM(sh_options); ele++)
+		if (sh_options[ele].name && strcmp(sh_options[ele].name, n) == 0)
+			return ele;
 
 	return -1;
 }
@@ -210,20 +210,21 @@ options_fmt_entry(void *arg, int i, char *buf, int buflen)
 static void
 printoptions(int verbose)
 {
-	int i;
+	unsigned int ele;
 
 	if (verbose) {
 		struct options_info oi;
-		int n, len;
+		unsigned int n;
+		int len;
 
 		/* verbose version */
 		shprintf("Current option settings\n");
 
-		for (i = n = oi.opt_width = 0; i < NELEM(sh_options); i++) {
-			if (sh_options[i].name) {
-				len = strlen(sh_options[i].name);
-				oi.opts[n].name = sh_options[i].name;
-				oi.opts[n++].flag = i;
+		for (ele = n = oi.opt_width = 0; ele < NELEM(sh_options); ele++) {
+			if (sh_options[ele].name) {
+				len = strlen(sh_options[ele].name);
+				oi.opts[n].name = sh_options[ele].name;
+				oi.opts[n++].flag = ele;
 				if (len > oi.opt_width)
 					oi.opt_width = len;
 			}
@@ -233,11 +234,11 @@ printoptions(int verbose)
 	} else {
 		/* short version ala ksh93 */
 		shprintf("set");
-		for (i = 0; i < NELEM(sh_options); i++) {
-			if (sh_options[i].name)
+		for (ele = 0; ele < NELEM(sh_options); ele++) {
+			if (sh_options[ele].name)
 				shprintf(" %co %s",
-					 Flag(i) ? '-' : '+',
-					 sh_options[i].name);
+					 Flag(ele) ? '-' : '+',
+					 sh_options[ele].name);
 		}
 		shprintf("\n");
 	}
@@ -246,13 +247,13 @@ printoptions(int verbose)
 char *
 getoptions(void)
 {
-	int i;
+	unsigned int ele;
 	char m[(int) FNFLAGS + 1];
 	char *cp = m;
 
-	for (i = 0; i < NELEM(sh_options); i++)
-		if (sh_options[i].c && Flag(i))
-			*cp++ = sh_options[i].c;
+	for (ele = 0; ele < NELEM(sh_options); ele++)
+		if (sh_options[ele].c && Flag(ele))
+			*cp++ = sh_options[ele].c;
 	*cp = 0;
 	return str_save(m, ATEMP);
 }
@@ -325,7 +326,8 @@ parse_args(char **argv,
 	char *opts;
 	char *array = NULL;
 	Getopt go;
-	int i, optc, set, sortargs = 0, arrayset = 0;
+	int i, optc, sortargs = 0, arrayset = 0;
+	unsigned int ele;
 
 	/* First call?  Build option strings... */
 	if (cmd_opts[0] == '\0') {
@@ -337,12 +339,12 @@ parse_args(char **argv,
 		/* see set_opts[] declaration */
 		strlcpy(set_opts, "A:o;s", sizeof set_opts);
 		q = set_opts + strlen(set_opts);
-		for (i = 0; i < NELEM(sh_options); i++) {
-			if (sh_options[i].c) {
-				if (sh_options[i].flags & OF_CMDLINE)
-					*p++ = sh_options[i].c;
-				if (sh_options[i].flags & OF_SET)
-					*q++ = sh_options[i].c;
+		for (ele = 0; ele < NELEM(sh_options); ele++) {
+			if (sh_options[ele].c) {
+				if (sh_options[ele].flags & OF_CMDLINE)
+					*p++ = sh_options[ele].c;
+				if (sh_options[ele].flags & OF_SET)
+					*q++ = sh_options[ele].c;
 			}
 		}
 		*p = '\0';
@@ -361,7 +363,7 @@ parse_args(char **argv,
 		opts = set_opts;
 	ksh_getopt_reset(&go, GF_ERROR|GF_PLUSOPT);
 	while ((optc = ksh_getopt(argv, &go, opts)) != -1) {
-		set = (go.info & GI_PLUS) ? 0 : 1;
+		int set = (go.info & GI_PLUS) ? 0 : 1;
 		switch (optc) {
 		case 'A':
 			arrayset = set ? 1 : -1;
@@ -380,14 +382,14 @@ parse_args(char **argv,
 				break;
 			}
 			i = option(go.optarg);
-			if (i >= 0 && set == Flag(i))
+			if (i != -1 && set == Flag(i))
 				/* Don't check the context if the flag
 				 * isn't changing - makes "set -o interactive"
 				 * work if you're already interactive.  Needed
 				 * if the output of "set +o" is to be used.
 				 */
 				;
-			else if (i >= 0 && (sh_options[i].flags & what))
+			else if (i != -1 && (sh_options[i].flags & what))
 				change_flag((enum sh_flag) i, what, set);
 			else {
 				bi_errorf("%s: bad option", go.optarg);
@@ -404,14 +406,14 @@ parse_args(char **argv,
 				sortargs = 1;
 				break;
 			}
-			for (i = 0; i < NELEM(sh_options); i++)
-				if (optc == sh_options[i].c &&
-				    (what & sh_options[i].flags)) {
-					change_flag((enum sh_flag) i, what,
+			for (ele = 0; ele < NELEM(sh_options); ele++)
+				if (optc == sh_options[ele].c &&
+				    (what & sh_options[ele].flags)) {
+					change_flag((enum sh_flag) ele, what,
 					    set);
 					break;
 				}
-			if (i == NELEM(sh_options)) {
+			if (ele == NELEM(sh_options)) {
 				internal_errorf(1, "parse_args: `%c'", optc);
 				return -1; /* not reached */
 			}
@@ -500,7 +502,7 @@ gmatch(const char *s, const char *p, int isfile)
 	 * the pattern.  If check fails, just to a strcmp().
 	 */
 	if (!isfile && !has_globbing(p, pe)) {
-		int len = pe - p + 1;
+		size_t len = pe - p + 1;
 		char tbuf[64];
 		char *t = len <= sizeof(tbuf) ? tbuf :
 		    alloc(len, ATEMP);
