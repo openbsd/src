@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.154 2017/07/27 18:48:30 sunil Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.155 2018/01/06 07:59:27 sunil Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -68,6 +68,8 @@ static int is_encrypted_buffer(const char *);
 static int is_gzip_buffer(const char *);
 static FILE *offline_file(void);
 static void sendmail_compat(int, char **);
+
+extern int	do_spfwalk(int, struct parameter *);
 
 extern char	*__progname;
 int		 sendmail;
@@ -1067,6 +1069,7 @@ main(int argc, char **argv)
 	cmd_install("show routes",		do_show_routes);
 	cmd_install("show stats",		do_show_stats);
 	cmd_install("show status",		do_show_status);
+	cmd_install("spf walk",			do_spfwalk);
 	cmd_install("trace <str>",		do_trace);
 	cmd_install("uncorrupt <msgid>",	do_uncorrupt);
 	cmd_install("unprofile <str>",		do_unprofile);
