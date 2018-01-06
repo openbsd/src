@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.34 2017/12/14 18:56:22 jca Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.35 2018/01/06 15:37:36 cheloha Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -109,7 +109,6 @@ clntudp_bufcreate(struct sockaddr_in *raddr, u_long program, u_long version,
 {
 	CLIENT *cl;
 	struct cu_data *cu = NULL;
-	struct timeval now;
 	struct rpc_msg call_msg;
 
 	cl = (CLIENT *)mem_alloc(sizeof(CLIENT));
@@ -128,7 +127,6 @@ clntudp_bufcreate(struct sockaddr_in *raddr, u_long program, u_long version,
 	}
 	cu->cu_outbuf = &cu->cu_inbuf[recvsz];
 
-	(void)gettimeofday(&now, NULL);
 	if (raddr->sin_port == 0) {
 		u_short port;
 		if ((port =

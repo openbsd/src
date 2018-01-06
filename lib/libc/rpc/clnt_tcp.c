@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_tcp.c,v 1.31 2017/12/14 18:56:22 jca Exp $ */
+/*	$OpenBSD: clnt_tcp.c,v 1.32 2018/01/06 15:37:36 cheloha Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -114,7 +114,6 @@ clnttcp_create(struct sockaddr_in *raddr, u_long prog, u_long vers, int *sockp,
 {
 	CLIENT *h;
 	struct ct_data *ct = NULL;
-	struct timeval now;
 	struct rpc_msg call_msg;
 
 	h  = (CLIENT *)mem_alloc(sizeof(*h));
@@ -174,7 +173,6 @@ clnttcp_create(struct sockaddr_in *raddr, u_long prog, u_long vers, int *sockp,
 	/*
 	 * Initialize call message
 	 */
-	(void)gettimeofday(&now, NULL);
 	call_msg.rm_xid = arc4random();
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
