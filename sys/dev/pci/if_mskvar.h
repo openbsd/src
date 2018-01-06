@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mskvar.h,v 1.13 2017/06/02 01:47:36 dlg Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.14 2018/01/06 03:11:04 dlg Exp $	*/
 /*	$NetBSD: if_skvar.h,v 1.6 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
@@ -26,7 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*	$OpenBSD: if_mskvar.h,v 1.13 2017/06/02 01:47:36 dlg Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.14 2018/01/06 03:11:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -81,39 +81,24 @@
 #ifndef _DEV_PCI_IF_MSKVAR_H_
 #define _DEV_PCI_IF_MSKVAR_H_
 
-struct sk_chain {
-	void			*sk_le;
-	struct mbuf		*sk_mbuf;
-	struct sk_chain		*sk_next;
-};
-
-/*
- * Number of DMA segments in a TxCB. Note that this is carefully
- * chosen to make the total struct size an even power of two. It's
- * critical that no TxCB be split across a page boundary since
- * no attempt is made to allocate physically contiguous memory.
- *
- */
 #define SK_NTXSEG      30
 
-#define SK_NRXSEG      4
-
-struct sk_txmap_entry {
-	bus_dmamap_t			dmamap;
-	SIMPLEQ_ENTRY(sk_txmap_entry)	link;
-};
-
 struct msk_chain_data {
-	struct if_rxring	sk_rx_ring;
-	struct sk_chain		sk_tx_chain[MSK_TX_RING_CNT];
-	struct sk_chain		sk_rx_chain[MSK_RX_RING_CNT];
-	struct sk_txmap_entry	*sk_tx_map[MSK_TX_RING_CNT];
-	bus_dmamap_t		sk_rx_map[MSK_RX_RING_CNT];
-	int			sk_tx_prod;
-	int			sk_tx_cons;
-	int			sk_tx_cnt;
-	int			sk_rx_prod;
-	int			sk_rx_cons;
+	struct mbuf		*sk_rx_mbuf[MSK_RX_RING_CNT];
+	bus_dmamap_t		 sk_rx_maps[MSK_RX_RING_CNT];
+
+	struct mbuf		*sk_tx_mbuf[MSK_TX_RING_CNT];
+	bus_dmamap_t		 sk_tx_maps[MSK_TX_RING_CNT];
+
+	struct if_rxring	 sk_rx_ring;
+
+	unsigned int		 sk_tx_prod;
+	unsigned int		 sk_tx_cons;
+	uint32_t		 sk_tx_hiaddr;
+
+	unsigned int		 sk_rx_prod;
+	unsigned int		 sk_rx_cons;
+	uint32_t		 sk_rx_hiaddr;
 };
 
 struct msk_ring_data {
@@ -208,10 +193,10 @@ struct sk_if_softc {
 	u_int32_t		sk_rx_ramend;
 	u_int32_t		sk_tx_ramstart;
 	u_int32_t		sk_tx_ramend;
-	u_int32_t		sk_tx_hiaddr;
 	int			sk_pktlen;
 	int			sk_link;
 	struct timeout		sk_tick_ch;
+	struct timeout		sk_tick_rx;
 	struct msk_chain_data	sk_cdata;
 	struct msk_ring_data	*sk_rdata;
 	bus_dmamap_t		sk_ring_map;
