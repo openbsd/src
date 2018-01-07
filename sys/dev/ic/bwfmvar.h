@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.7 2018/01/05 23:30:16 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.8 2018/01/07 22:08:04 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -125,9 +125,10 @@ struct bwfm_cmd_key {
 };
 
 struct bwfm_cmd_flowring_create {
-	uint32_t		 flowid;
 	uint8_t			 da[ETHER_ADDR_LEN];
 	uint8_t			 sa[ETHER_ADDR_LEN];
+	int			 flowid;
+	int			 prio;
 };
 
 struct bwfm_host_cmd_ring {

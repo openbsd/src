@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.6 2018/01/05 23:30:16 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.7 2018/01/07 22:08:04 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -89,6 +89,9 @@ struct bwfm_pci_msgring {
 	int			 itemsz;
 	enum ring_status	 status;
 	struct bwfm_pci_dmamem	*ring;
+
+	int			 fifo;
+	uint8_t			 mac[ETHER_ADDR_LEN];
 };
 
 struct bwfm_pci_buf {
@@ -243,7 +246,9 @@ int		 bwfm_pci_buscore_prepare(struct bwfm_softc *);
 int		 bwfm_pci_buscore_reset(struct bwfm_softc *);
 void		 bwfm_pci_buscore_activate(struct bwfm_softc *, uint32_t);
 
-void		 bwfm_pci_flowring_create(struct bwfm_pci_softc *, int,
+int		 bwfm_pci_flowring_lookup(struct bwfm_pci_softc *,
+		     struct mbuf *);
+void		 bwfm_pci_flowring_create(struct bwfm_pci_softc *,
 		     struct mbuf *);
 void		 bwfm_pci_flowring_create_cb(struct bwfm_softc *, void *);
 
@@ -1379,11 +1384,113 @@ bwfm_pci_buscore_activate(struct bwfm_softc *bwfm, uint32_t rstvec)
 	bus_space_write_4(sc->sc_tcm_iot, sc->sc_tcm_ioh, 0, rstvec);
 }
 
-void
-bwfm_pci_flowring_create(struct bwfm_pci_softc *sc, int flowid,
-    struct mbuf *m)
+static int bwfm_pci_prio2fifo[8] = {
+	1, /* best effort */
+	0, /* IPTOS_PREC_IMMEDIATE */
+	0, /* IPTOS_PREC_PRIORITY */
+	1, /* IPTOS_PREC_FLASH */
+	2, /* IPTOS_PREC_FLASHOVERRIDE */
+	2, /* IPTOS_PREC_CRITIC_ECP */
+	3, /* IPTOS_PREC_INTERNETCONTROL */
+	3, /* IPTOS_PREC_NETCONTROL */
+};
+
+int
+bwfm_pci_flowring_lookup(struct bwfm_pci_softc *sc, struct mbuf *m)
 {
+	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
+	uint8_t *da = mtod(m, uint8_t *);
+	int flowid, prio, fifo;
+	int i, found;
+
+	prio = ieee80211_classify(ic, m);
+	fifo = bwfm_pci_prio2fifo[prio];
+
+	switch (ic->ic_opmode)
+	{
+	case IEEE80211_M_STA:
+		flowid = fifo;
+		break;
+#ifndef IEEE80211_STA_ONLY
+	case IEEE80211_M_HOSTAP:
+		flowid = da[5] * 2 + fifo;
+		break;
+#endif
+	default:
+		printf("%s: state not supported\n", DEVNAME(sc));
+		return ENOBUFS;
+	}
+
+	found = 0;
+	flowid = flowid % sc->sc_max_flowrings;
+	for (i = 0; i < sc->sc_max_flowrings; i++) {
+		if (ic->ic_opmode == IEEE80211_M_STA &&
+		    sc->sc_flowrings[flowid].status >= RING_OPEN &&
+		    sc->sc_flowrings[flowid].fifo == fifo) {
+			found = 1;
+			break;
+		}
+#ifndef IEEE80211_STA_ONLY
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
+		    sc->sc_flowrings[flowid].status >= RING_OPEN &&
+		    sc->sc_flowrings[flowid].fifo == fifo &&
+		    memcmp(sc->sc_flowrings[flowid].mac, da, ETHER_ADDR_LEN)) {
+			found = 1;
+			break;
+		}
+#endif
+		flowid = (flowid + 1) % sc->sc_max_flowrings;
+	}
+
+	if (found)
+		return flowid;
+
+	return -1;
+}
+
+void
+bwfm_pci_flowring_create(struct bwfm_pci_softc *sc, struct mbuf *m)
+{
+	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
 	struct bwfm_cmd_flowring_create cmd;
+	uint8_t *da = mtod(m, uint8_t *);
+	int flowid, prio, fifo;
+	int i, found;
+
+	prio = ieee80211_classify(ic, m);
+	fifo = bwfm_pci_prio2fifo[prio];
+
+	switch (ic->ic_opmode)
+	{
+	case IEEE80211_M_STA:
+		flowid = fifo;
+		break;
+#ifndef IEEE80211_STA_ONLY
+	case IEEE80211_M_HOSTAP:
+		flowid = da[5] * 2 + fifo;
+		break;
+#endif
+	default:
+		printf("%s: state not supported\n", DEVNAME(sc));
+		return;
+	}
+
+	found = 0;
+	flowid = flowid % sc->sc_max_flowrings;
+	for (i = 0; i < sc->sc_max_flowrings; i++) {
+		if (sc->sc_flowrings[flowid].status == RING_CLOSED) {
+			found = 1;
+			break;
+		}
+		flowid = (flowid + 1) % sc->sc_max_flowrings;
+	}
+
+	if (!found) {
+		printf("%s: no flowring available\n", DEVNAME(sc));
+		return;
+	}
+
+	cmd.prio = prio;
 	cmd.flowid = flowid;
 	memcpy(cmd.da, mtod(m, char *) + 0 * ETHER_ADDR_LEN, ETHER_ADDR_LEN);
 	memcpy(cmd.sa, mtod(m, char *) + 1 * ETHER_ADDR_LEN, ETHER_ADDR_LEN);
@@ -1397,25 +1504,36 @@ bwfm_pci_flowring_create_cb(struct bwfm_softc *bwfm, void *arg)
 	struct bwfm_cmd_flowring_create *cmd = arg;
 	struct msgbuf_tx_flowring_create_req *req;
 	struct bwfm_pci_msgring *ring;
-	int flowid;
+	int flowid, prio;
 
 	flowid = cmd->flowid;
-	ring = &sc->sc_flowrings[flowid];
-	if (ring->status != RING_CLOSED)
-		return;
+	prio = cmd->prio;
 
-	if (bwfm_pci_setup_flowring(sc, ring, 512, 48))
+	ring = &sc->sc_flowrings[flowid];
+	if (ring->status != RING_CLOSED) {
+		printf("%s: flowring not closed\n", DEVNAME(sc));
 		return;
+	}
+
+	if (bwfm_pci_setup_flowring(sc, ring, 512, 48)) {
+		printf("%s: cannot setup flowring\n", DEVNAME(sc));
+		return;
+	}
 
 	req = bwfm_pci_ring_write_reserve(sc, &sc->sc_ctrl_submit);
-	if (req == NULL)
+	if (req == NULL) {
+		printf("%s: cannot reserve for flowring\n", DEVNAME(sc));
 		return;
+	}
 
 	ring->status = RING_OPENING;
+	ring->fifo = bwfm_pci_prio2fifo[prio];
+	memcpy(ring->mac, cmd->da, ETHER_ADDR_LEN);
+
 	req->msg.msgtype = MSGBUF_TYPE_FLOW_RING_CREATE;
 	req->msg.ifidx = 0;
 	req->msg.request_id = 0;
-	req->tid = 0; /* XXX: prio/fifo */
+	req->tid = bwfm_pci_prio2fifo[prio];
 	req->flow_ring_id = letoh16(flowid + 2);
 	memcpy(req->da, cmd->da, ETHER_ADDR_LEN);
 	memcpy(req->sa, cmd->sa, ETHER_ADDR_LEN);
@@ -1439,16 +1557,18 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 	paddr_t paddr;
 	int flowid, ret;
 
-	/* FIXME: We need individual flowrings. */
-	flowid = 0;
+	flowid = bwfm_pci_flowring_lookup(sc, m);
+	if (flowid < 0) {
+		bwfm_pci_flowring_create(sc, m);
+		return ENOBUFS;
+	}
 
 	ring = &sc->sc_flowrings[flowid];
 	if (ring->status == RING_OPENING ||
-	    ring->status == RING_CLOSING)
-		return ENOBUFS;
-
-	if (ring->status == RING_CLOSED) {
-		bwfm_pci_flowring_create(sc, flowid, m);
+	    ring->status == RING_CLOSING) {
+		printf("%s: tried to use a flow that was "
+		    "transitioning in status %d\n",
+		    DEVNAME(sc), ring->status);
 		return ENOBUFS;
 	}
 
