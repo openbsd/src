@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.117 2017/10/23 15:41:29 mikeb Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.118 2018/01/07 01:08:20 mlarkin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -127,6 +127,8 @@ struct cpu_info {
 	u_int32_t	ci_feature_eflags;
 	u_int32_t	ci_feature_sefflags_ebx;
 	u_int32_t	ci_feature_sefflags_ecx;
+	u_int32_t	ci_feature_sefflags_edx;
+	u_int32_t	ci_feature_amdspec_ebx;
 	u_int32_t	ci_feature_tpmflags;
 	u_int32_t	ci_pnfeatset;
 	u_int32_t	ci_efeature_eax;

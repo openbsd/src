@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.90 2017/10/18 12:52:06 mikeb Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.91 2018/01/07 01:08:20 mlarkin Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -197,6 +197,9 @@ const struct {
 	{ SEFF0ECX_AVX512VBMI,	"AVX512VBMI" },
 	{ SEFF0ECX_UMIP,	"UMIP" },
 	{ SEFF0ECX_PKU,		"PKU" },
+}, cpu_seff0_edxfeatures[] = {
+	{ SEFF0EDX_IBRS,	"IBRS" },
+	{ SEFF0EDX_STIBP,	"STIBP" },
 }, cpu_tpm_eaxfeatures[] = {
 	{ TPM_SENSOR,		"SENSOR" },
 	{ TPM_ARAT,		"ARAT" },
@@ -204,6 +207,8 @@ const struct {
 	{ CPUIDEAX_VERID,	"PERF" },
 }, cpu_cpuid_apmi_edx[] = {
 	{ CPUIDEDX_ITSC,	"ITSC" },
+}, cpu_amdspec_ebxfeatures[] = {
+	{ CPUIDEBX_IBPB,	"IBPB" },
 };
 
 int
@@ -560,7 +565,7 @@ identifycpu(struct cpu_info *ci)
 	if (cpuid_level >= 0x07) {
 		/* "Structured Extended Feature Flags" */
 		CPUID_LEAF(0x7, 0, dummy, ci->ci_feature_sefflags_ebx,
-		    ci->ci_feature_sefflags_ecx, dummy);
+		    ci->ci_feature_sefflags_ecx, ci->ci_feature_sefflags_edx);
 		for (i = 0; i < nitems(cpu_seff0_ebxfeatures); i++)
 			if (ci->ci_feature_sefflags_ebx &
 			    cpu_seff0_ebxfeatures[i].bit)
@@ -569,6 +574,10 @@ identifycpu(struct cpu_info *ci)
 			if (ci->ci_feature_sefflags_ecx &
 			    cpu_seff0_ecxfeatures[i].bit)
 				printf(",%s", cpu_seff0_ecxfeatures[i].str);
+		for (i = 0; i < nitems(cpu_seff0_edxfeatures); i++)
+			if (ci->ci_feature_sefflags_edx &
+			    cpu_seff0_edxfeatures[i].bit)
+				printf(",%s", cpu_seff0_edxfeatures[i].str);
 	}
 
 	if (!strcmp(cpu_vendor, "GenuineIntel") && cpuid_level >= 0x06) {
@@ -580,6 +589,19 @@ identifycpu(struct cpu_info *ci)
 	} else if (!strcmp(cpu_vendor, "AuthenticAMD")) {
 		if (ci->ci_family >= 0x12)
 			ci->ci_feature_tpmflags |= TPM_ARAT;
+	}
+
+	/* AMD speculation control features */
+	if (!strcmp(cpu_vendor, "AuthenticAMD")) {
+		if (ci->ci_pnfeatset >= 0x80000008) {
+			CPUID(0x80000008, dummy, ci->ci_feature_amdspec_ebx,
+			    dummy, dummy);
+			for (i = 0; i < nitems(cpu_amdspec_ebxfeatures); i++)
+				if (ci->ci_feature_amdspec_ebx &
+				    cpu_amdspec_ebxfeatures[i].bit)
+					printf(",%s",
+					    cpu_amdspec_ebxfeatures[i].str);
+		}
 	}
 
 	printf("\n");

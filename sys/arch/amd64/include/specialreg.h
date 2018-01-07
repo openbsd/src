@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.62 2017/12/06 16:26:12 fcambus Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.63 2018/01/07 01:08:20 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -214,6 +214,9 @@
 #define SEFF0ECX_AVX512VBMI	0x00000002 /* AVX-512 vector bit inst */
 #define SEFF0ECX_UMIP		0x00000004 /* UMIP support */
 #define SEFF0ECX_PKU		0x00000008 /* Page prot keys for user mode */
+/* SEFF EDX bits */
+#define SEFF0EDX_IBRS		0x04000000 /* IBRS / IBPB Speculation Control */
+#define SEFF0EDX_STIBP		0x08000000 /* STIBP Speculation Control */
 
 /*
  * Thermal and Power Management (CPUID function 0x6) EAX bits
@@ -285,8 +288,12 @@
  * "Advanced Power Management Information" bits (CPUID function 0x80000007):
  * EDX bits.
  */
-
 #define CPUIDEDX_ITSC		(1 << 8)	/* Invariant TSC */
+
+/*
+ * AMD CPUID function 0x80000008 EBX bits
+ */
+#define CPUIDEBX_IBPB		(1ULL << 12)	/* Speculation Control IBPB */
 
 #define	CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
@@ -319,6 +326,11 @@
 #define MSR_EBC_FREQUENCY_ID    0x02c   /* Pentium 4 only */
 #define	MSR_TEST_CTL		0x033
 #define MSR_IA32_FEATURE_CONTROL 0x03a
+#define MSR_SPEC_CTRL		0x048	/* Speculation Control IBRS / STIBP */
+#define SPEC_CTRL_IBRS		(1ULL << 0)
+#define SPEC_CTRL_STIBP		(1ULL << 1)
+#define MSR_PRED_CMD		0x049	/* Speculation Control IBPB */
+#define PRED_CMD_IBPB		(1ULL << 0)
 #define MSR_BIOS_UPDT_TRIG	0x079
 #define	MSR_BBL_CR_D0		0x088	/* PII+ only */
 #define	MSR_BBL_CR_D1		0x089	/* PII+ only */
