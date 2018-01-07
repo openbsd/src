@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.19 2017/12/05 15:02:06 jca Exp $ */
+/* $OpenBSD: s_time.c,v 1.20 2018/01/07 08:43:26 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,7 +88,6 @@
 
 #define SECONDS	30
 extern int verify_depth;
-extern int verify_error;
 
 static void s_time_usage(void);
 static SSL *doConnection(SSL * scon);
