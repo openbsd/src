@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.73 2017/11/26 15:44:20 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.74 2018/01/07 05:19:41 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1162,10 +1162,11 @@ cnmac_recv_mbuf(struct cnmac_softc *sc, uint64_t *work,
 
 		/*
 		 * Because of a hardware bug in some Octeon models the size
-		 * field of word3 can be wrong. However, the hardware uses
-		 * all space in a buffer before moving to the next one so
-		 * it is possible to derive the size of this data segment
-		 * from the size of packet data buffers.
+		 * field of word3 can be wrong (erratum PKI-100).
+		 * However, the hardware uses all space in a buffer before
+		 * moving to the next one so it is possible to derive
+		 * the size of this data segment from the size
+		 * of packet data buffers.
 		 */
 		size = OCTEON_POOL_SIZE_PKT - (addr - pktbuf);
 		if (size > left)

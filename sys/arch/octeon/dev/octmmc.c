@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.10 2017/11/09 02:35:34 visa Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.11 2018/01/07 05:19:41 visa Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Visa Hankala
@@ -821,11 +821,12 @@ octmmc_dma_load_6130(struct octmmc_softc *sc, struct sdmmc_command *cmd)
 	paddr_t locked_block = 0;
 
 	/*
-	 * According to Linux, the DMA hardware has a silicon bug that can
-	 * corrupt data. As a workaround, Linux locks the second last block
-	 * of a transfer into the L2 cache if the opcode is multi-block write
-	 * and there are more than two data blocks to write. In Linux, it is
-	 * not described under what circumstances the corruption can happen.
+	 * The DMA hardware has a silicon bug that can corrupt data
+	 * (erratum EMMC-17978). As a workaround, Linux locks the second last
+	 * block of a transfer into the L2 cache if the opcode is multi-block
+	 * write and there are more than two data blocks to write.
+	 * In Linux, it is not described under what circumstances
+	 * the corruption can happen.
 	 * Lacking better information, use the same workaround here.
 	 */
 	if (cmd->c_opcode == MMC_WRITE_BLOCK_MULTIPLE &&
