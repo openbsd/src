@@ -270,7 +270,7 @@ sha512_block_data_order:
 	str	$Thi,[sp,#$Foff+4]
 
 .L00_15:
-#if __ARM_ARCH__<7
+#if __ARM_ARCH__<7 || defined(__STRICT_ALIGNMENT)
 	ldrb	$Tlo,[$inp,#7]
 	ldrb	$t0, [$inp,#6]
 	ldrb	$t1, [$inp,#5]

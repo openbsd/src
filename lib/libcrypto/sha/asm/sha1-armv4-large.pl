@@ -95,7 +95,7 @@ ___
 sub BODY_00_15 {
 my ($a,$b,$c,$d,$e)=@_;
 $code.=<<___;
-#if __ARM_ARCH__<7
+#if __ARM_ARCH__<7 || defined(__STRICT_ALIGNMENT)
 	ldrb	$t1,[$inp,#2]
 	ldrb	$t0,[$inp,#3]
 	ldrb	$t2,[$inp,#1]
