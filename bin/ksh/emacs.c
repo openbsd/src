@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.80 2018/01/06 16:28:58 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.81 2018/01/07 19:18:56 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1328,20 +1328,21 @@ static struct kb_entry *
 kb_add(void *func, void *args, ...)
 {
 	va_list			ap;
-	unsigned int		i, count = 0;
-	char			l[LINE + 1];
+	unsigned char		ch;
+	unsigned int		i;
+	char			line[LINE + 1];
 
 	va_start(ap, args);
-	while (va_arg(ap, unsigned int) != 0)
-		count++;
+	for (i = 0; i < sizeof(line) - 1; i++) {
+		ch = va_arg(ap, unsigned int);
+		if (ch == 0)
+			break;
+		line[i] = ch;
+	}
 	va_end(ap);
+	line[i] = '\0';
 
-	va_start(ap, args);
-	for (i = 0; i <= count /* <= is correct */; i++)
-		l[i] = (unsigned char)va_arg(ap, unsigned int);
-	va_end(ap);
-
-	return (kb_add_string(func, args, l));
+	return (kb_add_string(func, args, line));
 }
 
 static void
