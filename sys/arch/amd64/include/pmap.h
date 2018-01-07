@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.62 2016/02/08 18:23:04 stefan Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.63 2018/01/07 21:43:25 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -229,9 +229,6 @@
  *   a PTP's index is the PD index of the PDE that points to it
  *   a PTP's offset is the byte-offset in the PTE space that this PTP is at
  *   a PTP's VA is the first VA mapped by that PTP
- *
- * note that PAGE_SIZE == number of bytes in a PTP (4096 bytes == 1024 entries)
- *           NBPD == number of bytes a PTP can map (4MB)
  */
 
 #define ptp_va2o(va, lvl)	(pl_i(va, (lvl)+1) * PAGE_SIZE)
