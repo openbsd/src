@@ -1,4 +1,4 @@
-/*	$OpenBSD: _endian.h,v 1.6 2018/01/05 05:53:56 deraadt Exp $	*/
+/*	$OpenBSD: _endian.h,v 1.7 2018/01/07 15:17:42 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -64,19 +64,19 @@
 	    ((__uint64_t)(x) & 0xff00000000000000ULL) >> 56)
 
 #ifndef __HAVE_MD_SWAP
-static inline __uint16_t
+static __inline __uint16_t
 __swap16md(__uint16_t x)
 {
 	return (__swap16gen(x));
 }
 
-static inline __uint32_t
+static __inline __uint32_t
 __swap32md(__uint32_t x)
 {
 	return (__swap32gen(x));
 }
 
-static inline __uint64_t
+static __inline __uint64_t
 __swap64md(__uint64_t x)
 {
 	return (__swap64gen(x));
