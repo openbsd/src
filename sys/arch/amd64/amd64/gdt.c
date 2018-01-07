@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.24 2015/05/24 01:01:49 guenther Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.25 2018/01/07 05:36:47 guenther Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -28,11 +28,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * Modified to deal with variable-length entries for amd64 by
- * fvdl@wasabisystems.com, may 2001
  */
 
 #include <sys/param.h>
@@ -73,7 +68,6 @@ gdt_alloc_cpu(struct cpu_info *ci)
 
 /*
  * Load appropriate gdt descriptor; we better be running on *ci
- * (for the most part, this is how a cpu knows who it is).
  */
 void
 gdt_init_cpu(struct cpu_info *ci)
