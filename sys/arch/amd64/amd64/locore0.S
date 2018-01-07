@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.5 2017/10/14 21:42:17 mlarkin Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.6 2018/01/07 19:56:19 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -204,6 +204,27 @@ bi_size_ok:
 	movl	%ecx,8(%ebp)
 	movl	$0,  12(%ebp)
 
+	/*
+	 * Determine if CPU is Intel. Intel CPUs cannot use PG_G (global
+	 * pages) in kernel mappings. If CPU is not Intel, this is safe.
+	 * Cache the result in pg_g_kern - 0 if not supported or PG_G (0x100)
+	 * if supported.
+	 *
+	 * This treatment is required for the meltdown CVE mitigation.
+	 */
+	cmpl	$0x756e6547, %ebx	# "Genu"
+	jne	not_intel
+	cmpl	$0x6c65746e, %ecx	# "ntel"
+	jne	not_intel
+	cmpl	$0x49656e69, %edx	# "ineI"
+	jne	not_intel
+
+	jmp	pg_g_check_finished
+
+not_intel:
+	movl	$PG_G, RELOC(pg_g_kern)
+
+pg_g_check_finished:
 	movl	$1,%eax
 	cpuid
 	movl	%eax,RELOC(cpu_id)
@@ -470,7 +491,8 @@ map_tables:
 	leal	(PROC0_DMP2_OFF)(%esi), %ebx
 	xorl	%eax, %eax
 	movl	$(NDML2_ENTRIES * NPDPG), %ecx
-1:	orl	$(PG_V|PG_KW|PG_PS|PG_G), %eax
+1:	orl	$(PG_V|PG_KW|PG_PS), %eax
+	orl	RELOC(pg_g_kern), %eax
 	cmpl	$__kernel_base_phys, %eax
 	jl	store_pte
 	cmpl	$__kernel_end_phys, %eax

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.92 2018/01/06 22:03:12 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.93 2018/01/07 19:56:19 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -175,6 +175,7 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(biosbasemem)
 	.globl	_C_LABEL(bootapiver)
 	.globl	_C_LABEL(pg_nx)
+	.globl	_C_LABEL(pg_g_kern)
 _C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
 _C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid'
 					#   instruction
@@ -207,6 +208,9 @@ _C_LABEL(biosextmem):	.long	0	# extended memory reported by BIOS
 _C_LABEL(biosextmem):	.long	REALEXTMEM
 #endif
 _C_LABEL(pg_nx):	.quad	0	# NX PTE bit (if CPU supports)
+_C_LABEL(pg_g_kern):	.quad	0	# 0x100 if global pages should be used
+					# in kernel mappings, 0 otherwise (for
+					# Intel)
 
 #define	_RELOC(x)	((x) - KERNBASE)
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
