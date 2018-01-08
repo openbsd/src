@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.77 2018/01/03 05:39:56 ccardenas Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.78 2018/01/08 11:58:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/cdefs.h>
 #include <sys/stat.h>
 #include <sys/tty.h>
+#include <sys/ttycom.h>
 #include <sys/ioctl.h>
 
 #include <stdio.h>
@@ -800,7 +801,7 @@ vmd_configure(void)
 	 * stdio - for malloc and basic I/O including events.
 	 * rpath - for reload to open and read the configuration files.
 	 * wpath - for opening disk images and tap devices.
-	 * tty - for openpty.
+	 * tty - for openpty and TIOCUCNTL.
 	 * proc - run kill to terminate its children safely.
 	 * sendfd - for disks, interfaces and other fds.
 	 * recvfd - for send and receive.
@@ -1273,12 +1274,20 @@ vm_opentty(struct vmd_vm *vm)
 	uid_t			 uid;
 	gid_t			 gid;
 	mode_t			 mode;
+	int			 on;
 
 	/*
 	 * Open tty with pre-opened PTM fd
 	 */
 	if ((ioctl(env->vmd_ptmfd, PTMGET, &ptm) == -1))
 		return (-1);
+
+	/*
+	 * We use user ioctl(2) mode to pass break commands.
+	 */
+	on = 1;
+	if (ioctl(ptm.cfd, TIOCUCNTL, &on))
+		fatal("could not enable user ioctl mode");
 
 	vm->vm_tty = ptm.cfd;
 	close(ptm.sfd);
