@@ -1,4 +1,4 @@
-$OpenBSD: PROJECTS,v 1.8 2015/09/14 09:42:33 nicm Exp $
+$OpenBSD: PROJECTS,v 1.9 2018/01/08 12:08:17 jca Exp $
 
 Things to be done in pdksh (see also the NOTES file):
 
@@ -22,30 +22,10 @@ Things to be done in pdksh (see also the NOTES file):
 
       (ulimit also needs to be examined to check that it fits the posix style)
 
-    * test suite
-      Ideally, as the builtin utilities are being POSIXized, short tests
-      should be written to be used in regression testing.  The tests
-      directory contains some tests, but many more need to be written.
-
-    * internationalization
-      Need to handle with the LANG and LC_* environment variables.  This
-      involves changes to ensure <ctype.h> macros are being used (currently
-      uses its own macros in many places), figuring out how to deal with
-      bases (for integer arithmetic, eg, 12#1A), and (the nasty one) doing
-      string look ups for error messages, etc..  It probably isn't worth
-      translating strings to other languages yet as the code is likely
-      to change a lot in the near future, but it would be good to have the
-      code set up so string tables can be used.
-
     * trap code
 	* add the DEBUG trap.
 	* fix up signal handling code.  In particular, fatal vs tty signals,
 	  have signal routine to call to check for pending/fatal traps, etc.
-
-    * parsing
-	* the time keyword needs to be hacked to accept options (!) since
-	  POSIX says it shall accept the -p option and must skip a -- argument
-	  (end of options).  Yuck.
 
     * lexing
       the lexing may need a re-write since it currently doesn't parse $( .. ),
@@ -68,29 +48,9 @@ Things to be done in pdksh (see also the NOTES file):
       in general, treatment of OPTIND/OPTARG,
 
     * history
-      There are two versions of the history code, COMPLEX_HISTORY and
-      EASY_HISTORY, which need to be merged.  COMPLEX does at&t style history
-      where the history file is written after each command and checked when
-      ever looking through the history (in case another shell has added
-      something).  EASY simply reads the history file at startup and writes
-      it before exiting.
-	* re-write the COMPLEX_HISTORY code so mmap() not needed (currently
-	  can't be used on machines without mmap()).
-	* Add multiline knowledge to COMPLEX_HISTORY (see EASY_HISTORY
-	  stuff).
-	* change COMPLEX_HISTORY code so concurrent history files are
-	  controlled by an option (set -o history-concurrent?).  Delete
-	  the EASY_HISTORY code.
+	* Add multiline knowledge
 	* bring history code up to POSIX standards (see POSIX description
 	  of fc, etc.).
-
-    * documentation
-      Some sort of tutorial with examples would be good.  Texinfo is probably
-      the best medium for this.  Also, the man page could be converted to
-      texinfo (if the tutorial and man page  are put in the same texinfo
-      page, they should be somewhat distinct - i.e., the tutorial should
-      be a separate thread - but there should be cross references between the
-      two).
 
     * miscellaneous
 	* POSIX specifies what happens when various kinds of errors occur
@@ -104,8 +64,3 @@ Things to be done in pdksh (see also the NOTES file):
 	* merge the emacs and vi code (should reduce the size of the shell and
 	  make maintenance easier); handle SIGWINCH while editing a line.
 	  [John Rochester is working on the merge]
-
-	* add POSIX globbing (eg, [[:alnum:]]), see POSIX.2:2.8.3.2.
-
-	* teach shf_vfprintf() about long long's (%lld); also make %p use
-	  long longs if appropriate.
