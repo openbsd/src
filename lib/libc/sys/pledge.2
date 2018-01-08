@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.48 2017/12/12 11:11:18 jmc Exp $
+.\" $OpenBSD: pledge.2,v 1.49 2018/01/08 12:02:42 mpi Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2017 $
+.Dd $Mdocdate: January 8 2018 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -440,9 +440,10 @@ requests are permitted:
 .Dv TIOCSBRK ,
 .Dv TIOCCDTR ,
 .Dv TIOCSETA ,
-.Dv TIOCSETAW
+.Dv TIOCSETAW ,
+.Dv TIOCSETAF
 and
-.Dv TIOCSETAF .
+.Dv TIOCUCNTL .
 .Pp
 If
 .Va tty
