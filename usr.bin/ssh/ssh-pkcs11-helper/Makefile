@@ -1,14 +1,10 @@
-#	$OpenBSD: Makefile,v 1.5 2018/01/08 15:18:46 markus Exp $
+#	$OpenBSD: Makefile,v 1.6 2018/01/08 15:37:38 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
 SRCS=	ssh-pkcs11-helper.c ssh-pkcs11.c
-SRCS+=	addrmatch.c atomicio.c bufaux.c buffer.c \
-	chacha.c cipher-chachapoly.c cipher.c compat.c digest-openssl.c \
-	ed25519.c fatal.c fe25519.c ge25519.c hash.c log.c match.c \
-	misc.c poly1305.c readpass.c sc25519.c ssh-dss.c ssh-ecdsa.c \
-	ssh-ed25519.c ssh-rsa.c sshbuf-getput-basic.c sshbuf-getput-crypto.c \
-	sshbuf-misc.c sshbuf.c ssherr.c sshkey.c uidswap.c verify.c xmalloc.c
+SRCS+=	atomicio.c bufaux.c buffer.c compat.c fatal.c readpass.c
+SRCS+=	${SRCS_KEY} ${SRCS_UTL} ${SRCS_BASE}
 
 PROG=	ssh-pkcs11-helper
 BINOWN=	root
@@ -22,4 +18,3 @@ MAN=	ssh-pkcs11-helper.8
 
 LDADD+=	-lcrypto -lutil
 DPADD+=	${LIBCRYPTO} ${LIBUTIL}
-

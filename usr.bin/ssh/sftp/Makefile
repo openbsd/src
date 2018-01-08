@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.15 2018/01/08 15:21:49 markus Exp $
+#	$OpenBSD: Makefile,v 1.16 2018/01/08 15:37:24 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
 SRCS=	sftp.c sftp-client.c sftp-common.c sftp-glob.c
-SRCS+=	atomicio.c cleanup.c fatal.c log.c misc.c progressmeter.c \
-	sshbuf-getput-basic.c sshbuf.c ssherr.c utf8.c xmalloc.c
+SRCS+=	atomicio.c cleanup.c fatal.c progressmeter.c utf8.c
+SRCS+=	${SRCS_BASE}
 
 PROG=	sftp
 BINOWN=	root

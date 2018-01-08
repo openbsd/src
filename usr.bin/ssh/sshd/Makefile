@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.94 2018/01/08 15:15:36 markus Exp $
+#	$OpenBSD: Makefile,v 1.95 2018/01/08 15:37:38 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -7,19 +7,10 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c sshpty.c sshlogin.c servconf.c \
 	groupaccess.c auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c monitor.c monitor_wrap.c \
 	sftp-server.c sftp-common.c sandbox-pledge.c
-
-SRCS+=	addrmatch.c atomicio.c authfd.c authfile.c bitmap.c bufaux.c \
-	bufbn.c bufec.c buffer.c canohost.c chacha.c channels.c \
-	cipher-chachapoly.c cipher.c compat.c crc32.c dh.c digest-openssl.c \
-	dispatch.c dns.c ed25519.c fatal.c fe25519.c ge25519.c hash.c hmac.c \
-	hostfile.c kex.c kexc25519.c kexc25519s.c kexdh.c \
-	kexdhs.c kexecdh.c kexecdhs.c kexgex.c \
-	kexgexs.c key.c krl.c log.c mac.c match.c misc.c monitor_fdpass.c \
-	msg.c nchan.c opacket.c packet.c poly1305.c readpass.c \
-	sc25519.c smult_curve25519_ref.c ssh-dss.c ssh-ecdsa.c ssh-ed25519.c \
-	ssh-pkcs11.c ssh-rsa.c sshbuf-getput-basic.c sshbuf-getput-crypto.c \
-	sshbuf-misc.c sshbuf.c ssherr.c sshkey.c ttymodes.c uidswap.c umac.c \
-	umac128.c utf8.c verify.c xmalloc.c
+SRCS+=	atomicio.c authfd.c bufaux.c buffer.c compat.c dns.c fatal.c \
+	hostfile.c key.c msg.c readpass.c utf8.c
+SRCS+=	${SRCS_BASE} ${SRCS_KEX} ${SRCS_KEXS} ${SRCS_KEY} ${SRCS_KEYP} \
+	${SRCS_KRL} ${SRCS_PROT} ${SRCS_PKT} ${SRCS_UTL} ${SRCS_PKCS11}
 
 PROG=	sshd
 BINOWN=	root
@@ -45,9 +36,9 @@ DPADD+= ${LIBGSSAPI} ${LIBKRB5}
 .endif
 
 .if (${OPENSSL:L} == "yes")
-LDADD+=	-lcrypto -lutil
-DPADD+=	${LIBCRYPTO} ${LIBUTIL}
+LDADD+=	-lcrypto
+DPADD+=	${LIBCRYPTO}
 .endif
 
-LDADD+=	-lz
-DPADD+=	${LIBZ}
+LDADD+=	-lutil -lz
+DPADD+=	${LIBUTIL} ${LIBZ}

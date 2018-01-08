@@ -1,15 +1,12 @@
-#	$OpenBSD: Makefile,v 1.25 2017/12/14 21:07:39 naddy Exp $
+#	$OpenBSD: Makefile,v 1.26 2018/01/08 15:37:27 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
-SRCS=	ssh-keygen.c moduli.c
-SRCS+=	addrmatch.c atomicio.c authfd.c authfile.c bitmap.c chacha.c \
-	cipher-chachapoly.c cipher.c cleanup.c digest-openssl.c dns.c \
-	ed25519.c fatal.c fe25519.c ge25519.c hash.c hmac.c hostfile.c krl.c \
-	log.c match.c misc.c poly1305.c readpass.c sc25519.c ssh-dss.c \
-	ssh-ecdsa.c ssh-ed25519.c ssh-pkcs11.c ssh-rsa.c sshbuf-getput-basic.c \
-	sshbuf-getput-crypto.c sshbuf-misc.c sshbuf.c ssherr.c sshkey.c \
-	uidswap.c utf8.c uuencode.c verify.c xmalloc.c
+SRCS=	ssh-keygen.c moduli.c uuencode.c
+SRCS+=	atomicio.c authfd.c cleanup.c dns.c fatal.c hmac.c hostfile.c \
+	readpass.c utf8.c
+SRCS+=	${SRCS_BASE} ${SRCS_KEY} ${SRCS_KEYP} ${SRCS_KRL} ${SRCS_UTL} \
+	${SRCS_PKCS11}
 
 PROG=	ssh-keygen
 BINOWN=	root
