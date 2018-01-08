@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.7 2018/01/07 22:08:04 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.8 2018/01/08 00:46:15 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -251,7 +251,9 @@ int		 bwfm_pci_flowring_lookup(struct bwfm_pci_softc *,
 void		 bwfm_pci_flowring_create(struct bwfm_pci_softc *,
 		     struct mbuf *);
 void		 bwfm_pci_flowring_create_cb(struct bwfm_softc *, void *);
+void		 bwfm_pci_flowring_delete(struct bwfm_pci_softc *, int);
 
+void		 bwfm_pci_stop(struct bwfm_softc *);
 int		 bwfm_pci_txdata(struct bwfm_softc *, struct mbuf *);
 void		 bwfm_pci_debug_console(struct bwfm_pci_softc *);
 
@@ -271,7 +273,7 @@ struct bwfm_buscore_ops bwfm_pci_buscore_ops = {
 
 struct bwfm_bus_ops bwfm_pci_bus_ops = {
 	.bs_init = NULL,
-	.bs_stop = NULL,
+	.bs_stop = bwfm_pci_stop,
 	.bs_txdata = bwfm_pci_txdata,
 	.bs_txctl = NULL,
 	.bs_rxctl = NULL,
@@ -1186,6 +1188,7 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf)
 	struct msgbuf_rx_event *event;
 	struct msgbuf_common_hdr *msg;
 	struct msgbuf_flowring_create_resp *fcr;
+	struct msgbuf_flowring_delete_resp *fdr;
 	struct bwfm_pci_msgring *ring;
 	struct mbuf *m;
 	int flowid;
@@ -1213,6 +1216,25 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf)
 		}
 		ring->status = RING_OPEN;
 		ifq_restart(&ifp->if_snd);
+		break;
+	case MSGBUF_TYPE_FLOW_RING_DELETE_CMPLT:
+		fdr = (struct msgbuf_flowring_delete_resp *)buf;
+		flowid = letoh16(fdr->compl_hdr.flow_ring_id);
+		if (flowid < 2)
+			break;
+		flowid -= 2;
+		if (flowid >= sc->sc_max_flowrings)
+			break;
+		ring = &sc->sc_flowrings[flowid];
+		if (ring->status != RING_CLOSING)
+			break;
+		if (fdr->compl_hdr.status) {
+			printf("%s: failed to delete flowring %d\n",
+			    DEVNAME(sc), flowid);
+			break;
+		}
+		bwfm_pci_dmamem_free(sc, ring->ring);
+		ring->status = RING_CLOSED;
 		break;
 	case MSGBUF_TYPE_IOCTLPTR_REQ_ACK:
 		break;
@@ -1434,7 +1456,7 @@ bwfm_pci_flowring_lookup(struct bwfm_pci_softc *sc, struct mbuf *m)
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 		    sc->sc_flowrings[flowid].status >= RING_OPEN &&
 		    sc->sc_flowrings[flowid].fifo == fifo &&
-		    memcmp(sc->sc_flowrings[flowid].mac, da, ETHER_ADDR_LEN)) {
+		    !memcmp(sc->sc_flowrings[flowid].mac, da, ETHER_ADDR_LEN)) {
 			found = 1;
 			break;
 		}
@@ -1545,6 +1567,49 @@ bwfm_pci_flowring_create_cb(struct bwfm_softc *bwfm, void *arg)
 	req->len_item = letoh16(48);
 
 	bwfm_pci_ring_write_commit(sc, &sc->sc_ctrl_submit);
+}
+
+void
+bwfm_pci_flowring_delete(struct bwfm_pci_softc *sc, int flowid)
+{
+	struct msgbuf_tx_flowring_delete_req *req;
+	struct bwfm_pci_msgring *ring;
+
+	ring = &sc->sc_flowrings[flowid];
+	if (ring->status != RING_OPEN) {
+		printf("%s: flowring not open\n", DEVNAME(sc));
+		return;
+	}
+
+	req = bwfm_pci_ring_write_reserve(sc, &sc->sc_ctrl_submit);
+	if (req == NULL) {
+		printf("%s: cannot reserve for flowring\n", DEVNAME(sc));
+		return;
+	}
+
+	ring->status = RING_CLOSING;
+
+	req->msg.msgtype = MSGBUF_TYPE_FLOW_RING_DELETE;
+	req->msg.ifidx = 0;
+	req->msg.request_id = 0;
+	req->flow_ring_id = letoh16(flowid + 2);
+	req->reason = 0;
+
+	bwfm_pci_ring_write_commit(sc, &sc->sc_ctrl_submit);
+}
+
+void
+bwfm_pci_stop(struct bwfm_softc *bwfm)
+{
+	struct bwfm_pci_softc *sc = (void *)bwfm;
+	struct bwfm_pci_msgring *ring;
+	int i;
+
+	for (i = 0; i < sc->sc_max_flowrings; i++) {
+		ring = &sc->sc_flowrings[i];
+		if (ring->status == RING_OPEN)
+			bwfm_pci_flowring_delete(sc, i);
+	}
 }
 
 int

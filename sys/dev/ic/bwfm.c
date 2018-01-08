@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.27 2018/01/05 23:13:04 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.28 2018/01/08 00:46:15 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -318,6 +318,9 @@ bwfm_init(struct ifnet *ifp)
 	uint8_t evmask[BWFM_EVENT_MASK_LEN];
 	struct bwfm_join_pref_params join_pref[2];
 
+	if (sc->sc_bus_ops->bs_init)
+		sc->sc_bus_ops->bs_init(sc);
+
 	if (bwfm_fwvar_var_set_int(sc, "mpc", 1)) {
 		printf("%s: could not set mpc\n", DEVNAME(sc));
 		return;
@@ -424,6 +427,9 @@ bwfm_stop(struct ifnet *ifp)
 
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_DOWN, 1);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, 0);
+
+	if (sc->sc_bus_ops->bs_stop)
+		sc->sc_bus_ops->bs_stop(sc);
 }
 
 void
