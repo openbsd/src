@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.8 2018/01/08 00:46:15 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.9 2018/01/08 17:29:21 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -255,7 +255,10 @@ void		 bwfm_pci_flowring_delete(struct bwfm_pci_softc *, int);
 
 void		 bwfm_pci_stop(struct bwfm_softc *);
 int		 bwfm_pci_txdata(struct bwfm_softc *, struct mbuf *);
+
+#ifdef BWFM_DEBUG
 void		 bwfm_pci_debug_console(struct bwfm_pci_softc *);
+#endif
 
 int		 bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *, int,
 		    int, char *, size_t *);
@@ -1666,6 +1669,7 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 	return 0;
 }
 
+#ifdef BWFM_DEBUG
 void
 bwfm_pci_debug_console(struct bwfm_pci_softc *sc)
 {
@@ -1673,7 +1677,7 @@ bwfm_pci_debug_console(struct bwfm_pci_softc *sc)
 	    sc->sc_console_base_addr + BWFM_CONSOLE_WRITEIDX);
 
 	if (newidx != sc->sc_console_readidx)
-		printf("BWFM CONSOLE: ");
+		DPRINTFN(3, ("BWFM CONSOLE: "));
 	while (newidx != sc->sc_console_readidx) {
 		uint8_t ch = bus_space_read_1(sc->sc_tcm_iot, sc->sc_tcm_ioh,
 		    sc->sc_console_buf_addr + sc->sc_console_readidx);
@@ -1682,9 +1686,10 @@ bwfm_pci_debug_console(struct bwfm_pci_softc *sc)
 			sc->sc_console_readidx = 0;
 		if (ch == '\r')
 			continue;
-		printf("%c", ch);
+		DPRINTFN(3, ("%c", ch));
 	}
 }
+#endif
 
 int
 bwfm_pci_intr(void *v)
