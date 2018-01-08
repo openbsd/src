@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.135 2018/01/02 06:38:45 guenther Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.136 2018/01/08 16:15:34 millert Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1962,7 +1962,12 @@ filt_ufsread(struct knote *kn, long hint)
 		return (1);
 	}
 
-	kn->kn_data = DIP(ip, size) - kn->kn_fp->f_offset;
+#ifdef EXT2FS
+	if (IS_EXT2_VNODE(ip->i_vnode))
+		kn->kn_data = ext2fs_size(ip) - kn->kn_fp->f_offset;
+	else
+#endif
+		kn->kn_data = DIP(ip, size) - kn->kn_fp->f_offset;
 	if (kn->kn_data == 0 && kn->kn_sfflags & NOTE_EOF) {
 		kn->kn_fflags |= NOTE_EOF;
 		return (1);

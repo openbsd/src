@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.41 2017/12/30 20:47:00 guenther Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.42 2018/01/08 16:15:34 millert Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -44,6 +44,7 @@
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
+#include <sys/event.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
@@ -241,10 +242,11 @@ ext2fs_write(void *v)
 	struct buf *bp;
 	int32_t lbn;
 	off_t osize;
-	int blkoffset, error, flags, ioflag, size, xfersize;
+	int blkoffset, error, extended, flags, ioflag, size, xfersize;
 	size_t resid;
 	ssize_t overrun;
 
+	extended = 0;
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
 	vp = ap->a_vp;
@@ -312,6 +314,7 @@ ext2fs_write(void *v)
 			if (error)
 				break;
 			uvm_vnp_setsize(vp, ip->i_e2fs_size);
+			extended = 1;
 		}
 		uvm_vnp_uncache(vp);
 
@@ -319,7 +322,7 @@ ext2fs_write(void *v)
 		if (size < xfersize)
 			xfersize = size;
 
-		error = uiomove((char *)bp->b_data + blkoffset, xfersize, uio);
+		error = uiomove(bp->b_data + blkoffset, xfersize, uio);
 #if 0
 		if (ioflag & IO_NOCACHE)
 			bp->b_flags |= B_NOCACHE;
@@ -341,6 +344,8 @@ ext2fs_write(void *v)
 	 */
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
 		ip->i_e2fs_mode &= ~(ISUID | ISGID);
+	if (resid > uio->uio_resid)
+		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
 		if (ioflag & IO_UNIT) {
 			(void)ext2fs_truncate(ip, osize,
