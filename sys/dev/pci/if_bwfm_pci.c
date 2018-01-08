@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.10 2018/01/08 17:53:07 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.11 2018/01/08 17:57:48 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1438,6 +1438,8 @@ bwfm_pci_flowring_lookup(struct bwfm_pci_softc *sc, struct mbuf *m)
 		break;
 #ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_HOSTAP:
+		if (ETHER_IS_MULTICAST(da))
+			da = etherbroadcastaddr;
 		flowid = da[5] * 2 + fifo;
 		break;
 #endif
@@ -1492,6 +1494,8 @@ bwfm_pci_flowring_create(struct bwfm_pci_softc *sc, struct mbuf *m)
 		break;
 #ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_HOSTAP:
+		if (ETHER_IS_MULTICAST(da))
+			da = etherbroadcastaddr;
 		flowid = da[5] * 2 + fifo;
 		break;
 #endif
@@ -1526,6 +1530,7 @@ void
 bwfm_pci_flowring_create_cb(struct bwfm_softc *bwfm, void *arg)
 {
 	struct bwfm_pci_softc *sc = (void *)bwfm;
+	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
 	struct bwfm_cmd_flowring_create *cmd = arg;
 	struct msgbuf_tx_flowring_create_req *req;
 	struct bwfm_pci_msgring *ring;
@@ -1554,6 +1559,10 @@ bwfm_pci_flowring_create_cb(struct bwfm_softc *bwfm, void *arg)
 	ring->status = RING_OPENING;
 	ring->fifo = bwfm_pci_prio2fifo[prio];
 	memcpy(ring->mac, cmd->da, ETHER_ADDR_LEN);
+#ifndef IEEE80211_STA_ONLY
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP && ETHER_IS_MULTICAST(cmd->da))
+		memcpy(ring->mac, etherbroadcastaddr, ETHER_ADDR_LEN);
+#endif
 
 	req->msg.msgtype = MSGBUF_TYPE_FLOW_RING_CREATE;
 	req->msg.ifidx = 0;
@@ -1710,9 +1719,9 @@ bwfm_pci_intr(void *v)
 		printf("%s: handle MB data\n", __func__);
 
 	if (status & BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_D2H_DB) {
-		bwfm_pci_ring_rx(sc, &sc->sc_ctrl_complete);
-		bwfm_pci_ring_rx(sc, &sc->sc_tx_complete);
 		bwfm_pci_ring_rx(sc, &sc->sc_rx_complete);
+		bwfm_pci_ring_rx(sc, &sc->sc_tx_complete);
+		bwfm_pci_ring_rx(sc, &sc->sc_ctrl_complete);
 	}
 
 #ifdef BWFM_DEBUG
