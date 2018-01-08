@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.9 2018/01/08 17:29:21 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.10 2018/01/08 17:53:07 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1661,7 +1661,7 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 	paddr += ETHER_HDR_LEN;
 
 	tx->msg.request_id = htole32(pktid);
-	tx->data_len = m->m_len;
+	tx->data_len = htole16(m->m_len - ETHER_HDR_LEN);
 	tx->data_buf_addr.high_addr = htole32(paddr >> 32);
 	tx->data_buf_addr.low_addr = htole32(paddr & 0xffffffff);
 
