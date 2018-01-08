@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.152 2017/10/10 15:38:26 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.153 2018/01/08 05:42:48 bentley Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: October 10 2017 $
+.Dd $Mdocdate: January 8 2018 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ rejects unsigned packages unless they come from a trusted source
 .Ev TRUSTED_PKG_PATH
 .Pc
 or option
-.Fl D Ar unsigned
+.Fl D Cm unsigned
 is used.
 .Pp
 If a package is digitally signed:
@@ -301,41 +301,41 @@ should be waived.
 Recognized keywords include:
 .Pp
 .Bl -tag -width "updatedependsXX" -compact
-.It Ar allversions
+.It Cm allversions
 Do not trim older p* variants of packages for updates.
-.It Ar arch
+.It Cm arch
 Architecture recorded in package may not match.
-.It Ar checksum
+.It Cm checksum
 Verify checksums before deleting or tying old files.
-.It Ar dontmerge
+.It Cm dontmerge
 By default, if dependencies are too strict,
 .Nm
 will merge updates together to make sure everything stays in sync.
-.Fl D Ns Ar dontmerge
+.Fl D Ns Cm dontmerge
 disables that behavior.
-.It Ar donttie
+.It Cm donttie
 By default,
 .Nm
 will try to find new files in old packages by comparing the stored sha256,
 and tie the entries together to avoid extracting files needlessly.
-.Fl D Ns Ar donttie
+.Fl D Ns Cm donttie
 disables that behavior.
-.It Ar downgrade
+.It Cm downgrade
 Don't filter out package versions older than what's currently installed.
-.It Ar installed
+.It Cm installed
 In update mode, reinstall an existing package with the same update signature.
-.It Ar libdepends
+.It Cm libdepends
 Library specifications may not be fulfilled.
-.It Ar nonroot
+.It Cm nonroot
 Install even if not running as root.
-.It Ar paranoid
+.It Cm paranoid
 Very safe update: don't run any @exec/@unexec.
 This may break some packages that will need manual intervention.
-.It Ar repair
+.It Cm repair
 Attempt to repair installed packages with missing registration data.
-.It Ar scripts
+.It Cm scripts
 External scripts may fail.
-.It Ar SIGNER
+.It Cm SIGNER
 List of trusted signers, separated by commas.
 Corresponds to list of public keys under
 .Pa /etc/signify
@@ -345,7 +345,7 @@ Defaults to any key matching
 for packages, and any key matching
 .Sq *fw
 for firmware.
-.It Ar snap
+.It Cm snap
 Force
 .Sq %c
 and
@@ -353,12 +353,12 @@ and
 to expand to
 .Sq snapshots ,
 even on a release kernel.
-.It Ar unsigned
+.It Cm unsigned
 Allow the installation of unsigned packages without warnings/errors
 (necessary for
 .Xr ports 7 ,
 automatically set by the build infrastructure).
-.It Ar updatedepends
+.It Cm updatedepends
 Force update even if forward dependencies no longer match.
 .El
 .It Fl I
@@ -435,7 +435,7 @@ will refuse to replace packages as soon as it needs to run scripts that
 might fail
 .Po
 use
-.Fl D Ar update
+.Fl D Cm update
 to force the replacement
 .Pc ;
 .Nm
@@ -443,7 +443,7 @@ will also refuse to replace packages when the dependencies don't quite
 match
 .Po
 use
-.Fl D Ar updatedepends
+.Fl D Cm updatedepends
 to force the replacement
 .Pc .
 .It Fl s
@@ -655,7 +655,9 @@ A check is made to determine if a similar package is already installed.
 If so, its full update signature is computed, which contains all the
 necessary dependency information along with the actual package version.
 If that signature is identical to that of the new package, no replacement
-is performed (unless -D installed is specified).
+is performed (unless
+.Fl D Cm installed
+is specified).
 .It
 A check is made to determine what old package(s) the new package(s) should
 replace, using conflicts.
@@ -671,8 +673,11 @@ update to those packages.
 .It
 A check is made to determine whether the old packages will be deleted without
 issue, and whether the new packages will install correctly.
-This includes refusing to run any code (unless -D update), and verifying
-that the new package still matches dependencies (unless -D updatedepends).
+This includes refusing to run any code (unless
+.Fl D Cm update ) ,
+and verifying
+that the new package still matches dependencies (unless
+.Fl D Cm updatedepends ) .
 .It
 Shared libraries deserve special treatment: each shared library from the old
 packages that does no longer exist in the new packages, but that is required
@@ -719,7 +724,9 @@ package first, which may contain exceptions to these rules.
 This special package contains global information, such as packages that
 can be deleted because they're now part of base, or stem changes.
 .It
-Version matching occurs: unless -D downgrade, only packages with newer
+Version matching occurs: unless
+.Fl D Cm downgrade ,
+only packages with newer
 versions will be considered as update candidates.
 Note that version matching is costly, thus
 .Ev PKG_PATH
@@ -774,7 +781,7 @@ If set, any package retrieved from a distant location will be copied to
 that directory as well.
 .It Ev PKG_CHECKSUM
 If set, verify files checksums during deletion, exactly like
-.Fl D Ns Ar checksum .
+.Fl D Ns Cm checksum .
 .It Ev PKG_DBDIR
 Where to register packages instead of
 .Pa /var/db/pkg .

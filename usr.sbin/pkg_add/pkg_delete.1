@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.57 2017/03/25 19:53:33 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.58 2018/01/08 05:42:48 bentley Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: March 25 2017 $
+.Dd $Mdocdate: January 8 2018 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -108,15 +108,15 @@ should be waived.
 Recognized keywords include:
 .Pp
 .Bl -tag -width "dependenciesXX" -compact
-.It Ar baddepend
+.It Cm baddepend
 Force the deletion of packages even if they reference nonexistent dependencies.
-.It Ar checksum
+.It Cm checksum
 Verify checksums before deleting files.
-.It Ar dependencies
+.It Cm dependencies
 Also delete the whole set of packages that depends upon the requested packages.
-.It Ar nonroot
+.It Cm nonroot
 Uninstall even if not running as root.
-.It Ar scripts
+.It Cm scripts
 External scripts may fail.
 .El
 .It Fl I
@@ -187,7 +187,7 @@ will list those dependent packages and refuse to delete the package.
 .Bl -tag -width PKG_CHECKSUM
 .It Ev PKG_CHECKSUM
 If set, verify files checksums during deletion, exactly like
-.Fl D Ns Ar checksum .
+.Fl D Ns Cm checksum .
 .It Ev PKG_DBDIR
 Where to look for installed packages instead of
 .Pa /var/db/pkg .

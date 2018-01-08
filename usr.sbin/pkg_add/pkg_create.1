@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.107 2017/09/18 14:10:11 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.108 2018/01/08 05:42:48 bentley Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: September 18 2017 $
+.Dd $Mdocdate: January 8 2018 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -128,26 +128,26 @@ have extra meaning, see
 for details:
 .Pp
 .Bl -tag -width FULLPKGPATH -compact
-.It Ar CDROM
+.It Cm CDROM
 Set to the port's Makefile
-.Ar PERMIT_PACKAGE_CDROM .
-.It Ar COMMENT
+.Va PERMIT_PACKAGE_CDROM .
+.It Cm COMMENT
 Set package
 .Dq one line description
 (mandatory).
-.It Ar HISTORY_DIR
+.It Cm HISTORY_DIR
 Record checksums of files in permanent location
 .Pa ${HISTORY_DIR}/${FULLPKGPATH:S,/,./g} .
-.It Ar FTP
+.It Cm FTP
 Set to the port's Makefile
-.Ar PERMIT_PACKAGE_FTP .
-.It Ar FULLPKGPATH
+.Va PERMIT_PACKAGE_FTP .
+.It Cm FULLPKGPATH
 Strongly recommended, otherwise updates won't work.
-.It Ar HOMEPAGE
+.It Cm HOMEPAGE
 If defined, appended to the description.
-.It Ar MAINTAINER
+.It Cm MAINTAINER
 If defined, appended to the description.
-.It Ar USE_GROFF
+.It Cm USE_GROFF
 Set to 1 to have groff format manpages behind the scenes during
 package creation.
 .El
@@ -330,7 +330,7 @@ Can also be used to comment out elements that update-plist
 will insist in inserting in a packing-list.
 .Pp
 The special comment
-.Cm @comment Ar "no checksum"
+.Cm @comment no checksum
 can be used to tag the next file as special: even though its characteristics
 will be recorded in the package, it can be altered after installation, and
 .Xr pkg_delete 1
@@ -599,21 +599,21 @@ Effects vary depending on
 .Ar name .
 These are the user settable options
 .Bl -tag -width indent
-.It Ar always-update
+.It Cm always-update
 By default,
 .Xr pkg_add 1
 uses some simplified information to decide whether an installed package
 needs updating.
 With this option, the package is updated whenever anything changes.
 To be used sparingly, as this is more expensive.
-.It Ar is-branch
+.It Cm is-branch
 Annotate the few rare ports where several branches are present in the
 ports tree (such as autoconf), to help
 .Xr pkg_info 1
 produce
 .Ar stem Ns % Ns Ar branch
 annotations when needed.
-.It Ar no-default-conflict
+.It Cm no-default-conflict
 By default, a package conflicts with other versions of the same package.
 With this option, the older package version will still be noticed, but the
 installation will proceed anyway.
