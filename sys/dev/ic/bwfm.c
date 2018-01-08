@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.28 2018/01/08 00:46:15 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.29 2018/01/08 23:30:11 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -100,6 +100,9 @@ int	 bwfm_fwvar_var_get_int(struct bwfm_softc *, char *, uint32_t *);
 int	 bwfm_fwvar_var_set_int(struct bwfm_softc *, char *, uint32_t);
 
 void	 bwfm_connect(struct bwfm_softc *);
+#ifndef IEEE80211_STA_ONLY
+void	 bwfm_hostap(struct bwfm_softc *);
+#endif
 void	 bwfm_scan(struct bwfm_softc *);
 
 void	 bwfm_task(void *);
@@ -118,7 +121,15 @@ void	 bwfm_set_key_cb(struct bwfm_softc *, void *);
 void	 bwfm_delete_key_cb(struct bwfm_softc *, void *);
 void	 bwfm_newstate_cb(struct bwfm_softc *, void *);
 
+struct mbuf *bwfm_newbuf(void);
 void	 bwfm_rx(struct bwfm_softc *, struct mbuf *);
+#ifndef IEEE80211_STA_ONLY
+void	 bwfm_rx_auth_ind(struct bwfm_softc *, struct bwfm_event *, size_t);
+void	 bwfm_rx_assoc_ind(struct bwfm_softc *, struct bwfm_event *, size_t, int);
+void	 bwfm_rx_deauth_ind(struct bwfm_softc *, struct bwfm_event *, size_t);
+void	 bwfm_rx_disassoc_ind(struct bwfm_softc *, struct bwfm_event *, size_t);
+void	 bwfm_rx_leave_ind(struct bwfm_softc *, struct bwfm_event *, size_t, int);
+#endif
 void	 bwfm_rx_event(struct bwfm_softc *, char *, size_t);
 void	 bwfm_scan_node(struct bwfm_softc *, struct bwfm_bss_info *, size_t);
 
@@ -174,7 +185,10 @@ bwfm_attach(struct bwfm_softc *sc)
 	ic->ic_state = IEEE80211_S_INIT;
 
 	ic->ic_caps =
-	    IEEE80211_C_RSN | 	/* WPA/RSN */
+#ifndef IEEE80211_STA_ONLY
+	    IEEE80211_C_HOSTAP |	/* Access Point */
+#endif
+	    IEEE80211_C_RSN | 		/* WPA/RSN */
 	    IEEE80211_C_SCANALL |	/* device scans all channels at once */
 	    IEEE80211_C_SCANALLBAND;	/* device scans all bands at once */
 
@@ -315,8 +329,10 @@ void
 bwfm_init(struct ifnet *ifp)
 {
 	struct bwfm_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t evmask[BWFM_EVENT_MASK_LEN];
 	struct bwfm_join_pref_params join_pref[2];
+	int pm;
 
 	if (sc->sc_bus_ops->bs_init)
 		sc->sc_bus_ops->bs_init(sc);
@@ -341,18 +357,35 @@ bwfm_init(struct ifnet *ifp)
 		return;
 	}
 
-	if (bwfm_fwvar_var_get_data(sc, "event_msgs", evmask, sizeof(evmask))) {
-		printf("%s: could not get event mask\n", DEVNAME(sc));
-		return;
+#define BWFM_EVENT(event) evmask[(event) / 8] |= 1 << ((event) % 8)
+	memset(evmask, 0, sizeof(evmask));
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_STA:
+		BWFM_EVENT(BWFM_E_IF);
+		BWFM_EVENT(BWFM_E_LINK);
+		BWFM_EVENT(BWFM_E_AUTH);
+		BWFM_EVENT(BWFM_E_ASSOC);
+		BWFM_EVENT(BWFM_E_DEAUTH);
+		BWFM_EVENT(BWFM_E_DISASSOC);
+		BWFM_EVENT(BWFM_E_SET_SSID);
+		BWFM_EVENT(BWFM_E_ESCAN_RESULT);
+		break;
+#ifndef IEEE80211_STA_ONLY
+	case IEEE80211_M_HOSTAP:
+		BWFM_EVENT(BWFM_E_AUTH_IND);
+		BWFM_EVENT(BWFM_E_ASSOC_IND);
+		BWFM_EVENT(BWFM_E_REASSOC_IND);
+		BWFM_EVENT(BWFM_E_DEAUTH_IND);
+		BWFM_EVENT(BWFM_E_DISASSOC_IND);
+		BWFM_EVENT(BWFM_E_SET_SSID);
+		BWFM_EVENT(BWFM_E_ESCAN_RESULT);
+		break;
+#endif
+	default:
+		break;
 	}
-	evmask[BWFM_E_IF / 8] |= 1 << (BWFM_E_IF % 8);
-	evmask[BWFM_E_LINK / 8] |= 1 << (BWFM_E_LINK % 8);
-	evmask[BWFM_E_AUTH / 8] |= 1 << (BWFM_E_AUTH % 8);
-	evmask[BWFM_E_ASSOC / 8] |= 1 << (BWFM_E_ASSOC % 8);
-	evmask[BWFM_E_DEAUTH / 8] |= 1 << (BWFM_E_DEAUTH % 8);
-	evmask[BWFM_E_DISASSOC / 8] |= 1 << (BWFM_E_DISASSOC % 8);
-	evmask[BWFM_E_SET_SSID / 8] |= 1 << (BWFM_E_SET_SSID % 8);
-	evmask[BWFM_E_ESCAN_RESULT / 8] |= 1 << (BWFM_E_ESCAN_RESULT % 8);
+#undef BWFM_EVENT
+
 	if (bwfm_fwvar_var_set_data(sc, "event_msgs", evmask, sizeof(evmask))) {
 		printf("%s: could not set event mask\n", DEVNAME(sc));
 		return;
@@ -374,7 +407,16 @@ bwfm_init(struct ifnet *ifp)
 		return;
 	}
 
-	if (bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, 2)) {
+	/*
+	 * Use CAM (constantly awake) when we are running as AP,
+	 * otherwise use fast power saving.
+	 */
+	pm = BWFM_PM_FAST_PS;
+#ifndef IEEE80211_STA_ONLY
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+		pm = BWFM_PM_CAM;
+#endif
+	if (bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, pm)) {
 		printf("%s: could not set power\n", DEVNAME(sc));
 		return;
 	}
@@ -426,7 +468,7 @@ bwfm_stop(struct ifnet *ifp)
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_DOWN, 1);
-	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, 0);
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, BWFM_PM_CAM);
 
 	if (sc->sc_bus_ops->bs_stop)
 		sc->sc_bus_ops->bs_stop(sc);
@@ -1366,6 +1408,73 @@ bwfm_connect(struct bwfm_softc *sc)
 	}
 }
 
+#ifndef IEEE80211_STA_ONLY
+void
+bwfm_hostap(struct bwfm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct bwfm_join_params join;
+
+	/*
+	 * OPEN: Open or WPA/WPA2 on newer Chips/Firmware.
+	 * SHARED KEY: WEP.
+	 * AUTO: Automatic, probably for older Chips/Firmware.
+	 */
+	if (ic->ic_flags & IEEE80211_F_RSNON) {
+		uint32_t wsec = 0;
+		uint32_t wpa = 0;
+
+		/* TODO: Turn off if replay counter set */
+		if (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)
+			bwfm_fwvar_var_set_int(sc, "wme_bss_disable", 1);
+
+		if (ni->ni_rsnprotos & IEEE80211_PROTO_WPA) {
+			if (ni->ni_rsnakms & IEEE80211_AKM_PSK)
+				wpa |= BWFM_WPA_AUTH_WPA_PSK;
+			if (ni->ni_rsnakms & IEEE80211_AKM_8021X)
+				wpa |= BWFM_WPA_AUTH_WPA_UNSPECIFIED;
+		}
+		if (ni->ni_rsnprotos & IEEE80211_PROTO_RSN) {
+			if (ni->ni_rsnakms & IEEE80211_AKM_PSK)
+				wpa |= BWFM_WPA_AUTH_WPA2_PSK;
+			if (ni->ni_rsnakms & IEEE80211_AKM_SHA256_PSK)
+				wpa |= BWFM_WPA_AUTH_WPA2_PSK_SHA256;
+			if (ni->ni_rsnakms & IEEE80211_AKM_8021X)
+				wpa |= BWFM_WPA_AUTH_WPA2_UNSPECIFIED;
+			if (ni->ni_rsnakms & IEEE80211_AKM_SHA256_8021X)
+				wpa |= BWFM_WPA_AUTH_WPA2_1X_SHA256;
+		}
+		if (ni->ni_rsnciphers & IEEE80211_WPA_CIPHER_TKIP ||
+		    ni->ni_rsngroupcipher & IEEE80211_WPA_CIPHER_TKIP)
+			wsec |= BWFM_WSEC_TKIP;
+		if (ni->ni_rsnciphers & IEEE80211_WPA_CIPHER_CCMP ||
+		    ni->ni_rsngroupcipher & IEEE80211_WPA_CIPHER_CCMP)
+			wsec |= BWFM_WSEC_AES;
+
+		bwfm_fwvar_var_set_int(sc, "wpa_auth", wpa);
+		bwfm_fwvar_var_set_int(sc, "wsec", wsec);
+	} else {
+		bwfm_fwvar_var_set_int(sc, "wpa_auth", BWFM_WPA_AUTH_DISABLED);
+		bwfm_fwvar_var_set_int(sc, "wsec", BWFM_WSEC_NONE);
+	}
+	bwfm_fwvar_var_set_int(sc, "auth", BWFM_AUTH_OPEN);
+	bwfm_fwvar_var_set_int(sc, "mfp", BWFM_MFP_NONE);
+
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_INFRA, 1);
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_AP, 1);
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_UP, 1);
+
+	memset(&join, 0, sizeof(join));
+	memcpy(join.ssid.ssid, ic->ic_des_essid, ic->ic_des_esslen);
+	join.ssid.len = htole32(ic->ic_des_esslen);
+	memset(join.assoc.bssid, 0xff, sizeof(join.assoc.bssid));
+	bwfm_fwvar_cmd_set_data(sc, BWFM_C_SET_SSID, &join, sizeof(join));
+	bwfm_fwvar_var_set_int(sc, "closednet",
+	    (ic->ic_flags & IEEE80211_F_HIDENWID) != 0);
+}
+#endif
+
 void
 bwfm_scan(struct bwfm_softc *sc)
 {
@@ -1407,6 +1516,26 @@ bwfm_scan(struct bwfm_softc *sc)
 	free(params, M_TEMP, params_size);
 }
 
+struct mbuf *
+bwfm_newbuf(void)
+{
+	struct mbuf *m;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return (NULL);
+
+	MCLGET(m, M_DONTWAIT);
+	if (!(m->m_flags & M_EXT)) {
+		m_freem(m);
+		return (NULL);
+	}
+
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
+
+	return (m);
+}
+
 void
 bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
 {
@@ -1414,6 +1543,7 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
 	struct ifnet *ifp = &ic->ic_if;
 	struct bwfm_event *e = mtod(m, struct bwfm_event *);
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	struct ieee80211_node *ni;
 
 	if (m->m_len >= sizeof(e->ehdr) &&
 	    ntohs(e->ehdr.ether_type) == BWFM_ETHERTYPE_LINK_CTL &&
@@ -1438,12 +1568,187 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
-		ieee80211_eapol_key_input(ic, m, ic->ic_bss);
+#ifndef IEEE80211_STA_ONLY
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			ni = ieee80211_find_node(ic,
+			    (void *)&e->ehdr.ether_shost);
+			if (ni == NULL) {
+				m_free(m);
+				return;
+			}
+		} else
+#endif
+			ni = ic->ic_bss;
+		ieee80211_eapol_key_input(ic, m, ni);
 	} else {
 		ml_enqueue(&ml, m);
 		if_input(ifp, &ml);
 	}
 }
+
+#ifndef IEEE80211_STA_ONLY
+void
+bwfm_rx_auth_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_rxinfo rxi;
+	struct ieee80211_frame *wh;
+	struct ieee80211_node *ni;
+	struct mbuf *m;
+	uint32_t pktlen, ieslen;
+
+	/* Build a fake beacon frame to let net80211 do all the parsing. */
+	ieslen = betoh32(e->msg.datalen);
+	pktlen = sizeof(*wh) + ieslen + 6;
+	if (pktlen > MCLBYTES)
+		return;
+	m = bwfm_newbuf();
+	if (m == NULL)
+		return;
+	wh = mtod(m, struct ieee80211_frame *);
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
+	    IEEE80211_FC0_SUBTYPE_AUTH;
+	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	*(uint16_t *)wh->i_dur = 0;
+	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, &e->msg.addr);
+	IEEE80211_ADDR_COPY(wh->i_addr3, ic->ic_bss->ni_bssid);
+	*(uint16_t *)wh->i_seq = 0;
+	((uint16_t *)(&wh[1]))[0] = IEEE80211_AUTH_ALG_OPEN;
+	((uint16_t *)(&wh[1]))[1] = IEEE80211_AUTH_OPEN_REQUEST;
+	((uint16_t *)(&wh[1]))[2] = 0;
+
+	/* Finalize mbuf. */
+	m->m_pkthdr.len = m->m_len = pktlen;
+	ni = ieee80211_find_node(ic, wh->i_addr2);
+	if (ni == NULL)
+		ni = ieee80211_alloc_node(ic, wh->i_addr2);
+	if (ni == NULL) {
+		m_free(m);
+		return;
+	}
+	ni->ni_chan = &ic->ic_channels[0];
+	rxi.rxi_flags = 0;
+	rxi.rxi_rssi = 0;
+	rxi.rxi_tstamp = 0;
+	ieee80211_input(ifp, m, ni, &rxi);
+}
+
+void
+bwfm_rx_assoc_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len,
+    int reassoc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_rxinfo rxi;
+	struct ieee80211_frame *wh;
+	struct ieee80211_node *ni;
+	struct mbuf *m;
+	uint32_t pktlen, ieslen;
+
+	/* Build a fake beacon frame to let net80211 do all the parsing. */
+	ieslen = betoh32(e->msg.datalen);
+	pktlen = sizeof(*wh) + ieslen + 4;
+	if (reassoc)
+		pktlen += IEEE80211_ADDR_LEN;
+	if (pktlen > MCLBYTES)
+		return;
+	m = bwfm_newbuf();
+	if (m == NULL)
+		return;
+	wh = mtod(m, struct ieee80211_frame *);
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT;
+	if (reassoc)
+	    wh->i_fc[0] |= IEEE80211_FC0_SUBTYPE_REASSOC_REQ;
+	else
+	    wh->i_fc[0] |= IEEE80211_FC0_SUBTYPE_ASSOC_REQ;
+	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	*(uint16_t *)wh->i_dur = 0;
+	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, &e->msg.addr);
+	IEEE80211_ADDR_COPY(wh->i_addr3, ic->ic_bss->ni_bssid);
+	*(uint16_t *)wh->i_seq = 0;
+	((uint16_t *)(&wh[1]))[0] = IEEE80211_CAPINFO_ESS; /* XXX */
+	((uint16_t *)(&wh[1]))[1] = 100; /* XXX */
+	if (reassoc) {
+		memset(&wh[1] + 4, 0, IEEE80211_ADDR_LEN);
+		memcpy(((uint8_t *)&wh[1]) + 4 + IEEE80211_ADDR_LEN,
+		    &e[1], ieslen);
+	} else
+		memcpy(((uint8_t *)&wh[1]) + 4, &e[1], ieslen);
+
+	/* Finalize mbuf. */
+	m->m_pkthdr.len = m->m_len = pktlen;
+	ni = ieee80211_find_node(ic, wh->i_addr2);
+	if (ni == NULL)
+		ni = ieee80211_alloc_node(ic, wh->i_addr2);
+	if (ni == NULL) {
+		m_free(m);
+		return;
+	}
+	ni->ni_chan = &ic->ic_channels[0];
+	rxi.rxi_flags = 0;
+	rxi.rxi_rssi = 0;
+	rxi.rxi_tstamp = 0;
+	ieee80211_input(ifp, m, ni, &rxi);
+}
+
+void
+bwfm_rx_deauth_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len)
+{
+	bwfm_rx_leave_ind(sc, e, len, IEEE80211_FC0_SUBTYPE_DEAUTH);
+}
+
+void
+bwfm_rx_disassoc_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len)
+{
+	bwfm_rx_leave_ind(sc, e, len, IEEE80211_FC0_SUBTYPE_DISASSOC);
+}
+
+void
+bwfm_rx_leave_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len,
+    int subtype)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_rxinfo rxi;
+	struct ieee80211_frame *wh;
+	struct ieee80211_node *ni;
+	struct mbuf *m;
+	uint32_t pktlen;
+
+	/* Build a fake beacon frame to let net80211 do all the parsing. */
+	pktlen = sizeof(*wh) + 2;
+	if (pktlen > MCLBYTES)
+		return;
+	m = bwfm_newbuf();
+	if (m == NULL)
+		return;
+	wh = mtod(m, struct ieee80211_frame *);
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
+	    subtype;
+	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	*(uint16_t *)wh->i_dur = 0;
+	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, &e->msg.addr);
+	IEEE80211_ADDR_COPY(wh->i_addr3, ic->ic_bss->ni_bssid);
+	*(uint16_t *)wh->i_seq = 0;
+	memset(&wh[1], 0, 2);
+
+	/* Finalize mbuf. */
+	m->m_pkthdr.len = m->m_len = pktlen;
+	ni = ieee80211_find_node(ic, wh->i_addr2);
+	if (ni == NULL) {
+		m_free(m);
+		return;
+	}
+	rxi.rxi_flags = 0;
+	rxi.rxi_rssi = 0;
+	rxi.rxi_tstamp = 0;
+	ieee80211_input(ifp, m, ni, &rxi);
+}
+#endif
 
 void
 bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
@@ -1513,6 +1818,23 @@ bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
 		/* Link status has changed */
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		break;
+#ifndef IEEE80211_STA_ONLY
+	case BWFM_E_AUTH_IND:
+		bwfm_rx_auth_ind(sc, e, len);
+		break;
+	case BWFM_E_ASSOC_IND:
+		bwfm_rx_assoc_ind(sc, e, len, 0);
+		break;
+	case BWFM_E_REASSOC_IND:
+		bwfm_rx_assoc_ind(sc, e, len, 1);
+		break;
+	case BWFM_E_DEAUTH_IND:
+		bwfm_rx_deauth_ind(sc, e, len);
+		break;
+	case BWFM_E_DISASSOC_IND:
+		bwfm_rx_disassoc_ind(sc, e, len);
+		break;
+#endif
 	default:
 		printf("%s: buf %p len %lu datalen %u code %u status %u"
 		    " reason %u\n", __func__, buf, len, ntohl(e->msg.datalen),
@@ -1541,18 +1863,11 @@ bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 
 	/* Build a fake beacon frame to let net80211 do all the parsing. */
 	pktlen = sizeof(*wh) + ieslen + 12;
-	if (__predict_false(pktlen > MCLBYTES))
+	if (pktlen > MCLBYTES)
 		return;
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (__predict_false(m == NULL))
+	m = bwfm_newbuf();
+	if (m == NULL)
 		return;
-	if (pktlen > MHLEN) {
-		MCLGET(m, M_DONTWAIT);
-		if (!(m->m_flags & M_EXT)) {
-			m_free(m);
-			return;
-		}
-	}
 	wh = mtod(m, struct ieee80211_frame *);
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
 	    IEEE80211_FC0_SUBTYPE_BEACON;
@@ -1656,8 +1971,8 @@ bwfm_set_key_cb(struct bwfm_softc *sc, void *arg)
 		ext_key = 1;
 
 	memset(&key, 0, sizeof(key));
-	if (ext_key && !IEEE80211_IS_MULTICAST(ni->ni_bssid))
-		memcpy(key.ea, ni->ni_bssid, sizeof(key.ea));
+	if (ext_key && !IEEE80211_IS_MULTICAST(ni->ni_macaddr))
+		memcpy(key.ea, ni->ni_macaddr, sizeof(key.ea));
 	key.index = htole32(k->k_id);
 	key.len = htole32(k->k_len);
 	memcpy(key.data, k->k_key, sizeof(key.data));
@@ -1759,6 +2074,12 @@ bwfm_newstate_cb(struct bwfm_softc *sc, void *arg)
 			ic->ic_bss->ni_rsn_supp_state = RSNA_SUPP_PTKSTART;
 		splx(s);
 		return;
+#ifndef IEEE80211_STA_ONLY
+	case IEEE80211_S_RUN:
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+			bwfm_hostap(sc);
+		break;
+#endif
 	default:
 		break;
 	}

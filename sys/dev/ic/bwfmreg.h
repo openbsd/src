@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.12 2017/12/18 18:42:33 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.13 2018/01/08 23:30:11 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -201,6 +201,11 @@
 #define BWFM_BAND_5G				1
 #define BWFM_BAND_2G				2
 #define BWFM_BAND_ALL				3
+
+/* Power Modes */
+#define BWFM_PM_CAM				0
+#define BWFM_PM_PS				1
+#define BWFM_PM_FAST_PS				2
 
 /* DCMD commands */
 #define BWFM_C_GET_VERSION			1
