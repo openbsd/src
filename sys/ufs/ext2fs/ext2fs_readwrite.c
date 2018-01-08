@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.42 2018/01/08 16:15:34 millert Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.43 2018/01/08 16:16:16 millert Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -313,7 +313,7 @@ ext2fs_write(void *v)
 			error = ext2fs_setsize(ip, uio->uio_offset + xfersize);
 			if (error)
 				break;
-			uvm_vnp_setsize(vp, ip->i_e2fs_size);
+			uvm_vnp_setsize(vp, ext2fs_size(ip));
 			extended = 1;
 		}
 		uvm_vnp_uncache(vp);
