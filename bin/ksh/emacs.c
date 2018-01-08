@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.81 2018/01/07 19:18:56 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.82 2018/01/08 13:01:31 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1325,14 +1325,14 @@ kb_add_string(void *func, void *args, char *str)
 }
 
 static struct kb_entry *
-kb_add(void *func, void *args, ...)
+kb_add(void *func, ...)
 {
 	va_list			ap;
 	unsigned char		ch;
 	unsigned int		i;
 	char			line[LINE + 1];
 
-	va_start(ap, args);
+	va_start(ap, func);
 	for (i = 0; i < sizeof(line) - 1; i++) {
 		ch = va_arg(ap, unsigned int);
 		if (ch == 0)
@@ -1342,7 +1342,7 @@ kb_add(void *func, void *args, ...)
 	va_end(ap);
 	line[i] = '\0';
 
-	return (kb_add_string(func, args, line));
+	return (kb_add_string(func, NULL, line));
 }
 
 static void
@@ -1453,109 +1453,109 @@ x_init_emacs(void)
 	TAILQ_INIT(&kblist);
 
 	/* man page order */
-	kb_add(x_abort,			NULL, CTRL('G'), 0);
-	kb_add(x_mv_back,		NULL, CTRL('B'), 0);
-	kb_add(x_mv_back,		NULL, CTRL('X'), CTRL('D'), 0);
-	kb_add(x_mv_bword,		NULL, CTRL('['), 'b', 0);
-	kb_add(x_beg_hist,		NULL, CTRL('['), '<', 0);
-	kb_add(x_mv_begin,		NULL, CTRL('A'), 0);
-	kb_add(x_fold_capitalize,	NULL, CTRL('['), 'C', 0);
-	kb_add(x_fold_capitalize,	NULL, CTRL('['), 'c', 0);
-	kb_add(x_comment,		NULL, CTRL('['), '#', 0);
-	kb_add(x_complete,		NULL, CTRL('['), CTRL('['), 0);
-	kb_add(x_comp_comm,		NULL, CTRL('X'), CTRL('['), 0);
-	kb_add(x_comp_file,		NULL, CTRL('['), CTRL('X'), 0);
-	kb_add(x_comp_list,		NULL, CTRL('I'), 0);
-	kb_add(x_comp_list,		NULL, CTRL('['), '=', 0);
-	kb_add(x_del_back,		NULL, CTRL('?'), 0);
-	kb_add(x_del_back,		NULL, CTRL('H'), 0);
-	kb_add(x_del_char,		NULL, CTRL('['), '[', '3', '~', 0); /* delete */
-	kb_add(x_del_bword,		NULL, CTRL('W'), 0);
-	kb_add(x_del_bword,		NULL, CTRL('['), CTRL('?'), 0);
-	kb_add(x_del_bword,		NULL, CTRL('['), CTRL('H'), 0);
-	kb_add(x_del_bword,		NULL, CTRL('['), 'h', 0);
-	kb_add(x_del_fword,		NULL, CTRL('['), 'd', 0);
-	kb_add(x_next_com,		NULL, CTRL('N'), 0);
-	kb_add(x_next_com,		NULL, CTRL('X'), 'B', 0);
-	kb_add(x_fold_lower,		NULL, CTRL('['), 'L', 0);
-	kb_add(x_fold_lower,		NULL, CTRL('['), 'l', 0);
-	kb_add(x_end_hist,		NULL, CTRL('['), '>', 0);
-	kb_add(x_mv_end,		NULL, CTRL('E'), 0);
+	kb_add(x_abort,			CTRL('G'), 0);
+	kb_add(x_mv_back,		CTRL('B'), 0);
+	kb_add(x_mv_back,		CTRL('X'), CTRL('D'), 0);
+	kb_add(x_mv_bword,		CTRL('['), 'b', 0);
+	kb_add(x_beg_hist,		CTRL('['), '<', 0);
+	kb_add(x_mv_begin,		CTRL('A'), 0);
+	kb_add(x_fold_capitalize,	CTRL('['), 'C', 0);
+	kb_add(x_fold_capitalize,	CTRL('['), 'c', 0);
+	kb_add(x_comment,		CTRL('['), '#', 0);
+	kb_add(x_complete,		CTRL('['), CTRL('['), 0);
+	kb_add(x_comp_comm,		CTRL('X'), CTRL('['), 0);
+	kb_add(x_comp_file,		CTRL('['), CTRL('X'), 0);
+	kb_add(x_comp_list,		CTRL('I'), 0);
+	kb_add(x_comp_list,		CTRL('['), '=', 0);
+	kb_add(x_del_back,		CTRL('?'), 0);
+	kb_add(x_del_back,		CTRL('H'), 0);
+	kb_add(x_del_char,		CTRL('['), '[', '3', '~', 0); /* delete */
+	kb_add(x_del_bword,		CTRL('W'), 0);
+	kb_add(x_del_bword,		CTRL('['), CTRL('?'), 0);
+	kb_add(x_del_bword,		CTRL('['), CTRL('H'), 0);
+	kb_add(x_del_bword,		CTRL('['), 'h', 0);
+	kb_add(x_del_fword,		CTRL('['), 'd', 0);
+	kb_add(x_next_com,		CTRL('N'), 0);
+	kb_add(x_next_com,		CTRL('X'), 'B', 0);
+	kb_add(x_fold_lower,		CTRL('['), 'L', 0);
+	kb_add(x_fold_lower,		CTRL('['), 'l', 0);
+	kb_add(x_end_hist,		CTRL('['), '>', 0);
+	kb_add(x_mv_end,		CTRL('E'), 0);
 	/* how to handle: eot: ^_, underneath copied from original keybindings */
-	kb_add(x_end_of_text,		NULL, CTRL('_'), 0);
-	kb_add(x_eot_del,		NULL, CTRL('D'), 0);
+	kb_add(x_end_of_text,		CTRL('_'), 0);
+	kb_add(x_eot_del,		CTRL('D'), 0);
 	/* error */
-	kb_add(x_xchg_point_mark,	NULL, CTRL('X'), CTRL('X'), 0);
-	kb_add(x_expand,		NULL, CTRL('['), '*', 0);
-	kb_add(x_mv_forw,		NULL, CTRL('F'), 0);
-	kb_add(x_mv_forw,		NULL, CTRL('X'), 'C', 0);
-	kb_add(x_mv_fword,		NULL, CTRL('['), 'f', 0);
-	kb_add(x_goto_hist,		NULL, CTRL('['), 'g', 0);
+	kb_add(x_xchg_point_mark,	CTRL('X'), CTRL('X'), 0);
+	kb_add(x_expand,		CTRL('['), '*', 0);
+	kb_add(x_mv_forw,		CTRL('F'), 0);
+	kb_add(x_mv_forw,		CTRL('X'), 'C', 0);
+	kb_add(x_mv_fword,		CTRL('['), 'f', 0);
+	kb_add(x_goto_hist,		CTRL('['), 'g', 0);
 	/* kill-line */
-	kb_add(x_kill,			NULL, CTRL('K'), 0);
-	kb_add(x_enumerate,		NULL, CTRL('['), '?', 0);
-	kb_add(x_list_comm,		NULL, CTRL('X'), '?', 0);
-	kb_add(x_list_file,		NULL, CTRL('X'), CTRL('Y'), 0);
-	kb_add(x_newline,		NULL, CTRL('J'), 0);
-	kb_add(x_newline,		NULL, CTRL('M'), 0);
-	kb_add(x_nl_next_com,		NULL, CTRL('O'), 0);
+	kb_add(x_kill,			CTRL('K'), 0);
+	kb_add(x_enumerate,		CTRL('['), '?', 0);
+	kb_add(x_list_comm,		CTRL('X'), '?', 0);
+	kb_add(x_list_file,		CTRL('X'), CTRL('Y'), 0);
+	kb_add(x_newline,		CTRL('J'), 0);
+	kb_add(x_newline,		CTRL('M'), 0);
+	kb_add(x_nl_next_com,		CTRL('O'), 0);
 	/* no-op */
-	kb_add(x_prev_histword,		NULL, CTRL('['), '.', 0);
-	kb_add(x_prev_histword,		NULL, CTRL('['), '_', 0);
+	kb_add(x_prev_histword,		CTRL('['), '.', 0);
+	kb_add(x_prev_histword,		CTRL('['), '_', 0);
 	/* how to handle: quote: ^^ */
-	kb_add(x_literal,		NULL, CTRL('^'), 0);
-	kb_add(x_draw_line,		NULL, CTRL('L'), 0);
-	kb_add(x_search_char_back,	NULL, CTRL('['), CTRL(']'), 0);
-	kb_add(x_search_char_forw,	NULL, CTRL(']'), 0);
-	kb_add(x_search_hist,		NULL, CTRL('R'), 0);
-	kb_add(x_set_mark,		NULL, CTRL('['), ' ', 0);
-	kb_add(x_transpose,		NULL, CTRL('T'), 0);
-	kb_add(x_prev_com,		NULL, CTRL('P'), 0);
-	kb_add(x_prev_com,		NULL, CTRL('X'), 'A', 0);
-	kb_add(x_fold_upper,		NULL, CTRL('['), 'U', 0);
-	kb_add(x_fold_upper,		NULL, CTRL('['), 'u', 0);
-	kb_add(x_literal,		NULL, CTRL('V'), 0);
-	kb_add(x_yank,			NULL, CTRL('Y'), 0);
-	kb_add(x_meta_yank,		NULL, CTRL('['), 'y', 0);
+	kb_add(x_literal,		CTRL('^'), 0);
+	kb_add(x_draw_line,		CTRL('L'), 0);
+	kb_add(x_search_char_back,	CTRL('['), CTRL(']'), 0);
+	kb_add(x_search_char_forw,	CTRL(']'), 0);
+	kb_add(x_search_hist,		CTRL('R'), 0);
+	kb_add(x_set_mark,		CTRL('['), ' ', 0);
+	kb_add(x_transpose,		CTRL('T'), 0);
+	kb_add(x_prev_com,		CTRL('P'), 0);
+	kb_add(x_prev_com,		CTRL('X'), 'A', 0);
+	kb_add(x_fold_upper,		CTRL('['), 'U', 0);
+	kb_add(x_fold_upper,		CTRL('['), 'u', 0);
+	kb_add(x_literal,		CTRL('V'), 0);
+	kb_add(x_yank,			CTRL('Y'), 0);
+	kb_add(x_meta_yank,		CTRL('['), 'y', 0);
 	/* man page ends here */
 
 	/* arrow keys */
-	kb_add(x_prev_com,		NULL, CTRL('['), '[', 'A', 0); /* up */
-	kb_add(x_next_com,		NULL, CTRL('['), '[', 'B', 0); /* down */
-	kb_add(x_mv_forw,		NULL, CTRL('['), '[', 'C', 0); /* right */
-	kb_add(x_mv_back,		NULL, CTRL('['), '[', 'D', 0); /* left */
-	kb_add(x_prev_com,		NULL, CTRL('['), 'O', 'A', 0); /* up */
-	kb_add(x_next_com,		NULL, CTRL('['), 'O', 'B', 0); /* down */
-	kb_add(x_mv_forw,		NULL, CTRL('['), 'O', 'C', 0); /* right */
-	kb_add(x_mv_back,		NULL, CTRL('['), 'O', 'D', 0); /* left */
+	kb_add(x_prev_com,		CTRL('['), '[', 'A', 0); /* up */
+	kb_add(x_next_com,		CTRL('['), '[', 'B', 0); /* down */
+	kb_add(x_mv_forw,		CTRL('['), '[', 'C', 0); /* right */
+	kb_add(x_mv_back,		CTRL('['), '[', 'D', 0); /* left */
+	kb_add(x_prev_com,		CTRL('['), 'O', 'A', 0); /* up */
+	kb_add(x_next_com,		CTRL('['), 'O', 'B', 0); /* down */
+	kb_add(x_mv_forw,		CTRL('['), 'O', 'C', 0); /* right */
+	kb_add(x_mv_back,		CTRL('['), 'O', 'D', 0); /* left */
 
 	/* more navigation keys */
-	kb_add(x_mv_begin,		NULL, CTRL('['), '[', 'H', 0); /* home */
-	kb_add(x_mv_end,		NULL, CTRL('['), '[', 'F', 0); /* end */
-	kb_add(x_mv_begin,		NULL, CTRL('['), 'O', 'H', 0); /* home */
-	kb_add(x_mv_end,		NULL, CTRL('['), 'O', 'F', 0); /* end */
-	kb_add(x_mv_begin,		NULL, CTRL('['), '[', '1', '~', 0); /* home */
-	kb_add(x_mv_end,		NULL, CTRL('['), '[', '4', '~', 0); /* end */
-	kb_add(x_mv_begin,		NULL, CTRL('['), '[', '7', '~', 0); /* home */
-	kb_add(x_mv_end,		NULL, CTRL('['), '[', '8', '~', 0); /* end */
+	kb_add(x_mv_begin,		CTRL('['), '[', 'H', 0); /* home */
+	kb_add(x_mv_end,		CTRL('['), '[', 'F', 0); /* end */
+	kb_add(x_mv_begin,		CTRL('['), 'O', 'H', 0); /* home */
+	kb_add(x_mv_end,		CTRL('['), 'O', 'F', 0); /* end */
+	kb_add(x_mv_begin,		CTRL('['), '[', '1', '~', 0); /* home */
+	kb_add(x_mv_end,		CTRL('['), '[', '4', '~', 0); /* end */
+	kb_add(x_mv_begin,		CTRL('['), '[', '7', '~', 0); /* home */
+	kb_add(x_mv_end,		CTRL('['), '[', '8', '~', 0); /* end */
 
 	/* can't be bound */
-	kb_add(x_set_arg,		NULL, CTRL('['), '0', 0);
-	kb_add(x_set_arg,		NULL, CTRL('['), '1', 0);
-	kb_add(x_set_arg,		NULL, CTRL('['), '2', 0);
-	kb_add(x_set_arg,		NULL, CTRL('['), '3', 0);
-	kb_add(x_set_arg,		NULL, CTRL('['), '4', 0);
-	kb_add(x_set_arg,		NULL, CTRL('['), '5', 0);
-	kb_add(x_set_arg,		NULL, CTRL('['), '6', 0);
-	kb_add(x_set_arg,		NULL, CTRL('['), '7', 0);
-	kb_add(x_set_arg,		NULL, CTRL('['), '8', 0);
-	kb_add(x_set_arg,		NULL, CTRL('['), '9', 0);
+	kb_add(x_set_arg,		CTRL('['), '0', 0);
+	kb_add(x_set_arg,		CTRL('['), '1', 0);
+	kb_add(x_set_arg,		CTRL('['), '2', 0);
+	kb_add(x_set_arg,		CTRL('['), '3', 0);
+	kb_add(x_set_arg,		CTRL('['), '4', 0);
+	kb_add(x_set_arg,		CTRL('['), '5', 0);
+	kb_add(x_set_arg,		CTRL('['), '6', 0);
+	kb_add(x_set_arg,		CTRL('['), '7', 0);
+	kb_add(x_set_arg,		CTRL('['), '8', 0);
+	kb_add(x_set_arg,		CTRL('['), '9', 0);
 
 	/* ctrl arrow keys */
-	kb_add(x_mv_end,		NULL, CTRL('['), '[', '1', ';', '5', 'A', 0); /* ctrl up */
-	kb_add(x_mv_begin,		NULL, CTRL('['), '[', '1', ';', '5', 'B', 0); /* ctrl down */
-	kb_add(x_mv_fword,		NULL, CTRL('['), '[', '1', ';', '5', 'C', 0); /* ctrl right */
-	kb_add(x_mv_bword,		NULL, CTRL('['), '[', '1', ';', '5', 'D', 0); /* ctrl left */
+	kb_add(x_mv_end,		CTRL('['), '[', '1', ';', '5', 'A', 0); /* ctrl up */
+	kb_add(x_mv_begin,		CTRL('['), '[', '1', ';', '5', 'B', 0); /* ctrl down */
+	kb_add(x_mv_fword,		CTRL('['), '[', '1', ';', '5', 'C', 0); /* ctrl right */
+	kb_add(x_mv_bword,		CTRL('['), '[', '1', ';', '5', 'D', 0); /* ctrl left */
 }
 
 void
@@ -1563,17 +1563,17 @@ x_emacs_keys(X_chars *ec)
 {
 	x_bind_quiet = 1;
 	if (ec->erase >= 0) {
-		kb_add(x_del_back, NULL, ec->erase, 0);
-		kb_add(x_del_bword, NULL, CTRL('['), ec->erase, 0);
+		kb_add(x_del_back, ec->erase, 0);
+		kb_add(x_del_bword, CTRL('['), ec->erase, 0);
 	}
 	if (ec->kill >= 0)
-		kb_add(x_del_line, NULL, ec->kill, 0);
+		kb_add(x_del_line, ec->kill, 0);
 	if (ec->werase >= 0)
-		kb_add(x_del_bword, NULL, ec->werase, 0);
+		kb_add(x_del_bword, ec->werase, 0);
 	if (ec->intr >= 0)
-		kb_add(x_abort, NULL, ec->intr, 0);
+		kb_add(x_abort, ec->intr, 0);
 	if (ec->quit >= 0)
-		kb_add(x_noop, NULL, ec->quit, 0);
+		kb_add(x_noop, ec->quit, 0);
 	x_bind_quiet = 0;
 }
 
