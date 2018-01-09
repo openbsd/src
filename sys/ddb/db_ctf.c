@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.25 2017/11/01 16:12:30 mpi Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.26 2018/01/09 10:19:25 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -343,10 +343,16 @@ db_ctf_type_by_index(uint16_t index)
 void
 db_ctf_pprint(const struct ctf_type *ctt, vaddr_t addr)
 {
+	db_addr_t		 taddr = (db_addr_t)ctt;
 	const struct ctf_type	*ref;
 	uint16_t		 kind;
+	uint32_t		 eob, toff;
 
 	kind = CTF_INFO_KIND(ctt->ctt_info);
+	if (ctt->ctt_size <= CTF_MAX_SIZE)
+		toff = sizeof(struct ctf_stype);
+	else
+		toff = sizeof(struct ctf_type);
 
 	switch (kind) {
 	case CTF_K_FLOAT:
@@ -356,7 +362,15 @@ db_ctf_pprint(const struct ctf_type *ctt, vaddr_t addr)
 		db_printf("%lu", *((unsigned long *)addr));
 		break;
 	case CTF_K_INTEGER:
-		db_printf("%d", *((int *)addr));
+		eob = db_get_value((taddr + toff), sizeof(eob), 0);
+		switch (CTF_INT_BITS(eob)) {
+		case 64:
+			db_printf("0x%llx", *((long long *)addr));
+			break;
+		default:
+			db_printf("0x%x", *((int *)addr));
+			break;
+		}
 		break;
 	case CTF_K_STRUCT:
 	case CTF_K_UNION:
