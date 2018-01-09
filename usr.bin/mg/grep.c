@@ -1,9 +1,11 @@
-/*	$OpenBSD: grep.c,v 1.45 2017/10/12 14:12:00 florian Exp $	*/
+/*	$OpenBSD: grep.c,v 1.46 2018/01/09 17:59:29 cheloha Exp $	*/
 
 /* This file is in the public domain */
 
 #include <sys/queue.h>
 #include <sys/types.h>
+#include <sys/wait.h>
+
 #include <ctype.h>
 #include <libgen.h>
 #include <limits.h>
@@ -180,7 +182,7 @@ compile_mode(const char *name, const char *command)
 	char	*buf;
 	size_t	 sz;
 	ssize_t	 len;
-	int	 ret, n;
+	int	 ret, n, status;
 	char	 cwd[NFILEN], qcmd[NFILEN];
 	char	 timestr[NTIME];
 	time_t	 t;
@@ -226,11 +228,16 @@ compile_mode(const char *name, const char *command)
 	t = time(NULL);
 	strftime(timestr, sizeof(timestr), "%a %b %e %T %Y", localtime(&t));
 	addline(bp, "");
-	if (ret != 0)
-		addlinef(bp, "Command exited abnormally with code %d"
-		    " at %s", ret, timestr);
-	else
-		addlinef(bp, "Command finished at %s", timestr);
+	if (WIFEXITED(ret)) {
+		status = WEXITSTATUS(ret);
+		if (status == 0)
+			addlinef(bp, "Command finished at %s", timestr);
+		else
+			addlinef(bp, "Command exited abnormally with code %d "
+			    "at %s", status, timestr);
+	} else
+		addlinef(bp, "Subshell killed by signal %d at %s",
+		    WTERMSIG(ret), timestr);
 
 	bp->b_dotp = bfirstlp(bp);
 	bp->b_modes[0] = name_mode("fundamental");
