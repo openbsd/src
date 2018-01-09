@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.161 2018/01/02 06:38:45 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.162 2018/01/09 15:14:23 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -83,7 +83,8 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	int type = SCARG(uap, type);
 	int domain = SCARG(uap, domain);
-	int fd, error, ss = 0;
+	int fd, error;
+	unsigned int ss = 0;
 
 	if ((type & SOCK_DNS) && !(domain == AF_INET || domain == AF_INET6))
 		return (EINVAL);

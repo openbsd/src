@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.227 2018/01/08 11:54:28 mpi Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.228 2018/01/09 15:14:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1337,7 +1337,7 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 }
 
 int
-pledge_socket(struct proc *p, int domain, int state)
+pledge_socket(struct proc *p, int domain, unsigned int state)
 {
 	if (! ISSET(p->p_p->ps_flags, PS_PLEDGE))
 		return 0;

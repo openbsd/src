@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.81 2018/01/02 12:54:07 mpi Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.82 2018/01/09 15:14:23 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -51,12 +51,12 @@ TAILQ_HEAD(soqhead, socket);
  * private data and error information.
  */
 struct socket {
+	const struct protosw *so_proto;	/* protocol handle */
+	void	*so_pcb;		/* protocol control block */
+	u_int	so_state;		/* internal state flags SS_*, below */
 	short	so_type;		/* generic type, see socket.h */
 	short	so_options;		/* from socket call, see socket.h */
 	short	so_linger;		/* time to linger while closing */
-	short	so_state;		/* internal state flags SS_*, below */
-	void	*so_pcb;		/* protocol control block */
-	const struct protosw *so_proto;	/* protocol handle */
 /*
  * Variables for connection queueing.
  * Socket where accepts occur is so_head in all subsidiary sockets.
@@ -77,7 +77,7 @@ struct socket {
 	short	so_qlen;		/* number of connections on so_q */
 	short	so_qlimit;		/* max number queued connections */
 	short	so_timeo;		/* connection timeout */
-	u_short	so_error;		/* error affecting connection */
+	u_int	so_error;		/* error affecting connection */
 	pid_t	so_pgid;		/* pgid for signals */
 	uid_t	so_siguid;		/* uid of process who set so_pgid */
 	uid_t	so_sigeuid;		/* euid of process who set so_pgid */
@@ -190,10 +190,6 @@ static inline long
 sbspace(struct socket *so, struct sockbuf *sb)
 {
 	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
-#if 0
-	/* XXXSMP kqueue_scan() calling filt_sowrite() cannot sleep. */
-	soassertlocked(so);
-#endif
 	return lmin(sb->sb_hiwat - sb->sb_cc, sb->sb_mbmax - sb->sb_mbcnt);
 }
 
