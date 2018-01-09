@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.248 2018/01/04 00:33:54 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.249 2018/01/09 06:24:15 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -434,7 +434,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 #ifdef MPLS
 	case ETHERTYPE_MPLS:
 	case ETHERTYPE_MPLS_MCAST:
-		mpls_input(m);
+		mpls_input(ifp, m);
 		return (1);
 #endif
 	default:

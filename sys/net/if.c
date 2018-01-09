@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.534 2018/01/04 10:48:02 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.535 2018/01/09 06:24:14 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -756,7 +756,7 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 #endif /* INET6 */
 #ifdef MPLS
 	case AF_MPLS:
-		mpls_input(m);
+		mpls_input(ifp, m);
 		break;
 #endif /* MPLS */
 	default:

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.68 2017/11/20 10:35:24 mpi Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.69 2018/01/09 06:24:15 dlg Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -175,7 +175,7 @@ gre_input2(struct mbuf *m, int hlen, int proto)
 #ifdef MPLS
 		case ETHERTYPE_MPLS:
 		case ETHERTYPE_MPLS_MCAST:
-			mpls_input(m);
+			mpls_input(&sc->sc_if, m);
 			return (1);
 #endif
 		default:	   /* others not yet supported */
