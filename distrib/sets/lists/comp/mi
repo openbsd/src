@@ -1535,7 +1535,6 @@
 ./usr/share/man/man2/adjfreq.2
 ./usr/share/man/man2/adjtime.2
 ./usr/share/man/man2/alpha/inb.2
-./usr/share/man/man2/amd64/amd64_get_fsbase.2
 ./usr/share/man/man2/amd64/amd64_iopl.2
 ./usr/share/man/man2/armv7/arm_drain_writebuf.2
 ./usr/share/man/man2/armv7/arm_sync_icache.2
