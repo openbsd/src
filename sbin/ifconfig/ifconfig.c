@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.351 2017/11/17 18:04:51 benno Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.352 2018/01/09 10:02:02 mpi Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2124,70 +2124,11 @@ ieee80211_status(void)
 		}
 	}
 
-	if (inwkey == 0 && nwkey.i_wepon > IEEE80211_NWKEY_OPEN) {
-		fputs(" nwkey ", stdout);
-		/* try to retrieve WEP keys */
-		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-			nwkey.i_key[i].i_keydat = keybuf[i];
-			nwkey.i_key[i].i_keylen = sizeof(keybuf[i]);
-		}
-		if (ioctl(s, SIOCG80211NWKEY, (caddr_t)&nwkey) == -1) {
-			fputs("<not displayed>", stdout);
-		} else {
-			nwkey_verbose = 0;
-			/*
-			 * check to see non default key
-			 * or multiple keys defined
-			 */
-			if (nwkey.i_defkid != 1) {
-				nwkey_verbose = 1;
-			} else {
-				for (i = 1; i < IEEE80211_WEP_NKID; i++) {
-					if (nwkey.i_key[i].i_keylen != 0) {
-						nwkey_verbose = 1;
-						break;
-					}
-				}
-			}
-			/* check extra ambiguity with keywords */
-			if (!nwkey_verbose) {
-				if (nwkey.i_key[0].i_keylen >= 2 &&
-				    isdigit((unsigned char)nwkey.i_key[0].i_keydat[0]) &&
-				    nwkey.i_key[0].i_keydat[1] == ':')
-					nwkey_verbose = 1;
-				else if (nwkey.i_key[0].i_keylen >= 7 &&
-				    strncasecmp("persist",
-				    (char *)nwkey.i_key[0].i_keydat, 7) == 0)
-					nwkey_verbose = 1;
-			}
-			if (nwkey_verbose)
-				printf("%d:", nwkey.i_defkid);
-			for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-				if (i > 0)
-					putchar(',');
-				if (nwkey.i_key[i].i_keylen < 0) {
-					fputs("persist", stdout);
-				} else {
-					/*
-					 * XXX
-					 * sanity check nwkey.i_key[i].i_keylen
-					 */
-					print_string(nwkey.i_key[i].i_keydat,
-					    nwkey.i_key[i].i_keylen);
-				}
-				if (!nwkey_verbose)
-					break;
-			}
-		}
-	}
+	if (inwkey == 0 && nwkey.i_wepon > IEEE80211_NWKEY_OPEN)
+		fputs(" nwkey", stdout);
 
-	if (ipsk == 0 && psk.i_enabled) {
-		fputs(" wpakey ", stdout);
-		if (psk.i_enabled == 2)
-			fputs("<not displayed>", stdout);
-		else
-			print_string(psk.i_psk, sizeof(psk.i_psk));
-	}
+	if (ipsk == 0 && psk.i_enabled)
+		fputs(" wpakey", stdout);
 	if (iwpa == 0 && wpa.i_enabled) {
 		const char *sep;
 
