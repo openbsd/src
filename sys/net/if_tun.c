@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.179 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.180 2018/01/09 15:24:24 bluhm Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -193,10 +193,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	struct tun_softc	*tp;
 	struct ifnet		*ifp;
 
-	tp = malloc(sizeof(*tp), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (tp == NULL)
-		return (ENOMEM);
-
+	tp = malloc(sizeof(*tp), M_DEVBUF, M_WAITOK|M_ZERO);
 	tp->tun_unit = unit;
 	tp->tun_flags = TUN_INITED|TUN_STAYUP;
 

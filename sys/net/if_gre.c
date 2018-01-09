@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.88 2017/10/20 09:35:09 mpi Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.89 2018/01/09 15:24:24 bluhm Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -122,14 +122,11 @@ gre_clone_create(struct if_clone *ifc, int unit)
 {
 	struct gre_softc *sc;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (!sc)
-		return (ENOMEM);
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	snprintf(sc->sc_if.if_xname, sizeof sc->sc_if.if_xname, "%s%d",
 	    ifc->ifc_name, unit);
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_type = IFT_TUNNEL;
-	sc->sc_if.if_addrlen = 0;
 	sc->sc_if.if_hdrlen = 24; /* IP + GRE */
 	sc->sc_if.if_mtu = GREMTU;
 	sc->sc_if.if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
@@ -137,11 +134,6 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_output = gre_output;
 	sc->sc_if.if_ioctl = gre_ioctl;
 	sc->sc_if.if_rtrequest = p2p_rtrequest;
-	sc->sc_if.if_collisions = 0;
-	sc->sc_if.if_ierrors = 0;
-	sc->sc_if.if_oerrors = 0;
-	sc->sc_if.if_ipackets = 0;
-	sc->sc_if.if_opackets = 0;
 	sc->g_dst.s_addr = sc->g_src.s_addr = INADDR_ANY;
 	sc->sc_ka_state = GRE_STATE_UKNWN;
 

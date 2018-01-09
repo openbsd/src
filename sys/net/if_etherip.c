@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.28 2017/11/20 10:35:24 mpi Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.29 2018/01/09 15:24:24 bluhm Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -99,9 +99,7 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet *ifp;
 	struct etherip_softc *sc;
 
-	if ((sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-		return ENOMEM;
-
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	ifp = &sc->sc_ac.ac_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "etherip%d", unit);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;

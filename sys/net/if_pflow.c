@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.85 2017/10/31 22:05:12 sashan Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.86 2018/01/09 15:24:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -145,12 +145,8 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet		*ifp;
 	struct pflow_softc	*pflowif;
 
-	if ((pflowif = malloc(sizeof(*pflowif),
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-		return (ENOMEM);
-
+	pflowif = malloc(sizeof(*pflowif), M_DEVBUF, M_WAITOK|M_ZERO);
 	MGET(pflowif->send_nam, M_WAIT, MT_SONAME);
-
 	pflowif->sc_version = PFLOW_PROTO_DEFAULT;
 
 	/* ipfix template init */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pair.c,v 1.10 2017/01/23 11:37:29 mpi Exp $	*/
+/*	$OpenBSD: if_pair.c,v 1.11 2018/01/09 15:24:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -108,10 +108,7 @@ pair_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet		*ifp;
 	struct pair_softc	*sc;
 
-	if ((sc = malloc(sizeof(*sc),
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-		return (ENOMEM);
-
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	ifp = &sc->sc_ac.ac_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "pair%d", unit);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;

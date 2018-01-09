@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.299 2017/11/20 10:17:40 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.300 2018/01/09 15:24:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -156,10 +156,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet *ifp;
 	int i;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (!sc)
-		return (ENOMEM);
-
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	sc->sc_stp = bstp_create(&sc->sc_if);
 	if (!sc->sc_stp) {
 		free(sc, M_DEVBUF, sizeof *sc);

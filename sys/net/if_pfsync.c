@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.255 2017/11/20 10:35:24 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.256 2018/01/09 15:24:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -300,8 +300,7 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 
 	pfsync_sync_ok = 1;
 
-	sc = malloc(sizeof(*pfsyncif), M_DEVBUF, M_WAITOK | M_ZERO);
-
+	sc = malloc(sizeof(*pfsyncif), M_DEVBUF, M_WAITOK|M_ZERO);
 	for (q = 0; q < PFSYNC_S_COUNT; q++)
 		TAILQ_INIT(&sc->sc_qs[q]);
 

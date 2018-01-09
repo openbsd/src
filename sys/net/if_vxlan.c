@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.64 2017/11/20 10:35:24 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.65 2018/01/09 15:24:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -125,10 +125,7 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet		*ifp;
 	struct vxlan_softc	*sc;
 
-	if ((sc = malloc(sizeof(*sc),
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-		return (ENOMEM);
-
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	sc->sc_imo.imo_membership = malloc(
 	    (sizeof(struct in_multi *) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
 	    M_WAITOK|M_ZERO);

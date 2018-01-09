@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.84 2017/12/15 01:37:30 dlg Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.85 2018/01/09 15:24:24 bluhm Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -167,10 +167,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet *ifp;
 
-	ifp = malloc(sizeof(*ifp), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (ifp == NULL)
-		return (ENOMEM);
-
+	ifp = malloc(sizeof(*ifp), M_DEVBUF, M_WAITOK|M_ZERO);
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "lo%d", unit);
 	ifp->if_softc = NULL;
 	ifp->if_mtu = LOMTU;
@@ -181,7 +178,6 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_output = looutput;
 	ifp->if_type = IFT_LOOP;
 	ifp->if_hdrlen = sizeof(u_int32_t);
-	ifp->if_addrlen = 0;
 	if (unit == 0) {
 		if_attachhead(ifp);
 		if_addgroup(ifp, ifc->ifc_name);
