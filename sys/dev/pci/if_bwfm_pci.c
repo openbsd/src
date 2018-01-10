@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.14 2018/01/10 02:15:22 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.15 2018/01/10 17:54:26 jcs Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -296,6 +296,7 @@ struct cfattach bwfm_pci_ca = {
 
 static const struct pci_matchid bwfm_pci_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43602 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4350 },
 };
 
 int
