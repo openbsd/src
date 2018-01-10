@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.214 2018/01/09 15:14:23 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.215 2018/01/10 18:14:34 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1078,7 +1078,8 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	soassertlocked(so);
 
 	if (sosplice_taskq == NULL)
-		sosplice_taskq = taskq_create("sosplice", 1, IPL_SOFTNET, 0);
+		sosplice_taskq = taskq_create("sosplice", 1, IPL_SOFTNET, 
+		    TASKQ_MPSAFE);
 	if (sosplice_taskq == NULL)
 		return (ENOMEM);
 
