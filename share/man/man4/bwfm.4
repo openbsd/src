@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwfm.4,v 1.4 2017/12/24 19:50:56 patrick Exp $
+.\" $OpenBSD: bwfm.4,v 1.5 2018/01/10 02:02:55 patrick Exp $
 .\"
 .\" Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 24 2017 $
+.Dd $Mdocdate: January 10 2018 $
 .Dt BWFM 4
 .Os
 .Sh NAME
@@ -39,6 +39,9 @@ Also known as
 mode, this is used when associating with an access point, through
 which all traffic passes.
 This mode is the default.
+.It Host AP
+In this mode the driver acts as an access point (base station)
+for other cards.
 .El
 .Pp
 The
@@ -88,11 +91,22 @@ nwid mynwid
 wpakey mywpakey
 dhcp
 .Ed
+.Pp
+The following
+.Xr hostname.if 5
+example creates a host-based access point on boot:
+.Bd -literal -offset indent
+mediaopt hostap
+nwid mynwid
+wpakey mywpakey
+inet 192.168.1.1 255.255.255.0
+.Ed
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
+.Xr pci 4 ,
 .Xr usb 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
@@ -109,4 +123,4 @@ driver was written by
 .An Patrick Wildt Aq Mt patrick@blueri.se .
 .Sh CAVEATS
 The firmware is outdated and contains known vulnerabilities.
-SDIO and PCI attachments are not yet supported.
+SDIO attachment is not yet supported.
