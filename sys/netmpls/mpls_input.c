@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.66 2018/01/09 06:24:15 dlg Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.67 2018/01/10 00:05:06 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -76,13 +76,15 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	shim = mtod(m, struct shim_hdr *);
-
 #ifdef MPLS_DEBUG
 	printf("mpls_input: iface %s label=%d, ttl=%d BoS %d\n",
-	    ifp->if_xname, MPLS_LABEL_GET(shim->shim_label), ttls, hasbos);
+	    ifp->if_xname, MPLS_LABEL_GET(shim->shim_label),
+	    MPLS_TTL_GET(shim->shim_label,
+	    MPLS_BOS_ISSET(shim->shim_label));
 #endif
 
 	/* check and decrement TTL */
+	ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
 	if (--ttl == 0) {
 		/* TTL exceeded */
 		m = mpls_do_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, 0);
