@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.166 2017/11/23 06:07:55 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.167 2018/01/10 09:03:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -810,7 +810,6 @@ audio_setpar(struct audio_softc *sc)
 		sc->round = max;
 	else if (sc->round < min)
 		sc->round = min;
-	sc->round = sc->round;
 
 	/*
 	 * set buffer size (number of blocks)
