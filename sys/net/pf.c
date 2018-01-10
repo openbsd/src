@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1054 2017/12/29 23:55:22 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1055 2018/01/10 13:57:17 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -183,7 +183,7 @@ void			 pf_translate_icmp(struct pf_pdesc *, struct pf_addr *,
 			    u_int16_t *, struct pf_addr *, struct pf_addr *,
 			    u_int16_t);
 int			 pf_translate_icmp_af(struct pf_pdesc*, int, void *);
-void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t,
+void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t, int,
 			    sa_family_t, struct pf_rule *, u_int);
 void			 pf_detach_state(struct pf_state *);
 void			 pf_state_key_detach(struct pf_state *, int);
@@ -2896,8 +2896,8 @@ pf_send_challenge_ack(struct pf_pdesc *pd, struct pf_state *s,
 }
 
 void
-pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
-    struct pf_rule *r, u_int rdomain)
+pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, int param,
+    sa_family_t af, struct pf_rule *r, u_int rdomain)
 {
 	struct mbuf	*m0;
 
@@ -2913,11 +2913,11 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 
 	switch (af) {
 	case AF_INET:
-		icmp_error(m0, type, code, 0, 0);
+		icmp_error(m0, type, code, 0, param);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		icmp6_error(m0, type, code, 0);
+		icmp6_error(m0, type, code, param);
 		break;
 #endif /* INET6 */
 	}
@@ -3815,13 +3815,13 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		    ICMP_INFOTYPE(ctx.icmptype)) && pd->af == AF_INET &&
 		    r->return_icmp)
 			pf_send_icmp(pd->m, r->return_icmp >> 8,
-			    r->return_icmp & 255, pd->af, r, pd->rdomain);
+			    r->return_icmp & 255, 0, pd->af, r, pd->rdomain);
 		else if ((pd->proto != IPPROTO_ICMPV6 ||
 		    (ctx.icmptype >= ICMP6_ECHO_REQUEST &&
 		    ctx.icmptype != ND_REDIRECT)) && pd->af == AF_INET6 &&
 		    r->return_icmp6)
 			pf_send_icmp(pd->m, r->return_icmp6 >> 8,
-			    r->return_icmp6 & 255, pd->af, r, pd->rdomain);
+			    r->return_icmp6 & 255, 0, pd->af, r, pd->rdomain);
 	}
 
 	if (r->action == PF_DROP)
@@ -5974,12 +5974,10 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	 */
 	if (ip->ip_off & htons(IP_DF)) {
 		ipstat_inc(ips_cantfrag);
-		if (r->rt != PF_DUPTO) {
-			icmp_error(m0, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG, 0,
-			    ifp->if_mtu);
-			goto done;
-		} else
-			goto bad;
+		if (r->rt != PF_DUPTO)
+			pf_send_icmp(m0, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG,
+			    ifp->if_mtu, pd->af, r, pd->rdomain);
+		goto bad;
 	}
 
 	m1 = m0;
@@ -6109,7 +6107,11 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	} else if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
 		ifp->if_output(ifp, m0, sin6tosa(dst), rt);
 	} else {
-		icmp6_error(m0, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
+		ip6stat_inc(ip6s_cantfrag);
+		if (r->rt != PF_DUPTO)
+			pf_send_icmp(m0, ICMP6_PACKET_TOO_BIG, 0,
+			    ifp->if_mtu, pd->af, r, pd->rdomain);
+		goto bad;
 	}
 
 done:
