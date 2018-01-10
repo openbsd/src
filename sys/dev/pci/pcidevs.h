@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1833 2018/01/06 20:14:01 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1834 2018/01/10 15:44:41 jcs Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -935,7 +935,8 @@
 #define	PCI_PRODUCT_APPLE_INTREPID2_FW	0x006a		/* Intrepid 2 FireWire */
 #define	PCI_PRODUCT_APPLE_INTREPID2_GMAC	0x006b		/* Intrepid 2 GMAC */
 #define	PCI_PRODUCT_APPLE_BCM5701	0x1645		/* BCM5701 */
-#define	PCI_PRODUCT_APPLE_NVME	0x2001		/* NVMe */
+#define	PCI_PRODUCT_APPLE_NVME1	0x2001		/* NVMe */
+#define	PCI_PRODUCT_APPLE_NVME2	0x2003		/* NVMe */
 
 /* Aralion products */
 #define	PCI_PRODUCT_ARALION_ARS106S	0x0301		/* ARS106S */
