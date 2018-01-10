@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.239 2017/12/23 01:44:24 jsg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.240 2018/01/10 09:00:40 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -211,7 +211,7 @@ int	azalia_get_response(azalia_t *, uint32_t *);
 void	azalia_rirb_kick_unsol_events(void *);
 void	azalia_rirb_intr(azalia_t *);
 int	azalia_alloc_dmamem(azalia_t *, size_t, size_t, azalia_dma_t *);
-int	azalia_free_dmamem(const azalia_t *, azalia_dma_t*);
+void	azalia_free_dmamem(const azalia_t *, azalia_dma_t*);
 
 int	azalia_codec_init(codec_t *);
 int	azalia_codec_delete(codec_t *);
@@ -1331,17 +1331,16 @@ free:
 	return err;
 }
 
-int
+void
 azalia_free_dmamem(const azalia_t *az, azalia_dma_t* d)
 {
 	if (d->addr == NULL)
-		return 0;
+		return;
 	bus_dmamap_unload(az->dmat, d->map);
 	bus_dmamap_destroy(az->dmat, d->map);
 	bus_dmamem_unmap(az->dmat, d->addr, d->size);
 	bus_dmamem_free(az->dmat, d->segments, 1);
 	d->addr = NULL;
-	return 0;
 }
 
 int
