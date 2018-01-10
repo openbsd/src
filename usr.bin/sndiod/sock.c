@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.20 2017/07/20 10:26:27 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.21 2018/01/10 09:05:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -625,7 +625,7 @@ sock_setpar(struct sock *f)
 	if (AMSG_ISSET(rchan) && (s->mode & MODE_RECMASK)) {
 		if (rchan < 1)
 			rchan = 1;
-		if (rchan > NCHAN_MAX)
+		else if (rchan > NCHAN_MAX)
 			rchan = NCHAN_MAX;
 		s->sub.slot_cmin = f->opt->rmin;
 		s->sub.slot_cmax = f->opt->rmin + rchan - 1;
@@ -649,7 +649,7 @@ sock_setpar(struct sock *f)
 	if (AMSG_ISSET(pchan) && (s->mode & MODE_PLAY)) {
 		if (pchan < 1)
 			pchan = 1;
-		if (pchan > NCHAN_MAX)
+		else if (pchan > NCHAN_MAX)
 			pchan = NCHAN_MAX;
 		s->mix.slot_cmin = f->opt->pmin;
 		s->mix.slot_cmax = f->opt->pmin + pchan - 1;
@@ -673,7 +673,7 @@ sock_setpar(struct sock *f)
 	if (AMSG_ISSET(rate)) {
 		if (rate < RATE_MIN)
 			rate = RATE_MIN;
-		if (rate > RATE_MAX)
+		else if (rate > RATE_MAX)
 			rate = RATE_MAX;
 		s->round = dev_roundof(d, rate);
 		s->rate = rate;
