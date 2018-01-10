@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.24 2018/01/04 14:30:08 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.25 2018/01/10 23:27:18 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -236,13 +236,17 @@ struct trapframe  proc0tf;
 void
 cpu_startup()
 {
-
 	u_int loop;
 	paddr_t minaddr;
 	paddr_t maxaddr;
 
 	proc0.p_addr = proc0paddr;
 
+	/*
+	 * Give pmap a chance to set up a few more things now the vm
+	 * is initialised
+	 */
+	pmap_postinit();
 
 	/*
 	 * Initialize error message buffer (at end of core).

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.42 2018/01/04 14:30:08 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.43 2018/01/10 23:27:18 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -37,6 +37,9 @@
 void pmap_setttb(struct proc *p);
 void pmap_free_asid(pmap_t pm);
 
+/* We run userland code with ASIDs that have the low bit set. */
+#define ASID_USER	1
+
 static inline void
 ttlb_flush(pmap_t pm, vaddr_t va)
 {
@@ -48,10 +51,13 @@ ttlb_flush(pmap_t pm, vaddr_t va)
 	} else {
 		resva |= (uint64_t)pm->pm_asid << 48;
 		cpu_tlb_flush_asid(resva);
+		resva |= (uint64_t)ASID_USER << 48;
+		cpu_tlb_flush_asid(resva);
 	}
 }
 
 struct pmap kernel_pmap_;
+struct pmap pmap_tramp;
 
 LIST_HEAD(pted_pv_head, pte_desc);
 
@@ -514,12 +520,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	ttlb_flush(pm, va & ~PAGE_MASK);
 
-	if (flags & PROT_EXEC) {
-		if (pg != NULL) {
-			need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
-			atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
-		} else
-			need_sync = 1;
+	if (pg != NULL && (flags & PROT_EXEC)) {
+		need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
+		atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
 	}
 
 	if (need_sync && (pm == pmap_kernel() || (curproc &&
@@ -1078,11 +1081,16 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 	 * via physical pointers
 	 */
 
-	pt1pa = pmap_steal_avail(sizeof(struct pmapvp1), Lx_TABLE_ALIGN, &va);
+	pt1pa = pmap_steal_avail(2 * sizeof(struct pmapvp1), Lx_TABLE_ALIGN,
+	    &va);
 	vp1 = (struct pmapvp1 *)pt1pa;
 	pmap_kernel()->pm_vp.l1 = (struct pmapvp1 *)va;
 	pmap_kernel()->pm_privileged = 1;
 	pmap_kernel()->pm_asid = 0;
+
+	pmap_tramp.pm_vp.l1 = (struct pmapvp1 *)va + 1;
+	pmap_tramp.pm_privileged = 1;
+	pmap_tramp.pm_asid = 0;
 
 	/* allocate Lx entries */
 	for (i = VP_IDX1(VM_MIN_KERNEL_ADDRESS);
@@ -1184,7 +1192,7 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 
 			vp2->l2[VP_IDX2(mapva)] = mappa | L2_BLOCK |
 			    ATTR_IDX(PTE_ATTR_WB) | ATTR_SH(SH_INNER) |
-			    ap_bits_kern[prot];
+			    ATTR_nG | ap_bits_kern[prot];
 		}
 	}
 
@@ -1429,6 +1437,7 @@ pmap_init(void)
 	tcr = READ_SPECIALREG(tcr_el1);
 	tcr &= ~TCR_T0SZ(0x3f);
 	tcr |= TCR_T0SZ(64 - USER_SPACE_BITS);
+	tcr |= TCR_A1;
 	WRITE_SPECIALREG(tcr_el1, tcr);
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, IPL_NONE, 0,
@@ -1473,7 +1482,7 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 {
 	uint64_t pte, access_bits;
 	pmap_t pm = pted->pted_pmap;
-	uint64_t attr = 0;
+	uint64_t attr = ATTR_nG;
 
 	/* see mair in locore.S */
 	switch (pted->pted_va & PMAP_CACHE_BITS) {
@@ -1503,9 +1512,6 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 		access_bits = ap_bits_kern[pted->pted_pte & PROT_MASK];
 	else
 		access_bits = ap_bits_user[pted->pted_pte & PROT_MASK];
-
-	if (pted->pted_va < VM_MIN_KERNEL_ADDRESS)
-		access_bits |= ATTR_nG;
 
 	pte = (pted->pted_pte & PTE_RPGN) | attr | access_bits | L3_P;
 	*pl3 = pte;
@@ -1655,6 +1661,13 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 void
 pmap_postinit(void)
 {
+	extern char trampoline_vectors[];
+	paddr_t pa;
+
+	memset(pmap_tramp.pm_vp.l1, 0, sizeof(struct pmapvp1));
+	pmap_extract(pmap_kernel(), (vaddr_t)trampoline_vectors, &pa);
+	pmap_enter(&pmap_tramp, (vaddr_t)trampoline_vectors, pa,
+	    PROT_READ | PROT_EXEC, PROT_READ | PROT_EXEC | PMAP_WIRED);
 }
 
 void
@@ -2040,6 +2053,13 @@ pmap_map_early(paddr_t spa, psize_t len)
 	}
 }
 
+/*
+ * We allocate ASIDs in pairs.  The first ASID is used to run the
+ * kernel and has both userland and the full kernel mapped.  The
+ * second ASID is used for running userland and has only the
+ * trampoline page mapped in addition to userland.
+ */
+
 #define NUM_ASID (1 << 16)
 uint64_t pmap_asid[NUM_ASID / 64];
 
@@ -2049,25 +2069,25 @@ pmap_allocate_asid(pmap_t pm)
 	int asid, bit;
 
 	do {
-		asid = arc4random() & (NUM_ASID - 1);
+		asid = arc4random() & (NUM_ASID - 2);
 		bit = (asid & (64 - 1));
-	} while (asid == 0 || (pmap_asid[asid / 64] & (1ULL << bit)));
+	} while (asid == 0 || (pmap_asid[asid / 64] & (3ULL << bit)));
 
-	pmap_asid[asid / 64] |= (1ULL << bit);
+	pmap_asid[asid / 64] |= (3ULL << bit);
 	pm->pm_asid = asid;
 }
 
 void
 pmap_free_asid(pmap_t pm)
 {
-	int asid, bit;
+	int bit;
 
 	KASSERT(pm != curcpu()->ci_curpm);
 	cpu_tlb_flush_asid_all((uint64_t)pm->pm_asid << 48);
+	cpu_tlb_flush_asid_all((uint64_t)(pm->pm_asid | ASID_USER) << 48);
 
-	asid = pm->pm_asid;
-	bit = (asid & (64 - 1));
-	pmap_asid[asid / 64] &= ~(1ULL << bit);
+	bit = (pm->pm_asid & (64 - 1));
+	pmap_asid[pm->pm_asid / 64] &= ~(3ULL << bit);
 }
 
 void
@@ -2075,6 +2095,8 @@ pmap_setttb(struct proc *p)
 {
 	pmap_t pm = p->p_vmspace->vm_map.pmap;
 
-	cpu_setttb(((uint64_t)pm->pm_asid << 48) | pm->pm_pt0pa);
+	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
+	__asm volatile("isb");
+	cpu_setttb(pm->pm_asid, pm->pm_pt0pa);
 	curcpu()->ci_curpm = pm;
 }

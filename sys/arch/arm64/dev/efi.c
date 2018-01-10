@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.1 2018/01/04 14:30:08 kettenis Exp $	*/
+/*	$OpenBSD: efi.c,v 1.2 2018/01/10 23:27:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -184,7 +184,9 @@ efi_enter(struct efi_softc *sc)
 	struct pmap *pm = sc->sc_pm;
 
 	sc->sc_psw = disable_interrupts();
-	cpu_setttb(((uint64_t)pm->pm_asid << 48) | pm->pm_pt0pa);
+	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
+	__asm volatile("isb");
+	cpu_setttb(pm->pm_asid, pm->pm_pt0pa);
 }
 
 void
@@ -192,7 +194,9 @@ efi_leave(struct efi_softc *sc)
 {
 	struct pmap *pm = curcpu()->ci_curpm;
 
-	cpu_setttb(((uint64_t)pm->pm_asid << 48) | pm->pm_pt0pa);
+	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
+	__asm volatile("isb");
+	cpu_setttb(pm->pm_asid, pm->pm_pt0pa);
 	restore_interrupts(sc->sc_psw);
 }
 

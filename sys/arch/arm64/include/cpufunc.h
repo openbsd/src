@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc.h,v 1.2 2017/03/24 19:48:01 kettenis Exp $ */
+/* $OpenBSD: cpufunc.h,v 1.3 2018/01/10 23:27:18 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -39,7 +39,7 @@ extern int64_t icache_line_size;
 extern int64_t idcache_line_size;
 extern int64_t dczva_line_size;
 
-void cpu_setttb(vaddr_t);
+void cpu_setttb(int, paddr_t);
 void cpu_tlb_flush(void);
 void cpu_tlb_flush_asid(vaddr_t);
 void cpu_tlb_flush_all_asid(vaddr_t);
