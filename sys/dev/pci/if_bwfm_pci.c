@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.11 2018/01/08 17:57:48 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.12 2018/01/10 01:43:01 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -614,9 +614,9 @@ bwfm_pci_attachhook(struct device *self)
 		bus_dmamap_create(sc->sc_dmat, MSGBUF_MAX_PKT_SIZE,
 		    BWFM_NUM_RX_DESCS, MSGBUF_MAX_PKT_SIZE, 0, BUS_DMA_WAITOK,
 		    &sc->sc_rx_pkts.pkts[i].bb_map);
-	sc->sc_tx_pkts.npkt = BWFM_NUM_TX_PKTIDS;
 
 	/* Maps TX mbufs to a packet id and back. */
+	sc->sc_tx_pkts.npkt = BWFM_NUM_TX_PKTIDS;
 	sc->sc_tx_pkts.pkts = malloc(BWFM_NUM_TX_PKTIDS
 	    * sizeof(struct bwfm_pci_buf), M_DEVBUF, M_WAITOK | M_ZERO);
 	for (i = 0; i < BWFM_NUM_TX_PKTIDS; i++)
