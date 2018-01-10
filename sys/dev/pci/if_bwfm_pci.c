@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.13 2018/01/10 02:07:11 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.14 2018/01/10 02:15:22 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -388,15 +388,18 @@ bwfm_pci_attachhook(struct device *self)
 
 	switch (bwfm->sc_chip.ch_chip)
 	{
+	case BRCM_CC_4350_CHIP_ID:
+		if (bwfm->sc_chip.ch_chiprev > 7)
+			name = "brcmfmac4350-pcie.bin";
+		else
+			name = "brcmfmac4350c2-pcie.bin";
+		break;
 	case BRCM_CC_43602_CHIP_ID:
 		name = "brcmfmac43602-pcie.bin";
 		break;
 	default:
-		break;
-	}
-
-	if (name == NULL) {
-		printf("%s: unknown firmware\n", DEVNAME(sc));
+		printf("%s: unknown firmware for chip %s\n",
+		    DEVNAME(sc), bwfm->sc_chip.ch_name);
 		return;
 	}
 
