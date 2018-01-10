@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.249 2018/01/09 06:24:15 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.250 2018/01/10 00:14:38 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -315,12 +315,9 @@ int
 ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 {
 	struct ether_header *eh;
-	struct niqueue *inq;
+	void (*input)(struct ifnet *, struct mbuf *);
 	u_int16_t etype;
 	struct arpcom *ac;
-#if NPPPOE > 0
-	struct ether_header *eh_tmp;
-#endif
 
 	/* Drop short frames */
 	if (m->m_len < ETHER_HDR_LEN)
@@ -328,7 +325,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 
 	ac = (struct arpcom *)ifp;
 	eh = mtod(m, struct ether_header *);
-	m_adj(m, ETHER_HDR_LEN);
 
 	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
 		/*
@@ -376,45 +372,34 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 
 	switch (etype) {
 	case ETHERTYPE_IP:
-		ipv4_input(ifp, m);
-		return (1);
+		input = ipv4_input;
+		break;
 
 	case ETHERTYPE_ARP:
 		if (ifp->if_flags & IFF_NOARP)
 			goto dropanyway;
-		arpinput(ifp, m);
-		return (1);
+		input = arpinput;
+		break;
 
 	case ETHERTYPE_REVARP:
 		if (ifp->if_flags & IFF_NOARP)
 			goto dropanyway;
-		revarpinput(ifp, m);
-		return (1);
+		input = revarpinput;
+		break;
 
 #ifdef INET6
 	/*
 	 * Schedule IPv6 software interrupt for incoming IPv6 packet.
 	 */
 	case ETHERTYPE_IPV6:
-		ipv6_input(ifp, m);
-		return (1);
+		input = ipv6_input;
+		break;
 #endif /* INET6 */
 #if NPPPOE > 0 || defined(PIPEX)
 	case ETHERTYPE_PPPOEDISC:
 	case ETHERTYPE_PPPOE:
 		if (m->m_flags & (M_MCAST | M_BCAST))
 			goto dropanyway;
-		M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
-		if (m == NULL)
-			return (1);
-
-		eh_tmp = mtod(m, struct ether_header *);
-		/*
-		 * danger!
-		 * eh_tmp and eh may overlap because eh
-		 * is stolen from the mbuf above.
-		 */
-		memmove(eh_tmp, eh, sizeof(struct ether_header));
 #ifdef PIPEX
 		if (pipex_enable) {
 			struct pipex_session *session;
@@ -426,22 +411,23 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 		}
 #endif
 		if (etype == ETHERTYPE_PPPOEDISC)
-			inq = &pppoediscinq;
+			niq_enqueue(&pppoediscinq, m);
 		else
-			inq = &pppoeinq;
-		break;
+			niq_enqueue(&pppoeinq, m);
+		return (1);
 #endif
 #ifdef MPLS
 	case ETHERTYPE_MPLS:
 	case ETHERTYPE_MPLS_MCAST:
-		mpls_input(ifp, m);
-		return (1);
+		input = mpls_input;
+		break;
 #endif
 	default:
 		goto dropanyway;
 	}
 
-	niq_enqueue(inq, m);
+	m_adj(m, sizeof(*eh));
+	(*input)(ifp, m);
 	return (1);
 dropanyway:
 	m_freem(m);
