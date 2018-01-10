@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.44 2017/11/23 13:32:25 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.45 2018/01/10 23:50:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -199,7 +199,7 @@ void		 carp_carpdev_state(void *);
 void		 carp_group_demote_adj(struct ifnet *, int, char *);
 int		 carp6_proto_input(struct mbuf **, int *, int, int);
 int		 carp_iamatch(struct ifnet *);
-struct ifnet	*carp_ourether(void *, u_int8_t *);
+int		 carp_ourether(struct ifnet *, u_int8_t *);
 int		 carp_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);
 int		 carp_sysctl(int *, u_int,  void *, size_t *, void *, size_t);

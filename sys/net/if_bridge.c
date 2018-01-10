@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.300 2018/01/09 15:24:24 bluhm Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.301 2018/01/10 23:50:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1108,8 +1108,8 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 		ac = (struct arpcom *)ifl->ifp;
 		if (bcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN) == 0
 #if NCARP > 0
-		    || (ifl->ifp->if_carp && carp_ourether(ifl->ifp->if_carp,
-			(u_int8_t *)&eh->ether_dhost) != NULL)
+		    || (!SRPL_EMPTY_LOCKED(&ifl->ifp->if_carp) &&
+		        !carp_ourether(ifl->ifp, eh->ether_dhost))
 #endif
 		    ) {
 			if (srcifl->bif_flags & IFBIF_LEARNING)
@@ -1131,8 +1131,8 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 		}
 		if (bcmp(ac->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN) == 0
 #if NCARP > 0
-		    || (ifl->ifp->if_carp && carp_ourether(ifl->ifp->if_carp,
-			(u_int8_t *)&eh->ether_shost) != NULL)
+		    || (!SRPL_EMPTY_LOCKED(&ifl->ifp->if_carp) &&
+			!carp_ourether(ifl->ifp, eh->ether_shost))
 #endif
 		    ) {
 			m_freem(m);

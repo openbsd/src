@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.88 2018/01/08 23:05:21 bluhm Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.89 2018/01/10 23:50:39 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ struct ifnet {				/* and the entries */
 	caddr_t if_mcast6;		/* used by IPv6 multicast code */
 	caddr_t	if_pf_kif;		/* pf interface abstraction */
 	union {
-		caddr_t	carp_s;		/* carp structure (used by !carp ifs) */
+		struct srpl carp_s;	/* carp if list (used by !carp ifs) */
 		struct ifnet *carp_d;	/* ptr to carpdev (used by carp ifs) */
 	} if_carp_ptr;
 #define if_carp		if_carp_ptr.carp_s
