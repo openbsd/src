@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: vmd,v 1.4 2016/02/02 17:51:11 sthen Exp $
+# $OpenBSD: vmd,v 1.5 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/vmd"
 

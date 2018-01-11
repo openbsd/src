@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: mountd,v 1.6 2015/12/26 09:55:15 ajacoutot Exp $
+# $OpenBSD: mountd,v 1.7 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/sbin/mountd"
 

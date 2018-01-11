@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: nsd,v 1.9 2014/12/29 11:17:05 ajacoutot Exp $
+# $OpenBSD: nsd,v 1.10 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/nsd-control"
 daemon_flags="-c /var/nsd/etc/nsd.conf"

@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: spamlogd,v 1.2 2011/08/08 17:13:31 robert Exp $
+# $OpenBSD: spamlogd,v 1.3 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/libexec/spamlogd"
 

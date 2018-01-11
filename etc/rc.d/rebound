@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: rebound,v 1.1 2015/11/30 23:35:30 jturner Exp $
+# $OpenBSD: rebound,v 1.2 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/rebound"
 

@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: switchd,v 1.1 2016/10/06 20:20:41 reyk Exp $
+# $OpenBSD: switchd,v 1.2 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/switchd"
 

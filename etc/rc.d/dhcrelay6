@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: dhcrelay6,v 1.1 2017/03/17 17:57:40 rzalamena Exp $
+# $OpenBSD: dhcrelay6,v 1.2 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/dhcrelay6"
 

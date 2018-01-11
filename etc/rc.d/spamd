@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: spamd,v 1.8 2017/03/23 10:10:54 ajacoutot Exp $
+# $OpenBSD: spamd,v 1.9 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/libexec/spamd"
 

@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: ldpd,v 1.2 2016/02/02 17:51:11 sthen Exp $
+# $OpenBSD: ldpd,v 1.3 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/ldpd"
 

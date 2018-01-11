@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: radiusd,v 1.1 2015/08/03 04:19:25 yasuoka Exp $
+# $OpenBSD: radiusd,v 1.2 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/radiusd"
 

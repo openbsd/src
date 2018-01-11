@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: mopd,v 1.3 2011/09/19 20:42:24 ajacoutot Exp $
+# $OpenBSD: mopd,v 1.4 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/mopd"
 daemon_flags="-a"

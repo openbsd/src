@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: ypbind,v 1.7 2017/05/27 19:55:48 ajacoutot Exp $
+# $OpenBSD: ypbind,v 1.8 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/ypbind"
 

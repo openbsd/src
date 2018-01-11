@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: pflogd,v 1.2 2011/07/08 21:42:52 robert Exp $
+# $OpenBSD: pflogd,v 1.3 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/sbin/pflogd"
 

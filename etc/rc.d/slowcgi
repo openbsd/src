@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: slowcgi,v 1.1 2013/06/01 14:06:20 naddy Exp $
+# $OpenBSD: slowcgi,v 1.2 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/slowcgi"
 
