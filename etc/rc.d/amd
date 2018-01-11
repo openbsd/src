@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: amd,v 1.8 2018/01/11 19:52:12 rpe Exp $
+# $OpenBSD: amd,v 1.9 2018/01/11 21:09:26 rpe Exp $
 
 daemon="/usr/sbin/amd"
 
@@ -11,7 +11,7 @@ rc_reload=NO
 rc_stop=NO
 
 rc_pre() {
-	[ -e ${amd_master} ] || return 1
+	[[ -e ${amd_master} ]] || return 1
 	daemon_flags="${daemon_flags} $(print -rn -- $(< ${amd_master}))"
 }
 

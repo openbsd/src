@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: spamd,v 1.9 2018/01/11 19:52:12 rpe Exp $
+# $OpenBSD: spamd,v 1.10 2018/01/11 21:09:26 rpe Exp $
 
 daemon="/usr/libexec/spamd"
 
@@ -10,7 +10,7 @@ pexp="spamd: \[priv\].*"
 rc_reload=NO
 
 rc_pre() {
-	if [ X"${spamd_black}" != X"NO" ]; then
+	if [[ ${spamd_black} != NO ]]; then
 		daemon_flags="-b ${daemon_flags}"
 		spamd_setup_flags="-b"
 	fi

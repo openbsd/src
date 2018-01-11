@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: isakmpd,v 1.2 2018/01/11 19:52:12 rpe Exp $
+# $OpenBSD: isakmpd,v 1.3 2018/01/11 21:09:26 rpe Exp $
 
 daemon="/sbin/isakmpd"
 
@@ -9,7 +9,7 @@ daemon="/sbin/isakmpd"
 pexp="isakmpd: monitor \[priv\]"
 
 rc_pre() {
-	[ X"${sasyncd_flags}" != X"NO" ] && \
+	[[ ${sasyncd_flags} != NO ]] &&
 		daemon_flags="-S ${daemon_flags}"
 	return 0
 }

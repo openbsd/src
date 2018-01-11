@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: yppasswdd,v 1.5 2018/01/11 19:52:12 rpe Exp $
+# $OpenBSD: yppasswdd,v 1.6 2018/01/11 21:09:26 rpe Exp $
 
 daemon="/usr/sbin/rpc.yppasswdd"
 
@@ -9,20 +9,20 @@ daemon="/usr/sbin/rpc.yppasswdd"
 rc_reload=NO
 
 rc_pre() {
-	[ X"`domainname`" != X"" -a -d /var/yp/`domainname` ] || \
+	[[ -n $(domainname) && -d /var/yp/$(domainname) ]] ||
 		return 1
-	_host1=`ypwhich -m passwd 2> /dev/null`
-	_host2=`hostname`
-	if [ `grep '^lookup' /etc/resolv.conf | grep yp | wc -c` -ne 0 ]; then
-		_host1=`ypmatch $_host1 hosts | cut -d' ' -f2`
-		_host2=`ypmatch $_host2 hosts | cut -d' ' -f2 | head -1`
+	_host1=$(ypwhich -m passwd 2> /dev/null)
+	_host2=$(hostname)
+	if [[ $(grep '^lookup' /etc/resolv.conf | grep yp | wc -c) -ne 0 ]]; then
+		_host1=$(ypmatch $_host1 hosts | cut -d' ' -f2)
+		_host2=$(ypmatch $_host2 hosts | cut -d' ' -f2 | head -1)
 	else
-		_host1=`echo $_host1 | nslookup | grep '^Name: ' | \
-			sed -e 's/^Name:    //'`
-		_host2=`echo $_host2 | nslookup | grep '^Name: ' | \
-			sed -e 's/^Name:    //'`
+		_host1=$(echo $_host1 | nslookup | grep '^Name: ' |
+			sed -e 's/^Name:    //')
+		_host2=$(echo $_host2 | nslookup | grep '^Name: ' |
+			sed -e 's/^Name:    //')
 	fi
-	[ "$_host2" = "$_host1" ]
+	[[ $_host2 == $_host1 ]]
 }
 
 rc_cmd $1

@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: spamlogd,v 1.3 2018/01/11 19:52:12 rpe Exp $
+# $OpenBSD: spamlogd,v 1.4 2018/01/11 21:09:26 rpe Exp $
 
 daemon="/usr/libexec/spamlogd"
 
@@ -9,7 +9,7 @@ daemon="/usr/libexec/spamlogd"
 rc_reload=NO
 
 rc_pre() {
-	[  X"${spamd_flags}" != X"NO" -a X"${spamd_black}" = X"NO" ]
+	[[ ${spamd_flags} != NO && ${spamd_black} == NO ]]
 	if pfctl -si | grep -q Enabled; then
 		ifconfig pflog0 create
 		if ifconfig pflog0; then

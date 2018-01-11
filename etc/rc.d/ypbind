@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: ypbind,v 1.8 2018/01/11 19:52:12 rpe Exp $
+# $OpenBSD: ypbind,v 1.9 2018/01/11 21:09:26 rpe Exp $
 
 daemon="/usr/sbin/ypbind"
 
@@ -10,7 +10,7 @@ rc_bg=YES
 rc_reload=NO
 
 rc_pre() {
-	[ X"`domainname`" != X"" ]
+	[[ -n $(domainname) ]]
 }
 
 rc_post() {

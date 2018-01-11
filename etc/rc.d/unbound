@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: unbound,v 1.4 2018/01/11 19:52:12 rpe Exp $
+# $OpenBSD: unbound,v 1.5 2018/01/11 21:09:26 rpe Exp $
 
 daemon="/usr/sbin/unbound"
 daemon_flags="-c /var/unbound/etc/unbound.conf"
@@ -17,7 +17,7 @@ rc_pre() {
 }
 
 rc_start() {
-	/usr/sbin/unbound-checkconf > /dev/null && \
+	/usr/sbin/unbound-checkconf > /dev/null &&
 	    ${rcexec} "unbound ${daemon_flags}"
 }
 
