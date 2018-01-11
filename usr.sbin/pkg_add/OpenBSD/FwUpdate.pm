@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.24 2017/11/01 18:18:10 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.25 2018/01/11 22:04:39 patrick Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -146,10 +146,11 @@ OpenBSD::Auto::cache(updater,
 	    return OpenBSD::FwUpdate::Update->new;
     });
 
-my %possible_drivers =  map {($_, 1)}
+my %possible_drivers = map {($_, "$_-firmware")}
     (qw(acx athn bwfm bwi ipw iwi iwm iwn malo otus pgt radeondrm rsu rtwn uath
 	upgt urtwn uvideo vmm wpi));
 
+my %match = map {($_, qr{^\Q$_\E\d+\s+at\s/})} (keys %possible_drivers);
 
 sub parse_dmesg
 {
@@ -158,9 +159,9 @@ sub parse_dmesg
 	while (<$f>) {
 		chomp;
 		for my $driver (keys %$search) {
-			next unless m/^\Q$driver\E\d+\s+at\s/;
-			delete $search->{$driver};
+			next unless $_ =~ $match{$driver};
 			$found->{$driver} = 1;
+			delete $search->{$driver};
 		}
 	}
 }
@@ -187,7 +188,8 @@ sub find_machine_drivers
 
 sub driver2firmware
 {
-	return shift."-firmware";
+	my $k = shift;
+	return $possible_drivers{$k};
 }
 
 sub find_installed_drivers
