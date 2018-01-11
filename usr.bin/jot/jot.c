@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.41 2017/12/30 07:21:10 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.42 2018/01/11 14:53:42 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -59,8 +59,8 @@ static double	begin	= 1;
 static double	ender	= 100;
 static double	step	= 1;
 
-static char	format[BUFSIZ];
-static char	sepstring[BUFSIZ] = "\n";
+static char	*format = "";
+static char	*sepstring = "\n";
 static int	prec = -1;
 static bool	boring;
 static bool	chardata;
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 	unsigned int	mask = 0;
 	int		n = 0;
 	int		ch;
-	const	char	*errstr;
+	const char	*errstr;
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
@@ -94,9 +94,7 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'b':
 			boring = true;
-			if (strlcpy(format, optarg, sizeof(format)) >=
-			    sizeof(format))
-				errx(1, "-b word too long");
+			format = optarg;
 			break;
 		case 'c':
 			chardata = true;
@@ -114,14 +112,10 @@ main(int argc, char *argv[])
 			randomize = true;
 			break;
 		case 's':
-			if (strlcpy(sepstring, optarg, sizeof(sepstring)) >=
-			    sizeof(sepstring))
-				errx(1, "-s string too long");
+			sepstring = optarg;
 			break;
 		case 'w':
-			if (strlcpy(format, optarg, sizeof(format)) >=
-			    sizeof(format))
-				errx(1, "-w word too long");
+			format = optarg;
 			break;
 		default:
 			usage();
@@ -176,7 +170,8 @@ main(int argc, char *argv[])
 		    argv[4]);
 	}
 
-	getformat();
+	if (!boring)
+		getformat();
 
 	if (!randomize) {
 		/*
@@ -355,40 +350,32 @@ getprec(char *s)
 static void
 getformat(void)
 {
-	char	*p, *p2;
-	int dot, hash, space, sign, numbers = 0;
-	size_t sz;
+	char	*p;
 
-	if (boring)				/* no need to bother */
-		return;
-	for (p = format; *p != '\0'; p++)	/* look for '%' */
-		if (*p == '%') {
-			if (*(p+1) != '%')
-				break;
-			p++;			/* leave %% alone */
-		}
-	sz = sizeof(format) - strlen(format) - 1;
-	if (*p == '\0' && !chardata) {
-		int n;
+	p = format;
+	while ((p = strchr(p, '%')) != NULL && p[1] == '%')
+		p += 2;
 
-		n = snprintf(p, sz, "%%.%df", prec);
-		if (n == -1 || n >= (int)sz)
-			errx(1, "-w word too long");
-	} else if (*p == '\0' && chardata) {
-		if (strlcpy(p, "%c", sz) >= sz)
-			errx(1, "-w word too long");
-		intdata = true;
-	} else if (*(p+1) == '\0') {
+	if (p == NULL && !chardata) {
+		if (asprintf(&format, "%s%%.%df", format, prec) < 0)
+			err(1, NULL);
+	} else if (p == NULL && chardata) {
+		if (asprintf(&format, "%s%%c", format) < 0)
+			err(1, NULL);
+	} else if (p[1] == '\0') {
 		/* cannot end in single '%' */
-		if (strlcat(format, "%", sizeof(format)) >= sizeof(format))
-			errx(1, "-w word too long");
+		if (asprintf(&format, "%s%%", format) < 0)
+			err(1, NULL);
 	} else {
 		/*
 		 * Allow conversion format specifiers of the form
 		 * %[#][ ][{+,-}][0-9]*[.[0-9]*]? where ? must be one of
 		 * [l]{d,i,o,u,x} or {f,e,g,E,G,d,o,x,D,O,U,X,c,u}
 		 */
-		p2 = p++;
+		char	*fmt;
+		int	dot, hash, space, sign, numbers;
+
+		fmt = p++;
 		dot = hash = space = sign = numbers = 0;
 		while (!isalpha((unsigned char)*p)) {
 			if (isdigit((unsigned char)*p)) {
@@ -445,21 +432,19 @@ getformat(void)
 			/* FALLTHROUGH */
 		default:
 fmt_broken:
-			if (*p != '\0')
-				p[1] = '\0';
-			errx(1, "illegal or unsupported format '%s'", p2);
+			errx(1, "illegal or unsupported format '%.*s'",
+			    (int)(p + 1 - fmt), fmt);
 		}
-		while (*++p != '\0')
-			if (*p == '%' && *(p+1) != '\0' && *(p+1) != '%')
+
+		while ((p = strchr(p, '%')) != NULL && p[1] == '%')
+			p += 2;
+		
+		if (p != NULL) {
+			if (p[1] != '\0')
 				errx(1, "too many conversions");
-			else if (*p == '%' && *(p+1) == '%')
-				p++;
-			else if (*p == '%' && *(p+1) == '\0') {
-				/* cannot end in single '%' */
-				if (strlcat(format, "%", sizeof(format)) >=
-				    sizeof(format))
-					errx(1, "-w word too long");
-				break;
-			}
+			/* cannot end in single '%' */
+			if (asprintf(&format, "%s%%", format) < 0)
+				err(1, NULL);
+		}
 	}
 }
