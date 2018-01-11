@@ -1,12 +1,12 @@
 #!/bin/ksh
 #
-# $OpenBSD: switchd,v 1.2 2018/01/11 19:52:12 rpe Exp $
+# $OpenBSD: switchd,v 1.3 2018/01/11 22:44:44 rpe Exp $
 
 daemon="/usr/sbin/switchd"
 
 . /etc/rc.d/rc.subr
 
-# child will not return a config loading error to the parent
+# Child will not return a config loading error to the parent.
 rc_pre() {
 	${daemon} -n ${daemon_flags}
 }

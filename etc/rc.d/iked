@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: iked,v 1.5 2018/01/11 21:09:26 rpe Exp $
+# $OpenBSD: iked,v 1.6 2018/01/11 22:44:44 rpe Exp $
 
 daemon="/sbin/iked"
 
@@ -8,11 +8,11 @@ daemon="/sbin/iked"
 
 pexp="iked: parent.*"
 
+# Child will not return a config parsing error to the parent.
 rc_pre() {
 	[[ ${sasyncd_flags} != NO ]] &&
 		daemon_flags="-S ${daemon_flags}"
-	#return 0
-	# child will not return a config parsing error to the parent
+
 	${daemon} -n ${daemon_flags}
 }
 
