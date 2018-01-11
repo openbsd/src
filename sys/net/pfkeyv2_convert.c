@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.62 2017/09/08 05:36:53 deraadt Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.63 2018/01/11 16:02:31 bluhm Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -543,7 +543,7 @@ export_encap(void **p, struct sockaddr_encap *encap, int type)
 		}
 		*p += PADUP(sizeof(struct sockaddr_in));
 		break;
-        case SENT_IP6:
+	case SENT_IP6:
 		saddr->sadb_address_len = (sizeof(struct sadb_address)
 		    + PADUP(sizeof(struct sockaddr_in6))) / sizeof(uint64_t);
 		sunion->sa.sa_len = sizeof(struct sockaddr_in6);
@@ -896,4 +896,5 @@ export_satype(void **p, struct tdb *tdb)
 	sab->sadb_protocol_len = sizeof(struct sadb_protocol) /
 	    sizeof(uint64_t);
 	sab->sadb_protocol_proto = tdb->tdb_satype;
+	*p += sizeof(struct sadb_protocol);
 }
