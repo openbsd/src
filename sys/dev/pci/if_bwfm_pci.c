@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.15 2018/01/10 17:54:26 jcs Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.16 2018/01/11 16:09:19 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -166,8 +166,9 @@ struct bwfm_pci_softc {
 	struct if_rxring	 sc_event_ring;
 	struct if_rxring	 sc_rxbuf_ring;
 
-	struct bwfm_pci_pkts	 sc_tx_pkts;
 	struct bwfm_pci_pkts	 sc_rx_pkts;
+	struct bwfm_pci_pkts	 sc_tx_pkts;
+	int			 sc_tx_pkts_full;
 };
 
 struct bwfm_pci_dmamem {
@@ -1275,6 +1276,10 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf)
 		if (m == NULL)
 			break;
 		m_freem(m);
+		if (sc->sc_tx_pkts_full) {
+			sc->sc_tx_pkts_full = 0;
+			ifq_restart(&ifp->if_snd);
+		}
 		break;
 	case MSGBUF_TYPE_RX_CMPLT:
 		rx = (struct msgbuf_rx_complete *)buf;
@@ -1670,6 +1675,7 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 
 	ret = bwfm_pci_pktid_new(sc, &sc->sc_tx_pkts, m, &pktid, &paddr);
 	if (ret) {
+		sc->sc_tx_pkts_full = 1;
 		bwfm_pci_ring_write_cancel(sc, ring, 1);
 		return ret;
 	}
