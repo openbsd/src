@@ -145,17 +145,19 @@ dispatch_txt(struct dns_rr *rr)
         char *in = buf;
         char *argv[512];
         char **ap = argv;
-
+	char *end;
+	
 	print_dname(rr->rr.other.rdata, buf, sizeof(buf));
-	buf[strlen(buf) - 1] = '\0';
-	if (buf[strlen(buf) - 1] == '.')
-		buf[strlen(buf) - 1] = '\0';
 	if (strncasecmp("v=spf1 ", buf, 7))
 		return;
 
 	while ((*ap = strsep(&in, " ")) != NULL) {
 		if (strcasecmp(*ap, "v=spf1") == 0)
 			continue;
+
+		end = *ap + strlen(*ap)-1;
+		if (*end == '.')
+			*end = '\0';
 
 		if (strncasecmp("ip4:", *ap, 4) == 0) {
 			if (ip_v4 == 1 || ip_both == 1)
