@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.108 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.109 2018/01/11 22:31:09 patrick Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -412,6 +412,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #endif /* MTRR */
 		cpu_init(ci);
 		cpu_init_mwait(sc);
+		config_mountroot(NULL, cpu_ucode_attachhook);
 		break;
 
 	case CPU_ROLE_BP:
@@ -435,6 +436,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		ioapic_bsp_id = caa->cpu_apicid;
 #endif
 		cpu_init_mwait(sc);
+		config_mountroot(NULL, cpu_ucode_attachhook);
 		break;
 
 	case CPU_ROLE_AP:
@@ -732,6 +734,8 @@ cpu_hatch(void *v)
 	lldt(0);
 
 	cpu_init(ci);
+	cpu_ucode_apply(ci);
+	cpu_flags_update(ci);
 #if NPVBUS > 0
 	pvbus_init_cpu();
 #endif
@@ -930,4 +934,21 @@ cpu_activate(struct device *self, int act)
 	}
 
 	return (0);
+}
+
+void
+cpu_flags_update(struct cpu_info *ci)
+{
+	uint32_t dummy;
+
+	/* XXX this update is much later than we want it to be */
+	if (cpuid_level >= 0x07) {
+		CPUID_LEAF(0x7, 0, dummy, dummy, dummy,
+		    ci->ci_feature_sefflags_edx);
+	}
+	if (!strcmp(cpu_vendor, "AuthenticAMD") &&
+	    ci->ci_pnfeatset >= 0x80000008) {
+		CPUID(0x80000008, dummy, ci->ci_feature_amdspec_ebx,
+		    dummy, dummy);
+	}
 }
