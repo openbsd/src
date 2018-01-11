@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.109 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.110 2018/01/11 09:26:36 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -147,6 +147,7 @@ static const struct umsm_type umsm_devs[] = {
 	{{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_K4511 }, DEV_UMASS5},
 	{{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E1750 }, DEV_UMASS5},
 	{{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E1752 }, 0},
+	{{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E3372 }, DEV_UMASS5},
 
 	{{ USB_VENDOR_HYUNDAI,	USB_PRODUCT_HYUNDAI_UM175 }, 0},
 
