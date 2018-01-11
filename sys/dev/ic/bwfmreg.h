@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.13 2018/01/08 23:30:11 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.14 2018/01/11 19:33:34 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -197,6 +197,46 @@
 /* Channel Parameters */
 #define BWFM_CHANSPEC_CHAN_MASK			0xff
 #define BWFM_CHANSPEC_CHAN_SHIFT		0
+#define BWFM_CHANSPEC_D11N_SB_L			(0x1 << 8) /* control lower */
+#define BWFM_CHANSPEC_D11N_SB_U			(0x2 << 8) /* control lower */
+#define BWFM_CHANSPEC_D11N_SB_N			(0x3 << 8) /* none */
+#define BWFM_CHANSPEC_D11N_SB_MASK		(0x3 << 8)
+#define BWFM_CHANSPEC_D11N_SB_SHIFT		8
+#define BWFM_CHANSPEC_D11N_BW_10		(0x1 << 10)
+#define BWFM_CHANSPEC_D11N_BW_20		(0x2 << 10)
+#define BWFM_CHANSPEC_D11N_BW_40		(0x3 << 10)
+#define BWFM_CHANSPEC_D11N_BW_MASK		(0x3 << 10)
+#define BWFM_CHANSPEC_D11N_BW_SHIFT		10
+#define BWFM_CHANSPEC_D11N_BND_5G		(0x1 << 12)
+#define BWFM_CHANSPEC_D11N_BND_2G		(0x2 << 12)
+#define BWFM_CHANSPEC_D11N_BND_MASK		(0x3 << 12)
+#define BWFM_CHANSPEC_D11N_BND_SHIFT		12
+#define BWFM_CHANSPEC_D11AC_SB_LLL		(0x0 << 8)
+#define BWFM_CHANSPEC_D11AC_SB_LLU		(0x1 << 8)
+#define BWFM_CHANSPEC_D11AC_SB_LUL		(0x2 << 8)
+#define BWFM_CHANSPEC_D11AC_SB_LUU		(0x3 << 8)
+#define BWFM_CHANSPEC_D11AC_SB_ULL		(0x4 << 8)
+#define BWFM_CHANSPEC_D11AC_SB_ULU		(0x5 << 8)
+#define BWFM_CHANSPEC_D11AC_SB_UUL		(0x6 << 8)
+#define BWFM_CHANSPEC_D11AC_SB_UUU		(0x7 << 8)
+#define BWFM_CHANSPEC_D11AC_SB_MASK		(0x7 << 8)
+#define BWFM_CHANSPEC_D11AC_SB_SHIFT		8
+#define BWFM_CHANSPEC_D11AC_BW_5		(0x0 << 11)
+#define BWFM_CHANSPEC_D11AC_BW_10		(0x1 << 11)
+#define BWFM_CHANSPEC_D11AC_BW_20		(0x2 << 11)
+#define BWFM_CHANSPEC_D11AC_BW_40		(0x3 << 11)
+#define BWFM_CHANSPEC_D11AC_BW_80		(0x4 << 11)
+#define BWFM_CHANSPEC_D11AC_BW_160		(0x5 << 11)
+#define BWFM_CHANSPEC_D11AC_BW_8080		(0x6 << 11)
+#define BWFM_CHANSPEC_D11AC_BW_MASK		(0x7 << 11)
+#define BWFM_CHANSPEC_D11AC_BW_SHIFT		11
+#define BWFM_CHANSPEC_D11AC_BND_2G		(0x0 << 14)
+#define BWFM_CHANSPEC_D11AC_BND_3G		(0x1 << 14)
+#define BWFM_CHANSPEC_D11AC_BND_4G		(0x2 << 14)
+#define BWFM_CHANSPEC_D11AC_BND_5G		(0x3 << 14)
+#define BWFM_CHANSPEC_D11AC_BND_MASK		(0x3 << 14)
+#define BWFM_CHANSPEC_D11AC_BND_SHIFT		14
+
 #define BWFM_BAND_AUTO				0
 #define BWFM_BAND_5G				1
 #define BWFM_BAND_2G				2

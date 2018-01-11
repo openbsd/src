@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.29 2018/01/08 23:30:11 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.30 2018/01/11 19:33:34 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -98,6 +98,10 @@ int	 bwfm_fwvar_var_get_data(struct bwfm_softc *, char *, void *, size_t);
 int	 bwfm_fwvar_var_set_data(struct bwfm_softc *, char *, void *, size_t);
 int	 bwfm_fwvar_var_get_int(struct bwfm_softc *, char *, uint32_t *);
 int	 bwfm_fwvar_var_set_int(struct bwfm_softc *, char *, uint32_t);
+
+uint32_t bwfm_spec2chan(struct bwfm_softc *, uint32_t);
+uint32_t bwfm_spec2chan_d11n(struct bwfm_softc *, uint32_t);
+uint32_t bwfm_spec2chan_d11ac(struct bwfm_softc *, uint32_t);
 
 void	 bwfm_connect(struct bwfm_softc *);
 #ifndef IEEE80211_STA_ONLY
@@ -1325,6 +1329,88 @@ bwfm_fwvar_var_set_int(struct bwfm_softc *sc, char *name, uint32_t data)
 	return bwfm_fwvar_var_set_data(sc, name, &data, sizeof(data));
 }
 
+/* Channel parameters */
+uint32_t
+bwfm_spec2chan(struct bwfm_softc *sc, uint32_t chanspec)
+{
+	if (sc->sc_io_type == BWFM_IO_TYPE_D11N)
+		return bwfm_spec2chan_d11n(sc, chanspec);
+	else
+		return bwfm_spec2chan_d11ac(sc, chanspec);
+}
+
+uint32_t
+bwfm_spec2chan_d11n(struct bwfm_softc *sc, uint32_t chanspec)
+{
+	uint32_t chanidx;
+
+	chanidx = chanspec & BWFM_CHANSPEC_CHAN_MASK;
+
+	switch (chanspec & BWFM_CHANSPEC_D11N_BW_MASK) {
+	case BWFM_CHANSPEC_D11N_BW_40:
+		switch (chanspec & BWFM_CHANSPEC_D11N_SB_MASK) {
+		case BWFM_CHANSPEC_D11N_SB_L:
+			chanidx -= 2;
+			break;
+		case BWFM_CHANSPEC_D11N_SB_U:
+			chanidx += 2;
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return chanidx;
+}
+
+uint32_t
+bwfm_spec2chan_d11ac(struct bwfm_softc *sc, uint32_t chanspec)
+{
+	uint32_t chanidx;
+
+	chanidx = chanspec & BWFM_CHANSPEC_CHAN_MASK;
+
+	switch (chanspec & BWFM_CHANSPEC_D11AC_BW_MASK) {
+	case BWFM_CHANSPEC_D11AC_BW_40:
+		switch (chanspec & BWFM_CHANSPEC_D11AC_SB_MASK) {
+		case BWFM_CHANSPEC_D11AC_SB_LLL:
+			chanidx -= 2;
+			break;
+		case BWFM_CHANSPEC_D11AC_SB_LLU:
+			chanidx += 2;
+			break;
+		default:
+			break;
+		}
+		break;
+	case BWFM_CHANSPEC_D11AC_BW_80:
+		switch (chanspec & BWFM_CHANSPEC_D11AC_SB_MASK) {
+		case BWFM_CHANSPEC_D11AC_SB_LLL:
+			chanidx -= 6;
+			break;
+		case BWFM_CHANSPEC_D11AC_SB_LLU:
+			chanidx -= 2;
+			break;
+		case BWFM_CHANSPEC_D11AC_SB_LUL:
+			chanidx += 2;
+			break;
+		case BWFM_CHANSPEC_D11AC_SB_LUU:
+			chanidx += 6;
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return chanidx;
+}
+
 /* 802.11 code */
 void
 bwfm_connect(struct bwfm_softc *sc)
@@ -1849,12 +1935,14 @@ bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	struct ieee80211_rxinfo rxi;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
+	struct ieee80211_rxinfo rxi;
+	struct ieee80211_channel *bss_chan;
 	struct mbuf *m;
 	uint32_t pktlen, ieslen;
 	uint16_t iesoff;
+	int chanidx;
 
 	iesoff = letoh16(bss->ie_offset);
 	ieslen = letoh32(bss->ie_length);
@@ -1885,10 +1973,24 @@ bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 	/* Finalize mbuf. */
 	m->m_pkthdr.len = m->m_len = pktlen;
 	ni = ieee80211_find_rxnode(ic, wh);
+	/*
+	 * We may switch ic_bss's channel during scans.
+	 * Record the current channel so we can restore it later.
+	 */
+	bss_chan = NULL;
+	if (ni == ic->ic_bss)
+		bss_chan = ni->ni_chan;
+	/* Channel mask equals IEEE80211_CHAN_MAX */
+	chanidx = bwfm_spec2chan(sc, letoh32(bss->chanspec));
+	ni->ni_chan = &ic->ic_channels[chanidx];
+	/* Supply RSSI */
 	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = letoh32(bss->rssi);
 	rxi.rxi_tstamp = 0;
 	ieee80211_input(ifp, m, ni, &rxi);
+	/* Restore channel */
+	if (bss_chan)
+		ni->ni_chan = bss_chan;
 	/* Node is no longer needed. */
 	ieee80211_release_node(ic, ni);
 }
