@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.537 2018/01/10 23:50:39 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.538 2018/01/12 23:47:24 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1005,11 +1005,6 @@ if_deactivate(struct ifnet *ifp)
 	 */
 	dohooks(ifp->if_detachhooks, HOOK_REMOVE | HOOK_FREE);
 
-#if NCARP > 0
-	/* Remove the interface from any carp group it is a part of.  */
-	if (ifp->if_type != IFT_CARP && !SRPL_EMPTY_LOCKED(&ifp->if_carp))
-		carp_ifdetach(ifp);
-#endif
 	NET_UNLOCK();
 }
 

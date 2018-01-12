@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.45 2018/01/10 23:50:39 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.46 2018/01/12 23:47:24 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -193,7 +193,6 @@ carpstat_inc(enum carpstat_counters c)
 	counters_inc(carpcounters, c);
 }
 
-void		 carp_ifdetach (struct ifnet *);
 int		 carp_proto_input(struct mbuf **, int *, int, int);
 void		 carp_carpdev_state(void *);
 void		 carp_group_demote_adj(struct ifnet *, int, char *);

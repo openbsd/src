@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.326 2018/01/12 23:29:37 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.327 2018/01/12 23:47:24 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -133,6 +133,7 @@ struct carp_softc {
 #define	sc_carpdev	sc_ac.ac_if.if_carpdev
 	void *ah_cookie;
 	void *lh_cookie;
+	void *dh_cookie;
 	struct ip_moptions sc_imo;
 #ifdef INET6
 	struct ip6_moptions sc_im6o;
@@ -215,7 +216,7 @@ int	carp_proto_input_if(struct ifnet *, struct mbuf **, int *, int);
 int	carp6_proto_input_if(struct ifnet *, struct mbuf **, int *, int);
 #endif
 void	carpattach(int);
-void	carpdetach(struct carp_softc *);
+void	carpdetach(void *);
 int	carp_prepare_ad(struct mbuf *, struct carp_vhost_entry *,
 	    struct carp_header *);
 void	carp_send_ad_all(void);
@@ -908,8 +909,9 @@ carp_del_all_timeouts(struct carp_softc *sc)
 }
 
 void
-carpdetach(struct carp_softc *sc)
+carpdetach(void *arg)
 {
+	struct carp_softc *sc = arg;
 	struct ifnet *ifp0;
 	struct srpl *cif;
 
@@ -936,26 +938,13 @@ carpdetach(struct carp_softc *sc)
 	/* Restore previous input handler. */
 	if_ih_remove(ifp0, carp_input, NULL);
 
-	if (sc->lh_cookie != NULL)
-		hook_disestablish(ifp0->if_linkstatehooks, sc->lh_cookie);
-
 	SRPL_REMOVE_LOCKED(&carp_sc_rc, cif, sc, carp_softc, sc_list);
 	if (SRPL_EMPTY_LOCKED(cif))
 		ifpromisc(ifp0, 0);
 	sc->sc_carpdev = NULL;
-}
 
-/* Detach an interface from the carp. */
-void
-carp_ifdetach(struct ifnet *ifp0)
-{
-	struct carp_softc *sc, *nextsc;
-	struct srpl *cif = &ifp0->if_carp;
-
-	KERNEL_ASSERT_LOCKED(); /* touching if_carp */
-
-	SRPL_FOREACH_SAFE_LOCKED(sc, cif, sc_list, nextsc)
-		carpdetach(sc);
+	hook_disestablish(ifp0->if_linkstatehooks, sc->lh_cookie);
+	hook_disestablish(ifp0->if_detachhooks, sc->dh_cookie);
 }
 
 void
@@ -1704,13 +1693,27 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 	if (ifp0->if_type != IFT_ETHER)
 		return (EINVAL);
 
+	sc->dh_cookie = hook_establish(ifp0->if_detachhooks, 0,
+            carpdetach, sc);
+	if (sc->dh_cookie == NULL)
+		return (ENOMEM);
+
+	sc->lh_cookie = hook_establish(ifp0->if_linkstatehooks, 1,
+	    carp_carpdev_state, ifp0);
+	if (sc->lh_cookie == NULL) {
+		error = ENOMEM;
+		goto rm_dh;
+	}
+
 	cif = &ifp0->if_carp;
 	if (SRPL_EMPTY_LOCKED(cif)) {
 		if ((error = ifpromisc(ifp0, 1)))
-			return (error);
+			goto rm_lh;
 
-	} else if (carp_check_dup_vhids(sc, cif, NULL))
-		return (EINVAL);
+	} else if (carp_check_dup_vhids(sc, cif, NULL)) {
+		error = EINVAL;
+		goto rm_lh;
+	}
 
 	/* detach from old interface */
 	if (sc->sc_carpdev != NULL)
@@ -1751,15 +1754,19 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 		sc->sc_if.if_flags |= IFF_UP;
 	carp_set_enaddr(sc);
 
-	sc->lh_cookie = hook_establish(ifp0->if_linkstatehooks, 1,
-	    carp_carpdev_state, ifp0);
-
 	/* Change input handler of the physical interface. */
 	if_ih_insert(ifp0, carp_input, NULL);
 
 	carp_carpdev_state(ifp0);
 
 	return (0);
+
+rm_lh:
+	hook_disestablish(ifp0->if_linkstatehooks, sc->lh_cookie);
+rm_dh:
+	hook_disestablish(ifp0->if_detachhooks, sc->dh_cookie);
+
+	return (error);
 }
 
 void
