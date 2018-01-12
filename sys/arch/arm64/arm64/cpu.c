@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.9 2017/12/29 14:45:15 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.10 2018/01/12 22:20:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -91,6 +91,8 @@ const struct implementers {
 
 char cpu_model[64];
 int cpu_node;
+
+struct cpu_info *cpu_info_list = &cpu_info_primary;
 
 int	cpu_match(struct device *, void *, void *);
 void	cpu_attach(struct device *, struct device *, void *);
@@ -198,3 +200,10 @@ cpu_clockspeed(int *freq)
 }
 
 int	(*cpu_on_fn)(register_t, register_t);
+
+#ifdef MULTIPROCESSOR
+void
+cpu_boot_secondary_processors(void)
+{
+}
+#endif

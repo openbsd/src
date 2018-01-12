@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.13 2017/12/24 10:32:25 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.14 2018/01/12 22:20:28 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -173,7 +173,9 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 
 		/* Fault in the user page: */
 		if (!pmap_fault_fixup(map->pmap, va, access_type, 1)) {
+			KERNEL_LOCK();
 			error = uvm_fault(map, va, ftype, access_type);
+			KERNEL_UNLOCK();
 		}
 
 		//PROC_LOCK(p);
@@ -185,7 +187,9 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 		 * kernel.
 		 */
 		if (!pmap_fault_fixup(map->pmap, va, access_type, 0)) {
+			KERNEL_LOCK();
 			error = uvm_fault(map, va, ftype, access_type);
+			KERNEL_UNLOCK();
 		}
 	}
 
@@ -206,7 +210,9 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 			}
 			sv.sival_ptr = (u_int64_t *)far;
 
+			KERNEL_LOCK();
 			trapsignal(p, sig, 0, code, sv);
+			KERNEL_UNLOCK();
 		} else {
 			if (curcpu()->ci_idepth == 0 &&
 			    pcb->pcb_onfault != 0) {
@@ -293,7 +299,9 @@ do_el0_sync(struct trapframe *frame)
 	case EXCP_UNKNOWN:
 		vfp_save();
 		sv.sival_ptr = (void *)frame->tf_elr;
+		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+		KERNEL_UNLOCK();
 		break;
 	case EXCP_FP_SIMD:
 	case EXCP_TRAP_FP:
@@ -310,12 +318,16 @@ do_el0_sync(struct trapframe *frame)
 	case EXCP_PC_ALIGN:
 		vfp_save();
 		sv.sival_ptr = (void *)frame->tf_elr;
+		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
+		KERNEL_UNLOCK();
 		break;
 	case EXCP_SP_ALIGN:
 		vfp_save();
 		sv.sival_ptr = (void *)frame->tf_sp;
+		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
+		KERNEL_UNLOCK();
 		break;
 	case EXCP_DATA_ABORT_L:
 		vfp_save();
@@ -324,7 +336,9 @@ do_el0_sync(struct trapframe *frame)
 	case EXCP_BRK:
 		vfp_save();
 		sv.sival_ptr = (void *)frame->tf_elr;
+		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
+		KERNEL_UNLOCK();
 		break;
 	default:
 		// panic("Unknown userland exception %x esr_el1 %lx\n", exception,
@@ -335,7 +349,9 @@ do_el0_sync(struct trapframe *frame)
 			printf("exception %x esr_el1 %llx\n", exception, esr);
 			dumpregs(frame);
 		}
+		KERNEL_LOCK();
 		sigexit(p, SIGILL);
+		KERNEL_UNLOCK();
 	}
 
 	userret(p);

@@ -1,4 +1,4 @@
-/* $OpenBSD: syscall.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: syscall.c,v 1.2 2018/01/12 22:20:28 kettenis Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -129,6 +129,8 @@ child_return(arg)
 	frame->tf_x[0] = 0;
 	frame->tf_x[1] = 1;
 	frame->tf_spsr &= ~PSR_C;	/* carry bit */
+
+	KERNEL_UNLOCK();
 
 	mi_child_return(p);
 }

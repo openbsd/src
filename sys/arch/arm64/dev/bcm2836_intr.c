@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.3 2017/04/30 16:45:45 mpi Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.4 2018/01/12 22:20:28 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -79,9 +79,10 @@ struct intrhand {
 	int (*ih_fun)(void *);		/* handler */
 	void *ih_arg;			/* arg for handler */
 	int ih_ipl;			/* IPL_* */
+	int ih_flags;
 	int ih_irq;			/* IRQ number */
-	struct evcount ih_count;	/* interrupt counter */
-	char *ih_name;			/* device name */
+	struct evcount ih_count;
+	char *ih_name;
 };
 
 struct intrsource {
@@ -450,6 +451,18 @@ bcm_intc_call_handler(int irq, void *frame)
 	pri = sc->sc_bcm_intc_handler[irq].is_irq;
 	s = bcm_intc_splraise(pri);
 	TAILQ_FOREACH(ih, &sc->sc_bcm_intc_handler[irq].is_list, ih_list) {
+#ifdef MULTIPROCESSOR
+		int need_lock;
+
+		if (ih->ih_flags & IPL_MPSAFE)
+			need_lock = 0;
+		else
+			need_lock = s < IPL_SCHED;
+
+		if (need_lock)
+			KERNEL_LOCK();
+#endif
+
 		if (ih->ih_arg != 0)
 			arg = ih->ih_arg;
 		else
@@ -458,6 +471,10 @@ bcm_intc_call_handler(int irq, void *frame)
 		if (ih->ih_fun(arg))
 			ih->ih_count.ec_count++;
 
+#ifdef MULTIPROCESSOR
+		if (need_lock)
+			KERNEL_UNLOCK();
+#endif
 	}
 
 	bcm_intc_splx(s);
@@ -521,6 +538,7 @@ bcm_intc_intr_establish(int irqno, int level, int (*func)(void *),
 	ih->ih_fun = func;
 	ih->ih_arg = arg;
 	ih->ih_ipl = level;
+	ih->ih_flags = 0;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
 
