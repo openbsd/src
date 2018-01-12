@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mem.4,v 1.5 2017/09/12 02:22:16 schwarze Exp $
+.\"	$OpenBSD: mem.4,v 1.6 2018/01/12 04:36:44 deraadt Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .\"
 .\"     from: @(#)mem.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: September 12 2017 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt MEM 4 sparc64
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ these devices can only be opened when the
 .Xr securelevel 7
 is insecure or when the
 .Va kern.allowkmem
-.Xr sysctl 3
+.Xr sysctl 2
 variable is set.
 .Sh FILES
 .Bl -tag -width /dev/kmem -compact

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.84 2016/03/18 21:39:18 jmc Exp $
+.\" $OpenBSD: ipsec.4,v 1.85 2018/01/12 04:36:44 deraadt Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: March 18 2016 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt IPSEC 4
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ and Authentication Header (AH),
 which provide security services for IP datagrams.
 .Pp
 Both protocols may be enabled or disabled using the following
-.Xr sysctl 3
+.Xr sysctl 2
 variables in
 .Pa /etc/sysctl.conf .
 By default, both protocols are enabled:
@@ -267,7 +267,7 @@ These are generally
 and
 .Va net.inet.ip.ipsec-* .
 Full explanations can be found in
-.Xr sysctl 3 ,
+.Xr sysctl 2 ,
 and variables can be set using the
 .Xr sysctl 8
 interface.

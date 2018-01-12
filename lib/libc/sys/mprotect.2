@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mprotect.2,v 1.22 2017/03/11 22:58:46 jmc Exp $
+.\"	$OpenBSD: mprotect.2,v 1.23 2018/01/12 04:36:44 deraadt Exp $
 .\"	$NetBSD: mprotect.2,v 1.6 1995/10/12 15:41:08 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mprotect.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: March 11 2017 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt MPROTECT 2
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ In particular,
 mappings are not permitted in most binaries (see
 .Dv kern.wxabort
 in
-.Xr sysctl 3
+.Xr sysctl 2
 for more information).
 .It Bq Er EINVAL
 The

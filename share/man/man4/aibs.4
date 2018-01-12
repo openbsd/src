@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aibs.4,v 1.6 2013/08/14 06:32:34 jmc Exp $
+.\"	$OpenBSD: aibs.4,v 1.7 2018/01/12 04:36:44 deraadt Exp $
 .\"
 .\" Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt AIBS 4
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ and voltage sensors always have a lower and an upper limit.
 .Pp
 Sensor values are made available through the
 .Dv HW_SENSORS
-.Xr sysctl 3
+.Xr sysctl 2
 interface,
 and can be monitored with the
 .Xr systat 1
@@ -165,7 +165,7 @@ native hardware monitoring drivers
 may be ignored as appropriate.
 .Sh SEE ALSO
 .Xr systat 1 ,
-.Xr sysctl 3 ,
+.Xr sysctl 2 ,
 .Xr acpi 4 ,
 .Xr intro 4 ,
 .Xr sensorsd 8 ,

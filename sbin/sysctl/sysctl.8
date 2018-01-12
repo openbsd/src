@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.212 2017/05/04 20:41:10 tb Exp $
+.\"	$OpenBSD: sysctl.8,v 1.213 2018/01/12 04:36:44 deraadt Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: May 4 2017 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -97,7 +97,7 @@ The information available from
 .Nm
 consists of integers, strings, and tables.
 For a detailed description of the variables, see
-.Xr sysctl 3 .
+.Xr sysctl 2 .
 Tables can only be retrieved by special purpose programs such as
 .Xr ps 1 ,
 .Xr systat 1 ,
@@ -181,7 +181,7 @@ into a safe place for debugging purposes:
 # sysctl kern.nosuidcoredump=3
 .Ed
 .Sh SEE ALSO
-.Xr sysctl 3 ,
+.Xr sysctl 2 ,
 .Xr options 4 ,
 .Xr sysctl.conf 5
 .Sh HISTORY

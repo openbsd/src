@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfsstat.1,v 1.15 2014/01/19 18:36:43 jmc Exp $
+.\"	$OpenBSD: nfsstat.1,v 1.16 2018/01/12 04:36:45 deraadt Exp $
 .\"	$NetBSD: nfsstat.1,v 1.8 1996/03/03 17:21:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)nfsstat.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 19 2014 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt NFSSTAT 1
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ nor
 .Fl N
 option was specified statistics will be obtained from the running system
 by calling
-.Xr sysctl 3 .
+.Xr sysctl 2 .
 Otherwise the specified core and system will be used to fetch
 data by means of
 .Xr kvm 3 .
@@ -88,7 +88,7 @@ default memory file
 .Xr ps 1 ,
 .Xr systat 1 ,
 .Xr kvm 3 ,
-.Xr sysctl 3 ,
+.Xr sysctl 2 ,
 .Xr iostat 8 ,
 .Xr pstat 8 ,
 .Xr vmstat 8

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.66 2017/12/12 18:41:44 schwarze Exp $
+.\"	$OpenBSD: intro.2,v 1.67 2018/01/12 04:36:44 deraadt Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.2	8.3 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: December 12 2017 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -174,7 +174,7 @@ Maximum number of file descriptors allowable on the system
 has been reached and a request for an open cannot be satisfied
 until at least one has been closed.
 The
-.Xr sysctl 3
+.Xr sysctl 2
 variable
 .Va kern.maxfiles
 contains the current limit.

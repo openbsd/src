@@ -1,7 +1,7 @@
-.\"	$OpenBSD: evcount.9,v 1.5 2014/09/08 01:27:55 schwarze Exp $
+.\"	$OpenBSD: evcount.9,v 1.6 2018/01/12 04:36:44 deraadt Exp $
 .\" Written by Jared Yanovich
 .\" This file belongs to the public domain, 11/02/2004.
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt EVCOUNT 9
 .Os
 .Sh NAME
@@ -20,7 +20,7 @@ The
 .Nm
 API provides an interface for generic event and interrupt counting,
 whose statistics are made available to machine-independent
-.Xr sysctl 3
+.Xr sysctl 2
 nodes.
 .Ss Overview
 With
@@ -28,7 +28,7 @@ With
 an architecture can collect interrupt counting for any device.
 All registered counters will be made available under the
 .Va kern.evcount
-.Xr sysctl 3
+.Xr sysctl 2
 node as a flat list.
 The following is a sample list of counters provided by some
 common architectures:
@@ -88,7 +88,7 @@ or
 .Dq pciide0 .
 .Fa data
 provides a chunk of data that will be made available through the
-.Xr sysctl 3
+.Xr sysctl 2
 call.
 .Pp
 The
@@ -190,7 +190,7 @@ will be made aware of interrupt occurrence.
 .Sh SEE ALSO
 .Xr systat 1 ,
 .Xr queue 3 ,
-.Xr sysctl 3 ,
+.Xr sysctl 2 ,
 .Xr intro 4 ,
 .Xr vmstat 8 ,
 .Xr autoconf 9

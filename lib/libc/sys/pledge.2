@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.49 2018/01/08 12:02:42 mpi Exp $
+.\" $OpenBSD: pledge.2,v 1.50 2018/01/12 04:36:44 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 8 2018 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -133,7 +133,7 @@ and any files below
 May operate on
 .Pa /etc/malloc.conf .
 .Pp
-.It Xr sysctl 3
+.It Xr sysctl 2
 A small set of read-only operations are allowed, sufficient to
 support:
 .Xr getdomainname 3 ,
@@ -493,13 +493,13 @@ and
 system calls.
 .It Va ps
 Allows enough
-.Xr sysctl 3
+.Xr sysctl 2
 interfaces to allow inspection of processes operating on the system using
 programs like
 .Xr ps 1 .
 .It Va vminfo
 Allows enough
-.Xr sysctl 3
+.Xr sysctl 2
 interfaces to allow inspection of the system's virtual memory by
 programs like
 .Xr top 1

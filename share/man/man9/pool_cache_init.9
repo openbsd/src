@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool_cache_init.9,v 1.7 2017/06/23 01:02:18 dlg Exp $
+.\"	$OpenBSD: pool_cache_init.9,v 1.8 2018/01/12 04:36:45 deraadt Exp $
 .\"
 .\" Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 23 2017 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt POOL_CACHE_INIT 9
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ use elsewhere.
 .Pp
 Information about the current state of the per CPU caches and
 counters of operations they handle are available via
-.Xr sysctl 3 ,
+.Xr sysctl 2 ,
 or displayed in the pcache view in
 .Xr systat 1 .
 .Pp
@@ -93,7 +93,7 @@ via a node for each pool under the
 .Dv CTL_KERN ,
 .Dv KERN_POOL ,
 .Dv KERN_POOL_CACHE
-.Xr sysctl 3
+.Xr sysctl 2
 MIB hierarchy.
 .Bd -literal -offset indent
 struct kinfo_pool_cache {
@@ -128,7 +128,7 @@ These counters may be accessed via a node for each pool under the
 .Dv CTL_KERN ,
 .Dv KERN_POOL ,
 .Dv KERN_POOL_CACHE_CPUS
-.Xr sysctl 3
+.Xr sysctl 2
 MIB hierarchy.
 This sysctl returns an array of
 .Vt kinfo_pool_cache_cpus
@@ -181,7 +181,7 @@ The pool implementation is in the file
 .Pa sys/kern/subr_pool.c .
 .Sh SEE ALSO
 .Xr systat 1 ,
-.Xr sysctl 3 ,
+.Xr sysctl 2 ,
 .Xr pool_get 9
 .Sh CAVEATS
 Because the intention of per CPU pool caches is to avoid having

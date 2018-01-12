@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.254 2017/10/25 12:38:21 job Exp $
+.\"	$OpenBSD: options.4,v 1.255 2018/01/12 04:36:44 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: October 25 2017 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -366,7 +366,7 @@ controls its behaviour.
 See
 .Xr sysctl 8
 and
-.Xr sysctl 3
+.Xr sysctl 2
 for details.
 .El
 .Sh NETWORKING OPTIONS
@@ -386,7 +386,7 @@ is 1, debug logging is on.
 See
 .Xr sysctl 8
 and
-.Xr sysctl 3
+.Xr sysctl 2
 for details.
 .It Cd option INET6
 Includes support for the IPv6 protocol stack.
@@ -411,7 +411,7 @@ The option sets the default value of
 to 1,
 for debugging IPv6 neighbor discovery protocol handling.
 See
-.Xr sysctl 3
+.Xr sysctl 2
 for details.
 .It Cd option PIPEX
 Includes pipex in-kernel acceleration for PPPoE, L2TP or PPTP.
