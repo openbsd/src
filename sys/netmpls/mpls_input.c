@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.67 2018/01/10 00:05:06 dlg Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.68 2018/01/12 06:57:56 jca Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -63,6 +63,11 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 	uint8_t ttl;
 	int hasbos;
 
+	if (!ISSET(ifp->if_xflags, IFXF_MPLS)) {
+		m_freem(m);
+		return;
+	}
+
 	/* drop all broadcast and multicast packets */
 	if (m->m_flags & (M_BCAST | M_MCAST)) {
 		m_freem(m);
@@ -79,7 +84,7 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 #ifdef MPLS_DEBUG
 	printf("mpls_input: iface %s label=%d, ttl=%d BoS %d\n",
 	    ifp->if_xname, MPLS_LABEL_GET(shim->shim_label),
-	    MPLS_TTL_GET(shim->shim_label,
+	    MPLS_TTL_GET(shim->shim_label),
 	    MPLS_BOS_ISSET(shim->shim_label));
 #endif
 
