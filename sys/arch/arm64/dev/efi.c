@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.2 2018/01/10 23:27:18 kettenis Exp $	*/
+/*	$OpenBSD: efi.c,v 1.3 2018/01/12 14:52:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -134,10 +134,19 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 			    desc->Attribute);
 #endif
 
+			/*
+			 * Normal memory is expected to be "write
+			 * back" cachable.  Everything else is mapped
+			 * as device memory.
+			 */
+			if ((desc->Attribute & EFI_MEMORY_WB) == 0)
+				pa |= PMAP_DEVICE;
+
 			if (desc->Type == EfiRuntimeServicesCode)
 				prot |= PROT_EXEC;
 			else
 				prot |= PROT_WRITE;
+
 			while (npages--) {
 				pmap_enter(sc->sc_pm, va, pa, prot,
 				   prot | PMAP_WIRED);

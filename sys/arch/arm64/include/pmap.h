@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.8 2018/01/04 14:30:08 kettenis Exp $ */
+/* $OpenBSD: pmap.h,v 1.9 2018/01/12 14:52:55 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -19,8 +19,9 @@
 
 #include <arm64/pte.h>
 
-#define PMAP_PA_MASK  ~((paddr_t)PAGE_MASK) /* to remove the flags */
+#define PMAP_PA_MASK	~((paddr_t)PAGE_MASK) /* to remove the flags */
 #define PMAP_NOCACHE	0x1 /* non-cacheable memory */
+#define PMAP_DEVICE	0x2 /* device memory */
 
 typedef struct pmap *pmap_t;
 
@@ -87,6 +88,7 @@ vaddr_t pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart,
     long kernelend, long ram_start, long ram_end);
 void pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot);
 
+paddr_t pmap_steal_avail(size_t size, int align, void **kva);
 void pmap_avail_fixup();
 void pmap_physload_avail();
 
