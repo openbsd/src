@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.6 2017/04/20 13:57:30 visa Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.7 2018/01/12 09:19:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -24,8 +24,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
-#ifndef _POWERPC_MUTEX_H_
-#define _POWERPC_MUTEX_H_
+
+#ifndef _MACHINE_MUTEX_H_
+#define _MACHINE_MUTEX_H_
 
 #include <sys/_lock.h>
 
@@ -54,10 +55,10 @@ struct mutex {
 
 #ifdef WITNESS
 #define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
-	{ NULL, __MUTEX_IPL(ipl), IPL_NONE, MTX_LO_INITIALIZER(name, flags) }
+	{ NULL, __MUTEX_IPL((ipl)), IPL_NONE, MTX_LO_INITIALIZER(name, flags) }
 #else
 #define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
-	{ NULL, __MUTEX_IPL(ipl), IPL_NONE }
+	{ NULL, __MUTEX_IPL((ipl)), IPL_NONE }
 #endif
 
 void __mtx_init(struct mutex *, int);
@@ -79,6 +80,6 @@ void __mtx_init(struct mutex *, int);
 #endif
 
 #define MUTEX_LOCK_OBJECT(mtx)	(&(mtx)->mtx_lock_obj)
-#define MUTEX_OLDIPL(mtx)	((mtx)->mtx_oldipl)
+#define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldipl
 
-#endif
+#endif	/* _MACHINE_MUTEX_H_ */

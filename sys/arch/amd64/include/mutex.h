@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.8 2017/04/20 13:57:29 visa Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.9 2018/01/12 09:19:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -24,15 +24,16 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
+
 #ifndef _MACHINE_MUTEX_H_
 #define _MACHINE_MUTEX_H_
 
 #include <sys/_lock.h>
 
 struct mutex {
+	volatile void *mtx_owner;
 	int mtx_wantipl;
 	int mtx_oldipl;
-	volatile void *mtx_owner;
 #ifdef WITNESS
 	struct lock_object mtx_lock_obj;
 #endif
@@ -54,15 +55,16 @@ struct mutex {
 
 #ifdef WITNESS
 #define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
-	{ __MUTEX_IPL((ipl)), 0, NULL, MTX_LO_INITIALIZER(name, flags) }
+	{ NULL, __MUTEX_IPL((ipl)), IPL_NONE, MTX_LO_INITIALIZER(name, flags) }
 #else
 #define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
-	{ __MUTEX_IPL((ipl)), 0, NULL }
+	{ NULL, __MUTEX_IPL((ipl)), IPL_NONE }
 #endif
 
 void __mtx_init(struct mutex *, int);
 #define _mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
 
+#ifdef DIAGNOSTIC
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
 	if ((mtx)->mtx_owner != curcpu())				\
 		panic("mutex %p not held in %s", (mtx), __func__);	\
@@ -72,8 +74,12 @@ void __mtx_init(struct mutex *, int);
 	if ((mtx)->mtx_owner == curcpu())				\
 		panic("mutex %p held in %s", (mtx), __func__);		\
 } while (0)
+#else
+#define MUTEX_ASSERT_LOCKED(mtx) do { } while (0)
+#define MUTEX_ASSERT_UNLOCKED(mtx) do { } while (0)
+#endif
 
 #define MUTEX_LOCK_OBJECT(mtx)	(&(mtx)->mtx_lock_obj)
 #define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldipl
 
-#endif
+#endif	/* _MACHINE_MUTEX_H_ */
