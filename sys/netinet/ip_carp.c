@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.324 2018/01/11 00:14:15 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.325 2018/01/12 00:36:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1001,7 +1001,7 @@ carp_send_ad_all(void)
 		return;
 	++carp_send_all_recur;
 	TAILQ_FOREACH(ifp0, &ifnet, if_list) {
-		if (ifp0->if_type == IFT_CARP)
+		if (ifp0->if_type != IFT_ETHER)
 			continue;
 
 		cif = &ifp0->if_carp;
@@ -1347,7 +1347,7 @@ carp_ourether(struct ifnet *ifp, u_int8_t *ena)
 	struct carp_softc *vh;
 
 	KERNEL_ASSERT_LOCKED(); /* touching if_carp + carp_vhosts */
-	KASSERT(ifp->if_type != IFT_CARP);
+	KASSERT(ifp->if_type == IFT_ETHER);
 	cif = &ifp->if_carp;
 
 	SRPL_FOREACH_LOCKED(vh, cif, sc_list) {
@@ -1694,7 +1694,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 	if ((ifp0->if_flags & IFF_MULTICAST) == 0)
 		return (EADDRNOTAVAIL);
 
-	if (ifp0->if_type == IFT_CARP)
+	if (ifp0->if_type != IFT_ETHER)
 		return (EINVAL);
 
 	cif = &ifp0->if_carp;
@@ -2469,7 +2469,7 @@ carp_carpdev_state(void *v)
 	struct carp_softc *sc;
 	struct ifnet *ifp0 = v;
 
-	if (ifp0->if_type == IFT_CARP)
+	if (ifp0->if_type != IFT_ETHER)
 		return;
 
 	cif = &ifp0->if_carp;
