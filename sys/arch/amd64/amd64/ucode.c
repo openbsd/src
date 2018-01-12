@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucode.c,v 1.1 2018/01/11 22:31:09 patrick Exp $	*/
+/*	$OpenBSD: ucode.c,v 1.2 2018/01/12 10:33:07 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Stefan Fritsch <fritsch@genua.de>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -260,6 +260,7 @@ cpu_ucode_intel_match(struct intel_ucode_header *hdr,
 	struct intel_ucode_ext_sig_header *ehdr;
 	struct intel_ucode_ext_sig *esig;
 	uint32_t data_size, total_size;
+	unsigned i;
 
 	data_size = hdr->data_size;
 	total_size = hdr->total_size;
@@ -286,10 +287,9 @@ cpu_ucode_intel_match(struct intel_ucode_header *hdr,
 	ehdr = (void *)((char *)hdr + sizeof(struct intel_ucode_header) +
 	    data_size);
 	esig = (void *)&ehdr[1];
-
-	for (unsigned i = 0; i < ehdr->ext_sig_count; i++) {
-		if (esig->processor_sig == processor_sig &&
-		    (esig->processor_flags & processor_mask))
+	for (i = 0; i < ehdr->ext_sig_count; i++) {
+		if (esig[i].processor_sig == processor_sig &&
+		    (esig[i].processor_flags & processor_mask))
 			return 1;
 	}
 
