@@ -97,3 +97,34 @@ expected-stdout:
 	-bc abc bbc cbc ebc
 ---
 
+name: glob-charclass-1
+description:
+	Check POSIX character class support
+file-setup: file 644 "abc"
+file-setup: file 644 "1bc"
+file-setup: file 644 "@bc"
+file-setup: file 644 "a.c"
+stdin:
+	echo [[:alnum:]]*
+	echo *[[:punct:]]c
+expected-stdout:
+	1bc a.c abc
+	a.c
+
+---
+
+name: glob-charclass-2
+description:
+	Check POSIX character class support (negative match)
+file-setup: file 644 "abc"
+file-setup: file 644 "1bc"
+file-setup: file 644 "@bc"
+file-setup: file 644 "a.c"
+stdin:
+	echo [![:alnum:]]*
+	echo *[![:punct:]]c
+expected-stdout:
+	@bc
+	1bc @bc abc
+
+---
