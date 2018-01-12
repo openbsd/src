@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.42 2018/01/11 14:53:42 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.43 2018/01/12 06:22:31 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -398,38 +398,41 @@ getformat(void)
 			}
 		}
 		switch (*p) {
-		case 'o': case 'u': case 'x': case 'X':
-			intdata = nosign = true;
-			break;
-		case 'd': case 'i':
+		case 'd':
+		case 'i':
 			intdata = true;
 			break;
+		case 'o':
+		case 'u':
+		case 'x':
+		case 'X':
+			intdata = nosign = true;
+			break;
 		case 'D':
-			/* %lD is undefined */
-			if (!longdata) {
-				longdata = true; /* %D behaves as %ld */
-				intdata = true;
-				break;
-			}
-			goto fmt_broken;
-		case 'O': case 'U':
-			/* %lO and %lU are undefined */
-			if (!longdata) {
-				longdata = true; /* %O, %U behave as %lo, %lu */
-				intdata = nosign = true;
-				break;
-			}
-			goto fmt_broken;
+			if (longdata)
+				goto fmt_broken;
+			longdata = intdata = true; /* same as %ld */
+			break;
+		case 'O':
+		case 'U':
+			if (longdata)
+				goto fmt_broken;
+			longdata = intdata = nosign = true; /* same as %l[ou] */
+			break;
 		case 'c':
-			if (!(intdata | longdata)) {
-				chardata = true;
-				break;
-			}
-			goto fmt_broken;
-		case 'f': case 'e': case 'g': case 'E': case 'G':
-			if (!longdata)
-				break;
-			/* FALLTHROUGH */
+			if (longdata)
+				goto fmt_broken;
+			chardata = true;
+			break;
+		case 'e':
+		case 'E':
+		case 'f':
+		case 'g':
+		case 'G':
+			if (longdata)
+				goto fmt_broken;
+			/* No cast needed for printing in putdata() */
+			break;
 		default:
 fmt_broken:
 			errx(1, "illegal or unsupported format '%.*s'",
