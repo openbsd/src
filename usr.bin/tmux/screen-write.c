@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.135 2017/11/15 19:21:24 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.136 2018/01/12 16:43:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1297,10 +1297,12 @@ screen_write_collect_end(struct screen_write_ctx *ctx)
 			grid_view_get_cell(s->grid, xx, s->cy, &gc);
 			if (~gc.flags & GRID_FLAG_PADDING)
 				break;
-			grid_view_set_cell(s->grid, xx, s->cy, &grid_default_cell);
+			grid_view_set_cell(s->grid, xx, s->cy,
+			    &grid_default_cell);
 		}
 		if (gc.data.width > 1)
-			grid_view_set_cell(s->grid, xx, s->cy, &grid_default_cell);
+			grid_view_set_cell(s->grid, xx, s->cy,
+			    &grid_default_cell);
 	}
 
 	memcpy(&gc, &ci->gc, sizeof gc);
@@ -1333,7 +1335,7 @@ screen_write_collect_add(struct screen_write_ctx *ctx,
 	 */
 
 	collect = 1;
-	if (gc->data.width != 1 || gc->data.size != 1)
+	if (gc->data.width != 1 || gc->data.size != 1 || *gc->data.data >= 0x7f)
 		collect = 0;
 	else if (gc->attr & GRID_ATTR_CHARSET)
 		collect = 0;
