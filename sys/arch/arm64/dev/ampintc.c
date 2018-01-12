@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.9 2017/04/30 16:45:45 mpi Exp $ */
+/* $OpenBSD: ampintc.c,v 1.10 2018/01/12 14:53:37 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -727,7 +727,7 @@ ampintc_msi_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": nspi %d\n", sc->sc_nspi);
 
-	sc->sc_spi = mallocarray(sc->sc_nspi, sizeof(int), M_DEVBUF,
+	sc->sc_spi = mallocarray(sc->sc_nspi, sizeof(void *), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
 
 	sc->sc_ic.ic_node = faa->fa_node;
