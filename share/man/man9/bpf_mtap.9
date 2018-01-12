@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.10 2016/10/10 08:33:32 bluhm Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.11 2018/01/12 02:19:47 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,10 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 10 2016 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt BPF_MTAP 9
 .Os
 .Sh NAME
+.Nm bpfattach ,
+.Nm bpfdetach ,
 .Nm bpf_filter ,
 .Nm bpf_mfilter ,
 .Nm bpf_validate ,
@@ -28,6 +30,15 @@
 .Nd BPF kernel API
 .Sh SYNOPSIS
 .In net/bpf.h
+.Ft void
+.Fo bpfattach
+.Fa "caddr_t *bpfp"
+.Fa "struct ifnet *ifp"
+.Fa "u_int dlt"
+.Fa "u_int hdrlen"
+.Fc
+.Ft void
+.Fn bpfdetach "struct ifnet *ifp"
 .Ft u_int
 .Fo bpf_filter
 .Fa "const struct bpf_insn *pc"
@@ -68,6 +79,29 @@ The BPF kernel API provides functions for evaluating BPF instructions
 against packets, and incoming linkage from device drivers.
 A packet is parsed by the filters associated with each interface
 and, if accepted, stashed into the corresponding buffer.
+.Pp
+.Fn bpfattach
+allocates and configures a BPF interface for use with the network interface
+.Fa ifp .
+.Fa bpfp
+is the location of BPF interface pointer that the network interface passes to
+the filter functions.
+The BPF interface pointer will be clear until a filter is registered and
+packets can be filtered on it.
+The
+.Fa dlt
+argument identifies the data link-layer type that the network
+interface provides for this BPF interface.
+.Fn bpfattach
+may be called multiple times against the same network interface to
+provide different data link-layer types for filtering.
+.Fa hdrlen
+indicates the length of the link header for the data link-layer type.
+.Pp
+.Fn bpfdetach
+removes and frees all the BPF interfaces that were configured for
+the network interface
+.Fa ifp .
 .Pp
 .Fn bpf_filter
 executes the BPF program referenced by
