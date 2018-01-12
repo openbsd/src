@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.33 2017/11/15 19:59:27 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.34 2018/01/12 10:16:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -97,9 +97,24 @@ void
 layout_print_cell(struct layout_cell *lc, const char *hdr, u_int n)
 {
 	struct layout_cell	*lcchild;
+	const char		*type;
 
-	log_debug("%s:%*s%p type %u [parent %p] wp=%p [%u,%u %ux%u]", hdr, n,
-	    " ", lc, lc->type, lc->parent, lc->wp, lc->xoff, lc->yoff, lc->sx,
+	switch (lc->type) {
+	case LAYOUT_LEFTRIGHT:
+		type = "LEFTRIGHT";
+		break;
+	case LAYOUT_TOPBOTTOM:
+		type = "TOPBOTTOM";
+		break;
+	case LAYOUT_WINDOWPANE:
+		type = "WINDOWPANE";
+		break;
+	default:
+		type = "UNKNOWN";
+		break;
+	}
+	log_debug("%s:%*s%p type %s [parent %p] wp=%p [%u,%u %ux%u]", hdr, n,
+	    " ", lc, type, lc->parent, lc->wp, lc->xoff, lc->yoff, lc->sx,
 	    lc->sy);
 	switch (lc->type) {
 	case LAYOUT_LEFTRIGHT:
