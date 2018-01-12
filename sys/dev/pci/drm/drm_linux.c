@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.15 2017/07/12 20:12:19 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.16 2018/01/12 11:03:15 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -204,8 +204,8 @@ alloc_pages(unsigned int gfp_mask, unsigned int order)
 		flags |= UVM_PLA_ZERO;
 
 	TAILQ_INIT(&mlist);
-	if (uvm_pglistalloc(PAGE_SIZE << order, 0, -1, PAGE_SIZE, 0,
-	    &mlist, 1, flags))
+	if (uvm_pglistalloc(PAGE_SIZE << order, dma_constraint.ucr_low,
+	    dma_constraint.ucr_high, PAGE_SIZE, 0, &mlist, 1, flags))
 		return NULL;
 	return TAILQ_FIRST(&mlist);
 }
