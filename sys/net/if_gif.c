@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.107 2018/01/09 15:24:24 bluhm Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.108 2018/01/12 02:25:27 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -175,54 +175,13 @@ gif_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf) {
-			int offset;
-			sa_family_t family;
-			u_int8_t proto;
-
-			/* must decapsulate outer header for bpf */
-			switch (sc->gif_psrc->sa_family) {
-			case AF_INET:
-				offset = sizeof(struct ip);
-				proto = mtod(m, struct ip *)->ip_p;
-				break;
-#ifdef INET6
-			case AF_INET6:
-				offset = sizeof(struct ip6_hdr);
-				proto = mtod(m, struct ip6_hdr *)->ip6_nxt;
-				break;
-#endif
-			default:
-				proto = 0;
-				break;
-			}
-			switch (proto) {
-			case IPPROTO_IPV4:
-				family = AF_INET;
-				break;
-			case IPPROTO_IPV6:
-				family = AF_INET6;
-				break;
-			case IPPROTO_ETHERIP:
-				family = AF_LINK;
-				offset += sizeof(struct etherip_header);
-				break;
-			case IPPROTO_MPLS:
-				family = AF_MPLS;
-				break;
-			default:
-				offset = 0;
-				family = sc->gif_psrc->sa_family;
-				break;
-			}
-			m->m_data += offset;
-			m->m_len -= offset;
-			m->m_pkthdr.len -= offset;
-			bpf_mtap_af(ifp->if_bpf, family, m, BPF_DIRECTION_OUT);
-			m->m_data -= offset;
-			m->m_len += offset;
-			m->m_pkthdr.len += offset;
+			bpf_mtap_af(ifp->if_bpf, m->m_pkthdr.ph_family, m,
+			    BPF_DIRECTION_OUT);
 		}
 #endif
+
+		if (gif_encap(ifp, &m, m->m_pkthdr.ph_family) != 0)
+			continue;
 
 		/* XXX we should cache the outgoing route */
 
@@ -294,9 +253,7 @@ gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		goto end;
 	}
 
-	error = gif_encap(ifp, &m, dst->sa_family);
-	if (error)
-		goto end;
+	m->m_pkthdr.ph_family = dst->sa_family;
 
 	error = if_enqueue(ifp, m);
 
