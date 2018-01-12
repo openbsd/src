@@ -1,4 +1,4 @@
-$OpenBSD: NOTES,v 1.15 2018/01/08 13:39:06 jca Exp $
+$OpenBSD: NOTES,v 1.16 2018/01/12 14:20:57 jca Exp $
 
 General features of at&t ksh88 that are not (yet) in pdksh:
     - exported aliases and functions (not in ksh93).
@@ -6,12 +6,10 @@ General features of at&t ksh88 that are not (yet) in pdksh:
     - signals/traps not cleared during functions.
     - trap DEBUG, local ERR and EXIT traps in functions.
     - ERRNO parameter.
-    - use of an `agent' to execute unreadable/setuid/setgid shell scripts
-      (don't ask).
     - read/select aren't hooked in to the command line editor
     - the last command of a pipeline is not run in the parent shell
 
-Known bugs (see also BUG-REPORTS and PROJECTS files):
+Known bugs (see also PROJECTS files):
     Variable parsing, Expansion:
 	- some specials behave differently when unset (eg, IFS behaves like
 	  " \t\n") others lose their special meaning.  IFS/PATH taken care of,
@@ -25,9 +23,9 @@ Known bugs (see also BUG-REPORTS and PROJECTS files):
     Commands,Execution:
 	- setting special parameters that have side effects when
 	  changed/restored (ie, HISTFILE, OPTIND, RANDOM) in front
-	  of a command (eg, HISTFILE=/foo/bar echo hi) effects the parent
+	  of a command (eg, HISTFILE=/foo/bar echo hi) affects the parent
 	  shell.  Note that setting other (not so special) parameters
-	  does not effect the parent shell.
+	  does not affect the parent shell.
 	- `echo hi | exec cat -n' causes at&t to exit, `exec echo hi | cat -n'
 	  does not.  pdksh exits for neither.  Don't think POSIX requires
 	  an exit, but not sure.
@@ -239,8 +237,8 @@ Oddities in ksh (pd & at&t):
     - when tracing (set -x), and a command's stderr is redirected, the trace
       output is also redirected. so "set -x; echo foo 2> /tmp/O > /dev/null"
       will create /tmp/foo with the lines "+ > /dev/null" and "+ echo foo".
-    - undocumented at&t ksh feature: FPATH is searched after PATH if no
-      executable is found, even if typeset -uf wasn't used.
+    - undocumented at&t ksh88, documented in ksh93: FPATH is searched
+      after PATH if no executable is found, even if typeset -uf wasn't used.
 
 POSIX sh questions (references are to POSIX 1003.2-1992)
 	- arithmetic expressions: how are empty expressions treated?
@@ -276,9 +274,6 @@ POSIX sh bugs (references are to POSIX 1003.2-1992)
 	  functions don't do the save/restore automatically).  Restoring
 	  OPTIND is kind of dumb since getopts may have been in the middle
 	  of parsing a group of flags (eg, -abc).
-	- unclear whether arithmetic expressions (eg, $((..))) should
-	  understand C integer constants (ie, 0x123, 0177).  at&t ksh doesn't
-	  and neither does pdksh.
 	- `...` definition (3.6.3) says nothing about backslash followed by
 	  a newline, which sh and at&t ksh strip out completely.  e.g.,
 		$ show-args `echo 'X
