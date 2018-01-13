@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.16 2018/01/12 11:03:15 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.17 2018/01/13 13:03:42 robert Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/ppbreg.h>
+#include <sys/event.h>
 
 void
 flush_barrier(void *arg)
@@ -729,4 +730,10 @@ void
 backlight_schedule_update_status(struct backlight_device *bd)
 {
 	task_add(systq, &bd->task);
+}
+
+void
+drm_sysfs_hotplug_event(struct drm_device *dev)
+{
+	KNOTE(&dev->note, NOTE_CHANGE);
 }
