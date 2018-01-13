@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.89 2017/12/30 20:47:00 guenther Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.90 2018/01/13 15:56:02 millert Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -357,8 +357,17 @@ ffs_write(void *v)
 			xfersize = size;
 
 		error = uiomove(bp->b_data + blkoffset, xfersize, uio);
-
-		if (error != 0)
+		/*
+		 * If the buffer is not already filled and we encounter an
+		 * error while trying to fill it, we have to clear out any
+		 * garbage data from the pages instantiated for the buffer.
+		 * If we do not, a failed uiomove() during a write can leave
+		 * the prior contents of the pages exposed to a userland mmap.
+		 *
+		 * Note that we don't need to clear buffers that were
+		 * allocated with the B_CLRBUF flag set.
+                 */
+		if (error != 0 && !(flags & B_CLRBUF))
 			memset(bp->b_data + blkoffset, 0, xfersize);
 
 #if 0
