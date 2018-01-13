@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.44 2018/01/13 15:09:49 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.45 2018/01/13 15:43:39 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -370,7 +370,7 @@ getformat(void)
 		/*
 		 * Allow conversion format specifiers of the form
 		 * %[#][ ][{+,-}][0-9]*[.[0-9]*]? where ? must be one of
-		 * [l]{d,i,o,u,x} or {f,e,g,E,G,d,o,x,D,O,U,X,c,u}
+		 * [l]{d,i,o,u,x} or {f,e,g,F,E,G,d,o,x,D,O,U,X,c,u}
 		 */
 		char	*fmt;
 		int	dot, hash, space, sign, numbers;
