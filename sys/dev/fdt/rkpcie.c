@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpcie.c,v 1.2 2018/01/06 20:31:03 kettenis Exp $	*/
+/*	$OpenBSD: rkpcie.c,v 1.3 2018/01/13 18:08:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -238,8 +238,10 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		delay(1000);
 	}
-	if (timo == 0)
-		printf("timeout\n");
+	if (timo == 0) {
+		printf("%s: link training timeout\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	/* Initialize Root Complex registers. */
 	HWRITE4(sc, PCIE_LM_VENDOR_ID, PCI_VENDOR_ROCKCHIP);
@@ -571,13 +573,14 @@ rkpcie_intr_disestablish(void *v, void *cookie)
 void
 rkpcie_phy_init(struct rkpcie_softc *sc)
 {
-	uint32_t phy;
+	uint32_t phys[8];
+	int len;
 
-	phy = OF_getpropint(sc->sc_node, "phys", 0);
-	if (phy == 0)
+	len = OF_getpropintarray(sc->sc_node, "phys", phys, sizeof(phys));
+	if (len < sizeof(phys[0]))
 		return;
 
-	sc->sc_phy_node = OF_getnodebyphandle(phy);
+	sc->sc_phy_node = OF_getnodebyphandle(phys[0]);
 	if (sc->sc_phy_node == 0)
 		return;
 
