@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.6 2017/03/09 14:23:59 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.7 2018/01/13 15:18:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -59,6 +59,7 @@
 #define	IPL_IPI		12	/* interprocessor interrupt */
 #define	NIPL		13	/* number of levels */
 
+#define	IPL_MPFLOOR	IPL_TTY
 /* Interrupt priority 'flags'. */
 #define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.8 2018/01/04 11:03:48 mpi Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.9 2018/01/13 15:18:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -54,7 +54,7 @@ struct mutex {
  */
 #ifdef MULTIPROCESSOR
 #define __MUTEX_IPL(ipl) \
-    (((ipl) > IPL_NONE && (ipl) < IPL_AUDIO) ? IPL_AUDIO : (ipl))
+    (((ipl) > IPL_NONE && (ipl) < IPL_MPFLOOR) ? IPL_MPFLOOR : (ipl))
 #ifdef WITNESS
 #define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
 	{ MUTEX_UNLOCKED, __MUTEX_IPL((ipl)), 0, NULL, \

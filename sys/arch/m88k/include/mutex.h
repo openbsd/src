@@ -1,6 +1,6 @@
 #ifndef _M88K_MUTEX_H_
 #define _M88K_MUTEX_H_
-/*	$OpenBSD: mutex.h,v 1.6 2018/01/04 11:03:48 mpi Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.7 2018/01/13 15:18:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -48,7 +48,7 @@ struct mutex {
  */
 #ifdef MULTIPROCESSOR
 #define __MUTEX_IPL(ipl) \
-    (((ipl) > IPL_NONE && (ipl) < IPL_TTY) ? IPL_TTY : (ipl))
+    (((ipl) > IPL_NONE && (ipl) < IPL_MPFLOOR) ? IPL_MPFLOOR : (ipl))
 #else
 #define __MUTEX_IPL(ipl) (ipl)
 #endif
