@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.43 2018/01/12 06:22:31 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.44 2018/01/13 15:09:49 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -427,6 +427,7 @@ getformat(void)
 		case 'e':
 		case 'E':
 		case 'f':
+		case 'F':
 		case 'g':
 		case 'G':
 			if (longdata)
