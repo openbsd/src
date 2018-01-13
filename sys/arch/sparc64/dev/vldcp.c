@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.13 2018/01/06 21:35:45 stsp Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.14 2018/01/13 15:10:02 stsp Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -397,7 +397,6 @@ retry:
 		}
 		goto retry;
 	}
-	splx(s);
 
 	ret = uiomove(lc->lc_rxq->lq_va + rx_head, 64, uio);
 
@@ -407,6 +406,7 @@ retry:
 	if (err != H_EOK)
 		printf("%s: hv_ldc_rx_set_qhead %d\n", __func__, err);
 
+	splx(s);
 	device_unref(&sc->sc_dv);
 	return (ret);
 }
