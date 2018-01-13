@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.29 2017/12/21 21:04:38 millert Exp $	*/
+/*	$OpenBSD: event.h,v 1.30 2018/01/13 12:58:40 robert Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -38,8 +38,9 @@
 #define EVFILT_PROC		(-5)	/* attached to struct process */
 #define EVFILT_SIGNAL		(-6)	/* attached to struct process */
 #define EVFILT_TIMER		(-7)	/* timers */
+#define EVFILT_DEVICE		(-8)	/* devices */
 
-#define EVFILT_SYSCOUNT		7
+#define EVFILT_SYSCOUNT		8
 
 #define EV_SET(kevp_, a, b, c, d, e, f) do {	\
 	struct kevent *kevp = (kevp_);		\
@@ -110,6 +111,9 @@ struct kevent {
 #define	NOTE_TRACK	0x00000001		/* follow across forks */
 #define	NOTE_TRACKERR	0x00000002		/* could not track child */
 #define	NOTE_CHILD	0x00000004		/* am a child process */
+
+/* data/hint flags for EVFILT_DEVICE, shared with userspace */
+#define NOTE_CHANGE	0x00000001		/* device change event */
 
 /*
  * This is currently visible to userland to work around broken

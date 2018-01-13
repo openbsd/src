@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.83 2017/12/18 10:10:53 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.84 2018/01/13 12:58:40 robert Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -137,6 +137,7 @@ struct filterops *sysfilt_ops[] = {
 	&proc_filtops,			/* EVFILT_PROC */
 	&sig_filtops,			/* EVFILT_SIGNAL */
 	&timer_filtops,			/* EVFILT_TIMER */
+	&file_filtops,			/* EVFILT_DEVICE */
 };
 
 void KQREF(struct kqueue *);
