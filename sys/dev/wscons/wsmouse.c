@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.42 2018/01/11 23:50:49 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.43 2018/01/13 11:54:01 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -618,6 +618,8 @@ static inline void
 set_x(struct position *pos, int x, u_int *sync, u_int mask)
 {
 	if (*sync & mask) {
+		if (x == pos->x)
+			return;
 		pos->x -= pos->dx;
 		pos->acc_dx -= pos->dx;
 	}
@@ -632,6 +634,8 @@ static inline void
 set_y(struct position *pos, int y, u_int *sync, u_int mask)
 {
 	if (*sync & mask) {
+		if (y == pos->y)
+			return;
 		pos->y -= pos->dy;
 		pos->acc_dy -= pos->dy;
 	}
