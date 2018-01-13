@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.43 2018/01/08 16:16:16 millert Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.44 2018/01/13 15:57:58 millert Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -323,6 +323,18 @@ ext2fs_write(void *v)
 			xfersize = size;
 
 		error = uiomove(bp->b_data + blkoffset, xfersize, uio);
+		/*
+		 * If the buffer is not already filled and we encounter an
+		 * error while trying to fill it, we have to clear out any
+		 * garbage data from the pages instantiated for the buffer.
+		 * If we do not, a failed uiomove() during a write can leave
+		 * the prior contents of the pages exposed to a userland mmap.
+		 *
+		 * Note that we don't need to clear buffers that were
+		 * allocated with the B_CLRBUF flag set.
+		 */
+		if (error != 0 && !(flags & B_CLRBUF))
+			memset(bp->b_data + blkoffset, 0, xfersize);
 #if 0
 		if (ioflag & IO_NOCACHE)
 			bp->b_flags |= B_NOCACHE;
