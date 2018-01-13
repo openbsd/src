@@ -687,8 +687,8 @@ if test "x$found_b64_ntop" = xno; then
 	fi
 fi
 if test "x$found_b64_ntop" = xyes; then
-	AC_DEFINE(HAVE_B64_NTOP)
-	AC_DEFINE(HAVE_B64_PTON)
+	AC_DEFINE(HAVE_B64_NTOP, 1, [Define to 1 if you have the `b64_ntop' function.])
+	AC_DEFINE(HAVE_B64_PTON, 1, [Define to 1 if you have the `b64_pton' function.])
 	AC_MSG_RESULT(yes)
 else
 	AC_LIBOBJ([b64_ntop])
