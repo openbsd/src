@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.65 2017/11/29 03:59:34 dlg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.66 2018/01/13 14:15:07 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -2161,6 +2161,7 @@ size_t sg_copy_from_buffer(struct scatterlist *, unsigned int,
     const void *, size_t);
 
 struct firmware {
+	size_t size;
 	const u8 *data;
 };
 
@@ -2168,7 +2169,14 @@ static inline int
 request_firmware(const struct firmware **fw, const char *name,
     struct device *device)
 {
-	return -EINVAL;
+	int r;
+	struct firmware *f = malloc(sizeof(struct firmware), M_DRM, M_WAITOK);
+	*fw = f;
+	r = loadfirmware(name, __DECONST(u_char **, &f->data), &f->size);
+	if (r != 0)
+		return -r;
+	else
+		return 0;
 }
 
 #define request_firmware_nowait(a, b, c, d, e, f, g) -EINVAL
@@ -2176,6 +2184,8 @@ request_firmware(const struct firmware **fw, const char *name,
 static inline void
 release_firmware(const struct firmware *fw)
 {
+	free(__DECONST(u_char *, fw->data), M_DRM, fw->size);
+	free(__DECONST(struct firmware *, fw), M_DRM, sizeof(*fw));
 }
 
 void *memchr_inv(const void *, int, size_t);
