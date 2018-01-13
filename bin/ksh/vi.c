@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.53 2018/01/06 16:28:58 millert Exp $	*/
+/*	$OpenBSD: vi.c,v 1.54 2018/01/13 02:06:54 schwarze Exp $	*/
 
 /*
  *	vi command editing
@@ -61,7 +61,7 @@ static void	display(char *, char *, int);
 static void	ed_mov_opt(int, char *);
 static int	expand_word(int);
 static int	complete_word(int, int);
-static int	print_expansions(struct edstate *, int);
+static int	print_expansions(struct edstate *);
 static int	char_len(int);
 static void	x_vi_zotc(int);
 static void	vi_pprompt(int);
@@ -648,7 +648,7 @@ vi_insert(int ch)
 		break;
 
 	case CTRL('e'):
-		print_expansions(es, 0);
+		print_expansions(es);
 		break;
 
 	case CTRL('i'):
@@ -1125,7 +1125,7 @@ vi_cmd(int argcnt, const char *cmd)
 
 		case '=':			/* at&t ksh */
 		case CTRL('e'):			/* Nonstandard vi/ksh */
-			print_expansions(es, 1);
+			print_expansions(es);
 			break;
 
 
@@ -2052,7 +2052,7 @@ complete_word(int command, int count)
 
 	/* Undo previous completion */
 	if (command == 0 && expanded == COMPLETE && buf) {
-		print_expansions(buf, 0);
+		print_expansions(buf);
 		expanded = PRINT;
 		return 0;
 	}
@@ -2143,7 +2143,7 @@ complete_word(int command, int count)
 }
 
 static int
-print_expansions(struct edstate *e, int command)
+print_expansions(struct edstate *e)
 {
 	int nwords;
 	int start, end;
