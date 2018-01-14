@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.86 2018/01/05 15:44:31 jca Exp $	*/
+/*	$OpenBSD: main.c,v 1.87 2018/01/14 16:04:21 anton Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -226,9 +226,7 @@ main(int argc, char *argv[])
 	 * brace expansion, so set this before setting up FPOSIX
 	 * (change_flag() clears FBRACEEXPAND when FPOSIX is set).
 	 */
-#ifdef BRACE_EXPAND
 	Flag(FBRACEEXPAND) = 1;
-#endif /* BRACE_EXPAND */
 
 	/* set posix flag just before environment so that it will have
 	 * exactly the same effect as the POSIXLY_CORRECT environment

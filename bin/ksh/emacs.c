@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.82 2018/01/08 13:01:31 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.83 2018/01/14 16:04:21 anton Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -2132,4 +2132,4 @@ x_lastcp(void)
 	return (xlp);
 }
 
-#endif /* EDIT */
+#endif /* EMACS */

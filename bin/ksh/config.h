@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.17 2018/01/05 15:44:31 jca Exp $	*/
+/*	$OpenBSD: config.h,v 1.18 2018/01/14 16:04:21 anton Exp $	*/
 
 /* config.h.  NOT generated automatically. */
 
@@ -10,9 +10,6 @@
 
 #ifndef CONFIG_H
 #define CONFIG_H
-
-/* Include brace-expansion? */
-#define BRACE_EXPAND 1
 
 /* Include any history? */
 #define HISTORY 1

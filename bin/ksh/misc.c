@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.65 2018/01/06 16:28:58 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.66 2018/01/14 16:04:21 anton Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -121,9 +121,7 @@ const struct option sh_options[] = {
 	 * entries MUST match the order of sh_flag F* enumerations in sh.h.
 	 */
 	{ "allexport",	'a',		OF_ANY },
-#ifdef BRACE_EXPAND
 	{ "braceexpand",  0,		OF_ANY }, /* non-standard */
-#endif
 	{ "bgnice",	  0,		OF_ANY },
 	{ NULL,	'c',	    OF_CMDLINE },
 	{ "csh-history",  0,		OF_ANY }, /* non-standard */
@@ -301,10 +299,7 @@ change_flag(enum sh_flag f,
 		setgroups(1, &gid);
 		setresuid(ksheuid, ksheuid, ksheuid);
 	} else if (f == FPOSIX && newval) {
-#ifdef BRACE_EXPAND
-		Flag(FBRACEEXPAND) = 0
-#endif /* BRACE_EXPAND */
-		;
+		Flag(FBRACEEXPAND) = 0;
 	}
 	/* Changing interactive flag? */
 	if (f == FTALKING) {

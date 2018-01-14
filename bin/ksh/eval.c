@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.57 2018/01/06 16:28:58 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.58 2018/01/14 16:04:21 anton Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -56,9 +56,7 @@ static	void	globit(XString *, char **, char *, XPtrV *, int);
 static char	*maybe_expand_tilde(char *, XString *, char **, int);
 static	char   *tilde(char *);
 static	char   *homedir(char *);
-#ifdef BRACE_EXPAND
 static void	alt_expand(XPtrV *, char *, char *, char *, int);
-#endif
 
 /* compile and expand word */
 char *
@@ -180,10 +178,8 @@ expand(char *cp,	/* input word */
 		f &= ~DOGLOB;
 	if (Flag(FMARKDIRS))
 		f |= DOMARKDIRS;
-#ifdef BRACE_EXPAND
 	if (Flag(FBRACEEXPAND) && (f & DOGLOB))
 		f |= DOBRACE_;
-#endif /* BRACE_EXPAND */
 
 	Xinit(ds, dp, 128, ATEMP);	/* init dest. string */
 	type = XBASE;
@@ -563,15 +559,12 @@ expand(char *cp,	/* input word */
 
 				*dp++ = '\0';
 				p = Xclose(ds, dp);
-#ifdef BRACE_EXPAND
 				if (fdo & DOBRACE_)
 					/* also does globbing */
 					alt_expand(wp, p, p,
 					    p + Xlength(ds, (dp - 1)),
 					    fdo | (f & DOMARKDIRS));
-				else
-#endif /* BRACE_EXPAND */
-				if (fdo & DOGLOB)
+				else if (fdo & DOGLOB)
 					glob(p, wp, f & DOMARKDIRS);
 				else if ((f & DOPAT) || !(fdo & DOMAGIC_))
 					XPput(*wp, p);
@@ -628,7 +621,6 @@ expand(char *cp,	/* input word */
 						*dp++ = MAGIC;
 					}
 					break;
-#ifdef BRACE_EXPAND
 				case OBRACE:
 				case ',':
 				case CBRACE:
@@ -638,7 +630,6 @@ expand(char *cp,	/* input word */
 						*dp++ = MAGIC;
 					}
 					break;
-#endif /* BRACE_EXPAND */
 				case '=':
 					/* Note first unquoted = for ~ */
 					if (!(f & DOTEMP_) && !saw_eq) {
@@ -1221,7 +1212,6 @@ homedir(char *name)
 	return ap->val.s;
 }
 
-#ifdef BRACE_EXPAND
 static void
 alt_expand(XPtrV *wp, char *start, char *exp_start, char *end, int fdo)
 {
@@ -1296,4 +1286,3 @@ alt_expand(XPtrV *wp, char *start, char *exp_start, char *end, int fdo)
 	}
 	return;
 }
-#endif /* BRACE_EXPAND */
