@@ -68,6 +68,7 @@ __aeabi_uidivmod
 __aeabi_d2f
 __aeabi_d2iz
 __aeabi_d2lz
+__aeabi_d2ulz
 __aeabi_dadd
 __aeabi_ddiv
 __aeabi_dmul
@@ -75,6 +76,7 @@ __aeabi_dsub
 __aeabi_f2d
 __aeabi_f2iz
 __aeabi_f2lz
+__aeabi_f2ulz
 __aeabi_fadd
 __aeabi_fdiv
 __aeabi_fmul
