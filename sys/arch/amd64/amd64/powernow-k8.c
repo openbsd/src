@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.27 2017/12/09 16:39:54 fcambus Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.28 2018/01/14 00:33:09 bluhm Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * Copyright (c) 2004-2005 Bruno Ducrot
@@ -231,7 +231,7 @@ k8pnow_transition(struct k8pnow_cpu_state *cstate, int level)
 
 	/* Phase 2: change to requested core frequency */
 	if (cfid != fid) {
-		u_int vco_fid, vco_cfid;
+		int vco_fid, vco_cfid;
 
 		vco_fid = FID_TO_VCO_FID(fid);
 		vco_cfid = FID_TO_VCO_FID(cfid);
