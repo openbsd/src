@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1053 2018/01/03 10:22:38 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1054 2018/01/14 12:12:52 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1458,12 +1458,41 @@ unpriv2() {
 	do_as _file "$@"
 }
 
+# Find filesystems to store prefetched sets.
+# Prefer filesystems which are not used during extraction with 512M free space.
+# Otherwise use any other filesystem with 2 GB free space to prevent overflow
+# during extraction.
+prefetcharea_fs_list() {
+	local _fs_list
+
+	_fs_list=$( (
+		for fs in /mnt/{tmp,home,usr{/local,}}; do
+			df -k $fs 2>/dev/null | grep " $fs\$"
+		done
+		df -k
+	) | (
+		while read a a a a m m; do
+			[[ $m == /mnt/@(tmp|home|usr/@(src,obj,xobj))@(|/*) ]] &&
+				((a > 524288)) && echo $m && continue
+			[[ $m == /mnt@(|/*) ]] &&
+				((a > 524288 * 4)) && echo $m
+		done
+	) | (
+		while read fs; do
+			isin "$fs" $list || list="$list${list:+ }$fs"
+		done
+		echo $list
+	) )
+
+	[[ -n $_fs_list ]] && echo $_fs_list || return 1
+}
+
 # Install a user-selected subset of the files in $2 from the source
 # named in $1. Display an error message for failed installs so the
 # user will know to try again.
 install_files() {
-	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS \
-		_tmpfs _tmpsrc _cfile=/tmp/SHA256 _fsrc _unver _t _issue
+	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS _tmpfs \
+		_tmpfs_list _tmpsrc _cfile=/tmp/SHA256 _fsrc _unver _t _issue
 	local _srclocal=false _unpriv=unpriv
 
 	# Fetch sets from local sources (disk, cdrom, nfs) as root.
@@ -1516,38 +1545,32 @@ install_files() {
 		! isin SHA256.sig $_files &&
 			_issue="Directory does not contain SHA256.sig" && break
 
-		# For non-local sources find a filesystem to store the prefetched
-		# sets. Prefer filesystems which are not used during extraction.
-		# They need to have 512 MB free space. Otherwise use any other
-		# filesystem having 2 GB free space to prevent overflow during
-		# extraction.
-		$_srclocal || _tmpfs=$( (
-			for fs in /mnt/{{,var/}tmp,home,usr{/local,}}; do
-				df -k $fs 2>/dev/null | grep " $fs\$"
-			done
-			df -k
-		) | (
-			while read a a a a m m; do
-				[[ $m == /mnt/@(@(|var/)tmp|home|usr/@(src,obj,xobj))@(|/*) ]] &&
-					((a > 524288)) && echo $m && exit
-				[[ $m == /mnt@(|/*) ]] &&
-					((a > 524288 * 4)) && echo $m && exit
-			done
-		) )
-
 		if ! $_srclocal; then
-			if [[ -d $_tmpfs ]]; then
+			! _tmpfs_list=$(prefetcharea_fs_list) &&
+				_issue="Cannot determine prefetch area" && break
+
+			for _tmpfs in $_tmpfs_list; do
 				# Try to clean up from previous runs, assuming
 				# the _tmpfs selection yields the same mount
 				# point.
 				for _tmpsrc in $_tmpfs/sets.+([0-9]).+([0-9]); do
 					[[ -d $_tmpsrc ]] && rm -r $_tmpsrc
 				done
-				! _tmpsrc=$(tmpdir "$_tmpfs/sets") &&
+	
+				# Create a download directory for the sets and
+				# check that the _sndio user can read files from
+				# it. Otherwise cleanup and skip the filesystem.
+				if _tmpsrc=$(tmpdir "$_tmpfs/sets"); then
+					(
+					>$_tmpsrc/t &&
+					$_unpriv cat $_tmpsrc/t
+					) >/dev/null 2>&1 && break ||
+						rm -r $_tmpsrc
+				fi
+			done
+
+			[[ ! -d $_tmpsrc ]] &&
 				_issue="Cannot create prefetch area" && break
-			else
-				_issue="Cannot determine prefetch area" && break
-			fi
 		fi
 
 		# Cleanup from previous runs.
