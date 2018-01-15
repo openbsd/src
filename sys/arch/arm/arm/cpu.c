@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.43 2017/12/29 14:45:15 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.44 2018/01/15 14:11:16 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -256,6 +256,49 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 		printf(" branch prediction enabled");
 
 	printf("\n");
+
+	/*
+	 * Some ARM processors are vulnerable to branch target
+	 * injection attacks.
+	 */
+	switch (cpuid & CPU_ID_CORTEX_MASK) {
+	case CPU_ID_CORTEX_A5:
+	case CPU_ID_CORTEX_A7:
+	case CPU_ID_CORTEX_A32:
+	case CPU_ID_CORTEX_A35:
+	case CPU_ID_CORTEX_A53:
+	case CPU_ID_CORTEX_A55:
+		/* Not vulnerable; no need to flush. */
+		ci->ci_flush_bp = cpufunc_nullop;
+		break;
+	case CPU_ID_CORTEX_A8:
+	case CPU_ID_CORTEX_A9:
+	case CPU_ID_CORTEX_A12:
+	case CPU_ID_CORTEX_A17:
+	case CPU_ID_CORTEX_A73:
+	case CPU_ID_CORTEX_A75:
+	default:
+		/* Vulnerable; flush BP cache. */
+		ci->ci_flush_bp = armv7_flush_bp;
+		break;
+	case CPU_ID_CORTEX_A15:
+	case CPU_ID_CORTEX_A72:
+		/*
+		 * Vulnerable; BPIALL is "not effective" so must use
+		 * ICIALLU and hope the firmware set the magic bit in
+		 * the ACTLR that actually forces a BTB flush.
+		 */
+		ci->ci_flush_bp = cortex_a15_flush_bp;
+		break;
+	case CPU_ID_CORTEX_A57:
+		/*
+		 * Vulnerable; must disable and enable the MMU which
+		 * can be done by a PSCI call on firmware with the
+		 * appropriate fixes.  Punt for now.
+		 */
+		ci->ci_flush_bp = cpufunc_nullop;
+		break;
+	}
 
 	/* Print cache info. */
 	if (arm_picache_line_size == 0 && arm_pdcache_line_size == 0)

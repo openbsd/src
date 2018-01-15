@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.30 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: fault.c,v 1.31 2018/01/15 14:11:16 kettenis Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -209,6 +209,15 @@ data_abort_handler(trapframe_t *tf)
 		goto out;
 	}
 
+	va = trunc_page((vaddr_t)far);
+
+	/*
+	 * Flush BP cache on processors that are vulnerable to branch
+	 * target injection attacks if access is outside user space.
+	 */
+	if (va < VM_MIN_ADDRESS || va >= VM_MAX_ADDRESS)
+		curcpu()->ci_flush_bp();
+
 	/*
 	 * At this point, we're dealing with one of the following data aborts:
 	 *
@@ -255,8 +264,6 @@ data_abort_handler(trapframe_t *tf)
 		    "Program Counter\n");
 		dab_fatal(tf, fsr, far, p, NULL);
 	}
-
-	va = trunc_page((vaddr_t)far);
 
 	/*
 	 * It is only a kernel address space fault iff:

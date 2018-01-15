@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.48 2017/08/12 13:18:48 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.49 2018/01/15 14:11:16 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -206,6 +206,8 @@ struct cpu_info {
 #ifdef GPROF
 	struct gmonparam *ci_gmon;
 #endif
+
+	void (*ci_flush_bp)(void);
 };
 
 extern struct cpu_info cpu_info_primary;
