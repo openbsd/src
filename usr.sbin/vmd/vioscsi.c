@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.1 2018/01/03 05:39:56 ccardenas Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.2 2018/01/15 04:26:58 ccardenas Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -217,6 +217,1344 @@ vioscsi_finish_read(struct ioinfo *info)
 	}
 
 	return info->buf;
+}
+
+static int
+vioscsi_handle_tur(struct vioscsi_dev *dev, struct virtio_scsi_req_hdr *req,
+    struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+
+	memset(&resp, 0, sizeof(resp));
+	/* Move index for response */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
+	    &(acct->resp_idx));
+
+	vioscsi_prepare_resp(&resp, VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
+
+	if (write_mem(acct->resp_desc->addr, &resp, acct->resp_desc->len)) {
+		log_warnx("%s: unable to write OK resp status data @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+	} else {
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+
+	return (ret);
+}
+
+static int
+vioscsi_handle_inquiry(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+	uint16_t inq_len;
+	struct scsi_inquiry *inq;
+	struct scsi_inquiry_data *inq_data;
+
+	memset(&resp, 0, sizeof(resp));
+	inq = (struct scsi_inquiry *)(req->cdb);
+	inq_len = (uint16_t)_2btol(inq->length);
+
+	log_debug("%s: INQ - EVPD %d PAGE_CODE 0x%08x LEN %d", __func__,
+	    inq->flags & SI_EVPD, inq->pagecode, inq_len);
+
+	vioscsi_prepare_resp(&resp,
+	    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
+
+	inq_data = calloc(1, sizeof(struct scsi_inquiry_data));
+
+	if (inq_data == NULL) {
+		log_warnx("%s: cannot alloc inq_data", __func__);
+		goto inq_out;
+	}
+
+	inq_data->device = T_CDROM;
+	inq_data->dev_qual2 = SID_REMOVABLE;
+	/* Leave version zero to say we don't comply */
+	inq_data->response_format = INQUIRY_RESPONSE_FORMAT;
+	inq_data->additional_length = SID_SCSI2_ALEN;
+	memcpy(inq_data->vendor, INQUIRY_VENDOR, INQUIRY_VENDOR_LEN);
+	memcpy(inq_data->product, INQUIRY_PRODUCT, INQUIRY_PRODUCT_LEN);
+	memcpy(inq_data->revision, INQUIRY_REVISION, INQUIRY_REVISION_LEN);
+
+	/* Move index for response */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing resp to 0x%llx size %d at local "
+	    "idx %d req_idx %d global_idx %d", __func__, acct->resp_desc->addr,
+	    acct->resp_desc->len, acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, &resp, acct->resp_desc->len)) {
+		log_warnx("%s: unable to write OK resp status data @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+		goto free_inq;
+	}
+
+	/* Move index for inquiry_data */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing inq_data to 0x%llx size %d at "
+	    "local idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, inq_data, acct->resp_desc->len)) {
+		log_warnx("%s: unable to write inquiry"
+		    " response to gpa @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+	} else {
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+
+free_inq:
+	free(inq_data);
+inq_out:
+	return (ret);
+}
+
+static int
+vioscsi_handle_mode_sense(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+	uint8_t mode_page_ctl;
+	uint8_t mode_page_code;
+	uint8_t *mode_reply;
+	uint8_t mode_reply_len;
+	struct scsi_mode_sense *mode_sense;
+
+	memset(&resp, 0, sizeof(resp));
+	mode_sense = (struct scsi_mode_sense *)(req->cdb);
+	mode_page_ctl = mode_sense->page & SMS_PAGE_CTRL;
+	mode_page_code = mode_sense->page & SMS_PAGE_CODE;
+
+	log_debug("%s: M_SENSE - DBD %d Page Ctrl 0x%x Code 0x%x Len %u",
+	    __func__, mode_sense->byte2 & SMS_DBD, mode_page_ctl,
+	    mode_page_code, mode_sense->length);
+
+	if (mode_page_ctl == SMS_PAGE_CTRL_CURRENT &&
+	    (mode_page_code == ERR_RECOVERY_PAGE ||
+	    mode_page_code == CDVD_CAPABILITIES_PAGE)) {
+		/* 
+		 * mode sense header is 4 bytes followed
+		 * by a variable page
+		 * ERR_RECOVERY_PAGE is 12 bytes
+		 * CDVD_CAPABILITIES_PAGE is 27 bytes
+		 */
+		switch(mode_page_code) {
+		case ERR_RECOVERY_PAGE:
+			mode_reply_len = 16;
+			mode_reply =
+			    (uint8_t*)calloc(mode_reply_len, sizeof(uint8_t));
+			if (mode_reply == NULL)
+				goto mode_sense_out;
+
+			/* set the page header */
+			*mode_reply = mode_reply_len - 1;
+			*(mode_reply + 1) = MODE_MEDIUM_TYPE_CODE;
+
+			/* set the page data, 7.3.2.1 mmc-5 */
+			*(mode_reply + 4) = MODE_ERR_RECOVERY_PAGE_CODE;
+			*(mode_reply + 5) = MODE_ERR_RECOVERY_PAGE_LEN;
+			*(mode_reply + 7) = MODE_READ_RETRY_COUNT;
+			break;
+		case CDVD_CAPABILITIES_PAGE:
+			mode_reply_len = 31;
+			mode_reply =
+			    (uint8_t*)calloc(mode_reply_len, sizeof(uint8_t));
+			if (mode_reply == NULL)
+				goto mode_sense_out;
+
+			/* set the page header */
+			*mode_reply = mode_reply_len - 1;
+			*(mode_reply + 1) = MODE_MEDIUM_TYPE_CODE;
+
+			/* set the page data, 6.3.11 mmc-3 */
+			*(mode_reply + 4) = MODE_CDVD_CAP_PAGE_CODE;
+			*(mode_reply + 5) = mode_reply_len - 6;
+			*(mode_reply + 6) = MODE_CDVD_CAP_READ_CODE;
+			_lto2b(MODE_CDVD_CAP_NUM_LEVELS, mode_reply + 14);
+			break;
+		default:
+			goto mode_sense_error;
+			break;
+		}
+
+		/* Move index for response */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->req_desc, &(acct->resp_idx));
+
+		dprintf("%s: writing resp to 0x%llx size %d "
+		    "at local idx %d req_idx %d global_idx %d",
+		    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+		    acct->resp_idx, acct->req_idx, acct->idx);
+
+		if (write_mem(acct->resp_desc->addr, &resp,
+		    acct->resp_desc->len)) {
+			log_warnx("%s: unable to write OK"
+			    " resp status data @ 0x%llx",
+			    __func__, acct->resp_desc->addr);
+			free(mode_reply);
+			goto mode_sense_out;
+		}
+
+		/* Move index for mode_reply */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->resp_desc, &(acct->resp_idx));
+
+		dprintf("%s: writing mode_reply to 0x%llx "
+		    "size %d at local idx %d req_idx %d "
+		    "global_idx %d",__func__, acct->resp_desc->addr,
+		    acct->resp_desc->len, acct->resp_idx, acct->req_idx,
+		    acct->idx);
+
+		if (write_mem(acct->resp_desc->addr, mode_reply,
+		    acct->resp_desc->len)) {
+			log_warnx("%s: unable to write "
+			    "mode_reply to gpa @ 0x%llx",
+			    __func__, acct->resp_desc->addr);
+			free(mode_reply);
+			goto mode_sense_out;
+		}
+
+		free(mode_reply);
+
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	} else {
+mode_sense_error:
+		/* send back un-supported */
+		vioscsi_prepare_resp(&resp,
+		    VIRTIO_SCSI_S_OK, SCSI_CHECK, SKEY_ILLEGAL_REQUEST,
+		    SENSE_ILLEGAL_CDB_FIELD, SENSE_DEFAULT_ASCQ);
+
+		/* Move index for response */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->req_desc, &(acct->resp_idx));
+
+		if (write_mem(acct->resp_desc->addr, &resp,
+		    acct->resp_desc->len)) {
+			log_warnx("%s: unable to set ERR status data @ 0x%llx",
+			    __func__, acct->resp_desc->addr);
+			goto mode_sense_out;
+		}
+	
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+mode_sense_out:
+	return (ret);
+}
+
+static int
+vioscsi_handle_mode_sense_big(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+	uint8_t mode_page_ctl;
+	uint8_t mode_page_code;
+	uint8_t *mode_reply;
+	uint8_t mode_reply_len;
+	uint16_t mode_sense_len;
+	struct scsi_mode_sense_big *mode_sense_10;
+
+	memset(&resp, 0, sizeof(resp));
+	mode_sense_10 = (struct scsi_mode_sense_big *)(req->cdb);
+	mode_page_ctl = mode_sense_10->page & SMS_PAGE_CTRL;
+	mode_page_code = mode_sense_10->page & SMS_PAGE_CODE;
+	mode_sense_len = (uint16_t)_2btol(mode_sense_10->length);
+
+	log_debug("%s: M_SENSE_10 - DBD %d Page Ctrl 0x%x Code 0x%x Len %u",
+	    __func__, mode_sense_10->byte2 & SMS_DBD, mode_page_ctl,
+	    mode_page_code, mode_sense_len);
+
+	if (mode_page_ctl == SMS_PAGE_CTRL_CURRENT &&
+	    (mode_page_code == ERR_RECOVERY_PAGE ||
+	    mode_page_code == CDVD_CAPABILITIES_PAGE)) {
+		/* 
+		 * mode sense header is 8 bytes followed
+		 * by a variable page
+		 * ERR_RECOVERY_PAGE is 12 bytes
+		 * CDVD_CAPABILITIES_PAGE is 27 bytes
+		 */
+		switch(mode_page_code) {
+		case ERR_RECOVERY_PAGE:
+			mode_reply_len = 20;
+			mode_reply =
+			    (uint8_t*)calloc(mode_reply_len, sizeof(uint8_t));
+			if (mode_reply == NULL)
+				goto mode_sense_big_out;
+
+			/* set the page header */
+			_lto2b(mode_reply_len - 2, mode_reply);
+			*(mode_reply + 2) = MODE_MEDIUM_TYPE_CODE;
+
+			/* set the page data, 7.3.2.1 mmc-5 */
+			*(mode_reply + 8) = MODE_ERR_RECOVERY_PAGE_CODE;
+			*(mode_reply + 9) = MODE_ERR_RECOVERY_PAGE_LEN;
+			*(mode_reply + 11) = MODE_READ_RETRY_COUNT;
+			break;
+		case CDVD_CAPABILITIES_PAGE:
+			mode_reply_len = 35;
+			mode_reply =
+			    (uint8_t*)calloc(mode_reply_len, sizeof(uint8_t));
+			if (mode_reply == NULL)
+				goto mode_sense_big_out;
+
+			/* set the page header */
+			_lto2b(mode_reply_len - 2, mode_reply);
+			*(mode_reply + 2) = MODE_MEDIUM_TYPE_CODE;
+
+			/* set the page data, 6.3.11 mmc-3 */
+			*(mode_reply + 8) = MODE_CDVD_CAP_PAGE_CODE;
+			*(mode_reply + 9) = mode_reply_len - 6;
+			*(mode_reply + 10) = MODE_CDVD_CAP_READ_CODE;
+			_lto2b(MODE_CDVD_CAP_NUM_LEVELS, mode_reply + 18);
+			break;
+		default:
+			goto mode_sense_big_error;
+			break;
+		}
+
+		/* Move index for response */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->req_desc, &(acct->resp_idx));
+
+		dprintf("%s: writing resp to 0x%llx size %d "
+		    "at local idx %d req_idx %d global_idx %d",
+		    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+		    acct->resp_idx, acct->req_idx, acct->idx);
+
+		if (write_mem(acct->resp_desc->addr, &resp,
+		    acct->resp_desc->len)) {
+			log_warnx("%s: unable to write OK"
+			    " resp status data @ 0x%llx",
+			    __func__, acct->resp_desc->addr);
+			free(mode_reply);
+			goto mode_sense_big_out;
+		}
+
+		/* Move index for mode_reply */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->resp_desc, &(acct->resp_idx));
+
+		dprintf("%s: writing mode_reply to 0x%llx "
+		    "size %d at local idx %d req_idx %d global_idx %d",
+		    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+		    acct->resp_idx, acct->req_idx, acct->idx);
+
+		if (write_mem(acct->resp_desc->addr, mode_reply,
+		    acct->resp_desc->len)) {
+			log_warnx("%s: unable to write "
+			    "mode_reply to gpa @ 0x%llx",
+			    __func__, acct->resp_desc->addr);
+			free(mode_reply);
+			goto mode_sense_big_out;
+		}
+
+		free(mode_reply);
+
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	} else {
+mode_sense_big_error:
+		/* send back un-supported */
+		vioscsi_prepare_resp(&resp,
+		    VIRTIO_SCSI_S_OK, SCSI_CHECK, SKEY_ILLEGAL_REQUEST,
+		    SENSE_ILLEGAL_CDB_FIELD, SENSE_DEFAULT_ASCQ);
+
+		/* Move index for response */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->req_desc, &(acct->resp_idx));
+
+		if (write_mem(acct->resp_desc->addr, &resp,
+		    acct->resp_desc->len)) {
+			log_warnx("%s: unable to set ERR status data @ 0x%llx",
+			    __func__, acct->resp_desc->addr);
+			goto mode_sense_big_out;
+		}
+	
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+mode_sense_big_out:	
+	return (ret);
+}
+
+static int
+vioscsi_handle_read_capacity(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+	uint32_t r_cap_addr;
+	struct scsi_read_capacity *r_cap;
+	struct scsi_read_cap_data *r_cap_data;
+
+	memset(&resp, 0, sizeof(resp));
+	r_cap = (struct scsi_read_capacity *)(req->cdb);
+	r_cap_addr = _4btol(r_cap->addr);
+	log_debug("%s: %s - Addr 0x%08x", __func__,
+	    vioscsi_op_names(r_cap->opcode), r_cap_addr);
+
+	vioscsi_prepare_resp(&resp,
+	    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
+
+	r_cap_data = calloc(1, sizeof(struct scsi_read_cap_data));
+
+	if (r_cap_data == NULL) {
+		log_warnx("%s: cannot alloc r_cap_data", __func__);
+		goto read_capacity_out;
+	}
+
+	log_debug("%s: ISO has %lld bytes and %lld blocks",
+	    __func__, dev->sz, dev->n_blocks);
+
+	/*
+	 * determine if size of iso image > UINT32_MAX
+	 * if it is, set addr to UINT32_MAX (0xffffffff)
+	 * indicating to hosts that READ_CAPACITY_16 should
+	 * be called to retrieve the full size
+	 */
+	if (dev->sz >= UINT32_MAX) {
+		_lto4b(UINT32_MAX, r_cap_data->addr);
+		_lto4b(VIOSCSI_BLOCK_SIZE_CDROM, r_cap_data->length);
+		log_warnx("%s: ISO sz %lld is bigger than "
+		    "UINT32_MAX %u, all data may not be read",
+		    __func__, dev->sz, UINT32_MAX);
+	} else {
+		_lto4b(dev->n_blocks - 1, r_cap_data->addr);
+		_lto4b(VIOSCSI_BLOCK_SIZE_CDROM, r_cap_data->length);
+	}
+
+	/* Move index for response */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing resp to 0x%llx size %d at local "
+	    "idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+			
+	if (write_mem(acct->resp_desc->addr, &resp, acct->resp_desc->len)) {
+		log_warnx("%s: unable to write OK resp status data @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+		goto free_read_capacity;
+	}
+
+	/* Move index for r_cap_data */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing r_cap_data to 0x%llx size %d at "
+	    "local idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, r_cap_data,
+	    acct->resp_desc->len)) {
+		log_warnx("%s: unable to write read_cap_data"
+		    " response to gpa @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+	} else {
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+
+free_read_capacity:
+	free(r_cap_data);
+read_capacity_out:
+	return (ret);
+}
+
+static int
+vioscsi_handle_read_capacity_16(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+	uint64_t r_cap_addr_16;
+	struct scsi_read_capacity_16 *r_cap_16;
+	struct scsi_read_cap_data_16 *r_cap_data_16;
+
+	memset(&resp, 0, sizeof(resp));
+	r_cap_16 = (struct scsi_read_capacity_16 *)(req->cdb);
+	r_cap_addr_16 = _8btol(r_cap_16->addr);
+	log_debug("%s: %s - Addr 0x%016llx", __func__,
+	    vioscsi_op_names(r_cap_16->opcode), r_cap_addr_16);
+
+	vioscsi_prepare_resp(&resp, VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
+
+	r_cap_data_16 = calloc(1, sizeof(struct scsi_read_cap_data_16));
+
+	if (r_cap_data_16 == NULL) {
+		log_warnx("%s: cannot alloc r_cap_data_16",
+		    __func__);
+		goto read_capacity_16_out;
+	}
+
+	log_debug("%s: ISO has %lld bytes and %lld blocks", __func__,
+	    dev->sz, dev->n_blocks);
+
+	_lto8b(dev->n_blocks - 1, r_cap_data_16->addr);
+	_lto4b(VIOSCSI_BLOCK_SIZE_CDROM, r_cap_data_16->length);
+
+	/* Move index for response */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing resp to 0x%llx size %d at local "
+	    "idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, &resp, acct->resp_desc->len)) {
+		log_warnx("%s: unable to write OK resp status "
+		    "data @ 0x%llx", __func__, acct->resp_desc->addr);
+		goto free_read_capacity_16;
+	}
+
+	/* Move index for r_cap_data_16 */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing r_cap_data_16 to 0x%llx size %d "
+	    "at local idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, r_cap_data_16,
+	    acct->resp_desc->len)) {
+		log_warnx("%s: unable to write read_cap_data_16"
+		    " response to gpa @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+	} else {
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+
+free_read_capacity_16:
+	free(r_cap_data_16);
+read_capacity_16_out:
+	return (ret);
+}
+
+static int
+vioscsi_handle_read_6(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+	const uint8_t *read_buf;
+	uint32_t read_lba;
+	struct ioinfo *info;
+	struct scsi_rw *read_6;
+
+	memset(&resp, 0, sizeof(resp));
+	read_6 = (struct scsi_rw *)(req->cdb);
+	read_lba = ((read_6->addr[0] & SRW_TOPADDR) << 16 ) |
+	    (read_6->addr[1] << 8) | read_6->addr[2];
+
+	log_debug("%s: READ Addr 0x%08x Len %d (%d)",
+	    __func__, read_lba, read_6->length, read_6->length * dev->max_xfer);
+
+	/* check if lba is in range */
+	if (read_lba > dev->n_blocks - 1) {
+		log_debug("%s: requested block out of range req: %ud max: %lld",
+		    __func__, read_lba, dev->n_blocks);
+
+		vioscsi_prepare_resp(&resp,
+		    VIRTIO_SCSI_S_OK, SCSI_CHECK, SKEY_ILLEGAL_REQUEST,
+		    SENSE_LBA_OUT_OF_RANGE, SENSE_DEFAULT_ASCQ);
+
+		/* Move index for response */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->req_desc, &(acct->resp_idx));
+
+		if (write_mem(acct->resp_desc->addr, &resp,
+		    acct->resp_desc->len)) {
+			log_warnx("%s: unable to set ERR "
+			    "status data @ 0x%llx", __func__,
+			    acct->resp_desc->addr);
+		} else {
+			ret = 1;
+			dev->cfg.isr_status = 1;
+			/* Move ring indexes */
+			vioscsi_next_ring_item(dev, acct->avail, acct->used,
+			    acct->req_desc, acct->req_idx);
+		}
+		goto read_6_out;
+	}
+
+	info = vioscsi_start_read(dev, read_lba, read_6->length);
+
+	if (info == NULL) {
+		log_warnx("%s: cannot alloc for read", __func__);
+		goto read_6_out;
+	}
+
+	/* read block */
+	read_buf = vioscsi_finish_read(info);
+
+	if (read_buf == NULL) {
+		log_warnx("%s: error reading position %ud",
+		    __func__, read_lba);
+		vioscsi_prepare_resp(&resp,
+		    VIRTIO_SCSI_S_OK, SCSI_CHECK, SKEY_MEDIUM_ERROR,
+		    SENSE_MEDIUM_NOT_PRESENT, SENSE_DEFAULT_ASCQ);
+
+		/* Move index for response */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->req_desc, &(acct->resp_idx));
+
+		if (write_mem(acct->resp_desc->addr, &resp,
+		    acct->resp_desc->len)) {
+			log_warnx("%s: unable to set ERR "
+			    "status data @ 0x%llx", __func__,
+			    acct->resp_desc->addr);
+		} else {
+			ret = 1;
+			dev->cfg.isr_status = 1;
+			/* Move ring indexes */
+			vioscsi_next_ring_item(dev, acct->avail, acct->used,
+			    acct->req_desc, acct->req_idx);
+		}
+
+		goto free_read_6;
+	}
+
+	vioscsi_prepare_resp(&resp, VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
+
+	/* Move index for response */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing resp to 0x%llx size %d at local "
+	    "idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, &resp, acct->resp_desc->len)) {
+		log_warnx("%s: unable to write OK resp status "
+		    "data @ 0x%llx", __func__, acct->resp_desc->addr);
+		goto free_read_6;
+	}
+
+	/* Move index for read_buf */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing read_buf to 0x%llx size %d at "
+	    "local idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, read_buf,
+	    acct->resp_desc->len)) {
+		log_warnx("%s: unable to write read_buf to gpa @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+	} else {
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+
+free_read_6:
+	vioscsi_free_info(info);
+read_6_out:
+	return (ret);
+}
+
+static int
+vioscsi_handle_read_10(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+	const uint8_t *read_buf;
+	uint32_t read_lba;
+	uint16_t read_10_len;
+	off_t chunk_offset;
+	struct ioinfo *info;
+	struct scsi_rw_big *read_10;
+
+	memset(&resp, 0, sizeof(resp));
+	read_10 = (struct scsi_rw_big *)(req->cdb);
+	read_lba = _4btol(read_10->addr);
+	read_10_len = _2btol(read_10->length);
+	chunk_offset = 0;
+
+	log_debug("%s: READ_10 Addr 0x%08x Len %d (%d)",
+	    __func__, read_lba, read_10_len, read_10_len * dev->max_xfer);
+
+	/* check if lba is in range */
+	if (read_lba > dev->n_blocks - 1) {
+		log_debug("%s: requested block out of range req: %ud max: %lld",
+		    __func__, read_lba, dev->n_blocks);
+
+		vioscsi_prepare_resp(&resp,
+		    VIRTIO_SCSI_S_OK, SCSI_CHECK, SKEY_ILLEGAL_REQUEST,
+		    SENSE_LBA_OUT_OF_RANGE, SENSE_DEFAULT_ASCQ);
+
+		/* Move index for response */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->req_desc, &(acct->resp_idx));
+
+		if (write_mem(acct->resp_desc->addr, &resp,
+		    acct->resp_desc->len)) {
+			log_warnx("%s: unable to set ERR status data @ 0x%llx",
+			    __func__, acct->resp_desc->addr);
+		} else {
+			ret = 1;
+			dev->cfg.isr_status = 1;
+			/* Move ring indexes */
+			vioscsi_next_ring_item(dev, acct->avail, acct->used,
+			    acct->req_desc, acct->req_idx);
+		}
+
+		goto read_10_out;
+	}
+
+	info = vioscsi_start_read(dev, read_lba, read_10_len);
+
+	if (info == NULL) {
+		log_warnx("%s: cannot alloc for read", __func__);
+		goto read_10_out;
+	}
+
+	/* read block */
+	read_buf = vioscsi_finish_read(info);
+
+	if (read_buf == NULL) {
+		log_warnx("%s: error reading position %ud", __func__, read_lba);
+		vioscsi_prepare_resp(&resp,
+		    VIRTIO_SCSI_S_OK, SCSI_CHECK, SKEY_MEDIUM_ERROR,
+		    SENSE_MEDIUM_NOT_PRESENT, SENSE_DEFAULT_ASCQ);
+
+		/* Move index for response */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->req_desc, &(acct->resp_idx));
+
+		if (write_mem(acct->resp_desc->addr, &resp,
+		    acct->resp_desc->len)) {
+			log_warnx("%s: unable to set ERR status data @ 0x%llx",
+			    __func__, acct->resp_desc->addr);
+		} else {
+			ret = 1;
+			dev->cfg.isr_status = 1;
+			/* Move ring indexes */
+			vioscsi_next_ring_item(dev, acct->avail, acct->used,
+			    acct->req_desc, acct->req_idx);
+		}
+	
+		goto free_read_10;
+	}
+
+	vioscsi_prepare_resp(&resp, VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
+
+	/* Move index for response */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing resp to 0x%llx size %d at local "
+	    "idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, &resp, acct->resp_desc->len)) {
+		log_warnx("%s: unable to write OK resp status "
+		    "data @ 0x%llx", __func__, acct->resp_desc->addr);
+		goto free_read_10;
+	}
+
+	/* 
+	 * Perform possible chunking of writes of read_buf
+	 * based on the segment length allocated by the host.
+	 * At least one write will be performed.
+	 * If chunk_offset == info->len, no more writes
+	 */
+	do {
+		/* Move index for read_buf */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->resp_desc, &(acct->resp_idx));
+
+		dprintf("%s: writing read_buf to 0x%llx size "
+		    "%d at local idx %d req_idx %d global_idx %d",
+		    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+		    acct->resp_idx, acct->req_idx, acct->idx);
+
+		if (write_mem(acct->resp_desc->addr,
+		    read_buf + chunk_offset, acct->resp_desc->len)) {
+			log_warnx("%s: unable to write read_buf"
+			    " to gpa @ 0x%llx", __func__,
+			    acct->resp_desc->addr);
+			goto free_read_10;
+		}
+		chunk_offset += acct->resp_desc->len;
+	} while (chunk_offset < info->len);
+
+	ret = 1;
+	dev->cfg.isr_status = 1;
+	/* Move ring indexes */
+	vioscsi_next_ring_item(dev, acct->avail, acct->used, acct->req_desc,
+	    acct->req_idx);
+
+free_read_10:
+	vioscsi_free_info(info);
+read_10_out:
+	return (ret);
+}
+
+static int
+vioscsi_handle_prevent_allow(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+
+	memset(&resp, 0, sizeof(resp));
+	/* Move index for response */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
+	    &(acct->resp_idx));
+
+	vioscsi_prepare_resp(&resp, VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
+
+	if (dev->locked) {
+		log_debug("%s: unlocking medium", __func__);
+	} else {
+		log_debug("%s: locking medium", __func__);
+	}
+
+	dev->locked = dev->locked ? 0 : 1;
+
+	if (write_mem(acct->resp_desc->addr, &resp, acct->resp_desc->len)) {
+		log_warnx("%s: unable to write OK resp status data @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+	} else {
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+
+	return (ret);
+}
+
+static int
+vioscsi_handle_mechanism_status(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+	uint16_t mech_status_len;
+	struct scsi_mechanism_status *mech_status;
+	struct scsi_mechanism_status_header *mech_status_header;
+
+	memset(&resp, 0, sizeof(resp));
+	mech_status = (struct scsi_mechanism_status *)(req->cdb);
+	mech_status_len = (uint16_t)_2btol(mech_status->length);
+	log_debug("%s: MECH_STATUS Len %u", __func__, mech_status_len);
+
+	mech_status_header = calloc(1, sizeof(*mech_status_header));
+
+	if (mech_status_header == NULL)
+		goto mech_out;
+
+	/* return a 0 header since we are not a changer */
+	vioscsi_prepare_resp(&resp,
+	    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
+
+	/* Move index for response */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+	    acct->req_desc, &(acct->resp_idx));
+
+	if (write_mem(acct->resp_desc->addr, &resp, acct->resp_desc->len)) {
+		log_warnx("%s: unable to set ERR status data @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+		goto free_mech;
+	}
+
+	/* Move index for mech_status_header */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
+	    &(acct->resp_idx));
+
+	if (write_mem(acct->resp_desc->addr, mech_status_header,
+	    acct->resp_desc->len)) {
+		log_warnx("%s: unable to write "
+		    "mech_status_header response to "
+		    "gpa @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+	} else {
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+
+free_mech:
+	free(mech_status_header);
+mech_out:
+	return (ret);
+}
+
+static int
+vioscsi_handle_read_toc(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+	uint16_t toc_len;
+	uint16_t toc_data_len;
+	uint8_t toc_data[TOC_DATA_SIZE];
+	uint8_t *toc_data_p;
+	struct scsi_read_toc *toc;
+
+	memset(&resp, 0, sizeof(resp));
+	toc = (struct scsi_read_toc *)(req->cdb);
+	toc_len = (uint16_t)_2btol(toc->data_len);
+	log_debug("%s: %s - MSF %d Track 0x%02x Addr 0x%04x",
+	    __func__, vioscsi_op_names(toc->opcode),
+	    ((toc->byte2 >> 1) & 1), toc->from_track, toc_len);
+
+	memset(toc_data, 0, sizeof(toc_data));
+
+	/* Tracks should be 0, 1, or LEAD_OUT_TRACK, 0xaa */
+	if (toc->from_track > 1 &&
+	    toc->from_track != READ_TOC_LEAD_OUT_TRACK) {
+		/* illegal request */
+		log_debug("%s: illegal request Track 0x%02x",
+		    __func__, toc->from_track);
+
+		vioscsi_prepare_resp(&resp,
+		    VIRTIO_SCSI_S_OK, SCSI_CHECK, SKEY_ILLEGAL_REQUEST,
+		    SENSE_ILLEGAL_CDB_FIELD, SENSE_DEFAULT_ASCQ);
+
+		/* Move index for response */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->req_desc, &(acct->resp_idx));
+
+		if (write_mem(acct->resp_desc->addr, &resp,
+		    acct->resp_desc->len)) {
+			log_warnx("%s: unable to set ERR status data @ 0x%llx",
+			    __func__, acct->resp_desc->addr);
+			goto read_toc_out;
+		}
+
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+
+		goto read_toc_out;
+	}
+
+	/* 
+	 * toc_data is defined as:
+	 * [0-1]: TOC Data Length, typically 0x1a
+	 * [2]: First Track, 1
+	 * [3]: Last Track, 1
+	 * 
+	 * Track 1 Descriptor
+	 * [0]: Reserved, 0
+	 * [1]: ADR,Control, 0x14
+	 * [2]: Track #, 1
+	 * [3]: Reserved, 0
+	 * [4-7]: Track Start Address, LBA
+	 *
+	 * Track 0xaa (Lead Out) Descriptor
+	 * [0]: Reserved, 0
+	 * [1]: ADR,Control, 0x14
+	 * [2]: Track #, 0xaa
+	 * [3]: Reserved, 0
+	 * [4-7]: Track Start Address, LBA
+	 */
+	toc_data_p = toc_data + 2;
+	*toc_data_p++ = READ_TOC_START_TRACK;
+	*toc_data_p++ = READ_TOC_LAST_TRACK;
+	if (toc->from_track <= 1) {
+		/* first track descriptor */
+		*toc_data_p++ = 0x0;
+		*toc_data_p++ = READ_TOC_ADR_CTL;
+		*toc_data_p++ = READ_TOC_START_TRACK;
+		*toc_data_p++ = 0x0;
+		/* start addr for first track is 0 */
+		*toc_data_p++ = 0x0;
+		*toc_data_p++ = 0x0;
+		*toc_data_p++ = 0x0;
+		*toc_data_p++ = 0x0;
+	}
+
+	/* last track descriptor */
+	*toc_data_p++ = 0x0;
+	*toc_data_p++ = READ_TOC_ADR_CTL;
+	*toc_data_p++ = READ_TOC_LEAD_OUT_TRACK;
+	*toc_data_p++ = 0x0;
+
+	_lto4b((uint32_t)dev->n_blocks, toc_data_p);
+	toc_data_p += 4;
+
+	toc_data_len = toc_data_p - toc_data;
+	_lto2b((uint32_t)toc_data_len - 2, toc_data);
+
+	vioscsi_prepare_resp(&resp, VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
+
+	/* Move index for response */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing resp to 0x%llx size %d at local "
+	    "idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, &resp, acct->resp_desc->len)) {
+		log_warnx("%s: unable to write OK resp status data @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+		goto read_toc_out;
+	}
+
+	/* Move index for toc descriptor */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing toc_data to 0x%llx size %d at "
+	    "local idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, toc_data,
+	    acct->resp_desc->len)) {
+		log_warnx("%s: unable to write toc descriptor data @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+	} else {
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+
+read_toc_out:
+	return (ret);
+}
+
+static int
+vioscsi_handle_read_disc_info(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+	struct scsi_read_disc_information *read_disc;
+
+	memset(&resp, 0, sizeof(resp));
+	read_disc =
+	    (struct scsi_read_disc_information *)(req->cdb);
+	log_debug("%s: Disc Info %x", __func__, read_disc->byte2);
+
+	/* send back unsupported */
+	vioscsi_prepare_resp(&resp,
+	    VIRTIO_SCSI_S_OK, SCSI_CHECK, SKEY_ILLEGAL_REQUEST,
+	    SENSE_ILLEGAL_CDB_FIELD, SENSE_DEFAULT_ASCQ);
+
+	/* Move index for response */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+	    acct->req_desc, &(acct->resp_idx));
+
+	if (write_mem(acct->resp_desc->addr, &resp,
+	    acct->resp_desc->len)) {
+		log_warnx("%s: unable to set ERR status data @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+	} else {
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+
+	return (ret);
+}
+
+static int
+vioscsi_handle_gesn(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+	uint8_t gesn_reply[GESN_SIZE];
+	struct scsi_gesn *gesn;
+	struct scsi_gesn_event_header *gesn_event_header;
+	struct scsi_gesn_power_event *gesn_power_event;
+
+	memset(&resp, 0, sizeof(resp));
+	gesn = (struct scsi_gesn *)(req->cdb);
+	log_debug("%s: GESN Method %s", __func__,
+	    gesn->byte2 ? "Polling" : "Asynchronous");
+
+	if (gesn->byte2 == 0) {
+		/* we don't support asynchronous */
+		vioscsi_prepare_resp(&resp,
+		    VIRTIO_SCSI_S_OK, SCSI_CHECK, SKEY_ILLEGAL_REQUEST,
+		    SENSE_ILLEGAL_CDB_FIELD, SENSE_DEFAULT_ASCQ);
+
+		/* Move index for response */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->req_desc, &(acct->resp_idx));
+
+		if (write_mem(acct->resp_desc->addr, &resp,
+		    acct->resp_desc->len)) {
+			log_warnx("%s: unable to set ERR status  data @ 0x%llx",
+			    __func__, acct->resp_desc->addr);
+			goto gesn_out;
+		}
+	
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+
+		goto gesn_out;
+	}
+	memset(gesn_reply, 0, sizeof(gesn_reply));
+	gesn_event_header = (struct scsi_gesn_event_header *)(gesn_reply);
+	gesn_power_event = (struct scsi_gesn_power_event *)(gesn_reply + 4);
+	/* set event header length and notification */
+	_lto2b(GESN_HEADER_LEN, gesn_event_header->length);
+	gesn_event_header->notification = GESN_NOTIFY_POWER_MGMT;
+	gesn_event_header->supported_event = GESN_EVENT_POWER_MGMT;
+
+	/* set event descriptor */
+	gesn_power_event->event_code = GESN_CODE_NOCHG;
+	if (dev->locked)
+		gesn_power_event->status = GESN_STATUS_ACTIVE;
+	else
+		gesn_power_event->status = GESN_STATUS_IDLE;
+
+	/* Move index for response */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing resp to 0x%llx size %d at local "
+	    "idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, &resp, acct->resp_desc->len)) {
+		log_warnx("%s: unable to write OK resp status "
+		    "data @ 0x%llx", __func__, acct->resp_desc->addr);
+		goto gesn_out;
+	}
+
+	/* Move index for gesn_reply */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing gesn_reply to 0x%llx size %d at "
+	    "local idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, gesn_reply,
+	    acct->resp_desc->len)) {
+		log_warnx("%s: unable to write gesn_reply"
+		    " response to gpa @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+	} else {
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+
+gesn_out:
+	return (ret);
+}
+
+static int
+vioscsi_handle_get_config(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+	uint16_t get_conf_feature;
+	uint16_t get_conf_len;
+	uint8_t *get_conf_reply;
+	struct scsi_get_configuration *get_configuration;
+	struct scsi_config_feature_header *config_feature_header;
+	struct scsi_config_generic_descriptor *config_generic_desc;
+	struct scsi_config_profile_descriptor *config_profile_desc;
+	struct scsi_config_core_descriptor *config_core_desc;
+	struct scsi_config_morphing_descriptor *config_morphing_desc;
+	struct scsi_config_remove_media_descriptor *config_remove_media_desc;
+	struct scsi_config_random_read_descriptor *config_random_read_desc;
+
+	memset(&resp, 0, sizeof(resp));
+	get_configuration = (struct scsi_get_configuration *)(req->cdb);
+	get_conf_feature = (uint16_t)_2btol(get_configuration->feature);
+	get_conf_len = (uint16_t)_2btol(get_configuration->length);
+	log_debug("%s: Conf RT %x Feature %d Len %d", __func__,
+	    get_configuration->byte2, get_conf_feature, get_conf_len);
+
+	get_conf_reply = (uint8_t*)calloc(G_CONFIG_REPLY_SIZE, sizeof(uint8_t));
+
+	if (get_conf_reply == NULL)
+		goto get_config_out;
+
+	/* 
+	 * Use MMC-5 6.6 for structure and
+	 * MMC-5 5.2 to send back:
+	 * feature header - 8 bytes
+	 * feature descriptor for profile list - 8 bytes
+	 * feature descriptor for core feature - 12 bytes
+	 * feature descriptor for morphing feature - 8 bytes
+	 * feature descriptor for removable media - 8 bytes
+	 * feature descriptor for random read feature - 12 bytes
+	 */
+
+	config_feature_header =
+	    (struct scsi_config_feature_header *)(get_conf_reply);
+	config_generic_desc =
+	    (struct scsi_config_generic_descriptor *)(get_conf_reply + 8);
+	config_profile_desc =
+	    (struct scsi_config_profile_descriptor *)(get_conf_reply + 12);
+	config_core_desc =
+	    (struct scsi_config_core_descriptor *)(get_conf_reply + 16);
+	config_morphing_desc =
+	    (struct scsi_config_morphing_descriptor *)(get_conf_reply + 28);
+	config_remove_media_desc =
+	    (struct scsi_config_remove_media_descriptor *)(get_conf_reply + 36);
+	config_random_read_desc =
+	    (struct scsi_config_random_read_descriptor *)(get_conf_reply + 44);
+
+	/* set size to be get_conf_reply - size field */
+	_lto4b(G_CONFIG_REPLY_SIZE_HEX, config_feature_header->length);
+	/* set current profile to be non-conforming */
+	_lto2b(CONFIG_PROFILE_NON_CONFORM,
+	    config_feature_header->current_profile);
+
+	/* fill out profile list feature */
+	_lto2b(CONFIG_FEATURE_CODE_PROFILE, config_generic_desc->feature_code);
+	config_generic_desc->byte3 = CONFIG_PROFILELIST_BYTE3;
+	config_generic_desc->length = CONFIG_PROFILELIST_LENGTH;
+	/* fill out profile descriptor for NON_COFORM */
+	_lto2b(CONFIG_PROFILE_NON_CONFORM, config_profile_desc->profile_number);
+	config_profile_desc->byte3 = CONFIG_PROFILE_BYTE3;
+
+	/* fill out core feature */
+	_lto2b(CONFIG_FEATURE_CODE_CORE, config_core_desc->feature_code);
+	config_core_desc->byte3 = CONFIG_CORE_BYTE3;
+	config_core_desc->length = CONFIG_CORE_LENGTH;
+	_lto4b(CONFIG_CORE_PHY_SCSI, config_core_desc->phy_std);
+
+	/* fill out morphing feature */
+	_lto2b(CONFIG_FEATURE_CODE_MORPHING,
+	    config_morphing_desc->feature_code);
+	config_morphing_desc->byte3 = CONFIG_MORPHING_BYTE3;
+	config_morphing_desc->length = CONFIG_MORPHING_LENGTH;
+	config_morphing_desc->byte5 = CONFIG_MORPHING_BYTE5;
+
+	/* fill out removable media feature */
+	_lto2b(CONFIG_FEATURE_CODE_REMOVE_MEDIA,
+	    config_remove_media_desc->feature_code);
+	config_remove_media_desc->byte3 = CONFIG_REMOVE_MEDIA_BYTE3;
+	config_remove_media_desc->length = CONFIG_REMOVE_MEDIA_LENGTH;
+	config_remove_media_desc->byte5 = CONFIG_REMOVE_MEDIA_BYTE5;
+
+	/* fill out random read feature */
+	_lto2b(CONFIG_FEATURE_CODE_RANDOM_READ,
+	    config_random_read_desc->feature_code);
+	config_random_read_desc->byte3 = CONFIG_RANDOM_READ_BYTE3;
+	config_random_read_desc->length = CONFIG_RANDOM_READ_LENGTH;
+	if (dev->sz >= UINT32_MAX)
+		_lto4b(UINT32_MAX, config_random_read_desc->block_size);
+	else
+		_lto4b(dev->n_blocks - 1, config_random_read_desc->block_size);
+	_lto2b(CONFIG_RANDOM_READ_BLOCKING_TYPE,
+	    config_random_read_desc->blocking_type);
+
+	vioscsi_prepare_resp(&resp, VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
+
+	/* Move index for response */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+	    acct->req_desc, &(acct->resp_idx));
+
+	dprintf("%s: writing resp to 0x%llx size %d at local "
+	    "idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, &resp,
+	    acct->resp_desc->len)) {
+		log_warnx("%s: unable to set Ok status data @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+		goto free_get_config;
+	}
+
+	/* Move index for get_conf_reply */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing get_conf_reply to 0x%llx size %d "
+	    "at local idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, get_conf_reply,
+	    acct->resp_desc->len)) {
+		log_warnx("%s: unable to write get_conf_reply"
+		    " response to gpa @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+	} else {
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+
+free_get_config:
+	free(get_conf_reply);
+get_config_out:
+	return (ret);
 }
 
 int
@@ -637,65 +1975,11 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 {
 	uint64_t q_gpa;
 	uint32_t vr_sz;
-	uint16_t idx, req_idx, resp_idx;
 	int ret;
 	char *vr;
-	struct vring_desc *desc, *req_desc, *resp_desc;
-	struct vring_avail *avail;
-	struct vring_used *used;
 	struct virtio_scsi_req_hdr req;
 	struct virtio_scsi_res_hdr resp;
-
-	/* various helper values */
-	uint16_t inq_len;
-	uint32_t r_cap_addr;
-	uint64_t r_cap_addr_16;
-	uint16_t toc_len;
-	uint16_t toc_data_len;
-	uint8_t toc_data[TOC_DATA_SIZE];
-	uint8_t *toc_data_p;
-	const uint8_t *read_buf;
-	uint32_t read_lba;
-	uint16_t read_10_len;
-	struct ioinfo *info;
-	off_t chunk_offset;
-	uint8_t mode_page_ctl;
-	uint8_t mode_page_code;
-	uint8_t *mode_reply;
-	uint8_t mode_reply_len;
-	uint16_t mode_sense_len;
-	uint8_t gesn_reply[GESN_SIZE];
-	uint16_t get_conf_feature;
-	uint16_t get_conf_len;
-	uint8_t *get_conf_reply;
-	uint16_t mech_status_len;
-
-	/* helper structs */
-	struct scsi_inquiry *inq;
-	struct scsi_inquiry_data *inq_data;
-	struct scsi_read_capacity *r_cap;
-	struct scsi_read_cap_data *r_cap_data;
-	struct scsi_read_capacity_16 *r_cap_16;
-	struct scsi_read_cap_data_16 *r_cap_data_16;
-	struct scsi_read_toc *toc;
-	struct scsi_rw *read_6;
-	struct scsi_rw_big *read_10;
-	struct scsi_mode_sense *mode_sense;
-	struct scsi_mode_sense_big *mode_sense_10;
-	struct scsi_mechanism_status *mech_status;
-	struct scsi_mechanism_status_header *mech_status_header;
-	struct scsi_read_disc_information *read_disc;
-	struct scsi_gesn *gesn;
-	struct scsi_gesn_event_header *gesn_event_header;
-	struct scsi_gesn_power_event *gesn_power_event;
-	struct scsi_get_configuration *get_configuration;
-	struct scsi_config_feature_header *config_feature_header;
-	struct scsi_config_generic_descriptor *config_generic_desc;
-	struct scsi_config_profile_descriptor *config_profile_desc;
-	struct scsi_config_core_descriptor *config_core_desc;
-	struct scsi_config_morphing_descriptor *config_morphing_desc;
-	struct scsi_config_remove_media_descriptor *config_remove_media_desc;
-	struct scsi_config_random_read_descriptor *config_random_read_desc;
+	struct virtio_vq_acct acct;
 
 	ret = 0;
 
@@ -719,37 +2003,38 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 	}
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
-	desc = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr +
+	acct.desc = (struct vring_desc *)(vr);
+	acct.avail = (struct vring_avail *)(vr +
 	    dev->vq[dev->cfg.queue_notify].vq_availoffset);
-	used = (struct vring_used *)(vr +
+	acct.used = (struct vring_used *)(vr +
 	    dev->vq[dev->cfg.queue_notify].vq_usedoffset);
 
-	idx = dev->vq[dev->cfg.queue_notify].last_avail & VIOSCSI_QUEUE_MASK;
+	acct.idx =
+	    dev->vq[dev->cfg.queue_notify].last_avail & VIOSCSI_QUEUE_MASK;
 
-	if ((avail->idx & VIOSCSI_QUEUE_MASK) == idx) {
+	if ((acct.avail->idx & VIOSCSI_QUEUE_MASK) == acct.idx) {
 		log_warnx("%s:nothing to do?", __func__);
 		goto out;
 	}
 
-	while (idx != (avail->idx & VIOSCSI_QUEUE_MASK)) {
+	while (acct.idx != (acct.avail->idx & VIOSCSI_QUEUE_MASK)) {
 
-		req_idx = avail->ring[idx] & VIOSCSI_QUEUE_MASK;
-		req_desc = &desc[req_idx];
+		acct.req_idx = acct.avail->ring[acct.idx] & VIOSCSI_QUEUE_MASK;
+		acct.req_desc = &(acct.desc[acct.req_idx]);
 
 		/* Clear resp for next message */
 		memset(&resp, 0, sizeof(resp));
 
-		if ((req_desc->flags & VRING_DESC_F_NEXT) == 0) {
+		if ((acct.req_desc->flags & VRING_DESC_F_NEXT) == 0) {
 			log_warnx("%s: unchained req descriptor received "
-			    "(idx %d)", __func__, req_idx);
+			    "(idx %d)", __func__, acct.req_idx);
 			goto out;
 		}
 
 		/* Read command from descriptor ring */
-		if (read_mem(req_desc->addr, &req, req_desc->len)) {
+		if (read_mem(acct.req_desc->addr, &req, acct.req_desc->len)) {
 			log_warnx("%s: command read_mem error @ 0x%llx",
-			    __func__, req_desc->addr);
+			    __func__, acct.req_desc->addr);
 			goto out;
 		}
 
@@ -773,24 +2058,25 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 			    __func__, req.cdb[0], vioscsi_op_names(req.cdb[0]),
 			    req.lun[0], req.lun[1], req.lun[2], req.lun[3]);
 			/* Move index for response */
-			resp_desc = vioscsi_next_ring_desc(desc, req_desc,
-			    &resp_idx);
+			acct.resp_desc = vioscsi_next_ring_desc(acct.desc,
+			    acct.req_desc, &(acct.resp_idx));
 
 			vioscsi_prepare_resp(&resp,
 			    VIRTIO_SCSI_S_BAD_TARGET, SCSI_OK, 0, 0, 0);
 
-			if (write_mem(resp_desc->addr, &resp, resp_desc->len)) {
+			if (write_mem(acct.resp_desc->addr, &resp,
+			    acct.resp_desc->len)) {
 				log_warnx("%s: unable to write BAD_TARGET"
 				    " resp status data @ 0x%llx",
-				    __func__, resp_desc->addr);
+				    __func__, acct.resp_desc->addr);
 				goto out;
 			}
 
 			ret = 1;
 			dev->cfg.isr_status = 1;
 			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used, req_desc,
-			    req_idx);
+			vioscsi_next_ring_item(dev, acct.avail, acct.used,
+			    acct.req_desc, acct.req_idx);
 
 			if (write_mem(q_gpa, vr, vr_sz)) {
 				log_warnx("%s: error writing vioring",
@@ -809,892 +2095,80 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 		switch(req.cdb[0]) {
 		case TEST_UNIT_READY:
 		case START_STOP:
-			/* Move index for response */
-			resp_desc = vioscsi_next_ring_desc(desc, req_desc,
-			    &resp_idx);
-
-			vioscsi_prepare_resp(&resp,
-			    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
-
-			if (write_mem(resp_desc->addr, &resp, resp_desc->len)) {
-				log_warnx("%s: unable to write OK resp status "
-				    "data @ 0x%llx", __func__, resp_desc->addr);
-				goto out;
-			}
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used, req_desc,
-			    req_idx);
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: error writing vioring",
-				    __func__);
+			ret = vioscsi_handle_tur(dev, &req, &acct);
+			if (ret) {
+				if (write_mem(q_gpa, vr, vr_sz)) {
+					log_warnx("%s: error writing vioring",
+					    __func__);
+				}
 			}
 			break;
 		case PREVENT_ALLOW:
-			/* Move index for response */
-			resp_desc = vioscsi_next_ring_desc(desc, req_desc,
-			    &resp_idx);
-
-			vioscsi_prepare_resp(&resp,
-			    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
-
-			if (dev->locked) {
-				log_debug("%s: unlocking medium", __func__);
-			} else {
-				log_debug("%s: locking medium", __func__);
-			}
-
-			dev->locked = dev->locked ? 0 : 1;
-
-			if (write_mem(resp_desc->addr, &resp, resp_desc->len)) {
-				log_warnx("%s: unable to write OK resp status "
-				    "data @ 0x%llx", __func__, resp_desc->addr);
-				goto out;
-			}
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used, req_desc,
-			    req_idx);
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: error writing vioring",
-				    __func__);
+			ret = vioscsi_handle_prevent_allow(dev, &req, &acct);
+			if (ret) {
+				if (write_mem(q_gpa, vr, vr_sz)) {
+					log_warnx("%s: error writing vioring",
+					    __func__);
+				}
 			}
 			break;
 		case READ_TOC:
-			toc = (struct scsi_read_toc *)(req.cdb);
-			toc_len = (uint16_t)_2btol(toc->data_len);
-			log_debug("%s: %s - MSF %d Track 0x%02x Addr 0x%04x",
-			    __func__, vioscsi_op_names(toc->opcode),
-			    ((toc->byte2 >> 1) & 1), toc->from_track, toc_len);
-
-			memset(toc_data, 0, sizeof(toc_data));
-
-			/* Tracks should be 0, 1, or LEAD_OUT_TRACK, 0xaa */
-			if (toc->from_track > 1 &&
-			    toc->from_track != READ_TOC_LEAD_OUT_TRACK) {
-				/* illegal request */
-				log_debug("%s: illegal request Track 0x%02x",
-				    __func__, toc->from_track);
-
-				vioscsi_prepare_resp(&resp,
-				    VIRTIO_SCSI_S_OK, SCSI_CHECK,
-				    SKEY_ILLEGAL_REQUEST,
-				    SENSE_ILLEGAL_CDB_FIELD,
-				    SENSE_DEFAULT_ASCQ);
-
-				/* Move index for response */
-				resp_desc = vioscsi_next_ring_desc(desc,
-				    req_desc, &resp_idx);
-
-				if (write_mem(resp_desc->addr, &resp,
-				    resp_desc->len)) {
-					log_warnx("%s: unable to set ERR "
-					    "status  data @ 0x%llx", __func__,
-					    resp_desc->addr);
-					goto out;
-				}
-
-				ret = 1;
-				dev->cfg.isr_status = 1;
-				/* Move ring indexes */
-				vioscsi_next_ring_item(dev, avail, used,
-				    req_desc, req_idx);
-
+			ret = vioscsi_handle_read_toc(dev, &req, &acct);
+			if (ret) {
 				if (write_mem(q_gpa, vr, vr_sz)) {
 					log_warnx("%s: error writing vioring",
 					    __func__);
 				}
-
-				goto next_msg;
 			}
-
-			/* 
-			 * toc_data is defined as:
-			 * [0-1]: TOC Data Length, typically 0x1a
-			 * [2]: First Track, 1
-			 * [3]: Last Track, 1
-			 * 
-			 * Track 1 Descriptor
-			 * [0]: Reserved, 0
-			 * [1]: ADR,Control, 0x14
-			 * [2]: Track #, 1
-			 * [3]: Reserved, 0
-			 * [4-7]: Track Start Address, LBA
-			 *
-			 * Track 0xaa (Lead Out) Descriptor
-			 * [0]: Reserved, 0
-			 * [1]: ADR,Control, 0x14
-			 * [2]: Track #, 0xaa
-			 * [3]: Reserved, 0
-			 * [4-7]: Track Start Address, LBA
-			 */
-			toc_data_p = toc_data + 2;
-			*toc_data_p++ = READ_TOC_START_TRACK;
-			*toc_data_p++ = READ_TOC_LAST_TRACK;
-			if (toc->from_track <= 1) {
-				/* first track descriptor */
-				*toc_data_p++ = 0x0;
-				*toc_data_p++ = READ_TOC_ADR_CTL;
-				*toc_data_p++ = READ_TOC_START_TRACK;
-				*toc_data_p++ = 0x0;
-				/* start addr for first track is 0 */
-				*toc_data_p++ = 0x0;
-				*toc_data_p++ = 0x0;
-				*toc_data_p++ = 0x0;
-				*toc_data_p++ = 0x0;
-			}
-
-			/* last track descriptor */
-			*toc_data_p++ = 0x0;
-			*toc_data_p++ = READ_TOC_ADR_CTL;
-			*toc_data_p++ = READ_TOC_LEAD_OUT_TRACK;
-			*toc_data_p++ = 0x0;
-
-			_lto4b((uint32_t)dev->n_blocks, toc_data_p);
-			toc_data_p += 4;
-
-			toc_data_len = toc_data_p - toc_data;
-			_lto2b((uint32_t)toc_data_len - 2, toc_data);
-
-			vioscsi_prepare_resp(&resp,
-			    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
-
-			/* Move index for response */
-			resp_desc = vioscsi_next_ring_desc(desc, req_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing resp to 0x%llx size %d at local "
-			    "idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, &resp, resp_desc->len)) {
-				log_warnx("%s: unable to write OK resp status "
-				    "data @ 0x%llx", __func__, resp_desc->addr);
-				goto out;
-			}
-
-			/* Move index for toc descriptor */
-			resp_desc = vioscsi_next_ring_desc(desc, resp_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing toc_data to 0x%llx size %d at "
-			    "local idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, toc_data,
-			    resp_desc->len)) {
-				log_warnx("%s: unable to write toc descriptor"
-				    "data @ 0x%llx", __func__, resp_desc->addr);
-				goto out;
-			}
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used, req_desc,
-			    req_idx);
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: error writing vioring",
-				    __func__);
-			}
-	
 			break;
 		case READ_CAPACITY:
-			r_cap = (struct scsi_read_capacity *)(req.cdb);
-			r_cap_addr = _4btol(r_cap->addr);
-			log_debug("%s: %s - Addr 0x%08x", __func__,
-			    vioscsi_op_names(r_cap->opcode),
-			    r_cap_addr);
-
-			vioscsi_prepare_resp(&resp,
-			    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
-
-			r_cap_data =
-			    calloc(1, sizeof(struct scsi_read_cap_data));
-
-			if (r_cap_data == NULL) {
-				log_warnx("%s: cannot alloc r_cap_data",
-				    __func__);
-				goto out;
-			}
-
-			log_debug("%s: ISO has %lld bytes and %lld blocks",
-			    __func__, dev->sz, dev->n_blocks);
-
-			/*
-			 * determine if size of iso image > UINT32_MAX
-			 * if it is, set addr to UINT32_MAX (0xffffffff)
-			 * indicating to hosts that READ_CAPACITY_16 should
-			 * be called to retrieve the full size
-			 */
-			if (dev->sz >= UINT32_MAX) {
-				_lto4b(UINT32_MAX, r_cap_data->addr);
-				_lto4b(VIOSCSI_BLOCK_SIZE_CDROM,
-				    r_cap_data->length);
-				log_warnx("%s: ISO sz %lld is bigger than "
-				    "UINT32_MAX %u, all data may not be read",
-				    __func__, dev->sz, UINT32_MAX);
-			} else {
-				_lto4b(dev->n_blocks - 1, r_cap_data->addr);
-				_lto4b(VIOSCSI_BLOCK_SIZE_CDROM,
-				    r_cap_data->length);
-			}
-
-			/* Move index for response */
-			resp_desc = vioscsi_next_ring_desc(desc, req_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing resp to 0x%llx size %d at local "
-			    "idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-			
-			if (write_mem(resp_desc->addr, &resp, resp_desc->len)) {
-				log_warnx("%s: unable to write OK resp status "
-				    "data @ 0x%llx", __func__, resp_desc->addr);
-				free(r_cap_data);
-				goto out;
-			}
-
-			/* Move index for r_cap_data */
-			resp_desc = vioscsi_next_ring_desc(desc, resp_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing r_cap_data to 0x%llx size %d at "
-			    "local idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, r_cap_data,
-			    resp_desc->len)) {
-				log_warnx("%s: unable to write read_cap_data"
-				    " response to gpa @ 0x%llx",
-				    __func__, resp_desc->addr);
-				free(r_cap_data);
-				goto out;
-			}
-
-			free(r_cap_data);
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used, req_desc,
-			    req_idx);
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: error writing vioring",
-				    __func__);
+			ret = vioscsi_handle_read_capacity(dev, &req, &acct);
+			if (ret) {
+				if (write_mem(q_gpa, vr, vr_sz)) {
+					log_warnx("%s: error writing vioring",
+					    __func__);
+				}
 			}
 			break;
 		case READ_CAPACITY_16:
-			r_cap_16 = (struct scsi_read_capacity_16 *)(req.cdb);
-			r_cap_addr_16 = _8btol(r_cap_16->addr);
-			log_debug("%s: %s - Addr 0x%016llx", __func__,
-			    vioscsi_op_names(r_cap_16->opcode),
-			    r_cap_addr_16);
-
-			vioscsi_prepare_resp(&resp,
-			    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
-
-			r_cap_data_16 =
-			    calloc(1, sizeof(struct scsi_read_cap_data_16));
-
-			if (r_cap_data_16 == NULL) {
-				log_warnx("%s: cannot alloc r_cap_data_16",
-				    __func__);
-				goto out;
-			}
-
-			log_debug("%s: ISO has %lld bytes and %lld blocks",
-			    __func__, dev->sz, dev->n_blocks);
-
-			_lto8b(dev->n_blocks - 1, r_cap_data_16->addr);
-			_lto4b(VIOSCSI_BLOCK_SIZE_CDROM,
-			    r_cap_data_16->length);
-
-			/* Move index for response */
-			resp_desc = vioscsi_next_ring_desc(desc, req_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing resp to 0x%llx size %d at local "
-			    "idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, &resp, resp_desc->len)) {
-				log_warnx("%s: unable to write OK resp status "
-				    "data @ 0x%llx", __func__, resp_desc->addr);
-				free(r_cap_data);
-				goto out;
-			}
-
-			/* Move index for r_cap_data_16 */
-			resp_desc = vioscsi_next_ring_desc(desc, resp_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing r_cap_data_16 to 0x%llx size %d "
-			    "at local idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, r_cap_data_16,
-			    resp_desc->len)) {
-				log_warnx("%s: unable to write read_cap_data_16"
-				    " response to gpa @ 0x%llx",
-				    __func__, resp_desc->addr);
-				free(r_cap_data);
-				goto out;
-			}
-
-			free(r_cap_data_16);
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used, req_desc,
-			    req_idx);
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: error writing vioring",
-				    __func__);
+			ret = vioscsi_handle_read_capacity_16(dev, &req, &acct);
+			if (ret) {
+				if (write_mem(q_gpa, vr, vr_sz)) {
+					log_warnx("%s: error writing vioring",
+					    __func__);
+				}
 			}
 			break;
 		case READ_COMMAND:
-			read_6 = (struct scsi_rw *)(req.cdb);
-			read_lba = ((read_6->addr[0] & SRW_TOPADDR) << 16 ) |
-			    (read_6->addr[1] << 8) | read_6->addr[2];
-
-			log_debug("%s: READ Addr 0x%08x Len %d (%d)",
-			    __func__, read_lba, read_6->length,
-			    read_6->length * dev->max_xfer);
-
-			/* check if lba is in range */
-			if (read_lba > dev->n_blocks - 1) {
-				log_debug("%s: requested block out of range "
-				    "req: %ud max: %lld", __func__,
-				    read_lba, dev->n_blocks);
-
-				vioscsi_prepare_resp(&resp,
-				    VIRTIO_SCSI_S_OK, SCSI_CHECK,
-				    SKEY_ILLEGAL_REQUEST,
-				    SENSE_LBA_OUT_OF_RANGE,
-				    SENSE_DEFAULT_ASCQ);
-
-				/* Move index for response */
-				resp_desc = vioscsi_next_ring_desc(desc,
-				    req_desc, &resp_idx);
-
-				if (write_mem(resp_desc->addr, &resp,
-				    resp_desc->len)) {
-					log_warnx("%s: unable to set ERR "
-					    "status  data @ 0x%llx", __func__,
-					    resp_desc->addr);
-					goto out;
-				}
-
-				ret = 1;
-				dev->cfg.isr_status = 1;
-				/* Move ring indexes */
-				vioscsi_next_ring_item(dev, avail, used,
-				    req_desc, req_idx);
-
+			ret = vioscsi_handle_read_6(dev, &req, &acct);
+			if (ret) {
 				if (write_mem(q_gpa, vr, vr_sz)) {
 					log_warnx("%s: error writing vioring",
 					    __func__);
 				}
-
-				goto next_msg;
 			}
-
-			info = vioscsi_start_read(dev, read_lba,
-			    read_6->length);
-
-			if (info == NULL) {
-				log_warnx("%s: cannot alloc for read",
-				    __func__);
-				goto out;
-			}
-
-			/* read block */
-			read_buf = vioscsi_finish_read(info);
-
-			if (read_buf == NULL) {
-				vioscsi_free_info(info);
-
-				log_warnx("%s: error reading position %ud",
-				    __func__, read_lba);
-				vioscsi_prepare_resp(&resp,
-				    VIRTIO_SCSI_S_OK, SCSI_CHECK,
-				    SKEY_MEDIUM_ERROR,
-				    SENSE_MEDIUM_NOT_PRESENT,
-				    SENSE_DEFAULT_ASCQ);
-
-				/* Move index for response */
-				resp_desc = vioscsi_next_ring_desc(desc,
-				    req_desc, &resp_idx);
-
-				if (write_mem(resp_desc->addr, &resp,
-				    resp_desc->len)) {
-					log_warnx("%s: unable to set ERR "
-					    "status  data @ 0x%llx", __func__,
-					    resp_desc->addr);
-					goto out;
-				}
-
-				ret = 1;
-				dev->cfg.isr_status = 1;
-				/* Move ring indexes */
-				vioscsi_next_ring_item(dev, avail, used,
-				    req_desc, req_idx);
-
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-
-				goto next_msg;
-			}
-
-			vioscsi_prepare_resp(&resp,
-			    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
-
-			/* Move index for response */
-			resp_desc = vioscsi_next_ring_desc(desc, req_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing resp to 0x%llx size %d at local "
-			    "idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, &resp, resp_desc->len)) {
-				log_warnx("%s: unable to write OK resp status "
-				    "data @ 0x%llx", __func__, resp_desc->addr);
-				vioscsi_free_info(info);
-				goto out;
-			}
-
-			/* Move index for read_buf */
-			resp_desc = vioscsi_next_ring_desc(desc, resp_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing read_buf to 0x%llx size %d at "
-			    "local idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, read_buf,
-			    resp_desc->len)) {
-				log_warnx("%s: unable to write read_buf"
-				    " to gpa @ 0x%llx", __func__,
-				    resp_desc->addr);
-				vioscsi_free_info(info);
-				goto out;
-			}
-
-			vioscsi_free_info(info);
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used, req_desc,
-			    req_idx);
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: error writing vioring",
-				    __func__);
-			}
-	
 			break;
 		case READ_BIG:
-			read_10 = (struct scsi_rw_big *)(req.cdb);
-			read_lba = _4btol(read_10->addr);
-			read_10_len = _2btol(read_10->length);
-			chunk_offset = 0;
-
-			log_debug("%s: READ_10 Addr 0x%08x Len %d (%d)",
-			    __func__, read_lba, read_10_len,
-			    read_10_len * dev->max_xfer);
-
-			/* check if lba is in range */
-			if (read_lba > dev->n_blocks - 1) {
-				log_debug("%s: requested block out of range "
-				    "req: %ud max: %lld", __func__,
-				    read_lba, dev->n_blocks);
-
-				vioscsi_prepare_resp(&resp,
-				    VIRTIO_SCSI_S_OK, SCSI_CHECK,
-				    SKEY_ILLEGAL_REQUEST,
-				    SENSE_LBA_OUT_OF_RANGE,
-				    SENSE_DEFAULT_ASCQ);
-
-				/* Move index for response */
-				resp_desc = vioscsi_next_ring_desc(desc,
-				    req_desc, &resp_idx);
-
-				if (write_mem(resp_desc->addr, &resp,
-				    resp_desc->len)) {
-					log_warnx("%s: unable to set ERR "
-					    "status  data @ 0x%llx", __func__,
-					    resp_desc->addr);
-					goto out;
-				}
-
-				ret = 1;
-				dev->cfg.isr_status = 1;
-				/* Move ring indexes */
-				vioscsi_next_ring_item(dev, avail, used,
-				    req_desc, req_idx);
-
+			ret = vioscsi_handle_read_10(dev, &req, &acct);
+			if (ret) {
 				if (write_mem(q_gpa, vr, vr_sz)) {
 					log_warnx("%s: error writing vioring",
 					    __func__);
 				}
-
-				goto next_msg;
 			}
-
-			info = vioscsi_start_read(dev, read_lba, read_10_len);
-
-			if (info == NULL) {
-				log_warnx("%s: cannot alloc for read",
-				    __func__);
-				goto out;
-			}
-
-			/* read block */
-			read_buf = vioscsi_finish_read(info);
-
-			if (read_buf == NULL) {
-				vioscsi_free_info(info);
-
-				log_warnx("%s: error reading position %ud",
-				    __func__, read_lba);
-				vioscsi_prepare_resp(&resp,
-				    VIRTIO_SCSI_S_OK, SCSI_CHECK,
-				    SKEY_MEDIUM_ERROR,
-				    SENSE_MEDIUM_NOT_PRESENT,
-				    SENSE_DEFAULT_ASCQ);
-
-				/* Move index for response */
-				resp_desc = vioscsi_next_ring_desc(desc,
-				    req_desc, &resp_idx);
-
-				if (write_mem(resp_desc->addr, &resp,
-				    resp_desc->len)) {
-					log_warnx("%s: unable to set ERR "
-					    "status  data @ 0x%llx", __func__,
-					    resp_desc->addr);
-					goto out;
-				}
-
-				ret = 1;
-				dev->cfg.isr_status = 1;
-				/* Move ring indexes */
-				vioscsi_next_ring_item(dev, avail, used,
-				    req_desc, req_idx);
-
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-	
-				goto next_msg;
-			}
-
-			vioscsi_prepare_resp(&resp,
-			    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
-
-			/* Move index for response */
-			resp_desc = vioscsi_next_ring_desc(desc, req_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing resp to 0x%llx size %d at local "
-			    "idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, &resp, resp_desc->len)) {
-				log_warnx("%s: unable to write OK resp status "
-				    "data @ 0x%llx", __func__, resp_desc->addr);
-				vioscsi_free_info(info);
-				goto out;
-			}
-
-			/* 
-			 * Perform possible chunking of writes of read_buf
-			 * based on the segment length allocated by the host.
-			 * At least one write will be performed.
-			 * If chunk_offset == info->len, no more writes
-			 */
-			do {
-				/* Move index for read_buf */
-				resp_desc = vioscsi_next_ring_desc(desc,
-				    resp_desc, &resp_idx);
-
-				dprintf("%s: writing read_buf to 0x%llx size "
-				    "%d at local idx %d req_idx %d "
-				    "global_idx %d",
-				    __func__, resp_desc->addr, resp_desc->len,
-				    resp_idx, req_idx, idx);
-
-				if (write_mem(resp_desc->addr,
-				    read_buf + chunk_offset, resp_desc->len)) {
-					log_warnx("%s: unable to write read_buf"
-					    " to gpa @ 0x%llx", __func__,
-					    resp_desc->addr);
-					vioscsi_free_info(info);
-					goto out;
-				}
-				chunk_offset += resp_desc->len;
-			} while (chunk_offset < info->len);
-
-			vioscsi_free_info(info);
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used, req_desc,
-			    req_idx);
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: error writing vioring",
-				    __func__);
-			}
-
 			break;
 		case INQUIRY:
-			inq = (struct scsi_inquiry *)(req.cdb);
-			inq_len = (uint16_t)_2btol(inq->length);
-
-			log_debug("%s: INQ - EVPD %d PAGE_CODE 0x%08x LEN %d",
-			    __func__, inq->flags & SI_EVPD, inq->pagecode,
-			    inq_len);
-
-			vioscsi_prepare_resp(&resp,
-			    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
-
-			inq_data = calloc(1, sizeof(struct scsi_inquiry_data));
-
-			if (inq_data == NULL) {
-				log_warnx("%s: cannot alloc inq_data",
-				    __func__);
-				goto out;
-			}
-
-			inq_data->device = T_CDROM;
-			inq_data->dev_qual2 = SID_REMOVABLE;
-			/* Leave version zero to say we don't comply */
-			inq_data->response_format = INQUIRY_RESPONSE_FORMAT;
-			inq_data->additional_length = SID_SCSI2_ALEN;
-			memcpy(inq_data->vendor, INQUIRY_VENDOR,
-			    INQUIRY_VENDOR_LEN);
-			memcpy(inq_data->product, INQUIRY_PRODUCT,
-			    INQUIRY_PRODUCT_LEN);
-			memcpy(inq_data->revision, INQUIRY_REVISION,
-			    INQUIRY_REVISION_LEN);
-
-			/* Move index for response */
-			resp_desc = vioscsi_next_ring_desc(desc, req_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing resp to 0x%llx size %d at local "
-			    "idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, &resp, resp_desc->len)) {
-				log_warnx("%s: unable to write OK resp status "
-				    "data @ 0x%llx", __func__, resp_desc->addr);
-				free(inq_data);
-				goto out;
-			}
-
-			/* Move index for inquiry_data */
-			resp_desc = vioscsi_next_ring_desc(desc, resp_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing inq_data to 0x%llx size %d at "
-			    "local idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, inq_data,
-			    resp_desc->len)) {
-				log_warnx("%s: unable to write inquiry"
-				    " response to gpa @ 0x%llx",
-				    __func__, resp_desc->addr);
-				free(inq_data);
-				goto out;
-			}
-
-			free(inq_data);
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used, req_desc,
-			    req_idx);
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: error writing vioring",
-				    __func__);
+			ret = vioscsi_handle_inquiry(dev, &req, &acct);
+			if (ret) {
+				if (write_mem(q_gpa, vr, vr_sz)) {
+					log_warnx("%s: error writing vioring",
+					    __func__);
+				}
 			}
 			break;
 		case MODE_SENSE:
-			mode_sense = (struct scsi_mode_sense *)(req.cdb);
-			mode_page_ctl = mode_sense->page & SMS_PAGE_CTRL;
-			mode_page_code = mode_sense->page & SMS_PAGE_CODE;
-
-			log_debug("%s: M_SENSE - DBD %d Page Ctrl 0x%x"
-			    " Code 0x%x Len %u",
-			    __func__, mode_sense->byte2 & SMS_DBD,
-			    mode_page_ctl, mode_page_code, mode_sense->length);
-
-			if (mode_page_ctl == SMS_PAGE_CTRL_CURRENT &&
-			    (mode_page_code == ERR_RECOVERY_PAGE ||
-			    mode_page_code == CDVD_CAPABILITIES_PAGE)) {
-				/* 
-				 * mode sense header is 4 bytes followed
-				 * by a variable page
-				 * ERR_RECOVERY_PAGE is 12 bytes
-				 * CDVD_CAPABILITIES_PAGE is 27 bytes
-				 */
-				switch(mode_page_code) {
-				case ERR_RECOVERY_PAGE:
-					mode_reply_len = 16;
-					mode_reply =
-					    (uint8_t*)calloc(mode_reply_len,
-					    sizeof(uint8_t));
-					if (mode_reply == NULL)
-						goto out;
-
-					/* set the page header */
-					*mode_reply = mode_reply_len - 1;
-					*(mode_reply + 1) =
-					    MODE_MEDIUM_TYPE_CODE;
-
-					/* set the page data, 7.3.2.1 mmc-5 */
-					*(mode_reply + 4) =
-					    MODE_ERR_RECOVERY_PAGE_CODE;
-					*(mode_reply + 5) =
-					    MODE_ERR_RECOVERY_PAGE_LEN;
-					*(mode_reply + 7) =
-					    MODE_READ_RETRY_COUNT;
-					break;
-				case CDVD_CAPABILITIES_PAGE:
-					mode_reply_len = 31;
-					mode_reply =
-					    (uint8_t*)calloc(mode_reply_len,
-					    sizeof(uint8_t));
-					if (mode_reply == NULL)
-						goto out;
-
-					/* set the page header */
-					*mode_reply = mode_reply_len - 1;
-					*(mode_reply + 1) =
-					    MODE_MEDIUM_TYPE_CODE;
-
-					/* set the page data, 6.3.11 mmc-3 */
-					*(mode_reply + 4) =
-					    MODE_CDVD_CAP_PAGE_CODE;
-					*(mode_reply + 5) = mode_reply_len - 6;
-					*(mode_reply + 6) =
-					    MODE_CDVD_CAP_READ_CODE;
-					_lto2b(MODE_CDVD_CAP_NUM_LEVELS,
-					    mode_reply + 14);
-					break;
-				default:
-					goto mode_sense_error;
-					break;
-				}
-
-				/* Move index for response */
-				resp_desc = vioscsi_next_ring_desc(desc,
-				    req_desc, &resp_idx);
-
-				dprintf("%s: writing resp to 0x%llx size %d "
-				    "at local idx %d req_idx %d global_idx %d",
-				    __func__, resp_desc->addr, resp_desc->len,
-				    resp_idx, req_idx, idx);
-
-				if (write_mem(resp_desc->addr, &resp,
-				    resp_desc->len)) {
-					log_warnx("%s: unable to write OK"
-					    " resp status data @ 0x%llx",
-					    __func__, resp_desc->addr);
-					free(mode_reply);
-					goto out;
-				}
-
-				/* Move index for mode_reply */
-				resp_desc = vioscsi_next_ring_desc(desc,
-				    resp_desc, &resp_idx);
-
-				dprintf("%s: writing mode_reply to 0x%llx "
-				    "size %d at local idx %d req_idx %d "
-				    "global_idx %d",__func__, resp_desc->addr,
-				    resp_desc->len, resp_idx, req_idx, idx);
-
-				if (write_mem(resp_desc->addr, mode_reply,
-				    resp_desc->len)) {
-					log_warnx("%s: unable to write "
-					    "mode_reply to gpa @ 0x%llx",
-					    __func__, resp_desc->addr);
-					free(mode_reply);
-					goto out;
-				}
-
-				free(mode_reply);
-
-				ret = 1;
-				dev->cfg.isr_status = 1;
-				/* Move ring indexes */
-				vioscsi_next_ring_item(dev, avail, used,
-				    req_desc, req_idx);
-
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-
-			} else {
-mode_sense_error:
-				/* send back un-supported */
-				vioscsi_prepare_resp(&resp,
-				    VIRTIO_SCSI_S_OK, SCSI_CHECK,
-				    SKEY_ILLEGAL_REQUEST,
-				    SENSE_ILLEGAL_CDB_FIELD,
-				    SENSE_DEFAULT_ASCQ);
-
-				/* Move index for response */
-				resp_desc = vioscsi_next_ring_desc(desc,
-				    req_desc, &resp_idx);
-
-				if (write_mem(resp_desc->addr, &resp,
-				    resp_desc->len)) {
-					log_warnx("%s: unable to set ERR "
-					    "status  data @ 0x%llx", __func__,
-					    resp_desc->addr);
-					goto out;
-				}
-	
-				ret = 1;
-				dev->cfg.isr_status = 1;
-				/* Move ring indexes */
-				vioscsi_next_ring_item(dev, avail, used,
-				    req_desc, req_idx);
-
+			ret = vioscsi_handle_mode_sense(dev, &req, &acct);
+			if (ret) {
 				if (write_mem(q_gpa, vr, vr_sz)) {
 					log_warnx("%s: error writing vioring",
 					    __func__);
@@ -1702,151 +2176,8 @@ mode_sense_error:
 			}
 			break;
 		case MODE_SENSE_BIG:
-			mode_sense_10 = (struct scsi_mode_sense_big *)(req.cdb);
-			mode_page_ctl = mode_sense_10->page & SMS_PAGE_CTRL;
-			mode_page_code = mode_sense_10->page & SMS_PAGE_CODE;
-			mode_sense_len =
-			    (uint16_t)_2btol(mode_sense_10->length);
-
-			log_debug("%s: M_SENSE_10 - DBD %d Page Ctrl 0x%x"
-			    " Code 0x%x Len %u",
-			    __func__, mode_sense_10->byte2 & SMS_DBD,
-			    mode_page_ctl, mode_page_code, mode_sense_len);
-
-			if (mode_page_ctl == SMS_PAGE_CTRL_CURRENT &&
-			    (mode_page_code == ERR_RECOVERY_PAGE ||
-			    mode_page_code == CDVD_CAPABILITIES_PAGE)) {
-				/* 
-				 * mode sense header is 8 bytes followed
-				 * by a variable page
-				 * ERR_RECOVERY_PAGE is 12 bytes
-				 * CDVD_CAPABILITIES_PAGE is 27 bytes
-				 */
-				switch(mode_page_code) {
-				case ERR_RECOVERY_PAGE:
-					mode_reply_len = 20;
-					mode_reply =
-					    (uint8_t*)calloc(mode_reply_len,
-					    sizeof(uint8_t));
-					if (mode_reply == NULL)
-						goto out;
-
-					/* set the page header */
-					_lto2b(mode_reply_len - 2, mode_reply);
-					*(mode_reply + 2) =
-					    MODE_MEDIUM_TYPE_CODE;
-
-					/* set the page data, 7.3.2.1 mmc-5 */
-					*(mode_reply + 8) =
-					    MODE_ERR_RECOVERY_PAGE_CODE;
-					*(mode_reply + 9) =
-					    MODE_ERR_RECOVERY_PAGE_LEN;
-					*(mode_reply + 11) =
-					    MODE_READ_RETRY_COUNT;
-					break;
-				case CDVD_CAPABILITIES_PAGE:
-					mode_reply_len = 35;
-					mode_reply =
-					    (uint8_t*)calloc(mode_reply_len,
-					    sizeof(uint8_t));
-					if (mode_reply == NULL)
-						goto out;
-
-					/* set the page header */
-					_lto2b(mode_reply_len - 2, mode_reply);
-					*(mode_reply + 2) =
-					    MODE_MEDIUM_TYPE_CODE;
-
-					/* set the page data, 6.3.11 mmc-3 */
-					*(mode_reply + 8) =
-					    MODE_CDVD_CAP_PAGE_CODE;
-					*(mode_reply + 9) = mode_reply_len - 6;
-					*(mode_reply + 10) =
-					    MODE_CDVD_CAP_READ_CODE;
-					_lto2b(MODE_CDVD_CAP_NUM_LEVELS,
-					    mode_reply + 18);
-					break;
-				default:
-					goto mode_sense_10_error;
-					break;
-				}
-
-				/* Move index for response */
-				resp_desc = vioscsi_next_ring_desc(desc,
-				    req_desc, &resp_idx);
-
-				dprintf("%s: writing resp to 0x%llx size %d "
-				    "at local idx %d req_idx %d global_idx %d",
-				    __func__, resp_desc->addr, resp_desc->len,
-				    resp_idx, req_idx, idx);
-
-				if (write_mem(resp_desc->addr, &resp,
-				    resp_desc->len)) {
-					log_warnx("%s: unable to write OK"
-					    " resp status data @ 0x%llx",
-					    __func__, resp_desc->addr);
-					free(mode_reply);
-					goto out;
-				}
-
-				/* Move index for mode_reply */
-				resp_desc = vioscsi_next_ring_desc(desc,
-				    resp_desc, &resp_idx);
-
-				dprintf("%s: writing mode_reply to 0x%llx "
-				    "size %d at local idx %d req_idx %d "
-				    "global_idx %d",__func__, resp_desc->addr,
-				    resp_desc->len, resp_idx, req_idx, idx);
-
-				if (write_mem(resp_desc->addr, mode_reply,
-				    resp_desc->len)) {
-					log_warnx("%s: unable to write "
-					    "mode_reply to gpa @ 0x%llx",
-					    __func__, resp_desc->addr);
-					free(mode_reply);
-					goto out;
-				}
-
-				free(mode_reply);
-
-				ret = 1;
-				dev->cfg.isr_status = 1;
-				/* Move ring indexes */
-				vioscsi_next_ring_item(dev, avail, used,
-				    req_desc, req_idx);
-
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-
-			} else {
-mode_sense_10_error:
-				/* send back un-supported */
-				vioscsi_prepare_resp(&resp,
-				    VIRTIO_SCSI_S_OK, SCSI_CHECK,
-				    SKEY_ILLEGAL_REQUEST,
-				    SENSE_ILLEGAL_CDB_FIELD,
-				    SENSE_DEFAULT_ASCQ);
-
-				/* Move index for response */
-				resp_desc = vioscsi_next_ring_desc(desc,
-				    req_desc, &resp_idx);
-
-				if (write_mem(resp_desc->addr, &resp,
-				    resp_desc->len)) {
-					log_warnx("%s: unable to set ERR "
-					    "status  data @ 0x%llx", __func__,
-					    resp_desc->addr);
-					goto out;
-				}
-	
-				ret = 1;
-				dev->cfg.isr_status = 1;
-				/* Move ring indexes */
-				vioscsi_next_ring_item(dev, avail, used,
-				    req_desc, req_idx);
-
+			ret = vioscsi_handle_mode_sense_big(dev, &req, &acct);
+			if (ret) {
 				if (write_mem(q_gpa, vr, vr_sz)) {
 					log_warnx("%s: error writing vioring",
 					    __func__);
@@ -1854,363 +2185,52 @@ mode_sense_10_error:
 			}
 			break;
 		case GET_EVENT_STATUS_NOTIFICATION:
-			gesn = (struct scsi_gesn *)(req.cdb);
-			log_debug("%s: GESN Method %s", __func__,
-			    gesn->byte2 ? "Polling" : "Asynchronous");
-
-			if (gesn->byte2 == 0) {
-				/* we don't support asynchronous */
-				vioscsi_prepare_resp(&resp,
-				    VIRTIO_SCSI_S_OK, SCSI_CHECK,
-				    SKEY_ILLEGAL_REQUEST,
-				    SENSE_ILLEGAL_CDB_FIELD,
-				    SENSE_DEFAULT_ASCQ);
-
-				/* Move index for response */
-				resp_desc = vioscsi_next_ring_desc(desc,
-				    req_desc, &resp_idx);
-
-				if (write_mem(resp_desc->addr, &resp,
-				    resp_desc->len)) {
-					log_warnx("%s: unable to set ERR "
-					    "status  data @ 0x%llx", __func__,
-					    resp_desc->addr);
-					goto out;
-				}
-	
-				ret = 1;
-				dev->cfg.isr_status = 1;
-				/* Move ring indexes */
-				vioscsi_next_ring_item(dev, avail, used,
-				    req_desc, req_idx);
-
+			ret = vioscsi_handle_gesn(dev, &req, &acct);
+			if (ret) {
 				if (write_mem(q_gpa, vr, vr_sz)) {
 					log_warnx("%s: error writing vioring",
 					    __func__);
 				}
-				goto out;
 			}
-			memset(gesn_reply, 0, sizeof(gesn_reply));
-			gesn_event_header =
-			    (struct scsi_gesn_event_header *)(gesn_reply);
-			gesn_power_event =
-			    (struct scsi_gesn_power_event *)(gesn_reply + 4);
-			/* set event header length and notification */
-			_lto2b(GESN_HEADER_LEN, gesn_event_header->length);
-			gesn_event_header->notification =
-			    GESN_NOTIFY_POWER_MGMT;
-			gesn_event_header->supported_event =
-			    GESN_EVENT_POWER_MGMT;
-
-			/* set event descriptor */
-			gesn_power_event->event_code = GESN_CODE_NOCHG;
-			if (dev->locked)
-				gesn_power_event->status = GESN_STATUS_ACTIVE;
-			else
-				gesn_power_event->status = GESN_STATUS_IDLE;
-
-			/* Move index for response */
-			resp_desc = vioscsi_next_ring_desc(desc, req_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing resp to 0x%llx size %d at local "
-			    "idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, &resp, resp_desc->len)) {
-				log_warnx("%s: unable to write OK resp status "
-				    "data @ 0x%llx", __func__, resp_desc->addr);
-				free(inq_data);
-				goto out;
-			}
-
-			/* Move index for gesn_reply */
-			resp_desc = vioscsi_next_ring_desc(desc, resp_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing gesn_reply to 0x%llx size %d at "
-			    "local idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, gesn_reply,
-			    resp_desc->len)) {
-				log_warnx("%s: unable to write gesn_reply"
-				    " response to gpa @ 0x%llx",
-				    __func__, resp_desc->addr);
-				free(inq_data);
-				goto out;
-			}
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used, req_desc,
-			    req_idx);
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: error writing vioring",
-				    __func__);
-			}
-	
 			break;
 		case READ_DISC_INFORMATION:
-			read_disc =
-			    (struct scsi_read_disc_information *)(req.cdb);
-			log_debug("%s: Disc Info %x", __func__,
-			    read_disc->byte2);
-
-			/* send back unsupported */
-			vioscsi_prepare_resp(&resp,
-			    VIRTIO_SCSI_S_OK, SCSI_CHECK,
-			    SKEY_ILLEGAL_REQUEST,
-			    SENSE_ILLEGAL_CDB_FIELD,
-			    SENSE_DEFAULT_ASCQ);
-
-			/* Move index for response */
-			resp_desc = vioscsi_next_ring_desc(desc,
-			    req_desc, &resp_idx);
-
-			if (write_mem(resp_desc->addr, &resp,
-			    resp_desc->len)) {
-				log_warnx("%s: unable to set ERR "
-				    "status  data @ 0x%llx", __func__,
-				    resp_desc->addr);
-				goto out;
-			}
-	
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used,
-			    req_desc, req_idx);
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: error writing vioring",
-				    __func__);
+			ret = vioscsi_handle_read_disc_info(dev, &req, &acct);
+			if (ret) {
+				if (write_mem(q_gpa, vr, vr_sz)) {
+					log_warnx("%s: error writing vioring",
+					    __func__);
+				}
 			}
 			break;
 		case GET_CONFIGURATION:
-			get_configuration =
-			    (struct scsi_get_configuration *)(req.cdb);
-			get_conf_feature =
-			    (uint16_t)_2btol(get_configuration->feature);
-			get_conf_len =
-			    (uint16_t)_2btol(get_configuration->length);
-			log_debug("%s: Conf RT %x Feature %d Len %d",
-			    __func__, get_configuration->byte2,
-			    get_conf_feature, get_conf_len);
-
-			get_conf_reply = (uint8_t*)calloc(G_CONFIG_REPLY_SIZE,
-			    sizeof(uint8_t));
-
-			if (get_conf_reply == NULL)
-				goto out;
-
-			/* 
-			 * Use MMC-5 6.6 for structure and
-			 * MMC-5 5.2 to send back:
-			 * feature header - 8 bytes
-			 * feature descriptor for profile list - 8 bytes
-			 * feature descriptor for core feature - 12 bytes
-			 * feature descriptor for morphing feature - 8 bytes
-			 * feature descriptor for removable media - 8 bytes
-			 * feature descriptor for random read feature - 12 bytes
-			 */
-
-			config_feature_header =
-			    (struct scsi_config_feature_header *)(get_conf_reply);
-			config_generic_desc =
-			    (struct scsi_config_generic_descriptor *)(get_conf_reply + 8);
-			config_profile_desc =
-			    (struct scsi_config_profile_descriptor *)(get_conf_reply + 12);
-			config_core_desc =
-			    (struct scsi_config_core_descriptor *)(get_conf_reply + 16);
-			config_morphing_desc =
-			    (struct scsi_config_morphing_descriptor *)(get_conf_reply + 28);
-			config_remove_media_desc =
-			    (struct scsi_config_remove_media_descriptor *)(get_conf_reply + 36);
-			config_random_read_desc =
-			    (struct scsi_config_random_read_descriptor *)(get_conf_reply + 44);
-
-			/* set size to be get_conf_reply - size field */
-			_lto4b(G_CONFIG_REPLY_SIZE_HEX,
-			    config_feature_header->length);
-			/* set current profile to be non-conforming */
-			_lto2b(CONFIG_PROFILE_NON_CONFORM,
-			    config_feature_header->current_profile);
-
-			/* fill out profile list feature */
-			_lto2b(CONFIG_FEATURE_CODE_PROFILE,
-			    config_generic_desc->feature_code);
-			config_generic_desc->byte3 = CONFIG_PROFILELIST_BYTE3;
-			config_generic_desc->length = CONFIG_PROFILELIST_LENGTH;
-			/* fill out profile descriptor for NON_COFORM */
-			_lto2b(CONFIG_PROFILE_NON_CONFORM,
-			    config_profile_desc->profile_number);
-			config_profile_desc->byte3 = CONFIG_PROFILE_BYTE3;
-
-			/* fill out core feature */
-			_lto2b(CONFIG_FEATURE_CODE_CORE,
-			    config_core_desc->feature_code);
-			config_core_desc->byte3 = CONFIG_CORE_BYTE3;
-			config_core_desc->length = CONFIG_CORE_LENGTH;
-			_lto4b(CONFIG_CORE_PHY_SCSI, config_core_desc->phy_std);
-
-			/* fill out morphing feature */
-			_lto2b(CONFIG_FEATURE_CODE_MORPHING,
-			    config_morphing_desc->feature_code);
-			config_morphing_desc->byte3 = CONFIG_MORPHING_BYTE3;
-			config_morphing_desc->length = CONFIG_MORPHING_LENGTH;
-			config_morphing_desc->byte5 = CONFIG_MORPHING_BYTE5;
-
-			/* fill out removable media feature */
-			_lto2b(CONFIG_FEATURE_CODE_REMOVE_MEDIA,
-			    config_remove_media_desc->feature_code);
-			config_remove_media_desc->byte3 =
-			    CONFIG_REMOVE_MEDIA_BYTE3;
-			config_remove_media_desc->length =
-			    CONFIG_REMOVE_MEDIA_LENGTH;
-			config_remove_media_desc->byte5 =
-			    CONFIG_REMOVE_MEDIA_BYTE5;
-
-			/* fill out random read feature */
-			_lto2b(CONFIG_FEATURE_CODE_RANDOM_READ,
-			    config_random_read_desc->feature_code);
-			config_random_read_desc->byte3 =
-			    CONFIG_RANDOM_READ_BYTE3;
-			config_random_read_desc->length =
-			    CONFIG_RANDOM_READ_LENGTH;
-			if (dev->sz >= UINT32_MAX)
-				_lto4b(UINT32_MAX,
-				    config_random_read_desc->block_size);
-			else
-				_lto4b(dev->n_blocks - 1,
-				    config_random_read_desc->block_size);
-			_lto2b(CONFIG_RANDOM_READ_BLOCKING_TYPE,
-			    config_random_read_desc->blocking_type);
-
-			vioscsi_prepare_resp(&resp,
-			    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
-
-			/* Move index for response */
-			resp_desc = vioscsi_next_ring_desc(desc,
-			    req_desc, &resp_idx);
-
-			dprintf("%s: writing resp to 0x%llx size %d at local "
-			    "idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, &resp,
-			    resp_desc->len)) {
-				log_warnx("%s: unable to set ERR "
-				    "status  data @ 0x%llx", __func__,
-				    resp_desc->addr);
-				free(get_conf_reply);
-				goto out;
-			}
-
-			/* Move index for get_conf_reply */
-			resp_desc = vioscsi_next_ring_desc(desc, resp_desc,
-			    &resp_idx);
-
-			dprintf("%s: writing get_conf_reply to 0x%llx size %d "
-			    "at local idx %d req_idx %d global_idx %d",
-			    __func__, resp_desc->addr, resp_desc->len,
-			    resp_idx, req_idx, idx);
-
-			if (write_mem(resp_desc->addr, get_conf_reply,
-			    resp_desc->len)) {
-				log_warnx("%s: unable to write get_conf_reply"
-				    " response to gpa @ 0x%llx",
-				    __func__, resp_desc->addr);
-				free(get_conf_reply);
-				goto out;
-			}
-
-			free(get_conf_reply);
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used,
-			    req_desc, req_idx);
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: error writing vioring",
-				    __func__);
+			ret = vioscsi_handle_get_config(dev, &req, &acct);
+			if (ret) {
+				if (write_mem(q_gpa, vr, vr_sz)) {
+					log_warnx("%s: error writing vioring",
+					    __func__);
+				}
 			}
 			break;
 		case MECHANISM_STATUS:
-			mech_status = (struct scsi_mechanism_status *)(req.cdb);
-			mech_status_len = (uint16_t)_2btol(mech_status->length);
-			log_debug("%s: MECH_STATUS Len %u", __func__,
-			    mech_status_len);
-
-			mech_status_header =
-			    calloc(1, sizeof(*mech_status_header));
-
-			if (mech_status_header == NULL)
-				goto out;
-
-			/* return a 0 header since we are not a changer */
-			vioscsi_prepare_resp(&resp,
-			    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
-
-			/* Move index for response */
-			resp_desc = vioscsi_next_ring_desc(desc,
-			    req_desc, &resp_idx);
-
-			if (write_mem(resp_desc->addr, &resp,
-			    resp_desc->len)) {
-				log_warnx("%s: unable to set ERR "
-				    "status  data @ 0x%llx", __func__,
-				    resp_desc->addr);
-				free(mech_status_header);
-				goto out;
-			}
-
-			/* Move index for mech_status_header */
-			resp_desc = vioscsi_next_ring_desc(desc, resp_desc,
-			    &resp_idx);
-
-			if (write_mem(resp_desc->addr, mech_status_header,
-			    resp_desc->len)) {
-				log_warnx("%s: unable to write "
-				    "mech_status_header response to "
-				    "gpa @ 0x%llx",
-				    __func__, resp_desc->addr);
-				free(mech_status_header);
-				goto out;
-			}
-
-			free(mech_status_header);
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used,
-			    req_desc, req_idx);
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: error writing vioring",
-				    __func__);
+			ret = vioscsi_handle_mechanism_status(dev, &req, &acct);
+			if (ret) {
+				if (write_mem(q_gpa, vr, vr_sz)) {
+					log_warnx("%s: error writing vioring",
+					    __func__);
+				}
 			}
 			break;
 		default:
 			log_warnx("%s: unsupported opcode 0x%02x,%s",
 			    __func__, req.cdb[0], vioscsi_op_names(req.cdb[0]));
 			/* Move ring indexes */
-			vioscsi_next_ring_item(dev, avail, used, req_desc,
-			    req_idx);
-
+			vioscsi_next_ring_item(dev, acct.avail, acct.used,
+			    acct.req_desc, acct.req_idx);
 			break;
 		}
 next_msg:
 		/* Increment to the next queue slot */
-		idx = (idx + 1) & VIOSCSI_QUEUE_MASK;
+		acct.idx = (acct.idx + 1) & VIOSCSI_QUEUE_MASK;
 	}
 out:
 	free(vr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.22 2018/01/03 05:39:56 ccardenas Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.23 2018/01/15 04:26:58 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -97,6 +97,40 @@ struct virtio_vq_info {
 	 * driver notified to the host.
 	 */
 	uint16_t notified_avail;
+};
+
+/*
+ * Each virtio driver has a notifyq method where one or more messages
+ * are ready to be processed on a given virtq.  As such, various
+ * pieces of information are needed to provide ring accounting while
+ * processing a given message such as virtq indexes, vring pointers, and
+ * vring descriptors.
+ */
+struct virtio_vq_acct {
+
+	/* index of previous avail vring message */
+	uint16_t idx;
+
+	/* index of current message containing the request */
+	uint16_t req_idx;
+
+	/* index of current message containing the response */
+	uint16_t resp_idx;
+
+	/* vring descriptor pointer */
+	struct vring_desc *desc;
+
+	/* vring descriptor pointer for request header and data */
+	struct vring_desc *req_desc;
+
+	/* vring descriptor pointer for response header and data */
+	struct vring_desc *resp_desc;
+
+	/* pointer to the available vring */
+	struct vring_avail *avail;
+
+	/* pointer to the used vring */
+	struct vring_used *used;
 };
 
 struct viornd_dev {
