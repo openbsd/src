@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.66 2018/01/13 14:15:07 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.67 2018/01/15 22:24:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -1199,6 +1199,11 @@ finish_wait(wait_queue_head_t *wq, wait_queue_head_t **wait)
 static inline long
 schedule_timeout(long timeout, wait_queue_head_t **wait)
 {
+	if (cold) {
+		delay((timeout * 1000000) / hz);
+		return -ETIMEDOUT;
+	}
+
 	return -msleep(*wait, &(*wait)->lock, PZERO, "schto", timeout);
 }
 
@@ -1609,8 +1614,14 @@ struct i2c_msg {
 #define I2C_M_NOSTART	0x0002
 
 struct i2c_algorithm {
-	u32 (*functionality)(struct i2c_adapter *);
 	int (*master_xfer)(struct i2c_adapter *, struct i2c_msg *, int);
+	u32 (*functionality)(struct i2c_adapter *);
+};
+
+extern struct i2c_algorithm i2c_bit_algo;
+
+struct i2c_algo_bit_data {
+	struct i2c_controller ic;
 };
 
 int i2c_transfer(struct i2c_adapter *, struct i2c_msg *, int);
