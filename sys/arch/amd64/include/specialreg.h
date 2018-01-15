@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.65 2018/01/15 06:53:02 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.66 2018/01/15 18:57:59 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -215,8 +215,8 @@
 #define SEFF0ECX_UMIP		0x00000004 /* UMIP support */
 #define SEFF0ECX_PKU		0x00000008 /* Page prot keys for user mode */
 /* SEFF EDX bits */
-#define	SEFF0EDX_AVX512_4FNNIW	0x00000004 /* AVX-512 neural network insns */
-#define	SEFF0EDX_AVX512_4FMAPS	0x00000008 /* AVX-512 mult accum single prec */
+#define SEFF0EDX_AVX512_4FNNIW	0x00000004 /* AVX-512 neural network insns */
+#define SEFF0EDX_AVX512_4FMAPS	0x00000008 /* AVX-512 mult accum single prec */
 #define SEFF0EDX_IBRS		0x04000000 /* IBRS / IBPB Speculation Control */
 #define SEFF0EDX_STIBP		0x08000000 /* STIBP Speculation Control */
 
