@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2018/01/11 03:23:16 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.26 2018/01/15 12:27:45 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -30,15 +30,15 @@ regress:
 # RTT addresses exist on ECO, PF has no route and must use route-to RT
 # RPT addresses exist on SRC, PF has no route and must use reply-to SRC
 #
-# +---+   0   +--+   1   +--+   2   +---+ 3
+# +---+   1   +--+   2   +--+   3   +---+ 4
 # |SRC| ----> |PF| ----> |RT| ----> |ECO| 7
 # +---+ 8     +--+       +--+       +---+ 9
 #     out    in  out    in  out    in   out
 #
-# 4 +---+ 5   6 +--+   7 +---+   +---+ 8
-#   |RDR|       |AF|     |RTT|   |RPT|
-#   +---+       +--+     +---+   +---+
-#  in   out    in       in           out
+# 5 +---+ 6   7 +--+    8 +---+ 9   10 +---+ 11
+#   |RDR|       |AF|      |RTT|        |RPT|
+#   +---+       +--+      +---+        +---+
+#  in   out    in        in          out
 
 # Configure Addresses on the machines, there must be routes for the
 # networks.  Adapt interface and addresse variables to your local
@@ -161,14 +161,7 @@ run-regress-traceroute-${proto}-${inet}-RPT_OUT:
 run-regress-traceroute-${proto}-${inet}-RPT_IN:
 	@echo '\n======== $@ ========'
 	# RPT_IN traceroute is broken with PF ttl.  The ICMP packet has
-        # localhost as source address.  It is selected by reject route.
-	@echo DISABLED
-
-run-regress-traceroute-${proto}-${inet}-RTT_IN:
-	@echo '\n======== $@ ========'
-	# RTT_IN traceroute is broken with PF ttl.  The incoming rule has
-	# route-to and the packet never goes through IP forward.  So the TTL
-	# is not decremented.
+	# localhost as source address.  It is selected by reject route.
 	@echo DISABLED
 .endfor # proto
 
