@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.8 2017/08/12 21:04:33 jsing Exp $ */
+/* $OpenBSD: s_cb.c,v 1.9 2018/01/15 11:02:07 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -730,6 +730,14 @@ tlsext_cb(SSL * s, int client_server, int type, unsigned char *data, int len,
 
 	case TLSEXT_TYPE_renegotiate:
 		extname = "renegotiation info";
+		break;
+
+	case TLSEXT_TYPE_application_layer_protocol_negotiation:
+		extname = "application layer protocol negotiation";
+		break;
+
+	case TLSEXT_TYPE_padding:
+		extname = "TLS padding";
 		break;
 
 	default:
