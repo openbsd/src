@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.79 2018/01/15 14:58:05 jca Exp $	*/
+/*	$OpenBSD: history.c,v 1.80 2018/01/15 22:30:38 jca Exp $	*/
 
 /*
  * command history
@@ -791,10 +791,9 @@ hist_init(Source *s)
 
 	hist_source = s;
 
-	hname = str_val(global("HISTFILE"));
-	if (hname == NULL)
+	if (str_val(global("HISTFILE")) == null)
 		return;
-	hname = str_save(hname, APERM);
+	hname = str_save(str_val(global("HISTFILE")), APERM);
 	histfh = history_open();
 	if (histfh == NULL)
 		return;
