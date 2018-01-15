@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.58 2018/01/15 15:27:03 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.59 2018/01/15 15:30:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -911,16 +911,12 @@ cmd_find_from_client(struct cmd_find_state *fs, struct client *c, int flags)
 	 */
 	fs->w = wp->window;
 	if (cmd_find_best_session_with_window(fs) != 0) {
-		if (wp != NULL) {
-			/*
-			 * The window may have been destroyed but the pane
-			 * still on all_window_panes due to something else
-			 * holding a reference.
-			 */
-			goto unknown_pane;
-		}
-		cmd_find_clear_state(fs, 0);
-		return (-1);
+		/*
+		 * The window may have been destroyed but the pane
+		 * still on all_window_panes due to something else
+		 * holding a reference.
+		 */
+		goto unknown_pane;
 	}
 	fs->wl = fs->s->curw;
 	fs->w = fs->wl->window;
