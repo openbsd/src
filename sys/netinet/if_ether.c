@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.231 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.232 2018/01/15 13:48:31 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -694,6 +694,7 @@ arptfree(struct rtentry *rt)
 {
 	struct ifnet *ifp;
 
+	KASSERT(!ISSET(rt->rt_flags, RTF_LOCAL));
 	arpinvalidate(rt);
 
 	ifp = if_get(rt->rt_ifidx);
