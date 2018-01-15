@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.87 2018/01/14 16:04:21 anton Exp $	*/
+/*	$OpenBSD: main.c,v 1.88 2018/01/15 14:58:05 jca Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -69,9 +69,7 @@ int	 builtin_flag;
 char	*current_wd;
 int	 current_wd_size;
 
-#ifdef EDIT
 int	x_cols = 80;
-#endif /* EDIT */
 
 /*
  * shell initialization
@@ -94,9 +92,7 @@ static const char *initcoms [] = {
 	  "stop=kill -STOP",
 	  "autoload=typeset -fu",
 	  "functions=typeset -f",
-#ifdef HISTORY
 	  "history=fc -l",
-#endif /* HISTORY */
 	  "integer=typeset -i",
 	  "nohup=nohup ",
 	  "local=typeset",
@@ -249,12 +245,12 @@ main(int argc, char *argv[])
 	/* Set edit mode to emacs by default, may be overridden
 	 * by the environment or the user.  Also, we want tab completion
 	 * on in vi by default. */
-#if defined(EDIT) && defined(EMACS)
+#if defined(EMACS)
 	change_flag(FEMACS, OF_SPECIAL, 1);
-#endif /* EDIT && EMACS */
-#if defined(EDIT) && defined(VI)
+#endif /* EMACS */
+#if defined(VI)
 	Flag(FVITABCOMPLETE) = 1;
-#endif /* EDIT && VI */
+#endif /* VI */
 
 	/* import environment */
 	if (environ != NULL)
@@ -367,11 +363,9 @@ main(int argc, char *argv[])
 	i = Flag(FMONITOR) != 127;
 	Flag(FMONITOR) = 0;
 	j_init(i);
-#ifdef EDIT
 	/* Do this after j_init(), as tty_fd is not initialized 'til then */
 	if (Flag(FTALKING))
 		x_init();
-#endif
 
 	l = genv->loc;
 	l->argv = make_argv(argc - (argi - 1), &argv[argi - 1]);

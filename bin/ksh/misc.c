@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.66 2018/01/14 16:04:21 anton Exp $	*/
+/*	$OpenBSD: misc.c,v 1.67 2018/01/15 14:58:05 jca Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -270,27 +270,25 @@ change_flag(enum sh_flag f,
 		if (what != OF_CMDLINE && newval != oldval)
 			j_change();
 	} else
-#ifdef EDIT
 	if (0
-# ifdef VI
+#ifdef VI
 	    || f == FVI
-# endif /* VI */
-# ifdef EMACS
+#endif /* VI */
+#ifdef EMACS
 	    || f == FEMACS || f == FGMACS
-# endif /* EMACS */
+#endif /* EMACS */
 	   )
 	{
 		if (newval) {
-# ifdef VI
+#ifdef VI
 			Flag(FVI) = 0;
-# endif /* VI */
-# ifdef EMACS
+#endif /* VI */
+#ifdef EMACS
 			Flag(FEMACS) = Flag(FGMACS) = 0;
-# endif /* EMACS */
+#endif /* EMACS */
 			Flag(f) = newval;
 		}
 	} else
-#endif /* EDIT */
 	/* Turning off -p? */
 	if (f == FPRIVILEGED && oldval && !newval) {
 		gid_t gid = getgid();

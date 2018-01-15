@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.h,v 1.20 2018/01/06 16:28:58 millert Exp $	*/
+/*	$OpenBSD: lex.h,v 1.21 2018/01/15 14:58:05 jca Exp $	*/
 
 /*
  * Source input, lexer and parser
@@ -105,14 +105,11 @@ extern YYSTYPE	yylval;		/* result from yylex */
 extern struct ioword *heres[HERES], **herep;
 extern char	ident[IDENT+1];
 
-#ifdef HISTORY
-# define HISTORYSIZE	500	/* size of saved history */
+#define HISTORYSIZE	500	/* size of saved history */
 
 extern char   **history;	/* saved commands */
 extern char   **histptr;	/* last history item */
 extern uint32_t	histsize;	/* history size */
-
-#endif /* HISTORY */
 
 int	yylex(int);
 void	yyerror(const char *, ...)

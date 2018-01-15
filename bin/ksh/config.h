@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.18 2018/01/14 16:04:21 anton Exp $	*/
+/*	$OpenBSD: config.h,v 1.19 2018/01/15 14:58:05 jca Exp $	*/
 
 /* config.h.  NOT generated automatically. */
 
@@ -11,9 +11,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-/* Include any history? */
-#define HISTORY 1
-
 /* Strict POSIX behaviour? */
 /* #undef POSIXLY_CORRECT */
 
@@ -24,15 +21,8 @@
  * End of configuration stuff for PD ksh.
  */
 
-#if defined(EMACS) || defined(VI)
-# define	EDIT
-#else
-# undef		EDIT
+#if !defined(EMACS) && !defined(VI)
+# error "Define either EMACS or VI."
 #endif
-
-/* Editing implies history */
-#if defined(EDIT) && !defined(HISTORY)
-# define HISTORY
-#endif /* EDIT */
 
 #endif /* CONFIG_H */

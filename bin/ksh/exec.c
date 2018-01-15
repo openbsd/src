@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.70 2017/12/27 13:02:57 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.71 2018/01/15 14:58:05 jca Exp $	*/
 
 /*
  * execute command tree
@@ -1239,7 +1239,6 @@ herein(const char *content, int sub)
 	return fd;
 }
 
-#ifdef EDIT
 /*
  *	ksh special - the select command processing section
  *	print the args in column form - assuming that we can
@@ -1365,7 +1364,6 @@ pr_list(char *const *ap)
 
 	return n;
 }
-#endif /* EDIT */
 
 /*
  *	[[ ... ]] evaluation routines

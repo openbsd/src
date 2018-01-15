@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.61 2018/01/06 16:28:58 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.62 2018/01/15 14:58:05 jca Exp $	*/
 
 /*
  * Command line editing - common code
@@ -6,7 +6,6 @@
  */
 
 #include "config.h"
-#ifdef EDIT
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -910,4 +909,3 @@ x_escape(const char *s, size_t len, int (*putbuf_func) (const char *, size_t))
 
 	return (rval);
 }
-#endif /* EDIT */
