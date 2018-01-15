@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.57 2017/08/30 10:33:57 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.58 2018/01/15 15:27:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -588,8 +588,6 @@ cmd_find_get_pane_with_window(struct cmd_find_state *fs, const char *pane)
 
 	/* Try special characters. */
 	if (strcmp(pane, "!") == 0) {
-		if (fs->w->last == NULL)
-			return (-1);
 		fs->wp = fs->w->last;
 		if (fs->wp == NULL)
 			return (-1);
