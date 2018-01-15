@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_main_mode.c,v 1.18 2018/01/04 14:21:00 mpi Exp $	 */
+/* $OpenBSD: ike_main_mode.c,v 1.19 2018/01/15 09:54:48 mpi Exp $	 */
 /* $EOM: ike_main_mode.c,v 1.77 1999/04/25 22:12:34 niklas Exp $	 */
 
 /*
@@ -102,7 +102,7 @@ responder_send_KE_NONCE(struct message *msg)
 	/*
 	 * Calculate DH values & key material in parallel with the message
 	 * going on a roundtrip over the wire.
- 	*/
+	 */
 	message_register_post_send(msg,
 	    (void (*)(struct message *))ike_phase_1_post_exchange_KE_NONCE);
 

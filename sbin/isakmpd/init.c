@@ -1,4 +1,4 @@
-/* $OpenBSD: init.c,v 1.42 2018/01/04 14:21:00 mpi Exp $	 */
+/* $OpenBSD: init.c,v 1.43 2018/01/15 09:54:48 mpi Exp $	 */
 /* $EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	 */
 
 /*
@@ -110,7 +110,7 @@ reinit(void)
 	 *     User-initiated SIGHUP's maybe "authorizes" a wait until
 	 *     next connection-check.
 	 * XXX This means we discard exchange->last_msg, is this really ok?
- 	*/
+	 */
 
 	/* Reread config file.  */
 	conf_reinit();
@@ -129,14 +129,14 @@ reinit(void)
 
 	/*
 	 * Rescan interfaces (call reinit() in all transports).
- 	*/
+	 */
 	transport_reinit();
 
 	/*
 	 * XXX "These" (non-existent) reinitializations should not be done.
 	 * cookie_reinit ();
 	 * ui_reinit ();
- 	*/
+	 */
 
 	sa_reinit();
 }

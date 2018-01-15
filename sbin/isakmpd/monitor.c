@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.75 2018/01/04 14:21:00 mpi Exp $	 */
+/* $OpenBSD: monitor.c,v 1.76 2018/01/15 09:54:48 mpi Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -692,7 +692,7 @@ m_priv_local_sanitize_path(char *path, size_t pmax, int flags)
 	 * We only permit paths starting with
 	 *  /etc/isakmpd/	(read only)
 	 *  /var/run/		(rw)
- 	*/
+	 */
 
 	if (realpath(path, new_path) == NULL ||
 	    realpath("/var/run", var_run) == NULL) {

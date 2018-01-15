@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.113 2018/01/04 14:21:00 mpi Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.114 2018/01/15 09:54:48 mpi Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -302,7 +302,7 @@ check_policy(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	 * Add the authorizer (who is requesting the SA/ID);
 	 * this may be a public or a secret key, depending on
 	 * what mode of authentication we used in Phase 1.
- 	*/
+	 */
 	for (i = 0; i < nprinc; i++) {
 		LOG_DBG((LOG_POLICY, 40, "check_policy: "
 		    "adding authorizer [%s]", principal[i]));
@@ -366,7 +366,7 @@ policydone:
 	 * XXX Currently, check_policy() is only called from
 	 * message_negotiate_sa(), and so this log message reflects this.
 	 * Change to something better?
- 	*/
+	 */
 	if (result == 0)
 		log_print("check_policy: negotiated SA failed policy check");
 
@@ -374,7 +374,7 @@ policydone:
 	 * Given that we have only 2 return values from policy (true/false)
 	 * we can just return the query result directly (no pre-processing
 	 * needed).
- 	*/
+	 */
 	return result;
 }
 
@@ -845,7 +845,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 	 * Add the payloads.  As this is a SA, we need to recompute the
 	 * lengths of the payloads containing others.  We also need to
 	 * reset these payload's "next payload type" field.
- 	*/
+	 */
 	if (message_add_payload(msg, ISAKMP_PAYLOAD_SA, sa_buf, sa_len, 1))
 		goto bail_out;
 	SET_ISAKMP_GEN_LENGTH(sa_buf, sa_len + proposals_len);
@@ -878,7 +878,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 
 	/*
 	 * Save SA payload body in ie->sa_i_b, length ie->sa_i_b_len.
- 	*/
+	 */
 	ie->sa_i_b = message_copy(msg, ISAKMP_GEN_SZ, &ie->sa_i_b_len);
 	if (!ie->sa_i_b)
 		goto bail_out;
@@ -886,7 +886,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 	/*
 	 * Generate a nonce, and add it to the message.
 	 * XXX I want a better way to specify the nonce's size.
- 	*/
+	 */
 	if (exchange_gen_nonce(msg, 16))
 		return -1;
 
@@ -1096,7 +1096,7 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 	 * transform should be given.
 	 *
 	 * XXX Currently we only support negotiating one SA per quick mode run.
- 	*/
+	 */
 	if (TAILQ_NEXT(sa_p, link)) {
 		log_print("initiator_recv_HASH_SA_NONCE: "
 		    "multiple SA payloads in quick mode not supported yet");
@@ -1364,7 +1364,7 @@ post_quick_mode(struct message *msg)
 	/*
 	 * Loop over all SA negotiations and do both an in- and an outgoing SA
 	 * per protocol.
- 	*/
+	 */
 	for (sa = TAILQ_FIRST(&exchange->sa_list); sa;
 	    sa = TAILQ_NEXT(sa, next)) {
 		for (proto = TAILQ_FIRST(&sa->protos); proto;
@@ -1520,7 +1520,7 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 	/*
 	 * Check the payload's integrity.
 	 * XXX Share with ipsec_fill_in_hash?
- 	*/
+	 */
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90, "responder_recv_HASH_SA_NONCE: "
 	    "SKEYID_a", isa->skeyid_a, isa->skeyid_len));
 	prf = prf_alloc(isa->prf_type, isa->hash, isa->skeyid_a,
@@ -1759,7 +1759,7 @@ next_sa:
 
 	/*
 	 * Try to find and set the connection name on the exchange.
- 	*/
+	 */
 
 	/*
 	 * Check for accepted identities as well as lookup the connection
@@ -1767,7 +1767,7 @@ next_sa:
 	 *
 	 * When not using policies make sure the peer proposes sane IDs.
 	 * Otherwise this is done by KeyNote.
- 	*/
+	 */
 	name = connection_passive_lookup_by_ids(ie->id_ci, ie->id_cr);
 	if (name) {
 		exchange->name = strdup(name);

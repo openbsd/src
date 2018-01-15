@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.h,v 1.21 2018/01/04 14:21:00 mpi Exp $	 */
+/* $OpenBSD: transport.h,v 1.22 2018/01/15 09:54:48 mpi Exp $	 */
 /* $EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	 */
 
 /*
@@ -78,7 +78,7 @@ struct transport_vtbl {
 	/*
 	 * Read a message from the transport's incoming pipe and start
 	 * handling it.
- 	*/
+	 */
 	void            (*handle_message) (struct transport *);
 
 	/* Send a message through the outgoing pipe.  */
@@ -87,18 +87,18 @@ struct transport_vtbl {
 	/*
 	 * Fill out a sockaddr structure with the transport's destination end's
 	 * address info.
- 	*/
+	 */
 	void            (*get_dst) (struct transport *, struct sockaddr **);
 
 	/*
 	 * Fill out a sockaddr structure with the transport's source end's
 	 * address info.
- 	*/
+	 */
 	void            (*get_src) (struct transport *, struct sockaddr **);
 
 	/*
 	 * Return a string with decoded src and dst information
- 	*/
+	 */
 	char           *(*decode_ids) (struct transport *);
 
 	/*
@@ -126,7 +126,7 @@ struct transport {
 	 * Prioritized send queue.  Messages in this queue will be transmitted
 	 * before the normal sendq, they will also all be transmitted prior
 	 * to a daemon shutdown.  Currently only used for DELETE notifications.
- 	*/
+	 */
 	struct msg_head prio_sendq;
 
 	/* Flags describing the transport.  */

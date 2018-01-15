@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.141 2018/01/04 14:21:00 mpi Exp $	 */
+/* $OpenBSD: exchange.c,v 1.142 2018/01/15 09:54:48 mpi Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -550,7 +550,7 @@ exchange_lookup(u_int8_t *msg, int phase2)
 	 * 16 at a time, and then masking, should do.  Doing it this way means
 	 * we can validate cookies very fast thus delimiting the effects of
 	 * "Denial of service"-attacks using packet flooding.
- 	*/
+	 */
 	for (i = 0; i < ISAKMP_HDR_COOKIES_LEN; i += 2) {
 		cp = msg + ISAKMP_HDR_COOKIES_OFF + i;
 		/* Doing it this way avoids alignment problems.  */
@@ -593,7 +593,7 @@ exchange_create(int phase, int initiator, int doi, int type)
 	/*
 	 * We want the exchange zeroed for exchange_free to be able to find
 	 * out what fields have been filled-in.
- 	*/
+	 */
 	exchange = calloc(1, sizeof *exchange);
 	if (!exchange) {
 		log_error("exchange_create: calloc (1, %lu) failed",
@@ -928,7 +928,7 @@ exchange_establish_p2(struct sa *isakmp_sa, u_int8_t type, char *name,
 	/*
 	 * Do not create SA's for informational exchanges.
 	 * XXX How to handle new group mode?
- 	*/
+	 */
 	if (exchange->type != ISAKMP_EXCH_INFO &&
 	    exchange->type != ISAKMP_EXCH_TRANSACTION) {
 		/* XXX Number of SAs should come from the args structure.  */
@@ -970,7 +970,7 @@ exchange_setup_p1(struct message *msg, u_int32_t doi)
 	/*
 	 * Unless this is an informational exchange, look up our policy for
 	 * this peer.
- 	*/
+	 */
 	type = GET_ISAKMP_HDR_EXCH_TYPE(msg->iov[0].iov_base);
 	if (type != ISAKMP_EXCH_INFO) {
 		/*
@@ -1341,7 +1341,7 @@ exchange_finalize(struct message *msg)
 	 *
 	 * XXX The decision should really be based on if a SA was installed
 	 * successfully.
- 	*/
+	 */
 	for (sa = TAILQ_FIRST(&exchange->sa_list); sa;
 	    sa = TAILQ_NEXT(sa, next)) {
 		/* Move over the name to the SA.  */
@@ -1396,7 +1396,7 @@ exchange_finalize(struct message *msg)
 	 * ISAKMP SA structure for future initialization of phase 2 exchanges'
 	 * keystates.  Also save the Phase 1 ID and authentication
 	 * information.
- 	*/
+	 */
 	if (exchange->phase == 1 && msg->isakmp_sa) {
 		msg->isakmp_sa->keystate = exchange->keystate;
 		exchange->keystate = 0;
@@ -1462,7 +1462,7 @@ exchange_finalize(struct message *msg)
 	 * it can hurt us if we have short lifetimes on the SAs and we try
 	 * to call exchange_report, where the SA list will be walked and
 	 * references to freed SAs can occur.
- 	*/
+	 */
 	while (TAILQ_FIRST(&exchange->sa_list)) {
 		sa = TAILQ_FIRST(&exchange->sa_list);
 
@@ -1675,7 +1675,7 @@ exchange_add_certs(struct message *msg)
 	 * Note: A 'return -1' breaks X509-auth interop in the responder case
 	 *       with some IPsec clients that send CERTREQs early (such as
 	 *       the SSH Sentinel).
- 	*/
+	 */
 	if (!id)
 		return 0;
 
@@ -1761,7 +1761,7 @@ exchange_establish(char *name, void (*finalize)(struct exchange *, void *,
 	/*
 	 * First of all, never try to establish anything if another exchange
 	 * of the same kind is running.
- 	*/
+	 */
 	exchange = exchange_lookup_by_name(name, phase);
 	if (exchange) {
 		LOG_DBG((LOG_EXCHANGE, 40,

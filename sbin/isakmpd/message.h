@@ -1,4 +1,4 @@
-/* $OpenBSD: message.h,v 1.28 2018/01/04 14:21:00 mpi Exp $	 */
+/* $OpenBSD: message.h,v 1.29 2018/01/15 09:54:48 mpi Exp $	 */
 /* $EOM: message.h,v 1.51 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -56,7 +56,7 @@ struct payload {
 	/*
 	 * A pointer to the parent payload, used for proposal and transform
 	 * payloads.
- 	*/
+	 */
 	struct payload *context;
 
 	/* Payload flags described below.  */
@@ -90,13 +90,13 @@ struct message {
 	/*
 	 * This is the transport the message either arrived on or will be sent
 	 * to.
- 	*/
+	 */
 	struct transport *transport;
 
 	/*
 	 * This is the ISAKMP SA protecting this message.
 	 * XXX Needs to be redone to some keystate pointer or something.
- 	*/
+	 */
 	struct sa      *isakmp_sa;
 
 	/* This is the exchange where this message appears.  */
@@ -109,7 +109,7 @@ struct message {
 	 * will be one payload, after encryption segment 0 will be the
 	 * unencrypted header, and segment 1 will be the encrypted payloads,
 	 * all of them.
- 	*/
+	 */
 	struct iovec   *iov;
 
 	/* The segment count.  */
@@ -134,13 +134,13 @@ struct message {
 	/*
 	 * Extra baggage needed to travel with the message.  Used transiently
 	 * in context sensitive ways.
- 	*/
+	 */
 	void           *extra;
 
 	/*
 	 * Hooks for stuff needed to be done after the message has gone out to
 	 * the wire.
- 	*/
+	 */
 	TAILQ_HEAD(post_send_head, post_send) post_send;
 };
 
