@@ -23,6 +23,7 @@
 #include <asr.h>
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <event.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -43,6 +44,7 @@ static void	dispatch_a(struct dns_rr *);
 static void	dispatch_aaaa(struct dns_rr *);
 static void	lookup_record(int, const char *, void (*)(struct dns_rr *));
 static void	dispatch_record(struct asr_result *, void *);
+static ssize_t	parse_txt(const char *, size_t, char *, size_t);
 
 int     ip_v4 = 0;
 int     ip_v6 = 0;
@@ -140,14 +142,19 @@ dispatch_record(struct asr_result *ar, void *arg)
 void
 dispatch_txt(struct dns_rr *rr)
 {
-        char buf[512];
+        char buf[4096];
         char buf2[512];
         char *in = buf;
         char *argv[512];
         char **ap = argv;
 	char *end;
-	
-	print_dname(rr->rr.other.rdata, buf, sizeof(buf));
+	ssize_t n;
+
+	n = parse_txt(rr->rr.other.rdata, rr->rr.other.rdlen, buf, sizeof(buf));
+	if (n == -1 || n == sizeof(buf))
+		return;
+	buf[n] = '\0';
+
 	if (strncasecmp("v=spf1 ", buf, 7))
 		return;
 
@@ -237,4 +244,39 @@ dispatch_aaaa(struct dns_rr *rr)
 	if ((ptr = inet_ntop(AF_INET6, &rr->rr.in_aaaa.addr6,
 	    buffer, sizeof buffer)))
 		printf("%s\n", ptr);
+}
+
+static ssize_t
+parse_txt(const char *rdata, size_t rdatalen, char *dst, size_t dstsz)
+{
+	size_t len;
+	ssize_t r = 0;
+
+	while (rdatalen) {
+		len = *(const unsigned char *)rdata;
+		if (len >= rdatalen) {
+			errno = EINVAL;
+			return -1;
+		}
+
+		rdata++;
+		rdatalen--;
+
+		if (len == 0)
+			continue;
+
+		if (len >= dstsz) {
+			errno = EOVERFLOW;
+			return -1;
+		}
+		memmove(dst, rdata, len);
+		dst += len;
+		dstsz -= len;
+
+		rdata += len;
+		rdatalen -= len;
+		r += len;
+	}
+
+	return r;
 }
