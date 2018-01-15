@@ -1,4 +1,4 @@
-# $OpenBSD: bsd.regress.mk,v 1.13 2014/07/19 18:15:53 miod Exp $
+# $OpenBSD: bsd.regress.mk,v 1.14 2018/01/15 20:38:47 bluhm Exp $
 # Documented in bsd.regress.mk(5)
 
 # No man pages for regression tests.
@@ -16,22 +16,6 @@ NOPROG=
 
 .MAIN: all
 all: regress
-
-# Check for deprecated REGRESS* variables and assign them to the
-# new versions if the new version is not already defined. 
-_REGRESS_DEPRECATED=LOG:LOG SKIPTARGETS:SKIP_TARGETS SKIPSLOW:SKIP_SLOW \
-	SKIP:SKIP TARGETS:TARGETS MAXTIME:MAXTIME ROOTTARGETS:ROOT_TARGETS
-
-.for _I in ${_REGRESS_DEPRECATED}
-_REGRESS_OLD=REGRESS${_I:C/\:.*//}
-_REGRESS_NEW=REGRESS_${_I:C/.*\://}
-.  if defined(${_REGRESS_OLD})
-ERRORS:= ${ERRORS} "Warning: ${_REGRESS_OLD} is deprecated, use ${_REGRESS_NEW} instead."
-.    if !defined(${_REGRESS_NEW})
-${_REGRESS_NEW}:=${${_REGRESS_OLD}}
-.    endif
-.  endif
-.endfor
 
 # XXX - Need full path to REGRESS_LOG, otherwise there will be much pain.
 REGRESS_LOG?=/dev/null
