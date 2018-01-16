@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.35 2016/03/20 00:01:21 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.36 2018/01/16 22:52:32 jca Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -86,21 +86,37 @@ bi_errorf(const char *fmt, ...)
 	}
 }
 
-/* Called when something that shouldn't happen does */
+static void
+internal_error_vwarn(const char *fmt, va_list va)
+{
+	error_prefix(true);
+	shf_fprintf(shl_out, "internal error: ");
+	shf_vfprintf(shl_out, fmt, va);
+	shf_putchar('\n', shl_out);
+	shf_flush(shl_out);
+}
+
+/* Warn when something that shouldn't happen does */
 void
-internal_errorf(int jump, const char *fmt, ...)
+internal_warningf(const char *fmt, ...)
 {
 	va_list va;
 
-	error_prefix(true);
-	shf_fprintf(shl_out, "internal error: ");
 	va_start(va, fmt);
-	shf_vfprintf(shl_out, fmt, va);
+	internal_error_vwarn(fmt, va);
 	va_end(va);
-	shf_putchar('\n', shl_out);
-	shf_flush(shl_out);
-	if (jump)
-		unwind(LERROR);
+}
+
+/* Warn and unwind when something that shouldn't happen does */
+__dead void
+internal_errorf(const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	internal_error_vwarn(fmt, va);
+	va_end(va);
+	unwind(LERROR);
 }
 
 /* used by error reporting functions to print "ksh: .kshrc[25]: " */
@@ -139,7 +155,7 @@ shprintf(const char *fmt, ...)
 	va_list va;
 
 	if (!shl_stdout_ok)
-		internal_errorf(1, "shl_stdout not valid");
+		internal_errorf("shl_stdout not valid");
 	va_start(va, fmt);
 	shf_vfprintf(shl_stdout, fmt, va);
 	va_end(va);

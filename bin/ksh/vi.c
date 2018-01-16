@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.54 2018/01/13 02:06:54 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.55 2018/01/16 22:52:32 jca Exp $	*/
 
 /*
  *	vi command editing
@@ -1669,7 +1669,7 @@ grabhist(int save, int n)
 	}
 	(void) histnum(n);
 	if ((hptr = *histpos()) == NULL) {
-		internal_errorf(0, "grabhist: bad history array");
+		internal_warningf("grabhist: bad history array");
 		return -1;
 	}
 	if (save)

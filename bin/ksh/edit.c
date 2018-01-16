@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.62 2018/01/15 14:58:05 jca Exp $	*/
+/*	$OpenBSD: edit.c,v 1.63 2018/01/16 22:52:32 jca Exp $	*/
 
 /*
  * Command line editing - common code
@@ -372,7 +372,7 @@ x_file_glob(int flags, const char *str, int slen, char ***wordsp)
 	source = s;
 	if (yylex(ONEWORD|UNESCAPE) != LWORD) {
 		source = sold;
-		internal_errorf(0, "fileglob: substitute error");
+		internal_warningf("fileglob: substitute error");
 		return 0;
 	}
 	source = sold;
@@ -616,12 +616,12 @@ x_try_array(const char *buf, int buflen, const char *want, int wantlen,
 
 	/* Try to find the array. */
 	if (asprintf(&name, "complete_%.*s_%d", cmdlen, cmd, n) < 0)
-		internal_errorf(1, "unable to allocate memory");
+		internal_errorf("unable to allocate memory");
 	v = global(name);
 	free(name);
 	if (~v->flag & (ISSET|ARRAY)) {
 		if (asprintf(&name, "complete_%.*s", cmdlen, cmd) < 0)
-			internal_errorf(1, "unable to allocate memory");
+			internal_errorf("unable to allocate memory");
 		v = global(name);
 		free(name);
 		if (~v->flag & (ISSET|ARRAY))

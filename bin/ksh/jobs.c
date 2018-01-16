@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.58 2018/01/08 22:22:28 benno Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.59 2018/01/16 22:52:32 jca Exp $	*/
 
 /*
  * Process and job control
@@ -411,7 +411,7 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 	/* link process into jobs list */
 	if (flags&XPIPEI) {	/* continuing with a pipe */
 		if (!last_job)
-			internal_errorf(1,
+			internal_errorf(
 			    "exchild: XPIPEI and no last_job - pid %d",
 			    (int) procpid);
 		j = last_job;
@@ -522,7 +522,7 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 		tty_close();
 		cleartraps();
 		execute(t, (flags & XERROK) | XEXEC, NULL); /* no return */
-		internal_errorf(0, "exchild: execute() returned");
+		internal_warningf("exchild: execute() returned");
 		unwind(LLEAVE);
 		/* NOTREACHED */
 	}
@@ -590,7 +590,7 @@ waitlast(void)
 		if (!j)
 			warningf(true, "waitlast: no last job");
 		else
-			internal_errorf(0, "waitlast: not started");
+			internal_warningf("waitlast: not started");
 		sigprocmask(SIG_SETMASK, &omask, NULL);
 		return 125; /* not so arbitrary, non-zero value */
 	}
@@ -931,7 +931,7 @@ j_set_async(Job *j)
 	if (async_job && (async_job->flags & (JF_KNOWN|JF_ZOMBIE)) == JF_ZOMBIE)
 		remove_job(async_job, "async");
 	if (!(j->flags & JF_STARTED)) {
-		internal_errorf(0, "j_async: job not started");
+		internal_warningf("j_async: job not started");
 		return;
 	}
 	async_job = j;
@@ -945,8 +945,8 @@ j_set_async(Job *j)
 		if (!oldest) {
 			/* XXX debugging */
 			if (!(async_job->flags & JF_ZOMBIE) || nzombie != 1) {
-				internal_errorf(0,
-				    "j_async: bad nzombie (%d)", nzombie);
+				internal_warningf("j_async: bad nzombie (%d)",
+				    nzombie);
 				nzombie = 0;
 			}
 			break;
@@ -1186,7 +1186,7 @@ check_job(Job *j)
 
 	/* XXX debugging (nasty - interrupt routine using shl_out) */
 	if (!(j->flags & JF_STARTED)) {
-		internal_errorf(0, "check_job: job started (flags 0x%x)",
+		internal_warningf("check_job: job started (flags 0x%x)",
 		    j->flags);
 		return;
 	}
@@ -1546,7 +1546,7 @@ remove_job(Job *j, const char *where)
 	for (; curr != NULL && curr != j; prev = &curr->next, curr = *prev)
 		;
 	if (curr != j) {
-		internal_errorf(0, "remove_job: job not found (%s)", where);
+		internal_warningf("remove_job: job not found (%s)", where);
 		return;
 	}
 	*prev = curr->next;

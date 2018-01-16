@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ulimit.c,v 1.25 2018/01/16 20:40:43 anton Exp $	*/
+/*	$OpenBSD: c_ulimit.c,v 1.26 2018/01/16 22:52:32 jca Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -97,7 +97,7 @@ c_ulimit(char **wp)
 			for (l = limits; l->name && l->option != optc; l++)
 				;
 			if (!l->name) {
-				internal_errorf(0, "ulimit: %c", optc);
+				internal_warningf("ulimit: %c", optc);
 				return 1;
 			}
 			if (builtin_opt.optarg) {

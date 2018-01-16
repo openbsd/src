@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.24 2017/12/27 13:02:57 millert Exp $	*/
+/*	$OpenBSD: table.c,v 1.25 2018/01/16 22:52:32 jca Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -128,7 +128,7 @@ ktenter(struct table *tp, const char *n, unsigned int h)
 		if (tp->size <= INT_MAX/2)
 			texpand(tp, 2*tp->size);
 		else
-			internal_errorf(1, "too many vars");
+			internal_errorf("too many vars");
 		goto Search;
 	}
 

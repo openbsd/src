@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.30 2016/03/17 23:33:23 mmcc Exp $	*/
+/*	$OpenBSD: trap.c,v 1.31 2018/01/16 22:52:32 jca Exp $	*/
 
 /*
  * signal handling
@@ -402,7 +402,7 @@ setexecsig(Trap *p, int restore)
 {
 	/* XXX debugging */
 	if (!(p->flags & (TF_ORIG_IGN|TF_ORIG_DFL)))
-		internal_errorf(1, "setexecsig: unset signal %d(%s)",
+		internal_errorf("setexecsig: unset signal %d(%s)",
 		    p->signal, p->name);
 
 	/* restore original value for exec'd kids */

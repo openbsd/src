@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.58 2018/01/14 16:04:21 anton Exp $	*/
+/*	$OpenBSD: eval.c,v 1.59 2018/01/16 22:52:32 jca Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -69,7 +69,7 @@ substitute(const char *cp, int f)
 	s->start = s->str = cp;
 	source = s;
 	if (yylex(ONEWORD) != LWORD)
-		internal_errorf(1, "substitute");
+		internal_errorf("substitute");
 	source = sold;
 	afree(s, ATEMP);
 	return evalstr(yylval.cp, f);
@@ -168,7 +168,7 @@ expand(char *cp,	/* input word */
 	size_t len;
 
 	if (cp == NULL)
-		internal_errorf(1, "expand(NULL)");
+		internal_errorf("expand(NULL)");
 	/* for alias, readonly, set, typeset commands */
 	if ((f & DOVACHECK) && is_wdvarassign(cp)) {
 		f &= ~(DOVACHECK|DOBLANK|DOGLOB|DOTILDE);
@@ -587,7 +587,7 @@ expand(char *cp,	/* input word */
 					char *p;
 
 					if ((p = strdup("")) == NULL)
-						internal_errorf(1, "unable "
+						internal_errorf("unable "
 						    "to allocate memory");
 					XPput(*wp, p);
 				}

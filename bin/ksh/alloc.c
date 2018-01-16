@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.18 2017/11/02 06:55:35 tb Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.19 2018/01/16 22:52:32 jca Exp $	*/
 
 /* Public domain, like most of the rest of ksh */
 
@@ -45,11 +45,11 @@ alloc(size_t size, Area *ap)
 
 	/* ensure that we don't overflow by allocating space for link */
 	if (size > SIZE_MAX - sizeof(struct link))
-		internal_errorf(1, "unable to allocate memory");
+		internal_errorf("unable to allocate memory");
 
 	l = malloc(sizeof(struct link) + size);
 	if (l == NULL)
-		internal_errorf(1, "unable to allocate memory");
+		internal_errorf("unable to allocate memory");
 	l->next = ap->freelist;
 	l->prev = NULL;
 	if (ap->freelist)
@@ -73,7 +73,7 @@ areallocarray(void *ptr, size_t nmemb, size_t size, Area *ap)
 	/* condition logic cloned from calloc() */
 	if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
 	    nmemb > 0 && SIZE_MAX / nmemb < size) {
-		internal_errorf(1, "unable to allocate memory");
+		internal_errorf("unable to allocate memory");
 	}
 
 	return aresize(ptr, nmemb * size, ap);
@@ -89,7 +89,7 @@ aresize(void *ptr, size_t size, Area *ap)
 
 	/* ensure that we don't overflow by allocating space for link */
 	if (size > SIZE_MAX - sizeof(struct link))
-		internal_errorf(1, "unable to allocate memory");
+		internal_errorf("unable to allocate memory");
 
 	l = P2L(ptr);
 	lprev = l->prev;
@@ -97,7 +97,7 @@ aresize(void *ptr, size_t size, Area *ap)
 
 	l2 = realloc(l, sizeof(struct link) + size);
 	if (l2 == NULL)
-		internal_errorf(1, "unable to allocate memory");
+		internal_errorf("unable to allocate memory");
 	if (lprev)
 		lprev->next = l2;
 	else
