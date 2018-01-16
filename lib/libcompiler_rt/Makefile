@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2017/12/26 20:59:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.12 2018/01/16 23:04:42 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -29,8 +29,6 @@ RTARCH=	${MACHINE_ARCH}
 GEN_SRCS=	absvdi2 \
 		absvsi2 \
 		absvti2 \
-		adddf3 \
-		addsf3 \
 		addtf3 \
 		addvdi3 \
 		addvsi3 \
@@ -56,13 +54,10 @@ GEN_SRCS=	absvdi2 \
 		ctzsi2 \
 		ctzti2 \
 		divdc3 \
-		divdf3 \
 		divdi3 \
 		divmoddi4 \
 		divmodsi4 \
 		divsc3 \
-		divsf3 \
-		divsi3 \
 		divtc3 \
 		divti3 \
 		divtf3 \
@@ -70,21 +65,14 @@ GEN_SRCS=	absvdi2 \
 		emutls \
 		enable_execute_stack \
 		eprintf \
-		extendsfdf2 \
 		extendhfsf2 \
 		ffsdi2 \
 		ffssi2 \
 		ffsti2 \
-		fixdfdi \
-		fixdfsi \
 		fixdfti \
-		fixsfdi \
-		fixsfsi \
 		fixsfti \
-		fixunsdfdi \
 		fixunsdfsi \
 		fixunsdfti \
-		fixunssfdi \
 		fixunssfsi \
 		fixunssfti \
 		fixunsxfdi \
@@ -92,8 +80,6 @@ GEN_SRCS=	absvdi2 \
 		fixunsxfti \
 		fixxfdi \
 		fixxfti \
-		floatsidf \
-		floatsisf \
 		floattidf \
 		floattisf \
 		floattixf \
@@ -110,13 +96,11 @@ GEN_SRCS=	absvdi2 \
 		modsi3 \
 		modti3 \
 		muldc3 \
-		muldf3 \
 		muldi3 \
 		mulodi4 \
 		mulosi4 \
 		muloti4 \
 		mulsc3 \
-		mulsf3 \
 		multi3 \
 		multf3 \
 		mulvdi3 \
@@ -140,15 +124,12 @@ GEN_SRCS=	absvdi2 \
 		powisf2 \
 		powitf2 \
 		powixf2 \
-		subdf3 \
-		subsf3 \
 		subvdi3 \
 		subvsi3 \
 		subvti3 \
 		subtf3 \
 		trampoline_setup \
 		truncdfhf2 \
-		truncdfsf2 \
 		truncsfhf2 \
 		ucmpdi2 \
 		ucmpti2 \
@@ -156,11 +137,33 @@ GEN_SRCS=	absvdi2 \
 		udivmoddi4 \
 		udivmodsi4 \
 		udivmodti4 \
-		udivsi3 \
 		udivti3 \
 		umoddi3 \
 		umodsi3 \
 		umodti3
+
+.if ${RTARCH} != "arm"
+GEN_SRCS+=	adddf3 \
+		addsf3 \
+		divdf3 \
+		divsf3 \
+		divsi3 \
+		extendsfdf2 \
+		fixdfdi \
+		fixdfsi \
+		fixsfdi \
+		fixsfsi \
+		fixunsdfdi \
+		fixunssfdi \
+		floatsidf \
+		floatsisf \
+		muldf3 \
+		mulsf3 \
+		subdf3 \
+		subsf3 \
+		truncdfsf2 \
+		udivsi3
+.endif
 
 .if ${RTARCH} == "i386"
 SRCS+=	floatdidf.c \
@@ -217,13 +220,11 @@ SRCS+=	aeabi_cdcmp.S \
 	aeabi_drsub.c \
 	aeabi_fcmp.S \
 	aeabi_frsub.c \
-	aeabi_idivmod.S \
 	aeabi_ldivmod.S \
 	aeabi_memcmp.S \
 	aeabi_memcpy.S \
 	aeabi_memmove.S \
 	aeabi_memset.S \
-	aeabi_uidivmod.S \
 	aeabi_uldivmod.S \
 	switch16.S \
 	switch32.S \
