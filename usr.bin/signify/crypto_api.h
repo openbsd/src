@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_api.h,v 1.1 2014/07/22 00:41:19 deraadt Exp $ */
+/* $OpenBSD: crypto_api.h,v 1.2 2018/01/16 21:42:40 naddy Exp $ */
 
 /*
  * Assembled from generated headers and source files by Markus Friedl.
@@ -15,9 +15,6 @@ typedef int32_t crypto_int32;
 typedef uint32_t crypto_uint32;
 
 #define randombytes(buf, buf_len) arc4random_buf((buf), (buf_len))
-
-#define crypto_hashblocks_sha512_STATEBYTES 64U
-#define crypto_hashblocks_sha512_BLOCKBYTES 128U
 
 int	crypto_hashblocks_sha512(unsigned char *, const unsigned char *,
      unsigned long long);
