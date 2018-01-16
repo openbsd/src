@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.232 2018/01/15 13:48:31 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.233 2018/01/16 10:33:55 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -356,7 +356,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		return (0);
 	}
 
-	if (ifp->if_flags & IFF_NOARP)
+	if (ifp->if_flags & (IFF_NOARP|IFF_STATICARP))
 		goto bad;
 
 	/*

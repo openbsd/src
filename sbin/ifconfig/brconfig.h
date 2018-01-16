@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.h,v 1.11 2016/09/02 10:01:36 goda Exp $	*/
+/*	$OpenBSD: brconfig.h,v 1.12 2018/01/16 10:33:55 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -70,7 +70,7 @@ void switch_datapathid(const char *, int);
 void switch_portno(const char *, const char *);
 
 #define	IFFBITS								\
-	"\024\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS" \
+	"\024\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6STATICARP" \
 	"\7RUNNING\10NOARP\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX"	\
 	"\15LINK0\16LINK1\17LINK2\20MULTICAST"	\
 	"\23INET6_NOPRIVACY\24MPLS\25WOL\26AUTOCONF6"

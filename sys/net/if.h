@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.189 2017/12/21 01:11:47 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.190 2018/01/16 10:33:55 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -184,34 +184,43 @@ struct if_status_description {
  */
 #define	IFDESCRSIZE	64
 
-#define	IFF_UP		0x1		/* interface is up */
-#define	IFF_BROADCAST	0x2		/* broadcast address valid */
-#define	IFF_DEBUG	0x4		/* turn on debugging */
-#define	IFF_LOOPBACK	0x8		/* is a loopback net */
-#define	IFF_POINTOPOINT	0x10		/* interface is point-to-point link */
-#define	IFF_NOTRAILERS	0x20		/* avoid use of trailers */
-#define	IFF_RUNNING	0x40		/* resources allocated */
-#define	IFF_NOARP	0x80		/* no address resolution protocol */
-#define	IFF_PROMISC	0x100		/* receive all packets */
-#define	IFF_ALLMULTI	0x200		/* receive all multicast packets */
-#define	IFF_OACTIVE	0x400		/* transmission in progress */
-#define	IFF_SIMPLEX	0x800		/* can't hear own transmissions */
-#define	IFF_LINK0	0x1000		/* per link layer defined bit */
-#define	IFF_LINK1	0x2000		/* per link layer defined bit */
-#define	IFF_LINK2	0x4000		/* per link layer defined bit */
-#define	IFF_MULTICAST	0x8000		/* supports multicast */
+/*
+ * Interface flags can be either owned by the stack or the driver.  The
+ * symbols below document who is toggling which flag.
+ *
+ *	I	immutable after creation
+ *	N	written by the stack (upon user request)
+ *	d	written by the driver
+ *	c	for userland compatibility only
+ */
+#define	IFF_UP		0x1		/* [N] interface is up */
+#define	IFF_BROADCAST	0x2		/* [I] broadcast address valid */
+#define	IFF_DEBUG	0x4		/* [N] turn on debugging */
+#define	IFF_LOOPBACK	0x8		/* [I] is a loopback net */
+#define	IFF_POINTOPOINT	0x10		/* [I] is point-to-point link */
+#define	IFF_STATICARP	0x20		/* [N] only static ARP */
+#define	IFF_RUNNING	0x40		/* [d] resources allocated */
+#define	IFF_NOARP	0x80		/* [N] no address resolution protocol */
+#define	IFF_PROMISC	0x100		/* [N] receive all packets */
+#define	IFF_ALLMULTI	0x200		/* [d] receive all multicast packets */
+#define	IFF_OACTIVE	0x400		/* [c] transmission in progress */
+#define	IFF_SIMPLEX	0x800		/* [I] can't hear own transmissions */
+#define	IFF_LINK0	0x1000		/* [N] per link layer defined bit */
+#define	IFF_LINK1	0x2000		/* [N] per link layer defined bit */
+#define	IFF_LINK2	0x4000		/* [N] per link layer defined bit */
+#define	IFF_MULTICAST	0x8000		/* [I] supports multicast */
 
 /* flags set internally only: */
 #define	IFF_CANTCHANGE \
 	(IFF_BROADCAST|IFF_POINTOPOINT|IFF_RUNNING|IFF_OACTIVE|\
 	    IFF_SIMPLEX|IFF_MULTICAST|IFF_ALLMULTI)
 
-#define	IFXF_MPSAFE		0x1		/* if_start is mpsafe */
-#define	IFXF_CLONED		0x2		/* pseudo interface */
-#define	IFXF_INET6_NOPRIVACY	0x4		/* don't autoconf privacy */
-#define	IFXF_MPLS		0x8		/* supports MPLS */
-#define	IFXF_WOL		0x10		/* wake on lan enabled */
-#define	IFXF_AUTOCONF6		0x20		/* v6 autoconf enabled */
+#define	IFXF_MPSAFE		0x1	/* [I] if_start is mpsafe */
+#define	IFXF_CLONED		0x2	/* [I] pseudo interface */
+#define	IFXF_INET6_NOPRIVACY	0x4	/* [N] don't autoconf privacy */
+#define	IFXF_MPLS		0x8	/* [N] supports MPLS */
+#define	IFXF_WOL		0x10	/* [N] wake on lan enabled */
+#define	IFXF_AUTOCONF6		0x20	/* [N] v6 autoconf enabled */
 
 #define	IFXF_CANTCHANGE \
 	(IFXF_MPSAFE|IFXF_CLONED)
