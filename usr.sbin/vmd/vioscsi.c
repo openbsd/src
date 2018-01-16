@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.2 2018/01/15 04:26:58 ccardenas Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.3 2018/01/16 06:10:45 ccardenas Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -768,6 +768,105 @@ vioscsi_handle_read_capacity_16(struct vioscsi_dev *dev,
 free_read_capacity_16:
 	free(r_cap_data_16);
 read_capacity_16_out:
+	return (ret);
+}
+
+static int
+vioscsi_handle_report_luns(struct vioscsi_dev *dev,
+    struct virtio_scsi_req_hdr *req, struct virtio_vq_acct *acct)
+{
+	int ret = 0;
+	struct virtio_scsi_res_hdr resp;
+	uint32_t rpl_length;
+	struct scsi_report_luns *rpl;
+	struct vioscsi_report_luns_data *reply_rpl;
+
+	memset(&resp, 0, sizeof(resp));
+	rpl = (struct scsi_report_luns *)(req->cdb);
+	rpl_length = _4btol(rpl->length);
+
+	log_debug("%s: REPORT_LUNS Report 0x%x Length %d", __func__,
+	    rpl->selectreport, rpl_length);
+
+	if (rpl_length < RPL_MIN_SIZE) {
+		log_debug("%s: RPL_Length %d < %d (RPL_MIN_SIZE)", __func__,
+		    rpl_length, RPL_MIN_SIZE);
+
+		vioscsi_prepare_resp(&resp,
+		    VIRTIO_SCSI_S_OK, SCSI_CHECK, SKEY_ILLEGAL_REQUEST,
+		    SENSE_ILLEGAL_CDB_FIELD, SENSE_DEFAULT_ASCQ);
+
+		/* Move index for response */
+		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
+		    acct->req_desc, &(acct->resp_idx));
+
+		if (write_mem(acct->resp_desc->addr, &resp,
+		    acct->resp_desc->len)) {
+			log_warnx("%s: unable to set ERR "
+			    "status data @ 0x%llx", __func__,
+			    acct->resp_desc->addr);
+		} else {
+			ret = 1;
+			dev->cfg.isr_status = 1;
+			/* Move ring indexes */
+			vioscsi_next_ring_item(dev, acct->avail, acct->used,
+			    acct->req_desc, acct->req_idx);
+		}
+		goto rpl_out;
+
+	}
+	
+	reply_rpl = calloc(1, sizeof(*reply_rpl));
+
+	if (reply_rpl == NULL) {
+		log_warnx("%s: cannot alloc reply_rpl", __func__);
+		goto rpl_out;
+	}
+
+	_lto4b(RPL_SINGLE_LUN, reply_rpl->length);
+	memcpy(reply_rpl->lun, req->lun, RPL_SINGLE_LUN);
+
+	vioscsi_prepare_resp(&resp,
+	    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
+
+	/* Move index for response */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing resp to 0x%llx size %d at local "
+	    "idx %d req_idx %d global_idx %d", __func__, acct->resp_desc->addr,
+	    acct->resp_desc->len, acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, &resp, acct->resp_desc->len)) {
+		log_warnx("%s: unable to write OK resp status data @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+		goto free_rpl;
+	}
+
+	/* Move index for reply_rpl */
+	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
+	    &(acct->resp_idx));
+
+	dprintf("%s: writing reply_rpl to 0x%llx size %d at "
+	    "local idx %d req_idx %d global_idx %d",
+	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
+	    acct->resp_idx, acct->req_idx, acct->idx);
+
+	if (write_mem(acct->resp_desc->addr, reply_rpl, acct->resp_desc->len)) {
+		log_warnx("%s: unable to write reply_rpl"
+		    " response to gpa @ 0x%llx",
+		    __func__, acct->resp_desc->addr);
+	} else {
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		/* Move ring indexes */
+		vioscsi_next_ring_item(dev, acct->avail, acct->used,
+		    acct->req_desc, acct->req_idx);
+	}
+	
+free_rpl:
+	free(reply_rpl);
+rpl_out:
 	return (ret);
 }
 
@@ -2213,6 +2312,15 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 			break;
 		case MECHANISM_STATUS:
 			ret = vioscsi_handle_mechanism_status(dev, &req, &acct);
+			if (ret) {
+				if (write_mem(q_gpa, vr, vr_sz)) {
+					log_warnx("%s: error writing vioring",
+					    __func__);
+				}
+			}
+			break;
+		case REPORT_LUNS:
+			ret = vioscsi_handle_report_luns(dev, &req, &acct);
 			if (ret) {
 				if (write_mem(q_gpa, vr, vr_sz)) {
 					log_warnx("%s: error writing vioring",

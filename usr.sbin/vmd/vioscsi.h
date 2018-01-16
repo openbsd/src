@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.h,v 1.1 2018/01/03 05:39:56 ccardenas Exp $  */
+/*	$OpenBSD: vioscsi.h,v 1.2 2018/01/16 06:10:45 ccardenas Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -58,6 +58,8 @@
 
 #define G_CONFIG_REPLY_SIZE		56
 #define G_CONFIG_REPLY_SIZE_HEX		0x0034
+
+#define RPL_MIN_SIZE			16
 
 /* Opcodes not defined in scsi */
 #define GET_EVENT_STATUS_NOTIFICATION	0x4a
@@ -228,4 +230,15 @@ struct scsi_config_random_read_descriptor {
 	u_int8_t blocking_type[2];
 #define CONFIG_RANDOM_READ_BLOCKING_TYPE	0x0010
 	u_int8_t unused[2];
+};
+
+/* 
+ * Variant of scsi_report_luns_data in scsi_all.h 
+ * but with only one lun in the lun list
+ */
+struct vioscsi_report_luns_data {
+	u_int8_t length[4];
+	u_int8_t reserved[4];
+#define RPL_SINGLE_LUN			8
+	u_int8_t lun[RPL_SINGLE_LUN];
 };
