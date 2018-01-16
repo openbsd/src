@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.125 2016/03/29 14:53:27 mestre Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.126 2018/01/16 17:07:49 cheloha Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -21,7 +21,6 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 #include <sys/wait.h>
 
 #include <netinet/in.h>
@@ -39,6 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "pathnames.h"
@@ -65,7 +65,7 @@ char	 luser[LOGIN_NAME_MAX];	/* username */
 char	 ipsrc[256];		/* ip as a string */
 char	 pidfile[PATH_MAX];	/* we save pid in this file. */
 
-struct timeval	Tstart, Tend;	/* start and end times of session */
+struct timespec	Tstart, Tend;	/* start and end times of session */
 
 volatile sig_atomic_t	want_death;
 static void		need_death(int signo);
@@ -819,12 +819,12 @@ change_filter(int add, const char *luser, const char *ipsrc)
 			goto error;
 		}
 
-		gettimeofday(&Tstart, NULL);
+		clock_gettime(CLOCK_MONOTONIC, &Tstart);
 		syslog(LOG_INFO, "allowing %s, user %s", ipsrc, luser);
 	} else {
 		remove_stale_rulesets();
 
-		gettimeofday(&Tend, NULL);
+		clock_gettime(CLOCK_MONOTONIC, &Tend);
 		syslog(LOG_INFO, "removed %s, user %s - duration %d seconds",
 		    ipsrc, luser, (int)(Tend.tv_sec - Tstart.tv_sec));
 	}
