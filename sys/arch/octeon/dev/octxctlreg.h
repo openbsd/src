@@ -1,4 +1,4 @@
-/*	$OpenBSD: octxctlreg.h,v 1.1 2017/08/01 16:18:12 visa Exp $	*/
+/*	$OpenBSD: octxctlreg.h,v 1.2 2018/01/16 15:50:28 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -76,7 +76,7 @@
 #define DWC3_GSNPSID			0xc120
 
 #define DWC3_GUSB2PHYCFG(n)		(0xc200 + ((n) * 0x04))
-#define   DWC3_GUSB2PHYCFG_SUSPHY		0x00000060u
+#define   DWC3_GUSB2PHYCFG_SUSPHY		0x00000040u
 
 #define DWC3_GUSB3PIPECTL(n)		(0xc2c0 + ((n) * 0x04))
 #define   DWC3_GUSB3PIPECTL_UX_EXIT_PX		0x08000000u
