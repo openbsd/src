@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.298 2018/01/12 16:41:00 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.299 2018/01/16 17:03:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -977,17 +977,23 @@ tty_draw_line(struct tty *tty, const struct window_pane *wp,
 		}
 
 		if (gcp->flags & GRID_FLAG_SELECTED)
-			screen_select_cell(s, &last, &gc);
+			screen_select_cell(s, &last, gcp);
 		else
-			memcpy(&last, &gc, sizeof last);
-		if (ux + gcp->data.width > screen_size_x(s))
+			memcpy(&last, gcp, sizeof last);
+		if (ux + gcp->data.width > screen_size_x(s)) {
+			tty_attributes(tty, &last, wp);
 			for (j = 0; j < gcp->data.width; j++) {
 				if (ux + j > screen_size_x(s))
 					break;
 				tty_putc(tty, ' ');
 				ux++;
 			}
-		else {
+		} else if (gcp->attr & GRID_ATTR_CHARSET) {
+			tty_attributes(tty, &last, wp);
+			for (j = 0; j < gcp->data.size; j++)
+				tty_putc(tty, gcp->data.data[j]);
+			ux += gc.data.width;
+		} else {
 			memcpy(buf + len, gcp->data.data, gcp->data.size);
 			len += gcp->data.size;
 			width += gcp->data.width;
