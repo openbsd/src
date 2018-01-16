@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.83 2018/01/14 16:04:21 anton Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.84 2018/01/16 17:17:18 jca Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1038,7 +1038,7 @@ x_redraw(int limit)
 		x_displen = xx_cols - 2;
 	}
 	xlp_valid = false;
-	cp = x_lastcp();
+	x_lastcp();
 	x_zots(xbp);
 	if (xbp != xbuf || xep > xlp)
 		limit = xx_cols;
