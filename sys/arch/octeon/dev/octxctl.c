@@ -1,4 +1,4 @@
-/*	$OpenBSD: octxctl.c,v 1.1 2017/08/01 16:18:12 visa Exp $	*/
+/*	$OpenBSD: octxctl.c,v 1.2 2018/01/16 15:22:14 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -348,7 +348,7 @@ octxctl_dwc3_init(struct octxctl_softc *sc, struct fdt_reg *reg)
 out:
 	bus_space_unmap(sc->sc_iot, ioh, reg->size);
 
-	return 0;
+	return error;
 }
 
 /*
