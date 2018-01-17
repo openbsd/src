@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.56 2017/03/11 21:46:32 jcs Exp $ */
+/* $OpenBSD: acpiec.c,v 1.57 2018/01/17 07:40:29 bentley Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -76,6 +76,8 @@ void		acpiec_unlock(struct acpiec_softc *);
 #define		EC_CMD_QR	0x84	/* Query */
 
 int	acpiec_reg(struct acpiec_softc *);
+
+extern char	*hw_vendor, *hw_prod;
 
 struct cfattach acpiec_ca = {
 	sizeof(struct acpiec_softc), acpiec_match, acpiec_attach
@@ -195,6 +197,9 @@ acpiec_write_1(struct acpiec_softc *sc, u_int8_t addr, u_int8_t data)
 void
 acpiec_burst_enable(struct acpiec_softc *sc)
 {
+	if (sc->sc_cantburst)
+		return;
+
 	acpiec_write_cmd(sc, EC_CMD_BE);
 	acpiec_read_data(sc);
 }
@@ -202,6 +207,9 @@ acpiec_burst_enable(struct acpiec_softc *sc)
 void
 acpiec_burst_disable(struct acpiec_softc *sc)
 {
+	if (sc->sc_cantburst)
+		return;
+
 	if ((acpiec_status(sc) & EC_STAT_BURST) == EC_STAT_BURST)
 		acpiec_write_cmd(sc, EC_CMD_BD);
 }
@@ -273,6 +281,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
+	sc->sc_cantburst = 0;
 
 	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &st))
 		st = STA_PRESENT | STA_ENABLED | STA_DEV_OK;
@@ -293,6 +302,16 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: Failed to register address space\n", DEVNAME(sc));
 		return;
 	}
+
+	/*
+	 * Some Chromebooks using the Google EC do not support burst mode and
+	 * cause us to spin forever waiting for the acknowledgment.  Don't use
+	 * burst mode at all on these machines.
+	 */
+	if (hw_vendor != NULL && hw_prod != NULL &&
+	    strcmp(hw_vendor, "GOOGLE") == 0 &&
+	    strcmp(hw_prod, "Samus") == 0)
+		sc->sc_cantburst = 1;
 
 	acpiec_get_events(sc);
 
