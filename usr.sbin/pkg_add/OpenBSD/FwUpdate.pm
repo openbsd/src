@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.26 2018/01/11 22:07:23 patrick Exp $
+# $OpenBSD: FwUpdate.pm,v 1.27 2018/01/17 13:35:52 patrick Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -150,7 +150,7 @@ my %possible_drivers = map {($_, "$_-firmware")}
     (qw(acx athn bwfm bwi intel ipw iwi iwm iwn malo otus pgt radeondrm rsu rtwn
 	uath upgt urtwn uvideo vmm wpi));
 
-my %match = map {($_, qr{^\Q$_\E\d+\s+at\s/})} (keys %possible_drivers);
+my %match = map {($_, qr{^\Q$_\E\d+\s+at\s})} (keys %possible_drivers);
 $match{'intel'} = qr{^cpu\d+: Intel};
 
 sub parse_dmesg
