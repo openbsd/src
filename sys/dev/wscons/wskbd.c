@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.87 2017/05/12 09:16:55 mpi Exp $ */
+/* $OpenBSD: wskbd.c,v 1.88 2018/01/17 16:54:19 fcambus Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -1126,7 +1126,7 @@ getkeyrepeat:
 			    KB_HANDLEDBYWSKBD);
 			wskbd_update_layout(sc->id, enc);
 		}
-		free(buf, M_TEMP, 0);
+		free(buf, M_TEMP, len);
 		return(error);
 
 	case WSKBDIO_GETMAP:

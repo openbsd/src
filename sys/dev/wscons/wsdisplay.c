@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.129 2017/07/19 20:12:54 kettenis Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.130 2018/01/17 16:54:19 fcambus Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -3326,7 +3326,7 @@ allocate_copybuffer(struct wsdisplay_softc *sc)
 	}
 	if (size != sc->sc_copybuffer_size && sc->sc_copybuffer_size != 0) {
 		bzero(sc->sc_copybuffer, sc->sc_copybuffer_size);
-		free(sc->sc_copybuffer, M_DEVBUF, 0);
+		free(sc->sc_copybuffer, M_DEVBUF, sc->sc_copybuffer_size);
 	}
 	if ((sc->sc_copybuffer = (char *)malloc(size, M_DEVBUF, M_NOWAIT)) ==
 	    NULL) {
