@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.10 2018/01/12 22:20:28 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.11 2018/01/17 10:22:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -27,6 +27,11 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
+
+#include "psci.h"
+#if NPSCI > 0
+#include <dev/fdt/pscivar.h>
+#endif
 
 /* CPU Identification */
 #define CPU_IMPL_ARM		0x41
@@ -105,6 +110,9 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
 
+void	cpu_flush_bp_noop(void);
+void	cpu_flush_bp_psci(void);
+
 void
 cpu_identify(struct cpu_info *ci)
 {
@@ -146,6 +154,40 @@ cpu_identify(struct cpu_info *ci)
 
 		if (CPU_IS_PRIMARY(ci))
 			snprintf(cpu_model, sizeof(cpu_model), "Unknown");
+	}
+
+	/*
+	 * Some ARM processors are vulnerable to branch target
+	 * injection attacks.
+	 */
+	switch (impl) {
+	case CPU_IMPL_ARM:
+		switch (part) {
+		case CPU_PART_CORTEX_A35:
+		case CPU_PART_CORTEX_A53:
+		case CPU_PART_CORTEX_A55:
+			/* Not vulnerable. */
+			ci->ci_flush_bp = cpu_flush_bp_noop;
+			break;
+		case CPU_PART_CORTEX_A57:
+		case CPU_PART_CORTEX_A72:
+		case CPU_PART_CORTEX_A73:
+		case CPU_PART_CORTEX_A75:
+		default:
+			/*
+			 * Vulnerable; call PSCI_VERSION and hope
+			 * we're running on top of Arm Trusted
+			 * Firmware with a fix for Security Advisory
+			 * TFV 6.
+			 */
+			ci->ci_flush_bp = cpu_flush_bp_psci;
+			break;
+		}
+		break;
+	default:
+		/* Not much we can do for an unknown processor.  */
+		ci->ci_flush_bp = cpu_flush_bp_noop;
+		break;
 	}
 }
 
@@ -190,6 +232,19 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	}
 
 	printf("\n");
+}
+
+void
+cpu_flush_bp_noop(void)
+{
+}
+
+void
+cpu_flush_bp_psci(void)
+{
+#if NPSCI > 0
+	psci_version();
+#endif
 }
 
 int

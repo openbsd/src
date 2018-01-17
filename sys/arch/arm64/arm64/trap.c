@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.14 2018/01/12 22:20:28 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.15 2018/01/17 10:22:25 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -142,6 +142,9 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 	p = curcpu()->ci_curproc;
 
 	far = READ_SPECIALREG(far_el1);
+	va = trunc_page(far);
+	if (va >= VM_MAXUSER_ADDRESS)
+		curcpu()->ci_flush_bp();
 
 	if (lower)
 		map = &p->p_vmspace->vm_map;
@@ -153,7 +156,6 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 			map = &p->p_vmspace->vm_map;
 	}
 
-	va = trunc_page(far);
 	if (exe)
 		access_type = PROT_EXEC;
 	else
@@ -298,6 +300,7 @@ do_el0_sync(struct trapframe *frame)
 	switch(exception) {
 	case EXCP_UNKNOWN:
 		vfp_save();
+		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_elr;
 		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
@@ -317,6 +320,7 @@ do_el0_sync(struct trapframe *frame)
 		break;
 	case EXCP_PC_ALIGN:
 		vfp_save();
+		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_elr;
 		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
@@ -324,6 +328,7 @@ do_el0_sync(struct trapframe *frame)
 		break;
 	case EXCP_SP_ALIGN:
 		vfp_save();
+		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_sp;
 		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
@@ -349,6 +354,7 @@ do_el0_sync(struct trapframe *frame)
 			printf("exception %x esr_el1 %llx\n", exception, esr);
 			dumpregs(frame);
 		}
+		curcpu()->ci_flush_bp();
 		KERNEL_LOCK();
 		sigexit(p, SIGILL);
 		KERNEL_UNLOCK();

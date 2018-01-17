@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.45 2018/01/13 10:58:50 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.46 2018/01/17 10:22:25 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -2099,10 +2099,12 @@ pmap_free_asid(pmap_t pm)
 void
 pmap_setttb(struct proc *p)
 {
+	struct cpu_info *ci = curcpu();
 	pmap_t pm = p->p_vmspace->vm_map.pmap;
 
 	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
 	__asm volatile("isb");
 	cpu_setttb(pm->pm_asid, pm->pm_pt0pa);
-	curcpu()->ci_curpm = pm;
+	ci->ci_flush_bp();
+	ci->ci_curpm = pm;
 }
