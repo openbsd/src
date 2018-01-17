@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_intel.S,v 1.9 2013/03/26 15:47:01 jsing Exp $	*/
+/*	$OpenBSD: aes_intel.S,v 1.10 2018/01/17 16:33:33 deraadt Exp $	*/
 
 /*
  * Implement AES algorithm in Intel AES-NI instructions.
@@ -97,7 +97,7 @@
 #define T2		%r11
 #define TCTR_LOW	T2
 
-	.data
+	.section .rodata
 .align 16
 .Lbswap_mask:
 	.byte 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
