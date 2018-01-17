@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.3 2017/12/29 14:45:15 kettenis Exp $	*/
+/*	$OpenBSD: psci.c,v 1.4 2018/01/17 10:17:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -26,10 +26,13 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 
+#include <dev/fdt/pscivar.h>
+
 extern void (*cpuresetfn)(void);
 extern void (*powerdownfn)(void);
 extern int (*cpu_on_fn)(register_t, register_t);
 
+#define PSCI_VERSION	0x84000000
 #define SYSTEM_OFF	0x84000008
 #define SYSTEM_RESET	0x84000009
 #ifdef __LP64__
@@ -42,6 +45,7 @@ struct psci_softc {
 	struct device	 sc_dev;
 	register_t	 (*sc_callfn)(register_t, register_t, register_t,
 			     register_t);
+	int		 sc_psci_version; 
 	int		 sc_system_off;
 	int		 sc_system_reset;
 	int		 sc_cpu_on;
@@ -82,6 +86,7 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 	struct psci_softc *sc = (struct psci_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	char method[128];
+	uint32_t version;
 
 	if (OF_getprop(faa->fa_node, "method", method, sizeof(method))) {
 		if (strcmp(method, "hvc") == 0)
@@ -97,6 +102,7 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (OF_is_compatible(faa->fa_node, "arm,psci-0.2") ||
 	    OF_is_compatible(faa->fa_node, "arm,psci-1.0")) {
+		sc->sc_psci_version = PSCI_VERSION;
 		sc->sc_system_off = SYSTEM_OFF;
 		sc->sc_system_reset = SYSTEM_RESET;
 		sc->sc_cpu_on = CPU_ON;
@@ -108,15 +114,29 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_cpu_on = OF_getpropint(faa->fa_node, "cpu_on", 0);
 	}
 
-	printf("\n");
-
 	psci_sc = sc;
+
+	version = psci_version();
+	printf(": PSCI %d.%d\n", version >> 16, version & 0xffff);
+
 	if (sc->sc_system_off != 0)
 		powerdownfn = psci_powerdown;
 	if (sc->sc_system_reset != 0)
 		cpuresetfn = psci_reset;
 	if (sc->sc_cpu_on != 0)
 		cpu_on_fn = psci_cpu_on;
+}
+
+uint32_t
+psci_version(void)
+{
+	struct psci_softc *sc = psci_sc;
+
+	if (sc && sc->sc_callfn && sc->sc_psci_version != 0)
+		return (*sc->sc_callfn)(sc->sc_psci_version, 0, 0, 0);
+
+	/* No version support; return 0.0. */
+	return 0;
 }
 
 void
