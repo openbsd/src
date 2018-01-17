@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.14 2018/01/13 15:10:02 stsp Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.15 2018/01/17 15:52:34 stsp Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -212,13 +212,13 @@ vldcp_tx_intr(void *arg)
 	if (tx_state != lc->lc_tx_state) {
 		switch (tx_state) {
 		case LDC_CHANNEL_DOWN:
-			DPRINTF(("Tx link down\n"));
+			DPRINTF(("%s: Tx link down\n", __func__));
 			break;
 		case LDC_CHANNEL_UP:
-			DPRINTF(("Tx link up\n"));
+			DPRINTF(("%s: Tx link up\n", __func__));
 			break;
 		case LDC_CHANNEL_RESET:
-			DPRINTF(("Tx link reset\n"));
+			DPRINTF(("%s: Tx link reset\n", __func__));
 			break;
 		}
 		lc->lc_tx_state = tx_state;
@@ -247,7 +247,7 @@ vldcp_rx_intr(void *arg)
 	if (rx_state != lc->lc_rx_state) {
 		switch (rx_state) {
 		case LDC_CHANNEL_DOWN:
-			DPRINTF(("Rx link down\n"));
+			DPRINTF(("%s: Rx link down\n", __func__));
 			if (rx_head == rx_tail)
 				break;
 			/* Discard and ack pending I/O. */
@@ -258,10 +258,10 @@ vldcp_rx_intr(void *arg)
 			printf("%s: hv_ldc_rx_set_qhead %d\n", __func__, err);
 			break;
 		case LDC_CHANNEL_UP:
-			DPRINTF(("Rx link up\n"));
+			DPRINTF(("%s: Rx link up\n", __func__));
 			break;
 		case LDC_CHANNEL_RESET:
-			DPRINTF(("Rx link reset\n"));
+			DPRINTF(("%s: Rx link reset\n", __func__));
 			break;
 		}
 		lc->lc_rx_state = rx_state;
