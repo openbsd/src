@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.148 2017/11/01 18:18:10 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.149 2018/01/17 13:25:36 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -288,15 +288,16 @@ sub parse_problems
 	CORE::open(my $fh, '<', $filename) or return;
 
 	my $baseurl = $self->url;
-	my $url = $baseurl;
-	if (defined $object) {
-		$url = $object->url;
-	}
 	my $notyet = 1;
 	my $broken = 0;
 	my $signify_error = 0;
 	$self->{last_error} = 0;
 	while(<$fh>) {
+		if (m/^Redirected to https?\:\/\/([^\/]*)/) {
+			$self->{host} = $1;
+			$baseurl = $self->url;
+			next;
+		}
 		next if m/^(?:200|220|221|226|229|230|227|250|331|500|150)[\s\-]/o;
 		next if m/^EPSV command not understood/o;
 		next if m/^Trying [\da-f\.\:]+\.\.\./o;
@@ -334,10 +335,12 @@ sub parse_problems
 		# so it's superfluous
 		next if m/^signify:/ && $self->{lasterror};
 		if ($notyet) {
-			$self->{state}->errprint("#1: ", $url);
+			my $url = $baseurl;
 			if (defined $object) {
+				$url = $object->url;
 				$object->{error_reported} = 1;
 			}
+			$self->{state}->errprint("#1: ", $url);
 			$notyet = 0;
 		}
 		if (m/^signify:/) {
