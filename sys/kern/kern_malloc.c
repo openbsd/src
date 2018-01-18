@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.132 2018/01/02 06:07:21 guenther Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.133 2018/01/18 18:08:51 bluhm Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 #include <sys/stdint.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
@@ -205,6 +206,11 @@ malloc(size_t size, int type, int flags)
 			mtx_leave(&malloc_mtx);
 			return (NULL);
 		}
+#ifdef DIAGNOSTIC
+		if (ISSET(flags, M_WAITOK) && curproc == &proc0)
+			panic("%s: cannot sleep for memory during boot",
+			    __func__);
+#endif
 		if (ksp->ks_limblocks < 65535)
 			ksp->ks_limblocks++;
 		msleep(ksp, &malloc_mtx, PSWP+2, memname[type], 0);

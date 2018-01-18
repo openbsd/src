@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.220 2017/08/13 20:26:33 guenther Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.221 2018/01/18 18:08:51 bluhm Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
 #include <sys/task.h>
@@ -596,6 +597,11 @@ pool_get(struct pool *pp, int flags)
 		struct pool_get_memory mem = { .v = NULL };
 		struct pool_request pr;
 
+#ifdef DIAGNOSTIC
+		if (ISSET(flags, PR_WAITOK) && curproc == &proc0)
+			panic("%s: cannot sleep for memory during boot",
+			    __func__);
+#endif
 		pl_init(pp, &mem.lock);
 		pool_request_init(&pr, pool_get_done, &mem);
 		pool_request(pp, &pr);
