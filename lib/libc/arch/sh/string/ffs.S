@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.3 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.4 2018/01/18 08:23:44 guenther Exp $	*/
 /*	$NetBSD: ffs.S,v 1.1 2005/12/20 19:28:50 christos Exp $	*/
 
 /*-
@@ -91,4 +91,5 @@ L8bit:
 
 Lzero:	rts
 	 nop
-END_WEAK(ffs)
+END(ffs)
+.protected ffs

@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.h,v 1.11 2017/11/29 05:13:57 guenther Exp $	*/
+/*	$OpenBSD: namespace.h,v 1.12 2018/01/18 08:23:44 guenther Exp $	*/
 
 #ifndef _LIBC_NAMESPACE_H_
 #define _LIBC_NAMESPACE_H_
@@ -135,6 +135,8 @@
 
 #include <sys/cdefs.h>	/* for __dso_hidden and __{weak,strong}_alias */
 
+#define	__dso_protected		__attribute__((__visibility__("protected")))
+
 #define	HIDDEN(x)		_libc_##x
 #define	CANCEL(x)		_libc_##x##_cancel
 #define	WRAP(x)			_libc_##x##_wrap
@@ -148,6 +150,7 @@
 #define	PROTO_CANCEL(x)		__dso_hidden typeof(x) HIDDEN(x), \
 					x asm(CANCEL_STRING(x))
 #define	PROTO_WRAP(x)		PROTO_NORMAL(x), WRAP(x)
+#define	PROTO_PROTECTED(x)	__dso_protected typeof(x) x
 
 #define	DEF_STRONG(x)		__strong_alias(x, HIDDEN(x))
 #define	DEF_WEAK(x)		__weak_alias(x, HIDDEN(x))
@@ -156,7 +159,7 @@
 #define	DEF_SYS(x)		__strong_alias(_thread_sys_##x, HIDDEN(x))
 #ifdef __clang__
 #define	DEF_BUILTIN(x)		__asm("")
-#define	BUILTIN			__attribute__((__visibility__("protected")))
+#define	BUILTIN			__dso_protected
 #else
 #define	DEF_BUILTIN(x)		DEF_STRONG(x)
 #define	BUILTIN

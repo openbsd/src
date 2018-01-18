@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.5 2017/11/29 05:13:57 guenther Exp $	*/
+/*	$OpenBSD: string.h,v 1.6 2018/01/18 08:23:44 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -28,7 +28,7 @@ PROTO_NORMAL(bcmp);
 PROTO_NORMAL(bcopy);
 PROTO_NORMAL(bzero);
 PROTO_NORMAL(explicit_bzero);
-PROTO_NORMAL(ffs);
+PROTO_PROTECTED(ffs);
 PROTO_DEPRECATED(index);
 PROTO_NORMAL(memccpy);
 PROTO_NORMAL(memchr);

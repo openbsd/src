@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.6 2016/09/18 10:22:10 kettenis Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.7 2018/01/18 08:23:44 guenther Exp $	*/
 /*	$NetBSD: ffs.S,v 1.5 2003/04/05 23:08:52 bjh21 Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -63,8 +63,10 @@ ENTRY(ffs)
 	ldrbne  r0, [ r2, r0, lsr #26 ]
 
         mov   pc, lr
-END_WEAK(ffs)
-.text;
+END(ffs)
+.protected ffs
+
+	.section .rodata
 .type .L_ffs_table, _ASM_TYPE_OBJECT;
 .L_ffs_table:
 /*               0   1   2   3   4   5   6   7           */
