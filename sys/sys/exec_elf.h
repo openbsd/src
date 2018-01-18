@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.78 2017/12/09 06:35:08 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.79 2018/01/18 08:17:39 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -355,6 +355,16 @@ typedef struct {
 #define STT_TLS		6		/* thread local storage */
 #define STT_LOPROC	13		/* reserved range for processor */
 #define STT_HIPROC	15		/*  specific symbol types */
+
+/* Extract symbol visibility - st_other */
+#define ELF_ST_VISIBILITY(v)		((v) & 0x3)
+#define ELF32_ST_VISIBILITY		ELF_ST_VISIBILITY
+#define ELF64_ST_VISIBILITY		ELF_ST_VISIBILITY
+
+#define STV_DEFAULT	0		/* Visibility set by binding type */
+#define STV_INTERNAL	1		/* OS specific version of STV_HIDDEN */
+#define STV_HIDDEN	2		/* can only be seen inside own .so */
+#define STV_PROTECTED	3		/* HIDDEN inside, DEFAULT outside */
 
 /* Relocation entry with implicit addend */
 typedef struct {
