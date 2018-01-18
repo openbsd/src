@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.239 2018/01/08 12:20:23 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.240 2018/01/18 08:37:28 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -931,7 +931,7 @@ malloc_bytes(struct dir_info *d, size_t size, void *f)
 	u_int i, r;
 	int j, listnum;
 	size_t k;
-	u_short	u, b, *lp;
+	u_short	*lp;
 	struct chunk_info *bp;
 	void *p;
 
@@ -960,15 +960,12 @@ malloc_bytes(struct dir_info *d, size_t size, void *f)
 	/* start somewhere in a short */
 	lp = &bp->bits[i / MALLOC_BITS];
 	if (*lp) {
-		b = *lp;
-		k = i % MALLOC_BITS;
-		u = 1 << k;
-		while (k < MALLOC_BITS) {
-			if (b & u)
-				goto found;
-			k++;
-			u <<= 1;
-		} 
+		j = i % MALLOC_BITS;
+		k = ffs(*lp >> j);
+		if (k != 0) {
+			k += j - 1;
+			goto found;
+		}
 	}
 	/* no bit halfway, go to next full short */
 	i /= MALLOC_BITS;
@@ -977,15 +974,8 @@ malloc_bytes(struct dir_info *d, size_t size, void *f)
 			i = 0;
 		lp = &bp->bits[i];
 		if (*lp) {
-			b = *lp;
-			k = 0;
-			u = 1;
-			for (;;) {
-				if (b & u)
-					goto found;
-				k++;
-				u <<= 1;
-			}
+			k = ffs(*lp) - 1;
+			break;
 		}
 	}
 found:
@@ -996,7 +986,7 @@ found:
 	}
 #endif
 
-	*lp ^= u;
+	*lp ^= 1 << k;
 
 	/* If there are no more free, remove from free-list */
 	if (--bp->free == 0)
