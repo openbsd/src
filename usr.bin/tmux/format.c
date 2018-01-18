@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.150 2017/11/02 18:52:05 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.151 2018/01/18 14:28:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -191,10 +191,15 @@ static void
 format_job_update(struct job *job)
 {
 	struct format_job	*fj = job->data;
-	char			*line;
+	struct evbuffer		*evb = job->event->input;
+	char			*line = NULL, *next;
 	time_t			 t;
 
-	if ((line = evbuffer_readline(job->event->input)) == NULL)
+	while ((next = evbuffer_readline(evb)) != NULL) {
+		free(line);
+		line = next;
+	}
+	if (line == NULL)
 		return;
 	fj->updated = 1;
 
