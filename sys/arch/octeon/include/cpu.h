@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.10 2017/07/30 16:08:09 visa Exp $ */
+/* $OpenBSD: cpu.h,v 1.11 2018/01/18 14:02:54 visa Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,8 +45,11 @@
 #define _MACHINE_CPU_H_
 
 #ifdef _KERNEL
+
+#define OCTEON_MAXCPUS	16
+
 #if defined(MULTIPROCESSOR) && !defined(_LOCORE)
-#define MAXCPUS 16
+#define MAXCPUS OCTEON_MAXCPUS
 struct cpu_info;
 struct cpu_info *hw_getcurcpu(void);
 void hw_setcurcpu(struct cpu_info *);

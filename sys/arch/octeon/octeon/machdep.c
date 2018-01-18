@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.103 2017/12/30 20:46:59 guenther Exp $ */
+/*	$OpenBSD: machdep.c,v 1.104 2018/01/18 14:02:54 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -681,11 +681,11 @@ get_ncpusfound(void)
 {
 	extern struct boot_desc *octeon_boot_desc;
 	uint64_t core_mask = octeon_boot_desc->core_mask;
-	uint64_t i, m, ncpus = 0;
+	uint64_t i, ncpus = 0;
 
-	for (i = 0, m = 1 ; i < MAXCPUS; i++, m <<= 1)
-		if (core_mask & m)
-			ncpus++;
+	/* There has to be 1-to-1 mapping between cpuids and coreids. */
+	for (i = 0; i < OCTEON_MAXCPUS && (core_mask & (1ul << i)) != 0; i++)
+		ncpus++;
 
 	return ncpus;
 }
