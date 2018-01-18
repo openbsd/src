@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.815 2017/12/19 15:00:39 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.816 2018/01/18 07:10:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1581,8 +1581,6 @@ void		 hooks_add(struct hooks *, const char *, struct cmd_list *);
 void		 hooks_copy(struct hooks *, struct hooks *);
 void		 hooks_remove(struct hooks *, const char *);
 struct hook	*hooks_find(struct hooks *, const char *);
-void printflike(4, 5) hooks_run(struct hooks *, struct client *,
-		    struct cmd_find_state *, const char *, ...);
 void printflike(4, 5) hooks_insert(struct hooks *, struct cmdq_item *,
 		    struct cmd_find_state *, const char *, ...);
 
