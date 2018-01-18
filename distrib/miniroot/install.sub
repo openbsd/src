@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1054 2018/01/14 12:12:52 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1055 2018/01/18 17:23:15 job Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1671,6 +1671,7 @@ install_http() {
 	local _d _f _flist _file_list _prompt _tls _http_proto _url_base
 	local _idx=/tmp/i/index.txt _sha=/tmp/i/SHA256 _sig=/tmp/i/SHA256.sig
 	local _iu_url _iu_srv _iu_dir _mirror_url _mirror_srv _mirror_dir
+	local _ftp_stdout=/tmp/i/ftpstdout _rurl_base
 
 	# N.B.: Don't make INSTALL_MIRROR a local variable! It preserves the
 	# mirror information if install_http() is called multiple times with
@@ -1778,9 +1779,10 @@ install_http() {
 	_url_base="$_http_proto://$HTTP_SERVER/$HTTP_DIR"
 
 	# Fetch SHA256.sig to create the list of files to select from.
-	rm -f $_idx $_sha $_sig
+	rm -f $_idx $_sha $_sig $_ftp_stdout
 	if ! unpriv -f $_sig \
-		ftp -w 15 -VMo $_sig "$_url_base/SHA256.sig" 2>/dev/null; then
+		ftp -w 15 -vMo $_sig "$_url_base/SHA256.sig" \
+			>$_ftp_stdout 2>/dev/null; then
 		case $_tls in
 		force)	$AUTO && exit 1 || return
 			;;
@@ -1788,11 +1790,16 @@ install_http() {
 				return
 			_http_proto=http
 			_url_base="http://$HTTP_SERVER/$HTTP_DIR"
-			unpriv -f $_sig ftp -VMo $_sig "$_url_base/SHA256.sig" \
-				2>/dev/null
+			unpriv -f $_sig ftp -vMo $_sig "$_url_base/SHA256.sig" \
+				>$_ftp_stdout 2>/dev/null
 			;;
 		esac
 	fi
+
+	# In case of URL redirection, use the final location to retrieve the
+	# rest of the files from. Redirection does not change INSTALL_MIRROR.
+	_rurl_base=$(sed -n 's/^Requesting //p' $_ftp_stdout | sed '$!d')
+	_rurl_base=${_rurl_base%/SHA256.sig}
 
 	# Verify SHA256.sig, write SHA256 and extract the list of files.
 	if unpriv -f $_sha \
@@ -1802,7 +1809,7 @@ install_http() {
 	else
 		echo "Unable to get a verified list of distribution sets."
 		# Deny this server, if it's a mirror without a valid SHA256.sig.
-		if [[ ${_url_base%/$HTTP_SETDIR} == "$_http_proto://$INSTALL_MIRROR" ]]; then
+		if [[ ${_rurl_base%/$HTTP_SETDIR} == "$_http_proto://$INSTALL_MIRROR" ]]; then
 			$AUTO && exit 1 || return
 		fi
 	fi
@@ -1812,15 +1819,15 @@ install_http() {
 	# sets from SHA256.sig, siteXX sets or the whole set list from index.txt
 	# if SHA256.sig was not found (e.g. self compiled sets).
 	if unpriv -f $_idx \
-		ftp -VMo $_idx "$_url_base/index.txt" 2>/dev/null; then
+		ftp -VMo $_idx "$_rurl_base/index.txt" 2>/dev/null; then
 		_flist=$(sed -En 's/^.* ([a-zA-Z][a-zA-Z0-9._-]+)$/\1/p' $_idx)
 		for _f in $_flist; do
 			! isin "$_f" $_file_list && _file_list="$_file_list $_f"
 		done
 	fi
-	rm -f $_idx $_sha $_sig
+	rm -f $_idx $_sha $_sig $_ftp_stdout
 
-	install_files "$_url_base" "$_file_list"
+	install_files "$_rurl_base" "$_file_list"
 
 	# Remember the sets location which is used later for creating the
 	# installurl(5) file and to tell the cgi server.
