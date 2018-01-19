@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1057 2018/01/16 14:48:38 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1058 2018/01/19 12:57:15 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6988,28 +6988,13 @@ done:
 
 	if (action == PF_PASS && qid)
 		pd.m->m_pkthdr.pf.qid = qid;
-	if (pd.dir == PF_IN && s && s->key[PF_SK_STACK]) {
-		/*
-		 * Check below fires whenever caller forgets to call
-		 * pf_pkt_addr_changed(). This might happen when we
-		 * deal with IP tunnels.
-		 */
-		if (pd.m->m_pkthdr.pf.statekey != NULL) {
-#ifdef DDB
-			m_print(pd.m, printf);
-#endif
-			panic("incoming mbuf already has a statekey");
-		}
-		pd.m->m_pkthdr.pf.statekey =
-		    pf_state_key_ref(s->key[PF_SK_STACK]);
-	}
+	if (pd.dir == PF_IN && s && s->key[PF_SK_STACK])
+		pf_mbuf_link_state_key(pd.m, s->key[PF_SK_STACK]);
 	if (pd.dir == PF_OUT &&
 	    pd.m->m_pkthdr.pf.inp && !pd.m->m_pkthdr.pf.inp->inp_pf_sk &&
-	    s && s->key[PF_SK_STACK] && !s->key[PF_SK_STACK]->inp) {
-		pd.m->m_pkthdr.pf.inp->inp_pf_sk =
-		    pf_state_key_ref(s->key[PF_SK_STACK]);
-		s->key[PF_SK_STACK]->inp = pd.m->m_pkthdr.pf.inp;
-	}
+	    s && s->key[PF_SK_STACK] && !s->key[PF_SK_STACK]->inp)
+		pf_state_key_link_inpcb(s->key[PF_SK_STACK],
+		    pd.m->m_pkthdr.pf.inp);
 
 	if (s && (pd.m->m_pkthdr.ph_flowid & M_FLOWID_VALID) == 0) {
 		pd.m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
