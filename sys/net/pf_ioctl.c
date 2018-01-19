@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.326 2017/11/28 16:05:46 bluhm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.327 2018/01/19 15:33:27 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1700,6 +1700,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = copyout(pstore, p, sizeof(*p));
 				if (error) {
 					free(pstore, M_TEMP, sizeof(*pstore));
+					PF_UNLOCK();
 					goto fail;
 				}
 				p++;
