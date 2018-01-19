@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.3 2018/01/16 06:10:45 ccardenas Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.4 2018/01/19 14:23:52 ccardenas Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -637,12 +637,12 @@ vioscsi_handle_read_capacity(struct vioscsi_dev *dev,
 	    __func__, dev->sz, dev->n_blocks);
 
 	/*
-	 * determine if size of iso image > UINT32_MAX
+	 * determine if num blocks of iso image > UINT32_MAX
 	 * if it is, set addr to UINT32_MAX (0xffffffff)
 	 * indicating to hosts that READ_CAPACITY_16 should
 	 * be called to retrieve the full size
 	 */
-	if (dev->sz >= UINT32_MAX) {
+	if (dev->n_blocks >= UINT32_MAX) {
 		_lto4b(UINT32_MAX, r_cap_data->addr);
 		_lto4b(VIOSCSI_BLOCK_SIZE_CDROM, r_cap_data->length);
 		log_warnx("%s: ISO sz %lld is bigger than "
@@ -1603,7 +1603,7 @@ vioscsi_handle_get_config(struct vioscsi_dev *dev,
 	    config_random_read_desc->feature_code);
 	config_random_read_desc->byte3 = CONFIG_RANDOM_READ_BYTE3;
 	config_random_read_desc->length = CONFIG_RANDOM_READ_LENGTH;
-	if (dev->sz >= UINT32_MAX)
+	if (dev->n_blocks >= UINT32_MAX)
 		_lto4b(UINT32_MAX, config_random_read_desc->block_size);
 	else
 		_lto4b(dev->n_blocks - 1, config_random_read_desc->block_size);
