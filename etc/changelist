@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.117 2017/05/03 11:55:36 gsoares Exp $
+#	$OpenBSD: changelist,v 1.118 2018/01/19 00:19:58 gsoares Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -114,7 +114,7 @@
 /etc/sensorsd.conf
 /etc/services
 /etc/shells
-/etc/snmpd.conf
++/etc/snmpd.conf
 +/etc/spwd.db
 /etc/ssh/ssh_config
 +/etc/ssh/ssh_host_dsa_key
