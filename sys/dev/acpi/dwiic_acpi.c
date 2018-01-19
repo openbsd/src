@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.2 2017/12/03 19:42:20 kettenis Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.3 2018/01/19 18:20:38 jcs Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -46,14 +46,6 @@ struct dwiic_crs {
 int		dwiic_acpi_match(struct device *, void *, void *);
 void		dwiic_acpi_attach(struct device *, struct device *, void *);
 
-int		dwiic_init(struct dwiic_softc *);
-void		dwiic_enable(struct dwiic_softc *, int);
-int		dwiic_intr(void *);
-
-void *		dwiic_i2c_intr_establish(void *, void *, int,
-		    int (*)(void *), void *, const char *);
-const char *	dwiic_i2c_intr_string(void *, void *);
-
 int		dwiic_acpi_parse_crs(int, union acpi_resource *, void *);
 int		dwiic_acpi_found_ihidev(struct dwiic_softc *,
 		    struct aml_node *, char *, struct dwiic_crs);
@@ -64,14 +56,6 @@ void		dwiic_acpi_get_params(struct dwiic_softc *, char *, uint16_t *,
 void		dwiic_acpi_power(struct dwiic_softc *, int);
 void		dwiic_acpi_bus_scan(struct device *,
 		    struct i2cbus_attach_args *, void *);
-
-int		dwiic_i2c_acquire_bus(void *, int);
-void		dwiic_i2c_release_bus(void *, int);
-uint32_t	dwiic_read(struct dwiic_softc *, int);
-void		dwiic_write(struct dwiic_softc *, int, uint32_t);
-int		dwiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
-		    size_t, void *, size_t, int);
-void		dwiic_xfer_msg(struct dwiic_softc *);
 
 struct cfattach dwiic_acpi_ca = {
 	sizeof(struct dwiic_softc),

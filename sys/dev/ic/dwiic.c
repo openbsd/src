@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.2 2017/12/01 16:06:25 kettenis Exp $ */
+/* $OpenBSD: dwiic.c,v 1.3 2018/01/19 18:20:38 jcs Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -32,43 +32,9 @@
 
 #include <dev/ic/dwiicvar.h>
 
-int		dwiic_match(struct device *, void *, void *);
-void		dwiic_attach(struct device *, struct device *, void *);
-int		dwiic_detach(struct device *, int);
-int		dwiic_activate(struct device *, int);
-
-int		dwiic_init(struct dwiic_softc *);
-void		dwiic_enable(struct dwiic_softc *, int);
-int		dwiic_intr(void *);
-
-void *		dwiic_i2c_intr_establish(void *, void *, int,
-		    int (*)(void *), void *, const char *);
-const char *	dwiic_i2c_intr_string(void *, void *);
-
-int		dwiic_i2c_acquire_bus(void *, int);
-void		dwiic_i2c_release_bus(void *, int);
-uint32_t	dwiic_read(struct dwiic_softc *, int);
-void		dwiic_write(struct dwiic_softc *, int, uint32_t);
-int		dwiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
-		    size_t, void *, size_t, int);
-void		dwiic_xfer_msg(struct dwiic_softc *);
-
 struct cfdriver dwiic_cd = {
 	NULL, "dwiic", DV_DULL
 };
-
-int
-dwiic_detach(struct device *self, int flags)
-{
-	struct dwiic_softc *sc = (struct dwiic_softc *)self;
-
-	if (sc->sc_ih != NULL) {
-		intr_disestablish(sc->sc_ih);
-		sc->sc_ih = NULL;
-	}
-
-	return 0;
-}
 
 int
 dwiic_activate(struct device *self, int act)
