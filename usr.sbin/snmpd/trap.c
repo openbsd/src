@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.29 2017/04/21 13:46:15 jca Exp $	*/
+/*	$OpenBSD: trap.c,v 1.30 2018/01/20 18:49:12 rob Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -65,7 +65,6 @@ trap_agentx(struct agentx_handle *h, struct agentx_pdu *pdu, int *idx,
 	int				 ret = AGENTX_ERR_NONE;
 	int				 seensysuptime, seentrapoid;
 	size_t				 len = 0;
-	pid_t				 pid = -1;
 	char				*v = NULL;
 
 	*varcpy = NULL;
@@ -125,8 +124,8 @@ trap_agentx(struct agentx_handle *h, struct agentx_pdu *pdu, int *idx,
 
 	if (varbind != NULL)
 		len = ber_calc_len(varbind);
-	log_debug("trap_agentx: from pid %u len %zd elements %d",
-	    pid, len, x);
+	log_debug("trap_agentx: from packetid %d len %zu elements %d",
+	    pdu->hdr->packetid, len, x);
 
 	trap_send(&o, varbind);
 
