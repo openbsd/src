@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.31 2018/01/16 22:52:32 jca Exp $	*/
+/*	$OpenBSD: tree.c,v 1.32 2018/01/20 15:32:20 anton Exp $	*/
 
 /*
  * command tree climbing
@@ -47,25 +47,8 @@ ptree(struct op *t, int indent, struct shf *shf)
 			fptreef(shf, indent, "#no-args# ");
 		break;
 	case TEXEC:
-#if 0 /* ?not useful - can't be called? */
-		/* Print original vars */
-		if (t->left->vars)
-			for (w = t->left->vars; *w != NULL; )
-				fptreef(shf, indent, "%S ", *w++);
-		else
-			fptreef(shf, indent, "#no-vars# ");
-		/* Print expanded vars */
-		if (t->args)
-			for (w = t->args; *w != NULL; )
-				fptreef(shf, indent, "%s ", *w++);
-		else
-			fptreef(shf, indent, "#no-args# ");
-		/* Print original io */
-		t = t->left;
-#else
 		t = t->left;
 		goto Chain;
-#endif
 	case TPAREN:
 		fptreef(shf, indent + 2, "( %T) ", t->left);
 		break;
