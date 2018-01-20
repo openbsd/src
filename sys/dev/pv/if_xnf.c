@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.62 2017/12/09 14:00:21 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.63 2018/01/20 20:03:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -1112,6 +1112,7 @@ xnf_capabilities(struct xnf_softc *sc)
 	if (error == 0 && res == 1)
 		sc->sc_caps |= XNF_CAP_SG;
 
+#if 0
 	/* Query IPv4 checksum offloading capability, enabled by default */
 	sc->sc_caps |= XNF_CAP_CSUM4;
 	prop = "feature-no-csum-offload";
@@ -1128,6 +1129,7 @@ xnf_capabilities(struct xnf_softc *sc)
 		goto errout;
 	if (error == 0 && res == 1)
 		sc->sc_caps |= XNF_CAP_CSUM6;
+#endif
 
 	/* Query multicast traffic contol capability */
 	prop = "feature-multicast-control";
@@ -1188,6 +1190,13 @@ xnf_init_backend(struct xnf_softc *sc)
 	/* Enable scatter-gather mode */
 	if (sc->sc_tx_frags > 1) {
 		prop = "feature-sg";
+		if (xs_setnum(sc->sc_parent, sc->sc_node, prop, 1))
+			goto errout;
+	}
+
+	/* Disable IPv4 checksum offloading */
+	if (!(sc->sc_caps & XNF_CAP_CSUM4)) {
+		prop = "feature-no-csum-offload";
 		if (xs_setnum(sc->sc_parent, sc->sc_node, prop, 1))
 			goto errout;
 	}
