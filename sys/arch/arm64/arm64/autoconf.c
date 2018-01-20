@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.6 2017/12/27 13:57:40 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.7 2018/01/20 18:35:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -34,7 +34,6 @@ enum devclass bootdev_class = DV_DULL;
 void
 unmap_startup(void)
 {
-#if 0
 	extern void *_start, *endboot;
 	vaddr_t p = (vaddr_t)&_start;
 
@@ -42,7 +41,6 @@ unmap_startup(void)
 		pmap_kremove(p, PAGE_SIZE);
 		p += PAGE_SIZE;
 	} while (p < (vaddr_t)&endboot);
-#endif
 }
 
 void
