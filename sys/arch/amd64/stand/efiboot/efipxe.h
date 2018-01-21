@@ -1,3 +1,4 @@
+/*	$OpenBSD: efipxe.h,v 1.2 2018/01/21 21:37:01 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
