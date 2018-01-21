@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.33 2017/04/12 14:49:05 deraadt Exp $	*/
+/*	$OpenBSD: script.c,v 1.34 2018/01/21 20:18:20 jasper Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ int		istty;
 
 __dead void done(int);
 void dooutput(void);
-void doshell(void);
+void doshell(char *);
 void fail(void);
 void finish(int);
 void scriptflush(int);
@@ -102,17 +102,23 @@ main(int argc, char *argv[])
 	struct sigaction sa;
 	struct winsize win;
 	char ibuf[BUFSIZ];
+	char *cmd;
 	ssize_t cc, off;
 	int aflg, ch;
 
+	cmd = NULL;
 	aflg = 0;
-	while ((ch = getopt(argc, argv, "a")) != -1)
+	while ((ch = getopt(argc, argv, "ac:")) != -1)
 		switch(ch) {
 		case 'a':
 			aflg = 1;
 			break;
+		case 'c':
+			cmd = optarg;
+			break;
 		default:
-			fprintf(stderr, "usage: %s [-a] [file]\n", __progname);
+			fprintf(stderr, "usage: %s [-a] [-c command] [file]\n",
+			    __progname);
 			exit(1);
 		}
 	argc -= optind;
@@ -163,7 +169,7 @@ main(int argc, char *argv[])
 		if (child)
 			dooutput();
 		else
-			doshell();
+			doshell(cmd);
 	}
 
 	bzero(&sa, sizeof sa);
@@ -196,7 +202,6 @@ main(int argc, char *argv[])
 	done(sigdeadstatus);
 }
 
-/* ARGSUSED */
 void
 finish(int signo)
 {
@@ -215,7 +220,6 @@ finish(int signo)
 	errno = save_errno;
 }
 
-/* ARGSUSED */
 void
 handlesigwinch(int signo)
 {
@@ -294,7 +298,6 @@ dooutput(void)
 	done(0);
 }
 
-/* ARGSUSED */
 void
 scriptflush(int signo)
 {
@@ -302,9 +305,10 @@ scriptflush(int signo)
 }
 
 void
-doshell(void)
+doshell(char *cmd)
 {
 	char *shell;
+	char *argp[] = {"sh", "-c", NULL, NULL};
 
 	shell = getenv("SHELL");
 	if (shell == NULL)
@@ -313,8 +317,15 @@ doshell(void)
 	(void)close(master);
 	(void)fclose(fscript);
 	login_tty(slave);
-	execl(shell, shell, "-i", (char *)NULL);
-	warn("%s", shell);
+
+	if (cmd != NULL) {
+		argp[2] = cmd;
+		execv(_PATH_BSHELL, argp);
+		warn("unable to execute %s", _PATH_BSHELL);
+	} else {
+		execl(shell, shell, "-i", (char *)NULL);
+		warn("%s", shell);
+	}
 	fail();
 }
 
