@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.20 2017/12/31 08:42:04 kettenis Exp $ */
+/* $OpenBSD: locore.S,v 1.21 2018/01/21 22:30:41 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -30,14 +30,92 @@
 #include "assym.h"
 #include <sys/syscall.h>
 #include <machine/asm.h>
+#include <machine/armreg.h>
+#include <machine/hypervisor.h>
 #include <machine/param.h>
+
+#define	VIRT_BITS	39
+
+/*
+ * If we are started in EL2, configure the required hypervisor
+ * registers and drop to EL1.
+ */
+	.globl drop_to_el1
+drop_to_el1:
+	mrs	x1, CurrentEL
+	lsr	x1, x1, #2
+	cmp	x1, #0x2
+	b.eq	1f
+	ret
+1:
+	/* Configure the Hypervisor */
+	mov	x2, #(HCR_RW)
+	msr	hcr_el2, x2
+
+	/* Load the Virtualization Process ID Register */
+	mrs	x2, midr_el1
+	msr	vpidr_el2, x2
+
+	/* Load the Virtualization Multiprocess ID Register */
+	mrs	x2, mpidr_el1
+	msr	vmpidr_el2, x2
+
+	/* Set the bits that need to be 1 in sctlr_el1 */
+	ldr	x2, .Lsctlr_res1
+	msr	sctlr_el1, x2
+
+	/* Don't trap to EL2 for exceptions */
+	mov	x2, #CPTR_RES1
+	msr	cptr_el2, x2
+
+	/* Don't trap to EL2 for CP15 traps */
+	msr	hstr_el2, xzr
+
+	/* Enable access to the physical timers at EL1 */
+	mrs	x2, cnthctl_el2
+	orr	x2, x2, #(CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN)
+	msr	cnthctl_el2, x2
+
+	/* Set the counter offset to a known value */
+	msr	cntvoff_el2, xzr
+
+	/* Hypervisor trap functions */
+	adr	x2, hyp_vectors
+	sub	x2, x2, x29 // VA -> PA
+	msr	vbar_el2, x2
+
+	mov	x2, #(PSR_F | PSR_I | PSR_A | PSR_D | PSR_M_EL1h)
+	msr	spsr_el2, x2
+
+	/* Configure GICv3 CPU interface */
+	mrs	x2, id_aa64pfr0_el1
+	/* Extract GIC bits from the register */
+	ubfx	x2, x2, #ID_AA64PFR0_GIC_SHIFT, #ID_AA64PFR0_GIC_BITS
+	/* GIC[3:0] == 0001 - GIC CPU interface via special regs. supported */
+	cmp	x2, #(ID_AA64PFR0_GIC_CPUIF_EN >> ID_AA64PFR0_GIC_SHIFT)
+	b.ne	2f
+
+	mrs	x2, icc_sre_el2
+	orr	x2, x2, #ICC_SRE_EL2_EN	/* Enable access from insecure EL1 */
+	orr	x2, x2, #ICC_SRE_EL2_SRE	/* Enable system registers */
+	msr	icc_sre_el2, x2
+2:
+
+	/* Set the address to return to our return address */
+	msr	elr_el2, x30
+	isb
+
+	eret
+
+	.align 3
+.Lsctlr_res1:
+	.quad SCTLR_RES1
 
 #define	VECT_EMPTY	\
 	.align 7;	\
 	1:	b	1b
 
 	.align 11
-	.globl hyp_vectors
 hyp_vectors:
 	VECT_EMPTY	/* Synchronous EL2t */
 	VECT_EMPTY	/* IRQ EL2t */
@@ -58,6 +136,106 @@ hyp_vectors:
 	VECT_EMPTY	/* IRQ 32-bit EL1 */
 	VECT_EMPTY	/* FIQ 32-bit EL1 */
 	VECT_EMPTY	/* Error 32-bit EL1 */
+
+/*
+ * Get the delta between the physical address we were loaded to and the
+ * virtual address we expect to run from. This is used when building the
+ * initial page table.
+ */
+	.globl get_virt_delta
+get_virt_delta:
+	/* Load the physical address of virt_map */
+	adr	x28, virt_map
+	/* Load the virtual address of virt_map stored in virt_map */
+	ldr	x29, [x28]
+	/* Calculate delta between virt_map and _start */
+	ldr	x27, [x28, #8]
+	sub	x27, x29, x27
+	/* Find PA - VA as PA' = VA' - VA + PA = VA' + (PA - VA) = VA' + x29 */
+	sub	x29, x29, x28
+	/* Calculate physical address at which we were loaded */
+	sub	x28, x28, x27
+	and	x28, x28, #~0x001fffff
+
+	ret
+
+	.align 3
+virt_map:
+	.quad	virt_map
+	.quad	_start
+
+	.globl start_mmu
+start_mmu:
+	dsb	sy
+
+	/* Load the exception vectors */
+	ldr	x2, =exception_vectors
+	msr	vbar_el1, x2
+
+	/* Load ttbr0 and ttbr1 */
+	msr	ttbr0_el1, x27
+	msr	ttbr1_el1, x26
+	isb
+
+	/* Clear the Monitor Debug System control register */
+	msr	mdscr_el1, xzr
+
+	/* Invalidate the TLB */
+	tlbi	vmalle1is
+
+	ldr	x2, mair
+	msr	mair_el1, x2
+
+	/*
+	 * Setup TCR according to PARange bits from ID_AA64MMFR0_EL1.
+	 * Some machines have physical memory mapped >512GiB, which can not
+	 * be identity-mapped using the default 39 VA bits. Thus, use
+	 * 48 VA bits for now and switch back to 39 after the VA jump.
+	 */
+	ldr	x2, tcr
+	mrs	x3, id_aa64mmfr0_el1
+	bfi	x2, x3, #32, #3
+	msr	tcr_el1, x2
+
+	/* Setup SCTLR */
+	ldr	x2, sctlr_set
+	ldr	x3, sctlr_clear
+	mrs	x1, sctlr_el1
+	bic	x1, x1, x3	/* Clear the required bits */
+	orr	x1, x1, x2	/* Set the required bits */
+	msr	sctlr_el1, x1
+	isb
+
+	ret
+
+	.globl switch_mmu_kernel
+switch_mmu_kernel:
+	dsb	sy
+	/* Invalidate the TLB */
+	tlbi	vmalle1is
+	/* Load ttbr1 (kernel) */
+	msr	ttbr1_el1, x0
+	isb
+	ret
+
+	.align 3
+mair:
+	/* Device | Normal (no cache, write-back, write-through) */
+	.quad	MAIR_ATTR(0x00, 0) |	\
+		MAIR_ATTR(0x44, 1) |	\
+		MAIR_ATTR(0xff, 2) |	\
+		MAIR_ATTR(0x88, 3)
+tcr:
+	.quad (TCR_T1SZ(64 - VIRT_BITS) | TCR_T0SZ(64 - 48) | \
+	    TCR_AS | TCR_TG1_4K | TCR_CACHE_ATTRS | TCR_SMP_ATTRS)
+sctlr_set:
+	/* Bits to set */
+	.quad (SCTLR_UCI | SCTLR_nTWE | SCTLR_nTWI | SCTLR_UCT | SCTLR_DZE | \
+	    SCTLR_I | SCTLR_SED | SCTLR_SA0 | SCTLR_SA | SCTLR_C | SCTLR_M)
+sctlr_clear:
+	/* Bits to clear */
+	.quad (SCTLR_EE | SCTLR_EOE | SCTLR_WXN | SCTLR_UMA | SCTLR_ITD | \
+	    SCTLR_THEE | SCTLR_CP15BEN | SCTLR_A)
 
 	.align 3
 	.globl abort
