@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2017/07/17 13:46:53 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.3 2018/01/21 21:35:34 patrick Exp $
 
 NOMAN=		#
 
@@ -8,7 +8,8 @@ PROG=		BOOTAA64.EFI
 OBJFMT=		binary
 INSTALL_STRIP=
 BINDIR=		/usr/mdec
-SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c fdt.c
+SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c efipxe.c
+SRCS+=		fdt.c
 
 S=		${.CURDIR}/../../../..
 EFIDIR=		${S}/stand/efi

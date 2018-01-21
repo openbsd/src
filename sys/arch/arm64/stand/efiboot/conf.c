@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.10 2018/01/21 21:35:34 patrick Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -28,22 +28,27 @@
 
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
+#include <lib/libsa/tftp.h>
 #include <lib/libsa/ufs.h>
 #include <dev/cons.h>
 
 #include "efiboot.h"
 #include "efidev.h"
+#include "efipxe.h"
 
-const char version[] = "0.8";
+const char version[] = "0.9";
 int	debug = 0;
 
 struct fs_ops file_system[] = {
+	{ tftp_open,   tftp_close,   tftp_read,   tftp_write,   tftp_seek,
+	  tftp_stat,   tftp_readdir   },
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
 	  ufs_stat,    ufs_readdir    },
 };
 int nfsys = nitems(file_system);
 
 struct devsw	devsw[] = {
+	{ "tftp", tftpstrategy, tftpopen, tftpclose, tftpioctl },
 	{ "sd", efistrategy, efiopen, eficlose, efiioctl },
 };
 int ndevs = nitems(devsw);

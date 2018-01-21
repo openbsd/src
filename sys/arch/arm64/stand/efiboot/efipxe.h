@@ -1,7 +1,6 @@
-/*	$OpenBSD: efiboot.h,v 1.2 2018/01/21 21:35:34 patrick Exp $	*/
-
+/*	$OpenBSD: efipxe.h,v 1.1 2018/01/21 21:35:34 patrick Exp $	*/
 /*
- * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
+ * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,11 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-void	efi_cleanup(void);
-void	efi_diskprobe(void);
-void	efi_pxeprobe(void);
-void	*efi_makebootargs(char *);
-void	efi_cons_probe(struct consdev *);
-void	efi_cons_init(struct consdev *);
-int	efi_cons_getc(dev_t);
-void	efi_cons_putc(dev_t, int);
+int tftpopen(struct open_file *, ...);
+int tftpclose(struct open_file *);
+int tftpioctl(struct open_file *, u_long, void *);
+int tftpstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
