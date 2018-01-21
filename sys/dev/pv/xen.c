@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.92 2018/01/21 18:51:19 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.93 2018/01/21 18:54:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -600,7 +600,7 @@ xen_intsrc_add(struct xen_softc *sc, struct xen_intsrc *xi)
 static inline struct xen_intsrc *
 xen_intsrc_acquire(struct xen_softc *sc, evtchn_port_t port)
 {
-	struct xen_intsrc *xi;
+	struct xen_intsrc *xi = NULL;
 
 	mtx_enter(&sc->sc_islck);
 	SLIST_FOREACH(xi, &sc->sc_intrs, xi_entry) {
@@ -713,8 +713,10 @@ xen_intr_schedule(xen_intr_handle_t xih)
 	struct xen_softc *sc = xen_sc;
 	struct xen_intsrc *xi;
 
-	if ((xi = xen_intsrc_acquire(sc, (evtchn_port_t)xih)) != NULL)
-		task_add(xi->xi_taskq, &xi->xi_task);
+	if ((xi = xen_intsrc_acquire(sc, (evtchn_port_t)xih)) != NULL) {
+		if (!task_add(xi->xi_taskq, &xi->xi_task))
+			xen_intsrc_release(sc, xi);
+	}
 }
 
 /*
