@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1055 2018/01/18 17:23:15 job Exp $
+#	$OpenBSD: install.sub,v 1.1056 2018/01/21 19:58:37 halex Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1610,6 +1610,8 @@ install_files() {
 					$AUTO && exit 1
 					return
 				fi
+				_unver=$(rmel $_f $_unver)
+				_get_sets=$(rmel $_f $_get_sets)
 				continue
 			fi
 
