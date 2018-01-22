@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.608 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.609 2018/01/22 09:08:43 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3938,7 +3938,7 @@ intr_handler(struct intrframe *frame, struct intrhand *ih)
 	if (ih->ih_flags & IPL_MPSAFE)
 		need_lock = 0;
 	else
-		need_lock = frame->if_ppl < IPL_SCHED;
+		need_lock = 1;
 
 	if (need_lock)
 		__mp_lock(&kernel_lock);
