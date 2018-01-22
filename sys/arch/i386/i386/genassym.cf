@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.40 2018/01/04 11:03:48 mpi Exp $
+#	$OpenBSD: genassym.cf,v 1.41 2018/01/22 10:04:46 mpi Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -32,6 +32,7 @@
 
 include <sys/param.h>
 include <sys/proc.h>
+include <sys/mutex.h>
 include <sys/resourcevar.h>
 include <sys/device.h>
 include <sys/user.h>
@@ -46,7 +47,6 @@ include <uvm/uvm_extern.h>
 include <machine/trap.h>
 include <machine/pmap.h>
 include <machine/vmparam.h>
-include <machine/mutex.h>
 
 if MULTIPROCESSOR
 include <machine/cpu.h>
