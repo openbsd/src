@@ -186,6 +186,14 @@ dispatch_txt(struct dns_rr *rr)
 				printf("%s\n", *(ap) + 5);
 			continue;
 		}
+		if (strncasecmp("a:", *ap, 2) == 0) {
+			lookup_record(T_A, *(ap) + 2, dispatch_a);
+			continue;
+		}
+		if (strncasecmp("exists:", *ap, 7) == 0) {
+			lookup_record(T_A, *(ap) + 7, dispatch_a);
+			continue;
+		}
 		if (strncasecmp("include:", *ap, 8) == 0) {
 			lookup_record(T_TXT, *(ap) + 8, dispatch_txt);
 			continue;
