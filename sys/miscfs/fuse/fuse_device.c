@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.23 2017/08/10 14:36:34 mestre Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.24 2018/01/22 13:16:48 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -91,6 +91,15 @@ fuse_dump_buff(char *buff, int len)
 {
 	char text[17];
 	int i;
+
+	if (len < 0) {
+		printf("invalid len: %d", len);
+		return;
+	}
+	if (buff == NULL) {
+		printf("invalid buff");
+		return;
+	}
 
 	bzero(text, 17);
 	for (i = 0; i < len; i++) {
@@ -338,7 +347,7 @@ fuseioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 #ifdef FUSE_DEBUG
-		fuse_dump_buff(ioexch->fbxch_data, ioexch->fbxch_len);
+		fuse_dump_buff(fbuf->fb_dat, fbuf->fb_len);
 #endif
 
 		/* Adding fbuf in fd_fbufs_wait */
