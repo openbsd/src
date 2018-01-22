@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.79 2018/01/18 08:17:39 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.80 2018/01/22 09:01:39 mpi Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -247,19 +247,20 @@ typedef struct {
 #define SHN_HIRESERVE	0xffff		/* upper bounds of reserved indexes */
 
 /* sh_type */
-#define SHT_NULL	0		/* inactive */
-#define SHT_PROGBITS	1		/* program defined information */
-#define SHT_SYMTAB	2		/* symbol table section */
-#define SHT_STRTAB	3		/* string table section */
-#define SHT_RELA	4		/* relocation section with addends*/
-#define SHT_HASH	5		/* symbol hash table section */
-#define SHT_DYNAMIC	6		/* dynamic section */
-#define SHT_NOTE	7		/* note section */
-#define SHT_NOBITS	8		/* no space section */
-#define SHT_REL		9		/* relation section without addends */
-#define SHT_SHLIB	10		/* reserved - purpose unknown */
-#define SHT_DYNSYM	11		/* dynamic symbol table section */
-#define SHT_NUM		12		/* number of section types */
+#define SHT_NULL		0	/* inactive */
+#define SHT_PROGBITS		1	/* program defined information */
+#define SHT_SYMTAB		2	/* symbol table section */
+#define SHT_STRTAB		3	/* string table section */
+#define SHT_RELA		4	/* relocation section with addends*/
+#define SHT_HASH		5	/* symbol hash table section */
+#define SHT_DYNAMIC		6	/* dynamic section */
+#define SHT_NOTE		7	/* note section */
+#define SHT_NOBITS		8	/* no space section */
+#define SHT_REL			9	/* relation section without addends */
+#define SHT_SHLIB		10	/* reserved - purpose unknown */
+#define SHT_DYNSYM		11	/* dynamic symbol table section */
+#define SHT_NUM			12	/* number of section types */
+#define SHT_SYMTAB_SHNDX	18	/* Section indexes (see SHN_XINDEX). */
 #define SHT_LOPROC	0x70000000	/* reserved range for processor */
 #define SHT_HIPROC	0x7fffffff	/*  specific section header types */
 #define SHT_LOUSER	0x80000000	/* reserved range for application */
