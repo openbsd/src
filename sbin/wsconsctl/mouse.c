@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.16 2017/10/24 09:36:13 jsg Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.17 2018/01/22 22:14:11 bru Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -58,6 +58,7 @@ struct field mouse_field_tab[] = {
     { "tp.scaling",		&cfg_scaling,	FMT_CFG,	FLG_NORDBACK },
     { "tp.swapsides",		&cfg_swapsides,	FMT_CFG,	FLG_NORDBACK },
     { "tp.disable",		&cfg_disable,	FMT_CFG,	FLG_NORDBACK },
+    { "tp.edges",		&cfg_edges,	FMT_CFG,	FLG_NORDBACK },
     { "tp.param",		&cfg_param,	FMT_CFG,	FLG_WRONLY },
     { NULL }
 };
