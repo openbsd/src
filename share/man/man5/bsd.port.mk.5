@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.471 2018/01/03 08:43:09 bentley Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.472 2018/01/22 13:18:37 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 3 2018 $
+.Dd $Mdocdate: January 22 2018 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2154,21 +2154,6 @@ It should be left alone for ports with empty regression tests, and for
 ports with failing tests.
 That way, if a subsequent update of a port acquires actual regression tests,
 they will be picked up automatically.
-.It Ev OLD_WRKDIR_NAME
-Base name for
-.Ev WRKDIR
-in the old scheme without
-.Ev WRKOBJDIR .
-Mostly used as a value for
-.Ev WRKDIR_LINKNAME ,
-e.g.,
-.Bd -literal
-WRKDIR_LINKNAME = ${OLD_WRKDIR_NAME}
-.Ed
-.Pp
-in
-.Pa /etc/mk.conf .
-Read-only.
 .It Ev ONLY_FOR_ARCHS
 List of architectures on which this port builds.
 Can hold both processor-specific information (e.g., powerpc), and more
@@ -3103,8 +3088,7 @@ is put at the front of the
 .It Ev WRKDIR_LINKNAME
 Name of a symbolic link to create within the port directory which will
 point to the port's ${WRKDIR}.
-See
-.Ev OLD_WRKDIRNAME .
+Deprecated.
 .It Ev WRKDIST
 Subdirectory of ${WRKDIR} in which the distribution files normally unpack.
 Base for all patches.
@@ -4066,6 +4050,11 @@ creates the whole
 hierarchy under ${WRKOBJDIR}, so
 .Ev OBJMACHINE
 is no longer useful.
+.It Ev OLD_WRKDIR_NAME
+Used to be a base name for
+.Ev WRKDIR
+in the old scheme without
+.Ev WRKOBJDIR .
 .It Ev OPSYS
 The operating system.
 This ports tree is only used on
