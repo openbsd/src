@@ -513,5 +513,5 @@ output of the compiler, along with information to reproduce.
 SEE ALSO
 --------
 
-:manpage:`as(1)`, :manpage:`ld(1)`
+:manpage:`as(1)`, :manpage:`clang-local(1)`, :manpage:`ld(1)`
 
