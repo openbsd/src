@@ -468,6 +468,7 @@ static const struct intel_device_info intel_kabylake_gt3_info = {
 	INTEL_SKL_GT1_IDS(&intel_skylake_info),	\
 	INTEL_SKL_GT2_IDS(&intel_skylake_info),	\
 	INTEL_SKL_GT3_IDS(&intel_skylake_gt3_info),	\
+	INTEL_SKL_GT4_IDS(&intel_skylake_gt3_info),	\
 	INTEL_BXT_IDS(&intel_broxton_info),		\
 	INTEL_KBL_GT1_IDS(&intel_kabylake_info),	\
 	INTEL_KBL_GT2_IDS(&intel_kabylake_info),	\
