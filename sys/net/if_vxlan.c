@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.65 2018/01/09 15:24:24 bluhm Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.66 2018/01/22 09:05:06 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -73,6 +73,8 @@ struct vxlan_softc {
 	int64_t			 sc_vnetid;
 	u_int8_t		 sc_ttl;
 
+	struct task		 sc_sendtask;
+
 	LIST_ENTRY(vxlan_softc)	 sc_entry;
 };
 
@@ -91,6 +93,7 @@ int	 vxlan_output(struct ifnet *, struct mbuf *);
 void	 vxlan_addr_change(void *);
 void	 vxlan_if_change(void *);
 void	 vxlan_link_change(void *);
+void	 vxlan_send_dispatch(void *);
 
 int	 vxlan_sockaddr_cmp(struct sockaddr *, struct sockaddr *);
 uint16_t vxlan_sockaddr_port(struct sockaddr *);
@@ -132,6 +135,7 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 	sc->sc_dstport = htons(VXLAN_PORT);
 	sc->sc_vnetid = VXLAN_VNI_UNSET;
+	task_set(&sc->sc_sendtask, vxlan_send_dispatch, sc);
 
 	ifp = &sc->sc_ac.ac_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "vxlan%d", unit);
@@ -186,6 +190,10 @@ vxlan_clone_destroy(struct ifnet *ifp)
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	if (!task_del(net_tq(ifp->if_index), &sc->sc_sendtask))
+		taskq_barrier(net_tq(ifp->if_index));
+
 	free(sc->sc_imo.imo_membership, M_IPMOPTS, 0);
 	free(sc, M_DEVBUF, sizeof(*sc));
 
@@ -299,21 +307,43 @@ vxlan_multicast_join(struct ifnet *ifp, struct sockaddr *src,
 void
 vxlanstart(struct ifnet *ifp)
 {
-	struct mbuf		*m;
+	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
 
+	task_add(net_tq(ifp->if_index), &sc->sc_sendtask);
+}
+
+void
+vxlan_send_dispatch(void *xsc)
+{
+	struct vxlan_softc	*sc = xsc;
+	struct ifnet		*ifp = &sc->sc_ac.ac_if;
+	struct mbuf		*m;
+	struct mbuf_list	 ml;
+
+	ml_init(&ml);
 	for (;;) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
-			return;
+			break;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
+		ml_enqueue(&ml, m);
+	}
+
+	if (ml_empty(&ml))
+		return;
+
+	NET_RLOCK();
+	while ((m = ml_dequeue(&ml)) != NULL) {
 		vxlan_output(ifp, m);
 	}
+	NET_RUNLOCK();
 }
+
 
 int
 vxlan_config(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
