@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.30 2018/01/23 20:41:42 bluhm Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.31 2018/01/23 20:49:58 bluhm Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -121,6 +121,7 @@ struct protosw {
  * A non-zero return from usrreq gives an
  * UNIX error number which should be passed to higher level software.
  */
+#define	PRU_ATTACH		0	/* attach protocol to up */
 #define	PRU_DETACH		1	/* detach protocol from up */
 #define	PRU_BIND		2	/* bind socket to address */
 #define	PRU_LISTEN		3	/* listen for connection */
@@ -148,7 +149,7 @@ struct protosw {
 
 #ifdef PRUREQUESTS
 const char *prurequests[] = {
-	"",		"DETACH",	"BIND",		"LISTEN",
+	"ATTACH",	"DETACH",	"BIND",		"LISTEN",
 	"CONNECT",	"ACCEPT",	"DISCONNECT",	"SHUTDOWN",
 	"RCVD",		"SEND",		"ABORT",	"CONTROL",
 	"SENSE",	"RCVOOB",	"SENDOOB",	"SOCKADDR",

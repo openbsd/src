@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.164 2018/01/22 20:27:28 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.165 2018/01/23 20:49:58 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -602,8 +602,8 @@ tcp_attach(struct socket *so, int proto)
 	if ((so->so_options & SO_LINGER) && so->so_linger == 0)
 		so->so_linger = TCP_LINGERTIME;
 
-	if (tp && (so->so_options & SO_DEBUG))
-		tcp_trace(TA_USER, 0, tp, (caddr_t)0, 0 /* XXX */, 0);
+	if (so->so_options & SO_DEBUG)
+		tcp_trace(TA_USER, TCPS_CLOSED, tp, (caddr_t)0, PRU_ATTACH, 0);
 	return (0);
 }
 
