@@ -1,4 +1,4 @@
-# $OpenBSD: zone.tab,v 1.62 2017/10/23 16:14:17 millert Exp $
+# $OpenBSD: zone.tab,v 1.63 2018/01/23 21:54:04 millert Exp $
 # tz zone descriptions (deprecated version)
 #
 # This file is in the public domain, so clarified as of
@@ -373,7 +373,7 @@ SM	+4355+01228	Europe/San_Marino
 SN	+1440-01726	Africa/Dakar
 SO	+0204+04522	Africa/Mogadishu
 SR	+0550-05510	America/Paramaribo
-SS	+0451+03136	Africa/Juba
+SS	+0451+03137	Africa/Juba
 ST	+0020+00644	Africa/Sao_Tome
 SV	+1342-08912	America/El_Salvador
 SX	+180305-0630250	America/Lower_Princes
