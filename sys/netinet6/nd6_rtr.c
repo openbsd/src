@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.165 2017/11/03 14:28:57 florian Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.166 2018/01/23 22:06:42 bluhm Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -171,6 +171,7 @@ nd6_rtr_cache(struct mbuf *m, int off, int icmp6len, int icmp6_type)
  * Delete all the routing table entries that use the specified gateway.
  * XXX: this function causes search through all entries of routing table, so
  * it shouldn't be called when acting as a router.
+ * The gateway must already contain KAME's hack for link-local scope.
  */
 void
 rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
@@ -181,8 +182,7 @@ rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
 	if (!IN6_IS_ADDR_LINKLOCAL(gateway))
 		return;
 
-	/* XXX: hack for KAME's link-local address kludge */
-	gateway->s6_addr16[1] = htons(ifp->if_index);
+	KASSERT(gateway->s6_addr16[1] != 0);
 
 	rtable_walk(ifp->if_rdomain, AF_INET6, rt6_deleteroute, gateway);
 }
