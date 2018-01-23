@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.66 2017/08/18 00:49:51 kevlo Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.67 2018/01/23 02:53:26 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -3596,7 +3596,6 @@ urtw_8187b_init(struct ifnet *ifp)
 	struct urtw_softc *sc = ifp->if_softc;
 	struct urtw_rf *rf = &sc->sc_rf;
 	struct ieee80211com *ic = &sc->sc_ic;
-	int ret;
 	uint8_t data;
 	usbd_status error;
 
@@ -3685,10 +3684,10 @@ urtw_8187b_init(struct ifnet *ifp)
 		error = urtw_open_pipes(sc);
 		if (error != 0)
 			goto fail;
-		ret = urtw_alloc_rx_data_list(sc);
+		error = urtw_alloc_rx_data_list(sc);
 		if (error != 0)
 			goto fail;
-		ret = urtw_alloc_tx_data_list(sc);
+		error = urtw_alloc_tx_data_list(sc);
 		if (error != 0)
 			goto fail;
 		sc->sc_flags |= URTW_INIT_ONCE;
