@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.499 2017/11/14 00:45:29 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.500 2018/01/23 05:01:15 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -502,8 +502,9 @@ privsep_preauth_child(void)
 		if ((pw = getpwnam(SSH_PRIVSEP_USER)) == NULL)
 			fatal("Privilege separation user %s does not exist",
 			    SSH_PRIVSEP_USER);
-		explicit_bzero(pw->pw_passwd, strlen(pw->pw_passwd));
+		pw = pwcopy(pw); /* Ensure mutable */
 		endpwent();
+		freezero(pw->pw_passwd, strlen(pw->pw_passwd));
 
 		/* Change our root directory */
 		if (chroot(_PATH_PRIVSEP_CHROOT_DIR) == -1)
@@ -1674,6 +1675,7 @@ main(int ac, char **av)
 		if (getpwnam(SSH_PRIVSEP_USER) == NULL)
 			fatal("Privilege separation user %s does not exist",
 			    SSH_PRIVSEP_USER);
+		endpwent();
 		if ((stat(_PATH_PRIVSEP_CHROOT_DIR, &st) == -1) ||
 		    (S_ISDIR(st.st_mode) == 0))
 			fatal("Missing privilege separation directory: %s",
