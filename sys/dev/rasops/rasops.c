@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.49 2017/12/23 10:30:25 fcambus Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.50 2018/01/23 10:10:32 fcambus Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1247,6 +1247,8 @@ rasops_putchar_rotated(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do rotated underline */
 	rp = ri->ri_bits + col * ri->ri_yscale + row * ri->ri_xscale;
+	if (ri->ri_flg & RI_ROTATE_CCW)
+		rp += (ri->ri_font->fontwidth - 1) * ri->ri_pelbytes;
 	height = ri->ri_font->fontheight;
 
 	/* XXX this assumes 16-bit color depth */
