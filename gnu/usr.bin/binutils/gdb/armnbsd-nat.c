@@ -70,10 +70,10 @@ supply_fparegset (struct fpreg *fparegset)
 
   for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
     regcache_raw_supply (current_regcache, regno,
-			 (char *) &fparegset->fpr[regno - ARM_F0_REGNUM]);
+			 (char *) &fparegset->fp_reg[regno - ARM_F0_REGNUM]);
 
   regcache_raw_supply (current_regcache, ARM_FPS_REGNUM,
-		       (char *) &fparegset->fpr_fpsr);
+		       (char *) &fparegset->fp_scr);
 }
 
 static void
@@ -164,12 +164,12 @@ fetch_fp_register (int regno)
     {
     case ARM_FPS_REGNUM:
       regcache_raw_supply (current_regcache, ARM_FPS_REGNUM,
-			   (char *) &inferior_fp_registers.fpr_fpsr);
+			   (char *) &inferior_fp_registers.fp_scr);
       break;
 
     default:
       regcache_raw_supply (current_regcache, regno,
-			   (char *) &inferior_fp_registers.fpr[regno - ARM_F0_REGNUM]);
+			   (char *) &inferior_fp_registers.fp_reg[regno - ARM_F0_REGNUM]);
       break;
     }
 }
@@ -352,12 +352,12 @@ store_fp_register (int regno)
     {
     case ARM_FPS_REGNUM:
       regcache_raw_collect (current_regcache, ARM_FPS_REGNUM,
-			    (char *) &inferior_fp_registers.fpr_fpsr);
+			    (char *) &inferior_fp_registers.fp_scr);
       break;
 
     default:
       regcache_raw_collect (current_regcache, regno,
-			    (char *) &inferior_fp_registers.fpr[regno - ARM_F0_REGNUM]);
+			    (char *) &inferior_fp_registers.fp_reg[regno - ARM_F0_REGNUM]);
       break;
     }
 
@@ -378,10 +378,10 @@ store_fp_regs (void)
 
   for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
     regcache_raw_collect (current_regcache, regno,
-			  (char *) &inferior_fp_registers.fpr[regno - ARM_F0_REGNUM]);
+			  (char *) &inferior_fp_registers.fp_reg[regno - ARM_F0_REGNUM]);
 
   regcache_raw_collect (current_regcache, ARM_FPS_REGNUM,
-			(char *) &inferior_fp_registers.fpr_fpsr);
+			(char *) &inferior_fp_registers.fp_scr);
 
   ret = ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
 		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
