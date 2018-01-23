@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson3_intr.c,v 1.5 2017/02/19 09:53:37 visa Exp $	*/
+/*	$OpenBSD: loongson3_intr.c,v 1.6 2018/01/23 14:47:21 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -416,7 +416,7 @@ loongson3_intr(uint32_t pending, struct trapframe *frame)
 			if (ih->ih_flags & IH_MPSAFE)
 				need_lock = 0;
 			else
-				need_lock = ih->ih_level < IPL_CLOCK;
+				need_lock = 1;
 			if (need_lock)
 				__mp_lock(&kernel_lock);
 #endif
@@ -492,7 +492,7 @@ loongson3_ht_intr(uint32_t pending, struct trapframe *frame)
 			if (ih->ih_flags & IH_MPSAFE)
 				need_lock = 0;
 			else
-				need_lock = ih->ih_level < IPL_CLOCK;
+				need_lock = 1;
 			if (need_lock)
 				__mp_lock(&kernel_lock);
 #endif

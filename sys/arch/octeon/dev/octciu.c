@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.8 2017/11/03 16:19:25 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.9 2018/01/23 14:47:21 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -480,7 +480,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 			if (ih->ih_flags & IH_MPSAFE)
 				need_lock = 0;
 			else
-				need_lock = ih->ih_level < IPL_CLOCK;
+				need_lock = 1;
 			if (need_lock)
 				__mp_lock(&kernel_lock);
 #endif
