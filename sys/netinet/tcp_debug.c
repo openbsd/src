@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.24 2017/05/18 11:38:07 mpi Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.25 2018/01/23 20:41:42 bluhm Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, caddr_t headers,
 	if (tcpconsdebug == 0)
 		return;
 	if (tp)
-		printf("%x %s:", tp, tcpstates[ostate]);
+		printf("%p %s:", tp, tcpstates[ostate]);
 	else
 		printf("???????? ");
 	printf("%s ", tanames[act]);
@@ -205,10 +205,10 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, caddr_t headers,
 	printf("\n");
 	if (tp == 0)
 		return;
-	printf("\trcv_(nxt,wnd,up) (%x,%x,%x) snd_(una,nxt,max) (%x,%x,%x)\n",
+	printf("\trcv_(nxt,wnd,up) (%x,%lx,%x) snd_(una,nxt,max) (%x,%x,%x)\n",
 	    tp->rcv_nxt, tp->rcv_wnd, tp->rcv_up, tp->snd_una, tp->snd_nxt,
 	    tp->snd_max);
-	printf("\tsnd_(wl1,wl2,wnd) (%x,%x,%x)\n",
+	printf("\tsnd_(wl1,wl2,wnd) (%x,%x,%lx)\n",
 	    tp->snd_wl1, tp->snd_wl2, tp->snd_wnd);
 #endif /* TCPDEBUG */
 }
