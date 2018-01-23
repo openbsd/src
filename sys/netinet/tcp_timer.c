@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.61 2018/01/23 21:06:47 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.62 2018/01/23 21:41:17 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -70,12 +70,14 @@ void	tcp_timer_rexmt(void *);
 void	tcp_timer_persist(void *);
 void	tcp_timer_keep(void *);
 void	tcp_timer_2msl(void *);
+void	tcp_timer_reaper(void *);
 
 const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS] = {
 	tcp_timer_rexmt,
 	tcp_timer_persist,
 	tcp_timer_keep,
 	tcp_timer_2msl,
+	tcp_timer_reaper,
 };
 
 /*
@@ -463,4 +465,21 @@ tcp_timer_2msl(void *arg)
 
  out:
 	NET_UNLOCK();
+}
+
+void
+tcp_timer_reaper(void *arg)
+{
+	struct tcpcb *tp = arg;
+
+	/*
+	 * This timer is necessary to delay the pool_put() after all timers
+	 * have finished, even if they were sleeping to grab the net lock.
+	 * Putting the pool_put() in a timer is sufficinet as all timers run
+	 * from the same timeout thread.  Note that neither softnet thread nor
+	 * user process may access the tcpcb after arming the reaper timer.
+	 * Freeing may run in parallel as it does not grab the net lock.
+	 */
+	pool_put(&tcpcb_pool, tp);
+	tcpstat_inc(tcps_closed);
 }

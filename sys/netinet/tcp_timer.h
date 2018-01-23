@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.14 2016/10/04 13:54:32 mpi Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.15 2018/01/23 21:41:17 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -39,12 +39,13 @@
  * Definitions of the TCP timers.  These timers are counted
  * down PR_SLOWHZ times a second.
  */
-#define	TCPT_NTIMERS	4
+#define	TCPT_NTIMERS	5
 
 #define	TCPT_REXMT	0		/* retransmit */
 #define	TCPT_PERSIST	1		/* retransmit persistence */
 #define	TCPT_KEEP	2		/* keep alive */
 #define	TCPT_2MSL	3		/* 2*msl quiet time timer */
+#define	TCPT_REAPER	4		/* delayed cleanup timeout */
 
 /*
  * The TCPT_REXMT timer is used to force retransmissions.
@@ -108,8 +109,8 @@
 #define	TCP_DELACK_TICKS (hz / PR_FASTHZ)	/* time to delay ACK */
 
 #ifdef	TCPTIMERS
-const char *tcptimers[] =
-    { "REXMT", "PERSIST", "KEEP", "2MSL" };
+const char *tcptimers[TCPT_NTIMERS] =
+    { "REXMT", "PERSIST", "KEEP", "2MSL", "REAPER" };
 #endif /* TCPTIMERS */
 
 /*

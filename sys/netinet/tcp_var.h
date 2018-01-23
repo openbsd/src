@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.128 2017/11/02 14:01:18 florian Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.129 2018/01/23 21:41:17 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -193,8 +193,6 @@ struct tcpcb {
 	u_short	t_pmtud_ip_hl;		/* IP header length from ICMP payload */
 
 	int pf;
-
-	struct	timeout t_reap_to;	/* delayed cleanup timeout */
 };
 
 #define	intotcpcb(ip)	((struct tcpcb *)(ip)->inp_ppcb)
@@ -679,6 +677,7 @@ tcpstat_pkt(enum tcpstat_counters pcounter, enum tcpstat_counters bcounter,
 	counters_pkt(tcpcounters, pcounter, bcounter, v);
 }
 
+extern	struct pool tcpcb_pool;
 extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
 extern	u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
@@ -705,7 +704,6 @@ extern	int tcp_syn_cache_active; /* active syn cache, may be 0 or 1 */
 void	 tcp_canceltimers(struct tcpcb *);
 struct tcpcb *
 	 tcp_close(struct tcpcb *);
-void	 tcp_reaper(void *);
 int	 tcp_freeq(struct tcpcb *);
 #ifdef INET6
 void	 tcp6_ctlinput(int, struct sockaddr *, u_int, void *);
