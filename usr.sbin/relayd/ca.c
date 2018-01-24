@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.32 2018/01/01 15:01:09 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.33 2018/01/24 13:51:36 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -279,8 +279,9 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			iov[c++].iov_len = cko.cko_tlen;
 		}
 
-		proc_composev_imsg(env->sc_ps, PROC_RELAY, cko.cko_proc,
-		    imsg->hdr.type, -1, -1, iov, c);
+		if (proc_composev_imsg(env->sc_ps, PROC_RELAY, cko.cko_proc,
+		    imsg->hdr.type, -1, -1, iov, c) == -1)
+			log_warn("%s: proc_composev_imsg", __func__);
 
 		free(to);
 		RSA_free(rsa);
@@ -356,7 +357,8 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	 * Send a synchronous imsg because we cannot defer the RSA
 	 * operation in OpenSSL's engine layer.
 	 */
-	imsg_composev(ibuf, cmd, 0, 0, -1, iov, cnt);
+	if (imsg_composev(ibuf, cmd, 0, 0, -1, iov, cnt) == -1)
+		log_warn("%s: imsg_composev", __func__);
 	if (imsg_flush(ibuf) == -1)
 		log_warn("%s: imsg_flush", __func__);
 
@@ -368,7 +370,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 			fatal("%s: poll", __func__);
 		case 0:
 			log_warnx("%s: poll timeout", __func__);
-			break;
+			return -1;
 		default:
 			break;
 		}
