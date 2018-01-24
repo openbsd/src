@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.79 2017/01/21 08:33:07 krw Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.80 2018/01/24 13:25:25 tb Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -987,8 +987,7 @@ shell(int argc, char *argv[])
 	old1 = signal (SIGINT, SIG_IGN);
 	old2 = signal (SIGQUIT, SIG_IGN);
 	if ((pid = fork()) == 0) {
-		for (pid = 3; pid < 20; pid++)
-			(void)close(pid);
+		(void)closefrom(3);
 		(void)signal(SIGINT, SIG_DFL);
 		(void)signal(SIGQUIT, SIG_DFL);
 		shellp = getenv("SHELL");
