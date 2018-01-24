@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.543 2017/12/20 18:51:14 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.544 2018/01/24 19:12:49 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -970,14 +970,12 @@ bind_lease(struct interface_info *ifi)
 	 * renewal == time to renew lease from server that provided it.
 	 * rebind  == time to renew lease from any server.
 	 *
-	 * 0 <= renewal <= rebind <= expiry
-	 * &&
-	 * expiry >= MIN(time_max, 60)
+	 * N.B.: renewal and/or rebind time could be < cur_time when the
+	 *       lease was obtained from the leases file.
 	 */
 	ifi->expiry = lease_expiry(lease);
 	ifi->rebind = lease_rebind(lease);
-
-	renewal = lease_renewal(lease) - cur_time;
+	renewal = lease_renewal(lease);
 
 	/*
 	 * A duplicate proposal once we are responsible & S_RENEWING means we
@@ -1015,8 +1013,8 @@ bind_lease(struct interface_info *ifi)
 
 newlease:
 	write_resolv_conf();
-	log_info("%s: bound to %s -- renewal in %lld seconds", log_procname,
-	    inet_ntoa(ifi->active->address), (long long)renewal);
+	log_info("%s: bound to %s", log_procname,
+	    inet_ntoa(ifi->active->address));
 	go_daemon(ifi->name);
 	rewrite_option_db(ifi->name, ifi->active, lease);
 	free_client_lease(lease);
@@ -1054,7 +1052,7 @@ newlease:
 	ifi->state = S_BOUND;
 
 	/* Set timeout to start the renewal process. */
-	set_timeout(ifi, renewal, state_bound);
+	set_timeout(ifi, renewal - cur_time, state_bound);
 }
 
 /*

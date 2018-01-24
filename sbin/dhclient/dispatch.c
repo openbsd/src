@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.146 2017/09/20 22:05:10 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.147 2018/01/24 19:12:49 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -325,7 +325,8 @@ set_timeout(struct interface_info *ifi, time_t secs,
     void (*where)(struct interface_info *))
 {
 	time(&ifi->timeout);
-	ifi->timeout += secs;
+	if (secs > 0)
+		ifi->timeout += secs;
 	ifi->timeout_func = where;
 }
 
