@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.31 2018/01/24 13:04:22 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.32 2018/01/24 13:07:31 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1922,10 +1922,10 @@ bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
 		break;
 #endif
 	default:
-		printf("%s: buf %p len %lu datalen %u code %u status %u"
-		    " reason %u\n", __func__, buf, len, ntohl(e->msg.datalen),
+		DPRINTF(("%s: len %lu datalen %u code %u status %u"
+		    " reason %u\n", __func__, len, ntohl(e->msg.datalen),
 		    ntohl(e->msg.event_type), ntohl(e->msg.status),
-		    ntohl(e->msg.reason));
+		    ntohl(e->msg.reason)));
 		break;
 	}
 }
