@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.130 2018/01/05 13:39:55 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.131 2018/01/24 16:52:45 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -103,16 +103,20 @@ sub handle_options
 			    }
 			    $state->{system_version} += $d;
 		    },
+	    'w' => sub {
+			    my $w = shift;
+			    $state->{libset}{$w} = 1;
+		    },
 	    'W' => sub {
 			    my $w = shift;
 			    $state->{wantlib}{$w} = 1;
 		    },
 	};
 	$state->{no_exports} = 1;
-	$state->SUPER::handle_options('p:f:d:M:U:A:B:P:V:W:qQS',
+	$state->SUPER::handle_options('p:f:d:M:U:A:B:P:V:w:W:qQS',
 	    '[-nQqvSx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
-	    '[-U undisplayfile] [-V n] [-W wantedlib]',
+	    '[-U undisplayfile] [-V n] [-W wantedlib] [-w libset]',
 	    '[-d desc -D COMMENT=value -f packinglist -p prefix]',
 	    'pkg-name');
 
@@ -810,7 +814,7 @@ sub solve_wantlibs
 	my $okay = 1;
 	my $lib_finder = OpenBSD::lookup::library->new($solver);
 	my $h = $solver->{set}->{new}[0];
-	for my $lib (@{$h->{plist}->{wantlib}}) {
+	for my $lib (@{$h->{plist}{wantlib}}) {
 		$solver->{localbase} = $h->{plist}->localbase;
 		next if $lib_finder->lookup($solver,
 		    $solver->{to_register}->{$h}, $state,
@@ -1190,6 +1194,9 @@ sub add_elements
 
 	for my $w (sort keys %{$state->{wantlib}}) {
 		OpenBSD::PackingElement::Wantlib->add($plist, $w);
+	}
+	for my $w (sort keys %{$state->{libset}}) {
+		OpenBSD::PackingElement::Libset->add($plist, $w);
 	}
 
 	if (defined $state->opt('A')) {

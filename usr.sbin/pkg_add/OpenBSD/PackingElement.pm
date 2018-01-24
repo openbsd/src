@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.248 2018/01/01 14:02:37 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.249 2018/01/24 16:52:44 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1096,6 +1096,22 @@ our @ISA=qw(OpenBSD::PackingElement::Depend);
 sub category() { "libset" }
 sub keyword() { "libset" }
 __PACKAGE__->register_with_factory;
+
+sub new
+{
+	my ($class, $args) = @_;
+	if ($args =~ m/(.*)\:(.*)/) {
+		return bless {name => $1, libs => [split(/\,/, $2)]}, $class;
+	} else {
+		die "Bad args for libset: $args";
+	}
+}
+
+sub stringize
+{
+	my $self = shift;
+	return $self->{name}.':'.join(',', @{$self->{libs}});
+}
 
 package OpenBSD::PackingElement::PkgPath;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
