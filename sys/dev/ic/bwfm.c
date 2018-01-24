@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.30 2018/01/11 19:33:34 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.31 2018/01/24 13:04:22 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -601,14 +601,14 @@ bwfm_chip_attach(struct bwfm_softc *sc)
 
 		switch (core->co_id) {
 		case BWFM_AGENT_CORE_ARM_CM3:
-			need_socram = true;
+			need_socram = 1;
 			/* FALLTHROUGH */
 		case BWFM_AGENT_CORE_ARM_CR4:
 		case BWFM_AGENT_CORE_ARM_CA7:
-			cpu_found = true;
+			cpu_found = 1;
 			break;
 		case BWFM_AGENT_INTERNAL_MEM:
-			has_socram = true;
+			has_socram = 1;
 			break;
 		default:
 			break;
