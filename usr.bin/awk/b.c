@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.19 2017/10/09 14:51:31 deraadt Exp $	*/
+/*	$OpenBSD: b.c,v 1.20 2018/01/24 16:28:25 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -260,6 +260,8 @@ int quoted(uschar **pp)	/* pick up next thing after a \\ */
 
 	if ((c = *p++) == 't')
 		c = '\t';
+	else if (c == 'v')
+		c = '\v';
 	else if (c == 'n')
 		c = '\n';
 	else if (c == 'f')
@@ -268,6 +270,8 @@ int quoted(uschar **pp)	/* pick up next thing after a \\ */
 		c = '\r';
 	else if (c == 'b')
 		c = '\b';
+	else if (c == 'a')
+		c = '\007';
 	else if (c == '\\')
 		c = '\\';
 	else if (c == 'x') {	/* hexadecimal goo follows */

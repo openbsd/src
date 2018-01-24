@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.16 2017/10/09 14:51:31 deraadt Exp $	*/
+/*	$OpenBSD: tran.c,v 1.17 2018/01/24 16:28:25 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -434,9 +434,11 @@ char *qstring(const char *is, int delim)	/* collect string up to next delim */
 			case '\\':	*bp++ = '\\'; break;
 			case 'n':	*bp++ = '\n'; break;
 			case 't':	*bp++ = '\t'; break;
+			case 'v':	*bp++ = '\v'; break;
 			case 'b':	*bp++ = '\b'; break;
 			case 'f':	*bp++ = '\f'; break;
 			case 'r':	*bp++ = '\r'; break;
+			case 'a':	*bp++ = '\007'; break;
 			default:
 				if (!isdigit(c)) {
 					*bp++ = c;
