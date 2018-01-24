@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.21 2017/12/09 07:16:51 deraadt Exp $ */
+/* $OpenBSD: gcm128.c,v 1.22 2018/01/24 23:03:37 kettenis Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -661,7 +661,7 @@ void gcm_ghash_4bit_x86(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len
 #  endif
 # elif defined(__arm__) || defined(__arm)
 #  include "arm_arch.h"
-#  if __ARM_ARCH__>=7
+#  if __ARM_ARCH__>=7 && !defined(__STRICT_ALIGNMENT)
 #   define GHASH_ASM_ARM
 #   define GCM_FUNCREF_4BIT
 void gcm_gmult_neon(u64 Xi[2],const u128 Htable[16]);
