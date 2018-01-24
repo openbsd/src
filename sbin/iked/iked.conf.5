@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.51 2017/11/27 18:39:35 patrick Exp $
+.\" $OpenBSD: iked.conf.5,v 1.52 2018/01/24 17:01:52 patrick Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2017 $
+.Dd $Mdocdate: January 24 2018 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -385,6 +385,9 @@ and the default proposals are described below in
 If omitted,
 .Xr iked 8
 will use the default proposals for the IKEv2 protocol.
+To specify multiple IKE SA proposals, the keyword can be used more
+than once.
+The order of the proposals depend on the order in the configuration.
 .It Xo
 .Ic childsa
 .Ic auth Ar algorithm
@@ -407,6 +410,9 @@ and the default proposals are described below in
 If omitted,
 .Xr iked 8
 will use the default proposals for the ESP or AH protocol.
+To specify multiple Child SA proposals, the keyword can be used more
+than once.
+The order of the proposals depend on the order in the configuration.
 The
 .Ic group
 option will only be used to enable Perfect Forward Secrecy (PFS)
@@ -885,7 +891,9 @@ ikev2 "big test" \e
 	from 10.0.0.0/8 port 23 to 20.0.0.0/8 port 40 \e
 	from 192.168.1.1 to 192.168.2.2 \e
 	peer any local any \e
+	ikesa enc 3des auth hmac-sha2-256 group modp1024 \e
 	ikesa enc 3des auth hmac-sha1 group modp1024 \e
+	childsa enc aes-128 auth hmac-sha2-256 \e
 	childsa enc aes-128 auth hmac-sha1 \e
 	srcid host.example.com \e
 	dstid 192.168.0.254 \e

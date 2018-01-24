@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.68 2017/12/01 20:19:05 patrick Exp $	*/
+/*	$OpenBSD: parse.y,v 1.69 2018/01/24 17:01:52 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -120,8 +120,8 @@ struct ipsec_transforms {
 };
 
 struct ipsec_mode {
-	struct ipsec_transforms	*xfs;
-	uint8_t			 ike_exch;
+	struct ipsec_transforms	**xfs;
+	unsigned int		  nxfs;
 };
 
 struct iked_transform ikev2_default_ike_transforms[] = {
@@ -329,9 +329,8 @@ const struct ipsec_xf	*parse_xf(const char *, unsigned int,
 const char		*print_xf(unsigned int, unsigned int,
 			    const struct ipsec_xf *);
 void			 copy_transforms(unsigned int, const struct ipsec_xf *,
-			    const struct ipsec_xf *,
-			    struct iked_transform *, size_t,
-			    unsigned int *, struct iked_transform *, size_t);
+			    struct iked_transform **, unsigned int *,
+			    struct iked_transform *, size_t);
 int			 create_ike(char *, int, uint8_t, struct ipsec_hosts *,
 			    struct ipsec_hosts *, struct ipsec_mode *,
 			    struct ipsec_mode *, uint8_t,
@@ -347,6 +346,7 @@ int			 parsekeyfile(char *, struct iked_auth *);
 
 struct ipsec_transforms *ipsec_transforms;
 struct ipsec_filters *ipsec_filters;
+struct ipsec_mode *ipsec_mode;
 
 typedef struct {
 	union {
@@ -405,7 +405,7 @@ typedef struct {
 %type	<v.ikemode>		ikeflags ikematch ikemode ipcomp
 %type	<v.ikeauth>		ikeauth
 %type	<v.ikekey>		keyspec
-%type	<v.mode>		ike_sa child_sa
+%type	<v.mode>		ike_sas child_sas
 %type	<v.lifetime>		lifetime
 %type	<v.number>		byte_spec time_spec ikelifetime
 %type	<v.string>		name
@@ -463,7 +463,7 @@ user		: USER STRING STRING		{
 		;
 
 ikev2rule	: IKEV2 name ikeflags satype af proto hosts_list peers
-		    ike_sa child_sa ids ikelifetime lifetime ikeauth ikecfg
+		    ike_sas child_sas ids ikelifetime lifetime ikeauth ikecfg
 		    filters {
 			if (create_ike($2, $5, $6, $7, &$8, $9, $10, $4, $3,
 			    $11.srcid, $11.dstid, $12, &$13, &$14,
@@ -774,27 +774,61 @@ transform	: AUTHXF STRING			{
 		}
 		;
 
-ike_sa		: /* empty */	{
-			$$ = NULL;
+ike_sas		:					{
+			if ((ipsec_mode = calloc(1,
+			    sizeof(struct ipsec_mode))) == NULL)
+				err(1, "ike_sas: calloc");
 		}
-		| IKESA		{
-			encxfs = ikeencxfs;
-		} transforms	{
-			if (($$ = calloc(1, sizeof(*$$))) == NULL)
-				err(1, "ike_sa: calloc");
-			$$->xfs = $3;
+		    ike_sas_l				{
+			$$ = ipsec_mode;
+		}
+		| /* empty */				{
+			$$ = NULL;
 		}
 		;
 
-child_sa	: /* empty */	{
+ike_sas_l	: ike_sas_l ike_sa
+		| ike_sa
+		;
+
+ike_sa		: IKESA		{
+			if ((ipsec_mode->xfs = recallocarray(ipsec_mode->xfs,
+			    ipsec_mode->nxfs, ipsec_mode->nxfs + 1,
+			    sizeof(struct ipsec_transforms *))) == NULL)
+				err(1, "ike_sa: recallocarray");
+			ipsec_mode->nxfs++;
+			encxfs = ikeencxfs;
+		} transforms	{
+			ipsec_mode->xfs[ipsec_mode->nxfs - 1] = $3;
+		}
+		;
+
+child_sas	:					{
+			if ((ipsec_mode = calloc(1,
+			    sizeof(struct ipsec_mode))) == NULL)
+				err(1, "child_sas: calloc");
+		}
+		    child_sas_l				{
+			$$ = ipsec_mode;
+		}
+		| /* empty */				{
 			$$ = NULL;
 		}
-		| CHILDSA	{
+		;
+
+child_sas_l	: child_sas_l child_sa
+		| child_sa
+		;
+
+child_sa	: CHILDSA	{
+			if ((ipsec_mode->xfs = recallocarray(ipsec_mode->xfs,
+			    ipsec_mode->nxfs, ipsec_mode->nxfs + 1,
+			    sizeof(struct ipsec_transforms *))) == NULL)
+				err(1, "child_sa: recallocarray");
+			ipsec_mode->nxfs++;
 			encxfs = ipsecencxfs;
 		} transforms	{
-			if (($$ = calloc(1, sizeof(*$$))) == NULL)
-				err(1, "child_sa: calloc");
-			$$->xfs = $3;
+			ipsec_mode->xfs[ipsec_mode->nxfs - 1] = $3;
 		}
 		;
 
@@ -2544,17 +2578,18 @@ print_policy(struct iked_policy *pol)
 
 void
 copy_transforms(unsigned int type, const struct ipsec_xf *xf,
-    const struct ipsec_xf *xfs,
-    struct iked_transform *dst, size_t ndst,
-    unsigned int *n, struct iked_transform *src, size_t nsrc)
+    struct iked_transform **dst, unsigned int *ndst,
+    struct iked_transform *src, size_t nsrc)
 {
 	unsigned int		 i;
 	struct iked_transform	*a, *b;
 
 	if (xf != NULL) {
-		if (*n >= ndst)
-			return;
-		b = dst + (*n)++;
+		*dst = recallocarray(*dst, *ndst,
+		    *ndst + 1, sizeof(struct iked_transform));
+		if (*dst == NULL)
+			err(1, "copy_transforms: recallocarray");
+		b = *dst + (*ndst)++;
 
 		b->xform_type = type;
 		b->xform_id = xf->id;
@@ -2567,9 +2602,11 @@ copy_transforms(unsigned int type, const struct ipsec_xf *xf,
 		a = src + i;
 		if (a->xform_type != type)
 			continue;
-		if (*n >= ndst)
-			return;
-		b = dst + (*n)++;
+		*dst = recallocarray(*dst, *ndst,
+		    *ndst + 1, sizeof(struct iked_transform));
+		if (*dst == NULL)
+			err(1, "copy_transforms: recallocarray");
+		b = *dst + (*ndst)++;
 		memcpy(b, a, sizeof(*b));
 	}
 }
@@ -2587,18 +2624,16 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 	unsigned int		 idtype = IKEV2_ID_NONE;
 	struct ipsec_addr_wrap	*ipa, *ipb, *ippn;
 	struct iked_policy	 pol;
-	struct iked_proposal	 prop[2];
-	unsigned int		 j;
+	struct iked_proposal	*p, *ptmp;
+	struct iked_transform	*xf;
+	unsigned int		 i, j, xfi;
 	unsigned int		 ikepropid = 1, ipsecpropid = 1;
-	struct iked_transform	 ikexforms[64], ipsecxforms[64];
 	struct iked_flow	 flows[64];
 	static unsigned int	 policy_id = 0;
 	struct iked_cfg		*cfg;
+	int			 ret = -1;
 
 	bzero(&pol, sizeof(pol));
-	bzero(&prop, sizeof(prop));
-	bzero(&ikexforms, sizeof(ikexforms));
-	bzero(&ipsecxforms, sizeof(ipsecxforms));
 	bzero(&flows, sizeof(flows));
 	bzero(idstr, sizeof(idstr));
 
@@ -2720,79 +2755,106 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 	TAILQ_INIT(&pol.pol_proposals);
 	RB_INIT(&pol.pol_flows);
 
-	prop[0].prop_id = ikepropid++;
-	prop[0].prop_protoid = IKEV2_SAPROTO_IKE;
-	if (ike_sa == NULL || ike_sa->xfs == NULL) {
-		prop[0].prop_nxforms = ikev2_default_nike_transforms;
-		prop[0].prop_xforms = ikev2_default_ike_transforms;
+	if (ike_sa == NULL || ike_sa->nxfs == 0) {
+		if ((p = calloc(1, sizeof(*p))) == NULL)
+			err(1, "create_ike: calloc");
+		p->prop_id = ikepropid++;
+		p->prop_protoid = IKEV2_SAPROTO_IKE;
+		p->prop_nxforms = ikev2_default_nike_transforms;
+		p->prop_xforms = ikev2_default_ike_transforms;
+		TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+		pol.pol_nproposals++;
 	} else {
-		j = 0;
-		copy_transforms(IKEV2_XFORMTYPE_INTEGR,
-		    ike_sa->xfs->authxf, authxfs,
-		    ikexforms, nitems(ikexforms), &j,
-		    ikev2_default_ike_transforms,
-		    ikev2_default_nike_transforms);
-		copy_transforms(IKEV2_XFORMTYPE_ENCR,
-		    ike_sa->xfs->encxf, ikeencxfs,
-		    ikexforms, nitems(ikexforms), &j,
-		    ikev2_default_ike_transforms,
-		    ikev2_default_nike_transforms);
-		copy_transforms(IKEV2_XFORMTYPE_DH,
-		    ike_sa->xfs->groupxf, groupxfs,
-		    ikexforms, nitems(ikexforms), &j,
-		    ikev2_default_ike_transforms,
-		    ikev2_default_nike_transforms);
-		copy_transforms(IKEV2_XFORMTYPE_PRF,
-		    ike_sa->xfs->prfxf, prfxfs,
-		    ikexforms, nitems(ikexforms), &j,
-		    ikev2_default_ike_transforms,
-		    ikev2_default_nike_transforms);
-		prop[0].prop_nxforms = j;
-		prop[0].prop_xforms = ikexforms;
-	}
-	TAILQ_INSERT_TAIL(&pol.pol_proposals, &prop[0], prop_entry);
-	pol.pol_nproposals++;
+		for (i = 0; i < ike_sa->nxfs; i++) {
+			if ((p = calloc(1, sizeof(*p))) == NULL)
+				err(1, "create_ike: calloc");
 
-	prop[1].prop_id = ipsecpropid++;
-	prop[1].prop_protoid = saproto;
-	if (ipsec_sa == NULL || ipsec_sa->xfs == NULL) {
-		prop[1].prop_nxforms = ikev2_default_nesp_transforms;
-		prop[1].prop_xforms = ikev2_default_esp_transforms;
-	} else {
-		j = 0;
-		if (ipsec_sa->xfs->encxf && ipsec_sa->xfs->encxf->noauth &&
-		    ipsec_sa->xfs->authxf) {
-			yyerror("authentication is implicit for %s",
-			    ipsec_sa->xfs->encxf->name);
-			return (-1);
-		}
-		if (ipsec_sa->xfs->encxf == NULL ||
-		    (ipsec_sa->xfs->encxf && !ipsec_sa->xfs->encxf->noauth))
+			xf = NULL;
+			xfi = 0;
 			copy_transforms(IKEV2_XFORMTYPE_INTEGR,
-			    ipsec_sa->xfs->authxf, authxfs,
-			    ipsecxforms, nitems(ipsecxforms), &j,
+			    ike_sa->xfs[i]->authxf, &xf, &xfi,
+			    ikev2_default_ike_transforms,
+			    ikev2_default_nike_transforms);
+			copy_transforms(IKEV2_XFORMTYPE_ENCR,
+			    ike_sa->xfs[i]->encxf, &xf, &xfi,
+			    ikev2_default_ike_transforms,
+			    ikev2_default_nike_transforms);
+			copy_transforms(IKEV2_XFORMTYPE_DH,
+			    ike_sa->xfs[i]->groupxf, &xf, &xfi,
+			    ikev2_default_ike_transforms,
+			    ikev2_default_nike_transforms);
+			copy_transforms(IKEV2_XFORMTYPE_PRF,
+			    ike_sa->xfs[i]->prfxf, &xf, &xfi,
+			    ikev2_default_ike_transforms,
+			    ikev2_default_nike_transforms);
+			free(ike_sa->xfs[i]);
+
+			p->prop_id = ikepropid++;
+			p->prop_protoid = IKEV2_SAPROTO_IKE;
+			p->prop_xforms = xf;
+			p->prop_nxforms = xfi;
+			TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+			pol.pol_nproposals++;
+		}
+		free(ike_sa->xfs);
+	}
+	free(ike_sa);
+
+	if (ipsec_sa == NULL || ipsec_sa->nxfs == 0) {
+		if ((p = calloc(1, sizeof(*p))) == NULL)
+			err(1, "create_ike: calloc");
+		p->prop_id = ipsecpropid++;
+		p->prop_protoid = saproto;
+		p->prop_nxforms = ikev2_default_nesp_transforms;
+		p->prop_xforms = ikev2_default_esp_transforms;
+		TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+		pol.pol_nproposals++;
+	} else {
+		for (i = 0; i < ipsec_sa->nxfs; i++) {
+			if (ipsec_sa->xfs[i]->encxf &&
+			    ipsec_sa->xfs[i]->encxf->noauth &&
+			    ipsec_sa->xfs[i]->authxf) {
+				yyerror("authentication is implicit for %s",
+				    ipsec_sa->xfs[i]->encxf->name);
+				return (-1);
+			}
+
+			if ((p = calloc(1, sizeof(*p))) == NULL)
+				err(1, "create_ike: calloc");
+
+			xf = NULL;
+			xfi = 0;
+			if (ipsec_sa->xfs[i]->encxf == NULL ||
+			    (ipsec_sa->xfs[i]->encxf &&
+			    !ipsec_sa->xfs[i]->encxf->noauth))
+				copy_transforms(IKEV2_XFORMTYPE_INTEGR,
+				    ipsec_sa->xfs[i]->authxf, &xf, &xfi,
+				    ikev2_default_esp_transforms,
+				    ikev2_default_nesp_transforms);
+			copy_transforms(IKEV2_XFORMTYPE_ENCR,
+			    ipsec_sa->xfs[i]->encxf, &xf, &xfi,
 			    ikev2_default_esp_transforms,
 			    ikev2_default_nesp_transforms);
-		copy_transforms(IKEV2_XFORMTYPE_ENCR,
-		    ipsec_sa->xfs->encxf, ipsecencxfs,
-		    ipsecxforms, nitems(ipsecxforms), &j,
-		    ikev2_default_esp_transforms,
-		    ikev2_default_nesp_transforms);
-		copy_transforms(IKEV2_XFORMTYPE_DH,
-		    ipsec_sa->xfs->groupxf, groupxfs,
-		    ipsecxforms, nitems(ipsecxforms), &j,
-		    ikev2_default_esp_transforms,
-		    ikev2_default_nesp_transforms);
-		copy_transforms(IKEV2_XFORMTYPE_ESN,
-		    NULL, NULL,
-		    ipsecxforms, nitems(ipsecxforms), &j,
-		    ikev2_default_esp_transforms,
-		    ikev2_default_nesp_transforms);
-		prop[1].prop_nxforms = j;
-		prop[1].prop_xforms = ipsecxforms;
+			copy_transforms(IKEV2_XFORMTYPE_DH,
+			    ipsec_sa->xfs[i]->groupxf, &xf, &xfi,
+			    ikev2_default_esp_transforms,
+			    ikev2_default_nesp_transforms);
+			copy_transforms(IKEV2_XFORMTYPE_ESN,
+			    NULL, &xf, &xfi,
+			    ikev2_default_esp_transforms,
+			    ikev2_default_nesp_transforms);
+			free(ipsec_sa->xfs[i]);
+
+			p->prop_id = ipsecpropid++;
+			p->prop_protoid = saproto;
+			p->prop_xforms = xf;
+			p->prop_nxforms = xfi;
+			TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+			pol.pol_nproposals++;
+		}
+		free(ipsec_sa->xfs);
 	}
-	TAILQ_INSERT_TAIL(&pol.pol_proposals, &prop[1], prop_entry);
-	pol.pol_nproposals++;
+	free(ipsec_sa);
 
 	if (hosts == NULL || hosts->src == NULL || hosts->dst == NULL)
 		fatalx("create_ike: no traffic selectors/flows");
@@ -2871,14 +2933,24 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 	/* Make sure that we know how to authenticate this peer */
 	if (idtype && set_policy(idstr, idtype, &pol) < 0) {
 		log_debug("%s: set_policy failed", __func__);
-		return (-1);
+		goto done;
 	}
 
 	config_setpolicy(env, &pol, PROC_IKEV2);
 	config_setflow(env, &pol, PROC_IKEV2);
 
 	rules++;
-	return (0);
+	ret = 0;
+
+done:
+	TAILQ_FOREACH_SAFE(p, &pol.pol_proposals, prop_entry, ptmp) {
+		if (p->prop_xforms != ikev2_default_ike_transforms &&
+		    p->prop_xforms != ikev2_default_esp_transforms)
+			free(p->prop_xforms);
+		free(p);
+	}
+
+	return (ret);
 }
 
 int
