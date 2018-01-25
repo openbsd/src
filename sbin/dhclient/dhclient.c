@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.544 2018/01/24 19:12:49 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.545 2018/01/25 15:43:51 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -368,11 +368,9 @@ routehandler(struct interface_info *ifi, int routefd)
 
 		linkstat = interface_status(ifi->name);
 		if (linkstat != ifi->linkstat) {
-#ifdef DEBUG
-			log_debug("%s: link %s -> %s", log_procname,
+			DPRINTF("%s: link %s -> %s", log_procname,
 			    (ifi->linkstat != 0) ? "up" : "down",
 			    (linkstat != 0) ? "up" : "down");
-#endif	/* DEBUG */
 			ifi->linkstat = linkstat;
 			if (ifi->linkstat != 0) {
 				if (ifi->state == S_PREBOOT) {
@@ -839,10 +837,8 @@ dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
 	time_t			 cur_time, stop_selecting;
 
 	if (ifi->state != S_SELECTING) {
-#ifdef DEBUG
-		log_debug("%s: unexpected %s - state #%d", log_procname, info,
+		DPRINTF("%s: unexpected %s - state #%d", log_procname, info,
 		    ifi->state);
-#endif	/* DEBUG */
 		return;
 	}
 
@@ -885,10 +881,8 @@ dhcpack(struct interface_info *ifi, struct option_data *options, char *info)
 	    ifi->state != S_REQUESTING &&
 	    ifi->state != S_RENEWING &&
 	    ifi->state != S_REBINDING) {
-#ifdef DEBUG
-		log_debug("%s: unexpected %s - state #%d", log_procname, info,
+		DPRINTF("%s: unexpected %s - state #%d", log_procname, info,
 		    ifi->state);
-#endif	/* DEBUG */
 		return;
 	}
 
@@ -918,18 +912,14 @@ dhcpnak(struct interface_info *ifi, struct option_data *options, char *info)
 	    ifi->state != S_REQUESTING &&
 	    ifi->state != S_RENEWING &&
 	    ifi->state != S_REBINDING) {
-#ifdef DEBUG
-		log_debug("%s: unexpected %s - state #%d", log_procname, info,
+		DPRINTF("%s: unexpected %s - state #%d", log_procname, info,
 		    ifi->state);
-#endif	/* DEBUG */
 		return;
 	}
 
 	if (ifi->active == NULL) {
-#ifdef DEBUG
-		log_debug("%s: unexpected %s - no active lease", log_procname,
+		DPRINTF("%s: unexpected %s - no active lease", log_procname,
 		    info);
-#endif	/* DEBUG */
 		return;
 	}
 
