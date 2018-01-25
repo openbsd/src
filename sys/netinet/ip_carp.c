@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.327 2018/01/12 23:47:24 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.328 2018/01/25 14:47:35 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -601,12 +601,21 @@ carp_proto_input_c(struct ifnet *ifp, struct mbuf *m, struct carp_header *ch,
 	struct timeval sc_tv, ch_tv;
 	struct srpl *cif;
 
-	if (ifp->if_type == IFT_CARP)
+	KERNEL_ASSERT_LOCKED(); /* touching if_carp + carp_vhosts */
+
+	if (ifp->if_type == IFT_CARP) {
+		/*
+		 * If the parent of this carp(4) got destroyed while
+		 * `m' was being processed, silently drop it.
+		 */
+		if (ifp->if_carpdev == NULL) {
+			m_freem(m);
+			return;
+		}
 		cif = &ifp->if_carpdev->if_carp;
-	else
+	} else
 		cif = &ifp->if_carp;
 
-	KERNEL_ASSERT_LOCKED(); /* touching if_carp + carp_vhosts */
 	SRPL_FOREACH_LOCKED(sc, cif, sc_list) {
 		if (af == AF_INET &&
 		    ismulti != IN_MULTICAST(sc->sc_peer.s_addr))
