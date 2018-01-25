@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.120 2017/11/04 16:04:16 florian Exp $
+#	$OpenBSD: Makefile.i386,v 1.121 2018/01/25 14:09:52 mpi Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -50,7 +50,8 @@ LINKFLAGS=	-T ld.script -X --warn-common -nopie
 .if ${MACHINE} == "amd64"
 CFLAGS+=	-m32
 AFLAGS+=	-m32
-LINKFLAGS+= -melf_i386_obsd
+LDFLAGS=	-melf_i386_obsd
+LINKFLAGS+=	${LDFLAGS}
 .endif
 
 HOSTCC?=	${CC}
@@ -126,7 +127,7 @@ ld.script: ${_machdir}/conf/ld.script
 makegap.sh:
 	cp $S/conf/makegap.sh $@
 
-MAKE_GAP = LD="${LD}" sh makegap.sh 0xcccccccc
+MAKE_GAP = LD="${LD}" LDFLAGS="${LDFLAGS}" sh makegap.sh 0xcccccccc
 
 gap.o:	Makefile makegap.sh vers.o
 	${MAKE_GAP}
