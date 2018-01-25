@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.236 2017/12/20 11:08:44 mpi Exp $
+#	$OpenBSD: files.i386,v 1.237 2018/01/25 15:06:29 mpi Exp $
 #
 # new style config file for i386 architecture
 #
@@ -21,7 +21,6 @@ file	arch/i386/i386/est.c		!small_kernel
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/in_cksum.s
 file	arch/i386/i386/machdep.c
-file	arch/i386/i386/mutex.c
 file	arch/i386/i386/hibernate_machdep.c hibernate
 file	arch/i386/i386/via.c
 file	arch/i386/i386/locore.s

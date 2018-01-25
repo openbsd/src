@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.17 2018/01/10 23:27:18 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.18 2018/01/25 15:06:29 mpi Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -32,7 +32,6 @@ file	arch/arm64/arm64/exception.S
 file	arch/arm64/arm64/trampoline.S
 file	arch/arm64/arm64/trap.c
 file	arch/arm64/arm64/ast.c
-file	arch/arm64/arm64/arm64_mutex.c
 
 file	arch/arm64/arm64/cpufunc_asm.S
 file	arch/arm64/arm64/support.S
