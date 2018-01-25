@@ -848,7 +848,7 @@ DynaLoader.c: miniperl ${DYNALOADER} lib/Config.pm
 
 perl.lib:	${GENERATED} ${_LIBS}
 
-install: install.lib install.perl maninstall
+afterinstall: install.perl
 	-chmod -R a+rX ${DESTDIR}/usr/libdata/perl5
 
 install.perl:
@@ -856,23 +856,4 @@ install.perl:
 	 STRIPFLAGS=${STRIPFLAGS} INSTALLFLAGS=-o NOLIBINSTALL=1 \
 	 LD_LIBRARY_PATH=${.OBJDIR} exec ./perl installperl --user=${LIBOWN} --group=${LIBGRP} --destdir=${DESTDIR} -o ${STRIPFLAGS}
 
-install.lib:
-	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 lib${LIB}.a \
-	    ${DESTDIR}${LIBDIR}
-.if (${INSTALL_COPY} != "-p")
-	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
-.endif
-	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}.a
-.if !defined(NOPROFILE)
-	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
-	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
-.if (${INSTALL_COPY} != "-p")
-	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
-.endif
-	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
-.endif
-.if !defined(NOPIC) && defined(major) && defined(minor)
-	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    lib${LIB}.so.${major}.${minor} ${DESTDIR}${LIBDIR}
-.endif
-.PHONY: perl.lib install.lib perl.build install.perl man.build
+.PHONY: perl.lib perl.build install.perl man.build
