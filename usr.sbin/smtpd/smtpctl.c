@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.155 2018/01/06 07:59:27 sunil Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.156 2018/01/26 08:00:54 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -69,7 +69,7 @@ static int is_gzip_buffer(const char *);
 static FILE *offline_file(void);
 static void sendmail_compat(int, char **);
 
-extern int	do_spfwalk(int, struct parameter *);
+extern int	spfwalk(int, struct parameter *);
 
 extern char	*__progname;
 int		 sendmail;
@@ -476,6 +476,29 @@ srv_show_cmd(int cmd, const void *data, size_t len)
 			done = 1;
 		srv_end();
 	} while (!done);
+}
+
+static void
+droppriv(void)
+{
+	struct passwd *pw;
+
+	if (geteuid())
+		return;
+
+	if ((pw = getpwnam(SMTPD_USER)) == NULL)
+		errx(1, "unknown user " SMTPD_USER);
+
+	if ((setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid)))
+		err(1, "cannot drop privileges");
+}
+
+static int
+do_permission_denied(int argc, struct parameter *argv)
+{
+	errx(1, "need root privileges");
 }
 
 static int
@@ -906,6 +929,8 @@ do_encrypt(int argc, struct parameter *argv)
 {
 	const char *p = NULL;
 
+	droppriv();
+
 	if (argv)
 		p = argv[0].u.u_str;
 	execl(PATH_ENCRYPT, "encrypt", p, (char *)NULL);
@@ -1014,67 +1039,81 @@ do_uncorrupt(int argc, struct parameter *argv)
 	return (0);
 }
 
+static int
+do_spf_walk(int argc, struct parameter *argv)
+{
+	droppriv();
+
+	return spfwalk(argc, argv);
+}
+
+#define cmd_install_priv(s, f) \
+	cmd_install((s), privileged ? (f) : do_permission_denied)
+
 int
 main(int argc, char **argv)
 {
 	gid_t		 gid;
+	int		 privileged;
 	char		*argv_mailq[] = { "show", "queue", NULL };
 
 	sendmail_compat(argc, argv);
-	if (geteuid())
-		errx(1, "need root privileges");
+	privileged = geteuid() == 0;
 
 	gid = getgid();
 	if (setresgid(gid, gid, gid) == -1)
 		err(1, "setresgid");
 
-	cmd_install("discover <evpid>",		do_discover);
-	cmd_install("discover <msgid>",		do_discover);
+	/* Privileged commands */
+	cmd_install_priv("discover <evpid>",	do_discover);
+	cmd_install_priv("discover <msgid>",	do_discover);
+	cmd_install_priv("pause mta from <addr> for <str>", do_block_mta);
+	cmd_install_priv("resume mta from <addr> for <str>", do_unblock_mta);
+	cmd_install_priv("show mta paused",	do_show_mta_block);
+	cmd_install_priv("log brief",		do_log_brief);
+	cmd_install_priv("log verbose",		do_log_verbose);
+	cmd_install_priv("monitor",		do_monitor);
+	cmd_install_priv("pause envelope <evpid>", do_pause_envelope);
+	cmd_install_priv("pause envelope <msgid>", do_pause_envelope);
+	cmd_install_priv("pause envelope all",	do_pause_envelope);
+	cmd_install_priv("pause mda",		do_pause_mda);
+	cmd_install_priv("pause mta",		do_pause_mta);
+	cmd_install_priv("pause smtp",		do_pause_smtp);
+	cmd_install_priv("profile <str>",	do_profile);
+	cmd_install_priv("remove <evpid>",	do_remove);
+	cmd_install_priv("remove <msgid>",	do_remove);
+	cmd_install_priv("remove all",		do_remove);
+	cmd_install_priv("resume envelope <evpid>", do_resume_envelope);
+	cmd_install_priv("resume envelope <msgid>", do_resume_envelope);
+	cmd_install_priv("resume envelope all",	do_resume_envelope);
+	cmd_install_priv("resume mda",		do_resume_mda);
+	cmd_install_priv("resume mta",		do_resume_mta);
+	cmd_install_priv("resume route <routeid>", do_resume_route);
+	cmd_install_priv("resume smtp",		do_resume_smtp);
+	cmd_install_priv("schedule <msgid>",	do_schedule);
+	cmd_install_priv("schedule <evpid>",	do_schedule);
+	cmd_install_priv("schedule all",	do_schedule);
+	cmd_install_priv("show envelope <evpid>", do_show_envelope);
+	cmd_install_priv("show hoststats",	do_show_hoststats);
+	cmd_install_priv("show message <msgid>", do_show_message);
+	cmd_install_priv("show message <evpid>", do_show_message);
+	cmd_install_priv("show queue",		do_show_queue);
+	cmd_install_priv("show queue <msgid>",	do_show_queue);
+	cmd_install_priv("show hosts",		do_show_hosts);
+	cmd_install_priv("show relays",		do_show_relays);
+	cmd_install_priv("show routes",		do_show_routes);
+	cmd_install_priv("show stats",		do_show_stats);
+	cmd_install_priv("show status",		do_show_status);
+	cmd_install_priv("trace <str>",		do_trace);
+	cmd_install_priv("uncorrupt <msgid>",	do_uncorrupt);
+	cmd_install_priv("unprofile <str>",	do_unprofile);
+	cmd_install_priv("untrace <str>",	do_untrace);
+	cmd_install_priv("update table <str>",	do_update_table);
+
+	/* Unprivileged commands */
 	cmd_install("encrypt",			do_encrypt);
 	cmd_install("encrypt <str>",		do_encrypt);
-	cmd_install("pause mta from <addr> for <str>", do_block_mta);
-	cmd_install("resume mta from <addr> for <str>", do_unblock_mta);
-	cmd_install("show mta paused",		do_show_mta_block);
-	cmd_install("log brief",		do_log_brief);
-	cmd_install("log verbose",		do_log_verbose);
-	cmd_install("monitor",			do_monitor);
-	cmd_install("pause envelope <evpid>",	do_pause_envelope);
-	cmd_install("pause envelope <msgid>",	do_pause_envelope);
-	cmd_install("pause envelope all",	do_pause_envelope);
-	cmd_install("pause mda",		do_pause_mda);
-	cmd_install("pause mta",		do_pause_mta);
-	cmd_install("pause smtp",		do_pause_smtp);
-	cmd_install("profile <str>",		do_profile);
-	cmd_install("remove <evpid>",		do_remove);
-	cmd_install("remove <msgid>",		do_remove);
-	cmd_install("remove all",		do_remove);
-	cmd_install("resume envelope <evpid>",	do_resume_envelope);
-	cmd_install("resume envelope <msgid>",	do_resume_envelope);
-	cmd_install("resume envelope all",	do_resume_envelope);
-	cmd_install("resume mda",		do_resume_mda);
-	cmd_install("resume mta",		do_resume_mta);
-	cmd_install("resume route <routeid>",	do_resume_route);
-	cmd_install("resume smtp",		do_resume_smtp);
-	cmd_install("schedule <msgid>",		do_schedule);
-	cmd_install("schedule <evpid>",		do_schedule);
-	cmd_install("schedule all",		do_schedule);
-	cmd_install("show envelope <evpid>",	do_show_envelope);
-	cmd_install("show hoststats",		do_show_hoststats);
-	cmd_install("show message <msgid>",	do_show_message);
-	cmd_install("show message <evpid>",	do_show_message);
-	cmd_install("show queue",		do_show_queue);
-	cmd_install("show queue <msgid>",	do_show_queue);
-	cmd_install("show hosts",		do_show_hosts);
-	cmd_install("show relays",		do_show_relays);
-	cmd_install("show routes",		do_show_routes);
-	cmd_install("show stats",		do_show_stats);
-	cmd_install("show status",		do_show_status);
-	cmd_install("spf walk",			do_spfwalk);
-	cmd_install("trace <str>",		do_trace);
-	cmd_install("uncorrupt <msgid>",	do_uncorrupt);
-	cmd_install("unprofile <str>",		do_unprofile);
-	cmd_install("untrace <str>",		do_untrace);
-	cmd_install("update table <str>",	do_update_table);
+	cmd_install("spf walk",			do_spf_walk);
 
 	if (strcmp(__progname, "mailq") == 0)
 		return cmd_run(2, argv_mailq);
