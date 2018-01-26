@@ -1,4 +1,4 @@
-/* $OpenBSD: vfp.h,v 1.2 2016/12/18 14:40:25 patrick Exp $ */
+/* $OpenBSD: vfp.h,v 1.3 2018/01/26 16:15:26 kettenis Exp $ */
 /*-
  * Copyright (c) 2015 The FreeBSD Foundation
  * All rights reserved.
@@ -39,7 +39,6 @@
 #define	VFP_UFPEN	(3 << 20)
 
 #ifndef LOCORE
-void	vfp_init(void);
 void	vfp_discard(struct proc *);
 void	vfp_save(void);
 void	vfp_enable(void);
