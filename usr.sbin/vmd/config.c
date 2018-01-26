@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.40 2018/01/05 13:34:52 jca Exp $	*/
+/*	$OpenBSD: config.c,v 1.41 2018/01/26 05:34:41 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -416,8 +416,13 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		free(tapfds);
 	}
 
-	log_debug("%s: calling vm_remove", __func__);
-	vm_remove(vm);
+	if (vm->vm_from_config) {
+		log_debug("%s: calling stop vm %d", __func__, vm->vm_vmid);
+		vm_stop(vm, 0);
+	} else {
+		log_debug("%s: calling remove vm %d", __func__, vm->vm_vmid);
+		vm_remove(vm);
+	}
 	errno = saved_errno;
 	if (errno == 0)
 		errno = EINVAL;
