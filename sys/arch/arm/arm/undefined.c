@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.c,v 1.10 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: undefined.c,v 1.11 2018/01/26 16:22:19 kettenis Exp $	*/
 /*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <arm/undefined.h>
+#include <arm/vfp.h>
 #include <machine/trap.h>
 
 
@@ -150,6 +151,9 @@ undefinedinstruction(trapframe_t *frame)
 #endif
 	union sigval sv;
 
+	/* Before enabling interrupts, save FPU state */
+	vfp_save();
+
 	/* Enable interrupts if they were enabled before the exception. */
 	if (!(frame->tf_spsr & PSR_I))
 		enable_interrupts(PSR_I);
@@ -194,10 +198,14 @@ undefinedinstruction(trapframe_t *frame)
 	 * instruction trap.
 	 */
 
+	coprocessor = 0;
 	if ((fault_instruction & (1 << 27)) != 0)
 		coprocessor = (fault_instruction >> 8) & 0x0f;
-	else
-		coprocessor = 0;
+	else {		/* check for special instructions */
+		if (((fault_instruction & 0xfe000000) == 0xf2000000) ||
+		    ((fault_instruction & 0xff100000) == 0xf4000000))
+			coprocessor = 10;	/* vfp / simd */
+	}
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
 		/*

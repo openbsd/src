@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.31 2018/01/15 14:11:16 kettenis Exp $	*/
+/*	$OpenBSD: fault.c,v 1.32 2018/01/26 16:22:19 kettenis Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -99,6 +99,7 @@
 #include <arm/db_machdep.h>
 #include <arch/arm/arm/disassem.h>
 #include <arm/machdep.h>
+#include <arm/vfp.h>
  
 #ifdef DEBUG
 int last_fault_code;	/* For the benefit of pmap_fault_fixup() */
@@ -187,6 +188,9 @@ data_abort_handler(trapframe_t *tf)
 
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
+
+	/* Before enabling interrupts, save FPU state */
+	vfp_save();
 
 	/* Re-enable interrupts if they were enabled previously */
 	if (__predict_true((tf->tf_spsr & PSR_I) == 0))
@@ -580,6 +584,9 @@ prefetch_abort_handler(trapframe_t *tf)
 	/* Prefetch aborts cannot happen in kernel mode */
 	if (__predict_false(!TRAP_USERMODE(tf)))
 		dab_fatal(tf, fsr, far, NULL, NULL);
+
+	/* Before enabling interrupts, save FPU state */
+	vfp_save();
 
 	/*
 	 * Enable IRQ's (disabled by the abort) This always comes

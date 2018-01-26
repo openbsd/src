@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.46 2017/04/30 13:04:49 mpi Exp $
+#	$OpenBSD: files.arm,v 1.47 2018/01/26 16:22:20 kettenis Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -73,6 +73,7 @@ file	arch/arm/armv7/armv7_a4x_space.c	cpu_armv7
 file	arch/arm/armv7/armv7_a4x_io.S		cpu_armv7
 file	arch/arm/armv7/armv7_mutex.c		cpu_armv7
 file	arch/arm/armv7/bus_space_asm_armv7.S	cpu_armv7
+file	arch/arm/arm/vfp.c			cpu_armv7
 
 pseudo-device	openprom
 file	arch/arm/arm/openprom.c			openprom needs-flag
