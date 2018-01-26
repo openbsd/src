@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.241 2018/01/18 20:06:16 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.242 2018/01/26 19:14:51 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -633,7 +633,7 @@ delete(struct dir_info *d, struct region_info *ri)
  * cache are in MALLOC_PAGESIZE units.
  */
 static void
-unmap(struct dir_info *d, void *p, size_t sz, int clear)
+unmap(struct dir_info *d, void *p, size_t sz, size_t clear, int junk)
 {
 	size_t psz = sz >> MALLOC_PAGESHIFT;
 	size_t rsz;
@@ -650,7 +650,7 @@ unmap(struct dir_info *d, void *p, size_t sz, int clear)
 	 * to unmap is larger than the cache size or we're clearing and the
 	 * cache is full, just munmap
 	 */
-	if (psz > mopts.malloc_cache || (clear && rsz == 0)) {
+	if (psz > mopts.malloc_cache || (clear > 0 && rsz == 0)) {
 		i = munmap(p, sz);
 		if (i)
 			wrterror(d, "munmap %p", p);
@@ -686,11 +686,10 @@ unmap(struct dir_info *d, void *p, size_t sz, int clear)
 	for (i = 0; ; i++) {
 		r = &d->free_regions[(i + offset) & mask];
 		if (r->p == NULL) {
-			if (clear)
-				memset(p, 0, sz - mopts.malloc_guard);
-			if (mopts.malloc_junk && !mopts.malloc_freeunmap) {
-				size_t amt = mopts.malloc_junk == 1 ?
-				    MALLOC_MAXCHUNK : sz;
+			if (clear > 0)
+				memset(p, 0, clear);
+			if (junk && !mopts.malloc_freeunmap) {
+				size_t amt = junk == 1 ?  MALLOC_MAXCHUNK : sz;
 				memset(p, SOME_FREEJUNK, amt);
 			}
 			if (mopts.malloc_freeunmap)
@@ -888,7 +887,7 @@ omalloc_make_chunks(struct dir_info *d, int bits, int listnum)
 	return bp;
 
 err:
-	unmap(d, pp, MALLOC_PAGESIZE, 0);
+	unmap(d, pp, MALLOC_PAGESIZE, 0, mopts.malloc_junk);
 	return NULL;
 }
 
@@ -1087,7 +1086,7 @@ free_bytes(struct dir_info *d, struct region_info *r, void *ptr)
 
 	if (info->size == 0 && !mopts.malloc_freeunmap)
 		mprotect(info->page, MALLOC_PAGESIZE, PROT_READ | PROT_WRITE);
-	unmap(d, info->page, MALLOC_PAGESIZE, 0);
+	unmap(d, info->page, MALLOC_PAGESIZE, 0, 0);
 
 	delete(d, r);
 	if (info->size != 0)
@@ -1118,7 +1117,7 @@ omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f)
 			return NULL;
 		}
 		if (insert(pool, p, sz, f)) {
-			unmap(pool, p, psz, 0);
+			unmap(pool, p, psz, 0, 0);
 			errno = ENOMEM;
 			return NULL;
 		}
@@ -1309,8 +1308,7 @@ ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
 				uint32_t chunknum =
 				    find_chunknum(pool, info, p, 0);
 
-				if (info->bits[info->offset + chunknum] <
-				    argsz)
+				if (info->bits[info->offset + chunknum] < argsz)
 					wrterror(pool, "recorded size %hu"
 					    " < %zu",
 					    info->bits[info->offset + chunknum],
@@ -1350,7 +1348,8 @@ ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
 			}
 			STATS_SUB(pool->malloc_guarded, mopts.malloc_guard);
 		}
-		unmap(pool, p, PAGEROUND(sz), clear);
+		unmap(pool, p, PAGEROUND(sz), clear ? argsz : 0,
+		    mopts.malloc_junk);
 		delete(pool, r);
 	} else {
 		/* Validate and optionally canary check */
@@ -1376,8 +1375,8 @@ ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
 			pool->delayed_chunks[i] = tmp;
 			if (mopts.malloc_junk)
 				validate_junk(pool, p);
-		} else if (sz > 0)
-			memset(p, 0, sz);
+		} else if (argsz > 0)
+			memset(p, 0, argsz);
 		if (p != NULL) {
 			r = find(pool, p);
 			if (r == NULL)
@@ -1575,7 +1574,8 @@ gotit:
 				    PROT_NONE))
 					wrterror(pool, "mprotect");
 			}
-			unmap(pool, (char *)r->p + rnewsz, roldsz - rnewsz, 0);
+			unmap(pool, (char *)r->p + rnewsz, roldsz - rnewsz, 0,
+			    mopts.malloc_junk);
 			r->size = gnewsz;
 			if (MALLOC_MOVE_COND(gnewsz)) {
 				void *pp = MALLOC_MOVE(r->p, gnewsz);
@@ -1791,7 +1791,7 @@ orecallocarray(struct dir_info *argpool, void *p, size_t oldsize,
 	} else
 		memcpy(newptr, p, newsize);
 
-	ofree(pool, p, 1, 0, 0);
+	ofree(pool, p, 1, 0, oldsize);
 
 done:
 	if (argpool != pool) {
@@ -1984,7 +1984,7 @@ omemalign(struct dir_info *pool, size_t alignment, size_t sz, int zero_fill,
 	}
 
 	if (insert(pool, p, sz, f)) {
-		unmap(pool, p, psz, 0);
+		unmap(pool, p, psz, 0, 0);
 		errno = ENOMEM;
 		return NULL;
 	}
