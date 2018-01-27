@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.18 2017/11/28 16:46:14 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.19 2018/01/27 15:17:13 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -271,11 +271,12 @@ tlsext_ec_serverhello_parse(SSL *s, CBS *cbs, int *alert)
 	/*
 	 * Servers should not send this extension per the RFC.
 	 *
-	 * However, F5 sends it by mistake (case ID 492780) so we need to skip
-	 * over it.  This bug is from at least 2014 but as of 2017, there
-	 * are still large sites with this bug in production.
+	 * However, certain F5 BIG-IP systems incorrectly send it. This bug is
+	 * from at least 2014 but as of 2017, there are still large sites with
+	 * this unpatched in production. As a result, we need to currently skip
+	 * over the extension and ignore its content:
 	 *
-	 * https://devcentral.f5.com/questions/disable-supported-elliptic-curves-extension-from-server
+	 *  https://support.f5.com/csp/article/K37345003
 	 */
 	if (!CBS_skip(cbs, CBS_len(cbs))) {
 		*alert = TLS1_AD_INTERNAL_ERROR;
