@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.162 2017/10/08 16:24:02 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.163 2018/01/27 15:09:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2298,12 +2298,12 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 const SSL_CIPHER *
 ssl3_get_cipher_by_char(const unsigned char *p)
 {
-	CBS cipher;
 	uint16_t cipher_value;
+	CBS cbs;
 
 	/* We have to assume it is at least 2 bytes due to existing API. */
-	CBS_init(&cipher, p, 2);
-	if (!CBS_get_u16(&cipher, &cipher_value))
+	CBS_init(&cbs, p, 2);
+	if (!CBS_get_u16(&cbs, &cipher_value))
 		return NULL;
 
 	return ssl3_get_cipher_by_value(cipher_value);
@@ -2312,12 +2312,29 @@ ssl3_get_cipher_by_char(const unsigned char *p)
 int
 ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
 {
-	if (p != NULL) {
-		if ((c->id & ~SSL3_CK_VALUE_MASK) != SSL3_CK_ID)
-			return (0);
-		s2n(ssl3_cipher_get_value(c), p); 
-	}
+	CBB cbb;
+
+	if (p == NULL)
+		return (2);
+
+	if ((c->id & ~SSL3_CK_VALUE_MASK) != SSL3_CK_ID)
+		return (0);
+
+	memset(&cbb, 0, sizeof(cbb));
+
+	/* We have to assume it is at least 2 bytes due to existing API. */
+	if (!CBB_init_fixed(&cbb, p, 2))
+		goto err;
+	if (!CBB_add_u16(&cbb, ssl3_cipher_get_value(c)))
+		goto err;
+	if (!CBB_finish(&cbb, NULL, NULL))
+		goto err;
+
 	return (2);
+
+ err:
+	CBB_cleanup(&cbb);
+	return (0);
 }
 
 SSL_CIPHER *
