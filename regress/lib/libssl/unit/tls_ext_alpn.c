@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls_ext_alpn.c,v 1.3 2017/01/22 08:19:36 jsing Exp $	*/
+/*	$OpenBSD: tls_ext_alpn.c,v 1.4 2018/01/27 15:30:43 jsing Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  *
@@ -22,6 +22,7 @@
 #include <openssl/ssl.h>
 
 #include "ssl_locl.h"
+#include "ssl_tlsext.h"
 
 #include "tests.h"
 
@@ -314,12 +315,14 @@ static uint8_t proto_invalid_missing9[] = {
 };
 
 
-#define CHECK_BOTH(c_val,s_val,proto) do {				\
+#define CHECK_BOTH(c_val, s_val, proto) do {				\
 	{								\
-		unsigned char *p = proto;				\
+		unsigned char *p;					\
+		CBS cbs;						\
 		int al;							\
-		CHECK(c_val == ssl_parse_clienthello_tlsext(s, &p,	\
-		    proto, sizeof(proto), &al));			\
+									\
+		CBS_init(&cbs, proto, sizeof(proto));			\
+		CHECK(c_val == tlsext_clienthello_parse(s, &cbs, &al)); \
 		p = proto;						\
 		CHECK(s_val == ssl_parse_serverhello_tlsext(s, &p,	\
 		    sizeof(proto), &al));				\
