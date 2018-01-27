@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.130 2017/12/13 00:12:03 dlg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.131 2018/01/27 22:55:23 naddy Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1514,10 +1514,11 @@ nail_bootdev(struct device *dev, struct bootpath *bp)
 }
 
 struct nam2blk nam2blk[] = {
-	{ "sd",		 7 },
 	{ "rd",		 5 },
+	{ "sd",		 7 },
+	{ "vnd",	 8 },
 	{ "wd",		12 },
+	{ "fd",		16 },
 	{ "cd",		18 },
-	{ "vnd",	8 },
 	{ NULL,		-1 }
 };
