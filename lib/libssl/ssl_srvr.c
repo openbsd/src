@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.26 2017/10/12 15:52:50 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.27 2018/01/27 15:30:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -813,7 +813,6 @@ ssl3_get_client_hello(SSL *s)
 	int i, j, ok, al, ret = -1, cookie_valid = 0;
 	long n;
 	unsigned long id;
-	unsigned char *p, *d;
 	SSL_CIPHER *c;
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
 	unsigned long alg_k;
@@ -843,8 +842,7 @@ ssl3_get_client_hello(SSL *s)
 	if (n < 0)
 		goto err;
 
-	d = p = (unsigned char *)s->internal->init_msg;
-	end = d + n;
+	end = (unsigned char *)s->internal->init_msg + n;
 
 	CBS_init(&cbs, s->internal->init_msg, n);
 
@@ -1038,14 +1036,17 @@ ssl3_get_client_hello(SSL *s)
 		goto f_err;
 	}
 
-	p = (unsigned char *)CBS_data(&cbs);
-
-	/* TLS extensions*/
-	if (!ssl_parse_clienthello_tlsext(s, &p, d, n, &al)) {
-		/* 'al' set by ssl_parse_clienthello_tlsext */
+	if (!tlsext_clienthello_parse(s, &cbs, &al)) {
 		SSLerror(s, SSL_R_PARSE_TLSEXT);
 		goto f_err;
 	}
+
+	if (!S3I(s)->renegotiate_seen && s->internal->renegotiate) {
+		al = SSL_AD_HANDSHAKE_FAILURE;
+		SSLerror(s, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+		goto f_err;
+	}
+
 	if (ssl_check_clienthello_tlsext_early(s) <= 0) {
 		SSLerror(s, SSL_R_CLIENTHELLO_TLSEXT);
 		goto err;

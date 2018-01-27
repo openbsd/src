@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.19 2018/01/27 15:17:13 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.20 2018/01/27 15:30:05 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1292,6 +1292,35 @@ static struct tls_extension tls_extensions[] = {
 
 #define N_TLS_EXTENSIONS (sizeof(tls_extensions) / sizeof(*tls_extensions))
 
+/* Ensure that extensions fit in a uint32_t bitmask. */
+CTASSERT(N_TLS_EXTENSIONS <= (sizeof(uint32_t) * 8));
+
+static struct tls_extension *
+tls_extension_find(uint16_t type, size_t *tls_extensions_idx)
+{
+	size_t i;
+
+	for (i = 0; i < N_TLS_EXTENSIONS; i++) {
+		if (tls_extensions[i].type == type) {
+			*tls_extensions_idx = i;
+			return &tls_extensions[i];
+		}
+	}
+
+	return NULL;
+}
+
+static void
+tlsext_clienthello_reset_state(SSL *s)
+{
+	s->internal->servername_done = 0;
+	s->tlsext_status_type = -1;
+	S3I(s)->renegotiate_seen = 0;
+	free(S3I(s)->alpn_selected);
+	S3I(s)->alpn_selected = NULL;
+	s->internal->srtp_profile = NULL;
+}
+
 int
 tlsext_clienthello_build(SSL *s, CBB *cbb)
 {
@@ -1329,28 +1358,55 @@ tlsext_clienthello_build(SSL *s, CBB *cbb)
 }
 
 int
-tlsext_clienthello_parse_one(SSL *s, CBS *cbs, uint16_t type, int *alert)
+tlsext_clienthello_parse(SSL *s, CBS *cbs, int *alert)
 {
+	CBS extensions, extension_data;
 	struct tls_extension *tlsext;
-	size_t i;
+	uint32_t extensions_seen = 0;
+	uint16_t type;
+	size_t idx;
 
-	for (i = 0; i < N_TLS_EXTENSIONS; i++) {
-		tlsext = &tls_extensions[i];
+	/* XXX - this possibly should be done by the caller... */
+	tlsext_clienthello_reset_state(s);
 
-		if (tlsext->type != type)
-			continue;
-		if (!tlsext->clienthello_parse(s, cbs, alert))
-			return 0;
-		if (CBS_len(cbs) != 0) {
-			*alert = SSL_AD_DECODE_ERROR;
-			return 0;
-		}
-
+	/* An empty extensions block is valid. */
+	if (CBS_len(cbs) == 0)
 		return 1;
+
+	*alert = SSL_AD_DECODE_ERROR;
+
+	if (!CBS_get_u16_length_prefixed(cbs, &extensions))
+		return 0;
+
+	while (CBS_len(&extensions) > 0) {
+		if (!CBS_get_u16(&extensions, &type))
+			return 0;
+		if (!CBS_get_u16_length_prefixed(&extensions, &extension_data))
+			return 0;
+
+		if (s->internal->tlsext_debug_cb != NULL)
+			s->internal->tlsext_debug_cb(s, 0, type,
+			    (unsigned char *)CBS_data(&extension_data),
+			    CBS_len(&extension_data),
+			    s->internal->tlsext_debug_arg);
+
+		/* Unknown extensions are ignored. */
+		if ((tlsext = tls_extension_find(type, &idx)) == NULL)
+			continue;
+
+		/* Check for duplicate extensions. */
+		if ((extensions_seen & (1 << idx)) != 0)
+			return 0;
+		extensions_seen |= (1 << idx);
+
+		if (!tlsext->clienthello_parse(s, &extension_data, alert))
+			return 0;
+
+		if (CBS_len(&extension_data) != 0)
+			return 0;
 	}
 
-	/* Not found. */
-	return 2;
+	return 1;
 }
 
 int

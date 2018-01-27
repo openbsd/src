@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.201 2017/10/12 16:06:32 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.202 2018/01/27 15:30:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -163,6 +163,9 @@
 #include "bytestring.h"
 
 __BEGIN_HIDDEN_DECLS
+
+#define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ]   \
+			    __attribute__((__unused__))
 
 #define l2n(l,c)	(*((c)++)=(unsigned char)(((l)>>24)&0xff), \
 			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
@@ -1275,8 +1278,6 @@ uint16_t tls1_ec_nid2curve_id(const int nid);
 int tls1_check_curve(SSL *s, const uint16_t curve_id);
 int tls1_get_shared_curve(SSL *s);
 
-int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **data,
-    unsigned char *d, int n, int *al);
 int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data,
     size_t n, int *al);
 int ssl_check_clienthello_tlsext_early(SSL *s);

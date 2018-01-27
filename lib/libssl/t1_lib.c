@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.139 2017/10/11 17:35:00 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.140 2018/01/27 15:30:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -659,75 +659,6 @@ tls12_get_req_sig_algs(SSL *s, unsigned char **sigalgs, size_t *sigalgs_len)
 {
 	*sigalgs = tls12_sigalgs;
 	*sigalgs_len = sizeof(tls12_sigalgs);
-}
-
-int
-ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
-    int n, int *al)
-{
-	unsigned short type;
-	unsigned short size;
-	unsigned short len;
-	unsigned char *data = *p;
-	unsigned char *end = d + n;
-	CBS cbs;
-
-	s->internal->servername_done = 0;
-	s->tlsext_status_type = -1;
-	S3I(s)->renegotiate_seen = 0;
-	free(S3I(s)->alpn_selected);
-	S3I(s)->alpn_selected = NULL;
-	s->internal->srtp_profile = NULL;
-
-	if (data == end)
-		goto ri_check;
-
-	if (end - data < 2)
-		goto err;
-	n2s(data, len);
-
-	if (end - data != len)
-		goto err;
-
-	while (end - data >= 4) {
-		n2s(data, type);
-		n2s(data, size);
-
-		if (end - data < size)
-			goto err;
-
-		if (s->internal->tlsext_debug_cb)
-			s->internal->tlsext_debug_cb(s, 0, type, data, size,
-			    s->internal->tlsext_debug_arg);
-
-		CBS_init(&cbs, data, size);
-		if (!tlsext_clienthello_parse_one(s, &cbs, type, al))
-			return 0;
-
-		data += size;
-	}
-
-	/* Spurious data on the end */
-	if (data != end)
-		goto err;
-
-	*p = data;
-
-ri_check:
-
-	/* Need RI if renegotiating */
-
-	if (!S3I(s)->renegotiate_seen && s->internal->renegotiate) {
-		*al = SSL_AD_HANDSHAKE_FAILURE;
-		SSLerror(s, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-		return 0;
-	}
-
-	return 1;
-
-err:
-	*al = SSL_AD_DECODE_ERROR;
-	return 0;
 }
 
 int
