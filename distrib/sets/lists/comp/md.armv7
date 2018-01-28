@@ -53,6 +53,7 @@
 ./usr/include/arm/tcb.h
 ./usr/include/arm/trap.h
 ./usr/include/arm/undefined.h
+./usr/include/arm/vfp.h
 ./usr/include/arm/vmparam.h
 ./usr/include/armv7
 ./usr/include/armv7/_float.h
