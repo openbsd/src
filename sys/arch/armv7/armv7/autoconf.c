@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 2018/01/27 22:55:23 naddy Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 2018/01/28 09:02:55 otto Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ diskconf(void)
 struct nam2blk nam2blk[] = {
 	{ "wd",		16 },
 	{ "rd",		18 },
-	} "vnd",	19 },
+	{ "vnd",	19 },
 	{ "sd",		24 },
 	{ "cd",		26 },
 	{ NULL,		-1 }
