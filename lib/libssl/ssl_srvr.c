@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.27 2018/01/27 15:30:05 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.28 2018/01/28 09:21:34 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -175,7 +175,7 @@ ssl3_accept(SSL *s)
 	unsigned long alg_k;
 	int ret = -1;
 	int new_state, state, skip = 0;
-	int listen;
+	int listen = 0;
 
 	ERR_clear_error();
 	errno = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.27 2017/08/12 21:04:33 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.28 2018/01/28 09:21:34 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -404,7 +404,7 @@ cert_status_cb(SSL * s, void *arg)
 {
 	tlsextstatusctx *srctx = arg;
 	BIO *err = srctx->err;
-	char *host, *port, *path;
+	char *host = NULL, *port = NULL, *path = NULL;
 	int use_ssl;
 	unsigned char *rspder = NULL;
 	int rspderlen;
