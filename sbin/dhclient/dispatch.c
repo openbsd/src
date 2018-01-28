@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.148 2018/01/25 15:43:51 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.149 2018/01/28 23:12:36 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -181,10 +181,8 @@ packethandler(struct interface_info *ifi)
 	struct dhcp_packet	*packet = &ifi->recv_packet;
 	struct reject_elem	*ap;
 	struct option_data	*options;
-	char			*type, *info;
+	char			*src;
 	ssize_t			 result;
-	void			(*handler)(struct interface_info *,
-	    struct option_data *, char *);
 	int			 i, rslt;
 
 	result = receive_packet(ifi, &from, &hfrom);
@@ -242,48 +240,36 @@ packethandler(struct interface_info *ifi)
 		return;
 	}
 
-	type = "<unknown>";
-	handler = NULL;
+	rslt = asprintf(&src, "%s (%s)",inet_ntoa(ifrom), ether_ntoa(&hfrom));
+	if (rslt == -1)
+		fatal("src");
 
 	i = DHO_DHCP_MESSAGE_TYPE;
 	if (options[i].data != NULL) {
 		/* Always try a DHCP packet, even if a bad option was seen. */
 		switch (options[i].data[0]) {
 		case DHCPOFFER:
-			handler = dhcpoffer;
-			type = "DHCPOFFER";
+			dhcpoffer(ifi, options, src);
 			break;
 		case DHCPNAK:
-			handler = dhcpnak;
-			type = "DHCPNACK";
+			dhcpnak(ifi, src);
 			break;
 		case DHCPACK:
-			handler = dhcpack;
-			type = "DHCPACK";
+			dhcpack(ifi, options, src);
 			break;
 		default:
 			DPRINTF("%s: discarding DHCP packet of unknown type "
 			    "(%d)", log_procname, options[i].data[0]);
-			return;
+			break;
 		}
 	} else if (packet->op == BOOTREPLY) {
-		handler = dhcpoffer;
-		type = "BOOTREPLY";
+		bootreply(ifi, options, src);
 	} else {
 		DPRINTF("%s: discarding packet which is neither DHCP nor "
 		    "BOOTP", log_procname);
-		return;
 	}
 
-	rslt = asprintf(&info, "%s from %s (%s)", type, inet_ntoa(ifrom),
-	    ether_ntoa(&hfrom));
-	if (rslt == -1)
-		fatal("info string");
-
-	if (handler != NULL)
-		(*handler)(ifi, options, info);
-
-	free(info);
+	free(src);
 }
 
 /*

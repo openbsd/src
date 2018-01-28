@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.246 2018/01/25 15:43:51 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.247 2018/01/28 23:12:36 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -219,9 +219,12 @@ extern int			 cmd_opts;
 #define		OPT_FOREGROUND	4
 
 void		 dhcpoffer(struct interface_info *, struct option_data *,
-    char *);
-void		 dhcpack(struct interface_info *, struct option_data *,char *);
-void		 dhcpnak(struct interface_info *, struct option_data *,char *);
+    const char *);
+void		 dhcpack(struct interface_info *, struct option_data *,
+    const char *);
+void		 dhcpnak(struct interface_info *, const char *);
+void		 bootreply(struct interface_info *, struct option_data *,
+    const char *);
 void		 free_client_lease(struct client_lease *);
 void		 routehandler(struct interface_info *, int);
 
