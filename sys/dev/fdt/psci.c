@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.4 2018/01/17 10:17:33 kettenis Exp $	*/
+/*	$OpenBSD: psci.c,v 1.5 2018/01/28 12:48:20 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -45,10 +45,10 @@ struct psci_softc {
 	struct device	 sc_dev;
 	register_t	 (*sc_callfn)(register_t, register_t, register_t,
 			     register_t);
-	int		 sc_psci_version; 
-	int		 sc_system_off;
-	int		 sc_system_reset;
-	int		 sc_cpu_on;
+	uint32_t	 sc_psci_version; 
+	uint32_t	 sc_system_off;
+	uint32_t	 sc_system_reset;
+	uint32_t	 sc_cpu_on;
 };
 
 struct psci_softc *psci_sc;
