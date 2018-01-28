@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.545 2018/01/25 15:43:51 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.546 2018/01/28 11:29:30 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -342,7 +342,7 @@ routehandler(struct interface_info *ifi, int routefd)
 				ifi->flags |= IFI_IN_CHARGE;
 				goto done;
 			} else if ((ifi->flags & IFI_IN_CHARGE) != 0)
-				fatal("yielding responsibility");
+				fatalx("yielding responsibility");
 		}
 		break;
 	case RTM_DESYNC:
@@ -353,7 +353,7 @@ routehandler(struct interface_info *ifi, int routefd)
 		if (ifm->ifm_index != ifi->index)
 			break;
 		if ((rtm->rtm_flags & RTF_UP) == 0)
-			fatal("down");
+			fatalx("down");
 
 		if ((ifi->flags & IFI_VALID_LLADDR) != 0) {
 			memcpy(&hw, &ifi->hw_address, sizeof(hw));
@@ -390,7 +390,7 @@ routehandler(struct interface_info *ifi, int routefd)
 		ifan = (struct if_announcemsghdr *)rtm;
 		if (ifan->ifan_what == IFAN_DEPARTURE &&
 		    ifan->ifan_index == ifi->index)
-			fatal("departed");
+			fatalx("departed");
 		break;
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
