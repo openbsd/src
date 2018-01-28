@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.26 2018/01/12 14:52:55 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.27 2018/01/28 13:17:45 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -416,7 +416,7 @@ need_resched(struct cpu_info *ci)
 	/* There's a risk we'll be called before the idle threads start */
 	if (ci->ci_curproc) {
 		aston(ci->ci_curproc);
-		//cpu_kick(ci); /* multiprocessor only ?? */
+		cpu_kick(ci);
 	}
 }
 

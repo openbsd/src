@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.5 2018/01/17 10:22:25 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.6 2018/01/28 13:17:45 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -81,10 +81,14 @@ struct cpu_info {
 	struct cpu_info		*ci_next;
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 
+	u_int32_t		ci_cpuid;
+	uint64_t		ci_mpidr;
+	int			ci_node;
+	struct cpu_info		*ci_self;
+
 	struct proc		*ci_curproc;
 	struct pmap		*ci_curpm;
 	struct proc		*ci_fpuproc;
-	u_int32_t		 ci_cpuid;
 	u_int32_t		ci_randseed;
 
 	struct pcb		*ci_curpcb;
@@ -104,12 +108,23 @@ struct cpu_info {
 
 #ifdef MULTIPROCESSOR
 	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
+	volatile int		ci_flags;
+	uint64_t		ci_ttbr1;
+	vaddr_t			ci_el1_stkend;
 #endif
 
 #ifdef GPROF
 	struct gmonparam	*ci_gmon;
 #endif
 };
+
+#define CPUF_PRIMARY 		(1<<0)
+#define CPUF_AP	 		(1<<1)
+#define CPUF_IDENTIFY		(1<<2)
+#define CPUF_IDENTIFIED		(1<<3)
+#define CPUF_PRESENT		(1<<4)
+#define CPUF_GO			(1<<5)
+#define CPUF_RUNNING		(1<<6)
 
 static inline struct cpu_info *
 curcpu(void)
@@ -137,10 +152,8 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_INFO_ITERATOR		int
 #define CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
 					    ci != NULL; ci = ci->ci_next)
-
 #define CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
 #define MAXCPUS	8
-#define cpu_unidle(ci)
 
 extern struct cpu_info *cpu_info[MAXCPUS];
 
@@ -162,7 +175,15 @@ void cpu_boot_secondary_processors(void);
  * process as soon as possible.
  */
 
+#ifdef MULTIPROCESSOR
+void cpu_unidle(struct cpu_info *ci);
+#define signotify(p)            (aston(p), cpu_unidle((p)->p_cpu))
+void cpu_kick(struct cpu_info *);
+#else
+#define cpu_kick(ci)
+#define cpu_unidle(ci)
 #define signotify(p)            setsoftast()
+#endif
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -263,6 +284,8 @@ intr_restore(u_long daif)
 {
 	restore_daif(daif);
 }
+
+void	cpu_startclock(void);
 
 void	delay (unsigned);
 #define	DELAY(x)	delay(x)

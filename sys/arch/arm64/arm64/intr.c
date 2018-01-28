@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.8 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: intr.c,v 1.9 2018/01/28 13:17:45 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -720,4 +720,23 @@ void
 intr_barrier(void *ih)
 {
 	sched_barrier(NULL);
+}
+
+/*
+ * IPI implementation
+ */
+
+void arm_no_send_ipi(struct cpu_info *ci, int id);
+void (*intr_send_ipi_func)(struct cpu_info *, int) = arm_no_send_ipi;
+
+void
+arm_send_ipi(struct cpu_info *ci, int id)
+{
+	(*intr_send_ipi_func)(ci, id);
+}
+
+void
+arm_no_send_ipi(struct cpu_info *ci, int id)
+{
+	panic("arm_send_ipi() called: no ipi function");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.7 2018/01/13 15:18:11 mpi Exp $ */
+/*	$OpenBSD: intr.h,v 1.8 2018/01/28 13:17:45 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -163,6 +163,12 @@ void	 arm_intr_route(void *, int, struct cpu_info *);
 void	*arm_intr_parent_establish_fdt(void *, int *, int,
 	    int (*)(void *), void *, char *);
 void	 arm_intr_parent_disestablish_fdt(void *);
+
+void	 arm_send_ipi(struct cpu_info *, int);
+extern void (*intr_send_ipi_func)(struct cpu_info *, int);
+
+#define ARM_IPI_NOP	0
+#define ARM_IPI_DDB	1
 
 #ifdef DIAGNOSTIC
 /*
