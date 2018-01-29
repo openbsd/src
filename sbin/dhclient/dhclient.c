@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.548 2018/01/29 13:41:30 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.549 2018/01/29 15:18:05 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -837,7 +837,7 @@ dhcpoffer(struct interface_info *ifi, struct option_data *options,
 		return;
 	}
 
-	log_info("%s: DHCPOFFER from %s", log_procname, src);
+	log_debug("%s: DHCPOFFER from %s", log_procname, src);
 	process_offer(ifi, options);
 }
 
@@ -851,7 +851,7 @@ bootreply(struct interface_info *ifi, struct option_data *options,
 		return;
 	}
 
-	log_info("%s: BOOTREPLY from %s", log_procname, src);
+	log_debug("%s: BOOTREPLY from %s", log_procname, src);
 	process_offer(ifi, options);
 }
 
@@ -942,7 +942,7 @@ dhcpnak(struct interface_info *ifi, const char *src)
 		return;
 	}
 
-	log_info("%s: DHCPNAK from %s", log_procname, src);
+	log_debug("%s: DHCPNAK from %s", log_procname, src);
 	delete_address(ifi->active->address);
 
 	/* XXX Do we really want to remove a NAK'd lease from the database? */
