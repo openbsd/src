@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.42 2018/01/04 14:30:08 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.43 2018/01/29 11:46:44 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -57,8 +57,8 @@ cd*		at scsibus?
 ch*		at scsibus?
 uk*		at scsibus?
 
-ampintc*	at fdt?
-ampintcmsi*	at fdt?
+ampintc*	at fdt? early 1
+ampintcmsi*	at fdt? early 1
 agintc*		at fdt?
 agtimer*	at fdt?
 ahci*		at fdt?
