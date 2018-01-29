@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.42 2018/01/25 15:43:51 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.43 2018/01/29 13:41:30 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -149,7 +149,7 @@ decode_udp_ip_header(unsigned char *buf, uint32_t buflen,
 		ip_packets_bad_checksum++;
 		if (ip_packets_seen > 4 && ip_packets_bad_checksum != 0 &&
 		    (ip_packets_seen / ip_packets_bad_checksum) < 2) {
-			log_info("%s: %d bad IP checksums seen in %d packets",
+			log_debug("%s: %d bad IP checksums seen in %d packets",
 			    log_procname, ip_packets_bad_checksum,
 			    ip_packets_seen);
 			ip_packets_seen = ip_packets_bad_checksum = 0;
@@ -191,7 +191,7 @@ decode_udp_ip_header(unsigned char *buf, uint32_t buflen,
 		    udp_packets_length_overflow != 0 &&
 		    (udp_packets_length_checked /
 		    udp_packets_length_overflow) < 2) {
-			log_info("%s: %d udp packets in %d too long - dropped",
+			log_debug("%s: %d udp packets in %d too long - dropped",
 			    log_procname, udp_packets_length_overflow,
 			    udp_packets_length_checked);
 			udp_packets_length_overflow =
@@ -216,7 +216,7 @@ decode_udp_ip_header(unsigned char *buf, uint32_t buflen,
 		udp_packets_bad_checksum++;
 		if (udp_packets_seen > 4 && udp_packets_bad_checksum != 0 &&
 		    (udp_packets_seen / udp_packets_bad_checksum) < 2) {
-			log_info("%s: %d bad udp checksums in %d packets",
+			log_debug("%s: %d bad udp checksums in %d packets",
 			    log_procname, udp_packets_bad_checksum,
 			    udp_packets_seen);
 			udp_packets_seen = udp_packets_bad_checksum = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.547 2018/01/28 23:12:36 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.548 2018/01/29 13:41:30 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -101,7 +101,6 @@ char *log_procname;
 
 char path_option_db[PATH_MAX];
 
-int log_perror = 1;
 int nullfd = -1;
 int cmd_opts;
 
@@ -436,12 +435,11 @@ main(int argc, char *argv[])
 	saved_argv = argv;
 
 	if (isatty(STDERR_FILENO) != 0)
-		log_perror = 1; /* log to stderr until daemonized */
+		log_init(1, LOG_DEBUG); /* log to stderr until daemonized */
 	else
-		log_perror = 0; /* can't log to stderr */
+		log_init(0, LOG_DEBUG); /* can't log to stderr */
 
-	log_init(log_perror, LOG_DAEMON);
-	log_setverbose(1);
+	log_setverbose(1);	/* Show log_debug() messages. */
 
 	while ((ch = getopt(argc, argv, "c:di:l:L:nq")) != -1)
 		switch (ch) {
@@ -490,9 +488,7 @@ main(int argc, char *argv[])
 		cmd_opts &= ~OPT_QUIET;
 
 	if ((cmd_opts & OPT_QUIET) != 0)
-		log_perror = 0;
-
-	log_init(log_perror, LOG_DAEMON);
+		log_setverbose(0);	/* Don't show log_debug() */
 
 	ifi = calloc(1, sizeof(*ifi));
 	if (ifi == NULL)
@@ -714,7 +710,7 @@ state_preboot(struct interface_info *ifi)
 
 	ifi->linkstat = interface_status(ifi->name);
 
-	if (log_perror != 0 && interval > 3) {
+	if (isatty(STDERR_FILENO) != 0 && interval > 3) {
 		if (preamble == 0 && ifi->linkstat == 0) {
 			fprintf(stderr, "%s: no link ....", ifi->name);
 			preamble = 1;
@@ -833,7 +829,7 @@ state_selecting(struct interface_info *ifi)
 
 void
 dhcpoffer(struct interface_info *ifi, struct option_data *options,
-	  const char *src)
+    const char *src)
 {
 	if (ifi->state != S_SELECTING) {
 		DPRINTF("%s: unexpected DHCPOFFER from %s - state #%d",
@@ -909,7 +905,7 @@ dhcpack(struct interface_info *ifi, struct option_data *options,
 		return;
 	}
 
-	log_info("%s: DHCPACK from %s", log_procname, src);
+	log_debug("%s: DHCPACK from %s", log_procname, src);
 
 	lease = packet_to_lease(ifi, options);
 	if (lease == NULL) {
@@ -1326,7 +1322,7 @@ send_discover(struct interface_info *ifi)
 
 	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast, "DHCPDISCOVER");
 	if (rslt != -1)
-		log_info("%s: DHCPDISCOVER - interval %lld", log_procname,
+		log_debug("%s: DHCPDISCOVER - interval %lld", log_procname,
 		    (long long)ifi->interval);
 
 	set_timeout(ifi, ifi->interval, send_discover);
@@ -1339,7 +1335,7 @@ send_discover(struct interface_info *ifi)
 void
 state_panic(struct interface_info *ifi)
 {
-	log_info("%s: no acceptable DHCPOFFERS received", log_procname);
+	log_debug("%s: no acceptable DHCPOFFERS received", log_procname);
 
 	ifi->offer = get_recorded_lease(ifi);
 	if (ifi->offer != NULL) {
@@ -1351,7 +1347,7 @@ state_panic(struct interface_info *ifi)
 	/*
 	 * No leases were available, or what was available didn't work
 	 */
-	log_info("%s: no working leases in persistent database - sleeping",
+	log_debug("%s: no working leases in persistent database - sleeping",
 	    log_procname);
 	ifi->state = S_INIT;
 	set_timeout(ifi, config->retry_interval, state_init);
@@ -1456,7 +1452,7 @@ send_request(struct interface_info *ifi)
 
 	rslt = send_packet(ifi, from, destination.sin_addr, "DHCPREQUEST");
 	if (rslt != -1)
-		log_info("%s: DHCPREQUEST to %s", log_procname,
+		log_debug("%s: DHCPREQUEST to %s", log_procname,
 		    inet_ntoa(destination.sin_addr));
 
 	set_timeout(ifi, ifi->interval, send_request);
@@ -1469,7 +1465,7 @@ send_decline(struct interface_info *ifi)
 
 	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast, "DHCPDECLINE");
 	if (rslt != -1)
-		log_info("%s: DHCPDECLINE", log_procname);
+		log_debug("%s: DHCPDECLINE", log_procname);
 }
 
 void
@@ -1984,14 +1980,10 @@ go_daemon(const char *name)
 		fatal("daemonize");
 
 	/* Stop logging to stderr. */
-	log_perror = 0;
 	log_init(0, LOG_DAEMON);
+	if ((cmd_opts & OPT_QUIET) == 0)
+		log_setverbose(1);	/* show log_debug() messages. */
 	log_procinit(log_procname);
-#ifdef DEBUG
-	log_setverbose(1);
-#else
-	log_setverbose(0);
-#endif	/* DEBUG */
 
 	setproctitle("%s", log_procname);
 	signal(SIGHUP, sighdlr);
@@ -2385,7 +2377,7 @@ apply_ignore_list(char *ignore_list)
 
 		i = name_to_code(p);
 		if (i == DHO_END) {
-			log_info("%s: invalid option name: '%s'", log_procname,
+			log_debug("%s: invalid option name: '%s'", log_procname,
 			    p);
 			return;
 		}
