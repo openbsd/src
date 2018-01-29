@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.84 2017/12/04 14:56:47 robert Exp $ */
+/* $OpenBSD: pms.c,v 1.85 2018/01/29 21:54:11 bru Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -215,7 +215,6 @@ static const struct alps_model {
 	{ 0x7321, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x7322, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x7325, 0xcf, ALPS_GLIDEPOINT },
-	{ 0x7331, 0x8f, ALPS_DUALPOINT },
 #if 0
 	/*
 	 * This model has a clitpad sending almost compatible PS2
@@ -225,6 +224,8 @@ static const struct alps_model {
 	{ 0x633b, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
 
 	{ 0x7326, 0, 0 },	/* XXX Uses unknown v3 protocol */
+
+	{ 0x7331, 0x8f, ALPS_DUALPOINT },	/* not supported */
 #endif
 };
 
@@ -1422,6 +1423,7 @@ alps_get_hwinfo(struct pms_softc *sc)
 			hw->y_min = ALPS_YMIN_BEZEL;
 			hw->x_max = ALPS_XMAX_BEZEL;
 			hw->y_max = ALPS_YMAX_BEZEL;
+			hw->contacts_max = 1;
 
 			return (0);
 		}

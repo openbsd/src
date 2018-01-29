@@ -1,4 +1,4 @@
-/* $OpenBSD: pmsreg.h,v 1.14 2017/08/25 19:44:21 bru Exp $ */
+/* $OpenBSD: pmsreg.h,v 1.15 2018/01/29 21:54:11 bru Exp $ */
 /* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
 
 #ifndef SYS_DEV_PCKBC_PMSREG_H
@@ -157,10 +157,10 @@
 #define SYNAPTICS_YMIN_BEZEL			1408
 #define SYNAPTICS_YMAX_BEZEL			4448
 
-#define ALPS_XMIN_BEZEL				130
-#define ALPS_XMAX_BEZEL				840
-#define ALPS_YMIN_BEZEL				130
-#define ALPS_YMAX_BEZEL				640
+#define ALPS_XMIN_BEZEL				0
+#define ALPS_XMAX_BEZEL				1023
+#define ALPS_YMIN_BEZEL				0
+#define ALPS_YMAX_BEZEL				767
 
 #define ALPS_XSEC_BEZEL				768
 #define ALPS_YSEC_BEZEL				512
