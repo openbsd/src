@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.77 2017/02/11 03:44:22 visa Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.78 2018/01/29 14:51:57 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -1178,8 +1178,8 @@ hw_ipi_intr_establish(int (*func)(void *), u_long cpuid)
 	int intr;
 
 	intr = IP27_SLICE_IPI(ci->ci_slice);
-	return ip27_hub_intr_establish(func, (void *)cpuid, intr, IPL_IPI,
-	    NULL, &ci->ci_ipiih);
+	return ip27_hub_intr_establish(func, (void *)cpuid, intr,
+	    IPL_IPI | IPL_MPSAFE, NULL, NULL);
 }
 
 void
