@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.549 2018/01/29 15:18:05 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.550 2018/01/29 23:16:36 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2417,20 +2417,24 @@ take_charge(struct interface_info *ifi, int routefd)
 	rtm.rtm_msglen = sizeof(rtm);
 	rtm.rtm_tableid = ifi->rdomain;
 	rtm.rtm_index = ifi->index;
-	rtm.rtm_seq = ifi->xid = arc4random();
 	rtm.rtm_priority = RTP_PROPOSAL_DHCLIENT;
 	rtm.rtm_addrs = 0;
 	rtm.rtm_flags = RTF_UP | RTF_PROTO3;
 
+	rtm.rtm_seq = ifi->xid = arc4random();
+	if (write(routefd, &rtm, sizeof(rtm)) == -1)
+		fatal("write(routefd)");
+
 	retries = 0;
 	while ((ifi->flags & IFI_IN_CHARGE) == 0) {
-		if (write(routefd, &rtm, sizeof(rtm)) == -1)
-			fatal("write(routefd)");
 		time(&cur_time);
 		if ((cur_time - start_time) > 3) {
 			if (++retries <= 3) {
 				if (time(&start_time) == -1)
 					fatal("time");
+				rtm.rtm_seq = ifi->xid = arc4random();
+				if (write(routefd, &rtm, sizeof(rtm)) == -1)
+					fatal("write(routefd)");
 			} else {
 				fatalx("failed to take charge");
 			}
