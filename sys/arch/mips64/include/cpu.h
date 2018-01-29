@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.122 2017/10/21 06:11:22 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.123 2018/01/29 14:53:01 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -205,7 +205,6 @@ struct cpu_info {
 	uint		ci_intrdepth;		/* interrupt depth */
 #ifdef MULTIPROCESSOR
 	u_long		ci_flags;		/* flags; see below */
-	struct intrhand	ci_ipiih;
 #endif
 	volatile int    ci_ddb;
 #define	CI_DDB_RUNNING		0
