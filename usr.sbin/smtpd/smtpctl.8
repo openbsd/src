@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.61 2018/01/06 09:16:37 jmc Exp $
+.\" $OpenBSD: smtpctl.8,v 1.62 2018/01/30 20:48:35 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 6 2018 $
+.Dd $Mdocdate: January 30 2018 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -104,11 +104,10 @@ Envelopes removed by the administrator.
 .It
 Generated bounces.
 .El
-.It Cm pause envelope Ar envelope-id | message-id
+.It Cm pause envelope Ar envelope-id | message-id | Cm all
 Temporarily suspend scheduling for the envelope with the given ID,
-or all envelopes with the given message ID.
-.It Cm pause envelope all
-Temporarily suspend scheduling all the envelopes.
+envelopes with the given message ID,
+or all envelopes.
 .It Cm pause mda
 Temporarily stop deliveries to local users.
 .It Cm pause mta
@@ -127,15 +126,14 @@ queue, to profile cost of queue IO
 .It
 imsg, to profile cost of event handlers
 .El
-.It Cm remove Ar envelope-id | message-id
-Remove a single envelope, or all envelopes with the same message ID.
-.It Cm remove all
-Remove all envelopes.
-.It Cm resume envelope Ar envelope-id | message-id
+.It Cm remove Ar envelope-id | message-id | Cm all
+Remove a single envelope,
+envelopes with the given message ID,
+or all envelopes.
+.It Cm resume envelope Ar envelope-id | message-id | Cm all
 Resume scheduling for the envelope with the given ID,
-or all envelopes with the given message ID.
-.It Cm resume envelope all
-Resume scheduling all the envelopes.
+envelopes with the given message ID,
+or all envelopes.
 .It Cm resume mda
 Resume deliveries to local users.
 .It Cm resume mta
@@ -145,11 +143,11 @@ Resume routing on disabled route
 .Ar route-id .
 .It Cm resume smtp
 Resume accepting incoming sessions.
-.It Cm schedule all
-Mark all envelopes as ready for immediate delivery.
-.It Cm schedule Ar envelope-id | message-id
-Mark a single envelope, or all envelopes with the same message ID,
-as ready for immediate delivery.
+.It Cm schedule Ar envelope-id | message-id | Cm all
+Mark as ready for immediate delivery
+a single envelope,
+envelopes with the given message ID,
+or all envelopes.
 .It Cm show envelope Ar envelope-id
 Display envelope content for the given ID.
 .It Cm show hosts
