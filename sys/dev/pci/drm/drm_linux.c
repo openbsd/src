@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.18 2018/01/15 22:24:17 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.19 2018/01/30 08:27:17 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -630,6 +630,15 @@ struct i2c_algorithm i2c_bit_algo = {
 	.master_xfer = i2c_bb_master_xfer,
 	.functionality = i2c_bb_functionality
 };
+
+int
+i2c_bit_add_bus(struct i2c_adapter *adap)
+{
+	adap->algo = &i2c_bit_algo;
+	adap->retries = 3;
+
+	return 0;
+}
 
 #if defined(__amd64__) || defined(__i386__)
 

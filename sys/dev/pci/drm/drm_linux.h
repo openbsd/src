@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.68 2018/01/30 08:25:06 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.69 2018/01/30 08:27:17 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -1646,6 +1646,8 @@ i2c_set_adapdata(struct i2c_adapter *adap, void *data)
 {
 	adap->data = data;
 }
+
+int i2c_bit_add_bus(struct i2c_adapter *);
 
 #define memcpy_toio(d, s, n)	memcpy(d, s, n)
 #define memcpy_fromio(d, s, n)	memcpy(d, s, n)
