@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.155 2018/01/13 13:03:42 robert Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.156 2018/01/30 08:17:31 jsg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -295,6 +295,12 @@ int drm_noop(struct drm_device *dev, void *data,
 	     struct drm_file *file_priv)
 {
 	return 0;
+}
+
+int drm_invalid_op(struct drm_device *dev, void *data,
+		   struct drm_file *file_priv)
+{
+	return -EINVAL;
 }
 
 /*
