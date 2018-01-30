@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.77 2018/01/30 08:50:59 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.78 2018/01/30 08:54:10 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -1555,6 +1555,10 @@ pci_bus_read_config_byte(struct pci_bus *bus, unsigned int devfn,
 }
 
 #define pci_set_master(x)
+#define pci_clear_master(x)
+
+#define pci_save_state(x)
+#define pci_restore_state(x)
 
 #define pci_enable_msi(x)
 #define pci_disable_msi(x)
@@ -1570,6 +1574,7 @@ typedef enum {
 #define pci_save_state(x)
 #define pci_enable_device(x)	0
 #define pci_disable_device(x)
+#define pci_set_power_state(d, s)
 
 static inline int
 vga_client_register(struct pci_dev *a, void *b, void *c, void *d)
