@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.71 2018/01/30 08:35:21 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.72 2018/01/30 08:37:44 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -91,6 +91,10 @@ typedef off_t loff_t;
 #define __must_check
 #define __init
 #define __exit
+
+#ifndef __user
+#define __user
+#endif
 
 #define __printf(x, y)
 
@@ -994,6 +998,7 @@ ktime_us_delta(struct timeval a, struct timeval b)
 #define GFP_ATOMIC	M_NOWAIT
 #define GFP_NOWAIT	M_NOWAIT
 #define GFP_KERNEL	(M_WAITOK | M_CANFAIL)
+#define GFP_USER	(M_WAITOK | M_CANFAIL)
 #define GFP_TEMPORARY	(M_WAITOK | M_CANFAIL)
 #define GFP_HIGHUSER	0
 #define GFP_DMA32	0
@@ -1063,6 +1068,12 @@ kasprintf(int flags, const char *fmt, ...)
 	}
 
 	return buf;
+}
+
+static inline void *
+vmalloc(unsigned long size)
+{
+	return malloc(size, M_DRM, M_WAITOK | M_CANFAIL);
 }
 
 static inline void *
