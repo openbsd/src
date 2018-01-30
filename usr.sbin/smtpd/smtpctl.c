@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.156 2018/01/26 08:00:54 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.157 2018/01/30 12:44:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -41,6 +41,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <vis.h>
 #include <limits.h>
 
 #include "smtpd.h"
@@ -1165,7 +1166,7 @@ static void
 show_queue_envelope(struct envelope *e, int online)
 {
 	const char	*src = "?", *agent = "?";
-	char		 status[128], runstate[128];
+	char		 status[128], runstate[128], errline[LINE_MAX];
 
 	status[0] = '\0';
 
@@ -1210,6 +1211,8 @@ show_queue_envelope(struct envelope *e, int online)
 	else if (e->ss.ss_family == AF_INET6)
 		src = "inet6";
 
+	strnvis(errline, e->errorline, sizeof(errline), 0);
+
 	printf("%016"PRIx64
 	    "|%s|%s|%s|%s@%s|%s@%s|%s@%s"
 	    "|%zu|%zu|%zu|%zu|%s|%s\n",
@@ -1228,7 +1231,7 @@ show_queue_envelope(struct envelope *e, int online)
 	    (size_t) e->lasttry,
 	    (size_t) e->retry,
 	    runstate,
-	    e->errorline);
+	    errline);
 }
 
 static void
