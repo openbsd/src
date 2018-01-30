@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.78 2018/01/30 08:54:10 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.79 2018/01/30 09:05:23 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -285,6 +285,8 @@ struct module;
 #define module_param_named(name, value, type, perm)
 #define module_param_named_unsafe(name, value, type, perm)
 #define module_param_unsafe(name, type, perm)
+#define module_init(x)
+#define module_exit(x)
 
 #define THIS_MODULE	NULL
 
@@ -848,6 +850,7 @@ typedef void *async_cookie_t;
 #define TASK_INTERRUPTIBLE	PCATCH
 
 #define signal_pending_state(x, y) CURSIG(curproc)
+#define signal_pending(y) CURSIG(curproc)
 
 #define NSEC_PER_USEC	1000L
 #define NSEC_PER_MSEC	1000000L
