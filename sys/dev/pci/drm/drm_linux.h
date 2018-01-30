@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.73 2018/01/30 08:40:19 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.74 2018/01/30 08:44:23 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -1597,11 +1597,12 @@ pci_dma_mapping_error(struct pci_dev *pdev, dma_addr_t dma_addr)
 void vga_get_uninterruptible(struct pci_dev *, int);
 void vga_put(struct pci_dev *, int);
 
+#endif
+
 #define vga_switcheroo_register_client(a, b, c)	0
 #define vga_switcheroo_unregister_client(a)
 #define vga_switcheroo_process_delayed_switch()
-
-#endif
+#define vga_switcheroo_fini_domain_pm_ops(x)
 
 struct i2c_algorithm;
 
