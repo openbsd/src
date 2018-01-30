@@ -604,7 +604,7 @@ omalloc_make_chunks(struct dir_info *d, int bits, int listnum)
 		goto err;
 	bp->page = pp;
 
-	if (insert(d, (void *)((uintptr_t)pp | bits + 1), (uintptr_t)bp))
+	if (insert(d, (void *)((uintptr_t)pp | (bits + 1)), (uintptr_t)bp))
 		goto err;
 	LIST_INSERT_HEAD(&d->chunk_dir[bits][listnum], bp, entries);
 	return bp;
