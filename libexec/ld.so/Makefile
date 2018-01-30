@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.71 2017/12/08 05:30:16 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.72 2018/01/30 20:15:25 otto Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -19,7 +19,7 @@ VPATH=${.CURDIR}/../../lib/libc/string
 SRCS=	ldasm.S boot.c loader.c resolve.c dlfcn.c dl_printf.c rtld_machine.c
 SRCS+=	path.c util.c sod.c strsep.c strtol.c dir.c library_subr.c
 SRCS+=	dl_realpath.c dl_uname.c dl_dirname.c strlcat.c strlen.c trace.c
-SRCS+=	malloc.c reallocarray.c tib.c
+SRCS+=	malloc.c reallocarray.c tib.c ffs.c
 
 syscall=__syscall close exit fstat __getcwd getdents getentropy getthrid \
 	issetugid mprotect munmap open pledge read readlink sendsyslog \
