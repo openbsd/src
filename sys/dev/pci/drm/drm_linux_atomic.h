@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_linux_atomic.h,v 1.1 2017/07/01 16:14:10 kettenis Exp $ */
+/* $OpenBSD: drm_linux_atomic.h,v 1.2 2018/01/30 08:15:17 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -50,6 +50,7 @@ typedef uint32_t atomic_t;
 #define atomic_dec_and_test(v)	(atomic_dec_return(v) == 0)
 #define atomic_inc_and_test(v)	(atomic_inc_return(v) == 0)
 #define atomic_or(n, p)		atomic_setbits_int(p, n)
+#define atomic_cmpxchg(p, o, n)	__sync_val_compare_and_swap(p, o, n)
 
 static __inline int
 atomic_xchg(volatile int *v, int n)
@@ -86,6 +87,9 @@ atomic64_xchg(volatile int64_t *v, int64_t n)
 	__sync_synchronize();
 	return __sync_lock_test_and_set(v, n);
 }
+
+#define atomic64_add(n, p)	__sync_fetch_and_add_8(p, n)
+#define atomic64_sub(n, p)	__sync_fetch_and_sub_8(p, n)
 
 #else
 
@@ -124,6 +128,22 @@ atomic64_xchg(atomic64_t *v, int64_t n)
 	mtx_leave(&v->lock);
 
 	return val;
+}
+
+static __inline void
+atomic64_add(int i, atomic64_t *v)
+{
+	mtx_enter(&v->lock);
+	v->val += i;
+	mtx_leave(&v->lock);
+}
+
+static __inline void
+atomic64_sub(int i, atomic64_t *v)
+{
+	mtx_enter(&v->lock);
+	v->val -= i;
+	mtx_leave(&v->lock);
 }
 #endif
 
