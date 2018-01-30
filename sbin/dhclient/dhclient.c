@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.550 2018/01/29 23:16:36 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.551 2018/01/30 13:22:42 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -153,7 +153,8 @@ void send_discover(struct interface_info *);
 void send_request(struct interface_info *);
 void send_decline(struct interface_info *);
 
-void process_offer(struct interface_info *, struct option_data *);
+void process_offer(struct interface_info *, struct option_data *,
+    const char *);
 void bind_lease(struct interface_info *);
 
 void make_discover(struct interface_info *, struct client_lease *);
@@ -823,6 +824,8 @@ state_selecting(struct interface_info *ifi)
 	/* Toss the lease we picked - we'll get it back in a DHCPACK. */
 	free_client_lease(ifi->offer);
 	ifi->offer = NULL;
+	free(ifi->offer_src);
+	ifi->offer_src = NULL;
 
 	send_request(ifi);
 }
@@ -838,7 +841,7 @@ dhcpoffer(struct interface_info *ifi, struct option_data *options,
 	}
 
 	log_debug("%s: DHCPOFFER from %s", log_procname, src);
-	process_offer(ifi, options);
+	process_offer(ifi, options, src);
 }
 
 void
@@ -852,11 +855,12 @@ bootreply(struct interface_info *ifi, struct option_data *options,
 	}
 
 	log_debug("%s: BOOTREPLY from %s", log_procname, src);
-	process_offer(ifi, options);
+	process_offer(ifi, options, src);
 }
 
 void
-process_offer(struct interface_info *ifi, struct option_data *options)
+process_offer(struct interface_info *ifi, struct option_data *options,
+    const char *src)
 {
 	struct client_lease	*lease;
 	time_t			 cur_time, stop_selecting;
@@ -867,6 +871,8 @@ process_offer(struct interface_info *ifi, struct option_data *options)
 	if (lease != NULL) {
 		if (ifi->offer == NULL) {
 			ifi->offer = lease;
+			free(ifi->offer_src);
+			ifi->offer_src = strdup(src);	/* NULL is OK */
 		} else if (lease->address.s_addr ==
 		    ifi->offer->address.s_addr) {
 			/* Decline duplicate offers. */
@@ -874,6 +880,8 @@ process_offer(struct interface_info *ifi, struct option_data *options)
 		    ifi->requested_address.s_addr) {
 			free_client_lease(ifi->offer);
 			ifi->offer = lease;
+			free(ifi->offer_src);
+			ifi->offer_src = strdup(src);	/* NULL is OK */
 		}
 		if (ifi->offer != lease) {
 			make_decline(ifi, lease);
@@ -915,6 +923,7 @@ dhcpack(struct interface_info *ifi, struct option_data *options,
 	}
 
 	ifi->offer = lease;
+	ifi->offer_src = strdup(src);	/* NULL is OK */
 	memcpy(ifi->offer->ssid, ifi->ssid, sizeof(ifi->offer->ssid));
 	ifi->offer->ssid_len = ifi->ssid_len;
 
@@ -1022,8 +1031,12 @@ bind_lease(struct interface_info *ifi)
 
 newlease:
 	write_resolv_conf();
-	log_info("%s: bound to %s", log_procname,
-	    inet_ntoa(ifi->active->address));
+	log_info("%s: bound to %s from %s", log_procname,
+	    inet_ntoa(ifi->active->address),
+	    (ifi->offer_src == NULL) ? "<unknown>" : ifi->offer_src
+	);
+	free(ifi->offer_src);
+	ifi->offer_src = NULL;
 	go_daemon(ifi->name);
 	rewrite_option_db(ifi->name, ifi->active, lease);
 	free_client_lease(lease);
@@ -1340,6 +1353,7 @@ state_panic(struct interface_info *ifi)
 	ifi->offer = get_recorded_lease(ifi);
 	if (ifi->offer != NULL) {
 		ifi->state = S_REQUESTING;
+		ifi->offer_src = strdup(path_lease_db); /* NULL is OK. */
 		bind_lease(ifi);
 		return;
 	}

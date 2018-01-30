@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.248 2018/01/29 15:18:05 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.249 2018/01/30 13:22:42 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -146,6 +146,7 @@ struct interface_info {
 	struct in_addr		 requested_address;
 	struct client_lease	*active;
 	struct client_lease	*offer;
+	char			*offer_src;
 	struct client_lease_tq	 lease_db;
 };
 
