@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.69 2018/01/30 08:27:17 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.70 2018/01/30 08:31:38 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -50,6 +50,8 @@
 #pragma clang diagnostic ignored "-Wtautological-compare"
 #pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
 #pragma clang diagnostic ignored "-Wunused-const-variable"
+#else
+#pragma GCC diagnostic ignored "-Wformat-zero-length"
 #endif
 
 typedef int irqreturn_t;
