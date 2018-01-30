@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.c,v 1.1 2018/01/21 21:35:34 patrick Exp $	*/
+/*	$OpenBSD: efipxe.c,v 1.2 2018/01/30 20:19:06 naddy Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -139,6 +139,9 @@ tftp_open(char *path, struct open_file *f)
 	}
 	tftpfile->inbufsize = size;
 
+	if (tftpfile->inbufsize == 0)
+		goto out;
+
 	status = EFI_CALL(BS->AllocatePages, AllocateAnyPages, EfiLoaderData,
 	    EFI_SIZE_TO_PAGES(tftpfile->inbufsize), &addr);
 	if (status != EFI_SUCCESS) {
@@ -153,7 +156,7 @@ tftp_open(char *path, struct open_file *f)
 		free(tftpfile, sizeof(*tftpfile));
 		return ENXIO;
 	}
-
+out:
 	f->f_fsdata = tftpfile;
 	return 0;
 }
@@ -163,8 +166,9 @@ tftp_close(struct open_file *f)
 {
 	struct tftp_handle *tftpfile = f->f_fsdata;
 
-	EFI_CALL(BS->FreePages, (paddr_t)tftpfile->inbuf,
-	    EFI_SIZE_TO_PAGES(tftpfile->inbufsize));
+	if (tftpfile->inbuf != NULL)
+		EFI_CALL(BS->FreePages, (paddr_t)tftpfile->inbuf,
+		    EFI_SIZE_TO_PAGES(tftpfile->inbufsize));
 	free(tftpfile, sizeof(*tftpfile));
 	return 0;
 }
@@ -180,14 +184,10 @@ tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 	else
 		toread = size;
 
-	if (toread == 0) {
-		if (resid != NULL)
-			*resid = 0;
-		return (0);
+	if (toread != 0) {
+		memcpy(addr, tftpfile->inbuf + tftpfile->inbufoff, toread);
+		tftpfile->inbufoff += toread;
 	}
-
-	memcpy(addr, tftpfile->inbuf + tftpfile->inbufoff, toread);
-	tftpfile->inbufoff += toread;
 
 	if (resid != NULL)
 		*resid = size - toread;
@@ -207,7 +207,8 @@ tftp_seek(struct open_file *f, off_t offset, int where)
 
 	switch(where) {
 	case SEEK_CUR:
-		if (tftpfile->inbufoff + offset < 0) {
+		if (tftpfile->inbufoff + offset < 0 ||
+		    tftpfile->inbufoff + offset > tftpfile->inbufsize) {
 			errno = EOFFSET;
 			break;
 		}
