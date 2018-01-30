@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.680 2018/01/11 09:26:36 kevlo Exp $
+$OpenBSD: usbdevs,v 1.681 2018/01/30 20:56:38 zhuk Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1549,6 +1549,7 @@ product DLINK RT3072		0x3c0a	RT3072
 product DLINK DWA140B3		0x3c15	DWA-140 rev B3
 product DLINK DWA160B2		0x3c1a	DWA-160 rev B2
 product DLINK DWA127		0x3c1b	DWA-127
+product DLINK DWA125B2		0x3c1e	DWA-125 rev B2
 product DLINK DWA162		0x3c1f	DWA-162 Wireless Adapter
 product DLINK DWA140D1		0x3c20	DWA-140 rev D1
 product DLINK DWA130F1		0x3c25	DWA-130 rev F1
