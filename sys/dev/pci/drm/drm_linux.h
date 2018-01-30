@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.79 2018/01/30 09:05:23 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.80 2018/01/30 09:57:58 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -1455,6 +1455,7 @@ struct pci_dev {
 };
 #define PCI_ANY_ID (uint16_t) (~0U)
 
+#define PCI_VENDOR_ID_APPLE	PCI_VENDOR_APPLE
 #define PCI_VENDOR_ID_ASUSTEK	PCI_VENDOR_ASUSTEK
 #define PCI_VENDOR_ID_ATI	PCI_VENDOR_ATI
 #define PCI_VENDOR_ID_DELL	PCI_VENDOR_DELL
@@ -1472,6 +1473,13 @@ struct pci_dev {
 
 #define pci_dev_put(x)
 
+#define PCI_EXP_DEVSTA		0x0a
+#define PCI_EXP_DEVSTA_TRPND	0x0020
+#define PCI_EXP_LNKCAP		0x0c
+#define PCI_EXP_LNKCAP_CLKPM	0x00040000
+#define PCI_EXP_LNKCTL		0x10
+#define PCI_EXP_LNKCTL_HAWD	0x0200
+#define PCI_EXP_LNKCTL2		0x30
 
 static inline int
 pci_read_config_dword(struct pci_dev *pdev, int reg, u32 *val)
@@ -1554,6 +1562,29 @@ pci_bus_read_config_byte(struct pci_bus *bus, unsigned int devfn,
 
 	v = pci_conf_read(bus->pc, tag, (reg & ~0x3));
 	*val = (v >> ((reg & 0x3) * 8));
+	return 0;
+}
+
+static inline int
+pci_pcie_cap(struct pci_dev *pdev)
+{
+	int pos;
+	if (!pci_get_capability(pdev->pc, pdev->tag, PCI_CAP_PCIEXPRESS,
+	    &pos, NULL))
+		return -EINVAL;
+	return pos;
+}
+
+static inline int
+pcie_capability_read_dword(struct pci_dev *pdev, int off, u32 *val)
+{
+	int pos;
+	if (!pci_get_capability(pdev->pc, pdev->tag, PCI_CAP_PCIEXPRESS,
+	    &pos, NULL)) {
+		*val = 0;
+		return -EINVAL;
+	}
+	*val = pci_conf_read(pdev->pc, pdev->tag, pos + off);
 	return 0;
 }
 
