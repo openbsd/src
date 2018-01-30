@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.72 2018/01/30 08:37:44 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.73 2018/01/30 08:40:19 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -1685,9 +1685,16 @@ iowrite32(u32 val, volatile void __iomem *addr)
 	*(volatile uint32_t *)addr = val;
 }
 
+static inline void
+iowrite64(u64 val, volatile void __iomem *addr)
+{
+	*(volatile uint64_t *)addr = val;
+}
+
 #define readl(p) ioread32(p)
 #define writel(v, p) iowrite32(v, p)
 #define readq(p) ioread64(p)
+#define writeq(v, p) iowrite64(v, p)
 
 #define page_to_phys(page)	(VM_PAGE_TO_PHYS(page))
 #define page_to_pfn(pp)		(VM_PAGE_TO_PHYS(pp) / PAGE_SIZE)
