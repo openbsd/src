@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.75 2018/01/30 08:46:49 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.76 2018/01/30 08:49:38 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -703,6 +703,13 @@ alloc_ordered_workqueue(const char *name, int flags)
 	return (struct workqueue_struct *)tq;
 }
 
+static inline struct workqueue_struct *
+create_singlethread_workqueue(const char *name)
+{
+	struct taskq *tq = taskq_create(name, 1, IPL_TTY, 0);
+	return (struct workqueue_struct *)tq;
+}
+
 static inline void
 destroy_workqueue(struct workqueue_struct *wq)
 {
@@ -743,6 +750,8 @@ struct delayed_work {
 	struct timeout to;
 	struct taskq *tq;
 };
+
+#define system_power_efficient_wq ((struct workqueue_struct *)systq)
 
 static inline struct delayed_work *
 to_delayed_work(struct work_struct *work)
