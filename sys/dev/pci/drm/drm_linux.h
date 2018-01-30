@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.67 2018/01/15 22:24:17 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.68 2018/01/30 08:25:06 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -104,10 +104,17 @@ typedef off_t loff_t;
 
 #define le16_to_cpu(x) letoh16(x)
 #define le32_to_cpu(x) letoh32(x)
+#define be16_to_cpu(x) betoh16(x)
+#define be32_to_cpu(x) betoh32(x)
+#define le16_to_cpup(x)	lemtoh16(x)
+#define le32_to_cpup(x)	lemtoh32(x)
+#define be16_to_cpup(x)	bemtoh16(x)
+#define be32_to_cpup(x)	bemtoh32(x)
+#define get_unaligned_le32(x)	lemtoh32(x)
 #define cpu_to_le16(x) htole16(x)
 #define cpu_to_le32(x) htole32(x)
-
-#define be32_to_cpup(x) betoh32(*x)
+#define cpu_to_be16(x) htobe16(x)
+#define cpu_to_be32(x) htobe32(x)
 
 static inline uint8_t
 hweight8(uint32_t x)
