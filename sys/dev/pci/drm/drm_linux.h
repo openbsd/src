@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.70 2018/01/30 08:31:38 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.71 2018/01/30 08:35:21 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -1313,6 +1313,7 @@ div64_s64(int64_t x, int64_t y)
 }
 
 #define mult_frac(x, n, d) (((x) * (n)) / (d))
+#define order_base_2(x) drm_order(x)
 
 static inline int64_t
 abs64(int64_t x)
@@ -1715,6 +1716,26 @@ void	 vunmap(void *, size_t);
 #define DIV_ROUND_CLOSEST(x, y)	(((x) + ((y) / 2)) / (y))
 #define DIV_ROUND_CLOSEST_ULL(x, y)	DIV_ROUND_CLOSEST(x, y)
 
+/*
+ * Compute the greatest common divisor of a and b.
+ * from libc getopt_long.c
+ */
+static inline unsigned long
+gcd(unsigned long a, unsigned long b)
+{
+	unsigned long c;
+
+	c = a % b;
+	while (c != 0) {
+		a = b;
+		b = c;
+		c = a % b;
+	}
+
+	return (b);
+}
+
+
 static inline unsigned long
 roundup_pow_of_two(unsigned long x)
 {
@@ -1854,6 +1875,8 @@ get_order(size_t size)
 {
 	return flsl((size - 1) >> PAGE_SHIFT);
 }
+
+#define ilog2(x) ((sizeof(x) <= 4) ? (fls(x) - 1) : (flsl(x) - 1))
 
 #if defined(__i386__) || defined(__amd64__)
 
