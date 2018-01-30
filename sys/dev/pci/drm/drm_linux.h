@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.74 2018/01/30 08:44:23 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.75 2018/01/30 08:46:49 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -1837,6 +1837,18 @@ power_supply_is_system_supplied(void)
 
 #define pm_qos_update_request(x, y)
 #define pm_qos_remove_request(x)
+#define pm_runtime_mark_last_busy(x)
+#define pm_runtime_use_autosuspend(x)
+#define pm_runtime_put_autosuspend(x)
+#define pm_runtime_set_autosuspend_delay(x, y)
+#define pm_runtime_set_active(x)
+#define pm_runtime_allow(x)
+
+static inline int
+pm_runtime_get_sync(struct device *dev)
+{
+	return 0;
+}
 
 #define _U      0x01
 #define _L      0x02
