@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.6 2018/01/28 13:17:45 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.7 2018/01/30 15:46:12 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -111,6 +111,14 @@ struct cpu_info {
 	volatile int		ci_flags;
 	uint64_t		ci_ttbr1;
 	vaddr_t			ci_el1_stkend;
+
+	volatile int		ci_ddb_paused;
+#define CI_DDB_RUNNING		0
+#define CI_DDB_SHOULDSTOP	1
+#define CI_DDB_STOPPED		2
+#define CI_DDB_ENTERDDB		3
+#define CI_DDB_INDDB		4
+
 #endif
 
 #ifdef GPROF
