@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.4 2018/01/12 22:20:28 kettenis Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.5 2018/01/31 10:52:12 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -49,6 +49,8 @@
 #define	ARM_LOCAL_INT_MAILBOX(n)	(0x50 + (n) * 4)
 #define	ARM_LOCAL_INT_PENDING(n)	(0x60 + (n) * 4)
 #define	 ARM_LOCAL_INT_PENDING_MASK	0x0f
+#define	ARM_LOCAL_INT_MAILBOX_SET(n)	(0x80 + (n) * 16)
+#define	ARM_LOCAL_INT_MAILBOX_CLR(n)	(0xc0 + (n) * 16)
 
 #define	BANK0_START	64
 #define	BANK0_END	(BANK0_START + 32 - 1)
@@ -68,6 +70,8 @@
 #define	IRQ_BANK2(n)	((n) - BANK2_START)
 #define	IRQ_LOCAL(n)	((n) - LOCAL_START)
 
+#define ARM_LOCAL_IRQ_MAILBOX(n) (4 + (n))
+
 #define	INTC_NIRQ	128
 #define	INTC_NBANK	4
 
@@ -81,8 +85,8 @@ struct intrhand {
 	int ih_ipl;			/* IPL_* */
 	int ih_flags;
 	int ih_irq;			/* IRQ number */
-	struct evcount ih_count;
-	char *ih_name;
+	struct evcount ih_count;	/* interrupt counter */
+	char *ih_name;			/* device name */
 };
 
 struct intrsource {
@@ -94,6 +98,7 @@ struct bcm_intc_softc {
 	struct device		 sc_dev;
 	struct intrsource	 sc_bcm_intc_handler[INTC_NIRQ];
 	uint32_t		 sc_bcm_intc_imask[INTC_NBANK][NIPL];
+	int32_t			 sc_localcoremask[MAXCPUS];
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
 	bus_space_handle_t	 sc_lioh;
@@ -117,6 +122,9 @@ void	*l1_intc_intr_establish_fdt(void *, int *, int, int (*)(void *),
     void *, char *);
 void	 bcm_intc_intr_disestablish(void *);
 void	 bcm_intc_irq_handler(void *);
+void	 bcm_intc_intr_route(void *, int , struct cpu_info *);
+void	 bcm_intc_handle_ipi(void);
+void	 bcm_intc_send_ipi(struct cpu_info *, int);
 
 struct cfattach	bcmintc_ca = {
 	sizeof (struct bcm_intc_softc), bcm_intc_match, bcm_intc_attach
@@ -166,10 +174,10 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	node = OF_finddevice("/soc/local_intc");
 	if (node == -1)
-		panic("%s: can't find ARM control logic\n", __func__);
+		panic("%s: can't find ARM control logic", __func__);
 
 	if (OF_getpropintarray(node, "reg", reg, sizeof(reg)) != sizeof(reg))
-		panic("%s: can't map ARM control logic\n", __func__);
+		panic("%s: can't map ARM control logic", __func__);
 
 	if (bus_space_map(sc->sc_iot, reg[0], reg[1], 0, &sc->sc_lioh))
 		panic("%s: bus_space_map failed!", __func__);
@@ -209,14 +217,18 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_intc.ic_cookie = sc;
 	sc->sc_intc.ic_establish = bcm_intc_intr_establish_fdt;
 	sc->sc_intc.ic_disestablish = bcm_intc_intr_disestablish;
+	sc->sc_intc.ic_route = bcm_intc_intr_route;
 	arm_intr_register_fdt(&sc->sc_intc);
 
 	sc->sc_l1_intc.ic_node = node;
 	sc->sc_l1_intc.ic_cookie = sc;
 	sc->sc_l1_intc.ic_establish = l1_intc_intr_establish_fdt;
 	sc->sc_l1_intc.ic_disestablish = bcm_intc_intr_disestablish;
+	sc->sc_l1_intc.ic_route = bcm_intc_intr_route;
 	arm_intr_register_fdt(&sc->sc_l1_intc);
 
+	intr_send_ipi_func = bcm_intc_send_ipi;
+	
 	bcm_intc_setipl(IPL_HIGH);  /* XXX ??? */
 	enable_interrupts();
 }
@@ -345,26 +357,29 @@ bcm_intc_setipl(int new)
 {
 	struct cpu_info *ci = curcpu();
 	struct bcm_intc_softc *sc = bcm_intc;
-	int i, psw;
+	int psw;
 
 	psw = disable_interrupts();
 	ci->ci_cpl = new;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_DISABLE_BANK0,
-	    0xffffffff);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_DISABLE_BANK1,
-	    0xffffffff);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_DISABLE_BANK2,
-	    0xffffffff);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_ENABLE_BANK0,
-	    sc->sc_bcm_intc_imask[0][new]);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_ENABLE_BANK1,
-	    sc->sc_bcm_intc_imask[1][new]);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_ENABLE_BANK2,
-	    sc->sc_bcm_intc_imask[2][new]);
-	/* XXX: SMP */
-	for (i = 0; i < 4; i++)
-		bus_space_write_4(sc->sc_iot, sc->sc_lioh,
-		    ARM_LOCAL_INT_TIMER(i), sc->sc_bcm_intc_imask[3][new]);
+	if (cpu_number() == 0) {
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_DISABLE_BANK0,
+		    0xffffffff);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_DISABLE_BANK1,
+		    0xffffffff);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_DISABLE_BANK2,
+		    0xffffffff);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_ENABLE_BANK0,
+		    sc->sc_bcm_intc_imask[0][new]);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_ENABLE_BANK1,
+		    sc->sc_bcm_intc_imask[1][new]);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_ENABLE_BANK2,
+		    sc->sc_bcm_intc_imask[2][new]);
+	}
+	/* timer for current core */
+	bus_space_write_4(sc->sc_iot, sc->sc_lioh,
+	    ARM_LOCAL_INT_TIMER(cpu_number()),
+	    sc->sc_bcm_intc_imask[3][ci->ci_cpl] &
+	    sc->sc_localcoremask[cpu_number()]);
 	restore_interrupts(psw);
 }
 
@@ -415,9 +430,8 @@ bcm_intc_get_next_irq(int last_irq)
 		} while (IS_IRQ_BANK0(irq));
 	}
 	if (IS_IRQ_LOCAL(irq)) {
-		/* XXX: SMP */
 		pending = bus_space_read_4(sc->sc_iot, sc->sc_lioh,
-		    ARM_LOCAL_INT_PENDING(0));
+		    ARM_LOCAL_INT_PENDING(cpu_number()));
 		pending &= ARM_LOCAL_INT_PENDING_MASK;
 		if (pending != 0) do {
 			if (pending & (1 << IRQ_LOCAL(irq)))
@@ -483,10 +497,17 @@ bcm_intc_call_handler(int irq, void *frame)
 void
 bcm_intc_irq_handler(void *frame)
 {
-	int irq = -1;
+	int irq = (cpu_number() == 0 ? 0 : LOCAL_START) - 1;
 
-	while ((irq = bcm_intc_get_next_irq(irq)) != -1)
+	while ((irq = bcm_intc_get_next_irq(irq)) != -1) {
+#ifdef MULTIPROCESSOR
+		if (irq == ARM_LOCAL_IRQ_MAILBOX(cpu_number())) {
+			bcm_intc_handle_ipi();
+			continue;
+		}
+#endif
 		bcm_intc_call_handler(irq, frame);
+	}
 }
 
 void *
@@ -537,10 +558,13 @@ bcm_intc_intr_establish(int irqno, int level, int (*func)(void *),
 	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 	ih->ih_fun = func;
 	ih->ih_arg = arg;
-	ih->ih_ipl = level;
-	ih->ih_flags = 0;
+	ih->ih_ipl = level & IPL_IRQMASK;
+	ih->ih_flags = level & IPL_FLAGMASK;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
+
+	if (IS_IRQ_LOCAL(irqno))
+		sc->sc_localcoremask[0] |= (1 << IRQ_LOCAL(irqno));
 
 	TAILQ_INSERT_TAIL(&sc->sc_bcm_intc_handler[irqno].is_list, ih, ih_list);
 
@@ -571,4 +595,64 @@ bcm_intc_intr_disestablish(void *cookie)
 		evcount_detach(&ih->ih_count);
 	free(ih, M_DEVBUF, 0);
 	restore_interrupts(psw);
+}
+
+void
+bcm_intc_intr_route(void *cookie, int enable, struct cpu_info *ci)
+{
+	struct bcm_intc_softc *sc = bcm_intc;
+	struct intrhand *ih = cookie;
+	int lirq = IRQ_LOCAL(ih->ih_irq);
+
+	if (enable)
+		sc->sc_localcoremask[ci->ci_cpuid] |= (1 << lirq);
+	else
+		sc->sc_localcoremask[ci->ci_cpuid] &= ~(1 << lirq);
+ 
+	if (ci == curcpu()) {
+		bus_space_write_4(sc->sc_iot, sc->sc_lioh,
+		    ARM_LOCAL_INT_TIMER(cpu_number()),
+		    sc->sc_bcm_intc_imask[3][ci->ci_cpl] &
+		    sc->sc_localcoremask[cpu_number()]);
+#ifdef MULTIPROCESSOR
+		bus_space_write_4(sc->sc_iot, sc->sc_lioh,
+		    ARM_LOCAL_INT_MAILBOX(cpu_number()),
+		    sc->sc_bcm_intc_imask[3][ci->ci_cpl] &
+		    sc->sc_localcoremask[cpu_number()]);
+#endif
+	}
+}
+
+void
+bcm_intc_handle_ipi(void)
+{
+	struct bcm_intc_softc *sc = bcm_intc;
+	int cpuno = cpu_number();
+	uint32_t mbox_val;
+	int ipi;
+
+	mbox_val = bus_space_read_4(sc->sc_iot, sc->sc_lioh,
+		ARM_LOCAL_INT_MAILBOX_CLR(cpuno));
+	ipi = ffs(mbox_val) - 1;
+	bus_space_write_4(sc->sc_iot, sc->sc_lioh,
+	    ARM_LOCAL_INT_MAILBOX_CLR(cpuno), 1 << ipi);
+	switch (ipi) {
+	case ARM_IPI_DDB:
+		/* XXX */
+		db_enter();
+		break;
+	case ARM_IPI_NOP:
+		break;
+	}
+}
+
+void
+bcm_intc_send_ipi(struct cpu_info *ci, int id)
+{
+	struct bcm_intc_softc *sc = bcm_intc;
+
+	__asm volatile("dsb sy"); /* XXX */
+
+	bus_space_write_4(sc->sc_iot, sc->sc_lioh,
+	    ARM_LOCAL_INT_MAILBOX_SET(ci->ci_cpuid), 1 << id);
 }

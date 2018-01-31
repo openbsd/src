@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.6 2018/01/12 22:20:28 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.7 2018/01/31 10:52:12 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  *
@@ -89,6 +89,7 @@
 #define  GICR_WAKER_CHILDRENASLEEP	(1 << 2)
 #define  GICR_WAKER_PROCESSORSLEEP	(1 << 1)
 #define  GICR_WAKER_X0			(1 << 0)
+#define GICR_IGROUP0		0x10080
 #define GICR_ISENABLE0		0x10100
 #define GICR_ICENABLE0		0x10180
 #define GICR_ISPENDR0		0x10200
@@ -130,6 +131,9 @@ struct agintc_softc {
 	int			 sc_ncells;
 	int			 sc_num_redist;
 	struct interrupt_controller sc_ic;
+	int			 sc_ipi_num[2]; /* id for NOP and DDB ipi */
+	int			 sc_ipi_reason[MAX_CORES]; /* NOP or DDB caused */
+	void			*sc_ipi_irq[2]; /* irqhandle for each ipi */
 };
 struct agintc_softc *agintc_sc;
 
@@ -149,6 +153,7 @@ struct intrq {
 	int			iq_irq;		/* IRQ to mask while handling */
 	int			iq_levels;	/* IPL_*'s this IRQ has */
 	int			iq_ist;		/* share type */
+	int			iq_route;
 };
 
 int		agintc_match(struct device *, void *, void *);
@@ -173,9 +178,15 @@ void		agintc_intr_enable(struct agintc_softc *, int);
 void		agintc_intr_disable(struct agintc_softc *, int);
 void		agintc_route(struct agintc_softc *, int, int,
 		    struct cpu_info *);
+void		agintc_route_irq(void *, int, struct cpu_info *);
 void		agintc_wait_rwp(struct agintc_softc *sc);
 void		agintc_r_wait_rwp(struct agintc_softc *sc);
 uint32_t	agintc_r_ictlr(void);
+
+int		agintc_ipi_ddb(void *v);
+int		agintc_ipi_nop(void *v);
+int		agintc_ipi_combined(void *);
+void		agintc_send_ipi(struct cpu_info *, int);
 
 struct cfattach	agintc_ca = {
 	sizeof (struct agintc_softc), agintc_match, agintc_attach
@@ -219,6 +230,9 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	int			 psw;
 	int			 offset, nredist;
 	int			 grp1enable;
+#ifdef MULTIPROCESSOR
+	int			 nipi, ipiirq[2];
+#endif
 
 	psw = disable_interrupts();
 	arm_init_smask();
@@ -312,7 +326,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		TAILQ_INIT(&sc->sc_agintc_handler[i].iq_list);
 
 	/* set priority to IPL_HIGH until configure lowers to desired IPL */
-	agintc_setipl(IPL_HIGH); 
+	agintc_setipl(IPL_HIGH);
 
 	/* initialize all interrupts as disabled */
 	agintc_calc_mask();
@@ -330,10 +344,76 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	__asm volatile("msr "STR(ICC_BPR1)", %x0" :: "r"(0));
 	__asm volatile("msr "STR(ICC_IGRPEN1)", %x0" :: "r"(grp1enable));
 
+#ifdef MULTIPROCESSOR
+	/* setup IPI interrupts */
+
+	/*
+	 * Ideally we want two IPI interrupts, one for NOP and one for
+	 * DDB, however we can survive if only one is available it is
+	 * possible that most are not available to the non-secure OS.
+	 */
+	nipi = 0;
+	for (i = 0; i < 16; i++) {
+		int hwcpu = sc->sc_cpuremap[cpu_number()];
+		int reg, oldreg;
+
+		oldreg = bus_space_read_1(sc->sc_iot, sc->sc_r_ioh[hwcpu],
+		    GICR_IPRIORITYR(i));
+		bus_space_write_1(sc->sc_iot, sc->sc_r_ioh[hwcpu],
+		    GICR_IPRIORITYR(i), oldreg ^ 0x20);
+
+		/* if this interrupt is not usable, pri will be unmodified */
+		reg = bus_space_read_1(sc->sc_iot, sc->sc_r_ioh[hwcpu],
+		    GICR_IPRIORITYR(i));
+		if (reg == oldreg)
+			continue;
+
+		/* return to original value, will be set when used */
+		bus_space_write_1(sc->sc_iot, sc->sc_r_ioh[hwcpu],
+		    GICR_IPRIORITYR(i), oldreg);
+
+		if (nipi == 0)
+			printf(" ipi: %d", i);
+		else
+			printf(", %d", i);
+		ipiirq[nipi++] = i;
+		if (nipi == 2)
+			break;
+	}
+
+	if (nipi == 0)
+		panic("no irq available for IPI");
+
+	switch (nipi) {
+	case 1:
+		sc->sc_ipi_irq[0] = agintc_intr_establish(ipiirq[0],
+		    IPL_IPI|IPL_MPSAFE, agintc_ipi_combined, sc, "ipi");
+		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
+		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[0];
+		break;
+	case 2:
+		sc->sc_ipi_irq[0] = agintc_intr_establish(ipiirq[0],
+		    IPL_IPI|IPL_MPSAFE, agintc_ipi_nop, sc, "ipinop");
+		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
+		sc->sc_ipi_irq[1] = agintc_intr_establish(ipiirq[1],
+		    IPL_IPI|IPL_MPSAFE, agintc_ipi_ddb, sc, "ipiddb");
+		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[1];
+		break;
+	default:
+		panic("nipi unexpected number %d", nipi);
+	}
+
+	intr_send_ipi_func = agintc_send_ipi;
+#endif
+
+	printf("\n");
+
 	sc->sc_ic.ic_node = faa->fa_node;
 	sc->sc_ic.ic_cookie = self;
 	sc->sc_ic.ic_establish = agintc_intr_establish_fdt;
 	sc->sc_ic.ic_disestablish = agintc_intr_disestablish;
+	sc->sc_ic.ic_route = agintc_route_irq;
+	sc->sc_ic.ic_cpu_enable = agintc_cpuinit;
 	arm_intr_register_fdt(&sc->sc_ic);
 
 	restore_interrupts(psw);
@@ -369,7 +449,7 @@ agintc_cpuinit(void)
 		    mpidr, affinity);
 		for (i = 0; i < sc->sc_num_redist; i++)
 			printf("rdist%d: %016llx\n", i, sc->sc_affinity[i]);
-		panic("failed to indentify cpunumber %d \n", ci->ci_cpuid);
+		panic("failed to indentify cpunumber %d", ci->ci_cpuid);
 	}
 
 	waker = bus_space_read_4(sc->sc_iot, sc->sc_r_ioh[hwcpu],
@@ -395,6 +475,16 @@ agintc_cpuinit(void)
 		bus_space_write_4(sc->sc_iot, sc->sc_r_ioh[hwcpu],
 		    GICR_IPRIORITYR(i), ~0);
 	}
+	
+	if (sc->sc_ipi_irq[0] != NULL)
+		agintc_route_irq(sc->sc_ipi_irq[0], IRQ_ENABLE, curcpu());
+	if (sc->sc_ipi_irq[1] != NULL)
+		agintc_route_irq(sc->sc_ipi_irq[1], IRQ_ENABLE, curcpu());
+
+	__asm volatile("msr "STR(ICC_PMR)", %x0" :: "r"(0xff));
+	__asm volatile("msr "STR(ICC_BPR1)", %x0" :: "r"(0));
+	__asm volatile("msr "STR(ICC_IGRPEN1)", %x0" :: "r"(1));
+	enable_interrupts();
 }
 
 void
@@ -446,6 +536,8 @@ agintc_setipl(int new)
 		prival = ((NIPL - new) << 4);
 
 	__asm volatile("msr "STR(ICC_PMR)", %x0" : : "r" (prival));
+	__isb();
+
 	restore_interrupts(psw);
 }
 
@@ -455,6 +547,7 @@ agintc_intr_enable(struct agintc_softc *sc, int irq)
 	struct cpu_info	*ci = curcpu();
 	int hwcpu = sc->sc_cpuremap[ci->ci_cpuid];
 	int bit = 1 << IRQ_TO_REG32BIT(irq);
+	uint32_t enable;
 
 	if (irq >= 32) {
 		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
@@ -462,6 +555,12 @@ agintc_intr_enable(struct agintc_softc *sc, int irq)
 	} else {
 		bus_space_write_4(sc->sc_iot, sc->sc_r_ioh[hwcpu],
 		    GICR_ISENABLE0, bit);
+		/* enable group1 as well */
+		bus_space_read_4(sc->sc_iot, sc->sc_r_ioh[hwcpu],
+		    GICR_IGROUP0);
+		enable |= 1 << IRQ_TO_REG32BIT(irq);
+		bus_space_write_4(sc->sc_iot, sc->sc_r_ioh[hwcpu],
+		    GICR_IGROUP0, enable);
 	}
 }
 
@@ -578,6 +677,20 @@ agintc_iack(void)
 	__asm volatile("mrs %x0, "STR(ICC_IAR1) : "=r" (irq));
 	__asm volatile("dsb sy");
 	return irq;
+}
+
+void
+agintc_route_irq(void *v, int enable, struct cpu_info *ci)
+{
+	struct agintc_softc	*sc = agintc_sc;
+	struct intrhand		*ih = v;
+
+	if (enable) {
+		agintc_set_priority(sc, ih->ih_irq,
+		    sc->sc_agintc_handler[ih->ih_irq].iq_irq);
+		agintc_route(sc, ih->ih_irq, IRQ_ENABLE, ci);
+		agintc_intr_enable(sc, ih->ih_irq);
+	}
 }
 
 void
@@ -708,8 +821,8 @@ agintc_intr_establish(int irqno, int level, int (*func)(void *),
 	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
-	ih->ih_ipl = level;
-	ih->ih_flags = 0;
+	ih->ih_ipl = level & IPL_IRQMASK;
+	ih->ih_flags = level & IPL_FLAGMASK;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
 
@@ -779,7 +892,7 @@ agintc_d_wait_rwp(struct agintc_softc *sc)
 	} while (--count && (v & GICD_CTLR_RWP));
 
 	if (count == 0)
-		panic("%s: RWP timed out 0x08%x\n", __func__, v);
+		panic("%s: RWP timed out 0x08%x", __func__, v);
 }
 
 void
@@ -796,13 +909,57 @@ agintc_r_wait_rwp(struct agintc_softc *sc)
 	} while (--count && (v & GICR_CTLR_RWP));
 
 	if (count == 0)
-		panic("%s: RWP timed out 0x08%x\n", __func__, v);
+		panic("%s: RWP timed out 0x08%x", __func__, v);
+}
+
+#ifdef MULTIPROCESSOR
+int
+agintc_ipi_ddb(void *v)
+{
+	/* XXX */
+	db_enter();
+	return 1;
+}
+
+int
+agintc_ipi_nop(void *v)
+{
+	/* Nothing to do here, just enough to wake up from WFI */
+	return 1;
+}
+
+int
+agintc_ipi_combined(void *v)
+{
+	struct agintc_softc *sc = v;
+
+	if (sc->sc_ipi_reason[cpu_number()] == ARM_IPI_DDB) {
+		sc->sc_ipi_reason[cpu_number()] = ARM_IPI_NOP;
+		return agintc_ipi_ddb(v);
+	} else {
+		return agintc_ipi_nop(v);
+	}
 }
 
 void
-agintc_send_ipi(int sgi, int targetmask)
+agintc_send_ipi(struct cpu_info *ci, int id)
 {
-	int val = (sgi << 24) | (targetmask);
+	struct agintc_softc	*sc = agintc_sc;
+	uint64_t sendmask;
 
-	__asm volatile("msr "STR(ICC_SGI1R)", %x0" ::"r" (val));
+	if (ci == curcpu() && id == ARM_IPI_NOP)
+		return;
+
+	/* never overwrite IPI_DDB with IPI_NOP */
+	if (id == ARM_IPI_DDB)
+		sc->sc_ipi_reason[ci->ci_cpuid] = id;
+
+	/* will only send 1 cpu */
+	sendmask = (sc->sc_affinity[ci->ci_cpuid]  & 0xff000000) << 48;
+	sendmask |= (sc->sc_affinity[ci->ci_cpuid] & 0x00ffff00) << 8;
+	sendmask |= 1 << (sc->sc_affinity[ci->ci_cpuid] & 0x0000000f);
+	sendmask |= (sc->sc_ipi_num[id] << 24);
+
+	__asm volatile ("msr " STR(ICC_SGI1R)", %x0" ::"r"(sendmask));
 }
+#endif

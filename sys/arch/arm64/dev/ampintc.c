@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.11 2018/01/12 22:20:28 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.12 2018/01/31 10:52:12 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -134,13 +134,15 @@
 
 struct ampintc_softc {
 	struct simplebus_softc	 sc_sbus;
-	struct intrq 		*sc_ampintc_handler;
+	struct intrq 		*sc_handler;
 	int			 sc_nintr;
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_d_ioh, sc_p_ioh;
 	uint8_t			 sc_cpu_mask[ICD_ICTR_CPU_M + 1];
 	struct evcount		 sc_spur;
 	struct interrupt_controller sc_ic;
+	int			 sc_ipi_reason[ICD_ICTR_CPU_M + 1];
+	int			 sc_ipi_num[2];
 };
 struct ampintc_softc *ampintc;
 
@@ -166,6 +168,7 @@ struct intrq {
 
 int		 ampintc_match(struct device *, void *, void *);
 void		 ampintc_attach(struct device *, struct device *, void *);
+void		 ampintc_cpuinit(void);
 int		 ampintc_spllower(int);
 void		 ampintc_splx(int);
 int		 ampintc_splraise(int);
@@ -187,6 +190,12 @@ void		 ampintc_intr_enable(int);
 void		 ampintc_intr_disable(int);
 void		 ampintc_intr_config(int, int);
 void		 ampintc_route(int, int, struct cpu_info *);
+void		 ampintc_route_irq(void *, int, struct cpu_info *);
+
+int		 ampintc_ipi_combined(void *);
+int		 ampintc_ipi_nop(void *);
+int		 ampintc_ipi_ddb(void *);
+void		 ampintc_send_ipi(struct cpu_info *, int);
 
 struct cfattach	ampintc_ca = {
 	sizeof (struct ampintc_softc), ampintc_match, ampintc_attach
@@ -224,6 +233,9 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	int i, nintr, ncpu;
 	uint32_t ictr;
+#ifdef MULTIPROCESSOR
+	int nipi, ipiirq[2];
+#endif
 
 	ampintc = sc;
 
@@ -277,10 +289,10 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX - check power saving bit */
 
-	sc->sc_ampintc_handler = mallocarray(nintr,
-	    sizeof(*sc->sc_ampintc_handler), M_DEVBUF, M_ZERO | M_NOWAIT);
+	sc->sc_handler = mallocarray(nintr, sizeof(*sc->sc_handler), M_DEVBUF,
+	    M_ZERO | M_NOWAIT);
 	for (i = 0; i < nintr; i++) {
-		TAILQ_INIT(&sc->sc_ampintc_handler[i].iq_list);
+		TAILQ_INIT(&sc->sc_handler[i].iq_list);
 	}
 
 	ampintc_setipl(IPL_HIGH);  /* XXX ??? */
@@ -289,6 +301,66 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	/* insert self as interrupt handler */
 	arm_set_intr_handler(ampintc_splraise, ampintc_spllower, ampintc_splx,
 	    ampintc_setipl, ampintc_irq_handler);
+
+#ifdef MULTIPROCESSOR
+	/* setup IPI interrupts */
+
+	/*
+	 * Ideally we want two IPI interrupts, one for NOP and one for
+	 * DDB, however we can survive if only one is available it is
+	 * possible that most are not available to the non-secure OS.
+	 */
+	nipi = 0;
+	for (i = 0; i < 16; i++) {
+		int reg, oldreg;
+
+		oldreg = bus_space_read_1(sc->sc_iot, sc->sc_d_ioh,
+		    ICD_IPRn(i));
+		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPRn(i),
+		    oldreg ^ 0x20);
+
+		/* if this interrupt is not usable, route will be zero */
+		reg = bus_space_read_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPRn(i));
+		if (reg == oldreg)
+			continue;
+
+		/* return to original value, will be set when used */
+		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPRn(i),
+		    oldreg);
+
+		if (nipi == 0)
+			printf(" ipi: %d", i);
+		else
+			printf(", %d", i);
+		ipiirq[nipi++] = i;
+		if (nipi == 2)
+			break;
+	}
+
+	if (nipi == 0)
+		panic ("no irq available for IPI");
+
+	switch (nipi) {
+	case 1:
+		ampintc_intr_establish(ipiirq[0], IST_EDGE_RISING,
+		    IPL_IPI|IPL_MPSAFE, ampintc_ipi_combined, sc, "ipi");
+		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
+		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[0];
+		break;
+	case 2:
+		ampintc_intr_establish(ipiirq[0], IST_EDGE_RISING,
+		    IPL_IPI|IPL_MPSAFE, ampintc_ipi_nop, sc, "ipinop");
+		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
+		ampintc_intr_establish(ipiirq[1], IST_EDGE_RISING,
+		    IPL_IPI|IPL_MPSAFE, ampintc_ipi_ddb, sc, "ipiddb");
+		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[1];
+		break;
+	default:
+		panic("nipi unexpected number %d", nipi);
+	}
+
+	intr_send_ipi_func = ampintc_send_ipi;
+#endif
 
 	/* enable interrupts */
 	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_DCR, 3);
@@ -299,6 +371,8 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_cookie = self;
 	sc->sc_ic.ic_establish = ampintc_intr_establish_fdt;
 	sc->sc_ic.ic_disestablish = ampintc_intr_disestablish;
+	sc->sc_ic.ic_route = ampintc_route_irq;
+	sc->sc_ic.ic_cpu_enable = ampintc_cpuinit;
 	arm_intr_register_fdt(&sc->sc_ic);
 
 	/* attach GICv2M frame controller */
@@ -389,8 +463,7 @@ ampintc_calc_mask(void)
 	for (irq = 0; irq < sc->sc_nintr; irq++) {
 		int max = IPL_NONE;
 		int min = IPL_HIGH;
-		TAILQ_FOREACH(ih, &sc->sc_ampintc_handler[irq].iq_list,
-		    ih_list) {
+		TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
 			if (ih->ih_ipl > max)
 				max = ih->ih_ipl;
 
@@ -398,10 +471,10 @@ ampintc_calc_mask(void)
 				min = ih->ih_ipl;
 		}
 
-		if (sc->sc_ampintc_handler[irq].iq_irq == max) {
+		if (sc->sc_handler[irq].iq_irq == max) {
 			continue;
 		}
-		sc->sc_ampintc_handler[irq].iq_irq = max;
+		sc->sc_handler[irq].iq_irq = max;
 
 		if (max == IPL_NONE)
 			min = IPL_NONE;
@@ -500,6 +573,47 @@ ampintc_route(int irq, int enable, struct cpu_info *ci)
 }
 
 void
+ampintc_cpuinit()
+{
+	struct ampintc_softc    *sc = ampintc;
+	int			 i;
+
+	/* XXX - this is the only cpu specific call to set this */
+	if (sc->sc_cpu_mask[cpu_number()] == 0) {
+		for (i = 0; i < 32; i++) {
+			int cpumask =
+			    bus_space_read_1(sc->sc_iot, sc->sc_d_ioh,
+			        ICD_IPTRn(i));
+
+			if (cpumask != 0) {
+				sc->sc_cpu_mask[cpu_number()] = cpumask;
+				break;
+			}
+		}
+	}
+
+	if (sc->sc_cpu_mask[cpu_number()] == 0)
+		panic("could not determine cpu target mask");
+}
+
+void
+ampintc_route_irq(void *v, int enable, struct cpu_info *ci)
+{
+	struct ampintc_softc    *sc = ampintc;
+	struct intrhand         *ih = v;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_p_ioh, ICPICR, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_ICRn(ih->ih_irq), 0);
+	if (enable) {
+		ampintc_set_priority(ih->ih_irq,
+		    sc->sc_handler[ih->ih_irq].iq_irq);
+		ampintc_intr_enable(ih->ih_irq);
+	}
+
+	ampintc_route(ih->ih_irq, enable, ci);
+}
+
+void
 ampintc_irq_handler(void *frame)
 {
 	struct ampintc_softc	*sc = ampintc;
@@ -534,9 +648,9 @@ ampintc_irq_handler(void *frame)
 	if (irq >= sc->sc_nintr)
 		return;
 
-	pri = sc->sc_ampintc_handler[irq].iq_irq;
+	pri = sc->sc_handler[irq].iq_irq;
 	s = ampintc_splraise(pri);
-	TAILQ_FOREACH(ih, &sc->sc_ampintc_handler[irq].iq_list, ih_list) {
+	TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
 #ifdef MULTIPROCESSOR
 		int need_lock;
 
@@ -614,17 +728,25 @@ ampintc_intr_establish(int irqno, int type, int level, int (*func)(void *),
 		panic("ampintc_intr_establish: bogus irqnumber %d: %s",
 		     irqno, name);
 
+	if (irqno < 16) {
+		/* SGI are only EDGE */
+		type = IST_EDGE_RISING;
+	} else if (irqno < 32) {
+		/* PPI are only LEVEL */
+		type = IST_LEVEL_HIGH;
+	}
+
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
-	ih->ih_ipl = level;
-	ih->ih_flags = 0;
+	ih->ih_ipl = level & IPL_IRQMASK;
+	ih->ih_flags = level & IPL_FLAGMASK;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
 
 	psw = disable_interrupts();
 
-	TAILQ_INSERT_TAIL(&sc->sc_ampintc_handler[irqno].iq_list, ih, ih_list);
+	TAILQ_INSERT_TAIL(&sc->sc_handler[irqno].iq_list, ih, ih_list);
 
 	if (name != NULL)
 		evcount_attach(&ih->ih_count, name, &ih->ih_irq);
@@ -655,7 +777,7 @@ ampintc_intr_disestablish(void *cookie)
 
 	psw = disable_interrupts();
 
-	TAILQ_REMOVE(&sc->sc_ampintc_handler[ih->ih_irq].iq_list, ih, ih_list);
+	TAILQ_REMOVE(&sc->sc_handler[ih->ih_irq].iq_list, ih, ih_list);
 	if (ih->ih_name != NULL)
 		evcount_detach(&ih->ih_count);
 	free(ih, M_DEVBUF, sizeof(*ih));
@@ -787,3 +909,53 @@ ampintc_intr_disestablish_msi(void *cookie)
 	ampintc_intr_disestablish(*(void **)cookie);
 	*(void **)cookie = NULL;
 }
+
+#ifdef MULTIPROCESSOR
+int
+ampintc_ipi_ddb(void *v)
+{
+	/* XXX */
+	db_enter();
+	return 1;
+}
+
+int
+ampintc_ipi_nop(void *v)
+{
+	/* Nothing to do here, just enough to wake up from WFI */
+	return 1;
+}
+
+int
+ampintc_ipi_combined(void *v)
+{
+	struct ampintc_softc *sc = (struct ampintc_softc *)v;
+
+	if (sc->sc_ipi_reason[cpu_number()] == ARM_IPI_DDB) {
+		sc->sc_ipi_reason[cpu_number()] = ARM_IPI_NOP;
+		return ampintc_ipi_ddb(v);
+	} else {
+		return ampintc_ipi_nop(v);
+	}
+}
+
+void
+ampintc_send_ipi(struct cpu_info *ci, int id)
+{
+	struct ampintc_softc	*sc = ampintc;
+	int sendmask;
+
+	if (ci == curcpu() && id == ARM_IPI_NOP)
+		return;
+
+	/* never overwrite IPI_DDB with IPI_NOP */
+	if (id == ARM_IPI_DDB)
+		sc->sc_ipi_reason[ci->ci_cpuid] = id;
+
+	/* currently will only send to one cpu */
+	sendmask = 1 << (16 + ci->ci_cpuid);
+	sendmask |= sc->sc_ipi_num[id];
+
+	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_SGIR, sendmask);
+}
+#endif

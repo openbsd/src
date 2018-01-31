@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.12 2018/01/28 13:17:45 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.13 2018/01/31 10:52:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -444,19 +444,17 @@ cpu_start_secondary(struct cpu_info *ci)
 	WRITE_SPECIALREG(tcr_el1, tcr);
 
 	s = splhigh();
-#ifdef notyet
 	arm_intr_cpu_enable();
 	cpu_startclock();
-#endif
 
 	nanouptime(&ci->ci_schedstate.spc_runtime);
 
 	atomic_setbits_int(&ci->ci_flags, CPUF_RUNNING);
 	__asm volatile("dsb sy; sev");
 
-#ifdef notyet
 	spllower(IPL_NONE);
 
+#ifdef notyet
 	SCHED_LOCK(s);
 	cpu_switchto(NULL, sched_chooseproc());
 #else

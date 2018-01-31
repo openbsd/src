@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.9 2018/01/28 13:17:45 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.10 2018/01/31 10:52:12 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -468,6 +468,16 @@ arm_intr_route(void *cookie, int enable, struct cpu_info *ci)
 		ic->ic_route(ih->ih_ih, enable, ci);
 }
 
+void
+arm_intr_cpu_enable(void)
+{
+	struct interrupt_controller *ic;
+
+	LIST_FOREACH(ic, &interrupt_controllers, ic_list)
+		if (ic->ic_cpu_enable)
+			ic->ic_cpu_enable();
+}
+
 int
 arm_dflt_splraise(int newcpl)
 {
@@ -671,6 +681,15 @@ cpu_initclocks(void)
 		panic("initclocks function not initialized yet");
 
 	arm_clock_func.initclocks();
+}
+
+void
+cpu_startclock(void)
+{
+	if (arm_clock_func.mpstartclock == NULL)
+		panic("startclock function not initialized yet");
+
+	arm_clock_func.mpstartclock();
 }
 
 void
