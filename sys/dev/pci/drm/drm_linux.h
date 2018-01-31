@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.81 2018/01/31 03:26:00 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.82 2018/01/31 05:04:41 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -1434,6 +1434,7 @@ struct resource {
 struct pci_bus {
 	pci_chipset_tag_t pc;
 	unsigned char	number;
+	pcitag_t	*bridgetag;
 };
 
 struct pci_dev {
@@ -1574,6 +1575,12 @@ pci_pcie_cap(struct pci_dev *pdev)
 	    &pos, NULL))
 		return -EINVAL;
 	return pos;
+}
+
+static inline bool
+pci_is_root_bus(struct pci_bus *pbus)
+{
+	return (pbus->bridgetag == NULL);
 }
 
 static inline int

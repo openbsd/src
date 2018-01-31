@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.156 2018/01/30 08:17:31 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.157 2018/01/31 05:04:41 jsg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -430,6 +430,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	dev->pdev->bus = &dev->pdev->_bus;
 	dev->pdev->bus->pc = da->pc;
 	dev->pdev->bus->number = bus;
+	dev->pdev->bus->bridgetag = da->bridgetag;
 	dev->pdev->devfn = PCI_DEVFN(slot, func);
 
 	dev->pc = da->pc;
