@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.62 2017/08/25 10:04:36 tb Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.63 2018/01/31 11:27:03 stsp Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -472,11 +472,11 @@ ath_hal_init_channels(struct ath_hal *hal, HAL_CHANNEL *channels,
 		    (ar5k_2ghz_channels[i].rc_mode & IEEE80211_CHAN_CCK))
 			all_channels[c].c_channel_flags = CHANNEL_B;
 
-		if ((hal->ah_capabilities.cap_mode & HAL_MODE_11G) &&
-		    (ar5k_2ghz_channels[i].rc_mode & IEEE80211_CHAN_OFDM)) {
-			all_channels[c].c_channel_flags |=
-			    hal->ah_version == AR5K_AR5211 ?
-			    CHANNEL_PUREG : CHANNEL_G;
+		if (hal->ah_capabilities.cap_mode & HAL_MODE_11G) {
+			if (ar5k_2ghz_channels[i].rc_mode & IEEE80211_CHAN_CCK)
+			    all_channels[c].c_channel_flags = CHANNEL_B;
+			if (ar5k_2ghz_channels[i].rc_mode & IEEE80211_CHAN_OFDM)
+				all_channels[c].c_channel_flags |= (CHANNEL_G | CHANNEL_PUREG);
 		}
 
 		/* Write channel and increment counter */
