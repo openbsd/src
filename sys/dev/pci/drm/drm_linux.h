@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.82 2018/01/31 05:04:41 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.83 2018/01/31 10:17:22 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -494,7 +494,7 @@ PTR_ERR_OR_ZERO(const void *ptr)
 	do { __typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while(0)
 
 #define container_of(ptr, type, member) ({                      \
-	__typeof( ((type *)0)->member ) *__mptr = (ptr);        \
+	const __typeof( ((type *)0)->member ) *__mptr = (ptr);        \
 	(type *)( (char *)__mptr - offsetof(type,member) );})
 
 #ifndef __DECONST
