@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.10 2017/10/31 10:08:51 mpi Exp $ */
+/*	$OpenBSD: parse.c,v 1.11 2018/01/31 14:47:13 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -322,6 +322,11 @@ it_cmp(struct itype *a, struct itype *b)
 	int diff;
 
 	if ((diff = (a->it_type - b->it_type)) != 0)
+		return diff;
+
+	/* Basic types need to have the same size. */
+	if ((a->it_type == CTF_K_INTEGER || a->it_type == CTF_K_FLOAT) &&
+	    (diff = (a->it_size - b->it_size) != 0))
 		return diff;
 
 	/* Match by name */
