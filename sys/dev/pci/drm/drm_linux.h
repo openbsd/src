@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.80 2018/01/30 09:57:58 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.81 2018/01/31 03:26:00 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -1425,6 +1425,7 @@ struct dmi_system_id {
 #define	DMI_MATCH(a, b) {(a), (b)}
 #define	DMI_EXACT_MATCH(a, b) {(a), (b)}
 int dmi_check_system(const struct dmi_system_id *);
+bool dmi_match(int, const char *);
 
 struct resource {
 	u_long	start;
