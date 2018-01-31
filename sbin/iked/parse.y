@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.69 2018/01/24 17:01:52 patrick Exp $	*/
+/*	$OpenBSD: parse.y,v 1.70 2018/01/31 13:25:55 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -112,11 +112,14 @@ struct ipsec_xf {
 };
 
 struct ipsec_transforms {
-	const struct ipsec_xf *authxf;
-	const struct ipsec_xf *prfxf;
-	const struct ipsec_xf *encxf;
-	const struct ipsec_xf *groupxf;
-	const struct ipsec_xf *esnxf;
+	const struct ipsec_xf	**authxf;
+	unsigned int		  nauthxf;
+	const struct ipsec_xf	**prfxf;
+	unsigned int		  nprfxf;
+	const struct ipsec_xf	**encxf;
+	unsigned int		  nencxf;
+	const struct ipsec_xf	**groupxf;
+	unsigned int		  ngroupxf;
 };
 
 struct ipsec_mode {
@@ -328,7 +331,8 @@ const struct ipsec_xf	*parse_xf(const char *, unsigned int,
 			    const struct ipsec_xf *);
 const char		*print_xf(unsigned int, unsigned int,
 			    const struct ipsec_xf *);
-void			 copy_transforms(unsigned int, const struct ipsec_xf *,
+void			 copy_transforms(unsigned int,
+			    const struct ipsec_xf **, unsigned int,
 			    struct iked_transform **, unsigned int *,
 			    struct iked_transform *, size_t);
 int			 create_ike(char *, int, uint8_t, struct ipsec_hosts *,
@@ -730,47 +734,52 @@ transforms_l	: transforms_l transform
 		;
 
 transform	: AUTHXF STRING			{
-			if (ipsec_transforms->authxf)
-				yyerror("auth already set");
-			else {
-				ipsec_transforms->authxf = parse_xf($2, 0,
-				    authxfs);
-				if (!ipsec_transforms->authxf)
-					yyerror("%s not a valid transform", $2);
-			}
+			const struct ipsec_xf **xfs = ipsec_transforms->authxf;
+			size_t nxfs = ipsec_transforms->nauthxf;
+			xfs = recallocarray(xfs, nxfs, nxfs + 1,
+			    sizeof(struct ipsec_xf *));
+			if (xfs == NULL)
+				err(1, "transform: recallocarray");
+			if ((xfs[nxfs] = parse_xf($2, 0, authxfs)) == NULL)
+				yyerror("%s not a valid transform", $2);
+			ipsec_transforms->authxf = xfs;
+			ipsec_transforms->nauthxf++;
 		}
 		| ENCXF STRING			{
-			if (ipsec_transforms->encxf)
-				yyerror("enc already set");
-			else {
-				ipsec_transforms->encxf = parse_xf($2, 0,
-				    encxfs);
-				if (!ipsec_transforms->encxf)
-					yyerror("%s not a valid transform",
-					    $2);
-			}
+			const struct ipsec_xf **xfs = ipsec_transforms->encxf;
+			size_t nxfs = ipsec_transforms->nencxf;
+			xfs = recallocarray(xfs, nxfs, nxfs + 1,
+			    sizeof(struct ipsec_xf *));
+			if (xfs == NULL)
+				err(1, "transform: recallocarray");
+			if ((xfs[nxfs] = parse_xf($2, 0, encxfs)) == NULL)
+				yyerror("%s not a valid transform", $2);
+			ipsec_transforms->encxf = xfs;
+			ipsec_transforms->nencxf++;
 		}
 		| PRFXF STRING			{
-			if (ipsec_transforms->prfxf)
-				yyerror("prf already set");
-			else {
-				ipsec_transforms->prfxf = parse_xf($2, 0,
-				    prfxfs);
-				if (!ipsec_transforms->prfxf)
-					yyerror("%s not a valid transform",
-					    $2);
-			}
+			const struct ipsec_xf **xfs = ipsec_transforms->prfxf;
+			size_t nxfs = ipsec_transforms->nprfxf;
+			xfs = recallocarray(xfs, nxfs, nxfs + 1,
+			    sizeof(struct ipsec_xf *));
+			if (xfs == NULL)
+				err(1, "transform: recallocarray");
+			if ((xfs[nxfs] = parse_xf($2, 0, prfxfs)) == NULL)
+				yyerror("%s not a valid transform", $2);
+			ipsec_transforms->prfxf = xfs;
+			ipsec_transforms->nprfxf++;
 		}
 		| GROUP STRING			{
-			if (ipsec_transforms->groupxf)
-				yyerror("group already set");
-			else {
-				ipsec_transforms->groupxf = parse_xf($2, 0,
-				    groupxfs);
-				if (!ipsec_transforms->groupxf)
-					yyerror("%s not a valid transform",
-					    $2);
-			}
+			const struct ipsec_xf **xfs = ipsec_transforms->groupxf;
+			size_t nxfs = ipsec_transforms->ngroupxf;
+			xfs = recallocarray(xfs, nxfs, nxfs + 1,
+			    sizeof(struct ipsec_xf *));
+			if (xfs == NULL)
+				err(1, "transform: recallocarray");
+			if ((xfs[nxfs] = parse_xf($2, 0, groupxfs)) == NULL)
+				yyerror("%s not a valid transform", $2);
+			ipsec_transforms->groupxf = xfs;
+			ipsec_transforms->ngroupxf++;
 		}
 		;
 
@@ -2577,24 +2586,29 @@ print_policy(struct iked_policy *pol)
 }
 
 void
-copy_transforms(unsigned int type, const struct ipsec_xf *xf,
+copy_transforms(unsigned int type,
+    const struct ipsec_xf **xfs, unsigned int nxfs,
     struct iked_transform **dst, unsigned int *ndst,
     struct iked_transform *src, size_t nsrc)
 {
 	unsigned int		 i;
 	struct iked_transform	*a, *b;
+	const struct ipsec_xf	*xf;
 
-	if (xf != NULL) {
-		*dst = recallocarray(*dst, *ndst,
-		    *ndst + 1, sizeof(struct iked_transform));
-		if (*dst == NULL)
-			err(1, "copy_transforms: recallocarray");
-		b = *dst + (*ndst)++;
+	if (nxfs) {
+		for (i = 0; i < nxfs; i++) {
+			xf = xfs[i];
+			*dst = recallocarray(*dst, *ndst,
+			    *ndst + 1, sizeof(struct iked_transform));
+			if (*dst == NULL)
+				err(1, "copy_transforms: recallocarray");
+			b = *dst + (*ndst)++;
 
-		b->xform_type = type;
-		b->xform_id = xf->id;
-		b->xform_keylength = xf->length * 8;
-		b->xform_length = xf->keylength * 8;
+			b->xform_type = type;
+			b->xform_id = xf->id;
+			b->xform_keylength = xf->length * 8;
+			b->xform_length = xf->keylength * 8;
+		}
 		return;
 	}
 
@@ -2626,7 +2640,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 	struct iked_policy	 pol;
 	struct iked_proposal	*p, *ptmp;
 	struct iked_transform	*xf;
-	unsigned int		 i, j, xfi;
+	unsigned int		 i, j, xfi, noauth;
 	unsigned int		 ikepropid = 1, ipsecpropid = 1;
 	struct iked_flow	 flows[64];
 	static unsigned int	 policy_id = 0;
@@ -2772,22 +2786,25 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 			xf = NULL;
 			xfi = 0;
 			copy_transforms(IKEV2_XFORMTYPE_INTEGR,
-			    ike_sa->xfs[i]->authxf, &xf, &xfi,
+			    ike_sa->xfs[i]->authxf,
+			    ike_sa->xfs[i]->nauthxf, &xf, &xfi,
 			    ikev2_default_ike_transforms,
 			    ikev2_default_nike_transforms);
 			copy_transforms(IKEV2_XFORMTYPE_ENCR,
-			    ike_sa->xfs[i]->encxf, &xf, &xfi,
+			    ike_sa->xfs[i]->encxf,
+			    ike_sa->xfs[i]->nencxf, &xf, &xfi,
 			    ikev2_default_ike_transforms,
 			    ikev2_default_nike_transforms);
 			copy_transforms(IKEV2_XFORMTYPE_DH,
-			    ike_sa->xfs[i]->groupxf, &xf, &xfi,
+			    ike_sa->xfs[i]->groupxf,
+			    ike_sa->xfs[i]->ngroupxf, &xf, &xfi,
 			    ikev2_default_ike_transforms,
 			    ikev2_default_nike_transforms);
 			copy_transforms(IKEV2_XFORMTYPE_PRF,
-			    ike_sa->xfs[i]->prfxf, &xf, &xfi,
+			    ike_sa->xfs[i]->prfxf,
+			    ike_sa->xfs[i]->nprfxf, &xf, &xfi,
 			    ikev2_default_ike_transforms,
 			    ikev2_default_nike_transforms);
-			free(ike_sa->xfs[i]);
 
 			p->prop_id = ikepropid++;
 			p->prop_protoid = IKEV2_SAPROTO_IKE;
@@ -2796,9 +2813,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 			TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
 			pol.pol_nproposals++;
 		}
-		free(ike_sa->xfs);
 	}
-	free(ike_sa);
 
 	if (ipsec_sa == NULL || ipsec_sa->nxfs == 0) {
 		if ((p = calloc(1, sizeof(*p))) == NULL)
@@ -2811,12 +2826,20 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 		pol.pol_nproposals++;
 	} else {
 		for (i = 0; i < ipsec_sa->nxfs; i++) {
-			if (ipsec_sa->xfs[i]->encxf &&
-			    ipsec_sa->xfs[i]->encxf->noauth &&
-			    ipsec_sa->xfs[i]->authxf) {
-				yyerror("authentication is implicit for %s",
-				    ipsec_sa->xfs[i]->encxf->name);
-				return (-1);
+			noauth = 0;
+			for (j = 0; j < ipsec_sa->xfs[i]->nencxf; j++) {
+				if (ipsec_sa->xfs[i]->encxf[j]->noauth)
+					noauth++;
+			}
+			if (noauth && noauth != ipsec_sa->xfs[i]->nencxf) {
+				yyerror("cannot mix encryption transforms with "
+				    "implicit and non-implicit authentication");
+				goto done;
+			}
+			if (noauth && ipsec_sa->xfs[i]->nauthxf) {
+				yyerror("authentication is implicit for given"
+				    "encryption transforms");
+				goto done;
 			}
 
 			if ((p = calloc(1, sizeof(*p))) == NULL)
@@ -2824,26 +2847,26 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 
 			xf = NULL;
 			xfi = 0;
-			if (ipsec_sa->xfs[i]->encxf == NULL ||
-			    (ipsec_sa->xfs[i]->encxf &&
-			    !ipsec_sa->xfs[i]->encxf->noauth))
+			if (!ipsec_sa->xfs[i]->nencxf || !noauth)
 				copy_transforms(IKEV2_XFORMTYPE_INTEGR,
-				    ipsec_sa->xfs[i]->authxf, &xf, &xfi,
+				    ipsec_sa->xfs[i]->authxf,
+				    ipsec_sa->xfs[i]->nauthxf, &xf, &xfi,
 				    ikev2_default_esp_transforms,
 				    ikev2_default_nesp_transforms);
 			copy_transforms(IKEV2_XFORMTYPE_ENCR,
-			    ipsec_sa->xfs[i]->encxf, &xf, &xfi,
+			    ipsec_sa->xfs[i]->encxf,
+			    ipsec_sa->xfs[i]->nencxf, &xf, &xfi,
 			    ikev2_default_esp_transforms,
 			    ikev2_default_nesp_transforms);
 			copy_transforms(IKEV2_XFORMTYPE_DH,
-			    ipsec_sa->xfs[i]->groupxf, &xf, &xfi,
+			    ipsec_sa->xfs[i]->groupxf,
+			    ipsec_sa->xfs[i]->ngroupxf, &xf, &xfi,
 			    ikev2_default_esp_transforms,
 			    ikev2_default_nesp_transforms);
 			copy_transforms(IKEV2_XFORMTYPE_ESN,
-			    NULL, &xf, &xfi,
+			    NULL, 0, &xf, &xfi,
 			    ikev2_default_esp_transforms,
 			    ikev2_default_nesp_transforms);
-			free(ipsec_sa->xfs[i]);
 
 			p->prop_id = ipsecpropid++;
 			p->prop_protoid = saproto;
@@ -2852,9 +2875,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 			TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
 			pol.pol_nproposals++;
 		}
-		free(ipsec_sa->xfs);
 	}
-	free(ipsec_sa);
 
 	if (hosts == NULL || hosts->src == NULL || hosts->dst == NULL)
 		fatalx("create_ike: no traffic selectors/flows");
@@ -2943,6 +2964,28 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 	ret = 0;
 
 done:
+	if (ike_sa) {
+		for (i = 0; i < ike_sa->nxfs; i++) {
+			free(ike_sa->xfs[i]->authxf);
+			free(ike_sa->xfs[i]->encxf);
+			free(ike_sa->xfs[i]->groupxf);
+			free(ike_sa->xfs[i]->prfxf);
+			free(ike_sa->xfs[i]);
+		}
+		free(ike_sa->xfs);
+		free(ike_sa);
+	}
+	if (ipsec_sa) {
+		for (i = 0; i < ipsec_sa->nxfs; i++) {
+			free(ipsec_sa->xfs[i]->authxf);
+			free(ipsec_sa->xfs[i]->encxf);
+			free(ipsec_sa->xfs[i]->groupxf);
+			free(ipsec_sa->xfs[i]->prfxf);
+			free(ipsec_sa->xfs[i]);
+		}
+		free(ipsec_sa->xfs);
+		free(ipsec_sa);
+	}
 	TAILQ_FOREACH_SAFE(p, &pol.pol_proposals, prop_entry, ptmp) {
 		if (p->prop_xforms != ikev2_default_ike_transforms &&
 		    p->prop_xforms != ikev2_default_esp_transforms)
