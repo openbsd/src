@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.123 2017/07/21 15:55:04 stsp Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.124 2018/01/31 12:36:13 stsp Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1206,9 +1206,6 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct atu_softc	*sc = ifp->if_softc;
 	enum ieee80211_state	ostate = ic->ic_state;
 
-	DPRINTFN(10, ("%s: atu_newstate: %s -> %s\n", sc->atu_dev.dv_xname,
-	    ieee80211_state_name[ostate], ieee80211_state_name[nstate]));
-
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
 		memcpy(ic->ic_chan_scan, ic->ic_chan_active,
@@ -1220,6 +1217,10 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		usb_add_task(sc->atu_udev, &sc->sc_task);
 
 		/* handle this ourselves */
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: %s -> %s\n", ifp->if_xname,
+			    ieee80211_state_name[ic->ic_state],
+			    ieee80211_state_name[nstate]);
 		ic->ic_state = nstate;
 		return (0);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.198 2018/01/09 10:00:12 mpi Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.199 2018/01/31 12:36:13 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1782,6 +1782,10 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			    sc->sc_dev.dv_xname);
 			return error;
 		}
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: %s -> %s\n", ifp->if_xname,
+			    ieee80211_state_name[ic->ic_state],
+			    ieee80211_state_name[nstate]);
 		ic->ic_state = nstate;
 		return 0;
 

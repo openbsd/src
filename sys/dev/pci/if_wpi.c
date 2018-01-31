@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.141 2017/10/26 15:00:28 mpi Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.142 2018/01/31 12:36:13 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1053,6 +1053,10 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			    sc->sc_dev.dv_xname);
 			return error;
 		}
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: %s -> %s\n", ifp->if_xname,
+			    ieee80211_state_name[ic->ic_state],
+			    ieee80211_state_name[nstate]);
 		ic->ic_state = nstate;
 		return 0;
 

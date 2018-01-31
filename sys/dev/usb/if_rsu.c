@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.41 2017/10/26 15:00:28 mpi Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.42 2018/01/31 12:36:13 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -814,14 +814,12 @@ rsu_newstate_cb(struct rsu_softc *sc, void *arg)
 {
 	struct rsu_cmd_newstate *cmd = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 	enum ieee80211_state ostate;
 	int error, s;
 
 	s = splnet();
 	ostate = ic->ic_state;
-	DPRINTF(("newstate %s -> %s\n",
-	    ieee80211_state_name[ostate],
-	    ieee80211_state_name[cmd->state]));
 
 	if (ostate == IEEE80211_S_RUN) {
 		/* Stop calibration. */
@@ -838,6 +836,10 @@ rsu_newstate_cb(struct rsu_softc *sc, void *arg)
 			printf("%s: could not send site survey command\n",
 			    sc->sc_dev.dv_xname);
 		}
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: %s -> %s\n", ifp->if_xname,
+			    ieee80211_state_name[ic->ic_state],
+			    ieee80211_state_name[cmd->state]);
 		ic->ic_state = cmd->state;
 		splx(s);
 		return;
@@ -851,6 +853,10 @@ rsu_newstate_cb(struct rsu_softc *sc, void *arg)
 			splx(s);
 			return;
 		}
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: %s -> %s\n", ifp->if_xname,
+			    ieee80211_state_name[ic->ic_state],
+			    ieee80211_state_name[cmd->state]);
 		ic->ic_state = cmd->state;
 		if (ic->ic_flags & IEEE80211_F_RSNON)
 			ic->ic_bss->ni_rsn_supp_state = RSNA_SUPP_PTKSTART;
@@ -858,6 +864,10 @@ rsu_newstate_cb(struct rsu_softc *sc, void *arg)
 		return;
 	case IEEE80211_S_ASSOC:
 		/* No-op for this driver. See rsu_event_join_bss(). */
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: %s -> %s\n", ifp->if_xname,
+			    ieee80211_state_name[ic->ic_state],
+			    ieee80211_state_name[cmd->state]);
 		ic->ic_state = cmd->state;
 		splx(s);
 		return;

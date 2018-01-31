@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.223 2018/01/14 11:51:34 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.224 2018/01/31 12:36:13 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5475,6 +5475,7 @@ int
 iwm_scan(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = IC2IFP(ic);
 	int err;
 
 	if (sc->sc_flags & IWM_FLAG_BGSCAN) {
@@ -5496,6 +5497,10 @@ iwm_scan(struct iwm_softc *sc)
 	}
 
 	sc->sc_flags |= IWM_FLAG_SCANNING;
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: %s -> %s\n", ifp->if_xname,
+		    ieee80211_state_name[ic->ic_state],
+		    ieee80211_state_name[IEEE80211_S_SCAN]);
 	ic->ic_state = IEEE80211_S_SCAN;
 	iwm_led_blink_start(sc);
 	wakeup(&ic->ic_state); /* wake iwm_init() */
@@ -6076,10 +6081,6 @@ iwm_newstate_task(void *psc)
 	enum ieee80211_state ostate = ic->ic_state;
 	int arg = sc->ns_arg;
 	int err = 0, s = splnet();
-
-	DPRINTF(("switching state %s->%s\n",
-	    ieee80211_state_name[ostate],
-	    ieee80211_state_name[nstate]));
 
 	if (sc->sc_flags & IWM_FLAG_SHUTDOWN) {
 		/* iwm_stop() is waiting for us. */
