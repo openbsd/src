@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.46 2018/01/17 10:22:25 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.47 2018/01/31 23:23:16 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -770,38 +770,34 @@ pmap_collect(pmap_t pm)
 
 /*
  * Fill the given physical page with zeros.
- * SMP: need multiple zero pages, one for each cpu.
- * XXX
  */
 void
 pmap_zero_page(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	vaddr_t va = zero_page + cpu_number() * PAGE_SIZE;
 
-	pmap_kenter_pa(zero_page, pa, PROT_READ|PROT_WRITE);
-
-	pagezero_cache(zero_page);
-
-	pmap_kremove_pg(zero_page);
+	pmap_kenter_pa(va, pa, PROT_READ|PROT_WRITE);
+	pagezero_cache(va);
+	pmap_kremove_pg(va);
 }
 
 /*
- * copy the given physical page with zeros.
- * SMP: need multiple copy va, one set for each cpu.
+ * Copy the given physical page.
  */
 void
 pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 {
 	paddr_t srcpa = VM_PAGE_TO_PHYS(srcpg);
 	paddr_t dstpa = VM_PAGE_TO_PHYS(dstpg);
+	vaddr_t srcva = copy_src_page + cpu_number() * PAGE_SIZE;
+	vaddr_t dstva = copy_dst_page + cpu_number() * PAGE_SIZE;
 
-	pmap_kenter_pa(copy_src_page, srcpa, PROT_READ);
-	pmap_kenter_pa(copy_dst_page, dstpa, PROT_READ|PROT_WRITE);
-
-	bcopy((void *)copy_src_page, (void *)copy_dst_page, PAGE_SIZE);
-
-	pmap_kremove_pg(copy_src_page);
-	pmap_kremove_pg(copy_dst_page);
+	pmap_kenter_pa(srcva, srcpa, PROT_READ);
+	pmap_kenter_pa(dstva, dstpa, PROT_READ|PROT_WRITE);
+	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
+	pmap_kremove_pg(srcva);
+	pmap_kremove_pg(dstva);
 }
 
 void

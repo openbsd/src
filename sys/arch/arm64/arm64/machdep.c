@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.27 2018/01/28 13:17:45 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.28 2018/01/31 23:23:16 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -842,11 +842,11 @@ initarm(struct arm64_bootparams *abp)
 	vstart += round_page(MSGBUFSIZE);
 
 	zero_page = vstart;
-	vstart += PAGE_SIZE;
+	vstart += MAXCPUS * PAGE_SIZE;
 	copy_src_page = vstart;
-	vstart += PAGE_SIZE;
+	vstart += MAXCPUS * PAGE_SIZE;
 	copy_dst_page = vstart;
-	vstart += PAGE_SIZE;
+	vstart += MAXCPUS * PAGE_SIZE;
 
 	/* Relocate the FDT to safe memory. */
 	if (fdt_get_size(config) != 0) {
