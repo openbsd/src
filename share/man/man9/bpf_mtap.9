@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.12 2018/01/24 00:33:45 dlg Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.13 2018/02/01 12:21:24 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 24 2018 $
+.Dd $Mdocdate: February 1 2018 $
 .Dt BPF_MTAP 9
 .Os
 .Sh NAME
@@ -28,7 +28,8 @@
 .Nm bpf_mtap ,
 .Nm bpf_mtap_hdr ,
 .Nm bpf_mtap_af ,
-.Nm bpf_mtap_ether
+.Nm bpf_mtap_ether ,
+.Nm bpf_tap_hdr
 .Nd BPF kernel API
 .Sh SYNOPSIS
 .In net/bpf.h
@@ -80,6 +81,15 @@
 .Fc
 .Ft int
 .Fn bpf_mtap_ether "caddr_t bpf" "const struct mbuf *m" "u_int direction"
+.Ft int
+.Fo bpf_tap_hdr
+.Fa "caddr_t bpf"
+.Fa "const void *hdr"
+.Fa "u_int hdrlen"
+.Fa "const void *buf"
+.Fa "u_int buflen"
+.Fa "u_int direction"
+.Fc
 .Sh DESCRIPTION
 The BPF kernel API provides functions for evaluating BPF instructions
 against packets, and incoming linkage from device drivers.
@@ -211,6 +221,21 @@ m->m_pkthdr.ether_vtag
 and
 m->m_pkthdr.pf.prio
 before matching occurs.
+.Pp
+.Fn bpf_tap_hdr
+runs the filters on the BPF interface referenced by
+.Fa bpf
+in the direction
+.Fa direction
+against the buffer
+.Fa buf
+of length
+.Fa buflen .
+The header
+.Fa hdr
+of length
+.Fa hdrlen
+will be prefixed to the buffer for filter evaluation.
 .Sh CONTEXT
 .Fn bpfattach ,
 .Fn bpfdetach ,
@@ -229,8 +254,9 @@ can be called from process context, or from an interrupt context.
 .Fn bpf_mtap ,
 .Fn bpf_mtap_hdr ,
 .Fn bpf_mtap_af ,
+.Fn bpf_mtap_ether ,
 and
-.Fn bpf_mtap_ether
+.Fn bpf_tap_hdr
 can be called from process context, or from an interrupt context at or below
 .Dv IPL_NET .
 .Sh RETURN VALUES
@@ -254,9 +280,9 @@ otherwise 0.
 .Fn bpf_mtap ,
 .Fn bpf_mtap_hdr ,
 .Fn bpf_mtap_af ,
-and
-.Fn bpf_mtap_ether
-return 1 if the packet matched a filter that indicates the packet
+.Fn bpf_mtap_ether ,
+.Fn bpf_tap_hdr ,
+return 1 if the packet or buffer matched a filter that indicates it
 should be dropped, otherwise 0.
 .Sh SEE ALSO
 .Xr mbuf 9 ,
