@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.55 2018/01/03 05:39:56 ccardenas Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.56 2018/02/01 18:33:27 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -2035,6 +2035,9 @@ vioscsi_restore(int fd, struct vm_create_params *vcp, int child_cdrom)
 {
 	off_t sz;
 
+	if (!strlen(vcp->vcp_cdrom))
+		return (0);
+
 	vioscsi = calloc(1, sizeof(struct vioscsi_dev));
 	if (vioscsi == NULL) {
 		log_warn("%s: calloc failure allocating vioscsi", __progname);
@@ -2051,7 +2054,7 @@ vioscsi_restore(int fd, struct vm_create_params *vcp, int child_cdrom)
 
 	sz = lseek(child_cdrom, 0, SEEK_END);
 
-	if (pci_set_bar_fn(vioscsi->pci_id, 0, vioscsi_io, NULL)) {
+	if (pci_set_bar_fn(vioscsi->pci_id, 0, vioscsi_io, vioscsi)) {
 		log_warnx("%s: can't set bar fn for vmm control device",
 		    __progname);
 		return (-1);
@@ -2139,9 +2142,12 @@ vioblk_dump(int fd)
 int
 vioscsi_dump(int fd)
 {
+	if (vioscsi == NULL)
+		return (0);
+
 	log_debug("%s: sending vioscsi", __func__);
-	if (atomicio(vwrite, fd, &vioscsi, sizeof(vioscsi)) !=
-	    sizeof(vioscsi)) {
+	if (atomicio(vwrite, fd, vioscsi, sizeof(struct vioscsi_dev)) !=
+	    sizeof(struct vioscsi_dev)) {
 		log_warnx("%s: error writing vioscsi to fd", __func__);
 		return (-1);
 	}
