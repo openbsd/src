@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.199 2018/01/31 12:36:13 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.200 2018/02/01 11:21:34 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1772,6 +1772,25 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			iwn_scan_abort(sc);
 	}
 
+	if (ic->ic_state == IEEE80211_S_SCAN) {
+		if (nstate == IEEE80211_S_SCAN)
+			return 0;
+		/* Turn LED off when leaving scan state. */
+		iwn_set_led(sc, IWN_LED_LINK, 1, 0);
+	}
+
+	if (ic->ic_state >= IEEE80211_S_ASSOC &&
+	    nstate <= IEEE80211_S_ASSOC) {
+		/* Reset state to handle re- and disassociations. */
+		sc->rxon.associd = 0;
+		sc->rxon.filter &= ~htole32(IWN_FILTER_BSS);
+		sc->calib.state = IWN_CALIB_STATE_INIT;
+		error = iwn_cmd(sc, IWN_CMD_RXON, &sc->rxon, sc->rxonsz, 1);
+		if (error != 0)
+			printf("%s: RXON command failed\n",
+			    sc->sc_dev.dv_xname);
+	}		 
+
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
 		/* Make the link LED blink while we're scanning. */
@@ -1794,11 +1813,6 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			break;
 		/* FALLTHROUGH */
 	case IEEE80211_S_AUTH:
-		/* Reset state to handle reassociations correctly. */
-		sc->rxon.associd = 0;
-		sc->rxon.filter &= ~htole32(IWN_FILTER_BSS);
-		sc->calib.state = IWN_CALIB_STATE_INIT;
-
 		if ((error = iwn_auth(sc, arg)) != 0) {
 			printf("%s: could not move to auth state\n",
 			    sc->sc_dev.dv_xname);
