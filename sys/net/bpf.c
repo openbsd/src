@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.166 2018/01/24 00:25:17 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.167 2018/02/01 12:10:27 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1288,6 +1288,45 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
 	SRPL_LEAVE(&sr);
 
 	return (drop);
+}
+
+/*
+ * Incoming linkage from device drivers, where a data buffer should be
+ * prepended by an arbitrary header. In this situation we already have a
+ * way of representing a chain of memory buffers, ie, mbufs, so reuse
+ * the existing functionality by attaching the buffers to mbufs.
+ *
+ * Con up a minimal mbuf chain to pacify bpf by allocating (only) a
+ * struct m_hdr each for the header and data on the stack.
+ */
+int
+bpf_tap_hdr(caddr_t arg, const void *hdr, unsigned int hdrlen,
+    const void *buf, unsigned int buflen, u_int direction)
+{
+	struct m_hdr mh, md;
+	struct mbuf *m0 = NULL;
+	struct mbuf **mp = &m0;
+
+	if (hdr != NULL) {
+		mh.mh_flags = 0;
+		mh.mh_next = NULL;
+		mh.mh_len = hdrlen;
+		mh.mh_data = (void *)hdr;
+
+		*mp = (struct mbuf *)&mh;
+		mp = &mh.mh_next;
+	}
+
+	if (buf != NULL) {
+		md.mh_flags = 0;
+		md.mh_next = NULL;
+		md.mh_len = buflen;
+		md.mh_data = (void *)buf;
+
+		*mp = (struct mbuf *)&md;
+	}
+
+	return _bpf_mtap(arg, m0, direction, bpf_mcopy);
 }
 
 /*
