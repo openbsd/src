@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.30 2018/01/22 09:06:22 mpi Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.31 2018/02/01 21:18:12 bluhm Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -571,7 +571,7 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 	if (!etherip_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0) {
 		m_freem(m);
 		etheripstat_inc(etherips_pdrops);
-		return IPPROTO_NONE;
+		return IPPROTO_DONE;
 	}
 
 	ip6 = mtod(m, const struct ip6_hdr *);
