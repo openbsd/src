@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.5 2018/01/31 10:52:12 kettenis Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.6 2018/02/01 07:41:33 deraadt Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -457,7 +457,9 @@ bcm_intc_call_handler(int irq, void *frame)
 		static int cnt = 0;
 		if ((cnt++ % 100) == 0) {
 			printf("irq  %d fired * _100\n", irq);
+#ifdef DDB
 			db_enter();
+#endif
 		}
 	}
 #endif
@@ -639,7 +641,9 @@ bcm_intc_handle_ipi(void)
 	switch (ipi) {
 	case ARM_IPI_DDB:
 		/* XXX */
+#ifdef DDB
 		db_enter();
+#endif
 		break;
 	case ARM_IPI_NOP:
 		break;
