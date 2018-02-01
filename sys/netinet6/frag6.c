@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.81 2017/11/14 14:46:49 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.82 2018/02/01 21:11:33 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -422,14 +422,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 		goto dropfrag;
 	}
 
-	/*
-	 * Store NXT to the original.
-	 */
-	{
-		u_int8_t *prvnxtp = ip6_get_prevhdr(m, offset); /* XXX */
-		*prvnxtp = nxt;
-	}
-
 	TAILQ_REMOVE(&frag6_queue, q6, ip6q_queue);
 	frag6_nfrags -= q6->ip6q_nfrag;
 	frag6_nfragpackets--;
@@ -443,6 +435,20 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 		for (t = m; t; t = t->m_next)
 			plen += t->m_len;
 		m->m_pkthdr.len = plen;
+	}
+
+	/*
+	 * Restore NXT to the original.
+	 */
+	{
+		int prvnxt = ip6_get_prevhdr(m, offset);
+		uint8_t *prvnxtp;
+
+		IP6_EXTHDR_GET(prvnxtp, uint8_t *, m, prvnxt,
+		    sizeof(*prvnxtp));
+		if (prvnxtp == NULL)
+			goto dropfrag;
+		*prvnxtp = nxt;
 	}
 
 	ip6stat_inc(ip6s_reassembled);
