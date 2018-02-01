@@ -434,6 +434,7 @@ unmap(struct dir_info *d, void *p, size_t sz, int junk)
 					break;
 				}
 			}
+			i++;
 		}
 	}
 	for (i = 0; ; i++) {
