@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.250 2018/01/10 00:14:38 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.251 2018/02/02 22:00:39 bluhm Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -333,14 +333,12 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 		 */
 		if ((ifp->if_flags & IFF_SIMPLEX) == 0) {
 			if (memcmp(ac->ac_enaddr, eh->ether_shost,
-			    ETHER_ADDR_LEN) == 0) {
-				m_freem(m);
-				return (1);
-			}
+			    ETHER_ADDR_LEN) == 0)
+				goto dropanyway;
 		}
 
 		if (memcmp(etherbroadcastaddr, eh->ether_dhost,
-		    sizeof(etherbroadcastaddr)) == 0)
+		    ETHER_ADDR_LEN) == 0)
 			m->m_flags |= M_BCAST;
 		else
 			m->m_flags |= M_MCAST;
@@ -351,10 +349,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	 * HW vlan tagged packets that were not collected by vlan(4) must
 	 * be dropped now.
 	 */
-	if (m->m_flags & M_VLANTAG) {
-		m_freem(m);
-		return (1);
-	}
+	if (m->m_flags & M_VLANTAG)
+		goto dropanyway;
 
 	/*
 	 * If packet is unicast, make sure it is for us.  Drop otherwise.
@@ -362,10 +358,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	 * where the MAC filter is 'best effort' only.
 	 */
 	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0) {
-		if (memcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN)) {
-			m_freem(m);
-			return (1);
-		}
+		if (memcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN))
+			goto dropanyway;
 	}
 
 	etype = ntohs(eh->ether_type);
