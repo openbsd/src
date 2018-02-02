@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.24 2015/10/11 20:17:49 guenther Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.25 2018/02/02 16:46:37 cheloha Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -102,12 +102,24 @@ main(int argc, char *argv[])
 		}
 	}
 
-	rqtp.tv_sec = secs;
-	rqtp.tv_nsec = nsecs;
-
-	if ((secs > 0) || (nsecs > 0))
+	while (secs > 0 || nsecs > 0) {
+		/*
+		 * nanosleep(2) supports a maximum of 100 million
+		 * seconds, so we break the nap up into multiple
+		 * calls if we have more than that.
+		 */
+		if (secs > 100000000) {
+			rqtp.tv_sec = 100000000;
+			rqtp.tv_nsec = 0;
+		} else {
+			rqtp.tv_sec = secs;
+			rqtp.tv_nsec = nsecs;
+		}
 		if (nanosleep(&rqtp, NULL))
 			err(1, NULL);
+		secs -= rqtp.tv_sec;
+		nsecs -= rqtp.tv_nsec;
+	}
 	return (0);
 }
 
