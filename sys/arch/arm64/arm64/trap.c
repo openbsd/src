@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.15 2018/01/17 10:22:25 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.16 2018/02/02 09:33:35 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -126,7 +126,8 @@ svc_handler(struct trapframe *frame)
 void dumpregs(struct trapframe*);
 
 static void
-data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
+data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
+    int lower, int exe)
 {
 	struct vm_map *map;
 	struct proc *p;
@@ -135,13 +136,11 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 	vm_prot_t access_type;
 	vaddr_t va;
 	union sigval sv;
-	uint64_t far;
 	int error = 0, sig, code;
 
 	pcb = curcpu()->ci_curpcb;
 	p = curcpu()->ci_curproc;
 
-	far = READ_SPECIALREG(far_el1);
 	va = trunc_page(far);
 	if (va >= VM_MAXUSER_ADDRESS)
 		curcpu()->ci_flush_bp();
@@ -230,11 +229,14 @@ void
 do_el1h_sync(struct trapframe *frame)
 {
 	uint32_t exception;
-	uint64_t esr;
+	uint64_t esr, far;
 
 	/* Read the esr register to get the exception details */
 	esr = READ_SPECIALREG(esr_el1);
 	exception = ESR_ELx_EXCEPTION(esr);
+	far = READ_SPECIALREG(far_el1);
+
+	enable_interrupts();
 
 	/*
 	 * Sanity check we are in an exception er can handle. The IL bit
@@ -255,7 +257,7 @@ do_el1h_sync(struct trapframe *frame)
 	case EXCP_TRAP_FP:
 		panic("VFP exception in the kernel");
 	case EXCP_DATA_ABORT:
-		data_abort(frame, esr, 0, 0);
+		data_abort(frame, esr, far, 0, 0);
 		break;
 	case EXCP_BRK:
 	case EXCP_WATCHPT_EL1:
@@ -290,10 +292,13 @@ do_el0_sync(struct trapframe *frame)
 	struct proc *p = curproc;
 	union sigval sv;
 	uint32_t exception;
-	uint64_t esr;
+	uint64_t esr, far;
 
 	esr = READ_SPECIALREG(esr_el1);
 	exception = ESR_ELx_EXCEPTION(esr);
+	far = READ_SPECIALREG(far_el1);
+
+	enable_interrupts();
 
 	refreshcreds(p);
 
@@ -316,7 +321,7 @@ do_el0_sync(struct trapframe *frame)
 		break;
 	case EXCP_INSN_ABORT_L:
 		vfp_save();
-		data_abort(frame, esr, 1, 1);
+		data_abort(frame, esr, far, 1, 1);
 		break;
 	case EXCP_PC_ALIGN:
 		vfp_save();
@@ -336,7 +341,7 @@ do_el0_sync(struct trapframe *frame)
 		break;
 	case EXCP_DATA_ABORT_L:
 		vfp_save();
-		data_abort(frame, esr, 1, 0);
+		data_abort(frame, esr, far, 1, 0);
 		break;
 	case EXCP_BRK:
 		vfp_save();
