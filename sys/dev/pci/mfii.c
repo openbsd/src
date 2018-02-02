@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.45 2017/11/27 04:32:14 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.46 2018/02/02 11:24:37 jsg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -537,7 +537,7 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 
 	/* wire up the bus shizz */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, sc->sc_iop->bar);
-	if (pci_mapreg_map(pa, MFII_BAR, memtype, 0,
+	if (pci_mapreg_map(pa, sc->sc_iop->bar, memtype, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_ios, MFII_PCI_MEMSIZE)) {
 		printf(": unable to map registers\n");
 		return;
