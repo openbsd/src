@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.12 2018/01/31 10:52:12 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.13 2018/02/02 09:32:11 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -620,7 +620,7 @@ ampintc_irq_handler(void *frame)
 	struct intrhand		*ih;
 	void			*arg;
 	uint32_t		 iack_val;
-	int			 irq, pri, s;
+	int			 irq, pri, s, handled;
 
 	iack_val = ampintc_iack();
 #ifdef DEBUG_INTC
@@ -668,7 +668,10 @@ ampintc_irq_handler(void *frame)
 		else
 			arg = frame;
 
-		if (ih->ih_func(arg))
+		enable_interrupts();
+		handled = ih->ih_func(arg);
+		disable_interrupts();
+		if (handled)
 			ih->ih_count.ec_count++;
 
 #ifdef MULTIPROCESSOR
