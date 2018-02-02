@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.13 2018/02/01 12:21:24 dlg Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.14 2018/02/02 10:52:44 jmc Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 1 2018 $
+.Dd $Mdocdate: February 2 2018 $
 .Dt BPF_MTAP 9
 .Os
 .Sh NAME
@@ -263,7 +263,7 @@ can be called from process context, or from an interrupt context at or below
 .Fn bpfsattach
 returns a reference to the BPF interface it allocates.
 .Pp
-.Fn bpf_filter ,
+.Fn bpf_filter
 and
 .Fn bpf_mfilter
 return -1 (cast to an unsigned integer) if the filter program is
@@ -281,7 +281,8 @@ otherwise 0.
 .Fn bpf_mtap_hdr ,
 .Fn bpf_mtap_af ,
 .Fn bpf_mtap_ether ,
-.Fn bpf_tap_hdr ,
+and
+.Fn bpf_tap_hdr
 return 1 if the packet or buffer matched a filter that indicates it
 should be dropped, otherwise 0.
 .Sh SEE ALSO
