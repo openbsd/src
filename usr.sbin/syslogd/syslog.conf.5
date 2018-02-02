@@ -26,10 +26,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.35 2018/02/01 17:13:44 landry Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.36 2018/02/02 10:53:44 jmc Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
-.Dd $Mdocdate: February 1 2018 $
+.Dd $Mdocdate: February 2 2018 $
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -315,17 +315,17 @@ mail.*							/var/log/maillog
 # special file.
 mail,news.err						/var/log/spoolerr
 
-# Save ftpd transactions along with mail and news
+# Save ftpd transactions along with mail and news.
 !ftpd
 *.*							/var/log/spoolerr
 
-# Keep a copy of all logging in a 32k memory buffer named "debug"
+# Keep a copy of all logging in a 32k memory buffer named "debug".
 *.debug							:32:debug
 
-# Store notices and authpriv messages in a 64k buffer named "important"
+# Store notices and authpriv messages in a 64k buffer named "important".
 *.notice,authpriv.*					:64:important
 
-# feed everything to logsurfer
+# Feed everything to logsurfer.
 *.*						|/usr/local/sbin/logsurfer
 .Ed
 .Sh SEE ALSO
