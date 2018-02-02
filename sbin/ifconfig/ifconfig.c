@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.353 2018/01/16 10:33:55 mpi Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.354 2018/02/02 13:39:52 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1796,6 +1796,8 @@ setifwpaakms(const char *val, int d)
 	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCG80211WPAPARMS");
 	wpa.i_akms = rval;
+	/* Enable WPA for 802.1x here. PSK case is handled in setifwpakey(). */
+	wpa.i_enabled = ((rval & IEEE80211_WPA_AKM_8021X) != 0);
 	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCS80211WPAPARMS");
 }
