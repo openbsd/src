@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.165 2018/01/23 20:49:58 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.166 2018/02/03 16:14:26 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -167,17 +167,15 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			m_freem(m);
 		return (error);
 	}
-	if (inp) {
-		tp = intotcpcb(inp);
-		/* tp might get 0 when using socket splicing */
-		if (tp == NULL)
-			return (0);
+	tp = intotcpcb(inp);
+	/* tp might get 0 when using socket splicing */
+	if (tp == NULL)
+		return (0);
 #ifdef KPROF
-		tcp_acounts[tp->t_state][req]++;
+	tcp_acounts[tp->t_state][req]++;
 #endif
-		ostate = tp->t_state;
-	} else
-		ostate = 0;
+	ostate = tp->t_state;
+
 	switch (req) {
 
 	/*
