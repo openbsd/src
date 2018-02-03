@@ -156,7 +156,7 @@ static const char* rrlsource2str(uint64_t s, uint16_t c2)
 		if(!inet_ntop(AF_INET6, &a6, buf, sizeof(buf)))
 			strlcpy(buf, "[ip6 ntop failed]", sizeof(buf));
 		else {
-			static char prefix[4];
+			static char prefix[5];
 			snprintf(prefix, sizeof(prefix), "/%d", rrl_ipv6_prefixlen);
 			strlcat(buf, &prefix[0], sizeof(buf));
 		}
@@ -170,7 +170,7 @@ static const char* rrlsource2str(uint64_t s, uint16_t c2)
 	if(!inet_ntop(AF_INET, &a4, buf, sizeof(buf)))
 		strlcpy(buf, "[ip4 ntop failed]", sizeof(buf));
 	else {
-		static char prefix[4];
+		static char prefix[5];
 		snprintf(prefix, sizeof(prefix), "/%d", rrl_ipv4_prefixlen);
 		strlcat(buf, &prefix[0], sizeof(buf));
 	}

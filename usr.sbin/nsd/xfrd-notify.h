@@ -33,6 +33,17 @@ struct xfrd_soa;
 struct acl_options;
 struct xfrd_state;
 
+/** number of concurrent notify packets in flight */
+#define NOTIFY_CONCURRENT_MAX 16 
+
+/** notify packet info */
+struct notify_pkt {
+	struct acl_options* dest; /* target, NULL if entry not in use */
+	uint8_t notify_retry; /* how manieth retry in sending to current */
+	uint16_t notify_query_id;
+	time_t send_time;
+};
+
 /**
  * This struct keeps track of outbound notifies for a zone.
  */
@@ -50,18 +61,20 @@ struct notify_zone {
 	/* Not saved on disk (i.e. kill of daemon stops notifies) */
 	int notify_send_enable;
 	struct event notify_send_handler;
+	int notify_send6_enable;
+	struct event notify_send6_handler;
 	struct timeval notify_timeout;
 	struct acl_options* notify_current; /* current slave to notify */
 	uint8_t notify_restart; /* restart notify after repattern */
-	uint8_t notify_retry; /* how manieth retry in sending to current */
-	uint16_t notify_query_id;
+	struct notify_pkt pkts[NOTIFY_CONCURRENT_MAX];
+	int notify_pkt_count; /* number of entries nonNULL in pkts */
 
 	/* is this notify waiting for a socket? */
 	uint8_t is_waiting;
 	/* the double linked waiting list for the udp sockets */
 	struct notify_zone* waiting_next;
 	struct notify_zone* waiting_prev;
-};
+} ATTR_PACKED;
 
 /* initialise outgoing notifies */
 void init_notify_send(rbtree_type* tree, region_type* region,

@@ -49,7 +49,7 @@ struct radnode {
 	uint16_t capacity;
 	/** the lookup array by [byte-offset] */
 	struct radsel* array; 
-};
+} ATTR_PACKED;
 
 /**
  * radix select edge in array
@@ -61,7 +61,7 @@ struct radsel {
 	radstrlen_type len;
 	/** node that deals with byte+str */
 	struct radnode* node;
-};
+} ATTR_PACKED;
 
 /**
  * Create new radix tree

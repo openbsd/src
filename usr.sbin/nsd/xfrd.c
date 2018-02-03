@@ -767,7 +767,7 @@ xfrd_set_timer_retry(xfrd_zone_type* zone)
 		else if(set_retry < (time_t)zone->zone_options->pattern->min_retry_time)
 			set_retry = zone->zone_options->pattern->min_retry_time;
 		if(set_retry < XFRD_LOWERBOUND_RETRY)
-			set_retry =  XFRD_LOWERBOUND_RETRY;
+			set_retry = XFRD_LOWERBOUND_RETRY;
 		xfrd_set_timer(zone, set_retry);
 	} else {
 		set_retry = ntohl(zone->soa_disk.expire);
@@ -1210,14 +1210,15 @@ xfrd_send_expire_notification(xfrd_zone_type* zone)
 }
 
 int
-xfrd_udp_read_packet(buffer_type* packet, int fd)
+xfrd_udp_read_packet(buffer_type* packet, int fd, struct sockaddr* src,
+	socklen_t* srclen)
 {
 	ssize_t received;
 
 	/* read the data */
 	buffer_clear(packet);
 	received = recvfrom(fd, buffer_begin(packet), buffer_remaining(packet),
-		0, NULL, NULL);
+		0, src, srclen);
 	if(received == -1) {
 		log_msg(LOG_ERR, "xfrd: recvfrom failed: %s",
 			strerror(errno));
@@ -1299,7 +1300,8 @@ static void
 xfrd_udp_read(xfrd_zone_type* zone)
 {
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: zone %s read udp data", zone->apex_str));
-	if(!xfrd_udp_read_packet(xfrd->packet, zone->zone_handler.ev_fd)) {
+	if(!xfrd_udp_read_packet(xfrd->packet, zone->zone_handler.ev_fd,
+		NULL, NULL)) {
 		zone->master->bad_xfr_count++;
 		if (zone->master->bad_xfr_count > 2) {
 			xfrd_disable_ixfr(zone);
@@ -1323,6 +1325,7 @@ xfrd_udp_read(xfrd_zone_type* zone)
 				xfrd_make_request(zone);
 				break;
 			}
+			/* fallthrough */
 		case xfrd_packet_newlease:
 			/* nothing more to do */
 			assert(zone->round_num == -1);

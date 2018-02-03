@@ -136,7 +136,7 @@ struct xfrd_soa {
 	uint32_t retry;
 	uint32_t expire;
 	uint32_t minimum;
-};
+} ATTR_PACKED;
 
 
 /*
@@ -219,7 +219,7 @@ struct xfrd_zone {
 				valid if msg_seq_nr nonzero */
 	int multi_master_first_master; /* >0: first check master_num */
 	int multi_master_update_check; /* -1: not update >0: last update master_num */
-};
+} ATTR_PACKED;
 
 enum xfrd_packet_result {
 	xfrd_packet_bad, /* drop the packet/connection */
@@ -239,10 +239,10 @@ enum xfrd_packet_result {
    Note that also some sockets are used for writing the ixfr.db, xfrd.state
    files and for the pipes to the main parent process.
 */
-#define XFRD_MAX_TCP 32 /* max number of TCP AXFR/IXFR concurrent connections.*/
+#define XFRD_MAX_TCP 128 /* max number of TCP AXFR/IXFR concurrent connections.*/
 			/* Each entry has 64Kb buffer preallocated.*/
-#define XFRD_MAX_UDP 64 /* max number of UDP sockets at a time for IXFR */
-#define XFRD_MAX_UDP_NOTIFY 64 /* max concurrent UDP sockets for NOTIFY */
+#define XFRD_MAX_UDP 128 /* max number of UDP sockets at a time for IXFR */
+#define XFRD_MAX_UDP_NOTIFY 128 /* max concurrent UDP sockets for NOTIFY */
 
 #define XFRD_TRANSFER_TIMEOUT_START 10 /* empty zone timeout is between x and 2*x seconds */
 #define XFRD_TRANSFER_TIMEOUT_MAX 86400 /* empty zone timeout max expbackoff */
@@ -300,7 +300,8 @@ int xfrd_send_udp(struct acl_options* acl, buffer_type* packet,
 /*
  * read from udp port packet into buffer, returns 0 on failure
  */
-int xfrd_udp_read_packet(buffer_type* packet, int fd);
+int xfrd_udp_read_packet(buffer_type* packet, int fd, struct sockaddr* src,
+	socklen_t* srclen);
 
 /*
  * Release udp socket that a zone is using

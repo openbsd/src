@@ -94,7 +94,7 @@ netio_current_time(netio_type *netio)
 	if (!netio->have_current_time) {
 		struct timeval current_timeval;
 		if (gettimeofday(&current_timeval, NULL) == -1) {
-			log_msg(LOG_CRIT, "gettimeofday: %s, aborting.", strerror(errno));
+			log_msg(LOG_ERR, "gettimeofday: %s, aborting.", strerror(errno));
 			abort();
 		}
 		timeval_to_timespec(&netio->cached_current_time, &current_timeval);

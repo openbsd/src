@@ -579,6 +579,7 @@ main(int argc, char *argv[])
 		case 'v':
 			version();
 			/* version exits */
+			break;
 #ifndef NDEBUG
 		case 'F':
 			sscanf(optarg, "%x", &nsd_debug_facilities);
@@ -980,6 +981,7 @@ main(int argc, char *argv[])
 			break;
 		case -1:
 			error("fork() failed: %s", strerror(errno));
+			break;
 		default:
 			/* Parent is done */
 			server_close_all_sockets(nsd.udp, nsd.ifs);

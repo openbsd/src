@@ -24,7 +24,7 @@ struct rbnode {
 	rbnode_type  *right;
 	const void   *key;
 	uint8_t	      color;
-};
+} ATTR_PACKED;
 
 #define	RBTREE_NULL &rbtree_null_node
 extern	rbnode_type	rbtree_null_node;
@@ -44,7 +44,7 @@ struct rbtree {
 
 	/* Key compare function. <0,0,>0 like strcmp. Return 0 on two NULL ptrs. */
 	int (*cmp) (const void *, const void *);
-};
+} ATTR_PACKED;
 
 /* rbtree.c */
 rbtree_type *rbtree_create(region_type *region, int (*cmpf)(const void *, const void *));

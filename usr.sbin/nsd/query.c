@@ -1241,8 +1241,15 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 		 * authoritative for the parent zone.
 		 */
 		zone_type *zone = domain_find_parent_zone(nsd->db, q->zone);
-		if (zone)
+		if (zone) {
 			q->zone = zone;
+			if(!q->zone->apex || !q->zone->soa_rrset) {
+				/* zone is configured but not loaded */
+				if(q->cname_count == 0)
+					RCODE_SET(q->packet, RCODE_SERVFAIL);
+				return;
+			}
+		}
 	}
 
 	/* see if the zone has expired (for secondary zones) */

@@ -958,10 +958,17 @@ print_zonestatus(SSL* ssl, xfrd_state_type* xfrd, struct zone_options* zo)
 		if(nz->is_waiting) {
 			if(!ssl_printf(ssl, "	notify: \"waiting-for-fd\"\n"))
 				return 0;
-		} else if(nz->notify_send_enable) {
-			if(!ssl_printf(ssl, "	notify: \"sent try %d "
-				"to %s with serial %u\"\n", nz->notify_retry,
-				nz->notify_current->ip_address_spec,
+		} else if(nz->notify_send_enable || nz->notify_send6_enable) {
+			int i;
+			if(!ssl_printf(ssl, "	notify: \"send"))
+				return 0;
+			for(i=0; i<NOTIFY_CONCURRENT_MAX; i++) {
+				if(!nz->pkts[i].dest) continue;
+				if(!ssl_printf(ssl, " %s",
+					nz->pkts[i].dest->ip_address_spec))
+					return 0;
+			}
+			if(!ssl_printf(ssl, " with serial %u\"\n",
 				(unsigned)ntohl(nz->current_soa->serial)))
 				return 0;
 		}
@@ -984,6 +991,10 @@ print_zonestatus(SSL* ssl, xfrd_state_type* xfrd, struct zone_options* zo)
 	if(xz->round_num != -1) {
 		if(!print_soa_status(ssl, "notified-serial", &xz->soa_notified,
 			xz->soa_notified_acquired))
+			return 0;
+	} else if(xz->event_added) {
+		if(!ssl_printf(ssl, "\twait: \"%u sec between attempts\"\n",
+			(unsigned)xz->timeout.tv_sec))
 			return 0;
 	}
 

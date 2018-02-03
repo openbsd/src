@@ -53,6 +53,20 @@ struct domain_table
 };
 
 #ifdef NSEC3
+typedef struct nsec3_hash_node nsec3_hash_node_type;
+struct nsec3_hash_node {
+	/* hash value */
+	uint8_t hash[NSEC3_HASH_LEN];
+	/* entry in the hashtree */
+	rbnode_type node;
+} ATTR_PACKED;
+
+typedef struct nsec3_hash_wc_node nsec3_hash_wc_node_type;
+struct nsec3_hash_wc_node {
+	nsec3_hash_node_type hash;
+	nsec3_hash_node_type wc;
+};
+
 struct nsec3_domain_data {
 	/* (if nsec3 chain complete) always the covering nsec3 record */
 	domain_type* nsec3_cover;
@@ -64,28 +78,18 @@ struct nsec3_domain_data {
 	domain_type* prehash_prev, *prehash_next;
 	/* entry in the nsec3tree (for NSEC3s in the chain in use) */
 	rbnode_type nsec3_node;
-	/* entry in the hashtree (for precompiled domains) */
-	rbnode_type hash_node;
-	/* entry in the wchashtree (the wildcard precompile) */
-	rbnode_type wchash_node;
-	/* entry in the dshashtree (the parent ds precompile) */
-	rbnode_type dshash_node;
 
-	/* nsec3 hash */
-	uint8_t nsec3_hash[NSEC3_HASH_LEN];
-	/* nsec3 hash of wildcard before this name */
-	uint8_t nsec3_wc_hash[NSEC3_HASH_LEN];
-	/* parent-side DS hash */
-	uint8_t nsec3_ds_parent_hash[NSEC3_HASH_LEN];
-	/* if the nsec3 has is available */
-	unsigned  have_nsec3_hash : 1;
-	unsigned  have_nsec3_wc_hash : 1;
-	unsigned  have_nsec3_ds_parent_hash : 1;
+	/* node for the precompiled domain and the precompiled wildcard */
+	nsec3_hash_wc_node_type* hash_wc;
+
+	/* node for the precompiled parent ds */
+	nsec3_hash_node_type* ds_parent_hash;
+
 	/* if the domain has an NSEC3 for it, use cover ptr to get it. */
 	unsigned     nsec3_is_exact : 1;
 	/* same but on parent side */
 	unsigned     nsec3_ds_parent_is_exact : 1;
-};
+} ATTR_PACKED;
 #endif /* NSEC3 */
 
 struct domain
@@ -104,8 +108,8 @@ struct domain
 #endif
 	/* double-linked list sorted by domain.number */
 	domain_type* numlist_prev, *numlist_next;
-	size_t     number; /* Unique domain name number.  */
-	size_t     usage; /* number of ptrs to this from RRs(in rdata) and
+	uint32_t     number; /* Unique domain name number.  */
+	uint32_t     usage; /* number of ptrs to this from RRs(in rdata) and
 			     from zone-apex pointers, also the root has one
 			     more to make sure it cannot be deleted. */
 
@@ -114,7 +118,7 @@ struct domain
 	 */
 	unsigned     is_existing : 1;
 	unsigned     is_apex : 1;
-};
+} ATTR_PACKED;
 
 struct zone
 {
@@ -140,7 +144,7 @@ struct zone
 	unsigned     is_secure : 1; /* zone uses DNSSEC */
 	unsigned     is_ok : 1; /* zone has not expired. */
 	unsigned     is_changed : 1; /* zone was changed by AXFR */
-};
+} ATTR_PACKED;
 
 /* a RR in DNS */
 struct rr {
@@ -150,7 +154,7 @@ struct rr {
 	uint16_t         type;
 	uint16_t         klass;
 	uint16_t         rdata_count;
-};
+} ATTR_PACKED;
 
 /*
  * An RRset consists of at least one RR.  All RRs are from the same
@@ -162,7 +166,7 @@ struct rrset
 	zone_type*  zone;
 	rr_type*    rrs;
 	uint16_t    rr_count;
-};
+} ATTR_PACKED;
 
 /*
  * The field used is based on the wireformat the atom is stored in.

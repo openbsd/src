@@ -478,7 +478,8 @@ nsec3_rrsets_changed_remove_prehash(domain_type* domain, zone_type* zone)
 	/* see if the domain is no longer precompiled */
 	/* it has a hash_node, but no longer fulfills conditions */
 	if(nsec3_domain_part_of_zone(domain, zone) && domain->nsec3 &&
-		domain->nsec3->hash_node.key &&
+		domain->nsec3->hash_wc &&
+		domain->nsec3->hash_wc->hash.node.key &&
 		!nsec3_condition_hash(domain, zone)) {
 		/* remove precompile */
 		domain->nsec3->nsec3_cover = NULL;
@@ -486,12 +487,13 @@ nsec3_rrsets_changed_remove_prehash(domain_type* domain, zone_type* zone)
 		domain->nsec3->nsec3_is_exact = 0;
 		/* remove it from the hash tree */
 		zone_del_domain_in_hash_tree(zone->hashtree,
-			&domain->nsec3->hash_node);
+			&domain->nsec3->hash_wc->hash.node);
 		zone_del_domain_in_hash_tree(zone->wchashtree,
-			&domain->nsec3->wchash_node);
+			&domain->nsec3->hash_wc->wc.node);
 	}
 	if(domain != zone->apex && domain->nsec3 &&
-		domain->nsec3->dshash_node.key &&
+		domain->nsec3->ds_parent_hash &&
+		domain->nsec3->ds_parent_hash->node.key &&
 		(!domain->parent || nsec3_domain_part_of_zone(domain->parent, zone)) &&
 		!nsec3_condition_dshash(domain, zone)) {
 		/* remove precompile */
@@ -499,7 +501,7 @@ nsec3_rrsets_changed_remove_prehash(domain_type* domain, zone_type* zone)
 		domain->nsec3->nsec3_ds_parent_is_exact = 0;
 		/* remove it from the hash tree */
 		zone_del_domain_in_hash_tree(zone->dshashtree,
-			&domain->nsec3->dshash_node);
+			&domain->nsec3->ds_parent_hash->node);
 	}
 }
 
@@ -510,13 +512,15 @@ nsec3_rrsets_changed_add_prehash(namedb_type* db, domain_type* domain,
 {
 	if(!zone->nsec3_param)
 		return;
-	if((!domain->nsec3 || !domain->nsec3->hash_node.key)
+	if((!domain->nsec3 || !domain->nsec3->hash_wc
+	                   || !domain->nsec3->hash_wc->hash.node.key)
 		&& nsec3_condition_hash(domain, zone)) {
 		region_type* tmpregion = region_create(xalloc, free);
 		nsec3_precompile_domain(db, domain, zone, tmpregion);
 		region_destroy(tmpregion);
 	}
-	if((!domain->nsec3 || !domain->nsec3->dshash_node.key)
+	if((!domain->nsec3 || !domain->nsec3->ds_parent_hash
+	                   || !domain->nsec3->ds_parent_hash->node.key)
 		&& nsec3_condition_dshash(domain, zone)) {
 		nsec3_precompile_domain_ds(db, domain, zone);
 	}

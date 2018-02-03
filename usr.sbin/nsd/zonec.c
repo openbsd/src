@@ -1627,6 +1627,7 @@ zonec_read(const char* name, const char* zonefile, zone_type* zone)
 			parser->current_zone->soa_rrset->rrs[0].owner));
 	}
 
+	parser_flush();
 	fclose(yyin);
 	if(!zone_is_slave(zone->opts))
 		check_dname(zone);
@@ -1719,5 +1720,6 @@ zonec_parse_string(region_type* region, domain_table_type* domains,
 	if(parser->origin != error_domain)
 		domain_table_deldomain(parser->db, parser->origin);
 	zonec_desetup_string_parser();
+	parser_flush();
 	return errors;
 }
