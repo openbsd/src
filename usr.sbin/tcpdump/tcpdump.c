@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.81 2017/12/08 17:04:15 deraadt Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.82 2018/02/03 13:39:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -127,6 +127,7 @@ static struct printer printers[] = {
 	{ ieee802_11_if_print,		DLT_IEEE802_11 },
 	{ ieee802_11_radio_if_print,	DLT_IEEE802_11_RADIO },
 	{ ofp_if_print,			DLT_OPENFLOW },
+	{ usbpcap_if_print,		DLT_USBPCAP },
 	{ NULL,				0 },
 };
 

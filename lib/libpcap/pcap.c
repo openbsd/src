@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.c,v 1.20 2016/11/16 13:47:27 reyk Exp $	*/
+/*	$OpenBSD: pcap.c,v 1.21 2018/02/03 13:39:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -326,6 +326,7 @@ DLT_CHOICE(DLT_IEEE802_11, "IEEE 802.11 wireless"),
 DLT_CHOICE(DLT_PFLOG, "Packet filter logging, by pcap people"),
 DLT_CHOICE(DLT_IEEE802_11_RADIO, "IEEE 802.11 plus WLAN header"),
 DLT_CHOICE(DLT_OPENFLOW, "OpenFlow"),
+DLT_CHOICE(DLT_USBPCAP, "USB"),
 #undef DLT_CHOICE
 	{ NULL, NULL, -1}
 };
