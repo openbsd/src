@@ -73,6 +73,9 @@
 /* Define to 1 if you have the `endpwent' function. */
 #undef HAVE_ENDPWENT
 
+/* Define to 1 if you have the `ERR_load_crypto_strings' function. */
+#undef HAVE_ERR_LOAD_CRYPTO_STRINGS
+
 /* Define to 1 if you have the `event_base_free' function. */
 #undef HAVE_EVENT_BASE_FREE
 
@@ -87,6 +90,9 @@
 
 /* Define to 1 if you have the <event.h> header file. */
 #undef HAVE_EVENT_H
+
+/* Define to 1 if you have the `EVP_cleanup' function. */
+#undef HAVE_EVP_CLEANUP
 
 /* Define to 1 if you have the `ev_default_loop' function. */
 #undef HAVE_EV_DEFAULT_LOOP
@@ -193,6 +199,12 @@
 
 /* Define to 1 if you have the <openssl/err.h> header file. */
 #undef HAVE_OPENSSL_ERR_H
+
+/* Define to 1 if you have the `OPENSSL_init_crypto' function. */
+#undef HAVE_OPENSSL_INIT_CRYPTO
+
+/* Define to 1 if you have the `OPENSSL_init_ssl' function. */
+#undef HAVE_OPENSSL_INIT_SSL
 
 /* Define to 1 if you have the <openssl/rand.h> header file. */
 #undef HAVE_OPENSSL_RAND_H
@@ -426,6 +438,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Define this to use packed structure alignment. */
+#undef PACKED_STRUCTS
+
 /* Pathname to the NSD pidfile */
 #undef PIDFILE
 
@@ -482,6 +497,9 @@
 
 /* Define this to enable mmap instead of malloc. Experimental. */
 #undef USE_MMAP_ALLOC
+
+/* Define this to configure to use the radix tree. */
+#undef USE_RADIX_TREE
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
@@ -659,6 +677,29 @@
 
 
 
+
+/* provide timespec def if not available */
+#ifndef CONFIG_DEFINES
+#define CONFIG_DEFINES
+#ifndef HAVE_STRUCT_TIMESPEC
+#ifndef __timespec_defined
+#define __timespec_defined 1
+	struct timespec {
+		long    tv_sec;         /* seconds */
+		long    tv_nsec;        /* nanoseconds */
+	};
+#endif /* !__timespec_defined */
+#endif /* !HAVE_STRUCT_TIMESPEC */
+#endif /* !CONFIG_DEFINES */
+
+#ifdef PACKED_STRUCTS
+#define ATTR_PACKED __attribute__((packed))
+#else
+#define ATTR_PACKED
+#endif
+
+
+
 #ifdef HAVE_VA_LIST_DOUBLE_DEF
 /* workaround double va_list definition on some platforms */
 #  ifndef _VA_LIST_DEFINED
@@ -736,13 +777,12 @@
 
 
 
-#ifndef HAVE_B64_NTOP
-int b64_ntop(uint8_t const *src, size_t srclength,
+int __b64_ntop(uint8_t const *src, size_t srclength,
 	     char *target, size_t targsize);
-#endif /* !HAVE_B64_NTOP */
-#ifndef HAVE_B64_PTON
-int b64_pton(char const *src, uint8_t *target, size_t targsize);
-#endif /* !HAVE_B64_PTON */
+int __b64_pton(char const *src, uint8_t *target, size_t targsize);
+
+
+
 #ifndef HAVE_FSEEKO
 #define fseeko fseek
 #define ftello ftell
@@ -800,22 +840,3 @@ int memcmp(const void *x, const void *y, size_t n);
 #endif
 
 
-
-
-
-/* provide timespec def if not available */
-#ifndef CONFIG_DEFINES
-#define CONFIG_DEFINES
-#ifndef HAVE_STRUCT_TIMESPEC
-#ifndef __timespec_defined
-#define __timespec_defined 1
-	struct timespec {
-		long    tv_sec;         /* seconds */
-		long    tv_nsec;        /* nanoseconds */
-	};
-#endif /* !__timespec_defined */
-#endif /* !HAVE_STRUCT_TIMESPEC */
-#endif /* !CONFIG_DEFINES */
-
-int __b64_ntop(uint8_t const *, size_t, char *, size_t);
-int __b64_pton(char const *, uint8_t*, size_t);
