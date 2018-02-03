@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.72 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.73 2018/02/03 13:37:37 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -34,6 +34,11 @@
 
 #ifndef _USBDIVAR_H_
 #define _USBDIVAR_H_
+
+#include "bpfilter.h"
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 #include <sys/timeout.h>
 
@@ -100,6 +105,10 @@ struct usbd_bus {
 	/* Filled by HC driver */
 	struct device		bdev; /* base device, host adapter */
 	struct usbd_bus_methods	*methods;
+#if NBPFILTER > 0
+	void			*bpfif;
+	caddr_t			bpf;
+#endif
 	u_int32_t		pipe_size; /* size of a pipe struct */
 	/* Filled by usb driver */
 	struct usbd_device     *root_hub;
@@ -253,6 +262,10 @@ int		usbd_detach(struct usbd_device *, struct device *);
 void		usb_needs_explore(struct usbd_device *, int);
 void		usb_needs_reattach(struct usbd_device *);
 void		usb_schedsoftintr(struct usbd_bus *);
+void		usb_tap(struct usbd_bus *, struct usbd_xfer *, uint8_t);
+
+#define USBTAP_DIR_OUT	0
+#define USBTAP_DIR_IN	1
 
 #define	UHUB_UNK_CONFIGURATION	-1
 #define	UHUB_UNK_INTERFACE	-1
