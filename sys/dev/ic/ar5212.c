@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.58 2018/01/31 11:27:03 stsp Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.59 2018/02/03 17:17:31 stsp Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -514,7 +514,6 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 			mode = AR5K_INI_VAL_11B;
 			ee_mode = AR5K_EEPROM_MODE_11B;
 		} else {
-			mode = AR5K_INI_VAL_11B;
 			mode = AR5K_INI_VAL_11G;
 			ee_mode = AR5K_EEPROM_MODE_11G;
 		}
