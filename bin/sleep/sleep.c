@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.25 2018/02/02 16:46:37 cheloha Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.26 2018/02/04 02:18:15 cheloha Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  */
 
 #include <ctype.h>
-#include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,10 +72,10 @@ main(int argc, char *argv[])
 	cp = *argv;
 	while ((*cp != '\0') && (*cp != '.')) {
 		if (!isdigit((unsigned char)*cp))
-			usage();
+			errx(1, "seconds is invalid: %s", *argv);
 		t = (secs * 10) + (*cp++ - '0');
 		if (t / 10 != secs)	/* oflow */
-			return (EINVAL);
+			errx(1, "seconds is too large: %s", *argv);
 		secs = t;
 	}
 
@@ -87,7 +86,7 @@ main(int argc, char *argv[])
 			if (*cp == '\0')
 				break;
 			if (!isdigit((unsigned char)*cp))
-				usage();
+				errx(1, "seconds is invalid: %s", *argv);
 			nsecs += (*cp++ - '0') * i;
 		}
 
@@ -98,7 +97,7 @@ main(int argc, char *argv[])
 		 */
 		while (*cp != '\0') {
 			if (!isdigit((unsigned char)*cp++))
-				usage();
+				errx(1, "seconds is invalid: %s", *argv);
 		}
 	}
 
