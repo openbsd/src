@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.86 2017/05/30 18:08:15 benno Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.87 2018/02/04 05:08:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -484,14 +484,14 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 		return;
 	}
 
-	/* generate update */
-	if (fasp != NULL)
-		up_generate(peer, fasp, &addr, 0);
-	else
-		up_generate(peer, asp, &addr, 0);
+	if (fasp == NULL)
+		fasp = asp;
+
+	up_generate(peer, fasp, &addr, 0);
 
 	/* no longer needed */
-	path_put(fasp);
+	if (fasp != asp)
+		path_put(fasp);
 	path_put(asp);
 }
 

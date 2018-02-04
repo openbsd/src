@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.373 2017/11/14 22:04:50 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.374 2018/02/04 05:08:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -224,6 +224,10 @@ rde_main(int debug, int verbose)
 	attr_init(attrhashsize);
 	nexthop_init(nexthophashsize);
 	peer_init(peerhashsize);
+
+	/* make sure the default RIBs are setup */
+	rib_new("Adj-RIB-In", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
+	rib_new("Adj-RIB-Out", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
 
 	out_rules = calloc(1, sizeof(struct filter_head));
 	if (out_rules == NULL)
@@ -1330,10 +1334,10 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 
 	peer->prefix_rcvd_update++;
 	/* add original path to the Adj-RIB-In */
-	if (path_update(&ribs[0].rib, peer, asp, prefix, prefixlen))
+	if (path_update(&ribs[RIB_ADJ_IN].rib, peer, asp, prefix, prefixlen))
 		peer->prefix_cnt++;
 
-	for (i = 1; i < rib_size; i++) {
+	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
 		/* input filter */
@@ -1366,7 +1370,7 @@ rde_update_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 {
 	u_int16_t i;
 
-	for (i = 1; i < rib_size; i++) {
+	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
 		if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen, 0)) {
@@ -1376,7 +1380,7 @@ rde_update_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 	}
 
 	/* remove original path form the Adj-RIB-In */
-	if (prefix_remove(&ribs[0].rib, peer, prefix, prefixlen, 0))
+	if (prefix_remove(&ribs[RIB_ADJ_IN].rib, peer, prefix, prefixlen, 0))
 		peer->prefix_cnt--;
 
 	peer->prefix_rcvd_withdraw++;
@@ -2957,8 +2961,8 @@ rde_reload_done(void)
 			ribs[rid].state = RECONF_RELOAD;
 			/* FALLTHROUGH */
 		case RECONF_REINIT:
-			rib_dump(&ribs[0].rib, rde_softreconfig_in, &ribs[rid],
-			    AID_UNSPEC);
+			rib_dump(&ribs[RIB_ADJ_IN].rib, rde_softreconfig_in,
+			    &ribs[rid], AID_UNSPEC);
 			break;
 		case RECONF_RELOAD:
 			log_warnx("Bad rib reload state");
@@ -3599,7 +3603,7 @@ network_add(struct network_config *nc, int flagstatic)
 	rde_apply_set(asp, &nc->attrset, nc->prefix.aid, peerself, peerself);
 	if (vpnset)
 		rde_apply_set(asp, vpnset, nc->prefix.aid, peerself, peerself);
-	for (i = 1; i < rib_size; i++) {
+	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
 		path_update(&ribs[i].rib, peerself, asp, &nc->prefix,
@@ -3647,7 +3651,7 @@ network_delete(struct network_config *nc, int flagstatic)
 		}
 	}
 
-	for (i = 1; i < rib_size; i++) {
+	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
 		prefix_remove(&ribs[i].rib, peerself, &nc->prefix,

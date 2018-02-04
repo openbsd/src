@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.154 2017/05/28 12:21:36 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.155 2018/02/04 05:08:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -114,8 +114,9 @@ rib_find(char *name)
 {
 	u_int16_t id;
 
+	/* no name returns the first Loc-RIB */
 	if (name == NULL || *name == '\0')
-		return (&ribs[1].rib);	/* no name returns the Loc-RIB */
+		return (&ribs[RIB_LOC_START].rib);
 
 	for (id = 0; id < rib_size; id++) {
 		if (!strcmp(ribs[id].name, name))
@@ -537,7 +538,7 @@ path_remove_stale(struct rde_aspath *asp, u_int8_t aid)
 		}
 
 		/* only count Adj-RIB-In */
-		if (re_rib(p->re) == &ribs[0].rib)
+		if (re_rib(p->re) == &ribs[RIB_ADJ_IN].rib)
 			rprefixes++;
 
 		prefix_destroy(p);

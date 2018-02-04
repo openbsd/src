@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.162 2017/05/30 18:08:15 benno Exp $ */
+/*	$OpenBSD: rde.h,v 1.163 2018/02/04 05:08:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -300,6 +300,10 @@ struct rib_desc {
 	struct filter_head	*in_rules_tmp;
 	enum reconf_action 	state;
 };
+
+#define RIB_ADJ_IN	0
+#define RIB_ADJ_OUT	1
+#define RIB_LOC_START	2
 
 struct prefix {
 	LIST_ENTRY(prefix)		 rib_l, path_l;
