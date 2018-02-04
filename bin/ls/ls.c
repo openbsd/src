@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.49 2018/02/04 21:53:54 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.50 2018/02/04 22:09:33 deraadt Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -493,8 +493,8 @@ display(FTSENT *p, FTSENT *list)
 			btotal += sp->st_blocks;
 			if (f_longform) {
 				if (f_numericonly) {
-					snprintf(nuser, 12, "%u", sp->st_uid);
-					snprintf(ngroup, 12, "%u", sp->st_gid);
+					snprintf(nuser, sizeof nuser, "%u", sp->st_uid);
+					snprintf(ngroup, sizeof nuser, "%u", sp->st_gid);
 					user = nuser;
 					group = ngroup;
 				} else {
