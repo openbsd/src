@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.46 2017/04/03 20:59:19 fcambus Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.47 2018/02/04 04:28:41 cheloha Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -151,18 +151,15 @@ main(int argc, char *argv[])
 		usage();
 
 	if (dofast && nosync) {
-		(void)fprintf(stderr,
-		    "shutdown: incompatible switches -f and -n.\n");
+		warnx("incompatible switches -f and -n.");
 		usage();
 	}
 	if (doreboot && dohalt) {
-		(void)fprintf(stderr,
-		    "shutdown: incompatible switches -h and -r.\n");
+		warnx("incompatible switches -h and -r.");
 		usage();
 	}
 	if (doreboot && dopower) {
-		(void)fprintf(stderr,
-		    "shutdown: incompatible switches -p and -r.\n");
+		warnx("incompatible switches -p and -r.");
 		usage();
 	}
 	getoffset(*argv++);
