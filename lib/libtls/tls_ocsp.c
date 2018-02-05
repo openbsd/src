@@ -47,11 +47,9 @@ tls_ocsp_free(struct tls_ocsp *ocsp)
 		return;
 
 	X509_free(ocsp->main_cert);
-	ocsp->main_cert = NULL;
 	free(ocsp->ocsp_result);
-	ocsp->ocsp_result = NULL;
 	free(ocsp->ocsp_url);
-	ocsp->ocsp_url = NULL;
+
 	free(ocsp);
 }
 
