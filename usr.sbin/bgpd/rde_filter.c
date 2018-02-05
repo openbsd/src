@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.83 2017/08/12 16:47:50 phessler Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.84 2018/02/05 01:36:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -442,6 +442,36 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 			return (0);
 	}
 
+	if (f->match.nexthop.flags != 0) {
+		struct bgpd_addr *nexthop, *cmpaddr;
+		if (asp != NULL && asp->nexthop == NULL)
+			/* no nexthop, skip */
+			return (0);
+		nexthop = &asp->nexthop->exit_nexthop;
+		if (f->match.nexthop.flags == FILTER_NEXTHOP_ADDR)
+			cmpaddr = &f->match.nexthop.addr;
+		else
+			cmpaddr = &from->remote_addr;
+		if (cmpaddr->aid != nexthop->aid)
+			/* don't use IPv4 rules for IPv6 and vice versa */
+			return (0);
+
+		switch (cmpaddr->aid) {
+		case AID_INET:
+			if (cmpaddr->v4.s_addr != nexthop->v4.s_addr)
+				return (0);
+			break;
+		case AID_INET6:
+			if (memcmp(&cmpaddr->v6, &nexthop->v6,
+			    sizeof(struct in6_addr)))
+				return (0);
+			break;
+		default:
+			fatalx("King Bula lost in address space");
+		}
+	}
+
+	/* XXX must be last because of the prefixlen compares */
 	if (f->match.prefix.addr.aid != 0) {
 		if (f->match.prefix.addr.aid != prefix->aid)
 			/* don't use IPv4 rules for IPv6 and vice versa */
@@ -476,35 +506,6 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 		}
 		/* NOTREACHED */
 	}
-	if (f->match.nexthop.flags != 0) {
-		struct bgpd_addr *nexthop, *cmpaddr;
-		if (asp != NULL && asp->nexthop == NULL)
-			/* no nexthop, skip */
-			return (0);
-		nexthop = &asp->nexthop->exit_nexthop;
-		if (f->match.nexthop.flags == FILTER_NEXTHOP_ADDR)
-			cmpaddr = &f->match.nexthop.addr;
-		else
-			cmpaddr = &from->remote_addr;
-		if (cmpaddr->aid != nexthop->aid)
-			/* don't use IPv4 rules for IPv6 and vice versa */
-			return (0);
-
-		switch (cmpaddr->aid) {
-		case AID_INET:
-			if (cmpaddr->v4.s_addr != nexthop->v4.s_addr)
-				return (0);
-			break;
-		case AID_INET6:
-			if (memcmp(&cmpaddr->v6, &nexthop->v6,
-			    sizeof(struct in6_addr)))
-				return (0);
-			break;
-		default:
-			fatalx("King Bula lost in address space");
-		}
-	}
-
 	/* matched somewhen or is anymatch rule  */
 	return (1);
 }
