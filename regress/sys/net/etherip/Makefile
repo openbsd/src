@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2017/11/15 15:00:04 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2018/02/05 18:30:29 anton Exp $
 
 # Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2015 Vincent Gross <vgross@openbsd.org>
@@ -15,7 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# This tests creates a routing doamin setup with bridge, vether,
+# This tests creates a routing domain setup with bridge, vether,
 # etherip, pair.  Then ping packets are sent through these interfaces.
 # Finally the setup is destroyed.
 
@@ -28,8 +28,8 @@ regress:
 	@echo SKIPPED
 .endif
 
-# This test uses routing doamin and interface number 11 and 12.
-# Adjust it here, if ue want to use something else.
+# This test uses routing domain and interface number 11 and 12.
+# Adjust it here, if you want to use something else.
 N1 =		11
 N2 =		12
 NUMS =		${N1} ${N2}
