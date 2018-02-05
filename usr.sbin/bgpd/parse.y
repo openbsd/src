@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.317 2018/02/04 05:08:16 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.318 2018/02/05 01:42:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2824,6 +2824,7 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 
 	netconf = &conf->networks;
 
+	/* the Adj-RIB-In/Out have no fib so no need to set the tableid */
 	add_rib("Adj-RIB-In", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
 	add_rib("Adj-RIB-Out", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
 	add_rib("Loc-RIB", conf->default_tableid, F_RIB_LOCAL);
