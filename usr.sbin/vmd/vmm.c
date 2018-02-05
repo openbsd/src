@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.79 2018/01/03 05:39:56 ccardenas Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.80 2018/02/05 05:01:08 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -55,7 +55,6 @@
 
 void vmm_sighdlr(int, short, void *);
 int vmm_start_vm(struct imsg *, uint32_t *);
-int vmm_receive_vm(struct vmd_vm * , int);
 int vmm_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 void vmm_run(struct privsep *, struct privsep_proc *, void *);
 void vmm_dispatch_vm(int, short, void *);
