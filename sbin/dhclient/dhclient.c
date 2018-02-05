@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.553 2018/02/05 05:08:27 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.554 2018/02/05 09:33:50 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -342,8 +342,11 @@ routehandler(struct interface_info *ifi, int routefd)
 			if (rtm->rtm_seq == (int32_t)ifi->xid) {
 				ifi->flags |= IFI_IN_CHARGE;
 				goto done;
-			} else if ((ifi->flags & IFI_IN_CHARGE) != 0)
-				fatalx("yielding responsibility");
+			} else if ((ifi->flags & IFI_IN_CHARGE) != 0) {
+				log_debug("%s: yielding responsibility",
+				    log_procname);
+				exit(0);
+			}
 		}
 		break;
 	case RTM_DESYNC:
@@ -961,8 +964,9 @@ bind_lease(struct interface_info *ifi)
 	struct proposal		*active_proposal = NULL;
 	struct proposal		*offered_proposal = NULL;
 	struct proposal		*effective_proposal = NULL;
+	char			*msg;
 	time_t			 cur_time, renewal;
-	int			 seen;
+	int			 rslt, seen;
 
 	time(&cur_time);
 	lease = apply_defaults(ifi->offer);
@@ -1016,12 +1020,24 @@ bind_lease(struct interface_info *ifi)
 	set_routes(effective_proposal->ifa, effective_proposal->netmask,
 	    effective_proposal->rtstatic, effective_proposal->rtstatic_len);
 
+	rslt = asprintf(&msg, "bound to %s from %s",
+	    inet_ntoa(ifi->active->address),
+	    (ifi->offer_src == NULL) ? "<unknown>" : ifi->offer_src);
+	if (rslt == -1)
+		fatal("bind msg");
+	if ((cmd_opts & OPT_FOREGROUND) != 0) {
+		/* log_info() will put messages on console only. */
+		;
+	} else if (isatty(STDERR_FILENO) != 0) {
+		/* log_info() to console and then /var/log/daemon. */
+		log_info("%s: %s", log_procname, msg);
+		go_daemon();
+	}
+	log_info("%s: %s", log_procname, msg);
+	free(msg);
+
 newlease:
 	write_resolv_conf();
-	log_info("%s: bound to %s from %s", log_procname,
-	    inet_ntoa(ifi->active->address),
-	    (ifi->offer_src == NULL) ? "<unknown>" : ifi->offer_src
-	);
 	free(ifi->offer_src);
 	ifi->offer_src = NULL;
 	go_daemon();
