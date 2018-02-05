@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.45 2017/12/09 16:46:08 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.46 2018/02/05 00:52:24 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -161,31 +161,31 @@ tls_config_load_file(struct tls_error *error, const char *filetype,
 	if ((fd = open(filename, O_RDONLY)) == -1) {
 		tls_error_set(error, "failed to open %s file '%s'",
 		    filetype, filename);
-		goto fail;
+		goto err;
 	}
 	if (fstat(fd, &st) != 0) {
 		tls_error_set(error, "failed to stat %s file '%s'",
 		    filetype, filename);
-		goto fail;
+		goto err;
 	}
 	if (st.st_size < 0)
-		goto fail;
+		goto err;
 	*len = (size_t)st.st_size;
 	if ((*buf = malloc(*len)) == NULL) {
 		tls_error_set(error, "failed to allocate buffer for "
 		    "%s file", filetype);
-		goto fail;
+		goto err;
 	}
 	n = read(fd, *buf, *len);
 	if (n < 0 || (size_t)n != *len) {
 		tls_error_set(error, "failed to read %s file '%s'",
 		    filetype, filename);
-		goto fail;
+		goto err;
 	}
 	close(fd);
 	return 0;
 
- fail:
+ err:
 	if (fd != -1)
 		close(fd);
 	freezero(*buf, *len);
@@ -571,17 +571,17 @@ tls_config_set_ciphers(struct tls_config *config, const char *ciphers)
 
 	if ((ssl_ctx = SSL_CTX_new(SSLv23_method())) == NULL) {
 		tls_config_set_errorx(config, "out of memory");
-		goto fail;
+		goto err;
 	}
 	if (SSL_CTX_set_cipher_list(ssl_ctx, ciphers) != 1) {
 		tls_config_set_errorx(config, "no ciphers for '%s'", ciphers);
-		goto fail;
+		goto err;
 	}
 
 	SSL_CTX_free(ssl_ctx);
 	return set_string(&config->ciphers, ciphers);
 
- fail:
+ err:
 	SSL_CTX_free(ssl_ctx);
 	return -1;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_util.c,v 1.9 2017/06/22 18:03:57 jsing Exp $ */
+/* $OpenBSD: tls_util.c,v 1.10 2018/02/05 00:52:24 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -43,7 +43,7 @@ tls_host_port(const char *hostport, char **host, char **port)
 	*port = NULL;
 
 	if ((s = strdup(hostport)) == NULL)
-		goto fail;
+		goto err;
 
 	h = p = s;
 
@@ -66,14 +66,14 @@ tls_host_port(const char *hostport, char **host, char **port)
 	*p++ = '\0';
 
 	if (asprintf(host, "%s", h) == -1)
-		goto fail;
+		goto err;
 	if (asprintf(port, "%s", p) == -1)
-		goto fail;
+		goto err;
 
 	rv = 0;
 	goto done;
 
- fail:
+ err:
 	free(*host);
 	*host = NULL;
 	free(*port);
@@ -126,38 +126,38 @@ tls_load_file(const char *name, size_t *len, char *password)
 	/* Just load the file into memory without decryption */
 	if (password == NULL) {
 		if (fstat(fd, &st) != 0)
-			goto fail;
+			goto err;
 		if (st.st_size < 0)
-			goto fail;
+			goto err;
 		size = (size_t)st.st_size;
 		if ((buf = malloc(size)) == NULL)
-			goto fail;
+			goto err;
 		n = read(fd, buf, size);
 		if (n < 0 || (size_t)n != size)
-			goto fail;
+			goto err;
 		close(fd);
 		goto done;
 	}
 
 	/* Or read the (possibly) encrypted key from file */
 	if ((fp = fdopen(fd, "r")) == NULL)
-		goto fail;
+		goto err;
 	fd = -1;
 
 	key = PEM_read_PrivateKey(fp, NULL, tls_password_cb, password);
 	fclose(fp);
 	if (key == NULL)
-		goto fail;
+		goto err;
 
 	/* Write unencrypted key to memory buffer */
 	if ((bio = BIO_new(BIO_s_mem())) == NULL)
-		goto fail;
+		goto err;
 	if (!PEM_write_bio_PrivateKey(bio, key, NULL, NULL, 0, NULL, NULL))
-		goto fail;
+		goto err;
 	if ((size = BIO_get_mem_data(bio, &data)) <= 0)
-		goto fail;
+		goto err;
 	if ((buf = malloc(size)) == NULL)
-		goto fail;
+		goto err;
 	memcpy(buf, data, size);
 
 	BIO_free_all(bio);
@@ -167,7 +167,7 @@ tls_load_file(const char *name, size_t *len, char *password)
 	*len = size;
 	return (buf);
 
- fail:
+ err:
 	if (fd != -1)
 		close(fd);
 	freezero(buf, size);
