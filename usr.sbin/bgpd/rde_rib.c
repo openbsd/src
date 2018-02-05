@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.156 2018/02/05 03:55:54 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.157 2018/02/05 23:29:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -367,7 +367,7 @@ path_init(u_int32_t hashsize)
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
 		;
-	pathtable.path_hashtbl = calloc(hs, sizeof(struct aspath_head));
+	pathtable.path_hashtbl = calloc(hs, sizeof(struct aspath_queue));
 	if (pathtable.path_hashtbl == NULL)
 		fatal("path_init");
 
@@ -496,9 +496,17 @@ void
 path_remove(struct rde_aspath *asp)
 {
 	struct prefix	*p, *np;
+	int		 has_updates;
 
-	for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = np) {
-		np = LIST_NEXT(p, path_l);
+	/*
+	 * Must check if we actually have updates before removing prefixes
+	 * because if this is the case than the last prefix on prefixes will
+	 * free the asp and so the access to updates is a use after free.
+	 */
+	has_updates = !TAILQ_EMPTY(&asp->updates);
+
+	for (p = TAILQ_FIRST(&asp->prefixes); p != NULL; p = np) {
+		np = TAILQ_NEXT(p, path_l);
 		if (asp->pftableid) {
 			struct bgpd_addr addr;
 
@@ -509,6 +517,12 @@ path_remove(struct rde_aspath *asp)
 		}
 		prefix_destroy(p);
 	}
+	if (has_updates)
+		for (p = TAILQ_FIRST(&asp->updates); p != NULL; p = np) {
+			np = TAILQ_NEXT(p, path_l);
+			/* no need to worry about pftable on Adj-RIB-Out */
+			prefix_destroy(p);
+		}
 }
 
 /* remove all stale routes or if staletime is 0 remove all routes for
@@ -519,11 +533,18 @@ path_remove_stale(struct rde_aspath *asp, u_int8_t aid)
 	struct prefix	*p, *np;
 	time_t		 staletime;
 	u_int32_t	 rprefixes;
+	int		 has_updates;
 
 	rprefixes=0;
 	staletime = asp->peer->staletime[aid];
-	for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = np) {
-		np = LIST_NEXT(p, path_l);
+	/*
+	 * Same magic as in path_remove() but probably not needed here.
+	 * This is called when a session flapped and during that time
+	 * the pending updates for that peer are getting reset.
+	 */
+	has_updates = !TAILQ_EMPTY(&asp->updates);
+	for (p = TAILQ_FIRST(&asp->prefixes); p != NULL; p = np) {
+		np = TAILQ_NEXT(p, path_l);
 		if (p->re->prefix->aid != aid)
 			continue;
 
@@ -545,11 +566,26 @@ path_remove_stale(struct rde_aspath *asp, u_int8_t aid)
 
 		prefix_destroy(p);
 	}
+	if (has_updates)
+		for (p = TAILQ_FIRST(&asp->updates); p != NULL; p = np) {
+			np = TAILQ_NEXT(p, path_l);
+			if (p->re->prefix->aid != aid)
+				continue;
+
+			if (staletime && p->lastchange > staletime)
+				continue;
+
+			/* no need to worry about pftable on Adj-RIB-Out */
+			prefix_destroy(p);
+		}
 	return (rprefixes);
 }
 
 
-/* this function is only called by prefix_remove and path_remove */
+/*
+ * This function can only called when all prefix have been removed first.
+ * Normally this happens directly out of the prefix removal functions.
+ */
 void
 path_destroy(struct rde_aspath *asp)
 {
@@ -559,7 +595,7 @@ path_destroy(struct rde_aspath *asp)
 
 	nexthop_unlink(asp);
 	LIST_REMOVE(asp, path_l);
-	LIST_REMOVE(asp, peer_l);
+	TAILQ_REMOVE(&asp->peer->path_h, asp, peer_l);
 	asp->peer = NULL;
 	asp->nexthop = NULL;
 	asp->flags &= ~F_ATTR_LINKED;
@@ -570,7 +606,7 @@ path_destroy(struct rde_aspath *asp)
 int
 path_empty(struct rde_aspath *asp)
 {
-	return LIST_EMPTY(&asp->prefix_h);
+	return TAILQ_EMPTY(&asp->prefixes) && TAILQ_EMPTY(&asp->updates);
 }
 
 /*
@@ -588,7 +624,7 @@ path_link(struct rde_aspath *asp, struct rde_peer *peer)
 	head = PATH_HASH(asp->aspath);
 
 	LIST_INSERT_HEAD(head, asp, path_l);
-	LIST_INSERT_HEAD(&peer->path_h, asp, peer_l);
+	TAILQ_INSERT_TAIL(&peer->path_h, asp, peer_l);
 	asp->peer = peer;
 	nexthop_link(asp);
 	asp->flags |= F_ATTR_LINKED;
@@ -635,7 +671,8 @@ path_get(void)
 		fatal("path_alloc");
 	rdemem.path_cnt++;
 
-	LIST_INIT(&asp->prefix_h);
+	TAILQ_INIT(&asp->prefixes);
+	TAILQ_INIT(&asp->updates);
 	asp->origin = ORIGIN_INCOMPLETE;
 	asp->lpref = DEFAULT_LPREF;
 	/* med = 0 */
@@ -736,7 +773,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	np->lastchange = time(NULL);
 
 	/* add to new as path */
-	LIST_INSERT_HEAD(&asp->prefix_h, np, path_l);
+	TAILQ_INSERT_HEAD(&asp->prefixes, np, path_l);
 	PREFIX_COUNT(asp, 1);
 	/*
 	 * no need to update the peer prefix count because we are only moving
@@ -756,7 +793,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 
 	/* remove old prefix node */
 	oasp = prefix_aspath(p);
-	LIST_REMOVE(p, path_l);
+	TAILQ_REMOVE(&oasp->prefixes, p, path_l);
 	PREFIX_COUNT(oasp, -1);
 	/* as before peer count needs no update because of move */
 
@@ -890,9 +927,11 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 {
 	struct prefix	*p;
 
-	LIST_FOREACH(p, &asp->prefix_h, path_l) {
+	TAILQ_FOREACH(p, &asp->prefixes, path_l) {
 		/*
-		 * skip non local-RIBs or RIBs that are flagged as noeval.
+		 * Skip non local-RIBs or RIBs that are flagged as noeval.
+		 * There is no need to run over updates since that is only
+		 * used on the Adj-RIB-Out.
 		 */
 		if (re_rib(p->re)->flags & F_RIB_NOEVALUATE)
 			continue;
@@ -933,6 +972,8 @@ prefix_destroy(struct prefix *p)
 	struct rde_aspath	*asp;
 
 	asp = prefix_aspath(p);
+	PREFIX_COUNT(asp, -1);
+
 	prefix_unlink(p);
 	prefix_free(p);
 
@@ -949,13 +990,14 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime, u_int32_t flags)
 	struct rde_aspath	*asp, *xasp;
 	struct prefix		*p, *xp;
 
-	for (asp = LIST_FIRST(&peer->path_h); asp != NULL; asp = xasp) {
-		xasp = LIST_NEXT(asp, peer_l);
+	for (asp = TAILQ_FIRST(&peer->path_h); asp != NULL; asp = xasp) {
+		xasp = TAILQ_NEXT(asp, peer_l);
 		if ((asp->flags & F_ANN_DYNAMIC) != flags)
 			continue;
-		for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = xp) {
-			xp = LIST_NEXT(p, path_l);
+		for (p = TAILQ_FIRST(&asp->prefixes); p != NULL; p = xp) {
+			xp = TAILQ_NEXT(p, path_l);
 			if (reloadtime > p->lastchange) {
+				PREFIX_COUNT(asp, -1);
 				prefix_unlink(p);
 				prefix_free(p);
 			}
@@ -971,7 +1013,7 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime, u_int32_t flags)
 static void
 prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_aspath *asp)
 {
-	LIST_INSERT_HEAD(&asp->prefix_h, pref, path_l);
+	TAILQ_INSERT_HEAD(&asp->prefixes, pref, path_l);
 	PREFIX_COUNT(asp, 1);
 
 	pref->_p._aspath = asp;
@@ -989,13 +1031,14 @@ static void
 prefix_unlink(struct prefix *pref)
 {
 	struct rib_entry	*re = pref->re;
+	struct prefix_queue	*pq;
 
 	/* make route decision */
 	LIST_REMOVE(pref, rib_l);
 	prefix_evaluate(NULL, re);
 
-	LIST_REMOVE(pref, path_l);
-	PREFIX_COUNT(prefix_aspath(pref), -1);
+	pq = &prefix_aspath(pref)->prefixes;
+	TAILQ_REMOVE(pq, pref, path_l);
 
 	if (rib_empty(re))
 		rib_remove(re);
@@ -1005,8 +1048,8 @@ prefix_unlink(struct prefix *pref)
 	pref->re = NULL;
 
 	/*
-	 * It's the caller's duty to remove empty aspath structures.
-	 * Also freeing the unlinked prefix is the caller's duty.
+	 * It's the caller's duty to do accounting and remove empty aspath
+	 * structures. Also freeing the unlinked prefix is the caller's duty.
 	 */
 }
 

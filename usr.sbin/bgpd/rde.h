@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.164 2018/02/05 03:55:54 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.165 2018/02/05 23:29:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -41,9 +41,15 @@ enum peer_state {
  * Currently I assume that we can do that with the neighbor_ip...
  */
 LIST_HEAD(rde_peer_head, rde_peer);
+LIST_HEAD(aspath_list, aspath);
+LIST_HEAD(attr_list, attr);
+LIST_HEAD(prefix_list, prefix);
+TAILQ_HEAD(prefix_queue, prefix);
 LIST_HEAD(aspath_head, rde_aspath);
+TAILQ_HEAD(aspath_queue, rde_aspath);
 RB_HEAD(uptree_prefix, update_prefix);
 RB_HEAD(uptree_attr, update_attr);
+
 struct rib_desc;
 struct rib;
 RB_HEAD(rib_tree, rib_entry);
@@ -53,7 +59,7 @@ TAILQ_HEAD(uplist_attr, update_attr);
 struct rde_peer {
 	LIST_ENTRY(rde_peer)		 hash_l; /* hash list over all peers */
 	LIST_ENTRY(rde_peer)		 peer_l; /* list of all peers */
-	struct aspath_head		 path_h; /* list of all as paths */
+	struct aspath_queue		 path_h; /* list of all as paths */
 	struct peer_config		 conf;
 	struct bgpd_addr		 remote_addr;
 	struct bgpd_addr		 local_v4_addr;
@@ -90,8 +96,6 @@ struct rde_peer {
 #define AS_CONFED_SEQUENCE	3
 #define AS_CONFED_SET		4
 #define ASPATH_HEADER_SIZE	(sizeof(struct aspath) - sizeof(u_char))
-
-LIST_HEAD(aspath_list, aspath);
 
 struct aspath {
 	LIST_ENTRY(aspath)	entry;
@@ -150,14 +154,10 @@ struct mpattr {
 	u_int16_t	 unreach_len;
 };
 
-LIST_HEAD(attr_list, attr);
-
 struct path_table {
 	struct aspath_head	*path_hashtbl;
 	u_int32_t		 path_hashmask;
 };
-
-LIST_HEAD(prefix_head, prefix);
 
 #define	F_ATTR_ORIGIN		0x00001
 #define	F_ATTR_ASPATH		0x00002
@@ -187,8 +187,9 @@ LIST_HEAD(prefix_head, prefix);
 #define DEFAULT_LPREF		100
 
 struct rde_aspath {
-	LIST_ENTRY(rde_aspath)		 path_l, peer_l, nexthop_l;
-	struct prefix_head		 prefix_h;
+	LIST_ENTRY(rde_aspath)		 path_l, nexthop_l;
+	TAILQ_ENTRY(rde_aspath)		 peer_l, update_l;
+	struct prefix_queue		 prefixes, updates;
 	struct attr			**others;
 	struct rde_peer			*peer;
 	struct aspath			*aspath;
@@ -281,7 +282,7 @@ struct rib_context {
 
 struct rib_entry {
 	RB_ENTRY(rib_entry)	 rib_e;
-	struct prefix_head	 prefix_h;
+	struct prefix_list	 prefix_h;
 	struct prefix		*active;	/* for fast access */
 	struct pt_entry		*prefix;
 	struct rib		*__rib;		/* mangled pointer with flags */
@@ -307,7 +308,8 @@ struct rib_desc {
 #define RIB_LOC_START	2
 
 struct prefix {
-	LIST_ENTRY(prefix)		 rib_l, path_l;
+	LIST_ENTRY(prefix)		 rib_l;
+	TAILQ_ENTRY(prefix)		 path_l;
 	struct rib_entry		*re;
 	union {
 		struct rde_aspath		*_aspath;

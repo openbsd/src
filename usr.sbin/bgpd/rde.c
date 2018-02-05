@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.375 2018/02/05 03:55:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.376 2018/02/05 23:29:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3251,7 +3251,7 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 	if (peer == NULL)
 		fatal("peer_add");
 
-	LIST_INIT(&peer->path_h);
+	TAILQ_INIT(&peer->path_h);
 	memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
 	peer->remote_bgpid = 0;
 	peer->rib = rib_find(peer->conf.rib);
@@ -3391,11 +3391,11 @@ peer_down(u_int32_t id)
 	up_down(peer);
 
 	/* walk through per peer RIB list and remove all prefixes. */
-	for (asp = LIST_FIRST(&peer->path_h); asp != NULL; asp = nasp) {
-		nasp = LIST_NEXT(asp, peer_l);
+	for (asp = TAILQ_FIRST(&peer->path_h); asp != NULL; asp = nasp) {
+		nasp = TAILQ_NEXT(asp, peer_l);
 		path_remove(asp);
 	}
-	LIST_INIT(&peer->path_h);
+	TAILQ_INIT(&peer->path_h);
 	peer->prefix_cnt = 0;
 
 	/* Deletions are performed in path_remove() */
@@ -3418,8 +3418,8 @@ peer_flush(struct rde_peer *peer, u_int8_t aid)
 
 	rprefixes = 0;
 	/* walk through per peer RIB list and remove all stale prefixes. */
-	for (asp = LIST_FIRST(&peer->path_h); asp != NULL; asp = nasp) {
-		nasp = LIST_NEXT(asp, peer_l);
+	for (asp = TAILQ_FIRST(&peer->path_h); asp != NULL; asp = nasp) {
+		nasp = TAILQ_NEXT(asp, peer_l);
 		rprefixes += path_remove_stale(asp, aid);
 	}
 
