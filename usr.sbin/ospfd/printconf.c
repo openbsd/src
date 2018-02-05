@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.17 2016/11/19 12:46:46 sthen Exp $ */
+/*	$OpenBSD: printconf.c,v 1.18 2018/02/05 12:11:28 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -94,9 +94,12 @@ print_redistribute(struct redist_list *rlh)
 			printf("%sredistribute default ", print_no(r->type));
 			break;
 		}
-		printf("set { metric %d type %d }\n",
+		printf("set { metric %d type %d }",
 		    (r->metric & LSA_METRIC_MASK),
 		    ((r->metric & LSA_ASEXT_E_FLAG) == 0 ? 1 : 2));
+		if (r->dependon[0])
+			printf(" depend on %s", r->dependon);
+		printf("\n");
 	}
 }
 
@@ -120,8 +123,10 @@ print_iface(struct iface *iface)
 
 	printf("\t\tmetric %d\n", iface->metric);
 
-	if (*iface->demote_group)
+	if (iface->demote_group[0] != '\0')
 		printf("\t\tdemote %s\n", iface->demote_group);
+	if (iface->dependon[0] != '\0')
+		printf("\t\tdepend on %s\n", iface->dependon);
 	if (iface->passive)
 		printf("\t\tpassive\n");
 	else {

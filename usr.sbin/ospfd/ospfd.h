@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.97 2017/01/24 04:24:25 benno Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.98 2018/02/05 12:11:28 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -149,6 +149,7 @@ struct redistribute {
 	u_int32_t			metric;
 	u_int16_t			label;
 	u_int16_t			type;
+	char				dependon[IFNAMSIZ];
 };
 SIMPLEQ_HEAD(redist_list, redistribute);
 
@@ -325,6 +326,7 @@ struct iface {
 
 	char			 name[IF_NAMESIZE];
 	char			 demote_group[IFNAMSIZ];
+	char			 dependon[IFNAMSIZ];
 	char			 auth_key[MAX_SIMPLE_AUTH_LEN];
 	struct in_addr		 addr;
 	struct in_addr		 dst;
@@ -346,6 +348,7 @@ struct iface {
 	int			 fd;
 	int			 state;
 	int			 mtu;
+	int			 depend_ok;
 	u_int16_t		 flags;
 	u_int16_t		 transmit_delay;
 	u_int16_t		 hello_interval;
@@ -553,6 +556,7 @@ int		 carp_demote_set(char *, int);
 /* parse.y */
 struct ospfd_conf	*parse_config(char *, int);
 int			 cmdline_symset(char *);
+void			 conf_clear_redist_list(struct redist_list *);
 
 /* in_cksum.c */
 u_int16_t	 in_cksum(void *, size_t);
@@ -603,6 +607,7 @@ void	merge_config(struct ospfd_conf *, struct ospfd_conf *);
 void	imsg_event_add(struct imsgev *);
 int	imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 	    pid_t, int, void *, u_int16_t);
+int	ifstate_is_up(struct kif *kif);
 
 /* printconf.c */
 void	print_config(struct ospfd_conf *);

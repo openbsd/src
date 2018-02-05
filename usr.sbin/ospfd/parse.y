@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.83 2017/01/05 13:53:09 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.84 2018/02/05 12:11:28 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -132,11 +132,12 @@ typedef struct {
 %token	DEMOTE
 %token	INCLUDE
 %token	ERROR
+%token	DEPEND ON
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
 %type	<v.number>	yesno no optlist optlist_l option demotecount msec
 %type	<v.number>	deadtime
-%type	<v.string>	string
+%type	<v.string>	string dependon
 %type	<v.redist>	redistribute
 
 %%
@@ -278,7 +279,7 @@ conf_main	: ROUTERID STRING {
 		;
 
 
-redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist {
+redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist dependon {
 			struct redistribute	*r;
 
 			if ((r = calloc(1, sizeof(*r))) == NULL)
@@ -295,9 +296,14 @@ redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist {
 			if ($1)
 				r->type |= REDIST_NO;
 			r->metric = $6;
+			if ($7) {
+				strlcpy(r->dependon, $7, sizeof(r->dependon));
+			} else
+				r->dependon[0] = '\0';
+			free($7);
 			$$ = r;
 		}
-		| no REDISTRIBUTE STRING optlist {
+		| no REDISTRIBUTE STRING optlist dependon {
 			struct redistribute	*r;
 
 			if ((r = calloc(1, sizeof(*r))) == NULL)
@@ -320,10 +326,15 @@ redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist {
 			if ($1)
 				r->type |= REDIST_NO;
 			r->metric = $4;
+			if ($5) {
+				strlcpy(r->dependon, $5, sizeof(r->dependon));
+			} else
+				r->dependon[0] = '\0';
 			free($3);
+			free($5);
 			$$ = r;
 		}
-		| no REDISTRIBUTE RTLABEL STRING optlist {
+		| no REDISTRIBUTE RTLABEL STRING optlist dependon {
 			struct redistribute	*r;
 
 			if ((r = calloc(1, sizeof(*r))) == NULL)
@@ -333,19 +344,23 @@ redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist {
 			if ($1)
 				r->type |= REDIST_NO;
 			r->metric = $5;
+			if ($6)
+				strlcpy(r->dependon, $6, sizeof(r->dependon));
+			else
+				r->dependon[0] = '\0';
 			free($4);
-
+			free($6);
 			$$ = r;
 		}
 		;
 
 optlist		: /* empty */ 			{ $$ = DEFAULT_REDIST_METRIC; }
-		| SET option			{
+		| SET option 			{
 			$$ = $2;
 			if (($$ & LSA_METRIC_MASK) == 0)
 				$$ |= DEFAULT_REDIST_METRIC;
 		}
-		| SET optnl '{' optnl optlist_l optnl '}'	{
+		| SET optnl '{' optnl optlist_l optnl '}' {
 			$$ = $5;
 			if (($$ & LSA_METRIC_MASK) == 0)
 				$$ |= DEFAULT_REDIST_METRIC;
@@ -385,6 +400,26 @@ option		: METRIC NUMBER {
 				yyerror("only external type 1 and 2 allowed");
 				YYERROR;
 			}
+		}
+		;
+
+dependon	: /* empty */		{ $$ = NULL; }
+		| DEPEND ON STRING	{
+			struct in_addr	 addr;
+			struct kif	*kif;
+
+			if (strlen($3) >= IFNAMSIZ) {
+				yyerror("interface name %s too long", $3);
+				free($3);
+				YYERROR;
+			}
+			bzero(&addr, sizeof(addr));
+			if ((kif = kif_findname($3, addr, NULL)) == NULL) {
+				yyerror("unknown interface %s", $3);
+				free($3);
+				YYERROR;
+			}
+			$$ = $3;
 		}
 		;
 
@@ -693,6 +728,23 @@ interfaceoptsl	: PASSIVE		{ iface->passive = 1; }
 				YYERROR;
 			}
 		}
+		| dependon {
+			struct in_addr	 addr;
+			struct kif	*kif;
+
+			if ($1) {
+				strlcpy(iface->dependon, $1,
+				       	sizeof(iface->dependon));
+				bzero(&addr, sizeof(addr));
+				kif = kif_findname($1, addr, NULL);
+				iface->depend_ok = ifstate_is_up(kif);
+			} else {
+				iface->dependon[0] = '\0';
+				iface->depend_ok = 1;
+			}
+
+			free($1);
+		}
 		| defaults
 		;
 
@@ -736,6 +788,7 @@ lookup(char *s)
 		{"auth-md-keyid",	AUTHMDKEYID},
 		{"auth-type",		AUTHTYPE},
 		{"demote",		DEMOTE},
+		{"depend",		DEPEND},
 		{"external-tag",	EXTTAG},
 		{"fast-hello-interval",	FASTHELLOINTERVAL},
 		{"fib-update",		FIBUPDATE},
@@ -746,6 +799,7 @@ lookup(char *s)
 		{"minimal",		MINIMAL},
 		{"msec",		MSEC},
 		{"no",			NO},
+		{"on",			ON},
 		{"passive",		PASSIVE},
 		{"rdomain",		RDOMAIN},
 		{"redistribute",	REDISTRIBUTE},
@@ -1288,6 +1342,16 @@ conf_check_rdomain(unsigned int rdomain)
 }
 
 void
+conf_clear_redist_list(struct redist_list *rl)
+{
+	struct redistribute *r;
+	while ((r = SIMPLEQ_FIRST(rl)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(rl, entry);
+		free(r);
+	}
+}
+
+void
 clear_config(struct ospfd_conf *xconf)
 {
 	struct area	*a;
@@ -1296,6 +1360,8 @@ clear_config(struct ospfd_conf *xconf)
 		LIST_REMOVE(a, entry);
 		area_del(a);
 	}
+
+	conf_clear_redist_list(&xconf->redist_list);
 
 	free(xconf);
 }
