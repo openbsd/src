@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.50 2018/02/05 12:11:28 remi Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.51 2018/02/05 12:43:29 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -111,11 +111,12 @@ Table 0 is the default table.
 .Op Ic no
 .Ic redistribute
 .Sm off
-.Po Ic static Ns | Ns Ic connected Ns | Ns
-.Ic default Pc
+.Pq Ic static | connected | default
 .Sm on
 .Op Ic set ...
+.Bk -words
 .Op Ic depend on Ar interface
+.Ek
 .Xc
 .It Xo
 .Op Ic no
@@ -357,10 +358,10 @@ demotion counter by 1 on the given interface group, usually
 when the interface state is going down.
 The demotion counter will be decreased when the interface
 state is active again.
-.It Ic depend Ic on Ar interface
+.It Ic depend on Ar interface
 A metric of 65535 is used if the specified interface is down or in status
 backup.
-.It Ic fast-hello-interval Ic msec Ar milliseconds
+.It Ic fast-hello-interval msec Ar milliseconds
 If the interface is configured to use
 .Ic router-dead-time minimal ,
 hello packets will be sent using this timer.
@@ -385,7 +386,7 @@ Set retransmit interval.
 The default value is 5 seconds; valid range is 5\-3600 seconds.
 .It Xo
 .Ic router-dead-time
-.Po Ar seconds Ns | Ns Ic minimal Pc
+.Pq Ar seconds Ns | Ns Ic minimal
 .Xc
 Set the router dead time, a.k.a. neighbor inactivity timer.
 The default value is 40 seconds; valid range is 2\-2147483647 seconds.
