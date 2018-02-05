@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.552 2018/02/05 03:59:49 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.553 2018/02/05 05:08:27 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -373,18 +373,8 @@ routehandler(struct interface_info *ifi, int routefd)
 			    (ifi->linkstat != 0) ? "up" : "down",
 			    (linkstat != 0) ? "up" : "down");
 			ifi->linkstat = linkstat;
-			if (ifi->linkstat != 0) {
-				if (ifi->state == S_PREBOOT) {
-					state_preboot(ifi);
-					get_hw_address(ifi);
-				} else {
-					ifi->state = S_REBOOTING;
-					state_reboot(ifi);
-				}
-			} else {
-				/* No need to wait for anything but link. */
-				cancel_timeout(ifi);
-			}
+			ifi->state = S_PREBOOT;
+			state_preboot(ifi);
 		}
 		break;
 	case RTM_IFANNOUNCE:
@@ -673,13 +663,8 @@ main(int argc, char *argv[])
 
 	time(&ifi->startup_time);
 
-	if (ifi->linkstat != 0) {
-		ifi->state = S_REBOOTING;
-		state_reboot(ifi);
-	} else {
-		ifi->state = S_PREBOOT;
-		state_preboot(ifi);
-	}
+	ifi->state = S_PREBOOT;
+	state_preboot(ifi);
 
 	dispatch(ifi, routefd);
 
@@ -728,12 +713,14 @@ state_preboot(struct interface_info *ifi)
 	}
 
 	if (ifi->linkstat != 0) {
+		if ((ifi->flags & IFI_VALID_LLADDR) == 0)
+			get_hw_address(ifi);
 		ifi->state = S_REBOOTING;
-		set_timeout(ifi, 1, state_reboot);
+		state_reboot(ifi);
+	} else if (interval > config->link_timeout) {
+		go_daemon();
+		cancel_timeout(ifi); /* Wait for RTM_IFINFO. */
 	} else {
-		if (interval > config->link_timeout)
-			go_daemon();
-		ifi->state = S_PREBOOT;
 		set_timeout(ifi, 1, state_preboot);
 	}
 }
