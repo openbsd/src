@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.163 2018/02/04 05:08:16 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.164 2018/02/05 03:55:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -25,6 +25,7 @@
 #include <stdint.h>
 
 #include "bgpd.h"
+#include "log.h"
 
 /* rde internal structures */
 
@@ -307,9 +308,10 @@ struct rib_desc {
 
 struct prefix {
 	LIST_ENTRY(prefix)		 rib_l, path_l;
-	struct rde_aspath		*aspath;
-	struct pt_entry			*prefix;
 	struct rib_entry		*re;
+	union {
+		struct rde_aspath		*_aspath;
+	} _p;
 	time_t				 lastchange;
 };
 
@@ -407,17 +409,27 @@ int		 rde_filter_equal(struct filter_head *, struct filter_head *,
 void		 rde_filter_calc_skip_steps(struct filter_head *);
 
 /* rde_prefix.c */
-#define pt_empty(pt)	((pt)->refcnt == 0)
-#define pt_ref(pt)	do {				\
-	++(pt)->refcnt;					\
-	if ((pt)->refcnt == 0)				\
-		fatalx("pt_ref: overflow");		\
-} while(0)
-#define pt_unref(pt)	do {				\
-	if ((pt)->refcnt == 0)				\
-		fatalx("pt_unref: underflow");		\
-	--(pt)->refcnt;					\
-} while(0)
+static inline int
+pt_empty(struct pt_entry *pt)
+{
+	return (pt->refcnt == 0);
+}
+
+static inline void
+pt_ref(struct pt_entry *pt)
+{
+	++pt->refcnt;
+	if (pt->refcnt == 0)
+		fatalx("pt_ref: overflow");
+}
+
+static inline void
+pt_unref(struct pt_entry *pt)
+{
+	if (pt->refcnt == 0)
+		fatalx("pt_unref: underflow");
+	--pt->refcnt;
+}
 
 void	 pt_init(void);
 void	 pt_shutdown(void);
@@ -480,6 +492,19 @@ void		 prefix_updateall(struct rde_aspath *, enum nexthop_state,
 		     enum nexthop_state);
 void		 prefix_destroy(struct prefix *);
 void		 prefix_network_clean(struct rde_peer *, time_t, u_int32_t);
+void		 prefix_relink(struct prefix *, struct rde_aspath *, int);
+
+static inline struct rde_aspath *
+prefix_aspath(struct prefix *p)
+{
+	return (p->_p._aspath);
+}
+
+static inline struct rde_peer *
+prefix_peer(struct prefix *p)
+{
+	return (p->_p._aspath->peer);
+}
 
 void		 nexthop_init(u_int32_t);
 void		 nexthop_shutdown(void);

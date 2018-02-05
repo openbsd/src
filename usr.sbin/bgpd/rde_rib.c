@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.155 2018/02/04 05:08:16 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.156 2018/02/05 03:55:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -149,14 +149,15 @@ rib_free(struct rib *rib)
 		 * use the default for loop.
 		 */
 		while ((p = LIST_FIRST(&re->prefix_h))) {
+			struct rde_aspath *asp = prefix_aspath(p);
 			np = LIST_NEXT(p, rib_l);
-			if (p->aspath->pftableid) {
+			if (asp->pftableid) {
 				struct bgpd_addr addr;
 
-				pt_getaddr(p->prefix, &addr);
+				pt_getaddr(p->re->prefix, &addr);
 				/* Commit is done in peer_down() */
-				rde_send_pftable(p->aspath->pftableid, &addr,
-				    p->prefix->prefixlen, 1);
+				rde_send_pftable(asp->pftableid, &addr,
+				    p->re->prefix->prefixlen, 1);
 			}
 			prefix_destroy(p);
 			if (np == NULL)
@@ -354,8 +355,9 @@ struct path_table pathtable;
 SIPHASH_KEY pathtablekey;
 
 /* XXX the hash should also include communities and the other attrs */
-#define PATH_HASH(x)				\
-	&pathtable.path_hashtbl[SipHash24(&pathtablekey, (x)->data, (x)->len) & \
+#define PATH_HASH(x)						\
+	&pathtable.path_hashtbl[x == NULL ? 0 :			\
+	    SipHash24(&pathtablekey, (x)->data, (x)->len) &	\
 	    pathtable.path_hashmask]
 
 void
@@ -404,7 +406,7 @@ path_update(struct rib *rib, struct rde_peer *peer, struct rde_aspath *nasp,
 	 * First try to find a prefix in the specified RIB.
 	 */
 	if ((p = prefix_get(rib, peer, prefix, prefixlen, 0)) != NULL) {
-		if (path_compare(nasp, p->aspath) == 0) {
+		if (path_compare(nasp, prefix_aspath(p)) == 0) {
 			/* no change, update last change */
 			p->lastchange = time(NULL);
 			return (0);
@@ -500,10 +502,10 @@ path_remove(struct rde_aspath *asp)
 		if (asp->pftableid) {
 			struct bgpd_addr addr;
 
-			pt_getaddr(p->prefix, &addr);
+			pt_getaddr(p->re->prefix, &addr);
 			/* Commit is done in peer_down() */
-			rde_send_pftable(p->aspath->pftableid, &addr,
-			    p->prefix->prefixlen, 1);
+			rde_send_pftable(prefix_aspath(p)->pftableid, &addr,
+			    p->re->prefix->prefixlen, 1);
 		}
 		prefix_destroy(p);
 	}
@@ -522,7 +524,7 @@ path_remove_stale(struct rde_aspath *asp, u_int8_t aid)
 	staletime = asp->peer->staletime[aid];
 	for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = np) {
 		np = LIST_NEXT(p, path_l);
-		if (p->prefix->aid != aid)
+		if (p->re->prefix->aid != aid)
 			continue;
 
 		if (staletime && p->lastchange > staletime)
@@ -531,10 +533,10 @@ path_remove_stale(struct rde_aspath *asp, u_int8_t aid)
 		if (asp->pftableid) {
 			struct bgpd_addr addr;
 
-			pt_getaddr(p->prefix, &addr);
+			pt_getaddr(p->re->prefix, &addr);
 			/* Commit is done in peer_flush() */
-			rde_send_pftable(p->aspath->pftableid, &addr,
-			    p->prefix->prefixlen, 1);
+			rde_send_pftable(prefix_aspath(p)->pftableid, &addr,
+			    p->re->prefix->prefixlen, 1);
 		}
 
 		/* only count Adj-RIB-In */
@@ -705,7 +707,7 @@ prefix_add(struct rib *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
 		prefix_link(p, re, asp);
 		return (1);
 	} else {
-		if (p->aspath != asp) {
+		if (prefix_aspath(p) != asp) {
 			/* prefix belongs to a different aspath so move */
 			prefix_move(asp, p);
 		} else
@@ -723,14 +725,13 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	struct prefix		*np;
 	struct rde_aspath	*oasp;
 
-	if (asp->peer != p->aspath->peer)
+	if (asp->peer != prefix_peer(p))
 		fatalx("prefix_move: cross peer move");
 
 	/* create new prefix node */
 	np = prefix_alloc();
-	np->aspath = asp;
+	np->_p._aspath = asp;
 	/* peer and prefix pointers are still equal */
-	np->prefix = p->prefix;
 	np->re = p->re;
 	np->lastchange = time(NULL);
 
@@ -754,14 +755,13 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	prefix_evaluate(np, np->re);
 
 	/* remove old prefix node */
-	oasp = p->aspath;
+	oasp = prefix_aspath(p);
 	LIST_REMOVE(p, path_l);
 	PREFIX_COUNT(oasp, -1);
 	/* as before peer count needs no update because of move */
 
 	/* destroy all references to other objects and free the old prefix */
-	p->aspath = NULL;
-	p->prefix = NULL;
+	p->_p._aspath = NULL;
 	p->re = NULL;
 	prefix_free(p);
 
@@ -783,15 +783,14 @@ prefix_remove(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
 	struct rde_aspath	*asp;
 
 	re = rib_get(rib, prefix, prefixlen);
-	if (re == NULL)	/* Got a dummy withdrawn request */
+	if (re == NULL)		/* Got a dummy withdrawn request */
 		return (0);
 
 	p = prefix_bypeer(re, peer, flags);
 	if (p == NULL)		/* Got a dummy withdrawn request. */
 		return (0);
 
-	asp = p->aspath;
-
+	asp = prefix_aspath(p);
 	if (asp->pftableid) {
 		/* only prefixes in the local RIB were pushed into pf */
 		rde_send_pftable(asp->pftableid, prefix, prefixlen, 1);
@@ -874,11 +873,11 @@ prefix_bypeer(struct rib_entry *re, struct rde_peer *peer, u_int32_t flags)
 	struct prefix	*p;
 
 	LIST_FOREACH(p, &re->prefix_h, rib_l) {
-		if (p->aspath->peer != peer)
+		if (prefix_peer(p) != peer)
 			continue;
-		if (p->aspath->flags & flags &&
+		if (prefix_aspath(p)->flags & flags &&
 		    (flags & F_ANN_DYNAMIC) !=
-		    (p->aspath->flags & F_ANN_DYNAMIC))
+		    (prefix_aspath(p)->flags & F_ANN_DYNAMIC))
 			continue;
 		return (p);
 	}
@@ -933,7 +932,7 @@ prefix_destroy(struct prefix *p)
 {
 	struct rde_aspath	*asp;
 
-	asp = p->aspath;
+	asp = prefix_aspath(p);
 	prefix_unlink(p);
 	prefix_free(p);
 
@@ -975,10 +974,8 @@ prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_aspath *asp)
 	LIST_INSERT_HEAD(&asp->prefix_h, pref, path_l);
 	PREFIX_COUNT(asp, 1);
 
-	pref->aspath = asp;
+	pref->_p._aspath = asp;
 	pref->re = re;
-	pref->prefix = re->prefix;
-	pt_ref(pref->prefix);
 	pref->lastchange = time(NULL);
 
 	/* make route decision */
@@ -998,17 +995,13 @@ prefix_unlink(struct prefix *pref)
 	prefix_evaluate(NULL, re);
 
 	LIST_REMOVE(pref, path_l);
-	PREFIX_COUNT(pref->aspath, -1);
+	PREFIX_COUNT(prefix_aspath(pref), -1);
 
-	pt_unref(pref->prefix);
-	if (pt_empty(pref->prefix))
-		pt_remove(pref->prefix);
 	if (rib_empty(re))
 		rib_remove(re);
 
 	/* destroy all references to other objects */
-	pref->aspath = NULL;
-	pref->prefix = NULL;
+	pref->_p._aspath = NULL;
 	pref->re = NULL;
 
 	/*

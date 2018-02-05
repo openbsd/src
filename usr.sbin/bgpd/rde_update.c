@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.87 2018/02/04 05:08:16 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.88 2018/02/05 03:55:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -275,6 +275,8 @@ int
 up_test_update(struct rde_peer *peer, struct prefix *p)
 {
 	struct bgpd_addr	 addr;
+	struct rde_aspath	*asp;
+	struct rde_peer		*prefp;
 	struct attr		*attr;
 
 	if (peer->state != PEER_UP)
@@ -284,20 +286,23 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 		/* no prefix available */
 		return (0);
 
-	if (peer == p->aspath->peer)
+	prefp = prefix_peer(p);
+	asp = prefix_aspath(p);
+
+	if (peer == prefp)
 		/* Do not send routes back to sender */
 		return (0);
 
-	if (p->aspath->flags & F_ATTR_PARSE_ERR)
+	if (asp->flags & F_ATTR_PARSE_ERR)
 		fatalx("try to send out a botched path");
-	if (p->aspath->flags & F_ATTR_LOOP)
+	if (asp->flags & F_ATTR_LOOP)
 		fatalx("try to send out a looped path");
 
-	pt_getaddr(p->prefix, &addr);
+	pt_getaddr(p->re->prefix, &addr);
 	if (peer->capa.mp[addr.aid] == 0)
 		return (-1);
 
-	if (!p->aspath->peer->conf.ebgp && !peer->conf.ebgp) {
+	if (!prefp->conf.ebgp && !peer->conf.ebgp) {
 		/*
 		 * route reflector redistribution rules:
 		 * 1. if announce is set                -> announce
@@ -306,9 +311,9 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 		 * 4. old non-client, new client        -> yes
 		 * 5. old client, new client            -> yes
 		 */
-		if (p->aspath->peer->conf.reflector_client == 0 &&
+		if (prefp->conf.reflector_client == 0 &&
 		    peer->conf.reflector_client == 0 &&
-		    (p->aspath->flags & F_PREFIX_ANNOUNCED) == 0)
+		    (asp->flags & F_PREFIX_ANNOUNCED) == 0)
 			/* Do not redistribute updates to ibgp peers */
 			return (0);
 	}
@@ -330,27 +335,26 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 		 * pass only prefix that have an aspath count
 		 * of zero this is equal to the ^$ regex.
 		 */
-		if (p->aspath->aspath->ascnt != 0)
+		if (asp->aspath->ascnt != 0)
 			return (0);
 		break;
 	}
 
 	/* well known communities */
-	if (community_match(p->aspath,
-	    COMMUNITY_WELLKNOWN, COMMUNITY_NO_ADVERTISE))
+	if (community_match(asp, COMMUNITY_WELLKNOWN, COMMUNITY_NO_ADVERTISE))
 		return (0);
-	if (peer->conf.ebgp && community_match(p->aspath,
-	    COMMUNITY_WELLKNOWN, COMMUNITY_NO_EXPORT))
+	if (peer->conf.ebgp && community_match(asp, COMMUNITY_WELLKNOWN,
+	    COMMUNITY_NO_EXPORT))
 		return (0);
-	if (peer->conf.ebgp && community_match(p->aspath,
-	    COMMUNITY_WELLKNOWN, COMMUNITY_NO_EXPSUBCONFED))
+	if (peer->conf.ebgp && community_match(asp, COMMUNITY_WELLKNOWN,
+	    COMMUNITY_NO_EXPSUBCONFED))
 		return (0);
 
 	/*
 	 * Don't send messages back to originator
 	 * this is not specified in the RFC but seems logical.
 	 */
-	if ((attr = attr_optget(p->aspath, ATTR_ORIGINATOR_ID)) != NULL) {
+	if ((attr = attr_optget(asp, ATTR_ORIGINATOR_ID)) != NULL) {
 		if (memcmp(attr->data, &peer->remote_bgpid,
 		    sizeof(peer->remote_bgpid)) == 0) {
 			/* would cause loop don't send */
@@ -406,7 +410,7 @@ void
 up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
     struct prefix *new, struct prefix *old)
 {
-	struct rde_aspath		*asp;
+	struct rde_aspath		*asp, *fasp;
 	struct bgpd_addr		 addr;
 
 	if (peer->state != PEER_UP)
@@ -417,13 +421,14 @@ withdraw:
 		if (up_test_update(peer, old) != 1)
 			return;
 
-		pt_getaddr(old->prefix, &addr);
-		if (rde_filter(rules, NULL, peer, old->aspath, &addr,
-		    old->prefix->prefixlen, old->aspath->peer) == ACTION_DENY)
+		asp = prefix_aspath(old);
+		pt_getaddr(old->re->prefix, &addr);
+		if (rde_filter(rules, NULL, peer, asp, &addr,
+		    old->re->prefix->prefixlen, asp->peer) == ACTION_DENY)
 			return;
 
 		/* withdraw prefix */
-		up_generate(peer, NULL, &addr, old->prefix->prefixlen);
+		up_generate(peer, NULL, &addr, old->re->prefix->prefixlen);
 	} else {
 		switch (up_test_update(peer, new)) {
 		case 1:
@@ -434,20 +439,21 @@ withdraw:
 			return;
 		}
 
-		pt_getaddr(new->prefix, &addr);
-		if (rde_filter(rules, &asp, peer, new->aspath, &addr,
-		    new->prefix->prefixlen, new->aspath->peer) == ACTION_DENY) {
-			path_put(asp);
+		asp = prefix_aspath(new);
+		pt_getaddr(new->re->prefix, &addr);
+		if (rde_filter(rules, &fasp, peer, asp, &addr,
+		    new->re->prefix->prefixlen, asp->peer) == ACTION_DENY) {
+			path_put(fasp);
 			goto withdraw;
 		}
-		if (asp == NULL)
-			asp = new->aspath;
+		if (fasp == NULL)
+			fasp = asp;
 
-		up_generate(peer, asp, &addr, new->prefix->prefixlen);
+		up_generate(peer, fasp, &addr, new->re->prefix->prefixlen);
 
 		/* free modified aspath */
-		if (asp != new->aspath)
-			path_put(asp);
+		if (fasp != asp)
+			path_put(fasp);
 	}
 }
 

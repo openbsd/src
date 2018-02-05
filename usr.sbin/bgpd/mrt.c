@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.83 2017/05/27 10:55:45 phessler Exp $ */
+/*	$OpenBSD: mrt.c,v 1.84 2018/02/05 03:55:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -253,6 +253,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
     struct rde_peer *peer)
 {
 	struct ibuf	*buf, *hbuf = NULL, *h2buf = NULL;
+	struct nexthop	*n;
 	struct bgpd_addr addr, nexthop, *nh;
 	u_int16_t	 len;
 	u_int8_t	 aid;
@@ -262,7 +263,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		return (-1);
 	}
 
-	if (mrt_attr_dump(buf, p->aspath, NULL, 0) == -1) {
+	if (mrt_attr_dump(buf, prefix_aspath(p), NULL, 0) == -1) {
 		log_warnx("mrt_dump_entry_mp: mrt_attr_dump error");
 		goto fail;
 	}
@@ -280,7 +281,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	DUMP_SHORT(h2buf, /* ifindex */ 0);
 
 	/* XXX is this for peer self? */
-	aid = peer->remote_addr.aid == AID_UNSPEC ? p->prefix->aid :
+	aid = peer->remote_addr.aid == AID_UNSPEC ? p->re->prefix->aid :
 	     peer->remote_addr.aid;
 	switch (aid) {
 	case AID_INET:
@@ -307,14 +308,15 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	DUMP_SHORT(h2buf, 1);		/* status */
 	DUMP_LONG(h2buf, p->lastchange);	/* originated */
 
-	pt_getaddr(p->prefix, &addr);
+	pt_getaddr(p->re->prefix, &addr);
 
-	if (p->aspath->nexthop == NULL) {
+	n = prefix_aspath(p)->nexthop;
+	if (n == NULL) {
 		bzero(&nexthop, sizeof(struct bgpd_addr));
 		nexthop.aid = addr.aid;
 		nh = &nexthop;
 	} else
-		nh = &p->aspath->nexthop->exit_nexthop;
+		nh = &n->exit_nexthop;
 
 	switch (addr.aid) {
 	case AID_INET:
@@ -337,7 +339,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		goto fail;
 	}
 
-	if (prefix_writebuf(h2buf, &addr, p->prefix->prefixlen) == -1) {
+	if (prefix_writebuf(h2buf, &addr, p->re->prefix->prefixlen) == -1) {
 		log_warn("mrt_dump_entry_mp: prefix_writebuf error");
 		goto fail;
 	}
@@ -367,13 +369,14 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
     struct rde_peer *peer)
 {
 	struct ibuf	*buf, *hbuf;
+	struct nexthop	*nexthop;
 	struct bgpd_addr addr, *nh;
 	size_t		 len;
 	u_int16_t	 subtype;
 	u_int8_t	 dummy;
 
-	if (p->prefix->aid != peer->remote_addr.aid &&
-	    p->prefix->aid != AID_INET && p->prefix->aid != AID_INET6)
+	if (p->re->prefix->aid != peer->remote_addr.aid &&
+	    p->re->prefix->aid != AID_INET && p->re->prefix->aid != AID_INET6)
 		/* only able to dump pure IPv4/IPv6 */
 		return (0);
 
@@ -382,19 +385,20 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		return (-1);
 	}
 
-	if (p->aspath->nexthop == NULL) {
+	nexthop = prefix_aspath(p)->nexthop;
+	if (nexthop == NULL) {
 		bzero(&addr, sizeof(struct bgpd_addr));
-		addr.aid = p->prefix->aid;
+		addr.aid = p->re->prefix->aid;
 		nh = &addr;
 	} else
-		nh = &p->aspath->nexthop->exit_nexthop;
-	if (mrt_attr_dump(buf, p->aspath, nh, 0) == -1) {
+		nh = &nexthop->exit_nexthop;
+	if (mrt_attr_dump(buf, prefix_aspath(p), nh, 0) == -1) {
 		log_warnx("mrt_dump_entry: mrt_attr_dump error");
 		ibuf_free(buf);
 		return (-1);
 	}
 	len = ibuf_size(buf);
-	aid2afi(p->prefix->aid, &subtype, &dummy);
+	aid2afi(p->re->prefix->aid, &subtype, &dummy);
 	if (mrt_dump_hdr_rde(&hbuf, MSG_TABLE_DUMP, subtype, len) == -1) {
 		ibuf_free(buf);
 		return (-1);
@@ -403,8 +407,8 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	DUMP_SHORT(hbuf, 0);
 	DUMP_SHORT(hbuf, snum);
 
-	pt_getaddr(p->prefix, &addr);
-	switch (p->prefix->aid) {
+	pt_getaddr(p->re->prefix, &addr);
+	switch (p->re->prefix->aid) {
 	case AID_INET:
 		DUMP_NLONG(hbuf, addr.v4.s_addr);
 		break;
@@ -415,11 +419,11 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		}
 		break;
 	}
-	DUMP_BYTE(hbuf, p->prefix->prefixlen);
+	DUMP_BYTE(hbuf, p->re->prefix->prefixlen);
 
 	DUMP_BYTE(hbuf, 1);		/* state */
 	DUMP_LONG(hbuf, p->lastchange);	/* originated */
-	switch (p->prefix->aid) {
+	switch (p->re->prefix->aid) {
 	case AID_INET:
 		DUMP_NLONG(hbuf, peer->remote_addr.v4.s_addr);
 		break;
@@ -493,24 +497,26 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 	}
 	nump = 0;
 	LIST_FOREACH(p, &re->prefix_h, rib_l) {
+		struct nexthop		*nexthop;
 		struct bgpd_addr	*nh;
 		struct ibuf		*tbuf;
 
-		if (p->aspath->nexthop == NULL) {
+		nexthop = prefix_aspath(p)->nexthop;
+		if (nexthop == NULL) {
 			bzero(&addr, sizeof(struct bgpd_addr));
-			addr.aid = p->prefix->aid;
+			addr.aid = re->prefix->aid;
 			nh = &addr;
 		} else
-			nh = &p->aspath->nexthop->exit_nexthop;
+			nh = &nexthop->exit_nexthop;
 
-		DUMP_SHORT(buf, p->aspath->peer->mrt_idx);
+		DUMP_SHORT(buf, prefix_peer(p)->mrt_idx);
 		DUMP_LONG(buf, p->lastchange); /* originated */
 
 		if ((tbuf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
 			log_warn("%s: ibuf_dynamic", __func__);
 			return (-1);
 		}
-		if (mrt_attr_dump(tbuf, p->aspath, nh, 1) == -1) {
+		if (mrt_attr_dump(tbuf, prefix_aspath(p), nh, 1) == -1) {
 			log_warnx("%s: mrt_attr_dump error", __func__);
 			ibuf_free(buf);
 			return (-1);
@@ -659,10 +665,10 @@ mrt_dump_upcall(struct rib_entry *re, void *ptr)
 	LIST_FOREACH(p, &re->prefix_h, rib_l) {
 		if (mrtbuf->type == MRT_TABLE_DUMP)
 			mrt_dump_entry(mrtbuf, p, mrtbuf->seqnum++,
-			    p->aspath->peer);
+			    prefix_peer(p));
 		else
 			mrt_dump_entry_mp(mrtbuf, p, mrtbuf->seqnum++,
-			    p->aspath->peer);
+			    prefix_peer(p));
 	}
 }
 
