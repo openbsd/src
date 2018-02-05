@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.33 2017/07/12 05:44:33 bentley Exp $
+.\" $OpenBSD: athn.4,v 1.34 2018/02/05 15:32:10 stsp Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 12 2017 $
+.Dd $Mdocdate: February 5 2018 $
 .Dt ATHN 4
 .Os
 .Sh NAME
@@ -161,17 +161,19 @@ of data frames.
 The transmit speed is user-selectable or can be adapted automatically by the
 driver depending on the number of hardware transmission retries.
 .Sh FILES
-For USB devices, the driver needs at least version 1.1 of the following
+For USB devices, the driver needs at least version 1.1p4 of the following
 firmware files, which are loaded when an interface is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/athn-ar7010
-.It Pa /etc/firmware/athn-ar7010-11
-.It Pa /etc/firmware/athn-ar9271
+.It Pa /etc/firmware/athn-open-ar7010
+.It Pa /etc/firmware/athn-open-ar9271
 .El
 .Pp
 A prepackaged version of the firmware can be installed using
 .Xr fw_update 1 .
+Firmware source code is available under a mix of BSD and GPLv2 licences.
+A port which cross-compiles the firmware can be found in
+.Pa /usr/ports/sysutils/devel/open-ath9k-htc-firmware .
 .Sh EXAMPLES
 The following example scans for available networks:
 .Pp
@@ -241,10 +243,14 @@ driver was written by
 .An Damien Bergamini Aq Mt damien.bergamini@free.fr
 based on source code licensed under the ISC released in 2008 by
 Atheros Communications for Linux.
+.An Anthony J. Bentley Aq Mt bentley@openbsd.org
+added the open source USB firmware and its cross-compiler to the ports tree.
+.An Stefan Sperling Aq Mt stsp@openbsd.org
+implemented driver support for the open source USB firmware.
 .Sh CAVEATS
 Support for 802.11n 40MHz channels and Tx aggregation is not yet implemented.
 Additional work is required in
 .Xr ieee80211 9
 before those features can be supported.
-.Sh BUGS
-Host AP mode does not work with USB devices.
+.Pp
+On USB devices, the firmware limits Host AP mode to 7 concurrent clients.
