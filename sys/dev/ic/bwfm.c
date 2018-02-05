@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.33 2018/01/31 12:36:13 stsp Exp $ */
+/* $OpenBSD: bwfm.c,v 1.34 2018/02/05 10:30:04 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -123,7 +123,7 @@ int	 bwfm_newstate(struct ieee80211com *, enum ieee80211_state, int);
 
 void	 bwfm_set_key_cb(struct bwfm_softc *, void *);
 void	 bwfm_delete_key_cb(struct bwfm_softc *, void *);
-void	 bwfm_newstate_cb(struct bwfm_softc *, void *);
+void	 bwfm_rx_event_cb(struct bwfm_softc *, void *);
 
 struct mbuf *bwfm_newbuf(void);
 void	 bwfm_rx(struct bwfm_softc *, struct mbuf *);
@@ -134,7 +134,7 @@ void	 bwfm_rx_deauth_ind(struct bwfm_softc *, struct bwfm_event *, size_t);
 void	 bwfm_rx_disassoc_ind(struct bwfm_softc *, struct bwfm_event *, size_t);
 void	 bwfm_rx_leave_ind(struct bwfm_softc *, struct bwfm_event *, size_t, int);
 #endif
-void	 bwfm_rx_event(struct bwfm_softc *, char *, size_t);
+void	 bwfm_rx_event(struct bwfm_softc *, struct mbuf *);
 void	 bwfm_scan_node(struct bwfm_softc *, struct bwfm_bss_info *, size_t);
 
 extern void ieee80211_node2req(struct ieee80211com *,
@@ -1635,8 +1635,7 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
 	    ntohs(e->ehdr.ether_type) == BWFM_ETHERTYPE_LINK_CTL &&
 	    memcmp(BWFM_BRCM_OUI, e->hdr.oui, sizeof(e->hdr.oui)) == 0 &&
 	    ntohs(e->hdr.usr_subtype) == BWFM_BRCM_SUBTYPE_EVENT) {
-		bwfm_rx_event(sc, mtod(m, char *), m->m_len);
-		m_freem(m);
+		bwfm_rx_event(sc, m);
 		return;
 	}
 
@@ -1837,18 +1836,32 @@ bwfm_rx_leave_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len,
 #endif
 
 void
-bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
+bwfm_rx_event(struct bwfm_softc *sc, struct mbuf *m)
+{
+	struct bwfm_cmd_mbuf cmd;
+
+	cmd.m = m;
+	bwfm_do_async(sc, bwfm_rx_event_cb, &cmd, sizeof(cmd));
+}
+
+void
+bwfm_rx_event_cb(struct bwfm_softc *sc, void *arg)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	struct bwfm_event *e = (void *)buf;
+	struct bwfm_cmd_mbuf *cmd = arg;
+	struct mbuf *m = cmd->m;
+	struct bwfm_event *e = mtod(m, void *);
+	size_t len = m->m_len;
 
-	if (ntohl(e->msg.event_type) >= BWFM_E_LAST)
+	if (ntohl(e->msg.event_type) >= BWFM_E_LAST) {
+		m_freem(m);
 		return;
+	}
 
 	switch (ntohl(e->msg.event_type)) {
 	case BWFM_E_ESCAN_RESULT: {
-		struct bwfm_escan_results *res = (void *)(buf + sizeof(*e));
+		struct bwfm_escan_results *res = (void *)&e[1];
 		struct bwfm_bss_info *bss;
 		int i;
 		if (ntohl(e->msg.status) != BWFM_E_STATUS_PARTIAL) {
@@ -1858,11 +1871,13 @@ bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
 		len -= sizeof(*e);
 		if (len < sizeof(*res) || len < letoh32(res->buflen)) {
 			printf("%s: results too small\n", DEVNAME(sc));
+			m_freem(m);
 			return;
 		}
 		len -= sizeof(*res);
 		if (len < letoh16(res->bss_count) * sizeof(struct bwfm_bss_info)) {
 			printf("%s: results too small\n", DEVNAME(sc));
+			m_freem(m);
 			return;
 		}
 		bss = &res->bss_info[0];
@@ -1928,6 +1943,8 @@ bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
 		    ntohl(e->msg.reason)));
 		break;
 	}
+
+	m_freem(m);
 }
 
 void
@@ -2024,11 +2041,16 @@ bwfm_do_async(struct bwfm_softc *sc,
 	int s;
 
 	s = splsoftnet();
+	if (ring->queued >= BWFM_HOST_CMD_RING_COUNT) {
+		splx(s);
+		return;
+	}
 	cmd = &ring->cmd[ring->cur];
 	cmd->cb = cb;
 	KASSERT(len <= sizeof(cmd->data));
 	memcpy(cmd->data, arg, len);
 	ring->cur = (ring->cur + 1) % BWFM_HOST_CMD_RING_COUNT;
+	ring->queued++;
 	task_add(sc->sc_taskq, &sc->sc_task);
 	splx(s);
 }
@@ -2139,21 +2161,7 @@ int
 bwfm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct bwfm_softc *sc = ic->ic_softc;
-	struct bwfm_cmd_newstate cmd;
-
-	cmd.state = nstate;
-	cmd.arg = arg;
-	bwfm_do_async(sc, bwfm_newstate_cb, &cmd, sizeof(cmd));
-	return 0;
-}
-
-void
-bwfm_newstate_cb(struct bwfm_softc *sc, void *arg)
-{
-	struct bwfm_cmd_newstate *cmd = arg;
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	enum ieee80211_state nstate = cmd->state;
 	int s;
 
 	s = splnet();
@@ -2167,7 +2175,7 @@ bwfm_newstate_cb(struct bwfm_softc *sc, void *arg)
 			    ieee80211_state_name[nstate]);
 		ic->ic_state = nstate;
 		splx(s);
-		return;
+		return 0;
 	case IEEE80211_S_AUTH:
 		ic->ic_bss->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
 		bwfm_connect(sc);
@@ -2179,7 +2187,7 @@ bwfm_newstate_cb(struct bwfm_softc *sc, void *arg)
 		if (ic->ic_flags & IEEE80211_F_RSNON)
 			ic->ic_bss->ni_rsn_supp_state = RSNA_SUPP_PTKSTART;
 		splx(s);
-		return;
+		return 0;
 #ifndef IEEE80211_STA_ONLY
 	case IEEE80211_S_RUN:
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
@@ -2189,7 +2197,7 @@ bwfm_newstate_cb(struct bwfm_softc *sc, void *arg)
 	default:
 		break;
 	}
-	sc->sc_newstate(ic, nstate, cmd->arg);
+	sc->sc_newstate(ic, nstate, arg);
 	splx(s);
-	return;
+	return 0;
 }

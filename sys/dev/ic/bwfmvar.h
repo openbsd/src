@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.8 2018/01/07 22:08:04 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.9 2018/02/05 10:30:04 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -114,14 +114,13 @@ struct bwfm_host_cmd {
 	uint8_t	 data[256];
 };
 
-struct bwfm_cmd_newstate {
-	enum ieee80211_state	 state;
-	int			 arg;
-};
-
 struct bwfm_cmd_key {
 	struct ieee80211_node	 *ni;
 	struct ieee80211_key	 *k;
+};
+
+struct bwfm_cmd_mbuf {
+	struct mbuf		 *m;
 };
 
 struct bwfm_cmd_flowring_create {
