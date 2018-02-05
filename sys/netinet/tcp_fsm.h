@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_fsm.h,v 1.8 2004/07/06 13:52:31 markus Exp $	*/
+/*	$OpenBSD: tcp_fsm.h,v 1.9 2018/02/05 14:53:26 bluhm Exp $	*/
 /*	$NetBSD: tcp_fsm.h,v 1.6 1994/10/14 16:01:48 mycroft Exp $	*/
 
 /*
@@ -74,10 +74,6 @@ u_char	tcp_outflags[TCP_NSTATES] = {
     TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_ACK, TH_ACK,
 };
 #endif /* TCPOUTFLAGS */
-
-#ifdef KPROF
-int	tcp_acounts[TCP_NSTATES][PRU_NREQ];
-#endif /* KPROF */
 
 #ifdef	TCPSTATES
 const char *tcpstates[] = {

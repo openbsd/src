@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.166 2018/02/03 16:14:26 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.167 2018/02/05 14:53:26 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -171,9 +171,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	/* tp might get 0 when using socket splicing */
 	if (tp == NULL)
 		return (0);
-#ifdef KPROF
-	tcp_acounts[tp->t_state][req]++;
-#endif
 	ostate = tp->t_state;
 
 	switch (req) {
@@ -631,9 +628,6 @@ tcp_detach(struct socket *so)
 	/* tp might get 0 when using socket splicing */
 	if (tp == NULL)
 		return (0);
-#ifdef KPROF
-	tcp_acounts[tp->t_state][req]++;
-#endif
 	ostate = tp->t_state;
 
 	/*

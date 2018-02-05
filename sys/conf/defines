@@ -1,4 +1,3 @@
-/:#if.*[ \t]*KPROF/d
 /:#if.*[ \t]*PGINPROF/d
 /:#if.*[ \t]*TRACE/d
 /:#if.*[ \t]*lint/d
