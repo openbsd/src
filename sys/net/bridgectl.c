@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.7 2018/02/05 03:51:53 henning Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.8 2018/02/05 05:06:51 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -406,7 +406,7 @@ bridge_rtdaddr(struct bridge_softc *sc, struct ether_addr *ea)
 
 	h = bridge_hash(sc, ea);
 	LIST_FOREACH(p, &sc->sc_rts[h], brt_next) {
-		if (bcmp(ea, &p->brt_addr, sizeof(p->brt_addr)) == 0) {
+		if (memcmp(ea, &p->brt_addr, sizeof(p->brt_addr)) == 0) {
 			LIST_REMOVE(p, brt_next);
 			sc->sc_brtcnt--;
 			free(p, M_DEVBUF, sizeof *p);
@@ -646,16 +646,16 @@ bridge_arpfilter(struct brl_node *n, struct ether_header *eh, struct mbuf *m)
 	if (n->brl_arpf.brla_op && ntohs(ea.arp_op) != n->brl_arpf.brla_op)
 		return (0);
 	if (n->brl_arpf.brla_flags & BRLA_SHA &&
-	    bcmp(ea.arp_sha, &n->brl_arpf.brla_sha, ETHER_ADDR_LEN))
+	    memcmp(ea.arp_sha, &n->brl_arpf.brla_sha, ETHER_ADDR_LEN))
 		return (0);
 	if (n->brl_arpf.brla_flags & BRLA_THA &&
-	    bcmp(ea.arp_tha, &n->brl_arpf.brla_tha, ETHER_ADDR_LEN))
+	    memcmp(ea.arp_tha, &n->brl_arpf.brla_tha, ETHER_ADDR_LEN))
 		return (0);
 	if (n->brl_arpf.brla_flags & BRLA_SPA &&
-	    bcmp(ea.arp_spa, &n->brl_arpf.brla_spa, sizeof(struct in_addr)))
+	    memcmp(ea.arp_spa, &n->brl_arpf.brla_spa, sizeof(struct in_addr)))
 		return (0);
 	if (n->brl_arpf.brla_flags & BRLA_TPA &&
-	    bcmp(ea.arp_tpa, &n->brl_arpf.brla_tpa, sizeof(struct in_addr)))
+	    memcmp(ea.arp_tpa, &n->brl_arpf.brla_tpa, sizeof(struct in_addr)))
 		return (0);
 
 	return (1);
@@ -674,19 +674,23 @@ bridge_filterrule(struct brl_head *h, struct ether_header *eh, struct mbuf *m)
 		if (flags == 0)
 			goto return_action;
 		if (flags == (BRL_FLAG_SRCVALID|BRL_FLAG_DSTVALID)) {
-			if (bcmp(eh->ether_shost, &n->brl_src, ETHER_ADDR_LEN))
+			if (memcmp(eh->ether_shost, &n->brl_src,
+			    ETHER_ADDR_LEN))
 				continue;
-			if (bcmp(eh->ether_dhost, &n->brl_dst, ETHER_ADDR_LEN))
+			if (memcmp(eh->ether_dhost, &n->brl_dst,
+			    ETHER_ADDR_LEN))
 				continue;
 			goto return_action;
 		}
 		if (flags == BRL_FLAG_SRCVALID) {
-			if (bcmp(eh->ether_shost, &n->brl_src, ETHER_ADDR_LEN))
+			if (memcmp(eh->ether_shost, &n->brl_src,
+			    ETHER_ADDR_LEN))
 				continue;
 			goto return_action;
 		}
 		if (flags == BRL_FLAG_DSTVALID) {
-			if (bcmp(eh->ether_dhost, &n->brl_dst, ETHER_ADDR_LEN))
+			if (memcmp(eh->ether_dhost, &n->brl_dst,
+			    ETHER_ADDR_LEN))
 				continue;
 			goto return_action;
 		}
