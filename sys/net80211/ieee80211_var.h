@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.83 2017/12/12 15:50:39 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.84 2018/02/05 08:44:13 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -204,6 +204,8 @@ struct ieee80211com {
 				    struct ieee80211_node *, int, int, int);
 	int			(*ic_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
+	int			(*ic_newauth)(struct ieee80211com *,
+				    struct ieee80211_node *, int, uint16_t);
 	void			(*ic_newassoc)(struct ieee80211com *,
 				    struct ieee80211_node *, int);
 	void			(*ic_node_leave)(struct ieee80211com *,

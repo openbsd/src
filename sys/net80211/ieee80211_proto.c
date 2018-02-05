@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.81 2017/12/08 21:16:01 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.82 2018/02/05 08:44:13 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -715,6 +715,24 @@ ieee80211_delba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}
 }
 
+#ifndef IEEE80211_STA_ONLY
+void
+ieee80211_auth_open_confirm(struct ieee80211com *ic,
+    struct ieee80211_node *ni, uint16_t seq)
+{
+	struct ifnet *ifp = &ic->ic_if;
+
+	IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: station %s %s authenticated (open)\n",
+		    ifp->if_xname,
+		    ether_sprintf((u_int8_t *)ni->ni_macaddr),
+		    ni->ni_state != IEEE80211_STA_CACHE ?
+		    "newly" : "already");
+	ieee80211_node_newstate(ni, IEEE80211_STA_AUTH);
+}
+#endif
+
 void
 ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
     struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, u_int16_t seq,
@@ -765,15 +783,16 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 			ni->ni_rstamp = rxi->rxi_tstamp;
 			ni->ni_chan = ic->ic_bss->ni_chan;
 		}
-		IEEE80211_SEND_MGMT(ic, ni,
-			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
-		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: station %s %s authenticated (open)\n",
-			    ifp->if_xname,
-			    ether_sprintf((u_int8_t *)ni->ni_macaddr),
-			    ni->ni_state != IEEE80211_STA_CACHE ?
-			    "newly" : "already");
-		ieee80211_node_newstate(ni, IEEE80211_STA_AUTH);
+
+		/* 
+		 * Drivers may want to set up state before confirming.
+		 * In which case this returns EBUSY and the driver will
+		 * later call ieee80211_auth_open_confirm() by itself.
+		 */
+		if (ic->ic_newauth && ic->ic_newauth(ic, ni,
+		    ni->ni_state != IEEE80211_STA_CACHE, seq) != 0)
+			break;
+		ieee80211_auth_open_confirm(ic, ni, seq);
 		break;
 #endif	/* IEEE80211_STA_ONLY */
 
