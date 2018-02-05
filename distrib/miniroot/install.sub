@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1056 2018/01/21 19:58:37 halex Exp $
+#	$OpenBSD: install.sub,v 1.1057 2018/02/05 22:31:40 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2749,6 +2749,10 @@ finish_up() {
 	# Ensure that sysmerge in batch mode is run on reboot.
 	[[ $MODE == upgrade ]] &&
 		echo "/usr/sbin/sysmerge -b" >>/mnt/etc/rc.sysmerge
+
+	# If a proxy was needed to fetch the sets, use it for fw_update and syspatch
+	[[ -n $http_proxy ]] &&
+		echo "export http_proxy=$http_proxy" >>/mnt/etc/rc.firsttime
 
 	# Ensure that fw_update is run on reboot.
 	echo "/usr/sbin/fw_update -v" >>/mnt/etc/rc.firsttime
