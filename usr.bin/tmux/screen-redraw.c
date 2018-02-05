@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.48 2017/12/22 23:16:41 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.49 2018/02/05 08:21:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -563,7 +563,7 @@ screen_redraw_draw_status(struct client *c, u_int lines, u_int top)
 	else
 		y = tty->sy - lines;
 	for (i = 0; i < lines; i++)
-		tty_draw_line(tty, NULL, &c->status, i, 0, y);
+		tty_draw_line(tty, NULL, &c->status.status, i, 0, y);
 }
 
 /* Draw number on a pane. */
