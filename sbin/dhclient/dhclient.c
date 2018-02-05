@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.551 2018/01/30 13:22:42 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.552 2018/02/05 03:59:49 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -172,7 +172,7 @@ time_t lease_rebind(struct client_lease *);
 
 struct client_lease *packet_to_lease(struct interface_info *,
     struct option_data *);
-void go_daemon(const char *);
+void go_daemon(void);
 int rdaemon(int);
 void	take_charge(struct interface_info *, int);
 void	set_default_client_identifier(struct interface_info *);
@@ -732,7 +732,7 @@ state_preboot(struct interface_info *ifi)
 		set_timeout(ifi, 1, state_reboot);
 	} else {
 		if (interval > config->link_timeout)
-			go_daemon(ifi->name);
+			go_daemon();
 		ifi->state = S_PREBOOT;
 		set_timeout(ifi, 1, state_preboot);
 	}
@@ -1037,7 +1037,7 @@ newlease:
 	);
 	free(ifi->offer_src);
 	ifi->offer_src = NULL;
-	go_daemon(ifi->name);
+	go_daemon();
 	rewrite_option_db(ifi->name, ifi->active, lease);
 	free_client_lease(lease);
 	free(active_proposal);
@@ -1365,7 +1365,7 @@ state_panic(struct interface_info *ifi)
 	    log_procname);
 	ifi->state = S_INIT;
 	set_timeout(ifi, config->retry_interval, state_init);
-	go_daemon(ifi->name);
+	go_daemon();
 }
 
 void
@@ -1981,7 +1981,7 @@ lease_as_string(char *ifname, char *type, struct client_lease *lease)
 }
 
 void
-go_daemon(const char *name)
+go_daemon(void)
 {
 	static int	 daemonized = 0;
 
@@ -2090,7 +2090,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
 
-	go_daemon(ifi->name);
+	go_daemon();
 
 	if (log_procname != NULL)
 		free(log_procname);
