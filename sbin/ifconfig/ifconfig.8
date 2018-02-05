@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.293 2018/02/05 03:51:53 henning Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.294 2018/02/05 07:16:13 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -691,23 +691,37 @@ like a hub or a wireless network.
 .Cm on Ar interface
 .Op Cm src Ar lladdr
 .Op Cm dst Ar lladdr
+.Bk -words
 .Op Cm tag Ar tagname
-.Op Cm arp | rarp Ar [ request | reply ] [ Cm sha Ar lladdr ] [ Cm spa Ar ipaddr ] [ Cm tha Ar lladdr ] [ Cm tpa Ar ipaddr ]
+.Oo
+.Cm arp | rarp Op Ar request | reply
+.Op Cm sha Ar lladdr
+.Op Cm spa Ar ipaddr
+.Op Cm tha Ar lladdr
+.Op Cm tpa Ar ipaddr
+.Oc
+.Ek
 .Xc
 Add a filtering rule to an interface.
 Rules have a similar syntax to those in
 .Xr pf.conf 5 .
-Rules can be used to selectively block or pass frames based on Ethernet
-MAC addresses.
-They can also tag packets for
+Rules can be used to selectively
+.Cm block
+or
+.Cm pass
+frames based on Ethernet
+MAC addresses or to
+.Cm tag
+packets for
 .Xr pf 4
 to filter on.
+.Pp
 .Xr arp 4
 packets can be matched with the
 .Cm arp
-keyword for regular and
+keyword for regular packets and
 .Cm rarp
-for reverse arp packets.
+for reverse arp.
 .Ar request
 and
 .Ar reply
@@ -717,12 +731,13 @@ The source and target host addresses can be matched with the
 and
 .Cm tha
 keywords,
-the protocol addresses with
+and the protocol addresses with
 .Cm spa
 and
 .Cm tpa .
-Rules are processed in the order in which they were added
-to the interface, and the first rule matched takes the action (block or pass)
+.Pp
+Rules are processed in the order in which they were added to the interface.
+The first rule matched takes the action (block or pass)
 and, if given, the tag of the rule.
 If no source or destination address is specified, the
 rule will match all frames (good for creating a catchall policy).
