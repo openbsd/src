@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.301 2018/01/10 23:50:39 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.302 2018/02/05 03:51:53 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -699,6 +699,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	struct ether_addr *dst;
 	struct bridge_softc *sc;
 	struct bridge_tunneltag *brtag;
+	struct bridge_iflist *ifl;
 	int error;
 
 	/* ifp must be a member interface of the bridge. */
@@ -784,6 +785,12 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 					continue;
 				}
 			}
+
+			ifl = (struct bridge_iflist *)dst_if->if_bridgeport;
+			KASSERT(ifl != NULL);
+			if (bridge_filterrule(&ifl->bif_brlout, eh, mc) ==
+			    BRL_ACTION_BLOCK)
+				continue;
 
 			error = bridge_ifenqueue(sc, dst_if, mc);
 			if (error)
