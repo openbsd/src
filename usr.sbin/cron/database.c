@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.36 2017/10/25 17:08:58 jca Exp $	*/
+/*	$OpenBSD: database.c,v 1.37 2018/02/05 03:52:37 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -170,9 +170,10 @@ process_crontab(int dfd, const char *uname, const char *fname,
 		struct stat *statbuf, cron_db *new_db, cron_db *old_db)
 {
 	struct passwd *pw = NULL;
-	int crontab_fd = -1;
+	FILE *crontab_fp = NULL;
 	user *u, *new_u;
 	mode_t tabmask, tabperm;
+	int fd;
 
 	/* Note: pw must remain NULL for system crontab (see below). */
 	if (fname[0] != '/' && (pw = getpwnam(uname)) == NULL) {
@@ -182,16 +183,20 @@ process_crontab(int dfd, const char *uname, const char *fname,
 		goto next_crontab;
 	}
 
-	crontab_fd = openat(dfd, fname,
-	    O_RDONLY|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC);
-	if (crontab_fd < 0) {
+	fd = openat(dfd, fname, O_RDONLY|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC);
+	if (fd < 0) {
 		/* crontab not accessible?
 		 */
 		syslog(LOG_ERR, "(%s) CAN'T OPEN (%s)", uname, fname);
 		goto next_crontab;
 	}
+	if (!(crontab_fp = fdopen(fd, "r"))) {
+		syslog(LOG_ERR, "(%s) FDOPEN (%m)", fname);
+		close(fd);
+		goto next_crontab;
+	}
 
-	if (fstat(crontab_fd, statbuf) < 0) {
+	if (fstat(fileno(crontab_fp), statbuf) < 0) {
 		syslog(LOG_ERR, "(%s) FSTAT FAILED (%s)", uname, fname);
 		goto next_crontab;
 	}
@@ -233,7 +238,7 @@ process_crontab(int dfd, const char *uname, const char *fname,
 		syslog(LOG_INFO, "(%s) RELOAD (%s)", uname, fname);
 	}
 
-	new_u = load_user(crontab_fd, pw, fname);
+	new_u = load_user(crontab_fp, pw, fname);
 	if (new_u != NULL) {
 		/* Insert user into the new database and remove from old. */
 		new_u->mtime = statbuf->st_mtim;
@@ -249,7 +254,7 @@ process_crontab(int dfd, const char *uname, const char *fname,
 	}
 
  next_crontab:
-	if (crontab_fd >= 0) {
-		close(crontab_fd);
+	if (crontab_fp != NULL) {
+		fclose(crontab_fp);
 	}
 }

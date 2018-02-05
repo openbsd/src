@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.28 2015/11/14 13:09:14 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.29 2018/02/05 03:52:37 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -48,7 +48,7 @@ char		*env_get(char *, char **),
 		**env_copy(char **),
 		**env_set(char **, char *);
 
-user		*load_user(int, struct passwd *, const char *),
+user		*load_user(FILE *, struct passwd *, const char *),
 		*find_user(cron_db *, const char *);
 
 entry		*load_entry(FILE *,
