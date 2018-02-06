@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.14 2017/11/27 01:58:52 florian Exp $ */
+/*	$Id: netproc.c,v 1.15 2018/02/06 05:08:27 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -209,12 +209,12 @@ nreq(struct conn *c, const char *addr)
 	free(c->buf.buf);
 	c->buf.sz = g->bodypartsz;
 	c->buf.buf = malloc(c->buf.sz);
-	memcpy(c->buf.buf, g->bodypart, c->buf.sz);
-	http_get_free(g);
 	if (c->buf.buf == NULL) {
 		warn("malloc");
-		return -1;
-	}
+		code = -1;
+	} else
+		memcpy(c->buf.buf, g->bodypart, c->buf.sz);
+	http_get_free(g);
 	return code;
 }
 
@@ -310,12 +310,12 @@ sreq(struct conn *c, const char *addr, const char *req)
 	free(c->buf.buf);
 	c->buf.sz = g->bodypartsz;
 	c->buf.buf = malloc(c->buf.sz);
-	memcpy(c->buf.buf, g->bodypart, c->buf.sz);
-	http_get_free(g);
 	if (c->buf.buf == NULL) {
 		warn("malloc");
-		return -1;
-	}
+		code = -1;
+	} else
+		memcpy(c->buf.buf, g->bodypart, c->buf.sz);
+	http_get_free(g);
 	return code;
 }
 
