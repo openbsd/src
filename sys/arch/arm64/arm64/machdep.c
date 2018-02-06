@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.28 2018/01/31 23:23:16 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.29 2018/02/06 20:35:21 naddy Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -51,6 +51,8 @@
 
 char *boot_args = NULL;
 char *boot_file = "";
+
+uint8_t *bootmac = NULL;
 
 extern uint64_t esym;
 
@@ -778,16 +780,23 @@ initarm(struct arm64_bootparams *abp)
 
 	node = fdt_find_node("/chosen");
 	if (node != NULL) {
-		char *args, *duid, *prop;
+		char *prop;
 		int len;
+		static uint8_t lladdr[6];
 
-		len = fdt_node_property(node, "bootargs", &args);
+		len = fdt_node_property(node, "bootargs", &prop);
 		if (len > 0)
-			collect_kernel_args(args);
+			collect_kernel_args(prop);
 
-		len = fdt_node_property(node, "openbsd,bootduid", &duid);
+		len = fdt_node_property(node, "openbsd,bootduid", &prop);
 		if (len == sizeof(bootduid))
-			memcpy(bootduid, duid, sizeof(bootduid));
+			memcpy(bootduid, prop, sizeof(bootduid));
+
+		len = fdt_node_property(node, "openbsd,bootmac", &prop);
+		if (len == sizeof(lladdr)) {
+			memcpy(lladdr, prop, sizeof(lladdr));
+			bootmac = lladdr;
+		}
 
 		len = fdt_node_property(node, "openbsd,uefi-mmap-start", &prop);
 		if (len == sizeof(mmap_start))

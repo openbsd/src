@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 2018/01/27 22:55:23 naddy Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 2018/02/06 20:35:21 naddy Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -20,8 +20,14 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+#include <sys/socket.h>
 #include <sys/hibernate.h>
 #include <uvm/uvm.h>
+
+#include <net/if.h>
+#include <net/if_types.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include <machine/bootconfig.h>
 
@@ -63,6 +69,7 @@ diskconf(void)
 	size_t	len;
 	char	*p;
 	dev_t	tmpdev;
+	extern uint8_t *bootmac;
 
 	if (*boot_file != '\0')
 		printf("bootfile: %s\n", boot_file);
@@ -76,6 +83,22 @@ diskconf(void)
 			len = strlen(boot_file);
 		bootdv = parsedisk(boot_file, len, 0, &tmpdev);
 	}
+
+#if defined(NFSCLIENT)
+	if (bootmac) {
+		struct ifnet *ifp;
+
+		TAILQ_FOREACH(ifp, &ifnet, if_list) {
+			if (ifp->if_type == IFT_ETHER &&
+			    memcmp(bootmac, ((struct arpcom *)ifp)->ac_enaddr,
+			    ETHER_ADDR_LEN) == 0)
+				break;
+		}
+		if (ifp)
+			bootdv = parsedisk(ifp->if_xname, strlen(ifp->if_xname),
+			    0, &tmpdev);
+	}
+#endif
 
 	if (bootdv != NULL)
 		printf("boot device: %s\n", bootdv->dv_xname);

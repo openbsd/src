@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.14 2018/01/21 21:35:34 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.15 2018/02/06 20:35:21 naddy Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -355,6 +355,7 @@ efi_framebuffer(void)
 	    "simple-framebuffer", strlen("simple-framebuffer") + 1);
 }
 
+char *bootmac = NULL;
 static EFI_GUID fdt_guid = FDT_TABLE_GUID;
 
 #define	efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
@@ -392,6 +393,10 @@ efi_makebootargs(char *bootargs)
 		fdt_node_add_property(node, "openbsd,bootduid", bootduid,
 		    sizeof(bootduid));
 	}
+
+	/* Pass netboot interface address. */
+	if (bootmac)
+		fdt_node_add_property(node, "openbsd,bootmac", bootmac, 6);
 
 	/* Pass EFI system table. */
 	fdt_node_add_property(node, "openbsd,uefi-system-table",
