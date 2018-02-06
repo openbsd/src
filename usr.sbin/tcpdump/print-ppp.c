@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.31 2018/02/06 03:07:51 dlg Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.32 2018/02/06 03:41:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -441,6 +441,7 @@ static void
 handle_lcp(const u_char *p, int l)
 {
 	struct ppp_control pc;
+	int i;
 
 	if (ppp_cp_header(&pc, p, l, &ppp_cp_lcp) == -1)
 		goto trunc;
@@ -474,6 +475,23 @@ handle_lcp(const u_char *p, int l)
 		if (l < 4)
 			goto trunc;
 		printf(" Magic-Number=%u", EXTRACT_32BITS(p));
+		p += 4;
+		l -= 4;
+
+		i = sizeof(pc) + 4;
+		if (i == pc.len)
+			break;
+
+		printf(" Data=");
+		do {
+			if (l == 0)
+				goto trunc;
+
+			printf("%02x", *p);
+
+			p++;
+			l--;
+		} while (++i < pc.len);
 		break;
 	case LCP_TERM_REQ:
 	case LCP_TERM_ACK:
