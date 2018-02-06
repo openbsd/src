@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.668 2017/11/28 16:05:46 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.669 2018/02/06 23:47:47 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -468,7 +468,7 @@ int	parseport(char *, struct range *r, int);
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT BINATTO NODF
 %token	MINTTL ERROR ALLOWOPTS FILENAME ROUTETO DUPTO REPLYTO NO LABEL
 %token	NOROUTE URPFFAILED FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
-%token	REASSEMBLE ANCHOR
+%token	REASSEMBLE ANCHOR SYNCOOKIES
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
 %token	SYNPROXY FINGERPRINTS NOSYNC DEBUG SKIP HOSTID
 %token	ANTISPOOF FOR INCLUDE MATCHES
@@ -488,7 +488,7 @@ int	parseport(char *, struct range *r, int);
 %type	<v.number>		tos not yesno optnodf
 %type	<v.probability>		probability
 %type	<v.weight>		optweight
-%type	<v.i>			dir af optimizer
+%type	<v.i>			dir af optimizer syncookie_val
 %type	<v.i>			sourcetrack flush unaryop statelock
 %type	<v.b>			action
 %type	<v.b>			flags flag blockspec prio
@@ -685,6 +685,26 @@ option		: SET REASSEMBLE yesno optnodf		{
 				YYERROR;
 			}
 			keep_state_defaults = $3;
+		}
+		| SET SYNCOOKIES syncookie_val {
+			if (pfctl_set_syncookies(pf, $3)) {
+				yyerror("error setting syncookies");
+				YYERROR;
+			}
+		}
+		;
+
+syncookie_val	: STRING	{
+			if (!strcmp($1, "never"))
+				$$ = PF_SYNCOOKIES_NEVER;
+			else if (!strcmp($1, "adaptive"))
+				$$ = PF_SYNCOOKIES_ADAPTIVE;
+			else if (!strcmp($1, "always"))
+				$$ = PF_SYNCOOKIES_ALWAYS;
+			else {
+				yyerror("illegal value for syncookies");
+				YYERROR;
+			}
 		}
 		;
 
@@ -5148,6 +5168,7 @@ lookup(char *s)
 		{ "state-policy",	STATEPOLICY},
 		{ "static-port",	STATICPORT},
 		{ "sticky-address",	STICKYADDRESS},
+		{ "syncookies",		SYNCOOKIES},
 		{ "synproxy",		SYNPROXY},
 		{ "table",		TABLE},
 		{ "tag",		TAG},

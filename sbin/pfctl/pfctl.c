@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.351 2017/11/25 22:26:25 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.352 2018/02/06 23:47:47 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -81,6 +81,8 @@ int	 pfctl_load_debug(struct pfctl *, unsigned int);
 int	 pfctl_load_logif(struct pfctl *, char *);
 int	 pfctl_load_hostid(struct pfctl *, unsigned int);
 int	 pfctl_load_reassembly(struct pfctl *, u_int32_t);
+int	 pfctl_load_syncookies(struct pfctl *, u_int8_t);
+int	 pfctl_set_synflwats(struct pfctl *, u_int32_t, u_int32_t);
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
 int	 pfctl_show_rules(int, char *, int, enum pfctl_show, char *, int, int,
 	    long);
@@ -1791,6 +1793,15 @@ pfctl_load_options(struct pfctl *pf)
 		pf->timeout_set[PFTM_ADAPTIVE_END] = 1;
 	}
 
+	/*
+	 * if the states limit has been set adjust the synflood detection
+	 * hiwat and lowat. Eventually they should be tunables.
+	 */
+	if (pf->limit_set[PF_LIMIT_STATES])
+		if (pfctl_set_synflwats(pf, pf->limit[PF_LIMIT_STATES] / 8,
+		    pf->limit[PF_LIMIT_STATES] / 4))
+			error = 1;
+
 	/* load timeouts */
 	for (i = 0; i < PFTM_MAX; i++)
 		if (pfctl_load_timeout(pf, i, pf->timeout[i]))
@@ -1810,6 +1821,10 @@ pfctl_load_options(struct pfctl *pf)
 
 	/* load reassembly settings */
 	if (pf->reass_set && pfctl_load_reassembly(pf, pf->reassemble))
+		error = 1;
+
+	/* load syncookies settings */
+	if (pf->syncookies_set && pfctl_load_syncookies(pf, pf->syncookies))
 		error = 1;
 
 	return (error);
@@ -1900,6 +1915,22 @@ pfctl_load_timeout(struct pfctl *pf, unsigned int timeout, unsigned int seconds)
 }
 
 int
+pfctl_set_synflwats(struct pfctl *pf, u_int32_t lowat, u_int32_t hiwat)
+{
+	struct pfioc_synflwats ps;
+
+	memset(&ps, 0, sizeof(ps));
+	ps.hiwat = hiwat;
+	ps.lowat = lowat;
+
+	if (ioctl(pf->dev, DIOCSETSYNFLWATS, &ps)) {
+		warnx("Cannot set synflood detection watermarks");
+		return (1);
+	}
+	return (0);
+}
+
+int
 pfctl_set_reassembly(struct pfctl *pf, int on, int nodf)
 {
 	pf->reass_set = 1;
@@ -1915,6 +1946,27 @@ pfctl_set_reassembly(struct pfctl *pf, int on, int nodf)
 		printf("set reassemble %s %s\n", on ? "yes" : "no",
 		    nodf ? "no-df" : "");
 
+	return (0);
+}
+
+int
+pfctl_set_syncookies(struct pfctl *pf, u_int8_t val)
+{
+	if (pf->opts & PF_OPT_VERBOSE) {
+		if (val == PF_SYNCOOKIES_NEVER)
+			printf("set syncookies never\n");
+		else if (val == PF_SYNCOOKIES_ALWAYS)
+			printf("set syncookies always\n");
+		else if (val == PF_SYNCOOKIES_ADAPTIVE)
+			printf("set syncookies adaptive\n");
+		else {	/* cannot happen */
+			warnx("king bula ate all syncookies");
+			return (1);
+		}
+	}
+
+	pf->syncookies_set = 1;
+	pf->syncookies = val;
 	return (0);
 }
 
@@ -2009,6 +2061,16 @@ pfctl_load_reassembly(struct pfctl *pf, u_int32_t reassembly)
 {
 	if (ioctl(dev, DIOCSETREASS, &reassembly)) {
 		warnx("DIOCSETREASS");
+		return (1);
+	}
+	return (0);
+}
+
+int
+pfctl_load_syncookies(struct pfctl *pf, u_int8_t val)
+{
+	if (ioctl(dev, DIOCSETSYNCOOKIES, &val)) {
+		warnx("DIOCSETSYNCOOKIES");
 		return (1);
 	}
 	return (0);
