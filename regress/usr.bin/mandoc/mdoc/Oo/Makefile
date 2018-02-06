@@ -1,6 +1,5 @@
-# $OpenBSD: Makefile,v 1.4 2017/06/10 01:48:31 schwarze Exp $
+# $OpenBSD: Makefile,v 1.5 2018/02/06 16:28:26 schwarze Exp $
 
 REGRESS_TARGETS  = punct
-LINT_TARGETS	 = punct
 
 .include <bsd.regress.mk>
