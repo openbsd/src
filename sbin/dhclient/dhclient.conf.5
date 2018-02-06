@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.39 2017/12/13 18:45:08 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.40 2018/02/06 00:25:09 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: December 13 2017 $
+.Dd $Mdocdate: February 6 2018 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@ and the first retransmission of the packet.
 The default is 1 second.
 .It Ic link-timeout Ar seconds ;
 Sets the number of seconds
-to wait for interface link before going into the background as a daemon.
+to wait for a lease before going into the background as a daemon.
 The default is 10 seconds.
 .It Ic reboot Ar seconds ;
 Sets the number of seconds to wait

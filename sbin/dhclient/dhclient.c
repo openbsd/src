@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.554 2018/02/05 09:33:50 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.555 2018/02/06 00:25:09 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -433,9 +433,9 @@ main(int argc, char *argv[])
 	else
 		log_init(0, LOG_DEBUG); /* can't log to stderr */
 
-	log_setverbose(1);	/* Show log_debug() messages. */
+	log_setverbose(0);	/* Don't show log_debug() messages. */
 
-	while ((ch = getopt(argc, argv, "c:di:l:L:nq")) != -1)
+	while ((ch = getopt(argc, argv, "c:di:l:L:nv")) != -1)
 		switch (ch) {
 		case 'c':
 			path_dhclient_conf = optarg;
@@ -465,8 +465,8 @@ main(int argc, char *argv[])
 		case 'n':
 			cmd_opts |= OPT_NOACTION;
 			break;
-		case 'q':
-			cmd_opts |= OPT_QUIET;
+		case 'v':
+			cmd_opts |= OPT_VERBOSE;
 			break;
 		default:
 			usage();
@@ -479,10 +479,10 @@ main(int argc, char *argv[])
 		usage();
 
 	if ((cmd_opts & (OPT_FOREGROUND | OPT_NOACTION)) != 0)
-		cmd_opts &= ~OPT_QUIET;
+		cmd_opts |= OPT_VERBOSE;
 
-	if ((cmd_opts & OPT_QUIET) != 0)
-		log_setverbose(0);	/* Don't show log_debug() */
+	if ((cmd_opts & OPT_VERBOSE) != 0)
+		log_setverbose(1);	/* Show log_debug() messages. */
 
 	ifi = calloc(1, sizeof(*ifi));
 	if (ifi == NULL)
@@ -681,7 +681,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-dnq] [-c file] [-i options] [-L file] "
+	    "usage: %s [-dnv] [-c file] [-i options] [-L file] "
 	    "[-l file] interface\n", __progname);
 	exit(1);
 }
@@ -1323,10 +1323,22 @@ send_discover(struct interface_info *ifi)
 	 * If the backoff would take us to the panic timeout, just use that
 	 * as the interval.
 	 */
-	if (cur_time + ifi->interval >
-	    ifi->first_sending + config->timeout)
+	if (cur_time + ifi->interval > ifi->first_sending + config->timeout)
 		ifi->interval = (ifi->first_sending +
 		    config->timeout) - cur_time + 1;
+
+	/*
+	 * If we are still starting up, backoff 1 second. If we are past
+	 * link_timeout we just go daemon and finish things up in the
+	 * background.
+	 */
+	if (cur_time - ifi->startup_time < config->link_timeout)
+		ifi->interval = 1;
+	else {
+		if (isatty(STDERR_FILENO) != 0)
+			fprintf(stderr, "no lease .... sleeping\n");
+		go_daemon();
+	}
 
 	/* Record the number of seconds since we started sending. */
 	if (interval < UINT16_MAX)
@@ -1334,7 +1346,6 @@ send_discover(struct interface_info *ifi)
 	else
 		packet->secs = htons(UINT16_MAX);
 	ifi->secs = packet->secs;
-
 
 	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast, "DHCPDISCOVER");
 	if (rslt != -1)
@@ -1438,6 +1449,19 @@ send_request(struct interface_info *ifi)
 		ifi->interval = ifi->expiry - cur_time + 1;
 
 	/*
+	 * If we are still starting up, backoff 1 second. If we are past
+	 * link_timeout we just go daemon and finish things up in the
+	 * background.
+	 */
+	if (cur_time - ifi->startup_time < config->link_timeout)
+		ifi->interval = 1;
+	else {
+		if (isatty(STDERR_FILENO) != 0)
+			fprintf(stderr, "no lease .... sleeping");
+		go_daemon();
+	}
+
+	/*
 	 * If the reboot timeout has expired, or the lease rebind time has
 	 * elapsed, or if we're not yet bound, broadcast the DHCPREQUEST rather
 	 * than unicasting.
@@ -1465,7 +1489,6 @@ send_request(struct interface_info *ifi)
 		else
 			packet->secs = htons(UINT16_MAX);
 	}
-
 
 	rslt = send_packet(ifi, from, destination.sin_addr, "DHCPREQUEST");
 	if (rslt != -1)
@@ -1998,8 +2021,8 @@ go_daemon(void)
 
 	/* Stop logging to stderr. */
 	log_init(0, LOG_DAEMON);
-	if ((cmd_opts & OPT_QUIET) == 0)
-		log_setverbose(1);	/* show log_debug() messages. */
+	if ((cmd_opts & OPT_VERBOSE) != 0)
+		log_setverbose(1);	/* Show log_debug() messages. */
 	log_procinit(log_procname);
 
 	setproctitle("%s", log_procname);

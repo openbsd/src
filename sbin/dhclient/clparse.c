@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.166 2018/01/05 15:03:09 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.167 2018/02/06 00:25:09 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -92,7 +92,7 @@ read_conf(char *name)
 	TAILQ_INIT(&config->reject_list);
 
 	/* Set some defaults. */
-	config->link_timeout = 10;	/* secs before going daemon w/o link */
+	config->link_timeout = 10;	/* secs before going daemon w/o lease */
 	config->timeout = 30;		/* secs to wait for an OFFER */
 	config->select_interval = 0;	/* secs to wait for other OFFERs */
 	config->reboot_timeout = 1;	/* secs before giving up on reboot */
