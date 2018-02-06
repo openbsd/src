@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.71 2018/02/06 09:04:45 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.72 2018/02/06 22:14:52 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -341,6 +341,17 @@ ieee80211_unref_node(struct ieee80211_node **ni)
 {
 	ieee80211_node_decref(*ni);
 	*ni = NULL;			/* guard against use */
+}
+
+/* 
+ * Check if the peer supports HT.
+ * Require at least one of the mandatory MCS.
+ * MCS 0-7 are mandatory but some APs have particular MCS disabled.
+ */
+static inline int
+ieee80211_node_supports_ht(struct ieee80211_node *ni)
+{
+	return (ni->ni_rxmcs[0] & 0xff);
 }
 
 struct ieee80211com;

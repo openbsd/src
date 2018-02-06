@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.125 2017/12/12 13:58:19 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.126 2018/02/06 22:14:52 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1435,7 +1435,7 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 #ifndef IEEE80211_STA_ONLY
 		nnodes++;
 		if ((ic->ic_flags & IEEE80211_F_HTON) && cache_timeout) {
-			if ((ni->ni_rxmcs[0] & 0xff) == 0) {
+			if (!ieee80211_node_supports_ht(ni)) {
 				nonht++;
 				if (ni->ni_state == IEEE80211_STA_ASSOC)
 					nonhtassoc++;
@@ -1481,7 +1481,7 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 #ifndef IEEE80211_STA_ONLY
 		nnodes--;
 		if ((ic->ic_flags & IEEE80211_F_HTON) && cache_timeout) {
-			if ((ni->ni_rxmcs[0] & 0xff) == 0) {
+			if (!ieee80211_node_supports_ht(ni)) {
 				nonht--;
 				if (ni->ni_state == IEEE80211_STA_ASSOC)
 					nonhtassoc--;
