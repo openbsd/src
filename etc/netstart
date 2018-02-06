@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.187 2017/11/12 21:58:00 tb Exp $
+#	$OpenBSD: netstart,v 1.188 2018/02/06 19:53:50 tb Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -147,15 +147,27 @@ ifmstart() {
 # Parse /etc/mygate and add default routes for IPv4 and IPv6
 # Usage: defaultroute
 defaultroute() {
+	local _cmd;
+
 	! $V4_DHCPCONF && stripcom /etc/mygate |
 	while read gw; do
 		[[ $gw == @(*:*) ]] && continue
-		route -qn add -host default $gw && break
+		_cmd="route -qn add -host default $gw"
+		if $PRINT_ONLY; then
+			print -r -- "$_cmd" && break
+		else
+			$_cmd && break
+		fi
 	done
 	! $V6_AUTOCONF && stripcom /etc/mygate |
 	while read gw; do
 		[[ $gw == !(*:*) ]] && continue
-		route -qn add -host -inet6 default $gw && break
+		_cmd="route -qn add -host -inet6 default $gw"
+		if $PRINT_ONLY; then
+			print -r -- "$_cmd" && break
+		else
+			$_cmd && break
+		fi
 	done
 }
 
