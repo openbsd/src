@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1057 2018/02/05 22:31:40 sthen Exp $
+#	$OpenBSD: install.sub,v 1.1058 2018/02/06 22:14:52 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2752,7 +2752,7 @@ finish_up() {
 
 	# If a proxy was needed to fetch the sets, use it for fw_update and syspatch
 	[[ -n $http_proxy ]] &&
-		echo "export http_proxy=$http_proxy" >>/mnt/etc/rc.firsttime
+		quote export "http_proxy=$http_proxy" >>/mnt/etc/rc.firsttime
 
 	# Ensure that fw_update is run on reboot.
 	echo "/usr/sbin/fw_update -v" >>/mnt/etc/rc.firsttime
