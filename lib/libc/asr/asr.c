@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.57 2017/02/27 10:44:46 jca Exp $	*/
+/*	$OpenBSD: asr.c,v 1.58 2018/02/06 13:00:48 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -165,32 +165,47 @@ DEF_WEAK(asr_run);
 /*
  * Same as above, but run in a loop that handles the fd conditions result.
  */
+
+static int
+poll_intrsafe(struct pollfd *fds, nfds_t nfds, int timeout)
+{
+	struct timespec pollstart, pollend, elapsed;
+	int r;
+
+	if (clock_gettime(CLOCK_MONOTONIC, &pollstart))
+		return -1;
+
+	while ((r = poll(fds, 1, timeout)) == -1 && errno == EINTR) {
+		if (clock_gettime(CLOCK_MONOTONIC, &pollend))
+			return -1;
+		timespecsub(&pollend, &pollstart, &elapsed);
+		timeout -= elapsed.tv_sec * 1000 + elapsed.tv_nsec / 1000000;
+		if (timeout < 1)
+			return 0;
+	}
+
+	return r;
+}
+
 int
 asr_run_sync(struct asr_query *as, struct asr_result *ar)
 {
 	struct pollfd	 fds[1];
-	struct timespec	 pollstart, pollend, elapsed;
-	int		 timeout, r, p, saved_errno = errno;
+	int		 r, saved_errno = errno;
 
 	while ((r = asr_run(as, ar)) == ASYNC_COND) {
 		fds[0].fd = ar->ar_fd;
 		fds[0].events = (ar->ar_cond == ASR_WANT_READ) ? POLLIN:POLLOUT;
 
-		timeout = ar->ar_timeout;
-	again:
-		if (clock_gettime(CLOCK_MONOTONIC, &pollstart))
-			break;
-		p = poll(fds, 1, timeout);
-		if (p == -1 && errno == EINTR) {
-			if (clock_gettime(CLOCK_MONOTONIC, &pollend))
-				break;
-
-			timespecsub(&pollend, &pollstart, &elapsed);
-			timeout -= (elapsed.tv_sec * 1000) +
-			    (elapsed.tv_nsec / 1000000);
-			if (timeout < 1)
-				break;
-			goto again;
+		if (poll_intrsafe(fds, 1, ar->ar_timeout) == -1) {
+			memset(ar, 0, sizeof(*ar));
+			ar->ar_errno = errno;
+			ar->ar_h_errno = NETDB_INTERNAL;
+			ar->ar_gai_errno = EAI_SYSTEM;
+			ar->ar_rrset_errno = NETDB_INTERNAL;
+			_asr_async_free(as);
+			errno = saved_errno;
+			return ASYNC_DONE;
 		}
 
 		/*
