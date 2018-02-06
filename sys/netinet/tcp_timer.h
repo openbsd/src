@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.15 2018/01/23 21:41:17 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.16 2018/02/06 15:13:08 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -120,13 +120,19 @@ const char *tcptimers[TCPT_NTIMERS] =
 	timeout_set_proc(&(tp)->t_timer[(timer)], tcp_timer_funcs[(timer)], tp)
 
 #define	TCP_TIMER_ARM(tp, timer, nticks)				\
-	timeout_add(&(tp)->t_timer[(timer)], (nticks) * (hz / PR_SLOWHZ))
+do {									\
+	SET((tp)->t_flags, TF_TIMER << (timer));			\
+	timeout_add(&(tp)->t_timer[(timer)], (nticks) * (hz / PR_SLOWHZ)); \
+} while (0)
 
 #define	TCP_TIMER_DISARM(tp, timer)					\
-	timeout_del(&(tp)->t_timer[(timer)])
+do {									\
+	CLR((tp)->t_flags, TF_TIMER << (timer));			\
+	timeout_del(&(tp)->t_timer[(timer)]);				\
+} while (0)
 
 #define	TCP_TIMER_ISARMED(tp, timer)					\
-	timeout_pending(&(tp)->t_timer[(timer)])
+	ISSET((tp)->t_flags, TF_TIMER << (timer))
 
 /*
  * Force a time value to be in a certain range.

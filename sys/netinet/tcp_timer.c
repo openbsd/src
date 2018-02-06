@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.62 2018/01/23 21:41:17 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.63 2018/02/06 15:13:08 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -185,8 +185,11 @@ tcp_timer_rexmt(void *arg)
 	uint32_t rto;
 
 	NET_LOCK();
-	if (tp->t_flags & TF_DEAD)
+	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
+	if (!ISSET((tp)->t_flags, TF_TMR_REXMT) ||
+	    timeout_pending(&tp->t_timer[TCPT_REXMT]))
 		goto out;
+	CLR((tp)->t_flags, TF_TMR_REXMT);
 
 	if ((tp->t_flags & TF_PMTUD_PEND) && tp->t_inpcb &&
 	    SEQ_GEQ(tp->t_pmtud_th_seq, tp->snd_una) &&
@@ -370,10 +373,14 @@ tcp_timer_persist(void *arg)
 	uint32_t rto;
 
 	NET_LOCK();
-	if ((tp->t_flags & TF_DEAD) ||
-            TCP_TIMER_ISARMED(tp, TCPT_REXMT)) {
+	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
+	if (!ISSET((tp)->t_flags, TF_TMR_PERSIST) ||
+	    timeout_pending(&tp->t_timer[TCPT_PERSIST]))
 		goto out;
-	}
+	CLR((tp)->t_flags, TF_TMR_PERSIST);
+
+	if (TCP_TIMER_ISARMED(tp, TCPT_REXMT))
+		goto out;
 	tcpstat_inc(tcps_persisttimeo);
 	/*
 	 * Hack: if the peer is dead/unreachable, we do not
@@ -406,8 +413,11 @@ tcp_timer_keep(void *arg)
 	struct tcpcb *tp = arg;
 
 	NET_LOCK();
-	if (tp->t_flags & TF_DEAD)
+	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
+	if (!ISSET((tp)->t_flags, TF_TMR_KEEP) ||
+	    timeout_pending(&tp->t_timer[TCPT_KEEP]))
 		goto out;
+	CLR((tp)->t_flags, TF_TMR_KEEP);
 
 	tcpstat_inc(tcps_keeptimeo);
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
@@ -452,8 +462,11 @@ tcp_timer_2msl(void *arg)
 	struct tcpcb *tp = arg;
 
 	NET_LOCK();
-	if (tp->t_flags & TF_DEAD)
+	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
+	if (!ISSET((tp)->t_flags, TF_TMR_2MSL) ||
+	    timeout_pending(&tp->t_timer[TCPT_2MSL]))
 		goto out;
+	CLR((tp)->t_flags, TF_TMR_2MSL);
 
 	tcp_timer_freesack(tp);
 
