@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.35 2018/02/06 02:12:55 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.36 2018/02/06 02:23:04 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1085,7 +1085,31 @@ bwfm_chip_socram_ramsize(struct bwfm_softc *sc, struct bwfm_core *core)
 void
 bwfm_chip_sysmem_ramsize(struct bwfm_softc *sc, struct bwfm_core *core)
 {
-	panic("%s: sysmem ramsize not supported", DEVNAME(sc));
+	uint32_t coreinfo, nb, banksize, bankinfo;
+	uint32_t ramsize = 0;
+	int i;
+
+	if (!sc->sc_chip.ch_core_isup(sc, core))
+		sc->sc_chip.ch_core_reset(sc, core, 0, 0, 0);
+
+	coreinfo = sc->sc_buscore_ops->bc_read(sc,
+	    core->co_base + BWFM_SOCRAM_COREINFO);
+	nb = (coreinfo & BWFM_SOCRAM_COREINFO_SRNB_MASK)
+	    >> BWFM_SOCRAM_COREINFO_SRNB_SHIFT;
+
+	for (i = 0; i < nb; i++) {
+		sc->sc_buscore_ops->bc_write(sc,
+		    core->co_base + BWFM_SOCRAM_BANKIDX,
+		    (BWFM_SOCRAM_BANKIDX_MEMTYPE_RAM <<
+		    BWFM_SOCRAM_BANKIDX_MEMTYPE_SHIFT) | i);
+		bankinfo = sc->sc_buscore_ops->bc_read(sc,
+		    core->co_base + BWFM_SOCRAM_BANKINFO);
+		banksize = ((bankinfo & BWFM_SOCRAM_BANKINFO_SZMASK) + 1)
+		    * BWFM_SOCRAM_BANKINFO_SZBASE;
+		ramsize += banksize;
+	}
+
+	sc->sc_chip.ch_ramsize = ramsize;
 }
 
 void
