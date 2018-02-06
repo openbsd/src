@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.249 2018/01/24 16:52:44 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.250 2018/02/06 15:17:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -352,9 +352,13 @@ sub category
 	return ref(shift);
 }
 
+# all the stuff that ends up in signatures
+package OpenBSD::PackingElement::VersionElement;
+our @ISA=qw(OpenBSD::PackingElement::Meta);
+
 # all dependency information
 package OpenBSD::PackingElement::Depend;
-our @ISA=qw(OpenBSD::PackingElement::Meta);
+our @ISA=qw(OpenBSD::PackingElement::VersionElement);
 
 # Abstract class for all file-like elements
 package OpenBSD::PackingElement::FileBase;
@@ -1022,7 +1026,7 @@ sub write_no_sig()
 }
 
 package OpenBSD::PackingElement::Version;
-our @ISA=qw(OpenBSD::PackingElement::Unique);
+our @ISA=qw(OpenBSD::PackingElement::Unique OpenBSD::PackingElement::VersionElement);
 
 sub keyword() { "version" }
 __PACKAGE__->register_with_factory;
@@ -1091,7 +1095,7 @@ OpenBSD::Auto::cache(spec,
     });
 
 package OpeNBSD::PackingElement::Libset;
-our @ISA=qw(OpenBSD::PackingElement::Depend);
+our @ISA=qw(OpenBSD::PackingElement::Meta);
 
 sub category() { "libset" }
 sub keyword() { "libset" }
