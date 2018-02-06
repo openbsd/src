@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.197 2017/12/12 11:34:38 tb Exp $
+.\"	$OpenBSD: ksh.1,v 1.198 2018/02/06 15:13:32 schwarze Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: December 12 2017 $
+.Dd $Mdocdate: February 6 2018 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -2788,11 +2788,16 @@ for more information.
 .Ar string Ns = Ns Op Ar editing-command
 .Ar ...
 .Xc
-The specified editing command is bound to the given
+In
+.Sx Emacs editing mode ,
+the specified editing command is bound to the given
 .Ar string .
 Future input of the
 .Ar string
 will cause the editing command to be immediately invoked.
+Bindings have no effect in
+.Sx Vi editing mode .
+.Pp
 If the
 .Fl m
 flag is given, the specified input
