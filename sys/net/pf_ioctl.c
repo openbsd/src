@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.327 2018/01/19 15:33:27 bluhm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.328 2018/02/06 09:16:11 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -225,7 +225,7 @@ pfattach(int num)
 	pf_default_rule.route.addr.type =  PF_ADDR_NONE;
 
 	pf_normalize_init();
-	bzero(&pf_status, sizeof(pf_status));
+	memset(&pf_status, 0, sizeof(pf_status));
 	pf_status.debug = LOG_ERR;
 	pf_status.reass = PF_REASS_ENABLED;
 
@@ -1076,7 +1076,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			PF_UNLOCK();
 			break;
 		}
-		bcopy(qs, &pq->queue, sizeof(pq->queue));
+		memcpy(&pq->queue, qs, sizeof(pq->queue));
 		PF_UNLOCK();
 		break;
 	}
@@ -1105,7 +1105,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			PF_UNLOCK();
 			break;
 		}
-		bcopy(qs, &pq->queue, sizeof(pq->queue));
+		memcpy(&pq->queue, qs, sizeof(pq->queue));
 		/* It's a root flow queue but is not an HFSC root class */
 		if ((qs->flags & PFQS_FLOWQUEUE) && qs->parent_qid == 0 &&
 		    !(qs->flags & PFQS_ROOTCLASS))
@@ -1136,7 +1136,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			PF_UNLOCK();
 			break;
 		}
-		bcopy(&q->queue, qs, sizeof(*qs));
+		memcpy(qs, &q->queue, sizeof(*qs));
 		qs->qid = pf_qname2qid(qs->qname, 1);
 		if (qs->parent[0] && (qs->parent_qid =
 		    pf_qname2qid(qs->parent, 0)) == 0) {
@@ -1308,8 +1308,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			PF_UNLOCK();
 			break;
 		}
-		bcopy(rule, &pr->rule, sizeof(struct pf_rule));
-		bzero(&pr->rule.entries, sizeof(pr->rule.entries));
+		memcpy(&pr->rule, rule, sizeof(struct pf_rule));
+		memset(&pr->rule.entries, 0, sizeof(pr->rule.entries));
 		pr->rule.kif = NULL;
 		pr->rule.nat.kif = NULL;
 		pr->rule.rdr.kif = NULL;
@@ -1318,7 +1318,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pr->rule.anchor = NULL;
 		pr->rule.overload_tbl = NULL;
 		pr->rule.pktrate.limit /= PF_THRESHOLD_MULT;
-		bzero(&pr->rule.gcle, sizeof(pr->rule.gcle));
+		memset(&pr->rule.gcle, 0, sizeof(pr->rule.gcle));
 		pr->rule.ruleset = NULL;
 		if (pf_anchor_copyout(ruleset, rule, pr)) {
 			error = EBUSY;
@@ -1657,7 +1657,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_state		*s;
 		struct pf_state_cmp	 id_key;
 
-		bzero(&id_key, sizeof(id_key));
+		memset(&id_key, 0, sizeof(id_key));
 		id_key.id = ps->state.id;
 		id_key.creatorid = ps->state.creatorid;
 
@@ -1719,7 +1719,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCGETSTATUS: {
 		struct pf_status *s = (struct pf_status *)addr;
 		PF_LOCK();
-		bcopy(&pf_status, s, sizeof(struct pf_status));
+		memcpy(s, &pf_status, sizeof(struct pf_status));
 		pfi_update_status(s->ifname, s);
 		PF_UNLOCK();
 		break;
@@ -1730,7 +1730,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		PF_LOCK();
 		if (pi->pfiio_name[0] == 0) {
-			bzero(pf_status.ifname, IFNAMSIZ);
+			memset(pf_status.ifname, 0, IFNAMSIZ);
 			PF_UNLOCK();
 			break;
 		}
@@ -1751,9 +1751,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 
-		bzero(pf_status.counters, sizeof(pf_status.counters));
-		bzero(pf_status.fcounters, sizeof(pf_status.fcounters));
-		bzero(pf_status.scounters, sizeof(pf_status.scounters));
+		memset(pf_status.counters, 0, sizeof(pf_status.counters));
+		memset(pf_status.fcounters, 0, sizeof(pf_status.fcounters));
+		memset(pf_status.scounters, 0, sizeof(pf_status.scounters));
 		pf_status.since = time_uptime;
 
 		PF_UNLOCK();
@@ -2218,7 +2218,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		ioe = malloc(sizeof(*ioe), M_TEMP, M_WAITOK);
 		table = malloc(sizeof(*table), M_TEMP, M_WAITOK);
 		pf_default_rule_new = pf_default_rule;
-		bzero(&pf_trans_set, sizeof(pf_trans_set));
+		memset(&pf_trans_set, 0, sizeof(pf_trans_set));
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
 				free(table, M_TEMP, sizeof(*table));
@@ -2237,7 +2237,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 			switch (ioe->type) {
 			case PF_TRANS_TABLE:
-				bzero(table, sizeof(*table));
+				memset(table, 0, sizeof(*table));
 				strlcpy(table->pfrt_anchor, ioe->anchor,
 				    sizeof(table->pfrt_anchor));
 				if ((error = pfr_ina_begin(table,
@@ -2303,7 +2303,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 			switch (ioe->type) {
 			case PF_TRANS_TABLE:
-				bzero(table, sizeof(*table));
+				memset(table, 0, sizeof(*table));
 				strlcpy(table->pfrt_anchor, ioe->anchor,
 				    sizeof(table->pfrt_anchor));
 				if ((error = pfr_ina_rollback(table,
@@ -2423,7 +2423,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 			switch (ioe->type) {
 			case PF_TRANS_TABLE:
-				bzero(table, sizeof(*table));
+				memset(table, 0, sizeof(*table));
 				strlcpy(table->pfrt_anchor, ioe->anchor,
 				    sizeof(table->pfrt_anchor));
 				if ((error = pfr_ina_commit(table, ioe->ticket,
@@ -2499,8 +2499,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if ((nr + 1) * sizeof(*p) > (unsigned)psn->psn_len)
 				break;
 
-			bcopy(n, pstore, sizeof(*pstore));
-			bzero(&pstore->entry, sizeof(pstore->entry));
+			memcpy(pstore, n, sizeof(*pstore));
+			memset(&pstore->entry, 0, sizeof(pstore->entry));
 			pstore->rule.ptr = NULL;
 			pstore->kif = NULL;
 			pstore->rule.nr = n->rule.ptr->nr;
@@ -2670,7 +2670,7 @@ pf_trans_set_commit(void)
 void
 pf_pool_copyin(struct pf_pool *from, struct pf_pool *to)
 {
-	bcopy(from, to, sizeof(*to));
+	memmove(to, from, sizeof(*to));
 	to->kif = NULL;
 }
 

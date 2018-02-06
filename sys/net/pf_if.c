@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.91 2017/05/30 20:00:48 deraadt Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.92 2018/02/06 09:16:11 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -103,7 +103,7 @@ pfi_kif_find(const char *kif_name)
 {
 	struct pfi_kif_cmp	 s;
 
-	bzero(&s, sizeof(s));
+	memset(&s, 0, sizeof(s));
 	strlcpy(s.pfik_name, kif_name, sizeof(s.pfik_name));
 	return (RB_FIND(pfi_ifhead, &pfi_ifs, (struct pfi_kif *)&s));
 }
@@ -547,7 +547,7 @@ pfi_address_add(struct sockaddr *sa, sa_family_t af, u_int8_t net)
 	if (af == AF_INET && net > 32)
 		net = 128;
 	p = pfi_buffer + pfi_buffer_cnt++;
-	bzero(p, sizeof(*p));
+	memset(p, 0, sizeof(*p));
 	p->pfra_af = af;
 	p->pfra_net = net;
 	if (af == AF_INET)
@@ -617,8 +617,8 @@ pfi_update_status(const char *name, struct pf_status *pfs)
 
 	if (*name == '\0' && pfs == NULL) {
 		RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
-			bzero(p->pfik_packets, sizeof(p->pfik_packets));
-			bzero(p->pfik_bytes, sizeof(p->pfik_bytes));
+			memset(p->pfik_packets, 0, sizeof(p->pfik_packets));
+			memset(p->pfik_bytes, 0, sizeof(p->pfik_bytes));
 			p->pfik_tzero = time_second;
 		}
 		return;
@@ -634,14 +634,14 @@ pfi_update_status(const char *name, struct pf_status *pfs)
 		    sizeof(ifg_members));
 	} else {
 		/* build a temporary list for p only */
-		bzero(&p_member, sizeof(p_member));
+		memset(&p_member, 0, sizeof(p_member));
 		p_member.ifgm_ifp = p->pfik_ifp;
 		TAILQ_INIT(&ifg_members);
 		TAILQ_INSERT_TAIL(&ifg_members, &p_member, ifgm_next);
 	}
 	if (pfs) {
-		bzero(pfs->pcounters, sizeof(pfs->pcounters));
-		bzero(pfs->bcounters, sizeof(pfs->bcounters));
+		memset(pfs->pcounters, 0, sizeof(pfs->pcounters));
+		memset(pfs->bcounters, 0, sizeof(pfs->bcounters));
 	}
 	TAILQ_FOREACH(ifgm, &ifg_members, ifgm_next) {
 		if (ifgm->ifgm_ifp == NULL)
@@ -650,8 +650,8 @@ pfi_update_status(const char *name, struct pf_status *pfs)
 
 		/* just clear statistics */
 		if (pfs == NULL) {
-			bzero(p->pfik_packets, sizeof(p->pfik_packets));
-			bzero(p->pfik_bytes, sizeof(p->pfik_bytes));
+			memset(p->pfik_packets, 0, sizeof(p->pfik_packets));
+			memset(p->pfik_bytes, 0, sizeof(p->pfik_bytes));
 			p->pfik_tzero = time_second;
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1058 2018/01/19 12:57:15 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1059 2018/02/06 09:16:11 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -497,7 +497,7 @@ pf_src_connlimit(struct pf_state **state)
 			    (*state)->key[PF_SK_WIRE]->af);
 		}
 
-		bzero(&p, sizeof(p));
+		memset(&p, 0, sizeof(p));
 		p.pfra_af = (*state)->key[PF_SK_WIRE]->af;
 		switch ((*state)->key[PF_SK_WIRE]->af) {
 		case AF_INET:
@@ -1148,7 +1148,7 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *st)
 {
 	int32_t expire;
 
-	bzero(sp, sizeof(struct pfsync_state));
+	memset(sp, 0, sizeof(struct pfsync_state));
 
 	/* copy from state key */
 	sp->key[PF_SK_WIRE].addr[0] = st->key[PF_SK_WIRE]->addr[0];
@@ -2312,7 +2312,7 @@ pf_translate_af(struct pf_pdesc *pd)
 	switch (pd->naf) {
 	case AF_INET:
 		ip4 = mtod(pd->m, struct ip *);
-		bzero(ip4, hlen);
+		memset(ip4, 0, hlen);
 		ip4->ip_v   = IPVERSION;
 		ip4->ip_hl  = hlen >> 2;
 		ip4->ip_tos = pd->tos;
@@ -2326,7 +2326,7 @@ pf_translate_af(struct pf_pdesc *pd)
 		break;
 	case AF_INET6:
 		ip6 = mtod(pd->m, struct ip6_hdr *);
-		bzero(ip6, hlen);
+		memset(ip6, 0, hlen);
 		ip6->ip6_vfc  = IPV6_VERSION;
 		ip6->ip6_flow |= htonl((u_int32_t)pd->tos << 20);
 		ip6->ip6_plen = htons(dlen);
@@ -2407,7 +2407,7 @@ pf_change_icmp_af(struct mbuf *m, int ipoff2, struct pf_pdesc *pd,
 	switch (naf) {
 	case AF_INET:
 		ip4 = mtod(n, struct ip *);
-		bzero(ip4, sizeof(*ip4));
+		memset(ip4, 0, sizeof(*ip4));
 		ip4->ip_v   = IPVERSION;
 		ip4->ip_hl  = sizeof(*ip4) >> 2;
 		ip4->ip_len = htons(sizeof(*ip4) + pd2->tot_len - ohlen);
@@ -2424,7 +2424,7 @@ pf_change_icmp_af(struct mbuf *m, int ipoff2, struct pf_pdesc *pd,
 		break;
 	case AF_INET6:
 		ip6 = mtod(n, struct ip6_hdr *);
-		bzero(ip6, sizeof(*ip6));
+		memset(ip6, 0, sizeof(*ip6));
 		ip6->ip6_vfc  = IPV6_VERSION;
 		ip6->ip6_plen = htons(pd2->tot_len - ohlen);
 		if (pd2->proto == IPPROTO_ICMP)
@@ -2792,7 +2792,7 @@ pf_build_tcp(const struct pf_rule *r, sa_family_t af,
 	m->m_pkthdr.len = m->m_len = len;
 	m->m_pkthdr.ph_ifidx = 0;
 	m->m_pkthdr.csum_flags |= M_TCP_CSUM_OUT;
-	bzero(m->m_data, len);
+	memset(m->m_data, 0, len);
 	switch (af) {
 	case AF_INET:
 		h = mtod(m, struct ip *);
@@ -3398,7 +3398,7 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr, sa_family_t af)
 	if (!r->rt)
 		return (0);
 
-	bzero(sns, sizeof(sns));
+	memset(sns, 0, sizeof(sns));
 	switch (af) {
 	case AF_INET:
 		rv = pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL, sns,
@@ -3708,7 +3708,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	struct pf_test_ctx	 ctx;
 	int			 rv;
 
-	bzero(&ctx, sizeof(ctx));
+	memset(&ctx, 0, sizeof(ctx));
 	ctx.pd = pd;
 	ctx.rm = rm;
 	ctx.am = am;
@@ -4083,7 +4083,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	 * Make state responsible for rules it binds here.
 	 */
 	memcpy(&s->match_rules, rules, sizeof(s->match_rules));
-	bzero(rules, sizeof(*rules));
+	memset(rules, 0, sizeof(*rules));
 	STATE_INC_COUNTERS(s);
 
 	if (tag > 0) {
@@ -5054,7 +5054,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 		int		 ipoff2;
 
 		/* Initialize pd2 fields valid for both packets with pd. */
-		bzero(&pd2, sizeof(pd2));
+		memset(&pd2, 0, sizeof(pd2));
 		pd2.af = pd->af;
 		pd2.dir = pd->dir;
 		pd2.kif = pd->kif;
@@ -5926,7 +5926,7 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	}
 
 	if (s == NULL) {
-		bzero(sns, sizeof(sns));
+		memset(sns, 0, sizeof(sns));
 		if (pf_map_addr(AF_INET, r,
 		    (struct pf_addr *)&ip->ip_src,
 		    &naddr, NULL, sns, &r->route, PF_SN_ROUTE)) {
@@ -6082,7 +6082,7 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	}
 
 	if (s == NULL) {
-		bzero(sns, sizeof(sns));
+		memset(sns, 0, sizeof(sns));
 		if (pf_map_addr(AF_INET6, r, (struct pf_addr *)&ip6->ip6_src,
 		    &naddr, NULL, sns, &r->route, PF_SN_ROUTE)) {
 			DPFPRINTF(LOG_ERR,
@@ -6230,7 +6230,7 @@ pf_get_divert(struct mbuf *m)
 		    M_NOWAIT);
 		if (mtag == NULL)
 			return (NULL);
-		bzero(mtag + 1, sizeof(struct pf_divert));
+		memset(mtag + 1, 0, sizeof(struct pf_divert));
 		m_tag_prepend(m, mtag);
 	}
 
@@ -6489,7 +6489,7 @@ int
 pf_setup_pdesc(struct pf_pdesc *pd, sa_family_t af, int dir,
     struct pfi_kif *kif, struct mbuf *m, u_short *reason)
 {
-	bzero(pd, sizeof(*pd));
+	memset(pd, 0, sizeof(*pd));
 	pd->dir = dir;
 	pd->kif = kif;		/* kif is NULL when called by pflog */
 	pd->m = m;
