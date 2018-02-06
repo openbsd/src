@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.91 2017/08/22 15:47:13 deraadt Exp $ */
+/* $OpenBSD: rebound.c,v 1.92 2018/02/06 20:38:47 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -922,8 +922,6 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 			case EVFILT_VNODE:
 				/* config file changed */
 				logmsg(LOG_INFO, "config changed, reloading");
-				close(conffd);
-				conffd = -1;
 				sleep(1);
 				raise(SIGHUP);
 				break;
@@ -931,6 +929,8 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 				if (kev.ident == SIGHUP) {
 					/* signaled. kill child. */
 					logmsg(LOG_INFO, "received HUP, restarting");
+					close(conffd);
+					conffd = -1;
 					hupped = 1;
 					if (childdead)
 						goto doublebreak;
