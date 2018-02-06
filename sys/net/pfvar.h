@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.470 2017/12/29 17:05:25 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.471 2018/02/06 23:44:48 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1296,6 +1296,7 @@ struct pf_status {
 	u_int64_t	pcounters[2][2][3];
 	u_int64_t	bcounters[2][2];
 	u_int64_t	stateid;
+	u_int64_t	syncookies_inflight[2];	/* unACKed SYNcookies */
 	time_t		since;
 	u_int32_t	running;
 	u_int32_t	states;
@@ -1304,12 +1305,20 @@ struct pf_status {
 	u_int32_t	debug;
 	u_int32_t	hostid;
 	u_int32_t	reass;			/* reassembly */
+	u_int8_t	syncookies_active;
+	u_int8_t	syncookies_mode;	/* never/always/adaptive */
+	u_int8_t	pad[2];
 	char		ifname[IFNAMSIZ];
 	u_int8_t	pf_chksum[PF_MD5_DIGEST_LENGTH];
 };
 
 #define PF_REASS_ENABLED	0x01
 #define PF_REASS_NODF		0x02
+
+#define	PF_SYNCOOKIES_NEVER	0
+#define	PF_SYNCOOKIES_ALWAYS	1
+#define	PF_SYNCOOKIES_ADAPTIVE	2
+#define	PF_SYNCOOKIES_MODE_MAX	PF_SYNCOOKIES_ADAPTIVE
 
 #define PF_PRIO_ZERO		0xff		/* match "prio 0" packets */
 
@@ -1564,6 +1573,10 @@ struct pfioc_iface {
 	int	 pfiio_flags;
 };
 
+struct pfioc_synflwats {
+	u_int32_t	hiwat;
+	u_int32_t	lowat;
+};
 
 /*
  * ioctl operations
@@ -1629,6 +1642,8 @@ struct pfioc_iface {
 #define DIOCGETQUEUES	_IOWR('D', 94, struct pfioc_queue)
 #define DIOCGETQUEUE	_IOWR('D', 95, struct pfioc_queue)
 #define DIOCGETQSTATS	_IOWR('D', 96, struct pfioc_qstats)
+#define DIOCSETSYNFLWATS	_IOWR('D', 97, struct pfioc_synflwats)
+#define DIOCSETSYNCOOKIES	_IOWR('D', 98, u_int8_t)
 
 #ifdef _KERNEL
 
@@ -1921,6 +1936,13 @@ void			 pf_send_tcp(const struct pf_rule *, sa_family_t,
 			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,
 			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int,
 			    u_int16_t, u_int);
+void			 pf_syncookies_init(void);
+int			 pf_syncookies_setmode(u_int8_t);
+int			 pf_syncookies_setwats(u_int32_t, u_int32_t);
+int			 pf_synflood_check(struct pf_pdesc *);
+void			 pf_syncookie_send(struct pf_pdesc *);
+u_int8_t		 pf_syncookie_validate(struct pf_pdesc *);
+struct mbuf *		 pf_syncookie_recreate_syn(struct pf_pdesc *);
 #endif /* _KERNEL */
 
 #endif /* _NET_PFVAR_H_ */

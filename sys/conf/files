@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.656 2017/11/16 18:12:27 jcs Exp $
+#	$OpenBSD: files,v 1.657 2018/02/06 23:44:48 henning Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -580,6 +580,7 @@ file	net/pf_table.c			pf
 file	net/pf_osfp.c			pf
 file	net/pf_if.c			pf
 file	net/pf_lb.c			pf
+file	net/pf_syncookies.c		pf
 file	net/hfsc.c			pf
 file	net/fq_codel.c			pf
 

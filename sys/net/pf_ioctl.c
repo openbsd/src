@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.328 2018/02/06 09:16:11 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.329 2018/02/06 23:44:48 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -173,6 +173,7 @@ pfattach(int num)
 	pfr_initialize();
 	pfi_initialize();
 	pf_osfp_initialize();
+	pf_syncookies_init();
 
 	pool_sethardlimit(pf_pool_limits[PF_LIMIT_STATES].pp,
 	    pf_pool_limits[PF_LIMIT_STATES].limit, NULL, 0);
@@ -2642,6 +2643,20 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pf_trans_set.reass = *reass;
 		pf_trans_set.mask |= PF_TSET_REASS;
 		PF_UNLOCK();
+		break;
+	}
+
+	case DIOCSETSYNFLWATS: {
+		struct pfioc_synflwats *io = (struct pfioc_synflwats *)addr;
+
+		error = pf_syncookies_setwats(io->hiwat, io->lowat);
+		break;
+	}
+
+	case DIOCSETSYNCOOKIES: {
+		u_int8_t	*mode = (u_int8_t *)addr;
+
+		error = pf_syncookies_setmode(*mode);
 		break;
 	}
 

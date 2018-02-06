@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.232 2017/10/19 11:02:42 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.233 2018/02/06 23:44:48 henning Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ struct pkthdr_pf {
 
 /* pkthdr_pf.flags */
 #define	PF_TAG_GENERATED		0x01
+#define	PF_TAG_SYNCOOKIE_RECREATED	0x02
 #define	PF_TAG_TRANSLATE_LOCALHOST	0x04
 #define	PF_TAG_DIVERTED			0x08
 #define	PF_TAG_DIVERTED_PACKET		0x10
