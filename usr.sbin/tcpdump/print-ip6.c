@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.24 2016/12/13 06:40:21 dlg Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.25 2018/02/06 03:07:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -190,10 +190,6 @@ ip6_print(const u_char *bp, u_int length)
 #endif
 		case IPPROTO_GRE:
 			gre_print(cp, len);
-			if (! vflag) {
-				printf(" (gre encap)");
-				goto out;
-			}
 			goto end;
 
 		case IPPROTO_NONE:

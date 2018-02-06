@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.82 2018/02/03 13:39:48 mpi Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.83 2018/02/06 03:07:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -115,6 +115,7 @@ static struct printer printers[] = {
 	{ sl_if_print,			DLT_SLIP },
 	{ sl_bsdos_if_print,		DLT_SLIP_BSDOS },
 	{ ppp_if_print,			DLT_PPP },
+	{ ppp_hdlc_if_print,		DLT_PPP_SERIAL },
 	{ fddi_if_print,		DLT_FDDI },
 	{ null_if_print,		DLT_NULL },
 	{ raw_if_print,			DLT_RAW },
