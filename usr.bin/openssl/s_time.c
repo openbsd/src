@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.20 2018/01/07 08:43:26 inoguchi Exp $ */
+/* $OpenBSD: s_time.c,v 1.21 2018/02/06 02:40:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -353,8 +353,6 @@ s_time_main(int argc, char **argv)
 			    SSL_RECEIVED_SHUTDOWN);
 		else
 			SSL_shutdown(scon);
-		shutdown(SSL_get_fd(scon), SHUT_RDWR);
-		close(SSL_get_fd(scon));
 
 		nConn += 1;
 		if (SSL_session_reused(scon))
@@ -415,8 +413,6 @@ next:
 		    SSL_RECEIVED_SHUTDOWN);
 	else
 		SSL_shutdown(scon);
-	shutdown(SSL_get_fd(scon), SHUT_RDWR);
-	close(SSL_get_fd(scon));
 
 	nConn = 0;
 	totalTime = 0.0;
@@ -449,8 +445,6 @@ next:
 			    SSL_RECEIVED_SHUTDOWN);
 		else
 			SSL_shutdown(scon);
-		shutdown(SSL_get_fd(scon), SHUT_RDWR);
-		close(SSL_get_fd(scon));
 
 		nConn += 1;
 		if (SSL_session_reused(scon))
