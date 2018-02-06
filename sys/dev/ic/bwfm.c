@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.34 2018/02/05 10:30:04 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.35 2018/02/06 02:12:55 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -989,7 +989,18 @@ bwfm_chip_ca7_set_passive(struct bwfm_softc *sc)
 int
 bwfm_chip_cm3_set_active(struct bwfm_softc *sc)
 {
-	panic("%s: cm3 not supported", DEVNAME(sc));
+	struct bwfm_core *core;
+
+	core = bwfm_chip_get_core(sc, BWFM_AGENT_INTERNAL_MEM);
+	if (!sc->sc_chip.ch_core_isup(sc, core))
+		return 1;
+
+	sc->sc_buscore_ops->bc_activate(sc, 0);
+
+	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CM3);
+	sc->sc_chip.ch_core_reset(sc, core, 0, 0, 0);
+
+	return 0;
 }
 
 void
