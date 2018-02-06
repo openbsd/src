@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.221 2018/01/18 18:08:51 bluhm Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.222 2018/02/06 22:35:32 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -917,6 +917,8 @@ pool_p_alloc(struct pool *pp, int flags, int *slowdown)
 	struct pool_page_header *ph;
 	struct pool_item *pi;
 	caddr_t addr;
+	unsigned int order;
+	int o;
 	int n;
 
 	pl_assert_unlocked(pp, &pp->pr_lock);
@@ -951,10 +953,19 @@ pool_p_alloc(struct pool *pp, int flags, int *slowdown)
 #endif /* DIAGNOSTIC */
 
 	n = pp->pr_itemsperpage;
+	o = 32;
 	while (n--) {
 		pi = (struct pool_item *)addr;
 		pi->pi_magic = POOL_IMAGIC(ph, pi);
-		XSIMPLEQ_INSERT_TAIL(&ph->ph_items, pi, pi_list);
+
+		if (o == 32) {
+			order = arc4random();
+			o = 0;
+		}
+		if (ISSET(order, 1 << o++))
+			XSIMPLEQ_INSERT_TAIL(&ph->ph_items, pi, pi_list);
+		else
+			XSIMPLEQ_INSERT_HEAD(&ph->ph_items, pi, pi_list);
 
 #ifdef DIAGNOSTIC
 		if (POOL_PHPOISON(ph))
