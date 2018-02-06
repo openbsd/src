@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.555 2018/02/06 00:25:09 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.556 2018/02/06 05:09:51 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1336,7 +1336,8 @@ send_discover(struct interface_info *ifi)
 		ifi->interval = 1;
 	else {
 		if (isatty(STDERR_FILENO) != 0)
-			fprintf(stderr, "no lease .... sleeping\n");
+			fprintf(stderr, "%s: no lease .... sleeping\n",
+			    log_procname);
 		go_daemon();
 	}
 
@@ -1457,7 +1458,8 @@ send_request(struct interface_info *ifi)
 		ifi->interval = 1;
 	else {
 		if (isatty(STDERR_FILENO) != 0)
-			fprintf(stderr, "no lease .... sleeping");
+			fprintf(stderr, "%s: no lease .... sleeping\n",
+			    log_procname);
 		go_daemon();
 	}
 
