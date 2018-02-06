@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.134 2018/02/01 21:06:31 bluhm Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.135 2018/02/06 14:54:22 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -80,7 +80,7 @@ void	ah_output_cb(struct cryptop *);
 void	ah_input_cb(struct cryptop *);
 int	ah_massage_headers(struct mbuf **, int, int, int, int);
 
-unsigned char ipseczeroes[IPSEC_ZEROES_SIZE]; /* zeroes! */
+const unsigned char ipseczeroes[IPSEC_ZEROES_SIZE]; /* zeroes! */
 
 
 /*
@@ -190,21 +190,19 @@ ah_zeroize(struct tdb *tdbp)
  * Massage IPv4/IPv6 headers for AH processing.
  */
 int
-ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
+ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 {
 	struct mbuf *m = *m0;
 	unsigned char *ptr;
-	int off, count;
-
+	int error, off, count;
 	struct ip *ip;
-
 #ifdef INET6
 	struct ip6_ext *ip6e;
 	struct ip6_hdr ip6;
 	int ad, alloc, nxt, noff;
 #endif /* INET6 */
 
-	switch (proto) {
+	switch (af) {
 	case AF_INET:
 		/*
 		 * This is the least painful way of dealing with IPv4 header
@@ -229,10 +227,8 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 		/* IPv4 option processing */
 		for (off = sizeof(struct ip); off < skip;) {
-			if (ptr[off] == IPOPT_EOL || ptr[off] == IPOPT_NOP ||
-			    off + 1 < skip)
-				;
-			else {
+			if (ptr[off] != IPOPT_EOL && ptr[off] != IPOPT_NOP &&
+			    off + 1 >= skip) {
 				DPRINTF(("%s: illegal IPv4 option length for"
 				    " option %d\n", __func__, ptr[off]));
 
@@ -355,7 +351,14 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 			ip6.ip6_dst.s6_addr16[1] = 0;
 
 		/* Done with IPv6 header. */
-		m_copyback(m, 0, sizeof(struct ip6_hdr), &ip6, M_NOWAIT);
+		error = m_copyback(m, 0, sizeof(struct ip6_hdr), &ip6,
+		    M_NOWAIT);
+		if (error) {
+			DPRINTF(("%s: m_copyback no memory", __func__));
+			ahstat_inc(ahs_hdrops);
+			m_freem(m);
+			return error;
+		}
 
 		/* Let's deal with the remaining headers (if any). */
 		if (skip - sizeof(struct ip6_hdr) > 0) {
@@ -386,7 +389,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		} else
 			break;
 
-		nxt = ip6.ip6_nxt & 0xff; /* Next header type. */
+		nxt = ip6.ip6_nxt;  /* Next header type. */
 
 		for (off = 0; off < skip - sizeof(struct ip6_hdr);) {
 			if (off + sizeof(struct ip6_ext) >
@@ -428,10 +431,6 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 				if (count != noff)
 					goto error6;
-
-				/* Advance. */
-				off += ((ip6e->ip6e_len + 1) << 3);
-				nxt = ip6e->ip6e_nxt;
 				break;
 
 			case IPPROTO_ROUTING:
@@ -471,15 +470,17 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 					    (caddr_t)&ip6);
 					addr[0] = ip6.ip6_dst;
 					ip6.ip6_dst = finaldst;
-					m_copyback(m, 0, sizeof(ip6), &ip6,
-					    M_NOWAIT);
-
+					error = m_copyback(m, 0, sizeof(ip6),
+					    &ip6, M_NOWAIT);
+					if (error) {
+						if (alloc)
+							free(ptr, M_XDATA, 0);
+						ahstat_inc(ahs_hdrops);
+						m_freem(m);
+						return error;
+					}
 					rh0->ip6r0_segleft = 0;
 				}
-
-				/* advance */
-				off += ((ip6e->ip6e_len + 1) << 3);
-				nxt = ip6e->ip6e_nxt;
 				break;
 			    }
 
@@ -493,13 +494,22 @@ error6:
 				m_freem(m);
 				return EINVAL;
 			}
+
+			/* Advance. */
+			off += ((ip6e->ip6e_len + 1) << 3);
+			nxt = ip6e->ip6e_nxt;
 		}
 
 		/* Copyback and free, if we allocated. */
 		if (alloc) {
-			m_copyback(m, sizeof(struct ip6_hdr),
+			error = m_copyback(m, sizeof(struct ip6_hdr),
 			    skip - sizeof(struct ip6_hdr), ptr, M_NOWAIT);
 			free(ptr, M_XDATA, 0);
+			if (error) {
+				ahstat_inc(ahs_hdrops);
+				m_freem(m);
+				return error;
+			}
 		}
 
 		break;
@@ -520,7 +530,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	struct tdb_crypto *tc;
 	u_int32_t btsx, esn;
 	u_int8_t hl;
-	int rplen;
+	int error, rplen;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
 #endif
@@ -657,12 +667,13 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	m_copyback(m, skip + rplen, ahx->authsize, ipseczeroes, M_NOWAIT);
 
 	/* "Massage" the packet headers for crypto processing. */
-	if ((btsx = ah_massage_headers(&m, tdb->tdb_dst.sa.sa_family,
-	    skip, ahx->type, 0)) != 0) {
+	error = ah_massage_headers(&m, tdb->tdb_dst.sa.sa_family, skip,
+	    ahx->type, 0);
+	if (error) {
 		/* mbuf will be free'd by callee. */
 		free(tc, M_XDATA, 0);
 		crypto_freereq(crp);
-		return btsx;
+		return error;
 	}
 
 	/* Crypto operation descriptor. */
@@ -912,7 +923,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	struct mbuf *mi;
 	struct cryptop *crp;
 	u_int16_t iplen;
-	int len, rplen, roff;
+	int error, rplen, roff;
 	u_int8_t prot;
 	struct ah *ah;
 #if NBPFILTER > 0
@@ -1144,12 +1155,13 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	m_copyback(m, protoff, sizeof(u_int8_t), &prot, M_NOWAIT);
 
 	/* "Massage" the packet headers for crypto processing. */
-	if ((len = ah_massage_headers(&m, tdb->tdb_dst.sa.sa_family,
-	    skip, ahx->type, 1)) != 0) {
+	error = ah_massage_headers(&m, tdb->tdb_dst.sa.sa_family, skip,
+	    ahx->type, 1);
+	if (error) {
 		/* mbuf will be free'd by callee. */
 		free(tc, M_XDATA, 0);
 		crypto_freereq(crp);
-		return len;
+		return error;
 	}
 
 	/* Crypto operation descriptor. */
