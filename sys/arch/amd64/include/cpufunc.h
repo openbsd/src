@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.22 2018/01/11 22:31:09 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.23 2018/02/06 01:09:17 patrick Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -314,9 +314,8 @@ breakpoint(void)
 }
 
 void amd64_errata(struct cpu_info *);
-void cpu_flags_update(struct cpu_info *);
+void cpu_ucode_setup(void);
 void cpu_ucode_apply(struct cpu_info *);
-void cpu_ucode_attachhook(struct device *);
 
 #endif /* _KERNEL */
 

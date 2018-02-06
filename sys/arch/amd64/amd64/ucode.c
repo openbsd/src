@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucode.c,v 1.3 2018/01/14 20:15:37 bluhm Exp $	*/
+/*	$OpenBSD: ucode.c,v 1.4 2018/02/06 01:09:17 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Stefan Fritsch <fritsch@genua.de>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -19,10 +19,14 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mutex.h>
+#include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/specialreg.h>
+#include <machine/biosvar.h>
 
 /* #define UCODE_DEBUG */
 #ifdef UCODE_DEBUG
@@ -65,7 +69,7 @@ struct intel_ucode_ext_sig {
 char *	 cpu_ucode_data;
 size_t	 cpu_ucode_size;
 
-void	 cpu_ucode_setup(struct cpu_info *);
+void	 cpu_ucode_setup(void);
 void	 cpu_ucode_apply(struct cpu_info *);
 
 /* Intel */
@@ -81,32 +85,18 @@ struct intel_ucode_header	*cpu_ucode_intel_applied;
 struct mutex			 cpu_ucode_intel_mtx = MUTEX_INITIALIZER(IPL_HIGH);
 
 void
-cpu_ucode_attachhook(struct device *dv)
+cpu_ucode_setup(void)
 {
-	struct cpu_info *ci = curcpu();
-
-	cpu_ucode_setup(ci);
-	cpu_ucode_apply(ci);
-	cpu_flags_update(ci);
-}
-
-void
-cpu_ucode_setup(struct cpu_info *ci)
-{
-	char name[128];
-	u_char *ucode;
-	size_t size;
-
-	snprintf(name, sizeof(name), "intel/%02x-%02x-%02x", ci->ci_family,
-	    ci->ci_model, (ci->ci_signature >> 0) & 0x0f);
-
-	if (loadfirmware(name, &ucode, &size) != 0) {
-		DPRINTF(("%s: no microcode found: %s\n", __func__, name));
+	if (bios_ucode == NULL)
 		return;
-	}
 
-	cpu_ucode_data = ucode;
-	cpu_ucode_size = size;
+	if (!bios_ucode->uc_addr || !bios_ucode->uc_size)
+		return;
+
+	cpu_ucode_size = bios_ucode->uc_size;
+	cpu_ucode_data = malloc(cpu_ucode_size, M_DEVBUF, M_WAITOK);
+	memcpy(cpu_ucode_data, (void *)PMAP_DIRECT_MAP(bios_ucode->uc_addr),
+	    cpu_ucode_size);
 }
 
 /*
@@ -126,8 +116,10 @@ cpu_ucode_intel_apply(struct cpu_info *ci)
 	uint32_t old_rev, new_rev;
 	paddr_t data;
 
-	if (cpu_ucode_data == NULL || cpu_ucode_size == 0)
+	if (cpu_ucode_data == NULL || cpu_ucode_size == 0) {
+		DPRINTF(("%s: no microcode provided\n", __func__));
 		return;
+	}
 
 	/*
 	 * Grab a mutex, because we are not allowed to run updates
@@ -140,10 +132,14 @@ cpu_ucode_intel_apply(struct cpu_info *ci)
 	if (update == NULL)
 		update = cpu_ucode_intel_find(cpu_ucode_data,
 		    cpu_ucode_size, old_rev);
-	if (update == NULL)
+	if (update == NULL) {
+		DPRINTF(("%s: no microcode update found\n", __func__));
 		goto out;
-	if (update->update_revision == old_rev)
+	}
+	if (update->update_revision == old_rev) {
+		DPRINTF(("%s: microcode already up-to-date\n", __func__));
 		goto out;
+	}
 
 	/* Apply microcode. */
 	data = (paddr_t)update;

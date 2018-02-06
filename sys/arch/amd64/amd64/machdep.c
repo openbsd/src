@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.237 2018/01/06 22:03:12 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.238 2018/02/06 01:09:17 patrick Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -241,6 +241,7 @@ bios_diskinfo_t	*bios_diskinfo;
 bios_memmap_t	*bios_memmap;
 u_int32_t	bios_cksumlen;
 bios_efiinfo_t	*bios_efiinfo;
+bios_ucode_t	*bios_ucode;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -308,6 +309,10 @@ cpu_startup(void)
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
+
+#ifndef SMALL_KERNEL
+	cpu_ucode_setup();
+#endif
 }
 
 /*
@@ -1884,6 +1889,10 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 			bios_efiinfo = (bios_efiinfo_t *)q->ba_arg;
 			if (bios_efiinfo->fb_addr != 0)
 				docninit++;
+			break;
+
+		case BOOTARG_UCODE:
+			bios_ucode = (bios_ucode_t *)q->ba_arg;
 			break;
 
 		default:

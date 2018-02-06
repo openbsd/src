@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.110 2018/01/12 20:14:20 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.111 2018/02/06 01:09:17 patrick Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -406,21 +406,24 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("(uniprocessor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
 		cpu_intr_init(ci);
+#ifndef SMALL_KERNEL
+		cpu_ucode_apply(ci);
+#endif
 		identifycpu(ci);
 #ifdef MTRR
 		mem_range_attach();
 #endif /* MTRR */
 		cpu_init(ci);
 		cpu_init_mwait(sc);
-#ifndef SMALL_KERNEL
-		config_mountroot(NULL, cpu_ucode_attachhook);
-#endif
 		break;
 
 	case CPU_ROLE_BP:
 		printf("apid %d (boot processor)\n", caa->cpu_apicid);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 		cpu_intr_init(ci);
+#ifndef SMALL_KERNEL
+		cpu_ucode_apply(ci);
+#endif
 		identifycpu(ci);
 #ifdef MTRR
 		mem_range_attach();
@@ -438,9 +441,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		ioapic_bsp_id = caa->cpu_apicid;
 #endif
 		cpu_init_mwait(sc);
-#ifndef SMALL_KERNEL
-		config_mountroot(NULL, cpu_ucode_attachhook);
-#endif
 		break;
 
 	case CPU_ROLE_AP:
@@ -698,6 +698,7 @@ cpu_hatch(void *v)
 
 	lapic_enable();
 	lapic_startclock();
+	cpu_ucode_apply(ci);
 
 	if ((ci->ci_flags & CPUF_IDENTIFIED) == 0) {
 		/*
@@ -738,8 +739,6 @@ cpu_hatch(void *v)
 	lldt(0);
 
 	cpu_init(ci);
-	cpu_ucode_apply(ci);
-	cpu_flags_update(ci);
 #if NPVBUS > 0
 	pvbus_init_cpu();
 #endif
@@ -938,21 +937,4 @@ cpu_activate(struct device *self, int act)
 	}
 
 	return (0);
-}
-
-void
-cpu_flags_update(struct cpu_info *ci)
-{
-	uint32_t dummy;
-
-	/* XXX this update is much later than we want it to be */
-	if (cpuid_level >= 0x07) {
-		CPUID_LEAF(0x7, 0, dummy, dummy, dummy,
-		    ci->ci_feature_sefflags_edx);
-	}
-	if (!strcmp(cpu_vendor, "AuthenticAMD") &&
-	    ci->ci_pnfeatset >= 0x80000008) {
-		CPUID(0x80000008, dummy, ci->ci_feature_amdspec_ebx,
-		    dummy, dummy);
-	}
 }
