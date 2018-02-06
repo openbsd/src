@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.67 2017/04/30 17:54:11 beck Exp $ */
+/* $OpenBSD: b_sock.c,v 1.68 2018/02/06 14:45:52 bluhm Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -184,7 +184,8 @@ BIO_get_accept_socket(char *host, int bind_mode)
 
 err:
 	free(str);
-	freeaddrinfo(res);
+	if (res != NULL)
+		freeaddrinfo(res);
 	if ((ret == 0) && (s != -1)) {
 		close(s);
 		s = -1;
