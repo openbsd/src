@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.91 2017/12/23 16:20:21 sthen Exp $
+.\"	$OpenBSD: release.8,v 1.92 2018/02/06 08:42:33 tb Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"	Copyright (c) 2016 Theo Buehler <tb@openbsd.org>
@@ -10,7 +10,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: December 23 2017 $
+.Dd $Mdocdate: February 6 2018 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -130,11 +130,6 @@ The build process will place the object files in a tree under
 .Pa /usr/obj .
 This directory must be owned by build:wobj with mode 770.
 .Pp
-The first time, the
-.Pa /usr/obj
-directory
-.Em must be
-cleaned out completely before proceeding to avoid permission issues.
 After a successful
 .Nm
 build, this is no longer needed.

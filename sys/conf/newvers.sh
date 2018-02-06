@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.157 2017/10/04 17:59:41 benno Exp $
+#	$OpenBSD: newvers.sh,v 1.158 2018/02/06 08:42:33 tb Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -31,6 +31,8 @@
 # SUCH DAMAGE.
 #
 #	@(#)newvers.sh	8.1 (Berkeley) 4/20/94
+
+umask 007
 
 if [ ! -r version -o ! -s version ]
 then
