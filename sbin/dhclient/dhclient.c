@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.557 2018/02/06 21:01:27 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.558 2018/02/06 21:09:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -896,8 +896,7 @@ dhcpack(struct interface_info *ifi, struct option_data *options,
 
 	if (ifi->state != S_REBOOTING &&
 	    ifi->state != S_REQUESTING &&
-	    ifi->state != S_RENEWING &&
-	    ifi->state != S_REBINDING) {
+	    ifi->state != S_RENEWING) {
 		DPRINTF("%s: unexpected DHCPACK from %s - state #%d",
 		    log_procname, src, ifi->state);
 		return;
@@ -928,8 +927,7 @@ dhcpnak(struct interface_info *ifi, const char *src)
 {
 	if (ifi->state != S_REBOOTING &&
 	    ifi->state != S_REQUESTING &&
-	    ifi->state != S_RENEWING &&
-	    ifi->state != S_REBINDING) {
+	    ifi->state != S_RENEWING) {
 		DPRINTF("%s: unexpected DHCPNAK from %s - state #%d",
 		    log_procname, src, ifi->state);
 		return;
@@ -1660,8 +1658,7 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 	 * set ciaddr to zero.
 	 */
 	if (ifi->state == S_BOUND ||
-	    ifi->state == S_RENEWING ||
-	    ifi->state == S_REBINDING)
+	    ifi->state == S_RENEWING)
 		packet->ciaddr.s_addr = lease->address.s_addr;
 	else
 		packet->ciaddr.s_addr = INADDR_ANY;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.250 2018/02/06 00:25:09 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.251 2018/02/06 21:09:10 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -75,8 +75,7 @@ enum dhcp_state {
 	S_SELECTING,
 	S_REQUESTING,
 	S_BOUND,
-	S_RENEWING,
-	S_REBINDING
+	S_RENEWING
 };
 
 TAILQ_HEAD(client_lease_tq, client_lease);
