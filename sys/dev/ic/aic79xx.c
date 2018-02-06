@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.63 2017/12/12 12:33:36 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.64 2018/02/06 00:18:38 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -7607,7 +7607,6 @@ ahd_reset_current_bus(struct ahd_softc *ahd)
 int
 ahd_reset_channel(struct ahd_softc *ahd, char channel, int initiate_reset)
 {
-	struct	ahd_devinfo devinfo;
 	u_int	initiator;
 	u_int	target;
 	u_int	max_scsiid;
@@ -7617,11 +7616,6 @@ ahd_reset_channel(struct ahd_softc *ahd, char channel, int initiate_reset)
 
 	ahd->pending_device = NULL;
 
-	ahd_compile_devinfo(&devinfo,
-			    CAM_TARGET_WILDCARD,
-			    CAM_TARGET_WILDCARD,
-			    CAM_LUN_WILDCARD,
-			    channel, ROLE_UNKNOWN);
 	ahd_pause(ahd);
 
 	/* Make sure the sequencer is in a safe location. */
