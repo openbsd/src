@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.556 2018/02/06 05:09:51 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.557 2018/02/06 21:01:27 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1076,8 +1076,17 @@ newlease:
 
 	ifi->state = S_BOUND;
 
-	/* Set timeout to start the renewal process. */
-	set_timeout(ifi, renewal - cur_time, state_bound);
+	/*
+	 * Set timeout to start the renewal process.
+	 *
+	 * If the renewal time is in the past, the lease is from the
+	 * leaseDB. Rather than immediately trying to contact a server,
+	 * pause the configured time between attempts.
+	 */
+	if (renewal < cur_time)
+		set_timeout(ifi, config->retry_interval, state_bound);
+	else
+		set_timeout(ifi, renewal - cur_time, state_bound);
 }
 
 /*
