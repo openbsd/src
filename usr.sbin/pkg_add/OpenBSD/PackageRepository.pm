@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.151 2018/01/20 12:01:56 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.152 2018/02/06 16:29:01 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -295,7 +295,10 @@ sub parse_problems
 	while(<$fh>) {
 		if (m/^Redirected to https?\:\/\/([^\/]*)/) {
 			$self->{state}->print("#1", $_);
-			$self->{host} = $1;
+			my $newhost = $1;
+			$self->{state}->syslog("Redirected from #1 to #2",
+			    $self->{host}, $newhost);
+			$self->{host} = $newhost;
 			$baseurl = $self->url;
 			next;
 		}
