@@ -1,9 +1,9 @@
 #!/bin/sh
-#	$OpenBSD: testenc.sh,v 1.1 2014/08/26 17:50:07 jsing Exp $
+#	$OpenBSD: testenc.sh,v 1.2 2018/02/06 02:31:13 tb Exp $
 
 testsrc=$2/openssl.cnf
 test=$1/p
-cmd=/usr/bin/openssl
+cmd=${OPENSSL:-/usr/bin/openssl}
 
 cd $1
 
