@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.135 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: tty.c,v 1.136 2018/02/06 01:24:31 tedu Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1703,7 +1703,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	int cc, ce, obufcc = 0;
 	struct proc *p;
 	struct process *pr;
-	int i, hiwat, error, s;
+	int hiwat, error, s;
 	size_t cnt;
 	u_char obuf[OBUFSIZ];
 
@@ -1801,6 +1801,7 @@ loop:
 		 * immediately.
 		 */
 		while (cc > 0) {
+			int i;
 			if (!ISSET(tp->t_oflag, OPOST))
 				ce = cc;
 			else {
