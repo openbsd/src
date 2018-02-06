@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.c,v 1.21 2018/02/03 13:39:48 mpi Exp $	*/
+/*	$OpenBSD: pcap.c,v 1.22 2018/02/06 02:55:48 dlg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -313,6 +313,7 @@ DLT_CHOICE(DLT_IEEE802, "IEEE 802 Networks"),
 DLT_CHOICE(DLT_ARCNET, "ARCNET"),
 DLT_CHOICE(DLT_SLIP, "Serial Line IP"),
 DLT_CHOICE(DLT_PPP, "Point-to-point Protocol"),
+DLT_CHOICE(DLT_PPP_SERIAL, "PPP over serial"),
 DLT_CHOICE(DLT_FDDI, "FDDI"),
 DLT_CHOICE(DLT_ATM_RFC1483, "LLC/SNAP encapsulated atm"),
 DLT_CHOICE(DLT_LOOP, "loopback type (af header)"),
