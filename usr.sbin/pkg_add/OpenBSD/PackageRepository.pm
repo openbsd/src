@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.152 2018/02/06 16:29:01 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.153 2018/02/06 16:34:35 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -293,9 +293,10 @@ sub parse_problems
 	my $signify_error = 0;
 	$self->{last_error} = 0;
 	while(<$fh>) {
-		if (m/^Redirected to https?\:\/\/([^\/]*)/) {
+		if (m/^Redirected to (https?)\:\/\/([^\/]*)/) {
+			my ($scheme, $newhost) = ($1, $2);
 			$self->{state}->print("#1", $_);
-			my $newhost = $1;
+			next if $scheme ne $self->urlscheme;
 			$self->{state}->syslog("Redirected from #1 to #2",
 			    $self->{host}, $newhost);
 			$self->{host} = $newhost;
