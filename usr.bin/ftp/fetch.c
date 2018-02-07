@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.164 2017/09/25 11:04:54 krw Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.165 2018/02/07 23:01:09 procter Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -636,9 +636,11 @@ noslash:
 		}
 	} else {
 		fin = fdopen(s, "r+");
+		s = -1;
 	}
 #else /* !NOSSL */
 	fin = fdopen(s, "r+");
+	s = -1;
 #endif /* !NOSSL */
 
 #ifdef SMALL
@@ -912,10 +914,14 @@ noslash:
 				*loctail = '\0';
 			if (verbose)
 				fprintf(ttyout, "Redirected to %s\n", redirurl);
-			if (fin != NULL)
+			if (fin != NULL) {
 				fclose(fin);
-			else if (s != -1)
+				fin = NULL;
+			}
+			if (s != -1) {
 				close(s);
+				s = -1;
+			}
 			rval = url_get(redirurl, proxyenv, savefile, lastfile);
 			free(redirurl);
 			goto cleanup_url_get;
@@ -1039,10 +1045,14 @@ cleanup_url_get:
 	free(full_host);
 	free(sslhost);
 #endif /* !NOSSL */
-	if (fin != NULL)
+	if (fin != NULL) {
 		fclose(fin);
-	else if (s != -1)
+		fin = NULL;
+	}
+	if (s != -1) {
 		close(s);
+		s = -1;
+	}
 	if (out >= 0 && out != fileno(stdout))
 		close(out);
 	free(buf);
