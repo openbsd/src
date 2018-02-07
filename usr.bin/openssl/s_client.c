@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.33 2017/08/12 21:04:33 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.34 2018/02/07 04:57:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1212,15 +1212,11 @@ end:
 			print_stuff(bio_c_out, con, 1);
 		SSL_free(con);
 	}
-	if (ctx != NULL)
-		SSL_CTX_free(ctx);
-	if (cert)
-		X509_free(cert);
-	if (key)
-		EVP_PKEY_free(key);
+	SSL_CTX_free(ctx);
+	X509_free(cert);
+	EVP_PKEY_free(key);
 	free(pass);
-	if (vpm)
-		X509_VERIFY_PARAM_free(vpm);
+	X509_VERIFY_PARAM_free(vpm);
 	freezero(cbuf, BUFSIZZ);
 	freezero(sbuf, BUFSIZZ);
 	freezero(mbuf, BUFSIZZ);
@@ -1405,8 +1401,7 @@ print_stuff(BIO * bio, SSL * s, int full)
 		}
 	}
 	BIO_printf(bio, "---\n");
-	if (peer != NULL)
-		X509_free(peer);
+	X509_free(peer);
 	/* flush, or debugging output gets mixed with http response */
 	(void) BIO_flush(bio);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: gendsa.c,v 1.8 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: gendsa.c,v 1.9 2018/02/07 04:57:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -206,10 +206,8 @@ end:
 	if (ret != 0)
 		ERR_print_errors(bio_err);
 	BIO_free(in);
-	if (out != NULL)
-		BIO_free_all(out);
-	if (dsa != NULL)
-		DSA_free(dsa);
+	BIO_free_all(out);
+	DSA_free(dsa);
 	free(passout);
 
 	return (ret);

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.14 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: x509.c,v 1.15 2018/02/07 04:57:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -916,8 +916,7 @@ end:
 	X509_free(xca);
 	EVP_PKEY_free(Upkey);
 	EVP_PKEY_free(CApkey);
-	if (sigopts)
-		sk_OPENSSL_STRING_free(sigopts);
+	sk_OPENSSL_STRING_free(sigopts);
 	X509_REQ_free(rq);
 	ASN1_INTEGER_free(sno);
 	sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);

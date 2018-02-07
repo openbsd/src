@@ -1,4 +1,4 @@
-/* $OpenBSD: genpkey.c,v 1.9 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: genpkey.c,v 1.10 2018/02/07 04:57:06 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -238,12 +238,9 @@ bad:
 	ret = 0;
 
 end:
-	if (pkey)
-		EVP_PKEY_free(pkey);
-	if (ctx)
-		EVP_PKEY_CTX_free(ctx);
-	if (out)
-		BIO_free_all(out);
+	EVP_PKEY_free(pkey);
+	EVP_PKEY_CTX_free(ctx);
+	BIO_free_all(out);
 	BIO_free(in);
 	free(pass);
 
@@ -285,10 +282,8 @@ init_keygen_file(BIO * err, EVP_PKEY_CTX ** pctx,
 err:
 	BIO_puts(err, "Error initializing context\n");
 	ERR_print_errors(err);
-	if (ctx)
-		EVP_PKEY_CTX_free(ctx);
-	if (pkey)
-		EVP_PKEY_free(pkey);
+	EVP_PKEY_CTX_free(ctx);
+	EVP_PKEY_free(pkey);
 	return 0;
 
 }
@@ -332,8 +327,7 @@ init_gen_str(BIO * err, EVP_PKEY_CTX ** pctx,
 err:
 	BIO_printf(err, "Error initializing %s context\n", algname);
 	ERR_print_errors(err);
-	if (ctx)
-		EVP_PKEY_CTX_free(ctx);
+	EVP_PKEY_CTX_free(ctx);
 	return 0;
 
 }

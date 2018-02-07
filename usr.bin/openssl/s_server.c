@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.28 2018/01/28 09:21:34 inoguchi Exp $ */
+/* $OpenBSD: s_server.c,v 1.29 2018/02/07 04:57:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1199,29 +1199,20 @@ bad:
 	print_stats(bio_s_out, ctx);
 	ret = 0;
 end:
-	if (ctx != NULL)
-		SSL_CTX_free(ctx);
-	if (s_cert)
-		X509_free(s_cert);
-	if (s_dcert)
-		X509_free(s_dcert);
-	if (s_key)
-		EVP_PKEY_free(s_key);
-	if (s_dkey)
-		EVP_PKEY_free(s_dkey);
+	SSL_CTX_free(ctx);
+	X509_free(s_cert);
+	X509_free(s_dcert);
+	EVP_PKEY_free(s_key);
+	EVP_PKEY_free(s_dkey);
 	free(pass);
 	free(dpass);
-	if (vpm)
-		X509_VERIFY_PARAM_free(vpm);
+	X509_VERIFY_PARAM_free(vpm);
 	free(tlscstatp.host);
 	free(tlscstatp.port);
 	free(tlscstatp.path);
-	if (ctx2 != NULL)
-		SSL_CTX_free(ctx2);
-	if (s_cert2)
-		X509_free(s_cert2);
-	if (s_key2)
-		EVP_PKEY_free(s_key2);
+	SSL_CTX_free(ctx2);
+	X509_free(s_cert2);
+	EVP_PKEY_free(s_key2);
 	free(alpn_ctx.data);
 	if (bio_s_out != NULL) {
 		BIO_free(bio_s_out);
@@ -1959,8 +1950,7 @@ err:
 		BIO_printf(bio_s_out, "ACCEPT\n");
 
 	free(buf);
-	if (io != NULL)
-		BIO_free_all(io);
+	BIO_free_all(io);
 /*	if (ssl_bio != NULL) BIO_free(ssl_bio);*/
 	return (ret);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1pars.c,v 1.7 2017/01/20 08:57:11 deraadt Exp $ */
+/* $OpenBSD: asn1pars.c,v 1.8 2018/02/07 04:57:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -416,8 +416,7 @@ end:
 	if (ret != 0)
 		ERR_print_errors(bio_err);
 	BUF_MEM_free(buf);
-	if (at != NULL)
-		ASN1_TYPE_free(at);
+	ASN1_TYPE_free(at);
 	sk_OPENSSL_STRING_free(asn1pars_config.osk);
 	OBJ_cleanup();
 
