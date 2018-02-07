@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.14 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: ocsp.c,v 1.15 2018/02/07 05:49:36 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -926,8 +926,7 @@ make_ocsp_response(OCSP_RESPONSE ** resp, OCSP_REQUEST * req, CA_DB * db,
 			    NULL);
 			goto end;
 		}
-		if (ca_id)
-			OCSP_CERTID_free(ca_id);
+		OCSP_CERTID_free(ca_id);
 		ca_id = OCSP_cert_to_id(cert_id_md, NULL, ca);
 
 		/* Is this request about our CA? */
@@ -1174,8 +1173,7 @@ query_responder(BIO * err, BIO * cbio, char *path,
 		}
 	}
  err:
-	if (ctx)
-		OCSP_REQ_CTX_free(ctx);
+	OCSP_REQ_CTX_free(ctx);
 
 	return rsp;
 }
@@ -1211,10 +1209,8 @@ process_responder(BIO * err, OCSP_REQUEST * req,
 	if (!resp)
 		BIO_printf(bio_err, "Error querying OCSP responder\n");
  end:
-	if (cbio)
-		BIO_free_all(cbio);
-	if (ctx)
-		SSL_CTX_free(ctx);
+	BIO_free_all(cbio);
+	SSL_CTX_free(ctx);
 	return resp;
 }
 
