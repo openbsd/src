@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.2 2018/02/07 21:44:09 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -43,6 +43,7 @@
 
 #include <dev/ic/bwfmvar.h>
 #include <dev/ic/bwfmreg.h>
+#include <dev/sdmmc/if_bwfm_sdio.h>
 
 #define BWFM_SDIO_CCCR_BRCM_CARDCAP			0xf0
 #define  BWFM_SDIO_CCCR_BRCM_CARDCAP_CMD14_SUPPORT	0x02
