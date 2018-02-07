@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.205 2017/08/26 20:38:09 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.206 2018/02/07 20:31:32 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1335,7 +1335,12 @@ parse_cat(struct mpage *mpage, int fd)
 		plen -= 2;
 	}
 
-	mpage->desc = mandoc_strdup(p);
+	/*
+	 * Cut off excessive one-line descriptions.
+	 * Bad pages are not worth better heuristics.
+	 */
+
+	mpage->desc = mandoc_strndup(p, 150);
 	fclose(stream);
 	free(title);
 }
@@ -1479,7 +1484,12 @@ parse_man(struct mpage *mpage, const struct roff_meta *meta,
 			while (' ' == *start)
 				start++;
 
-			mpage->desc = mandoc_strdup(start);
+			/*
+			 * Cut off excessive one-line descriptions.
+			 * Bad pages are not worth better heuristics.
+			 */
+
+			mpage->desc = mandoc_strndup(start, 150);
 			free(title);
 			return;
 		}
