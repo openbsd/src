@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.134 2017/08/11 18:48:56 jsing Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.135 2018/02/07 03:28:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -53,10 +53,13 @@
 #define HTTPD_LOGROOT		"/logs"
 #define HTTPD_ACCESS_LOG	"access.log"
 #define HTTPD_ERROR_LOG		"error.log"
+#define HTTPD_REALM_MAX		255
+#define HTTPD_LOCATION_MAX	255
 #define HTTPD_DEFAULT_TYPE	{ "bin", "application", "octet-stream", NULL }
 #define HTTPD_LOGVIS		VIS_NL|VIS_TAB|VIS_CSTYLE
 #define HTTPD_TLS_CERT		"/etc/ssl/server.crt"
 #define HTTPD_TLS_KEY		"/etc/ssl/private/server.key"
+#define HTTPD_TLS_CONFIG_MAX	255
 #define HTTPD_TLS_CIPHERS	"compat"
 #define HTTPD_TLS_DHE_PARAMS	"none"
 #define HTTPD_TLS_ECDHE_CURVES	"default"
@@ -427,7 +430,7 @@ enum log_format {
 };
 
 struct log_file {
-	char			log_name[NAME_MAX];
+	char			log_name[PATH_MAX];
 	int			log_fd;
 	uint32_t		log_id;
 	TAILQ_ENTRY(log_file)	log_entry;
@@ -460,12 +463,12 @@ struct server_config {
 	uint32_t		 id;
 	uint32_t		 parent_id;
 	char			 name[HOST_NAME_MAX+1];
-	char			 location[NAME_MAX];
-	char			 index[NAME_MAX];
+	char			 location[HTTPD_LOCATION_MAX];
+	char			 index[PATH_MAX];
 	char			 root[PATH_MAX];
 	char			 socket[PATH_MAX];
-	char			 accesslog[NAME_MAX];
-	char			 errorlog[NAME_MAX];
+	char			 accesslog[PATH_MAX];
+	char			 errorlog[PATH_MAX];
 	struct media_type	 default_type;
 
 	in_port_t		 port;
@@ -479,9 +482,9 @@ struct server_config {
 	uint8_t			*tls_cert;
 	size_t			 tls_cert_len;
 	char			*tls_cert_file;
-	char			 tls_ciphers[NAME_MAX];
-	char			 tls_dhe_params[NAME_MAX];
-	char			 tls_ecdhe_curves[NAME_MAX];
+	char			 tls_ciphers[HTTPD_TLS_CONFIG_MAX];
+	char			 tls_dhe_params[HTTPD_TLS_CONFIG_MAX];
+	char			 tls_ecdhe_curves[HTTPD_TLS_CONFIG_MAX];
 	uint8_t			*tls_key;
 	size_t			 tls_key_len;
 	char			*tls_key_file;
@@ -504,7 +507,7 @@ struct server_config {
 	struct log_file		*logaccess;
 	struct log_file		*logerror;
 
-	char			 auth_realm[NAME_MAX];
+	char			 auth_realm[HTTPD_REALM_MAX];
 	uint32_t		 auth_id;
 	const struct auth	*auth;
 

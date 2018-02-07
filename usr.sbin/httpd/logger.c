@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.20 2016/09/01 10:59:38 reyk Exp $	*/
+/*	$OpenBSD: logger.c,v 1.21 2018/02/07 03:28:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -155,12 +155,12 @@ int
 logger_open_priv(struct imsg *imsg)
 {
 	char			 path[PATH_MAX];
-	char			 name[NAME_MAX], *p;
+	char			 name[PATH_MAX], *p;
 	uint32_t		 id;
 	size_t			 len;
 	int			 fd;
 
-	/* called from the priviled process */
+	/* called from the privileged process */
 	IMSG_SIZE_CHECK(imsg, &id);
 	memcpy(&id, imsg->data, sizeof(id));
 	p = (char *)imsg->data + sizeof(id);
