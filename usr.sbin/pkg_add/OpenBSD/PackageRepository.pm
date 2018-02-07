@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.153 2018/02/06 16:34:35 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.154 2018/02/07 11:22:39 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -743,23 +743,43 @@ our @ISA=qw(OpenBSD::PackageRepository::Distant);
 
 our %distant = ();
 
+my ($fetch_uid, $fetch_gid, $fetch_user);
+
+sub fill_up_fetch_data
+{
+	my $self = shift;
+	if ($< == 0) {
+		$fetch_user = '_pkgfetch';
+		unless ((undef, undef, $fetch_uid, $fetch_gid) = 
+		    getpwnam($fetch_user)) {
+			$self->{state}->fatal(
+			    "Couldn't change identity: can't find #1 user", 
+			    $fetch_user);
+		}
+	} else {
+		($fetch_user) = getpwuid($<);
+    	}
+}
+
+sub fetch_id
+{
+	my $self = shift;
+	if (!defined $fetch_user) {
+		$self->fill_up_fetch_data;
+	}
+	return ($fetch_uid, $fetch_gid, $fetch_user);
+}
+
 sub drop_privileges_and_setup_env
 {
 	my $self = shift;
-	my $user = '_pkgfetch';
-	if ($< == 0) {
-		# we can't cache anything, we happen after the fork, 
-		# right before exec
-		if (my (undef, undef, $uid, $gid) = getpwnam($user)) {
-			$( = $gid;
-			$) = "$gid $gid";
-			$< = $uid;
-			$> = $uid;
-		} else {
-			$self->{state}->fatal("Couldn't change identity: can't find #1 user", $user);
-		}
-	} else {
-		($user) = getpwuid($<);
+	my ($uid, $gid, $user) = $self->fetch_id;
+	if (defined $uid) {
+		# we happen right before exec, so change id permanently
+		$( = $gid;
+		$) = "$gid $gid";
+		$< = $uid;
+		$> = $uid;
 	}
 	# create sanitized env for ftp
 	my %newenv = (
