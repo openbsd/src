@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.165 2018/02/05 23:29:59 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.166 2018/02/07 00:02:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -176,8 +176,9 @@ struct path_table {
 #define	F_NEXTHOP_BLACKHOLE	0x04000
 #define	F_NEXTHOP_NOMODIFY	0x08000
 #define	F_NEXTHOP_MASK		0x0f000
-#define	F_ATTR_PARSE_ERR	0x10000
-#define	F_ATTR_LINKED		0x20000
+#define	F_ATTR_PARSE_ERR	0x10000 /* parse error, not eligable */
+#define	F_ATTR_LINKED		0x20000 /* if set path is on various lists */
+#define	F_ATTR_UPDATE		0x20000 /* if set linked on update_l */
 
 
 #define ORIGIN_IGP		0
@@ -313,9 +314,12 @@ struct prefix {
 	struct rib_entry		*re;
 	union {
 		struct rde_aspath		*_aspath;
-	} _p;
+	}				 _p;
 	time_t				 lastchange;
+	int				 flags;
 };
+
+#define F_PREFIX_USE_UPDATES	0x01	/* linked onto the updates list */
 
 extern struct rde_memstats rdemem;
 
@@ -467,9 +471,8 @@ void		 path_init(u_int32_t);
 void		 path_init(u_int32_t);
 void		 path_shutdown(void);
 int		 path_update(struct rib *, struct rde_peer *,
-		     struct rde_aspath *, struct bgpd_addr *, int);
+		     struct rde_aspath *, struct bgpd_addr *, int, int);
 int		 path_compare(struct rde_aspath *, struct rde_aspath *);
-struct rde_aspath *path_lookup(struct rde_aspath *, struct rde_peer *);
 void		 path_remove(struct rde_aspath *);
 u_int32_t	 path_remove_stale(struct rde_aspath *, u_int8_t);
 void		 path_destroy(struct rde_aspath *);
@@ -479,11 +482,6 @@ struct rde_aspath *path_get(void);
 void		 path_put(struct rde_aspath *);
 
 #define	PREFIX_SIZE(x)	(((x) + 7) / 8 + 1)
-struct prefix	*prefix_get(struct rib *, struct rde_peer *,
-		    struct bgpd_addr *, int, u_int32_t);
-int		 prefix_add(struct rib *, struct rde_aspath *,
-		    struct bgpd_addr *, int);
-void		 prefix_move(struct rde_aspath *, struct prefix *);
 int		 prefix_remove(struct rib *, struct rde_peer *,
 		    struct bgpd_addr *, int, u_int32_t);
 int		 prefix_write(u_char *, int, struct bgpd_addr *, u_int8_t);

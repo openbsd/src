@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.376 2018/02/05 23:29:59 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.377 2018/02/07 00:02:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1334,7 +1334,7 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 
 	peer->prefix_rcvd_update++;
 	/* add original path to the Adj-RIB-In */
-	if (path_update(&ribs[RIB_ADJ_IN].rib, peer, asp, prefix, prefixlen))
+	if (path_update(&ribs[RIB_ADJ_IN].rib, peer, asp, prefix, prefixlen, 0))
 		peer->prefix_cnt++;
 
 	for (i = RIB_LOC_START; i < rib_size; i++) {
@@ -1351,7 +1351,7 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 			rde_update_log("update", i, peer,
 			    &fasp->nexthop->exit_nexthop, prefix, prefixlen);
 			path_update(&ribs[i].rib, peer, fasp, prefix,
-			    prefixlen);
+			    prefixlen, 0);
 		} else if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen,
 		    0)) {
 			rde_update_log("filtered withdraw", i, peer,
@@ -3039,7 +3039,7 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 		if (oa == ACTION_DENY && na == ACTION_ALLOW) {
 			/* update Local-RIB */
 			path_update(&rib->rib, peer, nasp, &addr,
-			    pt->prefixlen);
+			    pt->prefixlen, 0);
 		} else if (oa == ACTION_ALLOW && na == ACTION_DENY) {
 			/* remove from Local-RIB */
 			prefix_remove(&rib->rib, peer, &addr, pt->prefixlen, 0);
@@ -3047,7 +3047,7 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 			if (path_compare(nasp, oasp) != 0)
 				/* send update */
 				path_update(&rib->rib, peer, nasp, &addr,
-				    pt->prefixlen);
+				    pt->prefixlen, 0);
 		}
 
 		if (oasp != asp)
@@ -3610,7 +3610,7 @@ network_add(struct network_config *nc, int flagstatic)
 		if (*ribs[i].name == '\0')
 			break;
 		path_update(&ribs[i].rib, peerself, asp, &nc->prefix,
-		    nc->prefixlen);
+		    nc->prefixlen, 0);
 	}
 	path_put(asp);
 	filterset_free(&nc->attrset);

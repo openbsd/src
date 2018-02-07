@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.157 2018/02/05 23:29:59 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.158 2018/02/07 00:02:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -46,6 +46,12 @@ struct rib_entry *rib_restart(struct rib_context *);
 
 RB_PROTOTYPE(rib_tree, rib_entry, rib_e, rib_compare);
 RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
+
+struct prefix	*prefix_get(struct rib *, struct rde_peer *,
+		    struct bgpd_addr *, int, u_int32_t);
+int		 prefix_add(struct rib *, struct rde_aspath *,
+		    struct bgpd_addr *, int, int);
+void		 prefix_move(struct rde_aspath *, struct prefix *, int);
 
 static inline void
 re_lock(struct rib_entry *re)
@@ -348,6 +354,7 @@ rib_restart(struct rib_context *ctx)
 
 /* path specific functions */
 
+static struct rde_aspath *path_lookup(struct rde_aspath *, struct rde_peer *);
 static void	path_link(struct rde_aspath *, struct rde_peer *);
 
 struct path_table pathtable;
@@ -392,10 +399,11 @@ path_shutdown(void)
 
 int
 path_update(struct rib *rib, struct rde_peer *peer, struct rde_aspath *nasp,
-    struct bgpd_addr *prefix, int prefixlen)
+    struct bgpd_addr *prefix, int prefixlen, int flag)
 {
 	struct rde_aspath	*asp;
 	struct prefix		*p;
+	int			 pflag = 0;
 
 	if (nasp->pftableid) {
 		rde_send_pftable(nasp->pftableid, prefix, prefixlen, 0);
@@ -426,9 +434,9 @@ path_update(struct rib *rib, struct rde_peer *peer, struct rde_aspath *nasp,
 
 	/* If the prefix was found move it else add it to the aspath. */
 	if (p != NULL)
-		prefix_move(asp, p);
+		prefix_move(asp, p, pflag);
 	else
-		return (prefix_add(rib, asp, prefix, prefixlen));
+		return (prefix_add(rib, asp, prefix, prefixlen, pflag));
 	return (0);
 }
 
@@ -437,13 +445,21 @@ path_compare(struct rde_aspath *a, struct rde_aspath *b)
 {
 	int		 r;
 
+	if (a == NULL && b == NULL)
+		return (0);
+	else if (b == NULL)
+		return (1);
+	else if (a == NULL)
+		return (-1);
+	if ((a->flags & ~(F_ATTR_LINKED | F_ATTR_UPDATE)) >
+	    (b->flags & ~(F_ATTR_LINKED | F_ATTR_UPDATE)))
+		return (1);
+	if ((a->flags & ~(F_ATTR_LINKED | F_ATTR_UPDATE)) <
+	    (b->flags & ~(F_ATTR_LINKED | F_ATTR_UPDATE)))
+		return (-1);
 	if (a->origin > b->origin)
 		return (1);
 	if (a->origin < b->origin)
-		return (-1);
-	if ((a->flags & ~F_ATTR_LINKED) > (b->flags & ~F_ATTR_LINKED))
-		return (1);
-	if ((a->flags & ~F_ATTR_LINKED) < (b->flags & ~F_ATTR_LINKED))
 		return (-1);
 	if (a->med > b->med)
 		return (1);
@@ -477,7 +493,7 @@ path_compare(struct rde_aspath *a, struct rde_aspath *b)
 	return (attr_compare(a, b));
 }
 
-struct rde_aspath *
+static struct rde_aspath *
 path_lookup(struct rde_aspath *aspath, struct rde_peer *peer)
 {
 	struct aspath_head	*head;
@@ -654,7 +670,7 @@ path_copy(struct rde_aspath *asp)
 	nasp->pftableid = asp->pftableid;
 	pftable_ref(nasp->pftableid);
 
-	nasp->flags = asp->flags & ~F_ATTR_LINKED;
+	nasp->flags = asp->flags & ~(F_ATTR_LINKED | F_ATTR_UPDATE);
 	attr_copy(nasp, asp);
 
 	return (nasp);
@@ -705,7 +721,7 @@ path_put(struct rde_aspath *asp)
 static struct prefix	*prefix_alloc(void);
 static void		 prefix_free(struct prefix *);
 static void		 prefix_link(struct prefix *, struct rib_entry *,
-			     struct rde_aspath *);
+			     struct rde_aspath *, int);
 static void		 prefix_unlink(struct prefix *);
 
 /*
@@ -728,7 +744,7 @@ prefix_get(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
  */
 int
 prefix_add(struct rib *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
-    int prefixlen)
+    int prefixlen, int flag)
 
 {
 	struct prefix		*p;
@@ -741,12 +757,12 @@ prefix_add(struct rib *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
 	p = prefix_bypeer(re, asp->peer, asp->flags);
 	if (p == NULL) {
 		p = prefix_alloc();
-		prefix_link(p, re, asp);
+		prefix_link(p, re, asp, flag);
 		return (1);
 	} else {
 		if (prefix_aspath(p) != asp) {
 			/* prefix belongs to a different aspath so move */
-			prefix_move(asp, p);
+			prefix_move(asp, p, flag);
 		} else
 			p->lastchange = time(NULL);
 		return (0);
@@ -757,7 +773,7 @@ prefix_add(struct rib *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
  * Move the prefix to the specified as path, removes the old asp if needed.
  */
 void
-prefix_move(struct rde_aspath *asp, struct prefix *p)
+prefix_move(struct rde_aspath *asp, struct prefix *p, int flag)
 {
 	struct prefix		*np;
 	struct rde_aspath	*oasp;
@@ -768,12 +784,15 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	/* create new prefix node */
 	np = prefix_alloc();
 	np->_p._aspath = asp;
-	/* peer and prefix pointers are still equal */
 	np->re = p->re;
 	np->lastchange = time(NULL);
+	np->flags = flag;
 
 	/* add to new as path */
-	TAILQ_INSERT_HEAD(&asp->prefixes, np, path_l);
+	if (np->flags & F_PREFIX_USE_UPDATES)
+		TAILQ_INSERT_HEAD(&asp->updates, np, path_l);
+	else
+		TAILQ_INSERT_HEAD(&asp->prefixes, np, path_l);
 	PREFIX_COUNT(asp, 1);
 	/*
 	 * no need to update the peer prefix count because we are only moving
@@ -793,7 +812,10 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 
 	/* remove old prefix node */
 	oasp = prefix_aspath(p);
-	TAILQ_REMOVE(&oasp->prefixes, p, path_l);
+	if (p->flags & F_PREFIX_USE_UPDATES)
+		TAILQ_REMOVE(&oasp->updates, p, path_l);
+	else
+		TAILQ_REMOVE(&oasp->prefixes, p, path_l);
 	PREFIX_COUNT(oasp, -1);
 	/* as before peer count needs no update because of move */
 
@@ -1011,14 +1033,19 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime, u_int32_t flags)
  * Link a prefix into the different parent objects.
  */
 static void
-prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_aspath *asp)
+prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_aspath *asp,
+    int flag)
 {
-	TAILQ_INSERT_HEAD(&asp->prefixes, pref, path_l);
+	if (flag & F_PREFIX_USE_UPDATES)
+		TAILQ_INSERT_HEAD(&asp->updates, pref, path_l);
+	else
+		TAILQ_INSERT_HEAD(&asp->prefixes, pref, path_l);
 	PREFIX_COUNT(asp, 1);
 
 	pref->_p._aspath = asp;
 	pref->re = re;
 	pref->lastchange = time(NULL);
+	pref->flags = flag;
 
 	/* make route decision */
 	prefix_evaluate(pref, re);
@@ -1037,15 +1064,19 @@ prefix_unlink(struct prefix *pref)
 	LIST_REMOVE(pref, rib_l);
 	prefix_evaluate(NULL, re);
 
-	pq = &prefix_aspath(pref)->prefixes;
-	TAILQ_REMOVE(pq, pref, path_l);
+	if (pref->flags & F_PREFIX_USE_UPDATES)
+		pq = &prefix_aspath(pref)->updates;
+	else
+		pq = &prefix_aspath(pref)->prefixes;
 
+	TAILQ_REMOVE(pq, pref, path_l);
 	if (rib_empty(re))
 		rib_remove(re);
 
 	/* destroy all references to other objects */
 	pref->_p._aspath = NULL;
 	pref->re = NULL;
+	pref->flags = 0;
 
 	/*
 	 * It's the caller's duty to do accounting and remove empty aspath
