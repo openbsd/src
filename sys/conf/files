@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.657 2018/02/06 23:44:48 henning Exp $
+#	$OpenBSD: files,v 1.658 2018/02/07 01:09:57 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -551,6 +551,7 @@ pseudo-device carp: ifnet, ether
 pseudo-device sppp: ifnet
 pseudo-device gif: ifnet
 pseudo-device gre: ifnet
+pseudo-device mobileip: ifnet
 pseudo-device crypto: ifnet
 pseudo-device trunk: ifnet, ether, ifmedia
 pseudo-device mpe: ifnet, ether
@@ -799,6 +800,7 @@ file net/rtsock.c
 file net/slcompress.c			ppp
 file net/if_enc.c			enc			needs-count
 file net/if_gre.c			gre			needs-count
+file net/if_mobileip.c			mobileip		needs-count
 file net/if_trunk.c			trunk			needs-count
 file net/trunklacp.c			trunk
 file net/if_mpe.c			mpe			needs-count

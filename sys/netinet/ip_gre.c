@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.69 2018/01/09 06:24:15 dlg Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.70 2018/02/07 01:09:57 dlg Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -261,93 +261,6 @@ gre_input(struct mbuf **mp, int *offp, int proto, int af)
 }
 
 /*
- * Input routine for IPPROTO_MOBILE.
- * This is a little bit different from the other modes, as the
- * encapsulating header was not prepended, but instead inserted
- * between IP header and payload.
- */
-
-int
-gre_mobile_input(struct mbuf **mp, int *offp, int proto, int af)
-{
-	struct mbuf *m = *mp;
-	struct ip *ip;
-	struct mobip_h *mip;
-	struct gre_softc *sc;
-	u_char osrc = 0;
-	int msiz;
-
-	if (!ip_mobile_allow) {
-	        m_freem(m);
-		return IPPROTO_DONE;
-	}
-
-	if ((sc = gre_lookup(m, proto)) == NULL) {
-		/* No matching tunnel or tunnel is down. */
-		m_freem(m);
-		return IPPROTO_DONE;
-	}
-
-	if (m->m_len < sizeof(*mip)) {
-		m = *mp = m_pullup(m, sizeof(*mip));
-		if (m == NULL)
-			return IPPROTO_DONE;
-	}
-	ip = mtod(m, struct ip *);
-	mip = mtod(m, struct mobip_h *);
-
-	m->m_pkthdr.ph_ifidx = sc->sc_if.if_index;
-
-	sc->sc_if.if_ipackets++;
-	sc->sc_if.if_ibytes += m->m_pkthdr.len;
-
-	if (ntohs(mip->mh.proto) & MOB_H_SBIT) {
-		osrc = 1;
-		msiz = MOB_H_SIZ_L;
-		mip->mi.ip_src.s_addr = mip->mh.osrc;
-	} else
-		msiz = MOB_H_SIZ_S;
-
-	if (m->m_len < (ip->ip_hl << 2) + msiz) {
-		m = *mp = m_pullup(m, (ip->ip_hl << 2) + msiz);
-		if (m == NULL)
-			return IPPROTO_DONE;
-		ip = mtod(m, struct ip *);
-		mip = mtod(m, struct mobip_h *);
-	}
-
-	mip->mi.ip_dst.s_addr = mip->mh.odst;
-	mip->mi.ip_p = (ntohs(mip->mh.proto) >> 8);
-
-	if (gre_in_cksum((u_short *) &mip->mh, msiz) != 0) {
-		m_freem(m);
-		return IPPROTO_DONE;
-	}
-
-	memmove(ip + (ip->ip_hl << 2), ip + (ip->ip_hl << 2) + msiz, 
-	      m->m_len - msiz - (ip->ip_hl << 2));
-
-	m->m_len -= msiz;
-	ip->ip_len = htons(ntohs(ip->ip_len) - msiz);
-	m->m_pkthdr.len -= msiz;
-
-	ip->ip_sum = 0;
-	ip->ip_sum = in_cksum(m,(ip->ip_hl << 2));
-
-#if NBPFILTER > 0
-        if (sc->sc_if.if_bpf)
-		bpf_mtap_af(sc->sc_if.if_bpf, AF_INET, m, BPF_DIRECTION_IN);
-#endif
-
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
-
-	ipv4_input(&sc->sc_if, m);
-	return IPPROTO_DONE;
-}
-
-/*
  * Find the gre interface associated with our src/dst/proto set.
  */
 struct gre_softc *
@@ -389,29 +302,6 @@ gre_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
         case GRECTL_WCCP:
 		NET_LOCK();
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &gre_wccp);
-		NET_UNLOCK();
-		return (error);
-        default:
-                return (ENOPROTOOPT);
-        }
-        /* NOTREACHED */
-}
-
-int
-ipmobile_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen)
-{
-	int error;
-
-        /* All sysctl names at this level are terminal. */
-        if (namelen != 1)
-                return (ENOTDIR);
-
-        switch (name[0]) {
-        case MOBILEIPCTL_ALLOW:
-		NET_LOCK();
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip_mobile_allow);
 		NET_UNLOCK();
 		return (error);
         default:

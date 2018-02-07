@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.250 2017/10/25 12:38:21 job Exp $
+#	$OpenBSD: GENERIC,v 1.251 2018/02/07 01:09:57 dlg Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -17,7 +17,6 @@ option		PTRACE		# ptrace(2) system call
 #option		WITNESS		# witness(4) lock checker
 
 #option		KVA_GUARDPAGES	# slow virtual address recycling (+ guarding)
-option		POOL_DEBUG	# pool corruption detection
 #option		VFSLCKDEBUG	# VFS locking checks
 
 option		CRYPTO		# Cryptographic framework
@@ -90,6 +89,7 @@ pseudo-device	carp		# CARP protocol support
 pseudo-device	etherip		# EtherIP (RFC 3378)
 pseudo-device	gif		# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	gre		# GRE encapsulation interface
+pseudo-device	mobileip	# MobileIP encapsulation interface
 pseudo-device	loop		# network loopback
 pseudo-device	mpe		# MPLS PE interface
 pseudo-device	mpw		# MPLS pseudowire support
