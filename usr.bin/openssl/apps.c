@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.46 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.47 2018/02/07 08:57:25 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -1425,7 +1425,8 @@ rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
 	ret = 1;
 
  error:
-	BN_free(btmp);
+	if (b != btmp)
+		BN_free(btmp);
 
 	return ret;
 }
