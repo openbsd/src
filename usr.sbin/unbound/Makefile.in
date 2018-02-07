@@ -137,8 +137,7 @@ slabhash.lo timehist.lo tube.lo winsock_event.lo autotrust.lo val_anchor.lo \
 validator.lo val_kcache.lo val_kentry.lo val_neg.lo val_nsec3.lo val_nsec.lo \
 val_secalgo.lo val_sigcrypt.lo val_utils.lo dns64.lo cachedb.lo authzone.lo\
 $(SUBNET_OBJ) $(PYTHONMOD_OBJ) $(CHECKLOCK_OBJ) $(DNSTAP_OBJ) $(DNSCRYPT_OBJ) \
-$(IPSECMOD_OBJ)
-COMMON_OBJ_WITHOUT_NETCALL+=respip.lo
+$(IPSECMOD_OBJ) respip.lo
 COMMON_OBJ_WITHOUT_UB_EVENT=$(COMMON_OBJ_WITHOUT_NETCALL) netevent.lo listen_dnsport.lo \
 outside_network.lo
 COMMON_OBJ=$(COMMON_OBJ_WITHOUT_UB_EVENT) ub_event.lo
@@ -534,6 +533,8 @@ install-all:	all $(PYTHONMOD_INSTALL) $(PYUNBOUND_INSTALL) $(UNBOUND_EVENT_INSTA
 	$(INSTALL) -m 755 -d $(DESTDIR)$(mandir)/man8
 	$(INSTALL) -m 755 -d $(DESTDIR)$(mandir)/man5
 	$(INSTALL) -m 755 -d $(DESTDIR)$(mandir)/man1
+	$(INSTALL) -m 755 -d $(DESTDIR)$(libdir)/pkgconfig
+	$(INSTALL) -m 644 contrib/libunbound.pc $(DESTDIR)$(libdir)/pkgconfig
 	$(LIBTOOL) --mode=install cp -f unbound$(EXEEXT) $(DESTDIR)$(sbindir)/unbound$(EXEEXT)
 	$(LIBTOOL) --mode=install cp -f unbound-checkconf$(EXEEXT) $(DESTDIR)$(sbindir)/unbound-checkconf$(EXEEXT)
 	$(LIBTOOL) --mode=install cp -f unbound-control$(EXEEXT) $(DESTDIR)$(sbindir)/unbound-control$(EXEEXT)
@@ -824,9 +825,13 @@ shm_main.lo shm_main.o: $(srcdir)/util/shm_side/shm_main.c config.h $(srcdir)/ut
  $(srcdir)/util/fptr_wlist.h $(srcdir)/util/tube.h
 authzone.lo authzone.o: $(srcdir)/services/authzone.c config.h $(srcdir)/services/authzone.h \
  $(srcdir)/util/rbtree.h $(srcdir)/util/locks.h $(srcdir)/util/log.h $(srcdir)/util/data/dname.h \
- $(srcdir)/util/storage/lruhash.h $(srcdir)/util/data/msgreply.h $(srcdir)/util/data/packed_rrset.h \
- $(srcdir)/util/regional.h $(srcdir)/util/net_help.h $(srcdir)/util/config_file.h $(srcdir)/services/cache/dns.h \
- $(srcdir)/sldns/rrdef.h $(srcdir)/sldns/pkthdr.h $(srcdir)/sldns/sbuffer.h $(srcdir)/sldns/str2wire.h \
+ $(srcdir)/util/storage/lruhash.h $(srcdir)/util/data/msgparse.h $(srcdir)/sldns/pkthdr.h $(srcdir)/sldns/rrdef.h \
+ $(srcdir)/util/data/msgreply.h $(srcdir)/util/data/packed_rrset.h $(srcdir)/util/data/msgencode.h \
+ $(srcdir)/util/regional.h $(srcdir)/util/net_help.h $(srcdir)/util/netevent.h $(srcdir)/dnscrypt/dnscrypt.h \
+  $(srcdir)/dnscrypt/cert.h $(srcdir)/util/config_file.h \
+ $(srcdir)/util/module.h $(srcdir)/util/random.h $(srcdir)/services/cache/dns.h \
+ $(srcdir)/services/outside_network.h  \
+ $(srcdir)/services/listen_dnsport.h $(srcdir)/sldns/sbuffer.h $(srcdir)/sldns/str2wire.h \
  $(srcdir)/sldns/wire2str.h $(srcdir)/sldns/parseutil.h $(srcdir)/validator/val_nsec3.h \
  $(srcdir)/validator/val_secalgo.h
 fptr_wlist.lo fptr_wlist.o: $(srcdir)/util/fptr_wlist.c config.h $(srcdir)/util/fptr_wlist.h \
@@ -1314,8 +1319,8 @@ unbound-checkconf.lo unbound-checkconf.o: $(srcdir)/smallapp/unbound-checkconf.c
  $(srcdir)/iterator/iterator.h $(srcdir)/services/outbound_list.h $(srcdir)/iterator/iter_fwd.h \
  $(srcdir)/util/rbtree.h $(srcdir)/iterator/iter_hints.h $(srcdir)/util/storage/dnstree.h \
  $(srcdir)/validator/validator.h $(srcdir)/validator/val_utils.h $(srcdir)/services/localzone.h \
- $(srcdir)/services/view.h $(srcdir)/respip/respip.h $(srcdir)/sldns/sbuffer.h $(PYTHONMOD_HEADER) \
- $(srcdir)/edns-subnet/subnet-whitelist.h
+ $(srcdir)/services/view.h $(srcdir)/services/authzone.h $(srcdir)/respip/respip.h $(srcdir)/sldns/sbuffer.h \
+ $(PYTHONMOD_HEADER) $(srcdir)/edns-subnet/subnet-whitelist.h
 worker_cb.lo worker_cb.o: $(srcdir)/smallapp/worker_cb.c config.h $(srcdir)/libunbound/context.h \
  $(srcdir)/util/locks.h $(srcdir)/util/log.h $(srcdir)/util/alloc.h $(srcdir)/util/rbtree.h $(srcdir)/services/modstack.h \
  $(srcdir)/libunbound/unbound.h $(srcdir)/util/data/packed_rrset.h $(srcdir)/util/storage/lruhash.h \

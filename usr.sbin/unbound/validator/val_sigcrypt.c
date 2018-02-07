@@ -485,7 +485,8 @@ int algo_needs_missing(struct algo_needs* n)
 enum sec_status 
 dnskeyset_verify_rrset(struct module_env* env, struct val_env* ve,
 	struct ub_packed_rrset_key* rrset, struct ub_packed_rrset_key* dnskey,
-	uint8_t* sigalg, char** reason)
+	uint8_t* sigalg, char** reason, sldns_pkt_section section, 
+	struct module_qstate* qstate)
 {
 	enum sec_status sec;
 	size_t i, num;
@@ -512,7 +513,7 @@ dnskeyset_verify_rrset(struct module_env* env, struct val_env* ve,
 	}
 	for(i=0; i<num; i++) {
 		sec = dnskeyset_verify_rrset_sig(env, ve, *env->now, rrset, 
-			dnskey, i, &sortree, reason);
+			dnskey, i, &sortree, reason, section, qstate);
 		/* see which algorithm has been fixed up */
 		if(sec == sec_status_secure) {
 			if(!sigalg)
@@ -553,7 +554,8 @@ void algo_needs_reason(struct module_env* env, int alg, char** reason, char* s)
 enum sec_status 
 dnskey_verify_rrset(struct module_env* env, struct val_env* ve,
         struct ub_packed_rrset_key* rrset, struct ub_packed_rrset_key* dnskey,
-	size_t dnskey_idx, char** reason)
+	size_t dnskey_idx, char** reason, sldns_pkt_section section,
+	struct module_qstate* qstate)
 {
 	enum sec_status sec;
 	size_t i, num, numchecked = 0;
@@ -577,7 +579,8 @@ dnskey_verify_rrset(struct module_env* env, struct val_env* ve,
 		buf_canon = 0;
 		sec = dnskey_verify_rrset_sig(env->scratch, 
 			env->scratch_buffer, ve, *env->now, rrset, 
-			dnskey, dnskey_idx, i, &sortree, &buf_canon, reason);
+			dnskey, dnskey_idx, i, &sortree, &buf_canon, reason,
+			section, qstate);
 		if(sec == sec_status_secure)
 			return sec;
 		numchecked ++;
@@ -591,7 +594,8 @@ enum sec_status
 dnskeyset_verify_rrset_sig(struct module_env* env, struct val_env* ve, 
 	time_t now, struct ub_packed_rrset_key* rrset, 
 	struct ub_packed_rrset_key* dnskey, size_t sig_idx, 
-	struct rbtree_type** sortree, char** reason)
+	struct rbtree_type** sortree, char** reason, sldns_pkt_section section,
+	struct module_qstate* qstate)
 {
 	/* find matching keys and check them */
 	enum sec_status sec = sec_status_bogus;
@@ -616,7 +620,7 @@ dnskeyset_verify_rrset_sig(struct module_env* env, struct val_env* ve,
 		/* see if key verifies */
 		sec = dnskey_verify_rrset_sig(env->scratch, 
 			env->scratch_buffer, ve, now, rrset, dnskey, i, 
-			sig_idx, sortree, &buf_canon, reason);
+			sig_idx, sortree, &buf_canon, reason, section, qstate);
 		if(sec == sec_status_secure)
 			return sec;
 	}
@@ -906,7 +910,7 @@ canonical_sort(struct ub_packed_rrset_key* rrset, struct packed_rrset_data* d,
 }
 
 /**
- * Inser canonical owner name into buffer.
+ * Insert canonical owner name into buffer.
  * @param buf: buffer to insert into at current position.
  * @param k: rrset with its owner name.
  * @param sig: signature with signer name and label count.
@@ -1121,12 +1125,15 @@ int rrset_canonical_equal(struct regional* region,
  * 	signer name length.
  * @param sortree: if NULL is passed a new sorted rrset tree is built.
  * 	Otherwise it is reused.
+ * @param section: section of packet where this rrset comes from.
+ * @param qstate: qstate with region.
  * @return false on alloc error.
  */
 static int
 rrset_canonical(struct regional* region, sldns_buffer* buf, 
 	struct ub_packed_rrset_key* k, uint8_t* sig, size_t siglen,
-	struct rbtree_type** sortree)
+	struct rbtree_type** sortree, sldns_pkt_section section,
+	struct module_qstate* qstate)
 {
 	struct packed_rrset_data* d = (struct packed_rrset_data*)k->entry.data;
 	uint8_t* can_owner = NULL;
@@ -1175,6 +1182,20 @@ rrset_canonical(struct regional* region, sldns_buffer* buf,
 		canonicalize_rdata(buf, k, d->rr_len[walk->rr_idx]);
 	}
 	sldns_buffer_flip(buf);
+
+	/* Replace RR owner with canonical owner for NSEC records in authority
+	 * section, to prevent that a wildcard synthesized NSEC can be used in
+	 * the non-existence proves. */
+	if(ntohs(k->rk.type) == LDNS_RR_TYPE_NSEC &&
+		section == LDNS_SECTION_AUTHORITY) {
+		k->rk.dname = regional_alloc_init(qstate->region, can_owner,
+			can_owner_len);
+		if(!k->rk.dname)
+			return 0;
+		k->rk.dname_len = can_owner_len;
+	}
+	
+
 	return 1;
 }
 
@@ -1204,13 +1225,51 @@ sigdate_error(const char* str, int32_t expi, int32_t incep, int32_t now)
 			(unsigned)incep, (unsigned)now);
 }
 
+/** RFC 1918 comparison, uses unsigned integers, and tries to avoid
+ * compiler optimization (eg. by avoiding a-b<0 comparisons),
+ * this routine matches compare_serial(), for SOA serial number checks */
+static int
+compare_1918(uint32_t a, uint32_t b)
+{
+	/* for 32 bit values */
+        const uint32_t cutoff = ((uint32_t) 1 << (32 - 1));
+
+        if (a == b) {
+                return 0;
+        } else if ((a < b && b - a < cutoff) || (a > b && a - b > cutoff)) {
+                return -1;
+        } else {
+                return 1;
+        }
+}
+
+/** if we know that b is larger than a, return the difference between them,
+ * that is the distance between them. in RFC1918 arith */
+static uint32_t
+subtract_1918(uint32_t a, uint32_t b)
+{
+	/* for 32 bit values */
+        const uint32_t cutoff = ((uint32_t) 1 << (32 - 1));
+
+	if(a == b)
+		return 0;
+	if(a < b && b - a < cutoff) {
+		return b-a;
+	}
+	if(a > b && a - b > cutoff) {
+		return ((uint32_t)0xffffffff) - (a-b-1);
+	}
+	/* wrong case, b smaller than a */
+	return 0;
+}
+
 /** check rrsig dates */
 static int
 check_dates(struct val_env* ve, uint32_t unow,
 	uint8_t* expi_p, uint8_t* incep_p, char** reason)
 {
 	/* read out the dates */
-	int32_t expi, incep, now;
+	uint32_t expi, incep, now;
 	memmove(&expi, expi_p, sizeof(expi));
 	memmove(&incep, incep_p, sizeof(incep));
 	expi = ntohl(expi);
@@ -1224,21 +1283,21 @@ check_dates(struct val_env* ve, uint32_t unow,
 		}
 		now = ve->date_override;
 		verbose(VERB_ALGO, "date override option %d", (int)now); 
-	} else	now = (int32_t)unow;
+	} else	now = unow;
 
 	/* check them */
-	if(incep - expi > 0) {
+	if(compare_1918(incep, expi) > 0) {
 		sigdate_error("verify: inception after expiration, "
 			"signature bad", expi, incep, now);
 		*reason = "signature inception after expiration";
 		return 0;
 	}
-	if(incep - now > 0) {
+	if(compare_1918(incep, now) > 0) {
 		/* within skew ? (calc here to avoid calculation normally) */
-		int32_t skew = (expi-incep)/10;
-		if(skew < ve->skew_min) skew = ve->skew_min;
-		if(skew > ve->skew_max) skew = ve->skew_max;
-		if(incep - now > skew) {
+		uint32_t skew = subtract_1918(incep, expi)/10;
+		if(skew < (uint32_t)ve->skew_min) skew = ve->skew_min;
+		if(skew > (uint32_t)ve->skew_max) skew = ve->skew_max;
+		if(subtract_1918(now, incep) > skew) {
 			sigdate_error("verify: signature bad, current time is"
 				" before inception date", expi, incep, now);
 			*reason = "signature before inception date";
@@ -1247,11 +1306,11 @@ check_dates(struct val_env* ve, uint32_t unow,
 		sigdate_error("verify warning suspicious signature inception "
 			" or bad local clock", expi, incep, now);
 	}
-	if(now - expi > 0) {
-		int32_t skew = (expi-incep)/10;
-		if(skew < ve->skew_min) skew = ve->skew_min;
-		if(skew > ve->skew_max) skew = ve->skew_max;
-		if(now - expi > skew) {
+	if(compare_1918(now, expi) > 0) {
+		uint32_t skew = subtract_1918(incep, expi)/10;
+		if(skew < (uint32_t)ve->skew_min) skew = ve->skew_min;
+		if(skew > (uint32_t)ve->skew_max) skew = ve->skew_max;
+		if(subtract_1918(expi, now) > skew) {
 			sigdate_error("verify: signature expired", expi, 
 				incep, now);
 			*reason = "signature expired";
@@ -1318,7 +1377,8 @@ dnskey_verify_rrset_sig(struct regional* region, sldns_buffer* buf,
 	struct val_env* ve, time_t now,
         struct ub_packed_rrset_key* rrset, struct ub_packed_rrset_key* dnskey,
         size_t dnskey_idx, size_t sig_idx,
-	struct rbtree_type** sortree, int* buf_canon, char** reason)
+	struct rbtree_type** sortree, int* buf_canon, char** reason,
+	sldns_pkt_section section, struct module_qstate* qstate)
 {
 	enum sec_status sec;
 	uint8_t* sig;		/* RRSIG rdata */
@@ -1417,7 +1477,7 @@ dnskey_verify_rrset_sig(struct regional* region, sldns_buffer* buf,
 		/* create rrset canonical format in buffer, ready for 
 		 * signature */
 		if(!rrset_canonical(region, buf, rrset, sig+2, 
-			18 + signer_len, sortree)) {
+			18 + signer_len, sortree, section, qstate)) {
 			log_err("verify: failed due to alloc error");
 			return sec_status_unchecked;
 		}

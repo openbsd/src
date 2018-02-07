@@ -36,7 +36,7 @@
 /**
  * \file
  *
- * This file contains a module that performs recusive iterative DNS query
+ * This file contains a module that performs recursive iterative DNS query
  * processing.
  */
 
@@ -833,7 +833,7 @@ prime_stub(struct module_qstate* qstate, struct iter_qstate* iq, int id,
 
 /**
  * Generate A and AAAA checks for glue that is in-zone for the referral
- * we just got to obtain authoritative information on the adresses.
+ * we just got to obtain authoritative information on the addresses.
  *
  * @param qstate: the qtstate that triggered the need to prime.
  * @param iq: iterator query state.
@@ -914,6 +914,9 @@ generate_ns_check(struct module_qstate* qstate, struct iter_qstate* iq, int id)
 		generate_a_aaaa_check(qstate, iq, id);
 		return;
 	}
+	/* no need to get the NS record for DS, it is above the zonecut */
+	if(qstate->qinfo.qtype == LDNS_RR_TYPE_DS)
+		return;
 
 	log_nametypeclass(VERB_ALGO, "schedule ns fetch", 
 		iq->dp->name, LDNS_RR_TYPE_NS, iq->qchase.qclass);
@@ -1353,7 +1356,7 @@ processInitRequest(struct module_qstate* qstate, struct iter_qstate* iq,
  * the same init processing as ones that do not. Request events that reach
  * this state must have a valid currentDelegationPoint set.
  *
- * This part is primarly handling stub zone priming. Events that reach this
+ * This part is primarily handling stub zone priming. Events that reach this
  * state must have a current delegation point.
  *
  * @param qstate: query state.
@@ -1371,16 +1374,24 @@ processInitRequest2(struct module_qstate* qstate, struct iter_qstate* iq,
 	log_query_info(VERB_QUERY, "resolving (init part 2): ", 
 		&qstate->qinfo);
 
+	delname = iq->qchase.qname;
+	delnamelen = iq->qchase.qname_len;
 	if(iq->refetch_glue) {
+		struct iter_hints_stub* stub;
 		if(!iq->dp) {
 			log_err("internal or malloc fail: no dp for refetch");
 			return error_response(qstate, id, LDNS_RCODE_SERVFAIL);
 		}
-		delname = iq->dp->name;
-		delnamelen = iq->dp->namelen;
-	} else {
-		delname = iq->qchase.qname;
-		delnamelen = iq->qchase.qname_len;
+		/* Do not send queries above stub, do not set delname to dp if
+		 * this is above stub without stub-first. */
+		stub = hints_lookup_stub(
+			qstate->env->hints, iq->qchase.qname, iq->qchase.qclass,
+			iq->dp);
+		if(!stub || !stub->dp->has_parent_side_NS || 
+			dname_subdomain_c(iq->dp->name, stub->dp->name)) {
+			delname = iq->dp->name;
+			delnamelen = iq->dp->namelen;
+		}
 	}
 	if(iq->qchase.qtype == LDNS_RR_TYPE_DS || iq->refetch_glue) {
 		if(!dname_is_root(delname))
@@ -2396,7 +2407,7 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 			if(FLAGS_GET_RCODE(iq->response->rep->flags) ==
 				LDNS_RCODE_NXDOMAIN) {
 				/* Stop resolving when NXDOMAIN is DNSSEC
-				 * signed. Based on assumption that namservers
+				 * signed. Based on assumption that nameservers
 				 * serving signed zones do not return NXDOMAIN
 				 * for empty-non-terminals. */
 				if(iq->dnssec_expected)
@@ -2753,7 +2764,7 @@ processPrimeResponse(struct module_qstate* qstate, int id)
 /** 
  * Do final processing on responses to target queries. Events reach this
  * state after the iterative resolution algorithm terminates. This state is
- * responsible for reactiving the original event, and housekeeping related
+ * responsible for reactivating the original event, and housekeeping related
  * to received target responses (caching, updating the current delegation
  * point, etc).
  * Callback from walk_supers for every super state that is interested in 
@@ -3096,7 +3107,7 @@ processFinished(struct module_qstate* qstate, struct iter_qstate* iq,
 }
 
 /*
- * Return priming query results to interestes super querystates.
+ * Return priming query results to interested super querystates.
  * 
  * Sets the delegation point and delegation message (not nonRD queries).
  * This is a callback from walk_supers.

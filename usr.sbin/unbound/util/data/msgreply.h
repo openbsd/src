@@ -285,6 +285,10 @@ int parse_create_msg(struct sldns_buffer* pkt, struct msg_parse* msg,
         struct alloc_cache* alloc, struct query_info* qinf,
 	struct reply_info** rep, struct regional* region);
 
+/** get msg reply struct (in temp region) */
+struct reply_info* parse_reply_in_temp_region(struct sldns_buffer* pkt,
+	struct regional* region, struct query_info* qi);
+
 /**
  * Sorts the ref array.
  * @param rep: reply info. rrsets must be filled in.
@@ -634,7 +638,7 @@ int inplace_cb_edns_back_parsed_call(struct module_env* env,
 	struct module_qstate* qstate);
 
 /**
- * Call the registered functions in the inplace_cb_query_reponse linked list.
+ * Call the registered functions in the inplace_cb_query_response linked list.
  * This function is going to get called after receiving a reply from a
  * nameserver.
  * @param env: module environment.

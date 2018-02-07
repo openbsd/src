@@ -199,6 +199,10 @@ server:
 	# upstream connections use TCP only (and no UDP), "yes" or "no"
 	# useful for tunneling scenarios, default no.
 	# tcp-upstream: no
+	
+	# upstream connections also use UDP (even if do-udp is no).
+	# useful if if you want UDP upstream, but don't provide UDP downstream.
+	# udp-upstream-without-downstream: no
 
 	# Maximum segment size (MSS) of TCP socket on which the server
 	# responds to queries. Default is 0, system default MSS.
@@ -367,7 +371,7 @@ server:
 
 	# Sent minimum amount of information to upstream servers to enhance
 	# privacy. Only sent minimum required labels of the QNAME and set QTYPE
-	# to NS when possible.
+	# to A when possible.
 	# qname-minimisation: no
 
 	# QNAME minimisation in strict mode. Do not fall-back to sending full
@@ -512,7 +516,7 @@ server:
 	# that set CD but cannot validate themselves.
 	# ignore-cd-flag: no
 
-	# Serve expired reponses from cache, with TTL 0 in the response,
+	# Serve expired responses from cache, with TTL 0 in the response,
 	# and then attempt to fetch the data afresh.
 	# serve-expired: no
 
@@ -803,6 +807,30 @@ remote-control:
 # forward-zone:
 # 	name: "example.org"
 # 	forward-host: fwd.example.com
+
+# Authority zones
+# The data for these zones is kept locally, from a file or downloaded.
+# The data can be served to downstream clients, or used instead of the
+# upstream (which saves a lookup to the upstream).  The first example
+# has a copy of the root for local usage.  The second serves example.org
+# authoritatively.  zonefile: reads from file (and writes to it if you also
+# download it), master: fetches with AXFR, url: fetches zonefile over http.
+# auth-zone:
+#	name: "."
+#	for-downstream: no
+#	for-upstream: yes
+#	master: b.root-servers.net
+#	master: c.root-servers.net
+#	master: e.root-servers.net
+#	master: f.root-servers.net
+#	master: g.root-servers.net
+#	master: k.root-servers.net
+# auth-zone:
+#	name: "example.org"
+#	for-downstream: yes
+#	for-upstream: yes
+#	zonefile: "example.org.zone"
+#	url: "http://www.example.com/example.org.zone"
 
 # Views
 # Create named views. Name must be unique. Map views to requests using

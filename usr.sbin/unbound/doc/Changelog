@@ -1,5 +1,166 @@
+19 January 2018: Wouter
+	- tag 1.6.8 for release with CVE fix.
+	- trunk has 1.6.9 with fix and previous commits.
+	- patch for CVE-2017-15105: vulnerability in the processing of
+	  wildcard synthesized NSEC records.
+
+4 January 2018: Ralph
+	- Copy query and correctly set flags on REFUSED answers when cache
+	  snooping is not allowed.
+
+3 January 2018: Ralph
+	- Fix queries being leaked above stub when refetching glue.
+
+2 January 2017: Wouter
+	- Fix that DS queries with referral replies are answered straight
+	  away, without a repeat query picking the DS from cache.
+	  The correct reply should have been an answer, the reply is fixed
+	  by the scrubber to have the answer in the answer section.
+	- Remove clang optimizer disable,
+	  Fix that expiration date checks don't fail with clang -O2.
+
+15 December 2017: Wouter
+	- Fix timestamp failure because of clang optimizer failure, by
+	  disabling -O2 when the compiler --version is clang.
+	- iana port update.
+	- Also disable -flto for clang, to make incep-expi signature check
+	  work.
+
+12 December 2017: Ralph
+	- Fix qname-minimisation documentation (A QTYPE, not NS)
+
+12 December 2017: Wouter
+	- authzone work, transfer connect.
+
+7 December 2017: Ralph
+	- Check whether --with-libunbound-only is set when using --with-nettle
+	  or --with-nss.
+
+4 December 2017: Wouter 
+	- Fix link failure on OmniOS.
+
+1 December 2017: Wouter 
+	- auth zone work.
+
+30 November 2017: Wouter 
+	- Fix #3299 - forward CNAME daisy chain is not working
+
+14 November 2017: Wouter 
+	- Fix #2882: Unbound behaviour changes (wrong) when domain-insecure is
+	  set for stub zone.  It no longer searches for DNSSEC information.
+	- auth xfer work on probe timer and lookup.
+
+13 November 2017: Wouter 
+	- Fix #2801: Install libunbound.pc.
+	- Fix qname minimisation to send AAAA queries at zonecut like type A.
+	- reverted AAAA change.
+
+7 November 2017: Wouter 
+	- Fix #2492: Documentation libunbound.
+
+3 November 2017: Wouter 
+	- Fix #2362: TLS1.3/openssl-1.1.1 not working.
+	- Fix #2034 - Autoconf and -flto.
+	- Fix #2141 - for libsodium detect lack of entropy in chroot, print
+	  a message and exit.
+
+2 November 2017: Wouter 
+	- Fix #1913: ub_ctx_config is under circumstances thread-safe.
+	- make ip-transparent option work on OpenBSD.
+
+31 October 2017: Wouter 
+	- Document that errno is left informative on libunbound config read
+	  fail.
+	- lexer output.
+	- iana port update.
+
+25 October 2017: Ralph
+	- Fixed libunbound manual typo.
+	- Fix #1949: [dnscrypt] make provider name mismatch more obvious.
+	- Fix #2031: Double included headers
+
+24 October 2017: Ralph
+	- Update B root ipv4 address.
+
+19 October 2017: Wouter 
+	- authzone work, probe timer setup.
+
+18 October 2017: Wouter 
+	- lint for recent authzone commit.
+
+17 October 2017: Wouter 
+	- Fix #1749: With harden-referral-path: performance drops, due to
+	  circular dependency in NS and DS lookups.
+	- [dnscrypt] prevent dnscrypt-secret-key, dnscrypt-provider-cert
+	  duplicates
+	- [dnscrypt] introduce dnscrypt-provider-cert-rotated option,
+	  from Manu Bretelle.
+	This option allows handling multiple cert/key pairs while only
+	distributing some of them.
+	In order to reliably match a client magic with a given key without
+	strong assumption as to how those were generated, we need both key and
+	cert. Likewise, in order to know which ES version should be used.
+	On the other hand, when rotating a cert, it can be desirable to only
+	serve the new cert but still be able to handle clients that are still
+	using the old certs's public key.
+	The `dnscrypt-provider-cert-rotated` allow to instruct unbound to not
+	publish the cert as part of the DNS's provider_name's TXT answer.
+	- Better documentation for cache-max-negative-ttl.
+	- Work on local root zone code.
+
+10 October 2017: Wouter 
+	- tag 1.6.7
+	- trunk has version 1.6.8.
+
+6 October 2017: Wouter 
+	- Fix spelling in unbound-control man page.
+
+5 October 2017: Wouter 
+	- Fix trust-anchor-signaling works in libunbound.
+	- Fix some more crpls in testdata for different signaling default.
+	- tag 1.6.7rc1
+
+5 October 2017: Ralph 
+	- Set trust-anchor-signaling default to yes
+	- Use RCODE from A query on DNS64 synthesized answer.
+
+2 October 2017: Wouter
+	- Fix param unused warning for windows exportsymbol compile.
+
+25 September 2017: Ralph
+	-  Fix #1450: Generate again patch contrib/aaaa-filter-iterator.patch
+	   (by Danilo G. Baio).
+
+21 September 2017: Ralph
+	- Log name of looping module
+
+19 September 2017: Wouter
+	- use a cachedb answer even if it's "expired" when serve-expired is yes
+	  (patch from Jinmei Tatuya).
+	- trigger refetching of the answer in that case (this will bypass
+	  cachedb lookup)
+	- allow storing a 0-TTL answer from cachedb in the in-memory message
+	  cache when serve-expired is yes
+	- Fix DNSCACHE_STORE_ZEROTTL to be bigger than 0xffff.
+
+18 September 2017: Ralph
+	- Fix #1400: allowing use of global cache on ECS-forwarding unless
+	  always-forward.
+
+18 September 2017: Wouter
+	- tag 1.6.6 (is 1.6.6rc2)
+	- Fix that looping modules always stop the query, and don't pass
+	  control.
+	- Fix #1435: Please allow UDP to be disabled separately upstream and
+	  downstream.
+	- Fix #1440: [dnscrypt] client nonce cache.
+
+15 September 2017: Wouter
+	- Fix unbound-host to report error for DNSSEC state of failed lookups.
+	- Spelling fixes, from Josh Soref.
+
 13 September 2017: Wouter
-	- tag 1.6.6rc2
+	- tag 1.6.6rc2, became 1.6.6 on 18 sep.  trunk 1.6.7 in development.
 
 12 September 2017: Wouter
 	- Add dns64 for client-subnet in unbound-checkconf.

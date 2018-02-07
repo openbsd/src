@@ -1046,7 +1046,7 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 			strcasecmp(buf,
 			worker->daemon->dnscenv->provider_name) == 0)) {
 			verbose(VERB_ALGO,
-				"dnscrypt: not TXT %s. Receive: %s %s",
+				"dnscrypt: not TXT \"%s\". Received: %s \"%s\"",
 				worker->daemon->dnscenv->provider_name,
 				sldns_rr_descript(qinfo.qtype)->_name,
 				buf);
@@ -1266,13 +1266,9 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 	 * ACLs allow the snooping. */
 	if(!(LDNS_RD_WIRE(sldns_buffer_begin(c->buffer))) &&
 		acl != acl_allow_snoop ) {
-		sldns_buffer_set_limit(c->buffer, LDNS_HEADER_SIZE);
-		sldns_buffer_write_at(c->buffer, 4, 
-			(uint8_t*)"\0\0\0\0\0\0\0\0", 8);
-		LDNS_QR_SET(sldns_buffer_begin(c->buffer));
-		LDNS_RCODE_SET(sldns_buffer_begin(c->buffer), 
-			LDNS_RCODE_REFUSED);
-		sldns_buffer_flip(c->buffer);
+		error_encode(c->buffer, LDNS_RCODE_REFUSED, &qinfo,
+			*(uint16_t*)(void *)sldns_buffer_begin(c->buffer),
+			sldns_buffer_read_u16_at(c->buffer, 2), NULL);
 		regional_free_all(worker->scratchpad);
 		server_stats_insrcode(&worker->stats, c->buffer);
 		log_addr(VERB_ALGO, "refused nonrec (cache snoop) query from",
@@ -1633,7 +1629,8 @@ worker_init(struct worker* worker, struct config_file *cfg,
 		cfg->use_caps_bits_for_id, worker->ports, worker->numports,
 		cfg->unwanted_threshold, cfg->outgoing_tcp_mss,
 		&worker_alloc_cleanup, worker,
-		cfg->do_udp, worker->daemon->connect_sslctx, cfg->delay_close,
+		cfg->do_udp || cfg->udp_upstream_without_downstream,
+		worker->daemon->connect_sslctx, cfg->delay_close,
 		dtenv);
 	if(!worker->back) {
 		log_err("could not create outgoing sockets");
@@ -1671,8 +1668,10 @@ worker_init(struct worker* worker, struct config_file *cfg,
 	if(worker->thread_num == 0)
 		log_set_time(worker->env.now);
 	worker->env.worker = worker;
+	worker->env.worker_base = worker->base;
 	worker->env.send_query = &worker_send_query;
 	worker->env.alloc = &worker->alloc;
+	worker->env.outnet = worker->back;
 	worker->env.rnd = worker->rndstate;
 	/* If case prefetch is triggered, the corresponding mesh will clear
 	 * the scratchpad for the module env in the middle of request handling.

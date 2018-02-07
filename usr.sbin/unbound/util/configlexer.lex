@@ -14,7 +14,6 @@
 #endif
 
 #include <ctype.h>
-#include <string.h>
 #include <strings.h>
 #ifdef HAVE_GLOB_H
 # include <glob.h>
@@ -295,6 +294,12 @@ forward-addr{COLON}		{ YDVAR(1, VAR_FORWARD_ADDR) }
 forward-host{COLON}		{ YDVAR(1, VAR_FORWARD_HOST) }
 forward-first{COLON}		{ YDVAR(1, VAR_FORWARD_FIRST) }
 forward-ssl-upstream{COLON}	{ YDVAR(1, VAR_FORWARD_SSL_UPSTREAM) }
+auth-zone{COLON}		{ YDVAR(0, VAR_AUTH_ZONE) }
+zonefile{COLON}			{ YDVAR(1, VAR_ZONEFILE) }
+master{COLON}			{ YDVAR(1, VAR_MASTER) }
+url{COLON}			{ YDVAR(1, VAR_URL) }
+for-downstream{COLON}		{ YDVAR(1, VAR_FOR_DOWNSTREAM) }
+for-upstream{COLON}		{ YDVAR(1, VAR_FOR_UPSTREAM) }
 view{COLON}			{ YDVAR(0, VAR_VIEW) }
 view-first{COLON}		{ YDVAR(1, VAR_VIEW_FIRST) }
 do-not-query-address{COLON}	{ YDVAR(1, VAR_DO_NOT_QUERY_ADDRESS) }
@@ -417,10 +422,13 @@ dnscrypt-port{COLON}		{ YDVAR(1, VAR_DNSCRYPT_PORT) }
 dnscrypt-provider{COLON}	{ YDVAR(1, VAR_DNSCRYPT_PROVIDER) }
 dnscrypt-secret-key{COLON}	{ YDVAR(1, VAR_DNSCRYPT_SECRET_KEY) }
 dnscrypt-provider-cert{COLON}	{ YDVAR(1, VAR_DNSCRYPT_PROVIDER_CERT) }
+dnscrypt-provider-cert-rotated{COLON}	{ YDVAR(1, VAR_DNSCRYPT_PROVIDER_CERT_ROTATED) }
 dnscrypt-shared-secret-cache-size{COLON}	{
 		YDVAR(1, VAR_DNSCRYPT_SHARED_SECRET_CACHE_SIZE) }
 dnscrypt-shared-secret-cache-slabs{COLON}	{
 		YDVAR(1, VAR_DNSCRYPT_SHARED_SECRET_CACHE_SLABS) }
+dnscrypt-nonce-cache-size{COLON}	{ YDVAR(1, VAR_DNSCRYPT_NONCE_CACHE_SIZE) }
+dnscrypt-nonce-cache-slabs{COLON}	{ YDVAR(1, VAR_DNSCRYPT_NONCE_CACHE_SLABS) }
 ipsecmod-enabled{COLON}		{ YDVAR(1, VAR_IPSECMOD_ENABLED) }
 ipsecmod-ignore-bogus{COLON}	{ YDVAR(1, VAR_IPSECMOD_IGNORE_BOGUS) }
 ipsecmod-hook{COLON}		{ YDVAR(1, VAR_IPSECMOD_HOOK) }
@@ -430,6 +438,7 @@ ipsecmod-strict{COLON}		{ YDVAR(1, VAR_IPSECMOD_STRICT) }
 cachedb{COLON}			{ YDVAR(0, VAR_CACHEDB) }
 backend{COLON}			{ YDVAR(1, VAR_CACHEDB_BACKEND) }
 secret-seed{COLON}		{ YDVAR(1, VAR_CACHEDB_SECRETSEED) }
+udp-upstream-without-downstream{COLON} { YDVAR(1, VAR_UDP_UPSTREAM_WITHOUT_DOWNSTREAM) }
 <INITIAL,val>{NEWLINE}		{ LEXOUT(("NL\n")); cfg_parser->line++; }
 
 	/* Quoted strings. Strip leading and ending quotes */

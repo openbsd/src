@@ -295,6 +295,7 @@ the data in the cache does not match up with the actual data any more.
 .B cache\-max\-negative\-ttl: \fI<seconds>
 Time to live maximum for negative responses, these have a SOA in the
 authority section that is limited in time.  Default is 3600.
+This applies to nxdomain and nodata answers.
 .TP
 .B infra\-host\-ttl: \fI<seconds>
 Time to live for entries in the host cache. The host cache contains
@@ -355,6 +356,11 @@ negotiation between Unbound and other servers.
 .B tcp\-upstream: \fI<yes or no>
 Enable or disable whether the upstream queries use TCP only for transport.
 Default is no.  Useful in tunneling scenarios.
+.TP
+.B udp\-upstream\-without\-downstream: \fI<yes or no>
+Enable udp upstream even if do-udp is no.  Default is no, and this does not
+change anything.  Useful for TLS service providers, that want no udp downstream
+but use udp to fetch data upstream.
 .TP
 .B ssl\-upstream: \fI<yes or no>
 Enabled or disable whether the upstream queries use SSL only for transport.
@@ -641,7 +647,7 @@ Can be given multiple times, for different domains.
 .TP
 .B qname\-minimisation: \fI<yes or no>
 Send minimum amount of information to upstream servers to enhance privacy.
-Only sent minimum required labels of the QNAME and set QTYPE to NS when
+Only sent minimum required labels of the QNAME and set QTYPE to A when
 possible. Best effort approach; full QNAME and original QTYPE will be sent when
 upstream replies with a RCODE other than NOERROR, except when receiving
 NXDOMAIN from a DNSSEC signed zone. Default is off.
@@ -1343,6 +1349,9 @@ forward the queries to. The servers listed as \fBforward\-host:\fR and
 those servers are not authority servers, but are (just like unbound is)
 recursive servers too; unbound does not perform recursion itself for the
 forward zone, it lets the remote server do it.  Class IN is assumed.
+CNAMEs are chased by unbound itself, asking the remote server for every
+name in the indirection chain, to protect the local cache from illegal
+indirect referenced items.
 A forward\-zone entry with name "." and a forward\-addr target will
 forward all queries to that other server (unless it can answer from
 the cache).
@@ -1464,6 +1473,19 @@ times.
 Path to the certificate related to the \fBdnscrypt\-secret\-key\fRs.
 This option may be specified multiple times.
 .TP
+.B dnscrypt\-provider\-cert\-rotated: \fI<path to cert file>\fR
+Path to a certificate that we should be able to serve existing connection from
+but do not want to advertise over \fBdnscrypt\-provider\fR's TXT record certs
+distribution.
+A typical use case is when rotating certificates, existing clients may still use
+the client magic from the old cert in their queries until they fetch and update
+the new cert. Likewise, it would allow to prime the new cert/key without
+distributing the new cert yet, this can be useful when using a network of
+servers using anycast and on which the configuration may not get updated at the
+exact same time. By priming the cert, the servers can handle both old and new
+certs traffic while distributing only one.
+This option may be specified multiple times.
+.TP
 .B dnscrypt\-shared\-secret\-cache\-size: \fI<memory size>
 Give the size of the data structure in which the shared secret keys are kept
 in.  Default 4m.  In bytes or use m(mega), k(kilo), g(giga).
@@ -1473,6 +1495,17 @@ using the same public key. It saves a substantial amount of CPU.
 .B dnscrypt\-shared\-secret\-cache\-slabs: \fI<number>
 Give power of 2 number of slabs, this is used to reduce lock contention
 in the dnscrypt shared secrets cache.  Close to the number of cpus is
+a fairly good setting.
+.TP
+.B dnscrypt\-nonce\-cache\-size: \fI<memory size>
+Give the size of the data structure in which the client nonces are kept in.
+Default 4m. In bytes or use m(mega), k(kilo), g(giga).
+The nonce cache is used to prevent dnscrypt message replaying. Client nonce
+should be unique for any pair of client pk/server sk.
+.TP
+.B dnscrypt\-nonce\-cache\-slabs: \fI<number>
+Give power of 2 number of slabs, this is used to reduce lock contention
+in the dnscrypt nonce cache.  Close to the number of cpus is
 a fairly good setting.
 .SS "EDNS Client Subnet Module Options"
 .LP
@@ -1487,7 +1520,7 @@ specialized cache. If the authority indicated no support, the response is
 stored in the regular cache.
 .LP
 Additionally, when a client includes the option in its queries, Unbound will
-forward the option to the authority if prensent in the whitelist, or
+forward the option to the authority if present in the whitelist, or
 \fBclient\-subnet\-always\-forward\fR is set to yes. In this case the lookup in
 the regular cache is skipped.
 .LP

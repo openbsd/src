@@ -5,6 +5,7 @@
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif
+#include <inttypes.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include "sldns/sbuffer.h"
@@ -59,6 +60,17 @@ struct shared_secret_cache_key {
     struct lruhash_entry entry;
 };
 
+
+struct nonce_cache_key {
+    /** the nonce used by the client */
+    uint8_t nonce[crypto_box_HALF_NONCEBYTES];
+    /** the client_magic used by the client, this is associated to 1 cert only */
+    uint8_t magic_query[DNSCRYPT_MAGIC_HEADER_LEN];
+    /** the client public key */
+    uint8_t client_publickey[crypto_box_PUBLICKEYBYTES];
+    /** the hash table entry, data is uint8_t */
+    struct lruhash_entry entry;
+};
 
 /**
  * Generate a key suitable to find shared secret in slabhash.
@@ -136,6 +148,87 @@ dnsc_shared_secrets_lookup(struct slabhash* cache,
 }
 
 /**
+ * Generate a key hash suitable to find a nonce in slabhash.
+ * \param[in] nonce: a uint8_t pointer of size crypto_box_HALF_NONCEBYTES
+ * \param[in] magic_query: a uint8_t pointer of size DNSCRYPT_MAGIC_HEADER_LEN
+ * \param[in] pk: The public key of the client. uint8_t pointer of size
+ * crypto_box_PUBLICKEYBYTES.
+ * \return the hash of the key.
+ */
+static uint32_t
+dnsc_nonce_cache_key_hash(const uint8_t nonce[crypto_box_HALF_NONCEBYTES],
+                          const uint8_t magic_query[DNSCRYPT_MAGIC_HEADER_LEN],
+                          const uint8_t pk[crypto_box_PUBLICKEYBYTES])
+{
+    uint32_t h = 0;
+    h = hashlittle(nonce, crypto_box_HALF_NONCEBYTES, h);
+    h = hashlittle(magic_query, DNSCRYPT_MAGIC_HEADER_LEN, h);
+    return hashlittle(pk, crypto_box_PUBLICKEYBYTES, h);
+}
+
+/**
+ * Inserts a nonce, magic_query, pk tuple into the nonces_cache slabhash.
+ * \param[in] cache: the slabhash in which to look for the key.
+ * \param[in] nonce: a uint8_t pointer of size crypto_box_HALF_NONCEBYTES
+ * \param[in] magic_query: a uint8_t pointer of size DNSCRYPT_MAGIC_HEADER_LEN
+ * \param[in] pk: The public key of the client. uint8_t pointer of size
+ * crypto_box_PUBLICKEYBYTES.
+ * \param[in] hash: the hash of the key.
+ */
+static void
+dnsc_nonce_cache_insert(struct slabhash *cache,
+                        const uint8_t nonce[crypto_box_HALF_NONCEBYTES],
+                        const uint8_t magic_query[DNSCRYPT_MAGIC_HEADER_LEN],
+                        const uint8_t pk[crypto_box_PUBLICKEYBYTES],
+                        uint32_t hash)
+{
+    struct nonce_cache_key* k =
+        (struct nonce_cache_key*)calloc(1, sizeof(*k));
+    if(!k) {
+        free(k);
+        return;
+    }
+    lock_rw_init(&k->entry.lock);
+    memcpy(k->nonce, nonce, crypto_box_HALF_NONCEBYTES);
+    memcpy(k->magic_query, magic_query, DNSCRYPT_MAGIC_HEADER_LEN);
+    memcpy(k->client_publickey, pk, crypto_box_PUBLICKEYBYTES);
+    k->entry.hash = hash;
+    k->entry.key = k;
+    k->entry.data = NULL;
+    slabhash_insert(cache,
+                    hash, &k->entry,
+                    NULL,
+                    NULL);
+}
+
+/**
+ * Lookup a record in nonces_cache.
+ * \param[in] cache: the slabhash in which to look for the key.
+ * \param[in] nonce: a uint8_t pointer of size crypto_box_HALF_NONCEBYTES
+ * \param[in] magic_query: a uint8_t pointer of size DNSCRYPT_MAGIC_HEADER_LEN
+ * \param[in] pk: The public key of the client. uint8_t pointer of size
+ * crypto_box_PUBLICKEYBYTES.
+ * \param[in] hash: the hash of the key.
+ * \return a pointer to the locked cache entry or NULL on failure.
+ */
+static struct lruhash_entry*
+dnsc_nonces_lookup(struct slabhash* cache,
+                   const uint8_t nonce[crypto_box_HALF_NONCEBYTES],
+                   const uint8_t magic_query[DNSCRYPT_MAGIC_HEADER_LEN],
+                   const uint8_t pk[crypto_box_PUBLICKEYBYTES],
+                   uint32_t hash)
+{
+    struct nonce_cache_key k;
+    memset(&k, 0, sizeof(k));
+    k.entry.hash = hash;
+    memcpy(k.nonce, nonce, crypto_box_HALF_NONCEBYTES);
+    memcpy(k.magic_query, magic_query, DNSCRYPT_MAGIC_HEADER_LEN);
+    memcpy(k.client_publickey, pk, crypto_box_PUBLICKEYBYTES);
+
+    return slabhash_lookup(cache, hash, &k, 0);
+}
+
+/**
  * Decrypt a query using the dnsccert that was found using dnsc_find_cert.
  * The client nonce will be extracted from the encrypted query and stored in
  * client_nonce, a shared secret will be computed and stored in nmkey and the
@@ -163,11 +256,44 @@ dnscrypt_server_uncurve(struct dnsc_env* env,
     struct lruhash_entry* entry;
     uint32_t hash;
 
+    uint32_t nonce_hash;
+
     if (len <= DNSCRYPT_QUERY_HEADER_SIZE) {
         return -1;
     }
 
     query_header = (struct dnscrypt_query_header *)buf;
+
+    /* Detect replay attacks */
+    nonce_hash = dnsc_nonce_cache_key_hash(
+        query_header->nonce,
+        cert->magic_query,
+        query_header->publickey);
+
+    lock_basic_lock(&env->nonces_cache_lock);
+    entry = dnsc_nonces_lookup(
+        env->nonces_cache,
+        query_header->nonce,
+        cert->magic_query,
+        query_header->publickey,
+        nonce_hash);
+
+    if(entry) {
+        lock_rw_unlock(&entry->lock);
+        env->num_query_dnscrypt_replay++;
+        lock_basic_unlock(&env->nonces_cache_lock);
+        return -1;
+    }
+
+    dnsc_nonce_cache_insert(
+        env->nonces_cache,
+        query_header->nonce,
+        cert->magic_query,
+        query_header->publickey,
+        nonce_hash);
+    lock_basic_unlock(&env->nonces_cache_lock);
+
+    /* Find existing shared secret */
     hash = dnsc_shared_secrets_cache_key(key,
                                          cert->es_version[1],
                                          query_header->publickey,
@@ -463,18 +589,26 @@ dnsc_chroot_path(struct config_file *cfg, char *path)
 static int
 dnsc_parse_certs(struct dnsc_env *env, struct config_file *cfg)
 {
-	struct config_strlist *head;
+	struct config_strlist *head, *head2;
 	size_t signed_cert_id;
+	size_t rotated_cert_id;
 	char *nm;
 
 	env->signed_certs_count = 0U;
+	env->rotated_certs_count = 0U;
 	for (head = cfg->dnscrypt_provider_cert; head; head = head->next) {
 		env->signed_certs_count++;
+	}
+	for (head = cfg->dnscrypt_provider_cert_rotated; head; head = head->next) {
+		env->rotated_certs_count++;
 	}
 	env->signed_certs = sodium_allocarray(env->signed_certs_count,
 										  sizeof *env->signed_certs);
 
+	env->rotated_certs = sodium_allocarray(env->rotated_certs_count,
+										  sizeof env->signed_certs);
 	signed_cert_id = 0U;
+	rotated_cert_id = 0U;
 	for(head = cfg->dnscrypt_provider_cert; head; head = head->next, signed_cert_id++) {
 		nm = dnsc_chroot_path(cfg, head->str);
 		if(dnsc_read_from_file(
@@ -482,6 +616,14 @@ dnsc_parse_certs(struct dnsc_env *env, struct config_file *cfg)
 				(char *)(env->signed_certs + signed_cert_id),
 				sizeof(struct SignedCert)) != 0) {
 			fatal_exit("dnsc_parse_certs: failed to load %s: %s", head->str, strerror(errno));
+		}
+		for(head2 = cfg->dnscrypt_provider_cert_rotated; head2; head2 = head2->next) {
+			if(strcmp(head->str, head2->str) == 0) {
+				*(env->rotated_certs + rotated_cert_id) = env->signed_certs + signed_cert_id;
+				rotated_cert_id++;
+				verbose(VERB_OPS, "Cert %s is rotated and will not be distributed via DNS", head->str);
+				break;
+			}
 		}
 		verbose(VERB_OPS, "Loaded cert %s", head->str);
 	}
@@ -547,7 +689,7 @@ dnsc_find_cert(struct dnsc_env* dnscenv, struct sldns_buffer* buffer)
  * In order to be able to serve certs over TXT, we can reuse the local-zone and
  * local-data config option. The zone and qname are infered from the
  * provider_name and the content of the TXT record from the certificate content.
- * returns the number of certtificate TXT record that were loaded.
+ * returns the number of certificate TXT record that were loaded.
  * < 0 in case of error.
  */
 static int
@@ -567,27 +709,54 @@ dnsc_load_local_data(struct dnsc_env* dnscenv, struct config_file *cfg)
     // 2.dnscrypt-cert.example.com 86400 IN TXT "DNSC......"
     for(i=0; i<dnscenv->signed_certs_count; i++) {
         const char *ttl_class_type = " 86400 IN TXT \"";
+        int rotated_cert = 0;
+	uint32_t serial;
+	uint16_t rrlen;
+	char* rr;
         struct SignedCert *cert = dnscenv->signed_certs + i;
-        uint16_t rrlen = strlen(dnscenv->provider_name) +
+		// Check if the certificate is being rotated and should not be published
+        for(j=0; j<dnscenv->rotated_certs_count; j++){
+            if(cert == dnscenv->rotated_certs[j]) {
+                rotated_cert = 1;
+                break;
+            }
+        }
+		memcpy(&serial, cert->serial, sizeof serial);
+		serial = htonl(serial);
+        if(rotated_cert) {
+            verbose(VERB_OPS,
+                "DNSCrypt: not adding cert with serial #%"
+                PRIu32
+                " to local-data as it is rotated",
+                serial
+            );
+            continue;
+        }
+        rrlen = strlen(dnscenv->provider_name) +
                          strlen(ttl_class_type) +
                          4 * sizeof(struct SignedCert) + // worst case scenario
                          1 + // trailing double quote
                          1;
-        char *rr = malloc(rrlen);
+        rr = malloc(rrlen);
         if(!rr) {
             log_err("Could not allocate memory");
             return -2;
         }
         snprintf(rr, rrlen - 1, "%s 86400 IN TXT \"", dnscenv->provider_name);
         for(j=0; j<sizeof(struct SignedCert); j++) {
-       	    int c = (int)*((const uint8_t *) cert + j);
+			int c = (int)*((const uint8_t *) cert + j);
             if (isprint(c) && c != '"' && c != '\\') {
                 snprintf(rr + strlen(rr), rrlen - 1 - strlen(rr), "%c", c);
             } else {
                 snprintf(rr + strlen(rr), rrlen - 1 - strlen(rr), "\\%03d", c);
             }
         }
-        verbose(VERB_OPS, "DNSCrypt: adding local data to config: %s", rr);
+        verbose(VERB_OPS,
+			"DNSCrypt: adding cert with serial #%"
+			PRIu32
+			" to local-data to config: %s",
+			serial, rr
+		);
         snprintf(rr + strlen(rr), rrlen - 1 - strlen(rr), "\"");
         cfg_strlist_insert(&cfg->local_data, strdup(rr));
         free(rr);
@@ -701,6 +870,16 @@ dnsc_parse_keys(struct dnsc_env *env, struct config_file *cfg)
 	return cert_id;
 }
 
+static void
+sodium_misuse_handler(void)
+{
+	fatal_exit(
+		"dnscrypt: libsodium could not be initialized, this typically"
+		" happens when no good source of entropy is found. If you run"
+		" unbound in a chroot, make sure /dev/random is available. See"
+		" https://www.unbound.net/documentation/unbound.conf.html");
+}
+
 
 /**
  * #########################################################
@@ -764,14 +943,25 @@ struct dnsc_env *
 dnsc_create(void)
 {
 	struct dnsc_env *env;
+#ifdef SODIUM_MISUSE_HANDLER
+	sodium_set_misuse_handler(sodium_misuse_handler);
+#endif
 	if (sodium_init() == -1) {
 		fatal_exit("dnsc_create: could not initialize libsodium.");
 	}
 	env = (struct dnsc_env *) calloc(1, sizeof(struct dnsc_env));
 	lock_basic_init(&env->shared_secrets_cache_lock);
 	lock_protect(&env->shared_secrets_cache_lock,
-				 &env->num_query_dnscrypt_secret_missed_cache,
-				 sizeof(env->num_query_dnscrypt_secret_missed_cache));
+                 &env->num_query_dnscrypt_secret_missed_cache,
+                 sizeof(env->num_query_dnscrypt_secret_missed_cache));
+	lock_basic_init(&env->nonces_cache_lock);
+	lock_protect(&env->nonces_cache_lock,
+                 &env->nonces_cache,
+                 sizeof(env->nonces_cache));
+	lock_protect(&env->nonces_cache_lock,
+                 &env->num_query_dnscrypt_replay,
+                 sizeof(env->num_query_dnscrypt_replay));
+
 	return env;
 }
 
@@ -803,6 +993,16 @@ dnsc_apply_cfg(struct dnsc_env *env, struct config_file *cfg)
     if(!env->shared_secrets_cache){
         fatal_exit("dnsc_apply_cfg: could not create shared secrets cache.");
     }
+    env->nonces_cache = slabhash_create(
+        cfg->dnscrypt_nonce_cache_slabs,
+        HASH_DEFAULT_STARTARRAY,
+        cfg->dnscrypt_nonce_cache_size,
+        dnsc_nonces_sizefunc,
+        dnsc_nonces_compfunc,
+        dnsc_nonces_delkeyfunc,
+        dnsc_nonces_deldatafunc,
+        NULL
+    );
     return 0;
 }
 
@@ -814,10 +1014,13 @@ dnsc_delete(struct dnsc_env *env)
 	}
 	verbose(VERB_OPS, "DNSCrypt: Freeing environment.");
 	sodium_free(env->signed_certs);
+	sodium_free(env->rotated_certs);
 	sodium_free(env->certs);
 	sodium_free(env->keypairs);
 	slabhash_delete(env->shared_secrets_cache);
+	slabhash_delete(env->nonces_cache);
 	lock_basic_destroy(&env->shared_secrets_cache_lock);
+	lock_basic_destroy(&env->nonces_cache_lock);
 	free(env);
 }
 
@@ -857,4 +1060,52 @@ dnsc_shared_secrets_deldatafunc(void* d, void* ATTR_UNUSED(arg))
 {
     uint8_t* data = (uint8_t*)d;
     free(data);
+}
+
+/**
+ * #########################################################
+ * ############### Nonces cache functions ##################
+ * #########################################################
+ */
+
+size_t
+dnsc_nonces_sizefunc(void *k, void* ATTR_UNUSED(d))
+{
+    struct nonce_cache_key* nk = (struct nonce_cache_key*)k;
+    size_t key_size = sizeof(struct nonce_cache_key)
+        + lock_get_mem(&nk->entry.lock);
+    (void)nk; /* otherwise ssk is unused if no threading, or fixed locksize */
+    return key_size;
+}
+
+int
+dnsc_nonces_compfunc(void *m1, void *m2)
+{
+    struct nonce_cache_key *k1 = m1, *k2 = m2;
+    return
+        sodium_memcmp(
+            k1->nonce,
+            k2->nonce,
+            crypto_box_HALF_NONCEBYTES) != 0 ||
+        sodium_memcmp(
+            k1->magic_query,
+            k2->magic_query,
+            DNSCRYPT_MAGIC_HEADER_LEN) != 0 ||
+        sodium_memcmp(
+            k1->client_publickey, k2->client_publickey,
+            crypto_box_PUBLICKEYBYTES) != 0;
+}
+
+void
+dnsc_nonces_delkeyfunc(void *k, void* ATTR_UNUSED(arg))
+{
+    struct nonce_cache_key* nk = (struct nonce_cache_key*)k;
+    lock_rw_destroy(&nk->entry.lock);
+    free(nk);
+}
+
+void
+dnsc_nonces_deldatafunc(void* ATTR_UNUSED(d), void* ATTR_UNUSED(arg))
+{
+    return;
 }

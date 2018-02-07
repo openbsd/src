@@ -214,6 +214,7 @@ libworker_setup(struct ub_ctx* ctx, int is_bg, struct ub_event_base* eb)
 		libworker_delete(w);
 		return NULL;
 	}
+	w->env->worker_base = w->base;
 	if(!w->is_bg || w->is_bg_thread) {
 		lock_basic_lock(&ctx->cfglock);
 	}
@@ -232,9 +233,10 @@ libworker_setup(struct ub_ctx* ctx, int is_bg, struct ub_event_base* eb)
 		cfg->do_tcp?cfg->outgoing_num_tcp:0,
 		w->env->infra_cache, w->env->rnd, cfg->use_caps_bits_for_id,
 		ports, numports, cfg->unwanted_threshold,
-		cfg->outgoing_tcp_mss,
-		&libworker_alloc_cleanup, w, cfg->do_udp, w->sslctx,
+		cfg->outgoing_tcp_mss, &libworker_alloc_cleanup, w,
+		cfg->do_udp || cfg->udp_upstream_without_downstream, w->sslctx,
 		cfg->delay_close, NULL);
+	w->env->outnet = w->back;
 	if(!w->is_bg || w->is_bg_thread) {
 		lock_basic_unlock(&ctx->cfglock);
 	}
@@ -251,6 +253,7 @@ libworker_setup(struct ub_ctx* ctx, int is_bg, struct ub_event_base* eb)
 	w->env->send_query = &libworker_send_query;
 	w->env->detach_subs = &mesh_detach_subs;
 	w->env->attach_sub = &mesh_attach_sub;
+	w->env->add_sub = &mesh_add_sub;
 	w->env->kill_sub = &mesh_state_delete;
 	w->env->detect_cycle = &mesh_detect_cycle;
 	comm_base_timept(w->base, &w->env->now, &w->env->now_tv);
@@ -418,25 +421,6 @@ int libworker_bg(struct ub_ctx* ctx)
 	return UB_NOERROR;
 }
 
-/** get msg reply struct (in temp region) */
-static struct reply_info*
-parse_reply(sldns_buffer* pkt, struct regional* region, struct query_info* qi)
-{
-	struct reply_info* rep;
-	struct msg_parse* msg;
-	if(!(msg = regional_alloc(region, sizeof(*msg)))) {
-		return NULL;
-	}
-	memset(msg, 0, sizeof(*msg));
-	sldns_buffer_set_position(pkt, 0);
-	if(parse_packet(pkt, msg, region) != 0)
-		return 0;
-	if(!parse_create_msg(pkt, msg, NULL, qi, &rep, region)) {
-		return 0;
-	}
-	return rep;
-}
-
 /** insert canonname */
 static int
 fill_canon(struct ub_result* res, uint8_t* s)
@@ -510,7 +494,7 @@ libworker_enter_result(struct ub_result* res, sldns_buffer* buf,
 	struct query_info rq;
 	struct reply_info* rep;
 	res->rcode = LDNS_RCODE_SERVFAIL;
-	rep = parse_reply(buf, temp, &rq);
+	rep = parse_reply_in_temp_region(buf, temp, &rq);
 	if(!rep) {
 		log_err("cannot parse buf");
 		return; /* error parsing buf, or out of memory */

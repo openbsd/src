@@ -648,7 +648,7 @@ comm_point_udp_ancil_callback(int fd, short event, void* arg)
 			(void)comm_point_send_udp_msg_if(rep.c, rep.c->buffer,
 				(struct sockaddr*)&rep.addr, rep.addrlen, &rep);
 		}
-		if(rep.c->fd == -1) /* commpoint closed */
+		if(!rep.c || rep.c->fd == -1) /* commpoint closed */
 			break;
 	}
 #else
@@ -711,7 +711,7 @@ comm_point_udp_callback(int fd, short event, void* arg)
 			(void)comm_point_send_udp_msg(rep.c, buffer,
 				(struct sockaddr*)&rep.addr, rep.addrlen);
 		}
-		if(rep.c->fd != fd) /* commpoint closed to -1 or reused for
+		if(!rep.c || rep.c->fd != fd) /* commpoint closed to -1 or reused for
 		another UDP port. Note rep.c cannot be reused with TCP fd. */
 			break;
 	}
@@ -1400,7 +1400,7 @@ comm_point_tcp_handle_write(int fd, struct comm_point* c)
 		if (r == -1) {
 #if defined(EINPROGRESS) && defined(EWOULDBLOCK)
 			/* Handshake is underway, maybe because no TFO cookie available.
-			   Come back to write the messsage*/
+			   Come back to write the message*/
 			if(errno == EINPROGRESS || errno == EWOULDBLOCK)
 				return 1;
 #endif
