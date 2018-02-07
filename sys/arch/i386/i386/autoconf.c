@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.104 2018/01/27 22:55:23 naddy Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.105 2018/02/07 18:42:38 naddy Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -236,18 +236,17 @@ diskconf(void)
 	if (bios_bootmac) {
 		struct ifnet *ifp;
 
-		for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
-		    ifp = TAILQ_NEXT(ifp, if_list)) {
+		TAILQ_FOREACH(ifp, &ifnet, if_list) {
 			if (ifp->if_type == IFT_ETHER &&
-			    bcmp(bios_bootmac->mac,
+			    memcmp(bios_bootmac->mac,
 			    ((struct arpcom *)ifp)->ac_enaddr,
 			    ETHER_ADDR_LEN) == 0)
 				break;
 		}
 		if (ifp) {
-#if defined(NFSCLIENT)
 			printf("PXE boot MAC address %s, interface %s\n",
 			    ether_sprintf(bios_bootmac->mac), ifp->if_xname);
+#if defined(NFSCLIENT)
 			bootdv = parsedisk(ifp->if_xname, strlen(ifp->if_xname),
 			    0, &tmpdev);
 			part = 0;
