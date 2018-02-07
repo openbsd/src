@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.37 2018/02/07 21:36:34 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.38 2018/02/07 22:01:04 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -89,6 +89,7 @@ int	 bwfm_proto_bcdc_query_dcmd(struct bwfm_softc *, int,
 	     int, char *, size_t *);
 int	 bwfm_proto_bcdc_set_dcmd(struct bwfm_softc *, int,
 	     int, char *, size_t);
+void	 bwfm_proto_bcdc_rx(struct bwfm_softc *, struct mbuf *);
 
 int	 bwfm_fwvar_cmd_get_data(struct bwfm_softc *, int, void *, size_t);
 int	 bwfm_fwvar_cmd_set_data(struct bwfm_softc *, int, void *, size_t);
@@ -153,6 +154,7 @@ uint8_t bwfm_5ghz_channels[] = {
 struct bwfm_proto_ops bwfm_proto_bcdc_ops = {
 	.proto_query_dcmd = bwfm_proto_bcdc_query_dcmd,
 	.proto_set_dcmd = bwfm_proto_bcdc_set_dcmd,
+	.proto_rx = bwfm_proto_bcdc_rx,
 };
 
 struct cfdriver bwfm_cd = {
@@ -1329,6 +1331,24 @@ bwfm_proto_bcdc_set_dcmd(struct bwfm_softc *sc, int ifidx,
 err:
 	free(dcmd, M_TEMP, sizeof(*dcmd));
 	return ret;
+}
+
+void
+bwfm_proto_bcdc_rx(struct bwfm_softc *sc, struct mbuf *m)
+{
+	struct bwfm_proto_bcdc_hdr *hdr;
+
+	hdr = mtod(m, struct bwfm_proto_bcdc_hdr *);
+	if (m->m_len < sizeof(*hdr)) {
+		m_freem(m);
+		return;
+	}
+	if (m->m_len < sizeof(*hdr) + (hdr->data_offset << 2)) {
+		m_freem(m);
+		return;
+	}
+	m_adj(m, sizeof(*hdr) + (hdr->data_offset << 2));
+	bwfm_rx(sc, m);
 }
 
 /* FW Variable code */

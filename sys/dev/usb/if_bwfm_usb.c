@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.8 2018/01/24 13:10:20 patrick Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.9 2018/02/07 22:01:04 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -430,10 +430,9 @@ bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct bwfm_usb_rx_data *data = priv;
 	struct bwfm_usb_softc *sc = data->sc;
-	struct bwfm_proto_bcdc_hdr *hdr;
 	usbd_status error;
-	uint32_t len, off;
 	struct mbuf *m;
+	uint32_t len;
 
 	DPRINTFN(2, ("%s: %s status %s\n", DEVNAME(sc), __func__,
 	    usbd_errstr(status)));
@@ -449,23 +448,13 @@ bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	}
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
-	hdr = (void *)data->buf;
-	if (len < sizeof(*hdr))
-		goto resubmit;
-	len -= sizeof(*hdr);
-	off += sizeof(*hdr);
-	if (len < hdr->data_offset << 2)
-		goto resubmit;
-	len -= hdr->data_offset << 2;
-	off += hdr->data_offset << 2;
-
 	m = bwfm_usb_newbuf();
 	if (m == NULL)
 		goto resubmit;
 
-	memcpy(mtod(m, char *), data->buf + off, len);
+	memcpy(mtod(m, char *), data->buf, len);
 	m->m_len = m->m_pkthdr.len = len;
-	bwfm_rx(&sc->sc_sc, m);
+	sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m);
 
 resubmit:
 	usbd_setup_xfer(data->xfer, sc->sc_rx_pipeh, data, data->buf,

@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.10 2018/02/07 21:36:34 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.11 2018/02/07 22:01:04 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -106,6 +106,7 @@ struct bwfm_proto_ops {
 	    char *, size_t *);
 	int (*proto_set_dcmd)(struct bwfm_softc *, int, int,
 	    char *, size_t);
+	void (*proto_rx)(struct bwfm_softc *, struct mbuf *);
 };
 extern struct bwfm_proto_ops bwfm_proto_bcdc_ops;
 
