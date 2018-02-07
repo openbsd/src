@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.100 2017/11/23 13:45:46 mpi Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.101 2018/02/07 22:30:59 dlg Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -114,6 +114,11 @@
 #include "etherip.h"
 #if NETHERIP > 0
 #include <net/if_etherip.h>
+#endif
+
+#include "gre.h"
+#if NGRE > 0
+#include <net/if_gre.h>
 #endif
 
 /*
@@ -313,6 +318,19 @@ const struct protosw inet6sw[] = {
   .pr_detach	= rip6_detach,
 },
 #endif /* NETHERIP */
+#if NGRE > 0
+{
+  .pr_type	= SOCK_RAW,
+  .pr_domain	= &inet6domain,
+  .pr_protocol	= IPPROTO_GRE,
+  .pr_flags	= PR_ATOMIC|PR_ADDR,
+  .pr_input	= gre_input6,
+  .pr_ctloutput	= rip6_ctloutput,
+  .pr_usrreq	= rip6_usrreq,
+  .pr_attach	= rip6_attach,
+  .pr_detach	= rip6_detach,
+},
+#endif /* NGRE */
 {
   /* raw wildcard */
   .pr_type	= SOCK_RAW,

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.h,v 1.14 2017/01/24 10:08:30 krw Exp $ */
+/*      $OpenBSD: if_gre.h,v 1.15 2018/02/07 22:30:59 dlg Exp $ */
 /*	$NetBSD: if_gre.h,v 1.5 1999/11/19 20:41:19 thorpej Exp $ */
 
 /*
@@ -32,31 +32,6 @@
 
 #ifndef _NET_IF_GRE_H
 #define _NET_IF_GRE_H
-
-struct gre_softc {
-	struct ifnet		sc_if;
-	LIST_ENTRY(gre_softc)	sc_list;
-	struct timeout		sc_ka_hold;
-	struct timeout		sc_ka_snd;
-	struct in_addr		g_src;  /* source address of gre packets */
-	struct in_addr		g_dst;  /* destination address of gre packets */
-	struct route		route;	/* routing entry that determines, where
-					   an encapsulated packet should go */
-	u_int  g_rtableid;	/* routing table used for the tunnel */
-	int			gre_unit;
-	int			gre_flags;
-	int			sc_ka_timout;
-	int			sc_ka_holdmax;
-	int			sc_ka_holdcnt;
-	int			sc_ka_cnt;
-	u_char			g_proto;	/* protocol of encapsulator */
-	u_char			sc_ka_state;
-#define GRE_STATE_UKNWN	0
-#define GRE_STATE_DOWN	1
-#define GRE_STATE_HOLD	2
-#define GRE_STATE_UP	3
-};
-
 
 struct gre_h {
 	u_int16_t flags;	/* GRE flags */
@@ -138,22 +113,9 @@ struct mobip_h {
 #define MOB_H_SIZ_L		(sizeof(struct mobile_h))
 #define MOB_H_SBIT	0x0080
 
-
-/*
- * ioctls needed to manipulate the interface
- */
-
 #ifdef _KERNEL
-extern  LIST_HEAD(gre_softc_head, gre_softc) gre_softc_list;
-extern  int gre_allow;
-extern  int gre_wccp;
-extern  int ip_mobile_allow;
-
-void	greattach(int);
-int     gre_ioctl(struct ifnet *, u_long, caddr_t);
-int     gre_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-	    struct rtentry *);
-u_int16_t gre_in_cksum(u_int16_t *, u_int);
-void	gre_recv_keepalive(struct gre_softc *);
-#endif /* _KERNEL */
+int	gre_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+int	gre_input(struct mbuf **, int *, int, int);
+int	gre_input6(struct mbuf **, int *, int, int);
+#endif
 #endif /* _NET_IF_GRE_H_ */
