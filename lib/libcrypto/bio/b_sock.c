@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.68 2018/02/06 14:45:52 bluhm Exp $ */
+/* $OpenBSD: b_sock.c,v 1.69 2018/02/07 00:52:05 bluhm Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -134,16 +134,18 @@ BIO_get_accept_socket(char *host, int bind_mode)
 	p = NULL;
 	h = str;
 	if ((p = strrchr(str, ':')) == NULL) {
-		BIOerror(BIO_R_NO_PORT_SPECIFIED);
-		goto err;
-	}
-	*p++ = '\0';
-	if (*p == '\0') {
-		BIOerror(BIO_R_NO_PORT_SPECIFIED);
-		goto err;
-	}
-	if (*h == '\0' || strcmp(h, "*") == 0)
+		/* A string without a colon is treated as a port. */
+		p = str;
 		h = NULL;
+	} else {
+		*p++ = '\0';
+		if (*p == '\0') {
+			BIOerror(BIO_R_NO_PORT_SPECIFIED);
+			goto err;
+		}
+		if (*h == '\0' || strcmp(h, "*") == 0)
+			h = NULL;
+	}
 
 	if ((error = getaddrinfo(h, p, &hints, &res)) != 0) {
 		ERR_asprintf_error_data("getaddrinfo: '%s:%s': %s'", h, p,
