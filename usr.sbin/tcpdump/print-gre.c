@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.13 2018/02/06 03:07:51 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.14 2018/02/07 06:26:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -160,8 +160,8 @@ gre_print_0(const u_char *p, u_int length)
 
 		/* maybe NVGRE, or key entropy? */
 		vsid = (key & NVGRE_VSID_MASK) >> NVGRE_VSID_SHIFT;
-		printf(" vsid=%u+flow=0x%02x/key=%u",
-		    vsid, (key & NVGRE_FLOWID_MASK) >> NVGRE_FLOWID_SHIFT, key);
+		printf(" key=%u|%u+%0x", key, vsid,
+		    (key & NVGRE_FLOWID_MASK) >> NVGRE_FLOWID_SHIFT);
 	}
 
 	if (flags & GRE_SP) {
