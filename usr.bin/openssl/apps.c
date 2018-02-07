@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.44 2017/08/12 21:04:33 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.45 2018/02/07 04:25:19 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -584,8 +584,7 @@ load_pkcs12(BIO *err, BIO *in, const char *desc, pem_password_cb *pem_cb,
 	ret = PKCS12_parse(p12, pass, pkey, cert, ca);
 
 die:
-	if (p12)
-		PKCS12_free(p12);
+	PKCS12_free(p12);
 	return ret;
 }
 
@@ -900,8 +899,7 @@ load_certs_crls(BIO *err, const char *file, int format, const char *pass,
 		rv = 1;
 
 end:
-	if (xis)
-		sk_X509_INFO_pop_free(xis, X509_INFO_free);
+	sk_X509_INFO_pop_free(xis, X509_INFO_free);
 
 	if (rv == 0) {
 		if (pcerts) {
@@ -1311,10 +1309,8 @@ load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
 	}
 
 err:
-	if (in != NULL)
-		BIO_free(in);
-	if (ai != NULL)
-		ASN1_INTEGER_free(ai);
+	BIO_free(in);
+	ASN1_INTEGER_free(ai);
 	return (ret);
 }
 
@@ -1359,10 +1355,8 @@ save_serial(char *serialfile, char *suffix, BIGNUM *serial,
 	}
 
 err:
-	if (out != NULL)
-		BIO_free_all(out);
-	if (ai != NULL)
-		ASN1_INTEGER_free(ai);
+	BIO_free_all(out);
+	ASN1_INTEGER_free(ai);
 	return (ret);
 }
 
@@ -1431,8 +1425,7 @@ rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
 	ret = 1;
 
 error:
-	if (!b)
-		BN_free(btmp);
+	BN_free(btmp);
 
 	return ret;
 }
@@ -1497,12 +1490,9 @@ load_index(char *dbfile, DB_ATTR *db_attr)
 	}
 
 err:
-	if (dbattr_conf)
-		NCONF_free(dbattr_conf);
-	if (tmpdb)
-		TXT_DB_free(tmpdb);
-	if (in)
-		BIO_free_all(in);
+	NCONF_free(dbattr_conf);
+	TXT_DB_free(tmpdb);
+	BIO_free_all(in);
 	return retdb;
 }
 
@@ -1675,8 +1665,7 @@ void
 free_index(CA_DB *db)
 {
 	if (db) {
-		if (db->db)
-			TXT_DB_free(db->db);
+		TXT_DB_free(db->db);
 		free(db);
 	}
 }
@@ -1945,8 +1934,7 @@ args_verify(char ***pargs, int *pargc, int *badarg, BIO *err,
 		return 0;
 
 	if (*badarg) {
-		if (*pm)
-			X509_VERIFY_PARAM_free(*pm);
+		X509_VERIFY_PARAM_free(*pm);
 		*pm = NULL;
 		goto end;
 	}
@@ -2075,8 +2063,8 @@ policies_print(BIO *out, X509_STORE_CTX *ctx)
 
 	nodes_print(out, "Authority", X509_policy_tree_get0_policies(tree));
 	nodes_print(out, "User", X509_policy_tree_get0_user_policies(tree));
-	if (free_out)
-		BIO_free(out);
+
+	BIO_free(out);
 }
 
 /*
