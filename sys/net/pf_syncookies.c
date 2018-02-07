@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_syncookies.c,v 1.1 2018/02/06 23:37:24 henning Exp $ */
+/*	$OpenBSD: pf_syncookies.c,v 1.2 2018/02/07 01:50:48 dlg Exp $ */
 
 /* Copyright (c) 2016,2017 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2016 Alexandr Nedvedicky <sashan@openbsd.org>
@@ -110,13 +110,13 @@ union pf_syncookie {
 	} flags;
 };
 
-#define	PF_SYNCOOKIE_SECRET_SIZE	16
+#define	PF_SYNCOOKIE_SECRET_SIZE	SIPHASH_KEY_LENGTH
 #define	PF_SYNCOOKIE_SECRET_LIFETIME	15 /* seconds */
 
 static struct {
 	struct timeout	keytimeout;
 	volatile uint	oddeven;
-	uint8_t		key[2][PF_SYNCOOKIE_SECRET_SIZE];
+	SIPHASH_KEY	key[2];
 	uint32_t	hiwat;	/* absolute; # of states */
 	uint32_t	lowat;
 } pf_syncookie_status;
@@ -241,8 +241,10 @@ pf_syncookie_rotate(void *arg)
 	if (!pf_status.syncookies_active &&
 	    pf_status.syncookies_inflight[0] == 0 &&
 	    pf_status.syncookies_inflight[1] == 0) {
-		memset(pf_syncookie_status.key[0], 0, PF_SYNCOOKIE_SECRET_SIZE);
-		memset(pf_syncookie_status.key[1], 0, PF_SYNCOOKIE_SECRET_SIZE);
+		memset(&pf_syncookie_status.key[0], 0,
+		    PF_SYNCOOKIE_SECRET_SIZE);
+		memset(&pf_syncookie_status.key[1], 0,
+		    PF_SYNCOOKIE_SECRET_SIZE);
 		return;
 	}
 
@@ -255,7 +257,7 @@ pf_syncookie_newkey(void)
 {
 	pf_syncookie_status.oddeven = (pf_syncookie_status.oddeven + 1) & 0x1;
 	pf_status.syncookies_inflight[pf_syncookie_status.oddeven] = 0;
-	arc4random_buf(pf_syncookie_status.key[pf_syncookie_status.oddeven],
+	arc4random_buf(&pf_syncookie_status.key[pf_syncookie_status.oddeven],
 	    PF_SYNCOOKIE_SECRET_SIZE);
 	timeout_add_sec(&pf_syncookie_status.keytimeout,
 	    PF_SYNCOOKIE_SECRET_LIFETIME);
@@ -287,8 +289,7 @@ pf_syncookie_mac(struct pf_pdesc *pd, union pf_syncookie cookie, uint32_t seq)
 
 	KASSERT(pd->proto == IPPROTO_TCP);
 
-	SipHash24_Init(&ctx,
-	    (SIPHASH_KEY *)&pf_syncookie_status.key[cookie.flags.oddeven]);
+	SipHash24_Init(&ctx, &pf_syncookie_status.key[cookie.flags.oddeven]);
 
 	switch (pd->af) {
 	case AF_INET:
