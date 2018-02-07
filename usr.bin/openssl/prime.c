@@ -1,4 +1,4 @@
-/* $OpenBSD: prime.c,v 1.10 2015/10/17 15:00:11 doug Exp $ */
+/* $OpenBSD: prime.c,v 1.11 2018/02/07 05:47:55 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  *
@@ -191,7 +191,7 @@ prime_main(int argc, char **argv)
 
 	ret = 0;
 
-end:
+ end:
 	BN_free(bn);
 	BIO_free_all(bio_out);
 

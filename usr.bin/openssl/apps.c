@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.45 2018/02/07 04:25:19 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.46 2018/02/07 05:47:55 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -583,7 +583,7 @@ load_pkcs12(BIO *err, BIO *in, const char *desc, pem_password_cb *pem_cb,
 	}
 	ret = PKCS12_parse(p12, pass, pkey, cert, ca);
 
-die:
+ die:
 	PKCS12_free(p12);
 	return ret;
 }
@@ -642,7 +642,7 @@ load_cert(BIO *err, const char *file, int format, const char *pass,
 		goto end;
 	}
 
-end:
+ end:
 	if (x == NULL) {
 		BIO_printf(err, "unable to load certificate\n");
 		ERR_print_errors(err);
@@ -705,7 +705,7 @@ load_key(BIO *err, const char *file, int format, int maybe_stdin,
 		BIO_printf(err, "bad input format specified for key file\n");
 		goto end;
 	}
-end:
+ end:
 	BIO_free(key);
 	if (pkey == NULL) {
 		BIO_printf(err, "unable to load %s\n", key_descrip);
@@ -782,7 +782,7 @@ load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 		goto end;
 	}
 
-end:
+ end:
 	BIO_free(key);
 	if (pkey == NULL)
 		BIO_printf(err, "unable to load %s\n", key_descrip);
@@ -827,7 +827,7 @@ load_netscape_key(BIO *err, BIO *key, const char *file,
 	EVP_PKEY_set1_RSA(pkey, rsa);
 	return pkey;
 
-error:
+ error:
 	BUF_MEM_free(buf);
 	EVP_PKEY_free(pkey);
 	return NULL;
@@ -898,7 +898,7 @@ load_certs_crls(BIO *err, const char *file, int format, const char *pass,
 	if (pcrls && sk_X509_CRL_num(*pcrls) > 0)
 		rv = 1;
 
-end:
+ end:
 	sk_X509_INFO_pop_free(xis, X509_INFO_free);
 
 	if (rv == 0) {
@@ -1064,7 +1064,7 @@ copy_extensions(X509 *x, X509_REQ *req, int copy_type)
 
 	ret = 1;
 
-end:
+ end:
 	sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
 
 	return ret;
@@ -1179,7 +1179,7 @@ setup_verify(BIO *bp, char *CAfile, char *CApath)
 	ERR_clear_error();
 	return store;
 
-end:
+ end:
 	X509_STORE_free(store);
 	return NULL;
 }
@@ -1308,7 +1308,7 @@ load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
 		ai = NULL;
 	}
 
-err:
+ err:
 	BIO_free(in);
 	ASN1_INTEGER_free(ai);
 	return (ret);
@@ -1354,7 +1354,7 @@ save_serial(char *serialfile, char *suffix, BIGNUM *serial,
 		ai = NULL;
 	}
 
-err:
+ err:
 	BIO_free_all(out);
 	ASN1_INTEGER_free(ai);
 	return (ret);
@@ -1399,7 +1399,7 @@ rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 	}
 	return 1;
 
-err:
+ err:
 	return 0;
 }
 
@@ -1424,7 +1424,7 @@ rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
 
 	ret = 1;
 
-error:
+ error:
 	BN_free(btmp);
 
 	return ret;
@@ -1489,7 +1489,7 @@ load_index(char *dbfile, DB_ATTR *db_attr)
 		}
 	}
 
-err:
+ err:
 	NCONF_free(dbattr_conf);
 	TXT_DB_free(tmpdb);
 	BIO_free_all(in);
@@ -1562,7 +1562,7 @@ save_index(const char *file, const char *suffix, CA_DB *db)
 
 	return 1;
 
-err:
+ err:
 	return 0;
 }
 
@@ -1657,7 +1657,7 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 	}
 	return 1;
 
-err:
+ err:
 	return 0;
 }
 
@@ -1820,11 +1820,11 @@ parse_name(char *subject, long chtype, int multirdn)
 	}
 	goto done;
 
-error:
+ error:
 	X509_NAME_free(name);
 	name = NULL;
 
-done:
+ done:
 	free(ne_values);
 	free(ne_types);
 	free(mval);
@@ -1958,7 +1958,7 @@ args_verify(char ***pargs, int *pargc, int *badarg, BIO *err,
 	if (at_time)
 		X509_VERIFY_PARAM_set_time(*pm, at_time);
 
-end:
+ end:
 	(*pargs)++;
 
 	if (pargc)
@@ -2304,17 +2304,17 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed,
 		}
 	}
 
-done:
+ done:
 	if (argsused != NULL)
 		*argsused = i;
 
 	return (0);
 
-toomany:
+ toomany:
 	fprintf(stderr, "too many arguments\n");
 	return (1);
 
-unknown:
+ unknown:
 	fprintf(stderr, "unknown option '%s'\n", arg);
 	return (1);
 }

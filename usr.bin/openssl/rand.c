@@ -1,4 +1,4 @@
-/* $OpenBSD: rand.c,v 1.12 2018/02/07 04:57:06 jsing Exp $ */
+/* $OpenBSD: rand.c,v 1.13 2018/02/07 05:47:55 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -176,7 +176,7 @@ rand_main(int argc, char **argv)
 
 	ret = 0;
 
-err:
+ err:
 	ERR_print_errors(bio_err);
 	BIO_free_all(out);
 

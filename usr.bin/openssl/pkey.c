@@ -1,4 +1,4 @@
-/* $OpenBSD: pkey.c,v 1.9 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: pkey.c,v 1.10 2018/02/07 05:47:55 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -149,7 +149,7 @@ pkey_main(int argc, char **argv)
 	}
 
 	if (badarg) {
-bad:
+ bad:
 		BIO_printf(bio_err, "Usage pkey [options]\n");
 		BIO_printf(bio_err, "where options are\n");
 		BIO_printf(bio_err, "-in file        input file\n");
@@ -209,7 +209,7 @@ bad:
 	}
 	ret = 0;
 
-end:
+ end:
 	EVP_PKEY_free(pkey);
 	BIO_free_all(out);
 	BIO_free(in);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.16 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: ecparam.c,v 1.17 2018/02/07 05:47:55 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -572,7 +572,7 @@ ecparam_main(int argc, char **argv)
 	}
 	ret = 0;
 
-end:
+ end:
 	BN_free(ec_p);
 	BN_free(ec_a);
 	BN_free(ec_b);

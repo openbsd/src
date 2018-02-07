@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.22 2018/02/07 04:57:06 jsing Exp $ */
+/* $OpenBSD: s_time.c,v 1.23 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -388,7 +388,7 @@ s_time_main(int argc, char **argv)
 	 * over
 	 */
 
-next:
+ next:
 	if (!(s_time_config.perform & 2))
 		goto end;
 	printf("\n\nNow timing with session id reuse.\n");
@@ -472,7 +472,7 @@ next:
 	    bytes_read / nConn);
 
 	ret = 0;
-end:
+ end:
 	SSL_free(scon);
 
 	if (tm_ctx != NULL) {

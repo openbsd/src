@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.29 2018/02/07 04:57:06 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.30 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -487,7 +487,7 @@ cert_status_cb(SSL * s, void *arg)
 		OCSP_RESPONSE_print(err, resp, 2);
 	}
 	ret = SSL_TLSEXT_ERR_OK;
-done:
+ done:
 	if (ret != SSL_TLSEXT_ERR_OK)
 		ERR_print_errors(err);
 	if (aia) {
@@ -503,7 +503,7 @@ done:
 	if (resp)
 		OCSP_RESPONSE_free(resp);
 	return ret;
-err:
+ err:
 	ret = SSL_TLSEXT_ERR_ALERT_FATAL;
 	goto done;
 }
@@ -858,7 +858,7 @@ s_server_main(int argc, char *argv[])
 		argv++;
 	}
 	if (badop) {
-bad:
+ bad:
 		if (errstr)
 			BIO_printf(bio_err, "invalid argument %s: %s\n",
 			    *argv, errstr);
@@ -1198,7 +1198,7 @@ bad:
 		do_server(port, socket_type, &accept_socket, sv_body, context);
 	print_stats(bio_s_out, ctx);
 	ret = 0;
-end:
+ end:
 	SSL_CTX_free(ctx);
 	X509_free(s_cert);
 	X509_free(s_dcert);
@@ -1540,7 +1540,7 @@ sv_body(char *hostname, int s, unsigned char *context)
 			}
 		}
 	}
-err:
+ err:
 	if (con != NULL) {
 		BIO_printf(bio_s_out, "shutting down SSL\n");
 		SSL_set_shutdown(con, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
@@ -1655,7 +1655,7 @@ load_dh_param(const char *dhfile)
 	if ((bio = BIO_new_file(dhfile, "r")) == NULL)
 		goto err;
 	ret = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
-err:
+ err:
 	BIO_free(bio);
 	return (ret);
 }
@@ -1940,11 +1940,11 @@ www_body(char *hostname, int s, unsigned char *context)
 		} else
 			break;
 	}
-end:
+ end:
 	/* make sure we re-use sessions */
 	SSL_set_shutdown(con, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
 
-err:
+ err:
 
 	if (ret >= 0)
 		BIO_printf(bio_s_out, "ACCEPT\n");

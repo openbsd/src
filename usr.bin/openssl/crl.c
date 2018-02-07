@@ -1,4 +1,4 @@
-/* $OpenBSD: crl.c,v 1.10 2017/01/20 08:57:11 deraadt Exp $ */
+/* $OpenBSD: crl.c,v 1.11 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -424,7 +424,7 @@ crl_main(int argc, char **argv)
 	}
 	ret = 0;
 
-end:
+ end:
 	BIO_free_all(out);
 	BIO_free_all(bio_out);
 	bio_out = NULL;
@@ -471,7 +471,7 @@ load_crl(char *infile, int format)
 		goto end;
 	}
 
-end:
+ end:
 	BIO_free(in);
 	return (x);
 }

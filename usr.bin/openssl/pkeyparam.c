@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyparam.c,v 1.10 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: pkeyparam.c,v 1.11 2018/02/07 05:47:55 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -165,7 +165,7 @@ pkeyparam_main(int argc, char **argv)
 
 	ret = 0;
 
-end:
+ end:
 	EVP_PKEY_free(pkey);
 	BIO_free_all(out);
 	BIO_free(in);

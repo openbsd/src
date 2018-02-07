@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.6 2015/10/17 15:00:11 doug Exp $ */
+/* $OpenBSD: verify.c,v 1.7 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -201,7 +201,7 @@ verify_main(int argc, char **argv)
 				ret = -1;
 	}
 
-end:
+ end:
 	if (ret == 1) {
 		BIO_printf(bio_err, "usage: verify [-verbose] [-CApath path] [-CAfile file] [-purpose purpose] [-crl_check]");
 		BIO_printf(bio_err, " [-attime timestamp]");
@@ -259,7 +259,7 @@ check(X509_STORE * ctx, char *file, STACK_OF(X509) * uchain,
 
 	ret = 0;
 
-end:
+ end:
 	if (i > 0) {
 		fprintf(stdout, "OK\n");
 		ret = 1;

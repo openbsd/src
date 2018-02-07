@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.9 2018/02/07 04:57:06 jsing Exp $ */
+/* $OpenBSD: smime.c,v 1.10 2018/02/07 05:47:55 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -342,7 +342,7 @@ smime_main(int argc, char **argv)
 		badarg = 1;
 
 	if (badarg) {
-argerr:
+ argerr:
 		BIO_printf(bio_err, "Usage smime [options] cert.pem ...\n");
 		BIO_printf(bio_err, "where options are\n");
 		BIO_printf(bio_err, "-encrypt       encrypt message\n");
@@ -620,7 +620,7 @@ argerr:
 		}
 	}
 	ret = 0;
-end:
+ end:
 	if (ret)
 		ERR_print_errors(bio_err);
 	sk_X509_pop_free(encerts, X509_free);

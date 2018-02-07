@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.12 2017/08/28 17:50:58 jsing Exp $ */
+/* $OpenBSD: rsautl.c,v 1.13 2018/02/07 05:47:55 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -297,7 +297,7 @@ rsautl_main(int argc, char **argv)
 	else
 		BIO_write(out, rsa_out, rsa_outlen);
 
-end:
+ end:
 	RSA_free(rsa);
 	BIO_free(in);
 	BIO_free_all(out);

@@ -285,11 +285,11 @@ hashinfo_from_linkname(const char *linkname, const char *target)
 
 	goto done;
 
-err:
+ err:
 	hashinfo_free(hi);
 	hi = NULL;
 
-done:
+ done:
 	free(l);
 
 	return (hi);
@@ -318,7 +318,7 @@ certhash_cert(BIO *bio, const char *filename)
 
 	hi = hashinfo(filename, hash, fingerprint);
 
-err:
+ err:
 	X509_free(cert);
 
 	return (hi);
@@ -347,7 +347,7 @@ certhash_crl(BIO *bio, const char *filename)
 
 	hi = hashinfo(filename, hash, fingerprint);
 
-err:
+ err:
 	X509_CRL_free(crl);
 
 	return (hi);
@@ -371,7 +371,7 @@ certhash_addlink(struct hashinfo **links, struct hashinfo *hi)
 
 	return (0);
 
-err:
+ err:
 	hashinfo_free(link);
 	return (-1);
 }
@@ -545,7 +545,7 @@ certhash_file(struct dirent *dep, struct hashinfo **certs,
 
 	ret = 0;
 
-err:
+ err:
 	BIO_free(bio);
 
 	return (ret);
@@ -622,10 +622,10 @@ certhash_directory(const char *path)
 
 	goto done;
 
-err:
+ err:
 	ret = 1;
 
-done:
+ done:
 	hashinfo_chain_free(certs);
 	hashinfo_chain_free(crls);
 	hashinfo_chain_free(links);

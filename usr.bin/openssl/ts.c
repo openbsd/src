@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.14 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: ts.c,v 1.15 2018/02/07 05:47:55 jsing Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -301,7 +301,7 @@ ts_main(int argc, char **argv)
 
 	goto cleanup;
 
-usage:
+ usage:
 	BIO_printf(bio_err, "usage:\n"
 	    "ts -query [-config configfile] "
 	    "[-data file_to_hash] [-digest digest_bytes]"
@@ -322,7 +322,7 @@ usage:
 	    "-CApath ca_path -CAfile ca_file.pem "
 	    "-untrusted cert_file.pem\n");
 
-cleanup:
+ cleanup:
 	/* Clean up. */
 	NCONF_free(conf);
 	free(password);
@@ -435,7 +435,7 @@ query_command(const char *data, char *digest, const EVP_MD * md,
 
 	ret = 1;
 
-end:
+ end:
 	ERR_print_errors(bio_err);
 
 	/* Clean up. */
@@ -521,7 +521,7 @@ create_query(BIO * data_bio, char *digest, const EVP_MD * md,
 
 	ret = 1;
 
-err:
+ err:
 	if (!ret) {
 		TS_REQ_free(ts_req);
 		ts_req = NULL;
@@ -574,7 +574,7 @@ create_digest(BIO * input, char *digest, const EVP_MD * md,
 	}
 
 	return md_value_len;
-err:
+ err:
 	return 0;
 }
 
@@ -605,7 +605,7 @@ create_nonce(int bits)
 
 	return nonce;
 
-err:
+ err:
 	BIO_printf(bio_err, "could not create nonce\n");
 	ASN1_INTEGER_free(nonce);
 	return NULL;
@@ -680,7 +680,7 @@ reply_command(CONF * conf, char *section, char *queryfile,
 
 	ret = 1;
 
-end:
+ end:
 	ERR_print_errors(bio_err);
 
 	/* Clean up. */
@@ -728,7 +728,7 @@ read_PKCS7(BIO * in_bio)
 	tst_info = NULL;	/* Ownership is lost. */
 
 	ret = 1;
-end:
+ end:
 	PKCS7_free(token);
 	TS_TST_INFO_free(tst_info);
 	if (!ret) {
@@ -813,7 +813,7 @@ create_response(CONF * conf, const char *section,
 		goto end;
 
 	ret = 1;
-end:
+ end:
 	if (!ret) {
 		TS_RESP_free(response);
 		response = NULL;
@@ -876,7 +876,7 @@ next_serial(const char *serialfile)
 			goto err;
 	}
 	ret = 1;
-err:
+ err:
 	if (!ret) {
 		ASN1_INTEGER_free(serial);
 		serial = NULL;
@@ -899,7 +899,7 @@ save_ts_serial(const char *serialfile, ASN1_INTEGER * serial)
 	if (BIO_puts(out, "\n") <= 0)
 		goto err;
 	ret = 1;
-err:
+ err:
 	if (!ret)
 		BIO_printf(bio_err, "could not save serial number to %s\n",
 		    serialfile);
@@ -941,7 +941,7 @@ verify_command(char *data, char *digest, char *queryfile, char *in,
 	    TS_RESP_verify_token(verify_ctx, token) :
 	    TS_RESP_verify_response(verify_ctx, response);
 
-end:
+ end:
 	printf("Verification: ");
 	if (ret)
 		printf("OK\n");
@@ -1012,7 +1012,7 @@ create_verify_ctx(char *data, char *digest, char *queryfile, char *ca_path,
 		goto err;
 
 	ret = 1;
-err:
+ err:
 	if (!ret) {
 		TS_VERIFY_CTX_free(ctx);
 		ctx = NULL;
@@ -1064,7 +1064,7 @@ create_cert_store(char *ca_path, char *ca_file)
 		}
 	}
 	return cert_ctx;
-err:
+ err:
 	X509_STORE_free(cert_ctx);
 	return NULL;
 }

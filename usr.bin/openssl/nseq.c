@@ -1,4 +1,4 @@
-/* $OpenBSD: nseq.c,v 1.7 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: nseq.c,v 1.8 2018/02/07 05:47:55 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -167,7 +167,7 @@ nseq_main(int argc, char **argv)
 		PEM_write_bio_X509(out, x509);
 	}
 	ret = 0;
-end:
+ end:
 	BIO_free(in);
 	BIO_free_all(out);
 	NETSCAPE_CERT_SEQUENCE_free(seq);

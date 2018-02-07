@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyutl.c,v 1.13 2018/02/07 04:57:06 jsing Exp $ */
+/* $OpenBSD: pkeyutl.c,v 1.14 2018/02/07 05:47:55 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -309,7 +309,7 @@ pkeyutl_main(int argc, char **argv)
 	else
 		BIO_write(out, buf_out, buf_outlen);
 
-end:
+ end:
 	EVP_PKEY_CTX_free(ctx);
 	BIO_free(in);
 	BIO_free_all(out);
@@ -427,7 +427,7 @@ init_ctx(int *pkeysize,
 		EVP_PKEY_CTX_free(ctx);
 		ctx = NULL;
 	}
-end:
+ end:
 
 	free(passin);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.34 2018/02/07 04:57:06 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.35 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -592,7 +592,7 @@ s_client_main(int argc, char **argv)
 			goto bad;
 	}
 	if (badop) {
-bad:
+ bad:
 		if (errstr)
 			BIO_printf(bio_err, "invalid argument %s: %s\n",
 			    *argv, errstr);
@@ -1200,13 +1200,13 @@ re_start:
 	}
 
 	ret = 0;
-shut:
+ shut:
 	if (in_init)
 		print_stuff(bio_c_out, con, full_log);
 	SSL_shutdown(con);
 	shutdown(SSL_get_fd(con), SHUT_RD);
 	close(SSL_get_fd(con));
-end:
+ end:
 	if (con != NULL) {
 		if (prexit != 0)
 			print_stuff(bio_c_out, con, 1);

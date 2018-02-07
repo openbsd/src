@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.21 2017/12/05 15:02:06 jca Exp $ */
+/* $OpenBSD: speed.c,v 1.22 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1897,7 +1897,7 @@ show_res:
 
 	mret = 0;
 
-end:
+ end:
 	ERR_print_errors(bio_err);
 	free(buf);
 	free(buf2);
