@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.538 2018/01/12 23:47:24 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.539 2018/02/07 22:36:54 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2094,6 +2094,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		NET_UNLOCK();
 		break;
 
+	case SIOCSETKALIVE:
 	case SIOCDIFPHYADDR:
 	case SIOCSLIFPHYADDR:
 	case SIOCSLIFPHYRTABLE:
