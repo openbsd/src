@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.154 2018/02/07 11:22:39 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.155 2018/02/07 11:38:38 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -770,6 +770,12 @@ sub fetch_id
 	return ($fetch_uid, $fetch_gid, $fetch_user);
 }
 
+sub ftp_cmd
+{
+	my $self = shift;
+	return OpenBSD::Paths->ftp;
+}
+
 sub drop_privileges_and_setup_env
 {
 	my $self = shift;
@@ -817,14 +823,14 @@ sub drop_privileges_and_setup_env
 sub grab_object
 {
 	my ($self, $object) = @_;
-	my ($ftp, @extra) = split(/\s+/, OpenBSD::Paths->ftp);
+	my ($ftp, @extra) = split(/\s+/, $self->ftp_cmd);
 	$self->drop_privileges_and_setup_env;
 	exec {$ftp}
 	    $ftp,
 	    @extra,
 	    "-o",
 	    "-", $self->url($object->{name})
-	or $self->{state}->fatal("Can't run #1: #2", OpenBSD::Paths->ftp, $!);
+	or $self->{state}->fatal("Can't run #1: #2", $self->ftp_cmd, $!);
 }
 
 sub open_read_ftp
@@ -940,7 +946,7 @@ sub get_http_list
 
 	my $fullname = $self->url;
 	my $l = [];
-	my $fh = $self->open_read_ftp(OpenBSD::Paths->ftp." -o - $fullname", 
+	my $fh = $self->open_read_ftp($self->ftp_cmd." -o - $fullname", 
 	    $error) or return;
 	while(<$fh>) {
 		chomp;
@@ -977,6 +983,20 @@ sub urlscheme
 	return 'https';
 }
 
+OpenBSD::Auto::cache(session_file,
+    sub {
+	my $self = shift;
+	require OpenBSD::Temp;
+
+	local ($>, $));
+	my ($uid, $gid, $user) = $self->fetch_id;
+	if (defined $uid) {
+		$> = $uid;
+		$) = "$gid $gid";
+	}
+	return OpenBSD::Temp->file;
+    });
+
 package OpenBSD::PackageRepository::FTP;
 our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP);
 
@@ -1008,8 +1028,8 @@ sub get_ftp_list
 	my ($self, $error) = @_;
 
 	my $fullname = $self->url;
-	return $self->_list("echo 'nlist'| ".OpenBSD::Paths->ftp
-	    ." $fullname", $error);
+	return $self->_list("echo 'nlist'| ".$self->ftp_cmd." $fullname", 
+	    $error);
 }
 
 sub obtain_list
