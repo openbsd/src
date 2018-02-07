@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcom.c,v 1.16 2015/12/31 17:51:19 mestre Exp $	*/
+/*	$OpenBSD: getcom.c,v 1.17 2018/02/07 20:22:23 tedu Exp $	*/
 /*	$NetBSD: getcom.c,v 1.3 1995/03/21 15:07:30 cgd Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ getcom(char *buf, int size, const char *prompt, const char *error)
 	if (buf[strlen(buf) - 1] != '\n') {
 		int i;
 		while ((i = getchar()) != '\n' && i != EOF)
-			;
+			continue;
 	}
 	return (buf);
 }
