@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc_aux.c,v 1.8 2017/06/12 18:55:42 schwarze Exp $ */
+/*	$OpenBSD: mandoc_aux.c,v 1.9 2018/02/07 20:04:33 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -106,8 +106,8 @@ mandoc_strndup(const char *ptr, size_t sz)
 {
 	char	*p;
 
-	p = mandoc_malloc(sz + 1);
-	memcpy(p, ptr, sz);
-	p[(int)sz] = '\0';
+	p = strndup(ptr, sz);
+	if (p == NULL)
+		err((int)MANDOCLEVEL_SYSERR, NULL);
 	return p;
 }
