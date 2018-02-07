@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.122 2017/06/08 01:34:00 dlg Exp $	*/
+/*	$OpenBSD: gem.c,v 1.123 2018/02/07 22:35:14 bluhm Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -423,6 +423,7 @@ gem_tick(void *arg)
 	int s;
 	u_int32_t v;
 
+	s = splnet();
 	/* unload collisions counters */
 	v = bus_space_read_4(t, mac, GEM_MAC_EXCESS_COLL_CNT) +
 	    bus_space_read_4(t, mac, GEM_MAC_LATE_COLL_CNT);
@@ -448,7 +449,15 @@ gem_tick(void *arg)
 	bus_space_write_4(t, mac, GEM_MAC_RX_CRC_ERR_CNT, 0);
 	bus_space_write_4(t, mac, GEM_MAC_RX_CODE_VIOL, 0);
 
-	s = splnet();
+	/*
+	 * If buffer allocation fails, the receive ring may become
+	 * empty. There is no receive interrupt to recover from that.
+	 */
+	if (if_rxr_inuse(&sc->sc_rx_ring) == 0) {
+		gem_fill_rx_ring(sc);
+		bus_space_write_4(t, mac, GEM_RX_KICK, sc->sc_rx_prod);
+	}
+
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
@@ -1200,17 +1209,26 @@ gem_rx_watchdog(void *arg)
 	rx_fifo_wr_ptr = bus_space_read_4(t, h, GEM_RX_FIFO_WR_PTR);
 	rx_fifo_rd_ptr = bus_space_read_4(t, h, GEM_RX_FIFO_RD_PTR);
 	state = bus_space_read_4(t, h, GEM_MAC_MAC_STATE);
-	if ((state & GEM_MAC_STATE_OVERFLOW) == GEM_MAC_STATE_OVERFLOW &&
-	    ((rx_fifo_wr_ptr == rx_fifo_rd_ptr) ||
-	     ((sc->sc_rx_fifo_wr_ptr == rx_fifo_wr_ptr) &&
-	      (sc->sc_rx_fifo_rd_ptr == rx_fifo_rd_ptr)))) {
-		/*
-		 * The RX state machine is still in overflow state and
-		 * the RX FIFO write and read pointers seem to be
-		 * stuck.  Whack the chip over the head to get things
-		 * going again.
-		 */
-		gem_init(ifp);
+	if ((state & GEM_MAC_STATE_OVERFLOW) == GEM_MAC_STATE_OVERFLOW) {
+		if ((rx_fifo_wr_ptr == rx_fifo_rd_ptr) ||
+		     ((sc->sc_rx_fifo_wr_ptr == rx_fifo_wr_ptr) &&
+		      (sc->sc_rx_fifo_rd_ptr == rx_fifo_rd_ptr))) {
+			/*
+			 * The RX state machine is still in overflow state and
+			 * the RX FIFO write and read pointers seem to be
+			 * stuck.  Whack the chip over the head to get things
+			 * going again.
+			 */
+			gem_init(ifp);
+		} else {
+			/*
+			 * We made some progress, but is not certain that the
+			 * overflow condition has been resolved.  Check again.
+			 */
+			sc->sc_rx_fifo_wr_ptr = rx_fifo_wr_ptr;
+			sc->sc_rx_fifo_rd_ptr = rx_fifo_rd_ptr;
+			timeout_add_msec(&sc->sc_rx_watchdog, 400);
+		}
 	}
 }
 
