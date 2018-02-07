@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mobileip.4,v 1.2 2018/02/07 07:06:53 jmc Exp $
+.\"	$OpenBSD: mobileip.4,v 1.3 2018/02/07 08:45:17 dlg Exp $
 .\"
 .\" Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
 .\"
@@ -31,8 +31,8 @@ the Mobile IP (RFC 2004) encapsulation protocol
 .Nm
 datagrams (IP protocol number 55)
 are encapsulated into IP using a small encapsulation header.
-This protocol according to the RFC only supports encapsulating IPv4,
-and is intended for use with Mobile IP.
+This protocol, in line with the RFC, only supports encapsulating
+IPv4.
 .Pp
 A
 .Nm
