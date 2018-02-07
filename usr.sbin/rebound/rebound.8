@@ -1,4 +1,4 @@
-.\" $OpenBSD: rebound.8,v 1.11 2018/02/07 04:23:04 tedu Exp $
+.\" $OpenBSD: rebound.8,v 1.12 2018/02/07 17:15:48 anton Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -43,8 +43,9 @@ The options are as follows:
 Specify an alternative configuration file, instead of the default
 .Pa /etc/resolv.conf .
 .Nm
-will reload the configuration file when sent a SIGHUP signal or when the file
-changes.
+will reload the configuration file when sent a
+.Dv SIGHUP
+signal or when the file changes.
 Only the nameserver option is used to indicate the next server to contact.
 Localhost entries will be skipped.
 .It Fl d
