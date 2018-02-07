@@ -416,8 +416,7 @@ unmap(struct dir_info *d, void *p, size_t sz, int junk)
 	mask = mopts.malloc_cache - 1;
 	if (psz > rsz) {
 		size_t tounmap = psz - rsz;
-		i = 0;
-		for (;;) {
+		for (i = 0; ; i++) {
 			r = &d->free_regions[(i + offset) & mask];
 			if (r->p != NULL) {
 				rsz = r->size << MALLOC_PAGESHIFT;
@@ -434,7 +433,6 @@ unmap(struct dir_info *d, void *p, size_t sz, int junk)
 					break;
 				}
 			}
-			i++;
 		}
 	}
 	for (i = 0; ; i++) {
