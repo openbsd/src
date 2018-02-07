@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.16 2018/01/11 16:09:19 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.17 2018/02/07 22:02:48 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -286,6 +286,7 @@ struct bwfm_bus_ops bwfm_pci_bus_ops = {
 struct bwfm_proto_ops bwfm_pci_msgbuf_ops = {
 	.proto_query_dcmd = bwfm_pci_msgbuf_query_dcmd,
 	.proto_set_dcmd = bwfm_pci_msgbuf_set_dcmd,
+	.proto_rx = NULL,
 };
 
 struct cfattach bwfm_pci_ca = {
