@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.135 2018/02/06 14:54:22 bluhm Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.136 2018/02/07 22:46:11 procter Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -670,7 +670,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	error = ah_massage_headers(&m, tdb->tdb_dst.sa.sa_family, skip,
 	    ahx->type, 0);
 	if (error) {
-		/* mbuf will be free'd by callee. */
+		/* mbuf was freed by callee. */
 		free(tc, M_XDATA, 0);
 		crypto_freereq(crp);
 		return error;
@@ -1158,7 +1158,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	error = ah_massage_headers(&m, tdb->tdb_dst.sa.sa_family, skip,
 	    ahx->type, 1);
 	if (error) {
-		/* mbuf will be free'd by callee. */
+		/* mbuf was freed by callee. */
 		free(tc, M_XDATA, 0);
 		crypto_freereq(crp);
 		return error;
