@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.89 2018/01/09 15:24:24 bluhm Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.90 2018/02/07 01:52:15 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -89,12 +89,10 @@ struct gre_softc_head gre_softc_list;
 
 struct if_clone gre_cloner =
     IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
-struct if_clone mobileip_cloner =
-    IF_CLONE_INITIALIZER("mobileip", gre_clone_create, gre_clone_destroy);
 
 /*
  * We can control the acceptance of GRE and MobileIP packets by
- * altering the sysctl net.inet.gre.allow and net.inet.mobileip.allow values
+ * altering the sysctl net.inet.gre.allow values
  * respectively. Zero means drop them, all else is acceptance.  We can also
  * control acceptance of WCCPv1-style GRE packets through the
  * net.inet.gre.wccp value, but be aware it depends upon normal GRE being
@@ -103,7 +101,6 @@ struct if_clone mobileip_cloner =
  */
 int gre_allow = 0;
 int gre_wccp = 0;
-int ip_mobile_allow = 0;
 
 void gre_keepalive(void *);
 void gre_send_keepalive(void *);
@@ -114,7 +111,6 @@ greattach(int n)
 {
 	LIST_INIT(&gre_softc_list);
 	if_clone_attach(&gre_cloner);
-	if_clone_attach(&mobileip_cloner);
 }
 
 int
@@ -137,13 +133,8 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sc->g_dst.s_addr = sc->g_src.s_addr = INADDR_ANY;
 	sc->sc_ka_state = GRE_STATE_UKNWN;
 
-	if (strcmp("gre", ifc->ifc_name) == 0) {
-		/* GRE encapsulation */
-		sc->g_proto = IPPROTO_GRE;
-	} else {
-		/* Mobile IP encapsulation */
-		sc->g_proto = IPPROTO_MOBILE;
-	}
+	/* GRE encapsulation */
+	sc->g_proto = IPPROTO_GRE;
 
 	timeout_set(&sc->sc_ka_hold, gre_keepalive, sc);
 	timeout_set_proc(&sc->sc_ka_snd, gre_send_keepalive, sc);
@@ -193,7 +184,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct ip *inp = NULL;
 	u_int8_t ip_tos = 0;
 	u_int16_t etype = 0;
-	struct mobile_h mob_h;
 	struct m_tag *mtag;
 
 	if ((ifp->if_flags & IFF_UP) == 0 ||
@@ -238,147 +228,46 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m, BPF_DIRECTION_OUT);
 #endif
 
-	if (sc->g_proto == IPPROTO_MOBILE) {
-		if (ip_mobile_allow == 0) {
-			m_freem(m);
-			error = EACCES;
-			goto end;
-		}
-
-		if (dst->sa_family == AF_INET) {
-			struct mbuf *m0;
-			int msiz;
-
-			/*
-			 * Make sure the complete IP header (with options)
-			 * is in the first mbuf.
-			 */
-			if (m->m_len < sizeof(struct ip)) {
-				m = m_pullup(m, sizeof(struct ip));
-				if (m == NULL) {
-					error = ENOBUFS;
-					goto end;
-				} else
-					inp = mtod(m, struct ip *);
-
-				if (m->m_len < inp->ip_hl << 2) {
-					m = m_pullup(m, inp->ip_hl << 2);
-					if (m == NULL) {
-						error = ENOBUFS;
-						goto end;
-					}
-				}
-			}
-
-			inp = mtod(m, struct ip *);
-
-			bzero(&mob_h, MOB_H_SIZ_L);
-			mob_h.proto = (inp->ip_p) << 8;
-			mob_h.odst = inp->ip_dst.s_addr;
-			inp->ip_dst.s_addr = sc->g_dst.s_addr;
-
-			/*
-			 * If the packet comes from our host, we only change
-			 * the destination address in the IP header.
-			 * Otherwise we need to save and change the source.
-			 */
-			if (inp->ip_src.s_addr == sc->g_src.s_addr) {
-				msiz = MOB_H_SIZ_S;
-			} else {
-				mob_h.proto |= MOB_H_SBIT;
-				mob_h.osrc = inp->ip_src.s_addr;
-				inp->ip_src.s_addr = sc->g_src.s_addr;
-				msiz = MOB_H_SIZ_L;
-			}
-
-			mob_h.proto = htons(mob_h.proto);
-			mob_h.hcrc = gre_in_cksum((u_int16_t *) &mob_h, msiz);
-
-			/* Squeeze in the mobility header */
-			if ((m->m_data - msiz) < m->m_pktdat) {
-				/* Need new mbuf */
-				MGETHDR(m0, M_DONTWAIT, MT_HEADER);
-				if (m0 == NULL) {
-					m_freem(m);
-					error = ENOBUFS;
-					goto end;
-				}
-				M_MOVE_HDR(m0, m);
-
-				m0->m_len = msiz + (inp->ip_hl << 2);
-				m0->m_data += max_linkhdr;
-				m0->m_pkthdr.len = m->m_pkthdr.len + msiz;
-				m->m_data += inp->ip_hl << 2;
-				m->m_len -= inp->ip_hl << 2;
-
-				bcopy((caddr_t) inp, mtod(m0, caddr_t),
-				    sizeof(struct ip));
-
-				m0->m_next = m;
-				m = m0;
-			} else {  /* we have some space left in the old one */
-				m->m_data -= msiz;
-				m->m_len += msiz;
-				m->m_pkthdr.len += msiz;
-				bcopy(inp, mtod(m, caddr_t),
-				    inp->ip_hl << 2);
-			}
-
-			/* Copy Mobility header */
-			inp = mtod(m, struct ip *);
-			bcopy(&mob_h, (caddr_t)(inp + 1), (unsigned) msiz);
-			inp->ip_len = htons(ntohs(inp->ip_len) + msiz);
-		} else {  /* AF_INET */
-			m_freem(m);
-			error = EINVAL;
-			goto end;
-		}
-	} else if (sc->g_proto == IPPROTO_GRE) {
-		if (gre_allow == 0) {
-			m_freem(m);
-			error = EACCES;
-			goto end;
-		}
-
-		switch(dst->sa_family) {
-		case AF_INET:
-			if (m->m_len < sizeof(struct ip)) {
-				m = m_pullup(m, sizeof(struct ip));
-				if (m == NULL) {
-					error = ENOBUFS;
-					goto end;
-				}
-			}
-
-			inp = mtod(m, struct ip *);
-			ip_tos = inp->ip_tos;
-			etype = ETHERTYPE_IP;
-			break;
-#ifdef INET6
-		case AF_INET6:
-			etype = ETHERTYPE_IPV6;
-			break;
-#endif
-#ifdef MPLS
-		case AF_MPLS:
-			if (m->m_flags & (M_BCAST | M_MCAST))
-				etype = ETHERTYPE_MPLS_MCAST;
-			else
-				etype = ETHERTYPE_MPLS;
-			break;
-#endif
-		default:
-			m_freem(m);
-			error = EAFNOSUPPORT;
-			goto end;
-		}
-
-		M_PREPEND(m, sizeof(struct greip), M_DONTWAIT);
-	} else {
+	if (gre_allow == 0) {
 		m_freem(m);
-		error = EINVAL;
+		error = EACCES;
 		goto end;
 	}
+
+	switch(dst->sa_family) {
+	case AF_INET:
+		if (m->m_len < sizeof(struct ip)) {
+			m = m_pullup(m, sizeof(struct ip));
+			if (m == NULL) {
+				error = ENOBUFS;
+				goto end;
+			}
+		}
+
+		inp = mtod(m, struct ip *);
+		ip_tos = inp->ip_tos;
+		etype = ETHERTYPE_IP;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		etype = ETHERTYPE_IPV6;
+		break;
+#endif
+#ifdef MPLS
+	case AF_MPLS:
+		if (m->m_flags & (M_BCAST | M_MCAST))
+			etype = ETHERTYPE_MPLS_MCAST;
+		else
+			etype = ETHERTYPE_MPLS;
+		break;
+#endif
+	default:
+		m_freem(m);
+		error = EAFNOSUPPORT;
+		goto end;
+	}
+
+	M_PREPEND(m, sizeof(struct greip), M_DONTWAIT);
 
 	if (m == NULL) {
 		error = ENOBUFS;
@@ -394,14 +283,12 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	}
 
 	gh->gi_pr = sc->g_proto;
-	if (sc->g_proto != IPPROTO_MOBILE) {
-		gh->gi_src = sc->g_src;
-		gh->gi_dst = sc->g_dst;
-		((struct ip *) gh)->ip_hl = (sizeof(struct ip)) >> 2;
-		((struct ip *) gh)->ip_ttl = ip_defttl;
-		((struct ip *) gh)->ip_tos = ip_tos;
-		gh->gi_len = htons(m->m_pkthdr.len);
-	}
+	gh->gi_src = sc->g_src;
+	gh->gi_dst = sc->g_dst;
+	((struct ip *) gh)->ip_hl = (sizeof(struct ip)) >> 2;
+	((struct ip *) gh)->ip_ttl = ip_defttl;
+	((struct ip *) gh)->ip_tos = ip_tos;
+	gh->gi_len = htons(m->m_pkthdr.len);
 
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
