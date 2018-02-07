@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.559 2018/02/06 23:45:15 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.560 2018/02/07 01:03:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -945,7 +945,6 @@ void
 bind_lease(struct interface_info *ifi)
 {
 	struct client_lease	*lease, *pl;
-	struct proposal		*active_proposal = NULL;
 	struct proposal		*offered_proposal = NULL;
 	struct proposal		*effective_proposal = NULL;
 	char			*msg;
@@ -975,39 +974,32 @@ bind_lease(struct interface_info *ifi)
 	ifi->rebind = lease_rebind(lease);
 	renewal = lease_renewal(lease);
 
-	/*
-	 * A duplicate proposal once we are responsible & S_RENEWING means we
-	 * don't need to change the interface, routing table or resolv.conf.
-	 */
-	if ((ifi->flags & IFI_IN_CHARGE) && ifi->state == S_RENEWING) {
-		active_proposal = lease_as_proposal(ifi->active);
-		offered_proposal = lease_as_proposal(ifi->offer);
-		if (memcmp(active_proposal, offered_proposal,
-		    sizeof(*active_proposal)) == 0) {
-			ifi->active = ifi->offer;
-			ifi->offer = NULL;
-			goto newlease;
-		}
-	}
-
 	/* Replace the old active lease with the accepted offer. */
 	ifi->active = ifi->offer;
 	ifi->offer = NULL;
+
 	effective_proposal = lease_as_proposal(lease);
+	if (ifi->configured != NULL) {
+		if (memcmp(ifi->configured, effective_proposal,
+		    sizeof(*ifi->configured)) == 0)
+			goto newlease;
+	}
+	free(ifi->configured);
+	ifi->configured = effective_proposal;
+	effective_proposal = NULL;
 
 	set_resolv_conf(ifi->name,
-	    effective_proposal->rtsearch,
-	    effective_proposal->rtsearch_len,
-	    effective_proposal->rtdns,
-	    effective_proposal->rtdns_len);
+	    ifi->configured->rtsearch,
+	    ifi->configured->rtsearch_len,
+	    ifi->configured->rtdns,
+	    ifi->configured->rtdns_len);
 
-	set_mtu(effective_proposal->inits, effective_proposal->mtu);
+	set_mtu(ifi->configured->inits, ifi->configured->mtu);
 
-	set_address(ifi->name, effective_proposal->ifa,
-	    effective_proposal->netmask);
+	set_address(ifi->name, ifi->configured->ifa, ifi->configured->netmask);
 
-	set_routes(effective_proposal->ifa, effective_proposal->netmask,
-	    effective_proposal->rtstatic, effective_proposal->rtstatic_len);
+	set_routes(ifi->configured->ifa, ifi->configured->netmask,
+	    ifi->configured->rtstatic, ifi->configured->rtstatic_len);
 
 	rslt = asprintf(&msg, "bound to %s from %s",
 	    inet_ntoa(ifi->active->address),
@@ -1032,7 +1024,6 @@ newlease:
 	go_daemon();
 	rewrite_option_db(ifi->name, ifi->active, lease);
 	free_client_lease(lease);
-	free(active_proposal);
 	free(offered_proposal);
 	free(effective_proposal);
 
