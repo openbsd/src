@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.92 2018/02/06 20:38:47 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.93 2018/02/07 01:02:46 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -966,15 +966,6 @@ doublebreak:
 	return 1;
 }
 
-static void
-resetport(void)
-{
-	int dnsjacking[2] = { CTL_KERN, KERN_DNSJACKPORT };
-	int jackport = 0;
-
-	sysctl(dnsjacking, 2, NULL, NULL, &jackport, sizeof(jackport));
-}
-
 static void __dead
 usage(void)
 {
@@ -985,8 +976,6 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int dnsjacking[2] = { CTL_KERN, KERN_DNSJACKPORT };
-	int jackport = 54;
 	union sockun bindaddr;
 	int ld, ld6, ud, ud6, ch;
 	int one = 1;
@@ -1009,7 +998,6 @@ main(int argc, char **argv)
 			break;
 		case 'l':
 			bindname = optarg;
-			jackport = 0;
 			break;
 		case 'W':
 			daemonized = 1;
@@ -1032,7 +1020,7 @@ main(int argc, char **argv)
 	memset(&bindaddr, 0, sizeof(bindaddr));
 	bindaddr.i.sin_len = sizeof(bindaddr.i);
 	bindaddr.i.sin_family = AF_INET;
-	bindaddr.i.sin_port = htons(jackport ? jackport : 53);
+	bindaddr.i.sin_port = htons(53);
 	inet_aton(bindname, &bindaddr.i.sin_addr);
 
 	ud = socket(AF_INET, SOCK_DGRAM, 0);
@@ -1053,7 +1041,7 @@ main(int argc, char **argv)
 	memset(&bindaddr, 0, sizeof(bindaddr));
 	bindaddr.i6.sin6_len = sizeof(bindaddr.i6);
 	bindaddr.i6.sin6_family = AF_INET6;
-	bindaddr.i6.sin6_port = htons(jackport ? jackport : 53);
+	bindaddr.i6.sin6_port = htons(53);
 	bindaddr.i6.sin6_addr = in6addr_loopback;
 
 	ud6 = socket(AF_INET6, SOCK_DGRAM, 0);
@@ -1071,11 +1059,6 @@ main(int argc, char **argv)
 	if (listen(ld6, 10) == -1)
 		logerr("listen: %s", strerror(errno));
 
-	if (jackport) {
-		atexit(resetport);
-		sysctl(dnsjacking, 2, NULL, NULL, &jackport, sizeof(jackport));
-	}
-	
 	if (debug) {
 		int conffd = openconfig(confname, -1);
 		return workerloop(conffd, ud, ld, ud6, ld6);
