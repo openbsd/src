@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.303 2018/02/05 05:06:51 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.304 2018/02/07 11:30:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1004,6 +1004,25 @@ bridgeintr_frame(struct bridge_softc *sc, struct ifnet *src_if, struct mbuf *m)
 }
 
 /*
+ * Return 1 if `ena' belongs to `ifl', 0 otherwise.
+ */
+int
+bridge_ourether(struct bridge_iflist *ifl, uint8_t *ena)
+{
+	struct arpcom *ac = (struct arpcom *)ifl->ifp;
+
+	if (memcmp(ac->ac_enaddr, ena, ETHER_ADDR_LEN) == 0)
+		return (1);
+
+#if NCARP > 0
+	if (carp_ourether(ifl->ifp, ena))
+		return (1);
+#endif
+
+	return (0);
+}
+
+/*
  * Receive input from an interface.  Queue the packet for bridging if its
  * not for us, and schedule an interrupt.
  */
@@ -1029,7 +1048,6 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 	struct bridge_iflist *ifl;
 	struct bridge_iflist *srcifl;
 	struct ether_header *eh;
-	struct arpcom *ac;
 	struct mbuf *mc;
 
 	ifl = (struct bridge_iflist *)ifp->if_bridgeport;
@@ -1112,13 +1130,7 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 	TAILQ_FOREACH(ifl, &sc->sc_iflist, next) {
 		if (ifl->ifp->if_type != IFT_ETHER)
 			continue;
-		ac = (struct arpcom *)ifl->ifp;
-		if (memcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN) == 0
-#if NCARP > 0
-		    || (!SRPL_EMPTY_LOCKED(&ifl->ifp->if_carp) &&
-		        !carp_ourether(ifl->ifp, eh->ether_dhost))
-#endif
-		    ) {
+		if (bridge_ourether(ifl, eh->ether_dhost)) {
 			if (srcifl->bif_flags & IFBIF_LEARNING)
 				bridge_rtupdate(sc,
 				    (struct ether_addr *)&eh->ether_shost,
@@ -1136,12 +1148,7 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 			bridge_ifinput(ifl->ifp, m);
 			return;
 		}
-		if (memcmp(ac->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN) == 0
-#if NCARP > 0
-		    || (!SRPL_EMPTY_LOCKED(&ifl->ifp->if_carp) &&
-			!carp_ourether(ifl->ifp, eh->ether_shost))
-#endif
-		    ) {
+		if (bridge_ourether(ifl, eh->ether_shost)) {
 			m_freem(m);
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.328 2018/01/25 14:47:35 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.329 2018/02/07 11:30:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1348,12 +1348,15 @@ carp_iamatch(struct ifnet *ifp)
 int
 carp_ourether(struct ifnet *ifp, u_int8_t *ena)
 {
-	struct srpl *cif;
+	struct srpl *cif = &ifp->if_carp;
 	struct carp_softc *vh;
 
 	KERNEL_ASSERT_LOCKED(); /* touching if_carp + carp_vhosts */
+
+	if (SRPL_EMPTY_LOCKED(cif))
+		return (0);
+
 	KASSERT(ifp->if_type == IFT_ETHER);
-	cif = &ifp->if_carp;
 
 	SRPL_FOREACH_LOCKED(vh, cif, sc_list) {
 		struct carp_vhost_entry *vhe;
