@@ -1,4 +1,4 @@
-/* $OpenBSD: freenull.c,v 1.4 2017/05/06 21:23:57 jsing Exp $ */
+/* $OpenBSD: freenull.c,v 1.5 2018/02/07 02:13:42 jsing Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -33,8 +33,23 @@ main(int argc, char **argv)
 
 	BIO_free_all(NULL);
 
+	BN_clear_free(NULL);
+	BN_free(NULL);
+
+	DH_free(NULL);
+
 	DIST_POINT_free(NULL);
 
+	DSA_SIG_free(NULL);
+	DSA_free(NULL);
+
+	ECDSA_SIG_free(NULL);
+
+	EC_KEY_free(NULL);
+	EC_POINT_clear_free(NULL);
+	EC_POINT_free(NULL);
+
+	EVP_CIPHER_CTX_free(NULL);
 	EVP_PKEY_free(NULL);
 
 	GENERAL_NAME_free(NULL);
@@ -42,10 +57,13 @@ main(int argc, char **argv)
 
 	NAME_CONSTRAINTS_free(NULL);
 
+	RSA_free(NULL);
+
 	sk_GENERAL_NAME_pop_free(NULL, GENERAL_NAME_free);
 	sk_X509_NAME_ENTRY_pop_free(NULL, X509_NAME_ENTRY_free);
 
 	X509_NAME_ENTRY_free(NULL);
+	X509_free(NULL);
 
 	printf("PASS\n");
 
