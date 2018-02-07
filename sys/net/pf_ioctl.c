@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.329 2018/02/06 23:44:48 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.330 2018/02/07 06:11:43 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2649,14 +2649,18 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCSETSYNFLWATS: {
 		struct pfioc_synflwats *io = (struct pfioc_synflwats *)addr;
 
+		PF_LOCK();
 		error = pf_syncookies_setwats(io->hiwat, io->lowat);
+		PF_UNLOCK();
 		break;
 	}
 
 	case DIOCSETSYNCOOKIES: {
 		u_int8_t	*mode = (u_int8_t *)addr;
 
+		PF_LOCK();
 		error = pf_syncookies_setmode(*mode);
+		PF_UNLOCK();
 		break;
 	}
 
