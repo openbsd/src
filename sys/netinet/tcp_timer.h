@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.16 2018/02/06 15:13:08 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.17 2018/02/07 00:31:10 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -106,7 +106,7 @@
 
 #define	TCP_MAXRXTSHIFT	12			/* maximum retransmits */
 
-#define	TCP_DELACK_TICKS (hz / PR_FASTHZ)	/* time to delay ACK */
+#define	TCP_DELACK_MSECS 200			/* time to delay ACK */
 
 #ifdef	TCPTIMERS
 const char *tcptimers[TCPT_NTIMERS] =
@@ -122,7 +122,7 @@ const char *tcptimers[TCPT_NTIMERS] =
 #define	TCP_TIMER_ARM(tp, timer, nticks)				\
 do {									\
 	SET((tp)->t_flags, TF_TIMER << (timer));			\
-	timeout_add(&(tp)->t_timer[(timer)], (nticks) * (hz / PR_SLOWHZ)); \
+	timeout_add_msec(&(tp)->t_timer[(timer)], (nticks) * 500);	\
 } while (0)
 
 #define	TCP_TIMER_DISARM(tp, timer)					\
@@ -151,6 +151,7 @@ typedef void (*tcp_timer_func_t)(void *);
 
 extern const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS];
 
+extern int tcp_delack_msecs;		/* delayed ACK timeout in millisecs */
 extern int tcptv_keep_init;
 extern int tcp_always_keepalive;	/* assume SO_KEEPALIVE is always set */
 extern int tcp_keepidle;		/* time before keepalive probes begin */

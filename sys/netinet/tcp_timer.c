@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.63 2018/02/06 15:13:08 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.64 2018/02/07 00:31:10 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ int	tcp_maxidle;
  * Time to delay the ACK.  This is initialized in tcp_init(), unless
  * its patched.
  */
-int	tcp_delack_ticks;
+int	tcp_delack_msecs;
 
 void	tcp_timer_rexmt(void *);
 void	tcp_timer_persist(void *);
@@ -96,8 +96,8 @@ tcp_timer_init(void)
 	if (tcp_maxpersistidle == 0)
 		tcp_maxpersistidle = TCPTV_KEEP_IDLE;
 
-	if (tcp_delack_ticks == 0)
-		tcp_delack_ticks = TCP_DELACK_TICKS;
+	if (tcp_delack_msecs == 0)
+		tcp_delack_msecs = TCP_DELACK_MSECS;
 }
 
 /*

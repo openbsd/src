@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.130 2018/02/06 15:13:08 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.131 2018/02/07 00:31:10 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -205,14 +205,13 @@ struct tcpcb {
 #define	sototcpcb(so)	(intotcpcb(sotoinpcb(so)))
 
 #ifdef _KERNEL
-extern int tcp_delack_ticks;
 void	tcp_delack(void *);
 
 #define TCP_INIT_DELACK(tp)						\
 	timeout_set_proc(&(tp)->t_delack_to, tcp_delack, tp)
 
 #define TCP_RESTART_DELACK(tp)						\
-	timeout_add(&(tp)->t_delack_to, tcp_delack_ticks)
+	timeout_add_msec(&(tp)->t_delack_to, tcp_delack_msecs)
 
 #define	TCP_SET_DELACK(tp)						\
 do {									\
