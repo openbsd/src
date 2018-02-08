@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.38 2018/02/07 22:01:04 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.39 2018/02/08 05:00:38 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -293,7 +293,6 @@ bwfm_start(struct ifnet *ifp)
 {
 	struct bwfm_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	int error;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
@@ -304,30 +303,26 @@ bwfm_start(struct ifnet *ifp)
 
 	/* TODO: return if no link? */
 
-	m = ifq_deq_begin(&ifp->if_snd);
-	while (m != NULL) {
-		error = sc->sc_bus_ops->bs_txdata(sc, m);
-		if (error == ENOBUFS) {
-			ifq_deq_rollback(&ifp->if_snd, m);
+	for (;;) {
+		if (sc->sc_bus_ops->bs_txcheck(sc)) {
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
-		if (error == EFBIG) {
-			ifq_deq_commit(&ifp->if_snd, m);
-			m_freem(m); /* give up: drop it */
+
+		m = ifq_dequeue(&ifp->if_snd);
+		if (m == NULL)
+			break;
+
+		if (sc->sc_bus_ops->bs_txdata(sc, m) != 0) {
 			ifp->if_oerrors++;
+			m_freem(m);
 			continue;
 		}
-
-		/* Now we are committed to transmit the packet. */
-		ifq_deq_commit(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
-
-		m = ifq_deq_begin(&ifp->if_snd);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.17 2018/02/07 22:02:48 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.18 2018/02/08 05:00:38 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -89,6 +89,7 @@ struct bwfm_pci_msgring {
 	int			 itemsz;
 	enum ring_status	 status;
 	struct bwfm_pci_dmamem	*ring;
+	struct mbuf		*m;
 
 	int			 fifo;
 	uint8_t			 mac[ETHER_ADDR_LEN];
@@ -199,6 +200,8 @@ struct bwfm_pci_dmamem *
 		 bwfm_pci_dmamem_alloc(struct bwfm_pci_softc *, bus_size_t,
 		    bus_size_t);
 void		 bwfm_pci_dmamem_free(struct bwfm_pci_softc *, struct bwfm_pci_dmamem *);
+int		 bwfm_pci_pktid_avail(struct bwfm_pci_softc *,
+		    struct bwfm_pci_pkts *);
 int		 bwfm_pci_pktid_new(struct bwfm_pci_softc *,
 		    struct bwfm_pci_pkts *, struct mbuf *,
 		    uint32_t *, paddr_t *);
@@ -255,6 +258,7 @@ void		 bwfm_pci_flowring_create_cb(struct bwfm_softc *, void *);
 void		 bwfm_pci_flowring_delete(struct bwfm_pci_softc *, int);
 
 void		 bwfm_pci_stop(struct bwfm_softc *);
+int		 bwfm_pci_txcheck(struct bwfm_softc *);
 int		 bwfm_pci_txdata(struct bwfm_softc *, struct mbuf *);
 
 #ifdef BWFM_DEBUG
@@ -278,6 +282,7 @@ struct bwfm_buscore_ops bwfm_pci_buscore_ops = {
 struct bwfm_bus_ops bwfm_pci_bus_ops = {
 	.bs_init = NULL,
 	.bs_stop = bwfm_pci_stop,
+	.bs_txcheck = bwfm_pci_txcheck,
 	.bs_txdata = bwfm_pci_txdata,
 	.bs_txctl = NULL,
 	.bs_rxctl = NULL,
@@ -807,6 +812,22 @@ bwfm_pci_dmamem_free(struct bwfm_pci_softc *sc, struct bwfm_pci_dmamem *bdm)
  * the memory for the ID.  This simply looks for an empty slot.
  */
 int
+bwfm_pci_pktid_avail(struct bwfm_pci_softc *sc, struct bwfm_pci_pkts *pkts)
+{
+	int i, idx;
+
+	idx = pkts->last + 1;
+	for (i = 0; i < pkts->npkt; i++) {
+		if (idx == pkts->npkt)
+			idx = 0;
+		if (pkts->pkts[idx].bb_m == NULL)
+			return 0;
+		idx++;
+	}
+	return ENOBUFS;
+}
+
+int
 bwfm_pci_pktid_new(struct bwfm_pci_softc *sc, struct bwfm_pci_pkts *pkts,
     struct mbuf *m, uint32_t *pktid, paddr_t *paddr)
 {
@@ -872,6 +893,8 @@ bwfm_pci_fill_rx_ioctl_ring(struct bwfm_pci_softc *sc, struct if_rxring *rxring,
 
 	s = splnet();
 	for (slots = if_rxr_get(rxring, 8); slots > 0; slots--) {
+		if (bwfm_pci_pktid_avail(sc, &sc->sc_rx_pkts))
+			break;
 		req = bwfm_pci_ring_write_reserve(sc, &sc->sc_ctrl_submit);
 		if (req == NULL)
 			break;
@@ -910,6 +933,8 @@ bwfm_pci_fill_rx_buf_ring(struct bwfm_pci_softc *sc)
 	s = splnet();
 	for (slots = if_rxr_get(&sc->sc_rxbuf_ring, sc->sc_max_rxbufpost);
 	    slots > 0; slots--) {
+		if (bwfm_pci_pktid_avail(sc, &sc->sc_rx_pkts))
+			break;
 		req = bwfm_pci_ring_write_reserve(sc, &sc->sc_rxpost_submit);
 		if (req == NULL)
 			break;
@@ -1222,10 +1247,20 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf)
 			printf("%s: failed to open flowring %d\n",
 			    DEVNAME(sc), flowid);
 			ring->status = RING_CLOSED;
+			if (ring->m) {
+				m_freem(ring->m);
+				ring->m = NULL;
+			}
 			ifq_restart(&ifp->if_snd);
 			break;
 		}
 		ring->status = RING_OPEN;
+		if (ring->m != NULL) {
+			m = ring->m;
+			ring->m = NULL;
+			if (bwfm_pci_txdata(&sc->sc_sc, m))
+				m_freem(ring->m);
+		}
 		ifq_restart(&ifp->if_snd);
 		break;
 	case MSGBUF_TYPE_FLOW_RING_DELETE_CMPLT:
@@ -1493,6 +1528,7 @@ bwfm_pci_flowring_create(struct bwfm_pci_softc *sc, struct mbuf *m)
 	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
 	struct bwfm_cmd_flowring_create cmd;
 	uint8_t *da = mtod(m, uint8_t *);
+	struct bwfm_pci_msgring *ring;
 	int flowid, prio, fifo;
 	int i, found;
 
@@ -1519,22 +1555,27 @@ bwfm_pci_flowring_create(struct bwfm_pci_softc *sc, struct mbuf *m)
 	found = 0;
 	flowid = flowid % sc->sc_max_flowrings;
 	for (i = 0; i < sc->sc_max_flowrings; i++) {
-		if (sc->sc_flowrings[flowid].status == RING_CLOSED) {
+		ring = &sc->sc_flowrings[flowid];
+		if (ring->status == RING_CLOSED) {
+			ring->status = RING_OPENING;
 			found = 1;
 			break;
 		}
 		flowid = (flowid + 1) % sc->sc_max_flowrings;
 	}
 
+	/*
+	 * We cannot recover from that so far.  Only a stop/init
+	 * cycle can revive this if it ever happens at all.
+	 */
 	if (!found) {
 		printf("%s: no flowring available\n", DEVNAME(sc));
 		return;
 	}
 
+	cmd.m = m;
 	cmd.prio = prio;
 	cmd.flowid = flowid;
-	memcpy(cmd.da, mtod(m, char *) + 0 * ETHER_ADDR_LEN, ETHER_ADDR_LEN);
-	memcpy(cmd.sa, mtod(m, char *) + 1 * ETHER_ADDR_LEN, ETHER_ADDR_LEN);
 	bwfm_do_async(&sc->sc_sc, bwfm_pci_flowring_create_cb, &cmd, sizeof(cmd));
 }
 
@@ -1546,14 +1587,14 @@ bwfm_pci_flowring_create_cb(struct bwfm_softc *bwfm, void *arg)
 	struct bwfm_cmd_flowring_create *cmd = arg;
 	struct msgbuf_tx_flowring_create_req *req;
 	struct bwfm_pci_msgring *ring;
-	int flowid, prio;
+	uint8_t *da, *sa;
 
-	flowid = cmd->flowid;
-	prio = cmd->prio;
+	da = mtod(cmd->m, char *) + 0 * ETHER_ADDR_LEN;
+	sa = mtod(cmd->m, char *) + 1 * ETHER_ADDR_LEN;
 
-	ring = &sc->sc_flowrings[flowid];
-	if (ring->status != RING_CLOSED) {
-		printf("%s: flowring not closed\n", DEVNAME(sc));
+	ring = &sc->sc_flowrings[cmd->flowid];
+	if (ring->status != RING_OPENING) {
+		printf("%s: flowring not opening\n", DEVNAME(sc));
 		return;
 	}
 
@@ -1569,20 +1610,21 @@ bwfm_pci_flowring_create_cb(struct bwfm_softc *bwfm, void *arg)
 	}
 
 	ring->status = RING_OPENING;
-	ring->fifo = bwfm_pci_prio2fifo[prio];
-	memcpy(ring->mac, cmd->da, ETHER_ADDR_LEN);
+	ring->fifo = bwfm_pci_prio2fifo[cmd->prio];
+	ring->m = cmd->m;
+	memcpy(ring->mac, da, ETHER_ADDR_LEN);
 #ifndef IEEE80211_STA_ONLY
-	if (ic->ic_opmode == IEEE80211_M_HOSTAP && ETHER_IS_MULTICAST(cmd->da))
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP && ETHER_IS_MULTICAST(da))
 		memcpy(ring->mac, etherbroadcastaddr, ETHER_ADDR_LEN);
 #endif
 
 	req->msg.msgtype = MSGBUF_TYPE_FLOW_RING_CREATE;
 	req->msg.ifidx = 0;
 	req->msg.request_id = 0;
-	req->tid = bwfm_pci_prio2fifo[prio];
-	req->flow_ring_id = letoh16(flowid + 2);
-	memcpy(req->da, cmd->da, ETHER_ADDR_LEN);
-	memcpy(req->sa, cmd->sa, ETHER_ADDR_LEN);
+	req->tid = bwfm_pci_prio2fifo[cmd->prio];
+	req->flow_ring_id = letoh16(cmd->flowid + 2);
+	memcpy(req->da, da, ETHER_ADDR_LEN);
+	memcpy(req->sa, sa, ETHER_ADDR_LEN);
 	req->flow_ring_addr.high_addr =
 	    letoh32(BWFM_PCI_DMA_DVA(ring->ring) >> 32);
 	req->flow_ring_addr.low_addr =
@@ -1637,6 +1679,28 @@ bwfm_pci_stop(struct bwfm_softc *bwfm)
 }
 
 int
+bwfm_pci_txcheck(struct bwfm_softc *bwfm)
+{
+	struct bwfm_pci_softc *sc = (void *)bwfm;
+	struct bwfm_pci_msgring *ring;
+	int i;
+
+	/* If we are transitioning, we cannot send. */
+	for (i = 0; i < sc->sc_max_flowrings; i++) {
+		ring = &sc->sc_flowrings[i];
+		if (ring->status == RING_OPENING)
+			return ENOBUFS;
+	}
+
+	if (bwfm_pci_pktid_avail(sc, &sc->sc_tx_pkts)) {
+		sc->sc_tx_pkts_full = 1;
+		return ENOBUFS;
+	}
+
+	return 0;
+}
+
+int
 bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 {
 	struct bwfm_pci_softc *sc = (void *)bwfm;
@@ -1648,8 +1712,17 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 
 	flowid = bwfm_pci_flowring_lookup(sc, m);
 	if (flowid < 0) {
+		/*
+		 * We cannot send the packet right now as there is
+		 * no flowring yet.  The flowring will be created
+		 * asynchronously.  While the ring is transitioning
+		 * the TX check will tell the upper layers that we
+		 * cannot send packets right now.  When the flowring
+		 * is created the queue will be restarted and this
+		 * mbuf will be transmitted.
+		 */
 		bwfm_pci_flowring_create(sc, m);
-		return ENOBUFS;
+		return 0;
 	}
 
 	ring = &sc->sc_flowrings[flowid];
@@ -1676,7 +1749,11 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 
 	ret = bwfm_pci_pktid_new(sc, &sc->sc_tx_pkts, m, &pktid, &paddr);
 	if (ret) {
-		sc->sc_tx_pkts_full = 1;
+		if (ret == ENOBUFS) {
+			printf("%s: no pktid available for TX\n",
+			    DEVNAME(sc));
+			sc->sc_tx_pkts_full = 1;
+		}
 		bwfm_pci_ring_write_cancel(sc, ring, 1);
 		return ret;
 	}

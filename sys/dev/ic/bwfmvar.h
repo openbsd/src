@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.11 2018/02/07 22:01:04 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.12 2018/02/08 05:00:38 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -87,6 +87,7 @@ struct bwfm_chip {
 struct bwfm_bus_ops {
 	void (*bs_init)(struct bwfm_softc *);
 	void (*bs_stop)(struct bwfm_softc *);
+	int (*bs_txcheck)(struct bwfm_softc *);
 	int (*bs_txdata)(struct bwfm_softc *, struct mbuf *);
 	int (*bs_txctl)(struct bwfm_softc *, char *, size_t);
 	int (*bs_rxctl)(struct bwfm_softc *, char *, size_t *);
@@ -125,8 +126,7 @@ struct bwfm_cmd_mbuf {
 };
 
 struct bwfm_cmd_flowring_create {
-	uint8_t			 da[ETHER_ADDR_LEN];
-	uint8_t			 sa[ETHER_ADDR_LEN];
+	struct mbuf		*m;
 	int			 flowid;
 	int			 prio;
 };

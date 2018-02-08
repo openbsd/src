@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.9 2018/02/07 22:01:04 patrick Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.10 2018/02/08 05:00:38 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -196,6 +196,7 @@ void		 bwfm_usb_free_rx_list(struct bwfm_usb_softc *);
 int		 bwfm_usb_alloc_tx_list(struct bwfm_usb_softc *);
 void		 bwfm_usb_free_tx_list(struct bwfm_usb_softc *);
 
+int		 bwfm_usb_txcheck(struct bwfm_softc *);
 int		 bwfm_usb_txdata(struct bwfm_softc *, struct mbuf *);
 int		 bwfm_usb_txctl(struct bwfm_softc *, char *, size_t);
 int		 bwfm_usb_rxctl(struct bwfm_softc *, char *, size_t *);
@@ -207,6 +208,7 @@ void		 bwfm_usb_txeof(struct usbd_xfer *, void *, usbd_status);
 struct bwfm_bus_ops bwfm_usb_bus_ops = {
 	.bs_init = NULL,
 	.bs_stop = NULL,
+	.bs_txcheck = bwfm_usb_txcheck,
 	.bs_txdata = bwfm_usb_txdata,
 	.bs_txctl = bwfm_usb_txctl,
 	.bs_rxctl = bwfm_usb_rxctl,
@@ -588,8 +590,7 @@ bwfm_usb_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	/* We just released a Tx buffer, notify Tx. */
 	if (ifq_is_oactive(&ifp->if_snd)) {
-		ifq_clr_oactive(&ifp->if_snd);
-		ifp->if_start(ifp);
+		ifq_restart(&ifp->if_snd);
 	}
 	splx(s);
 }
@@ -725,6 +726,17 @@ err:
 	if (xfer != NULL)
 		usbd_free_xfer(xfer);
 	return 1;
+}
+
+int
+bwfm_usb_txcheck(struct bwfm_softc *bwfm)
+{
+	struct bwfm_usb_softc *sc = (void *)bwfm;
+
+	if (TAILQ_EMPTY(&sc->sc_tx_free_list))
+		return ENOBUFS;
+
+	return 0;
 }
 
 int
