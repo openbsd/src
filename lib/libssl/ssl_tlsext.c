@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.20 2018/01/27 15:30:05 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.21 2018/02/08 11:30:30 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1310,19 +1310,34 @@ tls_extension_find(uint16_t type, size_t *tls_extensions_idx)
 	return NULL;
 }
 
-static void
-tlsext_clienthello_reset_state(SSL *s)
+static int
+tls_extension_needs(struct tls_extension *tlsext, int is_serverhello, SSL *s)
 {
-	s->internal->servername_done = 0;
-	s->tlsext_status_type = -1;
-	S3I(s)->renegotiate_seen = 0;
-	free(S3I(s)->alpn_selected);
-	S3I(s)->alpn_selected = NULL;
-	s->internal->srtp_profile = NULL;
+	if (is_serverhello)
+		return tlsext->serverhello_needs(s);
+	return tlsext->clienthello_needs(s);
 }
 
-int
-tlsext_clienthello_build(SSL *s, CBB *cbb)
+static int
+tls_extension_build(struct tls_extension *tlsext, int is_serverhello, SSL *s,
+    CBB *cbb)
+{
+	if (is_serverhello)
+		return tlsext->serverhello_build(s, cbb);
+	return tlsext->clienthello_build(s, cbb);
+}
+
+static int
+tls_extension_parse(struct tls_extension *tlsext, int is_serverhello, SSL *s,
+    CBS *cbs, int *alert)
+{
+	if (is_serverhello)
+		return tlsext->serverhello_parse(s, cbs, alert);
+	return tlsext->clienthello_parse(s, cbs, alert);
+}
+
+static int
+tlsext_build(SSL *s, CBB *cbb, int is_serverhello)
 {
 	CBB extensions, extension_data;
 	struct tls_extension *tlsext;
@@ -1335,14 +1350,16 @@ tlsext_clienthello_build(SSL *s, CBB *cbb)
 	for (i = 0; i < N_TLS_EXTENSIONS; i++) {
 		tlsext = &tls_extensions[i];
 
-		if (!tlsext->clienthello_needs(s))
+		if (!tls_extension_needs(tlsext, is_serverhello, s))
 			continue;
 
 		if (!CBB_add_u16(&extensions, tlsext->type))
 			return 0;
 		if (!CBB_add_u16_length_prefixed(&extensions, &extension_data))
 			return 0;
-		if (!tls_extensions[i].clienthello_build(s, &extension_data))
+
+		if (!tls_extension_build(tlsext, is_serverhello, s,
+		    &extension_data))
 			return 0;
 
 		extensions_present = 1;
@@ -1357,17 +1374,14 @@ tlsext_clienthello_build(SSL *s, CBB *cbb)
 	return 1;
 }
 
-int
-tlsext_clienthello_parse(SSL *s, CBS *cbs, int *alert)
+static int
+tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_serverhello)
 {
 	CBS extensions, extension_data;
 	struct tls_extension *tlsext;
 	uint32_t extensions_seen = 0;
 	uint16_t type;
 	size_t idx;
-
-	/* XXX - this possibly should be done by the caller... */
-	tlsext_clienthello_reset_state(s);
 
 	/* An empty extensions block is valid. */
 	if (CBS_len(cbs) == 0)
@@ -1385,7 +1399,7 @@ tlsext_clienthello_parse(SSL *s, CBS *cbs, int *alert)
 			return 0;
 
 		if (s->internal->tlsext_debug_cb != NULL)
-			s->internal->tlsext_debug_cb(s, 0, type,
+			s->internal->tlsext_debug_cb(s, is_serverhello, type,
 			    (unsigned char *)CBS_data(&extension_data),
 			    CBS_len(&extension_data),
 			    s->internal->tlsext_debug_arg);
@@ -1394,12 +1408,13 @@ tlsext_clienthello_parse(SSL *s, CBS *cbs, int *alert)
 		if ((tlsext = tls_extension_find(type, &idx)) == NULL)
 			continue;
 
-		/* Check for duplicate extensions. */
+		/* Check for duplicate known extensions. */
 		if ((extensions_seen & (1 << idx)) != 0)
 			return 0;
 		extensions_seen |= (1 << idx);
 
-		if (!tlsext->clienthello_parse(s, &extension_data, alert))
+		if (!tls_extension_parse(tlsext, is_serverhello, s,
+		    &extension_data, alert))
 			return 0;
 
 		if (CBS_len(&extension_data) != 0)
@@ -1409,63 +1424,51 @@ tlsext_clienthello_parse(SSL *s, CBS *cbs, int *alert)
 	return 1;
 }
 
-int
-tlsext_serverhello_build(SSL *s, CBB *cbb)
+static void
+tlsext_clienthello_reset_state(SSL *s)
 {
-	CBB extensions, extension_data;
-	struct tls_extension *tlsext;
-	int extensions_present = 0;
-	size_t i;
-
-	if (!CBB_add_u16_length_prefixed(cbb, &extensions))
-		return 0;
-
-	for (i = 0; i < N_TLS_EXTENSIONS; i++) {
-		tlsext = &tls_extensions[i];
-
-		if (!tlsext->serverhello_needs(s))
-			continue;
-
-		if (!CBB_add_u16(&extensions, tlsext->type))
-			return 0;
-		if (!CBB_add_u16_length_prefixed(&extensions, &extension_data))
-			return 0;
-		if (!tlsext->serverhello_build(s, &extension_data))
-			return 0;
-
-		extensions_present = 1;
-	}
-
-	if (!extensions_present)
-		CBB_discard_child(cbb);
-
-	if (!CBB_flush(cbb))
-		return 0;
-
-	return 1;
+	s->internal->servername_done = 0;
+	s->tlsext_status_type = -1;
+	S3I(s)->renegotiate_seen = 0;
+	free(S3I(s)->alpn_selected);
+	S3I(s)->alpn_selected = NULL;
+	s->internal->srtp_profile = NULL;
 }
 
 int
-tlsext_serverhello_parse_one(SSL *s, CBS *cbs, uint16_t type, int *alert)
+tlsext_clienthello_build(SSL *s, CBB *cbb)
 {
-	struct tls_extension *tlsext;
-	size_t i;
+	return tlsext_build(s, cbb, 0);
+}
 
-	for (i = 0; i < N_TLS_EXTENSIONS; i++) {
-		tlsext = &tls_extensions[i];
+int
+tlsext_clienthello_parse(SSL *s, CBS *cbs, int *alert)
+{
+	/* XXX - this possibly should be done by the caller... */
+	tlsext_clienthello_reset_state(s);
 
-		if (tlsext->type != type)
-			continue;
-		if (!tlsext->serverhello_parse(s, cbs, alert))
-			return 0;
-		if (CBS_len(cbs) != 0) {
-			*alert = SSL_AD_DECODE_ERROR;
-			return 0;
-		}
+	return tlsext_parse(s, cbs, alert, 0);
+}
 
-		return 1;
-	}
+static void
+tlsext_serverhello_reset_state(SSL *s)
+{
+	S3I(s)->renegotiate_seen = 0;   
+	free(S3I(s)->alpn_selected);
+	S3I(s)->alpn_selected = NULL;
+}
 
-	/* Not found. */
-	return 2;
+int
+tlsext_serverhello_build(SSL *s, CBB *cbb)
+{
+	return tlsext_build(s, cbb, 1);
+}
+
+int
+tlsext_serverhello_parse(SSL *s, CBS *cbs, int *alert)
+{
+	/* XXX - this possibly should be done by the caller... */
+	tlsext_serverhello_reset_state(s);
+
+	return tlsext_parse(s, cbs, alert, 1);
 }

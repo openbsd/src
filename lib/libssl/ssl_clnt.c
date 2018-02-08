@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.22 2017/10/12 16:06:32 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.23 2018/02/08 11:30:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -813,7 +813,6 @@ ssl3_get_server_hello(SSL *s)
 	STACK_OF(SSL_CIPHER) *sk;
 	const SSL_CIPHER *cipher;
 	const SSL_METHOD *method;
-	unsigned char *p;
 	unsigned long alg_k;
 	size_t outlen;
 	int i, al, ok;
@@ -1011,21 +1010,30 @@ ssl3_get_server_hello(SSL *s)
 		goto f_err;
 	}
 
-	/* TLS extensions. */
-	p = (unsigned char *)CBS_data(&cbs);
-	if (!ssl_parse_serverhello_tlsext(s, &p, CBS_len(&cbs), &al)) {
-		/* 'al' set by ssl_parse_serverhello_tlsext */
+	if (!tlsext_serverhello_parse(s, &cbs, &al)) {
 		SSLerror(s, SSL_R_PARSE_TLSEXT);
 		goto f_err;
 	}
+
+	/*
+	 * Determine if we need to see RI. Strictly speaking if we want to
+	 * avoid an attack we should *always* see RI even on initial server
+	 * hello because the client doesn't see any renegotiation during an
+	 * attack. However this would mean we could not connect to any server
+	 * which doesn't support RI so for the immediate future tolerate RI
+	 * absence on initial connect only.
+	 */
+	if (!S3I(s)->renegotiate_seen &&
+	    !(s->internal->options & SSL_OP_LEGACY_SERVER_CONNECT)) {
+		al = SSL_AD_HANDSHAKE_FAILURE;
+		SSLerror(s, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+		goto f_err;
+	}
+
 	if (ssl_check_serverhello_tlsext(s) <= 0) {
 		SSLerror(s, SSL_R_SERVERHELLO_TLSEXT);
 		goto err;
 	}
-
-	/* See if any data remains... */
-	if (p - CBS_data(&cbs) != CBS_len(&cbs))
-		goto truncated;
 
 	return (1);
 

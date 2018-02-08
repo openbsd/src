@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.140 2018/01/27 15:30:05 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.141 2018/02/08 11:30:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -659,79 +659,6 @@ tls12_get_req_sig_algs(SSL *s, unsigned char **sigalgs, size_t *sigalgs_len)
 {
 	*sigalgs = tls12_sigalgs;
 	*sigalgs_len = sizeof(tls12_sigalgs);
-}
-
-int
-ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, size_t n, int *al)
-{
-	unsigned short type;
-	unsigned short size;
-	unsigned short len;
-	unsigned char *data = *p;
-	unsigned char *end = *p + n;
-	CBS cbs;
-
-	S3I(s)->renegotiate_seen = 0;
-	free(S3I(s)->alpn_selected);
-	S3I(s)->alpn_selected = NULL;
-
-	if (data == end)
-		goto ri_check;
-
-	if (end - data < 2)
-		goto err;
-	n2s(data, len);
-
-	if (end - data != len)
-		goto err;
-
-	while (end - data >= 4) {
-		n2s(data, type);
-		n2s(data, size);
-
-		if (end - data < size)
-			goto err;
-
-		if (s->internal->tlsext_debug_cb)
-			s->internal->tlsext_debug_cb(s, 1, type, data, size,
-			    s->internal->tlsext_debug_arg);
-
-		CBS_init(&cbs, data, size);
-		if (!tlsext_serverhello_parse_one(s, &cbs, type, al))
-			return 0;
-
-		data += size;
-
-	}
-
-	if (data != end) {
-		*al = SSL_AD_DECODE_ERROR;
-		return 0;
-	}
-
-	*p = data;
-
-ri_check:
-
-	/* Determine if we need to see RI. Strictly speaking if we want to
-	 * avoid an attack we should *always* see RI even on initial server
-	 * hello because the client doesn't see any renegotiation during an
-	 * attack. However this would mean we could not connect to any server
-	 * which doesn't support RI so for the immediate future tolerate RI
-	 * absence on initial connect only.
-	 */
-	if (!S3I(s)->renegotiate_seen &&
-	    !(s->internal->options & SSL_OP_LEGACY_SERVER_CONNECT)) {
-		*al = SSL_AD_HANDSHAKE_FAILURE;
-		SSLerror(s, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-		return 0;
-	}
-
-	return 1;
-
-err:
-	*al = SSL_AD_DECODE_ERROR;
-	return 0;
 }
 
 int
