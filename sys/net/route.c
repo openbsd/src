@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.369 2018/01/02 12:57:30 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.370 2018/02/08 13:50:48 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -379,21 +379,51 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int rtableid)
 int
 rt_setgwroute(struct rtentry *rt, u_int rtableid)
 {
-	struct rtentry *nhrt;
+	struct rtentry *prt, *nhrt;
+	unsigned int rdomain = rtable_l2(rtableid);
 
 	NET_ASSERT_LOCKED();
 
 	KASSERT(ISSET(rt->rt_flags, RTF_GATEWAY));
 
 	/* If we cannot find a valid next hop bail. */
-	nhrt = rt_match(rt->rt_gateway, NULL, RT_RESOLVE, rtable_l2(rtableid));
+	nhrt = rt_match(rt->rt_gateway, NULL, RT_RESOLVE, rdomain);
 	if (nhrt == NULL)
 		return (ENOENT);
 
 	/* Next hop entry must be on the same interface. */
 	if (nhrt->rt_ifidx != rt->rt_ifidx) {
+		struct sockaddr_in6	sa_mask;
+
+		/*
+		 * If we found a non-L2 entry on a different interface
+		 * there's nothing we can do.
+		 */
+		if (!ISSET(nhrt->rt_flags, RTF_LLINFO)) {
+			rtfree(nhrt);
+			return (EHOSTUNREACH);
+		}
+
+		/*
+		 * We found a L2 entry, so we might have multiple
+		 * RTF_CLONING routes for the same subnet.  Query
+		 * the first route of the multipath chain and iterate
+		 * until we find the correct one.
+		 */
+		prt = rtable_lookup(rdomain, rt_key(nhrt->rt_parent),
+		    rt_plen2mask(nhrt->rt_parent, &sa_mask), NULL, RTP_ANY);
 		rtfree(nhrt);
-		return (EHOSTUNREACH);
+
+		while (prt != NULL && prt->rt_ifidx != rt->rt_ifidx)
+			prt = rtable_iterate(prt);
+
+		/* We found nothing or a non-cloning MPATH route. */
+		if (prt == NULL || !ISSET(prt->rt_flags, RTF_CLONING)) {
+			rtfree(prt);
+			return (EHOSTUNREACH);
+		}
+
+		nhrt = rt_clone(prt, rt->rt_gateway, rtable_l2(rtableid));
 	}
 
 	/*
