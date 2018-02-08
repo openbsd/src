@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.72 2017/10/24 09:36:13 jsg Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.73 2018/02/08 13:15:32 mpi Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -89,6 +89,7 @@
 #define	SIOCBRDGDADDR	 _IOW('i', 71, struct ifbareq)	/* delete addr */
 #define	SIOCBRDGFLUSH	 _IOW('i', 72, struct ifbreq)	/* flush addr cache */
 #define	SIOCBRDGADDL	 _IOW('i', 73, struct ifbreq)	/* add local port */
+#define	SIOCBRDGSIFPROT	 _IOW('i', 74, struct ifbreq)	/* set protected grp */
 
 #define SIOCBRDGARL	 _IOW('i', 77, struct ifbrlreq)	/* add bridge rule */
 #define SIOCBRDGFRL	 _IOW('i', 78, struct ifbrlreq)	/* flush brdg rules */

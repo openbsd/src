@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.h,v 1.12 2018/01/16 10:33:55 mpi Exp $	*/
+/*	$OpenBSD: brconfig.h,v 1.13 2018/02/08 13:15:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -52,6 +52,8 @@ void bridge_addrs(const char *, int);
 void bridge_hellotime(const char *, int);
 void bridge_fwddelay(const char *, int);
 void bridge_maxage(const char *, int);
+void bridge_protect(const char *, const char *);
+void bridge_unprotect(const char *, int);
 void bridge_proto(const char *, int);
 void bridge_ifprio(const char *, const char *);
 void bridge_ifcost(const char *, const char *);

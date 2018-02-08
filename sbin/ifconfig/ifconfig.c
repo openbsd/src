@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.354 2018/02/02 13:39:52 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.355 2018/02/08 13:15:32 mpi Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -472,6 +472,8 @@ const struct	cmd {
 	{ "-edge",	NEXTARG,	0,		unsetedge },
 	{ "autoedge",	NEXTARG,	0,		setautoedge },
 	{ "-autoedge",	NEXTARG,	0,		unsetautoedge },
+	{ "protected",	NEXTARG2,	0,		NULL, bridge_protect },
+	{ "-protected",	NEXTARG,	0,		bridge_unprotect },
 	{ "ptp",	NEXTARG,	0,		setptp },
 	{ "-ptp",	NEXTARG,	0,		unsetptp },
 	{ "autoptp",	NEXTARG,	0,		setautoptp },

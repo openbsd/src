@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.294 2018/02/05 07:16:13 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.295 2018/02/08 13:15:32 mpi Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: February 5 2018 $
+.Dd $Mdocdate: February 8 2018 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -662,6 +662,14 @@ The default is 100 entries.
 .It Cm maxage Ar time
 Set the time (in seconds) that a spanning tree protocol configuration is valid.
 Defaults to 20 seconds, minimum of 6, maximum of 40.
+.It Cm protected Ar interface Ar ids
+Put
+.Ar interface
+in protected domains.
+.Ar ids
+is a comma delimited list of domain IDs to put the interface in.
+Interfaces that are part of a protected domain cannot forward traffic to any
+other interface in that domain .
 .It Cm proto Ar value
 Force the spanning tree protocol version.
 The available values are

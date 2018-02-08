@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.17 2018/02/05 03:51:53 henning Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.18 2018/02/08 13:15:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -338,6 +338,16 @@ bridge_list(char *delim)
 		printf("port %u ifpriority %u ifcost %u",
 		    reqp->ifbr_portno, reqp->ifbr_priority,
 		    reqp->ifbr_path_cost);
+		if (reqp->ifbr_protected) {
+			int v;
+
+			v = ffs(reqp->ifbr_protected);
+			printf(" protected %u", v);
+			while (++v < 32) {
+				if ((1 << (v - 1)) & reqp->ifbr_protected)
+					printf(",%u", v);
+			}
+		};
 		if (reqp->ifbr_ifsflags & IFBIF_STP)
 			printf(" %s role %s",
 			    stpstates[reqp->ifbr_state],
@@ -454,6 +464,54 @@ bridge_priority(const char *arg, int d)
 	bp.ifbrp_prio = v;
 	if (ioctl(s, SIOCBRDGSPRI, (caddr_t)&bp) < 0)
 		err(1, "%s", name);
+}
+
+void
+bridge_protect(const char *ifname, const char *val)
+{
+	struct ifbreq breq;
+	unsigned long v;
+	char *optlist, *str;
+	char *endptr;
+
+	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
+	breq.ifbr_protected = 0;
+
+	/* We muck with the string, so copy it. */
+	optlist = strdup(val);
+	if (optlist == NULL)
+		err(1, "strdup");
+
+	str = strtok(optlist, ",");
+	while (str != NULL) {
+		errno = 0;
+		v = strtoul(str, &endptr, 0);
+		if (str[0] == '\0' || endptr[0] != '\0' || v == 0 || v > 31 ||
+		    (errno == ERANGE && v == ULONG_MAX))
+			err(1, "invalid value for protected domain: %s", str);
+		breq.ifbr_protected |= (1 << (v - 1));
+		str = strtok(NULL, ",");
+	}
+
+	if (ioctl(s, SIOCBRDGSIFPROT, (caddr_t)&breq) < 0)
+		err(1, "%s: %s", name, val);
+
+	free(optlist);
+}
+
+void
+bridge_unprotect(const char *ifname, int d)
+{
+	struct ifbreq breq;
+
+	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
+
+	breq.ifbr_protected = 0;
+
+	if (ioctl(s, SIOCBRDGSIFPROT, (caddr_t)&breq) < 0)
+		err(1, "%s: %d", name, 0);
 }
 
 void

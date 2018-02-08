@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.56 2018/02/05 03:51:53 henning Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.57 2018/02/08 13:15:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -46,6 +46,7 @@ struct ifbreq {
 	char		ifbr_ifsname[IFNAMSIZ];	/* member ifs name */
 	u_int32_t	ifbr_ifsflags;		/* member ifs flags */
 	u_int32_t	ifbr_portno;		/* member port number */
+	u_int32_t	ifbr_protected;		/* protected domains */
 
 	u_int8_t	ifbr_state;		/* member stp state */
 	u_int8_t	ifbr_priority;		/* member stp priority */
@@ -415,6 +416,7 @@ struct bridge_iflist {
 	struct brl_head			bif_brlout;	/* output rules */
 	struct				ifnet *ifp;	/* member interface */
 	u_int32_t			bif_flags;	/* member flags */
+	u_int32_t			bif_protected;	/* protected domains */
 	void				*bif_dhcookie;
 };
 #define bif_state			bif_stp->bp_state
