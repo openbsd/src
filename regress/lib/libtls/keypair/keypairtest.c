@@ -1,4 +1,4 @@
-/* $OpenBSD: keypairtest.c,v 1.1 2018/02/08 10:06:52 jsing Exp $ */
+/* $OpenBSD: keypairtest.c,v 1.2 2018/02/08 10:19:57 jsing Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -170,8 +170,9 @@ do_keypair_tests(void)
 	    kp->ocsp_staple, kp->ocsp_staple_len) == -1)
 		goto done;
 
-	if (tls_keypair_pubkey_hash(kp, &hash) == -1) {
-		fprintf(stderr, "FAIL: failed to generate keypair hash\n");
+	if (tls_keypair_pubkey_hash(kp, &err, &hash) == -1) {
+		fprintf(stderr, "FAIL: failed to generate keypair hash: %s\n",
+		    err.msg);
 		goto done;
 	}
 	if (strcmp(hash, PUBKEY_HASH) != 0) {
