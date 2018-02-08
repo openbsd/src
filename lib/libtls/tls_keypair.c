@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_keypair.c,v 1.1 2018/02/08 05:56:49 jsing Exp $ */
+/* $OpenBSD: tls_keypair.c,v 1.2 2018/02/08 08:09:10 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -141,6 +141,45 @@ tls_keypair_load_cert(struct tls_keypair *keypair, struct tls_error *error,
 
  err:
 	BIO_free(cert_bio);
+
+	return (rv);
+}
+
+int
+tls_keypair_pubkey_hash(struct tls_keypair *keypair, char **hash)
+{
+	BIO *membio = NULL;
+	X509 *cert = NULL;
+	char d[EVP_MAX_MD_SIZE], *dhex = NULL;
+	int dlen, rv = -1;
+
+	free(*hash);
+	*hash = NULL;
+
+	if ((membio = BIO_new_mem_buf(keypair->cert_mem,
+	    keypair->cert_len)) == NULL)
+		goto err;
+	if ((cert = PEM_read_bio_X509_AUX(membio, NULL, tls_password_cb,
+	    NULL)) == NULL)
+		goto err;
+
+	if (X509_pubkey_digest(cert, EVP_sha256(), d, &dlen) != 1)
+		goto err;
+
+	if (tls_hex_string(d, dlen, &dhex, NULL) != 0)
+		goto err;
+
+	if (asprintf(hash, "SHA256:%s", dhex) == -1) {
+		*hash = NULL;
+		goto err;
+	}
+
+	rv = 0;
+
+ err:
+	free(dhex);
+	X509_free(cert);
+	BIO_free(membio);
 
 	return (rv);
 }
