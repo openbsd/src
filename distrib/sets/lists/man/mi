@@ -1502,6 +1502,7 @@
 ./usr/share/man/man4/midi.4
 ./usr/share/man/man4/mii.4
 ./usr/share/man/man4/mlphy.4
+./usr/share/man/man4/mobileip.4
 ./usr/share/man/man4/mos.4
 ./usr/share/man/man4/moscom.4
 ./usr/share/man/man4/mpath.4

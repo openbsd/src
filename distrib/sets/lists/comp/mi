@@ -691,6 +691,7 @@
 ./usr/include/dev/sbus/xboxvar.h
 ./usr/include/dev/sbus/zxreg.h
 ./usr/include/dev/sdmmc
+./usr/include/dev/sdmmc/if_bwfm_sdio.h
 ./usr/include/dev/sdmmc/sdhcreg.h
 ./usr/include/dev/sdmmc/sdhcvar.h
 ./usr/include/dev/sdmmc/sdmmc_ioreg.h
@@ -923,6 +924,7 @@
 ./usr/include/net/if_gre.h
 ./usr/include/net/if_llc.h
 ./usr/include/net/if_media.h
+./usr/include/net/if_mobileip.h
 ./usr/include/net/if_pflog.h
 ./usr/include/net/if_pflow.h
 ./usr/include/net/if_pfsync.h
