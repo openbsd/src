@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.560 2018/02/07 01:03:10 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.561 2018/02/08 08:22:31 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -786,8 +786,6 @@ state_selecting(struct interface_info *ifi)
 	}
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
-	time(&ifi->first_sending);
-
 	ifi->interval = 0;
 
 	/*
