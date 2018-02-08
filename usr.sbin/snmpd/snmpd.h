@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.76 2017/07/28 13:17:43 florian Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.77 2018/02/08 00:21:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -67,7 +67,7 @@
 #define SMALL_READ_BUF_SIZE	1024
 #define READ_BUF_SIZE		65535
 #define	RT_BUF_SIZE		16384
-#define	MAX_RTSOCK_BUF		(128 * 1024)
+#define	MAX_RTSOCK_BUF		(2 * 1024 * 1024)
 
 #define SNMP_ENGINEID_OLD	0x00
 #define SNMP_ENGINEID_NEW	0x80	/* RFC3411 */
