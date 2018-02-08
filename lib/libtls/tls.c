@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.73 2018/02/08 08:09:10 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.74 2018/02/08 10:19:31 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -313,7 +313,8 @@ tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 			tls_set_errorx(ctx, "failed to load certificate");
 			goto err;
 		}
-		if (tls_keypair_pubkey_hash(keypair, &keypair->pubkey_hash) == -1)
+		if (tls_keypair_pubkey_hash(keypair, &ctx->error,
+		    &keypair->pubkey_hash) == -1)
 			goto err;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.67 2018/02/08 08:09:10 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.68 2018/02/08 10:19:31 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -214,7 +214,8 @@ void tls_keypair_clear(struct tls_keypair *_keypair);
 void tls_keypair_free(struct tls_keypair *_keypair);
 int tls_keypair_load_cert(struct tls_keypair *_keypair,
     struct tls_error *_error, X509 **_cert);
-int tls_keypair_pubkey_hash(struct tls_keypair *_keypair, char **_hash);
+int tls_keypair_pubkey_hash(struct tls_keypair *_keypair,
+    struct tls_error *_error, char **_hash);
 
 struct tls_sni_ctx *tls_sni_ctx_new(void);
 void tls_sni_ctx_free(struct tls_sni_ctx *sni_ctx);
