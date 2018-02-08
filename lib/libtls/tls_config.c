@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.46 2018/02/05 00:52:24 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.47 2018/02/08 05:56:49 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -24,127 +24,8 @@
 #include <unistd.h>
 
 #include <tls.h>
+
 #include "tls_internal.h"
-
-static int
-set_string(const char **dest, const char *src)
-{
-	free((char *)*dest);
-	*dest = NULL;
-	if (src != NULL)
-		if ((*dest = strdup(src)) == NULL)
-			return -1;
-	return 0;
-}
-
-static void *
-memdup(const void *in, size_t len)
-{
-	void *out;
-
-	if ((out = malloc(len)) == NULL)
-		return NULL;
-	memcpy(out, in, len);
-	return out;
-}
-
-static int
-set_mem(char **dest, size_t *destlen, const void *src, size_t srclen)
-{
-	free(*dest);
-	*dest = NULL;
-	*destlen = 0;
-	if (src != NULL)
-		if ((*dest = memdup(src, srclen)) == NULL)
-			return -1;
-	*destlen = srclen;
-	return 0;
-}
-
-static struct tls_keypair *
-tls_keypair_new(void)
-{
-	return calloc(1, sizeof(struct tls_keypair));
-}
-
-static void
-tls_keypair_clear_key(struct tls_keypair *keypair)
-{
-	freezero(keypair->key_mem, keypair->key_len);
-	keypair->key_mem = NULL;
-	keypair->key_len = 0;
-}
-
-static int
-tls_keypair_set_cert_file(struct tls_keypair *keypair, struct tls_error *error,
-    const char *cert_file)
-{
-	return tls_config_load_file(error, "certificate", cert_file,
-	    &keypair->cert_mem, &keypair->cert_len);
-}
-
-static int
-tls_keypair_set_cert_mem(struct tls_keypair *keypair, const uint8_t *cert,
-    size_t len)
-{
-	return set_mem(&keypair->cert_mem, &keypair->cert_len, cert, len);
-}
-
-static int
-tls_keypair_set_key_file(struct tls_keypair *keypair, struct tls_error *error,
-    const char *key_file)
-{
-	tls_keypair_clear_key(keypair);
-	return tls_config_load_file(error, "key", key_file,
-	    &keypair->key_mem, &keypair->key_len);
-}
-
-static int
-tls_keypair_set_key_mem(struct tls_keypair *keypair, const uint8_t *key,
-    size_t len)
-{
-	tls_keypair_clear_key(keypair);
-	return set_mem(&keypair->key_mem, &keypair->key_len, key, len);
-}
-
-static int
-tls_keypair_set_ocsp_staple_file(struct tls_keypair *keypair,
-    struct tls_error *error, const char *ocsp_file)
-{
-	return tls_config_load_file(error, "ocsp", ocsp_file,
-	    &keypair->ocsp_staple, &keypair->ocsp_staple_len);
-}
-
-static int
-tls_keypair_set_ocsp_staple_mem(struct tls_keypair *keypair,
-    const uint8_t *staple, size_t len)
-{
-	return set_mem(&keypair->ocsp_staple, &keypair->ocsp_staple_len, staple,
-	    len);
-}
-
-static void
-tls_keypair_clear(struct tls_keypair *keypair)
-{
-	tls_keypair_set_cert_mem(keypair, NULL, 0);
-	tls_keypair_set_key_mem(keypair, NULL, 0);
-}
-
-static void
-tls_keypair_free(struct tls_keypair *keypair)
-{
-	if (keypair == NULL)
-		return;
-
-	tls_keypair_clear(keypair);
-
-	free(keypair->cert_mem);
-	free(keypair->key_mem);
-	free(keypair->ocsp_staple);
-	free(keypair->pubkey_hash);
-
-	free(keypair);
-}
 
 int
 tls_config_load_file(struct tls_error *error, const char *filetype,
@@ -529,13 +410,13 @@ tls_config_set_ca_file(struct tls_config *config, const char *ca_file)
 int
 tls_config_set_ca_path(struct tls_config *config, const char *ca_path)
 {
-	return set_string(&config->ca_path, ca_path);
+	return tls_set_string(&config->ca_path, ca_path);
 }
 
 int
 tls_config_set_ca_mem(struct tls_config *config, const uint8_t *ca, size_t len)
 {
-	return set_mem(&config->ca_mem, &config->ca_len, ca, len);
+	return tls_set_mem(&config->ca_mem, &config->ca_len, ca, len);
 }
 
 int
@@ -579,7 +460,7 @@ tls_config_set_ciphers(struct tls_config *config, const char *ciphers)
 	}
 
 	SSL_CTX_free(ssl_ctx);
-	return set_string(&config->ciphers, ciphers);
+	return tls_set_string(&config->ciphers, ciphers);
 
  err:
 	SSL_CTX_free(ssl_ctx);
@@ -597,7 +478,7 @@ int
 tls_config_set_crl_mem(struct tls_config *config, const uint8_t *crl,
     size_t len)
 {
-	return set_mem(&config->crl_mem, &config->crl_len, crl, len);
+	return tls_set_mem(&config->crl_mem, &config->crl_len, crl, len);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_util.c,v 1.10 2018/02/05 00:52:24 jsing Exp $ */
+/* $OpenBSD: tls_util.c,v 1.11 2018/02/08 05:56:49 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -24,6 +24,41 @@
 
 #include "tls.h"
 #include "tls_internal.h"
+
+static void *
+memdup(const void *in, size_t len)
+{
+	void *out;
+
+	if ((out = malloc(len)) == NULL)
+		return NULL;
+	memcpy(out, in, len);
+	return out;
+}
+
+int
+tls_set_mem(char **dest, size_t *destlen, const void *src, size_t srclen)
+{
+	free(*dest);
+	*dest = NULL;
+	*destlen = 0;
+	if (src != NULL)
+		if ((*dest = memdup(src, srclen)) == NULL)
+			return -1;
+	*destlen = srclen;
+	return 0;
+}
+
+int
+tls_set_string(const char **dest, const char *src)
+{
+	free((char *)*dest);
+	*dest = NULL;
+	if (src != NULL)
+		if ((*dest = strdup(src)) == NULL)
+			return -1;
+	return 0;
+}
 
 /*
  * Extract the host and port from a colon separated value. For a literal IPv6
