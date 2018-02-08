@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.14 2018/02/07 06:26:14 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.15 2018/02/08 09:01:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -204,6 +204,9 @@ gre_print_0(const u_char *p, u_int length)
 	printf(" ");
 
 	switch (proto) {
+	case 0:
+		printf("keep-alive");
+		break;
 	case ETHERTYPE_IP:
 		ip_print(p, length);
 		break;
