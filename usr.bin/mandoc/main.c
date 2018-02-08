@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.205 2017/08/21 15:41:26 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.206 2018/02/08 01:36:38 tb Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1152,7 +1152,7 @@ spawn_pager(struct tag_files *tag_files)
 	if (dup2(tag_files->ofd, STDOUT_FILENO) == -1)
 		err((int)MANDOCLEVEL_SYSERR, "pager stdout");
 	close(tag_files->ofd);
-	close(tag_files->tfd);
+	assert(tag_files->tfd == -1);
 
 	/* Do not start the pager before controlling the terminal. */
 
