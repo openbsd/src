@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.318 2017/11/28 16:05:47 bluhm Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.319 2018/02/08 02:26:39 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -515,7 +515,7 @@ const char	*pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
 const char	*pf_scounters[FCNT_MAX+1] = FCNT_NAMES;
 
 void
-print_status(struct pf_status *s, int opts)
+print_status(struct pf_status *s, struct pfctl_watermarks *synflwats, int opts)
 {
 	char			statline[80], *running, *debug;
 	time_t			runtime = 0;
@@ -631,6 +631,11 @@ print_status(struct pf_status *s, int opts)
 			else
 				printf("%14s\n", "");
 		}
+	}
+	if (opts & PF_OPT_VERBOSE) {
+		printf("Adaptive Syncookies Watermarks\n");
+		printf("  %-25s %14d states\n", "start", synflwats->hi);
+		printf("  %-25s %14d states\n", "end", synflwats->lo);
 	}
 }
 

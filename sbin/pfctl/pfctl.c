@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.352 2018/02/06 23:47:47 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.353 2018/02/08 02:26:39 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1106,14 +1106,22 @@ int
 pfctl_show_status(int dev, int opts)
 {
 	struct pf_status status;
+	struct pfctl_watermarks wats;
+	struct pfioc_synflwats iocwats;
 
 	if (ioctl(dev, DIOCGETSTATUS, &status)) {
 		warn("DIOCGETSTATUS");
 		return (-1);
 	}
+	if (ioctl(dev, DIOCGETSYNFLWATS, &iocwats)) {
+		warn("DIOCGETSYNFLWATS");
+		return (-1);
+	}
+	wats.hi = iocwats.hiwat;
+	wats.lo = iocwats.lowat;
 	if (opts & PF_OPT_SHOWALL)
 		pfctl_print_title("INFO:");
-	print_status(&status, opts);
+	print_status(&status, &wats, opts);
 	return (0);
 }
 
