@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_syncookies.c,v 1.4 2018/02/08 02:25:44 henning Exp $ */
+/*	$OpenBSD: pf_syncookies.c,v 1.5 2018/02/08 09:15:46 henning Exp $ */
 
 /* Copyright (c) 2016,2017 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2016 Alexandr Nedvedicky <sashan@openbsd.org>
@@ -132,8 +132,8 @@ pf_syncookies_init(void)
 {
 	timeout_set(&pf_syncookie_status.keytimeout,
 	    pf_syncookie_rotate, NULL);
-	pf_syncookie_status.hiwat = PFSTATE_HIWAT/4;
-	pf_syncookie_status.lowat = PFSTATE_HIWAT/8;
+	pf_syncookie_status.hiwat = PFSTATE_HIWAT * PF_SYNCOOKIES_HIWATPCT/100;
+	pf_syncookie_status.lowat = PFSTATE_HIWAT * PF_SYNCOOKIES_LOWATPCT/100;
 	pf_syncookies_setmode(PF_SYNCOOKIES_NEVER);
 }
 

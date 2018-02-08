@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.353 2018/02/08 02:26:39 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.354 2018/02/08 09:15:46 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1752,6 +1752,9 @@ pfctl_init_options(struct pfctl *pf)
 
 	pf->limit[PF_LIMIT_STATES] = PFSTATE_HIWAT;
 
+	pf->syncookieswat[0] = PF_SYNCOOKIES_LOWATPCT;
+	pf->syncookieswat[1] = PF_SYNCOOKIES_HIWATPCT;
+
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_MAXCLUSTERS;
 	size = sizeof(mcl);
@@ -1801,15 +1804,6 @@ pfctl_load_options(struct pfctl *pf)
 		pf->timeout_set[PFTM_ADAPTIVE_END] = 1;
 	}
 
-	/*
-	 * if the states limit has been set adjust the synflood detection
-	 * hiwat and lowat. Eventually they should be tunables.
-	 */
-	if (pf->limit_set[PF_LIMIT_STATES])
-		if (pfctl_set_synflwats(pf, pf->limit[PF_LIMIT_STATES] / 8,
-		    pf->limit[PF_LIMIT_STATES] / 4))
-			error = 1;
-
 	/* load timeouts */
 	for (i = 0; i < PFTM_MAX; i++)
 		if (pfctl_load_timeout(pf, i, pf->timeout[i]))
@@ -1834,6 +1828,23 @@ pfctl_load_options(struct pfctl *pf)
 	/* load syncookies settings */
 	if (pf->syncookies_set && pfctl_load_syncookies(pf, pf->syncookies))
 		error = 1;
+	if (pf->syncookieswat_set) {
+		struct pfioc_limit pl;
+		unsigned curlim;
+
+		if (pf->limit_set[PF_LIMIT_STATES])
+			curlim = pf->limit[PF_LIMIT_STATES];
+		else {
+			memset(&pl, 0, sizeof(pl));
+			pl.index = pf_limits[PF_LIMIT_STATES].index;
+			if (ioctl(dev, DIOCGETLIMIT, &pl))
+				err(1, "DIOCGETLIMIT");
+			curlim = pl.limit;
+		}
+		if (pfctl_set_synflwats(pf, curlim * pf->syncookieswat[0]/100,
+		    curlim * pf->syncookieswat[1]/100))
+			error = 1;
+	}
 
 	return (error);
 }
@@ -1958,16 +1969,39 @@ pfctl_set_reassembly(struct pfctl *pf, int on, int nodf)
 }
 
 int
-pfctl_set_syncookies(struct pfctl *pf, u_int8_t val)
+pfctl_set_syncookies(struct pfctl *pf, u_int8_t val, struct pfctl_watermarks *w)
 {
+	if (val != PF_SYNCOOKIES_ADAPTIVE && w != NULL) {
+		warnx("syncookies start/end only apply to adaptive");
+		return (1);
+	}
+	if (val == PF_SYNCOOKIES_ADAPTIVE && w != NULL) {
+		if (!w->hi)
+			w->hi = PF_SYNCOOKIES_HIWATPCT;
+		if (!w->lo)
+			w->lo = w->hi / 2;
+		if (w->lo >= w->hi) {
+			warnx("start must be higher than end");
+			return (1);
+		}
+		pf->syncookieswat[0] = w->lo;
+		pf->syncookieswat[1] = w->hi;
+		pf->syncookieswat_set = 1;
+	}
+
 	if (pf->opts & PF_OPT_VERBOSE) {
 		if (val == PF_SYNCOOKIES_NEVER)
 			printf("set syncookies never\n");
 		else if (val == PF_SYNCOOKIES_ALWAYS)
 			printf("set syncookies always\n");
-		else if (val == PF_SYNCOOKIES_ADAPTIVE)
-			printf("set syncookies adaptive\n");
-		else {	/* cannot happen */
+		else if (val == PF_SYNCOOKIES_ADAPTIVE) {
+			if (pf->syncookieswat_set)
+				printf("set syncookies adaptive (start %u%%, "
+				    "end %u%%)\n", pf->syncookieswat[1],
+				    pf->syncookieswat[0]);
+			else
+				printf("set syncookies adaptive\n");
+		} else {	/* cannot happen */
 			warnx("king bula ate all syncookies");
 			return (1);
 		}

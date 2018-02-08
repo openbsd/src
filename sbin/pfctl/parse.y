@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.669 2018/02/06 23:47:47 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.670 2018/02/08 09:15:46 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -342,6 +342,7 @@ struct table_opts {
 
 struct node_hfsc_opts	 hfsc_opts;
 struct node_state_opt	*keep_state_defaults = NULL;
+struct pfctl_watermarks	 syncookie_opts;
 
 int		 disallow_table(struct node_host *, const char *);
 int		 disallow_urpf_failed(struct node_host *, const char *);
@@ -449,6 +450,7 @@ typedef struct {
 		struct table_opts	 table_opts;
 		struct pool_opts	 pool_opts;
 		struct node_hfsc_opts	 hfsc_opts;
+		struct pfctl_watermarks	*watermarks;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -527,6 +529,7 @@ int	parseport(char *, struct range *r, int);
 %type	<v.scrub_opts>		scrub_opts scrub_opt scrub_opts_l
 %type	<v.table_opts>		table_opts table_opt table_opts_l
 %type	<v.pool_opts>		pool_opts pool_opt pool_opts_l
+%type	<v.watermarks>		syncookie_opts
 %%
 
 ruleset		: /* empty */
@@ -686,8 +689,8 @@ option		: SET REASSEMBLE yesno optnodf		{
 			}
 			keep_state_defaults = $3;
 		}
-		| SET SYNCOOKIES syncookie_val {
-			if (pfctl_set_syncookies(pf, $3)) {
+		| SET SYNCOOKIES syncookie_val syncookie_opts {
+			if (pfctl_set_syncookies(pf, $3, $4)) {
 				yyerror("error setting syncookies");
 				YYERROR;
 			}
@@ -703,6 +706,38 @@ syncookie_val	: STRING	{
 				$$ = PF_SYNCOOKIES_ALWAYS;
 			else {
 				yyerror("illegal value for syncookies");
+				YYERROR;
+			}
+		}
+		;
+
+syncookie_opts	: /* empty */			{ $$ = NULL; }
+		| {
+			memset(&syncookie_opts, 0, sizeof(syncookie_opts));
+		  } '(' syncookie_opt_l ')'	{ $$ = &syncookie_opts; }
+		;
+
+syncookie_opt_l	: syncookie_opt_l comma syncookie_opt
+		| syncookie_opt
+		;
+
+syncookie_opt	: STRING STRING {
+			double	 val;
+			char	*cp;
+
+			val = strtod($2, &cp);
+			if (cp == NULL || strcmp(cp, "%"))
+				YYERROR;
+			if (val <= 0 || val > 100) {
+				yyerror("illegal percentage value");
+				YYERROR;
+			}
+			if (!strcmp($1, "start")) {
+				syncookie_opts.hi = val;
+			} else if (!strcmp($1, "end")) {
+				syncookie_opts.lo = val;
+			} else {
+				yyerror("illegal syncookie option");
 				YYERROR;
 			}
 		}

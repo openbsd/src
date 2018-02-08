@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.473 2018/02/08 02:25:44 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.474 2018/02/08 09:15:46 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1325,6 +1325,9 @@ struct pf_status {
 #define	PF_SYNCOOKIES_ALWAYS	1
 #define	PF_SYNCOOKIES_ADAPTIVE	2
 #define	PF_SYNCOOKIES_MODE_MAX	PF_SYNCOOKIES_ADAPTIVE
+
+#define	PF_SYNCOOKIES_HIWATPCT	25
+#define	PF_SYNCOOKIES_LOWATPCT	PF_SYNCOOKIES_HIWATPCT/2
 
 #define PF_PRIO_ZERO		0xff		/* match "prio 0" packets */
 
