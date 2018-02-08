@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.10 2018/01/05 08:13:32 mpi Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.11 2018/02/08 18:02:06 jca Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -218,7 +218,6 @@ traphandler_parse(char *buf, size_t n, struct ber_element **req,
 	u_int			 vers, gtype, etype;
 
 	bzero(&ber, sizeof(ber));
-	ber.fd = -1;
 	ber_set_application(&ber, smi_application);
 	ber_set_readbuf(&ber, buf, n);
 

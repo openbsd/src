@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.2 2017/02/11 20:40:03 guenther Exp $ */
+/*	$OpenBSD: ber.h,v 1.3 2018/02/08 18:02:06 jca Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -35,7 +35,6 @@ struct ber_element {
 };
 
 struct ber {
-	int	 fd;
 	u_char	*br_wbuf;
 	u_char	*br_wptr;
 	u_char	*br_wend;

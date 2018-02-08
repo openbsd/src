@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.30 2018/01/20 18:49:12 rob Exp $	*/
+/*	$OpenBSD: trap.c,v 1.31 2018/02/08 18:02:06 jca Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -183,7 +183,6 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 		ber_link_elements(c, elm);
 
 	bzero(&ber, sizeof(ber));
-	ber.fd = -1;
 
 	TAILQ_FOREACH(tr, &snmpd_env->sc_trapreceivers, entry) {
 		if (tr->sa_oid != NULL && tr->sa_oid->bo_n) {

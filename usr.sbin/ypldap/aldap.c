@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.38 2017/12/21 05:09:56 jmatthew Exp $ */
-/*	$OpenBSD: aldap.c,v 1.38 2017/12/21 05:09:56 jmatthew Exp $ */
+/*	$Id: aldap.c,v 1.39 2018/02/08 18:02:06 jca Exp $ */
+/*	$OpenBSD: aldap.c,v 1.39 2018/02/08 18:02:06 jca Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -91,7 +91,6 @@ aldap_init(int fd)
 		return NULL;
 	a->buf = evbuffer_new();
 	a->fd = fd;
-	a->ber.fd = -1;
 	ber_set_application(&a->ber, aldap_application);
 
 	return a;
@@ -318,7 +317,6 @@ aldap_create_page_control(struct ber_element *elm, int size,
 	struct ber_element *ber = NULL;
 
 	c.br_wbuf = NULL;
-	c.fd = -1;
 
 	ber = ber_add_sequence(NULL);
 
@@ -462,7 +460,6 @@ aldap_parse_page_control(struct ber_element *control, size_t len)
 	struct aldap_page_control *page;
 
 	b.br_wbuf = NULL;
-	b.fd = -1;
 	ber_scanf_elements(control, "ss", &oid, &encoded);
 	ber_set_readbuf(&b, encoded, control->be_next->be_len);
 	elm = ber_read_elements(&b, NULL);

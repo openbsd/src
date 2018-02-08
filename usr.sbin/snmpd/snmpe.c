@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.50 2017/08/12 16:31:09 florian Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.51 2018/02/08 18:02:06 jca Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -514,7 +514,6 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 	msg->sm_datalen = (size_t)len;
 
 	bzero(&msg->sm_ber, sizeof(msg->sm_ber));
-	msg->sm_ber.fd = -1;
 	ber_set_application(&msg->sm_ber, smi_application);
 	ber_set_readbuf(&msg->sm_ber, msg->sm_data, msg->sm_datalen);
 
