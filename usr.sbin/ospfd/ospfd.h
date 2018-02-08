@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.98 2018/02/05 12:11:28 remi Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.99 2018/02/08 00:18:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -46,7 +46,7 @@
 #define	READ_BUF_SIZE		65535
 #define	PKG_DEF_SIZE		512	/* compromise */
 #define	RT_BUF_SIZE		16384
-#define	MAX_RTSOCK_BUF		128 * 1024
+#define	MAX_RTSOCK_BUF		(2 * 1024 * 1024)
 
 #define	OSPFD_FLAG_NO_FIB_UPDATE	0x0001
 #define	OSPFD_FLAG_STUB_ROUTER		0x0002
