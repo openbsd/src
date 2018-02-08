@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.94 2018/02/08 22:08:18 dlg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.95 2018/02/08 22:11:06 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1056,7 +1056,7 @@ gre_tunnel_ioctl(struct ifnet *ifp, struct gre_tunnel *tunnel,
 		break;
 
 	case SIOCSLIFPHYTTL:
-		if (ifr->ifr_ttl < 0 || ifr->ifr_ttl > 0xff) {
+		if (ifr->ifr_ttl < 1 || ifr->ifr_ttl > 0xff) {
 			error = EINVAL;
 			break;
 		}
