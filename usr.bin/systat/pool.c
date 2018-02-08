@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.15 2017/07/31 04:23:30 dlg Exp $	*/
+/*	$OpenBSD: pool.c,v 1.16 2018/02/08 13:22:25 martijn Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -245,19 +245,13 @@ int
 sort_psize_callback(const void *s1, const void *s2)
 {
 	struct pool_info *p1, *p2;
-	size_t ps1, ps2;
 
 	p1 = (struct pool_info *)s1;
 	p2 = (struct pool_info *)s2;
 
-	ps1  = (size_t)(p1->pool.pr_nget - p1->pool.pr_nput) *
-	    (size_t)p1->pool.pr_size;
-	ps2  = (size_t)(p2->pool.pr_nget - p2->pool.pr_nput) *
-	    (size_t)p2->pool.pr_size;
-
-	if (ps1 <  ps2)
+	if (p1->pool.pr_size <  p2->pool.pr_size)
 		return sortdir;
-	if (ps1 >  ps2)
+	if (p1->pool.pr_size >  p2->pool.pr_size)
 		return -sortdir;
 
 	return sort_npage_callback(s1, s2);
