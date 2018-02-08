@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.92 2018/02/08 04:58:55 dlg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.93 2018/02/08 05:00:37 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -172,8 +172,6 @@ static int
 struct gre_softc {
 	struct gre_tunnel	sc_tunnel; /* must be first */
 	struct ifnet		sc_if;
-
-	struct ifmedia		sc_media;
 
 	struct timeout		sc_ka_send;
 	struct timeout		sc_ka_hold;
