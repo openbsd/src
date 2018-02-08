@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.336 2018/02/08 06:02:09 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.337 2018/02/08 09:37:17 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2485,8 +2485,12 @@ acpi_sleep_state(struct acpi_softc *sc, int sleepmode)
 
 #ifdef HIBERNATE
 	if (sleepmode == ACPI_SLEEP_HIBERNATE) {
-		uvmpd_hibernate();
+		/*
+		 * Discard useless memory to reduce fragmentation,
+		 * and attempt to create a hibernate work area
+		 */
 		hibernate_suspend_bufcache();
+		uvmpd_hibernate();
 		if (hibernate_alloc()) {
 			printf("%s: failed to allocate hibernate memory\n",
 			    sc->sc_dev.dv_xname);
