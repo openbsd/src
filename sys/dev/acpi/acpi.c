@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.337 2018/02/08 09:37:17 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.338 2018/02/08 09:42:48 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2511,6 +2511,18 @@ acpi_sleep_state(struct acpi_softc *sc, int sleepmode)
 #ifdef MULTIPROCESSOR
 	acpi_sleep_mp();
 #endif
+
+#ifdef HIBERNATE
+	if (sleepmode == ACPI_SLEEP_HIBERNATE) {
+		/*
+		 * We've just done various forms of syncing to disk
+		 * churned lots of memory dirty.  We don't need to
+		 * save that dirty memory to hibernate, so release it.
+		 */
+		hibernate_suspend_bufcache();
+		uvmpd_hibernate();
+	}
+#endif /* HIBERNATE */
 
 	resettodr();
 
