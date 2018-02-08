@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_syncookies.c,v 1.3 2018/02/07 05:48:47 henning Exp $ */
+/*	$OpenBSD: pf_syncookies.c,v 1.4 2018/02/08 02:25:44 henning Exp $ */
 
 /* Copyright (c) 2016,2017 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2016 Alexandr Nedvedicky <sashan@openbsd.org>
@@ -162,6 +162,14 @@ pf_syncookies_setwats(u_int32_t hiwat, u_int32_t lowat)
 
 	pf_syncookie_status.hiwat = hiwat;
 	pf_syncookie_status.lowat = lowat;
+	return (0);
+}
+
+int
+pf_syncookies_getwats(struct pfioc_synflwats *wats)
+{
+	wats->hiwat = pf_syncookie_status.hiwat;
+	wats->lowat = pf_syncookie_status.lowat;
 	return (0);
 }
 
