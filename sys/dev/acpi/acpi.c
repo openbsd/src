@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.335 2017/11/29 22:51:01 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.336 2018/02/08 06:02:09 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -61,6 +61,7 @@
 
 #include "wd.h"
 #include "wsdisplay.h"
+#include "softraid.h"
 
 #ifdef ACPI_DEBUG
 int	acpi_debug = 16;
@@ -2443,6 +2444,9 @@ acpi_sleep_state(struct acpi_softc *sc, int sleepmode)
 	size_t rndbuflen = 0;
 	char *rndbuf = NULL;
 	int state, s;
+#if NSOFTRAID > 0
+	extern void sr_quiesce(void);
+#endif
 
 	switch (sleepmode) {
 	case ACPI_SLEEP_SUSPEND:
@@ -2495,6 +2499,9 @@ acpi_sleep_state(struct acpi_softc *sc, int sleepmode)
 	if (config_suspend_all(DVACT_QUIESCE))
 		goto fail_quiesce;
 
+#if NSOFTRAID > 0
+	sr_quiesce();
+#endif
 	bufq_quiesce();
 
 #ifdef MULTIPROCESSOR

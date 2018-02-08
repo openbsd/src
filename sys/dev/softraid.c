@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.390 2018/02/07 06:16:08 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.391 2018/02/08 06:02:09 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3922,6 +3922,12 @@ sr_discipline_shutdown(struct sr_discipline *sd, int meta_save, int dying)
 		    EWOULDBLOCK)
 			break;
 
+	if (dying == -1) {
+		sd->sd_ready = 1;
+		splx(s);
+		return;
+	}
+
 #ifndef SMALL_KERNEL
 	sr_sensors_delete(sd);
 #endif /* SMALL_KERNEL */
@@ -4532,6 +4538,18 @@ sr_validate_stripsize(u_int32_t b)
 		return(-1);
 
 	return (s);
+}
+
+void
+sr_quiesce(void)
+{
+	struct sr_softc		*sc = softraid0;
+	struct sr_discipline	*sd, *nsd;
+
+	/* Shutdown disciplines in reverse attach order. */
+	TAILQ_FOREACH_REVERSE_SAFE(sd, &sc->sc_dis_list,
+	    sr_discipline_list, sd_link, nsd)
+		sr_discipline_shutdown(sd, 1, -1);
 }
 
 void
