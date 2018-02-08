@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.23 2017/09/12 08:43:14 mpi Exp $
+# $OpenBSD: Makefile,v 1.24 2018/02/08 13:51:08 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -358,6 +358,26 @@ rttest${n}:
 	${RCMD} add -mpath 192.0.3/24 -priority 12 192.0.2.2
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Check that next-hop L2 cache are cloned using the correct MPATH route
+n=	32
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	# Use vether(4) and vlan(4) because we need IFT_ETHER interfaces
+	# for the auto-magic RTF_CLONING routes.
+	${SUDO} ifconfig vether99 rdomain ${RDOMAIN} lladdr fe:e1:ba:d4:c8:1d up
+	${SUDO} ifconfig vether99 130.102.71.68/27
+	${SUDO} ifconfig vlan99 rdomain ${RDOMAIN} parent vether99 vnetid 3 up
+	${SUDO} ifconfig vlan99 130.102.71.70/27
+	# Inserting such route generate the insertion of a RTF_CLONED entry
+	# attached to the specified interface
+	${RCMD} add -net 192.168.67.0/25 130.102.71.67 -priority 9 -ifp vether99
+	${RCMD} add -net 192.168.67.128/25 130.102.71.67 -priority 3 -ifp vlan99
+	${RCMD} show -inet 2>&1 | \
+		sed -e "s,link\#[0-9 ]*U,link#              U," | \
+		cat > ${.CURDIR}/${.TARGET}.ok
+	${SUDO} ifconfig vlan99 destroy
+	${SUDO} ifconfig vether99 destroy
 
 REGRESS_TARGETS=netmask ${RTTEST_TARGETS}
 REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
