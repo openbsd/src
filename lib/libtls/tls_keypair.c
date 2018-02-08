@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_keypair.c,v 1.2 2018/02/08 08:09:10 jsing Exp $ */
+/* $OpenBSD: tls_keypair.c,v 1.3 2018/02/08 10:03:19 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -90,6 +90,10 @@ tls_keypair_clear(struct tls_keypair *keypair)
 {
 	tls_keypair_set_cert_mem(keypair, NULL, 0);
 	tls_keypair_set_key_mem(keypair, NULL, 0);
+	tls_keypair_set_ocsp_staple_mem(keypair, NULL, 0);
+
+	free(keypair->pubkey_hash);
+	keypair->pubkey_hash = NULL;
 }
 
 void
@@ -99,11 +103,6 @@ tls_keypair_free(struct tls_keypair *keypair)
 		return;
 
 	tls_keypair_clear(keypair);
-
-	free(keypair->cert_mem);
-	free(keypair->key_mem);
-	free(keypair->ocsp_staple);
-	free(keypair->pubkey_hash);
 
 	free(keypair);
 }
