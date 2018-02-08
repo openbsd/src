@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.355 2018/02/08 13:15:32 mpi Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.356 2018/02/08 21:54:55 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2742,8 +2742,12 @@ phys_status(int force)
 
 	if (dstport)
 		printf(":%u", ntohs(dstport));
-	if (ioctl(s, SIOCGLIFPHYTTL, (caddr_t)&ifr) == 0 && ifr.ifr_ttl > 0)
-		printf(" ttl %d", ifr.ifr_ttl);
+	if (ioctl(s, SIOCGLIFPHYTTL, (caddr_t)&ifr) == 0) {
+		if (ifr.ifr_ttl == -1)
+			printf(" ttl copy");
+		else if (ifr.ifr_ttl > 0)
+			printf(" ttl %d", ifr.ifr_ttl);
+	}
 #ifndef SMALL
 	if (ioctl(s, SIOCGLIFPHYRTABLE, (caddr_t)&ifr) == 0 &&
 	    (rdomainid != 0 || ifr.ifr_rdomainid != 0))
@@ -3265,9 +3269,13 @@ settunnelttl(const char *id, int param)
 	const char *errmsg = NULL;
 	int ttl;
 
-	ttl = strtonum(id, 0, 0xff, &errmsg);
-	if (errmsg)
-		errx(1, "tunnelttl %s: %s", id, errmsg);
+	if (strcmp(id, "copy") == 0)
+		ttl = -1;
+	else {
+		ttl = strtonum(id, 0, 0xff, &errmsg);
+		if (errmsg)
+			errx(1, "tunnelttl %s: %s", id, errmsg);
+	}
 
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_ttl = ttl;
