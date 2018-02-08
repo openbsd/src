@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mobileip.c,v 1.3 2018/02/07 06:02:01 dlg Exp $ */
+/*	$OpenBSD: if_mobileip.c,v 1.4 2018/02/08 21:55:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -387,6 +387,10 @@ mobileip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCDIFPHYADDR:
 		error = mobileip_del_tunnel(sc);
+		break;
+
+	case SIOCGLIFPHYTTL:
+		ifr->ifr_ttl = -1;
 		break;
 
 	case SIOCSLIFPHYRTABLE:
