@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.71 2017/09/20 17:05:17 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.72 2018/02/08 08:04:12 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -269,7 +269,9 @@ tls_cert_hash(X509 *cert, char **hash)
 	char d[EVP_MAX_MD_SIZE], *dhex = NULL;
 	int dlen, rv = -1;
 
+	free(*hash);
 	*hash = NULL;
+
 	if (X509_digest(cert, EVP_sha256(), d, &dlen) != 1)
 		goto err;
 
@@ -296,6 +298,7 @@ tls_keypair_pubkey_hash(struct tls_keypair *keypair, char **hash)
 	char d[EVP_MAX_MD_SIZE], *dhex = NULL;
 	int dlen, rv = -1;
 
+	free(*hash);
 	*hash = NULL;
 
 	if ((membio = BIO_new_mem_buf(keypair->cert_mem,
