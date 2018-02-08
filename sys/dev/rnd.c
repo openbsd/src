@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.195 2017/11/26 17:06:46 mikeb Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.196 2018/02/08 09:27:44 mortimer Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -649,6 +649,41 @@ arc4random_buf(void *buf, size_t n)
 	mtx_enter(&rndlock);
 	_rs_random_buf(buf, n);
 	mtx_leave(&rndlock);
+}
+
+/*
+ * Allocate a new ChaCha20 context for the caller to use.
+ */
+struct arc4random_ctx *
+arc4random_ctx_new()
+{
+	char keybuf[KEYSZ + IVSZ];
+
+	chacha_ctx *ctx = malloc(sizeof(chacha_ctx), M_TEMP, M_WAITOK);
+	arc4random_buf(keybuf, KEYSZ + IVSZ);
+	chacha_keysetup(ctx, keybuf, 256);
+	chacha_ivsetup(ctx, keybuf + KEYSZ, NULL);
+	explicit_bzero(keybuf, sizeof(keybuf));
+	return (struct arc4random_ctx *)ctx;
+}
+
+/*
+ * Free a ChaCha20 context created by arc4random_ctx_new()
+ */
+void
+arc4random_ctx_free(struct arc4random_ctx *ctx)
+{
+	explicit_bzero(ctx, sizeof(chacha_ctx));
+	free(ctx, M_TEMP, sizeof(chacha_ctx));
+}
+
+/*
+ * Use a given ChaCha20 context to fill a buffer
+ */
+void
+arc4random_ctx_buf(struct arc4random_ctx *ctx, void *buf, size_t n)
+{
+	chacha_encrypt_bytes((chacha_ctx *)ctx, buf, buf, n);
 }
 
 /*

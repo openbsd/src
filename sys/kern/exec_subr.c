@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.52 2017/05/18 18:50:32 kettenis Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.53 2018/02/08 09:27:44 mortimer Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -283,35 +283,46 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
  * vmcmd_randomize():
  *	handle vmcmd which specifies a randomized address space region.
  */
-
+#define RANDOMIZE_CTX_THRESHOLD 512
 int
 vmcmd_randomize(struct proc *p, struct exec_vmcmd *cmd)
 {
-	char *buf;
 	int error;
-	size_t off = 0, len;
+	struct arc4random_ctx *ctx;
+	char *buf;
+	size_t count, sublen, off = 0;
+	size_t len = cmd->ev_len;
 
-	if (cmd->ev_len == 0)
+	if (len == 0)
 		return (0);
-	if (cmd->ev_len > ELF_RANDOMIZE_LIMIT)
+	if (len > ELF_RANDOMIZE_LIMIT)
 		return (EINVAL);
 
 	buf = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-	len = cmd->ev_len;
-	do {
-		size_t sublen = MIN(len, PAGE_SIZE);
-
-		arc4random_buf(buf, sublen);
-		error = copyout(buf, (void *)cmd->ev_addr + off, sublen);
-		if (error)
-			break;
-		off += sublen;
-		len -= sublen;
-		if (len)
-			yield();
-	} while (len);
+	if (len < RANDOMIZE_CTX_THRESHOLD) {
+		arc4random_buf(buf, len);
+		error = copyout(buf, (void *)cmd->ev_addr, len);
+		explicit_bzero(buf, len);
+	} else {
+		ctx = arc4random_ctx_new();
+		count = 0;
+		do {
+			sublen = MIN(len, PAGE_SIZE);
+			arc4random_ctx_buf(ctx, buf, sublen);
+			error = copyout(buf, (void *)cmd->ev_addr + off, sublen);
+			if (error)
+				break;
+			off += sublen;
+			len -= sublen;
+			if (++count == 32) {
+				count = 0;
+				yield();
+			}
+		} while (len);
+		arc4random_ctx_free(ctx);
+		explicit_bzero(buf, PAGE_SIZE);
+	}
 	free(buf, M_TEMP, PAGE_SIZE);
-
 	return (error);
 }
 
