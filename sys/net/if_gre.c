@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.97 2018/02/09 00:03:13 dlg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.98 2018/02/09 10:12:38 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -136,6 +136,11 @@ struct gre_h_wccp {
 #define GRE_KA_HOLD		2
 #define GRE_KA_UP		3
 
+union gre_addr {
+	struct in_addr		in4;
+	struct in6_addr		in6;
+};
+
 struct gre_tunnel {
 	RBT_ENTRY(gre_entry)	t_entry;
 
@@ -146,8 +151,12 @@ struct gre_tunnel {
 	uint32_t		t_key;
 
 	u_int			t_rtableid;
-	uint32_t		t_src[4];
-	uint32_t		t_dst[4];
+	union gre_addr		t_src;
+#define t_src4	t_src.in4
+#define t_src6	t_src.in6
+	union gre_addr		t_dst;
+#define t_dst4	t_dst.in4
+#define t_dst6	t_dst.in6
 	int			t_ttl;
 	sa_family_t		t_af;
 };
@@ -405,8 +414,8 @@ gre_input(struct mbuf **mp, int *offp, int type, int af)
 
 	key.t_af = AF_INET;
 	key.t_ttl = ip->ip_ttl;
-	key.t_src[0] = ip->ip_dst.s_addr;
-	key.t_dst[0] = ip->ip_src.s_addr;
+	key.t_src4 = ip->ip_dst;
+	key.t_dst4 = ip->ip_src;
 
 	if (gre_input_key(mp, offp, type, af, &key) == -1)
 		return (rip_input(mp, offp, type, af));
@@ -426,8 +435,8 @@ gre_input6(struct mbuf **mp, int *offp, int type, int af)
 
 	key.t_af = AF_INET6;
 	key.t_ttl = ip6->ip6_hlim;
-	memcpy(key.t_src, &ip6->ip6_dst, sizeof(key.t_src));
-	memcpy(key.t_dst, &ip6->ip6_src, sizeof(key.t_dst));
+	key.t_src6 = ip6->ip6_dst;
+	key.t_dst6 = ip6->ip6_src;
 
 	if (gre_input_key(mp, offp, type, af, &key) == -1)
 		return (rip6_input(mp, offp, type, af));
@@ -1017,8 +1026,8 @@ gre_ip_encap(const struct gre_tunnel *tunnel, struct mbuf *m,
 		ip->ip_len = htons(m->m_pkthdr.len);
 		ip->ip_ttl = ttl;
 		ip->ip_p = IPPROTO_GRE;
-		ip->ip_src.s_addr = tunnel->t_src[0];
-		ip->ip_dst.s_addr = tunnel->t_dst[0];
+		ip->ip_src = tunnel->t_src4;
+		ip->ip_dst = tunnel->t_dst4;
 		break;
 	}
 #ifdef INET6
@@ -1037,8 +1046,8 @@ gre_ip_encap(const struct gre_tunnel *tunnel, struct mbuf *m,
 		ip6->ip6_plen = htons(len);
 		ip6->ip6_nxt = IPPROTO_GRE;
 		ip6->ip6_hlim = ttl;
-		memcpy(&ip6->ip6_src, tunnel->t_src, sizeof(ip6->ip6_src));
-		memcpy(&ip6->ip6_dst, tunnel->t_dst, sizeof(ip6->ip6_dst));
+		ip6->ip6_src = tunnel->t_src6;
+		ip6->ip6_dst = tunnel->t_dst6;
 		break;
 	}
 #endif /* INET6 */
@@ -1400,8 +1409,8 @@ gre_keepalive_send(void *arg)
 	ttl = sc->sc_tunnel.t_ttl == -1 ? ip_defttl : sc->sc_tunnel.t_ttl;
 
 	t.t_af = sc->sc_tunnel.t_af;
-	memcpy(t.t_src, sc->sc_tunnel.t_dst, sizeof(t.t_src));
-	memcpy(t.t_dst, sc->sc_tunnel.t_src, sizeof(t.t_dst));
+	t.t_src = sc->sc_tunnel.t_dst;
+	t.t_dst = sc->sc_tunnel.t_src;
 	m = gre_ip_encap(&t, m, ttl, 0);
 	if (m == NULL)
 		return;
@@ -1490,8 +1499,8 @@ gre_set_tunnel(struct gre_tunnel *tunnel, struct if_laddrreq *req)
 		    IN_MULTICAST(dst4->sin_addr.s_addr))
 			return (EINVAL);
 
-		tunnel->t_src[0] = src4->sin_addr.s_addr;
-		tunnel->t_dst[0] = dst4->sin_addr.s_addr;
+		tunnel->t_src4 = src4->sin_addr;
+		tunnel->t_dst4 = dst4->sin_addr;
 
 		break;
 #ifdef INET6
@@ -1509,13 +1518,11 @@ gre_set_tunnel(struct gre_tunnel *tunnel, struct if_laddrreq *req)
 		    IN6_IS_ADDR_MULTICAST(&dst6->sin6_addr))
 			return (EINVAL);
 
-		error = in6_embedscope((struct in6_addr *)tunnel->t_src,
-		    src6, NULL);
+		error = in6_embedscope(&tunnel->t_src6, src6, NULL);
 		if (error != 0)
 			return (error);
 
-		error = in6_embedscope((struct in6_addr *)tunnel->t_dst,
-		    dst6, NULL);
+		error = in6_embedscope(&tunnel->t_dst6, dst6, NULL);
 		if (error != 0)
 			return (error);
 
@@ -1549,13 +1556,13 @@ gre_get_tunnel(struct gre_tunnel *tunnel, struct if_laddrreq *req)
 		memset(sin, 0, sizeof(*sin));
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(*sin);
-		sin->sin_addr.s_addr = tunnel->t_src[0];
+		sin->sin_addr = tunnel->t_src4;
 
 		sin = (struct sockaddr_in *)dst;
 		memset(sin, 0, sizeof(*sin));
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(*sin);
-		sin->sin_addr.s_addr = tunnel->t_dst[0];
+		sin->sin_addr = tunnel->t_dst4;
 
 		break;
 
@@ -1565,13 +1572,13 @@ gre_get_tunnel(struct gre_tunnel *tunnel, struct if_laddrreq *req)
 		memset(sin6, 0, sizeof(*sin6));
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_len = sizeof(*sin6);
-		in6_recoverscope(sin6, (struct in6_addr *)tunnel->t_src);
+		in6_recoverscope(sin6, &tunnel->t_src6);
 
 		sin6 = (struct sockaddr_in6 *)dst;
 		memset(sin6, 0, sizeof(*sin6));
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_len = sizeof(*sin6);
-		in6_recoverscope(sin6, (struct in6_addr *)tunnel->t_dst);
+		in6_recoverscope(sin6, &tunnel->t_dst6);
 
 		break;
 #endif
@@ -1700,34 +1707,15 @@ gre_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 }
 
 static inline int
-gre_ip_cmp(int af, const uint32_t *a, const uint32_t *b)
+gre_ip_cmp(int af, const union gre_addr *a, const union gre_addr *b)
 {
 	switch (af) {
 #ifdef INET6
 	case AF_INET6:
-		if (a[3] > b[3])
-			return (1);
-		if (a[3] < b[3])
-			return (-1);
-
-		if (a[2] > b[2])
-			return (1);
-		if (a[2] < b[2])
-			return (-1);
-
-		if (a[1] > b[1])
-			return (1);
-		if (a[1] < b[1])
-			return (-1);
-
-		/* FALLTHROUGH */
+		return (memcmp(&a->in6, &b->in6, sizeof(a->in6)));
 #endif /* INET6 */
 	case AF_INET:
-		if (a[0] > b[0])
-			return (1);
-		if (a[0] < b[0])
-			return (-1);
-		break;
+		return (memcmp(&a->in4, &b->in4, sizeof(a->in4)));
 	default:
 		panic("%s: unsupported af %d\n", __func__, af);
 	}
@@ -1754,11 +1742,11 @@ gre_cmp(const struct gre_tunnel *a, const struct gre_tunnel *b)
 	if (a->t_af < b->t_af)
 		return (-1);
 
-	rv = gre_ip_cmp(a->t_af, a->t_dst, b->t_dst);
+	rv = gre_ip_cmp(a->t_af, &a->t_dst, &b->t_dst);
 	if (rv != 0)
 		return (rv);
 
-	rv = gre_ip_cmp(a->t_af, a->t_src, b->t_src);
+	rv = gre_ip_cmp(a->t_af, &a->t_src, &b->t_src);
 	if (rv != 0)
 		return (rv);
 
