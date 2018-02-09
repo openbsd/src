@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mq_init.9,v 1.8 2016/04/15 05:05:21 dlg Exp $
+.\"     $OpenBSD: mq_init.9,v 1.9 2018/02/09 02:26:33 patrick Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 15 2016 $
+.Dd $Mdocdate: February 9 2018 $
 .Dt MQ_INIT 9
 .Os
 .Sh NAME
@@ -26,6 +26,7 @@
 .Nm mq_dechain ,
 .Nm mq_len ,
 .Nm mq_empty ,
+.Nm mq_full ,
 .Nm mq_purge ,
 .Nm mq_drops ,
 .Nm mq_set_maxlen ,
@@ -49,6 +50,8 @@
 .Fn mq_len "struct mbuf_queue *mq"
 .Ft int
 .Fn mq_empty "struct mbuf_queue *mq"
+.Ft int
+.Fn mq_full "struct mbuf_queue *mq"
 .Ft unsigned int
 .Fn mq_purge "struct mbuf_queue *mq"
 .Ft unsigned int
@@ -135,6 +138,10 @@ mbuf queue.
 Return if the
 .Fa mq
 mbuf queue is empty.
+.It Fn mq_full "struct mbuf_queue *mq"
+Return if the
+.Fa mq
+mbuf queue is full.
 .It Fn mq_purge "struct mbuf_queue *mq"
 Free all the mbufs on the
 .Fa mq
@@ -163,6 +170,7 @@ already exist on the queue.
 .Fn mq_dechain ,
 .Fn mq_len ,
 .Fn mq_empty ,
+.Fn mq_full ,
 .Fn mq_purge ,
 .Fn mq_drops ,
 .Fn mq_set_maxlen ,
@@ -188,6 +196,9 @@ returns the number of mbufs on the queue.
 .Pp
 .Fn mq_empty
 returns a non-zero value if the queue is empty, otherwise 0.
+.Pp
+.Fn mq_full
+returns a non-zero value if the queue is full, otherwise 0.
 .Pp
 .Fn mq_enqueue
 returns 0 if the mbuf was successfully queued, or non-zero if the

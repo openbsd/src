@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.233 2018/02/06 23:44:48 henning Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.234 2018/02/09 02:26:33 patrick Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -555,6 +555,7 @@ unsigned int		mq_purge(struct mbuf_queue *);
 
 #define	mq_len(_mq)		ml_len(&(_mq)->mq_list)
 #define	mq_empty(_mq)		ml_empty(&(_mq)->mq_list)
+#define	mq_full(_mq)		(mq_len((_mq)) >= (_mq)->mq_maxlen)
 #define	mq_drops(_mq)		((_mq)->mq_drops)
 #define	mq_set_maxlen(_mq, _l)	((_mq)->mq_maxlen = (_l))
 
