@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.socppc,v 1.58 2017/09/28 16:16:34 patrick Exp $
+#	$OpenBSD: Makefile.socppc,v 1.59 2018/02/09 03:59:15 tb Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -128,7 +128,7 @@ MACHINE_NAME!=  uname -n
 install: install-kernel-${MACHINE_NAME}
 .if !target(install-kernel-${MACHINE_NAME}})
 install-kernel-${MACHINE_NAME}:
-	cmp -s bsd /bsd || ln -f /bsd /obsd
+	[[ ! -f /bsd ]] || cmp -s bsd /bsd || ln -f /bsd /obsd
 	umask 077; cp bsd /nbsd
 	mv /nbsd /bsd
 .endif

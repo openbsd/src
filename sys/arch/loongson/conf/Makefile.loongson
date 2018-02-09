@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.69 2017/11/04 16:04:16 florian Exp $
+#	$OpenBSD: Makefile.loongson,v 1.70 2018/02/09 03:59:15 tb Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -155,7 +155,7 @@ lcore_access.o lcore_ddb.o lcore_float.o tlbhandler.o: assym.h
 pmon32.o: assym.h
 
 hardlink-obsd:
-	cmp -s bsd /bsd || ln -f /bsd /obsd
+	[[ ! -f /bsd ]] || cmp -s bsd /bsd || ln -f /bsd /obsd
 
 newinstall:
 	umask 077 && cp bsd /nbsd && mv /nbsd /bsd && \

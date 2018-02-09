@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.26 2018/01/28 17:19:29 kettenis Exp $
+#	$OpenBSD: Makefile.arm64,v 1.27 2018/02/09 03:59:15 tb Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -148,7 +148,7 @@ cpuswitch.o exception.o bcopy_page.o irq_dispatch.o support.o: assym.h
 locore.o vectors.o trampoline.o: assym.h
 
 hardlink-obsd:
-	cmp -s bsd /bsd || ln -f /bsd /obsd
+	[[ ! -f /bsd ]] || cmp -s bsd /bsd || ln -f /bsd /obsd
 
 newinstall:
 	umask 077 && cp bsd /nbsd && mv /nbsd /bsd && \

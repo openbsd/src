@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.121 2018/01/25 14:09:52 mpi Exp $
+#	$OpenBSD: Makefile.i386,v 1.122 2018/02/09 03:59:15 tb Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -150,7 +150,7 @@ locore.o mutex.o in_cksum.o mptramp.o: assym.h
 kvm86call.o acpi_wakecode.o vmm_support.o: assym.h
 
 hardlink-obsd:
-	cmp -s bsd /bsd || ln -f /bsd /obsd
+	[[ ! -f /bsd ]] || cmp -s bsd /bsd || ln -f /bsd /obsd
 
 newinstall:
 	umask 077 && cp bsd /nbsd && mv /nbsd /bsd && \
