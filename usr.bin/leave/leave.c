@@ -1,4 +1,4 @@
-/*	$OpenBSD: leave.c,v 1.17 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: leave.c,v 1.18 2018/02/09 23:12:13 cheloha Exp $	*/
 /*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
@@ -113,6 +113,7 @@ main(int argc, char *argv[])
 
 		secs = (hours - t->tm_hour) * HOUR;
 		secs += (minutes - t->tm_min) * MINUTE;
+		secs -= t->tm_sec;	/* aim for beginning of minute */
 	}
 	doalarm(secs);
 	exit(0);
@@ -155,12 +156,16 @@ doalarm(u_int secs)
 		sleep(secs - MINUTE);
 		if (puts("\a\aJust one more minute!") == EOF)
 			exit(0);
+		secs = MINUTE;
 	}
 
+	sleep(secs);
+
 	for (bother = 10; bother--;) {
-		sleep(MINUTE);
 		if (puts("\a\aTime to leave!") == EOF)
 			exit(0);
+		if (bother)
+			sleep(MINUTE);
 	}
 
 	puts("\a\aThat was the last time I'll tell you.  Bye.");
