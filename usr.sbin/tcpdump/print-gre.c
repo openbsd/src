@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.16 2018/02/08 22:56:28 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.17 2018/02/09 00:06:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -219,25 +219,32 @@ gre_print_0(const u_char *p, u_int length)
 		printf("keep-alive");
 		break;
 	case GRE_WCCP: {
-		struct wccp_redirect *wccp;
-
 		printf("wccp ");
-		if (l < sizeof(*wccp)) {
-			printf("[|wccp]");
+
+		if (l == 0)
 			return;
+
+		if (*p >> 4 != 4) {
+			struct wccp_redirect *wccp;
+
+			if (l < sizeof(*wccp)) {
+				printf("[|wccp]");
+				return;
+			}
+
+			wccp = (struct wccp_redirect *)p;
+
+			printf("D:%c A:%c SId:%u Alt:%u Pri:%u",
+			    (wccp->flags & WCCP_D) ? '1' : '0',
+			    (wccp->flags & WCCP_A) ? '1' : '0',
+			    wccp->ServiceId, wccp->AltBucket, wccp->PriBucket);
+
+			p += sizeof(*wccp);
+			l -= sizeof(*wccp);
+
+			printf(": ");
 		}
 
-		wccp = (struct wccp_redirect *)p;
-
-		printf("D:%c A:%c SId:%u Alt:%u Pri:%u",
-		    (wccp->flags & WCCP_D) ? '1' : '0',
-		    (wccp->flags & WCCP_A) ? '1' : '0',
-		    wccp->ServiceId, wccp->AltBucket, wccp->PriBucket);
-
-		p += sizeof(*wccp);
-		l -= sizeof(*wccp);
-
-		printf(": ");
 		/* FALLTHROUGH */
 	}
 	case ETHERTYPE_IP:
