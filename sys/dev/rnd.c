@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.197 2018/02/08 10:01:12 mortimer Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.198 2018/02/09 03:01:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -747,6 +747,8 @@ arc4_reinit(void *v)
 void
 random_start(void)
 {
+	extern char etext[];
+
 #if !defined(NO_PROPOLICE)
 	extern long __guard_local;
 
@@ -761,6 +763,8 @@ random_start(void)
 	if (msgbufp->msg_magic == MSG_MAGIC)
 		add_entropy_words((u_int32_t *)msgbufp->msg_bufc,
 		    msgbufp->msg_bufs / sizeof(u_int32_t));
+	add_entropy_words((u_int32_t *)etext - 32*1024,
+	    8192/sizeof(u_int32_t));
 
 	dequeue_randomness(NULL);
 	arc4_init(NULL);
