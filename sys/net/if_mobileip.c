@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mobileip.c,v 1.4 2018/02/08 21:55:34 dlg Exp $ */
+/*	$OpenBSD: if_mobileip.c,v 1.5 2018/02/09 09:30:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -56,8 +56,8 @@ struct mobileip_softc {
 				sc_entry;
 
 	unsigned int		sc_rtableid;
-	uint32_t		sc_src;
-	uint32_t		sc_dst;
+	struct in_addr		sc_src;
+	struct in_addr		sc_dst;
 };
 
 static int	mobileip_clone_create(struct if_clone *, int);
@@ -115,8 +115,8 @@ mobileip_clone_create(struct if_clone *ifc, int unit)
 		return (ENOMEM);
 
 	sc->sc_rtableid = 0;
-	sc->sc_src = INADDR_ANY;
-	sc->sc_dst = INADDR_ANY;
+	sc->sc_src.s_addr = INADDR_ANY;
+	sc->sc_dst.s_addr = INADDR_ANY;
 
 	snprintf(sc->sc_if.if_xname, sizeof sc->sc_if.if_xname, "%s%d",
 	    ifc->ifc_name, unit);
@@ -181,14 +181,14 @@ mobileip_cksum(const void *buf, size_t len)
 static inline int
 mobileip_cmp(const struct mobileip_softc *a, const struct mobileip_softc *b)
 {
-	if (a->sc_src > b->sc_src)
+	if (a->sc_src.s_addr > b->sc_src.s_addr)
 		return (1);
-	if (a->sc_src < b->sc_src)
+	if (a->sc_src.s_addr < b->sc_src.s_addr)
 		return (-1);
 
-	if (a->sc_dst > b->sc_dst)
+	if (a->sc_dst.s_addr > b->sc_dst.s_addr)
 		return (1);
-	if (a->sc_dst < b->sc_dst)
+	if (a->sc_dst.s_addr < b->sc_dst.s_addr)
 		return (-1);
 
 	if (a->sc_rtableid > b->sc_rtableid)
@@ -288,7 +288,7 @@ mobileip_encap(struct mobileip_softc *sc, struct mbuf *m)
 
 	/* figure out how much extra space we'll need */
 	hlen = sizeof(*mh);
-	if (ip->ip_src.s_addr != sc->sc_src)
+	if (ip->ip_src.s_addr != sc->sc_src.s_addr)
 		hlen += sizeof(*msh);
 
 	/* add the space */
@@ -313,20 +313,20 @@ mobileip_encap(struct mobileip_softc *sc, struct mbuf *m)
 	mh->mip_hcrc = 0;
 	mh->mip_dst = ip->ip_dst.s_addr;
 
-	if (ip->ip_src.s_addr != sc->sc_src) {
+	if (ip->ip_src.s_addr != sc->sc_src.s_addr) {
 		mh->mip_flags |= MOBILEIP_SP;
 
 		msh = (struct mobileip_h_src *)(mh + 1);
 		msh->mip_src = ip->ip_src.s_addr;
 
-		ip->ip_src.s_addr = sc->sc_src;
+		ip->ip_src.s_addr = sc->sc_src.s_addr;
 	}
 
 	htobem16(&mh->mip_hcrc, mobileip_cksum(mh, hlen));
 
 	ip->ip_p = IPPROTO_MOBILE;
 	htobem16(&ip->ip_len, bemtoh16(&ip->ip_len) + hlen);
-	ip->ip_dst.s_addr = sc->sc_dst;
+	ip->ip_dst = sc->sc_dst;
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	m->m_pkthdr.ph_rtableid = sc->sc_rtableid;
@@ -424,7 +424,7 @@ mobileip_up(struct mobileip_softc *sc)
 {
 	struct mobileip_softc *osc;
 
-	if (sc->sc_dst == INADDR_ANY)
+	if (sc->sc_dst.s_addr == INADDR_ANY)
 		return (EDESTADDRREQ);
 
 	NET_ASSERT_LOCKED();
@@ -475,8 +475,8 @@ mobileip_set_tunnel(struct mobileip_softc *sc, struct if_laddrreq *req)
 		return (EINVAL);
 
 	/* commit */
-	sc->sc_src = src->sin_addr.s_addr;
-	sc->sc_dst = dst->sin_addr.s_addr;
+	sc->sc_src = src->sin_addr;
+	sc->sc_dst = dst->sin_addr;
 
 	return (0);
 }
@@ -487,18 +487,18 @@ mobileip_get_tunnel(struct mobileip_softc *sc, struct if_laddrreq *req)
 	struct sockaddr_in *src = (struct sockaddr_in *)&req->addr;
 	struct sockaddr_in *dst = (struct sockaddr_in *)&req->dstaddr;
 
-	if (sc->sc_dst == INADDR_ANY)
+	if (sc->sc_dst.s_addr == INADDR_ANY)
 		return (EADDRNOTAVAIL);
 
 	memset(src, 0, sizeof(*src));
 	src->sin_family = AF_INET;
 	src->sin_len = sizeof(*src);
-	src->sin_addr.s_addr = sc->sc_src;
+	src->sin_addr = sc->sc_src;
 
 	memset(dst, 0, sizeof(*dst));
 	dst->sin_family = AF_INET;
 	dst->sin_len = sizeof(*dst);
-	dst->sin_addr.s_addr = sc->sc_dst;
+	dst->sin_addr = sc->sc_dst;
 
 	return (0);
 }
@@ -510,8 +510,8 @@ mobileip_del_tunnel(struct mobileip_softc *sc)
 		return (EBUSY);
 
 	/* commit */
-	sc->sc_src = INADDR_ANY;
-	sc->sc_dst = INADDR_ANY;
+	sc->sc_src.s_addr = INADDR_ANY;
+	sc->sc_dst.s_addr = INADDR_ANY;
 
 	return (0);
 }
@@ -536,8 +536,8 @@ mobileip_input(struct mbuf **mp, int *offp, int type, int af)
 	ip = mtod(m, struct ip *);
 
 	key.sc_rtableid = m->m_pkthdr.ph_rtableid;
-	key.sc_src = ip->ip_dst.s_addr;
-	key.sc_dst = ip->ip_src.s_addr;
+	key.sc_src = ip->ip_dst;
+	key.sc_dst = ip->ip_src;
 
 	/* NET_ASSERT_READ_LOCKED() */
 	sc = RBT_FIND(mobileip_tree, &mobileip_softcs, &key);
