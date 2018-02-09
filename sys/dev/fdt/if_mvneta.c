@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.3 2017/10/05 06:32:26 patrick Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.4 2018/02/09 00:08:17 jmatthew Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -649,7 +649,7 @@ mvneta_tick(void *arg)
 	mii_tick(mii);
 	splx(s);
 
-	timeout_add(&sc->sc_tick_ch, hz);
+	timeout_add_sec(&sc->sc_tick_ch, 1);
 }
 
 int
@@ -890,7 +890,7 @@ mvneta_up(struct mvneta_softc *sc)
 	    MVNETA_PRXTXTI_RBICTAPQ(0) |
 	    MVNETA_PRXTXTI_TBTCQ(0));
 
-	timeout_add(&sc->sc_tick_ch, hz);
+	timeout_add_sec(&sc->sc_tick_ch, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
