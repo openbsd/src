@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.95 2018/02/05 12:11:28 remi Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.96 2018/02/09 22:52:54 jca Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -516,13 +516,12 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 	struct in_addr		 addr;
 	struct kif		*kif;
 	struct redistribute	*r;
-	int		 	 is_default = 0, depend_ok = 1;
+	int		 	 is_default, depend_ok;
 
 	bzero(&addr, sizeof(addr));
 
 	/* only allow 0.0.0.0/0 via REDIST_DEFAULT */
-	if (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0)
-		is_default = 1;
+	is_default = (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0);
 
 	SIMPLEQ_FOREACH(r, &ospfd_conf->redist_list, entry) {
 		if (r->dependon[0] != '\0') {
@@ -530,7 +529,7 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 				depend_ok = ifstate_is_up(kif);
 			else
 				depend_ok = 0;
-		} else 
+		} else
 			depend_ok = 1;
 
 		switch (r->type & ~REDIST_NO) {

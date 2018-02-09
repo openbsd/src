@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.84 2018/02/05 12:11:28 remi Exp $ */
+/*	$OpenBSD: parse.y,v 1.85 2018/02/09 22:52:54 jca Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -296,9 +296,9 @@ redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist dependon {
 			if ($1)
 				r->type |= REDIST_NO;
 			r->metric = $6;
-			if ($7) {
+			if ($7)
 				strlcpy(r->dependon, $7, sizeof(r->dependon));
-			} else
+			else
 				r->dependon[0] = '\0';
 			free($7);
 			$$ = r;
@@ -326,9 +326,9 @@ redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist dependon {
 			if ($1)
 				r->type |= REDIST_NO;
 			r->metric = $4;
-			if ($5) {
+			if ($5)
 				strlcpy(r->dependon, $5, sizeof(r->dependon));
-			} else
+			else
 				r->dependon[0] = '\0';
 			free($3);
 			free($5);
