@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.32 2018/02/09 04:05:58 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.33 2018/02/09 09:22:46 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -87,6 +87,7 @@ struct etherip_softc {
 	struct etherip_tunnel	sc_tunnel; /* must be first */
 	struct arpcom		sc_ac;
 	struct ifmedia		sc_media;
+	uint8_t			sc_ttl;
 };
 
 /*
@@ -134,6 +135,8 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
 	    ifc->ifc_name, unit);
+
+	sc->sc_ttl = ip_defttl;
 
 	ifp->if_softc = sc;
 	ifp->if_ioctl = etherip_ioctl;
@@ -281,6 +284,19 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		error = etherip_del_tunnel(sc);
+		break;
+
+	case SIOCSLIFPHYTTL:
+		if (ifr->ifr_ttl < 1 || ifr->ifr_ttl > 0xff) {
+			error = EINVAL;
+			break;
+		}
+
+		/* commit */
+		sc->sc_ttl = (uint8_t)ifr->ifr_ttl;
+		break;
+	case SIOCGLIFPHYTTL:
+		ifr->ifr_ttl = (int)sc->sc_ttl;
 		break;
 
 	case SIOCSIFMEDIA:
@@ -476,7 +492,7 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	ip->ip_tos = IPTOS_LOWDELAY;
 	ip->ip_p = IPPROTO_ETHERIP;
 	ip->ip_len = htons(m->m_pkthdr.len);
-	ip->ip_ttl = IPDEFTTL;
+	ip->ip_ttl = sc->sc_ttl;
 	ip->ip_src = sc->sc_tunnel.t_src4;
 	ip->ip_dst = sc->sc_tunnel.t_dst4;
 
