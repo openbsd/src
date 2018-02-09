@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.96 2018/02/08 23:53:20 dlg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.97 2018/02/09 00:03:13 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -118,6 +118,14 @@ struct gre_h_seq {
 	uint32_t		gre_seq;
 } __packed __aligned(4);
 
+struct gre_h_wccp {
+	uint8_t			wccp_flags;
+	uint8_t			service_id;
+	uint8_t			alt_bucket;
+	uint8_t			pri_bucket;
+} __packed __aligned(4);
+
+#define GRE_WCCP 0x883e
 
 /*
  * GRE tunnel metadata
@@ -504,6 +512,32 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 	key->t_rtableid = m->m_pkthdr.ph_rtableid;
 
 	switch (gh->gre_proto) {
+	case htons(GRE_WCCP):
+		/* WCCP/GRE:
+		 *   So far as I can see (and test) it seems that Cisco's WCCP
+		 *   GRE tunnel is precisely a IP-in-GRE tunnel that differs
+		 *   only in its protocol number.  At least, it works for me.
+		 *
+		 *   The Internet Drafts can be found if you look for
+		 *   the following:
+		 *     draft-forster-wrec-wccp-v1-00.txt
+		 *     draft-wilson-wrec-wccp-v2-01.txt
+		 *
+		 *   So yes, we're doing a fall-through (unless, of course,
+		 *   net.inet.gre.wccp is 0).
+		 */
+		switch (gre_wccp) {
+		case 1:
+			break;
+		case 2:
+			hlen += sizeof(gre_wccp);
+			break;
+		case 0:
+		default:
+			goto decline;
+		}
+
+		/* FALLTHROUGH */
 	case htons(ETHERTYPE_IP):
 #if NBPFILTER > 0
 		bpf_af = AF_INET;
