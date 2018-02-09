@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.13 2013/03/25 14:29:35 markus Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.14 2018/02/09 03:53:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -603,15 +603,15 @@ nbr_act_delete(struct nbr *nbr)
 {
 	struct timeval	tv;
 
+	/* clear dr and bdr */
+	nbr->dr.s_addr = 0;
+	nbr->bdr.s_addr = 0;
+
 	if (nbr == nbr->iface->self)
 		return (0);
 
 	/* stop timers */
 	nbr_stop_itimer(nbr);
-
-	/* clear dr and bdr */
-	nbr->dr.s_addr = 0;
-	nbr->bdr.s_addr = 0;
 
 	/* schedule kill timer */
 	timerclear(&tv);
