@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.17 2018/02/09 00:06:51 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.18 2018/02/09 04:08:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -257,7 +257,7 @@ gre_print_0(const u_char *p, u_int length)
 		mpls_print(p, length);
 		break;
 	case ETHERTYPE_TRANSETHER:
-		ether_print(p, length);
+		ether_tryprint(p, length, 0);
 		break;
 	default:
 		printf("unknown-proto-%04x", proto);
