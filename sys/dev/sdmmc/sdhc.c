@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.55 2017/05/05 15:10:07 kettenis Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.56 2018/02/10 05:21:13 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -804,7 +804,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	int seg;
 	int s;
 	
-	DPRINTF(1,("%s: start cmd %u arg=%#x data=%#x dlen=%d flags=%#x "
+	DPRINTF(1,("%s: start cmd %u arg=%#x data=%p dlen=%d flags=%#x "
 	    "proc=\"%s\"\n", DEVNAME(hp->sc), cmd->c_opcode, cmd->c_arg,
 	    cmd->c_data, cmd->c_datalen, cmd->c_flags, curproc ?
 	    curproc->p_p->ps_comm : ""));
