@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.378 2018/02/10 01:24:28 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.379 2018/02/10 05:54:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -68,7 +68,7 @@ int		 rde_update_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
 int		 rde_update_get_prefix6(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *);
 int		 rde_update_get_vpn4(u_char *, u_int16_t, struct bgpd_addr *,
-		     u_int8_t *);
+		     u_int8_t *, int);
 void		 rde_update_err(struct rde_peer *, u_int8_t , u_int8_t,
 		     void *, u_int16_t);
 void		 rde_update_log(const char *, u_int16_t,
@@ -1146,7 +1146,7 @@ rde_update_dispatch(struct imsg *imsg)
 		case AID_VPN_IPv4:
 			while (mplen > 0) {
 				if ((pos = rde_update_get_vpn4(mpp, mplen,
-				    &prefix, &prefixlen)) == -1) {
+				    &prefix, &prefixlen, 1)) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad VPNv4 withdraw prefix");
 					rde_update_err(peer, ERR_UPDATE,
@@ -1318,7 +1318,7 @@ rde_update_dispatch(struct imsg *imsg)
 		case AID_VPN_IPv4:
 			while (mplen > 0) {
 				if ((pos = rde_update_get_vpn4(mpp, mplen,
-				    &prefix, &prefixlen)) == -1) {
+				    &prefix, &prefixlen, 0)) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad VPNv4 nlri prefix");
 					rde_update_err(peer, ERR_UPDATE,
@@ -1998,7 +1998,7 @@ rde_update_get_prefix6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 
 int
 rde_update_get_vpn4(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
-    u_int8_t *prefixlen)
+    u_int8_t *prefixlen, int withdraw)
 {
 	int		 rv, done = 0;
 	u_int8_t	 pfxlen;
@@ -2020,6 +2020,12 @@ rde_update_get_vpn4(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 		if (prefix->vpn4.labellen + 3U >
 		    sizeof(prefix->vpn4.labelstack))
 			return (-1);
+		if (withdraw) {
+			/* on withdraw ignore the labelstack all together */
+			plen += 3;
+			pfxlen -= 3 * 8;
+			break;
+		}
 		prefix->vpn4.labelstack[prefix->vpn4.labellen++] = *p++;
 		prefix->vpn4.labelstack[prefix->vpn4.labellen++] = *p++;
 		prefix->vpn4.labelstack[prefix->vpn4.labellen] = *p++;
@@ -2746,7 +2752,7 @@ rde_update_queue_runner(void)
 			/* first withdraws */
 			wpos = 2; /* reserve space for the length field */
 			r = up_dump_prefix(queue_buf + wpos, len - wpos - 2,
-			    &peer->withdraws[AID_INET], peer);
+			    &peer->withdraws[AID_INET], peer, 1);
 			wd_len = r;
 			/* write withdraws length filed */
 			wd_len = htons(wd_len);

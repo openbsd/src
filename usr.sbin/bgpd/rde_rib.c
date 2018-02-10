@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.158 2018/02/07 00:02:02 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.159 2018/02/10 05:54:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -863,7 +863,8 @@ prefix_remove(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
 
 /* dump a prefix into specified buffer */
 int
-prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen)
+prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen,
+    int withdraw)
 {
 	int	totlen;
 
@@ -878,15 +879,30 @@ prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen)
 		memcpy(buf, &prefix->ba, totlen - 1);
 		return (totlen);
 	case AID_VPN_IPv4:
-		totlen = PREFIX_SIZE(plen) + sizeof(prefix->vpn4.rd) +
-		    prefix->vpn4.labellen;
-		plen += (sizeof(prefix->vpn4.rd) + prefix->vpn4.labellen) * 8;
+		totlen = PREFIX_SIZE(plen) + sizeof(prefix->vpn4.rd);
+		plen += sizeof(prefix->vpn4.rd) * 8;
+		if (withdraw) {
+			/* withdraw have one compat label as placeholder */
+			totlen += 3;
+			plen += 3 * 8;
+		} else {
+			totlen += prefix->vpn4.labellen;
+			plen += prefix->vpn4.labellen * 8;
+		}
 
 		if (totlen > len)
 			return (-1);
 		*buf++ = plen;
-		memcpy(buf, &prefix->vpn4.labelstack, prefix->vpn4.labellen);
-		buf += prefix->vpn4.labellen;
+		if (withdraw) {
+			/* magic compatibility label as per rfc8277 */
+			*buf++ = 0x80;
+			*buf++ = 0x0;
+			*buf++ = 0x0;
+		} else  {
+			memcpy(buf, &prefix->vpn4.labelstack,
+			    prefix->vpn4.labellen);
+			buf += prefix->vpn4.labellen;
+		}
 		memcpy(buf, &prefix->vpn4.rd, sizeof(prefix->vpn4.rd));
 		buf += sizeof(prefix->vpn4.rd);
 		memcpy(buf, &prefix->vpn4.addr, PREFIX_SIZE(plen) - 1);
@@ -917,7 +933,7 @@ prefix_writebuf(struct ibuf *buf, struct bgpd_addr *prefix, u_int8_t plen)
 
 	if ((bptr = ibuf_reserve(buf, totlen)) == NULL)
 		return (-1);
-	if (prefix_write(bptr, totlen, prefix, plen) == -1)
+	if (prefix_write(bptr, totlen, prefix, plen, 0) == -1)
 		return (-1);
 	return (0);
 }

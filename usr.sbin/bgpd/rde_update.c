@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.88 2018/02/05 03:55:54 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.89 2018/02/10 05:54:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -956,29 +956,26 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 #define MIN_PREFIX_LEN	5	/* 1 byte prefix length + 4 bytes addr */
 int
 up_dump_prefix(u_char *buf, int len, struct uplist_prefix *prefix_head,
-    struct rde_peer *peer)
+    struct rde_peer *peer, int withdraw)
 {
 	struct update_prefix	*upp;
 	int			 r, wpos = 0;
-	u_int8_t		 i;
 
 	while ((upp = TAILQ_FIRST(prefix_head)) != NULL) {
 		if ((r = prefix_write(buf + wpos, len - wpos,
-		    &upp->prefix, upp->prefixlen)) == -1)
+		    &upp->prefix, upp->prefixlen, withdraw)) == -1)
 			break;
 		wpos += r;
 		if (RB_REMOVE(uptree_prefix, &peer->up_prefix, upp) == NULL)
 			log_warnx("dequeuing update failed.");
 		TAILQ_REMOVE(upp->prefix_h, upp, prefix_l);
 		peer->up_pcnt--;
-		for (i = 0; i < AID_MAX; i++) {
-			if (upp->prefix_h == &peer->withdraws[i]) {
-				peer->up_wcnt--;
-				peer->prefix_sent_withdraw++;
-			} else {
-				peer->up_nlricnt--;
-				peer->prefix_sent_update++;
-			}
+		if (withdraw) {
+			peer->up_wcnt--;
+			peer->prefix_sent_withdraw++;
+		} else {
+			peer->up_nlricnt--;
+			peer->prefix_sent_update++;
 		}
 		free(upp);
 	}
@@ -1034,7 +1031,7 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	wpos += upa->attr_len;
 
 	/* last but not least dump the nlri */
-	r = up_dump_prefix(buf + wpos, len - wpos, &upa->prefix_h, peer);
+	r = up_dump_prefix(buf + wpos, len - wpos, &upa->prefix_h, peer, 0);
 	wpos += r;
 
 	/* now check if all prefixes were written */
@@ -1070,7 +1067,7 @@ up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer,
 		return (NULL);
 
 	datalen = up_dump_prefix(buf + wpos, *len - wpos,
-	    &peer->withdraws[aid], peer);
+	    &peer->withdraws[aid], peer, 1);
 	if (datalen == 0)
 		return (NULL);
 
@@ -1162,7 +1159,7 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer,
 		return (-2);
 
 	datalen = up_dump_prefix(buf + wpos, *len - wpos,
-	    &upa->prefix_h, peer);
+	    &upa->prefix_h, peer, 0);
 	if (datalen == 0)
 		return (-2);
 
