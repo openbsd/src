@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.53 2018/02/08 09:27:44 mortimer Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.54 2018/02/10 02:54:33 mortimer Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -290,7 +290,7 @@ vmcmd_randomize(struct proc *p, struct exec_vmcmd *cmd)
 	int error;
 	struct arc4random_ctx *ctx;
 	char *buf;
-	size_t count, sublen, off = 0;
+	size_t sublen, off = 0;
 	size_t len = cmd->ev_len;
 
 	if (len == 0)
@@ -305,7 +305,6 @@ vmcmd_randomize(struct proc *p, struct exec_vmcmd *cmd)
 		explicit_bzero(buf, len);
 	} else {
 		ctx = arc4random_ctx_new();
-		count = 0;
 		do {
 			sublen = MIN(len, PAGE_SIZE);
 			arc4random_ctx_buf(ctx, buf, sublen);
@@ -314,10 +313,7 @@ vmcmd_randomize(struct proc *p, struct exec_vmcmd *cmd)
 				break;
 			off += sublen;
 			len -= sublen;
-			if (++count == 32) {
-				count = 0;
-				yield();
-			}
+			sched_pause(yield);
 		} while (len);
 		arc4random_ctx_free(ctx);
 		explicit_bzero(buf, PAGE_SIZE);
