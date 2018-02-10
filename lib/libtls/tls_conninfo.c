@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.17 2018/02/08 10:02:48 jsing Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.18 2018/02/10 04:41:24 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -221,6 +221,14 @@ tls_conninfo_cert_pem(struct tls *ctx)
 	return rv;
 }
 
+static int
+tls_conninfo_session(struct tls *ctx)
+{
+	ctx->conninfo->session_resumed = SSL_session_reused(ctx->ssl_conn);
+
+	return 0;
+}
+
 int
 tls_conninfo_populate(struct tls *ctx)
 {
@@ -258,6 +266,9 @@ tls_conninfo_populate(struct tls *ctx)
 		goto err;
 
 	if (tls_conninfo_cert_pem(ctx) == -1)
+		goto err;
+
+	if (tls_conninfo_session(ctx) == -1)
 		goto err;
 
 	return (0);
@@ -311,6 +322,14 @@ tls_conn_servername(struct tls *ctx)
 	if (ctx->conninfo == NULL)
 		return (NULL);
 	return (ctx->conninfo->servername);
+}
+
+int
+tls_conn_session_resumed(struct tls *ctx)
+{
+	if (ctx->conninfo == NULL)
+		return (0);
+	return (ctx->conninfo->session_resumed);
 }
 
 const char *

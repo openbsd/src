@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.68 2018/02/08 10:19:31 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.69 2018/02/10 04:41:24 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -95,6 +95,7 @@ struct tls_config {
 	int ocsp_require_stapling;
 	uint32_t protocols;
 	unsigned char session_id[TLS_MAX_SESSION_ID_LENGTH];
+	int session_fd;
 	int session_lifetime;
 	struct tls_ticket_key ticket_keys[TLS_NUM_TICKETS];
 	uint32_t ticket_keyrev;
@@ -111,6 +112,7 @@ struct tls_conninfo {
 	char *alpn;
 	char *cipher;
 	char *servername;
+	int session_resumed;
 	char *version;
 
 	char *hash;
