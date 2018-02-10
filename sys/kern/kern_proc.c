@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.79 2017/12/30 20:47:00 guenther Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.80 2018/02/10 10:32:51 mpi Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/pool.h>
+#include <sys/vnode.h>
 
 #define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
 LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
@@ -380,6 +381,48 @@ fixjobc(struct process *pr, struct pgrp *pgrp, int entering)
 			else if (--hispgrp->pg_jobc == 0)
 				orphanpg(hispgrp);
 		}
+}
+
+void
+killjobc(struct process *pr)
+{
+	if (SESS_LEADER(pr)) {
+		struct session *sp = pr->ps_session;
+
+		if (sp->s_ttyvp) {
+			struct vnode *ovp;
+
+			/*
+			 * Controlling process.
+			 * Signal foreground pgrp,
+			 * drain controlling terminal
+			 * and revoke access to controlling terminal.
+			 */
+			if (sp->s_ttyp->t_session == sp) {
+				if (sp->s_ttyp->t_pgrp)
+					pgsignal(sp->s_ttyp->t_pgrp, SIGHUP, 1);
+				ttywait(sp->s_ttyp);
+				/*
+				 * The tty could have been revoked
+				 * if we blocked.
+				 */
+				if (sp->s_ttyvp)
+					VOP_REVOKE(sp->s_ttyvp, REVOKEALL);
+			}
+			ovp = sp->s_ttyvp;
+			sp->s_ttyvp = NULL;
+			if (ovp)
+				vrele(ovp);
+			/*
+			 * s_ttyp is not zero'd; we use this to
+			 * indicate that the session once had a
+			 * controlling terminal.  (for logging and
+			 * informational purposes)
+			 */
+		}
+		sp->s_leader = NULL;
+	}
+	fixjobc(pr, pr->ps_pgrp, 0);
 }
 
 /* 
