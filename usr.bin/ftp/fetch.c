@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.166 2018/02/07 23:04:50 procter Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.167 2018/02/10 06:25:16 jsing Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1037,6 +1037,9 @@ improper:
 cleanup_url_get:
 #ifndef NOSSL
 	if (tls != NULL) {
+		if (tls_session_fd != -1)
+			dprintf(STDERR_FILENO, "tls session resumed: %s\n",
+			    tls_conn_session_resumed(tls) ? "yes" : "no");
 		do {
 			i = tls_close(tls);
 		} while (i == TLS_WANT_POLLIN || i == TLS_WANT_POLLOUT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.40 2017/01/21 08:33:07 krw Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.41 2018/02/10 06:25:16 jsing Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*
@@ -227,4 +227,5 @@ extern struct cmd cmdtab[];
 
 #ifndef NOSSL
 extern struct tls_config *tls_config;
+extern int tls_session_fd;
 #endif /* !NOSSL */
