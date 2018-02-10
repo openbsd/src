@@ -1,4 +1,4 @@
-/*	$OpenBSD: leave.c,v 1.18 2018/02/09 23:12:13 cheloha Exp $	*/
+/*	$OpenBSD: leave.c,v 1.19 2018/02/10 00:00:47 tb Exp $	*/
 /*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 		(void)fputs("When do you have to leave? ", stdout);
 		cp = fgets(buf, sizeof(buf), stdin);
 		if (cp == NULL || *cp == '\n')
-			exit(0);
+			return 0;
 	} else if (argc > 2)
 		usage();
 	else
@@ -116,7 +116,7 @@ main(int argc, char *argv[])
 		secs -= t->tm_sec;	/* aim for beginning of minute */
 	}
 	doalarm(secs);
-	exit(0);
+	return 0;
 }
 
 static void
