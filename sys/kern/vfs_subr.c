@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.265 2017/12/14 20:23:15 deraadt Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.266 2018/02/10 05:24:23 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
 
 #include "softraid.h"
 
-void sr_shutdown(int);
+void sr_quiesce(void);
 
 enum vtype iftovt_tab[16] = {
 	VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,
@@ -1583,6 +1583,48 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 	return (file_mode & mask) == mask ? 0 : EACCES;
 }
 
+struct rwlock vfs_stall_lock = RWLOCK_INITIALIZER("vfs_stall");
+
+int
+vfs_stall(struct proc *p, int stall)
+{
+	struct mount *mp, *nmp;
+	int allerror = 0, error;
+
+	if (stall)
+		rw_enter_write(&vfs_stall_lock);
+
+	TAILQ_FOREACH_REVERSE_SAFE(mp, &mountlist, mntlist, mnt_list, nmp) {
+		if (stall) {
+			error = vfs_busy(mp, VB_WRITE|VB_WAIT);
+			if (error) {
+				printf("%s: busy\n", mp->mnt_stat.f_mntonname);
+				allerror = error;
+				continue;
+			}
+			uvm_vnp_sync(mp);
+			error = VFS_SYNC(mp, MNT_WAIT, stall, p->p_ucred, p);
+			if (error) {
+				printf("%s: failed to sync\n", mp->mnt_stat.f_mntonname);
+				vfs_unbusy(mp);
+				allerror = error;
+				continue;
+			}
+			mp->mnt_flag |= MNT_STALLED;
+		} else {
+			if (mp->mnt_flag & MNT_STALLED) {
+				vfs_unbusy(mp);
+				mp->mnt_flag &= ~MNT_STALLED;
+			}
+		}
+	}
+
+	if (!stall)
+		rw_exit_write(&vfs_stall_lock);
+
+	return (allerror);
+}
+
 int
 vfs_readonly(struct mount *mp, struct proc *p)
 {
@@ -1594,7 +1636,7 @@ vfs_readonly(struct mount *mp, struct proc *p)
 		return (error);
 	}
 	uvm_vnp_sync(mp);
-	error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p);
+	error = VFS_SYNC(mp, MNT_WAIT, 0, p->p_ucred, p);
 	if (error) {
 		printf("%s: failed to sync\n", mp->mnt_stat.f_mntonname);
 		vfs_unbusy(mp);
@@ -1628,7 +1670,6 @@ vfs_rofs(struct proc *p)
 	struct mount *mp, *nmp;
 
 	TAILQ_FOREACH_REVERSE_SAFE(mp, &mountlist, mntlist, mnt_list, nmp) {
-		/* XXX Here is a race, the next pointer is not locked. */
 		(void) vfs_readonly(mp, p);
 	}
 }
@@ -1651,14 +1692,14 @@ vfs_shutdown(struct proc *p)
 		vfs_rofs(p);
 	}
 
+#if NSOFTRAID > 0
+	sr_quiesce();
+#endif
+
 	if (vfs_syncwait(p, 1))
 		printf("giving up\n");
 	else
 		printf("done\n");
-
-#if NSOFTRAID > 0
-	sr_shutdown(1);
-#endif
 }
 
 /*

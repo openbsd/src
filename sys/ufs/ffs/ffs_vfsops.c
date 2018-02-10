@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.171 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.172 2018/02/10 05:24:23 deraadt Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 
 		if (ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			/* Flush any dirty data */
-			VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p);
+			VFS_SYNC(mp, MNT_WAIT, 0, p->p_ucred, p);
 
 			/*
 			 * Get rid of files open for writing.
@@ -1141,19 +1141,25 @@ struct ffs_sync_args {
 	int allerror;
 	struct proc *p;
 	int waitfor;
+	int nlink0;
+	int inflight;
 	struct ucred *cred;
 };
 
 int
-ffs_sync_vnode(struct vnode *vp, void *arg) {
+ffs_sync_vnode(struct vnode *vp, void *arg)
+{
 	struct ffs_sync_args *fsa = arg;
 	struct inode *ip;
-	int error;
+	int error, nlink0 = 0;
 
 	if (vp->v_type == VNON)
 		return (0);
 
 	ip = VTOI(vp);
+
+	if (vp->v_inflight && !(vp->v_type == VCHR || vp->v_type == VBLK))
+		fsa->inflight = MIN(fsa->inflight+1, 65536);
 
 	/*
 	 * If unmounting or converting rw to ro, then stop deferring
@@ -1164,20 +1170,27 @@ ffs_sync_vnode(struct vnode *vp, void *arg) {
 		UFS_UPDATE(ip, 1);
 	}
 
+	if (ip->i_effnlink == 0)
+		nlink0 = 1;
+
 	if ((ip->i_flag &
-		(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0	&&
-		LIST_EMPTY(&vp->v_dirtyblkhd)) {
-		return (0);
+	    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
+	    LIST_EMPTY(&vp->v_dirtyblkhd)) {
+		goto end;
 	}
 
-	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, fsa->p))
-		return (0);
+	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, fsa->p)) {
+		nlink0 = 1;		/* potentially.. */
+		goto end;
+	}
 
 	if ((error = VOP_FSYNC(vp, fsa->cred, fsa->waitfor, fsa->p)))
 		fsa->allerror = error;
 	VOP_UNLOCK(vp, fsa->p);
 	vrele(vp);
 
+end:
+	fsa->nlink0 = MIN(fsa->nlink0 + nlink0, 65536);
 	return (0);
 }
 
@@ -1189,11 +1202,11 @@ ffs_sync_vnode(struct vnode *vp, void *arg) {
  * Should always be called with the mount point locked.
  */
 int
-ffs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
+ffs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred, struct proc *p)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
-	int error, allerror = 0, count;
+	int error, allerror = 0, count, clean, fmod;
 	struct ffs_sync_args fsa;
 
 	fs = ump->um_fs;
@@ -1214,6 +1227,8 @@ ffs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 	fsa.p = p;
 	fsa.cred = cred;
 	fsa.waitfor = waitfor;
+	fsa.nlink0 = 0;
+	fsa.inflight = 0;
 
 	/*
 	 * Don't traverse the vnode list if we want to skip all of them.
@@ -1243,9 +1258,26 @@ ffs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 	/*
 	 * Write back modified superblock.
 	 */
-
+	clean = fs->fs_clean;
+	fmod = fs->fs_fmod;
+	if (stall && fs->fs_ronly == 0) {
+		fs->fs_fmod = 1;
+		if (allerror == 0 && fsa.nlink0 == 0 && fsa.inflight == 0) {
+			fs->fs_clean = (fs->fs_flags & FS_UNCLEAN) ? 0 : 1;
+#if 0
+			printf("%s force clean (dangling %d inflight %d)\n",
+			    mp->mnt_stat.f_mntonname, fsa.nlink0, fsa.inflight);
+#endif
+		} else {
+			fs->fs_clean = 0;
+			printf("%s force dirty (dangling %d inflight %d)\n",
+			    mp->mnt_stat.f_mntonname, fsa.nlink0, fsa.inflight);
+		}
+	}
 	if (fs->fs_fmod != 0 && (error = ffs_sbupdate(ump, waitfor)) != 0)
 		allerror = error;
+	fs->fs_clean = clean;
+	fs->fs_fmod = fmod;
 
 	return (allerror);
 }

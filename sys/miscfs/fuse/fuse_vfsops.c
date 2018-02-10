@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.31 2018/01/04 10:51:11 mpi Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.32 2018/02/10 05:24:23 deraadt Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -40,7 +40,7 @@ int	fusefs_unmount(struct mount *, int, struct proc *);
 int	fusefs_root(struct mount *, struct vnode **);
 int	fusefs_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
 int	fusefs_statfs(struct mount *, struct statfs *, struct proc *);
-int	fusefs_sync(struct mount *, int, struct ucred *, struct proc *);
+int	fusefs_sync(struct mount *, int, int, struct ucred *, struct proc *);
 int	fusefs_vget(struct mount *, ino_t, struct vnode **);
 int	fusefs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	fusefs_vptofh(struct vnode *, struct fid *);
@@ -239,7 +239,7 @@ fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 }
 
 int
-fusefs_sync(struct mount *mp, int waitfor, struct ucred *cred,
+fusefs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred,
     struct proc *p)
 {
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.115 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.116 2018/02/10 05:24:23 deraadt Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ int	nfs_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
 int	nfs_root(struct mount *, struct vnode **);
 int	nfs_start(struct mount *, int, struct proc *);
 int	nfs_statfs(struct mount *, struct statfs *, struct proc *);
-int	nfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int	nfs_sync(struct mount *, int, int, struct ucred *, struct proc *);
 int	nfs_unmount(struct mount *, int, struct proc *);
 int	nfs_vget(struct mount *, ino_t, struct vnode **);
 int	nfs_vptofh(struct vnode *, struct fid *);
@@ -729,7 +729,7 @@ nfs_root(struct mount *mp, struct vnode **vpp)
  * Flush out the buffer cache
  */
 int
-nfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
+nfs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred, struct proc *p)
 {
 	struct vnode *vp;
 	int error, allerror = 0;

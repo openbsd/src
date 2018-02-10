@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.86 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.87 2018/02/10 05:24:23 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -80,7 +80,7 @@ int msdosfs_start(struct mount *, int, struct proc *);
 int msdosfs_unmount(struct mount *, int, struct proc *);
 int msdosfs_root(struct mount *, struct vnode **);
 int msdosfs_statfs(struct mount *, struct statfs *, struct proc *);
-int msdosfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int msdosfs_sync(struct mount *, int, int, struct ucred *, struct proc *);
 int msdosfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int msdosfs_vptofh(struct vnode *, struct fid *);
 int msdosfs_check_export(struct mount *mp, struct mbuf *nam,
@@ -118,7 +118,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 		if (!(pmp->pm_flags & MSDOSFSMNT_RONLY) &&
 		    (mp->mnt_flag & MNT_RDONLY)) {
 			mp->mnt_flag &= ~MNT_RDONLY;
-			VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p);
+			VFS_SYNC(mp, MNT_WAIT, 0, p->p_ucred, p);
 			mp->mnt_flag |= MNT_RDONLY;
 
 			flags = WRITECLOSE;
@@ -689,7 +689,8 @@ msdosfs_sync_vnode(struct vnode *vp, void *arg)
 
 
 int
-msdosfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
+msdosfs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred,
+    struct proc *p)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct msdosfs_sync_arg msa;

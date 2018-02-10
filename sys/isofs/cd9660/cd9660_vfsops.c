@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.86 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.87 2018/02/10 05:24:23 deraadt Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -644,9 +644,10 @@ cd9660_statfs(mp, sbp, p)
 
 /* ARGSUSED */
 int
-cd9660_sync(mp, waitfor, cred, p)
+cd9660_sync(mp, waitfor, stall, cred, p)
 	struct mount *mp;
 	int waitfor;
+	int stall;
 	struct ucred *cred;
 	struct proc *p;
 {

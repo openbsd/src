@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.134 2018/01/05 05:54:36 deraadt Exp $	*/
+/*	$OpenBSD: mount.h,v 1.135 2018/02/10 05:24:23 deraadt Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -389,6 +389,7 @@ struct mount {
 #define	MNT_DELEXPORT	0x00020000	/* delete export host lists */
 #define	MNT_RELOAD	0x00040000	/* reload filesystem data */
 #define	MNT_FORCE	0x00080000	/* force unmount or readonly change */
+#define	MNT_STALLED	0x00100000	/* filesystem stalled */ 
 #define MNT_WANTRDWR	0x02000000	/* want upgrade to read/write */
 #define MNT_SOFTDEP     0x04000000      /* soft dependencies being done */
 #define MNT_DOOMED	0x08000000	/* device behind filesystem is gone */
@@ -505,7 +506,7 @@ struct vfsops {
 				    caddr_t arg, struct proc *p);
 	int	(*vfs_statfs)(struct mount *mp, struct statfs *sbp,
 				    struct proc *p);
-	int	(*vfs_sync)(struct mount *mp, int waitfor,
+	int	(*vfs_sync)(struct mount *mp, int waitfor, int stall,
 				    struct ucred *cred, struct proc *p);
 	int	(*vfs_vget)(struct mount *mp, ino_t ino,
 				    struct vnode **vpp);
@@ -526,7 +527,7 @@ struct vfsops {
 #define VFS_ROOT(MP, VPP)	  (*(MP)->mnt_op->vfs_root)(MP, VPP)
 #define VFS_QUOTACTL(MP,C,U,A,P)  (*(MP)->mnt_op->vfs_quotactl)(MP, C, U, A, P)
 #define VFS_STATFS(MP, SBP, P)	  (*(MP)->mnt_op->vfs_statfs)(MP, SBP, P)
-#define VFS_SYNC(MP, WAIT, C, P)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, P)
+#define VFS_SYNC(MP, W, S, C, P)  (*(MP)->mnt_op->vfs_sync)(MP, W, S, C, P)
 #define VFS_VGET(MP, INO, VPP)	  (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
 #define VFS_FHTOVP(MP, FIDP, VPP) \
 	(*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP)
@@ -573,6 +574,7 @@ int	vfs_mountedon(struct vnode *);
 int	vfs_rootmountalloc(char *, char *, struct mount **);
 void	vfs_unbusy(struct mount *);
 extern	TAILQ_HEAD(mntlist, mount) mountlist;
+int	vfs_stall(struct proc *, int);
 
 struct	mount *getvfs(fsid_t *);	    /* return vfs given fsid */
 					    /* process mount export info */

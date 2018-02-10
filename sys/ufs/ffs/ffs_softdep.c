@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.137 2017/12/13 16:38:34 beck Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.138 2018/02/10 05:24:23 deraadt Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -4945,7 +4945,7 @@ loop:
 	 */
 	if (vn_isdisk(vp, NULL) &&
 	    vp->v_specmountpoint && !VOP_ISLOCKED(vp) &&
-	    (error = VFS_SYNC(vp->v_specmountpoint, MNT_WAIT, ap->a_cred,
+	    (error = VFS_SYNC(vp->v_specmountpoint, MNT_WAIT, 0, ap->a_cred,
 	     ap->a_p)) != 0)
 		return (error);
 	return (0);

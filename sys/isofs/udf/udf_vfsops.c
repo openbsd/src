@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.61 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.62 2018/02/10 05:24:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -537,7 +537,7 @@ udf_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 }
 
 int
-udf_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
+udf_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred, struct proc *p)
 {
 	return (0);
 }

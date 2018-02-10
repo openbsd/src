@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.338 2018/02/08 09:42:48 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.339 2018/02/10 05:24:23 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -30,6 +30,8 @@
 #include <sys/sched.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 #ifdef HIBERNATE
 #include <sys/hibernate.h>
@@ -2503,6 +2505,7 @@ acpi_sleep_state(struct acpi_softc *sc, int sleepmode)
 	if (config_suspend_all(DVACT_QUIESCE))
 		goto fail_quiesce;
 
+	vfs_stall(curproc, 1);
 #if NSOFTRAID > 0
 	sr_quiesce();
 #endif
@@ -2590,6 +2593,7 @@ fail_suspend:
 	acpi_resume_mp();
 #endif
 
+	vfs_stall(curproc, 0);
 	bufq_restart();
 
 fail_quiesce:
@@ -2611,6 +2615,8 @@ fail_alloc:
 	wsdisplay_resume();
 	rw_enter_write(&sc->sc_lck);
 #endif /* NWSDISPLAY > 0 */
+
+	sys_sync(curproc, NULL, NULL);
 
 	/* Restore hw.setperf */
 	if (cpu_setperf != NULL)
