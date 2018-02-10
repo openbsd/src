@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.164 2018/02/10 01:24:28 benno Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.165 2018/02/10 11:19:09 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -326,9 +326,8 @@ daemons like
 .Xr ospfd 8 .
 .Pp
 .It Xo
-.Ic prefix-set Ar name Ic { Ar address Ns Li / Ns Ar len
-.Op Ar ...\&
-.Ic }
+.Ic prefix-set Ar name
+.Ic { Ar address Ns Li / Ns Ar len ... Ic }
 .Xc
 A
 .Ic prefix-set
