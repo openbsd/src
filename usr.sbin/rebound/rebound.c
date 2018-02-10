@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.93 2018/02/07 01:02:46 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.94 2018/02/10 17:51:37 anton Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -885,6 +885,9 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 	int r, kq;
 	int conffd = -1;
 	struct timespec ts, *timeout = NULL;
+
+	if (pledge("stdio rpath proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	kq = kqueue();
 
