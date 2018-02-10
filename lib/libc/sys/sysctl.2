@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.1 2018/01/12 04:36:12 deraadt Exp $
+.\"	$OpenBSD: sysctl.2,v 1.2 2018/02/10 05:53:58 florian Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 12 2018 $
+.Dd $Mdocdate: February 10 2018 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -1663,6 +1663,7 @@ The currently defined protocols and names are:
 .It ip6 Ta multipath Ta integer Ta yes
 .It ip6 Ta neighborgcthresh Ta integer Ta yes
 .It ip6 Ta redirect Ta integer Ta yes
+.It ip6 Ta soiikey Ta uint8_t[] Ta yes
 .It ip6 Ta use_deprecated Ta integer Ta yes
 .El
 .Pp
@@ -1842,6 +1843,11 @@ The default value is 2048.
 Returns 1 when ICMPv6 redirects may be sent by the node.
 This option is ignored unless the node is routing IP packets,
 and should normally be enabled on all systems.
+.Pp
+.It Li ip6.soii Pq Va net.inet6.ip6.soiikey
+This variable configures the secret key for the RFC 7217 algorithm to 
+calculate a persistent Semantically Opaque Interface Identifier (SOII)
+for IPv6 link local and Stateless Address Autoconfiguration (SLAAC) addresses.
 .Pp
 .It Li ip6.use_deprecated Pq Va net.inet6.ip6.use_deprecated
 This variable controls the use of deprecated addresses, specified in
