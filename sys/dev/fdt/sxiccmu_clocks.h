@@ -170,6 +170,7 @@ struct sxiccmu_ccu_bit sun8i_a23_gates[] = {
 #define A64_CLK_HOSC		253
 
 struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
+	[A64_CLK_PLL_PERIPH0] = { 0x0028, 31 },
 	[A64_CLK_BUS_MMC0] =  { 0x0060, 8 },
 	[A64_CLK_BUS_MMC1] =  { 0x0060, 9 },
 	[A64_CLK_BUS_MMC2] =  { 0x0060, 10 },
@@ -352,10 +353,12 @@ struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
 #define H3_R_CLK_APB0		2
 
 #define H3_R_CLK_APB0_PIO	3
+#define H3_R_CLK_APB0_RSB	6
 #define H3_R_CLK_APB0_I2C	9
 
 struct sxiccmu_ccu_bit sun8i_h3_r_gates[] = {
 	[H3_R_CLK_APB0_PIO] = { 0x0028, 0 },
+	[H3_R_CLK_APB0_RSB] = { 0x0028, 3, H3_R_CLK_APB0 },
 	[H3_R_CLK_APB0_I2C] = { 0x0028, 6, H3_R_CLK_APB0 },
 };
 
@@ -624,9 +627,11 @@ struct sxiccmu_ccu_bit sun8i_h3_resets[] = {
 	[H3_RST_BUS_I2C2]  = { 0x02d8, 2 },
 };
 
+#define H3_R_RST_APB0_RSB	2
 #define H3_R_RST_APB0_I2C	5
 
 struct sxiccmu_ccu_bit sun8i_h3_r_resets[] = {
+	[H3_R_RST_APB0_RSB] = { 0x00b0, 3 },
 	[H3_R_RST_APB0_I2C] = { 0x00b0, 6 },
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.17 2017/12/31 10:54:39 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.18 2018/02/10 22:31:34 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -135,6 +135,7 @@ sxiccmu_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(node, "allwinner,sun9i-a80-usb-clks") ||
 	    OF_is_compatible(node, "allwinner,sun9i-a80-mmc-config-clk") ||
 	    OF_is_compatible(node, "allwinner,sun50i-a64-ccu") ||
+	    OF_is_compatible(node, "allwinner,sun50i-a64-r-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun50i-h5-ccu"));
 }
 
@@ -180,7 +181,8 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_nresets = nitems(sun8i_h3_resets);
 		sc->sc_get_frequency = sxiccmu_h3_get_frequency;
 		sc->sc_set_frequency = sxiccmu_h3_set_frequency;
-	} else if (OF_is_compatible(node, "allwinner,sun8i-h3-r-ccu")) {
+	} else if (OF_is_compatible(node, "allwinner,sun8i-h3-r-ccu") ||	
+	    OF_is_compatible(node, "allwinner,sun50i-a64-r-ccu")) {
 		KASSERT(faa->fa_nreg > 0);
 		sc->sc_gates = sun8i_h3_r_gates;
 		sc->sc_ngates = nitems(sun8i_h3_r_gates);
