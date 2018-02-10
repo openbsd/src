@@ -1,9 +1,10 @@
-/*	$OpenBSD: rde_filter.c,v 1.84 2018/02/05 01:36:45 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.85 2018/02/10 01:24:28 benno Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2016 Job Snijders <job@instituut.net>
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
+ * Copyright (c) 2018 Sebastian Benoit <benno@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,6 +32,7 @@
 int	rde_filter_match(struct filter_rule *, struct rde_aspath *,
 	    struct bgpd_addr *, u_int8_t, struct rde_peer *, struct rde_peer *);
 int	filterset_equal(struct filter_set_head *, struct filter_set_head *);
+int	rde_test_prefix(struct filter_prefix *, struct bgpd_addr *, u_int8_t);
 
 void
 rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
@@ -336,6 +338,7 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 	u_int32_t	pas;
 	int		cas, type;
 	int64_t		las, ld1, ld2;
+	struct prefixset_item *psi;
 
 	if (asp != NULL && f->match.as.type != AS_NONE) {
 		if (f->match.as.flags & AS_FLAG_NEIGHBORAS)
@@ -471,50 +474,38 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 		}
 	}
 
-	/* XXX must be last because of the prefixlen compares */
-	if (f->match.prefix.addr.aid != 0) {
-		if (f->match.prefix.addr.aid != prefix->aid)
-			/* don't use IPv4 rules for IPv6 and vice versa */
-			return (0);
-
-		if (prefix_compare(prefix, &f->match.prefix.addr,
-		    f->match.prefix.len))
-			return (0);
-
-		/* test prefixlen stuff too */
-		switch (f->match.prefix.op) {
-		case OP_NONE: /* perfect match */
-			return (plen == f->match.prefix.len);
-		case OP_EQ:
-			return (plen == f->match.prefix.len_min);
-		case OP_NE:
-			return (plen != f->match.prefix.len_min);
-		case OP_RANGE:
-			return ((plen >= f->match.prefix.len_min) &&
-			    (plen <= f->match.prefix.len_max));
-		case OP_XRANGE:
-			return ((plen < f->match.prefix.len_min) ||
-			    (plen > f->match.prefix.len_max));
-		case OP_LE:
-			return (plen <= f->match.prefix.len_min);
-		case OP_LT:
-			return (plen < f->match.prefix.len_min);
-		case OP_GE:
-			return (plen >= f->match.prefix.len_min);
-		case OP_GT:
-			return (plen > f->match.prefix.len_min);
+	/*
+	 * XXX must be second to last because we unconditionally return here.
+	 * prefixset and prefix filter rules are mutual exclusive
+	 */
+	if (f->match.prefixset.flags != 0) {
+		log_debug("%s: processing filter for prefixset %s",
+		    __func__, f->match.prefixset.name);
+		SIMPLEQ_FOREACH(psi, &f->match.prefixset.ps->psitems, entry) {
+			if (rde_test_prefix(&psi->p, prefix, plen)) {
+				log_debug("%s: prefixset %s matched %s",
+				    __func__, f->match.prefixset.ps->name,
+				    log_addr(&psi->p.addr));
+				return (1);
+			}
 		}
-		/* NOTREACHED */
+		return (0);
 	}
+
+	/* XXX must be last because we unconditionally return here */
+	if (f->match.prefix.addr.aid != 0)
+		return (rde_test_prefix(&f->match.prefix, prefix, plen));
+
 	/* matched somewhen or is anymatch rule  */
 	return (1);
 }
 
 int
 rde_filter_equal(struct filter_head *a, struct filter_head *b,
-    struct rde_peer *peer)
+    struct rde_peer *peer, struct prefixset_head *psh)
 {
 	struct filter_rule	*fa, *fb;
+	struct prefixset	*psa, *psb;
 
 	fa = a ? TAILQ_FIRST(a) : NULL;
 	fb = b ? TAILQ_FIRST(b) : NULL;
@@ -570,8 +561,25 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 			return (0);
 		if (memcmp(&fa->peer, &fb->peer, sizeof(fa->peer)))
 			return (0);
+
+		/* compare filter_rule.match without the prefixset pointer */
+		psa = fa->match.prefixset.ps;
+		psb = fb->match.prefixset.ps;
+		fa->match.prefixset.ps = fb->match.prefixset.ps = NULL;
 		if (memcmp(&fa->match, &fb->match, sizeof(fa->match)))
 			return (0);
+		fa->match.prefixset.ps = psa;
+		fb->match.prefixset.ps = psb;
+
+		if ((fa->match.prefixset.flags != 0) &&
+		    (fa->match.prefixset.ps != NULL) &&
+		    ((fa->match.prefixset.ps->sflags
+		    & PREFIXSET_FLAG_DIRTY) != 0)) {
+			log_debug("%s: prefixset %s has changed",
+			    __func__, fa->match.prefixset.name);
+			return (0);
+		}
+
 		if (!filterset_equal(&fa->set, &fb->set))
 			return (0);
 
@@ -900,9 +908,6 @@ filterset_name(enum action_types type)
 		}						\
 	} while (0)
 
-struct peer;
-void print_rule(struct peer *, struct filter_rule *);
-
 void
 rde_filter_calc_skip_steps(struct filter_head *rules)
 {
@@ -995,4 +1000,42 @@ rde_filter(struct filter_head *rules, struct rde_aspath **new,
  nextrule: ;
 	}
 	return (action);
+}
+
+/* return 1 when prefix matches filter_prefix, 0 if not */
+int
+rde_test_prefix(struct filter_prefix *fp, struct bgpd_addr *prefix,
+    u_int8_t plen)
+{
+	if (fp->addr.aid != prefix->aid)
+		/* don't use IPv4 rules for IPv6 and vice versa */
+		return (0);
+
+	if (prefix_compare(prefix, &fp->addr, fp->len))
+		return (0);
+
+	/* test prefixlen stuff too */
+	switch (fp->op) {
+	case OP_NONE: /* perfect match */
+		return (plen == fp->len);
+	case OP_EQ:
+		return (plen == fp->len_min);
+	case OP_NE:
+		return (plen != fp->len_min);
+	case OP_RANGE:
+		return ((plen >= fp->len_min) &&
+		    (plen <= fp->len_max));
+	case OP_XRANGE:
+		return ((plen < fp->len_min) ||
+		    (plen > fp->len_max));
+	case OP_LE:
+		return (plen <= fp->len_min);
+	case OP_LT:
+		return (plen < fp->len_min);
+	case OP_GE:
+		return (plen >= fp->len_min);
+	case OP_GT:
+		return (plen > fp->len_min);
+	}
+	return (0); /* should not be reached */
 }

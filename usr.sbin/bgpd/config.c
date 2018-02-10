@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.67 2017/05/29 09:56:33 benno Exp $ */
+/*	$OpenBSD: config.c,v 1.68 2018/02/10 01:24:28 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -59,6 +59,9 @@ new_config(void)
 	    conf->default_tableid) == -1)
 		fatal(NULL);
 
+	if ((conf->prefixsets = calloc(1, sizeof(struct prefixset_head)))
+	    == NULL)
+		fatal(NULL);
 	if ((conf->filters = calloc(1, sizeof(struct filter_head))) == NULL)
 		fatal(NULL);
 	if ((conf->listen_addrs = calloc(1, sizeof(struct listen_addrs))) ==
@@ -70,6 +73,7 @@ new_config(void)
 	/* init the various list for later */
 	TAILQ_INIT(&conf->networks);
 	SIMPLEQ_INIT(&conf->rdomains);
+	SIMPLEQ_INIT(conf->prefixsets);
 
 	TAILQ_INIT(conf->filters);
 	TAILQ_INIT(conf->listen_addrs);
@@ -105,6 +109,25 @@ free_rdomains(struct rdomain_head *rdomains)
 }
 
 void
+free_prefixsets(struct prefixset_head *psh)
+{
+	struct prefixset	*ps;
+	struct prefixset_item	*psi;
+
+
+	while (!SIMPLEQ_EMPTY(psh)) {
+		ps = SIMPLEQ_FIRST(psh);
+		while (!SIMPLEQ_EMPTY(&ps->psitems)) {
+			psi = SIMPLEQ_FIRST(&ps->psitems);
+			SIMPLEQ_REMOVE_HEAD(&ps->psitems, entry);
+			free(psi);
+		}
+		SIMPLEQ_REMOVE_HEAD(psh, entry);
+		free(ps);
+	}
+}
+
+void
 free_config(struct bgpd_config *conf)
 {
 	struct listen_addr	*la;
@@ -113,6 +136,7 @@ free_config(struct bgpd_config *conf)
 	free_rdomains(&conf->rdomains);
 	free_networks(&conf->networks);
 	filterlist_free(conf->filters);
+	free_prefixsets(conf->prefixsets);
 
 	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
 		TAILQ_REMOVE(conf->listen_addrs, la, entry);
@@ -139,6 +163,7 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 	struct listen_addr	*nla, *ola, *next;
 	struct network		*n;
 	struct rdomain		*rd;
+	struct prefixset	*ps;
 
 	/*
 	 * merge the freshly parsed conf into the running xconf
@@ -186,6 +211,12 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 	xconf->filters = conf->filters;
 	conf->filters = NULL;
 
+	/* switch the prefixsets, first remove the old ones */
+	free_prefixsets(xconf->prefixsets);
+	while ((ps = SIMPLEQ_FIRST(conf->prefixsets)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(conf->prefixsets, entry);
+		SIMPLEQ_INSERT_TAIL(xconf->prefixsets, ps, entry);
+	}
 	/* switch the network statements, but first remove the old ones */
 	free_networks(&xconf->networks);
 	while ((n = TAILQ_FIRST(&conf->networks)) != NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.106 2017/08/12 16:47:50 phessler Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.107 2018/02/10 01:24:28 benno Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,6 +40,7 @@ void		 print_rdomain_targets(struct filter_set_head *, const char *);
 void		 print_rdomain(struct rdomain *);
 const char	*print_af(u_int8_t);
 void		 print_network(struct network_config *, const char *);
+void		 print_prefixsets(struct prefixset_head *);
 void		 print_peer(struct peer_config *, struct bgpd_config *,
 		    const char *);
 const char	*print_auth_alg(u_int8_t);
@@ -421,6 +422,35 @@ print_network(struct network_config *n, const char *c)
 }
 
 void
+print_prefixsets(struct prefixset_head *psh)
+{
+	struct prefixset	*ps;
+	struct prefixset_item	*psi;
+
+	SIMPLEQ_FOREACH(ps, psh, entry) {
+		printf("prefix-set \"%s\" { ", ps->name);
+		SIMPLEQ_FOREACH(psi, &ps->psitems, entry) {
+			if (psi->p.addr.aid)
+				printf("%s/%u ", log_addr(&psi->p.addr),
+				    psi->p.len);
+			if (psi->p.op) {
+				if (psi->p.op == OP_RANGE ||
+				    psi->p.op == OP_XRANGE) {
+					printf("prefixlen %u ", psi->p.len_min);
+					print_op(psi->p.op);
+					printf(" %u ", psi->p.len_max);
+				} else {
+					printf("prefixlen ");
+					print_op(psi->p.op);
+					printf(" %u ", psi->p.len_min);
+				}
+			}
+		}
+		printf(" }\n");
+	}
+}
+
+void
 print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 {
 	char		*method;
@@ -665,6 +695,9 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 		}
 	}
 
+	if (r->match.prefixset.flags & PREFIXSET_FLAG_FILTER)
+		printf("prefix-set \"%s\" ", r->match.prefixset.name);
+
 	if (r->match.nexthop.flags) {
 		if (r->match.nexthop.flags == FILTER_NEXTHOP_NEIGHBOR)
 			printf("nexthop neighbor ");
@@ -847,6 +880,8 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 			    rr->rtableid, rr->flags & F_RIB_NOFIBSYNC ?
 			    "no" : "yes");
 	}
+	printf("\n");
+	print_prefixsets(conf->prefixsets);
 	printf("\n");
 	print_mrt(conf, 0, 0, "", "");
 	printf("\n");

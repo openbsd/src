@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.316 2018/02/08 00:16:18 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.317 2018/02/10 01:24:28 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,6 +43,7 @@
 #define	TCP_MD5_KEY_LEN			80
 #define	IPSEC_ENC_KEY_LEN		32
 #define	IPSEC_AUTH_KEY_LEN		20
+#define	PREFIXSET_NAME_LEN		32
 
 #define	MAX_PKTSIZE			4096
 #define	MIN_HOLDTIME			3
@@ -208,6 +209,9 @@ SIMPLEQ_HEAD(rdomain_head, rdomain);
 struct network;
 TAILQ_HEAD(network_head, network);
 
+struct prefixset;
+SIMPLEQ_HEAD(prefixset_head, prefixset);
+
 struct filter_rule;
 TAILQ_HEAD(filter_head, filter_rule);
 
@@ -217,6 +221,7 @@ struct bgpd_config {
 	struct filter_head			*filters;
 	struct listen_addrs			*listen_addrs;
 	struct mrt_head				*mrt;
+	struct prefixset_head			*prefixsets;
 	char					*csock;
 	char					*rcsock;
 	int					 flags;
@@ -397,6 +402,8 @@ enum imsg_type {
 	IMSG_NETWORK_FLUSH,
 	IMSG_NETWORK_DONE,
 	IMSG_FILTER_SET,
+	IMSG_RECONF_PREFIXSET,
+	IMSG_RECONF_PREFIXSETITEM,
 	IMSG_SOCKET_CONN,
 	IMSG_SOCKET_CONN_CTL,
 	IMSG_RECONF_CONF,
@@ -651,6 +658,15 @@ struct filter_aslen {
 	enum aslen_spec	type;
 };
 
+#define PREFIXSET_FLAG_FILTER	0x01
+#define PREFIXSET_FLAG_DIRTY	0x02	/* prefix-set changed at reload */
+
+struct filter_prefixset {
+	int			 flags;
+	char	 		 name[PREFIXSET_NAME_LEN];
+	struct prefixset	*ps;
+};
+
 #define AS_FLAG_NEIGHBORAS	0x01
 
 struct filter_community {
@@ -849,6 +865,7 @@ struct filter_match {
 	struct filter_community		community;
 	struct filter_largecommunity	large_community;
 	struct filter_extcommunity	ext_community;
+	struct filter_prefixset		prefixset;
 };
 
 union filter_rule_ptr {
@@ -916,6 +933,19 @@ struct filter_set {
 		u_int8_t		origin;
 	} action;
 	enum action_types		type;
+};
+
+struct prefixset_item {
+	struct filter_prefix		 p;
+	SIMPLEQ_ENTRY(prefixset_item)	 entry;
+};
+SIMPLEQ_HEAD(prefixset_items_h, prefixset_item);
+
+struct prefixset {
+	int				 sflags;
+	char				 name[PREFIXSET_NAME_LEN];
+	struct prefixset_items_h	 psitems;
+	SIMPLEQ_ENTRY(prefixset)	 entry;
 };
 
 struct rdomain {
@@ -1023,7 +1053,8 @@ int	control_imsg_relay(struct imsg *);
 
 /* config.c */
 struct bgpd_config	*new_config(void);
-void			free_config(struct bgpd_config *);
+void			 free_config(struct bgpd_config *);
+void	free_prefixsets(struct prefixset_head *);
 void	filterlist_free(struct filter_head *);
 int	host(const char *, struct bgpd_addr *, u_int8_t *);
 
@@ -1086,7 +1117,10 @@ void		 pftable_unref(u_int16_t);
 void		 pftable_ref(u_int16_t);
 
 /* parse.y */
-int	 cmdline_symset(char *);
+int		 cmdline_symset(char *);
+struct prefixset *find_prefixset(char *, struct prefixset_head *);
+struct prefixset_item *find_prefixsetitem(struct prefixset_item *i,
+				struct prefixset_items_h *psitems);
 
 /* pftable.c */
 int	pftable_exists(const char *);

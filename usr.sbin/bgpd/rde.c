@@ -1,9 +1,10 @@
-/*	$OpenBSD: rde.c,v 1.377 2018/02/07 00:02:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.378 2018/02/10 01:24:28 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2016 Job Snijders <job@instituut.net>
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
+ * Copyright (c) 2018 Sebastian Benoit <benno@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -103,6 +104,8 @@ void		 rde_softreconfig_unload_peer(struct rib_entry *, void *);
 void		 rde_up_dump_upcall(struct rib_entry *, void *);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(u_int8_t);
+void		 rde_mark_prefixsets_dirty(struct prefixset_head *,
+						struct prefixset_head *);
 
 void		 peer_init(u_int32_t);
 void		 peer_shutdown(void);
@@ -129,6 +132,7 @@ struct bgpd_config	*conf, *nconf;
 time_t			 reloadtime;
 struct rde_peer_head	 peerlist;
 struct rde_peer		*peerself;
+struct prefixset_head	*prefixsets_tmp;
 struct filter_head	*out_rules, *out_rules_tmp;
 struct rdomain_head	*rdomains_l, *newdomains;
 struct imsgbuf		*ibuf_se;
@@ -233,10 +237,12 @@ rde_main(int debug, int verbose)
 	if (out_rules == NULL)
 		fatal(NULL);
 	TAILQ_INIT(out_rules);
+
 	rdomains_l = calloc(1, sizeof(struct rdomain_head));
 	if (rdomains_l == NULL)
 		fatal(NULL);
 	SIMPLEQ_INIT(rdomains_l);
+
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
 	log_info("route decision engine ready");
@@ -654,6 +660,7 @@ void
 rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
 	static struct rdomain	*rd;
+	static struct prefixset	*last_prefixset;
 	struct imsg		 imsg;
 	struct mrt		 xmrt;
 	struct rde_rib		 rn;
@@ -663,6 +670,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	struct filter_set	*s;
 	struct nexthop		*nh;
 	struct rib		*rib;
+	struct prefixset	*ps;
+	struct prefixset_item	*psi;
 	int			 n, fd;
 	u_int16_t		 rid;
 
@@ -730,6 +739,11 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			    sizeof(struct bgpd_config))
 				fatalx("IMSG_RECONF_CONF bad len");
 			reloadtime = time(NULL);
+			prefixsets_tmp = calloc(1,
+			    sizeof(struct prefixset_head));
+			if (prefixsets_tmp == NULL)
+				fatal(NULL);
+			SIMPLEQ_INIT(prefixsets_tmp);
 			out_rules_tmp = calloc(1, sizeof(struct filter_head));
 			if (out_rules_tmp == NULL)
 				fatal(NULL);
@@ -782,6 +796,16 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if ((r = malloc(sizeof(struct filter_rule))) == NULL)
 				fatal(NULL);
 			memcpy(r, imsg.data, sizeof(struct filter_rule));
+			if (r->match.prefixset.flags != 0) {
+				log_info("%s: retrieving prefixset %s for rule",
+				    __func__, r->match.prefixset.name);
+				r->match.prefixset.ps =
+				    find_prefixset(r->match.prefixset.name,
+					prefixsets_tmp);
+				if (r->match.prefixset.ps == NULL)
+					log_warnx("%s: no prefixset for %s",
+					    __func__, r->match.prefixset.name);
+			}
 			TAILQ_INIT(&r->set);
 			if ((rib = rib_find(r->rib)) == NULL) {
 				log_warnx("IMSG_RECONF_FILTER: filter rule "
@@ -805,6 +829,30 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				TAILQ_INSERT_TAIL(nr, r, entry);
 			} else
 				TAILQ_INSERT_TAIL(out_rules_tmp, r, entry);
+			break;
+		case IMSG_RECONF_PREFIXSET:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct prefixset))
+				fatalx("IMSG_RECONF_PREFIXSET bad len");
+			ps = malloc(sizeof(struct prefixset));
+			if (ps == NULL)
+				fatal(NULL);
+			memcpy(ps, imsg.data, sizeof(struct prefixset));
+			SIMPLEQ_INIT(&ps->psitems);
+			SIMPLEQ_INSERT_TAIL(prefixsets_tmp, ps, entry);
+			last_prefixset = ps;
+			break;
+		case IMSG_RECONF_PREFIXSETITEM:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct prefixset_item))
+				fatalx("IMSG_RECONF_PREFIXSETITEM bad len");
+			psi = malloc(sizeof(struct prefixset_item));
+			if (psi == NULL)
+				fatal(NULL);
+			memcpy(psi, imsg.data, sizeof(struct prefixset_item));
+			if (last_prefixset == NULL)
+				fatalx("King Bula has no prefixset");
+			SIMPLEQ_INSERT_TAIL(&last_prefixset->psitems, psi, entry);
 			break;
 		case IMSG_RECONF_RDOMAIN:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -840,6 +888,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (nconf == NULL)
 				fatalx("got IMSG_RECONF_DONE but no config");
 			parent_set = NULL;
+			last_prefixset = NULL;
 
 			rde_reload_done();
 			break;
@@ -2876,6 +2925,7 @@ rde_reload_done(void)
 	struct rde_peer		*peer;
 	struct filter_head	*fh;
 	u_int16_t		 rid;
+	struct prefixset_head	*prefixsets_old;
 
 	/* first merge the main config */
 	if ((nconf->flags & BGPD_FLAG_NO_EVALUATE)
@@ -2887,6 +2937,9 @@ rde_reload_done(void)
 		else
 			nconf->flags &= ~BGPD_FLAG_NO_EVALUATE;
 	}
+
+	prefixsets_old = conf->prefixsets;
+
 	memcpy(conf, nconf, sizeof(struct bgpd_config));
 	conf->listen_addrs = NULL;
 	conf->csock = NULL;
@@ -2911,7 +2964,10 @@ rde_reload_done(void)
 	rdomains_l = newdomains;
 	/* XXX WHERE IS THE SYNC ??? */
 
-	rde_filter_calc_skip_steps(out_rules_tmp);
+	rde_mark_prefixsets_dirty(prefixsets_old, prefixsets_tmp);
+	/* swap the prefixsets */
+	conf->prefixsets = prefixsets_tmp;
+	prefixsets_tmp = NULL;
 
 	/*
 	 * make the new filter rules the active one but keep the old for
@@ -2921,6 +2977,8 @@ rde_reload_done(void)
 	fh = out_rules;
 	out_rules = out_rules_tmp;
 	out_rules_tmp = fh;
+
+	rde_filter_calc_skip_steps(out_rules);
 
 	/* check if filter changed */
 	LIST_FOREACH(peer, &peerlist, peer_l) {
@@ -2937,7 +2995,8 @@ rde_reload_done(void)
 			peer->reconf_rib = 1;
 			continue;
 		}
-		if (!rde_filter_equal(out_rules, out_rules_tmp, peer)) {
+		if (!rde_filter_equal(out_rules, out_rules_tmp, peer,
+		    conf->prefixsets)) {
 			peer->reconf_out = 1;
 		}
 	}
@@ -2958,7 +3017,7 @@ rde_reload_done(void)
 			break;
 		case RECONF_KEEP:
 			if (rde_filter_equal(ribs[rid].in_rules,
-			    ribs[rid].in_rules_tmp, NULL))
+			    ribs[rid].in_rules_tmp, NULL, conf->prefixsets))
 				/* rib is in sync */
 				break;
 			ribs[rid].state = RECONF_RELOAD;
@@ -2991,6 +3050,10 @@ rde_reload_done(void)
 		ribs[rid].in_rules_tmp = NULL;
 		ribs[rid].state = RECONF_NONE;
 	}
+
+	if (prefixsets_old != NULL)
+		free_prefixsets(prefixsets_old);
+	prefixsets_old = NULL;
 
 	log_info("RDE reconfigured");
 	imsg_compose(ibuf_main, IMSG_RECONF_DONE, 0, 0,
@@ -3767,4 +3830,28 @@ sa_cmp(struct bgpd_addr *a, struct sockaddr *b)
 	}
 
 	return (0);
+}
+
+void
+rde_mark_prefixsets_dirty(struct prefixset_head *psold,
+    struct prefixset_head *psnew)
+{
+	struct prefixset *new, *fps;
+	struct prefixset_item *item;
+
+	SIMPLEQ_FOREACH(new, psnew, entry) {
+		if ((psold == NULL) ||
+		    (fps = find_prefixset(new->name, psold)) == NULL) {
+			new->sflags |= PREFIXSET_FLAG_DIRTY;
+		} else {
+			SIMPLEQ_FOREACH(item, &new->psitems, entry) {
+				if (find_prefixsetitem(item, &fps->psitems)
+				    == NULL) {
+					new->sflags |= PREFIXSET_FLAG_DIRTY;
+					break;
+				}
+			}
+		}
+	}
+	return;
 }
