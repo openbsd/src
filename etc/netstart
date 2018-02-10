@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.188 2018/02/06 19:53:50 tb Exp $
+#	$OpenBSD: netstart,v 1.189 2018/02/10 05:56:47 florian Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -193,6 +193,9 @@ if $PRINT_ONLY && (($# == 0)); then
 	print -u2 "Missing parameters.\n$USAGE"
 	exit 1
 fi
+
+$PRINT_ONLY || [[ ! -f /etc/soii.key ]] ||
+	sysctl -q "net.inet6.ip6.soiikey=$(</etc/soii.key)"
 
 # If we were invoked with a list of interface names, just reconfigure these
 # interfaces (or bridges), add default routes and return.

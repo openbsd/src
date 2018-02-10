@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.124 2017/05/03 11:55:36 gsoares Exp $
+#	$OpenBSD: special,v 1.125 2018/02/10 05:56:47 florian Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -94,6 +94,7 @@ shells		type=file mode=0644 uname=root gname=wheel
 skey		type=dir mode=01730 uname=root gname=auth optional
 ..	#skey
 snmpd.conf	type=file mode=0600 uname=root gname=wheel optional
+soii.key	type=file mode=0600 uname=root gname=wheel optional
 spwd.db		type=file mode=0640 uname=root gname=_shadow
 ssh		type=dir mode=0755 uname=root gname=wheel optional
 ssh_config	type=file mode=0644 uname=root gname=wheel
