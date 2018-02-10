@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.71 2018/02/06 03:07:51 dlg Exp $	*/
+/*	$OpenBSD: interface.h,v 1.72 2018/02/10 10:00:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.71 2018/02/06 03:07:51 dlg Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.72 2018/02/10 10:00:32 dlg Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -271,7 +271,7 @@ extern void stp_print(const u_char *, u_int);
 extern void radius_print(const u_char *, u_int);
 extern void lwres_print(const u_char *, u_int);
 extern void ether_print(const u_char *, u_int);
-extern void etherip_print(const u_char *, u_int, u_int, const u_char *);
+extern void etherip_print(const u_char *, u_int, u_int);
 extern void ipcomp_print(const u_char *, u_int, const u_char *);
 extern void mpls_print(const u_char *, u_int);
 extern void lldp_print(const u_char *, u_int);

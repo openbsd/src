@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-etherip.c,v 1.9 2017/03/08 10:05:30 jca Exp $	*/
+/*	$OpenBSD: print-etherip.c,v 1.10 2018/02/10 10:00:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -56,21 +56,19 @@
 extern u_short extracted_ethertype;
 
 void
-etherip_print(const u_char *bp, u_int caplen, u_int len, const u_char *bp2)
+etherip_print(const u_char *bp, u_int caplen, u_int len)
 {
-	const struct ip *ip = (const struct ip *)bp2;
 	struct ether_header *eh;
 	const u_char *pbuf = bp;
 	u_int plen = caplen, hlen;
 	u_int16_t etype;
 
+	printf("etherip ");
+
 	if (plen < sizeof(struct etherip_header)) {
 		printf("[|etherip]");
 		return;
 	}
-
-	printf("etherip %s > %s ver ", ipaddr_string(&ip->ip_src),
-	    ipaddr_string(&ip->ip_dst));
 
 	switch (*pbuf >> 4) {
 	case 2:

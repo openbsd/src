@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.48 2018/02/06 03:07:51 dlg Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.49 2018/02/10 10:00:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -537,8 +537,10 @@ ip_print(const u_char *bp, u_int length)
 #define IPPROTO_ETHERIP	97
 #endif
 		case IPPROTO_ETHERIP:
-			etherip_print(cp, snapend - cp, len,
-			    (const u_char *)ip);
+			(void)printf("%s > %s: ",
+			     ipaddr_string(&ip->ip_src),
+			     ipaddr_string(&ip->ip_dst));
+			etherip_print(cp, snapend - cp, len);
 			break;
 
 #ifndef	IPPROTO_IPCOMP
