@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.356 2018/02/08 21:54:55 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.357 2018/02/10 05:55:26 florian Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -388,6 +388,8 @@ const struct	cmd {
 	{ "eui64",	0,		0,		setia6eui64 },
 	{ "autoconfprivacy",	-IFXF_INET6_NOPRIVACY,	0,	setifxflags },
 	{ "-autoconfprivacy",	IFXF_INET6_NOPRIVACY,	0,	setifxflags },
+	{ "soii",	-IFXF_INET6_NOSOII,	0,	setifxflags },
+	{ "-soii",	IFXF_INET6_NOSOII,	0,	setifxflags },
 #ifndef SMALL
 	{ "hwfeatures", NEXTARG0,	0,		printifhwfeatures },
 	{ "metric",	NEXTARG,	0,		setifmetric },
