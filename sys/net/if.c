@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.542 2018/02/10 05:32:21 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.543 2018/02/10 05:52:08 florian Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1922,6 +1922,19 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 				break;
 			}
 		}
+
+		if (ISSET(ifr->ifr_flags, IFXF_INET6_NOSOII) &&
+		    !ISSET(ifp->if_xflags, IFXF_INET6_NOSOII)) {
+			ifp->if_xflags |= IFXF_INET6_NOSOII;
+			in6_soiiupdate(ifp);
+		}
+
+		if (!ISSET(ifr->ifr_flags, IFXF_INET6_NOSOII) &&
+		    ISSET(ifp->if_xflags, IFXF_INET6_NOSOII)) {
+			ifp->if_xflags &= ~IFXF_INET6_NOSOII;
+			in6_soiiupdate(ifp);
+		}
+
 #endif	/* INET6 */
 
 #ifdef MPLS

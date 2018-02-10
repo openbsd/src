@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.190 2018/01/16 10:33:55 mpi Exp $	*/
+/*	$OpenBSD: if.h,v 1.191 2018/02/10 05:52:08 florian Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -221,6 +221,7 @@ struct if_status_description {
 #define	IFXF_MPLS		0x8	/* [N] supports MPLS */
 #define	IFXF_WOL		0x10	/* [N] wake on lan enabled */
 #define	IFXF_AUTOCONF6		0x20	/* [N] v6 autoconf enabled */
+#define IFXF_INET6_NOSOII	0x40	/* [N] don't do RFC 7217 */
 
 #define	IFXF_CANTCHANGE \
 	(IFXF_MPSAFE|IFXF_CLONED)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.82 2018/02/01 21:11:33 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.83 2018/02/10 05:52:08 florian Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -291,6 +291,9 @@ extern int	ip6_dad_pending;	/* number of currently running DADs */
 
 extern int ip6_auto_flowlabel;
 extern int ip6_auto_linklocal;
+
+#define	IP6_SOIIKEY_LEN 16
+extern uint8_t	ip6_soiikey[IP6_SOIIKEY_LEN];
 
 struct in6pcb;
 struct inpcb;

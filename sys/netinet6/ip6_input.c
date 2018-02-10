@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.211 2018/02/01 21:11:33 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.212 2018/02/10 05:52:08 florian Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -92,6 +92,7 @@
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
 #include <netinet6/in6_var.h>
+#include <netinet6/in6_ifattach.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
@@ -118,12 +119,15 @@ struct niqueue ip6intrq = NIQUEUE_INITIALIZER(IPQ_MAXLEN, NETISR_IPV6);
 
 struct cpumem *ip6counters;
 
+uint8_t ip6_soiikey[IP6_SOIIKEY_LEN];
+
 int ip6_ours(struct mbuf **, int *, int, int);
 int ip6_local(struct mbuf **, int *, int, int);
 int ip6_check_rh0hdr(struct mbuf *, int *);
 int ip6_hbhchcheck(struct mbuf *, int *, int *, int *);
 int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
 struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
+int ip6_sysctl_soiikey(void *, size_t *, void *, size_t);
 
 static struct mbuf_queue	ip6send_mq;
 
@@ -1367,6 +1371,35 @@ ip6_sysctl_ip6stat(void *oldp, size_t *oldlenp, void *newp)
 }
 
 int
+ip6_sysctl_soiikey(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	struct ifnet *ifp;
+	uint8_t oldkey[16];
+	int error;
+
+	error = suser(curproc, 0);
+	if (error != 0)
+		return (error);
+
+	memcpy(oldkey, ip6_soiikey, sizeof(oldkey));
+
+	error = sysctl_struct(oldp, oldlenp, newp, newlen, ip6_soiikey,
+	    sizeof(ip6_soiikey));
+
+	if (!error && memcmp(ip6_soiikey, oldkey, sizeof(oldkey)) != 0) {
+		TAILQ_FOREACH(ifp, &ifnet, if_list) {
+			if (ifp->if_flags & IFF_LOOPBACK)
+				continue;
+			NET_LOCK();
+			in6_soiiupdate(ifp);
+			NET_UNLOCK();
+		}
+	}
+
+	return (error);
+}
+
+int
 ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
@@ -1429,6 +1462,8 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case IPV6CTL_IFQUEUE:
 		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ip6intrq));
+	case IPV6CTL_SOIIKEY:
+		return (ip6_sysctl_soiikey(oldp, oldlenp, newp, newlen));
 	default:
 		if (name[0] < IPV6CTL_MAXID) {
 			NET_LOCK();
