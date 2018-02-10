@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.69 2018/02/10 04:41:24 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.70 2018/02/10 04:57:35 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -199,25 +199,22 @@ int tls_set_mem(char **_dest, size_t *_destlen, const void *_src,
 int tls_set_string(const char **_dest, const char *_src);
 
 struct tls_keypair *tls_keypair_new(void);
-void tls_keypair_clear_key(struct tls_keypair *_keypair);
+void tls_keypair_clear(struct tls_keypair *_keypair);
+void tls_keypair_free(struct tls_keypair *_keypair);
 int tls_keypair_set_cert_file(struct tls_keypair *_keypair,
     struct tls_error *_error, const char *_cert_file);
-int tls_keypair_set_cert_mem(struct tls_keypair *_keypair, const uint8_t *_cert,
-    size_t _len);
+int tls_keypair_set_cert_mem(struct tls_keypair *_keypair,
+    struct tls_error *_error, const uint8_t *_cert, size_t _len);
 int tls_keypair_set_key_file(struct tls_keypair *_keypair,
     struct tls_error *_error, const char *_key_file);
-int tls_keypair_set_key_mem(struct tls_keypair *_keypair, const uint8_t *_key,
-    size_t _len);
+int tls_keypair_set_key_mem(struct tls_keypair *_keypair,
+    struct tls_error *_error, const uint8_t *_key, size_t _len);
 int tls_keypair_set_ocsp_staple_file(struct tls_keypair *_keypair,
     struct tls_error *_error, const char *_ocsp_file);
 int tls_keypair_set_ocsp_staple_mem(struct tls_keypair *_keypair,
-    const uint8_t *_staple, size_t _len);
-void tls_keypair_clear(struct tls_keypair *_keypair);
-void tls_keypair_free(struct tls_keypair *_keypair);
+    struct tls_error *_error, const uint8_t *_staple, size_t _len);
 int tls_keypair_load_cert(struct tls_keypair *_keypair,
     struct tls_error *_error, X509 **_cert);
-int tls_keypair_pubkey_hash(struct tls_keypair *_keypair,
-    struct tls_error *_error, char **_hash);
 
 struct tls_sni_ctx *tls_sni_ctx_new(void);
 void tls_sni_ctx_free(struct tls_sni_ctx *sni_ctx);
@@ -281,6 +278,7 @@ struct tls_ocsp *tls_ocsp_setup_from_peer(struct tls *ctx);
 int tls_hex_string(const unsigned char *_in, size_t _inlen, char **_out,
     size_t *_outlen);
 int tls_cert_hash(X509 *_cert, char **_hash);
+int tls_cert_pubkey_hash(X509 *_cert, char **_hash);
 
 int tls_password_cb(char *_buf, int _size, int _rwflag, void *_u);
 

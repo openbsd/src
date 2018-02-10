@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_keypair.c,v 1.4 2018/02/08 10:19:31 jsing Exp $ */
+/* $OpenBSD: tls_keypair.c,v 1.5 2018/02/10 04:57:35 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -29,7 +29,7 @@ tls_keypair_new(void)
 	return calloc(1, sizeof(struct tls_keypair));
 }
 
-void
+static void
 tls_keypair_clear_key(struct tls_keypair *keypair)
 {
 	freezero(keypair->key_mem, keypair->key_len);
@@ -37,19 +37,50 @@ tls_keypair_clear_key(struct tls_keypair *keypair)
 	keypair->key_len = 0;
 }
 
+static int
+tls_keypair_pubkey_hash(struct tls_keypair *keypair, struct tls_error *error)
+{
+	X509 *cert = NULL;
+	int rv = -1;
+
+	free(keypair->pubkey_hash);
+	keypair->pubkey_hash = NULL;
+
+	if (keypair->cert_mem == NULL) {
+		rv = 0;
+		goto done;
+	}
+
+	if (tls_keypair_load_cert(keypair, error, &cert) == -1)
+		goto err;
+	if (tls_cert_pubkey_hash(cert, &keypair->pubkey_hash) == -1)
+		goto err;
+
+	rv = 0;
+
+ err:
+	X509_free(cert);
+ done:
+	return (rv);
+}
+
 int
 tls_keypair_set_cert_file(struct tls_keypair *keypair, struct tls_error *error,
     const char *cert_file)
 {
-	return tls_config_load_file(error, "certificate", cert_file,
-	    &keypair->cert_mem, &keypair->cert_len);
+	if (tls_config_load_file(error, "certificate", cert_file,
+	    &keypair->cert_mem, &keypair->cert_len) == -1)
+		return -1;
+	return tls_keypair_pubkey_hash(keypair, error);
 }
 
 int
-tls_keypair_set_cert_mem(struct tls_keypair *keypair, const uint8_t *cert,
-    size_t len)
+tls_keypair_set_cert_mem(struct tls_keypair *keypair, struct tls_error *error,
+    const uint8_t *cert, size_t len)
 {
-	return tls_set_mem(&keypair->cert_mem, &keypair->cert_len, cert, len);
+	if (tls_set_mem(&keypair->cert_mem, &keypair->cert_len, cert, len) == -1)
+		return -1;
+	return tls_keypair_pubkey_hash(keypair, error);
 }
 
 int
@@ -62,8 +93,8 @@ tls_keypair_set_key_file(struct tls_keypair *keypair, struct tls_error *error,
 }
 
 int
-tls_keypair_set_key_mem(struct tls_keypair *keypair, const uint8_t *key,
-    size_t len)
+tls_keypair_set_key_mem(struct tls_keypair *keypair, struct tls_error *error,
+    const uint8_t *key, size_t len)
 {
 	tls_keypair_clear_key(keypair);
 	return tls_set_mem(&keypair->key_mem, &keypair->key_len, key, len);
@@ -79,7 +110,7 @@ tls_keypair_set_ocsp_staple_file(struct tls_keypair *keypair,
 
 int
 tls_keypair_set_ocsp_staple_mem(struct tls_keypair *keypair,
-    const uint8_t *staple, size_t len)
+    struct tls_error *error, const uint8_t *staple, size_t len)
 {
 	return tls_set_mem(&keypair->ocsp_staple, &keypair->ocsp_staple_len,
 	    staple, len);
@@ -88,9 +119,11 @@ tls_keypair_set_ocsp_staple_mem(struct tls_keypair *keypair,
 void
 tls_keypair_clear(struct tls_keypair *keypair)
 {
-	tls_keypair_set_cert_mem(keypair, NULL, 0);
-	tls_keypair_set_key_mem(keypair, NULL, 0);
-	tls_keypair_set_ocsp_staple_mem(keypair, NULL, 0);
+	struct tls_error error;
+
+	tls_keypair_set_cert_mem(keypair, &error, NULL, 0);
+	tls_keypair_set_key_mem(keypair, &error, NULL, 0);
+	tls_keypair_set_ocsp_staple_mem(keypair, &error, NULL, 0);
 
 	free(keypair->pubkey_hash);
 	keypair->pubkey_hash = NULL;
@@ -140,40 +173,6 @@ tls_keypair_load_cert(struct tls_keypair *keypair, struct tls_error *error,
 
  err:
 	BIO_free(cert_bio);
-
-	return (rv);
-}
-
-int
-tls_keypair_pubkey_hash(struct tls_keypair *keypair, struct tls_error *error,
-    char **hash)
-{
-	X509 *cert = NULL;
-	char d[EVP_MAX_MD_SIZE], *dhex = NULL;
-	int dlen, rv = -1;
-
-	free(*hash);
-	*hash = NULL;
-
-	if (tls_keypair_load_cert(keypair, error, &cert) == -1)
-		goto err;
-
-	if (X509_pubkey_digest(cert, EVP_sha256(), d, &dlen) != 1)
-		goto err;
-
-	if (tls_hex_string(d, dlen, &dhex, NULL) != 0)
-		goto err;
-
-	if (asprintf(hash, "SHA256:%s", dhex) == -1) {
-		*hash = NULL;
-		goto err;
-	}
-
-	rv = 0;
-
- err:
-	X509_free(cert);
-	free(dhex);
 
 	return (rv);
 }

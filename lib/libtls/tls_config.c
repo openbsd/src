@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.48 2018/02/10 04:41:24 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.49 2018/02/10 04:57:35 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -351,12 +351,13 @@ tls_config_add_keypair_mem_internal(struct tls_config *config, const uint8_t *ce
 
 	if ((keypair = tls_keypair_new()) == NULL)
 		return (-1);
-	if (tls_keypair_set_cert_mem(keypair, cert, cert_len) != 0)
+	if (tls_keypair_set_cert_mem(keypair, &config->error, cert, cert_len) != 0)
 		goto err;
-	if (tls_keypair_set_key_mem(keypair, key, key_len) != 0)
+	if (tls_keypair_set_key_mem(keypair, &config->error, key, key_len) != 0)
 		goto err;
 	if (staple != NULL &&
-	    tls_keypair_set_ocsp_staple_mem(keypair, staple, staple_len) != 0)
+	    tls_keypair_set_ocsp_staple_mem(keypair, &config->error, staple,
+		staple_len) != 0)
 		goto err;
 
 	tls_config_keypair_add(config, keypair);
@@ -431,7 +432,8 @@ int
 tls_config_set_cert_mem(struct tls_config *config, const uint8_t *cert,
     size_t len)
 {
-	return tls_keypair_set_cert_mem(config->keypair, cert, len);
+	return tls_keypair_set_cert_mem(config->keypair, &config->error,
+	    cert, len);
 }
 
 int
@@ -592,7 +594,8 @@ int
 tls_config_set_key_mem(struct tls_config *config, const uint8_t *key,
     size_t len)
 {
-	return tls_keypair_set_key_mem(config->keypair, key, len);
+	return tls_keypair_set_key_mem(config->keypair, &config->error,
+	    key, len);
 }
 
 static int
@@ -789,7 +792,8 @@ int
 tls_config_set_ocsp_staple_mem(struct tls_config *config, const uint8_t *staple,
     size_t len)
 {
-	return tls_keypair_set_ocsp_staple_mem(config->keypair, staple, len);
+	return tls_keypair_set_ocsp_staple_mem(config->keypair, &config->error,
+	    staple, len);
 }
 
 int
