@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.40 2018/02/06 00:25:09 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.41 2018/02/10 23:25:15 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: February 6 2018 $
+.Dd $Mdocdate: February 10 2018 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -130,9 +130,9 @@ for
 .Ar option .
 .It Ic ignore Op Ar option , ... ;
 Discard values provided for the listed options.
-Each
 .Ic ignore
-overrides any previous one.
+statements are cumulative, except that an empty
+list will remove all previously specified options.
 .It Ic prepend Ar option option-value ;
 Prepend
 .Ar option-value
@@ -154,9 +154,9 @@ for
 .It Ic request Op Ar option , ... ;
 Ask that any lease contain values
 for the listed options.
-Each
 .Ic request
-overrides any previous one.
+statements are cumulative, except that an empty
+list will remove all previously specified options.
 The default is to request the options
 bootfile-name
 broadcast-address,
@@ -209,10 +209,10 @@ If more than one
 is present all leases from any of the
 addresses will be discarded.
 .It Ic require Op Ar option , ... ;
-Discard leases that do not contain all the listed options.
-Each
+Discard leases that do not contain the listed options.
 .Ic require
-overrides any previous one.
+statements are cumulative, except that an empty
+list will remove all previously specified options.
 .El
 .Sh SEE ALSO
 .Xr dhclient.leases 5 ,

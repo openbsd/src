@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.167 2018/02/06 00:25:09 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.168 2018/02/10 23:25:15 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -272,9 +272,18 @@ parse_conf_decl(FILE *cfile, char *name)
 			parse_semi(cfile);
 		break;
 	case TOK_IGNORE:
+		memset(list, 0, sizeof(list));
+		count = 0;
 		if (parse_option_list(cfile, &count, list) == 1) {
-			for (i = 0; i < count; i++)
-				config->default_actions[list[i]] = ACTION_IGNORE;
+			enum actions *p = config->default_actions;
+			if (count == 0) {
+				for (i = 0; i < DHO_COUNT; i++)
+					if (p[i] == ACTION_IGNORE)
+						p[i] = ACTION_NONE;
+			} else {
+				for (i = 0; i < count; i++)
+					p[list[i]] = ACTION_IGNORE;
+			}
 			parse_semi(cfile);
 		}
 		break;
@@ -434,8 +443,9 @@ parse_option_list(FILE *cfile, int *count, uint8_t *optlist)
 		return 1;
 	}
 
-	memset(list, DHO_PAD, sizeof(list));
-	ix = 0;
+	memset(list, 0, sizeof(list));
+	memcpy(list, optlist, *count);
+	ix = *count;
 	do {
 		/* Next token must be an option name. */
 		token = next_token(&val, cfile);

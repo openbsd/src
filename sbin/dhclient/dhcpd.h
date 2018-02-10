@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.252 2018/02/07 01:03:10 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.253 2018/02/10 23:25:15 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -78,18 +78,20 @@ enum dhcp_state {
 	S_RENEWING
 };
 
+enum actions {
+	ACTION_NONE,
+	ACTION_DEFAULT,
+	ACTION_SUPERSEDE,
+	ACTION_PREPEND,
+	ACTION_APPEND,
+	ACTION_IGNORE
+};
+
 TAILQ_HEAD(client_lease_tq, client_lease);
 
 struct client_config {
-	struct option_data	defaults[DHO_COUNT];
-	enum {
-		ACTION_DEFAULT,
-		ACTION_SUPERSEDE,
-		ACTION_PREPEND,
-		ACTION_APPEND,
-		ACTION_IGNORE
-	} default_actions[DHO_COUNT];
-
+	struct option_data	 defaults[DHO_COUNT];
+	enum actions		 default_actions[DHO_COUNT];
 	struct in_addr		 address;
 	struct in_addr		 next_server;
 	struct option_data	 send_options[DHO_COUNT];
