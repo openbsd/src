@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.32 2018/01/22 10:04:46 mpi Exp $
+#	$OpenBSD: genassym.cf,v 1.33 2018/02/10 09:21:12 mpi Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -138,11 +138,6 @@ member	IH_COUNT	ih_count.ec_count
 struct	ioapic_softc
 member	IOAPIC_SC_REG	sc_reg
 member	IOAPIC_SC_DATA	sc_data
-
-struct	mutex
-member	mtx_wantipl
-member	mtx_oldipl
-member	mtx_owner
 
 # pte fields
 export	PG_V

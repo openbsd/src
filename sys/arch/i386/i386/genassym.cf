@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.41 2018/01/22 10:04:46 mpi Exp $
+#	$OpenBSD: genassym.cf,v 1.42 2018/02/10 09:21:12 mpi Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -134,11 +134,6 @@ member	ih_arg
 member	IH_COUNT		ih_count.ec_count
 member	ih_next
 endif
-
-struct mutex
-member	mtx_wantipl
-member	mtx_oldipl
-member	mtx_owner
 
 define	IP_SRC			offsetof(struct ip, ip_src)
 define	IP_DST			offsetof(struct ip, ip_dst)
