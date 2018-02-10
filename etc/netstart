@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.189 2018/02/10 05:56:47 florian Exp $
+#	$OpenBSD: netstart,v 1.190 2018/02/10 08:46:10 claudio Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -229,12 +229,6 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 
 	# Disallow "internal" addresses to appear on the wire.
 	route -qn add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject >/dev/null
-
-	# Disallow packets to malicious IPv4 compatible prefix.
-	route -qn add -inet6 ::224.0.0.0 -prefixlen 100 ::1 -reject >/dev/null
-	route -qn add -inet6 ::127.0.0.0 -prefixlen 104 ::1 -reject >/dev/null
-	route -qn add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject >/dev/null
-	route -qn add -inet6 ::255.0.0.0 -prefixlen 104 ::1 -reject >/dev/null
 
 	# Disallow packets to malicious 6to4 prefix.
 	route -qn add -inet6 2002:e000:: -prefixlen 20 ::1 -reject >/dev/null
