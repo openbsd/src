@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.14 2017/12/10 17:34:05 stsp Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.15 2018/02/10 05:57:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
+#include <sys/sysctl.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
 
@@ -100,6 +101,7 @@ void	configure_interface(struct imsg_configure_address *);
 void	configure_gateway(struct imsg_configure_dfr *, uint8_t);
 void	add_gateway(struct imsg_configure_dfr *);
 void	delete_gateway(struct imsg_configure_dfr *);
+int	get_soiikey(uint8_t *);
 
 static int	main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *);
 int		main_imsg_compose_frontend(int, pid_t, void *, uint16_t);
@@ -470,8 +472,11 @@ main_dispatch_frontend(int fd, short event, void *bula)
 				fatal("%s: IMSG_UPDATE_IF wrong length: %d",
 				    __func__, imsg.hdr.len);
 			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
-			main_imsg_compose_engine(IMSG_UPDATE_IF, 0,
-			    &imsg_ifinfo, sizeof(imsg_ifinfo));
+			if (get_soiikey(imsg_ifinfo.soiikey) == -1)
+				log_warn("get_soiikey");
+			else
+				main_imsg_compose_engine(IMSG_UPDATE_IF, 0,
+				    &imsg_ifinfo, sizeof(imsg_ifinfo));
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -885,3 +890,12 @@ sin6_to_str(struct sockaddr_in6 *sin6)
 	return hbuf;
 }
 #endif	/* SMALL */
+
+int
+get_soiikey(uint8_t *key)
+{
+	int	 mib[4] = {CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_SOIIKEY};
+	size_t	 size = SLAACD_SOIIKEY_LEN;
+
+	return sysctl(mib, sizeof(mib) / sizeof(mib[0]), key, &size, NULL, 0);
+}

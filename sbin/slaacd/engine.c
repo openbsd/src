@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.19 2017/11/04 17:23:05 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.20 2018/02/10 05:57:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -63,6 +63,8 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
+
+#include <crypto/sha2.h>
 
 #include <errno.h>
 #include <event.h>
@@ -179,6 +181,7 @@ struct address_proposal {
 	uint8_t				 prefix_len;
 	uint32_t			 vltime;
 	uint32_t			 pltime;
+	uint8_t				 soiikey[SLAACD_SOIIKEY_LEN];
 };
 
 struct dfr_proposal {
@@ -204,8 +207,10 @@ struct slaacd_iface {
 	uint32_t			 if_index;
 	int				 running;
 	int				 autoconfprivacy;
+	int				 soii;
 	struct ether_addr		 hw_address;
 	struct sockaddr_in6		 ll_address;
+	uint8_t				 soiikey[SLAACD_SOIIKEY_LEN];
 	LIST_HEAD(, radv)		 radvs;
 	LIST_HEAD(, address_proposal)	 addr_proposals;
 	LIST_HEAD(, dfr_proposal)	 dfr_proposals;
@@ -618,12 +623,15 @@ engine_dispatch_main(int fd, short event, void *bula)
 					iface->state = IF_DOWN;
 				iface->autoconfprivacy =
 				    imsg_ifinfo.autoconfprivacy;
+				iface->soii = imsg_ifinfo.soii;
 				memcpy(&iface->hw_address,
 				    &imsg_ifinfo.hw_address,
 				    sizeof(struct ether_addr));
 				memcpy(&iface->ll_address,
 				    &imsg_ifinfo.ll_address,
 				    sizeof(struct sockaddr_in6));
+				memcpy(iface->soiikey, imsg_ifinfo.soiikey,
+				    sizeof(iface->soiikey));
 				LIST_INIT(&iface->radvs);
 				LIST_INSERT_HEAD(&slaacd_interfaces,
 				    iface, entries);
@@ -638,12 +646,28 @@ engine_dispatch_main(int fd, short event, void *bula)
 					    imsg_ifinfo.autoconfprivacy;
 					need_refresh = 1;
 				}
+
+				if (iface->soii !=
+				    imsg_ifinfo.soii) {
+					iface->soii =
+					    imsg_ifinfo.soii;
+					need_refresh = 1;
+				}
+
 				if (memcmp(&iface->hw_address,
 					    &imsg_ifinfo.hw_address,
 					    sizeof(struct ether_addr)) != 0) {
 					memcpy(&iface->hw_address,
 					    &imsg_ifinfo.hw_address,
 					    sizeof(struct ether_addr));
+					need_refresh = 1;
+				}
+				if (memcmp(iface->soiikey,
+					    imsg_ifinfo.soiikey,
+					    sizeof(iface->soiikey)) != 0) {
+					memcpy(iface->soiikey,
+					    imsg_ifinfo.soiikey,
+					    sizeof(iface->soiikey));
 					need_refresh = 1;
 				}
 
@@ -763,6 +787,7 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 	cei.if_index = iface->if_index;
 	cei.running = iface->running;
 	cei.autoconfprivacy = iface->autoconfprivacy;
+	cei.soii = iface->soii;
 	memcpy(&cei.hw_address, &iface->hw_address, sizeof(struct ether_addr));
 	memcpy(&cei.ll_address, &iface->ll_address,
 	    sizeof(struct sockaddr_in6));
@@ -1209,7 +1234,10 @@ void
 gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
     address_proposal *addr_proposal, int privacy)
 {
+	SHA2_CTX ctx;
 	struct in6_addr	priv_in6;
+	int dad_counter = 0; /* XXX not used */
+	u_int8_t digest[SHA512_DIGEST_LENGTH];
 
 	/* from in6_ifadd() in nd6_rtr.c */
 	/* XXX from in6.h, guarded by #ifdef _KERNEL   XXX nonstandard */
@@ -1256,20 +1284,33 @@ gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
 		addr_proposal->addr.sin6_addr.s6_addr32[3] |=
 		    (priv_in6.s6_addr32[3] & ~addr_proposal->mask.s6_addr32[3]);
 	} else {
-		addr_proposal->addr.sin6_addr.s6_addr32[0] |=
-		    (iface->ll_address.sin6_addr.s6_addr32[0] &
-		    ~addr_proposal->mask.s6_addr32[0]);
-		addr_proposal->addr.sin6_addr.s6_addr32[1] |=
-		    (iface->ll_address.sin6_addr.s6_addr32[1] &
-		    ~addr_proposal->mask.s6_addr32[1]);
-		addr_proposal->addr.sin6_addr.s6_addr32[2] |=
-		    (iface->ll_address.sin6_addr.s6_addr32[2] &
-		    ~addr_proposal->mask.s6_addr32[2]);
-		addr_proposal->addr.sin6_addr.s6_addr32[3] |=
-		    (iface->ll_address.sin6_addr.s6_addr32[3] &
-		    ~addr_proposal->mask.s6_addr32[3]);
+		if (iface->soii) {
+			SHA512Init(&ctx);
+			SHA512Update(&ctx, &prefix->prefix,
+			    sizeof(prefix->prefix));
+			SHA512Update(&ctx, &iface->hw_address,
+			    sizeof(iface->hw_address));
+			SHA512Update(&ctx, &dad_counter, sizeof(dad_counter));
+			SHA512Update(&ctx, addr_proposal->soiikey,
+			    sizeof(addr_proposal->soiikey));
+			SHA512Final(digest, &ctx);
+			memcpy(&addr_proposal->addr.sin6_addr.s6_addr[8],
+			    digest, 8);
+		} else {
+			addr_proposal->addr.sin6_addr.s6_addr32[0] |=
+			    (iface->ll_address.sin6_addr.s6_addr32[0] &
+			    ~addr_proposal->mask.s6_addr32[0]);
+			addr_proposal->addr.sin6_addr.s6_addr32[1] |=
+			    (iface->ll_address.sin6_addr.s6_addr32[1] &
+			    ~addr_proposal->mask.s6_addr32[1]);
+			addr_proposal->addr.sin6_addr.s6_addr32[2] |=
+			    (iface->ll_address.sin6_addr.s6_addr32[2] &
+			    ~addr_proposal->mask.s6_addr32[2]);
+			addr_proposal->addr.sin6_addr.s6_addr32[3] |=
+			    (iface->ll_address.sin6_addr.s6_addr32[3] &
+			    ~addr_proposal->mask.s6_addr32[3]);
+		}
 	}
-
 #undef s6_addr32
 }
 
@@ -1650,6 +1691,11 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 				    sizeof(addr_proposal->hw_address)) != 0)
 					continue;
 
+				if (memcmp(&addr_proposal->soiikey,
+				    &iface->soiikey,
+				    sizeof(addr_proposal->soiikey)) != 0)
+					continue;
+
 				if (addr_proposal->privacy) {
 					/*
 					 * create new privacy address if old
@@ -1797,6 +1843,8 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 	addr_proposal->if_index = iface->if_index;
 	memcpy(&addr_proposal->hw_address, &iface->hw_address,
 	    sizeof(addr_proposal->hw_address));
+	memcpy(&addr_proposal->soiikey, &iface->soiikey,
+	    sizeof(addr_proposal->soiikey));
 	addr_proposal->privacy = privacy;
 	memcpy(&addr_proposal->prefix, &prefix->prefix,
 	    sizeof(addr_proposal->prefix));

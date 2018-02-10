@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.11 2017/12/10 10:07:54 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.12 2018/02/10 05:57:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -20,6 +20,8 @@
 
 #define	SLAACD_SOCKET		"/dev/slaacd.sock"
 #define SLAACD_USER		"_slaacd"
+
+#define SLAACD_SOIIKEY_LEN	16
 
 /* MAXDNAME from arpa/namesr.h */
 #define SLAACD_MAX_DNSSL	1025
@@ -90,6 +92,7 @@ struct ctl_engine_info {
 	uint32_t		if_index;
 	int			running;
 	int			autoconfprivacy;
+	int			soii;
 	struct ether_addr	hw_address;
 	struct sockaddr_in6	ll_address;
 };
@@ -169,8 +172,10 @@ struct imsg_ifinfo {
 	uint32_t		if_index;
 	int			running;
 	int			autoconfprivacy;
+	int			soii;
 	struct ether_addr	hw_address;
 	struct sockaddr_in6	ll_address;
+	uint8_t			soiikey[SLAACD_SOIIKEY_LEN];
 };
 
 struct imsg_del_addr {
