@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.145 2018/02/10 05:32:21 claudio Exp $	*/
+/*	$OpenBSD: in.c,v 1.146 2018/02/10 08:47:37 claudio Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -650,7 +650,7 @@ in_up_loopback(struct ifnet *ifp)
 	in_socktrim(&ia->ia_sockmask);
 
 	/* Now insert a reject route for 127.0.0.0/8 */
-	bzero((caddr_t)&info, sizeof(info));
+	bzero(&info, sizeof(info));
 	info.rti_flags = RTF_GATEWAY | RTF_REJECT | RTF_STATIC;
 	info.rti_ifa = &ia->ia_ifa;
 	info.rti_info[RTAX_DST] = ia->ia_ifa.ifa_addr;
