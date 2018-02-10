@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.18 2018/02/10 04:41:24 jsing Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.19 2018/02/10 04:48:17 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -185,8 +185,6 @@ tls_conninfo_cert_pem(struct tls *ctx)
 	BIO *membio = NULL;
 	BUF_MEM *bptr = NULL;
 
-	if (ctx->conninfo == NULL)
-		goto err;
 	if (ctx->ssl_peer_cert == NULL)
 		return 0;
 	if ((membio = BIO_new(BIO_s_mem()))== NULL)
