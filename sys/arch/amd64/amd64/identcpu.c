@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.93 2018/01/15 06:53:02 mlarkin Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.94 2018/02/10 09:46:58 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -160,9 +160,15 @@ const struct {
 	{ CPUIDECX_SKINIT,	"SKINIT" },
 	{ CPUIDECX_LWP,		"WDT" },
 	{ CPUIDECX_FMA4,	"FMA4" },
+	{ CPUIDECX_TCE,		"TCE" },
 	{ CPUIDECX_NODEID,	"NODEID" },
 	{ CPUIDECX_TBM,		"TBM" },
 	{ CPUIDECX_TOPEXT,	"TOPEXT" },
+	{ CPUIDECX_CPCTR,	"CPCTR" },
+	{ CPUIDECX_DBKP,	"DBKP" },
+	{ CPUIDECX_PERFTSC,	"PERFTSC" },
+	{ CPUIDECX_PCTRL3,	"PCTRL3" },
+	{ CPUIDECX_MWAITX,	"MWAITX" },
 }, cpu_seff0_ebxfeatures[] = {
 	{ SEFF0EBX_FSGSBASE,	"FSGSBASE" },
 	{ SEFF0EBX_SGX,		"SGX" },
