@@ -1,7 +1,7 @@
-.\" $OpenBSD: tls_conn_version.3,v 1.6 2017/10/08 06:56:36 jmc Exp $
+.\" $OpenBSD: tls_conn_version.3,v 1.7 2018/02/10 04:43:16 jsing Exp $
 .\"
 .\" Copyright (c) 2015 Bob Beck <beck@openbsd.org>
-.\" Copyright (c) 2016 Joel Sing <jsing@openbsd.org>
+.\" Copyright (c) 2016, 2018 Joel Sing <jsing@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 8 2017 $
+.Dd $Mdocdate: February 10 2018 $
 .Dt TLS_CONN_VERSION 3
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nm tls_conn_cipher ,
 .Nm tls_conn_alpn_selected ,
 .Nm tls_conn_servername ,
+.Nm tls_conn_session_resumed ,
 .Nm tls_peer_cert_provided ,
 .Nm tls_peer_cert_contains_name ,
 .Nm tls_peer_cert_chain_pem ,
@@ -42,6 +43,8 @@
 .Fn tls_conn_alpn_selected "struct tls *ctx"
 .Ft const char *
 .Fn tls_conn_servername "struct tls *ctx"
+.Ft int
+.Fn tls_conn_session_resumed "struct tls *ctx"
 .Ft int
 .Fn tls_peer_cert_provided "struct tls *ctx"
 .Ft int
@@ -89,6 +92,12 @@ If no protocol was selected then NULL is returned.
 returns a string corresponding to the servername that the client connected to
 .Ar ctx
 requested by sending a TLS Server Name Indication extension (server only).
+.Pp
+.Fn tls_conn_session_resumed
+indicates whether a TLS session has been resumed during the handshake with
+the server connected to
+.Ar ctx
+(client only).
 .Pp
 .Fn tls_peer_cert_provided
 checks if the peer of
@@ -146,6 +155,10 @@ POINTER TO
 .Xr tls_ocsp_process_response 3
 .Sh RETURN VALUES
 The
+.Fn tls_conn_session_resumed
+function returns 1 if a TLS session was resumed or 0 if it was not.
+.Pp
+The
 .Fn tls_peer_cert_provided
 and
 .Fn tls_peer_cert_contains_name
@@ -183,6 +196,10 @@ and
 .Fn tls_conn_alpn_selected
 appeared in
 .Ox 6.1 .
+.Pp
+.Fn tls_conn_session_resumed
+appeared in
+.Ox 6.3 .
 .Sh AUTHORS
 .An Bob Beck Aq Mt beck@openbsd.org
 .An Joel Sing Aq Mt jsing@openbsd.org
