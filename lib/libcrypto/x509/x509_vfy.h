@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.18 2016/12/21 15:15:45 jsing Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.19 2018/02/10 04:33:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -542,6 +542,21 @@ int X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param,
 int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param, 
 					STACK_OF(ASN1_OBJECT) *policies);
 int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param);
+int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param, const char *name,
+    size_t namelen);
+int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param, const char *name,
+    size_t namelen);
+void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
+    unsigned int flags);
+char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *param);
+int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,  const char *email,
+    size_t emaillen);
+int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param, const unsigned char *ip,
+    size_t iplen);
+int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc);
+const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param);
+const X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id);
+int X509_VERIFY_PARAM_get_count(void);
 
 int X509_VERIFY_PARAM_add0_table(X509_VERIFY_PARAM *param);
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name);
