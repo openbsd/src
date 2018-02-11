@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwfm.4,v 1.5 2018/01/10 02:02:55 patrick Exp $
+.\" $OpenBSD: bwfm.4,v 1.6 2018/02/11 04:23:02 patrick Exp $
 .\"
 .\" Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 10 2018 $
+.Dd $Mdocdate: February 11 2018 $
 .Dt BWFM 4
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nd Broadcom and Cypress wireless network device
 .Sh SYNOPSIS
 .Cd "bwfm* at pci?"
+.Cd "bwfm* at sdmmc?"
 .Cd "bwfm* at usb?"
 .Sh DESCRIPTION
 The
@@ -123,4 +124,3 @@ driver was written by
 .An Patrick Wildt Aq Mt patrick@blueri.se .
 .Sh CAVEATS
 The firmware is outdated and contains known vulnerabilities.
-SDIO attachment is not yet supported.
