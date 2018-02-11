@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.94 2018/02/10 17:51:37 anton Exp $ */
+/* $OpenBSD: rebound.c,v 1.95 2018/02/11 01:23:40 tb Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -24,7 +24,6 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/wait.h>
-#include <sys/sysctl.h>
 
 #include <signal.h>
 #include <syslog.h>
