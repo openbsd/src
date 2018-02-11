@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.5 2018/02/11 05:07:36 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.6 2018/02/11 05:13:07 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1077,7 +1077,6 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 			m = bwfm_sdio_newbuf();
 			if (m == NULL)
 				break;
-			m_adj(m, ETHER_ALIGN);
 			if (flen - off > m->m_len) {
 				printf("%s: frame bigger than anticipated\n",
 				    DEVNAME(sc));

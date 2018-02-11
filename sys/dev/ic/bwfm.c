@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.39 2018/02/08 05:00:38 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.40 2018/02/11 05:13:07 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1331,6 +1331,10 @@ err:
 void
 bwfm_proto_bcdc_rx(struct bwfm_softc *sc, struct mbuf *m)
 {
+#ifdef __STRICT_ALIGNMENT
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+#endif
 	struct bwfm_proto_bcdc_hdr *hdr;
 
 	hdr = mtod(m, struct bwfm_proto_bcdc_hdr *);
@@ -1343,6 +1347,21 @@ bwfm_proto_bcdc_rx(struct bwfm_softc *sc, struct mbuf *m)
 		return;
 	}
 	m_adj(m, sizeof(*hdr) + (hdr->data_offset << 2));
+
+#ifdef __STRICT_ALIGNMENT
+	/* Remaining data is an ethernet packet, so align. */
+	if ((mtod(m, paddr_t) & 0x3) != ETHER_ALIGN) {
+		struct mbuf *m0;
+		m0 = m_devget(mtod(m, caddr_t), m->m_len, ETHER_ALIGN);
+		m_freem(m);
+		if (m0 == NULL) {
+			ifp->if_ierrors++;
+			return;
+		}
+		m = m0;
+	}
+#endif
+
 	bwfm_rx(sc, m);
 }
 
