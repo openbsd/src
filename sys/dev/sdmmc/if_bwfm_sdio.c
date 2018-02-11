@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.6 2018/02/11 05:13:07 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.7 2018/02/11 21:10:03 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -227,8 +227,8 @@ bwfm_sdio_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sf = saa->sf;
 
-	sdmmc_io_set_block_size(sc->sc_sf[1], 64);
-	sdmmc_io_set_block_size(sc->sc_sf[2], 512);
+	sdmmc_io_set_blocklen(sc->sc_sf[1], 64);
+	sdmmc_io_set_blocklen(sc->sc_sf[2], 512);
 
 	/* Enable Function 1. */
 	if (sdmmc_io_function_enable(sc->sc_sf[1]) != 0) {
@@ -730,9 +730,9 @@ bwfm_sdio_buf_read(struct bwfm_sdio_softc *sc, struct sdmmc_function *sf,
 	int err;
 
 	if (sf == sc->sc_sf[1])
-		err = sdmmc_io_read_multi_1(sf, reg, data, size, 1);
+		err = sdmmc_io_read_region_1(sf, reg, data, size);
 	else
-		err = sdmmc_io_read_multi_1(sf, reg, data, size, 0);
+		err = sdmmc_io_read_multi_1(sf, reg, data, size);
 
 	if (err)
 		printf("%s: error %d\n", __func__, err);
@@ -746,7 +746,7 @@ bwfm_sdio_buf_write(struct bwfm_sdio_softc *sc, struct sdmmc_function *sf,
 {
 	int err;
 
-	err = sdmmc_io_write_multi_1(sf, reg, data, size, 1);
+	err = sdmmc_io_write_region_1(sf, reg, data, size);
 
 	if (err)
 		printf("%s: error %d\n", __func__, err);
