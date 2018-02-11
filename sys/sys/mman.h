@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.31 2018/02/11 04:39:15 deraadt Exp $	*/
+/*	$OpenBSD: mman.h,v 1.32 2018/02/11 05:11:50 deraadt Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@
 #define	__MAP_NOREPLACE	0x0800	/* fail if address not available */
 #define	MAP_ANON	0x1000	/* allocated from memory, swap space */
 #define	MAP_ANONYMOUS	MAP_ANON	/* alternate POSIX spelling */
-#define	__MAP_NOFAULT	0x2000)
+#define	__MAP_NOFAULT	0x2000
 #define	MAP_STACK	0x4000	/* mapping is used for a stack */
 
 #define	MAP_FLAGMASK	0x7ff7
