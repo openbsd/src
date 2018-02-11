@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.260 2018/02/08 22:24:41 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.261 2018/02/11 02:26:55 benno Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -141,6 +141,7 @@ struct routecb {
 	unsigned int		msgfilter;
 	unsigned int		flags;
 	u_int			rtableid;
+	u_char			priority;
 };
 #define	sotoroutecb(so)	((struct routecb *)(so)->so_pcb)
 
@@ -308,7 +309,7 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 {
 	struct routecb *rop = sotoroutecb(so);
 	int error = 0;
-	unsigned int tid;
+	unsigned int tid, prio;
 
 	if (level != AF_ROUTE)
 		return (EINVAL);
@@ -333,6 +334,17 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 			else
 				rop->rtableid = tid;
 			break;
+		case ROUTE_PRIOFILTER:
+			if (m == NULL || m->m_len != sizeof(unsigned int)) {
+				error = EINVAL;
+				break;
+			}
+			prio = *mtod(m, unsigned int *);
+			if (prio > RTP_MAX)
+				error = EINVAL;
+			else
+				rop->priority = prio;
+			break;
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -347,6 +359,10 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 		case ROUTE_TABLEFILTER:
 			m->m_len = sizeof(unsigned int);
 			*mtod(m, unsigned int *) = rop->rtableid;
+			break;
+		case ROUTE_PRIOFILTER:
+			m->m_len = sizeof(unsigned int);
+			*mtod(m, unsigned int *) = rop->priority;
 			break;
 		default:
 			error = ENOPROTOOPT;
@@ -430,6 +446,8 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 		/* but RTM_DESYNC can't be filtered */
 		if (rtm->rtm_type != RTM_DESYNC && rop->msgfilter != 0 &&
 		    !(rop->msgfilter & (1 << rtm->rtm_type)))
+			continue;
+		if (rop->priority != 0 && rop->priority < rtm->rtm_priority)
 			continue;
 		switch (rtm->rtm_type) {
 		case RTM_IFANNOUNCE:
