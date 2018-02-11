@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.30 2017/10/12 11:54:37 patrick Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.31 2018/02/11 20:57:57 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -528,6 +528,52 @@ sdmmc_io_write_multi_1(struct sdmmc_function *sf, int reg, u_char *data,
 
 	return sdmmc_io_rw_extended(sf->sc, sf, reg, data, datalen,
 	    SD_ARG_CMD53_WRITE);
+}
+
+int
+sdmmc_io_read_region_1(struct sdmmc_function *sf, int reg, u_char *data,
+    int datalen)
+{
+	int error;
+
+	rw_assert_wrlock(&sf->sc->sc_lock);
+
+	while (datalen > SD_ARG_CMD53_LENGTH_MAX) {
+		error = sdmmc_io_rw_extended(sf->sc, sf, reg, data,
+		    SD_ARG_CMD53_LENGTH_MAX, SD_ARG_CMD53_READ |
+		    SD_ARG_CMD53_INCREMENT);
+		if (error)
+			return error;
+		reg += SD_ARG_CMD53_LENGTH_MAX;
+		data += SD_ARG_CMD53_LENGTH_MAX;
+		datalen -= SD_ARG_CMD53_LENGTH_MAX;
+	}
+
+	return sdmmc_io_rw_extended(sf->sc, sf, reg, data, datalen,
+	    SD_ARG_CMD53_READ | SD_ARG_CMD53_INCREMENT);
+}
+
+int
+sdmmc_io_write_region_1(struct sdmmc_function *sf, int reg, u_char *data,
+    int datalen)
+{
+	int error;
+
+	rw_assert_wrlock(&sf->sc->sc_lock);
+
+	while (datalen > SD_ARG_CMD53_LENGTH_MAX) {
+		error = sdmmc_io_rw_extended(sf->sc, sf, reg, data,
+		    SD_ARG_CMD53_LENGTH_MAX, SD_ARG_CMD53_WRITE |
+		    SD_ARG_CMD53_INCREMENT);
+		if (error)
+			return error;
+		reg += SD_ARG_CMD53_LENGTH_MAX;
+		data += SD_ARG_CMD53_LENGTH_MAX;
+		datalen -= SD_ARG_CMD53_LENGTH_MAX;
+	}
+
+	return sdmmc_io_rw_extended(sf->sc, sf, reg, data, datalen,
+	    SD_ARG_CMD53_WRITE | SD_ARG_CMD53_INCREMENT);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.26 2016/05/05 11:01:08 kettenis Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.27 2018/02/11 20:57:57 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -258,10 +258,12 @@ u_int8_t sdmmc_io_read_1(struct sdmmc_function *, int);
 u_int16_t sdmmc_io_read_2(struct sdmmc_function *, int);
 u_int32_t sdmmc_io_read_4(struct sdmmc_function *, int);
 int	sdmmc_io_read_multi_1(struct sdmmc_function *, int, u_char *, int);
+int	sdmmc_io_read_region_1(struct sdmmc_function *, int, u_char *, int);
 void	sdmmc_io_write_1(struct sdmmc_function *, int, u_int8_t);
 void	sdmmc_io_write_2(struct sdmmc_function *, int, u_int16_t);
 void	sdmmc_io_write_4(struct sdmmc_function *, int, u_int32_t);
 int	sdmmc_io_write_multi_1(struct sdmmc_function *, int, u_char *, int);
+int	sdmmc_io_write_region_1(struct sdmmc_function *, int, u_char *, int);
 int	sdmmc_io_function_ready(struct sdmmc_function *);
 int	sdmmc_io_function_enable(struct sdmmc_function *);
 void	sdmmc_io_function_disable(struct sdmmc_function *);
