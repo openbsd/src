@@ -1,4 +1,4 @@
-/*     $OpenBSD: kern.ldscript,v 1.7 2017/10/24 20:06:54 guenther Exp $         */
+/*     $OpenBSD: kern.ldscript,v 1.8 2018/02/11 21:07:08 patrick Exp $         */
 /*     $NetBSD: ldscript.evbarm,v 1.2 2003/03/05 23:54:22 thorpej Exp $        */
 
 OUTPUT_ARCH(aarch64)
@@ -36,15 +36,15 @@ SECTIONS
 	{
 		*(.rodata .rodata.*)
 	} :rodata
-	PROVIDE (_erodata = .);
-
-	/* Move .random to the next page, so we can add W bit on it and .data */
-	. = ALIGN(__ALIGN_SIZE);
-	PROVIDE (__data_start = .);
 	.openbsd.randomdata :
 	{
 		*(.openbsd.randomdata)
-	} :openbsd_randomize :data
+	} :openbsd_randomize :rodata
+	PROVIDE (_erodata = .);
+
+	/* Move .data to the next page, so we can add W bit on it */
+	. = ALIGN(__ALIGN_SIZE);
+	PROVIDE (__data_start = .);
 	.got :
 	{
 		*(.got .got.*)
