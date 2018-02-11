@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.10 2017/01/24 00:58:55 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.11 2018/02/11 21:04:13 patrick Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
@@ -48,37 +48,11 @@ db_regs_t ddb_regs;
 #define INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
 
 /*
- * APCS stack frames are awkward beasts, so I don't think even trying to use
- * a structure to represent them is a good idea.
- *
- * Here's the diagram from the APCS.  Increasing address is _up_ the page.
- *
- *          save code pointer       [fp]        <- fp points to here
- *          return link value       [fp, #-4]
- *          return sp value         [fp, #-8]
- *          return fp value         [fp, #-12]
- *          [saved v7 value]
- *          [saved v6 value]
- *          [saved v5 value]
- *          [saved v4 value]
- *          [saved v3 value]
- *          [saved v2 value]
- *          [saved v1 value]
- *          [saved a4 value]
- *          [saved a3 value]
- *          [saved a2 value]
- *          [saved a1 value]
- *
- * The save code pointer points twelve bytes beyond the start of the
- * code sequence (usually a single STM) that created the stack frame.
- * We have to disassemble it if we want to know which of the optional
- * fields are actually present.
+ *          return link value       [fp, #+4]
+ *          return fp value         [fp]        <- fp points to here
  */
-
-#define FR_SCP	(0)
-#define FR_RLV	(-1)
-#define FR_RSP	(-2)
-#define FR_RFP	(-3)
+#define FR_RFP	(0)
+#define FR_RLV	(+1)
 
 void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
@@ -88,6 +62,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	char c, *cp = modif;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
+	db_addr_t	scp;
 	int	scp_offset;
 
 	while ((c = *cp++) != 0) {
@@ -97,9 +72,10 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			trace_thread = TRUE;
 	}
 
-	if (!have_addr)
+	if (!have_addr) {
 		frame = (u_int32_t *)(ddb_regs.tf_r11);
-	else {
+		scp = ddb_regs.tf_pc;
+	} else {
 		if (trace_thread) {
 			struct proc *p;
 			struct user *u;
@@ -112,6 +88,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			u = p->p_addr;
 			frame = (u_int32_t *)(u->u_pcb.pcb_un.un_32.pcb32_r11);
 			(*pr)("at %p\n", frame);
+			scp = u->u_pcb.pcb_un.un_32.pcb32_pc;
 		} else
 			frame = (u_int32_t *)(addr);
 	}
@@ -119,38 +96,9 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	scp_offset = -(get_pc_str_offset() >> 2);
 
 	while (count-- && frame != NULL) {
-		db_addr_t	scp;
-		u_int32_t	savecode;
-		int		r, n;
-		u_int32_t	*rp;
-		const char	*sep;
-
-		/*
-		 * In theory, the SCP isn't guaranteed to be in the function
-		 * that generated the stack frame.  We hope for the best.
-		 */
-		scp = frame[FR_SCP];
-
 		db_printsym(scp, DB_STGY_PROC, pr);
-		(*pr)("\n\tscp=0x%08x rlv=0x%08x (", scp, frame[FR_RLV]);
-		db_printsym(frame[FR_RLV], DB_STGY_PROC, pr);
-		(*pr)(")\n\trsp=0x%08x rfp=0x%08x",
-		    frame[FR_RSP], frame[FR_RFP]);
-
-		savecode = ((u_int32_t *)scp)[scp_offset];
-		if ((savecode & 0x0e100000) == 0x08000000) {
-			/* Looks like an STM */
-			rp = frame - 4;
-			n = 0;
-			for (r = 10; r >= 0; r--) {
-				if (savecode & (1 << r)) {
-					sep = n++ % 4 == 0 ? "\n\t" : " ";
-					(*pr)("%sr%d=0x%08x", sep, r, *rp--);
-				}
-			}
-		}
-
-		(*pr)("\n");
+		(*pr)("\n\trlv=0x%08x rfp=0x%08x\n", frame[FR_RLV], frame[FR_RFP]);
+		scp = frame[FR_RLV];
 
 		/*
 		 * Switch to next frame up
