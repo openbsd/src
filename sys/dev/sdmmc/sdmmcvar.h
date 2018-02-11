@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.27 2018/02/11 20:57:57 patrick Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.28 2018/02/11 20:58:40 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -151,6 +151,7 @@ struct sdmmc_function {
 	int number;			/* I/O function number or -1 */
 	struct device *child;		/* function driver */
 	struct sdmmc_cis cis;		/* decoded CIS */
+	unsigned int cur_blklen;	/* current block length */
 	/* SD/MMC memory card members */
 	struct sdmmc_csd csd;		/* decoded CSD value */
 	struct sdmmc_cid cid;		/* decoded CID value */
@@ -267,6 +268,7 @@ int	sdmmc_io_write_region_1(struct sdmmc_function *, int, u_char *, int);
 int	sdmmc_io_function_ready(struct sdmmc_function *);
 int	sdmmc_io_function_enable(struct sdmmc_function *);
 void	sdmmc_io_function_disable(struct sdmmc_function *);
+void	sdmmc_io_set_blocklen(struct sdmmc_function *, unsigned int);
 
 int	sdmmc_read_cis(struct sdmmc_function *, struct sdmmc_cis *);
 void	sdmmc_print_cis(struct sdmmc_function *);

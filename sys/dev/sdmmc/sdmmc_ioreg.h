@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_ioreg.h,v 1.6 2016/04/23 14:15:59 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_ioreg.h,v 1.7 2018/02/11 20:58:40 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -75,8 +75,8 @@
 #define SD_IO_CCCR_CISPTR		0x09 /* XXX 9-10, 10-11, or 9-12 */
 
 /* Function Basic Registers (FBR) */
-#define SD_IO_FBR_START			0x00100
-#define SD_IO_FBR_SIZE			0x00700
+#define SD_IO_FBR_BASE(f)		((f) * 0x100)
+#define SD_IO_FBR_BLOCKLEN		0x10
 
 /* Card Information Structure (CIS) */
 #define SD_IO_CIS_START			0x01000

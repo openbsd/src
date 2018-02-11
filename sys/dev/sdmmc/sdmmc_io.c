@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.31 2018/02/11 20:57:57 patrick Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.32 2018/02/11 20:58:40 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -46,6 +46,7 @@ int	sdmmc_io_xchg(struct sdmmc_softc *, struct sdmmc_function *,
 	    int, u_char *);
 void	sdmmc_io_reset(struct sdmmc_softc *);
 int	sdmmc_io_send_op_cond(struct sdmmc_softc *, u_int32_t, u_int32_t *);
+void	sdmmc_io_set_blocklen(struct sdmmc_function *, unsigned int);
 
 #ifdef SDMMC_DEBUG
 #define DPRINTF(s)	printf s
@@ -415,7 +416,7 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R5;
 	cmd.c_data = datap;
 	cmd.c_datalen = datalen;
-	cmd.c_blklen = MIN(datalen, sdmmc_chip_host_maxblklen(sc->sct, sc->sch));
+	cmd.c_blklen = MIN(datalen, sf->cur_blklen);
 
 	if (!ISSET(arg, SD_ARG_CMD53_WRITE))
 		cmd.c_flags |= SCF_CMD_READ;
@@ -766,4 +767,26 @@ sdmmc_intr_task(void *arg)
 	}
 	sdmmc_chip_card_intr_ack(sc->sct, sc->sch);
 	splx(s);
+}
+
+void
+sdmmc_io_set_blocklen(struct sdmmc_function *sf, unsigned int blklen)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	struct sdmmc_function *sf0 = sc->sc_fn0;
+
+	rw_assert_wrlock(&sc->sc_lock);
+
+	if (blklen > sdmmc_chip_host_maxblklen(sc->sct, sc->sch))
+		return;
+
+	if (blklen == 0) {
+		blklen = min(512, sdmmc_chip_host_maxblklen(sc->sct, sc->sch));
+	}
+
+	sdmmc_io_write_1(sf0, SD_IO_FBR_BASE(sf->number) +
+	    SD_IO_FBR_BLOCKLEN, blklen & 0xff);
+	sdmmc_io_write_1(sf0, SD_IO_FBR_BASE(sf->number) +
+	    SD_IO_FBR_BLOCKLEN+ 1, (blklen >> 8) & 0xff);
+	sf->cur_blklen = blklen;
 }

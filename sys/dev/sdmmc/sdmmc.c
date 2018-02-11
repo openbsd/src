@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.48 2017/12/24 12:55:52 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.49 2018/02/11 20:58:40 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -503,6 +503,7 @@ sdmmc_function_alloc(struct sdmmc_softc *sc)
 	sf->cis.manufacturer = SDMMC_VENDOR_INVALID;
 	sf->cis.product = SDMMC_PRODUCT_INVALID;
 	sf->cis.function = SDMMC_FUNCTION_INVALID;
+	sf->cur_blklen = sdmmc_chip_host_maxblklen(sc->sct, sc->sch);
 	return sf;
 }
 
