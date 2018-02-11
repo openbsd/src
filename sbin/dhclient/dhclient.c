@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.562 2018/02/09 23:23:02 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.563 2018/02/11 04:16:58 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1163,7 +1163,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 			buf = pretty_print_domain_search(options[i].data,
 			    options[i].len);
 			if (buf == NULL || res_hnok_list(buf) == 0) {
-				log_warnx("%s: invalid host name in %s",
+				log_debug("%s: invalid host name in %s",
 				    log_procname, name);
 				continue;
 			}
@@ -1176,7 +1176,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 			 * entries in the resolv.conf 'search' statement.
 			 */
 			if (res_hnok_list(pretty) == 0) {
-				log_warnx("%s: invalid host name in %s",
+				log_debug("%s: invalid host name in %s",
 				    log_procname, name);
 				continue;
 			}
@@ -1184,7 +1184,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 		case DHO_HOST_NAME:
 		case DHO_NIS_DOMAIN:
 			if (res_hnok(pretty) == 0) {
-				log_warnx("%s: invalid host name in %s",
+				log_debug("%s: invalid host name in %s",
 				    log_procname, name);
 				continue;
 			}
@@ -1236,7 +1236,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 		}
 		memcpy(lease->server_name, packet->sname, DHCP_SNAME_LEN);
 		if (res_hnok(lease->server_name) == 0) {
-			log_warnx("%s: invalid host name in SNAME ignored",
+			log_debug("%s: invalid host name in SNAME ignored",
 			    log_procname);
 			free(lease->server_name);
 			lease->server_name = NULL;
