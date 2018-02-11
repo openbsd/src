@@ -1,4 +1,4 @@
-/* $OpenBSD: serverloop.c,v 1.203 2018/01/23 05:27:21 djm Exp $ */
+/* $OpenBSD: serverloop.c,v 1.204 2018/02/11 21:16:56 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -149,7 +149,6 @@ sigchld_handler(int sig)
 {
 	int save_errno = errno;
 	child_terminated = 1;
-	signal(SIGCHLD, sigchld_handler);
 	notify_parent();
 	errno = save_errno;
 }
