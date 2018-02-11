@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.35 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.36 2018/02/11 20:03:10 jmc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -859,7 +859,7 @@ re_start:
 		BIO_free(fbio);
 		if (!foundit)
 			BIO_printf(bio_err,
-			    "didn't found starttls in server response,"
+			    "didn't find starttls in server response,"
 			    " try anyway...\n");
 		BIO_printf(sbio, "STARTTLS\r\n");
 		BIO_read(sbio, sbuf, BUFSIZZ);
