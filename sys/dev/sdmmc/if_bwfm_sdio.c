@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.4 2018/02/09 02:21:16 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.5 2018/02/11 05:07:36 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1138,7 +1138,7 @@ bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub)
 			ml_purge(&ml);
 			return;
 		}
-		m->m_len = letoh16(sublen[i]);
+		m->m_len = m->m_pkthdr.len = letoh16(sublen[i]);
 	}
 
 	/* TODO: Verify actual superframe header */
