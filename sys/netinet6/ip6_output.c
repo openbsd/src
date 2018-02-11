@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.232 2017/09/01 15:05:31 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.233 2018/02/11 00:24:13 dlg Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -656,7 +656,10 @@ reroute:
 	 */
 	tlen = m->m_pkthdr.len;
 
-	if (opt && (opt->ip6po_flags & IP6PO_DONTFRAG))
+	if (ISSET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT)) {
+		CLR(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
+		dontfrag = 1;
+	} else if (opt && ISSET(opt->ip6po_flags, IP6PO_DONTFRAG))
 		dontfrag = 1;
 	else
 		dontfrag = 0;

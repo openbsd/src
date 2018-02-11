@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.234 2018/02/09 02:26:33 patrick Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.235 2018/02/11 00:24:13 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -224,12 +224,14 @@ struct mbuf {
 #define	M_ICMP_CSUM_OUT		0x0200	/* ICMP/ICMPv6 checksum needed */
 #define	M_ICMP_CSUM_IN_OK	0x0400	/* ICMP/ICMPv6 checksum verified */
 #define	M_ICMP_CSUM_IN_BAD	0x0800	/* ICMP/ICMPv6 checksum bad */
+#define	M_IPV6_DF_OUT		0x1000	/* don't fragment outgoing IPv6 */
 
 #ifdef _KERNEL
 #define MCS_BITS \
     ("\20\1IPV4_CSUM_OUT\2TCP_CSUM_OUT\3UDP_CSUM_OUT\4IPV4_CSUM_IN_OK" \
     "\5IPV4_CSUM_IN_BAD\6TCP_CSUM_IN_OK\7TCP_CSUM_IN_BAD\10UDP_CSUM_IN_OK" \
-    "\11UDP_CSUM_IN_BAD\12ICMP_CSUM_OUT\13ICMP_CSUM_IN_OK\14ICMP_CSUM_IN_BAD")
+    "\11UDP_CSUM_IN_BAD\12ICMP_CSUM_OUT\13ICMP_CSUM_IN_OK\14ICMP_CSUM_IN_BAD" \
+    "\15IPV6_NODF_OUT")
 #endif
 
 /* mbuf types */
