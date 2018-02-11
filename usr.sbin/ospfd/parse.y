@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.85 2018/02/09 22:52:54 jca Exp $ */
+/*	$OpenBSD: parse.y,v 1.86 2018/02/11 02:27:33 benno Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -295,6 +295,8 @@ redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist dependon {
 
 			if ($1)
 				r->type |= REDIST_NO;
+			else
+				conf->redist_label_or_prefix = 1;
 			r->metric = $6;
 			if ($7)
 				strlcpy(r->dependon, $7, sizeof(r->dependon));
@@ -314,9 +316,10 @@ redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist dependon {
 				r->type = REDIST_STATIC;
 			else if (!strcmp($3, "connected"))
 				r->type = REDIST_CONNECTED;
-			else if (host($3, &r->addr, &r->mask))
+			else if (host($3, &r->addr, &r->mask)) {
 				r->type = REDIST_ADDR;
-			else {
+				conf->redist_label_or_prefix = !$1;
+			} else {
 				yyerror("unknown redistribute type");
 				free($3);
 				free(r);
@@ -343,6 +346,8 @@ redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist dependon {
 			r->label = rtlabel_name2id($4);
 			if ($1)
 				r->type |= REDIST_NO;
+			else
+				conf->redist_label_or_prefix = 1;
 			r->metric = $5;
 			if ($6)
 				strlcpy(r->dependon, $6, sizeof(r->dependon));

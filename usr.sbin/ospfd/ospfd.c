@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.96 2018/02/09 22:52:54 jca Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.97 2018/02/11 02:27:33 benno Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -265,7 +265,7 @@ main(int argc, char *argv[])
 	event_add(&iev_rde->ev, NULL);
 
 	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE),
-	    ospfd_conf->rdomain) == -1)
+	    ospfd_conf->rdomain, ospfd_conf->redist_label_or_prefix) == -1)
 		fatalx("kr_init failed");
 
 	/* remove unneeded stuff from config */
@@ -637,7 +637,7 @@ ospf_reload(void)
 
 	merge_config(ospfd_conf, xconf);
 	/* update redistribute lists */
-	kr_reload();
+	kr_reload(ospfd_conf->redist_label_or_prefix);
 	return (0);
 }
 
@@ -667,6 +667,7 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 	    SIMPLEQ_EMPTY(&xconf->redist_list))
 		rchange = 1;
 	conf->rfc1583compat = xconf->rfc1583compat;
+	conf->redist_label_or_prefix = xconf->redist_label_or_prefix;
 
 	if (ospfd_process == PROC_MAIN) {
 		/* main process does neither use areas nor interfaces */

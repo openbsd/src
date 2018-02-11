@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.99 2018/02/08 00:18:57 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.100 2018/02/11 02:27:33 benno Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -394,6 +394,7 @@ struct ospfd_conf {
 	int			spf_state;
 	int			ospf_socket;
 	int			flags;
+	int			redist_label_or_prefix;
 	u_int8_t		rfc1583compat;
 	u_int8_t		border;
 	u_int8_t		redistribute;
@@ -567,7 +568,7 @@ u_int16_t	 iso_cksum(void *, u_int16_t, u_int16_t);
 /* kroute.c */
 int		 kif_init(void);
 void		 kif_clear(void);
-int		 kr_init(int, u_int);
+int		 kr_init(int, u_int, int);
 int		 kr_change(struct kroute *, int);
 int		 kr_delete(struct kroute *);
 void		 kr_shutdown(void);
@@ -578,7 +579,7 @@ void		 kr_dispatch_msg(int, short, void *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *, pid_t);
 struct kif	*kif_findname(char *, struct in_addr, struct kif_addr **);
-void		 kr_reload(void);
+void		 kr_reload(int);
 
 u_int8_t	mask2prefixlen(in_addr_t);
 in_addr_t	prefixlen2mask(u_int8_t);
