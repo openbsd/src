@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.563 2018/02/11 04:16:58 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.564 2018/02/11 22:00:19 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -932,6 +932,8 @@ dhcpnak(struct interface_info *ifi, const char *src)
 	free_client_lease(ifi->active);
 
 	ifi->active = NULL;
+	free(ifi->configured);
+	ifi->configured = NULL;
 
 	/* Stop sending DHCPREQUEST packets. */
 	cancel_timeout(ifi);
