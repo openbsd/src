@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.98 2018/02/09 10:12:38 dlg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.99 2018/02/12 00:07:53 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1076,13 +1076,6 @@ gre_tunnel_ioctl(struct ifnet *ifp, struct gre_tunnel *tunnel,
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		break;
-
-	case SIOCSIFRDOMAIN:
-		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-			error = EBUSY;
-			break;
-		}
 		break;
 
 	case SIOCSVNETID:
