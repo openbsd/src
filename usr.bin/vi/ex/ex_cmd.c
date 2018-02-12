@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cmd.c,v 1.10 2015/11/19 07:53:31 bentley Exp $	*/
+/*	$OpenBSD: ex_cmd.c,v 1.11 2018/02/12 01:10:46 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -111,7 +111,7 @@ EXCMDLIST const cmds[] = {
 	{"bg",		ex_bg,		E_VIONLY,
 	    "",
 	    "bg",
-	    "put a foreground screen into the background"},
+	    "put the current screen into the background"},
 /* C_CHANGE */
 	{"change",	ex_change,	E_ADDR2|E_ADDR_ZERODEF,
 	    "!ca",
@@ -150,12 +150,12 @@ EXCMDLIST const cmds[] = {
 /* C_EDIT */
 	{"edit",	ex_edit,	E_NEWSCREEN,
 	    "f1o",
-	    "[Ee][dit][!] [+cmd] [file]",
+	    "e[dit][!] [+cmd] [file]",
 	    "begin editing another file"},
 /* C_EX */
 	{"ex",		ex_edit,	E_NEWSCREEN,
 	    "f1o",
-	    "[Ee]x[!] [+cmd] [file]",
+	    "ex[!] [+cmd] [file]",
 	    "begin editing another file"},
 /* C_EXUSAGE */
 	{"exusage",	ex_usage,	0,
@@ -170,7 +170,7 @@ EXCMDLIST const cmds[] = {
 /* C_FG */
 	{"fg",		ex_fg,		E_NEWSCREEN|E_VIONLY,
 	    "f1o",
-	    "[Ff]g [file]",
+	    "fg [file]",
 	    "bring a backgrounded screen into the foreground"},
 /* C_GLOBAL */
 	{"global",	ex_global,	E_ADDR2_ALL,
@@ -225,7 +225,7 @@ EXCMDLIST const cmds[] = {
 /* C_NEXT */
 	{"next",	ex_next,	E_NEWSCREEN,
 	    "!fN",
-	    "[Nn][ext][!] [+cmd] [file ...]",
+	    "n[ext][!] [+cmd] [file ...]",
 	    "edit (and optionally specify) the next file"},
 /* C_NUMBER */
 	{"number",	ex_number,	E_ADDR2|E_CLRFLAG,
@@ -250,7 +250,7 @@ EXCMDLIST const cmds[] = {
 /* C_PREVIOUS */
 	{"previous",	ex_prev,	E_NEWSCREEN,
 	    "!",
-	    "[Pp]rev[ious][!]",
+	    "prev[ious][!]",
 	    "edit the previous file in the file argument list"},
 /* C_PUT */
 	{"put",		ex_put,	
@@ -262,7 +262,7 @@ EXCMDLIST const cmds[] = {
 	{"quit",	ex_quit,	0,
 	    "!",
 	    "q[uit][!]",
-	    "exit ex/vi"},
+	    "exit ex/vi or close the current screen"},
 /* C_READ */
 	{"read",	ex_read,	E_ADDR1|E_ADDR_ZERO|E_ADDR_ZERODEF,
 	    "s",
@@ -331,7 +331,7 @@ EXCMDLIST const cmds[] = {
 /* C_TAG */
 	{"tag",		ex_tag_push,	E_NEWSCREEN,
 	    "!w1o",
-	    "[Tt]a[g][!] [string]",
+	    "ta[g][!] [string]",
 	    "edit the file containing the tag"},
 /* C_TAGNEXT */
 	{"tagnext",	ex_tag_next,	0,
@@ -386,7 +386,7 @@ EXCMDLIST const cmds[] = {
 /* C_VISUAL_VI */
 	{"visual",	ex_edit,	E_NEWSCREEN,
 	    "f1o",
-	    "[Vv]i[sual][!] [+cmd] [file]",
+	    "vi[sual][!] [+cmd] [file]",
 	    "edit another file (from vi mode only)"},
 /* C_VIUSAGE */
 	{"viusage",	ex_viusage,	0,
@@ -412,7 +412,7 @@ EXCMDLIST const cmds[] = {
 	{"xit",		ex_xit,		E_ADDR2_ALL|E_ADDR_ZERODEF,
 	    "!f1o",
 	    "[line [,line]] x[it][!] [file]",
-	    "exit"},
+	    "write if modified and exit"},
 /* C_YANK */
 	{"yank",	ex_yank,	E_ADDR2,
 	    "bca",

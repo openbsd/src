@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_usage.c,v 1.8 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_usage.c,v 1.9 2018/02/12 01:10:46 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -58,7 +58,7 @@ ex_usage(SCR *sp, EXCMD *cmdp)
 	ARGS *ap;
 	EXCMDLIST const *cp;
 	int newscreen;
-	char *name, *p, nb[MAXCMDNAMELEN + 5];
+	char *p;
 
 	switch (cmdp->argc) {
 	case 1:
@@ -96,30 +96,11 @@ ex_usage(SCR *sp, EXCMD *cmdp)
 		}
 		break;
 	case 0:
-		for (cp = cmds; cp->name != NULL && !INTERRUPTED(sp); ++cp) {
-			/*
-			 * The ^D command has an unprintable name.
-			 *
-			 * XXX
-			 * We display both capital and lower-case versions of
-			 * the appropriate commands -- no need to add in extra
-			 * room, they're all short names.
-			 */
-			if (cp == &cmds[C_SCROLL])
-				name = "^D";
-			else if (F_ISSET(cp, E_NEWSCREEN)) {
-				nb[0] = '[';
-				nb[1] = toupper(cp->name[0]);
-				nb[2] = cp->name[0];
-				nb[3] = ']';
-				for (name = cp->name + 1,
-				    p = nb + 4; (*p++ = *name++) != '\0';);
-				name = nb;
-			} else
-				name = cp->name;
-			(void)ex_printf(sp,
-			    "%*s: %s\n", MAXCMDNAMELEN, name, cp->help);
-		}
+		for (cp = cmds; cp->name != NULL && !INTERRUPTED(sp); ++cp)
+			(void)ex_printf(sp, "%*s: %s\n", MAXCMDNAMELEN,
+			    /* The ^D command has an unprintable name. */
+			    cp == &cmds[C_SCROLL] ? "^D" : cp->name,
+			    cp->help);
 		break;
 	default:
 		abort();
