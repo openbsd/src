@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.156 2018/02/10 10:35:09 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.157 2018/02/12 20:25:18 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -330,7 +330,7 @@ sub parse_problems
 			}
 			next if $self->{count} < 2 || $self->{said_slow};
 			$self->{said_slow} = 1;
-			$self->{state}->say("#1: no session resumption on connection ##2, https will be slow", $self->{host}, $self->{count});
+			$self->{state}->say("#1: no session resumption supported by ftp(1) on connection ##2\n\thttps will be slow", $self->{host}, $self->{count});
 			next;
 		}
 		# http error
