@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.33 2018/02/09 09:22:46 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.34 2018/02/12 00:09:39 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -73,7 +73,7 @@ struct etherip_tunnel {
 	sa_family_t	t_af;
 
 	RBT_ENTRY(etherip_tunnel)
-			t_entry;;
+			t_entry;
 };
 
 RBT_HEAD(etherip_tree, etherip_tunnel);
