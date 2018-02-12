@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mobileip.c,v 1.6 2018/02/12 02:33:50 dlg Exp $ */
+/*	$OpenBSD: if_mobileip.c,v 1.7 2018/02/12 02:55:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -28,7 +28,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>
-#include <sys/tree.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -54,11 +54,11 @@ struct mobileip_tunnel {
 	struct in_addr		t_src;
 	struct in_addr		t_dst;
 
-	RBT_ENTRY(mobileip_softc)
+	TAILQ_ENTRY(mobileip_tunnel)
 				t_entry;
 };
 
-RBT_HEAD(mobileip_tree, mobileip_tunnel);
+TAILQ_HEAD(mobileip_list, mobileip_tunnel);
 
 struct mobileip_softc {
 	struct mobileip_tunnel	sc_tunnel;
@@ -75,9 +75,7 @@ static inline int
 		mobileip_cmp(const struct mobileip_tunnel *,
 		    const struct mobileip_tunnel *);
 
-RBT_PROTOTYPE(mobileip_tree, mobileip_tunnel, t_entry, mobileip_cmp);
-
-struct mobileip_tree mobileip_tree = RBT_INITIALIZER();
+struct mobileip_list mobileip_list = TAILQ_HEAD_INITIALIZER(mobileip_list);
 
 #define MOBILEIPMTU	(1500 - (sizeof(struct mobileip_header) +	\
 			    sizeof(struct mobileip_h_src)))		\
@@ -95,6 +93,8 @@ static int	mobileip_output(struct ifnet *, struct mbuf *,
 		    struct sockaddr *, struct rtentry *);
 static void	mobileip_start(struct ifnet *);
 static int	mobileip_encap(struct mobileip_softc *, struct mbuf *);
+static struct mobileip_softc *
+		mobileip_find(const struct mobileip_tunnel *);
 
 /*
  * let's begin
@@ -140,6 +140,10 @@ mobileip_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_LOOP, sizeof(uint32_t));
 #endif
 
+	NET_LOCK();
+	TAILQ_INSERT_TAIL(&mobileip_list, &sc->sc_tunnel, t_entry);
+	NET_UNLOCK();
+
 	return (0);
 }
 
@@ -153,6 +157,8 @@ mobileip_clone_destroy(struct ifnet *ifp)
 	NET_LOCK();
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		mobileip_down(sc);
+
+	TAILQ_REMOVE(&mobileip_list, &sc->sc_tunnel, t_entry);
 	NET_UNLOCK();
 
 	free(sc, M_DEVBUF, sizeof(*sc));
@@ -398,11 +404,6 @@ mobileip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSLIFPHYRTABLE:
-		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-			error = EBUSY;
-			break;
-		}
-
 		if (ifr->ifr_rdomainid < 0 ||
 		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
 		    !rtable_exists(ifr->ifr_rdomainid)) {
@@ -426,12 +427,7 @@ mobileip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 static int
 mobileip_up(struct mobileip_softc *sc)
 {
-	if (sc->sc_tunnel.t_dst.s_addr == INADDR_ANY)
-		return (EDESTADDRREQ);
-
 	NET_ASSERT_LOCKED();
-	if (RBT_INSERT(mobileip_tree, &mobileip_tree, &sc->sc_tunnel) != NULL)
-		return (EADDRINUSE);
 
 	SET(sc->sc_if.if_flags, IFF_RUNNING);
 
@@ -442,7 +438,6 @@ static int
 mobileip_down(struct mobileip_softc *sc)
 {
 	NET_ASSERT_LOCKED();
-	RBT_REMOVE(mobileip_tree, &mobileip_tree, &sc->sc_tunnel);
 
 	CLR(sc->sc_if.if_flags, IFF_RUNNING);
 
@@ -456,9 +451,6 @@ mobileip_set_tunnel(struct mobileip_softc *sc, struct if_laddrreq *req)
 {
 	struct sockaddr_in *src = (struct sockaddr_in *)&req->addr;
 	struct sockaddr_in *dst = (struct sockaddr_in *)&req->dstaddr;
-
-	if (ISSET(sc->sc_if.if_flags, IFF_RUNNING))
-		return (EBUSY);
 
 	/* sa_family and sa_len must be equal */
 	if (src->sin_family != dst->sin_family || src->sin_len != dst->sin_len)
@@ -507,14 +499,31 @@ mobileip_get_tunnel(struct mobileip_softc *sc, struct if_laddrreq *req)
 static int
 mobileip_del_tunnel(struct mobileip_softc *sc)
 {
-	if (ISSET(sc->sc_if.if_flags, IFF_RUNNING))
-		return (EBUSY);
-
 	/* commit */
 	sc->sc_tunnel.t_src.s_addr = INADDR_ANY;
 	sc->sc_tunnel.t_dst.s_addr = INADDR_ANY;
 
 	return (0);
+}
+
+static struct mobileip_softc *
+mobileip_find(const struct mobileip_tunnel *key)
+{
+	struct mobileip_tunnel *t;
+	struct mobileip_softc *sc;
+
+	TAILQ_FOREACH(t, &mobileip_list, t_entry) {
+		if (mobileip_cmp(key, t) != 0)
+			continue;
+
+		sc = (struct mobileip_softc *)t;
+		if (!ISSET(sc->sc_if.if_flags, IFF_RUNNING))
+			continue;
+
+		return (sc);
+	}
+
+	return (NULL);
 }
 
 int
@@ -541,8 +550,7 @@ mobileip_input(struct mbuf **mp, int *offp, int type, int af)
 	key.t_dst = ip->ip_src;
 
 	/* NET_ASSERT_READ_LOCKED() */
-	sc = (struct mobileip_softc *)RBT_FIND(mobileip_tree,
-	    &mobileip_tree, &key);
+	sc = mobileip_find(&key);
 	if (sc == NULL)
 		goto drop;
 
@@ -644,5 +652,3 @@ mobileip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	return (0);
 }
-
-RBT_GENERATE(mobileip_tree, mobileip_tunnel, t_entry, mobileip_cmp);
