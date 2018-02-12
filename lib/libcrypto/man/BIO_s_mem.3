@@ -1,5 +1,6 @@
-.\"	$OpenBSD: BIO_s_mem.3,v 1.5 2016/12/06 14:45:08 schwarze Exp $
-.\"	OpenSSL 8711efb4 Mon Apr 20 11:33:12 2009 +0000
+.\" $OpenBSD: BIO_s_mem.3,v 1.6 2018/02/12 16:57:32 schwarze Exp $
+.\" full merge up to: OpenSSL 8711efb4 Mon Apr 20 11:33:12 2009 +0000
+.\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
@@ -48,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: February 12 2018 $
 .Dt BIO_S_MEM 3
 .Os
 .Sh NAME
@@ -206,6 +207,23 @@ the operation can be very slow.
 The use of a read only memory BIO avoids this problem.
 If the BIO must be read/write then adding a buffering BIO
 to the chain will speed up the process.
+.Sh RETURN VALUES
+.Fn BIO_s_mem
+returns a pointer to a static object.
+.Pp
+.Fn BIO_set_mem_eof_return ,
+.Fn BIO_get_mem_data ,
+.Fn BIO_set_mem_buf ,
+and
+.Fn BIO_get_mem_ptr
+return 1 on success or a value less than or equal to 0 if an error occurred.
+.Pp
+.Fn BIO_new_mem_buf
+returns a newly allocated
+.Vt BIO
+object on success or
+.Dv NULL
+on error.
 .Sh EXAMPLES
 Create a memory BIO and write some data to it:
 .Bd -literal -offset indent
