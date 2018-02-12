@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.34 2018/02/12 00:09:39 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.35 2018/02/12 01:43:42 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -72,16 +72,14 @@ struct etherip_tunnel {
 	unsigned int	t_rtableid;
 	sa_family_t	t_af;
 
-	RBT_ENTRY(etherip_tunnel)
+	TAILQ_ENTRY(etherip_tunnel)
 			t_entry;
 };
 
-RBT_HEAD(etherip_tree, etherip_tunnel);
+TAILQ_HEAD(etherip_list, etherip_tunnel);
 
 static inline int etherip_cmp(const struct etherip_tunnel *,
     const struct etherip_tunnel *);
-
-RBT_PROTOTYPE(etherip_tree, etherip_tunnel, t_entry, etherip_cmp);
 
 struct etherip_softc {
 	struct etherip_tunnel	sc_tunnel; /* must be first */
@@ -110,12 +108,13 @@ int etherip_get_tunnel(struct etherip_softc *, struct if_laddrreq *);
 int etherip_del_tunnel(struct etherip_softc *);
 int etherip_up(struct etherip_softc *);
 int etherip_down(struct etherip_softc *);
+struct etherip_softc *etherip_find(const struct etherip_tunnel *);
 int etherip_input(struct etherip_tunnel *, struct mbuf *, int);
 
 struct if_clone	etherip_cloner = IF_CLONE_INITIALIZER("etherip",
     etherip_clone_create, etherip_clone_destroy);
 
-struct etherip_tree etherip_tree = RBT_INITIALIZER();
+struct etherip_list etherip_list = TAILQ_HEAD_INITIALIZER(etherip_list);
 
 void
 etheripattach(int count)
@@ -155,6 +154,10 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
+	NET_LOCK();
+	TAILQ_INSERT_TAIL(&etherip_list, &sc->sc_tunnel, t_entry);
+	NET_UNLOCK();
+
 	return (0);
 }
 
@@ -166,6 +169,8 @@ etherip_clone_destroy(struct ifnet *ifp)
 	NET_LOCK();
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		etherip_down(sc);
+
+	TAILQ_REMOVE(&etherip_list, &sc->sc_tunnel, t_entry);
 	NET_UNLOCK();
 
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
@@ -217,7 +222,9 @@ etherip_start(struct ifnet *ifp)
 			break;
 #endif
 		default:
-			unhandled_af(sc->sc_tunnel.t_af);
+			/* unhandled_af(sc->sc_tunnel.t_af); */
+			m_freem(m);
+			continue;
 		}
 
 		if (error)
@@ -250,10 +257,6 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSLIFPHYRTABLE:
-		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-			error = EBUSY;
-			break;
-		}
 		if (ifr->ifr_rdomainid < 0 ||
 		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
 		    !rtable_exists(ifr->ifr_rdomainid)) {
@@ -268,21 +271,12 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSLIFPHYADDR:
-		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-			error = EBUSY;
-			break;
-		}
-
 		error = etherip_set_tunnel(sc, (struct if_laddrreq *)data);
 		break;
 	case SIOCGLIFPHYADDR:
 		error = etherip_get_tunnel(sc, (struct if_laddrreq *)data);
 		break;
 	case SIOCDIFPHYADDR:
-		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-			error = EBUSY;
-			break;
-		}
 		error = etherip_del_tunnel(sc);
 		break;
 
@@ -443,14 +437,11 @@ etherip_del_tunnel(struct etherip_softc *sc)
 int
 etherip_up(struct etherip_softc *sc)
 {
-	if (sc->sc_tunnel.t_af == AF_UNSPEC)
-		return (ENXIO);
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
 	NET_ASSERT_LOCKED();
-	if (RBT_INSERT(etherip_tree, &etherip_tree, &sc->sc_tunnel) != NULL)
-		return (EADDRINUSE);
 
-	SET(sc->sc_ac.ac_if.if_flags, IFF_RUNNING);
+	SET(ifp->if_flags, IFF_RUNNING);
 
 	return (0);
 }
@@ -459,13 +450,10 @@ int
 etherip_down(struct etherip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
 	NET_ASSERT_LOCKED();
 
-	RBT_REMOVE(etherip_tree, &etherip_tree, &sc->sc_tunnel);
-
 	CLR(ifp->if_flags, IFF_RUNNING);
-
-	ifq_barrier(&ifp->if_snd);
 
 	return (0);
 }
@@ -531,6 +519,26 @@ ip_etherip_input(struct mbuf **mp, int *offp, int type, int af)
 	return (etherip_input(&key, m, *offp));
 }
 
+struct etherip_softc *
+etherip_find(const struct etherip_tunnel *key)
+{
+	struct etherip_tunnel *t;
+	struct etherip_softc *sc;
+
+	TAILQ_FOREACH(t, &etherip_list, t_entry) {
+		if (etherip_cmp(key, t) != 0)
+			continue;
+
+		sc = (struct etherip_softc *)t;
+		if (!ISSET(sc->sc_ac.ac_if.if_flags, IFF_RUNNING))
+			continue;
+
+		return (sc);
+	}
+
+	return (NULL);
+}
+
 int
 etherip_input(struct etherip_tunnel *key, struct mbuf *m, int hlen)
 {
@@ -547,8 +555,7 @@ etherip_input(struct etherip_tunnel *key, struct mbuf *m, int hlen)
 	key->t_rtableid = m->m_pkthdr.ph_rtableid;
 
 	NET_ASSERT_LOCKED();
-	sc = (struct etherip_softc *)RBT_FIND(etherip_tree,
-	    &etherip_tree, key);
+	sc = etherip_find(key);
 	if (sc == NULL) {
 		etheripstat_inc(etherips_noifdrops);
 		goto drop;
@@ -747,5 +754,3 @@ etherip_cmp(const struct etherip_tunnel *a, const struct etherip_tunnel *b)
 
 	return (0);
 }
-
-RBT_GENERATE(etherip_tree, etherip_tunnel, t_entry, etherip_cmp);
