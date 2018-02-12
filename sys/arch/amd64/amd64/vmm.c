@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.183 2018/02/02 08:24:28 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.184 2018/02/12 00:59:28 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2571,7 +2571,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * Determine which bits in CR4 have to be set to a fixed
 	 * value as per Intel SDM A.8.
 	 * CR4 bits in the vrs parameter must match these, except
-	 * CR$_VMXE - we add that here since it must always be set.
+	 * CR4_VMXE - we add that here since it must always be set.
 	 */
 	want1 = (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed0) &
 	    (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed1);
