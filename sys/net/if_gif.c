@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.109 2018/02/10 08:12:01 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.110 2018/02/12 03:30:24 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/syslog.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -82,7 +83,7 @@ union gif_addr {
 };
 
 struct gif_tunnel {
-	RBT_ENTRY(gif_tunnel)	t_entry;
+	TAILQ_ENTRY(gif_tunnel)	t_entry;
 
 	union gif_addr		t_src;
 #define t_src4		t_src.in4
@@ -95,12 +96,10 @@ struct gif_tunnel {
 	sa_family_t		t_af;
 };
 
-RBT_HEAD(gif_tree, gif_tunnel);
+TAILQ_HEAD(gif_list, gif_tunnel);
 
 static inline int	gif_cmp(const struct gif_tunnel *,
 			    const struct gif_tunnel *);
-
-RBT_PROTOTYPE(gif_tree, gif_tunnel, t_entry, gif_cmp);
 
 struct gif_softc {
 	struct gif_tunnel	sc_tunnel; /* must be first */
@@ -108,7 +107,7 @@ struct gif_softc {
 	int			sc_ttl;
 };
 
-struct gif_tree gif_tree = RBT_INITIALIZER();
+struct gif_list gif_list = TAILQ_HEAD_INITIALIZER(gif_list);
 
 void	gifattach(int);
 int	gif_clone_create(struct if_clone *, int);
@@ -174,6 +173,10 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
 #endif
 
+	NET_LOCK();
+	TAILQ_INSERT_TAIL(&gif_list, &sc->sc_tunnel, t_entry);
+	NET_UNLOCK();
+
 	return (0);
 }
 
@@ -182,11 +185,12 @@ gif_clone_destroy(struct ifnet *ifp)
 {
 	struct gif_softc *sc = ifp->if_softc;
 
-	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-		NET_LOCK();
+	NET_LOCK();
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		gif_down(sc);
-		NET_UNLOCK();
-	}
+
+	TAILQ_INSERT_TAIL(&gif_list, &sc->sc_tunnel, t_entry);
+	NET_UNLOCK();
 
 	if_detach(ifp);
 
@@ -342,7 +346,8 @@ gif_send(struct gif_softc *sc, struct mbuf *m,
 	}
 #endif
 	default:
-		unhandled_af(sc->sc_tunnel.t_af);
+		m_freem(m);
+		break;
 	}
 
 	return (0);
@@ -410,12 +415,7 @@ drop:
 int
 gif_up(struct gif_softc *sc)
 {
-	if (sc->sc_tunnel.t_af == AF_UNSPEC)
-		return (EDESTADDRREQ);
-
 	NET_ASSERT_LOCKED();
-	if (RBT_INSERT(gif_tree, &gif_tree, &sc->sc_tunnel) != NULL)
-		return (EADDRINUSE);
 
 	SET(sc->sc_if.if_flags, IFF_RUNNING);
 
@@ -426,8 +426,6 @@ int
 gif_down(struct gif_softc *sc)
 {
 	NET_ASSERT_LOCKED();
-
-	RBT_REMOVE(gif_tree, &gif_tree, &sc->sc_tunnel);
 
 	CLR(sc->sc_if.if_flags, IFF_RUNNING);
 
@@ -464,20 +462,12 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSLIFPHYADDR:
-		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-			error = EBUSY;
-			break;
-		}
 		error = gif_set_tunnel(sc, (struct if_laddrreq *)data);
 		break;
 	case SIOCGLIFPHYADDR:
 		error = gif_get_tunnel(sc, (struct if_laddrreq *)data);
 		break;
 	case SIOCDIFPHYADDR:
-		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-			error = EBUSY;
-			break;
-		}
 		error = gif_del_tunnel(sc);
 		break;
 
@@ -491,10 +481,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSLIFPHYRTABLE:
-		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-			error = EBUSY;
-			break;
-		}
 		if (ifr->ifr_rdomainid < 0 ||
 		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
 		    !rtable_exists(ifr->ifr_rdomainid)) {
@@ -708,6 +694,26 @@ in6_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 }
 #endif /* INET6 */
 
+struct gif_softc *
+gif_find(const struct gif_tunnel *key)
+{
+	struct gif_tunnel *t;
+	struct gif_softc *sc;
+
+	TAILQ_FOREACH(t, &gif_list, t_entry) {
+		if (gif_cmp(key, t) != 0)
+			continue;
+
+		sc = (struct gif_softc *)t;
+		if (!ISSET(sc->sc_if.if_flags, IFF_RUNNING))
+			continue;
+
+		return (sc);
+	}
+
+	return (NULL);
+}
+
 int
 gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
     int af, uint8_t ttl, uint8_t otos)
@@ -731,10 +737,10 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 
 	key->t_rtableid = m->m_pkthdr.ph_rtableid;
 
-	sc = (struct gif_softc *)RBT_FIND(gif_tree, &gif_tree, key);
+	sc = gif_find(key);
 	if (sc == NULL) {
 		memset(&key->t_dst, 0, sizeof(key->t_dst));
-		sc = (struct gif_softc *)RBT_FIND(gif_tree, &gif_tree, key);
+		sc = gif_find(key);
 		if (sc == NULL)
 			return (-1);
 	}
@@ -880,5 +886,3 @@ gif_cmp(const struct gif_tunnel *a, const struct gif_tunnel *b)
 
 	return (0);
 }
-
-RBT_GENERATE(gif_tree, gif_tunnel, t_entry, gif_cmp);
