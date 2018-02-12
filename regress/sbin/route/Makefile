@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.24 2018/02/08 13:51:08 mpi Exp $
+# $OpenBSD: Makefile,v 1.25 2018/02/12 15:36:40 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -10,6 +10,7 @@ RDOMAIN?=	5
 .SILENT: .BEGIN .END
 
 .BEGIN:
+	-${SUDO} ifconfig lo${RDOMAIN} -inet6 down
 	-${SUDO} ifconfig lo10001 up rdomain ${RDOMAIN} 192.0.2.1/32
 	-${SUDO} ifconfig lo10002 up rdomain ${RDOMAIN} 192.0.2.2/32
 	-${SUDO} ifconfig lo10003 up rdomain ${RDOMAIN} 192.0.2.3/32
