@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.212 2018/02/10 05:52:08 florian Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.213 2018/02/12 15:53:05 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1374,7 +1374,7 @@ int
 ip6_sysctl_soiikey(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
 	struct ifnet *ifp;
-	uint8_t oldkey[16];
+	uint8_t oldkey[IP6_SOIIKEY_LEN];
 	int error;
 
 	error = suser(curproc, 0);
