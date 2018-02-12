@@ -2,7 +2,7 @@ Routing tables
 
 Internet:
 Destination        Gateway            Flags   Refs      Use   Mtu  Prio Iface
-10.0/14            10.1.254.56        UCPn       0        1     -     4 vether99
+10.0/14            10.1.254.56        UCPn       0        3     -     4 vether99
 10.0/14            10.1.255.1         CPn        0        0     -     4 vlan99
 10.0/14            10.1.255.2         CPn        0        0     -     4 vlan99
 10.0/14            10.1.255.3         CPn        0        0     -     4 vlan99
