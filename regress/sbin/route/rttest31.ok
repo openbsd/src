@@ -2,6 +2,8 @@ Routing tables
 
 Internet:
 Destination        Gateway            Flags   Refs      Use   Mtu  Prio Iface
+127/8              127.0.0.1          UGRS       0        0 32768     8 lo5  
+127.0.0.1          127.0.0.1          UHhl       1        1 32768     1 lo5  
 192.0.2.1          192.0.2.1          UHhl       1        2 32768     1 lo10001
 192.0.2.2          192.0.2.2          UHhl       1        2 32768     1 lo10002
 192.0.2.3          192.0.2.3          UHhl       1        2 32768     1 lo10003
