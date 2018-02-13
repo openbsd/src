@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.53 2017/01/05 13:53:09 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.54 2018/02/13 17:35:32 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -500,7 +500,8 @@ limit		: /* empty */
 				yyerror("limit out of range: %lld usec", $2);
 				YYERROR;
 			}
-			frame.f_limit.tv_usec = $2;
+			frame.f_limit.tv_sec = $2 / 1000000;
+			frame.f_limit.tv_usec = $2 % 1000000;
 		}
 		;
 
