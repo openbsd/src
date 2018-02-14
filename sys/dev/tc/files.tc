@@ -1,4 +1,4 @@
-#	$OpenBSD: files.tc,v 1.14 2017/11/02 14:04:24 mpi Exp $
+#	$OpenBSD: files.tc,v 1.15 2018/02/14 23:51:49 jsg Exp $
 #	$NetBSD: files.tc,v 1.26 2001/11/28 10:21:24 lukem Exp $
 #
 # Config file and device description for machine-independent
@@ -50,9 +50,3 @@ file	dev/ic/z8530sc.c		zs
 device	zstty: tty
 attach	zstty at zs
 file	dev/ic/z8530tty.c		zstty		needs-flag
-
-#attach	vsms at zs with zsms
-#file	dev/tc/zsms.c			zsms
-
-#attach	lkkbd at zs with zskbd
-#file	dev/tc/zskbd.c			zskbd		needs-flag

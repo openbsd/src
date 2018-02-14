@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.659 2018/02/14 08:55:35 mpi Exp $
+#	$OpenBSD: files,v 1.660 2018/02/14 23:51:49 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -65,7 +65,6 @@ define	wlan
 # "Chipset" attributes.  These are the machine-independent portions
 # of device drivers.
 define	ncr5380sbc	# NCR 5380 SCSI Bus Controller
-define	ncr53c7xx	# NCR 53c7xx SCSI Bus Controller
 define	dp8390nic	# 8390-family Ethernet controllers
 define	rtl80x9		# Realtek 8019/8029 NE2000-compatible
 define	dl10019		# DL10019/10022-family Ethernet controllers
@@ -630,7 +629,6 @@ file dev/diskmap.c
 file dev/firmload.c			firmload
 file dev/flash.c			flash			needs-flag
 file dev/ic/ncr5380sbc.c		ncr5380sbc
-file dev/ic/ncr53c7xx.c			ncr53c7xx
 file dev/ic/dp8390.c			dp8390nic
 file dev/ic/rtl80x9.c			rtl80x9
 file dev/ic/tea5757.c			tea5757

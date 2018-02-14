@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP26,v 1.3 2015/11/02 20:14:36 miod Exp $
+#	$OpenBSD: GENERIC-IP26,v 1.4 2018/02/14 23:51:49 jsg Exp $
 #
 # THIS KERNEL IS FOR POWER INDIGO2 R8000 (IP26) SYSTEMS ONLY.
 #
@@ -49,7 +49,6 @@ hpc0		at gio? addr 0x1fb80000
 dsclock0	at hpc0
 sq*		at hpc?		# On-board Ethernet
 wdsc*		at hpc?		# On-board SCSI
-#haltwo*		at hpc0		# Audio
 panel*		at hpc0		# front panel buttons
 pckbc*		at hpc0		# keyboard and mouse
 
@@ -74,8 +73,6 @@ pci*		at giopci?
 #dc*		at pci?		# Phobos G100/G130/G160 Fast Ethernet
 #lxtphy*		at mii?		# Level1 LXT970 PHYs
 #ukphy*		at mii?		# "unknown" PHYs
-
-#audio*		at haltwo?
 
 scsibus*	at scsi?
 sd*		at scsibus?

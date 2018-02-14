@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.21 2017/08/14 21:46:02 ians Exp $
+#	$OpenBSD: files.omap,v 1.22 2018/02/14 23:51:49 jsg Exp $
 
 define omap {}
 device omap: omap
@@ -77,10 +77,6 @@ device omusbtll
 attach omusbtll at omap
 file arch/armv7/omap/omusbtll.c			omusbtll
 
-device omkbd: wskbddev
-attach omkbd at omap
-file	arch/armv7/omap/omkbd.c			omkbd
-
 # LCD frame buffer
 device omdisplay: wsemuldisplaydev, rasops16
 attach omdisplay at omap
@@ -89,16 +85,6 @@ file arch/armv7/omap/omdisplay.c		omdisplay
 device amdisplay: wsemuldisplaydev, rasops16
 attach amdisplay at fdt
 file arch/armv7/omap/amdisplay.c		amdisplay
-
-# MCSPI - spi 
-device mcspi 
-attach mcspi at omap
-file	arch/armv7/omap/mcspi.c			mcspi
-
-# pseudo-Audio Device Driver
-device oaudio: audio
-attach oaudio at omap				# configure after Atlas Driver
-file arch/armv7/omap/beagle_audio.c		oaudio
 
 # TDA19988 HDMI PHY
 device nxphdmi

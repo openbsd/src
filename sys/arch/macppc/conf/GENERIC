@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.263 2017/11/27 09:03:37 mpi Exp $g
+#	$OpenBSD: GENERIC,v 1.264 2018/02/14 23:51:49 jsg Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -140,7 +140,6 @@ xlights*	at macobio?	# Xserve front panel LEDs
 mc*		at macobio?	# MACE ethernet
 #esp*		at macobio? flags 0x0000ffff # 53c9x SCSI
 mesh*		at macobio? flags 0xffff # MESH SCSI
-#nvram*		at macobio?	# nvram
 adb*		at macobio?	# Apple Desktop Bus
 apm0		at adb?		# APM emulation
 piic0		at adb?		# PMU I2C

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.89 2017/10/11 17:25:23 deraadt Exp $
+#	$OpenBSD: files.macppc,v 1.90 2018/02/14 23:51:49 jsg Exp $
 
 #
 # macppc-specific configuration info
@@ -83,8 +83,6 @@ include "dev/wscons/files.wscons"
 #
 # mac peripheral pieces.
 #
-
-#file	arch/macppc/pci/bandit.c			pci
 
 # HT bridge
 device  hpb {} : pcibus
@@ -220,10 +218,6 @@ file	arch/macppc/dev/aoa.c				aoa
 device	daca: audio, i2s
 attach	daca at macobio
 file	arch/macppc/dev/daca.c				daca
-
-#device	nvram
-#attach	nvram at macobio
-#file	arch/macppc/dev/nvram.c				nvram needs-flag
 
 device	macgpio {}
 attach	macgpio at macobio with macgpio

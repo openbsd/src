@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.106 2018/01/25 15:06:29 mpi Exp $
+#	$OpenBSD: files.alpha,v 1.107 2018/02/14 23:51:49 jsg Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -306,7 +306,6 @@ file	arch/alpha/alpha/promcons.c
 # XXX
 file	arch/alpha/alpha/cpuconf.c
 file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50
-file	arch/alpha/alpha/dec_21000.c		dec_21000
 file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300
 file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500
 file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33

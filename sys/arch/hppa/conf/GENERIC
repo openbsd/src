@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.174 2017/08/28 19:32:53 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.175 2018/02/14 23:51:49 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -184,9 +184,6 @@ sti1	at phantomas0 irq 12
 sti1	at uturn? irq 12
 sti*	at pci?			# EG-PCI, FX*
 
-#medusa* at mainbus? irq 4	# FDDI
-#venus* at mainbus? irq 5	# ATM J2498A/J3420A
-
 # internal i/o space
 gsc0	at asp?			# Snakes, old 715, old 725, 735/755
 gsc0	at lasi0		# 712,715/100,725/64,725/100,[ABCJ]*
@@ -226,7 +223,6 @@ ie0	at gsc0 irq 8		# 82C596DX/CA ether
 #ie*	at isa? port 0x360 iomem 0xd0000 irq 7
 #ie*	at isa? port 0x300 irq 10
 #ie*	at pci?
-#tms*	at gsc? irq 10		# TMS380C26 Network Controller
 #siop*	at gsc? irq 3		# NCR 53C720 (Fast-Wide HVD)
 osiop*	at gsc? irq 9		# NCR 53C710 (Narrow SE)
 #osiop* at eisa?

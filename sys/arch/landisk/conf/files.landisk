@@ -1,4 +1,4 @@
-#	$OpenBSD: files.landisk,v 1.13 2017/06/08 05:35:23 deraadt Exp $
+#	$OpenBSD: files.landisk,v 1.14 2018/02/14 23:51:49 jsg Exp $
 #	$NetBSD: files.landisk,v 1.2 2006/09/07 01:55:02 uwe Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
@@ -96,7 +96,3 @@ file	arch/landisk/dev/wdc_obio.c	wdc_obio
 device	power
 attach	power at obio
 file	arch/landisk/dev/power.c	power needs-flag
-
-#device	led
-#attach	led at obio
-#file	arch/landisk/dev/led_obio.c	led needs-flag

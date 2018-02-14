@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.97 2017/06/05 18:59:07 deraadt Exp $
+#	$OpenBSD: files.hppa,v 1.98 2018/02/14 23:51:49 jsg Exp $
 #
 # hppa-specific configuration info
 
@@ -184,12 +184,6 @@ attach	elroy at gedoens
 file	arch/hppa/dev/elroy.c		elroy
 file	arch/hppa/dev/apic.c		elroy
 
-# EPIC, Excalibur PCI Interface Chip. Integrated IOA
-# SAGA is a 64-bit data path EPIC
-#device	epic: pcibus
-#attach	epic at gedoens
-#file	arch/hppa/dev/epic.c			epic
-
 attach	sti at gedoens with sti_gedoens
 file	arch/hppa/dev/sti_sgc.c			sti_gedoens
 file	arch/hppa/dev/sti_pci_machdep.c		sti_pci
@@ -259,23 +253,6 @@ file	arch/hppa/gsc/arcofi_gsc.c		arcofi_gsc
 device	harmony: audio
 attach	harmony at gsc
 file	arch/hppa/gsc/harmony.c			harmony
-
-# HPA4011A/B w/ TMS380C26PQL, TMS38054FNL
-#device	tms: tokenring
-#attach	tms at gsc
-#file	arch/hppa/gsc/if_tms.c			tms
-
-# these we don't know yet
-# AMD Supernet2 FDDI ?
-#device	medusa: fddi
-#attach	medusa at gsc
-#file	arch/hppa/gsc/medusa.c			medusa
-
-# XXX should not be here
-# ANSI/VITA 26-1998 Gbit packet switching network iface
-#device	myri: ether
-#attach	myri at pci
-#file	dev/pci/myri.c				myri
 
 # PS/2 input ports
 device	gsckbc: pckbcslot

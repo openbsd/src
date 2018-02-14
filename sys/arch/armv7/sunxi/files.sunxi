@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sunxi,v 1.19 2017/05/05 20:13:54 kettenis Exp $
+#	$OpenBSD: files.sunxi,v 1.20 2018/02/14 23:51:49 jsg Exp $
 
 device	sxiintc
 attach	sxiintc at fdt
@@ -15,9 +15,6 @@ file	arch/armv7/sunxi/sxidog.c		sxidog
 device	sxiahci: scsi, atascsi
 attach	sxiahci at fdt
 file	arch/armv7/sunxi/sxiahci.c		sxiahci
-
-#attach ohci at sunxi with sxiohci
-#file	arch/armv7/sunxi/sxiohci.c		sxiohci
 
 device	sxie: ether, ifnet, mii, ifmedia
 attach	sxie at fdt

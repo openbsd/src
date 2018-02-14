@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.46 2016/09/03 16:18:21 tedu Exp $
+#	$OpenBSD: files.pcmcia,v 1.47 2018/02/14 23:51:49 jsg Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -41,24 +41,10 @@ file	dev/pcmcia/wdc_pcmcia.c			wdc_pcmcia
 attach	sm at pcmcia with sm_pcmcia
 file	dev/pcmcia/if_sm_pcmcia.c		sm_pcmcia
 
-# MB8696x Ethernet Controllers (i.e. TDK LAK CD021BX)
-#attach	mbe at pcmcia with mbe_pcmcia
-#file	dev/pcmcia/if_mbe_pcmcia.c		mbe_pcmcia
-
 # Xircom Ethernet controllers
 device	xe: ether, ifnet, mii, ifmedia
 attach	xe at pcmcia with xe_pcmcia
 file	dev/pcmcia/if_xe.c			xe_pcmcia
-
-# PCMCIA Floppy controller
-#attach	fdc at pcmcia with fdc_pcmcia
-#file	dev/pcmcia/fdc_pcmcia.c			fdc_pcmcia
-
-# PCMCIA multi-port serial cards
-#device	pcmcom {[slave = -1]}
-#attach	pcmcom at pcmcia
-#attach	com at pcmcom with com_pcmcom
-#file	dev/pcmcia/pcmcom.c			pcmcom | com_pcmcom needs-flag
 
 # Lucent WaveLAN
 attach	wi at pcmcia with wi_pcmcia
