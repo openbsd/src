@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.26 2018/02/12 15:48:58 mpi Exp $
+# $OpenBSD: Makefile,v 1.27 2018/02/14 08:42:22 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -13,7 +13,7 @@ RDOMAIN?=	5
 .for itf in lo10001 lo10002 lo10003 lo10004 vlan99 vether99
 	-${SUDO} ifconfig ${itf} destroy 2>/dev/null || true
 .endfor
-	-${SUDO} ifconfig lo${RDOMAIN} -inet6 down
+	-${SUDO} ifconfig lo${RDOMAIN} rdomain ${RDOMAIN} -inet6 down
 	-${SUDO} ifconfig lo10001 up rdomain ${RDOMAIN} 192.0.2.1/32
 	-${SUDO} ifconfig lo10002 up rdomain ${RDOMAIN} 192.0.2.2/32
 	-${SUDO} ifconfig lo10003 up rdomain ${RDOMAIN} 192.0.2.3/32
