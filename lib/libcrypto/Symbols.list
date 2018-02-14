@@ -2857,6 +2857,8 @@ X509_email_free
 X509_find_by_issuer_and_serial
 X509_find_by_subject
 X509_free
+X509_get0_notAfter
+X509_get0_notBefore
 X509_get0_pubkey_bitstr
 X509_get1_email
 X509_get1_ocsp
@@ -2880,6 +2882,8 @@ X509_get_pubkey_parameters
 X509_get_serialNumber
 X509_get_signature_nid
 X509_get_subject_name
+X509_getm_notAfter
+X509_getm_notBefore
 X509_gmtime_adj
 X509_issuer_and_serial_cmp
 X509_issuer_and_serial_hash
