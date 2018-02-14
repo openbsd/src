@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_STORE_CTX_new.3,v 1.5 2017/01/07 03:01:44 schwarze Exp $
+.\"	$OpenBSD: X509_STORE_CTX_new.3,v 1.6 2018/02/14 02:05:55 schwarze Exp $
 .\"	OpenSSL 186bb907 Apr 13 11:05:13 2015 -0700
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 7 2017 $
+.Dd $Mdocdate: February 14 2018 $
 .Dt X509_STORE_CTX_NEW 3
 .Os
 .Sh NAME
@@ -213,7 +213,7 @@ should not be used.
 looks up and sets the default verification method to
 .Fa name .
 This uses the function
-.Fn X509_VERIFY_PARAM_lookup
+.Xr X509_VERIFY_PARAM_lookup 3
 to find an appropriate set of parameters from
 .Fa name .
 .Pp
