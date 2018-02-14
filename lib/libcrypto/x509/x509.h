@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.26 2016/12/27 16:05:57 jsing Exp $ */
+/* $OpenBSD: x509.h,v 1.27 2018/02/14 16:18:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -887,6 +887,8 @@ int X509_set_ex_data(X509 *r, int idx, void *arg);
 void *X509_get_ex_data(X509 *r, int idx);
 int		i2d_X509_AUX(X509 *a,unsigned char **pp);
 X509 *		d2i_X509_AUX(X509 **a,const unsigned char **pp,long length);
+
+int X509_get_signature_nid(const X509 *x);
 
 int X509_alias_set1(X509 *x, unsigned char *name, int len);
 int X509_keyid_set1(X509 *x, unsigned char *id, int len);
