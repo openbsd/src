@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.34 2018/02/11 18:45:51 otto Exp $
+# $OpenBSD: mksubr,v 1.35 2018/02/14 17:26:56 otto Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -316,7 +316,7 @@ auto_or_type "mmapflagsname" "(__)?MAP_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/mm
 auto_orz_type "wait4optname" "W[A-Z]+[[:space:]]+[0-9]+" "sys/wait.h"
 #auto_or_type "timerflagsname" "TIMER_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/time.h"
 #auto_or_type "getfsstatflagsname" "MNT_[A-Z]+[[:space:]]+[1-9][0-9]*" "sys/mount.h"
-auto_or_type "mountflagsname" "MNT_[A-Z]+[[:space:]]+0x[0-9]+" "sys/mount.h"
+auto_orz_type "mountflagsname" "MNT_[A-Z]+[[:space:]]+0x[0-9]+" "sys/mount.h"
 auto_or_type "rebootoptname" "RB_[A-Z]+[[:space:]]+0x[0-9]+" "sys/reboot.h"
 auto_or_type "flockname" "LOCK_[A-Z]+[[:space:]]+0x[0-9]+" "sys/fcntl.h"
 #auto_or_type "thrcreateflagsname" "THR_[A-Z]+[[:space:]]+0x[0-9]+" "sys/thr.h"
