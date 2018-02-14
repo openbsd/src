@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.17 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p_lib.c,v 1.18 2018/02/14 16:40:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -202,6 +202,13 @@ EVP_PKEY_new(void)
 	ret->attributes = NULL;
 	ret->save_parameters = 1;
 	return (ret);
+}
+
+int
+EVP_PKEY_up_ref(EVP_PKEY *pkey)
+{
+	int refs = CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+	return ((refs > 1) ? 1 : 0);
 }
 
 /* Setup a public key ASN1 method and ENGINE from a NID or a string.

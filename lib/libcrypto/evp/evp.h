@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.53 2017/08/28 17:48:02 jsing Exp $ */
+/* $OpenBSD: evp.h,v 1.54 2018/02/14 16:40:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -894,6 +894,7 @@ struct gost_key_st;
 
 EVP_PKEY *EVP_PKEY_new(void);
 void EVP_PKEY_free(EVP_PKEY *pkey);
+int EVP_PKEY_up_ref(EVP_PKEY *pkey);
 
 EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
     long length);

@@ -1388,6 +1388,7 @@ EVP_PKEY_sign
 EVP_PKEY_sign_init
 EVP_PKEY_size
 EVP_PKEY_type
+EVP_PKEY_up_ref
 EVP_PKEY_verify
 EVP_PKEY_verify_init
 EVP_PKEY_verify_recover
