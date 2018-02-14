@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.134 2017/08/30 16:24:21 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.135 2018/02/14 16:16:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1336,9 +1336,10 @@ int SSL_set_purpose(SSL *s, int purpose);
 int SSL_CTX_set_trust(SSL_CTX *s, int trust);
 int SSL_set_trust(SSL *s, int trust);
 
+X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx);
 int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm);
+X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl);
 int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm);
-
 
 void	SSL_free(SSL *ssl);
 int 	SSL_accept(SSL *ssl);

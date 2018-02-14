@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.172 2017/10/11 17:35:00 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.173 2018/02/14 16:16:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -469,10 +469,22 @@ SSL_set_trust(SSL *s, int trust)
 	return (X509_VERIFY_PARAM_set_trust(s->param, trust));
 }
 
+X509_VERIFY_PARAM *
+SSL_CTX_get0_param(SSL_CTX *ctx)
+{
+	return (ctx->param);
+}
+
 int
 SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm)
 {
 	return (X509_VERIFY_PARAM_set1(ctx->param, vpm));
+}
+
+X509_VERIFY_PARAM *
+SSL_get0_param(SSL *ssl)
+{
+	return (ssl->param);
 }
 
 int
