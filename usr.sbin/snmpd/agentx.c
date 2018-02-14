@@ -1,4 +1,4 @@
-/*      $OpenBSD: agentx.c,v 1.11 2018/01/05 08:13:32 mpi Exp $    */
+/*      $OpenBSD: agentx.c,v 1.12 2018/02/14 12:43:07 rob Exp $    */
 /*
  * Copyright (c) 2013,2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -962,7 +962,8 @@ snmp_agentx_do_read_oid(struct agentx_pdu *pdu, struct snmp_oid *oid,
 }
 
 int
-snmp_agentx_read_searchrange(struct agentx_pdu *pdu, struct agentx_search_range *sr)
+snmp_agentx_read_searchrange(struct agentx_pdu *pdu,
+    struct agentx_search_range *sr)
 {
 	if (snmp_agentx_do_read_oid(pdu, &sr->start, &sr->include) == -1 ||
 	    snmp_agentx_read_oid(pdu, &sr->end) == -1)
@@ -1124,7 +1125,7 @@ snmp_agentx_dump_hdr(struct agentx_hdr *hdr)
 		return;
 	}
 
-	fprintf(stderr, 
+	fprintf(stderr,
 	    "agentx: version %d type %s flags %d reserved %d"
 	    " sessionid %d transactid %d packetid %d length %d",
 	    hdr->version, snmp_agentx_type2name(hdr->type), hdr->flags,
