@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.41 2017/04/29 21:48:43 jsing Exp $ */
+/* $OpenBSD: crypto.h,v 1.42 2018/02/14 16:32:06 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -330,6 +330,14 @@ int CRYPTO_is_mem_check_on(void);
 	CRYPTO_malloc_locked((int)num,__FILE__,__LINE__)
 #define OPENSSL_free_locked(addr) CRYPTO_free_locked(addr)
 
+const char *OpenSSL_version(int type);
+#define OPENSSL_VERSION		0
+#define OPENSSL_CFLAGS		1
+#define OPENSSL_BUILT_ON	2
+#define OPENSSL_PLATFORM	3
+#define OPENSSL_DIR		4
+#define OPENSSL_ENGINES_DIR	5
+unsigned long OpenSSL_version_num(void);
 
 const char *SSLeay_version(int type);
 unsigned long SSLeay(void);

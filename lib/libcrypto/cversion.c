@@ -1,4 +1,4 @@
-/* $OpenBSD: cversion.c,v 1.15 2014/07/11 11:42:28 jsing Exp $ */
+/* $OpenBSD: cversion.c,v 1.16 2018/02/14 16:32:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,4 +83,16 @@ unsigned long
 SSLeay(void)
 {
 	return (SSLEAY_VERSION_NUMBER);
+}
+
+const char *
+OpenSSL_version(int t)
+{
+	return SSLeay_version(t);
+}
+
+unsigned long
+OpenSSL_version_num(void)
+{
+	return SSLeay();
 }

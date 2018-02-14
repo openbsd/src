@@ -1832,6 +1832,8 @@ OTHERNAME_new
 OpenSSLDie
 OpenSSL_add_all_ciphers
 OpenSSL_add_all_digests
+OpenSSL_version
+OpenSSL_version_num
 PBE2PARAM_free
 PBE2PARAM_it
 PBE2PARAM_new
