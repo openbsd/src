@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.190 2018/02/10 08:46:10 claudio Exp $
+#	$OpenBSD: netstart,v 1.191 2018/02/14 22:08:45 dlg Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -72,6 +72,26 @@ parse_hn_line() {
 	set +o noglob
 }
 
+ifcreate() {
+	local _if=$1
+
+	{ ifconfig $_if || ifconfig $_if create; } >/dev/null 2>&1 || return
+}
+
+vifscreate() {
+	local _vifs=$(ifconfig -C) _vif _hn _if
+
+	for _vif in ${_vifs}; do
+		for _hn in /etc/hostname.${_vif}*; do
+			[[ -f $_hn ]] || continue
+			_if=${_hn#/etc/hostname.}
+
+			# Create wanted ifs.
+			ifcreate $_if || return
+		done
+	done
+}
+
 # Start a single interface.
 # Usage: ifstart if1
 ifstart() {
@@ -97,8 +117,7 @@ ifstart() {
 
 	# Check for ifconfig'able interface, except if -n option is specified.
 	if ! $PRINT_ONLY; then
-		(ifconfig $_if || ifconfig $_if create) >/dev/null 2>&1 ||
-		return
+		ifcreate $_if || return
 	fi
 
 	# Parse the hostname.if(5) file and fill _cmds array with interface
@@ -260,15 +279,17 @@ else
 	ip6kernel=NO
 fi
 
+# Create all the pseudo interfaces up front
+vifscreate
 
 # Configure all the non-loopback interfaces which we know about, but
 # do not start interfaces which must be delayed. Refer to hostname.if(5)
-ifmstart "" "trunk svlan vlan carp gif gre pfsync pppoe tun bridge switch pflow"
+ifmstart "" "trunk svlan vlan carp pppoe tun tap gif etherip gre egre mobileip pflow"
 
 # The trunk interfaces need to come up first in this list.
 # The (s)vlan interfaces need to come up after trunk.
 # Configure all the carp interfaces which we know about before default route.
-ifmstart "trunk svlan vlan carp"
+ifmstart "trunk svlan vlan carp pppoe"
 
 # Look for default routes in /etc/mygate.
 defaultroute
@@ -279,14 +300,11 @@ if [[ $multicast != YES ]]; then
 	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject >/dev/null
 fi
 
-# Configure PPPoE, GIF, GRE, TUN and PFLOW interfaces, delayed because they
-# require routes to be set. TUN might depend on PPPoE, and GIF or GRE may
-# depend on either of them. PFLOW might bind to ip addresses configured
-# on either of them.
-ifmstart "pppoe tun gif gre bridge switch pflow"
-
 # Reject 127/8 other than 127.0.0.1.
 route -qn add -net 127 127.0.0.1 -reject >/dev/null
+
+# Configure interfaces that rely on routing
+ifmstart "tun tap gif etherip gre egre mobileip pflow"
 
 if [[ $ip6kernel == YES ]]; then
 	# This is to make sure DAD is completed before going further.
