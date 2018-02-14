@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.66 2017/08/27 01:39:26 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.67 2018/02/14 17:06:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2302,6 +2302,12 @@ X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 }
 
 void
+X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
+{
+	X509_STORE_CTX_trusted_stack(ctx, sk);
+}
+
+void
 X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 {
 	if (ctx->cleanup)
@@ -2347,6 +2353,24 @@ X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
     int (*verify_cb)(int, X509_STORE_CTX *))
 {
 	ctx->verify_cb = verify_cb;
+}
+
+X509 *
+X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx)
+{
+	return ctx->cert;
+}
+
+STACK_OF(X509) *
+X509_STORE_CTX_get0_untrusted(X509_STORE_CTX *ctx)
+{
+	return ctx->untrusted;
+}
+
+void
+X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
+{
+	ctx->untrusted = sk;
 }
 
 X509_POLICY_TREE *

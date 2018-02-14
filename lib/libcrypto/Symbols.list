@@ -2741,11 +2741,13 @@ X509_SIG_it
 X509_SIG_new
 X509_STORE_CTX_cleanup
 X509_STORE_CTX_free
+X509_STORE_CTX_get0_cert
 X509_STORE_CTX_get0_current_crl
 X509_STORE_CTX_get0_current_issuer
 X509_STORE_CTX_get0_param
 X509_STORE_CTX_get0_parent_ctx
 X509_STORE_CTX_get0_policy_tree
+X509_STORE_CTX_get0_untrusted
 X509_STORE_CTX_get1_chain
 X509_STORE_CTX_get1_issuer
 X509_STORE_CTX_get_chain
@@ -2760,6 +2762,8 @@ X509_STORE_CTX_new
 X509_STORE_CTX_purpose_inherit
 X509_STORE_CTX_set0_crls
 X509_STORE_CTX_set0_param
+X509_STORE_CTX_set0_trusted_stack
+X509_STORE_CTX_set0_untrusted
 X509_STORE_CTX_set_cert
 X509_STORE_CTX_set_chain
 X509_STORE_CTX_set_default
