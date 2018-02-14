@@ -1,5 +1,5 @@
-.\"	$OpenBSD: EVP_PKEY_new.3,v 1.4 2018/02/14 02:15:46 schwarze Exp $
-.\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
+.\" $OpenBSD: EVP_PKEY_new.3,v 1.5 2018/02/14 23:49:52 schwarze Exp $
+.\" full merge up to: OpenSSL 99d63d42 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2002 The OpenSSL Project.  All rights reserved.
@@ -53,12 +53,17 @@
 .Os
 .Sh NAME
 .Nm EVP_PKEY_new ,
+.Nm EVP_PKEY_up_ref ,
 .Nm EVP_PKEY_free
 .Nd private key allocation functions
 .Sh SYNOPSIS
 .In openssl/evp.h
 .Ft EVP_PKEY *
 .Fn EVP_PKEY_new void
+.Ft int
+.Fo EVP_PKEY_up_ref
+.Fa "EVP_PKEY *key"
+.Fc
 .Ft void
 .Fo EVP_PKEY_free
 .Fa "EVP_PKEY *key"
@@ -74,12 +79,19 @@ The
 function allocates an empty
 .Vt EVP_PKEY
 structure.
+The reference count is set to 1.
 To add a private key to it, use the functions described in
 .Xr EVP_PKEY_set1_RSA 3 .
 .Pp
+.Fn EVP_PKEY_up_ref
+increments the reference count of
+.Fa key
+by 1.
+.Pp
 .Fn EVP_PKEY_free
-frees up the private key
-.Fa key .
+decrements the reference count of
+.Fa key
+by 1, and if the reference count reaches zero, frees it up.
 If
 .Fa key
 is a
@@ -92,6 +104,9 @@ returns either the newly allocated
 structure or
 .Dv NULL
 if an error occurred.
+.Pp
+.Fn EVP_PKEY_up_ref
+returns 1 for success or 0 for failure.
 .Sh SEE ALSO
 .Xr EVP_PKEY_asn1_set_free 3 ,
 .Xr EVP_PKEY_set1_RSA 3
@@ -100,3 +115,6 @@ if an error occurred.
 and
 .Fn EVP_PKEY_free
 exist in all versions of OpenSSL.
+.Pp
+.Fn EVP_PKEY_up_ref
+first appeared in OpenSSL 1.1.0.
