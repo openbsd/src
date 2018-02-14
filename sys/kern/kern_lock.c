@@ -1,6 +1,7 @@
-/*	$OpenBSD: kern_lock.c,v 1.56 2018/02/10 12:59:24 mpi Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.57 2018/02/14 08:55:12 mpi Exp $	*/
 
 /*
+ * Copyright (c) 2017 Visa Hankala
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  *
@@ -350,3 +351,52 @@ __mtx_leave(struct mutex *mtx)
 		splx(s);
 }
 #endif /* __USE_MI_MUTEX */
+
+#ifdef WITNESS
+void
+_mtx_init_flags(struct mutex *m, int ipl, const char *name, int flags,
+    struct lock_type *type)
+{
+	struct lock_object *lo = MUTEX_LOCK_OBJECT(m);
+
+	lo->lo_flags = MTX_LO_FLAGS(flags);
+	if (name != NULL)
+		lo->lo_name = name;
+	else
+		lo->lo_name = type->lt_name;
+	WITNESS_INIT(lo, type);
+
+	_mtx_init(m, ipl);
+}
+
+void
+_mtx_enter(struct mutex *m, const char *file, int line)
+{
+	struct lock_object *lo = MUTEX_LOCK_OBJECT(m);
+
+	WITNESS_CHECKORDER(lo, LOP_EXCLUSIVE | LOP_NEWORDER, file, line, NULL);
+	__mtx_enter(m);
+	WITNESS_LOCK(lo, LOP_EXCLUSIVE, file, line);
+}
+
+int
+_mtx_enter_try(struct mutex *m, const char *file, int line)
+{
+	struct lock_object *lo = MUTEX_LOCK_OBJECT(m);
+
+	if (__mtx_enter_try(m)) {
+		WITNESS_LOCK(lo, LOP_EXCLUSIVE, file, line);
+		return 1;
+	}
+	return 0;
+}
+
+void
+_mtx_leave(struct mutex *m, const char *file, int line)
+{
+	struct lock_object *lo = MUTEX_LOCK_OBJECT(m);
+
+	WITNESS_UNLOCK(lo, LOP_EXCLUSIVE, file, line);
+	__mtx_leave(m);
+}
+#endif /* WITNESS */
