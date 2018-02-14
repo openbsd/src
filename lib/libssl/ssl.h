@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.135 2018/02/14 16:16:10 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.136 2018/02/14 17:08:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1208,6 +1208,7 @@ void BIO_ssl_shutdown(BIO *ssl_bio);
 int	SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
 void	SSL_CTX_free(SSL_CTX *);
+int SSL_CTX_up_ref(SSL_CTX *ctx);
 long SSL_CTX_set_timeout(SSL_CTX *ctx, long t);
 long SSL_CTX_get_timeout(const SSL_CTX *ctx);
 X509_STORE *SSL_CTX_get_cert_store(const SSL_CTX *);

@@ -115,6 +115,7 @@ SSL_CTX_set_tmp_rsa_callback
 SSL_CTX_set_trust
 SSL_CTX_set_verify
 SSL_CTX_set_verify_depth
+SSL_CTX_up_ref
 SSL_CTX_use_PrivateKey
 SSL_CTX_use_PrivateKey_ASN1
 SSL_CTX_use_PrivateKey_file

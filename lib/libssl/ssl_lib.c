@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.173 2018/02/14 16:16:10 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.174 2018/02/14 17:08:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1962,6 +1962,13 @@ SSL_CTX_free(SSL_CTX *ctx)
 
 	free(ctx->internal);
 	free(ctx);
+}
+
+int
+SSL_CTX_up_ref(SSL_CTX *ctx)
+{
+	int refs = CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
+	return ((refs > 1) ? 1 : 0);
 }
 
 void
