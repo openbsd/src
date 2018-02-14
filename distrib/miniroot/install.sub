@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1059 2018/02/10 05:59:06 florian Exp $
+#	$OpenBSD: install.sub,v 1.1060 2018/02/14 11:43:05 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3090,6 +3090,8 @@ do_install() {
 }
 
 do_upgrade() {
+	local _f
+
 	# Get $ROOTDISK and $ROOTDEV
 	get_rootinfo
 
