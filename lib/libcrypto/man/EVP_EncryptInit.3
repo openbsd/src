@@ -1,6 +1,6 @@
-.\"	$OpenBSD: EVP_EncryptInit.3,v 1.6 2017/08/20 18:41:39 schwarze Exp $
-.\"	OpenSSL EVP_EncryptInit.pod 519a5d1e Jun 27 17:38:25 2017 -0700
-.\"	OpenSSL EVP_EncryptInit.pod 5211e094 Nov 11 14:39:11 2014 -0800
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.7 2018/02/14 00:19:03 schwarze Exp $
+.\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
+.\" selective merge up to: OpenSSL 5c5eb286 Dec 5 00:36:43 2017 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000-2002, 2005, 2012-2016 The OpenSSL Project.
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 20 2017 $
+.Dd $Mdocdate: February 14 2018 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -75,6 +75,7 @@
 .Nm EVP_CIPHER_CTX_set_padding ,
 .Nm EVP_CIPHER_CTX_set_key_length ,
 .Nm EVP_CIPHER_CTX_ctrl ,
+.Nm EVP_CIPHER_CTX_rand_key ,
 .Nm EVP_CIPHER_CTX_cleanup ,
 .Nm EVP_get_cipherbyname ,
 .Nm EVP_get_cipherbynid ,
@@ -184,7 +185,7 @@
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "unsigned char *out"
 .Fa "int *outl"
-.Fa "unsigned char *in"
+.Fa "const unsigned char *in"
 .Fa "int inl"
 .Fc
 .Ft int
@@ -206,7 +207,7 @@
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "unsigned char *out"
 .Fa "int *outl"
-.Fa "unsigned char *in"
+.Fa "const unsigned char *in"
 .Fa "int inl"
 .Fc
 .Ft int
@@ -294,6 +295,11 @@
 .Fa "int type"
 .Fa "int arg"
 .Fa "void *ptr"
+.Fc
+.Ft int
+.Fo EVP_CIPHER_CTX_rand_key
+.Fa "EVP_CIPHER_CTX *ctx"
+.Fa "unsigned char *key"
 .Fc
 .Ft int
 .Fo EVP_CIPHER_CTX_cleanup
@@ -661,8 +667,10 @@ return the block cipher mode:
 .Dv EVP_CIPH_ECB_MODE ,
 .Dv EVP_CIPH_CBC_MODE ,
 .Dv EVP_CIPH_CFB_MODE ,
+.Dv EVP_CIPH_OFB_MODE ,
+.Dv EVP_CIPH_CTR_MODE ,
 or
-.Dv EVP_CIPH_OFB_MODE .
+.Dv EVP_CIPH_XTS_MODE .
 If the cipher is a stream cipher then
 .Dv EVP_CIPH_STREAM_CIPHER
 is returned.
@@ -706,6 +714,18 @@ the RC2 effective key length is not supported).
 allows various cipher specific parameters to be determined and set.
 Currently only the RC2 effective key length and the number of rounds of
 RC5 can be set.
+.Pp
+.Fn EVP_CIPHER_CTX_rand_key
+generates a random key of the appropriate length based on the cipher
+context.
+The
+.Vt EVP_CIPHER
+can provide its own random key generation routine to support keys
+of a specific form.
+The
+.Fa key
+argument must point to a buffer at least as big as the value returned by
+.Fn EVP_CIPHER_CTX_key_length .
 .Pp
 Where possible the EVP interface to symmetric ciphers should be
 used in preference to the low level interfaces.
@@ -782,8 +802,10 @@ return 1 for success and 0 for failure.
 .Fn EVP_CipherFinal_ex
 returns 0 for a decryption failure or 1 for success.
 .Pp
+.Fn EVP_CIPHER_CTX_rand_key
+and
 .Fn EVP_CIPHER_CTX_cleanup
-returns 1 for success and 0 for failure.
+return 1 for success or 0 for failure.
 .Pp
 .Fn EVP_get_cipherbyname ,
 .Fn EVP_get_cipherbynid ,
