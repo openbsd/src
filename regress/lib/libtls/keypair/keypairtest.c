@@ -1,4 +1,4 @@
-/* $OpenBSD: keypairtest.c,v 1.2 2018/02/08 10:19:57 jsing Exp $ */
+/* $OpenBSD: keypairtest.c,v 1.3 2018/02/14 15:59:50 jsing Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -124,6 +124,11 @@ do_keypair_tests(void)
 	if (compare_mem("ocsp staple", ocsp_staple, ocsp_staple_len,
 	    kp->ocsp_staple, kp->ocsp_staple_len) == -1)
 		goto done;
+	if (strcmp(kp->pubkey_hash, PUBKEY_HASH) != 0) {
+		fprintf(stderr, "FAIL: got pubkey hash '%s', want '%s'",
+		    hash, PUBKEY_HASH);
+		goto done;
+	}
 
 	tls_keypair_clear(kp);
 
@@ -148,15 +153,15 @@ do_keypair_tests(void)
 		goto done;
 	}
 
-	if (tls_keypair_set_cert_mem(kp, cert, cert_len) == -1) {
+	if (tls_keypair_set_cert_mem(kp, &err, cert, cert_len) == -1) {
 		fprintf(stderr, "FAIL: failed to load cert: %s\n", err.msg);
 		goto done;
 	}
-	if (tls_keypair_set_key_mem(kp, key, key_len) == -1) {
+	if (tls_keypair_set_key_mem(kp, &err, key, key_len) == -1) {
 		fprintf(stderr, "FAIL: failed to load key: %s\n", err.msg);
 		goto done;
 	}
-	if (tls_keypair_set_ocsp_staple_mem(kp, ocsp_staple,
+	if (tls_keypair_set_ocsp_staple_mem(kp, &err, ocsp_staple,
 	    ocsp_staple_len) == -1) {
 		fprintf(stderr, "FAIL: failed to load ocsp staple: %s\n", err.msg);
 		goto done;
@@ -169,13 +174,7 @@ do_keypair_tests(void)
 	if (compare_mem("ocsp staple", ocsp_staple, ocsp_staple_len,
 	    kp->ocsp_staple, kp->ocsp_staple_len) == -1)
 		goto done;
-
-	if (tls_keypair_pubkey_hash(kp, &err, &hash) == -1) {
-		fprintf(stderr, "FAIL: failed to generate keypair hash: %s\n",
-		    err.msg);
-		goto done;
-	}
-	if (strcmp(hash, PUBKEY_HASH) != 0) {
+	if (strcmp(kp->pubkey_hash, PUBKEY_HASH) != 0) {
 		fprintf(stderr, "FAIL: got pubkey hash '%s', want '%s'",
 		    hash, PUBKEY_HASH);
 		goto done;
