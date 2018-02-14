@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.43 2017/05/06 17:12:59 beck Exp $ */
+/* $OpenBSD: asn1.h,v 1.44 2018/02/14 16:46:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -784,7 +784,8 @@ void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len);
 int ASN1_STRING_length(const ASN1_STRING *x);
 void ASN1_STRING_length_set(ASN1_STRING *x, int n);
 int ASN1_STRING_type(ASN1_STRING *x);
-unsigned char * ASN1_STRING_data(ASN1_STRING *x);
+unsigned char *ASN1_STRING_data(ASN1_STRING *x);
+const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x);
 
 ASN1_BIT_STRING *ASN1_BIT_STRING_new(void);
 void ASN1_BIT_STRING_free(ASN1_BIT_STRING *a);

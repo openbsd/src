@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.39 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.40 2018/02/14 16:46:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -481,6 +481,12 @@ ASN1_STRING_type(ASN1_STRING *x)
 
 unsigned char *
 ASN1_STRING_data(ASN1_STRING *x)
+{
+	return (x->data);
+}
+
+const unsigned char *
+ASN1_STRING_get0_data(const ASN1_STRING *x)
 {
 	return (x->data);
 }
