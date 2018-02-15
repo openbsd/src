@@ -1,0 +1,74 @@
+.\" $OpenBSD: X509_get0_notBefore.3,v 1.1 2018/02/15 10:01:33 schwarze Exp $
+.\" content checked up to: OpenSSL 27b138e9 May 19 00:16:38 2017 +0000
+.\"
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: February 15 2018 $
+.Dt X509_GET0_NOTBEFORE 3
+.Os
+.Sh NAME
+.Nm X509_get0_notBefore ,
+.Nm X509_getm_notBefore ,
+.Nm X509_get0_notAfter ,
+.Nm X509_getm_notAfter
+.Nd get certificate validity dates
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft const ASN1_TIME *
+.Fo X509_get0_notBefore
+.Fa "const X509 *x"
+.Fc
+.Ft const ASN1_TIME *
+.Fo X509_get0_notAfter
+.Fa "const X509 *x"
+.Fc
+.Ft ASN1_TIME *
+.Fo X509_getm_notBefore
+.Fa "const X509 *x"
+.Fc
+.Ft ASN1_TIME *
+.Fo X509_getm_notAfter
+.Fa "const X509 *x"
+.Fc
+.Sh DESCRIPTION
+.Fn X509_getm_notBefore
+and
+.Fn X509_getm_notAfter
+return pointers to the
+.Fa notBefore
+and
+.Fa notAfter
+fields of the validity period of the certificate
+.Fa x ,
+respectively.
+.Pp
+.Fn X509_get0_notBefore
+and
+.Fn X509_get0_notAfter
+are identical except for the const qualifier on the return type.
+.Sh RETURN VALUES
+These functions return internal pointers which must not be freed
+by the application, or
+.Dv NULL
+if the requested fields are not available.
+.Sh SEE ALSO
+.Xr ASN1_TIME_set 3 ,
+.Xr ASN1_TIME_set_tm 3 ,
+.Xr X509_cmp_time 3 ,
+.Xr X509_get_subject_name 3 ,
+.Xr X509_new 3 ,
+.Xr X509_sign 3 ,
+.Xr X509_VAL_new 3 ,
+.Xr X509_verify_cert 3
