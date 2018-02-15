@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_verify_recover.3,v 1.7 2018/02/15 12:52:37 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_verify_recover.3,v 1.8 2018/02/15 14:52:16 schwarze Exp $
 .\" full merge up to: OpenSSL 48e5119a Jan 19 10:49:22 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -178,6 +178,7 @@ if (EVP_PKEY_verify_recover(ctx, rout, &routlen, sig, siglen) <= 0)
 .Xr EVP_PKEY_decrypt 3 ,
 .Xr EVP_PKEY_derive 3 ,
 .Xr EVP_PKEY_encrypt 3 ,
+.Xr EVP_PKEY_meth_set_verify_recover 3 ,
 .Xr EVP_PKEY_sign 3 ,
 .Xr EVP_PKEY_verify 3
 .Sh HISTORY
