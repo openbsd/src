@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.51 2018/02/07 07:06:53 jmc Exp $
+.\" $OpenBSD: gre.4,v 1.52 2018/02/15 01:58:46 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,25 +28,49 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 7 2018 $
+.Dd $Mdocdate: February 15 2018 $
 .Dt GRE 4
 .Os
 .Sh NAME
-.Nm gre
+.Nm gre , 
+.Nm egre
 .Nd encapsulating network device
 .Sh SYNOPSIS
 .Cd "pseudo-device gre"
 .Sh DESCRIPTION
 The
-.Nm
-driver allows tunnel construction using the GRE (RFC 1701)
+.Nm gre
+pseudo-device provides interfaces for tunnelling protocols across
+IPv4 and IPv6 networks using the Generic Routing Encapsulation (GRE)
 encapsulation protocol.
 .Pp
-GRE and WCCPv1 are enabled with the following
+GRE datagrams (IP protocol number 47) consist of a GRE and outer IP
+header encapsulationg another protocols datagram.
+The GRE header specifies the type of the encapsulated datagram,
+allowing for the tunneling of multiple protocols.
+Different tunnels between the same endpoints may be distinguised
+by an optional Key field in the GRE header.
+.Pp
+This pseudo driver provides the clonable network interfaces:
+.Bl -tag -width nvgreXXX
+.It Nm gre
+Layer 3 protocols, specifically IPv4, IPv6, and MPLS, are encapsulated
+by GRE and IP headers.
+The MTU is set to 1476 by default to match the value used by Cisco routers.
+.Nm gre
+also supports reception of WCCP encapsulated IPv4 packets.
+.It Nm egre
+Layer 2 Ethernet packets are encapsulated by GRE and IP headers.
+Transparent Ethernet (0x6558) is used as the protocol identifier
+in the GRE header as per RFC 1701.
+The MTU is set to 1500 by default.
+.El
+.Pp
+GRE and WCCP are enabled with the following
 .Xr sysctl 2
 variables respectively in
 .Pa /etc/sysctl.conf :
-.Bl -tag -width "net.inet.mobileip.allow"
+.Bl -tag -width "net.inet.wccp.allow"
 .It Va net.inet.gre.allow
 Allow GRE packets in and out of the system.
 .It Va net.inet.gre.wccp
@@ -61,42 +85,35 @@ This sysctl requires
 to be set.
 .El
 .Pp
-GRE datagrams (IP protocol number 47)
-are prepended by an outer datagram and a GRE header.
-The GRE header specifies the type of the encapsulated datagram
-and thus allows for tunneling other protocols than IP,
-such as AppleTalk.
-GRE mode is the default tunnel mode on Cisco routers.
-This is also the default mode of operation of the
-.Nm
-interfaces.
-.Pp
-A
 .Nm gre
-interface can be created at runtime using the
-.Ic ifconfig gre Ns Ar N Ic create
+and
+.Nm egre
+interfaces can be created at runtime using the
+.Ic ifconfig iface Ns Ar N Ic create
 command or by setting up a
 .Xr hostname.if 5
 configuration file for
 .Xr netstart 8 .
-The MTU is set to 1476 by default to match the value used by Cisco routers.
-This may not be an optimal value,
-depending on the link between the two tunnel endpoints,
-but it can be adjusted via
-.Xr ifconfig 8 .
 .Pp
-For correct operation,
-there needs to be a route to the destination
-that is less specific than the one over the tunnel
-(there needs to be a route to the decapsulating host that
-does not run over the tunnel, as this would create a loop).
+The default MTU may not be an optimal value depending on the link
+between the tunnel endpoints, but can be adjusted.
 .Pp
-Note that the IP addresses of the tunnel endpoints may be the same as the
-ones defined with
-.Xr ifconfig 8
-for the interface (as if IP is encapsulated) but need not be as,
-for example, when encapsulating AppleTalk.
+For correct operation, the route to the tunnel destination must not
+go over the interface itself.
+This can be implemented by adding a distinct or a more specific
+route to the tunnel destination than the hosts or networks routed
+via the tunnel interface.
+Alternatively, the tunnel traffic may be configured in a separate
+routing table to the encapsulated traffic.
+.Pp
+Each interface supports use of the optional GRE Key field as a
+virtual network idenfitier.
+.Pp
+.Nm gre
+optionally supports sending keepalive packets to the remote endpoint,
+which allows tunnel failure to be detected.
 .Sh EXAMPLES
+.Nm gre
 Configuration example:
 .Bd -literal
 Host X ---- Host A ------------ tunnel ------------ Cisco D ---- Host E
@@ -146,9 +163,7 @@ and on the Cisco:
 .Pp
 .Dl ip route Y mask tunnelX
 .Pp
-Keepalive packets may optionally be sent to the remote endpoint, which
-decapsulates and returns them, allowing tunnel failure to be detected.
-Enable them like this:
+Keepalive packets may be enabled like this:
 .Bd -literal -offset indent
 # ifconfig greN keepalive period count
 .Ed
