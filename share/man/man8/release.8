@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.92 2018/02/06 08:42:33 tb Exp $
+.\"	$OpenBSD: release.8,v 1.93 2018/02/15 19:01:39 tb Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"	Copyright (c) 2016 Theo Buehler <tb@openbsd.org>
@@ -10,7 +10,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: February 6 2018 $
+.Dd $Mdocdate: February 15 2018 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -129,10 +129,6 @@ Reboot.
 The build process will place the object files in a tree under
 .Pa /usr/obj .
 This directory must be owned by build:wobj with mode 770.
-.Pp
-After a successful
-.Nm
-build, this is no longer needed.
 .Pp
 Create the tree of obj directories and begin the build:
 .Bd -literal -offset indent
