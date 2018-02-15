@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.53 2018/02/15 02:03:03 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.54 2018/02/15 02:09:21 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -252,7 +252,13 @@ pass quick on gre proto gre no state
 .Re
 .Sh AUTHORS
 .An Heiko W. Rupp Aq Mt hwr@pilhuhn.de
-.Sh BUGS
-The GRE RFC is not yet fully implemented (no GRE options).
+.Sh CAVEATS
+.Pp
+RFC 1701 and RFC 2890 describe a variety of optional GRE header
+fields in the protocol that are not implemented in the
+.Nm gre
+driver.
+The only optional field the driver implements support for is the
+Key header.
 .Pp
 The redirect header for WCCPv2 GRE encapsulated packets is skipped.
