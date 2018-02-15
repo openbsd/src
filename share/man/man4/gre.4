@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.54 2018/02/15 02:09:21 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.55 2018/02/15 09:17:13 jmc Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 .Dt GRE 4
 .Os
 .Sh NAME
-.Nm gre , 
+.Nm gre ,
 .Nm egre
 .Nd encapsulating network device
 .Sh SYNOPSIS
@@ -44,10 +44,10 @@ pseudo-device provides interfaces for tunnelling protocols across
 IPv4 and IPv6 networks using the Generic Routing Encapsulation (GRE)
 encapsulation protocol.
 .Pp
-GRE datagrams (IP protocol number 47) consist of a GRE and outer IP
-header encapsulationg another protocols datagram.
+GRE datagrams (IP protocol number 47) consist of a GRE header
+and an outer IP header for encapsulating another protocol's datagram.
 The GRE header specifies the type of the encapsulated datagram,
-allowing for the tunneling of multiple protocols.
+allowing for the tunnelling of multiple protocols.
 Different tunnels between the same endpoints may be distinguised
 by an optional Key field in the GRE header.
 .Pp
@@ -253,7 +253,6 @@ pass quick on gre proto gre no state
 .Sh AUTHORS
 .An Heiko W. Rupp Aq Mt hwr@pilhuhn.de
 .Sh CAVEATS
-.Pp
 RFC 1701 and RFC 2890 describe a variety of optional GRE header
 fields in the protocol that are not implemented in the
 .Nm gre
