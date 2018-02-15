@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_time_parse.3,v 1.5 2017/05/06 18:07:46 jmc Exp $
+.\" $OpenBSD: ASN1_time_parse.3,v 1.6 2018/02/15 09:28:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 6 2017 $
+.Dd $Mdocdate: February 15 2018 $
 .Dt ASN1_TIME_PARSE 3
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ sets the
 structure
 .Fa s
 to the time represented by the
-.Vt strict tm
+.Vt struct tm
 value pointed to by
 .Fa tm .
 If
