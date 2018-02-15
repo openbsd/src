@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.100 2018/02/12 03:15:32 dlg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.101 2018/02/15 01:03:17 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -554,6 +554,15 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 
 	key->t_rtableid = m->m_pkthdr.ph_rtableid;
 
+	if (gh->gre_proto == htons(ETHERTYPE_TRANSETHER)) {
+		if (egre_input(key, m, hlen) == -1)
+			goto decline;
+	}
+
+	sc = gre_find(key);
+	if (sc == NULL)
+		goto decline;
+
 	switch (gh->gre_proto) {
 	case htons(GRE_WCCP):
 		/* WCCP/GRE:
@@ -616,16 +625,9 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 		input = gre_keepalive_recv;
 		break;
 
-	case htons(ETHERTYPE_TRANSETHER):
-		if (egre_input(key, m, hlen) == -1)
-			goto decline;
 	default:
 		goto decline;
 	}
-
-	sc = gre_find(key);
-	if (sc == NULL)
-		goto decline;
 
 	ifp = &sc->sc_if;
 
