@@ -1790,6 +1790,8 @@
 ./usr/share/man/man3/EVP_OpenInit.3
 ./usr/share/man/man3/EVP_PKEY_CTX_ctrl.3
 ./usr/share/man/man3/EVP_PKEY_CTX_new.3
+./usr/share/man/man3/EVP_PKEY_asn1_get_count.3
+./usr/share/man/man3/EVP_PKEY_asn1_new.3
 ./usr/share/man/man3/EVP_PKEY_cmp.3
 ./usr/share/man/man3/EVP_PKEY_decrypt.3
 ./usr/share/man/man3/EVP_PKEY_derive.3
@@ -1797,6 +1799,7 @@
 ./usr/share/man/man3/EVP_PKEY_get_default_digest_nid.3
 ./usr/share/man/man3/EVP_PKEY_keygen.3
 ./usr/share/man/man3/EVP_PKEY_meth_get0_info.3
+./usr/share/man/man3/EVP_PKEY_meth_new.3
 ./usr/share/man/man3/EVP_PKEY_new.3
 ./usr/share/man/man3/EVP_PKEY_print_private.3
 ./usr/share/man/man3/EVP_PKEY_set1_RSA.3
@@ -2012,8 +2015,10 @@
 ./usr/share/man/man3/X509_check_private_key.3
 ./usr/share/man/man3/X509_cmp_time.3
 ./usr/share/man/man3/X509_digest.3
+./usr/share/man/man3/X509_get0_notBefore.3
 ./usr/share/man/man3/X509_get_pubkey.3
 ./usr/share/man/man3/X509_get_serialNumber.3
+./usr/share/man/man3/X509_get_signature_nid.3
 ./usr/share/man/man3/X509_get_subject_name.3
 ./usr/share/man/man3/X509_get_version.3
 ./usr/share/man/man3/X509_new.3
