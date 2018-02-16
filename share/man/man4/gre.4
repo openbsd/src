@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.55 2018/02/15 09:17:13 jmc Exp $
+.\" $OpenBSD: gre.4,v 1.56 2018/02/16 01:28:07 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 15 2018 $
+.Dd $Mdocdate: February 16 2018 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -112,6 +112,10 @@ virtual network idenfitier.
 .Nm gre
 optionally supports sending keepalive packets to the remote endpoint,
 which allows tunnel failure to be detected.
+.Nm gre
+interfaces can be individually configured to receive WCCP packets by
+setting the link-level flag
+.Cm link0 .
 .Sh EXAMPLES
 .Nm gre
 Configuration example:
