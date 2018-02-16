@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.102 2018/02/16 01:28:07 dlg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.103 2018/02/16 02:41:07 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/errno.h>
 #include <sys/timeout.h>
 #include <sys/queue.h>
+#include <sys/tree.h>
 
 #include <crypto/siphash.h>
 
@@ -142,8 +143,6 @@ union gre_addr {
 };
 
 struct gre_tunnel {
-	TAILQ_ENTRY(gre_tunnel)	t_entry;
-
 	uint32_t		t_key_mask;
 #define GRE_KEY_NONE			htonl(0x00000000U)
 #define GRE_KEY_ENTROPY			htonl(0xffffff00U)
@@ -160,8 +159,6 @@ struct gre_tunnel {
 	int			t_ttl;
 	sa_family_t		t_af;
 };
-
-TAILQ_HEAD(gre_list, gre_tunnel);
 
 static inline int
 		gre_cmp(const struct gre_tunnel *, const struct gre_tunnel *);
@@ -189,8 +186,10 @@ static int	gre_tunnel_ioctl(struct ifnet *, struct gre_tunnel *,
  */
 
 struct gre_softc {
-	struct gre_tunnel	sc_tunnel; /* must be first */
 	struct ifnet		sc_if;
+
+	struct gre_tunnel	sc_tunnel;
+	TAILQ_ENTRY(gre_softc)	sc_entry;
 
 	struct timeout		sc_ka_send;
 	struct timeout		sc_ka_hold;
@@ -206,6 +205,8 @@ struct gre_softc {
 	uint32_t		sc_ka_bias;
 	int			sc_ka_recvtm;
 };
+
+TAILQ_HEAD(gre_list, gre_softc);
 
 struct gre_keepalive {
 	uint32_t		gk_uptime;
@@ -248,9 +249,15 @@ static void	gre_keepalive_hold(void *);
 
 struct egre_softc {
 	struct gre_tunnel	sc_tunnel; /* must be first */
+	RBT_ENTRY(egre_softc)	sc_entry;
+
 	struct arpcom		sc_ac;
 	struct ifmedia		sc_media;
 };
+
+RBT_HEAD(egre_tree, egre_softc);
+
+RBT_PROTOTYPE(egre_tree, egre_softc, sc_entry, egre_cmp);
 
 static int	egre_clone_create(struct if_clone *, int);
 static int	egre_clone_destroy(struct ifnet *);
@@ -264,13 +271,10 @@ static int	egre_up(struct egre_softc *);
 static int	egre_down(struct egre_softc *);
 
 static int	egre_input(const struct gre_tunnel *, struct mbuf *, int);
-static struct egre_softc *
-		egre_find(const struct gre_tunnel *);
-
 struct if_clone egre_cloner =
     IF_CLONE_INITIALIZER("egre", egre_clone_create, egre_clone_destroy);
 
-struct gre_list egre_list = TAILQ_HEAD_INITIALIZER(gre_list);
+struct egre_tree egre_tree = RBT_INITIALIZER();
 
 /*
  * It is not easy to calculate the right value for a GRE MTU.
@@ -334,7 +338,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 #endif
 
 	NET_LOCK();
-	TAILQ_INSERT_TAIL(&gre_list, &sc->sc_tunnel, t_entry);
+	TAILQ_INSERT_TAIL(&gre_list, sc, sc_entry);
 	NET_UNLOCK();
 
 	return (0);
@@ -349,7 +353,7 @@ gre_clone_destroy(struct ifnet *ifp)
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		gre_down(sc);
 
-	TAILQ_REMOVE(&gre_list, &sc->sc_tunnel, t_entry);
+	TAILQ_REMOVE(&gre_list, sc, sc_entry);
 	NET_UNLOCK();
 
 	if_detach(ifp);
@@ -389,10 +393,6 @@ egre_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	NET_LOCK();
-	TAILQ_INSERT_TAIL(&egre_list, &sc->sc_tunnel, t_entry);
-	NET_UNLOCK();
-
 	return (0);
 }
 
@@ -404,8 +404,6 @@ egre_clone_destroy(struct ifnet *ifp)
 	NET_LOCK();
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		egre_down(sc);
-
-	TAILQ_REMOVE(&egre_list, &sc->sc_tunnel, t_entry);
 	NET_UNLOCK();
 
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
@@ -462,14 +460,12 @@ gre_input6(struct mbuf **mp, int *offp, int type, int af)
 static struct gre_softc *
 gre_find(const struct gre_tunnel *key)
 {
-	struct gre_tunnel *t;
 	struct gre_softc *sc;
 
-	TAILQ_FOREACH(t, &gre_list, t_entry) {
-		if (gre_cmp(key, t) != 0)
+	TAILQ_FOREACH(sc, &gre_list, sc_entry) {
+		if (gre_cmp(key, &sc->sc_tunnel) != 0)
 			continue;
 
-		sc = (struct gre_softc *)t;
 		if (!ISSET(sc->sc_if.if_flags, IFF_RUNNING))
 			continue;
 
@@ -669,26 +665,6 @@ decline:
 	return (-1);
 }
 
-static struct egre_softc *
-egre_find(const struct gre_tunnel *key)
-{
-	struct gre_tunnel *t;
-	struct egre_softc *sc;
-
-	TAILQ_FOREACH(t, &egre_list, t_entry) {
-		if (gre_cmp(key, t) != 0)
-			continue;
-
-		sc = (struct egre_softc *)t;
-		if (!ISSET(sc->sc_ac.ac_if.if_flags, IFF_RUNNING))
-			continue;
-
-		return (sc);
-	}
-
-	return (NULL);
-}
-
 static int
 egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen)
 {
@@ -697,7 +673,7 @@ egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen)
 	struct mbuf *n;
 	int off;
 
-	sc = egre_find(key);
+	sc = RBT_FIND(egre_tree, &egre_tree, (const struct egre_softc *)key);
 	if (sc == NULL)
 		return (-1);
 
@@ -1260,8 +1236,7 @@ egre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch(cmd) {
 	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-		/* FALLTHROUGH */
+		break;
 	case SIOCSIFFLAGS:
 		if (ISSET(ifp->if_flags, IFF_UP)) {
 			if (!ISSET(ifp->if_flags, IFF_RUNNING))
@@ -1286,8 +1261,18 @@ egre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCGLIFPHYTTL:
 		ifr->ifr_ttl = (int)sc->sc_tunnel.t_ttl;
-		break;
 
+	case SIOCSVNETID:
+	case SIOCDVNETID:
+	case SIOCSLIFPHYADDR:
+	case SIOCDIFPHYADDR:
+	case SIOCSLIFPHYRTABLE:
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
+			break;
+		}
+
+		/* FALLTHROUGH */
 	default:
 		error = gre_tunnel_ioctl(ifp, &sc->sc_tunnel, cmd, data);
 		if (error == ENOTTY)
@@ -1301,9 +1286,6 @@ egre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 static int
 gre_up(struct gre_softc *sc)
 {
-	if (sc->sc_tunnel.t_af == AF_UNSPEC)
-		return (ENXIO);
-
 	NET_ASSERT_LOCKED(); 
 	SET(sc->sc_if.if_flags, IFF_RUNNING);
 
@@ -1653,7 +1635,13 @@ gre_del_vnetid(struct gre_tunnel *tunnel)
 static int
 egre_up(struct egre_softc *sc)
 {
+	if (sc->sc_tunnel.t_af == AF_UNSPEC)
+		return (EDESTADDRREQ);
+
 	NET_ASSERT_LOCKED(); 
+
+	if (RBT_INSERT(egre_tree, &egre_tree, sc) != NULL)
+		return (EADDRINUSE);
 
 	SET(sc->sc_ac.ac_if.if_flags, IFF_RUNNING);
 
@@ -1666,6 +1654,8 @@ egre_down(struct egre_softc *sc)
 	NET_ASSERT_LOCKED();
 
 	CLR(sc->sc_ac.ac_if.if_flags, IFF_RUNNING);
+
+	RBT_REMOVE(egre_tree, &egre_tree, sc);
 
 	/* barrier? */
 
@@ -1729,7 +1719,7 @@ gre_ip_cmp(int af, const union gre_addr *a, const union gre_addr *b)
 	return (0);
 }
 
-static inline int
+static int
 gre_cmp(const struct gre_tunnel *a, const struct gre_tunnel *b)
 {
 	uint32_t ka, kb;
@@ -1784,3 +1774,10 @@ gre_cmp(const struct gre_tunnel *a, const struct gre_tunnel *b)
 	return (0);
 }
 
+static int
+egre_cmp(const struct egre_softc *a, const struct egre_softc *b)
+{
+	return (gre_cmp(&a->sc_tunnel, &b->sc_tunnel));
+}
+
+RBT_GENERATE(egre_tree, egre_softc, sc_entry, egre_cmp);
