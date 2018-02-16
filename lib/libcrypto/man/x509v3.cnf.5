@@ -1,5 +1,7 @@
-.\"	$OpenBSD: x509v3.cnf.5,v 1.3 2016/12/25 22:15:10 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: x509v3.cnf.5,v 1.4 2018/02/16 18:48:55 schwarze Exp $
+.\" full merge up to:
+.\" OpenSSL man5/x509v3_config a41815f0 Mar 17 18:43:53 2017 -0700
+.\" selective merge up to: OpenSSL 36cf10cf Oct 4 02:11:08 2017 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2004, 2006, 2013, 2014, 2015, 2016 The OpenSSL Project.
@@ -49,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 25 2016 $
+.Dd $Mdocdate: February 16 2018 $
 .Dt X509V3.CNF 5
 .Os
 .Sh NAME
@@ -318,7 +320,7 @@ option that will copy all the subject alternative name values from
 the issuer certificate (if possible).
 Example:
 .Pp
-.Dl issuserAltName = issuer:copy
+.Dl issuerAltName = issuer:copy
 .Ss Authority info access
 The authority information access extension gives details about how to
 access certain information relating to the CA.
