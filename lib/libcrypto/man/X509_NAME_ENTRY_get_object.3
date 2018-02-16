@@ -1,5 +1,6 @@
-.\"	$OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.6 2016/12/25 22:15:10 schwarze Exp $
-.\"	OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
+.\" $OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.7 2018/02/16 17:24:33 schwarze Exp $
+.\" full merge up to: OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
+.\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
@@ -19,7 +20,8 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2002, 2005, 2006 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2002, 2005, 2006, 2017 The OpenSSL Project.
+.\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -65,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 25 2016 $
+.Dd $Mdocdate: February 16 2018 $
 .Dt X509_NAME_ENTRY_GET_OBJECT 3
 .Os
 .Sh NAME
@@ -220,6 +222,36 @@ but in the case of
 .Fn X509_NAME_ENTRY_set_data
 the field type must be set first so the relevant field information
 can be looked up internally.
+.Sh RETURN VALUES
+.Fn X509_NAME_ENTRY_new ,
+.Fn X509_NAME_ENTRY_create_by_txt ,
+.Fn X509_NAME_ENTRY_create_by_NID ,
+and
+.Fn X509_NAME_ENTRY_create_by_OBJ
+return a valid
+.Vt X509_NAME_ENTRY
+structure on success or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn X509_NAME_ENTRY_get_object
+returns a valid
+.Vt ASN1_OBJECT
+structure if it is set or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn X509_NAME_ENTRY_get_data
+returns a valid
+.Vt ASN1_STRING
+structure if it is set or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn X509_NAME_ENTRY_set_object
+and
+.Fn X509_NAME_ENTRY_set_data
+return 1 on success or 0 on error.
 .Sh SEE ALSO
 .Xr ERR_get_error 3 ,
 .Xr OBJ_nid2obj 3 ,
