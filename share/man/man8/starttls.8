@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.23 2017/06/22 13:51:49 jmc Exp $
+.\" $OpenBSD: starttls.8,v 1.24 2018/02/16 07:24:26 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 22 2017 $
+.Dd $Mdocdate: February 16 2018 $
 .Dt STARTTLS 8
 .Os
 .Sh NAME
@@ -105,17 +105,17 @@ with the following command:
 If you don't intend to use TLS for authentication (and if you are using
 self-signed certificates you probably don't) you can simply link
 your new certificate to
-.Pa CAcert.pem .
+.Pa cert.pem :
 .Pp
-.Dl # ln -s /etc/ssl/mail.example.com.crt /etc/ssl/CAcert.pem
+.Dl # ln -s /etc/ssl/mail.example.com.crt /etc/ssl/cert.pem
 .Pp
 If, on the other hand, you intend to use TLS for authentication
-you should install your certificate authority bundle as
-.Pa /etc/ssl/CAcert.pem .
+you should add your certificate authority bundle to
+.Pa /etc/ssl/cert.pem
+(or whatever your software expects).
 .Pp
 Because the private key files are unencrypted,
-MTAs
-can be picky about using tight permissions on those files.
+MTAs can be picky about using tight permissions on those files.
 The certificate directory and the files therein should be
 readable and writable only by the owner (root).
 A simple way to ensure this is to run the following:
@@ -197,35 +197,8 @@ We can use this authentication to selectively relay clients, including
 other mail servers and mobile clients like laptops.
 However, there have been some problems getting some mail clients to work using
 certificate-based authentication.
-Note that your clients will have to generate certificates and have them
-signed (for trust validation) by a CA (certificate authority) you also trust,
-if you configure your server to do client certificate checking.
-Two new entries are available for TLS options:
-.Bl -tag -width Ds -offset indent
-.It VERIFY
-contains the status of the level of verification (held in the macro {verify})
-.It ENCR
-the strength of the encryption (in the macro {cipher_bits})
-.El
-.Pp
-VERIFY can also accept the argument for {cipher_bits}.
-Here are a few example entries that illustrate these features, and
-the role based granularity as well:
-.Pp
-Require strong (256-bit) encryption for communication with this server:
-.Pp
-.Dl TLS_Srv:server1.example.net	ENCR:256
-.Pp
-For a TLS client,
-require verification and a minimum of 128-bit encryption:
-.Pp
-.Dl TLS_Clt:desktop.example.net VERIFY:128
-.Pp
-Much more complicated access maps are possible, and error conditions (such
-as permanent or temporary, PERM+ or TEMP+) can be set on the basis of
-various criteria.
-This allows you fine-grained control over the types of connections you
-can allow.
+Clients will have to generate certificates and have them
+signed (for trust validation) by a trusted CA (certificate authority).
 .Pp
 Note that it is unwise to force all SMTP clients to use TLS, as it is not
 yet widespread.
