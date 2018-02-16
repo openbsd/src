@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.38 2017/12/30 13:34:56 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.39 2018/02/16 07:37:48 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -738,8 +738,6 @@ imxesdhc_bus_width(sdmmc_chipset_handle_t sch, int width)
 void
 imxesdhc_card_intr_mask(sdmmc_chipset_handle_t sch, int enable)
 {
-	printf("imxesdhc_card_intr_mask\n");
-	/* - this is SDIO card interrupt */
 	struct imxesdhc_softc *sc = sch;
 
 	if (enable) {
@@ -756,9 +754,7 @@ imxesdhc_card_intr_ack(sdmmc_chipset_handle_t sch)
 {
 	struct imxesdhc_softc *sc = sch;
 
-	printf("imxesdhc_card_intr_ack\n");
-
-	HWRITE4(sc, SDHC_INT_STATUS, SDHC_INT_STATUS_CINT);
+	HSET4(sc, SDHC_INT_STATUS_EN, SDHC_INT_STATUS_CINT);
 }
 
 int
@@ -1206,7 +1202,7 @@ imxesdhc_intr(void *arg)
 	 */
 	if (ISSET(status, SDHC_INT_STATUS_CINT)) {
 		DPRINTF(0,("%s: card interrupt\n", HDEVNAME(sc)));
-		HCLR4(sc, SDHC_INT_STATUS, SDHC_INT_STATUS_CINT);
+		HCLR4(sc, SDHC_INT_STATUS_EN, SDHC_INT_STATUS_CINT);
 		sdmmc_card_intr(sc->sdmmc);
 	}
 
