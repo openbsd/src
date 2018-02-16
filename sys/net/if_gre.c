@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.103 2018/02/16 02:41:07 dlg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.104 2018/02/16 06:26:10 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -172,11 +172,10 @@ static int	gre_get_vnetid(struct gre_tunnel *, struct ifreq *);
 static int	gre_del_vnetid(struct gre_tunnel *);
 
 static struct mbuf *
-		gre_ip_encap(const struct gre_tunnel *, struct mbuf *,
+		gre_encap(const struct gre_tunnel *, struct mbuf *, uint16_t,
 		    uint8_t, uint8_t);
 static int
-		gre_ip_output(const struct gre_tunnel *, struct mbuf *,
-		    uint8_t, uint8_t);
+		gre_ip_output(const struct gre_tunnel *, struct mbuf *);
 
 static int	gre_tunnel_ioctl(struct ifnet *, struct gre_tunnel *,
 		    u_long, void *);
@@ -235,9 +234,6 @@ static int	gre_input_key(struct mbuf **, int *, int, int,
 		    struct gre_tunnel *);
 static struct gre_softc *
 		gre_find(const struct gre_tunnel *);
-
-static struct mbuf *
-		gre_encap(struct gre_tunnel *, struct mbuf *, uint16_t);
 
 static void	gre_keepalive_send(void *);
 static void	gre_keepalive_recv(struct ifnet *ifp, struct mbuf *);
@@ -874,14 +870,6 @@ gre_start(struct ifnet *ifp)
 		}
 #endif
 
-		m->m_flags &= ~(M_MCAST|M_BCAST);
-		m->m_pkthdr.ph_ifidx = ifp->if_index;
-		m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
-
-#if NPF > 0
-		pf_pkt_addr_changed(m);
-#endif
-
 		switch (m->m_pkthdr.ph_family) {
 		case AF_INET: {
 			struct ip *ip;
@@ -928,9 +916,8 @@ gre_start(struct ifnet *ifp)
 		} else
 			ttl = tttl;
 
-		m = gre_encap(&sc->sc_tunnel, m, proto);
-		if (m == NULL ||
-		    gre_ip_output(&sc->sc_tunnel, m, ttl, tos) != 0) {
+		m = gre_encap(&sc->sc_tunnel, m, proto, ttl, tos);
+		if (m == NULL || gre_ip_output(&sc->sc_tunnel, m) != 0) {
 			ifp->if_oerrors++;
 			continue;
 		}
@@ -968,50 +955,18 @@ egre_start(struct ifnet *ifp)
 		MH_ALIGN(m, 0);
 		m->m_len = 0;
 
-		m->m_flags &= ~(M_MCAST|M_BCAST);
-		m->m_pkthdr.ph_ifidx = ifp->if_index;
-		m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
-
-#if NPF > 0
-		pf_pkt_addr_changed(m);
-#endif
-
-		m = gre_encap(&sc->sc_tunnel, m, htons(ETHERTYPE_TRANSETHER));
-		if (m == NULL || gre_ip_output(&sc->sc_tunnel, m,
-		    sc->sc_tunnel.t_ttl, 0) != 0) {
+		m = gre_encap(&sc->sc_tunnel, m, htons(ETHERTYPE_TRANSETHER),
+		    sc->sc_tunnel.t_ttl, 0);
+		if (m == NULL || gre_ip_output(&sc->sc_tunnel, m) != 0) {
 			ifp->if_oerrors++;
 			continue;
 		}
 	}
 }
 
-static int
-gre_ip_output(const struct gre_tunnel *tunnel, struct mbuf *m,
-     uint8_t ttl, uint8_t tos)
-{
-	m = gre_ip_encap(tunnel, m, ttl, tos);
-	if (m == NULL)
-		return (-1);
-
-	switch (tunnel->t_af) {
-	case AF_INET:
-		ip_send(m);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		ip6_send(m);
-		break;
-#endif
-	default:
-		panic("%s: unsupported af %d in %p", __func__, tunnel->t_af,
-		    tunnel);
-	}
-
-	return (0);
-}
-
 static struct mbuf *
-gre_encap(struct gre_tunnel *tunnel, struct mbuf *m, uint16_t proto)
+gre_encap(const struct gre_tunnel *tunnel, struct mbuf *m, uint16_t proto,
+    uint8_t ttl, uint8_t tos)
 {
 	struct gre_header *gh;
 	struct gre_h_key *gkh;
@@ -1034,20 +989,6 @@ gre_encap(struct gre_tunnel *tunnel, struct mbuf *m, uint16_t proto)
 		gkh = (struct gre_h_key *)(gh + 1);
 		gkh->gre_key = tunnel->t_key;
 	}
-
-	return (m);
-}
-
-static struct mbuf *
-gre_ip_encap(const struct gre_tunnel *tunnel, struct mbuf *m,
-    uint8_t ttl, uint8_t tos)
-{
-	m->m_flags &= ~(M_BCAST|M_MCAST);
-	m->m_pkthdr.ph_rtableid = tunnel->t_rtableid;
-
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
 
 	switch (tunnel->t_af) {
 	case AF_INET: {
@@ -1094,6 +1035,33 @@ gre_ip_encap(const struct gre_tunnel *tunnel, struct mbuf *m,
 	}
 
 	return (m);
+}
+
+static int
+gre_ip_output(const struct gre_tunnel *tunnel, struct mbuf *m)
+{
+	m->m_flags &= ~(M_BCAST|M_MCAST);
+	m->m_pkthdr.ph_rtableid = tunnel->t_rtableid;
+
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
+
+	switch (tunnel->t_af) {
+	case AF_INET:
+		ip_send(m);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		ip6_send(m);
+		break;
+#endif
+	default:
+		panic("%s: unsupported af %d in %p", __func__, tunnel->t_af,
+		    tunnel);
+	}
+
+	return (0);
 }
 
 static int
@@ -1261,6 +1229,7 @@ egre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCGLIFPHYTTL:
 		ifr->ifr_ttl = (int)sc->sc_tunnel.t_ttl;
+		break;
 
 	case SIOCSVNETID:
 	case SIOCDVNETID:
@@ -1397,16 +1366,15 @@ gre_keepalive_send(void *arg)
 	SipHash24_Update(&ctx, &gk->gk_random, sizeof(gk->gk_random));
 	SipHash24_Final(gk->gk_digest, &ctx);
 
-	m = gre_encap(&sc->sc_tunnel, m, htons(0));
-	if (m == NULL)
-		return;
-
 	ttl = sc->sc_tunnel.t_ttl == -1 ? ip_defttl : sc->sc_tunnel.t_ttl;
 
 	t.t_af = sc->sc_tunnel.t_af;
 	t.t_src = sc->sc_tunnel.t_dst;
 	t.t_dst = sc->sc_tunnel.t_src;
-	m = gre_ip_encap(&t, m, ttl, 0);
+	t.t_key = sc->sc_tunnel.t_key;
+	t.t_key_mask = sc->sc_tunnel.t_key_mask;
+
+	m = gre_encap(&t, m, htons(0), ttl, 0);
 	if (m == NULL)
 		return;
 
@@ -1417,7 +1385,6 @@ gre_keepalive_send(void *arg)
 		ip = mtod(m, struct ip *);
 		ip->ip_v = IPVERSION;
 		ip->ip_hl = sizeof(*ip) >> 2;
-		ip->ip_off &= htons(IP_DF);
 		ip->ip_id = htons(ip_randomid());
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, sizeof(*ip));
@@ -1432,18 +1399,14 @@ gre_keepalive_send(void *arg)
 #endif
 	}
 
-
 	/*
 	 * put it in the tunnel
 	 */
-	m = gre_encap(&sc->sc_tunnel, m, proto);
+	m = gre_encap(&sc->sc_tunnel, m, proto, ttl, 0);
 	if (m == NULL)
 		return;
 
-	m->m_pkthdr.ph_ifidx = sc->sc_if.if_index;
-	m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
-
-	gre_ip_output(&sc->sc_tunnel, m, ttl, 0);
+	gre_ip_output(&sc->sc_tunnel, m);
 
 	timeout_add_sec(&sc->sc_ka_send, sc->sc_ka_timeo);
 }
