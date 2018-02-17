@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.37 2017/11/28 06:55:49 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.38 2018/02/17 16:54:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,18 +74,6 @@
 #include "evp_locl.h"
 
 #define M_do_cipher(ctx, out, in, inl) ctx->cipher->do_cipher(ctx, out, in, inl)
-
-void
-EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
-{
-	memset(ctx, 0, sizeof(EVP_CIPHER_CTX));
-}
-
-EVP_CIPHER_CTX *
-EVP_CIPHER_CTX_new(void)
-{
-	return calloc(1, sizeof(EVP_CIPHER_CTX));
-}
 
 int
 EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -548,13 +536,33 @@ EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	return (1);
 }
 
+EVP_CIPHER_CTX *
+EVP_CIPHER_CTX_new(void)
+{
+	return calloc(1, sizeof(EVP_CIPHER_CTX));
+}
+
 void
 EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
 {
-	if (ctx) {
-		EVP_CIPHER_CTX_cleanup(ctx);
-		free(ctx);
-	}
+	if (ctx == NULL)
+		return;
+
+	EVP_CIPHER_CTX_cleanup(ctx);
+
+	free(ctx);
+}
+
+void
+EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
+{
+	memset(ctx, 0, sizeof(EVP_CIPHER_CTX));
+}
+
+int
+EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *a)
+{
+	return EVP_CIPHER_CTX_cleanup(a);
 }
 
 int
