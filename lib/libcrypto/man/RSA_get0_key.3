@@ -1,8 +1,8 @@
-.\"	$OpenBSD: DSA_sign.3,v 1.6 2018/02/17 16:59:48 schwarze Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\" $OpenBSD: RSA_get0_key.3,v 1.1 2018/02/17 16:59:48 schwarze Exp $
+.\" selective merge up to: OpenSSL 665d899f Aug 2 02:19:43 2017 +0800
 .\"
-.\" This file was written by Ulf Moeller <ulf@openssl.org>.
-.\" Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+.\" This file was written by Richard Levitte <levitte@openssl.org>
+.\" Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -49,125 +49,100 @@
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd $Mdocdate: February 17 2018 $
-.Dt DSA_SIGN 3
+.Dt RSA_GET0_KEY 3
 .Os
 .Sh NAME
-.Nm DSA_sign ,
-.Nm DSA_sign_setup ,
-.Nm DSA_verify
-.Nd DSA signatures
+.Nm RSA_get0_key ,
+.Nm RSA_set0_key
+.Nd get and set data in an RSA object
 .Sh SYNOPSIS
-.In openssl/dsa.h
-.Ft int
-.Fo DSA_sign
-.Fa "int type"
-.Fa "const unsigned char *dgst"
-.Fa "int len"
-.Fa "unsigned char *sigret"
-.Fa "unsigned int *siglen"
-.Fa "DSA *dsa"
+.In openssl/rsa.h
+.Ft void
+.Fo RSA_get0_key
+.Fa "const RSA *r"
+.Fa "const BIGNUM **n"
+.Fa "const BIGNUM **e"
+.Fa "const BIGNUM **d"
 .Fc
 .Ft int
-.Fo DSA_sign_setup
-.Fa "DSA *dsa"
-.Fa "BN_CTX *ctx"
-.Fa "BIGNUM **kinvp"
-.Fa "BIGNUM **rp"
-.Fc
-.Ft int
-.Fo DSA_verify
-.Fa "int type"
-.Fa "const unsigned char *dgst"
-.Fa "int len"
-.Fa "unsigned char *sigbuf"
-.Fa "int siglen"
-.Fa "DSA *dsa"
+.Fo RSA_set0_key
+.Fa "RSA *r"
+.Fa "BIGNUM *n"
+.Fa "BIGNUM *e"
+.Fa "BIGNUM *d"
 .Fc
 .Sh DESCRIPTION
-.Fn DSA_sign
-computes a digital signature on the
-.Fa len
-byte message digest
-.Fa dgst
-using the private key
-.Fa dsa
-and places its ASN.1 DER encoding at
-.Fa sigret .
-The length of the signature is placed in
-.Pf * Fa siglen .
-.Fa sigret
-must point to
-.Fn DSA_size dsa
-bytes of memory.
-.Pp
-.Fn DSA_sign_setup
-may be used to precompute part of the signing operation in case
-signature generation is time-critical.
-It expects
-.Fa dsa
-to contain DSA parameters.
-It places the precomputed values in newly allocated
-.Vt BIGNUM Ns s
-at
-.Pf * Fa kinvp
+An
+.Vt RSA
+object contains the components for the public and private key.
+.Fa n
+is the modulus common to both public and private key,
+.Fa e
+is the public exponent and
+.Fa d
+is the private exponent.
+These parameters can be obtained by calling
+.Fn RSA_get0_key .
+If they have not been set yet, then
+.Pf * Fa n ,
+.Pf * Fa e ,
 and
-.Pf * Fa rp ,
-after freeing the old ones unless
-.Fa kinvp
-and
-.Fa rp
-are
+.Pf * Fa d
+will be set to
 .Dv NULL .
-These values may be passed to
-.Fn DSA_sign
-in
-.Fa dsa->kinv
-and
-.Sy dsa->r .
-.Fa ctx
-is a pre-allocated
-.Vt BN_CTX
-or
-.Dv NULL .
-.Pp
-.Fn DSA_verify
-verifies that the signature
-.Fa sigbuf
-of size
-.Fa siglen
-matches a given message digest
-.Fa dgst
-of size
-.Fa len .
-.Fa dsa
-is the signer's public key.
+Otherwise, they are set to pointers to the internal representations
+of the values that should not be freed by the caller.
+If any of the arguments is
+.Dv NULL ,
+the respective parameter is not retrieved.
 .Pp
 The
-.Fa type
-parameter is ignored.
+.Fa n ,
+.Fa e ,
+and
+.Fa d
+parameter values can be set by calling
+.Fn RSA_set0_key .
+The values
+.Fa n
+and
+.Fa e
+must be
+.Pf non- Dv NULL
+the first time this function is called on a given
+.Vt RSA
+object.
+The value
+.Fa d
+may be
+.Dv NULL .
+On subsequent calls, any of these values may be
+.Dv NULL ,
+which means that the corresponding field is left untouched.
+Calling this function transfers the memory management of the values to
+the RSA object.
+Therefore, the values that have been passed in
+should not be freed by the caller.
+.Pp
+Values retrieved with
+.Fn RSA_get0_key
+are owned by the
+.Vt RSA
+object used in the call and may therefore
+.Em not
+be passed to
+.Fn RSA_set0_key .
+If needed, duplicate the received value using
+.Xr BN_dup 3
+and pass the duplicate.
 .Sh RETURN VALUES
-.Fn DSA_sign
-and
-.Fn DSA_sign_setup
-return 1 on success or 0 on error.
-.Fn DSA_verify
-returns 1 for a valid signature, 0 for an incorrect signature,
-and -1 on error.
-The error codes can be obtained by
-.Xr ERR_get_error 3 .
+.Fn RSA_set0_key
+returns 1 on success or 0 on failure.
 .Sh SEE ALSO
-.Xr DSA_do_sign 3 ,
-.Xr DSA_get0_key 3 ,
-.Xr DSA_new 3 ,
-.Xr ERR_get_error 3 ,
-.Xr RAND_bytes 3
-.Sh STANDARDS
-US Federal Information Processing Standard FIPS 186 (Digital Signature
-Standard, DSS), ANSI X9.30
+.Xr RSA_check_key 3 ,
+.Xr RSA_generate_key 3 ,
+.Xr RSA_new 3 ,
+.Xr RSA_print 3 ,
+.Xr RSA_size 3
 .Sh HISTORY
-.Fn DSA_sign
-and
-.Fn DSA_verify
-are available in all versions of SSLeay.
-.Fn DSA_sign_setup
-was added in SSLeay 0.8.
+These functions first appeared in OpenSSL 1.1.0.

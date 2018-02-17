@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DH_generate_key.3,v 1.6 2016/12/10 22:22:59 schwarze Exp $
+.\"	$OpenBSD: DH_generate_key.3,v 1.7 2018/02/17 16:59:48 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 10 2016 $
+.Dd $Mdocdate: February 17 2018 $
 .Dt DH_GENERATE_KEY 3
 .Os
 .Sh NAME
@@ -110,6 +110,7 @@ returns the size of the shared secret on success, or -1 on error.
 The error codes can be obtained by
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
+.Xr DH_get0_key 3 ,
 .Xr DH_new 3 ,
 .Xr DH_size 3 ,
 .Xr ERR_get_error 3 ,

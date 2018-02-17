@@ -1,8 +1,8 @@
-.\"	$OpenBSD: DSA_sign.3,v 1.6 2018/02/17 16:59:48 schwarze Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\" $OpenBSD: DSA_get0_pqg.3,v 1.1 2018/02/17 16:59:48 schwarze Exp $
+.\" selective merge up to: OpenSSL e90fc053 Jul 15 09:39:45 2017 -0400
 .\"
-.\" This file was written by Ulf Moeller <ulf@openssl.org>.
-.\" Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+.\" This file was written by Matt Caswell <matt@openssl.org>.
+.\" Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -49,125 +49,76 @@
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd $Mdocdate: February 17 2018 $
-.Dt DSA_SIGN 3
+.Dt DSA_GET0_PQG 3
 .Os
 .Sh NAME
-.Nm DSA_sign ,
-.Nm DSA_sign_setup ,
-.Nm DSA_verify
-.Nd DSA signatures
+.Nm DSA_get0_pqg ,
+.Nm DSA_get0_key
+.Nd get data from a DSA object
 .Sh SYNOPSIS
 .In openssl/dsa.h
-.Ft int
-.Fo DSA_sign
-.Fa "int type"
-.Fa "const unsigned char *dgst"
-.Fa "int len"
-.Fa "unsigned char *sigret"
-.Fa "unsigned int *siglen"
-.Fa "DSA *dsa"
+.Ft void
+.Fo DSA_get0_pqg
+.Fa "const DSA *d"
+.Fa "const BIGNUM **p"
+.Fa "const BIGNUM **q"
+.Fa "const BIGNUM **g"
 .Fc
-.Ft int
-.Fo DSA_sign_setup
-.Fa "DSA *dsa"
-.Fa "BN_CTX *ctx"
-.Fa "BIGNUM **kinvp"
-.Fa "BIGNUM **rp"
-.Fc
-.Ft int
-.Fo DSA_verify
-.Fa "int type"
-.Fa "const unsigned char *dgst"
-.Fa "int len"
-.Fa "unsigned char *sigbuf"
-.Fa "int siglen"
-.Fa "DSA *dsa"
+.Ft void
+.Fo DSA_get0_key
+.Fa "const DSA *d"
+.Fa "const BIGNUM **pub_key"
+.Fa "const BIGNUM **priv_key"
 .Fc
 .Sh DESCRIPTION
-.Fn DSA_sign
-computes a digital signature on the
-.Fa len
-byte message digest
-.Fa dgst
-using the private key
-.Fa dsa
-and places its ASN.1 DER encoding at
-.Fa sigret .
-The length of the signature is placed in
-.Pf * Fa siglen .
-.Fa sigret
-must point to
-.Fn DSA_size dsa
-bytes of memory.
-.Pp
-.Fn DSA_sign_setup
-may be used to precompute part of the signing operation in case
-signature generation is time-critical.
-It expects
-.Fa dsa
-to contain DSA parameters.
-It places the precomputed values in newly allocated
-.Vt BIGNUM Ns s
-at
-.Pf * Fa kinvp
+A
+.Vt DSA
+object contains the parameters
+.Fa p ,
+.Fa q ,
 and
-.Pf * Fa rp ,
-after freeing the old ones unless
-.Fa kinvp
-and
-.Fa rp
-are
-.Dv NULL .
-These values may be passed to
-.Fn DSA_sign
-in
-.Fa dsa->kinv
-and
-.Sy dsa->r .
-.Fa ctx
-is a pre-allocated
-.Vt BN_CTX
-or
-.Dv NULL .
-.Pp
-.Fn DSA_verify
-verifies that the signature
-.Fa sigbuf
-of size
-.Fa siglen
-matches a given message digest
-.Fa dgst
-of size
-.Fa len .
-.Fa dsa
-is the signer's public key.
+.Fa g .
+It also contains a public key
+.Fa pub_key
+and an optional private key
+.Fa priv_key .
 .Pp
 The
-.Fa type
-parameter is ignored.
-.Sh RETURN VALUES
-.Fn DSA_sign
+.Fa p ,
+.Fa q ,
 and
-.Fn DSA_sign_setup
-return 1 on success or 0 on error.
-.Fn DSA_verify
-returns 1 for a valid signature, 0 for an incorrect signature,
-and -1 on error.
-The error codes can be obtained by
-.Xr ERR_get_error 3 .
+.Fa g
+parameters can be obtained by calling
+.Fn DSA_get0_pqg .
+If the parameters have not yet been set, then
+.Pf * Fa p ,
+.Pf * Fa q ,
+and
+.Pf * Fa g
+are set to
+.Dv NULL .
+Otherwise, they are set to pointers to the internal representations
+of the values that should not be freed by the application.
+.Pp
+The
+.Fn DSA_get0_key
+function stores pointers to the internal representations
+of the public key in
+.Pf * Fa pub_key
+and to the private key in
+.Pf * Fa priv_key .
+Either may be
+.Dv NULL
+if it has not yet been set.
+If the private key has been set, then the public key must be.
 .Sh SEE ALSO
 .Xr DSA_do_sign 3 ,
-.Xr DSA_get0_key 3 ,
+.Xr DSA_dup_DH 3 ,
+.Xr DSA_generate_key 3 ,
+.Xr DSA_generate_parameters 3 ,
 .Xr DSA_new 3 ,
-.Xr ERR_get_error 3 ,
-.Xr RAND_bytes 3
-.Sh STANDARDS
-US Federal Information Processing Standard FIPS 186 (Digital Signature
-Standard, DSS), ANSI X9.30
+.Xr DSA_print 3 ,
+.Xr DSA_sign 3 ,
+.Xr DSA_size 3
 .Sh HISTORY
-.Fn DSA_sign
-and
-.Fn DSA_verify
-are available in all versions of SSLeay.
-.Fn DSA_sign_setup
-was added in SSLeay 0.8.
+These functions first appeared in OpenSSL 1.1.0.

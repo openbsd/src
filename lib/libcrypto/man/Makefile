@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.129 2018/02/15 14:52:16 schwarze Exp $
+# $OpenBSD: Makefile,v 1.130 2018/02/17 16:59:48 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -71,6 +71,7 @@ MAN=	\
 	DH_generate_key.3 \
 	DH_generate_parameters.3 \
 	DH_get_ex_new_index.3 \
+	DH_get0_pqg.3 \
 	DH_new.3 \
 	DH_set_method.3 \
 	DH_size.3 \
@@ -81,6 +82,7 @@ MAN=	\
 	DSA_generate_key.3 \
 	DSA_generate_parameters.3 \
 	DSA_get_ex_new_index.3 \
+	DSA_get0_pqg.3 \
 	DSA_new.3 \
 	DSA_set_method.3 \
 	DSA_sign.3 \
@@ -185,6 +187,7 @@ MAN=	\
 	RSA_check_key.3 \
 	RSA_generate_key.3 \
 	RSA_get_ex_new_index.3 \
+	RSA_get0_key.3 \
 	RSA_new.3 \
 	RSA_padding_add_PKCS1_type_1.3 \
 	RSA_print.3 \
