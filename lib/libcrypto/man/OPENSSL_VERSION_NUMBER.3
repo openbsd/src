@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_VERSION_NUMBER.3,v 1.4 2018/02/17 18:00:59 schwarze Exp $
+.\" $OpenBSD: OPENSSL_VERSION_NUMBER.3,v 1.5 2018/02/17 18:44:36 schwarze Exp $
 .\" full merge up to: OpenSSL 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
 .\" This file is a derived work.
@@ -73,6 +73,8 @@
 .Os
 .Sh NAME
 .Nm OPENSSL_VERSION_NUMBER ,
+.Nm LIBRESSL_VERSION_NUMBER ,
+.Nm LIBRESSL_VERSION_TEXT ,
 .Nm OpenSSL_version_num ,
 .Nm OpenSSL_version ,
 .Nm SSLeay ,
@@ -81,6 +83,8 @@
 .Sh SYNOPSIS
 .In openssl/opensslv.h
 .Fd #define OPENSSL_VERSION_NUMBER 0x020000000L
+.Fd #define LIBRESSL_VERSION_NUMBER 0x02nnnn00fL
+.Fd #define LIBRESSL_VERSION_TEXT \(dqLibreSSL 2.n.n\(dq
 .In openssl/crypto.h
 .Ft unsigned long
 .Fn OpenSSL_version_num void
@@ -96,21 +100,32 @@
 .Fc
 .Sh DESCRIPTION
 .Dv OPENSSL_VERSION_NUMBER
-is a numeric release version identifier.
-For OpenSSL, the first two digits contain the major release number,
+and
+.Dv LIBRESSL_VERSION_NUMBER
+are numeric release version identifiers.
+The first two digits contain the major release number,
 the third and fourth digits the minor release number,
-the fifth and sixth digits the fix release number,
-the seventh and eight digits the patch release number.
-The final digit is 0 for development, 1 to e for betas 1 to 14, or f
+and the fifth and sixth digits the fix release number.
+For OpenSSL, the seventh and eight digits contain the patch release number
+and the final digit is 0 for development, 1 to e for betas 1 to 14, or f
 for release.
-For LibreSSL, this number is always 0x020000000.
+For LibreSSL,
+.Dv OPENSSL_VERSION_NUMBER
+is always 0x020000000,
+and
+.Dv LIBRESSL_VERSION_NUMBER
+always ends with 00f.
 .Pp
 For example:
 .Bd -literal -offset indent
+OPENSSL_VERSION_NUMBER:
 0x000906000 == 0.9.6 dev
 0x000906023 == 0.9.6b beta 3
 0x00090605f == 0.9.6e release
 0x020000000 == 2.0.0 for any version of LibreSSL
+
+LIBRESSL_VERSION_NUMBER:
+0x02070000f == LibreSSL 2.7.0
 .Ed
 .Pp
 OpenSSL versions prior to 0.9.3 had identifiers < 0x0930.
@@ -129,7 +144,8 @@ one, except the patch level got the highest bit set, to keep continuity.
 The number was therefore 0x0090581f.
 .Pp
 .Fn OpenSSL_version_num
-returns this version number.
+returns
+.Dv OPENSSL_VERSION_NUMBER .
 .Pp
 .Fn OpenSSL_version
 returns different strings depending on
@@ -137,11 +153,11 @@ returns different strings depending on
 .Bl -tag -width Ds
 .It Dv OPENSSL_VERSION
 The text variant of the version number.
-For OpenSSL, it is followed by the release date.
-For example,
-.Qq OpenSSL 0.9.5a 1 Apr 2000
-or
-.Qq LibreSSL 2.7.0 .
+For OpenSSL, it is followed by the release date, for example
+.Qq OpenSSL 0.9.5a 1 Apr 2000 .
+For LibreSSL,
+.Dv LIBRESSL_VERSION_TEXT
+is returned.
 .It Dv OPENSSL_CFLAGS
 The compiler flags set for the compilation process in the form
 .Qq compiler: ...
@@ -236,3 +252,12 @@ are available in all versions of SSLeay and OpenSSL.
 is available in all versions of OpenSSL.
 .Dv SSLEAY_DIR
 was added in OpenSSL 0.9.7.
+.Pp
+.Dv LIBRESSL_VERSION_NUMBER
+first appeared in LibreSSL 2.0.0 and
+.Ox 5.6
+and got its final format in LibreSSL 2.3.2 and
+.Ox 5.9 .
+.Dv LIBRESSL_VERSION_TEXT
+first appered in LibreSSL 2.2.2 and
+.Ox 5.8 .
