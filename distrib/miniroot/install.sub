@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1060 2018/02/14 11:43:05 tb Exp $
+#	$OpenBSD: install.sub,v 1.1061 2018/02/17 19:05:41 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -872,7 +872,7 @@ ask_password() {
 
 # Issue a DHCP request to configure interface $1.
 dhcp_request() {
-	local _if=$1 _hn=$2
+	local _if=$1
 
 	echo "lookup file bind" >/etc/resolv.conf.tail
 
@@ -1005,7 +1005,7 @@ vlan_config() {
 # Parameters:
 #
 # $1 = name of the network device
-# $2 = hostname to use for dhcp request
+# $2 = hostname to add to hosts file
 # $3 = /path/to/hostname.if
 #
 v4_config() {
@@ -1037,7 +1037,7 @@ v4_config() {
 				echo "DHCP not possible - no /sbin/dhclient."
 				$AUTO && exit 1 || continue
 			else
-				dhcp_request $_if "$_name"
+				dhcp_request $_if
 				echo "dhcp" >>$_hn
 				return
 			fi
@@ -1111,7 +1111,7 @@ v6_defroute() {
 # Parameters:
 #
 # $1 = name of the network device
-# $2 = hostname to use for dhcp request
+# $2 = hostname to add to hosts file
 # $3 = /path/to/hostname.if
 #
 v6_config() {
