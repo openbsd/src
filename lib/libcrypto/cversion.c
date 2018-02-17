@@ -1,4 +1,4 @@
-/* $OpenBSD: cversion.c,v 1.16 2018/02/14 16:32:06 jsing Exp $ */
+/* $OpenBSD: cversion.c,v 1.17 2018/02/17 06:56:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,7 +88,21 @@ SSLeay(void)
 const char *
 OpenSSL_version(int t)
 {
-	return SSLeay_version(t);
+	switch (t) {
+	case OPENSSL_VERSION:
+		return OPENSSL_VERSION_TEXT;
+	case OPENSSL_BUILT_ON:
+		return("built on: date not available");
+	case OPENSSL_CFLAGS:
+		return("compiler: information not available");
+	case OPENSSL_PLATFORM:
+		return("platform: information not available");
+	case OPENSSL_DIR:
+		return "OPENSSLDIR: \"" OPENSSLDIR "\"";
+	case OPENSSL_ENGINES_DIR:
+		return "ENGINESDIR: N/A";
+	}
+	return("not available");
 }
 
 unsigned long
