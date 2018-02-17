@@ -56,6 +56,7 @@ SSL_CTX_check_private_key
 SSL_CTX_ctrl
 SSL_CTX_flush_sessions
 SSL_CTX_free
+SSL_CTX_get0_certificate
 SSL_CTX_get0_param
 SSL_CTX_get_cert_store
 SSL_CTX_get_client_CA_list
