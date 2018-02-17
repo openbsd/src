@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.138 2018/02/17 15:13:12 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.139 2018/02/17 15:19:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1509,6 +1509,9 @@ void SSL_CTX_set_tmp_ecdh_callback(SSL_CTX *ctx,
     EC_KEY *(*ecdh)(SSL *ssl, int is_export, int keylength));
 void SSL_set_tmp_ecdh_callback(SSL *ssl,
     EC_KEY *(*ecdh)(SSL *ssl, int is_export, int keylength));
+
+size_t SSL_get_client_random(const SSL *s, unsigned char *out, size_t max_out);
+size_t SSL_get_server_random(const SSL *s, unsigned char *out, size_t max_out);
 
 const void *SSL_get_current_compression(SSL *s);
 const void *SSL_get_current_expansion(SSL *s);

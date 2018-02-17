@@ -172,6 +172,7 @@ SSL_get_certificate
 SSL_get_cipher_list
 SSL_get_ciphers
 SSL_get_client_CA_list
+SSL_get_client_random
 SSL_get_current_cipher
 SSL_get_current_compression
 SSL_get_current_expansion
@@ -192,6 +193,7 @@ SSL_get_rbio
 SSL_get_read_ahead
 SSL_get_rfd
 SSL_get_selected_srtp_profile
+SSL_get_server_random
 SSL_get_servername
 SSL_get_servername_type
 SSL_get_session
