@@ -1744,6 +1744,7 @@
 ./usr/share/man/man3/DES_set_key.3
 ./usr/share/man/man3/DH_generate_key.3
 ./usr/share/man/man3/DH_generate_parameters.3
+./usr/share/man/man3/DH_get0_pqg.3
 ./usr/share/man/man3/DH_get_ex_new_index.3
 ./usr/share/man/man3/DH_new.3
 ./usr/share/man/man3/DH_set_method.3
@@ -1754,6 +1755,7 @@
 ./usr/share/man/man3/DSA_dup_DH.3
 ./usr/share/man/man3/DSA_generate_key.3
 ./usr/share/man/man3/DSA_generate_parameters.3
+./usr/share/man/man3/DSA_get0_pqg.3
 ./usr/share/man/man3/DSA_get_ex_new_index.3
 ./usr/share/man/man3/DSA_new.3
 ./usr/share/man/man3/DSA_set_method.3
@@ -1860,6 +1862,7 @@
 ./usr/share/man/man3/RSA_blinding_on.3
 ./usr/share/man/man3/RSA_check_key.3
 ./usr/share/man/man3/RSA_generate_key.3
+./usr/share/man/man3/RSA_get0_key.3
 ./usr/share/man/man3/RSA_get_ex_new_index.3
 ./usr/share/man/man3/RSA_new.3
 ./usr/share/man/man3/RSA_padding_add_PKCS1_type_1.3
