@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.c,v 1.24 2017/03/03 10:39:07 inoguchi Exp $ */
+/* $OpenBSD: hmac.c,v 1.25 2018/02/17 14:53:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -171,6 +171,38 @@ err:
 	return 0;
 }
 
+HMAC_CTX *
+HMAC_CTX_new(void)
+{
+	HMAC_CTX *ctx;
+
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
+		return NULL;
+
+	HMAC_CTX_init(ctx);
+
+	return ctx;
+}
+
+void
+HMAC_CTX_free(HMAC_CTX *ctx)
+{
+	if (ctx == NULL)
+		return;
+
+	HMAC_CTX_cleanup(ctx);
+
+	free(ctx);
+}
+
+int
+HMAC_CTX_reset(HMAC_CTX *ctx)
+{
+	HMAC_CTX_cleanup(ctx);
+	HMAC_CTX_init(ctx);
+	return 1;
+}
+
 void
 HMAC_CTX_init(HMAC_CTX *ctx)
 {
@@ -206,6 +238,20 @@ HMAC_CTX_cleanup(HMAC_CTX *ctx)
 	explicit_bzero(ctx, sizeof(*ctx));
 }
 
+void
+HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags)
+{
+	EVP_MD_CTX_set_flags(&ctx->i_ctx, flags);
+	EVP_MD_CTX_set_flags(&ctx->o_ctx, flags);
+	EVP_MD_CTX_set_flags(&ctx->md_ctx, flags);
+}
+
+const EVP_MD *
+HMAC_CTX_get_md(const HMAC_CTX *ctx)
+{
+	return ctx->md;
+}
+
 unsigned char *
 HMAC(const EVP_MD *evp_md, const void *key, int key_len, const unsigned char *d,
     size_t n, unsigned char *md, unsigned int *md_len)
@@ -227,12 +273,4 @@ HMAC(const EVP_MD *evp_md, const void *key, int key_len, const unsigned char *d,
 err:
 	HMAC_CTX_cleanup(&c);
 	return NULL;
-}
-
-void
-HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags)
-{
-	EVP_MD_CTX_set_flags(&ctx->i_ctx, flags);
-	EVP_MD_CTX_set_flags(&ctx->o_ctx, flags);
-	EVP_MD_CTX_set_flags(&ctx->md_ctx, flags);
 }
