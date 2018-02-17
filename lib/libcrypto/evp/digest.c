@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.28 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: digest.c,v 1.29 2018/02/17 14:55:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,18 +121,6 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
-
-void
-EVP_MD_CTX_init(EVP_MD_CTX *ctx)
-{
-	memset(ctx, 0, sizeof *ctx);
-}
-
-EVP_MD_CTX *
-EVP_MD_CTX_create(void)
-{
-	return calloc(1, sizeof(EVP_MD_CTX));
-}
 
 int
 EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
@@ -339,20 +327,53 @@ EVP_Digest(const void *data, size_t count,
 	return ret;
 }
 
+EVP_MD_CTX *
+EVP_MD_CTX_new(void)
+{
+	return calloc(1, sizeof(EVP_MD_CTX));
+}
+
+void
+EVP_MD_CTX_free(EVP_MD_CTX *ctx)
+{
+	if (ctx == NULL)
+		return;
+
+	EVP_MD_CTX_cleanup(ctx);
+
+	free(ctx);
+}
+
+void
+EVP_MD_CTX_init(EVP_MD_CTX *ctx)
+{
+	memset(ctx, 0, sizeof(*ctx));
+}
+
+int
+EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
+{
+	return EVP_MD_CTX_cleanup(ctx);
+}
+
+EVP_MD_CTX *
+EVP_MD_CTX_create(void)
+{
+	return EVP_MD_CTX_new();
+}
+
 void
 EVP_MD_CTX_destroy(EVP_MD_CTX *ctx)
 {
-	if (ctx) {
-		EVP_MD_CTX_cleanup(ctx);
-		free(ctx);
-	}
+	EVP_MD_CTX_free(ctx);
 }
 
 /* This call frees resources associated with the context */
 int
 EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 {
-	/* Don't assume ctx->md_data was cleaned in EVP_Digest_Final,
+	/*
+	 * Don't assume ctx->md_data was cleaned in EVP_Digest_Final,
 	 * because sometimes only copies of the context are ever finalised.
 	 */
 	if (ctx->digest && ctx->digest->cleanup &&
@@ -368,7 +389,7 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 		 * functional reference we held for this reason. */
 		ENGINE_finish(ctx->engine);
 #endif
-	memset(ctx, 0, sizeof *ctx);
+	memset(ctx, 0, sizeof(*ctx));
 
 	return 1;
 }

@@ -1274,8 +1274,11 @@ EVP_MD_CTX_copy_ex
 EVP_MD_CTX_create
 EVP_MD_CTX_ctrl
 EVP_MD_CTX_destroy
+EVP_MD_CTX_free
 EVP_MD_CTX_init
 EVP_MD_CTX_md
+EVP_MD_CTX_new
+EVP_MD_CTX_reset
 EVP_MD_CTX_set_flags
 EVP_MD_CTX_test_flags
 EVP_MD_block_size
