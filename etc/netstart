@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.191 2018/02/14 22:08:45 dlg Exp $
+#	$OpenBSD: netstart,v 1.192 2018/02/17 13:11:03 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -72,21 +72,22 @@ parse_hn_line() {
 	set +o noglob
 }
 
+# Create interface $1 if it does not yet exist.
 ifcreate() {
 	local _if=$1
 
-	{ ifconfig $_if || ifconfig $_if create; } >/dev/null 2>&1 || return
+	{ ifconfig $_if || ifconfig $_if create; } >/dev/null 2>&1
 }
 
+# Create interfaces for network pseudo-devices referred to by hostname.if files.
 vifscreate() {
-	local _vifs=$(ifconfig -C) _vif _hn _if
+	local _vif _hn _if
 
-	for _vif in ${_vifs}; do
+	for _vif in $(ifconfig -C); do
 		for _hn in /etc/hostname.${_vif}*; do
 			[[ -f $_hn ]] || continue
 			_if=${_hn#/etc/hostname.}
 
-			# Create wanted ifs.
 			ifcreate $_if || return
 		done
 	done
