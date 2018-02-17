@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.3 2017/12/14 03:30:43 guenther Exp $	*/
+/*	$OpenBSD: mem.c,v 1.4 2018/02/17 22:33:00 kettenis Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -89,7 +89,6 @@
 
 #include <uvm/uvm_extern.h>
 
-extern char *memhook;            /* poor name! */
 caddr_t zeropage;
 
 /* open counter for aperture */
@@ -150,13 +149,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	struct iovec *iov;
 	int error = 0;
 	vm_prot_t prot;
+	extern caddr_t vmmap;
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
 		error = rw_enter(&physlock, RW_WRITE | RW_INTR);
 		if (error)
 			return (error);
-
 	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -173,14 +172,14 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			v = uio->uio_offset;
 			prot = uio->uio_rw == UIO_READ ? PROT_READ :
 			    PROT_WRITE;
-			pmap_enter(pmap_kernel(), (vaddr_t)memhook,
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = ulmin(uio->uio_resid, PAGE_SIZE - o);
-			error = uiomove((caddr_t)memhook + o, c, uio);
-			pmap_remove(pmap_kernel(), (vaddr_t)memhook,
-			    (vaddr_t)memhook + PAGE_SIZE);
+			error = uiomove((caddr_t)vmmap + o, c, uio);
+			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
+			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			break;
 

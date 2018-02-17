@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.47 2018/01/31 23:23:16 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.48 2018/02/17 22:33:00 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -139,7 +139,7 @@ vaddr_t pmap_map_stolen(vaddr_t);
 void pmap_physload_avail(void);
 extern caddr_t msgbufaddr;
 
-char *memhook;
+vaddr_t vmmap;
 vaddr_t zero_page;
 vaddr_t copy_src_page;
 vaddr_t copy_dst_page;
@@ -1216,7 +1216,7 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 
 	curcpu()->ci_curpm = pmap_kernel();
 
-	memhook = (char *)vstart;
+	vmmap = vstart;
 	vstart += PAGE_SIZE;
 
 	return vstart;
