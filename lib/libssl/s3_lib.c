@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.163 2018/01/27 15:09:15 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.164 2018/02/17 15:08:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2134,6 +2134,13 @@ _SSL_CTX_set_tlsext_ticket_keys(SSL_CTX *ctx, unsigned char *keys, int keys_len)
 }
 
 static int
+_SSL_CTX_get_tlsext_status_arg(SSL_CTX *ctx, void **arg)
+{
+	*arg = ctx->internal->tlsext_status_arg;
+	return 1;
+}
+
+static int
 _SSL_CTX_set_tlsext_status_arg(SSL_CTX *ctx, void *arg)
 {
 	ctx->internal->tlsext_status_arg = arg;
@@ -2215,6 +2222,9 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 	case SSL_CTRL_SET_TLSEXT_TICKET_KEYS:
 		return _SSL_CTX_set_tlsext_ticket_keys(ctx, parg, larg);
 
+	case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG:
+		return _SSL_CTX_get_tlsext_status_arg(ctx, parg);
+
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG:
 		return _SSL_CTX_set_tlsext_status_arg(ctx, parg);
 
@@ -2277,6 +2287,10 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 	case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
 		ctx->internal->tlsext_servername_callback =
 		    (int (*)(SSL *, int *, void *))fp;
+		return 1;
+
+	case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB:
+		*(int (**)(SSL *, void *))fp = ctx->internal->tlsext_status_cb;
 		return 1;
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB:

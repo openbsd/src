@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.31 2017/08/28 17:36:58 jsing Exp $ */
+/* $OpenBSD: tls1.h,v 1.32 2018/02/17 15:08:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -354,11 +354,15 @@ SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
 #define SSL_CTX_set_tlsext_ticket_keys(ctx, keys, keylen) \
 	SSL_CTX_ctrl((ctx),SSL_CTRL_SET_TLSEXT_TICKET_KEYS,(keylen),(keys))
 
+#define SSL_CTX_get_tlsext_status_cb(ssl, cb) \
+SSL_CTX_callback_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB,(void (*)(void))cb)
 #define SSL_CTX_set_tlsext_status_cb(ssl, cb) \
 SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB,(void (*)(void))cb)
 
+#define SSL_CTX_get_tlsext_status_arg(ssl, arg) \
+SSL_CTX_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG,0,(void *)arg)
 #define SSL_CTX_set_tlsext_status_arg(ssl, arg) \
-SSL_CTX_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG,0, (void *)arg)
+SSL_CTX_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG,0,(void *)arg)
 
 #define SSL_CTX_set_tlsext_ticket_key_cb(ssl, cb) \
 SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
