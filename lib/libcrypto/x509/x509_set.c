@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_set.c,v 1.13 2018/02/14 16:57:25 jsing Exp $ */
+/* $OpenBSD: x509_set.c,v 1.14 2018/02/17 15:50:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,12 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+
+const STACK_OF(X509_EXTENSION) *
+X509_get0_extensions(const X509 *x)
+{
+	return x->cert_info->extensions;
+}
 
 int
 X509_set_version(X509 *x, long version)

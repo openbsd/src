@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.28 2018/02/14 16:57:25 jsing Exp $ */
+/* $OpenBSD: x509.h,v 1.29 2018/02/17 15:50:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -887,7 +887,8 @@ int X509_set_ex_data(X509 *r, int idx, void *arg);
 void *X509_get_ex_data(X509 *r, int idx);
 int		i2d_X509_AUX(X509 *a,unsigned char **pp);
 X509 *		d2i_X509_AUX(X509 **a,const unsigned char **pp,long length);
-
+void X509_get0_signature(const ASN1_BIT_STRING **psig,
+    const X509_ALGOR **palg, const X509 *x);
 int X509_get_signature_nid(const X509 *x);
 
 int X509_alias_set1(X509 *x, unsigned char *name, int len);
@@ -960,6 +961,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
 	     	ASN1_BIT_STRING *signature, void *asn, EVP_MD_CTX *ctx);
 #endif
 
+const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
 int 		X509_set_version(X509 *x,long version);
 int 		X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
 ASN1_INTEGER *	X509_get_serialNumber(X509 *x);
