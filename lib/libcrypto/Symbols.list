@@ -286,6 +286,14 @@ BIO_gethostbyname
 BIO_gets
 BIO_indent
 BIO_int_ctrl
+BIO_meth_free
+BIO_meth_new
+BIO_meth_set_create
+BIO_meth_set_ctrl
+BIO_meth_set_destroy
+BIO_meth_set_puts
+BIO_meth_set_read
+BIO_meth_set_write
 BIO_method_name
 BIO_method_type
 BIO_new

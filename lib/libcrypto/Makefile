@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.23 2017/08/28 17:41:59 jsing Exp $
+# $OpenBSD: Makefile,v 1.24 2018/02/17 13:57:14 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -64,7 +64,7 @@ SRCS+= a_time_tm.c
 SRCS+= bf_skey.c bf_ecb.c bf_cfb64.c bf_ofb64.c
 
 # bio/
-SRCS+= bio_lib.c bio_cb.c bio_err.c
+SRCS+= bio_lib.c bio_cb.c bio_err.c bio_meth.c
 SRCS+= bss_mem.c bss_null.c bss_fd.c
 SRCS+= bss_file.c bss_sock.c bss_conn.c
 SRCS+= bf_null.c bf_buff.c b_print.c b_dump.c
