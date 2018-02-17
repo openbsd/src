@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.23 2018/02/17 13:47:36 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.24 2018/02/17 14:35:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -259,7 +259,7 @@ DH *DSA_dup_DH(const DSA *r);
 
 void DSA_get0_pqg(const DSA *d, const BIGNUM **p, const BIGNUM **q,
     const BIGNUM **g);
-void DSA_get0_key(const DH *d, const BIGNUM **pub_key, const BIGNUM **priv_key);
+void DSA_get0_key(const DSA *d, const BIGNUM **pub_key, const BIGNUM **priv_key);
 
 #define EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits) \
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
