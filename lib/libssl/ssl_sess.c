@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.71 2017/04/10 17:27:33 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.72 2018/02/17 15:32:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -751,6 +751,23 @@ SSL_set_session(SSL *s, SSL_SESSION *session)
 		ret = 1;
 	}
 	return (ret);
+}
+
+size_t
+SSL_SESSION_get_master_key(const SSL_SESSION *ss, unsigned char *out,
+    size_t max_out)
+{
+	size_t len = ss->master_key_length;
+
+	if (out == NULL)
+		return len;
+
+	if (len > max_out)
+		len = max_out;
+
+	memcpy(out, ss->master_key, len);
+
+	return len;
 }
 
 long
