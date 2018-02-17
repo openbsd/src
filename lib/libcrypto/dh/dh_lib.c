@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.22 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.23 2018/02/17 13:47:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -238,4 +238,24 @@ int
 DH_size(const DH *dh)
 {
 	return BN_num_bytes(dh->p);
+}
+
+void
+DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
+{
+	if (p != NULL)
+		*p = dh->p;
+	if (q != NULL)
+		*q = dh->q;
+	if (g != NULL)
+		*g = dh->g;
+}
+
+void
+DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
+{
+	if (pub_key != NULL)
+		*pub_key = dh->pub_key;
+	if (priv_key != NULL)
+		*priv_key = dh->priv_key;
 }

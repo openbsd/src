@@ -736,6 +736,8 @@ DH_free
 DH_generate_key
 DH_generate_parameters
 DH_generate_parameters_ex
+DH_get0_key
+DH_get0_pqg
 DH_get_default_method
 DH_get_ex_data
 DH_get_ex_new_index
@@ -776,6 +778,8 @@ DSA_free
 DSA_generate_key
 DSA_generate_parameters
 DSA_generate_parameters_ex
+DSA_get0_key
+DSA_get0_pqg
 DSA_get_default_method
 DSA_get_ex_data
 DSA_get_ex_new_index
@@ -1338,9 +1342,12 @@ EVP_PKEY_encrypt_old
 EVP_PKEY_free
 EVP_PKEY_get0
 EVP_PKEY_get0_asn1
+EVP_PKEY_get0_DH
 EVP_PKEY_get1_DH
+EVP_PKEY_get0_DSA
 EVP_PKEY_get1_DSA
 EVP_PKEY_get1_EC_KEY
+EVP_PKEY_get0_RSA
 EVP_PKEY_get1_RSA
 EVP_PKEY_get_attr
 EVP_PKEY_get_attr_by_NID
@@ -2185,6 +2192,7 @@ RSA_flags
 RSA_free
 RSA_generate_key
 RSA_generate_key_ex
+RSA_get0_key
 RSA_get_default_method
 RSA_get_ex_data
 RSA_get_ex_new_index
@@ -2209,6 +2217,7 @@ RSA_private_decrypt
 RSA_private_encrypt
 RSA_public_decrypt
 RSA_public_encrypt
+RSA_set0_key
 RSA_set_default_method
 RSA_set_ex_data
 RSA_set_method

@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.18 2018/02/14 16:40:42 jsing Exp $ */
+/* $OpenBSD: p_lib.c,v 1.19 2018/02/17 13:47:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -286,13 +286,14 @@ EVP_PKEY_get0(EVP_PKEY *pkey)
 }
 
 #ifndef OPENSSL_NO_RSA
-int
-EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
+RSA *
+EVP_PKEY_get0_RSA(EVP_PKEY *pkey)
 {
-	int ret = EVP_PKEY_assign_RSA(pkey, key);
-	if (ret)
-		RSA_up_ref(key);
-	return ret;
+	if (pkey->type != EVP_PKEY_RSA) {
+		EVPerror(EVP_R_EXPECTING_AN_RSA_KEY);
+		return NULL;
+	}
+	return pkey->pkey.rsa;
 }
 
 RSA *
@@ -305,16 +306,26 @@ EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 	RSA_up_ref(pkey->pkey.rsa);
 	return pkey->pkey.rsa;
 }
+
+int
+EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
+{
+	int ret = EVP_PKEY_assign_RSA(pkey, key);
+	if (ret)
+		RSA_up_ref(key);
+	return ret;
+}
 #endif
 
 #ifndef OPENSSL_NO_DSA
-int
-EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
+DSA *
+EVP_PKEY_get0_DSA(EVP_PKEY *pkey)
 {
-	int ret = EVP_PKEY_assign_DSA(pkey, key);
-	if (ret)
-		DSA_up_ref(key);
-	return ret;
+	if (pkey->type != EVP_PKEY_DSA) {
+		EVPerror(EVP_R_EXPECTING_A_DSA_KEY);
+		return NULL;
+	}
+	return pkey->pkey.dsa;
 }
 
 DSA *
@@ -326,6 +337,15 @@ EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 	}
 	DSA_up_ref(pkey->pkey.dsa);
 	return pkey->pkey.dsa;
+}
+
+int
+EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
+{
+	int ret = EVP_PKEY_assign_DSA(pkey, key);
+	if (ret)
+		DSA_up_ref(key);
+	return ret;
 }
 #endif
 
@@ -354,14 +374,14 @@ EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
 
 
 #ifndef OPENSSL_NO_DH
-
-int
-EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
+DH *
+EVP_PKEY_get0_DH(EVP_PKEY *pkey)
 {
-	int ret = EVP_PKEY_assign_DH(pkey, key);
-	if (ret)
-		DH_up_ref(key);
-	return ret;
+	if (pkey->type != EVP_PKEY_DH) {
+		EVPerror(EVP_R_EXPECTING_A_DH_KEY);
+		return NULL;
+	}
+	return pkey->pkey.dh;
 }
 
 DH *
@@ -373,6 +393,15 @@ EVP_PKEY_get1_DH(EVP_PKEY *pkey)
 	}
 	DH_up_ref(pkey->pkey.dh);
 	return pkey->pkey.dh;
+}
+
+int
+EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
+{
+	int ret = EVP_PKEY_assign_DH(pkey, key);
+	if (ret)
+		DH_up_ref(key);
+	return ret;
 }
 #endif
 
