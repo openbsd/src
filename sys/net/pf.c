@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1060 2018/02/06 23:44:48 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.1061 2018/02/18 21:45:30 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3108,9 +3108,9 @@ pf_step_into_anchor(struct pf_test_ctx *ctx, struct pf_rule *r)
 			rv = pf_match_rule(ctx, &child->ruleset);
 			if ((rv == PF_TEST_QUICK) || (rv == PF_TEST_FAIL)) {
 				/*
-				 * we either hit a rule qith quick action
+				 * we either hit a rule with quick action
 				 * (more likely), or hit some runtime
-				 * error (e.g. pool_get() faillure).
+				 * error (e.g. pool_get() failure).
 				 */
 				break;
 			}
@@ -3497,6 +3497,8 @@ enum pf_test_status
 pf_match_rule(struct pf_test_ctx *ctx, struct pf_ruleset *ruleset)
 {
 	struct pf_rule	*r;
+	struct pf_rule	*save_a;
+	struct pf_ruleset	*save_aruleset;
 
 	r = TAILQ_FIRST(ruleset->rules.active.ptr);
 	while (r != NULL) {
@@ -3682,11 +3684,18 @@ pf_match_rule(struct pf_test_ctx *ctx, struct pf_ruleset *ruleset)
 				break;
 			}
 		} else {
+			save_a = ctx->a;
+			save_aruleset = ctx->aruleset;
 			ctx->a = r;		/* remember anchor */
 			ctx->aruleset = ruleset;	/* and its ruleset */
-			if (pf_step_into_anchor(ctx, r) != PF_TEST_OK) {
+			/*
+			 * Note: we don't need to restore if we are not going
+			 * to continue with ruleset evaluation.
+			 */
+			if (pf_step_into_anchor(ctx, r) != PF_TEST_OK)
 				break;
-			}
+			ctx->a = save_a;
+			ctx->aruleset = save_aruleset;
 		}
 		r = TAILQ_NEXT(r, entries);
 	}
@@ -3768,8 +3777,6 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	ruleset = *ctx.rsm;/* ruleset of the anchor defined by the rule 'a' */
 	ctx.aruleset = ctx.arsm;/* ruleset of the 'a' rule itself */
 
-
-
 	/* apply actions for last matching pass/block rule */
 	pf_rule_to_actions(r, &ctx.act);
 	if (r->rule_flag & PFRULE_AFTO)
@@ -3782,9 +3789,9 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 
 #if NPFLOG > 0
 	if (r->log)
-		PFLOG_PACKET(pd, ctx.reason, r, ctx.a, ruleset, NULL);
+		PFLOG_PACKET(pd, ctx.reason, r, a, ruleset, NULL);
 	if (ctx.act.log & PF_LOG_MATCHES)
-		pf_log_matches(pd, r, ctx.a, ruleset, &ctx.rules);
+		pf_log_matches(pd, r, a, ruleset, &ctx.rules);
 #endif	/* NPFLOG > 0 */
 
 	if (pd->virtual_proto != PF_VPROTO_FRAGMENT &&
