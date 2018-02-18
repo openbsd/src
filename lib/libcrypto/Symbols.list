@@ -276,6 +276,7 @@ BIO_free_all
 BIO_get_accept_socket
 BIO_get_callback
 BIO_get_callback_arg
+BIO_get_data
 BIO_get_ex_data
 BIO_get_ex_new_index
 BIO_get_host_ip
@@ -334,9 +335,11 @@ BIO_s_socket
 BIO_set
 BIO_set_callback
 BIO_set_callback_arg
+BIO_set_data
 BIO_set_cipher
 BIO_set_ex_data
 BIO_set_flags
+BIO_set_init
 BIO_set_tcp_ndelay
 BIO_snprintf
 BIO_sock_cleanup

@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.31 2018/02/17 13:57:14 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.32 2018/02/18 12:58:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -586,6 +586,9 @@ BIO *BIO_new_fp(FILE *stream, int close_flag);
 BIO *	BIO_new(BIO_METHOD *type);
 int	BIO_set(BIO *a, BIO_METHOD *type);
 int	BIO_free(BIO *a);
+void 	*BIO_get_data(BIO *a);
+void 	BIO_set_data(BIO *a, void *ptr);
+void 	BIO_set_init(BIO *a, int init);
 void	BIO_vfree(BIO *a);
 int	BIO_read(BIO *b, void *data, int len)
 		__attribute__((__bounded__(__buffer__,2,3)));
