@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.32 2018/02/17 13:47:36 tb Exp $ */
+/* $OpenBSD: rsa.h,v 1.33 2018/02/18 12:52:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -256,6 +256,7 @@ struct rsa_st {
 
 RSA *RSA_new(void);
 RSA *RSA_new_method(ENGINE *engine);
+int RSA_bits(const RSA *rsa);
 int RSA_size(const RSA *rsa);
 
 /* Deprecated version */

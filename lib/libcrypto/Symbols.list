@@ -2203,6 +2203,7 @@ RSA_PSS_PARAMS_free
 RSA_PSS_PARAMS_it
 RSA_PSS_PARAMS_new
 RSA_X931_hash_id
+RSA_bits
 RSA_blinding_off
 RSA_blinding_on
 RSA_check_key
