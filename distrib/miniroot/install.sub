@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1062 2018/02/18 00:43:16 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1063 2018/02/18 01:50:04 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -329,8 +329,7 @@ get_dkdevs_uninitialized() {
 get_ifs() {
 	local _if _iflist=$(rmel vlan $(ifconfig -C))
 
-	for _if in $(ifconfig "$@" 2>/dev/null |
-		sed -n 's/^\([^[:space:]]*\):.*/\1/p'); do
+	for _if in $(ifconfig "$@" 2>/dev/null | sed '/^[a-z]/!d;s/:.*//'); do
 		isin "${_if%%+([0-9])}" $_iflist || echo $_if
 	done
 }
