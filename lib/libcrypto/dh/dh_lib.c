@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.23 2018/02/17 13:47:36 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.24 2018/02/18 12:51:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -249,6 +249,28 @@ DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 		*q = dh->q;
 	if (g != NULL)
 		*g = dh->g;
+}
+
+int
+DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
+{
+	if ((dh->p == NULL && p == NULL) || (dh->g == NULL && g == NULL))
+		return 0;
+
+	if (p != NULL) {
+		BN_free(dh->p);
+		dh->p = p;
+	}
+	if (q != NULL) {
+		BN_free(dh->q);
+		dh->q = q;
+	}
+	if (g != NULL) {
+		BN_free(dh->g);
+		dh->g = g;
+	}
+
+	return 1;
 }
 
 void
