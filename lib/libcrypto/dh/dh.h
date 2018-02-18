@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.h,v 1.20 2018/02/18 12:51:31 tb Exp $ */
+/* $OpenBSD: dh.h,v 1.21 2018/02/18 14:58:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -192,6 +192,7 @@ void DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q,
     const BIGNUM **g);
 int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
 void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key);
+int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
 
 /* Deprecated version */
 #ifndef OPENSSL_NO_DEPRECATED

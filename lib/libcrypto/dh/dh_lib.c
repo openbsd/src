@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.24 2018/02/18 12:51:31 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.25 2018/02/18 14:58:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -280,4 +280,23 @@ DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
 		*pub_key = dh->pub_key;
 	if (priv_key != NULL)
 		*priv_key = dh->priv_key;
+}
+
+int
+DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
+{
+	if ((dh->pub_key == NULL && pub_key == NULL) ||
+	    (dh->priv_key == NULL && priv_key == NULL))
+		return 0;
+
+	if (pub_key != NULL) {
+		BN_free(dh->pub_key);
+		dh->pub_key = pub_key;
+	}
+	if (priv_key != NULL) {
+		BN_free(dh->priv_key);
+		dh->priv_key = priv_key;
+	}
+
+	return 1;
 }
