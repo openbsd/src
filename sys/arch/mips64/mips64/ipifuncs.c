@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.17 2017/05/28 17:12:48 visa Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.18 2018/02/18 14:42:32 visa Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -216,7 +216,9 @@ smp_rendezvous_cpus(unsigned long map,
 	smp_rv_func_arg = arg;
 	smp_rv_waiters[0] = 0;
 	smp_rv_waiters[1] = 0;
-	mips_sync();
+
+	/* Ensure the parameters are visible to other CPUs. */
+	membar_producer();
 
 	/* signal other processors, which will enter the IPI with interrupts off */
 	mips64_multicast_ipi(map, MIPS64_IPI_RENDEZVOUS);
