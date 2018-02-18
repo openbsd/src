@@ -1699,6 +1699,7 @@
 ./usr/share/man/man3/BIO_f_ssl.3
 ./usr/share/man/man3/BIO_find_type.3
 ./usr/share/man/man3/BIO_get_ex_new_index.3
+./usr/share/man/man3/BIO_meth_new.3
 ./usr/share/man/man3/BIO_new.3
 ./usr/share/man/man3/BIO_printf.3
 ./usr/share/man/man3/BIO_push.3
