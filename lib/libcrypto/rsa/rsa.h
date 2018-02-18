@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.33 2018/02/18 12:52:13 tb Exp $ */
+/* $OpenBSD: rsa.h,v 1.34 2018/02/18 12:53:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -399,6 +399,8 @@ void *RSA_get_ex_data(const RSA *r, int idx);
 int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d);
 void RSA_get0_key(const RSA *r, const BIGNUM **n, const BIGNUM **e,
     const BIGNUM **d);
+void RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q);
+int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q);
 
 RSA *RSAPublicKey_dup(RSA *rsa);
 RSA *RSAPrivateKey_dup(RSA *rsa);

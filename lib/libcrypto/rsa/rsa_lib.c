@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.32 2018/02/17 13:47:36 tb Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.33 2018/02/18 12:53:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -288,4 +288,31 @@ RSA_get0_key(const RSA *r, const BIGNUM **n, const BIGNUM **e, const BIGNUM **d)
 		*e = r->e;
 	if (d != NULL)
 		*d = r->d;
+}
+
+void
+RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q)
+{
+	if (p != NULL)
+		*p = r->p;
+	if (q != NULL)
+		*q = r->q;
+}
+
+int
+RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
+{
+	if ((r->p == NULL && p == NULL) || (r->q == NULL && q == NULL))
+		return 0;
+
+	if (p != NULL) {
+		BN_free(r->p);
+		r->p = p;
+	}
+	if (q != NULL) {
+		BN_free(r->q);
+		r->q = q;
+	}
+
+	return 1;
 }
