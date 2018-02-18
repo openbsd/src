@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mobileip.c,v 1.7 2018/02/12 02:55:40 dlg Exp $ */
+/*	$OpenBSD: if_mobileip.c,v 1.8 2018/02/18 23:53:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -355,11 +355,16 @@ mobileip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct mobileip_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	int error = 0;
 
 	switch(cmd) {
 	case SIOCSIFADDR:
-		/* XXX restrict to AF_INET */
+		if (ifa->ifa_addr->sa_family != AF_INET) {
+			error = EAFNOSUPPORT;
+			break;
+		}
+
 		ifp->if_flags |= IFF_UP;
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
