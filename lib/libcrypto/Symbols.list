@@ -795,6 +795,7 @@ DSA_new
 DSA_new_method
 DSA_print
 DSA_print_fp
+DSA_set0_pqg
 DSA_set_default_method
 DSA_set_ex_data
 DSA_set_method

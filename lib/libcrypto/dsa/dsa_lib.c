@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.24 2018/02/17 13:47:36 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.25 2018/02/18 12:50:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -313,6 +313,29 @@ DSA_get0_pqg(const DSA *d, const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 		*q = d->q;
 	if (g != NULL)
 		*g = d->g;
+}
+
+int
+DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
+{
+	if ((d->p == NULL && p == NULL) || (d->q == NULL && q == NULL) ||
+	    (d->g == NULL && g == NULL))
+		return 0;
+
+	if (p != NULL) {
+		BN_free(d->p);
+		d->p = p;
+	}
+	if (q != NULL) {
+		BN_free(d->q);
+		d->q = q;
+	}
+	if (g != NULL) {
+		BN_free(d->g);
+		d->g = g;
+	}
+
+	return 1;
 }
 
 void
