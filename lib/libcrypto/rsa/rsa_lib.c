@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.33 2018/02/18 12:53:46 tb Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.34 2018/02/18 12:55:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -257,6 +257,17 @@ RSA_get_ex_data(const RSA *r, int idx)
 	return CRYPTO_get_ex_data(&r->ex_data, idx);
 }
 
+void
+RSA_get0_key(const RSA *r, const BIGNUM **n, const BIGNUM **e, const BIGNUM **d)
+{
+	if (n != NULL)
+		*n = r->n;
+	if (e != NULL)
+		*e = r->e;
+	if (d != NULL)
+		*d = r->d;
+}
+
 int
 RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
 {
@@ -279,16 +290,6 @@ RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
 	return 1;
 }
 
-void
-RSA_get0_key(const RSA *r, const BIGNUM **n, const BIGNUM **e, const BIGNUM **d)
-{
-	if (n != NULL)
-		*n = r->n;
-	if (e != NULL)
-		*e = r->e;
-	if (d != NULL)
-		*d = r->d;
-}
 
 void
 RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q)
