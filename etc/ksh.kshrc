@@ -1,4 +1,4 @@
-#	$OpenBSD: ksh.kshrc,v 1.30 2017/11/05 10:58:39 rpe Exp $
+#	$OpenBSD: ksh.kshrc,v 1.31 2018/02/18 21:48:00 kn Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -119,26 +119,3 @@ case "$-" in
 *)	# non-interactive
 ;;
 esac
-# commands for both interactive and non-interactive shells
-
-# is $1 missing from $2 (or PATH) ?
-function no_path {
-	eval _v="\$${2:-PATH}"
-	case :$_v: in
-	*:$1:*) return 1;;		# no we have it
-	esac
-	return 0
-}
-# if $1 exists and is not in path, append it
-function add_path {
-	[[ -d ${1:-.} ]] && no_path $* && eval ${2:-PATH}="\$${2:-PATH}:$1"
-}
-# if $1 exists and is not in path, prepend it
-function pre_path {
-	[[ -d ${1:-.} ]] && no_path $* && eval ${2:-PATH}="$1:\$${2:-PATH}"
-}
-# if $1 is in path, remove it
-function del_path {
-	no_path $* || eval ${2:-PATH}=$(eval echo :'$'${2:-PATH}: |
-		sed -e "s;:$1:;:;g" -e "s;^:;;" -e "s;:\$;;")
-}
