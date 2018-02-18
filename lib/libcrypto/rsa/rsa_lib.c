@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.34 2018/02/18 12:55:32 tb Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.35 2018/02/18 12:57:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -290,6 +290,41 @@ RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
 	return 1;
 }
 
+void
+RSA_get0_crt_params(const RSA *r, const BIGNUM **dmp1, const BIGNUM **dmq1,
+    const BIGNUM **iqmp)
+{
+	if (dmp1 != NULL)
+		*dmp1 = r->dmp1;
+	if (dmq1 != NULL)
+		*dmq1 = r->dmq1;
+	if (iqmp != NULL)
+		*iqmp = r->iqmp;
+}
+
+int
+RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
+{
+	if ((r->dmp1 == NULL && dmp1 == NULL) ||
+	    (r->dmq1 == NULL && dmq1 == NULL) ||
+	    (r->iqmp == NULL && iqmp == NULL))
+	       	return 0;
+
+	if (dmp1 != NULL) {
+		BN_free(r->dmp1);
+		r->dmp1 = dmp1;
+	}
+	if (dmq1 != NULL) {
+		BN_free(r->dmq1);
+		r->dmq1 = dmq1;
+	}
+	if (iqmp != NULL) {
+		BN_free(r->iqmp);
+		r->iqmp = iqmp;
+	}
+
+	return 1;
+}
 
 void
 RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q)

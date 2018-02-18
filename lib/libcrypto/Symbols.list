@@ -2211,6 +2211,7 @@ RSA_flags
 RSA_free
 RSA_generate_key
 RSA_generate_key_ex
+RSA_get0_crt_params
 RSA_get0_factors
 RSA_get0_key
 RSA_get_default_method
@@ -2237,6 +2238,7 @@ RSA_private_decrypt
 RSA_private_encrypt
 RSA_public_decrypt
 RSA_public_encrypt
+RSA_set0_crt_params
 RSA_set0_factors
 RSA_set0_key
 RSA_set_default_method
