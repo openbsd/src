@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.86 2017/08/28 17:50:58 jsing Exp $
+.\" $OpenBSD: openssl.1,v 1.87 2018/02/18 07:43:55 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 28 2017 $
+.Dd $Mdocdate: February 18 2018 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3578,6 +3578,7 @@ Verify the input data and output the recovered data.
 .Op Fl crlf
 .Op Fl debug
 .Op Fl extended_crl
+.Op Fl groups
 .Op Fl ign_eof
 .Op Fl ignore_critical
 .Op Fl issuer_checks
@@ -3691,6 +3692,8 @@ Translate a line feed from the terminal into CR+LF,
 as required by some servers.
 .It Fl debug
 Print extensive debugging information, including a hex dump of all traffic.
+.It Fl groups Ar ecgroups
+Specify a colon-separated list of permitted EC curve groups.
 .It Fl ign_eof
 Inhibit shutting down the connection when end of file is reached in the input.
 .It Fl key Ar keyfile
