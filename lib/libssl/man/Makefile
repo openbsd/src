@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.59 2017/08/21 10:10:25 schwarze Exp $
+# $OpenBSD: Makefile,v 1.60 2018/02/18 22:18:59 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,7 @@ MAN =	BIO_f_ssl.3 \
 	SSL_CTX_free.3 \
 	SSL_CTX_get_ex_new_index.3 \
 	SSL_CTX_get_verify_mode.3 \
+	SSL_CTX_get0_certificate.3 \
 	SSL_CTX_load_verify_locations.3 \
 	SSL_CTX_new.3 \
 	SSL_CTX_sess_number.3 \
