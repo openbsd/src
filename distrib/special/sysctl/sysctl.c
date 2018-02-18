@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.10 2018/02/10 05:59:06 florian Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.11 2018/02/18 17:47:47 naddy Exp $	*/
 
 /*
  * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -24,10 +24,11 @@
 
 #include <netinet/in.h>
 
-#include <unistd.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define SOIIKEY_LEN 16
 
