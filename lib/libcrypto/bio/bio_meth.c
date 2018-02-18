@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_meth.c,v 1.1 2018/02/17 13:57:14 tb Exp $	*/
+/*	$OpenBSD: bio_meth.c,v 1.2 2018/02/18 12:59:06 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -57,6 +57,13 @@ int
 BIO_meth_set_puts(BIO_METHOD *biom, int (*puts)(BIO *, const char *))
 {
 	biom->bputs = puts;
+	return 1;
+}
+
+int
+BIO_meth_set_gets(BIO_METHOD *biom, int (*gets)(BIO *, char *, int))
+{
+	biom->bgets = gets;
 	return 1;
 }
 
