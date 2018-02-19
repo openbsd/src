@@ -1,4 +1,4 @@
-.\" $OpenBSD: DSA_get0_pqg.3,v 1.1 2018/02/17 16:59:48 schwarze Exp $
+.\" $OpenBSD: DSA_get0_pqg.3,v 1.2 2018/02/19 10:40:00 schwarze Exp $
 .\" selective merge up to: OpenSSL e90fc053 Jul 15 09:39:45 2017 -0400
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,13 +48,15 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 17 2018 $
+.Dd $Mdocdate: February 19 2018 $
 .Dt DSA_GET0_PQG 3
 .Os
 .Sh NAME
 .Nm DSA_get0_pqg ,
-.Nm DSA_get0_key
-.Nd get data from a DSA object
+.Nm DSA_set0_pqg ,
+.Nm DSA_get0_key ,
+.Nm DSA_set0_key
+.Nd get data from and set data in a DSA object
 .Sh SYNOPSIS
 .In openssl/dsa.h
 .Ft void
@@ -64,11 +66,24 @@
 .Fa "const BIGNUM **q"
 .Fa "const BIGNUM **g"
 .Fc
+.Ft int
+.Fo DSA_set0_pqg
+.Fa "DSA *d"
+.Fa "BIGNUM *p"
+.Fa "BIGNUM *q"
+.Fa "BIGNUM *g"
+.Fc
 .Ft void
 .Fo DSA_get0_key
 .Fa "const DSA *d"
 .Fa "const BIGNUM **pub_key"
 .Fa "const BIGNUM **priv_key"
+.Fc
+.Ft int
+.Fo DSA_set0_key
+.Fa "DSA *d"
+.Fa "BIGNUM *pub_key"
+.Fa "BIGNUM *priv_key"
 .Fc
 .Sh DESCRIPTION
 A
@@ -101,6 +116,17 @@ Otherwise, they are set to pointers to the internal representations
 of the values that should not be freed by the application.
 .Pp
 The
+.Fa p ,
+.Fa q ,
+and
+.Fa g
+values can be set by calling
+.Fn DSA_set0_pqg .
+Calling this function transfers the memory management of the values to
+.Fa d ,
+and therefore they should not be freed by the caller.
+.Pp
+The
 .Fn DSA_get0_key
 function stores pointers to the internal representations
 of the public key in
@@ -111,6 +137,44 @@ Either may be
 .Dv NULL
 if it has not yet been set.
 If the private key has been set, then the public key must be.
+.Pp
+The public and private key values can be set using
+.Fn DSA_set0_key .
+The public key must be
+.Pf non- Dv NULL
+the first time this function is called on a given
+.Vt DSA
+object.
+The private key may be
+.Dv NULL .
+On subsequent calls, either may be
+.Dv NULL ,
+which means the corresponding
+.Vt DSA
+field is left untouched.
+.Fn DSA_set0_key
+transfers the memory management of the key values to
+.Fa d ,
+and therefore they should not be freed by the caller.
+.Pp
+Values retrieved with
+.Fn DSA_get0_pqg
+and
+.Fn DSA_get0_key
+are owned by the
+.Vt DSA
+object and may therefore not be passed to
+.Fn DSA_set0_pqg
+or
+.Fn DSA_set0_key .
+If needed, duplicate the received values using
+.Xr BN_dup 3
+and pass the duplicates.
+.Sh RETURN VALUES
+.Fn DSA_set0_pqg
+and
+.Fn DSA_set0_key
+return 1 on success or 0 on failure.
 .Sh SEE ALSO
 .Xr DSA_do_sign 3 ,
 .Xr DSA_dup_DH 3 ,
