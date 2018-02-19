@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.357 2018/02/10 05:55:26 florian Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.358 2018/02/19 00:23:57 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -252,6 +252,8 @@ void	setpfsync_syncpeer(const char *, int);
 void	unsetpfsync_syncpeer(const char *, int);
 void	setpfsync_defer(const char *, int);
 void	pfsync_status(void);
+void	settunneldf(const char *, int);
+void	settunnelnodf(const char *, int);
 void	setpppoe_dev(const char *,int);
 void	setpppoe_svc(const char *,int);
 void	setpppoe_ac(const char *,int);
@@ -434,6 +436,8 @@ const struct	cmd {
 	{ "deletetunnel",  0,		0,		deletetunnel },
 	{ "tunneldomain", NEXTARG,	0,		settunnelinst },
 	{ "tunnelttl",	NEXTARG,	0,		settunnelttl },
+	{ "tunneldf",	0,		0,		settunneldf },
+	{ "-tunneldf",	0,		0,		settunnelnodf },
 	{ "pppoedev",	NEXTARG,	0,		setpppoe_dev },
 	{ "pppoesvc",	NEXTARG,	0,		setpppoe_svc },
 	{ "-pppoesvc",	1,		0,		setpppoe_svc },
@@ -2750,6 +2754,10 @@ phys_status(int force)
 		else if (ifr.ifr_ttl > 0)
 			printf(" ttl %d", ifr.ifr_ttl);
 	}
+
+	if (ioctl(s, SIOCGLIFPHYDF, (caddr_t)&ifr) == 0)
+		printf(" %s", ifr.ifr_df ? "df" : "nodf");
+
 #ifndef SMALL
 	if (ioctl(s, SIOCGLIFPHYRTABLE, (caddr_t)&ifr) == 0 &&
 	    (rdomainid != 0 || ifr.ifr_rdomainid != 0))
@@ -3283,6 +3291,24 @@ settunnelttl(const char *id, int param)
 	ifr.ifr_ttl = ttl;
 	if (ioctl(s, SIOCSLIFPHYTTL, (caddr_t)&ifr) < 0)
 		warn("SIOCSLIFPHYTTL");
+}
+
+void
+settunneldf(const char *ignored, int alsoignored)
+{
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_df = 1;
+	if (ioctl(s, SIOCSLIFPHYDF, (caddr_t)&ifr) < 0)
+		warn("SIOCSLIFPHYDF");
+}
+
+void
+settunnelnodf(const char *ignored, int alsoignored)
+{
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_df = 0;
+	if (ioctl(s, SIOCSLIFPHYDF, (caddr_t)&ifr) < 0)
+		warn("SIOCSLIFPHYDF");
 }
 
 void
