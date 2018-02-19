@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.110 2018/02/12 03:30:24 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.111 2018/02/19 00:34:32 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ static inline int	gif_cmp(const struct gif_tunnel *,
 struct gif_softc {
 	struct gif_tunnel	sc_tunnel; /* must be first */
 	struct ifnet		sc_if;
+	uint16_t		sc_df;
 	int			sc_ttl;
 };
 
@@ -150,6 +151,7 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	ifp = &sc->sc_if;
 
+	sc->sc_df = htons(0);
 	sc->sc_ttl = ip_defttl;
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname),
@@ -304,7 +306,7 @@ gif_send(struct gif_softc *sc, struct mbuf *m,
 			return (-1);
 
 		ip = mtod(m, struct ip *);
-		ip->ip_off = 0; /* DF ? */
+		ip->ip_off = sc->sc_df;
 		ip->ip_tos = otos;
 		ip->ip_len = htons(m->m_pkthdr.len);
 		ip->ip_ttl = ttl;
@@ -340,6 +342,9 @@ gif_send(struct gif_softc *sc, struct mbuf *m,
 		ip6->ip6_hlim = ttl;
 		ip6->ip6_src = sc->sc_tunnel.t_src6;
 		ip6->ip6_dst = sc->sc_tunnel.t_dst6;
+
+		if (sc->sc_df)
+			SET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
 
 		ip6_send(m);
 		break;
@@ -505,6 +510,14 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGLIFPHYTTL:
 		ifr->ifr_ttl = sc->sc_ttl;
+		break;
+
+	case SIOCSLIFPHYDF:
+		/* commit */
+		sc->sc_df = ifr->ifr_df ? htons(IP_DF) : htons(0);
+		break;
+	case SIOCGLIFPHYDF:
+		ifr->ifr_df = sc->sc_df ? 1 : 0;
 		break;
 
 	default:
