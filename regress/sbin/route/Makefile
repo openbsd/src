@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.27 2018/02/14 08:42:22 mpi Exp $
+# $OpenBSD: Makefile,v 1.28 2018/02/19 11:37:38 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -376,7 +376,7 @@ rttest${n}:
 	${RCMD} add -net 192.168.67.128/25 130.102.71.67 -priority 3 -ifp vlan99
 	${RCMD} show -inet 2>&1 | \
 		sed -e "s,link\#[0-9 ]*U,link#              U," | \
-		cat > ${.CURDIR}/${.TARGET}.ok
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
 REGRESS_TARGETS=netmask ${RTTEST_TARGETS}
 REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
