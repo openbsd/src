@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.73 2018/02/08 13:15:32 mpi Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.74 2018/02/19 00:21:31 dlg Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -190,6 +190,9 @@
 #define	SIOCGUMBINFO	_IOWR('i', 190, struct ifreq)	/* get MBIM info */
 #define	SIOCSUMBPARAM	 _IOW('i', 191, struct ifreq)	/* set MBIM param */
 #define	SIOCGUMBPARAM	_IOWR('i', 192, struct ifreq)	/* get MBIM param */
+
+#define	SIOCSLIFPHYDF	_IOW('i', 193, struct ifreq)	/* set tunnel df/nodf */
+#define	SIOCGLIFPHYDF	_IOWR('i', 194, struct ifreq)	/* set tunnel df/nodf */
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */
