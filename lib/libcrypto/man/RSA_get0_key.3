@@ -1,4 +1,4 @@
-.\" $OpenBSD: RSA_get0_key.3,v 1.1 2018/02/17 16:59:48 schwarze Exp $
+.\" $OpenBSD: RSA_get0_key.3,v 1.2 2018/02/19 13:28:05 schwarze Exp $
 .\" selective merge up to: OpenSSL 665d899f Aug 2 02:19:43 2017 +0800
 .\"
 .\" This file was written by Richard Levitte <levitte@openssl.org>
@@ -48,12 +48,16 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 17 2018 $
+.Dd $Mdocdate: February 19 2018 $
 .Dt RSA_GET0_KEY 3
 .Os
 .Sh NAME
 .Nm RSA_get0_key ,
-.Nm RSA_set0_key
+.Nm RSA_set0_key ,
+.Nm RSA_get0_factors ,
+.Nm RSA_set0_factors ,
+.Nm RSA_get0_crt_params ,
+.Nm RSA_set0_crt_params
 .Nd get and set data in an RSA object
 .Sh SYNOPSIS
 .In openssl/rsa.h
@@ -71,6 +75,32 @@
 .Fa "BIGNUM *e"
 .Fa "BIGNUM *d"
 .Fc
+.Ft void
+.Fo RSA_get0_factors
+.Fa "const RSA *r"
+.Fa "const BIGNUM **p"
+.Fa "const BIGNUM **q"
+.Fc
+.Ft int
+.Fo RSA_set0_factors
+.Fa "RSA *r"
+.Fa "BIGNUM *p"
+.Fa "BIGNUM *q"
+.Fc
+.Ft void
+.Fo RSA_get0_crt_params
+.Fa "const RSA *r"
+.Fa "const BIGNUM **dmp1"
+.Fa "const BIGNUM **dmq1"
+.Fa "const BIGNUM **iqmp"
+.Fc
+.Ft int
+.Fo RSA_set0_crt_params
+.Fa "RSA *r"
+.Fa "BIGNUM *dmp1"
+.Fa "BIGNUM *dmq1"
+.Fa "BIGNUM *iqmp"
+.Fc
 .Sh DESCRIPTION
 An
 .Vt RSA
@@ -81,20 +111,41 @@ is the modulus common to both public and private key,
 is the public exponent and
 .Fa d
 is the private exponent.
-These parameters can be obtained by calling
+.Fa p ,
+.Fa q ,
+.Fa dmp1 ,
+.Fa dmq1 ,
+and
+.Fa iqmp
+are the factors for the second representation of a private key
+(see PKCS#1 section 3 Key Types), where
+.Fa p
+and
+.Fa q
+are the first and second factor of
+.Fa n .
+.Fa dmp1 ,
+.Fa dmq1 ,
+and
+.Fa iqmp
+are the exponents and coefficient for CRT calculations.
+.Pp
+The
+.Fa n ,
+.Fa e ,
+and
+.Fa d
+parameters can be obtained by calling
 .Fn RSA_get0_key .
 If they have not been set yet, then
 .Pf * Fa n ,
 .Pf * Fa e ,
 and
 .Pf * Fa d
-will be set to
+are set to
 .Dv NULL .
 Otherwise, they are set to pointers to the internal representations
 of the values that should not be freed by the caller.
-If any of the arguments is
-.Dv NULL ,
-the respective parameter is not retrieved.
 .Pp
 The
 .Fa n ,
@@ -124,20 +175,63 @@ the RSA object.
 Therefore, the values that have been passed in
 should not be freed by the caller.
 .Pp
+In a similar fashion, the
+.Fa p
+and
+.Fa q
+parameters can be obtained and set with
+.Fn RSA_get0_factors
+and
+.Fn RSA_set0_factors ,
+and the
+.Fa dmp1 ,
+.Fa dmq1 ,
+and
+.Fa iqmp
+parameters can be obtained and set with
+.Fn RSA_get0_crt_params
+and
+.Fn RSA_set0_crt_params .
+.Pp
+For
+.Fn RSA_get0_key ,
+.Fn RSA_get0_factors ,
+and
+.Fn RSA_get0_crt_params ,
+.Dv NULL
+value
+.Vt BIGNUM **
+output arguments are permitted.
+The functions
+ignore
+.Dv NULL
+arguments but return values for other,
+.Pf non- Dv NULL ,
+arguments.
+.Pp
 Values retrieved with
-.Fn RSA_get0_key
+.Fn RSA_get0_key ,
+.Fn RSA_get0_factors ,
+and
+.Fn RSA_get0_crt_params
 are owned by the
 .Vt RSA
 object used in the call and may therefore
 .Em not
 be passed to
-.Fn RSA_set0_key .
+.Fn RSA_set0_key ,
+.Fn RSA_set0_factors ,
+or
+.Fn RSA_set0_crt_params .
 If needed, duplicate the received value using
 .Xr BN_dup 3
 and pass the duplicate.
 .Sh RETURN VALUES
-.Fn RSA_set0_key
-returns 1 on success or 0 on failure.
+.Fn RSA_set0_key ,
+.Fn RSA_set0_factors ,
+and
+.Fn RSA_set0_crt_params
+return 1 on success or 0 on failure.
 .Sh SEE ALSO
 .Xr RSA_check_key 3 ,
 .Xr RSA_generate_key 3 ,
