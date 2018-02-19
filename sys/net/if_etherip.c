@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.36 2018/02/19 00:26:26 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.37 2018/02/19 00:29:29 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -137,7 +137,7 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 	    ifc->ifc_name, unit);
 
 	sc->sc_ttl = ip_defttl;
-	sc->sc_ttl = htons(0);
+	sc->sc_df = htons(0);
 
 	ifp->if_softc = sc;
 	ifp->if_ioctl = etherip_ioctl;
