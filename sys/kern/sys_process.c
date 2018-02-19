@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.79 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.80 2018/02/19 09:25:13 mpi Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -295,8 +295,10 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 	case PT_ATTACH:
 	case PT_DETACH:
 		/* Find the process we're supposed to be operating on. */
-		if ((tr = prfind(pid)) == NULL)
-			return (ESRCH);
+		if ((tr = prfind(pid)) == NULL) {
+			error = ESRCH;
+			goto fail;
+		}
 		t = TAILQ_FIRST(&tr->ps_threads);
 		break;
 
@@ -305,20 +307,24 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 #ifdef PT_STEP
 	case PT_STEP:
 #endif
-		if ((tr = process_tprfind(pid, &t)) == NULL)
-			return ESRCH;
+		if ((tr = process_tprfind(pid, &t)) == NULL) {
+			error = ESRCH;
+			goto fail;
+		}
 		break;
 	}
 
 	/* Check permissions/state */
 	if (req != PT_ATTACH) {
 		/* Check that the data is a valid signal number or zero. */
-		if (req != PT_KILL && (data < 0 || data >= NSIG))
-			return EINVAL;
+		if (req != PT_KILL && (data < 0 || data >= NSIG)) {
+			error = EINVAL;
+			goto fail;
+		}
 
 		/* Most operations require the target to already be traced */
 		if ((error = process_checktracestate(p->p_p, tr, t)))
-			return error;
+			goto fail;
 
 		/* Do single-step fixup if needed. */
 		FIX_SSTEP(t);
@@ -327,26 +333,34 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		 * PT_ATTACH is the opposite; you can't attach to a process if:
 		 *	(1) it's the process that's doing the attaching,
 		 */
-		if (tr == p->p_p)
-			return (EINVAL);
+		if (tr == p->p_p) {
+			error = EINVAL;
+			goto fail;
+		}
 
 		/*
 		 *	(2) it's a system process
 		 */
-		if (ISSET(tr->ps_flags, PS_SYSTEM))
-			return (EPERM);
+		if (ISSET(tr->ps_flags, PS_SYSTEM)) {
+			error = EPERM;
+			goto fail;
+		}
 
 		/*
 		 *	(3) it's already being traced, or
 		 */
-		if (ISSET(tr->ps_flags, PS_TRACED))
-			return (EBUSY);
+		if (ISSET(tr->ps_flags, PS_TRACED)) {
+			error = EBUSY;
+			goto fail;
+		}
 
 		/*
 		 *	(4) it's in the middle of execve(2)
 		 */
-		if (ISSET(tr->ps_flags, PS_INEXEC))
-			return (EAGAIN);
+		if (ISSET(tr->ps_flags, PS_INEXEC)) {
+			error = EAGAIN;
+			goto fail;
+		}
 
 		/*
 		 *	(5) it's not owned by you, or the last exec
@@ -362,14 +376,14 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		if ((tr->ps_ucred->cr_ruid != p->p_ucred->cr_ruid ||
 		    ISSET(tr->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
 		    (error = suser(p)) != 0)
-			return (error);
+			goto fail;
 
 		/*
 		 * 	(5.5) it's not a child of the tracing process.
 		 */
 		if (global_ptrace == 0 && !inferior(tr, p->p_p) &&
 		    (error = suser(p)) != 0)
-			return (error);
+			goto fail;
 
 		/*
 		 *	(6) ...it's init, which controls the security level
@@ -377,16 +391,20 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		 *          compiled with permanently insecure mode turned
 		 *	    on.
 		 */
-		if ((tr->ps_pid == 1) && (securelevel > -1))
-			return (EPERM);
+		if ((tr->ps_pid == 1) && (securelevel > -1)) {
+			error = EPERM;
+			goto fail;
+		}
 
 		/*
 		 *	(7) it's an ancestor of the current process and
 		 *	    not init (because that would create a loop in
 		 *	    the process graph).
 		 */
-		if (tr->ps_pid != 1 && inferior(p->p_p, tr))
-			return (EINVAL);
+		if (tr->ps_pid != 1 && inferior(p->p_p, tr)) {
+			error = EINVAL;
+			goto fail;
+		}
 	}
 
 	switch (req) {
@@ -419,7 +437,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)addr != (int *)1)
 			if ((error = process_set_pc(t, addr)) != 0)
-				return error;
+				goto fail;
 
 #ifdef PT_STEP
 		/*
@@ -427,7 +445,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		 */
 		error = process_sstep(t, req == PT_STEP);
 		if (error)
-			return error;
+			goto fail;
 #endif
 		goto sendsig;
 
@@ -453,7 +471,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		 */
 		error = process_sstep(t, 0);
 		if (error)
-			return error;
+			goto fail;
 #endif
 
 		/* give process back to original parent or init */
@@ -515,6 +533,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		break;
 	}
 
+fail:
 	return error;
 }
 
