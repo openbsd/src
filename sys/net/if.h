@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.191 2018/02/10 05:52:08 florian Exp $	*/
+/*	$OpenBSD: if.h,v 1.192 2018/02/19 04:43:48 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -387,6 +387,7 @@ struct	ifreq {
 #define	ifr_rdomainid	ifr_ifru.ifru_metric	/* VRF instance (overload) */
 #define ifr_vnetid	ifr_ifru.ifru_vnetid	/* Virtual Net Id */
 #define ifr_ttl		ifr_ifru.ifru_metric	/* tunnel TTL (overload) */
+#define ifr_df		ifr_ifru.ifru_metric	/* tunnel DF (overload) */
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
 #define ifr_index	ifr_ifru.ifru_index	/* interface index */
 #define ifr_llprio	ifr_ifru.ifru_metric	/* link layer priority */
