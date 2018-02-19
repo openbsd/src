@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.57 2018/02/14 08:55:12 mpi Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.58 2018/02/19 09:08:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -26,6 +26,11 @@
 
 #include <ddb/db_output.h>
 
+#if defined(MULTIPROCESSOR) || defined(WITNESS)
+#include <sys/mplock.h>
+struct __mp_lock kernel_lock;
+#endif
+
 #ifdef MP_LOCKDEBUG
 #ifndef DDB
 #error "MP_LOCKDEBUG requires DDB"
@@ -34,10 +39,6 @@
 /* CPU-dependent timing, this needs to be settable from ddb. */
 int __mp_lock_spinout = 200000000;
 #endif /* MP_LOCKDEBUG */
-
-#if defined(MULTIPROCESSOR) || defined(WITNESS)
-struct __mp_lock kernel_lock;
-#endif
 
 #ifdef MULTIPROCESSOR
 
