@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.193 2018/02/19 21:47:43 rpe Exp $
+#	$OpenBSD: netstart,v 1.194 2018/02/19 23:42:29 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -89,7 +89,7 @@ vifscreate() {
 			_if=${_hn#/etc/hostname.}
 
 			if ! ifcreate $_if; then
-				echo "${0##*/}: create for '$_if' failed."
+				print -u2 "${0##*/}: create for '$_if' failed."
 			fi
 		done
 	done
@@ -106,14 +106,14 @@ ifstart() {
 	[[ $_if != +([[:alpha:]])+([[:digit:]]) ]] && return
 
 	if [[ ! -f $_hn ]]; then
-		echo "${0##*/}: $_hn: No such file or directory"
+		print -u2 "${0##*/}: $_hn: No such file or directory."
 		return
 	fi
 
 	# Not using stat(1), we can't rely on having /usr yet.
 	set -A _stat -- $(ls -nL $_hn)
 	if [[ "${_stat[0]}${_stat[2]}${_stat[3]}" != *---00 ]]; then
-		echo "WARNING: $_hn is insecure, fixing permissions"
+		print -u2 "WARNING: $_hn is insecure, fixing permissions."
 		chmod -LR o-rwx $_hn
 		chown -LR root:wheel $_hn
 	fi
