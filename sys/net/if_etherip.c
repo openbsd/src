@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.35 2018/02/12 01:43:42 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.36 2018/02/19 00:26:26 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -85,6 +85,7 @@ struct etherip_softc {
 	struct etherip_tunnel	sc_tunnel; /* must be first */
 	struct arpcom		sc_ac;
 	struct ifmedia		sc_media;
+	uint16_t		sc_df;
 	uint8_t			sc_ttl;
 };
 
@@ -136,6 +137,7 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 	    ifc->ifc_name, unit);
 
 	sc->sc_ttl = ip_defttl;
+	sc->sc_ttl = htons(0);
 
 	ifp->if_softc = sc;
 	ifp->if_ioctl = etherip_ioctl;
@@ -291,6 +293,14 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGLIFPHYTTL:
 		ifr->ifr_ttl = (int)sc->sc_ttl;
+		break;
+
+	case SIOCSLIFPHYDF:
+		/* commit */
+		sc->sc_df = ifr->ifr_df ? htons(IP_DF) : htons(0);
+		break;
+	case SIOCGLIFPHYDF:
+		ifr->ifr_df = sc->sc_df ? 1 : 0;
 		break;
 
 	case SIOCSIFMEDIA:
@@ -476,11 +486,12 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 
 	ip->ip_v = IPVERSION;
 	ip->ip_hl = sizeof(*ip) >> 2;
-	ip->ip_id = htons(ip_randomid());
 	ip->ip_tos = IPTOS_LOWDELAY;
-	ip->ip_p = IPPROTO_ETHERIP;
 	ip->ip_len = htons(m->m_pkthdr.len);
+	ip->ip_id = htons(ip_randomid());
+	ip->ip_off = sc->sc_df;
 	ip->ip_ttl = sc->sc_ttl;
+	ip->ip_p = IPPROTO_ETHERIP;
 	ip->ip_src = sc->sc_tunnel.t_src4;
 	ip->ip_dst = sc->sc_tunnel.t_dst4;
 
@@ -639,6 +650,9 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	eip->eip_ver = ETHERIP_VERSION;
 	eip->eip_res = 0;
 	eip->eip_pad = 0;
+
+	if (sc->sc_df)
+		SET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	m->m_pkthdr.ph_rtableid = sc->sc_tunnel.t_rtableid;
