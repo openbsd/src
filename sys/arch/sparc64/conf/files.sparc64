@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.150 2018/02/14 23:51:49 jsg Exp $
+#	$OpenBSD: files.sparc64,v 1.151 2018/02/19 09:18:50 mpi Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -328,7 +328,6 @@ file	arch/sparc64/sparc64/ipifuncs.c		multiprocessor
 file	arch/sparc64/sparc64/machdep.c
 file	arch/sparc64/sparc64/mdesc.c		sun4v
 file	arch/sparc64/sparc64/mem.c
-file	arch/sparc64/sparc64/mutex.S
 file	arch/sparc64/sparc64/openprom.c
 file	arch/sparc64/sparc64/openfirm.c
 file	arch/sparc64/sparc64/ofw_machdep.c
