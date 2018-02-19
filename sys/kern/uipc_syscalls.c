@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.165 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.166 2018/02/19 11:35:41 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -447,7 +447,7 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp1, *fp2;
 	struct socket *so1, *so2;
-	int s, type, cloexec, nonblock, fflag, error, sv[2];
+	int type, cloexec, nonblock, fflag, error, sv[2];
 
 	type  = SCARG(uap, type) & ~(SOCK_CLOEXEC | SOCK_NONBLOCK);
 	cloexec = (SCARG(uap, type) & SOCK_CLOEXEC) ? UF_EXCLOSE : 0;
@@ -461,9 +461,7 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto free1;
 
-	s = solock(so1);
 	error = soconnect2(so1, so2);
-	sounlock(s);
 	if (error != 0)
 		goto free2;
 
@@ -471,9 +469,7 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 		/*
 		 * Datagram socket connection is asymmetric.
 		 */
-		s = solock(so2);
 		error = soconnect2(so2, so1);
-		sounlock(s);
 		if (error != 0)
 			goto free2;
 	}

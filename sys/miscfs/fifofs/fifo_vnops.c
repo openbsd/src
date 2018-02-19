@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.62 2018/01/02 06:38:45 guenther Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.63 2018/02/19 11:35:41 mpi Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -143,14 +143,7 @@ fifo_open(void *v)
 			return (error);
 		}
 		fip->fi_writesock = wso;
-		/*
-		 * XXXSMP
-		 * We only lock `wso' because AF_LOCAL sockets are
-		 * still relying on the KERNEL_LOCK().
-		 */
-		s = solock(wso);
 		if ((error = soconnect2(wso, rso)) != 0) {
-			sounlock(s);
 			(void)soclose(wso);
 			(void)soclose(rso);
 			free(fip, M_VNODE, sizeof *fip);
@@ -158,6 +151,7 @@ fifo_open(void *v)
 			return (error);
 		}
 		fip->fi_readers = fip->fi_writers = 0;
+		s = solock(wso);
 		wso->so_state |= SS_CANTSENDMORE;
 		wso->so_snd.sb_lowat = PIPE_BUF;
 	} else {

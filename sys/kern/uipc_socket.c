@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.216 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.217 2018/02/19 11:35:41 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -337,11 +337,12 @@ soconnect(struct socket *so, struct mbuf *nam)
 int
 soconnect2(struct socket *so1, struct socket *so2)
 {
-	int error;
+	int s, error;
 
-	soassertlocked(so1);
+	s = solock(so1);
 	error = (*so1->so_proto->pr_usrreq)(so1, PRU_CONNECT2, NULL,
 	    (struct mbuf *)so2, NULL, curproc);
+	sounlock(s);
 	return (error);
 }
 
