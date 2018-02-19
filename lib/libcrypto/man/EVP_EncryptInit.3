@@ -1,8 +1,9 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.7 2018/02/14 00:19:03 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.8 2018/02/19 10:04:08 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\" selective merge up to: OpenSSL 5c5eb286 Dec 5 00:36:43 2017 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>
+.\" and Richard Levitte <levitte@openssl.org>.
 .\" Copyright (c) 2000-2002, 2005, 2012-2016 The OpenSSL Project.
 .\" All rights reserved.
 .\"
@@ -50,11 +51,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 14 2018 $
+.Dd $Mdocdate: February 19 2018 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
 .Nm EVP_CIPHER_CTX_new ,
+.Nm EVP_CIPHER_CTX_reset ,
+.Nm EVP_CIPHER_CTX_cleanup ,
 .Nm EVP_CIPHER_CTX_init ,
 .Nm EVP_CIPHER_CTX_free ,
 .Nm EVP_EncryptInit_ex ,
@@ -76,7 +79,6 @@
 .Nm EVP_CIPHER_CTX_set_key_length ,
 .Nm EVP_CIPHER_CTX_ctrl ,
 .Nm EVP_CIPHER_CTX_rand_key ,
-.Nm EVP_CIPHER_CTX_cleanup ,
 .Nm EVP_get_cipherbyname ,
 .Nm EVP_get_cipherbynid ,
 .Nm EVP_get_cipherbyobj ,
@@ -164,6 +166,14 @@
 .In openssl/evp.h
 .Ft EVP_CIPHER_CTX *
 .Fn EVP_CIPHER_CTX_new void
+.Ft int
+.Fo EVP_CIPHER_CTX_reset
+.Fa "EVP_CIPHER_CTX *ctx"
+.Fc
+.Ft int
+.Fo EVP_CIPHER_CTX_cleanup
+.Fa "EVP_CIPHER_CTX *ctx"
+.Fc
 .Ft void
 .Fo EVP_CIPHER_CTX_init
 .Fa "EVP_CIPHER_CTX *ctx"
@@ -301,10 +311,6 @@
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "unsigned char *key"
 .Fc
-.Ft int
-.Fo EVP_CIPHER_CTX_cleanup
-.Fa "EVP_CIPHER_CTX *ctx"
-.Fc
 .Ft const EVP_CIPHER *
 .Fo EVP_get_cipherbyname
 .Fa "const char *name"
@@ -401,15 +407,35 @@ The EVP cipher routines are a high level interface to certain symmetric
 ciphers.
 .Pp
 .Fn EVP_CIPHER_CTX_new
-creates a cipher context.
+creates a new, empty cipher context.
+.Pp
+.Fn EVP_CIPHER_CTX_reset
+clears all information from
+.Fa ctx
+and frees all allocated memory associated with it, except the
+.Fa ctx
+object itself, such that it can be reused for another series of calls to
+.Fn EVP_CipherInit ,
+.Fn EVP_CipherUpdate ,
+and
+.Fn EVP_CipherFinal .
+It is also suitable for cipher contexts on the stack that were used
+and are no longer needed.
+.Fn EVP_CIPHER_CTX_cleanup
+is a deprecated alias for
+.Fn EVP_CIPHER_CTX_reset .
 .Pp
 .Fn EVP_CIPHER_CTX_init
-initializes the cipher context
-.Fa ctx .
+is a deprecated function to clear a cipher context on the stack
+before use.
+Do not use it on a cipher context returned from
+.Fn EVP_CIPHER_CTX_new
+or one one that was already used.
 .Pp
 .Fn EVP_CIPHER_CTX_free
-clears all information from a cipher context and frees up any
-allocated memory associate with it, including
+clears all information from
+.Fa ctx
+and frees all allocated memory associated with it, including
 .Fa ctx
 itself.
 This function should be called after all operations using a cipher
@@ -428,8 +454,11 @@ for encryption with cipher
 from
 .Vt ENGINE
 .Fa impl .
+If
 .Fa ctx
-must be initialized before calling this function.
+points to an unused object on the stack, it must be initialized with
+.Fn EVP_MD_CTX_init
+before calling this function.
 .Fa type
 is normally supplied by a function such as
 .Fn EVP_aes_256_cbc .
@@ -524,25 +553,19 @@ the value unchanged (the actual value of
 .Fa enc
 being supplied in a previous call).
 .Pp
-.Fn EVP_CIPHER_CTX_cleanup
-clears all information from a cipher context and free up any allocated
-memory associated with it.
-It should be called after all operations using a cipher are complete so
-sensitive information does not remain in memory.
-.Pp
 .Fn EVP_EncryptInit ,
 .Fn EVP_DecryptInit ,
 and
 .Fn EVP_CipherInit
-behave in a similar way to
+are deprecated functions behaving like
 .Fn EVP_EncryptInit_ex ,
 .Fn EVP_DecryptInit_ex ,
 and
 .Fn EVP_CipherInit_ex
-except the
-.Fa ctx
-parameter does not need to be initialized and they always use the
-default cipher implementation.
+except that they always use the default cipher implementation
+and that they require
+.Fn EVP_CIPHER_CTX_reset
+before they can be used on a context that was already used.
 .Pp
 .Fn EVP_EncryptFinal ,
 .Fn EVP_DecryptFinal ,
@@ -556,7 +579,9 @@ and
 In previous releases of OpenSSL, they also used to clean up the
 .Fa ctx ,
 but this is no longer done and
-.Fn EVP_CIPHER_CTX_cleanup
+.Fn EVP_CIPHER_CTX_reset
+or
+.Fn EVP_CIPHER_CTX_free
 must be called to free any context resources.
 .Pp
 .Fn EVP_get_cipherbyname ,
@@ -782,30 +807,30 @@ for success or
 .Dv NULL
 for failure.
 .Pp
+.Fn EVP_CIPHER_CTX_reset ,
+.Fn EVP_CIPHER_CTX_cleanup ,
 .Fn EVP_EncryptInit_ex ,
 .Fn EVP_EncryptUpdate ,
+.Fn EVP_EncryptFinal_ex ,
+.Fn EVP_DecryptInit_ex ,
+.Fn EVP_DecryptUpdate ,
+.Fn EVP_DecryptFinal_ex ,
+.Fn EVP_CipherInit_ex ,
+.Fn EVP_CipherUpdate ,
+.Fn EVP_CipherFinal_ex ,
+.Fn EVP_EncryptInit ,
+.Fn EVP_EncryptFinal ,
+.Fn EVP_DecryptInit ,
+.Fn EVP_DecryptFinal ,
+.Fn EVP_CipherInit ,
+.Fn EVP_CipherFinal ,
+.Fn EVP_CIPHER_CTX_set_key_length ,
 and
-.Fn EVP_EncryptFinal_ex
-return 1 for success and 0 for failure.
-.Pp
-.Fn EVP_DecryptInit_ex
-and
-.Fn EVP_DecryptUpdate
-return 1 for success and 0 for failure.
-.Fn EVP_DecryptFinal_ex
-returns 0 if the decrypt failed or 1 for success.
-.Pp
-.Fn EVP_CipherInit_ex
-and
-.Fn EVP_CipherUpdate
-return 1 for success and 0 for failure.
-.Fn EVP_CipherFinal_ex
-returns 0 for a decryption failure or 1 for success.
-.Pp
 .Fn EVP_CIPHER_CTX_rand_key
-and
-.Fn EVP_CIPHER_CTX_cleanup
 return 1 for success or 0 for failure.
+.Pp
+.Fn EVP_CIPHER_CTX_set_padding
+always returns 1.
 .Pp
 .Fn EVP_get_cipherbyname ,
 .Fn EVP_get_cipherbynid ,
@@ -831,9 +856,6 @@ return the block size.
 and
 .Fn EVP_CIPHER_CTX_key_length
 return the key length.
-.Pp
-.Fn EVP_CIPHER_CTX_set_padding
-always returns 1.
 .Pp
 .Fn EVP_CIPHER_iv_length
 and
@@ -1102,10 +1124,11 @@ do_crypt(char *outfile)
 	const char intext[] = "Some Crypto Text";
 	EVP_CIPHER_CTX *ctx;
 	FILE *out;
-	EVP_CIPHER_CTX_init(&ctx);
-	EVP_EncryptInit_ex(&ctx, EVP_bf_cbc(), NULL, key, iv);
 
-	if (!EVP_EncryptUpdate(&ctx, outbuf, &outlen, intext,
+	ctx = EVP_CIPHER_CTX_new();
+	EVP_EncryptInit_ex(ctx, EVP_bf_cbc(), NULL, key, iv);
+
+	if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, intext,
 	    strlen(intext))) {
 		/* Error */
 		EVP_CIPHER_CTX_free(ctx);
@@ -1115,13 +1138,13 @@ do_crypt(char *outfile)
 	 * Buffer passed to EVP_EncryptFinal() must be after data just
 	 * encrypted to avoid overwriting it.
 	 */
-	if (!EVP_EncryptFinal_ex(&ctx, outbuf + outlen, &tmplen)) {
+	if (!EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen)) {
 		/* Error */
 		EVP_CIPHER_CTX_free(ctx);
 		return 0;
 	}
 	outlen += tmplen;
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_free(ctx);
 	/*
 	 * Need binary mode for fopen because encrypted data is
 	 * binary data. Also cannot use strlen() on it because
@@ -1147,49 +1170,49 @@ openssl bf -in cipher.bin -K 000102030405060708090A0B0C0D0E0F \e
            -iv 0102030405060708 -d
 .Ed
 .Pp
-General encryption, decryption function example using FILE I/O and RC2
-with an 80-bit key:
+General encryption, decryption function example using FILE I/O and AES128
+with an 128-bit key:
 .Bd -literal
 int
 do_crypt(FILE *in, FILE *out, int do_encrypt)
 {
 	/* Allow enough space in output buffer for additional block */
-	inbuf[1024], outbuf[1024 + EVP_MAX_BLOCK_LENGTH];
+	unsigned char inbuf[1024], outbuf[1024 + EVP_MAX_BLOCK_LENGTH];
 	int inlen, outlen;
+	EVP_CIPHER_CTX *ctx;
+
 	/*
 	 * Bogus key and IV: we'd normally set these from
 	 * another source.
 	 */
-	unsigned char key[] = "0123456789";
-	unsigned char iv[] = "12345678";
+	unsigned char key[] = "0123456789abcdeF";
+	unsigned char iv[] = "1234567887654321";
 
-	/* Don't set key or IV because we will modify the parameters */
-	EVP_CIPHER_CTX_init(&ctx);
-	EVP_CipherInit_ex(&ctx, EVP_rc2(), NULL, NULL, NULL, do_encrypt);
-	EVP_CIPHER_CTX_set_key_length(&ctx, 10);
-	/* We finished modifying parameters so now we can set key and IV */
-	EVP_CipherInit_ex(&ctx, NULL, NULL, key, iv, do_encrypt);
+	ctx = EVP_CIPHER_CTX_new();
+	EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, NULL, NULL,
+	    do_encrypt);
+	EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, do_encrypt);
 
-	for(;;) {
+	for (;;) {
 		inlen = fread(inbuf, 1, 1024, in);
 		if (inlen <= 0)
 			break;
-		if (!EVP_CipherUpdate(&ctx, outbuf, &outlen, inbuf,
+		if (!EVP_CipherUpdate(ctx, outbuf, &outlen, inbuf,
 		    inlen)) {
 			/* Error */
-			EVP_CIPHER_CTX_cleanup(&ctx);
+			EVP_CIPHER_CTX_free(ctx);
 			return 0;
 		}
 		fwrite(outbuf, 1, outlen, out);
 	}
-	if (!EVP_CipherFinal_ex(&ctx, outbuf, &outlen)) {
+	if (!EVP_CipherFinal_ex(ctx, outbuf, &outlen)) {
 		/* Error */
-		EVP_CIPHER_CTX_cleanup(&ctx);
+		EVP_CIPHER_CTX_free(ctx);
 		return 0;
 	}
 	fwrite(outbuf, 1, outlen, out);
 
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_free(ctx);
 	return 1;
 }
 .Ed
@@ -1206,6 +1229,9 @@ do_crypt(FILE *in, FILE *out, int do_encrypt)
 and
 .Fn EVP_CIPHER_CTX_set_padding
 appeared in OpenSSL 0.9.7.
+.Pp
+.Fn EVP_CIPHER_CTX_reset
+fist appeared in OpenSSL 1.1.0.
 .Sh BUGS
 For RC5 the number of rounds can currently only be set to 8, 12 or 16.
 This is a limitation of the current RC5 code rather than the EVP
