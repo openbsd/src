@@ -1,6 +1,6 @@
-.\"	$OpenBSD: BIO_f_ssl.3,v 1.5 2017/08/20 17:35:18 schwarze Exp $
-.\"	OpenSSL BIO_f_ssl.pod e90fc053 Jul 15 09:39:45 2017 -0400
-.\"	OpenSSL BIO_f_ssl.pod f672aee4 Feb 9 11:52:40 2016 -0500
+.\" $OpenBSD: BIO_f_ssl.3,v 1.6 2018/02/19 16:11:02 schwarze Exp $
+.\" full merge up to: OpenSSL f672aee4 Feb 9 11:52:40 2016 -0500
+.\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000, 2003, 2009, 2014-2016 The OpenSSL Project.
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 20 2017 $
+.Dd $Mdocdate: February 19 2018 $
 .Dt BIO_F_SSL 3
 .Os
 .Sh NAME
@@ -353,8 +353,37 @@ and
 .Fn BIO_do_handshake
 are implemented as macros.
 .Sh RETURN VALUES
-.\" XXX
-This section is incomplete.
+.Fn BIO_f_ssl
+returns a pointer to a static
+.Vt BIO_METHOD
+structure.
+.Pp
+.Fn BIO_set_ssl ,
+.Fn BIO_get_ssl ,
+.Fn BIO_set_ssl_mode ,
+.Fn BIO_set_ssl_renegotiate_bytes ,
+.Fn BIO_set_ssl_renegotiate_timeout ,
+and
+.Fn BIO_get_num_renegotiates
+return 1 on success or a value less than or equal to 0
+if an error occurred.
+.Pp
+.Fn BIO_new_ssl ,
+.Fn BIO_new_ssl_connect ,
+and
+.Fn BIO_new_buffer_ssl_connect
+returns a pointer to a newly allocated
+.Vt BIO
+chain or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn BIO_ssl_copy_session_id
+returns 1 on success or 0 on error.
+.Pp
+.Fn BIO_do_handshake
+returns 1 if the connection was established successfully
+or a value less than or equal to 0 otherwise.
 .Sh EXAMPLES
 This SSL/TLS client example attempts to retrieve a page from an SSL/TLS web
 server.
