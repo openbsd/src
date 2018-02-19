@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.104 2018/02/16 06:26:10 dlg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.105 2018/02/19 00:46:27 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -157,6 +157,7 @@ struct gre_tunnel {
 #define t_dst4	t_dst.in4
 #define t_dst6	t_dst.in6
 	int			t_ttl;
+	uint16_t		t_df;
 	sa_family_t		t_af;
 };
 
@@ -321,6 +322,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_rtrequest = p2p_rtrequest;
 
 	sc->sc_tunnel.t_ttl = ip_defttl;
+	sc->sc_tunnel.t_df = htons(0);
 
 	timeout_set(&sc->sc_ka_send, gre_keepalive_send, sc);
 	timeout_set_proc(&sc->sc_ka_hold, gre_keepalive_hold, sc);
@@ -381,6 +383,7 @@ egre_clone_create(struct if_clone *ifc, int unit)
 	ether_fakeaddr(ifp);
 
 	sc->sc_tunnel.t_ttl = ip_defttl;
+	sc->sc_tunnel.t_df = htons(0);
 
 	ifmedia_init(&sc->sc_media, 0, egre_media_change, egre_media_status);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
@@ -999,7 +1002,7 @@ gre_encap(const struct gre_tunnel *tunnel, struct mbuf *m, uint16_t proto,
 			return (NULL);
 
 		ip = mtod(m, struct ip *);
-		ip->ip_off = 0; /* DF ? */
+		ip->ip_off = tunnel->t_df;
 		ip->ip_tos = tos;
 		ip->ip_len = htons(m->m_pkthdr.len);
 		ip->ip_ttl = ttl;
@@ -1026,6 +1029,10 @@ gre_encap(const struct gre_tunnel *tunnel, struct mbuf *m, uint16_t proto,
 		ip6->ip6_hlim = ttl;
 		ip6->ip6_src = tunnel->t_src6;
 		ip6->ip6_dst = tunnel->t_dst6;
+
+		if (tunnel->t_df)
+			SET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
+
 		break;
 	}
 #endif /* INET6 */
@@ -1115,6 +1122,14 @@ gre_tunnel_ioctl(struct ifnet *ifp, struct gre_tunnel *tunnel,
 		break;
 	case SIOCGLIFPHYRTABLE:
 		ifr->ifr_rdomainid = tunnel->t_rtableid;
+		break;
+
+	case SIOCSLIFPHYDF:
+		/* commit */
+		tunnel->t_df = ifr->ifr_df ? htons(IP_DF) : htons(0);
+		break;
+	case SIOCGLIFPHYDF:
+		ifr->ifr_df = tunnel->t_df ? 1 : 0;
 		break;
 
 	default:
@@ -1369,6 +1384,7 @@ gre_keepalive_send(void *arg)
 	ttl = sc->sc_tunnel.t_ttl == -1 ? ip_defttl : sc->sc_tunnel.t_ttl;
 
 	t.t_af = sc->sc_tunnel.t_af;
+	t.t_df = sc->sc_tunnel.t_df;
 	t.t_src = sc->sc_tunnel.t_dst;
 	t.t_dst = sc->sc_tunnel.t_src;
 	t.t_key = sc->sc_tunnel.t_key;
