@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.20 2015/12/21 21:49:02 sf Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.21 2018/02/19 08:59:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -89,7 +89,7 @@ mstsopen(dev_t dev, struct tty *tp, struct proc *p)
 	DPRINTF(("mstsopen\n"));
 	if (tp->t_line == MSTSDISC)
 		return ENODEV;
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return error;
 	np = malloc(sizeof(struct msts), M_DEVBUF, M_WAITOK|M_ZERO);
 	snprintf(np->timedev.xname, sizeof(np->timedev.xname), "msts%d",

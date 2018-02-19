@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.331 2018/01/02 06:38:45 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.332 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -164,7 +164,7 @@ sys_sysctl(struct proc *p, void *v, register_t *retval)
 	int name[CTL_MAXNAME];
 
 	if (SCARG(uap, new) != NULL &&
-	    (error = suser(p, 0)))
+	    (error = suser(p)))
 		return (error);
 	/*
 	 * all top-level sysctl names are non-terminal
@@ -487,7 +487,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdint(oldp, oldlenp, newp, mp->msg_bufs));
 	}
 	case KERN_CONSBUF:
-		if ((error = suser(p, 0)))
+		if ((error = suser(p)))
 			return (error);
 		/* FALLTHROUGH */
 	case KERN_MSGBUF: {
@@ -1065,7 +1065,7 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 			kf->f_data = PTRTOINT64(fp->f_data);
 		kf->f_usecount = 0;
 
-		if (suser(p, 0) == 0 || p->p_ucred->cr_uid == fp->f_cred->cr_uid) {
+		if (suser(p) == 0 || p->p_ucred->cr_uid == fp->f_cred->cr_uid) {
 			kf->f_offset = fp->f_offset;
 			kf->f_rxfer = fp->f_rxfer;
 			kf->f_rwfer = fp->f_wxfer;
@@ -1273,7 +1273,7 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 	if (elem_size < 1)
 		return (EINVAL);
 
-	show_pointers = suser(curproc, 0) == 0;
+	show_pointers = suser(curproc) == 0;
 
 	kf = malloc(sizeof(*kf), M_TEMP, M_WAITOK);
 
@@ -1464,7 +1464,7 @@ sysctl_doproc(int *name, u_int namelen, char *where, size_t *sizep)
 	dothreads = op & KERN_PROC_SHOW_THREADS;
 	op &= ~KERN_PROC_SHOW_THREADS;
 
-	show_pointers = suser(curproc, 0) == 0;
+	show_pointers = suser(curproc) == 0;
 
 	if (where != NULL)
 		kproc = malloc(sizeof(*kproc), M_TEMP, M_WAITOK);
@@ -1717,7 +1717,7 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	/* Only owner or root can get env */
 	if ((op == KERN_PROC_NENV || op == KERN_PROC_ENV) &&
 	    (vpr->ps_ucred->cr_uid != cp->p_ucred->cr_uid &&
-	    (error = suser(cp, 0)) != 0))
+	    (error = suser(cp)) != 0))
 		return (error);
 
 	ps_strings = vpr->ps_strings;
@@ -1900,7 +1900,7 @@ sysctl_proc_cwd(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	/* Only owner or root can get cwd */
 	if (findpr->ps_ucred->cr_uid != cp->p_ucred->cr_uid &&
-	    (error = suser(cp, 0)) != 0)
+	    (error = suser(cp)) != 0)
 		return (error);
 
 	len = *oldlenp;
@@ -1956,7 +1956,7 @@ sysctl_proc_nobroadcastkill(int *name, u_int namelen, void *newp, size_t newlen,
 		return (EINVAL);
 
 	/* Only root can change PS_NOBROADCASTKILL */
-	if (newp != 0 && (error = suser(cp, 0)) != 0)
+	if (newp != 0 && (error = suser(cp)) != 0)
 		return (error);
 
 	/* get the PS_NOBROADCASTKILL flag */
@@ -2018,17 +2018,17 @@ sysctl_proc_vmmap(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 #if 1
 		/* XXX Allow only root for now */
-		if ((error = suser(cp, 0)) != 0)
+		if ((error = suser(cp)) != 0)
 			return (error);
 #else
 		/* Only owner or root can get vmmap */
 		if (findpr->ps_ucred->cr_uid != cp->p_ucred->cr_uid &&
-		    (error = suser(cp, 0)) != 0)
+		    (error = suser(cp)) != 0)
 			return (error);
 #endif
 	} else {
 		/* Only root can get kernel_map */
-		if ((error = suser(cp, 0)) != 0)
+		if ((error = suser(cp)) != 0)
 			return (error);
 		findpr = NULL;
 	}

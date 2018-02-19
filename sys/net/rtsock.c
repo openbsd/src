@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.261 2018/02/11 02:26:55 benno Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.262 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -656,7 +656,7 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	 * Verify that the caller has the appropriate privilege; RTM_GET
 	 * is the only operation the non-superuser is allowed.
 	 */
-	if (rtm->rtm_type != RTM_GET && suser(curproc, 0) != 0) {
+	if (rtm->rtm_type != RTM_GET && suser(curproc) != 0) {
 		error = EACCES;
 		goto fail;
 	}

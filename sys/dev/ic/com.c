@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.164 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: com.c,v 1.165 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -375,7 +375,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p, 0) != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p) != 0)
 		return EBUSY;
 	else
 		s = spltty();
@@ -741,7 +741,7 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCSFLAGS: {
 		int userbits, driverbits = 0;
 
-		error = suser(p, 0);
+		error = suser(p);
 		if (error != 0)
 			return(EPERM);
 

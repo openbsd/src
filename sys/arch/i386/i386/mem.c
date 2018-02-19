@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.53 2017/12/14 03:30:43 guenther Exp $ */
+/*	$OpenBSD: mem.c,v 1.54 2018/02/19 08:59:52 mpi Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -90,7 +90,7 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 		break;
 #ifdef APERTURE
 	case 4:
-	        if (suser(p, 0) != 0 || !allowaperture)
+	        if (suser(p) != 0 || !allowaperture)
 			return (EPERM);
 
 		/* authorize only one simultaneous open() unless
@@ -210,7 +210,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 	switch (minor(dev)) {
 	/* minor device 0 is physical memory */
 	case 0:
-		if ((u_int)off > ptoa(physmem) && suser(p, 0) != 0)
+		if ((u_int)off > ptoa(physmem) && suser(p) != 0)
 			return -1;
 		return off;
 

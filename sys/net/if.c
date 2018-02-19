@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.545 2018/02/19 00:24:48 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.546 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1815,21 +1815,21 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 	switch (cmd) {
 	case SIOCIFCREATE:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 		NET_LOCK();
 		error = if_clone_create(ifr->ifr_name, 0);
 		NET_UNLOCK();
 		return (error);
 	case SIOCIFDESTROY:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 		NET_LOCK();
 		error = if_clone_destroy(ifr->ifr_name);
 		NET_UNLOCK();
 		return (error);
 	case SIOCSIFGATTR:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 		NET_LOCK();
 		error = if_setgroupattribs(data);
@@ -1863,7 +1863,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	switch (cmd) {
 	case SIOCIFAFATTACH:
 	case SIOCIFAFDETACH:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			break;
 		NET_LOCK();
 		switch (ifar->ifar_af) {
@@ -1887,7 +1887,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			break;
 
 		NET_LOCK();
@@ -1909,7 +1909,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCSIFXFLAGS:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			break;
 
 		NET_LOCK();
@@ -1984,7 +1984,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCSIFMETRIC:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			break;
 		NET_LOCK();
 		ifp->if_metric = ifr->ifr_metric;
@@ -1992,7 +1992,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCSIFMTU:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			break;
 		NET_LOCK();
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
@@ -2002,7 +2002,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCSIFDESCR:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			break;
 		error = copyinstr(ifr->ifr_data, ifdescrbuf,
 		    IFDESCRSIZE, &bytesdone);
@@ -2013,7 +2013,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCSIFRTLABEL:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			break;
 		error = copyinstr(ifr->ifr_data, ifrtlabelbuf,
 		    RTLABEL_LEN, &bytesdone);
@@ -2024,7 +2024,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCSIFPRIORITY:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			break;
 		if (ifr->ifr_metric < 0 || ifr->ifr_metric > 15) {
 			error = EINVAL;
@@ -2034,7 +2034,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCSIFRDOMAIN:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			break;
 		NET_LOCK();
 		error = if_setrdomain(ifp, ifr->ifr_rdomainid);
@@ -2042,7 +2042,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCAIFGROUP:
-		if ((error = suser(p, 0)))
+		if ((error = suser(p)))
 			break;
 		NET_LOCK();
 		error = if_addgroup(ifp, ifgr->ifgr_group);
@@ -2055,7 +2055,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCDIFGROUP:
-		if ((error = suser(p, 0)))
+		if ((error = suser(p)))
 			break;
 		NET_LOCK();
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
@@ -2067,7 +2067,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCSIFLLADDR:
-		if ((error = suser(p, 0)))
+		if ((error = suser(p)))
 			break;
 		if ((ifp->if_sadl == NULL) ||
 		    (ifr->ifr_addr.sa_len != ETHER_ADDR_LEN) ||
@@ -2098,7 +2098,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCSIFLLPRIO:
-		if ((error = suser(p, 0)))
+		if ((error = suser(p)))
 			break;
 		if (ifr->ifr_llprio > UCHAR_MAX) {
 			error = EINVAL;
@@ -2122,7 +2122,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFPAIR:
 	case SIOCSIFPARENT:
 	case SIOCDIFPARENT:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			break;
 		/* FALLTHROUGH */
 	default:

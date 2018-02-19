@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.40 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.41 2018/02/19 08:59:53 mpi Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -1059,7 +1059,7 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, caddr_t arg,
 			break;
 		/* FALLTHROUGH */
 	default:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 	}
 

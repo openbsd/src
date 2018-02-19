@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.175 2018/01/09 15:24:24 bluhm Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.176 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -890,7 +890,7 @@ vlan_set_compat(struct ifnet *ifp, struct ifreq *ifr)
 
 	int error;
 
-	error = suser(curproc, 0);
+	error = suser(curproc);
 	if (error != 0)
 		return (error);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.20 2014/07/13 23:10:23 deraadt Exp $ */
+/*	$OpenBSD: cz.c,v 1.21 2018/02/19 08:59:52 mpi Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -964,7 +964,7 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(p, 0) != 0)
+	    suser(p) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -1171,7 +1171,7 @@ czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p, 0);
+		error = suser(p);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.83 2018/01/31 10:17:22 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.84 2018/02/19 08:59:52 mpi Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -1773,7 +1773,7 @@ static inline int
 capable(int cap)
 {
 	KASSERT(cap == CAP_SYS_ADMIN);
-	return suser(curproc, 0);
+	return suser(curproc);
 }
 
 typedef int pgprot_t;

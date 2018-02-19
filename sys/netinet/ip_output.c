@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.344 2017/11/22 12:28:49 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.345 2018/02/19 08:59:53 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -989,7 +989,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			switch (optname) {
 			case IP_AUTH_LEVEL:
 				if (optval < IPSEC_AUTH_LEVEL_DEFAULT &&
-				    suser(p, 0)) {
+				    suser(p)) {
 					error = EACCES;
 					break;
 				}
@@ -998,7 +998,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 
 			case IP_ESP_TRANS_LEVEL:
 				if (optval < IPSEC_ESP_TRANS_LEVEL_DEFAULT &&
-				    suser(p, 0)) {
+				    suser(p)) {
 					error = EACCES;
 					break;
 				}
@@ -1007,7 +1007,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 
 			case IP_ESP_NETWORK_LEVEL:
 				if (optval < IPSEC_ESP_NETWORK_LEVEL_DEFAULT &&
-				    suser(p, 0)) {
+				    suser(p)) {
 					error = EACCES;
 					break;
 				}
@@ -1015,7 +1015,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 				break;
 			case IP_IPCOMP_LEVEL:
 				if (optval < IPSEC_IPCOMP_LEVEL_DEFAULT &&
-				    suser(p, 0)) {
+				    suser(p)) {
 					error = EACCES;
 					break;
 				}
@@ -1040,7 +1040,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			/* needs privileges to switch when already set */
 			if (p->p_p->ps_rtableid != rtid &&
 			    p->p_p->ps_rtableid != 0 &&
-			    (error = suser(p, 0)) != 0)
+			    (error = suser(p)) != 0)
 				break;
 			/* table must exist */
 			if (!rtable_exists(rtid)) {

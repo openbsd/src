@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.22 2018/01/09 15:24:24 bluhm Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.23 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -390,12 +390,12 @@ switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCBRDGADD:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		error = switch_port_add(sc, (struct ifbreq *)data);
 		break;
 	case SIOCBRDGDEL:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		error = switch_port_del(sc, (struct ifbreq *)data);
 		break;
@@ -403,7 +403,7 @@ switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		error = switch_port_list(sc, (struct ifbifconf *)data);
 		break;
 	case SIOCBRDGADDL:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		error = switch_port_add(sc, (struct ifbreq *)data);
 		if (error && error != EEXIST)

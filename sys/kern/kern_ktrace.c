@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.94 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.95 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -441,7 +441,7 @@ doktrace(struct vnode *vp, int ops, int facs, pid_t pid, struct proc *p)
 		goto done;
 	}
 	if (ops == KTROP_SET) {
-		if (suser(p, 0) == 0)
+		if (suser(p) == 0)
 			facs |= KTRFAC_ROOT;
 		ktrstart(p, vp, cred);
 	}

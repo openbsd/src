@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.2 2017/05/30 17:47:11 krw Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.3 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -528,7 +528,7 @@ vioconopen(dev_t dev, int flag, int mode, struct proc *p)
 		ttsetwater(tp);
 		splx(s);
 	}
-	else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p, 0) != 0) {
+	else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p) != 0) {
 		return (EBUSY);
 	}
 

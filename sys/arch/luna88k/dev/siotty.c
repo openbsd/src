@@ -1,4 +1,4 @@
-/* $OpenBSD: siotty.c,v 1.21 2017/11/03 06:54:06 aoyama Exp $ */
+/* $OpenBSD: siotty.c,v 1.22 2018/02/19 08:59:52 mpi Exp $ */
 /* $NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $ */
 
 /*-
@@ -469,7 +469,7 @@ sioopen(dev_t dev, int flag, int mode, struct proc *p)
 	tp = sc->sc_tty;
 
 	if ((tp->t_state & TS_ISOPEN) && (tp->t_state & TS_XCLUDE)
-	    && suser(p, 0) != 0)
+	    && suser(p) != 0)
 		return EBUSY;
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
@@ -592,7 +592,7 @@ sioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		siomctl(sc, *(int *)data, DMBIC);
 		break;
 	case TIOCSFLAGS: /* Instruct how serial port behaves */
-		error = suser(p, 0);
+		error = suser(p);
 		if (error != 0)
 			return EPERM;
 		sc->sc_flags = *(int *)data;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.233 2018/02/11 00:24:13 dlg Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.234 2018/02/19 08:59:53 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1306,7 +1306,7 @@ do { \
 			switch (optname) {
 			case IPV6_AUTH_LEVEL:
 			        if (optval < IPSEC_AUTH_LEVEL_DEFAULT &&
-				    suser(p, 0)) {
+				    suser(p)) {
 					error = EACCES;
 					break;
 				}
@@ -1315,7 +1315,7 @@ do { \
 
 			case IPV6_ESP_TRANS_LEVEL:
 			        if (optval < IPSEC_ESP_TRANS_LEVEL_DEFAULT &&
-				    suser(p, 0)) {
+				    suser(p)) {
 					error = EACCES;
 					break;
 				}
@@ -1324,7 +1324,7 @@ do { \
 
 			case IPV6_ESP_NETWORK_LEVEL:
 			        if (optval < IPSEC_ESP_NETWORK_LEVEL_DEFAULT &&
-				    suser(p, 0)) {
+				    suser(p)) {
 					error = EACCES;
 					break;
 				}
@@ -1333,7 +1333,7 @@ do { \
 
 			case IPV6_IPCOMP_LEVEL:
 			        if (optval < IPSEC_IPCOMP_LEVEL_DEFAULT &&
-				    suser(p, 0)) {
+				    suser(p)) {
 					error = EACCES;
 					break;
 				}
@@ -1353,7 +1353,7 @@ do { \
 			/* needs privileges to switch when already set */
 			if (p->p_p->ps_rtableid != rtid &&
 			    p->p_p->ps_rtableid != 0 &&
-			    (error = suser(p, 0)) != 0)
+			    (error = suser(p)) != 0)
 				break;
 			/* table must exist */
 			if (!rtable_exists(rtid)) {
@@ -1959,7 +1959,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
 			 * all multicast addresses. Only super user is allowed
 			 * to do this.
 			 */
-			if (suser(p, 0))
+			if (suser(p))
 			{
 				error = EACCES;
 				break;
@@ -2051,7 +2051,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
 		}
 		mreq = mtod(m, struct ipv6_mreq *);
 		if (IN6_IS_ADDR_UNSPECIFIED(&mreq->ipv6mr_multiaddr)) {
-			if (suser(p, 0))
+			if (suser(p))
 			{
 				error = EACCES;
 				break;

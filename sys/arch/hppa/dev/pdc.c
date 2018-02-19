@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.39 2011/08/16 17:26:04 kettenis Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.40 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -223,7 +223,7 @@ pdcopen(dev, flag, mode, p)
 		ttsetwater(tp);
 
 		setuptimeout = 1;
-	} else if (tp->t_state&TS_XCLUDE && suser(p, 0) != 0) {
+	} else if (tp->t_state&TS_XCLUDE && suser(p) != 0) {
 		splx(s);
 		return (EBUSY);
 	}

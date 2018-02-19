@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.146 2018/02/11 04:09:48 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.147 2018/02/19 08:59:53 mpi Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -873,7 +873,7 @@ sys_mlock(struct proc *p, void *v, register_t *retval)
 			p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur)
 		return (EAGAIN);
 #else
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return (error);
 #endif
 
@@ -907,7 +907,7 @@ sys_munlock(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);		/* disallow wrap-around. */
 
 #ifndef pmap_wired_count
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return (error);
 #endif
 
@@ -934,7 +934,7 @@ sys_mlockall(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);
 
 #ifndef pmap_wired_count
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return (error);
 #endif
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.89 2018/01/22 12:20:54 fcambus Exp $ */
+/* $OpenBSD: wskbd.c,v 1.90 2018/02/19 08:59:52 mpi Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -1060,7 +1060,7 @@ getbell:
 		return (0);
 
 	case WSKBDIO_SETDEFAULTBELL:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 		kbdp = &wskbd_default_bell_data;
 		goto setbell;
@@ -1096,7 +1096,7 @@ getkeyrepeat:
 		return (0);
 
 	case WSKBDIO_SETDEFAULTKEYREPEAT:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 		kkdp = &wskbd_default_keyrepeat_data;
 		goto setkeyrepeat;

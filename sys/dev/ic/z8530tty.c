@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.29 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.30 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -479,7 +479,7 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(p, 0) != 0)
+	    suser(p) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -775,7 +775,7 @@ zsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p, 0);
+		error = suser(p);
 		if (error)
 			break;
 		zst->zst_swflags = *(int *)data;

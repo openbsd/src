@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.66 2018/01/09 15:24:24 bluhm Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.67 2018/02/19 08:59:52 mpi Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -796,7 +796,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		struct pppoediscparms *parms = (struct pppoediscparms *)data;
 		int len;
 
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 		if (parms->eth_ifname[0] != '\0') {
 			struct ifnet	*eth_if;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.10 2017/12/14 03:30:43 guenther Exp $	*/
+/*	$OpenBSD: mem.c,v 1.11 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: mem.c,v 1.21 2006/07/23 22:06:07 ad Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 	if (minor(dev) != 0)
 		return (-1);
 
-	if (__mm_mem_addr((paddr_t)off) == FALSE && suser(p, 0) != 0)
+	if (__mm_mem_addr((paddr_t)off) == FALSE && suser(p) != 0)
 		return (-1);
 	return ((paddr_t)off);
 }

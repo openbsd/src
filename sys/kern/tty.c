@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.136 2018/02/06 01:24:31 tedu Exp $	*/
+/*	$OpenBSD: tty.c,v 1.137 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -829,7 +829,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		splx(s);
 		break;
 	case TIOCGPGRP:			/* get pgrp of tty */
-		if (!isctty(pr, tp) && suser(p, 0))
+		if (!isctty(pr, tp) && suser(p))
 			return (ENOTTY);
 		*(int *)data = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.329 2018/02/07 11:30:01 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.330 2018/02/19 08:59:53 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2060,7 +2060,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	case SIOCSVH:
 		KERNEL_ASSERT_LOCKED(); /* touching carp_vhosts */
 		vhe = SRPL_FIRST_LOCKED(&sc->carp_vhosts);
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			break;
 		if ((error = copyin(ifr->ifr_data, &carpr, sizeof carpr)))
 			break;
@@ -2147,7 +2147,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		}
 		carpr.carpr_advbase = sc->sc_advbase;
 		carpr.carpr_balancing = sc->sc_balancing;
-		if (suser(p, 0) == 0)
+		if (suser(p) == 0)
 			bcopy(sc->sc_key, carpr.carpr_key,
 			    sizeof(carpr.carpr_key));
 		carpr.carpr_peer.s_addr = sc->sc_peer.s_addr;

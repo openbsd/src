@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.306 2018/02/11 02:17:46 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.307 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -269,7 +269,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCBRDGADD:
 	/* bridge(4) does not distinguish between routing/forwarding ports */
 	case SIOCBRDGADDL:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 
 		ifs = ifunit(req->ifbr_ifsname);
@@ -336,7 +336,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		TAILQ_INSERT_TAIL(&sc->sc_iflist, p, next);
 		break;
 	case SIOCBRDGDEL:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		ifs = ifunit(req->ifbr_ifsname);
 		if (ifs == NULL) {
@@ -354,7 +354,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = bridge_bifconf(sc, (struct ifbifconf *)data);
 		break;
 	case SIOCBRDGADDS:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		ifs = ifunit(req->ifbr_ifsname);
 		if (ifs == NULL) {			/* no such interface */
@@ -388,7 +388,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		TAILQ_INSERT_TAIL(&sc->sc_spanlist, p, next);
 		break;
 	case SIOCBRDGDELS:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		TAILQ_FOREACH(p, &sc->sc_spanlist, next) {
 			if (strncmp(p->ifp->if_xname, req->ifbr_ifsname,
@@ -443,7 +443,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCBRDGSIFFLGS:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		ifs = ifunit(req->ifbr_ifsname);
 		if (ifs == NULL) {
@@ -540,7 +540,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCBRDGSPROTO:
 	case SIOCBRDGSIFPRIO:
 	case SIOCBRDGSIFCOST:
-		error = suser(curproc, 0);
+		error = suser(curproc);
 		break;
 	default:
 		error = ENOTTY;

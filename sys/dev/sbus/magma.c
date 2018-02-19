@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.27 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: magma.c,v 1.28 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -892,7 +892,7 @@ mttyopen(dev_t dev, int flags, int mode, struct proc *p)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p, 0) != 0) {
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p) != 0) {
 		return (EBUSY);	/* superuser can break exclusive access */
 	} else {
 		s = spltty();
@@ -1054,7 +1054,7 @@ mttyioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		if (suser(p, 0))
+		if (suser(p))
 			error = EPERM;
 		else
 			mp->mp_openflags = *((int *)data) &

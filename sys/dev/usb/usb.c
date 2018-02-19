@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.115 2018/02/03 13:37:37 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.116 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -598,7 +598,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 #ifdef USB_DEBUG
 	case USB_SETDEBUG:
 		/* only root can access to these debug flags */
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			return (error);
 		if (!(flag & FWRITE))
 			return (EBADF);

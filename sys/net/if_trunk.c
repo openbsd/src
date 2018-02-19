@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.135 2018/01/09 15:24:24 bluhm Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.136 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -631,7 +631,7 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCSTRUNK:
-		if ((error = suser(curproc, 0)) != 0) {
+		if ((error = suser(curproc)) != 0) {
 			error = EPERM;
 			break;
 		}
@@ -688,7 +688,7 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		trunk_port2req(tp, rp);
 		break;
 	case SIOCSTRUNKPORT:
-		if ((error = suser(curproc, 0)) != 0) {
+		if ((error = suser(curproc)) != 0) {
 			error = EPERM;
 			break;
 		}
@@ -700,7 +700,7 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = trunk_port_create(tr, tpif);
 		break;
 	case SIOCSTRUNKDELPORT:
-		if ((error = suser(curproc, 0)) != 0) {
+		if ((error = suser(curproc)) != 0) {
 			error = EPERM;
 			break;
 		}

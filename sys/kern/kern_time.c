@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.100 2017/12/18 05:51:53 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.101 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ sys_clock_settime(struct proc *p, void *v, register_t *retval)
 	clockid_t clock_id;
 	int error;
 
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, tp), &ats, sizeof(ats))) != 0)
@@ -371,7 +371,7 @@ sys_settimeofday(struct proc *p, void *v, register_t *retval)
 	tv = SCARG(uap, tv);
 	tzp = SCARG(uap, tzp);
 
-	if ((error = suser(p, 0)))
+	if ((error = suser(p)))
 		return (error);
 	/* Verify all parameters before changing time. */
 	if (tv && (error = copyin(tv, &atv, sizeof(atv))))
@@ -408,7 +408,7 @@ sys_adjfreq(struct proc *p, void *v, register_t *retval)
 			return (error);
 	}
 	if (freq) {
-		if ((error = suser(p, 0)))
+		if ((error = suser(p)))
 			return (error);
 		if ((error = copyin(freq, &f, sizeof(f))))
 			return (error);
@@ -448,7 +448,7 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 	}
 
 	if (delta) {
-		if ((error = suser(p, 0)))
+		if ((error = suser(p)))
 			return (error);
 
 		if ((error = copyin(delta, &atv, sizeof(struct timeval))))

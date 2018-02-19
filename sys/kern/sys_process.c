@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.78 2017/10/14 10:17:08 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.79 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -361,14 +361,14 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		 */
 		if ((tr->ps_ucred->cr_ruid != p->p_ucred->cr_ruid ||
 		    ISSET(tr->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
-		    (error = suser(p, 0)) != 0)
+		    (error = suser(p)) != 0)
 			return (error);
 
 		/*
 		 * 	(5.5) it's not a child of the tracing process.
 		 */
 		if (global_ptrace == 0 && !inferior(tr, p->p_p) &&
-		    (error = suser(p, 0)) != 0)
+		    (error = suser(p)) != 0)
 			return (error);
 
 		/*
@@ -812,7 +812,7 @@ process_checkioperm(struct proc *p, struct process *tr)
 
 	if ((tr->ps_ucred->cr_ruid != p->p_ucred->cr_ruid ||
 	    ISSET(tr->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
-	    (error = suser(p, 0)) != 0)
+	    (error = suser(p)) != 0)
 		return (error);
 
 	if ((tr->ps_pid == 1) && (securelevel > -1))

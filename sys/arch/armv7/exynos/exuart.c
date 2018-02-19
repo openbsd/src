@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.13 2017/10/27 11:23:28 kevlo Exp $ */
+/* $OpenBSD: exuart.c,v 1.14 2018/02/19 08:59:52 mpi Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -645,7 +645,7 @@ exuartopen(dev_t dev, int flag, int mode, struct proc *p)
 		SET(tp->t_state, TS_CARR_ON); /* XXX */
 
 
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p, 0) != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p) != 0)
 		return EBUSY;
 	else
 		s = spltty();
@@ -825,7 +825,7 @@ exuartioctl( dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p, 0);
+		error = suser(p);
 		if (error != 0)
 			return(EPERM);
 

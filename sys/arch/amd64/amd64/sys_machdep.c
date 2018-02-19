@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.19 2018/01/07 18:54:44 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.20 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@ amd64_iopl(struct proc *p, void *args, register_t *retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct amd64_iopl_args ua;
 
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return error;
 
 #ifdef APERTURE

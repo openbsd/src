@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.38 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.39 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ i386_iopl(struct proc *p, void *args, register_t *retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct i386_iopl_args ua;
 
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return error;
 #ifdef APERTURE
 	if (!allowaperture && securelevel > 0)

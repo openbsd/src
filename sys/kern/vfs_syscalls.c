@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.275 2018/02/10 05:24:23 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.276 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	int flags = SCARG(uap, flags);
 	void *args = NULL;
 
-	if ((error = suser(p, 0)))
+	if ((error = suser(p)))
 		return (error);
 
 	/*
@@ -379,7 +379,7 @@ sys_unmount(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return (error);
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
@@ -588,7 +588,7 @@ copyout_statfs(struct statfs *sp, void *uaddr, struct proc *p)
 	int error;
 
 	/* Don't let non-root see filesystem id (for NFS security) */
-	if (suser(p, 0)) {
+	if (suser(p)) {
 		fsid_t fsid;
 
 		s = (char *)sp;
@@ -812,7 +812,7 @@ sys_chroot(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
@@ -1020,7 +1020,7 @@ sys_getfh(struct proc *p, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	error = suser(p, 0);
+	error = suser(p);
 	if (error)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
@@ -1066,7 +1066,7 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p, 0)))
+	if ((error = suser(p)))
 		return (error);
 
 	flags = FFLAGS(SCARG(uap, flags));
@@ -1189,7 +1189,7 @@ sys_fhstat(struct proc *p, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p, 0)))
+	if ((error = suser(p)))
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
@@ -1223,7 +1223,7 @@ sys_fhstatfs(struct proc *p, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p, 0)))
+	if ((error = suser(p)))
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
@@ -1289,7 +1289,7 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 	vp = nd.ni_vp;
 	if (!S_ISFIFO(mode) || dev != 0) {
 		if ((nd.ni_dvp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
-		    (error = suser(p, 0)) != 0)
+		    (error = suser(p)) != 0)
 			goto out;
 		if (p->p_fd->fd_rdir) {
 			error = EINVAL;
@@ -1801,7 +1801,7 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf, int flag)
 			return (ENOENT);
 	}
 	/* Don't let non-root see generation numbers (for NFS security) */
-	if (suser(p, 0))
+	if (suser(p))
 		sb.st_gen = 0;
 	error = copyout(&sb, buf, sizeof(sb));
 #ifdef KTRACE
@@ -1993,7 +1993,7 @@ dovchflags(struct proc *p, struct vnode *vp, u_int flags)
 	else if (flags == VNOVAL)
 		error = EINVAL;
 	else {
-		if (suser(p, 0)) {
+		if (suser(p)) {
 			if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p))
 			    != 0)
 				goto out;
@@ -2167,7 +2167,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 			goto out;
 		if ((uid != -1 || gid != -1) &&
 		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
-		    (suser(p, 0) || suid_clear)) {
+		    (suser(p) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2219,7 +2219,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 			goto out;
 		if ((uid != -1 || gid != -1) &&
 		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
-		    (suser(p, 0) || suid_clear)) {
+		    (suser(p) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2269,7 +2269,7 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 			goto out;
 		if ((uid != -1 || gid != -1) &&
 		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
-		    (suser(p, 0) || suid_clear)) {
+		    (suser(p) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2874,7 +2874,7 @@ sys_revoke(struct proc *p, void *v, register_t *retval)
 	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
 		goto out;
 	if (p->p_ucred->cr_uid != vattr.va_uid &&
-	    (error = suser(p, 0)))
+	    (error = suser(p)))
 		goto out;
 	if (vp->v_usecount > 1 || (vp->v_flag & (VALIASED)))
 		VOP_REVOKE(vp, REVOKEALL);

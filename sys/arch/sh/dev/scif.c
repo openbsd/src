@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.18 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: scif.c,v 1.19 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -686,7 +686,7 @@ scifopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(p, 0) != 0)
+	    suser(p) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -859,7 +859,7 @@ scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p, 0);
+		error = suser(p);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

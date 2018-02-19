@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.227 2017/12/04 13:40:34 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.228 2018/02/19 08:59:53 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -361,7 +361,7 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			return (error);
 	} else {
 		if (in_rootonly(ntohs(lport), so->so_proto->pr_protocol) &&
-		    suser(p, 0) != 0)
+		    suser(p) != 0)
 			return (EACCES);
 	}
 	if (nam) {
@@ -456,7 +456,7 @@ in_pcbpickport(u_int16_t *lport, void *laddr, int wild, struct inpcb *inp,
 		first = ipport_hifirstauto;	/* sysctl */
 		last = ipport_hilastauto;
 	} else if (inp->inp_flags & INP_LOWPORT) {
-		if (suser(p, 0))
+		if (suser(p))
 			return (EACCES);
 		first = IPPORT_RESERVED-1; /* 1023 */
 		last = 600;		   /* not IPPORT_RESERVED/2 */

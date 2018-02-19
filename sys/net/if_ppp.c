@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.110 2018/01/09 15:24:24 bluhm Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.111 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -379,7 +379,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 		break;
 
 	case PPPIOCSFLAGS:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 		flags = *(int *)data & SC_MASK;
 #ifdef PPP_COMPRESS
@@ -392,7 +392,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 		break;
 
 	case PPPIOCSMRU:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 		mru = *(int *)data;
 		if (mru >= PPP_MRU && mru <= PPP_MAXMRU)
@@ -405,7 +405,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 
 #ifdef VJC
 	case PPPIOCSMAXCID:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 		if (sc->sc_comp)
 			sl_compress_setup(sc->sc_comp, *(int *)data);
@@ -413,14 +413,14 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 #endif
 
 	case PPPIOCXFERUNIT:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 		sc->sc_xfer = p->p_p->ps_pid;
 		break;
 
 #ifdef PPP_COMPRESS
 	case PPPIOCSCOMPRESS:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 		odp = (struct ppp_option_data *) data;
 		nb = odp->length;
@@ -499,7 +499,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 		if (cmd == PPPIOCGNPMODE) {
 			npi->mode = sc->sc_npmode[npx];
 		} else {
-			if ((error = suser(p, 0)) != 0)
+			if ((error = suser(p)) != 0)
 				return (error);
 			if (npi->mode != sc->sc_npmode[npx]) {
 				sc->sc_npmode[npx] = npi->mode;

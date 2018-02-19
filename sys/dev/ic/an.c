@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.72 2017/01/22 10:17:37 dlg Exp $	*/
+/*	$OpenBSD: an.c,v 1.73 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1534,7 +1534,7 @@ an_get_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 		if (nwkey->i_key[i].i_keydat == NULL)
 			continue;
 		/* do not show any keys to non-root user */
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		nwkey->i_key[i].i_keylen = sc->sc_wepkeys[i].an_wep_keylen;
 		if (nwkey->i_key[i].i_keylen < 0) {

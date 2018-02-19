@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.173 2017/10/20 09:35:09 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.174 2018/02/19 08:59:52 mpi Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -4494,7 +4494,7 @@ sppp_get_params(struct sppp *sp, struct ifreq *ifr)
 		spa->flags = auth->flags;
 
 		/* do not copy the secret, and only let root know the name */
-		if (auth->name != NULL && suser(curproc, 0) == 0)
+		if (auth->name != NULL && suser(curproc) == 0)
 			strlcpy(spa->name, auth->name, sizeof(spa->name));
 
 		if (copyout(spa, (caddr_t)ifr->ifr_data, sizeof(*spa)) != 0) {

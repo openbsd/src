@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.175 2017/11/20 10:56:51 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.176 2018/02/19 08:59:52 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2336,7 +2336,7 @@ pfkeyv2_dump_policy(struct ipsec_policy *ipo, void **headers, void **buffer,
 	    headers);
 
 	/* Add ids only when we are root. */
-	perm = suser(curproc, 0);
+	perm = suser(curproc);
 	if (perm == 0 && ipo->ipo_ids)
 		export_identities(&p, ipo->ipo_ids, 0, headers);
 
@@ -2438,7 +2438,7 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	switch(w.w_op) {
 	case NET_KEY_SADB_DUMP:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			return (error);
 		NET_LOCK();
 		error = tdb_walk(rdomain, pfkeyv2_sysctl_walker, &w);

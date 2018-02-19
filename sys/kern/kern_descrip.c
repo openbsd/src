@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.141 2017/07/20 16:47:21 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.142 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -708,7 +708,7 @@ sys_fstat(struct proc *p, void *v, register_t *retval)
 		 * Don't let non-root see generation numbers
 		 * (for NFS security)
 		 */
-		if (suser(p, 0))
+		if (suser(p))
 			ub.st_gen = 0;
 		error = copyout((caddr_t)&ub, (caddr_t)SCARG(uap, sb),
 		    sizeof (ub));

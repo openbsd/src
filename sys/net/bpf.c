@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.167 2018/02/01 12:10:27 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.168 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -684,7 +684,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	int error = 0;
 
 	d = bpfilter_lookup(minor(dev));
-	if (d->bd_locked && suser(p, 0) != 0) {
+	if (d->bd_locked && suser(p) != 0) {
 		/* list of allowed ioctls when locked and not root */
 		switch (cmd) {
 		case BIOCGBLEN:

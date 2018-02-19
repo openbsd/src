@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.214 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.215 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1498,7 +1498,7 @@ coredump(struct proc *p)
 	 * If the process has inconsistent uids, nosuidcoredump
 	 * determines coredump placement policy.
 	 */
-	if (((pr->ps_flags & PS_SUGID) && (error = suser(p, 0))) ||
+	if (((pr->ps_flags & PS_SUGID) && (error = suser(p))) ||
 	   ((pr->ps_flags & PS_SUGID) && nosuidcoredump)) {
 		if (nosuidcoredump == 3 || nosuidcoredump == 2)
 			incrash = 1;
