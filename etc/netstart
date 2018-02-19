@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.192 2018/02/17 13:11:03 rpe Exp $
+#	$OpenBSD: netstart,v 1.193 2018/02/19 21:47:43 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -84,11 +84,13 @@ vifscreate() {
 	local _vif _hn _if
 
 	for _vif in $(ifconfig -C); do
-		for _hn in /etc/hostname.${_vif}*; do
+		for _hn in /etc/hostname.${_vif}+([[:digit:]]); do
 			[[ -f $_hn ]] || continue
 			_if=${_hn#/etc/hostname.}
 
-			ifcreate $_if || return
+			if ! ifcreate $_if; then
+				echo "${0##*/}: create for '$_if' failed."
+			fi
 		done
 	done
 }
@@ -149,9 +151,9 @@ ifmstart() {
 	local _sifs=$1 _xifs=$2 _hn _if _sif _xif
 
 	for _sif in ${_sifs:-ALL}; do
-		for _hn in /etc/hostname.*; do
+		for _hn in /etc/hostname.+([[:alpha:]])+([[:digit:]]); do
+			[[ -f $_hn ]] || continue
 			_if=${_hn#/etc/hostname.}
-			[[ $_if == '*' ]] && continue
 
 			# Skip unwanted ifs.
 			for _xif in $_xifs; do
