@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.11 2018/02/10 05:57:59 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.12 2018/02/19 09:52:16 otto Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -630,13 +630,19 @@ frontend_startup(void)
 void
 route_receive(int fd, short events, void *arg)
 {
-	static uint8_t			 buf[ROUTE_SOCKET_BUF_SIZE];
+	static uint8_t			 *buf;
 
-	struct rt_msghdr		*rtm = (struct rt_msghdr *)buf;
+	struct rt_msghdr		*rtm;
 	struct sockaddr			*sa, *rti_info[RTAX_MAX];
 	ssize_t				 n;
 
-	if ((n = read(fd, &buf, sizeof(buf))) == -1) {
+	if (buf == NULL) {
+		buf = malloc(ROUTE_SOCKET_BUF_SIZE);
+		if (buf == NULL)
+			fatal("malloc");
+	}
+	rtm = (struct rt_msghdr *)buf;
+	if ((n = read(fd, buf, ROUTE_SOCKET_BUF_SIZE)) == -1) {
 		if (errno == EAGAIN || errno == EINTR)
 			return;
 		log_warn("dispatch_rtmsg: read error");
@@ -647,7 +653,7 @@ route_receive(int fd, short events, void *arg)
 		fatal("routing socket closed");
 
 	if (n < rtm->rtm_msglen) {
-		log_warnx("partial rtm in buffer");
+		log_warnx("partial rtm of %zd in buffer", n);
 		return;
 	}
 
