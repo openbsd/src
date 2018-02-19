@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gif.4,v 1.31 2018/01/12 04:36:44 deraadt Exp $
+.\"	$OpenBSD: gif.4,v 1.32 2018/02/19 00:18:31 dlg Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 12 2018 $
+.Dd $Mdocdate: February 19 2018 $
 .Dt GIF 4
 .Os
 .Sh NAME
@@ -39,9 +39,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface is a generic tunnelling pseudo-device for IPv4 and IPv6.
-It can tunnel IPv[46] over IPv[46] with behavior mainly based on
-RFC 4213 IPv6-over-IPv4, for a total of four possible combinations.
+interface is a generic tunnelling pseudo-device.
+It can tunnel IPv4, IPv6, and MPLS over IPv4 and IPv6, 
+with behavior mainly based on RFC 4213 IPv6-over-IPv4.
 .Pp
 A
 .Nm
@@ -72,6 +72,7 @@ interface.
 .Sh SEE ALSO
 .Xr sysctl 2 ,
 .Xr etherip 4 ,
+.Xr gre 4 ,
 .Xr inet 4 ,
 .Xr inet6 4 ,
 .Xr ipsec 4 ,
@@ -85,6 +86,15 @@ interface.
 .%D October 2005
 .%R RFC 4213
 .%T Basic Transition Mechanisms for IPv6 Hosts and Routers
+.Re
+.Pp
+.Rs
+.%A T. Worster
+.%A Y. Rekhter
+.%A E. Rosen
+.%D March 2005
+.%R RFC 4023
+.%T Encapsulating MPLS in IP or Generic Routing Encapsulation (GRE)
 .Re
 .Sh HISTORY
 The
