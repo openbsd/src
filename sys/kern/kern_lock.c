@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.58 2018/02/19 09:08:13 jsg Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.59 2018/02/19 09:18:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -23,6 +23,7 @@
 #include <sys/sched.h>
 #include <sys/atomic.h>
 #include <sys/witness.h>
+#include <sys/mutex.h>
 
 #include <ddb/db_output.h>
 
