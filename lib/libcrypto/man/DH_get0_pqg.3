@@ -1,4 +1,4 @@
-.\" $OpenBSD: DH_get0_pqg.3,v 1.1 2018/02/17 16:59:48 schwarze Exp $
+.\" $OpenBSD: DH_get0_pqg.3,v 1.2 2018/02/19 11:55:49 schwarze Exp $
 .\" selective merge up to: OpenSSL 7966101e Sep 18 11:58:24 2017 -0400
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,13 +48,15 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 17 2018 $
+.Dd $Mdocdate: February 19 2018 $
 .Dt DH_GET0_PQG 3
 .Os
 .Sh NAME
 .Nm DH_get0_pqg ,
-.Nm DH_get0_key
-.Nd get data from a DH object
+.Nm DH_set0_pqg ,
+.Nm DH_get0_key ,
+.Nm DH_set0_key
+.Nd get data from and set data in a DH object
 .Sh SYNOPSIS
 .In openssl/dh.h
 .Ft void
@@ -64,11 +66,24 @@
 .Fa "const BIGNUM **q"
 .Fa "const BIGNUM **g"
 .Fc
+.Ft int
+.Fo DH_set0_pqg
+.Fa "DH *dh"
+.Fa "BIGNUM *p"
+.Fa "BIGNUM *q"
+.Fa "BIGNUM *g"
+.Fc
 .Ft void
 .Fo DH_get0_key
 .Fa "const DH *dh"
 .Fa "const BIGNUM **pub_key"
 .Fa "const BIGNUM **priv_key"
+.Fc
+.Ft int
+.Fo DH_set0_key
+.Fa "DH *dh"
+.Fa "BIGNUM *pub_key"
+.Fa "BIGNUM *priv_key"
 .Fc
 .Sh DESCRIPTION
 A
@@ -101,6 +116,21 @@ Otherwise, they are set to pointers to the internal representations
 of the values that should not be freed by the application.
 .Pp
 The
+.Fa p ,
+.Fa q ,
+and
+.Fa g
+values can be set by calling
+.Fn DH_set0_pqg .
+Calling this function transfers the memory management of the values to
+.Fa dh ,
+and therefore they should not be freed by the caller.
+The
+.Fa q
+argument may be
+.Dv NULL .
+.Pp
+The
 .Fn DH_get0_key
 function stores pointers to the internal representations
 of the public key in
@@ -111,6 +141,36 @@ Either may be
 .Dv NULL
 if it has not yet been set.
 If the private key has been set, then the public key must be.
+.Pp
+The public and private key values can be set using
+.Fn DH_set0_key .
+Either parameter may be
+.Dv NULL ,
+which means the corresponding
+.Vt DH
+field is left untouched.
+This function transfers the memory management of the key values to
+.Fa dh ,
+and therefore they should not be freed by the caller.
+.Pp
+Values retrieved with
+.Fn DH_get0_pqg
+and
+.Fn DH_get0_key
+are owned by the
+.Vt DH
+object and may therefore not be passed to
+.Fn DH_set0_pqg
+or
+.Fn DH_set0_key .
+If needed, duplicate the received values using
+.Xr BN_dup 3
+and pass the duplicates.
+.Sh RETURN VALUES
+.Fn DH_set0_pqg
+and
+.Fn DH_set0_key
+return 1 on success or 0 on failure.
 .Sh SEE ALSO
 .Xr DH_generate_key 3 ,
 .Xr DH_generate_parameters 3 ,
