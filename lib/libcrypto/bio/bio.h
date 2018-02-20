@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.35 2018/02/20 17:55:26 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.36 2018/02/20 18:10:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -341,8 +341,7 @@ int BIO_meth_set_write(BIO_METHOD *biom,
 int BIO_meth_set_read(BIO_METHOD *biom, int (*read)(BIO *, char *, int));
 int BIO_meth_set_puts(BIO_METHOD *biom, int (*puts)(BIO *, const char *));
 int BIO_meth_set_gets(BIO_METHOD *biom, int (*gets)(BIO *, char *, int));
-int BIO_meth_set_ctrl(BIO_METHOD *biom,
-    int long (*ctrl)(BIO *, int, long, void *));
+int BIO_meth_set_ctrl(BIO_METHOD *biom, long (*ctrl)(BIO *, int, long, void *));
 int BIO_meth_set_create(BIO_METHOD *biom, int (*create)(BIO *));
 int BIO_meth_set_destroy(BIO_METHOD *biom, int (*destroy)(BIO *));
 
