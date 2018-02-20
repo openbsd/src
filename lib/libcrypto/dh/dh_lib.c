@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.25 2018/02/18 14:58:12 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.26 2018/02/20 17:38:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -299,4 +299,22 @@ DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
 	}
 
 	return 1;
+}
+
+void
+DH_clear_flags(DH *dh, int flags)
+{
+	dh->flags &= ~flags;
+}
+
+int
+DH_test_flags(const DH *dh, int flags)
+{
+	return dh->flags & flags;
+}
+
+void
+DH_set_flags(DH *dh, int flags)
+{
+	dh->flags |= flags;
 }
