@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.301 2018/02/19 06:48:45 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.302 2018/02/20 03:45:06 dlg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: February 19 2018 $
+.Dd $Mdocdate: February 20 2018 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1605,6 +1605,7 @@ for a complete list of the available protocols.
 .Op Cm tunneldomain Ar tableid
 .Op Oo Fl Oc Ns Cm tunneldf
 .Op Cm tunnelttl Ar ttl
+.Op Oo Fl Oc Ns Cm vnetflowid
 .Op Oo Fl Oc Ns Cm vnetid Ar network-id
 .Ek
 .nr nS 0
@@ -1666,6 +1667,13 @@ the value can also be set to
 .Ar copy
 to have the TTL copied between the encapsulated protocol headers
 and the tunnel protocol headers.
+.It Cm vnetflowid
+Use a portion of the virtual network identifier space for a flow identifier.
+This allows load balancing of the encapsulated traffic over multiple
+links.
+.It Cm -vnetflowid
+Disable the use of portion of the virtual network identifier as a
+flow identifier.
 .It Cm vnetid Ar network-id
 Set the virtual network identifier.
 This is a number which is used by tunnel protocols such as
