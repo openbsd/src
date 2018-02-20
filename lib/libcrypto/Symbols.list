@@ -280,6 +280,7 @@ BIO_get_data
 BIO_get_ex_data
 BIO_get_ex_new_index
 BIO_get_host_ip
+BIO_get_new_index
 BIO_get_port
 BIO_get_retry_BIO
 BIO_get_retry_reason

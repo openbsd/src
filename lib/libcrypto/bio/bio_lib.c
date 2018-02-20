@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.24 2018/02/18 12:58:25 tb Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.25 2018/02/20 17:15:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,6 +63,20 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/stack.h>
+
+int
+BIO_get_new_index(void)
+{
+	static int bio_type_index = BIO_TYPE_START;
+	int index;
+
+	/* The index will collide with the BIO flag bits if it exceeds 255. */
+	index = CRYPTO_add(&bio_type_index, 1, CRYPTO_LOCK_BIO);
+	if (index > 255)
+		return -1;
+
+	return index;
+}
 
 BIO *
 BIO_new(BIO_METHOD *method)

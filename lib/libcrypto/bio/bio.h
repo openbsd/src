@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.33 2018/02/18 12:59:06 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.34 2018/02/20 17:15:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,6 +102,12 @@ extern "C" {
 #define BIO_TYPE_DESCRIPTOR	0x0100	/* socket, fd, connect or accept */
 #define BIO_TYPE_FILTER		0x0200
 #define BIO_TYPE_SOURCE_SINK	0x0400
+
+/*
+ * BIO_TYPE_START is the first user-allocated BIO type. No pre-defined type,
+ * flag bits aside, may exceed this value.
+ */
+#define BIO_TYPE_START 128
 
 /* BIO_FILENAME_READ|BIO_CLOSE to open or close on free.
  * BIO_set_fp(in,stdin,BIO_NOCLOSE); */
@@ -580,6 +586,7 @@ int
 BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
 asn1_ps_func **psuffix_free);
 
+int BIO_get_new_index(void);
 BIO_METHOD *BIO_s_file(void );
 BIO *BIO_new_file(const char *filename, const char *mode);
 BIO *BIO_new_fp(FILE *stream, int close_flag);
