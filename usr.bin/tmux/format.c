@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.151 2018/01/18 14:28:11 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.152 2018/02/20 10:43:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1121,7 +1121,7 @@ format_expand_time(struct format_tree *ft, const char *fmt, time_t t)
 char *
 format_expand(struct format_tree *ft, const char *fmt)
 {
-	char		*buf, *out;
+	char		*buf, *out, *name;
 	const char	*ptr, *s, *saved = fmt;
 	size_t		 off, len, n, outlen;
 	int     	 ch, brackets;
@@ -1160,8 +1160,11 @@ format_expand(struct format_tree *ft, const char *fmt)
 
 			if (ft->flags & FORMAT_NOJOBS)
 				out = xstrdup("");
-			else
-				out = format_job_get(ft, xstrndup(fmt, n));
+			else {
+				name = xstrndup(fmt, n);
+				out = format_job_get(ft, name);
+				free(name);
+			}
 			outlen = strlen(out);
 
 			while (len - off < outlen + 1) {
