@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.359 2018/02/20 03:45:06 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.360 2018/02/20 15:33:16 tb Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3358,20 +3358,6 @@ delvnetflowid(const char *ignored, int alsoignored)
 }
 
 void
-getvnetflowid(struct ifencap *ife)
-{
-	if (strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name)) >=
-	    sizeof(ifr.ifr_name))
-		errx(1, "vnetflowid: name is too long");
-
-	if (ioctl(s, SIOCGVNETFLOWID, &ifr) == -1)
-		return;
-
-	if (ifr.ifr_vnetid)
-		ife->ife_flags |= IFE_VNETFLOWID;
-}
-
-void
 mpe_status(void)
 {
 	struct shim_hdr	shim;
@@ -3556,6 +3542,20 @@ setmpwcontrolword(const char *value, int d)
 		imrsave.imr_flags &= ~IMR_FLAG_CONTROLWORD;
 }
 #endif /* SMALL */
+
+void
+getvnetflowid(struct ifencap *ife)
+{
+	if (strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name)) >=
+	    sizeof(ifr.ifr_name))
+		errx(1, "vnetflowid: name is too long");
+
+	if (ioctl(s, SIOCGVNETFLOWID, &ifr) == -1)
+		return;
+
+	if (ifr.ifr_vnetid)
+		ife->ife_flags |= IFE_VNETFLOWID;
+}
 
 void
 setvnetid(const char *id, int param)
