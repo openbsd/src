@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.74 2018/02/19 00:21:31 dlg Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.75 2018/02/20 03:43:07 dlg Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -193,6 +193,9 @@
 
 #define	SIOCSLIFPHYDF	_IOW('i', 193, struct ifreq)	/* set tunnel df/nodf */
 #define	SIOCGLIFPHYDF	_IOWR('i', 194, struct ifreq)	/* set tunnel df/nodf */
+
+#define	SIOCSVNETFLOWID	_IOW('i', 195, struct ifreq)	/* set vnet flowid */
+#define	SIOCGVNETFLOWID	_IOWR('i', 196, struct ifreq)	/* get vnet flowid */
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */
