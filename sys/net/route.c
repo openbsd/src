@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.371 2018/02/10 09:17:56 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.372 2018/02/20 12:43:03 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -707,26 +707,31 @@ rtequal(struct rtentry *a, struct rtentry *b)
 int
 rtflushclone1(struct rtentry *rt, void *arg, u_int id)
 {
-	struct rtentry *parent = arg;
+	struct rtentry *cloningrt = arg;
 	struct ifnet *ifp;
 	int error;
 
-	ifp = if_get(rt->rt_ifidx);
+	if (!ISSET(rt->rt_flags, RTF_CLONED))
+		return 0;
 
+	/* Cached route must stay alive as long as their parent are alive. */
+	if (ISSET(rt->rt_flags, RTF_CACHED) && (rt->rt_parent != cloningrt))
+		return 0;
+
+	if (!rtequal(rt->rt_parent, cloningrt))
+		return 0;
 	/*
 	 * This happens when an interface with a RTF_CLONING route is
 	 * being detached.  In this case it's safe to bail because all
 	 * the routes are being purged by rt_ifa_purge().
 	 */
+	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL)
 	        return 0;
 
-	if (ISSET(rt->rt_flags, RTF_CLONED) && rtequal(rt->rt_parent, parent)) {
-	        error = rtdeletemsg(rt, ifp, id);
-	        if (error == 0)
-			error = EAGAIN;
-	} else
-		error = 0;
+	error = rtdeletemsg(rt, ifp, id);
+	if (error == 0)
+		error = EAGAIN;
 
 	if_put(ifp);
 	return error;
