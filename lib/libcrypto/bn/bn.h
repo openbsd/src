@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.37 2018/02/20 17:02:30 jsing Exp $ */
+/* $OpenBSD: bn.h,v 1.38 2018/02/20 17:13:14 jsing Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -285,6 +285,11 @@ struct bn_gencb_st {
 		int (*cb_2)(int, int, BN_GENCB *);
 	} cb;
 };
+
+BN_GENCB *BN_GENCB_new(void);
+void BN_GENCB_free(BN_GENCB *cb);
+void *BN_GENCB_get_arg(BN_GENCB *cb);
+
 /* Wrapper function to make using BN_GENCB easier,  */
 int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 /* Macro to populate a BN_GENCB structure with an "old"-style callback */

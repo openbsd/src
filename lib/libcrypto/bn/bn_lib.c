@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.38 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.39 2018/02/20 17:13:14 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -887,4 +887,29 @@ BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 		BN_CONSTTIME_SWAP(0);
 	}
 #undef BN_CONSTTIME_SWAP
+}
+
+BN_GENCB *
+BN_GENCB_new(void)
+{
+	BN_GENCB *cb;
+
+	if ((cb = calloc(1, sizeof(*cb))) == NULL)
+		return NULL;
+
+	return cb;
+}
+
+void
+BN_GENCB_free(BN_GENCB *cb)
+{
+	if (cb == NULL)
+		return;
+	free(cb);
+}
+
+void *
+BN_GENCB_get_arg(BN_GENCB *cb)
+{
+	return cb->arg;
 }

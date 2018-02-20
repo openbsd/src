@@ -375,6 +375,9 @@ BN_CTX_init
 BN_CTX_new
 BN_CTX_start
 BN_GENCB_call
+BN_GENCB_free
+BN_GENCB_get_arg
+BN_GENCB_new
 BN_GF2m_add
 BN_GF2m_arr2poly
 BN_GF2m_mod
