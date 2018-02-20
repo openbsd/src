@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.31 2018/02/20 17:06:19 jsing Exp $ */
+/* $OpenBSD: x509.h,v 1.32 2018/02/20 17:09:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -758,6 +758,7 @@ void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md);
 int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b);
 
 X509_NAME *X509_NAME_dup(X509_NAME *xn);
+int X509_NAME_get0_der(X509_NAME *nm, const unsigned char **pder, size_t *pderlen);
 X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne);
 
 int		X509_cmp_time(const ASN1_TIME *s, time_t *t);
