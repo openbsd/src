@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.26 2018/02/20 17:38:15 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.27 2018/02/20 17:59:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -238,6 +238,12 @@ int
 DH_size(const DH *dh)
 {
 	return BN_num_bytes(dh->p);
+}
+
+int
+DH_bits(const DH *dh)
+{
+	return BN_num_bits(dh->p);
 }
 
 void

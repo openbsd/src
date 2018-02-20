@@ -755,6 +755,7 @@ DES_string_to_2keys
 DES_string_to_key
 DES_xcbc_encrypt
 DH_OpenSSL
+DH_bits
 DH_check
 DH_check_pub_key
 DH_clear_flags

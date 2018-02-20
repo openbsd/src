@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.h,v 1.22 2018/02/20 17:38:15 tb Exp $ */
+/* $OpenBSD: dh.h,v 1.23 2018/02/20 17:59:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -183,6 +183,7 @@ DH *	DH_new(void);
 void	DH_free(DH *dh);
 int	DH_up_ref(DH *dh);
 int	DH_size(const DH *dh);
+int	DH_bits(const DH *dh);
 int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int DH_set_ex_data(DH *d, int idx, void *arg);
