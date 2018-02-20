@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.66 2018/01/22 09:05:06 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.67 2018/02/20 01:20:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -71,6 +71,7 @@ struct vxlan_softc {
 	in_port_t		 sc_dstport;
 	u_int			 sc_rdomain;
 	int64_t			 sc_vnetid;
+	uint16_t		 sc_df;
 	u_int8_t		 sc_ttl;
 
 	struct task		 sc_sendtask;
@@ -135,6 +136,7 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 	sc->sc_dstport = htons(VXLAN_PORT);
 	sc->sc_vnetid = VXLAN_VNI_UNSET;
+	sc->sc_df = htons(0);
 	task_set(&sc->sc_sendtask, vxlan_send_dispatch, sc);
 
 	ifp = &sc->sc_ac.ac_if;
@@ -496,6 +498,14 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifr->ifr_ttl = (int)sc->sc_ttl;
 		break;
 
+	case SIOCSLIFPHYDF:
+		/* commit */
+		sc->sc_df = ifr->ifr_df ? htons(IP_DF) : htons(0);
+		break;
+	case SIOCGLIFPHYDF:
+		ifr->ifr_df = sc->sc_df ? 1 : 0;
+		break;
+
 	case SIOCSVNETID:
 		if (sc->sc_vnetid == ifr->ifr_vnetid)
 			break;
@@ -744,7 +754,7 @@ vxlan_encap4(struct ifnet *ifp, struct mbuf *m,
 	ip->ip_v = IPVERSION;
 	ip->ip_hl = sizeof(struct ip) >> 2;
 	ip->ip_id = htons(ip_randomid());
-	ip->ip_off = 0; /* htons(IP_DF); XXX should we disallow IP fragments? */
+	ip->ip_off = sc->sc_df;
 	ip->ip_p = IPPROTO_UDP;
 	ip->ip_tos = IPTOS_LOWDELAY;
 	ip->ip_len = htons(m->m_pkthdr.len);
@@ -802,6 +812,9 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 
 		ip6->ip6_src = *in6a;
 	}
+
+	if (sc->sc_df)
+		SET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
 
 	/*
 	 * The UDP checksum of VXLAN packets should be set to zero,
