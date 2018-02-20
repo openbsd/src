@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,4.1.17,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.1.19,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 CFLAGS="$CFLAGS"
@@ -918,6 +918,16 @@ case "$enable_radix_tree" in
 	;;
 esac
 
+AC_ARG_ENABLE(packed, AC_HELP_STRING([--enable-packed], [Enable packed structure alignment, uses less memory, but unaligned reads.]))
+case "$enable_packed" in
+	yes)
+	AC_DEFINE_UNQUOTED([PACKED_STRUCTS], [], [Define this to use packed structure alignment.])
+	ACX_CHECK_COMPILER_FLAG(Wno-address-of-packed-member, [CFLAGS="$CFLAGS -Wno-address-of-packed-member"])
+	;;
+	no|*)
+	;;
+esac
+
 AH_BOTTOM([
 /* define before includes as it specifies what standard to use. */
 #if (defined(HAVE_PSELECT) && !defined (HAVE_PSELECT_PROTO)) \
@@ -1096,6 +1106,12 @@ AH_BOTTOM([
 #endif /* !__timespec_defined */
 #endif /* !HAVE_STRUCT_TIMESPEC */
 #endif /* !CONFIG_DEFINES */
+
+#ifdef PACKED_STRUCTS
+#define ATTR_PACKED __attribute__((packed))
+#else
+#define ATTR_PACKED
+#endif
 ])
 
 # big fat warning
