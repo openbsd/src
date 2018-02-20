@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.13 2018/01/31 10:52:12 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.14 2018/02/20 23:46:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -454,13 +454,8 @@ cpu_start_secondary(struct cpu_info *ci)
 
 	spllower(IPL_NONE);
 
-#ifdef notyet
 	SCHED_LOCK(s);
 	cpu_switchto(NULL, sched_chooseproc());
-#else
-	for (;;)
-		__asm volatile("wfe");
-#endif
 }
 
 void
