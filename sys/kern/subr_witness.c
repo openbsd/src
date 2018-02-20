@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.5 2017/11/14 14:43:39 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.6 2018/02/20 14:46:22 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from BSDI $Id: subr_witness.c,v 1.5 2017/11/14 14:43:39 visa Exp $
- *	and BSDI $Id: subr_witness.c,v 1.5 2017/11/14 14:43:39 visa Exp $
+ *	from BSDI $Id: subr_witness.c,v 1.6 2018/02/20 14:46:22 visa Exp $
+ *	and BSDI $Id: subr_witness.c,v 1.6 2018/02/20 14:46:22 visa Exp $
  */
 
 /*
@@ -2096,8 +2096,19 @@ db_witness_list(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_witness_list_all(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	struct lock_list_entry *lock_list;
 	struct process *pr;
 	struct proc *p;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		lock_list = witness_cpu[CPU_INFO_UNIT(ci)].wc_spinlocks;
+		if (lock_list == NULL || lock_list->ll_count == 0)
+			continue;
+		db_printf("CPU %d:\n", CPU_INFO_UNIT(ci));
+		witness_list_locks(&lock_list, db_printf);
+	}
 
 	/*
 	 * It would be nice to list only threads and processes that actually
