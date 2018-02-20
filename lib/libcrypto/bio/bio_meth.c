@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_meth.c,v 1.4 2018/02/20 18:17:17 tb Exp $	*/
+/*	$OpenBSD: bio_meth.c,v 1.5 2018/02/20 18:51:35 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -134,7 +134,7 @@ long
 (*BIO_meth_get_callback_ctrl(BIO_METHOD *biom))(BIO *, int, BIO_info_cb *)
 {
 	return
-	    (long (*)(BIO *, int, BIO_info_cb*))biom->callback_ctrl; /* XXX */
+	    (long (*)(BIO *, int, BIO_info_cb *))biom->callback_ctrl; /* XXX */
 }
 
 int
