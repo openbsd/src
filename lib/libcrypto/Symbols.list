@@ -2750,6 +2750,7 @@ X509_REQ_digest
 X509_REQ_dup
 X509_REQ_extension_nid
 X509_REQ_free
+X509_REQ_get0_signature
 X509_REQ_get1_email
 X509_REQ_get_attr
 X509_REQ_get_attr_by_NID
