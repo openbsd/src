@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.105 2018/02/19 00:46:27 dlg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.106 2018/02/20 03:53:54 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -142,6 +142,14 @@ union gre_addr {
 	struct in6_addr		in6;
 };
 
+#define GRE_KEY_MIN		0x00000000U
+#define GRE_KEY_MAX		0xffffffffU
+#define GRE_KEY_SHIFT		0
+
+#define GRE_KEY_ENTROPY_MIN	0x00000000U
+#define GRE_KEY_ENTROPY_MAX	0x00ffffffU
+#define GRE_KEY_ENTROPY_SHIFT	8
+
 struct gre_tunnel {
 	uint32_t		t_key_mask;
 #define GRE_KEY_NONE			htonl(0x00000000U)
@@ -171,6 +179,9 @@ static int	gre_del_tunnel(struct gre_tunnel *);
 static int	gre_set_vnetid(struct gre_tunnel *, struct ifreq *);
 static int	gre_get_vnetid(struct gre_tunnel *, struct ifreq *);
 static int	gre_del_vnetid(struct gre_tunnel *);
+
+static int	gre_set_vnetflowid(struct gre_tunnel *, struct ifreq *);
+static int	gre_get_vnetflowid(struct gre_tunnel *, struct ifreq *);
 
 static struct mbuf *
 		gre_encap(const struct gre_tunnel *, struct mbuf *, uint16_t,
@@ -649,6 +660,11 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 	pf_pkt_addr_changed(m);
 #endif
 
+	if (sc->sc_tunnel.t_key_mask == GRE_KEY_ENTROPY) {
+		m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
+		    (bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY);
+	}
+
 	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_pkthdr.len;
 
@@ -708,6 +724,11 @@ egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen)
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
+
+	if (sc->sc_tunnel.t_key_mask == GRE_KEY_ENTROPY) {
+		m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
+		    (bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY);
+	}
 
 	ml_enqueue(&ml, m);
 	if_input(&sc->sc_ac.ac_if, &ml);
@@ -991,6 +1012,12 @@ gre_encap(const struct gre_tunnel *tunnel, struct mbuf *m, uint16_t proto,
 
 		gkh = (struct gre_h_key *)(gh + 1);
 		gkh->gre_key = tunnel->t_key;
+
+		if (tunnel->t_key_mask == GRE_KEY_ENTROPY &&
+		    ISSET(m->m_pkthdr.ph_flowid, M_FLOWID_VALID)) {
+			gkh->gre_key |= htonl(~GRE_KEY_ENTROPY &
+			    (m->m_pkthdr.ph_flowid & M_FLOWID_MASK));
+		}
 	}
 
 	switch (tunnel->t_af) {
@@ -1099,6 +1126,14 @@ gre_tunnel_ioctl(struct ifnet *ifp, struct gre_tunnel *tunnel,
 		break;
 	case SIOCDVNETID:
 		error = gre_del_vnetid(tunnel);
+		break;
+
+	case SIOCSVNETFLOWID:
+		error = gre_set_vnetflowid(tunnel, ifr);
+		break;
+
+	case SIOCGVNETFLOWID:
+		error = gre_get_vnetflowid(tunnel, ifr);
 		break;
 
 	case SIOCSLIFPHYADDR:
@@ -1248,6 +1283,7 @@ egre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSVNETID:
 	case SIOCDVNETID:
+	case SIOCSVNETFLOWID:
 	case SIOCSLIFPHYADDR:
 	case SIOCDIFPHYADDR:
 	case SIOCSLIFPHYRTABLE:
@@ -1576,17 +1612,25 @@ static int
 gre_set_vnetid(struct gre_tunnel *tunnel, struct ifreq *ifr)
 {
 	uint32_t key;
+	uint32_t min = GRE_KEY_MIN;
+	uint32_t max = GRE_KEY_MAX;
+	unsigned int shift = GRE_KEY_SHIFT;
+	uint32_t mask = GRE_KEY_MASK;
 
-	if (ifr->ifr_vnetid < 0 || ifr->ifr_vnetid > 0xffffffff)
-		return EINVAL;
+	if (tunnel->t_key_mask == GRE_KEY_ENTROPY) {
+		min = GRE_KEY_ENTROPY_MIN;
+		max = GRE_KEY_ENTROPY_MAX;
+		shift = GRE_KEY_ENTROPY_SHIFT;
+		mask = GRE_KEY_ENTROPY;
+	}
 
-	key = htonl(ifr->ifr_vnetid);
+	if (ifr->ifr_vnetid < min || ifr->ifr_vnetid > max)
+		return (EINVAL);
 
-	if (tunnel->t_key_mask == GRE_KEY_MASK && tunnel->t_key == key)
-		return (0);
+	key = htonl(ifr->ifr_vnetid << shift);
 
 	/* commit */
-	tunnel->t_key_mask = GRE_KEY_MASK;
+	tunnel->t_key_mask = mask;
 	tunnel->t_key = key;
 
 	return (0);
@@ -1595,10 +1639,20 @@ gre_set_vnetid(struct gre_tunnel *tunnel, struct ifreq *ifr)
 static int
 gre_get_vnetid(struct gre_tunnel *tunnel, struct ifreq *ifr)
 {
-	if (tunnel->t_key_mask == GRE_KEY_NONE)
-		return (EADDRNOTAVAIL);
+	int shift;
 
-	ifr->ifr_vnetid = (int64_t)ntohl(tunnel->t_key);
+	switch (tunnel->t_key_mask) {
+	case GRE_KEY_NONE:
+		return (EADDRNOTAVAIL);
+	case GRE_KEY_ENTROPY:
+		shift = GRE_KEY_ENTROPY_SHIFT;
+		break;
+	case GRE_KEY_MASK:
+		shift = GRE_KEY_SHIFT;
+		break;
+	}
+
+	ifr->ifr_vnetid = ntohl(tunnel->t_key) >> shift;
 
 	return (0);
 }
@@ -1607,6 +1661,47 @@ static int
 gre_del_vnetid(struct gre_tunnel *tunnel)
 {
 	tunnel->t_key_mask = GRE_KEY_NONE;
+
+	return (0);
+}
+
+static int
+gre_set_vnetflowid(struct gre_tunnel *tunnel, struct ifreq *ifr)
+{
+	uint32_t mask, key;
+
+	if (tunnel->t_key_mask == GRE_KEY_NONE)
+		return (EADDRNOTAVAIL);
+
+	mask = ifr->ifr_vnetid ? GRE_KEY_ENTROPY : GRE_KEY_MASK;
+	if (tunnel->t_key_mask == mask) {
+		/* nop */
+		return (0);
+	}
+
+	key = ntohl(tunnel->t_key);
+	if (mask == GRE_KEY_ENTROPY) {
+		if (key > GRE_KEY_ENTROPY_MAX)
+			return (ERANGE);
+
+		key = htonl(key << GRE_KEY_ENTROPY_SHIFT);
+	} else
+		key = htonl(key >> GRE_KEY_ENTROPY_SHIFT);
+
+	/* commit */
+	tunnel->t_key_mask = mask;
+	tunnel->t_key = key;
+
+	return (0);
+}
+
+static int
+gre_get_vnetflowid(struct gre_tunnel *tunnel, struct ifreq *ifr)
+{
+	if (tunnel->t_key_mask == GRE_KEY_NONE)
+		return (EADDRNOTAVAIL);
+
+	ifr->ifr_vnetid = tunnel->t_key_mask == GRE_KEY_ENTROPY;
 
 	return (0);
 }
