@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.37 2018/02/20 18:13:31 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.38 2018/02/20 18:17:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -270,6 +270,7 @@ const char * BIO_method_name(const BIO *b);
 int BIO_method_type(const BIO *b);
 
 typedef void bio_info_cb(struct bio_st *, int, const char *, int, long, long);
+typedef int BIO_info_cb(BIO *, int, int);
 
 typedef struct bio_method_st {
 	int type;
@@ -350,6 +351,9 @@ int (*BIO_meth_get_create(BIO_METHOD *biom))(BIO *);
 int BIO_meth_set_create(BIO_METHOD *biom, int (*create)(BIO *));
 int (*BIO_meth_get_destroy(BIO_METHOD *biom))(BIO *);
 int BIO_meth_set_destroy(BIO_METHOD *biom, int (*destroy)(BIO *));
+long (*BIO_meth_get_callback_ctrl(BIO_METHOD *biom))(BIO *, int, BIO_info_cb *);
+int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
+    long (*callback_ctrl)(BIO *, int, BIO_info_cb *));
 
 /* connect BIO stuff */
 #define BIO_CONN_S_BEFORE		1

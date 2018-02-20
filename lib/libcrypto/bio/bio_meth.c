@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_meth.c,v 1.3 2018/02/20 18:13:31 tb Exp $	*/
+/*	$OpenBSD: bio_meth.c,v 1.4 2018/02/20 18:17:17 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -127,5 +127,21 @@ int
 BIO_meth_set_destroy(BIO_METHOD *biom, int (*destroy)(BIO *))
 {
 	biom->destroy = destroy;
+	return 1;
+}
+
+long
+(*BIO_meth_get_callback_ctrl(BIO_METHOD *biom))(BIO *, int, BIO_info_cb *)
+{
+	return
+	    (long (*)(BIO *, int, BIO_info_cb*))biom->callback_ctrl; /* XXX */
+}
+
+int
+BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
+    long (*callback_ctrl)(BIO *, int, BIO_info_cb *))
+{
+	biom->callback_ctrl =
+	    (long (*)(BIO *, int, bio_info_cb *))callback_ctrl;	/* XXX */
 	return 1;
 }
