@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.26 2018/02/18 14:58:12 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.27 2018/02/20 17:45:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -363,4 +363,22 @@ DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
 	}
 
 	return 1;
+}
+
+void
+DSA_clear_flags(DSA *d, int flags)
+{
+	d->flags &= ~flags;
+}
+
+int
+DSA_test_flags(const DSA *d, int flags)
+{
+	return d->flags & flags;
+}
+
+void
+DSA_set_flags(DSA *d, int flags)
+{
+	d->flags |= flags;
 }

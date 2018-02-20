@@ -800,6 +800,7 @@ DSA_OpenSSL
 DSA_SIG_free
 DSA_SIG_it
 DSA_SIG_new
+DSA_clear_flags
 DSA_do_sign
 DSA_do_verify
 DSA_dup_DH
@@ -820,10 +821,12 @@ DSA_set0_key
 DSA_set0_pqg
 DSA_set_default_method
 DSA_set_ex_data
+DSA_set_flags
 DSA_set_method
 DSA_sign
 DSA_sign_setup
 DSA_size
+DSA_test_flags
 DSA_up_ref
 DSA_verify
 DSAparams_dup
