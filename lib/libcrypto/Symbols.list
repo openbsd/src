@@ -336,8 +336,8 @@ BIO_s_socket
 BIO_set
 BIO_set_callback
 BIO_set_callback_arg
-BIO_set_data
 BIO_set_cipher
+BIO_set_data
 BIO_set_ex_data
 BIO_set_flags
 BIO_set_init
@@ -438,6 +438,14 @@ BN_get0_nist_prime_256
 BN_get0_nist_prime_384
 BN_get0_nist_prime_521
 BN_get_params
+BN_get_rfc2409_prime_1024
+BN_get_rfc2409_prime_768
+BN_get_rfc3526_prime_1536
+BN_get_rfc3526_prime_2048
+BN_get_rfc3526_prime_3072
+BN_get_rfc3526_prime_4096
+BN_get_rfc3526_prime_6144
+BN_get_rfc3526_prime_8192
 BN_get_word
 BN_hex2bn
 BN_init
