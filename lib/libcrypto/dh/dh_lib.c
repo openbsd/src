@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.27 2018/02/20 17:59:31 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.28 2018/02/20 18:01:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <limits.h>
 #include <stdio.h>
 
 #include <openssl/opensslconf.h>
@@ -323,4 +324,12 @@ void
 DH_set_flags(DH *dh, int flags)
 {
 	dh->flags |= flags;
+}
+
+int
+DH_set_length(DH *dh, long length)
+{
+	if (length < 0 || length > INT_MAX)
+		dh->length = length;
+	return 1;
 }

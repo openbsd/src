@@ -776,6 +776,7 @@ DH_set0_pqg
 DH_set_default_method
 DH_set_ex_data
 DH_set_flags
+DH_set_length
 DH_set_method
 DH_size
 DH_test_flags
