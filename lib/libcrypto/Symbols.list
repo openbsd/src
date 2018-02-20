@@ -290,6 +290,12 @@ BIO_gets
 BIO_indent
 BIO_int_ctrl
 BIO_meth_free
+BIO_meth_get_create
+BIO_meth_get_ctrl
+BIO_meth_get_destroy
+BIO_meth_get_gets
+BIO_meth_get_puts
+BIO_meth_get_read
 BIO_meth_new
 BIO_meth_set_create
 BIO_meth_set_ctrl

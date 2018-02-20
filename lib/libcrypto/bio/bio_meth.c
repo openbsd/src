@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_meth.c,v 1.2 2018/02/18 12:59:06 tb Exp $	*/
+/*	$OpenBSD: bio_meth.c,v 1.3 2018/02/20 18:13:31 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -40,10 +40,22 @@ BIO_meth_free(BIO_METHOD *biom)
 }
 
 int
+(*BIO_meth_get_write(BIO_METHOD *biom))(BIO *, const char *, int)
+{
+	return biom->bwrite;
+}
+
+int
 BIO_meth_set_write(BIO_METHOD *biom, int (*write)(BIO *, const char *, int))
 {
 	biom->bwrite = write;
 	return 1;
+}
+
+int
+(*BIO_meth_get_read(BIO_METHOD *biom))(BIO *, char *, int)
+{
+	return biom->bread;
 }
 
 int
@@ -54,6 +66,12 @@ BIO_meth_set_read(BIO_METHOD *biom, int (*read)(BIO *, char *, int))
 }
 
 int
+(*BIO_meth_get_puts(BIO_METHOD *biom))(BIO *, const char *)
+{
+	return biom->bputs;
+}
+
+int
 BIO_meth_set_puts(BIO_METHOD *biom, int (*puts)(BIO *, const char *))
 {
 	biom->bputs = puts;
@@ -61,10 +79,22 @@ BIO_meth_set_puts(BIO_METHOD *biom, int (*puts)(BIO *, const char *))
 }
 
 int
+(*BIO_meth_get_gets(BIO_METHOD *biom))(BIO *, char *, int)
+{
+	return biom->bgets;
+}
+
+int
 BIO_meth_set_gets(BIO_METHOD *biom, int (*gets)(BIO *, char *, int))
 {
 	biom->bgets = gets;
 	return 1;
+}
+
+long
+(*BIO_meth_get_ctrl(BIO_METHOD *biom))(BIO *, int, long, void *)
+{
+	return biom->ctrl;
 }
 
 int
@@ -75,10 +105,22 @@ BIO_meth_set_ctrl(BIO_METHOD *biom, long (*ctrl)(BIO *, int, long, void *))
 }
 
 int
+(*BIO_meth_get_create(BIO_METHOD *biom))(BIO *)
+{
+	return biom->create;
+}
+
+int
 BIO_meth_set_create(BIO_METHOD *biom, int (*create)(BIO *))
 {
 	biom->create = create;
 	return 1;
+}
+
+int
+(*BIO_meth_get_destroy(BIO_METHOD *biom))(BIO *)
+{
+	return biom->destroy;
 }
 
 int
