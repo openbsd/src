@@ -2258,7 +2258,6 @@ RSA_get0_key
 RSA_get_default_method
 RSA_get_ex_data
 RSA_get_ex_new_index
-RSA_get_flags
 RSA_get_method
 RSA_new
 RSA_new_method
@@ -2291,6 +2290,7 @@ RSA_setup_blinding
 RSA_sign
 RSA_sign_ASN1_OCTET_STRING
 RSA_size
+RSA_test_flags
 RSA_up_ref
 RSA_verify
 RSA_verify_ASN1_OCTET_STRING
