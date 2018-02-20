@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drm.h,v 1.25 2017/07/01 16:14:10 kettenis Exp $ */
+/* $OpenBSD: i915_drm.h,v 1.26 2018/02/20 23:44:19 jsg Exp $ */
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -603,53 +603,53 @@ struct drm_i915_gem_exec_object2 {
 	 * User's handle for a buffer to be bound into the GTT for this
 	 * operation.
 	 */
-	u_int32_t handle;
+	uint32_t handle;
 
 	/** Number of relocations to be performed on this buffer */
-	u_int32_t relocation_count;
+	uint32_t relocation_count;
 	/**
 	 * Pointer to array of struct drm_i915_gem_relocation_entry containing
 	 * the relocations to be performed in this buffer.
 	 */
-	u_int64_t relocs_ptr;
+	uint64_t relocs_ptr;
 
 	/** Required alignment in graphics aperture */
-	u_int64_t alignment;
+	uint64_t alignment;
 
 	/**
 	 * Returned value of the updated offset of the object, for future
 	 * presumed_offset writes.
 	 */
-	u_int64_t offset;
+	uint64_t offset;
 
 #define EXEC_OBJECT_NEEDS_FENCE (1<<0)
 #define EXEC_OBJECT_NEEDS_GTT	(1<<1)
 #define EXEC_OBJECT_WRITE	(1<<2)
 #define EXEC_OBJECT_SUPPORTS_48B_ADDRESS (1<<3)
 #define __EXEC_OBJECT_UNKNOWN_FLAGS -(EXEC_OBJECT_SUPPORTS_48B_ADDRESS<<1)
-	u_int64_t flags;
+	uint64_t flags;
 
-	u_int64_t rsvd1;
-	u_int64_t rsvd2;
+	uint64_t rsvd1;
+	uint64_t rsvd2;
 };
 
 struct drm_i915_gem_execbuffer2 {
 	/**
 	 * List of gem_exec_object2 structs
 	 */
-	u_int64_t buffers_ptr;
-	u_int32_t buffer_count;
+	uint64_t buffers_ptr;
+	uint32_t buffer_count;
 
 	/** Offset in the batchbuffer to start execution from. */
-	u_int32_t batch_start_offset;
+	uint32_t batch_start_offset;
 	/** Bytes used in batchbuffer from batch_start_offset */
-	u_int32_t batch_len;
+	uint32_t batch_len;
 #ifndef __OpenBSD__
-	u_int32_t DR1;
-	u_int32_t DR4;
-	u_int32_t num_cliprects;
+	uint32_t DR1;
+	uint32_t DR4;
+	uint32_t num_cliprects;
 	/** This is a struct drm_clip_rect *cliprects */
-	u_int64_t cliprects_ptr;
+	uint64_t cliprects_ptr;
 #endif
 #define I915_EXEC_RING_MASK              (7<<0)
 #define I915_EXEC_DEFAULT                (0<<0)
@@ -668,9 +668,9 @@ struct drm_i915_gem_execbuffer2 {
 #define I915_EXEC_CONSTANTS_REL_GENERAL (0<<6) /* default */
 #define I915_EXEC_CONSTANTS_ABSOLUTE 	(1<<6)
 #define I915_EXEC_CONSTANTS_REL_SURFACE (2<<6) /* gen4/5 only */
-	u_int64_t flags;
-	u_int64_t rsvd1;
-	u_int64_t rsvd2;
+	uint64_t flags;
+	uint64_t rsvd1;
+	uint64_t rsvd2;
 };
 
 /** Resets the SO write offset registers for transform feedback on gen7. */
@@ -883,15 +883,15 @@ struct drm_i915_get_pipe_from_crtc_id {
 
 struct drm_i915_gem_madvise {
 	/** Handle of the buffer to change the backing store advice */
-	u_int32_t handle;
+	uint32_t handle;
 
 	/* Advice: either the buffer will be needed again in the near future,
 	 *         or wont be and could be discarded under memory pressure.
 	 */
-	u_int32_t madv;
+	uint32_t madv;
 
 	/** Whether the backing store still exists. */
-	u_int32_t retained;
+	uint32_t retained;
 };
 
 #define I915_OVERLAY_TYPE_MASK 		0xff
