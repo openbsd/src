@@ -284,6 +284,7 @@ BIO_get_new_index
 BIO_get_port
 BIO_get_retry_BIO
 BIO_get_retry_reason
+BIO_get_shutdown
 BIO_gethostbyname
 BIO_gets
 BIO_indent
@@ -342,6 +343,7 @@ BIO_set_data
 BIO_set_ex_data
 BIO_set_flags
 BIO_set_init
+BIO_set_shutdown
 BIO_set_tcp_ndelay
 BIO_snprintf
 BIO_sock_cleanup

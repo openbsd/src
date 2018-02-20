@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.25 2018/02/20 17:15:27 jsing Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.26 2018/02/20 17:55:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -167,6 +167,18 @@ void
 BIO_set_init(BIO *a, int init)
 {
 	a->init = init;
+}
+
+int
+BIO_get_shutdown(BIO *a)
+{
+	return (a->shutdown);
+}
+
+void
+BIO_set_shutdown(BIO *a, int shut)
+{
+	a->shutdown = shut;
 }
 
 void
