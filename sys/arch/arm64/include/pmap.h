@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.9 2018/01/12 14:52:55 kettenis Exp $ */
+/* $OpenBSD: pmap.h,v 1.10 2018/02/20 23:45:24 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -17,7 +17,9 @@
 #ifndef	_ARM64_PMAP_H_
 #define	_ARM64_PMAP_H_
 
-#include <arm64/pte.h>
+#include <sys/mutex.h>
+
+#include <machine/pte.h>
 
 #define PMAP_PA_MASK	~((paddr_t)PAGE_MASK) /* to remove the flags */
 #define PMAP_NOCACHE	0x1 /* non-cacheable memory */
@@ -66,6 +68,7 @@ void pagezero_cache(vaddr_t);
  * Pmap stuff
  */
 struct pmap {
+	struct mutex pm_mtx;
 	union {
 		struct pmapvp0 *l0;	/* virtual to physical table 4 lvl */
 		struct pmapvp1 *l1;	/* virtual to physical table 3 lvl */
@@ -104,12 +107,14 @@ void	pmap_map_early(paddr_t, psize_t);
 
 #define __HAVE_VM_PAGE_MD
 struct vm_page_md {
+	struct mutex pv_mtx;
 	LIST_HEAD(,pte_desc) pv_list;
 	int pvh_attrs;				/* page attributes */
 };
 
 #define VM_MDPAGE_INIT(pg) do {			\
-        LIST_INIT(&((pg)->mdpage.pv_list));     \
+	mtx_init(&(pg)->mdpage.pv_mtx, IPL_VM);	\
+	LIST_INIT(&((pg)->mdpage.pv_list));     \
 	(pg)->mdpage.pvh_attrs = 0;		\
 } while (0)
 
