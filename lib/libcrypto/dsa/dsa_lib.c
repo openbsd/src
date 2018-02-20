@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.27 2018/02/20 17:45:44 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.28 2018/02/20 17:52:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -381,4 +381,10 @@ void
 DSA_set_flags(DSA *d, int flags)
 {
 	d->flags |= flags;
+}
+
+ENGINE *
+DSA_get0_engine(DSA *d)
+{
+	return d->engine;
 }

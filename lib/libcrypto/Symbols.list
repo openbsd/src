@@ -810,6 +810,7 @@ DSA_free
 DSA_generate_key
 DSA_generate_parameters
 DSA_generate_parameters_ex
+DSA_get0_engine
 DSA_get0_key
 DSA_get0_pqg
 DSA_get_default_method
