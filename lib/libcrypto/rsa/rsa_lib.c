@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.35 2018/02/18 12:57:14 tb Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.36 2018/02/20 17:42:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -351,4 +351,22 @@ RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
 	}
 
 	return 1;
+}
+
+void
+RSA_clear_flags(RSA *r, int flags)
+{
+	r->flags &= ~flags;
+}
+
+int
+RSA_test_flags(const RSA *r, int flags)
+{
+	return r->flags & flags;
+}
+
+void
+RSA_set_flags(RSA *r, int flags)
+{
+	r->flags |= flags;
 }

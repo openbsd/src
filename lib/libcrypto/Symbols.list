@@ -2228,6 +2228,7 @@ RSA_bits
 RSA_blinding_off
 RSA_blinding_on
 RSA_check_key
+RSA_clear_flags
 RSA_flags
 RSA_free
 RSA_generate_key
@@ -2238,6 +2239,7 @@ RSA_get0_key
 RSA_get_default_method
 RSA_get_ex_data
 RSA_get_ex_new_index
+RSA_get_flags
 RSA_get_method
 RSA_new
 RSA_new_method
@@ -2264,6 +2266,7 @@ RSA_set0_factors
 RSA_set0_key
 RSA_set_default_method
 RSA_set_ex_data
+RSA_set_flags
 RSA_set_method
 RSA_setup_blinding
 RSA_sign
