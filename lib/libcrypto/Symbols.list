@@ -2620,6 +2620,9 @@ X509_CRL_dup
 X509_CRL_free
 X509_CRL_get0_by_cert
 X509_CRL_get0_by_serial
+X509_CRL_get0_lastUpdate
+X509_CRL_get0_nextUpdate
+X509_CRL_get0_signature
 X509_CRL_get_ext
 X509_CRL_get_ext_by_NID
 X509_CRL_get_ext_by_OBJ
