@@ -620,7 +620,7 @@
 ./usr/include
 ./usr/lib
 ./usr/lib/libc.so.92.3
-./usr/lib/libcrypto.so.42.5
+./usr/lib/libcrypto.so.42.6
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
 ./usr/lib/libevent.so.4.1
@@ -646,10 +646,10 @@
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.7.0
-./usr/lib/libssl.so.44.6
+./usr/lib/libssl.so.44.7
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
-./usr/lib/libtls.so.16.6
+./usr/lib/libtls.so.16.7
 ./usr/lib/libusbhid.so.7.0
 ./usr/lib/libutil.so.13.0
 ./usr/lib/libz.so.5.0
@@ -2702,7 +2702,7 @@
 ./usr/share/relink/usr/libexec/ld.so.a
 ./usr/share/relink/usr/lib
 ./usr/share/relink/usr/lib/libc.so.92.3.a
-./usr/share/relink/usr/lib/libcrypto.so.42.5.a
+./usr/share/relink/usr/lib/libcrypto.so.42.6.a
 ./usr/share/snmp
 ./usr/share/snmp/mibs
 ./usr/share/snmp/mibs/OPENBSD-BASE-MIB.txt
