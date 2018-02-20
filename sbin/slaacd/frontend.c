@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.12 2018/02/19 09:52:16 otto Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.13 2018/02/20 16:22:19 otto Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -652,7 +652,7 @@ route_receive(int fd, short events, void *arg)
 	if (n == 0)
 		fatal("routing socket closed");
 
-	if (n < rtm->rtm_msglen) {
+	if (n < (ssize_t)sizeof(rtm->rtm_msglen) || n < rtm->rtm_msglen) {
 		log_warnx("partial rtm of %zd in buffer", n);
 		return;
 	}
