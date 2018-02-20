@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.19 2018/02/17 13:47:36 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.20 2018/02/20 18:05:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -311,7 +311,7 @@ int
 EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 {
 	int ret = EVP_PKEY_assign_RSA(pkey, key);
-	if (ret)
+	if (ret != 0)
 		RSA_up_ref(key);
 	return ret;
 }
@@ -343,21 +343,21 @@ int
 EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
 {
 	int ret = EVP_PKEY_assign_DSA(pkey, key);
-	if (ret)
+	if (ret != 0)
 		DSA_up_ref(key);
 	return ret;
 }
 #endif
 
 #ifndef OPENSSL_NO_EC
-
-int
-EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
+EC_KEY *
+EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey)
 {
-	int ret = EVP_PKEY_assign_EC_KEY(pkey, key);
-	if (ret)
-		EC_KEY_up_ref(key);
-	return ret;
+	if (pkey->type != EVP_PKEY_EC) {
+		EVPerror(EVP_R_EXPECTING_A_EC_KEY);
+		return NULL;
+	}
+	return pkey->pkey.ec;
 }
 
 EC_KEY *
@@ -369,6 +369,15 @@ EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
 	}
 	EC_KEY_up_ref(pkey->pkey.ec);
 	return pkey->pkey.ec;
+}
+
+int
+EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
+{
+	int ret = EVP_PKEY_assign_EC_KEY(pkey, key);
+	if (ret != 0)
+		EC_KEY_up_ref(key);
+	return ret;
 }
 #endif
 
@@ -399,7 +408,7 @@ int
 EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
 {
 	int ret = EVP_PKEY_assign_DH(pkey, key);
-	if (ret)
+	if (ret != 0)
 		DH_up_ref(key);
 	return ret;
 }

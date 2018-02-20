@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.57 2018/02/17 16:54:08 jsing Exp $ */
+/* $OpenBSD: evp.h,v 1.58 2018/02/20 18:05:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -893,8 +893,9 @@ int EVP_PKEY_set1_DH(EVP_PKEY *pkey, struct dh_st *key);
 #endif
 #ifndef OPENSSL_NO_EC
 struct ec_key_st;
-int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, struct ec_key_st *key);
+struct ec_key_st *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey);
 struct ec_key_st *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
+int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, struct ec_key_st *key);
 #endif
 #ifndef OPENSSL_NO_GOST
 struct gost_key_st;
