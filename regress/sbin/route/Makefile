@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.28 2018/02/19 11:37:38 mpi Exp $
+# $OpenBSD: Makefile,v 1.29 2018/02/20 12:44:28 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -374,6 +374,23 @@ rttest${n}:
 	# attached to the specified interface
 	${RCMD} add -net 192.168.67.0/25 130.102.71.67 -priority 9 -ifp vether99
 	${RCMD} add -net 192.168.67.128/25 130.102.71.67 -priority 3 -ifp vlan99
+	${RCMD} show -inet 2>&1 | \
+		sed -e "s,link\#[0-9 ]*U,link#              U," | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Check that removing a RTF_CLONING route do not remove RTF_CACHED children
+# from another cloning route.
+n=	33
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	# Use vether(4) because we need IFT_ETHER interfaces
+	# for the auto-magic RTF_CLONING routes.
+	${SUDO} ifconfig vether99 rdomain ${RDOMAIN} lladdr fe:e1:ba:d4:c8:1d up
+	${SUDO} ifconfig vether99 192.168.178.52/24
+	${SUDO} ifconfig vether99 alias 192.168.178.53/24
+	${RCMD} add default 192.168.178.1
+	# Remove the alias
+	${SUDO} ifconfig vether99 192.168.178.53 delete
 	${RCMD} show -inet 2>&1 | \
 		sed -e "s,link\#[0-9 ]*U,link#              U," | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
