@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.26 2017/12/24 16:19:27 fcambus Exp $	*/
+/*	$OpenBSD: via.c,v 1.27 2018/02/20 15:02:13 mikeb Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -179,9 +179,9 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 
 			/* Build expanded keys for both directions */
 			AES_KeySetup_Encrypt(ses->ses_ekey, c->cri_key,
-			    c->cri_klen);
+			    c->cri_klen / 8);
 			AES_KeySetup_Decrypt(ses->ses_dkey, c->cri_key,
-			    c->cri_klen);
+			    c->cri_klen / 8);
 			for (i = 0; i < 4 * (AES_MAXROUNDS + 1); i++) {
 				ses->ses_ekey[i] = ntohl(ses->ses_ekey[i]);
 				ses->ses_dkey[i] = ntohl(ses->ses_dkey[i]);
