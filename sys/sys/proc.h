@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.245 2018/02/10 10:32:51 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.246 2018/02/20 12:38:58 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -496,13 +496,12 @@ void	proc_printit(struct proc *p, const char *modif,
     int (*pr)(const char *, ...));
 
 int	chgproccnt(uid_t uid, int diff);
-int	enterpgrp(struct process *, pid_t, struct pgrp *, struct session *);
-void	fixjobc(struct process *, struct pgrp *, int);
+void	enternewpgrp(struct process *, struct pgrp *, struct session *);
+void	enterthispgrp(struct process *, struct pgrp *);
 int	inferior(struct process *, struct process *);
 void	leavepgrp(struct process *);
 void	killjobc(struct process *);
 void	preempt(void);
-void	pgdelete(struct pgrp *);
 void	procinit(void);
 void	resetpriority(struct proc *);
 void	setrunnable(struct proc *);

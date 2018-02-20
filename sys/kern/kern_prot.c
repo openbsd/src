@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.72 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.73 2018/02/20 12:38:58 mpi Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -222,15 +222,14 @@ sys_setsid(struct proc *p, void *v, register_t *retval)
 	pid_t pid = pr->ps_pid;
 
 	newsess = pool_get(&session_pool, PR_WAITOK);
-	timeout_set(&newsess->s_verauthto, zapverauth, newsess);
 	newpgrp = pool_get(&pgrp_pool, PR_WAITOK);
 
-	if (pr->ps_pgid == pid || pgfind(pid)) {
+	if (pr->ps_pgid == pid || pgfind(pid) != NULL) {
 		pool_put(&pgrp_pool, newpgrp);
 		pool_put(&session_pool, newsess);
 		return (EPERM);
 	} else {
-		(void) enterpgrp(pr, pid, newpgrp, newsess);
+		enternewpgrp(pr, newpgrp, newsess);
 		*retval = pid;
 		return (0);
 	}
@@ -291,15 +290,26 @@ sys_setpgid(struct proc *curp, void *v, register_t *retval)
 	}
 	if (pgid == 0)
 		pgid = targpr->ps_pid;
-	else if (pgid != targpr->ps_pid)
-		if ((pgrp = pgfind(pgid)) == 0 ||
-		    pgrp->pg_session != curpr->ps_session) {
+
+	error = 0;
+	if ((pgrp = pgfind(pgid)) == NULL) {
+		/* can only create a new process group with pgid == pid */
+		if (pgid != targpr->ps_pid)
 			error = EPERM;
-			goto out;
+		else {
+			enternewpgrp(targpr, newpgrp, NULL);
+			newpgrp = NULL;
 		}
-	return (enterpgrp(targpr, pgid, newpgrp, NULL));
-out:
-	pool_put(&pgrp_pool, newpgrp);
+	} else if (pgrp != targpr->ps_pgrp) {		/* anything to do? */
+		if (pgid != targpr->ps_pid &&
+		    pgrp->pg_session != curpr->ps_session)
+			error = EPERM;
+		else
+			enterthispgrp(targpr, pgrp);
+	}
+ out:
+	if (newpgrp != NULL)
+		pool_put(&pgrp_pool, newpgrp);
 	return (error);
 }
 

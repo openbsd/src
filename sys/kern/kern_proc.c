@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.80 2018/02/10 10:32:51 mpi Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.81 2018/02/20 12:38:58 mpi Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -72,6 +72,9 @@ struct pool rusage_pool;
 struct pool ucred_pool;
 struct pool pgrp_pool;
 struct pool session_pool;
+
+void	pgdelete(struct pgrp *);
+void	fixjobc(struct process *, struct pgrp *, int);
 
 static void orphanpg(struct pgrp *);
 #ifdef DEBUG
@@ -222,67 +225,54 @@ zombiefind(pid_t pid)
 }
 
 /*
- * Move p to a new or existing process group (and session)
- * Caller provides a pre-allocated pgrp and session that should
- * be freed if they are not used.
- * XXX need proctree lock
+ * Move process to a new process group.  If a session is provided
+ * then it's a new session to contain this process group; otherwise
+ * the process is staying within its existing session.
  */
-int
-enterpgrp(struct process *pr, pid_t pgid, struct pgrp *newpgrp,
-    struct session *newsess)
+void
+enternewpgrp(struct process *pr, struct pgrp *pgrp, struct session *newsess)
 {
-	struct pgrp *pgrp = pgfind(pgid);
-
 #ifdef DIAGNOSTIC
-	if (pgrp != NULL && newsess)	/* firewalls */
-		panic("enterpgrp: setsid into non-empty pgrp");
 	if (SESS_LEADER(pr))
-		panic("enterpgrp: session leader attempted setpgrp");
-#endif
-	if (pgrp == NULL) {
-		/*
-		 * new process group
-		 */
-#ifdef DIAGNOSTIC
-		if (pr->ps_pid != pgid)
-			panic("enterpgrp: new pgrp and pid != pgid");
+		panic("%s: session leader attempted setpgrp", __func__);
 #endif
 
-		pgrp = newpgrp;
-		if (newsess) {
-			/*
-			 * new session
-			 */
-			newsess->s_leader = pr;
-			newsess->s_count = 1;
-			newsess->s_ttyvp = NULL;
-			newsess->s_ttyp = NULL;
-			memcpy(newsess->s_login, pr->ps_session->s_login,
-			    sizeof(newsess->s_login));
-			atomic_clearbits_int(&pr->ps_flags, PS_CONTROLT);
-			pgrp->pg_session = newsess;
+	if (newsess != NULL) {
+		/*
+		 * New session.  Initialize it completely
+		 */
+		timeout_set(&newsess->s_verauthto, zapverauth, newsess);
+		newsess->s_leader = pr;
+		newsess->s_count = 1;
+		newsess->s_ttyvp = NULL;
+		newsess->s_ttyp = NULL;
+		memcpy(newsess->s_login, pr->ps_session->s_login,
+		    sizeof(newsess->s_login));
+		atomic_clearbits_int(&pr->ps_flags, PS_CONTROLT);
+		pgrp->pg_session = newsess;
 #ifdef DIAGNOSTIC
-			if (pr != curproc->p_p)
-				panic("enterpgrp: mksession but not curproc");
+		if (pr != curproc->p_p)
+			panic("%s: mksession but not curproc", __func__);
 #endif
-		} else {
-			pgrp->pg_session = pr->ps_session;
-			pgrp->pg_session->s_count++;
-		}
-		pgrp->pg_id = pgid;
-		LIST_INIT(&pgrp->pg_members);
-		LIST_INSERT_HEAD(PGRPHASH(pgid), pgrp, pg_hash);
-		pgrp->pg_jobc = 0;
-	} else if (pgrp == pr->ps_pgrp) {
-		if (newsess)
-			pool_put(&session_pool, newsess);
-		pool_put(&pgrp_pool, newpgrp);
-		return (0);
 	} else {
-		if (newsess)
-			pool_put(&session_pool, newsess);
-		pool_put(&pgrp_pool, newpgrp);
+		pgrp->pg_session = pr->ps_session;
+		pgrp->pg_session->s_count++;
 	}
+	pgrp->pg_id = pr->ps_pid;
+	LIST_INIT(&pgrp->pg_members);
+	LIST_INSERT_HEAD(PGRPHASH(pr->ps_pid), pgrp, pg_hash);
+	pgrp->pg_jobc = 0;
+
+	enterthispgrp(pr, pgrp);
+}
+
+/*
+ * move process to an existing process group
+ */
+void
+enterthispgrp(struct process *pr, struct pgrp *pgrp)
+{
+	struct pgrp *savepgrp = pr->ps_pgrp;
 
 	/*
 	 * Adjust eligibility of affected pgrps to participate in job control.
@@ -290,14 +280,13 @@ enterpgrp(struct process *pr, pid_t pgid, struct pgrp *newpgrp,
 	 * could reach 0 spuriously during the first call.
 	 */
 	fixjobc(pr, pgrp, 1);
-	fixjobc(pr, pr->ps_pgrp, 0);
+	fixjobc(pr, savepgrp, 0);
 
 	LIST_REMOVE(pr, ps_pglist);
-	if (LIST_EMPTY(&pr->ps_pgrp->pg_members))
-		pgdelete(pr->ps_pgrp);
 	pr->ps_pgrp = pgrp;
 	LIST_INSERT_HEAD(&pgrp->pg_members, pr, ps_pglist);
-	return (0);
+	if (LIST_EMPTY(&savepgrp->pg_members))
+		pgdelete(savepgrp);
 }
 
 /*
