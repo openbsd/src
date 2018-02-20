@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.46 2018/02/02 11:24:37 jsg Exp $ */
+/* $OpenBSD: mfii.c,v 1.47 2018/02/20 05:40:52 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -630,22 +630,18 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 
 	mfii_syspd(sc);
 
-#ifdef notyet
 	if (mfii_aen_register(sc) != 0) {
 		/* error printed by mfii_aen_register */
 		goto intr_disestablish;
 	}
-#endif
 
 	/* enable interrupts */
 	mfii_write(sc, MFI_OSTS, 0xffffffff);
 	mfii_write(sc, MFI_OMSK, ~MFII_OSTS_INTR_VALID);
 
 	return;
-#ifdef notyet
 intr_disestablish:
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-#endif
 free_sgl:
 	mfii_dmamem_free(sc, sc->sc_sgl);
 free_requests:
@@ -851,6 +847,7 @@ mfii_dcmd_start(struct mfii_softc *sc, struct mfii_ccb *ccb)
 
 	io->function = MFII_FUNCTION_PASSTHRU_IO;
 	io->sgl_offset0 = (uint32_t *)sge - (uint32_t *)io;
+	io->chain_offset = io->sgl_offset0 / 4;
 
 	htolem64(&sge->sg_addr, ccb->ccb_sense_dva);
 	htolem32(&sge->sg_len, sizeof(*ccb->ccb_sense));
