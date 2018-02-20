@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.106 2018/02/20 03:53:54 dlg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.107 2018/02/20 04:03:15 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1426,7 +1426,7 @@ gre_keepalive_send(void *arg)
 	t.t_key = sc->sc_tunnel.t_key;
 	t.t_key_mask = sc->sc_tunnel.t_key_mask;
 
-	m = gre_encap(&t, m, htons(0), ttl, 0);
+	m = gre_encap(&t, m, htons(0), ttl, IPTOS_PREC_INTERNETCONTROL);
 	if (m == NULL)
 		return;
 
@@ -1454,7 +1454,8 @@ gre_keepalive_send(void *arg)
 	/*
 	 * put it in the tunnel
 	 */
-	m = gre_encap(&sc->sc_tunnel, m, proto, ttl, 0);
+	m = gre_encap(&sc->sc_tunnel, m, proto, ttl,
+	    IPTOS_PREC_INTERNETCONTROL);
 	if (m == NULL)
 		return;
 
