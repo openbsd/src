@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.20 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.21 2018/02/20 17:48:35 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -131,6 +131,29 @@ int
 i2d_DSA_SIG(const DSA_SIG *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DSA_SIG_it);
+}
+
+void
+DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
+{
+	if (pr != NULL)
+		*pr = sig->r;
+	if (ps != NULL)
+		*ps = sig->s;
+}
+
+int
+DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
+{
+	if (r == NULL || s == NULL)
+		return 0;
+
+	BN_clear_free(sig->r);
+	sig->r = r;
+	BN_clear_free(sig->s);
+	sig->s = s;
+
+	return 1;
 }
 
 /* Override the default free and new methods */

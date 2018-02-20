@@ -798,8 +798,10 @@ DSAPrivateKey_it
 DSAPublicKey_it
 DSA_OpenSSL
 DSA_SIG_free
+DSA_SIG_get0
 DSA_SIG_it
 DSA_SIG_new
+DSA_SIG_set0
 DSA_clear_flags
 DSA_do_sign
 DSA_do_verify
