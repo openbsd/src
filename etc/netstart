@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.194 2018/02/19 23:42:29 rpe Exp $
+#	$OpenBSD: netstart,v 1.195 2018/02/21 19:57:21 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -73,6 +73,7 @@ parse_hn_line() {
 }
 
 # Create interface $1 if it does not yet exist.
+# Usage: ifcreate if1
 ifcreate() {
 	local _if=$1
 
@@ -80,6 +81,7 @@ ifcreate() {
 }
 
 # Create interfaces for network pseudo-devices referred to by hostname.if files.
+# Usage: vifscreate
 vifscreate() {
 	local _vif _hn _if
 
@@ -166,7 +168,7 @@ ifmstart() {
 	done
 }
 
-# Parse /etc/mygate and add default routes for IPv4 and IPv6
+# Parse /etc/mygate and add default routes for IPv4 and IPv6.
 # Usage: defaultroute
 defaultroute() {
 	local _cmd;
@@ -216,6 +218,8 @@ if $PRINT_ONLY && (($# == 0)); then
 	exit 1
 fi
 
+# Load key material for the generation of IPv6 Semantically Opaque Interface
+# Identifiers (SOII) used for link local and SLAAC addresses.
 $PRINT_ONLY || [[ ! -f /etc/soii.key ]] ||
 	sysctl -q "net.inet6.ip6.soiikey=$(</etc/soii.key)"
 
@@ -236,8 +240,8 @@ fi
 # automatically invokes the IPv6 address ::1.
 ifconfig lo0 inet 127.0.0.1/8
 
+# IPv6 configuration.
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
-	# IPv6 configurations.
 	ip6kernel=YES
 
 	# Disallow link-local unicast dest without outgoing scope identifiers.
@@ -282,7 +286,7 @@ else
 	ip6kernel=NO
 fi
 
-# Create all the pseudo interfaces up front
+# Create all the pseudo interfaces up front.
 vifscreate
 
 # Configure all the non-loopback interfaces which we know about, but
@@ -294,7 +298,7 @@ ifmstart "" "trunk svlan vlan carp pppoe tun tap gif etherip gre egre mobileip p
 # Configure all the carp interfaces which we know about before default route.
 ifmstart "trunk svlan vlan carp pppoe"
 
-# Look for default routes in /etc/mygate.
+# Set default routes for IPv4 and IPv6.
 defaultroute
 
 # Multicast routing.
@@ -310,7 +314,7 @@ route -qn add -net 127 127.0.0.1 -reject >/dev/null
 ifmstart "tun tap gif etherip gre egre mobileip pflow"
 
 if [[ $ip6kernel == YES ]]; then
-	# This is to make sure DAD is completed before going further.
+	# Ensure IPv6 Duplicate Address Detection (DAD) is completed.
 	count=0
 	while ((count++ < 10 && $(sysctl -n net.inet6.ip6.dad_pending) != 0)); do
 		sleep 1
