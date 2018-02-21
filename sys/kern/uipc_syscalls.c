@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.166 2018/02/19 11:35:41 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.167 2018/02/21 09:30:02 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	int type = SCARG(uap, type);
 	int domain = SCARG(uap, domain);
-	int fd, error;
+	int fd, cloexec, nonblock, fflag, error;
 	unsigned int ss = 0;
 
 	if ((type & SOCK_DNS) && !(domain == AF_INET || domain == AF_INET6))
@@ -95,24 +95,25 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	fdplock(fdp);
-	error = falloc(p, (type & SOCK_CLOEXEC) ? UF_EXCLOSE : 0, &fp, &fd);
-	fdpunlock(fdp);
+	type &= ~(SOCK_CLOEXEC | SOCK_NONBLOCK | SOCK_DNS);
+	cloexec = (SCARG(uap, type) & SOCK_CLOEXEC) ? UF_EXCLOSE : 0;
+	nonblock = SCARG(uap, type) & SOCK_NONBLOCK;
+	fflag = FREAD | FWRITE | (nonblock ? FNONBLOCK : 0);
+
+	error = socreate(SCARG(uap, domain), &so, type, SCARG(uap, protocol));
 	if (error != 0)
 		goto out;
 
-	fp->f_flag = FREAD | FWRITE | (type & SOCK_NONBLOCK ? FNONBLOCK : 0);
-	fp->f_type = DTYPE_SOCKET;
-	fp->f_ops = &socketops;
-	error = socreate(SCARG(uap, domain), &so,
-	    type & ~(SOCK_CLOEXEC | SOCK_NONBLOCK | SOCK_DNS), SCARG(uap, protocol));
+	fdplock(fdp);
+	error = falloc(p, cloexec, &fp, &fd);
+	fdpunlock(fdp);
 	if (error) {
-		fdplock(fdp);
-		fdremove(fdp, fd);
-		closef(fp, p);
-		fdpunlock(fdp);
+		soclose(so);
 	} else {
-		if (type & SOCK_NONBLOCK)
+		fp->f_flag = fflag;
+		fp->f_type = DTYPE_SOCKET;
+		fp->f_ops = &socketops;
+		if (nonblock)
 			so->so_state |= SS_NBIO;
 		so->so_state |= ss;
 		fp->f_data = so;
@@ -451,7 +452,7 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 
 	type  = SCARG(uap, type) & ~(SOCK_CLOEXEC | SOCK_NONBLOCK);
 	cloexec = (SCARG(uap, type) & SOCK_CLOEXEC) ? UF_EXCLOSE : 0;
-	nonblock = SCARG(uap, type) &  SOCK_NONBLOCK;
+	nonblock = SCARG(uap, type) & SOCK_NONBLOCK;
 	fflag = FREAD | FWRITE | (nonblock ? FNONBLOCK : 0);
 
 	error = socreate(SCARG(uap, domain), &so1, type, SCARG(uap, protocol));
