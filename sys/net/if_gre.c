@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.108 2018/02/21 05:19:11 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.109 2018/02/21 05:20:17 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -563,6 +563,8 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 	if (gh->gre_proto == htons(ETHERTYPE_TRANSETHER)) {
 		if (egre_input(key, m, hlen) == -1)
 			goto decline;
+
+		return (IPPROTO_DONE);
 	}
 
 	sc = gre_find(key);
