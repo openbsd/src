@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.109 2018/02/21 05:20:17 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.110 2018/02/21 22:20:19 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -51,22 +51,27 @@
 #include <sys/timeout.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
+#include <sys/pool.h>
+#include <sys/rwlock.h>
 
 #include <crypto/siphash.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/if_media.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
+#include <netinet/in_var.h>
+#include <netinet/if_ether.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
-#include <netinet/if_ether.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/in6_var.h>
 #endif
 
 #ifdef PIPEX
@@ -89,6 +94,10 @@
 
 #include <netinet/ip_gre.h>
 #include <sys/sysctl.h>
+
+/* for nvgre bridge shizz */
+#include <sys/socket.h>
+#include <net/if_bridge.h>
 
 /*
  * packet formats
@@ -142,6 +151,10 @@ union gre_addr {
 	struct in6_addr		in6;
 };
 
+static inline int
+		gre_ip_cmp(int, const union gre_addr *,
+		    const union gre_addr *);
+
 #define GRE_KEY_MIN		0x00000000U
 #define GRE_KEY_MAX		0xffffffffU
 #define GRE_KEY_SHIFT		0
@@ -169,10 +182,10 @@ struct gre_tunnel {
 	sa_family_t		t_af;
 };
 
-static inline int
+static int
 		gre_cmp(const struct gre_tunnel *, const struct gre_tunnel *);
 
-static int	gre_set_tunnel(struct gre_tunnel *, struct if_laddrreq *);
+static int	gre_set_tunnel(struct gre_tunnel *, struct if_laddrreq *, int);
 static int	gre_get_tunnel(struct gre_tunnel *, struct if_laddrreq *);
 static int	gre_del_tunnel(struct gre_tunnel *);
 
@@ -184,8 +197,11 @@ static int	gre_set_vnetflowid(struct gre_tunnel *, struct ifreq *);
 static int	gre_get_vnetflowid(struct gre_tunnel *, struct ifreq *);
 
 static struct mbuf *
-		gre_encap(const struct gre_tunnel *, struct mbuf *, uint16_t,
-		    uint8_t, uint8_t);
+		gre_encap_dst(const struct gre_tunnel *, const union gre_addr *,
+		    struct mbuf *, uint16_t, uint8_t, uint8_t);
+#define gre_encap(_t, _m, _p, _ttl, _tos) \
+		gre_encap_dst((_t), &(_t)->t_dst, (_m), (_p), (_ttl), (_tos))
+
 static int
 		gre_ip_output(const struct gre_tunnel *, struct mbuf *);
 
@@ -254,6 +270,12 @@ static void	gre_keepalive_hold(void *);
 /*
  * Ethernet GRE tunnels
  */
+#define ether_cmp(_a, _b)	memcmp((_a), (_b), ETHER_ADDR_LEN)
+#define ether_isequal(_a, _b)	(ether_cmp((_a), (_b)) == 0)
+#define ether_isbcast(_e)	ether_isequal((_e), etherbroadcastaddr)
+
+static struct mbuf *
+		gre_ether_align(struct mbuf *, int);
 
 struct egre_softc {
 	struct gre_tunnel	sc_tunnel; /* must be first */
@@ -264,6 +286,9 @@ struct egre_softc {
 };
 
 RBT_HEAD(egre_tree, egre_softc);
+
+static inline int
+		egre_cmp(const struct egre_softc *, const struct egre_softc *);
 
 RBT_PROTOTYPE(egre_tree, egre_softc, sc_entry, egre_cmp);
 
@@ -283,6 +308,103 @@ struct if_clone egre_cloner =
     IF_CLONE_INITIALIZER("egre", egre_clone_create, egre_clone_destroy);
 
 struct egre_tree egre_tree = RBT_INITIALIZER();
+
+/*
+ * Network Virtualisation Using Generic Routing Encapsulation (NVGRE)
+ */
+
+#define NVGRE_AGE_TMO		100	/* seconds */
+
+struct nvgre_entry {
+	RB_ENTRY(nvgre_entry)	 nv_entry;
+	struct ether_addr	 nv_dst;
+	uint8_t			 nv_type;
+#define NVGRE_ENTRY_DYNAMIC		0
+#define NVGRE_ENTRY_STATIC		1
+	union gre_addr		 nv_gateway;
+	struct refcnt		 nv_refs;
+	int			 nv_age;
+};
+
+RBT_HEAD(nvgre_map, nvgre_entry);
+
+static inline int
+		nvgre_entry_cmp(const struct nvgre_entry *,
+		    const struct nvgre_entry *);
+
+RBT_PROTOTYPE(nvgre_map, nvgre_entry, nv_entry, nvgre_entry_cmp);
+
+struct nvgre_softc {
+	struct gre_tunnel	 sc_tunnel; /* must be first */
+	unsigned int		 sc_ifp0;
+	RBT_ENTRY(nvgre_softc)	 sc_uentry;
+	RBT_ENTRY(nvgre_softc)	 sc_mentry;
+
+	struct arpcom		 sc_ac;
+	struct ifmedia		 sc_media;
+
+	struct mbuf_queue	 sc_send_list;
+	struct task		 sc_send_task;
+
+	void			*sc_inm;
+	void			*sc_lhcookie;
+	void			*sc_dhcookie;
+
+	struct rwlock		 sc_ether_lock;
+	struct nvgre_map	 sc_ether_map;
+	unsigned int		 sc_ether_num;
+	unsigned int		 sc_ether_max;
+	int			 sc_ether_tmo;
+	struct timeout		 sc_ether_age;
+
+	caddr_t			 sc_if_bpf;
+};
+
+RBT_HEAD(nvgre_ucast_tree, nvgre_softc);
+RBT_HEAD(nvgre_mcast_tree, nvgre_softc);
+
+static inline int
+		nvgre_cmp_ucast(const struct nvgre_softc *,
+		    const struct nvgre_softc *);
+static int
+		nvgre_cmp_mcast(const struct gre_tunnel *,
+		    const union gre_addr *, unsigned int,
+		    const struct gre_tunnel *, const union gre_addr *,
+		    unsigned int);
+static inline int
+		nvgre_cmp_mcast_sc(const struct nvgre_softc *,
+		    const struct nvgre_softc *);
+
+RBT_PROTOTYPE(nvgre_ucast_tree, nvgre_softc, sc_uentry, nvgre_cmp_ucast);
+RBT_PROTOTYPE(nvgre_mcast_tree, nvgre_softc, sc_mentry, nvgre_cmp_mcast_sc);
+
+static int	nvgre_clone_create(struct if_clone *, int);
+static int	nvgre_clone_destroy(struct ifnet *);
+
+static void	nvgre_start(struct ifnet *);
+static int	nvgre_ioctl(struct ifnet *, u_long, caddr_t);
+
+static int	nvgre_up(struct nvgre_softc *);
+static int	nvgre_down(struct nvgre_softc *);
+static int	nvgre_set_parent(struct nvgre_softc *, const char *);
+static void	nvgre_link_change(void *);
+static void	nvgre_detach(void *);
+
+static int	nvgre_input(const struct gre_tunnel *, struct mbuf *, int);
+static void	nvgre_send(void *);
+
+static int	nvgre_rtfind(struct nvgre_softc *, struct ifbaconf *);
+static void	nvgre_flush_map(struct nvgre_softc *);
+static void	nvgre_input_map(struct nvgre_softc *,
+		    const struct gre_tunnel *, const struct ether_header *);
+static void	nvgre_age(void *);
+
+struct if_clone nvgre_cloner =
+    IF_CLONE_INITIALIZER("nvgre", nvgre_clone_create, nvgre_clone_destroy);
+
+struct nvgre_ucast_tree nvgre_ucast_tree = RBT_INITIALIZER();
+struct nvgre_mcast_tree nvgre_mcast_tree = RBT_INITIALIZER();
+struct pool nvgre_pool;
 
 /*
  * It is not easy to calculate the right value for a GRE MTU.
@@ -308,6 +430,7 @@ greattach(int n)
 {
 	if_clone_attach(&gre_cloner);
 	if_clone_attach(&egre_cloner);
+	if_clone_attach(&nvgre_cloner);
 }
 
 static int
@@ -425,6 +548,82 @@ egre_clone_destroy(struct ifnet *ifp)
 	return (0);
 }
 
+static int
+nvgre_clone_create(struct if_clone *ifc, int unit)
+{
+	struct nvgre_softc *sc;
+	struct ifnet *ifp;
+	struct gre_tunnel *tunnel;
+
+	if (nvgre_pool.pr_size == 0) {
+		pool_init(&nvgre_pool, sizeof(struct nvgre_entry), 0,
+		    IPL_SOFTNET, 0, "nvgren", NULL);
+	}
+
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
+	ifp = &sc->sc_ac.ac_if;
+
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
+	    ifc->ifc_name, unit);
+
+	ifp->if_softc = sc;
+	ifp->if_mtu = 1500; /* XXX */
+	ifp->if_ioctl = nvgre_ioctl;
+	ifp->if_start = nvgre_start;
+	ifp->if_xflags = IFXF_CLONED;
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ether_fakeaddr(ifp);
+
+	tunnel = &sc->sc_tunnel;
+	tunnel->t_ttl = IP_DEFAULT_MULTICAST_TTL;
+	tunnel->t_df = htons(IP_DF);
+	tunnel->t_key_mask = GRE_KEY_ENTROPY;
+	tunnel->t_key = htonl(0 << GRE_KEY_ENTROPY_SHIFT);
+
+	mq_init(&sc->sc_send_list, IFQ_MAXLEN * 2, IPL_SOFTNET);
+	task_set(&sc->sc_send_task, nvgre_send, sc);
+
+	rw_init(&sc->sc_ether_lock, "nvgrelk");
+	RBT_INIT(nvgre_map, &sc->sc_ether_map);
+	sc->sc_ether_num = 0;
+	sc->sc_ether_max = 100;
+	sc->sc_ether_tmo = 240 * hz;
+	timeout_set_proc(&sc->sc_ether_age, nvgre_age, sc); /* ugh */
+
+	ifmedia_init(&sc->sc_media, 0, egre_media_change, egre_media_status);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
+
+	if_attach(ifp);
+	ether_ifattach(ifp);
+
+#if NBPFILTER > 0
+	bpfattach(&sc->sc_if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
+#endif
+
+	return (0);
+}
+
+static int
+nvgre_clone_destroy(struct ifnet *ifp)
+{
+	struct nvgre_softc *sc = ifp->if_softc;
+
+	NET_LOCK();
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
+		nvgre_down(sc);
+	NET_UNLOCK();
+
+	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	free(sc, M_DEVBUF, sizeof(*sc));
+
+	return (0);
+}
+
 int
 gre_input(struct mbuf **mp, int *offp, int type, int af)
 {
@@ -433,6 +632,8 @@ gre_input(struct mbuf **mp, int *offp, int type, int af)
 	struct ip *ip;
 
 	ip = mtod(m, struct ip *);
+
+	/* XXX check if ip_src is sane for nvgre? */
 
 	key.t_af = AF_INET;
 	key.t_ttl = ip->ip_ttl;
@@ -454,6 +655,8 @@ gre_input6(struct mbuf **mp, int *offp, int type, int af)
 	struct ip6_hdr *ip6;
 
 	ip6 = mtod(m, struct ip6_hdr *);
+
+	/* XXX check if ip6_src is sane for nvgre? */
 
 	key.t_af = AF_INET6;
 	key.t_ttl = ip6->ip6_hlim;
@@ -561,7 +764,8 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 	key->t_rtableid = m->m_pkthdr.ph_rtableid;
 
 	if (gh->gre_proto == htons(ETHERTYPE_TRANSETHER)) {
-		if (egre_input(key, m, hlen) == -1)
+		if (egre_input(key, m, hlen) == -1 &&
+		    nvgre_input(key, m, hlen) == -1)
 			goto decline;
 
 		return (IPPROTO_DONE);
@@ -687,38 +891,19 @@ egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen)
 {
 	struct egre_softc *sc;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	struct mbuf *n;
-	int off;
 
 	sc = RBT_FIND(egre_tree, &egre_tree, (const struct egre_softc *)key);
 	if (sc == NULL)
 		return (-1);
 
 	/* it's ours now */
-
-	m_adj(m, hlen);
-
-	if (m->m_pkthdr.len < sizeof(struct ether_header)) {
-		m_freem(m);
-		return (0);
-	}
-
-	m = m_pullup(m, sizeof(struct ether_header));
+	m = gre_ether_align(m, hlen);
 	if (m == NULL)
 		return (0);
 
-	n = m_getptr(m, sizeof(struct ether_header), &off);
-	if (n == NULL) {
-		m_freem(m);
-		return (0);
-	}
-
-	if (!ALIGNED_POINTER(mtod(n, caddr_t) + off, uint32_t)) {
-		n = m_dup_pkt(m, ETHER_ALIGN, M_NOWAIT);
-		m_freem(m);
-		if (n == NULL)
-			return (0);
-		m = n;
+	if (sc->sc_tunnel.t_key_mask == GRE_KEY_ENTROPY) {
+		m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
+		    (bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY);
 	}
 
 	m->m_flags &= ~(M_MCAST|M_BCAST);
@@ -727,15 +912,301 @@ egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen)
 	pf_pkt_addr_changed(m);
 #endif
 
-	if (sc->sc_tunnel.t_key_mask == GRE_KEY_ENTROPY) {
-		m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
-		    (bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY);
+	ml_enqueue(&ml, m);
+	if_input(&sc->sc_ac.ac_if, &ml);
+
+	return (0);
+}
+
+static int
+nvgre_rtfind(struct nvgre_softc *sc, struct ifbaconf *baconf)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct nvgre_entry *nv;
+	struct ifbareq bareq;
+	caddr_t uaddr, end;
+	int error;
+	int age;
+
+	if (baconf->ifbac_len == 0) {
+		/* single read is atomic */
+		baconf->ifbac_len = sc->sc_ether_num * sizeof(bareq);
+		return (0);
 	}
+
+	uaddr = baconf->ifbac_buf;
+	end = uaddr + baconf->ifbac_len;
+
+	rw_enter_read(&sc->sc_ether_lock);
+	RBT_FOREACH(nv, nvgre_map, &sc->sc_ether_map) {
+		if (uaddr >= end)
+			break;
+
+		memcpy(bareq.ifba_name, ifp->if_xname,
+		    sizeof(bareq.ifba_name));
+		memcpy(bareq.ifba_ifsname, ifp->if_xname,
+		    sizeof(bareq.ifba_ifsname));
+		memcpy(&bareq.ifba_dst, &nv->nv_dst,
+		    sizeof(bareq.ifba_dst));
+
+		memset(&bareq.ifba_dstsa, 0, sizeof(bareq.ifba_dstsa));
+		switch (sc->sc_tunnel.t_af) {
+		case AF_INET: {
+			struct sockaddr_in *sin;
+
+			sin = (struct sockaddr_in *)&bareq.ifba_dstsa;
+			sin->sin_len = sizeof(*sin);
+			sin->sin_family = AF_INET;
+			sin->sin_addr = nv->nv_gateway.in4;
+
+			break;
+		}
+#ifdef INET6
+		case AF_INET6: {
+			struct sockaddr_in6 *sin6;
+
+			sin6 = (struct sockaddr_in6 *)&bareq.ifba_dstsa;
+			sin6->sin6_len = sizeof(*sin6);
+			sin6->sin6_family = AF_INET6;
+			sin6->sin6_addr = nv->nv_gateway.in6;
+
+			break;
+		}
+#endif /* INET6 */
+		default:
+			unhandled_af(sc->sc_tunnel.t_af);
+		}
+
+		switch (nv->nv_type) {
+		case NVGRE_ENTRY_DYNAMIC:
+			age = (ticks - nv->nv_age) / hz;
+			bareq.ifba_age = MIN(age, 0xff);
+			bareq.ifba_flags = IFBAF_DYNAMIC;
+			break;
+		case NVGRE_ENTRY_STATIC:
+			bareq.ifba_age = 0;
+			bareq.ifba_flags = IFBAF_STATIC;
+			break;
+		}
+
+		error = copyout(&bareq, uaddr, sizeof(bareq));
+		if (error != 0) {
+			rw_exit_read(&sc->sc_ether_lock);
+			return (error);
+		}
+
+		uaddr += sizeof(bareq);
+	}
+	baconf->ifbac_len = sc->sc_ether_num * sizeof(bareq);
+	rw_exit_read(&sc->sc_ether_lock);
+
+	return (0);
+}
+
+static void
+nvgre_flush_map(struct nvgre_softc *sc)
+{
+	struct nvgre_map map;
+	struct nvgre_entry *nv, *nnv;
+
+	rw_enter_write(&sc->sc_ether_lock);
+	map = sc->sc_ether_map;
+	RBT_INIT(nvgre_map, &sc->sc_ether_map);
+	sc->sc_ether_num = 0;
+	rw_exit_write(&sc->sc_ether_lock);
+
+	RBT_FOREACH_SAFE(nv, nvgre_map, &map, nnv) {
+		RBT_REMOVE(nvgre_map, &map, nv);
+		if (refcnt_rele(&nv->nv_refs))
+			pool_put(&nvgre_pool, nv);
+	}
+}
+
+static void
+nvgre_input_map(struct nvgre_softc *sc, const struct gre_tunnel *key,
+    const struct ether_header *eh)
+{
+	struct nvgre_entry *nv, nkey;
+	int new = 0;
+
+	if (ether_isbcast(eh->ether_shost) ||
+	    ETHER_IS_MULTICAST(eh->ether_shost))
+		return;
+
+	memcpy(&nkey.nv_dst, eh->ether_shost, ETHER_ADDR_LEN);
+
+	/* remember where it came from */
+	rw_enter_read(&sc->sc_ether_lock);
+	nv = RBT_FIND(nvgre_map, &sc->sc_ether_map, &nkey);
+	if (nv == NULL)
+		new = 1;
+	else {
+		nv->nv_age = ticks;
+
+		if (nv->nv_type != NVGRE_ENTRY_DYNAMIC ||
+		    gre_ip_cmp(key->t_af, &key->t_dst, &nv->nv_gateway))
+			nv = NULL;
+		else
+			refcnt_take(&nv->nv_refs);
+	}
+	rw_exit_read(&sc->sc_ether_lock);
+
+	if (new) {
+		struct nvgre_entry *onv;
+		unsigned int num;
+
+		nv = pool_get(&nvgre_pool, PR_NOWAIT);
+		if (nv == NULL) {
+			/* oh well */
+			return;
+		}
+
+		memcpy(&nv->nv_dst, eh->ether_shost, ETHER_ADDR_LEN);
+		memcpy(&nv->nv_dst, eh->ether_shost, ETHER_ADDR_LEN);
+		nv->nv_type = NVGRE_ENTRY_DYNAMIC;
+		nv->nv_gateway = key->t_dst;
+		refcnt_init(&nv->nv_refs);
+		nv->nv_age = ticks;
+
+		rw_enter_write(&sc->sc_ether_lock);
+		num = sc->sc_ether_num;
+		if (++num > sc->sc_ether_max)
+			onv = nv;
+		else {
+			/* try to give the ref to the map */
+			onv = RBT_INSERT(nvgre_map, &sc->sc_ether_map, nv);
+			if (onv == NULL) {
+				/* count the successful insert */
+				sc->sc_ether_num = num;
+			}
+		}
+		rw_exit_write(&sc->sc_ether_lock);
+
+		if (onv != NULL)
+			pool_put(&nvgre_pool, nv);
+	} else if (nv != NULL) {
+		rw_enter_write(&sc->sc_ether_lock);
+		nv->nv_gateway = key->t_dst;
+		rw_exit_write(&sc->sc_ether_lock);
+
+		if (refcnt_rele(&nv->nv_refs)) {
+			/* ioctl may have deleted the entry */
+			pool_put(&nvgre_pool, nv);
+		}
+	}
+}
+
+static inline struct nvgre_softc *
+nvgre_mcast_find(const struct gre_tunnel *key, unsigned int if0idx)
+{
+	struct nvgre_softc *sc;
+	int rv;
+
+	/*
+	 * building an nvgre_softc to use with RBT_FIND is expensive, and
+	 * would need to swap the src and dst addresses in the key. so do the
+	 * find by hand.
+	 */
+
+	sc = RBT_ROOT(nvgre_mcast_tree, &nvgre_mcast_tree);
+	while (sc != NULL) {
+		rv = nvgre_cmp_mcast(key, &key->t_src, if0idx,
+		    &sc->sc_tunnel, &sc->sc_tunnel.t_dst, sc->sc_ifp0);
+		if (rv == 0)
+			return (sc);
+		if (rv < 0)
+			sc = RBT_LEFT(nvgre_mcast_tree, sc);
+		else
+			sc = RBT_RIGHT(nvgre_mcast_tree, sc);
+	}
+
+	return (NULL);
+}
+
+static inline struct nvgre_softc *
+nvgre_ucast_find(const struct gre_tunnel *key)
+{
+	return (RBT_FIND(nvgre_ucast_tree, &nvgre_ucast_tree,
+	    (struct nvgre_softc *)key));
+}
+
+static int
+nvgre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen)
+{
+	struct nvgre_softc *sc;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	extern int ticks;
+
+	if (ISSET(m->m_flags, M_MCAST|M_BCAST))
+		sc = nvgre_mcast_find(key, m->m_pkthdr.ph_ifidx);
+	else
+		sc = nvgre_ucast_find(key);
+
+	if (sc == NULL)
+		return (-1);
+
+#if NBPFILTER > 0
+	{
+		caddr_t if_bpf = sc->sc_if_bpf;
+		if (if_bpf)
+			bpf_mtap_af(if_bpf, key->t_af, m, BPF_DIRECTION_IN);
+	}
+#endif
+
+	/* it's ours now */
+	m = gre_ether_align(m, hlen);
+	if (m == NULL)
+		return (0);
+
+	nvgre_input_map(sc, key, mtod(m, struct ether_header *));
+
+	m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
+	    (bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY);
+
+	m->m_flags &= ~(M_MCAST|M_BCAST);
+
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
 
 	ml_enqueue(&ml, m);
 	if_input(&sc->sc_ac.ac_if, &ml);
 
 	return (0);
+}
+
+static struct mbuf *
+gre_ether_align(struct mbuf *m, int hlen)
+{
+	struct mbuf *n;
+	int off;
+
+	m_adj(m, hlen);
+
+	if (m->m_pkthdr.len < sizeof(struct ether_header)) {
+		m_freem(m);
+		return (NULL);
+	}
+
+	m = m_pullup(m, sizeof(struct ether_header));
+	if (m == NULL)
+		return (NULL);
+
+	n = m_getptr(m, sizeof(struct ether_header), &off);
+	if (n == NULL) {
+		m_freem(m);
+		return (NULL);
+	}
+
+	if (!ALIGNED_POINTER(mtod(n, caddr_t) + off, uint32_t)) {
+		n = m_dup_pkt(m, ETHER_ALIGN, M_NOWAIT);
+		m_freem(m);
+		if (n == NULL)
+			return (NULL);
+		m = n;
+	}
+
+	return (m);
 }
 
 static void
@@ -959,8 +1430,10 @@ egre_start(struct ifnet *ifp)
 	caddr_t if_bpf;
 #endif
 
-	if (!gre_allow)
+	if (!gre_allow) {
 		ifq_purge(&ifp->if_snd);
+		return;
+	}
 
 	while ((m0 = ifq_dequeue(&ifp->if_snd)) != NULL) {
 #if NBPFILTER > 0
@@ -991,8 +1464,8 @@ egre_start(struct ifnet *ifp)
 }
 
 static struct mbuf *
-gre_encap(const struct gre_tunnel *tunnel, struct mbuf *m, uint16_t proto,
-    uint8_t ttl, uint8_t tos)
+gre_encap_dst(const struct gre_tunnel *tunnel, const union gre_addr *dst,
+    struct mbuf *m, uint16_t proto, uint8_t ttl, uint8_t tos)
 {
 	struct gre_header *gh;
 	struct gre_h_key *gkh;
@@ -1031,13 +1504,15 @@ gre_encap(const struct gre_tunnel *tunnel, struct mbuf *m, uint16_t proto,
 			return (NULL);
 
 		ip = mtod(m, struct ip *);
+		ip->ip_v = IPVERSION;
+		ip->ip_hl = sizeof(*ip) >> 2;
 		ip->ip_off = tunnel->t_df;
 		ip->ip_tos = tos;
 		ip->ip_len = htons(m->m_pkthdr.len);
 		ip->ip_ttl = ttl;
 		ip->ip_p = IPPROTO_GRE;
 		ip->ip_src = tunnel->t_src4;
-		ip->ip_dst = tunnel->t_dst4;
+		ip->ip_dst = dst->in4;
 		break;
 	}
 #ifdef INET6
@@ -1057,7 +1532,7 @@ gre_encap(const struct gre_tunnel *tunnel, struct mbuf *m, uint16_t proto,
 		ip6->ip6_nxt = IPPROTO_GRE;
 		ip6->ip6_hlim = ttl;
 		ip6->ip6_src = tunnel->t_src6;
-		ip6->ip6_dst = tunnel->t_dst6;
+		ip6->ip6_dst = dst->in6;
 
 		if (tunnel->t_df)
 			SET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
@@ -1139,7 +1614,7 @@ gre_tunnel_ioctl(struct ifnet *ifp, struct gre_tunnel *tunnel,
 		break;
 
 	case SIOCSLIFPHYADDR:
-		error = gre_set_tunnel(tunnel, (struct if_laddrreq *)data);
+		error = gre_set_tunnel(tunnel, (struct if_laddrreq *)data, 1);
 		break;
 	case SIOCGLIFPHYADDR:
 		error = gre_get_tunnel(tunnel, (struct if_laddrreq *)data);
@@ -1306,6 +1781,185 @@ egre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 static int
+nvgre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+{
+	struct nvgre_softc *sc = ifp->if_softc;
+	struct gre_tunnel *tunnel = &sc->sc_tunnel;
+
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct if_parent *parent = (struct if_parent *)data;
+	struct ifbrparam *bparam = (struct ifbrparam *)data;
+	struct ifnet *ifp0;
+
+	int error = 0;
+
+	switch (cmd) {
+	case SIOCSIFADDR:
+		break;
+	case SIOCSIFFLAGS:
+		if (ISSET(ifp->if_flags, IFF_UP)) {
+			if (!ISSET(ifp->if_flags, IFF_RUNNING))
+				error = nvgre_up(sc);
+			else
+				error = ENETRESET;
+		} else {
+			if (ISSET(ifp->if_flags, IFF_RUNNING))
+				error = nvgre_down(sc);
+		}
+		break;
+
+	case SIOCSLIFPHYADDR:
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
+			break;
+		}
+		error = gre_set_tunnel(tunnel, (struct if_laddrreq *)data, 0);
+		if (error == 0)
+			nvgre_flush_map(sc);
+		break;
+	case SIOCGLIFPHYADDR:
+		error = gre_get_tunnel(tunnel, (struct if_laddrreq *)data);
+		break;
+	case SIOCDIFPHYADDR:
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
+			break;
+		}
+		error = gre_del_tunnel(tunnel);
+		if (error == 0)
+			nvgre_flush_map(sc);
+		break;
+
+	case SIOCSIFPARENT:
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
+			break;
+		}
+		error = nvgre_set_parent(sc, parent->ifp_parent);
+		if (error == 0)
+			nvgre_flush_map(sc);
+		break;
+	case SIOCGIFPARENT:
+		ifp0 = if_get(sc->sc_ifp0);
+		if (ifp0 == NULL)
+			error = EADDRNOTAVAIL;
+		else {
+			memcpy(parent->ifp_parent, ifp0->if_xname,
+			    sizeof(parent->ifp_parent));
+		}
+		if_put(ifp0);
+		break;
+	case SIOCDIFPARENT:
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
+			break;
+		}
+		/* commit */
+		sc->sc_ifp0 = 0;
+		nvgre_flush_map(sc);
+		break;
+
+	case SIOCSVNETID:
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
+			break;
+		}
+		if (ifr->ifr_vnetid < GRE_KEY_ENTROPY_MIN ||
+		    ifr->ifr_vnetid > GRE_KEY_ENTROPY_MAX) {
+			error = EINVAL;
+			break;
+		}
+
+		/* commit */
+		tunnel->t_key = htonl(ifr->ifr_vnetid << GRE_KEY_ENTROPY_SHIFT);
+		nvgre_flush_map(sc);
+		break;
+	case SIOCGVNETID:
+		error = gre_get_vnetid(tunnel, ifr);
+		break;
+
+	case SIOCSLIFPHYRTABLE:
+		if (ifr->ifr_rdomainid < 0 ||
+		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
+		    !rtable_exists(ifr->ifr_rdomainid)) {
+			error = EINVAL;
+			break;
+		}
+		tunnel->t_rtableid = ifr->ifr_rdomainid;
+		nvgre_flush_map(sc);
+		break;
+	case SIOCGLIFPHYRTABLE:
+		ifr->ifr_rdomainid = tunnel->t_rtableid;
+		break;
+
+	case SIOCSLIFPHYDF:
+		/* commit */
+		tunnel->t_df = ifr->ifr_df ? htons(IP_DF) : htons(0);
+		break;
+	case SIOCGLIFPHYDF:
+		ifr->ifr_df = tunnel->t_df ? 1 : 0;
+		break;
+
+	case SIOCSLIFPHYTTL:
+		if (ifr->ifr_ttl < 1 || ifr->ifr_ttl > 0xff) {
+			error = EINVAL;
+			break;
+		}
+
+		/* commit */
+		tunnel->t_ttl = ifr->ifr_ttl;
+		break;
+
+	case SIOCGLIFPHYTTL:
+		ifr->ifr_ttl = tunnel->t_ttl;
+		break;
+
+	case SIOCBRDGSCACHE:
+		if (bparam->ifbrp_csize < 1) {
+			error = EINVAL;
+			break;
+		}
+
+		/* commit */
+		sc->sc_ether_max = bparam->ifbrp_csize;
+		break;
+	case SIOCBRDGGCACHE:
+		bparam->ifbrp_csize = sc->sc_ether_max;
+		break;
+
+	case SIOCBRDGSTO:
+		if (bparam->ifbrp_ctime < 0 ||
+		    bparam->ifbrp_ctime > INT_MAX / hz) {
+			error = EINVAL;
+			break;
+		}
+		sc->sc_ether_tmo = bparam->ifbrp_ctime * hz;
+		break;
+	case SIOCBRDGGTO:
+		bparam->ifbrp_ctime = sc->sc_ether_tmo / hz;
+		break;
+
+	case SIOCBRDGRTS:
+		error = nvgre_rtfind(sc, (struct ifbaconf *)data);
+		break;
+	case SIOCBRDGFLUSH:
+		nvgre_flush_map(sc);
+		break;
+
+	default:
+		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
+		break;
+	}
+
+	if (error == ENETRESET) {
+		/* no hardware to program */
+		error = 0;
+	}
+
+	return (error);
+}
+
+static int
 gre_up(struct gre_softc *sc)
 {
 	NET_ASSERT_LOCKED();
@@ -1437,8 +2091,6 @@ gre_keepalive_send(void *arg)
 		struct ip *ip;
 
 		ip = mtod(m, struct ip *);
-		ip->ip_v = IPVERSION;
-		ip->ip_hl = sizeof(*ip) >> 2;
 		ip->ip_id = htons(ip_randomid());
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, sizeof(*ip));
@@ -1482,7 +2134,7 @@ gre_keepalive_hold(void *arg)
 }
 
 static int
-gre_set_tunnel(struct gre_tunnel *tunnel, struct if_laddrreq *req)
+gre_set_tunnel(struct gre_tunnel *tunnel, struct if_laddrreq *req, int ucast)
 {
 	struct sockaddr *src = (struct sockaddr *)&req->addr;
 	struct sockaddr *dst = (struct sockaddr *)&req->dstaddr;
@@ -1509,7 +2161,7 @@ gre_set_tunnel(struct gre_tunnel *tunnel, struct if_laddrreq *req)
 
 		dst4 = (struct sockaddr_in *)dst;
 		if (in_nullhost(dst4->sin_addr) ||
-		    IN_MULTICAST(dst4->sin_addr.s_addr))
+		    (IN_MULTICAST(dst4->sin_addr.s_addr) != !ucast))
 			return (EINVAL);
 
 		tunnel->t_src4 = src4->sin_addr;
@@ -1528,7 +2180,10 @@ gre_set_tunnel(struct gre_tunnel *tunnel, struct if_laddrreq *req)
 
 		dst6 = (struct sockaddr_in6 *)dst;
 		if (IN6_IS_ADDR_UNSPECIFIED(&dst6->sin6_addr) ||
-		    IN6_IS_ADDR_MULTICAST(&dst6->sin6_addr))
+		    IN6_IS_ADDR_MULTICAST(&dst6->sin6_addr) != !ucast)
+			return (EINVAL);
+
+		if (src6->sin6_scope_id != dst6->sin6_scope_id)
 			return (EINVAL);
 
 		error = in6_embedscope(&tunnel->t_src6, src6, NULL);
@@ -1752,6 +2407,396 @@ egre_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
 }
 
+static int
+nvgre_up(struct nvgre_softc *sc)
+{
+	struct gre_tunnel *tunnel = &sc->sc_tunnel;
+	struct ifnet *ifp0;
+	void *inm;
+	int error;
+
+	if (tunnel->t_af == AF_UNSPEC)
+		return (EDESTADDRREQ);
+
+	ifp0 = if_get(sc->sc_ifp0);
+	if (ifp0 == NULL)
+		return (ENXIO);
+	if (!ISSET(ifp0->if_flags, IFF_MULTICAST)) {
+		error = ENODEV;
+		goto put;
+	}
+
+	NET_ASSERT_LOCKED();
+
+	if (RBT_INSERT(nvgre_mcast_tree, &nvgre_mcast_tree, sc) != NULL) {
+		error = EADDRINUSE;
+		goto put;
+	}
+	if (RBT_INSERT(nvgre_ucast_tree, &nvgre_ucast_tree, sc) != NULL) {
+		error = EADDRINUSE;
+		goto remove_mcast;
+	}
+
+	switch (tunnel->t_af) {
+	case AF_INET:
+		inm = in_addmulti(&tunnel->t_dst4, ifp0);
+		if (inm == NULL) {
+			error = ECONNABORTED;
+			goto remove_ucast;
+		}
+		break;
+#ifdef INET6
+	case AF_INET6:
+		inm = in6_addmulti(&tunnel->t_dst6, ifp0, &error);
+		if (inm == NULL) {
+			/* error is already set */
+			goto remove_ucast;
+		}
+		break;
+#endif /* INET6 */
+	default:
+		unhandled_af(tunnel->t_af);
+	}
+
+	sc->sc_lhcookie = hook_establish(ifp0->if_linkstatehooks, 0,
+	    nvgre_link_change, sc);
+	if (sc->sc_lhcookie == NULL) {
+		error = ENOMEM;
+		goto delmulti;
+	}
+
+	sc->sc_dhcookie = hook_establish(ifp0->if_detachhooks, 0,
+	    nvgre_detach, sc);
+	if (sc->sc_dhcookie == NULL) {
+		error = ENOMEM;
+		goto dislh;
+	}
+
+	if_put(ifp0);
+
+	sc->sc_inm = inm;
+	SET(sc->sc_ac.ac_if.if_flags, IFF_RUNNING);
+
+	timeout_add_sec(&sc->sc_ether_age, NVGRE_AGE_TMO);
+
+	return (0);
+
+dislh:
+	hook_disestablish(ifp0->if_linkstatehooks, sc->sc_lhcookie);
+delmulti:
+	switch (tunnel->t_af) {
+	case AF_INET:
+		in_delmulti(inm);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		in6_delmulti(inm);
+		break;
+#endif
+	}
+remove_ucast:
+	RBT_REMOVE(nvgre_ucast_tree, &nvgre_ucast_tree, sc);
+remove_mcast:
+	RBT_REMOVE(nvgre_mcast_tree, &nvgre_mcast_tree, sc);
+put:
+	if_put(ifp0);
+	return (error);
+}
+
+static int
+nvgre_down(struct nvgre_softc *sc)
+{
+	struct gre_tunnel *tunnel = &sc->sc_tunnel;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct taskq *softnet = net_tq(ifp->if_index);
+	struct ifnet *ifp0;
+
+	NET_ASSERT_LOCKED();
+
+	CLR(ifp->if_flags, IFF_RUNNING);
+
+	NET_UNLOCK();
+	if (!timeout_del(&sc->sc_ether_age))
+		timeout_barrier(&sc->sc_ether_age);
+	ifq_barrier(&ifp->if_snd);
+	if (!task_del(softnet, &sc->sc_send_task))
+		taskq_barrier(softnet);
+	NET_LOCK();
+
+	mq_purge(&sc->sc_send_list);
+
+	ifp0 = if_get(sc->sc_ifp0);
+	if (ifp0 != NULL) {
+		hook_disestablish(ifp0->if_detachhooks, sc->sc_dhcookie);
+		hook_disestablish(ifp0->if_linkstatehooks, sc->sc_lhcookie);
+	}
+	if_put(ifp0);
+
+	switch (tunnel->t_af) {
+	case AF_INET:
+		in_delmulti(sc->sc_inm);
+		break;
+
+#ifdef INET6
+	case AF_INET6:
+		in6_delmulti(sc->sc_inm);
+		break;
+#endif
+	}
+
+	RBT_REMOVE(nvgre_ucast_tree, &nvgre_ucast_tree, sc);
+	RBT_REMOVE(nvgre_mcast_tree, &nvgre_mcast_tree, sc);
+
+	return (0);
+}
+
+static void
+nvgre_link_change(void *arg)
+{
+	/* nop */
+}
+
+static void
+nvgre_detach(void *arg)
+{
+	struct nvgre_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
+	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+		nvgre_down(sc);
+		if_down(ifp);
+	}
+
+	sc->sc_ifp0 = 0;
+}
+
+static int
+nvgre_set_parent(struct nvgre_softc *sc, const char *parent)
+{
+	struct ifnet *ifp0;
+
+	ifp0 = ifunit(parent); /* doesn't need an if_put */
+	if (ifp0 == NULL)
+		return (EINVAL);
+
+	if (!ISSET(ifp0->if_flags, IFF_MULTICAST))
+		return (EPROTONOSUPPORT);
+
+	/* commit */
+	sc->sc_ifp0 = ifp0->if_index;
+
+	return (0);
+}
+
+static void
+nvgre_age(void *arg)
+{
+	struct nvgre_softc *sc = arg;
+	struct nvgre_entry *nv, *nnv;
+	int tmo = sc->sc_ether_tmo * 2;
+	int diff;
+
+	if (!ISSET(sc->sc_ac.ac_if.if_flags, IFF_RUNNING))
+		return;
+
+	rw_enter_write(&sc->sc_ether_lock); /* XXX */
+	RBT_FOREACH_SAFE(nv, nvgre_map, &sc->sc_ether_map, nnv) {
+		if (nv->nv_type != NVGRE_ENTRY_DYNAMIC)
+			continue;
+
+		diff = ticks - nv->nv_age;
+		if (diff < tmo)
+			continue;
+
+		sc->sc_ether_num--;
+		RBT_REMOVE(nvgre_map, &sc->sc_ether_map, nv);
+		if (refcnt_rele(&nv->nv_refs))
+			pool_put(&nvgre_pool, nv);
+	}
+	rw_exit_write(&sc->sc_ether_lock);
+
+	timeout_add_sec(&sc->sc_ether_age, NVGRE_AGE_TMO);
+}
+
+static inline int
+nvgre_entry_valid(struct nvgre_softc *sc, const struct nvgre_entry *nv)
+{
+	int diff;
+
+	if (nv == NULL)
+		return (0);
+
+	if (nv->nv_type == NVGRE_ENTRY_STATIC)
+		return (1);
+
+	diff = ticks - nv->nv_age;
+	if (diff < sc->sc_ether_tmo)
+		return (1);
+
+	return (0);
+}
+
+static void
+nvgre_start(struct ifnet *ifp)
+{
+	struct nvgre_softc *sc = ifp->if_softc;
+	const struct gre_tunnel *tunnel = &sc->sc_tunnel;
+	union gre_addr gateway;
+	struct nvgre_entry *nv, key;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	struct ether_header *eh;
+	struct mbuf *m, *m0;
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
+
+	if (!gre_allow) {
+		ifq_purge(&ifp->if_snd);
+		return;
+	}
+
+	while ((m0 = ifq_dequeue(&ifp->if_snd)) != NULL) {
+#if NBPFILTER > 0
+		if_bpf = ifp->if_bpf;
+		if (if_bpf)
+			bpf_mtap_ether(if_bpf, m0, BPF_DIRECTION_OUT);
+#endif
+
+		eh = mtod(m0, struct ether_header *);
+		if (ether_isbcast(eh->ether_dhost))
+			gateway = tunnel->t_dst;
+		else {
+			memcpy(&key.nv_dst, eh->ether_dhost,
+			    sizeof(key.nv_dst));
+
+			rw_enter_read(&sc->sc_ether_lock);
+			nv = RBT_FIND(nvgre_map, &sc->sc_ether_map, &key);
+			if (nvgre_entry_valid(sc, nv))
+				gateway = nv->nv_gateway;
+			else {
+				/* "flood" to unknown hosts */
+				gateway = tunnel->t_dst;
+			}
+			rw_exit_read(&sc->sc_ether_lock);
+		}
+
+		m = m_gethdr(M_DONTWAIT, m0->m_type);
+		if (m == NULL) {
+			m_freem(m0);
+			continue;
+		}
+
+		M_MOVE_PKTHDR(m, m0);
+		m->m_next = m0;
+
+		MH_ALIGN(m, 0);
+		m->m_len = 0;
+
+		m = gre_encap_dst(tunnel, &gateway, m,
+		    htons(ETHERTYPE_TRANSETHER), tunnel->t_ttl, 0);
+		if (m == NULL)
+			continue;
+
+#if NBPFILTER > 0
+		if_bpf = sc->sc_if_bpf;
+		if (if_bpf)
+			bpf_mtap_af(if_bpf, tunnel->t_af, m, BPF_DIRECTION_OUT);
+#endif
+
+		m->m_flags &= ~(M_BCAST|M_MCAST);
+		m->m_pkthdr.ph_rtableid = tunnel->t_rtableid;
+
+#if NPF > 0
+		pf_pkt_addr_changed(m);
+#endif
+
+		ml_enqueue(&ml, m);
+	}
+
+	if (!ml_empty(&ml)) {
+		if (mq_enlist(&sc->sc_send_list, &ml) == 0)
+			task_add(net_tq(ifp->if_index), &sc->sc_send_task);
+		/* else set OACTIVE? */
+	}
+}
+
+static uint64_t
+nvgre_send4(struct nvgre_softc *sc, struct mbuf_list *ml)
+{
+	struct ip_moptions imo;
+	struct mbuf *m;
+	uint64_t oerrors = 0;
+
+	imo.imo_ifidx = sc->sc_ifp0;
+	imo.imo_ttl = sc->sc_tunnel.t_ttl;
+	imo.imo_loop = 0;
+
+	NET_RLOCK();
+	while ((m = ml_dequeue(ml)) != NULL) {
+		if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &imo, NULL, 0) != 0)
+			oerrors++;
+	}
+	NET_RUNLOCK();
+
+	return (oerrors);
+}
+
+#ifdef INET6
+static uint64_t
+nvgre_send6(struct nvgre_softc *sc, struct mbuf_list *ml)
+{
+	struct ip6_moptions im6o;
+	struct mbuf *m;
+	uint64_t oerrors = 0;
+
+	im6o.im6o_ifidx = sc->sc_ifp0;
+	im6o.im6o_hlim = sc->sc_tunnel.t_ttl;
+	im6o.im6o_loop = 0;
+
+	NET_RLOCK();
+	while ((m = ml_dequeue(ml)) != NULL) {
+		if (ip6_output(m, NULL, NULL, 0, &im6o, NULL) != 0)
+			oerrors++;
+	}
+	NET_RUNLOCK();
+
+	return (oerrors);
+}
+#endif /* INET6 */
+
+static void
+nvgre_send(void *arg)
+{
+	struct nvgre_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	sa_family_t af = sc->sc_tunnel.t_af;
+	struct mbuf_list ml;
+	uint64_t oerrors;
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		return;
+
+	mq_delist(&sc->sc_send_list, &ml);
+	if (ml_empty(&ml))
+		return;
+
+	switch (af) {
+	case AF_INET:
+		oerrors = nvgre_send4(sc, &ml);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		oerrors = nvgre_send6(sc, &ml);
+		break;
+#endif
+	default:
+		unhandled_af(af);
+		/* NOTREACHED */
+	}
+
+	ifp->if_oerrors += oerrors; /* XXX should be ifq_oerrors */
+}
+
 int
 gre_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
@@ -1851,10 +2896,101 @@ gre_cmp(const struct gre_tunnel *a, const struct gre_tunnel *b)
 	return (0);
 }
 
-static int
+static inline int
 egre_cmp(const struct egre_softc *a, const struct egre_softc *b)
 {
 	return (gre_cmp(&a->sc_tunnel, &b->sc_tunnel));
 }
 
 RBT_GENERATE(egre_tree, egre_softc, sc_entry, egre_cmp);
+
+static inline int
+nvgre_entry_cmp(const struct nvgre_entry *a, const struct nvgre_entry *b)
+{
+	return (memcmp(&a->nv_dst, &a->nv_dst, sizeof(a->nv_dst)));
+}
+
+RBT_GENERATE(nvgre_map, nvgre_entry, nv_entry, nvgre_entry_cmp);
+
+static int
+nvgre_cmp_tunnel(const struct gre_tunnel *a, const struct gre_tunnel *b)
+{
+	uint32_t ka, kb;
+
+	ka = a->t_key & GRE_KEY_ENTROPY;
+	kb = b->t_key & GRE_KEY_ENTROPY;
+
+	/* sort by common prefix */
+	if (ka > kb)
+		return (1);
+	if (ka < kb)
+		return (-1);
+
+	/* sort by routing table */
+	if (a->t_rtableid > b->t_rtableid)
+		return (1);
+	if (a->t_rtableid < b->t_rtableid)
+		return (-1);
+
+	/* sort by address */
+	if (a->t_af > b->t_af)
+		return (1);
+	if (a->t_af < b->t_af)
+		return (-1);
+
+	return (0);
+}
+
+static inline int
+nvgre_cmp_ucast(const struct nvgre_softc *na, const struct nvgre_softc *nb)
+{
+	const struct gre_tunnel *a = &na->sc_tunnel;
+	const struct gre_tunnel *b = &nb->sc_tunnel;
+	int rv;
+
+	rv = nvgre_cmp_tunnel(a, b);
+	if (rv != 0)
+		return (rv);
+
+	rv = gre_ip_cmp(a->t_af, &a->t_src, &b->t_src);
+	if (rv != 0)
+		return (rv);
+
+	return (0);
+}
+
+static int
+nvgre_cmp_mcast(const struct gre_tunnel *a, const union gre_addr *aa,
+    unsigned int if0idxa, const struct gre_tunnel *b,
+    const union gre_addr *ab,unsigned int if0idxb)
+{
+	int rv;
+
+	rv = nvgre_cmp_tunnel(a, b);
+	if (rv != 0)
+		return (rv);
+
+	rv = gre_ip_cmp(a->t_af, aa, ab);
+	if (rv != 0)
+		return (rv);
+
+	if (if0idxa > if0idxb)
+		return (1);
+	if (if0idxa < if0idxb)
+		return (-1);
+
+	return (0);
+}
+
+static inline int
+nvgre_cmp_mcast_sc(const struct nvgre_softc *na, const struct nvgre_softc *nb)
+{
+	const struct gre_tunnel *a = &na->sc_tunnel;
+	const struct gre_tunnel *b = &nb->sc_tunnel;
+
+	return (nvgre_cmp_mcast(a, &a->t_dst, na->sc_ifp0,
+	    b, &b->t_dst, nb->sc_ifp0));
+}
+
+RBT_GENERATE(nvgre_ucast_tree, nvgre_softc, sc_uentry, nvgre_cmp_ucast);
+RBT_GENERATE(nvgre_mcast_tree, nvgre_softc, sc_mentry, nvgre_cmp_mcast_sc);
