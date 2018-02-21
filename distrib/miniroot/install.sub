@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1063 2018/02/18 01:50:04 kn Exp $
+#	$OpenBSD: install.sub,v 1.1064 2018/02/21 19:54:25 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -251,7 +251,9 @@ __EOT
 lease_value() {
 	local _lf=$1 _o
 
+	[[ -s $_lf ]] || return
 	shift
+
 	for _o; do
 		sed -E \
 			-e '/^ *(option )?'"$_o"' (.*);$/!d;s//\2/' \
@@ -1999,6 +2001,12 @@ donetconfig() {
 	# configured via dhclient too.
 	resp="${_dn:-$(get_fqdn)}"
 	if ifconfig dhcp >/dev/null 2>&1 && [[ $NIFS == 1 && -n $_dn ]]; then
+		# If we have a 'domain-name' option in the lease file use that.
+		# It might *NOT* not be the same as the first domain in any
+		# 'domain-search' option.
+		set -- $(get_ifs dhcp)
+		set -- $(lease_value /var/db/dhclient.leases.$1 domain-name)
+		[[ -n $1 ]] && resp=$1
 		echo "Using DNS domainname $resp"
 	else
 		ask "DNS domain name? (e.g. 'example.com')" "$resp"
