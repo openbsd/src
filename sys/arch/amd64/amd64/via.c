@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.27 2018/02/20 15:02:13 mikeb Exp $	*/
+/*	$OpenBSD: via.c,v 1.28 2018/02/21 21:09:57 mikeb Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -97,6 +97,7 @@ viac3_crypto_setup(void)
 	algs[CRYPTO_SHA2_256_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA2_384_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA2_512_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_ESN] = CRYPTO_ALG_FLAG_SUPPORTED;
 
 	vc3_sc->sc_cid = crypto_get_driverid(0);
 	if (vc3_sc->sc_cid < 0) {
@@ -252,6 +253,9 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			swd->sw_axf = axf;
 			swd->sw_alg = c->cri_alg;
 
+			break;
+		case CRYPTO_ESN:
+			/* nothing to do */
 			break;
 		default:
 			viac3_crypto_freesession(sesn);
