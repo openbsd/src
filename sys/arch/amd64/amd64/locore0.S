@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.6 2018/01/07 19:56:19 mlarkin Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.7 2018/02/21 19:24:15 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -205,26 +205,47 @@ bi_size_ok:
 	movl	$0,  12(%ebp)
 
 	/*
-	 * Determine if CPU is Intel. Intel CPUs cannot use PG_G (global
-	 * pages) in kernel mappings. If CPU is not Intel, this is safe.
-	 * Cache the result in pg_g_kern - 0 if not supported or PG_G (0x100)
-	 * if supported.
-	 *
-	 * This treatment is required for the meltdown CVE mitigation.
+	 * Determine if CPU has meltdown. Certain Intel CPUs do not properly
+	 * respect page permissions when speculatively loading data into
+	 * the cache ("Meltdown" CVE). These CPUs must utilize a secondary
+	 * sanitized page table lacking kernel mappings when executing user
+	 * processes, and may not use PG_G global PTEs for kernel VAs.
 	 */
+	movl	$0x1, RELOC(cpu_meltdown)	/* assume insecure at first */
+	movl	$0x0, RELOC(pg_g_kern)
+	
 	cmpl	$0x756e6547, %ebx	# "Genu"
-	jne	not_intel
+	jne	.Lcpu_secure
 	cmpl	$0x6c65746e, %ecx	# "ntel"
-	jne	not_intel
+	jne	.Lcpu_secure
 	cmpl	$0x49656e69, %edx	# "ineI"
-	jne	not_intel
+	jne	.Lcpu_secure
 
-	jmp	pg_g_check_finished
+	/*
+	 * Intel CPU, now check if IA32_ARCH_CAPABILITIES is supported and
+	 * if it says this CPU is safe.
+	 */
+	movl	$0x0,	%eax
+	cpuid
+	cmpl	$0x7,	%eax
+	jl	.Lcpu_check_finished
 
-not_intel:
+	movl	$0x7,	%eax
+	cpuid
+	testl	$SEFF0EDX_ARCH_CAP, %edx
+	jz	.Lcpu_check_finished
+	
+	/* IA32_ARCH_CAPABILITIES MSR avaialble, use it to check CPU security */
+	movl	$MSR_ARCH_CAPABILITIES, %ecx
+	rdmsr
+	testl	$ARCH_CAPABILITIES_RDCL_NO, %eax
+	jz	.Lcpu_check_finished
+
+.Lcpu_secure:
+	movl	$0x0, RELOC(cpu_meltdown)
 	movl	$PG_G, RELOC(pg_g_kern)
 
-pg_g_check_finished:
+.Lcpu_check_finished:
 	movl	$1,%eax
 	cpuid
 	movl	%eax,RELOC(cpu_id)

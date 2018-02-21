@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.118 2018/01/07 01:08:20 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.119 2018/02/21 19:24:15 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
  */
 #ifdef _KERNEL
 #include <machine/frame.h>
-#include <machine/segments.h>
+#include <machine/segments.h>		/* USERMODE */
 #include <machine/cacheinfo.h>
 #include <machine/intrdefs.h>
 #endif /* _KERNEL */
@@ -89,6 +89,17 @@ union vmm_cpu_cap {
 
 struct x86_64_tss;
 struct cpu_info {
+	/*
+	 * The beginning of this structure in mapped in the userspace "u-k"
+	 * page tables, so that these first couple members can be accessed
+	 * from the trampoline code.  The ci_PAGEALIGN member defines where
+	 * the part that is *not* visible begins, so don't put anything
+	 * above it that must be kept hidden from userspace!
+	 */
+	u_int64_t	ci_kern_cr3;	/* U+K page table */
+	u_int64_t	ci_scratch;	/* for U<-->K transition */
+
+#define ci_PAGEALIGN	ci_dev
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
@@ -100,7 +111,9 @@ struct cpu_info {
 	u_int ci_acpi_proc_id;
 	u_int32_t ci_randseed;
 
-	u_int64_t ci_scratch;
+	u_int64_t ci_kern_rsp;	/* kernel-only stack */
+	u_int64_t ci_intr_rsp;	/* U<-->K trampoline stack */
+	u_int64_t ci_user_cr3;	/* U-K page table */
 
 	struct proc *ci_fpcurproc;
 	struct proc *ci_fpsaveproc;
@@ -216,7 +229,10 @@ struct cpu_info {
 #define PROC_PC(p)	((p)->p_md.md_regs->tf_rip)
 #define PROC_STACK(p)	((p)->p_md.md_regs->tf_rsp)
 
-extern struct cpu_info cpu_info_primary;
+struct cpu_info_full;
+extern struct cpu_info_full cpu_info_full_primary;
+#define cpu_info_primary (*(struct cpu_info *)((char *)&cpu_info_full_primary + 4096*2 - offsetof(struct cpu_info, ci_PAGEALIGN)))
+
 extern struct cpu_info *cpu_info_list;
 
 #define CPU_INFO_ITERATOR		int
@@ -241,7 +257,8 @@ extern void need_resched(struct cpu_info *);
 #define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
 
 #define curcpu()	({struct cpu_info *__ci;                  \
-			asm volatile("movq %%gs:8,%0" : "=r" (__ci)); \
+			asm volatile("movq %%gs:%P1,%0" : "=r" (__ci) \
+				:"n" (offsetof(struct cpu_info, ci_self))); \
 			__ci;})
 #define cpu_number()	(curcpu()->ci_cpuid)
 
@@ -262,8 +279,6 @@ void cpu_unidle(struct cpu_info *);
 #define MAXCPUS		1
 
 #ifdef _KERNEL
-extern struct cpu_info cpu_info_primary;
-
 #define curcpu()		(&cpu_info_primary)
 
 #define cpu_kick(ci)

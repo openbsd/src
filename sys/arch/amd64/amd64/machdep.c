@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.238 2018/02/06 01:09:17 patrick Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.239 2018/02/21 19:24:15 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@
 
 #include <sys/sysctl.h>
 
-#include <machine/cpu.h>
+#include <machine/cpu_full.h>
 #include <machine/cpufunc.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
@@ -140,6 +140,14 @@ extern int db_console;
 #if NPCKBC > 0 && NUKBD > 0
 #include <dev/ic/pckbcvar.h>
 #endif
+
+/* #define MACHDEP_DEBUG */
+
+#ifdef MACHDEP_DEBUG
+#define DPRINTF(x...)	do { printf(x); } while(0)
+#else
+#define DPRINTF(x...)
+#endif /* MACHDEP_DEBUG */
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;
@@ -257,6 +265,7 @@ void	cpu_init_extents(void);
 void	map_tramps(void);
 void	init_x86_64(paddr_t);
 void	(*cpuresetfn)(void);
+void	enter_shared_special_pages(void);
 
 #ifdef APERTURE
 int allowaperture = 0;
@@ -313,6 +322,65 @@ cpu_startup(void)
 #ifndef SMALL_KERNEL
 	cpu_ucode_setup();
 #endif
+	/* enter the IDT and trampoline code in the u-k maps */
+	enter_shared_special_pages();
+
+	/* initialize CPU0's TSS and GDT and put them in the u-k maps */
+	cpu_enter_pages(&cpu_info_full_primary);
+}
+
+/*
+ * enter_shared_special_pages
+ *
+ * Requests mapping of various special pages required in the Intel Meltdown
+ * case (to be entered into the U-K page table):
+ *
+ *  1 IDT page
+ *  Various number of pages covering the U-K ".kutext" section. This section
+ *   contains code needed during trampoline operation
+ *  Various number of pages covering the U-K ".kudata" section. This section
+ *   contains data accessed by the trampoline, before switching to U+K
+ *   (for example, various shared global variables used by IPIs, etc)
+ *
+ * The linker script places the required symbols in the sections above.
+ *
+ * On CPUs not affected by Meltdown, the calls to pmap_enter_special below
+ * become no-ops.
+ */
+void
+enter_shared_special_pages(void)
+{
+	extern char __kutext_start[], __kutext_end[], __kernel_kutext_phys[];
+	extern char __kudata_start[], __kudata_end[], __kernel_kudata_phys[];
+	vaddr_t va;
+	paddr_t pa;
+
+	/* idt */
+	pmap_enter_special(idt_vaddr, idt_paddr, PROT_READ);
+	DPRINTF("%s: entered idt page va 0x%llx pa 0x%llx\n", __func__,
+	    (uint64_t)idt_vaddr, (uint64_t)idt_paddr);
+
+	/* .kutext section */
+	va = (vaddr_t)__kutext_start;
+	pa = (paddr_t)__kernel_kutext_phys;
+	while (va < (vaddr_t)__kutext_end) {
+		pmap_enter_special(va, pa, PROT_READ | PROT_EXEC);
+		DPRINTF("%s: entered kutext page va 0x%llx pa 0x%llx\n",
+		    __func__, (uint64_t)va, (uint64_t)pa);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
+
+	/* .kudata section */
+	va = (vaddr_t)__kudata_start;
+	pa = (paddr_t)__kernel_kudata_phys;
+	while (va < (vaddr_t)__kudata_end) {
+		pmap_enter_special(va, pa, PROT_READ | PROT_WRITE);
+		DPRINTF("%s: entered kudata page va 0x%llx pa 0x%llx\n",
+		    __func__, (uint64_t)va, (uint64_t)pa);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
 }
 
 /*
@@ -329,12 +397,6 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb->pcb_kstack = (u_int64_t)proc0.p_addr + USPACE - 16;
 	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_kstack - 1;
 
-	/* an empty iomap, by setting its offset to the TSS limit */
-	cpu_info_primary.ci_tss->tss_iobase = sizeof(struct x86_64_tss);
-	cpu_info_primary.ci_tss->tss_rsp0 = pcb->pcb_kstack;
-	cpu_info_primary.ci_tss->tss_ist[0] =
-	    (u_int64_t)proc0.p_addr + PAGE_SIZE - 16;
-
 	ltr(GSYSSEL(GPROC0_SEL, SEL_KPL));
 	lldt(0);
 }
@@ -346,15 +408,11 @@ x86_64_proc0_tss_ldt_init(void)
 #ifdef MULTIPROCESSOR
 void    
 x86_64_init_pcb_tss_ldt(struct cpu_info *ci)   
-{        
+{
 	struct pcb *pcb = ci->ci_idle_pcb;
  
-	ci->ci_tss->tss_iobase = sizeof(*ci->ci_tss);
-	ci->ci_tss->tss_rsp0 = pcb->pcb_kstack;
-	ci->ci_tss->tss_ist[0] = pcb->pcb_kstack - USPACE + PAGE_SIZE;
-
 	pcb->pcb_cr0 = rcr0();
-}       
+}
 #endif	/* MULTIPROCESSOR */
 
 bios_diskinfo_t *
@@ -1551,8 +1609,6 @@ init_x86_64(paddr_t first_avail)
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, PROT_READ | PROT_WRITE);
-	pmap_kenter_pa(idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
-	    PROT_READ | PROT_WRITE);
 
 #if defined(MULTIPROCESSOR) || \
     (NACPI > 0 && !defined(SMALL_KERNEL))
@@ -1560,7 +1616,7 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 	idt = (struct gate_descriptor *)idt_vaddr;
-	cpu_info_primary.ci_tss = (void *)(idt + NIDT);
+	cpu_info_primary.ci_tss = &cpu_info_full_primary.cif_tss;
 	cpu_info_primary.ci_gdt = (void *)(cpu_info_primary.ci_tss + 1);
 
 	/* make gdt gates and memory segments */
@@ -1585,9 +1641,10 @@ init_x86_64(paddr_t first_avail)
 
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
-		ist = (x == 8) ? 1 : 0;
+		/* trap2 == NMI, trap8 == double fault */
+		ist = (x == 2) ? 2 : (x == 8) ? 1 : 0;
 		setgate(&idt[x], IDTVEC(exceptions)[x], ist, SDT_SYS386IGT,
-		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
+		    (x == 3) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
 		idt_allocmap[x] = 1;
 	}

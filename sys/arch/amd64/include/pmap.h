@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.63 2018/01/07 21:43:25 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.64 2018/02/21 19:24:15 guenther Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -280,8 +280,19 @@ struct pmap {
 	struct mutex pm_mtx;
 	struct uvm_object pm_obj[PTP_LEVELS-1]; /* objects for lvl >= 1) */
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
-	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
-	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
+	/*
+	 * pm_pdir         : VA of page table to be used when executing in
+	 *                   privileged mode
+	 * pm_pdirpa       : PA of page table to be used when executing in
+	 *                   privileged mode
+	 * pm_pdir_intel   : VA of special page table to be used when executing
+	 *                   on an Intel CPU in usermode (no kernel mappings)
+	 * pm_pdirpa_intel : PA of special page table to be used when executing
+	 *                   on an Intel CPU in usermode (no kernel mappings)
+	 */
+	pd_entry_t *pm_pdir, *pm_pdir_intel;
+	paddr_t pm_pdirpa, pm_pdirpa_intel;
+
 	struct vm_page *pm_ptphint[PTP_LEVELS-1];
 					/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
@@ -375,6 +386,7 @@ paddr_t	pmap_prealloc_lowmem_ptps(paddr_t);
 void	pagezero(vaddr_t);
 
 int	pmap_convert(struct pmap *, int);
+void	pmap_enter_special(vaddr_t, paddr_t, vm_prot_t);
 
 /* 
  * functions for flushing the cache for vaddrs and pages.

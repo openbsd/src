@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.94 2018/02/10 09:46:58 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.95 2018/02/21 19:24:15 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -208,6 +208,7 @@ const struct {
 	{ SEFF0EDX_AVX512_4FMAPS, "AVX512FMAPS" },
 	{ SEFF0EDX_IBRS,	"IBRS,IBPB" },
 	{ SEFF0EDX_STIBP,	"STIBP" },
+	 /* SEFF0EDX_ARCH_CAP (not printed) */
 }, cpu_tpm_eaxfeatures[] = {
 	{ TPM_SENSOR,		"SENSOR" },
 	{ TPM_ARAT,		"ARAT" },
@@ -455,6 +456,7 @@ identifycpu(struct cpu_info *ci)
 	int i;
 	char *brandstr_from, *brandstr_to;
 	int skipspace;
+	extern uint32_t cpu_meltdown;
 
 	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
 	CPUID(0x80000000, ci->ci_pnfeatset, dummy, dummy, dummy);
@@ -611,6 +613,9 @@ identifycpu(struct cpu_info *ci)
 					    cpu_amdspec_ebxfeatures[i].str);
 		}
 	}
+
+	if (cpu_meltdown)
+		printf(",MELTDOWN");
 
 	printf("\n");
 

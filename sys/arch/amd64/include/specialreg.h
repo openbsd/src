@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.67 2018/02/10 09:46:58 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.68 2018/02/21 19:24:15 guenther Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -219,6 +219,7 @@
 #define SEFF0EDX_AVX512_4FMAPS	0x00000008 /* AVX-512 mult accum single prec */
 #define SEFF0EDX_IBRS		0x04000000 /* IBRS / IBPB Speculation Control */
 #define SEFF0EDX_STIBP		0x08000000 /* STIBP Speculation Control */
+#define SEFF0EDX_ARCH_CAP	0x20000000 /* Has IA32_ARCH_CAPABILITIES MSR */
 
 /*
  * Thermal and Power Management (CPUID function 0x6) EAX bits
@@ -351,6 +352,8 @@
 #define MTRRcap_FIXED		0x100	/* bit 8 - fixed MTRRs supported */
 #define MTRRcap_WC		0x400	/* bit 10 - WC type supported */
 #define MTRRcap_SMRR		0x800	/* bit 11 - SMM range reg supported */
+#define MSR_ARCH_CAPABILITIES	0x10a
+#define ARCH_CAPABILITIES_RDCL_NO	(1ULL << 0)	/* Meltdown safe */
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define	MSR_BBL_CR_CTL		0x119	/* PII+ only */

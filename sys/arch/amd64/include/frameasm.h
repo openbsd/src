@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.11 2018/01/06 22:03:12 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.12 2018/02/21 19:24:15 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -13,7 +13,10 @@
  * These are used on interrupt or trap entry or exit.
  */
 #define INTR_SAVE_GPRS \
-	subq	$120,%rsp	; \
+	subq	$120,%rsp		; \
+	INTR_SAVE_MOST_GPRS_NO_ADJ	; \
+	movq	%rcx,TF_RCX(%rsp)
+#define INTR_SAVE_MOST_GPRS_NO_ADJ \
 	movq	%r15,TF_R15(%rsp)	; \
 	movq	%r14,TF_R14(%rsp)	; \
 	movq	%r13,TF_R13(%rsp)	; \
@@ -27,15 +30,54 @@
 	movq	%rbp,TF_RBP(%rsp)	; \
 	movq	%rbx,TF_RBX(%rsp)	; \
 	movq	%rdx,TF_RDX(%rsp)	; \
-	movq	%rcx,TF_RCX(%rsp)	; \
 	movq	%rax,TF_RAX(%rsp)
 
-#define	INTRENTRY \
-	subq	$32,%rsp		; \
-	testq	$SEL_RPL,56(%rsp)	; \
-	je	98f			; \
+/* For real interrupt code paths, where we can come from userspace */
+#define INTRENTRY_LABEL(label)	X##label##_untramp
+#define	INTRENTRY(label) \
+	testq	$SEL_RPL,24(%rsp)	; \
+	je	INTRENTRY_LABEL(label)	; \
 	swapgs				; \
-98: 	INTR_SAVE_GPRS
+	movq	%rax,CPUVAR(SCRATCH)	; \
+	movq	CPUVAR(KERN_CR3),%rax	; \
+	testq	%rax,%rax		; \
+	jz	98f			; \
+	movq	%rax,%cr3		; \
+	jmp	98f			; \
+	.text				; \
+	.global	INTRENTRY_LABEL(label)	; \
+INTRENTRY_LABEL(label):	/* from kernel */ \
+	subq	$152,%rsp		; \
+	movq	%rcx,TF_RCX(%rsp)	; \
+	jmp	99f			; \
+98:	/* from userspace */		  \
+	movq	CPUVAR(KERN_RSP),%rax	; \
+	xchgq	%rax,%rsp		; \
+	movq	%rcx,TF_RCX(%rsp)	; \
+	/* copy trapno+err to the trap frame */ \
+	movq	0(%rax),%rcx		; \
+	movq	%rcx,TF_TRAPNO(%rsp)	; \
+	movq	8(%rax),%rcx		; \
+	movq	%rcx,TF_ERR(%rsp)	; \
+	addq	$16,%rax		; \
+	/* copy iretq frame to the trap frame */ \
+	movq	IRETQ_RIP(%rax),%rcx	; \
+	movq	%rcx,TF_RIP(%rsp)	; \
+	movq	IRETQ_CS(%rax),%rcx	; \
+	movq	%rcx,TF_CS(%rsp)	; \
+	movq	IRETQ_RFLAGS(%rax),%rcx	; \
+	movq	%rcx,TF_RFLAGS(%rsp)	; \
+	movq	IRETQ_RSP(%rax),%rcx	; \
+	movq	%rcx,TF_RSP(%rsp)	; \
+	movq	IRETQ_SS(%rax),%rcx	; \
+	movq	%rcx,TF_SS(%rsp)	; \
+	movq	CPUVAR(SCRATCH),%rax	; \
+99:	INTR_SAVE_MOST_GPRS_NO_ADJ
+
+/* For faking up an interrupt frame when we're already in the kernel */
+#define	INTR_REENTRY \
+	subq	$32,%rsp		; \
+	INTR_SAVE_GPRS
 
 #define INTRFASTEXIT \
 	jmp	intr_fast_exit
@@ -49,24 +91,6 @@
 	movl	%cs,%r11d		; \
 	pushq	%r11			; \
 	pushq	%r13			;
-
-/*
- * Restore FS.base if it's not already in the CPU, and do the cli/swapgs.
- * Uses %rax, %rcx, and %rdx
- */
-#define INTR_RESTORE_SELECTORS						\
-	btsl	$CPUF_USERSEGS_BIT, CPUVAR(FLAGS)			; \
-	jc	99f							; \
-	movq	CPUVAR(CURPCB),%rdx	/* for below */			; \
-	movq	PCB_FSBASE(%rdx),%rax					; \
-	cmpq	$0,%rax							; \
-	je	99f		/* setting %fs has zeroed FS.base */	; \
-	movq	%rax,%rdx						; \
-	shrq	$32,%rdx						; \
-	movl	$MSR_FSBASE,%ecx					; \
-	wrmsr								; \
-99:	cli								; \
-	swapgs
 
 #define	INTR_FAKE_TRAP	0xbadabada
 

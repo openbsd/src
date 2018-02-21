@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.49 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.50 2018/02/21 19:24:15 guenther Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -58,6 +58,14 @@
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
 #endif
+
+/* #define LAPIC_DEBUG */
+
+#ifdef LAPIC_DEBUG
+#define DPRINTF(x...)	do { printf(x); } while(0)
+#else
+#define DPRINTF(x...)
+#endif /* LAPIC_DEBUG */
 
 struct evcount clk_count;
 #ifdef MULTIPROCESSOR
@@ -201,6 +209,7 @@ lapic_map(paddr_t lapic_base)
 		codepatch_call(CPTAG_EOI, &x2apic_eoi);
 
 		lapic_writereg(LAPIC_TPRI, s);
+		va = (vaddr_t)&local_apic;
 	} else {
 		/*
 		 * Map local apic.  If we have a local apic, it's safe to
@@ -219,6 +228,17 @@ lapic_map(paddr_t lapic_base)
 
 		lapic_tpr = s;
 	}
+
+	/*
+	 * Enter the LAPIC MMIO page in the U-K page table for handling
+	 * Meltdown (needed in the interrupt stub to acknowledge the
+	 * incoming interrupt). On CPUs unaffected by Meltdown,
+	 * pmap_enter_special is a no-op.
+	 * XXX - need to map this PG_N
+	 */
+	pmap_enter_special(va, lapic_base, PROT_READ | PROT_WRITE);
+	DPRINTF("%s: entered lapic page va 0x%llx pa 0x%llx\n", __func__,
+	    (uint64_t)va, (uint64_t)lapic_base);
 
 	enable_intr();
 }
