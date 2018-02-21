@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.107 2018/02/20 04:03:15 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.108 2018/02/21 05:19:11 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1306,7 +1306,7 @@ egre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 static int
 gre_up(struct gre_softc *sc)
 {
-	NET_ASSERT_LOCKED(); 
+	NET_ASSERT_LOCKED();
 	SET(sc->sc_if.if_flags, IFF_RUNNING);
 
 	if (sc->sc_ka_state != GRE_KA_NONE) {
@@ -1713,7 +1713,7 @@ egre_up(struct egre_softc *sc)
 	if (sc->sc_tunnel.t_af == AF_UNSPEC)
 		return (EDESTADDRREQ);
 
-	NET_ASSERT_LOCKED(); 
+	NET_ASSERT_LOCKED();
 
 	if (RBT_INSERT(egre_tree, &egre_tree, sc) != NULL)
 		return (EADDRINUSE);
