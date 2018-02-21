@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1064 2018/02/21 19:54:25 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1065 2018/02/21 20:02:37 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2750,9 +2750,9 @@ finish_up() {
 		rm -rf $_kernel_dir
 		mkdir -m 700 -p $_kernel_dir
 		tar -C $_kernel_dir -xzf $_kernel_dir.tgz $_kernel
+		rm -f $_kernel_dir.tgz
 		chroot /mnt /bin/ksh -e -c "cd ${_kernel_dir#/mnt}/$_kernel; \
 			make newbsd; make newinstall"
-		rm -f $_kernel_dir.tgz
 		) >/dev/null 2>&1 && echo "done." || echo "failed."
 	fi
 
