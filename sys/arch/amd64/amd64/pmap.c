@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.109 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.110 2018/02/22 20:36:40 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2035,6 +2035,8 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pd_entry_t *pd, *ptp;
 	paddr_t npa;
 	struct pmap *pmap = pmap_kernel();
+	pt_entry_t *ptes;
+	int level, offs;
 
 	/* If CPU is secure, no need to do anything */
 	if (!cpu_meltdown)
@@ -2138,25 +2140,18 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		    (uint64_t)npa);
 
 	DPRINTF("%s: setting PTE, PT page @ phys 0x%llx virt 0x%llx prot "
-	    "0x%llx was 0x%llx\n", __func__, (uint64_t)npa, (uint64_t)pd, (uint64_t)prot, (uint64_t)pd[l1idx]);
+	    "0x%llx was 0x%llx\n", __func__, (uint64_t)npa, (uint64_t)pd,
+	    (uint64_t)prot, (uint64_t)pd[l1idx]);
 
-	pd[l1idx] = pa | protection_codes[prot] | PG_V | pg_g_kern | PG_W;
+	pd[l1idx] = pa | protection_codes[prot] | PG_V | PG_G | PG_W;
 	DPRINTF("%s: setting PTE[%lld] = 0x%llx\n", __func__, l1idx, pd[l1idx]);
 
-	if (pg_g_kern) {
-		/* now set the PG_G flag on the corresponding U+K entry */
-		pt_entry_t *ptes;
-		int level, offs;
-
-		level = pmap_find_pte_direct(pmap, va, &ptes, &offs);
-		if (__predict_true(level == 0 &&
-		    pmap_valid_entry(ptes[offs]))) {
-			ptes[offs] |= pg_g_kern;
-		} else {
-			DPRINTF("%s: no U+K mapping for special mapping?\n",
-			    __func__);
-		}
-	}
+	/* now set the PG_G flag on the corresponding U+K entry */
+	level = pmap_find_pte_direct(pmap, va, &ptes, &offs);
+	if (__predict_true(level == 0 && pmap_valid_entry(ptes[offs])))
+		ptes[offs] |= PG_G;
+	else
+		DPRINTF("%s: no U+K mapping for special mapping?\n", __func__);
 }
 
 /*
