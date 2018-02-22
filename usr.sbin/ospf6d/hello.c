@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.17 2014/11/18 20:54:28 krw Exp $ */
+/*	$OpenBSD: hello.c,v 1.18 2018/02/22 07:43:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -173,7 +173,6 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 		nbr->dr.s_addr = hello.d_rtr;
 		nbr->bdr.s_addr = hello.bd_rtr;
 		nbr->priority = LSA_24_GETHI(ntohl(hello.opts));
-		nbr_change = 1;
 	}
 
 	/* actually the neighbor address shouldn't be stored on virtual links */
@@ -186,8 +185,10 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 		memcpy(&nbr_id, buf, sizeof(nbr_id));
 		if (nbr_id == ospfe_router_id()) {
 			/* seen myself */
-			if (nbr->state & NBR_STA_PRELIM)
+			if (nbr->state & NBR_STA_PRELIM) {
 				nbr_fsm(nbr, NBR_EVT_2_WAY_RCVD);
+				nbr_change = 1;
+			}
 			break;
 		}
 		buf += sizeof(nbr_id);
