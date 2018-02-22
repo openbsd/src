@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.178 2018/02/22 17:29:25 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.179 2018/02/22 17:30:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -938,6 +938,12 @@ SSL_connect(SSL *s)
 		SSL_set_connect_state(s); /* Not properly initialized yet */
 
 	return (s->method->internal->ssl_connect(s));
+}
+
+int
+SSL_is_server(const SSL *s)
+{
+	return s->server;
 }
 
 long

@@ -213,6 +213,7 @@ SSL_get_version
 SSL_get_wbio
 SSL_get_wfd
 SSL_has_matching_session_id
+SSL_is_server
 SSL_library_init
 SSL_load_client_CA_file
 SSL_load_error_strings
