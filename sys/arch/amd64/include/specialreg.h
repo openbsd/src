@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.68 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.69 2018/02/22 20:18:59 bluhm Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -353,7 +353,7 @@
 #define MTRRcap_WC		0x400	/* bit 10 - WC type supported */
 #define MTRRcap_SMRR		0x800	/* bit 11 - SMM range reg supported */
 #define MSR_ARCH_CAPABILITIES	0x10a
-#define ARCH_CAPABILITIES_RDCL_NO	(1ULL << 0)	/* Meltdown safe */
+#define ARCH_CAPABILITIES_RDCL_NO	(1 << 0)	/* Meltdown safe */
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define	MSR_BBL_CR_CTL		0x119	/* PII+ only */
