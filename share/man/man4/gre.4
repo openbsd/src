@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.60 2018/02/22 13:23:47 jmc Exp $
+.\" $OpenBSD: gre.4,v 1.61 2018/02/22 22:17:01 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ and an outer IP header for encapsulating another protocol's datagram.
 The GRE header specifies the type of the encapsulated datagram,
 allowing for the tunnelling of multiple protocols.
 .Pp
-Different tunnels between the same endpoints may be distinguised
+Different tunnels between the same endpoints may be distinguished
 by an optional Key field in the GRE header.
 The Key field may be partitioned to carry flow information about the
 encapsulated traffic to allow better use of multipath links.
