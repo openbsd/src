@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.73 2018/02/20 18:07:11 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.74 2018/02/22 17:25:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -707,6 +707,13 @@ SSL_SESSION_free(SSL_SESSION *ss)
 
 	freezero(ss->internal, sizeof(*ss->internal));
 	freezero(ss, sizeof(*ss));
+}
+
+int
+SSL_SESSION_up_ref(SSL_SESSION *ss)
+{
+	int refs = CRYPTO_add(&ss->references, 1, CRYPTO_LOCK_SSL_SESSION);
+	return (refs > 1) ? 1 : 0;
 }
 
 int
