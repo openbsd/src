@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.58 2018/02/22 07:24:58 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.59 2018/02/22 07:27:26 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -53,8 +53,8 @@ allowing for the tunnelling of multiple protocols.
 .Pp
 Different tunnels between the same endpoints may be distinguised
 by an optional Key field in the GRE header.
-The Key field may be used to carry flow information about the
-encapsulated traffic to allow better use multipath links.
+The Key field may be partitioned to carry flow information about the
+encapsulated traffic to allow better use of multipath links.
 .Pp
 This pseudo driver provides the clonable network interfaces:
 .Bl -tag -width nvgreX
