@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.34 2018/02/22 16:50:30 jsing Exp $ */
+/* $OpenBSD: x509.h,v 1.35 2018/02/22 16:53:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -605,6 +605,8 @@ extern "C" {
 #define 	X509_CRL_get_nextUpdate(x) ((x)->crl->nextUpdate)
 #define		X509_CRL_get_issuer(x) ((x)->crl->issuer)
 #define		X509_CRL_get_REVOKED(x) ((x)->crl->revoked)
+
+int X509_CRL_up_ref(X509_CRL *x);
 
 const ASN1_TIME *X509_CRL_get0_lastUpdate(const X509_CRL *crl);
 const ASN1_TIME *X509_CRL_get0_nextUpdate(const X509_CRL *crl);

@@ -2675,6 +2675,7 @@ X509_CRL_set_version
 X509_CRL_sign
 X509_CRL_sign_ctx
 X509_CRL_sort
+X509_CRL_up_ref
 X509_CRL_verify
 X509_EXTENSIONS_it
 X509_EXTENSION_create_by_NID

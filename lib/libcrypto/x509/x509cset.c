@@ -1,4 +1,4 @@
-/* $OpenBSD: x509cset.c,v 1.12 2018/02/22 16:47:50 jsing Exp $ */
+/* $OpenBSD: x509cset.c,v 1.13 2018/02/22 16:53:42 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -62,6 +62,13 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+
+int
+X509_CRL_up_ref(X509_CRL *x)   
+{
+	int refs = CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509_CRL);
+	return (refs > 1) ? 1 : 0;
+}
 
 int
 X509_CRL_set_version(X509_CRL *x, long version)
