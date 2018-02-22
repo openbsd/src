@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.59 2018/02/22 07:27:26 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.60 2018/02/22 13:23:47 jmc Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ to the local tunnel.
 .\" talk about caveats with rdomains
 .Pp
 .Nm gre
-interfaces may be confugred to receive IPv4 packets in
+interfaces may be configured to receive IPv4 packets in
 Web Cache Communication Protocol (WCCP)
 encapsulation by setting the
 .Cm link0
@@ -197,7 +197,7 @@ interfaces support configuration of unicast IP addresses as the
 tunnel endpoints.
 .Pp
 .Nm nvgre
-interfaces supports configuration of a unicast IP address as the
+interfaces support configuration of a unicast IP address as the
 local endpoint and a multicast group address as the destination
 address.
 .It Dv SIOCGLIFPHYADDR Fa "struct if_laddrreq *"
@@ -227,7 +227,7 @@ field in of the GRE Key header.
 .It Dv SIOCGVNETID Fa "struct ifreq *"
 Get the virtual network identifer used in the GRE Key header.
 .It Dv SIOCDVNETID Fa "struct ifreq *"
-Disable the use of the a virtual network identifier.
+Disable the use of the virtual network identifier.
 The virtual network identifer may only be disabled while the interface
 is down.
 .Pp
@@ -251,15 +251,15 @@ Set the Time-To-Live field in IPv4 encapsulation headers, or the
 Hop Limit field in IPv6 encapsulation headers.
 .Pp
 .Nm gre
-interfaces configured with a ttl of -1 will copy the TTL in and out
+interfaces configured with a TTL of -1 will copy the TTL in and out
 of the encapsulated protocol headers.
 .It Dv SIOCGLIFPHYTTL Fa "struct ifreq *"
-Get the value used in Time-To-Live field in a IPv4 encapsulation
+Get the value used in the Time-To-Live field in a IPv4 encapsulation
 header or the Hop Limit field in a IPv6 encapsulation header.
 .It Dv SIOCSLIFPHYDF Fa "struct ifreq *"
 Configure whether the tunnel traffic sent by the interface can be
 fragmented or not.
-This set's the Don't Fragment (DF) bit on IPv4 packets,
+This sets the Don't Fragment (DF) bit on IPv4 packets,
 and disables fragmentation of IPv6 packets.
 .It Dv SIOCGLIFPHYDF Fa "struct ifreq *"
 Get whether the tunnel traffic sent by the interface can be fragmented
@@ -283,7 +283,7 @@ and
 .Nm egre
 must already be configured with a virtual network identifer before
 enabling flow identifiers in the GRE Key header.
-The configured virtual network identify must also fit into 24-bits.
+The configured virtual network identify must also fit into 24 bits.
 .It Dv SIOCDVNETFLOWID Fa "struct ifreq *"
 Get the status of the partitioning of the GRE key.
 .El
@@ -488,7 +488,7 @@ The NVGRE RFC also explicitly states encapsulated Ethernet packets
 must not contain IEEE 802.1Q (VLAN) tags.
 The
 .Nm nvgre
-driver not restrict the use of these VSIDs, and does not prevent
+driver does not restrict the use of these VSIDs, and does not prevent
 the configuration of child
 .Xr vlan 4
 interfaces or the bridging of VLAN tagged traffic across the tunnel.
