@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get0_notBefore.3,v 1.1 2018/02/15 10:01:33 schwarze Exp $
+.\" $OpenBSD: X509_get0_notBefore.3,v 1.2 2018/02/22 17:10:00 schwarze Exp $
 .\" content checked up to: OpenSSL 27b138e9 May 19 00:16:38 2017 +0000
 .\"
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,15 +15,17 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 15 2018 $
+.Dd $Mdocdate: February 22 2018 $
 .Dt X509_GET0_NOTBEFORE 3
 .Os
 .Sh NAME
 .Nm X509_get0_notBefore ,
 .Nm X509_getm_notBefore ,
 .Nm X509_get0_notAfter ,
-.Nm X509_getm_notAfter
-.Nd get certificate validity dates
+.Nm X509_getm_notAfter ,
+.Nm X509_CRL_get0_lastUpdate ,
+.Nm X509_CRL_get0_nextUpdate
+.Nd get certificate and CRL validity dates
 .Sh SYNOPSIS
 .In openssl/x509.h
 .Ft const ASN1_TIME *
@@ -42,6 +44,14 @@
 .Fo X509_getm_notAfter
 .Fa "const X509 *x"
 .Fc
+.Ft ASN1_TIME *
+.Fo X509_CRL_get0_lastUpdate
+.Fa "const X509_CRL *crl"
+.Fc
+.Ft ASN1_TIME *
+.Fo X509_CRL_get0_nextUpdate
+.Fa "const X509_CRL *crl"
+.Fc
 .Sh DESCRIPTION
 .Fn X509_getm_notBefore
 and
@@ -58,6 +68,16 @@ respectively.
 and
 .Fn X509_get0_notAfter
 are identical except for the const qualifier on the return type.
+.Pp
+.Fn X509_CRL_get0_lastUpdate
+and
+.Fn X509_CRL_get0_nextUpdate
+return pointers to the
+.Fa lastUpdate
+and
+.Fa nextUpdate
+fields of
+.Fa crl .
 .Sh RETURN VALUES
 These functions return internal pointers which must not be freed
 by the application, or
@@ -67,6 +87,8 @@ if the requested fields are not available.
 .Xr ASN1_TIME_set 3 ,
 .Xr ASN1_TIME_set_tm 3 ,
 .Xr X509_cmp_time 3 ,
+.Xr X509_CRL_get0_by_serial 3 ,
+.Xr X509_CRL_new 3 ,
 .Xr X509_get_subject_name 3 ,
 .Xr X509_new 3 ,
 .Xr X509_sign 3 ,
