@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.21 2018/02/22 17:11:30 jsing Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.22 2018/02/22 17:15:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -426,11 +426,13 @@ X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h,int type,X
 X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h, X509_OBJECT *x);
 void X509_OBJECT_up_ref_count(X509_OBJECT *a);
 void X509_OBJECT_free_contents(X509_OBJECT *a);
-X509_STORE *X509_STORE_new(void );
-void X509_STORE_free(X509_STORE *v);
 
+X509_STORE *X509_STORE_new(void);
+void X509_STORE_free(X509_STORE *v);
+int X509_STORE_up_ref(X509_STORE *x);
 STACK_OF(X509)* X509_STORE_get1_certs(X509_STORE_CTX *st, X509_NAME *nm);
 STACK_OF(X509_CRL)* X509_STORE_get1_crls(X509_STORE_CTX *st, X509_NAME *nm);
+
 int X509_STORE_set_flags(X509_STORE *ctx, unsigned long flags);
 int X509_STORE_set_purpose(X509_STORE *ctx, int purpose);
 int X509_STORE_set_trust(X509_STORE *ctx, int trust);

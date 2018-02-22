@@ -2886,6 +2886,7 @@ X509_STORE_set_flags
 X509_STORE_set_purpose
 X509_STORE_set_trust
 X509_STORE_set_verify_cb
+X509_STORE_up_ref
 X509_TRUST_add
 X509_TRUST_cleanup
 X509_TRUST_get0
