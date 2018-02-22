@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.26 2018/02/20 17:55:26 tb Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.27 2018/02/22 16:38:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -149,6 +149,13 @@ void
 BIO_vfree(BIO *a)
 {
 	BIO_free(a);
+}
+
+int
+BIO_up_ref(BIO *bio)
+{
+	int refs = CRYPTO_add(&bio->references, 1, CRYPTO_LOCK_BIO);
+	return (refs > 1) ? 1 : 0;
 }
 
 void *

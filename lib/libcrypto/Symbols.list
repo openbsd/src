@@ -362,6 +362,7 @@ BIO_sock_should_retry
 BIO_socket_ioctl
 BIO_socket_nbio
 BIO_test_flags
+BIO_up_ref
 BIO_vfree
 BIO_vprintf
 BIO_vsnprintf
