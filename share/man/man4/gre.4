@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.61 2018/02/22 22:17:01 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.62 2018/02/22 23:03:34 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -104,23 +104,11 @@ The MTU is set to 1476 by default to match the value used by Cisco
 routers.
 .Pp
 .Nm gre
-supports sending keepalive packets to the remote endpoint, which
+supports sending keepalive packets to the remote endpoint which
 allows tunnel failure to be detected.
-.\" talk about keepalive packet construction?
 To return keepalives, the remote host must be configured to forward
 IP packets received from inside the tunnel back to the address of
 the local tunnel endpoint.
-For example, an
-.Ox
-remote host with a GRE tunnel over IPv4 would need the following
-to ensure packets received inside the tunnel can be forwarded back
-to the local tunnel.
-.Bd -literal -offset indent
-# sysctl net.inet.ip.forwarding=1
-# ifconfig greN rdomain X
-# ifconfig greN tunneldomain X
-.Ed
-.\" talk about caveats with rdomains
 .Pp
 .Nm gre
 interfaces may be configured to receive IPv4 packets in
@@ -152,31 +140,35 @@ on top of an IPv4 or IPv6 underlay network as per RFC 7367.
 Ethernet traffic is encapsulated using Transparent Ethernet (0x6558)
 as the protocol identifier in the GRE header, a 24-bit Virtual
 Subnet ID (VSID), and an 8-bit FlowID.
-A
-.Nm nvgre
-interface represents a Network Virtualization Edge (NVE), and
-transports traffic in the overlay network by encapsulating it
-in the underlay.
 .Pp
+By default the MTU of an
 .Nm nvgre
-interfaces are configured with a unicast tunnel source address,
+interface is set to 1500, and the Don't Fragment flag is set.
+The MTU on the network interfaces carrying underlay network traffic
+must be raised to accomodate this and the overhead of the NVGRE
+encapsulation, or the
+.Nm nvgre
+interface must be reconfigured for less capable underlays.
+.Pp
+The underlay network parameters on a
+.Nm nvgre
+interface are a unicast tunnel source address,
 a multicast tunnel destination address,
-and a parent interface to use for sending and receiving multicast
-traffic on the underlay network.
+and a parent network interface.
 The unicast source address is used as the NVE Provider Address (PA)
 on the underlay network.
-The multicast group address in the underlay is used to transport
-broadcast and multicast traffic from the overlay to other participating
-NVGRE endpoints.
+The parent interface is used to identify which interface the multicast
+group should be joined to.
+.Pp
+The multicast group is used to transport broadcast and multicast
+traffic from the overlay to other participating NVGRE endpoints.
 It is also used to flood unicast traffic to Ethernet addresses in
 the overlay with an unknown association to a NVGRE endpoint.
-Traffic received from other NVGRE endpoints, either to the unicast
-PA address or multicast group address, is used to learn associations
-between Ethernet addresses in the overlay network and the Provider
-Addresses of NVGRE endpoints.
-.Pp
-The MTU is set to 1500 by default.
-.\" talk about DF and MTU of underlay network.
+Traffic received from other NVGRE endpoints,
+either to the Provider Address or via the multicast group,
+is used to learn associations between Ethernet addresses in the
+overlay network and the Provider Addresses of NVGRE endpoints in
+the underlay.
 .Ss Programming Interface
 .Nm gre ,
 .Nm egre ,
@@ -371,7 +363,10 @@ and on the Cisco:
 .Pp
 .Dl ip route Y mask tunnelX
 .Pp
-Keepalive packets may be enabled like this:
+.Nm gre
+keepalive packets may be enabled with
+.Xr ifconfig 8
+like this:
 .Bd -literal -offset indent
 # ifconfig greN keepalive period count
 .Ed
