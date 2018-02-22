@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.372 2018/02/20 12:43:03 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.373 2018/02/22 08:47:20 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1004,11 +1004,14 @@ rt_setgate(struct rtentry *rt, struct sockaddr *gate, u_int rtableid)
 	int glen = ROUNDUP(gate->sa_len);
 	struct sockaddr *sa;
 
-	if (rt->rt_gateway == NULL || glen > ROUNDUP(rt->rt_gateway->sa_len)) {
+	if (rt->rt_gateway == NULL || glen != ROUNDUP(rt->rt_gateway->sa_len)) {
 		sa = malloc(glen, M_RTABLE, M_NOWAIT);
 		if (sa == NULL)
 			return (ENOBUFS);
-		free(rt->rt_gateway, M_RTABLE, 0);
+		if (rt->rt_gateway != NULL) {
+			free(rt->rt_gateway, M_RTABLE,
+			    ROUNDUP(rt->rt_gateway->sa_len));
+		}
 		rt->rt_gateway = sa;
 	}
 	memmove(rt->rt_gateway, gate, glen);
