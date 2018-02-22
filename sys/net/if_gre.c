@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.110 2018/02/21 22:20:19 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.111 2018/02/22 07:33:24 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1676,6 +1676,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCSIFRDOMAIN:
+		/* let if_rdomain do its thing */
+		error = ENOTTY;
 		break;
 
 	case SIOCSETKALIVE:
