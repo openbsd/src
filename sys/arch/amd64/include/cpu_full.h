@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_full.h,v 1.1 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: cpu_full.h,v 1.2 2018/02/22 20:27:14 bluhm Exp $	*/
 /*
  * Copyright (c) Philip Guenther <guenther@openbsd.org>
  *
@@ -61,6 +61,6 @@ CTASSERT(sizeof(struct cpu_info_full) % PAGE_SIZE == 0);
 extern struct cpu_info_full cpu_info_full_primary;
 
 /* Now make sure the cpu_info_primary macro is correct */
-CTASSERT(&cpu_info_primary == &cpu_info_full_primary.cif_cpu);
+CTASSERT(&cpu_info_primary - &cpu_info_full_primary.cif_cpu == 0);
 
 #endif /* _MACHINE_CPU_FULL_H_ */
