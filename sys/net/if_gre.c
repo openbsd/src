@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.111 2018/02/22 07:33:24 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.112 2018/02/22 09:47:12 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -356,8 +356,6 @@ struct nvgre_softc {
 	unsigned int		 sc_ether_max;
 	int			 sc_ether_tmo;
 	struct timeout		 sc_ether_age;
-
-	caddr_t			 sc_if_bpf;
 };
 
 RBT_HEAD(nvgre_ucast_tree, nvgre_softc);
@@ -597,10 +595,6 @@ nvgre_clone_create(struct if_clone *ifc, int unit)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
-#endif
 
 	return (0);
 }
@@ -1144,14 +1138,6 @@ nvgre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen)
 
 	if (sc == NULL)
 		return (-1);
-
-#if NBPFILTER > 0
-	{
-		caddr_t if_bpf = sc->sc_if_bpf;
-		if (if_bpf)
-			bpf_mtap_af(if_bpf, key->t_af, m, BPF_DIRECTION_IN);
-	}
-#endif
 
 	/* it's ours now */
 	m = gre_ether_align(m, hlen);
@@ -2698,12 +2684,6 @@ nvgre_start(struct ifnet *ifp)
 		    htons(ETHERTYPE_TRANSETHER), tunnel->t_ttl, 0);
 		if (m == NULL)
 			continue;
-
-#if NBPFILTER > 0
-		if_bpf = sc->sc_if_bpf;
-		if (if_bpf)
-			bpf_mtap_af(if_bpf, tunnel->t_af, m, BPF_DIRECTION_OUT);
-#endif
 
 		m->m_flags &= ~(M_BCAST|M_MCAST);
 		m->m_pkthdr.ph_rtableid = tunnel->t_rtableid;
