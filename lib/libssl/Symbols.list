@@ -59,6 +59,7 @@ SSL_CTX_free
 SSL_CTX_get0_certificate
 SSL_CTX_get0_param
 SSL_CTX_get_cert_store
+SSL_CTX_get_ciphers
 SSL_CTX_get_client_CA_list
 SSL_CTX_get_client_cert_cb
 SSL_CTX_get_ex_data

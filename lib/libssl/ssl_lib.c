@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.176 2018/02/17 15:19:43 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.177 2018/02/22 17:27:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1312,6 +1312,12 @@ SSL_get_cipher_list(const SSL *s, int n)
 	if (c == NULL)
 		return (NULL);
 	return (c->name);
+}
+
+STACK_OF(SSL_CIPHER) *
+SSL_CTX_get_ciphers(const SSL_CTX *ctx)
+{
+	return ctx->cipher_list;
 }
 
 /* Specify the ciphers to be used by default by the SSL_CTX. */
