@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.20 2018/02/14 17:06:34 jsing Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.21 2018/02/22 17:11:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -447,6 +447,8 @@ void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
 int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store,
 			 X509 *x509, STACK_OF(X509) *chain);
 X509 *X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx);
+STACK_OF(X509) *X509_STORE_CTX_get0_chain(X509_STORE_CTX *xs);
+X509_STORE *X509_STORE_CTX_get0_store(X509_STORE_CTX *xs);
 STACK_OF(X509) *X509_STORE_CTX_get0_untrusted(X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.67 2018/02/14 17:06:34 jsing Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.68 2018/02/22 17:11:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2023,12 +2023,20 @@ X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx)
 	return ctx->current_cert;
 }
 
-STACK_OF(X509) *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx)
+STACK_OF(X509) *
+X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx)
 {
 	return ctx->chain;
 }
 
-STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
+STACK_OF(X509) *
+X509_STORE_CTX_get0_chain(X509_STORE_CTX *xs)
+{
+	return xs->chain;
+}
+
+STACK_OF(X509) *
+X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
 {
 	int i;
 	X509 *x;
@@ -2059,6 +2067,12 @@ X509_STORE_CTX *
 X509_STORE_CTX_get0_parent_ctx(X509_STORE_CTX *ctx)
 {
 	return ctx->parent;
+}
+
+X509_STORE *
+X509_STORE_CTX_get0_store(X509_STORE_CTX *xs)
+{
+	return xs->ctx;
 }
 
 void
