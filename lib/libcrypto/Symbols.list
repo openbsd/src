@@ -2651,6 +2651,7 @@ X509_CRL_dup
 X509_CRL_free
 X509_CRL_get0_by_cert
 X509_CRL_get0_by_serial
+X509_CRL_get0_extensions
 X509_CRL_get0_lastUpdate
 X509_CRL_get0_nextUpdate
 X509_CRL_get0_signature
@@ -2661,6 +2662,7 @@ X509_CRL_get_ext_by_critical
 X509_CRL_get_ext_count
 X509_CRL_get_ext_d2i
 X509_CRL_get_meth_data
+X509_CRL_get_signature_nid
 X509_CRL_it
 X509_CRL_match
 X509_CRL_new

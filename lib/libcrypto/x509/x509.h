@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.35 2018/02/22 16:53:42 jsing Exp $ */
+/* $OpenBSD: x509.h,v 1.36 2018/02/22 16:58:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -607,7 +607,9 @@ extern "C" {
 #define		X509_CRL_get_REVOKED(x) ((x)->crl->revoked)
 
 int X509_CRL_up_ref(X509_CRL *x);
+int X509_CRL_get_signature_nid(const X509_CRL *crl);
 
+const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl);
 const ASN1_TIME *X509_CRL_get0_lastUpdate(const X509_CRL *crl);
 const ASN1_TIME *X509_CRL_get0_nextUpdate(const X509_CRL *crl);
 void X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
@@ -920,11 +922,13 @@ void X509_REVOKED_free(X509_REVOKED *a);
 X509_REVOKED *d2i_X509_REVOKED(X509_REVOKED **a, const unsigned char **in, long len);
 int i2d_X509_REVOKED(X509_REVOKED *a, unsigned char **out);
 extern const ASN1_ITEM X509_REVOKED_it;
+
 X509_CRL_INFO *X509_CRL_INFO_new(void);
 void X509_CRL_INFO_free(X509_CRL_INFO *a);
 X509_CRL_INFO *d2i_X509_CRL_INFO(X509_CRL_INFO **a, const unsigned char **in, long len);
 int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **out);
 extern const ASN1_ITEM X509_CRL_INFO_it;
+
 X509_CRL *X509_CRL_new(void);
 void X509_CRL_free(X509_CRL *a);
 X509_CRL *d2i_X509_CRL(X509_CRL **a, const unsigned char **in, long len);
