@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.57 2018/02/22 01:35:04 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.58 2018/02/22 07:24:58 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -33,7 +33,9 @@
 .Os
 .Sh NAME
 .Nm gre ,
-.Nm egre
+.\" .Nm mgre ,
+.Nm egre ,
+.Nm nvgre
 .Nd Generic Routing Encapsulation network device
 .Sh SYNOPSIS
 .Cd "pseudo-device gre"
@@ -48,46 +50,38 @@ GRE datagrams (IP protocol number 47) consist of a GRE header
 and an outer IP header for encapsulating another protocol's datagram.
 The GRE header specifies the type of the encapsulated datagram,
 allowing for the tunnelling of multiple protocols.
+.Pp
 Different tunnels between the same endpoints may be distinguised
 by an optional Key field in the GRE header.
+The Key field may be used to carry flow information about the
+encapsulated traffic to allow better use multipath links.
 .Pp
 This pseudo driver provides the clonable network interfaces:
-.Bl -tag -width nvgreXXX
+.Bl -tag -width nvgreX
 .It Nm gre
-Layer 3 protocols, specifically IPv4, IPv6, and MPLS, are encapsulated
-by GRE and IP headers.
-The MTU is set to 1476 by default to match the value used by Cisco routers.
-.Nm gre
-also supports reception of WCCP encapsulated IPv4 packets.
+Point-to-point Layer 3 tunnel interfaces.
+.\" .It Nm mgre
+.\" Point-to-multipoint Layer 3 tunnel interfaces.
 .It Nm egre
-Layer 2 Ethernet packets are encapsulated by GRE and IP headers.
-Transparent Ethernet (0x6558) is used as the protocol identifier
-in the GRE header as per RFC 1701.
-The MTU is set to 1500 by default.
+Point-to-point Ethernet tunnel interfaces.
+.It Nm nvgre
+Network Virtualization Using Generic Routing Encapsulation
+(NVGRE) overlay Ethernet network interfaces.
 .El
 .Pp
-GRE and WCCP are enabled with the following
-.Xr sysctl 2
-variables respectively in
-.Pa /etc/sysctl.conf :
-.Bl -tag -width "net.inet.wccp.allow"
-.It Va net.inet.gre.allow
-Allow GRE packets in and out of the system.
-.It Va net.inet.gre.wccp
-Set to 1 to allow WCCPv1-style GRE packets into the system;
-set to 2 to handle the packets as WCCPv2-style GRE, truncating
-the redirect header.
-Some magic with the packet filter configuration
-and a caching proxy like squid are needed
-to do anything useful with these packets.
-This sysctl requires
-.Va gre.allow
-to be set.
-.El
+All GRE packet processing in the system is allowed or denied by setting the
+.Va net.inet.gre.allow
+.Xr sysctl 8
+variable.
+To allow GRE packet processing, set
+.Va net.inet.gre.allow
+to 1.
 .Pp
-.Nm gre
+.Nm gre ,
+.\" .Nm mgre ,
+.Nm egre ,
 and
-.Nm egre
+.Nm nvgre
 interfaces can be created at runtime using the
 .Ic ifconfig iface Ns Ar N Ic create
 command or by setting up a
@@ -95,27 +89,237 @@ command or by setting up a
 configuration file for
 .Xr netstart 8 .
 .Pp
-The default MTU may not be an optimal value depending on the link
-between the tunnel endpoints, but can be adjusted.
-.Pp
-For correct operation, the route to the tunnel destination must not
-go over the interface itself.
+For correct operation, encapsulated traffic must not be routed
+over the interface itself.
 This can be implemented by adding a distinct or a more specific
 route to the tunnel destination than the hosts or networks routed
 via the tunnel interface.
 Alternatively, the tunnel traffic may be configured in a separate
 routing table to the encapsulated traffic.
-.Pp
-Each interface supports use of the optional GRE Key field as a
-virtual network idenfitier.
+.Ss Point-to-Point Layer 3 GRE tunnel interfaces (gre)
+A
+.Nm gre
+tunnel can encapsulate IPv4, IPv6, and MPLS packets.
+The MTU is set to 1476 by default to match the value used by Cisco
+routers.
 .Pp
 .Nm gre
-optionally supports sending keepalive packets to the remote endpoint,
-which allows tunnel failure to be detected.
+supports sending keepalive packets to the remote endpoint, which
+allows tunnel failure to be detected.
+.\" talk about keepalive packet construction?
+To return keepalives, the remote host must be configured to forward
+IP packets received from inside the tunnel back to the address of
+the local tunnel endpoint.
+For example, an
+.Ox
+remote host with a GRE tunnel over IPv4 would need the following
+to ensure packets received inside the tunnel can be forwarded back
+to the local tunnel.
+.Bd -literal -offset indent
+# sysctl net.inet.ip.forwarding=1
+# ifconfig greN rdomain X
+# ifconfig greN tunneldomain X
+.Ed
+.\" talk about caveats with rdomains
+.Pp
 .Nm gre
-interfaces can be individually configured to receive WCCP packets by
-setting the link-level flag
-.Cm link0 .
+interfaces may be confugred to receive IPv4 packets in
+Web Cache Communication Protocol (WCCP)
+encapsulation by setting the
+.Cm link0
+flag on the interface.
+WCCP reception may be enabled globally by setting the
+.Va net.inet.gre.wccp
+sysctl value to 1.
+Some magic with the packet filter configuration
+and a caching proxy like squid are needed
+to do anything useful with these packets.
+This sysctl requires
+.Va net.inet.gre.allow
+to also be set.
+.\" .Ss Point-to-Multipoint Layer 3 GRE tunnel interfaces (mgre)
+.Ss Point-to-Point Ethernet over GRE tunnel interfaces (egre)
+A
+.Nm egre
+tunnel interface carries Ethernet over GRE (EoGRE).
+Ethernet traffic is encapsulated using Transparent Ethernet (0x6558)
+as the protocol identifier in the GRE header, as per RFC 1701.
+The MTU is set to 1500 by default.
+.Ss Network Virtualization Using GRE interfaces (nvgre)
+.Nm nvgre
+interfaces allow construction of virtual overlay Ethernet networks
+on top of an IPv4 or IPv6 underlay network as per RFC 7367.
+Ethernet traffic is encapsulated using Transparent Ethernet (0x6558)
+as the protocol identifier in the GRE header, a 24-bit Virtual
+Subnet ID (VSID), and an 8-bit FlowID.
+A
+.Nm nvgre
+interface represents a Network Virtualization Edge (NVE), and
+transports traffic in the overlay network by encapsulating it
+in the underlay.
+.Pp
+.Nm nvgre
+interfaces are configured with a unicast tunnel source address,
+a multicast tunnel destination address,
+and a parent interface to use for sending and receiving multicast
+traffic on the underlay network.
+The unicast source address is used as the NVE Provider Address (PA)
+on the underlay network.
+The multicast group address in the underlay is used to transport
+broadcast and multicast traffic from the overlay to other participating
+NVGRE endpoints.
+It is also used to flood unicast traffic to Ethernet addresses in
+the overlay with an unknown association to a NVGRE endpoint.
+Traffic received from other NVGRE endpoints, either to the unicast
+PA address or multicast group address, is used to learn associations
+between Ethernet addresses in the overlay network and the Provider
+Addresses of NVGRE endpoints.
+.Pp
+The MTU is set to 1500 by default.
+.\" talk about DF and MTU of underlay network.
+.Ss Programming Interface
+.Nm gre ,
+.Nm egre ,
+and
+.Nm nvgre
+interfaces support the following
+.Xr ioctl 2
+calls for configuring tunnel options:
+.Bl -tag -width indent -offset 3n
+.It Dv SIOCSLIFPHYADDR Fa "struct if_laddrreq *"
+Set the IPv4 or IPv6 addresses for the encapsulating IP packets.
+The addresses may only be configured while the interface is down.
+.Pp
+.Nm gre
+and
+.Nm egre
+interfaces support configuration of unicast IP addresses as the
+tunnel endpoints.
+.Pp
+.Nm nvgre
+interfaces supports configuration of a unicast IP address as the
+local endpoint and a multicast group address as the destination
+address.
+.It Dv SIOCGLIFPHYADDR Fa "struct if_laddrreq *"
+Get the addresses used for the encapsulating IP packets.
+.It Dv SIOCDIFPHYADDR Fa "struct ifreq *"
+Clear the addresses used for the encapsulating IP packets.
+The addresses may only be cleared while the interface is down.
+.It Dv SIOCSVNETID Fa "struct ifreq *"
+Configure a virtual network identifier for use in the GRE Key header.
+The virtual network identifier may only be configured while the
+interface is down.
+.Pp
+.Nm gre
+and
+.Nm egre
+interfaces configured with a virtual network identifier will enable
+the use of the GRE Key header.
+The Key is a 32-bit value by default, or a 24-bit value when the
+virtual network flow identifier is enabled.
+.Pp
+.Nm nvgre
+interfaces use the virtual network identifier in the 24-bit
+Virtual Subnet Identifer (VSID)
+aka
+Tenant Network Identifier (TNI)
+field in of the GRE Key header.
+.It Dv SIOCGVNETID Fa "struct ifreq *"
+Get the virtual network identifer used in the GRE Key header.
+.It Dv SIOCDVNETID Fa "struct ifreq *"
+Disable the use of the a virtual network identifier.
+The virtual network identifer may only be disabled while the interface
+is down.
+.Pp
+When the virtual network identifier is disabled on
+.Nm gre
+and
+.Nm egre
+interfaces, it disables the use of the GRE Key header.
+.Pp
+.Nm nvgre
+interfaces do not support this ioctl as a
+Virtual Subnet Identifier
+is required by the protocol.
+.It Dv SIOCSLIFPHYRTABLE Fa "struct ifreq *"
+Set the routing table the tunnel traffic operates in.
+The routing table may only be configured while the interface is down.
+.It Dv SIOCGLIFPHYRTABLE Fa "struct ifreq *"
+Get the routing table the tunnel traffic operates in.
+.It Dv SIOCSLIFPHYTTL Fa "struct ifreq *"
+Set the Time-To-Live field in IPv4 encapsulation headers, or the
+Hop Limit field in IPv6 encapsulation headers.
+.Pp
+.Nm gre
+interfaces configured with a ttl of -1 will copy the TTL in and out
+of the encapsulated protocol headers.
+.It Dv SIOCGLIFPHYTTL Fa "struct ifreq *"
+Get the value used in Time-To-Live field in a IPv4 encapsulation
+header or the Hop Limit field in a IPv6 encapsulation header.
+.It Dv SIOCSLIFPHYDF Fa "struct ifreq *"
+Configure whether the tunnel traffic sent by the interface can be
+fragmented or not.
+This set's the Don't Fragment (DF) bit on IPv4 packets,
+and disables fragmentation of IPv6 packets.
+.It Dv SIOCGLIFPHYDF Fa "struct ifreq *"
+Get whether the tunnel traffic sent by the interface can be fragmented
+or not.
+.El
+.Pp
+.Nm gre
+and
+.Nm egre
+interfaces support the following
+.Xr ioctl 2
+calls:
+.Bl -tag -width indent -offset 3n
+.It Dv SIOCSVNEFLOWID Fa "struct ifreq *"
+Enable or disable the partitioning of the optional GRE Key header
+into a 24-bit virtual network identifier and an 8-bit flow
+identifier.
+.Pp
+.Nm gre
+and
+.Nm egre
+must already be configured with a virtual network identifer before
+enabling flow identifiers in the GRE Key header.
+The configured virtual network identify must also fit into 24-bits.
+.It Dv SIOCDVNETFLOWID Fa "struct ifreq *"
+Get the status of the partitioning of the GRE key.
+.El
+.Pp
+.Nm gre
+interfaces support the following
+.Xr ioctl 2
+calls:
+.Bl -tag -width indent -offset 3n
+.It Dv SIOCSETKALIVE Fa "struct ifkalivereq *"
+Enable the transmission of keepalive packets to detect tunnel failure.
+.\" Keepalives may only be configured while the interace is down.
+.Pp
+Setting the keepalive period or count to 0 disables keepalives on
+the tunnel.
+.It Dv SIOCGETKALIVE Fa "struct ifkalivereq *"
+Get the configuration of keepalive packets.
+.El
+.Pp
+.Nm nvgre
+interfaces support the following
+.Xr ioctl 2
+calls:
+.Bl -tag -width indent -offset 3n
+.It Dv SIOCSIFPARENT Fa "struct if_parent *"
+Configure which interface will be joined to the multicast group
+specified by the tunnel destination address.
+The parent interface may only be configured while the interface is
+down.
+.It Dv SIOCGIFPARENT Fa "struct if_parent *"
+Get the name of the interface used for multicast communication.
+.It Dv SIOCGIFPARENT Fa "struct ireq *"
+Remove the configuration of the interface used for multicast
+communication.
+.\" bridge(4) ioctls should go here too.
+.El
 .Sh EXAMPLES
 .Nm gre
 Configuration example:
@@ -246,6 +450,14 @@ pass quick on gre proto gre no state
 .Re
 .Pp
 .Rs
+.%A P. Garg
+.%A Y. Wang
+.%D September 2015
+.%R RFC 7647
+.%T NVGRE: Network Virtualization Using Generic Routing Encapsulation
+.Re
+.Pp
+.Rs
 .%U https://tools.ietf.org/html/draft-ietf-wrec-web-pro-00.txt
 .%T Web Cache Coordination Protocol V1.0
 .Re
@@ -260,8 +472,25 @@ pass quick on gre proto gre no state
 RFC 1701 and RFC 2890 describe a variety of optional GRE header
 fields in the protocol that are not implemented in the
 .Nm gre
-driver.
-The only optional field the driver implements support for is the
+and
+.Nm egre
+interface drivers.
+The only optional field the drivers implement support for is the
 Key header.
 .Pp
-The redirect header for WCCPv2 GRE encapsulated packets is skipped.
+.Nm gre
+interfaces skip the redirect header in WCCPv2 GRE encapsulated packets.
+.Pp
+The NVGRE RFC specifies VSIDs 0 (0x0) to 4095 (0xfff) as reserved
+for future use, and VSID 16777215 (0xffffff) for use for vendor-specific
+endpoint communication.
+The NVGRE RFC also explicitly states encapsulated Ethernet packets
+must not contain IEEE 802.1Q (VLAN) tags.
+The
+.Nm nvgre
+driver not restrict the use of these VSIDs, and does not prevent
+the configuration of child
+.Xr vlan 4
+interfaces or the bridging of VLAN tagged traffic across the tunnel.
+These non-restrictions allow non-compliant tunnels to be configured
+which may not interoperate with other vendors.
