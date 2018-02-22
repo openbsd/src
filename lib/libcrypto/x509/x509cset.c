@@ -1,4 +1,4 @@
-/* $OpenBSD: x509cset.c,v 1.11 2015/09/30 17:49:59 jsing Exp $ */
+/* $OpenBSD: x509cset.c,v 1.12 2018/02/22 16:47:50 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -134,6 +134,24 @@ X509_CRL_sort(X509_CRL *c)
 	}
 	c->crl->enc.modified = 1;
 	return 1;
+}
+
+const STACK_OF(X509_EXTENSION) *
+X509_REVOKED_get0_extensions(const X509_REVOKED *x)
+{
+	return x->extensions;
+}
+
+const ASN1_TIME *
+X509_REVOKED_get0_revocationDate(const X509_REVOKED *x)
+{
+	return x->revocationDate;
+}
+
+const ASN1_INTEGER *
+X509_REVOKED_get0_serialNumber(const X509_REVOKED *x)
+{
+	return x->serialNumber;
 }
 
 int
