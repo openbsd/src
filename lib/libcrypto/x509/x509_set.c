@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_set.c,v 1.14 2018/02/17 15:50:42 jsing Exp $ */
+/* $OpenBSD: x509_set.c,v 1.15 2018/02/22 17:06:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -147,6 +147,12 @@ X509_set_notBefore(X509 *x, const ASN1_TIME *tm)
 	return (in != NULL);
 }
 
+int
+X509_set1_notBefore(X509 *x, const ASN1_TIME *tm)
+{
+	return X509_set_notBefore(x, tm);
+}
+
 const ASN1_TIME *
 X509_get0_notAfter(const X509 *x)
 {
@@ -177,6 +183,12 @@ X509_set_notAfter(X509 *x, const ASN1_TIME *tm)
 		}
 	}
 	return (in != NULL);
+}
+
+int
+X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
+{
+	return X509_set_notAfter(x, tm);
 }
 
 int

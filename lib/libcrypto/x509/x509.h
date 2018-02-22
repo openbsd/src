@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.38 2018/02/22 17:05:35 jsing Exp $ */
+/* $OpenBSD: x509.h,v 1.39 2018/02/22 17:06:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -987,7 +987,9 @@ X509_NAME *	X509_get_issuer_name(X509 *a);
 int 		X509_set_subject_name(X509 *x, X509_NAME *name);
 X509_NAME *	X509_get_subject_name(X509 *a);
 int 		X509_set_notBefore(X509 *x, const ASN1_TIME *tm);
+int 		X509_set1_notBefore(X509 *x, const ASN1_TIME *tm);
 int 		X509_set_notAfter(X509 *x, const ASN1_TIME *tm);
+int 		X509_set1_notAfter(X509 *x, const ASN1_TIME *tm);
 const ASN1_TIME *X509_get0_notBefore(const X509 *x);
 ASN1_TIME *X509_getm_notBefore(const X509 *x);
 const ASN1_TIME *X509_get0_notAfter(const X509 *x);

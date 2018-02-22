@@ -3013,6 +3013,8 @@ X509_print_ex_fp
 X509_print_fp
 X509_pubkey_digest
 X509_reject_clear
+X509_set1_notAfter
+X509_set1_notBefore
 X509_set_ex_data
 X509_set_issuer_name
 X509_set_notAfter
