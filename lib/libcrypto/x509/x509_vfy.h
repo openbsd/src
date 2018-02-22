@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.22 2018/02/22 17:15:09 jsing Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.23 2018/02/22 17:17:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -426,6 +426,8 @@ X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h,int type,X
 X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h, X509_OBJECT *x);
 void X509_OBJECT_up_ref_count(X509_OBJECT *a);
 void X509_OBJECT_free_contents(X509_OBJECT *a);
+X509 *X509_OBJECT_get0_X509(const X509_OBJECT *xo);
+X509_CRL *X509_OBJECT_get0_X509_CRL(X509_OBJECT *xo);
 
 X509_STORE *X509_STORE_new(void);
 void X509_STORE_free(X509_STORE *v);

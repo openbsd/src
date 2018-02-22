@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.24 2018/02/22 17:15:09 jsing Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.25 2018/02/22 17:17:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -533,6 +533,22 @@ X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h, int type,
 	return sk_X509_OBJECT_value(h, idx);
 }
 
+X509 *
+X509_OBJECT_get0_X509(const X509_OBJECT *xo)
+{
+	if (xo != NULL && xo->type == X509_LU_X509)
+		return xo->data.x509;
+	return NULL;
+}
+
+X509_CRL *
+X509_OBJECT_get0_X509_CRL(X509_OBJECT *xo)
+{
+	if (xo != NULL && xo->type == X509_LU_CRL)
+		return xo->data.crl;
+	return NULL;
+}
+
 STACK_OF(X509) *
 X509_STORE_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
 {
@@ -655,7 +671,6 @@ X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h, X509_OBJECT *x)
 	}
 	return NULL;
 }
-
 
 /* Try to get issuer certificate from store. Due to limitations
  * of the API this can only retrieve a single certificate matching

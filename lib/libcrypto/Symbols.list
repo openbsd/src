@@ -2747,6 +2747,8 @@ X509_NAME_print_ex
 X509_NAME_print_ex_fp
 X509_NAME_set
 X509_OBJECT_free_contents
+X509_OBJECT_get0_X509
+X509_OBJECT_get0_X509_CRL
 X509_OBJECT_idx_by_subject
 X509_OBJECT_retrieve_by_subject
 X509_OBJECT_retrieve_match
