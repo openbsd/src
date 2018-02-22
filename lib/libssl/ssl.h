@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.143 2018/02/22 17:27:07 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.144 2018/02/22 17:29:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1337,7 +1337,6 @@ int SSL_check_private_key(const SSL *ctx);
 
 int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx, unsigned int sid_ctx_len);
 
-SSL *SSL_new(SSL_CTX *ctx);
 int SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx, unsigned int sid_ctx_len);
 
 int SSL_CTX_set_purpose(SSL_CTX *s, int purpose);
@@ -1350,7 +1349,9 @@ int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm);
 X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl);
 int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm);
 
+SSL *SSL_new(SSL_CTX *ctx);
 void	SSL_free(SSL *ssl);
+int	SSL_up_ref(SSL *ssl);
 int 	SSL_accept(SSL *ssl);
 int 	SSL_connect(SSL *ssl);
 int 	SSL_read(SSL *ssl, void *buf, int num);

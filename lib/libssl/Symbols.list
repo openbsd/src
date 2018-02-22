@@ -269,6 +269,7 @@ SSL_shutdown
 SSL_state
 SSL_state_string
 SSL_state_string_long
+SSL_up_ref
 SSL_use_PrivateKey
 SSL_use_PrivateKey_ASN1
 SSL_use_PrivateKey_file

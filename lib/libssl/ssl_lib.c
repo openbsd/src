@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.177 2018/02/22 17:27:07 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.178 2018/02/22 17:29:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -566,6 +566,13 @@ SSL_free(SSL *s)
 
 	free(s->internal);
 	free(s);
+}
+
+int
+SSL_up_ref(SSL *s)
+{
+	int refs = CRYPTO_add(&s->references, 1, CRYPTO_LOCK_SSL);
+	return (refs > 1) ? 1 : 0;
 }
 
 void
