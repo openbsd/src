@@ -2940,6 +2940,7 @@ X509_add_ext
 X509_alias_get0
 X509_alias_set1
 X509_certificate_type
+X509_chain_up_ref
 X509_check_akid
 X509_check_ca
 X509_check_email

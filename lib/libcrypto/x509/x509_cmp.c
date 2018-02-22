@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cmp.c,v 1.28 2018/02/22 17:05:35 jsing Exp $ */
+/* $OpenBSD: x509_cmp.c,v 1.29 2018/02/22 17:22:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -369,4 +369,22 @@ X509_check_private_key(X509 *x, EVP_PKEY *k)
 	if (ret > 0)
 		return 1;
 	return 0;
+}
+
+/*
+ * Not strictly speaking an "up_ref" as a STACK doesn't have a reference
+ * count but it has the same effect by duping the STACK and upping the ref of
+ * each X509 structure.
+ */
+STACK_OF(X509) *
+X509_chain_up_ref(STACK_OF(X509) *chain)
+{
+	STACK_OF(X509) *ret;
+	size_t i;
+
+	ret = sk_X509_dup(chain);
+	for (i = 0; i < sk_X509_num(ret); i++)
+		X509_up_ref(sk_X509_value(ret, i));
+
+	return ret;
 }
