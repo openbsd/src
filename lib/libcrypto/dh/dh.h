@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.h,v 1.24 2018/02/20 18:01:42 tb Exp $ */
+/* $OpenBSD: dh.h,v 1.25 2018/02/22 16:41:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -189,6 +189,7 @@ int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 int DH_set_ex_data(DH *d, int idx, void *arg);
 void *DH_get_ex_data(DH *d, int idx);
 
+ENGINE *DH_get0_engine(DH *d);
 void DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q,
     const BIGNUM **g);
 int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);

@@ -773,6 +773,7 @@ DH_free
 DH_generate_key
 DH_generate_parameters
 DH_generate_parameters_ex
+DH_get0_engine
 DH_get0_key
 DH_get0_pqg
 DH_get_default_method
