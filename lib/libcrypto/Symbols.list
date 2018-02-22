@@ -2791,6 +2791,7 @@ X509_REQ_get_attr_count
 X509_REQ_get_extension_nids
 X509_REQ_get_extensions
 X509_REQ_get_pubkey
+X509_REQ_get_signature_nid
 X509_REQ_it
 X509_REQ_new
 X509_REQ_print

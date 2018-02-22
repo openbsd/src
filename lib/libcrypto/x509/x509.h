@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.33 2018/02/22 16:47:50 jsing Exp $ */
+/* $OpenBSD: x509.h,v 1.34 2018/02/22 16:50:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -610,6 +610,8 @@ const ASN1_TIME *X509_CRL_get0_lastUpdate(const X509_CRL *crl);
 const ASN1_TIME *X509_CRL_get0_nextUpdate(const X509_CRL *crl);
 void X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
     const X509_ALGOR **palg);
+
+int X509_REQ_get_signature_nid(const X509_REQ *req);
 
 void X509_REQ_get0_signature(const X509_REQ *req, const ASN1_BIT_STRING **psig,
     const X509_ALGOR **palg);

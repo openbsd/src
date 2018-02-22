@@ -1,4 +1,4 @@
-/* $OpenBSD: x_req.c,v 1.16 2018/02/20 17:06:19 jsing Exp $ */
+/* $OpenBSD: x_req.c,v 1.17 2018/02/22 16:50:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -224,6 +224,12 @@ X509_REQ *
 X509_REQ_dup(X509_REQ *x)
 {
 	return ASN1_item_dup(&X509_REQ_it, x);
+}
+
+int
+X509_REQ_get_signature_nid(const X509_REQ *req)
+{
+	return OBJ_obj2nid(req->sig_alg->algorithm);
 }
 
 void
