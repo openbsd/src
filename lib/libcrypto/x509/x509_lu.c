@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.25 2018/02/22 17:17:09 jsing Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.26 2018/02/22 17:19:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -746,6 +746,24 @@ X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 	if (*issuer)
 		CRYPTO_add(&(*issuer)->references, 1, CRYPTO_LOCK_X509);
 	return ret;
+}
+
+STACK_OF(X509_OBJECT) *
+X509_STORE_get0_objects(X509_STORE *xs)
+{
+	return xs->objs;
+}
+
+void *
+X509_STORE_get_ex_data(X509_STORE *xs, int idx)
+{
+	return CRYPTO_get_ex_data(&xs->ex_data, idx);
+}
+
+int
+X509_STORE_set_ex_data(X509_STORE *xs, int idx, void *data)
+{
+	return CRYPTO_set_ex_data(&xs->ex_data, idx, data);
 }
 
 int
