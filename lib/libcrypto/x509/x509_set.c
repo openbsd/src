@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_set.c,v 1.15 2018/02/22 17:06:42 jsing Exp $ */
+/* $OpenBSD: x509_set.c,v 1.16 2018/02/22 17:09:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,6 +67,12 @@ const STACK_OF(X509_EXTENSION) *
 X509_get0_extensions(const X509 *x)
 {
 	return x->cert_info->extensions;
+}
+
+const X509_ALGOR *
+X509_get0_tbs_sigalg(const X509 *x)
+{
+	return x->cert_info->signature;
 }
 
 int

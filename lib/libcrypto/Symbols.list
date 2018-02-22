@@ -2958,6 +2958,7 @@ X509_get0_notBefore
 X509_get0_pubkey
 X509_get0_pubkey_bitstr
 X509_get0_signature
+X509_get0_tbs_sigalg
 X509_get1_email
 X509_get1_ocsp
 X509_get_default_cert_area
