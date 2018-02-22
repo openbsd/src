@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.178 2017/12/19 15:00:39 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.179 2018/02/22 10:54:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -254,6 +254,9 @@ server_loop(void)
 	} while (items != 0);
 
 	server_client_loop();
+
+	if (!options_get_number(global_options, "exit-empty") && !server_exit)
+		return (0);
 
 	if (!options_get_number(global_options, "exit-unattached")) {
 		if (!RB_EMPTY(&sessions))
