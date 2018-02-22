@@ -1,4 +1,4 @@
-/* $OpenBSD: x509cset.c,v 1.13 2018/02/22 16:53:42 jsing Exp $ */
+/* $OpenBSD: x509cset.c,v 1.14 2018/02/22 17:01:44 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -109,6 +109,12 @@ X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm)
 }
 
 int
+X509_CRL_set1_lastUpdate(X509_CRL *x, const ASN1_TIME *tm)
+{
+	return X509_CRL_set_lastUpdate(x, tm);
+}
+
+int
 X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm)
 {
 	ASN1_TIME *in;
@@ -124,6 +130,12 @@ X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm)
 		}
 	}
 	return (in != NULL);
+}
+
+int
+X509_CRL_set1_nextUpdate(X509_CRL *x, const ASN1_TIME *tm)
+{
+	return X509_CRL_set_nextUpdate(x, tm);
 }
 
 int

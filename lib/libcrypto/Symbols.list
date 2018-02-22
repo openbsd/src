@@ -2668,6 +2668,8 @@ X509_CRL_match
 X509_CRL_new
 X509_CRL_print
 X509_CRL_print_fp
+X509_CRL_set1_lastUpdate
+X509_CRL_set1_nextUpdate
 X509_CRL_set_default_method
 X509_CRL_set_issuer_name
 X509_CRL_set_lastUpdate

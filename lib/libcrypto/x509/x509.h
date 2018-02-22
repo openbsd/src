@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.36 2018/02/22 16:58:45 jsing Exp $ */
+/* $OpenBSD: x509.h,v 1.37 2018/02/22 17:01:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1029,7 +1029,9 @@ int X509_REQ_add1_attr_by_txt(X509_REQ *req,
 int X509_CRL_set_version(X509_CRL *x, long version);
 int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name);
 int X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm);
+int X509_CRL_set1_lastUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
+int X509_CRL_set1_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_sort(X509_CRL *crl);
 
 const STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(const X509_REVOKED *x);
