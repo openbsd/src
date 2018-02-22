@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.247 2018/02/05 08:21:54 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.248 2018/02/22 10:58:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -907,6 +907,7 @@ server_client_handle_key(struct client *c, key_code key)
 	 * The prefix always takes precedence and forces a switch to the prefix
 	 * table, unless we are already there.
 	 */
+retry:
 	key0 = (key & ~KEYC_XTERM);
 	if ((key0 == (key_code)options_get_number(s->options, "prefix") ||
 	    key0 == (key_code)options_get_number(s->options, "prefix2")) &&
@@ -917,7 +918,6 @@ server_client_handle_key(struct client *c, key_code key)
 	}
 	flags = c->flags;
 
-retry:
 	/* Log key table. */
 	if (wp == NULL)
 		log_debug("key table %s (no pane)", table->name);
