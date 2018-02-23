@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.310 2017/12/18 09:09:53 ajacoutot Exp $	*/
+/*	$OpenBSD: editor.c,v 1.311 2018/02/23 21:39:58 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -760,7 +760,7 @@ editor_resize(struct disklabel *lp, char *p)
 
 	/*
 	 * Pack partitions above the resized partition, leaving unused
-	 * partions alone.
+	 * partitions alone.
 	 */
 	prev = pp;
 	for (i = partno + 1; i < MAXPARTITIONS; i++) {
@@ -1868,13 +1868,13 @@ void
 mpfree(char **mp)
 {
 	int part;
-	
+
 	if (mp == NULL)
 		return;
-	
+
 	for (part = 0; part < MAXPARTITIONS; part++)
 		free(mp[part]);
-	
+
 	free(mp);
 }
 
@@ -2504,7 +2504,7 @@ parse_sizerange(char *buf, u_int64_t *min, u_int64_t *max)
 		if (*max == 0)
 			*max = *min;
 	free(buf);
-	return (0);	
+	return (0);
 }
 
 int
