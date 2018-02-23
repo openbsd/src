@@ -1,4 +1,5 @@
-.\" $OpenBSD: BIO_meth_new.3,v 1.2 2018/02/19 14:22:15 schwarze Exp $
+.\" $OpenBSD: BIO_meth_new.3,v 1.3 2018/02/23 19:12:09 schwarze Exp $
+.\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
 .\" This file is a derived work.
@@ -65,22 +66,34 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 19 2018 $
+.Dd $Mdocdate: February 23 2018 $
 .Dt BIO_METH_NEW 3
 .Os
 .Sh NAME
+.Nm BIO_get_new_index ,
 .Nm BIO_meth_new ,
 .Nm BIO_meth_free ,
+.Nm BIO_meth_get_write ,
 .Nm BIO_meth_set_write ,
+.Nm BIO_meth_get_read ,
 .Nm BIO_meth_set_read ,
+.Nm BIO_meth_get_puts ,
 .Nm BIO_meth_set_puts ,
+.Nm BIO_meth_get_gets ,
 .Nm BIO_meth_set_gets ,
+.Nm BIO_meth_get_ctrl ,
 .Nm BIO_meth_set_ctrl ,
+.Nm BIO_meth_get_create ,
 .Nm BIO_meth_set_create ,
-.Nm BIO_meth_set_destroy
+.Nm BIO_meth_get_destroy ,
+.Nm BIO_meth_set_destroy ,
+.Nm BIO_meth_get_callback_ctrl ,
+.Nm BIO_meth_set_callback_ctrl
 .Nd manipulate BIO_METHOD structures
 .Sh SYNOPSIS
 .In openssl/bio.h
+.Ft int
+.Fn BIO_get_new_index void
 .Ft BIO_METHOD *
 .Fo BIO_meth_new
 .Fa "int type"
@@ -91,39 +104,64 @@
 .Fa "BIO_METHOD *biom"
 .Fc
 .Ft int
+.Fn "(*BIO_meth_get_write(BIO_METHOD *biom))" "BIO *" "const char *" int
+.Ft int
 .Fo BIO_meth_set_write
 .Fa "BIO_METHOD *biom"
 .Fa "int (*write)(BIO *, const char *, int)"
 .Fc
+.Ft int
+.Fn "(*BIO_meth_get_read(BIO_METHOD *biom))" "BIO *" "char *" int
 .Ft int
 .Fo BIO_meth_set_read
 .Fa "BIO_METHOD *biom"
 .Fa "int (*read)(BIO *, char *, int)"
 .Fc
 .Ft int
+.Fn "(*BIO_meth_get_puts(BIO_METHOD *biom))" "BIO *" "const char *"
+.Ft int
 .Fo BIO_meth_set_puts
 .Fa "BIO_METHOD *biom"
 .Fa "int (*puts)(BIO *, const char *)"
 .Fc
 .Ft int
+.Fn "(*BIO_meth_get_gets(BIO_METHOD *biom))" "BIO *" "char *" int
+.Ft int
 .Fo BIO_meth_set_gets
 .Fa "BIO_METHOD *biom"
 .Fa "int (*gets)(BIO *, char *, int)"
 .Fc
+.Ft long
+.Fn "(*BIO_meth_get_ctrl(BIO_METHOD *biom))" "BIO *" int long "void *"
 .Ft int
 .Fo BIO_meth_set_ctrl
 .Fa "BIO_METHOD *biom"
 .Fa "long (*ctrl)(BIO *, int, long, void *)"
 .Fc
 .Ft int
+.Fn "(*BIO_meth_get_create(BIO_METHOD *biom))" "BIO *"
+.Ft int
 .Fo BIO_meth_set_create
 .Fa "BIO_METHOD *biom"
 .Fa "int (*create)(BIO *)"
 .Fc
 .Ft int
+.Fn "(*BIO_meth_get_destroy(BIO_METHOD *biom))" "BIO *"
+.Ft int
 .Fo BIO_meth_set_destroy
 .Fa "BIO_METHOD *biom"
 .Fa "int (*destroy)(BIO *)"
+.Fc
+.Ft long
+.Fo "(*BIO_meth_get_callback_ctrl(BIO_METHOD *biom))"
+.Fa "BIO *"
+.Fa int
+.Fa "BIO_info_cb *"
+.Fc
+.Ft int
+.Fo BIO_meth_set_callback_ctrl
+.Fa "BIO_METHOD *biom"
+.Fa "long (*callback_ctrl)(BIO *, int, BIO_info_cb *)"
 .Fc
 .Sh DESCRIPTION
 The
@@ -142,7 +180,14 @@ creates a new
 .Vt BIO_METHOD
 structure.
 It requires a unique integer
+.Fa type ;
+use
+.Fn BIO_get_new_index
+to get the value for
 .Fa type .
+Currently, the user can only create up to 127 different BIO types, and
+.Fa type
+is limited to the range 129\(en255.
 The
 .Fa name
 pointer is stored in the structure and will not be freed by
@@ -174,10 +219,12 @@ for more information.
 is an alias for
 .Xr free 3 .
 .Pp
-.Fn BIO_meth_set_write
+.Fn BIO_meth_get_write ,
+.Fn BIO_meth_set_write ,
+.Fn BIO_meth_get_read ,
 and
 .Fn BIO_meth_set_read
-set the functions
+get and set the functions
 .Fa write
 and
 .Fa read
@@ -197,8 +244,10 @@ have the same meaning as for
 and
 .Xr BIO_read 3 .
 .Pp
+.Fn BIO_meth_get_puts
+and
 .Fn BIO_meth_set_puts
-sets the function
+get and set the function
 .Fa puts
 used for writing a NUL-terminated string to the
 .Vt BIO .
@@ -209,10 +258,12 @@ The parameters and the return value of
 have the same meaning as for
 .Xr BIO_puts 3 .
 .Pp
+.Fn BIO_meth_get_gets
+and
 .Fn BIO_meth_set_gets
-sets the function
+get and set the function
 .Fa gets
-used for reading a line of data to the
+used for reading a line of data from the
 .Vt BIO .
 This function is called from
 .Xr BIO_gets 3 .
@@ -221,8 +272,10 @@ The parameters and the return value of
 have the same meaning as for
 .Xr BIO_gets 3 .
 .Pp
+.Fn BIO_meth_get_ctrl
+and
 .Fn BIO_meth_set_ctrl
-sets the function
+get and set the function
 .Fa ctrl
 used for processing control messages in the
 .Vt BIO .
@@ -233,8 +286,10 @@ The parameters and return value of
 have the same meaning as for
 .Xr BIO_ctrl 3 .
 .Pp
+.Fn BIO_meth_get_create
+and
 .Fn BIO_meth_set_create
-sets a function
+get and set a function
 .Fa create
 used while initializing a new instance of the
 .Vt BIO .
@@ -248,8 +303,10 @@ and a pointer to this newly allocated structure is passed
 as the parameter to
 .Fa create .
 .Pp
+.Fn BIO_meth_get_destroy
+and
 .Fn BIO_meth_set_destroy
-sets a function
+get and set a function
 .Fa destroy
 used while destroying an instance of a
 .Vt BIO .
@@ -266,7 +323,24 @@ function is intended to perform clean-up specific to the
 The memory for the
 .Vt BIO
 itself must not be freed by this function.
+.Pp
+.Fn BIO_meth_get_callback_ctrl
+and
+.Fn BIO_meth_set_callback_ctrl
+get and set the function
+.Fa callback_ctrl
+used for processing callback control messages in the
+.Vt BIO .
+This function is called from
+.Xr BIO_callback_ctrl 3 .
+The parameters and return value of
+.Fa callback_ctrl
+have the same meaning as for
+.Xr BIO_callback_ctrl 3 .
 .Sh RETURN VALUES
+.Fn BIO_get_new_index
+returns the new BIO type value or \-1 if an error occurs.
+.Pp
 .Fn BIO_meth_new
 returns the new
 .Vt BIO_METHOD
@@ -278,6 +352,10 @@ The
 .Fn BIO_meth_set_*
 functions return 1 on success or 0 on error.
 Currently, they cannot fail.
+.Pp
+The
+.Fn BIO_meth_get_*
+functions return function pointers.
 .Sh SEE ALSO
 .Xr BIO_ctrl 3 ,
 .Xr BIO_find_type 3 ,
