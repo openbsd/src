@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.63 2018/02/23 02:52:28 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.64 2018/02/23 03:01:34 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -638,3 +638,22 @@ the configuration of child
 interfaces or the bridging of VLAN tagged traffic across the tunnel.
 These non-restrictions allow non-compliant tunnels to be configured
 which may not interoperate with other vendors.
+.Sh SECURITY CONSIDERATIONS
+The GRE protocol in all its flavours does not provide any integrated
+security features.
+GRE should only be deployed on trusted private networks,
+or protected with IPsec to add authentication and encryption for
+confidentiality.
+IPsec is especially recommended when transporting GRE over the
+public internet.
+.Pp
+The Packet Filter
+.Xr pf 4
+can be used to filter tunnel traffic with endpoint policies
+.Xr pf.conf 5 .
+.Pp
+The Time-to-Live (TTL) value of a tunnel can be set to 1 or a low
+value to restrict the traffic to the local network:
+.Bd -literal -offset indent
+# ifconfig gre0 tunnelttl 1
+.Ed
