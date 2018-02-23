@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.57 2018/01/08 15:37:21 markus Exp $
+#	$OpenBSD: Makefile.inc,v 1.58 2018/02/23 15:58:37 markus Exp $
 
 .include <bsd.own.mk>
 
@@ -120,6 +120,18 @@ SRCS_UTL+=	uidswap.c
 SRCS_PKCS11+=	ssh-pkcs11.c
 .else
 SRCS_PKCS11+=
+.endif
+
+WITH_XMSS?=	no
+.if (${WITH_XMSS:L} == "yes")
+CFLAGS+=	-DWITH_XMSS
+SRCS_KEY+=	ssh-xmss.c
+SRCS_KEY+=	sshkey-xmss.c
+SRCS_KEY+=	xmss_commons.c
+SRCS_KEY+=	xmss_fast.c
+SRCS_KEY+=	xmss_hash.c
+SRCS_KEY+=	xmss_hash_address.c
+SRCS_KEY+=	xmss_wots.c
 .endif
 
 .include <bsd.obj.mk>
