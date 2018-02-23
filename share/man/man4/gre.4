@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.65 2018/02/23 03:03:36 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.66 2018/02/23 09:50:30 jmc Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ By default the MTU of an
 .Nm nvgre
 interface is set to 1500, and the Don't Fragment flag is set.
 The MTU on the network interfaces carrying underlay network traffic
-must be raised to accomodate this and the overhead of the NVGRE
+must be raised to accommodate this and the overhead of the NVGRE
 encapsulation, or the
 .Nm nvgre
 interface must be reconfigured for less capable underlays.
@@ -312,9 +312,27 @@ Remove the configuration of the interface used for multicast
 communication.
 .\" bridge(4) ioctls should go here too.
 .El
+.Ss Security Considerations
+The GRE protocol in all its flavours does not provide any integrated
+security features.
+GRE should only be deployed on trusted private networks,
+or protected with IPsec to add authentication and encryption for
+confidentiality.
+IPsec is especially recommended when transporting GRE over the
+public internet.
+.Pp
+The Packet Filter
+.Xr pf 4
+can be used to filter tunnel traffic with endpoint policies
+.Xr pf.conf 5 .
+.Pp
+The Time-to-Live (TTL) value of a tunnel can be set to 1 or a low
+value to restrict the traffic to the local network:
+.Bd -literal -offset indent
+# ifconfig gre0 tunnelttl 1
+.Ed
 .Sh EXAMPLES
 .Ss Point-to-Point Layer 3 GRE tunnel interfaces (gre)
-.Nm gre
 Configuration example:
 .Bd -literal
 Host X ---- Host A ------------ tunnel ------------ Cisco D ---- Host E
@@ -637,22 +655,3 @@ the configuration of child
 interfaces or the bridging of VLAN tagged traffic across the tunnel.
 These non-restrictions allow non-compliant tunnels to be configured
 which may not interoperate with other vendors.
-.Sh SECURITY CONSIDERATIONS
-The GRE protocol in all its flavours does not provide any integrated
-security features.
-GRE should only be deployed on trusted private networks,
-or protected with IPsec to add authentication and encryption for
-confidentiality.
-IPsec is especially recommended when transporting GRE over the
-public internet.
-.Pp
-The Packet Filter
-.Xr pf 4
-can be used to filter tunnel traffic with endpoint policies
-.Xr pf.conf 5 .
-.Pp
-The Time-to-Live (TTL) value of a tunnel can be set to 1 or a low
-value to restrict the traffic to the local network:
-.Bd -literal -offset indent
-# ifconfig gre0 tunnelttl 1
-.Ed
