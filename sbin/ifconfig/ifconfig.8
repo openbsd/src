@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.303 2018/02/20 07:34:28 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.304 2018/02/23 05:17:39 akoshibe Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: February 20 2018 $
+.Dd $Mdocdate: February 23 2018 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -439,6 +439,10 @@ domains.
 If the specified rdomain does not yet exist it will be created, including
 a routing table with the same id.
 By default all interfaces belong to routing domain 0.
+.It Cm -rdomain
+Remove the interface from the routing domain and return it to routing
+domain 0.
+Any inet and inet6 addresses on the interface will also be removed.
 .It Cm rtlabel Ar route-label
 (inet)
 Attach

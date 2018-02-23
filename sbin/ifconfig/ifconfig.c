@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.360 2018/02/20 15:33:16 tb Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.361 2018/02/23 05:17:39 akoshibe Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -237,6 +237,7 @@ void	unsetvlandev(const char *, int);
 void	mpe_status(void);
 void	mpw_status(void);
 void	setrdomain(const char *, int);
+void	unsetrdomain(const char *, int);
 int	prefix(void *val, int);
 void	getifgroups(void);
 void	setifgroup(const char *, int);
@@ -421,6 +422,7 @@ const struct	cmd {
 	{ "rtlabel",	NEXTARG,	0,		setifrtlabel },
 	{ "-rtlabel",	-1,		0,		setifrtlabel },
 	{ "rdomain",	NEXTARG,	0,		setrdomain },
+	{ "-rdomain",	0,		0,		unsetrdomain },
 	{ "staticarp",	IFF_STATICARP,	0,		setifflags },
 	{ "-staticarp",	-IFF_STATICARP,	0,		setifflags },
 	{ "mpls",	IFXF_MPLS,	0,		setifxflags },
@@ -5665,6 +5667,15 @@ setrdomain(const char *id, int param)
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_rdomainid = rdomainid;
 	if (ioctl(s, SIOCSIFRDOMAIN, (caddr_t)&ifr) < 0)
+		warn("SIOCSIFRDOMAIN");
+}
+
+void
+unsetrdomain(const char *ignored, int alsoignored)
+{
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_rdomainid = 0;
+	if (ioctl(s, SIOCSIFRDOMAIN, (caddr_t)&ifr) < 0) 	
 		warn("SIOCSIFRDOMAIN");
 }
 #endif
