@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.6 2018/02/01 07:41:33 deraadt Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.7 2018/02/23 21:47:08 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -201,7 +201,7 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 		    ARM_LOCAL_INT_TIMER(i), 0);
 	for (i = 0; i < 4; i++)
 		bus_space_write_4(sc->sc_iot, sc->sc_lioh,
-		    ARM_LOCAL_INT_MAILBOX(i), 1);
+		    ARM_LOCAL_INT_MAILBOX(i), 0);
 
 	for (i = 0; i < INTC_NIRQ; i++) {
 		TAILQ_INIT(&sc->sc_bcm_intc_handler[i].is_list);
