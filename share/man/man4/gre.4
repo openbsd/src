@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.62 2018/02/22 23:03:34 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.63 2018/02/23 02:52:28 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 22 2018 $
+.Dd $Mdocdate: February 23 2018 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -313,6 +313,7 @@ communication.
 .\" bridge(4) ioctls should go here too.
 .El
 .Sh EXAMPLES
+.Ss Point-to-Point Layer 3 GRE tunnel interfaces (gre)
 .Nm gre
 Configuration example:
 .Bd -literal
@@ -394,6 +395,154 @@ because the keepalive packet is entering the network stack multiple times.
 In most cases the following should work:
 .Bd -literal -offset indent
 pass quick on gre proto gre no state
+.Ed
+.Ss Network Virtualization Using GRE interfaces (nvgre)
+NVGRE can be used to build a distinct logical Ethernet network
+on top of another network.
+.Nm nvgre
+is therefore like a
+.Xr vlan 4
+interface configured on top of a physical Ethernet interface,
+except it can sit on any IP network capable of multicast.
+.Pp
+The following shows a basic
+.Nm nvgre
+configuration and an equivalent
+.Xr vlan 4
+configuration.
+In the examples, 192.168.0.1/24 will be the network configured on
+the relevent virtual interfaces.
+The NVGRE underlay network will be configured on 100.64.10.0/24,
+and will use 239.1.1.100 as the multicast group address.
+.Pp
+The
+.Xr vlan 4
+interface only relies on Ethernet, it does not rely on IP configuration
+on the parent interface:
+.Bd -literal -offset indent
+# ifconfig em0 up
+# ifconfig vlan0 create
+# ifconfig vlan0 parent em0
+# ifconfig vlan0 vnetid 10
+# ifconfig vlan0 inet 192.168.0.1/24
+# ifconfig vlan0 up
+.Ed
+.Pp
+.Nm nvgre
+relies on IP configuration on the parent interface, and an MTU large
+enough to carry the encapsulated traffic:
+.Bd -literal -offset indent
+# ifconfig em0 mtu 1600
+# ifconfig em0 inet 100.64.10.1/24
+# ifconfig em0 up
+# ifconfig nvgre0 create
+# ifconfig nvgre0 parent em0 tunnel 100.64.10.1 239.1.1.100
+# ifconfig nvgre0 vnetid 10010
+# ifconfig nvgre0 inet 192.168.0.1/24
+# ifconfig nvgre0 up
+.Ed
+.Pp
+NVGRE is intended for use in a multitenant datacentre environment to
+provide each customer with distinct Ethernet networks as needed,
+but without running into the limit on the number of VLAN tags, and
+without requiring reconfiguration of the underlying Ethernet
+infrastructure.
+Another way to look at it is NVGRE can be used to construct multipoint
+Ethernet VPNs across an IP core.
+.Pp
+For example, if a customer has multiple virtual machines running in
+.Xr vmm 4
+on distinct physical hosts,
+.Nm nvgre
+and
+.Xr bridge 4
+can be used to provide network connectivity between the
+.Xr tap 4
+interfaces connected to the virtual machines.
+
+If there are 3 virtual machines, all using tap0 on each hosts, and
+those hosts are connected to the same network described above,
+.Nm nvgre
+with a distinct virtual network identifier and multicast group can
+be created for them.
+The following assumes nvgre1 and bridge1 have already been created
+on each host:
+.Pp
+On physical host 1:
+.Bd -literal -offset indent
+hv0# ifconfig em0 inet 100.64.10.10/24
+hv0# ifconfig nvgre1 parent em0 tunnel 100.64.10.10 239.1.1.111
+hv0# ifconfig nvgre1 vnetid 10011
+hv0# ifconfig bridge1 add nvgre1 add tap0 up
+.Ed
+.Pp
+On physical host 2:
+.Bd -literal -offset indent
+hv1# ifconfig em0 inet 100.64.10.11/24
+hv1# ifconfig nvgre1 parent em0 tunnel 100.64.10.11 239.1.1.111
+hv1# ifconfig nvgre1 vnetid 10011
+hv1# ifconfig bridge1 add nvgre1 add tap0 up
+.Ed
+.Pp
+On physical host 3:
+.Bd -literal -offset indent
+hv2# ifconfig em0 inet 100.64.10.12/24
+hv2# ifconfig nvgre1 parent em0 tunnel 100.64.10.12 239.1.1.111
+hv2# ifconfig nvgre1 vnetid 10011
+hv2# ifconfig bridge1 add nvgre1 add tap0 up
+.Ed
+.Pp
+Being able to carry working multicast and jumbo frames over the
+public internet is unlikely, which makes it difficult to use NVGRE
+to extended Ethernet VPNs between different sites.
+.Nm nvgre
+and
+.Nm egre
+can be bridged together to provide such connectivity.
+.Pp
+In this example the NVE device at the first site has a public IP
+of 192.0.2.1, and uses 100.64.10.0/24 for the NVGRE underlay network.
+The second site has a public IP 203.0.113.2, and uses 100.64.11.0/24 for
+the NVGRE underlay.
+.Nm egre
+is explicitly configured to provide the same MTU as the
+.Nm nvgre
+interfaces, but allows the encapsulated frames to be fragmented.
+Multiple
+.Nm egre
+interfaces are used to carry traffic for two different NVGRE networks,
+so each interface must configure distinct virtual network identifiers.
+.Pp
+At the first site:
+.Bd -literal -offset indent
+nve0# ifconfig nvgre0 parent em0 tunnel 100.64.10.1 239.1.1.100
+nve0# ifconfig nvgre0 vnetid 10000
+nve0# ifconfig egre0 create
+nve0# ifconfig egre0 tunnel 192.0.2.1 203.0.113.2
+nve0# ifconfig egre0 vnetid 10000 vnetflowid -tunneldf
+nve0# ifconfig bridge0 add nvgre0 add egre0 up
+nve0# ifconfig nvgre1 parent em0 tunnel 100.64.10.1 239.1.1.111
+nve0# ifconfig nvgre1 vnetid 10011
+nve0# ifconfig egre1 create
+nve0# ifconfig egre1 tunnel 192.0.2.1 203.0.113.2
+nve0# ifconfig egre1 vnetid 10011 vnetflowid -tunneldf
+nve0# ifconfig bridge0 add nvgre0 add egre0 up
+.Ed
+.Pp
+At the second site:
+.Bd -literal -offset indent
+nve1# ifconfig nvgre0 parent em0 tunnel 100.64.11.1 239.1.1.100
+nve1# ifconfig nvgre0 vnetid 10000
+nve1# ifconfig egre0 create
+nve1# ifconfig egre0 tunnel 203.0.113.2 192.0.2.1
+nve1# ifconfig egre0 vnetid 10000 vnetflowid -tunneldf
+nve1# ifconfig bridge0 add nvgre0 add egre0 up
+nve1# ifconfig nvgre1 parent em0 tunnel 100.64.11.1 239.1.1.111
+nve1# ifconfig nvgre1 vnetid 10011
+nve1# ifconfig egre1 create
+nve1# ifconfig egre1 tunnel 203.0.113.2 192.0.2.1
+nve1# ifconfig egre1 vnetid 10011 vnetflowid -tunneldf
+nve1# ifconfig bridge1 add nvgre1 add egre1 up
 .Ed
 .Sh SEE ALSO
 .Xr inet 4 ,
