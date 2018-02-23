@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.64 2018/02/23 03:01:34 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.65 2018/02/23 03:03:36 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -459,14 +459,13 @@ and
 can be used to provide network connectivity between the
 .Xr tap 4
 interfaces connected to the virtual machines.
-
 If there are 3 virtual machines, all using tap0 on each hosts, and
 those hosts are connected to the same network described above,
 .Nm nvgre
 with a distinct virtual network identifier and multicast group can
 be created for them.
 The following assumes nvgre1 and bridge1 have already been created
-on each host:
+on each host, and em0 has had the MTU raised:
 .Pp
 On physical host 1:
 .Bd -literal -offset indent
