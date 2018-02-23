@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1835 2018/01/10 15:52:23 jcs Exp $
+$OpenBSD: pcidevs,v 1.1836 2018/02/23 07:04:57 dlg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3395,7 +3395,7 @@ product INTEL XL710_20G_BP_1	0x1587	XL710 20GbE Backplane
 product INTEL XL710_20G_BP_2	0x1588	XL710 20GbE Backplane
 product INTEL X710_T4_10G	0x1589	X710-T4 10GbaseT
 product INTEL XXV710_25G_BP	0x158a	XXV710 25GbE Backplane
-product INTEL XXV710_25G_SFP28	0x158a	XXV710 SFP28
+product INTEL XXV710_25G_SFP28	0x158b	XXV710 SFP28
 product INTEL I218_LM_2		0x15a0	I218-LM
 product INTEL I218_V_2		0x15a1	I218-V
 product INTEL I218_LM_3		0x15a2	I218-LM
