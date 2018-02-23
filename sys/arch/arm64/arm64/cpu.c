@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.14 2018/02/20 23:46:48 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.15 2018/02/23 19:08:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -323,8 +323,6 @@ cpu_clockspeed(int *freq)
 	return 0;
 }
 
-int	(*cpu_on_fn)(register_t, register_t);
-
 #ifdef MULTIPROCESSOR
 
 void cpu_boot_secondary(struct cpu_info *ci);
@@ -391,8 +389,9 @@ cpu_hatch_secondary(struct cpu_info *ci, int method, uint64_t data)
 	switch (method) {
 	case 1:
 		/* psci  */
-		if (cpu_on_fn != 0)
-			rc = !cpu_on_fn(ci->ci_mpidr, startaddr);
+#if NPSCI > 0
+		rc = (psci_cpu_on(ci->ci_mpidr, startaddr, 0) == PSCI_SUCCESS);
+#endif
 		break;
 	case 2:
 		/* spin-table */

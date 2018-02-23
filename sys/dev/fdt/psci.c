@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.5 2018/01/28 12:48:20 jsg Exp $	*/
+/*	$OpenBSD: psci.c,v 1.6 2018/02/23 19:08:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -30,7 +30,6 @@
 
 extern void (*cpuresetfn)(void);
 extern void (*powerdownfn)(void);
-extern int (*cpu_on_fn)(register_t, register_t);
 
 #define PSCI_VERSION	0x84000000
 #define SYSTEM_OFF	0x84000008
@@ -57,7 +56,6 @@ int	psci_match(struct device *, void *, void *);
 void	psci_attach(struct device *, struct device *, void *);
 void	psci_reset(void);
 void	psci_powerdown(void);
-int	psci_cpu_on(register_t, register_t);
 
 extern register_t hvc_call(register_t, register_t, register_t, register_t);
 extern register_t smc_call(register_t, register_t, register_t, register_t);
@@ -123,8 +121,6 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 		powerdownfn = psci_powerdown;
 	if (sc->sc_system_reset != 0)
 		cpuresetfn = psci_reset;
-	if (sc->sc_cpu_on != 0)
-		cpu_on_fn = psci_cpu_on;
 }
 
 uint32_t
@@ -155,11 +151,15 @@ psci_powerdown(void)
 		(*sc->sc_callfn)(sc->sc_system_off, 0, 0, 0);
 }
 
-int
-psci_cpu_on(register_t mpidr, register_t pc)
+int32_t
+psci_cpu_on(register_t target_cpu, register_t entry_point_address,
+    register_t context_id)
 {
 	struct psci_softc *sc = psci_sc;
-	if (sc->sc_callfn)
-		return (*sc->sc_callfn)(sc->sc_cpu_on, mpidr, pc, 0);
-	return -1;
+
+	if (sc && sc->sc_callfn && sc->sc_cpu_on != 0)
+		return (*sc->sc_callfn)(sc->sc_cpu_on, target_cpu,
+		    entry_point_address, context_id);
+
+	return PSCI_NOT_SUPPORTED;
 }
