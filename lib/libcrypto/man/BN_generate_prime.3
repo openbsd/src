@@ -1,5 +1,5 @@
-.\"	$OpenBSD: BN_generate_prime.3,v 1.6 2017/01/07 05:06:22 schwarze Exp $
-.\"	OpenSSL 2afb29b4 Aug 14 16:47:13 2014 -0400
+.\" $OpenBSD: BN_generate_prime.3,v 1.7 2018/02/23 12:16:08 schwarze Exp $
+.\" full merge up to: OpenSSL b3696a55 Sep 2 09:35:50 2017 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
 .\" Bodo Moeller <bodo@openssl.org>, and Matt Caswell <matt@openssl.org>.
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 7 2017 $
+.Dd $Mdocdate: February 23 2018 $
 .Dt BN_GENERATE_PRIME 3
 .Os
 .Sh NAME
@@ -58,8 +58,11 @@
 .Nm BN_is_prime_ex ,
 .Nm BN_is_prime_fasttest_ex ,
 .Nm BN_GENCB_call ,
+.Nm BN_GENCB_new ,
+.Nm BN_GENCB_free ,
 .Nm BN_GENCB_set_old ,
 .Nm BN_GENCB_set ,
+.Nm BN_GENCB_get_arg ,
 .Nm BN_generate_prime ,
 .Nm BN_is_prime ,
 .Nm BN_is_prime_fasttest
@@ -96,6 +99,12 @@
 .Fa "int a"
 .Fa "int b"
 .Fc
+.Ft BN_GENCB *
+.Fn BN_GENCB_new void
+.Ft void
+.Fo BN_GENCB_free
+.Fa "BN_GENCB *cb"
+.Fc
 .Ft void
 .Fo BN_GENCB_set_old
 .Fa "BN_GENCB *gencb"
@@ -107,6 +116,10 @@
 .Fa "BN_GENCB *gencb"
 .Fa "int (*callback)(int, int, BN_GENCB *)"
 .Fa "void *cb_arg"
+.Fc
+.Ft void *
+.Fo BN_GENCB_get_arg
+.Fa "BN_GENCB *cb"
 .Fc
 .Pp
 Deprecated:
@@ -260,9 +273,16 @@ structures that are supported: "new" style and "old" style.
 New programs should prefer the "new" style, whilst the "old" style is
 provided for backwards compatibility purposes.
 .Pp
+A
+.Vt BN_GENCB
+structure should be created through a call to
+.Fn BN_GENCB_new
+and freed through a call to
+.Fn BN_GENCB_free .
+.Pp
 For "new" style callbacks a
 .Vt BN_GENCB
-structure should be initialised with a call to the macro
+structure should be initialised with a call to
 .Fn BN_GENCB_set ,
 where
 .Fa gencb
@@ -276,7 +296,7 @@ and
 is a
 .Vt void * .
 "Old" style callbacks are the same except they are initialised with a
-call to the macro
+call to
 .Fn BN_GENCB_set_old
 and
 .Fa callback
@@ -290,6 +310,15 @@ This will check the type of the callback and will invoke
 for new style callbacks or
 .Fn callback a b cb_arg
 for old style.
+.Pp
+It is possible to obtain the argument associated with a
+.Vt BN_GENCB
+structure (set via a call to
+.Fn BN_GENCB_set
+or
+.Fn BN_GENCB_set_old )
+using
+.Fn BN_GENCB_get_arg .
 .Pp
 .Fn BN_generate_prime
 (deprecated) works in the same way as
@@ -326,6 +355,18 @@ returns the prime number on success,
 .Dv NULL
 otherwise.
 .Pp
+.Fn BN_GENCB_new
+returns a pointer to a
+.Vt BN_GENCB
+structure on success, or
+.Dv NULL
+otherwise.
+.Pp
+.Fn BN_GENCB_get_arg
+returns the argument previously associated with a
+.Vt BN_GENCB
+structure.
+.Pp
 Callback functions should return 1 on success or 0 on error.
 .Pp
 The error codes can be obtained by
@@ -342,10 +383,18 @@ arguments to
 and to
 .Fn BN_is_prime
 were added in SSLeay 0.9.0.
+.Pp
 The
 .Fa ret
 argument to
 .Fn BN_generate_prime
 was added in SSLeay 0.9.1.
+.Pp
 .Fn BN_is_prime_fasttest
 was added in OpenSSL 0.9.5.
+.Pp
+.Fn BN_GENCB_new ,
+.Fn BN_GENCB_free ,
+and
+.Fn BN_GENCB_get_arg
+were added in OpenSSL 1.1.0 .
