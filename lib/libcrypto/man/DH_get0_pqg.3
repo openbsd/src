@@ -1,4 +1,4 @@
-.\" $OpenBSD: DH_get0_pqg.3,v 1.2 2018/02/19 11:55:49 schwarze Exp $
+.\" $OpenBSD: DH_get0_pqg.3,v 1.3 2018/02/23 14:50:21 schwarze Exp $
 .\" selective merge up to: OpenSSL 7966101e Sep 18 11:58:24 2017 -0400
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,14 +48,19 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 19 2018 $
+.Dd $Mdocdate: February 23 2018 $
 .Dt DH_GET0_PQG 3
 .Os
 .Sh NAME
 .Nm DH_get0_pqg ,
 .Nm DH_set0_pqg ,
 .Nm DH_get0_key ,
-.Nm DH_set0_key
+.Nm DH_set0_key ,
+.Nm DH_clear_flags ,
+.Nm DH_test_flags ,
+.Nm DH_set_flags ,
+.Nm DH_get0_engine ,
+.Nm DH_set_length
 .Nd get data from and set data in a DH object
 .Sh SYNOPSIS
 .In openssl/dh.h
@@ -85,14 +90,38 @@
 .Fa "BIGNUM *pub_key"
 .Fa "BIGNUM *priv_key"
 .Fc
+.Ft void
+.Fo DH_clear_flags
+.Fa "DH *dh"
+.Fa "int flags"
+.Fc
+.Ft int
+.Fo DH_test_flags
+.Fa "const DH *dh"
+.Fa "int flags"
+.Fc
+.Ft void
+.Fo DH_set_flags
+.Fa "DH *dh"
+.Fa "int flags"
+.Fc
+.Ft ENGINE *
+.Fo DH_get0_engine
+.Fa "DH *d"
+.Fc
+.Ft int
+.Fo DH_set_length
+.Fa "DH *dh"
+.Fa "long length"
+.Fc
 .Sh DESCRIPTION
 A
 .Vt DH
 object contains the parameters
 .Fa p ,
-.Fa q ,
+.Fa g ,
 and optionally
-.Fa g .
+.Fa q .
 It also contains a public key
 .Fa pub_key
 and an optional private key
@@ -166,11 +195,57 @@ or
 If needed, duplicate the received values using
 .Xr BN_dup 3
 and pass the duplicates.
+.Pp
+.Fn DH_clear_flags
+clears the specified
+.Fa flags
+in
+.Fa dh .
+.Fn DH_test_flags
+tests the
+.Fa flags
+in
+.Fa dh .
+.Fn DH_set_flags
+sets the
+.Fa flags
+in
+.Fa dh ;
+any flags already set remain set.
+For all three functions, multiple flags can be passed in one call,
+OR'ed together bitwise.
+.Pp
+.Fn DH_set_length
+sets the optional length attribute of
+.Fa dh ,
+indicating the length of the secret exponent (private key) in bits.
+If the length attribute is non-zero, it is used, otherwise it is ignored.
 .Sh RETURN VALUES
-.Fn DH_set0_pqg
+.Fn DH_set0_pqg ,
+.Fn DH_set0_key ,
 and
-.Fn DH_set0_key
+.Fn DH_set_length
 return 1 on success or 0 on failure.
+.Pp
+.Fn DH_test_flags
+return those of the given
+.Fa flags
+currently set in
+.Fa dh
+or 0 if none of the given
+.Fa flags
+are set.
+.Pp
+.Fn DH_get0_engine
+returns a pointer to the
+.Vt ENGINE
+used by the
+.Vt DH
+object
+.Fa dh ,
+or
+.Dv NULL
+if no engine was set for this object.
 .Sh SEE ALSO
 .Xr DH_generate_key 3 ,
 .Xr DH_generate_parameters 3 ,
