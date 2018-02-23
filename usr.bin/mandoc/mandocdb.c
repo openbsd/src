@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.206 2018/02/07 20:31:32 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.207 2018/02/23 18:24:41 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -124,6 +124,8 @@ static	void	 parse_mdoc(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
 static	int	 parse_mdoc_head(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
+static	int	 parse_mdoc_Fa(struct mpage *, const struct roff_meta *,
+			const struct roff_node *);
 static	int	 parse_mdoc_Fd(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
 static	void	 parse_mdoc_fname(struct mpage *, const struct roff_node *);
@@ -192,11 +194,11 @@ static	const struct mdoc_handler __mdocs[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, TYPE_Er, 0 },  /* Er */
 	{ NULL, TYPE_Ev, 0 },  /* Ev */
 	{ NULL, 0, 0 },  /* Ex */
-	{ NULL, TYPE_Fa, 0 },  /* Fa */
+	{ parse_mdoc_Fa, 0, 0 },  /* Fa */
 	{ parse_mdoc_Fd, 0, 0 },  /* Fd */
 	{ NULL, TYPE_Fl, 0 },  /* Fl */
 	{ parse_mdoc_Fn, 0, 0 },  /* Fn */
-	{ NULL, TYPE_Ft, 0 },  /* Ft */
+	{ NULL, TYPE_Ft | TYPE_Vt, 0 },  /* Ft */
 	{ NULL, TYPE_Ic, 0 },  /* Ic */
 	{ NULL, TYPE_In, 0 },  /* In */
 	{ NULL, TYPE_Li, 0 },  /* Li */
@@ -1535,6 +1537,20 @@ parse_mdoc(struct mpage *mpage, const struct roff_meta *meta,
 }
 
 static int
+parse_mdoc_Fa(struct mpage *mpage, const struct roff_meta *meta,
+	const struct roff_node *n)
+{
+	uint64_t mask;
+
+	mask = TYPE_Fa;
+	if (n->sec == SEC_SYNOPSIS)
+		mask |= TYPE_Vt;
+
+	putmdockey(mpage, n->child, mask, 0);
+	return 0;
+}
+
+static int
 parse_mdoc_Fd(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
@@ -1603,15 +1619,20 @@ static int
 parse_mdoc_Fn(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
+	uint64_t mask;
 
 	if (n->child == NULL)
 		return 0;
 
 	parse_mdoc_fname(mpage, n->child);
 
-	for (n = n->child->next; n != NULL; n = n->next)
-		if (n->type == ROFFT_TEXT)
-			putkey(mpage, n->string, TYPE_Fa);
+	n = n->child->next;
+	if (n != NULL && n->type == ROFFT_TEXT) {
+		mask = TYPE_Fa;
+		if (n->sec == SEC_SYNOPSIS)
+			mask |= TYPE_Vt;
+		putmdockey(mpage, n, mask, 0);
+	}
 
 	return 0;
 }

@@ -1,7 +1,7 @@
 initial magic 0x3a7d0cdb
 version       0x00000001
 macros offset 0x00000078
-end offset    0x0000022c
+end offset    0x0000028c
 page count    1
 === PAGES ===
 page name # [f]fn # [1t]Fn # [s]fn_func # [s]fo_name 
@@ -57,7 +57,13 @@ macro 30 entry count 0
 macro 31 entry count 0
 macro 32 entry count 0
 macro 33 entry count 0
-macro 34 entry count 0
+macro 34 entry count 4
+=== MACRO 34 ===
+macro 34 # fn_arg # fn 
+macro 34 # fn_type # fn 
+macro 34 # fo_arg # fn 
+macro 34 # fo_type # fn 
+=== END OF MACRO 34 ===
 macro 35 entry count 0
 === END OF MACROS ===
 final magic   0x3a7d0cdb
