@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.165 2017/11/10 22:48:05 jca Exp $ */
+/*	$OpenBSD: read.c,v 1.166 2018/02/23 21:34:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -554,6 +554,7 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 	gzFile		 gz;
 	size_t		 off;
 	ssize_t		 ssz;
+	int		 gzerrnum, retval;
 
 	if (fstat(fd, &st) == -1) {
 		mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0,
@@ -581,9 +582,22 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 	}
 
 	if (curp->gzip) {
+		/*
+		 * Duplicating the file descriptor is required
+		 * because we will have to call gzclose(3)
+		 * to free memory used internally by zlib,
+		 * but that will also close the file descriptor,
+		 * which this function must not do.
+		 */
+		if ((fd = dup(fd)) == -1) {
+			mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0,
+			    "dup: %s", strerror(errno));
+			return 0;
+		}
 		if ((gz = gzdopen(fd, "rb")) == NULL) {
 			mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0,
 			    "gzdopen: %s", strerror(errno));
+			close(fd);
 			return 0;
 		}
 	} else
@@ -596,6 +610,7 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 
 	*with_mmap = 0;
 	off = 0;
+	retval = 0;
 	fb->sz = 0;
 	fb->buf = NULL;
 	for (;;) {
@@ -612,19 +627,29 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 		    read(fd, fb->buf + (int)off, fb->sz - off);
 		if (ssz == 0) {
 			fb->sz = off;
-			return 1;
+			retval = 1;
+			break;
 		}
 		if (ssz == -1) {
-			mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0,
-			    "read: %s", strerror(errno));
+			if (curp->gzip)
+				(void)gzerror(gz, &gzerrnum);
+			mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0, "read: %s",
+			    curp->gzip && gzerrnum != Z_ERRNO ?
+			    zError(gzerrnum) : strerror(errno));
 			break;
 		}
 		off += (size_t)ssz;
 	}
 
-	free(fb->buf);
-	fb->buf = NULL;
-	return 0;
+	if (curp->gzip && (gzerrnum = gzclose(gz)) != Z_OK)
+		mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0, "gzclose: %s",
+		    gzerrnum == Z_ERRNO ? strerror(errno) :
+		    zError(gzerrnum));
+	if (retval == 0) {
+		free(fb->buf);
+		fb->buf = NULL;
+	}
+	return retval;
 }
 
 static void
