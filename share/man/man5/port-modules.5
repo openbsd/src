@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.227 2018/02/24 21:05:57 kn Exp $
+.\"	$OpenBSD: port-modules.5,v 1.228 2018/02/24 21:22:44 kn Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -1438,9 +1438,6 @@ and
 by appending
 .Ev MODINTLTOOL_OVERRIDE
 to them.
-.It www/drupal6
-This module is legacy.
-drupal6 is still supported, but new work should mostly happen in drupal7 land.
 .It www/drupal7
 Can be used to install plugins (default), themes if
 .Ev MODDRUPAL_THEME
@@ -1492,7 +1489,6 @@ With drupal7, all translations have been put in separate .po files.
 It has been deemed simplest to pack all translations for a given language
 into a single package, since translations for non installed modules won't
 affect anything.
-.It www/horde
 .It www/mozilla
 Sets
 .Ev PKGNAME ,
@@ -1594,7 +1590,6 @@ to
 and also sets
 .Ev NO_TEST
 to Yes.
-.It www/zope
 .It x11/gnome
 This module has full support for the
 .Ar gnu ,
