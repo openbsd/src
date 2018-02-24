@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.38 2018/02/24 10:39:35 phessler Exp $
+.\"	$OpenBSD: vmctl.8,v 1.39 2018/02/24 13:14:09 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -81,6 +81,10 @@ Reset and terminate all VMs.
 Send a VM with the specified
 .Ar id
 to standard output and terminate it.
+.It Cm show Op Ar id
+An alias for the
+.Cm status
+command.
 .It Xo Cm start Ar name
 .Op Fl cL
 .Op Fl b Ar path
@@ -143,10 +147,6 @@ with '.', '-' or '_'.
 .It Cm status Op Ar id
 Lists VMs running on the host, optionally listing just the selected VM
 .Ar id .
-.It Cm show Op Ar id
-An alias for the
-.Cm status
-command.
 .It Cm stop Ar id
 Stops (terminates) a VM defined by the specified VM
 .Ar id .
