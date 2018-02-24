@@ -1,6 +1,9 @@
-.\"	$OpenBSD: BIO_new.3,v 1.9 2018/02/17 23:24:38 schwarze Exp $
-.\"	OpenSSL doc/man3/BIO_new.pod ca3a82c3 Mar 25 11:31:18 2015 -0400
-.\"	OpenSSL doc/man7/bio.pod a9c85cea Nov 11 09:33:55 2016 +0100
+.\" $OpenBSD: BIO_new.3,v 1.10 2018/02/24 19:17:10 schwarze Exp $
+.\" full merge up to:
+.\" OpenSSL man3/BIO_new.pod fb46be03 Feb 26 11:51:31 2016 +0000
+.\" OpenSSL man7/bio.pod 631c37be Dec 12 16:56:50 2017 +0100
+.\" partial merge up to:
+.\" OpenSSL man3/BIO_new.pod e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000, 2015, 2016 The OpenSSL Project.  All rights reserved.
@@ -49,11 +52,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 17 2018 $
+.Dd $Mdocdate: February 24 2018 $
 .Dt BIO_NEW 3
 .Os
 .Sh NAME
 .Nm BIO_new ,
+.Nm BIO_up_ref ,
 .Nm BIO_set ,
 .Nm BIO_free ,
 .Nm BIO_vfree ,
@@ -64,6 +68,10 @@
 .Ft BIO *
 .Fo BIO_new
 .Fa "BIO_METHOD *type"
+.Fc
+.Ft int
+.Fo BIO_up_ref
+.Fa "BIO *a"
 .Fc
 .Ft int
 .Fo BIO_set
@@ -95,7 +103,8 @@ The
 function constructs a new
 .Vt BIO
 using the method
-.Fa type .
+.Fa type
+and sets its reference count to 1.
 There are two groups of BIO types, source/sink BIOs and filter BIOs.
 .Pp
 Source/sink BIOs provide input or consume output.
@@ -106,8 +115,8 @@ or to the application, forming a chain of BIOs.
 The data may be left unmodified (for example by a message digest BIO)
 or translated (for example by an encryption BIO).
 The effect of a filter BIO may change according to the I/O operation
-it is performing: for example an encryption BIO will encrypt data
-if it is written to and decrypt data if it is read from.
+it is performing: for example an encryption BIO encrypts data
+if it is written to and decrypts data if it is read from.
 .Pp
 Some BIOs (such as memory BIOs) can be used immediately after calling
 .Fn BIO_new .
@@ -124,13 +133,33 @@ the methods for source/sink BIOs are called
 and those for filter BIOs
 .Fn BIO_f_* .
 .Pp
+.Fn BIO_up_ref
+increments the reference count of
+.Fa a
+by 1.
+.Pp
 .Fn BIO_set
-sets the method of an already existing BIO.
+is a deprecated function to initialize an unused
+.Vt BIO
+structure located in static memory or on the stack,
+to set its method to
+.Fa type ,
+and to set its reference count to 1.
+It must not be called on
+.Vt BIO
+objects created with
+.Fn BIO_new ,
+nor on objects that were already used.
 .Pp
 .Fn BIO_free
 and
 .Fn BIO_vfree
-destruct a single BIO, which may also have some effect on the
+decrement the reference count of
+.Fa a
+by 1, and if the refenece count reaches 0, they destruct the single
+.Vt BIO
+.Fa a ,
+which may also have some effect on the
 underlying I/O structure, for example it may close the file being
 referred to under certain circumstances.
 If
@@ -140,11 +169,26 @@ is a
 pointer, no action occurs.
 If
 .Fn BIO_free
-is called on a BIO chain, it will only destruct one BIO,
+is called on a BIO chain, it destructs at most one BIO,
 resulting in a memory leak.
 .Pp
 .Fn BIO_free_all
-destructs an entire BIO chain.
+calls
+.Fn BIO_free
+on
+.Fa a
+and on all following
+.Vt BIO
+objects in the chain.
+As soon as the reference count of a
+.Vt BIO
+is still non-zero after calling
+.Fn BIO_free
+on it, the function
+.Fn BIO_free_all
+returns right away and refrains from freeing the remaining
+.Vt BIO
+objects in the chain.
 It does not halt if an error occurs
 destructing an individual BIO in the chain.
 If
@@ -174,7 +218,8 @@ object or
 .Dv NULL
 on failure.
 .Pp
-.Fn BIO_set
+.Fn BIO_up_ref ,
+.Fn BIO_set ,
 and
 .Fn BIO_free
 return 1 for success or 0 for failure.
