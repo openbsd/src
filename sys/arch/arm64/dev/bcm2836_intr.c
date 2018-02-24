@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.7 2018/02/23 21:47:08 kettenis Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.8 2018/02/24 12:46:45 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -80,7 +80,7 @@
 
 struct intrhand {
 	TAILQ_ENTRY(intrhand) ih_list;	/* link on intrq list */
-	int (*ih_fun)(void *);		/* handler */
+	int (*ih_func)(void *);		/* handler */
 	void *ih_arg;			/* arg for handler */
 	int ih_ipl;			/* IPL_* */
 	int ih_flags;
@@ -447,7 +447,7 @@ bcm_intc_call_handler(int irq, void *frame)
 {
 	struct bcm_intc_softc *sc = bcm_intc;
 	struct intrhand *ih;
-	int pri, s;
+	int pri, s, handled;
 	void *arg;
 
 #ifdef DEBUG_INTC
@@ -484,7 +484,10 @@ bcm_intc_call_handler(int irq, void *frame)
 		else
 			arg = frame;
 
-		if (ih->ih_fun(arg))
+		enable_interrupts();
+		handled = ih->ih_func(arg);
+		disable_interrupts();
+		if (handled)
 			ih->ih_count.ec_count++;
 
 #ifdef MULTIPROCESSOR
@@ -558,7 +561,7 @@ bcm_intc_intr_establish(int irqno, int level, int (*func)(void *),
 	psw = disable_interrupts();
 
 	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
-	ih->ih_fun = func;
+	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_ipl = level & IPL_IRQMASK;
 	ih->ih_flags = level & IPL_FLAGMASK;
