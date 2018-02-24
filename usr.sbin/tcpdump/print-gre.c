@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.18 2018/02/09 04:08:26 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.19 2018/02/24 08:53:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -171,7 +171,7 @@ gre_print_0(const u_char *p, u_int length)
 
 		/* maybe NVGRE, or key entropy? */
 		vsid = (key & NVGRE_VSID_MASK) >> NVGRE_VSID_SHIFT;
-		printf(" key=%u|%u+%0x", key, vsid,
+		printf(" key=%u|%u+%02x", key, vsid,
 		    (key & NVGRE_FLOWID_MASK) >> NVGRE_FLOWID_SHIFT);
 	}
 
