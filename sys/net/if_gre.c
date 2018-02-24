@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.112 2018/02/22 09:47:12 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.113 2018/02/24 07:20:04 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1055,7 +1055,6 @@ nvgre_input_map(struct nvgre_softc *sc, const struct gre_tunnel *key,
 			return;
 		}
 
-		memcpy(&nv->nv_dst, eh->ether_shost, ETHER_ADDR_LEN);
 		memcpy(&nv->nv_dst, eh->ether_shost, ETHER_ADDR_LEN);
 		nv->nv_type = NVGRE_ENTRY_DYNAMIC;
 		nv->nv_gateway = key->t_dst;
@@ -2889,7 +2888,7 @@ RBT_GENERATE(egre_tree, egre_softc, sc_entry, egre_cmp);
 static inline int
 nvgre_entry_cmp(const struct nvgre_entry *a, const struct nvgre_entry *b)
 {
-	return (memcmp(&a->nv_dst, &a->nv_dst, sizeof(a->nv_dst)));
+	return (memcmp(&a->nv_dst, &b->nv_dst, sizeof(a->nv_dst)));
 }
 
 RBT_GENERATE(nvgre_map, nvgre_entry, nv_entry, nvgre_entry_cmp);
