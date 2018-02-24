@@ -1,8 +1,8 @@
-.\"	$OpenBSD: SSL_SESSION_get_id.3,v 1.2 2018/02/24 19:24:09 schwarze Exp $
-.\"	OpenSSL SSL_SESSION_set1_id.pod b31db505 Mar 24 16:01:50 2017 +0000
+.\" $OpenBSD: SSL_SESSION_get_protocol_version.3,v 1.1 2018/02/24 19:24:09 schwarze Exp $
+.\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
-.\" This file was written by Matt Caswell <matt@openssl.org>
-.\" Copyright (c) 2017 The OpenSSL Project.  All rights reserved.
+.\" This file was written by TJ Saunders <tj@castaglia.org>
+.\" Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -49,30 +49,35 @@
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd $Mdocdate: February 24 2018 $
-.Dt SSL_SESSION_GET_ID 3
+.Dt SSL_SESSION_GET_PROTOCOL_VERSION 3
 .Os
 .Sh NAME
-.Nm SSL_SESSION_get_id
-.Nd get the SSL session ID
+.Nm SSL_SESSION_get_protocol_version
+.Nd get the session protocol version
 .Sh SYNOPSIS
 .In openssl/ssl.h
-.Ft const unsigned char *
-.Fo SSL_SESSION_get_id
+.Ft int
+.Fo SSL_SESSION_get_protocol_version
 .Fa "const SSL_SESSION *s"
-.Fa "unsigned int *len"
 .Fc
 .Sh DESCRIPTION
-.Fn SSL_SESSION_get_id
-returns a pointer to the internal session id value for the session
+.Fn SSL_SESSION_get_protocol_version
+returns the protocol version number used by the session
 .Fa s .
-The length of the id in bytes is stored in
-.Pf * Fa len .
-The length may be 0.
-The caller should not free the returned pointer directly.
+.Sh RETURN VALUES
+.Fn SSL_SESSION_get_protocol_version
+returns a constant like
+.Dv TLS1_VERSION
+or
+.Dv TLS1_2_VERSION .
 .Sh SEE ALSO
 .Xr ssl 3 ,
-.Xr SSL_copy_session_id 3 ,
 .Xr SSL_get_session 3 ,
+.Xr SSL_SESSION_get0_peer 3 ,
 .Xr SSL_SESSION_get_compress_id 3 ,
-.Xr SSL_SESSION_get_protocol_version 3 ,
+.Xr SSL_SESSION_get_id 3 ,
+.Xr SSL_SESSION_get_time 3 ,
 .Xr SSL_SESSION_new 3
+.Sh HISTORY
+.Fn SSL_SESSION_get_protocol_version
+first appeared in OpenSSL 1.1.0.
