@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.15 2018/02/23 19:08:56 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.16 2018/02/24 09:45:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -231,19 +231,11 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	}
 #ifdef MULTIPROCESSOR
 	else {
-		ncpusfound++;
 		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
 		cpu_info[dev->dv_unit] = ci;
 		ci->ci_next = cpu_info_list->ci_next;
 		cpu_info_list->ci_next = ci;
 		ci->ci_flags |= CPUF_AP;
-	}
-#else
-	else {
-		ncpusfound++;
-		printf(" mpidr %llx not configured\n",
-		    faa->fa_reg[0].addr);
-		return;
 	}
 #endif
 

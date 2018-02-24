@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.8 2018/01/04 14:30:08 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.9 2018/02/24 09:45:10 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -236,6 +236,7 @@ mainbus_attach_cpus(struct device *self, cfmatch_t match)
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	int node = OF_finddevice("/cpus");
 	int acells, scells;
+	char buf[32];
 
 	if (node == 0)
 		return;
@@ -245,8 +246,14 @@ mainbus_attach_cpus(struct device *self, cfmatch_t match)
 	sc->sc_acells = OF_getpropint(node, "#address-cells", 2);
 	sc->sc_scells = OF_getpropint(node, "#size-cells", 0);
 
-	for (node = OF_child(node); node != 0; node = OF_peer(node))
+	ncpusfound = 0;
+	for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+		if (OF_getprop(node, "device_type", buf, sizeof(buf)) > 0 &&
+		    strcmp(buf, "cpu") == 0)
+			ncpusfound++;
+
 		mainbus_attach_node(self, node, match);
+	}
 
 	sc->sc_acells = acells;
 	sc->sc_scells = scells;
