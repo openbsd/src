@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.226 2018/01/26 13:12:08 jca Exp $
+.\"	$OpenBSD: port-modules.5,v 1.227 2018/02/24 21:05:57 kn Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 26 2018 $
+.Dd $Mdocdate: February 24 2018 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -612,6 +612,10 @@ instead of the standard crates-io network source.
 Finally, any crates listed in
 .Ev MODCARGO_CRATES_UPDATE
 are updated.
+.Ev MODCARGO_RUSTFLAGS
+can be used to pass custom flags to all
+.Xr rustc 1
+invocations.
 .Pp
 .Pa lang/rust ,
 .Pa devel/cargo
