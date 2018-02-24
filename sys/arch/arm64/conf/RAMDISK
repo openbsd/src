@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.43 2018/01/29 11:46:44 jsg Exp $
+# $OpenBSD: RAMDISK,v 1.44 2018/02/24 13:46:57 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -94,6 +94,7 @@ wsdisplay*	at simplefb?
 bcmaux*		at fdt?
 bcmintc*	at fdt?
 bcmdog*		at fdt?
+bcmrng*		at fdt?
 dwctwo*		at fdt?
 usb*		at dwctwo?
 
