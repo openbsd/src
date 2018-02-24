@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.66 2017/05/11 15:47:45 visa Exp $ */
+/*	$OpenBSD: macebus.c,v 1.67 2018/02/24 11:42:31 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -540,10 +540,7 @@ macebus_splx(int newipl)
 	struct cpu_info *ci = curcpu();
 
 	/* Update masks to new ipl. Order highly important! */
-	__asm__ (".set noreorder\n");
 	ci->ci_ipl = newipl;
-	mips_sync();
-	__asm__ (".set reorder\n");
 	crime_setintrmask(newipl);
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)

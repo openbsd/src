@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.9 2018/01/23 14:47:21 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.10 2018/02/24 11:42:31 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -462,10 +462,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 	 * Now process allowed interrupts.
 	 */
 
-	__asm__ (".set noreorder\n");
 	ipl = ci->ci_ipl;
-	mips_sync();
-	__asm__ (".set reorder\n");
 
 	while ((irq = octciu_next_irq(&isr)) >= 0) {
 		irq += bank->id * BANK_SIZE;
@@ -500,10 +497,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 			printf("spurious interrupt %d\n", irq);
 	}
 
-	__asm__ (".set noreorder\n");
 	ci->ci_ipl = ipl;
-	mips_sync();
-	__asm__ (".set reorder\n");
 
 	/*
 	 * Reenable interrupts which have been serviced.
@@ -543,11 +537,7 @@ octciu_splx(int newipl)
 	struct octciu_softc *sc = octciu_sc;
 	struct octciu_cpu *scpu = &sc->sc_cpu[ci->ci_cpuid];
 
-	/* Update IPL. Order highly important! */
-	__asm__ (".set noreorder\n");
 	ci->ci_ipl = newipl;
-	mips_sync();
-	__asm__ (".set reorder\n");
 
 	/* Set hardware masks. */
 	bus_space_write_8(sc->sc_iot, sc->sc_ioh, scpu->scpu_ibank[0].en,

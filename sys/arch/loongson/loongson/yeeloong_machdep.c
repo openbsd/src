@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.26 2017/05/23 16:53:15 visa Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.27 2018/02/24 11:42:31 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -409,10 +409,7 @@ lemote_isa_intr(uint32_t hwpend, struct trapframe *frame)
 						rc = 1;
 						ih->ih_count.ec_count++;
 					}
-					__asm__ (".set noreorder\n");
 					curcpu()->ci_ipl = frame->ipl;
-					mips_sync();
-					__asm__ (".set reorder\n");
 					if (ret == 1)
 						break;
 				}

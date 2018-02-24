@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.123 2018/01/29 14:53:01 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.124 2018/02/24 11:42:31 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -188,7 +188,7 @@ struct cpu_info {
 	int		ci_want_resched;	/* need_resched() invoked */
 	cpuid_t		ci_cpuid;		/* our CPU ID */
 	uint32_t	ci_randseed;		/* per cpu random seed */
-	int		ci_ipl;			/* software IPL */
+	volatile int	ci_ipl;			/* software IPL */
 	uint32_t	ci_softpending;		/* pending soft interrupts */
 	int		ci_clock_started;
 	u_int32_t	ci_cpu_counter_last;	/* last compare value loaded */

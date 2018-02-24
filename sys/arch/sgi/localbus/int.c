@@ -1,4 +1,4 @@
-/*	$OpenBSD: int.c,v 1.14 2017/02/11 03:44:22 visa Exp $	*/
+/*	$OpenBSD: int.c,v 1.15 2018/02/24 11:42:31 visa Exp $	*/
 /*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -248,10 +248,7 @@ int2_splx(int newipl)
 	struct cpu_info *ci = curcpu();
 	register_t sr;
 
-	__asm__ (".set noreorder");
 	ci->ci_ipl = newipl;
-	mips_sync();
-	__asm__ (".set reorder\n");
 
 	sr = disableintr();	/* XXX overkill? */
 	int2_write(INT2_LOCAL1_MASK, (int2_intem >> 8) & ~int2_l1imask[newipl]);

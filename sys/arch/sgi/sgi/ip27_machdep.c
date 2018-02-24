@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.78 2018/01/29 14:51:57 visa Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.79 2018/02/24 11:42:31 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -900,10 +900,7 @@ ip27_hub_splx(int newipl)
 	struct cpu_info *ci = curcpu();
 
 	/* Update masks to new ipl. Order highly important! */
-	__asm__ (".set noreorder\n");
 	ci->ci_ipl = newipl;
-	mips_sync();
-	__asm__ (".set reorder\n");
 	ip27_hub_setintrmask(newipl);
 
 	/* If we still have softints pending trigger processing. */
