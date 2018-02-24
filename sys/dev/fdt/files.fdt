@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.37 2018/01/17 10:17:33 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.38 2018/02/24 11:06:59 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -56,6 +56,10 @@ file	dev/fdt/bcm2835_aux.c		bcmaux
 device	bcmdog
 attach	bcmdog at fdt
 file	dev/fdt/bcm2835_dog.c		bcmdog
+
+device	bcmtemp
+attach	bcmtemp at fdt
+file	dev/fdt/bcm2835_temp.c		bcmdog
 
 device	exrtc
 attach	exrtc at fdt
