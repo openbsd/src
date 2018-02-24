@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge_fdt.c,v 1.5 2017/08/13 10:42:15 jsg Exp $	*/
+/*	$OpenBSD: if_dwge_fdt.c,v 1.6 2018/02/24 22:28:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -78,6 +78,7 @@ dwge_fdt_match(struct device *parent, void *match, void *aux)
 
 	return (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-gmac") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-gmac") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-gmac") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-gmac"));
 }
 
@@ -121,6 +122,8 @@ dwge_fdt_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-gmac"))
 		dwge_fdt_attach_allwinner(fsc);
 	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3288-gmac"))
+		dwge_fdt_attach_rockchip(fsc);
+	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3328-gmac"))
 		dwge_fdt_attach_rockchip(fsc);
 	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3399-gmac"))
 		dwge_fdt_attach_rockchip(fsc);
@@ -237,6 +240,22 @@ dwge_fdt_attach_allwinner(struct dwge_fdt_softc *sc)
 #define  RK3288_GMAC_TXCLK_DLY_ENA	((1 << 14) << 16 | (1 << 14))
 #define  RK3288_GMAC_CLK_TX_DL_CFG(val) ((0x7f << 0) << 16 | ((val) << 0))
 
+/* RK3328 registers */
+#define RK3328_GRF_MAC_CON0	0x0900
+#define  RK3328_GMAC_CLK_RX_DL_CFG(val) ((0x7f << 7) << 16 | ((val) << 7))
+#define  RK3328_GMAC_CLK_TX_DL_CFG(val) ((0x7f << 0) << 16 | ((val) << 0))
+
+#define RK3328_GRF_MAC_CON1	0x0904
+#define  RK3328_GMAC_PHY_INTF_SEL_RGMII	((0x7 << 4) << 16 | (0x1 << 4))
+#define  RK3328_GMAC_PHY_INTF_SEL_RMII	((0x7 << 4) << 16 | (0x4 << 4))
+#define  RK3328_RMII_MODE_RMII		((1 << 9) << 16 | (1 << 9))
+#define  RK3328_RMII_MODE_MII		((1 << 9) << 16 | (0 << 9))
+#define  RK3328_GMAC_CLK_SEL_125	((0x3 << 11) << 16 | (0x0 << 11))
+#define  RK3328_GMAC_CLK_SEL_25		((0x3 << 11) << 16 | (0x3 << 11))
+#define  RK3328_GMAC_CLK_SEL_2_5	((0x3 << 11) << 16 | (0x2 << 11))
+#define  RK3328_GMAC_RXCLK_DLY_ENA	((1 << 1) << 16 | (1 << 1))
+#define  RK3328_GMAC_TXCLK_DLY_ENA	((1 << 0) << 16 | (1 << 0))
+
 /* RK3399 registers */
 #define RK3399_GRF_SOC_CON5	0xc214
 #define  RK3399_GMAC_PHY_INTF_SEL_RGMII	((0x7 << 9) << 16 | (0x1 << 9))
@@ -290,6 +309,23 @@ dwge_fdt_attach_rockchip(struct dwge_fdt_softc *sc)
 		sc->sc_clk_sel_2_5 = RK3288_GMAC_CLK_SEL_2_5;
 		sc->sc_clk_sel_25 = RK3288_GMAC_CLK_SEL_25;
 		sc->sc_clk_sel_125 = RK3288_GMAC_CLK_SEL_125;
+	} else if (OF_is_compatible(sc->sc_node, "rockchip,rk3328-gmac")) {
+		/* Use RGMII interface. */
+		regmap_write_4(rm, RK3328_GRF_MAC_CON1,
+		    RK3328_GMAC_PHY_INTF_SEL_RGMII | RK3399_RMII_MODE_MII);
+
+		/* Program clock delay lines. */
+		regmap_write_4(rm, RK3328_GRF_MAC_CON0,
+		    RK3328_GMAC_CLK_TX_DL_CFG(tx_delay) |
+		    RK3328_GMAC_CLK_RX_DL_CFG(rx_delay));
+		regmap_write_4(rm, RK3328_GRF_MAC_CON1,
+		    RK3328_GMAC_TXCLK_DLY_ENA | RK3328_GMAC_RXCLK_DLY_ENA);
+
+		/* Clock speed bits. */
+		sc->sc_clk_sel = RK3328_GRF_MAC_CON1;
+		sc->sc_clk_sel_2_5 = RK3328_GMAC_CLK_SEL_2_5;
+		sc->sc_clk_sel_25 = RK3328_GMAC_CLK_SEL_25;
+		sc->sc_clk_sel_125 = RK3328_GMAC_CLK_SEL_125;
 	} else {
 		/* Use RGMII interface. */
 		regmap_write_4(rm, RK3399_GRF_SOC_CON5,
