@@ -1,5 +1,5 @@
-.\" $OpenBSD: DSA_get0_pqg.3,v 1.2 2018/02/19 10:40:00 schwarze Exp $
-.\" selective merge up to: OpenSSL e90fc053 Jul 15 09:39:45 2017 -0400
+.\" $OpenBSD: DSA_get0_pqg.3,v 1.3 2018/02/24 13:25:50 schwarze Exp $
+.\" full merge up to: OpenSSL e90fc053 Jul 15 09:39:45 2017 -0400
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
 .\" Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
@@ -48,14 +48,18 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 19 2018 $
+.Dd $Mdocdate: February 24 2018 $
 .Dt DSA_GET0_PQG 3
 .Os
 .Sh NAME
 .Nm DSA_get0_pqg ,
 .Nm DSA_set0_pqg ,
 .Nm DSA_get0_key ,
-.Nm DSA_set0_key
+.Nm DSA_set0_key ,
+.Nm DSA_clear_flags ,
+.Nm DSA_test_flags ,
+.Nm DSA_set_flags ,
+.Nm DSA_get0_engine
 .Nd get data from and set data in a DSA object
 .Sh SYNOPSIS
 .In openssl/dsa.h
@@ -84,6 +88,25 @@
 .Fa "DSA *d"
 .Fa "BIGNUM *pub_key"
 .Fa "BIGNUM *priv_key"
+.Fc
+.Ft void
+.Fo DSA_clear_flags
+.Fa "DSA *d"
+.Fa "int flags"
+.Fc
+.Ft int
+.Fo DSA_test_flags
+.Fa "const DSA *d"
+.Fa "int flags"
+.Fc
+.Ft void
+.Fo DSA_set_flags
+.Fa "DSA *d"
+.Fa "int flags"
+.Fc
+.Ft ENGINE *
+.Fo DSA_get0_engine
+.Fa "DSA *d"
 .Fc
 .Sh DESCRIPTION
 A
@@ -170,11 +193,50 @@ or
 If needed, duplicate the received values using
 .Xr BN_dup 3
 and pass the duplicates.
+.Pp
+.Fn DSA_clear_flags
+clears the specified
+.Fa flags
+in
+.Fa d .
+.Fn DSA_test_flags
+tests the
+.Fa flags
+in
+.Fa d .
+.Fn DSA_set_flags
+sets the
+.Fa flags
+in
+.Fa d ;
+any flags already set remain set.
+For all three functions, multiple flags can be passed in one call,
+OR'ed together bitwise.
 .Sh RETURN VALUES
 .Fn DSA_set0_pqg
 and
 .Fn DSA_set0_key
 return 1 on success or 0 on failure.
+.Pp
+.Fn DSA_test_flags
+returns those of the given
+.Fa flags
+currently set in
+.Fa d
+or 0 if none of the given
+.Fa flags
+are set.
+.Pp
+.Fn DSA_get0_engine
+returns a pointer to the
+.Vt ENGINE
+used by the
+.Vt DSA
+object
+Fa d ,
+or
+.Dv NULL
+if no engine was set for this object.
 .Sh SEE ALSO
 .Xr DSA_do_sign 3 ,
 .Xr DSA_dup_DH 3 ,
