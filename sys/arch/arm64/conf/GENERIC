@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.50 2018/02/10 22:32:32 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.51 2018/02/24 11:07:40 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -87,6 +87,7 @@ wsdisplay*	at simplefb?
 bcmaux*		at fdt?
 bcmintc*	at fdt?
 bcmdog*		at fdt?
+bcmtemp*	at fdt?
 dwctwo*		at fdt?
 usb*		at dwctwo?
 
