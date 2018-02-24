@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.18 2018/02/08 13:15:32 mpi Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.19 2018/02/24 06:31:47 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -276,8 +276,12 @@ bridge_cfg(const char *delim)
 	u_int16_t bprio;
 
 	strlcpy(ifbp.ifbop_name, name, sizeof(ifbp.ifbop_name));
-	if (ioctl(s, SIOCBRDGGPARAM, (caddr_t)&ifbp))
-		err(1, "%s", name);
+	if (ioctl(s, SIOCBRDGGPARAM, (caddr_t)&ifbp) == -1) {
+		if (errno == ENOTTY)
+			return;
+		err(1, "%s SIOCBRDGGPARAM", name);
+	}
+
 	printf("%s", delim);
 	pri = ifbp.ifbop_priority;
 	ht = ifbp.ifbop_hellotime;
@@ -320,8 +324,11 @@ bridge_list(char *delim)
 			err(1, "malloc");
 		bifc.ifbic_buf = inbuf = inb;
 		strlcpy(bifc.ifbic_name, name, sizeof(bifc.ifbic_name));
-		if (ioctl(s, SIOCBRDGIFS, &bifc) < 0)
-			err(1, "%s", name);
+		if (ioctl(s, SIOCBRDGIFS, &bifc) < 0) {
+			if (errno == ENOTTY)
+				return;
+			err(1, "%s SIOCBRDGIFS", name);
+		}
 		if (bifc.ifbic_len + sizeof(*reqp) < len)
 			break;
 		len *= 2;
