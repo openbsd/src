@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.37 2018/01/03 08:17:18 jmc Exp $
+.\"	$OpenBSD: vmctl.8,v 1.38 2018/02/24 10:39:35 phessler Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 3 2018 $
+.Dd $Mdocdate: February 24 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -143,6 +143,10 @@ with '.', '-' or '_'.
 .It Cm status Op Ar id
 Lists VMs running on the host, optionally listing just the selected VM
 .Ar id .
+.It Cm show Op Ar id
+An alias for the
+.Cm status
+command.
 .It Cm stop Ar id
 Stops (terminates) a VM defined by the specified VM
 .Ar id .

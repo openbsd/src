@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2018/01/03 05:39:56 ccardenas Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2018/02/24 10:39:35 phessler Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -68,6 +68,7 @@ struct ctl_command ctl_commands[] = {
 	{ "log",	CMD_LOG,	ctl_log,	"(verbose|brief)" },
 	{ "reload",	CMD_RELOAD,	ctl_reload,	"" },
 	{ "reset",	CMD_RESET,	ctl_reset,	"[all|vms|switches]" },
+	{ "show",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "start",	CMD_START,	ctl_start,	"\"name\""
 	    " [-Lc] [-b image] [-r image] [-m size]\n"
 	    "\t\t[-n switch] [-i count] [-d disk]*" },
