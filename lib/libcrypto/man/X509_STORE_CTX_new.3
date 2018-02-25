@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_new.3,v 1.8 2018/02/25 16:04:07 schwarze Exp $
+.\" $OpenBSD: X509_STORE_CTX_new.3,v 1.9 2018/02/25 16:26:15 schwarze Exp $
 .\" full merge up to: OpenSSL 186bb907 Apr 13 11:05:13 2015 -0700
 .\" selective merge up to: OpenSSL 7643a172 Apr 21 13:35:51 2017 +0200
 .\"
@@ -58,6 +58,7 @@
 .Nm X509_STORE_CTX_cleanup ,
 .Nm X509_STORE_CTX_free ,
 .Nm X509_STORE_CTX_init ,
+.Nm X509_STORE_CTX_get0_store ,
 .Nm X509_STORE_CTX_set0_trusted_stack ,
 .Nm X509_STORE_CTX_trusted_stack ,
 .Nm X509_STORE_CTX_set_cert ,
@@ -88,6 +89,10 @@
 .Fa "X509_STORE *store"
 .Fa "X509 *x509"
 .Fa "STACK_OF(X509) *chain"
+.Fc
+.Ft X509_STORE *
+.Fo X509_STORE_CTX_get0_store
+.Fa "X509_STORE_CTX *ctx"
 .Fc
 .Ft void
 .Fo X509_STORE_CTX_set0_trusted_stack
@@ -185,6 +190,12 @@ and
 .Fa chain
 parameters can be
 .Dv NULL .
+.Pp
+.Fn X509_STORE_CTX_get0_store
+returns an internal pointer to the trusted certificate
+.Fa store
+that was set with
+.Fn X509_STORE_CTX_init .
 .Pp
 .Fn X509_STORE_CTX_set0_trusted_stack
 sets the set of trusted certificates of
@@ -284,6 +295,13 @@ if an error occurred.
 .Pp
 .Fn X509_STORE_CTX_init
 returns 1 for success or 0 if an error occurred.
+.Pp
+.Fn X509_STORE_CTX_get0_store
+returns a pointer to the trusted certificate store or
+.Dv NULL
+if
+.Fa ctx
+was not initialised.
 .Pp
 .Fn X509_STORE_CTX_get0_param
 returns a pointer to an
