@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.133 2018/02/19 14:08:52 schwarze Exp $
+# $OpenBSD: Makefile,v 1.134 2018/02/25 17:46:38 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -231,6 +231,7 @@ MAN=	\
 	X509_STORE_CTX_new.3 \
 	X509_STORE_CTX_set_verify_cb.3 \
 	X509_STORE_load_locations.3 \
+	X509_STORE_new.3 \
 	X509_STORE_set_verify_cb_func.3 \
 	X509_STORE_set1_param.3 \
 	X509_VERIFY_PARAM_set_flags.3 \

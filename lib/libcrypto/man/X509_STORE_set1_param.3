@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_STORE_set1_param.3,v 1.3 2017/01/06 22:46:06 schwarze Exp $
+.\"	$OpenBSD: X509_STORE_set1_param.3,v 1.4 2018/02/25 17:46:39 schwarze Exp $
 .\"	OpenSSL 99d63d46
 .\"
 .\" This file was written by Christian Heimes <cheimes@redhat.com>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 6 2017 $
+.Dd $Mdocdate: February 25 2018 $
 .Dt X509_STORE_SET1_PARAM 3
 .Os
 .Sh NAME
@@ -70,3 +70,6 @@ for
 .Sh RETURN VALUES
 .Fn X509_STORE_set1_param
 returns 1 for success and 0 for failure.
+.Sh SEE ALSO
+.Xr X509_STORE_load_locations 3 ,
+.Xr X509_STORE_new 3
