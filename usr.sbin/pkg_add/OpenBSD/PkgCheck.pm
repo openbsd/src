@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.64 2017/03/14 23:30:36 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.65 2018/02/25 14:19:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -561,32 +561,34 @@ sub remove
 	for my $i (@OpenBSD::PackageInfo::info) {
 		if (-e $dir.$i) {
 			if ($state->verbose) {
-				$state->say("unlink(#1)", $dir.$i);
+				$state->say("unlink(#1)", 
+				    $state->safe($dir.$i));
 			}
 			unless ($state->{not}) {
 				unlink($dir.$i) or
 				    $state->errsay("#1: Couldn't delete #2: #3",
-				    	$name, $dir.$i, $!);
+				    	$state->safe($name), 
+					$state->safe($dir.$i), $!);
 			}
 		}
 	}
 	if (-f $dir) {
 		if ($state->verbose) {
-			$state->say("unlink(#1)", $dir);
+			$state->say("unlink(#1)", $state->safe($dir));
 		}
 		unless ($state->{not}) {
 			unlink($dir) or
 			    $state->errsay("#1: Couldn't delete #2: #3",
-				$name, $dir, $!);
+				$state->safe($name), $state->safe($dir), $!);
 		}
 	} elsif (-d $dir) {
 		if ($state->verbose) {
-			$state->say("rmdir(#1)", $dir);
+			$state->say("rmdir(#1)", $state->safe($dir));
 		}
 		unless ($state->{not}) {
 			rmdir($dir) or
 			    $state->errsay("#1: Couldn't delete #2: #3",
-			    	$name, $dir, $!);
+			    	$state->safe($name), $state->safe($dir), $!);
 		}
 	}
 }
@@ -596,7 +598,7 @@ sub may_remove
 	my ($self, $state, $name) = @_;
 	if ($state->{force}) {
 		$self->remove($state, $name);
-	} elsif ($state->confirm("Remove wrong package $name")) {
+	} elsif ($state->confirm("Remove wrong package ".$state->safe($name))) {
 			$self->remove($state, $name);
 	}
 	$state->{bogus}{$name} = 1;
