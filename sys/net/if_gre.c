@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.113 2018/02/24 07:20:04 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.114 2018/02/25 01:52:25 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -123,6 +123,10 @@ struct gre_h_cksum {
 struct gre_h_key {
 	uint32_t		gre_key;
 } __packed __aligned(4);
+
+#define NVGRE_VSID_RES_MIN	0x000000 /* reserved for future use */
+#define NVGRE_VSID_RES_MAX	0x000fff
+#define NVGRE_VSID_NVE2NVE	0xffffff /* vendor specific NVE-to-NVE comms */
 
 struct gre_h_seq {
 	uint32_t		gre_seq;
@@ -577,7 +581,8 @@ nvgre_clone_create(struct if_clone *ifc, int unit)
 	tunnel->t_ttl = IP_DEFAULT_MULTICAST_TTL;
 	tunnel->t_df = htons(IP_DF);
 	tunnel->t_key_mask = GRE_KEY_ENTROPY;
-	tunnel->t_key = htonl(0 << GRE_KEY_ENTROPY_SHIFT);
+	tunnel->t_key = htonl((NVGRE_VSID_RES_MAX + 1) <<
+	    GRE_KEY_ENTROPY_SHIFT);
 
 	mq_init(&sc->sc_send_list, IFQ_MAXLEN * 2, IPL_SOFTNET);
 	task_set(&sc->sc_send_task, nvgre_send, sc);
