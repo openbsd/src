@@ -1,6 +1,6 @@
-/*	$OpenBSD: rkclock.c,v 1.20 2018/01/03 20:41:31 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.21 2018/02/25 13:25:57 kettenis Exp $	*/
 /*
- * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
+ * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -44,6 +44,21 @@
 #define  RK3288_CRU_MODE_PLL_WORK_MODE_SLOW	0x0
 #define  RK3288_CRU_MODE_PLL_WORK_MODE_NORMAL	0x1
 #define RK3288_CRU_CLKSEL_CON(i)	(0x0060 + (i) * 4)
+
+/* RK3328 registers */
+#define RK3328_CRU_CPLL_CON(i)		(0x0040 + (i) * 4)
+#define RK3328_CRU_GPLL_CON(i)		(0x0060 + (i) * 4)
+#define RK3328_CRU_CLKSEL_CON(i)	(0x0100 + (i) * 4)
+#define  RK3328_CRU_PLL_POSTDIV1_MASK		(0x7 << 12)
+#define  RK3328_CRU_PLL_POSTDIV1_SHIFT		12
+#define  RK3328_CRU_PLL_FBDIV_MASK		(0xfff << 0)
+#define  RK3328_CRU_PLL_FBDIV_SHIFT		0
+#define  RK3328_CRU_PLL_POSTDIV2_MASK		(0x7 << 6)
+#define  RK3328_CRU_PLL_POSTDIV2_SHIFT		6
+#define  RK3328_CRU_PLL_REFDIV_MASK		(0x3f << 0)
+#define  RK3328_CRU_PLL_REFDIV_SHIFT		0
+#define RK3328_CRU_CLKGATE_CON(i)	(0x0200 + (i) * 4)
+#define RK3328_CRU_SOFTRST_CON(i)	(0x0300 + (i) * 4)
 
 /* RK3399 registers */
 #define RK3399_CRU_LPLL_CON(i)		(0x0000 + (i) * 4)
@@ -120,6 +135,12 @@ int	rk3288_set_frequency(void *, uint32_t *, uint32_t);
 void	rk3288_enable(void *, uint32_t *, int);
 void	rk3288_reset(void *, uint32_t *, int);
 
+void	rk3328_init(struct rkclock_softc *);
+uint32_t rk3328_get_frequency(void *, uint32_t *);
+int	rk3328_set_frequency(void *, uint32_t *, uint32_t);
+void	rk3328_enable(void *, uint32_t *, int);
+void	rk3328_reset(void *, uint32_t *, int);
+
 void	rk3399_init(struct rkclock_softc *);
 uint32_t rk3399_get_frequency(void *, uint32_t *);
 int	rk3399_set_frequency(void *, uint32_t *, uint32_t);
@@ -148,6 +169,11 @@ struct rkclock_compat rkclock_compat[] = {
 		rk3288_set_frequency, rk3288_reset
 	},
 	{
+		"rockchip,rk3328-cru", rk3328_init,
+		rk3328_enable, rk3328_get_frequency,
+		rk3328_set_frequency, rk3328_reset
+	},
+	{
 		"rockchip,rk3399-cru", rk3399_init,
 		rk3399_enable, rk3399_get_frequency,
 		rk3399_set_frequency, rk3399_reset,
@@ -167,7 +193,7 @@ rkclock_match(struct device *parent, void *match, void *aux)
 
 	for (i = 0; i < nitems(rkclock_compat); i++) {
 		if (OF_is_compatible(faa->fa_node, rkclock_compat[i].compat))
-			return 1;
+			return 10;
 	}
 
 	return 0;
@@ -516,6 +542,140 @@ rk3288_reset(void *cookie, uint32_t *cells, int on)
 	uint32_t idx = cells[0];
 
 	printf("%s: 0x%08x\n", __func__, idx);
+}
+
+/*
+ * Rockchip RK3328
+ */
+
+void
+rk3328_init(struct rkclock_softc *sc)
+{
+	int i;
+
+	/* The code below assumes all clocks are enabled.  Check this!. */
+	for (i = 0; i <= 28; i++) {
+		if (HREAD4(sc, RK3328_CRU_CLKGATE_CON(i)) != 0x00000000) {
+			printf("CRU_CLKGATE_CON%d: 0x%08x\n", i,
+			    HREAD4(sc, RK3328_CRU_CLKGATE_CON(i)));
+		}
+	}
+}
+
+uint32_t
+rk3328_get_pll(struct rkclock_softc *sc, bus_size_t base)
+{
+	uint32_t fbdiv, postdiv1, postdiv2, refdiv;
+	uint32_t reg;
+
+	reg = HREAD4(sc, base + 0x0000);
+	postdiv1 = (reg & RK3328_CRU_PLL_POSTDIV1_MASK) >>
+	    RK3328_CRU_PLL_POSTDIV1_SHIFT;
+	fbdiv = (reg & RK3328_CRU_PLL_FBDIV_MASK) >>
+	    RK3328_CRU_PLL_FBDIV_SHIFT;
+	reg = HREAD4(sc, base + 0x0004);
+	postdiv2 = (reg & RK3328_CRU_PLL_POSTDIV2_MASK) >>
+	    RK3328_CRU_PLL_POSTDIV2_SHIFT;
+	refdiv = (reg & RK3328_CRU_PLL_REFDIV_MASK) >>
+	    RK3399_CRU_PLL_REFDIV_SHIFT;
+	return 24000000ULL * fbdiv / refdiv / postdiv1 / postdiv2;
+}
+
+uint32_t
+rk3328_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint32_t reg, mux, div_con;
+
+	switch (idx) {
+	case RK3328_PLL_CPLL:
+		return rk3328_get_pll(sc, RK3328_CRU_CPLL_CON(0));
+		break;
+	case RK3328_PLL_GPLL:
+		return rk3328_get_pll(sc, RK3328_CRU_GPLL_CON(0));
+		break;
+	case RK3328_CLK_SDMMC:
+		reg = HREAD4(sc, RK3328_CRU_CLKSEL_CON(30));
+		mux = (reg >> 8) & 0x3;
+		div_con = reg & 0xff;
+		switch (mux) {
+		case 0:
+			idx = RK3328_PLL_CPLL;
+			break;
+		case 1:
+			idx = RK3328_PLL_GPLL;
+			break;
+		case 2:
+			return 24000000 / (div_con + 1);
+#ifdef notyet
+		case 3:
+			idx = RK3328_USB_480M;
+			break;
+#endif
+		default:
+			return 0;
+		}
+		return rk3328_get_frequency(sc, &idx) / (div_con + 1);
+	case RK3328_CLK_EMMC:
+		reg = HREAD4(sc, RK3328_CRU_CLKSEL_CON(32));
+		mux = (reg >> 8) & 0x3;
+		div_con = reg & 0xff;
+		switch (mux) {
+		case 0:
+			idx = RK3328_PLL_CPLL;
+			break;
+		case 1:
+			idx = RK3328_PLL_GPLL;
+			break;
+		case 2:
+			return 24000000 / (div_con + 1);
+#ifdef notyet
+		case 3:
+			idx = RK3328_USB_480M;
+			break;
+#endif
+		default:
+			return 0;
+		}
+		return rk3328_get_frequency(sc, &idx) / (div_con + 1);
+	}
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return 0;
+}
+
+int
+rk3328_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+{
+	uint32_t idx = cells[0];
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return -1;
+}
+
+void
+rk3328_enable(void *cookie, uint32_t *cells, int on)
+{
+	uint32_t idx = cells[0];
+
+	/*
+	 * All clocks are enabled by default, so there is nothing for
+	 * us to do until we start disabling clocks.
+	 */
+	if (!on)
+		printf("%s: 0x%08x\n", __func__, idx);
+}
+
+void
+rk3328_reset(void *cookie, uint32_t *cells, int on)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint32_t mask = (1 << (idx % 16));
+
+	HWRITE4(sc, RK3328_CRU_SOFTRST_CON(idx / 16),
+	    mask << 16 | (on ? mask : 0));
 }
 
 /* 

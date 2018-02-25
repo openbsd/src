@@ -35,6 +35,16 @@
 #define RK3288_HCLK_SDMMC		456
 
 /*
+ * RK3328 clocks.
+ */
+
+#define RK3328_PLL_CPLL			3
+#define RK3328_PLL_GPLL			4
+
+#define RK3328_CLK_SDMMC		33
+#define RK3328_CLK_EMMC			35
+
+/*
  * RK3399 clocks.
  */
 
