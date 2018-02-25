@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.33 2017/12/14 14:21:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.34 2018/02/25 12:40:06 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -203,6 +203,7 @@ struct iwn_softc {
 #define IWN_FLAG_ENH_SENS	(1 << 7)
 #define IWN_FLAG_ADV_BT_COEX	(1 << 8)
 #define IWN_FLAG_BGSCAN		(1 << 9)
+#define IWN_FLAG_SCANNING	(1 << 10)
 
 	uint8_t 		hw_type;
 

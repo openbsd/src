@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.200 2018/02/01 11:21:34 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.201 2018/02/25 12:40:06 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1773,8 +1773,11 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	}
 
 	if (ic->ic_state == IEEE80211_S_SCAN) {
-		if (nstate == IEEE80211_S_SCAN)
-			return 0;
+		if (nstate == IEEE80211_S_SCAN) {
+			if (sc->sc_flags & IWN_FLAG_SCANNING)
+				return 0;
+		} else
+			sc->sc_flags &= ~IWN_FLAG_SCANNING;
 		/* Turn LED off when leaving scan state. */
 		iwn_set_led(sc, IWN_LED_LINK, 1, 0);
 	}
@@ -2653,8 +2656,9 @@ iwn_notif_intr(struct iwn_softc *sc)
 				if (error == 0)
 					break;
 			}
-			ieee80211_end_scan(ifp);
+			sc->sc_flags &= ~IWN_FLAG_SCANNING;
 			sc->sc_flags &= ~IWN_FLAG_BGSCAN;
+			ieee80211_end_scan(ifp);
 			break;
 		}
 		case IWN5000_CALIBRATION_RESULT:
@@ -4922,11 +4926,12 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags, int bgscan)
 	hdr->len = htole16(buflen);
 
 	DPRINTF(("sending scan command nchan=%d\n", hdr->nchan));
-	if (bgscan)
-		sc->sc_flags |= IWN_FLAG_BGSCAN;
 	error = iwn_cmd(sc, IWN_CMD_SCAN, buf, buflen, 1);
-	if (bgscan && error)
-		sc->sc_flags &= ~IWN_FLAG_BGSCAN;
+	if (error == 0) {
+		sc->sc_flags |= IWN_FLAG_SCANNING;
+		if (bgscan)
+			sc->sc_flags |= IWN_FLAG_BGSCAN;
+	}
 	free(buf, M_DEVBUF, IWN_SCAN_MAXSZ);
 	return error;
 }
@@ -4939,6 +4944,7 @@ iwn_scan_abort(struct iwn_softc *sc)
 	/* XXX Cannot wait for status response in interrupt context. */
 	DELAY(100);
 
+	sc->sc_flags &= ~IWN_FLAG_SCANNING;
 	sc->sc_flags &= ~IWN_FLAG_BGSCAN;
 }
 
@@ -4947,6 +4953,9 @@ iwn_bgscan(struct ieee80211com *ic)
 {
 	struct iwn_softc *sc = ic->ic_softc;
 	int error; 
+
+	if (sc->sc_flags & IWN_FLAG_SCANNING)
+		return 0;
 
 	error = iwn_scan(sc, IEEE80211_CHAN_2GHZ, 1);
 	if (error)
