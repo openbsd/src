@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.21 2018/02/25 13:25:57 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.22 2018/02/25 20:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -46,8 +46,11 @@
 #define RK3288_CRU_CLKSEL_CON(i)	(0x0060 + (i) * 4)
 
 /* RK3328 registers */
+#define RK3328_CRU_APLL_CON(i)		(0x0000 + (i) * 4)
+#define RK3328_CRU_DPLL_CON(i)		(0x0020 + (i) * 4)
 #define RK3328_CRU_CPLL_CON(i)		(0x0040 + (i) * 4)
 #define RK3328_CRU_GPLL_CON(i)		(0x0060 + (i) * 4)
+#define RK3328_CRU_NPLL_CON(i)		(0x0080 + (i) * 4)
 #define RK3328_CRU_CLKSEL_CON(i)	(0x0100 + (i) * 4)
 #define  RK3328_CRU_PLL_POSTDIV1_MASK		(0x7 << 12)
 #define  RK3328_CRU_PLL_POSTDIV1_SHIFT		12
@@ -582,6 +585,48 @@ rk3328_get_pll(struct rkclock_softc *sc, bus_size_t base)
 }
 
 uint32_t
+rk3328_get_sdmmc(struct rkclock_softc *sc, bus_size_t base)
+{
+	uint32_t reg, mux, div_con;
+	uint32_t idx;
+
+	reg = HREAD4(sc, base);
+	mux = (reg >> 8) & 0x3;
+	div_con = reg & 0xff;
+	switch (mux) {
+	case 0:
+		idx = RK3328_PLL_CPLL;
+		break;
+	case 1:
+		idx = RK3328_PLL_GPLL;
+		break;
+	case 2:
+		return 24000000 / (div_con + 1);
+#ifdef notyet
+	case 3:
+		idx = RK3328_USB_480M;
+		break;
+#endif
+	default:
+		return 0;
+	}
+	return rk3328_get_frequency(sc, &idx) / (div_con + 1);
+}
+
+uint32_t
+rk3328_get_i2c(struct rkclock_softc *sc, size_t base, int shift)
+{
+	uint32_t reg, mux, div_con;
+	uint32_t idx;
+
+	reg = HREAD4(sc, base);
+	mux = (reg >> (7 + shift)) & 0x1;
+	div_con = (reg >> shift) & 0x7f;
+	idx = (mux == 0) ? RK3328_PLL_CPLL : RK3328_PLL_GPLL;
+	return rk3328_get_frequency(sc, &idx) / (div_con + 1);
+}
+
+uint32_t
 rk3328_get_frequency(void *cookie, uint32_t *cells)
 {
 	struct rkclock_softc *sc = cookie;
@@ -589,56 +634,72 @@ rk3328_get_frequency(void *cookie, uint32_t *cells)
 	uint32_t reg, mux, div_con;
 
 	switch (idx) {
+	case RK3328_PLL_APLL:
+		return rk3328_get_pll(sc, RK3328_CRU_APLL_CON(0));
+		break;
+	case RK3328_PLL_DPLL:
+		return rk3328_get_pll(sc, RK3328_CRU_DPLL_CON(0));
+		break;
 	case RK3328_PLL_CPLL:
 		return rk3328_get_pll(sc, RK3328_CRU_CPLL_CON(0));
 		break;
 	case RK3328_PLL_GPLL:
 		return rk3328_get_pll(sc, RK3328_CRU_GPLL_CON(0));
 		break;
+	case RK3328_PLL_NPLL:
+		return rk3328_get_pll(sc, RK3328_CRU_NPLL_CON(0));
+		break;
+	case RK3328_ARMCLK:
+		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(0));
+		mux = (reg >> 6) & 0x3;
+		div_con = reg & 0x1f;
+		switch (mux) {
+		case 0:
+			idx = RK3328_PLL_APLL;
+			break;
+		case 1:
+			idx = RK3328_PLL_GPLL;
+			break;
+		case 2:
+			idx = RK3328_PLL_DPLL;
+			break;
+		case 3:
+			idx = RK3328_PLL_NPLL;
+			break;
+		}
+		return rk3328_get_frequency(sc, &idx) / (div_con + 1);
 	case RK3328_CLK_SDMMC:
-		reg = HREAD4(sc, RK3328_CRU_CLKSEL_CON(30));
-		mux = (reg >> 8) & 0x3;
-		div_con = reg & 0xff;
-		switch (mux) {
-		case 0:
-			idx = RK3328_PLL_CPLL;
-			break;
-		case 1:
-			idx = RK3328_PLL_GPLL;
-			break;
-		case 2:
-			return 24000000 / (div_con + 1);
-#ifdef notyet
-		case 3:
-			idx = RK3328_USB_480M;
-			break;
-#endif
-		default:
-			return 0;
-		}
-		return rk3328_get_frequency(sc, &idx) / (div_con + 1);
+		return rk3328_get_sdmmc(sc, RK3328_CRU_CLKSEL_CON(30));
+	case RK3328_CLK_SDIO:
+		return rk3328_get_sdmmc(sc, RK3328_CRU_CLKSEL_CON(31));
 	case RK3328_CLK_EMMC:
-		reg = HREAD4(sc, RK3328_CRU_CLKSEL_CON(32));
+		return rk3328_get_sdmmc(sc, RK3328_CRU_CLKSEL_CON(32));
+	case RK3328_CLK_UART0:
+		reg = HREAD4(sc, RK3328_CRU_CLKSEL_CON(14));
 		mux = (reg >> 8) & 0x3;
-		div_con = reg & 0xff;
-		switch (mux) {
-		case 0:
-			idx = RK3328_PLL_CPLL;
-			break;
-		case 1:
-			idx = RK3328_PLL_GPLL;
-			break;
-		case 2:
-			return 24000000 / (div_con + 1);
-#ifdef notyet
-		case 3:
-			idx = RK3328_USB_480M;
-			break;
-#endif
-		default:
-			return 0;
-		}
-		return rk3328_get_frequency(sc, &idx) / (div_con + 1);
+		if (mux == 2)
+			return 24000000;
+		break;
+	case RK3328_CLK_UART1:
+		reg = HREAD4(sc, RK3328_CRU_CLKSEL_CON(16));
+		mux = (reg >> 8) & 0x3;
+		if (mux == 2)
+			return 24000000;
+		break;
+	case RK3328_CLK_UART2:
+		reg = HREAD4(sc, RK3328_CRU_CLKSEL_CON(18));
+		mux = (reg >> 8) & 0x3;
+		if (mux == 2)
+			return 24000000;
+		break;
+	case RK3328_CLK_I2C0:
+		return rk3328_get_i2c(sc, RK3399_CRU_CLKSEL_CON(34), 0);
+	case RK3328_CLK_I2C1:
+		return rk3328_get_i2c(sc, RK3399_CRU_CLKSEL_CON(34), 8);
+	case RK3328_CLK_I2C2:
+		return rk3328_get_i2c(sc, RK3399_CRU_CLKSEL_CON(35), 0);
+	case RK3328_CLK_I2C3:
+		return rk3328_get_i2c(sc, RK3399_CRU_CLKSEL_CON(35), 8);
 	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
