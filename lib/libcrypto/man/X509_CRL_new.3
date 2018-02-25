@@ -1,6 +1,6 @@
-.\"	$OpenBSD: X509_CRL_new.3,v 1.3 2016/12/25 22:15:10 schwarze Exp $
+.\"	$OpenBSD: X509_CRL_new.3,v 1.4 2018/02/25 09:49:08 schwarze Exp $
 .\"
-.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2016, 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,11 +14,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 25 2016 $
+.Dd $Mdocdate: February 25 2018 $
 .Dt X509_CRL_NEW 3
 .Os
 .Sh NAME
 .Nm X509_CRL_new ,
+.Nm X509_CRL_dup ,
+.Nm X509_CRL_up_ref ,
 .Nm X509_CRL_free ,
 .Nm X509_CRL_INFO_new ,
 .Nm X509_CRL_INFO_free
@@ -27,6 +29,10 @@
 .In openssl/x509.h
 .Ft X509_CRL *
 .Fn X509_CRL_new void
+.Ft X509_CRL *
+.Fn X509_CRL_dup "X509_CRL *crl"
+.Ft int
+.Fn X509_CRL_up_ref "X509_CRL *crl"
 .Ft void
 .Fn X509_CRL_free "X509_CRL *crl"
 .Ft X509_CRL_INFO *
@@ -44,8 +50,22 @@ It can hold a pointer to an
 .Vt X509_CRL_INFO
 object discussed below together with a cryptographic signature
 and information about the signature algorithm used.
+The reference count is set to 1.
+.Pp
+.Fn X509_CRL_dup
+creates a deep copy of
+.Fa crl .
+.Pp
+.Fn X509_CRL_up_ref
+increments the reference count of
+.Fa crl
+by 1.
+.Pp
 .Fn X509_CRL_free
-frees
+decrements the reference count of
+.Fa crl
+by 1.
+If the reference count reaches 0, it frees
 .Fa crl .
 .Pp
 .Fn X509_CRL_INFO_new
@@ -63,7 +83,8 @@ list is due, and optional extensions.
 frees
 .Fa crl_info .
 .Sh RETURN VALUES
-.Fn X509_CRL_new
+.Fn X509_CRL_new ,
+.Fn X509_CRL_dup ,
 and
 .Fn X509_CRL_INFO_new
 return the new
@@ -73,6 +94,9 @@ or
 object, respectively, or
 .Dv NULL
 if an error occurs.
+.Pp
+.Fn X509_CRL_up_ref
+returns 1 on success or 0 on error.
 .Sh SEE ALSO
 .Xr ACCESS_DESCRIPTION_new 3 ,
 .Xr AUTHORITY_KEYID_new 3 ,
