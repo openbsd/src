@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.65 2018/02/25 14:19:26 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.66 2018/02/25 14:20:39 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -604,6 +604,38 @@ sub may_remove
 	$state->{bogus}{$name} = 1;
 }
 
+sub may_unlink
+{
+	my ($self, $state, $path) = @_;
+	if (!$state->{force} && 
+	    !$state->confirm("Remove non-file".$state->safe($path))) {
+		return;
+	}
+	if ($state->verbose) {
+		$state->say("remove #1", $state->safe($path));
+	}
+	return if $state->{not};
+	rmdir($path) or 
+	    $state->errsay("Couldn't delete #1: #2", $state->safe($path), $!);
+}
+
+sub may_fix_perms
+{
+	my ($self, $state, $path, $perm) = @_;
+	if (!$state->{force} && 
+	    !$state->confirm("Make ".$state->safe($path)." world-readable")) {
+		return;
+	}
+	if ($state->verbose) {
+		$state->say("chmod #1 #2", sprintf("%04o", $perm), 
+		    $state->safe($path));
+	}
+	return if $state->{not};
+	chmod $perm, $path or
+	    $state->errsay("Couldn't fix perms for #1: #2", 
+	    	$state->safe($path), $!);
+}
+
 sub for_all_packages
 {
 	my ($self, $state, $l, $msg, $code) = @_;
@@ -619,9 +651,43 @@ sub for_all_packages
 	    });
 }
 
+sub check_permissions
+{
+	my ($self, $state, $dir) = @_;
+	my $perm = (stat $dir)[2];
+
+	if (($perm & 0555) != 0555) {
+		$state->errsay("Directory #1 is not world-readable",
+		    $state->safe($dir));
+		$self->may_fix_perms($state, $dir, ($perm & 0777)|0555);
+	}
+	for my $file (@OpenBSD::PackageInfo::info) {
+		next unless -e $file;
+		my $perm = (stat $file)[2];
+		if (!-f $file) {
+			$state->errsay("#1 should be a file", 
+			    $state->safe($file));
+			$self->may_unlink($state, $file);
+		} elsif (($perm & 0444) != 0444) {
+			$state->errsay("File #1 is not world-readable",
+			    $state->safe($file));
+			$self->may_fix_perms($state, $file, 
+			    ($perm&0777)|0444);
+		}
+
+	}
+}
+
+
 sub sanity_check
 {
 	my ($self, $state, $l) = @_;
+
+	# let's find /var/db/pkg or its equivalent
+	my $base = installed_info("");
+	$base =~ s,/*$,,;
+	$self->check_permissions($state, $base);
+
 	$self->for_all_packages($state, $l, "Packing-list sanity", sub {
 		my $name = shift;
 		my $info = installed_info($name);
@@ -637,6 +703,7 @@ sub sanity_check
 			}
 			return;
 		}
+		$self->check_permissions($state, $info);
 		my $contents = $info.OpenBSD::PackageInfo::CONTENTS;
 		unless (-f $contents) {
 			$state->errsay("#1: missing #2",
