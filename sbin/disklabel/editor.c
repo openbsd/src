@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.312 2018/02/24 21:00:00 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.313 2018/02/25 17:24:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -128,7 +128,7 @@ void	editor_modify(struct disklabel *, char *);
 void	editor_name(struct disklabel *, char *);
 char	*getstring(const char *, const char *, const char *);
 u_int64_t getuint64(struct disklabel *, char *, char *, u_int64_t, u_int64_t,
-	    u_int64_t, int);
+    u_int64_t, int);
 int	has_overlap(struct disklabel *);
 int	partition_cmp(const void *, const void *);
 struct partition **sort_partitions(struct disklabel *);
@@ -148,7 +148,7 @@ int	get_offset(struct disklabel *, int);
 int	get_size(struct disklabel *, int);
 void	get_geometry(int, struct disklabel **);
 void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *,
-	    char *);
+    char *);
 void	zero_partitions(struct disklabel *);
 u_int64_t max_partition_size(struct disklabel *, int);
 void	display_edit(struct disklabel *, char, u_int64_t);
@@ -876,8 +876,8 @@ editor_add(struct disklabel *lp, char *p)
 	new_size = new_offset = 0;
 	for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++) {
 		if (chunks[i].stop - chunks[i].start > new_size) {
-		    new_size = chunks[i].stop - chunks[i].start;
-		    new_offset = chunks[i].start;
+			new_size = chunks[i].stop - chunks[i].start;
+			new_offset = chunks[i].start;
 		}
 	}
 	DL_SETPSIZE(pp, new_size);
@@ -1355,8 +1355,8 @@ edit_parms(struct disklabel *lp)
 		if (strcasecmp(p, "IDE") == 0)
 			ui = DTYPE_ESDI;
 		else
-			for (ui = 1; ui < DKMAXTYPES &&
-			    strcasecmp(p, dktypenames[ui]); ui++)
+			for (ui = 1; ui < DKMAXTYPES && strcasecmp(p,
+			    dktypenames[ui]); ui++)
 				;
 		if (ui < DKMAXTYPES) {
 			break;
@@ -1393,7 +1393,7 @@ edit_parms(struct disklabel *lp)
 			fputs("Command aborted\n", stderr);
 			*lp = oldlabel;		/* undo damage */
 			return;
-		} if (ui == ULLONG_MAX)
+		} else if (ui == ULLONG_MAX)
 			fputs("Invalid entry\n", stderr);
 		else
 			break;
@@ -1604,8 +1604,8 @@ set_bounds(struct disklabel *lp)
 	/* Starting sector */
 	do {
 		ui = getuint64(lp, "Starting sector",
-		  "The start of the OpenBSD portion of the disk.",
-		  starting_sector, DL_GETDSIZE(lp), 0, 0);
+		    "The start of the OpenBSD portion of the disk.",
+		    starting_sector, DL_GETDSIZE(lp), 0, 0);
 		if (ui == ULLONG_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			return;
@@ -1616,9 +1616,9 @@ set_bounds(struct disklabel *lp)
 	/* Size */
 	do {
 		ui = getuint64(lp, "Size ('*' for entire disk)",
-		  "The size of the OpenBSD portion of the disk ('*' for the "
-		  "entire disk).", ending_sector - starting_sector,
-		  DL_GETDSIZE(lp) - start_temp, 0, 0);
+		    "The size of the OpenBSD portion of the disk ('*' for the "
+		    "entire disk).", ending_sector - starting_sector,
+		    DL_GETDSIZE(lp) - start_temp, 0, 0);
 		if (ui == ULLONG_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			return;
@@ -1888,10 +1888,10 @@ get_offset(struct disklabel *lp, int partno)
 	int i, fstype;
 
 	ui = getuint64(lp, "offset",
-	   "Starting sector for this partition.",
-	   DL_GETPOFFSET(pp),
-	   DL_GETPOFFSET(pp), 0, DO_CONVERSIONS |
-	   (pp->p_fstype == FS_BSDFFS ? DO_ROUNDING : 0));
+	    "Starting sector for this partition.",
+	    DL_GETPOFFSET(pp),
+	    DL_GETPOFFSET(pp), 0, DO_CONVERSIONS |
+	    (pp->p_fstype == FS_BSDFFS ? DO_ROUNDING : 0));
 
 	if (ui == ULLONG_MAX - 1)
 		fputs("Command aborted\n", stderr);
@@ -2151,7 +2151,7 @@ get_fstype(struct disklabel *lp, int partno)
 			if (ui == ULLONG_MAX - 1) {
 				fputs("Command aborted\n", stderr);
 				return(1);
-			} if (ui == ULLONG_MAX)
+			} else if (ui == ULLONG_MAX)
 				fputs("Invalid entry\n", stderr);
 			else
 				break;
@@ -2441,13 +2441,13 @@ apply_unit(double val, u_char unit, u_int64_t *n)
 
 	switch (tolower(unit)) {
 	case 't':
-		 factor *= 1024;
+		factor *= 1024;
 		/* FALLTHROUGH */
 	case 'g':
-		 factor *= 1024;
+		factor *= 1024;
 		/* FALLTHROUGH */
 	case 'm':
-		 factor *= 1024;
+		factor *= 1024;
 		/* FALLTHROUGH */
 	case 'k':
 		factor *= 1024;
