@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_set1_param.3,v 1.5 2018/02/25 22:24:18 schwarze Exp $
+.\" $OpenBSD: X509_STORE_set1_param.3,v 1.6 2018/02/25 22:52:48 schwarze Exp $
 .\" content checked up to:
 .\" OpenSSL man3/X509_STORE_get0_param e90fc053 Jul 15 09:39:45 2017 -0400
 .\"
@@ -27,7 +27,9 @@
 .Nm X509_STORE_set_depth ,
 .Nm X509_STORE_add_cert ,
 .Nm X509_STORE_add_crl ,
-.Nm X509_STORE_get0_objects
+.Nm X509_STORE_get0_objects ,
+.Nm X509_STORE_set_ex_data ,
+.Nm X509_STORE_get_ex_data
 .Nd get and set X509_STORE data
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
@@ -70,6 +72,17 @@
 .Fo X509_STORE_get0_objects
 .Fa "X509_STORE *store"
 .Fc
+.Ft int
+.Fo X509_STORE_set_ex_data
+.Fa "X509_STORE *store"
+.Fa "int idx"
+.Fa "void *arg"
+.Fc
+.Ft void *
+.Fo X509_STORE_get_ex_data
+.Fa "X509_STORE *store"
+.Fa "int idx"
+.Fc
 .Sh DESCRIPTION
 .Fn X509_STORE_set1_param
 copies the verification parameters from
@@ -101,11 +114,23 @@ or the certificate revocation list
 to the
 .Fa store ,
 increasing its reference count by 1 in case of success.
+.Pp
+.Fn X509_STORE_set_ex_data
+and
+.Fn X509_STORE_get_ex_data
+handle application specific data in
+.Vt X509_STORE
+objects.
+Their usage is identical to that of
+.Xr RSA_set_ex_data 3
+and
+.Xr RSA_get_ex_data 3 .
 .Sh RETURN VALUES
 .Fn X509_STORE_set1_param ,
 .Fn X509_STORE_set_purpose ,
+.Fn X509_STORE_set_trust ,
 and
-.Fn X509_STORE_set_trust
+.Fn X509_STORE_set_ex_data
 return 1 for success or 0 for failure.
 .Pp
 .Fn X509_STORE_set_flags
@@ -136,6 +161,11 @@ returns an internal pointer to the stack of certificates, revocation lists,
 and private keys contained in the
 .Fa store .
 The returned pointer must not be freed by the calling application.
+.Pp
+.Fn X509_STORE_get_ex_data
+returns the application data or
+.Dv NULL
+on failure.
 .Sh SEE ALSO
 .Xr SSL_set1_param 3 ,
 .Xr X509_OBJECT_get0_X509 3 ,
