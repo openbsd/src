@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.66 2018/02/23 09:50:30 jmc Exp $
+.\" $OpenBSD: gre.4,v 1.67 2018/02/25 01:16:12 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 23 2018 $
+.Dd $Mdocdate: February 25 2018 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -414,6 +414,76 @@ In most cases the following should work:
 .Bd -literal -offset indent
 pass quick on gre proto gre no state
 .Ed
+.Ss Point-to-Point Ethernet over GRE tunnel interfaces (egre)
+.Nm egre
+can be used to carry Ethernet traffic between two endpoints over
+an IP network, including the public internet.
+This can also be achieved using
+.Xr etherip 4 ,
+but
+.Nm egre
+offers the ability to carry different Ethernet networks between the
+same endpoints by using virtual network identifiers to distinguish
+between them.
+.Pp
+For example, a pair of routers separated by the internet could
+bridge several Ethernet networks using
+.Nm egre
+and
+.Xr bridge 4 .
+.Pp
+In this example the first router has a public IP of 192.0.2.1, and
+the second router has 203.0.113.2.
+They are connecting the Ethernet networks on two
+.Xr vlan 4
+interfaces over the internet.
+A separate
+.Nm egre
+tunnel is created for each VLAN and given different virtual network
+identifiers so the routers can tell which network the encapsulated
+traffic is for.
+The
+.Nm egre
+interfaces are explicitley configured to provide the same MTU as the
+.Xr vlan 4
+interfaces (1500 bytes) with fragmentation enabled so they can be
+carried over the internet, which has the same or lower MTU.
+.Pp
+At the first site:
+.Bd -literal -offset indent
+# ifconfig vlan0 vnetid 100
+# ifconfig egre0 create
+# ifconfig egre0 tunnel 192.0.2.1 203.0.113.2
+# ifconfig egre0 vnetid 100
+# ifconfig egre0 mtu 1500 -tunneldf
+# ifconfig egre0 up
+# ifconfig bridge0 add vlan0 add egre0 up
+# ifconfig vlan1 vnetid 200
+# ifconfig egre1 create
+# ifconfig egre1 tunnel 192.0.2.1 203.0.113.2
+# ifconfig egre1 vnetid 200
+# ifconfig egre1 mtu 1500 -tunneldf
+# ifconfig egre1 up
+# ifconfig bridge1 add vlan1 add egre1 up
+.Ed
+.Pp
+At the second site:
+.Bd -literal -offset indent
+# ifconfig vlan0 vnetid 100
+# ifconfig egre0 create
+# ifconfig egre0 tunnel 203.0.113.2 192.0.2.1
+# ifconfig egre0 vnetid 100
+# ifconfig egre0 mtu 1500 -tunneldf
+# ifconfig egre0 up
+# ifconfig bridge0 add vlan0 add egre0 up
+# ifconfig vlan1 vnetid 200
+# ifconfig egre1 create
+# ifconfig egre1 tunnel 203.0.113.2 192.0.2.1
+# ifconfig egre1 vnetid 200
+# ifconfig egre1 mtu 1500 -tunneldf
+# ifconfig egre1 up
+# ifconfig bridge1 add vlan1 add egre1 up
+.Ed
 .Ss Network Virtualization Using GRE interfaces (nvgre)
 NVGRE can be used to build a distinct logical Ethernet network
 on top of another network.
@@ -487,26 +557,26 @@ on each host, and em0 has had the MTU raised:
 .Pp
 On physical host 1:
 .Bd -literal -offset indent
-hv0# ifconfig em0 inet 100.64.10.10/24
-hv0# ifconfig nvgre1 parent em0 tunnel 100.64.10.10 239.1.1.111
-hv0# ifconfig nvgre1 vnetid 10011
-hv0# ifconfig bridge1 add nvgre1 add tap0 up
+# ifconfig em0 inet 100.64.10.10/24
+# ifconfig nvgre1 parent em0 tunnel 100.64.10.10 239.1.1.111
+# ifconfig nvgre1 vnetid 10011
+# ifconfig bridge1 add nvgre1 add tap0 up
 .Ed
 .Pp
 On physical host 2:
 .Bd -literal -offset indent
-hv1# ifconfig em0 inet 100.64.10.11/24
-hv1# ifconfig nvgre1 parent em0 tunnel 100.64.10.11 239.1.1.111
-hv1# ifconfig nvgre1 vnetid 10011
-hv1# ifconfig bridge1 add nvgre1 add tap0 up
+# ifconfig em0 inet 100.64.10.11/24
+# ifconfig nvgre1 parent em0 tunnel 100.64.10.11 239.1.1.111
+# ifconfig nvgre1 vnetid 10011
+# ifconfig bridge1 add nvgre1 add tap0 up
 .Ed
 .Pp
 On physical host 3:
 .Bd -literal -offset indent
-hv2# ifconfig em0 inet 100.64.10.12/24
-hv2# ifconfig nvgre1 parent em0 tunnel 100.64.10.12 239.1.1.111
-hv2# ifconfig nvgre1 vnetid 10011
-hv2# ifconfig bridge1 add nvgre1 add tap0 up
+# ifconfig em0 inet 100.64.10.12/24
+# ifconfig nvgre1 parent em0 tunnel 100.64.10.12 239.1.1.111
+# ifconfig nvgre1 vnetid 10011
+# ifconfig bridge1 add nvgre1 add tap0 up
 .Ed
 .Pp
 Being able to carry working multicast and jumbo frames over the
@@ -516,51 +586,10 @@ to extended Ethernet VPNs between different sites.
 and
 .Nm egre
 can be bridged together to provide such connectivity.
-.Pp
-In this example the NVE device at the first site has a public IP
-of 192.0.2.1, and uses 100.64.10.0/24 for the NVGRE underlay network.
-The second site has a public IP 203.0.113.2, and uses 100.64.11.0/24 for
-the NVGRE underlay.
+See the
 .Nm egre
-is explicitly configured to provide the same MTU as the
-.Nm nvgre
-interfaces, but allows the encapsulated frames to be fragmented.
-Multiple
-.Nm egre
-interfaces are used to carry traffic for two different NVGRE networks,
-so each interface must configure distinct virtual network identifiers.
+section for an example.
 .Pp
-At the first site:
-.Bd -literal -offset indent
-nve0# ifconfig nvgre0 parent em0 tunnel 100.64.10.1 239.1.1.100
-nve0# ifconfig nvgre0 vnetid 10000
-nve0# ifconfig egre0 create
-nve0# ifconfig egre0 tunnel 192.0.2.1 203.0.113.2
-nve0# ifconfig egre0 vnetid 10000 vnetflowid -tunneldf
-nve0# ifconfig bridge0 add nvgre0 add egre0 up
-nve0# ifconfig nvgre1 parent em0 tunnel 100.64.10.1 239.1.1.111
-nve0# ifconfig nvgre1 vnetid 10011
-nve0# ifconfig egre1 create
-nve0# ifconfig egre1 tunnel 192.0.2.1 203.0.113.2
-nve0# ifconfig egre1 vnetid 10011 vnetflowid -tunneldf
-nve0# ifconfig bridge0 add nvgre0 add egre0 up
-.Ed
-.Pp
-At the second site:
-.Bd -literal -offset indent
-nve1# ifconfig nvgre0 parent em0 tunnel 100.64.11.1 239.1.1.100
-nve1# ifconfig nvgre0 vnetid 10000
-nve1# ifconfig egre0 create
-nve1# ifconfig egre0 tunnel 203.0.113.2 192.0.2.1
-nve1# ifconfig egre0 vnetid 10000 vnetflowid -tunneldf
-nve1# ifconfig bridge0 add nvgre0 add egre0 up
-nve1# ifconfig nvgre1 parent em0 tunnel 100.64.11.1 239.1.1.111
-nve1# ifconfig nvgre1 vnetid 10011
-nve1# ifconfig egre1 create
-nve1# ifconfig egre1 tunnel 203.0.113.2 192.0.2.1
-nve1# ifconfig egre1 vnetid 10011 vnetflowid -tunneldf
-nve1# ifconfig bridge1 add nvgre1 add egre1 up
-.Ed
 .Sh SEE ALSO
 .Xr inet 4 ,
 .Xr ip 4 ,
