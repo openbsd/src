@@ -1,75 +1,148 @@
-.\"	$OpenBSD: X509_STORE_set1_param.3,v 1.4 2018/02/25 17:46:39 schwarze Exp $
-.\"	OpenSSL 99d63d46
+.\" $OpenBSD: X509_STORE_set1_param.3,v 1.5 2018/02/25 22:24:18 schwarze Exp $
+.\" content checked up to:
+.\" OpenSSL man3/X509_STORE_get0_param e90fc053 Jul 15 09:39:45 2017 -0400
 .\"
-.\" This file was written by Christian Heimes <cheimes@redhat.com>.
-.\" Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\"
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in
-.\"    the documentation and/or other materials provided with the
-.\"    distribution.
-.\"
-.\" 3. All advertising materials mentioning features or use of this
-.\"    software must display the following acknowledgment:
-.\"    "This product includes software developed by the OpenSSL Project
-.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
-.\"
-.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
-.\"    endorse or promote products derived from this software without
-.\"    prior written permission. For written permission, please contact
-.\"    openssl-core@openssl.org.
-.\"
-.\" 5. Products derived from this software may not be called "OpenSSL"
-.\"    nor may "OpenSSL" appear in their names without prior written
-.\"    permission of the OpenSSL Project.
-.\"
-.\" 6. Redistributions of any form whatsoever must retain the following
-.\"    acknowledgment:
-.\"    "This product includes software developed by the OpenSSL Project
-.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
-.\"
-.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
-.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
-.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: February 25 2018 $
 .Dt X509_STORE_SET1_PARAM 3
 .Os
 .Sh NAME
-.Nm X509_STORE_set1_param
-.Nd set X509_STORE verification parameters
+.Nm X509_STORE_set1_param ,
+.Nm X509_STORE_set_flags ,
+.Nm X509_STORE_set_purpose ,
+.Nm X509_STORE_set_trust ,
+.Nm X509_STORE_set_depth ,
+.Nm X509_STORE_add_cert ,
+.Nm X509_STORE_add_crl ,
+.Nm X509_STORE_get0_objects
+.Nd get and set X509_STORE data
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
 .Ft int
 .Fo X509_STORE_set1_param
-.Fa "X509_STORE *ctx"
+.Fa "X509_STORE *store"
 .Fa "X509_VERIFY_PARAM *pm"
+.Fc
+.Ft int
+.Fo X509_STORE_set_flags
+.Fa "X509_STORE *store"
+.Fa "unsigned long flags"
+.Fc
+.Ft int
+.Fo X509_STORE_set_purpose
+.Fa "X509_STORE *store"
+.Fa "int purpose"
+.Fc
+.Ft int
+.Fo X509_STORE_set_trust
+.Fa "X509_STORE *store"
+.Fa "int trust"
+.Fc
+.Ft int
+.Fo X509_STORE_set_depth
+.Fa "X509_STORE *store"
+.Fa "int depth"
+.Fc
+.Ft int
+.Fo X509_STORE_add_cert
+.Fa "X509_STORE *store"
+.Fa "X509 *x"
+.Fc
+.Ft int
+.Fo X509_STORE_add_crl
+.Fa "X509_STORE *store"
+.Fa "X509_CRL *crl"
+.Fc
+.Ft STACK_OF(X509_OBJECT) *
+.Fo X509_STORE_get0_objects
+.Fa "X509_STORE *store"
 .Fc
 .Sh DESCRIPTION
 .Fn X509_STORE_set1_param
-sets the verification parameters to
+copies the verification parameters from
 .Fa pm
-for
-.Fa ctx .
+into the verification parameter object contained in the
+.Fa store .
+.Pp
+.Fn X509_VERIFY_PARAM_set_flags ,
+.Fn X509_STORE_set_purpose ,
+.Fn X509_STORE_set_trust ,
+and
+.Fn X509_STORE_set_depth
+call
+.Fn X509_VERIFY_PARAM_set_flags ,
+.Fn X509_VERIFY_PARAM_set_purpose ,
+.Fn X509_VERIFY_PARAM_set_trust ,
+and
+.Fn X509_VERIFY_PARAM_set_depth
+on the verification parameter object contained in the
+.Fa store .
+.Pp
+.Fn X509_STORE_add_cert
+and
+.Fn X509_STORE_add_crl
+add the certificate
+.Fa x
+or the certificate revocation list
+.Fa crl
+to the
+.Fa store ,
+increasing its reference count by 1 in case of success.
 .Sh RETURN VALUES
-.Fn X509_STORE_set1_param
-returns 1 for success and 0 for failure.
+.Fn X509_STORE_set1_param ,
+.Fn X509_STORE_set_purpose ,
+and
+.Fn X509_STORE_set_trust
+return 1 for success or 0 for failure.
+.Pp
+.Fn X509_STORE_set_flags
+and
+.Fn X509_STORE_set_depth
+always return 1, indicating success.
+.Pp
+.Fn X509_STORE_add_cert
+and
+.Fn X509_STORE_add_crl
+return 1 for success or 0 for failure.
+For example, they fail if
+.Fa x
+or
+.Fa crl
+is a
+.Dv NULL
+pointer, if a certificate with the same subject name as
+.Fa x
+or a revocation list with the same issuer name as
+.Fa crl
+are already contained in the
+.Fa store ,
+or if memory allocation fails.
+.Pp
+.Fn X509_STORE_get0_objects
+returns an internal pointer to the stack of certificates, revocation lists,
+and private keys contained in the
+.Fa store .
+The returned pointer must not be freed by the calling application.
 .Sh SEE ALSO
+.Xr SSL_set1_param 3 ,
+.Xr X509_OBJECT_get0_X509 3 ,
+.Xr X509_STORE_CTX_set0_param 3 ,
 .Xr X509_STORE_load_locations 3 ,
-.Xr X509_STORE_new 3
+.Xr X509_STORE_new 3 ,
+.Xr X509_VERIFY_PARAM_set_flags 3
+.Sh HISTORY
+.Fn X509_STORE_get0_objects
+first appeared in OpenSSL 1.1.0.
