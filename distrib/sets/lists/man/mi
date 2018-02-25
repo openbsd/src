@@ -1205,6 +1205,7 @@
 ./usr/share/man/man4/axen.4
 ./usr/share/man/man4/azalia.4
 ./usr/share/man/man4/bce.4
+./usr/share/man/man4/bcmrng.4
 ./usr/share/man/man4/bcmtemp.4
 ./usr/share/man/man4/berkwdt.4
 ./usr/share/man/man4/bge.4

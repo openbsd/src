@@ -1927,6 +1927,7 @@
 ./usr/share/man/man3/SSL_SESSION_get_compress_id.3
 ./usr/share/man/man3/SSL_SESSION_get_ex_new_index.3
 ./usr/share/man/man3/SSL_SESSION_get_id.3
+./usr/share/man/man3/SSL_SESSION_get_protocol_version.3
 ./usr/share/man/man3/SSL_SESSION_get_time.3
 ./usr/share/man/man3/SSL_SESSION_new.3
 ./usr/share/man/man3/SSL_SESSION_print.3
