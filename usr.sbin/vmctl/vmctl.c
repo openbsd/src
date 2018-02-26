@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.45 2018/01/03 05:39:56 ccardenas Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.46 2018/02/26 06:36:53 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -702,7 +702,7 @@ vm_console(struct vmop_info_result *list, size_t ct)
 		}
 	}
 
-	errx(1, "console %d not found", info_id);
+	errx(1, "console not found");
 }
 
 /*
