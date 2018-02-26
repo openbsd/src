@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.246 2018/02/20 12:38:58 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.247 2018/02/26 13:43:51 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -408,6 +408,7 @@ struct uidinfo {
 };
 
 struct uidinfo *uid_find(uid_t);
+void uid_release(struct uidinfo *);
 
 /*
  * We use process IDs <= PID_MAX; PID_MAX + 1 must also fit in a pid_t,

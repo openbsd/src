@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.81 2018/02/20 12:38:58 mpi Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.82 2018/02/26 13:43:51 mpi Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/buf.h>
 #include <sys/acct.h>
 #include <sys/wait.h>
+#include <sys/rwlock.h>
 #include <ufs/ufs/quota.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
@@ -49,6 +50,7 @@
 #include <sys/pool.h>
 #include <sys/vnode.h>
 
+struct rwlock uidinfolk;
 #define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
 LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
 u_long uihash;		/* size of hash table - 1 */
@@ -91,6 +93,7 @@ procinit(void)
 	LIST_INIT(&zombprocess);
 	LIST_INIT(&allproc);
 
+	rw_init(&uidinfolk, "uidinfo");
 
 	tidhashtbl = hashinit(maxthread / 4, M_PROC, M_NOWAIT, &tidhash);
 	pidhashtbl = hashinit(maxprocess / 4, M_PROC, M_NOWAIT, &pidhash);
@@ -113,6 +116,10 @@ procinit(void)
 	    PR_WAITOK, "sessionpl", NULL);
 }
 
+/*
+ * This returns with `uidinfolk' held: caller must call uid_release()
+ * after making whatever change they needed.
+ */
 struct uidinfo *
 uid_find(uid_t uid)
 {
@@ -120,12 +127,15 @@ uid_find(uid_t uid)
 	struct uihashhead *uipp;
 
 	uipp = UIHASH(uid);
+	rw_enter_write(&uidinfolk);
 	LIST_FOREACH(uip, uipp, ui_hash)
 		if (uip->ui_uid == uid)
 			break;
 	if (uip)
 		return (uip);
+	rw_exit_write(&uidinfolk);
 	nuip = malloc(sizeof(*nuip), M_PROC, M_WAITOK|M_ZERO);
+	rw_enter_write(&uidinfolk);
 	LIST_FOREACH(uip, uipp, ui_hash)
 		if (uip->ui_uid == uid)
 			break;
@@ -139,6 +149,12 @@ uid_find(uid_t uid)
 	return (nuip);
 }
 
+void
+uid_release(struct uidinfo *uip)
+{
+	rw_exit_write(&uidinfolk);
+}
+
 /*
  * Change the count associated with number of threads
  * a given user is using.
@@ -147,12 +163,14 @@ int
 chgproccnt(uid_t uid, int diff)
 {
 	struct uidinfo *uip;
+	long count;
 
 	uip = uid_find(uid);
-	uip->ui_proccnt += diff;
-	if (uip->ui_proccnt < 0)
+	count = (uip->ui_proccnt += diff);
+	uid_release(uip);
+	if (count < 0)
 		panic("chgproccnt: procs < 0");
-	return (uip->ui_proccnt);
+	return count;
 }
 
 /*
