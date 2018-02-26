@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.215 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.216 2018/02/26 13:33:25 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -82,6 +82,7 @@ void proc_stop(struct proc *p, int);
 void proc_stop_sweep(void *);
 struct timeout proc_stop_to;
 
+void postsig(struct proc *, int);
 int cansignal(struct proc *, struct process *, int);
 
 struct pool sigacts_pool;	/* memory pool for sigacts structures */
@@ -747,6 +748,27 @@ pgsignal(struct pgrp *pgrp, int signum, int checkctty)
 }
 
 /*
+ * Recalculate the signal mask and reset the signal disposition after
+ * usermode frame for delivery is formed.
+ */
+void
+postsig_done(struct proc *p, int signum, struct sigacts *ps)
+{
+	int mask = sigmask(signum);
+
+	KERNEL_ASSERT_LOCKED();
+
+	p->p_ru.ru_nsignals++;
+	atomic_setbits_int(&p->p_sigmask, ps->ps_catchmask[signum]);
+	if ((ps->ps_sigreset & mask) != 0) {
+		ps->ps_sigcatch &= ~mask;
+		if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
+			ps->ps_sigignore |= mask;
+		ps->ps_sigact[signum] = SIG_DFL;
+	}
+}
+
+/*
  * Send a signal caused by a trap to the current thread
  * If it will be caught immediately, deliver it with correct code.
  * Otherwise, post it normally.
@@ -780,16 +802,9 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 			    p->p_sigmask, code, &si);
 		}
 #endif
-		p->p_ru.ru_nsignals++;
 		(*pr->ps_emul->e_sendsig)(ps->ps_sigact[signum], signum,
 		    p->p_sigmask, trapno, code, sigval);
-		atomic_setbits_int(&p->p_sigmask, ps->ps_catchmask[signum]);
-		if ((ps->ps_sigreset & mask) != 0) {
-			ps->ps_sigcatch &= ~mask;
-			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
-				ps->ps_sigignore |= mask;
-			ps->ps_sigact[signum] = SIG_DFL;
-		}
+		postsig_done(p, signum, ps);
 	} else {
 		p->p_sisig = signum;
 		p->p_sitrapno = trapno;	/* XXX for core dump/debugger */
@@ -1330,9 +1345,8 @@ proc_stop_sweep(void *v)
  * from the current set of pending signals.
  */
 void
-postsig(int signum)
+postsig(struct proc *p, int signum)
 {
-	struct proc *p = curproc;
 	struct process *pr = p->p_p;
 	struct sigacts *ps = pr->ps_sigacts;
 	sig_t action;
@@ -1341,12 +1355,8 @@ postsig(int signum)
 	union sigval sigval;
 	int s, code;
 
-#ifdef DIAGNOSTIC
-	if (signum == 0)
-		panic("postsig");
-#endif
-
-	KERNEL_LOCK();
+	KASSERT(signum != 0);
+	KERNEL_ASSERT_LOCKED();
 
 	mask = sigmask(signum);
 	atomic_clearbits_int(&p->p_siglist, mask);
@@ -1366,7 +1376,7 @@ postsig(int signum)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PSIG)) {
 		siginfo_t si;
-		
+
 		initsiginfo(&si, signum, trapno, code, sigval);
 		ktrpsig(p, signum, action, p->p_flag & P_SIGSUSPEND ?
 		    p->p_oldmask : p->p_sigmask, code, &si);
@@ -1407,15 +1417,6 @@ postsig(int signum)
 		} else {
 			returnmask = p->p_sigmask;
 		}
-		atomic_setbits_int(&p->p_sigmask, ps->ps_catchmask[signum]);
-		if ((ps->ps_sigreset & mask) != 0) {
-			ps->ps_sigcatch &= ~mask;
-			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
-				ps->ps_sigignore |= mask;
-			ps->ps_sigact[signum] = SIG_DFL;
-		}
-		splx(s);
-		p->p_ru.ru_nsignals++;
 		if (p->p_sisig == signum) {
 			p->p_sisig = 0;
 			p->p_sitrapno = 0;
@@ -1425,9 +1426,9 @@ postsig(int signum)
 
 		(*pr->ps_emul->e_sendsig)(action, signum, returnmask, trapno,
 		    code, sigval);
+		postsig_done(p, signum, ps);
+		splx(s);
 	}
-
-	KERNEL_UNLOCK();
 }
 
 /*
@@ -1816,7 +1817,7 @@ filt_signal(struct knote *kn, long hint)
 void
 userret(struct proc *p)
 {
-	int sig;
+	int signum;
 
 	/* send SIGPROF or SIGVTALRM if their timers interrupted this thread */
 	if (p->p_flag & P_PROFPEND) {
@@ -1832,8 +1833,12 @@ userret(struct proc *p)
 		KERNEL_UNLOCK();
 	}
 
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
+	if (CURSIG(p) != 0) {
+		KERNEL_LOCK();
+		while ((signum = CURSIG(p)) != 0)
+			postsig(p, signum);
+		KERNEL_UNLOCK();
+	}
 
 	/*
 	 * If P_SIGSUSPEND is still set here, then we still need to restore
@@ -1845,8 +1850,10 @@ userret(struct proc *p)
 		atomic_clearbits_int(&p->p_flag, P_SIGSUSPEND);
 		p->p_sigmask = p->p_oldmask;
 
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
+		KERNEL_LOCK();
+		while ((signum = CURSIG(p)) != 0)
+			postsig(p, signum);
+		KERNEL_UNLOCK();
 	}
 
 	if (p->p_flag & P_SUSPSINGLE) {
