@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge_fdt.c,v 1.6 2018/02/24 22:28:08 kettenis Exp $	*/
+/*	$OpenBSD: if_dwge_fdt.c,v 1.7 2018/02/26 13:11:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -312,7 +312,7 @@ dwge_fdt_attach_rockchip(struct dwge_fdt_softc *sc)
 	} else if (OF_is_compatible(sc->sc_node, "rockchip,rk3328-gmac")) {
 		/* Use RGMII interface. */
 		regmap_write_4(rm, RK3328_GRF_MAC_CON1,
-		    RK3328_GMAC_PHY_INTF_SEL_RGMII | RK3399_RMII_MODE_MII);
+		    RK3328_GMAC_PHY_INTF_SEL_RGMII | RK3328_RMII_MODE_MII);
 
 		/* Program clock delay lines. */
 		regmap_write_4(rm, RK3328_GRF_MAC_CON0,
