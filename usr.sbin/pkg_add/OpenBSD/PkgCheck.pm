@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.67 2018/02/25 14:47:21 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.68 2018/02/26 13:04:30 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -296,13 +296,6 @@ sub log
 	}
 }
 
-sub safe
-{
-	my ($self, $string) = @_;
-	$string =~ s/[^\w\d\s\+\-\.\>\<\=\/\;\:\,\(\)\[\]\'\$\@\"]/?/g;
-	return $string;
-}
-
 sub handle_options
 {
 	my $self = shift;
@@ -358,8 +351,7 @@ sub new
 		if ($state->{exists}{$pkg}) {
 			$o->{possible}{$pkg} = 1;
 		} else {
-			$state->errsay("#1: bogus #2",
-			    $name, $o->string($state->safe($pkg)));
+			$state->errsay("#1: bogus #2", $name, $o->string($pkg));
 		}
 	}
 	return $o;
@@ -387,8 +379,7 @@ sub ask_delete_deps
 	my ($self, $state, $l) = @_;
 	if ($state->{force}) {
 		$self->{req}->delete(@$l);
-	} elsif ($state->confirm("Remove missing ".
-		    $state->safe($self->string(@$l)))) {
+	} elsif ($state->confirmf("Remove missing #1", $self->string(@$l))) {
 			$self->{req}->delete(@$l);
 	}
 }
@@ -398,8 +389,7 @@ sub ask_add_deps
 	my ($self, $state, $l) = @_;
 	if ($state->{force}) {
 		$self->{req}->add(@$l);
-	} elsif ($state->confirm("Add missing ".
-		    $self->string(@$l))) {
+	} elsif ($state->confirmf("Add missing #1", $self->string(@$l))) {
 			$self->{req}->add(@$l);
 	}
 }
@@ -414,7 +404,7 @@ sub adjust
 		}
 		if (@todo != 0) {
 			$state->errsay("#1 has too many #2",
-			    $self->{name}, $state->safe($self->string(@todo)));
+			    $self->{name}, $self->string(@todo));
 			$self->ask_delete_deps($state, \@todo);
 		}
 	}
@@ -561,34 +551,32 @@ sub remove
 	for my $i (@OpenBSD::PackageInfo::info) {
 		if (-e $dir.$i) {
 			if ($state->verbose) {
-				$state->say("unlink(#1)", 
-				    $state->safe($dir.$i));
+				$state->say("unlink(#1)", $dir.$i);
 			}
 			unless ($state->{not}) {
 				unlink($dir.$i) or
 				    $state->errsay("#1: Couldn't delete #2: #3",
-				    	$state->safe($name), 
-					$state->safe($dir.$i), $!);
+				    	$name, $dir.$i, $!);
 			}
 		}
 	}
 	if (-f $dir) {
 		if ($state->verbose) {
-			$state->say("unlink(#1)", $state->safe($dir));
+			$state->say("unlink(#1)", $dir);
 		}
 		unless ($state->{not}) {
 			unlink($dir) or
 			    $state->errsay("#1: Couldn't delete #2: #3",
-				$state->safe($name), $state->safe($dir), $!);
+				$name, $dir, $!);
 		}
 	} elsif (-d $dir) {
 		if ($state->verbose) {
-			$state->say("rmdir(#1)", $state->safe($dir));
+			$state->say("rmdir(#1)", $dir);
 		}
 		unless ($state->{not}) {
 			rmdir($dir) or
 			    $state->errsay("#1: Couldn't delete #2: #3",
-			    	$state->safe($name), $state->safe($dir), $!);
+			    	$name, $dir, $!);
 		}
 	}
 }
@@ -598,7 +586,7 @@ sub may_remove
 	my ($self, $state, $name) = @_;
 	if ($state->{force}) {
 		$self->remove($state, $name);
-	} elsif ($state->confirm("Remove wrong package ".$state->safe($name))) {
+	} elsif ($state->confirmf("Remove wrong package #1", $name)) {
 			$self->remove($state, $name);
 	}
 	$state->{bogus}{$name} = 1;
@@ -608,31 +596,30 @@ sub may_unlink
 {
 	my ($self, $state, $path) = @_;
 	if (!$state->{force} && 
-	    !$state->confirm("Remove non-file".$state->safe($path))) {
+	    !$state->confirmf("Remove #1", $path)) {
 		return;
 	}
 	if ($state->verbose) {
-		$state->say("remove #1", $state->safe($path));
+		$state->say("remove #1", $path);
 	}
 	return if $state->{not};
-	rmdir($path) or 
-	    $state->errsay("Couldn't delete #1: #2", $state->safe($path), $!);
+	unlink($path) or rmdir($path) or
+	    $state->errsay("Couldn't delete #1: #2", $path, $!);
 }
 
 sub may_fix_ownership
 {
 	my ($self, $state, $path) = @_;
 	if (!$state->{force} && 
-	    !$state->confirm("Give ".$state->safe($path)." to root:wheel")) {
+	    !$state->confirmf("Give #1 to root:wheel", $path)) {
 		return;
 	}
 	if ($state->verbose) {
-		$state->say("chown root:wheel #1", $state->safe($path));
+		$state->say("chown root:wheel #1", $path);
 	}
 	return if $state->{not};
 	chown 0, 0, $path or
-	    $state->errsay("Couldn't fix ownership for #1: #1",
-	    	$state->safe($path), $!);
+	    $state->errsay("Couldn't fix ownership for #1: #2", $path, $!);
 }
 
 sub may_fix_perms
@@ -640,18 +627,16 @@ sub may_fix_perms
 	my ($self, $state, $path, $perm, $readable) = @_;
 
 	if (!$state->{force} && 
-	    !$state->confirm("Make ".$state->safe($path).
-	    ($readable ? " not world/group-writable" : " world readable"))) {
+	    !$state->confirmf("Make #1 #2", $path,
+	    ($readable ? "not world/group-writable" : "world readable"))) {
 		return;
 	}
 	if ($state->verbose) {
-		$state->say("chmod #1 #2", sprintf("%04o", $perm), 
-		    $state->safe($path));
+		$state->say("chmod #1 #2", sprintf("%04o", $perm), $path);
 	}
 	return if $state->{not};
 	chmod $perm, $path or
-	    $state->errsay("Couldn't fix perms for #1: #2", 
-	    	$state->safe($path), $!);
+	    $state->errsay("Couldn't fix perms for #1: #2", $path, $!);
 }
 
 sub for_all_packages
@@ -676,19 +661,17 @@ sub check_dir_permissions
 	$perm &= 0777;
 
 	if (($perm & 0555) != 0555) {
-		$state->errsay("Directory #1 is not world-readable",
-		    $state->safe($dir));
+		$state->errsay("Directory #1 is not world-readable", $dir);
 		$perm |= 0555;
 		$self->may_fix_perms($state, $dir, $perm, 0);
 	}
 	if ($uid != 0 || $gid != 0) {
 		$state->errsay("Directory #1 does not belong to root:wheel",
-		    $state->safe($dir));
+		    $dir);
 	    	$self->may_fix_ownership($state, $dir);
 	}
 	if (($perm & 0022) != 0) {
-		$state->errsay("Directory #1 is world/group writable",
-		    $state->safe($dir));
+		$state->errsay("Directory #1 is world/group writable", $dir);
 		$perm &= 0755;
 		$self->may_fix_perms($state, $dir, $perm, 1);
 	}
@@ -699,35 +682,41 @@ sub check_permissions
 	my ($self, $state, $dir) = @_;
 
 	$self->check_dir_permissions($state, $dir);
-	for my $name (@OpenBSD::PackageInfo::info) {
+	opendir(my $d, $dir) or return;
+	for my $name (readdir $d) {
+		next if $name eq '.' or $name eq '..';
 		my $file = $dir.$name;
-		next unless -e $file;
+		if (!grep {$_ eq $name} (@OpenBSD::PackageInfo::info)) {
+			$state->errsay("Weird filename in pkg db: #1",
+			    $file);
+			$self->may_unlink($state, $file);
+			next;
+		}
 		my ($perm, $uid, $gid) = (stat $file)[2, 4, 5];
 		if (!-f $file) {
-			$state->errsay("#1 should be a file", 
-			    $state->safe($file));
+			$state->errsay("#1 should be a file", $file);
 			$self->may_unlink($state, $file);
 			next;
 		}
 		$perm &= 0777;
 		if (($perm & 0444) != 0444) {
-			$state->errsay("File #1 is not world-readable",
-			    $state->safe($file));
+			$state->errsay("File #1 is not world-readable", $file);
 			$perm |= 0444;
 			$self->may_fix_perms($state, $file, $perm, 0);
 		}
 		if ($uid != 0 || $gid != 0) {
 			$state->errsay("File #1 does not belong to root:wheel",
-			    $state->safe($file));
+			    $file);
 			$self->may_fix_ownership($state, $file);
 		}
 		if (($perm & 0022) != 0) {
 			$state->errsay("File #1 is world/group writable",
-			    $state->safe($file));
+			    $file);
 			$perm &= 0755;
 			$self->may_fix_perms($state, $file, $perm, 1);
 		}
 	}
+	closedir($d);
 }
 
 
@@ -742,10 +731,15 @@ sub sanity_check
 
 	$self->for_all_packages($state, $l, "Packing-list sanity", sub {
 		my $name = shift;
+		if ($name ne $state->safe($name)) {
+			$state->errsay("#1: bogus pkgname", $name);
+			$self->may_remove($state, $name);
+			return;
+		}
 		my $info = installed_info($name);
 		if (-f $info) {
 			$state->errsay("#1: #2 should be a directory",
-			    $state->safe($name), $state->safe($info));
+			    $name, $info);
 			if ($info =~ m/\.core$/) {
 				$state->errsay("looks like a core dump, ".
 					"removing");
@@ -758,8 +752,7 @@ sub sanity_check
 		$self->check_permissions($state, $info);
 		my $contents = $info.OpenBSD::PackageInfo::CONTENTS;
 		unless (-f $contents) {
-			$state->errsay("#1: missing #2",
-			    $state->safe($name), $state->safe($contents));
+			$state->errsay("#1: missing #2", $name, $contents);
 			$self->may_remove($state, $name);
 			return;
 		}
@@ -768,22 +761,20 @@ sub sanity_check
 			$plist = OpenBSD::PackingList->fromfile($contents);
 		};
 		if ($@ || !defined $plist) {
-			$state->errsay("#1: bad packing-list", $state->safe($name));
+			$state->errsay("#1: bad packing-list", $name);
 			if ($@) {
-				$state->errsay("#1", $state->safe($@));
+				$state->errsay("#1", $@);
 			}
 			$self->may_remove($state, $name);
 			return;
 		}
 		if (!defined $plist->pkgname) {
-			$state->errsay("#1: no pkgname in plist",
-			    $state->safe($name));
+			$state->errsay("#1: no pkgname in plist", $name);
 			$self->may_remove($state, $name);
 			return;
 		}
 		if ($plist->pkgname ne $name) {
-			$state->errsay("#1: pkgname does not match",
-			    $state->safe($name));
+			$state->errsay("#1: pkgname does not match", $name);
 			$self->may_remove($state, $name);
 		}
 		$plist->mark_available_lib($plist->pkgname, $state);

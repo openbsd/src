@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.48 2017/12/23 12:35:47 espie Exp $
+# $OpenBSD: State.pm,v 1.49 2018/02/26 13:04:30 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -174,6 +174,14 @@ sub usage
 	exit($code);
 }
 
+sub safe
+{
+	my ($self, $string) = @_;
+	my @l = split(/\n/, $string);
+	s/[[:^print:]]/?/g for @l;
+	return join("\n", $string);
+}
+
 sub f
 {
 	my $self = shift;
@@ -181,6 +189,12 @@ sub f
 		return undef;
 	}
 	my ($fmt, @l) = @_;
+
+	# encode any unknown chars as ?
+	for (@l) {
+		$_ = $self->safe($_);
+	}
+
 	# make it so that #0 is #
 	unshift(@l, '#');
 	$fmt =~ s,\#(\d+),($l[$1] // "<Undefined #$1>"),ge;

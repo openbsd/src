@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.39 2016/06/24 11:42:30 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.40 2018/02/26 13:04:30 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -112,6 +112,11 @@ sub confirm
 	return $self->{interactive}->confirm(@_);
 }
 
+sub confirmf
+{
+	my $self = shift;
+	return $self->{interactive}->confirm($self->f(@_));
+}
 sub ask_list
 {
 	my $self = shift;
