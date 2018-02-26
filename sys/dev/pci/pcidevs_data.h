@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1836 2018/02/23 07:04:57 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1837 2018/02/26 06:46:10 ccardenas Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -122,6 +122,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ7223,
 	    "OZ711E0 CardBus",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ8621,
+	    "0Z8621 SD/MMC",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985,
@@ -1288,6 +1292,58 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AMD64 16h Host",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_6X_LINK,
+	    "AMD64 15h Link Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_6X_ADDR,
+	    "AMD64 15h Address Map",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_6X_DRAM,
+	    "AMD64 15h DRAM Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_6X_MISC,
+	    "AMD64 15h Misc Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_6X_CPU_PM,
+	    "AMD64 15h CPU Power",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_6X_MISC_2,
+	    "AMD64 15h Misc Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_6X_RC,
+	    "AMD64 15h Root Complex",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_6X_IOMMU,
+	    "AMD64 15h IOMMU",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_6X_PSP,
+	    "AMD64 15h PSP 2.0",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_6X_AUDIO,
+	    "AMD64 15h HD Audio",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_6X_HB_1,
+	    "AMD64 15h Host",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_6X_PCIE_1,
+	    "AMD64 15h PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_6X_HB_2,
+	    "AMD64 15h Host",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_3X_LINK,
 	    "AMD64 16h Link Cfg",
 	},
@@ -1718,6 +1774,42 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_BOLTON_XHCI,
 	    "Bolton xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CARRIZO_SATA_1,
+	    "Carrizo SATA",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CARRIZO_AHCI_1,
+	    "Carrizo AHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CARRIZO_RAID_1,
+	    "Carrizo RAID",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CARRIZO_RAID_2,
+	    "Carrizo RAID",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CARRIZO_AHCI_2,
+	    "Carrizo AHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CARRIZO_EHCI,
+	    "Carrizo USB2",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CARRIZO_SMB,
+	    "Carrizo SMBus",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CARRIZO_LPC,
+	    "Carrizo LPC",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CARRIZO_XHCI,
+	    "Carrizo xHCI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_HB,
@@ -5386,6 +5478,26 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_1,
 	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CARRIZO_1,
+	    "Carrizo",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CARRIZO_2,
+	    "Carrizo",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CARRIZO_3,
+	    "Carrizo",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CARRIZO_4,
+	    "Carrizo",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CARRIZO_5,
+	    "Carrizo",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_ARUBA_1,
