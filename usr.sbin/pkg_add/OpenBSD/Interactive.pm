@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.21 2016/06/24 14:20:49 espie Exp $
+# $OpenBSD: Interactive.pm,v 1.22 2018/02/26 13:53:31 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -94,7 +94,7 @@ LOOP2:
 	    $prompt, $yesno ? "Y/n" : "y/N");
 
 	my $result = <STDIN>;
-	unless(defined $result) {
+	unless (defined $result) {
 		$self->{state}->errsay("");
 		return $yesno;
 	}
