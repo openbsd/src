@@ -1,4 +1,4 @@
-/*	$OpenBSD: rktemp.c,v 1.2 2017/12/29 10:39:01 kettenis Exp $	*/
+/*	$OpenBSD: rktemp.c,v 1.3 2018/02/26 22:37:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -115,6 +115,45 @@ struct rktemp_entry rk3288_temps[] = {
 
 const char *rk3288_names[] = { "", "CPU", "GPU" };
 
+/* RK3328 conversion table. */
+struct rktemp_entry rk3328_temps[] = {
+	{ -40000, 296 },
+	{ -35000, 304 },
+	{ -30000, 313 },
+	{ -20000, 331 },
+	{ -15000, 340 },
+	{ -10000, 349 },
+	{  -5000, 359 },
+	{      0, 368 },
+	{   5000, 378 },
+	{  10000, 388 },
+	{  15000, 398 },
+	{  20000, 408 },
+	{  25000, 418 },
+	{  30000, 429 },
+	{  35000, 440 },
+	{  40000, 451 },
+	{  45000, 462 },
+	{  50000, 473 },
+	{  55000, 485 },
+	{  60000, 496 },
+	{  65000, 508 },
+	{  70000, 521 },
+	{  75000, 533 },
+	{  80000, 546 },
+	{  85000, 559 },
+	{  90000, 572 },
+	{  95000, 586 },
+	{ 100000, 600 },
+	{ 105000, 614 },
+	{ 110000, 629 },
+	{ 115000, 644 },
+	{ 120000, 659 },
+	{ 125000, 675 },
+};
+
+const char *rk3328_names[] = { "CPU" };
+
 /* RK3399 conversion table. */
 struct rktemp_entry rk3399_temps[] = {
 	{ -40000, 402 },
@@ -190,6 +229,7 @@ rktemp_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "rockchip,rk3288-tsadc") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-tsadc") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-tsadc"));
 }
 
@@ -223,6 +263,11 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ntemps = nitems(rk3288_temps);
 		sc->sc_nsensors = 3;
 		names = rk3288_names;
+	} else if (OF_is_compatible(node, "rockchip,rk3328-tsadc")) {
+		sc->sc_temps = rk3328_temps;
+		sc->sc_ntemps = nitems(rk3328_temps);
+		sc->sc_nsensors = 1;
+		names = rk3328_names;
 	} else {
 		sc->sc_temps = rk3399_temps;
 		sc->sc_ntemps = nitems(rk3399_temps);
