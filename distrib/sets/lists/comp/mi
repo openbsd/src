@@ -2005,6 +2005,7 @@
 ./usr/share/man/man3/X509_NAME_get_index_by_NID.3
 ./usr/share/man/man3/X509_NAME_new.3
 ./usr/share/man/man3/X509_NAME_print_ex.3
+./usr/share/man/man3/X509_OBJECT_get0_X509.3
 ./usr/share/man/man3/X509_PUBKEY_new.3
 ./usr/share/man/man3/X509_REQ_new.3
 ./usr/share/man/man3/X509_REVOKED_new.3
@@ -2014,6 +2015,7 @@
 ./usr/share/man/man3/X509_STORE_CTX_new.3
 ./usr/share/man/man3/X509_STORE_CTX_set_verify_cb.3
 ./usr/share/man/man3/X509_STORE_load_locations.3
+./usr/share/man/man3/X509_STORE_new.3
 ./usr/share/man/man3/X509_STORE_set1_param.3
 ./usr/share/man/man3/X509_STORE_set_verify_cb_func.3
 ./usr/share/man/man3/X509_VERIFY_PARAM_set_flags.3
