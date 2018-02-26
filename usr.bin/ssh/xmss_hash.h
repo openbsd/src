@@ -1,3 +1,4 @@
+/* $OpenBSD: xmss_hash.h,v 1.2 2018/02/26 03:56:44 dtucker Exp $ */
 /*
 hash.h version 20160722
 Andreas Hülsing
