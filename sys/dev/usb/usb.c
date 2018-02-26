@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.117 2018/02/19 09:20:45 jsg Exp $	*/
+/*	$OpenBSD: usb.c,v 1.118 2018/02/26 13:06:49 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -992,11 +992,17 @@ usb_tap(struct usbd_bus *bus, struct usbd_xfer *xfer, uint8_t dir)
 #if NBPFILTER > 0
 	struct usb_softc *sc = (struct usb_softc *)bus->usbctl;
 	usb_endpoint_descriptor_t *ed = xfer->pipe->endpoint->edesc;
-	struct usbpcap_ctl_hdr uch;
-	struct usbpcap_pkt_hdr *uph = &uch.uch_hdr;
+	union {
+		struct usbpcap_ctl_hdr		uch;
+		struct usbpcap_iso_hdr_full	uih;
+	} h;
+	struct usbpcap_pkt_hdr *uph = &h.uch.uch_hdr;
+	uint32_t nframes, offset;
 	unsigned int bpfdir;
 	void *data = NULL;
+	size_t flen;
 	caddr_t bpf;
+	int i;
 
 	bpf = bus->bpf;
 	if (bpf == NULL)
@@ -1004,13 +1010,34 @@ usb_tap(struct usbd_bus *bus, struct usbd_xfer *xfer, uint8_t dir)
 
 	switch (UE_GET_XFERTYPE(ed->bmAttributes)) {
 	case UE_CONTROL:
-		/* Control transfer headers include an extra byte. */
-		uph->uph_hlen = htole16(sizeof(uch));
+		/* Control transfer headers include an extra byte */
+		uph->uph_hlen = htole16(sizeof(struct usbpcap_ctl_hdr));
 		uph->uph_xfertype = USBPCAP_TRANSFER_CONTROL;
 		break;
 	case UE_ISOCHRONOUS:
-		uph->uph_hlen = htole16(sizeof(*uph));
+		offset = 0;
+		nframes = xfer->nframes;
+#ifdef DIAGNOSTIC
+		if (nframes > _USBPCAP_MAX_ISOFRAMES) {
+			printf("%s: too many frames: %d > %d\n", __func__,
+			    xfer->nframes, _USBPCAP_MAX_ISOFRAMES);
+			nframes = _USBPCAP_MAX_ISOFRAMES;
+		}
+#endif
+		/* Isochronous transfer headers include space for one frame */
+		flen = (nframes - 1) * sizeof(struct usbpcap_iso_pkt);
+		uph->uph_hlen = htole16(sizeof(struct usbpcap_iso_hdr) + flen);
 		uph->uph_xfertype = USBPCAP_TRANSFER_ISOCHRONOUS;
+		h.uih.uih_startframe = 0; /* not yet used */
+		h.uih.uih_nframes = nframes;
+		h.uih.uih_errors = 0; /* we don't have per-frame error */
+		for (i = 0; i < nframes; i++) {
+			h.uih.uih_frames[i].uip_offset = offset;
+			h.uih.uih_frames[i].uip_length = xfer->frlengths[i];
+			/* See above, we don't have per-frame error */
+			h.uih.uih_frames[i].uip_status = 0;
+			offset += xfer->frlengths[i];
+		}
 		break;
 	case UE_BULK:
 		uph->uph_hlen = htole16(sizeof(*uph));
@@ -1034,7 +1061,7 @@ usb_tap(struct usbd_bus *bus, struct usbd_xfer *xfer, uint8_t dir)
 
 	/* Outgoing control requests start with a STAGE dump. */
 	if ((xfer->rqflags & URQ_REQUEST) && (dir == USBTAP_DIR_OUT)) {
-		uch.uch_stage = USBPCAP_CONTROL_STAGE_SETUP;
+		h.uch.uch_stage = USBPCAP_CONTROL_STAGE_SETUP;
 		uph->uph_dlen = sizeof(usb_device_request_t);
 		bpf_tap_hdr(bpf, uph, uph->uph_hlen, &xfer->request,
 		    uph->uph_dlen, BPF_DIRECTION_OUT);
@@ -1045,11 +1072,13 @@ usb_tap(struct usbd_bus *bus, struct usbd_xfer *xfer, uint8_t dir)
 		if (!usbd_xfer_isread(xfer)) {
 			data = KERNADDR(&xfer->dmabuf, 0);
 			uph->uph_dlen = xfer->length;
-			uch.uch_stage = USBPCAP_CONTROL_STAGE_DATA;
+			if (xfer->rqflags & URQ_REQUEST)
+				h.uch.uch_stage = USBPCAP_CONTROL_STAGE_DATA;
 		} else {
 			data = NULL;
 			uph->uph_dlen = 0;
-			uch.uch_stage = USBPCAP_CONTROL_STAGE_STATUS;
+			if (xfer->rqflags & URQ_REQUEST)
+				h.uch.uch_stage = USBPCAP_CONTROL_STAGE_STATUS;
 		}
 	} else { /* USBTAP_DIR_IN */
 		bpfdir = BPF_DIRECTION_IN;
@@ -1057,11 +1086,13 @@ usb_tap(struct usbd_bus *bus, struct usbd_xfer *xfer, uint8_t dir)
 		if (usbd_xfer_isread(xfer)) {
 			data = KERNADDR(&xfer->dmabuf, 0);
 			uph->uph_dlen = xfer->actlen;
-			uch.uch_stage = USBPCAP_CONTROL_STAGE_DATA;
+			if (xfer->rqflags & URQ_REQUEST)
+				h.uch.uch_stage = USBPCAP_CONTROL_STAGE_DATA;
 		} else {
 			data = NULL;
 			uph->uph_dlen = 0;
-			uch.uch_stage = USBPCAP_CONTROL_STAGE_STATUS;
+			if (xfer->rqflags & URQ_REQUEST)
+				h.uch.uch_stage = USBPCAP_CONTROL_STAGE_STATUS;
 		}
 	}
 
@@ -1070,8 +1101,8 @@ usb_tap(struct usbd_bus *bus, struct usbd_xfer *xfer, uint8_t dir)
 
 	/* Incoming control requests with DATA need a STATUS stage. */
 	if ((xfer->rqflags & URQ_REQUEST) && (dir == USBTAP_DIR_IN) &&
-	    (uch.uch_stage == USBPCAP_CONTROL_STAGE_DATA)) {
-		uch.uch_stage = USBPCAP_CONTROL_STAGE_STATUS;
+	    (h.uch.uch_stage == USBPCAP_CONTROL_STAGE_DATA)) {
+		h.uch.uch_stage = USBPCAP_CONTROL_STAGE_STATUS;
 		uph->uph_dlen = 0;
 		bpf_tap_hdr(bpf, uph, uph->uph_hlen, NULL, 0, BPF_DIRECTION_IN);
 	}

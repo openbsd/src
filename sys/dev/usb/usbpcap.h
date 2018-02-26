@@ -1,4 +1,4 @@
-/* $OpenBSD: usbpcap.h,v 1.1 2018/02/03 13:37:37 mpi Exp $ */
+/* $OpenBSD: usbpcap.h,v 1.2 2018/02/26 13:06:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2018 Martin Pieuchot
@@ -53,4 +53,35 @@ struct usbpcap_ctl_hdr {
 #define USBPCAP_CONTROL_STAGE_STATUS	2
 } __attribute__((packed));
 
+struct usbpcap_iso_pkt {
+	uint32_t	uip_offset;
+	uint32_t	uip_length;
+	uint32_t	uip_status;
+} __attribute__((packed));
+
+/*
+ * Header used when dumping isochronous transfers.
+ */
+struct usbpcap_iso_hdr {
+	struct usbpcap_pkt_hdr	uih_hdr;
+	uint32_t		uih_startframe;
+	uint32_t		uih_nframes;	/* number of frame */
+	uint32_t		uih_errors;	/* error count */
+	struct usbpcap_iso_pkt	uih_frames[1];
+} __attribute__((packed));
+
+#ifdef _KERNEL
+/*
+ * OpenBSD specific, maximum number of frames per transfer used across
+ * all USB drivers.  This allows us to setup the header on the stack.
+ */
+#define _USBPCAP_MAX_ISOFRAMES 40
+struct usbpcap_iso_hdr_full {
+	struct usbpcap_pkt_hdr	uih_hdr;
+	uint32_t		uih_startframe;
+	uint32_t		uih_nframes;
+	uint32_t		uih_errors;
+	struct usbpcap_iso_pkt	uih_frames[_USBPCAP_MAX_ISOFRAMES];
+} __attribute__((packed));
+#endif /* _KERNEL */
 #endif /* _USBCAP_H_ */
