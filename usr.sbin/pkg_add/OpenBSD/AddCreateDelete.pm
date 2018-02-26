@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.41 2018/02/26 14:07:39 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.42 2018/02/26 14:09:27 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -196,11 +196,6 @@ sub confirm
 {
 	my ($self, $prompt, $yesno) = @_;
 	return $yesno;
-}
-
-sub confirmf
-{
-	return 0;
 }
 
 sub is_interactive
