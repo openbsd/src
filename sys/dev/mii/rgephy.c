@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.39 2017/03/11 13:40:46 kettenis Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.40 2018/02/27 19:47:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -255,6 +255,11 @@ setit:
 				sc->mii_ticks = 0;
 				break;
 			}
+		} else if (sc->mii_rev == RGEPHY_8211F) {
+			reg = PHY_READ(sc, RGEPHY_F_SR);
+			if (reg & RGEPHY_F_SR_LINK) {
+				sc->mii_ticks = 0;
+			}
 		} else {
 			reg = PHY_READ(sc, RGEPHY_SR);
 			if (reg & RGEPHY_SR_LINK) {
@@ -309,6 +314,10 @@ rgephy_status(struct mii_softc *sc)
 		bmsr = PHY_READ(sc, RL_GMEDIASTAT);
 		if (bmsr & RL_GMEDIASTAT_LINK)
 			mii->mii_media_status |= IFM_ACTIVE;
+	} else if (sc->mii_rev == RGEPHY_8211F) {
+		bmsr = PHY_READ(sc, RGEPHY_F_SR);
+		if (bmsr & RGEPHY_F_SR_LINK)
+			mii->mii_media_status |= IFM_ACTIVE;
 	} else {
 		bmsr = PHY_READ(sc, RGEPHY_SR);
 		if (bmsr & RGEPHY_SR_LINK)
@@ -340,6 +349,20 @@ rgephy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_10_T;
 
 		if (bmsr & RL_GMEDIASTAT_FDX)
+			mii->mii_media_active |= mii_phy_flowstatus(sc) |
+			    IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
+	} else if (sc->mii_rev == RGEPHY_8211F) {
+		bmsr = PHY_READ(sc, RGEPHY_F_SR);
+		if (RGEPHY_F_SR_SPEED(bmsr) == RGEPHY_F_SR_SPEED_1000MBPS)
+			mii->mii_media_active |= IFM_1000_T;
+		else if (RGEPHY_F_SR_SPEED(bmsr) == RGEPHY_F_SR_SPEED_100MBPS)
+			mii->mii_media_active |= IFM_100_TX;
+		else if (RGEPHY_F_SR_SPEED(bmsr) == RGEPHY_F_SR_SPEED_10MBPS)
+			mii->mii_media_active |= IFM_10_T;
+
+		if (bmsr & RGEPHY_F_SR_FDX)
 			mii->mii_media_active |= mii_phy_flowstatus(sc) |
 			    IFM_FDX;
 		else

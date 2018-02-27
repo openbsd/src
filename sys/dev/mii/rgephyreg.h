@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephyreg.h,v 1.8 2015/07/19 06:35:18 yuo Exp $	*/
+/*	$OpenBSD: rgephyreg.h,v 1.9 2018/02/27 19:47:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -36,6 +36,10 @@
 #ifndef _DEV_MII_RGEPHYREG_H_
 #define	_DEV_MII_RGEPHYREG_H_
 
+#define RGEPHY_8211B		2
+#define RGEPHY_8211C		3
+#define RGEPHY_8211F		6
+
 /*
  * Realtek 8169S/8110S gigE PHY registers
  */
@@ -52,6 +56,7 @@
 #define RGEPHY_CR_ALDPS		0x0004	/* RTL8251 only */
 #define RGEPHY_CR_JABBER_DIS	0x0001
 
+/* RTL8211B(L)/RTL8211C(L) */
 #define RGEPHY_SR		0x11	/* PHY Specific Status */
 #define RGEPHY_SR_SPEED_1000MBPS	0x8000
 #define RGEPHY_SR_SPEED_100MBPS		0x4000
@@ -65,6 +70,16 @@
 #define RGEPHY_SR_ALDPS			0x0008	/* RTL8211C(L) only */
 #define RGEPHY_SR_JABBER		0x0001	/* Jabber */
 #define RGEPHY_SR_SPEED(X)		((X) & RGEPHY_SR_SPEED_MASK)
+
+/* RTL8211F */
+#define RGEPHY_F_SR		0x1A	/* PHY Specific Status */
+#define RGEPHY_F_SR_SPEED_1000MBPS	0x0020
+#define RGEPHY_F_SR_SPEED_100MBPS	0x0010
+#define RGEPHY_F_SR_SPEED_10MBPS	0x0000
+#define RGEPHY_F_SR_SPEED_MASK		0x0030
+#define RGEPHY_F_SR_FDX			0x0008
+#define RGEPHY_F_SR_LINK		0x0004
+#define RGEPHY_F_SR_SPEED(X)		((X) & RGEPHY_F_SR_SPEED_MASK)
 
 #define RGEPHY_LC		0x18	/* PHY LED Control Register */
 #define RGEPHY_LC_P2		0x1A	/* PHY LED Control Register, Page 2 */
