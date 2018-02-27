@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.114 2018/02/25 01:52:25 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.115 2018/02/27 04:36:18 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -187,6 +187,9 @@ struct gre_tunnel {
 };
 
 static int
+		gre_cmp_src(const struct gre_tunnel *,
+		    const struct gre_tunnel *);
+static int
 		gre_cmp(const struct gre_tunnel *, const struct gre_tunnel *);
 
 static int	gre_set_tunnel(struct gre_tunnel *, struct if_laddrreq *, int);
@@ -217,10 +220,10 @@ static int	gre_tunnel_ioctl(struct ifnet *, struct gre_tunnel *,
  */
 
 struct gre_softc {
-	struct ifnet		sc_if;
-
-	struct gre_tunnel	sc_tunnel;
+	struct gre_tunnel	sc_tunnel; /* must be first */
 	TAILQ_ENTRY(gre_softc)	sc_entry;
+
+	struct ifnet		sc_if;
 
 	struct timeout		sc_ka_send;
 	struct timeout		sc_ka_hold;
@@ -264,12 +267,47 @@ static void	gre_link_state(struct gre_softc *);
 
 static int	gre_input_key(struct mbuf **, int *, int, int,
 		    struct gre_tunnel *);
-static struct gre_softc *
-		gre_find(const struct gre_tunnel *);
 
 static void	gre_keepalive_send(void *);
 static void	gre_keepalive_recv(struct ifnet *ifp, struct mbuf *);
 static void	gre_keepalive_hold(void *);
+
+static struct mbuf *
+		gre_l3_encap_dst(const struct gre_tunnel *, const void *,
+		    struct mbuf *m, sa_family_t);
+
+#define gre_l3_encap(_t, _m, _af) \
+		gre_l3_encap_dst((_t), &(_t)->t_dst, (_m), (_af))
+
+struct mgre_softc {
+	struct gre_tunnel	sc_tunnel; /* must be first */
+	RBT_ENTRY(mgre_softc)	sc_entry;
+
+	struct ifnet		sc_if;
+};
+
+RBT_HEAD(mgre_tree, mgre_softc);
+
+static inline int
+		mgre_cmp(const struct mgre_softc *, const struct mgre_softc *);
+
+RBT_PROTOTYPE(mgre_tree, mgre_softc, sc_entry, mgre_cmp);
+
+static int	mgre_clone_create(struct if_clone *, int);
+static int	mgre_clone_destroy(struct ifnet *);
+
+struct if_clone mgre_cloner =
+    IF_CLONE_INITIALIZER("mgre", mgre_clone_create, mgre_clone_destroy);
+
+static int	mgre_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+		    struct rtentry *);
+static void	mgre_start(struct ifnet *);
+static int	mgre_ioctl(struct ifnet *, u_long, caddr_t);
+
+static int	mgre_up(struct mgre_softc *);
+static int	mgre_down(struct mgre_softc *);
+
+struct mgre_tree mgre_tree = RBT_INITIALIZER();
 
 /*
  * Ethernet GRE tunnels
@@ -431,6 +469,7 @@ void
 greattach(int n)
 {
 	if_clone_attach(&gre_cloner);
+	if_clone_attach(&mgre_cloner);
 	if_clone_attach(&egre_cloner);
 	if_clone_attach(&nvgre_cloner);
 }
@@ -488,6 +527,59 @@ gre_clone_destroy(struct ifnet *ifp)
 		gre_down(sc);
 
 	TAILQ_REMOVE(&gre_list, sc, sc_entry);
+	NET_UNLOCK();
+
+	if_detach(ifp);
+
+	free(sc, M_DEVBUF, sizeof(*sc));
+
+	return (0);
+}
+
+static int
+mgre_clone_create(struct if_clone *ifc, int unit)
+{
+	struct mgre_softc *sc;
+	struct ifnet *ifp;
+
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
+	ifp = &sc->sc_if;
+
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname),
+	    "%s%d", ifc->ifc_name, unit);
+
+	ifp->if_softc = sc;
+	ifp->if_type = IFT_L3IPVLAN;
+	ifp->if_hdrlen = 24; /* IP + GRE */
+	ifp->if_mtu = GREMTU;
+	ifp->if_flags = 0; /* it's not p2p, and can't mcast or bcast */
+	ifp->if_xflags = IFXF_CLONED;
+	ifp->if_rtrequest = p2p_rtrequest; /* maybe? */;
+	ifp->if_output = mgre_output;
+	ifp->if_start = mgre_start;
+	ifp->if_ioctl = mgre_ioctl;
+
+	sc->sc_tunnel.t_ttl = ip_defttl;
+	sc->sc_tunnel.t_df = htons(0);
+
+	if_attach(ifp);
+	if_alloc_sadl(ifp);
+
+#if NBPFILTER > 0
+	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
+#endif
+
+	return (0);
+}
+
+static int
+mgre_clone_destroy(struct ifnet *ifp)
+{
+	struct mgre_softc *sc = ifp->if_softc;
+
+	NET_LOCK();
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
+		mgre_down(sc);
 	NET_UNLOCK();
 
 	if_detach(ifp);
@@ -669,7 +761,7 @@ gre_input6(struct mbuf **mp, int *offp, int type, int af)
 }
 #endif /* INET6 */
 
-static struct gre_softc *
+static inline struct ifnet *
 gre_find(const struct gre_tunnel *key)
 {
 	struct gre_softc *sc;
@@ -681,8 +773,20 @@ gre_find(const struct gre_tunnel *key)
 		if (!ISSET(sc->sc_if.if_flags, IFF_RUNNING))
 			continue;
 
-		return (sc);
+		return (&sc->sc_if);
 	}
+
+	return (NULL);
+}
+
+static inline struct ifnet *
+mgre_find(const struct gre_tunnel *key)
+{
+	struct mgre_softc *sc;
+
+	sc = RBT_FIND(mgre_tree, &mgre_tree, (const struct mgre_softc *)key);
+	if (sc != NULL)
+		return (&sc->sc_if);
 
 	return (NULL);
 }
@@ -693,8 +797,8 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 {
 	struct mbuf *m = *mp;
 	int iphlen = *offp, hlen;
-	struct gre_softc *sc;
 	struct ifnet *ifp;
+	const struct gre_tunnel *tunnel;
 	caddr_t buf;
 	struct gre_header *gh;
 	struct gre_h_key *gkh;
@@ -770,11 +874,12 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 		return (IPPROTO_DONE);
 	}
 
-	sc = gre_find(key);
-	if (sc == NULL)
-		goto decline;
-
-	ifp = &sc->sc_if;
+	ifp = gre_find(key);
+	if (ifp == NULL) {
+		ifp = mgre_find(key);
+		if (ifp == NULL)
+			goto decline;
+	}
 
 	switch (gh->gre_proto) {
 	case htons(GRE_WCCP): {
@@ -836,6 +941,11 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 		break;
 #endif
 	case htons(0):
+		if (ifp->if_type != IFT_TUNNEL) {
+			/* keepalives dont make sense for mgre */
+			goto decline;
+		}
+
 #if NBPFILTER > 0
 		bpf_af = AF_UNSPEC;
 #endif
@@ -846,14 +956,23 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 		goto decline;
 	}
 
+	/* it's ours now */
+
 	m_adj(m, hlen);
 
-	if (sc->sc_tunnel.t_ttl == -1) {
+	tunnel = ifp->if_softc; /* gre and mgre tunnel info is at the front */
+
+	if (tunnel->t_ttl == -1) {
 		m = m_pullup(m, ttloff + 1);
 		if (m == NULL)
 			return (IPPROTO_DONE);
 
 		*(m->m_data + ttloff) = key->t_ttl;
+	}
+
+	if (tunnel->t_key_mask == GRE_KEY_ENTROPY) {
+		m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
+		    (bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY);
 	}
 
 	m->m_flags &= ~(M_MCAST|M_BCAST);
@@ -864,11 +983,6 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
-
-	if (sc->sc_tunnel.t_key_mask == GRE_KEY_ENTROPY) {
-		m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
-		    (bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY);
-	}
 
 	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_pkthdr.len;
@@ -1338,76 +1452,178 @@ gre_start(struct ifnet *ifp)
 {
 	struct gre_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	uint8_t ttl, tos;
-	int tttl;
-	uint16_t proto;
+	int af;
 #if NBPFILTER > 0
 	caddr_t if_bpf;
 #endif
-	int ttloff;
 
-	tttl = sc->sc_tunnel.t_ttl;
+	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
+		af = m->m_pkthdr.ph_family;
+
+#if NBPFILTER > 0
+		if_bpf = ifp->if_bpf;
+		if (if_bpf)
+			bpf_mtap_af(if_bpf, af, m, BPF_DIRECTION_OUT);
+#endif
+
+		m = gre_l3_encap(&sc->sc_tunnel, m, af);
+		if (m == NULL || gre_ip_output(&sc->sc_tunnel, m) != 0) {
+			ifp->if_oerrors++;
+			continue;
+		}
+	}
+}
+
+static int
+mgre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dest,
+    struct rtentry *rt0)
+{
+	struct mgre_softc *sc = ifp->if_softc;
+	struct sockaddr *gate;
+	struct rtentry *rt;
+	struct m_tag *mtag;
+	int error = 0;
+	sa_family_t af;
+	const void *addr;
+
+	if (!gre_allow) {
+		error = EACCES;
+		goto drop;
+	}
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING)) {
+		error = ENETDOWN;
+		goto drop;
+	}
+
+	switch (dest->sa_family) {
+	case AF_INET:
+#ifdef INET6
+	case AF_INET6:
+#endif
+#ifdef MPLS
+	case AF_MPLS:
+#endif
+		break;
+	default:
+		error = EAFNOSUPPORT;
+		goto drop;
+	}
+
+	if (ISSET(m->m_flags, M_MCAST|M_BCAST)) {
+		error = ENETUNREACH;
+		goto drop;
+	}
+
+	rt = rt_getll(rt0);
+
+	/* chech rt_expire? */
+	if (ISSET(rt->rt_flags, RTF_REJECT)) {
+		error = (rt == rt0) ? EHOSTDOWN : EHOSTUNREACH;
+		goto drop;
+	}
+	if (!ISSET(rt->rt_flags, RTF_HOST)) {
+		error = EHOSTUNREACH;
+		goto drop;
+	}
+	if (ISSET(rt->rt_flags, RTF_GATEWAY)) {
+		error = EINVAL;
+		goto drop;
+	}
+
+	gate = rt->rt_gateway;
+	af = gate->sa_family;
+	if (af != sc->sc_tunnel.t_af) {
+		error = EAGAIN;
+		goto drop;
+	}
+ 
+	/* Try to limit infinite recursion through misconfiguration. */
+	for (mtag = m_tag_find(m, PACKET_TAG_GRE, NULL); mtag;
+	     mtag = m_tag_find(m, PACKET_TAG_GRE, mtag)) {
+		if (memcmp((caddr_t)(mtag + 1), &ifp->if_index,
+		    sizeof(ifp->if_index)) == 0) {
+			error = EIO;
+			goto drop;
+		}
+	}
+
+	mtag = m_tag_get(PACKET_TAG_GRE, sizeof(ifp->if_index), M_NOWAIT);
+	if (mtag == NULL) {
+		error = ENOBUFS;
+		goto drop;
+	}
+	memcpy((caddr_t)(mtag + 1), &ifp->if_index, sizeof(ifp->if_index));
+	m_tag_prepend(m, mtag);
+
+	switch (af) {
+	case AF_INET: {
+		struct sockaddr_in *sin = (struct sockaddr_in *)gate;
+		addr = &sin->sin_addr;
+		break;
+	}
+#ifdef INET6
+	case AF_INET6: {
+		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)gate;
+		addr = &sin6->sin6_addr;
+		break;
+	}
+ #endif
+	default:
+		unhandled_af(af);
+		/* NOTREACHED */
+	}
+
+	m = gre_l3_encap_dst(&sc->sc_tunnel, addr, m, dest->sa_family);
+	if (m == NULL)
+		return (ENOBUFS);
+
+	m->m_pkthdr.ph_family = dest->sa_family;
+
+	error = if_enqueue(ifp, m);
+	if (error)
+		ifp->if_oerrors++;
+	return (error);
+
+drop:
+	m_freem(m);
+	return (error);
+}
+
+static void
+mgre_start(struct ifnet *ifp)
+{
+	struct mgre_softc *sc = ifp->if_softc;
+	struct mbuf *m;
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
 
 	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
 #if NBPFILTER > 0
 		if_bpf = ifp->if_bpf;
 		if (if_bpf) {
-			int af = m->m_pkthdr.ph_family;
-			bpf_mtap_af(if_bpf, af, m, BPF_DIRECTION_OUT);
+			struct m_hdr mh;
+			struct mbuf *n;
+			int off;
+
+			n = m_getptr(m, ifp->if_hdrlen, &off);
+			KASSERT(n != NULL);
+
+			mh.mh_flags = 0;
+			mh.mh_next = n->m_next;
+			mh.mh_len = n->m_len - off;
+			mh.mh_data = n->m_data + off;
+
+			bpf_mtap_af(if_bpf, m->m_pkthdr.ph_family,
+			    (struct mbuf *)&mh, BPF_DIRECTION_OUT);
 		}
 #endif
 
-		switch (m->m_pkthdr.ph_family) {
-		case AF_INET: {
-			struct ip *ip;
-
-			m = m_pullup(m, sizeof(*ip));
-			if (m == NULL)
-				continue;
-
-			ip = mtod(m, struct ip *);
-			tos = ip->ip_tos;
-
-			ttloff = offsetof(struct ip, ip_ttl);
-			proto = htons(ETHERTYPE_IP);
-			break;
-		}
-#ifdef INET6
-		case AF_INET6:
-			tos = 0;
-			ttloff = offsetof(struct ip6_hdr, ip6_hlim);
-			proto = htons(ETHERTYPE_IPV6);
-			break;
-#endif
-#ifdef MPLS
-		case AF_MPLS:
-			ttloff = 3;
-			tos = 0;
-
-			if (m->m_flags & (M_BCAST | M_MCAST))
-				proto = htons(ETHERTYPE_MPLS_MCAST);
-			else
-				proto = htons(ETHERTYPE_MPLS);
-			break;
-#endif
-		default:
-			unhandled_af(m->m_pkthdr.ph_family);
-		}
-
-		if (tttl == -1) {
-			m = m_pullup(m, ttloff + 1);
-			if (m == NULL)
-				continue;
-
-			ttl = *(m->m_data + ttloff);
-		} else
-			ttl = tttl;
-
-		m = gre_encap(&sc->sc_tunnel, m, proto, ttl, tos);
 		if (m == NULL || gre_ip_output(&sc->sc_tunnel, m) != 0) {
-			ifp->if_oerrors++;
-			continue;
-		}
+ 			ifp->if_oerrors++;
+ 			continue;
+ 		}
 	}
 }
 
@@ -1451,6 +1667,64 @@ egre_start(struct ifnet *ifp)
 			continue;
 		}
 	}
+}
+
+static struct mbuf *
+gre_l3_encap_dst(const struct gre_tunnel *tunnel, const void *dst,
+    struct mbuf *m, sa_family_t af)
+{
+	uint16_t proto;
+	uint8_t ttl, tos;
+	int tttl = tunnel->t_ttl;
+	int ttloff;
+
+	switch (af) {
+	case AF_INET: {
+		struct ip *ip;
+
+		m = m_pullup(m, sizeof(*ip));
+		if (m == NULL)
+			return (NULL);
+
+		ip = mtod(m, struct ip *);
+		tos = ip->ip_tos;
+
+		ttloff = offsetof(struct ip, ip_ttl);
+		proto = htons(ETHERTYPE_IP);
+		break;
+	}
+#ifdef INET6
+	case AF_INET6:
+		tos = 0;
+		ttloff = offsetof(struct ip6_hdr, ip6_hlim);
+		proto = htons(ETHERTYPE_IPV6);
+		break;
+ #endif
+#ifdef MPLS
+	case AF_MPLS:
+		ttloff = 3;
+		tos = 0;
+ 
+		if (m->m_flags & (M_BCAST | M_MCAST))
+			proto = htons(ETHERTYPE_MPLS_MCAST);
+		else
+			proto = htons(ETHERTYPE_MPLS);
+		break;
+#endif
+	default:
+		unhandled_af(af);
+	}
+ 
+	if (tttl == -1) {
+		m = m_pullup(m, ttloff + 1);
+		if (m == NULL)
+			return (NULL);
+ 
+		ttl = *(m->m_data + ttloff);
+	} else
+		ttl = tttl;
+
+	return (gre_encap_dst(tunnel, dst, m, proto, ttl, tos));
 }
 
 static struct mbuf *
@@ -1710,6 +1984,63 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = gre_tunnel_ioctl(ifp, &sc->sc_tunnel, cmd, data);
 		break;
 	}
+
+	return (error);
+}
+
+static int
+mgre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+{
+	struct mgre_softc *sc = ifp->if_softc;
+	struct ifreq *ifr = (struct ifreq *)data;
+	int error = 0;
+
+	switch(cmd) {
+	case SIOCSIFADDR:
+		break;
+	case SIOCSIFFLAGS:
+		if (ISSET(ifp->if_flags, IFF_UP)) {
+			if (!ISSET(ifp->if_flags, IFF_RUNNING))
+				error = mgre_up(sc);
+			else
+				error = 0;
+		} else {
+			if (ISSET(ifp->if_flags, IFF_RUNNING))
+				error = mgre_down(sc);
+		}
+		break;
+
+	case SIOCSLIFPHYTTL:
+		if (ifr->ifr_ttl != -1 &&
+		    (ifr->ifr_ttl < 1 || ifr->ifr_ttl > 0xff)) {
+			error = EINVAL;
+			break;
+		}
+
+		/* commit */
+		sc->sc_tunnel.t_ttl = ifr->ifr_ttl;
+		break;
+
+	case SIOCGLIFPHYTTL:
+		ifr->ifr_ttl = sc->sc_tunnel.t_ttl;
+		break;
+
+	case SIOCSLIFPHYADDR:
+		/* XXX */
+	case SIOCSVNETID:
+	case SIOCDVNETID:
+	case SIOCDIFPHYADDR:
+	case SIOCSLIFPHYRTABLE:
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
+			break;
+		}
+
+		/* FALLTHROUGH */
+	default:
+		error = gre_tunnel_ioctl(ifp, &sc->sc_tunnel, cmd, data);
+ 		break;
+ 	}
 
 	return (error);
 }
@@ -2357,6 +2688,54 @@ gre_get_vnetflowid(struct gre_tunnel *tunnel, struct ifreq *ifr)
 }
 
 static int
+mgre_up(struct mgre_softc *sc)
+{
+	unsigned int hlen;
+
+	switch (sc->sc_tunnel.t_af) {
+	case AF_UNSPEC:
+		return (EDESTADDRREQ);
+	case AF_INET:
+		hlen = sizeof(struct ip);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		hlen = sizeof(struct ip6_hdr);
+		break;
+#endif /* INET6 */
+	}
+
+	hlen += sizeof(struct gre_header);
+	if (sc->sc_tunnel.t_key_mask != GRE_KEY_NONE)
+		hlen += sizeof(struct gre_h_key);
+
+	NET_ASSERT_LOCKED();
+
+	if (RBT_INSERT(mgre_tree, &mgre_tree, sc) != NULL)
+		return (EADDRINUSE);
+
+	sc->sc_if.if_hdrlen = hlen;
+	SET(sc->sc_if.if_flags, IFF_RUNNING);
+
+	return (0);
+}
+
+static int
+mgre_down(struct mgre_softc *sc)
+{
+	NET_ASSERT_LOCKED();
+
+	CLR(sc->sc_if.if_flags, IFF_RUNNING);
+	sc->sc_if.if_hdrlen = 24; /* symmetry */
+
+	RBT_REMOVE(mgre_tree, &mgre_tree, sc);
+
+	/* barrier? */
+
+	return (0);
+}
+
+static int
 egre_up(struct egre_softc *sc)
 {
 	if (sc->sc_tunnel.t_af == AF_UNSPEC)
@@ -2828,31 +3207,11 @@ gre_ip_cmp(int af, const union gre_addr *a, const union gre_addr *b)
 }
 
 static int
-gre_cmp(const struct gre_tunnel *a, const struct gre_tunnel *b)
+gre_cmp_src(const struct gre_tunnel *a, const struct gre_tunnel *b)
 {
 	uint32_t ka, kb;
 	uint32_t mask;
 	int rv;
-
-	/* sort by routing table */
-	if (a->t_rtableid > b->t_rtableid)
-		return (1);
-	if (a->t_rtableid < b->t_rtableid)
-		return (-1);
-
-	/* sort by address */
-	if (a->t_af > b->t_af)
-		return (1);
-	if (a->t_af < b->t_af)
-		return (-1);
-
-	rv = gre_ip_cmp(a->t_af, &a->t_dst, &b->t_dst);
-	if (rv != 0)
-		return (rv);
-
-	rv = gre_ip_cmp(a->t_af, &a->t_src, &b->t_src);
-	if (rv != 0)
-		return (rv);
 
 	/* is K set at all? */
 	ka = a->t_key_mask & GRE_KEY_ENTROPY;
@@ -2879,8 +3238,44 @@ gre_cmp(const struct gre_tunnel *a, const struct gre_tunnel *b)
 			return (-1);
 	}
 
+	/* sort by routing table */
+	if (a->t_rtableid > b->t_rtableid)
+		return (1);
+	if (a->t_rtableid < b->t_rtableid)
+		return (-1);
+
+	/* sort by address */
+	if (a->t_af > b->t_af)
+		return (1);
+	if (a->t_af < b->t_af)
+		return (-1);
+
+	rv = gre_ip_cmp(a->t_af, &a->t_src, &b->t_src);
+	if (rv != 0)
+		return (rv);
+
 	return (0);
 }
+
+static int
+gre_cmp(const struct gre_tunnel *a, const struct gre_tunnel *b)
+{
+	int rv;
+
+	rv = gre_cmp_src(a, b);
+	if (rv != 0)
+		return (rv);
+
+	return (gre_ip_cmp(a->t_af, &a->t_dst, &b->t_dst));
+}
+
+static inline int
+mgre_cmp(const struct mgre_softc *a, const struct mgre_softc *b)
+{
+	return (gre_cmp_src(&a->sc_tunnel, &b->sc_tunnel));
+}
+
+RBT_GENERATE(mgre_tree, mgre_softc, sc_entry, mgre_cmp);
 
 static inline int
 egre_cmp(const struct egre_softc *a, const struct egre_softc *b)
