@@ -1,8 +1,10 @@
-.\"	$OpenBSD: SSL_set_connect_state.3,v 1.2 2016/12/04 12:20:54 schwarze Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\" $OpenBSD: SSL_set_connect_state.3,v 1.3 2018/02/27 02:59:38 schwarze Exp $
+.\" full merge up to OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" selective merge up to: OpenSSL dbd007d7 Jul 28 13:31:27 2017 +0800
 .\"
-.\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
-.\" Copyright (c) 2001, 2002 The OpenSSL Project.  All rights reserved.
+.\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>
+.\" and Paul Yang <yang.yang@baishancloud.com>.
+.\" Copyright (c) 2001, 2017 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -48,12 +50,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 4 2016 $
+.Dd $Mdocdate: February 27 2018 $
 .Dt SSL_SET_CONNECT_STATE 3
 .Os
 .Sh NAME
 .Nm SSL_set_connect_state ,
-.Nm SSL_set_accept_state
+.Nm SSL_set_accept_state ,
+.Nm SSL_is_server
 .Nd prepare SSL object to work in client or server mode
 .Sh SYNOPSIS
 .In openssl/ssl.h
@@ -61,6 +64,8 @@
 .Fn SSL_set_connect_state "SSL *ssl"
 .Ft void
 .Fn SSL_set_accept_state "SSL *ssl"
+.Ft int
+.Fn SSL_is_server "const SSL *ssl"
 .Sh DESCRIPTION
 .Fn SSL_set_connect_state
 sets
@@ -71,6 +76,11 @@ to work in client mode.
 sets
 .Fa ssl
 to work in server mode.
+.Pp
+.Fn SSL_is_server
+checks whether
+.Fa ssl
+is set to server mode.
 .Pp
 When the
 .Vt SSL_CTX
@@ -101,11 +111,26 @@ the handshake routines must be explicitly set in advance using either
 .Fn SSL_set_connect_state
 or
 .Fn SSL_set_accept_state .
-.Sh RETURN VALUES
+.Pp
+If
+.Fn SSL_is_server
+is called before
 .Fn SSL_set_connect_state
-and
+or
 .Fn SSL_set_accept_state
-do not return diagnostic information.
+was called either automatically or explicitly,
+the result depends on what method was used when the
+.Fa SSL_CTX
+was created.
+If a generic method or a dedicated server method was passed to
+.Xr SSL_CTX_new 3 ,
+.Fn SSL_is_server
+returns 1; otherwise, it returns 0.
+.Sh RETURN VALUES
+.Fn SSL_is_server
+returns 1 if
+.Fa ssl
+is set to server mode or 0 if it is set to client mode.
 .Sh SEE ALSO
 .Xr ssl 3 ,
 .Xr SSL_accept 3 ,
