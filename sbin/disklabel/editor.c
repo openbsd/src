@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.313 2018/02/25 17:24:44 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.314 2018/02/27 14:58:05 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -526,7 +526,7 @@ editor_allocspace(struct disklabel *lp_org)
 	struct diskchunk *chunks;
 	u_int64_t chunkstart, chunksize, cylsecs, secs, totsecs, xtrasecs;
 	char **partmp;
-	int i, j, lastalloc, index = 0, fragsize, partno;
+	int i, j, lastalloc, index = 0, partno;
 	extern int64_t physmem;
 
 	/* How big is the OpenBSD portion of the disk?  */
@@ -665,21 +665,12 @@ cylinderalign:
 		/* Everything seems ok so configure the partition. */
 		DL_SETPSIZE(pp, secs);
 		DL_SETPOFFSET(pp, chunkstart);
-		fragsize = 2048;
-		if (secs * lp->d_secsize > 128ULL * 1024 * 1024 * 1024)
-			fragsize *= 2;
-		if (secs * lp->d_secsize > 512ULL * 1024 * 1024 * 1024)
-			fragsize *= 2;
-		if (fragsize < lp->d_secsize)
-			fragsize = lp->d_secsize;
-		if (fragsize > MAXBSIZE / 8)
-			fragsize = MAXBSIZE / 8;
-		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fragsize, 8);
 		pp->p_cpg = 1;
 		if (ap->mp[0] != '/')
 			pp->p_fstype = FS_SWAP;
 		else {
 			pp->p_fstype = FS_BSDFFS;
+			get_fsize(lp, partno);
 			get_bsize(lp, partno);
 			free(*partmp);
 			if ((*partmp = strdup(ap->mp)) == NULL)
@@ -756,6 +747,7 @@ editor_resize(struct disklabel *lp, char *p)
 	}
 
 	DL_SETPSIZE(pp, secs);
+	get_fsize(&label, partno);
 	get_bsize(&label, partno);
 
 	/*
@@ -782,12 +774,13 @@ editor_resize(struct disklabel *lp, char *p)
 				fprintf(stderr,
 				    "Partition %c shrunk to make room\n",
 				    i + 'a');
+				get_fsize(&label, i);
+				get_bsize(&label, i);
 			}
 		} else {
 			fputs("No room left for all partitions\n", stderr);
 			return;
 		}
-		get_bsize(&label, i);
 		prev = pp;
 	}
 	*lp = label;
@@ -802,7 +795,7 @@ editor_add(struct disklabel *lp, char *p)
 	struct partition *pp;
 	struct diskchunk *chunks;
 	char buf[2];
-	int i, partno, fragsize;
+	int i, partno;
 	u_int64_t freesectors, new_offset, new_size;
 
 	freesectors = editor_countfree(lp);
@@ -886,25 +879,14 @@ editor_add(struct disklabel *lp, char *p)
 	pp->p_cpg = 1;
 
 	if (get_offset(lp, partno) == 0 &&
-	    get_size(lp, partno) == 0) {
-		fragsize = 2048;
-		new_size = DL_GETPSIZE(pp) * lp->d_secsize;
-		if (new_size > 128ULL * 1024 * 1024 * 1024)
-			fragsize *= 2;
-		if (new_size > 512ULL * 1024 * 1024 * 1024)
-			fragsize *= 2;
-		if (fragsize < lp->d_secsize)
-			fragsize = lp->d_secsize;
-		if (fragsize > MAXBSIZE / 8)
-			fragsize = MAXBSIZE / 8;
-		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fragsize, 8);
-		if (get_fstype(lp, partno) == 0 &&
-		    get_mp(lp, partno) == 0 &&
-		    get_fsize(lp, partno) == 0  &&
-		    get_bsize(lp, partno) == 0 &&
-		    get_cpg(lp, partno) == 0)
-			return;
-	}
+	    get_size(lp, partno) == 0 &&
+	    get_fstype(lp, partno) == 0 &&
+	    get_mp(lp, partno) == 0 &&
+	    get_fsize(lp, partno) == 0  &&
+	    get_bsize(lp, partno) == 0 &&
+	    get_cpg(lp, partno) == 0)
+		return;
+
 	/* Bailed out at some point, so effectively delete the partition. */
 	memset(pp, 0, sizeof(*pp));
 }
@@ -1998,16 +1980,32 @@ get_cpg(struct disklabel *lp, int partno)
 int
 get_fsize(struct disklabel *lp, int partno)
 {
-	u_int64_t ui, fsize, frag;
 	struct partition *pp = &lp->d_partitions[partno];
+	u_int64_t ui, bytes;
+	u_int32_t frag, fsize;
 
-	if (!expert || pp->p_fstype != FS_BSDFFS)
+	if (pp->p_fstype != FS_BSDFFS)
 		return (0);
 
 	fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 	frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
-	if (fsize == 0)
+	if (fsize == 0) {
+		fsize = 2048;
 		frag = 8;
+		bytes = DL_GETPSIZE(pp) * lp->d_secsize;
+		if (bytes > 128ULL * 1024 * 1024 * 1024)
+			fsize *= 2;
+		if (bytes > 512ULL * 1024 * 1024 * 1024)
+			fsize *= 2;
+		if (fsize < lp->d_secsize)
+			fsize = lp->d_secsize;
+		if (fsize > MAXBSIZE / frag)
+			fsize = MAXBSIZE / frag;
+		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fsize, frag);
+	}
+
+	if (expert == 0)
+		return (0);
 
 	for (;;) {
 		ui = getuint64(lp, "fragment size",
