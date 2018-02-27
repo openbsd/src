@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.68 2018/02/25 07:22:22 jmc Exp $
+.\" $OpenBSD: gre.4,v 1.69 2018/02/27 06:38:54 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,12 +28,12 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 25 2018 $
+.Dd $Mdocdate: February 27 2018 $
 .Dt GRE 4
 .Os
 .Sh NAME
 .Nm gre ,
-.\" .Nm mgre ,
+.Nm mgre ,
 .Nm egre ,
 .Nm nvgre
 .Nd Generic Routing Encapsulation network device
@@ -60,8 +60,8 @@ This pseudo driver provides the clonable network interfaces:
 .Bl -tag -width nvgreX
 .It Nm gre
 Point-to-point Layer 3 tunnel interfaces.
-.\" .It Nm mgre
-.\" Point-to-multipoint Layer 3 tunnel interfaces.
+.It Nm mgre
+Point-to-multipoint Layer 3 tunnel interfaces.
 .It Nm egre
 Point-to-point Ethernet tunnel interfaces.
 .It Nm nvgre
@@ -125,7 +125,17 @@ to do anything useful with these packets.
 This sysctl requires
 .Va net.inet.gre.allow
 to also be set.
-.\" .Ss Point-to-Multipoint Layer 3 GRE tunnel interfaces (mgre)
+.Ss Point-to-Multipoint Layer 3 GRE tunnel interfaces (mgre)
+.Nm mgre
+interfaces can encapsulate IPv4, IPv6, and MPLS packets.
+Unlike a point-to-point interface,
+.Nm mgre
+interfaces are configured with an address on an IP subnet.
+Peers on that subnet are mapped to the addresses of multiple tunnel
+endpoints.
+.Pp
+The MTU is set to 1476 by default to match the value used by Cisco
+routers.
 .Ss Point-to-Point Ethernet over GRE tunnel interfaces (egre)
 A
 .Nm egre
