@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/06/11 19:43:16 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2018/02/27 07:58:29 mpi Exp $
 
 # Start with a clean /var/account/acct accounting file and turn on
 # process accounting with accton(8).  Each test executes a command
@@ -33,14 +33,6 @@ run-regress-fork:
 	cp -f /bin/sh regress-fork
 	./regress-fork -c '( : ) &'
 	lastcomm regress-fork | grep -q ' -F '
-
-TARGETS+=	su
-run-regress-su:
-	@echo '\n======== $@ ========'
-	# Create shell program, run as super user, and check the -S flag.
-	cp -f /bin/sh regress-su
-	${SUDO} ./regress-su -c ':'
-	lastcomm regress-su | grep -q ' -S '
 
 TARGETS+=	core
 run-regress-core:
