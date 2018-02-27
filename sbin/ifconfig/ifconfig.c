@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.361 2018/02/23 05:17:39 akoshibe Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.362 2018/02/27 22:32:26 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -200,6 +200,7 @@ void	unsetifnwflag(const char *, int);
 void	setifnetmask(const char *, int);
 void	setifprefixlen(const char *, int);
 void	settunnel(const char *, const char *);
+void	settunneladdr(const char *, int);
 void	deletetunnel(const char *, int);
 void	settunnelinst(const char *, int);
 void	settunnelttl(const char *, int);
@@ -453,6 +454,7 @@ const struct	cmd {
 	{ "defer",	1,		0,		setpfsync_defer },
 	{ "-defer",	0,		0,		setpfsync_defer },
 	{ "tunnel",	NEXTARG2,	0,		NULL, settunnel },
+	{ "tunneladdr",	NEXTARG,	0,		settunneladdr },
 	{ "-tunnel",	0,		0,		deletetunnel },
 	/* deletetunnel is for backward compat, remove during 6.4-current */
 	{ "deletetunnel",  0,		0,		deletetunnel },
@@ -2736,42 +2738,76 @@ print_media_word(uint64_t ifmw, int print_type, int as_syntax)
 		printf(" instance %lld", IFM_INST(ifmw));
 }
 
-/* ARGSUSED */
 static void
-phys_status(int force)
+print_tunnel(const struct if_laddrreq *req)
 {
 	char psrcaddr[NI_MAXHOST];
 	char pdstaddr[NI_MAXHOST];
 	const char *ver = "";
 	const int niflag = NI_NUMERICHOST;
-	struct if_laddrreq req;
-	in_port_t dstport = 0;
+
+	if (req == NULL) {
+		printf("(unset)");
+		return;
+	}
 
 	psrcaddr[0] = pdstaddr[0] = '\0';
 
-	memset(&req, 0, sizeof(req));
-	(void) strlcpy(req.iflr_name, name, sizeof(req.iflr_name));
-	if (ioctl(s, SIOCGLIFPHYADDR, (caddr_t)&req) < 0)
-		return;
-	if (getnameinfo((struct sockaddr *)&req.addr, req.addr.ss_len,
+	if (getnameinfo((struct sockaddr *)&req->addr, req->addr.ss_len,
 	    psrcaddr, sizeof(psrcaddr), 0, 0, niflag) != 0)
 		strlcpy(psrcaddr, "<error>", sizeof(psrcaddr));
-	if (req.addr.ss_family == AF_INET6)
+	if (req->addr.ss_family == AF_INET6)
 		ver = "6";
 
-	if (req.dstaddr.ss_family == AF_INET)
-		dstport = ((struct sockaddr_in *)&req.dstaddr)->sin_port;
-	else if (req.dstaddr.ss_family == AF_INET6)
-		dstport = ((struct sockaddr_in6 *)&req.dstaddr)->sin6_port;
-	if (getnameinfo((struct sockaddr *)&req.dstaddr, req.dstaddr.ss_len,
-	    pdstaddr, sizeof(pdstaddr), 0, 0, niflag) != 0)
-		strlcpy(pdstaddr, "<error>", sizeof(pdstaddr));
+	printf("inet%s %s", ver, psrcaddr);
 
-	printf("\ttunnel: inet%s %s -> %s", ver,
-	    psrcaddr, pdstaddr);
+	if (req->dstaddr.ss_family != AF_UNSPEC) {
+		in_port_t dstport = 0;
+		const struct sockaddr_in *sin;
+		const struct sockaddr_in6 *sin6;
 
-	if (dstport)
-		printf(":%u", ntohs(dstport));
+		if (getnameinfo((struct sockaddr *)&req->dstaddr,
+		    req->dstaddr.ss_len, pdstaddr, sizeof(pdstaddr),
+		    0, 0, niflag) != 0)
+			strlcpy(pdstaddr, "<error>", sizeof(pdstaddr));
+
+		printf(" -> %s", pdstaddr);
+
+		switch (req->dstaddr.ss_family) {
+		case AF_INET:
+			sin = (const struct sockaddr_in *)&req->dstaddr;
+			dstport = sin->sin_port;
+			break;
+		case AF_INET6:
+			sin6 = (const struct sockaddr_in6 *)&req->dstaddr;
+			dstport = sin6->sin6_port;
+			break;
+		}
+
+		if (dstport)
+			printf(":%u", ntohs(dstport));
+	}
+}
+
+/* ARGSUSED */
+static void
+phys_status(int force)
+{
+	struct if_laddrreq req;
+	struct if_laddrreq *r = &req;
+
+	memset(&req, 0, sizeof(req));
+	(void) strlcpy(req.iflr_name, name, sizeof(req.iflr_name));
+	if (ioctl(s, SIOCGLIFPHYADDR, (caddr_t)&req) < 0) {
+		if (errno != EADDRNOTAVAIL)
+			return;
+
+		r = NULL;
+	}
+
+	printf("\ttunnel: ");
+	print_tunnel(r);
+
 	if (ioctl(s, SIOCGLIFPHYTTL, (caddr_t)&ifr) == 0) {
 		if (ifr.ifr_ttl == -1)
 			printf(" ttl copy");
@@ -3271,6 +3307,40 @@ settunnel(const char *src, const char *dst)
 
 	freeaddrinfo(srcres);
 	freeaddrinfo(dstres);
+}
+
+void
+settunneladdr(const char *addr, int ignored)
+{
+	struct addrinfo hints, *res;
+	struct if_laddrreq req;
+	ssize_t len;
+	int rv;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = 0;
+	hints.ai_flags = AI_PASSIVE;
+
+	rv = getaddrinfo(addr, NULL, &hints, &res);
+	if (rv != 0)
+		errx(1, "tunneladdr %s: %s", addr, gai_strerror(rv));
+
+	memset(&req, 0, sizeof(req));
+	len = strlcpy(req.iflr_name, name, sizeof(req.iflr_name));
+	if (len >= sizeof(req.iflr_name))
+		errx(1, "%s: Interface name too long", name);
+
+	memcpy(&req.addr, res->ai_addr, res->ai_addrlen);
+
+	req.dstaddr.ss_len = 2;
+	req.dstaddr.ss_family = AF_UNSPEC;
+
+	if (ioctl(s, SIOCSLIFPHYADDR, &req) < 0)
+		warn("tunneladdr %s", addr);
+
+	freeaddrinfo(res);
 }
 
 /* ARGSUSED */
