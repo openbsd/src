@@ -1,5 +1,6 @@
-.\"	$OpenBSD: ssl.3,v 1.12 2018/02/24 19:24:09 schwarze Exp $
-.\"	OpenSSL e330f55d Nov 11 00:51:04 2016 +0100
+.\" $OpenBSD: ssl.3,v 1.13 2018/02/27 19:14:49 schwarze Exp $
+.\" full merge up to: OpenSSL e330f55d Nov 11 00:51:04 2016 +0100
+.\" selective merge up to: OpenSSL cbade361 Dec 12 13:14:45 2017 +0100
 .\"
 .\" This file was written by Ralf S. Engelschall <rse@openssl.org>,
 .\" Ben Laurie <ben@openssl.org>, and Ulf Moeller <ulf@openssl.org>.
@@ -50,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 24 2018 $
+.Dd $Mdocdate: February 27 2018 $
 .Dt SSL 3
 .Os
 .Sh NAME
@@ -129,7 +130,7 @@ client and server certificates, keys, etc.
 That's the main SSL/TLS structure which is created by a server or client per
 established connection.
 This actually is the core structure in the SSL API.
-Under run-time the application usually deals with this structure which has
+At run-time the application usually deals with this structure which has
 links to mostly all other structures.
 .El
 .Sh HEADER FILES
