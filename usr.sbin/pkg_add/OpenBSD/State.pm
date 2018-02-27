@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.50 2018/02/26 14:58:36 espie Exp $
+# $OpenBSD: State.pm,v 1.51 2018/02/27 22:46:53 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -174,12 +174,13 @@ sub usage
 	exit($code);
 }
 
+my $forbidden = qr{[^[:print:]\s]};
+
 sub safe
 {
 	my ($self, $string) = @_;
-	my @l = split(/\n/, $string);
-	s/[[:^print:]]/?/g for @l;
-	return join("\n", @l);
+	$string =~ s/$forbidden/?/g;
+	return $string;
 }
 
 sub f
@@ -190,14 +191,14 @@ sub f
 	}
 	my ($fmt, @l) = @_;
 
-	# encode any unknown chars as ?
-	for (@l) {
-		$_ = $self->safe($_);
+	# is there anything to format, actually ?
+	if ($fmt =~ m/\#\d/) {
+		# encode any unknown chars as ?
+		s/$forbidden/?/g for @l;
+		# make it so that #0 is #
+		unshift(@l, '#');
+		$fmt =~ s,\#(\d+),($l[$1] // "<Undefined #$1>"),ge;
 	}
-
-	# make it so that #0 is #
-	unshift(@l, '#');
-	$fmt =~ s,\#(\d+),($l[$1] // "<Undefined #$1>"),ge;
 	return $fmt;
 }
 

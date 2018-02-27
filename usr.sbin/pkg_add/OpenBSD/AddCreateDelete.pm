@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.42 2018/02/26 14:09:27 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.43 2018/02/27 22:46:53 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -106,17 +106,18 @@ sub find_window_size
 	$state->{progressmeter}->compute_playfield($cont);
 }
 
-sub confirm
+sub confirm_defaults_to_no
 {
 	my $self = shift;
-	return $self->{interactive}->confirm(@_);
+	return $self->{interactive}->confirm($self->f(@_), 0);
 }
 
-sub confirmf
+sub confirm_defaults_to_yes
 {
 	my $self = shift;
-	return $self->{interactive}->confirm($self->f(@_));
+	return $self->{interactive}->confirm($self->f(@_), 1);
 }
+
 sub ask_list
 {
 	my $self = shift;

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.97 2017/11/01 18:18:10 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.98 2018/02/27 22:46:53 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -574,7 +574,8 @@ sub check_forward_dependencies
 		if ($state->defines('updatedepends')) {
 			$state->errsay("Forcing update");
 			return $no_merge;
-		} elsif ($state->confirm("Proceed with update anyway", 0)) {
+		} elsif ($state->confirm_defaults_to_no(
+		    "Proceed with update anyway")) {
 				return $no_merge;
 		} else {
 				return undef;

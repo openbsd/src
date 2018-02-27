@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.131 2018/01/24 16:52:45 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.132 2018/02/27 22:46:53 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1131,7 +1131,7 @@ sub add_description
 	}
 	return if defined $state->opt('q');
 
-	open(my $fh, '>', $o->fullname) or die "Can't write to DESC: $!";
+	open(my $fh, '+>', $o->fullname) or die "Can't write to DESC: $!";
 	if (defined $comment) {
 		print $fh $subst->do($comment), "\n";
 	}
@@ -1150,6 +1150,20 @@ sub add_description
 		if (!$subst->empty('HOMEPAGE')) {
 			print $fh "\n", $subst->do('WWW: ${HOMEPAGE}'), "\n";
 		}
+	}
+	seek($fh, 0, 0) or die "Can't rewind DESC: $!";
+    	my $errors = 0;
+	while (<$fh>) {
+		chomp;
+		if ($state->safe($_) ne $_) {
+			$state->errsay(
+			    "DESC contains weird characters: #1 on line #2", 
+			    $_, $.);
+		$errors++;
+		}
+	}
+	if ($errors) {
+		$state->fatal("Can't continue");
 	}
 	close($fh);
 }

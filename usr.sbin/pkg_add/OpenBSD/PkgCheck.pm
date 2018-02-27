@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.68 2018/02/26 13:04:30 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.69 2018/02/27 22:46:53 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -379,7 +379,8 @@ sub ask_delete_deps
 	my ($self, $state, $l) = @_;
 	if ($state->{force}) {
 		$self->{req}->delete(@$l);
-	} elsif ($state->confirmf("Remove missing #1", $self->string(@$l))) {
+	} elsif ($state->confirm_defaults_to_no(
+	    "Remove missing #1", $self->string(@$l))) {
 			$self->{req}->delete(@$l);
 	}
 }
@@ -389,7 +390,8 @@ sub ask_add_deps
 	my ($self, $state, $l) = @_;
 	if ($state->{force}) {
 		$self->{req}->add(@$l);
-	} elsif ($state->confirmf("Add missing #1", $self->string(@$l))) {
+	} elsif ($state->confirm_defaults_to_no(
+	    "Add missing #1", $self->string(@$l))) {
 			$self->{req}->add(@$l);
 	}
 }
@@ -586,7 +588,8 @@ sub may_remove
 	my ($self, $state, $name) = @_;
 	if ($state->{force}) {
 		$self->remove($state, $name);
-	} elsif ($state->confirmf("Remove wrong package #1", $name)) {
+	} elsif ($state->confirm_defaults_to_no(
+	    "Remove wrong package #1", $name)) {
 			$self->remove($state, $name);
 	}
 	$state->{bogus}{$name} = 1;
@@ -596,7 +599,7 @@ sub may_unlink
 {
 	my ($self, $state, $path) = @_;
 	if (!$state->{force} && 
-	    !$state->confirmf("Remove #1", $path)) {
+	    !$state->confirm_defaults_to_no("Remove #1", $path)) {
 		return;
 	}
 	if ($state->verbose) {
@@ -611,7 +614,7 @@ sub may_fix_ownership
 {
 	my ($self, $state, $path) = @_;
 	if (!$state->{force} && 
-	    !$state->confirmf("Give #1 to root:wheel", $path)) {
+	    !$state->confirm_defaults_to_no("Give #1 to root:wheel", $path)) {
 		return;
 	}
 	if ($state->verbose) {
@@ -627,7 +630,7 @@ sub may_fix_perms
 	my ($self, $state, $path, $perm, $readable) = @_;
 
 	if (!$state->{force} && 
-	    !$state->confirmf("Make #1 #2", $path,
+	    !$state->confirm_defaults_to_no("Make #1 #2", $path,
 	    ($readable ? "not world/group-writable" : "world readable"))) {
 		return;
 	}
@@ -843,7 +846,7 @@ sub install_pkglocate
 	if (OpenBSD::PkgSpec->new($spec)->match_ref(\@l)) {
 		return 1;
 	}
-	unless ($state->confirm("Unknown file system entries.\n".
+	unless ($state->confirm_defaults_to_no("Unknown file system entries.\n".
 	    "Do you want to install $spec to look them up")) {
 	    	return 0;
 	}
@@ -886,7 +889,7 @@ sub display_tmps
 	}
 	if ($state->{force}) {
 		unlink(@{$state->{tmps}});
-	} elsif ($state->confirm("Remove")) {
+	} elsif ($state->confirm_defaults_to_no("Remove")) {
 			unlink(@{$state->{tmps}});
 	}
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.38 2017/03/13 11:36:23 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.39 2018/02/27 22:46:53 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -265,7 +265,7 @@ sub delete_dependencies
 	if ($state->defines("dependencies")) {
 		return 1;
 	}
-	return $state->confirm("Delete them as well", 0);
+	return $state->confirm_defaults_to_no("Delete them as well");
 }
 
 sub fix_bad_dependencies
@@ -275,7 +275,7 @@ sub fix_bad_dependencies
 	if ($state->defines("baddepend")) {
 		return 1;
 	}
-	return $state->confirm("Delete anyway", 0);
+	return $state->confirm_defaults_to_no("Delete anyway");
 }
 
 sub process_set
