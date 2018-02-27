@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.116 2018/02/27 06:16:23 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.117 2018/02/27 06:46:00 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -140,6 +140,8 @@ struct gre_h_wccp {
 } __packed __aligned(4);
 
 #define GRE_WCCP 0x883e
+
+#define GRE_HDRLEN (sizeof(struct ip) + sizeof(struct gre_header))
 
 /*
  * GRE tunnel metadata
@@ -492,7 +494,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	ifp = &sc->sc_if;
 	ifp->if_softc = sc;
 	ifp->if_type = IFT_TUNNEL;
-	ifp->if_hdrlen = 24; /* IP + GRE */
+	ifp->if_hdrlen = GRE_HDRLEN;
 	ifp->if_mtu = GREMTU;
 	ifp->if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED;
@@ -555,7 +557,7 @@ mgre_clone_create(struct if_clone *ifc, int unit)
 
 	ifp->if_softc = sc;
 	ifp->if_type = IFT_L3IPVLAN;
-	ifp->if_hdrlen = 24; /* IP + GRE */
+	ifp->if_hdrlen = GRE_HDRLEN;
 	ifp->if_mtu = GREMTU;
 	ifp->if_flags = 0; /* it's not p2p, and can't mcast or bcast */
 	ifp->if_xflags = IFXF_CLONED;
@@ -2735,7 +2737,7 @@ mgre_down(struct mgre_softc *sc)
 	NET_ASSERT_LOCKED();
 
 	CLR(sc->sc_if.if_flags, IFF_RUNNING);
-	sc->sc_if.if_hdrlen = 24; /* symmetry */
+	sc->sc_if.if_hdrlen = GRE_HDRLEN; /* symmetry */
 
 	RBT_REMOVE(mgre_tree, &mgre_tree, sc);
 
