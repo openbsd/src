@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MD5.3,v 1.4 2016/11/27 16:20:15 schwarze Exp $
+.\"	$OpenBSD: MD5.3,v 1.5 2018/02/27 20:28:06 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org> and
@@ -49,46 +49,20 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 27 2016 $
+.Dd $Mdocdate: February 27 2018 $
 .Dt MD5 3
 .Os
 .Sh NAME
-.Nm MD2 ,
 .Nm MD4 ,
 .Nm MD5 ,
-.Nm MD2_Init ,
-.Nm MD2_Update ,
-.Nm MD2_Final ,
 .Nm MD4_Init ,
 .Nm MD4_Update ,
 .Nm MD4_Final ,
 .Nm MD5_Init ,
 .Nm MD5_Update ,
 .Nm MD5_Final
-.Nd MD2, MD4, and MD5 hash functions
+.Nd MD4 and MD5 hash functions
 .Sh SYNOPSIS
-.In openssl/md2.h
-.Ft unsigned char *
-.Fo MD2
-.Fa "const unsigned char *d"
-.Fa "unsigned long n"
-.Fa "unsigned char *md"
-.Fc
-.Ft int
-.Fo MD2_Init
-.Fa "MD2_CTX *c"
-.Fc
-.Ft int
-.Fo MD2_Update
-.Fa "MD2_CTX *c"
-.Fa "const unsigned char *data"
-.Fa "unsigned long len"
-.Fc
-.Ft int
-.Fo MD2_Final
-.Fa "unsigned char *md"
-.Fa "MD2_CTX *c"
-.Fc
 .In openssl/md4.h
 .Ft unsigned char *
 .Fo MD4
@@ -134,23 +108,20 @@
 .Fa "MD5_CTX *c"
 .Fc
 .Sh DESCRIPTION
-MD2, MD4, and MD5 are cryptographic hash functions with a 128-bit
+MD4 and MD5 are cryptographic hash functions with a 128-bit
 output.
 .Pp
-.Fn MD2 ,
-.Fn MD4 ,
+.Fn MD4
 and
 .Fn MD5
-compute the MD2, MD4, and MD5 message digest of the
+compute the MD4 and MD5 message digest of the
 .Fa n
 bytes at
 .Fa d
 and place it in
 .Fa md ,
 which must have space for
-.Dv MD2_DIGEST_LENGTH No ==
-.Dv MD4_DIGEST_LENGTH No ==
-.Dv MD5_DIGEST_LENGTH No == 16
+.Dv MD4_DIGEST_LENGTH No == Dv MD5_DIGEST_LENGTH No == 16
 bytes of output.
 If
 .Fa md
@@ -161,49 +132,40 @@ the digest is placed in a static array.
 The following functions may be used if the message is not completely
 stored in memory:
 .Pp
-.Fn MD2_Init
+.Fn MD5_Init
 initializes a
-.Vt MD2_CTX
+.Vt MD5_CTX
 structure.
 .Pp
-.Fn MD2_Update
+.Fn MD5_Update
 can be called repeatedly with chunks of the message to be hashed
 .Pq Fa len No bytes at Fa data .
 .Pp
-.Fn MD2_Final
+.Fn MD5_Final
 places the message digest in
 .Fa md ,
 which must have space for
-.Dv MD2_DIGEST_LENGTH No == 16
+.Dv MD5_DIGEST_LENGTH No == 16
 bytes of output, and erases the
-.Vt MD2_CTX .
+.Vt MD5_CTX .
 .Pp
 .Fn MD4_Init ,
 .Fn MD4_Update ,
-.Fn MD4_Final ,
-.Fn MD5_Init ,
-.Fn MD5_Update ,
 and
-.Fn MD5_Final
+.Fn MD4_Final
 are analogous using an
 .Vt MD4_CTX
-and
-.Vt MD5_CTX
 structure.
 .Pp
 Applications should use the higher level functions
 .Xr EVP_DigestInit 3
 etc. instead of calling these hash functions directly.
 .Sh RETURN VALUES
-.Fn MD2 ,
-.Fn MD4 ,
+.Fn MD4
 and
 .Fn MD5
 return pointers to the hash value.
 .Pp
-.Fn MD2_Init ,
-.Fn MD2_Update ,
-.Fn MD2_Final ,
 .Fn MD4_Init ,
 .Fn MD4_Update ,
 .Fn MD4_Final ,
@@ -215,12 +177,8 @@ return 1 for success or 0 otherwise.
 .Sh SEE ALSO
 .Xr EVP_DigestInit 3
 .Sh STANDARDS
-RFC 1319, RFC 1320, RFC 1321
+RFC 1320, RFC 1321
 .Sh HISTORY
-.Fn MD2 ,
-.Fn MD2_Init ,
-.Fn MD2_Update ,
-.Fn MD2_Final ,
 .Fn MD5 ,
 .Fn MD5_Init ,
 .Fn MD5_Update ,

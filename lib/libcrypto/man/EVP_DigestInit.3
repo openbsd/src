@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_DigestInit.3,v 1.7 2018/02/18 20:11:16 schwarze Exp $
+.\" $OpenBSD: EVP_DigestInit.3,v 1.8 2018/02/27 20:28:06 schwarze Exp $
 .\" full merge up to: OpenSSL 7f572e95 Dec 2 13:57:04 2015 +0000
 .\" selective merge up to: OpenSSL a95d7574 Jul 2 12:16:38 2017 -0400
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 18 2018 $
+.Dd $Mdocdate: February 27 2018 $
 .Dt EVP_DIGESTINIT 3
 .Os
 .Sh NAME
@@ -80,7 +80,6 @@
 .Nm EVP_MD_CTX_block_size ,
 .Nm EVP_MD_CTX_type ,
 .Nm EVP_md_null ,
-.Nm EVP_md2 ,
 .Nm EVP_md5 ,
 .Nm EVP_md5_sha1 ,
 .Nm EVP_sha1 ,
@@ -202,8 +201,6 @@
 .Fc
 .Ft const EVP_MD *
 .Fn EVP_md_null void
-.Ft const EVP_MD *
-.Fn EVP_md2 void
 .Ft const EVP_MD *
 .Fn EVP_md5 void
 .Ft const EVP_MD *
@@ -417,7 +414,6 @@ is associated with RSA so this will return
 Since digests and signature algorithms are no longer linked this
 function is only retained for compatibility reasons.
 .Pp
-.Fn EVP_md2 ,
 .Fn EVP_md5 ,
 .Fn EVP_sha1 ,
 .Fn EVP_sha224 ,
@@ -428,7 +424,7 @@ and
 .Fn EVP_ripemd160
 return
 .Vt EVP_MD
-structures for the MD2, MD5, SHA1, SHA224, SHA256, SHA384, SHA512 and
+structures for the MD5, SHA1, SHA224, SHA256, SHA384, SHA512 and
 RIPEMD160 digest algorithms respectively.
 .Pp
 .Fn EVP_md5_sha1
@@ -555,7 +551,6 @@ is
 .Dv NULL .
 .Pp
 .Fn EVP_md_null ,
-.Fn EVP_md2 ,
 .Fn EVP_md5 ,
 .Fn EVP_md5_sha1 ,
 .Fn EVP_sha1 ,
@@ -641,7 +636,6 @@ and
 were added in OpenSSL 0.9.7.
 .Pp
 .Fn EVP_md_null ,
-.Fn EVP_md2 ,
 .Fn EVP_md5 ,
 .Fn EVP_sha1 ,
 .Fn EVP_dss ,
@@ -663,6 +657,3 @@ and later, so now
 can be used with RSA and DSA; there is no need to use
 .Fn EVP_dss1
 any more.
-.Pp
-OpenSSL 1.0 and later does not include the MD2 digest algorithm in the
-default configuration due to its security weaknesses.
