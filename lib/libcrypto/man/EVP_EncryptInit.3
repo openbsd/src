@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.8 2018/02/19 10:04:08 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.9 2018/02/27 20:43:41 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\" selective merge up to: OpenSSL 5c5eb286 Dec 5 00:36:43 2017 +0100
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 19 2018 $
+.Dd $Mdocdate: February 27 2018 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -156,10 +156,6 @@
 .Nm EVP_aes_256_ccm ,
 .Nm EVP_aes_128_cbc_hmac_sha1 ,
 .Nm EVP_aes_256_cbc_hmac_sha1 ,
-.Nm EVP_rc5_32_12_16_cbc ,
-.Nm EVP_rc5_32_12_16_cfb ,
-.Nm EVP_rc5_32_12_16_ecb ,
-.Nm EVP_rc5_32_12_16_ofb ,
 .Nm EVP_chacha20
 .Nd EVP cipher routines
 .Sh SYNOPSIS
@@ -737,8 +733,7 @@ the RC2 effective key length is not supported).
 .Pp
 .Fn EVP_CIPHER_CTX_ctrl
 allows various cipher specific parameters to be determined and set.
-Currently only the RC2 effective key length and the number of rounds of
-RC5 can be set.
+Currently only the RC2 effective key length can be set.
 .Pp
 .Fn EVP_CIPHER_CTX_rand_key
 generates a random key of the appropriate length based on the cipher
@@ -985,16 +980,6 @@ This is a variable key length cipher.
 CAST encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
 This is a variable key length cipher.
 .It Xo
-.Fn EVP_rc5_32_12_16_cbc ,
-.Fn EVP_rc5_32_12_16_ecb ,
-.Fn EVP_rc5_32_12_16_cfb ,
-.Fn EVP_rc5_32_12_16_ofb
-.Xc
-RC5 encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
-This is a variable key length cipher with an additional "number of
-rounds" parameter.
-By default the key length is set to 128 bits and 12 rounds.
-.It Xo
 .Fn EVP_aes_128_gcm ,
 .Fn EVP_aes_192_gcm ,
 .Fn EVP_aes_256_gcm
@@ -1233,10 +1218,6 @@ appeared in OpenSSL 0.9.7.
 .Fn EVP_CIPHER_CTX_reset
 fist appeared in OpenSSL 1.1.0.
 .Sh BUGS
-For RC5 the number of rounds can currently only be set to 8, 12 or 16.
-This is a limitation of the current RC5 code rather than the EVP
-interface.
-.Pp
 .Dv EVP_MAX_KEY_LENGTH
 and
 .Dv EVP_MAX_IV_LENGTH
