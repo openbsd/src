@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.117 2018/02/27 06:46:00 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.118 2018/02/27 09:24:56 benno Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -2376,8 +2376,13 @@ gre_keepalive_send(void *arg)
 		return;
 
 	/* this is really conservative */
+#ifdef INET6
 	linkhdr = max_linkhdr + MAX(sizeof(struct ip), sizeof(struct ip6_hdr)) +
 	    sizeof(struct gre_header) + sizeof(struct gre_h_key);
+#else
+	linkhdr = max_linkhdr + sizeof(struct ip) +
+	    sizeof(struct gre_header) + sizeof(struct gre_h_key);
+#endif
 	len = linkhdr + sizeof(*gk);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);

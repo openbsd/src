@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.136 2018/02/07 22:46:11 procter Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.137 2018/02/27 09:24:56 benno Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -194,12 +194,12 @@ ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 {
 	struct mbuf *m = *m0;
 	unsigned char *ptr;
-	int error, off, count;
+	int off, count;
 	struct ip *ip;
 #ifdef INET6
 	struct ip6_ext *ip6e;
 	struct ip6_hdr ip6;
-	int ad, alloc, nxt, noff;
+	int ad, alloc, nxt, noff, error;
 #endif /* INET6 */
 
 	switch (af) {

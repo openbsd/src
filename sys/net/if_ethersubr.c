@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.251 2018/02/02 22:00:39 bluhm Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.252 2018/02/27 09:24:56 benno Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -248,11 +248,13 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				memcpy(edst, LLADDR(satosdl(dst)),
 				    sizeof(edst));
 				break;
+#ifdef INET6
 			case AF_INET6:
 				error = nd6_resolve(ifp, rt, m, dst, edst);
 				if (error)
 					return (error == EAGAIN ? 0 : error);
 				break;
+#endif
 			case AF_INET:
 			case AF_MPLS:
 				error = arpresolve(ifp, rt, m, dst, edst);

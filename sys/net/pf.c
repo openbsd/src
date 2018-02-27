@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1061 2018/02/18 21:45:30 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1062 2018/02/27 09:24:56 benno Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -319,8 +319,10 @@ static __inline int pf_state_compare_key(struct pf_state_key *,
 	struct pf_state_key *);
 static __inline int pf_state_compare_id(struct pf_state *,
 	struct pf_state *);
+#ifdef INET6
 static __inline void pf_cksum_uncover(u_int16_t *, u_int16_t, u_int8_t);
 static __inline void pf_cksum_cover(u_int16_t *, u_int16_t, u_int8_t);
+#endif /* INET6 */
 static __inline void pf_set_protostate(struct pf_state *, int, u_int8_t);
 
 struct pf_src_tree tree_src_tracking;
@@ -1816,6 +1818,7 @@ pf_cksum_fixup(u_int16_t *cksum, u_int16_t was, u_int16_t now,
 	*cksum = (u_int16_t)(x);
 }
 
+#ifdef INET6
 /* pre: coverage(cksum) is superset of coverage(covered_cksum) */
 static __inline void
 pf_cksum_uncover(u_int16_t *cksum, u_int16_t covered_cksum, u_int8_t proto)
@@ -1829,6 +1832,7 @@ pf_cksum_cover(u_int16_t *cksum, u_int16_t uncovered_cksum, u_int8_t proto)
 {
 	pf_cksum_fixup(cksum, 0x0, ~uncovered_cksum, proto);
 }
+#endif /* INET6 */
 
 /* pre: *a is 16-bit aligned within its packet
  *
