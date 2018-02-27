@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.115 2018/02/27 04:36:18 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.116 2018/02/27 06:16:23 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -254,6 +254,7 @@ static int	gre_clone_destroy(struct ifnet *);
 struct if_clone gre_cloner =
     IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
 
+/* protected by NET_LOCK */
 struct gre_list gre_list = TAILQ_HEAD_INITIALIZER(gre_list);
 
 static int	gre_output(struct ifnet *, struct mbuf *, struct sockaddr *,
@@ -307,6 +308,7 @@ static int	mgre_ioctl(struct ifnet *, u_long, caddr_t);
 static int	mgre_up(struct mgre_softc *);
 static int	mgre_down(struct mgre_softc *);
 
+/* protected by NET_LOCK */
 struct mgre_tree mgre_tree = RBT_INITIALIZER();
 
 /*
@@ -348,7 +350,8 @@ static int	egre_down(struct egre_softc *);
 static int	egre_input(const struct gre_tunnel *, struct mbuf *, int);
 struct if_clone egre_cloner =
     IF_CLONE_INITIALIZER("egre", egre_clone_create, egre_clone_destroy);
-
+ 
+/* protected by NET_LOCK */
 struct egre_tree egre_tree = RBT_INITIALIZER();
 
 /*
@@ -442,9 +445,11 @@ static void	nvgre_age(void *);
 struct if_clone nvgre_cloner =
     IF_CLONE_INITIALIZER("nvgre", nvgre_clone_create, nvgre_clone_destroy);
 
+struct pool nvgre_pool;
+
+/* protected by NET_LOCK */
 struct nvgre_ucast_tree nvgre_ucast_tree = RBT_INITIALIZER();
 struct nvgre_mcast_tree nvgre_mcast_tree = RBT_INITIALIZER();
-struct pool nvgre_pool;
 
 /*
  * It is not easy to calculate the right value for a GRE MTU.
@@ -784,6 +789,7 @@ mgre_find(const struct gre_tunnel *key)
 {
 	struct mgre_softc *sc;
 
+	NET_ASSERT_LOCKED();
 	sc = RBT_FIND(mgre_tree, &mgre_tree, (const struct mgre_softc *)key);
 	if (sc != NULL)
 		return (&sc->sc_if);
@@ -1005,6 +1011,7 @@ egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen)
 	struct egre_softc *sc;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 
+	NET_ASSERT_LOCKED();
 	sc = RBT_FIND(egre_tree, &egre_tree, (const struct egre_softc *)key);
 	if (sc == NULL)
 		return (-1);
@@ -1220,6 +1227,7 @@ nvgre_mcast_find(const struct gre_tunnel *key, unsigned int if0idx)
 	 * find by hand.
 	 */
 
+	NET_ASSERT_LOCKED();
 	sc = RBT_ROOT(nvgre_mcast_tree, &nvgre_mcast_tree);
 	while (sc != NULL) {
 		rv = nvgre_cmp_mcast(key, &key->t_src, if0idx,
@@ -1238,6 +1246,7 @@ nvgre_mcast_find(const struct gre_tunnel *key, unsigned int if0idx)
 static inline struct nvgre_softc *
 nvgre_ucast_find(const struct gre_tunnel *key)
 {
+	NET_ASSERT_LOCKED();
 	return (RBT_FIND(nvgre_ucast_tree, &nvgre_ucast_tree,
 	    (struct nvgre_softc *)key));
 }
