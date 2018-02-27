@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_options.3,v 1.5 2018/02/27 17:08:20 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_options.3,v 1.6 2018/02/27 17:17:00 schwarze Exp $
 .\" full merge up to: OpenSSL 7946ab33 Dec 6 17:56:41 2015 +0100
 .\" selective merge up to: OpenSSL edb79c3a Mar 29 10:07:14 2017 +1000
 .\"
@@ -169,22 +169,28 @@ The following
 .Em modifying
 options are available:
 .Bl -tag -width Ds
-.It Dv SSL_OP_TLS_ROLLBACK_BUG
-Disable version rollback attack detection.
-.Pp
-During the client key exchange, the client must send the same information
-about acceptable SSL/TLS protocol levels as during the first hello.
-Some clients violate this rule by adapting to the server's answer.
-(Example: the client sends a SSLv2 hello and accepts up to SSLv3.1=TLSv1,
-the server only understands up to SSLv3.
-In this case the client must still use the same SSLv3.1=TLSv1 announcement.
-Some clients step down to SSLv3 with respect to the server's answer and violate
-the version rollback protection.)
 .It Dv SSL_OP_CIPHER_SERVER_PREFERENCE
 When choosing a cipher, use the server's preferences instead of the client
 preferences.
 When not set, the server will always follow the client's preferences.
 When set, the server will choose following its own preferences.
+.It Dv SSL_OP_LEGACY_SERVER_CONNECT
+Allow legacy insecure renegotiation between OpenSSL and unpatched servers
+.Em only :
+this option is currently set by default.
+See the
+.Sx SECURE RENEGOTIATION
+section for more details.
+.It Dv SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+When performing renegotiation as a server, always start a new session (i.e.,
+session resumption requests are only accepted in the initial handshake).
+This option is not needed for clients.
+.It Dv SSL_OP_NO_TICKET
+Normally clients and servers will, where possible, transparently make use of
+RFC4507bis tickets for stateless session resumption.
+.Pp
+If this option is set this functionality is disabled and tickets will not be
+used by clients or servers.
 .It Dv SSL_OP_NO_TLSv1
 Do not use the TLSv1.0 protocol.
 Deprecated; use
@@ -197,23 +203,17 @@ Do not use the TLSv1.2 protocol.
 Deprecated; use
 .Xr SSL_CTX_set_max_proto_version 3
 instead.
-.It Dv SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
-When performing renegotiation as a server, always start a new session (i.e.,
-session resumption requests are only accepted in the initial handshake).
-This option is not needed for clients.
-.It Dv SSL_OP_NO_TICKET
-Normally clients and servers will, where possible, transparently make use of
-RFC4507bis tickets for stateless session resumption.
+.It Dv SSL_OP_TLS_ROLLBACK_BUG
+Disable version rollback attack detection.
 .Pp
-If this option is set this functionality is disabled and tickets will not be
-used by clients or servers.
-.It Dv SSL_OP_LEGACY_SERVER_CONNECT
-Allow legacy insecure renegotiation between OpenSSL and unpatched servers
-.Em only :
-this option is currently set by default.
-See the
-.Sx SECURE RENEGOTIATION
-section for more details.
+During the client key exchange, the client must send the same information
+about acceptable SSL/TLS protocol levels as during the first hello.
+Some clients violate this rule by adapting to the server's answer.
+(Example: the client sends a SSLv2 hello and accepts up to SSLv3.1=TLSv1,
+the server only understands up to SSLv3.
+In this case the client must still use the same SSLv3.1=TLSv1 announcement.
+Some clients step down to SSLv3 with respect to the server's answer and violate
+the version rollback protection.)
 .El
 .Pp
 The following options used to be supported at some point in the past
