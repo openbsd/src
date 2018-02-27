@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_options.3,v 1.6 2018/02/27 17:17:00 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_options.3,v 1.7 2018/02/27 17:35:05 schwarze Exp $
 .\" full merge up to: OpenSSL 7946ab33 Dec 6 17:56:41 2015 +0100
 .\" selective merge up to: OpenSSL edb79c3a Mar 29 10:07:14 2017 +1000
 .\"
@@ -174,6 +174,9 @@ When choosing a cipher, use the server's preferences instead of the client
 preferences.
 When not set, the server will always follow the client's preferences.
 When set, the server will choose following its own preferences.
+.It Dv SSL_OP_COOKIE_EXCHANGE
+Turn on Cookie Exchange as described in RFC4347 Section 4.2.1.
+Only affects DTLS connections.
 .It Dv SSL_OP_LEGACY_SERVER_CONNECT
 Allow legacy insecure renegotiation between OpenSSL and unpatched servers
 .Em only :
@@ -181,6 +184,9 @@ this option is currently set by default.
 See the
 .Sx SECURE RENEGOTIATION
 section for more details.
+.It Dv SSL_OP_NO_QUERY_MTU
+Do not query the MTU.
+Only affects DTLS connections.
 .It Dv SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
 When performing renegotiation as a server, always start a new session (i.e.,
 session resumption requests are only accepted in the initial handshake).
@@ -226,12 +232,14 @@ and no longer have any effect:
 .Dv SSL_OP_NETSCAPE_CHALLENGE_BUG ,
 .Dv SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG ,
 .Dv SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG ,
+.Dv SSL_OP_NO_COMPRESSION ,
 .Dv SSL_OP_NO_SSLv2 ,
 .Dv SSL_OP_NO_SSLv3 ,
 .Dv SSL_OP_PKCS1_CHECK_1 ,
 .Dv SSL_OP_PKCS1_CHECK_2 ,
 .Dv SSL_OP_SAFARI_ECDHE_ECDSA_BUG ,
 .Dv SSL_OP_SINGLE_DH_USE ,
+.Dv SSL_OP_SINGLE_ECDH_USE ,
 .Dv SSL_OP_SSLEAY_080_CLIENT_DH_BUG ,
 .Dv SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG ,
 .Dv SSL_OP_TLS_BLOCK_PADDING_BUG ,
