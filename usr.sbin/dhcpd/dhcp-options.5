@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.22 2015/09/14 20:06:59 schwarze Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.23 2018/02/28 19:49:33 matthieu Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: February 28 2018 $
 .Dt DHCP-OPTIONS 5
 .Os
 .Sh NAME
@@ -171,6 +171,11 @@ RFC 1122.
 .It Ic option classless-static-routes Ar ip/prefix ip Oo , Ar ip/prefix ip ... Oc ;
 This option specifies a list of static routes in CDIR notation, which
 should be sent to the client.
+This option is specified in RFC 3442.
+Note that, since the RFC says that clients supporting this option must ignore the
+.Ic Routers
+option when both are present, the default route
+needs to be included in the list of routes specified here.
 .It Ic option classless-ms-static-routes Ar ip/prefix ip Oo , Ar ip/prefix ip ... Oc ;
 This option does the same as
 .Ic classless-static-routes ,
@@ -516,6 +521,9 @@ and the second address is the router for the destination.
 The default route (0.0.0.0) is an illegal destination for a static route.
 To specify the default route, use the
 .Ic routers
+option.
+Note that this option is obsolete and should be replaced by the
+.Ic classless-static-routes
 option.
 .It Ic option streettalk-directory-assistance-server Ar ip-address Oo , Ar ip-address ... Oc ;
 The StreetTalk Directory Assistance (STDA) server option specifies a
