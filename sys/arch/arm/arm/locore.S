@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.13 2017/01/06 00:06:02 jsg Exp $	*/
+/*	$OpenBSD: locore.S,v 1.14 2018/02/28 13:16:22 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -101,6 +101,7 @@ ASENTRY_NP(start)
 	.align	2
 
 	.bss
+	.align	3
 svcstk:
 	.space	INIT_ARM_STACK_SIZE
 
@@ -179,6 +180,7 @@ ENTRY(longjmp)
 	mov	pc, lr
 
 	.data
+	.align	2
 	.global _C_LABEL(esym)
 _C_LABEL(esym):	.word	_C_LABEL(end)
 
