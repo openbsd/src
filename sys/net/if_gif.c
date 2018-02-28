@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.111 2018/02/19 00:34:32 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.112 2018/02/28 23:28:05 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ gif_clone_destroy(struct ifnet *ifp)
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		gif_down(sc);
 
-	TAILQ_INSERT_TAIL(&gif_list, &sc->sc_tunnel, t_entry);
+	TAILQ_REMOVE(&gif_list, &sc->sc_tunnel, t_entry);
 	NET_UNLOCK();
 
 	if_detach(ifp);
@@ -671,7 +671,7 @@ in_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	key.t_af = AF_INET;
 	key.t_src4 = ip->ip_dst;
-	key.t_dst4 = ip->ip_dst;
+	key.t_dst4 = ip->ip_src;
 
 	rv = gif_input(&key, mp, offp, proto, af, ip->ip_ttl, ip->ip_tos);
 	if (rv == -1)
