@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.69 2018/02/27 06:38:54 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.70 2018/02/28 22:24:40 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 27 2018 $
+.Dd $Mdocdate: February 28 2018 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -78,7 +78,7 @@ To allow GRE packet processing, set
 to 1.
 .Pp
 .Nm gre ,
-.\" .Nm mgre ,
+.Nm mgre ,
 .Nm egre ,
 and
 .Nm nvgre
@@ -181,6 +181,7 @@ overlay network and the Provider Addresses of NVGRE endpoints in
 the underlay.
 .Ss Programming Interface
 .Nm gre ,
+.Nm mgre ,
 .Nm egre ,
 and
 .Nm nvgre
@@ -198,6 +199,12 @@ and
 interfaces support configuration of unicast IP addresses as the
 tunnel endpoints.
 .Pp
+.Nm mgre
+interfaces support configuration of a unicast local IP address,
+and require an
+.Dv AF_UNSPEC
+destination address.
+.Pp
 .Nm nvgre
 interfaces support configuration of a unicast IP address as the
 local endpoint and a multicast group address as the destination
@@ -212,7 +219,8 @@ Configure a virtual network identifier for use in the GRE Key header.
 The virtual network identifier may only be configured while the
 interface is down.
 .Pp
-.Nm gre
+.Nm gre ,
+.Nm mgre ,
 and
 .Nm egre
 interfaces configured with a virtual network identifier will enable
@@ -234,7 +242,8 @@ The virtual network identifer may only be disabled while the interface
 is down.
 .Pp
 When the virtual network identifier is disabled on
-.Nm gre
+.Nm gre ,
+.Nm mgre ,
 and
 .Nm egre
 interfaces, it disables the use of the GRE Key header.
@@ -253,6 +262,8 @@ Set the Time-To-Live field in IPv4 encapsulation headers, or the
 Hop Limit field in IPv6 encapsulation headers.
 .Pp
 .Nm gre
+and
+.Nm mgre
 interfaces configured with a TTL of -1 will copy the TTL in and out
 of the encapsulated protocol headers.
 .It Dv SIOCGLIFPHYTTL Fa "struct ifreq *"
@@ -268,7 +279,8 @@ Get whether the tunnel traffic sent by the interface can be fragmented
 or not.
 .El
 .Pp
-.Nm gre
+.Nm gre ,
+.Nm mgre ,
 and
 .Nm egre
 interfaces support the following
@@ -280,9 +292,7 @@ Enable or disable the partitioning of the optional GRE Key header
 into a 24-bit virtual network identifier and an 8-bit flow
 identifier.
 .Pp
-.Nm gre
-and
-.Nm egre
+The interface
 must already be configured with a virtual network identifer before
 enabling flow identifiers in the GRE Key header.
 The configured virtual network identify must also fit into 24 bits.
