@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.564 2018/02/11 22:00:19 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.565 2018/02/28 22:16:56 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -373,7 +373,7 @@ routehandler(struct interface_info *ifi, int routefd)
 
 		linkstat = interface_status(ifi->name);
 		if (linkstat != ifi->linkstat) {
-			DPRINTF("%s: link %s -> %s", log_procname,
+			log_debug("%s: link %s -> %s", log_procname,
 			    (ifi->linkstat != 0) ? "up" : "down",
 			    (linkstat != 0) ? "up" : "down");
 			ifi->linkstat = linkstat;
@@ -810,7 +810,7 @@ dhcpoffer(struct interface_info *ifi, struct option_data *options,
     const char *src)
 {
 	if (ifi->state != S_SELECTING) {
-		DPRINTF("%s: unexpected DHCPOFFER from %s - state #%d",
+		log_debug("%s: unexpected DHCPOFFER from %s - state #%d",
 		    log_procname, src, ifi->state);
 		return;
 	}
@@ -824,7 +824,7 @@ bootreply(struct interface_info *ifi, struct option_data *options,
     const char *src)
 {
 	if (ifi->state != S_SELECTING) {
-		DPRINTF("%s: unexpected BOOTREPLY from %s - state #%d",
+		log_debug("%s: unexpected BOOTREPLY from %s - state #%d",
 		    log_procname, src, ifi->state);
 		return;
 	}
@@ -882,7 +882,7 @@ dhcpack(struct interface_info *ifi, struct option_data *options,
 	if (ifi->state != S_REBOOTING &&
 	    ifi->state != S_REQUESTING &&
 	    ifi->state != S_RENEWING) {
-		DPRINTF("%s: unexpected DHCPACK from %s - state #%d",
+		log_debug("%s: unexpected DHCPACK from %s - state #%d",
 		    log_procname, src, ifi->state);
 		return;
 	}
@@ -913,13 +913,13 @@ dhcpnak(struct interface_info *ifi, const char *src)
 	if (ifi->state != S_REBOOTING &&
 	    ifi->state != S_REQUESTING &&
 	    ifi->state != S_RENEWING) {
-		DPRINTF("%s: unexpected DHCPNAK from %s - state #%d",
+		log_debug("%s: unexpected DHCPNAK from %s - state #%d",
 		    log_procname, src, ifi->state);
 		return;
 	}
 
 	if (ifi->active == NULL) {
-		DPRINTF("%s: unexpected DHCPNAK from %s - no active lease",
+		log_debug("%s: unexpected DHCPNAK from %s - no active lease",
 		    log_procname, src);
 		return;
 	}

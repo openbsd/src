@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.149 2018/01/28 23:12:36 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.150 2018/02/28 22:16:56 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -200,26 +200,26 @@ packethandler(struct interface_info *ifi)
 	ifrom.s_addr = from.sin_addr.s_addr;
 
 	if (packet->hlen != ETHER_ADDR_LEN) {
-		DPRINTF("%s: discarding packet with hlen == %u", log_procname,
+		log_debug("%s: discarding packet with hlen == %u", log_procname,
 		    packet->hlen);
 		return;
 	} else if (memcmp(&ifi->hw_address, packet->chaddr,
 	    sizeof(ifi->hw_address))) {
-		DPRINTF("%s: discarding packet with chaddr == %s",
+		log_debug("%s: discarding packet with chaddr == %s",
 		    log_procname,
 		    ether_ntoa((struct ether_addr *)packet->chaddr));
 		return;
 	}
 
 	if (ifi->xid != packet->xid) {
-		DPRINTF("%s: discarding packet with XID != %u (%u)",
+		log_debug("%s: discarding packet with XID != %u (%u)",
 		    log_procname, ifi->xid, packet->xid);
 		return;
 	}
 
 	TAILQ_FOREACH(ap, &config->reject_list, next)
 	    if (ifrom.s_addr == ap->addr.s_addr) {
-		    DPRINTF("%s: discarding packet from address on reject "
+		    log_debug("%s: discarding packet from address on reject "
 			"list (%s)", log_procname, inet_ntoa(ifrom));
 		    return;
 	    }
@@ -235,7 +235,7 @@ packethandler(struct interface_info *ifi)
 	    ((options[i].len != config->send_options[i].len) ||
 	    memcmp(options[i].data, config->send_options[i].data,
 	    options[i].len) != 0)) {
-		DPRINTF("%s: discarding packet with client-identifier %s'",
+		log_debug("%s: discarding packet with client-identifier %s'",
 		    log_procname, pretty_print_option(i, &options[i], 0));
 		return;
 	}
@@ -258,14 +258,14 @@ packethandler(struct interface_info *ifi)
 			dhcpack(ifi, options, src);
 			break;
 		default:
-			DPRINTF("%s: discarding DHCP packet of unknown type "
+			log_debug("%s: discarding DHCP packet of unknown type "
 			    "(%d)", log_procname, options[i].data[0]);
 			break;
 		}
 	} else if (packet->op == BOOTREPLY) {
 		bootreply(ifi, options, src);
 	} else {
-		DPRINTF("%s: discarding packet which is neither DHCP nor "
+		log_debug("%s: discarding packet which is neither DHCP nor "
 		    "BOOTP", log_procname);
 	}
 
