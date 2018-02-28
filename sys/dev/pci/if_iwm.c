@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.225 2018/02/25 12:40:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.226 2018/02/28 14:39:35 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7315,6 +7315,10 @@ iwm_notif_intr(struct iwm_softc *sc)
 				sc->sc_flags &= ~IWM_FLAG_TE_ACTIVE;
 			break;
 		}
+
+		case IWM_WIDE_ID(IWM_SYSTEM_GROUP,
+		    IWM_FSEQ_VER_MISMATCH_NOTIFICATION):
+		    break;
 
 		/*
 		 * Firmware versions 21 and 22 generate some DEBUG_LOG_MSG
