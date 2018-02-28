@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.15 2017/07/09 00:51:40 pd Exp $ */
+/* $OpenBSD: mc146818.c,v 1.16 2018/02/28 06:53:25 pd Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -354,6 +354,6 @@ mc146818_stop()
 void
 mc146818_start()
 {
-	evtimer_add(&rtc.per, &rtc.per_tv);
 	evtimer_add(&rtc.sec, &rtc.sec_tv);
+	rtc_reschedule_per();
 }
