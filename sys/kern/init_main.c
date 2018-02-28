@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.273 2018/01/11 18:58:17 patrick Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.274 2018/02/28 18:47:33 patrick Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -546,12 +546,12 @@ main(void *framep)
 		panic("fork zerothread");
 #endif
 
-	config_process_deferred_mountroot();
-
 #if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */
 	cpu_boot_secondary_processors();
 #endif
+
+	config_process_deferred_mountroot();
 
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!
