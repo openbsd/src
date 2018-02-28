@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.87 2018/02/18 07:43:55 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.88 2018/02/28 20:36:09 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: February 18 2018 $
+.Dd $Mdocdate: February 28 2018 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -360,8 +360,8 @@ Specify an alternative configuration file.
 The number of days to certify the certificate for.
 .It Fl enddate Ar date
 Set the expiry date.
-The format of the date is YYMMDDHHMMSSZ
-.Pq the same as an ASN.1 UTCTime structure .
+The format of the date is [YY]YYMMDDHHMMSSZ,
+with all four year digits required for dates from 2050 onwards.
 .It Fl extensions Ar section
 The section of the configuration file containing certificate extensions
 to be added when a certificate is issued (defaults to
@@ -492,8 +492,8 @@ then it can be preceded by a number and a
 A single self-signed certificate to be signed by the CA.
 .It Fl startdate Ar date
 Set the start date.
-The format of the date is YYMMDDHHMMSSZ
-.Pq the same as an ASN.1 UTCTime structure .
+The format of the date is [YY]YYMMDDHHMMSSZ,
+with all four year digits required for dates from 2050 onwards.
 .It Fl status Ar serial
 Show the status of the certificate with serial number
 .Ar serial .
