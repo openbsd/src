@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.112 2017/10/12 11:32:27 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.113 2018/02/28 08:55:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -455,8 +455,6 @@ server_set_stdin_callback(struct client *c, void (*cb)(struct client *, int,
 void
 server_unzoom_window(struct window *w)
 {
-	if (window_unzoom(w) == 0) {
+	if (window_unzoom(w) == 0)
 		server_redraw_window(w);
-		server_status_window(w);
-	}
 }

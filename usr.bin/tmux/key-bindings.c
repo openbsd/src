@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.84 2017/11/15 19:59:27 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.85 2018/02/28 08:55:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -183,9 +183,9 @@ key_bindings_init(void)
 		"bind 9 select-window -t:=9",
 		"bind : command-prompt",
 		"bind \\; last-pane",
-		"bind = choose-buffer",
+		"bind = choose-buffer -Z",
 		"bind ? list-keys",
-		"bind D choose-client",
+		"bind D choose-client -Z",
 		"bind E select-layout -E",
 		"bind L switch-client -l",
 		"bind M select-pane -M",
@@ -202,9 +202,9 @@ key_bindings_init(void)
 		"bind p previous-window",
 		"bind q display-panes",
 		"bind r refresh-client",
-		"bind s choose-tree -s",
+		"bind s choose-tree -Zs",
 		"bind t clock-mode",
-		"bind w choose-tree -w",
+		"bind w choose-tree -Zw",
 		"bind x confirm-before -p\"kill-pane #P? (y/n)\" kill-pane",
 		"bind z resize-pane -Z",
 		"bind { swap-pane -U",
