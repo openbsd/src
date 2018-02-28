@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drm.h,v 1.27 2018/02/21 00:04:41 jsg Exp $ */
+/* $OpenBSD: i915_drm.h,v 1.28 2018/02/28 00:44:28 jsg Exp $ */
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -201,12 +201,12 @@ typedef struct drm_i915_sarea {
 #define DRM_I915_GEM_SET_TILING	0x21
 #define DRM_I915_GEM_GET_TILING	0x22
 #define DRM_I915_GEM_GET_APERTURE 0x23
-#define DRM_I915_GEM_EXECBUFFER2	0x24	/* MMAP_GTT upstream */
-#define DRM_I915_GEM_MADVISE	0x25		/* PIPE_FROM_CRTC_ID upstream */
-#define DRM_I915_GEM_MMAP_GTT		0x26	/* MADVISE upstream */
+#define DRM_I915_GEM_MMAP_GTT	0x24
+#define DRM_I915_GET_PIPE_FROM_CRTC_ID	0x25
+#define DRM_I915_GEM_MADVISE	0x26
 #define DRM_I915_OVERLAY_PUT_IMAGE	0x27
 #define DRM_I915_OVERLAY_ATTRS	0x28
-#define DRM_I915_GET_PIPE_FROM_CRTC_ID  0x29	/* EXECBUFFER2 upstream */
+#define DRM_I915_GEM_EXECBUFFER2	0x29
 #define DRM_I915_GET_SPRITE_COLORKEY	0x2a
 #define DRM_I915_SET_SPRITE_COLORKEY	0x2b
 #define DRM_I915_GEM_WAIT	0x2c
@@ -644,13 +644,11 @@ struct drm_i915_gem_execbuffer2 {
 	uint32_t batch_start_offset;
 	/** Bytes used in batchbuffer from batch_start_offset */
 	uint32_t batch_len;
-#ifndef __OpenBSD__
 	uint32_t DR1;
 	uint32_t DR4;
 	uint32_t num_cliprects;
 	/** This is a struct drm_clip_rect *cliprects */
 	uint64_t cliprects_ptr;
-#endif
 #define I915_EXEC_RING_MASK              (7<<0)
 #define I915_EXEC_DEFAULT                (0<<0)
 #define I915_EXEC_RENDER                 (1<<0)
