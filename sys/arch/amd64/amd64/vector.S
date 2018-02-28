@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.52 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.53 2018/02/28 06:19:28 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ IDTVEC(trap02)
 	pushq	$T_NMI
 calltrap_specstk:			# special stack path
 	INTR_REENTRY
-	movl	$MSR_FSBASE,%ecx	# save current GS.base...
+	movl	$MSR_GSBASE,%ecx	# save current GS.base...
 	rdmsr
 	movq	%rax,%r12		# ...in %r12 and %r13
 	movq	%rdx,%r13
@@ -145,7 +145,7 @@ INTRENTRY_LABEL(calltrap_specstk):
 	SMAP_CLAC
 	movq	%rsp,%rdi
 	call	trap
-	movl	$MSR_FSBASE,%ecx	# restore GS.base
+	movl	$MSR_GSBASE,%ecx	# restore GS.base
 	movq	%r12,%rax
 	movq	%r13,%rdx
 	wrmsr
