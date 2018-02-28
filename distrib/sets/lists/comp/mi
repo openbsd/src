@@ -1918,6 +1918,7 @@
 ./usr/share/man/man3/SSL_CTX_set_tlsext_servername_callback.3
 ./usr/share/man/man3/SSL_CTX_set_tlsext_status_cb.3
 ./usr/share/man/man3/SSL_CTX_set_tlsext_ticket_key_cb.3
+./usr/share/man/man3/SSL_CTX_set_tlsext_use_srtp.3
 ./usr/share/man/man3/SSL_CTX_set_tmp_dh_callback.3
 ./usr/share/man/man3/SSL_CTX_set_tmp_rsa_callback.3
 ./usr/share/man/man3/SSL_CTX_set_verify.3
