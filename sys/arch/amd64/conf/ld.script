@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.9 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: ld.script,v 1.10 2018/03/01 06:47:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -93,7 +93,6 @@ SECTIONS
 		__data_start = ABSOLUTE(.);
 		*(.data .data.*)
 	} :data =0xcccccccc
-	. = ALIGN(0x1000);
 
 	. = ALIGN(__ALIGN_SIZE);
 	__kernel_kudata_phys = (. - __kernel_virt_base) + 0x1000000;
