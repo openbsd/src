@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.63 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: npx.c,v 1.64 2018/03/01 13:01:26 bluhm Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -528,7 +528,9 @@ npxintr(void *arg)
 		else
 			code = x86fpflags_to_siginfo(addr->sv_87.sv_ex_sw);
 		sv.sival_int = frame->if_eip;
+		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, T_ARITHTRAP, code, sv);
+		KERNEL_UNLOCK();
 	} else {
 		/*
 		 * Nested interrupt.  These losers occur when:
@@ -544,7 +546,9 @@ npxintr(void *arg)
 		 *
 		 * Treat them like a true async interrupt.
 		 */
+		KERNEL_LOCK();
 		psignal(p, SIGFPE);
+		KERNEL_UNLOCK();
 	}
 
 	return (1);
