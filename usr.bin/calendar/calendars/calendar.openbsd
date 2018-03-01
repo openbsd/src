@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.38 2016/09/03 13:37:45 guenther Exp $
+ * $OpenBSD: calendar.openbsd,v 1.39 2018/03/01 20:48:11 jmc Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -53,7 +53,7 @@ May 29	t2k13: General hackathon, Toronto, Canada, 43 developers, 2013
 May 30	c2k9: General hackathon, Edmonton, Alberta, 46 developers, 2009
 May 31	Initial cut at OpenNTP, 2004
 Jun 01	OpenBSD 2.1 released, first time on CD (double set), 1997
-Jun 04	c99: First hackathon (IPSec), Calgary, Alberta, 10 developers, 1999
+Jun 04	c99: First hackathon (IPsec), Calgary, Alberta, 10 developers, 1999
 Jun 04	c2k2: General hackathon, Calgary, Alberta, 42 developers, 2002
 Jun 06	c2k8: General hackathon, Edmonton, Alberta, 55 developers, 2008
 Jun 14	r2k6: First network hackathon, Hamburg, Germany, 6 developers, 2006
@@ -79,7 +79,7 @@ Aug 12	OpenBSD/sparc is switched to wscons, 2002
 Aug 16	IPX network stack added to OpenBSD, from FreeBSD, 1996
 Aug 17	c2k1-2: Sparc64 hackathon, Washington D.C., 12 developers, 2001
 Aug 17	OpenBSD/sparc64 port is added, from NetBSD, 2001
-Aug 28	k2k6: IPSec hackathon, Schloss Kransberg, Germany, 14 developers, 2006
+Aug 28	k2k6: IPsec hackathon, Schloss Kransberg, Germany, 14 developers, 2006
 Sep 01	Support for the sparc (32bit) architecture removed, 2016
 Sep 03	Support for the zaurus architecture removed, 2016
 Sep 16	s2k11: General hackathon, Ljubljana, Slovenia, 25 developers, 2011
