@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.135 2018/02/25 20:26:51 schwarze Exp $
+# $OpenBSD: Makefile,v 1.136 2018/03/01 19:20:09 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -157,6 +157,7 @@ MAN=	\
 	OPENSSL_config.3 \
 	OPENSSL_load_builtin_modules.3 \
 	OPENSSL_malloc.3 \
+	OPENSSL_sk_new.3 \
 	OpenSSL_add_all_algorithms.3 \
 	PEM_bytes_read_bio.3 \
 	PEM_read.3 \
@@ -202,6 +203,7 @@ MAN=	\
 	SHA1.3 \
 	SMIME_read_PKCS7.3 \
 	SMIME_write_PKCS7.3 \
+	STACK_OF.3 \
 	SXNET_new.3 \
 	TS_REQ_new.3 \
 	UI_UTIL_read_pw.3 \
