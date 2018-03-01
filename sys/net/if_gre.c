@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.119 2018/02/27 22:36:38 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.120 2018/03/01 00:27:01 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -302,6 +302,7 @@ static int	mgre_clone_destroy(struct ifnet *);
 struct if_clone mgre_cloner =
     IF_CLONE_INITIALIZER("mgre", mgre_clone_create, mgre_clone_destroy);
 
+static void	mgre_rtrequest(struct ifnet *, int, struct rtentry *);
 static int	mgre_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
 static void	mgre_start(struct ifnet *);
@@ -563,7 +564,7 @@ mgre_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_mtu = GREMTU;
 	ifp->if_flags = 0; /* it's not p2p, and can't mcast or bcast */
 	ifp->if_xflags = IFXF_CLONED;
-	ifp->if_rtrequest = p2p_rtrequest; /* maybe? */;
+	ifp->if_rtrequest = mgre_rtrequest;
 	ifp->if_output = mgre_output;
 	ifp->if_start = mgre_start;
 	ifp->if_ioctl = mgre_ioctl;
@@ -1484,6 +1485,49 @@ gre_start(struct ifnet *ifp)
 			ifp->if_oerrors++;
 			continue;
 		}
+	}
+}
+
+void
+mgre_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
+{
+	struct ifnet *lo0ifp;
+	struct ifaddr *ifa, *lo0ifa;
+
+	switch (req) {
+	case RTM_ADD:
+		if (!ISSET(rt->rt_flags, RTF_LOCAL))
+			break;
+
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+			if (memcmp(rt_key(rt), ifa->ifa_addr,
+			    rt_key(rt)->sa_len) == 0)
+				break;
+		}
+
+		if (ifa == NULL)
+			break;
+
+		KASSERT(ifa == rt->rt_ifa);
+
+		lo0ifp = if_get(rtable_loindex(ifp->if_rdomain));
+		KASSERT(lo0ifp != NULL);
+		TAILQ_FOREACH(lo0ifa, &lo0ifp->if_addrlist, ifa_list) {
+			if (lo0ifa->ifa_addr->sa_family ==
+			    ifa->ifa_addr->sa_family)
+				break;
+		}
+		if_put(lo0ifp);
+
+		if (lo0ifa == NULL)
+			break;
+
+		rt->rt_flags &= ~RTF_LLINFO;
+		break;
+	case RTM_DELETE:
+	case RTM_RESOLVE:
+	default:
+		break;
 	}
 }
 
