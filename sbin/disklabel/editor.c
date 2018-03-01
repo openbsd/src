@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.316 2018/03/01 15:35:40 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.317 2018/03/01 15:47:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1225,11 +1225,22 @@ getuint64(struct disklabel *lp, char *prompt, char *helpstring,
 					/* Negative mult means divide (fancy) */
 					rval = d / (-mult) * percent;
 
-				/* Apply the operator */
-				if (operator == '+')
-					rval += oval;
-				else if (operator == '-')
-					rval = oval - rval;
+				/* Range check then apply [+-] operator */
+				if (operator == '+') {
+					if (ULLONG_MAX - 2 - oval >= rval)
+						rval += oval;
+					else {
+						errno = EINVAL;
+						rval = ULLONG_MAX;
+					}
+				} else if (operator == '-') {
+					if (oval >= rval)
+						rval = oval - rval;
+					else {
+						errno = EINVAL;
+						rval = ULLONG_MAX;
+					}
+				}
 			}
 		}
 	}
