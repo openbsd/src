@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.315 2018/03/01 15:19:05 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.316 2018/03/01 15:35:40 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -620,15 +620,14 @@ again:
 				secs = ap->maxsz;
 #ifdef SUN_CYLCHECK
 cylinderalign:
-			secs = ((secs + cylsecs - 1) / cylsecs) * cylsecs;
-#endif
-			totsecs -= secs;
-#ifdef SUN_CYLCHECK
-			while (totsecs < 0) {
-				secs -= cylsecs;
-				totsecs += cylsecs;
+			if (lp->d_flags & D_VENDOR) {
+				secs = ((secs + cylsecs - 1) / cylsecs) *
+				    cylsecs;
+				while (secs > totsecs)
+					secs -= cylsecs;
 			}
 #endif
+			totsecs -= secs;
 		}
 
 		/* Find largest chunk of free space. */
@@ -2035,9 +2034,12 @@ get_fsize(struct disklabel *lp, int partno)
 int
 get_bsize(struct disklabel *lp, int partno)
 {
-	u_int64_t adj, ui, bsize, frag, fsize, orig_offset, orig_size;
+	u_int64_t ui, frag, fsize;
 	struct partition *pp = &lp->d_partitions[partno];
+#ifndef SUN_CYLCHECK
+	u_int64_t adj, bsize, orig_offset, orig_size;
 	char *p;
+#endif
 
 	if (pp->p_fstype != FS_BSDFFS)
 		return (0);
