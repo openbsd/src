@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.317 2018/03/01 15:47:54 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.318 2018/03/01 20:11:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1212,18 +1212,23 @@ getuint64(struct disklabel *lp, char *prompt, char *helpstring,
 			endptr = p;
 			errno = 0;
 			d = strtod(p, &endptr);
-			if (errno == ERANGE)
+			if (errno == ERANGE || d < 0)
 				rval = ULLONG_MAX;	/* too big/small */
 			else if (*endptr != '\0') {
 				errno = EINVAL;		/* non-numbers in str */
 				rval = ULLONG_MAX;
 			} else {
-				/* XXX - should check for overflow */
 				if (mult > 0)
-					rval = d * mult * percent;
+					d = d * mult * percent;
 				else
-					/* Negative mult means divide (fancy) */
-					rval = d / (-mult) * percent;
+					d = d / (-mult) * percent;
+
+				if (d < ULLONG_MAX - 1) {
+					rval = d;
+				} else {
+					errno = ERANGE;
+					rval = ULLONG_MAX;
+				}
 
 				/* Range check then apply [+-] operator */
 				if (operator == '+') {
