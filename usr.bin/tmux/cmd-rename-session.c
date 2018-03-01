@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-session.c,v 1.26 2017/04/22 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-rename-session.c,v 1.27 2018/03/01 12:53:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -46,26 +46,31 @@ const struct cmd_entry cmd_rename_session_entry = {
 static enum cmd_retval
 cmd_rename_session_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args	*args = self->args;
-	struct session	*s = item->target.s;
-	const char	*newname;
+	struct args		*args = self->args;
+	struct client		*c = cmd_find_client(item, NULL, 0);
+	struct session		*s = item->target.s;
+	char			*newname;
 
-	newname = args->argv[0];
-	if (strcmp(newname, s->name) == 0)
+	newname = format_single(item, args->argv[0], c, s, NULL, NULL);
+	if (strcmp(newname, s->name) == 0) {
+		free(newname);
 		return (CMD_RETURN_NORMAL);
+	}
 
 	if (!session_check_name(newname)) {
 		cmdq_error(item, "bad session name: %s", newname);
+		free(newname);
 		return (CMD_RETURN_ERROR);
 	}
 	if (session_find(newname) != NULL) {
 		cmdq_error(item, "duplicate session: %s", newname);
+		free(newname);
 		return (CMD_RETURN_ERROR);
 	}
 
 	RB_REMOVE(sessions, &sessions, s);
 	free(s->name);
-	s->name = xstrdup(newname);
+	s->name = newname;
 	RB_INSERT(sessions, &sessions, s);
 
 	server_status_session(s);

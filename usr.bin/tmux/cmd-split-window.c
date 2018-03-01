@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.87 2017/08/30 10:33:57 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.88 2018/03/01 12:53:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -61,8 +61,8 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	struct window		*w = wl->window;
 	struct window_pane	*wp = item->target.wp, *new_wp = NULL;
 	struct environ		*env;
-	const char		*cmd, *path, *shell, *template, *cwd;
-	char		       **argv, *cause, *new_cause, *cp, *to_free = NULL;
+	const char		*cmd, *path, *shell, *template, *tmp;
+	char		       **argv, *cause, *new_cause, *cp, *cwd;
 	u_int			 hlimit;
 	int			 argc, size, percentage;
 	enum layout_type	 type;
@@ -86,14 +86,12 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 		argv = args->argv;
 	}
 
-	if (args_has(args, 'c')) {
-		cwd = args_get(args, 'c');
-		to_free = format_single(item, cwd, c, s, NULL, NULL);
-		cwd = to_free;
-	} else if (item->client != NULL && item->client->session == NULL)
-		cwd = item->client->cwd;
+	if ((tmp = args_get(args, 'c')) != NULL)
+		cwd = format_single(item, tmp, c, s, NULL, NULL);
+	else if (item->client != NULL && item->client->session == NULL)
+		cwd = xstrdup(item->client->cwd);
 	else
-		cwd = s->cwd;
+		cwd = xstrdup(s->cwd);
 
 	type = LAYOUT_TOPBOTTOM;
 	if (args_has(args, 'h'))
@@ -175,7 +173,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	cmd_find_from_winlink_pane(&fs, wl, new_wp, 0);
 	hooks_insert(s->hooks, item, &fs, "after-split-window");
 
-	free(to_free);
+	free(cwd);
 	return (CMD_RETURN_NORMAL);
 
 error:
@@ -186,6 +184,6 @@ error:
 	cmdq_error(item, "create pane failed: %s", cause);
 	free(cause);
 
-	free(to_free);
+	free(cwd);
 	return (CMD_RETURN_ERROR);
 }
