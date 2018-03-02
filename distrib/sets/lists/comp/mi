@@ -1832,6 +1832,7 @@
 ./usr/share/man/man3/OPENSSL_config.3
 ./usr/share/man/man3/OPENSSL_load_builtin_modules.3
 ./usr/share/man/man3/OPENSSL_malloc.3
+./usr/share/man/man3/OPENSSL_sk_new.3
 ./usr/share/man/man3/OpenSSL_add_all_algorithms.3
 ./usr/share/man/man3/PEM_bytes_read_bio.3
 ./usr/share/man/man3/PEM_read.3
@@ -1985,6 +1986,7 @@
 ./usr/share/man/man3/SSL_state_string.3
 ./usr/share/man/man3/SSL_want.3
 ./usr/share/man/man3/SSL_write.3
+./usr/share/man/man3/STACK_OF.3
 ./usr/share/man/man3/SXNET_new.3
 ./usr/share/man/man3/SipHash24.3
 ./usr/share/man/man3/TS_REQ_new.3
