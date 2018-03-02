@@ -1,4 +1,4 @@
-/*	$OpenBSD: octxctl.c,v 1.2 2018/01/16 15:22:14 visa Exp $	*/
+/*	$OpenBSD: octxctl.c,v 1.3 2018/03/02 15:44:39 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -229,9 +229,9 @@ octxctl_uctl_init(struct octxctl_softc *sc, uint64_t clock_freq,
 	case 100000000:
 	default:
 		if (clock_sel < 2)
-			refclk_fsel = 0x07;
-		else
 			refclk_fsel = 0x27;
+		else
+			refclk_fsel = 0x07;
 		mpll_mult = 0x19;
 		break;
 	}
