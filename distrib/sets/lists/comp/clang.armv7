@@ -187,3 +187,4 @@
 ./usr/share/man/man1/clang++.1
 ./usr/share/man/man1/clang-cpp.1
 ./usr/share/man/man1/clang.1
+./usr/share/man/man1/ld.lld.1
