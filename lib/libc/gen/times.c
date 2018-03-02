@@ -1,4 +1,4 @@
-/*	$OpenBSD: times.c,v 1.7 2015/11/02 17:02:37 mmcc Exp $ */
+/*	$OpenBSD: times.c,v 1.8 2018/03/02 16:35:58 cheloha Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,9 +28,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/time.h>
 #include <sys/times.h>
 #include <sys/resource.h>
+#include <time.h>
 
 /*
  * Convert usec to clock ticks; could do (usec * CLK_TCK) / 1000000,
@@ -42,7 +42,7 @@ clock_t
 times(struct tms *tp)
 {
 	struct rusage ru;
-	struct timeval t;
+	struct timespec ts;
 
 	if (getrusage(RUSAGE_SELF, &ru) < 0)
 		return ((clock_t)-1);
@@ -52,7 +52,7 @@ times(struct tms *tp)
 		return ((clock_t)-1);
 	tp->tms_cutime = CONVTCK(ru.ru_utime);
 	tp->tms_cstime = CONVTCK(ru.ru_stime);
-	if (gettimeofday(&t, NULL))
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 		return ((clock_t)-1);
-	return ((clock_t)(CONVTCK(t)));
+	return (ts.tv_sec * CLK_TCK + ts.tv_nsec / (1000000000 / CLK_TCK));
 }
