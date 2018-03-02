@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.319 2018/03/02 12:33:26 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.320 2018/03/02 12:49:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -567,7 +567,8 @@ again:
 	/* bump max swap based on phys mem, little physmem gets 2x swap */
 	if (index == 0 && alloc_table == alloc_table_default) {
 		if (physmem / DEV_BSIZE < MEG(256))
-			alloc[1].minsz = alloc[1].maxsz = 2 * (physmem / DEV_BSIZE);
+			alloc[1].minsz = alloc[1].maxsz = 2 * (physmem /
+			    DEV_BSIZE);
 		else
 			alloc[1].maxsz += (physmem / DEV_BSIZE);
 		/* bump max /var to make room for 2 crash dumps */
@@ -725,8 +726,8 @@ editor_resize(struct disklabel *lp, char *p)
 		return;
 	}
 	secs = getuint64(lp, "[+|-]new size (with unit)",
-	    "new size or amount to grow (+) or shrink (-) partition including unit",
-	    sz, sz + editor_countfree(lp), 0, DO_CONVERSIONS);
+	    "new size or amount to grow (+) or shrink (-) partition including "
+	    "unit", sz, sz + editor_countfree(lp), 0, DO_CONVERSIONS);
 
 	if (secs == ULLONG_MAX - 1) {
 		fputs("Command aborted\n", stderr);
