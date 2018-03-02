@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.168 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.169 2018/03/02 16:57:41 bluhm Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -326,7 +326,9 @@ bpf_detachd(struct bpf_d *d)
 
 		bpf_get(d);
 		mtx_leave(&d->bd_mtx);
+		NET_LOCK();
 		error = ifpromisc(bp->bif_ifp, 0);
+		NET_UNLOCK();
 		mtx_enter(&d->bd_mtx);
 		bpf_put(d);
 
@@ -794,7 +796,9 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		} else if (d->bd_bif->bif_ifp != NULL) { 
 			if (d->bd_promisc == 0) {
 				MUTEX_ASSERT_UNLOCKED(&d->bd_mtx);
+				NET_LOCK();
 				error = ifpromisc(d->bd_bif->bif_ifp, 1);
+				NET_UNLOCK();
 				if (error == 0)
 					d->bd_promisc = 1;
 			}
