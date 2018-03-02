@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.48 2018/02/24 20:00:07 cheloha Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.49 2018/03/02 02:30:15 cheloha Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -59,13 +59,16 @@
 #define	_PATH_FASTBOOT	"./fastboot"
 #endif
 
-#define	H		*60*60
-#define	M		*60
-#define	S		*1
-#define	NOLOG_TIME	5*60
+#define	H		*60*60LL
+#define	M		*60LL
+#define	S		*1LL
+#define	TEN_HOURS	(10*60*60)
+#define	NOLOG_TIME	(5*60)
 struct interval {
-	int timeleft, timetowait;
+	time_t timeleft;
+	time_t timetowait;
 } tlist[] = {
+	{    0,    0 },
 	{ 10 H,  5 H },
 	{  5 H,  3 H },
 	{  2 H,  1 H },
@@ -79,6 +82,7 @@ struct interval {
 	{ 30 S, 30 S },
 	{    0,    0 }
 };
+const int tlistlen = sizeof(tlist) / sizeof(tlist[0]);
 #undef H
 #undef M
 #undef S
@@ -96,7 +100,7 @@ void getoffset(char *);
 void __dead loop(void);
 void nolog(void);
 void timeout(int);
-void timewarn(int);
+void timewarn(time_t);
 void usage(void);
 
 int
@@ -229,40 +233,39 @@ main(int argc, char *argv[])
 void
 loop(void)
 {
-	struct interval *tp;
-	u_int sltime;
-	int logged;
+	struct timespec timeout;
+	int broadcast, i, logged;
 
-	if (offset <= NOLOG_TIME) {
-		logged = 1;
-		nolog();
-	} else
-		logged = 0;
-	tp = tlist;
-	if (tp->timeleft < offset)
-		(void)sleep((u_int)(offset - tp->timeleft));
-	else {
-		while (offset < tp->timeleft)
-			++tp;
-		/*
-		 * Warn now, if going to sleep more than a fifth of
-		 * the next wait time.
-		 */
-		if ((sltime = offset - tp->timeleft)) {
-			if (sltime > tp->timetowait / 5)
-				timewarn(offset);
-			(void)sleep(sltime);
+	broadcast = 1;
+
+	for (i = 0; i < tlistlen - 1; i++) {
+		if (offset > tlist[i + 1].timeleft) {
+			tlist[i].timeleft = offset;
+			tlist[i].timetowait = offset - tlist[i + 1].timeleft;
+			break;
 		}
 	}
-	for (;; ++tp) {
-		timewarn(tp->timeleft);
-		if (!logged && tp->timeleft <= NOLOG_TIME) {
+
+	/*
+	 * Don't spam the users: skip our offset's warning broadcast if
+	 * there's a broadcast scheduled after ours and it's relatively
+	 * imminent.
+	 */
+	if (offset > TEN_HOURS ||
+	    (offset > 0 && tlist[i].timetowait < tlist[i+1].timetowait / 5))
+		broadcast = 0;
+
+	for (logged = 0; i < tlistlen; i++) {
+		if (broadcast)
+			timewarn(tlist[i].timeleft);
+		broadcast = 1;
+		if (!logged && tlist[i].timeleft <= NOLOG_TIME) {
 			logged = 1;
 			nolog();
 		}
-		(void)sleep((u_int)tp->timetowait);
-		if (!tp->timeleft)
-			break;
+		timeout.tv_sec = tlist[i].timetowait;
+		timeout.tv_nsec = 0;
+		nanosleep(&timeout, NULL);
 	}
 	die_you_gravy_sucking_pig_dog();
 }
@@ -273,7 +276,7 @@ static char *restricted_environ[] = {
 };
 
 void
-timewarn(int timeleft)
+timewarn(time_t timeleft)
 {
 	static char hostname[HOST_NAME_MAX+1];
 	static int first;
@@ -319,10 +322,10 @@ timewarn(int timeleft)
 
 		dprintf(fd[1], "System going down at %d:%02d\n\n",
 		    tm->tm_hour, tm->tm_min);
-	} else if (timeleft > 59)
-		dprintf(fd[1], "System going down in %d minute%s\n\n",
-		    timeleft / 60, (timeleft > 60) ? "s" : "");
-	else if (timeleft)
+	} else if (timeleft > 59) {
+		dprintf(fd[1], "System going down in %lld minute%s\n\n",
+		    (long long)(timeleft / 60), (timeleft > 60) ? "s" : "");
+	} else if (timeleft)
 		dprintf(fd[1], "System going down in 30 seconds\n\n");
 	else
 		dprintf(fd[1], "System going down IMMEDIATELY\n\n");
