@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.146 2018/02/10 08:47:37 claudio Exp $	*/
+/*	$OpenBSD: in.c,v 1.147 2018/03/02 15:52:11 claudio Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -607,62 +607,6 @@ in_broadcast(struct in_addr in, u_int rtableid)
 	}
 	return (0);
 #undef ia
-}
-
-int
-in_up_loopback(struct ifnet *ifp)
-{
-	struct in_ifaddr *ia;
-	struct rt_addrinfo info;
-	int error;
-
-	if ((ifp->if_flags & IFF_LOOPBACK) == 0)
-		return (0);
-
-	/* configure 127.0.0.1 on the loopback interface */
-	ia = malloc(sizeof *ia, M_IFADDR, M_WAITOK | M_ZERO);
-	ia->ia_addr.sin_family = AF_INET;
-	ia->ia_addr.sin_len = sizeof(ia->ia_addr);
-	ia->ia_addr.sin_addr.s_addr = INADDR_LOOPBACK;
-	ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
-	ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
-	ia->ia_ifa.ifa_netmask = sintosa(&ia->ia_sockmask);
-	ia->ia_netmask = IN_CLASSA_NET;
-	ia->ia_sockmask.sin_len = 8;
-	ia->ia_sockmask.sin_addr.s_addr = ia->ia_netmask;
-	ia->ia_ifp = ifp;
-
-	if (ifaof_ifpforaddr(ia->ia_ifa.ifa_addr, ifp) != NULL) {
-		free(ia, M_IFADDR, sizeof *ia);
-		return (0);
-	}
-
-	/*
-	 * Add the address to the local list and the global tree.  If an
-	 * error occured, cleanup.
-	 */
-	ifa_add(ifp, &ia->ia_ifa);
-	error = rt_ifa_addlocal(&ia->ia_ifa);
-	if (error)
-		goto out;
-
-	ia->ia_net = ia->ia_addr.sin_addr.s_addr & ia->ia_netmask;
-	in_socktrim(&ia->ia_sockmask);
-
-	/* Now insert a reject route for 127.0.0.0/8 */
-	bzero(&info, sizeof(info));
-	info.rti_flags = RTF_GATEWAY | RTF_REJECT | RTF_STATIC;
-	info.rti_ifa = &ia->ia_ifa;
-	info.rti_info[RTAX_DST] = ia->ia_ifa.ifa_addr;
-	info.rti_info[RTAX_NETMASK] = ia->ia_ifa.ifa_netmask;
-	info.rti_info[RTAX_GATEWAY] = ia->ia_ifa.ifa_addr;
-
-	error = rtrequest(RTM_ADD, &info, 0, NULL, ifp->if_rdomain);
-
-out:
-	if (error)
-		in_purgeaddr(&ia->ia_ifa);
-	return (error);
 }
 
 /*

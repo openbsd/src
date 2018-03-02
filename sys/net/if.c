@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.547 2018/02/20 03:46:45 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.548 2018/03/02 15:52:11 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1550,9 +1550,8 @@ if_up(struct ifnet *ifp)
 
 #ifdef INET6
 	/* Userland expects the kernel to set ::1 on default lo(4). */
-	if (ifp->if_index == rtable_loindex(ifp->if_rdomain)) {
+	if (ifp->if_index == rtable_loindex(ifp->if_rdomain))
 		in6_ifattach(ifp);
-	}
 #endif
 
 	if_linkstate(ifp);
@@ -1745,7 +1744,6 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 		}
 
 		loifp->if_rdomain = rdomain;
-		if_up(loifp);
 	}
 
 	/* make sure that the routing table is a real rdomain */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.86 2018/02/10 05:32:21 claudio Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.87 2018/03/02 15:52:11 claudio Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -142,7 +142,6 @@
 
 int	loioctl(struct ifnet *, u_long, caddr_t);
 void	loopattach(int);
-void	loop_delayed_create(void *);
 void	lortrequest(struct ifnet *, int, struct rtentry *);
 int	loinput(struct ifnet *, struct mbuf *, void *);
 int	looutput(struct ifnet *,
@@ -163,19 +162,9 @@ loopattach(int n)
 	if_clone_attach(&loop_cloner);
 }
 
-void
-loop_delayed_create(void *arg)
-{
-	struct ifnet *ifp = arg;
-	NET_LOCK();
-	if_up(ifp);
-	NET_UNLOCK();
-}
-
 int
 loop_clone_create(struct if_clone *ifc, int unit)
 {
-	static struct task lot;
 	struct ifnet *ifp;
 
 	ifp = malloc(sizeof(*ifp), M_DEVBUF, M_WAITOK|M_ZERO);
@@ -193,8 +182,6 @@ loop_clone_create(struct if_clone *ifc, int unit)
 		if_attachhead(ifp);
 		if_addgroup(ifp, ifc->ifc_name);
 		rtable_l2set(0, 0, ifp->if_index);
-		task_set(&lot, loop_delayed_create, ifp);
-		task_add(systq, &lot);
 	} else
 		if_attach(ifp);
 	if_alloc_sadl(ifp);
