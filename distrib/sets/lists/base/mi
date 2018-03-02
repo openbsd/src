@@ -2701,11 +2701,11 @@
 ./usr/share/relink/kernel
 ./usr/share/relink/kernel.tgz
 ./usr/share/relink/usr
-./usr/share/relink/usr/libexec
-./usr/share/relink/usr/libexec/ld.so.a
 ./usr/share/relink/usr/lib
 ./usr/share/relink/usr/lib/libc.so.92.3.a
 ./usr/share/relink/usr/lib/libcrypto.so.42.7.a
+./usr/share/relink/usr/libexec
+./usr/share/relink/usr/libexec/ld.so.a
 ./usr/share/snmp
 ./usr/share/snmp/mibs
 ./usr/share/snmp/mibs/OPENBSD-BASE-MIB.txt
