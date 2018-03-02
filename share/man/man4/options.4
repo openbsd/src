@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.255 2018/01/12 04:36:44 deraadt Exp $
+.\"	$OpenBSD: options.4,v 1.256 2018/03/02 09:53:20 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: January 12 2018 $
+.Dd $Mdocdate: March 2 2018 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -372,11 +372,10 @@ for details.
 .Sh NETWORKING OPTIONS
 .Bl -ohang
 .It Cd option ENCDEBUG
-This option enables debugging information to be conditionally logged
-in case IPSEC encounters errors.
-The option
+This option permits the conditional logging of IPsec debugging information,
+and requires the
 .Em IPSEC
-is required along with this option.
+option.
 Debug logging can be turned on/off through the use of the
 .Em net.inet.ip.encdebug
 sysctl variable.
