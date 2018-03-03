@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstart.8,v 1.21 2016/09/05 12:58:17 jmc Exp $
+.\"	$OpenBSD: netstart.8,v 1.22 2018/03/03 07:33:35 landry Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"     @(#)rc.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 5 2016 $
+.Dd $Mdocdate: March 3 2018 $
 .Dt NETSTART 8
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Nd command script for network startup
 .Sh SYNOPSIS
 .Nm /etc/netstart
-.Op Ar interface ...
+.Op Oo Fl n Oc Ar interface ...
 .Sh DESCRIPTION
 .Nm
 is the command script that is invoked by
@@ -93,6 +93,11 @@ the following, where
 is the interface or bridge name:
 .Pp
 .D1 # sh /etc/netstart foo0
+.Pp
+Using the
+.Fl n
+option reports the steps that would be taken,
+without actually configuring the interface.
 .Sh MULTICAST ROUTING
 To enable
 .Xr multicast 4
