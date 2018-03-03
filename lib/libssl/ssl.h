@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.145 2018/02/22 17:30:25 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.146 2018/03/03 19:58:29 jca Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1199,6 +1199,21 @@ int SSL_set_max_proto_version(SSL *ssl, uint16_t version);
 
 #define SSL_get_server_tmp_key(s, pk) \
 	SSL_ctrl(s,SSL_CTRL_GET_SERVER_TMP_KEY,0,pk)
+
+#ifndef LIBRESSL_INTERNAL
+/*
+ * Also provide those functions as macros for compatibility with
+ * existing users.
+ */
+#define SSL_CTX_set1_groups		SSL_CTX_set1_groups
+#define SSL_CTX_set1_groups_list	SSL_CTX_set1_groups_list
+#define SSL_set1_groups			SSL_set1_groups
+#define SSL_set1_groups_list		SSL_set1_groups_list
+#define SSL_CTX_set_min_proto_version	SSL_CTX_set_min_proto_version
+#define SSL_CTX_set_max_proto_version	SSL_CTX_set_max_proto_version
+#define SSL_set_min_proto_version	SSL_set_min_proto_version
+#define SSL_set_max_proto_version	SSL_set_max_proto_version
+#endif
 
 BIO_METHOD *BIO_f_ssl(void);
 BIO *BIO_new_ssl(SSL_CTX *ctx, int client);
