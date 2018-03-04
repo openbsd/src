@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.320 2018/03/02 12:49:59 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.321 2018/03/04 19:56:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -692,9 +692,6 @@ editor_resize(struct disklabel *lp, char *p)
 	struct disklabel label;
 	struct partition *pp, *prev;
 	u_int64_t secs, sz, off;
-#ifdef SUN_CYLCHECK
-	u_int64_t cylsecs;
-#endif
 	int partno, i;
 
 	label = *lp;
@@ -735,14 +732,17 @@ editor_resize(struct disklabel *lp, char *p)
 	} else if (secs == ULLONG_MAX) {
 		fputs("Invalid entry\n", stderr);
 		return;
+	} else if (secs == 0) {
+		fputs("The size must be > 0 sectors\n", stderr);
+		return;
 	}
 
 #ifdef SUN_CYLCHECK
-	cylsecs = lp->d_secpercyl;
-	if (secs > 0)
+	if (lp->d_secpercyl & D_VENDOR) {
+		u_int64_t cylsecs;
+		cylsecs = lp->d_secpercyl;
 		secs = ((secs + cylsecs - 1) / cylsecs) * cylsecs;
-	else
-		secs = ((secs - cylsecs + 1) / cylsecs) * cylsecs;
+	}
 #endif
 	if (DL_GETPOFFSET(pp) + secs > ending_sector) {
 		fputs("Amount too big\n", stderr);
