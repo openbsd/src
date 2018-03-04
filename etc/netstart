@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.196 2018/03/03 07:34:19 landry Exp $
+#	$OpenBSD: netstart,v 1.197 2018/03/04 10:12:26 jmc Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -214,7 +214,7 @@ shift $((OPTIND-1))
 
 # Option -n is only supported if interface names are specified as parameters.
 if $PRINT_ONLY && (($# == 0)); then
-	print -u2 "Missing parameters.\n$USAGE"
+	print -u2 "$USAGE"
 	exit 1
 fi
 
