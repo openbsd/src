@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.131 2018/02/19 21:20:10 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.132 2018/03/05 12:32:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1907,7 +1907,6 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 
 		switch (n) {
 		case 0:
-		case 10:
 			memcpy(gc, &grid_default_cell, sizeof *gc);
 			break;
 		case 1:
