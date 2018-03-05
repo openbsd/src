@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmp.c,v 1.16 2016/10/28 07:22:59 schwarze Exp $      */
+/*      $OpenBSD: cmp.c,v 1.17 2018/03/05 16:53:39 cheloha Exp $      */
 /*      $NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $      */
 
 /*
@@ -84,29 +84,16 @@ main(int argc, char *argv[])
 		special = 1;
 		fd1 = 0;
 		file1 = "stdin";
-	} else if ((fd1 = open(file1, O_RDONLY, 0)) < 0) {
-		if (sflag)
-			return ERR_EXIT;
-		else
-			err(ERR_EXIT, "%s", file1);
-	}
+	} else if ((fd1 = open(file1, O_RDONLY, 0)) == -1)
+		fatal("%s", file1);
 	if (strcmp(file2 = argv[1], "-") == 0) {
-		if (special) {
-			if (sflag)
-				return ERR_EXIT;
-			else
-				errx(ERR_EXIT,
-					"standard input may only be specified once");
-		}
+		if (special)
+			fatalx("standard input may only be specified once");
 		special = 1;
 		fd2 = 0;
 		file2 = "stdin";
-	} else if ((fd2 = open(file2, O_RDONLY, 0)) < 0) {
-		if (sflag)
-			return ERR_EXIT;
-		else
-			err(ERR_EXIT, "%s", file2);
-	}
+	} else if ((fd2 = open(file2, O_RDONLY, 0)) == -1)
+		fatal("%s", file2);
 
 	if (pledge("stdio", NULL) == -1)
 		err(ERR_EXIT, "pledge");
@@ -115,21 +102,13 @@ main(int argc, char *argv[])
 	skip2 = argc == 4 ? strtoll(argv[3], NULL, 0) : 0;
 
 	if (!special) {
-		if (fstat(fd1, &sb1)) {
-			if (sflag)
-				return ERR_EXIT;
-			else
-				err(ERR_EXIT, "%s", file1);
-		}
+		if (fstat(fd1, &sb1) == -1)
+			fatal("%s", file1);
 		if (!S_ISREG(sb1.st_mode))
 			special = 1;
 		else {
-			if (fstat(fd2, &sb2)) {
-				if (sflag)
-					return ERR_EXIT;
-				else
-					err(ERR_EXIT, "%s", file2);
-			}
+			if (fstat(fd2, &sb2) == -1)
+				fatal("%s", file2);
 			if (!S_ISREG(sb2.st_mode))
 				special = 1;
 		}
