@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.232 2017/08/07 11:50:58 kettenis Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.233 2018/03/05 03:31:39 jsg Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -387,15 +387,12 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 			if (error == 0) {
 				dospartoff = DL_GETBSTART(gptlp);
 				dospartend = DL_GETBEND(gptlp);
-				if (partoffp) {
-					if (dospartoff == 0)
-						return (ENXIO);
-					else
-						goto notfat;
-				}
-				*lp = *gptlp;
+				if (partoffp == 0)
+					*lp = *gptlp;
 				free(gptlp, M_DEVBUF,
 				    sizeof(struct disklabel));
+				if (partoffp && dospartoff == 0)
+					return (ENXIO);
 				goto notfat;
 			} else {
 				free(gptlp, M_DEVBUF,
