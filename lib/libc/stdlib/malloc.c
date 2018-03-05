@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.245 2018/02/07 18:58:30 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.246 2018/03/05 01:32:32 deraadt Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -46,11 +46,7 @@
 #include "thread_private.h"
 #include <tib.h>
 
-#if defined(__mips64__)
-#define MALLOC_PAGESHIFT	(14U)
-#else
-#define MALLOC_PAGESHIFT	(PAGE_SHIFT)
-#endif
+#define MALLOC_PAGESHIFT	_MAX_PAGE_SHIFT
 
 #define MALLOC_MINSHIFT		4
 #define MALLOC_MAXSHIFT		(MALLOC_PAGESHIFT - 1)
