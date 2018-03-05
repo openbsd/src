@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.18 2017/12/18 09:12:49 job Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.19 2018/03/05 10:53:37 denis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -160,7 +160,7 @@ lg_arg2argv(char *arg, int *argc)
 	len = strlen(arg);
 
 	/* Count elements */
-	for (i = 0; i < (len - 1); i++) {
+	for (i = 0; i < len; i++) {
 		if (isspace((unsigned char)arg[i])) {
 			/* filter out additional options */
 			if (arg[i + 1] == '-') {
@@ -182,7 +182,7 @@ lg_arg2argv(char *arg, int *argc)
 	*argc = c;
 
 	/* Fill array */
-	for (i = c = 0; i < (len - 1); i++) {
+	for (i = c = 0; i < len; i++) {
 		if (arg[i] == '\0' || i == 0) {
 			if (i != 0)
 				ptr = &arg[i + 1];
