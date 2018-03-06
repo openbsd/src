@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.246 2018/03/05 01:32:32 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.247 2018/03/06 14:28:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -26,7 +26,6 @@
 /* #define MALLOC_STATS */
 
 #include <sys/types.h>
-#include <sys/param.h>	/* PAGE_SHIFT ALIGN */
 #include <sys/queue.h>
 #include <sys/mman.h>
 #include <sys/uio.h>
@@ -833,7 +832,7 @@ alloc_chunk_info(struct dir_info *d, int bits)
 		size = sizeof(struct chunk_info) + (size - 1) * sizeof(u_short);
 		if (mopts.chunk_canaries)
 			size += count * sizeof(u_short);
-		size = ALIGN(size);
+		size = _ALIGN(size);
 
 		q = MMAP(MALLOC_PAGESIZE);
 		if (q == MAP_FAILED)
