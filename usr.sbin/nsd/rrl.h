@@ -51,6 +51,14 @@ void rrl_mmap_init(int numch, size_t numbuck, size_t lm, size_t wlm, size_t sm,
  */
 void rrl_init(size_t ch);
 
+/** deinit (for this child server processs) */
+void rrl_deinit(size_t ch);
+
+/** deinit mmaps for n children */
+void rrl_mmap_deinit(void);
+/** frees memory but keeps mmap in place (for other processes) */
+void rrl_mmap_deinit_keep_mmap(void);
+
 /**
  * Process query that happens, the query structure contains the
  * information about the query and the answer.

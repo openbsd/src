@@ -23,6 +23,7 @@ extern FILE* c_in, *c_out;
 int c_parse(void);
 int c_lex(void);
 int c_wrap(void);
+int c_lex_destroy(void);
 void c_error(const char *message);
 extern char* c_text;
 
@@ -280,9 +281,9 @@ void options_zonestatnames_create(struct nsd_options* opt)
 	/* allocate "" as zonestat 0, for zones without a zonestat */
 	if(!rbtree_search(opt->zonestatnames, "")) {
 		struct zonestatname* n;
-		n = (struct zonestatname*)xalloc(sizeof(*n));
-		memset(n, 0, sizeof(*n));
-		n->node.key = strdup("");
+		n = (struct zonestatname*)region_alloc_zero(opt->region,
+			sizeof(*n));
+		n->node.key = region_strdup(opt->region, "");
 		if(!n->node.key) {
 			log_msg(LOG_ERR, "malloc failed: %s", strerror(errno));
 			exit(1);
@@ -692,8 +693,10 @@ zone_list_compact(struct nsd_options* opt)
 void
 zone_list_close(struct nsd_options* opt)
 {
-	fclose(opt->zonelist);
-	opt->zonelist = NULL;
+	if(opt->zonelist) {
+		fclose(opt->zonelist);
+		opt->zonelist = NULL;
+	}
 }
 
 void
@@ -1887,11 +1890,15 @@ parse_acl_info(region_type* region, char* ip, const char* key)
 #ifdef INET6
 		if(inet_pton(AF_INET6, ip, &acl->addr.addr6) != 1)
 			c_error_msg("Bad ip6 address '%s'", ip);
-		if(acl->rangetype==acl_range_mask || acl->rangetype==acl_range_minmax)
+		if(acl->rangetype==acl_range_mask || acl->rangetype==acl_range_minmax) {
+			assert(p);
 			if(inet_pton(AF_INET6, p, &acl->range_mask.addr6) != 1)
 				c_error_msg("Bad ip6 address mask '%s'", p);
-		if(acl->rangetype==acl_range_subnet)
+		}
+		if(acl->rangetype==acl_range_subnet) {
+			assert(p);
 			parse_acl_range_subnet(p, &acl->range_mask.addr6, 128);
+		}
 #else
 		c_error_msg("encountered IPv6 address '%s'.", ip);
 #endif /* INET6 */
@@ -1899,11 +1906,15 @@ parse_acl_info(region_type* region, char* ip, const char* key)
 		acl->is_ipv6 = 0;
 		if(inet_pton(AF_INET, ip, &acl->addr.addr) != 1)
 			c_error_msg("Bad ip4 address '%s'", ip);
-		if(acl->rangetype==acl_range_mask || acl->rangetype==acl_range_minmax)
+		if(acl->rangetype==acl_range_mask || acl->rangetype==acl_range_minmax) {
+			assert(p);
 			if(inet_pton(AF_INET, p, &acl->range_mask.addr) != 1)
 				c_error_msg("Bad ip4 address mask '%s'", p);
-		if(acl->rangetype==acl_range_subnet)
+		}
+		if(acl->rangetype==acl_range_subnet) {
+			assert(p);
 			parse_acl_range_subnet(p, &acl->range_mask.addr, 32);
+		}
 	}
 
 	/* key */
@@ -2005,6 +2016,9 @@ void
 nsd_options_destroy(struct nsd_options* opt)
 {
 	region_destroy(opt->region);
+#ifdef MEMCLEAN /* OS collects memory pages */
+	c_lex_destroy();
+#endif
 }
 
 unsigned getzonestatid(struct nsd_options* opt, struct zone_options* zopt)
@@ -2021,9 +2035,8 @@ unsigned getzonestatid(struct nsd_options* opt, struct zone_options* zopt)
 	if(res)
 		return ((struct zonestatname*)res)->id;
 	/* create it */
-	n = (struct zonestatname*)xalloc(sizeof(*n));
-	memset(n, 0, sizeof(*n));
-	n->node.key = strdup(statname);
+	n = (struct zonestatname*)region_alloc_zero(opt->region, sizeof(*n));
+	n->node.key = region_strdup(opt->region, statname);
 	if(!n->node.key) {
 		log_msg(LOG_ERR, "malloc failed: %s", strerror(errno));
 		exit(1);

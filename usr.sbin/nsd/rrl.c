@@ -100,6 +100,27 @@ void rrl_mmap_init(int numch, size_t numbuck, size_t lm, size_t wlm, size_t sm,
 #endif
 }
 
+void rrl_mmap_deinit(void)
+{
+#ifdef HAVE_MMAP
+	size_t i;
+	for(i=0; i<rrl_maps_num; i++) {
+		munmap(rrl_maps[i], sizeof(struct rrl_bucket)*rrl_array_size);
+		rrl_maps[i] = NULL;
+	}
+	free(rrl_maps);
+	rrl_maps = NULL;
+#endif
+}
+
+void rrl_mmap_deinit_keep_mmap(void)
+{
+#ifdef HAVE_MMAP
+	free(rrl_maps);
+	rrl_maps = NULL;
+#endif
+}
+
 void rrl_set_limit(size_t lm, size_t wlm, size_t sm)
 {
 	rrl_ratelimit = lm*2;
@@ -115,6 +136,13 @@ void rrl_init(size_t ch)
 #ifdef HAVE_MMAP
 	else rrl_array = (struct rrl_bucket*)rrl_maps[ch];
 #endif
+}
+
+void rrl_deinit(size_t ch)
+{
+	if(!rrl_maps || ch >= rrl_maps_num)
+		free(rrl_array);
+	rrl_array = NULL;
 }
 
 /** return the source netblock of the query, this is the genuine source

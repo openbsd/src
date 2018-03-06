@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,4.1.19,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.1.20,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 CFLAGS="$CFLAGS"
@@ -799,6 +799,10 @@ case "$enable_checking" in
                 AC_DEFINE([NDEBUG], [], [Undefine this to enable internal runtime checks.])
                 ;;
 esac
+
+AC_ARG_ENABLE(memclean, AC_HELP_STRING([--enable-memclean], [Cleanup memory (at exit) for eg. valgrind, memcheck]))
+if test "$enable_memclean" = "yes"; then AC_DEFINE_UNQUOTED([MEMCLEAN], [1], [Define this to cleanup memory at exit (eg. for valgrind, etc.)])
+fi
 
 AC_ARG_ENABLE(ratelimit, AC_HELP_STRING([--enable-ratelimit], [Enable rate limiting]))
 case "$enable_ratelimit" in

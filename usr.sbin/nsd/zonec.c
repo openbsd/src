@@ -1260,6 +1260,8 @@ parse_unknown_rdata(uint16_t type, uint16_t *wireformat)
 			zadd_rdata_wireformat(rdatas[i].data);
 		}
 	}
+	region_recycle(parser->region, rdatas,
+		rdata_count*sizeof(rdata_atom_type));
 }
 
 
@@ -1626,6 +1628,7 @@ zonec_read(const char* name, const char* zonefile, zone_type* zone)
 			name, domain_to_string(
 			parser->current_zone->soa_rrset->rrs[0].owner));
 	}
+	region_free_all(parser->rr_region);
 
 	parser_flush();
 	fclose(yyin);
@@ -1667,6 +1670,9 @@ zonec_desetup_parser(void)
 		 * region_recycle(parser->region, (void*)error_domain, 1); */
 		/* clear memory for exit, but this is not portable to
 		 * other versions of lex. yylex_destroy(); */
+#ifdef MEMCLEAN /* OS collects memory pages */
+		yylex_destroy();
+#endif
 	}
 }
 
@@ -1719,6 +1725,7 @@ zonec_parse_string(region_type* region, domain_table_type* domains,
 	/* remove origin if it was not used during the parse */
 	if(parser->origin != error_domain)
 		domain_table_deldomain(parser->db, parser->origin);
+	region_free_all(parser->rr_region);
 	zonec_desetup_string_parser();
 	parser_flush();
 	return errors;

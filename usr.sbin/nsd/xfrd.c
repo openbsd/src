@@ -29,6 +29,7 @@
 #include "difffile.h"
 #include "ipc.h"
 #include "remote.h"
+#include "rrl.h"
 
 #define XFRD_UDP_TIMEOUT 10 /* seconds, before a udp request times out */
 #define XFRD_NO_IXFR_CACHE 172800 /* 48h before retrying ixfr's after notimpl */
@@ -98,11 +99,15 @@ xfrd_signal_callback(int sig, short event, void* ATTR_UNUSED(arg))
 	sig_handler(sig);
 }
 
+static struct event* xfrd_sig_evs[10];
+static int xfrd_sig_num = 0;
+
 static void
 xfrd_sigsetup(int sig)
 {
-	/* no need to remember the event ; dealloc on process exit */
 	struct event *ev = xalloc_zero(sizeof(*ev));
+	assert(xfrd_sig_num <= (int)(sizeof(xfrd_sig_evs)/sizeof(ev)));
+	xfrd_sig_evs[xfrd_sig_num++] = ev;
 	signal_set(ev, sig, xfrd_signal_callback, NULL);
 	if(event_base_set(xfrd->event_base, ev) != 0) {
 		log_msg(LOG_ERR, "xfrd sig handler: event_base_set failed");
@@ -321,6 +326,7 @@ xfrd_shutdown()
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd shutdown"));
 	event_del(&xfrd->ipc_handler);
 	close(xfrd->ipc_handler.ev_fd); /* notifies parent we stop */
+	zone_list_close(nsd.options);
 	if(xfrd->nsd->options->xfrdfile != NULL && xfrd->nsd->options->xfrdfile[0]!=0)
 		xfrd_write_state(xfrd);
 	if(xfrd->reload_added) {
@@ -379,9 +385,49 @@ xfrd_shutdown()
 	/* unlink xfr files in not-yet-done task file */
 	xfrd_clean_pending_tasks(xfrd->nsd, xfrd->nsd->task[xfrd->nsd->mytask]);
 	xfrd_del_tempdir(xfrd->nsd);
+#ifdef HAVE_SSL
+	daemon_remote_delete(xfrd->nsd->rc); /* ssl-delete secret keys */
+#endif
 
 	/* process-exit cleans up memory used by xfrd process */
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd shutdown complete"));
+#ifdef MEMCLEAN /* OS collects memory pages */
+	if(xfrd->zones) {
+		xfrd_zone_type* z;
+		RBTREE_FOR(z, xfrd_zone_type*, xfrd->zones) {
+			tsig_delete_record(&z->tsig, NULL);
+		}
+	}
+	if(xfrd->notify_zones) {
+		struct notify_zone* n;
+		RBTREE_FOR(n, struct notify_zone*, xfrd->notify_zones) {
+			tsig_delete_record(&n->notify_tsig, NULL);
+		}
+	}
+	if(xfrd_sig_num > 0) {
+		int i;
+		for(i=0; i<xfrd_sig_num; i++) {
+			signal_del(xfrd_sig_evs[i]);
+			free(xfrd_sig_evs[i]);
+		}
+		for(i=0; i<(int)nsd.ifs; i++) {
+			if(nsd.udp[i].s != -1 && nsd.udp[i].addr)
+				freeaddrinfo(nsd.udp[i].addr);
+			if(nsd.tcp[i].s != -1 && nsd.tcp[i].addr)
+				freeaddrinfo(nsd.tcp[i].addr);
+		}
+	}
+#ifdef RATELIMIT
+	rrl_mmap_deinit();
+#endif
+	udb_base_free(nsd.task[0]);
+	udb_base_free(nsd.task[1]);
+	event_base_free(xfrd->event_base);
+	region_destroy(xfrd->region);
+	nsd_options_destroy(nsd.options);
+	region_destroy(nsd.region);
+	log_finalize();
+#endif
 
 	exit(0);
 }
@@ -521,7 +567,7 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 		memmove(&soa.expire, p, sizeof(uint32_t));
 		p += sizeof(uint32_t);
 		memmove(&soa.minimum, p, sizeof(uint32_t));
-		p += sizeof(uint32_t);
+		/* p += sizeof(uint32_t); if we wanted to read further */
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "SOAINFO for %s %u",
 			dname_to_string(task->zname,0),
 			(unsigned)ntohl(soa.serial)));

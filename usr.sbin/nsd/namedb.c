@@ -242,6 +242,16 @@ do_deldomain(namedb_type* db, domain_type* domain)
 		if(domain->nsec3->ds_parent_hash && domain->nsec3->ds_parent_hash->node.key)
 			zone_del_domain_in_hash_tree(nsec3_tree_dszone(db, domain)
 				->dshashtree, &domain->nsec3->ds_parent_hash->node);
+		if(domain->nsec3->hash_wc) {
+			region_recycle(db->domains->region,
+				domain->nsec3->hash_wc,
+				sizeof(nsec3_hash_wc_node_type));
+		}
+		if(domain->nsec3->ds_parent_hash) {
+			region_recycle(db->domains->region,
+				domain->nsec3->ds_parent_hash,
+				sizeof(nsec3_hash_node_type));
+		}
 		region_recycle(db->domains->region, domain->nsec3,
 			sizeof(struct nsec3_domain_data));
 	}

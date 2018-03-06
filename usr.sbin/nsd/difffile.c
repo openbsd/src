@@ -1333,6 +1333,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 		udb_ptr z;
 
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "processing xfr: %s", zone_buf));
+		memset(&z, 0, sizeof(z)); /* if udb==NULL, have &z defined */
 		if(nsd->db->udb) {
 			if(udb_base_get_userflags(nsd->db->udb) != 0) {
 				log_msg(LOG_ERR, "database corrupted, cannot update");

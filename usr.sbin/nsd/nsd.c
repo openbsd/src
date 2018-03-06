@@ -177,6 +177,9 @@ add_interface(char*** nodes, struct nsd* nsd, char* ip)
 		nsd->udp = xalloc_zero(sizeof(*nsd->udp));
 		nsd->tcp = xalloc_zero(sizeof(*nsd->udp));
 	} else {
+		region_remove_cleanup(nsd->region, free, *nodes);
+		region_remove_cleanup(nsd->region, free, nsd->udp);
+		region_remove_cleanup(nsd->region, free, nsd->tcp);
 		*nodes = xrealloc(*nodes, (nsd->ifs+1)*sizeof(*nodes));
 		nsd->udp = xrealloc(nsd->udp, (nsd->ifs+1)*sizeof(*nsd->udp));
 		nsd->tcp = xrealloc(nsd->tcp, (nsd->ifs+1)*sizeof(*nsd->udp));
@@ -184,6 +187,9 @@ add_interface(char*** nodes, struct nsd* nsd, char* ip)
 		memset(&nsd->udp[nsd->ifs], 0, sizeof(*nsd->udp));
 		memset(&nsd->tcp[nsd->ifs], 0, sizeof(*nsd->tcp));
 	}
+	region_add_cleanup(nsd->region, free, *nodes);
+	region_add_cleanup(nsd->region, free, nsd->udp);
+	region_add_cleanup(nsd->region, free, nsd->tcp);
 
 	/* add it */
 	(*nodes)[nsd->ifs] = ip;
@@ -595,7 +601,7 @@ main(int argc, char *argv[])
 		}
 	}
 	argc -= optind;
-	argv += optind;
+	/* argv += optind; */
 
 	/* Commandline parse error */
 	if (argc != 0) {
@@ -763,6 +769,9 @@ main(int argc, char *argv[])
 		nsd.children[i].need_to_send_QUIT = 0;
 		nsd.children[i].need_to_exit = 0;
 		nsd.children[i].has_exited = 0;
+#ifdef  BIND8_STATS
+		nsd.children[i].query_count = 0;
+#endif
 	}
 
 	nsd.this_child = NULL;
@@ -799,6 +808,7 @@ main(int argc, char *argv[])
 	}
 
 	/* Set up the address info structures with real interface/port data */
+	assert(nodes);
 	for (i = 0; i < nsd.ifs; ++i) {
 		int r;
 		const char* node = NULL;
@@ -1134,6 +1144,8 @@ main(int argc, char *argv[])
 		/* xfrd forks this before reading database, so it does not get
 		 * the memory size of the database */
 		server_start_xfrd(&nsd, 0, 0);
+		/* close zonelistfile in non-xfrd processes */
+		zone_list_close(nsd.options);
 	}
 	if (server_prepare(&nsd) != 0) {
 		unlinkpid(nsd.pidfile);

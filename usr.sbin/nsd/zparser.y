@@ -1078,16 +1078,16 @@ rdata_csync:	STR sp STR nsec_seq
 rdata_unknown:	URR sp STR sp str_sp_seq trail
     {
 	    /* $2 is the number of octets, currently ignored */
-	    $$ = zparser_conv_hex(parser->region, $5.str, $5.len);
+	    $$ = zparser_conv_hex(parser->rr_region, $5.str, $5.len);
 
     }
     |	URR sp STR trail
     {
-	    $$ = zparser_conv_hex(parser->region, "", 0);
+	    $$ = zparser_conv_hex(parser->rr_region, "", 0);
     }
     |	URR error NL
     {
-	    $$ = zparser_conv_hex(parser->region, "", 0);
+	    $$ = zparser_conv_hex(parser->rr_region, "", 0);
     }
     ;
 %%

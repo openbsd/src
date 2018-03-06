@@ -1085,7 +1085,7 @@ answer_authoritative(struct nsd   *nsd,
 			}
 			DEBUG(DEBUG_QUERY,2, (LOG_INFO, "->result is %s", dname_to_string(newname, NULL)));
 			/* follow the DNAME */
-			exact = namedb_lookup(nsd->db, newname, &closest_match, &closest_encloser);
+			(void)namedb_lookup(nsd->db, newname, &closest_match, &closest_encloser);
 			/* synthesize CNAME record */
 			newnum = query_synthesize_cname(q, answer, name, newname,
 				src, closest_encloser, &closest_match, rrset->rrs[0].ttl);

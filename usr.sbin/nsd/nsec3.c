@@ -537,7 +537,7 @@ nsec3_precompile_domain(struct namedb* db, struct domain* domain,
 	else	domain->nsec3->nsec3_is_exact = 0;
 
 	/* find cover for *.domain for wildcard denial */
-	exact = nsec3_find_cover(zone, domain->nsec3->hash_wc->wc.hash,
+	(void)nsec3_find_cover(zone, domain->nsec3->hash_wc->wc.hash,
 		sizeof(domain->nsec3->hash_wc->wc.hash), &result);
 	domain->nsec3->nsec3_wcard_child_cover = result;
 }
