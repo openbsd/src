@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.230 2018/02/16 07:27:07 jmc Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.231 2018/03/06 20:56:36 tim Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -1030,7 +1030,7 @@ parse(char *string, int flags)
 						    (unsigned char)buf[i]);
 					}
 				} else
-					(void)printf("%s", cp);
+					(void)printf("%s", buf);
 
 				(void)printf(" -> ");
 			}
