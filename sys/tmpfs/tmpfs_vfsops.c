@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.14 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.15 2018/03/07 14:44:22 deraadt Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ int	tmpfs_vget(struct mount *, ino_t, struct vnode **);
 int	tmpfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	tmpfs_vptofh(struct vnode *, struct fid *);
 int	tmpfs_statfs(struct mount *, struct statfs *, struct proc *);
-int	tmpfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int	tmpfs_sync(struct mount *, int, int, struct ucred *, struct proc *);
 int	tmpfs_init(struct vfsconf *);
 
 int
@@ -350,7 +350,8 @@ tmpfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 }
 
 int
-tmpfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
+tmpfs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred,
+    struct proc *p)
 {
 
 	return 0;
