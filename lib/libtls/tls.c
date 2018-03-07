@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.76 2018/03/07 17:17:47 beck Exp $ */
+/* $OpenBSD: tls.c,v 1.77 2018/03/07 19:07:13 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -19,7 +19,6 @@
 
 #include <errno.h>
 #include <limits.h>
-#include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -36,35 +35,28 @@
 
 static struct tls_config *tls_config_default;
 
-static int tls_init_rv = -1;
-
-static void
-tls_do_init(void)
+int
+tls_init(void)
 {
+	static int tls_initialised = 0;
+
+	if (tls_initialised)
+		return (0);
+
 	SSL_load_error_strings();
 	SSL_library_init();
 
 	if (BIO_sock_init() != 1)
-		return;
+		return (-1);
 
 	if ((tls_config_default = tls_config_new()) == NULL)
-		return;
+		return (-1);
 
 	tls_config_default->refcount++;
 
-	tls_init_rv = 0;
-	return;
-}
+	tls_initialised = 1;
 
-int
-tls_init(void)
-{
-	static pthread_once_t once = PTHREAD_ONCE_INIT;
-
-	if (pthread_once(&once, tls_do_init) != 0)
-		return -1;
-
-	return tls_init_rv;
+	return (0);
 }
 
 const char *
