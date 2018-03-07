@@ -140,6 +140,8 @@ dispatch_txt(struct dns_rr *rr)
 	char *end;
 	ssize_t n;
 
+	if (rr->rr_type != T_TXT)
+		return;
 	n = parse_txt(rr->rr.other.rdata, rr->rr.other.rdlen, buf, sizeof(buf));
 	if (n == -1 || n == sizeof(buf))
 		return;
