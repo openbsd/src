@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.317 2018/02/16 20:57:30 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.318 2018/03/07 21:37:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1609,6 +1609,10 @@ smtp_rfc4954_auth_login(struct smtp_session *s, char *arg)
 	switch (s->state) {
 	case STATE_HELO:
 		smtp_enter_state(s, STATE_AUTH_USERNAME);
+		if (arg != NULL && *arg != '\0') {
+			smtp_rfc4954_auth_login(s, arg);
+			return;
+		}
 		smtp_reply(s, "334 VXNlcm5hbWU6");
 		return;
 
