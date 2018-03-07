@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.7 2018/03/07 01:33:07 jsg Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.8 2018/03/07 01:39:08 jsg Exp $	*/
 /*
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2017 Adam Steen <adam@adamsteen.com.au>
@@ -56,13 +56,13 @@ tsc_freq_cpuid(struct cpu_info *ci)
 			case 0x5e: /* Skylake desktop */
 			case 0x8e: /* Kabylake mobile */
 			case 0x9e: /* Kabylake desktop */
-				khz = 24000; /* 24.0 Mhz */
+				khz = 24000; /* 24.0 MHz */
 				break;
 			case 0x5f: /* Atom Denverton */
-				khz = 25000; /* 25.0 Mhz */
+				khz = 25000; /* 25.0 MHz */
 				break;
 			case 0x5c: /* Atom Goldmont */
-				khz = 19200; /* 19.2 Mhz */
+				khz = 19200; /* 19.2 MHz */
 				break;
 			}
 		}
