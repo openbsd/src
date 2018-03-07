@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.20 2018/02/10 05:57:59 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.21 2018/03/07 18:26:28 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1243,18 +1243,6 @@ gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
 	/* XXX from in6.h, guarded by #ifdef _KERNEL   XXX nonstandard */
 #define s6_addr32 __u6_addr.__u6_addr32
 
-	/* XXX from in6_ifattach.c */
-#define EUI64_GBIT	0x01
-#define EUI64_UBIT	0x02
-
-	if (privacy) {
-		arc4random_buf(&priv_in6.s6_addr32[2], 8);
-		priv_in6.s6_addr[8] &= ~EUI64_GBIT; /* g bit to "individual" */
-		priv_in6.s6_addr[8] |= EUI64_UBIT;  /* u bit to "local" */
-		/* convert EUI64 into IPv6 interface identifier */
-		priv_in6.s6_addr[8] ^= EUI64_UBIT;
-	}
-
 	in6_prefixlen2mask(&addr_proposal->mask, addr_proposal->prefix_len);
 
 	memset(&addr_proposal->addr, 0, sizeof(addr_proposal->addr));
@@ -1275,6 +1263,7 @@ gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
 	    addr_proposal->mask.s6_addr32[3];
 
 	if (privacy) {
+		arc4random_buf(&priv_in6.s6_addr, sizeof(priv_in6.s6_addr));
 		addr_proposal->addr.sin6_addr.s6_addr32[0] |=
 		    (priv_in6.s6_addr32[0] & ~addr_proposal->mask.s6_addr32[0]);
 		addr_proposal->addr.sin6_addr.s6_addr32[1] |=
