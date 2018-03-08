@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.820 2018/02/28 08:55:44 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.821 2018/03/08 08:09:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -621,6 +621,9 @@ struct job {
 		JOB_DEAD,
 		JOB_CLOSED
 	} state;
+
+	int			 flags;
+#define JOB_NOWAIT 0x1
 
 	char			*cmd;
 	pid_t			 pid;
@@ -1649,7 +1652,7 @@ extern const struct options_table_entry options_table[];
 /* job.c */
 extern struct joblist all_jobs;
 struct job	*job_run(const char *, struct session *, const char *,
-		     job_update_cb, job_complete_cb, job_free_cb, void *);
+		     job_update_cb, job_complete_cb, job_free_cb, void *, int);
 void		 job_free(struct job *);
 void		 job_died(struct job *, int);
 

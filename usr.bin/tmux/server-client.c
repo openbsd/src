@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.248 2018/02/22 10:58:12 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.249 2018/03/08 08:09:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1279,6 +1279,8 @@ server_client_check_exit(struct client *c)
 	if (EVBUFFER_LENGTH(c->stderr_data) != 0)
 		return;
 
+	if (c->flags & CLIENT_ATTACHED)
+		notify_client("client-detached", c);
 	proc_send(c->peer, MSG_EXIT, -1, &c->retval, sizeof c->retval);
 	c->flags &= ~CLIENT_EXIT;
 }

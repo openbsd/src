@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.152 2018/02/20 10:43:46 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.153 2018/03/08 08:09:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -295,7 +295,7 @@ format_job_get(struct format_tree *ft, const char *cmd)
 	t = time(NULL);
 	if (fj->job == NULL && (force || fj->last != t)) {
 		fj->job = job_run(expanded, NULL, NULL, format_job_update,
-		    format_job_complete, NULL, fj);
+		    format_job_complete, NULL, fj, JOB_NOWAIT);
 		if (fj->job == NULL) {
 			free(fj->out);
 			xasprintf(&fj->out, "<'%s' didn't start>", fj->cmd);

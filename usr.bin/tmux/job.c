@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.48 2017/07/14 18:49:07 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.49 2018/03/08 08:09:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,7 +44,7 @@ struct joblist	all_jobs = LIST_HEAD_INITIALIZER(all_jobs);
 struct job *
 job_run(const char *cmd, struct session *s, const char *cwd,
     job_update_cb updatecb, job_complete_cb completecb, job_free_cb freecb,
-    void *data)
+    void *data, int flags)
 {
 	struct job	*job;
 	struct environ	*env;
@@ -111,6 +111,7 @@ job_run(const char *cmd, struct session *s, const char *cwd,
 
 	job = xmalloc(sizeof *job);
 	job->state = JOB_RUNNING;
+	job->flags = flags;
 
 	job->cmd = xstrdup(cmd);
 	job->pid = pid;

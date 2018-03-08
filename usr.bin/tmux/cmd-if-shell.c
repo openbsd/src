@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.56 2017/04/25 11:49:35 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.57 2018/03/08 08:09:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -129,7 +129,7 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 	memcpy(&cdata->mouse, &shared->mouse, sizeof cdata->mouse);
 
 	job_run(shellcmd, s, cwd, NULL, cmd_if_shell_callback,
-	    cmd_if_shell_free, cdata);
+	    cmd_if_shell_free, cdata, 0);
 	free(shellcmd);
 
 	if (args_has(args, 'b'))
