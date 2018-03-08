@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.321 2018/03/04 19:56:10 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.322 2018/03/08 21:19:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -526,7 +526,7 @@ editor_allocspace(struct disklabel *lp_org)
 	struct diskchunk *chunks;
 	u_int64_t chunkstart, chunksize, cylsecs, secs, totsecs, xtrasecs;
 	char **partmp;
-	int i, j, lastalloc, index = 0, partno;
+	int i, j, lastalloc, index, partno;
 	extern int64_t physmem;
 
 	/* How big is the OpenBSD portion of the disk?  */
@@ -549,7 +549,13 @@ editor_allocspace(struct disklabel *lp_org)
 	}
 
 	cylsecs = lp_org->d_secpercyl;
+	alloc = NULL;
+	index = -1;
 again:
+	free(alloc);
+	index++;
+	if (index >= alloc_table_nitems)
+		return 1;
 	lp = &label;
 	for (i=0; i<MAXPARTITIONS; i++) {
 		free(mountpoints[i]);
@@ -593,11 +599,7 @@ again:
 				break;
 		if (j == MAXPARTITIONS) {
 			/* It did not work out, try next strategy */
-			free(alloc);
-			if (++index < alloc_table_nitems)
-				goto again;
-			else
-				return 1;
+			goto again;
 		}
 		partno = j;
 		pp = &lp->d_partitions[j];
@@ -655,11 +657,7 @@ cylinderalign:
 		}
 		if (secs < ap->minsz) {
 			/* It did not work out, try next strategy */
-			free(alloc);
-			if (++index < alloc_table_nitems)
-				goto again;
-			else
-				return 1;
+			goto again;
 		}
 
 		/* Everything seems ok so configure the partition. */
