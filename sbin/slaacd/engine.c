@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.21 2018/03/07 18:26:28 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.22 2018/03/08 17:41:15 phessler Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1235,7 +1235,7 @@ gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
     address_proposal *addr_proposal, int privacy)
 {
 	SHA2_CTX ctx;
-	struct in6_addr	priv_in6;
+	struct in6_addr	iid;
 	int dad_counter = 0; /* XXX not used */
 	u_int8_t digest[SHA512_DIGEST_LENGTH];
 
@@ -1263,43 +1263,33 @@ gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
 	    addr_proposal->mask.s6_addr32[3];
 
 	if (privacy) {
-		arc4random_buf(&priv_in6.s6_addr, sizeof(priv_in6.s6_addr));
-		addr_proposal->addr.sin6_addr.s6_addr32[0] |=
-		    (priv_in6.s6_addr32[0] & ~addr_proposal->mask.s6_addr32[0]);
-		addr_proposal->addr.sin6_addr.s6_addr32[1] |=
-		    (priv_in6.s6_addr32[1] & ~addr_proposal->mask.s6_addr32[1]);
-		addr_proposal->addr.sin6_addr.s6_addr32[2] |=
-		    (priv_in6.s6_addr32[2] & ~addr_proposal->mask.s6_addr32[2]);
-		addr_proposal->addr.sin6_addr.s6_addr32[3] |=
-		    (priv_in6.s6_addr32[3] & ~addr_proposal->mask.s6_addr32[3]);
+		arc4random_buf(&iid.s6_addr, sizeof(iid.s6_addr));
+	} else if (iface->soii) {
+		SHA512Init(&ctx);
+		SHA512Update(&ctx, &prefix->prefix,
+		    sizeof(prefix->prefix));
+		SHA512Update(&ctx, &iface->hw_address,
+		    sizeof(iface->hw_address));
+		SHA512Update(&ctx, &dad_counter, sizeof(dad_counter));
+		SHA512Update(&ctx, addr_proposal->soiikey,
+		    sizeof(addr_proposal->soiikey));
+		SHA512Final(digest, &ctx);
+
+		memcpy(&iid.s6_addr, digest, sizeof(iid.s6_addr));
 	} else {
-		if (iface->soii) {
-			SHA512Init(&ctx);
-			SHA512Update(&ctx, &prefix->prefix,
-			    sizeof(prefix->prefix));
-			SHA512Update(&ctx, &iface->hw_address,
-			    sizeof(iface->hw_address));
-			SHA512Update(&ctx, &dad_counter, sizeof(dad_counter));
-			SHA512Update(&ctx, addr_proposal->soiikey,
-			    sizeof(addr_proposal->soiikey));
-			SHA512Final(digest, &ctx);
-			memcpy(&addr_proposal->addr.sin6_addr.s6_addr[8],
-			    digest, 8);
-		} else {
-			addr_proposal->addr.sin6_addr.s6_addr32[0] |=
-			    (iface->ll_address.sin6_addr.s6_addr32[0] &
-			    ~addr_proposal->mask.s6_addr32[0]);
-			addr_proposal->addr.sin6_addr.s6_addr32[1] |=
-			    (iface->ll_address.sin6_addr.s6_addr32[1] &
-			    ~addr_proposal->mask.s6_addr32[1]);
-			addr_proposal->addr.sin6_addr.s6_addr32[2] |=
-			    (iface->ll_address.sin6_addr.s6_addr32[2] &
-			    ~addr_proposal->mask.s6_addr32[2]);
-			addr_proposal->addr.sin6_addr.s6_addr32[3] |=
-			    (iface->ll_address.sin6_addr.s6_addr32[3] &
-			    ~addr_proposal->mask.s6_addr32[3]);
-		}
+		/* This is safe, because we have a 64 prefix len */
+		memcpy(&iid.s6_addr, &iface->ll_address.sin6_addr,
+		    sizeof(iid.s6_addr));
 	}
+
+	addr_proposal->addr.sin6_addr.s6_addr32[0] |=
+	    (iid.s6_addr32[0] & ~addr_proposal->mask.s6_addr32[0]);
+	addr_proposal->addr.sin6_addr.s6_addr32[1] |=
+	    (iid.s6_addr32[1] & ~addr_proposal->mask.s6_addr32[1]);
+	addr_proposal->addr.sin6_addr.s6_addr32[2] |=
+	    (iid.s6_addr32[2] & ~addr_proposal->mask.s6_addr32[2]);
+	addr_proposal->addr.sin6_addr.s6_addr32[3] |=
+	    (iid.s6_addr32[3] & ~addr_proposal->mask.s6_addr32[3]);
 #undef s6_addr32
 }
 
@@ -1661,7 +1651,6 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 		LIST_FOREACH(prefix, &ra->prefixes, entries) {
 			if (!prefix->autonomous || prefix->vltime == 0 ||
 			    prefix->pltime > prefix->vltime ||
-			    prefix->prefix_len != 64 ||
 			    IN6_IS_ADDR_LINKLOCAL(&prefix->prefix))
 				continue;
 			found = 0;
@@ -1743,10 +1732,12 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 				}
 			}
 
-			if (!found)
+			if (!found &&
+			    (iface->soii || prefix->prefix_len <= 64))
 				/* new proposal */
 				gen_address_proposal(iface, ra, prefix, 0);
 
+			/* privacy addresses do not depend on eui64 */
 			if (!found_privacy && iface->autoconfprivacy) {
 				if (prefix->pltime <
 				    ND6_PRIV_MAX_DESYNC_FACTOR) {
