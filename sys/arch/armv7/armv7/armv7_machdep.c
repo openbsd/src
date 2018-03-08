@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.49 2017/05/02 21:39:45 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.50 2018/03/08 20:44:23 patrick Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -621,21 +621,27 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
 	{
-		extern char etext[];
-		size_t textsize = (u_int32_t) etext - KERNEL_TEXT_BASE;
-		size_t totalsize = (u_int32_t) esym - KERNEL_TEXT_BASE;
+		extern char __text_start[], _etext[];
+		extern char __rodata_start[], _erodata[];
+		size_t textsize = (u_int32_t) (_etext - __text_start);
+		size_t rodatasize = (u_int32_t) (_erodata - __rodata_start);
+		size_t totalsize = esym - (u_int32_t)__text_start;
 		u_int logical;
 
 		textsize = (textsize + PGOFSET) & ~PGOFSET;
+		rodatasize = (rodatasize + PGOFSET) & ~PGOFSET;
 		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
 
-		logical = 0x00000000;	/* offset of kernel in RAM */
+		logical = 0x00300000;	/* offset of kernel in RAM */
 
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    loadaddr + logical, textsize,
 		    PROT_READ | PROT_EXEC, PTE_CACHE);
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
-		    loadaddr + logical, totalsize - textsize,
+		    loadaddr + logical, rodatasize,
+		    PROT_READ, PTE_CACHE);
+		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
+		    loadaddr + logical, totalsize - (textsize + rodatasize),
 		    PROT_READ | PROT_WRITE, PTE_CACHE);
 	}
 
