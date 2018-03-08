@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.324 2018/03/08 21:37:14 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.325 2018/03/08 21:47:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -619,26 +619,21 @@ again:
 				secs = ap->maxsz;
 			else
 				secs = totsecs;
-#ifdef SUN_CYLCHECK
-			goto cylinderalign;
-#endif
 		} else {
 			secs = ap->minsz;
 			if (xtrasecs > 0)
 				secs += (xtrasecs / 100) * ap->rate;
 			if (secs > ap->maxsz)
 				secs = ap->maxsz;
-#ifdef SUN_CYLCHECK
-cylinderalign:
-			if (lp->d_flags & D_VENDOR) {
-				secs = ((secs + cylsecs - 1) / cylsecs) *
-				    cylsecs;
-				while (secs > totsecs)
-					secs -= cylsecs;
-			}
-#endif
-			totsecs -= secs;
 		}
+#ifdef SUN_CYLCHECK
+		if (lp->d_flags & D_VENDOR) {
+			secs = ((secs + cylsecs - 1) / cylsecs) * cylsecs;
+			while (secs > totsecs)
+				secs -= cylsecs;
+		}
+#endif
+		totsecs -= secs;
 
 		/* Find largest chunk of free space. */
 		chunks = free_chunks(lp);
