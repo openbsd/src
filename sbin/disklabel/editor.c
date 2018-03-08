@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.323 2018/03/08 21:32:27 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.324 2018/03/08 21:37:14 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -591,10 +591,12 @@ again:
 	for (i = 0; i < lastalloc; i++) {
 		alloc[i].minsz = DL_BLKTOSEC(lp, alloc[i].minsz);
 		alloc[i].maxsz = DL_BLKTOSEC(lp, alloc[i].maxsz);
-		if (xtrasecs > alloc[i].minsz)
+		if (xtrasecs >= alloc[i].minsz)
 			xtrasecs -= alloc[i].minsz;
-		else
-			xtrasecs = 0;
+		else {
+			/* It did not work out, try next strategy */
+			goto again;
+		}
 	}
 
 	for (i = 0; i < lastalloc; i++) {
