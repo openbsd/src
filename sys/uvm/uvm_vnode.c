@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.98 2017/08/12 20:27:28 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.99 2018/03/08 22:04:18 bluhm Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -74,6 +74,8 @@ struct uvn_list_struct uvn_wlist;	/* writeable uvns */
 SIMPLEQ_HEAD(uvn_sq_struct, uvm_vnode);
 struct uvn_sq_struct uvn_sync_q;		/* sync'ing uvns */
 struct rwlock uvn_sync_lock;			/* locks sync operation */
+
+extern int rebooting;
 
 /*
  * functions
@@ -1226,10 +1228,13 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 		wakeup(&uvn->u_nio);
 	}
 
-	if (result == 0)
+	if (result == 0) {
 		return(VM_PAGER_OK);
-	else
+	} else {
+		while (rebooting)
+			tsleep(&rebooting, PVM, "uvndead", 0);
 		return(VM_PAGER_ERROR);
+	}
 }
 
 /*
