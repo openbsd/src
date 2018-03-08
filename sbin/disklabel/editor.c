@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.326 2018/03/08 21:55:57 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.327 2018/03/08 22:05:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -525,7 +525,7 @@ editor_allocspace(struct disklabel *lp_org)
 	struct partition *pp;
 	struct diskchunk *chunks;
 	u_int64_t chunkstart, chunkstop, chunksize;
-	u_int64_t cylsecs, secs, totsecs, xtrasecs;
+	u_int64_t cylsecs, secs, xtrasecs;
 	char **partmp;
 	int i, j, lastalloc, index, partno, freeparts;
 	extern int64_t physmem;
@@ -587,7 +587,7 @@ again:
 		alloc[3].maxsz += 2 * (physmem / DEV_BSIZE);
 	}
 
-	xtrasecs = totsecs = editor_countfree(lp);
+	xtrasecs = editor_countfree(lp);
 
 	for (i = 0; i < lastalloc; i++) {
 		alloc[i].minsz = DL_BLKTOSEC(lp, alloc[i].minsz);
@@ -614,28 +614,6 @@ again:
 		partmp = &mountpoints[j];
 		ap = &alloc[i];
 
-		/* Figure out the size of the partition. */
-		if (i == lastalloc - 1) {
-			if (totsecs > ap->maxsz)
-				secs = ap->maxsz;
-			else
-				secs = totsecs;
-		} else {
-			secs = ap->minsz;
-			if (xtrasecs > 0)
-				secs += (xtrasecs / 100) * ap->rate;
-			if (secs > ap->maxsz)
-				secs = ap->maxsz;
-		}
-#ifdef SUN_CYLCHECK
-		if (lp->d_flags & D_VENDOR) {
-			secs = ((secs + cylsecs - 1) / cylsecs) * cylsecs;
-			while (secs > totsecs)
-				secs -= cylsecs;
-		}
-#endif
-		totsecs -= secs;
-
 		/* Find largest chunk of free space. */
 		chunks = free_chunks(lp);
 		chunksize = 0;
@@ -656,11 +634,30 @@ again:
 			}
 		}
 
-		/* See if partition can fit into chunk. */
-		if (secs > chunksize) {
-			totsecs += secs - chunksize;
-			secs = chunksize;
+		/* Figure out the size of the partition. */
+		if (i == lastalloc - 1) {
+			if (chunksize > ap->maxsz)
+				secs = ap->maxsz;
+			else
+				secs = chunksize;
+		} else {
+			secs = ap->minsz;
+			if (xtrasecs > 0)
+				secs += (xtrasecs / 100) * ap->rate;
+			if (secs > ap->maxsz)
+				secs = ap->maxsz;
 		}
+#ifdef SUN_CYLCHECK
+		if (lp->d_flags & D_VENDOR) {
+			secs = ((secs + cylsecs - 1) / cylsecs) * cylsecs;
+			while (secs > chunksize)
+				secs -= cylsecs;
+		}
+#endif
+
+		/* See if partition can fit into chunk. */
+		if (secs > chunksize)
+			secs = chunksize;
 		if (secs < ap->minsz) {
 			/* It did not work out, try next strategy */
 			goto again;
