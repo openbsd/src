@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.322 2018/03/08 21:19:08 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.323 2018/03/08 21:32:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -526,18 +526,21 @@ editor_allocspace(struct disklabel *lp_org)
 	struct diskchunk *chunks;
 	u_int64_t chunkstart, chunksize, cylsecs, secs, totsecs, xtrasecs;
 	char **partmp;
-	int i, j, lastalloc, index, partno;
+	int i, j, lastalloc, index, partno, freeparts;
 	extern int64_t physmem;
 
 	/* How big is the OpenBSD portion of the disk?  */
 	find_bounds(lp_org);
 
 	overlap = 0;
+	freeparts = 0;
 	for (i = 0;  i < MAXPARTITIONS; i++) {
 		u_int64_t psz, pstart, pend;
 
 		pp = &lp_org->d_partitions[i];
 		psz = DL_GETPSIZE(pp);
+		if (psz == 0)
+			freeparts++;
 		pstart = DL_GETPOFFSET(pp);
 		pend = pstart + psz;
 		if (i != RAW_PART && psz != 0 &&
@@ -564,6 +567,8 @@ again:
 	memcpy(lp, lp_org, sizeof(struct disklabel));
 	lp->d_npartitions = MAXPARTITIONS;
 	lastalloc = alloc_table[index].sz;
+	if (lastalloc > freeparts)
+		goto again;
 	alloc = reallocarray(NULL, lastalloc, sizeof(struct space_allocation));
 	if (alloc == NULL)
 		errx(4, "out of memory");
