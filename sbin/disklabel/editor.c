@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.325 2018/03/08 21:47:18 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.326 2018/03/08 21:55:57 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -524,7 +524,8 @@ editor_allocspace(struct disklabel *lp_org)
 	struct space_allocation *ap;
 	struct partition *pp;
 	struct diskchunk *chunks;
-	u_int64_t chunkstart, chunksize, cylsecs, secs, totsecs, xtrasecs;
+	u_int64_t chunkstart, chunkstop, chunksize;
+	u_int64_t cylsecs, secs, totsecs, xtrasecs;
 	char **partmp;
 	int i, j, lastalloc, index, partno, freeparts;
 	extern int64_t physmem;
@@ -637,21 +638,24 @@ again:
 
 		/* Find largest chunk of free space. */
 		chunks = free_chunks(lp);
-		chunkstart = 0;
 		chunksize = 0;
-		for (j = 0; chunks[j].start != 0 || chunks[j].stop != 0; j++)
+		for (j = 0; chunks[j].start != 0 || chunks[j].stop != 0; j++) {
 			if ((chunks[j].stop - chunks[j].start) > chunksize) {
 				chunkstart = chunks[j].start;
-				chunksize = chunks[j].stop - chunks[j].start;
-			}
+				chunkstop = chunks[j].stop;
 #ifdef SUN_CYLCHECK
-		if (lp->d_flags & D_VENDOR) {
-			/* Align chunk to cylinder boundaries. */
-			chunksize -= chunksize % cylsecs;
-			chunkstart = ((chunkstart + cylsecs - 1) / cylsecs) *
-			    cylsecs;
-		}
+				if (lp->d_flags & D_VENDOR) {
+					/* Align to cylinder boundaries. */
+					chunkstart = ((chunkstart + cylsecs - 1)
+					    / cylsecs) * cylsecs;
+					chunkstop = (chunkstop / cylsecs) *
+					    cylsecs;
+				}
 #endif
+				chunksize = chunkstop - chunkstart;
+			}
+		}
+
 		/* See if partition can fit into chunk. */
 		if (secs > chunksize) {
 			totsecs += secs - chunksize;
