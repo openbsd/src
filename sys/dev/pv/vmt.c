@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.13 2017/06/04 05:04:24 jmatthew Exp $ */
+/*	$OpenBSD: vmt.c,v 1.14 2018/03/08 05:33:56 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -36,6 +36,8 @@
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/mount.h>
+#include <sys/task.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -125,6 +127,13 @@
 #define VM_RPC_REPLY_ERROR		"ERROR Unknown command"
 #define VM_RPC_REPLY_ERROR_IP_ADDR	"ERROR Unable to find guest IP address"
 
+/* VM backup error codes */
+#define VM_BACKUP_SUCCESS		0
+#define VM_BACKUP_SYNC_ERROR		3
+#define VM_BACKUP_REMOTE_ABORT		4
+
+#define VM_BACKUP_TIMEOUT		30 /* seconds */
+
 /* A register. */
 union vm_reg {
 	struct {
@@ -167,6 +176,8 @@ struct vmt_softc {
 	int			sc_rpc_error;
 	int			sc_tclo_ping;
 	int			sc_set_guest_os;
+	int			sc_quiesce;
+	struct task		sc_quiesce_task;
 #define VMT_RPC_BUFLEN		4096
 
 	struct timeout		sc_tick;
@@ -231,6 +242,14 @@ void	 vmt_tclo_resume(struct vmt_softc *);
 void	 vmt_tclo_capreg(struct vmt_softc *);
 void	 vmt_tclo_broadcastip(struct vmt_softc *);
 
+void	 vmt_set_backup_status(struct vmt_softc *, const char *, int,
+	    const char *);
+void	 vmt_quiesce_task(void *);
+void	 vmt_quiesce_done_task(void *);
+void	 vmt_tclo_abortbackup(struct vmt_softc *);
+void	 vmt_tclo_startbackup(struct vmt_softc *);
+void	 vmt_tclo_backupdone(struct vmt_softc *);
+
 int	 vmt_probe(void);
 
 struct vmt_tclo_rpc {
@@ -247,7 +266,10 @@ struct vmt_tclo_rpc {
         { "Set_Option broadcastIP 1",   vmt_tclo_broadcastip },
         { "ping",                       vmt_tclo_ping },
         { "reset",                      vmt_tclo_reset },
-	{ NULL },
+        { "vmbackup.abort",		vmt_tclo_abortbackup },
+        { "vmbackup.snapshotDone",	vmt_tclo_backupdone },
+        { "vmbackup.start 1",		vmt_tclo_startbackup },
+        { NULL },
 #if 0
 	/* Various unsupported commands */
 	{ "Set_Option autohide 0" },
@@ -809,6 +831,123 @@ vmt_tclo_broadcastip(struct vmt_softc *sc)
 	}
 }
 
+void
+vmt_set_backup_status(struct vmt_softc *sc, const char *state, int code,
+    const char *desc)
+{
+	if (vm_rpc_send_rpci_tx(sc, "vmbackup.eventSet %s %d %s",
+	    state, code, desc) != 0) {
+		DPRINTF("%s: setting backup status failed\n", DEVNAME(sc));
+	}
+}
+
+void
+vmt_quiesce_task(void *data)
+{
+	struct vmt_softc *sc = data;
+	int err;
+
+	DPRINTF("%s: quiescing filesystems for backup\n", DEVNAME(sc));
+	err = vfs_stall(curproc, 1);
+	if (err != 0) {
+		printf("%s: unable to quiesce filesystems\n", DEVNAME(sc));
+		vfs_stall(curproc, 0);
+
+		vmt_set_backup_status(sc, "req.aborted", VM_BACKUP_SYNC_ERROR,
+		    "vfs_stall failed");
+		vmt_set_backup_status(sc, "req.done", VM_BACKUP_SUCCESS, "");
+		sc->sc_quiesce = 0;
+		return;
+	}
+
+	DPRINTF("%s: filesystems quiesced\n", DEVNAME(sc));
+	vmt_set_backup_status(sc, "prov.snapshotCommit", VM_BACKUP_SUCCESS, "");
+}
+
+void
+vmt_quiesce_done_task(void *data)
+{
+	struct vmt_softc *sc = data;
+
+	vfs_stall(curproc, 0);
+
+	if (sc->sc_quiesce == -1)
+		vmt_set_backup_status(sc, "req.aborted", VM_BACKUP_REMOTE_ABORT,
+		    "");
+
+	vmt_set_backup_status(sc, "req.done", VM_BACKUP_SUCCESS, "");
+	sc->sc_quiesce = 0;
+}
+
+void
+vmt_tclo_abortbackup(struct vmt_softc *sc)
+{
+	const char *reply = VM_RPC_REPLY_OK;
+
+	if (sc->sc_quiesce > 0) {
+		DPRINTF("%s: aborting backup\n", DEVNAME(sc));
+		sc->sc_quiesce = -1;
+		task_set(&sc->sc_quiesce_task, vmt_quiesce_done_task, sc);
+		task_add(systq, &sc->sc_quiesce_task);
+	} else {
+		DPRINTF("%s: can't abort, no backup in progress\n",
+		    DEVNAME(sc));
+		reply = VM_RPC_REPLY_ERROR;
+	}
+
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, reply) != 0) {
+		DPRINTF("%s: error sending vmbackup.abort reply\n",
+		    DEVNAME(sc));
+		sc->sc_rpc_error = 1;
+	}
+}
+
+void
+vmt_tclo_startbackup(struct vmt_softc *sc)
+{
+	const char *reply = VM_RPC_REPLY_OK;
+
+	if (sc->sc_quiesce == 0) {
+		DPRINTF("%s: starting quiesce\n", DEVNAME(sc));
+		vmt_set_backup_status(sc, "reset", VM_BACKUP_SUCCESS, "");
+
+		task_set(&sc->sc_quiesce_task, vmt_quiesce_task, sc);
+		task_add(systq, &sc->sc_quiesce_task);
+		sc->sc_quiesce = 1;
+	} else {
+		DPRINTF("%s: can't start backup, already in progress\n",
+		    DEVNAME(sc));
+		reply = VM_RPC_REPLY_ERROR;
+	}
+
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, reply) != 0) {
+		DPRINTF("%s: error sending vmbackup.start reply\n",
+		    DEVNAME(sc));
+		sc->sc_rpc_error = 1;
+	}
+}
+
+void
+vmt_tclo_backupdone(struct vmt_softc *sc)
+{
+	const char *reply = VM_RPC_REPLY_OK;
+	if (sc->sc_quiesce > 0) {
+		DPRINTF("%s: backup complete\n", DEVNAME(sc));
+		task_set(&sc->sc_quiesce_task, vmt_quiesce_done_task, sc);
+		task_add(systq, &sc->sc_quiesce_task);
+	} else {
+		DPRINTF("%s: got backup complete, but not doing a backup\n",
+		    DEVNAME(sc));
+		reply = VM_RPC_REPLY_ERROR;
+	}
+
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, reply) != 0) {
+		DPRINTF("%s: error sending vmbackup.snapshotDone reply\n",
+		    DEVNAME(sc));
+		sc->sc_rpc_error = 1;
+	}
+}
+
 int
 vmt_tclo_process(struct vmt_softc *sc, const char *name)
 {
@@ -837,6 +976,19 @@ vmt_tclo_tick(void *xarg)
 
 	/* By default, poll every second for new messages */
 	delay = 1;
+
+	if (sc->sc_quiesce > 0) {
+		/* abort quiesce if it's taking too long */
+		if (sc->sc_quiesce++ == VM_BACKUP_TIMEOUT) {
+			printf("%s: aborting quiesce\n", DEVNAME(sc));
+			sc->sc_quiesce = -1;
+			task_set(&sc->sc_quiesce_task, vmt_quiesce_done_task,
+			    sc);
+			task_add(systq, &sc->sc_quiesce_task);
+		} else
+			vmt_set_backup_status(sc, "req.keepAlive",
+			    VM_BACKUP_SUCCESS, "");
+	}
 
 	/* reopen tclo channel if it's currently closed */
 	if (sc->sc_tclo_rpc.channel == 0 &&
