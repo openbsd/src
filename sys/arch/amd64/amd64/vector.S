@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.53 2018/02/28 06:19:28 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.54 2018/03/09 07:43:07 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -305,24 +305,26 @@ Xexceptions:
 	.quad	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
 
 /*
- * If an error is detected during trap, syscall, or interrupt exit, trap() will
- * change %rip to point to this label.  At that point, we'll be running with
- * the kernel GS.base, but the trap frame will be from CPL==3, so we can't
- * go through INTRENTRY as it would do the swapgs that we don't want/need.
- * So, locally expand INTRENTRY but without the swapgs: manually
- * clean up the stack and resume as if we were handling a general
- * protection fault.  This will cause the process to get a SIGBUS.
+ * If an error is detected during trap, syscall, or interrupt exit
+ * then it occurs with CPL==0, but with the user GS.base and on the
+ * U-K page tables and tramp stack, pushing another iretq_frame on
+ * top of the one we were trying to use.  trap0d above will handle
+ * switching the GS.base, page table, and stack and call trap(),
+ * which will change tf_rip from pointing to the failed iretq to
+ * instead point to resume_iret here.  Since we trapped with CPL==0,
+ * intr_fast_exit will leave us at CPL==0 on the U+K page tables
+ * and the kernel GS.base, but the iretq will take us back to the
+ * tramp stack and our original iretq_frame which was from CPL==3.
+ * That means a simple INTRENTRY won't work for us: despite appearing
+ * to be coming from CPL==3 we don't need the page table change or
+ * swapgs, but we do need the stack switch.
+ *
+ * So, locally expand INTRENTRY for the bits we need: switch stacks,
+ * and set up a trapframe as if we were handling a general protection
+ * fault.  This will cause the process to get a SIGBUS.
  */
 NENTRY(resume_iret)
 	movq	%rax,CPUVAR(SCRATCH)
-	movq	CPUVAR(KERN_CR3),%rax
-	testq	%rax,%rax
-	jz	INTRENTRY_LABEL(iret)
-	movq	%rax,%cr3
-	jmp	INTRENTRY_LABEL(iret)
-	.text
-	.globl	INTRENTRY_LABEL(iret)
-INTRENTRY_LABEL(iret):	/* from kernel */
 	movq	CPUVAR(KERN_RSP),%rax
 	xchgq	%rax,%rsp
 	movq	%rcx,TF_RCX(%rsp)
