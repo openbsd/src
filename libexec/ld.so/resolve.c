@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.81 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.82 2018/03/09 14:55:44 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -281,6 +281,8 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 			object->dyn.flags |= dynp->d_un.d_val;
 			if (dynp->d_un.d_val & DF_SYMBOLIC)
 				object->dyn.symbolic = 1;
+			if (dynp->d_un.d_val & DF_TEXTREL)
+				object->dyn.textrel = 1;
 			if (dynp->d_un.d_val & DF_ORIGIN)
 				object->obj_flags |= DF_1_ORIGIN;
 			if (dynp->d_un.d_val & DF_BIND_NOW)
