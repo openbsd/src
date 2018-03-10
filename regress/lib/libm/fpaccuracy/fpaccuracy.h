@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpaccuracy.h,v 1.1 2009/04/09 01:24:43 martynas Exp $	*/
+/*	$OpenBSD: fpaccuracy.h,v 1.2 2018/03/10 20:52:58 kettenis Exp $	*/
 
 /*
  * Written by Martynas Venckus.  Public domain 
@@ -26,6 +26,8 @@ int fpaccuracy_log10(FILE *);
 int fpaccuracy_pow2_x(FILE *);
 int fpaccuracy_powx_275(FILE *);
 int fpaccuracy_sin(FILE *);
+int fpaccuracy_sincos_sin(FILE *);
+int fpaccuracy_sincos_cos(FILE *);
 int fpaccuracy_sinh(FILE *);
 int fpaccuracy_sqrt(FILE *);
 int fpaccuracy_tan(FILE *);

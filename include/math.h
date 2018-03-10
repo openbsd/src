@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.35 2016/03/17 20:55:35 jca Exp $	*/
+/*	$OpenBSD: math.h,v 1.36 2018/03/10 20:52:58 kettenis Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -273,6 +273,8 @@ int finite(double);
 double gamma_r(double, int *);
 double lgamma_r(double, int *);
 
+void sincos(double, double *, double *);
+
 /*
  * IEEE Test Vector
  */
@@ -382,6 +384,8 @@ int isnanf(float);
 float gammaf_r(float, int *);
 float lgammaf_r(float, int *);
 
+void sincosf(float, float *, float *);
+
 /*
  * Float version of IEEE Test Vector
  */
@@ -459,6 +463,13 @@ long double fminl(long double, long double);
 
 long double fmal(long double, long double, long double);
 #endif /* __ISO_C_VISIBLE >= 1999 */
+
+/*
+ * Long double versions of BSD math library entry points
+ */
+#if __BSD_VISIBLE
+void sincosl(long double, long double *, long double *);
+#endif
 
 /*
  * Library implementation

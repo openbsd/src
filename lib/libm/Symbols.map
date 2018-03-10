@@ -255,6 +255,9 @@
 		significand;
 		significandf;
 		sin;
+		sincos;
+		sincosf;
+		sincosl;
 		sinf;
 		sinh;
 		sinhf;

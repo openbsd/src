@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.117 2018/02/28 16:00:00 kettenis Exp $
+#  $OpenBSD: Makefile,v 1.118 2018/03/10 20:52:58 kettenis Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -101,8 +101,8 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	s_nextafterf.c s_nexttowardf.c s_remquo.c s_remquof.c s_rint.c \
 	s_rintf.c \
 	s_scalbn.c s_scalbnf.c s_significand.c \
-	s_significandf.c \
-	s_sin.c s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_trunc.c \
+	s_significandf.c s_sin.c s_sinf.c s_sincos.c s_sincosf.c \
+	s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_trunc.c \
 	s_truncf.c w_drem.c w_dremf.c w_gamma.c w_gamma_r.c w_gammaf.c \
 	w_gammaf_r.c w_lgamma.c w_lgammaf.c
 
@@ -119,7 +119,7 @@ LONG_SRCS = e_acoshl.c e_acosl.c e_asinl.c e_atan2l.c e_atanhl.c \
 	s_floorl.c s_fmal.c s_fmaxl.c s_fminl.c s_frexpl.c s_ilogbl.c \
 	s_llrintl.c s_llroundl.c s_log1pl.c s_logbl.c s_lrintl.c \
 	s_lroundl.c s_modfl.c s_nanl.c s_nextafterl.c s_nexttoward.c \
-	s_remquol.c s_rintl.c s_roundl.c s_scalbnl.c s_sinl.c \
+	s_remquol.c s_rintl.c s_roundl.c s_scalbnl.c s_sinl.c s_sincosl.c \
 	s_tanhl.c s_tanl.c s_truncl.c
 
 # math routines that are completely MI
@@ -158,7 +158,7 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	fdim.3 feclearexcept.3 feenableexcept.3 fegetenv.3 \
 	fegetround.3 floor.3 fma.3 fmax.3 fmod.3 hypot.3 ilogb.3 j0.3 \
 	lgamma.3 logb.3 lrint.3 lround.3 nan.3 nextafter.3 \
-	remainder.3 rint.3 round.3 scalbn.3 sin.3 sinh.3 sqrt.3 \
+	remainder.3 rint.3 round.3 scalbn.3 sin.3 sincos.3 sinh.3 sqrt.3 \
 	tan.3 tanh.3 trunc.3
 
 MAN+=	cacos.3 cacosh.3 carg.3 casin.3 casinh.3 catan.3 catanh.3 \
