@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.71 2018/03/10 02:49:23 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.72 2018/03/10 04:35:01 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -565,6 +565,14 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_PCH_SPT_I219_V4     0x15D8
 #define E1000_DEV_ID_PCH_SPT_I219_LM5    0x15E3
 #define E1000_DEV_ID_PCH_SPT_I219_V5     0x15D6
+#define E1000_DEV_ID_PCH_CNP_I219_LM6    0x15BD
+#define E1000_DEV_ID_PCH_CNP_I219_V6     0x15BE
+#define E1000_DEV_ID_PCH_CNP_I219_LM7    0x15BB
+#define E1000_DEV_ID_PCH_CNP_I219_V7     0x15BC
+#define E1000_DEV_ID_PCH_ICP_I219_LM8    0x15DF
+#define E1000_DEV_ID_PCH_ICP_I219_V8     0x15E0
+#define E1000_DEV_ID_PCH_ICP_I219_LM9    0x15E1
+#define E1000_DEV_ID_PCH_ICP_I219_V9     0x15E2
 #define E1000_DEV_ID_82575EB_PT          0x10A7
 #define E1000_DEV_ID_82575EB_PF          0x10A9
 #define E1000_DEV_ID_82575GB_QP          0x10D6
@@ -595,6 +603,8 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_I350_SGMII          0x1524
 #define E1000_DEV_ID_82576_QUAD_CU_ET2   0x1526
 #define E1000_DEV_ID_I210_COPPER	 0x1533
+#define E1000_DEV_ID_I210_COPPER_OEM1	 0x1534
+#define E1000_DEV_ID_I210_COPPER_IT	 0x1535
 #define E1000_DEV_ID_I210_FIBER		 0x1536
 #define E1000_DEV_ID_I210_SERDES	 0x1537
 #define E1000_DEV_ID_I210_SGMII		 0x1538
