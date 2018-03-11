@@ -271,7 +271,7 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_capabilities = IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
 	    IFCAP_CSUM_TCPv6;
-	if (sc->sc_ndisver >= NDIS_VERSION_6_30)
+	if (sc->sc_ndisver > NDIS_VERSION_6_30)
 		ifp->if_capabilities |= IFCAP_CSUM_UDPv4 | IFCAP_CSUM_UDPv6;
 
 	if (sc->sc_proto >= HVN_NVS_PROTO_VERSION_2) {
