@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.20 2017/01/22 10:17:37 dlg Exp $ */
+/* $OpenBSD: if_fec.c,v 1.21 2018/03/11 17:58:52 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -339,7 +339,8 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 
 	/* reset the controller */
 	HSET4(sc, ENET_ECR, ENET_ECR_RESET);
-	while(HREAD4(sc, ENET_ECR) & ENET_ECR_RESET);
+	while (HREAD4(sc, ENET_ECR) & ENET_ECR_ETHEREN)
+		continue;
 
 	HWRITE4(sc, ENET_EIMR, 0);
 	HWRITE4(sc, ENET_EIR, 0xffffffff);
@@ -604,7 +605,8 @@ fec_init(struct fec_softc *sc)
 
 	/* reset the controller */
 	HSET4(sc, ENET_ECR, ENET_ECR_RESET);
-	while(HREAD4(sc, ENET_ECR) & ENET_ECR_RESET);
+	while (HREAD4(sc, ENET_ECR) & ENET_ECR_ETHEREN)
+		continue;
 
 	/* set hw address */
 	HWRITE4(sc, ENET_PALR,
@@ -703,7 +705,8 @@ fec_stop(struct fec_softc *sc)
 
 	/* reset the controller */
 	HSET4(sc, ENET_ECR, ENET_ECR_RESET);
-	while(HREAD4(sc, ENET_ECR) & ENET_ECR_RESET);
+	while (HREAD4(sc, ENET_ECR) & ENET_ECR_ETHEREN)
+		continue;
 }
 
 void
