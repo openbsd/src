@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.22 2015/09/27 17:31:50 stsp Exp $ */
+/*	$OpenBSD: interface.c,v 1.23 2018/03/11 13:17:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -711,10 +711,13 @@ if_set_recvbuf(int fd)
 {
 	int	bsize;
 
-	bsize = 65535;
+	bsize = 256 * 1024;
 	while (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bsize,
 	    sizeof(bsize)) == -1)
 		bsize /= 2;
+
+	if (bsize != 256 * 1024)
+		log_warnx("if_set_recvbuf: recvbuf size only %d", bsize);
 }
 
 int
