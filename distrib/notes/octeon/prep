@@ -1,6 +1,6 @@
-dnl	$OpenBSD: prep,v 1.7 2017/11/30 15:31:16 visa Exp $
+dnl	$OpenBSD: prep,v 1.8 2018/03/11 18:30:18 sthen Exp $
 By default MACHINE systems are shipped with a Linux (or proprietary) system
-installated on the CompactFlash card or USB drive.
+installed on the CompactFlash card or USB drive.
 
 First connect your computer via serial port to the device (you may need to use
 a Cisco serial cable depending on your hardware) with a command such as
