@@ -2601,6 +2601,7 @@
 ./usr/share/man/man3/sigvec.3
 ./usr/share/man/man3/sigwait.3
 ./usr/share/man/man3/sin.3
+./usr/share/man/man3/sincos.3
 ./usr/share/man/man3/sinh.3
 ./usr/share/man/man3/sio_open.3
 ./usr/share/man/man3/skey.3
