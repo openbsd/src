@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.27 2018/02/09 03:59:15 tb Exp $
+#	$OpenBSD: Makefile.arm64,v 1.28 2018/03/12 22:20:07 kettenis Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -143,9 +143,9 @@ cleandir: clean
 depend obj:
 
 locore0.o: ${_archdir}/${_arch}/locore0.S assym.h
-in_cksum_arm.o fiq_subr.o bcopyinout.o copystr.o sigcode.o copy.o: assym.h
-cpuswitch.o exception.o bcopy_page.o irq_dispatch.o support.o: assym.h
-locore.o vectors.o trampoline.o: assym.h
+copy.o copystr.o: assym.h
+cpuswitch.o exception.o support.o: assym.h
+locore.o trampoline.o: assym.h
 
 hardlink-obsd:
 	[[ ! -f /bsd ]] || cmp -s bsd /bsd || ln -f /bsd /obsd
