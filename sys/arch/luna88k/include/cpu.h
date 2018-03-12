@@ -1,8 +1,9 @@
-/* $OpenBSD: cpu.h,v 1.8 2017/03/19 10:57:29 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.9 2018/03/12 11:17:06 aoyama Exp $ */
 /* public domain */
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
 
+#include <m88k/asm_macro.h>
 #include <m88k/cpu.h>
 
 #ifdef _KERNEL
@@ -21,6 +22,23 @@
 
 void luna88k_ext_int(struct trapframe *eframe);
 #define	md_interrupt_func	luna88k_ext_int
+
+static inline u_long
+intr_disable(void)
+{
+	u_long psr;
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+	return psr;
+}
+
+static inline void
+intr_restore(u_long psr)
+{
+	set_psr(psr & ~PSR_IND);
+}
+
 #endif	/* _KERNEL */
 
 #endif	/* _MACHINE_CPU_H_ */
