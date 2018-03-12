@@ -76,4 +76,4 @@ rint(double x)
 	return w-TWO52[sx];
 }
 DEF_STD(rint);
-LDBL_MAYBE_NONSTD_UNUSED_CLONE(rint);
+LDBL_MAYBE_NONSTD_CLONE(rint);
