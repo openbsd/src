@@ -172,7 +172,7 @@ PROTO_NORMAL(scalbnl);
 PROTO_DEPRECATED(significand);
 PROTO_DEPRECATED(significandf);
 PROTO_NORMAL(sin);
-PROTO_DEPRECATED(sincos);
+PROTO_NORMAL(sincos);
 PROTO_DEPRECATED(sincosf);
 PROTO_DEPRECATED(sincosl);
 PROTO_NORMAL(sinf);

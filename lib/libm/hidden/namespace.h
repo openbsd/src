@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.h,v 1.1 2016/09/12 19:47:02 guenther Exp $	*/
+/*	$OpenBSD: namespace.h,v 1.2 2018/03/12 04:22:56 guenther Exp $	*/
 
 #ifndef _LIBM_NAMESPACE_H_
 #define _LIBM_NAMESPACE_H_
@@ -101,7 +101,8 @@
 #define DEF_NONSTD(x)		WEAK_IN_STATIC_ALIAS(x, HIDDEN(x))
 
 #define	MAKE_UNUSED_CLONE(dst, src)	__strong_alias(dst, src)
-#define LDBL_UNUSED_CLONE(x)	__strong_alias(x##l, HIDDEN(x))
+#define LDBL_UNUSED_CLONE(x)		__strong_alias(x##l, HIDDEN(x))
+#define LDBL_NONSTD_UNUSED_CLONE(x)	WEAK_IN_STATIC_ALIAS(x##l, HIDDEN(x))
 #define LDBL_CLONE(x)		LDBL_UNUSED_CLONE(x); \
 				__dso_hidden typeof(HIDDEN(x##l)) HIDDEN(x##l) \
 				__attribute__((alias (HIDDEN_STRING(x))))
@@ -111,11 +112,13 @@
 # define LDBL_PROTO_STD_DEPRECATED(x)	typeof(x) HIDDEN(x)
 # define LDBL_MAYBE_CLONE(x)		LDBL_CLONE(x)
 # define LDBL_MAYBE_UNUSED_CLONE(x)	LDBL_UNUSED_CLONE(x)
+# define LDBL_MAYBE_NONSTD_UNUSED_CLONE(x)	LDBL_NONSTD_UNUSED_CLONE(x)
 #else
 # define LDBL_PROTO_NORMAL(x)		PROTO_NORMAL(x)
 # define LDBL_PROTO_STD_DEPRECATED(x)	PROTO_STD_DEPRECATED(x)
 # define LDBL_MAYBE_CLONE(x)		__asm("")
 # define LDBL_MAYBE_UNUSED_CLONE(x)	__asm("")
+# define LDBL_MAYBE_NONSTD_UNUSED_CLONE(x)	__asm("")
 #endif
 
 #endif	/* _LIBM_NAMESPACE_H_ */

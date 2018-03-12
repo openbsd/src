@@ -69,4 +69,5 @@ sincos(double x, double *sn, double *cs)
 		*sn = -*sn;
 	}
 }
-LDBL_MAYBE_CLONE(sincos);
+DEF_NONSTD(sincos);
+LDBL_MAYBE_NONSTD_UNUSED_CLONE(sincos);
