@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.18 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.19 2018/03/12 13:14:21 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -433,13 +433,15 @@ do_EC_KEY_print(BIO * bp, const EC_KEY * x, int off, int ktype)
 	}
 	if (ktype > 0) {
 		public_key = EC_KEY_get0_public_key(x);
-		if ((pub_key = EC_POINT_point2bn(group, public_key,
+		if (public_key != NULL) {
+			if ((pub_key = EC_POINT_point2bn(group, public_key,
 			    EC_KEY_get_conv_form(x), NULL, ctx)) == NULL) {
-			reason = ERR_R_EC_LIB;
-			goto err;
+				reason = ERR_R_EC_LIB;
+				goto err;
+			}
+			if (pub_key)
+				buf_len = (size_t) BN_num_bytes(pub_key);
 		}
-		if (pub_key)
-			buf_len = (size_t) BN_num_bytes(pub_key);
 	}
 	if (ktype == 2) {
 		priv_key = EC_KEY_get0_private_key(x);

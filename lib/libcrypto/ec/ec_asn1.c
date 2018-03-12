@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.24 2017/05/26 16:32:14 jsing Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.25 2018/03/12 13:14:21 inoguchi Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1380,16 +1380,17 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 		goto err;
 	}
 
+	if (ret->pub_key)
+		EC_POINT_clear_free(ret->pub_key);
+	ret->pub_key = EC_POINT_new(ret->group);
+	if (ret->pub_key == NULL) {
+		ECerror(ERR_R_EC_LIB);
+		goto err;
+	}
+
 	if (priv_key->publicKey) {
 		const unsigned char *pub_oct;
 		size_t pub_oct_len;
-
-		EC_POINT_clear_free(ret->pub_key);
-		ret->pub_key = EC_POINT_new(ret->group);
-		if (ret->pub_key == NULL) {
-			ECerror(ERR_R_EC_LIB);
-			goto err;
-		}
 
 		pub_oct = ASN1_STRING_data(priv_key->publicKey);
 		pub_oct_len = ASN1_STRING_length(priv_key->publicKey);
@@ -1405,6 +1406,14 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
+	} else {
+		if (!EC_POINT_mul(ret->group, ret->pub_key, ret->priv_key,
+			NULL, NULL, NULL)) {
+			ECerror(ERR_R_EC_LIB);
+			goto err;
+		}
+		/* Remember the original private-key-only encoding. */
+		ret->enc_flag |= EC_PKEY_NO_PUBKEY;
 	}
 
 	EC_PRIVATEKEY_free(priv_key);
@@ -1429,7 +1438,8 @@ i2d_ECPrivateKey(EC_KEY * a, unsigned char **out)
 	size_t buf_len = 0, tmp_len;
 	EC_PRIVATEKEY *priv_key = NULL;
 
-	if (a == NULL || a->group == NULL || a->priv_key == NULL) {
+	if (a == NULL || a->group == NULL || a->priv_key == NULL ||
+	    (!(a->enc_flag & EC_PKEY_NO_PUBKEY) && a->pub_key == NULL)) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
