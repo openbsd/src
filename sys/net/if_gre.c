@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.121 2018/03/12 06:28:02 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.122 2018/03/12 12:47:35 aoyama Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1261,7 +1261,6 @@ nvgre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen)
 {
 	struct nvgre_softc *sc;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	extern int ticks;
 
 	if (ISSET(m->m_flags, M_MCAST|M_BCAST))
 		sc = nvgre_mcast_find(key, m->m_pkthdr.ph_ifidx);
