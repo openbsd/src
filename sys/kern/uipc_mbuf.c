@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.253 2018/01/16 19:44:34 benno Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.254 2018/03/12 23:38:42 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -812,11 +812,12 @@ m_adj(struct mbuf *mp, int req_len)
 		while (m != NULL && len > 0) {
 			if (m->m_len <= len) {
 				len -= m->m_len;
+				m->m_data += m->m_len;
 				m->m_len = 0;
 				m = m->m_next;
 			} else {
-				m->m_len -= len;
 				m->m_data += len;
+				m->m_len -= len;
 				len = 0;
 			}
 		}
