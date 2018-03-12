@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_significand.S,v 1.3 2016/09/12 19:47:01 guenther Exp $ */
+/*	$OpenBSD: s_significand.S,v 1.4 2018/03/12 04:27:48 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -16,3 +16,4 @@ ENTRY(significand)
 	XMM_DOUBLE_EPILOGUE
 	ret
 END(significand)
+	.weak	significand
