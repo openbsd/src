@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.233 2018/01/16 10:33:55 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.234 2018/03/13 16:42:22 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ int	arpt_prune = (5 * 60);	/* walk list every 5 minutes */
 int	arpt_keep = (20 * 60);	/* once resolved, cache for 20 minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 
+struct mbuf *arppullup(struct mbuf *m);
 void arpinvalidate(struct rtentry *);
 void arptfree(struct rtentry *);
 void arptimer(void *);
@@ -417,6 +418,37 @@ bad:
 	return (EINVAL);
 }
 
+struct mbuf *
+arppullup(struct mbuf *m)
+{
+	struct arphdr *ar;
+	int len;
+
+#ifdef DIAGNOSTIC
+	if ((m->m_flags & M_PKTHDR) == 0)
+		panic("arp without packet header");
+#endif
+
+	len = sizeof(struct arphdr);
+	if (m->m_len < len && (m = m_pullup(m, len)) == NULL)
+		return NULL;
+
+	ar = mtod(m, struct arphdr *);
+	if (ntohs(ar->ar_hrd) != ARPHRD_ETHER ||
+	    ntohs(ar->ar_pro) != ETHERTYPE_IP ||
+	    ar->ar_hln != ETHER_ADDR_LEN ||
+	    ar->ar_pln != sizeof(struct in_addr)) {
+		m_freem(m);
+		return NULL;
+	}
+
+	len += 2 * (ar->ar_hln + ar->ar_pln);
+	if (m->m_len < len && (m = m_pullup(m, len)) == NULL)
+		return NULL;
+
+	return m;
+}
+
 /*
  * Common length and type checks are done here,
  * then the protocol-specific routine is called.
@@ -424,29 +456,8 @@ bad:
 void
 arpinput(struct ifnet *ifp, struct mbuf *m)
 {
-	struct arphdr *ar;
-	int len;
-
-#ifdef DIAGNOSTIC
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("arpintr");
-#endif
-
-	len = sizeof(struct arphdr);
-	if (m->m_len < len && (m = m_pullup(m, len)) == NULL)
+	if ((m = arppullup(m)) == NULL)
 		return;
-
-	ar = mtod(m, struct arphdr *);
-	if (ntohs(ar->ar_hrd) != ARPHRD_ETHER ||
-	    ntohs(ar->ar_pro) != ETHERTYPE_IP) {
-		m_freem(m);
-		return;
-	}
-
-	len += 2 * (ar->ar_hln + ar->ar_pln);
-	if (m->m_len < len && (m = m_pullup(m, len)) == NULL)
-		return;
-
 	niq_enqueue(&arpinq, m);
 }
 
@@ -787,26 +798,9 @@ arpproxy(struct in_addr in, unsigned int rtableid)
 void
 revarpinput(struct ifnet *ifp, struct mbuf *m)
 {
-	struct arphdr *ar;
-
-	if (m->m_len < sizeof(struct arphdr))
-		goto out;
-	ar = mtod(m, struct arphdr *);
-	if (ntohs(ar->ar_hrd) != ARPHRD_ETHER)
-		goto out;
-	if (m->m_len < sizeof(struct arphdr) + 2 * (ar->ar_hln + ar->ar_pln))
-		goto out;
-	switch (ntohs(ar->ar_pro)) {
-
-	case ETHERTYPE_IP:
-		in_revarpinput(ifp, m);
+	if ((m = arppullup(m)) == NULL)
 		return;
-
-	default:
-		break;
-	}
-out:
-	m_freem(m);
+	in_revarpinput(ifp, m);
 }
 
 /*
