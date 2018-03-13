@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.58 2018/02/06 13:00:48 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.59 2018/03/13 12:25:34 jca Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -162,10 +162,6 @@ asr_run(struct asr_query *as, struct asr_result *ar)
 }
 DEF_WEAK(asr_run);
 
-/*
- * Same as above, but run in a loop that handles the fd conditions result.
- */
-
 static int
 poll_intrsafe(struct pollfd *fds, nfds_t nfds, int timeout)
 {
@@ -187,6 +183,9 @@ poll_intrsafe(struct pollfd *fds, nfds_t nfds, int timeout)
 	return r;
 }
 
+/*
+ * Same as asr_run, but run in a loop that handles the fd conditions result.
+ */
 int
 asr_run_sync(struct asr_query *as, struct asr_result *ar)
 {
@@ -222,7 +221,7 @@ DEF_WEAK(asr_run_sync);
 
 /*
  * Create a new async request of the given "type" on the async context "ac".
- * Take a reference on it so it does not gets deleted while the async query
+ * Take a reference on it so it does not get deleted while the async query
  * is running.
  */
 struct asr_query *
