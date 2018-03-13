@@ -1,4 +1,4 @@
-/*	$OpenBSD: k1x-pstate.c,v 1.9 2017/09/08 05:36:51 deraadt Exp $ */
+/*	$OpenBSD: k1x-pstate.c,v 1.10 2018/03/13 13:51:05 bluhm Exp $ */
 /*
  * Copyright (c) 2011 Bryan Steele <brynet@gmail.com>
  *
@@ -187,7 +187,7 @@ k1x_init(struct cpu_info *ci)
 #endif
 	if (cstate->n_states) {
 		printf("%s: %d MHz: speeds:",
-		    ci->ci_dev.dv_xname, cpuspeed);
+		    ci->ci_dev->dv_xname, cpuspeed);
 		for (i = cstate->n_states; i > 0; i--) {
 			state = &cstate->state_table[i-1];
 			printf(" %d", state->freq);

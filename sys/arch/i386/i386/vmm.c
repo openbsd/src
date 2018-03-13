@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.34 2017/11/28 15:06:08 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.35 2018/03/13 13:51:05 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -745,7 +745,7 @@ vmm_start(void)
 			delay(10);
 		if (!(ci->ci_flags & CPUF_VMM)) {
 			printf("%s: failed to enter VMM mode\n",
-				ci->ci_dev.dv_xname);
+				ci->ci_dev->dv_xname);
 			ret = EIO;
 		}
 	}
@@ -755,7 +755,7 @@ vmm_start(void)
 	start_vmm_on_cpu(self);
 	if (!(self->ci_flags & CPUF_VMM)) {
 		printf("%s: failed to enter VMM mode\n",
-			self->ci_dev.dv_xname);
+			self->ci_dev->dv_xname);
 		ret = EIO;
 	}
 
@@ -793,7 +793,7 @@ vmm_stop(void)
 			delay(10);
 		if (ci->ci_flags & CPUF_VMM) {
 			printf("%s: failed to exit VMM mode\n",
-				ci->ci_dev.dv_xname);
+				ci->ci_dev->dv_xname);
 			ret = EIO;
 		}
 	}
@@ -803,7 +803,7 @@ vmm_stop(void)
 	stop_vmm_on_cpu(self);
 	if (self->ci_flags & CPUF_VMM) {
 		printf("%s: failed to exit VMM mode\n",
-			self->ci_dev.dv_xname);
+			self->ci_dev->dv_xname);
 		ret = EIO;
 	}
 
@@ -2519,7 +2519,7 @@ vcpu_init_vmx(struct vcpu *vcpu)
 		goto exit;
 	}
 
-	if (vmwrite(VMCS_HOST_IA32_TR_SEL, proc0.p_md.md_tss_sel)) {
+	if (vmwrite(VMCS_HOST_IA32_TR_SEL, GSEL(GTSS_SEL, SEL_KPL))) {
 		ret = EINVAL;
 		goto exit;
 	}
@@ -3446,7 +3446,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 			/* Host TR base */
 			if (vmwrite(VMCS_HOST_IA32_TR_BASE,
-			    proc0.p_md.md_tss_sel)) {
+			    GSEL(GTSS_SEL, SEL_KPL))) {
 				ret = EINVAL;
 				break;
 			}

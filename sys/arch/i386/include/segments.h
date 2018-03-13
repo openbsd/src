@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.21 2016/03/15 03:17:51 guenther Exp $	*/
+/*	$OpenBSD: segments.h,v 1.22 2018/03/13 13:51:05 bluhm Exp $	*/
 /*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
@@ -221,11 +221,10 @@ void idt_vec_free(int);
 #define	GICODE_SEL	10	/* Interrupt code descriptor (same as Kernel code) */
 #define	GUFS_SEL	11	/* User per-thread (%fs) descriptor */
 #define	GUGS_SEL	12	/* User per-thread (%gs) descriptor */
-#define	NGDT		13
+#define GTSS_SEL	13	/* common TSS */
+#define	GBIOS32_SEL	14	/* spare slot for 32 bit BIOS calls */
+#define	NGDT		15
 
-/*
- * Entries in the Local Descriptor Table (LDT)
- */
-#define	NLDT		17
+#define GDT_SIZE	(NGDT << 3)
 
 #endif /* _MACHINE_SEGMENTS_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86call.S,v 1.7 2015/04/25 21:31:24 guenther Exp $ */
+/* $OpenBSD: kvm86call.S,v 1.8 2018/03/13 13:51:05 bluhm Exp $ */
 /* $NetBSD: kvm86call.S,v 1.7 2006/04/11 17:14:07 drochner Exp $ */
 
 /*-
@@ -33,6 +33,7 @@
 
 #include <machine/asm.h>
 #include <machine/param.h>
+#include <machine/segments.h>
 #include "assym.h"
 
 	.data
@@ -43,7 +44,7 @@
 kvm86_incall:		.long	0
 
 /* XXX arguments for kvm86call() */
-	.globl vm86pcb, vm86newptd, vm86frame, vm86pgtableva
+	.globl vm86tss, vm86newptd, vm86frame, vm86pgtableva
 	.globl	vm86tssd0, vm86tssd1
 
 /* locals */
@@ -93,19 +94,12 @@ ENTRY(kvm86_call)
 	leal	_C_LABEL(cpu_info_primary),%ecx
 #endif
 
-	movl	CPU_INFO_CURPCB(%ecx),%eax
-	pushl	%eax			/* save curpcb */
-	
-	movl	vm86pcb,%eax		
-	movl	%eax,CPU_INFO_CURPCB(%ecx) /* set curpcb to vm86pcb */
-	movl	CPU_INFO_CURPROC(%ecx),%ecx
-	movl	P_MD_TSS_SEL(%ecx),%edi
-
 #ifdef	MULTIPROCESSOR
 	movl	CPU_INFO_GDT(%edx),%eax
 #else
 	movl	_C_LABEL(gdt),%eax
 #endif
+	movl	GTSS_SEL,%edi
 	andl	$~0x0200,4(%eax,%edi,1)	/* reset "task busy" */
 
 	movl	0(%eax,%edi,1),%edx
@@ -191,8 +185,7 @@ ENTRY(kvm86_ret)
 	leal	_C_LABEL(cpu_info_primary),%ecx
 	movl	_C_LABEL(gdt),%eax
 #endif
-	movl	CPU_INFO_CURPROC(%ecx),%ecx
-	movl	P_MD_TSS_SEL(%ecx),%edi
+	movl	GTSS_SEL,%edi
 	movl	SCRTSS0, %edx
 	movl	%edx, 0(%eax,%edi,1)	/* restore first word */
 	movl	SCRTSS1, %edx

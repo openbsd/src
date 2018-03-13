@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.49 2018/02/16 14:42:29 fcambus Exp $ */
+/*	$OpenBSD: est.c,v 1.50 2018/03/13 13:51:05 bluhm Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -1049,7 +1049,7 @@ est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
 void
 est_init(struct cpu_info *ci, int vendor)
 {
-	const char *cpu_device = ci->ci_dev.dv_xname;
+	const char *cpu_device = ci->ci_dev->dv_xname;
 	int i, low, high;
 	u_int64_t msr;
 	u_int16_t idhi, idlo, cur;

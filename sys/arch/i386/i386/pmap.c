@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.196 2017/05/29 14:19:49 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.197 2018/03/13 13:51:05 bluhm Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -778,7 +778,7 @@ setcslimit(struct pmap *pm, struct trapframe *tf, struct pcb *pcb,
 	 */
 	curcpu()->ci_gdt[GUCODE_SEL].sd = pm->pm_codeseg;
 
-	pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 }
 
 /*

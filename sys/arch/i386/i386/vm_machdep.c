@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.67 2017/08/18 16:53:02 tom Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.68 2018/03/13 13:51:05 bluhm Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -88,17 +88,13 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 #endif
 	*pcb = p1->p_addr->u_pcb;
 
-	/* Fix up the TSS. */
-	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = (int)p2->p_addr + USPACE - 16 -
+	pcb->pcb_kstack = (int)p2->p_addr + USPACE - 16 -
 	    (arc4random() & PAGE_MASK & ~_STACKALIGNBYTES);
-
-	p2->p_md.md_tss_sel = tss_alloc(pcb);
 
 	/*
 	 * Copy the trapframe, and arrange for the child to return directly
 	 */
-	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_kstack - 1;
 	*tf = *p1->p_md.md_regs;
 
 	/*
@@ -128,8 +124,6 @@ cpu_exit(struct proc *p)
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		npxsave_proc(p, 0);
 #endif
-
-	tss_free(p->p_md.md_tss_sel);
 	sched_exit(p);
 }
 
