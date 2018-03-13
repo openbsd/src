@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.22 2018/03/08 17:41:15 phessler Exp $	*/
+/*	$OpenBSD: engine.c,v 1.23 2018/03/13 13:57:07 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1239,6 +1239,8 @@ gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
 	int dad_counter = 0; /* XXX not used */
 	u_int8_t digest[SHA512_DIGEST_LENGTH];
 
+	memset(&iid, 0, sizeof(iid));
+
 	/* from in6_ifadd() in nd6_rtr.c */
 	/* XXX from in6.h, guarded by #ifdef _KERNEL   XXX nonstandard */
 #define s6_addr32 __u6_addr.__u6_addr32
@@ -1275,7 +1277,8 @@ gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
 		    sizeof(addr_proposal->soiikey));
 		SHA512Final(digest, &ctx);
 
-		memcpy(&iid.s6_addr, digest, sizeof(iid.s6_addr));
+		memcpy(&iid.s6_addr, digest + (sizeof(digest) -
+		    sizeof(iid.s6_addr)), sizeof(iid.s6_addr));
 	} else {
 		/* This is safe, because we have a 64 prefix len */
 		memcpy(&iid.s6_addr, &iface->ll_address.sin6_addr,
