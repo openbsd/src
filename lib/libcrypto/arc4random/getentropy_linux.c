@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.44 2017/04/29 18:43:31 beck Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.45 2018/03/13 22:53:28 bcook Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -74,7 +74,7 @@
 int	getentropy(void *buf, size_t len);
 
 static int gotdata(char *buf, size_t len);
-#ifdef SYS_getrandom
+#if defined(SYS_getrandom) && defined(GRND_NONBLOCK)
 static int getentropy_getrandom(void *buf, size_t len);
 #endif
 static int getentropy_urandom(void *buf, size_t len);
@@ -94,7 +94,7 @@ getentropy(void *buf, size_t len)
 		return (-1);
 	}
 
-#ifdef SYS_getrandom
+#if defined(SYS_getrandom) && defined(GRND_NONBLOCK)
 	/*
 	 * Try descriptor-less getrandom(), in non-blocking mode.
 	 *
@@ -193,7 +193,7 @@ gotdata(char *buf, size_t len)
 	return (0);
 }
 
-#ifdef SYS_getrandom
+#if defined(SYS_getrandom) && defined(GRND_NONBLOCK)
 static int
 getentropy_getrandom(void *buf, size_t len)
 {
