@@ -15,6 +15,7 @@
  */
 
 #include <sys/socket.h>
+#include <sys/tree.h>
 
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -31,7 +32,9 @@
 #include <strings.h>
 #include <unistd.h>
 
+#define LINE_MAX 1024
 #include "smtpd-defines.h"
+#include "smtpd-api.h"
 #include "unpack_dns.h"
 #include "parser.h"
 
@@ -48,6 +51,8 @@ static ssize_t	parse_txt(const char *, size_t, char *, size_t);
 int     ip_v4 = 0;
 int     ip_v6 = 0;
 int     ip_both = 1;
+
+struct dict seen;
 
 int
 spfwalk(int argc, struct parameter *argv)
@@ -74,6 +79,7 @@ spfwalk(int argc, struct parameter *argv)
 	argv += optind;
 	argc -= optind;
 
+	dict_init(&seen);
   	event_init();
 
 	while ((linelen = getline(&line, &linesize, stdin)) != -1) {
@@ -157,6 +163,9 @@ dispatch_txt(struct dns_rr *rr)
 		end = *ap + strlen(*ap)-1;
 		if (*end == '.')
 			*end = '\0';
+
+		if (dict_set(&seen, *ap, &seen))
+			continue;
 
 		if (strncasecmp("ip4:", *ap, 4) == 0) {
 			if (ip_v4 == 1 || ip_both == 1)
