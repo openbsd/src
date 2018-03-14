@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.158 2018/03/03 17:57:14 job Exp $
+# $OpenBSD: PackageRepository.pm,v 1.159 2018/03/14 14:12:31 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -322,6 +322,7 @@ sub parse_problems
 			next;
 		}
 		if (m/^tls session resumed\: (\w+)/) {
+			next; # disable the detailed handling for now
 			my $s = $1;
 			if ($s eq 'yes') {
 				# everything okay for now
