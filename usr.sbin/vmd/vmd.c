@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.80 2018/02/18 01:00:25 pd Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.81 2018/03/14 07:29:34 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -811,9 +811,10 @@ vmd_configure(void)
 	 * recvfd - for send and receive.
 	 * getpw - lookup user or group id by name.
 	 * chown, fattr - change tty ownership
+	 * flock - locking disk files
 	 */
 	if (pledge("stdio rpath wpath proc tty recvfd sendfd getpw"
-	    " chown fattr", NULL) == -1)
+	    " chown fattr flock", NULL) == -1)
 		fatal("pledge");
 
 	if (parse_config(env->vmd_conffile) == -1) {
