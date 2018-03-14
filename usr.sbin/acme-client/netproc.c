@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.15 2018/02/06 05:08:27 florian Exp $ */
+/*	$Id: netproc.c,v 1.16 2018/03/14 12:28:25 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -180,15 +180,18 @@ nreq(struct conn *c, const char *addr)
 {
 	struct httpget	*g;
 	struct source	 src[MAX_SERVERS_DNS];
+	struct httphead *st;
 	char		*host, *path;
 	short		 port;
 	size_t		 srcsz;
 	ssize_t		 ssz;
 	long		 code;
+	int		 redirects = 0;
 
 	if ((host = url2host(addr, &port, &path)) == NULL)
 		return -1;
 
+again:
 	if ((ssz = urlresolve(c->dfd, host, src)) < 0) {
 		free(host);
 		free(path);
@@ -202,7 +205,36 @@ nreq(struct conn *c, const char *addr)
 	if (g == NULL)
 		return -1;
 
-	code = g->code;
+	switch (g->code) {
+	case 301:
+	case 302:
+	case 303:
+	case 307:
+	case 308:
+		redirects++;
+		if (redirects > 3) {
+			warnx("too many redirects");
+			http_get_free(g);
+			return -1;
+		}
+
+		if ((st = http_head_get("Location", g->head, g->headsz)) ==
+		    NULL) {
+			warnx("redirect without location header");
+			return -1;
+		}
+
+		dodbg("Location: %s", st->val);
+		host = url2host(st->val, &port, &path);
+		http_get_free(g);
+		if (host == NULL)
+			return -1;
+		goto again;
+		break;
+	default:
+		code = g->code;
+		break;
+	}
 
 	/* Copy the body part into our buffer. */
 
