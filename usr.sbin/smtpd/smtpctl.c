@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.157 2018/01/30 12:44:55 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.158 2018/03/14 22:22:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -1130,7 +1130,7 @@ sendmail_compat(int argc, char **argv)
 {
 	FILE	*offlinefp = NULL;
 	gid_t	 gid;
-	int	 i;
+	int	 i, r;
 
 	if (strcmp(__progname, "sendmail") == 0 ||
 	    strcmp(__progname, "send-mail") == 0) {
@@ -1158,8 +1158,18 @@ sendmail_compat(int argc, char **argv)
 		exit(enqueue(argc, argv, offlinefp));
 	} else if (strcmp(__progname, "makemap") == 0)
 		exit(makemap(P_MAKEMAP, argc, argv));
-	else if (strcmp(__progname, "newaliases") == 0)
-		exit(makemap(P_NEWALIASES, argc, argv));
+	else if (strcmp(__progname, "newaliases") == 0) {
+		r = makemap(P_NEWALIASES, argc, argv);
+		/*
+		 * if server is available, notify of table update.
+		 * only makes sense for static tables AND if server is up.
+		 */
+		if (srv_connect()) {
+			srv_send(IMSG_CTL_UPDATE_TABLE, "aliases", strlen("aliases") + 1);
+			srv_check_result(0);
+		}
+		exit(r);
+	}
 }
 
 static void
