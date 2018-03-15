@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.21 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.22 2018/03/15 21:36:59 uaa Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -214,7 +214,6 @@ ugl_attach(struct device *parent, struct device *self, void *aux)
 	int			i;
 
 	DPRINTFN(5,(" : ugl_attach: sc=%p, dev=%p", sc, dev));
-
 
 	sc->sc_udev = dev;
 	sc->sc_iface = iface;
@@ -595,7 +594,7 @@ ugl_start(struct ifnet *ifp)
 		return;
 
 	if (ugl_send(sc, m_head, 0)) {
-		ifq_deq_commit(&ifp->if_snd, m_head);
+		ifq_deq_rollback(&ifp->if_snd, m_head);
 		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
@@ -655,9 +654,9 @@ ugl_init(void *xsc)
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
-	splx(s);
-
 	ifq_clr_oactive(&ifp->if_snd);
+
+	splx(s);
 }
 
 int
