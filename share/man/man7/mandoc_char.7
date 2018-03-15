@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc_char.7,v 1.32 2017/06/14 20:56:42 schwarze Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.33 2018/03/15 18:09:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 14 2017 $
+.Dd $Mdocdate: March 15 2018 $
 .Dt MANDOC_CHAR 7
 .Os
 .Sh NAME
@@ -35,13 +35,27 @@ documents.
 .Pp
 The rendering depends on the
 .Xr mandoc 1
-output mode; in ASCII output, most characters are completely
-unintelligible.
-For that reason, using any of the special characters documented here,
-except those discussed in the
+output mode; it can be inspected by calling
+.Xr man 1
+on the
+.Nm
+manual page with different
+.Fl T
+arguments.
+In ASCII output, the rendering of some characters may be hard
+to interpret for the reader.
+Many are rendered as descriptive strings like
+.Qq <integral> ,
+.Qq <degree> ,
+or
+.Qq <Gamma> ,
+which may look ugly, and many are replaced by similar ASCII characters.
+In particular, accented characters are usually shown without the accent.
+For that reason, try to avoid using any of the special characters
+documented here except those discussed in the
 .Sx DESCRIPTION ,
-is strongly discouraged; they are supported merely for backwards
-compatibility with existing documents.
+unless they are essential for explaining the subject matter at hand,
+for example when documenting complicated mathematical functions.
 .Pp
 In particular, in English manual pages, do not use special-character
 escape sequences to represent national language characters in author
