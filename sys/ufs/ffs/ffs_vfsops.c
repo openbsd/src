@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.172 2018/02/10 05:24:23 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.173 2018/03/15 04:22:16 deraadt Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1270,8 +1270,10 @@ ffs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred, struct pr
 #endif
 		} else {
 			fs->fs_clean = 0;
+#if 0
 			printf("%s force dirty (dangling %d inflight %d)\n",
 			    mp->mnt_stat.f_mntonname, fsa.nlink0, fsa.inflight);
+#endif
 		}
 	}
 	if (fs->fs_fmod != 0 && (error = ffs_sbupdate(ump, waitfor)) != 0)
