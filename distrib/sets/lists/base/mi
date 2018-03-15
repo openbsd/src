@@ -222,9 +222,11 @@
 ./etc/signify/openbsd-63-base.pub
 ./etc/signify/openbsd-63-fw.pub
 ./etc/signify/openbsd-63-pkg.pub
+./etc/signify/openbsd-63-syspatch.pub
 ./etc/signify/openbsd-64-base.pub
 ./etc/signify/openbsd-64-fw.pub
 ./etc/signify/openbsd-64-pkg.pub
+./etc/signify/openbsd-64-syspatch.pub
 ./etc/skel
 ./etc/skel/.ssh
 ./etc/ssh
