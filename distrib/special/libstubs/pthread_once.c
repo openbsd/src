@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_once.c,v 1.1 2018/03/08 16:07:36 beck Exp $ */
+/*	$OpenBSD: pthread_once.c,v 1.2 2018/03/15 13:27:40 beck Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>s
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
@@ -26,4 +26,17 @@ pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
 		once_control->state = PTHREAD_DONE_INIT;
 	}
 	return (0);
+}
+
+int
+pthread_equal(pthread_t t1, pthread_t t2)
+{
+	return (t1 == t2);
+}
+
+pthread_t
+pthread_self(void)
+{
+	/* needs to differ from 0 inited value. */
+	return (pthread_t) 1;
 }
