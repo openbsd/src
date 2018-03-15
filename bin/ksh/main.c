@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.89 2018/01/16 22:52:32 jca Exp $	*/
+/*	$OpenBSD: main.c,v 1.90 2018/03/15 16:51:29 anton Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -492,7 +492,7 @@ include(const char *name, int argc, char **argv, int intr_ok)
 			unwind(i);
 			/* NOTREACHED */
 		default:
-			internal_errorf("include: %d", i);
+			internal_errorf("%s: %d", __func__, i);
 			/* NOTREACHED */
 		}
 	}
@@ -579,7 +579,7 @@ shell(Source *volatile s, volatile int toplevel)
 		default:
 			source = old_source;
 			quitenv(NULL);
-			internal_errorf("shell: %d", i);
+			internal_errorf("%s: %d", __func__, i);
 			/* NOTREACHED */
 		}
 	}

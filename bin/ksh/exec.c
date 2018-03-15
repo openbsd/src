@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.72 2018/01/16 22:52:32 jca Exp $	*/
+/*	$OpenBSD: exec.c,v 1.73 2018/03/15 16:51:29 anton Exp $	*/
 
 /*
  * execute command tree
@@ -727,7 +727,7 @@ shcomexec(char **wp)
 
 	tp = ktsearch(&builtins, *wp, hash(*wp));
 	if (tp == NULL)
-		internal_errorf("shcomexec: %s", *wp);
+		internal_errorf("%s: %s", __func__, *wp);
 	return call_builtin(tp, wp);
 }
 
@@ -1221,7 +1221,7 @@ herein(const char *content, int sub)
 		s->start = s->str = content;
 		source = s;
 		if (yylex(ONEWORD|HEREDOC) != LWORD)
-			internal_errorf("herein: yylex");
+			internal_errorf("%s: yylex", __func__);
 		source = osource;
 		shf_puts(evalstr(yylval.cp, 0), shf);
 	} else
@@ -1446,5 +1446,5 @@ static void
 dbteste_error(Test_env *te, int offset, const char *msg)
 {
 	te->flags |= TEF_ERROR;
-	internal_warningf("dbteste_error: %s (offset %d)", msg, offset);
+	internal_warningf("%s: %s (offset %d)", __func__, msg, offset);
 }

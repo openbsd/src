@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.32 2018/01/16 22:52:32 jca Exp $	*/
+/*	$OpenBSD: shf.c,v 1.33 2018/03/15 16:51:29 anton Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -100,7 +100,7 @@ shf_fdopen(int fd, int sflags, struct shf *shf)
 	}
 
 	if (!(sflags & (SHF_RD | SHF_WR)))
-		internal_errorf("shf_fdopen: missing read/write");
+		internal_errorf("%s: missing read/write", __func__);
 
 	if (shf) {
 		if (bsize) {
@@ -157,9 +157,9 @@ shf_reopen(int fd, int sflags, struct shf *shf)
 	}
 
 	if (!(sflags & (SHF_RD | SHF_WR)))
-		internal_errorf("shf_reopen: missing read/write");
+		internal_errorf("%s: missing read/write", __func__);
 	if (!shf || !shf->buf || shf->bsize < bsize)
-		internal_errorf("shf_reopen: bad shf/buf/bsize");
+		internal_errorf("%s: bad shf/buf/bsize", __func__);
 
 	/* assumes shf->buf and shf->bsize already set up */
 	shf->fd = fd;
@@ -189,7 +189,7 @@ shf_sopen(char *buf, int bsize, int sflags, struct shf *shf)
 	/* can't have a read+write string */
 	if (!(sflags & (SHF_RD | SHF_WR)) ||
 	    (sflags & (SHF_RD | SHF_WR)) == (SHF_RD | SHF_WR))
-		internal_errorf("shf_sopen: flags 0x%x", sflags);
+		internal_errorf("%s: flags 0x%x", __func__, sflags);
 
 	if (!shf) {
 		shf = alloc(sizeof(struct shf), ATEMP);
@@ -282,7 +282,7 @@ shf_flush(struct shf *shf)
 		return (shf->flags & SHF_WR) ? EOF : 0;
 
 	if (shf->fd < 0)
-		internal_errorf("shf_flush: no fd");
+		internal_errorf("%s: no fd", __func__);
 
 	if (shf->flags & SHF_ERROR) {
 		errno = shf->errno_;
@@ -312,7 +312,7 @@ shf_emptybuf(struct shf *shf, int flags)
 	int ret = 0;
 
 	if (!(shf->flags & SHF_STRING) && shf->fd < 0)
-		internal_errorf("shf_emptybuf: no fd");
+		internal_errorf("%s: no fd", __func__);
 
 	if (shf->flags & SHF_ERROR) {
 		errno = shf->errno_;
@@ -392,7 +392,7 @@ shf_fillbuf(struct shf *shf)
 		return 0;
 
 	if (shf->fd < 0)
-		internal_errorf("shf_fillbuf: no fd");
+		internal_errorf("%s: no fd", __func__);
 
 	if (shf->flags & (SHF_EOF | SHF_ERROR)) {
 		if (shf->flags & SHF_ERROR)
@@ -438,10 +438,10 @@ shf_read(char *buf, int bsize, struct shf *shf)
 	int ncopy;
 
 	if (!(shf->flags & SHF_RD))
-		internal_errorf("shf_read: flags %x", shf->flags);
+		internal_errorf("%s: flags %x", __func__, shf->flags);
 
 	if (bsize <= 0)
-		internal_errorf("shf_read: bsize %d", bsize);
+		internal_errorf("%s: bsize %d", __func__, bsize);
 
 	while (bsize > 0) {
 		if (shf->rnleft == 0 &&
@@ -473,7 +473,7 @@ shf_getse(char *buf, int bsize, struct shf *shf)
 	char *orig_buf = buf;
 
 	if (!(shf->flags & SHF_RD))
-		internal_errorf("shf_getse: flags %x", shf->flags);
+		internal_errorf("%s: flags %x", __func__, shf->flags);
 
 	if (bsize <= 0)
 		return NULL;
@@ -508,7 +508,7 @@ int
 shf_getchar(struct shf *shf)
 {
 	if (!(shf->flags & SHF_RD))
-		internal_errorf("shf_getchar: flags %x", shf->flags);
+		internal_errorf("%s: flags %x", __func__, shf->flags);
 
 	if (shf->rnleft == 0 && (shf_fillbuf(shf) == EOF || shf->rnleft == 0))
 		return EOF;
@@ -523,7 +523,7 @@ int
 shf_ungetc(int c, struct shf *shf)
 {
 	if (!(shf->flags & SHF_RD))
-		internal_errorf("shf_ungetc: flags %x", shf->flags);
+		internal_errorf("%s: flags %x", __func__, shf->flags);
 
 	if ((shf->flags & SHF_ERROR) || c == EOF ||
 	    (shf->rp == shf->buf && shf->rnleft))
@@ -558,7 +558,7 @@ int
 shf_putchar(int c, struct shf *shf)
 {
 	if (!(shf->flags & SHF_WR))
-		internal_errorf("shf_putchar: flags %x", shf->flags);
+		internal_errorf("%s: flags %x", __func__, shf->flags);
 
 	if (c == EOF)
 		return EOF;
@@ -568,7 +568,7 @@ shf_putchar(int c, struct shf *shf)
 		int n;
 
 		if (shf->fd < 0)
-			internal_errorf("shf_putchar: no fd");
+			internal_errorf("%s: no fd", __func__);
 		if (shf->flags & SHF_ERROR) {
 			errno = shf->errno_;
 			return EOF;
@@ -614,10 +614,10 @@ shf_write(const char *buf, int nbytes, struct shf *shf)
 	int ncopy;
 
 	if (!(shf->flags & SHF_WR))
-		internal_errorf("shf_write: flags %x", shf->flags);
+		internal_errorf("%s: flags %x", __func__, shf->flags);
 
 	if (nbytes < 0)
-		internal_errorf("shf_write: nbytes %d", nbytes);
+		internal_errorf("%s: nbytes %d", __func__, nbytes);
 
 	/* Don't buffer if buffer is empty and we're writting a large amount. */
 	if ((ncopy = shf->wnleft) &&
@@ -687,8 +687,8 @@ shf_snprintf(char *buf, int bsize, const char *fmt, ...)
 	int n;
 
 	if (!buf || bsize <= 0)
-		internal_errorf("shf_snprintf: buf %lx, bsize %d",
-			(long) buf, bsize);
+		internal_errorf("%s: buf %lx, bsize %d",
+			__func__, (long) buf, bsize);
 
 	shf_sopen(buf, bsize, SHF_WR, &shf);
 	va_start(args, fmt);

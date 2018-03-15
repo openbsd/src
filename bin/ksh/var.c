@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.65 2018/01/16 22:52:32 jca Exp $	*/
+/*	$OpenBSD: var.c,v 1.66 2018/03/15 16:51:29 anton Exp $	*/
 
 #include <sys/stat.h>
 
@@ -366,9 +366,8 @@ setstr(struct tbl *vq, const char *s, int error_ok)
 			/* debugging */
 			if (s >= vq->val.s &&
 			    s <= vq->val.s + strlen(vq->val.s))
-				internal_errorf(
-				    "setstr: %s=%s: assigning to self",
-				    vq->name, s);
+				internal_errorf("%s: %s=%s: assigning to self",
+				    __func__, vq->name, s);
 			afree(vq->val.s, vq->areap);
 		}
 		vq->flag &= ~(ISSET|ALLOC);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.59 2018/01/16 22:52:32 jca Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.60 2018/03/15 16:51:29 anton Exp $	*/
 
 /*
  * Process and job control
@@ -199,14 +199,13 @@ j_suspend(void)
 		tcsetattr(tty_fd, TCSADRAIN, &tty_state);
 		if (restore_ttypgrp >= 0) {
 			if (tcsetpgrp(tty_fd, restore_ttypgrp) < 0) {
-				warningf(false,
-				    "j_suspend: tcsetpgrp() failed: %s",
-				    strerror(errno));
+				warningf(false, "%s: tcsetpgrp() failed: %s",
+				    __func__, strerror(errno));
 			} else {
 				if (setpgid(0, restore_ttypgrp) < 0) {
 					warningf(false,
-					    "j_suspend: setpgid() failed: %s",
-					    strerror(errno));
+					    "%s: setpgid() failed: %s",
+					    __func__, strerror(errno));
 				}
 			}
 		}
@@ -224,15 +223,14 @@ j_suspend(void)
 	if (ttypgrp_ok) {
 		if (restore_ttypgrp >= 0) {
 			if (setpgid(0, kshpid) < 0) {
-				warningf(false,
-				    "j_suspend: setpgid() failed: %s",
-				    strerror(errno));
+				warningf(false, "%s: setpgid() failed: %s",
+				    __func__, strerror(errno));
 				ttypgrp_ok = 0;
 			} else {
 				if (tcsetpgrp(tty_fd, kshpid) < 0) {
 					warningf(false,
-					    "j_suspend: tcsetpgrp() failed: %s",
-					    strerror(errno));
+					    "%s: tcsetpgrp() failed: %s",
+					    __func__, strerror(errno));
 					ttypgrp_ok = 0;
 				}
 			}
@@ -309,8 +307,8 @@ j_change(void)
 		ttypgrp_ok = use_tty && tty_fd >= 0 && tty_devtty;
 
 		if (ttypgrp_ok && (our_pgrp = getpgrp()) < 0) {
-			warningf(false, "j_init: getpgrp() failed: %s",
-			    strerror(errno));
+			warningf(false, "%s: getpgrp() failed: %s",
+			    __func__, strerror(errno));
 			ttypgrp_ok = 0;
 		}
 		if (ttypgrp_ok) {
@@ -322,8 +320,8 @@ j_change(void)
 
 				if ((ttypgrp = tcgetpgrp(tty_fd)) < 0) {
 					warningf(false,
-					    "j_init: tcgetpgrp() failed: %s",
-					    strerror(errno));
+					    "%s: tcgetpgrp() failed: %s",
+					    __func__, strerror(errno));
 					ttypgrp_ok = 0;
 					break;
 				}
@@ -337,15 +335,14 @@ j_change(void)
 			    SS_RESTORE_DFL|SS_FORCE);
 		if (ttypgrp_ok && our_pgrp != kshpid) {
 			if (setpgid(0, kshpid) < 0) {
-				warningf(false,
-				    "j_init: setpgid() failed: %s",
-				    strerror(errno));
+				warningf(false, "%s: setpgid() failed: %s",
+				    __func__, strerror(errno));
 				ttypgrp_ok = 0;
 			} else {
 				if (tcsetpgrp(tty_fd, kshpid) < 0) {
 					warningf(false,
-					    "j_init: tcsetpgrp() failed: %s",
-					    strerror(errno));
+					    "%s: tcsetpgrp() failed: %s",
+					    __func__, strerror(errno));
 					ttypgrp_ok = 0;
 				} else
 					restore_ttypgrp = our_pgrp;
@@ -354,7 +351,8 @@ j_change(void)
 		}
 		if (use_tty) {
 			if (!ttypgrp_ok)
-				warningf(false, "warning: won't have full job control");
+				warningf(false,
+				    "warning: won't have full job control");
 		}
 		if (tty_fd >= 0)
 			tcgetattr(tty_fd, &tty_state);
@@ -411,9 +409,8 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 	/* link process into jobs list */
 	if (flags&XPIPEI) {	/* continuing with a pipe */
 		if (!last_job)
-			internal_errorf(
-			    "exchild: XPIPEI and no last_job - pid %d",
-			    (int) procpid);
+			internal_errorf("%s: XPIPEI and no last_job - pid %d",
+			    __func__, (int) procpid);
 		j = last_job;
 		last_proc->next = p;
 		last_proc = p;
@@ -522,7 +519,7 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 		tty_close();
 		cleartraps();
 		execute(t, (flags & XERROK) | XEXEC, NULL); /* no return */
-		internal_warningf("exchild: execute() returned");
+		internal_warningf("%s: execute() returned", __func__);
 		unwind(LLEAVE);
 		/* NOTREACHED */
 	}
@@ -588,9 +585,9 @@ waitlast(void)
 	j = last_job;
 	if (!j || !(j->flags & JF_STARTED)) {
 		if (!j)
-			warningf(true, "waitlast: no last job");
+			warningf(true, "%s: no last job", __func__);
 		else
-			internal_warningf("waitlast: not started");
+			internal_warningf("%s: not started", __func__);
 		sigprocmask(SIG_SETMASK, &omask, NULL);
 		return 125; /* not so arbitrary, non-zero value */
 	}
@@ -931,7 +928,7 @@ j_set_async(Job *j)
 	if (async_job && (async_job->flags & (JF_KNOWN|JF_ZOMBIE)) == JF_ZOMBIE)
 		remove_job(async_job, "async");
 	if (!(j->flags & JF_STARTED)) {
-		internal_warningf("j_async: job not started");
+		internal_warningf("%s: job not started", __func__);
 		return;
 	}
 	async_job = j;
@@ -945,8 +942,8 @@ j_set_async(Job *j)
 		if (!oldest) {
 			/* XXX debugging */
 			if (!(async_job->flags & JF_ZOMBIE) || nzombie != 1) {
-				internal_warningf("j_async: bad nzombie (%d)",
-				    nzombie);
+				internal_warningf("%s: bad nzombie (%d)",
+				    __func__, nzombie);
 				nzombie = 0;
 			}
 			break;
@@ -1035,8 +1032,8 @@ j_waitj(Job *j,
 				j->flags |= JF_SAVEDTTYPGRP;
 			if (tcsetpgrp(tty_fd, our_pgrp) < 0) {
 				warningf(true,
-				    "j_waitj: tcsetpgrp(%d, %d) failed: %s",
-				    tty_fd, (int) our_pgrp,
+				    "%s: tcsetpgrp(%d, %d) failed: %s",
+				    __func__, tty_fd, (int)our_pgrp,
 					strerror(errno));
 			}
 			if (j->state == PSTOPPED) {
@@ -1186,8 +1183,8 @@ check_job(Job *j)
 
 	/* XXX debugging (nasty - interrupt routine using shl_out) */
 	if (!(j->flags & JF_STARTED)) {
-		internal_warningf("check_job: job started (flags 0x%x)",
-		    j->flags);
+		internal_warningf("%s: job started (flags 0x%x)",
+		    __func__, j->flags);
 		return;
 	}
 
@@ -1546,7 +1543,7 @@ remove_job(Job *j, const char *where)
 	for (; curr != NULL && curr != j; prev = &curr->next, curr = *prev)
 		;
 	if (curr != j) {
-		internal_warningf("remove_job: job not found (%s)", where);
+		internal_warningf("%s: job not found (%s)", __func__, where);
 		return;
 	}
 	*prev = curr->next;
