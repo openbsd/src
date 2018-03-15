@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.112 2018/02/28 23:28:05 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.113 2018/03/15 21:01:18 remi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -744,10 +744,6 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 		return (-1);
 	}
 	
-	/* XXX What if we run transport-mode IPsec to protect gif tunnel ? */
-	if (m->m_flags & (M_AUTH | M_CONF))
-		return (-1);
-
 	key->t_rtableid = m->m_pkthdr.ph_rtableid;
 
 	sc = gif_find(key);
