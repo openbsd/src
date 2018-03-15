@@ -646,10 +646,10 @@
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.7.0
-./usr/lib/libssl.so.44.8
+./usr/lib/libssl.so.44.9
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
-./usr/lib/libtls.so.16.8
+./usr/lib/libtls.so.16.9
 ./usr/lib/libusbhid.so.7.0
 ./usr/lib/libutil.so.13.0
 ./usr/lib/libz.so.5.0
