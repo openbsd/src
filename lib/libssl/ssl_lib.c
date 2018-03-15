@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.179 2018/02/22 17:30:25 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.180 2018/03/15 12:27:01 jca Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3024,10 +3024,22 @@ SSL_cache_hit(SSL *s)
 }
 
 int
+SSL_CTX_get_min_proto_version(SSL_CTX *ctx)
+{
+	return ctx->internal->min_version;
+}
+
+int
 SSL_CTX_set_min_proto_version(SSL_CTX *ctx, uint16_t version)
 {
 	return ssl_version_set_min(ctx->method, version,
 	    ctx->internal->max_version, &ctx->internal->min_version);
+}
+
+int
+SSL_CTX_get_max_proto_version(SSL_CTX *ctx)
+{
+	return ctx->internal->max_version;
 }
 
 int
@@ -3038,10 +3050,21 @@ SSL_CTX_set_max_proto_version(SSL_CTX *ctx, uint16_t version)
 }
 
 int
+SSL_get_min_proto_version(SSL *ssl)
+{
+	return ssl->internal->min_version;
+}
+
+int
 SSL_set_min_proto_version(SSL *ssl, uint16_t version)
 {
 	return ssl_version_set_min(ssl->method, version,
 	    ssl->internal->max_version, &ssl->internal->min_version);
+}
+int
+SSL_get_max_proto_version(SSL *ssl)
+{
+	return ssl->internal->max_version;
 }
 
 int

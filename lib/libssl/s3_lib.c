@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.164 2018/02/17 15:08:21 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.165 2018/03/15 12:27:00 jca Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1984,6 +1984,12 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 	case SSL_CTRL_GET_SERVER_TMP_KEY:
 		return ssl_ctrl_get_server_tmp_key(s, parg);
 
+	case SSL_CTRL_GET_MIN_PROTO_VERSION:
+		return SSL_get_min_proto_version(s);
+
+	case SSL_CTRL_GET_MAX_PROTO_VERSION:
+		return SSL_get_max_proto_version(s);
+
 	case SSL_CTRL_SET_MIN_PROTO_VERSION:
 		if (larg < 0 || larg > UINT16_MAX)
 			return 0;
@@ -2242,6 +2248,12 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_SET_GROUPS_LIST:
 		return SSL_CTX_set1_groups_list(ctx, parg);
+
+	case SSL_CTRL_GET_MIN_PROTO_VERSION:
+		return SSL_CTX_get_min_proto_version(ctx);
+
+	case SSL_CTRL_GET_MAX_PROTO_VERSION:
+		return SSL_CTX_get_max_proto_version(ctx);
 
 	case SSL_CTRL_SET_MIN_PROTO_VERSION:
 		if (larg < 0 || larg > UINT16_MAX)

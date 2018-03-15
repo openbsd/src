@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.4 2017/05/06 20:39:03 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.5 2018/03/15 12:27:01 jca Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -620,16 +620,16 @@ test_ssl_min_max_version(void)
 			goto next;
 		}
 
-		if (ssl_ctx->internal->min_version != mmvt->want_minver) {
+		if (SSL_CTX_get_min_proto_version(ssl_ctx) != mmvt->want_minver) {
 			fprintf(stderr, "FAIL: test %zu - got SSL_CTX min "
 			    "version 0x%x, want 0x%x\n", i,
-			    ssl_ctx->internal->min_version, mmvt->want_minver);
+			    SSL_CTX_get_min_proto_version(ssl_ctx), mmvt->want_minver);
 			goto next;
 		}
-		if (ssl_ctx->internal->max_version != mmvt->want_maxver) {
+		if (SSL_CTX_get_max_proto_version(ssl_ctx) != mmvt->want_maxver) {
 			fprintf(stderr, "FAIL: test %zu - got SSL_CTX max "
 			    "version 0x%x, want 0x%x\n", i,
-			    ssl_ctx->internal->max_version, mmvt->want_maxver);
+			    SSL_CTX_get_max_proto_version(ssl_ctx), mmvt->want_maxver);
 			goto next;
 		}
 
@@ -638,16 +638,16 @@ test_ssl_min_max_version(void)
 			return 1;
 		}
 
-		if (ssl->internal->min_version != mmvt->want_minver) {
+		if (SSL_get_min_proto_version(ssl) != mmvt->want_minver) {
 			fprintf(stderr, "FAIL: test %zu - initial SSL min "
 			    "version 0x%x, want 0x%x\n", i,
-			    ssl_ctx->internal->min_version, mmvt->want_minver);
+			    SSL_get_min_proto_version(ssl), mmvt->want_minver);
 			goto next;
 		}
-		if (ssl->internal->max_version != mmvt->want_maxver) {
+		if (SSL_get_max_proto_version(ssl) != mmvt->want_maxver) {
 			fprintf(stderr, "FAIL: test %zu - initial SSL max "
 			    "version 0x%x, want 0x%x\n", i,
-			    ssl_ctx->internal->max_version, mmvt->want_maxver);
+			    SSL_get_max_proto_version(ssl), mmvt->want_maxver);
 			goto next;
 		}
 
@@ -679,16 +679,16 @@ test_ssl_min_max_version(void)
 			goto next;
 		}
 
-		if (ssl->internal->min_version != mmvt->want_minver) {
+		if (SSL_get_min_proto_version(ssl) != mmvt->want_minver) {
 			fprintf(stderr, "FAIL: test %zu - got SSL min "
 			    "version 0x%x, want 0x%x\n", i,
-			    ssl_ctx->internal->min_version, mmvt->want_minver);
+			    SSL_get_min_proto_version(ssl), mmvt->want_minver);
 			goto next;
 		}
-		if (ssl->internal->max_version != mmvt->want_maxver) {
+		if (SSL_get_max_proto_version(ssl) != mmvt->want_maxver) {
 			fprintf(stderr, "FAIL: test %zu - got SSL max "
 			    "version 0x%x, want 0x%x\n", i,
-			    ssl->internal->max_version, mmvt->want_maxver);
+			    SSL_get_max_proto_version(ssl), mmvt->want_maxver);
 			goto next;
 		}
 

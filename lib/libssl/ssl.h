@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.146 2018/03/03 19:58:29 jca Exp $ */
+/* $OpenBSD: ssl.h,v 1.147 2018/03/15 12:27:01 jca Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1125,6 +1125,8 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 
 #define SSL_CTRL_SET_MIN_PROTO_VERSION			123
 #define SSL_CTRL_SET_MAX_PROTO_VERSION			124
+#define SSL_CTRL_GET_MIN_PROTO_VERSION			130
+#define SSL_CTRL_GET_MAX_PROTO_VERSION			131
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -1174,9 +1176,13 @@ int SSL_CTX_set1_groups_list(SSL_CTX *ctx, const char *groups);
 int SSL_set1_groups(SSL *ssl, const int *groups, size_t groups_len);
 int SSL_set1_groups_list(SSL *ssl, const char *groups);
 
+int SSL_CTX_get_min_proto_version(SSL_CTX *ctx);
+int SSL_CTX_get_max_proto_version(SSL_CTX *ctx);
 int SSL_CTX_set_min_proto_version(SSL_CTX *ctx, uint16_t version);
 int SSL_CTX_set_max_proto_version(SSL_CTX *ctx, uint16_t version);
 
+int SSL_get_min_proto_version(SSL *ssl);
+int SSL_get_max_proto_version(SSL *ssl);
 int SSL_set_min_proto_version(SSL *ssl, uint16_t version);
 int SSL_set_max_proto_version(SSL *ssl, uint16_t version);
 
@@ -1209,8 +1215,12 @@ int SSL_set_max_proto_version(SSL *ssl, uint16_t version);
 #define SSL_CTX_set1_groups_list	SSL_CTX_set1_groups_list
 #define SSL_set1_groups			SSL_set1_groups
 #define SSL_set1_groups_list		SSL_set1_groups_list
+#define SSL_CTX_get_min_proto_version	SSL_CTX_get_min_proto_version
+#define SSL_CTX_get_max_proto_version	SSL_CTX_get_max_proto_version
 #define SSL_CTX_set_min_proto_version	SSL_CTX_set_min_proto_version
 #define SSL_CTX_set_max_proto_version	SSL_CTX_set_max_proto_version
+#define SSL_get_min_proto_version	SSL_get_min_proto_version
+#define SSL_get_max_proto_version	SSL_get_max_proto_version
 #define SSL_set_min_proto_version	SSL_set_min_proto_version
 #define SSL_set_max_proto_version	SSL_set_max_proto_version
 #endif
