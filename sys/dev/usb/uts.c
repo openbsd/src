@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.40 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: uts.c,v 1.41 2018/03/15 00:42:41 kevlo Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -57,7 +57,6 @@ struct uts_softc {
 	struct device		sc_dev;
 	struct usbd_device	*sc_udev;
 	struct usbd_interface	*sc_iface;
-	int			sc_iface_number;
 	int			sc_product;
 	int			sc_vendor;
 
@@ -180,7 +179,6 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Find the interrupt endpoint */
 	id = usbd_get_interface_descriptor(sc->sc_iface);
-	sc->sc_iface_number = id->bInterfaceNumber;
 
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
