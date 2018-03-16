@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mandoc.1,v 1.145 2017/11/28 20:26:03 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.146 2018/03/16 15:05:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2017 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -952,6 +952,12 @@ An
 request occurs even though the document already switched to no-fill mode
 and did not switch back to fill mode yet.
 It has no effect.
+.It Sy "verbatim \(dq--\(dq, maybe consider using \e(em"
+.Pq mdoc
+Even though the ASCII output device renders an em-dash as
+.Qq \-\- ,
+that is not a good way to write it in an input file
+because it renders poorly on all other output devices.
 .It Sy "function name without markup"
 .Pq mdoc
 A word followed by an empty pair of parentheses occurs on a text line.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.166 2018/02/23 21:34:37 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.167 2018/03/16 15:05:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -104,6 +104,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"no blank before trailing delimiter",
 	"fill mode already enabled, skipping",
 	"fill mode already disabled, skipping",
+	"verbatim \"--\", maybe consider using \\(em",
 	"function name without markup",
 	"whitespace at end of input line",
 	"bad comment style",
