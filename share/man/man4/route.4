@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.45 2018/02/11 02:26:55 benno Exp $
+.\"	$OpenBSD: route.4,v 1.46 2018/03/16 19:45:13 benno Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: February 11 2018 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -91,6 +91,13 @@ as many ones as there are bits in the destination.)
 If no entry is found, the destination is declared to be unreachable,
 and a routing\-miss message is generated if there are any
 listeners on the routing control socket described below.
+.Pp
+If there are two identical destinations, the route priority acts as a
+tie-breaker.
+The kernel assigns certain default priorities based on the type of
+route, as given in the table below.
+For connected and static routes, this default priority is added to the
+interface's priority.
 .Pp
 A wildcard routing entry is specified with a zero
 destination address value and a mask of all zeroes.
