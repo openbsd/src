@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.338 2018/03/10 04:41:36 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.339 2018/03/16 06:30:50 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -152,10 +152,18 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM3 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM4 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM5 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM6 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM7 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM8 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM9 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V4 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V5 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V6 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V7 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V8 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V9 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_COPPER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_FIBER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_SERDES },
@@ -451,6 +459,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		case em_pch2lan:
 		case em_pch_lpt:
 		case em_pch_spt:
+		case em_pch_cnp:
 		case em_80003es2lan:
 			/* 9K Jumbo Frame size */
 			sc->hw.max_frame_size = 9234;
@@ -862,6 +871,7 @@ em_init(void *arg)
 	case em_pch2lan:
 	case em_pch_lpt:
 	case em_pch_spt:
+	case em_pch_cnp:
 		pba = E1000_PBA_26K;
 		break;
 	default:
@@ -1526,7 +1536,7 @@ em_stop(void *arg, int softonly)
 
 	if (!softonly)
 		em_disable_intr(sc);
-	if (sc->hw.mac_type == em_pch_spt)
+	if (sc->hw.mac_type >= em_pch_spt)
 		em_flush_desc_rings(sc);
 	if (!softonly)
 		em_reset_hw(&sc->hw);
@@ -1589,7 +1599,7 @@ em_legacy_irq_quirk_spt(struct em_softc *sc)
 	uint32_t	reg;
 
 	/* Legacy interrupt: SPT needs a quirk. */
-	if (sc->hw.mac_type != em_pch_spt)
+	if (sc->hw.mac_type != em_pch_spt && sc->hw.mac_type != em_pch_cnp)
 		return;
 	if (sc->legacy_irq == 0)
 		return;
@@ -1660,7 +1670,7 @@ em_allocate_pci_resources(struct em_softc *sc)
 
 	sc->osdep.em_flashoffset = 0;
 	/* for ICH8 and family we need to find the flash memory */
-	if (sc->hw.mac_type == em_pch_spt) {
+	if (sc->hw.mac_type >= em_pch_spt) {
 		sc->osdep.flash_bus_space_tag = sc->osdep.mem_bus_space_tag;
 		sc->osdep.flash_bus_space_handle = sc->osdep.mem_bus_space_handle;
 		sc->osdep.em_flashbase = 0;
@@ -1769,7 +1779,7 @@ em_hardware_init(struct em_softc *sc)
 	u_int16_t rx_buffer_size;
 
 	INIT_DEBUGOUT("em_hardware_init: begin");
-	if (sc->hw.mac_type == em_pch_spt)
+	if (sc->hw.mac_type >= em_pch_spt)
 		em_flush_desc_rings(sc);
 	/* Issue a global reset */
 	em_reset_hw(&sc->hw);

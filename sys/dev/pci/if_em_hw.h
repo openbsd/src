@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.72 2018/03/10 04:35:01 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.73 2018/03/16 06:30:50 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -81,6 +81,7 @@ typedef enum {
     em_pch2lan,
     em_pch_lpt,
     em_pch_spt,
+    em_pch_cnp,
     em_num_macs
 } em_mac_type;
 
