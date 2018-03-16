@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfp.c,v 1.1 2018/01/26 16:22:19 kettenis Exp $	*/
+/*	$OpenBSD: vfp.c,v 1.2 2018/03/16 21:46:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
@@ -186,11 +186,11 @@ vfp_fault(unsigned int pc, unsigned int insn, trapframe_t *tf, int fault_code)
 }
 
 void
-vfp_discard(void)
+vfp_discard(struct proc *p)
 {
 	struct cpu_info *ci = curcpu();
 
-	if (curpcb->pcb_fpcpu == ci && ci->ci_fpuproc == curproc) {
+	if (curpcb->pcb_fpcpu == ci && ci->ci_fpuproc == p) {
 		ci->ci_fpuproc = NULL;
 		curpcb->pcb_fpcpu = NULL;
 	}

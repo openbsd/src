@@ -128,7 +128,7 @@
 #define COPROC11		(0x3 << 22)
 
 void		vfp_init(void);
-void		vfp_discard(void);
+void		vfp_discard(struct proc *);
 void		vfp_save(void);
 void		vfp_enable(void);
 

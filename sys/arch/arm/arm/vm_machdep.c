@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.22 2018/01/26 16:22:19 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.23 2018/03/16 21:46:04 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -134,7 +134,10 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 void
 cpu_exit(struct proc *p)
 {
-	vfp_discard();
+	/* If we were using the FPU, forget about it. */
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		vfp_discard(p);
+
 	pmap_deactivate(p);
 	sched_exit(p);
 }
