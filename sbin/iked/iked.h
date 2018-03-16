@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.117 2017/11/30 12:18:44 patrick Exp $	*/
+/*	$OpenBSD: iked.h,v 1.118 2018/03/16 12:31:09 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -165,7 +165,7 @@ RB_HEAD(iked_flows, iked_flow);
 TAILQ_HEAD(iked_saflows, iked_flow);
 
 struct iked_childsa {
-	uint8_t				 csa_saproto;	/* IPSec protocol */
+	uint8_t				 csa_saproto;	/* IPsec protocol */
 	unsigned int			 csa_dir;	/* in/out */
 
 	uint64_t			 csa_peerspi;	/* peer relation */
@@ -432,8 +432,8 @@ struct iked_sa {
 	struct ibuf			*sa_eapmsk;	/* EAK session key */
 
 	struct iked_proposals		 sa_proposals;	/* SA proposals */
-	struct iked_childsas		 sa_childsas;	/* IPSec Child SAs */
-	struct iked_saflows		 sa_flows;	/* IPSec flows */
+	struct iked_childsas		 sa_childsas;	/* IPsec Child SAs */
+	struct iked_saflows		 sa_flows;	/* IPsec flows */
 
 	struct iked_sa			*sa_nexti;	/* initiated IKE SA */
 	struct iked_sa			*sa_nextr;	/* simultaneous rekey */
