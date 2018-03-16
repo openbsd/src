@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.146 2017/12/30 07:32:09 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.147 2018/03/16 16:58:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 30 2017 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -700,10 +700,10 @@ display the names and values of all shell variables.
 The options are described in the options description
 at the beginning of this manual.
 The sequence
-.Qq set -o
+.Ql set -o
 displays the current option settings;
 the sequence
-.Qq set +o
+.Ql set +o
 displays,
 in a format suitable to be reinput to the shell,
 a command suitable to achieve the current option settings.
@@ -713,10 +713,10 @@ with the special parameter
 .Sq #
 set to the number of positional parameters.
 The sequence
-.Qq set --
+.Ql set --
 indicates an end to option processing
 (i.e. only arguments follow);
-.Qq set --
+.Ql set --
 by itself unsets all positional parameters
 and sets
 .Sq #

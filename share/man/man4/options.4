@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.256 2018/03/02 09:53:20 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.257 2018/03/16 16:58:26 schwarze Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: March 2 2018 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -263,8 +263,8 @@ Processors with a small kernel address space, such as the sun4 and sun4c, do
 not have enough kernel memory to support soft updates.
 Attempts to use this option with these CPUs will cause a kernel hang or panic
 after a short period of use as the kernel will quickly run out of memory.
-This is not related to the amount of physical memory present in the machine --
-it is a limitation of the CPU architecture itself.
+This is not related to the amount of physical memory present in the
+machine \(em it is a limitation of the CPU architecture itself.
 .It Cd option FIFO
 Adds support for
 .At V

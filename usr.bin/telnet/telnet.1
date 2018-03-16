@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.62 2015/11/13 21:09:18 jmc Exp $
+.\"	$OpenBSD: telnet.1,v 1.63 2018/03/16 16:58:26 schwarze Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)telnet.1	8.4 (Berkeley) 2/3/94
 .\"
-.Dd $Mdocdate: November 13 2015 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt TELNET 1
 .Os
 .Sh NAME
@@ -611,8 +611,7 @@ This sequence causes the remote system to discard all previously typed
 This sequence is sent as TCP urgent
 data (and may not work if the remote system is a
 .Bx 4.2
-system -- if
-it doesn't work, a lower case
+system \(em if it doesn't work, a lower case
 .Sq r
 may be echoed on the terminal).
 .It Ic do Ar cmd

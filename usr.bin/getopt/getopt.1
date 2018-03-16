@@ -1,9 +1,9 @@
-.\"	$OpenBSD: getopt.1,v 1.18 2014/01/19 09:15:08 schwarze Exp $
+.\"	$OpenBSD: getopt.1,v 1.19 2018/03/16 16:58:26 schwarze Exp $
 .\"
 .\" This material, written by Henry Spencer, was released by him
 .\" into the public domain and is thus not subject to any copyright.
 .\"
-.Dd $Mdocdate: January 19 2014 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt GETOPT 1
 .Os
 .Sh NAME
@@ -92,7 +92,9 @@ Written by Henry Spencer, working from a Bell Labs manual page.
 Behavior believed identical to the Bell version.
 .Sh CAVEATS
 Note that the construction
-.Sy set -- `getopt optstring $*`
+.Pp
+.Dl set -- `getopt optstring $*`
+.Pp
 is not recommended, as the exit value from
 .Sy set
 will prevent the exit value from

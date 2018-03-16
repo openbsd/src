@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fegetenv.3,v 1.3 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: fegetenv.3,v 1.4 2018/03/16 16:58:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt FEGETENV 3
 .Os
 .Sh NAME
@@ -34,14 +34,14 @@
 .Ft int
 .Fn feupdateenv "const fenv_t *envp"
 .Sh DESCRIPTION
-These functions manage the floating-point environment -- status
-flags, rounding direction modes and exception masks -- as one entity.
+These functions manage the floating-point environment \(em status
+flags, rounding direction modes and exception masks \(em as one entity.
 The
 .Fa envp
 input argument is an object representing the floating-point environment.
 The macro
 .Dv FE_DFL_ENV
-represents the default floating-point environment -- the one installed
+represents the default floating-point environment \(em the one installed
 at program startup.
 .Pp
 The

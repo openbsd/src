@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.55 2017/05/10 09:09:45 sthen Exp $
+.\"	$OpenBSD: fstat.1,v 1.56 2018/03/16 16:58:26 schwarze Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd $Mdocdate: May 10 2017 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -131,7 +131,7 @@ If the file number is followed by an asterisk
 .Pq Ql * ,
 the file is not an inode, but rather a socket, or there is an error.
 In this case the remainder of the line doesn't
-correspond to the remaining headers -- the format of the line
+correspond to the remaining headers \(em the format of the line
 is described later under
 .Sx SOCKETS .
 .It Li MOUNT

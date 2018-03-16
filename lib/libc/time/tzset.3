@@ -1,5 +1,5 @@
-.\"	$OpenBSD: tzset.3,v 1.22 2015/11/10 20:58:20 millert Exp $
-.Dd $Mdocdate: November 10 2015 $
+.\"	$OpenBSD: tzset.3,v 1.23 2018/03/16 16:58:26 schwarze Exp $
+.Dd $Mdocdate: March 16 2018 $
 .Dt TZSET 3
 .Os
 .Sh NAME
@@ -96,10 +96,7 @@ minus
 .Pq Sq \&- ,
 plus
 .Pq Sq \&+ ,
-and
-.Tn ASCII
-.Tn NUL
-are allowed.
+and ASCII NUL are allowed.
 .It Ar offset
 Indicates the value one must add to the local time to arrive at
 Coordinated Universal Time.
@@ -129,7 +126,7 @@ summer time is assumed to be one hour ahead of standard time.
 One or more digits may be used; the value is always interpreted as a
 decimal number.
 The hour must be between zero and 24, and the minutes (and
-seconds) -- if present -- between zero and 59.
+seconds) \(em if present \(em between zero and 59.
 If preceded by a
 .Dq \&- ,
 the time zone shall be east of the Prime Meridian; otherwise it shall be
@@ -161,8 +158,8 @@ is one of the following:
 The Julian day
 .Ar n
 .Pq 1 <= Ar n No <= 365 .
-Leap days are not counted; that is, in all years -- including leap
-years -- February 28 is day 59 and March 1 is day 60.
+Leap days are not counted; that is, in all years \(em including leap
+years \(em February 28 is day 59 and March 1 is day 60.
 It is impossible to explicitly refer to the occasional February 29.
 .It Ar n
 The zero-based Julian day
