@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.270 2018/03/16 15:05:33 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.271 2018/03/16 20:41:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -410,8 +410,9 @@ check_text_em(struct roff_man *mdoc, int ln, int pos, char *p)
 	/* Look for em-dashes wrongly encoded as "--". */
 
 	for (cp = p; *cp != '\0'; cp++) {
-		if (*cp != '-' || *++cp != '-')
+		if (cp[0] != '-' || cp[1] != '-')
 			continue;
+		cp++;
 
 		/* Skip input sequences of more than two '-'. */
 
