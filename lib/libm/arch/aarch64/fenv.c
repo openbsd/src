@@ -1,4 +1,4 @@
-/* $OpenBSD: fenv.c,v 1.1 2017/01/11 13:38:13 patrick Exp $ */
+/* $OpenBSD: fenv.c,v 1.2 2018/03/16 10:22:52 kettenis Exp $ */
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -252,33 +252,17 @@ DEF_STD(feupdateenv);
 int
 feenableexcept(int mask)
 {
-	fenv_t old_r, new_r;
-
-	__mrs_fpcr(old_r);
-	new_r = old_r | ((mask & FE_ALL_EXCEPT) << _FPUSW_SHIFT);
-	__msr_fpcr(new_r);
-	return ((old_r >> _FPUSW_SHIFT) & FE_ALL_EXCEPT);
+	return -1;
 }
-DEF_STD(feenableexcept);
 
 int
 fedisableexcept(int mask)
 {
-	fenv_t old_r, new_r;
-
-	__mrs_fpcr(old_r);
-	new_r = old_r & ~((mask & FE_ALL_EXCEPT) << _FPUSW_SHIFT);
-	__msr_fpcr(new_r);
-	return ((old_r >> _FPUSW_SHIFT) & FE_ALL_EXCEPT);
+	return 0;
 }
-DEF_STD(fedisableexcept);
 
 int
 fegetexcept(void)
 {
-	fenv_t r;
-
-	__mrs_fpcr(r);
-	return ((r & _ENABLE_MASK) >> _FPUSW_SHIFT);
+	return 0;
 }
-DEF_STD(fegetexcept);
