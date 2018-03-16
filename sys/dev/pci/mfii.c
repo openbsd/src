@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.48 2018/03/16 04:28:14 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.49 2018/03/16 04:30:31 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1304,7 +1304,7 @@ mfii_mfa_poll(struct mfii_softc *sc, struct mfii_ccb *ccb)
 #endif
 
 	hdr->mfh_context = ccb->ccb_smid;
-	hdr->mfh_cmd_status = 0xff;
+	hdr->mfh_cmd_status = MFI_STAT_INVALID_STATUS;
 	hdr->mfh_flags |= htole16(MFI_FRAME_DONT_POST_IN_REPLY_QUEUE);
 
 	r = MFII_REQ_MFA(ccb->ccb_request_dva);
@@ -1317,7 +1317,7 @@ mfii_mfa_poll(struct mfii_softc *sc, struct mfii_ccb *ccb)
 		    ccb->ccb_request_offset, MFII_REQUEST_SIZE,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-		if (hdr->mfh_cmd_status != 0xff)
+		if (hdr->mfh_cmd_status != MFI_STAT_INVALID_STATUS)
 			break;
 
 		if (to++ > 5000) { /* XXX 5 seconds busywait sucks */
