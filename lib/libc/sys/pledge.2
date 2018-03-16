@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.51 2018/03/04 16:47:43 jmc Exp $
+.\" $OpenBSD: pledge.2,v 1.52 2018/03/16 07:11:03 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 4 2018 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -152,259 +152,6 @@ The
 .Ar promises
 argument is specified as a string, with space separated keywords:
 .Bl -tag -width "prot_exec" -offset indent
-.It Va audio
-Allows a subset of
-.Xr ioctl 2
-operations on
-.Xr audio 4
-devices
-(see
-.Xr sio_open 3
-for more information):
-.Pp
-.Dv AUDIO_GETPOS ,
-.Dv AUDIO_GETPAR ,
-.Dv AUDIO_SETPAR ,
-.Dv AUDIO_START ,
-.Dv AUDIO_STOP
-.It Va bpf
-Allow
-.Dv BIOCGSTATS
-operation for statistics collection from a
-.Xr bpf 4
-device.
-.It Va chown
-The
-.Xr chown 2
-family is allowed to change the user or group on a file.
-.It Va cpath
-A number of system calls and sub-modes are allowed, which may
-create new files or directories in the filesystem:
-.Pp
-.Xr rename 2 ,
-.Xr renameat 2 ,
-.Xr link 2 ,
-.Xr linkat 2 ,
-.Xr symlink 2 ,
-.Xr symlinkat 2 ,
-.Xr unlink 2 ,
-.Xr unlinkat 2 ,
-.Xr mkdir 2 ,
-.Xr mkdirat 2 ,
-.Xr rmdir 2
-.It Va dns
-Subsequent to a successful
-.Xr open 2
-of
-.Pa /etc/resolv.conf ,
-a few system calls become able to allow DNS network transactions:
-.Pp
-.Xr sendto 2 ,
-.Xr recvfrom 2 ,
-.Xr socket 2 ,
-.Xr connect 2
-.It Va dpath
-A number of system calls are allowed to create special files:
-.Pp
-.Xr mkfifo 2 ,
-.Xr mknod 2
-.It Va error
-Rather than killing the process upon violation, indicate error with
-.Er ENOSYS .
-.Pp
-Also when
-.Nm pledge
-is called with higher
-.Ar promises
-or
-.Ar execpromises ,
-those changes will be ignored and return success.
-This is useful when a parent enforces
-.Ar execpromises
-but an execve'd child has a different idea.
-.It Va exec
-Allows a process to call
-.Xr execve 2 .
-Coupled with the
-.Va proc
-promise, this allows a process to fork and execute another program.
-If
-.Ar execpromises
-has been previously set the new program begins with those promises,
-unless setuid/setgid bits are set in which case execution is blocked with
-.Er EACCESS .
-Otherwise the new program starts running without pledge active,
-and hopefully makes a new pledge soon.
-.It Va fattr
-The following system calls are allowed to make explicit changes
-to fields in
-.Va struct stat
-relating to a file:
-.Pp
-.Xr utimes 2 ,
-.Xr futimes 2 ,
-.Xr utimensat 2 ,
-.Xr futimens 2 ,
-.Xr chmod 2 ,
-.Xr fchmod 2 ,
-.Xr fchmodat 2 ,
-.Xr chflags 2 ,
-.Xr chflagsat 2 ,
-.Xr chown 2 ,
-.Xr fchownat 2 ,
-.Xr lchown 2 ,
-.Xr fchown 2 ,
-.Xr utimes 2
-.It Va flock
-File locking via
-.Xr fcntl 2 ,
-.Xr flock 2 ,
-.Xr lockf 3 ,
-and
-.Xr open 2
-is allowed.
-No distinction is made between shared and exclusive locks.
-This promise is required for unlock as well as lock.
-.It Va getpw
-This allows read-only opening of files in
-.Pa /etc
-for the
-.Xr getpwnam 3 ,
-.Xr getgrnam 3 ,
-.Xr getgrouplist 3 ,
-and
-.Xr initgroups 3
-family of functions.
-They may also need to operate in a
-.Xr yp 8
-environment, so a successful
-.Xr open 2
-of
-.Pa /var/run/ypbind.lock
-enables
-.Va inet
-operations.
-.It Va id
-Allows the following system calls which can change the rights of a
-process:
-.Pp
-.Xr setuid 2 ,
-.Xr seteuid 2 ,
-.Xr setreuid 2 ,
-.Xr setresuid 2 ,
-.Xr setgid 2 ,
-.Xr setegid 2 ,
-.Xr setregid 2 ,
-.Xr setresgid 2 ,
-.Xr setgroups 2 ,
-.Xr setlogin 2 ,
-.Xr setrlimit 2 ,
-.Xr getpriority 2 ,
-.Xr setpriority 2
-.It Va inet
-The following system calls are allowed to operate in the
-.Dv AF_INET
-and
-.Dv AF_INET6
-domains
-(though
-.Xr setsockopt 2
-has been substantially reduced in functionality):
-.Pp
-.Xr socket 2 ,
-.Xr listen 2 ,
-.Xr bind 2 ,
-.Xr connect 2 ,
-.Xr accept4 2 ,
-.Xr accept 2 ,
-.Xr getpeername 2 ,
-.Xr getsockname 2 ,
-.Xr setsockopt 2 ,
-.Xr getsockopt 2
-.It Va mcast
-In combination with
-.Va inet
-give back functionality to
-.Xr setsockopt 2
-for operating on multicast sockets.
-.It Va pf
-Allows a subset of
-.Xr ioctl 2
-operations on the
-.Xr pf 4
-device:
-.Pp
-.Dv DIOCADDRULE ,
-.Dv DIOCGETSTATUS ,
-.Dv DIOCNATLOOK ,
-.Dv DIOCRADDTABLES ,
-.Dv DIOCRCLRADDRS ,
-.Dv DIOCRCLRTABLES ,
-.Dv DIOCRCLRTSTATS ,
-.Dv DIOCRGETTSTATS ,
-.Dv DIOCRSETADDRS ,
-.Dv DIOCXBEGIN ,
-.Dv DIOCXCOMMIT
-.It Va proc
-Allows the following process relationship operations:
-.Pp
-.Xr fork 2 ,
-.Xr vfork 2 ,
-.Xr kill 2 ,
-.Xr getpriority 2 ,
-.Xr setpriority 2 ,
-.Xr setrlimit 2 ,
-.Xr setpgid 2 ,
-.Xr setsid 2
-.It Va prot_exec
-Allows the use of
-.Dv PROT_EXEC
-with
-.Xr mmap 2
-and
-.Xr mprotect 2 .
-.It Va ps
-Allows enough
-.Xr sysctl 2
-interfaces to allow inspection of processes operating on the system using
-programs like
-.Xr ps 1 .
-.It Va recvfd
-Allows receiving of file descriptors using
-.Xr recvmsg 2 .
-File descriptors referring to directories may not be passed.
-.It Va rpath
-A number of system calls are allowed if they only cause
-read-only effects on the filesystem:
-.Pp
-.Xr chdir 2 ,
-.Xr getcwd 3 ,
-.Xr openat 2 ,
-.Xr fstatat 2 ,
-.Xr faccessat 2 ,
-.Xr readlinkat 2 ,
-.Xr lstat 2 ,
-.Xr chmod 2 ,
-.Xr fchmod 2 ,
-.Xr fchmodat 2 ,
-.Xr chflags 2 ,
-.Xr chflagsat 2 ,
-.Xr chown 2 ,
-.Xr fchown 2 ,
-.Xr fchownat 2 ,
-.Xr fstat 2 ,
-.Xr getfsstat 2
-.It Va sendfd
-Allows sending of file descriptors using
-.Xr sendmsg 2 .
-File descriptors referring to directories may not be passed.
-.It Va settime
-Allows the setting of system time, via the
-.Xr settimeofday 2 ,
-.Xr adjtime 2 ,
-and
-.Xr adjfreq 2
-system calls.
 .It Va stdio
 The following system calls are permitted.
 .Xr sendto 2
@@ -481,12 +228,66 @@ As a result, all the expected functionalities of libc stdio work.
 .Xr wait4 2 ,
 .Xr write 2 ,
 .Xr writev 2
-.It Va tape
-Allow
-.Dv MTIOCGET
-and
-.Dv MTIOCTOP
-operations against tape drives.
+.It Va rpath
+A number of system calls are allowed if they only cause
+read-only effects on the filesystem:
+.Pp
+.Xr chdir 2 ,
+.Xr getcwd 3 ,
+.Xr openat 2 ,
+.Xr fstatat 2 ,
+.Xr faccessat 2 ,
+.Xr readlinkat 2 ,
+.Xr lstat 2 ,
+.Xr chmod 2 ,
+.Xr fchmod 2 ,
+.Xr fchmodat 2 ,
+.Xr chflags 2 ,
+.Xr chflagsat 2 ,
+.Xr chown 2 ,
+.Xr fchown 2 ,
+.Xr fchownat 2 ,
+.Xr fstat 2 ,
+.Xr getfsstat 2
+.It Va wpath
+A number of system calls are allowed and may cause
+write-effects on the filesystem:
+.Pp
+.Xr getcwd 3 ,
+.Xr openat 2 ,
+.Xr fstatat 2 ,
+.Xr faccessat 2 ,
+.Xr readlinkat 2 ,
+.Xr lstat 2 ,
+.Xr chmod 2 ,
+.Xr fchmod 2 ,
+.Xr fchmodat 2 ,
+.Xr chflags 2 ,
+.Xr chflagsat 2 ,
+.Xr chown 2 ,
+.Xr fchown 2 ,
+.Xr fchownat 2 ,
+.Xr fstat 2
+.It Va cpath
+A number of system calls and sub-modes are allowed, which may
+create new files or directories in the filesystem:
+.Pp
+.Xr rename 2 ,
+.Xr renameat 2 ,
+.Xr link 2 ,
+.Xr linkat 2 ,
+.Xr symlink 2 ,
+.Xr symlinkat 2 ,
+.Xr unlink 2 ,
+.Xr unlinkat 2 ,
+.Xr mkdir 2 ,
+.Xr mkdirat 2 ,
+.Xr rmdir 2
+.It Va dpath
+A number of system calls are allowed to create special files:
+.Pp
+.Xr mkfifo 2 ,
+.Xr mknod 2
 .It Va tmppath
 A number of system calls are allowed to do operations in the
 .Pa /tmp
@@ -498,6 +299,125 @@ directory, including create, read, or write:
 .Xr chown 2 ,
 .Xr unlink 2 ,
 .Xr fstat 2
+.It Va inet
+The following system calls are allowed to operate in the
+.Dv AF_INET
+and
+.Dv AF_INET6
+domains
+(though
+.Xr setsockopt 2
+has been substantially reduced in functionality):
+.Pp
+.Xr socket 2 ,
+.Xr listen 2 ,
+.Xr bind 2 ,
+.Xr connect 2 ,
+.Xr accept4 2 ,
+.Xr accept 2 ,
+.Xr getpeername 2 ,
+.Xr getsockname 2 ,
+.Xr setsockopt 2 ,
+.Xr getsockopt 2
+.It Va mcast
+In combination with
+.Va inet
+give back functionality to
+.Xr setsockopt 2
+for operating on multicast sockets.
+.It Va fattr
+The following system calls are allowed to make explicit changes
+to fields in
+.Va struct stat
+relating to a file:
+.Pp
+.Xr utimes 2 ,
+.Xr futimes 2 ,
+.Xr utimensat 2 ,
+.Xr futimens 2 ,
+.Xr chmod 2 ,
+.Xr fchmod 2 ,
+.Xr fchmodat 2 ,
+.Xr chflags 2 ,
+.Xr chflagsat 2 ,
+.Xr chown 2 ,
+.Xr fchownat 2 ,
+.Xr lchown 2 ,
+.Xr fchown 2 ,
+.Xr utimes 2
+.It Va chown
+The
+.Xr chown 2
+family is allowed to change the user or group on a file.
+.It Va flock
+File locking via
+.Xr fcntl 2 ,
+.Xr flock 2 ,
+.Xr lockf 3 ,
+and
+.Xr open 2
+is allowed.
+No distinction is made between shared and exclusive locks.
+This promise is required for unlock as well as lock.
+.It Va unix
+The following system calls are allowed to operate in the
+.Dv AF_UNIX
+domain:
+.Pp
+.Xr socket 2 ,
+.Xr listen 2 ,
+.Xr bind 2 ,
+.Xr connect 2 ,
+.Xr accept4 2 ,
+.Xr accept 2 ,
+.Xr getpeername 2 ,
+.Xr getsockname 2 ,
+.Xr setsockopt 2 ,
+.Xr getsockopt 2
+.It Va dns
+Subsequent to a successful
+.Xr open 2
+of
+.Pa /etc/resolv.conf ,
+a few system calls become able to allow DNS network transactions:
+.Pp
+.Xr sendto 2 ,
+.Xr recvfrom 2 ,
+.Xr socket 2 ,
+.Xr connect 2
+.It Va getpw
+This allows read-only opening of files in
+.Pa /etc
+for the
+.Xr getpwnam 3 ,
+.Xr getgrnam 3 ,
+.Xr getgrouplist 3 ,
+and
+.Xr initgroups 3
+family of functions.
+They may also need to operate in a
+.Xr yp 8
+environment, so a successful
+.Xr open 2
+of
+.Pa /var/run/ypbind.lock
+enables
+.Va inet
+operations.
+.It Va sendfd
+Allows sending of file descriptors using
+.Xr sendmsg 2 .
+File descriptors referring to directories may not be passed.
+.It Va recvfd
+Allows receiving of file descriptors using
+.Xr recvmsg 2 .
+File descriptors referring to directories may not be passed.
+.It Va tape
+Allow
+.Dv MTIOCGET
+and
+.Dv MTIOCTOP
+operations against tape drives.
 .It Va tty
 In addition to allowing read-write operations on
 .Pa /dev/tty ,
@@ -525,21 +445,50 @@ requests are permitted:
 .Dv TIOCSETAW ,
 .Dv TIOCSETAF ,
 .Dv TIOCUCNTL
-.It Va unix
-The following system calls are allowed to operate in the
-.Dv AF_UNIX
-domain:
+.It Va proc
+Allows the following process relationship operations:
 .Pp
-.Xr socket 2 ,
-.Xr listen 2 ,
-.Xr bind 2 ,
-.Xr connect 2 ,
-.Xr accept4 2 ,
-.Xr accept 2 ,
-.Xr getpeername 2 ,
-.Xr getsockname 2 ,
-.Xr setsockopt 2 ,
-.Xr getsockopt 2
+.Xr fork 2 ,
+.Xr vfork 2 ,
+.Xr kill 2 ,
+.Xr getpriority 2 ,
+.Xr setpriority 2 ,
+.Xr setrlimit 2 ,
+.Xr setpgid 2 ,
+.Xr setsid 2
+.It Va exec
+Allows a process to call
+.Xr execve 2 .
+Coupled with the
+.Va proc
+promise, this allows a process to fork and execute another program.
+If
+.Ar execpromises
+has been previously set the new program begins with those promises,
+unless setuid/setgid bits are set in which case execution is blocked with
+.Er EACCESS .
+Otherwise the new program starts running without pledge active,
+and hopefully makes a new pledge soon.
+.It Va prot_exec
+Allows the use of
+.Dv PROT_EXEC
+with
+.Xr mmap 2
+and
+.Xr mprotect 2 .
+.It Va settime
+Allows the setting of system time, via the
+.Xr settimeofday 2 ,
+.Xr adjtime 2 ,
+and
+.Xr adjfreq 2
+system calls.
+.It Va ps
+Allows enough
+.Xr sysctl 2
+interfaces to allow inspection of processes operating on the system using
+programs like
+.Xr ps 1 .
 .It Va vminfo
 Allows enough
 .Xr sysctl 2
@@ -548,25 +497,76 @@ programs like
 .Xr top 1
 and
 .Xr vmstat 8 .
-.It Va wpath
-A number of system calls are allowed and may cause
-write-effects on the filesystem:
+.It Va id
+Allows the following system calls which can change the rights of a
+process:
 .Pp
-.Xr getcwd 3 ,
-.Xr openat 2 ,
-.Xr fstatat 2 ,
-.Xr faccessat 2 ,
-.Xr readlinkat 2 ,
-.Xr lstat 2 ,
-.Xr chmod 2 ,
-.Xr fchmod 2 ,
-.Xr fchmodat 2 ,
-.Xr chflags 2 ,
-.Xr chflagsat 2 ,
-.Xr chown 2 ,
-.Xr fchown 2 ,
-.Xr fchownat 2 ,
-.Xr fstat 2
+.Xr setuid 2 ,
+.Xr seteuid 2 ,
+.Xr setreuid 2 ,
+.Xr setresuid 2 ,
+.Xr setgid 2 ,
+.Xr setegid 2 ,
+.Xr setregid 2 ,
+.Xr setresgid 2 ,
+.Xr setgroups 2 ,
+.Xr setlogin 2 ,
+.Xr setrlimit 2 ,
+.Xr getpriority 2 ,
+.Xr setpriority 2
+.It Va pf
+Allows a subset of
+.Xr ioctl 2
+operations on the
+.Xr pf 4
+device:
+.Pp
+.Dv DIOCADDRULE ,
+.Dv DIOCGETSTATUS ,
+.Dv DIOCNATLOOK ,
+.Dv DIOCRADDTABLES ,
+.Dv DIOCRCLRADDRS ,
+.Dv DIOCRCLRTABLES ,
+.Dv DIOCRCLRTSTATS ,
+.Dv DIOCRGETTSTATS ,
+.Dv DIOCRSETADDRS ,
+.Dv DIOCXBEGIN ,
+.Dv DIOCXCOMMIT
+.It Va audio
+Allows a subset of
+.Xr ioctl 2
+operations on
+.Xr audio 4
+devices
+(see
+.Xr sio_open 3
+for more information):
+.Pp
+.Dv AUDIO_GETPOS ,
+.Dv AUDIO_GETPAR ,
+.Dv AUDIO_SETPAR ,
+.Dv AUDIO_START ,
+.Dv AUDIO_STOP
+.It Va bpf
+Allow
+.Dv BIOCGSTATS
+operation for statistics collection from a
+.Xr bpf 4
+device.
+.It Va error
+Rather than killing the process upon violation, indicate error with
+.Er ENOSYS .
+.Pp
+Also when
+.Nm pledge
+is called with higher
+.Ar promises
+or
+.Ar execpromises ,
+those changes will be ignored and return success.
+This is useful when a parent enforces
+.Ar execpromises
+but an execve'd child has a different idea.
 .El
 .Sh RETURN VALUES
 .Rv -std
