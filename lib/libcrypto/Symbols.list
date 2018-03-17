@@ -2263,6 +2263,12 @@ RSA_get_default_method
 RSA_get_ex_data
 RSA_get_ex_new_index
 RSA_get_method
+RSA_meth_dup
+RSA_meth_free
+RSA_meth_new
+RSA_meth_set_finish
+RSA_meth_set_priv_dec
+RSA_meth_set_priv_enc
 RSA_new
 RSA_new_method
 RSA_padding_add_PKCS1_OAEP
