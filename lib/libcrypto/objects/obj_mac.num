@@ -964,3 +964,4 @@ auth_rsa	963
 auth_ecdsa	964
 auth_gost01	965
 auth_null	966
+chacha20_poly1305	967

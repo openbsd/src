@@ -1320,6 +1320,8 @@ brainpool 1 14 : brainpoolP512t1
 !Cname chacha20
 			: ChaCha		: chacha
 
+			: ChaCha20-Poly1305 : chacha20-poly1305
+
 			: gost89-ecb
 			: gost89-cbc
 
