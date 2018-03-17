@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.148 2018/03/17 14:26:13 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.149 2018/03/17 14:40:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1255,6 +1255,11 @@ char *	SSL_CIPHER_get_version(const SSL_CIPHER *c);
 const char *	SSL_CIPHER_get_name(const SSL_CIPHER *c);
 unsigned long 	SSL_CIPHER_get_id(const SSL_CIPHER *c);
 uint16_t SSL_CIPHER_get_value(const SSL_CIPHER *c);
+int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);
+int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c);
+int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c);
+int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c);
+int SSL_CIPHER_is_aead(const SSL_CIPHER *c);
 
 int	SSL_get_fd(const SSL *s);
 int	SSL_get_rfd(const SSL *s);

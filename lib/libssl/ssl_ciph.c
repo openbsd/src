@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.97 2017/08/28 16:37:04 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.98 2018/03/17 14:40:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1718,6 +1718,104 @@ uint16_t
 SSL_CIPHER_get_value(const SSL_CIPHER *c)
 {
 	return ssl3_cipher_get_value(c);
+}
+
+int
+SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c)
+{
+	switch (c->algorithm_enc) {
+	case SSL_eNULL:
+		return NID_undef;
+	case SSL_3DES:
+		return NID_des_ede3_cbc;
+	case SSL_AES128:
+		return NID_aes_128_cbc;
+	case SSL_AES128GCM:
+		return NID_aes_128_gcm;
+	case SSL_AES256:
+		return NID_aes_256_cbc;
+	case SSL_AES256GCM:
+		return NID_aes_256_gcm;
+	case SSL_CAMELLIA128:
+		return NID_camellia_128_cbc;
+	case SSL_CAMELLIA256:
+		return NID_camellia_256_cbc;
+	case SSL_CHACHA20POLY1305:
+		return NID_chacha20_poly1305;
+	case SSL_DES:
+		return NID_des_cbc;
+	case SSL_RC4:
+		return NID_rc4;
+	case SSL_eGOST2814789CNT:
+		return NID_gost89_cnt;
+	default:
+		return NID_undef;
+	}
+}
+
+int
+SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c)
+{
+	switch (c->algorithm_mac) {
+	case SSL_AEAD:
+		return NID_undef;
+	case SSL_GOST89MAC:
+		return NID_id_Gost28147_89_MAC;
+	case SSL_GOST94:
+		return NID_id_GostR3411_94;
+	case SSL_MD5:
+		return NID_md5;
+	case SSL_SHA1:
+		return NID_sha1;
+	case SSL_SHA256:
+		return NID_sha256;
+	case SSL_SHA384:
+		return NID_sha384;
+	case SSL_STREEBOG256:
+		return NID_id_tc26_gost3411_2012_256;
+	default:
+		return NID_undef;
+	}
+}
+
+int
+SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c)
+{
+	switch (c->algorithm_mkey) {
+	case SSL_kDHE:
+		return NID_kx_dhe;
+	case SSL_kECDHE:
+		return NID_kx_ecdhe;
+	case SSL_kGOST:
+		return NID_kx_gost;
+	case SSL_kRSA:
+		return NID_kx_rsa;
+	default:
+		return NID_undef;
+	}
+}
+
+int
+SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
+{
+	switch (c->algorithm_auth) {
+	case SSL_aNULL:
+		return NID_auth_null;
+	case SSL_aECDSA:
+		return NID_auth_ecdsa;
+	case SSL_aGOST01:
+		return NID_auth_gost01;
+	case SSL_aRSA:
+		return NID_auth_rsa;
+	default:
+		return NID_undef;
+	}
+}
+
+int
+SSL_CIPHER_is_aead(const SSL_CIPHER *c)
+{
+	return (c->algorithm_mac & SSL_AEAD) == SSL_AEAD;
 }
 
 void *
