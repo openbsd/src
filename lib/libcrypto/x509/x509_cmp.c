@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cmp.c,v 1.29 2018/02/22 17:22:02 jsing Exp $ */
+/* $OpenBSD: x509_cmp.c,v 1.30 2018/03/17 14:57:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -329,7 +329,9 @@ X509_get_pubkey(X509 *x)
 EVP_PKEY *
 X509_get0_pubkey(X509 *x)
 {
-	return X509_get_pubkey(x);
+	if (x == NULL || x->cert_info == NULL)
+		return (NULL);
+	return (X509_PUBKEY_get0(x->cert_info->key));
 }
 
 ASN1_BIT_STRING *
