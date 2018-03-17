@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.59 2018/01/15 15:30:03 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.60 2018/03/17 16:48:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -390,7 +390,7 @@ cmd_find_get_window_with_session(struct cmd_find_state *fs, const char *window)
 					return (-1);
 				fs->idx = s->curw->idx + n;
 			} else {
-				if (n < s->curw->idx)
+				if (n > s->curw->idx)
 					return (-1);
 				fs->idx = s->curw->idx - n;
 			}
