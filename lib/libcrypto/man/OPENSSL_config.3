@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OPENSSL_config.3,v 1.6 2017/07/06 15:42:04 schwarze Exp $
+.\"	$OpenBSD: OPENSSL_config.3,v 1.7 2018/03/17 18:52:42 schwarze Exp $
 .\"	OpenSSL ab6577a4 May 14 21:07:51 2014 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 6 2017 $
+.Dd $Mdocdate: March 17 2018 $
 .Dt OPENSSL_CONFIG 3
 .Os
 .Sh NAME
@@ -147,6 +147,7 @@ standard configuration file
 .Sh SEE ALSO
 .Xr CONF_modules_free 3 ,
 .Xr CONF_modules_load 3 ,
+.Xr OPENSSL_init_crypto 3 ,
 .Xr openssl.cnf 5
 .Sh HISTORY
 .Fn OPENSSL_config
