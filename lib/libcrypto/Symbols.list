@@ -297,6 +297,7 @@ BIO_meth_get_destroy
 BIO_meth_get_gets
 BIO_meth_get_puts
 BIO_meth_get_read
+BIO_meth_get_write
 BIO_meth_new
 BIO_meth_set_callback_ctrl
 BIO_meth_set_create

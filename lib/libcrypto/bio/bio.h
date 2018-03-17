@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.39 2018/02/22 16:38:43 jsing Exp $ */
+/* $OpenBSD: bio.h,v 1.40 2018/03/17 15:05:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -337,6 +337,7 @@ typedef int asn1_ps_func(BIO *b, unsigned char **pbuf, int *plen, void *parg);
 /* BIO_METHOD accessors */
 BIO_METHOD *BIO_meth_new(int type, const char *name);
 void BIO_meth_free(BIO_METHOD *biom);
+int (*BIO_meth_get_write(BIO_METHOD *biom))(BIO *, const char *, int);
 int BIO_meth_set_write(BIO_METHOD *biom,
     int (*write)(BIO *, const char *, int));
 int (*BIO_meth_get_read(BIO_METHOD *biom))(BIO *, char *, int);
