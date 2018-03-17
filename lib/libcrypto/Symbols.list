@@ -891,8 +891,10 @@ ECDH_set_method
 ECDH_size
 ECDSA_OpenSSL
 ECDSA_SIG_free
+ECDSA_SIG_get0
 ECDSA_SIG_it
 ECDSA_SIG_new
+ECDSA_SIG_set0
 ECDSA_do_sign
 ECDSA_do_sign_ex
 ECDSA_do_verify
