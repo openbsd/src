@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.14 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: x509name.c,v 1.15 2018/03/17 15:28:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -404,4 +404,10 @@ X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne)
 	if (ne == NULL)
 		return (NULL);
 	return (ne->value);
+}
+
+int
+X509_NAME_ENTRY_set(const X509_NAME_ENTRY *ne)
+{
+	return (ne->set);
 }
