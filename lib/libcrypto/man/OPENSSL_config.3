@@ -1,8 +1,25 @@
-.\"	$OpenBSD: OPENSSL_config.3,v 1.7 2018/03/17 18:52:42 schwarze Exp $
-.\"	OpenSSL ab6577a4 May 14 21:07:51 2014 +0100
+.\" $OpenBSD: OPENSSL_config.3,v 1.8 2018/03/17 20:18:44 schwarze Exp $
+.\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2000, 2004, 2005 The OpenSSL Project.  All rights reserved.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -54,32 +71,50 @@
 .Sh NAME
 .Nm OPENSSL_config ,
 .Nm OPENSSL_no_config
-.Nd simple OpenSSL configuration functions
+.Nd old style crypto and ssl library initialization
 .Sh SYNOPSIS
 .In openssl/conf.h
 .Ft void
 .Fo OPENSSL_config
-.Fa "const char *config_name"
+.Fa "const char *appname"
 .Fc
 .Ft void
 .Fn OPENSSL_no_config void
 .Sh DESCRIPTION
+These functions have been deprecated since OpenSSL 1.1.0.
+It is recommended to use
+.Xr CONF_modules_load_file 3
+instead of
 .Fn OPENSSL_config
-configures OpenSSL using the standard
-.Xr openssl.cnf 5
-configuration file name using
-.Fa config_name .
+or
+.Xr OPENSSL_init_crypto 3
+with
+.Dv OPENSSL_INIT_NO_LOAD_CONFIG
+instead of
+.Fn OPENSSL_no_config .
+Except to disable the standard configuration file, application programs
+do not need to call any library initialization function at all because
+LibreSSL does all the required initialization automatically, and so does
+OpenSSL 1.1.0 and later.
+.Pp
+.Fn OPENSSL_config
+initializes the crypto library, in particular calling
+.Xr OPENSSL_init_crypto 3
+and
+.Xr CONF_modules_load_file 3
+with the standard configuration file and the given
+.Fa appname .
 If
-.Fa config_name
+.Fa appname
 is
-.Dv NULL
+.Dv NULL ,
 then the default name
 .Sy openssl_conf
-will be used.
+is used.
 Any errors are ignored.
 Further calls to
 .Fn OPENSSL_config
-will have no effect.
+have no effect.
 .Pp
 .Fn OPENSSL_no_config
 disables configuration.
@@ -87,58 +122,16 @@ If called before
 .Fn OPENSSL_config ,
 no configuration takes place.
 .Pp
-It is
-.Sy strongly
-recommended that
-.Sy all
-new applications call
-.Fn OPENSSL_config
-or the more sophisticated functions such as
-.Xr CONF_modules_load 3
-during initialization (that is before starting any threads).
-By doing this, an application does not need to keep track of all
-configuration options and some new functionality can be supported
-automatically.
-.Pp
-It is also possible to automatically call
-.Fn OPENSSL_config
-when an application calls
-.Xr OpenSSL_add_all_algorithms 3
-by compiling an application with the preprocessor symbol
+If an application is compiled with the preprocessor symbol
 .Dv OPENSSL_LOAD_CONF
-#define'd.
-In this way configuration can be added without source changes.
-.Pp
-The environment variable
-.Ev OPENSSL_CONF
-can be set to specify the location of the configuration file.
-.Pp
-Currently ASN.1 OBJECT and ENGINE configuration can be performed.
-.Pp
-There are several reasons why calling the OpenSSL configuration routines
-is advisable.
-For example new ENGINE functionality was added to OpenSSL 0.9.7.
-In OpenSSL 0.9.7 control functions can be supported by ENGINEs which can be
-used (among other things) to load dynamic ENGINEs from shared libraries
-(DSOs).
-However very few applications currently support the control interface
-and so very few can load and use dynamic ENGINEs.
-Equally in future more sophisticated ENGINEs will require certain
-control operations to customize them.
-If an application calls
-.Fn OPENSSL_config
-it doesn't need to know or care about ENGINE control operations because
-they can be performed by editing a configuration file.
+#define'd,
+.Xr OpenSSL_add_all_algorithms 3
+automatically calls
+.Fn OPENSSL_config .
 .Pp
 Applications should free up configuration at application closedown by
 calling
 .Xr CONF_modules_free 3 .
-.Sh RETURN VALUES
-Neither
-.Fn OPENSSL_config
-nor
-.Fn OPENSSL_no_config
-return a value.
 .Sh FILES
 .Bl -tag -width /etc/ssl/openssl.cnf -compact
 .It Pa /etc/ssl/openssl.cnf
@@ -146,7 +139,7 @@ standard configuration file
 .El
 .Sh SEE ALSO
 .Xr CONF_modules_free 3 ,
-.Xr CONF_modules_load 3 ,
+.Xr CONF_modules_load_file 3 ,
 .Xr OPENSSL_init_crypto 3 ,
 .Xr openssl.cnf 5
 .Sh HISTORY
@@ -154,19 +147,3 @@ standard configuration file
 and
 .Fn OPENSSL_no_config
 first appeared in OpenSSL 0.9.7.
-.Sh CAVEATS
-The
-.Fn OPENSSL_config
-function is designed to be a very simple "call it and forget it"
-function.
-As a result its behaviour is somewhat limited.
-It ignores all errors silently and it can only load from the standard
-configuration file location for example.
-.Pp
-It is however
-.Sy much
-better than nothing.
-Applications which need finer control over their configuration
-functionality should use the configuration functions such as
-.Xr CONF_modules_load 3
-directly.
