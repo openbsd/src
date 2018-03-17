@@ -1830,6 +1830,8 @@
 ./usr/share/man/man3/OPENSSL_VERSION_NUMBER.3
 ./usr/share/man/man3/OPENSSL_cleanse.3
 ./usr/share/man/man3/OPENSSL_config.3
+./usr/share/man/man3/OPENSSL_init_crypto.3
+./usr/share/man/man3/OPENSSL_init_ssl.3
 ./usr/share/man/man3/OPENSSL_load_builtin_modules.3
 ./usr/share/man/man3/OPENSSL_malloc.3
 ./usr/share/man/man3/OPENSSL_sk_new.3
@@ -1931,6 +1933,7 @@
 ./usr/share/man/man3/SSL_SESSION_get_id.3
 ./usr/share/man/man3/SSL_SESSION_get_protocol_version.3
 ./usr/share/man/man3/SSL_SESSION_get_time.3
+./usr/share/man/man3/SSL_SESSION_has_ticket.3
 ./usr/share/man/man3/SSL_SESSION_new.3
 ./usr/share/man/man3/SSL_SESSION_print.3
 ./usr/share/man/man3/SSL_SESSION_set1_id_context.3
