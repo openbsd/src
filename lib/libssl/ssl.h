@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.150 2018/03/17 14:47:48 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.151 2018/03/17 15:48:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1361,7 +1361,9 @@ int SSL_CTX_use_PrivateKey_ASN1(int pk, SSL_CTX *ctx, const unsigned char *d, lo
 int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x);
 int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, const unsigned char *d);
 
+pem_password_cb *SSL_CTX_get_default_passwd_cb(SSL_CTX *ctx);
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb);
+void *SSL_CTX_get_default_passwd_cb_userdata(SSL_CTX *ctx);
 void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u);
 
 int SSL_CTX_check_private_key(const SSL_CTX *ctx);
