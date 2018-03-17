@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.76 2018/03/17 14:47:48 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.77 2018/03/17 15:55:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -247,6 +247,18 @@ unsigned int
 SSL_SESSION_get_compress_id(const SSL_SESSION *ss)
 {
 	return 0;
+}
+
+unsigned long
+SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s)
+{
+	return s->tlsext_tick_lifetime_hint;
+}
+
+int
+SSL_SESSION_has_ticket(const SSL_SESSION *s)
+{
+	return (s->tlsext_ticklen > 0) ? 1 : 0;
 }
 
 /*

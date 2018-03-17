@@ -147,8 +147,10 @@ SSL_SESSION_get_ex_new_index
 SSL_SESSION_get_id
 SSL_SESSION_get_master_key
 SSL_SESSION_get_protocol_version
+SSL_SESSION_get_ticket_lifetime_hint
 SSL_SESSION_get_time
 SSL_SESSION_get_timeout
+SSL_SESSION_has_ticket
 SSL_SESSION_new
 SSL_SESSION_print
 SSL_SESSION_print_fp

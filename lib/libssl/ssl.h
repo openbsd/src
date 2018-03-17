@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.151 2018/03/17 15:48:31 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.152 2018/03/17 15:55:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1327,6 +1327,8 @@ const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *ss,
 	    unsigned int *len);
 const unsigned char *SSL_SESSION_get0_id_context(const SSL_SESSION *ss,
 	    unsigned int *len);
+unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s);
+int	SSL_SESSION_has_ticket(const SSL_SESSION *s);
 unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *ss);
 int	SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *ses);
 int	SSL_SESSION_print(BIO *fp, const SSL_SESSION *ses);
