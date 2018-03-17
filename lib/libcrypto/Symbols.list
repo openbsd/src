@@ -831,6 +831,11 @@ DSA_get0_pqg
 DSA_get_default_method
 DSA_get_ex_data
 DSA_get_ex_new_index
+DSA_meth_dup
+DSA_meth_free
+DSA_meth_new
+DSA_meth_set_finish
+DSA_meth_set_sign
 DSA_new
 DSA_new_method
 DSA_print

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.29 2018/02/20 17:52:27 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.30 2018/03/17 15:19:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -268,6 +268,13 @@ void DSA_clear_flags(DSA *d, int flags);
 int DSA_test_flags(const DSA *d, int flags);
 void DSA_set_flags(DSA *d, int flags);
 ENGINE *DSA_get0_engine(DSA *d);
+
+DSA_METHOD *DSA_meth_new(const char *name, int flags);
+void DSA_meth_free(DSA_METHOD *meth);
+DSA_METHOD *DSA_meth_dup(const DSA_METHOD *meth);
+int DSA_meth_set_sign(DSA_METHOD *meth,
+    DSA_SIG *(*sign)(const unsigned char *, int, DSA *));
+int DSA_meth_set_finish(DSA_METHOD *meth, int (*finish)(DSA *));
 
 #define EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits) \
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \

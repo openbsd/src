@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.25 2018/03/17 15:12:56 tb Exp $
+# $OpenBSD: Makefile,v 1.26 2018/03/17 15:19:12 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -117,6 +117,7 @@ SRCS+= dh_ameth.c dh_pmeth.c dh_prn.c
 # dsa/
 SRCS+= dsa_gen.c dsa_key.c dsa_lib.c dsa_asn1.c dsa_vrf.c dsa_sign.c
 SRCS+= dsa_err.c dsa_ossl.c dsa_depr.c dsa_ameth.c dsa_pmeth.c dsa_prn.c
+SRCS+= dsa_meth.c
 
 # dso/
 SRCS+= dso_dlfcn.c dso_err.c dso_lib.c dso_null.c
