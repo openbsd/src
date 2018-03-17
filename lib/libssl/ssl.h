@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.149 2018/03/17 14:40:45 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.150 2018/03/17 14:47:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1310,7 +1310,7 @@ const char *SSL_state_string_long(const SSL *s);
 const char *SSL_rstate_string_long(const SSL *s);
 size_t	SSL_SESSION_get_master_key(const SSL_SESSION *ss,
 	    unsigned char *out, size_t max_out);
-int	SSL_SESSION_get_protocol_version(SSL_SESSION *s);
+int	SSL_SESSION_get_protocol_version(const SSL_SESSION *s);
 long	SSL_SESSION_get_time(const SSL_SESSION *s);
 long	SSL_SESSION_set_time(SSL_SESSION *s, long t);
 long	SSL_SESSION_get_timeout(const SSL_SESSION *s);
