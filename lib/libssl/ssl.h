@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.147 2018/03/15 12:27:01 jca Exp $ */
+/* $OpenBSD: ssl.h,v 1.148 2018/03/17 14:26:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1318,9 +1318,11 @@ int	SSL_SESSION_set1_id_context(SSL_SESSION *s,
 SSL_SESSION *SSL_SESSION_new(void);
 void	SSL_SESSION_free(SSL_SESSION *ses);
 int	SSL_SESSION_up_ref(SSL_SESSION *ss);
-const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
+const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *ss,
 	    unsigned int *len);
-unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s);
+const unsigned char *SSL_SESSION_get0_id_context(const SSL_SESSION *ss,
+	    unsigned int *len);
+unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *ss);
 int	SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *ses);
 int	SSL_SESSION_print(BIO *fp, const SSL_SESSION *ses);
 int	i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp);

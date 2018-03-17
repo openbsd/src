@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.74 2018/02/22 17:25:18 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.75 2018/03/17 14:26:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -228,15 +228,23 @@ SSL_SESSION_new(void)
 }
 
 const unsigned char *
-SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)
+SSL_SESSION_get_id(const SSL_SESSION *ss, unsigned int *len)
 {
-	if (len)
-		*len = s->session_id_length;
-	return s->session_id;
+	if (len != NULL)
+		*len = ss->session_id_length;
+	return ss->session_id;
+}
+
+const unsigned char *
+SSL_SESSION_get0_id_context(const SSL_SESSION *ss, unsigned int *len)
+{
+	if (len != NULL)
+		*len = (unsigned int)ss->sid_ctx_length;
+	return ss->sid_ctx;
 }
 
 unsigned int
-SSL_SESSION_get_compress_id(const SSL_SESSION *s)
+SSL_SESSION_get_compress_id(const SSL_SESSION *ss)
 {
 	return 0;
 }
