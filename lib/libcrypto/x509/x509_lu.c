@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.26 2018/02/22 17:19:31 jsing Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.27 2018/03/17 15:39:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -456,6 +456,12 @@ X509_OBJECT_up_ref_count(X509_OBJECT *a)
 		CRYPTO_add(&a->data.crl->references, 1, CRYPTO_LOCK_X509_CRL);
 		break;
 	}
+}
+
+int
+X509_OBJECT_get_type(const X509_OBJECT *a)
+{
+	return a->type;
 }
 
 void
