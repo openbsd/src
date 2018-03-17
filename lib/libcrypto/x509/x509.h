@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.42 2018/03/17 14:33:20 jsing Exp $ */
+/* $OpenBSD: x509.h,v 1.43 2018/03/17 14:55:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -806,6 +806,7 @@ extern const ASN1_ITEM X509_PUBKEY_it;
 
 int		X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_PUBKEY_get(X509_PUBKEY *key);
+EVP_PKEY *	X509_PUBKEY_get0(X509_PUBKEY *key);
 int		X509_get_pubkey_parameters(EVP_PKEY *pkey,
 					   STACK_OF(X509) *chain);
 int		i2d_PUBKEY(EVP_PKEY *a,unsigned char **pp);
