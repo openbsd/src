@@ -1,4 +1,4 @@
-.\" $OpenBSD: ssl.3,v 1.13 2018/02/27 19:14:49 schwarze Exp $
+.\" $OpenBSD: ssl.3,v 1.14 2018/03/17 18:19:49 schwarze Exp $
 .\" full merge up to: OpenSSL e330f55d Nov 11 00:51:04 2016 +0100
 .\" selective merge up to: OpenSSL cbade361 Dec 12 13:14:45 2017 +0100
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 27 2018 $
+.Dd $Mdocdate: March 17 2018 $
 .Dt SSL 3
 .Os
 .Sh NAME
@@ -249,6 +249,7 @@ Accessors:
 .Xr SSL_SESSION_get_protocol_version 3 ,
 .Xr SSL_SESSION_get_time 3 ,
 .Xr SSL_SESSION_get0_peer 3 ,
+.Xr SSL_SESSION_has_ticket 3 ,
 .Xr SSL_SESSION_set1_id_context 3
 .Pp
 Encoding and decoding:
