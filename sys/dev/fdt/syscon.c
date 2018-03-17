@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.3 2017/10/09 11:47:53 kettenis Exp $	*/
+/*	$OpenBSD: syscon.c,v 1.4 2018/03/17 18:04:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -26,11 +26,17 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
+#ifdef __armv7__
+#include <arm/simplebus/simplebusvar.h>
+#else
+#include <arm64/dev/simplebusvar.h>
+#endif
+
 extern void (*cpuresetfn)(void);
 extern void (*powerdownfn)(void);
 
 struct syscon_softc {
-	struct device		sc_dev;
+	struct simplebus_softc	sc_sbus;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	uint32_t		sc_regmap;
@@ -72,6 +78,9 @@ syscon_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	char name[32];
 
+	OF_getprop(faa->fa_node, "name", name, sizeof(name));
+	name[sizeof(name) - 1] = 0;
+
 	if (OF_is_compatible(faa->fa_node, "syscon")) {
 		if (faa->fa_nreg < 1) {
 			printf(": no registers\n");
@@ -88,19 +97,15 @@ syscon_attach(struct device *parent, struct device *self, void *aux)
 
 		regmap_register(faa->fa_node, sc->sc_iot, sc->sc_ioh,
 		    faa->fa_reg[0].size);
-
-		if (OF_getprop(faa->fa_node, "name", name, sizeof(name)) > 0) {
-			name[sizeof(name) - 1] = 0;
-			printf(": \"%s\"", name);
-		}
-
-		printf("\n");
 	}
+
+	if (OF_is_compatible(faa->fa_node, "simple-mfd"))
+		simplebus_attach(parent, &sc->sc_sbus.sc_dev, faa);
+	else
+		printf(": \"%s\"\n", name);
 
 	if (OF_is_compatible(faa->fa_node, "syscon-reboot") ||
 	    OF_is_compatible(faa->fa_node, "syscon-poweroff")) {
-		printf("\n");
-
 		sc->sc_regmap = OF_getpropint(faa->fa_node, "regmap", 0);
 		if (sc->sc_regmap == 0)
 			return;
