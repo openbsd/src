@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.152 2018/03/17 15:55:52 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.153 2018/03/17 16:20:01 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2111,6 +2111,19 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_X509_LIB					 268
 #define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS		 269
 #define SSL_R_PEER_BEHAVING_BADLY			 666
+
+/*
+ * OpenSSL compatible OPENSSL_INIT options
+ */
+
+/*
+ * These are provided for compatibiliy, but have no effect
+ * on how LibreSSL is initialized.
+ */
+#define OPENSSL_INIT_LOAD_SSL_STRINGS	_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_SSL_DEFAULT	_OPENSSL_INIT_FLAG_NOOP
+
+int OPENSSL_init_ssl(uint64_t opts, const void *settings);
 
 #ifdef  __cplusplus
 }

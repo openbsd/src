@@ -298,3 +298,6 @@ SSL_version
 SSL_version_str
 SSL_want
 SSL_write
+
+/* OpenSSL compatible init */
+OPENSSL_init_ssl

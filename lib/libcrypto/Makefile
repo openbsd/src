@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.26 2018/03/17 15:19:12 tb Exp $
+# $OpenBSD: Makefile,v 1.27 2018/03/17 16:20:01 beck Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -37,7 +37,7 @@ SYMBOL_LIST=	${.CURDIR}/Symbols.list
 # crypto/
 SRCS+= cryptlib.c malloc-wrapper.c mem_dbg.c cversion.c ex_data.c cpt_err.c
 SRCS+= o_time.c o_str.c o_init.c
-SRCS+= mem_clr.c
+SRCS+= mem_clr.c crypto_init.c
 
 # aes/
 SRCS+= aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c

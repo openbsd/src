@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_sap.c,v 1.11 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: conf_sap.c,v 1.12 2018/03/17 16:20:01 beck Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -56,6 +56,7 @@
  *
  */
 
+#include <pthread.h>
 #include <stdio.h>
 
 #include <openssl/opensslconf.h>
@@ -75,23 +76,24 @@
  * unless this is overridden by calling OPENSSL_no_config()
  */
 
-static int openssl_configured = 0;
+static pthread_once_t openssl_configured = PTHREAD_ONCE_INIT;
 
-void
-OPENSSL_config(const char *config_name)
+static const char *openssl_config_name;
+
+void ENGINE_load_builtin_engines_internal(void);
+
+static void
+OPENSSL_config_internal(void)
 {
-	if (openssl_configured)
-		return;
-
 	OPENSSL_load_builtin_modules();
 #ifndef OPENSSL_NO_ENGINE
 	/* Need to load ENGINEs */
-	ENGINE_load_builtin_engines();
+	ENGINE_load_builtin_engines_internal();
 #endif
 	/* Add others here? */
 
 	ERR_clear_error();
-	if (CONF_modules_load_file(NULL, config_name,
+	if (CONF_modules_load_file(NULL, openssl_config_name,
 	    CONF_MFLAGS_DEFAULT_SECTION|CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0) {
 		BIO *bio_err;
 		ERR_load_crypto_strings();
@@ -107,7 +109,31 @@ OPENSSL_config(const char *config_name)
 }
 
 void
+OPENSSL_config(const char *config_name)
+{
+	/* Don't override if NULL */
+	/*
+	 * Note - multiple threads calling this with *different* config names
+	 * is probably not advisable.  One thread will win, but you don't know
+	 * if it will be the same thread as wins the pthread_once.
+	 */
+	if (config_name != NULL)
+		openssl_config_name = config_name;
+
+	(void) OPENSSL_init_crypto(0, NULL);
+
+	(void) pthread_once(&openssl_configured, OPENSSL_config_internal);
+
+	return;
+}
+
+static void
+OPENSSL_no_config_internal(void)
+{
+}
+
+void
 OPENSSL_no_config(void)
 {
-	openssl_configured = 1;
+	(void) pthread_once(&openssl_configured, OPENSSL_no_config_internal);
 }

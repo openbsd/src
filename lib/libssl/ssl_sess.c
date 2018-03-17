@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.77 2018/03/17 15:55:53 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.78 2018/03/17 16:20:01 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -198,6 +198,11 @@ SSL_SESSION *
 SSL_SESSION_new(void)
 {
 	SSL_SESSION *ss;
+
+	if (!OPENSSL_init_ssl(0, NULL)) {
+		SSLerrorx(SSL_R_LIBRARY_BUG);
+		return(NULL);
+	}
 
 	if ((ss = calloc(1, sizeof(*ss))) == NULL) {
 		SSLerrorx(ERR_R_MALLOC_FAILURE);

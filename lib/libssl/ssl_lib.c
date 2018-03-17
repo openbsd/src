@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.181 2018/03/17 15:48:31 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.182 2018/03/17 16:20:01 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1790,6 +1790,11 @@ SSL_CTX *
 SSL_CTX_new(const SSL_METHOD *meth)
 {
 	SSL_CTX	*ret;
+
+	if (!OPENSSL_init_ssl(0, NULL)) {
+		SSLerrorx(SSL_R_LIBRARY_BUG);
+		return (NULL);
+	}
 
 	if (meth == NULL) {
 		SSLerrorx(SSL_R_NULL_SSL_METHOD_PASSED);

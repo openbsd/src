@@ -1,4 +1,4 @@
-/* $OpenBSD: ex_data.c,v 1.19 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: ex_data.c,v 1.20 2018/03/17 16:20:01 beck Exp $ */
 
 /*
  * Overhaul notes;
@@ -312,6 +312,8 @@ def_get_class(int class_index)
 	EX_CLASS_ITEM d, *p, *gen;
 	EX_DATA_CHECK(return NULL;)
 	d.class_index = class_index;
+	if (!OPENSSL_init_crypto(0, NULL))
+		return NULL;
 	CRYPTO_w_lock(CRYPTO_LOCK_EX_DATA);
 	p = lh_EX_CLASS_ITEM_retrieve(ex_data, &d);
 	if (!p) {
@@ -500,6 +502,7 @@ int_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 	EX_CLASS_ITEM *item;
 	void *ptr;
 	CRYPTO_EX_DATA_FUNCS **storage = NULL;
+
 	if ((item = def_get_class(class_index)) == NULL)
 		return;
 	CRYPTO_r_lock(CRYPTO_LOCK_EX_DATA);

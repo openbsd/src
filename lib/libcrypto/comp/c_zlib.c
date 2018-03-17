@@ -1,4 +1,4 @@
-/* $OpenBSD: c_zlib.c,v 1.19 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: c_zlib.c,v 1.20 2018/03/17 16:20:01 beck Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -191,6 +191,8 @@ COMP_zlib(void)
 			if (zlib_stateful_ex_idx == -1)
 				goto err;
 		}
+		if (!OPENSSL_init_crypto(0, NULL))
+			goto err;
 
 		meth = &zlib_stateful_method;
 	}

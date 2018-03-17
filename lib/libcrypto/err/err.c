@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.45 2017/02/20 23:21:19 beck Exp $ */
+/* $OpenBSD: err.c,v 1.46 2018/03/17 16:20:01 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,6 +109,7 @@
  *
  */
 
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -281,6 +282,8 @@ static LHASH_OF(ERR_STRING_DATA) *int_error_hash = NULL;
 static LHASH_OF(ERR_STATE) *int_thread_hash = NULL;
 static int int_thread_hash_references = 0;
 static int int_err_library_number = ERR_LIB_USER;
+
+static pthread_t err_init_thread;
 
 /* Internal function that checks whether "err_fns" is set and if not, sets it to
  * the defaults. */
@@ -650,8 +653,9 @@ ERR_STATE_free(ERR_STATE *s)
 }
 
 void
-ERR_load_ERR_strings(void)
+ERR_load_ERR_strings_internal(void)
 {
+	err_init_thread = pthread_self();
 	err_fns_check();
 #ifndef OPENSSL_NO_ERR
 	err_load_strings(0, ERR_str_libraries);
@@ -660,6 +664,21 @@ ERR_load_ERR_strings(void)
 	build_SYS_str_reasons();
 	err_load_strings(ERR_LIB_SYS, SYS_str_reasons);
 #endif
+}
+
+
+void
+ERR_load_ERR_strings(void)
+{
+	static pthread_once_t once = PTHREAD_ONCE_INIT;
+
+	if (pthread_equal(pthread_self(), err_init_thread))
+		return; /* don't recurse */
+
+	/* Prayer and clean living lets you ignore errors, OpenSSL style */
+	(void) OPENSSL_init_crypto(0, NULL);
+
+	(void) pthread_once(&once, ERR_load_ERR_strings_internal);
 }
 
 static void
@@ -683,6 +702,9 @@ ERR_load_strings(int lib, ERR_STRING_DATA *str)
 void
 ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 {
+	/* Prayer and clean living lets you ignore errors, OpenSSL style */
+	(void) OPENSSL_init_crypto(0, NULL);
+
 	while (str->error) {
 		if (lib)
 			str->error |= ERR_PACK(lib, 0, 0);
@@ -694,6 +716,9 @@ ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 void
 ERR_free_strings(void)
 {
+	/* Prayer and clean living lets you ignore errors, OpenSSL style */
+	(void) OPENSSL_init_crypto(0, NULL);
+
 	err_fns_check();
 	ERRFN(err_del)();
 }
@@ -952,6 +977,9 @@ ERR_lib_error_string(unsigned long e)
 {
 	ERR_STRING_DATA d, *p;
 	unsigned long l;
+
+	if (!OPENSSL_init_crypto(0, NULL))
+		return NULL;
 
 	err_fns_check();
 	l = ERR_GET_LIB(e);
