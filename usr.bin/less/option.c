@@ -24,7 +24,7 @@
 static struct loption *pendopt;
 int plusoption = FALSE;
 
-static char *optstring(char *, char **, char *, char *);
+static char *optstring(char *, char **, char *, char *, int);
 static int flip_triple(int, int);
 
 extern int screen_trashed;
@@ -66,7 +66,7 @@ propt(int c)
  * LESS environment variable) and process it.
  */
 void
-scan_option(char *s)
+scan_option(char *s, int env)
 {
 	struct loption *o;
 	int optc;
@@ -147,7 +147,7 @@ scan_option(char *s)
 			 * EVERY input file.
 			 */
 			plusoption = TRUE;
-			s = optstring(s, &str, propt('+'), NULL);
+			s = optstring(s, &str, propt('+'), NULL, 0);
 			if (s == NULL)
 				return;
 			if (*str == '+')
@@ -290,7 +290,7 @@ scan_option(char *s)
 			 */
 			while (*s == ' ')
 				s++;
-			s = optstring(s, &str, printopt, o->odesc[1]);
+			s = optstring(s, &str, printopt, o->odesc[1], env);
 			if (s == NULL)
 				return;
 			break;
@@ -559,7 +559,7 @@ nopendopt(void)
  * Return a pointer to the remainder of the string, if any.
  */
 static char *
-optstring(char *s, char **p_str, char *printopt, char *validchars)
+optstring(char *s, char **p_str, char *printopt, char *validchars, int env)
 {
 	char *p;
 	char *out;
@@ -577,7 +577,7 @@ optstring(char *s, char **p_str, char *printopt, char *validchars)
 			/* Take next char literally. */
 			++p;
 		} else {
-			if (*p == END_OPTION_STRING ||
+			if ((*p == END_OPTION_STRING && env == 1) ||
 			    (validchars != NULL &&
 			    strchr(validchars, *p) == NULL))
 				/* End of option string. */

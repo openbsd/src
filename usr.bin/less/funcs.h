@@ -213,7 +213,7 @@ void opt_quote(int, char *);
 void opt_query(int, char *);
 int get_swindow(void);
 char *propt(int);
-void scan_option(char *);
+void scan_option(char *, int);
 void toggle_option(struct loption *, int, char *, int);
 int opt_has_param(struct loption *);
 char *opt_prompt(struct loption *);
