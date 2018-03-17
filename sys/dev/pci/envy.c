@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.71 2018/03/17 13:33:08 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.72 2018/03/17 13:35:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -56,6 +56,7 @@ int envydebug = 1;
 int  envymatch(struct device *, void *, void *);
 void envyattach(struct device *, struct device *, void *);
 int  envydetach(struct device *, int);
+int  envyactivate(struct device *, int);
 
 int  envy_ccs_read(struct envy_softc *, int);
 void envy_ccs_write(struct envy_softc *, int, int);
@@ -168,7 +169,8 @@ void ak5365_adc_get(struct envy_softc *, struct mixer_ctrl *, int);
 int ak5365_adc_set(struct envy_softc *, struct mixer_ctrl *, int);
 
 struct cfattach envy_ca = {
-	sizeof(struct envy_softc), envymatch, envyattach, envydetach
+	sizeof(struct envy_softc), envymatch, envyattach, envydetach,
+	envyactivate
 };
 
 struct cfdriver envy_cd = {
@@ -1725,6 +1727,22 @@ envydetach(struct device *self, int flags)
 		bus_space_unmap(sc->mt_iot, sc->mt_ioh, sc->mt_iosz);
 	}
 	return 0;
+}
+
+int
+envyactivate(struct device *self, int act)
+{
+	struct envy_softc *sc = (struct envy_softc *)self;
+
+ 	if (act == DVACT_RESUME) {
+		/*
+		 * The audio(4) layer will restore parameters and, if
+		 * needed, start DMA. So we only need to reach the
+		 * same device state as after the audio_attach() call.
+		 */
+		envy_reset(sc);
+	}
+	return config_activate_children(self, act);
 }
 
 int
