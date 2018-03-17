@@ -71,7 +71,7 @@ opt_o(int type, char *s)
 	}
 	switch (type) {
 	case INIT:
-		namelogfile = s;
+		namelogfile = estrdup(s);
 		break;
 	case TOGGLE:
 		if (ch_getflags() & CH_CANSEEK) {
@@ -83,6 +83,7 @@ opt_o(int type, char *s)
 			return;
 		}
 		s = skipsp(s);
+		free(namelogfile);
 		namelogfile = lglob(s);
 		use_logfile(namelogfile);
 		sync_logfile();

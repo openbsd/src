@@ -366,6 +366,7 @@ end_logfile(void)
 	}
 	close(logfile);
 	logfile = -1;
+	free(namelogfile);
 	namelogfile = NULL;
 }
 
