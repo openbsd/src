@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.41 2018/02/22 17:22:02 jsing Exp $ */
+/* $OpenBSD: x509.h,v 1.42 2018/03/17 14:33:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -919,6 +919,7 @@ void X509_reject_clear(X509 *x);
 
 X509_REVOKED *X509_REVOKED_new(void);
 void X509_REVOKED_free(X509_REVOKED *a);
+X509_REVOKED *X509_REVOKED_dup(X509_REVOKED *a);
 X509_REVOKED *d2i_X509_REVOKED(X509_REVOKED **a, const unsigned char **in, long len);
 int i2d_X509_REVOKED(X509_REVOKED *a, unsigned char **out);
 extern const ASN1_ITEM X509_REVOKED_it;

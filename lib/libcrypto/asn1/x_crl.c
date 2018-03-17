@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.29 2018/02/22 16:58:45 jsing Exp $ */
+/* $OpenBSD: x_crl.c,v 1.30 2018/03/17 14:33:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -460,6 +460,12 @@ void
 X509_REVOKED_free(X509_REVOKED *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_REVOKED_it);
+}
+
+X509_REVOKED *
+X509_REVOKED_dup(X509_REVOKED *a)
+{
+	return ASN1_item_dup(&X509_REVOKED_it, a);
 }
 
 X509_CRL_INFO *
