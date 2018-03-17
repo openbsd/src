@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.27 2018/03/17 15:39:43 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.28 2018/03/17 15:43:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -801,6 +801,12 @@ int
 X509_STORE_set1_param(X509_STORE *ctx, X509_VERIFY_PARAM *param)
 {
 	return X509_VERIFY_PARAM_set1(ctx->param, param);
+}
+
+X509_VERIFY_PARAM *
+X509_STORE_get0_param(X509_STORE *ctx)
+{
+	return ctx->param;
 }
 
 void

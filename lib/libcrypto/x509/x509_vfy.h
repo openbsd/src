@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.25 2018/03/17 15:39:43 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.26 2018/03/17 15:43:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -443,6 +443,7 @@ int X509_STORE_set_flags(X509_STORE *ctx, unsigned long flags);
 int X509_STORE_set_purpose(X509_STORE *ctx, int purpose);
 int X509_STORE_set_trust(X509_STORE *ctx, int trust);
 int X509_STORE_set1_param(X509_STORE *ctx, X509_VERIFY_PARAM *pm);
+X509_VERIFY_PARAM *X509_STORE_get0_param(X509_STORE *ctx);
 
 void X509_STORE_set_verify_cb(X509_STORE *ctx,
 				  int (*verify_cb)(int, X509_STORE_CTX *));
