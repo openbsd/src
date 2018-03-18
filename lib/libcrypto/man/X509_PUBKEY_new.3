@@ -1,5 +1,5 @@
-.\"	$OpenBSD: X509_PUBKEY_new.3,v 1.6 2018/02/14 02:15:46 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: X509_PUBKEY_new.3,v 1.7 2018/03/18 10:22:09 schwarze Exp $
+.\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
@@ -48,13 +48,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 14 2018 $
+.Dd $Mdocdate: March 18 2018 $
 .Dt X509_PUBKEY_NEW 3
 .Os
 .Sh NAME
 .Nm X509_PUBKEY_new ,
 .Nm X509_PUBKEY_free ,
 .Nm X509_PUBKEY_set ,
+.Nm X509_PUBKEY_get0 ,
 .Nm X509_PUBKEY_get ,
 .Nm d2i_PUBKEY ,
 .Nm i2d_PUBKEY ,
@@ -77,6 +78,10 @@
 .Fo X509_PUBKEY_set
 .Fa "X509_PUBKEY **x"
 .Fa "EVP_PKEY *pkey"
+.Fc
+.Ft EVP_PKEY *
+.Fo X509_PUBKEY_get0
+.Fa "X509_PUBKEY *key"
 .Fc
 .Ft EVP_PKEY *
 .Fo X509_PUBKEY_get
@@ -167,10 +172,15 @@ is not
 .Dv NULL ,
 any existing public key structure will be freed.
 .Pp
-.Fn X509_PUBKEY_get
+.Fn X509_PUBKEY_get0
 returns the public key contained in
 .Fa key .
-The reference
+The returned value is an internal pointer which must not be freed after use.
+.Pp
+.Fn X509_PUBKEY_get
+is similar to
+.Fn X509_PUBKEY_get0
+except that the reference
 count on the returned key is incremented so it must be freed using
 .Xr EVP_PKEY_free 3
 after use.
@@ -240,6 +250,7 @@ and sets an error code that can be obtained by
 .Xr ERR_get_error 3 .
 Otherwise it returns a pointer to the newly allocated structure.
 .Pp
+.Fn X509_PUBKEY_get0 ,
 .Fn X509_PUBKEY_get ,
 .Fn d2i_PUBKEY ,
 .Fn d2i_PUBKEY_bio ,
