@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_REVOKED_new.3,v 1.3 2018/02/24 21:39:29 schwarze Exp $
+.\" $OpenBSD: X509_REVOKED_new.3,v 1.4 2018/03/18 08:10:31 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/X509_CRL_get0_by_serial cdd6c8c5 Mar 20 12:29:37 2017 +0100
 .\"
@@ -66,11 +66,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 24 2018 $
+.Dd $Mdocdate: March 18 2018 $
 .Dt X509_REVOKED_NEW 3
 .Os
 .Sh NAME
 .Nm X509_REVOKED_new ,
+.Nm X509_REVOKED_dup ,
 .Nm X509_REVOKED_free ,
 .Nm X509_REVOKED_get0_serialNumber ,
 .Nm X509_REVOKED_get0_revocationDate ,
@@ -81,6 +82,10 @@
 .In openssl/x509.h
 .Ft X509_REVOKED *
 .Fn X509_REVOKED_new void
+.Ft X509_REVOKED *
+.Fo X509_REVOKED_dup
+.Fa "X509_REVOKED *r"
+.Fc
 .Ft void
 .Fn X509_REVOKED_free "X509_REVOKED *r"
 .Ft const ASN1_INTEGER *
@@ -115,6 +120,10 @@ objects and can hold information about one revoked certificate
 including issuer names, serial number, revocation date, and revocation
 reason.
 .Pp
+.Fn X509_REVOKED_dup
+creates a deep copy of
+.Fa r .
+.Pp
 .Fn X509_REVOKED_free
 frees
 .Fa r .
@@ -138,7 +147,9 @@ The supplied
 pointer is not used internally so it should be freed up after use.
 .Sh RETURN VALUES
 .Fn X509_REVOKED_new
-returns the new
+and
+.Fn X509_REVOKED_dup
+return the new
 .Vt X509_REVOKED
 object or
 .Dv NULL
