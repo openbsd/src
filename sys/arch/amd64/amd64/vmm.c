@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.184 2018/02/12 00:59:28 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.185 2018/03/18 08:58:58 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5728,6 +5728,29 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
 	vcpu->vc_gueststate.vg_rip += insn_length;
+
+	/*
+	 * "If a value entered for CPUID.EAX is higher than the maximum input
+	 *  value for basic or extended function for that processor then the
+	 *  data for the highest basic information leaf is returned."
+	 *
+	 * This means if rax is between cpuid_level and 0x40000000 (the start
+	 * of the hypervisor info leaves), clamp to cpuid_level. Also, if
+	 * rax is greater than the extended function info, clamp also to
+	 * cpuid_level.
+	 *
+	 * Note that %rax may be overwritten here - that's ok since we are
+	 * going to reassign it a new value (based on the input parameter)
+	 * later anyway.
+	 */
+	if ((*rax > cpuid_level && *rax < 0x40000000) ||
+	    (*rax > curcpu()->ci_pnfeatset)) {
+		DPRINTF("%s: invalid cpuid input leaf 0x%llx, guest rip="
+		    "0x%llx - resetting to 0x%x\n", __func__, *rax,
+		    vcpu->vc_gueststate.vg_rip - insn_length,
+		    cpuid_level);
+		*rax = cpuid_level;
+	}
 
 	/*
 	 * "CPUID leaves above 02H and below 80000000H are only visible when
