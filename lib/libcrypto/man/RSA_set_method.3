@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_set_method.3,v 1.5 2016/12/11 12:21:48 schwarze Exp $
+.\"	$OpenBSD: RSA_set_method.3,v 1.6 2018/03/18 13:06:36 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 11 2016 $
+.Dd $Mdocdate: March 18 2018 $
 .Dt RSA_SET_METHOD 3
 .Os
 .Sh NAME
@@ -300,6 +300,7 @@ and sets an error code that can be obtained by
 if the allocation fails.
 Otherwise it returns a pointer to the newly allocated structure.
 .Sh SEE ALSO
+.Xr RSA_meth_new 3 ,
 .Xr RSA_new 3
 .Sh HISTORY
 .Fn RSA_new_method
