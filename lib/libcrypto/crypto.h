@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.44 2018/03/18 01:39:26 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.45 2018/03/19 03:35:38 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -547,6 +547,7 @@ void ERR_load_CRYPTO_strings(void);
  */
 
 #define OPENSSL_INIT_NO_LOAD_CONFIG		0x00000001L
+#define OPENSSL_INIT_LOAD_CONFIG		0x00000002L
 
 /* LibreSSL specific */
 #define _OPENSSL_INIT_FLAG_NOOP			0x80000000L
@@ -555,7 +556,6 @@ void ERR_load_CRYPTO_strings(void);
  * These are provided for compatibiliy, but have no effect
  * on how LibreSSL is initialized.
  */
-#define OPENSSL_INIT_LOAD_CONFIG		_OPENSSL_INIT_FLAG_NOOP
 #define OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS	_OPENSSL_INIT_FLAG_NOOP
 #define OPENSSL_INIT_LOAD_CRYPTO_STRINGS	_OPENSSL_INIT_FLAG_NOOP
 #define OPENSSL_INIT_ADD_ALL_CIPHERS		_OPENSSL_INIT_FLAG_NOOP

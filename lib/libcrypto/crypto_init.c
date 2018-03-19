@@ -25,6 +25,9 @@
 #include <openssl/err.h>
 #include "cryptlib.h"
 
+int OpenSSL_config(char *);
+int OpenSSL_no_config(char *);
+
 static pthread_t crypto_init_thread;
 
 static void
@@ -35,7 +38,6 @@ OPENSSL_init_crypto_internal(void)
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
-	OPENSSL_config(NULL);
 }
 
 int
@@ -46,10 +48,15 @@ OPENSSL_init_crypto(uint64_t opts, const void *settings)
 	if (pthread_equal(pthread_self(), crypto_init_thread))
 		return 1; /* don't recurse */
 
-	if (opts & OPENSSL_INIT_NO_LOAD_CONFIG)
-		OPENSSL_no_config();
-
 	if (pthread_once(&once, OPENSSL_init_crypto_internal) != 0)
+		return 0;
+
+	if ((opts & OPENSSL_INIT_NO_LOAD_CONFIG) &&
+	    (OpenSSL_no_config(NULL) == 0))
+		return 0;
+
+	if ((opts & OPENSSL_INIT_LOAD_CONFIG) &&
+	    (OpenSSL_config(NULL) == 0))
 		return 0;
 
 	return 1;
