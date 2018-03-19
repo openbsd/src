@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.56 2018/02/10 05:21:13 jmatthew Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.57 2018/03/19 21:40:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -201,6 +201,11 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		max_clock = 63000;
 		if (SDHC_BASE_FREQ_KHZ(caps) != 0)
 			hp->clkbase = SDHC_BASE_FREQ_KHZ(caps);
+	}
+	if (hp->clkbase == 0) {
+		/* Make sure we can clock down to 400 kHz. */
+		max_clock = 400 * SDHC_SDCLK_DIV_MAX_V3;
+		hp->clkbase = sc->sc_clkbase;
 	}
 	if (hp->clkbase == 0) {
 		/* The attachment driver must tell us. */
@@ -536,11 +541,11 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, u_int32_t ocr)
 static int
 sdhc_clock_divisor(struct sdhc_host *hp, u_int freq)
 {
-	int max_div = 256;
+	int max_div = SDHC_SDCLK_DIV_MAX;;
 	int div;
 
 	if (SDHC_SPEC_VERSION(hp->version) >= SDHC_SPEC_V3)
-		max_div = 2046;
+		max_div = SDHC_SDCLK_DIV_MAX_V3;;
 
 	for (div = 1; div <= max_div; div *= 2)
 		if ((hp->clkbase / div) <= freq)

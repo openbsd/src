@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcreg.h,v 1.7 2016/04/30 11:49:29 kettenis Exp $	*/
+/*	$OpenBSD: sdhcreg.h,v 1.8 2018/03/19 21:40:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -211,6 +211,8 @@
 #define SDHC_SDCLK_DIV_V3(div)						\
 	(SDHC_SDCLK_DIV(div) |						\
 	(((div) & SDHC_SDCLK_DIV_MASK_V3) >> SDHC_SDCLK_DIV_RSHIFT_V3))
+#define SDHC_SDCLK_DIV_MAX		256
+#define SDHC_SDCLK_DIV_MAX_V3		2046
 
 /* SDHC_CAPABILITIES decoding */
 #define SDHC_BASE_FREQ_KHZ(cap)						\
