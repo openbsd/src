@@ -56,6 +56,7 @@
 ./usr/include/alpha/tcb.h
 ./usr/include/alpha/varargs.h
 ./usr/include/alpha/vmparam.h
+./usr/include/alpha/z8530var.h
 ./usr/include/ieeefp.h
 ./usr/include/unwind.h
 ./usr/lib/libalpha.a
