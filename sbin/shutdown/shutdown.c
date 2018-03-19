@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.49 2018/03/02 02:30:15 cheloha Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.50 2018/03/19 14:51:45 cheloha Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -464,9 +464,10 @@ die_you_gravy_sucking_pig_dog(void)
 void
 getoffset(char *timearg)
 {
+	const char *errstr;
 	struct tm *lt;
 	int this_year;
-	time_t now;
+	time_t minutes, now;
 	char *p;
 
 	if (!strcasecmp(timearg, "now")) {		/* now */
@@ -475,13 +476,11 @@ getoffset(char *timearg)
 	}
 
 	(void)time(&now);
-	if (*timearg == '+') {				/* +minutes */
-		const char *errstr;
-
-		offset = strtonum(++timearg, 0, INT_MAX, &errstr);
+	if (timearg[0] == '+') {			/* +minutes */
+		minutes = strtonum(timearg, 0, INT_MAX, &errstr);
 		if (errstr)
-			badtime();
-		offset *= 60;
+			errx(1, "relative offset is %s: %s", errstr, timearg);
+		offset = minutes * 60;
 		shuttime = now + offset;
 		return;
 	}
