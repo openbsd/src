@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.9 2017/05/07 03:25:26 jsing Exp $ */
+/* $OpenBSD: tlstest.c,v 1.10 2018/03/19 16:36:12 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -442,9 +442,6 @@ main(int argc, char **argv)
 	cafile = argv[1];
 	certfile = argv[2];
 	keyfile = argv[3];
-
-	if (tls_init() == -1)
-		errx(1, "failed to initialise tls");
 
 	failure |= do_tls_tests();
 	failure |= do_tls_ordering_tests();
