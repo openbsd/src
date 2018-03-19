@@ -1,4 +1,4 @@
-/* $OpenBSD: mvpinctrl.c,v 1.1 2017/08/25 20:00:35 patrick Exp $ */
+/* $OpenBSD: mvpinctrl.c,v 1.2 2018/03/19 13:49:06 patrick Exp $ */
 /*
  * Copyright (c) 2013,2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -149,8 +149,6 @@ mvpinctrl_pinctrl(uint32_t phandle, void *cookie)
 	OF_getprop(node, "marvell,pins", pins, plen);
 
 	while (plen > 0) {
-		int found = 0;
-
 		for (i = 0; i < sc->sc_npins; i++) {
 			uint32_t off, shift;
 
@@ -159,16 +157,15 @@ mvpinctrl_pinctrl(uint32_t phandle, void *cookie)
 			if (strcmp(sc->sc_pins[i].function, func))
 				continue;
 
-			found++;
-
 			off = (sc->sc_pins[i].pid / 8) * sizeof(uint32_t);
 			shift = (sc->sc_pins[i].pid % 8) * 4;
 
 			HWRITE4(sc, off, (HREAD4(sc, off) & ~(0xf << shift)) |
 			    (sc->sc_pins[i].value << shift));
+			break;
 		}
 
-		if (found == 0)
+		if (i == sc->sc_npins)
 			printf("%s: unsupported pin %s function %s\n",
 			    sc->sc_dev.dv_xname, pin, func);
 
