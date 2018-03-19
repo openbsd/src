@@ -25,8 +25,8 @@
 #include <openssl/err.h>
 #include "cryptlib.h"
 
-int OpenSSL_config(char *);
-int OpenSSL_no_config(char *);
+int OpenSSL_config(const char *);
+int OpenSSL_no_config(void);
 
 static pthread_t crypto_init_thread;
 
@@ -52,7 +52,7 @@ OPENSSL_init_crypto(uint64_t opts, const void *settings)
 		return 0;
 
 	if ((opts & OPENSSL_INIT_NO_LOAD_CONFIG) &&
-	    (OpenSSL_no_config(NULL) == 0))
+	    (OpenSSL_no_config() == 0))
 		return 0;
 
 	if ((opts & OPENSSL_INIT_LOAD_CONFIG) &&
