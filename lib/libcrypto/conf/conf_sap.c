@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_sap.c,v 1.13 2018/03/19 03:35:38 beck Exp $ */
+/* $OpenBSD: conf_sap.c,v 1.14 2018/03/19 03:56:08 beck Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -80,15 +80,13 @@ static pthread_once_t openssl_configured = PTHREAD_ONCE_INIT;
 
 static const char *openssl_config_name;
 
-void ENGINE_load_builtin_engines_internal(void);
-
 static void
 OPENSSL_config_internal(void)
 {
 	OPENSSL_load_builtin_modules();
 #ifndef OPENSSL_NO_ENGINE
 	/* Need to load ENGINEs */
-	ENGINE_load_builtin_engines_internal();
+	ENGINE_load_builtin_engines();
 #endif
 	/* Add others here? */
 
