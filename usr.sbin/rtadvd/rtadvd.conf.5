@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.38 2016/08/25 09:41:13 sthen Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.39 2018/03/19 06:53:09 jmc Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.46 2003/06/17 08:26:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 25 2016 $
+.Dd $Mdocdate: March 19 2018 $
 .Dt RTADVD.CONF 5
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ In such cases, the
 daemon will automatically configure itself using default values
 specified in the specification.
 .Pp
-It obeys the famous
+It obeys the infamous
 .Xr termcap 5
 file format.
 Each line in the file describes a network interface.
@@ -88,7 +88,7 @@ and no greater than 1800 seconds.
 (num) The minimum time allowed between sending unsolicited multicast
 router advertisements
 .Pq unit: seconds .
-The default value is the one third of value of
+The default value is one third of the value of
 .Cm maxinterval .
 Its value must be no less than 3 seconds and no greater than .75 *
 the value of
@@ -242,7 +242,7 @@ will be set to the interface MTU automatically.
 The following items are for ICMPv6 route information option,
 which will be attached to router advertisement header.
 These items are optional.
-Each items can be augmented with number, like
+Each item can be augmented with a number, like
 .Dq Li rtplen2 ,
 to specify multiple routes.
 .Bl -tag -width indent
