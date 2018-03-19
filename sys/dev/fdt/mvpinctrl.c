@@ -1,4 +1,4 @@
-/* $OpenBSD: mvpinctrl.c,v 1.2 2018/03/19 13:49:06 patrick Exp $ */
+/* $OpenBSD: mvpinctrl.c,v 1.3 2018/03/19 17:07:20 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -69,33 +69,7 @@ struct cfdriver mvpinctrl_cd = {
 #define STR(x) STR_HELPER(x)
 #define MPP(id, func, val) { STR(mpp ## id), func, val, id }
 
-struct mvpinctrl_pin mv88f6828_pins[] = {
-	MPP(4,		"ge",		1),
-	MPP(5,		"ge",		1),
-	MPP(6,		"ge0",		1),
-	MPP(7,		"ge0",		1),
-	MPP(8,		"ge0",		1),
-	MPP(9,		"ge0",		1),
-	MPP(10,		"ge0",		1),
-	MPP(11,		"ge0",		1),
-	MPP(12,		"ge0",		1),
-	MPP(13,		"ge0",		1),
-	MPP(14,		"ge0",		1),
-	MPP(15,		"ge0",		1),
-	MPP(16,		"ge0",		1),
-	MPP(17,		"ge0",		1),
-	MPP(20,		"gpio",		0),
-	MPP(21,		"sd0",		4),
-	MPP(23,		"gpio",		0),
-	MPP(28,		"sd0",		4),
-	MPP(37,		"sd0",		4),
-	MPP(38,		"sd0",		4),
-	MPP(39,		"sd0",		4),
-	MPP(40,		"sd0",		4),
-	MPP(41,		"gpio",		0),
-	MPP(45,		"ref",		1),
-	MPP(46,		"ref",		1),
-};
+#include "mvpinctrl_pins.h"
 
 int
 mvpinctrl_match(struct device *parent, void *match, void *aux)
@@ -116,8 +90,8 @@ mvpinctrl_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("mvpinctrl_attach: bus_space_map failed!");
 
-	sc->sc_pins = mv88f6828_pins;
-	sc->sc_npins = sizeof(mv88f6828_pins) / sizeof(struct mvpinctrl_pin);
+	sc->sc_pins = armada_38x_pins;
+	sc->sc_npins = nitems(armada_38x_pins);
 	pinctrl_register(faa->fa_node, mvpinctrl_pinctrl, sc);
 
 	printf("\n");
