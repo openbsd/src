@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.19 2017/10/17 19:31:56 naddy Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.20 2018/03/19 17:27:03 robert Exp $
 #
 # Copyright (c) 2016-2017 Robert Nagy <robert@openbsd.org>
 #
@@ -164,14 +164,14 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE} ${_FAKE_COOKIE}
 		su ${BUILDUSER} -c 'umask ${WOBJUMASK} && \
 		cd ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/GENERIC/obj && \
 		cp -p *.o Makefile ld.script makegap.sh \
-		${FAKE}/usr/share/compile/GENERIC/' || \
+		${FAKE}/usr/share/relink/kernel/GENERIC/' || \
 		{ echo "***>   failed to install ${_kern} object files"; \
 		exit 1; }; \
 	elif [ ${_kern} = "GENERIC.MP" ]; then \
 		su ${BUILDUSER} -c 'umask ${WOBJUMASK} && \
 		cd ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/GENERIC.MP/obj && \
 		cp -p *.o Makefile ld.script makegap.sh \
-		${FAKE}/usr/share/compile/GENERIC.MP/' || \
+		${FAKE}/usr/share/relink/kernel/GENERIC.MP/' || \
 		{ echo "***>   failed to install ${_kern} object files"; \
 		exit 1; }; \
 	fi; exit 0
