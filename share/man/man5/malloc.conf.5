@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.conf.5,v 1.13 2017/12/30 07:35:02 otto Exp $
+.\"	$OpenBSD: malloc.conf.5,v 1.14 2018/03/19 13:35:06 otto Exp $
 .\"
 .\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
 .\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 30 2017 $
+.Dd $Mdocdate: March 19 2018 $
 .Dt MALLOC.CONF 5
 .Os
 .Sh NAME
@@ -75,13 +75,15 @@ Decrease the junk level by one if it is larger than 0.
 Junking writes some junk bytes into the area allocated.
 Junk is bytes of 0xdb when allocating;
 freed chunks are filled with 0xdf.
-By default the junk level is 1: small chunks are always junked
-and the first part of pages is junked after free.
+By default the junk level is 1: after free,
+small chunks are completely junked;
+for pages the first part is junked.
 After a delay,
 the filling pattern is validated and the process is aborted if the pattern
 was modified.
+For junk level 2, junking is done on allocation as well and without size
+restrictions.
 If the junk level is zero, no junking is performed.
-For junk level 2, junking is done without size restrictions.
 .It Cm R
 .Dq realloc .
 Always reallocate when
