@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.189 2017/11/28 16:59:10 jsing Exp $ */
+/* $OpenBSD: netcat.c,v 1.190 2018/03/19 16:35:29 jsing Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -484,8 +484,6 @@ main(int argc, char *argv[])
 	}
 
 	if (usetls) {
-		if (tls_init() == -1)
-			errx(1, "unable to initialize TLS");
 		if ((tls_cfg = tls_config_new()) == NULL)
 			errx(1, "unable to allocate TLS config");
 		if (Rflag && tls_config_set_ca_file(tls_cfg, Rflag) == -1)
