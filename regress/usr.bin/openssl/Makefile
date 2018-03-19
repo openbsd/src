@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2018/02/06 02:31:13 tb Exp $
+#	$OpenBSD: Makefile,v 1.6 2018/03/19 03:41:40 beck Exp $
 
 SUBDIR= options
 
@@ -58,7 +58,7 @@ ssl-dsa:
 ssl-rsa:
 	env OPENSSL=${OPENSSL} sh ${.CURDIR}/testrsa.sh ${.OBJDIR} ${.CURDIR}
 appstest:
-	env OPENSSL=${OPENSSL} sh ${.CURDIR}/appstest.sh ${.OBJDIR} ${.CURDIR}
+	env OPENSSL=${OPENSSL} sh ${.CURDIR}/appstest.sh -q
 
 clean:
 	rm -rf ${CLEANFILES}

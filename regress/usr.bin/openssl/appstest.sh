@@ -38,6 +38,22 @@ function check_exit_status {
     fi
 }
 
+function usage {
+    echo "usage: apptest.sh [[-q]]"
+}
+
+no_long_tests=0
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -q | --quick )          shift
+                                no_long_tests=1
+                                ;;
+        * )                     usage
+                                exit 1
+    esac
+done
+
 #---------#---------#---------#---------#---------#---------#---------#---------
 
 #
@@ -226,12 +242,16 @@ start_message "dh - Obsoleted by dhparam."
 $openssl_bin dh -in $gendh2 -check -text -out $gendh2.out
 check_exit_status $?
 
-start_message "dhparam - Superseded by genpkey and pkeyparam."
-dhparam2=$key_dir/dhparam2.pem
-$openssl_bin dhparam -2 -out $dhparam2
-check_exit_status $?
-$openssl_bin dhparam -in $dhparam2 -check -text -out $dhparam2.out
-check_exit_status $?
+if [ $no_long_tests = 0 ] ; then
+    start_message "dhparam - Superseded by genpkey and pkeyparam."
+    dhparam2=$key_dir/dhparam2.pem
+    $openssl_bin dhparam -2 -out $dhparam2
+    check_exit_status $?
+    $openssl_bin dhparam -in $dhparam2 -check -text -out $dhparam2.out
+    check_exit_status $?
+else    
+    start_message "SKIPPNG dhparam - Superseded by genpkey and pkeyparam. (quick mode)"
+fi
 
 # DSA
 
@@ -936,9 +956,13 @@ wait $s_server_pid
 # === PERFORMANCE ===
 section_message "PERFORMANCE"
 
-start_message "speed"
-$openssl_bin speed sha512 rsa2048 -multi 2 -elapsed
-check_exit_status $?
+if [ $no_long_tests = 0 ] ; then
+    start_message "speed"
+    $openssl_bin speed sha512 rsa2048 -multi 2 -elapsed
+    check_exit_status $?
+else    
+    start_message "SKIPPNG speed (quick mode)"
+fi
 
 #---------#---------#---------#---------#---------#---------#---------#---------
 
