@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.43 2018/02/08 05:56:49 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.44 2018/03/19 16:34:47 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -30,6 +30,9 @@ struct tls *
 tls_server(void)
 {
 	struct tls *ctx;
+
+	if (tls_init() == -1)
+		return (NULL);
 
 	if ((ctx = tls_new()) == NULL)
 		return (NULL);

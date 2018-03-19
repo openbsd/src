@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.49 2018/02/10 04:57:35 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.50 2018/03/19 16:34:47 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -77,7 +77,7 @@ tls_config_load_file(struct tls_error *error, const char *filetype,
 }
 
 struct tls_config *
-tls_config_new(void)
+tls_config_new_internal(void)
 {
 	struct tls_config *config;
 	unsigned char sid[TLS_MAX_SESSION_ID_LENGTH];
@@ -126,6 +126,15 @@ tls_config_new(void)
  err:
 	tls_config_free(config);
 	return (NULL);
+}
+
+struct tls_config *
+tls_config_new(void)
+{
+	if (tls_init() == -1)
+		return (NULL);
+
+	return tls_config_new_internal();
 }
 
 void
