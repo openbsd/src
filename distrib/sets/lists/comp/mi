@@ -117,6 +117,7 @@
 ./usr/include/dev/fdt
 ./usr/include/dev/fdt/if_mvnetareg.h
 ./usr/include/dev/fdt/mvmdiovar.h
+./usr/include/dev/fdt/mvpinctrl_pins.h
 ./usr/include/dev/fdt/pscivar.h
 ./usr/include/dev/fdt/rkclock_clocks.h
 ./usr/include/dev/fdt/rsbvar.h
