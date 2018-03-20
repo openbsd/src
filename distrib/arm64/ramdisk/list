@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.6 2017/11/19 12:11:53 job Exp $
+#	$OpenBSD: list,v 1.7 2018/03/20 23:24:17 jsg Exp $
 
 SRCDIRS distrib/special
 
@@ -119,6 +119,7 @@ SYMLINK	install.sub				install
 SYMLINK	install.sub				upgrade
 
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-3-b.dtb usr/mdec/rpi/bcm2710-rpi-3-b.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-3-b-plus.dtb usr/mdec/rpi/bcm2710-rpi-3-b-plus.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-cm3.dtb usr/mdec/rpi/bcm2710-rpi-cm3.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bootcode.bin usr/mdec/rpi/bootcode.bin
 COPY	/usr/local/share/raspberrypi-firmware/boot/start.elf usr/mdec/rpi/start.elf
