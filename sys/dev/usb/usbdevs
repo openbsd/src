@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.682 2018/03/09 08:32:35 kevlo Exp $
+$OpenBSD: usbdevs,v 1.683 2018/03/20 07:30:10 kevlo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -606,6 +606,7 @@ vendor PEGATRON		0x1d4d	Pegatron
 vendor OPENMOKO2	0x1d50	OpenMoko
 vendor SELUXIT		0x1d6f	Seluxit
 vendor METAGEEK		0x1dd5	MetaGeek
+vendor SIMCOM		0x1e0e	SIMCom Wireless Solutions Co., Ltd.
 vendor FESTO		0x1e29	Festo
 vendor MODACOM		0x1eb8	Modacom
 vendor AIRTIES		0x1eda	AirTies
@@ -3955,6 +3956,9 @@ product SILABS USBCOUNT50	0xf004	USBcount50
 /* Silicon Portals Inc. */
 product SILICONPORTALS YAPPH_NF	0x0200	YAP Phone (no firmware)
 product SILICONPORTALS YAPPHONE	0x0201	YAP Phone
+
+/* Simcom products */
+product SIMCOM SIM7600E		0x9001	SIM7600E modem
 
 /* Sirius Technologies products */
 product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56
