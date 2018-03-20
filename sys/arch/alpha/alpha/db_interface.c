@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.23 2017/04/30 16:45:45 mpi Exp $ */
+/* $OpenBSD: db_interface.c,v 1.24 2018/03/20 15:45:32 mpi Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -91,8 +91,6 @@ struct db_command db_machine_command_table[] = {
 #endif
 	{ NULL,		NULL,		0,	NULL }
 };
-
-int	db_active = 0;
 
 struct db_variable db_regs[] = {
 	{	"v0",	&ddb_regs.tf_regs[FRAME_V0],	FCN_NULL	},

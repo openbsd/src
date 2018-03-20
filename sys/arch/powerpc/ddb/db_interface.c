@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.3 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.4 2018/03/20 15:45:32 mpi Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 /*
@@ -50,7 +50,6 @@ boolean_t        db_switch_cpu;
 long             db_switch_to_cpu;
 #endif
 
-int db_active;
 extern db_regs_t ddb_regs;
 
 #ifdef MULTIPROCESSOR
@@ -59,8 +58,6 @@ void db_startproc_cmd(db_expr_t, int, db_expr_t, char *);
 void db_stopproc_cmd(db_expr_t, int, db_expr_t, char *);
 void db_ddbproc_cmd(db_expr_t, int, db_expr_t, char *);
 #endif
-
-int db_active = 0;
 
 int db_trap_glue(struct trapframe *frame); /* called from locore */
 

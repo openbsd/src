@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.49 2017/12/03 10:55:50 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.50 2018/03/20 15:45:32 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -196,8 +196,6 @@ struct db_variable db_regs[] = {
 struct db_variable *db_eregs = db_regs + nitems(db_regs);
 
 extern label_t	*db_recover;
-
-int	db_active = 0;
 
 extern char *trap_type[];
 

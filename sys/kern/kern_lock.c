@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.59 2018/02/19 09:18:00 mpi Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.60 2018/03/20 15:45:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -79,7 +79,7 @@ _kernel_unlock(void)
 int
 _kernel_lock_held(void)
 {
-	if (panicstr)
+	if (panicstr || db_active)
 		return 1;
 	return (__mp_lock_held(&kernel_lock, curcpu()));
 }

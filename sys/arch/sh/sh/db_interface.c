@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.10 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.11 2018/03/20 15:45:32 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
 
 /*-
@@ -82,8 +82,6 @@ struct db_command db_machine_command_table[] = {
 #endif
 	{ NULL }
 };
-
-int db_active;
 
 void
 db_machine_init(void)

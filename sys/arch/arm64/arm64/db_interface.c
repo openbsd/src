@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.4 2018/01/30 15:46:12 kettenis Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.5 2018/03/20 15:45:32 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /*
@@ -121,8 +121,6 @@ int db_enter_ddb(void);
 extern label_t       *db_recover;
 
 struct db_variable * db_eregs = db_regs + nitems(db_regs);
-
-int	db_active = 0;
 
 #ifdef DDB
 /*

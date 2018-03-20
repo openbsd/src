@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.33 2017/12/18 10:05:43 mpi Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.34 2018/03/20 15:45:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -236,8 +236,8 @@ retry:
 		unsigned long set = o | op->wait_set;
 		int do_sleep;
 
-		/* Avoid deadlocks after panic */
-		if (panicstr)
+		/* Avoid deadlocks after panic or in DDB */
+		if (panicstr || db_active)
 			return (0);
 
 		rw_enter_diag(rwl, flags);
@@ -287,8 +287,8 @@ _rw_exit(struct rwlock *rwl LOCK_FL_VARS)
 	int wrlock = owner & RWLOCK_WRLOCK;
 	unsigned long set;
 
-	/* Avoid deadlocks after panic */
-	if (panicstr)
+	/* Avoid deadlocks after panic or in DDB */
+	if (panicstr || db_active)
 		return;
 
 	if (wrlock)
