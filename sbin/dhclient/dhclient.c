@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.565 2018/02/28 22:16:56 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.566 2018/03/20 11:46:32 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1961,8 +1961,8 @@ lease_as_string(char *ifname, char *type, struct client_lease *lease)
 		name = code_to_name(i);
 
 		buf = pretty_print_option(i, opt, 1);
-		if (buf == NULL)
-			return NULL;
+		if (strlen(buf) == 0)
+			continue;
 		strlcat(string, "  option ", sizeof(string));
 		strlcat(string, name, sizeof(string));
 		append_statement(string, sizeof(string), " ", buf);
