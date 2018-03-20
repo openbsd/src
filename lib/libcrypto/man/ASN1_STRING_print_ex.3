@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_STRING_print_ex.3,v 1.9 2018/02/12 16:04:50 schwarze Exp $
+.\" $OpenBSD: ASN1_STRING_print_ex.3,v 1.10 2018/03/20 18:35:13 schwarze Exp $
 .\" full merge up to: OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 12 2018 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt ASN1_STRING_PRINT_EX 3
 .Os
 .Sh NAME
@@ -221,3 +221,7 @@ returns 1 on success or 0 on error.
 returns a static string.
 .Sh SEE ALSO
 .Xr X509_NAME_print_ex 3
+.Sh HISTORY
+.Fn ASN1_STRING_print
+appeared in SSLeay 0.8.1b or earlier and has been available since
+.Ox 2.4 .

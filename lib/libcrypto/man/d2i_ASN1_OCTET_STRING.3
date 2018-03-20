@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.5 2017/08/01 14:57:03 schwarze Exp $
+.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.6 2018/03/20 18:35:13 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 1 2017 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt D2I_ASN1_OCTET_STRING 3
 .Os
 .Sh NAME
@@ -384,3 +384,21 @@ Specification of basic notation
 .Pp
 RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
 Certificate Revocation List (CRL) Profile
+.Sh HISTORY
+.Fn d2i_ASN1_OCTET_STRING ,
+.Fn i2d_ASN1_OCTET_STRING ,
+.Fn d2i_ASN1_BIT_STRING ,
+.Fn i2d_ASN1_BIT_STRING ,
+.Fn d2i_ASN1_INTEGER ,
+.Fn i2d_ASN1_INTEGER ,
+.Fn d2i_ASN1_IA5STRING ,
+.Fn i2d_ASN1_IA5STRING ,
+.Fn d2i_ASN1_T61STRING ,
+.Fn d2i_ASN1_PRINTABLESTRING ,
+.Fn d2i_ASN1_PRINTABLE ,
+.Fn i2d_ASN1_PRINTABLE ,
+.Fn d2i_ASN1_UTCTIME ,
+and
+.Fn i2d_ASN1_UTCTIME
+appeared in SSLeay 0.8.1b or earlier and have been available since
+.Ox 2.4 .

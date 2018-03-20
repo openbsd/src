@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_OBJECT.3,v 1.6 2017/01/05 08:24:38 jmc Exp $
+.\"	$OpenBSD: d2i_ASN1_OBJECT.3,v 1.7 2018/03/20 18:35:13 schwarze Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 5 2017 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt D2I_ASN1_OBJECT 3
 .Os
 .Sh NAME
@@ -74,6 +74,12 @@ or a value <= 0 if an error occurs.
 .Xr ASN1_item_d2i 3 ,
 .Xr ASN1_OBJECT_new 3 ,
 .Xr OBJ_nid2obj 3
+.Sh HISTORY
+.Fn d2i_ASN1_OBJECT
+and
+.Fn i2d_ASN1_OBJECT
+appeared in SSLeay 0.8.1b or earlier and have been available since
+.Ox 2.4 .
 .Sh CAVEATS
 .Fn d2i_ASN1_OBJECT
 never sets the long and short names of the object, not even if the
