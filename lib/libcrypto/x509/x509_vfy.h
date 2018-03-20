@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.26 2018/03/17 15:43:32 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.27 2018/03/20 15:26:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -438,6 +438,10 @@ STACK_OF(X509_CRL)* X509_STORE_get1_crls(X509_STORE_CTX *st, X509_NAME *nm);
 STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(X509_STORE *xs);
 void *X509_STORE_get_ex_data(X509_STORE *xs, int idx);
 int X509_STORE_set_ex_data(X509_STORE *xs, int idx, void *data);
+
+#define X509_STORE_get_ex_new_index(l, p, newf, dupf, freef) \
+	CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509_STORE, (l), (p), \
+		(newf), (dupf), (freef))
 
 int X509_STORE_set_flags(X509_STORE *ctx, unsigned long flags);
 int X509_STORE_set_purpose(X509_STORE *ctx, int purpose);
