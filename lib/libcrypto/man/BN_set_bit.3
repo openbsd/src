@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_set_bit.3,v 1.5 2016/12/10 21:13:25 schwarze Exp $
+.\"	$OpenBSD: BN_set_bit.3,v 1.6 2018/03/20 20:26:23 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 10 2016 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt BN_SET_BIT 3
 .Os
 .Sh NAME
@@ -212,4 +212,5 @@ The error codes can be obtained by
 .Fn BN_rshift ,
 and
 .Fn BN_rshift1
-are available in all versions of SSLeay and OpenSSL.
+appeared before SSLeay 0.8 and have been available since
+.Ox 2.4 .
