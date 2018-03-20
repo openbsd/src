@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_bus_space.c,v 1.4 2017/04/27 10:57:05 kettenis Exp $ */
+/*	$OpenBSD: arm64_bus_space.c,v 1.5 2018/03/20 23:04:48 patrick Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -58,6 +58,7 @@ bus_space_t arm64_bs_tag = {
 	._space_subregion =	generic_space_region,
 	._space_vaddr =		generic_space_vaddr
 };
+bus_space_t *fdt_cons_bs_tag = &arm64_bs_tag;
 
 bus_space_t arm64_a4x_bs_tag = {
 	.bus_base = 0ULL, // XXX

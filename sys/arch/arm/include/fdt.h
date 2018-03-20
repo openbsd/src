@@ -1,4 +1,4 @@
-/* $OpenBSD: fdt.h,v 1.5 2017/08/27 12:42:22 kettenis Exp $ */
+/* $OpenBSD: fdt.h,v 1.6 2018/03/20 23:04:48 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -35,6 +35,7 @@ struct fdt_attach_args {
 };
 
 extern int stdout_node;
+extern bus_space_tag_t fdt_cons_bs_tag;
 
 void *fdt_find_cons(const char *);
 
