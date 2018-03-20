@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.26 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.27 2018/03/20 16:16:59 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -1015,7 +1015,9 @@ int X509_check_host(X509 *x, const char *chk, size_t chklen,
 {
 	if (chk == NULL)
 		return -2;
-	if (memchr(chk, '\0', chklen))
+	if (chklen == 0)
+		chklen = strlen(chk);
+	else if (memchr(chk, '\0', chklen))
 		return -2;
 	return do_x509_check(x, chk, chklen, flags, GEN_DNS, peername);
 }
@@ -1025,7 +1027,9 @@ int X509_check_email(X509 *x, const char *chk, size_t chklen,
 {
 	if (chk == NULL)
 		return -2;
-	if (memchr(chk, '\0', chklen))
+	if (chklen == 0)
+		chklen = strlen(chk);
+	else if (memchr(chk, '\0', chklen))
 		return -2;
 	return do_x509_check(x, chk, chklen, flags, GEN_EMAIL, NULL);
 }
