@@ -1,4 +1,4 @@
-.\" $OpenBSD: DES_set_key.3,v 1.8 2018/02/13 20:54:10 schwarze Exp $
+.\" $OpenBSD: DES_set_key.3,v 1.9 2018/03/20 22:06:59 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/DES_random_key 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -115,7 +115,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: February 13 2018 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt DES_SET_KEY 3
 .Os
 .Sh NAME
@@ -786,22 +786,52 @@ ANSI X3.106
 The DES library was initially written to be source code compatible
 with the MIT Kerberos library.
 .Sh HISTORY
-In OpenSSL 0.9.7, all des_ functions were renamed to DES_ to avoid
-clashes with older versions of libdes.
+Versions of
+.Fn DES_random_key ,
+.Fn DES_set_key ,
+.Fn DES_key_sched ,
+.Fn DES_set_odd_parity ,
+.Fn DES_is_weak_key ,
+.Fn DES_ecb_encrypt ,
+.Fn DES_ecb2_encrypt ,
+.Fn DES_ecb3_encrypt ,
+.Fn DES_ncbc_encrypt ,
+.Fn DES_cfb_encrypt ,
+.Fn DES_ofb_encrypt ,
+.Fn DES_pcbc_encrypt ,
+.Fn DES_cfb64_encrypt ,
+.Fn DES_ofb64_encrypt ,
+.Fn DES_xcbc_encrypt ,
+.Fn DES_ede2_cbc_encrypt ,
+.Fn DES_ede2_cfb64_encrypt ,
+.Fn DES_ede2_ofb64_encrypt ,
+.Fn DES_ede3_cbc_encrypt ,
+.Fn DES_ede3_cfb64_encrypt ,
+.Fn DES_ede3_ofb64_encrypt ,
+.Fn DES_cbc_cksum ,
+.Fn DES_quad_cksum ,
+.Fn DES_string_to_key ,
+.Fn DES_string_to_2keys ,
+.Fn DES_fcrypt ,
+.Fn DES_crypt ,
+.Fn DES_enc_read ,
+and
+.Fn DES_enc_write
+with lower case names starting with
+.Sy des_
+appeared in SSLeay 0.8.1b or earlier and have been available since
+.Ox 2.4 .
+.Pp
+In OpenSSL 0.9.7, all
+.Sy des_
+functions were renamed to
+.Sy DES_
+to avoid clashes with older versions of libdes.
 .Pp
 .Fn DES_set_key_checked
 and
 .Fn DES_set_key_unchecked
 were added in OpenSSL 0.9.5.
-.Pp
-.Fn des_generate_random_block ,
-.Fn des_init_random_number_generator ,
-.Fn des_new_random_key ,
-.Fn des_set_random_generator_seed ,
-.Fn des_set_sequence_number ,
-and
-.Fn des_rand_data 3
-are used in newer versions of Kerberos but are not implemented here.
 .Pp
 .Fn DES_random_key
 generated cryptographically weak random data in SSLeay and in OpenSSL
