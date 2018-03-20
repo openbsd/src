@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86call.S,v 1.8 2018/03/13 13:51:05 bluhm Exp $ */
+/* $OpenBSD: kvm86call.S,v 1.9 2018/03/20 16:39:10 bluhm Exp $ */
 /* $NetBSD: kvm86call.S,v 1.7 2006/04/11 17:14:07 drochner Exp $ */
 
 /*-
@@ -94,12 +94,15 @@ ENTRY(kvm86_call)
 	leal	_C_LABEL(cpu_info_primary),%ecx
 #endif
 
+	movl	CPU_INFO_CURPCB(%ecx),%eax
+	pushl	%eax			/* save curpcb */
+
 #ifdef	MULTIPROCESSOR
 	movl	CPU_INFO_GDT(%edx),%eax
 #else
 	movl	_C_LABEL(gdt),%eax
 #endif
-	movl	GTSS_SEL,%edi
+	movl	$GSEL(GTSS_SEL, SEL_KPL),%edi
 	andl	$~0x0200,4(%eax,%edi,1)	/* reset "task busy" */
 
 	movl	0(%eax,%edi,1),%edx
@@ -185,7 +188,7 @@ ENTRY(kvm86_ret)
 	leal	_C_LABEL(cpu_info_primary),%ecx
 	movl	_C_LABEL(gdt),%eax
 #endif
-	movl	GTSS_SEL,%edi
+	movl	$GSEL(GTSS_SEL, SEL_KPL),%edi
 	movl	SCRTSS0, %edx
 	movl	%edx, 0(%eax,%edi,1)	/* restore first word */
 	movl	SCRTSS1, %edx
