@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BF_set_key.3,v 1.5 2016/11/11 01:20:53 schwarze Exp $
+.\"	$OpenBSD: BF_set_key.3,v 1.6 2018/03/20 17:10:14 schwarze Exp $
 .\"	OpenSSL 99d63d46 Jul 19 09:27:53 2016 -0400
 .\"
 .\" This file was written by Richard Levitte <levitte@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 11 2016 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt BF_SET_KEY 3
 .Os
 .Sh NAME
@@ -258,4 +258,4 @@ Be aware that these functions take each 32-bit chunk in host-byte order,
 which is little-endian on little-endian platforms
 and big-endian on big-endian ones.
 .Sh HISTORY
-The Blowfish functions are available in all versions of SSLeay and OpenSSL.
+This Blowfish implementation first appeared in SSLeay 0.6.6.
