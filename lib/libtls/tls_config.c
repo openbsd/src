@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.50 2018/03/19 16:34:47 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.51 2018/03/20 15:40:10 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -517,17 +517,16 @@ tls_config_set_dheparams(struct tls_config *config, const char *params)
 int
 tls_config_set_ecdhecurve(struct tls_config *config, const char *curve)
 {
-	if (strchr(curve, ',') != NULL || strchr(curve, ':') != NULL) {
+	if (curve == NULL ||
+	    strcasecmp(curve, "none") == 0 ||
+	    strcasecmp(curve, "auto") == 0) {
+		curve = TLS_ECDHE_CURVES;
+	} else if (strchr(curve, ',') != NULL || strchr(curve, ':') != NULL) {
 		tls_config_set_errorx(config, "invalid ecdhe curve '%s'",
 		    curve);
 		return (-1);
 	}
 
-	if (curve == NULL ||
-	    strcasecmp(curve, "none") == 0 ||
-	    strcasecmp(curve, "auto") == 0)
-		curve = TLS_ECDHE_CURVES;
-		
 	return tls_config_set_ecdhecurves(config, curve);
 }
 
