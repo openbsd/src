@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.34 2017/12/03 10:34:30 jsg Exp $
+#	$OpenBSD: list,v 1.35 2018/03/20 23:09:09 jsg Exp $
 
 SRCDIRS distrib/special
 
@@ -146,9 +146,23 @@ COPY	/usr/local/share/dtb/arm/omap4-sdp.dtb		usr/mdec/panda/omap4-sdp.dtb
 COPY	/usr/local/share/u-boot/mx6cuboxi/SPL		usr/mdec/cubox/SPL
 COPY	/usr/local/share/u-boot/mx6cuboxi/u-boot.img	usr/mdec/cubox/u-boot.img
 COPY	/usr/local/share/dtb/arm/imx6dl-cubox-i.dtb	usr/mdec/cubox/imx6dl-cubox-i.dtb
+COPY	/usr/local/share/dtb/arm/imx6dl-cubox-i-emmc-som-v15.dtb	usr/mdec/cubox/imx6dl-cubox-i-emmc-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/imx6dl-cubox-i-som-v15.dtb	usr/mdec/cubox/imx6dl-cubox-i-som-v15.dtb
 COPY	/usr/local/share/dtb/arm/imx6dl-hummingboard.dtb	usr/mdec/cubox/imx6dl-hummingboard.dtb
+COPY	/usr/local/share/dtb/arm/imx6dl-hummingboard-emmc-som-v15.dtb	usr/mdec/cubox/imx6dl-hummingboard-emmc-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/imx6dl-hummingboard-som-v15.dtb	usr/mdec/cubox/imx6dl-hummingboard-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/imx6dl-hummingboard2.dtb	usr/mdec/cubox/imx6dl-hummingboard2.dtb
+COPY	/usr/local/share/dtb/arm/imx6dl-hummingboard2-emmc-som-v15.dtb	usr/mdec/cubox/imx6dl-hummingboard2-emmc-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/imx6dl-hummingboard2-som-v15.dtb	usr/mdec/cubox/imx6dl-hummingboard2-som-v15.dtb
 COPY	/usr/local/share/dtb/arm/imx6q-cubox-i.dtb	usr/mdec/cubox/imx6q-cubox-i.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-cubox-i-emmc-som-v15.dtb	usr/mdec/cubox/imx6q-cubox-i-emmc-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-cubox-i-som-v15.dtb	usr/mdec/cubox/imx6q-cubox-i-som-v15.dtb
 COPY	/usr/local/share/dtb/arm/imx6q-hummingboard.dtb	usr/mdec/cubox/imx6q-hummingboard.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-hummingboard-emmc-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard-emmc-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-hummingboard-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-hummingboard2.dtb	usr/mdec/cubox/imx6q-hummingboard2.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-hummingboard2-emmc-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard2-emmc-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-hummingboard2-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard2-som-v15.dtb
 
 COPY	/usr/local/share/dtb/arm/imx6dl-nitrogen6x.dtb	usr/mdec/nitrogen/imx6dl-nitrogen6x.dtb
 COPY	/usr/local/share/dtb/arm/imx6dl-sabrelite.dtb	usr/mdec/nitrogen/imx6dl-sabrelite.dtb
