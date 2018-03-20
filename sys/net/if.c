@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.548 2018/03/02 15:52:11 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.549 2018/03/20 08:58:19 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1028,6 +1028,10 @@ if_detach(struct ifnet *ifp)
 	/* Other CPUs must not have a reference before we start destroying. */
 	if_idxmap_remove(ifp);
 
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+
 	NET_LOCK();
 	s = splnet();
 	ifp->if_qstart = if_detached_qstart;
@@ -1041,9 +1045,6 @@ if_detach(struct ifnet *ifp)
 	/* Remove the link state task */
 	task_del(net_tq(ifp->if_index), &ifp->if_linkstatetask);
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 	rti_delete(ifp);
 #if NETHER > 0 && defined(NFSCLIENT)
 	if (ifp->if_index == revarp_ifidx)
