@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.28 2018/02/11 20:58:40 patrick Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.29 2018/03/20 04:18:40 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -279,6 +279,11 @@ void	sdmmc_mem_scan(struct sdmmc_softc *);
 int	sdmmc_mem_init(struct sdmmc_softc *, struct sdmmc_function *);
 int	sdmmc_mem_read_block(struct sdmmc_function *, int, u_char *, size_t);
 int	sdmmc_mem_write_block(struct sdmmc_function *, int, u_char *, size_t);
+
+#ifdef HIBERNATE
+int	sdmmc_mem_hibernate_write(struct sdmmc_function *, daddr_t, u_char *,
+	    size_t);
+#endif
 
 /* ioctls */
 

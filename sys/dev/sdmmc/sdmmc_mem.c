@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.30 2017/04/06 03:15:29 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.31 2018/03/20 04:18:40 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -27,6 +27,10 @@
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcreg.h>
 #include <dev/sdmmc/sdmmcvar.h>
+
+#ifdef HIBERNATE
+#include <uvm/uvm_extern.h>
+#endif
 
 typedef struct { uint32_t _bits[512/32]; } __packed __aligned(4) sdmmc_bitfield512_t;
 
@@ -1104,3 +1108,37 @@ out:
 	rw_exit(&sc->sc_lock);
 	return (error);
 }
+
+#ifdef HIBERNATE
+int
+sdmmc_mem_hibernate_write(struct sdmmc_function *sf, daddr_t blkno,
+    u_char *data, size_t datalen)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	int i, error;
+	struct bus_dmamap dmamap;
+	paddr_t phys_addr;
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_SINGLE_ONLY)) {
+		for (i = 0; i < datalen / sf->csd.sector_size; i++) {
+			error = sdmmc_mem_write_block_subr(sf, NULL, blkno + i,
+			    data + i * sf->csd.sector_size,
+			    sf->csd.sector_size);
+			if (error)
+				return (error);
+		}
+	} else if (!ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+		return (sdmmc_mem_write_block_subr(sf, NULL, blkno, data,
+		    datalen));
+	}
+
+	/* pretend we're bus_dmamap_load */
+	bzero(&dmamap, sizeof(dmamap));
+	pmap_extract(pmap_kernel(), (vaddr_t)data, &phys_addr);
+	dmamap.dm_mapsize = datalen;
+	dmamap.dm_nsegs = 1;
+	dmamap.dm_segs[0].ds_addr = phys_addr;
+	dmamap.dm_segs[0].ds_len = datalen;
+	return (sdmmc_mem_write_block_subr(sf, &dmamap, blkno, data, datalen));
+}
+#endif

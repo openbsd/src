@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.40 2017/04/06 17:00:53 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.41 2018/03/20 04:18:40 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -31,6 +31,13 @@
 
 #include <dev/sdmmc/sdmmc_scsi.h>
 #include <dev/sdmmc/sdmmcvar.h>
+
+#ifdef HIBERNATE
+#include <sys/hibernate.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+#include <sys/rwlock.h>
+#endif
 
 #define SDMMC_SCSIID_HOST	0x00
 #define SDMMC_SCSIID_MAX	0x0f
@@ -552,3 +559,93 @@ sdmmc_scsi_minphys(struct buf *bp, struct scsi_link *sl)
 
 	minphys(bp);
 }
+
+#ifdef HIBERNATE
+int
+sdmmc_scsi_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
+    int op, void *page)
+{
+	struct {
+		struct sdmmc_softc sdmmc_sc;
+		struct sdmmc_function sdmmc_sf;
+		daddr_t poffset;
+		size_t psize;
+		struct sdmmc_function *orig_sf;
+		char chipset_softc[0];	/* size depends on the chipset layer */
+	} *state = page;
+	extern struct cfdriver sd_cd;
+	struct device *disk, *scsibus, *chip, *sdmmc;
+	struct scsibus_softc *bus_sc;
+	struct sdmmc_scsi_softc *scsi_sc;
+	struct scsi_link *link;
+	struct sdmmc_function *sf;
+	struct sdmmc_softc *sc;
+	int error;
+
+	switch (op) {
+	case HIB_INIT:
+		/* find device (sdmmc_softc, sdmmc_function) */
+		disk = disk_lookup(&sd_cd, DISKUNIT(dev));
+		scsibus = disk->dv_parent;
+		sdmmc = scsibus->dv_parent;
+		chip = sdmmc->dv_parent;
+
+		bus_sc = (struct scsibus_softc *)scsibus;
+		scsi_sc = (struct sdmmc_scsi_softc *)scsibus;
+		SLIST_FOREACH(link, &bus_sc->sc_link_list, bus_list) {
+			if (link->device_softc == disk) {
+				sc = (struct sdmmc_softc *)link->adapter_softc;
+				scsi_sc = sc->sc_scsibus;
+				sf = scsi_sc->sc_tgt[link->target].card;
+			}
+		}
+
+		/* if the chipset doesn't do hibernate, bail out now */
+		sc = (struct sdmmc_softc *)sdmmc;
+		if (sc->sct->hibernate_init == NULL)
+			return (ENOTTY);
+
+		state->sdmmc_sc = *sc;
+		state->sdmmc_sf = *sf;
+		state->sdmmc_sf.sc = &state->sdmmc_sc;
+
+		/* pretend we own the lock */
+		state->sdmmc_sc.sc_lock.rwl_owner =
+		    (((long)curproc) & ~RWLOCK_MASK) | RWLOCK_WRLOCK;
+
+		/* build chip layer fake softc */
+		error = state->sdmmc_sc.sct->hibernate_init(state->sdmmc_sc.sch,
+		    &state->chipset_softc);
+		if (error)
+			return (error);
+		state->sdmmc_sc.sch = state->chipset_softc;
+
+		/* make sure we're talking to the right target */
+		state->orig_sf = sc->sc_card;
+		error = sdmmc_select_card(&state->sdmmc_sc, &state->sdmmc_sf);
+		if (error)
+			return (error);
+
+		state->poffset = blkno;
+		state->psize = size;
+		return (0);
+
+	case HIB_W:
+		if (blkno > state->psize)
+			return (E2BIG);
+		return (sdmmc_mem_hibernate_write(&state->sdmmc_sf,
+		    blkno + state->poffset, (u_char *)addr, size));
+
+	case HIB_DONE:
+		/*
+		 * bring the hardware state back into line with the real
+		 * softc by operating on the fake one
+		 */
+		sdmmc_select_card(&state->sdmmc_sc, state->orig_sf);
+		return (0);
+	}
+
+	return (EINVAL);
+}
+
+#endif

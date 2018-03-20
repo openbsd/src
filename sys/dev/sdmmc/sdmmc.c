@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.49 2018/02/11 20:58:40 patrick Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.50 2018/03/20 04:18:40 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -630,7 +630,8 @@ sdmmc_mmc_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 #endif
 
 	error = cmd->c_error;
-	wakeup(cmd);
+	if (!cold)
+		wakeup(cmd);
 
 	return error;
 }

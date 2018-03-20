@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.50 2018/02/10 05:11:06 jmatthew Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.51 2018/03/20 04:18:40 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -45,6 +45,7 @@
 #include "ahci.h"
 #include "softraid.h"
 #include "sd.h"
+#include "sdmmc.h"
 
 /* Hibernate support */
 void    hibernate_enter_resume_4k_pte(vaddr_t, paddr_t);
@@ -97,6 +98,8 @@ get_hibernate_io_function(dev_t dev)
 		    vaddr_t addr, size_t size, int op, void *page);
 		extern int sr_hibernate_io(dev_t dev, daddr_t blkno,
 		    vaddr_t addr, size_t size, int op, void *page);
+		extern int sdmmc_scsi_hibernate_io(dev_t dev, daddr_t blkno,
+		    vaddr_t addr, size_t size, int op, void *page);
 		struct device *dv = disk_lookup(&sd_cd, DISKUNIT(dev));
 		struct {
 			const char *driver;
@@ -107,6 +110,9 @@ get_hibernate_io_function(dev_t dev)
 #endif
 #if NSOFTRAID > 0
 			{ "softraid", sr_hibernate_io },
+#endif
+#if SDMMC > 0
+			{ "sdmmc", sdmmc_scsi_hibernate_io },
 #endif
 		};
 

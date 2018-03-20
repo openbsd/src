@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sdmmc,v 1.5 2017/10/11 17:19:50 patrick Exp $
+#	$OpenBSD: files.sdmmc,v 1.6 2018/03/20 04:18:40 jmatthew Exp $
 #
 # Config file and device description for machine-independent SD/MMC code.
 # Included by ports that need it.
@@ -6,7 +6,7 @@
 define	sdmmc {}
 device	sdmmc: scsi
 attach	sdmmc at sdmmcbus
-file	dev/sdmmc/sdmmc.c		sdmmc
+file	dev/sdmmc/sdmmc.c		sdmmc	needs-flag
 file	dev/sdmmc/sdmmc_cis.c		sdmmc
 file	dev/sdmmc/sdmmc_io.c		sdmmc
 file	dev/sdmmc/sdmmc_mem.c		sdmmc

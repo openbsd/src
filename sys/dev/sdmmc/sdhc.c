@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.57 2018/03/19 21:40:32 kettenis Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.58 2018/03/20 04:18:40 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -96,10 +96,12 @@ void	sdhc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
 int	sdhc_start_command(struct sdhc_host *, struct sdmmc_command *);
 int	sdhc_wait_state(struct sdhc_host *, u_int32_t, u_int32_t);
 int	sdhc_soft_reset(struct sdhc_host *, int);
+int	sdhc_wait_intr_cold(struct sdhc_host *, int, int);
 int	sdhc_wait_intr(struct sdhc_host *, int, int);
 void	sdhc_transfer_data(struct sdhc_host *, struct sdmmc_command *);
 void	sdhc_read_data(struct sdhc_host *, u_char *, int);
 void	sdhc_write_data(struct sdhc_host *, u_char *, int);
+int	sdhc_hibernate_init(sdmmc_chipset_handle_t, void *);
 
 #ifdef SDHC_DEBUG
 int sdhcdebug = 0;
@@ -127,7 +129,9 @@ struct sdmmc_chip_functions sdhc_functions = {
 	sdhc_card_intr_mask,
 	sdhc_card_intr_ack,
 	/* UHS functions */
-	sdhc_signal_voltage
+	sdhc_signal_voltage,
+	/* hibernate */
+	sdhc_hibernate_init,
 };
 
 struct cfdriver sdhc_cd = {
@@ -1074,10 +1078,63 @@ sdhc_soft_reset(struct sdhc_host *hp, int mask)
 }
 
 int
+sdhc_wait_intr_cold(struct sdhc_host *hp, int mask, int timo)
+{
+	int status;
+
+	mask |= SDHC_ERROR_INTERRUPT;
+	timo = timo * tick;
+	status = hp->intr_status;
+	while ((status & mask) == 0) {
+
+		status = HREAD2(hp, SDHC_NINTR_STATUS);
+		if (ISSET(status, SDHC_NINTR_STATUS_MASK)) {
+			HWRITE2(hp, SDHC_NINTR_STATUS, status);
+			if (ISSET(status, SDHC_ERROR_INTERRUPT)) {
+				uint16_t error;
+				error = HREAD2(hp, SDHC_EINTR_STATUS);
+				HWRITE2(hp, SDHC_EINTR_STATUS, error);
+				hp->intr_status |= status;
+
+				if (ISSET(error, SDHC_CMD_TIMEOUT_ERROR|
+				    SDHC_DATA_TIMEOUT_ERROR))
+					break;
+			}
+
+			if (ISSET(status, SDHC_BUFFER_READ_READY |
+			    SDHC_BUFFER_WRITE_READY | SDHC_COMMAND_COMPLETE |
+			    SDHC_TRANSFER_COMPLETE)) {
+				hp->intr_status |= status;
+				break;
+			}
+
+			if (ISSET(status, SDHC_CARD_INTERRUPT)) {
+				HSET2(hp, SDHC_NINTR_STATUS_EN,
+				    SDHC_CARD_INTERRUPT);
+			}
+
+			continue;
+		}
+
+		delay(1);
+		if (timo-- == 0) {
+			status |= SDHC_ERROR_INTERRUPT;
+			break;
+		}
+	}
+
+	hp->intr_status &= ~(status & mask);
+	return (status & mask);
+}
+
+int
 sdhc_wait_intr(struct sdhc_host *hp, int mask, int timo)
 {
 	int status;
 	int s;
+
+	if (cold)
+		return (sdhc_wait_intr_cold(hp, mask, timo));
 
 	mask |= SDHC_ERROR_INTERRUPT;
 
@@ -1222,3 +1279,14 @@ sdhc_dump_regs(struct sdhc_host *hp)
 	    HREAD4(hp, SDHC_MAX_CAPABILITIES));
 }
 #endif
+
+int
+sdhc_hibernate_init(sdmmc_chipset_handle_t sch, void *fake_softc)
+{
+	struct sdhc_host *hp, *fhp;
+	fhp = fake_softc;
+	hp = sch;
+	*fhp = *hp;
+
+	return (0);
+}
