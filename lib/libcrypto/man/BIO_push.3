@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_push.3,v 1.5 2016/12/06 12:54:19 schwarze Exp $
+.\"	$OpenBSD: BIO_push.3,v 1.6 2018/03/20 19:33:16 schwarze Exp $
 .\"	OpenSSL doc/man3/BIO_push.pod 76ed5a42 Jun 29 13:38:55 2014 +0100
 .\"	OpenSSL doc/man7/bio.pod a9c85cea Nov 11 09:33:55 2016 +0100
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt BIO_PUSH 3
 .Os
 .Sh NAME
@@ -176,3 +176,9 @@ as before.
 .Xr BIO_find_type 3 ,
 .Xr BIO_new 3 ,
 .Xr BIO_read 3
+.Sh HISTORY
+.Fn BIO_push
+and
+.Fn BIO_pop
+appeared in SSLeay 0.8.1b or earlier and have been available since
+.Ox 2.4 .

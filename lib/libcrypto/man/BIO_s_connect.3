@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_s_connect.3,v 1.6 2016/12/20 23:14:37 beck Exp $
+.\"	$OpenBSD: BIO_s_connect.3,v 1.7 2018/03/20 19:33:16 schwarze Exp $
 .\"	OpenSSL 186bb907 Apr 13 11:05:13 2015 -0700
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 20 2016 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt BIO_S_CONNECT 3
 .Os
 .Sh NAME
@@ -369,3 +369,11 @@ BIO_free(out);
 .Ed
 .Sh SEE ALSO
 .Xr BIO_new 3
+.Sh HISTORY
+.Fn BIO_s_connect ,
+.Fn BIO_new_connect ,
+.Fn BIO_set_nbio ,
+and
+.Fn BIO_do_connect
+appeared in SSLeay 0.8.1b or earlier and have been available since
+.Ox 2.4 .

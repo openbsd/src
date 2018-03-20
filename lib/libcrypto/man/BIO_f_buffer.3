@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_f_buffer.3,v 1.6 2016/12/06 12:24:33 schwarze Exp $
+.\"	$OpenBSD: BIO_f_buffer.3,v 1.7 2018/03/20 19:33:16 schwarze Exp $
 .\"	OpenSSL 9b86974e Mar 19 12:32:14 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt BIO_F_BUFFER 3
 .Os
 .Sh NAME
@@ -180,3 +180,12 @@ returns 1 if the data was set correctly or 0 if there was an error.
 .Xr BIO_new 3 ,
 .Xr BIO_pop 3 ,
 .Xr BIO_reset 3
+.Sh HISTORY
+.Fn BIO_f_buffer ,
+.Fn BIO_get_buffer_num_lines ,
+.Fn BIO_set_read_buffer_size ,
+.Fn BIO_set_write_buffer_size ,
+and
+.Fn BIO_set_buffer_size
+appeared in SSLeay 0.8.1b or earlier and have been available since
+.Ox 2.4 .

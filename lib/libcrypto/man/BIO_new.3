@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_new.3,v 1.11 2018/03/20 17:10:14 schwarze Exp $
+.\" $OpenBSD: BIO_new.3,v 1.12 2018/03/20 19:33:16 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/BIO_new.pod fb46be03 Feb 26 11:51:31 2016 +0000
 .\" OpenSSL man7/bio.pod 631c37be Dec 12 16:56:50 2017 +0100
@@ -252,6 +252,13 @@ Create a memory BIO:
 .Xr BIO_set_callback 3 ,
 .Xr BIO_should_retry 3
 .Sh HISTORY
-The
-.Vt BIO
-type first appeared in SSLeay 0.6.0.
+.Fn BIO_new
+and
+.Fn BIO_free
+first appeared in SSLeay 0.6.0.
+.Fn BIO_set
+and
+.Fn BIO_free_all
+appeared in SSLeay 0.8.1b or earlier.
+All these functions have been available since
+.Ox 2.4 .

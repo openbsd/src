@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_f_null.3,v 1.6 2016/12/06 14:45:08 schwarze Exp $
+.\"	$OpenBSD: BIO_f_null.3,v 1.7 2018/03/20 19:33:16 schwarze Exp $
 .\"	OpenSSL e117a890 Sep 14 12:14:41 2000 +0000
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt BIO_F_NULL 3
 .Os
 .Sh NAME
@@ -74,3 +74,7 @@ behaves just as though the BIO was not there.
 returns the null filter BIO method.
 .Sh SEE ALSO
 .Xr BIO_new 3
+.Sh HISTORY
+.Fn BIO_f_null
+appeared in SSLeay 0.8.1b or earlier and has been available since
+.Ox 2.4 .

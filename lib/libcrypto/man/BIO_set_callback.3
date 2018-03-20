@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_set_callback.3,v 1.6 2018/02/13 01:15:24 schwarze Exp $
+.\" $OpenBSD: BIO_set_callback.3,v 1.7 2018/03/20 19:33:16 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 13 2018 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt BIO_SET_CALLBACK 3
 .Os
 .Sh NAME
@@ -256,3 +256,7 @@ Its source is in the file
 .Pa crypto/bio/bio_cb.c .
 .Sh SEE ALSO
 .Xr BIO_new 3
+.Sh HISTORY
+These functions appeared in SSLeay 0.8.1b or earlier
+and have been available since
+.Ox 2.4 .

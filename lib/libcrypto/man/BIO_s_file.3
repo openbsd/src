@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_s_file.3,v 1.6 2018/03/20 18:26:45 schwarze Exp $
+.\"	$OpenBSD: BIO_s_file.3,v 1.7 2018/03/20 19:33:16 schwarze Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -287,7 +287,18 @@ BIO_free(out);
 .Xr BIO_seek 3
 .Sh HISTORY
 .Fn BIO_s_file
-appeared in SSLeay 0.6.0 and has been available since
+and
+.Fn BIO_set_fp
+first appeared in SSLeay 0.6.0.
+.Fn BIO_new_file ,
+.Fn BIO_new_fp ,
+.Fn BIO_get_fp ,
+.Fn BIO_read_filename ,
+.Fn BIO_write_filename ,
+and
+.Fn BIO_append_filename
+appeared in SSLeay 0.8.1b or earlier.
+All these functions have been available since
 .Ox 2.4 .
 .Sh BUGS
 .Xr BIO_reset 3

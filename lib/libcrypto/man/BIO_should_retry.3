@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_should_retry.3,v 1.6 2018/02/13 01:34:34 schwarze Exp $
+.\" $OpenBSD: BIO_should_retry.3,v 1.7 2018/03/20 19:33:16 schwarze Exp $
 .\" full merge up to: OpenSSL 60e24554 Apr 6 14:45:18 2010 +0000
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 13 2018 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt BIO_SHOULD_RETRY 3
 .Os
 .Sh NAME
@@ -214,6 +214,10 @@ and use a timeout on the
 .Sh SEE ALSO
 .Xr BIO_new 3 ,
 .Xr BIO_read 3
+.Sh HISTORY
+These functions appeared in SSLeay 0.8.1b or earlier
+and have been available since
+.Ox 2.4 .
 .Sh BUGS
 The OpenSSL ASN.1 functions cannot gracefully deal with non-blocking I/O:
 they cannot retry after a partial read or write.

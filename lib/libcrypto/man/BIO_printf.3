@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_printf.3,v 1.1 2017/03/25 17:15:59 schwarze Exp $
+.\"	$OpenBSD: BIO_printf.3,v 1.2 2018/03/20 19:33:16 schwarze Exp $
 .\"	OpenSSL 2ca2e917 Mon Mar 20 16:25:22 2017 -0400
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 25 2017 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt BIO_PRINTF 3
 .Os
 .Sh NAME
@@ -84,3 +84,7 @@ also return -1 if
 is too small to hold the complete output.
 .Sh SEE ALSO
 .Xr BIO_new 3
+.Sh HISTORY
+.Fn BIO_printf
+first appeared in SSLeay 0.6.5 and has been available since
+.Ox 2.4 .
