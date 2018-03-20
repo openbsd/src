@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.18 2018/02/19 08:59:52 mpi Exp $ */
+/* $OpenBSD: imxuart.c,v 1.19 2018/03/20 23:05:54 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -38,7 +38,6 @@
 #include <ddb/db_var.h>
 #endif
 
-#include <arm/armv7/armv7var.h>
 #include <armv7/imx/imxuartreg.h>
 #include <armv7/imx/imxuartvar.h>
 
@@ -113,6 +112,7 @@ extern int comcnmode;
 
 /* XXX - we imitate 'com' serial ports and take over their entry points */
 /* XXX: These belong elsewhere */
+cdev_decl(com);
 cdev_decl(imxuart);
 
 struct cfdriver imxuart_cd = {
@@ -143,7 +143,7 @@ imxuart_init_cons(void)
 	if (fdt_get_reg(node, 0, &reg))
 		return;
 
-	imxuartcnattach(&armv7_bs_tag, reg.addr, comcnspeed, comcnmode);
+	imxuartcnattach(fdt_cons_bs_tag, reg.addr, B115200, TTYDEF_CFLAG);
 }
 
 int
@@ -796,8 +796,6 @@ imxuart_sc(dev_t dev)
 void
 imxuartcnprobe(struct consdev *cp)
 {
-	cp->cn_dev = makedev(12 /* XXX */, 0);
-	cp->cn_pri = CN_MIDPRI;
 }
 
 void
@@ -812,13 +810,21 @@ imxuartcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, tcflag_t cflag
 		NULL, NULL, imxuartcngetc, imxuartcnputc, imxuartcnpollc, NULL,
 		NODEV, CN_MIDPRI
 	};
+	int maj;
 
 	if (bus_space_map(iot, iobase, IMXUART_SPACE, 0, &imxuartconsioh))
-			return ENOMEM;
+		return ENOMEM;
+
+	/* Look for major of com(4) to replace. */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == comopen)
+			break;
+	if (maj == nchrdev)
+		return ENXIO;
 
 	cn_tab = &imxuartcons;
-	cn_tab->cn_dev = makedev(12 /* XXX */, 0);
-	cdevsw[12] = imxuartdev; 	/* KLUDGE */
+	cn_tab->cn_dev = makedev(maj, 0);
+	cdevsw[maj] = imxuartdev; 	/* KLUDGE */
 
 	imxuartconsiot = iot;
 	imxuartconsaddr = iobase;
