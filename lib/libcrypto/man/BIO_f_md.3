@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_f_md.3,v 1.7 2017/01/07 08:46:13 jmc Exp $
+.\"	$OpenBSD: BIO_f_md.3,v 1.8 2018/03/20 23:56:07 schwarze Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 7 2017 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt BIO_F_MD 3
 .Os
 .Sh NAME
@@ -246,6 +246,14 @@ BIO_free_all(bio);
 .Sh SEE ALSO
 .Xr BIO_new 3
 .Sh HISTORY
+.Fn BIO_f_md ,
+.Fn BIO_set_md ,
+.Fn BIO_get_md ,
+and
+.Fn BIO_get_md_ctx
+appeared in SSLeay 0.8.1b or earlier and have been available since
+.Ox 2.4 .
+.Pp
 Before OpenSSL 1.0.0, the call to
 .Fn BIO_get_md_ctx
 would only work if the

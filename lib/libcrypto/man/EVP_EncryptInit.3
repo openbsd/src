@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.9 2018/02/27 20:43:41 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.10 2018/03/20 23:56:07 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\" selective merge up to: OpenSSL 5c5eb286 Dec 5 00:36:43 2017 +0100
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 27 2018 $
+.Dd $Mdocdate: March 20 2018 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -1204,6 +1204,61 @@ do_crypt(FILE *in, FILE *out, int do_encrypt)
 .Sh SEE ALSO
 .Xr evp 3
 .Sh HISTORY
+.Fn EVP_CIPHER_CTX_cleanup ,
+.Fn EVP_EncryptInit ,
+.Fn EVP_EncryptUpdate ,
+.Fn EVP_EncryptFinal ,
+.Fn EVP_DecryptInit ,
+.Fn EVP_DecryptUpdate ,
+.Fn EVP_DecryptFinal ,
+.Fn EVP_CipherInit ,
+.Fn EVP_CipherUpdate ,
+.Fn EVP_CipherFinal ,
+.Fn EVP_get_cipherbyname ,
+.Fn EVP_get_cipherbynid ,
+.Fn EVP_get_cipherbyobj ,
+.Fn EVP_CIPHER_nid ,
+.Fn EVP_CIPHER_block_size ,
+.Fn EVP_CIPHER_key_length ,
+.Fn EVP_CIPHER_iv_length ,
+.Fn EVP_CIPHER_CTX_cipher ,
+.Fn EVP_CIPHER_CTX_nid ,
+.Fn EVP_CIPHER_CTX_block_size ,
+.Fn EVP_CIPHER_CTX_key_length ,
+.Fn EVP_CIPHER_CTX_iv_length ,
+.Fn EVP_CIPHER_CTX_get_app_data ,
+.Fn EVP_CIPHER_CTX_set_app_data ,
+.Fn EVP_enc_null ,
+.Fn EVP_des_cbc ,
+.Fn EVP_des_ecb ,
+.Fn EVP_des_cfb ,
+.Fn EVP_des_ofb ,
+.Fn EVP_des_ede_cbc ,
+.Fn EVP_des_ede ,
+.Fn EVP_des_ede_ofb ,
+.Fn EVP_des_ede_cfb ,
+.Fn EVP_des_ede3_cbc ,
+.Fn EVP_des_ede3 ,
+.Fn EVP_des_ede3_ofb ,
+.Fn EVP_des_ede3_cfb ,
+.Fn EVP_desx_cbc ,
+.Fn EVP_rc4 ,
+.Fn EVP_idea_cbc ,
+.Fn EVP_idea_ecb ,
+.Fn EVP_idea_cfb ,
+.Fn EVP_idea_ofb ,
+.Fn EVP_rc2_cbc ,
+.Fn EVP_rc2_ecb ,
+.Fn EVP_rc2_cfb ,
+.Fn EVP_rc2_ofb ,
+.Fn EVP_bf_cbc ,
+.Fn EVP_bf_ecb ,
+.Fn EVP_bf_cfb ,
+and
+.Fn EVP_bf_ofb
+appeared in SSLeay 0.8.1b or earlier and have been available since
+.Ox 2.4 .
+.Pp
 .Fn EVP_CIPHER_CTX_init ,
 .Fn EVP_EncryptInit_ex ,
 .Fn EVP_EncryptFinal_ex ,
@@ -1216,7 +1271,7 @@ and
 appeared in OpenSSL 0.9.7.
 .Pp
 .Fn EVP_CIPHER_CTX_reset
-fist appeared in OpenSSL 1.1.0.
+first appeared in OpenSSL 1.1.0.
 .Sh BUGS
 .Dv EVP_MAX_KEY_LENGTH
 and
