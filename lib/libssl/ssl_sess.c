@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.78 2018/03/17 16:20:01 beck Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.79 2018/03/20 15:28:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -848,6 +848,19 @@ X509 *
 SSL_SESSION_get0_peer(SSL_SESSION *s)
 {
 	return s->peer;
+}
+
+int
+SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
+    unsigned int sid_len)
+{
+	if (sid_len > SSL_MAX_SSL_SESSION_ID_LENGTH) {
+		SSLerrorx(SSL_R_SSL_SESSION_ID_TOO_LONG);
+		return 0;
+	}
+	s->session_id_length = sid_len;
+	memmove(s->session_id, sid, sid_len);
+	return 1;
 }
 
 int

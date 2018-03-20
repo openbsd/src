@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.35 2017/08/28 17:36:58 jsing Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.36 2018/03/20 15:28:12 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -390,6 +390,7 @@ static ERR_STRING_DATA SSL_str_reasons[]= {
 	{ERR_REASON(SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG), "ssl session id context too long"},
 	{ERR_REASON(SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH), "ssl session id has bad length"},
 	{ERR_REASON(SSL_R_SSL_SESSION_ID_IS_DIFFERENT), "ssl session id is different"},
+	{ERR_REASON(SSL_R_SSL_SESSION_ID_TOO_LONG), "ssl session id is too long"},
 	{ERR_REASON(SSL_R_TLSV1_ALERT_ACCESS_DENIED), "tlsv1 alert access denied"},
 	{ERR_REASON(SSL_R_TLSV1_ALERT_DECODE_ERROR), "tlsv1 alert decode error"},
 	{ERR_REASON(SSL_R_TLSV1_ALERT_DECRYPTION_FAILED), "tlsv1 alert decryption failed"},

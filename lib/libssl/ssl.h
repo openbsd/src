@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.153 2018/03/17 16:20:01 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.154 2018/03/20 15:28:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1317,6 +1317,8 @@ long	SSL_SESSION_get_timeout(const SSL_SESSION *s);
 long	SSL_SESSION_set_timeout(SSL_SESSION *s, long t);
 void	SSL_copy_session_id(SSL *to, const SSL *from);
 X509	*SSL_SESSION_get0_peer(SSL_SESSION *s);
+int	SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
+	    unsigned int sid_len);
 int	SSL_SESSION_set1_id_context(SSL_SESSION *s,
 	    const unsigned char *sid_ctx, unsigned int sid_ctx_len);
 
@@ -2039,6 +2041,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG		 273
 #define SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH		 303
 #define SSL_R_SSL_SESSION_ID_IS_DIFFERENT		 231
+#define SSL_R_SSL_SESSION_ID_TOO_LONG			 408
 #define SSL_R_TLSV1_ALERT_ACCESS_DENIED			 1049
 #define SSL_R_TLSV1_ALERT_DECODE_ERROR			 1050
 #define SSL_R_TLSV1_ALERT_DECRYPTION_FAILED		 1021
