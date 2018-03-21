@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_sk_new.3,v 1.1 2018/03/01 19:20:09 schwarze Exp $
+.\" $OpenBSD: OPENSSL_sk_new.3,v 1.2 2018/03/21 01:41:03 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 1 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt OPENSSL_SK_NEW 3
 .Os
 .Sh NAME
@@ -203,7 +203,7 @@ on the other.
 frees the given
 .Fa stack .
 It does not free any of the pointers stored on the stack.
-Unless these pointers are merely copies of pointers owner by
+Unless these pointers are merely copies of pointers owned by
 other objects, they must be freed before calling
 .Fn sk_free ,
 in order to avoid leaking memory.
@@ -397,9 +397,10 @@ pointer must not be
 removes all pointers from the
 .Fa stack .
 It does not free any of the pointers.
-Unless these pointers are merely copies of pointers owner by other
-objects, they must be freed before calling sk_zero(), in order to
-avoid leaking memory.
+Unless these pointers are merely copies of pointers owned by other
+objects, they must be freed before calling
+.Fn sk_zero ,
+in order to avoid leaking memory.
 If
 .Fa stack
 is a
@@ -523,6 +524,27 @@ returns
 or
 .Dv NULL
 if it is not found.
+.Sh HISTORY
+.Fn sk_new_null ,
+.Fn sk_new ,
+.Fn sk_set_cmp_func ,
+.Fn sk_dup ,
+.Fn sk_free ,
+.Fn sk_pop_free ,
+.Fn sk_num ,
+.Fn sk_value ,
+.Fn sk_find ,
+.Fn sk_push ,
+.Fn sk_unshift ,
+.Fn sk_insert ,
+.Fn sk_pop ,
+.Fn sk_shift ,
+.Fn sk_delete ,
+.Fn sk_delete_ptr ,
+and
+.Fn sk_zero
+appeared in SSLeay 0.8.1b or earlier and have been available since
+.Ox 2.4 .
 .Sh BUGS
 .Fn sk_set
 does not set the state of the
