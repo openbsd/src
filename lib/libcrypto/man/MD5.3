@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MD5.3,v 1.5 2018/02/27 20:28:06 schwarze Exp $
+.\"	$OpenBSD: MD5.3,v 1.6 2018/03/21 00:03:37 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org> and
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 27 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt MD5 3
 .Os
 .Sh NAME
@@ -184,7 +184,8 @@ RFC 1320, RFC 1321
 .Fn MD5_Update ,
 and
 .Fn MD5_Final
-are available in all versions of SSLeay and OpenSSL.
+appeared in SSLeay 0.8.1b or earlier and have been available since
+.Ox 2.4 .
 .Pp
 .Fn MD4 ,
 .Fn MD4_Init ,
