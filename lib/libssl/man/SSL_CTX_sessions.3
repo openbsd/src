@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_sessions.3,v 1.2 2016/11/30 16:25:29 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_sessions.3,v 1.3 2018/03/21 05:07:04 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt SSL_CTX_SESSIONS 3
 .Os
 .Sh NAME
@@ -80,3 +80,7 @@ family of functions.
 .Xr ssl 3 ,
 .Xr SSL_CTX_add_session 3 ,
 .Xr SSL_CTX_set_session_cache_mode 3
+.Sh HISTORY
+.Fn SSL_CTX_sessions
+appeared before SSLeay 0.8 and has been available since
+.Ox 2.4 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_read.3,v 1.4 2016/12/07 18:47:23 schwarze Exp $
+.\"	$OpenBSD: SSL_read.3,v 1.5 2018/03/21 05:07:04 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org> and
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 7 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt SSL_READ 3
 .Os
 .Sh NAME
@@ -223,3 +223,9 @@ with the return value to find out the reason.
 .Xr SSL_set_shutdown 3 ,
 .Xr SSL_shutdown 3 ,
 .Xr SSL_write 3
+.Sh HISTORY
+.Fn SSL_read
+and
+.Fn SSL_peek
+appeared before SSLeay 0.8 and have been available since
+.Ox 2.4 .

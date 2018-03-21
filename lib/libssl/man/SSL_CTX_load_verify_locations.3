@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_load_verify_locations.3,v 1.2 2016/11/30 14:16:38 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_load_verify_locations.3,v 1.3 2018/03/21 05:07:04 schwarze Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt SSL_CTX_LOAD_VERIFY_LOCATIONS 3
 .Os
 .Sh NAME
@@ -221,6 +221,12 @@ $ for c in *.pem; do
 .Xr SSL_CTX_set_client_CA_list 3 ,
 .Xr SSL_CTX_use_certificate 3 ,
 .Xr SSL_get_client_CA_list 3
+.Sh HISTORY
+.Fn SSL_CTX_load_verify_locations
+and
+.Fn SSL_CTX_set_default_verify_paths
+appeared before SSLeay 0.8 and have been available since
+.Ox 2.4 .
 .Sh CAVEATS
 If several CA certificates matching the name, key identifier, and serial
 number condition are available, only the first one will be examined.

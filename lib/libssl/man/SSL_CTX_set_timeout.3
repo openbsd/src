@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_timeout.3,v 1.2 2016/12/01 19:50:12 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_timeout.3,v 1.3 2018/03/21 05:07:04 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 1 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt SSL_CTX_SET_TIMEOUT 3
 .Os
 .Sh NAME
@@ -110,3 +110,9 @@ returns the currently set timeout value.
 .Xr SSL_CTX_set_session_cache_mode 3 ,
 .Xr SSL_get_default_timeout 3 ,
 .Xr SSL_SESSION_get_time 3
+.Sh HISTORY
+.Fn SSL_CTX_set_timeout
+and
+.Fn SSL_CTX_get_timeout
+appeared before SSLeay 0.8 and have been available since
+.Ox 2.4 .

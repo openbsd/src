@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_get_SSL_CTX.3,v 1.2 2016/12/03 08:54:21 schwarze Exp $
+.\"	$OpenBSD: SSL_get_SSL_CTX.3,v 1.3 2018/03/21 05:07:04 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 3 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt SSL_GET_SSL_CTX 3
 .Os
 .Sh NAME
@@ -73,3 +73,7 @@ object is returned.
 .Sh SEE ALSO
 .Xr ssl 3 ,
 .Xr SSL_new 3
+.Sh HISTORY
+.Fn SSL_get_SSL_CTX
+appeared before SSLeay 0.8 and has been available since
+.Ox 2.4 .

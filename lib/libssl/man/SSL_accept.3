@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_accept.3,v 1.3 2016/12/06 12:24:33 schwarze Exp $
+.\"	$OpenBSD: SSL_accept.3,v 1.4 2018/03/21 05:07:04 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt SSL_ACCEPT 3
 .Os
 .Sh NAME
@@ -149,3 +149,7 @@ to find out the reason.
 .Xr SSL_get_error 3 ,
 .Xr SSL_set_connect_state 3 ,
 .Xr SSL_shutdown 3
+.Sh HISTORY
+.Fn SSL_accept
+appeared before SSLeay 0.8 and has been available since
+.Ox 2.4 .

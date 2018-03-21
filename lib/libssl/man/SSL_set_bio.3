@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_set_bio.3,v 1.3 2016/12/06 12:24:33 schwarze Exp $
+.\"	$OpenBSD: SSL_set_bio.3,v 1.4 2018/03/21 05:07:04 schwarze Exp $
 .\"	OpenSSL acb5b343 Sep 16 16:00:38 2000 +0000
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt SSL_SET_BIO 3
 .Os
 .Sh NAME
@@ -96,3 +96,7 @@ cannot fail.
 .Xr SSL_connect 3 ,
 .Xr SSL_get_rbio 3 ,
 .Xr SSL_shutdown 3
+.Sh HISTORY
+.Fn SSL_set_bio
+appeared before SSLeay 0.8 and has been available since
+.Ox 2.4 .

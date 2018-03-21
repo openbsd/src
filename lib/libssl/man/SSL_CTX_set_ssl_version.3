@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_ssl_version.3,v 1.2 2016/12/01 19:50:12 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_ssl_version.3,v 1.3 2018/03/21 05:07:04 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 1 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt SSL_CTX_SET_SSL_VERSION 3
 .Os
 .Sh NAME
@@ -126,3 +126,10 @@ The operation succeeded.
 .Xr SSL_CTX_new 3 ,
 .Xr SSL_new 3 ,
 .Xr SSL_set_connect_state 3
+.Sh HISTORY
+.Fn SSL_CTX_set_ssl_version ,
+.Fn SSL_set_ssl_method ,
+and
+.Fn SSL_get_ssl_method
+appeared before SSLeay 0.8 and have been available since
+.Ox 2.4 .

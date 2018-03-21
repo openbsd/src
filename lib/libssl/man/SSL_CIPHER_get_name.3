@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CIPHER_get_name.3,v 1.5 2018/03/18 08:56:45 schwarze Exp $
+.\" $OpenBSD: SSL_CIPHER_get_name.3,v 1.6 2018/03/21 05:07:04 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 18 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt SSL_CIPHER_GET_NAME 3
 .Os
 .Sh NAME
@@ -321,6 +321,14 @@ A complete list can be retrieved by invoking the following command:
 .Xr ssl 3 ,
 .Xr SSL_get_ciphers 3 ,
 .Xr SSL_get_current_cipher 3
+.Sh HISTORY
+.Fn SSL_CIPHER_get_name ,
+.Fn SSL_CIPHER_get_bits ,
+.Fn SSL_CIPHER_get_version ,
+and
+.Fn SSL_CIPHER_description
+appeared before SSLeay 0.8 and have been available since
+.Ox 2.4 .
 .Sh BUGS
 If
 .Fn SSL_CIPHER_description
