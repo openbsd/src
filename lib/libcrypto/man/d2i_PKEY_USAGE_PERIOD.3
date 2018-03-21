@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_PKEY_USAGE_PERIOD.3,v 1.1 2016/12/28 20:36:33 schwarze Exp $
+.\"	$OpenBSD: d2i_PKEY_USAGE_PERIOD.3,v 1.2 2018/03/21 16:09:51 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt D2I_PKEY_USAGE_PERIOD 3
 .Os
 .Sh NAME
@@ -66,3 +66,9 @@ section 4.2.1.4: Private Key Usage Period
 RFC 3280 was obsoleted by RFC 5280; see
 .Xr PKEY_USAGE_PERIOD_new 3
 for details.
+.Sh HISTORY
+.Fn d2i_PKEY_USAGE_PERIOD
+and
+.Fn i2d_PKEY_USAGE_PERIOD
+first appeared in OpenSSL 0.9.2b and have been available since
+.Ox 2.6 .

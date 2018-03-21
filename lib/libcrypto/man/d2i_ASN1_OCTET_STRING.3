@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.7 2018/03/21 09:03:49 schwarze Exp $
+.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.8 2018/03/21 16:09:51 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -406,5 +406,14 @@ appeared in SSLeay 0.8.1b or earlier and have been available since
 .Fn d2i_ASN1_BMPSTRING
 and
 .Fn i2d_ASN1_BMPSTRING
-first appeared in SSLeay 0.9.1 and have been available since
+first appeared in SSLeay 0.9.1.
+.Fn d2i_ASN1_ENUMERATED ,
+.Fn i2d_ASN1_ENUMERATED ,
+.Fn d2i_ASN1_GENERALIZEDTIME ,
+.Fn i2d_ASN1_GENERALIZEDTIME ,
+.Fn d2i_ASN1_TIME ,
+and
+.Fn i2d_ASN1_TIME
+first appeared in OpenSSL 0.9.2b.
+These functions have been available since
 .Ox 2.6 .

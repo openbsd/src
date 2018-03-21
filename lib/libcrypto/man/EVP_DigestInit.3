@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_DigestInit.3,v 1.10 2018/03/21 07:00:52 schwarze Exp $
+.\" $OpenBSD: EVP_DigestInit.3,v 1.11 2018/03/21 16:09:51 schwarze Exp $
 .\" full merge up to: OpenSSL 7f572e95 Dec 2 13:57:04 2015 +0000
 .\" selective merge up to: OpenSSL a95d7574 Jul 2 12:16:38 2017 -0400
 .\"
@@ -648,6 +648,10 @@ and
 first appeared in SSLeay 0.9.0.
 All these functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn EVP_MD_CTX_copy
+first appeared in OpenSSL 0.9.2b and has been available since
+.Ox 2.6 .
 .Pp
 .Fn EVP_MD_CTX_init ,
 .Fn EVP_MD_CTX_create ,

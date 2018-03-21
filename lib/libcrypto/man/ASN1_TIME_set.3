@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_TIME_set.3,v 1.5 2018/03/21 05:43:56 schwarze Exp $
+.\"	$OpenBSD: ASN1_TIME_set.3,v 1.6 2018/03/21 16:09:51 schwarze Exp $
 .\"	OpenSSL ASN1_TIME_set.pod cf37aaa3 Aug 4 11:24:03 2017 +1000
 .\"	OpenSSL ASN1_TIME_set.pod e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
@@ -405,6 +405,16 @@ appeared in SSLeay 0.8.1b or earlier.
 first appeared in SSLeay 0.9.0.
 All these functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn ASN1_TIME_set ,
+.Fn ASN1_GENERALIZEDTIME_set ,
+.Fn ASN1_GENERALIZEDTIME_set_string ,
+.Fn ASN1_GENERALIZEDTIME_check ,
+.Fn ASN1_TIME_print ,
+and
+.Fn ASN1_GENERALIZEDTIME_print
+first appeared in OpenSSL 0.9.2b and have been available since
+.Ox 2.6 .
 .Pp
 .Fn ASN1_TIME_cmp_time_t
 first appeared in OpenSSL 1.1.1.
