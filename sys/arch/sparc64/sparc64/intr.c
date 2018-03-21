@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.58 2017/12/22 15:52:36 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.59 2018/03/21 14:25:14 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -253,6 +253,8 @@ intr_establish(int level, struct intrhand *ih)
 			nih->ih_clr = q->ih_clr;
 			nih->ih_ack = q->ih_ack;
 			q->ih_ack = NULL;
+			nih->ih_bus = q->ih_bus;
+			nih->ih_cpu = q->ih_cpu;
 
 			intrlev[ih->ih_number] = q = nih;
 		} else
