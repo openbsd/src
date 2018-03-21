@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.34 2018/03/20 15:45:32 mpi Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.35 2018/03/21 12:28:39 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -333,6 +333,9 @@ rw_status(struct rwlock *rwl)
 void
 rw_assert_wrlock(struct rwlock *rwl)
 {
+	if (panicstr || db_active)
+		return;
+
 	if (!(rwl->rwl_owner & RWLOCK_WRLOCK))
 		panic("%s: lock not held", rwl->rwl_name);
 
@@ -343,6 +346,9 @@ rw_assert_wrlock(struct rwlock *rwl)
 void
 rw_assert_rdlock(struct rwlock *rwl)
 {
+	if (panicstr || db_active)
+		return;
+
 	if (!RWLOCK_OWNER(rwl) || (rwl->rwl_owner & RWLOCK_WRLOCK))
 		panic("%s: lock not shared", rwl->rwl_name);
 }
@@ -350,6 +356,9 @@ rw_assert_rdlock(struct rwlock *rwl)
 void
 rw_assert_anylock(struct rwlock *rwl)
 {
+	if (panicstr || db_active)
+		return;
+
 	switch (rw_status(rwl)) {
 	case RW_WRITE_OTHER:
 		panic("%s: lock held by different process", rwl->rwl_name);
@@ -361,6 +370,9 @@ rw_assert_anylock(struct rwlock *rwl)
 void
 rw_assert_unlocked(struct rwlock *rwl)
 {
+	if (panicstr || db_active)
+		return;
+
 	if (rwl->rwl_owner != 0L)
 		panic("%s: lock held", rwl->rwl_name);
 }
