@@ -1,4 +1,4 @@
-/* $OpenBSD: mvpinctrl.c,v 1.3 2018/03/19 17:07:20 kettenis Exp $ */
+/* $OpenBSD: mvpinctrl.c,v 1.4 2018/03/21 09:17:21 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -26,17 +26,14 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 #define HREAD4(sc, reg)							\
-	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
+	(regmap_read_4((sc)->sc_rm, (reg)))
 #define HWRITE4(sc, reg, val)						\
-	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
-#define HSET4(sc, reg, bits)						\
-	HWRITE4((sc), (reg), HREAD4((sc), (reg)) | (bits))
-#define HCLR4(sc, reg, bits)						\
-	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
+	regmap_write_4((sc)->sc_rm, (reg), (val))
 
 struct mvpinctrl_pin {
 	char *pin;
@@ -49,6 +46,7 @@ struct mvpinctrl_softc {
 	struct device		 sc_dev;
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
+	struct regmap		*sc_rm;
 	struct mvpinctrl_pin	*sc_pins;
 	int			 sc_npins;
 };
@@ -71,30 +69,89 @@ struct cfdriver mvpinctrl_cd = {
 
 #include "mvpinctrl_pins.h"
 
+struct mvpinctrl_pins {
+	const char *compat;
+	struct mvpinctrl_pin *pins;
+	int npins;
+};
+
+struct mvpinctrl_pins mvpinctrl_pins[] = {
+	{
+		"marvell,mv88f6810-pinctrl",
+		armada_38x_pins, nitems(armada_38x_pins)
+	},
+	{
+		"marvell,mv88f6820-pinctrl",
+		armada_38x_pins, nitems(armada_38x_pins)
+	},
+	{
+		"marvell,mv88f6828-pinctrl",
+		armada_38x_pins, nitems(armada_38x_pins)
+	},
+	{
+		"marvell,ap806-pinctrl",
+		armada_ap806_pins, nitems(armada_ap806_pins)
+	},
+	{
+		"marvell,cp110-pinctrl",
+		armada_cp110_pins, nitems(armada_cp110_pins)
+	},
+};
+
 int
 mvpinctrl_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
+	int i;
 
-	return OF_is_compatible(faa->fa_node, "marvell,mv88f6828-pinctrl");
+	for (i = 0; i < nitems(mvpinctrl_pins); i++) {
+		if (OF_is_compatible(faa->fa_node, mvpinctrl_pins[i].compat))
+			return 1;
+	}
+
+	return 0;
 }
 
 void
 mvpinctrl_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct mvpinctrl_softc *sc = (struct mvpinctrl_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	struct mvpinctrl_softc *sc = (struct mvpinctrl_softc *) self;
+	int i;
 
-	sc->sc_iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
-	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
-		panic("mvpinctrl_attach: bus_space_map failed!");
+	if (faa->fa_nreg > 0) {
+		sc->sc_iot = faa->fa_iot;
+		if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+		    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
+			printf(": can't map registers\n");
+			return;
+		}
 
-	sc->sc_pins = armada_38x_pins;
-	sc->sc_npins = nitems(armada_38x_pins);
-	pinctrl_register(faa->fa_node, mvpinctrl_pinctrl, sc);
+		regmap_register(faa->fa_node, sc->sc_iot, sc->sc_ioh,
+		    faa->fa_reg[0].size);
+		sc->sc_rm = regmap_bynode(faa->fa_node);
+	} else {
+		/* No registers; use regmap provided by parent. */
+		sc->sc_rm = regmap_bynode(OF_parent(faa->fa_node));
+	}
+
+	if (sc->sc_rm == NULL) {
+		printf(": no registers\n");
+		return;
+	}
 
 	printf("\n");
+
+	for (i = 0; i < nitems(mvpinctrl_pins); i++) {
+		if (OF_is_compatible(faa->fa_node, mvpinctrl_pins[i].compat)) {
+			sc->sc_pins = mvpinctrl_pins[i].pins;
+			sc->sc_npins = mvpinctrl_pins[i].npins;
+			break;
+		}
+	}
+
+	KASSERT(sc->sc_pins);
+	pinctrl_register(faa->fa_node, mvpinctrl_pinctrl, sc);
 }
 
 int
