@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_TIME_set.3,v 1.4 2018/03/20 18:35:13 schwarze Exp $
+.\"	$OpenBSD: ASN1_TIME_set.3,v 1.5 2018/03/21 05:43:56 schwarze Exp $
 .\"	OpenSSL ASN1_TIME_set.pod cf37aaa3 Aug 4 11:24:03 2017 +1000
 .\"	OpenSSL ASN1_TIME_set.pod e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 20 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt ASN1_TIME_SET 3
 .Os
 .Sh NAME
@@ -400,7 +400,10 @@ BIO_free(b);
 .Fn ASN1_UTCTIME_check ,
 and
 .Fn ASN1_UTCTIME_print
-appeared in SSLeay 0.8.1b or earlier and have been available since
+appeared in SSLeay 0.8.1b or earlier.
+.Fn ASN1_UTCTIME_set_string
+first appeared in SSLeay 0.9.0.
+All these functions have been available since
 .Ox 2.4 .
 .Pp
 .Fn ASN1_TIME_cmp_time_t

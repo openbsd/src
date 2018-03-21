@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OBJ_nid2obj.3,v 1.6 2018/03/21 00:10:48 schwarze Exp $
+.\"	$OpenBSD: OBJ_nid2obj.3,v 1.7 2018/03/21 05:43:56 schwarze Exp $
 .\"	OpenSSL c264592d May 14 11:28:00 2006 +0000
 .\"
 .\" This file is a derived work.
@@ -381,7 +381,10 @@ obj = OBJ_txt2obj("1.2.3.4", 1);
 .Fn OBJ_dup ,
 and
 .Fn OBJ_cleanup
-appeared in SSLeay 0.8.1b or earlier and have been available since
+appeared in SSLeay 0.8.1b or earlier.
+.Fn i2t_ASN1_OBJECT
+first appeared in SSLeay 0.9.0.
+All these functions have been available since
 .Ox 2.4 .
 .Sh BUGS
 .Fn OBJ_obj2txt
