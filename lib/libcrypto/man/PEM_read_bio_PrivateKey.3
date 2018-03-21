@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PEM_read_bio_PrivateKey.3,v 1.9 2018/03/21 00:37:32 schwarze Exp $
+.\"	$OpenBSD: PEM_read_bio_PrivateKey.3,v 1.10 2018/03/21 21:18:08 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -1260,6 +1260,24 @@ and
 .Fn PEM_write_PKCS7
 appeared in SSLeay 0.8.1b or earlier and have been available since
 .Ox 2.4 .
+.Pp
+.Fn PEM_write_bio_PKCS8PrivateKey ,
+.Fn PEM_write_PKCS8PrivateKey ,
+.Fn PEM_read_bio_PKCS8 ,
+.Fn PEM_read_PKCS8 ,
+.Fn PEM_write_bio_PKCS8 ,
+.Fn PEM_write_PKCS8 ,
+.Fn PEM_read_bio_PKCS8_PRIV_KEY_INFO ,
+.Fn PEM_read_PKCS8_PRIV_KEY_INFO ,
+.Fn PEM_write_bio_PKCS8_PRIV_KEY_INFO ,
+.Fn PEM_write_PKCS8_PRIV_KEY_INFO ,
+.Fn PEM_read_bio_NETSCAPE_CERT_SEQUENCE ,
+.Fn PEM_read_NETSCAPE_CERT_SEQUENCE ,
+.Fn PEM_write_bio_NETSCAPE_CERT_SEQUENCE ,
+and
+.Fn PEM_write_NETSCAPE_CERT_SEQUENCE ,
+first appeared in OpenSSL 0.9.4 and have been available since
+.Ox 2.6 .
 .Sh CAVEATS
 A frequent cause of problems is attempting to use the PEM routines like
 this:

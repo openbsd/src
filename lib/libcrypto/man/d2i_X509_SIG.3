@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_X509_SIG.3,v 1.7 2018/03/21 03:16:08 schwarze Exp $
+.\"	$OpenBSD: d2i_X509_SIG.3,v 1.8 2018/03/21 21:18:08 schwarze Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -129,6 +129,14 @@ and
 .Fn i2d_X509_SIG
 appeared before SSLeay 0.8 and have been available since
 .Ox 2.4 .
+.Pp
+.Fn d2i_PKCS8_bio ,
+.Fn i2d_PKCS8_bio ,
+.Fn d2i_PKCS8_fp ,
+and
+.Fn i2d_PKCS8_fp
+first appeared in OpenSSL 0.9.4 and have been available since
+.Ox 2.6 .
 .Sh BUGS
 .Fn d2i_PKCS8_bio ,
 .Fn i2d_PKCS8_bio ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: CRYPTO_set_locking_callback.3,v 1.6 2018/03/20 21:27:32 schwarze Exp $
+.\"	$OpenBSD: CRYPTO_set_locking_callback.3,v 1.7 2018/03/21 21:18:08 schwarze Exp $
 .\"	OpenSSL doc/crypto/threads.pod fb552ac6 Sep 30 23:43:01 2009 +0000
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>,
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 20 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt CRYPTO_SET_LOCKING_CALLBACK 3
 .Os
 .Sh NAME
@@ -376,7 +376,9 @@ appeared in SSLeay 0.8.1b or earlier and have been available since
 .Ox 2.4 .
 .Pp
 .Fn CRYPTO_num_locks
-was added in OpenSSL 0.9.4.
+first appeared in OpenSSL 0.9.4 and have been available since
+.Ox 2.6 .
+.Pp
 All functions dealing with dynamic locks were added in OpenSSL 0.9.5b-dev.
 .Vt CRYPTO_THREADID
 and associated functions were introduced in OpenSSL 1.0.0 to replace

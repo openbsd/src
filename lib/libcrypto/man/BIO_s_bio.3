@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_s_bio.3,v 1.9 2017/01/06 02:29:18 schwarze Exp $
+.\"	$OpenBSD: BIO_s_bio.3,v 1.10 2018/03/21 21:18:08 schwarze Exp $
 .\"	OpenSSL c03726ca Aug 27 12:28:08 2015 -0400
 .\"
 .\" This file was written by
@@ -53,7 +53,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 6 2017 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt BIO_S_BIO 3
 .Os
 .Sh NAME
@@ -360,6 +360,20 @@ SSL operations can successfully be continued.
 .Xr BIO_should_retry 3 ,
 .Xr ssl 3 ,
 .Xr SSL_set_bio 3
+.Sh HISTORY
+.Fn BIO_s_bio ,
+.Fn BIO_make_bio_pair ,
+.Fn BIO_destroy_bio_pair ,
+.Fn BIO_set_write_buf_size ,
+.Fn BIO_get_write_buf_size ,
+.Fn BIO_new_bio_pair ,
+.Fn BIO_get_write_guarantee ,
+.Fn BIO_ctrl_get_write_guarantee ,
+.Fn BIO_get_read_request ,
+and
+.Fn BIO_ctrl_reset_read_request
+first appeared in OpenSSL 0.9.4 and have been available since
+.Ox 2.6 .
 .Sh CAVEATS
 As the data is buffered, SSL operations may return with an
 .Dv ERROR_SSL_WANT_READ
