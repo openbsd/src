@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_sign.3,v 1.4 2016/12/11 12:21:48 schwarze Exp $
+.\"	$OpenBSD: RSA_sign.3,v 1.5 2018/03/21 01:27:25 schwarze Exp $
 .\"	OpenSSL aa90ca11 Aug 20 15:48:56 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 11 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt RSA_SIGN 3
 .Os
 .Sh NAME
@@ -142,4 +142,5 @@ SSL, PKCS #1 v2.0
 .Fn RSA_sign
 and
 .Fn RSA_verify
-are available in all versions of SSLeay and OpenSSL.
+appeared before SSLeay 0.8 and have been available since
+.Ox 2.4 .
