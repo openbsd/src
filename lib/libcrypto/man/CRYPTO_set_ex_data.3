@@ -1,4 +1,4 @@
-.\"	$OpenBSD: CRYPTO_set_ex_data.3,v 1.7 2017/01/06 20:35:23 schwarze Exp $
+.\"	$OpenBSD: CRYPTO_set_ex_data.3,v 1.8 2018/03/21 06:33:19 schwarze Exp $
 .\"	OpenSSL CRYPTO_get_ex_new_index.pod 35cb565a Nov 19 15:49:30 2015 -0500
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -98,7 +98,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 6 2017 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt CRYPTO_SET_EX_DATA 3
 .Os
 .Sh NAME
@@ -391,7 +391,11 @@ On failure an error code can be obtained from
 .Xr RSA_get_ex_new_index 3 ,
 .Xr X509_STORE_CTX_get_ex_new_index 3
 .Sh HISTORY
-.Fn CRYPTO_set_ex_data
+.Fn CRYPTO_get_ex_new_index ,
+.Fn CRYPTO_set_ex_data ,
+.Fn CRYPTO_get_ex_data ,
+.Fn CRYPTO_free_ex_data ,
 and
-.Fn CRYPTO_get_ex_data
-have been available since SSLeay 0.9.0.
+.Fn CRYPTO_new_ex_data
+first appeared in SSLeay 0.9.0 and have been available since
+.Ox 2.4 .
