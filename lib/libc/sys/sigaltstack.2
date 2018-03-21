@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaltstack.2,v 1.20 2018/02/11 04:50:25 deraadt Exp $
+.\"	$OpenBSD: sigaltstack.2,v 1.21 2018/03/21 16:22:21 gsoares Exp $
 .\"	$NetBSD: sigaltstack.2,v 1.3 1995/02/27 10:41:52 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sigaltstack.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: February 11 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt SIGALTSTACK 2
 .Os
 .Sh NAME
@@ -109,7 +109,7 @@ the usual case when allocating an alternate stack area.
 The following code fragment is typically used to allocate an alternate stack.
 .Bd -literal -offset indent
 if ((sigstk.ss_sp = mmap(NULL, SIGSTKSZ, PROT_WRITE | PROT_READ,
-    MAP_PRIVATE | MAP_ANON | MAP_STACK, -1, 0)) == NULL)
+    MAP_PRIVATE | MAP_ANON | MAP_STACK, -1, 0)) == MAP_FAILED)
 	/* error return */
 sigstk.ss_size = SIGSTKSZ;
 sigstk.ss_flags = 0;
