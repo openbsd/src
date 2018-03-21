@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.345 2018/02/19 08:59:53 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.346 2018/03/21 14:42:41 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -215,7 +215,14 @@ reroute:
 			ifp = if_get(rtable_loindex(m->m_pkthdr.ph_rtableid));
 		else
 			ifp = if_get(ro->ro_rt->rt_ifidx);
+		/*
+		 * We aren't using rtisvalid() here because the UP/DOWN state
+		 * machine is broken with some Ethernet drivers like em(4).
+		 * As a result we might try to use an invalid cached route
+		 * entry while an interface is being detached.
+		 */
 		if (ifp == NULL) {
+			ipstat_inc(ips_noroute);
 			error = EHOSTUNREACH;
 			goto bad;
 		}
