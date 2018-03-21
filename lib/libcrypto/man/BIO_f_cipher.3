@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_f_cipher.3,v 1.7 2018/03/20 23:56:07 schwarze Exp $
+.\"	$OpenBSD: BIO_f_cipher.3,v 1.8 2018/03/21 09:03:49 schwarze Exp $
 .\"	OpenSSL 186bb907 Apr 13 11:05:13 2015 -0700
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 20 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt BIO_F_CIPHER 3
 .Os
 .Sh NAME
@@ -169,3 +169,7 @@ and
 .Fn BIO_get_cipher_status
 appeared in SSLeay 0.8.1b or earlier and have been available since
 .Ox 2.4 .
+.Pp
+.Fn BIO_get_cipher_ctx
+first appeared in SSLeay 0.9.1 and has been available since
+.Ox 2.6 .

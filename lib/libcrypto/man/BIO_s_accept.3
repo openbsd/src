@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_s_accept.3,v 1.7 2018/03/21 06:09:37 schwarze Exp $
+.\"	$OpenBSD: BIO_s_accept.3,v 1.8 2018/03/21 09:03:49 schwarze Exp $
 .\"	OpenSSL c03726ca Thu Aug 27 12:28:08 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -367,3 +367,9 @@ appeared in SSLeay 0.8.1b or earlier.
 first appeared in SSLeay 0.9.0.
 All these functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn BIO_set_bind_mode
+and
+.Fn BIO_get_bind_mode
+first appeared in SSLeay 0.9.1 and have been available since
+.Ox 2.6 .

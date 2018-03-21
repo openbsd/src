@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_set_flags.3,v 1.1 2017/01/30 01:29:31 schwarze Exp $
+.\"	$OpenBSD: BN_set_flags.3,v 1.2 2018/03/21 09:03:49 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 30 2017 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt BN_SET_FLAGS 3
 .Os
 .Sh NAME
@@ -138,6 +138,12 @@ returns zero or more of the above constants, OR'ed together.
 .Xr BN_mod_inverse 3 ,
 .Xr BN_new 3 ,
 .Xr BN_with_flags 3
+.Sh HISTORY
+.Fn BN_set_flags
+and
+.Fn BN_get_flags
+first appeared in SSLeay 0.9.1 and have been available since
+.Ox 2.6 .
 .Sh CAVEATS
 No public interface exists to clear a flag once it is set.
 So think twice before using

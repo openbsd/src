@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_ctrl.3,v 1.10 2018/03/21 06:09:37 schwarze Exp $
+.\"	$OpenBSD: BIO_ctrl.3,v 1.11 2018/03/21 09:03:49 schwarze Exp $
 .\"	OpenSSL b055fceb Thu Oct 20 09:56:18 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -329,6 +329,12 @@ and
 first appeared in SSLeay 0.9.0.
 All these functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn BIO_seek
+and
+.Fn BIO_tell
+first appeared in SSLeay 0.9.1 and have been available since
+.Ox 2.6 .
 .Sh BUGS
 Some of the return values are ambiguous and care should be taken.
 In particular a return value of 0 can be returned if an operation

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_add.3,v 1.9 2018/03/21 06:26:31 schwarze Exp $
+.\"	$OpenBSD: BN_add.3,v 1.10 2018/03/21 09:03:49 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -407,7 +407,9 @@ The
 .Fa ctx
 argument to
 .Fn BN_mul
-was added in SSLeay 0.9.1b.
+was added in SSLeay 0.9.1 and
+.Ox 2.6 .
+.Pp
 .Fn BN_nnmod ,
 .Fn BN_mod_add ,
 .Fn BN_mod_sub ,
