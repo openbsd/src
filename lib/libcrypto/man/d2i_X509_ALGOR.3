@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_X509_ALGOR.3,v 1.7 2016/12/28 14:17:47 schwarze Exp $
+.\"	$OpenBSD: d2i_X509_ALGOR.3,v 1.8 2018/03/21 03:16:08 schwarze Exp $
 .\"	OpenSSL 186bb907 Apr 13 11:05:13 2015 -0700
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt D2I_X509_ALGOR 3
 .Os
 .Sh NAME
@@ -50,3 +50,9 @@ For details about the semantics, examples, caveats, and bugs, see
 .Sh STANDARDS
 RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
 Certificate Revocation List (CRL) Profile
+.Sh HISTORY
+.Fn d2i_X509_ALGOR
+and
+.Fn i2d_X509_ALGOR
+appeared before SSLeay 0.8 and have been available since
+.Ox 2.4 .

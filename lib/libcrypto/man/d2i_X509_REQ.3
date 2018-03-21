@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_X509_REQ.3,v 1.5 2016/12/28 15:18:05 schwarze Exp $
+.\"	$OpenBSD: d2i_X509_REQ.3,v 1.6 2018/03/21 03:16:08 schwarze Exp $
 .\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt D2I_X509_REQ 3
 .Os
 .Sh NAME
@@ -134,3 +134,15 @@ return 1 for success or 0 if an error occurs.
 .Xr X509_REQ_new 3
 .Sh STANDARDS
 RFC 2986: PKCS #10: Certification Request Syntax Specification
+.Sh HISTORY
+.Fn d2i_X509_REQ ,
+.Fn i2d_X509_REQ ,
+.Fn d2i_X509_REQ_bio ,
+.Fn d2i_X509_REQ_fp ,
+.Fn i2d_X509_REQ_bio ,
+.Fn i2d_X509_REQ_fp ,
+.Fn d2i_X509_REQ_INFO ,
+and
+.Fn i2d_X509_REQ_INFO
+appeared before SSLeay 0.8 and have been available since
+.Ox 2.4 .

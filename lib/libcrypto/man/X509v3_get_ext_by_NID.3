@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509v3_get_ext_by_NID.3,v 1.5 2018/02/24 21:39:29 schwarze Exp $
+.\"	$OpenBSD: X509v3_get_ext_by_NID.3,v 1.6 2018/03/21 03:16:08 schwarze Exp $
 .\"	OpenSSL c952780c Jun 21 07:03:34 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 24 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt X509V3_GET_EXT_BY_NID 3
 .Os
 .Sh NAME
@@ -387,3 +387,6 @@ on error.
 .Xr X509_EXTENSION_new 3 ,
 .Xr X509_REVOKED_new 3 ,
 .Xr X509V3_get_d2i 3
+.Sh HISTORY
+These functions appeared before SSLeay 0.8 and have been available since
+.Ox 2.4 .

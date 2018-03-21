@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_check_private_key.3,v 1.1 2017/08/20 23:18:53 schwarze Exp $
+.\"	$OpenBSD: X509_check_private_key.3,v 1.2 2018/03/21 03:16:08 schwarze Exp $
 .\"	OpenSSL X509_check_private_key.pod 09ddb878 Jun 5 03:56:07 2017 +0800
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 20 2017 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt X509_CHECK_PRIVATE_KEY 3
 .Os
 .Sh NAME
@@ -61,3 +61,7 @@ On error or mismatch, a reason code can be obtained using
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
 .Xr SSL_check_private_key 3
+.Sh HISTORY
+.Fn X509_check_private_key
+appeared before SSLeay 0.8 and has been available since
+.Ox 2.4 .
