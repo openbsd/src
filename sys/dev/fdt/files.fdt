@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.43 2018/03/20 21:23:38 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.44 2018/03/21 09:20:10 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -153,6 +153,10 @@ file	dev/fdt/mvclock.c		mvclock
 device	mvgpio
 attach	mvgpio at fdt
 file	dev/fdt/mvgpio.c		mvgpio
+
+device	mvicu
+attach	mvicu at fdt
+file	dev/fdt/mvicu.c			mvicu
 
 device	mvpinctrl
 attach	mvpinctrl at fdt
