@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_LOOKUP_hash_dir.3,v 1.5 2018/03/21 03:28:40 schwarze Exp $
+.\" $OpenBSD: X509_LOOKUP_hash_dir.3,v 1.6 2018/03/21 07:41:44 schwarze Exp $
 .\" full merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
 .\" This file was written by Victor B. Wagner <vitus@cryptocom.ru>
@@ -233,5 +233,8 @@ or 0 on error.
 .Fn X509_LOOKUP_file ,
 and
 .Fn X509_load_cert_file
-appeared before SSLeay 0.8 and have been available since
+appeared before SSLeay 0.8.
+.Fn X509_load_crl_file
+first appeared in SSLeay 0.9.0.
+These functions have been available since
 .Ox 2.4 .
