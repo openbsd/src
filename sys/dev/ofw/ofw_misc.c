@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.3 2018/01/03 04:15:51 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.4 2018/03/21 09:16:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -41,18 +41,14 @@ regmap_register(int node, bus_space_tag_t tag, bus_space_handle_t handle,
     bus_size_t size)
 {
 	struct regmap *rm;
-	uint32_t phandle;
 
-	phandle = OF_getpropint(node, "phandle", 0);
-	if (phandle) {
-		rm = malloc(sizeof(struct regmap), M_DEVBUF, M_WAITOK);
-		rm->rm_node = node;
-		rm->rm_phandle = phandle;
-		rm->rm_tag = tag;
-		rm->rm_handle = handle;
-		rm->rm_size = size;
-		LIST_INSERT_HEAD(&regmaps, rm, rm_list);
-	}
+	rm = malloc(sizeof(struct regmap), M_DEVBUF, M_WAITOK);
+	rm->rm_node = node;
+	rm->rm_phandle = OF_getpropint(node, "phandle", 0);
+	rm->rm_tag = tag;
+	rm->rm_handle = handle;
+	rm->rm_size = size;
+	LIST_INSERT_HEAD(&regmaps, rm, rm_list);
 }
 
 struct regmap *
