@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_read_ahead.3,v 1.2 2018/03/21 05:07:04 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_read_ahead.3,v 1.3 2018/03/21 16:12:41 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -131,6 +131,13 @@ and
 .Fn SSL_get_read_ahead
 appeared before SSLeay 0.8 and have been available since
 .Ox 2.4 .
+.Pp
+.Fn SSL_CTX_set_read_ahead ,
+.Fn SSL_CTX_get_read_ahead ,
+and
+.Fn SSL_CTX_get_default_read_ahead
+first appeared in OpenSSL 0.9.2b and have been available since
+.Ox 2.6 .
 .Sh CAVEATS
 Switching read ahead on can impact the behaviour of the
 .Xr SSL_pending 3

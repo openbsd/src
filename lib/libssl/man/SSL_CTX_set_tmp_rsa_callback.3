@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_tmp_rsa_callback.3,v 1.5 2018/03/21 05:07:04 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_tmp_rsa_callback.3,v 1.6 2018/03/21 16:12:41 schwarze Exp $
 .\"	OpenSSL 0b30fc90 Dec 19 15:23:05 2013 -0500
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -105,3 +105,9 @@ and
 .Fn SSL_CTX_need_tmp_RSA
 appeared before SSLeay 0.8 and have been available since
 .Ox 2.4 .
+.Pp
+.Fn SSL_set_tmp_rsa_callback
+and
+.Fn SSL_set_tmp_rsa
+first appeared in OpenSSL 0.9.2b and have been available since
+.Ox 2.6 .
