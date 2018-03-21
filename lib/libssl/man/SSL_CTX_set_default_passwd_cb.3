@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_default_passwd_cb.3,v 1.4 2018/03/21 05:07:04 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_default_passwd_cb.3,v 1.5 2018/03/21 21:20:26 schwarze Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -137,3 +137,7 @@ int pem_passwd_cb(char *buf, int size, int rwflag, void *password)
 .Fn SSL_CTX_set_default_passwd_cb
 appeared before SSLeay 0.8 and has been available since
 .Ox 2.4 .
+.Pp
+.Fn SSL_CTX_set_default_passwd_cb_userdata
+first appeared in OpenSSL 0.9.4 and has been available since
+.Ox 2.6 .
