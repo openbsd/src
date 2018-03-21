@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_get_verify_mode.3,v 1.3 2018/03/21 05:07:04 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_get_verify_mode.3,v 1.4 2018/03/21 17:58:58 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -123,3 +123,9 @@ and
 .Fn SSL_CTX_get_verify_callback
 appeared before SSLeay 0.8 and have been available since
 .Ox 2.4 .
+.Pp
+.Fn SSL_CTX_get_verify_depth
+and
+.Fn SSL_get_verify_depth
+first appeared in OpenSSL 0.9.3 and have been available since
+.Ox 2.6 .
