@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_PKCS7.3,v 1.4 2016/12/27 13:10:26 schwarze Exp $
+.\"	$OpenBSD: d2i_PKCS7.3,v 1.5 2018/03/21 00:54:31 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 27 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt D2I_PKCS7 3
 .Os
 .Sh NAME
@@ -324,3 +324,31 @@ return 1 for success or 0 if an error occurs.
 .Xr SMIME_write_PKCS7 3
 .Sh STANDARDS
 RFC 2315: PKCS #7: Cryptographic Message Syntax Version 1.5
+.Sh HISTORY
+.Fn d2i_PKCS7 ,
+.Fn i2d_PKCS7 ,
+.Fn d2i_PKCS7_bio ,
+.Fn i2d_PKCS7_bio ,
+.Fn d2i_PKCS7_fp ,
+.Fn i2d_PKCS7_fp ,
+.Fn d2i_PKCS7_DIGEST ,
+.Fn i2d_PKCS7_DIGEST ,
+.Fn d2i_PKCS7_ENCRYPT ,
+.Fn i2d_PKCS7_ENCRYPT ,
+.Fn d2i_PKCS7_ENC_CONTENT ,
+.Fn i2d_PKCS7_ENC_CONTENT ,
+.Fn d2i_PKCS7_ENVELOPE ,
+.Fn i2d_PKCS7_ENVELOPE ,
+.Fn d2i_PKCS7_ISSUER_AND_SERIAL ,
+.Fn i2d_PKCS7_ISSUER_AND_SERIAL ,
+.Fn d2i_PKCS7_RECIP_INFO ,
+.Fn i2d_PKCS7_RECIP_INFO ,
+.Fn d2i_PKCS7_SIGNED ,
+.Fn i2d_PKCS7_SIGNED ,
+.Fn d2i_PKCS7_SIGNER_INFO ,
+.Fn i2d_PKCS7_SIGNER_INFO ,
+.Fn d2i_PKCS7_SIGN_ENVELOPE ,
+and
+.Fn i2d_PKCS7_SIGN_ENVELOPE
+appeared in SSLeay 0.8.1b or earlier and have been available since
+.Ox 2.4 .
