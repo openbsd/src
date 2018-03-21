@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_generate_key.3,v 1.8 2018/03/21 01:27:25 schwarze Exp $
+.\"	$OpenBSD: RSA_generate_key.3,v 1.9 2018/03/21 07:25:59 schwarze Exp $
 .\"	OpenSSL RSA_generate_key.pod bb6c5e7f Feb 5 10:29:22 2017 -0500
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -147,12 +147,11 @@ The error codes can be obtained by
 .Xr RSA_new 3
 .Sh HISTORY
 .Fn RSA_generate_key
-appeared before SSLeay 0.8 and has been available since
-.Ox 2.4 .
-.Pp
-The
+appeared before SSLeay 0.8 and had its
 .Fa cb_arg
-argument was added in SSLeay 0.9.0.
+argument added in SSLeay 0.9.0.
+It has been available since
+.Ox 2.4 .
 .Sh BUGS
 .Fn BN_GENCB_call cb 2 x
 is used with two different meanings.
