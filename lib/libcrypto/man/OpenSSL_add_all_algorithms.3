@@ -1,5 +1,5 @@
-.\"	$OpenBSD: OpenSSL_add_all_algorithms.3,v 1.4 2016/11/28 16:40:27 schwarze Exp $
-.\"	OpenSSL f672aee4 Feb 9 11:52:40 2016 -0500
+.\" $OpenBSD: OpenSSL_add_all_algorithms.3,v 1.5 2018/03/21 22:08:04 schwarze Exp $
+.\" full merge up to: OpenSSL b3696a55 Sep 2 09:35:50 2017 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000, 2003, 2013 The OpenSSL Project.  All rights reserved.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 28 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt OPENSSL_ADD_ALL_ALGORITHMS 3
 .Os
 .Sh NAME
@@ -68,6 +68,11 @@
 .Ft void
 .Fn EVP_cleanup void
 .Sh DESCRIPTION
+These functions are deprecated.
+It is never useful for any application program
+to call any of them explicitly.
+The library automatically calls them internally whenever needed.
+.Pp
 OpenSSL keeps an internal table of digest algorithms and ciphers.
 It uses this table to look up ciphers via functions such as
 .Xr EVP_get_cipherbyname 3 .
@@ -82,38 +87,26 @@ adds all digest algorithms to the table.
 adds all encryption algorithms to the table including password based
 encryption algorithms.
 .Pp
+If any of the above functions is called more than once,
+only the first call has an effect.
+.Pp
 .Fn EVP_cleanup
 removes all ciphers and digests from the table.
-.Pp
-A typical application will call
-.Fn OpenSSL_add_all_algorithms
-initially and
-.Fn EVP_cleanup
-before exiting.
-.Pp
-An application does not need to add algorithms to use them explicitly,
-for example by
-.Xr EVP_sha1 3 .
-It just needs to add them if it (or any of the functions it calls) needs
-to look up algorithms.
-.Pp
-The cipher and digest lookup functions are used in many parts of the
-library.
-If the table is not initialized, several functions will misbehave and
-complain they cannot find algorithms.
-This includes the PEM, PKCS#12, SSL and S/MIME libraries.
-This is a common query in the OpenSSL mailing lists.
-.Pp
-Calling
-.Fn OpenSSL_add_all_algorithms
-links in all algorithms: as a result a statically linked executable can
-be quite large.
-If this is important, it is possible to just add the required ciphers and
-digests.
 .Sh SEE ALSO
 .Xr evp 3 ,
 .Xr EVP_DigestInit 3 ,
-.Xr EVP_EncryptInit 3
+.Xr EVP_EncryptInit 3 ,
+.Xr OPENSSL_config 3 ,
+.Xr OPENSSL_init_crypto 3
+.Sh HISTORY
+.Fn EVP_cleanup
+and precursor functions
+.Fn SSLeay_add_all_algorithms ,
+.Fn SSLeay_add_all_ciphers ,
+and
+.Fn SSLeay_add_all_digests
+appeared in SSLeay 0.8.1b or earlier and have been available since
+.Ox 2.4 .
 .Sh BUGS
 Although the functions do not return error codes, it is possible for them
 to fail.

@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_config.3,v 1.8 2018/03/17 20:18:44 schwarze Exp $
+.\" $OpenBSD: OPENSSL_config.3,v 1.9 2018/03/21 22:08:04 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -65,13 +65,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 17 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt OPENSSL_CONFIG 3
 .Os
 .Sh NAME
 .Nm OPENSSL_config ,
 .Nm OPENSSL_no_config
-.Nd old style crypto and ssl library initialization
+.Nd simple crypto and ssl library configuration
 .Sh SYNOPSIS
 .In openssl/conf.h
 .Ft void
@@ -81,25 +81,12 @@
 .Ft void
 .Fn OPENSSL_no_config void
 .Sh DESCRIPTION
-These functions have been deprecated since OpenSSL 1.1.0.
-It is recommended to use
-.Xr CONF_modules_load_file 3
-instead of
 .Fn OPENSSL_config
-or
+initializes the crypto library with
 .Xr OPENSSL_init_crypto 3
-with
-.Dv OPENSSL_INIT_NO_LOAD_CONFIG
-instead of
-.Fn OPENSSL_no_config .
-Except to disable the standard configuration file, application programs
-do not need to call any library initialization function at all because
-LibreSSL does all the required initialization automatically, and so does
-OpenSSL 1.1.0 and later.
-.Pp
-.Fn OPENSSL_config
-initializes the crypto library, in particular calling
-.Xr OPENSSL_init_crypto 3
+and then calls
+.Xr OPENSSL_load_builtin_modules 3 ,
+.Xr ENGINE_load_builtin_engines 3 ,
 and
 .Xr CONF_modules_load_file 3
 with the standard configuration file and the given
@@ -117,10 +104,13 @@ Further calls to
 have no effect.
 .Pp
 .Fn OPENSSL_no_config
-disables configuration.
-If called before
-.Fn OPENSSL_config ,
-no configuration takes place.
+has no effect except that later calls to
+.Fn OPENSSL_config
+will be ignored.
+.Pp
+Calling these functions is optional.
+All required initialization of the crypto libraries happens
+automatically when needed.
 .Pp
 If an application is compiled with the preprocessor symbol
 .Dv OPENSSL_LOAD_CONF
@@ -141,6 +131,7 @@ standard configuration file
 .Xr CONF_modules_free 3 ,
 .Xr CONF_modules_load_file 3 ,
 .Xr OPENSSL_init_crypto 3 ,
+.Xr OPENSSL_load_builtin_modules 3 ,
 .Xr openssl.cnf 5
 .Sh HISTORY
 .Fn OPENSSL_config

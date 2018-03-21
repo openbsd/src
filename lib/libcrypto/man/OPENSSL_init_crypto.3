@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_init_crypto.3,v 1.1 2018/03/17 18:52:42 schwarze Exp $
+.\" $OpenBSD: OPENSSL_init_crypto.3,v 1.2 2018/03/21 22:08:04 schwarze Exp $
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 17 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt OPENSSL_INIT_CRYPTO 3
 .Os
 .Sh NAME
@@ -31,14 +31,21 @@ If
 .Fn OPENSSL_init_crypto
 is called before any other crypto or ssl functions, the crypto
 library is initialised by allocating various internal resources.
-Unless the
-.Dv OPENSSL_INIT_NO_LOAD_CONFIG
-bit is set in the
+.Pp
+The following
 .Fa options
-argument, the default
-.Xr openssl.cnf 5
-configuration file is also loaded as documented in
+are supported:
+.Bl -tag -width Ds
+.It Dv OPENSSL_INIT_LOAD_CONFIG
+At the end of the initialization, call
+.Xr OPENSSL_config 3
+with a
+.Dv NULL
+argument, loading the default configuration file.
+.It Dv OPENSSL_INIT_NO_LOAD_CONFIG
+Ignore any later calls to
 .Xr OPENSSL_config 3 .
+.El
 .Pp
 The other
 .Fa options
@@ -61,7 +68,9 @@ the first one have any effect.
 is intended to return 1 on success or 0 on error.
 .Sh SEE ALSO
 .Xr CONF_modules_load_file 3 ,
+.Xr OPENSSL_config 3 ,
 .Xr OPENSSL_init_ssl 3 ,
+.Xr OPENSSL_load_builtin_modules 3 ,
 .Xr openssl.cnf 5
 .Sh HISTORY
 .Fn OPENSSL_init_crypto
