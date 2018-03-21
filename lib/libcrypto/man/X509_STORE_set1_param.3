@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_set1_param.3,v 1.7 2018/03/20 16:12:01 schwarze Exp $
+.\" $OpenBSD: X509_STORE_set1_param.3,v 1.8 2018/03/21 03:28:40 schwarze Exp $
 .\" content checked up to:
 .\" OpenSSL man3/X509_STORE_get0_param e90fc053 Jul 15 09:39:45 2017 -0400
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 20 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt X509_STORE_SET1_PARAM 3
 .Os
 .Sh NAME
@@ -188,5 +188,9 @@ on failure.
 .Xr X509_STORE_new 3 ,
 .Xr X509_VERIFY_PARAM_set_flags 3
 .Sh HISTORY
+.Fn X509_STORE_add_cert
+appeared before SSLeay 0.8 and has been available since
+.Ox 2.4 .
+.Pp
 .Fn X509_STORE_get0_objects
 first appeared in OpenSSL 1.1.0.
