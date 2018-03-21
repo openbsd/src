@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.12 2018/03/21 09:03:49 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.13 2018/03/21 17:57:48 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\" selective merge up to: OpenSSL 5c5eb286 Dec 5 00:36:43 2017 +0100
 .\"
@@ -1266,7 +1266,10 @@ All these functions have been available since
 .Ox 2.4 .
 .Pp
 .Fn EVP_rc2_64_cbc
-first appeared in SSL_eay 0.9.1 and has been available since
+first appeared in SSL_eay 0.9.1.
+.Fn EVP_CIPHER_CTX_type
+first appeared in OpenSSL 0.9.3.
+These functions and have been available since
 .Ox 2.6 .
 .Pp
 .Fn EVP_EncryptInit_ex ,

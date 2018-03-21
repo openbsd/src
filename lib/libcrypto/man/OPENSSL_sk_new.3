@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_sk_new.3,v 1.2 2018/03/21 01:41:03 schwarze Exp $
+.\" $OpenBSD: OPENSSL_sk_new.3,v 1.3 2018/03/21 17:57:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -545,6 +545,10 @@ and
 .Fn sk_zero
 appeared in SSLeay 0.8.1b or earlier and have been available since
 .Ox 2.4 .
+.Pp
+.Fn sk_set
+first appeared in OpenSSL 0.9.3 and has been available since
+.Ox 2.6 .
 .Sh BUGS
 .Fn sk_set
 does not set the state of the
