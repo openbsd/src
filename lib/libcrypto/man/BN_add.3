@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_add.3,v 1.8 2018/03/20 20:26:23 schwarze Exp $
+.\"	$OpenBSD: BN_add.3,v 1.9 2018/03/21 06:26:31 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 20 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt BN_ADD 3
 .Os
 .Sh NAME
@@ -397,7 +397,10 @@ The error codes can be obtained by
 .Fn BN_mod_exp ,
 and
 .Fn BN_gcd
-appeared before SSLeay 0.8 and have been available since
+appeared before SSLeay 0.8.
+.Fn BN_exp
+first appeared in SSLeay 0.9.0.
+All these functions have been available since
 .Ox 2.4 .
 .Pp
 The
@@ -405,8 +408,6 @@ The
 argument to
 .Fn BN_mul
 was added in SSLeay 0.9.1b.
-.Fn BN_exp
-appeared in SSLeay 0.9.0.
 .Fn BN_nnmod ,
 .Fn BN_mod_add ,
 .Fn BN_mod_sub ,

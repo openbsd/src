@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_bn2bin.3,v 1.7 2018/03/20 20:26:23 schwarze Exp $
+.\"	$OpenBSD: BN_bn2bin.3,v 1.8 2018/03/21 06:26:31 schwarze Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 20 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt BN_BN2BIN 3
 .Os
 .Sh NAME
@@ -304,9 +304,7 @@ The error codes can be obtained by
 .Fn BN_print ,
 and
 .Fn BN_print_fp
-appeared before SSLeay 0.8 and have been available since
-.Ox 2.4 .
-.Pp
+appeared before SSLeay 0.8.
 .Fn BN_bn2hex ,
 .Fn BN_bn2dec ,
 .Fn BN_hex2bn ,
@@ -315,3 +313,5 @@ appeared before SSLeay 0.8 and have been available since
 and
 .Fn BN_mpi2bn
 first appeared in SSLeay 0.9.0.
+All these functions have been available since
+.Ox 2.4 .
