@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.40 2018/03/21 18:54:16 sthen Exp $
+# $OpenBSD: list.local,v 1.41 2018/03/21 19:16:06 sthen Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					sbin/growfs
@@ -9,7 +9,7 @@ LINK	instbin					sbin/restore
 LINK	instbin					sbin/bioctl
 LINK	instbin					sbin/slaacd
 
-SPECIAL awk -f ${UTILS}/trimcerts.awk ${CURDIR}/../../../lib/libcrypto/cert.pem etc/ssl/cert.pem
+SPECIAL awk -f ${UTILS}/trimcerts.awk ${DESTDIR}/etc/ssl/cert.pem etc/ssl/cert.pem
 LINK	instbin					usr/bin/ftp-ssl usr/bin/ftp
 SPECIAL	rm usr/bin/ftp-ssl
 

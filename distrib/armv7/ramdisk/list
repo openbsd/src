@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.35 2018/03/20 23:09:09 jsg Exp $
+#	$OpenBSD: list,v 1.36 2018/03/21 19:16:06 sthen Exp $
 
 SRCDIRS distrib/special
 
@@ -65,7 +65,7 @@ LINK	instbin					usr/sbin/chroot
 LINK	instbin					usr/sbin/pwd_mkdb
 LINK	instbin					usr/sbin/mkuboot
 
-COPY	${DESTDIR}/etc/ssl/cert.pem		etc/ssl/cert.pem
+SPECIAL awk -f ${UTILS}/trimcerts.awk ${DESTDIR}/etc/ssl/cert.pem etc/ssl/cert.pem
 LINK	instbin					usr/bin/ftp-ssl usr/bin/ftp
 SPECIAL	rm usr/bin/ftp-ssl
 
