@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_sess_number.3,v 1.5 2018/03/21 05:07:04 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_sess_number.3,v 1.6 2018/03/21 08:06:34 schwarze Exp $
 .\"	OpenSSL SSL_CTX_sess_number.pod 7bd27895 Mar 29 11:45:29 2017 +1000
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -155,5 +155,11 @@ cache size was exceeded.
 .Fn SSL_CTX_sess_misses ,
 and
 .Fn SSL_CTX_sess_timeouts
-appeared before SSLeay 0.8 and have been available since
+appeared before SSLeay 0.8.
+.Fn SSL_CTX_sess_connect_renegotiate ,
+.Fn SSL_CTX_sess_accept_renegotiate ,
+and
+.Fn SSL_CTX_sess_cache_full
+first appeared in SSLeay 0.9.0.
+All these functions have been available since
 .Ox 2.4 .

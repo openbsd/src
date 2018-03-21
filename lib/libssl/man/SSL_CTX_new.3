@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_new.3,v 1.5 2018/03/21 05:07:04 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_new.3,v 1.6 2018/03/21 08:06:34 schwarze Exp $
 .\" full merge up to: OpenSSL 21cd6e00 Oct 21 14:40:15 2015 +0100
 .\" selective merge up to: OpenSSL eb43101f Dec 9 18:07:09 2016 +0100
 .\"
@@ -244,5 +244,11 @@ returns 1 for success or 0 for failure.
 .Fn SSLv23_server_method ,
 and
 .Fn SSLv23_client_method
-appeared before SSLeay 0.8 and have been available since
+appeared before SSLeay 0.8.
+.Fn TLSv1_method ,
+.Fn TLSv1_server_method ,
+and
+.Fn TLSv1_client_method
+first appeared in SSLeay 0.9.0.
+All these functions have been available since
 .Ox 2.4 .

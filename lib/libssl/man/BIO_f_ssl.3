@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_f_ssl.3,v 1.7 2018/03/21 05:07:04 schwarze Exp $
+.\" $OpenBSD: BIO_f_ssl.3,v 1.8 2018/03/21 08:06:34 schwarze Exp $
 .\" full merge up to: OpenSSL f672aee4 Feb 9 11:52:40 2016 -0500
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -575,7 +575,15 @@ BIO_free_all(sbio);
 .Fn BIO_ssl_shutdown ,
 and
 .Fn BIO_do_handshake
-appeared before SSLeay 0.8 and have been available since
+appeared before SSLeay 0.8.
+.Fn BIO_set_ssl_renegotiate_bytes ,
+.Fn BIO_get_num_renegotiates ,
+.Fn BIO_set_ssl_renegotiate_timeout ,
+.Fn BIO_new_ssl_connect ,
+and
+.Fn BIO_new_buffer_ssl_connect
+first appeared in SSLeay 0.9.0.
+All these functions have been available since
 .Ox 2.4 .
 .Pp
 In OpenSSL versions before 1.0.0 the
