@@ -1,4 +1,4 @@
-.\" $OpenBSD: RAND_add.3,v 1.6 2018/02/15 16:47:26 schwarze Exp $
+.\" $OpenBSD: RAND_add.3,v 1.7 2018/03/21 01:02:06 schwarze Exp $
 .\" content checked up to: OpenSSL c16de9d8 Aug 31 23:16:22 2017 +0200
 .\"
 .\" Copyright (c) 2014 Miod Vallat <miod@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 15 2018 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt RAND_ADD 3
 .Os
 .Sh NAME
@@ -55,3 +55,9 @@ should not be used in new programs.
 and
 .Fn RAND_status
 always return 1.
+.Sh HISTORY
+.Fn RAND_cleanup
+and
+.Fn RAND_seed
+appeared in SSLeay 0.8.1b or earlier and have been available since
+.Ox 2.4 .
