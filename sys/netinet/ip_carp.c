@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.330 2018/02/19 08:59:53 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.331 2018/03/21 15:01:10 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -217,7 +217,7 @@ int	carp6_proto_input_if(struct ifnet *, struct mbuf **, int *, int);
 #endif
 void	carpattach(int);
 void	carpdetach(void *);
-int	carp_prepare_ad(struct mbuf *, struct carp_vhost_entry *,
+void	carp_prepare_ad(struct mbuf *, struct carp_vhost_entry *,
 	    struct carp_header *);
 void	carp_send_ad_all(void);
 void	carp_vhe_send_ad_all(struct carp_softc *);
@@ -972,7 +972,7 @@ carp_destroy_vhosts(struct carp_softc *sc)
 	sc->sc_vhe_count = 0;
 }
 
-int
+void
 carp_prepare_ad(struct mbuf *m, struct carp_vhost_entry *vhe,
     struct carp_header *ch)
 {
@@ -989,8 +989,6 @@ carp_prepare_ad(struct mbuf *m, struct carp_vhost_entry *vhe,
 	 * in the HMAC.
 	 */
 	carp_hmac_generate(vhe, ch->carp_counter, ch->carp_md, HMAC_NOV6LL);
-
-	return (0);
 }
 
 void
@@ -1127,8 +1125,7 @@ carp_send_ad(struct carp_vhost_entry *vhe)
 
 		ch_ptr = (struct carp_header *)(ip + 1);
 		bcopy(&ch, ch_ptr, sizeof(ch));
-		if (carp_prepare_ad(m, vhe, ch_ptr))
-			goto retry_later;
+		carp_prepare_ad(m, vhe, ch_ptr);
 
 		m->m_data += sizeof(*ip);
 		ch_ptr->carp_cksum = carp_cksum(m, len - sizeof(*ip));
@@ -1217,8 +1214,7 @@ carp_send_ad(struct carp_vhost_entry *vhe)
 
 		ch_ptr = (struct carp_header *)(ip6 + 1);
 		bcopy(&ch, ch_ptr, sizeof(ch));
-		if (carp_prepare_ad(m, vhe, ch_ptr))
-			goto retry_later;
+		carp_prepare_ad(m, vhe, ch_ptr);
 
 		m->m_data += sizeof(*ip6);
 		ch_ptr->carp_cksum = carp_cksum(m, len - sizeof(*ip6));
