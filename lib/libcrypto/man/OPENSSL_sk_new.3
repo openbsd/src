@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_sk_new.3,v 1.4 2018/03/21 21:18:08 schwarze Exp $
+.\" $OpenBSD: OPENSSL_sk_new.3,v 1.5 2018/03/22 17:11:04 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt OPENSSL_SK_NEW 3
 .Os
 .Sh NAME
@@ -552,6 +552,10 @@ first appeared in OpenSSL 0.9.3.
 first appeared in OpenSSL 0.9.4.
 Both functions have been available since
 .Ox 2.6 .
+.Pp
+.Fn sk_new_null
+first appeared in OpenSSL 0.9.6 and has been available since
+.Ox 2.9 .
 .Sh BUGS
 .Fn sk_set
 does not set the state of the

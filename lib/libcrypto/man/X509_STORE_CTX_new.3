@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_new.3,v 1.13 2018/03/22 16:06:33 schwarze Exp $
+.\" $OpenBSD: X509_STORE_CTX_new.3,v 1.14 2018/03/22 17:11:04 schwarze Exp $
 .\" full merge up to: OpenSSL 186bb907 Apr 13 11:05:13 2015 -0700
 .\" selective merge up to: OpenSSL 7643a172 Apr 21 13:35:51 2017 +0200
 .\"
@@ -335,6 +335,10 @@ and
 .Fn X509_STORE_CTX_free
 first appeared in OpenSSL 0.9.5 and have been available since
 .Ox 2.7 .
+.Pp
+.Fn X509_STORE_CTX_trusted_stack
+first appeared in OpenSSL 0.9.6 and has been available since
+.Ox 2.9 .
 .Pp
 .Fn X509_STORE_CTX_set0_crls
 was first added to OpenSSL 1.0.0.

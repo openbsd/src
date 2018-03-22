@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_new.3,v 1.12 2018/03/20 19:33:16 schwarze Exp $
+.\" $OpenBSD: BIO_new.3,v 1.13 2018/03/22 17:11:04 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/BIO_new.pod fb46be03 Feb 26 11:51:31 2016 +0000
 .\" OpenSSL man7/bio.pod 631c37be Dec 12 16:56:50 2017 +0100
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 20 2018 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt BIO_NEW 3
 .Os
 .Sh NAME
@@ -262,3 +262,7 @@ and
 appeared in SSLeay 0.8.1b or earlier.
 All these functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn BIO_vfree
+first appeared in OpenSSL 0.9.6 and has been available since
+.Ox 2.9 .

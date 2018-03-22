@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_PUBKEY_new.3,v 1.9 2018/03/22 16:06:33 schwarze Exp $
+.\" $OpenBSD: X509_PUBKEY_new.3,v 1.10 2018/03/22 17:11:04 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -296,3 +296,11 @@ and
 .Fn i2d_PUBKEY
 first appeared in OpenSSL 0.9.5 and have been available since
 .Ox 2.7 .
+.Pp
+.Fn d2i_PUBKEY_bio ,
+.Fn d2i_PUBKEY_fp ,
+.Fn i2d_PUBKEY_fp ,
+and
+.Fn i2d_PUBKEY_bio
+first appeared in OpenSSL 0.9.6 and have been available since
+.Ox 2.9 .

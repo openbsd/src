@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_s_bio.3,v 1.11 2018/03/22 16:06:33 schwarze Exp $
+.\"	$OpenBSD: BIO_s_bio.3,v 1.12 2018/03/22 17:11:04 schwarze Exp $
 .\"	OpenSSL c03726ca Aug 27 12:28:08 2015 -0400
 .\"
 .\" This file was written by
@@ -378,6 +378,10 @@ first appeared in OpenSSL 0.9.4 and have been available since
 .Fn BIO_ctrl_reset_read_request
 first appeared in OpenSSL 0.9.5 and has been available since
 .Ox 2.7 .
+.Pp
+.Fn BIO_shutdown_wr
+first appeared in OpenSSL 0.9.6 and has been available since
+.Ox 2.9 .
 .Sh CAVEATS
 As the data is buffered, SSL operations may return with an
 .Dv ERROR_SSL_WANT_READ
