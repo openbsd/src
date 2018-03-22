@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_rand.3,v 1.8 2018/03/22 16:06:33 schwarze Exp $
+.\"	$OpenBSD: BN_rand.3,v 1.9 2018/03/22 17:22:38 schwarze Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -150,6 +150,8 @@ The
 .Fa top
 == -1 case and the function
 .Fn BN_rand_range
-were added in OpenSSL 0.9.6a.
+first appeared in OpenSSL 0.9.6a and have been available since
+.Ox 3.0 .
+.Pp
 .Fn BN_pseudo_rand_range
 was added in OpenSSL 0.9.6c.
