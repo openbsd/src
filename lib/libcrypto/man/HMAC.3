@@ -1,4 +1,4 @@
-.\" $OpenBSD: HMAC.3,v 1.10 2018/03/22 21:08:22 schwarze Exp $
+.\" $OpenBSD: HMAC.3,v 1.11 2018/03/22 22:07:12 schwarze Exp $
 .\" full merge up to: OpenSSL crypto/hmac a528d4f0 Oct 27 13:40:11 2015 -0400
 .\" selective merge up to: OpenSSL man3/HMAC b3696a55 Sep 2 09:35:50 2017 -0400
 .\"
@@ -385,6 +385,10 @@ and
 .Fn HMAC_Init_ex
 first appeared in OpenSSL 0.9.7 and have been available since
 .Ox 3.2 .
+.Pp
+.Fn HMAC_CTX_set_flags
+first appeared in OpenSSL 0.9.7f and have been available since
+.Ox 3.8 .
 .Pp
 .Fn HMAC_CTX_new ,
 .Fn HMAC_CTX_reset ,
