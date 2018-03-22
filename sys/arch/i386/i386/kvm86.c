@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86.c,v 1.13 2018/03/20 16:39:10 bluhm Exp $ */
+/* $OpenBSD: kvm86.c,v 1.14 2018/03/22 19:30:18 bluhm Exp $ */
 /* $NetBSD: kvm86.c,v 1.10 2005/12/26 19:23:59 perry Exp $ */
 /*
  * Copyright (c) 2002
@@ -35,7 +35,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/tss.h>
+#include <machine/pcb.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/kvm86.h>
@@ -54,7 +54,7 @@ struct kvm86_data {
 
 	struct segment_descriptor sd;
 
-	struct i386tss tss;
+	struct pcb pcb;
 	u_long iomap[0x10000/32];
 };
 
@@ -82,7 +82,7 @@ kvm86_init(void)
 	size_t vmdsize;
 	char *buf;
 	struct kvm86_data *vmd;
-	struct i386tss *tss;
+	struct pcb *pcb;
 	paddr_t pa;
 	int i;
 
@@ -93,23 +93,25 @@ kvm86_init(void)
 	
 	/* first page is stack */
 	vmd = (struct kvm86_data *)(buf + PAGE_SIZE);
-	tss = &vmd->tss;
+	pcb = &vmd->pcb;
 
 	/*
-	 * derive TSS from proc0
+	 * derive pcb and TSS from proc0
 	 * we want to access all IO ports, so we need a full-size
-	 * permission bitmap
+	 *  permission bitmap
+	 * XXX do we really need the pcb or just the TSS?
 	 */
-	memcpy(tss, cpu_info_primary.ci_tss, sizeof(struct i386tss));
-	tss->tss_esp0 = (int)vmd;
-	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	memcpy(pcb, &proc0.p_addr->u_pcb, sizeof(struct pcb));
+	pcb->pcb_tss.tss_esp0 = (int)vmd;
+	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	for (i = 0; i < sizeof(vmd->iomap) / 4; i++)
 		vmd->iomap[i] = 0;
-	tss->tss_ioopt = ((caddr_t)vmd->iomap - (caddr_t)&tss) << 16;
+	pcb->pcb_tss.tss_ioopt =
+	    ((caddr_t)vmd->iomap - (caddr_t)&pcb->pcb_tss) << 16;
 
 	/* setup TSS descriptor (including our iomap) */
-	setsegment(&vmd->sd, tss,
-	    sizeof(struct i386tss) + sizeof(vmd->iomap) - 1,
+	setsegment(&vmd->sd, &pcb->pcb_tss,
+	    sizeof(struct pcb) + sizeof(vmd->iomap) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 
 	/* prepare VM for BIOS calls */
@@ -130,7 +132,7 @@ kvm86_init(void)
  * XXX this should be done cleanly (in call argument to kvm86_call())
  */
 
-volatile struct i386tss *vm86tss;
+volatile struct pcb *vm86pcb;
 volatile int vm86tssd0, vm86tssd1;
 volatile paddr_t vm86newptd;
 volatile struct trapframe *vm86frame;
@@ -142,7 +144,7 @@ kvm86_prepare(struct kvm86_data *vmd)
 	vm86newptd = vtophys((vaddr_t)vmd) | PG_V | PG_RW | PG_U | PG_u;
 	vm86pgtableva = vmd->pgtbl;
 	vm86frame = (struct trapframe *)vmd - 1;
-	vm86tss = &vmd->tss;
+	vm86pcb = &vmd->pcb;
 	vm86tssd0 = *(int*)&vmd->sd;
 	vm86tssd1 = *((int*)&vmd->sd + 1);
 }
@@ -251,7 +253,7 @@ kvm86_simplecall(int no, struct kvm86regs *regs)
 {
 	struct trapframe tf;
 	int res;
-
+	
 	memset(&tf, 0, sizeof(struct trapframe));
 	tf.tf_eax = regs->eax;
 	tf.tf_ebx = regs->ebx;

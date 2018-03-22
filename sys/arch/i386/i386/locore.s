@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.182 2018/03/13 13:51:05 bluhm Exp $	*/
+/*	$OpenBSD: locore.s,v 1.183 2018/03/22 19:30:18 bluhm Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -775,11 +775,6 @@ switch_exited:
 	movl	PCB_ESP(%ebx),%esp
 	movl	PCB_EBP(%ebx),%ebp
 
-	/* Set this process' esp0 in the TSS. */
-	movl	CPUVAR(TSS),%edx
-	movl	PCB_KSTACK(%ebx),%eax
-	movl	%eax,TSS_ESP0(%edx)
-
 	/* Record new pcb. */
 	movl	%ebx, CPUVAR(CURPCB)
 
@@ -792,6 +787,14 @@ switch_exited:
 	pushl	%esi
 	call	_C_LABEL(pmap_switch)
 	addl	$8,%esp
+
+	/* Load TSS info. */
+	movl	CPUVAR(GDT),%eax
+	movl	P_MD_TSS_SEL(%edi),%edx
+
+	/* Switch TSS. */
+	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
+	ltr	%dx
 
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%ebx),%ecx

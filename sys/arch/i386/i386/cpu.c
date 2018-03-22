@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.86 2018/03/13 13:51:05 bluhm Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.87 2018/03/22 19:30:18 bluhm Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -113,14 +113,12 @@
 #include <i386/isa/nvram.h>
 #include <dev/isa/isareg.h>
 
-struct cpu_softc;
-
 int     cpu_match(struct device *, void *, void *);
 void    cpu_attach(struct device *, struct device *, void *);
 int     cpu_activate(struct device *, int);
 void	patinit(struct cpu_info *ci);
 void	cpu_idle_mwait_cycle(void);
-void	cpu_init_mwait(struct cpu_softc *);
+void	cpu_init_mwait(struct device *);
 #if NVMM > 0
 void	cpu_init_vmm(struct cpu_info *ci);
 #endif /* NVMM > 0 */
@@ -141,6 +139,9 @@ struct cpu_functions mp_cpu_funcs =
  */
 struct cpu_info cpu_info_primary;
 struct cpu_info *cpu_info_list = &cpu_info_primary;
+
+void	cpu_init_tss(struct i386tss *, void *, void *);
+void	cpu_set_tss_gates(struct cpu_info *);
 
 #ifdef MULTIPROCESSOR
 /*
@@ -166,13 +167,8 @@ cpu_init_first(void)
 }
 #endif
 
-struct cpu_softc {
-	struct device sc_dev;
-	struct cpu_info *sc_info;
-};
-
 struct cfattach cpu_ca = {
-	sizeof(struct cpu_softc), cpu_match, cpu_attach, NULL, cpu_activate
+	sizeof(struct cpu_info), cpu_match, cpu_attach, NULL, cpu_activate
 };
 
 struct cfdriver cpu_cd = {
@@ -222,18 +218,16 @@ cpu_match(struct device *parent, void *match, void *aux)
 void
 cpu_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct cpu_softc *sc = (void *)self;
+	struct cpu_info *ci = (struct cpu_info *)self;
 	struct cpu_attach_args *caa = (struct cpu_attach_args *)aux;
-	struct cpu_info *ci;
 
 #ifdef MULTIPROCESSOR
-	int cpunum = sc->sc_dev.dv_unit;
+	int cpunum = ci->ci_dev.dv_unit;
 	vaddr_t kstack;
 	struct pcb *pcb;
 #endif
 
 	if (caa->cpu_role == CPU_ROLE_AP) {
-		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK|M_ZERO);
 #ifdef MULTIPROCESSOR
 		if (cpu_info[cpunum] != NULL)
 			panic("cpu at apic id %d already attached?", cpunum);
@@ -245,14 +239,13 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		if (caa->cpu_apicid != lapic_cpu_number()) {
 			panic("%s: running cpu is at apic %d"
 			    " instead of at expected %d",
-			    sc->sc_dev.dv_xname, lapic_cpu_number(), caa->cpu_apicid);
+			    self->dv_xname, lapic_cpu_number(), caa->cpu_apicid);
 		}
 #endif
+		bcopy(self, &ci->ci_dev, sizeof *self);
 	}
 
 	ci->ci_self = ci;
-	sc->sc_info = ci;
-	ci->ci_dev = self;
 	ci->ci_apicid = caa->cpu_apicid;
 	ci->ci_acpi_proc_id = caa->cpu_acpi_proc_id;
 #ifdef MULTIPROCESSOR
@@ -276,14 +269,17 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 			    " primary");
 		}
 		printf("%s: unable to allocate idle stack\n",
-		    sc->sc_dev.dv_xname);
+		    ci->ci_dev.dv_xname);
 		return;
 	}
 	pcb = ci->ci_idle_pcb = (struct pcb *)kstack;
 	memset(pcb, 0, USPACE);
 
-	pcb->pcb_kstack = kstack + USPACE - 16 - sizeof (struct trapframe);
-	pcb->pcb_esp = pcb->pcb_ebp = pcb->pcb_kstack;
+	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	pcb->pcb_tss.tss_esp0 = kstack + USPACE - 16 -
+	    sizeof (struct trapframe);
+	pcb->pcb_tss.tss_esp = kstack + USPACE - 16 -
+	    sizeof (struct trapframe);
 	pcb->pcb_pmap = pmap_kernel();
 	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
 #endif
@@ -302,7 +298,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		mem_range_attach();
 #endif
 		cpu_init(ci);
-		cpu_init_mwait(sc);
+		cpu_init_mwait(&ci->ci_dev);
 		break;
 
 	case CPU_ROLE_BP:
@@ -324,7 +320,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #if NIOAPIC > 0
 		ioapic_bsp_id = caa->cpu_apicid;
 #endif
-		cpu_init_mwait(sc);
+		cpu_init_mwait(&ci->ci_dev);
 		break;
 
 	case CPU_ROLE_AP:
@@ -351,9 +347,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
 		printf("%s: kstack at 0x%lx for %d bytes\n",
-		    ci->ci_dev->dv_xname, kstack, USPACE);
+		    ci->ci_dev.dv_xname, kstack, USPACE);
 		printf("%s: idle pcb at %p, idle sp at 0x%x\n",
-		    ci->ci_dev->dv_xname, pcb, pcb->pcb_esp);
+		    ci->ci_dev.dv_xname, pcb, pcb->pcb_esp);
 	}
 #endif
 
@@ -584,7 +580,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 	struct pmap *kpm = pmap_kernel();
 
 	if (mp_verbose)
-		printf("%s: starting", ci->ci_dev->dv_xname);
+		printf("%s: starting", ci->ci_dev.dv_xname);
 
 	/* XXX move elsewhere, not per CPU. */
 	mp_pdirpa = kpm->pm_pdirpa;
@@ -603,7 +599,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 		delay(10);
 	}
 	if (!(ci->ci_flags & CPUF_RUNNING)) {
-		printf("%s failed to become ready\n", ci->ci_dev->dv_xname);
+		printf("%s failed to become ready\n", ci->ci_dev.dv_xname);
 #ifdef DDB
 		db_enter();
 #endif
@@ -648,7 +644,7 @@ cpu_hatch(void *v)
 	enable_intr();
 	if (mp_verbose)
 		printf("%s: CPU at apid %ld running\n",
-		    ci->ci_dev->dv_xname, ci->ci_cpuid);
+		    ci->ci_dev.dv_xname, ci->ci_cpuid);
 	nanouptime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 
@@ -676,6 +672,69 @@ cpu_copy_trampoline(void)
 	    (vaddr_t)(MP_TRAMPOLINE + NBPG), PROT_READ | PROT_EXEC);
 }
 
+#endif
+
+#ifdef notyet
+void
+cpu_init_tss(struct i386tss *tss, void *stack, void *func)
+{
+	memset(tss, 0, sizeof *tss);
+	tss->tss_esp0 = tss->tss_esp = (int)((char *)stack + USPACE - 16);
+	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	tss->__tss_cs = GSEL(GCODE_SEL, SEL_KPL);
+	tss->tss_fs = GSEL(GCPU_SEL, SEL_KPL);
+	tss->tss_gs = tss->__tss_es = tss->__tss_ds =
+	    tss->__tss_ss = GSEL(GDATA_SEL, SEL_KPL);
+	tss->tss_cr3 = pmap_kernel()->pm_pdirpa;
+	tss->tss_esp = (int)((char *)stack + USPACE - 16);
+	tss->tss_ldt = 0;
+	tss->__tss_eflags = PSL_MBO | PSL_NT;	/* XXX not needed? */
+	tss->__tss_eip = (int)func;
+}
+
+/* XXX */
+#define IDTVEC(name)	__CONCAT(X, name)
+typedef void (vector)(void);
+extern vector IDTVEC(tss_trap08);
+#ifdef DDB
+extern vector Xintrddbipi;
+extern int ddb_vec;
+#endif
+
+void
+cpu_set_tss_gates(struct cpu_info *ci)
+{
+	struct segment_descriptor sd;
+
+	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map, USPACE);
+	cpu_init_tss(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
+	    IDTVEC(tss_trap08));
+	setsegment(&sd, &ci->ci_doubleflt_tss, sizeof(struct i386tss) - 1,
+	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	ci->ci_gdt[GTRAPTSS_SEL].sd = sd;
+	setgate(&idt[8], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
+	    GSEL(GTRAPTSS_SEL, SEL_KPL));
+
+#if defined(DDB) && defined(MULTIPROCESSOR)
+	/*
+	 * Set up separate handler for the DDB IPI, so that it doesn't
+	 * stomp on a possibly corrupted stack.
+	 *
+	 * XXX overwriting the gate set in db_machine_init.
+	 * Should rearrange the code so that it's set only once.
+	 */
+	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE);
+	cpu_init_tss(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
+	    Xintrddbipi);
+
+	setsegment(&sd, &ci->ci_ddbipi_tss, sizeof(struct i386tss) - 1,
+	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	ci->ci_gdt[GIPITSS_SEL].sd = sd;
+
+	setgate(&idt[ddb_vec], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
+	    GSEL(GIPITSS_SEL, SEL_KPL));
+#endif
+}
 #endif
 
 #ifdef MULTIPROCESSOR
@@ -776,7 +835,7 @@ cpu_idle_mwait_cycle(void)
 }
 
 void
-cpu_init_mwait(struct cpu_softc *sc)
+cpu_init_mwait(struct device *dv)
 {
 	unsigned int smallest, largest, extensions, c_substates;
 
@@ -788,8 +847,7 @@ cpu_init_mwait(struct cpu_softc *sc)
 	smallest &= 0xffff;
 	largest  &= 0xffff;
 
-	printf("%s: mwait min=%u, max=%u", sc->sc_dev.dv_xname,
-	    smallest, largest);
+	printf("%s: mwait min=%u, max=%u", dv->dv_xname, smallest, largest);
 	if (extensions & 0x1) {
 		if (cpu_mwait_states > 0) {
 			c_substates = cpu_mwait_states;

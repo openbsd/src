@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.38 2018/03/13 13:51:05 bluhm Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.39 2018/03/22 19:30:18 bluhm Exp $	*/
 /*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  *
  * The bootstrap GDT area will hold the initial requirement of NGDT
  * descriptors.  The normal GDT will have a statically sized virtual memory
- * area of size GDT_SIZE.
+ * area of size MAXGDTSIZ.
  *
  * Every CPU in a system has its own copy of the GDT.  The only real difference
  * between the two are currently that there is a cpu-specific segment holding
@@ -82,7 +82,7 @@ setgdt(int sel, void *base, size_t limit, int type, int dpl, int def32,
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
-	KASSERT(sel < NGDT);
+	KASSERT(sel < MAXGDTSIZ);
 
 	setsegment(sd, base, limit, type, dpl, def32, gran);
 	CPU_INFO_FOREACH(cii, ci)
@@ -100,11 +100,11 @@ gdt_init(void)
 	vaddr_t va;
 	struct cpu_info *ci = &cpu_info_primary;
 
-	gdt_next = GBIOS32_SEL;
+	gdt_next = NGDT;
 	gdt_free = GNULL_SEL;
 
-	gdt = (union descriptor *)uvm_km_valloc(kernel_map, GDT_SIZE);
-	for (va = (vaddr_t)gdt; va < (vaddr_t)gdt + GDT_SIZE;
+	gdt = (union descriptor *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
+	for (va = (vaddr_t)gdt; va < (vaddr_t)gdt + MAXGDTSIZ;
 	    va += PAGE_SIZE) {
 		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
 		if (pg == NULL)
@@ -130,26 +130,21 @@ gdt_alloc_cpu(struct cpu_info *ci)
 	struct vm_page *pg;
 	vaddr_t va;
 
-	ci->ci_gdt = (union descriptor *)uvm_km_valloc(kernel_map,
-	    GDT_SIZE + sizeof(*ci->ci_tss));
-	ci->ci_tss = (void *)ci->ci_gdt + GDT_SIZE;
+	ci->ci_gdt = (union descriptor *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
 	uvm_map_pageable(kernel_map, (vaddr_t)ci->ci_gdt,
-	    (vaddr_t)ci->ci_gdt + GDT_SIZE + sizeof(*ci->ci_tss),
-	    FALSE, FALSE);
-	for (va = (vaddr_t)ci->ci_gdt;
-	    va < (vaddr_t)ci->ci_gdt + GDT_SIZE + sizeof(*ci->ci_tss);
+	    (vaddr_t)ci->ci_gdt + MAXGDTSIZ, FALSE, FALSE);
+	for (va = (vaddr_t)ci->ci_gdt; va < (vaddr_t)ci->ci_gdt + MAXGDTSIZ;
 	    va += PAGE_SIZE) {
 		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
 		if (pg == NULL)
-			panic("gdt_alloc_cpu: no pages");
+			panic("gdt_init: no pages");
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
 		    PROT_READ | PROT_WRITE);
 	}
-	bzero(ci->ci_gdt, GDT_SIZE);
-	bcopy(gdt, ci->ci_gdt, GDT_SIZE);
+	bzero(ci->ci_gdt, MAXGDTSIZ);
+	bcopy(gdt, ci->ci_gdt, MAXGDTSIZ);
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
 	    SDT_MEMRWA, SEL_KPL, 0, 0);
-	bzero(ci->ci_tss, sizeof(*ci->ci_tss));
 }
 #endif	/* MULTIPROCESSOR */
 
@@ -163,20 +158,14 @@ gdt_init_cpu(struct cpu_info *ci)
 {
 	struct region_descriptor region;
 
-	setsegment(&ci->ci_gdt[GTSS_SEL].sd, ci->ci_tss,
-	    sizeof(*ci->ci_tss)-1, SDT_SYS386TSS, SEL_KPL, 0, 0);
-
-	setregion(&region, ci->ci_gdt, GDT_SIZE - 1);
+	setregion(&region, ci->ci_gdt, MAXGDTSIZ - 1);
 	lgdt(&region);
-
-	ltr(GSEL(GTSS_SEL, SEL_KPL));
-	lldt(0);
 }
 
 /*
  * Allocate a GDT slot as follows:
  * 1) If there are entries on the free list, use those.
- * 2) If there are fewer than NGDT entries in use, there are free slots
+ * 2) If there are fewer than MAXGDTSIZ entries in use, there are free slots
  *    near the end that we can sweep through.
  */
 int
@@ -190,11 +179,45 @@ gdt_get_slot(void)
 		slot = gdt_free;
 		gdt_free = gdt[slot].gd.gd_selector;
 	} else {
-		if (gdt_next >= NGDT)
+		if (gdt_next >= MAXGDTSIZ)
 			panic("gdt_get_slot: out of GDT descriptors");
 		slot = gdt_next++;
 	}
 
 	gdt_unlock();
 	return (slot);
+}
+
+/*
+ * Deallocate a GDT slot, putting it on the free list.
+ */
+void
+gdt_put_slot(int slot)
+{
+
+	gdt_lock();
+
+	gdt[slot].gd.gd_type = SDT_SYSNULL;
+	gdt[slot].gd.gd_selector = gdt_free;
+	gdt_free = slot;
+
+	gdt_unlock();
+}
+
+int
+tss_alloc(struct pcb *pcb)
+{
+	int slot;
+
+	slot = gdt_get_slot();
+	setgdt(slot, &pcb->pcb_tss, sizeof(struct pcb) - 1,
+	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	return GSEL(slot, SEL_KPL);
+}
+
+void
+tss_free(int sel)
+{
+
+	gdt_put_slot(IDXSEL(sel));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.159 2018/03/13 13:51:05 bluhm Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.160 2018/03/22 19:30:19 bluhm Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@
 #include <machine/psl.h>
 #include <machine/segments.h>
 #include <machine/intrdefs.h>
-#include <machine/tss.h>
 
 #ifdef MULTIPROCESSOR
 #include <machine/i82489reg.h>
@@ -103,7 +102,7 @@ union vmm_cpu_cap {
 #ifdef _KERNEL
 /* XXX stuff to move to cpuvar.h later */
 struct cpu_info {
-	struct device	*ci_dev;	/* our device */
+	struct device ci_dev;		/* our device */
 	struct cpu_info *ci_self;	/* pointer to this structure */
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 	struct cpu_info *ci_next;	/* next cpu */
@@ -130,6 +129,7 @@ struct cpu_info {
 
 	struct pcb *ci_curpcb;		/* VA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* VA of current PCB */
+	int ci_idle_tss_sel;		/* TSS selector of idle PCB */
 	struct pmap *ci_curpmap;
 
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
@@ -175,7 +175,6 @@ struct cpu_info {
 	int		ci_want_resched;
 
 	union descriptor *ci_gdt;
-	struct i386tss	*ci_tss;
 
 	volatile int ci_ddb_paused;	/* paused due to other proc in ddb */
 #define CI_DDB_RUNNING		0
@@ -231,7 +230,7 @@ extern struct cpu_info *cpu_info_list;
 #define	CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
 					    ci != NULL; ci = ci->ci_next)
 
-#define CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
+#define CPU_INFO_UNIT(ci)	((ci)->ci_dev.dv_unit)
 
 #ifdef MULTIPROCESSOR
 

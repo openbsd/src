@@ -1,4 +1,4 @@
-/*	$OpenBSD: tss.h,v 1.9 2018/03/13 13:51:05 bluhm Exp $	*/
+/*	$OpenBSD: tss.h,v 1.10 2018/03/22 19:30:19 bluhm Exp $	*/
 /*	$NetBSD: tss.h,v 1.6 1995/10/11 04:20:28 mycroft Exp $	*/
 
 /*-
@@ -50,24 +50,24 @@ struct i386tss {
 	int	__tss_ss1;
 	int	__tss_esp2;
 	int	__tss_ss2;
-	int	__tss_cr3;
+	int	tss_cr3;	/* page directory [pointer] paddr */
 	int	__tss_eip;
 	int	__tss_eflags;
 	int	__tss_eax; 
 	int	__tss_ecx; 
 	int	__tss_edx; 
 	int	__tss_ebx; 
-	int	__tss_esp;
-	int	__tss_ebp;
+	int	tss_esp;	/* saved stack pointer */
+	int	tss_ebp;	/* saved frame pointer */
 	int	__tss_esi; 
 	int	__tss_edi; 
 	int	__tss_es;
-	int	__tss_cs;
+	int	tss_cs;
 	int	__tss_ss;
 	int	__tss_ds;
-	int	__tss_fs;
-	int	__tss_gs;
-	int	__tss_ldt;
+	int	tss_fs;		/* saved segment register */
+	int	tss_gs;		/* saved segment register */
+	int	tss_ldt;	/* LDT selector */
 	int	tss_ioopt;	/* options and I/O permission map offset */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.8 2018/03/13 13:51:05 bluhm Exp $	*/
+/*	$OpenBSD: proc.h,v 1.9 2018/03/22 19:30:19 bluhm Exp $	*/
 /*	$NetBSD: proc.h,v 1.10 1995/08/06 05:33:23 mycroft Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 struct mdproc {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
+	int	md_tss_sel;		/* TSS selector */
 	int	md_astpending;
 };
 

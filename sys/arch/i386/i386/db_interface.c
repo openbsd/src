@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.38 2018/03/20 15:45:32 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.39 2018/03/22 19:30:18 bluhm Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ db_cpuinfo_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	for (i = 0; i < MAXCPUS; i++) {
 		if (cpu_info[i] != NULL) {
 			db_printf("%c%4d: ", (i == cpu_number()) ? '*' : ' ',
-			    cpu_info[i]->ci_dev->dv_unit);
+			    cpu_info[i]->ci_dev.dv_unit);
 			switch(cpu_info[i]->ci_ddb_paused) {
 			case CI_DDB_RUNNING:
 				db_printf("running\n");
