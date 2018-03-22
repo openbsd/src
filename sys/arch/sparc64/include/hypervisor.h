@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.16 2017/12/06 16:20:53 kettenis Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.17 2018/03/22 11:24:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -267,6 +267,9 @@ int64_t hv_ldc_rx_set_qhead(uint64_t ldc_id, uint64_t head_offset);
 #define LDC_CHANNEL_DOWN	0
 #define LDC_CHANNEL_UP		1
 #define LDC_CHANNEL_RESET	2
+
+/* Used by drivers only, not part of the hypervisor API. */
+#define LDC_CHANNEL_INIT	((uint64_t)-1)
 
 int64_t	hv_ldc_set_map_table(uint64_t ldc_id, paddr_t base_raddr,
 	    uint64_t nentries);

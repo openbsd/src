@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.16 2018/01/27 13:44:03 stsp Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.17 2018/03/22 11:24:27 stsp Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -169,6 +169,7 @@ vldcp_attach(struct device *parent, struct device *self, void *aux)
 		printf(", can't allocate rx queue\n");
 		goto free_txqueue;
 	}
+	lc->lc_rx_state = LDC_CHANNEL_INIT;
 
 	for (svc = vldc_svc; svc->vs_name != NULL; svc++) {
 		if (strcmp(ca->ca_name, svc->vs_name) == 0) {
