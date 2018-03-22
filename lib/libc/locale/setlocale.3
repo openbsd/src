@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setlocale.3,v 1.19 2015/09/21 14:46:59 guenther Exp $
+.\"	$OpenBSD: setlocale.3,v 1.20 2018/03/22 00:03:24 schwarze Exp $
 .\"	$NetBSD: setlocale.3,v 1.3 1997/07/14 23:19:47 kleink Exp $
 .\"
 .\" Copyright (c) 1993
@@ -33,13 +33,13 @@
 .\"
 .\"	@(#)setlocale.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: September 21 2015 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt SETLOCALE 3
 .Os
 .Sh NAME
 .Nm setlocale ,
 .Nm localeconv
-.Nd natural language formatting for C
+.Nd select character encoding
 .Sh SYNOPSIS
 .In locale.h
 .Ft char *
@@ -49,78 +49,80 @@
 .Sh DESCRIPTION
 The
 .Fn setlocale
-function sets the C library's notion
-of natural language formatting style
-for particular sets of routines.
-Each such style is called a
-.Dq locale
-and is invoked using an appropriate name passed as a C string.
-The
-.Fn localeconv
-routine returns the current locale's parameters
-for formatting numbers.
-.Pp
-The
-.Fn setlocale
-function recognizes several categories of routines.
-These are the categories and the sets of routines they select:
-.Bl -tag -width LC_MONETARY
-.It Dv LC_ALL
-Set the entire locale generically.
-.It Dv LC_COLLATE
-Set a locale for string collation routines.
-This controls alphabetic ordering in
-.Xr strcoll 3
-and
-.Xr strxfrm 3 .
-.It Dv LC_CTYPE
-Set a locale for the functions declared in
-.In ctype.h
-and
-.In wctype.h .
-This controls recognition of upper and lower case,
-alphabetic or non-alphabetic characters, and so on.
-.It Dv LC_MESSAGES
-Set a locale for message strings.
-Controls the behaviour of
-.Xr catopen 3
-and internationalization tools.
-.It Dv LC_MONETARY
-Set a locale for formatting monetary values;
-this affects the
-.Fn localeconv
-function.
-.It Dv LC_NUMERIC
-Set a locale for formatting numbers.
-This controls the formatting of decimal points
-in input and output of floating point numbers
-in functions such as
-.Xr printf 3
-and
-.Xr scanf 3 ,
-as well as values returned by
-.Fn localeconv .
-.It Dv LC_TIME
-Set a locale for formatting dates and times using the
-.Xr strftime 3
-function.
-.El
-.Pp
-Only three locales are defined by default,
-the empty string
-.Qq
-which denotes the native environment, and the
-.Qq C
-and
-.Qq POSIX
-locales, which denote the C language environment.
-A
+function sets and retrieves the active
 .Fa locale
-argument of
-.Dv NULL
-causes
+for the current process.
+The locale modifies the behaviour of some functions in the C library
+with respect to the character encoding, and on other operating systems
+also with respect to some language and cultural conventions.
+For more information about locales in general, see the
+.Xr locale 1
+manual page.
+.Pp
+On
+.Ox ,
+the only useful value for the
+.Fa category
+is
+.Dv LC_CTYPE .
+It sets the locale used for character encoding, character classification,
+and case conversion.
+For compatibility with natural language support in
+.Xr packages 7 ,
+all other categories \(em
+.Dv LC_COLLATE ,
+.Dv LC_MESSAGES ,
+.Dv LC_MONETARY ,
+.Dv LC_NUMERIC ,
+and
+.Dv LC_TIME
+\(em can be set and retrieved, too, but their values are ignored by the
+.Ox
+C library.
+A category of
+.Dv LC_ALL
+sets the entire locale generically.
+.Pp
+The syntax and semantics of the
+.Fa locale
+argument are not standardized and vary among operating systems.
+On
+.Ox ,
+if the
+.Fa locale
+string ends with
+.Qq ".UTF-8" ,
+the UTF-8 locale is selected; otherwise, the
+.Qq C
+locale is selected, which uses the ASCII character set.
+If the
+.Fa locale
+contains a dot but does not end with
+.Qq ".UTF-8" ,
 .Fn setlocale
-to return the current locale.
+fails.
+.Pp
+If
+.Fa locale
+is an empty string
+.Pq Qq ,
+the value of the environment variable
+.Ev LC_ALL ,
+with a fallback to the variable corresponding to
+.Fa category ,
+and with a further fallback to
+.Ev LANG ,
+is used instead, as documented in the
+.Xr locale 1
+manual page.
+.Pp
+If
+.Fa locale
+is
+.Dv NULL ,
+the locale remains unchanged.
+This can be used to determine the currently active locale.
+.Pp
 By default, C programs start in the
 .Qq C
 locale.
@@ -130,39 +132,14 @@ the locale is never changed as a side effect of some other routine.
 .Pp
 The
 .Fn localeconv
-function returns a pointer to a structure
-which provides parameters for formatting numbers,
-especially currency values:
-.Bd -literal -offset indent
-struct lconv {
-	char	*decimal_point;
-	char	*thousands_sep;
-	char	*grouping;
-	char	*int_curr_symbol;
-	char	*currency_symbol;
-	char	*mon_decimal_point;
-	char	*mon_thousands_sep;
-	char	*mon_grouping;
-	char	*positive_sign;
-	char	*negative_sign;
-	char	int_frac_digits;
-	char	frac_digits;
-	char	p_cs_precedes;
-	char	p_sep_by_space;
-	char	n_cs_precedes;
-	char	n_sep_by_space;
-	char	p_sign_posn;
-	char	n_sign_posn;
-	char	int_p_cs_precedes;
-	char	int_p_sep_by_space;
-	char	int_n_cs_precedes;
-	char	int_n_sep_by_space;
-	char	int_p_sign_posn;
-	char	int_n_sign_posn;
-};
-.Ed
+function returns a pointer to a static structure
+which provides parameters for formatting numbers.
+On
+.Ox ,
+nothing in the returned structure ever changes.
 .Pp
-The individual fields have the following meanings:
+It provides the following fields of type
+.Vt char * :
 .Bl -tag -width mon_decimal_point
 .It Fa decimal_point
 The decimal point character, except for currency values.
@@ -200,6 +177,11 @@ usually the empty string.
 .It Fa negative_sign
 The character used to denote negative currency values,
 usually a minus sign.
+.El
+.Pp
+It also provides the following fields of type
+.Vt char :
+.Bl -tag -width mon_decimal_point
 .It Fa int_frac_digits
 The number of digits after the decimal point
 in an international-style currency value.
@@ -279,38 +261,69 @@ A
 .Dv CHAR_MAX
 result similarly denotes an unavailable value.
 .Sh RETURN VALUES
-The
+In case of success,
 .Fn setlocale
-function returns
-.Dv NULL
-and fails to change the locale
-if the given combination of
-.Fa category
-and
+returns a pointer to a static string describing the locale
+that is in force after the call.
+Subsequent calls to
+.Fn setlocale
+may change the content of the string.
+The format of the string is not standardized and varies among
+operating systems.
+.Pp
+On
+.Ox ,
+if
+.Fn setlocale
+was never called with a
+.Pf non- Dv NULL
 .Fa locale
-makes no sense.
-The
-.Fn localeconv
-function returns a pointer to a static object
-which may be altered by later calls to
+argument, the string
+.Qq C
+is returned.
+Otherwise, if the
+.Fa category
+was not
+.Dv LC_ALL
+or if the locale is the same for all categories, a copy of the
+.Fa locale
+argument is returned.
+Otherwise, the locales for the six categories
+.Dv LC_COLLATE ,
+.Dv LC_CTYPE ,
+.Dv LC_MESSAGES ,
+.Dv LC_MONETARY ,
+.Dv LC_NUMERIC ,
+.Dv LC_TIME
+are concatenated in that order, with slash
+.Pq Ql /
+characters in between.
+.Pp
+In case of failure,
 .Fn setlocale
-or
-.Fn localeconv .
-.\" .Sh FILES							XXX
-.\" .Bl -tag -width /usr/share/locale/locale/category -compact	XXX
-.\" .It Pa $PATH_LOCALE/\fIlocale\fP/\fIcategory\fP		XXX
-.\" .It Pa /usr/share/locale/\fIlocale\fP/\fIcategory\fP	XXX
-.\" locale file for the locale \fIlocale\fP			XXX
-.\" and the category \fIcategory\fP.				XXX
-.\" .El
-.Sh SEE ALSO
-.Xr mklocale 1 ,
-.Xr catopen 3 ,
-.Xr printf 3 ,
-.Xr scanf 3 ,
-.Xr strcoll 3 ,
-.Xr strftime 3 ,
-.Xr strxfrm 3
+returns
+.Dv NULL .
+On
+.Ox ,
+that can only happen if the
+.Fa category
+is invalid, if a character encoding other than UTF-8 is requested,
+if the requested
+.Fa locale
+name is of excessive length, or if memory allocation fails.
+.Sh EXAMPLES
+Calling
+.Pp
+.Dl setlocale(LC_CTYPE, \(dqen_US.UTF-8\(dq);
+.Pp
+at the beginning of a program selects the UTF-8 locale and returns
+.Qq en_US.UTF-8 .
+Calling
+.Pp
+.Dl setlocale(LC_ALL, NULL);
+.Pp
+right afterwards leaves the locale unchanged and returns
+.Qq C/en_US.UTF-8/C/C/C/C .
 .Sh STANDARDS
 The
 .Fn setlocale
@@ -325,27 +338,3 @@ and
 .Fn localeconv
 functions first appeared in
 .Bx 4.4 .
-.Sh BUGS
-The current implementation supports only the
-.Qq C
-and
-.Qq POSIX
-locales for all but the
-.Dv LC_CTYPE
-locale.
-.Pp
-In spite of the gnarly currency support in
-.Fn localeconv ,
-the standards don't include any functions
-for generalized currency formatting.
-.Pp
-.Dv LC_COLLATE
-does not make sense for many languages.
-Use of
-.Dv LC_MONETARY
-could lead to misleading results until we have a real time currency
-conversion function.
-.Dv LC_NUMERIC
-and
-.Dv LC_TIME
-are personal choices and should not be wrapped up with the other categories.
