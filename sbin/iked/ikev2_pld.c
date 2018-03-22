@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.69 2017/12/07 22:47:28 patrick Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.70 2018/03/22 21:11:49 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1498,19 +1498,34 @@ ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
 	struct sockaddr_in		 s4;
 	struct sockaddr_in6		 s6;
 	uint8_t				 buf[2][128];
-	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t				*ptr;
 
 	if (ikev2_validate_ts(msg, offset, left, &tsp))
 		return (-1);
-	offset += sizeof(tsp);
 
-	len = left - sizeof(tsp);
+	ptr = ibuf_data(msg->msg_data) + offset;
+	len = left;
+
+	ptr += sizeof(tsp);
+	len -= sizeof(tsp);
 
 	log_debug("%s: count %d length %zu", __func__,
 	    tsp.tsp_count, len);
 
 	for (i = 0; i < tsp.tsp_count; i++) {
-		memcpy(&ts, msgbuf + offset, sizeof(ts));
+		if (len < sizeof(ts)) {
+			log_debug("%s: malformed payload: too short for ts "
+			    "(%zu < %zu)", __func__, left, sizeof(ts));
+			return (-1);
+		}
+		memcpy(&ts, ptr, sizeof(ts));
+		/* Note that ts_length includes header sizeof(ts) */
+		if (len < betoh16(ts.ts_length)) {
+			log_debug("%s: malformed payload: too short for "
+			    "ts_length (%zu < %u)", __func__, len,
+			    betoh16(ts.ts_length));
+			return (-1);
+		}
 
 		log_debug("%s: type %s protoid %u length %d "
 		    "startport %u endport %u", __func__,
@@ -1521,30 +1536,38 @@ ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
 
 		switch (ts.ts_type) {
 		case IKEV2_TS_IPV4_ADDR_RANGE:
+			if (betoh16(ts.ts_length) < sizeof(ts) + 2 * 4) {
+				log_debug("%s: malformed payload: too short "
+				    "for ipv4 addr range (%u < %u)",
+				    __func__, betoh16(ts.ts_length), 2 * 4);
+				return (-1);
+			}
 			bzero(&s4, sizeof(s4));
 			s4.sin_family = AF_INET;
 			s4.sin_len = sizeof(s4);
-			memcpy(&s4.sin_addr.s_addr,
-			    msgbuf + offset + sizeof(ts), 4);
+			memcpy(&s4.sin_addr.s_addr, ptr + sizeof(ts), 4);
 			print_host((struct sockaddr *)&s4,
 			    (char *)buf[0], sizeof(buf[0]));
-			memcpy(&s4.sin_addr.s_addr,
-			    msgbuf + offset + sizeof(ts) + 4, 4);
+			memcpy(&s4.sin_addr.s_addr, ptr + sizeof(ts) + 4, 4);
 			print_host((struct sockaddr *)&s4,
 			    (char *)buf[1], sizeof(buf[1]));
 			log_debug("%s: start %s end %s", __func__,
 			    buf[0], buf[1]);
 			break;
 		case IKEV2_TS_IPV6_ADDR_RANGE:
+			if (betoh16(ts.ts_length) < sizeof(ts) + 2 * 16) {
+				log_debug("%s: malformed payload: too short "
+				    "for ipv6 addr range (%u < %u)",
+				    __func__, betoh16(ts.ts_length), 2 * 16);
+				return (-1);
+			}
 			bzero(&s6, sizeof(s6));
 			s6.sin6_family = AF_INET6;
 			s6.sin6_len = sizeof(s6);
-			memcpy(&s6.sin6_addr,
-			    msgbuf + offset + sizeof(ts), 16);
+			memcpy(&s6.sin6_addr, ptr + sizeof(ts), 16);
 			print_host((struct sockaddr *)&s6,
 			    (char *)buf[0], sizeof(buf[0]));
-			memcpy(&s6.sin6_addr,
-			    msgbuf + offset + sizeof(ts) + 16, 16);
+			memcpy(&s6.sin6_addr, ptr + sizeof(ts) + 16, 16);
 			print_host((struct sockaddr *)&s6,
 			    (char *)buf[1], sizeof(buf[1]));
 			log_debug("%s: start %s end %s", __func__,
@@ -1554,7 +1577,8 @@ ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
 			break;
 		}
 
-		offset += betoh16(ts.ts_length);
+		ptr += betoh16(ts.ts_length);
+		len -= betoh16(ts.ts_length);
 	}
 
 	return (0);
@@ -1630,31 +1654,45 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 {
 	struct ikev2_cp		 cp;
 	struct ikev2_cfg	*cfg;
-	uint8_t			*buf;
-	size_t			 len, i;
-	uint8_t			*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t			*ptr;
+	size_t			 len;
 	struct iked_sa		*sa = msg->msg_sa;
 
 	if (ikev2_validate_cp(msg, offset, left, &cp))
 		return (-1);
-	offset += sizeof(cp);
 
-	buf = msgbuf + offset;
+	ptr = ibuf_data(msg->msg_data) + offset + sizeof(cp);
 	len = left - sizeof(cp);
 
 	log_debug("%s: type %s length %zu",
 	    __func__, print_map(cp.cp_type, ikev2_cp_map), len);
-	print_hex(buf, 0, len);
+	print_hex(ptr, 0, len);
 
-	for (i = 0; i < len;) {
-		cfg = (struct ikev2_cfg *)(buf + i);
+	while (len > 0) {
+		if (len < sizeof(*cfg)) {
+			log_debug("%s: malformed payload: too short for cfg "
+			    "(%zu < %zu)", __func__, len, sizeof(*cfg));
+			return (-1);
+		}
+		cfg = (struct ikev2_cfg *)ptr;
 
 		log_debug("%s: %s 0x%04x length %d", __func__,
 		    print_map(betoh16(cfg->cfg_type), ikev2_cfg_map),
 		    betoh16(cfg->cfg_type),
 		    betoh16(cfg->cfg_length));
 
-		i += betoh16(cfg->cfg_length) + sizeof(*cfg);
+		ptr += sizeof(*cfg);
+		len -= sizeof(*cfg);
+
+		if (len < betoh16(cfg->cfg_length)) {
+			log_debug("%s: malformed payload: too short for "
+			    "cfg_length (%zu < %u)", __func__, len,
+			    betoh16(cfg->cfg_length));
+			return (-1);
+		}
+
+		ptr += betoh16(cfg->cfg_length);
+		len -= betoh16(cfg->cfg_length);
 	}
 
 	if (!ikev2_msg_frompeer(msg))
