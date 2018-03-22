@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_DigestInit.3,v 1.12 2018/03/22 16:06:33 schwarze Exp $
+.\" $OpenBSD: EVP_DigestInit.3,v 1.13 2018/03/22 21:08:22 schwarze Exp $
 .\" full merge up to: OpenSSL 7f572e95 Dec 2 13:57:04 2015 +0000
 .\" selective merge up to: OpenSSL a95d7574 Jul 2 12:16:38 2017 -0400
 .\"
@@ -659,24 +659,14 @@ first appeared in OpenSSL 0.9.5 and has been available since
 .Pp
 .Fn EVP_MD_CTX_init ,
 .Fn EVP_MD_CTX_create ,
-.Fn EVP_MD_CTX_copy_ex ,
 .Fn EVP_MD_CTX_cleanup ,
 .Fn EVP_MD_CTX_destroy ,
 .Fn EVP_DigestInit_ex ,
+.Fn EVP_DigestFinal_ex ,
 and
-.Fn EVP_DigestFinal_ex
-were added in OpenSSL 0.9.7.
-.Pp
-.Fn EVP_md_null ,
-.Fn EVP_md5 ,
-.Fn EVP_sha1 ,
-.Fn EVP_dss ,
-.Fn EVP_dss1 ,
-and
-.Fn EVP_ripemd160
-were changed to return truly const
-.Vt EVP_MD
-pointers in OpenSSL 0.9.7.
+.Fn EVP_MD_CTX_copy_ex
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
 .Pp
 .Fn EVP_MD_CTX_new
 and

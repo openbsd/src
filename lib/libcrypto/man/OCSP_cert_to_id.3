@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_cert_to_id.3,v 1.6 2016/12/25 22:15:10 schwarze Exp $
+.\"	$OpenBSD: OCSP_cert_to_id.3,v 1.7 2018/03/22 21:08:22 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 25 2016 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt OCSP_CERT_TO_ID 3
 .Os
 .Sh NAME
@@ -224,3 +224,7 @@ returns 1 for success or 0 for failure.
 .Sh STANDARDS
 RFC 6960: X.509 Internet Public Key Infrastructure Online Certificate
 Status Protocol, section 4: Details of the Protocol
+.Sh HISTORY
+These functions first appeared in OpenSSL 0.9.7
+and have been available since
+.Ox 3.2 .

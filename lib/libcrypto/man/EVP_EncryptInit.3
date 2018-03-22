@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.14 2018/03/22 17:11:04 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.15 2018/03/22 21:08:22 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\" selective merge up to: OpenSSL 5c5eb286 Dec 5 00:36:43 2017 +0100
 .\"
@@ -1290,7 +1290,8 @@ first appeared in OpenSSL 0.9.6 and have been available since
 .Fn EVP_CipherFinal_ex ,
 and
 .Fn EVP_CIPHER_CTX_set_padding
-appeared in OpenSSL 0.9.7.
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
 .Pp
 .Fn EVP_CIPHER_CTX_reset
 first appeared in OpenSSL 1.1.0.

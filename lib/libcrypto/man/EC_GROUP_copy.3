@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_GROUP_copy.3,v 1.7 2016/12/11 14:22:43 schwarze Exp $
+.\"	$OpenBSD: EC_GROUP_copy.3,v 1.8 2018/03/22 21:08:22 schwarze Exp $
 .\"	OpenSSL aafbe1cc Jun 12 23:42:08 2013 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 11 2016 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt EC_GROUP_COPY 3
 .Os
 .Sh NAME
@@ -485,3 +485,13 @@ Alternatively in the event of an error a 0 is returned.
 .Xr EC_KEY_new 3 ,
 .Xr EC_POINT_add 3 ,
 .Xr EC_POINT_new 3
+.Sh HISTORY
+.Fn EC_GROUP_copy ,
+.Fn EC_GROUP_method_of ,
+.Fn EC_GROUP_set_generator ,
+.Fn EC_GROUP_get0_generator ,
+.Fn EC_GROUP_get_order ,
+and
+.Fn EC_GROUP_get_cofactor
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .

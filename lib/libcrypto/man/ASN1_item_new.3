@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ASN1_item_new.3,v 1.3 2018/02/25 10:07:34 schwarze Exp $
+.\"     $OpenBSD: ASN1_item_new.3,v 1.4 2018/03/22 21:08:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2016, 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 25 2018 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt ASN1_ITEM_NEW 3
 .Os
 .Sh NAME
@@ -107,6 +107,12 @@ if an error occurs.
 .Xr ASN1_TYPE_new 3 ,
 .Xr d2i_ASN1_NULL 3 ,
 .Xr OBJ_nid2obj 3
+.Sh HISTORY
+.Fn ASN1_item_new
+and
+.Fn ASN1_item_free
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
 .Sh BUGS
 The
 .Vt ASN1_VALUE

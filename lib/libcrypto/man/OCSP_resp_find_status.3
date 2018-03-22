@@ -1,4 +1,4 @@
-.\" $OpenBSD: OCSP_resp_find_status.3,v 1.6 2018/03/18 10:01:45 schwarze Exp $
+.\" $OpenBSD: OCSP_resp_find_status.3,v 1.7 2018/03/22 21:08:22 schwarze Exp $
 .\" full merge up to: OpenSSL c952780c Jun 21 07:03:34 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 18 2018 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt OCSP_RESP_FIND_STATUS 3
 .Os
 .Sh NAME
@@ -386,3 +386,19 @@ or -1 if an error occurred.
 .Sh STANDARDS
 RFC 6960: X.509 Internet Public Key Infrastructure Online Certificate
 Status Protocol, section 4.2: Response Syntax
+.Sh HISTORY
+.Fn OCSP_SINGLERESP_new ,
+.Fn OCSP_SINGLERESP_free ,
+.Fn OCSP_CERTSTATUS_new ,
+.Fn OCSP_CERTSTATUS_free ,
+.Fn OCSP_REVOKEDINFO_new ,
+.Fn OCSP_REVOKEDINFO_free ,
+.Fn OCSP_resp_find_status ,
+.Fn OCSP_resp_count ,
+.Fn OCSP_resp_get0 ,
+.Fn OCSP_resp_find ,
+.Fn OCSP_single_get0_status ,
+and
+.Fn OCSP_check_validity
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .

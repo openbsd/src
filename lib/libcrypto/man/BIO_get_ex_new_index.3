@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_get_ex_new_index.3,v 1.6 2018/03/22 16:06:33 schwarze Exp $
+.\" $OpenBSD: BIO_get_ex_new_index.3,v 1.7 2018/03/22 21:08:22 schwarze Exp $
 .\" full merge up to: OpenSSL a970b14f Jul 31 18:58:40 2017 -0400
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -148,3 +148,10 @@ and
 .Fn X509_get_ex_data
 first appeared in OpenSSL 0.9.5 and have been available since
 .Ox 2.7 .
+.Pp
+.Fn UI_get_ex_new_index ,
+.Fn UI_set_ex_data ,
+and
+.Fn UI_get_ex_data
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .

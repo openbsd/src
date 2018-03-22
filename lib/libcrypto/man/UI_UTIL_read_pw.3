@@ -1,4 +1,4 @@
-.\" $OpenBSD: UI_UTIL_read_pw.3,v 1.2 2018/02/15 19:39:56 schwarze Exp $
+.\" $OpenBSD: UI_UTIL_read_pw.3,v 1.3 2018/03/22 21:08:22 schwarze Exp $
 .\" full merge up to: OpenSSL 23103a52 Jan 12 15:17:42 2017 +0100
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 15 2018 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt UI_UTIL_READ_PW 3
 .Os
 .Sh NAME
@@ -99,3 +99,9 @@ and
 return 0 on success or a negative value on error.
 .Sh SEE ALSO
 .Xr UI_new 3
+.Sh HISTORY
+.Fn UI_UTIL_read_pw
+and
+.Fn UI_UTIL_read_pw_string
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .

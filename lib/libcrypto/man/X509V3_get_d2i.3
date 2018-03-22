@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509V3_get_d2i.3,v 1.12 2018/03/22 16:06:33 schwarze Exp $
+.\" $OpenBSD: X509V3_get_d2i.3,v 1.13 2018/03/22 21:08:22 schwarze Exp $
 .\" full merge up to: OpenSSL ff7fbfd5 Nov 2 11:52:01 2015 +0000
 .\" selective merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
@@ -420,3 +420,11 @@ and
 .Fn X509_REVOKED_get_ext_d2i
 first appeared in OpenSSL 0.9.5 and have been available since
 .Ox 2.7 .
+.Pp
+.Fn X509V3_add1_i2d ,
+.Fn X509_add1_ext_i2d ,
+.Fn X509_CRL_add1_ext_i2d ,
+and
+.Fn X509_REVOKED_add1_ext_i2d
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
