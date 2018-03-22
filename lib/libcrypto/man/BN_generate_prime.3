@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_generate_prime.3,v 1.10 2018/03/21 09:03:49 schwarze Exp $
+.\" $OpenBSD: BN_generate_prime.3,v 1.11 2018/03/22 16:06:33 schwarze Exp $
 .\" full merge up to: OpenSSL b3696a55 Sep 2 09:35:50 2017 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt BN_GENERATE_PRIME 3
 .Os
 .Sh NAME
@@ -393,7 +393,8 @@ was added in SSLeay 0.9.1 and
 .Ox 2.6 .
 .Pp
 .Fn BN_is_prime_fasttest
-was added in OpenSSL 0.9.5.
+first appeared in OpenSSL 0.9.5 and has been available since
+.Ox 2.7 .
 .Pp
 .Fn BN_GENCB_new ,
 .Fn BN_GENCB_free ,

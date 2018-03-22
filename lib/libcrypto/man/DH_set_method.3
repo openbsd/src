@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DH_set_method.3,v 1.5 2016/12/10 22:22:59 schwarze Exp $
+.\"	$OpenBSD: DH_set_method.3,v 1.6 2018/03/22 16:06:33 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 10 2016 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt DH_SET_METHOD 3
 .Os
 .Sh NAME
@@ -227,7 +227,8 @@ Otherwise it returns a pointer to the newly allocated structure.
 .Fn DH_new_method
 and
 .Fn DH_OpenSSL
-were added in OpenSSL 0.9.4.
+first appeared in OpenSSL 0.9.5 and have been available since
+.Ox 2.7 .
 .Sh CAVEATS
 As of version 0.9.7,
 .Vt DH_METHOD

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_STRING_TABLE_add.3,v 1.2 2017/08/20 18:06:42 jmc Exp $
+.\"	$OpenBSD: ASN1_STRING_TABLE_add.3,v 1.3 2018/03/22 16:06:33 schwarze Exp $
 .\"	OpenSSL ASN1_STRING_TABLE_add.pod 7b608d08 Jul 27 01:18:50 2017 +0800
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 20 2017 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt ASN1_STRING_TABLE_ADD 3
 .Os
 .Sh NAME
@@ -88,5 +88,12 @@ if nothing is found.
 .Xr ASN1_OBJECT_new 3 ,
 .Xr ERR_get_error 3 ,
 .Xr OBJ_nid2obj 3
+.Sh HISTORY
+.Fn ASN1_STRING_TABLE_add ,
+.Fn ASN1_STRING_TABLE_get ,
+and
+.Fn ASN1_STRING_TABLE_cleanup
+first appeared in OpenSSL 0.9.5 and have been available since
+.Ox 2.7 .
 .Sh BUGS
 Most aspects of the semantics considerably differ from OpenSSL.

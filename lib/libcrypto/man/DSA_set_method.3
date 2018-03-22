@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DSA_set_method.3,v 1.7 2018/03/18 13:06:36 schwarze Exp $
+.\"	$OpenBSD: DSA_set_method.3,v 1.8 2018/03/22 16:06:33 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 18 2018 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt DSA_SET_METHOD 3
 .Os
 .Sh NAME
@@ -232,7 +232,8 @@ Otherwise it returns a pointer to the newly allocated structure.
 .Fn DSA_new_method ,
 and
 .Fn DSA_OpenSSL
-were added in OpenSSL 0.9.4.
+first appeared in OpenSSL 0.9.5 and have been available since
+.Ox 2.7 .
 .Sh CAVEATS
 As of version 0.9.7, DSA_METHOD implementations are grouped together
 with other algorithmic APIs (e.g. RSA_METHOD, EVP_CIPHER) in
