@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_renegotiate.3,v 1.6 2018/03/22 21:09:18 schwarze Exp $
+.\"	$OpenBSD: SSL_renegotiate.3,v 1.7 2018/03/23 05:50:30 schwarze Exp $
 .\"	OpenSSL SSL_key_update.pod 4fbfe86a Feb 16 17:04:40 2017 +0000
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt SSL_RENEGOTIATE 3
 .Os
 .Sh NAME
@@ -159,3 +159,7 @@ appeared before SSLeay 0.8 and has been available since
 .Fn SSL_renegotiate_pending
 first appeared in OpenSSL 0.9.7 and has been available since
 .Ox 3.2 .
+.Pp
+.Fn SSL_renegotiate_abbreviated
+first appeared in OpenSSL 1.0.1 and has been available since
+.Ox 5.3 .
