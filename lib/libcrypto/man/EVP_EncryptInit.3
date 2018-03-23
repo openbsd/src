@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.16 2018/03/23 00:09:11 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.17 2018/03/23 01:05:50 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\" selective merge up to: OpenSSL 5c5eb286 Dec 5 00:36:43 2017 +0100
 .\"
@@ -1294,7 +1294,12 @@ first appeared in OpenSSL 0.9.7 and have been available since
 .Ox 3.2 .
 .Pp
 .Fn EVP_CIPHER_CTX_rand_key
-first appeared in OpenSSL 0.9.8 and has been available since
+first appeared in OpenSSL 0.9.8.
+.Fn EVP_CIPHER_CTX_new
+and
+.Fn EVP_CIPHER_CTX_free
+first appeared in OpenSSL 0.9.8b.
+These functions have been available since
 .Ox 4.5 .
 .Pp
 .Fn EVP_CIPHER_CTX_reset
