@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ERR_set_mark.3,v 1.3 2016/11/23 17:59:29 schwarze Exp $
+.\"	$OpenBSD: ERR_set_mark.3,v 1.4 2018/03/23 00:09:11 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Richard Levitte <levitte@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2016 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt ERR_SET_MARK 3
 .Os
 .Sh NAME
@@ -82,4 +82,5 @@ the stack became empty, otherwise 1.
 .Fn ERR_set_mark
 and
 .Fn ERR_pop_to_mark
-were added in OpenSSL 0.9.8.
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_KEY_new.3,v 1.9 2018/02/17 16:59:48 schwarze Exp $
+.\"	$OpenBSD: EC_KEY_new.3,v 1.10 2018/03/23 00:09:11 schwarze Exp $
 .\"	OpenSSL d900a015 Oct 8 14:40:42 2015 +0200
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 17 2018 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt EC_KEY_NEW 3
 .Os
 .Sh NAME
@@ -526,3 +526,30 @@ returns the point_conversion_form for the
 .Xr EC_POINT_new 3 ,
 .Xr ECDSA_SIG_new 3 ,
 .Xr EVP_PKEY_set1_EC_KEY 3
+.Sh HISTORY
+.Fn EC_KEY_new ,
+.Fn EC_KEY_new_by_curve_name ,
+.Fn EC_KEY_free ,
+.Fn EC_KEY_copy ,
+.Fn EC_KEY_dup ,
+.Fn EC_KEY_up_ref ,
+.Fn EC_KEY_get0_group ,
+.Fn EC_KEY_set_group ,
+.Fn EC_KEY_get0_private_key ,
+.Fn EC_KEY_set_private_key ,
+.Fn EC_KEY_get0_public_key ,
+.Fn EC_KEY_set_public_key ,
+.Fn EC_KEY_get_enc_flags ,
+.Fn EC_KEY_set_enc_flags ,
+.Fn EC_KEY_get_conv_form ,
+.Fn EC_KEY_set_conv_form ,
+.Fn EC_KEY_get_key_method_data ,
+.Fn EC_KEY_insert_key_method_data ,
+.Fn EC_KEY_set_asn1_flag ,
+.Fn EC_KEY_precompute_mult ,
+.Fn EC_KEY_generate_key ,
+.Fn EC_KEY_check_key ,
+and
+.Fn EC_KEY_print_fp
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .

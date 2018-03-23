@@ -1,4 +1,4 @@
-.\" $OpenBSD: ECDSA_SIG_new.3,v 1.9 2018/03/18 13:49:08 schwarze Exp $
+.\" $OpenBSD: ECDSA_SIG_new.3,v 1.10 2018/03/23 00:09:11 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file was written by Nils Larsch <nils@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 18 2018 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt ECDSA_SIG_NEW 3
 .Os
 .Sh NAME
@@ -483,7 +483,25 @@ if (ret == -1) {
 ANSI X9.62, US Federal Information Processing Standard FIPS 186-2
 (Digital Signature Standard, DSS)
 .Sh HISTORY
-The ECDSA implementation was first introduced in OpenSSL 0.9.8.
+.Fn ECDSA_SIG_new ,
+.Fn ECDSA_SIG_free ,
+.Fn i2d_ECDSA_SIG ,
+.Fn d2i_ECDSA_SIG ,
+.Fn ECDSA_size ,
+.Fn ECDSA_sign_setup ,
+.Fn ECDSA_sign ,
+.Fn ECDSA_sign_ex ,
+.Fn ECDSA_verify ,
+.Fn ECDSA_do_sign ,
+.Fn ECDSA_do_sign_ex ,
+.Fn ECDSA_do_verify ,
+.Fn ECDSA_OpenSSL ,
+.Fn ECDSA_get_default_method ,
+.Fn ECDSA_set_default_method ,
+and
+.Fn ECDSA_set_method
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .
 .Sh AUTHORS
 .An Nils Larsch
 for the OpenSSL project.

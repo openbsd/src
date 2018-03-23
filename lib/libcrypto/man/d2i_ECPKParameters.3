@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ECPKParameters.3,v 1.10 2017/08/01 14:57:03 schwarze Exp $
+.\"	$OpenBSD: d2i_ECPKParameters.3,v 1.11 2018/03/23 00:09:11 schwarze Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 1 2017 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt D2I_ECPKPARAMETERS 3
 .Os
 .Sh NAME
@@ -434,3 +434,34 @@ Private-Key Information Syntax Specification
 RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
 Certificate Revocation List (CRL) Profile,
 section 4.1: Basic Certificate Fields
+.Sh HISTORY
+.Fn d2i_ECPKParameters ,
+.Fn i2d_ECPKParameters ,
+.Fn d2i_ECPKParameters_bio ,
+.Fn i2d_ECPKParameters_bio ,
+.Fn d2i_ECPKParameters_fP ,
+.Fn i2d_ECPKParameters_fp ,
+.Fn d2i_ECParameters ,
+.Fn i2d_ECParameters ,
+.Fn ECParameters_dup ,
+.Fn d2i_ECPrivateKey ,
+.Fn i2d_ECPrivateKey ,
+.Fn d2i_ECPrivateKey_bio ,
+.Fn i2d_ECPrivateKey_bio ,
+.Fn d2i_ECPrivateKey_fp ,
+.Fn i2d_ECPrivateKey_fp ,
+.Fn o2i_ECPublicKey ,
+.Fn i2o_ECPublicKey ,
+.Fn ECPKParameters_print ,
+.Fn ECPKParameters_print_fp ,
+.Fn ECParameters_print ,
+.Fn ECParameters_print_fp ,
+.Fn d2i_EC_PUBKEY ,
+.Fn i2d_EC_PUBKEY ,
+.Fn d2i_EC_PUBKEY_bio ,
+.Fn i2d_EC_PUBKEY_bio ,
+.Fn d2i_EC_PUBKEY_fp ,
+and
+.Fn i2d_EC_PUBKEY_fp
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .

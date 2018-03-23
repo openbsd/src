@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.9 2018/02/25 22:24:18 schwarze Exp $
+.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.10 2018/03/23 00:09:11 schwarze Exp $
 .\" full merge up to: OpenSSL d33def66 Feb 9 14:17:13 2016 -0500
 .\" selective merge up to: OpenSSL 48e5119a Jan 19 10:49:22 2018 +0100
 .\"
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 25 2018 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt X509_VERIFY_PARAM_SET_FLAGS 3
 .Os
 .Sh NAME
@@ -659,6 +659,24 @@ X509_VERIFY_PARAM_free(param);
 .Xr X509_STORE_CTX_set0_param 3 ,
 .Xr X509_STORE_set1_param 3 ,
 .Xr X509_verify_cert 3
+.Sh HISTORY
+.Fn X509_VERIFY_PARAM_new ,
+.Fn X509_VERIFY_PARAM_free ,
+.Fn X509_VERIFY_PARAM_set1_name ,
+.Fn X509_VERIFY_PARAM_set_flags ,
+.Fn X509_VERIFY_PARAM_set_purpose ,
+.Fn X509_VERIFY_PARAM_set_trust ,
+.Fn X509_VERIFY_PARAM_set_time ,
+.Fn X509_VERIFY_PARAM_add0_policy ,
+.Fn X509_VERIFY_PARAM_set1_policies ,
+.Fn X509_VERIFY_PARAM_set_depth ,
+.Fn X509_VERIFY_PARAM_get_depth ,
+.Fn X509_VERIFY_PARAM_add0_table ,
+.Fn X509_VERIFY_PARAM_lookup ,
+and
+.Fn X509_VERIFY_PARAM_table_cleanup
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .
 .Sh BUGS
 Delta CRL checking is currently primitive.
 Only a single delta can be used and (partly due to limitations of

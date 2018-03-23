@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_set1_param.3,v 1.10 2018/03/22 21:08:22 schwarze Exp $
+.\" $OpenBSD: X509_STORE_set1_param.3,v 1.11 2018/03/23 00:09:11 schwarze Exp $
 .\" content checked up to:
 .\" OpenSSL man3/X509_STORE_get0_param e90fc053 Jul 15 09:39:45 2017 -0400
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt X509_STORE_SET1_PARAM 3
 .Os
 .Sh NAME
@@ -195,12 +195,18 @@ first appeared in SSLeay 0.9.0.
 These functions have been available since
 .Ox 2.4 .
 .Pp
-.Fn X509_STORE_get0_objects
-first appeared in OpenSSL 1.1.0.
-.Pp
 .Fn X509_STORE_set_flags ,
 .Fn X509_STORE_set_purpose ,
 and
 .Fn X509_STORE_set_trust
 first appeared in OpenSSL 0.9.7 and have been available since
 .Ox 3.2 .
+.Pp
+.Fn X509_STORE_set1_param
+and
+.Fn X509_STORE_set_depth
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .
+.Pp
+.Fn X509_STORE_get0_objects
+first appeared in OpenSSL 1.1.0.
