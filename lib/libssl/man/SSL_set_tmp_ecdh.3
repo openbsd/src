@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_set_tmp_ecdh.3,v 1.4 2018/03/23 00:10:28 schwarze Exp $
+.\"	$OpenBSD: SSL_set_tmp_ecdh.3,v 1.5 2018/03/23 14:28:16 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -111,3 +111,9 @@ and
 .Fn SSL_CTX_set_tmp_ecdh_callback
 first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
+.Pp
+.Fn SSL_CTX_set_ecdh_auto
+and
+.Fn SSL_set_ecdh_auto
+first appeared in OpenSSL 1.0.2 and have been available since
+.Ox 5.7 .

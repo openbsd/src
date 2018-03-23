@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_set1_param.3,v 1.3 2018/03/23 04:35:09 schwarze Exp $
+.\" $OpenBSD: SSL_set1_param.3,v 1.4 2018/03/23 14:28:16 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/SSL_CTX_get0_param 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
@@ -128,3 +128,9 @@ and
 .Fn SSL_set1_param
 first appeared in OpenSSL 1.0.0 and have been available since
 .Ox 4.9 .
+.Pp
+.Fn SSL_CTX_get0_param
+and
+.Fn SSL_get0_param
+first appeared in OpenSSL 1.0.2 and have been available since
+.Ox 6.3 .
