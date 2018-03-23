@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.34 2018/01/12 10:16:03 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.35 2018/03/23 07:44:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1023,7 +1023,7 @@ layout_spread_cell(struct window *w, struct layout_cell *parent)
 	changed = 0;
 	TAILQ_FOREACH (lc, &parent->cells, entry) {
 		if (TAILQ_NEXT(lc, entry) == NULL)
-			each = size - (each * (number - 1));
+			each = size - ((each + 1) * (number - 1));
 		change = 0;
 		if (parent->type == LAYOUT_LEFTRIGHT) {
 			change = each - (int)lc->sx;
