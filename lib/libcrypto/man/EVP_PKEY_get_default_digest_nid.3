@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_PKEY_get_default_digest_nid.3,v 1.3 2018/02/14 02:15:46 schwarze Exp $
+.\"	$OpenBSD: EVP_PKEY_get_default_digest_nid.3,v 1.4 2018/03/23 04:34:23 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 14 2018 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt EVP_PKEY_GET_DEFAULT_DIGEST_NID 3
 .Os
 .Sh NAME
@@ -88,4 +88,6 @@ supported by the public key algorithm.
 .Xr EVP_PKEY_verify 3 ,
 .Xr EVP_PKEY_verify_recover 3
 .Sh HISTORY
-This function was first added to OpenSSL 1.0.0.
+.Fn EVP_PKEY_get_default_digest_nid
+first appeared in OpenSSL 1.0.0 and has been available since
+.Ox 4.9 .

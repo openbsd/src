@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_KEY_new.3,v 1.10 2018/03/23 00:09:11 schwarze Exp $
+.\"	$OpenBSD: EC_KEY_new.3,v 1.11 2018/03/23 04:34:23 schwarze Exp $
 .\"	OpenSSL d900a015 Oct 8 14:40:42 2015 +0200
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -553,3 +553,7 @@ and
 .Fn EC_KEY_print_fp
 first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
+.Pp
+.Fn EC_KEY_up_ref
+first appeared in OpenSSL 1.0.0 and has been available since
+.Ox 4.9 .

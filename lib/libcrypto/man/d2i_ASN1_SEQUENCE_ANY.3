@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_SEQUENCE_ANY.3,v 1.1 2017/01/04 21:14:26 schwarze Exp $
+.\"	$OpenBSD: d2i_ASN1_SEQUENCE_ANY.3,v 1.2 2018/03/23 04:34:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 4 2017 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt D2I_ASN1_SEQUENCE_ANY 3
 .Os
 .Sh NAME
@@ -83,3 +83,11 @@ occurs.
 .Sh SEE ALSO
 .Xr ASN1_item_d2i 3 ,
 .Xr ASN1_TYPE_new 3
+.Sh HISTORY
+.Fn d2i_ASN1_SEQUENCE_ANY ,
+.Fn i2d_ASN1_SEQUENCE_ANY ,
+.Fn d2i_ASN1_SET_ANY ,
+and
+.Fn i2d_ASN1_SET_ANY
+first appeared in OpenSSL 1.0.0 and have been available since
+.Ox 4.9 .

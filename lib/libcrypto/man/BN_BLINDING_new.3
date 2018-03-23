@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_BLINDING_new.3,v 1.8 2018/03/23 00:09:11 schwarze Exp $
+.\"	$OpenBSD: BN_BLINDING_new.3,v 1.9 2018/03/23 04:34:23 schwarze Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file was written by Nils Larsch <nils@openssl.org>.
@@ -329,5 +329,9 @@ and
 .Fn BN_BLINDING_create_param
 first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
+.Pp
+.Fn BN_BLINDING_thread_id
+first appeared in OpenSSL 1.0.0 and has been available since
+.Ox 4.9 .
 .Sh AUTHORS
 .An Nils Larsch Aq Mt nils@openssl.org

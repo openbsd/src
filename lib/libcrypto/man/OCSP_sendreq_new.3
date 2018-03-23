@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_sendreq_new.3,v 1.6 2018/03/23 01:05:50 schwarze Exp $
+.\"	$OpenBSD: OCSP_sendreq_new.3,v 1.7 2018/03/23 04:34:23 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -239,6 +239,12 @@ and
 .Fn OCSP_REQ_CTX_free
 first appeared in OpenSSL 0.9.8h and have been available since
 .Ox 4.5 .
+.Pp
+.Fn OCSP_REQ_CTX_add1_header
+and
+.Fn OCSP_REQ_CTX_set1_req
+first appeared in OpenSSL 1.0.0 and have been available since
+.Ox 4.9 .
 .Sh CAVEATS
 These functions only perform a minimal HTTP query to a responder.
 If an application wishes to support more advanced features, it
