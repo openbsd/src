@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_KEY_new.3,v 1.11 2018/03/23 04:34:23 schwarze Exp $
+.\"	$OpenBSD: EC_KEY_new.3,v 1.12 2018/03/23 05:48:56 schwarze Exp $
 .\"	OpenSSL d900a015 Oct 8 14:40:42 2015 +0200
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -557,3 +557,11 @@ first appeared in OpenSSL 0.9.8 and have been available since
 .Fn EC_KEY_up_ref
 first appeared in OpenSSL 1.0.0 and has been available since
 .Ox 4.9 .
+.Pp
+.Fn EC_KEY_get_flags ,
+.Fn EC_KEY_set_flags ,
+.Fn EC_KEY_clear_flags ,
+and
+.Fn EC_KEY_set_public_key_affine_coordinates
+first appeared in OpenSSL 1.0.1 and have been available since
+.Ox 5.3 .

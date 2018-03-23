@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_PKEY_meth_get0_info.3,v 1.1 2017/08/20 19:21:20 schwarze Exp $
+.\"	$OpenBSD: EVP_PKEY_meth_get0_info.3,v 1.2 2018/03/23 05:48:56 schwarze Exp $
 .\"	OpenSSL EVP_PKEY_meth_get_count.pod 6a2da303 Aug 9 11:25:19 2017 -0400
 .\"	OpenSSL EVP_PKEY_meth_get_count.pod 48ed9c23 Jul 25 17:48:26 2017 +0100
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 20 2017 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt EVP_PKEY_METH_GET0_INFO 3
 .Os
 .Sh NAME
@@ -71,3 +71,7 @@ public key method
 .Pf * Fa meth .
 .Sh SEE ALSO
 .Xr EVP_PKEY_new 3
+.Sh HISTORY
+.Fn EVP_PKEY_meth_get0_info
+first appeared in OpenSSL 1.0.1 and has been available since
+.Ox 5.3 .

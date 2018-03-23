@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.17 2018/03/23 01:05:50 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.18 2018/03/23 05:48:56 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\" selective merge up to: OpenSSL 5c5eb286 Dec 5 00:36:43 2017 +0100
 .\"
@@ -1301,6 +1301,19 @@ and
 first appeared in OpenSSL 0.9.8b.
 These functions have been available since
 .Ox 4.5 .
+.Pp
+.Fn EVP_rc4_hmac_md5 ,
+.Fn EVP_aes_128_gcm ,
+.Fn EVP_aes_192_gcm ,
+.Fn EVP_aes_256_gcm ,
+.Fn EVP_aes_128_ccm ,
+.Fn EVP_aes_192_ccm ,
+.Fn EVP_aes_256_ccm ,
+.Fn EVP_aes_128_cbc_hmac_sha1 ,
+and
+.Fn EVP_aes_256_cbc_hmac_sha1
+first appeared in OpenSSL 1.0.1 and have been available since
+.Ox 5.3 .
 .Pp
 .Fn EVP_CIPHER_CTX_reset
 first appeared in OpenSSL 1.1.0.

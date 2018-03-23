@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_GFp_simple_method.3,v 1.8 2018/03/23 00:09:11 schwarze Exp $
+.\"	$OpenBSD: EC_GFp_simple_method.3,v 1.9 2018/03/23 05:48:56 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -172,3 +172,10 @@ and
 .Fn EC_METHOD_get_field_type
 first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
+.Pp
+.Fn EC_GFp_nistp224_method ,
+.Fn EC_GFp_nistp256_method ,
+and
+.Fn EC_GFp_nistp521_method
+first appeared in OpenSSL 1.0.1 and have been available since
+.Ox 5.3 .

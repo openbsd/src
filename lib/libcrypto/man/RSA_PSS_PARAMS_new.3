@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_PSS_PARAMS_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
+.\"	$OpenBSD: RSA_PSS_PARAMS_new.3,v 1.3 2018/03/23 05:48:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 25 2016 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt RSA_PSS_PARAMS_NEW 3
 .Os
 .Sh NAME
@@ -51,3 +51,9 @@ if an error occurs.
 .Xr X509_sign 3
 .Sh STANDARDS
 RFC 8017: PKCS#1: RSA Cryptography Specifications Version 2.2
+.Sh HISTORY
+.Fn RSA_PSS_PARAMS_new
+and
+.Fn RSA_PSS_PARAMS_free
+first appeared in OpenSSL 1.0.1 and have been available since
+.Ox 5.3 .
