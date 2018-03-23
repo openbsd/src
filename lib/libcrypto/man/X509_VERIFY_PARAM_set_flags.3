@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.11 2018/03/23 01:05:50 schwarze Exp $
+.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.12 2018/03/23 14:26:40 schwarze Exp $
 .\" full merge up to: OpenSSL d33def66 Feb 9 14:17:13 2016 -0500
 .\" selective merge up to: OpenSSL 48e5119a Jan 19 10:49:22 2018 +0100
 .\"
@@ -682,6 +682,20 @@ and
 first appeared in OpenSSL 0.9.8a.
 All these functions have been available since
 .Ox 4.5 .
+.Pp
+.Fn X509_VERIFY_PARAM_get0_name
+.Fn X509_VERIFY_PARAM_set1_host ,
+.Fn X509_VERIFY_PARAM_add1_host ,
+.Fn X509_VERIFY_PARAM_set_hostflags ,
+.Fn X509_VERIFY_PARAM_get0_peername ,
+.Fn X509_VERIFY_PARAM_set1_email ,
+.Fn X509_VERIFY_PARAM_set1_ip ,
+.Fn X509_VERIFY_PARAM_set1_ip_asc ,
+.Fn X509_VERIFY_PARAM_get_count ,
+and
+.Fn X509_VERIFY_PARAM_get0
+first appeared in OpenSSL 1.0.2 and have been available since
+.Ox 6.3 .
 .Sh BUGS
 Delta CRL checking is currently primitive.
 Only a single delta can be used and (partly due to limitations of

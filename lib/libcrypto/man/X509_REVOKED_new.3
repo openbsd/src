@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_REVOKED_new.3,v 1.6 2018/03/22 21:08:22 schwarze Exp $
+.\" $OpenBSD: X509_REVOKED_new.3,v 1.7 2018/03/23 14:26:40 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/X509_CRL_get0_by_serial cdd6c8c5 Mar 20 12:29:37 2017 +0100
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt X509_REVOKED_NEW 3
 .Os
 .Sh NAME
@@ -190,3 +190,7 @@ and
 .Fn X509_REVOKED_set_revocationDate
 first appeared in OpenSSL 0.9.7 and have been available since
 .Ox 3.2 .
+.Pp
+.Fn X509_REVOKED_dup
+first appeared in OpenSSL 1.0.2 and has been available since
+.Ox 6.3 .
