@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_STORE_set_verify_cb_func.3,v 1.6 2018/03/23 04:34:23 schwarze Exp $
+.\"	$OpenBSD: X509_STORE_set_verify_cb_func.3,v 1.7 2018/03/23 23:18:17 schwarze Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -96,7 +96,8 @@ do not return a value.
 .Xr X509_STORE_new 3
 .Sh HISTORY
 .Fn X509_STORE_set_verify_cb_func
-is available in all versions of SSLeay and OpenSSL.
+appeared before SSLeay 0.8 and has been available since
+.Ox 2.4 .
 .Pp
 .Fn X509_STORE_set_verify_cb
 first appeared in OpenSSL 1.0.0 and has been available since

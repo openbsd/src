@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get0_notBefore.3,v 1.3 2018/02/25 10:53:16 schwarze Exp $
+.\" $OpenBSD: X509_get0_notBefore.3,v 1.4 2018/03/23 23:18:17 schwarze Exp $
 .\" content checked up to: OpenSSL 27b138e9 May 19 00:16:38 2017 +0000
 .\"
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 25 2018 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt X509_GET0_NOTBEFORE 3
 .Os
 .Sh NAME
@@ -152,3 +152,7 @@ return 1 on success or 0 on failure.
 .Xr X509_sign 3 ,
 .Xr X509_VAL_new 3 ,
 .Xr X509_verify_cert 3
+.Sh HISTORY
+These functions first appeared in OpenSSL 1.1.0
+and have been available since
+.Ox 6.3 .

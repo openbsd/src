@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.10 2018/03/22 16:06:33 schwarze Exp $
+.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.11 2018/03/23 23:18:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt D2I_ASN1_OCTET_STRING 3
 .Os
 .Sh NAME
@@ -432,3 +432,11 @@ These functions have been available since
 .Fn i2d_ASN1_PRINTABLESTRING
 first appeared in OpenSSL 0.9.5 and has been available since
 .Ox 2.7 .
+.Pp
+.Fn d2i_ASN1_UNIVERSALSTRING ,
+.Fn i2d_ASN1_UNIVERSALSTRING ,
+.Fn d2i_ASN1_GENERALSTRING ,
+and
+.Fn i2d_ASN1_GENERALSTRING
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .

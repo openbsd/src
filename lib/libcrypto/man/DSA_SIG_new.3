@@ -1,4 +1,4 @@
-.\" $OpenBSD: DSA_SIG_new.3,v 1.6 2018/03/21 17:57:48 schwarze Exp $
+.\" $OpenBSD: DSA_SIG_new.3,v 1.7 2018/03/23 23:18:17 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>,
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt DSA_SIG_NEW 3
 .Os
 .Sh NAME
@@ -132,5 +132,11 @@ returns 1 on success or 0 on failure.
 .Fn DSA_SIG_new
 and
 .Fn DSA_SIG_free
-first appeared in in OpenSSL 0.9.3 and have been available since
+first appeared in OpenSSL 0.9.3 and have been available since
 .Ox 2.6 .
+.Pp
+.Fn DSA_SIG_get0
+and
+.Fn DSA_SIG_set0
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.3 .

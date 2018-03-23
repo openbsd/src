@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_new.3,v 1.13 2018/03/23 14:26:40 schwarze Exp $
+.\" $OpenBSD: X509_new.3,v 1.14 2018/03/23 23:18:17 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -160,6 +160,10 @@ and
 .Fn X509_free
 appeared before SSLeay 0.8 and have been available since
 .Ox 2.4 .
+.Pp
+.Fn X509_up_ref
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 6.1 .
 .Pp
 .Fn X509_chain_up_ref
 first appeared in OpenSSL 1.0.2 and has been available since

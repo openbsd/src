@@ -1,4 +1,4 @@
-.\" $OpenBSD: get_rfc3526_prime_8192.3,v 1.3 2018/03/23 01:05:50 schwarze Exp $
+.\" $OpenBSD: get_rfc3526_prime_8192.3,v 1.4 2018/03/23 23:18:17 schwarze Exp $
 .\" checked up to: OpenSSL DH_get_1024_160 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -163,6 +163,11 @@ and
 .Fn get_rfc3526_prime_8192
 first appeared in OpenSSL 0.9.8a and have been available since
 .Ox 4.5 .
+.Pp
+The
+.Sy BN_
+aliases first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.3 .
 .Sh CAVEATS
 As all the memory needed for storing the numbers is dynamically
 allocated, the

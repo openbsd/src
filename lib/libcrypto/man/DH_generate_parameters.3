@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DH_generate_parameters.3,v 1.9 2018/03/20 22:22:10 schwarze Exp $
+.\"	$OpenBSD: DH_generate_parameters.3,v 1.10 2018/03/23 23:18:17 schwarze Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 20 2018 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt DH_GENERATE_PARAMETERS 3
 .Os
 .Sh NAME
@@ -167,6 +167,10 @@ In versions before OpenSSL 0.9.5,
 .Dv DH_CHECK_P_NOT_STRONG_PRIME
 is used instead of
 .Dv DH_CHECK_P_NOT_SAFE_PRIME .
+.Pp
+.Fn DH_generate_parameters_ex
+first appeared in OpenSSL 0.9.8 and has been available since
+.Ox 4.5 .
 .Sh CAVEATS
 .Fn DH_generate_parameters_ex
 and

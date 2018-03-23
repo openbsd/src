@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get0_signature.3,v 1.4 2018/03/23 14:26:40 schwarze Exp $
+.\" $OpenBSD: X509_get0_signature.3,v 1.5 2018/03/23 23:18:17 schwarze Exp $
 .\" selective merge up to:
 .\" OpenSSL man3/X509_get0_signature 2f7a2520 Apr 25 17:28:08 2017 +0100
 .\"
@@ -150,12 +150,13 @@ is not appropriate, for example in a non-standard or unsupported format.
 .Fn X509_get0_signature
 and
 .Fn X509_get_signature_nid
-first appeared in OpenSSL 1.0.2 and have been available since
-.Ox 6.3 .
-.Pp
+first appeared in OpenSSL 1.0.2.
 .Fn X509_REQ_get0_signature ,
 .Fn X509_CRL_get0_signature ,
+.Fn X509_get0_tbs_sigalg ,
 .Fn X509_REQ_get_signature_nid ,
 and
 .Fn X509_CRL_get_signature_nid
 first appeared in OpenSSL 1.1.0.
+All these functions have been available since
+.Ox 6.3 .

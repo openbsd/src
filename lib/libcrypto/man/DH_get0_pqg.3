@@ -1,4 +1,4 @@
-.\" $OpenBSD: DH_get0_pqg.3,v 1.3 2018/02/23 14:50:21 schwarze Exp $
+.\" $OpenBSD: DH_get0_pqg.3,v 1.4 2018/03/23 23:18:17 schwarze Exp $
 .\" selective merge up to: OpenSSL 7966101e Sep 18 11:58:24 2017 -0400
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 23 2018 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt DH_GET0_PQG 3
 .Os
 .Sh NAME
@@ -253,4 +253,6 @@ if no engine was set for this object.
 .Xr DH_size 3 ,
 .Xr DHparams_print 3
 .Sh HISTORY
-These functions first appeared in OpenSSL 1.1.0.
+These functions first appeared in OpenSSL 1.1.0
+and have been available since
+.Ox 6.3 .

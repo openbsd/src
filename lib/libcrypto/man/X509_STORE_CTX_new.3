@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_new.3,v 1.16 2018/03/23 14:26:40 schwarze Exp $
+.\" $OpenBSD: X509_STORE_CTX_new.3,v 1.17 2018/03/23 23:18:17 schwarze Exp $
 .\" full merge up to: OpenSSL 186bb907 Apr 13 11:05:13 2015 -0700
 .\" selective merge up to: OpenSSL 7643a172 Apr 21 13:35:51 2017 +0200
 .\"
@@ -349,7 +349,13 @@ first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
 .Pp
 .Fn X509_STORE_CTX_get0_store
-first appeared in OpenSSL 1.0.2 and has been available since
+first appeared in OpenSSL 1.0.2.
+.Fn X509_STORE_CTX_set0_trusted_stack ,
+.Fn X509_STORE_CTX_get0_untrusted ,
+and
+.Fn X509_STORE_CTX_set0_untrusted
+first appeared in OpenSSL 1.1.0.
+These functions have been available since
 .Ox 6.3 .
 .Sh BUGS
 The certificates and CRLs in a context are used internally and should

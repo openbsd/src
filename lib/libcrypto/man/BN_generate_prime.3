@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_generate_prime.3,v 1.12 2018/03/23 00:09:11 schwarze Exp $
+.\" $OpenBSD: BN_generate_prime.3,v 1.13 2018/03/23 23:18:17 schwarze Exp $
 .\" full merge up to: OpenSSL b3696a55 Sep 2 09:35:50 2017 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -399,6 +399,7 @@ first appeared in OpenSSL 0.9.5 and has been available since
 .Fn BN_generate_prime_ex ,
 .Fn BN_is_prime_ex ,
 .Fn BN_is_prime_fasttest_ex ,
+.Fn BN_GENCB_call ,
 .Fn BN_GENCB_set_old ,
 and
 .Fn BN_GENCB_set
@@ -409,4 +410,5 @@ first appeared in OpenSSL 0.9.8 and have been available since
 .Fn BN_GENCB_free ,
 and
 .Fn BN_GENCB_get_arg
-were added in OpenSSL 1.1.0 .
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.3 .

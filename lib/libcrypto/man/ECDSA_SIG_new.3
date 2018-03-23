@@ -1,4 +1,4 @@
-.\" $OpenBSD: ECDSA_SIG_new.3,v 1.10 2018/03/23 00:09:11 schwarze Exp $
+.\" $OpenBSD: ECDSA_SIG_new.3,v 1.11 2018/03/23 23:18:17 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file was written by Nils Larsch <nils@openssl.org>.
@@ -502,6 +502,12 @@ and
 .Fn ECDSA_set_method
 first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
+.Pp
+.Fn ECDSA_SIG_get0
+and
+.Fn ECDSA_SIG_set0
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.3 .
 .Sh AUTHORS
 .An Nils Larsch
 for the OpenSSL project.

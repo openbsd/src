@@ -1,4 +1,4 @@
-.\" $OpenBSD: RSA_get0_key.3,v 1.3 2018/02/24 13:04:47 schwarze Exp $
+.\" $OpenBSD: RSA_get0_key.3,v 1.4 2018/03/23 23:18:17 schwarze Exp $
 .\" selective merge up to: OpenSSL 665d899f Aug 2 02:19:43 2017 +0800
 .\"
 .\" This file was written by Richard Levitte <levitte@openssl.org>
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 24 2018 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt RSA_GET0_KEY 3
 .Os
 .Sh NAME
@@ -285,4 +285,6 @@ are set.
 .Xr RSA_print 3 ,
 .Xr RSA_size 3
 .Sh HISTORY
-These functions first appeared in OpenSSL 1.1.0.
+These functions first appeared in OpenSSL 1.1.0
+and have been available since
+.Ox 6.3 .

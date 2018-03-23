@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.11 2018/03/23 04:34:23 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.12 2018/03/23 23:18:17 schwarze Exp $
 .\" full merge up to: OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
 .\" selective merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
@@ -327,3 +327,11 @@ and
 .Fn EVP_PKEY_base_id
 first appeared in OpenSSL 1.0.0 and have been available since
 .Ox 4.9 .
+.Pp
+.Fn EVP_PKEY_get0_RSA ,
+.Fn EVP_PKEY_get0_DSA ,
+.Fn EVP_PKEY_get0_DH ,
+and
+.Fn EVP_PKEY_get0_EC_KEY
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.3 .
