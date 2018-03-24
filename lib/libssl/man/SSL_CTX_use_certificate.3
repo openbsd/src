@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_use_certificate.3,v 1.6 2018/03/21 05:07:04 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_use_certificate.3,v 1.7 2018/03/24 00:55:37 schwarze Exp $
 .\"	OpenSSL e248596b Apr 8 22:49:57 2005 +0000
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 24 2018 $
 .Dt SSL_CTX_USE_CERTIFICATE 3
 .Os
 .Sh NAME
@@ -416,6 +416,10 @@ and
 appeared before SSLeay 0.8 and have been available since
 .Ox 2.4 .
 .Pp
+.Fn SSL_CTX_use_certificate_chain_file
+first appeared in OpenSSL 0.9.4 and has been available since
+.Ox 2.6 .
+.Pp
 Support for DER encoded private keys
 .Pq Dv SSL_FILETYPE_ASN1
 in
@@ -423,3 +427,7 @@ in
 and
 .Fn SSL_use_PrivateKey_file
 was added in 0.9.8.
+.Pp
+.Fn SSL_CTX_use_certificate_chain_mem
+first appeared in
+.Ox 5.7 .

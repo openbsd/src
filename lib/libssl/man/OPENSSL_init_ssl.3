@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_init_ssl.3,v 1.1 2018/03/17 18:52:42 schwarze Exp $
+.\" $OpenBSD: OPENSSL_init_ssl.3,v 1.2 2018/03/24 00:55:37 schwarze Exp $
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 17 2018 $
+.Dd $Mdocdate: March 24 2018 $
 .Dt OPENSSL_INIT_SSL 3
 .Os
 .Sh NAME
@@ -53,7 +53,8 @@ is intended to return 1 on success or 0 on error.
 .Xr OPENSSL_init_crypto 3
 .Sh HISTORY
 .Fn OPENSSL_init_ssl
-first appeared in OpenSSL 1.1.0.
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 6.3 .
 .Sh BUGS
 .Fn OPENSSL_init_ssl
 silently ignores even more configuration failures than

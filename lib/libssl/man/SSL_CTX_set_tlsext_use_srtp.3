@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_tlsext_use_srtp.3,v 1.1 2018/02/27 18:30:30 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_tlsext_use_srtp.3,v 1.2 2018/03/24 00:55:37 schwarze Exp $
 .\" full merge up to: OpenSSL 3733ce61 Aug 21 08:44:14 2017 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 27 2018 $
+.Dd $Mdocdate: March 24 2018 $
 .Dt SSL_CTX_SET_TLSEXT_USE_SRTP 3
 .Os
 .Sh NAME
@@ -186,3 +186,7 @@ object if one has been negotiated or
 otherwise.
 .Sh SEE ALSO
 .Xr SSL_export_keying_material 3
+.Sh HISTORY
+These functions first appeared in OpenSSL 1.0.1
+and have been available since
+.Ox 5.3 .
