@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_tlsext_status_cb.3,v 1.5 2018/03/23 23:59:06 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_tlsext_status_cb.3,v 1.6 2018/03/24 00:11:37 schwarze Exp $
 .\" full merge up to: OpenSSL 43c34894 Nov 30 16:04:51 2015 +0000
 .\" selective merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
@@ -49,12 +49,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 24 2018 $
 .Dt SSL_CTX_SET_TLSEXT_STATUS_CB 3
 .Os
 .Sh NAME
 .Nm SSL_CTX_set_tlsext_status_cb ,
+.Nm SSL_CTX_get_tlsext_status_cb ,
 .Nm SSL_CTX_set_tlsext_status_arg ,
+.Nm SSL_CTX_get_tlsext_status_arg ,
 .Nm SSL_set_tlsext_status_type ,
 .Nm SSL_get_tlsext_status_ocsp_resp ,
 .Nm SSL_set_tlsext_status_ocsp_resp
@@ -67,9 +69,19 @@
 .Fa "int (*callback)(SSL *, void *)"
 .Fc
 .Ft long
+.Fo SSL_CTX_get_tlsext_status_cb
+.Fa "SSL_CTX *ctx"
+.Fa "int (*callback)(SSL *, void *)"
+.Fc
+.Ft long
 .Fo SSL_CTX_set_tlsext_status_arg
 .Fa "SSL_CTX *ctx"
 .Fa "void *arg"
+.Fc
+.Ft long
+.Fo SSL_CTX_get_tlsext_status_arg
+.Fa "SSL_CTX *ctx"
+.Fa "void **arg"
 .Fc
 .Ft long
 .Fo SSL_set_tlsext_status_type
@@ -112,6 +124,13 @@ a call to
 Note that the callback will not be called in the event of a handshake
 where session resumption occurs (because there are no Certificates
 exchanged in such a handshake).
+.Pp
+The callback previously set via
+.Fn SSL_CTX_set_tlsext_status_cb
+can be retrieved by calling
+.Fn SSL_CTX_get_tlsext_status_cb ,
+and the argument by calling
+.Fn SSL_CTX_get_tlsext_status_arg .
 .Pp
 The response returned by the server can be obtained via a call to
 .Fn SSL_get_tlsext_status_ocsp_resp .
@@ -156,7 +175,9 @@ The callback when used on the server side should return with either
 (meaning that a fatal error has occurred).
 .Pp
 .Fn SSL_CTX_set_tlsext_status_cb ,
+.Fn SSL_CTX_get_tlsext_status_cb ,
 .Fn SSL_CTX_set_tlsext_status_arg ,
+.Fn SSL_CTX_get_tlsext_status_arg ,
 .Fn SSL_set_tlsext_status_type ,
 and
 .Fn SSL_set_tlsext_status_ocsp_resp
@@ -176,3 +197,9 @@ and
 .Fn SSL_set_tlsext_status_ocsp_resp
 first appeared in OpenSSL 0.9.8h and have been available since
 .Ox 4.5 .
+.Pp
+.Fn SSL_CTX_get_tlsext_status_cb
+and
+.Fn SSL_CTX_get_tlsext_status_arg
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.3 .
