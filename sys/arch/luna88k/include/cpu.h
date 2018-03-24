@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.9 2018/03/12 11:17:06 aoyama Exp $ */
+/* $OpenBSD: cpu.h,v 1.10 2018/03/24 04:19:43 visa Exp $ */
 /* public domain */
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
@@ -36,7 +36,7 @@ intr_disable(void)
 static inline void
 intr_restore(u_long psr)
 {
-	set_psr(psr & ~PSR_IND);
+	set_psr(psr);
 }
 
 #endif	/* _KERNEL */
