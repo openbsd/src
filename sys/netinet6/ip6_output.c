@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.236 2018/03/21 14:42:41 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.237 2018/03/27 15:03:52 dhill Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -861,7 +861,7 @@ ip6_copyexthdr(struct mbuf **mp, caddr_t hdr, int hlen)
 	}
 	m->m_len = hlen;
 	if (hdr)
-		bcopy(hdr, mtod(m, caddr_t), hlen);
+		memcpy(mtod(m, caddr_t), hdr, hlen);
 
 	*mp = m;
 	return (0);
@@ -929,7 +929,7 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
 			if (!n)
 				return (ENOBUFS);
 			n->m_len = oldoptlen + JUMBOOPTLEN;
-			bcopy(mtod(mopt, caddr_t), mtod(n, caddr_t),
+			memcpy(mtod(n, caddr_t), mtod(mopt, caddr_t),
 			      oldoptlen);
 			optbuf = mtod(n, u_int8_t *) + oldoptlen;
 			m_freem(mopt);

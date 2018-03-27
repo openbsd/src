@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.106 2018/03/13 13:58:03 florian Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.107 2018/03/27 15:03:52 dhill Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 
 		/* make EUI64 address */
 		if (addrlen == 8)
-			bcopy(addr, &in6->s6_addr[8], 8);
+			memcpy(&in6->s6_addr[8], addr, 8);
 		else if (addrlen == 6) {
 			in6->s6_addr[8] = addr[0];
 			in6->s6_addr[9] = addr[1];
@@ -244,7 +244,7 @@ in6_get_soii_ifid(struct ifnet *ifp, struct in6_addr *in6)
 	SHA512Update(&ctx, ip6_soiikey, sizeof(ip6_soiikey));
 	SHA512Final(digest, &ctx);
 
-	bcopy(digest + (sizeof(digest) - 8), &in6->s6_addr[8], 8);
+	memcpy(&in6->s6_addr[8], digest + (sizeof(digest) - 8), 8);
 
 	return 0;
 }
@@ -464,7 +464,7 @@ in6_nigroup(struct ifnet *ifp, const char *name, int namelen,
 	sa6->sin6_addr.s6_addr16[0] = htons(0xff02);
 	sa6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 	sa6->sin6_addr.s6_addr8[11] = 2;
-	bcopy(digest, &sa6->sin6_addr.s6_addr32[3],
+	memcpy(&sa6->sin6_addr.s6_addr32[3], digest,
 	    sizeof(sa6->sin6_addr.s6_addr32[3]));
 
 	return 0;
