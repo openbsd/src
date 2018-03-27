@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.218 2018/03/01 14:11:11 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.219 2018/03/27 08:27:29 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1141,13 +1141,11 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	/* Lock both receive and send buffer. */
 	if ((error = sblock(so, &so->so_rcv,
 	    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK)) != 0) {
-		FRELE(fp, curproc);
-		return (error);
+		goto frele;
 	}
 	if ((error = sblock(so, &sosp->so_snd, M_WAITOK)) != 0) {
 		sbunlock(so, &so->so_rcv);
-		FRELE(fp, curproc);
-		return (error);
+		goto frele;
 	}
 
 	if (so->so_sp->ssp_socket || sosp->so_sp->ssp_soback) {
@@ -1191,6 +1189,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
  release:
 	sbunlock(sosp, &sosp->so_snd);
 	sbunlock(so, &so->so_rcv);
+ frele:
 	FRELE(fp, curproc);
 	return (error);
 }
