@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.82 2018/02/26 13:43:51 mpi Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.83 2018/03/27 08:42:49 mpi Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -507,6 +507,7 @@ db_kill_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	memset(&sa, 0, sizeof sa);
 	sa.sa_handler = SIG_DFL;
 	setsigvec(p, SIGABRT, &sa);
+	atomic_clearbits_int(&p->p_sigmask, sigmask(SIGABRT));
 	psignal(p, SIGABRT);
 }
 

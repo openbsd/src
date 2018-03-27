@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.228 2018/01/09 15:14:23 mpi Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.229 2018/03/27 08:42:49 mpi Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -526,10 +526,12 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 	log(LOG_ERR, "%s[%d]: pledge \"%s\", syscall %d\n",
 	    p->p_p->ps_comm, p->p_p->ps_pid, codes, p->p_pledge_syscall);
 	p->p_p->ps_acflag |= APLEDGE;
+
 	/* Send uncatchable SIGABRT for coredump */
 	memset(&sa, 0, sizeof sa);
 	sa.sa_handler = SIG_DFL;
 	setsigvec(p, SIGABRT, &sa);
+	atomic_clearbits_int(&p->p_sigmask, sigmask(SIGABRT));
 	psignal(p, SIGABRT);
 
 	p->p_p->ps_pledge = 0;		/* Disable all PLEDGE_ flags */
