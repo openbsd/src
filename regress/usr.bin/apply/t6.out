@@ -1,0 +1,1 @@
+exec 2to3 test.py

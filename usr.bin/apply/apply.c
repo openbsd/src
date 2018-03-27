@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.27 2015/10/10 17:48:34 deraadt Exp $	*/
+/*	$OpenBSD: apply.c,v 1.28 2018/03/27 10:00:16 tobias Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -44,15 +44,42 @@
 #include <string.h>
 #include <unistd.h>
 
+#define ISMAGICNO(p) \
+	    (p)[0] == magic && isdigit((unsigned char)(p)[1]) && (p)[1] != '0'
+
 __dead	void	usage(void);
 static	int	mysystem(const char *);
+
+char	*str;
+size_t	 sz;
+
+void
+stradd(char *p)
+{
+	size_t n;
+
+	n = strlen(p);
+	if (str == NULL || sz - strlen(str) <= n) {
+		sz += (n / 1024 + 1) * 1024;
+		if ((str = realloc(str, sz)) == NULL)
+			err(1, "realloc");
+	}
+	strlcat(str, p, sz);
+}
+
+void
+strset(char *p)
+{
+	if (str != NULL)
+		str[0] = '\0';
+	stradd(p);
+}
 
 int
 main(int argc, char *argv[])
 {
-	int ch, clen, debug, i, l, magic, n, nargs, rval;
-	char *c, *c2, *cmd, *p, *q;
-	size_t len;
+	int ch, debug, i, magic, n, nargs, rval;
+	char buf[4], *cmd, *p;
 
 	if (pledge("stdio proc exec", NULL) == -1)
 		err(1, "pledge");
@@ -63,7 +90,7 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "a:d0123456789")) != -1)
 		switch (ch) {
 		case 'a':
-			if (optarg[1] != '\0')
+			if (optarg[0] == '\0' || optarg[1] != '\0')
 				errx(1,
 				    "illegal magic character specification.");
 			magic = optarg[0];
@@ -93,8 +120,7 @@ main(int argc, char *argv[])
 	 * largest one.
 	 */
 	for (n = 0, p = argv[0]; *p != '\0'; ++p)
-		if (p[0] == magic &&
-		    isdigit((unsigned char)p[1]) && p[1] != '0') {
+		if (ISMAGICNO(p)) {
 			++p;
 			if (p[0] - '0' > n)
 				n = p[0] - '0';
@@ -106,28 +132,15 @@ main(int argc, char *argv[])
 	 * the end to consume (nargs) arguments each time round the loop.
 	 * Allocate enough space to hold the maximum command.
 	 */
+	strset(argv[0]);
 	if (n == 0) {
-		len = sizeof("exec ") - 1 +
-		    strlen(argv[0]) + 9 * (sizeof(" %1") - 1) + 1;
-		if ((cmd = malloc(len)) == NULL)
-			err(1, NULL);
-
 		/* If nargs not set, default to a single argument. */
 		if (nargs == -1)
 			nargs = 1;
 
-		l = snprintf(cmd, len, "exec %s", argv[0]);
-		if (l >= len || l == -1)
-			errx(1, "error building exec string");
-		len -= l;
-		p = cmd + l;
-		
 		for (i = 1; i <= nargs; i++) {
-			l = snprintf(p, len, " %c%d", magic, i);
-			if (l >= len || l == -1)
-				errx(1, "error numbering arguments");
-			len -= l;
-			p += l;
+			snprintf(buf, sizeof(buf), " %c%d", magic, i);
+			stradd(buf);
 		}
 
 		/*
@@ -136,19 +149,10 @@ main(int argc, char *argv[])
 		 */
 		if (nargs == 0)
 			nargs = 1;
-	} else {
-		if (asprintf(&cmd, "exec %s", argv[0]) == -1)
-			err(1, NULL);		
+	} else
 		nargs = n;
-	}
-
-	/*
-	 * Grab some space in which to build the command.  Allocate
-	 * as necessary later, but no reason to build it up slowly
-	 * for the normal case.
-	 */
-	if ((c = malloc(clen = 1024)) == NULL)
-		err(1, NULL);
+	if ((cmd = strdup(str)) == NULL)
+		err(1, "strdup");
 
 	/*
 	 * (argc) and (argv) are still offset by one to make it simpler to
@@ -156,35 +160,21 @@ main(int argc, char *argv[])
 	 * equals 1 means that all the (argv) has been consumed.
 	 */
 	for (rval = 0; argc > nargs; argc -= nargs, argv += nargs) {
-		/*
-		 * Find a max value for the command length, and ensure
-		 * there's enough space to build it.
-		 */
-		for (l = strlen(cmd), i = 0; i < nargs; i++)
-			l += strlen(argv[i+1]);
-		if (l > clen) {
-			if ((c2 = realloc(c, l)) == NULL)
-				err(1, NULL);
-			c = c2;
-			clen = l;
-		}
+		strset("exec ");
 
 		/* Expand command argv references. */
-		for (p = cmd, q = c; *p != '\0'; ++p)
-			if (p[0] == magic &&
-			    isdigit((unsigned char)p[1]) && p[1] != '0') {
-				strlcpy(q, argv[(++p)[0] - '0'], c + clen - q);
-				q += strlen(q);
-			} else
-				*q++ = *p;
-
-		/* Terminate the command string. */
-		*q = '\0';
+		for (p = cmd; *p != '\0'; ++p)
+			if (ISMAGICNO(p))
+				stradd(argv[*(++p) - '0']);
+			else {
+				strlcpy(buf, p, 2);
+				stradd(buf);
+			}
 
 		/* Run the command. */
 		if (debug)
-			(void)printf("%s\n", c);
-		else if (mysystem(c))
+			(void)printf("%s\n", str);
+		else if (mysystem(str))
 			rval = 1;
 	}
 
