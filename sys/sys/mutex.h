@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.13 2018/02/10 12:53:22 mpi Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.14 2018/03/27 08:32:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -75,12 +75,12 @@ void __mtx_init(struct mutex *, int);
 
 #ifdef DIAGNOSTIC
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
-	if ((mtx)->mtx_owner != curcpu())				\
+	if (((mtx)->mtx_owner != curcpu()) && !(panicstr || db_active))	\
 		panic("mutex %p not held in %s", (mtx), __func__);	\
 } while (0)
 
 #define MUTEX_ASSERT_UNLOCKED(mtx) do {					\
-	if ((mtx)->mtx_owner == curcpu())				\
+	if (((mtx)->mtx_owner == curcpu()) && !(panicstr || db_active))	\
 		panic("mutex %p held in %s", (mtx), __func__);		\
 } while (0)
 #else
