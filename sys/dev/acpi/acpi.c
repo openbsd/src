@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.340 2018/02/19 08:59:52 mpi Exp $ */
+/* $OpenBSD: acpi.c,v 1.341 2018/03/27 21:11:16 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2907,7 +2907,6 @@ const char *acpi_skip_hids[] = {
 	"PNP0800",	/* Microsoft Sound System Compatible Device */
 	"PNP0A03",	/* PCI Bus */
 	"PNP0A08",	/* PCI Express Bus */
-	"PNP0B00",	/* AT Real-Time Clock */
 	"PNP0C01",	/* System Board */
 	"PNP0C02",	/* PNP Motherboard Resources */
 	"PNP0C04",	/* x87-compatible Floating Point Processing Unit */

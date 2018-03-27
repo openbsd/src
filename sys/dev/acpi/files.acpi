@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.39 2018/03/14 18:52:16 patrick Exp $
+#	$OpenBSD: files.acpi,v 1.40 2018/03/27 21:11:16 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -30,6 +30,11 @@ file	dev/acpi/acpibat.c		acpibat
 device	acpibtn
 attach	acpibtn at acpi
 file	dev/acpi/acpibtn.c		acpibtn
+
+# cmos device
+device	acpicmos
+attach	acpicmos at acpi
+file	dev/acpi/acpicmos.c		acpicmos
 
 # cpu device
 device	acpicpu

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.829 2017/08/28 19:32:53 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.830 2018/03/27 21:11:17 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -47,6 +47,7 @@ acpiac*		at acpi?
 acpibat*	at acpi?
 acpibtn*	at acpi?
 acpicpu*	at acpi?
+acpicmos*	at acpi?
 acpidock*	at acpi?
 acpiec*		at acpi?
 acpimadt0	at acpi?
