@@ -1,4 +1,4 @@
-# $OpenBSD: antarctica,v 1.38 2017/10/23 16:14:16 millert Exp $
+# $OpenBSD: antarctica,v 1.39 2018/03/27 21:22:13 millert Exp $
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -76,7 +76,8 @@ Zone Antarctica/Casey	0	-	-00	1969
 			8:00	-	+08	2011 Oct 28  2:00
 			11:00	-	+11	2012 Feb 21 17:00u
 			8:00	-	+08	2016 Oct 22
-			11:00	-	+11
+			11:00	-	+11	2018 Mar 11  4:00
+			8:00	-	+08
 Zone Antarctica/Davis	0	-	-00	1957 Jan 13
 			7:00	-	+07	1964 Nov
 			0	-	-00	1969 Feb
