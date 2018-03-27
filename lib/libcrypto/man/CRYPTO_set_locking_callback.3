@@ -1,4 +1,4 @@
-.\"	$OpenBSD: CRYPTO_set_locking_callback.3,v 1.9 2018/03/23 04:34:23 schwarze Exp $
+.\"	$OpenBSD: CRYPTO_set_locking_callback.3,v 1.10 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL doc/crypto/threads.pod fb552ac6 Sep 30 23:43:01 2009 +0000
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>,
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt CRYPTO_SET_LOCKING_CALLBACK 3
 .Os
 .Sh NAME
@@ -369,10 +369,12 @@ shows examples of the callback functions on Solaris, Irix and Win32.
 .Fn CRYPTO_w_lock ,
 .Fn CRYPTO_w_unlock ,
 .Fn CRYPTO_r_lock ,
-.Fn CRYPTO_r_unlock ,
 and
+.Fn CRYPTO_r_unlock
+first appeared in SSLeay 0.6.0.
 .Fn CRYPTO_add
-appeared in SSLeay 0.8.1b or earlier and have been available since
+first appeared in SSLeay 0.6.2.
+These functions have been available since
 .Ox 2.4 .
 .Pp
 .Fn CRYPTO_num_locks

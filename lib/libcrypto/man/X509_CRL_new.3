@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_CRL_new.3,v 1.6 2018/03/23 23:18:17 schwarze Exp $
+.\"	$OpenBSD: X509_CRL_new.3,v 1.7 2018/03/27 17:35:50 schwarze Exp $
 .\"
 .\" Copyright (c) 2016, 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt X509_CRL_NEW 3
 .Os
 .Sh NAME
@@ -120,12 +120,14 @@ Certificate Revocation List (CRL) Profile, section 5: CRL and CRL
 Extensions Profile
 .Sh HISTORY
 .Fn X509_CRL_new ,
-.Fn X509_CRL_dup ,
 .Fn X509_CRL_free ,
 .Fn X509_CRL_INFO_new ,
 and
 .Fn X509_CRL_INFO_free
-appeared before SSLeay 0.8 and have been available since
+first appeared in SSLeay 0.4.4.
+.Fn X509_CRL_dup
+first appeared in SSLeay 0.5.1.
+These functions have been available since
 .Ox 2.4 .
 .Pp
 .Fn X509_CRL_up_ref

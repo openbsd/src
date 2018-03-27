@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_PUBKEY_new.3,v 1.12 2018/03/23 23:18:17 schwarze Exp $
+.\" $OpenBSD: X509_PUBKEY_new.3,v 1.13 2018/03/27 17:35:50 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt X509_PUBKEY_NEW 3
 .Os
 .Sh NAME
@@ -283,12 +283,15 @@ return 1 for success and 0 if an error occurred.
 RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
 Certificate Revocation List (CRL) Profile
 .Sh HISTORY
-.Fn X509_PUBKEY_new ,
-.Fn X509_PUBKEY_free ,
-.Fn X509_PUBKEY_set ,
+.Fn X509_PUBKEY_new
+and
+.Fn X509_PUBKEY_free
+appeared in SSLeay 0.4 or earlier.
+.Fn X509_PUBKEY_set
 and
 .Fn X509_PUBKEY_get
-appeared before SSLeay 0.8 and have been available since
+first appeared in SSLeay 0.8.0.
+These functions have been available since
 .Ox 2.4 .
 .Pp
 .Fn d2i_PUBKEY

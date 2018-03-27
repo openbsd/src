@@ -1,4 +1,4 @@
-.\"	$OpenBSD: CRYPTO_get_mem_functions.3,v 1.4 2018/03/20 21:27:32 schwarze Exp $
+.\"	$OpenBSD: CRYPTO_get_mem_functions.3,v 1.5 2018/03/27 17:35:50 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 20 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt CRYPTO_GET_MEM_FUNCTIONS 3
 .Os
 .Sh NAME
@@ -91,6 +91,16 @@ always returns 0.
 always returns
 .Dv CRYPTO_MEM_CHECK_OFF .
 .Sh HISTORY
-These functions appeared in SSLeay 0.8.1b or earlier
-and have been available since
+.Fn CRYPTO_mem_ctrl ,
+.Fn CRYPTO_mem_leaks ,
+and
+.Fn CRYPTO_mem_leaks_fp
+first appeared in SSLeay 0.6.4.
+.Fn CRYPTO_get_mem_functions
+and
+.Fn CRYPTO_set_mem_functions
+first appeared in SSLeay 0.6.5.
+.Fn CRYPTO_mem_leaks_cb
+first appeared in SSLeay 0.6.6.
+All these functions have all been available since
 .Ox 2.4 .

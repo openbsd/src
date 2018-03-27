@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_zero.3,v 1.8 2018/03/20 20:26:23 schwarze Exp $
+.\" $OpenBSD: BN_zero.3,v 1.9 2018/03/27 17:35:50 schwarze Exp $
 .\" full merge up to: OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\" selective merge up to: OpenSSL b713c4ff Jan 22 14:41:09 2018 -0500
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 20 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt BN_ZERO 3
 .Os
 .Sh NAME
@@ -131,20 +131,14 @@ returns the constant.
 .Sh HISTORY
 .Fn BN_zero ,
 .Fn BN_one ,
+.Fn BN_value_one ,
 and
 .Fn BN_set_word
-appeared before SSLeay 0.8.
-.Fn BN_value_one
-and
+first appeared in SSLeay 0.5.1.
 .Fn BN_get_word
-first appeared in SSLeay 0.8.
+first appeared in SSLeay 0.6.0.
 All these functions have been available since
 .Ox 2.4 .
-.Pp
-.Fn BN_value_one
-was changed to return a true
-.Vt const BIGNUM *
-in OpenSSL 0.9.7.
 .Sh BUGS
 Someone might change the constant.
 .Pp

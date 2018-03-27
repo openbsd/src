@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_tmp_dh_callback.3,v 1.6 2018/03/21 16:12:41 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_tmp_dh_callback.3,v 1.7 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt SSL_CTX_SET_TMP_DH_CALLBACK 3
 .Os
 .Sh NAME
@@ -225,7 +225,7 @@ if (SSL_CTX_set_tmp_dh(ctx, dh_2048) != 1) {
 .Fn SSL_CTX_set_tmp_dh_callback
 and
 .Fn SSL_CTX_set_tmp_dh
-appeared before SSLeay 0.8 and have been available since
+first appeared in SSLeay 0.8.0 and have been available since
 .Ox 2.4 .
 .Pp
 .Fn SSL_set_tmp_dh_callback

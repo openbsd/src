@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_SESSION_get_time.3,v 1.6 2018/03/21 08:06:34 schwarze Exp $
+.\"	$OpenBSD: SSL_SESSION_get_time.3,v 1.7 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt SSL_SESSION_GET_TIME 3
 .Os
 .Sh NAME
@@ -149,11 +149,12 @@ pointer for the session
 .Xr SSL_SESSION_new 3
 .Sh HISTORY
 .Fn SSL_get_time ,
-.Fn SSL_set_time ,
 .Fn SSL_get_timeout ,
 and
 .Fn SSL_set_timeout
-appeared before SSLeay 0.8.
+appeared in SSLeay 0.4 or earlier.
+.Fn SSL_set_time
+first appeared in SSLeay 0.5.2.
 .Fn SSL_SESSION_get_time ,
 .Fn SSL_SESSION_set_time ,
 .Fn SSL_SESSION_get_timeout ,

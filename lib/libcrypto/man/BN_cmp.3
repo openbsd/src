@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_cmp.3,v 1.5 2018/03/20 20:26:23 schwarze Exp $
+.\"	$OpenBSD: BN_cmp.3,v 1.6 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 20 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt BN_CMP 3
 .Os
 .Sh NAME
@@ -144,8 +144,8 @@ return 1 if the condition is true, 0 otherwise.
 .Fn BN_is_one ,
 and
 .Fn BN_is_word
-appeared before SSLeay 0.8.
+first appeared in SSLeay 0.5.1.
 .Fn BN_is_odd
-first appeared in SSLeay 0.8.
+first appeared in SSLeay 0.8.0.
 All these functions have been available since
 .Ox 2.4 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PEM_read.3,v 1.4 2018/03/21 00:37:32 schwarze Exp $
+.\"	$OpenBSD: PEM_read.3,v 1.5 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Viktor Dukhovni
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt PEM_READ 3
 .Os
 .Sh NAME
@@ -283,6 +283,16 @@ is likely meaningless if these functions fail.
 .Xr PEM_bytes_read_bio 3 ,
 .Xr PEM_read_bio_PrivateKey 3
 .Sh HISTORY
-These functions appeared in SSLeay 0.8.1b or earlier
-and have been available since
+.Fn PEM_write ,
+.Fn PEM_read ,
+and
+.Fn PEM_do_header
+appeared in SSLeay 0.4 or earlier.
+.Fn PEM_get_EVP_CIPHER_INFO
+first appeared in SSLeay 0.5.1.
+.Fn PEM_write_bio
+and
+.Fn PEM_read_bio
+first appeared in SSLeay 0.6.0.
+These functions have been available since
 .Ox 2.4 .

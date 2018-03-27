@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_f_buffer.3,v 1.8 2018/03/21 06:09:37 schwarze Exp $
+.\"	$OpenBSD: BIO_f_buffer.3,v 1.9 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL 9b86974e Mar 19 12:32:14 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt BIO_F_BUFFER 3
 .Os
 .Sh NAME
@@ -181,13 +181,16 @@ returns 1 if the data was set correctly or 0 if there was an error.
 .Xr BIO_pop 3 ,
 .Xr BIO_reset 3
 .Sh HISTORY
-.Fn BIO_f_buffer ,
-.Fn BIO_get_buffer_num_lines ,
-.Fn BIO_set_read_buffer_size ,
-.Fn BIO_set_write_buffer_size ,
+.Fn BIO_f_buffer
+first appeared in SSLeay 0.6.0.
+.Fn BIO_get_buffer_num_lines
 and
 .Fn BIO_set_buffer_size
-appeared in SSLeay 0.8.1b or earlier.
+first appeared in SSLeay 0.6.5.
+.Fn BIO_set_read_buffer_size
+and
+.Fn BIO_set_write_buffer_size
+first appeared in SSLeay 0.8.0.
 .Fn BIO_set_buffer_read_data
 first appeared in SSLeay 0.9.0.
 All these functions have been available since

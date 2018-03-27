@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_info_callback.3,v 1.3 2018/03/21 05:07:04 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_info_callback.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt SSL_CTX_SET_INFO_CALLBACK 3
 .Os
 .Sh NAME
@@ -228,5 +228,6 @@ apps_ssl_info_callback(SSL *s, int where, int ret)
 .Xr SSL_alert_type_string 3 ,
 .Xr SSL_state_string 3
 .Sh HISTORY
-These functions appeared before SSLeay 0.8 and have been available since
+These functions first appeared in SSLeay 0.6.0
+and have been available since
 .Ox 2.4 .

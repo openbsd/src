@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_ctrl.3,v 1.13 2018/03/22 16:06:33 schwarze Exp $
+.\"	$OpenBSD: BIO_ctrl.3,v 1.14 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b055fceb Thu Oct 20 09:56:18 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt BIO_CTRL 3
 .Os
 .Sh NAME
@@ -317,10 +317,11 @@ operation.
 .Fn BIO_eof ,
 .Fn BIO_set_close ,
 .Fn BIO_get_close ,
-.Fn BIO_pending ,
 and
+.Fn BIO_pending
+first appeared in SSLeay 0.6.0.
 .Fn BIO_wpending
-appeared in SSLeay 0.8.1b or earlier.
+first appeared in SSLeay 0.8.1.
 .Fn BIO_ptr_ctrl ,
 .Fn BIO_int_ctrl ,
 .Fn BIO_get_info_callback

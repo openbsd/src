@@ -1,4 +1,4 @@
-.\" $OpenBSD: DES_set_key.3,v 1.11 2018/03/22 21:08:22 schwarze Exp $
+.\" $OpenBSD: DES_set_key.3,v 1.12 2018/03/27 17:35:50 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/DES_random_key 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -115,7 +115,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt DES_SET_KEY 3
 .Os
 .Sh NAME
@@ -786,48 +786,49 @@ ANSI X3.106
 The DES library was initially written to be source code compatible
 with the MIT Kerberos library.
 .Sh HISTORY
-Versions of
 .Fn DES_random_key ,
 .Fn DES_set_key ,
 .Fn DES_key_sched ,
 .Fn DES_set_odd_parity ,
 .Fn DES_is_weak_key ,
 .Fn DES_ecb_encrypt ,
-.Fn DES_ecb2_encrypt ,
-.Fn DES_ecb3_encrypt ,
-.Fn DES_ncbc_encrypt ,
 .Fn DES_cfb_encrypt ,
 .Fn DES_ofb_encrypt ,
 .Fn DES_pcbc_encrypt ,
 .Fn DES_cfb64_encrypt ,
 .Fn DES_ofb64_encrypt ,
-.Fn DES_xcbc_encrypt ,
-.Fn DES_ede2_cbc_encrypt ,
-.Fn DES_ede2_cfb64_encrypt ,
-.Fn DES_ede2_ofb64_encrypt ,
 .Fn DES_ede3_cbc_encrypt ,
-.Fn DES_ede3_cfb64_encrypt ,
-.Fn DES_ede3_ofb64_encrypt ,
 .Fn DES_cbc_cksum ,
 .Fn DES_quad_cksum ,
 .Fn DES_string_to_key ,
 .Fn DES_string_to_2keys ,
-.Fn DES_fcrypt ,
 .Fn DES_crypt ,
 .Fn DES_enc_read ,
 and
 .Fn DES_enc_write
-with lower case names starting with
-.Sy des_
-appeared in SSLeay 0.8.1b or earlier and have been available since
+appeared in SSLeay 0.4 or earlier.
+.Fn DES_ncbc_encrypt
+first appeared in SSLeay 0.4.2.
+.Fn DES_ede2_cbc_encrypt
+first appeared in SSLeay 0.4.4.
+.Fn DES_ecb2_encrypt ,
+.Fn DES_ecb3_encrypt ,
+.Fn DES_ede2_cfb64_encrypt ,
+.Fn DES_ede2_ofb64_encrypt ,
+.Fn DES_ede3_cfb64_encrypt ,
+and
+.Fn DES_ede3_ofb64_encrypt
+first appeared in SSLeay 0.5.1.
+.Fn DES_xcbc_encrypt
+first appeared in SSLeay 0.6.2.
+.Fn DES_fcrypt
+first appeared in SSLeay 0.6.5.
+These functions have been available since
 .Ox 2.4 .
 .Pp
-Versions of
 .Fn DES_set_key_checked
 and
 .Fn DES_set_key_unchecked
-with lower case names starting with
-.Sy des_
 first appeared in OpenSSL 0.9.5 and have been available since
 .Ox 2.7 .
 .Pp

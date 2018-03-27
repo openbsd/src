@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_sk_new.3,v 1.7 2018/03/23 00:09:11 schwarze Exp $
+.\" $OpenBSD: OPENSSL_sk_new.3,v 1.8 2018/03/27 17:35:50 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt OPENSSL_SK_NEW 3
 .Os
 .Sh NAME
@@ -527,8 +527,6 @@ if it is not found.
 .Sh HISTORY
 .Fn sk_new_null ,
 .Fn sk_new ,
-.Fn sk_set_cmp_func ,
-.Fn sk_dup ,
 .Fn sk_free ,
 .Fn sk_pop_free ,
 .Fn sk_num ,
@@ -540,10 +538,15 @@ if it is not found.
 .Fn sk_pop ,
 .Fn sk_shift ,
 .Fn sk_delete ,
-.Fn sk_delete_ptr ,
+and
+.Fn sk_delete_ptr
+first appeared in SSLeay 0.5.1.
+.Fn sk_set_cmp_func ,
+.Fn sk_dup ,
 and
 .Fn sk_zero
-appeared in SSLeay 0.8.1b or earlier and have been available since
+first appeared in SSLeay 0.8.0.
+These functions have been available since
 .Ox 2.4 .
 .Pp
 .Fn sk_set
@@ -552,10 +555,6 @@ first appeared in OpenSSL 0.9.3.
 first appeared in OpenSSL 0.9.4.
 Both functions have been available since
 .Ox 2.6 .
-.Pp
-.Fn sk_new_null
-first appeared in OpenSSL 0.9.6 and has been available since
-.Ox 2.9 .
 .Pp
 .Fn sk_is_sorted
 first appeared in OpenSSL 0.9.7e and has been available since

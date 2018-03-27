@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_private_encrypt.3,v 1.8 2018/03/21 01:27:25 schwarze Exp $
+.\"	$OpenBSD: RSA_private_encrypt.3,v 1.9 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL RSA_private_encrypt.pod b41f6b64 Mar 10 15:49:04 2017 +0000
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt RSA_PRIVATE_ENCRYPT 3
 .Os
 .Sh NAME
@@ -144,11 +144,8 @@ On error, -1 is returned; the error codes can be obtained by
 .Fn RSA_private_encrypt
 and
 .Fn RSA_public_decrypt
-appeared before SSLeay 0.8 and have been available since
+appeared in SSLeay 0.4 or earlier and have been available since
 .Ox 2.4 .
 .Pp
-The
-.Fa padding
-argument was added in SSLeay 0.8.
 .Dv RSA_NO_PADDING
 is available since SSLeay 0.9.0.

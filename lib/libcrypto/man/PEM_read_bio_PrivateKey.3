@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PEM_read_bio_PrivateKey.3,v 1.12 2018/03/23 00:09:11 schwarze Exp $
+.\"	$OpenBSD: PEM_read_bio_PrivateKey.3,v 1.13 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt PEM_READ_BIO_PRIVATEKEY 3
 .Os
 .Sh NAME
@@ -1217,48 +1217,59 @@ pass_cb(char *buf, int size, int rwflag, void *u)
 .Xr PEM_bytes_read_bio 3 ,
 .Xr PEM_read 3
 .Sh HISTORY
+.Fn PEM_read_X509
+and
+.Fn PEM_write_X509
+appeared in SSLeay 0.4 or earlier.
+.Fn PEM_read_X509_REQ ,
+.Fn PEM_write_X509_REQ ,
+.Fn PEM_read_X509_CRL ,
+and
+.Fn PEM_write_X509_CRL
+first appeared in SSLeay 0.4.4.
+.Fn PEM_read_RSAPrivateKey ,
+.Fn PEM_write_RSAPrivateKey ,
+.Fn PEM_read_DHparams ,
+.Fn PEM_write_DHparams ,
+.Fn PEM_read_PKCS7 ,
+and
+.Fn PEM_write_PKCS7
+first appeared in SSLeay 0.5.1.
 .Fn PEM_read_bio_PrivateKey ,
 .Fn PEM_read_PrivateKey ,
-.Fn PEM_write_bio_PrivateKey ,
-.Fn PEM_write_PrivateKey ,
 .Fn PEM_read_bio_RSAPrivateKey ,
-.Fn PEM_read_RSAPrivateKey ,
 .Fn PEM_write_bio_RSAPrivateKey ,
-.Fn PEM_write_RSAPrivateKey ,
-.Fn PEM_read_bio_RSAPublicKey ,
-.Fn PEM_read_RSAPublicKey ,
-.Fn PEM_write_bio_RSAPublicKey ,
-.Fn PEM_write_RSAPublicKey ,
 .Fn PEM_read_bio_DSAPrivateKey ,
 .Fn PEM_read_DSAPrivateKey ,
 .Fn PEM_write_bio_DSAPrivateKey ,
 .Fn PEM_write_DSAPrivateKey ,
+.Fn PEM_read_bio_DHparams ,
+.Fn PEM_write_bio_DHparams ,
+.Fn PEM_read_bio_X509 ,
+.Fn PEM_write_bio_X509 ,
+.Fn PEM_read_bio_X509_REQ ,
+.Fn PEM_write_bio_X509_REQ ,
+.Fn PEM_read_bio_X509_CRL ,
+.Fn PEM_write_bio_X509_CRL ,
+.Fn PEM_read_bio_PKCS7 ,
+and
+.Fn PEM_write_bio_PKCS7
+first appeared in SSLeay 0.6.0.
+.Fn PEM_write_bio_PrivateKey ,
+.Fn PEM_write_PrivateKey ,
 .Fn PEM_read_bio_DSAparams ,
 .Fn PEM_read_DSAparams ,
 .Fn PEM_write_bio_DSAparams ,
-.Fn PEM_write_DSAparams ,
-.Fn PEM_read_bio_DHparams ,
-.Fn PEM_read_DHparams ,
-.Fn PEM_write_bio_DHparams ,
-.Fn PEM_write_DHparams ,
-.Fn PEM_read_bio_X509 ,
-.Fn PEM_read_X509 ,
-.Fn PEM_write_bio_X509 ,
-.Fn PEM_write_X509 ,
-.Fn PEM_read_bio_X509_REQ ,
-.Fn PEM_read_X509_REQ ,
-.Fn PEM_write_bio_X509_REQ ,
-.Fn PEM_write_X509_REQ ,
-.Fn PEM_read_bio_X509_CRL ,
-.Fn PEM_read_X509_CRL ,
-.Fn PEM_write_bio_X509_CRL ,
-.Fn PEM_write_X509_CRL ,
-.Fn PEM_read_bio_PKCS7 ,
-.Fn PEM_read_PKCS7 ,
-.Fn PEM_write_bio_PKCS7 ,
 and
-.Fn PEM_write_PKCS7
-appeared in SSLeay 0.8.1b or earlier and have been available since
+.Fn PEM_write_DSAparams
+first appeared in SSLeay 0.8.0.
+.Fn PEM_read_bio_RSAPublicKey ,
+.Fn PEM_read_RSAPublicKey ,
+.Fn PEM_write_bio_RSAPublicKey ,
+and
+.Fn PEM_write_RSAPublicKey
+first appeared in SSLeay 0.8.1.
+All these functions have been available since
 .Ox 2.4 .
 .Pp
 .Fn PEM_write_bio_PKCS8PrivateKey ,
@@ -1275,7 +1286,7 @@ appeared in SSLeay 0.8.1b or earlier and have been available since
 .Fn PEM_read_NETSCAPE_CERT_SEQUENCE ,
 .Fn PEM_write_bio_NETSCAPE_CERT_SEQUENCE ,
 and
-.Fn PEM_write_NETSCAPE_CERT_SEQUENCE ,
+.Fn PEM_write_NETSCAPE_CERT_SEQUENCE
 first appeared in OpenSSL 0.9.4 and have been available since
 .Ox 2.6 .
 .Pp

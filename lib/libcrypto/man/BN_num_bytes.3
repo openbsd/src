@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_num_bytes.3,v 1.6 2018/03/20 20:26:23 schwarze Exp $
+.\"	$OpenBSD: BN_num_bytes.3,v 1.7 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 20 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt BN_NUM_BYTES 3
 .Os
 .Sh NAME
@@ -120,5 +120,11 @@ The size.
 .Xr DSA_size 3 ,
 .Xr RSA_size 3
 .Sh HISTORY
-These functions appeared before SSLeay 0.8 and have been available since
+.Fn BN_num_bytes
+and
+.Fn BN_num_bits
+first appeared in SSLeay 0.5.1.
+.Fn BN_num_bits_word
+first appeared in SSLeay 0.5.2.
+These functions have been available since
 .Ox 2.4 .

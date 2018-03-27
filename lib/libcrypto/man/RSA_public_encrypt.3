@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_public_encrypt.3,v 1.10 2018/03/21 01:27:25 schwarze Exp $
+.\"	$OpenBSD: RSA_public_encrypt.3,v 1.11 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL RSA_public_encrypt.pod 1e3f62a3 Jul 17 16:47:13 2017 +0200
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt RSA_PUBLIC_ENCRYPT 3
 .Os
 .Sh NAME
@@ -152,12 +152,9 @@ SSL, PKCS #1 v2.0
 .Fn RSA_public_encrypt
 and
 .Fn RSA_private_decrypt
-appeared before SSLeay 0.8 and have been available since
+appeared in SSLeay 0.4 or earlier and have been available since
 .Ox 2.4 .
 .Pp
-The
-.Fa padding
-argument was added in SSLeay 0.8.
 .Dv RSA_NO_PADDING
 is available since SSLeay 0.9.0.
 OAEP was added in OpenSSL 0.9.2b.

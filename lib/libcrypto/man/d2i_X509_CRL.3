@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_X509_CRL.3,v 1.6 2018/03/21 03:16:08 schwarze Exp $
+.\"	$OpenBSD: d2i_X509_CRL.3,v 1.7 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt D2I_X509_CRL 3
 .Os
 .Sh NAME
@@ -132,14 +132,17 @@ section 5: CRL and CRL Extensions Profile
 .Sh HISTORY
 .Fn d2i_X509_CRL ,
 .Fn i2d_X509_CRL ,
-.Fn d2i_X509_CRL_bio ,
 .Fn d2i_X509_CRL_fp ,
-.Fn i2d_X509_CRL_bio ,
 .Fn i2d_X509_CRL_fp ,
 .Fn d2i_X509_CRL_INFO ,
 .Fn i2d_X509_CRL_INFO ,
 .Fn d2i_X509_REVOKED ,
 and
 .Fn i2d_X509_REVOKED
-appeared before SSLeay 0.8 and have been available since
+first appeared in SSLeay 0.5.1.
+.Fn d2i_X509_CRL_bio
+and
+.Fn i2d_X509_CRL_bio
+first appeared in SSLeay 0.6.0.
+These functions have been available since
 .Ox 2.4 .

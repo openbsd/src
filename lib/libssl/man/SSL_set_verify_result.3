@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_set_verify_result.3,v 1.3 2018/03/21 05:07:04 schwarze Exp $
+.\"	$OpenBSD: SSL_set_verify_result.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt SSL_SET_VERIFY_RESULT 3
 .Os
 .Sh NAME
@@ -89,5 +89,5 @@ does not provide a return value.
 .Xr SSL_get_verify_result 3
 .Sh HISTORY
 .Fn SSL_set_verify_result
-appeared before SSLeay 0.8 and has been available since
+first appeared in SSLeay 0.6.1 and has been available since
 .Ox 2.4 .

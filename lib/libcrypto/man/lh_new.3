@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lh_new.3,v 1.3 2016/11/28 14:31:20 schwarze Exp $
+.\"	$OpenBSD: lh_new.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL 1bc74519 May 20 08:11:46 2016 -0400
 .\"
 .\" --------------------------------------------------------------------------
@@ -115,7 +115,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: November 28 2016 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt LH_NEW 3
 .Os
 .Sh NAME
@@ -525,7 +525,19 @@ rather it would be used in the function passed to
 .Sh SEE ALSO
 .Xr lh_stats 3
 .Sh HISTORY
-The lhash library is available in all versions of SSLeay and OpenSSL.
+.Fn lh_new ,
+.Fn lh_free ,
+.Fn lh_insert ,
+.Fn lh_delete ,
+.Fn lh_retrieve ,
+and
+.Fn lh_doall
+appeared in SSLeay 0.4 or earlier.
+.Fn lh_doall_arg
+first appeared in SSLeay 0.5.1.
+These functions have been available since
+.Ox 2.4 .
+.Pp
 .Fn lh_<type>_error
 was added in SSLeay 0.9.1b.
 .Pp

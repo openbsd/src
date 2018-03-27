@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_sess_set_get_cb.3,v 1.3 2018/03/21 05:07:04 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_sess_set_get_cb.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt SSL_CTX_SESS_SET_GET_CB 3
 .Os
 .Sh NAME
@@ -206,5 +206,15 @@ not be explicitly freed with
 .Xr SSL_CTX_set_session_cache_mode 3 ,
 .Xr SSL_SESSION_free 3
 .Sh HISTORY
-These functions appeared before SSLeay 0.8 and have been available since
+.Fn SSL_CTX_sess_set_new_cb ,
+.Fn SSL_CTX_sess_set_get_cb ,
+.Fn SSL_CTX_sess_get_new_cb ,
+and
+.Fn SSL_CTX_sess_get_get_cb
+first appeared in SSLeay 0.6.0.
+.Fn SSL_CTX_sess_set_remove_cb
+and
+.Fn SSL_CTX_sess_get_remove_cb
+first appeared in SSLeay 0.8.0.
+These functions have been available since
 .Ox 2.4 .

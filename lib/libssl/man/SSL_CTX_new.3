@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_new.3,v 1.9 2018/03/24 00:55:37 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_new.3,v 1.10 2018/03/27 17:35:50 schwarze Exp $
 .\" full merge up to: OpenSSL 21cd6e00 Oct 21 14:40:15 2015 +0100
 .\" selective merge up to: OpenSSL eb43101f Dec 9 18:07:09 2016 +0100
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 24 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt SSL_CTX_NEW 3
 .Os
 .Sh NAME
@@ -239,12 +239,13 @@ returns 1 for success or 0 for failure.
 .Xr SSL_CTX_set_options 3 ,
 .Xr SSL_set_connect_state 3
 .Sh HISTORY
-.Fn SSL_CTX_new ,
+.Fn SSL_CTX_new
+first appeared in SSLeay 0.5.1.
 .Fn SSLv23_method ,
 .Fn SSLv23_server_method ,
 and
 .Fn SSLv23_client_method
-appeared before SSLeay 0.8.
+first appeared in SSLeay 0.8.0.
 .Fn TLSv1_method ,
 .Fn TLSv1_server_method ,
 and

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_tmp_rsa_callback.3,v 1.7 2018/03/24 00:55:37 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_tmp_rsa_callback.3,v 1.8 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL 0b30fc90 Dec 19 15:23:05 2013 -0500
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 24 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt SSL_CTX_SET_TMP_RSA_CALLBACK 3
 .Os
 .Sh NAME
@@ -103,7 +103,7 @@ These functions always return 0, indicating failure.
 .Fn SSL_CTX_set_tmp_rsa ,
 and
 .Fn SSL_CTX_need_tmp_RSA
-appeared before SSLeay 0.8 and have been available since
+first appeared in SSLeay 0.8.0 and have been available since
 .Ox 2.4 .
 .Pp
 .Fn SSL_set_tmp_rsa_callback

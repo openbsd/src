@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_get_current_cipher.3,v 1.3 2018/03/21 05:07:04 schwarze Exp $
+.\"	$OpenBSD: SSL_get_current_cipher.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt SSL_GET_CURRENT_CIPHER 3
 .Os
 .Sh NAME
@@ -108,5 +108,15 @@ if no session has been established.
 .Xr ssl 3 ,
 .Xr SSL_CIPHER_get_name 3
 .Sh HISTORY
-These functions appeared before SSLeay 0.8 and have been available since
+.Fn SSL_get_cipher
+appeared in SSLeay 0.4 or earlier.
+.Fn SSL_get_cipher_bits
+first appeared in SSLeay 0.6.4.
+.Fn SSL_get_cipher_name
+and
+.Fn SSL_get_cipher_version
+first appeared in SSLeay 0.8.0.
+.Fn SSL_get_current_cipher
+first appeared in SSLeay 0.8.1.
+These functions have been available since
 .Ox 2.4 .

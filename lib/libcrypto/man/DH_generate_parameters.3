@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DH_generate_parameters.3,v 1.10 2018/03/23 23:18:17 schwarze Exp $
+.\"	$OpenBSD: DH_generate_parameters.3,v 1.11 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt DH_GENERATE_PARAMETERS 3
 .Os
 .Sh NAME
@@ -154,7 +154,7 @@ The error codes can be obtained by
 .Fn DH_check
 and
 .Fn DH_generate_parameters
-appeared in SSLeay 0.8.1b or earlier and have been available since
+first appeared in SSLeay 0.5.1 and have been available since
 .Ox 2.4 .
 .Pp
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ERR_get_error.3,v 1.7 2018/03/22 21:08:22 schwarze Exp $
+.\"	$OpenBSD: ERR_get_error.3,v 1.8 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt ERR_GET_ERROR 3
 .Os
 .Sh NAME
@@ -168,12 +168,14 @@ The error code, or 0 if there is no error in the queue.
 .Xr ERR_error_string 3 ,
 .Xr ERR_GET_LIB 3
 .Sh HISTORY
-.Fn ERR_get_error ,
-.Fn ERR_peek_error ,
-.Fn ERR_get_error_line ,
+.Fn ERR_get_error
+and
+.Fn ERR_peek_error
+first appeared in SSLeay 0.4.4.
+.Fn ERR_get_error_line
 and
 .Fn ERR_peek_error_line
-appeared in SSLeay 0.8.1b or earlier.
+first appeared in SSLeay 0.6.0.
 .Fn ERR_get_error_line_data
 and
 .Fn ERR_peek_error_line_data

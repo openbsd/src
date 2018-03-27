@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_VERSION_NUMBER.3,v 1.9 2018/03/23 23:18:17 schwarze Exp $
+.\" $OpenBSD: OPENSSL_VERSION_NUMBER.3,v 1.10 2018/03/27 17:35:50 schwarze Exp $
 .\" full merge up to: OpenSSL 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
 .\" This file is a derived work.
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt OPENSSL_VERSION_NUMBER 3
 .Os
 .Sh NAME
@@ -248,7 +248,7 @@ return pointers to static strings.
 .Fn SSLeay_version ,
 and
 .Dv SSLEAY_VERSION_NUMBER
-appeared in SSLeay 0.8.1b or earlier and have been available since
+first appeared in SSLeay 0.6.0 and have been available since
 .Ox 2.4 .
 .Pp
 .Dv OPENSSL_VERSION_NUMBER
@@ -257,7 +257,8 @@ and has been available since
 .Ox 2.6 .
 .Pp
 .Dv SSLEAY_DIR
-was added in OpenSSL 0.9.7.
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
 .Pp
 .Dv LIBRESSL_VERSION_NUMBER
 first appeared in LibreSSL 2.0.0 and

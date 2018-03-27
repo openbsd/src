@@ -1,4 +1,4 @@
-.\" $OpenBSD: RAND_add.3,v 1.9 2018/03/23 23:18:17 schwarze Exp $
+.\" $OpenBSD: RAND_add.3,v 1.10 2018/03/27 17:35:50 schwarze Exp $
 .\" content checked up to: OpenSSL c16de9d8 Aug 31 23:16:22 2017 +0200
 .\"
 .\" Copyright (c) 2014 Miod Vallat <miod@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt RAND_ADD 3
 .Os
 .Sh NAME
@@ -59,7 +59,7 @@ always return 1.
 .Fn RAND_cleanup
 and
 .Fn RAND_seed
-appeared in SSLeay 0.8.1b or earlier and have been available since
+first appeared in SSLeay 0.5.1 and have been available since
 .Ox 2.4 .
 .Pp
 .Fn RAND_add

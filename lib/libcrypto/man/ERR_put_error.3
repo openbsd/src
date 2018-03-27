@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ERR_put_error.3,v 1.8 2018/03/23 05:48:56 schwarze Exp $
+.\"	$OpenBSD: ERR_put_error.3,v 1.9 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt ERR_PUT_ERROR 3
 .Os
 .Sh NAME
@@ -147,10 +147,10 @@ macro.
 .Xr ERR_load_strings 3
 .Sh HISTORY
 .Fn ERR_put_error
-appeared in SSLeay 0.8.1b or earlier.
+first appeared in SSLeay 0.4.4.
 .Fn ERR_add_error_data
 first appeared in SSLeay 0.9.0.
-These functions have been available since
+Both functions have been available since
 .Ox 2.4 .
 .Pp
 .Fn ERR_add_error_vdata

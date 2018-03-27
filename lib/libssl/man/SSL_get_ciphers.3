@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_get_ciphers.3,v 1.5 2018/03/24 00:55:37 schwarze Exp $
+.\" $OpenBSD: SSL_get_ciphers.3,v 1.6 2018/03/27 17:35:50 schwarze Exp $
 .\" full merge up to: OpenSSL c3e64028 Mar 30 11:50:14 2005 +0000
 .\" selective merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 24 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt SSL_GET_CIPHERS 3
 .Os
 .Sh NAME
@@ -136,10 +136,11 @@ is returned.
 .Xr SSL_CIPHER_get_name 3 ,
 .Xr SSL_CTX_set_cipher_list 3
 .Sh HISTORY
-.Fn SSL_get_ciphers
-and
 .Fn SSL_get_cipher_list
-appeared before SSLeay 0.8 and have been available since
+first appeared in SSLeay 0.5.2.
+.Fn SSL_get_ciphers
+first appeared in SSLeay 0.8.0.
+Both functions have been available since
 .Ox 2.4 .
 .Pp
 .Fn SSL_CTX_get_ciphers

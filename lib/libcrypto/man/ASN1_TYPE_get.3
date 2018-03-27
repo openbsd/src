@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_TYPE_get.3,v 1.6 2018/03/23 02:20:16 schwarze Exp $
+.\"	$OpenBSD: ASN1_TYPE_get.3,v 1.7 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL 99d63d46 Mon Jun 6 00:43:05 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt ASN1_TYPE_GET 3
 .Os
 .Sh NAME
@@ -279,12 +279,15 @@ returns 0 for a match or non-zero for a mismatch.
 .Xr d2i_ASN1_TYPE 3 ,
 .Xr OBJ_dup 3
 .Sh HISTORY
-.Fn ASN1_TYPE_new ,
-.Fn ASN1_TYPE_free ,
-.Fn ASN1_TYPE_get ,
+.Fn ASN1_TYPE_new
+and
+.Fn ASN1_TYPE_free
+first appeared in SSLeay 0.5.1.
+.Fn ASN1_TYPE_get
 and
 .Fn ASN1_TYPE_set
-appeared in SSLeay 0.8.1b or earlier and have been available since
+first appeared in SSLeay 0.8.0.
+These functions have been available since
 .Ox 2.4 .
 .Pp
 .Fn ASN1_TYPE_set1
@@ -292,5 +295,6 @@ first appeared in OpenSSL 0.9.8h and has been available since
 .Ox 4.5 .
 .Pp
 .Fn ASN1_TYPE_cmp
-first appeared in OpenSSL 0.9.8zd and has been available since
+first appeared in OpenSSL 0.9.8zd, 1.0.0p, and 1.0.1k
+and has been available since
 .Ox 4.9 .

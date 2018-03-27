@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_library_init.3,v 1.5 2018/03/22 16:07:53 schwarze Exp $
+.\"	$OpenBSD: SSL_library_init.3,v 1.6 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt SSL_LIBRARY_INIT 3
 .Os
 .Sh NAME
@@ -98,7 +98,7 @@ SSL_library_init();                      /* initialize library */
 .Xr SSL_load_error_strings 3
 .Sh HISTORY
 .Fn SSLeay_add_ssl_algorithms
-appeared before SSLeay 0.8 and has been available since
+first appeared in SSLeay 0.8.0 and has been available since
 .Ox 2.4 .
 .Pp
 .Fn SSL_library_init

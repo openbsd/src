@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_PKEY_cmp.3,v 1.8 2018/03/23 00:09:11 schwarze Exp $
+.\"	$OpenBSD: EVP_PKEY_cmp.3,v 1.9 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt EVP_PKEY_CMP 3
 .Os
 .Sh NAME
@@ -148,7 +148,7 @@ are different and -2 if the operation is not supported.
 .Fn EVP_PKEY_missing_parameters
 and
 .Fn EVP_PKEY_copy_parameters
-appeared in SSLeay 0.8.1b or earlier.
+first appeared in SSLeay 0.8.0.
 .Fn EVP_PKEY_cmp_parameters
 first appeared in SSLeay 0.9.0.
 These functions have been available since

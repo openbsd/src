@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_generate_prime.3,v 1.13 2018/03/23 23:18:17 schwarze Exp $
+.\" $OpenBSD: BN_generate_prime.3,v 1.14 2018/03/27 17:35:50 schwarze Exp $
 .\" full merge up to: OpenSSL b3696a55 Sep 2 09:35:50 2017 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt BN_GENERATE_PRIME 3
 .Os
 .Sh NAME
@@ -379,7 +379,7 @@ The error codes can be obtained by
 .Fn BN_generate_prime
 and
 .Fn BN_is_prime
-appeared before SSLeay 0.8 and had their
+first appeared in SSLeay 0.5.1 and had their
 .Fa cb_arg
 argument added in SSLeay 0.9.0.
 These two functions have been available since

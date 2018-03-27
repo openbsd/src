@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_get_ex_new_index.3,v 1.3 2018/03/21 08:06:34 schwarze Exp $
+.\"	$OpenBSD: SSL_get_ex_new_index.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt SSL_GET_EX_NEW_INDEX 3
 .Os
 .Sh NAME
@@ -122,6 +122,12 @@ in
 .Xr ssl 3 ,
 .Xr SSL_CTX_set_verify 3
 .Sh HISTORY
+Precursor functions
+.Fn SSL_set_app_data
+and
+.Fn SSL_get_app_data
+first appeared in SSLeay 0.6.1.
+.Pp
 .Fn SSL_get_ex_new_index ,
 .Fn SSL_set_ex_data ,
 and

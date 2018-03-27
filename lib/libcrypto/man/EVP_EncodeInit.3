@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_EncodeInit.3,v 1.3 2018/03/20 23:56:07 schwarze Exp $
+.\"	$OpenBSD: EVP_EncodeInit.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL f430ba31 Jun 19 19:39:01 2016 +0200
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 20 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt EVP_ENCODEINIT 3
 .Os
 .Sh NAME
@@ -294,6 +294,6 @@ returns the length of the data decoded or -1 on error.
 .Sh SEE ALSO
 .Xr evp 3
 .Sh HISTORY
-These functions appeared in SSLeay 0.8.1b or earlier
+These functions first appeared in SSLeay 0.5.1
 and have been available since
 .Ox 2.4 .

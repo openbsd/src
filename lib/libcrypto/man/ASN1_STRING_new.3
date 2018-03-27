@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_STRING_new.3,v 1.14 2018/03/21 17:57:48 schwarze Exp $
+.\"	$OpenBSD: ASN1_STRING_new.3,v 1.15 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL 99d63d46 Tue Mar 24 07:52:24 2015 -0400
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt ASN1_STRING_NEW 3
 .Os
 .Sh NAME
@@ -207,9 +207,6 @@ if an error occurs.
 .Xr d2i_ASN1_OCTET_STRING 3 ,
 .Xr ERR_get_error 3
 .Sh HISTORY
-.Fn ASN1_STRING_new ,
-.Fn ASN1_STRING_type_new ,
-.Fn ASN1_STRING_free ,
 .Fn ASN1_OCTET_STRING_new ,
 .Fn ASN1_OCTET_STRING_free ,
 .Fn ASN1_BIT_STRING_new ,
@@ -218,10 +215,6 @@ if an error occurs.
 .Fn ASN1_INTEGER_free ,
 .Fn ASN1_IA5STRING_new ,
 .Fn ASN1_IA5STRING_free ,
-.Fn ASN1_UNIVERSALSTRING_new ,
-.Fn ASN1_UNIVERSALSTRING_free ,
-.Fn ASN1_GENERALSTRING_new ,
-.Fn ASN1_GENERALSTRING_free ,
 .Fn ASN1_T61STRING_new ,
 .Fn ASN1_T61STRING_free ,
 .Fn ASN1_PRINTABLESTRING_new ,
@@ -231,7 +224,18 @@ if an error occurs.
 .Fn ASN1_UTCTIME_new ,
 and
 .Fn ASN1_UTCTIME_free
-appeared in SSLeay 0.8.1b or earlier.
+first appeared in SSLeay 0.5.1.
+.Fn ASN1_STRING_new ,
+.Fn ASN1_STRING_type_new ,
+and
+.Fn ASN1_STRING_free
+first appeared in SSLeay 0.6.5.
+.Fn ASN1_UNIVERSALSTRING_new ,
+.Fn ASN1_UNIVERSALSTRING_free ,
+.Fn ASN1_GENERALSTRING_new ,
+and
+.Fn ASN1_GENERALSTRING_free
+first appeared in SSLeay 0.8.0.
 .Fn ASN1_BMPSTRING_new ,
 .Fn ASN1_BMPSTRING_free ,
 .Fn ASN1_GENERALIZEDTIME_new ,

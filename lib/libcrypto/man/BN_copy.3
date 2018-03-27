@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_copy.3,v 1.8 2018/03/22 22:07:12 schwarze Exp $
+.\"	$OpenBSD: BN_copy.3,v 1.9 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt BN_COPY 3
 .Os
 .Sh NAME
@@ -156,9 +156,10 @@ The error codes can be obtained by
 .Fn BN_copy
 and
 .Fn BN_dup
-appeared before SSLeay 0.8 and have been available since
+first appeared in SSLeay 0.5.1 and have been available since
 .Ox 2.4 .
 .Pp
 .Fn BN_with_flags
-first appeared in OpenSSL 0.9.7h and has been available since
+first appeared in OpenSSL 0.9.7h and 0.9.8a
+and has been available since
 .Ox 4.0 .
