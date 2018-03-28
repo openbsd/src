@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.276 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.277 2018/03/28 09:47:52 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2930,23 +2930,25 @@ sys_pread(struct proc *p, void *v, register_t *retval)
 	off_t offset;
 	int fd = SCARG(uap, fd);
 
+	iov.iov_base = SCARG(uap, buf);
+	iov.iov_len = SCARG(uap, nbyte);
+
 	if ((fp = fd_getfile_mode(fdp, fd, FREAD)) == NULL)
 		return (EBADF);
+	FREF(fp);
 
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
 	    (vp->v_flag & VISTTY)) {
+		FRELE(fp, p);
 		return (ESPIPE);
 	}
 
-	iov.iov_base = SCARG(uap, buf);
-	iov.iov_len = SCARG(uap, nbyte);
-
 	offset = SCARG(uap, offset);
-	if (offset < 0 && vp->v_type != VCHR)
+	if (offset < 0 && vp->v_type != VCHR) {
+		FRELE(fp, p);
 		return (EINVAL);
-
-	FREF(fp);
+	}
 
 	/* dofilereadv() will FRELE the descriptor for us */
 	return (dofilereadv(p, fd, fp, &iov, 1, 0, &offset, retval));
@@ -2973,18 +2975,20 @@ sys_preadv(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile_mode(fdp, fd, FREAD)) == NULL)
 		return (EBADF);
+	FREF(fp);
 
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
 	    (vp->v_flag & VISTTY)) {
+		FRELE(fp, p);
 		return (ESPIPE);
 	}
 
 	offset = SCARG(uap, offset);
-	if (offset < 0 && vp->v_type != VCHR)
+	if (offset < 0 && vp->v_type != VCHR) {
+		FRELE(fp, p);
 		return (EINVAL);
-
-	FREF(fp);
+	}
 
 	/* dofilereadv() will FRELE the descriptor for us */
 	return (dofilereadv(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt), 1,
@@ -3011,23 +3015,25 @@ sys_pwrite(struct proc *p, void *v, register_t *retval)
 	off_t offset;
 	int fd = SCARG(uap, fd);
 
+	iov.iov_base = (void *)SCARG(uap, buf);
+	iov.iov_len = SCARG(uap, nbyte);
+
 	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
+	FREF(fp);
 
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
 	    (vp->v_flag & VISTTY)) {
+		FRELE(fp, p);
 		return (ESPIPE);
 	}
 
-	iov.iov_base = (void *)SCARG(uap, buf);
-	iov.iov_len = SCARG(uap, nbyte);
-
 	offset = SCARG(uap, offset);
-	if (offset < 0 && vp->v_type != VCHR)
+	if (offset < 0 && vp->v_type != VCHR) {
+		FRELE(fp, p);
 		return (EINVAL);
-
-	FREF(fp);
+	}
 
 	/* dofilewritev() will FRELE the descriptor for us */
 	return (dofilewritev(p, fd, fp, &iov, 1, 0, &offset, retval));
@@ -3054,18 +3060,20 @@ sys_pwritev(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
+	FREF(fp);
 
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
 	    (vp->v_flag & VISTTY)) {
+		FRELE(fp, p);
 		return (ESPIPE);
 	}
 
 	offset = SCARG(uap, offset);
-	if (offset < 0 && vp->v_type != VCHR)
+	if (offset < 0 && vp->v_type != VCHR) {
+		FRELE(fp, p);
 		return (EINVAL);
-
-	FREF(fp);
+	}
 
 	/* dofilewritev() will FRELE the descriptor for us */
 	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
