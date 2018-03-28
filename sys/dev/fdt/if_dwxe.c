@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.6 2017/12/13 10:38:06 kettenis Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.7 2018/03/28 09:03:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -448,6 +448,7 @@ dwxe_phy_setup(struct dwxe_softc *sc)
 {
 	struct regmap *rm;
 	uint32_t syscon;
+	uint32_t tx_delay, rx_delay;
 	char *phy_mode;
 	int len;
 
@@ -457,6 +458,7 @@ dwxe_phy_setup(struct dwxe_softc *sc)
 
 	syscon = regmap_read_4(rm, SYSCON);
 	syscon &= ~(SYSCON_ETCS_MASK|SYSCON_EPIT|SYSCON_RMII_EN);
+	syscon &= ~(SYSCON_ETXDC_MASK | SYSCON_ERXDC_MASK);
 	syscon &= ~SYSCON_H3_EPHY_SELECT;
 
 	if ((len = OF_getproplen(sc->sc_node, "phy-mode")) <= 0)
@@ -479,6 +481,11 @@ dwxe_phy_setup(struct dwxe_softc *sc)
 		syscon |= (sc->sc_phyloc << SYSCON_H3_EPHY_ADDR_SHIFT);
 	}
 	free(phy_mode, M_TEMP, len);
+
+	tx_delay = OF_getpropint(sc->sc_node, "allwinner,tx-delay-ps", 0);
+	rx_delay = OF_getpropint(sc->sc_node, "allwinner,rx-delay-ps", 0);
+	syscon |= ((tx_delay / 100) << SYSCON_ETXDC_SHIFT) & SYSCON_ETXDC_MASK;
+	syscon |= ((rx_delay / 100) << SYSCON_ERXDC_SHIFT) & SYSCON_ERXDC_MASK;
 
 	regmap_write_4(rm, SYSCON, syscon);
 	dwxe_reset(sc);
