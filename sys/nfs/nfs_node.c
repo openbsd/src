@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.65 2016/09/27 01:37:38 dlg Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.66 2018/03/28 09:40:26 mpi Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -58,8 +58,6 @@
 struct pool nfs_node_pool;
 extern int prtactive;
 
-struct rwlock nfs_hashlock = RWLOCK_INITIALIZER("nfshshlk");
-
 /* XXX */
 extern struct vops nfs_vops;
 
@@ -98,12 +96,10 @@ nfs_nget(struct mount *mnt, nfsfh_t *fh, int fhsize, struct nfsnode **npp)
 	nmp = VFSTONFS(mnt);
 
 loop:
-	rw_enter_write(&nfs_hashlock);
 	find.n_fhp = fh;
 	find.n_fhsize = fhsize;
 	np = RBT_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
 	if (np != NULL) {
-		rw_exit_write(&nfs_hashlock);
 		vp = NFSTOV(np);
 		error = vget(vp, LK_EXCLUSIVE, p);
 		if (error)
@@ -120,25 +116,24 @@ loop:
 	 * to see if this nfsnode has been added while we did not hold
 	 * the lock.
 	 */
-	rw_exit_write(&nfs_hashlock);
 	error = getnewvnode(VT_NFS, mnt, &nfs_vops, &nvp);
 	/* note that we don't have this vnode set up completely yet */
-	rw_enter_write(&nfs_hashlock);
 	if (error) {
 		*npp = NULL;
-		rw_exit_write(&nfs_hashlock);
 		return (error);
 	}
 	nvp->v_flag |= VLARVAL;
-	np = RBT_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
-	if (np != NULL) {
+	np = pool_get(&nfs_node_pool, PR_WAITOK | PR_ZERO);
+	/*
+	 * getnewvnode() and pool_get() can sleep, check for race.
+	 */
+	if (RBT_FIND(nfs_nodetree, &nmp->nm_ntree, &find) != NULL) {
+		pool_put(&nfs_node_pool, np);
 		vgone(nvp);
-		rw_exit_write(&nfs_hashlock);
 		goto loop;
 	}
 
 	vp = nvp;
-	np = pool_get(&nfs_node_pool, PR_WAITOK | PR_ZERO);
 	vp->v_data = np;
 	/* we now have an nfsnode on this vnode */
 	vp->v_flag &= ~VLARVAL;
@@ -162,7 +157,6 @@ loop:
 	np2 = RBT_INSERT(nfs_nodetree, &nmp->nm_ntree, np);
 	KASSERT(np2 == NULL);
 	np->n_accstamp = -1;
-	rw_exit(&nfs_hashlock);
 	*npp = np;
 
 	return (0);
@@ -239,9 +233,7 @@ nfs_reclaim(void *v)
 		    ap->a_vp);
 #endif
 	nmp = VFSTONFS(vp->v_mount);
-	rw_enter_write(&nfs_hashlock);
 	RBT_REMOVE(nfs_nodetree, &nmp->nm_ntree, np);
-	rw_exit_write(&nfs_hashlock);
 
 	if (np->n_rcred)
 		crfree(np->n_rcred);
