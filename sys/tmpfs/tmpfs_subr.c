@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.18 2017/04/20 14:13:00 visa Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.19 2018/03/28 16:34:28 visa Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -314,7 +314,7 @@ again:
 		return error;
 	}
 
-	rrw_init_flags(&node->tn_vlock, "tnode", RWL_DUPOK);
+	rrw_init_flags(&node->tn_vlock, "tnode", RWL_DUPOK | RWL_IS_VNODE);
 	vp->v_type = node->tn_type;
 
 	/* Type-specific initialization. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.59 2017/08/14 22:43:56 sf Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.60 2018/03/28 16:34:28 visa Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -233,7 +233,7 @@ retry:
 		return (error);
 	}
 	ldep = malloc(sizeof(*ldep), M_MSDOSFSNODE, M_WAITOK | M_ZERO);
-	rrw_init_flags(&ldep->de_lock, "denode", RWL_DUPOK);
+	rrw_init_flags(&ldep->de_lock, "denode", RWL_DUPOK | RWL_IS_VNODE);
 	nvp->v_data = ldep;
 	ldep->de_vnode = nvp;
 	ldep->de_flag = 0;

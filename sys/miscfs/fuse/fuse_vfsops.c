@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.32 2018/02/10 05:24:23 deraadt Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.33 2018/03/28 16:34:28 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -271,7 +271,8 @@ retry:
 	}
 
 	ip = malloc(sizeof(*ip), M_FUSEFS, M_WAITOK | M_ZERO);
-	rrw_init_flags(&ip->ufs_ino.i_lock, "fuseinode", RWL_DUPOK);
+	rrw_init_flags(&ip->ufs_ino.i_lock, "fuseinode",
+	    RWL_DUPOK | RWL_IS_VNODE);
 	nvp->v_data = ip;
 	ip->ufs_ino.i_vnode = nvp;
 	ip->ufs_ino.i_dev = fmp->dev;
