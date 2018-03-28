@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.167 2018/02/21 09:30:02 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.168 2018/03/28 09:54:00 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1160,9 +1160,11 @@ getsock(struct proc *p, int fdes, struct file **fpp)
 
 	if ((fp = fd_getfile(p->p_fd, fdes)) == NULL)
 		return (EBADF);
-	if (fp->f_type != DTYPE_SOCKET)
-		return (ENOTSOCK);
 	FREF(fp);
+	if (fp->f_type != DTYPE_SOCKET) {
+		FRELE(fp, p);
+		return (ENOTSOCK);
+	}
 	*fpp = fp;
 
 	return (0);
