@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.142 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.143 2018/03/28 09:49:28 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1205,9 +1205,11 @@ sys_flock(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
-	if (fp->f_type != DTYPE_VNODE)
-		return (EOPNOTSUPP);
 	FREF(fp);
+	if (fp->f_type != DTYPE_VNODE) {
+		error = EOPNOTSUPP;
+		goto out;
+	}
 	vp = fp->f_data;
 	lf.l_whence = SEEK_SET;
 	lf.l_start = 0;
