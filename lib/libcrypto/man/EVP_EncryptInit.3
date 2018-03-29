@@ -1,6 +1,6 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.20 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.21 2018/03/29 21:12:02 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
-.\" selective merge up to: OpenSSL 5c5eb286 Dec 5 00:36:43 2017 +0100
+.\" selective merge up to: OpenSSL 16cfc2c9 Mar 8 22:30:28 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>
 .\" and Richard Levitte <levitte@openssl.org>.
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: March 29 2018 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -183,8 +183,8 @@
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "const EVP_CIPHER *type"
 .Fa "ENGINE *impl"
-.Fa "unsigned char *key"
-.Fa "unsigned char *iv"
+.Fa "const unsigned char *key"
+.Fa "const unsigned char *iv"
 .Fc
 .Ft int
 .Fo EVP_EncryptUpdate
@@ -205,8 +205,8 @@
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "const EVP_CIPHER *type"
 .Fa "ENGINE *impl"
-.Fa "unsigned char *key"
-.Fa "unsigned char *iv"
+.Fa "const unsigned char *key"
+.Fa "const unsigned char *iv"
 .Fc
 .Ft int
 .Fo EVP_DecryptUpdate
@@ -227,8 +227,8 @@
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "const EVP_CIPHER *type"
 .Fa "ENGINE *impl"
-.Fa "unsigned char *key"
-.Fa "unsigned char *iv"
+.Fa "const unsigned char *key"
+.Fa "const unsigned char *iv"
 .Fa "int enc"
 .Fc
 .Ft int
@@ -236,7 +236,7 @@
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "unsigned char *out"
 .Fa "int *outl"
-.Fa "unsigned char *in"
+.Fa "const unsigned char *in"
 .Fa "int inl"
 .Fc
 .Ft int
@@ -249,8 +249,8 @@
 .Fo EVP_EncryptInit
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "const EVP_CIPHER *type"
-.Fa "unsigned char *key"
-.Fa "unsigned char *iv"
+.Fa "const unsigned char *key"
+.Fa "const unsigned char *iv"
 .Fc
 .Ft int
 .Fo EVP_EncryptFinal
@@ -262,8 +262,8 @@
 .Fo EVP_DecryptInit
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "const EVP_CIPHER *type"
-.Fa "unsigned char *key"
-.Fa "unsigned char *iv"
+.Fa "const unsigned char *key"
+.Fa "const unsigned char *iv"
 .Fc
 .Ft int
 .Fo EVP_DecryptFinal
@@ -275,8 +275,8 @@
 .Fo EVP_CipherInit
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "const EVP_CIPHER *type"
-.Fa "unsigned char *key"
-.Fa "unsigned char *iv"
+.Fa "const unsigned char *key"
+.Fa "const unsigned char *iv"
 .Fa "int enc"
 .Fc
 .Ft int
