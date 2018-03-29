@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_sparc64.h,v 1.3 2016/09/11 17:53:26 jsing Exp $	*/
+/*	$OpenBSD: softraid_sparc64.h,v 1.4 2018/03/29 08:12:58 stsp Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -21,8 +21,9 @@
 
 void	srprobe(void);
 
+struct sr_boot_chunk *sr_vol_boot_chunk(struct sr_boot_volume *);
 const char *sr_getdisklabel(struct sr_boot_volume *, struct disklabel *);
-int	sr_strategy(struct sr_boot_volume *, int, daddr32_t, size_t,
+int	sr_strategy(struct sr_boot_volume *, int, int, daddr32_t, size_t,
 	    void *, size_t *);
 
 #endif /* _SOFTRAID_SPARC64_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.27 2016/09/11 17:53:26 jsing Exp $	*/
+/*	$OpenBSD: boot.c,v 1.28 2018/03/29 08:12:58 stsp Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -248,6 +248,8 @@ loadfile(int fd, char *args)
 	close(fd);
 
 #ifdef SOFTRAID
+	if (bootdev_dip)
+		OF_close(bootdev_dip->sr_handle);
 	sr_clear_keys();
 #endif
 	chain(entry, args, ssym, esym);
@@ -283,12 +285,11 @@ fail:
 }
 
 #ifdef SOFTRAID
-/* Set bootdev_dip to the software boot volume, if specified. */
+/* Set bootdev_dip to the softraid boot volume, if specified. */
 static int
 srbootdev(const char *bootline)
 {
 	struct sr_boot_volume *bv;
-	struct diskinfo *dip;
 	int unit;
 
 	bootdev_dip = NULL;
@@ -320,9 +321,23 @@ srbootdev(const char *bootline)
 				return EPERM;
 
 		if (bv->sbv_diskinfo == NULL) {
+			struct sr_boot_chunk *bc;
+			struct diskinfo *dip, *bc_dip;
+			int sr_handle;
+
+			/* All reads will come from the boot chunk. */
+			bc = sr_vol_boot_chunk(bv);
+			if (bc == NULL)
+				return ENXIO;
+			bc_dip = (struct diskinfo *)bc->sbc_diskinfo;
+			sr_handle = OF_open(bc_dip->path);
+			if (sr_handle == -1)
+				return EIO;
+
 			dip = alloc(sizeof(struct diskinfo));
 			bzero(dip, sizeof(*dip));
 			dip->sr_vol = bv;
+			dip->sr_handle = sr_handle;
 			bv->sbv_diskinfo = dip;
 		}
 
@@ -331,7 +346,8 @@ srbootdev(const char *bootline)
 
 		/* Attempt to read disklabel. */
 		bv->sbv_part = 'c';
-		if (sr_getdisklabel(bv, &dip->disklabel)) {
+		if (sr_getdisklabel(bv, &bootdev_dip->disklabel)) {
+			OF_close(bootdev_dip->sr_handle);
 			free(bv->sbv_diskinfo, sizeof(struct diskinfo));
 			bv->sbv_diskinfo = NULL;
 			bootdev_dip = NULL;

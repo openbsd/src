@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.1 2014/11/26 20:30:41 stsp Exp $ */
+/*	$OpenBSD: disk.h,v 1.2 2018/03/29 08:12:58 stsp Exp $ */
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -36,7 +36,10 @@
 struct diskinfo {
 	char path[256];
 	struct disklabel disklabel;
+
+	/* Used during softraid boot. */
 	struct sr_boot_volume *sr_vol;
+	int sr_handle; /* open handle for reading from boot chunk */
 
 	TAILQ_ENTRY(diskinfo) list;
 };

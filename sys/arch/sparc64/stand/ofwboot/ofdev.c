@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.25 2015/10/01 16:08:20 krw Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.26 2018/03/29 08:12:58 stsp Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -125,8 +125,8 @@ strategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 #ifdef SOFTRAID
 	/* Intercept strategy for softraid volumes. */
 	if (dev->type == OFDEV_SOFTRAID)
-		return sr_strategy(bootdev_dip->sr_vol, rw,
-		    blk, size, buf, rsize);
+		return sr_strategy(bootdev_dip->sr_vol, bootdev_dip->sr_handle,
+		    rw, blk, size, buf, rsize);
 #endif
 	if (dev->type != OFDEV_DISK)
 		panic("strategy");
