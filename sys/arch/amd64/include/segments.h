@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.14 2015/09/30 05:44:32 guenther Exp $	*/
+/*	$OpenBSD: segments.h,v 1.15 2018/03/29 01:21:02 guenther Exp $	*/
 /*	$NetBSD: segments.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -263,9 +263,9 @@ void cpu_init_idt(void);
 #define GDT_SYS_OFFSET	(NGDT_MEM << 3)
 
 #define GDT_ADDR_MEM(s,i)	\
-    ((struct mem_segment_descriptor *)((s) + ((i) << 3)))
+    ((struct mem_segment_descriptor *)((char *)(s) + ((i) << 3)))
 #define GDT_ADDR_SYS(s,i)	\
-   ((struct sys_segment_descriptor *)((s) + (((i) << 4) + SYSSEL_START)))
+    ((struct sys_segment_descriptor *)((char *)(s) + ((i) << 4) + SYSSEL_START))
 
 /*
  * Checks for valid user selectors.

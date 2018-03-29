@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_full.h,v 1.2 2018/02/22 20:27:14 bluhm Exp $	*/
+/*	$OpenBSD: cpu_full.h,v 1.3 2018/03/29 01:21:02 guenther Exp $	*/
 /*
  * Copyright (c) Philip Guenther <guenther@openbsd.org>
  *
@@ -29,10 +29,14 @@
 struct cpu_info_full {
 	/* page mapped kRO in u-k */
 	union {
-		struct x86_64_tss	u_tss; /* followed by gdt */
+		struct {
+			struct x86_64_tss	uu_tss;
+			uint64_t		uu_gdt[GDT_SIZE / 8];
+		} u_tssgdt;
 		char			u_align[PAGE_SIZE];
 	} cif_RO;
-#define cif_tss	cif_RO.u_tss
+#define cif_tss	cif_RO.u_tssgdt.uu_tss
+#define cif_gdt	cif_RO.u_tssgdt.uu_gdt
 
 	/* start of page mapped kRW in u-k */
 	uint64_t cif_tramp_stack[(PAGE_SIZE / 4

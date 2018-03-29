@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.119 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.120 2018/03/29 01:21:02 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -177,7 +177,7 @@ struct cpu_info {
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
 
 	struct	x86_64_tss *ci_tss;
-	char		*ci_gdt;
+	void		*ci_gdt;
 
 	volatile int	ci_ddb_paused;
 #define CI_DDB_RUNNING		0

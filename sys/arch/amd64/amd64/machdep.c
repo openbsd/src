@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.239 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.240 2018/03/29 01:21:02 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1617,7 +1617,7 @@ init_x86_64(paddr_t first_avail)
 
 	idt = (struct gate_descriptor *)idt_vaddr;
 	cpu_info_primary.ci_tss = &cpu_info_full_primary.cif_tss;
-	cpu_info_primary.ci_gdt = (void *)(cpu_info_primary.ci_tss + 1);
+	cpu_info_primary.ci_gdt = &cpu_info_full_primary.cif_gdt;
 
 	/* make gdt gates and memory segments */
 	set_mem_segment(GDT_ADDR_MEM(cpu_info_primary.ci_gdt, GCODE_SEL), 0,
