@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.28 2018/03/29 16:34:25 schwarze Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.29 2018/03/29 16:39:04 schwarze Exp $	*/
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -138,17 +138,9 @@ setlocale(int category, const char *locname)
 		goto done;
 	}
 
-	/* Individual category. */
-	if (category > LC_ALL) {
+	/* Individual category, or LC_ALL uniformly set. */
+	if (category > LC_ALL || newgl[LC_ALL][0] != '\0') {
 		if (strlcpy(global_locname, newgl[category],
-		    sizeof(global_locname)) >= sizeof(global_locname))
-			global_locname[0] = '\0';
-		goto done;
-	}
-
-	/* LC_ALL overrides everything else. */
-	if (newgl[LC_ALL][0] != '\0') {
-		if (strlcpy(global_locname, newgl[LC_ALL],
 		    sizeof(global_locname)) >= sizeof(global_locname))
 			global_locname[0] = '\0';
 		goto done;
