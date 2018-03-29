@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.185 2018/03/18 08:58:58 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.186 2018/03/29 02:25:10 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5943,7 +5943,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rax = curcpu()->ci_efeature_eax;
 		*rbx = 0;	/* Reserved */
 		*rcx = curcpu()->ci_efeature_ecx;
-		*rdx = curcpu()->ci_feature_eflags;
+		*rdx = curcpu()->ci_feature_eflags & VMM_FEAT_EFLAGS_MASK;
 		break;
 	case 0x80000002:	/* Brand string */
 		*rax = curcpu()->ci_brand[0];

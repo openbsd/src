@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.50 2017/11/29 02:46:10 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.51 2018/03/29 02:25:10 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -586,6 +586,12 @@ struct vm_rwregs_params {
     SEFF0EBX_AVX512ER | SEFF0EBX_AVX512CD | \
     SEFF0EBX_AVX512BW | SEFF0EBX_AVX512VL)
 #define VMM_SEFF0ECX_MASK ~(SEFF0ECX_AVX512VBMI)
+
+/*
+ * Extended function flags - copy from host minus:
+ * 0x80000001  EDX:RDTSCP Support
+ */
+#define VMM_FEAT_EFLAGS_MASK ~(CPUID_RDTSCP)
 
 #ifdef _KERNEL
 
