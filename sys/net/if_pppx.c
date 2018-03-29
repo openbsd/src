@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.63 2017/08/12 20:27:28 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.64 2018/03/29 04:53:17 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -392,6 +392,8 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 	proto = ntohl(*(uint32_t *)(th + 1));
 	m_adj(top, sizeof(uint32_t));
 
+	NET_LOCK();
+
 	switch (proto) {
 	case AF_INET:
 		ipv4_input(&pxi->pxi_if, top);
@@ -403,8 +405,11 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 #endif
 	default:
 		m_freem(top);
-		return (EAFNOSUPPORT);
+		error = EAFNOSUPPORT;
+		break;
 	}
+
+	NET_UNLOCK();
 
 	return (error);
 }
@@ -583,8 +588,10 @@ pppxclose(dev_t dev, int flags, int mode, struct proc *p)
 	pxd = pppx_dev_lookup(dev);
 
 	/* XXX */
+	NET_LOCK();
 	while ((pxi = LIST_FIRST(&pxd->pxd_pxis)))
 		pppx_if_destroy(pxd, pxi);
+	NET_UNLOCK();
 
 	LIST_REMOVE(pxd, pxd_entry);
 
