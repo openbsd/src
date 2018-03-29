@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuswitch.S,v 1.2 2017/03/24 19:48:01 kettenis Exp $ */
+/* $OpenBSD: cpuswitch.S,v 1.3 2018/03/29 19:25:39 patrick Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -63,6 +63,7 @@ ENTRY(cpu_switchto)
 	mrs	x2, tpidr_el1			// load curcpu
 	mov	w5, #SONPROC
 	strb	w5, [x1, #(P_STAT) ] 		// Mark new on cpu
+	str	x2, [x1, #(P_CPU)]
 	ldr 	x5, [x1, #(P_ADDR) ]		// load new pcb
 	str	x5, [x2, #(CI_CURPCB)]
 	str	x1, [x2, #(CI_CURPROC)]
