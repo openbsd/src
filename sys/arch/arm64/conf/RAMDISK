@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.44 2018/02/24 13:46:57 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.45 2018/03/29 18:57:41 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -97,6 +97,13 @@ bcmdog*		at fdt?
 bcmrng*		at fdt?
 dwctwo*		at fdt?
 usb*		at dwctwo?
+
+# Marvell SoCs
+mvclock*	at fdt? early 1
+mvicu*		at fdt? early 1
+mvpinctrl*	at fdt? early 1
+mvgpio*		at fdt?
+mvrtc*		at fdt?
 
 # Rockchip SoCs
 rkclock*	at fdt? early 1
