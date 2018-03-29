@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.45 2018/03/29 18:20:52 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.46 2018/03/29 20:33:53 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -181,3 +181,7 @@ file	dev/fdt/if_dwxe.c		dwxe
 device	acrtc
 attach	acrtc at rsb
 file	dev/fdt/acrtc.c			acrtc
+
+device	imxuart
+attach	imxuart at fdt
+file	dev/fdt/imxuart.c		imxuart

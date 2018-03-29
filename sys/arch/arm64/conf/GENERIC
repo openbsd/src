@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.53 2018/03/29 18:57:41 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.54 2018/03/29 20:33:53 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -82,6 +82,9 @@ option	WSDISPLAY_DEFAULTSCREENS=6	# initial number of text consoles
 
 simplefb*	at fdt?
 wsdisplay*	at simplefb?
+
+# iMX
+imxuart*	at fdt?
 
 # Raspberry Pi 3
 bcmaux*		at fdt?

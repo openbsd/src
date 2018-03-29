@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuartreg.h,v 1.1 2013/09/06 20:45:54 patrick Exp $ */
+/* $OpenBSD: imxuartreg.h,v 1.1 2018/03/29 20:33:53 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *

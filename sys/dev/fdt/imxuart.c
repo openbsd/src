@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.19 2018/03/20 23:05:54 patrick Exp $ */
+/* $OpenBSD: imxuart.c,v 1.1 2018/03/29 20:33:53 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -38,8 +38,8 @@
 #include <ddb/db_var.h>
 #endif
 
-#include <armv7/imx/imxuartreg.h>
-#include <armv7/imx/imxuartvar.h>
+#include <dev/fdt/imxuartreg.h>
+#include <dev/fdt/imxuartvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>

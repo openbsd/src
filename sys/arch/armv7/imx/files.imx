@@ -1,8 +1,4 @@
-#	$OpenBSD: files.imx,v 1.21 2017/10/23 17:37:51 kettenis Exp $
-
-device imxuart
-attach	imxuart at fdt
-file	arch/armv7/imx/imxuart.c	imxuart
+#	$OpenBSD: files.imx,v 1.22 2018/03/29 20:33:53 patrick Exp $
 
 device imxccm
 attach imxccm at fdt
