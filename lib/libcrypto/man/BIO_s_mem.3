@@ -1,6 +1,6 @@
-.\" $OpenBSD: BIO_s_mem.3,v 1.10 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: BIO_s_mem.3,v 1.11 2018/03/29 20:31:50 schwarze Exp $
 .\" full merge up to: OpenSSL 8711efb4 Mon Apr 20 11:33:12 2009 +0000
-.\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
+.\" selective merge up to: OpenSSL 36359cec Mar 7 14:37:23 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: March 29 2018 $
 .Dt BIO_S_MEM 3
 .Os
 .Sh NAME
@@ -151,7 +151,7 @@ should be set to a negative value, typically -1.
 .Pp
 .Fn BIO_get_mem_data
 sets
-.Fa pp
+.Pf * Fa pp
 to a pointer to the start of the memory BIO's data
 and returns the total amount of data available.
 It is implemented as a macro.
@@ -174,7 +174,7 @@ is a macro.
 places the underlying
 .Vt BUF_MEM
 structure in
-.Fa pp .
+.Pf * Fa pp .
 It is a macro.
 .Pp
 .Fn BIO_new_mem_buf
