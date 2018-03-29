@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.28 2018/02/28 08:55:44 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.29 2018/03/29 08:03:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -296,7 +296,8 @@ window_tree_build_window(struct session *s, struct winlink *wl, void* modedata,
 	free(text);
 	free(name);
 
-	wp = TAILQ_FIRST(&wl->window->panes);
+	if ((wp = TAILQ_FIRST(&wl->window->panes)) == NULL)
+		goto empty;
 	if (TAILQ_NEXT(wp, entry) == NULL) {
 		if (!window_tree_filter_pane(s, wl, wp, filter))
 			goto empty;
