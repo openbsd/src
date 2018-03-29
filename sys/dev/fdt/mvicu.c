@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvicu.c,v 1.1 2018/03/21 09:20:10 kettenis Exp $	*/
+/*	$OpenBSD: mvicu.c,v 1.2 2018/03/29 18:11:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -47,6 +47,8 @@ struct mvicu_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
+	uint32_t		sc_spi_ranges[4];
+
 	struct interrupt_controller sc_ic;
 	struct interrupt_controller *sc_parent_ic;
 };
@@ -89,8 +91,16 @@ mvicu_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_iot = faa->fa_iot;
+	phandle = OF_getpropint(faa->fa_node, "msi-parent", 0);
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0) {
+		printf(": GICP not found\n");
+		return;
+	}
+	OF_getpropintarray(node, "marvell,spi-ranges", sc->sc_spi_ranges,
+	    sizeof(sc->sc_spi_ranges));
 
+	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
 		printf(": can't map registers\n");
@@ -115,11 +125,8 @@ mvicu_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	phandle = OF_getpropint(faa->fa_node, "msi-parent", 0);
-	node = OF_getnodebyphandle(phandle);
 	extern uint32_t arm_intr_get_parent(int);
 	phandle = arm_intr_get_parent(node);
-
 	extern LIST_HEAD(, interrupt_controller) interrupt_controllers;
 	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
 		if (ic->ic_phandle == phandle)
@@ -144,6 +151,7 @@ mvicu_intr_establish(void *cookie, int *cell, int level,
 	uint32_t idx = cell[1];
 	uint32_t interrupt[3];
 	uint32_t reg;
+	int i;
 
 	if (ic == NULL)
 		return NULL;
@@ -154,8 +162,18 @@ mvicu_intr_establish(void *cookie, int *cell, int level,
 		return NULL;
 
 	/* Convert to GIC interrupt source. */
+	idx = reg & ICU_INT_MASK;
+	for (i = 0; i < nitems(sc->sc_spi_ranges); i += 2) {
+		if (idx < sc->sc_spi_ranges[i + 1]) {
+			idx += sc->sc_spi_ranges[i];
+			break;
+		}
+		idx -= sc->sc_spi_ranges[i];
+	}
+	if (i == nitems(sc->sc_spi_ranges))
+		return NULL;
 	interrupt[0] = 0;
-	interrupt[1] = (reg & ICU_INT_MASK) + 32;
+	interrupt[1] = idx - 32;
 	interrupt[2] = cell[2];
 	return ic->ic_establish(ic->ic_cookie, interrupt, level,
 	    func, arg, name);
