@@ -1,5 +1,5 @@
-.\"	$OpenBSD: EC_POINT_new.3,v 1.8 2018/03/23 00:09:11 schwarze Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\" $OpenBSD: EC_POINT_new.3,v 1.9 2018/03/29 20:56:49 schwarze Exp $
+.\" full merge up to: OpenSSL ddc1caac Mar 6 14:00:24 2018 -0500
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
 .\" Copyright (c) 2013, 2016 The OpenSSL Project.  All rights reserved.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 29 2018 $
 .Dt EC_POINT_NEW 3
 .Os
 .Sh NAME
@@ -302,6 +302,18 @@ coordinates for the point
 .Fa p
 defined over the curve given in
 .Fa group .
+The functions
+.Fn EC_POINT_get_affine_coordinates_GFp
+and
+.Fn EC_POINT_get_affine_coordinates_GF2m
+set
+.Fa x
+and
+.Fa y ,
+either of which may be
+.Dv NULL ,
+to the corresponding coordinates of
+.Fa p .
 .Pp
 As well as the affine coordinates, a point can alternatively be
 described in terms of its Jacobian projective coordinates (for Fp
