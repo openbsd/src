@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.38 2017/04/16 14:25:42 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.39 2018/03/29 01:43:41 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -297,7 +297,9 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 		    UVM_PLA_WAITOK);
 	/* should not happen */
 	if (i != 0)
-		panic("uvm_pagealloc_multi unable to allocate an buf_object of size %lu", size);
+		panic("uvm_pagealloc_multi unable to allocate an buf_object "
+		    "of size %lu", size);
+
 	bcstats.numbufpages += atop(size);
 	bcstats.dmapages += atop(size);
 	SET(bp->b_flags, B_DMA);
