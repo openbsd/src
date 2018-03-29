@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_err.c,v 1.20 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: asn1_err.c,v 1.21 2018/03/29 02:29:24 inoguchi Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -150,6 +150,7 @@ static ERR_STRING_DATA ASN1_str_reasons[] = {
 	{ERR_REASON(ASN1_R_MSTRING_NOT_UNIVERSAL), "mstring not universal"},
 	{ERR_REASON(ASN1_R_MSTRING_WRONG_TAG)    , "mstring wrong tag"},
 	{ERR_REASON(ASN1_R_NESTED_ASN1_STRING)   , "nested asn1 string"},
+	{ERR_REASON(ASN1_R_NESTED_TOO_DEEP)      , "nested too deep"},
 	{ERR_REASON(ASN1_R_NON_HEX_CHARACTERS)   , "non hex characters"},
 	{ERR_REASON(ASN1_R_NOT_ASCII_FORMAT)     , "not ascii format"},
 	{ERR_REASON(ASN1_R_NOT_ENOUGH_DATA)      , "not enough data"},

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.44 2018/02/14 16:46:04 jsing Exp $ */
+/* $OpenBSD: asn1.h,v 1.45 2018/03/29 02:29:24 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1405,6 +1405,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_R_MSTRING_NOT_UNIVERSAL			 139
 #define ASN1_R_MSTRING_WRONG_TAG			 140
 #define ASN1_R_NESTED_ASN1_STRING			 197
+#define ASN1_R_NESTED_TOO_DEEP				 219
 #define ASN1_R_NON_HEX_CHARACTERS			 141
 #define ASN1_R_NOT_ASCII_FORMAT				 190
 #define ASN1_R_NOT_ENOUGH_DATA				 142
