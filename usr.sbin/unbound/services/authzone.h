@@ -237,6 +237,11 @@ struct auth_xfer {
 	 * valid any more, if no master responds within this time, either
 	 * with the current zone or a new zone. */
 	time_t expiry;
+
+	/** zone lease start time (start+expiry is expiration time).
+	 * this is renewed every SOA probe and transfer.  On zone load
+	 * from zonefile it is also set (with probe set soon to check) */
+	time_t lease_time;
 };
 
 /**
@@ -254,12 +259,10 @@ struct auth_nextprobe {
 	/* module env for this task */
 	struct module_env* env;
 
+	/** increasing backoff for failures */
+	time_t backoff;
 	/** Timeout for next probe (for SOA) */
 	time_t next_probe;
-	/** zone lease start time (start+expiry is expiration time).
-	 * this is renewed every SOA probe and transfer.  On zone load
-	 * from zonefile it is also set (with probe set soon to check) */
-	time_t lease_time;
 	/** timeout callback for next_probe or expiry(if that is sooner).
 	 * it is on the worker's event_base */
 	struct comm_timer* timer;
@@ -355,6 +358,18 @@ struct auth_transfer {
 	 * data or add of duplicate data).  Flag is cleared once the retry
 	 * with axfr is done. */
 	int ixfr_fail;
+	/** we are doing IXFR right now */
+	int on_ixfr;
+	/** did we detect the current AXFR/IXFR serial number yet, 0 not yet,
+	 * 1 we saw the first, 2 we saw the second, 3 must be last SOA in xfr*/
+	int got_xfr_serial;
+	/** number of RRs scanned for AXFR/IXFR detection */
+	size_t rr_scan_num;
+	/** we are doing an IXFR but we detected an AXFR contents */
+	int on_ixfr_is_axfr;
+	/** the serial number for the current AXFR/IXFR incoming reply,
+	 * for IXFR, the outermost SOA records serial */
+	uint32_t incoming_xfr_serial;
 
 	/** dns id of AXFR query */
 	uint16_t id;
@@ -387,6 +402,8 @@ struct auth_master {
 	int ixfr;
 	/** use ssl for channel */
 	int ssl;
+	/** the port number (for urls) */
+	int port;
 	/** if the host is a hostname, the list of resolved addrs, if any*/
 	struct auth_addr* list;
 };
@@ -413,11 +430,24 @@ struct auth_zones* auth_zones_create(void);
  * @param az: auth zones structure
  * @param cfg: config to apply.
  * @param setup: if true, also sets up values in the auth zones structure
- * @param env: for setup, with current time.
  * @return false on failure.
  */
 int auth_zones_apply_cfg(struct auth_zones* az, struct config_file* cfg,
-	int setup, struct module_env* env);
+	int setup);
+
+/** initial pick up of worker timeouts, ties events to worker event loop
+ * @param az: auth zones structure
+ * @param env: worker env, of first worker that receives the events (if any)
+ * 	in its eventloop.
+ */
+void auth_xfer_pickup_initial(struct auth_zones* az, struct module_env* env);
+
+/**
+ * Cleanup auth zones.  This removes all events from event bases.
+ * Stops the xfr tasks.  But leaves zone data.
+ * @param az: auth zones structure.
+ */
+void auth_zones_cleanup(struct auth_zones* az);
 
 /**
  * Delete auth zones structure
@@ -471,11 +501,13 @@ int auth_zones_answer(struct auth_zones* az, struct module_env* env,
  * Return NULL when there is no auth_zone above the give name, otherwise
  * returns the closest auth_zone above the qname that pertains to it.
  * @param az: auth zones structure.
- * @param qinfo: query info to lookup.
+ * @param name: query to look up for.
+ * @param name_len: length of name.
+ * @param dclass: class of zone to find.
  * @return NULL or auth_zone that pertains to the query.
  */
 struct auth_zone* auth_zones_find_zone(struct auth_zones* az,
-	struct query_info* qinfo);
+	uint8_t* name, size_t name_len, uint16_t dclass);
 
 /** find an auth zone by name (exact match by name or NULL returned) */
 struct auth_zone* auth_zone_find(struct auth_zones* az, uint8_t* nm,
@@ -484,7 +516,6 @@ struct auth_zone* auth_zone_find(struct auth_zones* az, uint8_t* nm,
 /** find an xfer zone by name (exact match by name or NULL returned) */
 struct auth_xfer* auth_xfer_find(struct auth_zones* az, uint8_t* nm,
 	size_t nmlen, uint16_t dclass);
-
 
 /** create an auth zone. returns wrlocked zone. caller must have wrlock
  * on az. returns NULL on malloc failure */
@@ -497,6 +528,18 @@ int auth_zone_set_zonefile(struct auth_zone* z, char* zonefile);
 /** set auth zone fallback. caller must have lock on zone.
  * fallbackstr is "yes" or "no". false on parse failure. */
 int auth_zone_set_fallback(struct auth_zone* z, char* fallbackstr);
+
+/** see if the auth zone for the name can fallback
+ * @param az: auth zones
+ * @param nm: name of delegation point.
+ * @param nmlen: length of nm.
+ * @param dclass: class of zone to look for.
+ * @return true if fallback_enabled is true. false if not.
+ * if the zone does not exist, fallback is true (more lenient)
+ * also true if zone does not do upstream requests.
+ */
+int auth_zones_can_fallback(struct auth_zones* az, uint8_t* nm, size_t nmlen,
+	uint16_t dclass);
 
 /** read auth zone from zonefile. caller must lock zone. false on failure */
 int auth_zone_read_zonefile(struct auth_zone* z);
@@ -522,10 +565,11 @@ struct auth_xfer* auth_xfer_create(struct auth_zones* az, struct auth_zone* z);
  * Set masters in auth xfer structure from config.
  * @param list: pointer to start of list.  The malloced list is returned here.
  * @param c: the config items to copy over.
+ * @param with_http: if true, http urls are also included, before the masters.
  * @return false on failure.
  */
-int xfer_set_masters(struct auth_master** list, struct config_auth* c);
-
+int xfer_set_masters(struct auth_master** list, struct config_auth* c,
+	int with_http);
 
 /** xfer nextprobe timeout callback, this is part of task_nextprobe */
 void auth_xfer_timer(void* arg);
@@ -535,6 +579,9 @@ int auth_xfer_probe_udp_callback(struct comm_point* c, void* arg, int err,
         struct comm_reply* repinfo);
 /** callback for task_transfer tcp connections */
 int auth_xfer_transfer_tcp_callback(struct comm_point* c, void* arg, int err,
+        struct comm_reply* repinfo);
+/** callback for task_transfer http connections */
+int auth_xfer_transfer_http_callback(struct comm_point* c, void* arg, int err,
         struct comm_reply* repinfo);
 /** xfer probe timeout callback, part of task_probe */
 void auth_xfer_probe_timer_callback(void* arg);

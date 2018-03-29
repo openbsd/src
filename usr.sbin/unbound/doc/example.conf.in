@@ -380,6 +380,10 @@ server:
 	# This option only has effect when qname-minimisation is enabled.
 	# qname-minimisation-strict: no
 
+	# Aggressive NSEC uses the DNSSEC NSEC chain to synthesize NXDOMAIN
+	# and other denials, using information from previous NXDOMAINs answers.
+	# aggressive-nsec: no
+
 	# Use 0x20-encoded random bits in the query to foil spoof attempts.
 	# This feature is an experimental implementation of draft dns-0x20.
 	# use-caps-for-id: no
@@ -627,6 +631,7 @@ server:
 	# o inform_deny drops queries and logs client IP address
 	# o always_transparent, always_refuse, always_nxdomain, resolve in
 	#   that way but ignore local data for that name.
+	# o noview breaks out of that view towards global local-zones.
 	#
 	# defaults are localhost address, reverse for 127.0.0.1 and ::1
 	# and nxdomain for AS112 zones. If you configure one of these zones
@@ -659,16 +664,19 @@ server:
 	# add a netblock specific override to a localzone, with zone type
 	# local-zone-override: "example.com" 192.0.2.0/24 refuse
 
-	# service clients over SSL (on the TCP sockets), with plain DNS inside
-	# the SSL stream.  Give the certificate to use and private key.
+	# service clients over TLS (on the TCP sockets), with plain DNS inside
+	# the TLS stream.  Give the certificate to use and private key.
 	# default is "" (disabled).  requires restart to take effect.
-	# ssl-service-key: "path/to/privatekeyfile.key"
-	# ssl-service-pem: "path/to/publiccertfile.pem"
-	# ssl-port: 853
+	# tls-service-key: "path/to/privatekeyfile.key"
+	# tls-service-pem: "path/to/publiccertfile.pem"
+	# tls-port: 853
 
-	# request upstream over SSL (with plain DNS inside the SSL stream).
+	# request upstream over TLS (with plain DNS inside the TLS stream).
 	# Default is no.  Can be turned on and off with unbound-control.
-	# ssl-upstream: no
+	# tls-upstream: no
+
+	# Certificates used to authenticate connections made upstream.
+	# tls-cert-bundle: ""
 
 	# DNS64 prefix. Must be specified when DNS64 is use.
 	# Enable dns64 in module-config.  Used to synthesize IPv6 from IPv4.
@@ -787,7 +795,7 @@ remote-control:
 #	stub-addr: 192.0.2.68
 #	stub-prime: no
 #	stub-first: no
-#	stub-ssl-upstream: no
+#	stub-tls-upstream: no
 # stub-zone:
 #	name: "example.org"
 #	stub-host: ns.example.com.
@@ -803,7 +811,7 @@ remote-control:
 # 	forward-addr: 192.0.2.68
 # 	forward-addr: 192.0.2.73@5355  # forward to port 5355.
 # 	forward-first: no
-# 	forward-ssl-upstream: no
+# 	forward-tls-upstream: no
 # forward-zone:
 # 	name: "example.org"
 # 	forward-host: fwd.example.com
@@ -814,11 +822,12 @@ remote-control:
 # upstream (which saves a lookup to the upstream).  The first example
 # has a copy of the root for local usage.  The second serves example.org
 # authoritatively.  zonefile: reads from file (and writes to it if you also
-# download it), master: fetches with AXFR, url: fetches zonefile over http.
+# download it), master: fetches with AXFR and IXFR, or url to zonefile.
 # auth-zone:
 #	name: "."
 #	for-downstream: no
 #	for-upstream: yes
+#	fallback-enabled: yes
 #	master: b.root-servers.net
 #	master: c.root-servers.net
 #	master: e.root-servers.net
@@ -830,7 +839,6 @@ remote-control:
 #	for-downstream: yes
 #	for-upstream: yes
 #	zonefile: "example.org.zone"
-#	url: "http://www.example.com/example.org.zone"
 
 # Views
 # Create named views. Name must be unique. Map views to requests using

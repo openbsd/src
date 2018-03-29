@@ -109,6 +109,16 @@ print_option(struct config_file* cfg, const char* opt, int final)
 		free(p);
 		return;
 	}
+	if(strcmp(opt, "auto-trust-anchor-file") == 0 && final) {
+		struct config_strlist* s = cfg->auto_trust_anchor_file_list;
+		for(; s; s=s->next) {
+			char *p = fname_after_chroot(s->str, cfg, 1);
+			if(!p) fatal_exit("out of memory");
+			printf("%s\n", p);
+			free(p);
+		}
+		return;
+	}
 	if(!config_get_option(cfg, opt, config_print_func, stdout))
 		fatal_exit("cannot print option '%s'", opt);
 }
@@ -579,7 +589,7 @@ static void
 check_auth(struct config_file* cfg)
 {
 	struct auth_zones* az = auth_zones_create();
-	if(!az || !auth_zones_apply_cfg(az, cfg, 0, NULL)) {
+	if(!az || !auth_zones_apply_cfg(az, cfg, 0)) {
 		fatal_exit("Could not setup authority zones");
 	}
 	auth_zones_delete(az);

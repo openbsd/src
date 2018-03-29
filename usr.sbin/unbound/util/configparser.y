@@ -109,7 +109,7 @@ extern struct config_parser_state* cfg_parser;
 %token VAR_IGNORE_CD_FLAG VAR_LOG_QUERIES VAR_LOG_REPLIES
 %token VAR_TCP_UPSTREAM VAR_SSL_UPSTREAM
 %token VAR_SSL_SERVICE_KEY VAR_SSL_SERVICE_PEM VAR_SSL_PORT VAR_FORWARD_FIRST
-%token VAR_STUB_SSL_UPSTREAM VAR_FORWARD_SSL_UPSTREAM
+%token VAR_STUB_SSL_UPSTREAM VAR_FORWARD_SSL_UPSTREAM VAR_TLS_CERT_BUNDLE
 %token VAR_STUB_FIRST VAR_MINIMAL_RESPONSES VAR_RRSET_ROUNDROBIN
 %token VAR_MAX_UDP_SIZE VAR_DELAY_CLOSE
 %token VAR_UNBLOCK_LAN_ZONES VAR_INSECURE_LAN_ZONES
@@ -141,7 +141,7 @@ extern struct config_parser_state* cfg_parser;
 %token VAR_ACCESS_CONTROL_TAG_DATA VAR_VIEW VAR_ACCESS_CONTROL_VIEW
 %token VAR_VIEW_FIRST VAR_SERVE_EXPIRED VAR_FAKE_DSA VAR_FAKE_SHA1
 %token VAR_LOG_IDENTITY VAR_HIDE_TRUSTANCHOR VAR_TRUST_ANCHOR_SIGNALING
-%token VAR_USE_SYSTEMD VAR_SHM_ENABLE VAR_SHM_KEY
+%token VAR_AGGRESSIVE_NSEC VAR_USE_SYSTEMD VAR_SHM_ENABLE VAR_SHM_KEY
 %token VAR_DNSCRYPT VAR_DNSCRYPT_ENABLE VAR_DNSCRYPT_PORT VAR_DNSCRYPT_PROVIDER
 %token VAR_DNSCRYPT_SECRET_KEY VAR_DNSCRYPT_PROVIDER_CERT
 %token VAR_DNSCRYPT_PROVIDER_CERT_ROTATED
@@ -154,6 +154,7 @@ extern struct config_parser_state* cfg_parser;
 %token VAR_CACHEDB VAR_CACHEDB_BACKEND VAR_CACHEDB_SECRETSEED
 %token VAR_UDP_UPSTREAM_WITHOUT_DOWNSTREAM VAR_FOR_UPSTREAM
 %token VAR_AUTH_ZONE VAR_ZONEFILE VAR_MASTER VAR_URL VAR_FOR_DOWNSTREAM
+%token VAR_FALLBACK_ENABLED
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -242,7 +243,8 @@ content_server: server_num_threads | server_verbosity | server_port |
 	server_ipsecmod_enabled | server_ipsecmod_hook |
 	server_ipsecmod_ignore_bogus | server_ipsecmod_max_ttl |
 	server_ipsecmod_whitelist | server_ipsecmod_strict |
-	server_udp_upstream_without_downstream
+	server_udp_upstream_without_downstream | server_aggressive_nsec |
+	server_tls_cert_bundle
 	;
 stubstart: VAR_STUB_ZONE
 	{
@@ -308,6 +310,7 @@ authstart: VAR_AUTH_ZONE
 			/* defaults for auth zone */
 			s->for_downstream = 1;
 			s->for_upstream = 1;
+			s->fallback_enabled = 0;
 		} else 
 			yyerror("out of memory");
 	}
@@ -315,7 +318,7 @@ authstart: VAR_AUTH_ZONE
 contents_auth: contents_auth content_auth 
 	| ;
 content_auth: auth_name | auth_zonefile | auth_master | auth_url |
-	auth_for_downstream | auth_for_upstream
+	auth_for_downstream | auth_for_upstream | auth_fallback_enabled
 	;
 server_num_threads: VAR_NUM_THREADS STRING_ARG 
 	{ 
@@ -670,6 +673,13 @@ server_ssl_port: VAR_SSL_PORT STRING_ARG
 			yyerror("port number expected");
 		else cfg_parser->cfg->ssl_port = atoi($2);
 		free($2);
+	}
+	;
+server_tls_cert_bundle: VAR_TLS_CERT_BUNDLE STRING_ARG
+	{
+		OUTYY(("P(server_tls_cert_bundle:%s)\n", $2));
+		free(cfg_parser->cfg->tls_cert_bundle);
+		cfg_parser->cfg->tls_cert_bundle = $2;
 	}
 	;
 server_use_systemd: VAR_USE_SYSTEMD STRING_ARG
@@ -1388,6 +1398,17 @@ server_val_permissive_mode: VAR_VAL_PERMISSIVE_MODE STRING_ARG
 		free($2);
 	}
 	;
+server_aggressive_nsec: VAR_AGGRESSIVE_NSEC STRING_ARG
+	{
+		OUTYY(("P(server_aggressive_nsec:%s)\n", $2));
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else
+			cfg_parser->cfg->aggressive_nsec =
+				(strcmp($2, "yes")==0);
+		free($2);
+	}
+	;
 server_ignore_cd_flag: VAR_IGNORE_CD_FLAG STRING_ARG
 	{
 		OUTYY(("P(server_ignore_cd_flag:%s)\n", $2));
@@ -1523,12 +1544,13 @@ server_local_zone: VAR_LOCAL_ZONE STRING_ARG STRING_ARG
 		   && strcmp($3, "always_transparent")!=0
 		   && strcmp($3, "always_refuse")!=0
 		   && strcmp($3, "always_nxdomain")!=0
+		   && strcmp($3, "noview")!=0
 		   && strcmp($3, "inform")!=0 && strcmp($3, "inform_deny")!=0)
 			yyerror("local-zone type: expected static, deny, "
 				"refuse, redirect, transparent, "
 				"typetransparent, inform, inform_deny, "
 				"always_transparent, always_refuse, "
-				"always_nxdomain or nodefault");
+				"always_nxdomain, noview or nodefault");
 		else if(strcmp($3, "nodefault")==0) {
 			if(!cfg_strlist_insert(&cfg_parser->cfg->
 				local_zones_nodefault, $2))
@@ -2070,6 +2092,16 @@ auth_for_upstream: VAR_FOR_UPSTREAM STRING_ARG
 		free($2);
 	}
 	;
+auth_fallback_enabled: VAR_FALLBACK_ENABLED STRING_ARG
+	{
+		OUTYY(("P(fallback-enabled:%s)\n", $2));
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->cfg->auths->fallback_enabled =
+			(strcmp($2, "yes")==0);
+		free($2);
+	}
+	;
 view_name: VAR_NAME STRING_ARG
 	{
 		OUTYY(("P(name:%s)\n", $2));
@@ -2090,12 +2122,13 @@ view_local_zone: VAR_LOCAL_ZONE STRING_ARG STRING_ARG
 		   && strcmp($3, "always_transparent")!=0
 		   && strcmp($3, "always_refuse")!=0
 		   && strcmp($3, "always_nxdomain")!=0
+		   && strcmp($3, "noview")!=0
 		   && strcmp($3, "inform")!=0 && strcmp($3, "inform_deny")!=0)
 			yyerror("local-zone type: expected static, deny, "
 				"refuse, redirect, transparent, "
 				"typetransparent, inform, inform_deny, "
 				"always_transparent, always_refuse, "
-				"always_nxdomain or nodefault");
+				"always_nxdomain, noview or nodefault");
 		else if(strcmp($3, "nodefault")==0) {
 			if(!cfg_strlist_insert(&cfg_parser->cfg->views->
 				local_zones_nodefault, $2))

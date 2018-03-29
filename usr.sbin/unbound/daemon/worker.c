@@ -58,6 +58,7 @@
 #include "services/cache/rrset.h"
 #include "services/cache/infra.h"
 #include "services/cache/dns.h"
+#include "services/authzone.h"
 #include "services/mesh.h"
 #include "services/localzone.h"
 #include "util/data/msgparse.h"
@@ -1251,6 +1252,22 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 		server_stats_insrcode(&worker->stats, c->buffer);
 		goto send_reply;
 	}
+	if(worker->env.auth_zones &&
+		auth_zones_answer(worker->env.auth_zones, &worker->env,
+		&qinfo, &edns, c->buffer, worker->scratchpad)) {
+		regional_free_all(worker->scratchpad);
+		if(sldns_buffer_limit(c->buffer) == 0) {
+			comm_point_drop_reply(repinfo);
+			return 0;
+		}
+		/* set RA for everyone that can have recursion (based on
+		 * access control list) */
+		if(LDNS_RD_WIRE(sldns_buffer_begin(c->buffer)) &&
+		   acl != acl_deny_non_local && acl != acl_refuse_non_local)
+			LDNS_RA_SET(sldns_buffer_begin(c->buffer));
+		server_stats_insrcode(&worker->stats, c->buffer);
+		goto send_reply;
+	}
 
 	/* We've looked in our local zones. If the answer isn't there, we
 	 * might need to bail out based on ACLs now. */
@@ -1322,11 +1339,11 @@ lookup_cache:
 		h = query_info_hash(lookup_qinfo, sldns_buffer_read_u16_at(c->buffer, 2));
 		if((e=slabhash_lookup(worker->env.msg_cache, h, lookup_qinfo, 0))) {
 			/* answer from cache - we have acquired a readlock on it */
-			if(answer_from_cache(worker, &qinfo, 
+			if(answer_from_cache(worker, &qinfo,
 				cinfo, &need_drop, &alias_rrset, &partial_rep,
-				(struct reply_info*)e->data, 
-				*(uint16_t*)(void *)sldns_buffer_begin(c->buffer), 
-				sldns_buffer_read_u16_at(c->buffer, 2), repinfo, 
+				(struct reply_info*)e->data,
+				*(uint16_t*)(void *)sldns_buffer_begin(c->buffer),
+				sldns_buffer_read_u16_at(c->buffer, 2), repinfo,
 				&edns)) {
 				/* prefetch it if the prefetch TTL expired.
 				 * Note that if there is more than one pass
@@ -1720,6 +1737,14 @@ worker_init(struct worker* worker, struct config_file *cfg,
 			/* let timer fire, then it can reset itself */
 			comm_timer_set(worker->env.probe_timer, &tv);
 		}
+	}
+	/* zone transfer tasks, setup once per process, if any */
+	if(worker->env.auth_zones
+#ifndef THREADS_DISABLED
+		&& worker->thread_num == 0
+#endif
+		) {
+		auth_xfer_pickup_initial(worker->env.auth_zones, &worker->env);
 	}
 	if(!worker->env.mesh || !worker->env.scratch_buffer) {
 		worker_delete(worker);

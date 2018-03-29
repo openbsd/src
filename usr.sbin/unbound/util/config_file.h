@@ -100,6 +100,8 @@ struct config_file {
 	int ssl_port;
 	/** if outgoing tcp connections use SSL */
 	int ssl_upstream;
+	/** cert bundle for outgoing connections */
+	char* tls_cert_bundle;
 
 	/** outgoing port range number of ports (per thread) */
 	int outgoing_num_ports;
@@ -300,6 +302,8 @@ struct config_file {
 	int val_log_squelch;
 	/** should validator allow bogus messages to go through */
 	int val_permissive_mode;
+	/** use cached NSEC records to synthesise (negative) answers */
+	int aggressive_nsec;
 	/** ignore the CD flag in incoming queries and refuse them bogus data */
 	int ignore_cd;
 	/** serve expired entries and prefetch them */
@@ -551,6 +555,9 @@ struct config_auth {
 	int for_downstream;
 	/** provide upstream answers */
 	int for_upstream;
+	/** fallback to recursion to authorities if zone expired and other
+	 * reasons perhaps (like, query bogus) */
+	int fallback_enabled;
 };
 
 /**
