@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.16 2018/02/24 09:45:10 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.17 2018/03/29 19:48:14 patrick Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -265,6 +265,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 			    "cpu-release-addr", 0);
 		}
 
+		sched_init_cpu(ci);
 		if (cpu_hatch_secondary(ci, spinup_method, spinup_data)) {
 			atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFY);
 			__asm volatile("dsb sy; sev");
@@ -333,7 +334,6 @@ cpu_boot_secondary_processors(void)
 			continue;
 
 		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
-		sched_init_cpu(ci);
 		cpu_boot_secondary(ci);
 	}
 }
