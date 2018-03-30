@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.90 2018/03/30 20:38:23 schwarze Exp $
+.\" $OpenBSD: openssl.1,v 1.91 2018/03/30 23:03:31 schwarze Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -300,6 +300,7 @@ into a nested structure.
 .Op Fl batch
 .Op Fl cert Ar file
 .Op Fl config Ar file
+.Op Fl create_serial
 .Op Fl crl_CA_compromise Ar time
 .Op Fl crl_compromise Ar time
 .Op Fl crl_hold Ar instruction
@@ -314,11 +315,12 @@ into a nested structure.
 .Op Fl gencrl
 .Op Fl in Ar file
 .Op Fl infiles
-.Op Fl key Ar keyfile
+.Op Fl key Ar password
 .Op Fl keyfile Ar arg
-.Op Fl keyform Ar pem
+.Op Fl keyform Cm pem | der
 .Op Fl md Ar arg
 .Op Fl msie_hack
+.Op Fl multivalue\-rdn
 .Op Fl name Ar section
 .Op Fl noemailDN
 .Op Fl notext
@@ -328,12 +330,14 @@ into a nested structure.
 .Op Fl policy Ar arg
 .Op Fl preserveDN
 .Op Fl revoke Ar file
+.Op Fl selfsign
 .Op Fl spkac Ar file
 .Op Fl ss_cert Ar file
 .Op Fl startdate Ar date
 .Op Fl status Ar serial
 .Op Fl subj Ar arg
 .Op Fl updatedb
+.Op Fl utf8
 .Op Fl verbose
 .nr nS 0
 .Pp
@@ -354,6 +358,10 @@ and all certificates will be certified automatically.
 The CA certificate file.
 .It Fl config Ar file
 Specify an alternative configuration file.
+.It Fl create_serial
+If reading the serial from the text file as specified in the
+configuration fails, create a new random serial to be used as the
+next serial number.
 .It Fl days Ar arg
 The number of days to certify the certificate for.
 .It Fl enddate Ar date
@@ -371,6 +379,9 @@ If no extension section is present, a V1 certificate is created.
 If the extension section is present
 .Pq even if it is empty ,
 then a V3 certificate is created.
+See the
+.Xr x509v3.cnf 5
+manual page for details of the extension section format.
 .It Fl extfile Ar file
 An additional configuration
 .Ar file
@@ -385,14 +396,18 @@ containing a single certificate request to be signed by the CA.
 .It Fl infiles
 If present, this should be the last option; all subsequent arguments
 are assumed to be the names of files containing certificate requests.
-.It Fl key Ar keyfile
-The password used to encrypt the private key.
+.It Fl key Ar password
+The
+.Fa password
+used to encrypt the private key.
 Since on some systems the command line arguments are visible,
 this option should be used with caution.
 .It Fl keyfile Ar file
 The private key to sign requests with.
-.It Fl keyform Ar pem
+.It Fl keyform Cm pem | der
 Private key file format.
+The default is
+.Cm pem .
 .It Fl md Ar alg
 The message digest to use.
 Possible values include
@@ -411,6 +426,16 @@ its use is strongly discouraged.
 The newer control
 .Qq Xenroll
 does not need this option.
+.It Fl multivalue\-rdn
+This option causes the
+.Fl subj
+argument to be interpreted with full support for multivalued RDNs,
+for example
+.Qq "/DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe" .
+If
+.Fl multivalue\-rdn
+is not used, the UID value is set to
+.Qq "123456+CN=John Doe" .
 .It Fl name Ar section
 Specifies the configuration file
 .Ar section
@@ -435,7 +460,10 @@ Don't output the text form of a certificate to the output file.
 .It Fl out Ar file
 The output file to output certificates to.
 The default is standard output.
-The certificate details will also be printed out to this file.
+The certificate details will also be printed out to this file in
+PEM format, except that
+.Fl spkac
+outputs DER format.
 .It Fl outdir Ar directory
 The
 .Ar directory
@@ -472,6 +500,27 @@ This is largely for compatibility with the older IE enrollment control
 which would only accept certificates if their DNs matched the order of the
 request.
 This is not needed for Xenroll.
+.It Fl selfsign
+Indicates the issued certificates are to be signed with the key the
+certificate requests were signed with, given with
+.Fl keyfile .
+Certificate requests signed with a different key are ignored.
+If
+.Fl gencrl ,
+.Fl spkac ,
+or
+.Fl ss_cert
+are given,
+.Fl selfsign
+is ignored.
+.Pp
+A consequence of using
+.Fl selfsign
+is that the self-signed certificate appears among the entries in
+the certificate database (see the configuration option
+.Cm database )
+and uses the same serial number counter as all other certificates
+signed with the self-signed certificate.
 .It Fl spkac Ar file
 A file containing a single Netscape signed public key and challenge,
 and additional field values to be signed by the CA.
@@ -492,11 +541,23 @@ A single self-signed certificate to be signed by the CA.
 Set the start date.
 The format of the date is [YY]YYMMDDHHMMSSZ,
 with all four year digits required for dates from 2050 onwards.
-.It Fl status Ar serial
-Show the status of the certificate with serial number
-.Ar serial .
-.It Fl updatedb
-Update database for expired certificates.
+.It Fl subj Ar arg
+Supersedes the subject name given in the request.
+The
+.Ar arg
+must be formatted as
+.Sm off
+.Pf / Ar type0 Ns = Ar value0 Ns / Ar type 1 Ns = Ar value 1 Ns /
+.Ar type2 Ns = Ar ... ;
+.Sm on
+characters may be escaped by
+.Sq \e
+.Pq backslash ,
+no spaces are skipped.
+.It Fl utf8
+Interpret field values read from a terminal or obtained from a
+configuration file as UTF-8 strings.
+By default, they are interpreted as ASCII.
 .It Fl verbose
 Print extra details about the operations being performed.
 .El
@@ -547,6 +608,9 @@ if the CRL extension section is present
 then a V2 CRL is created.
 The CRL extensions specified are CRL extensions and not CRL entry extensions.
 It should be noted that some software can't handle V2 CRLs.
+See the
+.Xr x509v3.cnf 5
+manual page for details of the extension section format.
 .It Fl crlhours Ar num
 The number of hours before the next CRL is due.
 .It Fl gencrl
@@ -555,16 +619,11 @@ Generate a CRL based on information in the index file.
 A
 .Ar file
 containing a certificate to revoke.
-.It Fl subj Ar arg
-Supersedes the subject name given in the request.
-The
-.Ar arg
-must be formatted as
-.Ar /type0=value0/type1=value1/type2=... ;
-characters may be escaped by
-.Sq \e
-.Pq backslash ,
-no spaces are skipped.
+.It Fl status Ar serial
+Show the status of the certificate with serial number
+.Ar serial .
+.It Fl updatedb
+Update the database index to purge expired certificates.
 .El
 .Pp
 Many of the options can be set in the
@@ -623,7 +682,7 @@ extension with CA:TRUE and the
 value is set to
 .Cm copyall
 and the user does not spot
-this when the certificate is displayed, then this will hand the requestor
+this when the certificate is displayed, then this will hand the requester
 a valid CA certificate.
 .Pp
 This situation can be avoided by setting
