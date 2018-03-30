@@ -1,3 +1,4 @@
+/* $OpenBSD: imxanatop.c,v 1.1 2018/03/30 20:38:27 patrick Exp $ */
 /*
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
  *
