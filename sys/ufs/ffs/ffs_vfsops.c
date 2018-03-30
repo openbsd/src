@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.173 2018/03/15 04:22:16 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.174 2018/03/30 17:35:20 dhill Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -447,7 +447,7 @@ success:
 			fs->fs_clean = ronly &&
 			    (fs->fs_flags & FS_UNCLEAN) == 0 ? 1 : 0;
 			if (ronly)
-				free(fs->fs_contigdirs, M_UFSMNT, 0);
+				free(fs->fs_contigdirs, M_UFSMNT, fs->fs_ncg);
 		}
 		if (!ronly) {
 			if (mp->mnt_flag & MNT_SOFTDEP)
@@ -911,7 +911,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		if ((fs->fs_flags & FS_DOSOFTDEP) &&
 		    (error = softdep_mount(devvp, mp, fs, cred)) != 0) {
 			free(fs->fs_csp, M_UFSMNT, 0);
-			free(fs->fs_contigdirs, M_UFSMNT, 0);
+			free(fs->fs_contigdirs, M_UFSMNT, fs->fs_ncg);
 			goto out;
 		}
 		fs->fs_fmod = 1;
@@ -1046,7 +1046,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 			fs->fs_clean = 0;
 			return (error);
 		}
-		free(fs->fs_contigdirs, M_UFSMNT, 0);
+		free(fs->fs_contigdirs, M_UFSMNT, fs->fs_ncg);
 	}
 	ump->um_devvp->v_specmountpoint = NULL;
 
