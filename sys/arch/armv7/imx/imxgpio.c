@@ -1,4 +1,4 @@
-/* $OpenBSD: imxgpio.c,v 1.12 2017/06/22 11:34:51 tom Exp $ */
+/* $OpenBSD: imxgpio.c,v 1.13 2018/03/30 19:26:38 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -28,9 +28,6 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 #include <machine/intr.h>
-
-#include <armv7/armv7/armv7var.h>
-#include <armv7/imx/imxgpiovar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
@@ -72,19 +69,8 @@ struct imxgpio_softc {
 	struct intrhand		*sc_handlers[GPIO_NUM_PINS];
 	struct interrupt_controller sc_ic;
 
-	unsigned int (*sc_get_bit)(struct imxgpio_softc *sc,
-	    unsigned int gpio);
-	void (*sc_set_bit)(struct imxgpio_softc *sc,
-	    unsigned int gpio);
-	void (*sc_clear_bit)(struct imxgpio_softc *sc,
-	    unsigned int gpio);
-	void (*sc_set_dir)(struct imxgpio_softc *sc,
-	    unsigned int gpio, unsigned int dir);
 	struct gpio_controller sc_gc;
 };
-
-#define GPIO_PIN_TO_INST(x)	((x) >> 5)
-#define GPIO_PIN_TO_OFFSET(x)	((x) & 0x1f)
 
 int imxgpio_match(struct device *, void *, void *);
 void imxgpio_attach(struct device *, struct device *, void *);
@@ -98,12 +84,6 @@ void *imxgpio_intr_establish(void *, int *, int, int (*)(void *),
     void *, char *);
 void imxgpio_intr_disestablish(void *);
 void imxgpio_recalc_ipl(struct imxgpio_softc *);
-
-unsigned int imxgpio_v6_get_bit(struct imxgpio_softc *, unsigned int);
-void imxgpio_v6_set_bit(struct imxgpio_softc *, unsigned int);
-void imxgpio_v6_clear_bit(struct imxgpio_softc *, unsigned int);
-void imxgpio_v6_set_dir(struct imxgpio_softc *, unsigned int, unsigned int);
-unsigned int imxgpio_v6_get_dir(struct imxgpio_softc *, unsigned int);
 
 
 struct cfattach	imxgpio_ca = {
@@ -143,11 +123,6 @@ imxgpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gc.gc_get_pin = imxgpio_get_pin;
 	sc->sc_gc.gc_set_pin = imxgpio_set_pin;
 	gpio_controller_register(&sc->sc_gc);
-
-	sc->sc_get_bit  = imxgpio_v6_get_bit;
-	sc->sc_set_bit = imxgpio_v6_set_bit;
-	sc->sc_clear_bit = imxgpio_v6_clear_bit;
-	sc->sc_set_dir = imxgpio_v6_set_dir;
 
 	sc->sc_ipl = IPL_NONE;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_IMR, 0);
@@ -218,106 +193,6 @@ imxgpio_set_pin(void *cookie, uint32_t *cells, int val)
 	else
 		reg &= ~(1 << pin);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_DR, reg);
-}
-
-unsigned int
-imxgpio_get_bit(unsigned int gpio)
-{
-	struct imxgpio_softc *sc = imxgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
-
-	return sc->sc_get_bit(sc, gpio);
-	
-}
-
-void
-imxgpio_set_bit(unsigned int gpio)
-{
-	struct imxgpio_softc *sc = imxgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
-
-	sc->sc_set_bit(sc, gpio);
-}
-
-void
-imxgpio_clear_bit(unsigned int gpio)
-{
-	struct imxgpio_softc *sc = imxgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
-
-	sc->sc_clear_bit(sc, gpio);
-}
-void
-imxgpio_set_dir(unsigned int gpio, unsigned int dir)
-{
-	struct imxgpio_softc *sc = imxgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
-
-	sc->sc_set_dir(sc, gpio, dir);
-}
-
-unsigned int
-imxgpio_v6_get_bit(struct imxgpio_softc *sc, unsigned int gpio)
-{
-	u_int32_t val;
-
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_DR);
-
-	return (val >> GPIO_PIN_TO_OFFSET(gpio)) & 0x1;
-}
-
-void
-imxgpio_v6_set_bit(struct imxgpio_softc *sc, unsigned int gpio)
-{
-	u_int32_t val;
-
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_DR);
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_DR,
-		val | (1 << GPIO_PIN_TO_OFFSET(gpio)));
-}
-
-void
-imxgpio_v6_clear_bit(struct imxgpio_softc *sc, unsigned int gpio)
-{
-	u_int32_t val;
-
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_DR);
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_DR,
-		val & ~(1 << GPIO_PIN_TO_OFFSET(gpio)));
-}
-
-void
-imxgpio_v6_set_dir(struct imxgpio_softc *sc, unsigned int gpio, unsigned int dir)
-{
-	int s;
-	u_int32_t val;
-
-	s = splhigh();
-
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_GDIR);
-	if (dir == IMXGPIO_DIR_OUT)
-		val |= 1 << GPIO_PIN_TO_OFFSET(gpio);
-	else
-		val &= ~(1 << GPIO_PIN_TO_OFFSET(gpio));
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_GDIR, val);
-
-	splx(s);
-}
-
-unsigned int
-imxgpio_v6_get_dir(struct imxgpio_softc *sc, unsigned int gpio)
-{
-	int s;
-	u_int32_t val;
-
-	s = splhigh();
-
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_GDIR);
-	if (val & (1 << GPIO_PIN_TO_OFFSET(gpio)))
-		val = IMXGPIO_DIR_OUT;
-	else
-		val = IMXGPIO_DIR_IN;
-
-	splx(s);
-	return val;
 }
 
 int
