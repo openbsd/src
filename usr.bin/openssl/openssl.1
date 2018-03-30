@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.89 2018/03/22 19:24:18 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.90 2018/03/30 20:38:23 schwarze Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,9 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.\" OPENSSL
-.\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: March 30 2018 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -120,7 +118,7 @@
 .Nd OpenSSL command line tool
 .Sh SYNOPSIS
 .Nm
-.Cm command
+.Ar command
 .Op Ar command_opts
 .Op Ar command_args
 .Pp
@@ -6054,6 +6052,8 @@ certificates.
 .Sh SEE ALSO
 .Xr acme-client 1 ,
 .Xr nc 1 ,
+.Xr openssl.cnf 5 ,
+.Xr x509v3.cnf 5 ,
 .Xr ssl 8 ,
 .Xr starttls 8
 .Sh STANDARDS
