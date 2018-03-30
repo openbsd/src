@@ -1519,6 +1519,8 @@
 ./usr/share/man/man4/mtdphy.4
 ./usr/share/man/man4/mtio.4
 ./usr/share/man/man4/multicast.4
+./usr/share/man/man4/mvicu.4
+./usr/share/man/man4/mvrtc.4
 ./usr/share/man/man4/myx.4
 ./usr/share/man/man4/ne.4
 ./usr/share/man/man4/neo.4
@@ -1874,6 +1876,7 @@
 ./usr/share/man/man4/vioscsi.4
 ./usr/share/man/man4/virtio.4
 ./usr/share/man/man4/vlan.4
+./usr/share/man/man4/vmmci.4
 ./usr/share/man/man4/vmt.4
 ./usr/share/man/man4/vmwpvs.4
 ./usr/share/man/man4/vmx.4
@@ -1900,6 +1903,7 @@
 ./usr/share/man/man4/wskbd.4
 ./usr/share/man/man4/wsmouse.4
 ./usr/share/man/man4/wsmux.4
+./usr/share/man/man4/xbf.4
 ./usr/share/man/man4/xe.4
 ./usr/share/man/man4/xen.4
 ./usr/share/man/man4/xf86.4
