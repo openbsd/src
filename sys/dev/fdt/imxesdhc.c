@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.39 2018/02/16 07:37:48 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.1 2018/03/30 19:50:55 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
