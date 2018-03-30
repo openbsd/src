@@ -1,4 +1,4 @@
-#	$OpenBSD: files.imx,v 1.23 2018/03/30 09:26:14 patrick Exp $
+#	$OpenBSD: files.imx,v 1.24 2018/03/30 19:38:00 patrick Exp $
 
 device imxccm
 attach imxccm at fdt
@@ -15,10 +15,6 @@ file	arch/armv7/imx/imxdog.c		imxdog
 device imxanatop
 attach imxanatop at fdt
 file	arch/armv7/imx/imxanatop.c	imxanatop
-
-device imxgpio
-attach imxgpio at fdt
-file	arch/armv7/imx/imxgpio.c	imxgpio
 
 device	imxiic: i2cbus
 attach	imxiic at fdt
