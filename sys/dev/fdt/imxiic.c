@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.14 2017/12/30 13:34:56 kettenis Exp $ */
+/* $OpenBSD: imxiic.c,v 1.1 2018/03/30 20:02:28 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -23,7 +23,7 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
-#include <armv7/imx/imxiicvar.h>
+#include <dev/fdt/imxiicvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
