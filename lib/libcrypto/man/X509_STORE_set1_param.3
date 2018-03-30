@@ -1,5 +1,6 @@
-.\" $OpenBSD: X509_STORE_set1_param.3,v 1.13 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: X509_STORE_set1_param.3,v 1.14 2018/03/30 00:44:24 schwarze Exp $
 .\" content checked up to:
+.\" OpenSSL man3/X509_STORE_add_cert b0edda11 Mar 20 13:00:17 2018 +0000
 .\" OpenSSL man3/X509_STORE_get0_param e90fc053 Jul 15 09:39:45 2017 -0400
 .\"
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: March 30 2018 $
 .Dt X509_STORE_SET1_PARAM 3
 .Os
 .Sh NAME
@@ -123,6 +124,7 @@ or the certificate revocation list
 to the
 .Fa store ,
 increasing its reference count by 1 in case of success.
+Untrusted objects should not be added in this way.
 .Pp
 .Fn X509_STORE_get_ex_new_index ,
 .Fn X509_STORE_set_ex_data ,

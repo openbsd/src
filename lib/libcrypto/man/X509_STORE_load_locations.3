@@ -1,4 +1,6 @@
-.\"	$OpenBSD: X509_STORE_load_locations.3,v 1.5 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: X509_STORE_load_locations.3,v 1.6 2018/03/30 00:44:24 schwarze Exp $
+.\" full merge up to:
+.\" OpenSSL X509_STORE_add_cert b0edda11 Mar 20 13:00:17 2018 +0000
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: March 30 2018 $
 .Dt X509_STORE_LOAD_LOCATIONS 3
 .Os
 .Sh NAME
@@ -44,6 +46,8 @@ contained in the colon-separated list
 .Fa dirs
 for looking up certificates, in addition to files and directories
 that are already configured.
+The certificates in the directores must be in hashed form, as documented in
+.Xr X509_LOOKUP_hash_dir 3 .
 Directories already in use are not added again.
 If
 .Dv NULL
