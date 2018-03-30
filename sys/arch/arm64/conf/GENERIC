@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.56 2018/03/30 19:38:23 patrick Exp $
+# $OpenBSD: GENERIC,v 1.57 2018/03/30 19:51:17 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -87,6 +87,8 @@ wsdisplay*	at simplefb?
 imxuart*	at fdt?
 imxgpc*		at fdt?
 imxgpio*	at fdt?
+imxesdhc*	at fdt?
+sdmmc*		at imxesdhc?
 
 # Raspberry Pi 3
 bcmaux*		at fdt?
