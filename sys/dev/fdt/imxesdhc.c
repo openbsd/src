@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.1 2018/03/30 19:50:55 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.2 2018/03/30 19:53:42 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -283,7 +283,8 @@ imxesdhc_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return OF_is_compatible(faa->fa_node, "fsl,imx6q-usdhc") ||
-	    OF_is_compatible(faa->fa_node, "fsl,imx6sx-usdhc");
+	    OF_is_compatible(faa->fa_node, "fsl,imx6sx-usdhc") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-usdhc");
 }
 
 void
