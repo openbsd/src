@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.7 2018/01/31 10:52:12 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.8 2018/03/30 16:55:20 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  *
@@ -293,7 +293,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	printf(" nirq %d, nredist %d\n", nintr, sc->sc_num_redist);
+	printf(" nirq %d, nredist %d", nintr, sc->sc_num_redist);
 
 	/* Disable all interrupts, clear all pending */
 	for (i = 1; i < nintr / 32; i++) {
