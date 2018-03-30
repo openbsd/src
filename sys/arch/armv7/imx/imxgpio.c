@@ -1,4 +1,4 @@
-/* $OpenBSD: imxgpio.c,v 1.13 2018/03/30 19:26:38 patrick Exp $ */
+/* $OpenBSD: imxgpio.c,v 1.14 2018/03/30 19:30:57 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -22,8 +22,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/evcount.h>
-
-#include <arm/cpufunc.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -233,7 +231,7 @@ imxgpio_intr_establish(void *cookie, int *cells, int ipl,
 {
 	struct imxgpio_softc	*sc = (struct imxgpio_softc *)cookie;
 	struct intrhand		*ih;
-	int			 psw, val, reg, shift;
+	int			 s, val, reg, shift;
 	int			 irqno = cells[0];
 	int			 level = cells[1];
 
@@ -254,7 +252,7 @@ imxgpio_intr_establish(void *cookie, int *cells, int ipl,
 	ih->ih_level = level;
 	ih->ih_sc = sc;
 
-	psw = disable_interrupts(PSR_I);
+	s = splhigh();
 
 	sc->sc_handlers[irqno] = ih;
 
@@ -301,7 +299,7 @@ imxgpio_intr_establish(void *cookie, int *cells, int ipl,
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_IMR,
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_IMR) | 1 << irqno);
 
-	restore_interrupts(psw);
+	splx(s);
 	return (ih);
 }
 
@@ -311,9 +309,9 @@ imxgpio_intr_disestablish(void *cookie)
 	struct intrhand		*ih = cookie;
 	struct imxgpio_softc	*sc = ih->ih_sc;
 	uint32_t		 mask;
-	int			 psw;
+	int			 s;
 
-	psw = disable_interrupts(PSR_I);
+	s = splhigh();
 
 #ifdef DEBUG_INTC
 	printf("%s: irq %d ipl %d [%s]\n", __func__, ih->ih_irq, ih->ih_ipl,
@@ -331,7 +329,7 @@ imxgpio_intr_disestablish(void *cookie)
 
 	imxgpio_recalc_ipl(sc);
 
-	restore_interrupts(psw);
+	splx(s);
 }
 
 void
