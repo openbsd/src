@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.228 2018/02/19 08:59:53 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.229 2018/03/30 17:33:54 dhill Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -206,6 +206,7 @@ in_pcbinit(struct inpcbtable *table, int hashsize)
 	if (table->inpt_lhashtbl == NULL)
 		panic("in_pcbinit: hashinit failed for lport");
 	table->inpt_count = 0;
+	table->inpt_size = hashsize;
 	arc4random_buf(&table->inpt_key, sizeof(table->inpt_key));
 }
 
@@ -998,32 +999,34 @@ int
 in_pcbresize(struct inpcbtable *table, int hashsize)
 {
 	u_long nhash, nlhash;
+	int osize;
 	void *nhashtbl, *nlhashtbl, *ohashtbl, *olhashtbl;
 	struct inpcb *inp0, *inp1;
 
 	ohashtbl = table->inpt_hashtbl;
 	olhashtbl = table->inpt_lhashtbl;
+	osize = table->inpt_size;
 
 	nhashtbl = hashinit(hashsize, M_PCB, M_NOWAIT, &nhash);
+	if (nhashtbl == NULL)
+		return ENOBUFS;
 	nlhashtbl = hashinit(hashsize, M_PCB, M_NOWAIT, &nlhash);
-	if (nhashtbl == NULL || nlhashtbl == NULL) {
-		if (nhashtbl != NULL)
-			free(nhashtbl, M_PCB, 0);
-		if (nlhashtbl != NULL)
-			free(nlhashtbl, M_PCB, 0);
-		return (ENOBUFS);
+	if (nlhashtbl == NULL) {
+		hashfree(nhashtbl, hashsize, M_PCB);
+		return ENOBUFS;
 	}
 	table->inpt_hashtbl = nhashtbl;
 	table->inpt_lhashtbl = nlhashtbl;
 	table->inpt_hash = nhash;
 	table->inpt_lhash = nlhash;
+	table->inpt_size = hashsize;
 	arc4random_buf(&table->inpt_key, sizeof(table->inpt_key));
 
 	TAILQ_FOREACH_SAFE(inp0, &table->inpt_queue, inp_queue, inp1) {
 		in_pcbrehash(inp0);
 	}
-	free(ohashtbl, M_PCB, 0);
-	free(olhashtbl, M_PCB, 0);
+	hashfree(ohashtbl, osize, M_PCB);
+	hashfree(olhashtbl, osize, M_PCB);
 
 	return (0);
 }
