@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.22 2018/03/30 19:26:38 patrick Exp $ */
+/* $OpenBSD: if_fec.c,v 1.23 2018/03/30 20:32:50 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -44,7 +44,6 @@
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
 
 #include <dev/ofw/openfirm.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.19 2016/12/28 22:45:24 kettenis Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.20 2018/03/30 20:32:50 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -31,7 +31,6 @@
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
 
 #include <dev/ofw/openfirm.h>
