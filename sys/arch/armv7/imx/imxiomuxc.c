@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiomuxc.c,v 1.8 2016/09/18 18:16:00 kettenis Exp $ */
+/* $OpenBSD: imxiomuxc.c,v 1.9 2018/03/30 20:10:00 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -36,30 +36,9 @@
 #include <dev/ofw/fdt.h>
 
 /* registers */
-#define IOMUXC_GPR1			0x004
-#define IOMUXC_GPR8			0x020
-#define IOMUXC_GPR12			0x030
 #define IOMUXC_GPR13			0x034
 
 /* bits and bytes */
-#define IOMUXC_GPR1_REF_SSP_EN					(1 << 16)
-#define IOMUXC_GPR1_TEST_POWERDOWN				(1 << 18)
-
-#define IOMUXC_GPR8_PCS_TX_DEEMPH_GEN1				(0 << 0)
-#define IOMUXC_GPR8_PCS_TX_DEEMPH_GEN2_3P5DB			(0 << 6)
-#define IOMUXC_GPR8_PCS_TX_DEEMPH_GEN2_6DB			(20 << 12)
-#define IOMUXC_GPR8_PCS_TX_SWING_FULL				(127 << 18)
-#define IOMUXC_GPR8_PCS_TX_SWING_LOW				(127 << 25)
-
-#define IOMUXC_GPR12_LOS_LEVEL_MASK				(0x1f << 4)
-#define IOMUXC_GPR12_LOS_LEVEL_9				(9 << 4)
-#define IOMUXC_GPR12_APPS_PM_XMT_PME				(1 << 9)
-#define IOMUXC_GPR12_APPS_LTSSM_ENABLE				(1 << 10)
-#define IOMUXC_GPR12_APPS_INIT_RST				(1 << 11)
-#define IOMUXC_GPR12_DEVICE_TYPE_RC				(2 << 12)
-#define IOMUXC_GPR12_DEVICE_TYPE_MASK				(3 << 12)
-#define IOMUXC_GPR12_APPS_PM_XMT_TURNOFF			(1 << 16)
-
 #define IOMUXC_GPR13_SATA_PHY_1_FAST_EDGE_RATE			(0x00 << 0)
 #define IOMUXC_GPR13_SATA_PHY_1_SLOW_EDGE_RATE			(0x02 << 0)
 #define IOMUXC_GPR13_SATA_PHY_1_EDGE_RATE_MASK			0x3
@@ -247,51 +226,4 @@ imxiomuxc_enable_sata(void)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR13,
 	    (bus_space_read_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR13) & ~IOMUXC_GPR13_SATA_PHY_1_SLOW_EDGE_RATE) |
 		IOMUXC_GPR13_SATA_PHY_1_SLOW_EDGE_RATE);
-}
-
-void
-imxiomuxc_enable_pcie(void)
-{
-	struct imxiomuxc_softc *sc = imxiomuxc_sc;
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR12,
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR12) & ~IOMUXC_GPR12_APPS_LTSSM_ENABLE);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR12,
-	    (bus_space_read_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR12) & ~IOMUXC_GPR12_DEVICE_TYPE_MASK) |
-		IOMUXC_GPR12_DEVICE_TYPE_RC);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR12,
-	    (bus_space_read_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR12) & ~IOMUXC_GPR12_LOS_LEVEL_MASK) |
-		IOMUXC_GPR12_LOS_LEVEL_9);
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR8,
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR8) |
-		IOMUXC_GPR8_PCS_TX_DEEMPH_GEN1 | IOMUXC_GPR8_PCS_TX_DEEMPH_GEN2_3P5DB |
-		IOMUXC_GPR8_PCS_TX_DEEMPH_GEN2_6DB | IOMUXC_GPR8_PCS_TX_SWING_FULL |
-		IOMUXC_GPR8_PCS_TX_SWING_LOW);
-}
-
-void
-imxiomuxc_pcie_refclk(int enable)
-{
-	struct imxiomuxc_softc *sc = imxiomuxc_sc;
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR1,
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR1) & ~IOMUXC_GPR1_REF_SSP_EN);
-
-	if (enable)
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR1,
-		    bus_space_read_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR1) | IOMUXC_GPR1_REF_SSP_EN);
-}
-
-void
-imxiomuxc_pcie_test_powerdown(int enable)
-{
-	struct imxiomuxc_softc *sc = imxiomuxc_sc;
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR1,
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR1) & ~IOMUXC_GPR1_TEST_POWERDOWN);
-
-	if (enable)
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR1,
-		    bus_space_read_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR1) | IOMUXC_GPR1_TEST_POWERDOWN);
 }
