@@ -1,5 +1,5 @@
-.\" $OpenBSD: SSL_CTX_set_tlsext_use_srtp.3,v 1.2 2018/03/24 00:55:37 schwarze Exp $
-.\" full merge up to: OpenSSL 3733ce61 Aug 21 08:44:14 2017 +0100
+.\" $OpenBSD: SSL_CTX_set_tlsext_use_srtp.3,v 1.3 2018/03/30 19:31:11 schwarze Exp $
+.\" full merge up to: OpenSSL b0edda11 Mar 20 13:00:17 2018 +0000
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
 .\" Copyright (c) 2017 The OpenSSL Project.  All rights reserved.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 24 2018 $
+.Dd $Mdocdate: March 30 2018 $
 .Dt SSL_CTX_SET_TLSEXT_USE_SRTP 3
 .Os
 .Sh NAME
@@ -143,7 +143,7 @@ if no SRTP protection profile was negotiated.
 The memory returned from this function should not be freed by the
 caller.
 .Pp
-If an SRTP protection profile has been sucessfully negotiated,
+If an SRTP protection profile has been successfully negotiated,
 then the SRTP keying material (on both the client and server)
 should be obtained by calling
 .Xr SSL_export_keying_material 3
