@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxgpc.c,v 1.1 2018/03/30 09:26:14 patrick Exp $	*/
+/*	$OpenBSD: imxgpc.c,v 1.2 2018/03/30 09:31:05 patrick Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -44,7 +44,8 @@ imxgpc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "fsl,imx6q-gpc");
+	return (OF_is_compatible(faa->fa_node, "fsl,imx6q-gpc") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-gpc"));
 }
 
 void
