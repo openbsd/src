@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxgpc.c,v 1.2 2016/08/06 17:18:38 kettenis Exp $	*/
+/*	$OpenBSD: imxgpc.c,v 1.1 2018/03/30 09:26:14 patrick Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
