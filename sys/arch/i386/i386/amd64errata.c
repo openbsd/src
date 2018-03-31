@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd64errata.c,v 1.11 2018/03/31 13:45:03 bluhm Exp $	*/
+/*	$OpenBSD: amd64errata.c,v 1.12 2018/03/31 22:52:30 bluhm Exp $	*/
 /*	$NetBSD: errata.c,v 1.6 2007/02/05 21:05:45 ad Exp $	*/
 
 /*-
@@ -352,7 +352,7 @@ amd64_errata(struct cpu_info *ci)
 
 #ifdef ERRATA_DEBUG
 		printf("%s: erratum %d present%s\n",
-		    ci->ci_dev.dv_xname, e->e_num,
+		    ci->ci_dev->dv_xname, e->e_num,
 		    (rc == 2) ? " and patched" : "");
 #endif
 	}

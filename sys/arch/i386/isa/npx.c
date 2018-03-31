@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.67 2018/03/31 13:45:03 bluhm Exp $	*/
+/*	$OpenBSD: npx.c,v 1.68 2018/03/31 22:52:30 bluhm Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -434,7 +434,7 @@ npxintr(void *arg)
 	union sigval sv;
 
 	uvmexp.traps++;
-	IPRINTF(("%s: fp intr\n", ci->ci_dev.dv_xname));
+	IPRINTF(("%s: fp intr\n", ci->ci_dev->dv_xname));
 
 	if (p == NULL || npx_type == NPX_NONE) {
 		/* XXX no %p in stand/printf.c.  Cast to quiet gcc -Wall. */
@@ -635,7 +635,7 @@ npxdna_xmm(struct cpu_info *ci)
 	p = curproc;
 #endif
 
-	IPRINTF(("%s: dna for %lx%s\n", ci->ci_dev.dv_xname, (u_long)p,
+	IPRINTF(("%s: dna for %lx%s\n", ci->ci_dev->dv_xname, (u_long)p,
 	    (p->p_md.md_flags & MDP_USEDFPU) ? " (used fpu)" : ""));
 
 	/*
@@ -647,19 +647,19 @@ npxdna_xmm(struct cpu_info *ci)
 	 * initialization).
 	 */
 	if (ci->ci_fpcurproc != NULL) {
-		IPRINTF(("%s: fp save %lx\n", ci->ci_dev.dv_xname,
+		IPRINTF(("%s: fp save %lx\n", ci->ci_dev->dv_xname,
 		    (u_long)ci->ci_fpcurproc));
 		npxsave_cpu(ci, ci->ci_fpcurproc != &proc0);
 	} else {
 		clts();
-		IPRINTF(("%s: fp init\n", ci->ci_dev.dv_xname));
+		IPRINTF(("%s: fp init\n", ci->ci_dev->dv_xname));
 		fninit();
 		fwait();
 		stts();
 	}
 	splx(s);
 
-	IPRINTF(("%s: done saving\n", ci->ci_dev.dv_xname));
+	IPRINTF(("%s: done saving\n", ci->ci_dev->dv_xname));
 	KDASSERT(ci->ci_fpcurproc == NULL);
 #ifndef MULTIPROCESSOR
 	KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
@@ -719,7 +719,7 @@ npxdna_s87(struct cpu_info *ci)
 	p = curproc;
 #endif
 
-	IPRINTF(("%s: dna for %lx%s\n", ci->ci_dev.dv_xname, (u_long)p,
+	IPRINTF(("%s: dna for %lx%s\n", ci->ci_dev->dv_xname, (u_long)p,
 	    (p->p_md.md_flags & MDP_USEDFPU) ? " (used fpu)" : ""));
 
 	/*
@@ -728,19 +728,19 @@ npxdna_s87(struct cpu_info *ci)
 	 * clear any exceptions.
 	 */
 	if (ci->ci_fpcurproc != NULL) {
-		IPRINTF(("%s: fp save %lx\n", ci->ci_dev.dv_xname,
+		IPRINTF(("%s: fp save %lx\n", ci->ci_dev->dv_xname,
 		    (u_long)ci->ci_fpcurproc));
 		npxsave_cpu(ci, ci->ci_fpcurproc != &proc0);
 	} else {
 		clts();
-		IPRINTF(("%s: fp init\n", ci->ci_dev.dv_xname));
+		IPRINTF(("%s: fp init\n", ci->ci_dev->dv_xname));
 		fninit();
 		fwait();
 		stts();
 	}
 	splx(s);
 
-	IPRINTF(("%s: done saving\n", ci->ci_dev.dv_xname));
+	IPRINTF(("%s: done saving\n", ci->ci_dev->dv_xname));
 	KDASSERT(ci->ci_fpcurproc == NULL);
 #ifndef MULTIPROCESSOR
 	KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
@@ -804,7 +804,7 @@ npxsave_cpu(struct cpu_info *ci, int save)
 	if (p == NULL)
 		return;
 
-	IPRINTF(("%s: fp cpu %s %lx\n", ci->ci_dev.dv_xname,
+	IPRINTF(("%s: fp cpu %s %lx\n", ci->ci_dev->dv_xname,
 	    save ? "save" : "flush", (u_long)p));
 
 	if (save) {
@@ -861,7 +861,7 @@ npxsave_proc(struct proc *p, int save)
 	if (oci == NULL)
 		return;
 
-	IPRINTF(("%s: fp proc %s %lx\n", ci->ci_dev.dv_xname,
+	IPRINTF(("%s: fp proc %s %lx\n", ci->ci_dev->dv_xname,
 	    save ? "save" : "flush", (u_long)p));
 
 #if defined(MULTIPROCESSOR)
@@ -870,8 +870,8 @@ npxsave_proc(struct proc *p, int save)
 		npxsave_cpu(ci, save);
 		splx(s);
 	} else {
-		IPRINTF(("%s: fp ipi to %s %s %lx\n", ci->ci_dev.dv_xname,
-		    oci->ci_dev.dv_xname, save ? "save" : "flush", (u_long)p));
+		IPRINTF(("%s: fp ipi to %s %s %lx\n", ci->ci_dev->dv_xname,
+		    oci->ci_dev->dv_xname, save ? "save" : "flush", (u_long)p));
 
 		oci->ci_fpsaveproc = p;
 		i386_send_ipi(oci,
