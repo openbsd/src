@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.42 2018/02/27 23:48:44 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.43 2018/03/31 12:39:58 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: February 27 2018 $
+.Dd $Mdocdate: March 31 2018 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -170,6 +170,11 @@ subnet-mask,
 tftp-server-name
 and
 time-offset.
+.It Ic require Op Ar option , ... ;
+Discard leases that do not contain the listed options.
+.Ic require
+statements are cumulative, except that an empty
+list will remove all previously specified options.
 .It Ic send Ar option option-value ;
 Include
 .Ar option-value
@@ -208,11 +213,6 @@ If more than one
 .Ic reject
 is present all leases from any of the
 addresses will be discarded.
-.It Ic require Op Ar option , ... ;
-Discard leases that do not contain the listed options.
-.Ic require
-statements are cumulative, except that an empty
-list will remove all previously specified options.
 .El
 .Sh SEE ALSO
 .Xr dhclient.leases 5 ,
