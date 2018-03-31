@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.26 2016/10/19 18:20:25 schwarze Exp $	*/
+/*	$OpenBSD: expr.c,v 1.27 2018/03/31 14:50:56 tobias Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -19,8 +19,8 @@
 struct val	*make_int(int64_t);
 struct val	*make_str(char *);
 void		 free_value(struct val *);
-int		 is_integer(struct val *, int64_t *);
-int		 to_integer(struct val *);
+int		 is_integer(struct val *, int64_t *, const char **);
+int		 to_integer(struct val *, const char **);
 void		 to_string(struct val *);
 int		 is_zero_or_null(struct val *);
 void		 nexttoken(int);
@@ -94,11 +94,13 @@ free_value(struct val *vp)
 
 /* determine if vp is an integer; if so, return it's value in *r */
 int
-is_integer(struct val *vp, int64_t *r)
+is_integer(struct val *vp, int64_t *r, const char **errstr)
 {
-	char	       *s;
-	int		neg;
-	int64_t		i;
+	const char *errstrp;
+
+	if (errstr == NULL)
+		errstr = &errstrp;
+	*errstr = NULL;
 
 	if (vp->type == integer) {
 		*r = vp->u.i;
@@ -107,43 +109,27 @@ is_integer(struct val *vp, int64_t *r)
 
 	/*
 	 * POSIX.2 defines an "integer" as an optional unary minus
-	 * followed by digits.
+	 * followed by digits. Other representations are unspecified,
+	 * which means that strtonum(3) is a viable option here.
 	 */
-	s = vp->u.s;
-	i = 0;
-
-	neg = (*s == '-');
-	if (neg)
-		s++;
-
-	while (*s) {
-		if (!isdigit((unsigned char)*s))
-			return 0;
-
-		i *= 10;
-		i += *s - '0';
-
-		s++;
-	}
-
-	if (neg)
-		i *= -1;
-
-	*r = i;
-	return 1;
+	*r = strtonum(vp->u.s, INT64_MIN, INT64_MAX, errstr);
+	return *errstr == NULL;
 }
 
 
 /* coerce to vp to an integer */
 int
-to_integer(struct val *vp)
+to_integer(struct val *vp, const char **errstr)
 {
 	int64_t		r;
+
+	if (errstr != NULL)
+		*errstr = NULL;
 
 	if (vp->type == integer)
 		return 1;
 
-	if (is_integer(vp, &r)) {
+	if (is_integer(vp, &r, errstr)) {
 		free(vp->u.s);
 		vp->u.i = r;
 		vp->type = integer;
@@ -176,7 +162,7 @@ is_zero_or_null(struct val *vp)
 	if (vp->type == integer)
 		return vp->u.i == 0;
 	else
-		return *vp->u.s == 0 || (to_integer(vp) && vp->u.i == 0);
+		return *vp->u.s == 0 || (to_integer(vp, NULL) && vp->u.i == 0);
 }
 
 void
@@ -303,20 +289,26 @@ eval5(void)
 struct val *
 eval4(void)
 {
-	struct val     *l, *r;
-	enum token	op;
+	const char	*errstr;
+	struct val	*l, *r;
+	enum token	 op;
+	volatile int64_t res;
 
 	l = eval5();
 	while ((op = token) == MUL || op == DIV || op == MOD) {
 		nexttoken(0);
 		r = eval5();
 
-		if (!to_integer(l) || !to_integer(r)) {
-			errx(2, "non-numeric argument");
-		}
+		if (!to_integer(l, &errstr))
+			errx(2, "number \"%s\" is %s", l->u.s, errstr);
+		if (!to_integer(r, &errstr))
+			errx(2, "number \"%s\" is %s", r->u.s, errstr);
 
 		if (op == MUL) {
-			l->u.i *= r->u.i;
+			res = l->u.i * r->u.i;
+			if (r->u.i != 0 && l->u.i != res / r->u.i)
+				errx(3, "overflow");
+			l->u.i = res;
 		} else {
 			if (r->u.i == 0) {
 				errx(2, "division by zero");
@@ -324,6 +316,8 @@ eval4(void)
 			if (op == DIV) {
 				if (l->u.i != INT64_MIN || r->u.i != -1)
 					l->u.i /= r->u.i;
+				else
+					errx(3, "overflow");
 			} else {
 				if (l->u.i != INT64_MIN || r->u.i != -1)
 					l->u.i %= r->u.i;
@@ -342,22 +336,33 @@ eval4(void)
 struct val *
 eval3(void)
 {
-	struct val     *l, *r;
-	enum token	op;
+	const char	*errstr;
+	struct val	*l, *r;
+	enum token	 op;
+	volatile int64_t res;
 
 	l = eval4();
 	while ((op = token) == ADD || op == SUB) {
 		nexttoken(0);
 		r = eval4();
 
-		if (!to_integer(l) || !to_integer(r)) {
-			errx(2, "non-numeric argument");
-		}
+		if (!to_integer(l, &errstr))
+			errx(2, "number \"%s\" is %s", l->u.s, errstr);
+		if (!to_integer(r, &errstr))
+			errx(2, "number \"%s\" is %s", r->u.s, errstr);
 
 		if (op == ADD) {
-			l->u.i += r->u.i;
+			res = l->u.i + r->u.i;
+			if ((l->u.i > 0 && r->u.i > 0 && res <= 0) ||
+			    (l->u.i < 0 && r->u.i < 0 && res >= 0))
+				errx(3, "overflow");
+			l->u.i = res;
 		} else {
-			l->u.i -= r->u.i;
+			res = l->u.i - r->u.i;
+			if ((l->u.i >= 0 && r->u.i < 0 && res <= 0) ||
+			    (l->u.i < 0 && r->u.i > 0 && res >= 0))
+				errx(3, "overflow");
+			l->u.i = res;
 		}
 
 		free_value(r);
@@ -380,7 +385,7 @@ eval2(void)
 		nexttoken(0);
 		r = eval3();
 
-		if (is_integer(l, &li) && is_integer(r, &ri)) {
+		if (is_integer(l, &li, NULL) && is_integer(r, &ri, NULL)) {
 			switch (op) {
 			case GT:
 				v = (li >  ri);
