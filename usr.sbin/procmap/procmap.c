@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.63 2016/09/16 04:45:35 dlg Exp $ */
+/*	$OpenBSD: procmap.c,v 1.64 2018/03/31 17:26:13 otto Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -611,6 +611,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	dev_t dev = 0;
 	size_t sz = 0;
 	char *name;
+	static u_long prevend;
 
 	uvm_obj = &kbit[0];
 	vp = &kbit[1];
@@ -794,6 +795,15 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	}
 
 	if (print_all) {
+		if (verbose) {
+			if  (prevend < vme->start)
+				printf("%0*lx-%0*lx %7luk *\n",
+				    (int)sizeof(void *) * 2, prevend,
+				    (int)sizeof(void *) * 2, vme->start - 1,
+				    (vme->start - prevend) / 1024);
+			prevend = vme->end;
+		}
+
 		sz = (size_t)((vme->end - vme->start) / 1024);
 		printf("%0*lx-%0*lx %7luk %0*lx %c%c%c%c%c (%c%c%c) %d/%d/%d %02d:%02d %7llu - %s",
 		    (int)sizeof(void *) * 2, vme->start, (int)sizeof(void *) * 2,
