@@ -1,3 +1,4 @@
+/* $OpenBSD: self_reloc.c,v 1.3 2018/03/31 18:07:14 patrick Exp $ */
 /*-
  * Copyright (c) 2008-2010 Rui Paulo <rpaulo@FreeBSD.org>
  * All rights reserved.

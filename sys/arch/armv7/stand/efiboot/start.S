@@ -1,3 +1,4 @@
+/* $OpenBSD: start.S,v 1.3 2018/03/31 18:07:14 patrick Exp $ */
 /*-
  * Copyright (c) 2014, 2015 Andrew Turner
  * All rights reserved.
