@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2017/11/22 21:22:40 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.9 2018/03/31 18:19:12 patrick Exp $
 
 NOMAN=		#
 
@@ -8,7 +8,8 @@ PROG=		BOOTARM.EFI
 OBJFMT=		binary
 INSTALL_STRIP=
 BINDIR=		/usr/mdec
-SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c fdt.c
+SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c efipxe.c
+SRCS+=		fdt.c
 
 S=		${.CURDIR}/../../../..
 EFIDIR=		${S}/stand/efi
@@ -29,6 +30,7 @@ SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
 	lseek.c open.c read.c readdir.c stat.c
 SRCS+=	loadfile.c
 SRCS+=	ufs.c
+SRCS+=	arp.c ether.c globals.c in_cksum.c net.c netif.c netudp.c tftp.c
 
 .PATH:	${S}/lib/libkern/arch/arm ${S}/lib/libkern
 SRCS+=	divsi3.S divdi3.c moddi3.c qdivrem.c strlcpy.c strlen.c
