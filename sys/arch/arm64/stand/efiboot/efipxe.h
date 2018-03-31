@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.h,v 1.1 2018/01/21 21:35:34 patrick Exp $	*/
+/*	$OpenBSD: efipxe.h,v 1.2 2018/03/31 17:43:53 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -15,7 +15,19 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-int tftpopen(struct open_file *, ...);
-int tftpclose(struct open_file *);
-int tftpioctl(struct open_file *, u_long, void *);
-int tftpstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
+extern struct netif_driver efinet_driver;
+
+int	 efitftp_open(char *path, struct open_file *f);
+
+int	 mtftp_open(char *, struct open_file *);
+int	 mtftp_close(struct open_file *);
+int	 mtftp_read(struct open_file *, void *, size_t, size_t *);
+int	 mtftp_write(struct open_file *, void *, size_t, size_t *);
+off_t	 mtftp_seek(struct open_file *, off_t, int);
+int	 mtftp_stat(struct open_file *, struct stat *);
+int	 mtftp_readdir(struct open_file *, char *);
+
+int	 tftpopen(struct open_file *, ...);
+int	 tftpclose(struct open_file *);
+int	 tftpioctl(struct open_file *, u_long, void *);
+int	 tftpstrategy(void *, int, daddr32_t, size_t, void *, size_t *);

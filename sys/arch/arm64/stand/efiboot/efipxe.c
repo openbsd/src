@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.c,v 1.3 2018/02/06 20:35:21 naddy Exp $	*/
+/*	$OpenBSD: efipxe.c,v 1.4 2018/03/31 17:43:53 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -17,9 +17,21 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
+#include <netinet/udp.h>
+#include <netinet/udp_var.h>
 
 #include <libsa.h>
 #include <lib/libsa/tftp.h>
+#include <lib/libsa/net.h>
+#include <lib/libsa/netif.h>
 
 #include <efi.h>
 #include <efiapi.h>
@@ -32,13 +44,25 @@ extern EFI_DEVICE_PATH		*efi_bootdp;
 
 extern char			*bootmac;
 static UINT8			 boothw[16];
-static EFI_IP_ADDRESS		 bootip, servip;
+struct in_addr			 bootip, servip;
+extern struct in_addr		 gateip;
 static EFI_GUID			 devp_guid = DEVICE_PATH_PROTOCOL;
+static EFI_GUID			 net_guid = EFI_SIMPLE_NETWORK_PROTOCOL;
 static EFI_GUID			 pxe_guid = EFI_PXE_BASE_CODE_PROTOCOL;
+static EFI_SIMPLE_NETWORK	*NET = NULL;
 static EFI_PXE_BASE_CODE	*PXE = NULL;
+static EFI_PHYSICAL_ADDRESS	 txbuf;
+static int			 use_mtftp = 0;
 
 extern int	 efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
 extern int	 efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
+
+int		 efinet_probe(struct netif *, void *);
+int		 efinet_match(struct netif *, void *);
+void		 efinet_init(struct iodesc *, void *);
+int		 efinet_get(struct iodesc *, void *, size_t, time_t);
+int		 efinet_put(struct iodesc *, void *, size_t);
+void		 efinet_end(struct netif *);
 
 /*
  * TFTP initial probe.  This function discovers PXE handles and tries
@@ -48,6 +72,7 @@ extern int	 efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
 void
 efi_pxeprobe(void)
 {
+	EFI_SIMPLE_NETWORK *net;
 	EFI_PXE_BASE_CODE *pxe;
 	EFI_DEVICE_PATH *dp0;
 	EFI_HANDLE *handles;
@@ -75,6 +100,11 @@ efi_pxeprobe(void)
 		if (efi_device_path_ncmp(efi_bootdp, dp0, depth))
 			continue;
 
+		status = EFI_CALL(BS->HandleProtocol, handles[i], &net_guid,
+		    (void **)&net);
+		if (status != EFI_SUCCESS)
+			continue;
+
 		status = EFI_CALL(BS->HandleProtocol, handles[i], &pxe_guid,
 		    (void **)&pxe);
 		if (status != EFI_SUCCESS)
@@ -92,40 +122,45 @@ efi_pxeprobe(void)
 			    &pxe->Mode->PxeReply;
 		}
 
-		if (dhcp) {
-			memcpy(&bootip, dhcp->BootpYiAddr, sizeof(bootip));
-			memcpy(&servip, dhcp->BootpSiAddr, sizeof(servip));
-			memcpy(boothw, dhcp->BootpHwAddr, sizeof(boothw));
-			bootmac = boothw;
-			PXE = pxe;
-			break;
-		}
+		if (!dhcp)
+			continue;
+
+		if (pxe->Mtftp != NULL)
+			use_mtftp = 1;
+
+		memcpy(&bootip, dhcp->BootpYiAddr, sizeof(bootip));
+		memcpy(&servip, dhcp->BootpSiAddr, sizeof(servip));
+		memcpy(&gateip, dhcp->BootpSiAddr, sizeof(gateip));
+		memcpy(boothw, dhcp->BootpHwAddr, sizeof(boothw));
+		bootmac = boothw;
+		NET = net;
+		PXE = pxe;
+		break;
 	}
 }
 
 /*
  * TFTP filesystem layer implementation.
  */
-struct tftp_handle {
+struct mtftp_handle {
 	unsigned char	*inbuf;	/* input buffer */
 	size_t		 inbufsize;
 	off_t		 inbufoff;
 };
 
-struct fs_ops tftp_fs = {
-	tftp_open, tftp_close, tftp_read, tftp_write, tftp_seek,
-	tftp_stat, tftp_readdir
-};
-
 int
-tftp_open(char *path, struct open_file *f)
+mtftp_open(char *path, struct open_file *f)
 {
-	struct tftp_handle *tftpfile;
+	struct mtftp_handle *tftpfile;
 	EFI_PHYSICAL_ADDRESS addr;
+	EFI_IP_ADDRESS dstip;
 	EFI_STATUS status;
 	UINT64 size;
 
 	if (PXE == NULL)
+		return ENXIO;
+
+	if (!use_mtftp)
 		return ENXIO;
 
 	tftpfile = alloc(sizeof(*tftpfile));
@@ -133,8 +168,9 @@ tftp_open(char *path, struct open_file *f)
 		return ENOMEM;
 	memset(tftpfile, 0, sizeof(*tftpfile));
 
+	memcpy(&dstip, &servip, sizeof(servip));
 	status = EFI_CALL(PXE->Mtftp, PXE, EFI_PXE_BASE_CODE_TFTP_GET_FILE_SIZE,
-	    NULL, FALSE, &size, NULL, &servip, path, NULL, FALSE);
+	    NULL, FALSE, &size, NULL, &dstip, path, NULL, FALSE);
 	if (status != EFI_SUCCESS) {
 		free(tftpfile, sizeof(*tftpfile));
 		return ENOENT;
@@ -153,7 +189,7 @@ tftp_open(char *path, struct open_file *f)
 	tftpfile->inbuf = (unsigned char *)((paddr_t)addr);
 
 	status = EFI_CALL(PXE->Mtftp, PXE, EFI_PXE_BASE_CODE_TFTP_READ_FILE,
-	    tftpfile->inbuf, FALSE, &size, NULL, &servip, path, NULL, FALSE);
+	    tftpfile->inbuf, FALSE, &size, NULL, &dstip, path, NULL, FALSE);
 	if (status != EFI_SUCCESS) {
 		free(tftpfile, sizeof(*tftpfile));
 		return ENXIO;
@@ -164,9 +200,9 @@ out:
 }
 
 int
-tftp_close(struct open_file *f)
+mtftp_close(struct open_file *f)
 {
-	struct tftp_handle *tftpfile = f->f_fsdata;
+	struct mtftp_handle *tftpfile = f->f_fsdata;
 
 	if (tftpfile->inbuf != NULL)
 		EFI_CALL(BS->FreePages, (paddr_t)tftpfile->inbuf,
@@ -176,9 +212,9 @@ tftp_close(struct open_file *f)
 }
 
 int
-tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
+mtftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 {
-	struct tftp_handle *tftpfile = f->f_fsdata;
+	struct mtftp_handle *tftpfile = f->f_fsdata;
 	size_t toread;
 
 	if (size > tftpfile->inbufsize - tftpfile->inbufoff)
@@ -197,15 +233,15 @@ tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 }
 
 int
-tftp_write(struct open_file *f, void *start, size_t size, size_t *resid)
+mtftp_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	return EROFS;
 }
 
 off_t
-tftp_seek(struct open_file *f, off_t offset, int where)
+mtftp_seek(struct open_file *f, off_t offset, int where)
 {
-	struct tftp_handle *tftpfile = f->f_fsdata;
+	struct mtftp_handle *tftpfile = f->f_fsdata;
 
 	switch(where) {
 	case SEEK_CUR:
@@ -233,9 +269,9 @@ tftp_seek(struct open_file *f, off_t offset, int where)
 }
 
 int
-tftp_stat(struct open_file *f, struct stat *sb)
+mtftp_stat(struct open_file *f, struct stat *sb)
 {
-	struct tftp_handle *tftpfile = f->f_fsdata;
+	struct mtftp_handle *tftpfile = f->f_fsdata;
 
 	sb->st_mode = 0444;
 	sb->st_nlink = 1;
@@ -247,17 +283,36 @@ tftp_stat(struct open_file *f, struct stat *sb)
 }
 
 int
-tftp_readdir(struct open_file *f, char *name)
+mtftp_readdir(struct open_file *f, char *name)
 {
 	return EOPNOTSUPP;
 }
 
 /*
- * Dummy TFTP network device.
+ * Overload generic TFTP implementation to check that
+ * we actually have a driver.
  */
+int
+efitftp_open(char *path, struct open_file *f)
+{
+	if (NET == NULL || PXE == NULL)
+		return ENXIO;
+
+	if (use_mtftp)
+		return ENXIO;
+
+	return tftp_open(path, f);
+}
+
+/*
+ * Dummy network device.
+ */
+int tftpdev_sock = -1;
+
 int
 tftpopen(struct open_file *f, ...)
 {
+	EFI_STATUS status;
 	u_int unit, part;
 	va_list ap;
 
@@ -273,13 +328,36 @@ tftpopen(struct open_file *f, ...)
 	if (unit != 0)
 		return 1;
 
+	if (!use_mtftp) {
+		status = EFI_CALL(BS->AllocatePages, AllocateAnyPages,
+		    EfiLoaderData, EFI_SIZE_TO_PAGES(RECV_SIZE), &txbuf);
+		if (status != EFI_SUCCESS)
+			return ENOMEM;
+
+		if ((tftpdev_sock = netif_open("efinet")) < 0) {
+			EFI_CALL(BS->FreePages, txbuf,
+			    EFI_SIZE_TO_PAGES(RECV_SIZE));
+			return ENXIO;
+		}
+
+		f->f_devdata = &tftpdev_sock;
+	}
+
 	return 0;
 }
 
 int
 tftpclose(struct open_file *f)
 {
-	return 0;
+	int ret = 0;
+
+	if (!use_mtftp) {
+		ret = netif_close(*(int *)f->f_devdata);
+		EFI_CALL(BS->FreePages, txbuf, EFI_SIZE_TO_PAGES(RECV_SIZE));
+		txbuf = 0;
+	}
+
+	return ret;
 }
 
 int
@@ -293,4 +371,155 @@ tftpstrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 	size_t *rsize)
 {
 	return EOPNOTSUPP;
+}
+
+/*
+ * Simple Network Protocol driver.
+ */
+struct netif_stats efinet_stats;
+struct netif_dif efinet_ifs[] = {
+	{ 0, 1, &efinet_stats, 0, 0, },
+};
+
+struct netif_driver efinet_driver = {
+	"efinet",
+	efinet_match,
+	efinet_probe,
+	efinet_init,
+	efinet_get,
+	efinet_put,
+	efinet_end,
+	efinet_ifs,
+	nitems(efinet_ifs)
+};
+
+int
+efinet_match(struct netif *nif, void *v)
+{
+	return 1;
+}
+
+int
+efinet_probe(struct netif *nif, void *v)
+{
+	if (strncmp(v, efinet_driver.netif_bname, 3))
+		return -1;
+
+	return 0;
+}
+
+void
+efinet_init(struct iodesc *desc, void *v)
+{
+	EFI_SIMPLE_NETWORK *net = NET;
+	EFI_STATUS status;
+
+	if (net == NULL)
+		return;
+
+	if (net->Mode->State == EfiSimpleNetworkStopped) {
+		status = EFI_CALL(net->Start, net);
+		if (status != EFI_SUCCESS)
+			return;
+	}
+
+	if (net->Mode->State != EfiSimpleNetworkInitialized) {
+		status = EFI_CALL(net->Initialize, net, 0, 0);
+		if (status != EFI_SUCCESS)
+			return;
+	}
+
+	EFI_CALL(net->ReceiveFilters, net,
+	    EFI_SIMPLE_NETWORK_RECEIVE_UNICAST |
+	    EFI_SIMPLE_NETWORK_RECEIVE_BROADCAST,
+	    0, FALSE, 0, NULL);
+
+	memcpy(desc->myea, net->Mode->CurrentAddress.Addr, 6);
+	memcpy(&desc->myip, &bootip, sizeof(bootip));
+	desc->xid = 1;
+}
+
+int
+efinet_get(struct iodesc *desc, void *pkt, size_t len, time_t tmo)
+{
+	EFI_SIMPLE_NETWORK *net = NET;
+	EFI_STATUS status;
+	UINTN bufsz, pktsz;
+	time_t t;
+	char *buf, *ptr;
+	ssize_t ret = -1;
+
+	if (net == NULL)
+		return ret;
+
+	bufsz = net->Mode->MaxPacketSize + ETHER_HDR_LEN + ETHER_CRC_LEN;
+	buf = alloc(bufsz + ETHER_ALIGN);
+	if (buf == NULL)
+		return ret;
+	ptr = buf + ETHER_ALIGN;
+
+	t = getsecs();
+	status = EFI_NOT_READY;
+	while ((getsecs() - t) < tmo) {
+		pktsz = bufsz;
+		status = EFI_CALL(net->Receive, net, NULL, &pktsz, ptr,
+		    NULL, NULL, NULL);
+		if (status == EFI_SUCCESS)
+			break;
+		if (status != EFI_NOT_READY)
+			break;
+	}
+
+	if (status == EFI_SUCCESS) {
+		memcpy(pkt, ptr, min((ssize_t)pktsz, len));
+		ret = min((ssize_t)pktsz, len);
+	}
+
+	free(buf, bufsz + ETHER_ALIGN);
+	return ret;
+}
+
+int
+efinet_put(struct iodesc *desc, void *pkt, size_t len)
+{
+	EFI_SIMPLE_NETWORK *net = NET;
+	EFI_STATUS status;
+	void *buf = NULL;
+	int ret = -1;
+
+	if (net == NULL)
+		goto out;
+
+	if (len > RECV_SIZE)
+		goto out;
+
+	memcpy((void *)txbuf, pkt, len);
+	status = EFI_CALL(net->Transmit, net, 0, len, (void *)txbuf,
+	    NULL, NULL, NULL);
+	if (status != EFI_SUCCESS)
+		goto out;
+
+	buf = NULL;
+	while (status == EFI_SUCCESS) {
+		status = EFI_CALL(net->GetStatus, net, NULL, &buf);
+		if (buf)
+			break;
+	}
+
+	if (status == EFI_SUCCESS)
+		ret = len;
+
+out:
+	return ret;
+}
+
+void
+efinet_end(struct netif *nif)
+{
+	EFI_SIMPLE_NETWORK *net = NET;
+
+	if (net == NULL)
+		return;
+
+	EFI_CALL(net->Shutdown, net);
 }
