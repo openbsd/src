@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86.c,v 1.15 2018/03/31 13:45:03 bluhm Exp $ */
+/* $OpenBSD: kvm86.c,v 1.16 2018/03/31 13:49:03 bluhm Exp $ */
 /* $NetBSD: kvm86.c,v 1.10 2005/12/26 19:23:59 perry Exp $ */
 /*
  * Copyright (c) 2002
@@ -108,7 +108,7 @@ kvm86_init(void)
 	tss->tss_ioopt = ((caddr_t)vmd->iomap - (caddr_t)&tss) << 16;
 
 	/* setup TSS descriptor (including our iomap) */
-	setsegment(&vmd->sd, &tss,
+	setsegment(&vmd->sd, tss,
 	    sizeof(struct i386tss) + sizeof(vmd->iomap) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 
