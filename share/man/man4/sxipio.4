@@ -1,6 +1,6 @@
-.\"     $OpenBSD: imxiic.4,v 1.2 2016/06/10 02:56:15 jsg Exp $
+.\"	$OpenBSD: sxipio.4,v 1.1 2018/03/31 03:22:34 jsg Exp $
 .\"
-.\" Copyright (c) 2014 Sylvestre Gallon <syl@openbsd.org>
+.\" Copyright (c) 2014 Raphael Graf <r@undefined.ch>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,30 +14,31 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2016 $
-.Dt IMXIIC 4 armv7
+.Dd $Mdocdate: March 31 2018 $
+.Dt SXIPIO 4
 .Os
 .Sh NAME
-.Nm imxiic
-.Nd i.MX6 onboard I2C controller
+.Nm sxipio
+.Nd Allwinner GPIO controller
 .Sh SYNOPSIS
-.Cd "imxiic at fdt?"
-.Cd "iic* at imxiic?"
+.Cd "sxipio* at fdt? early 1"
+.Cd "gpio* at sxipio?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the I2C controller found on the Freescale
-i.MX6 processor family.
+driver provides support for the GPIO controller integrated in Allwinner
+Technology A10, A10s, A13, A20, A23, A33, A64, A80, GR8, H3, H5 and R40 SoCs.
+The devices have several ports for multi-functional pins which can be configured
+as either inputs or outputs, and accessed using
+.Xr gpioctl 8 .
+.\" Both values are made available through the
+.\" .Xr sysctl 8
+.\" interface.
 .Sh SEE ALSO
-.Xr iic 4 ,
-.Xr intro 4
+.Xr gpio 4 ,
+.Xr gpioctl 8
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
 .Ox 5.5 .
-.Sh AUTHORS
-The
-.Nm
-driver was written by
-.An Patrick Wildt Aq Mt patrick@blueri.se .

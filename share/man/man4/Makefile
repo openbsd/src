@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.668 2018/03/29 18:41:12 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.669 2018/03/31 03:22:34 jsg Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -31,7 +31,8 @@ MAN=	aac.4 ac97.4 acphy.4 acrtc.4 \
 	hds.4 hifn.4 hil.4 hilid.4 hilkbd.4 hilms.4 hme.4 hotplug.4 hsq.4 \
 	hvn.4 hvs.4 hyperv.4 \
 	iatp.4 ichiic.4 ichwdt.4 icmp.4 icmp6.4 icsphy.4 ifmedia.4 \
-	iha.4 ihidev.4 iic.4 ikbd.4 ims.4 imt.4 inet.4 inet6.4 inphy.4 iophy.4 \
+	iha.4 ihidev.4 iic.4 ikbd.4 ims.4 imt.4 \
+	imxesdhc.4 imxiic.4 inet.4 inet6.4 inphy.4 iophy.4 \
 	ip.4 ip6.4 ipcomp.4 ipgphy.4 ipmi.4 ips.4 ipsec.4 ipw.4 \
 	isa.4 isagpio.4 isapnp.4 it.4 itherm.4 iwi.4 iwn.4 iwm.4 \
 	ix.4 ixgb.4 jmb.4 jme.4 jmphy.4 \
@@ -48,9 +49,9 @@ MAN=	aac.4 ac97.4 acphy.4 acrtc.4 \
 	owid.4 owctr.4 owsbm.4 owtemp.4 \
 	pair.4 pcagpio.4 pcaled.4 pcdisplay.4 pchb.4 pchtemp.4 pci.4 pcib.4 \
 	pcfadc.4 pcfiic.4 pcfrtc.4 pcxrtc.4 pciide.4 pckbc.4 pckbd.4 \
-	pcmcia.4 pcn.4 pcppi.4 \
-	pcscp.4 pf.4 pflog.4 pflow.4 pfsync.4 pgt.4 piixpm.4 pipex.4 \
-	pms.4 ppb.4 ppp.4 pppoe.4 pppx.4 pty.4 puc.4 pvbus.4 pwdog.4 \
+	pcmcia.4 pcn.4 pcppi.4 pcscp.4 pf.4 pflog.4 pflow.4 pfsync.4 \
+	pgt.4 piixpm.4 pipex.4 plrtc.4 \
+	pms.4 ppb.4 ppp.4 pppoe.4 pppx.4 psci.4  pty.4 puc.4 pvbus.4 pwdog.4 \
 	qla.4 qle.4 qlw.4 qsphy.4 radio.4 \
 	ral.4 random.4 rdomain.4 rd.4 rdac.4 re.4 rdcphy.4 rgephy.4 \
 	ricohrtc.4 rkpcie.4 rktemp.4 \
@@ -60,8 +61,8 @@ MAN=	aac.4 ac97.4 acphy.4 acrtc.4 \
 	sdmmc.4 sdhc.4 se.4 ses.4 \
 	sf.4 sili.4 simplefb.4 siop.4 sis.4 sk.4 sli.4 \
 	sm.4 smsc.4 softraid.4 spdmem.4 sdtemp.4 speaker.4 sppp.4 sqphy.4 \
-	st.4 ste.4 stge.4 sti.4 stp.4 sv.4 switch.4 sxirsb.4 sxitemp.4 \
-	sym.4 \
+	st.4 ste.4 stge.4 sti.4 stp.4 sv.4 switch.4 sxiccmu.4 sximmc.4 \
+	sxipio.4 sxirsb.4 sxitemp.4 sym.4 \
 	tcic.4 tcp.4 termios.4 tht.4 ti.4 tl.4 \
 	tlphy.4 thmc.4 tpm.4 tqphy.4 trm.4 trunk.4 tsl.4 tty.4 tun.4 tap.4 \
 	twe.4 \

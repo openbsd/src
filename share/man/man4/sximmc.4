@@ -1,6 +1,6 @@
-.\"	$OpenBSD: sxipio.4,v 1.4 2018/03/27 07:01:42 jsg Exp $
+.\"	$OpenBSD: sximmc.4,v 1.1 2018/03/31 03:22:34 jsg Exp $
 .\"
-.\" Copyright (c) 2014 Raphael Graf <r@undefined.ch>
+.\" Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,31 +14,43 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
-.Dt SXIPIO 4 armv7
+.Dd $Mdocdate: March 31 2018 $
+.Dt SXIMMC 4
 .Os
 .Sh NAME
-.Nm sxipio
-.Nd Allwinner GPIO controller
+.Nm sximmc
+.Nd SD/MMC controller
 .Sh SYNOPSIS
-.Cd "sxipio* at fdt? early 1"
-.Cd "gpio* at sxipio?"
+.Cd "sximmc* at fdt?"
+.Cd "sdmmc* at sximmc?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the GPIO controller integrated in Allwinner
-Technology A10, A10s, A13, A20, A23, A33, A64, A80, GR8, H3, H5 and R40 SoCs.
-The devices have several ports for multi-functional pins which can be configured
-as either inputs or outputs, and accessed using
-.Xr gpioctl 8 .
-.\" Both values are made available through the
-.\" .Xr sysctl 8
-.\" interface.
+driver provides support for the MMC/SD/SDIO controller integrated on
+Allwinner A1X/A20 SoCs.
+.Pp
+The
+.Xr sdmmc 4
+subsystem performs SD/MMC transactions to communicate with
+MMC, SD, SDHC, or SDIO devices inserted into the SD slot.
 .Sh SEE ALSO
-.Xr gpio 4 ,
-.Xr gpioctl 8
+.Xr intro 4 ,
+.Xr sdmmc 4 ,
+.Xr sunxi 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Ox 5.5 .
+.Ox 6.1 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Jared D. McNeill
+for
+.Nx
+and ported to
+.Ox
+by
+.An Mark Kettenis Mt kettenis@openbsd.org .
