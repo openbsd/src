@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.22 2018/03/22 19:30:19 bluhm Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.23 2018/03/31 13:45:03 bluhm Exp $	*/
 /*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
 
 /*-
@@ -46,19 +46,20 @@
 #include <sys/signal.h>
 
 #include <machine/segments.h>
-#include <machine/tss.h>
 #include <machine/npx.h>
 #include <machine/sysarch.h>
 
+/*
+ * Please not that pcb_savefpu must be aligend to 16 bytes.
+ */
 struct pcb {
-	struct	i386tss pcb_tss;
-#define	pcb_cr3	pcb_tss.tss_cr3
-#define	pcb_esp	pcb_tss.tss_esp
-#define	pcb_ebp	pcb_tss.tss_ebp
-#define	pcb_cs	pcb_tss.tss_cs
+	union	savefpu pcb_savefpu;	/* floating point state for FPU */
+	int	pcb_cr3;
+	int	pcb_esp;
+	int	pcb_ebp;
+	int	pcb_kstack;		/* kernel stack address */
 	int	pcb_cr0;		/* saved image of CR0 */
 	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
-	union	savefpu pcb_savefpu;	/* floating point state for FPU */
 	struct	segment_descriptor pcb_threadsegs[2];
 					/* per-thread descriptors */
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */

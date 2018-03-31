@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.40 2018/03/22 19:30:19 bluhm Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.41 2018/03/31 13:45:03 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -434,7 +434,7 @@ k7_powernow_init(void)
 		else
 			techname = "PowerNow! K7";
 		printf("%s: %s %d MHz: speeds:",
-		    ci->ci_dev.dv_xname, techname, cpuspeed);
+		    ci->ci_dev->dv_xname, techname, cpuspeed);
 		for (i = cstate->n_states; i > 0; i--) {
 			state = &cstate->state_table[i-1];
 			printf(" %d", state->freq);

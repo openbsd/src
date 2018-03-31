@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd64errata.c,v 1.10 2018/03/22 19:30:18 bluhm Exp $	*/
+/*	$OpenBSD: amd64errata.c,v 1.11 2018/03/31 13:45:03 bluhm Exp $	*/
 /*	$NetBSD: errata.c,v 1.6 2007/02/05 21:05:45 ad Exp $	*/
 
 /*-
@@ -332,7 +332,7 @@ amd64_errata(struct cpu_info *ci)
 
 #ifdef ERRATA_DEBUG
 		printf("%s: testing for erratum %d\n",
-		    ci->ci_dev.dv_xname, e->e_num);
+		    ci->ci_dev->dv_xname, e->e_num);
 #endif
 
 		/*
@@ -363,7 +363,7 @@ amd64_errata(struct cpu_info *ci)
 		int first = 1;
 
 		/* Print out found and corrected */
-		printf("%s: AMD %s", ci->ci_dev.dv_xname,
+		printf("%s: AMD %s", ci->ci_dev->dv_xname,
 		    (corrected == 1) ? "erratum" : "errata");
 		for (e = errata; e < ex; e++) {
 			if (e->e_reported == 2) {
@@ -381,7 +381,7 @@ amd64_errata(struct cpu_info *ci)
 		int first = 1;
 
 		/* Print out found but not corrected */
-		printf("%s: AMD %s", ci->ci_dev.dv_xname,
+		printf("%s: AMD %s", ci->ci_dev->dv_xname,
 		    (found == 1) ? "erratum" : "errata");
 		for (e = errata; e < ex; e++) {
 			if (e->e_reported == 1) {

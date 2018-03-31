@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.66 2018/03/22 19:30:19 bluhm Exp $	*/
+/*	$OpenBSD: npx.c,v 1.67 2018/03/31 13:45:03 bluhm Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -353,7 +353,7 @@ npxinit(struct cpu_info *ci)
 	if (npx586bug1(4195835, 3145727) != 0) {
 		i386_fpu_fdivbug = 1;
 		printf("%s: WARNING: Pentium FDIV bug detected!\n",
-		    ci->ci_dev.dv_xname);
+		    ci->ci_dev->dv_xname);
 	}
 	if (fpu_mxcsr_mask == 0 && i386_use_fxsave) {
 		struct savexmm xm __attribute__((aligned(16)));
