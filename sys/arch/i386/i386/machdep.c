@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.613 2018/03/31 13:45:03 bluhm Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.614 2018/03/31 13:55:05 bluhm Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1645,16 +1645,7 @@ cyrix3_cpu_name(int model, int step)
  * information; however, the chance of multi-vendor SMP actually
  * ever *working* is sufficiently low that it's probably safe to assume
  * all processors are of the same vendor.
- *
- * Note that identifycpu() is called twice for the primary CPU: the first
- * is very early (right after the "OpenBSD X.Y" line) with the CPUF_PRIMARY
- * flag *not* set, then again later in the config sequence with CPUF_PRIMARY
- * set.  Thus, the tests here for ((ci->ci_flags & CPUF_PRIMARY) == 0) are
- * actually saying "do this on the first call for each CPU".  Don't change
- * them to use CPU_IS_PRIMARY() because then they would be done on both
- * calls in the SP build.
  */
-
 void
 identifycpu(struct cpu_info *ci)
 {
@@ -1849,23 +1840,21 @@ identifycpu(struct cpu_info *ci)
 		    "%s %s%s", vendorname, modifier, name);
 	}
 
-	if ((ci->ci_flags & CPUF_PRIMARY) == 0) {
-		if (cachesize > -1) {
-			snprintf(cpu_model, sizeof(cpu_model),
-			    "%s (%s%s%s%s-class, %dKB L2 cache)",
-			    cpu_brandstr,
-			    ((*token) ? "\"" : ""), ((*token) ? token : ""),
-			    ((*token) ? "\" " : ""), classnames[class], cachesize);
-		} else {
-			snprintf(cpu_model, sizeof(cpu_model),
-			    "%s (%s%s%s%s-class)",
-			    cpu_brandstr,
-			    ((*token) ? "\"" : ""), ((*token) ? token : ""),
-			    ((*token) ? "\" " : ""), classnames[class]);
-		}
-
-		printf("%s: %s", cpu_device, cpu_model);
+	if (cachesize > -1) {
+		snprintf(cpu_model, sizeof(cpu_model),
+		    "%s (%s%s%s%s-class, %dKB L2 cache)",
+		    cpu_brandstr,
+		    ((*token) ? "\"" : ""), ((*token) ? token : ""),
+		    ((*token) ? "\" " : ""), classnames[class], cachesize);
+	} else {
+		snprintf(cpu_model, sizeof(cpu_model),
+		    "%s (%s%s%s%s-class)",
+		    cpu_brandstr,
+		    ((*token) ? "\"" : ""), ((*token) ? token : ""),
+		    ((*token) ? "\" " : ""), classnames[class]);
 	}
+
+	printf("%s: %s", cpu_device, cpu_model);
 
 	if (ci->ci_feature_flags && (ci->ci_feature_flags & CPUID_TSC)) {
 		/* Has TSC, check if it's constant */
@@ -1888,114 +1877,108 @@ identifycpu(struct cpu_info *ci)
 
 			ghz = (cpuspeed + 9) / 1000;
 			fr = ((cpuspeed + 9) / 10 ) % 100;
-			if ((ci->ci_flags & CPUF_PRIMARY) == 0) {
-				if (fr)
-					printf(" %d.%02d GHz", ghz, fr);
-				else
-					printf(" %d GHz", ghz);
-			}
+			if (fr)
+				printf(" %d.%02d GHz", ghz, fr);
+			else
+				printf(" %d GHz", ghz);
 		} else {
-			if ((ci->ci_flags & CPUF_PRIMARY) == 0) {
-				printf(" %d MHz", cpuspeed);
-			}
+			printf(" %d MHz", cpuspeed);
 		}
 	}
-	if ((ci->ci_flags & CPUF_PRIMARY) == 0) {
-		printf("\n");
+	printf("\n");
 
-		if (ci->ci_feature_flags) {
-			int numbits = 0;
+	if (ci->ci_feature_flags) {
+		int numbits = 0;
 
-			printf("%s: ", cpu_device);
-			max = sizeof(i386_cpuid_features) /
-			    sizeof(i386_cpuid_features[0]);
-			for (i = 0; i < max; i++) {
-				if (ci->ci_feature_flags &
-				    i386_cpuid_features[i].feature_bit) {
-					printf("%s%s", (numbits == 0 ? "" : ","),
-					    i386_cpuid_features[i].feature_name);
-					numbits++;
-				}
+		printf("%s: ", cpu_device);
+		max = sizeof(i386_cpuid_features) /
+		    sizeof(i386_cpuid_features[0]);
+		for (i = 0; i < max; i++) {
+			if (ci->ci_feature_flags &
+			    i386_cpuid_features[i].feature_bit) {
+				printf("%s%s", (numbits == 0 ? "" : ","),
+				    i386_cpuid_features[i].feature_name);
+				numbits++;
 			}
-			for (i = 0; i < nitems(i386_ecpuid_features); i++) {
-				if (ecpu_feature &
-				    i386_ecpuid_features[i].feature_bit) {
-					printf("%s%s", (numbits == 0 ? "" : ","),
-					    i386_ecpuid_features[i].feature_name);
-					numbits++;
-				}
-			}
-			max = sizeof(i386_cpuid_ecxfeatures)
-				/ sizeof(i386_cpuid_ecxfeatures[0]);
-			for (i = 0; i < max; i++) {
-				if (cpu_ecxfeature &
-				    i386_cpuid_ecxfeatures[i].feature_bit) {
-					printf("%s%s", (numbits == 0 ? "" : ","),
-					    i386_cpuid_ecxfeatures[i].feature_name);
-					numbits++;
-				}
-			}
-			for (i = 0; i < nitems(i386_ecpuid_ecxfeatures); i++) {
-				if (ecpu_ecxfeature &
-				    i386_ecpuid_ecxfeatures[i].feature_bit) {
-					printf("%s%s", (numbits == 0 ? "" : ","),
-					    i386_ecpuid_ecxfeatures[i].feature_name);
-					numbits++;
-				}
-			}
-			for (i = 0; i < nitems(i386_cpuid_eaxperf); i++) {
-				if (cpu_perf_eax &
-				    i386_cpuid_eaxperf[i].feature_bit) {
-					printf("%s%s", (numbits == 0 ? "" : ","),
-					    i386_cpuid_eaxperf[i].feature_name);
-					numbits++;
-				}
-			}
-			for (i = 0; i < nitems(i386_cpuid_edxapmi); i++) {
-				if (cpu_apmi_edx &
-				    i386_cpuid_edxapmi[i].feature_bit) {
-					printf("%s%s", (numbits == 0 ? "" : ","),
-					    i386_cpuid_edxapmi[i].feature_name);
-					numbits++;
-				}
-			}
-
-			if (cpuid_level >= 0x07) {
-				u_int dummy;
-
-				/* "Structured Extended Feature Flags" */
-				CPUID_LEAF(0x7, 0, dummy,
-				    ci->ci_feature_sefflags_ebx,
-				    ci->ci_feature_sefflags_ecx, dummy);
-				for (i = 0; i < nitems(cpu_seff0_ebxfeatures); i++)
-					if (ci->ci_feature_sefflags_ebx &
-					    cpu_seff0_ebxfeatures[i].feature_bit)
-						printf("%s%s",
-						    (numbits == 0 ? "" : ","),
-						    cpu_seff0_ebxfeatures[i].feature_name);
-				for (i = 0; i < nitems(cpu_seff0_ecxfeatures); i++)
-					if (ci->ci_feature_sefflags_ecx &
-					    cpu_seff0_ecxfeatures[i].feature_bit)
-						printf("%s%s",
-						    (numbits == 0 ? "" : ","),
-						    cpu_seff0_ecxfeatures[i].feature_name);
-			}
-
-			if (!strcmp(cpu_vendor, "GenuineIntel") &&
-			    cpuid_level >= 0x06 ) {
-				u_int dummy;
-
-				CPUID(0x06, ci->ci_feature_tpmflags, dummy,
-				    dummy, dummy);
-				max = nitems(cpu_tpm_eaxfeatures);
-				for (i = 0; i < max; i++)
-					if (ci->ci_feature_tpmflags &
-					    cpu_tpm_eaxfeatures[i].feature_bit)
-						printf(",%s", cpu_tpm_eaxfeatures[i].feature_name);
-			}
-
-			printf("\n");
 		}
+		for (i = 0; i < nitems(i386_ecpuid_features); i++) {
+			if (ecpu_feature &
+			    i386_ecpuid_features[i].feature_bit) {
+				printf("%s%s", (numbits == 0 ? "" : ","),
+				    i386_ecpuid_features[i].feature_name);
+				numbits++;
+			}
+		}
+		max = sizeof(i386_cpuid_ecxfeatures)
+			/ sizeof(i386_cpuid_ecxfeatures[0]);
+		for (i = 0; i < max; i++) {
+			if (cpu_ecxfeature &
+			    i386_cpuid_ecxfeatures[i].feature_bit) {
+				printf("%s%s", (numbits == 0 ? "" : ","),
+				    i386_cpuid_ecxfeatures[i].feature_name);
+				numbits++;
+			}
+		}
+		for (i = 0; i < nitems(i386_ecpuid_ecxfeatures); i++) {
+			if (ecpu_ecxfeature &
+			    i386_ecpuid_ecxfeatures[i].feature_bit) {
+				printf("%s%s", (numbits == 0 ? "" : ","),
+				    i386_ecpuid_ecxfeatures[i].feature_name);
+				numbits++;
+			}
+		}
+		for (i = 0; i < nitems(i386_cpuid_eaxperf); i++) {
+			if (cpu_perf_eax &
+			    i386_cpuid_eaxperf[i].feature_bit) {
+				printf("%s%s", (numbits == 0 ? "" : ","),
+				    i386_cpuid_eaxperf[i].feature_name);
+				numbits++;
+			}
+		}
+		for (i = 0; i < nitems(i386_cpuid_edxapmi); i++) {
+			if (cpu_apmi_edx &
+			    i386_cpuid_edxapmi[i].feature_bit) {
+				printf("%s%s", (numbits == 0 ? "" : ","),
+				    i386_cpuid_edxapmi[i].feature_name);
+				numbits++;
+			}
+		}
+
+		if (cpuid_level >= 0x07) {
+			u_int dummy;
+
+			/* "Structured Extended Feature Flags" */
+			CPUID_LEAF(0x7, 0, dummy,
+			    ci->ci_feature_sefflags_ebx,
+			    ci->ci_feature_sefflags_ecx, dummy);
+			for (i = 0; i < nitems(cpu_seff0_ebxfeatures); i++)
+				if (ci->ci_feature_sefflags_ebx &
+				    cpu_seff0_ebxfeatures[i].feature_bit)
+					printf("%s%s",
+					    (numbits == 0 ? "" : ","),
+					    cpu_seff0_ebxfeatures[i].feature_name);
+			for (i = 0; i < nitems(cpu_seff0_ecxfeatures); i++)
+				if (ci->ci_feature_sefflags_ecx &
+				    cpu_seff0_ecxfeatures[i].feature_bit)
+					printf("%s%s",
+					    (numbits == 0 ? "" : ","),
+					    cpu_seff0_ecxfeatures[i].feature_name);
+		}
+
+		if (!strcmp(cpu_vendor, "GenuineIntel") &&
+		    cpuid_level >= 0x06 ) {
+			u_int dummy;
+
+			CPUID(0x06, ci->ci_feature_tpmflags, dummy,
+			    dummy, dummy);
+			max = nitems(cpu_tpm_eaxfeatures);
+			for (i = 0; i < max; i++)
+				if (ci->ci_feature_tpmflags &
+				    cpu_tpm_eaxfeatures[i].feature_bit)
+					printf(",%s", cpu_tpm_eaxfeatures[i].feature_name);
+		}
+
+		printf("\n");
 	}
 
 	/*
