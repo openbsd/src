@@ -1,4 +1,4 @@
-.\" $OpenBSD: imxesdhc.4,v 1.1 2018/03/31 03:22:34 jsg Exp $
+.\" $OpenBSD: imxesdhc.4,v 1.2 2018/03/31 03:31:43 jsg Exp $
 .\" Copyright (c) 2014 Sylvestre Gallon <syl@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@
 .Os
 .Sh NAME
 .Nm imxesdhc
-.Nd SD host controller
+.Nd i.MX SD host controller
 .Sh SYNOPSIS
 .Cd "imxesdhc* at fdt?"
 .Cd "sdmmc* at imxesdhc?"
@@ -26,7 +26,7 @@
 The
 .Nm
 driver provides support for the MMC/SD/SDIO controller integrated in
-i.MX6 processors.
+i.MX 6 and i.MX 8 processors.
 .Pp
 The
 .Xr sdmmc 4
