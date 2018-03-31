@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.91 2018/03/30 23:03:31 schwarze Exp $
+.\" $OpenBSD: openssl.1,v 1.92 2018/03/31 12:46:12 schwarze Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: March 30 2018 $
+.Dd $Mdocdate: March 31 2018 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -837,7 +837,6 @@ The same as
 .Sh CIPHERS
 .Nm openssl ciphers
 .Op Fl hVv
-.Op Fl tls1
 .Op Ar cipherlist
 .Pp
 The
@@ -851,14 +850,11 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl h , \&?
 Print a brief usage message.
-.It Fl tls1
-Only include TLS v1 ciphers.
 .It Fl V
 Verbose.
-List ciphers with a complete description of protocol version,
-key exchange, authentication, encryption and mac algorithms,
-any key size restrictions,
-and cipher suite codes (hex format).
+List ciphers with cipher suite code in hex format,
+cipher name, and a complete description of protocol version,
+key exchange, authentication, encryption, and mac algorithms.
 .It Fl v
 Like
 .Fl V ,
