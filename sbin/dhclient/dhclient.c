@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.566 2018/03/20 11:46:32 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.567 2018/03/31 12:54:43 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2422,8 +2422,13 @@ apply_ignore_list(char *ignore_list)
 			list[ix++] = i;
 	}
 
-	for (i = 0; i < ix; i++)
-		config->default_actions[list[i]] = ACTION_IGNORE;
+	for (i = 0; i < ix; i++) {
+		j = list[i];
+		config->default_actions[j] = ACTION_IGNORE;
+		free(config->defaults[j].data);
+		config->defaults[j].data = NULL;
+		config->defaults[j].len = 0;
+	}
 }
 
 void
