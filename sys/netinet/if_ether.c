@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.234 2018/03/13 16:42:22 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.235 2018/03/31 15:07:09 stsp Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -86,7 +86,8 @@ struct rtentry *arplookup(struct in_addr *, int, int, unsigned int);
 void in_arpinput(struct ifnet *, struct mbuf *);
 void in_revarpinput(struct ifnet *, struct mbuf *);
 int arpcache(struct ifnet *, struct ether_arp *, struct rtentry *);
-void arpreply(struct ifnet *, struct mbuf *, struct in_addr *, uint8_t *);
+void arpreply(struct ifnet *, struct mbuf *, struct in_addr *, uint8_t *,
+    unsigned int);
 
 struct niqueue arpinq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
 
@@ -267,11 +268,15 @@ arprequest(struct ifnet *ifp, u_int32_t *sip, u_int32_t *tip, u_int8_t *enaddr)
 }
 
 void
-arpreply(struct ifnet *ifp, struct mbuf *m, struct in_addr *sip, uint8_t *eaddr)
+arpreply(struct ifnet *ifp, struct mbuf *m, struct in_addr *sip, uint8_t *eaddr,
+    unsigned int rdomain)
 {
 	struct ether_header *eh;
 	struct ether_arp *ea;
 	struct sockaddr sa;
+
+	m_resethdr(m);
+	m->m_pkthdr.ph_rtableid = rdomain;
 
 	ea = mtod(m, struct ether_arp *);
 	ea->arp_op = htons(ARPOP_REPLY);
@@ -574,7 +579,7 @@ in_arpinput(struct ifnet *ifp, struct mbuf *m)
 				goto out;
 			eaddr = LLADDR(satosdl(rt->rt_gateway));
 		}
-		arpreply(ifp, m, &itaddr, eaddr);
+		arpreply(ifp, m, &itaddr, eaddr, rdomain);
 		rtfree(rt);
 		return;
 	}
