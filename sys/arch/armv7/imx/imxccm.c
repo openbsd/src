@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.11 2018/04/01 18:50:54 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.12 2018/04/01 18:57:48 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -246,7 +246,6 @@ void imxccm_enable_pll_usb2(void);
 void imxccm_enable_pll_enet(void);
 void imxccm_enable_enet(void);
 void imxccm_enable_sata(void);
-void imxccm_enable_pcie(void);
 
 int
 imxccm_match(struct device *parent, void *match, void *aux)
@@ -609,23 +608,6 @@ imxccm_enable_sata(void)
 }
 
 void
-imxccm_enable_pcie(void)
-{
-	struct imxccm_softc *sc = imxccm_sc;
-
-	HWRITE4(sc, CCM_PMU_MISC1,
-	    (HREAD4(sc, CCM_PMU_MISC1) & ~CCM_PMU_MISC1_LVDSCLK1_CLK_SEL_MASK)
-	    | CCM_PMU_MISC1_LVDSCLK1_CLK_SEL_SATA
-	    | CCM_PMU_MISC1_LVDSCLK1_OBEN
-	    | CCM_PMU_MISC1_LVDSCLK1_IBEN);
-
-	imxccm_enable_pll_enet();
-	HWRITE4(sc, CCM_ANALOG_PLL_ENET_SET, CCM_ANALOG_PLL_ENET_125M_PCIE);
-
-	HSET4(sc, CCM_CCGR4, CCM_CCGR4_125M_PCIE);
-}
-
-void 
 imxccm_disable_usb1_chrg_detect(void)
 {
 	struct imxccm_softc *sc = imxccm_sc;
