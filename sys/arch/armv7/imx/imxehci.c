@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.21 2018/04/01 22:19:18 patrick Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.22 2018/04/01 22:28:54 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -116,7 +116,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct imxehci_softc *sc = (struct imxehci_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	struct regmap *rm;
+	struct regmap *rm = NULL;
 	usbd_status r;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	uint32_t phy[1], misc[2];
@@ -144,6 +144,10 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_getpropintarray(node, "reg", phy_reg,
 	    sizeof(phy_reg)) != sizeof(phy_reg))
 		return;
+
+	if (OF_getpropintarray(node, "fsl,anatop",
+	    anatop, sizeof(anatop)) == sizeof(anatop))
+		rm = regmap_byphandle(anatop[0]);
 
 	node = OF_getnodebyphandle(misc[0]);
 	if (node == 0)
@@ -195,19 +199,11 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (misc[1]) {
 	case 0:
-		node = OF_getnodebyphandle(phy[0]);
-		if (OF_getpropintarray(node, "fsl,anatop",
-		    anatop, sizeof(anatop)) != sizeof(anatop))
-			break;
-
-		rm = regmap_byphandle(anatop[0]);
-		if (rm == NULL)
-			break;
-
 		/* disable the carger detection, else signal on DP will be poor */
-		regmap_write_4(rm, ANALOG_USB1_CHRG_DETECT_SET,
-		    ANALOG_USB1_CHRG_DETECT_CHK_CHRG_B |
-		    ANALOG_USB1_CHRG_DETECT_EN_B);
+		if (rm != NULL)
+			regmap_write_4(rm, ANALOG_USB1_CHRG_DETECT_SET,
+			    ANALOG_USB1_CHRG_DETECT_CHK_CHRG_B |
+			    ANALOG_USB1_CHRG_DETECT_EN_B);
 
 		/* power host 0 */
 		imxccm_enable_pll_usb1();
@@ -218,19 +214,11 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 		    (USBNC_USB_OTG_CTRL_OVER_CUR_POL | USBNC_USB_OTG_CTRL_OVER_CUR_DIS));
 		break;
 	case 1:
-		node = OF_getnodebyphandle(phy[0]);
-		if (OF_getpropintarray(node, "fsl,anatop",
-		    anatop, sizeof(anatop)) != sizeof(anatop))
-			break;
-
-		rm = regmap_byphandle(anatop[0]);
-		if (rm == NULL)
-			break;
-
 		/* disable the carger detection, else signal on DP will be poor */
-		regmap_write_4(rm, ANALOG_USB2_CHRG_DETECT_SET,
-		    ANALOG_USB2_CHRG_DETECT_CHK_CHRG_B |
-		    ANALOG_USB2_CHRG_DETECT_EN_B);
+		if (rm != NULL)
+			regmap_write_4(rm, ANALOG_USB2_CHRG_DETECT_SET,
+			    ANALOG_USB2_CHRG_DETECT_CHK_CHRG_B |
+			    ANALOG_USB2_CHRG_DETECT_EN_B);
 
 		/* power host 1 */
 		imxccm_enable_pll_usb2();
