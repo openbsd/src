@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.95 2017/12/23 10:23:34 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.96 2018/04/01 19:28:32 patrick Exp $
 
 machine		armv7 arm
 
@@ -42,6 +42,7 @@ armliicc*	at cortex?
 # iMX
 imxccm*		at fdt? early 1		# clock control module
 imxiomuxc*	at fdt? early 1		# iomux controller
+imxanatop*	at fdt?			# anatop controller
 imxgpc*		at fdt?			# power controller
 imxdog*		at fdt?			# watchdog timer
 imxgpio*	at fdt?			# user-visible GPIO pins?
