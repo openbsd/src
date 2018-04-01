@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.14 2018/04/01 19:18:22 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.15 2018/04/01 22:19:18 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -239,8 +239,6 @@ uint32_t imxccm_get_ipg_perclk(struct imxccm_softc *);
 uint32_t imxccm_get_uartclk(struct imxccm_softc *);
 void imxccm_enable(void *, uint32_t *, int);
 uint32_t imxccm_get_frequency(void *, uint32_t *);
-void imxccm_disable_usb1_chrg_detect(void);
-void imxccm_disable_usb2_chrg_detect(void);
 void imxccm_enable_pll_usb1(void);
 void imxccm_enable_pll_usb2(void);
 void imxccm_enable_pll_enet(void);
@@ -590,26 +588,6 @@ imxccm_enable_sata(void)
 	HWRITE4(sc, CCM_ANALOG_PLL_ENET_SET, CCM_ANALOG_PLL_ENET_100M_SATA);
 
 	HSET4(sc, CCM_CCGR5, CCM_CCGR5_100M_SATA);
-}
-
-void
-imxccm_disable_usb1_chrg_detect(void)
-{
-	struct imxccm_softc *sc = imxccm_sc;
-
-	HWRITE4(sc, CCM_ANALOG_USB1_CHRG_DETECT_SET,
-	      CCM_ANALOG_USB1_CHRG_DETECT_CHK_CHRG_B
-	    | CCM_ANALOG_USB1_CHRG_DETECT_EN_B);
-}
-
-void
-imxccm_disable_usb2_chrg_detect(void)
-{
-	struct imxccm_softc *sc = imxccm_sc;
-
-	HWRITE4(sc, CCM_ANALOG_USB2_CHRG_DETECT_SET,
-	      CCM_ANALOG_USB2_CHRG_DETECT_CHK_CHRG_B
-	    | CCM_ANALOG_USB2_CHRG_DETECT_EN_B);
 }
 
 void
