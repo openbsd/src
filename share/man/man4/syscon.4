@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syscon.4,v 1.1 2018/04/01 09:03:25 jsg Exp $
+.\"	$OpenBSD: syscon.4,v 1.2 2018/04/01 12:05:03 kettenis Exp $
 .\"
 .\" Copyright (c) 2018 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -19,14 +19,17 @@
 .Os
 .Sh NAME
 .Nm syscon
-.Nd SYSCON reset and power off
+.Nd System controller
 .Sh SYNOPSIS
 .Cd "syscon* at fdt?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides for system reset and power off functionality through
-a generic system configuration (SYSCON) interface.
+driver provides access to a set of miscellaneous hardware registers to
+other device drivers.
+The driver may also provide system reset and power off functionality
+if such functionality is provided through hardware registers in such a
+set.
 .Sh SEE ALSO
 .Xr intro 4
 .Sh HISTORY
