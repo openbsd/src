@@ -7,6 +7,7 @@
 #define IMX6_CLK_IPG		0x3e
 #define IMX6_CLK_IPG_PER	0x3f
 #define IMX6_CLK_ARM		0x68
+#define IMX6_CLK_AHB		0x69
 #define IMX6_CLK_ENET		0x75
 #define IMX6_CLK_I2C1		0x7d
 #define IMX6_CLK_I2C2		0x7e

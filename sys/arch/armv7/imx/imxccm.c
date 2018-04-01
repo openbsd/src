@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.12 2018/04/01 18:57:48 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.13 2018/04/01 19:07:31 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -548,6 +548,8 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 		}
 	} else {
 		switch (idx) {
+		case IMX6_CLK_AHB:
+			return imxccm_get_ahbclk();
 		case IMX6_CLK_ARM:
 			return imxccm_get_armclk();
 		case IMX6_CLK_IPG:

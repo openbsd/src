@@ -1,4 +1,4 @@
-/* $OpenBSD: imxahci.c,v 1.8 2018/03/30 20:32:50 patrick Exp $ */
+/* $OpenBSD: imxahci.c,v 1.9 2018/04/01 19:07:31 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -33,6 +33,7 @@
 #include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
 
 /* registers */
@@ -152,7 +153,8 @@ imxahci_attach(struct device *parent, struct device *self, void *aux)
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SATA_PI, 1);
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SATA_TIMER1MS, imxccm_get_ahbclk());
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SATA_TIMER1MS,
+	    clock_get_frequency(faa->fa_node, "ahb"));
 
 	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SATA_P0SSTS) & 0xF) && timeout--);
 
