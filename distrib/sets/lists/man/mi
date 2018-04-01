@@ -1199,6 +1199,8 @@
 ./usr/share/man/man4/axppmic.4
 ./usr/share/man/man4/azalia.4
 ./usr/share/man/man4/bce.4
+./usr/share/man/man4/bcmaux.4
+./usr/share/man/man4/bcmdog.4
 ./usr/share/man/man4/bcmrng.4
 ./usr/share/man/man4/bcmtemp.4
 ./usr/share/man/man4/berkwdt.4
@@ -1243,6 +1245,7 @@
 ./usr/share/man/man4/dpt.4
 ./usr/share/man/man4/drm.4
 ./usr/share/man/man4/dwctwo.4
+./usr/share/man/man4/dwdog.4
 ./usr/share/man/man4/dwge.4
 ./usr/share/man/man4/dwiic.4
 ./usr/share/man/man4/dwmmc.4
@@ -1271,6 +1274,7 @@
 ./usr/share/man/man4/etphy.4
 ./usr/share/man/man4/ex.4
 ./usr/share/man/man4/exphy.4
+./usr/share/man/man4/exrtc.4
 ./usr/share/man/man4/fd.4
 ./usr/share/man/man4/fdc.4
 ./usr/share/man/man4/fins.4
@@ -1379,7 +1383,10 @@
 ./usr/share/man/man4/imt.4
 ./usr/share/man/man4/imxanatop.4
 ./usr/share/man/man4/imxesdhc.4
+./usr/share/man/man4/imxgpc.4
+./usr/share/man/man4/imxgpio.4
 ./usr/share/man/man4/imxiic.4
+./usr/share/man/man4/imxuart.4
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/inet6.4
 ./usr/share/man/man4/inphy.4
@@ -1519,6 +1526,7 @@
 ./usr/share/man/man4/mvclock.4
 ./usr/share/man/man4/mvgpio.4
 ./usr/share/man/man4/mvicu.4
+./usr/share/man/man4/mvneta.4
 ./usr/share/man/man4/mvpinctrl.4
 ./usr/share/man/man4/mvrtc.4
 ./usr/share/man/man4/mvtemp.4
@@ -1612,9 +1620,12 @@
 ./usr/share/man/man4/rgephy.4
 ./usr/share/man/man4/ricohrtc.4
 ./usr/share/man/man4/rkclock.4
+./usr/share/man/man4/rkgpio.4
 ./usr/share/man/man4/rkgrf.4
+./usr/share/man/man4/rkiic.4
 ./usr/share/man/man4/rkpcie.4
 ./usr/share/man/man4/rkpinctrl.4
+./usr/share/man/man4/rkpmic.4
 ./usr/share/man/man4/rktemp.4
 ./usr/share/man/man4/rl.4
 ./usr/share/man/man4/rlphy.4
@@ -1777,10 +1788,12 @@
 ./usr/share/man/man4/sximmc.4
 ./usr/share/man/man4/sxipio.4
 ./usr/share/man/man4/sxirsb.4
+./usr/share/man/man4/sxirtc.4
 ./usr/share/man/man4/sxitemp.4
 ./usr/share/man/man4/sxitwi.4
 ./usr/share/man/man4/sym.4
 ./usr/share/man/man4/sypwr.4
+./usr/share/man/man4/syscon.4
 ./usr/share/man/man4/tap.4
 ./usr/share/man/man4/tcic.4
 ./usr/share/man/man4/tcp.4
