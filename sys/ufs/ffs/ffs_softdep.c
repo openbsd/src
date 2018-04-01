@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.139 2018/03/30 17:35:20 dhill Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.140 2018/04/01 12:02:00 dhill Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -2307,8 +2307,7 @@ check_inode_unwritten(struct inodedep *inodedep)
 	if (inodedep->id_state & ONWORKLIST)
 		WORKLIST_REMOVE(&inodedep->id_list);
 	if (inodedep->id_savedino1 != NULL) {
-		free(inodedep->id_savedino1, M_INODEDEP,
-		    sizeof(struct ufs1_dinode));
+		free(inodedep->id_savedino1, M_INODEDEP, inodedep->id_unsize);
 		inodedep->id_savedino1 = NULL;
 	}
 	if (free_inodedep(inodedep) == 0) {
@@ -3420,6 +3419,7 @@ initiate_write_inodeblock_ufs1(struct inodedep *inodedep, struct buf *bp)
 		FREE_LOCK(&lk);
 		inodedep->id_savedino1 = malloc(sizeof(struct ufs1_dinode),
 		    M_INODEDEP, M_WAITOK);
+		inodedep->id_unsize = sizeof(struct ufs1_dinode);
 		ACQUIRE_LOCK(&lk);
 		*inodedep->id_savedino1 = *dp;
 		memset(dp, 0, sizeof(struct ufs1_dinode));
@@ -3562,6 +3562,7 @@ initiate_write_inodeblock_ufs2(struct inodedep *inodedep, struct buf *bp)
 			panic("initiate_write_inodeblock_ufs2: I/O underway");
 		inodedep->id_savedino2 = malloc(sizeof(struct ufs2_dinode),
 		    M_INODEDEP, M_WAITOK);
+		inodedep->id_unsize = sizeof(struct ufs2_dinode);
 		*inodedep->id_savedino2 = *dp;
 		memset(dp, 0, sizeof(struct ufs2_dinode));
 		return;
@@ -4035,8 +4036,7 @@ handle_written_inodeblock(struct inodedep *inodedep, struct buf *bp)
 			*dp1 = *inodedep->id_savedino1;
 		else
 			*dp2 = *inodedep->id_savedino2;
-		free(inodedep->id_savedino1, M_INODEDEP,
-		    sizeof(struct ufs1_dinode));
+		free(inodedep->id_savedino1, M_INODEDEP, inodedep->id_unsize);
 		inodedep->id_savedino1 = NULL;
 		if ((bp->b_flags & B_DELWRI) == 0)
 			stat_inode_bitmap++;
