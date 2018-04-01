@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.23 2018/03/30 20:32:50 patrick Exp $ */
+/* $OpenBSD: if_fec.c,v 1.24 2018/04/01 18:50:54 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -47,6 +47,7 @@
 #include <armv7/imx/imxccmvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
@@ -132,7 +133,7 @@
 #define ENET_TCSR3		0x620
 #define ENET_TCCR3		0x624
 
-#define ENET_MII_CLK		2500
+#define ENET_MII_CLK		2500000
 #define ENET_ALIGNMENT		16
 
 #define HREAD4(sc, reg)							\
@@ -230,6 +231,7 @@ struct fec_softc {
 	int			cur_tx;
 	int			cur_rx;
 	struct timeout		sc_tick;
+	uint32_t		sc_phy_speed;
 };
 
 struct fec_softc *fec_sc;
@@ -402,9 +404,16 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
-	/* initialize the MII clock */
-	HWRITE4(sc, ENET_MSCR,
-	    (((imxccm_get_fecclk() + (ENET_MII_CLK << 2) - 1) / (ENET_MII_CLK << 2)) << 1) | 0x100);
+	/*
+	 * Initialize the MII clock.  The formula is:
+	 *
+	 * ENET_MII_CLK = ref_freq / ((phy_speed + 1) x 2)
+	 * phy_speed = (((ref_freq / ENET_MII_CLK) / 2) - 1)
+	 */
+	sc->sc_phy_speed = clock_get_frequency(sc->sc_node, "ipg");
+	sc->sc_phy_speed = (sc->sc_phy_speed + (ENET_MII_CLK - 1)) / ENET_MII_CLK;
+	sc->sc_phy_speed = (sc->sc_phy_speed / 2) - 1;
+	HWRITE4(sc, ENET_MSCR, (sc->sc_phy_speed << 1) | 0x100);
 
 	/* Initialize MII/media info. */
 	mii = &sc->sc_mii;
@@ -642,8 +651,7 @@ fec_init(struct fec_softc *sc)
 	    ENET_RCR_MAX_FL(1522) | ENET_RCR_RGMII_MODE | ENET_RCR_MII_MODE |
 	    ENET_RCR_FCE);
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ENET_MSCR,
-	    (((imxccm_get_fecclk() + (ENET_MII_CLK << 2) - 1) / (ENET_MII_CLK << 2)) << 1) | 0x100);
+	HWRITE4(sc, ENET_MSCR, (sc->sc_phy_speed << 1) | 0x100);
 
 	/* RX FIFO treshold and pause */
 	HWRITE4(sc, ENET_RSEM, 0x84);

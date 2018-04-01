@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.10 2017/12/30 13:34:56 kettenis Exp $ */
+/* $OpenBSD: imxccm.c,v 1.11 2018/04/01 18:50:54 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -233,7 +233,6 @@ uint32_t imxccm_get_armclk(void);
 void imxccm_armclk_set_parent(enum clocks);
 uint32_t imxccm_get_usdhx(int x);
 uint32_t imxccm_get_periphclk(void);
-uint32_t imxccm_get_fecclk(void);
 uint32_t imxccm_get_ahbclk(void);
 uint32_t imxccm_get_ipgclk(void);
 uint32_t imxccm_get_ipg_perclk(void);
@@ -451,31 +450,6 @@ imxccm_get_periphclk(void)
 			return imxccm_get_pll2_pfd(2) / 2; // 198 MHz
 		}
 	}
-}
-
-uint32_t
-imxccm_get_fecclk(void)
-{
-	struct imxccm_softc *sc = imxccm_sc;
-	uint32_t div = 0;
-
-	switch (HREAD4(sc, CCM_ANALOG_PLL_ENET) & 0x3)
-	{
-	case 0:
-		div = 20;
-		break;
-	case 1:
-		div = 10;
-		break;
-	case 2:
-		div = 5;
-		break;
-	case 3:
-		div = 4;
-		break;
-	}
-
-	return 500000000 / div ;
 }
 
 uint32_t
