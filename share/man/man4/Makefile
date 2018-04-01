@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.672 2018/03/31 16:39:31 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.673 2018/04/01 09:03:25 jsg Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -14,17 +14,17 @@ MAN=	aac.4 ac97.4 acphy.4 acrtc.4 \
 	asbtm.4 asmc.4 ast.4 atapiscsi.4 atphy.4 ath.4 athn.4 atu.4 atw.4 \
 	auacer.4 audio.4 aue.4 auglx.4 auich.4 auixp.4 autri.4 auvia.4 \
 	axe.4 axen.4 axppmic.4 azalia.4 \
-	bce.4 bcmrng.4 bcmtemp.4 berkwdt.4 bge.4 bgw.4 bio.4 bktr.4 \
-	bmtphy.4 bnx.4 \
+	bce.4 bcmaux.4 bcmdog.4  bcmrng.4 bcmtemp.4 berkwdt.4 bge.4 \
+	bgw.4 bio.4 bktr.4 bmtphy.4 bnx.4 \
 	boca.4 bpf.4 brgphy.4 bridge.4 brswphy.4 bwfm.4 bwi.4 bytgpio.4 \
 	cac.4 cas.4 cardbus.4 carp.4 cd.4 cdce.4 cfxga.4 \
 	ch.4 chvgpio.4 ciphy.4 ciss.4 clcs.4 clct.4 cmpci.4 \
 	com.4 cue.4 cy.4 cz.4 \
 	dc.4 dcphy.4 ddb.4 de.4 diskmap.4 divert.4 dpt.4 drm.4 dwctwo.4 \
-	dwge.4 dwiic.4 dwmmc.4 dwxe.4 \
+	dwdog.4 dwge.4 dwiic.4 dwmmc.4 dwxe.4 \
 	eap.4 ec.4 eephy.4 ef.4 eg.4 ehci.4 eisa.4 el.4 em.4 emc.4 gcu.4 \
 	emu.4 enc.4 endrun.4 envy.4 ep.4 epic.4 esa.4 \
-	eso.4 ess.4 et.4 etherip.4 etphy.4 ex.4 exphy.4 \
+	eso.4 ess.4 et.4 etherip.4 etphy.4 ex.4 exphy.4 exrtc.4 \
 	fd.4 fdc.4 fins.4 fintek.4 fms.4 fuse.4 fxp.4 gdt.4 \
 	gentbi.4 gem.4 gif.4 \
 	glenv.4 gpio.4 gpiodcf.4 gpioiic.4 gpioow.4 gpr.4 gre.4 gscsio.4 \
@@ -32,7 +32,8 @@ MAN=	aac.4 ac97.4 acphy.4 acrtc.4 \
 	hvn.4 hvs.4 hyperv.4 \
 	iatp.4 ichiic.4 ichwdt.4 icmp.4 icmp6.4 icsphy.4 ifmedia.4 \
 	iha.4 ihidev.4 iic.4 ikbd.4 ims.4 imt.4 imxanatop.4 \
-	imxesdhc.4 imxiic.4 inet.4 inet6.4 inphy.4 iophy.4 \
+	imxesdhc.4 imxgpc.4 imxgpio.4 imxiic.4 imxuart.4 \
+	inet.4 inet6.4 inphy.4 iophy.4 \
 	ip.4 ip6.4 ipcomp.4 ipgphy.4 ipmi.4 ips.4 ipsec.4 ipw.4 \
 	isa.4 isagpio.4 isapnp.4 it.4 itherm.4 iwi.4 iwn.4 iwm.4 \
 	ix.4 ixgb.4 jmb.4 jme.4 jmphy.4 \
@@ -42,7 +43,7 @@ MAN=	aac.4 ac97.4 acphy.4 acrtc.4 \
 	mii.4 mfi.4 \
 	mfii.4 mlphy.4 mobileip.4 moscom.4 mos.4 mpe.4 mpath.4 mpi.4 mpii.4 \
 	mpu.4 msk.4 mpw.4 msts.4 mtd.4 mtdphy.4 multicast.4 mtio.4 \
-	mvclock.4 mvgpio.4 mvicu.4 mvpinctrl.4 mvrtc.4 mvtemp.4 myx.4 \
+	mvclock.4 mvgpio.4 mvicu.4 mvneta.4 mvpinctrl.4 mvrtc.4 mvtemp.4 myx.4 \
 	ne.4 neo.4 nep.4 netintro.4 nfe.4 nge.4 nmea.4 \
 	nsclpcsio.4 nsgphy.4 nsphy.4 nsphyter.4 null.4 nviic.4 nvme.4 nvt.4 \
 	oce.4 ohci.4 options.4 onewire.4 oosiop.4 osiop.4 otus.4 \
@@ -54,7 +55,8 @@ MAN=	aac.4 ac97.4 acphy.4 acrtc.4 \
 	pms.4 ppb.4 ppp.4 pppoe.4 pppx.4 psci.4  pty.4 puc.4 pvbus.4 pwdog.4 \
 	qla.4 qle.4 qlw.4 qsphy.4 radio.4 \
 	ral.4 random.4 rdomain.4 rd.4 rdac.4 re.4 rdcphy.4 rgephy.4 \
-	ricohrtc.4 rkclock.4 rkgrf.4 rkpcie.4 rkpinctrl.4 rktemp.4 \
+	ricohrtc.4 rkclock.4 rkgpio.4 rkgrf.4 rkiic.4 \
+	rkpcie.4 rkpinctrl.4 rkpmic.4 rktemp.4 \
 	rl.4 rlphy.4 route.4 rsu.4 rtsx.4 rum.4 run.4 \
 	rtfps.4 rtw.4 rtwn.4 safe.4 safte.4 sbus.4 schsio.4 \
 	scsi.4 sd.4 \
@@ -62,7 +64,7 @@ MAN=	aac.4 ac97.4 acphy.4 acrtc.4 \
 	sf.4 sili.4 simplefb.4 siop.4 sis.4 sk.4 sli.4 \
 	sm.4 smsc.4 softraid.4 spdmem.4 sdtemp.4 speaker.4 sppp.4 sqphy.4 \
 	st.4 ste.4 stge.4 sti.4 stp.4 sv.4 switch.4 sxiccmu.4 sximmc.4 \
-	sxipio.4 sxirsb.4 sxitemp.4 sxitwi.4 sym.4 sypwr.4 \
+	sxipio.4 sxirsb.4 sxirtc.4 sxitemp.4 sxitwi.4 sym.4 sypwr.4 syscon.4 \
 	tcic.4 tcp.4 termios.4 tht.4 ti.4 tl.4 \
 	tlphy.4 thmc.4 tpm.4 tqphy.4 trm.4 trunk.4 tsl.4 tty.4 tun.4 tap.4 \
 	twe.4 \
