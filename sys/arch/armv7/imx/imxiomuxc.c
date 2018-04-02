@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiomuxc.c,v 1.10 2018/04/02 12:47:22 patrick Exp $ */
+/* $OpenBSD: imxiomuxc.c,v 1.11 2018/04/02 17:43:08 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -29,28 +29,9 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
-#include <armv7/imx/imxiomuxcvar.h>
-
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
-
-/* registers */
-#define IOMUXC_GPR13			0x034
-
-/* bits and bytes */
-#define IOMUXC_GPR13_SATA_PHY_1_FAST_EDGE_RATE			(0x00 << 0)
-#define IOMUXC_GPR13_SATA_PHY_1_SLOW_EDGE_RATE			(0x02 << 0)
-#define IOMUXC_GPR13_SATA_PHY_1_EDGE_RATE_MASK			0x3
-#define IOMUXC_GPR13_SATA_PHY_2_1104V				(0x11 << 2)
-#define IOMUXC_GPR13_SATA_PHY_3_333DB				(0x00 << 7)
-#define IOMUXC_GPR13_SATA_PHY_4_9_16				(0x04 << 11)
-#define IOMUXC_GPR13_SATA_PHY_5_SS				(0x01 << 14)
-#define IOMUXC_GPR13_SATA_SPEED_3G				(0x01 << 15)
-#define IOMUXC_GPR13_SATA_PHY_6					(0x03 << 16)
-#define IOMUXC_GPR13_SATA_PHY_7_SATA2M				(0x12 << 19)
-#define IOMUXC_GPR13_SATA_PHY_8_30DB				(0x05 << 24)
-#define IOMUXC_GPR13_SATA_MASK					0x07FFFFFD
 
 #define IOMUX_CONFIG_SION		(1 << 4)
 
@@ -178,21 +159,4 @@ imxiomuxc_pinctrl(uint32_t phandle, void *cookie)
 
 	free(pins, M_TEMP, len);
 	return 0;
-}
-
-void
-imxiomuxc_enable_sata(void)
-{
-	struct imxiomuxc_softc *sc = imxiomuxc_sc;
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR13,
-	    (bus_space_read_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR13) & ~IOMUXC_GPR13_SATA_MASK) |
-		IOMUXC_GPR13_SATA_PHY_1_FAST_EDGE_RATE | IOMUXC_GPR13_SATA_PHY_2_1104V |
-		IOMUXC_GPR13_SATA_PHY_3_333DB | IOMUXC_GPR13_SATA_PHY_4_9_16 |
-		IOMUXC_GPR13_SATA_SPEED_3G | IOMUXC_GPR13_SATA_PHY_6 |
-		IOMUXC_GPR13_SATA_PHY_7_SATA2M | IOMUXC_GPR13_SATA_PHY_8_30DB);
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR13,
-	    (bus_space_read_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR13) & ~IOMUXC_GPR13_SATA_PHY_1_SLOW_EDGE_RATE) |
-		IOMUXC_GPR13_SATA_PHY_1_SLOW_EDGE_RATE);
 }
