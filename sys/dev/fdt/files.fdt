@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.56 2018/04/02 17:45:38 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.57 2018/04/02 21:40:59 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -173,6 +173,10 @@ file	dev/fdt/mvmdio.c		mvmdio
 device	mvneta: ether, ifnet, mii, ifmedia
 attach	mvneta at fdt
 file	dev/fdt/if_mvneta.c		mvneta
+
+device	mvrng
+attach	mvrng at fdt
+file	dev/fdt/mvrng.c			mvrng
 
 device	mvrtc
 attach	mvrtc at fdt
