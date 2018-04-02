@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.1 2018/04/02 16:51:58 patrick Exp $ */
+/* $OpenBSD: if_fec.c,v 1.2 2018/04/02 17:52:36 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -270,7 +270,8 @@ fec_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "fsl,imx6q-fec");
+	return (OF_is_compatible(faa->fa_node, "fsl,imx6q-fec") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-fec"));
 }
 
 void
