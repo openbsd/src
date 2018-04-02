@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1840 2018/03/14 20:07:06 jasper Exp $
+$OpenBSD: pcidevs,v 1.1841 2018/04/02 08:37:41 henning Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4613,6 +4613,22 @@ product INTEL CORE7G_U_GT2_2	0x591d	HD Graphics P630
 product INTEL CORE7G_Y_GT2	0x591e	HD Graphics 615
 product INTEL CORE7G_U_GT3_15W	0x5926	Iris Plus Graphics 640
 product INTEL CORE7G_U_GT3_28W	0x5927	Iris Plus Graphics 650
+product INTEL APOLLOLAKE_IGD	0x5a85	HD Graphics 500
+product INTEL APOLLOLAKE_HDA	0x5a98	Apollo Lake HD Audio
+product INTEL APOLLOLAKE_TXE	0x5a9a	Apollo Lake TXE
+product INTEL APOLLOLAKE_XHCI	0x5aa8	Apollo Lake xHCI
+product INTEL APOLLOLAKE_I2C_1	0x5aac	Apollo Lake I2C
+product INTEL APOLLOLAKE_UART_1	0x5abc	Apollo Lake HSUART
+product INTEL APOLLOLAKE_SPI_1	0x5ac2	Apollo Lake SPI
+product INTEL APOLLOLAKE_SPI_2	0x5ac4	Apollo Lake SPI
+product INTEL APOLLOLAKE_SPI_3	0x5ac6	Apollo Lake SPI
+product INTEL APOLLOLAKE_SMB	0x5ad4	Apollo Lake SMBus
+product INTEL APOLLOLAKE_PCIE_1	0x5ad8	Apollo Lake PCIE
+product INTEL APOLLOLAKE_PCIE_2	0x5ad9	Apollo Lake PCIE
+product INTEL APOLLOLAKE_PCIE_3	0x5ada	Apollo Lake PCIE
+product INTEL APOLLOLAKE_AHCI	0x5ae3	Apollo Lake AHCI
+product INTEL APOLLOLAKE_LPC	0x5ae8	Apollo Lake LPC
+product INTEL APOLLOLAKE_HB	0x5af0	Apollo Lake Host
 product INTEL 5100_HB		0x65c0	5100 Host
 product INTEL 5100_PCIE_2	0x65e2	5100 PCIE
 product INTEL 5100_PCIE_3	0x65e3	5100 PCIE
