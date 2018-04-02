@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.53 2017/04/30 13:04:49 mpi Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.54 2018/04/02 07:45:20 kettenis Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -88,6 +88,8 @@ struct com_softc {
 	int sc_frequency;
 
 	bus_space_handle_t sc_ioh;
+	u_char sc_reg_width;
+	u_char sc_reg_shift;
 
 	u_char sc_uarttype;
 #define COM_UART_UNKNOWN	0x00		/* unknown */
@@ -130,6 +132,9 @@ struct com_softc {
 	void (*disable)(struct com_softc *);
 	int enabled;
 };
+
+uint8_t com_read_reg(struct com_softc *, bus_size_t);
+void	com_write_reg(struct com_softc *, bus_size_t, uint8_t);
 
 int	comprobe1(bus_space_tag_t, bus_space_handle_t);
 int	comstop(struct tty *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.165 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: com.c,v 1.166 2018/04/02 07:45:20 kettenis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -237,8 +237,6 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = DEVUNIT(dev);
 	struct com_softc *sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 	struct tty *tp;
 	int s;
 	int error = 0;
@@ -292,9 +290,6 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
 		sc->sc_ibufend = sc->sc_ibuf + COM_IBUFSIZE;
 
-		iot = sc->sc_iot;
-		ioh = sc->sc_ioh;
-
 		/*
 		 * Wake up the sleepy heads.
 		 */
@@ -302,14 +297,14 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 			switch (sc->sc_uarttype) {
 			case COM_UART_ST16650:
 			case COM_UART_ST16650V2:
-				bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
-				bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
-				bus_space_write_1(iot, ioh, com_ier, 0);
-				bus_space_write_1(iot, ioh, com_efr, 0);
-				bus_space_write_1(iot, ioh, com_lcr, 0);
+				com_write_reg(sc, com_lcr, LCR_EFR);
+				com_write_reg(sc, com_efr, EFR_ECB);
+				com_write_reg(sc, com_ier, 0);
+				com_write_reg(sc, com_efr, 0);
+				com_write_reg(sc, com_lcr, 0);
 				break;
 			case COM_UART_TI16750:
-				bus_space_write_1(iot, ioh, com_ier, 0);
+				com_write_reg(sc, com_ier, 0);
 				break;
 			}
 		}
@@ -326,8 +321,8 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 				fifo |= FIFO_TRIGGER_8;
 			if (sc->sc_uarttype == COM_UART_TI16750) {
 				fifo |= FIFO_ENABLE_64BYTE;
-				lcr = bus_space_read_1(iot, ioh, com_lcr);
-				bus_space_write_1(iot, ioh, com_lcr,
+				lcr = com_read_reg(sc, com_lcr);
+				com_write_reg(sc, com_lcr,
 				    lcr | LCR_DLAB);
 			}
 
@@ -343,33 +338,33 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 			 * Set the FIFO threshold based on the receive speed.
 			 */
 			for (;;) {
-				bus_space_write_1(iot, ioh, com_fifo, 0);
+				com_write_reg(sc, com_fifo, 0);
 				delay(100);
-				(void) bus_space_read_1(iot, ioh, com_data);
-				bus_space_write_1(iot, ioh, com_fifo, fifo |
+				(void) com_read_reg(sc, com_data);
+				com_write_reg(sc, com_fifo, fifo |
 				    FIFO_RCV_RST | FIFO_XMT_RST);
 				delay(100);
-				if(!ISSET(bus_space_read_1(iot, ioh,
+				if(!ISSET(com_read_reg(sc,
 				    com_lsr), LSR_RXRDY))
 					break;
 			}
 			if (sc->sc_uarttype == COM_UART_TI16750)
-				bus_space_write_1(iot, ioh, com_lcr, lcr);
+				com_write_reg(sc, com_lcr, lcr);
 		}
 
 		/* Flush any pending I/O. */
-		while (ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
-			(void) bus_space_read_1(iot, ioh, com_data);
+		while (ISSET(com_read_reg(sc, com_lsr), LSR_RXRDY))
+			(void) com_read_reg(sc, com_data);
 
 		/* You turn me on, baby! */
 		sc->sc_mcr = MCR_DTR | MCR_RTS;
 		if (!ISSET(sc->sc_hwflags, COM_HW_NOIEN))
 			SET(sc->sc_mcr, MCR_IENABLE);
-		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+		com_write_reg(sc, com_mcr, sc->sc_mcr);
 		sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
-		bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
+		com_write_reg(sc, com_ier, sc->sc_ier);
 
-		sc->sc_msr = bus_space_read_1(iot, ioh, com_msr);
+		sc->sc_msr = com_read_reg(sc, com_msr);
 		if (ISSET(sc->sc_swflags, COM_SW_SOFTCAR) || DEVCUA(dev) ||
 		    ISSET(sc->sc_msr, MSR_DCD) || ISSET(tp->t_cflag, MDMBUF))
 			SET(tp->t_state, TS_CARR_ON);
@@ -426,8 +421,6 @@ comclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = DEVUNIT(dev);
 	struct com_softc *sc = com_cd.cd_devs[unit];
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp = sc->sc_tty;
 	int s;
 
@@ -445,7 +438,7 @@ comclose(dev_t dev, int flag, int mode, struct proc *p)
 	if (ISSET(tp->t_state, TS_WOPEN)) {
 		/* tty device is waiting for carrier; drop dtr then re-raise */
 		CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
-		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+		com_write_reg(sc, com_mcr, sc->sc_mcr);
 		timeout_add_sec(&sc->sc_dtr_tmo, 2);
 	} else {
 		/* no one else waiting; turn off the uart */
@@ -470,42 +463,40 @@ comclose(dev_t dev, int flag, int mode, struct proc *p)
 void
 compwroff(struct com_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp = sc->sc_tty;
 
 	CLR(sc->sc_lcr, LCR_SBREAK);
-	bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr);
-	bus_space_write_1(iot, ioh, com_ier, 0);
+	com_write_reg(sc, com_lcr, sc->sc_lcr);
+	com_write_reg(sc, com_ier, 0);
 	if (ISSET(tp->t_cflag, HUPCL) &&
 	    !ISSET(sc->sc_swflags, COM_SW_SOFTCAR)) {
 		/* XXX perhaps only clear DTR */
 		sc->sc_mcr = 0;
-		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+		com_write_reg(sc, com_mcr, sc->sc_mcr);
 	}
 
 	/*
 	 * Turn FIFO off; enter sleep mode if possible.
 	 */
-	bus_space_write_1(iot, ioh, com_fifo, 0);
+	com_write_reg(sc, com_fifo, 0);
 	delay(100);
-	if (ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
-		(void) bus_space_read_1(iot, ioh, com_data);
+	if (ISSET(com_read_reg(sc, com_lsr), LSR_RXRDY))
+		(void) com_read_reg(sc, com_data);
 	delay(100);
-	bus_space_write_1(iot, ioh, com_fifo,
+	com_write_reg(sc, com_fifo,
 			  FIFO_RCV_RST | FIFO_XMT_RST);
 
 	if (!ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		switch (sc->sc_uarttype) {
 		case COM_UART_ST16650:
 		case COM_UART_ST16650V2:
-			bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
-			bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
-			bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
-			bus_space_write_1(iot, ioh, com_lcr, 0);
+			com_write_reg(sc, com_lcr, LCR_EFR);
+			com_write_reg(sc, com_efr, EFR_ECB);
+			com_write_reg(sc, com_ier, IER_SLEEP);
+			com_write_reg(sc, com_lcr, 0);
 			break;
 		case COM_UART_TI16750:
-			bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
+			com_write_reg(sc, com_ier, IER_SLEEP);
 			break;
 		}
 	}
@@ -515,14 +506,13 @@ void
 com_resume(struct com_softc *sc)
 {
 	struct tty *tp = sc->sc_tty;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 	int ospeed;
 
 	if (!tp || !ISSET(tp->t_state, TS_ISOPEN)) {
 #ifdef COM_CONSOLE
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
-			cominit(iot, ioh, comconsrate, comconsfreq);
+			cominit(comconsiot, comconsioh, comconsrate,
+			    comconsfreq);
 #endif
 		return;
 	}
@@ -534,14 +524,14 @@ com_resume(struct com_softc *sc)
 		switch (sc->sc_uarttype) {
 		case COM_UART_ST16650:
 		case COM_UART_ST16650V2:
-			bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
-			bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
-			bus_space_write_1(iot, ioh, com_ier, 0);
-			bus_space_write_1(iot, ioh, com_efr, 0);
-			bus_space_write_1(iot, ioh, com_lcr, 0);
+			com_write_reg(sc, com_lcr, LCR_EFR);
+			com_write_reg(sc, com_efr, EFR_ECB);
+			com_write_reg(sc, com_ier, 0);
+			com_write_reg(sc, com_efr, 0);
+			com_write_reg(sc, com_lcr, 0);
 			break;
 		case COM_UART_TI16750:
-			bus_space_write_1(iot, ioh, com_ier, 0);
+			com_write_reg(sc, com_ier, 0);
 			break;
 		}
 	}
@@ -549,12 +539,12 @@ com_resume(struct com_softc *sc)
 	ospeed = comspeed(sc->sc_frequency, tp->t_ospeed);
 
 	if (ospeed != 0) {
-		bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr | LCR_DLAB);
-		bus_space_write_1(iot, ioh, com_dlbl, ospeed);
-		bus_space_write_1(iot, ioh, com_dlbh, ospeed >> 8);
-		bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr);
+		com_write_reg(sc, com_lcr, sc->sc_lcr | LCR_DLAB);
+		com_write_reg(sc, com_dlbl, ospeed);
+		com_write_reg(sc, com_dlbh, ospeed >> 8);
+		com_write_reg(sc, com_lcr, sc->sc_lcr);
 	} else {
-		bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr);
+		com_write_reg(sc, com_lcr, sc->sc_lcr);
 	}
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
@@ -569,8 +559,8 @@ com_resume(struct com_softc *sc)
 			fifo |= FIFO_TRIGGER_8;
 		if (sc->sc_uarttype == COM_UART_TI16750) {
 			fifo |= FIFO_ENABLE_64BYTE;
-			lcr = bus_space_read_1(iot, ioh, com_lcr);
-			bus_space_write_1(iot, ioh, com_lcr,
+			lcr = com_read_reg(sc, com_lcr);
+			com_write_reg(sc, com_lcr,
 			    lcr | LCR_DLAB);
 		}
 
@@ -586,23 +576,23 @@ com_resume(struct com_softc *sc)
 		 * Set the FIFO threshold based on the receive speed.
 		 */
 		for (;;) {
-			bus_space_write_1(iot, ioh, com_fifo, 0);
+			com_write_reg(sc, com_fifo, 0);
 			delay(100);
-			(void) bus_space_read_1(iot, ioh, com_data);
-			bus_space_write_1(iot, ioh, com_fifo, fifo |
+			(void) com_read_reg(sc, com_data);
+			com_write_reg(sc, com_fifo, fifo |
 			    FIFO_RCV_RST | FIFO_XMT_RST);
 			delay(100);
-			if(!ISSET(bus_space_read_1(iot, ioh,
+			if(!ISSET(com_read_reg(sc,
 			    com_lsr), LSR_RXRDY))
 				break;
 		}
 		if (sc->sc_uarttype == COM_UART_TI16750)
-			bus_space_write_1(iot, ioh, com_lcr, lcr);
+			com_write_reg(sc, com_lcr, lcr);
 	}
 
 	/* You turn me on, baby! */
-	bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
-	bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
+	com_write_reg(sc, com_mcr, sc->sc_mcr);
+	com_write_reg(sc, com_ier, sc->sc_ier);
 }
 
 void
@@ -611,7 +601,7 @@ com_raisedtr(void *arg)
 	struct com_softc *sc = arg;
 
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
+	com_write_reg(sc, com_mcr, sc->sc_mcr);
 }
 
 int
@@ -659,8 +649,6 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int unit = DEVUNIT(dev);
 	struct com_softc *sc = com_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 	int error;
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
@@ -673,29 +661,29 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case TIOCSBRK:
 		SET(sc->sc_lcr, LCR_SBREAK);
-		bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr);
+		com_write_reg(sc, com_lcr, sc->sc_lcr);
 		break;
 	case TIOCCBRK:
 		CLR(sc->sc_lcr, LCR_SBREAK);
-		bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr);
+		com_write_reg(sc, com_lcr, sc->sc_lcr);
 		break;
 	case TIOCSDTR:
 		SET(sc->sc_mcr, sc->sc_dtr);
-		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+		com_write_reg(sc, com_mcr, sc->sc_mcr);
 		break;
 	case TIOCCDTR:
 		CLR(sc->sc_mcr, sc->sc_dtr);
-		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+		com_write_reg(sc, com_mcr, sc->sc_mcr);
 		break;
 	case TIOCMSET:
 		CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
 	case TIOCMBIS:
 		SET(sc->sc_mcr, tiocm_xxx2mcr(*(int *)data));
-		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+		com_write_reg(sc, com_mcr, sc->sc_mcr);
 		break;
 	case TIOCMBIC:
 		CLR(sc->sc_mcr, tiocm_xxx2mcr(*(int *)data));
-		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+		com_write_reg(sc, com_mcr, sc->sc_mcr);
 		break;
 	case TIOCMGET: {
 		u_char m;
@@ -715,7 +703,7 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			SET(bits, TIOCM_DSR);
 		if (ISSET(m, MSR_RI | MSR_TERI))
 			SET(bits, TIOCM_RI);
-		if (bus_space_read_1(iot, ioh, com_ier))
+		if (com_read_reg(sc, com_ier))
 			SET(bits, TIOCM_LE);
 		*(int *)data = bits;
 		break;
@@ -773,8 +761,6 @@ int
 comparam(struct tty *tp, struct termios *t)
 {
 	struct com_softc *sc = com_cd.cd_devs[DEVUNIT(tp->t_dev)];
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 	int ospeed = comspeed(sc->sc_frequency, t->c_ospeed);
 	u_char lcr;
 	tcflag_t oldcflag;
@@ -811,7 +797,7 @@ comparam(struct tty *tp, struct termios *t)
 
 	if (ospeed == 0) {
 		CLR(sc->sc_mcr, MCR_DTR);
-		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+		com_write_reg(sc, com_mcr, sc->sc_mcr);
 	}
 
 	/*
@@ -843,42 +829,42 @@ comparam(struct tty *tp, struct termios *t)
 				}
 			}
 
-			bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
-			bus_space_write_1(iot, ioh, com_dlbl, ospeed);
-			bus_space_write_1(iot, ioh, com_dlbh, ospeed >> 8);
-			bus_space_write_1(iot, ioh, com_lcr, lcr);
+			com_write_reg(sc, com_lcr, lcr | LCR_DLAB);
+			com_write_reg(sc, com_dlbl, ospeed);
+			com_write_reg(sc, com_dlbh, ospeed >> 8);
+			com_write_reg(sc, com_lcr, lcr);
 			SET(sc->sc_mcr, MCR_DTR);
-			bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+			com_write_reg(sc, com_mcr, sc->sc_mcr);
 		} else
-			bus_space_write_1(iot, ioh, com_lcr, lcr);
+			com_write_reg(sc, com_lcr, lcr);
 
 		if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
 			if (sc->sc_uarttype == COM_UART_TI16750) {
-				bus_space_write_1(iot, ioh, com_lcr,
+				com_write_reg(sc, com_lcr,
 				    lcr | LCR_DLAB);
-				bus_space_write_1(iot, ioh, com_fifo,
+				com_write_reg(sc, com_fifo,
 				    FIFO_ENABLE | FIFO_ENABLE_64BYTE |
 				    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
-				bus_space_write_1(iot, ioh, com_lcr, lcr);
+				com_write_reg(sc, com_lcr, lcr);
 			} else
-				bus_space_write_1(iot, ioh, com_fifo,
+				com_write_reg(sc, com_fifo,
 				    FIFO_ENABLE |
 				    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
 		}
 	} else
-		bus_space_write_1(iot, ioh, com_lcr, lcr);
+		com_write_reg(sc, com_lcr, lcr);
 
 	/* When not using CRTSCTS, RTS follows DTR. */
 	if (!ISSET(t->c_cflag, CRTSCTS)) {
 		if (ISSET(sc->sc_mcr, MCR_DTR)) {
 			if (!ISSET(sc->sc_mcr, MCR_RTS)) {
 				SET(sc->sc_mcr, MCR_RTS);
-				bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+				com_write_reg(sc, com_mcr, sc->sc_mcr);
 			}
 		} else {
 			if (ISSET(sc->sc_mcr, MCR_RTS)) {
 				CLR(sc->sc_mcr, MCR_RTS);
-				bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+				com_write_reg(sc, com_mcr, sc->sc_mcr);
 			}
 		}
 		sc->sc_dtr = MCR_DTR | MCR_RTS;
@@ -900,7 +886,7 @@ comparam(struct tty *tp, struct termios *t)
 	    ISSET(oldcflag, MDMBUF) != ISSET(tp->t_cflag, MDMBUF) &&
 	    (*linesw[tp->t_line].l_modem)(tp, 0) == 0) {
 		CLR(sc->sc_mcr, sc->sc_dtr);
-		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+		com_write_reg(sc, com_mcr, sc->sc_mcr);
 	}
 
 	/* Just to be sure... */
@@ -912,8 +898,6 @@ void
 comstart(struct tty *tp)
 {
 	struct com_softc *sc = com_cd.cd_devs[DEVUNIT(tp->t_dev)];
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 	int s;
 
 	s = spltty();
@@ -931,7 +915,7 @@ comstart(struct tty *tp)
 	/* Enable transmit completion interrupts. */
 	if (!ISSET(sc->sc_ier, IER_ETXRDY)) {
 		SET(sc->sc_ier, IER_ETXRDY);
-		bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
+		com_write_reg(sc, com_ier, sc->sc_ier);
 	}
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
@@ -941,18 +925,18 @@ comstart(struct tty *tp)
 		n = q_to_b(&tp->t_outq, buffer,
 		    min(sc->sc_fifolen, sizeof buffer));
 		for (i = 0; i < n; i++) {
-			bus_space_write_1(iot, ioh, com_data, buffer[i]);
+			com_write_reg(sc, com_data, buffer[i]);
 		}
 		bzero(buffer, n);
 	} else if (tp->t_outq.c_cc != 0)
-		bus_space_write_1(iot, ioh, com_data, getc(&tp->t_outq));
+		com_write_reg(sc, com_data, getc(&tp->t_outq));
 out:
 	splx(s);
 	return;
 stopped:
 	if (ISSET(sc->sc_ier, IER_ETXRDY)) {
 		CLR(sc->sc_ier, IER_ETXRDY);
-		bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
+		com_write_reg(sc, com_ier, sc->sc_ier);
 	}
 	splx(s);
 }
@@ -1038,8 +1022,7 @@ comsoft(void *arg)
 	    !ISSET(sc->sc_mcr, MCR_RTS)) {
 		/* XXX */
 		SET(sc->sc_mcr, MCR_RTS);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr,
-		    sc->sc_mcr);
+		com_write_reg(sc, com_mcr, sc->sc_mcr);
 	}
 
 	splx(s);
@@ -1061,28 +1044,26 @@ int
 comintr(void *arg)
 {
 	struct com_softc *sc = arg;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
 	u_char lsr, data, msr, delta;
 
 	if (!sc->sc_tty)
 		return (0);		/* Can't do squat. */
 
-	if (ISSET(bus_space_read_1(iot, ioh, com_iir), IIR_NOPEND))
+	if (ISSET(com_read_reg(sc, com_iir), IIR_NOPEND))
 		return (0);
 
 	tp = sc->sc_tty;
 
 	for (;;) {
-		lsr = bus_space_read_1(iot, ioh, com_lsr);
+		lsr = com_read_reg(sc, com_lsr);
 
 		if (ISSET(lsr, LSR_RXRDY)) {
 			u_char *p = sc->sc_ibufp;
 
 			softintr_schedule(sc->sc_si);
 			do {
-				data = bus_space_read_1(iot, ioh, com_data);
+				data = com_read_reg(sc, com_data);
 				if (ISSET(lsr, LSR_BI)) {
 #if defined(COM_CONSOLE) && defined(DDB)
 					if (ISSET(sc->sc_hwflags,
@@ -1105,19 +1086,19 @@ comintr(void *arg)
 					    ISSET(tp->t_cflag, CRTSCTS)) {
 						/* XXX */
 						CLR(sc->sc_mcr, MCR_RTS);
-						bus_space_write_1(iot, ioh, com_mcr,
+						com_write_reg(sc, com_mcr,
 						    sc->sc_mcr);
 					}
 				}
 #if defined(COM_CONSOLE) && defined(DDB)
 			next:
 #endif
-				lsr = bus_space_read_1(iot, ioh, com_lsr);
+				lsr = com_read_reg(sc, com_lsr);
 			} while (ISSET(lsr, LSR_RXRDY));
 
 			sc->sc_ibufp = p;
 		}
-		msr = bus_space_read_1(iot, ioh, com_msr);
+		msr = com_read_reg(sc, com_msr);
 
 		if (msr != sc->sc_msr) {
 			delta = msr ^ sc->sc_msr;
@@ -1130,7 +1111,7 @@ comintr(void *arg)
 				if (!ISSET(sc->sc_swflags, COM_SW_SOFTCAR) &&
 				    (*linesw[tp->t_line].l_modem)(tp, ISSET(msr, MSR_DCD)) == 0) {
 					CLR(sc->sc_mcr, sc->sc_dtr);
-					bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+					com_write_reg(sc, com_mcr, sc->sc_mcr);
 				}
 			}
 			if (ISSET(delta & msr, MSR_CTS) &&
@@ -1147,7 +1128,7 @@ comintr(void *arg)
 			(*linesw[tp->t_line].l_start)(tp);
 		}
 
-		if (ISSET(bus_space_read_1(iot, ioh, com_iir), IIR_NOPEND))
+		if (ISSET(com_read_reg(sc, com_iir), IIR_NOPEND))
 			return (1);
 	}
 }
@@ -1317,7 +1298,7 @@ com_enable_debugport(struct com_softc *sc)
 	/* Turn on line break interrupt, set carrier. */
 	s = splhigh();
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS | MCR_IENABLE);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
+	com_write_reg(sc, com_mcr, sc->sc_mcr);
 
 	splx(s);
 }
@@ -1326,14 +1307,12 @@ com_enable_debugport(struct com_softc *sc)
 void
 com_attach_subr(struct com_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 	int probe = 0;
 	u_int8_t lcr;
 
 	sc->sc_ier = 0;
 	/* disable interrupts */
-	bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
+	com_write_reg(sc, com_ier, sc->sc_ier);
 
 #ifdef COM_CONSOLE
 	if (sc->sc_iot == comconsiot && sc->sc_iobase == comconsaddr) {
@@ -1347,19 +1326,19 @@ com_attach_subr(struct com_softc *sc)
 	/*
 	 * Probe for all known forms of UART.
 	 */
-	lcr = bus_space_read_1(iot, ioh, com_lcr);
-	bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
-	bus_space_write_1(iot, ioh, com_efr, 0);
-	bus_space_write_1(iot, ioh, com_lcr, 0);
+	lcr = com_read_reg(sc, com_lcr);
+	com_write_reg(sc, com_lcr, LCR_EFR);
+	com_write_reg(sc, com_efr, 0);
+	com_write_reg(sc, com_lcr, 0);
 
-	bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE);
+	com_write_reg(sc, com_fifo, FIFO_ENABLE);
 	delay(100);
 
 	/*
 	 * Skip specific probes if attachment code knows it already.
 	 */
 	if (sc->sc_uarttype == COM_UART_UNKNOWN) {
-		switch (bus_space_read_1(iot, ioh, com_iir) >> 6) {
+		switch (com_read_reg(sc, com_iir) >> 6) {
 		case 0:
 			sc->sc_uarttype = COM_UART_16450;
 			break;
@@ -1378,15 +1357,15 @@ com_attach_subr(struct com_softc *sc)
 
 	/* Probe for ST16650s */
 	if (probe && sc->sc_uarttype == COM_UART_16550A) {
-		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
-		if (bus_space_read_1(iot, ioh, com_efr) == 0) {
-			bus_space_write_1(iot, ioh, com_efr, EFR_CTS);
-			if (bus_space_read_1(iot, ioh, com_efr) != 0)
+		com_write_reg(sc, com_lcr, lcr | LCR_DLAB);
+		if (com_read_reg(sc, com_efr) == 0) {
+			com_write_reg(sc, com_efr, EFR_CTS);
+			if (com_read_reg(sc, com_efr) != 0)
 				sc->sc_uarttype = COM_UART_ST16650;
-			bus_space_write_1(iot, ioh, com_efr, 0);
+			com_write_reg(sc, com_efr, 0);
 		} else {
-			bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
-			if (bus_space_read_1(iot, ioh, com_efr) == 0)
+			com_write_reg(sc, com_lcr, LCR_EFR);
+			if (com_read_reg(sc, com_efr) == 0)
 				sc->sc_uarttype = COM_UART_ST16650V2;
 		}
 	}
@@ -1397,53 +1376,53 @@ com_attach_subr(struct com_softc *sc)
 		u_int8_t dlbl, dlbh;
 
 		/* Enable latch access and get the current values. */
-		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
-		dlbl = bus_space_read_1(iot, ioh, com_dlbl);
-		dlbh = bus_space_read_1(iot, ioh, com_dlbh);
+		com_write_reg(sc, com_lcr, lcr | LCR_DLAB);
+		dlbl = com_read_reg(sc, com_dlbl);
+		dlbh = com_read_reg(sc, com_dlbh);
 
 		/* Zero out the latch divisors */
-		bus_space_write_1(iot, ioh, com_dlbl, 0);
-		bus_space_write_1(iot, ioh, com_dlbh, 0);
+		com_write_reg(sc, com_dlbl, 0);
+		com_write_reg(sc, com_dlbh, 0);
 
-		if (bus_space_read_1(iot, ioh, com_dlbh) == 0x10) {
+		if (com_read_reg(sc, com_dlbh) == 0x10) {
 			sc->sc_uarttype = COM_UART_XR16850;
-			sc->sc_uartrev = bus_space_read_1(iot, ioh, com_dlbl);
+			sc->sc_uartrev = com_read_reg(sc, com_dlbl);
 		}
 
 		/* Reset to original. */
-		bus_space_write_1(iot, ioh, com_dlbl, dlbl);
-		bus_space_write_1(iot, ioh, com_dlbh, dlbh);
+		com_write_reg(sc, com_dlbl, dlbl);
+		com_write_reg(sc, com_dlbh, dlbh);
 	}
 #endif
 
 	/* Probe for TI16750s */
 	if (probe && sc->sc_uarttype == COM_UART_16550A) {
-		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
-		bus_space_write_1(iot, ioh, com_fifo,
+		com_write_reg(sc, com_lcr, lcr | LCR_DLAB);
+		com_write_reg(sc, com_fifo,
 		    FIFO_ENABLE | FIFO_ENABLE_64BYTE);
-		if ((bus_space_read_1(iot, ioh, com_iir) >> 5) == 7) {
+		if ((com_read_reg(sc, com_iir) >> 5) == 7) {
 #if 0
-			bus_space_write_1(iot, ioh, com_lcr, 0);
-			if ((bus_space_read_1(iot, ioh, com_iir) >> 5) == 6)
+			com_write_reg(sc, com_lcr, 0);
+			if ((com_read_reg(sc, com_iir) >> 5) == 6)
 #endif
 				sc->sc_uarttype = COM_UART_TI16750;
 		}
-		bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE);
+		com_write_reg(sc, com_fifo, FIFO_ENABLE);
 	}
 
 	/* Reset the LCR (latch access is probably enabled). */
-	bus_space_write_1(iot, ioh, com_lcr, lcr);
+	com_write_reg(sc, com_lcr, lcr);
 
 	/* Probe for 8250 */
 	if (probe && sc->sc_uarttype == COM_UART_16450) {
 		u_int8_t scr0, scr1, scr2;
 
-		scr0 = bus_space_read_1(iot, ioh, com_scratch);
-		bus_space_write_1(iot, ioh, com_scratch, 0xa5);
-		scr1 = bus_space_read_1(iot, ioh, com_scratch);
-		bus_space_write_1(iot, ioh, com_scratch, 0x5a);
-		scr2 = bus_space_read_1(iot, ioh, com_scratch);
-		bus_space_write_1(iot, ioh, com_scratch, scr0);
+		scr0 = com_read_reg(sc, com_scratch);
+		com_write_reg(sc, com_scratch, 0xa5);
+		scr1 = com_read_reg(sc, com_scratch);
+		com_write_reg(sc, com_scratch, 0x5a);
+		scr2 = com_read_reg(sc, com_scratch);
+		com_write_reg(sc, com_scratch, scr0);
 
 		if ((scr1 != 0xa5) || (scr2 != 0x5a))
 			sc->sc_uarttype = COM_UART_8250;
@@ -1519,13 +1498,13 @@ com_attach_subr(struct com_softc *sc)
 	}
 
 	/* clear and disable fifo */
-	bus_space_write_1(iot, ioh, com_fifo, FIFO_RCV_RST | FIFO_XMT_RST);
-	if (ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
-		(void)bus_space_read_1(iot, ioh, com_data);
-	bus_space_write_1(iot, ioh, com_fifo, 0);
+	com_write_reg(sc, com_fifo, FIFO_RCV_RST | FIFO_XMT_RST);
+	if (ISSET(com_read_reg(sc, com_lsr), LSR_RXRDY))
+		(void)com_read_reg(sc, com_data);
+	com_write_reg(sc, com_fifo, 0);
 
 	sc->sc_mcr = 0;
-	bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+	com_write_reg(sc, com_mcr, sc->sc_mcr);
 
 #ifdef COM_CONSOLE
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
@@ -1566,8 +1545,6 @@ com_attach_subr(struct com_softc *sc)
 void
 com_fifo_probe(struct com_softc *sc)
 {
-	bus_space_handle_t ioh = sc->sc_ioh;
-	bus_space_tag_t iot = sc->sc_iot;
 	u_int8_t fifo, ier;
 	int timo, len;
 
@@ -1575,23 +1552,23 @@ com_fifo_probe(struct com_softc *sc)
 		return;
 
 	ier = 0;
-	bus_space_write_1(iot, ioh, com_ier, ier);
-	bus_space_write_1(iot, ioh, com_lcr, LCR_DLAB);
-	bus_space_write_1(iot, ioh, com_dlbl, 3);
-	bus_space_write_1(iot, ioh, com_dlbh, 0);
-	bus_space_write_1(iot, ioh, com_lcr, LCR_PNONE | LCR_8BITS);
-	bus_space_write_1(iot, ioh, com_mcr, MCR_LOOPBACK);
+	com_write_reg(sc, com_ier, ier);
+	com_write_reg(sc, com_lcr, LCR_DLAB);
+	com_write_reg(sc, com_dlbl, 3);
+	com_write_reg(sc, com_dlbh, 0);
+	com_write_reg(sc, com_lcr, LCR_PNONE | LCR_8BITS);
+	com_write_reg(sc, com_mcr, MCR_LOOPBACK);
 
 	fifo = FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST;
 	if (sc->sc_uarttype == COM_UART_TI16750)
 		fifo |= FIFO_ENABLE_64BYTE;
 
-	bus_space_write_1(iot, ioh, com_fifo, fifo);
+	com_write_reg(sc, com_fifo, fifo);
 
 	for (len = 0; len < 256; len++) {
-		bus_space_write_1(iot, ioh, com_data, (len + 1));
+		com_write_reg(sc, com_data, (len + 1));
 		timo = 2000;
-		while (!ISSET(bus_space_read_1(iot, ioh, com_lsr),
+		while (!ISSET(com_read_reg(sc, com_lsr),
 		    LSR_TXRDY) && --timo)
 			delay(1);
 		if (!timo)
@@ -1602,10 +1579,10 @@ com_fifo_probe(struct com_softc *sc)
 
 	for (len = 0; len < 256; len++) {
 		timo = 2000;
-		while (!ISSET(bus_space_read_1(iot, ioh, com_lsr),
+		while (!ISSET(com_read_reg(sc, com_lsr),
 		    LSR_RXRDY) && --timo)
 			delay(1);
-		if (!timo || bus_space_read_1(iot, ioh, com_data) != (len + 1))
+		if (!timo || com_read_reg(sc, com_data) != (len + 1))
 			break;
 	}
 
@@ -1615,4 +1592,26 @@ com_fifo_probe(struct com_softc *sc)
 		    sc->sc_dev.dv_xname, len);
 		sc->sc_fifolen = len;
 	}
+}
+
+uint8_t
+com_read_reg(struct com_softc *sc, bus_size_t reg)
+{
+	reg <<= sc->sc_reg_shift;
+
+	if (sc->sc_reg_width == 4)
+		return bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg);
+	else
+		return bus_space_read_1(sc->sc_iot, sc->sc_ioh, reg);
+}
+
+void
+com_write_reg(struct com_softc *sc, bus_size_t reg, uint8_t value)
+{
+	reg <<= sc->sc_reg_shift;
+
+	if (sc->sc_reg_width == 4)
+		return bus_space_write_4(sc->sc_iot, sc->sc_ioh, reg, value);
+	else
+		return bus_space_write_1(sc->sc_iot, sc->sc_ioh, reg, value);
 }
