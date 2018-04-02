@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.18 2018/04/02 16:39:20 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.1 2018/04/02 16:47:39 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *

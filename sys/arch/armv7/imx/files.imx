@@ -1,8 +1,4 @@
-#	$OpenBSD: files.imx,v 1.27 2018/03/30 20:38:27 patrick Exp $
-
-device imxccm
-attach imxccm at fdt
-file	arch/armv7/imx/imxccm.c		imxccm
+#	$OpenBSD: files.imx,v 1.28 2018/04/02 16:47:39 patrick Exp $
 
 device imxiomuxc
 attach imxiomuxc at fdt
