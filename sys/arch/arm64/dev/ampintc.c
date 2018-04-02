@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.13 2018/02/02 09:32:11 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.14 2018/04/02 15:22:41 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -175,8 +175,6 @@ int		 ampintc_splraise(int);
 void		 ampintc_setipl(int);
 void		 ampintc_calc_mask(void);
 void		*ampintc_intr_establish(int, int, int, int (*)(void *),
-		    void *, char *);
-void		*ampintc_intr_establish_ext(int, int, int, int (*)(void *),
 		    void *, char *);
 void		*ampintc_intr_establish_fdt(void *, int *, int,
 		    int (*)(void *), void *, char *);
@@ -685,13 +683,6 @@ ampintc_irq_handler(void *frame)
 }
 
 void *
-ampintc_intr_establish_ext(int irqno, int type, int level, int (*func)(void *),
-    void *arg, char *name)
-{
-	return ampintc_intr_establish(irqno+32, type, level, func, arg, name);
-}
-
-void *
 ampintc_intr_establish_fdt(void *cookie, int *cell, int level,
     int (*func)(void *), void *arg, char *name)
 {
@@ -892,13 +883,13 @@ ampintc_intr_establish_msi(void *self, uint64_t *addr, uint64_t *data,
 		if (sc->sc_spi[i] != NULL)
 			continue;
 
-		cookie = ampintc_intr_establish_ext(sc->sc_bspi + i,
+		cookie = ampintc_intr_establish(sc->sc_bspi + i,
 		    IST_EDGE_RISING, level, func, arg, name);
 		if (cookie == NULL)
 			return NULL;
 
 		*addr = sc->sc_addr + GICV2M_SETSPI_NS;
-		*data = sc->sc_bspi + i + 32;
+		*data = sc->sc_bspi + i;
 		sc->sc_spi[i] = cookie;
 		return &sc->sc_spi[i];
 	}
