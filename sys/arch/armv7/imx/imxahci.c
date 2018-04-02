@@ -1,4 +1,4 @@
-/* $OpenBSD: imxahci.c,v 1.9 2018/04/01 19:07:31 patrick Exp $ */
+/* $OpenBSD: imxahci.c,v 1.10 2018/04/02 16:18:45 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -29,7 +29,6 @@
 #include <dev/ic/ahcireg.h>
 #include <dev/ic/ahcivar.h>
 
-#include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
@@ -134,7 +133,8 @@ imxahci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* power it up */
-	imxccm_enable_sata();
+	clock_enable(faa->fa_node, "sata_ref");
+	clock_enable(faa->fa_node, "sata");
 	delay(100);
 
 	/* power phy up */

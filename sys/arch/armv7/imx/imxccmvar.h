@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccmvar.h,v 1.8 2018/04/02 16:03:50 patrick Exp $ */
+/* $OpenBSD: imxccmvar.h,v 1.9 2018/04/02 16:18:45 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -19,6 +19,5 @@
 #define IMXCCMVAR_H
 
 void imxccm_enable_enet(void);
-void imxccm_enable_sata(void);
 
 #endif /* IMXCCMVAR_H */

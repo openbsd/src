@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.16 2018/04/02 16:03:50 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.17 2018/04/02 16:18:45 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -243,7 +243,7 @@ void imxccm_enable_pll_usb1(struct imxccm_softc *);
 void imxccm_enable_pll_usb2(struct imxccm_softc *);
 void imxccm_enable_pll_enet(void);
 void imxccm_enable_enet(void);
-void imxccm_enable_sata(void);
+void imxccm_enable_sata(struct imxccm_softc *);
 
 int
 imxccm_match(struct device *parent, void *match, void *aux)
@@ -491,6 +491,9 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 		case IMX6_CLK_USBPHY2:
 			imxccm_enable_pll_usb2(sc);
 			return;
+		case IMX6_CLK_SATA_REF_100:
+			imxccm_enable_sata(sc);
+			return;
 		default:
 			break;
 		}
@@ -593,14 +596,10 @@ imxccm_enable_enet(void)
 }
 
 void
-imxccm_enable_sata(void)
+imxccm_enable_sata(struct imxccm_softc *sc)
 {
-	struct imxccm_softc *sc = imxccm_sc;
-
 	imxccm_enable_pll_enet();
 	HWRITE4(sc, CCM_ANALOG_PLL_ENET_SET, CCM_ANALOG_PLL_ENET_100M_SATA);
-
-	HSET4(sc, CCM_CCGR5, CCM_CCGR5_100M_SATA);
 }
 
 void
