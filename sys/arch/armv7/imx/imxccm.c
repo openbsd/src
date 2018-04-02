@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.15 2018/04/01 22:19:18 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.16 2018/04/02 16:03:50 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -239,8 +239,8 @@ uint32_t imxccm_get_ipg_perclk(struct imxccm_softc *);
 uint32_t imxccm_get_uartclk(struct imxccm_softc *);
 void imxccm_enable(void *, uint32_t *, int);
 uint32_t imxccm_get_frequency(void *, uint32_t *);
-void imxccm_enable_pll_usb1(void);
-void imxccm_enable_pll_usb2(void);
+void imxccm_enable_pll_usb1(struct imxccm_softc *);
+void imxccm_enable_pll_usb2(struct imxccm_softc *);
 void imxccm_enable_pll_enet(void);
 void imxccm_enable_enet(void);
 void imxccm_enable_sata(void);
@@ -483,6 +483,19 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 	if (idx == 0)
 		return;
 
+	if (sc->sc_gates == imx6_gates) {
+		switch (idx) {
+		case IMX6_CLK_USBPHY1:
+			imxccm_enable_pll_usb1(sc);
+			return;
+		case IMX6_CLK_USBPHY2:
+			imxccm_enable_pll_usb2(sc);
+			return;
+		default:
+			break;
+		}
+	}
+
 	if (idx >= sc->sc_ngates || sc->sc_gates[idx].reg == 0) {
 		printf("%s: 0x%08x\n", __func__, idx);
 		return;
@@ -591,10 +604,8 @@ imxccm_enable_sata(void)
 }
 
 void
-imxccm_enable_pll_usb1(void)
+imxccm_enable_pll_usb1(struct imxccm_softc *sc)
 {
-	struct imxccm_softc *sc = imxccm_sc;
-
 	HWRITE4(sc, CCM_ANALOG_PLL_USB1_CLR, CCM_ANALOG_PLL_USB1_BYPASS);
 
 	HWRITE4(sc, CCM_ANALOG_PLL_USB1_SET,
@@ -604,10 +615,8 @@ imxccm_enable_pll_usb1(void)
 }
 
 void
-imxccm_enable_pll_usb2(void)
+imxccm_enable_pll_usb2(struct imxccm_softc *sc)
 {
-	struct imxccm_softc *sc = imxccm_sc;
-
 	HWRITE4(sc, CCM_ANALOG_PLL_USB2_CLR, CCM_ANALOG_PLL_USB2_BYPASS);
 
 	HWRITE4(sc, CCM_ANALOG_PLL_USB2_SET,

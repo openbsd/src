@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.22 2018/04/01 22:28:54 patrick Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.23 2018/04/02 16:03:50 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -124,7 +124,8 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t misc_reg[2];
 	uint32_t anatop[1];
 	uint32_t vbus;
-	int node;
+	int misc_node;
+	int phy_node;
 
 	if (faa->fa_nreg < 1)
 		return;
@@ -137,23 +138,23 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	    misc, sizeof(misc)) != sizeof(misc))
 		return;
 
-	node = OF_getnodebyphandle(phy[0]);
-	if (node == 0)
+	phy_node = OF_getnodebyphandle(phy[0]);
+	if (phy_node == 0)
 		return;
 
-	if (OF_getpropintarray(node, "reg", phy_reg,
+	if (OF_getpropintarray(phy_node, "reg", phy_reg,
 	    sizeof(phy_reg)) != sizeof(phy_reg))
 		return;
 
-	if (OF_getpropintarray(node, "fsl,anatop",
+	if (OF_getpropintarray(phy_node, "fsl,anatop",
 	    anatop, sizeof(anatop)) == sizeof(anatop))
 		rm = regmap_byphandle(anatop[0]);
 
-	node = OF_getnodebyphandle(misc[0]);
-	if (node == 0)
+	misc_node = OF_getnodebyphandle(misc[0]);
+	if (misc_node == 0)
 		return;
 
-	if (OF_getpropintarray(node, "reg", misc_reg,
+	if (OF_getpropintarray(misc_node, "reg", misc_reg,
 	    sizeof(misc_reg)) != sizeof(misc_reg))
 		return;
 
@@ -206,7 +207,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 			    ANALOG_USB1_CHRG_DETECT_EN_B);
 
 		/* power host 0 */
-		imxccm_enable_pll_usb1();
+		clock_enable(phy_node, NULL);
 
 		/* over current and polarity setting */
 		bus_space_write_4(sc->sc.iot, sc->nc_ioh, USBNC_USB_OTG_CTRL,
@@ -221,7 +222,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 			    ANALOG_USB2_CHRG_DETECT_EN_B);
 
 		/* power host 1 */
-		imxccm_enable_pll_usb2();
+		clock_enable(phy_node, NULL);
 
 		/* over current and polarity setting */
 		bus_space_write_4(sc->sc.iot, sc->nc_ioh, USBNC_USB_UH1_CTRL,

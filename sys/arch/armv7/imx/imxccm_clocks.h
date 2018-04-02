@@ -19,6 +19,8 @@
 #define IMX6_CLK_USDHC2		0xa4
 #define IMX6_CLK_USDHC3		0xa5
 #define IMX6_CLK_USDHC4		0xa6
+#define IMX6_CLK_USBPHY1	0xb6
+#define IMX6_CLK_USBPHY2	0xb7
 
 struct imxccm_gate imx6_gates[] = {
 	[IMX6_CLK_ENET] = { CCM_CCGR1, 5, IMX6_CLK_IPG },
