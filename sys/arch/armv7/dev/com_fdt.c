@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.10 2017/08/29 13:33:03 jsg Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.11 2018/04/02 12:59:39 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -45,13 +45,8 @@ int	com_fdt_intr_designware(void *);
 extern int comcnspeed;
 extern int comcnmode;
 
-struct com_fdt_softc {
-	struct com_softc	 sc;
-	struct bus_space	 sc_iot;
-};
-
 struct cfattach com_fdt_ca = {
-	sizeof (struct com_fdt_softc), com_fdt_match, com_fdt_attach
+	sizeof (struct com_softc), com_fdt_match, com_fdt_attach
 };
 
 int com_fdt_cngetc(dev_t);
@@ -108,7 +103,7 @@ com_fdt_match(struct device *parent, void *match, void *aux)
 void
 com_fdt_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct com_fdt_softc *sc = (struct com_fdt_softc *)self;
+	struct com_softc *sc = (struct com_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	int (*intr)(void *) = comintr;
 	uint32_t freq;
@@ -127,44 +122,39 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 	if (freq == 0)
 		freq = clock_get_frequency(faa->fa_node, NULL);
 
-	/*
-	 * XXX This sucks.  We need to get rid of the a4x bus tag
-	 * altogether.  For this we will need to change com(4).
-	 */
-	sc->sc_iot = armv7_a4x_bs_tag;
-	sc->sc_iot.bs_cookie = faa->fa_iot->bs_cookie;
-	sc->sc_iot.bs_map = faa->fa_iot->bs_map;
+	sc->sc_iot = faa->fa_iot;
+	sc->sc_iobase = faa->fa_reg[0].addr;
+	sc->sc_uarttype = COM_UART_16550;
+	sc->sc_frequency = freq ? freq : COM_FREQ;
 
-	sc->sc.sc_iot = &sc->sc_iot;
-	sc->sc.sc_iobase = faa->fa_reg[0].addr;
-	sc->sc.sc_uarttype = COM_UART_16550;
-	sc->sc.sc_frequency = freq ? freq : COM_FREQ;
+	sc->sc_reg_width = OF_getpropint(faa->fa_node, "reg-io-width", 4);
+	sc->sc_reg_shift = OF_getpropint(faa->fa_node, "reg-shift", 2);
 
 	if (OF_is_compatible(faa->fa_node, "snps,dw-apb-uart"))
 		intr = com_fdt_intr_designware;
 
 	if (OF_is_compatible(faa->fa_node, "ti,omap3-uart") ||
 	    OF_is_compatible(faa->fa_node, "ti,omap4-uart"))
-		sc->sc.sc_uarttype = COM_UART_TI16750;
+		sc->sc_uarttype = COM_UART_TI16750;
 
 	if (stdout_node == faa->fa_node) {
-		SET(sc->sc.sc_hwflags, COM_HW_CONSOLE);
-		SET(sc->sc.sc_swflags, COM_SW_SOFTCAR);
-		comconsfreq = sc->sc.sc_frequency;
+		SET(sc->sc_hwflags, COM_HW_CONSOLE);
+		SET(sc->sc_swflags, COM_SW_SOFTCAR);
+		comconsfreq = sc->sc_frequency;
 	}
 
-	if (bus_space_map(sc->sc.sc_iot, sc->sc.sc_iobase,
-	    faa->fa_reg[0].size, 0, &sc->sc.sc_ioh)) {
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
 		printf("%s: bus_space_map failed\n", __func__);
 		return;
 	}
 
 	pinctrl_byname(faa->fa_node, "default");
 
-	com_attach_subr(&sc->sc);
+	com_attach_subr(sc);
 
 	arm_intr_establish_fdt(faa->fa_node, IPL_TTY, intr,
-	    sc, sc->sc.sc_dev.dv_xname);
+	    sc, sc->sc_dev.dv_xname);
 }
 
 int
@@ -172,7 +162,7 @@ com_fdt_intr_designware(void *cookie)
 {
 	struct com_softc *sc = cookie;
 
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, com_usr);
+	com_read_reg(sc, com_usr);
 
 	return comintr(sc);
 }
