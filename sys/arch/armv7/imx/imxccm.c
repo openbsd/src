@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.17 2018/04/02 16:18:45 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.18 2018/04/02 16:39:20 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -213,8 +213,6 @@ enum clocks {
 	USB1_PLL3_PFD3,	/* 454.7 MHz */
 };
 
-struct imxccm_softc *imxccm_sc;
-
 int	imxccm_match(struct device *, void *, void *);
 void	imxccm_attach(struct device *parent, struct device *self, void *args);
 
@@ -241,8 +239,8 @@ void imxccm_enable(void *, uint32_t *, int);
 uint32_t imxccm_get_frequency(void *, uint32_t *);
 void imxccm_enable_pll_usb1(struct imxccm_softc *);
 void imxccm_enable_pll_usb2(struct imxccm_softc *);
-void imxccm_enable_pll_enet(void);
-void imxccm_enable_enet(void);
+void imxccm_enable_pll_enet(struct imxccm_softc *);
+void imxccm_enable_enet(struct imxccm_softc *);
 void imxccm_enable_sata(struct imxccm_softc *);
 
 int
@@ -264,7 +262,6 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 
 	KASSERT(faa->fa_nreg >= 1);
 
-	imxccm_sc = sc;
 	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
@@ -494,6 +491,9 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 		case IMX6_CLK_SATA_REF_100:
 			imxccm_enable_sata(sc);
 			return;
+		case IMX6_CLK_ENET_REF:
+			imxccm_enable_enet(sc);
+			return;
 		default:
 			break;
 		}
@@ -568,10 +568,8 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 }
 
 void
-imxccm_enable_pll_enet(void)
+imxccm_enable_pll_enet(struct imxccm_softc *sc)
 {
-	struct imxccm_softc *sc = imxccm_sc;
-
 	if (HREAD4(sc, CCM_ANALOG_PLL_ENET) & CCM_ANALOG_PLL_ENET_ENABLE)
 		return;
 
@@ -585,20 +583,16 @@ imxccm_enable_pll_enet(void)
 }
 
 void
-imxccm_enable_enet(void)
+imxccm_enable_enet(struct imxccm_softc *sc)
 {
-	struct imxccm_softc *sc = imxccm_sc;
-
-	imxccm_enable_pll_enet();
+	imxccm_enable_pll_enet(sc);
 	HWRITE4(sc, CCM_ANALOG_PLL_ENET_SET, CCM_ANALOG_PLL_ENET_DIV_125M);
-
-	HSET4(sc, CCM_CCGR1, CCM_CCGR1_ENET);
 }
 
 void
 imxccm_enable_sata(struct imxccm_softc *sc)
 {
-	imxccm_enable_pll_enet();
+	imxccm_enable_pll_enet(sc);
 	HWRITE4(sc, CCM_ANALOG_PLL_ENET_SET, CCM_ANALOG_PLL_ENET_100M_SATA);
 }
 
