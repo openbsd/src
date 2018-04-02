@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1840 2018/03/14 20:07:06 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1841 2018/04/02 08:37:41 henning Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -15962,6 +15962,70 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_U_GT3_28W,
 	    "Iris Plus Graphics 650",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_IGD,
+	    "HD Graphics 500",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_HDA,
+	    "Apollo Lake HD Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_TXE,
+	    "Apollo Lake TXE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_XHCI,
+	    "Apollo Lake xHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_1,
+	    "Apollo Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_UART_1,
+	    "Apollo Lake HSUART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_SPI_1,
+	    "Apollo Lake SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_SPI_2,
+	    "Apollo Lake SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_SPI_3,
+	    "Apollo Lake SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_SMB,
+	    "Apollo Lake SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_1,
+	    "Apollo Lake PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_2,
+	    "Apollo Lake PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_3,
+	    "Apollo Lake PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_AHCI,
+	    "Apollo Lake AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_LPC,
+	    "Apollo Lake LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_HB,
+	    "Apollo Lake Host",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5100_HB,
