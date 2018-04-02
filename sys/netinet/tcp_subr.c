@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.169 2018/03/18 21:05:21 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.170 2018/04/02 14:19:17 dhill Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -952,7 +952,7 @@ tcp_signature_tdb_init(struct tdb *tdbp, struct xformsw *xsp,
 	tdbp->tdb_amxkey = malloc(ii->ii_authkeylen, M_XDATA, M_NOWAIT);
 	if (tdbp->tdb_amxkey == NULL)
 		return (ENOMEM);
-	bcopy(ii->ii_authkey, tdbp->tdb_amxkey, ii->ii_authkeylen);
+	memcpy(tdbp->tdb_amxkey, ii->ii_authkey, ii->ii_authkeylen);
 	tdbp->tdb_amxkeylen = ii->ii_authkeylen;
 
 	return (0);
@@ -963,7 +963,7 @@ tcp_signature_tdb_zeroize(struct tdb *tdbp)
 {
 	if (tdbp->tdb_amxkey) {
 		explicit_bzero(tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
-		free(tdbp->tdb_amxkey, M_XDATA, 0);
+		free(tdbp->tdb_amxkey, M_XDATA, tdbp->tdb_amxkeylen);
 		tdbp->tdb_amxkey = NULL;
 	}
 
