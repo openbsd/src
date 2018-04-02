@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.55 2018/04/02 17:46:03 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.56 2018/04/02 21:41:33 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -118,6 +118,7 @@ mvclock*	at fdt? early 1
 mvicu*		at fdt? early 1
 mvpinctrl*	at fdt? early 1
 mvgpio*		at fdt?
+mvrng*		at fdt?
 mvrtc*		at fdt?
 
 # Rockchip SoCs
