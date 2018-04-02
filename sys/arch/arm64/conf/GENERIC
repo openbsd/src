@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.63 2018/04/02 16:52:15 patrick Exp $
+# $OpenBSD: GENERIC,v 1.64 2018/04/02 17:46:03 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -87,6 +87,7 @@ wsdisplay*	at simplefb?
 
 # iMX
 imxccm*		at fdt? early 1
+imxiomuxc*	at fdt? early 1
 imxanatop*	at fdt?
 imxgpc*		at fdt?
 imxgpio*	at fdt?

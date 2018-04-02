@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.54 2018/04/02 16:52:15 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.55 2018/04/02 17:46:03 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -94,6 +94,7 @@ wsdisplay*	at simplefb?
 
 # iMX
 imxccm*		at fdt? early 1
+imxiomuxc*	at fdt? early 1
 imxanatop*	at fdt?
 imxgpc*		at fdt?
 imxgpio*	at fdt?
