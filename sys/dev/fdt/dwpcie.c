@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.1 2018/04/02 15:25:27 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.2 2018/04/03 09:31:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -87,7 +87,7 @@ dwpcie_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "snps,dw-pcie");
+	return OF_is_compatible(faa->fa_node, "marvell,armada8k-pcie");
 }
 
 void	dwpcie_atr_init(struct dwpcie_softc *);
