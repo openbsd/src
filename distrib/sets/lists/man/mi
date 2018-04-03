@@ -1155,7 +1155,6 @@
 ./usr/share/man/man4/armv7/cpsw.4
 ./usr/share/man/man4/armv7/dmtimer.4
 ./usr/share/man/man4/armv7/edma.4
-./usr/share/man/man4/armv7/fec.4
 ./usr/share/man/man4/armv7/gptimer.4
 ./usr/share/man/man4/armv7/imxtemp.4
 ./usr/share/man/man4/armv7/intc.4
@@ -1278,6 +1277,7 @@
 ./usr/share/man/man4/exrtc.4
 ./usr/share/man/man4/fd.4
 ./usr/share/man/man4/fdc.4
+./usr/share/man/man4/fec.4
 ./usr/share/man/man4/fins.4
 ./usr/share/man/man4/fintek.4
 ./usr/share/man/man4/fms.4
