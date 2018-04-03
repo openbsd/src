@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.6 2018/02/20 14:46:22 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.7 2018/04/03 08:43:02 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from BSDI $Id: subr_witness.c,v 1.6 2018/02/20 14:46:22 visa Exp $
- *	and BSDI $Id: subr_witness.c,v 1.6 2018/02/20 14:46:22 visa Exp $
+ *	from BSDI $Id: subr_witness.c,v 1.7 2018/04/03 08:43:02 mpi Exp $
+ *	and BSDI $Id: subr_witness.c,v 1.7 2018/04/03 08:43:02 mpi Exp $
  */
 
 /*
@@ -565,7 +565,7 @@ witness_init(struct lock_object *lock, struct lock_type *type)
 	 * it to the pending_locks list.  If it is not too early, then enroll
 	 * the lock now.
 	 */
-	if (witness_watch < 1 || panicstr != NULL ||
+	if (witness_watch < 1 || panicstr != NULL || db_active ||
 	    (lock->lo_flags & LO_WITNESS) == 0)
 		lock->lo_witness = NULL;
 	else if (witness_cold) {
@@ -706,7 +706,7 @@ int
 witness_defineorder(struct lock_object *lock1, struct lock_object *lock2)
 {
 
-	if (witness_watch == -1 || panicstr != NULL)
+	if (witness_watch == -1 || panicstr != NULL || db_active)
 		return (0);
 
 	/* Require locks that witness knows about. */
@@ -745,7 +745,7 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 	int i, j, s;
 
 	if (witness_cold || witness_watch < 1 || panicstr != NULL ||
-	    (lock->lo_flags & LO_WITNESS) == 0)
+	    db_active || (lock->lo_flags & LO_WITNESS) == 0)
 		return;
 
 	w = lock->lo_witness;
@@ -1079,7 +1079,7 @@ witness_lock(struct lock_object *lock, int flags, const char *file, int line)
 	int s;
 
 	if (witness_cold || witness_watch == -1 || panicstr != NULL ||
-	    (lock->lo_flags & LO_WITNESS) == 0)
+	    db_active || (lock->lo_flags & LO_WITNESS) == 0)
 		return;
 
 	w = lock->lo_witness;
@@ -1139,7 +1139,8 @@ witness_upgrade(struct lock_object *lock, int flags, const char *file, int line)
 	int s;
 
 	KASSERTMSG(witness_cold == 0, "%s: witness_cold", __func__);
-	if (lock->lo_witness == NULL || witness_watch == -1 || panicstr != NULL)
+	if (lock->lo_witness == NULL || witness_watch == -1 ||
+	    panicstr != NULL || db_active)
 		return;
 	class = LOCK_CLASS(lock);
 	if (witness_watch) {
@@ -1185,7 +1186,8 @@ witness_downgrade(struct lock_object *lock, int flags, const char *file,
 	int s;
 
 	KASSERTMSG(witness_cold == 0, "%s: witness_cold", __func__);
-	if (lock->lo_witness == NULL || witness_watch == -1 || panicstr != NULL)
+	if (lock->lo_witness == NULL || witness_watch == -1 ||
+	    panicstr != NULL || db_active)
 		return;
 	class = LOCK_CLASS(lock);
 	if (witness_watch) {
@@ -1233,7 +1235,8 @@ witness_unlock(struct lock_object *lock, int flags, const char *file, int line)
 	int i, j;
 	int s;
 
-	if (witness_cold || lock->lo_witness == NULL || panicstr != NULL)
+	if (witness_cold || lock->lo_witness == NULL ||
+	    panicstr != NULL || db_active)
 		return;
 	p = curproc;
 	class = LOCK_CLASS(lock);
@@ -1333,7 +1336,7 @@ witness_thread_exit(struct proc *p)
 	int i, n;
 
 	lle = p->p_sleeplocks;
-	if (lle == NULL || panicstr != NULL)
+	if (lle == NULL || panicstr != NULL || db_active)
 		return;
 	if (lle->ll_count != 0) {
 		for (n = 0; lle != NULL; lle = lle->ll_next)
@@ -1367,7 +1370,7 @@ witness_warn(int flags, struct lock_object *lock, const char *fmt, ...)
 	va_list ap;
 	int i, n;
 
-	if (witness_cold || witness_watch < 1 || panicstr != NULL)
+	if (witness_cold || witness_watch < 1 || panicstr != NULL || db_active)
 		return (0);
 	n = 0;
 	p = curproc;
@@ -1452,7 +1455,7 @@ enroll(struct lock_type *type, const char *subtype,
 
 	KASSERT(type != NULL);
 
-	if (witness_watch == -1 || panicstr != NULL)
+	if (witness_watch == -1 || panicstr != NULL || db_active)
 		return (NULL);
 	if ((lock_class->lc_flags & LC_SPINLOCK)) {
 		if (witness_skipspin)
@@ -1882,7 +1885,8 @@ witness_save(struct lock_object *lock, const char **filep, int *linep)
 	struct lock_class *class;
 
 	KASSERTMSG(witness_cold == 0, "%s: witness_cold", __func__);
-	if (lock->lo_witness == NULL || witness_watch == -1 || panicstr != NULL)
+	if (lock->lo_witness == NULL || witness_watch == -1 ||
+	    panicstr != NULL || db_active)
 		return;
 	class = LOCK_CLASS(lock);
 	if (class->lc_flags & LC_SLEEPLOCK)
@@ -1910,7 +1914,8 @@ witness_restore(struct lock_object *lock, const char *file, int line)
 	struct lock_class *class;
 
 	KASSERTMSG(witness_cold == 0, "%s: witness_cold", __func__);
-	if (lock->lo_witness == NULL || witness_watch == -1 || panicstr != NULL)
+	if (lock->lo_witness == NULL || witness_watch == -1 ||
+	    panicstr != NULL || db_active)
 		return;
 	class = LOCK_CLASS(lock);
 	if (class->lc_flags & LC_SLEEPLOCK)
@@ -1940,7 +1945,8 @@ witness_assert(const struct lock_object *lock, int flags, const char *file,
 	struct lock_instance *instance;
 	struct lock_class *class;
 
-	if (lock->lo_witness == NULL || witness_watch < 1 || panicstr != NULL)
+	if (lock->lo_witness == NULL || witness_watch < 1 ||
+	    panicstr != NULL || db_active)
 		return;
 	class = LOCK_CLASS(lock);
 	if ((class->lc_flags & LC_SLEEPLOCK) != 0)
@@ -2013,7 +2019,8 @@ witness_setflag(struct lock_object *lock, int flag, int set)
 	struct lock_instance *instance;
 	struct lock_class *class;
 
-	if (lock->lo_witness == NULL || witness_watch == -1 || panicstr != NULL)
+	if (lock->lo_witness == NULL || witness_watch == -1 ||
+	    panicstr != NULL || db_active)
 		return;
 	class = LOCK_CLASS(lock);
 	if (class->lc_flags & LC_SLEEPLOCK)
