@@ -116,6 +116,7 @@
 ./usr/include/dev/eisa/eisavar.h
 ./usr/include/dev/fdt
 ./usr/include/dev/fdt/if_mvnetareg.h
+./usr/include/dev/fdt/imxccm_clocks.h
 ./usr/include/dev/fdt/imxiicvar.h
 ./usr/include/dev/fdt/imxuartreg.h
 ./usr/include/dev/fdt/imxuartvar.h

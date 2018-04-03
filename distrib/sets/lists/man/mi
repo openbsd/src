@@ -1249,6 +1249,7 @@
 ./usr/share/man/man4/dwge.4
 ./usr/share/man/man4/dwiic.4
 ./usr/share/man/man4/dwmmc.4
+./usr/share/man/man4/dwpcie.4
 ./usr/share/man/man4/dwxe.4
 ./usr/share/man/man4/eap.4
 ./usr/share/man/man4/ec.4
@@ -1528,6 +1529,7 @@
 ./usr/share/man/man4/mvicu.4
 ./usr/share/man/man4/mvneta.4
 ./usr/share/man/man4/mvpinctrl.4
+./usr/share/man/man4/mvrng.4
 ./usr/share/man/man4/mvrtc.4
 ./usr/share/man/man4/mvtemp.4
 ./usr/share/man/man4/myx.4
