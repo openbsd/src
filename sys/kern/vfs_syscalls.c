@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.278 2018/04/03 09:07:54 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.279 2018/04/03 09:10:02 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1616,12 +1616,12 @@ sys_lseek(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
-	if (fp->f_type != DTYPE_VNODE)
-		return (ESPIPE);
-	vp = fp->f_data;
-	if (vp->v_type == VFIFO)
-		return (ESPIPE);
 	FREF(fp);
+	vp = fp->f_data;
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+		error = ESPIPE;
+		goto bad;
+	}
 	if (vp->v_type == VCHR)
 		special = 1;
 	else
@@ -2900,15 +2900,19 @@ getvnode(struct proc *p, int fd, struct file **fpp)
 
 	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
 		return (EBADF);
+	FREF(fp);
 
-	if (fp->f_type != DTYPE_VNODE)
+	if (fp->f_type != DTYPE_VNODE) {
+		FRELE(fp, p);
 		return (EINVAL);
+	}
 
 	vp = fp->f_data;
-	if (vp->v_type == VBAD)
+	if (vp->v_type == VBAD) {
+		FRELE(fp, p);
 		return (EBADF);
+	}
 
-	FREF(fp);
 	*fpp = fp;
 
 	return (0);

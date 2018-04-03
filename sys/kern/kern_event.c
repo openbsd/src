@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.84 2018/01/13 12:58:40 robert Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.85 2018/04/03 09:10:02 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -479,11 +479,14 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	int i, n, nerrors, error;
 	struct kevent kev[KQ_NEVENTS];
 
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL ||
-	    (fp->f_type != DTYPE_KQUEUE))
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
-
 	FREF(fp);
+
+	if (fp->f_type != DTYPE_KQUEUE) {
+		error = EBADF;
+		goto done;
+	}
 
 	if (SCARG(uap, timeout) != NULL) {
 		error = copyin(SCARG(uap, timeout), &ts, sizeof(ts));
