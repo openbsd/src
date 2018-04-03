@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.31 2016/07/11 00:27:50 rzalamena Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.32 2018/04/03 01:57:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -182,6 +182,7 @@ int
 ether_encap_print(u_short ethertype, const u_char *p,
     u_int length, u_int caplen)
 {
+	uint16_t vlan, pri, vid;
 recurse:
 	extracted_ethertype = ethertype;
 
@@ -221,10 +222,17 @@ recurse:
 	case ETHERTYPE_QINQ:
 		if (ethertype == ETHERTYPE_QINQ)
 			printf("QinQ s");
-		printf("vid %d pri %d%s",
-		       ntohs(*(unsigned short*)p)&0xFFF,
-		       ntohs(*(unsigned short*)p)>>13,
-		       (ntohs(*(unsigned short*)p)&0x1000) ? " cfi " : " ");
+
+		/* XXX caplen check */
+
+		vlan = ntohs(*(unsigned short*)p);
+		vid = vlan & 0xfff;
+		pri = vlan >> 13;
+		if (pri <= 1)
+			pri = !pri;
+
+		printf("vid %d pri %d%s", vid, pri,
+		    vlan & 0x1000 ? " cfi " : " ");
 		ethertype = ntohs(*(unsigned short*)(p+2));
 		p += 4;
 		length -= 4;
