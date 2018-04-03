@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.46 2018/03/17 16:20:01 beck Exp $ */
+/* $OpenBSD: err.c,v 1.47 2018/04/03 21:59:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1107,7 +1107,8 @@ ERR_set_error_data(char *data, int flags)
 }
 
 void
-ERR_asprintf_error_data(char * format, ...) {
+ERR_asprintf_error_data(char * format, ...)
+{
 	char *errbuf = NULL;
 	va_list ap;
 	int r;
