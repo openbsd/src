@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcore.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: kcore.h,v 1.5 2018/04/03 07:13:37 mlarkin Exp $	*/
 /*	$NetBSD: kcore.h,v 1.1 2003/04/26 18:39:43 fvdl Exp $	*/
 
 /*
@@ -42,9 +42,6 @@
 typedef struct cpu_kcore_hdr {
 	u_int64_t	ptdpaddr;		/* PA of PML4 */
 	u_int64_t	nmemsegs;		/* Number of RAM segments */
-#if 0
-	phys_ram_seg_t  memsegs[];		/* RAM segments */
-#endif
 } cpu_kcore_hdr_t;
 
 #endif /* _MACHINE_KCORE_H_ */
