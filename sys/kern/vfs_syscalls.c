@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.277 2018/03/28 09:47:52 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.278 2018/04/03 09:07:54 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -745,10 +745,14 @@ sys_fchdir(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
+	FREF(fp);
 	vp = fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type != VDIR)
+	if (fp->f_type != DTYPE_VNODE || vp->v_type != VDIR) {
+		FRELE(fp, p);
 		return (ENOTDIR);
+	}
 	vref(vp);
+	FRELE(fp, p);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
 
