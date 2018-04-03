@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.176 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.177 2018/04/03 02:52:50 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -261,9 +261,10 @@ vlan_start(struct ifqueue *ifq)
 			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER > 0 */
 
+		prio = ISSET(ifp->if_flags, IFF_LINK0) ?
+		    ifp->if_llprio : m->m_pkthdr.pf.prio;
 
 		/* IEEE 802.1p has prio 0 and 1 swapped */
-		prio = m->m_pkthdr.pf.prio;
 		if (prio <= 1)
 			prio = !prio;
 
