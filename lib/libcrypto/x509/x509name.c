@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.15 2018/03/17 15:28:27 tb Exp $ */
+/* $OpenBSD: x509name.c,v 1.16 2018/04/04 11:59:26 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -249,17 +249,15 @@ X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc, int set)
 		loc = n;
 	else if (loc < 0)
 		loc = n;
-
+	inc = (set == 0);
 	name->modified = 1;
 
 	if (set == -1) {
 		if (loc == 0) {
 			set = 0;
 			inc = 1;
-		} else {
+		} else
 			set = sk_X509_NAME_ENTRY_value(sk, loc - 1)->set;
-			inc = 0;
-		}
 	} else /* if (set >= 0) */ {
 		if (loc >= n) {
 			if (loc != 0)
@@ -268,7 +266,6 @@ X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc, int set)
 				set = 0;
 		} else
 			set = sk_X509_NAME_ENTRY_value(sk, loc)->set;
-		inc = (set == 0) ? 1 : 0;
 	}
 
 	if ((new_name = X509_NAME_ENTRY_dup(ne)) == NULL)
@@ -281,7 +278,7 @@ X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc, int set)
 	if (inc) {
 		n = sk_X509_NAME_ENTRY_num(sk);
 		for (i = loc + 1; i < n; i++)
-			sk_X509_NAME_ENTRY_value(sk, i - 1)->set += 1;
+			sk_X509_NAME_ENTRY_value(sk, i)->set += 1;
 	}
 	return (1);
 
