@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.271 2018/03/16 20:41:19 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.272 2018/04/05 09:16:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -989,10 +989,10 @@ post_lb(POST_ARGS)
 	mdoc->next = ROFF_NEXT_CHILD;
 	roff_word_alloc(mdoc, n->line, n->pos, "library");
 	mdoc->last->flags = NODE_NOSRC;
-	roff_word_alloc(mdoc, n->line, n->pos, "\\(Lq");
+	roff_word_alloc(mdoc, n->line, n->pos, "\\(lq");
 	mdoc->last->flags = NODE_DELIMO | NODE_NOSRC;
 	mdoc->last = mdoc->last->next;
-	roff_word_alloc(mdoc, n->line, n->pos, "\\(Rq");
+	roff_word_alloc(mdoc, n->line, n->pos, "\\(rq");
 	mdoc->last->flags = NODE_DELIMC | NODE_NOSRC;
 	mdoc->last = n;
 }
