@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.122 2018/04/05 08:46:29 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.123 2018/04/05 22:04:37 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1406,7 +1406,7 @@ pre_it(DECL_ARGS)
 			if (bln->norm->Bl.type == LIST_diag)
 				print_line(".B \"", 0);
 			else
-				print_line(".R \"", 0);
+				print_line(".BR \\& \"", 0);
 			outflags &= ~MMAN_spc;
 			return 1;
 		case LIST_bullet:
