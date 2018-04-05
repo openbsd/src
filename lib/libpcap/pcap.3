@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.46 2016/10/17 02:54:40 lteo Exp $
+.\"	$OpenBSD: pcap.3,v 1.47 2018/04/05 03:47:27 lteo Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: October 17 2016 $
+.Dd $Mdocdate: April 5 2018 $
 .Dt PCAP_OPEN_LIVE 3
 .Os
 .Sh NAME
@@ -78,6 +78,7 @@
 .Nm pcap_set_rfmon ,
 .Nm pcap_set_timeout ,
 .Nm pcap_set_buffer_size ,
+.Nm pcap_set_immediate_mode ,
 .Nm pcap_activate ,
 .Nm pcap_statustostr ,
 .Nm pcap_offline_filter
@@ -194,6 +195,8 @@
 .Fn pcap_set_timeout "pcap_t *p" "int timeout_ms"
 .Ft int
 .Fn pcap_set_buffer_size "pcap_t *p" "int buffer_size"
+.Ft int
+.Fn pcap_set_immediate_mode "pcap_t *p" "int immediate"
 .Ft int
 .Fn pcap_activate "pcap_t *p"
 .Ft const char *
@@ -613,6 +616,13 @@ sets the buffer size that will be used on a capture handle when the
 handle is activated to
 .Fa buffer_size ,
 which is in units of bytes.
+.Pp
+.Fn pcap_set_immediate_mode
+sets whether immediate mode should be set on a capture handle when
+the handle is activated.
+If
+.Fa immediate
+is non-zero, immediate mode will be set, otherwise it will not be set.
 .Pp
 .Fn pcap_activate
 is used to activate a packet capture handle to look at

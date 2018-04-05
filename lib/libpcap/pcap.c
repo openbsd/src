@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.c,v 1.22 2018/02/06 02:55:48 dlg Exp $	*/
+/*	$OpenBSD: pcap.c,v 1.23 2018/04/05 03:47:27 lteo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -219,6 +219,15 @@ pcap_set_timeout(pcap_t *p, int timeout_ms)
 	if (pcap_check_activated(p))
 		return PCAP_ERROR_ACTIVATED;
 	p->md.timeout = timeout_ms;
+	return 0;
+}
+
+int
+pcap_set_immediate_mode(pcap_t *p, int immediate)
+{
+	if (pcap_check_activated(p))
+		return PCAP_ERROR_ACTIVATED;
+	p->opt.immediate = immediate;
 	return 0;
 }
 

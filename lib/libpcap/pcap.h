@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.h,v 1.18 2016/04/06 08:02:56 jasper Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.19 2018/04/05 03:47:27 lteo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -168,6 +168,7 @@ int	pcap_set_promisc(pcap_t *, int);
 int	pcap_can_set_rfmon(pcap_t *);
 int	pcap_set_rfmon(pcap_t *, int);
 int	pcap_set_timeout(pcap_t *, int);
+int	pcap_set_immediate_mode(pcap_t *, int);
 int	pcap_set_buffer_size(pcap_t *, int);
 int	pcap_activate(pcap_t *);
 

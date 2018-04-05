@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.35 2017/04/19 05:36:12 natano Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.36 2018/04/05 03:47:27 lteo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -565,6 +565,16 @@ pcap_activate(pcap_t *p)
 		}
 	}
 
+	if (p->opt.immediate) {
+		v = 1;
+		if (ioctl(p->fd, BIOCIMMEDIATE, &v) < 0) {
+			snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
+			    "BIOCIMMEDIATE: %s", pcap_strerror(errno));
+			status = PCAP_ERROR;
+			goto bad;
+		}
+	}
+
 	if (p->opt.promisc) {
 		/* set promiscuous mode, just warn if it fails */
 		if (ioctl(p->fd, BIOCPROMISC, NULL) < 0) {
@@ -846,6 +856,7 @@ pcap_create(const char *device, char *errbuf)
 	pcap_set_snaplen(p, 65535);	/* max packet size */
 	p->opt.promisc = 0;
 	p->opt.buffer_size = 0;
+	p->opt.immediate = 0;
 	return (p);
 }
 
