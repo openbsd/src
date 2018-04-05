@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.331 2018/02/08 02:25:44 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.332 2018/04/05 03:28:20 lteo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2251,7 +2251,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					goto fail;
 				}
 				break;
-			default:
+			case PF_TRANS_RULESET:
 				if ((error = pf_begin_rules(&ioe->ticket,
 				    ioe->anchor))) {
 					free(table, M_TEMP, sizeof(*table));
@@ -2260,6 +2260,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					goto fail;
 				}
 				break;
+			default:
+				free(table, M_TEMP, sizeof(*table));
+				free(ioe, M_TEMP, sizeof(*ioe));
+				error = EINVAL;
+				PF_UNLOCK();
+				goto fail;
 			}
 			if (copyout(ioe, io->array+i, sizeof(io->array[i]))) {
 				free(table, M_TEMP, sizeof(*table));
@@ -2317,7 +2323,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					goto fail; /* really bad */
 				}
 				break;
-			default:
+			case PF_TRANS_RULESET:
 				if ((error = pf_rollback_rules(ioe->ticket,
 				    ioe->anchor))) {
 					free(table, M_TEMP, sizeof(*table));
@@ -2326,6 +2332,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					goto fail; /* really bad */
 				}
 				break;
+			default:
+				free(table, M_TEMP, sizeof(*table));
+				free(ioe, M_TEMP, sizeof(*ioe));
+				error = EINVAL;
+				PF_UNLOCK();
+				goto fail; /* really bad */
 			}
 		}
 		free(table, M_TEMP, sizeof(*table));
@@ -2377,7 +2389,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					goto fail;
 				}
 				break;
-			default:
+			case PF_TRANS_RULESET:
 				rs = pf_find_ruleset(ioe->anchor);
 				if (rs == NULL ||
 				    !rs->rules.inactive.open ||
@@ -2390,6 +2402,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					goto fail;
 				}
 				break;
+			default:
+				free(table, M_TEMP, sizeof(*table));
+				free(ioe, M_TEMP, sizeof(*ioe));
+				error = EINVAL;
+				PF_UNLOCK();
+				goto fail;
 			}
 		}
 
@@ -2437,7 +2455,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					goto fail; /* really bad */
 				}
 				break;
-			default:
+			case PF_TRANS_RULESET:
 				if ((error = pf_commit_rules(ioe->ticket,
 				    ioe->anchor))) {
 					free(table, M_TEMP, sizeof(*table));
@@ -2446,6 +2464,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					goto fail; /* really bad */
 				}
 				break;
+			default:
+				free(table, M_TEMP, sizeof(*table));
+				free(ioe, M_TEMP, sizeof(*ioe));
+				error = EINVAL;
+				PF_UNLOCK();
+				goto fail; /* really bad */
 			}
 		}
 		for (i = 0; i < PF_LIMIT_MAX; i++) {
