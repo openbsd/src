@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2018/04/06 14:44:04 patrick Exp $
 
 LIB=	LLVMScalarOpts
 NOPIC=
@@ -11,11 +11,13 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms/Scalar
 SRCS=	ADCE.cpp \
 	AlignmentFromAssumptions.cpp \
 	BDCE.cpp \
+	CallSiteSplitting.cpp \
 	ConstantHoisting.cpp \
 	ConstantProp.cpp \
 	CorrelatedValuePropagation.cpp \
 	DCE.cpp \
 	DeadStoreElimination.cpp \
+	DivRemPairs.cpp \
 	EarlyCSE.cpp \
 	FlattenCFGPass.cpp \
 	Float2Int.cpp \
@@ -50,6 +52,7 @@ SRCS=	ADCE.cpp \
 	LowerExpectIntrinsic.cpp \
 	LowerGuardIntrinsic.cpp \
 	MemCpyOptimizer.cpp \
+	MergeICmps.cpp \
 	MergedLoadStoreMotion.cpp \
 	NaryReassociate.cpp \
 	NewGVN.cpp \
@@ -66,6 +69,7 @@ SRCS=	ADCE.cpp \
 	SimpleLoopUnswitch.cpp \
 	SimplifyCFGPass.cpp \
 	Sink.cpp \
+	SpeculateAroundPHIs.cpp \
 	SpeculativeExecution.cpp \
 	StraightLineStrengthReduce.cpp \
 	StructurizeCFG.cpp \

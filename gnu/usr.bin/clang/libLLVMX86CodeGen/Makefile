@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2018/04/06 14:44:04 patrick Exp $
 
 LIB=	LLVMX86CodeGen
 NOPIC=
@@ -9,8 +9,10 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/X86 -I${LLVM_SRCS}/lib/Target/X86
 .include <bsd.own.mk>
 SRCS=	X86AsmPrinter.cpp \
 	X86CallFrameOptimization.cpp \
+	X86CallLowering.cpp \
 	X86CallingConv.cpp \
 	X86CmovConversion.cpp \
+	X86DomainReassignment.cpp \
 	X86EvexToVex.cpp \
 	X86ExpandPseudo.cpp \
 	X86FastISel.cpp \
@@ -23,12 +25,16 @@ SRCS=	X86AsmPrinter.cpp \
 	X86ISelLowering.cpp \
 	X86InstrFMA3Info.cpp \
 	X86InstrInfo.cpp \
+	X86InstructionSelector.cpp \
 	X86InterleavedAccess.cpp \
+	X86LegalizerInfo.cpp \
 	X86MCInstLower.cpp \
 	X86MachineFunctionInfo.cpp \
 	X86MacroFusion.cpp \
 	X86PadShortFunction.cpp \
+	X86RegisterBankInfo.cpp \
 	X86RegisterInfo.cpp \
+	X86RetpolineThunks.cpp \
 	X86SelectionDAGInfo.cpp \
 	X86ShuffleDecodeConstantPool.cpp \
 	X86Subtarget.cpp \

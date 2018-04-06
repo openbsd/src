@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.14 2017/12/24 23:29:52 patrick Exp $
+# $OpenBSD: Makefile,v 1.15 2018/04/06 14:44:04 patrick Exp $
 
 .include <bsd.own.mk>
 
-LLVM_V=			5.0.1
+LLVM_V=			6.0.0
 CLANG_INTR_INCDIR=	/usr/lib/clang/${LLVM_V}/include
 
 TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/10/11 12:46:03 kettenis Exp $
+# $OpenBSD: Makefile,v 1.5 2018/04/06 14:44:04 patrick Exp $
 
 LIB=	LLVMARMCodeGen
 NOPIC=
@@ -11,6 +11,7 @@ SRCS=	A15SDOptimizer.cpp \
 	ARMAsmPrinter.cpp \
 	ARMBaseInstrInfo.cpp \
 	ARMBaseRegisterInfo.cpp \
+	ARMCallLowering.cpp \
 	ARMComputeBlockSize.cpp \
 	ARMConstantIslandPass.cpp \
 	ARMConstantPoolValue.cpp \
@@ -21,10 +22,13 @@ SRCS=	A15SDOptimizer.cpp \
 	ARMISelDAGToDAG.cpp \
 	ARMISelLowering.cpp \
 	ARMInstrInfo.cpp \
+	ARMInstructionSelector.cpp \
+	ARMLegalizerInfo.cpp \
 	ARMLoadStoreOptimizer.cpp \
 	ARMMCInstLower.cpp \
 	ARMMachineFunctionInfo.cpp \
 	ARMMacroFusion.cpp \
+	ARMRegisterBankInfo.cpp \
 	ARMRegisterInfo.cpp \
 	ARMOptimizeBarriersPass.cpp \
 	ARMSelectionDAGInfo.cpp \

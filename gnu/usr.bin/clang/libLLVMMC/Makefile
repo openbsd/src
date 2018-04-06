@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2018/04/06 14:44:04 patrick Exp $
 
 LIB=	LLVMMC
 NOPIC=
@@ -18,6 +18,7 @@ SRCS=	ConstantPools.cpp \
 	MCAssembler.cpp \
 	MCCodeEmitter.cpp \
 	MCCodeView.cpp \
+	MCCodePadder.cpp \
 	MCContext.cpp \
 	MCDwarf.cpp \
 	MCELFObjectTargetWriter.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2018/04/06 14:44:04 patrick Exp $
 
 LIB=	LLVMAArch64CodeGen
 NOPIC=
@@ -11,9 +11,11 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/AArch64 \
 SRCS=	AArch64A57FPLoadBalancing.cpp \
 	AArch64AdvSIMDScalarPass.cpp \
 	AArch64AsmPrinter.cpp \
+	AArch64CallLowering.cpp \
 	AArch64CleanupLocalDynamicTLSPass.cpp \
 	AArch64CollectLOH.cpp \
 	AArch64CondBrTuning.cpp \
+	AArch64ConditionOptimizer.cpp \
 	AArch64ConditionalCompares.cpp \
 	AArch64DeadRegisterDefinitionsPass.cpp \
 	AArch64ExpandPseudoInsts.cpp \
@@ -21,24 +23,26 @@ SRCS=	AArch64A57FPLoadBalancing.cpp \
 	AArch64FastISel.cpp \
 	AArch64A53Fix835769.cpp \
 	AArch64FrameLowering.cpp \
-	AArch64ConditionOptimizer.cpp \
 	AArch64ISelDAGToDAG.cpp \
 	AArch64ISelLowering.cpp \
 	AArch64InstrInfo.cpp \
+	AArch64InstructionSelector.cpp \
+	AArch64LegalizerInfo.cpp \
 	AArch64LoadStoreOptimizer.cpp \
 	AArch64MacroFusion.cpp \
 	AArch64MCInstLower.cpp \
 	AArch64PromoteConstant.cpp \
 	AArch64PBQPRegAlloc.cpp \
 	AArch64RedundantCopyElimination.cpp \
+	AArch64RegisterBankInfo.cpp \
 	AArch64RegisterInfo.cpp \
+	AArch64SIMDInstrOpt.cpp \
 	AArch64SelectionDAGInfo.cpp \
 	AArch64StorePairSuppress.cpp \
 	AArch64Subtarget.cpp \
 	AArch64TargetMachine.cpp \
 	AArch64TargetObjectFile.cpp \
-	AArch64TargetTransformInfo.cpp \
-	AArch64VectorByElementOpt.cpp
+	AArch64TargetTransformInfo.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Target/AArch64
 

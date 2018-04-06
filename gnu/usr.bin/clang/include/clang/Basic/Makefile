@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2018/04/06 14:44:04 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,10 @@ CLANG_INC=${.CURDIR}/../../../../../llvm/tools/clang/include
 
 GEN= AttrList.inc DiagnosticASTKinds.inc DiagnosticAnalysisKinds.inc
 GEN+=DiagnosticCommentKinds.inc DiagnosticCommonKinds.inc
+GEN+=DiagnosticCrossTUKinds.inc
 GEN+=DiagnosticDriverKinds.inc DiagnosticFrontendKinds.inc DiagnosticGroups.inc
 GEN+=DiagnosticIndexName.inc DiagnosticLexKinds.inc DiagnosticParseKinds.inc
+GEN+=DiagnosticRefactoringKinds.inc
 GEN+=DiagnosticSemaKinds.inc DiagnosticSerializationKinds.inc arm_neon.inc
 GEN+=AttrHasAttributeImpl.inc AttrSubMatchRulesList.inc
 
@@ -23,10 +25,13 @@ clean cleandir:
 AttrList.inc: ${CLANG_INC}/clang/Basic/Attr.td
 	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-list -o ${.TARGET} ${.ALLSRC}
 
-.for _comp in AST Analysis Comment Common Driver Frontend Lex Parse Sema Serialization
+.for _comp in AST Analysis Comment Common CrossTU Driver Frontend Lex Parse \
+	Refactoring Sema Serialization
+
 Diagnostic${_comp}Kinds.inc: ${CLANG_INC}/clang/Basic/Diagnostic.td
 	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-clang-diags-defs \
 		-clang-component=${_comp} -o ${.TARGET} ${.ALLSRC}
+
 .endfor
 
 DiagnosticGroups.inc: ${CLANG_INC}/clang/Basic/Diagnostic.td
