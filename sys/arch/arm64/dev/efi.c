@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.3 2018/01/12 14:52:55 kettenis Exp $	*/
+/*	$OpenBSD: efi.c,v 1.4 2018/04/06 19:09:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -125,7 +125,7 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 			vaddr_t va = desc->VirtualStart;
 			paddr_t pa = desc->PhysicalStart;
 			int npages = desc->NumberOfPages;
-			vm_prot_t prot = PROT_READ;
+			vm_prot_t prot = PROT_READ | PROT_WRITE;
 
 #ifdef EFI_DEBUG
 			printf("type 0x%x pa 0x%llx va 0x%llx pages 0x%llx attr 0x%llx\n",
@@ -142,10 +142,20 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 			if ((desc->Attribute & EFI_MEMORY_WB) == 0)
 				pa |= PMAP_DEVICE;
 
+			/*
+			 * Only make pages marked as runtime service code
+			 * executable.  This violates the standard but it
+			 * seems we can get away with it.
+			 */
 			if (desc->Type == EfiRuntimeServicesCode)
 				prot |= PROT_EXEC;
-			else
-				prot |= PROT_WRITE;
+
+			if (desc->Attribute & EFI_MEMORY_RP)
+				prot &= ~PROT_READ;
+			if (desc->Attribute & EFI_MEMORY_XP)
+				prot &= ~PROT_EXEC;
+			if (desc->Attribute & EFI_MEMORY_RO)
+				prot &= ~PROT_WRITE;
 
 			while (npages--) {
 				pmap_enter(sc->sc_pm, va, pa, prot,
