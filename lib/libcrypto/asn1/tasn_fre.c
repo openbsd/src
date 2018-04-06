@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_fre.c,v 1.15 2016/12/30 16:04:34 jsing Exp $ */
+/* $OpenBSD: tasn_fre.c,v 1.16 2018/04/06 12:16:06 bluhm Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -88,7 +88,10 @@ asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int combine)
 	ASN1_aux_cb *asn1_cb = NULL;
 	int i;
 
-	if (pval == NULL || *pval == NULL)
+	if (pval == NULL)
+		return;
+	/* For primitive types *pval may be something other than C pointer. */
+	if (it->itype != ASN1_ITYPE_PRIMITIVE && *pval == NULL)
 		return;
 
 	if (aux != NULL && aux->asn1_cb != NULL)
