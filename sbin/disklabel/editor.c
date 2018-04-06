@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.327 2018/03/08 22:05:17 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.328 2018/04/06 13:57:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1127,9 +1127,6 @@ getuint64(struct disklabel *lp, char *prompt, char *helpstring,
 	size_t n;
 	double d, percent = 1.0;
 
-	/* We only care about the remainder */
-	offset = offset % lp->d_secpercyl;
-
 	buf[0] = '\0';
 	do {
 		printf("%s: [%llu] ", prompt, oval);
@@ -1261,16 +1258,19 @@ getuint64(struct disklabel *lp, char *prompt, char *helpstring,
 		    mult != 1 &&
 #endif
 		    (rval + offset) % lp->d_secpercyl != 0) {
-			u_int64_t cyls;
+			u_int64_t nextcyl, lastcyl;
+			u_int32_t secpercyl = lp->d_secpercyl;
 
-			/* Round to higher cylinder but no more than maxval */
-			cyls = (rval / lp->d_secpercyl) + 1;
-			if ((cyls * lp->d_secpercyl) - offset > maxval)
-				cyls--;
-			rval = (cyls * lp->d_secpercyl) - offset;
+			/* Round to start of next cylinder <= maxval */
+			nextcyl = ((offset + rval + secpercyl - 1) / secpercyl)
+			    * secpercyl;
+			lastcyl = (maxval / secpercyl) * secpercyl;
+			if (nextcyl > lastcyl)
+				nextcyl = lastcyl;
+			rval = nextcyl - offset;
 			if (!quiet)
-				printf("Rounding size to cylinder (%d sectors)"
-				    ": %llu\n", lp->d_secpercyl, rval);
+				printf("Rounding %s to cylinder (%d sectors)"
+				    ": %llu\n", prompt, lp->d_secpercyl, rval);
 		}
 	}
 
