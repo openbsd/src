@@ -193,6 +193,7 @@
 ./usr/lib/clang/6.0.0/include/bmi2intrin.h
 ./usr/lib/clang/6.0.0/include/bmiintrin.h
 ./usr/lib/clang/6.0.0/include/clflushoptintrin.h
+./usr/lib/clang/6.0.0/include/clwbintrin.h
 ./usr/lib/clang/6.0.0/include/clzerointrin.h
 ./usr/lib/clang/6.0.0/include/cpuid.h
 ./usr/lib/clang/6.0.0/include/emmintrin.h
