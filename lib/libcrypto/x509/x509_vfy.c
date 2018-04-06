@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.68 2018/02/22 17:11:30 jsing Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.69 2018/04/06 07:08:20 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -182,10 +182,13 @@ check_id_error(X509_STORE_CTX *ctx, int errcode)
 static int
 check_hosts(X509 *x, X509_VERIFY_PARAM_ID *id)
 {
-	size_t i;
-	size_t n = sk_OPENSSL_STRING_num(id->hosts);
+	size_t i, n;
 	char *name;
 
+	if (id->poisoned)
+		return 0;
+
+	n = sk_OPENSSL_STRING_num(id->hosts);
 	free(id->peername);
 	id->peername = NULL;
 
@@ -204,6 +207,10 @@ check_id(X509_STORE_CTX *ctx)
 	X509_VERIFY_PARAM *vpm = ctx->param;
 	X509_VERIFY_PARAM_ID *id = vpm->id;
 	X509 *x = ctx->cert;
+
+	if (id->poisoned)
+		if (!check_id_error(ctx, X509_V_ERR_INVALID_CALL))
+			return 0;
 
 	if (id->hosts && check_hosts(x, id) <= 0) {
 		if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
