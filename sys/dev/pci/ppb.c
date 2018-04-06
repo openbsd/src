@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.65 2015/12/01 21:02:04 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.66 2018/04/06 13:59:30 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -620,14 +620,18 @@ ppb_alloc_resources(struct ppb_softc *sc, struct pci_attach_args *pa)
 	csr = pci_conf_read(pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
 
 	/*
-	 * Get the bridge in a consistent state.  If memory mapped I/O
-	 * is disabled, disabled the associated windows as well.  
+	 * Get the bridge in a consistent state.  If memory mapped I/O or
+	 * port I/O is disabled, disabled the associated windows as well.
 	 */
 	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0) {
 		pci_conf_write(pc, sc->sc_tag, PPB_REG_MEM, 0x0000ffff);
 		pci_conf_write(pc, sc->sc_tag, PPB_REG_PREFMEM, 0x0000ffff);
 		pci_conf_write(pc, sc->sc_tag, PPB_REG_PREFBASE_HI32, 0);
 		pci_conf_write(pc, sc->sc_tag, PPB_REG_PREFLIM_HI32, 0);
+	}
+	if ((csr & PCI_COMMAND_IO_ENABLE) == 0) {
+		pci_conf_write(pc, sc->sc_tag, PPB_REG_IOSTATUS, 0x000000ff);
+		pci_conf_write(pc, sc->sc_tag, PPB_REG_IO_HI, 0x0000ffff);
 	}
 
 	/* Allocate I/O address space if necessary. */
