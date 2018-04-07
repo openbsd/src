@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.90 2017/11/30 16:14:30 jmc Exp $
+.\"	$OpenBSD: iic.4,v 1.91 2018/04/07 20:52:52 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2017 $
+.Dd $Mdocdate: April 7 2018 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -151,6 +151,8 @@ Genesys Logic GL518SM temperature, voltage, and fan sensor
 Atmel maXTouch touchpad and touchscreen
 .It Xr ihidev 4
 HID over I2C support
+.It Xr islrtc 4
+Intersil ISL1208/1218 Real Time Clock
 .It Xr lisa 4
 STMicroelectronics LIS331DL MEMS motion sensor
 .It Xr lm 4
@@ -163,6 +165,8 @@ National Semiconductor LM93 temperature, voltage, and fan sensor
 National Semiconductor LM75/LM76/LM77 temperature sensor
 .It Xr maxds 4
 Maxim DS1624/DS1631/DS1721 temperature sensor
+.It Xr maxrtc 4
+Maxim DS1307 Real Time Clock
 .It Xr maxtmp 4
 Maxim MAX6642/MAX6690 temperature sensor
 .It Xr mfokclock 4
