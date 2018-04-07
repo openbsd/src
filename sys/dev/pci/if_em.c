@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.339 2018/03/16 06:30:50 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.340 2018/04/07 11:52:24 sf Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -557,6 +557,9 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	if (!defer)
 		em_update_link_status(sc);
 
+#ifdef EM_DEBUG
+	printf(", mac %#x phy %#x", sc->hw.mac_type, sc->hw.phy_type);
+#endif
 	printf(", address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	/* Indicate SOL/IDER usage */
@@ -1860,8 +1863,8 @@ em_hardware_init(struct em_softc *sc)
 			INIT_DEBUGOUT("\nHardware Initialization Deferred ");
 			return (EAGAIN);
 		}
-		printf("\n%s: Hardware Initialization Failed\n",
-		       DEVNAME(sc));
+		printf("\n%s: Hardware Initialization Failed: %d\n",
+		       DEVNAME(sc), ret_val);
 		return (EIO);
 	}
 
