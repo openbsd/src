@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.79 2018/03/19 16:34:47 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.80 2018/04/07 16:30:59 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -41,8 +41,7 @@ static int tls_init_rv = -1;
 static void
 tls_do_init(void)
 {
-	SSL_load_error_strings();
-	SSL_library_init();
+	OPENSSL_init_ssl(OPENSSL_INIT_NO_LOAD_CONFIG, NULL);
 
 	if (BIO_sock_init() != 1)
 		return;
