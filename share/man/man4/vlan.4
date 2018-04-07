@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.48 2018/04/03 02:56:57 dlg Exp $
+.\" $OpenBSD: vlan.4,v 1.49 2018/04/07 13:34:39 jmc Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 3 2018 $
+.Dd $Mdocdate: April 7 2018 $
 .Dt VLAN 4
 .Os
 .Sh NAME
@@ -84,7 +84,7 @@ identifiers, and decapsulated for reception on the associated virtual
 interfaces.
 .Pp
 The 802.1Q and 802.1ad protocols include a priority field.
-By default, the priority of transmitted packet is based on the
+By default, the priority of a transmitted packet is based on the
 priority of packets sent over the interface, which may
 be altered via
 .Xr pf.conf 5 ;
@@ -93,7 +93,7 @@ see the
 option for more information.
 Alternatively, the
 .Cm link0
-flag may be set use the interfaces
+flag may be set to use the interface's
 .Cm llprio
 value for transmitted packets.
 .Pp
