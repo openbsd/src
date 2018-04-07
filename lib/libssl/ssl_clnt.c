@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.23 2018/02/08 11:30:30 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.24 2018/04/07 16:55:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -510,15 +510,8 @@ ssl3_connect(SSL *s)
 			S3I(s)->hs.state = SSL3_ST_CW_FLUSH;
 
 			/* clear flags */
-			s->s3->flags &= ~SSL3_FLAGS_POP_BUFFER;
 			if (s->internal->hit) {
 				S3I(s)->hs.next_state = SSL_ST_OK;
-				if (s->s3->flags &
-				    SSL3_FLAGS_DELAY_CLIENT_FINISHED) {
-					S3I(s)->hs.state = SSL_ST_OK;
-					s->s3->flags |= SSL3_FLAGS_POP_BUFFER;
-					S3I(s)->delay_buf_pop_ret = 0;
-				}
 			} else {
 				/* Allow NewSessionTicket if ticket expected */
 				if (s->internal->tlsext_ticket_expected)
@@ -595,13 +588,7 @@ ssl3_connect(SSL *s)
 				s->internal->init_buf = NULL;
 			}
 
-			/*
-			 * If we are not 'joining' the last two packets,
-			 * remove the buffering now
-			 */
-			if (!(s->s3->flags & SSL3_FLAGS_POP_BUFFER))
-				ssl_free_wbio_buffer(s);
-			/* else do it later in ssl3_write */
+			ssl_free_wbio_buffer(s);
 
 			s->internal->init_num = 0;
 			s->internal->renegotiate = 0;
