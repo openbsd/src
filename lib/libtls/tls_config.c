@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.51 2018/03/20 15:40:10 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.52 2018/04/07 16:35:34 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -189,10 +189,7 @@ tls_config_clear_keys(struct tls_config *config)
 	struct tls_keypair *kp;
 
 	for (kp = config->keypair; kp != NULL; kp = kp->next)
-		tls_keypair_clear(kp);
-
-	tls_config_set_ca_mem(config, NULL, 0);
-	tls_config_set_crl_mem(config, NULL, 0);
+		tls_keypair_clear_key(kp);
 }
 
 int

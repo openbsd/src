@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_keypair.c,v 1.5 2018/02/10 04:57:35 jsing Exp $ */
+/* $OpenBSD: tls_keypair.c,v 1.6 2018/04/07 16:35:34 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -29,14 +29,6 @@ tls_keypair_new(void)
 	return calloc(1, sizeof(struct tls_keypair));
 }
 
-static void
-tls_keypair_clear_key(struct tls_keypair *keypair)
-{
-	freezero(keypair->key_mem, keypair->key_len);
-	keypair->key_mem = NULL;
-	keypair->key_len = 0;
-}
-
 static int
 tls_keypair_pubkey_hash(struct tls_keypair *keypair, struct tls_error *error)
 {
@@ -62,6 +54,14 @@ tls_keypair_pubkey_hash(struct tls_keypair *keypair, struct tls_error *error)
 	X509_free(cert);
  done:
 	return (rv);
+}
+
+void
+tls_keypair_clear_key(struct tls_keypair *keypair)
+{
+	freezero(keypair->key_mem, keypair->key_len);
+	keypair->key_mem = NULL;
+	keypair->key_len = 0;
 }
 
 int
@@ -117,25 +117,16 @@ tls_keypair_set_ocsp_staple_mem(struct tls_keypair *keypair,
 }
 
 void
-tls_keypair_clear(struct tls_keypair *keypair)
-{
-	struct tls_error error;
-
-	tls_keypair_set_cert_mem(keypair, &error, NULL, 0);
-	tls_keypair_set_key_mem(keypair, &error, NULL, 0);
-	tls_keypair_set_ocsp_staple_mem(keypair, &error, NULL, 0);
-
-	free(keypair->pubkey_hash);
-	keypair->pubkey_hash = NULL;
-}
-
-void
 tls_keypair_free(struct tls_keypair *keypair)
 {
 	if (keypair == NULL)
 		return;
 
-	tls_keypair_clear(keypair);
+	tls_keypair_clear_key(keypair);
+
+	free(keypair->cert_mem);
+	free(keypair->ocsp_staple);
+	free(keypair->pubkey_hash);
 
 	free(keypair);
 }
