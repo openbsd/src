@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.59 2017/12/20 21:08:06 tb Exp $	*/
+/*	$OpenBSD: pch.c,v 1.60 2018/04/07 14:55:13 anton Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -41,7 +41,6 @@
 #include "common.h"
 #include "util.h"
 #include "pch.h"
-#include "pathnames.h"
 
 /* Patch (diff listing) abstract type. */
 
