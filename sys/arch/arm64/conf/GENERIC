@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.65 2018/04/02 21:41:33 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.66 2018/04/07 18:31:22 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -294,6 +294,7 @@ ch*		at scsibus?
 uk*		at scsibus?
 
 # I2C devices
+islrtc*		at iic?			# ISL1208 RTC
 rkpmic*		at iic?			# RK808 PMIC
 
 # 1-Wire devices
