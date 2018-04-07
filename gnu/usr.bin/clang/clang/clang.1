@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "CLANG" "1" "Jan 22, 2018" "5" "Clang"
+.TH "CLANG" "1" "Apr 07, 2018" "6" "Clang"
 .SH NAME
 clang \- the Clang C, C++, and Objective-C compiler
 .
@@ -311,9 +311,9 @@ best at \fI\%\-O0\fP\&.  When more than one option starting with \fI\-g\fP is
 specified, the last one wins:
 .INDENT 7.0
 .INDENT 3.5
-\fI\%\-g\fP Generate debug information.
+\fB\-g\fP Generate debug information.
 .sp
-\fI\%\-gline\-tables\-only\fP Generate only line table debug information. This
+\fB\-gline\-tables\-only\fP Generate only line table debug information. This
 allows for symbolicated backtraces with inlining information, but does not
 include any information about variables, their locations or types.
 .sp
@@ -344,7 +344,7 @@ needed by a module and could be replaced with a forward declaration.
 Further, Clang will only emit type info for a dynamic C++ class in the
 module that contains the vtable for the class.
 .sp
-The \fI\%\-fstandalone\-debug\fP option turns off these optimizations.
+The \fB\-fstandalone\-debug\fP option turns off these optimizations.
 This is useful when working with 3rd\-party libraries that don\(aqt come with
 debug information.  This is the default on Darwin.  Note that Clang will
 never emit type information for types that are not referenced at all by the
