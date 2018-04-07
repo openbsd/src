@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.4 2018/02/25 20:43:33 kettenis Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.5 2018/04/07 22:35:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -127,7 +127,8 @@ rkpmic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = rkpmic_gettime;
 	sc->sc_todr.todr_settime = rkpmic_settime;
-	todr_handle = &sc->sc_todr;
+	if (todr_handle == NULL)
+		todr_handle = &sc->sc_todr;
 
 	if (OF_is_compatible(node, "rockchip,rk805")) {
 		chip = "RK805";
