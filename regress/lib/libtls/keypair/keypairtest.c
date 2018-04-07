@@ -1,4 +1,4 @@
-/* $OpenBSD: keypairtest.c,v 1.3 2018/02/14 15:59:50 jsing Exp $ */
+/* $OpenBSD: keypairtest.c,v 1.4 2018/04/07 16:42:17 jsing Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -130,26 +130,11 @@ do_keypair_tests(void)
 		goto done;
 	}
 
-	tls_keypair_clear(kp);
+	tls_keypair_clear_key(kp);
 
-	if (kp->cert_mem != NULL || kp->cert_len != 0) {
-		fprintf(stderr, "FAIL: cert not cleared (mem %p, len %zu)",
-		    kp->cert_mem, kp->cert_len);
-		goto done;
-	}
 	if (kp->key_mem != NULL || kp->key_len != 0) {
 		fprintf(stderr, "FAIL: key not cleared (mem %p, len %zu)",
 		    kp->key_mem, kp->key_len);
-		goto done;
-	}
-	if (kp->ocsp_staple != NULL || kp->ocsp_staple_len != 0) {
-		fprintf(stderr, "FAIL: ocsp staple not cleared (mem %p, "
-		    "len %zu)", kp->ocsp_staple, kp->ocsp_staple_len);
-		goto done;
-	}
-	if (kp->pubkey_hash != NULL) {
-		fprintf(stderr, "FAIL: pubkey hash not cleared (mem %p)\n",
-		    kp->pubkey_hash);
 		goto done;
 	}
 
@@ -186,7 +171,7 @@ do_keypair_tests(void)
 		goto done;
 	}
 
-	tls_keypair_clear(kp);
+	tls_keypair_clear_key(kp);
 
 	if (kp->key_mem != NULL || kp->key_len != 0) {
 		fprintf(stderr, "FAIL: key not cleared (mem %p, len %zu)",
