@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.7 2017/08/17 11:26:04 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.8 2018/04/07 15:05:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -25,6 +25,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
@@ -134,6 +135,8 @@ struct dwmmc_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_size;
+	int			sc_node;
+
 	void			*sc_ih;
 
 	uint32_t		sc_clkbase;
@@ -141,6 +144,8 @@ struct dwmmc_softc {
 	uint32_t		sc_fifo_width;
 	void (*sc_read_data)(struct dwmmc_softc *, u_char *, int);
 	void (*sc_write_data)(struct dwmmc_softc *, u_char *, int);
+
+	uint32_t		sc_gpio[4];
 
 	struct device		*sc_sdmmc;
 };
@@ -207,6 +212,7 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
 	sc->sc_size = faa->fa_reg[0].size;
 
@@ -258,6 +264,11 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't establish interrupt\n");
 		goto unmap;
 	}
+
+	OF_getpropintarray(faa->fa_node, "cd-gpios", sc->sc_gpio,
+	    sizeof(sc->sc_gpio));
+	if (sc->sc_gpio[0])
+		gpio_controller_config_pin(sc->sc_gpio, GPIO_CONFIG_INPUT);
 
 	printf(": %d MHz base clock\n", sc->sc_clkbase / 1000000);
 
@@ -327,6 +338,18 @@ dwmmc_card_detect(sdmmc_chipset_handle_t sch)
 {
 	struct dwmmc_softc *sc = sch;
 	uint32_t cdetect;
+
+	if (OF_getproplen(sc->sc_node, "non-removable") == 0)
+		return 1;
+
+	if (sc->sc_gpio[0]) {
+		int inverted, val;
+
+		val = gpio_controller_get_pin(sc->sc_gpio);
+
+		inverted = (OF_getproplen(sc->sc_node, "cd-inverted") == 0);
+		return inverted ? !val : val;
+	}
 
 	cdetect = HREAD4(sc, SDMMC_CDETECT);
 	return !(cdetect & SDMMC_CDETECT_CARD_DETECT_0);
