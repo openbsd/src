@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_config.3,v 1.10 2018/03/22 21:08:22 schwarze Exp $
+.\" $OpenBSD: OPENSSL_config.3,v 1.11 2018/04/07 17:20:26 beck Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: April 7 2018 $
 .Dt OPENSSL_CONFIG 3
 .Os
 .Sh NAME
@@ -104,9 +104,13 @@ Further calls to
 have no effect.
 .Pp
 .Fn OPENSSL_no_config
-has no effect except that later calls to
+supresses the loading of any configuration file, so that any
+future calls to 
 .Fn OPENSSL_config
-will be ignored.
+or to
+.Xr OPENSSL_init_crypto 3
+will ensure the library is initialized but no configuation
+file will be loaded.
 .Pp
 Calling these functions is optional.
 All required initialization of the crypto libraries happens
