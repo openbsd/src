@@ -234,10 +234,10 @@
 ./usr/lib/clang/6.0.0/include/tbmintrin.h
 ./usr/lib/clang/6.0.0/include/tgmath.h
 ./usr/lib/clang/6.0.0/include/tmmintrin.h
-./usr/lib/clang/6.0.0/include/vaesintrin.h
-./usr/lib/clang/6.0.0/include/vpclmulqdqintrin.h
 ./usr/lib/clang/6.0.0/include/unwind.h
+./usr/lib/clang/6.0.0/include/vaesintrin.h
 ./usr/lib/clang/6.0.0/include/varargs.h
+./usr/lib/clang/6.0.0/include/vpclmulqdqintrin.h
 ./usr/lib/clang/6.0.0/include/wmmintrin.h
 ./usr/lib/clang/6.0.0/include/x86intrin.h
 ./usr/lib/clang/6.0.0/include/xmmintrin.h
