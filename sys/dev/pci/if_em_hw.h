@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.73 2018/03/16 06:30:50 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.74 2018/04/07 11:56:40 sf Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -2295,6 +2295,7 @@ struct em_hw {
 #define E1000_WUS_FLX_FILTERS 0x000F0000 /* Mask for the 4 flexible filters */
 
 /* TRAC0 bits */
+#define E1000_TARC0_CB_MULTIQ_2_REQ     (1 << 29)
 #define E1000_TARC0_CB_MULTIQ_3_REQ     (1 << 28 | 1 << 29)
 
 /* Management Control */

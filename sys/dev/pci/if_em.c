@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.340 2018/04/07 11:52:24 sf Exp $ */
+/* $OpenBSD: if_em.c,v 1.341 2018/04/07 11:56:40 sf Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2268,7 +2268,9 @@ em_initialize_transmit_unit(struct em_softc *sc)
 		EM_WRITE_REG(&sc->hw, E1000_IOSFPC, reg_val);
 
 		reg_val = E1000_READ_REG(&sc->hw, TARC0);
-		reg_val |= E1000_TARC0_CB_MULTIQ_3_REQ;
+		/* i218-i219 Specification Update 1.5.4.5 */
+		reg_val &= ~E1000_TARC0_CB_MULTIQ_3_REQ;
+		reg_val |= E1000_TARC0_CB_MULTIQ_2_REQ;
 		E1000_WRITE_REG(&sc->hw, TARC0, reg_val);
 	}
 }
