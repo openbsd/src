@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2018/03/31 17:43:53 patrick Exp $
+#	$OpenBSD: Makefile,v 1.5 2018/04/08 13:27:22 kettenis Exp $
 
 NOMAN=		#
 
@@ -8,8 +8,8 @@ PROG=		BOOTAA64.EFI
 OBJFMT=		binary
 INSTALL_STRIP=
 BINDIR=		/usr/mdec
-SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c efipxe.c
-SRCS+=		fdt.c
+SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c
+SRCS+=		efipxe.c efirng.c fdt.c
 
 S=		${.CURDIR}/../../../..
 EFIDIR=		${S}/stand/efi
@@ -43,7 +43,7 @@ CPPFLAGS+=	-I${S} -I. -I${.CURDIR}
 CPPFLAGS+=	-I${EFIDIR}/include -I${EFIDIR}/include/arm64
 CPPFLAGS+=	-D_STANDALONE
 CPPFLAGS+=	-DSMALL -DSLOW -DNOBYFOUR -D__INTERNAL_LIBSA_CREAD
-CPPFLAGS+=	-DNEEDS_HEAP_H
+CPPFLAGS+=	-DNEEDS_HEAP_H -DFWRANDOM
 COPTS+=		-Wno-attributes -Wno-format
 COPTS+=		-ffreestanding -fno-stack-protector
 COPTS+=		-fshort-wchar -fPIC -fno-builtin
