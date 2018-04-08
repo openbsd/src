@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.113 2018/03/15 21:01:18 remi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.114 2018/04/08 00:39:34 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -403,6 +403,8 @@ gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		error = ENOBUFS;
 		goto drop;
 	}
+	memcpy((caddr_t)(mtag + 1), &ifp->if_index, sizeof(ifp->if_index));
+	m_tag_prepend(m, mtag);
 
 	m->m_pkthdr.ph_family = dst->sa_family;
 
