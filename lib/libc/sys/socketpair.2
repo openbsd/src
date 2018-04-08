@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socketpair.2,v 1.20 2016/05/29 06:01:24 guenther Exp $
+.\"	$OpenBSD: socketpair.2,v 1.21 2018/04/08 18:46:43 schwarze Exp $
 .\"	$NetBSD: socketpair.2,v 1.5 1995/02/27 12:38:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socketpair.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 29 2016 $
+.Dd $Mdocdate: April 8 2018 $
 .Dt SOCKETPAIR 2
 .Os
 .Sh NAME
@@ -39,23 +39,34 @@
 .Sh SYNOPSIS
 .In sys/socket.h
 .Ft int
-.Fn socketpair "int d" "int type" "int protocol" "int sv[2]"
+.Fn socketpair "int domain" "int type" "int protocol" "int sv[2]"
 .Sh DESCRIPTION
 The
 .Fn socketpair
-call creates an unnamed pair of connected sockets in
-the specified domain
-.Fa d ,
-of the specified
-.Fa type ,
-and using the optionally specified
-.Fa protocol .
+call creates an unnamed pair of connected sockets.
 The descriptors used in referencing the new sockets
 are returned in
 .Fa sv Ns [0]
 and
 .Fa sv Ns [1] .
 The two sockets are indistinguishable.
+.Pp
+The only supported
+.Fa domain
+is
+.Dv AF_UNIX .
+Possible values for the
+.Fa type
+and
+.Fa protocol
+arguments are explained in the
+.Xr socket 2
+manual page.
+The only useful value for
+.Fa protocol
+is 0, which will let the system select an appropriate protocol
+for the requested socket
+.Fa type .
 .Pp
 Any combination of the following flags may additionally be used in the
 .Fa type
@@ -119,12 +130,3 @@ and
 .Dv SOCK_NONBLOCK
 flags appeared in
 .Ox 5.7 .
-.Sh BUGS
-This call is currently implemented only for the LOCAL domain.
-Many operating systems only accept a
-.Fa protocol
-of
-.Dv AF_UNSPEC ,
-so that should be used instead of
-.Dv AF_LOCAL
-for maximal portability.
