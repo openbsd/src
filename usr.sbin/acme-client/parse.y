@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2017/11/27 01:58:52 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.20 2018/04/08 19:10:12 florian Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -92,7 +92,7 @@ typedef struct {
 
 %}
 
-%token	AUTHORITY AGREEMENT URL API ACCOUNT
+%token	AUTHORITY URL API ACCOUNT
 %token	DOMAIN ALTERNATIVE NAMES CERT FULL CHAIN KEY SIGN WITH CHALLENGEDIR
 %token	YES NO
 %token	INCLUDE
@@ -188,11 +188,7 @@ authorityopts_l	: authorityopts_l authorityoptsl nl
 		| authorityoptsl optnl
 		;
 
-authorityoptsl	: AGREEMENT URL STRING {
-			warnx("\"agreement url\" is deprecated.");
-			/* XXX remove after 6.3 */
-		}
-		| API URL STRING {
+authorityoptsl	: API URL STRING {
 			char *s;
 			if (auth->api != NULL) {
 				yyerror("duplicate api");
@@ -408,7 +404,6 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{"account",		ACCOUNT},
-		{"agreement",		AGREEMENT},
 		{"alternative",		ALTERNATIVE},
 		{"api",			API},
 		{"authority",		AUTHORITY},
