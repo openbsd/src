@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.8 2018/03/07 01:39:08 jsg Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.9 2018/04/08 18:26:29 mikeb Exp $	*/
 /*
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2017 Adam Steen <adam@adamsteen.com.au>
@@ -175,9 +175,6 @@ calibrate_tsc_freq(void)
 	tsc_timecounter.tc_frequency = freq;
 	if (tsc_is_invariant)
 		tsc_timecounter.tc_quality = 2000;
-
-	printf("%s: recalibrated TSC frequency %llu Hz\n",
-	    reference->tc_name, tsc_timecounter.tc_frequency);
 }
 
 void
