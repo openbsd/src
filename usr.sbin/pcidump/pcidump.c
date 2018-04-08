@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.46 2017/08/31 12:03:02 otto Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.47 2018/04/08 13:55:40 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -50,6 +50,7 @@ const char *str2busdevfunc(const char *, int *, int *, int *);
 int pci_nfuncs(int, int);
 int pci_read(int, int, int, u_int32_t, u_int32_t *);
 int pci_readmask(int, int, int, u_int32_t, u_int32_t *);
+void dump_bars(int, int, int, int);
 void dump_caplist(int, int, int, u_int8_t);
 void dump_pci_powerstate(int, int, int, uint8_t);
 void dump_pcie_linkspeed(int, int, int, uint8_t);
@@ -455,7 +456,7 @@ dump_caplist(int bus, int dev, int func, u_int8_t ptr)
 }
 
 void
-dump_type0(int bus, int dev, int func)
+dump_bars(int bus, int dev, int func, int end)
 {
 	const char *memtype;
 	u_int64_t mem;
@@ -463,7 +464,7 @@ dump_type0(int bus, int dev, int func)
 	u_int32_t reg, reg1;
 	int bar;
 
-	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_END; bar += 0x4) {
+	for (bar = PCI_MAPREG_START; bar < end; bar += 0x4) {
 		if (pci_read(bus, dev, func, bar, &reg) != 0 ||
 		    pci_readmask(bus, dev, func, bar, &reg1) != 0)
 			warn("unable to read PCI_MAPREG 0x%02x", bar);
@@ -519,6 +520,14 @@ dump_type0(int bus, int dev, int func)
 			break;
 		}
 	}
+}
+
+void
+dump_type0(int bus, int dev, int func)
+{
+	u_int32_t reg;
+
+	dump_bars(bus, dev, func, PCI_MAPREG_END);
 
 	if (pci_read(bus, dev, func, PCI_CARDBUS_CIS_REG, &reg) != 0)
 		warn("unable to read PCI_CARDBUS_CIS_REG");
@@ -549,13 +558,8 @@ void
 dump_type1(int bus, int dev, int func)
 {
 	u_int32_t reg;
-	int bar;
 
-	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_PPB_END; bar += 0x4) {
-		if (pci_read(bus, dev, func, bar, &reg) != 0)
-			warn("unable to read PCI_MAPREG 0x%02x", bar);
-		printf("\t0x%04x: %08x\n", bar, reg);
-	}
+	dump_bars(bus, dev, func, PCI_MAPREG_PPB_END);
 
 	if (pci_read(bus, dev, func, PCI_PRIBUS_1, &reg) != 0)
 		warn("unable to read PCI_PRIBUS_1");
