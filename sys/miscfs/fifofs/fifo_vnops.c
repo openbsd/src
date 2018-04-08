@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.63 2018/02/19 11:35:41 mpi Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.64 2018/04/08 18:57:39 guenther Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -130,13 +130,13 @@ fifo_open(void *v)
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		fip = malloc(sizeof(*fip), M_VNODE, M_WAITOK);
 		vp->v_fifoinfo = fip;
-		if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0)) != 0) {
+		if ((error = socreate(AF_UNIX, &rso, SOCK_STREAM, 0)) != 0) {
 			free(fip, M_VNODE, sizeof *fip);
 			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_readsock = rso;
-		if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0)) != 0) {
+		if ((error = socreate(AF_UNIX, &wso, SOCK_STREAM, 0)) != 0) {
 			(void)soclose(rso);
 			free(fip, M_VNODE, sizeof *fip);
 			vp->v_fifoinfo = NULL;

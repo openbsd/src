@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.219 2018/03/27 08:27:29 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.220 2018/04/08 18:57:39 guenther Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -419,8 +419,8 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 		 * of space and clen.
 		 */
 		clen = control->m_len;
-		/* reserve extra space for AF_LOCAL's internalize */
-		if (so->so_proto->pr_domain->dom_family == AF_LOCAL &&
+		/* reserve extra space for AF_UNIX's internalize */
+		if (so->so_proto->pr_domain->dom_family == AF_UNIX &&
 		    clen >= CMSG_ALIGN(sizeof(struct cmsghdr)) &&
 		    mtod(control, struct cmsghdr *)->cmsg_type == SCM_RIGHTS)
 			clen = CMSG_SPACE(
@@ -454,7 +454,7 @@ restart:
 		if (flags & MSG_OOB)
 			space += 1024;
 		if ((atomic && resid > so->so_snd.sb_hiwat) ||
-		    (so->so_proto->pr_domain->dom_family != AF_LOCAL &&
+		    (so->so_proto->pr_domain->dom_family != AF_UNIX &&
 		    clen > so->so_snd.sb_hiwat))
 			snderr(EMSGSIZE);
 		if (space < clen ||

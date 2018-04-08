@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.91 2018/02/18 19:11:27 kettenis Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.92 2018/04/08 18:57:39 guenther Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ solock(struct socket *so)
 {
 	int s = 0;
 
-	if ((so->so_proto->pr_domain->dom_family != PF_LOCAL) &&
+	if ((so->so_proto->pr_domain->dom_family != PF_UNIX) &&
 	    (so->so_proto->pr_domain->dom_family != PF_ROUTE) &&
 	    (so->so_proto->pr_domain->dom_family != PF_KEY))
 		NET_LOCK();
@@ -302,7 +302,7 @@ soassertlocked(struct socket *so)
 	case PF_INET6:
 		NET_ASSERT_LOCKED();
 		break;
-	case PF_LOCAL:
+	case PF_UNIX:
 	case PF_ROUTE:
 	case PF_KEY:
 	default:
@@ -314,7 +314,7 @@ soassertlocked(struct socket *so)
 int
 sosleep(struct socket *so, void *ident, int prio, const char *wmesg, int timo)
 {
-	if ((so->so_proto->pr_domain->dom_family != PF_LOCAL) &&
+	if ((so->so_proto->pr_domain->dom_family != PF_UNIX) &&
 	    (so->so_proto->pr_domain->dom_family != PF_ROUTE) &&
 	    (so->so_proto->pr_domain->dom_family != PF_KEY)) {
 		return rwsleep(ident, &netlock, prio, wmesg, timo);
