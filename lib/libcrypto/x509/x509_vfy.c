@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.69 2018/04/06 07:08:20 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.70 2018/04/08 16:57:57 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -185,9 +185,6 @@ check_hosts(X509 *x, X509_VERIFY_PARAM_ID *id)
 	size_t i, n;
 	char *name;
 
-	if (id->poisoned)
-		return 0;
-
 	n = sk_OPENSSL_STRING_num(id->hosts);
 	free(id->peername);
 	id->peername = NULL;
@@ -207,10 +204,6 @@ check_id(X509_STORE_CTX *ctx)
 	X509_VERIFY_PARAM *vpm = ctx->param;
 	X509_VERIFY_PARAM_ID *id = vpm->id;
 	X509 *x = ctx->cert;
-
-	if (id->poisoned)
-		if (!check_id_error(ctx, X509_V_ERR_INVALID_CALL))
-			return 0;
 
 	if (id->hosts && check_hosts(x, id) <= 0) {
 		if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
@@ -248,6 +241,15 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		/*
 		 * This X509_STORE_CTX has already been used to verify
 		 * a cert. We cannot do another one.
+		 */
+		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ctx->error = X509_V_ERR_INVALID_CALL;
+		return -1;
+	}
+	if (ctx->param->id->poisoned) {
+		/*
+		 * This X509_STORE_CTX had failures setting
+		 * up verify parameters. We can not use it.
 		 */
 		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		ctx->error = X509_V_ERR_INVALID_CALL;
