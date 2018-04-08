@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.85 2018/04/03 09:10:02 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.86 2018/04/08 16:45:12 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -676,6 +676,8 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	if ((kev->flags & EV_ENABLE) && (kn->kn_status & KN_DISABLED)) {
 		s = splhigh();
 		kn->kn_status &= ~KN_DISABLED;
+		if (kn->kn_fop->f_event(kn, 0))
+			kn->kn_status |= KN_ACTIVE;
 		if ((kn->kn_status & KN_ACTIVE) &&
 		    ((kn->kn_status & KN_QUEUED) == 0))
 			knote_enqueue(kn);
