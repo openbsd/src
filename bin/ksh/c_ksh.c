@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.59 2018/03/15 16:51:29 anton Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.60 2018/04/09 17:53:36 tobias Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -1017,7 +1017,7 @@ int
 c_let(char **wp)
 {
 	int rv = 1;
-	long val;
+	int64_t val;
 
 	if (wp[1] == NULL) /* at&t ksh does this */
 		bi_errorf("no arguments");

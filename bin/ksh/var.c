@@ -1,9 +1,10 @@
-/*	$OpenBSD: var.c,v 1.66 2018/03/15 16:51:29 anton Exp $	*/
+/*	$OpenBSD: var.c,v 1.67 2018/04/09 17:53:36 tobias Exp $	*/
 
 #include <sys/stat.h>
 
 #include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -136,7 +137,7 @@ array_index_calc(const char *n, bool *arrayp, int *valp)
 	p = skip_varname(n, false);
 	if (p != n && *p == '[' && (len = array_ref_len(p))) {
 		char *sub, *tmp;
-		long rval;
+		int64_t rval;
 
 		/* Calculate the value of the subscript */
 		*arrayp = true;
@@ -146,7 +147,8 @@ array_index_calc(const char *n, bool *arrayp, int *valp)
 		n = str_nsave(n, p - n, ATEMP);
 		evaluate(sub, &rval, KSH_UNWIND_ERROR, true);
 		if (rval < 0 || rval > INT_MAX)
-			errorf("%s: subscript %ld out of range", n, rval);
+			errorf("%s: subscript %" PRIi64 " out of range",
+			    n, rval);
 		*valp = rval;
 		afree(sub, ATEMP);
 	}
@@ -295,18 +297,18 @@ str_val(struct tbl *vp)
 	else if (!(vp->flag&INTEGER))	/* string source */
 		s = vp->val.s + vp->type;
 	else {				/* integer source */
-		/* worst case number length is when base=2, so use BITS(long) */
-		/* minus base #     number    null */
-		char strbuf[1 + 2 + 1 + BITS(long) + 1];
+		/* worst case number length is when base=2, so use
+		 * minus base # number BITS(int64_t) NUL */
+		char strbuf[1 + 2 + 1 + BITS(int64_t) + 1];
 		const char *digits = (vp->flag & UCASEV_AL) ?
 		    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" :
 		    "0123456789abcdefghijklmnopqrstuvwxyz";
-		unsigned long n;
+		uint64_t n;
 		unsigned int base;
 
 		s = strbuf + sizeof(strbuf);
 		if (vp->flag & INT_U)
-			n = (unsigned long) vp->val.i;
+			n = (uint64_t) vp->val.i;
 		else
 			n = (vp->val.i < 0) ? -vp->val.i : vp->val.i;
 		base = (vp->type == 0) ? 10 : vp->type;
@@ -335,10 +337,10 @@ str_val(struct tbl *vp)
 }
 
 /* get variable integer value, with error checking */
-long
+int64_t
 intval(struct tbl *vp)
 {
-	long num;
+	int64_t num;
 	int base;
 
 	base = getint(vp, &num, false);
@@ -393,7 +395,7 @@ setstr(struct tbl *vq, const char *s, int error_ok)
 
 /* set variable to integer */
 void
-setint(struct tbl *vq, long int n)
+setint(struct tbl *vq, int64_t n)
 {
 	if (!(vq->flag&INTEGER)) {
 		struct tbl *vp = &vtemp;
@@ -411,13 +413,13 @@ setint(struct tbl *vq, long int n)
 }
 
 int
-getint(struct tbl *vp, long int *nump, bool arith)
+getint(struct tbl *vp, int64_t *nump, bool arith)
 {
 	char *s;
 	int c;
 	int base, neg;
 	int have_base = 0;
-	long num;
+	int64_t num;
 
 	if (vp->flag&SPECIAL)
 		getspec(vp);
@@ -483,7 +485,7 @@ struct tbl *
 setint_v(struct tbl *vq, struct tbl *vp, bool arith)
 {
 	int base;
-	long num;
+	int64_t num;
 
 	if ((base = getint(vp, &num, arith)) == -1)
 		return NULL;
@@ -920,27 +922,27 @@ getspec(struct tbl *vp)
 		 * (see initcoms[] in main.c).
 		 */
 		if (vp->flag & ISSET)
-			setint(vp, (long)(time(NULL) - seconds)); /* XXX 2038 */
+			setint(vp, (int64_t)(time(NULL) - seconds));
 		vp->flag |= SPECIAL;
 		break;
 	case V_RANDOM:
 		vp->flag &= ~SPECIAL;
-		setint(vp, (long) (rand() & 0x7fff));
+		setint(vp, (int64_t) (rand() & 0x7fff));
 		vp->flag |= SPECIAL;
 		break;
 	case V_HISTSIZE:
 		vp->flag &= ~SPECIAL;
-		setint(vp, (long) histsize);
+		setint(vp, (int64_t) histsize);
 		vp->flag |= SPECIAL;
 		break;
 	case V_OPTIND:
 		vp->flag &= ~SPECIAL;
-		setint(vp, (long) user_opt.uoptind);
+		setint(vp, (int64_t) user_opt.uoptind);
 		vp->flag |= SPECIAL;
 		break;
 	case V_LINENO:
 		vp->flag &= ~SPECIAL;
-		setint(vp, (long) current_lineno + user_lineno);
+		setint(vp, (int64_t) current_lineno + user_lineno);
 		vp->flag |= SPECIAL;
 		break;
 	}
@@ -1004,7 +1006,7 @@ setspec(struct tbl *vp)
 		break;
 	case V_COLUMNS:
 		{
-			long l;
+			int64_t l;
 
 			if (getint(vp, &l, false) == -1) {
 				x_cols = MIN_COLS;
@@ -1034,7 +1036,7 @@ setspec(struct tbl *vp)
 		break;
 	case V_SECONDS:
 		vp->flag &= ~SPECIAL;
-		seconds = time(NULL) - intval(vp); /* XXX 2038 */
+		seconds = time(NULL) - intval(vp);
 		vp->flag |= SPECIAL;
 		break;
 	case V_TMOUT:

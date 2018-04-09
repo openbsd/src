@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.c,v 1.22 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: mail.c,v 1.23 2018/04/09 17:53:36 tobias Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -81,7 +81,7 @@ mcheck(void)
 }
 
 void
-mcset(long int interval)
+mcset(int64_t interval)
 {
 	mailcheck_interval = interval;
 }

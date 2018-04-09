@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.71 2018/01/16 22:52:32 jca Exp $	*/
+/*	$OpenBSD: sh.h,v 1.72 2018/04/09 17:53:36 tobias Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -440,7 +440,7 @@ int	search_access(const char *, int, int *);
 int	pr_menu(char *const *);
 int	pr_list(char *const *);
 /* expr.c */
-int	evaluate(const char *, long *, int, bool);
+int	evaluate(const char *, int64_t *, int, bool);
 int	v_evaluate(struct tbl *, const char *, volatile int, bool);
 /* history.c */
 void	init_histvec(void);
@@ -512,7 +512,7 @@ pid_t	j_async(void);
 int	j_stopped_running(void);
 /* mail.c */
 void	mcheck(void);
-void	mcset(long);
+void	mcset(int64_t);
 void	mbset(char *);
 void	mpset(char *);
 /* main.c */
@@ -527,7 +527,7 @@ void	cleanup_proc_env(void);
 /* misc.c */
 void	setctypes(const char *, int);
 void	initctypes(void);
-char *	ulton(unsigned long, int);
+char *	u64ton(uint64_t, int);
 char *	str_save(const char *, Area *);
 char *	str_nsave(const char *, int, Area *);
 int	option(const char *);
@@ -583,11 +583,11 @@ void	initvar(void);
 struct tbl *	global(const char *);
 struct tbl *	local(const char *, bool);
 char *	str_val(struct tbl *);
-long	intval(struct tbl *);
+int64_t	intval(struct tbl *);
 int	setstr(struct tbl *, const char *, int);
 struct tbl *setint_v(struct tbl *, struct tbl *, bool);
-void	setint(struct tbl *, long);
-int	getint(struct tbl *, long *, bool);
+void	setint(struct tbl *, int64_t);
+int	getint(struct tbl *, int64_t *, bool);
 struct tbl *typeset(const char *, int, int, int, int);
 void	unset(struct tbl *, int);
 char  * skip_varname(const char *, int);

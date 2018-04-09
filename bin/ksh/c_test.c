@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.24 2017/12/26 19:10:31 millert Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.25 2018/04/09 17:53:36 tobias Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -308,7 +308,7 @@ test_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2,
 	case TO_INTLE: /* -le */
 	case TO_INTLT: /* -lt */
 		{
-			long v1, v2;
+			int64_t v1, v2;
 
 			if (!evaluate(opnd1, &v1, KSH_RETURN_ERROR, false) ||
 			    !evaluate(opnd2, &v2, KSH_RETURN_ERROR, false)) {

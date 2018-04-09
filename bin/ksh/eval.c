@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.59 2018/01/16 22:52:32 jca Exp $	*/
+/*	$OpenBSD: eval.c,v 1.60 2018/04/09 17:53:36 tobias Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -732,7 +732,7 @@ varsub(Expand *xp, char *sp, char *word,
 		if (Flag(FNOUNSET) && c == 0 && !zero_ok)
 			errorf("%s: parameter not set", sp);
 		*stypep = 0; /* unqualified variable/string substitution */
-		xp->str = str_save(ulton((unsigned long)c, 10), ATEMP);
+		xp->str = str_save(u64ton((uint64_t)c, 10), ATEMP);
 		return XSUB;
 	}
 
