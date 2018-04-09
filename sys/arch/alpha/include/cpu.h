@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.58 2017/05/29 14:19:49 mpi Exp $ */
+/* $OpenBSD: cpu.h,v 1.59 2018/04/09 04:11:04 deraadt Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -310,7 +310,7 @@ struct clockframe {
  * This is used during profiling to integrate system time.
  */
 #define	PROC_PC(p)	((p)->p_md.md_tf->tf_regs[FRAME_PC])
-#define	PROC_STACK(p)	(alpha_pal_rdusp())	/*XXX only works for curproc */
+#define	PROC_STACK(p)	((p)->p_md.md_tf->tf_regs[FRAME_SP])
 
 /*
  * Preempt the current process if in interrupt from user mode,
