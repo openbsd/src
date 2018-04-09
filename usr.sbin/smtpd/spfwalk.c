@@ -138,6 +138,7 @@ dispatch_record(struct asr_result *ar, void *arg)
 void
 dispatch_txt(struct dns_rr *rr)
 {
+	struct in6_addr ina;
         char buf[4096];
         char buf2[512];
         char *in = buf;
@@ -168,22 +169,26 @@ dispatch_txt(struct dns_rr *rr)
 			continue;
 
 		if (strncasecmp("ip4:", *ap, 4) == 0) {
-			if (ip_v4 == 1 || ip_both == 1)
+			if ((ip_v4 == 1 || ip_both == 1) &&
+			    inet_pton(AF_INET, *(ap) + 4, &ina) == 1)
 				printf("%s\n", *(ap) + 4);
 			continue;
 		}
 		if (strncasecmp("ip6:", *ap, 4) == 0) {
-			if (ip_v6 == 1 || ip_both == 1)
+			if ((ip_v6 == 1 || ip_both == 1) &&
+			    inet_pton(AF_INET6, *(ap) + 4, &ina) == 1)
 				printf("%s\n", *(ap) + 4);
 			continue;
 		}
 		if (strncasecmp("+ip4:", *ap, 5) == 0) {
-			if (ip_v4 == 1 || ip_both == 1)
+			if ((ip_v4 == 1 || ip_both == 1) &&
+			    inet_pton(AF_INET, *(ap) + 5, &ina) == 1)
 				printf("%s\n", *(ap) + 5);
 			continue;
 		}
 		if (strncasecmp("+ip6:", *ap, 5) == 0) {
-			if (ip_v6 == 1 || ip_both == 1)
+			if ((ip_v6 == 1 || ip_both == 1) &&
+			    inet_pton(AF_INET6, *(ap) + 5, &ina) == 1)
 				printf("%s\n", *(ap) + 5);
 			continue;
 		}
