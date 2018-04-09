@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.4 2018/04/09 18:35:13 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.5 2018/04/09 21:55:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -57,6 +57,12 @@
 #define  PCIE_GLOBAL_STATUS_RDLH_LINK_UP	(1 << 1)
 #define  PCIE_GLOBAL_STATUS_PHY_LINK_UP		(1 << 9)
 #define PCIE_PM_STATUS		0x8014
+#define PCIE_GLOBAL_INT_CAUSE	0x801c
+#define PCIE_GLOBAL_INT_MASK	0x8020
+#define  PCIE_GLOBAL_INT_MASK_INT_A		(1 << 9)
+#define  PCIE_GLOBAL_INT_MASK_INT_B		(1 << 10)
+#define  PCIE_GLOBAL_INT_MASK_INT_C		(1 << 11)
+#define  PCIE_GLOBAL_INT_MASK_INT_D		(1 << 12)
 #define PCIE_ARCACHE_TRC	0x8050
 #define  PCIE_ARCACHE_TRC_DEFAULT		0x3511
 #define PCIE_AWCACHE_TRC	0x8054
@@ -107,6 +113,8 @@ struct dwpcie_softc {
 	char			sc_ioex_name[32];
 	char			sc_memex_name[32];
 	int			sc_bus;
+
+	void			*sc_ih;
 };
 
 int dwpcie_match(struct device *, void *, void *);
@@ -130,6 +138,7 @@ dwpcie_match(struct device *parent, void *match, void *aux)
 
 void	dwpcie_armada8k_init(struct dwpcie_softc *);
 int	dwpcie_armada8k_link_up(struct dwpcie_softc *);
+int	dwpcie_armada8k_intr(void *);
 
 void	dwpcie_attach_hook(struct device *, struct device *,
 	    struct pcibus_attach_args *);
@@ -148,6 +157,9 @@ const char *dwpcie_intr_string(void *, pci_intr_handle_t);
 void	*dwpcie_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *, char *);
 void	dwpcie_intr_disestablish(void *, void *);
+
+void	*dwpcie_armada8k_intr_establish(void *, pci_intr_handle_t, int,
+	    int (*)(void *), void *, char *);
 
 void
 dwpcie_attach(struct device *parent, struct device *self, void *aux)
@@ -365,6 +377,14 @@ dwpcie_armada8k_init(struct dwpcie_softc *sc)
 			break;
 		delay(1000);
 	}
+
+	sc->sc_ih = arm_intr_establish_fdt(sc->sc_node, IPL_AUDIO | IPL_MPSAFE,
+	    dwpcie_armada8k_intr, sc, sc->sc_dev.dv_xname);
+
+	/* Unmask INTx interrupts. */
+	HWRITE4(sc, PCIE_GLOBAL_INT_MASK,
+	    PCIE_GLOBAL_INT_MASK_INT_A | PCIE_GLOBAL_INT_MASK_INT_B |
+	    PCIE_GLOBAL_INT_MASK_INT_C | PCIE_GLOBAL_INT_MASK_INT_D);
 }
 
 int
@@ -376,6 +396,20 @@ dwpcie_armada8k_link_up(struct dwpcie_softc *sc)
 	mask |= PCIE_GLOBAL_STATUS_PHY_LINK_UP;
 	reg = HREAD4(sc, PCIE_GLOBAL_STATUS);
 	return ((reg & mask) == mask);
+}
+
+int
+dwpcie_armada8k_intr(void *arg)
+{
+	struct dwpcie_softc *sc = arg;
+	uint32_t cause;
+
+	/* Acknowledge interrupts. */
+	cause = HREAD4(sc, PCIE_GLOBAL_INT_CAUSE);
+	HWRITE4(sc, PCIE_GLOBAL_INT_CAUSE, cause);
+
+	/* INTx interrupt, so not really ours. */
+	return 0;
 }
 
 void
@@ -487,6 +521,7 @@ dwpcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	ih->ih_pc = pa->pa_pc;
 	ih->ih_tag = pa->pa_intrtag;
 	ih->ih_intrpin = pa->pa_intrpin;
+	ih->ih_msi = 0;
 	*ihp = (pci_intr_handle_t)ih;
 
 	return 0;
@@ -590,4 +625,5 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 void
 dwpcie_intr_disestablish(void *v, void *cookie)
 {
+	panic("%s", __func__);
 }
