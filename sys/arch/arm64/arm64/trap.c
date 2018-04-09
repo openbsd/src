@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.16 2018/02/02 09:33:35 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.17 2018/04/09 22:17:11 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -26,7 +26,6 @@
  *
  */
 
-#include <sys/cdefs.h>
 #if 0
 __FBSDID("$FreeBSD: head/sys/arm64/arm64/trap.c 281654 2015-04-17 12:58:09Z andrew $");
 #endif
@@ -68,61 +67,6 @@ void do_el1h_sync(struct trapframe *);
 void do_el0_sync(struct trapframe *);
 void do_el0_error(struct trapframe *);
 
-
-#if 0
-int
-cpu_fetch_syscall_args(struct thread *td, struct syscall_args *sa)
-{
-	struct proc *p;
-	register_t *ap;
-	int nap;
-
-	nap = 8;
-	p = td->td_proc;
-	ap = td->td_frame->tf_x;
-
-	sa->code = td->td_frame->tf_x[8];
-
-	if (sa->code == SYS_syscall || sa->code == SYS___syscall) {
-		sa->code = *ap++;
-		nap--;
-	}
-
-	if (p->p_sysent->sv_mask)
-		sa->code &= p->p_sysent->sv_mask;
-	if (sa->code >= p->p_sysent->sv_size)
-		sa->callp = &p->p_sysent->sv_table[0];
-	else
-		sa->callp = &p->p_sysent->sv_table[sa->code];
-
-	sa->narg = sa->callp->sy_narg;
-	memcpy(sa->args, ap, nap * sizeof(register_t));
-	if (sa->narg > nap)
-		panic("TODO: Could we have more than 8 args?");
-
-	td->td_retval[0] = 0;
-	td->td_retval[1] = 0;
-
-	return (0);
-}
-
-#include "../../kern/subr_syscall.c"
-
-static void
-svc_handler(struct trapframe *frame)
-{
-	struct syscall_args sa;
-	struct thread *td;
-	int error;
-
-	td = curthread;
-	td->td_frame = frame;
-
-	error = syscallenter(td, &sa);
-	syscallret(td, error, &sa);
-}
-#endif
-
 void dumpregs(struct trapframe*);
 
 static void
@@ -163,25 +107,12 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 	ftype = VM_FAULT_INVALID; // should check for failed permissions.
 
 	if (map != kernel_map) {
-		/*
-		 * Keep swapout from messing with us during this
-		 *	critical time.
-		 */
-		// XXX SMP
-		//PROC_LOCK(p);
-		//++p->p_lock;
-		//PROC_UNLOCK(p);
-
 		/* Fault in the user page: */
 		if (!pmap_fault_fixup(map->pmap, va, access_type, 1)) {
 			KERNEL_LOCK();
 			error = uvm_fault(map, va, ftype, access_type);
 			KERNEL_UNLOCK();
 		}
-
-		//PROC_LOCK(p);
-		//--p->p_lock;
-		//PROC_UNLOCK(p);
 	} else {
 		/*
 		 * Don't have to worry about process locking or stacks in the
@@ -371,7 +302,5 @@ do_el0_sync(struct trapframe *frame)
 void
 do_el0_error(struct trapframe *frame)
 {
-
 	panic("do_el0_error");
 }
-
