@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.7 2017/06/18 17:35:40 schwarze Exp $
+# $OpenBSD: Makefile,v 1.8 2018/04/09 02:31:37 schwarze Exp $
 
-REGRESS_TARGETS	 = escape infinite name std zerolength
-LINT_TARGETS	 = name std
+REGRESS_TARGETS	 = escape infinite name std undef zerolength
+LINT_TARGETS	 = name std undef
 
 # The infinite test fails badly with groff-1.20.1:
 # It fails to print the following text.

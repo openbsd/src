@@ -1,0 +1,69 @@
+.\" $OpenBSD: undef.in,v 1.1 2018/04/09 02:31:37 schwarze Exp $
+.TH STRING-UNDEF 1 "April 9, 2018"
+.SH NAME
+string-undef - expanding undefined strings
+.SH DESCRIPTION
+.SS User defined string
+The sting "mys" is
+.ie dmys defined
+.el undefined
+and remains
+.ie dmys defined.
+.el undefined.
+.PP
+Its value is "\*[mys]", and now it is
+.ie dmys defined,
+.el undefined,
+and its value is still "\*[mys]".
+.PP
+.ds mys newval
+After redefining it to "\*[mys]", it is of course still
+.ie dmys defined.
+.el undefined.
+.PP
+.rm mys
+After removing the definition, it is now
+.ie dmys defined.
+.el undefined.
+.SS User defined macro
+The macro "mym" is
+.ie dmym defined.
+.el undefined.
+.PP
+It has no effect:
+.mym
+But now it is
+.ie dmym defined.
+.el undefined.
+.PP
+.de mym
+neweffect
+..
+After defining it as:
+.mym
+it is of course still
+.ie dmym defined.
+.el undefined.
+.PP
+.rm mym
+After removing the definition, it is now
+.ie dmym defined.
+.el undefined.
+.SS Renamed macro
+The standard .BR macro is
+.ie dBR defined,
+.el undefined,
+and it
+.BR works .
+.PP
+.rn BR newBR
+After renaming it, the new name is
+.ie dnewBR defined,
+.el undefined,
+and
+.newBR works .
+.SS Predefined string
+A predefined string is
+.ie dR defined
+.el undefined
+and has the value "\*R".
