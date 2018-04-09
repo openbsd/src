@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.17 2018/04/09 22:17:11 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.18 2018/04/09 22:21:05 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -39,6 +39,7 @@ __FBSDID("$FreeBSD: head/sys/arm64/arm64/trap.c 281654 2015-04-17 12:58:09Z andr
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
 #include <sys/signalvar.h>
+#include <sys/user.h>
 
 #ifdef KDB
 #include <sys/kdb.h>
@@ -231,6 +232,7 @@ do_el0_sync(struct trapframe *frame)
 
 	enable_interrupts();
 
+	p->p_addr->u_pcb.pcb_tf = frame;
 	refreshcreds(p);
 
 	switch(exception) {

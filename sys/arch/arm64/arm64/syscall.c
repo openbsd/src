@@ -1,4 +1,4 @@
-/* $OpenBSD: syscall.c,v 1.2 2018/01/12 22:20:28 kettenis Exp $ */
+/* $OpenBSD: syscall.c,v 1.3 2018/04/09 22:21:05 kettenis Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -49,8 +49,6 @@ svc_handler(trapframe_t *frame)
 	/* Re-enable interrupts if they were enabled previously */
 	if (__predict_true((frame->tf_spsr & I_bit) == 0))
 		enable_interrupts();
-
-	p->p_addr->u_pcb.pcb_tf = frame;
 
 	code = frame->tf_x[8];
 
