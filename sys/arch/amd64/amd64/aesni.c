@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.43 2018/02/23 15:41:08 visa Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.44 2018/04/09 04:34:56 visa Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -33,15 +33,6 @@
 #include <crypto/cryptosoft.h>
 
 #include <machine/fpu.h>
-
-/* defines from crypto/xform.c */
-#define AESCTR_NONCESIZE	4
-#define AESCTR_IVSIZE		8
-#define AESCTR_BLOCKSIZE	16
-
-#define AES_XTS_BLOCKSIZE	16
-#define AES_XTS_IVSIZE		8
-#define AES_XTS_ALPHA		0x87	/* GF(2^128) generator polynomial */
 
 struct aesni_aes_ctx {
 	uint32_t		 aes_ekey[4 * (AES_MAXROUNDS + 1)];
