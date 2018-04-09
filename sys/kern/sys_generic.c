@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.116 2018/01/02 06:38:45 guenther Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.117 2018/04/09 09:53:13 mpi Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -393,29 +393,30 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	struct filedesc *fdp;
 	u_long com = SCARG(uap, com);
-	int error;
+	int error = 0;
 	u_int size;
-	caddr_t data, memp;
+	caddr_t data, memp = NULL;
 	int tmp;
 #define STK_PARAMS	128
 	long long stkbuf[STK_PARAMS / sizeof(long long)];
 
 	fdp = p->p_fd;
-	fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE);
-
-	if (fp == NULL)
+	if ((fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE)) == NULL)
 		return (EBADF);
+	FREF(fp);
 
 	if (fp->f_type == DTYPE_SOCKET) {
 		struct socket *so = fp->f_data;
 
-		if (so->so_state & SS_DNS)
-			return (EINVAL);
+		if (so->so_state & SS_DNS) {
+			error = EINVAL;
+			goto out;
+		}
 	}
 
 	error = pledge_ioctl(p, com, fp);
 	if (error)
-		return (error);
+		goto out;
 
 	switch (com) {
 	case FIONCLEX:
@@ -426,7 +427,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 		else
 			fdp->fd_ofileflags[SCARG(uap, fd)] |= UF_EXCLOSE;
 		fdpunlock(fdp);
-		return (0);
+		goto out;
 	}
 
 	/*
@@ -434,10 +435,10 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	 * copied to/from the user's address space.
 	 */
 	size = IOCPARM_LEN(com);
-	if (size > IOCPARM_MAX)
-		return (ENOTTY);
-	FREF(fp);
-	memp = NULL;
+	if (size > IOCPARM_MAX) {
+		error = ENOTTY;
+		goto out;
+	}
 	if (size > sizeof (stkbuf)) {
 		memp = malloc(size, M_IOCTLOPS, M_WAITOK);
 		data = memp;
@@ -525,8 +526,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 		error = copyout(data, SCARG(uap, data), size);
 out:
 	FRELE(fp, p);
-	if (memp)
-		free(memp, M_IOCTLOPS, size);
+	free(memp, M_IOCTLOPS, size);
 	return (error);
 }
 
