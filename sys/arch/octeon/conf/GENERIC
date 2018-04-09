@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.40 2017/08/28 19:32:53 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.41 2018/04/09 13:46:15 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -35,6 +35,7 @@ iobus0		at mainbus0
 simplebus*	at fdt?
 simplebus*	at iobus?
 
+#octcrypto0	at mainbus0
 octrtc0		at mainbus0
 
 octcf0		at iobus0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.11 2017/12/05 15:39:26 visa Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.12 2018/04/09 13:46:15 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -32,6 +32,8 @@
 
 #include <machine/autoconf.h>
 #include <machine/octeonvar.h>
+
+#include <octeon/dev/cn30xxcorereg.h>
 
 int	mainbus_match(struct device *, void *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
@@ -93,6 +95,12 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	caa.caa_maa.maa_name = "octrtc";
 	config_found(self, &caa.caa_maa, mainbus_print);
 
+#ifdef CRYPTO
+	if (!ISSET(octeon_get_cvmctl(), COP_0_CVMCTL_NOCRYPTO)) {
+		caa.caa_maa.maa_name = "octcrypto";
+		config_found(self, &caa.caa_maa, mainbus_print);
+	}
+#endif
 }
 
 int

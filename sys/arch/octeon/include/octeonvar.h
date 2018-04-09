@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.44 2017/11/20 15:20:03 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.45 2018/04/09 13:46:15 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -388,6 +388,19 @@ octeon_get_cycles(void)
 		"	dmfc0	%[tmp], $9, 6		\n"
 		_ASM_EPILOGUE
 		: [tmp]"=&r"(tmp));
+	return tmp;
+}
+
+static inline uint64_t
+octeon_get_cvmctl(void)
+{
+	uint64_t tmp;
+
+	__asm volatile (
+		_ASM_PROLOGUE_OCTEON
+		"	dmfc0	%[tmp], $9, 7		\n"
+		_ASM_EPILOGUE
+		: [tmp]"=r"(tmp));
 	return tmp;
 }
 

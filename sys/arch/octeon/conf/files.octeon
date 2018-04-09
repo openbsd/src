@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.44 2018/03/31 11:22:11 visa Exp $
+#	$OpenBSD: files.octeon,v 1.45 2018/04/09 13:46:15 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -55,6 +55,11 @@ attach	cpu at mainbus
 
 device	clock
 attach	clock at mainbus
+
+device	octcrypto: crypto
+attach	octcrypto at mainbus
+file	arch/octeon/dev/octcrypto.c			octcrypto
+file	arch/octeon/dev/octcrypto_asm.S			octcrypto
 
 # TOD clock
 device	octrtc
