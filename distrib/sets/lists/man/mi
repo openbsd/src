@@ -1561,6 +1561,7 @@
 ./usr/share/man/man4/octeon/octcib.4
 ./usr/share/man/man4/octeon/octcit.4
 ./usr/share/man/man4/octeon/octciu.4
+./usr/share/man/man4/octeon/octcrypto.4
 ./usr/share/man/man4/octeon/octmmc.4
 ./usr/share/man/man4/octeon/octrng.4
 ./usr/share/man/man4/octeon/octrtc.4
