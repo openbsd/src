@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.145 2018/04/06 10:48:09 bluhm Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.146 2018/04/09 09:57:13 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -591,7 +591,7 @@ out:
 }
 
 /*
- * Common code for dup, dup2, and fcntl(F_DUPFD).
+ * Common code for dup, dup2, dupfdopen and fcntl(F_DUPFD).
  */
 int
 finishdup(struct proc *p, struct file *fp, int old, int new,
@@ -1274,6 +1274,8 @@ dupfdopen(struct proc *p, int indx, int mode)
 	struct filedesc *fdp = p->p_fd;
 	int dupfd = p->p_dupfd;
 	struct file *wfp;
+	int error, flags;
+	register_t dummy;
 
 	fdpassertlocked(fdp);
 
@@ -1297,24 +1299,26 @@ dupfdopen(struct proc *p, int indx, int mode)
 	 */
 	if ((wfp = fd_getfile(fdp, dupfd)) == NULL)
 		return (EBADF);
+	FREF(wfp);
 
 	/*
 	 * Check that the mode the file is being opened for is a
 	 * subset of the mode of the existing descriptor.
 	 */
-	if (((mode & (FREAD|FWRITE)) | wfp->f_flag) != wfp->f_flag)
+	if (((mode & (FREAD|FWRITE)) | wfp->f_flag) != wfp->f_flag) {
+		FRELE(wfp, p);
 		return (EACCES);
-	if (wfp->f_count == LONG_MAX-2)
-		return (EDEADLK);
+	}
 
-	fdp->fd_ofiles[indx] = wfp;
-	fdp->fd_ofileflags[indx] = (fdp->fd_ofileflags[indx] & UF_EXCLOSE) |
-	    (fdp->fd_ofileflags[dupfd] & ~UF_EXCLOSE);
+	flags = fdp->fd_ofileflags[indx] & UF_EXCLOSE;
 	if (ISSET(p->p_p->ps_flags, PS_PLEDGE))
-		fdp->fd_ofileflags[indx] |= UF_PLEDGED;
-	wfp->f_count++;
-	fd_used(fdp, indx);
-	return (0);
+		flags |= UF_PLEDGED;
+
+	/* finishdup() does FRELE */
+	error = finishdup(p, wfp, dupfd, indx, &dummy, 1);
+	if (error == 0)
+		fdp->fd_ofileflags[indx] |= flags;
+	return (error);
 }
 
 /*
