@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.197 2018/04/09 02:31:37 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.198 2018/04/09 22:26:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -180,8 +180,7 @@ static	void		 roff_freestr(struct roffkv *);
 static	size_t		 roff_getname(struct roff *, char **, int, int);
 static	int		 roff_getnum(const char *, int *, int *, int);
 static	int		 roff_getop(const char *, int *, char *);
-static	int		 roff_getregn(const struct roff *,
-				const char *, size_t);
+static	int		 roff_getregn(struct roff *, const char *, size_t);
 static	int		 roff_getregro(const struct roff *,
 				const char *name);
 static	const char	*roff_getstrn(struct roff *,
@@ -205,6 +204,8 @@ static	enum rofferr	 roff_res(struct roff *, struct buf *, int, int);
 static	enum rofferr	 roff_rm(ROFF_ARGS);
 static	enum rofferr	 roff_rn(ROFF_ARGS);
 static	enum rofferr	 roff_rr(ROFF_ARGS);
+static	void		 roff_setregn(struct roff *, const char *,
+				size_t, int, char);
 static	void		 roff_setstr(struct roff *,
 				const char *, const char *, int);
 static	void		 roff_setstrn(struct roffkv **, const char *,
@@ -2519,19 +2520,27 @@ roff_evalnum(struct roff *r, int ln, const char *v,
 void
 roff_setreg(struct roff *r, const char *name, int val, char sign)
 {
+	roff_setregn(r, name, strlen(name), val, sign);
+}
+
+static void
+roff_setregn(struct roff *r, const char *name, size_t len,
+    int val, char sign)
+{
 	struct roffreg	*reg;
 
 	/* Search for an existing register with the same name. */
 	reg = r->regtab;
 
-	while (reg && strcmp(name, reg->key.p))
+	while (reg != NULL && (reg->key.sz != len ||
+	    strncmp(reg->key.p, name, len) != 0))
 		reg = reg->next;
 
 	if (NULL == reg) {
 		/* Create a new register. */
 		reg = mandoc_malloc(sizeof(struct roffreg));
-		reg->key.p = mandoc_strdup(name);
-		reg->key.sz = strlen(name);
+		reg->key.p = mandoc_strndup(name, len);
+		reg->key.sz = len;
 		reg->val = 0;
 		reg->next = r->regtab;
 		r->regtab = reg;
@@ -2576,26 +2585,13 @@ roff_getregro(const struct roff *r, const char *name)
 }
 
 int
-roff_getreg(const struct roff *r, const char *name)
+roff_getreg(struct roff *r, const char *name)
 {
-	struct roffreg	*reg;
-	int		 val;
-
-	if ('.' == name[0] && '\0' != name[1] && '\0' == name[2]) {
-		val = roff_getregro(r, name + 1);
-		if (-1 != val)
-			return val;
-	}
-
-	for (reg = r->regtab; reg; reg = reg->next)
-		if (0 == strcmp(name, reg->key.p))
-			return reg->val;
-
-	return 0;
+	return roff_getregn(r, name, strlen(name));
 }
 
 static int
-roff_getregn(const struct roff *r, const char *name, size_t len)
+roff_getregn(struct roff *r, const char *name, size_t len)
 {
 	struct roffreg	*reg;
 	int		 val;
@@ -2611,6 +2607,7 @@ roff_getregn(const struct roff *r, const char *name, size_t len)
 		    0 == strncmp(name, reg->key.p, len))
 			return reg->val;
 
+	roff_setregn(r, name, len, 0, '\0');
 	return 0;
 }
 
@@ -2662,14 +2659,13 @@ roff_nr(ROFF_ARGS)
 	keysz = roff_getname(r, &val, ln, pos);
 	if (key[keysz] == '\\')
 		return ROFF_IGN;
-	key[keysz] = '\0';
 
 	sign = *val;
 	if (sign == '+' || sign == '-')
 		val++;
 
 	if (roff_evalnum(r, ln, val, NULL, &iv, ROFFNUM_SCALE))
-		roff_setreg(r, key, iv, sign);
+		roff_setregn(r, key, keysz, iv, sign);
 
 	return ROFF_IGN;
 }
