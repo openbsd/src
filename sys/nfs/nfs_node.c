@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.66 2018/03/28 09:40:26 mpi Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.67 2018/04/09 09:39:53 mpi Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -138,19 +138,7 @@ loop:
 	/* we now have an nfsnode on this vnode */
 	vp->v_flag &= ~VLARVAL;
 	np->n_vnode = vp;
-
 	rw_init(&np->n_commitlock, "nfs_commitlk");
-
-	/* 
-	 * Are we getting the root? If so, make sure the vnode flags
-	 * are correct 
-	 */
-	if ((fhsize == nmp->nm_fhsize) && !bcmp(fh, nmp->nm_fh, fhsize)) {
-		if (vp->v_type == VNON)
-			vp->v_type = VDIR;
-		vp->v_flag |= VROOT;
-	}
-
 	np->n_fhp = &np->n_fh;
 	bcopy(fh, np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
