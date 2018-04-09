@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2018/01/31 10:52:12 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.10 2018/04/09 18:35:13 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -156,7 +156,7 @@ void	*arm_intr_establish_fdt(int, int, int (*)(void *),
 	    void *, char *);
 void	*arm_intr_establish_fdt_idx(int, int, int, int (*)(void *),
 	    void *, char *);
-void	*arm_intr_establish_fdt_imap(int, int *, int, int, int, int (*)(void *),
+void	*arm_intr_establish_fdt_imap(int, int *, int, int, int (*)(void *),
 	    void *, char *);
 void	*arm_intr_establish_fdt_msi(int, uint64_t *, uint64_t *, int ,
 	    int (*)(void *), void *, char *);

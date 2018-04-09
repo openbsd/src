@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.10 2018/01/31 10:52:12 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.11 2018/04/09 18:35:13 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -309,14 +309,14 @@ arm_intr_establish_fdt_idx(int node, int idx, int level, int (*func)(void *),
 }
 
 void *
-arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int acells,
-    int level, int (*func)(void *), void *cookie, char *name)
+arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int level,
+    int (*func)(void *), void *cookie, char *name)
 {
 	struct interrupt_controller *ic;
 	struct arm_intr_handle *ih;
-	uint32_t *cell, phandle;
-	int map_mask[4], *map, map_len;
-	int i, len, ncells;
+	uint32_t *cell;
+	uint32_t map_mask[4], *map;
+	int i, len, acells, ncells;
 	void *val = NULL;
 
 	if (nreg != sizeof(map_mask))
@@ -326,19 +326,15 @@ arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int acells,
 	    sizeof(map_mask)) != sizeof(map_mask))
 		return NULL;
 
-	map_len = OF_getproplen(node, "interrupt-map");
-	if (map_len <= 0)
+	len = OF_getproplen(node, "interrupt-map");
+	if (len <= 0)
 		return NULL;
 
-	map = malloc(map_len, M_DEVBUF, M_WAITOK);
-	len = OF_getpropintarray(node, "interrupt-map", map, map_len);
-	if (len != map_len) {
-		free(map, M_DEVBUF, map_len);
-		return NULL;
-	}
+	map = malloc(len, M_DEVBUF, M_WAITOK);
+	OF_getpropintarray(node, "interrupt-map", map, len);
 
 	cell = map;
-	ncells = map_len / sizeof(uint32_t);
+	ncells = len / sizeof(uint32_t);
 	for (i = 0; ncells > 0; i++) {
 		LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
 			if (ic->ic_phandle == cell[4])
@@ -348,13 +344,13 @@ arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int acells,
 		if (ic == NULL)
 			break;
 
+		acells = OF_getpropint(ic->ic_node, "#address-cells", 0);
 		if (ncells >= (5 + acells + ic->ic_cells) &&
 		    (reg[0] & map_mask[0]) == cell[0] &&
 		    (reg[1] & map_mask[1]) == cell[1] &&
 		    (reg[2] & map_mask[2]) == cell[2] &&
 		    (reg[3] & map_mask[3]) == cell[3] &&
 		    ic->ic_establish) {
-			phandle = cell[4];
 			val = ic->ic_establish(ic->ic_cookie, &cell[5 + acells],
 			    level, func, cookie, name);
 			break;
@@ -365,7 +361,7 @@ arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int acells,
 	}
 
 	if (val == NULL) {
-		free(map, M_DEVBUF, map_len);
+		free(map, M_DEVBUF, len);
 		return NULL;
 	}
 
@@ -373,7 +369,7 @@ arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int acells,
 	ih->ih_ic = ic;
 	ih->ih_ih = val;
 
-	free(map, M_DEVBUF, map_len);
+	free(map, M_DEVBUF, len);
 	return ih;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.3 2018/04/05 21:41:49 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.4 2018/04/09 18:35:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -580,8 +580,7 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 		reg[3] = ih->ih_intrpin;
 
 		cookie = arm_intr_establish_fdt_imap(sc->sc_node, reg,
-		    sizeof(reg), sc->sc_pacells, level, func, arg,
-		    (void *)name);
+		    sizeof(reg), level, func, arg, name);
 	}
 
 	free(ih, M_DEVBUF, sizeof(struct dwpcie_intr_handle));

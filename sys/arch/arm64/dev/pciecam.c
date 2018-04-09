@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.2 2017/04/08 22:38:17 kettenis Exp $ */
+/* $OpenBSD: pciecam.c,v 1.3 2018/04/09 18:35:13 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -416,8 +416,7 @@ pciecam_intr_establish(void *self, pci_intr_handle_t ihp, int level,
 		reg[3] = ih->ih_intrpin;
 
 		cookie = arm_intr_establish_fdt_imap(sc->sc_node, reg,
-		    sizeof(reg), sc->sc_pacells, level, func, arg,
-		    (void *)name);
+		    sizeof(reg), level, func, arg, name);
 	}
 
 	free(ih, M_DEVBUF, sizeof(struct pciecam_intr_handle));
