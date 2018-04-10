@@ -39,7 +39,7 @@ function check_exit_status {
 }
 
 function usage {
-    echo "usage: apptest.sh [[-q]]"
+    echo "usage: appstest.sh [-q]"
 }
 
 no_long_tests=0
