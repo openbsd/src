@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.24 2017/01/23 01:10:10 patrick Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.25 2018/04/10 12:27:01 otto Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -358,8 +358,8 @@ uvm_addr_linsearch(struct vm_map *map, struct uvm_addr_state *uaddr,
 	    entry = (direction == 1 ?
 	    RBT_NEXT(uvm_map_addr, entry) :
 	    RBT_PREV(uvm_map_addr, entry))) {
-		if (VMMAP_FREE_START(entry) > high ||
-		    VMMAP_FREE_END(entry) < low) {
+		if ((direction == 1 && VMMAP_FREE_START(entry) > high) ||
+		    (direction == -1 && VMMAP_FREE_END(entry) < low)) {
 			break;
 		}
 
