@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.94 2018/03/20 15:45:32 mpi Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.95 2018/04/10 09:24:56 mpi Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -264,7 +264,9 @@ log(int level, const char *fmt, ...)
 	splx(s);
 	if (!log_open) {
 		va_start(ap, fmt);
+		mtx_enter(&kprintf_mutex);
 		kprintf(fmt, TOCONS, NULL, NULL, ap);
+		mtx_leave(&kprintf_mutex);
 		va_end(ap);
 	}
 	logwakeup();		/* wake up anyone waiting for log msgs */
@@ -304,7 +306,9 @@ addlog(const char *fmt, ...)
 	splx(s);
 	if (!log_open) {
 		va_start(ap, fmt);
+		mtx_enter(&kprintf_mutex);
 		kprintf(fmt, TOCONS, NULL, NULL, ap);
+		mtx_leave(&kprintf_mutex);
 		va_end(ap);
 	}
 	logwakeup();
@@ -502,15 +506,15 @@ printf(const char *fmt, ...)
 	va_list ap;
 	int retval;
 
-	mtx_enter(&kprintf_mutex);
 
 	va_start(ap, fmt);
+	mtx_enter(&kprintf_mutex);
 	retval = kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
+	mtx_leave(&kprintf_mutex);
 	va_end(ap);
 	if (!panicstr)
 		logwakeup();
 
-	mtx_leave(&kprintf_mutex);
 
 	return(retval);
 }
@@ -526,12 +530,11 @@ vprintf(const char *fmt, va_list ap)
 	int retval;
 
 	mtx_enter(&kprintf_mutex);
-
 	retval = kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
+	mtx_leave(&kprintf_mutex);
 	if (!panicstr)
 		logwakeup();
 
-	mtx_leave(&kprintf_mutex);
 
 	return (retval);
 }
@@ -686,6 +689,9 @@ kprintf(const char *fmt0, int oflags, void *vp, char *sbuf, va_list ap)
 	char *xdigs = NULL;	/* digits for [xX] conversion */
 	char buf[KPRINTF_BUFSIZE]; /* space for %c, %[diouxX] */
 	char *tailp = NULL;	/* tail pointer for snprintf */
+
+	if (oflags & TOCONS)
+		MUTEX_ASSERT_LOCKED(&kprintf_mutex);
 
 	if ((oflags & TOBUFONLY) && (vp != NULL))
 		tailp = *(char **)vp;
