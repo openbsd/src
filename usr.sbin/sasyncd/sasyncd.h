@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.18 2016/07/18 21:22:09 benno Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.19 2018/04/10 15:58:21 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -37,7 +37,7 @@ enum RUNSTATE		{ INIT = 0, SLAVE, MASTER, FAIL };
 #define CARPSTATES	{ "INIT", "SLAVE", "MASTER", "FAIL" }
 
 struct syncpeer;
-struct timeval;
+struct timespec;
 
 struct cfgstate {
 	enum RUNSTATE	 runstate;
@@ -171,6 +171,6 @@ void	pfkey_snapshot(void *);
 
 /* timer.c */
 void	timer_init(void);
-void	timer_next_event(struct timeval *);
+void	timer_next_event(struct timespec *);
 void	timer_run(void);
 int	timer_add(char *, u_int32_t, void (*)(void *), void *);

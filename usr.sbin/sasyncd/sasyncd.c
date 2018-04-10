@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.27 2017/04/10 09:27:08 reyk Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.28 2018/04/10 15:58:21 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 
 #include <sys/types.h>
-#include <sys/time.h>
+
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "sasyncd.h"
@@ -55,7 +56,7 @@ sasyncd_stop(int s)
 static int
 sasyncd_run(pid_t ppid)
 {
-	struct timeval	*timeout, tv;
+	struct timespec	*timeout, ts;
 	fd_set		*rfds, *wfds;
 	size_t		 fdsetsize;
 	int		 maxfd, n;
@@ -101,10 +102,10 @@ sasyncd_run(pid_t ppid)
 		if (cfgstate.route_socket + 1 > maxfd)
 			maxfd = cfgstate.route_socket + 1;
 
-		timeout = &tv;
-		timer_next_event(&tv);
+		timeout = &ts;
+		timer_next_event(&ts);
 
-		n = select(maxfd, rfds, wfds, 0, timeout);
+		n = pselect(maxfd, rfds, wfds, NULL, timeout, NULL);
 		if (n == -1) {
 			if (errno != EINTR) {
 				log_err("select()");
