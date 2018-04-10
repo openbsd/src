@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.92 2018/04/06 14:05:06 bluhm Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.93 2018/04/10 11:09:14 sthen Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -740,11 +740,15 @@ socktrans(struct kinfo_file *kf)
 		printf("* internet %s", stype);
 		getinetproto(kf->so_protocol);
 		print_inet_details(kf);
+		if (kf->inp_rtableid)
+			printf(" rtable %u", kf->inp_rtableid);
 		break;
 	case AF_INET6:
 		printf("* internet6 %s", stype);
 		getinetproto(kf->so_protocol);
 		print_inet6_details(kf);
+		if (kf->inp_rtableid)
+			printf(" rtable %u", kf->inp_rtableid);
 		break;
 	case AF_UNIX:
 		/* print address of pcb and connected pcb */
