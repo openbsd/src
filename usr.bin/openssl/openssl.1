@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.92 2018/03/31 12:46:12 schwarze Exp $
+.\" $OpenBSD: openssl.1,v 1.93 2018/04/10 22:07:30 schwarze Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: March 31 2018 $
+.Dd $Mdocdate: April 10 2018 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -837,14 +837,20 @@ The same as
 .Sh CIPHERS
 .Nm openssl ciphers
 .Op Fl hVv
-.Op Ar cipherlist
+.Op Ar control
 .Pp
 The
 .Nm ciphers
-command converts
-.Nm openssl
-cipher lists into ordered SSL cipher preference lists.
-It can be used as a way to determine the appropriate cipher list.
+command converts the
+.Ar control
+string from the format documented in
+.Xr SSL_CTX_set_cipher_list 3
+into an ordered SSL cipher suite preference list.
+If no
+.Ar control
+string is specified, the
+.Cm DEFAULT
+list is printed.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -859,144 +865,6 @@ key exchange, authentication, encryption, and mac algorithms.
 Like
 .Fl V ,
 but without cipher suite codes.
-.It Ar cipherlist
-A cipher list to convert to a cipher preference list.
-If it is not included, the default cipher list will be used.
-.Pp
-The cipher list consists of one or more cipher strings
-separated by colons.
-Commas or spaces are also acceptable separators, but colons are normally used.
-.Pp
-The actual cipher string can take several different forms:
-.Pp
-It can consist of a single cipher suite, such as RC4-SHA.
-.Pp
-It can represent a list of cipher suites containing a certain algorithm,
-or cipher suites of a certain type.
-For example SHA1 represents all cipher suites using the digest algorithm SHA1.
-.Pp
-Lists of cipher suites can be combined in a single cipher string using the
-.Sq +
-character
-(logical AND operation).
-For example, SHA1+DES represents all cipher suites
-containing the SHA1 and DES algorithms.
-.Pp
-Each cipher string can be optionally preceded by the characters
-.Sq \&! ,
-.Sq - ,
-or
-.Sq + .
-If
-.Sq !\&
-is used, then the ciphers are permanently deleted from the list.
-The ciphers deleted can never reappear in the list even if they are
-explicitly stated.
-If
-.Sq -
-is used, then the ciphers are deleted from the list, but some or
-all of the ciphers can be added again by later options.
-If
-.Sq +
-is used, then the ciphers are moved to the end of the list.
-This option doesn't add any new ciphers, it just moves matching existing ones.
-.Pp
-If none of these characters is present, the string is just interpreted
-as a list of ciphers to be appended to the current preference list.
-If the list includes any ciphers already present, they will be ignored;
-that is, they will not be moved to the end of the list.
-.Pp
-Additionally, the cipher string
-.Cm @STRENGTH
-can be used at any point to sort the current cipher list in order of
-encryption algorithm key length.
-.El
-.Pp
-The following is a list of all permitted cipher strings and their meanings.
-.Bl -tag -width "XXXX"
-.It Cm DEFAULT
-The default cipher list.
-This is determined at compile time and is currently
-.Cm ALL:!aNULL:!eNULL:!SSLv2 .
-This must be the first cipher string specified.
-.It Cm COMPLEMENTOFDEFAULT
-The ciphers included in
-.Cm ALL ,
-but not enabled by default.
-Currently this is
-.Cm ADH .
-Note that this rule does not cover
-.Cm eNULL ,
-which is not included by
-.Cm ALL
-(use
-.Cm COMPLEMENTOFALL
-if necessary).
-.It Cm ALL
-All cipher suites except the
-.Cm eNULL
-ciphers, which must be explicitly enabled.
-.It Cm COMPLEMENTOFALL
-The cipher suites not enabled by
-.Cm ALL ,
-currently being
-.Cm eNULL .
-.It Cm HIGH
-.Qq High
-encryption cipher suites.
-This currently means those with key lengths larger than 128 bits.
-.It Cm MEDIUM
-.Qq Medium
-encryption cipher suites, currently those using 128-bit encryption.
-.It Cm LOW
-.Qq Low
-encryption cipher suites, currently those using 64- or 56-bit encryption
-algorithms.
-.It Cm eNULL , NULL
-The
-.Qq NULL
-ciphers; that is, those offering no encryption.
-Because these offer no encryption at all and are a security risk,
-they are disabled unless explicitly included.
-.It Cm aNULL
-The cipher suites offering no authentication.
-This is currently the anonymous DH algorithms.
-These cipher suites are vulnerable to a
-.Qq man in the middle
-attack, so their use is normally discouraged.
-.It Cm kRSA , RSA
-Cipher suites using RSA key exchange.
-.It Cm kEDH
-Cipher suites using ephemeral DH key agreement.
-.It Cm aRSA
-Cipher suites using RSA authentication, i.e. the certificates carry RSA keys.
-.It Cm aDSS , DSS
-Cipher suites using DSS authentication, i.e. the certificates carry DSS keys.
-.It Cm TLSv1
-TLS v1.0 cipher suites.
-.It Cm DH
-Cipher suites using DH, including anonymous DH.
-.It Cm ADH
-Anonymous DH cipher suites.
-.It Cm AES
-Cipher suites using AES.
-.It Cm 3DES
-Cipher suites using triple DES.
-.It Cm DES
-Cipher suites using DES
-.Pq not triple DES .
-.It Cm RC4
-Cipher suites using RC4.
-.It Cm CAMELLIA
-Cipher suites using Camellia.
-.It Cm CHACHA20
-Cipher suites using ChaCha20.
-.It Cm IDEA
-Cipher suites using IDEA.
-.It Cm MD5
-Cipher suites using MD5.
-.It Cm SHA1 , SHA
-Cipher suites using SHA1.
 .El
 .Sh CRL
 .nr nS 1
