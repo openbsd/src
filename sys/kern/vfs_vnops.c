@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.89 2018/01/02 06:38:45 guenther Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.90 2018/04/10 09:17:45 mpi Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -65,9 +65,15 @@ int vn_poll(struct file *, int, struct proc *);
 int vn_kqfilter(struct file *, struct knote *);
 int vn_closefile(struct file *, struct proc *);
 
-struct 	fileops vnops =
-	{ vn_read, vn_write, vn_ioctl, vn_poll, vn_kqfilter, vn_statfile,
-	  vn_closefile };
+struct 	fileops vnops = {
+	.fo_read	= vn_read,
+	.fo_write	= vn_write,
+	.fo_ioctl	= vn_ioctl,
+	.fo_poll	= vn_poll,
+	.fo_kqfilter	= vn_kqfilter,
+	.fo_stat	= vn_statfile,
+	.fo_close	= vn_closefile
+};
 
 /*
  * Common code for vnode open operations.

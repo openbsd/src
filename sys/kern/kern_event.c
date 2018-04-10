@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.86 2018/04/08 16:45:12 mikeb Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.87 2018/04/10 09:17:45 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -71,13 +71,13 @@ int	kqueue_close(struct file *fp, struct proc *p);
 void	kqueue_wakeup(struct kqueue *kq);
 
 struct fileops kqueueops = {
-	kqueue_read,
-	kqueue_write,
-	kqueue_ioctl,
-	kqueue_poll,
-	kqueue_kqfilter,
-	kqueue_stat,
-	kqueue_close
+	.fo_read	= kqueue_read,
+	.fo_write	= kqueue_write,
+	.fo_ioctl	= kqueue_ioctl,
+	.fo_poll	= kqueue_poll,
+	.fo_kqfilter	= kqueue_kqfilter,
+	.fo_stat	= kqueue_stat,
+	.fo_close	= kqueue_close
 };
 
 void	knote_attach(struct knote *kn, struct filedesc *fdp);

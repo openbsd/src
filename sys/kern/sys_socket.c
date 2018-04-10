@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.35 2017/12/10 11:31:54 mpi Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.36 2018/04/10 09:17:45 mpi Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -48,8 +48,13 @@
 #include <net/route.h>
 
 struct	fileops socketops = {
-	soo_read, soo_write, soo_ioctl, soo_poll, soo_kqfilter,
-	soo_stat, soo_close
+	.fo_read	= soo_read,
+	.fo_write	= soo_write,
+	.fo_ioctl	= soo_ioctl,
+	.fo_poll	= soo_poll,
+	.fo_kqfilter	= soo_kqfilter,
+	.fo_stat	= soo_stat,
+	.fo_close	= soo_close
 };
 
 int
