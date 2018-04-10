@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.593 2018/02/28 08:55:44 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.594 2018/04/10 10:48:44 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 28 2018 $
+.Dd $Mdocdate: April 10 2018 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1459,6 +1459,8 @@ The following keys may be used in tree mode:
 .It Li "Enter" Ta "Choose selected item"
 .It Li "Up" Ta "Select previous item"
 .It Li "Down" Ta "Select next item"
+.It Li "x" Ta "Kill selected item"
+.It Li "X" Ta "Kill tagged items"
 .It Li "<" Ta "Scroll list of previews left"
 .It Li ">" Ta "Scroll list of previews right"
 .It Li "C-s" Ta "Search by name"

@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.113 2018/02/28 08:55:44 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.114 2018/04/10 10:48:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -175,6 +175,22 @@ server_lock_client(struct client *c)
 
 	c->flags |= CLIENT_SUSPENDED;
 	proc_send(c->peer, MSG_LOCK, -1, cmd, strlen(cmd) + 1);
+}
+
+void
+server_kill_pane(struct window_pane *wp)
+{
+	struct window	*w = wp->window;
+
+	if (window_count_panes(w) == 1) {
+		server_kill_window(w);
+		recalculate_sizes();
+	} else {
+		server_unzoom_window(w);
+		layout_close_pane(wp);
+		window_remove_pane(w, wp);
+		server_redraw_window(w);
+	}
 }
 
 void
