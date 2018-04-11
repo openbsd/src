@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.224 2017/11/08 17:27:39 visa Exp $	*/
+/*	$OpenBSD: ping.c,v 1.225 2018/04/11 16:03:58 zhuk Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -586,7 +586,7 @@ main(int argc, char *argv[])
 		for (i = ECHOTMLEN; i < datalen; ++i)
 			*datap++ = i;
 
-	ident = getpid() & 0xFFFF;
+	ident = arc4random() & 0xFFFF;
 
 	/*
 	 * When trying to send large packets, you must increase the
@@ -1033,7 +1033,7 @@ pinger(int s)
 		icp6->icmp6_cksum = 0;
 		icp6->icmp6_type = ICMP6_ECHO_REQUEST;
 		icp6->icmp6_code = 0;
-		icp6->icmp6_id = htons(ident);
+		icp6->icmp6_id = ident;
 		icp6->icmp6_seq = seq;
 	} else {
 		icp = (struct icmp *)outpack;
@@ -1151,7 +1151,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		}
 
 		if (icp6->icmp6_type == ICMP6_ECHO_REPLY) {
-			if (ntohs(icp6->icmp6_id) != ident)
+			if (icp6->icmp6_id != ident)
 				return;			/* 'Twas not our ECHO */
 			seq = icp6->icmp6_seq;
 			echo_reply = 1;
