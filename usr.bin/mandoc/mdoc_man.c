@@ -1,6 +1,6 @@
-/*	$OpenBSD: mdoc_man.c,v 1.123 2018/04/05 22:04:37 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.124 2018/04/11 17:10:35 schwarze Exp $ */
 /*
- * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -608,6 +608,14 @@ man_mdoc(void *arg, const struct roff_man *mdoc)
 {
 	struct roff_node *n;
 
+	printf(".\\\" Automatically generated from an mdoc input file."
+	    "  Do not edit.\n");
+	for (n = mdoc->first->child; n != NULL; n = n->next) {
+		if (n->type != ROFFT_COMMENT)
+			break;
+		printf(".\\\"%s\n", n->string);
+	}
+
 	printf(".TH \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"\n",
 	    mdoc->meta.title,
 	    (mdoc->meta.msec == NULL ? "" : mdoc->meta.msec),
@@ -622,7 +630,7 @@ man_mdoc(void *arg, const struct roff_man *mdoc)
 		fontqueue.head = fontqueue.tail = mandoc_malloc(8);
 		*fontqueue.tail = 'R';
 	}
-	for (n = mdoc->first->child; n != NULL; n = n->next)
+	for (; n != NULL; n = n->next)
 		print_node(&mdoc->meta, n);
 	putchar('\n');
 }

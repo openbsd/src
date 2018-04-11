@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.169 2017/07/15 17:57:46 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.170 2018/04/11 17:10:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -342,7 +342,7 @@ print_mdoc_node(MDOC_ARGS)
 	int		 child;
 	struct tag	*t;
 
-	if (n->flags & NODE_NOPRT)
+	if (n->type == ROFFT_COMMENT || n->flags & NODE_NOPRT)
 		return;
 
 	child = 1;

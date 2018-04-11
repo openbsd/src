@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.272 2018/04/05 09:16:45 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.273 2018/04/11 17:10:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -318,6 +318,7 @@ mdoc_node_validate(struct roff_man *mdoc)
 		    (np->tok == MDOC_Sh || np->tok == MDOC_Ss)))
 			check_toptext(mdoc, n->line, n->pos, n->string);
 		break;
+	case ROFFT_COMMENT:
 	case ROFFT_EQN:
 	case ROFFT_TBL:
 		break;
@@ -1973,8 +1974,10 @@ post_root(POST_ARGS)
 	/* Check that we begin with a proper `Sh'. */
 
 	n = mdoc->first->child;
-	while (n != NULL && n->tok >= MDOC_Dd &&
-	    mdoc_macros[n->tok].flags & MDOC_PROLOGUE)
+	while (n != NULL &&
+	    (n->type == ROFFT_COMMENT ||
+	     (n->tok >= MDOC_Dd &&
+	      mdoc_macros[n->tok].flags & MDOC_PROLOGUE)))
 		n = n->next;
 
 	if (n == NULL)
