@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.68 2018/03/31 22:52:30 bluhm Exp $	*/
+/*	$OpenBSD: npx.c,v 1.69 2018/04/11 15:44:08 bluhm Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -131,8 +131,10 @@ enum npx_type {
 };
 
 static	enum npx_type		npx_type;
-static	volatile u_int		npx_intrs_while_probing;
-static	volatile u_int		npx_traps_while_probing;
+static	volatile u_int		npx_intrs_while_probing
+				    __attribute__((section(".kudata")));
+static	volatile u_int		npx_traps_while_probing
+				    __attribute__((section(".kudata")));
 
 extern int i386_fpu_present;
 extern int i386_fpu_exception;

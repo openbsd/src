@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.161 2018/03/31 13:45:03 bluhm Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.162 2018/04/11 15:44:08 bluhm Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -103,7 +103,11 @@ union vmm_cpu_cap {
 #ifdef _KERNEL
 /* XXX stuff to move to cpuvar.h later */
 struct cpu_info {
-	struct device	*ci_dev;	/* our device */
+	u_int32_t	ci_kern_cr3;	/* U+K page table */
+	u_int32_t	ci_scratch;	/* for U<-->K transition */
+
+#define ci_PAGEALIGN	ci_dev
+	struct device *ci_dev;		/* our device */
 	struct cpu_info *ci_self;	/* pointer to this structure */
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 	struct cpu_info *ci_next;	/* next cpu */
@@ -116,6 +120,10 @@ struct cpu_info {
 	u_int ci_apicid;		/* our APIC ID */
 	u_int ci_acpi_proc_id;
 	u_int32_t ci_randseed;
+
+	u_int32_t ci_kern_esp;		/* kernel-only stack */
+	u_int32_t ci_intr_esp;		/* U<-->K trampoline stack */
+	u_int32_t ci_user_cr3;		/* U-K page table */
 
 #if defined(MULTIPROCESSOR)
 	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
@@ -224,7 +232,10 @@ struct cpu_info {
  * the only CPU on uniprocessors), and the primary CPU is the
  * first CPU on the CPU info list.
  */
-extern struct cpu_info cpu_info_primary;
+struct cpu_info_full;
+extern struct cpu_info_full cpu_info_full_primary;
+#define cpu_info_primary (*(struct cpu_info *)((char *)&cpu_info_full_primary + PAGE_SIZE*2 - offsetof(struct cpu_info, ci_PAGEALIGN)))
+
 extern struct cpu_info *cpu_info_list;
 
 #define	CPU_INFO_ITERATOR		int

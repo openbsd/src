@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.199 2018/03/31 13:45:03 bluhm Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.200 2018/04/11 15:44:08 bluhm Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -930,6 +930,8 @@ pmap_bootstrap(vaddr_t kva_start)
 	bzero(&kpm->pm_list, sizeof(kpm->pm_list));  /* pm_list not used */
 	kpm->pm_pdir = (vaddr_t)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);
 	kpm->pm_pdirpa = proc0.p_addr->u_pcb.pcb_cr3;
+	kpm->pm_pdir_intel = 0;
+	kpm->pm_pdirpa_intel = 0;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		atop(kva_start - VM_MIN_KERNEL_ADDRESS);
 	kpm->pm_type = PMAP_TYPE_NORMAL;
@@ -1316,6 +1318,10 @@ pmap_pinit_pd_86(struct pmap *pmap)
 			    &pmap->pm_pdirpa);
 	pmap->pm_pdirsize = NBPG;
 
+	/* XXX hshoexer */
+	pmap->pm_pdir_intel = pmap->pm_pdir;
+	pmap->pm_pdirpa_intel = pmap->pm_pdirpa;
+
 	/* init PDP */
 	/* zero init area */
 	bzero((void *)pmap->pm_pdir, PDSLOT_PTE * sizeof(pd_entry_t));
@@ -1377,6 +1383,11 @@ pmap_destroy(struct pmap *pmap)
 		    &kp_zero);
 #endif /* NVMM > 0 */
 
+	if (pmap->pm_pdir_intel) {
+		uvm_km_free(kernel_map, pmap->pm_pdir_intel, pmap->pm_pdirsize);
+		pmap->pm_pdir_intel = 0;
+	}
+
 	pool_put(&pmap_pmap_pool, pmap);
 }
 
@@ -1421,8 +1432,18 @@ pmap_switch(struct proc *o, struct proc *p)
 	} else if (o != NULL && pmap == pmap_kernel()) {
 		nlazy_cr3++;
 	} else {
-		curcpu()->ci_curpmap = pmap;
+		self->ci_curpmap = pmap;
 		lcr3(pmap->pm_pdirpa);
+	}
+
+	/*
+	 * Meltdown: iff we're doing separate U+K and U-K page tables,
+	 * then record them in cpu_info for easy access in syscall and
+	 * interrupt trampolines.
+	 */
+	if (pmap->pm_pdirpa_intel) {
+		self->ci_kern_cr3 = pmap->pm_pdirpa;
+		self->ci_user_cr3 = pmap->pm_pdirpa_intel;
 	}
 
 	/*
@@ -2400,6 +2421,12 @@ out:
 	return error;
 }
 
+void
+pmap_enter_special_86(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
+{
+	/* XXX hshoexer nothing yet */
+}
+
 /*
  * pmap_growkernel: increase usage of KVM space
  *
@@ -2493,10 +2520,10 @@ out:
  * release the lock if we get an interrupt in a bad moment.
  */
 
-volatile int tlb_shoot_wait;
+volatile int tlb_shoot_wait __attribute__((section(".kudata")));
 
-volatile vaddr_t tlb_shoot_addr1;
-volatile vaddr_t tlb_shoot_addr2;
+volatile vaddr_t tlb_shoot_addr1 __attribute__((section(".kudata")));
+volatile vaddr_t tlb_shoot_addr2 __attribute__((section(".kudata")));
 
 void
 pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)
@@ -2692,6 +2719,8 @@ boolean_t	(*pmap_clear_attrs_p)(struct vm_page *, int) =
     pmap_clear_attrs_86;
 int		(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int) =
     pmap_enter_86;
+void		(*pmap_enter_special_p)(vaddr_t, paddr_t, vm_prot_t,
+    u_int32_t) = pmap_enter_special_86;
 boolean_t	(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *) =
     pmap_extract_86;
 vaddr_t		(*pmap_growkernel_p)(vaddr_t) = pmap_growkernel_86;

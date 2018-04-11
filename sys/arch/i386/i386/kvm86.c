@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86.c,v 1.16 2018/03/31 13:49:03 bluhm Exp $ */
+/* $OpenBSD: kvm86.c,v 1.17 2018/04/11 15:44:08 bluhm Exp $ */
 /* $NetBSD: kvm86.c,v 1.10 2005/12/26 19:23:59 perry Exp $ */
 /*
  * Copyright (c) 2002
@@ -95,11 +95,7 @@ kvm86_init(void)
 	vmd = (struct kvm86_data *)(buf + PAGE_SIZE);
 	tss = &vmd->tss;
 
-	/*
-	 * derive TSS from proc0
-	 * we want to access all IO ports, so we need a full-size
-	 * permission bitmap
-	 */
+	/* derive TSS from primary cpu */
 	memcpy(tss, cpu_info_primary.ci_tss, sizeof(struct i386tss));
 	tss->tss_esp0 = (int)vmd;
 	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
@@ -107,7 +103,7 @@ kvm86_init(void)
 		vmd->iomap[i] = 0;
 	tss->tss_ioopt = ((caddr_t)vmd->iomap - (caddr_t)&tss) << 16;
 
-	/* setup TSS descriptor (including our iomap) */
+	/* setup TSS descriptor */
 	setsegment(&vmd->sd, tss,
 	    sizeof(struct i386tss) + sizeof(vmd->iomap) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);

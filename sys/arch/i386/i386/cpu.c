@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.88 2018/03/31 13:45:03 bluhm Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.89 2018/04/11 15:44:08 bluhm Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -80,6 +80,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/codepatch.h>
+#include <machine/cpu_full.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
@@ -113,6 +114,15 @@
 #include <i386/isa/nvram.h>
 #include <dev/isa/isareg.h>
 
+/* #define CPU_DEBUG */
+
+#ifdef CPU_DEBUG
+#define DPRINTF(x...)	do  { printf(x); } while (0)
+#else
+#define DPRINTF(x...)
+#endif	/* CPU_DEBUG */
+
+
 struct cpu_softc;
 
 int     cpu_match(struct device *, void *, void *);
@@ -139,7 +149,8 @@ struct cpu_functions mp_cpu_funcs =
  * CPU, on uniprocessors).  The CPU info list is initialized to
  * point at it.
  */
-struct cpu_info cpu_info_primary;
+struct cpu_info_full cpu_info_full_primary = { .cif_cpu = { .ci_self = &cpu_info_primary } };
+
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
 #ifdef MULTIPROCESSOR
@@ -233,8 +244,13 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	if (caa->cpu_role == CPU_ROLE_AP) {
-		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK|M_ZERO);
+		struct cpu_info_full *cif;
+
+		cif = km_alloc(sizeof *cif, &kv_any, &kp_zero, &kd_waitok);
+		ci = &cif->cif_cpu;
 #ifdef MULTIPROCESSOR
+		ci->ci_tss = &cif->cif_tss;
+		cpu_enter_pages(cif);
 		if (cpu_info[cpunum] != NULL)
 			panic("cpu at apic id %d already attached?", cpunum);
 		cpu_info[cpunum] = ci;
@@ -524,16 +540,47 @@ rdrand(void *v)
 int
 cpu_activate(struct device *self, int act)
 {
-	struct cpu_info *sc = (struct cpu_info *)self;
+	struct cpu_softc *sc = (struct cpu_softc *)self;
 
 	switch (act) {
 	case DVACT_RESUME:
-		if (sc->ci_cpuid == 0)
+		if (sc->sc_info->ci_cpuid == 0)
 			rdrand(NULL);
 		break;
 	}
 
 	return (0);
+}
+
+void
+cpu_enter_pages(struct cpu_info_full *cif)
+{
+	vaddr_t	va;
+	paddr_t pa;
+
+	/* The TSS + GDT need to be readable */
+	va = (vaddr_t)&cif->cif_tss;
+	pmap_extract(pmap_kernel(), va, &pa);
+	pmap_enter_special(va, pa, PROT_READ, 0);
+	DPRINTF("%s: entered tss+gdt page at va 0x%08x pa 0x%08x\n", __func__,
+	    (uint32_t)va, (uint32_t)pa);
+
+	/* The trampoline stack page needs to be read/write */
+	va = (vaddr_t)&cif->cif_tramp_stack;
+	pmap_extract(pmap_kernel(), va, &pa);
+	pmap_enter_special(va, pa, PROT_READ | PROT_WRITE, 0);
+	DPRINTF("%s: entered t.stack page at va 0x%08x pa 0x%08x\n", __func__,
+	    (uint32_t)va, (uint32_t)pa);
+
+	cif->cif_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	cif->cif_tss.tss_esp0 = va + sizeof(cif->cif_tramp_stack) - 16;
+	DPRINTF("%s: cif_tss.tss_esp0 = 0x%08x\n", __func__,
+	    (uint32_t)cif->cif_tss.tss_esp0);
+	cif->cif_cpu.ci_intr_esp = cif->cif_tss.tss_esp0 -
+	    sizeof(struct trampframe);
+
+	/* empty iomap */
+	cif->cif_tss.tss_ioopt = sizeof(cif->cif_tss) << 16;
 }
 
 #ifdef MULTIPROCESSOR

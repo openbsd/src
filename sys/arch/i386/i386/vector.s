@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.21 2017/05/30 12:41:55 mlarkin Exp $	*/
+/*	$OpenBSD: vector.s,v 1.22 2018/04/11 15:44:08 bluhm Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -72,24 +72,24 @@
  * On exit, we jump to Xdoreti(), to process soft interrupts and ASTs.
  */
 #define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
-IDTVEC(resume_##name##num)						;\
+KIDTVEC(resume_##name##num)						;\
 	push	%ebx							;\
 	cli								;\
 	jmp	1f							;\
-IDTVEC(recurse_##name##num)						;\
+KIDTVEC(recurse_##name##num)						;\
 	pushfl								;\
 	pushl	%cs							;\
 	pushl	%esi							;\
 	subl	$8,%esp			/* space for tf_{err,trapno} */ ;\
 	movl	%ebx,%esi						;\
-	INTRENTRY							;\
+	INTRENTRY(recurse_##name##num)					;\
 	MAKE_FRAME							;\
 	push	%esi							;\
 	cli								;\
 	jmp	1f							;\
-_C_LABEL(Xintr_##name##num):						;\
+IDTVEC(intr_##name##num)						;\
 	subl	$8,%esp			/* space for tf_{err,trapno} */ ;\
-	INTRENTRY							;\
+	INTRENTRY(intr_##name##num)					;\
 	MAKE_FRAME							;\
 	mask(num)			/* mask it in hardware */	;\
 	early_ack(num)			/* and allow other intrs */	;\
@@ -130,14 +130,22 @@ _C_LABEL(Xintr_##name##num):						;\
 6:	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
-IDTVEC(stray_##name##num)						;\
+KIDTVEC(stray_##name##num)						;\
 	pushl	$num							;\
 	call	_C_LABEL(isa_strayintr)					;\
 	addl	$4,%esp							;\
 	jmp	6b							;\
-IDTVEC(hold_##name##num)						;\
+KIDTVEC(hold_##name##num)						;\
 	orb	$IRQ_BIT(num),CPUVAR(IPENDING) + IRQ_BYTE(num)	;\
+	CLIDEBUG							;\
 	INTRFASTEXIT
+
+#if defined(DIAGNOSTIC)
+#define CLIDEBUG \
+	movl	$0xfa,%esi
+#else
+#define	CLIDEBUG
+#endif
 
 #if defined(DEBUG)
 #define	STRAY_INITIALIZE \

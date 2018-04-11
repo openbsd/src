@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.116 2017/07/15 17:20:56 tedu Exp $	*/
+/*	$OpenBSD: bios.c,v 1.117 2018/04/11 15:44:08 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -637,7 +637,6 @@ bios32_service(u_int32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 	u_long pa, endpa;
 	vaddr_t va, sva;
 	u_int32_t base, count, off, ent;
-	int slot;
 
 	if (bios32_entry.offset == 0)
 		return 0;
@@ -664,8 +663,7 @@ bios32_service(u_int32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 	/* Store bios32 service kva for cleanup later */
 	bios_softc->bios32_service_va = sva;
 
-	slot = gdt_get_slot();
-	setgdt(slot, (caddr_t)va, BIOS32_END, SDT_MEMERA, SEL_KPL, 1, 0);
+	setgdt(GBIOS32_SEL, (caddr_t)va, BIOS32_END, SDT_MEMERA, SEL_KPL, 1, 0);
 
 	for (pa = trunc_page(BIOS32_START),
 	    va += trunc_page(BIOS32_START);
@@ -682,7 +680,7 @@ bios32_service(u_int32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 		}
 	}
 
-	e->segment = GSEL(slot, SEL_KPL);
+	e->segment = GSEL(GBIOS32_SEL, SEL_KPL);
 	e->offset = (vaddr_t)ent;
 
 	ei->bei_base = base;

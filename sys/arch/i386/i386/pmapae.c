@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.52 2016/10/21 06:20:58 mlarkin Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.53 2018/04/11 15:44:08 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -685,6 +685,7 @@ pmap_bootstrap_pae(void)
 		pmap_pte_paddr_p = pmap_pte_paddr_pae;
 		pmap_clear_attrs_p = pmap_clear_attrs_pae;
 		pmap_enter_p = pmap_enter_pae;
+		pmap_enter_special_p = pmap_enter_special_pae;
 		pmap_extract_p = pmap_extract_pae;
 		pmap_growkernel_p = pmap_growkernel_pae;
 		pmap_page_remove_p = pmap_page_remove_pae;
@@ -847,6 +848,10 @@ pmap_pinit_pd_pae(struct pmap *pmap)
 	pmap->pm_pdidx[2] |= PG_V;
 	pmap->pm_pdidx[3] |= PG_V;
 	pmap->pm_pdirsize = 4 * NBPG;
+
+	/* XXX hshoexer */
+	pmap->pm_pdir_intel = pmap->pm_pdir;
+	pmap->pm_pdirpa_intel = pmap->pm_pdirpa;
 
 	/* init PDP */
 	/* zero init area */
@@ -1750,6 +1755,12 @@ out:
 		pool_put(&pmap_pv_pool, opve);
 
 	return error;
+}
+
+void
+pmap_enter_special_pae(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
+{
+	/* XXX hshoexer nothing yet */
 }
 
 /*

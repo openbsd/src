@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.8 2017/10/24 20:06:54 guenther Exp $	*/
+/*	$OpenBSD: ld.script,v 1.9 2018/04/11 15:44:08 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -56,6 +56,16 @@ SECTIONS
 		locore0.o(.text)
 		*(.text .text.*)
 	} :text =0xcccccccc
+
+	. = ALIGN(__ALIGN_SIZE);
+	__kernel_kutext_phys = . & 0xfffffff;
+	.kutext : AT (__kernel_kutext_phys)
+	{
+		__kutext_start = ABSOLUTE(.);
+		*(.kutext)
+		__kutext_end = ABSOLUTE(.);
+	} :text =0xcccccccc
+
 	PROVIDE (__etext = .);
 	PROVIDE (etext = .);
 	_etext = .;
@@ -94,6 +104,16 @@ SECTIONS
 		__data_load = LOADADDR(.data);
 		*(.data .data.*)
 	} :data =0xcccccccc
+
+	. = ALIGN(__ALIGN_SIZE);
+	__kernel_kudata_phys = . & 0xfffffff;
+	.kudata : AT (__kernel_kudata_phys)
+	{
+		__kudata_start = ABSOLUTE(.);
+		*(.kudata)
+		__kudata_end = ABSOLUTE(.);
+	}
+
 	. = ALIGN(0x1000);
 	PROVIDE (edata = .);
 	_edata = .;

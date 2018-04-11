@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.27 2017/08/08 15:53:55 visa Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.28 2018/04/11 15:44:08 bluhm Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -288,6 +288,9 @@ breakpoint(void)
 }
 
 void amd64_errata(struct cpu_info *);
+
+struct cpu_info_full;
+void cpu_enter_pages(struct cpu_info_full *);
 
 #endif /* _KERNEL */
 #endif /* !_MACHINE_CPUFUNC_H_ */

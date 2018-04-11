@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.23 2018/03/31 13:45:03 bluhm Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.24 2018/04/11 15:44:08 bluhm Exp $	*/
 /*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #include <machine/sysarch.h>
 
 /*
- * Please not that pcb_savefpu must be aligend to 16 bytes.
+ * Please note that pcb_savefpu must be aligend to 16 bytes.
  */
 struct pcb {
 	union	savefpu pcb_savefpu;	/* floating point state for FPU */

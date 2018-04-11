@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.83 2016/10/21 06:20:59 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.84 2018/04/11 15:44:08 bluhm Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -99,8 +99,18 @@ struct pmap {
 	struct mutex pm_mtx;
 	struct mutex pm_apte_mtx;
 
-	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
-	vaddr_t pm_pdir;		/* VA of PD (lck by object lock) */
+	/*
+	 * pm_pdir		: VA of PD when executing in privileged mode
+	 *			  (lock by objeckt lock)
+	 * pm_pdirpa		: PA of PD when executing in privileged mode,
+	 *			  (read-only after create)
+	 * pm_pdir_intel	: VA of PD when executing on Intel CPU in
+	 *			  usermode (no kernel mappings)
+	 * pm_pdirpa_intel	: PA of PD when executing on Intel CPU in
+	 *			  usermode (no kernel mappings)
+	 */
+	paddr_t pm_pdirpa, pm_pdirpa_intel;
+	vaddr_t pm_pdir, pm_pdir_intel;
 	int	pm_pdirsize;		/* PD size (4k vs 16k on PAE) */
 	struct uvm_object pm_obj;	/* object (lck by object lock) */
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
@@ -263,6 +273,7 @@ extern u_int32_t (*pmap_pte_bits_p)(vaddr_t);
 extern paddr_t (*pmap_pte_paddr_p)(vaddr_t);
 extern boolean_t (*pmap_clear_attrs_p)(struct vm_page *, int);
 extern int (*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+extern void (*pmap_enter_special_p)(vaddr_t, paddr_t, vm_prot_t, u_int32_t);
 extern boolean_t (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
 extern vaddr_t (*pmap_growkernel_p)(vaddr_t);
 extern void (*pmap_page_remove_p)(struct vm_page *);
@@ -281,6 +292,7 @@ u_int32_t pmap_pte_bits_pae(vaddr_t);
 paddr_t pmap_pte_paddr_pae(vaddr_t);
 boolean_t pmap_clear_attrs_pae(struct vm_page *, int);
 int pmap_enter_pae(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+void pmap_enter_special_pae(vaddr_t, paddr_t, vm_prot_t, u_int32_t);
 boolean_t pmap_extract_pae(pmap_t, vaddr_t, paddr_t *);
 vaddr_t pmap_growkernel_pae(vaddr_t);
 void pmap_page_remove_pae(struct vm_page *);
@@ -315,6 +327,7 @@ u_int32_t pmap_pte_bits_86(vaddr_t);
 paddr_t pmap_pte_paddr_86(vaddr_t);
 boolean_t pmap_clear_attrs_86(struct vm_page *, int);
 int pmap_enter_86(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+void pmap_enter_special_86(vaddr_t, paddr_t, vm_prot_t, u_int32_t);
 boolean_t pmap_extract_86(pmap_t, vaddr_t, paddr_t *);
 vaddr_t pmap_growkernel_86(vaddr_t);
 void pmap_page_remove_86(struct vm_page *);
@@ -433,6 +446,12 @@ __inline static int
 pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	return (*pmap_enter_p)(pmap, va, pa, prot, flags);
+}
+
+__inline static void
+pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
+{
+	(*pmap_enter_special_p)(va, pa, prot, flags);
 }
 
 __inline static boolean_t

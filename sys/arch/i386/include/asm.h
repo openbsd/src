@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.15 2017/06/29 17:36:16 deraadt Exp $	*/
+/*	$OpenBSD: asm.h,v 1.16 2018/04/11 15:44:08 bluhm Exp $	*/
 /*	$NetBSD: asm.h,v 1.7 1994/10/27 04:15:56 cgd Exp $	*/
 
 /*-
@@ -96,6 +96,20 @@
 #define _ENTRY(x) \
 	.text; _ALIGN_TEXT; .globl x; .type x,@function; x:
 
+#ifdef _KERNEL
+#define KUTEXT	.section .kutext, "ax"
+
+#define IDTVEC(name)    \
+	KUTEXT; ALIGN_TEXT;	\
+	.globl X##name; X##name:
+#define KIDTVEC(name)    \
+	.text; ALIGN_TEXT;	\
+	.globl X##name; X##name:
+#define KUENTRY(x) \
+	KUTEXT; _ALIGN_TEXT; .globl x; .type x,@function; x:
+
+#endif	/* _KERNEL */
+
 #if defined(PROF) || defined(GPROF)
 # define _PROF_PROLOGUE	\
 	pushl %ebp; movl %esp,%ebp; call PIC_PLT(mcount); popl %ebp
@@ -113,11 +127,7 @@
 
 #ifdef _KERNEL
 
-#ifdef MULTIPROCESSOR
 #define CPUVAR(var)	%fs:__CONCAT(CPU_INFO_,var)
-#else
-#define CPUVAR(var)	_C_LABEL(cpu_info_primary)+__CONCAT(CPU_INFO_,var)
-#endif
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.44 2018/03/31 13:45:03 bluhm Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.45 2018/04/11 15:44:08 bluhm Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -55,6 +55,14 @@
 
 #include <dev/ic/i8253reg.h>
 
+/* #define LAPIC_DEBUG */
+
+#ifdef LAPIC_DEBUG
+#define DPRINTF(x...)	do { printf(x); } while(0)
+#else
+#define DPRINTF(x...)
+#endif /* LAPIC_DEBUG */
+
 struct evcount clk_count;
 #ifdef MULTIPROCESSOR
 struct evcount ipi_count;
@@ -86,6 +94,10 @@ lapic_map(paddr_t lapic_base)
 
 	pmap_pte_set(va, lapic_base, PG_RW | PG_V | PG_N);
 	invlpg(va);
+
+	pmap_enter_special(va, lapic_base, PROT_READ | PROT_WRITE, PG_N);
+	DPRINTF("%s: entered lapic page va 0x%08lx pa 0x%08lx\n", __func__,
+	    va, lapic_base);
 
 #ifdef MULTIPROCESSOR
 	cpu_init_first();

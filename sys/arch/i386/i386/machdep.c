@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.614 2018/03/31 13:55:05 bluhm Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.615 2018/04/11 15:44:08 bluhm Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -100,6 +100,7 @@
 #include <machine/bus.h>
 
 #include <machine/cpu.h>
+#include <machine/cpu_full.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/gdt.h>
@@ -168,6 +169,14 @@ extern struct proc *npxproc;
 #if NPCKBC > 0 && NUKBD > 0
 #include <dev/ic/pckbcvar.h>
 #endif
+
+/* #define MACHDEP_DEBUG */
+
+#ifdef MACHDEP_DEBUG
+#define DPRINTF(x...)	do  { printf(x); } while (0)
+#else
+#define DPRINTF(x...)
+#endif	/* MACHDEP_DEBUG */
 
 #include "vmm.h"
 
@@ -314,6 +323,7 @@ void	p3_get_bus_clock(struct cpu_info *);
 void	p4_update_cpuspeed(void);
 void	p3_update_cpuspeed(void);
 int	pentium_cpuspeed(int *);
+void	enter_shared_special_pages(void);
 #if NVMM > 0
 void	cpu_check_vmm_cap(struct cpu_info *);
 #endif /* NVMM > 0 */
@@ -415,6 +425,47 @@ cpu_startup(void)
 #endif
 	}
 	ioport_malloc_safe = 1;
+
+	/* enter the IDT and trampoline code in the u-k maps */
+	enter_shared_special_pages();
+
+	/* initialize CPU0's TSS and GDT and put them in the u-k maps */
+	cpu_enter_pages(&cpu_info_full_primary);
+}
+
+void
+enter_shared_special_pages(void)
+{
+	extern char __kutext_start[], __kutext_end[], __kernel_kutext_phys[];
+	extern char __kudata_start[], __kudata_end[], __kernel_kudata_phys[];
+	vaddr_t	va;
+	paddr_t	pa;
+
+	/* idt */
+	pmap_extract(pmap_kernel(), (vaddr_t)idt, &pa);
+	pmap_enter_special((vaddr_t)idt, pa, PROT_READ, 0);
+
+	/* .kutext section */
+	va = (vaddr_t)__kutext_start;
+	pa = (paddr_t)__kernel_kutext_phys;
+	while (va < (vaddr_t)__kutext_end) {
+		pmap_enter_special(va, pa, PROT_READ | PROT_EXEC, 0);
+		DPRINTF("%s: entered kutext page va 0x%08lx pa 0x%08lx\n",
+		    __func__, (unsigned long)va, (unsigned long)pa);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
+
+	/* .kudata section */
+	va = (vaddr_t)__kudata_start;
+	pa = (paddr_t)__kernel_kudata_phys;
+	while (va < (vaddr_t)__kudata_end) {
+		pmap_enter_special(va, pa, PROT_READ | PROT_WRITE, 0);
+		DPRINTF("%s: entered kudata page va 0x%08lx pa 0x%08lx\n",
+		    __func__, (unsigned long)va, (unsigned long)pa);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
 }
 
 /*
@@ -429,11 +480,6 @@ i386_proc0_tss_init(void)
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_kstack = (int)proc0.p_addr + USPACE - 16;
 	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_kstack - 1;
-
-	/* empty iomap */
-	cpu_info_primary.ci_tss->tss_ioopt = sizeof(struct i386tss) << 16;
-	cpu_info_primary.ci_tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	cpu_info_primary.ci_tss->tss_esp0 = pcb->pcb_kstack;
 }
 
 #ifdef MULTIPROCESSOR
@@ -441,10 +487,6 @@ void
 i386_init_pcb_tss(struct cpu_info *ci)
 {
 	struct pcb *pcb = ci->ci_idle_pcb;
-
-	ci->ci_tss->tss_ioopt = sizeof(*ci->ci_tss) << 16;
-	ci->ci_tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	ci->ci_tss->tss_esp0 = pcb->pcb_kstack;
 
 	pcb->pcb_cr0 = rcr0();
 }
@@ -2924,7 +2966,12 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
  * Initialize segments and descriptor tables
  */
 
-struct gate_descriptor idt_region[NIDT];
+/* IDT is now a full page, so we can map it in u-k */
+union {
+	struct gate_descriptor	idt[NIDT];
+	char			align[PAGE_SIZE];
+} _idt_region __aligned(PAGE_SIZE);
+#define idt_region _idt_region.idt
 struct gate_descriptor *idt = idt_region;
 
 extern  struct user *proc0paddr;
@@ -2960,7 +3007,6 @@ unsetgate(struct gate_descriptor *gd)
 void
 setregion(struct region_descriptor *rd, void *base, size_t limit)
 {
-
 	rd->rd_limit = (int)limit;
 	rd->rd_base = (int)base;
 }
@@ -2998,6 +3044,7 @@ fix_f00f(void)
 {
 	struct region_descriptor region;
 	vaddr_t va;
+	paddr_t pa;
 	void *p;
 
 	/* Allocate two new pages */
@@ -3009,14 +3056,21 @@ fix_f00f(void)
 	idt = p;
 
 	/* Fix up paging redirect */
-	setgate(&idt[ 14], &IDTVEC(f00f_redirect), 0, SDT_SYS386TGT, SEL_KPL,
+	setgate(&idt[ 14], &IDTVEC(f00f_redirect), 0, SDT_SYS386IGT, SEL_KPL,
 	    GCODE_SEL);
 
 	/* Map first page RO */
 	pmap_pte_setbits(va, 0, PG_RW);
 
+	/* add k-u read-only mappings XXX old IDT stays in place */
+	/* XXX hshoexer: are f00f affected CPUs affected by meltdown? */
+	pmap_extract(pmap_kernel(), va, &pa);
+	pmap_enter_special(va, pa, PROT_READ, 0);
+	pmap_extract(pmap_kernel(), va + PAGE_SIZE, &pa);
+	pmap_enter_special(va + PAGE_SIZE, pa, PROT_READ, 0);
+
 	/* Reload idtr */
-	setregion(&region, idt, sizeof(idt_region) - 1);
+	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
 
 	/* Tell the rest of the world */
@@ -3033,8 +3087,6 @@ cpu_init_idt(void)
 }
 #endif /* MULTIPROCESSOR */
 
-struct i386tss proc0_tss;
-
 void
 init386(paddr_t first_avail)
 {
@@ -3045,55 +3097,60 @@ init386(paddr_t first_avail)
 	proc0.p_addr = proc0paddr;
 	cpu_info_primary.ci_self = &cpu_info_primary;
 	cpu_info_primary.ci_curpcb = &proc0.p_addr->u_pcb;
-	cpu_info_primary.ci_tss = &proc0_tss;
+	cpu_info_primary.ci_tss = &cpu_info_full_primary.cif_tss;
+	cpu_info_primary.ci_gdt = (void *)(cpu_info_primary.ci_tss + 1);
 
 	/* make bootstrap gdt gates and memory segments */
-	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GICODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GUCODE_SEL].sd, 0, atop(I386_MAX_EXE_ADDR) - 1,
-	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUDATA_SEL].sd, 0, atop(VM_MAXUSER_ADDRESS) - 1,
-	    SDT_MEMRWA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary,
+	setsegment(&cpu_info_primary.ci_gdt[GCODE_SEL].sd, 0, 0xfffff,
+	    SDT_MEMERA, SEL_KPL, 1, 1);
+	setsegment(&cpu_info_primary.ci_gdt[GICODE_SEL].sd, 0, 0xfffff,
+	    SDT_MEMERA, SEL_KPL, 1, 1);
+	setsegment(&cpu_info_primary.ci_gdt[GDATA_SEL].sd, 0, 0xfffff,
+	    SDT_MEMRWA, SEL_KPL, 1, 1);
+	setsegment(&cpu_info_primary.ci_gdt[GUCODE_SEL].sd, 0,
+	    atop(I386_MAX_EXE_ADDR) - 1, SDT_MEMERA, SEL_UPL, 1, 1);
+	setsegment(&cpu_info_primary.ci_gdt[GUDATA_SEL].sd, 0,
+	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 1);
+	setsegment(&cpu_info_primary.ci_gdt[GCPU_SEL].sd, &cpu_info_primary,
 	    sizeof(struct cpu_info)-1, SDT_MEMRWA, SEL_KPL, 0, 0);
-	setsegment(&gdt[GUFS_SEL].sd, 0, atop(VM_MAXUSER_ADDRESS) - 1,
-	    SDT_MEMRWA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUGS_SEL].sd, 0, atop(VM_MAXUSER_ADDRESS) - 1,
-	    SDT_MEMRWA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GTSS_SEL].sd, &proc0_tss, sizeof(proc0_tss)-1,
+	setsegment(&cpu_info_primary.ci_gdt[GUFS_SEL].sd, 0,
+	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 1);
+	setsegment(&cpu_info_primary.ci_gdt[GUGS_SEL].sd, 0,
+	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 1);
+	setsegment(&cpu_info_primary.ci_gdt[GTSS_SEL].sd,
+	    cpu_info_primary.ci_tss, sizeof(cpu_info_primary.ci_tss)-1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 
 	/* exceptions */
-	setgate(&idt[  0], &IDTVEC(div),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[  1], &IDTVEC(dbg),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[  2], &IDTVEC(nmi),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[  3], &IDTVEC(bpt),     0, SDT_SYS386TGT, SEL_UPL, GCODE_SEL);
-	setgate(&idt[  4], &IDTVEC(ofl),     0, SDT_SYS386TGT, SEL_UPL, GCODE_SEL);
-	setgate(&idt[  5], &IDTVEC(bnd),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[  6], &IDTVEC(ill),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[  7], &IDTVEC(dna),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[  8], &IDTVEC(dble),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[  9], &IDTVEC(fpusegm), 0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[ 10], &IDTVEC(tss),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[ 11], &IDTVEC(missing), 0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[ 12], &IDTVEC(stk),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[ 13], &IDTVEC(prot),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[ 14], &IDTVEC(page),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[ 15], &IDTVEC(rsvd),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[ 16], &IDTVEC(fpu),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[ 17], &IDTVEC(align),   0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[ 18], &IDTVEC(mchk),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[ 19], &IDTVEC(simd),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[  0], &IDTVEC(div),     0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[  1], &IDTVEC(dbg),     0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[  2], &IDTVEC(nmi),     0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[  3], &IDTVEC(bpt),     0, SDT_SYS386IGT, SEL_UPL, GCODE_SEL);
+	setgate(&idt[  4], &IDTVEC(ofl),     0, SDT_SYS386IGT, SEL_UPL, GCODE_SEL);
+	setgate(&idt[  5], &IDTVEC(bnd),     0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[  6], &IDTVEC(ill),     0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[  7], &IDTVEC(dna),     0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[  8], &IDTVEC(dble),    0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[  9], &IDTVEC(fpusegm), 0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[ 10], &IDTVEC(tss),     0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[ 11], &IDTVEC(missing), 0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[ 12], &IDTVEC(stk),     0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[ 13], &IDTVEC(prot),    0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[ 14], &IDTVEC(page),    0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[ 15], &IDTVEC(rsvd),    0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[ 16], &IDTVEC(fpu),     0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[ 17], &IDTVEC(align),   0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[ 18], &IDTVEC(mchk),    0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[ 19], &IDTVEC(simd),    0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
 	for (i = 20; i < NRSVIDT; i++)
-		setgate(&idt[i], &IDTVEC(rsvd), 0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
+		setgate(&idt[i], &IDTVEC(rsvd), 0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
 	for (i = NRSVIDT; i < NIDT; i++)
 		unsetgate(&idt[i]);
-	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL, GCODE_SEL);
+	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386IGT, SEL_UPL, GCODE_SEL);
 
-	setregion(&region, gdt, GDT_SIZE - 1);
+	setregion(&region, cpu_info_primary.ci_gdt, GDT_SIZE - 1);
 	lgdt(&region);
-	setregion(&region, idt, sizeof(idt_region) - 1);
+	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
 
 	/*
@@ -3384,7 +3441,7 @@ cpu_reset(void)
 	 * IDT to point to nothing.
 	 */
 	bzero((caddr_t)idt, sizeof(idt_region));
-	setregion(&region, idt, sizeof(idt_region) - 1);
+	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
 	__asm volatile("divl %0,%1" : : "q" (0), "a" (0));
 
