@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.28 2018/01/28 09:21:34 inoguchi Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.29 2018/04/11 17:47:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1772,36 +1772,21 @@ ssl3_get_client_kex_rsa(SSL *s, unsigned char *p, long n)
 	if ((al == -1) && !((p[0] == (s->client_version >> 8)) &&
 	    (p[1] == (s->client_version & 0xff)))) {
 		/*
-		 * The premaster secret must contain the same version
-		 * number as the ClientHello to detect version rollback
-		 * attacks (strangely, the protocol does not offer such
-		 * protection for DH ciphersuites).
-		 * However, buggy clients exist that send the negotiated
-		 * protocol version instead if the server does not
-		 * support the requested protocol version.
-		 * If SSL_OP_TLS_ROLLBACK_BUG is set, tolerate such
-		 * clients.
+		 * The premaster secret must contain the same version number
+		 * as the ClientHello to detect version rollback attacks
+		 * (strangely, the protocol does not offer such protection for
+		 * DH ciphersuites).
+		 *
+		 * The Klima-Pokorny-Rosa extension of Bleichenbacher's attack
+		 * (http://eprint.iacr.org/2003/052/) exploits the version
+		 * number check as a "bad version oracle" -- an alert would
+		 * reveal that the plaintext corresponding to some ciphertext
+		 * made up by the adversary is properly formatted except that
+		 * the version number is wrong. To avoid such attacks, we should
+		 * treat this just like any other decryption error.
 		 */
-		if (!((s->internal->options & SSL_OP_TLS_ROLLBACK_BUG) &&
-		    (p[0] == (s->version >> 8)) &&
-		    (p[1] == (s->version & 0xff)))) {
-			al = SSL_AD_DECODE_ERROR;
-			/* SSLerror(s, SSL_R_BAD_PROTOCOL_VERSION_NUMBER); */
-
-			/*
-			 * The Klima-Pokorny-Rosa extension of
-			 * Bleichenbacher's attack
-			 * (http://eprint.iacr.org/2003/052/) exploits
-			 * the version number check as a "bad version
-			 * oracle" -- an alert would reveal that the
-			 * plaintext corresponding to some ciphertext
-			 * made up by the adversary is properly
-			 * formatted except that the version number is
-			 * wrong.
-			 * To avoid such attacks, we should treat this
-			 * just like any other decryption error.
-			 */
-		}
+		al = SSL_AD_DECODE_ERROR;
+		/* SSLerror(s, SSL_R_BAD_PROTOCOL_VERSION_NUMBER); */
 	}
 
 	if (al != -1) {
