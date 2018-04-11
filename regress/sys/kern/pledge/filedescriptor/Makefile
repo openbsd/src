@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2018/04/10 23:00:53 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2018/04/11 16:47:17 bluhm Exp $
 
 # Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -13,6 +13,10 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+# Check that a file descriptor's plegde flag is correctly propagated.
+# The test covers the system calls dup, dup2, dup3, open /dev/fd, and
+# file descriptor passing.  The fstat(1) output is analysed.
 
 PROGS =		dup dup2 dup3 dev pass
 WARNINGS =	yes
@@ -74,7 +78,7 @@ run-regress-dup3: dup3.fstat
 
 run-regress-dev: dev.fstat
 	# file descriptor 5 has been open(2)ed from pre-pledge /dev/fd/3
-	grep ' 5 /.* rp ' dev.fstat
+	grep ' 5 /.* r ' dev.fstat
 	# file descriptor 6 has been open(2)ed from post-pledge /dev/fd/4
 	grep ' 6 /.* rp ' dev.fstat
 

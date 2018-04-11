@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.147 2018/04/09 13:59:03 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.148 2018/04/11 16:47:17 bluhm Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1310,8 +1310,6 @@ dupfdopen(struct proc *p, int indx, int mode)
 	fdp->fd_ofiles[indx] = wfp;
 	fdp->fd_ofileflags[indx] = (fdp->fd_ofileflags[indx] & UF_EXCLOSE) |
 	    (fdp->fd_ofileflags[dupfd] & ~UF_EXCLOSE);
-	if (ISSET(p->p_p->ps_flags, PS_PLEDGE))
-		fdp->fd_ofileflags[indx] |= UF_PLEDGED;
 	wfp->f_count++;
 	fd_used(fdp, indx);
 	return (0);
