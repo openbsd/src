@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.22 2016/12/27 19:43:07 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.23 2018/04/11 19:00:54 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -35,7 +35,7 @@ sub new {
 	$args{fstatfile} ||= "syslogd.fstat";
 	$args{logfile} ||= "syslogd.log";
 	$args{up} ||= "syslogd: started";
-	$args{down} ||= "syslogd: exiting";
+	$args{down} ||= "syslogd: exited";
 	$args{up} = $args{down} = "execute:"
 	    if $args{foreground} || $args{daemon};
 	$args{foreground} && $args{daemon}
@@ -230,16 +230,16 @@ sub up {
 }
 
 sub down {
-	my $self = Proc::up(shift, @_);
+	my $self = shift;
 
 	if (my $dir = $self->{tempdir}) {
 		# keep all logs in single directory for easy debugging
 		copy($_, ".") foreach glob("$dir/*");
 	}
 
-	return $self unless $self->{daemon};
+	return Proc::down($self, @_) unless $self->{daemon};
 
-	my $timeout = shift || 10;
+	my $timeout = $_[0] || 10;
 	my $end = time() + $timeout;
 
 	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : "env";
@@ -251,7 +251,7 @@ sub down {
 		sleep .1;
 		system(@pgrep) && $? != 256
 		    and die ref($self), " system '@pgrep' failed: $?";
-		return $self if $? == 256;
+		return Proc::down($self, @_) if $? == 256;
 		print STDERR "syslogd still running\n";
 	} while (time() < $end);
 
