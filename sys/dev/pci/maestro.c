@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.42 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.43 2018/04/11 04:48:31 ratchov Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -1393,8 +1393,6 @@ maestro_activate(struct device *self, int act)
 		DPRINTF(("maestro: power resume\n"));
 		maestro_init(sc);
 		/* Restore codec settings */
-		if (sc->codec_if)
-			sc->codec_if->vtbl->restore_ports(sc->codec_if);
 		if (sc->play.mode & MAESTRO_RUNNING)
 			maestro_channel_start(&sc->play);
 		if (sc->record.mode & MAESTRO_RUNNING)

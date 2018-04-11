@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.53 2016/09/19 06:46:44 ratchov Exp $ */
+/*      $OpenBSD: eap.c,v 1.54 2018/04/11 04:48:31 ratchov Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -600,7 +600,6 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 int
 eap_resume(struct eap_softc *sc)
 {
-	mixer_ctrl_t ctl;
 	int i;
 
 	if (!sc->sc_1371) {
@@ -615,23 +614,6 @@ eap_resume(struct eap_softc *sc)
 		eap1370_write_codec(sc, AK_RESET, AK_PD);
 		eap1370_write_codec(sc, AK_RESET, AK_PD | AK_NRST);
 		eap1370_write_codec(sc, AK_CS, 0x0);
-
-		bzero(&ctl, sizeof(ctl));
-
-		ctl.dev = EAP_RECORD_SOURCE;
-		ctl.type = AUDIO_MIXER_SET;
-		ctl.un.mask = sc->sc_record_source;
-		eap1370_hw_if.set_port(sc, &ctl);
-
-		ctl.dev = EAP_INPUT_SOURCE;
-		ctl.type = AUDIO_MIXER_SET;
-		ctl.un.mask = sc->sc_input_source;
-		eap1370_hw_if.set_port(sc, &ctl);
-
-		eap1370_set_mixer(sc, AK_MGAIN, sc->sc_mic_preamp);
-
-		for (i = EAP_MASTER_VOL; i < EAP_MIC_VOL; i++)
-			eap1370_write_codec(sc, i, sc->sc_port[i]);
 
 	} else {
 		/* clean slate */
