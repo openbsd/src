@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.100 2016/11/16 01:27:45 dlg Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.101 2018/04/11 08:02:18 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1061,6 +1061,7 @@ struct rl_softc {
 #define RL_PCI_HEADER_TYPE	0x0E
 #define RL_PCI_LOIO		0x10
 #define RL_PCI_LOMEM		0x14
+#define RL_PCI_LOMEM64		0x18
 #define RL_PCI_BIOSROM		0x30
 #define RL_PCI_INTLINE		0x3C
 #define RL_PCI_INTPIN		0x3D
