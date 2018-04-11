@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.92 2017/08/28 06:00:05 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.93 2018/04/11 15:50:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -106,7 +106,6 @@ int		 host_if(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
 int		 host(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
-void		 host_free(struct addresslist *);
 struct server	*server_inherit(struct server *, struct server_config *,
 		    struct server_config *);
 int		 getservice(char *);
@@ -415,39 +414,61 @@ serveroptsl	: LISTEN ON STRING opttls port {
 				YYERROR;
 			}
 
-			if (srv->srv_conf.ss.ss_family != AF_UNSPEC) {
-				if ((alias = calloc(1,
-				    sizeof(*alias))) == NULL)
-					fatal("out of memory");
-
-				/* Add as an IP-based alias. */
-				s_conf = alias;
-			} else
-				s_conf = &srv->srv_conf;
-
 			TAILQ_INIT(&al);
-			if (host($3, &al, 1, &$5, NULL, -1) <= 0) {
-				yyerror("invalid listen ip: %s", $3);
-				free($3);
-				YYERROR;
+			if (strcmp("*", $3) == 0) {
+				if (host("0.0.0.0", &al, 1, &$5, NULL, -1) <=
+				    0) {
+					yyerror("invalid listen ip: %s",
+					    "0.0.0.0");
+					free($3);
+					YYERROR;
+				}
+				if (host("::", &al, 1, &$5, NULL, -1) <= 0) {
+					yyerror("invalid listen ip: %s", "::");
+					free($3);
+					YYERROR;
+				}
+			} else {
+				if (host($3, &al, HTTPD_MAX_ALIAS_IP, &$5, NULL,
+				    -1) <= 0) {
+					yyerror("invalid listen ip: %s", $3);
+					free($3);
+					YYERROR;
+				}
 			}
 			free($3);
-			h = TAILQ_FIRST(&al);
-			memcpy(&s_conf->ss, &h->ss, sizeof(s_conf->ss));
-			s_conf->port = h->port.val[0];
-			s_conf->prefixlen = h->prefixlen;
-			host_free(&al);
+			while ((h = TAILQ_FIRST(&al)) != NULL) {
 
-			if ($4)
-				s_conf->flags |= SRVFLAG_TLS;
+				if (srv->srv_conf.ss.ss_family != AF_UNSPEC) {
+					if ((alias = calloc(1,
+					    sizeof(*alias))) == NULL)
+						fatal("out of memory");
 
-			if (alias != NULL) {
-				/* IP-based; use name match flags from parent */
-				alias->flags &= ~SRVFLAG_SERVER_MATCH;
-				alias->flags |= srv->srv_conf.flags &
-				    SRVFLAG_SERVER_MATCH;
-				TAILQ_INSERT_TAIL(&srv->srv_hosts,
-				    alias, entry);
+					/* Add as an IP-based alias. */
+					s_conf = alias;
+				} else
+					s_conf = &srv->srv_conf;
+
+				memcpy(&s_conf->ss, &h->ss, sizeof(s_conf->ss));
+				s_conf->port = h->port.val[0];
+				s_conf->prefixlen = h->prefixlen;
+
+				if ($4)
+					s_conf->flags |= SRVFLAG_TLS;
+
+				if (alias != NULL) {
+					/*
+					 * IP-based; use name match flags from
+					 * parent
+					 */
+					alias->flags &= ~SRVFLAG_SERVER_MATCH;
+					alias->flags |= srv->srv_conf.flags &
+					    SRVFLAG_SERVER_MATCH;
+					TAILQ_INSERT_TAIL(&srv->srv_hosts,
+					    alias, entry);
+				}
+				TAILQ_REMOVE(&al, h, entry);
+				free(h);
 			}
 		}
 		| ALIAS optmatch STRING		{
@@ -1990,9 +2011,6 @@ host(const char *s, struct addresslist *al, int max,
 {
 	struct address *h;
 
-	if (strcmp("*", s) == 0)
-		s = "0.0.0.0";
-
 	h = host_v4(s);
 
 	/* IPv6 address? */
@@ -2019,17 +2037,6 @@ host(const char *s, struct addresslist *al, int max,
 	}
 
 	return (host_dns(s, al, max, port, ifname, ipproto));
-}
-
-void
-host_free(struct addresslist *al)
-{
-	struct address	 *h;
-
-	while ((h = TAILQ_FIRST(al)) != NULL) {
-		TAILQ_REMOVE(al, h, entry);
-		free(h);
-	}
 }
 
 struct server *
