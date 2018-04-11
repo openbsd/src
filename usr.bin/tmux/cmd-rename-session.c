@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-session.c,v 1.27 2018/03/01 12:53:08 nicm Exp $ */
+/* $OpenBSD: cmd-rename-session.c,v 1.28 2018/04/11 09:54:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -47,7 +47,7 @@ static enum cmd_retval
 cmd_rename_session_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
-	struct client		*c = cmd_find_client(item, NULL, 0);
+	struct client		*c = cmd_find_client(item, NULL, 1);
 	struct session		*s = item->target.s;
 	char			*newname;
 
