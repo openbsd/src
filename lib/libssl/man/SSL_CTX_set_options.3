@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_options.3,v 1.11 2018/03/24 00:55:37 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_options.3,v 1.12 2018/04/11 18:05:49 schwarze Exp $
 .\" full merge up to: OpenSSL 7946ab33 Dec 6 17:56:41 2015 +0100
 .\" selective merge up to: OpenSSL edb79c3a Mar 29 10:07:14 2017 +1000
 .\"
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 24 2018 $
+.Dd $Mdocdate: April 11 2018 $
 .Dt SSL_CTX_SET_OPTIONS 3
 .Os
 .Sh NAME
@@ -209,17 +209,6 @@ Do not use the TLSv1.2 protocol.
 Deprecated; use
 .Xr SSL_CTX_set_max_proto_version 3
 instead.
-.It Dv SSL_OP_TLS_ROLLBACK_BUG
-Disable version rollback attack detection.
-.Pp
-During the client key exchange, the client must send the same information
-about acceptable SSL/TLS protocol levels as during the first hello.
-Some clients violate this rule by adapting to the server's answer.
-(Example: the client sends a SSLv2 hello and accepts up to SSLv3.1=TLSv1,
-the server only understands up to SSLv3.
-In this case the client must still use the same SSLv3.1=TLSv1 announcement.
-Some clients step down to SSLv3 with respect to the server's answer and violate
-the version rollback protection.)
 .El
 .Pp
 The following options used to be supported at some point in the past
@@ -244,6 +233,7 @@ and no longer have any effect:
 .Dv SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG ,
 .Dv SSL_OP_TLS_BLOCK_PADDING_BUG ,
 .Dv SSL_OP_TLS_D5_BUG ,
+.Dv SSL_OP_TLS_ROLLBACK_BUG ,
 .Dv SSL_OP_TLSEXT_PADDING .
 .Sh SECURE RENEGOTIATION
 OpenSSL 0.9.8m and later always attempts to use secure renegotiation as
