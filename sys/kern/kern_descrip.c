@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.149 2018/04/12 10:28:13 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.150 2018/04/12 10:30:18 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -241,6 +241,7 @@ restart:
 		}
 		goto out;
 	}
+	/* No need for FRELE(), finishdup() uses current ref. */
 	error = finishdup(p, fp, old, new, retval, 0);
 
 out:
@@ -320,7 +321,7 @@ restart:
 			panic("dup2: fdalloc");
 		fd_unused(fdp, new);
 	}
-	/* finishdup() does FRELE */
+	/* No need for FRELE(), finishdup() uses current ref. */
 	error = finishdup(p, fp, old, new, retval, 1);
 	if (!error && flags & O_CLOEXEC)
 		fdp->fd_ofileflags[new] |= UF_EXCLOSE;
@@ -376,7 +377,7 @@ restart:
 				goto restart;
 			}
 		} else {
-			/* finishdup will FRELE for us. */
+			/* No need for FRELE(), finishdup() uses current ref. */
 			error = finishdup(p, fp, fd, i, retval, 0);
 
 			if (!error && SCARG(uap, cmd) == F_DUPFD_CLOEXEC)
@@ -616,8 +617,6 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 
 	fdp->fd_ofiles[new] = fp;
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] & ~UF_EXCLOSE;
-	fp->f_count++;
-	FRELE(fp, p);
 	if (dup2 && oldfp == NULL)
 		fd_used(fdp, new);
 	*retval = new;
