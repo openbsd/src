@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2017/07/07 23:15:27 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.18 2018/04/12 00:05:17 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used distribute the configuration.
@@ -215,7 +215,7 @@ DUMPCMD=	tcpdump -l -e -vvv -s 2048 -ni
 stamp-bpf: Makefile stamp-drop
 	@echo '\n======== $@ ========'
 	rm -f enc0.tcpdump
-	-ssh ${IPS_SSH} ${SUDO} pkill -f "'${DUMPCMD} enc0'" || true
+	-ssh ${IPS_SSH} ${SUDO} pkill -f "'^${DUMPCMD} enc0'" || true
 	ssh ${IPS_SSH} ${SUDO} ${DUMPCMD} enc0 >enc0.tcpdump &
 	sleep 5  # XXX
 	rm -f stamp-stop
@@ -225,7 +225,7 @@ stamp-bpf: Makefile stamp-drop
 stamp-pflog: stamp-pfctl stamp-drop
 	@echo '\n======== $@ ========'
 	rm -f pflog0.tcpdump
-	-ssh ${IPS_SSH} ${SUDO} pkill -f "'${DUMPCMD} pflog0'" || true
+	-ssh ${IPS_SSH} ${SUDO} pkill -f "'^${DUMPCMD} pflog0'" || true
 	ssh ${IPS_SSH} ${SUDO} ${DUMPCMD} pflog0 >pflog0.tcpdump &
 	sleep 5  # XXX
 	rm -f stamp-stop
@@ -234,7 +234,7 @@ stamp-pflog: stamp-pfctl stamp-drop
 stamp-stop:
 	@echo '\n======== $@ ========'
 	sleep 5  # XXX
-	-ssh ${IPS_SSH} ${SUDO} pkill -f "'${DUMPCMD}'"
+	-ssh ${IPS_SSH} ${SUDO} pkill -f "'^${DUMPCMD}'"
 	@date >$@
 
 # Old TCP connections send packets from time to time.  These confuse
@@ -353,27 +353,8 @@ tcp ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
     run-regress-send-tcp-${host}_${sec}_${mode}_${ipv}
 run-regress-send-tcp-${host}_${sec}_${mode}_${ipv}:
 	@echo '\n======== $@ ========'
-	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
-	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1}' >pkt.in
-	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
-	    awk '/output ${sec:S/BUNDLE/ESP/} /{print $$1}' >pkt.out
 	echo $$$$ | nc -n -N -w 3 ${${host}_${sec}_${mode}_${ipv}} 7 |\
 	    fgrep $$$$
-.if "${sec}" == IPCOMP
-	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
-	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1}' |\
-	    diff pkt.in -
-	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
-	    awk '/output ${sec:S/BUNDLE/ESP/} /{print $$1}' |\
-	    diff pkt.out -
-.else
-	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
-	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1-4}' |\
-	    diff pkt.in -
-	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
-	    awk '/output ${sec:S/BUNDLE/ESP/} /{print $$1-6}' |\
-	    diff pkt.out -
-.endif
 
 .endfor
 .endfor
