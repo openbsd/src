@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.148 2018/03/27 08:42:49 mpi Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.149 2018/04/12 17:13:44 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -371,7 +371,6 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 	size = (vsize_t) SCARG(uap, len);
 	prot = SCARG(uap, prot);
 	flags = SCARG(uap, flags);
-	flags &= ~MAP_STACK;	/* XXX MAP_STACK coming in 2018 */
 	fd = SCARG(uap, fd);
 	pos = SCARG(uap, pos);
 
@@ -390,6 +389,16 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);
 	if ((flags & (MAP_FIXED|__MAP_NOREPLACE)) == __MAP_NOREPLACE)
 		return (EINVAL);
+	if (flags & MAP_STACK) {
+		if ((flags & (MAP_ANON|MAP_PRIVATE)) != (MAP_ANON|MAP_PRIVATE))
+			return (EINVAL);
+		if (flags & ~(MAP_STACK|MAP_FIXED|MAP_ANON|MAP_PRIVATE))
+			return (EINVAL);
+		if (pos != 0)
+			return (EINVAL);
+		if ((prot & (PROT_READ|PROT_WRITE)) != (PROT_READ|PROT_WRITE))
+			return (EINVAL);
+	}
 	if (size == 0)
 		return (EINVAL);
 
@@ -667,7 +676,6 @@ sys_munmap(struct proc *p, void *v, register_t *retval)
 
 	TAILQ_INIT(&dead_entries);
 	uvm_unmap_remove(map, addr, addr + size, &dead_entries, FALSE, TRUE);
-
 	vm_map_unlock(map);	/* and unlock */
 
 	uvm_unmap_detach(&dead_entries, 0);
@@ -1045,6 +1053,8 @@ uvm_mmapanon(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	else
 		/* shared: create amap now */
 		uvmflag |= UVM_FLAG_OVERLAY;
+	if (flags & MAP_STACK)
+		uvmflag |= UVM_FLAG_STACK;
 
 	/* set up mapping flags */
 	uvmflag = UVM_MAPFLAG(prot, maxprot,
@@ -1151,6 +1161,8 @@ uvm_mmapfile(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 		uvmflag |= UVM_FLAG_COPYONW;
 	if (flags & __MAP_NOFAULT)
 		uvmflag |= (UVM_FLAG_NOFAULT | UVM_FLAG_OVERLAY);
+	if (flags & MAP_STACK)
+		uvmflag |= UVM_FLAG_STACK;
 
 	/* set up mapping flags */
 	uvmflag = UVM_MAPFLAG(prot, maxprot,

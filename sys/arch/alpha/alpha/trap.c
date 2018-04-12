@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.84 2018/04/09 04:11:02 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.85 2018/04/12 17:13:41 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -242,8 +242,26 @@ trap(a0, a1, a2, entry, framep)
 	framep->tf_regs[FRAME_SP] = alpha_pal_rdusp();
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
 	if (user) {
+		vaddr_t sp;
+
 		p->p_md.md_tf = framep;
 		refreshcreds(p);
+
+		sp = PROC_STACK(p);
+		if (p->p_vmspace->vm_map.serial != p->p_spserial ||
+		    p->p_spstart == 0 || sp < p->p_spstart ||
+		    sp >= p->p_spend) {
+			KERNEL_LOCK();
+			if (!uvm_map_check_stack_range(p, sp)) {
+				printf("trap [%s]%d/%d type %d: sp %lx not inside %lx-%lx\n",
+				    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
+				    0, sp, p->p_spstart, p->p_spend);
+				sv.sival_ptr = (void *)PROC_PC(p);
+				trapsignal(p, SIGSEGV, entry, SEGV_ACCERR, sv);
+			}
+
+			KERNEL_UNLOCK();
+		}
 	}
 
 	switch (entry) {

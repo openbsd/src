@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.27 2016/05/21 00:56:43 deraadt Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.28 2018/04/12 17:13:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,8 +121,9 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		fsize -= sizeof(siginfo_t);
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(regs->sp) && (psp->ps_sigonstack & sigmask(sig)))
-		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
-					 p->p_sigstk.ss_size - fsize);
+		fp = (struct sigframe *)
+		    (trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size)
+		    - fsize);
 	else
 		fp = (struct sigframe *)(regs->sp - fsize);
 	/*

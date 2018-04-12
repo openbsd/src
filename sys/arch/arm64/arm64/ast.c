@@ -1,4 +1,4 @@
-/* $OpenBSD: ast.c,v 1.4 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: ast.c,v 1.5 2018/04/12 17:13:43 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -18,7 +18,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
+#include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
 #include <machine/pcb.h>

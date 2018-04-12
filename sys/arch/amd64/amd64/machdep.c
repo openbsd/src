@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.240 2018/03/29 01:21:02 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.241 2018/04/12 17:13:43 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -593,7 +593,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	/* Allocate space for the signal handler context. */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->tf_rsp) && (psp->ps_sigonstack & sigmask(sig)))
-		sp = (register_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size;
+		sp = trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
 		sp = tf->tf_rsp - 128;
 

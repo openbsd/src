@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.32 2018/01/26 16:22:19 kettenis Exp $	*/
+/*	$OpenBSD: fault.c,v 1.33 2018/04/12 17:13:43 deraadt Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -237,8 +237,26 @@ data_abort_handler(trapframe_t *tf)
 	 */
 
 	if (user) {
+		vaddr_t sp;
+
 		p->p_addr->u_pcb.pcb_tf = tf;
 		refreshcreds(p);
+
+		sp = PROC_STACK(p);
+		if (p->p_vmspace->vm_map.serial != p->p_spserial ||
+		    p->p_spstart == 0 || sp < p->p_spstart ||
+		    sp >= p->p_spend) {
+			KERNEL_LOCK();
+			if (!uvm_map_check_stack_range(p, sp)) {
+				printf("trap [%s]%d/%d type %d: sp %lx not inside %lx-%lx\n",
+				    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
+				    0, sp, p->p_spstart, p->p_spend);
+
+				sv.sival_ptr = (void *)PROC_PC(p);
+				trapsignal(p, SIGSEGV, 0, SEGV_ACCERR, sv);
+			}
+			KERNEL_UNLOCK();
+		}
 	}
 
 	/*

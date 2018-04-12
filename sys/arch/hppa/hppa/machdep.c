@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.250 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.251 2018/04/12 17:13:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1224,7 +1224,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->tf_sp) && (psp->ps_sigonstack & sigmask(sig)))
-		scp = (register_t)p->p_sigstk.ss_sp;
+		scp = round_page((vaddr_t)p->p_sigstk.ss_sp);
 	else
 		scp = (tf->tf_sp + 63) & ~63;
 

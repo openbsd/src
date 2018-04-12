@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.615 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.616 2018/04/12 17:13:43 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2401,7 +2401,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->tf_esp) && (psp->ps_sigonstack & sigmask(sig)))
-		sp = (long)p->p_sigstk.ss_sp + p->p_sigstk.ss_size;
+		sp = trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
 		sp = tf->tf_esp;
 

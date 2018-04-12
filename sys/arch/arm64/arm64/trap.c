@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.18 2018/04/09 22:21:05 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.19 2018/04/12 17:13:43 deraadt Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -225,6 +225,7 @@ do_el0_sync(struct trapframe *frame)
 	union sigval sv;
 	uint32_t exception;
 	uint64_t esr, far;
+	vaddr_t sp;
 
 	esr = READ_SPECIALREG(esr_el1);
 	exception = ESR_ELx_EXCEPTION(esr);
@@ -234,6 +235,21 @@ do_el0_sync(struct trapframe *frame)
 
 	p->p_addr->u_pcb.pcb_tf = frame;
 	refreshcreds(p);
+
+	sp = PROC_STACK(p);
+	if (p->p_vmspace->vm_map.serial != p->p_spserial ||
+	    p->p_spstart == 0 || sp < p->p_spstart ||
+	    sp >= p->p_spend) {
+		KERNEL_LOCK();
+		if (!uvm_map_check_stack_range(p, sp)) {
+			printf("trap [%s]%d/%d type %d: sp %lx not inside %lx-%lx\n",
+			    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
+			    exception, sp, p->p_spstart, p->p_spend);
+			sv.sival_ptr = (void *)PROC_PC(p);
+			trapsignal(p, SIGSEGV, exception, SEGV_ACCERR, sv);
+		}
+		KERNEL_UNLOCK();
+	}
 
 	switch(exception) {
 	case EXCP_UNKNOWN:

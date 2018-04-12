@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.247 2018/02/26 13:43:51 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.248 2018/04/12 17:13:44 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -329,6 +329,10 @@ struct proc {
 /* The following fields are all copied upon creation in fork. */
 #define	p_startcopy	p_sigmask
 	sigset_t p_sigmask;	/* Current signal mask. */
+
+	u_int	 p_spserial;
+	vaddr_t	 p_spstart;
+	vaddr_t	 p_spend;
 
 	u_char	p_priority;	/* Process priority. */
 	u_char	p_usrpri;	/* User-priority based on p_estcpu and ps_nice. */
