@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.7 2018/04/03 08:43:02 mpi Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.8 2018/04/12 14:59:08 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from BSDI $Id: subr_witness.c,v 1.7 2018/04/03 08:43:02 mpi Exp $
- *	and BSDI $Id: subr_witness.c,v 1.7 2018/04/03 08:43:02 mpi Exp $
+ *	from BSDI Id: mutex_witness.c,v 1.1.2.20 2000/04/27 03:10:27 cp Exp
+ *	and BSDI Id: synch_machdep.c,v 2.3.2.39 2000/04/27 03:10:25 cp Exp
  */
 
 /*
