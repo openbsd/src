@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.23 2017/09/05 02:40:54 guenther Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.24 2018/04/12 17:15:34 deraadt Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -19,8 +19,11 @@
  * generic attribute support
  */
 
+#include <sys/mman.h>
+
 #include <stdint.h>
 #include <stdlib.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -118,13 +121,54 @@ int
 pthread_attr_setstack(pthread_attr_t *attrp, void *stackaddr, size_t stacksize)
 {
 	int error;
+	volatile char *p = stackaddr;
+	size_t i;
+	struct syslog_data data = SYSLOG_DATA_INIT;
+
+	if (stacksize < PTHREAD_STACK_MIN) {
+		syslog_r(LOG_USER, &data,
+		    "pthread_attr_setstack(%p, %zu): "
+		    "stack size below min size %d",
+		    stackaddr, stacksize, PTHREAD_STACK_MIN);
+		return (EINVAL);
+	}
 
 	/*
-	 * XXX Add an alignment test, on stackaddr for stack-grows-up
-	 * archs or on stackaddr+stacksize for stack-grows-down archs
+	 * Make sure that the stack is page-aligned and a multiple
+	 * of the page size
 	 */
-	if (stacksize < PTHREAD_STACK_MIN)
+	if (((uintptr_t)stackaddr % PTHREAD_STACK_MIN) != 0
+	    || (stacksize % PTHREAD_STACK_MIN) != 0) {
+		syslog_r(LOG_USER, &data,
+		    "pthread_attr_setstack(%p, 0x%zx): "
+		    "unaligned thread stack start and/or size",
+		    stackaddr, stacksize);
 		return (EINVAL);
+	}
+
+	/*
+	 * We are going to re-mmap() stackaddr to MAP_STACK, but only
+	 * if the entire range [stackaddr, stackaddr+stacksize) consists
+	 * of valid address that are mapped PROT_READ|PROT_WRITE.
+	 * Test this by reading and writing every page.
+	 *
+	 * XXX: What if the caller has SIGSEGV blocked or ignored?
+	 * Then we won't crash here when entering an invalid mapping.
+	 */
+	for (i = 0; i < stacksize; i += PTHREAD_STACK_MIN) {
+		char val = p[i];
+
+		p[i] = val;
+	}
+
+	if (mmap(stackaddr, stacksize, PROT_READ|PROT_WRITE,
+	    MAP_FIXED|MAP_STACK|MAP_ANON|MAP_PRIVATE, -1, 0) == MAP_FAILED) {
+		syslog_r(LOG_USER, &data,
+		    "pthread_attr_setstack(%p, %zu): mmap error %m",
+		    stackaddr, stacksize);
+		return (errno);
+	}
+
 	if ((error = pthread_attr_setstackaddr(attrp, stackaddr)))
 		return (error);
 	(*attrp)->stack_size = stacksize;
