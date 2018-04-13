@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.104 2017/05/30 07:05:22 florian Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.105 2018/04/13 14:11:37 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -703,7 +703,7 @@ expandtilde(const char *fn)
 	struct stat	 statbuf;
 	const char	*cp;
 	char		 user[LOGIN_NAME_MAX], path[NFILEN];
-	char		*un, *ret;
+	char		*ret;
 	size_t		 ulen, plen;
 
 	path[0] = '\0';
@@ -722,16 +722,13 @@ expandtilde(const char *fn)
 			return (NULL);
 		return(ret);
 	}
-	if (ulen == 0) { /* ~/ or ~ */
-		if ((un = getlogin()) != NULL)
-			(void)strlcpy(user, un, sizeof(user));
-		else
-			user[0] = '\0';
-	} else { /* ~user/ or ~user */
+	if (ulen == 0) /* ~/ or ~ */
+		pw = getpwuid(geteuid());
+	else { /* ~user/ or ~user */
 		memcpy(user, &fn[1], ulen);
 		user[ulen] = '\0';
+		pw = getpwnam(user);
 	}
-	pw = getpwnam(user);
 	if (pw != NULL) {
 		plen = strlcpy(path, pw->pw_dir, sizeof(path));
 		if (plen == 0 || path[plen - 1] != '/') {
