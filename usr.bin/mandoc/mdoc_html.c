@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.170 2018/04/11 17:10:35 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.171 2018/04/13 16:27:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -48,14 +48,17 @@ struct	htmlmdoc {
 };
 
 static	char		 *cond_id(const struct roff_node *);
-static	void		  print_mdoc_head(MDOC_ARGS);
+static	void		  print_mdoc_head(const struct roff_meta *,
+				struct html *);
 static	void		  print_mdoc_node(MDOC_ARGS);
 static	void		  print_mdoc_nodelist(MDOC_ARGS);
 static	void		  synopsis_pre(struct html *,
 				const struct roff_node *);
 
-static	void		  mdoc_root_post(MDOC_ARGS);
-static	int		  mdoc_root_pre(MDOC_ARGS);
+static	void		  mdoc_root_post(const struct roff_meta *,
+				struct html *);
+static	int		  mdoc_root_pre(const struct roff_meta *,
+				struct html *);
 
 static	void		  mdoc__x_post(MDOC_ARGS);
 static	int		  mdoc__x_pre(MDOC_ARGS);
@@ -282,30 +285,34 @@ synopsis_pre(struct html *h, const struct roff_node *n)
 void
 html_mdoc(void *arg, const struct roff_man *mdoc)
 {
-	struct html	*h;
-	struct tag	*t;
+	struct html		*h;
+	struct roff_node	*n;
+	struct tag		*t;
 
 	h = (struct html *)arg;
+	n = mdoc->first->child;
 
 	if ((h->oflags & HTML_FRAGMENT) == 0) {
 		print_gen_decls(h);
 		print_otag(h, TAG_HTML, "");
+		if (n->type == ROFFT_COMMENT)
+			print_gen_comment(h, n);
 		t = print_otag(h, TAG_HEAD, "");
-		print_mdoc_head(&mdoc->meta, mdoc->first->child, h);
+		print_mdoc_head(&mdoc->meta, h);
 		print_tagq(h, t);
 		print_otag(h, TAG_BODY, "");
 	}
 
-	mdoc_root_pre(&mdoc->meta, mdoc->first->child, h);
+	mdoc_root_pre(&mdoc->meta, h);
 	t = print_otag(h, TAG_DIV, "c", "manual-text");
-	print_mdoc_nodelist(&mdoc->meta, mdoc->first->child, h);
+	print_mdoc_nodelist(&mdoc->meta, n, h);
 	print_tagq(h, t);
-	mdoc_root_post(&mdoc->meta, mdoc->first->child, h);
+	mdoc_root_post(&mdoc->meta, h);
 	print_tagq(h, NULL);
 }
 
 static void
-print_mdoc_head(MDOC_ARGS)
+print_mdoc_head(const struct roff_meta *meta, struct html *h)
 {
 	char	*cp;
 
@@ -427,7 +434,7 @@ print_mdoc_node(MDOC_ARGS)
 }
 
 static void
-mdoc_root_post(MDOC_ARGS)
+mdoc_root_post(const struct roff_meta *meta, struct html *h)
 {
 	struct tag	*t, *tt;
 
@@ -444,7 +451,7 @@ mdoc_root_post(MDOC_ARGS)
 }
 
 static int
-mdoc_root_pre(MDOC_ARGS)
+mdoc_root_pre(const struct roff_meta *meta, struct html *h)
 {
 	struct tag	*t, *tt;
 	char		*volume, *title;

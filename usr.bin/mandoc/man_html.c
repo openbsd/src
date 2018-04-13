@@ -1,7 +1,7 @@
-/*	$OpenBSD: man_html.c,v 1.99 2018/04/11 17:10:35 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.100 2018/04/13 16:27:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -46,7 +46,8 @@ struct	htmlman {
 
 static	void		  print_bvspace(struct html *,
 				const struct roff_node *);
-static	void		  print_man_head(MAN_ARGS);
+static	void		  print_man_head(const struct roff_meta *,
+				struct html *);
 static	void		  print_man_nodelist(MAN_ARGS);
 static	void		  print_man_node(MAN_ARGS);
 static	int		  fillmode(struct html *, int);
@@ -66,8 +67,10 @@ static	int		  man_UR_pre(MAN_ARGS);
 static	int		  man_alt_pre(MAN_ARGS);
 static	int		  man_ign_pre(MAN_ARGS);
 static	int		  man_in_pre(MAN_ARGS);
-static	void		  man_root_post(MAN_ARGS);
-static	void		  man_root_pre(MAN_ARGS);
+static	void		  man_root_post(const struct roff_meta *,
+				struct html *);
+static	void		  man_root_pre(const struct roff_meta *,
+				struct html *);
 
 static	const struct htmlman __mans[MAN_MAX - MAN_TH] = {
 	{ NULL, NULL }, /* TH */
@@ -136,30 +139,34 @@ print_bvspace(struct html *h, const struct roff_node *n)
 void
 html_man(void *arg, const struct roff_man *man)
 {
-	struct html	*h;
-	struct tag	*t;
+	struct html		*h;
+	struct roff_node	*n;
+	struct tag		*t;
 
 	h = (struct html *)arg;
+	n = man->first->child;
 
 	if ((h->oflags & HTML_FRAGMENT) == 0) {
 		print_gen_decls(h);
 		print_otag(h, TAG_HTML, "");
+		if (n->type == ROFFT_COMMENT)
+			print_gen_comment(h, n);
 		t = print_otag(h, TAG_HEAD, "");
-		print_man_head(&man->meta, man->first, h);
+		print_man_head(&man->meta, h);
 		print_tagq(h, t);
 		print_otag(h, TAG_BODY, "");
 	}
 
-	man_root_pre(&man->meta, man->first, h);
+	man_root_pre(&man->meta, h);
 	t = print_otag(h, TAG_DIV, "c", "manual-text");
-	print_man_nodelist(&man->meta, man->first->child, h);
+	print_man_nodelist(&man->meta, n, h);
 	print_tagq(h, t);
-	man_root_post(&man->meta, man->first, h);
+	man_root_post(&man->meta, h);
 	print_tagq(h, NULL);
 }
 
 static void
-print_man_head(MAN_ARGS)
+print_man_head(const struct roff_meta *man, struct html *h)
 {
 	char	*cp;
 
@@ -368,7 +375,7 @@ a2width(const struct roff_node *n, struct roffsu *su)
 }
 
 static void
-man_root_pre(MAN_ARGS)
+man_root_pre(const struct roff_meta *man, struct html *h)
 {
 	struct tag	*t, *tt;
 	char		*title;
@@ -396,7 +403,7 @@ man_root_pre(MAN_ARGS)
 }
 
 static void
-man_root_post(MAN_ARGS)
+man_root_post(const struct roff_meta *man, struct html *h)
 {
 	struct tag	*t, *tt;
 

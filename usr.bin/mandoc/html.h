@@ -1,7 +1,7 @@
-/*	$OpenBSD: html.h,v 1.49 2017/07/08 14:51:01 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.50 2018/04/13 16:27:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -119,6 +119,7 @@ struct	eqn_box;
 
 void		  roff_html_pre(struct html *, const struct roff_node *);
 
+void		  print_gen_comment(struct html *, struct roff_node *);
 void		  print_gen_decls(struct html *);
 void		  print_gen_head(struct html *);
 struct tag	 *print_otag(struct html *, enum htmltag, const char *, ...);
