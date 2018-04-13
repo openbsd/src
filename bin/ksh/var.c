@@ -1,6 +1,7 @@
-/*	$OpenBSD: var.c,v 1.67 2018/04/09 17:53:36 tobias Exp $	*/
+/*	$OpenBSD: var.c,v 1.68 2018/04/13 18:18:36 cheloha Exp $	*/
 
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -908,7 +909,7 @@ unspecial(const char *name)
 		ktdelete(tp);
 }
 
-static	time_t	seconds;		/* time SECONDS last set */
+static	struct	timespec seconds;	/* time SECONDS last set */
 static	int	user_lineno;		/* what user set $LINENO to */
 
 static void
@@ -921,8 +922,13 @@ getspec(struct tbl *vp)
 		 * has been set - don't do anything in this case
 		 * (see initcoms[] in main.c).
 		 */
-		if (vp->flag & ISSET)
-			setint(vp, (int64_t)(time(NULL) - seconds));
+		if (vp->flag & ISSET) {
+			struct timespec difference, now;
+
+			clock_gettime(CLOCK_MONOTONIC, &now);
+			timespecsub(&now, &seconds, &difference);
+			setint(vp, (int64_t)difference.tv_sec);
+		}
 		vp->flag |= SPECIAL;
 		break;
 	case V_RANDOM:
@@ -1036,7 +1042,8 @@ setspec(struct tbl *vp)
 		break;
 	case V_SECONDS:
 		vp->flag &= ~SPECIAL;
-		seconds = time(NULL) - intval(vp);
+		clock_gettime(CLOCK_MONOTONIC, &seconds);
+		seconds.tv_sec -= intval(vp);
 		vp->flag |= SPECIAL;
 		break;
 	case V_TMOUT:
