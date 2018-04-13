@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.100 2018/01/01 16:16:23 bluhm Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.101 2018/04/13 05:33:38 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -1039,10 +1039,10 @@ ipmi_cmd_poll(struct ipmi_cmd *c)
 {
 	mtx_enter(&c->c_sc->sc_cmd_mtx);
 
-	if (ipmi_sendcmd(c)) {
-		panic("%s: sendcmd fails", DEVNAME(c->c_sc));
-	}
-	c->c_ccode = ipmi_recvcmd(c);
+	if ((c->c_ccode = ipmi_sendcmd(c)))
+		printf("%s: sendcmd fails\n", DEVNAME(c->c_sc));
+	else
+		c->c_ccode = ipmi_recvcmd(c);
 
 	mtx_leave(&c->c_sc->sc_cmd_mtx);
 }
@@ -1819,8 +1819,6 @@ ipmiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
 		c->c_txlen = req->msg.data_len;
 		c->c_rxlen = 0;
 		ipmi_cmd(c);
-
-		KASSERT(c->c_ccode != -1);
 		break;
 	case IPMICTL_RECEIVE_MSG_TRUNC:
 	case IPMICTL_RECEIVE_MSG:
