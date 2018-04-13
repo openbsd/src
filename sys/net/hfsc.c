@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.46 2017/08/17 18:22:43 mikeb Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.47 2018/04/13 14:09:42 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -411,25 +411,31 @@ int
 hfsc_pf_addqueue(void *arg, struct pf_queuespec *q)
 {
 	struct hfsc_if *hif = arg;
-	struct hfsc_class *cl, *parent;
+	struct hfsc_class *cl, *parent, *np = NULL;
 	struct hfsc_sc rtsc, lssc, ulsc;
 	int error = 0;
 
 	KASSERT(hif != NULL);
+	KASSERT(q->qid != 0);
+
+	/* Root queue must have non-zero linksharing parameters */
+	if (q->linkshare.m1.absolute == 0 && q->linkshare.m2.absolute == 0 &&
+	    q->parent_qid == 0)
+		return (EINVAL);
 
 	if (q->parent_qid == 0 && hif->hif_rootclass == NULL) {
-		parent = hfsc_class_create(hif, NULL, NULL, NULL, NULL,
+		np = hfsc_class_create(hif, NULL, NULL, NULL, NULL,
 		    0, 0, HFSC_ROOT_CLASS | q->qid);
-		if (parent == NULL)
+		if (np == NULL)
 			return (EINVAL);
+		parent = np;
 	} else if ((parent = hfsc_clh2cph(hif, q->parent_qid)) == NULL)
 		return (EINVAL);
 
-	if (q->qid == 0)
-		return (EINVAL);
-
-	if (hfsc_clh2cph(hif, q->qid) != NULL)
+	if (hfsc_clh2cph(hif, q->qid) != NULL) {
+		hfsc_class_destroy(hif, np);
 		return (EBUSY);
+	}
 
 	rtsc.m1 = q->realtime.m1.absolute;
 	rtsc.d  = q->realtime.d;
@@ -441,22 +447,11 @@ hfsc_pf_addqueue(void *arg, struct pf_queuespec *q)
 	ulsc.d  = q->upperlimit.d;
 	ulsc.m2 = q->upperlimit.m2.absolute;
 
-	/* Compatibility with older pfctl, return an EINVAL after 6.2 */
-	if (rtsc.m1 == 0 && rtsc.m2 == 0 && lssc.m1 == 0 &&
-	    lssc.m2 == 0 && ulsc.m1 == 0 && ulsc.m2 == 0 &&
-	    q->parent_qid == 0 && strncmp(q->qname, "_root_", 6) == 0) {
-		hfsc_class_destroy(hif, parent);
-		parent = NULL;
-	}
-
-	cl = hfsc_class_create(hif, &rtsc, &lssc, &ulsc,
-	    parent, q->qlimit, q->flags, q->qid);
-	if (cl == NULL)
+	if ((cl = hfsc_class_create(hif, &rtsc, &lssc, &ulsc,
+	    parent, q->qlimit, q->flags, q->qid)) == NULL) {
+		hfsc_class_destroy(hif, np);
 		return (ENOMEM);
-
-	/* Compatibility with older pfctl, remove after 6.2 */
-	if (parent == NULL)
-		return (0);
+	}
 
 	/* Attach a queue manager if specified */
 	cl->cl_qops = pf_queue_manager(q);
@@ -469,6 +464,7 @@ hfsc_pf_addqueue(void *arg, struct pf_queuespec *q)
 		if (cl->cl_qdata == NULL) {
 			cl->cl_qops = NULL;
 			hfsc_class_destroy(hif, cl);
+			hfsc_class_destroy(hif, np);
 			return (ENOMEM);
 		}
 		error = cl->cl_qops->pfq_addqueue(cl->cl_qdata, q);
@@ -476,6 +472,7 @@ hfsc_pf_addqueue(void *arg, struct pf_queuespec *q)
 			cl->cl_qops->pfq_free(cl->cl_qdata);
 			cl->cl_qops = NULL;
 			hfsc_class_destroy(hif, cl);
+			hfsc_class_destroy(hif, np);
 			return (error);
 		}
 	}

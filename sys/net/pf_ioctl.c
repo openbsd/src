@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.332 2018/04/05 03:28:20 lteo Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.333 2018/04/13 14:09:42 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1141,6 +1141,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		memcpy(qs, &q->queue, sizeof(*qs));
 		qs->qid = pf_qname2qid(qs->qname, 1);
+		if (qs->qid == 0) {
+			pool_put(&pf_queue_pl, qs);
+			error = EBUSY;
+			PF_UNLOCK();
+			break;
+		}
 		if (qs->parent[0] && (qs->parent_qid =
 		    pf_qname2qid(qs->parent, 0)) == 0) {
 			pool_put(&pf_queue_pl, qs);
