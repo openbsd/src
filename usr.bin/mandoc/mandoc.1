@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.146 2018/03/16 15:05:33 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.147 2018/04/13 19:55:13 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 16 2018 $
+.Dd $Mdocdate: April 13 2018 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -299,9 +299,6 @@ The special characters documented in
 .Xr mandoc_char 7
 are rendered best-effort in an ASCII equivalent.
 .Pp
-Output width is limited to 78 visible columns unless literal input lines
-exceed this limit.
-.Pp
 The following
 .Fl O
 arguments are accepted:
@@ -315,6 +312,8 @@ and seven for
 .Xr man 7 .
 Increasing this is not recommended; it may result in degraded formatting,
 for example overfull lines or ugly line breaks.
+When output is to a pager on a terminal that is less than 66 columns
+wide, the default is reduced to three columns.
 .It Cm mdoc
 Format
 .Xr man 7
@@ -331,7 +330,12 @@ output formats in the same way as the
 source it was generated from.
 .It Cm width Ns = Ns Ar width
 The output width is set to
-.Ar width .
+.Ar width
+instead of the default of 78.
+When output is to a pager on a terminal that is less than 79 columns
+wide, the default is reduced to one less than the terminal width.
+In any case, lines that are output in literal mode are never wrapped
+and may exceed the output width.
 .El
 .Ss HTML Output
 Output produced by
