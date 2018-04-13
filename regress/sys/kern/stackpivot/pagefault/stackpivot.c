@@ -16,24 +16,45 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
-void pivot(size_t *newstack) {
-#if defined(__amd64__)
-    asm("mov %0, %%rsp; retq;" ::"r"(newstack));
-#elif defined(__i386__)
-    asm("mov %0, %%esp; retl;" ::"r"(newstack));
-#endif
+#include "../pivot.h"
+
+static size_t *realstack;
+static char *scan;
+static size_t scansize = UINT16_MAX;
+
+/* scan some memory crossing a page boundary */
+size_t dowork() {
+    size_t b = 0;
+    size_t i;
+    for (i = 0; i < scansize; ++i)
+        b += *scan++;
+    return b;
 }
 
 void doexit() {
     exit(0);
 }
 
+void unpivot() {
+    pivot(realstack);
+}
+
 int main() {
+
+    /* allocate some memory to scan */
+    scan = malloc(scansize);
+
+    /* set up a rop chain on the real stack for syscalls */
+    size_t stack[10];
+    stack[0] = (size_t)doexit;
+    realstack = stack;
+
+    /* set up a basic alt stack on the heap that does some work */
     size_t *newstack = calloc(10, sizeof(size_t));
-    /* set up a basic alt stack on the heap that just calls doexit */
-    newstack[0] = (size_t)doexit;
-    /* program should be killed in this function call */
+    newstack[0] = (size_t)dowork;
+    newstack[1] = (size_t)unpivot;
     pivot(newstack);
     return 0;
 }
