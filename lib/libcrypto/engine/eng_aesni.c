@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_aesni.c,v 1.10 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: eng_aesni.c,v 1.11 2018/04/14 07:18:37 tb Exp $ */
 /*
  * Support for Intel AES-NI intruction set
  *   Author: Huang Ying <ying.huang@intel.com>
@@ -102,12 +102,12 @@ void ENGINE_load_aesni(void)
 /* On non-x86 CPUs it just returns. */
 #ifdef COMPILE_HW_AESNI
 	ENGINE *toadd = ENGINE_aesni();
-	if (!toadd)
+	if (toadd == NULL)
 		return;
-	ENGINE_add (toadd);
-	ENGINE_register_complete (toadd);
-	ENGINE_free (toadd);
-	ERR_clear_error ();
+	ENGINE_add(toadd);
+	ENGINE_register_complete(toadd);
+	ENGINE_free(toadd);
+	ERR_clear_error();
 #endif
 }
 

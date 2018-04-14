@@ -1,4 +1,4 @@
-/* $OpenBSD: freenull.c,v 1.6 2018/02/07 05:07:39 jsing Exp $ */
+/* $OpenBSD: freenull.c,v 1.7 2018/04/14 07:18:37 tb Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -17,6 +17,9 @@
 
 #include <openssl/asn1.h>
 #include <openssl/ocsp.h>
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 #include <openssl/pkcs12.h>
 #include <openssl/ts.h>
 #include <openssl/ui.h>
@@ -55,6 +58,9 @@ main(int argc, char **argv)
 	EC_KEY_free(NULL);
 	EC_POINT_clear_free(NULL);
 	EC_POINT_free(NULL);
+#ifndef OPENSSL_NO_ENGINE
+	ENGINE_free(NULL);
+#endif
 	EVP_CIPHER_CTX_free(NULL);
 	EVP_PKEY_CTX_free(NULL);
 	EVP_PKEY_free(NULL);

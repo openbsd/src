@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_padlock.c,v 1.15 2016/11/04 13:56:05 miod Exp $ */
+/* $OpenBSD: eng_padlock.c,v 1.16 2018/04/14 07:18:37 tb Exp $ */
 /*
  * Support for VIA PadLock Advanced Cryptography Engine (ACE)
  * Written by Michal Ludvig <michal@logix.cz>
@@ -108,19 +108,21 @@
 
 #ifdef OPENSSL_NO_DYNAMIC_ENGINE
 #ifdef COMPILE_HW_PADLOCK
-static ENGINE *ENGINE_padlock (void);
+static ENGINE *ENGINE_padlock(void);
 #endif
 
-void ENGINE_load_padlock (void)
+void
+ENGINE_load_padlock(void)
 {
 /* On non-x86 CPUs it just returns. */
 #ifdef COMPILE_HW_PADLOCK
-	ENGINE *toadd = ENGINE_padlock ();
-	if (!toadd)
+	ENGINE *toadd = ENGINE_padlock();
+
+	if (toadd == NULL)
 		return;
-	ENGINE_add (toadd);
-	ENGINE_free (toadd);
-	ERR_clear_error ();
+	ENGINE_add(toadd);
+	ENGINE_free(toadd);
+	ERR_clear_error();
 #endif
 }
 
@@ -203,9 +205,8 @@ ENGINE_padlock(void)
 {
 	ENGINE *eng = ENGINE_new();
 
-	if (!eng) {
+	if (eng == NULL)
 		return NULL;
-	}
 
 	if (!padlock_bind_helper(eng)) {
 		ENGINE_free(eng);
