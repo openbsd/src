@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.20 2018/02/20 18:05:28 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.21 2018/04/14 07:09:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -229,11 +229,8 @@ pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
 		if ((type == pkey->save_type) && pkey->ameth)
 			return 1;
 #ifndef OPENSSL_NO_ENGINE
-		/* If we have an ENGINE release it */
-		if (pkey->engine) {
-			ENGINE_finish(pkey->engine);
-			pkey->engine = NULL;
-		}
+		ENGINE_finish(pkey->engine);
+		pkey->engine = NULL;
 #endif
 	}
 	if (str)
@@ -241,7 +238,7 @@ pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
 	else
 		ameth = EVP_PKEY_asn1_find(&e, type);
 #ifndef OPENSSL_NO_ENGINE
-	if (!pkey && e)
+	if (pkey == NULL)
 		ENGINE_finish(e);
 #endif
 	if (!ameth) {
@@ -426,8 +423,7 @@ EVP_PKEY_type(int type)
 	else
 		ret = NID_undef;
 #ifndef OPENSSL_NO_ENGINE
-	if (e)
-		ENGINE_finish(e);
+	ENGINE_finish(e);
 #endif
 	return ret;
 }
@@ -470,10 +466,8 @@ EVP_PKEY_free_it(EVP_PKEY *x)
 		x->pkey.ptr = NULL;
 	}
 #ifndef OPENSSL_NO_ENGINE
-	if (x->engine) {
-		ENGINE_finish(x->engine);
-		x->engine = NULL;
-	}
+	ENGINE_finish(x->engine);
+	x->engine = NULL;
 #endif
 }
 

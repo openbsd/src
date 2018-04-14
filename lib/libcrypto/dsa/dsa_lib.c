@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.28 2018/02/20 17:52:27 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.29 2018/04/14 07:09:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -108,10 +108,8 @@ DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
         if (mtmp->finish)
 		mtmp->finish(dsa);
 #ifndef OPENSSL_NO_ENGINE
-	if (dsa->engine) {
-		ENGINE_finish(dsa->engine);
-		dsa->engine = NULL;
-	}
+	ENGINE_finish(dsa->engine);
+	dsa->engine = NULL;
 #endif
         dsa->meth = meth;
         if (meth->init)
@@ -142,7 +140,7 @@ DSA_new_method(ENGINE *engine)
 		ret->engine = ENGINE_get_default_DSA();
 	if (ret->engine) {
 		ret->meth = ENGINE_get_DSA(ret->engine);
-		if (!ret->meth) {
+		if (ret->meth == NULL) {
 			DSAerror(ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			free(ret);
@@ -170,8 +168,7 @@ DSA_new_method(ENGINE *engine)
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
 	if (ret->meth->init != NULL && !ret->meth->init(ret)) {
 #ifndef OPENSSL_NO_ENGINE
-		if (ret->engine)
-			ENGINE_finish(ret->engine);
+		ENGINE_finish(ret->engine);
 #endif
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
 		free(ret);
@@ -196,8 +193,7 @@ DSA_free(DSA *r)
 	if (r->meth->finish)
 		r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
-	if (r->engine)
-		ENGINE_finish(r->engine);
+	ENGINE_finish(r->engine);
 #endif
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);

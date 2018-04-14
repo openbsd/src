@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.29 2018/02/17 14:55:31 jsing Exp $ */
+/* $OpenBSD: digest.c,v 1.30 2018/04/14 07:09:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -146,9 +146,8 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 		/* Ensure an ENGINE left lying around from last time is cleared
 		 * (the previous check attempted to avoid this if the same
 		 * ENGINE and EVP_MD could be used). */
-		if (ctx->engine)
-			ENGINE_finish(ctx->engine);
-		if (impl) {
+		ENGINE_finish(ctx->engine);
+		if (impl != NULL) {
 			if (!ENGINE_init(impl)) {
 				EVPerror(EVP_R_INITIALIZATION_ERROR);
 				return 0;
@@ -156,10 +155,10 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 		} else
 			/* Ask if an ENGINE is reserved for this job */
 			impl = ENGINE_get_digest_engine(type->type);
-		if (impl) {
+		if (impl != NULL) {
 			/* There's an ENGINE for this job ... (apparently) */
 			const EVP_MD *d = ENGINE_get_digest(impl, type->type);
-			if (!d) {
+			if (d == NULL) {
 				/* Same comment from evp_enc.c */
 				EVPerror(EVP_R_INITIALIZATION_ERROR);
 				ENGINE_finish(impl);
@@ -384,10 +383,7 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 		freezero(ctx->md_data, ctx->digest->ctx_size);
 	EVP_PKEY_CTX_free(ctx->pctx);
 #ifndef OPENSSL_NO_ENGINE
-	if (ctx->engine)
-		/* The EVP_MD we used belongs to an ENGINE, release the
-		 * functional reference we held for this reason. */
-		ENGINE_finish(ctx->engine);
+	ENGINE_finish(ctx->engine);
 #endif
 	memset(ctx, 0, sizeof(*ctx));
 

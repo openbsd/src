@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.38 2018/02/17 16:54:08 jsing Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.39 2018/04/14 07:09:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -577,10 +577,7 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 	}
 	free(c->cipher_data);
 #ifndef OPENSSL_NO_ENGINE
-	if (c->engine)
-		/* The EVP_CIPHER we used belongs to an ENGINE, release the
-		 * functional reference we held for this reason. */
-		ENGINE_finish(c->engine);
+	ENGINE_finish(c->engine);
 #endif
 	explicit_bzero(c, sizeof(EVP_CIPHER_CTX));
 	return 1;
