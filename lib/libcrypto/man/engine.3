@@ -1,4 +1,4 @@
-.\" $OpenBSD: engine.3,v 1.13 2018/03/22 21:08:22 schwarze Exp $
+.\" $OpenBSD: engine.3,v 1.14 2018/04/14 11:38:32 schwarze Exp $
 .\" full merge up to: OpenSSL crypto/engine e6390aca Jul 21 10:06:03 2015 -0400
 .\" selective merge up to: man3/ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: April 14 2018 $
 .Dt ENGINE 3
 .Os
 .Sh NAME
@@ -704,68 +704,61 @@ query or manipulate the data of an
 .Vt ENGINE
 implementation rather than use its functionality.
 .Pp
-The
 .Fn ENGINE_new
-function returns a structural reference to a new (empty)
+allocates and initializes an empty
 .Vt ENGINE
-object.
-There are other
-.Nm engine
-API functions that return structural references such as
+object and sets its structural reference count to 1
+and its functional reference count to 0.
+Many functions increment the structural reference count by 1
+when successful.
+Some of them, including
 .Fn ENGINE_by_id ,
 .Fn ENGINE_get_first ,
 .Fn ENGINE_get_last ,
 .Fn ENGINE_get_next ,
 and
-.Fn ENGINE_get_prev .
-All structural references should be released by a corresponding call
-to the
-.Fn ENGINE_free
-function.
-The
-.Vt ENGINE
-object itself will only actually be cleaned up and deallocated when
-the last structural reference is released.
+.Fn ENGINE_get_prev ,
+do so because they return a structural reference to the user.
+Other functions, including
+.Fn ENGINE_add ,
+.Fn ENGINE_init ,
+.Fn ENGINE_get_default_* ,
+.Fn ENGINE_get_*_engine ,
+and
+.Fn ENGINE_set_default_* ,
+do so because they store a structural refence internally.
+.Fn ENGINE_up_ref
+explicitly increment the structural reference count by 1.
 .Pp
-It should also be noted that many
-.Nm engine
-API function calls that accept a structural reference will internally
-obtain another reference.
-Typically this happens whenever the supplied
-.Vt ENGINE
-will be needed by OpenSSL after the function has returned.
-For example, the function to add a new
-.Vt ENGINE
-to OpenSSL's internal list is
-.Fn ENGINE_add .
-If this function returns success, OpenSSL will have stored a new
-structural reference internally so the caller is still responsible for
-freeing their own reference with
 .Fn ENGINE_free
-when they are finished with it.
-In a similar way, some functions will automatically release the
-structural reference passed to it if part of the function's job is
-to do so.
-For example, the
+decrements the structural reference count by 1,
+and if it reaches 0, the cleanup function associated with
+.Fa e
+is called, and both the memory used internally by
+.Fa e
+and
+.Fa e
+itself are freed.
+If
+.Fa e
+is a
+.Dv NULL
+pointer, no action occurs.
+Many functions internally call the equivalent of
+.Fn ENGINE_free .
+Some of them, including
 .Fn ENGINE_get_next
 and
-.Fn ENGINE_get_prev
-functions are used for iterating across the internal
-.Vt ENGINE
-list.
-They
-will return a new structural reference to the next (or previous)
-.Vt ENGINE
-in the list or
-.Dv NULL
-if at the end (or beginning) of the list, but in either case the
-structural reference passed to the function is released on behalf
-of the caller.
-.Pp
-To clarify a particular function's handling of references, one should
-always consult that function's manual page, or failing that the
-.In openssl/engine.h
-header file includes some hints.
+.Fn ENGINE_get_prev ,
+thus invalidate the structural reference passed in by the user.
+Other functions, including
+.Fn ENGINE_finish ,
+.Fn ENGINE_remove ,
+.Fn ENGINE_get_default_* ,
+.Fn ENGINE_get_*_engine ,
+and
+.Fn ENGINE_set_default_* ,
+do so when an internally stored structural reference is no longer needed.
 .Pp
 .Em Functional references
 .Pp
