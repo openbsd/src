@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1842 2018/04/03 09:32:32 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1843 2018/04/14 20:27:17 jcs Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -261,6 +261,7 @@
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia */
 #define	PCI_VENDOR_MSI	0x1462		/* MSI */
+#define	PCI_VENDOR_LITEON2	0x14a4		/* Lite-On */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
 #define	PCI_VENDOR_GLOBESPAN	0x14bc		/* Globespan */
 #define	PCI_VENDOR_MYRICOM	0x14c1		/* Myricom */
@@ -5243,6 +5244,7 @@
 /* Lite-On Communications */
 #define	PCI_PRODUCT_LITEON_PNIC	0x0002		/* PNIC */
 #define	PCI_PRODUCT_LITEON_PNICII	0xc115		/* PNIC-II */
+#define	PCI_PRODUCT_LITEON2_CB1	0x5100		/* CB1 NVMe */
 
 /* Longshine products */
 #define	PCI_PRODUCT_GLOBALSUN_8031	0x1103		/* 8031 */
