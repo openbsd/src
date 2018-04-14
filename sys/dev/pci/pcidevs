@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1842 2018/04/03 09:32:32 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1843 2018/04/14 20:27:17 jcs Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -256,6 +256,7 @@ vendor	SAMSUNG2	0x144d	Samsung
 vendor	ASKEY		0x144f	Askey
 vendor	AVERMEDIA	0x1461	Avermedia
 vendor	MSI		0x1462	MSI
+vendor	LITEON2		0x14a4	Lite-On
 vendor	AIRONET		0x14b9	Aironet
 vendor	GLOBESPAN	0x14bc	Globespan
 vendor	MYRICOM		0x14c1	Myricom
@@ -5238,6 +5239,7 @@ product LINKSYS PCM200		0xab09	PCM200
 /* Lite-On Communications */
 product LITEON PNIC		0x0002	PNIC
 product LITEON PNICII		0xc115	PNIC-II
+product LITEON2 CB1		0x5100	CB1 NVMe
 
 /* Longshine products */
 product GLOBALSUN 8031		0x1103	8031
