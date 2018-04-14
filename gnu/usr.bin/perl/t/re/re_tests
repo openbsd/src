@@ -1968,6 +1968,7 @@ ab(?#Comment){2}c	abbc	y	$&	abbc
 (?:.||)(?|)000000000@	000000000@	y	$&	000000000@		#  [perl #126405]
 aa$|a(?R)a|a	aaa	y	$&	aaa		# [perl 128420] recursive matches
 (?:\1|a)([bcd])\1(?:(?R)|e)\1	abbaccaddedcb	y	$&	abbaccaddedcb		# [perl 128420] recursive match with backreferences
+(?il)\x{100}|\x{100}|\x{FF}	\xFF	y	$&	\xFF
 
 # Keep these lines at the end of the file
 # vim: softtabstop=0 noexpandtab

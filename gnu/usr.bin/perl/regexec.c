@@ -1451,7 +1451,7 @@ Perl_re_intuit_start(pTHX_
 #define DECL_TRIE_TYPE(scan) \
     const enum { trie_plain, trie_utf8, trie_utf8_fold, trie_latin_utf8_fold,       \
                  trie_utf8_exactfa_fold, trie_latin_utf8_exactfa_fold,              \
-                 trie_utf8l, trie_flu8 }                                            \
+                 trie_utf8l, trie_flu8, trie_flu8_latin }                           \
                     trie_type = ((scan->flags == EXACT)                             \
                                  ? (utf8_target ? trie_utf8 : trie_plain)           \
                                  : (scan->flags == EXACTL)                          \
@@ -1461,20 +1461,24 @@ Perl_re_intuit_start(pTHX_
                                          ? trie_utf8_exactfa_fold                   \
                                          : trie_latin_utf8_exactfa_fold)            \
                                       : (scan->flags == EXACTFLU8                   \
-                                         ? trie_flu8                                \
+                                         ? (utf8_target                             \
+                                           ? trie_flu8                              \
+                                           : trie_flu8_latin)                       \
                                          : (utf8_target                             \
                                            ? trie_utf8_fold                         \
-                                           :   trie_latin_utf8_fold)))
+                                           : trie_latin_utf8_fold)))
 
-#define REXEC_TRIE_READ_CHAR(trie_type, trie, widecharmap, uc, uscan, len, uvc, charid, foldlen, foldbuf, uniflags) \
+/* 'uscan' is set to foldbuf, and incremented, so below the end of uscan is
+ * 'foldbuf+sizeof(foldbuf)' */
+#define REXEC_TRIE_READ_CHAR(trie_type, trie, widecharmap, uc, uc_end, uscan, len, uvc, charid, foldlen, foldbuf, uniflags) \
 STMT_START {                                                                        \
     STRLEN skiplen;                                                                 \
     U8 flags = FOLD_FLAGS_FULL;                                                     \
     switch (trie_type) {                                                            \
     case trie_flu8:                                                                 \
         _CHECK_AND_WARN_PROBLEMATIC_LOCALE;                                         \
-        if (utf8_target && UTF8_IS_ABOVE_LATIN1(*uc)) {                             \
-            _CHECK_AND_OUTPUT_WIDE_LOCALE_UTF8_MSG(uc, uc + UTF8SKIP(uc));          \
+        if (UTF8_IS_ABOVE_LATIN1(*uc)) {                                            \
+            _CHECK_AND_OUTPUT_WIDE_LOCALE_UTF8_MSG(uc, uc_end - uc);                \
         }                                                                           \
         goto do_trie_utf8_fold;                                                     \
     case trie_utf8_exactfa_fold:                                                    \
@@ -1483,7 +1487,7 @@ STMT_START {                                                                    
     case trie_utf8_fold:                                                            \
       do_trie_utf8_fold:                                                            \
         if ( foldlen>0 ) {                                                          \
-            uvc = utf8n_to_uvchr( (const U8*) uscan, UTF8_MAXLEN, &len, uniflags ); \
+            uvc = utf8n_to_uvchr( (const U8*) uscan, foldlen, &len, uniflags );     \
             foldlen -= len;                                                         \
             uscan += len;                                                           \
             len=0;                                                                  \
@@ -1495,12 +1499,16 @@ STMT_START {                                                                    
             uscan = foldbuf + skiplen;                                              \
         }                                                                           \
         break;                                                                      \
+    case trie_flu8_latin:                                                           \
+        _CHECK_AND_WARN_PROBLEMATIC_LOCALE;                                         \
+        goto do_trie_latin_utf8_fold;                                               \
     case trie_latin_utf8_exactfa_fold:                                              \
         flags |= FOLD_FLAGS_NOMIX_ASCII;                                            \
         /* FALLTHROUGH */                                                           \
     case trie_latin_utf8_fold:                                                      \
+      do_trie_latin_utf8_fold:                                                      \
         if ( foldlen>0 ) {                                                          \
-            uvc = utf8n_to_uvchr( (const U8*) uscan, UTF8_MAXLEN, &len, uniflags ); \
+            uvc = utf8n_to_uvchr( (const U8*) uscan, foldlen, &len, uniflags );     \
             foldlen -= len;                                                         \
             uscan += len;                                                           \
             len=0;                                                                  \
@@ -1519,7 +1527,7 @@ STMT_START {                                                                    
         }                                                                           \
         /* FALLTHROUGH */                                                           \
     case trie_utf8:                                                                 \
-        uvc = utf8n_to_uvchr( (const U8*) uc, UTF8_MAXLEN, &len, uniflags );        \
+        uvc = utf8n_to_uvchr( (const U8*) uc, uc_end - uc, &len, uniflags );        \
         break;                                                                      \
     case trie_plain:                                                                \
         uvc = (UV)*uc;                                                              \
@@ -2599,10 +2607,10 @@ S_find_byclass(pTHX_ regexp * prog, const regnode *c, char *s,
                     }
                     points[pointpos++ % maxlen]= uc;
                     if (foldlen || uc < (U8*)strend) {
-                        REXEC_TRIE_READ_CHAR(trie_type, trie,
-                                         widecharmap, uc,
-                                         uscan, len, uvc, charid, foldlen,
-                                         foldbuf, uniflags);
+                        REXEC_TRIE_READ_CHAR(trie_type, trie, widecharmap, uc,
+                                             (U8 *) strend, uscan, len, uvc,
+                                             charid, foldlen, foldbuf,
+                                             uniflags);
                         DEBUG_TRIE_EXECUTE_r({
                             dump_exec_pos( (char *)uc, c, strend,
                                         real_start, s, utf8_target, 0);
@@ -5511,8 +5519,9 @@ S_regmatch(pTHX_ regmatch_info *reginfo, char *startpos, regnode *prog)
 		    if ( base && (foldlen || uc < (U8*)(reginfo->strend))) {
 			I32 offset;
 			REXEC_TRIE_READ_CHAR(trie_type, trie, widecharmap, uc,
-					     uscan, len, uvc, charid, foldlen,
-					     foldbuf, uniflags);
+                                             (U8 *) reginfo->strend, uscan,
+                                             len, uvc, charid, foldlen,
+                                             foldbuf, uniflags);
 			charcount++;
 			if (foldlen>0)
 			    ST.longfold = TRUE;
@@ -5642,8 +5651,8 @@ S_regmatch(pTHX_ regmatch_info *reginfo, char *startpos, regnode *prog)
 			while (foldlen) {
 			    if (!--chars)
 				break;
-			    uvc = utf8n_to_uvchr(uscan, UTF8_MAXLEN, &len,
-					    uniflags);
+			    uvc = utf8n_to_uvchr(uscan, foldlen, &len,
+                                                 uniflags);
 			    uscan += len;
 			    foldlen -= len;
 			}

@@ -260,3 +260,7 @@ setlocale(&POSIX::LC_CTYPE, $utf8_locale);
 "k" =~ /(?[ \N{KELVIN SIGN} ])/i;
 ":" =~ /(?[ \: ])/;
 EXPECT
+########
+# NAME perl #132063, read beyond buffer end
+"\xff" =~ /(?il)\x{100}|\x{100}/;
+EXPECT
