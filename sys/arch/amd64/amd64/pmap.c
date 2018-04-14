@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.111 2018/03/13 07:37:58 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.112 2018/04/14 02:04:19 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1136,6 +1136,7 @@ pmap_create(void)
 	if (cpu_meltdown) {
 		pmap->pm_pdir_intel = pool_get(&pmap_pdp_pool, PR_WAITOK);
 		pmap_pdp_ctor_intel(pmap->pm_pdir_intel);
+		pmap->pm_stats.resident_count++;
 		if (!pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir_intel,
 		    &pmap->pm_pdirpa_intel))
 			panic("%s: unknown PA mapping for meltdown PML4\n",
@@ -1202,8 +1203,10 @@ pmap_destroy(struct pmap *pmap)
 	/* XXX: need to flush it out of other processor's space? */
 	pool_put(&pmap_pdp_pool, pmap->pm_pdir);
 
-	if (pmap->pm_pdir_intel)
+	if (pmap->pm_pdir_intel) {
+		pmap->pm_stats.resident_count--;	
 		pool_put(&pmap_pdp_pool, pmap->pm_pdir_intel);
+	}
 
 	pool_put(&pmap_pmap_pool, pmap);
 }
