@@ -1781,9 +1781,12 @@
 ./usr/share/man/man3/ENGINE_ctrl.3
 ./usr/share/man/man3/ENGINE_get_default_RSA.3
 ./usr/share/man/man3/ENGINE_init.3
+./usr/share/man/man3/ENGINE_new.3
 ./usr/share/man/man3/ENGINE_register_RSA.3
 ./usr/share/man/man3/ENGINE_register_all_RSA.3
+./usr/share/man/man3/ENGINE_set_RSA.3
 ./usr/share/man/man3/ENGINE_set_default.3
+./usr/share/man/man3/ENGINE_set_flags.3
 ./usr/share/man/man3/ENGINE_unregister_RSA.3
 ./usr/share/man/man3/ERR.3
 ./usr/share/man/man3/ERR_GET_LIB.3
