@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.45 2017/08/20 07:03:45 tb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.46 2018/04/15 11:57:29 mpf Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -99,9 +99,9 @@ struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
 int		 host_dns(const char *, struct addresslist *,
 		    int, in_port_t, struct ber_oid *, char *,
-		    struct address *);
+		    struct address *, int);
 int		 host(const char *, struct addresslist *,
-		    int, in_port_t, struct ber_oid *, char *, char *);
+		    int, in_port_t, struct ber_oid *, char *, char *, int);
 
 typedef struct {
 	union {
@@ -128,12 +128,12 @@ typedef struct {
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR DISABLED
-%token	SOCKET RESTRICTED AGENTX HANDLE DEFAULT SRCADDR
+%token	SOCKET RESTRICTED AGENTX HANDLE DEFAULT SRCADDR TCP UDP
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostcmn
 %type	<v.string>	srcaddr
-%type	<v.number>	optwrite yesno seclevel socktype
+%type	<v.number>	optwrite yesno seclevel socktype proto
 %type	<v.data>	objtype cmd
 %type	<v.oid>		oid hostoid trapoid
 %type	<v.auth>	auth
@@ -197,9 +197,9 @@ yesno		:  STRING			{
 		}
 		;
 
-main		: LISTEN ON STRING		{
+main		: LISTEN ON STRING proto	{
 			if (host($3, &conf->sc_addresses, 16, SNMPD_PORT, NULL,
-			    NULL, NULL) <= 0) {
+			    NULL, NULL, $4) <= 0) {
 				yyerror("invalid ip address: %s", $3);
 				free($3);
 				YYERROR;
@@ -442,7 +442,7 @@ srcaddr		: /* empty */				{ $$ = NULL; }
 
 hostdef		: STRING hostoid hostcmn srcaddr	{
 			if (host($1, hlist, 1,
-			    SNMPD_TRAPPORT, $2, $3, $4) <= 0) {
+			    SNMPD_TRAPPORT, $2, $3, $4, IPPROTO_UDP) <= 0) {
 				yyerror("invalid host: %s", $1);
 				free($1);
 				YYERROR;
@@ -522,6 +522,11 @@ enc		: STRING			{
 socktype	: RESTRICTED		{ $$ = SOCK_TYPE_RESTRICTED; }
 		| AGENTX		{ $$ = SOCK_TYPE_AGENTX; }
 		| /* nothing */		{ $$ = 0; }
+		;
+
+proto		: /* empty */			{ $$ = IPPROTO_UDP; }
+		| TCP				{ $$ = IPPROTO_TCP; }
+		| UDP				{ $$ = IPPROTO_UDP; }
 		;
 
 cmd		: STRING		{
@@ -634,7 +639,9 @@ lookup(char *s)
 		{ "source-address",	SRCADDR },
 		{ "string",		OCTETSTRING },
 		{ "system",		SYSTEM },
+		{ "tcp",		TCP },
 		{ "trap",		TRAP },
+		{ "udp",		UDP },
 		{ "user",		USER }
 	};
 	const struct keywords	*p;
@@ -969,6 +976,8 @@ struct snmpd *
 parse_config(const char *filename, u_int flags)
 {
 	struct sym	*sym, *next;
+	struct address	*h;
+	int found;
 
 	if ((conf = calloc(1, sizeof(*conf))) == NULL) {
 		log_warn("cannot allocate memory");
@@ -999,18 +1008,25 @@ parse_config(const char *filename, u_int flags)
 
 	endservent();
 
+	/* Setup default listen addresses */
 	if (TAILQ_EMPTY(&conf->sc_addresses)) {
-		struct address		*h;
-		if ((h = calloc(1, sizeof(*h))) == NULL)
-			fatal("snmpe: %s", __func__);
-		h->ss.ss_family = AF_INET;
-		h->port = SNMPD_PORT;
-		TAILQ_INSERT_TAIL(&conf->sc_addresses, h, entry);
-		if ((h = calloc(1, sizeof(*h))) == NULL)
-			fatal("snmpe: %s", __func__);
-		h->ss.ss_family = AF_INET6;
-		h->port = SNMPD_PORT;
-		TAILQ_INSERT_TAIL(&conf->sc_addresses, h, entry);
+		host("0.0.0.0", &conf->sc_addresses, 1, SNMPD_PORT,
+		    NULL, NULL, NULL, IPPROTO_UDP);
+		host("::", &conf->sc_addresses, 1, SNMPD_PORT,
+		    NULL, NULL, NULL, IPPROTO_UDP);
+	}
+	if (conf->sc_traphandler) {
+		found = 0;
+		TAILQ_FOREACH(h, &conf->sc_addresses, entry) {
+			if (h->ipproto == IPPROTO_UDP)
+				found = 1;
+		}
+		if (!found) {
+			log_warnx("trap handler needs at least one "
+			    "udp listen address");
+			free(conf);
+			return (NULL);
+		}
 	}
 
 	/* Free macros and check which have not been used. */
@@ -1162,7 +1178,8 @@ host_v6(const char *s)
 
 int
 host_dns(const char *s, struct addresslist *al, int max,
-	in_port_t port, struct ber_oid *oid, char *cmn, struct address *src)
+    in_port_t port, struct ber_oid *oid, char *cmn,
+    struct address *src, int ipproto)
 {
 	struct addrinfo		 hints, *res0, *res;
 	int			 error, cnt = 0;
@@ -1193,6 +1210,7 @@ host_dns(const char *s, struct addresslist *al, int max,
 			fatal(__func__);
 
 		h->port = port;
+		h->ipproto = ipproto;
 		if (oid != NULL) {
 			if ((h->sa_oid = calloc(1, sizeof(*oid))) == NULL)
 				fatal(__func__);
@@ -1235,7 +1253,7 @@ host_dns(const char *s, struct addresslist *al, int max,
 
 int
 host(const char *s, struct addresslist *al, int max,
-    in_port_t port, struct ber_oid *oid, char *cmn, char *srcaddr)
+    in_port_t port, struct ber_oid *oid, char *cmn, char *srcaddr, int ipproto)
 {
 	struct address	*h, *src = NULL;
 
@@ -1259,6 +1277,7 @@ host(const char *s, struct addresslist *al, int max,
 		h->port = port;
 		h->sa_oid = oid;
 		h->sa_community = cmn;
+		h->ipproto = ipproto;
 		if (src != NULL && h->ss.ss_family != src->ss.ss_family) {
 			log_warnx("host and source-address family mismatch");
 			return (-1);
@@ -1269,5 +1288,5 @@ host(const char *s, struct addresslist *al, int max,
 		return (1);
 	}
 
-	return (host_dns(s, al, max, port, oid, cmn, src));
+	return (host_dns(s, al, max, port, oid, cmn, src, ipproto));
 }

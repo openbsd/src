@@ -1,7 +1,8 @@
-/*	$OpenBSD: snmpe.c,v 1.51 2018/02/08 18:02:06 jca Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.52 2018/04/15 11:57:29 mpf Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2017 Marco Pfatschbacher <mpf@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -41,6 +42,7 @@
 
 void	 snmpe_init(struct privsep *, struct privsep_proc *, void *);
 int	 snmpe_parse(struct snmp_message *);
+void	 snmpe_tryparse(int, struct snmp_message *);
 int	 snmpe_parsevarbinds(struct snmp_message *);
 void	 snmpe_response(struct snmp_message *);
 unsigned long
@@ -49,10 +51,15 @@ void	 snmpe_sig_handler(int sig, short, void *);
 int	 snmpe_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 snmpe_bind(struct address *);
 void	 snmpe_recvmsg(int fd, short, void *);
+void	 snmpe_readcb(int fd, short, void *);
+void	 snmpe_writecb(int fd, short, void *);
+void	 snmpe_acceptcb(int fd, short, void *);
+void	 snmpe_prepare_read(struct snmp_message *, int);
 int	 snmpe_encode(struct snmp_message *);
 void	 snmp_msgfree(struct snmp_message *);
 
 struct imsgev	*iev_parent;
+static const struct timeval	snmpe_tcp_timeout = { 10, 0 }; /* 10s */
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	snmpe_dispatch_parent }
@@ -76,11 +83,13 @@ snmpe(struct privsep *ps, struct privsep_proc *p)
 	}
 #endif
 
+	/* bind SNMP UDP/TCP sockets */
 	TAILQ_FOREACH(h, &env->sc_addresses, entry) {
 		if ((so = calloc(1, sizeof(*so))) == NULL)
 			fatal("snmpe: %s", __func__);
 		if ((so->s_fd = snmpe_bind(h)) == -1)
-			fatal("snmpe: failed to bind SNMP UDP socket");
+			fatal("snmpe: failed to bind SNMP socket");
+		so->s_ipproto = h->ipproto;
 		TAILQ_INSERT_TAIL(&env->sc_sockets, so, entry);
 	}
 
@@ -99,10 +108,17 @@ snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 	timer_init();
 	usm_generate_keys();
 
-	/* listen for incoming SNMP UDP messages */
+	/* listen for incoming SNMP UDP/TCP messages */
 	TAILQ_FOREACH(so, &env->sc_sockets, entry) {
-		event_set(&so->s_ev, so->s_fd, EV_READ|EV_PERSIST,
-		    snmpe_recvmsg, env);
+		if (so->s_ipproto == IPPROTO_TCP) {
+			if (listen(so->s_fd, 5) < 0)
+				fatalx("snmpe: failed to listen on socket");
+			event_set(&so->s_ev, so->s_fd, EV_READ, snmpe_acceptcb, so);
+			evtimer_set(&so->s_evt, snmpe_acceptcb, so);
+		} else {
+			event_set(&so->s_ev, so->s_fd, EV_READ|EV_PERSIST,
+			    snmpe_recvmsg, env);
+		}
 		event_add(&so->s_ev, NULL);
 	}
 
@@ -119,6 +135,14 @@ BROKEN	if (pledge("stdio inet route recvfd vminfo", NULL) == -1)
 void
 snmpe_shutdown(void)
 {
+	struct listen_sock *so;
+
+	TAILQ_FOREACH(so, &snmpd_env->sc_sockets, entry) {
+		event_del(&so->s_ev);
+		if (so->s_ipproto == IPPROTO_TCP)
+			event_del(&so->s_evt);
+		close(so->s_fd);
+	}
 	kr_shutdown();
 }
 
@@ -139,7 +163,8 @@ snmpe_bind(struct address *addr)
 	char	 buf[512];
 	int	 val, s;
 
-	if ((s = snmpd_socket_af(&addr->ss, htons(addr->port))) == -1)
+	if ((s = snmpd_socket_af(&addr->ss, htons(addr->port),
+	    addr->ipproto)) == -1)
 		return (-1);
 
 	/*
@@ -148,23 +173,30 @@ snmpe_bind(struct address *addr)
 	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
 		goto bad;
 
-	switch (addr->ss.ss_family) {
-	case AF_INET:
+	if (addr->ipproto == IPPROTO_TCP) {
 		val = 1;
-		if (setsockopt(s, IPPROTO_IP, IP_RECVDSTADDR,
-		    &val, sizeof(int)) == -1) {
-			log_warn("%s: failed to set IPv4 packet info",
-			    __func__);
-			goto bad;
-		}
-		break;
-	case AF_INET6:
-		val = 1;
-		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO,
-		    &val, sizeof(int)) == -1) {
-			log_warn("%s: failed to set IPv6 packet info",
-			    __func__);
-			goto bad;
+		if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+		    &val, sizeof(val)) == -1)
+			fatal("setsockopt SO_REUSEADDR");
+	} else { /* UDP */
+		switch (addr->ss.ss_family) {
+		case AF_INET:
+			val = 1;
+			if (setsockopt(s, IPPROTO_IP, IP_RECVDSTADDR,
+			    &val, sizeof(int)) == -1) {
+				log_warn("%s: failed to set IPv4 packet info",
+				    __func__);
+				goto bad;
+			}
+			break;
+		case AF_INET6:
+			val = 1;
+			if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO,
+			    &val, sizeof(int)) == -1) {
+				log_warn("%s: failed to set IPv6 packet info",
+				    __func__);
+				goto bad;
+			}
 		}
 	}
 
@@ -174,7 +206,8 @@ snmpe_bind(struct address *addr)
 	if (print_host(&addr->ss, buf, sizeof(buf)) == NULL)
 		goto bad;
 
-	log_info("snmpe: listening on %s:%d", buf, addr->port);
+	log_info("snmpe: listening on %s %s:%d",
+	    (addr->ipproto == IPPROTO_TCP) ? "tcp" : "udp", buf, addr->port);
 
 	return (s);
 
@@ -491,6 +524,178 @@ snmpe_parsevarbinds(struct snmp_message *msg)
 }
 
 void
+snmpe_acceptcb(int fd, short type, void *arg)
+{
+	struct listen_sock	*so = arg;
+	struct sockaddr_storage ss;
+	socklen_t len = sizeof(ss);
+	struct snmp_message	*msg;
+	int afd;
+
+	event_add(&so->s_ev, NULL);
+	if ((type & EV_TIMEOUT))
+		return;
+
+	if ((afd = accept4(fd, (struct sockaddr *)&ss, &len,
+	    SOCK_NONBLOCK|SOCK_CLOEXEC)) < 0) {
+		/* Pause accept if we are out of file descriptors  */
+		if (errno == ENFILE || errno == EMFILE) {
+			struct timeval evtpause = { 1, 0 };
+
+			event_del(&so->s_ev);
+			evtimer_add(&so->s_evt, &evtpause);
+		} else if (errno != EAGAIN && errno != EINTR)
+			log_debug("%s: accept4", __func__);
+		return;
+	}
+	if ((msg = calloc(1, sizeof(*msg))) == NULL)
+		goto fail;
+
+	snmpe_prepare_read(msg, afd);
+	return;
+fail:
+	free(msg);
+	close(afd);
+	return;
+}
+
+void
+snmpe_prepare_read(struct snmp_message *msg, int fd)
+{
+	msg->sm_sock = fd;
+	msg->sm_sock_tcp = 1;
+	event_del(&msg->sm_sockev);
+	event_set(&msg->sm_sockev, fd, EV_READ,
+	    snmpe_readcb, msg);
+	event_add(&msg->sm_sockev, &snmpe_tcp_timeout);
+}
+
+void
+snmpe_tryparse(int fd, struct snmp_message *msg)
+{
+	struct snmp_stats	*stats = &snmpd_env->sc_stats;
+
+	ber_set_application(&msg->sm_ber, smi_application);
+	ber_set_readbuf(&msg->sm_ber, msg->sm_data, msg->sm_datalen);
+	msg->sm_req = ber_read_elements(&msg->sm_ber, NULL);
+	if (msg->sm_req == NULL) {
+		if (errno == ECANCELED) {
+			/* short read; try again */
+			snmpe_prepare_read(msg, fd);
+			return;
+		}
+		goto fail;
+	}
+
+	if (snmpe_parse(msg) == -1) {
+		if (msg->sm_usmerr && MSG_REPORT(msg)) {
+			usm_make_report(msg);
+			snmpe_response(msg);
+			return;
+		} else
+			goto fail;
+	}
+	stats->snmp_inpkts++;
+
+	snmpe_dispatchmsg(msg);
+	return;
+ fail:
+	snmp_msgfree(msg);
+	close(fd);
+}
+
+void
+snmpe_readcb(int fd, short type, void *arg)
+{
+	struct snmp_message *msg = arg;
+	ssize_t len;
+
+	if (type == EV_TIMEOUT || msg->sm_datalen >= sizeof(msg->sm_data))
+		goto fail;
+
+	len = read(fd, msg->sm_data + msg->sm_datalen,
+	    sizeof(msg->sm_data) - msg->sm_datalen);
+	if (len <= 0) {
+		if (errno != EAGAIN && errno != EINTR)
+			goto fail;
+		snmpe_prepare_read(msg, fd);
+		return;
+	}
+
+	msg->sm_datalen += (size_t)len;
+	snmpe_tryparse(fd, msg);
+	return;
+
+ fail:
+	snmp_msgfree(msg);
+	close(fd);
+}
+
+void
+snmpe_writecb(int fd, short type, void *arg)
+{
+	struct snmp_stats	*stats = &snmpd_env->sc_stats;
+	struct snmp_message	*msg = arg;
+	struct snmp_message	*nmsg;
+	ssize_t			 len;
+	size_t			 reqlen;
+	struct ber		*ber = &msg->sm_ber;
+
+	if (type == EV_TIMEOUT)
+		goto fail;
+
+	len = ber->br_wend - ber->br_wbuf;
+	ber->br_wptr = ber->br_wbuf;
+
+	log_debug("%s: write fd %d len %zd", __func__, fd, len);
+
+	len = write(fd, ber->br_wptr, len);
+	if (len == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			return;
+		else
+			goto fail;
+	}
+
+	ber->br_wptr += len;
+
+	if (ber->br_wptr < ber->br_wend) {
+		event_del(&msg->sm_sockev);
+		event_set(&msg->sm_sockev, msg->sm_sock, EV_WRITE,
+		    snmpe_writecb, msg);
+		event_add(&msg->sm_sockev, &snmpe_tcp_timeout);
+		return;
+	}
+
+	stats->snmp_outpkts++;
+
+	if ((nmsg = calloc(1, sizeof(*nmsg))) == NULL)
+		goto fail;
+
+	/*
+	 * Reuse the connection.
+	 * In case we already read data of the next message, copy it over.
+	 */
+	reqlen = ber_calc_len(msg->sm_req);
+	if (msg->sm_datalen > reqlen) {
+		memcpy(nmsg->sm_data, msg->sm_data + reqlen,
+		    msg->sm_datalen - reqlen);
+		nmsg->sm_datalen = msg->sm_datalen - reqlen;
+		snmp_msgfree(msg);
+		snmpe_prepare_read(nmsg, fd);
+		snmpe_tryparse(fd, nmsg);
+	} else {
+		snmp_msgfree(msg);
+		snmpe_prepare_read(nmsg, fd);
+	}
+	return;
+
+ fail:
+	close(fd);
+	snmp_msgfree(msg);
+}
+
+void
 snmpe_recvmsg(int fd, short sig, void *arg)
 {
 	struct snmpd		*env = arg;
@@ -546,10 +751,11 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 void
 snmpe_dispatchmsg(struct snmp_message *msg)
 {
+	/* dispatched to subagent */
 	if (snmpe_parsevarbinds(msg) == 1)
 		return;
 
-	/* not dispatched to subagent; respond directly */
+	/* respond directly */
 	msg->sm_context = SNMP_C_GETRESP;
 	snmpe_response(msg);
 }
@@ -592,11 +798,19 @@ snmpe_response(struct snmp_message *msg)
 		goto done;
 
 	usm_finalize_digest(msg, ptr, len);
-	len = sendtofrom(msg->sm_sock, ptr, len, 0,
-	    (struct sockaddr *)&msg->sm_ss, msg->sm_slen,
-	    (struct sockaddr *)&msg->sm_local_ss, msg->sm_local_slen);
-	if (len != -1)
-		stats->snmp_outpkts++;
+	if (msg->sm_sock_tcp) {
+		event_del(&msg->sm_sockev);
+		event_set(&msg->sm_sockev, msg->sm_sock, EV_WRITE,
+		    snmpe_writecb, msg);
+		event_add(&msg->sm_sockev, &snmpe_tcp_timeout);
+		return;
+	} else {
+		len = sendtofrom(msg->sm_sock, ptr, len, 0,
+		    (struct sockaddr *)&msg->sm_ss, msg->sm_slen,
+		    (struct sockaddr *)&msg->sm_local_ss, msg->sm_local_slen);
+		if (len != -1)
+			stats->snmp_outpkts++;
+	}
 
  done:
 	snmp_msgfree(msg);
@@ -605,6 +819,7 @@ snmpe_response(struct snmp_message *msg)
 void
 snmp_msgfree(struct snmp_message *msg)
 {
+	event_del(&msg->sm_sockev);
 	ber_free(&msg->sm_ber);
 	if (msg->sm_req != NULL)
 		ber_free_elements(msg->sm_req);

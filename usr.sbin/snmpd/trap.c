@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.31 2018/02/08 18:02:06 jca Exp $	*/
+/*	$OpenBSD: trap.c,v 1.32 2018/04/15 11:57:29 mpf Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -194,7 +194,8 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 				continue;
 		}
 
-		if ((s = snmpd_socket_af(&tr->ss, htons(tr->port))) == -1) {
+		if ((s = snmpd_socket_af(&tr->ss, htons(tr->port),
+		    IPPROTO_UDP)) == -1) {
 			ret = -1;
 			goto done;
 		}

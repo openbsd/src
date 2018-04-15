@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.77 2018/02/08 00:21:10 claudio Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.78 2018/04/15 11:57:29 mpf Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -404,6 +404,8 @@ struct snmp_message {
 	int			 sm_sock;
 	struct sockaddr_storage	 sm_ss;
 	socklen_t		 sm_slen;
+	int			 sm_sock_tcp;
+	struct event		 sm_sockev;
 	char			 sm_host[HOST_NAME_MAX+1];
 
 	struct sockaddr_storage	 sm_local_ss;
@@ -509,6 +511,7 @@ struct snmp_stats {
 struct address {
 	struct sockaddr_storage	 ss;
 	in_port_t		 port;
+	int			 ipproto;
 
 	TAILQ_ENTRY(address)	 entry;
 
@@ -521,7 +524,9 @@ TAILQ_HEAD(addresslist, address);
 
 struct listen_sock {
 	int				s_fd;
+	int				s_ipproto;
 	struct event			s_ev;
+	struct event			s_evt;
 	TAILQ_ENTRY(listen_sock)	entry;
 };
 TAILQ_HEAD(socklist, listen_sock);
@@ -739,7 +744,7 @@ char		*smi_print_element(struct ber_element *);
 void		 timer_init(void);
 
 /* snmpd.c */
-int		 snmpd_socket_af(struct sockaddr_storage *, in_port_t);
+int		 snmpd_socket_af(struct sockaddr_storage *, in_port_t, int);
 u_long		 snmpd_engine_time(void);
 char		*tohexstr(u_int8_t *, int);
 

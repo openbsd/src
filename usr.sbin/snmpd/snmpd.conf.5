@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.35 2016/11/09 20:31:56 jca Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.36 2018/04/15 11:57:29 mpf Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 9 2016 $
+.Dd $Mdocdate: April 15 2018 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -86,10 +86,13 @@ Routing table information will not be available, but CPU use will be
 reduced during bulk updates.
 The default is
 .Ic no .
-.It Ic listen on Ar address
+.It Ic listen on Ar address Op Ic tcp | udp
 Specify the local address
 .Xr snmpd 8
 should listen on for incoming SNMP messages.
+Multiple
+.Ic listen on
+statements are supported, the default is UDP.
 .It Ic read-only community Ar string
 Specify the name of the read-only community.
 The default value is
@@ -198,6 +201,9 @@ the resolved hostname of the host sending the trap,
 the IP address of the host sending the trap,
 and any variable bindings contained in the trap
 (the OID followed by the value, separated by a single space).
+Traps will will be accepted on all
+.Ic listen on
+UDP addresses.
 .It Xo
 .Ic trap receiver Ar string
 .Op Ic oid Ar oid-string
