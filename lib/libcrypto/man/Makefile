@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.139 2018/04/15 01:43:45 schwarze Exp $
+# $OpenBSD: Makefile,v 1.140 2018/04/15 17:02:03 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -101,9 +101,12 @@ MAN=	\
 	ENGINE_ctrl.3 \
 	ENGINE_get_default_RSA.3 \
 	ENGINE_init.3 \
+	ENGINE_new.3 \
 	ENGINE_register_RSA.3 \
 	ENGINE_register_all_RSA.3 \
+	ENGINE_set_RSA.3 \
 	ENGINE_set_default.3 \
+	ENGINE_set_flags.3 \
 	ENGINE_unregister_RSA.3 \
 	ERR.3 \
 	ERR_GET_LIB.3 \

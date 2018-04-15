@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_register_all_RSA.3,v 1.1 2018/04/15 01:43:45 schwarze Exp $
+.\" $OpenBSD: ENGINE_register_all_RSA.3,v 1.2 2018/04/15 17:02:03 schwarze Exp $
 .\" content checked up to:
 .\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
@@ -29,7 +29,9 @@
 .Nm ENGINE_register_all_STORE ,
 .Nm ENGINE_register_all_ciphers ,
 .Nm ENGINE_register_all_digests ,
-.Nm ENGINE_register_all_complete
+.Nm ENGINE_register_all_complete ,
+.Nm ENGINE_load_builtin_engines ,
+.Nm ENGINE_load_dynamic
 .Nd register all engines as implementing an algorithm
 .Sh SYNOPSIS
 .In openssl/engine.h
@@ -53,6 +55,10 @@
 .Fn ENGINE_register_all_digests void
 .Ft int
 .Fn ENGINE_register_all_complete void
+.Ft void
+.Fn ENGINE_load_builtin_engines void
+.Ft void
+.Fn ENGINE_load_dynamic void
 .Sh DESCRIPTION
 These functions loop over all the
 .Vt ENGINE
@@ -70,4 +76,21 @@ in this way, except that it skips those
 .Vt ENGINE
 objects that have the
 .Dv ENGINE_FLAGS_NO_REGISTER_ALL
-flag set.
+flag set with
+.Xr ENGINE_set_flags 3 .
+.Pp
+.Fn ENGINE_load_builtin_engines
+calls
+.Xr OPENSSL_init_crypto 3
+with no options, loads any built-in engines
+that are enabled by default, and calls
+.Fn ENGINE_register_all_complete .
+Currently, LibreSSL does not provide any engines.
+.Sy GOST
+and
+.Sy aesni
+support is provided by the crypto library itself
+and does not require any engines, not even built-in ones.
+.Pp
+.Fn ENGINE_load_dynamic
+has no effect and is only provided for compatibility.

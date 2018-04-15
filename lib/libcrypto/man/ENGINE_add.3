@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_add.3,v 1.1 2018/04/15 01:43:45 schwarze Exp $
+.\" $OpenBSD: ENGINE_add.3,v 1.2 2018/04/15 17:02:03 schwarze Exp $
 .\" content checked up to: OpenSSL 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -20,7 +20,12 @@
 .Os
 .Sh NAME
 .Nm ENGINE_add ,
+.Nm ENGINE_set_id ,
+.Nm ENGINE_get_id ,
+.Nm ENGINE_set_name ,
+.Nm ENGINE_get_name ,
 .Nm ENGINE_remove ,
+.Nm ENGINE_cleanup ,
 .Nm ENGINE_get_first ,
 .Nm ENGINE_get_last ,
 .Nm ENGINE_get_next ,
@@ -34,9 +39,29 @@
 .Fa "ENGINE *e"
 .Fc
 .Ft int
+.Fo ENGINE_set_id
+.Fa "ENGINE *e"
+.Fa "const char *id"
+.Fc
+.Ft const char *
+.Fo ENGINE_get_id
+.Fa "const ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_name
+.Fa "ENGINE *e"
+.Fa "const char *name"
+.Fc
+.Ft const char *
+.Fo ENGINE_get_name
+.Fa "const ENGINE *e"
+.Fc
+.Ft int
 .Fo ENGINE_remove
 .Fa "ENGINE *e"
 .Fc
+.Ft void
+.Fn ENGINE_cleanup void
 .Ft ENGINE *
 .Fn ENGINE_get_first void
 .Ft ENGINE *
@@ -63,12 +88,12 @@ appends
 .Fa e
 to the end of the list
 and increments its structural reference count by 1.
-The name and identifier of
+A unique identifier and a name of
 .Fa e
 have to be set with
-.Xr ENGINE_set_name 3
+.Fn ENGINE_set_id
 and
-.Xr ENGINE_set_id 3
+.Fn ENGINE_set_name
 before calling this function.
 .Fn ENGINE_add
 fails if the list already contains an
@@ -83,6 +108,26 @@ If successful, it calls
 .Xr ENGINE_free 3
 on
 .Fa e .
+.Pp
+.Fn ENGINE_cleanup
+calls
+.Xr ENGINE_finish 3
+on all
+.Vt ENGINE
+objects that were selected as default engines, for example using the
+functions documented in the
+.Xr ENGINE_set_default 3
+and
+.Xr ENGINE_get_default_RSA 3
+manual pages, and it calls
+.Fn ENGINE_remove
+on all
+.Vt ENGINE
+objects that were added to the global list with
+.Fn ENGINE_add .
+Calling this function is required at the end of each program using
+.Fn ENGINE_add ,
+even if no engines are explicitly registered or used.
 .Pp
 .Fn ENGINE_get_first
 and
@@ -109,13 +154,40 @@ searches the list for an
 .Vt ENGINE
 object with a matching
 .Fa id .
-If found, it increments  the structural reference count of the
+If found, it increments the structural reference count of the
 retrieved object by 1.
+If
+.Dv ENGINE_FLAGS_BY_ID_COPY
+was set on
+.Fa e
+with
+.Xr ENGINE_set_flags 3 ,
+it returns a shallow copy of the object rather than incrementing
+the reference count and returning a pointer to the original.
 .Sh RETURN VALUES
-.Fn ENGINE_add
+.Fn ENGINE_add ,
+.Fn ENGINE_set_id ,
+.Fn ENGINE_set_name ,
 and
 .Fn ENGINE_remove
 return 1 on success or 0 on error.
+.Fn ENGINE_set_id
+and
+.Fn ENGINE_set_name
+can only fail if the supplied
+.Fa id
+or
+.Fa name
+is
+.Dv NULL .
+.Pp
+.Fn ENGINE_get_id
+and
+.Fn ENGINE_get_name
+return a pointer to an internal string
+representing the identifier and the name of
+.Fa e ,
+respectively.
 .Pp
 .Fn ENGINE_get_first
 and
