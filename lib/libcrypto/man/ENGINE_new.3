@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_new.3,v 1.1 2018/04/15 17:02:03 schwarze Exp $
+.\" $OpenBSD: ENGINE_new.3,v 1.2 2018/04/15 17:44:59 schwarze Exp $
 .\" content checked up to:
 .\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
@@ -52,6 +52,14 @@
 .Fa "const ENGINE *e"
 .Fc
 .Sh DESCRIPTION
+.Vt ENGINE
+objects can be used to provide alternative implementations of
+cryptographic algorithms, to support additional algorithms, to
+support cryptographic hardware, and to switch among alternative
+implementations of algorithms at run time.
+LibreSSL generally avoids engines and prefers providing
+cryptographic functionality in the crypto library itself.
+.Pp
 .Fn ENGINE_new
 allocates and initializes an empty
 .Vt ENGINE

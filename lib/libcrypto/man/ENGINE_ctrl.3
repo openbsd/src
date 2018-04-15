@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_ctrl.3,v 1.1 2018/04/15 01:43:45 schwarze Exp $
+.\" $OpenBSD: ENGINE_ctrl.3,v 1.2 2018/04/15 17:44:59 schwarze Exp $
 .\" content checked up to:
 .\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
@@ -95,6 +95,11 @@ passing the arguments
 .Fa i
 and
 .Fa p .
+.Pp
+User-defined commands can be used before
+.Xr ENGINE_init 3
+to provide data required for initialization
+or at any time to modify the behaviour of an engine.
 .Pp
 Most built-in commands operate on user-defined commands installed with
 .Fn ENGINE_set_cmd_defns ,
