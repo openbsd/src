@@ -1,0 +1,73 @@
+.\" $OpenBSD: ENGINE_register_all_RSA.3,v 1.1 2018/04/15 01:43:45 schwarze Exp $
+.\" content checked up to:
+.\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
+.\"
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 15 2018 $
+.Dt ENGINE_REGISTER_ALL_RSA 3
+.Os
+.Sh NAME
+.Nm ENGINE_register_all_RSA ,
+.Nm ENGINE_register_all_DSA ,
+.Nm ENGINE_register_all_ECDH ,
+.Nm ENGINE_register_all_ECDSA ,
+.Nm ENGINE_register_all_DH ,
+.Nm ENGINE_register_all_RAND ,
+.Nm ENGINE_register_all_STORE ,
+.Nm ENGINE_register_all_ciphers ,
+.Nm ENGINE_register_all_digests ,
+.Nm ENGINE_register_all_complete
+.Nd register all engines as implementing an algorithm
+.Sh SYNOPSIS
+.In openssl/engine.h
+.Ft void
+.Fn ENGINE_register_all_RSA void
+.Ft void
+.Fn ENGINE_register_all_DSA void
+.Ft void
+.Fn ENGINE_register_all_ECDH void
+.Ft void
+.Fn ENGINE_register_all_ECDSA void
+.Ft void
+.Fn ENGINE_register_all_DH void
+.Ft void
+.Fn ENGINE_register_all_RAND void
+.Ft void
+.Fn ENGINE_register_all_STORE void
+.Ft void
+.Fn ENGINE_register_all_ciphers void
+.Ft void
+.Fn ENGINE_register_all_digests void
+.Ft int
+.Fn ENGINE_register_all_complete void
+.Sh DESCRIPTION
+These functions loop over all the
+.Vt ENGINE
+objects contained in the global table described in the
+.Xr ENGINE_add 3
+manual page.
+They register each object for the respective algorithm
+by calling the corresponding function described in
+.Xr ENGINE_register_RSA 3 .
+.Pp
+.Fn ENGINE_register_all_complete
+calls
+.Fn ENGINE_register_complete
+in this way, except that it skips those
+.Vt ENGINE
+objects that have the
+.Dv ENGINE_FLAGS_NO_REGISTER_ALL
+flag set.

@@ -1,0 +1,143 @@
+.\" $OpenBSD: ENGINE_add.3,v 1.1 2018/04/15 01:43:45 schwarze Exp $
+.\" content checked up to: OpenSSL 1f13ad31 Dec 25 17:50:39 2017 +0800
+.\"
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 15 2018 $
+.Dt ENGINE_ADD 3
+.Os
+.Sh NAME
+.Nm ENGINE_add ,
+.Nm ENGINE_remove ,
+.Nm ENGINE_get_first ,
+.Nm ENGINE_get_last ,
+.Nm ENGINE_get_next ,
+.Nm ENGINE_get_prev ,
+.Nm ENGINE_by_id
+.Nd maintain a global list of ENGINE objects
+.Sh SYNOPSIS
+.In openssl/engine.h
+.Ft int
+.Fo ENGINE_add
+.Fa "ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_remove
+.Fa "ENGINE *e"
+.Fc
+.Ft ENGINE *
+.Fn ENGINE_get_first void
+.Ft ENGINE *
+.Fn ENGINE_get_last void
+.Ft ENGINE *
+.Fo ENGINE_get_next
+.Fa "ENGINE *e"
+.Fc
+.Ft ENGINE *
+.Fo ENGINE_get_prev
+.Fa "ENGINE *e"
+.Fc
+.Ft ENGINE *
+.Fo ENGINE_by_id
+.Fa "const char *id"
+.Fc
+.Sh DESCRIPTION
+The crypto library maintains a global list of
+.Vt ENGINE
+objects.
+.Pp
+.Fn ENGINE_add
+appends
+.Fa e
+to the end of the list
+and increments its structural reference count by 1.
+The name and identifier of
+.Fa e
+have to be set with
+.Xr ENGINE_set_name 3
+and
+.Xr ENGINE_set_id 3
+before calling this function.
+.Fn ENGINE_add
+fails if the list already contains an
+.Vt ENGINE
+with the same identifier.
+.Pp
+.Fn ENGINE_remove
+removes
+.Fa e
+from the list.
+If successful, it calls
+.Xr ENGINE_free 3
+on
+.Fa e .
+.Pp
+.Fn ENGINE_get_first
+and
+.Fn ENGINE_get_last
+provide access to the first and last
+.Vt ENGINE
+object on the list, respectively.
+Unless the list is empty, they increment the structural reference
+count of the retrieved object by 1.
+.Pp
+.Fn ENGINE_get_next
+and
+.Fn ENGINE_get_prev
+support iteration of the list.
+They always call
+.Xr ENGINE_free 3
+on
+.Fa e .
+Unless the end of the list is reached, they increment the structural
+reference count of the retrieved object by 1.
+.Pp
+.Fn ENGINE_by_id
+searches the list for an
+.Vt ENGINE
+object with a matching
+.Fa id .
+If found, it increments  the structural reference count of the
+retrieved object by 1.
+.Sh RETURN VALUES
+.Fn ENGINE_add
+and
+.Fn ENGINE_remove
+return 1 on success or 0 on error.
+.Pp
+.Fn ENGINE_get_first
+and
+.Fn ENGINE_get_last
+return an
+.Vt ENGINE
+object or
+.Dv NULL
+if the list is empty.
+.Pp
+.Fn ENGINE_get_next
+and
+.Fn ENGINE_get_prev
+return an
+.Vt ENGINE
+object or
+.Dv NULL
+when the end of the list is reached.
+.Pp
+.Fn ENGINE_by_id
+returns an
+.Vt ENGINE
+object or
+.Dv NULL
+if no matching object is found.

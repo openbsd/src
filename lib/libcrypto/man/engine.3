@@ -1,4 +1,4 @@
-.\" $OpenBSD: engine.3,v 1.14 2018/04/14 11:38:32 schwarze Exp $
+.\" $OpenBSD: engine.3,v 1.15 2018/04/15 01:43:45 schwarze Exp $
 .\" full merge up to: OpenSSL crypto/engine e6390aca Jul 21 10:06:03 2015 -0400
 .\" selective merge up to: man3/ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
@@ -51,77 +51,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 14 2018 $
+.Dd $Mdocdate: April 15 2018 $
 .Dt ENGINE 3
 .Os
 .Sh NAME
-.Nm ENGINE_get_first ,
-.Nm ENGINE_get_last ,
-.Nm ENGINE_get_next ,
-.Nm ENGINE_get_prev ,
-.Nm ENGINE_add ,
-.Nm ENGINE_remove ,
-.Nm ENGINE_by_id ,
-.Nm ENGINE_init ,
-.Nm ENGINE_finish ,
 .Nm ENGINE_load_openssl ,
 .Nm ENGINE_load_dynamic ,
-.Nm ENGINE_load_cryptodev ,
 .Nm ENGINE_load_builtin_engines ,
 .Nm ENGINE_cleanup ,
-.Nm ENGINE_get_default_RSA ,
-.Nm ENGINE_get_default_DSA ,
-.Nm ENGINE_get_default_ECDH ,
-.Nm ENGINE_get_default_ECDSA ,
-.Nm ENGINE_get_default_DH ,
-.Nm ENGINE_get_default_RAND ,
-.Nm ENGINE_get_cipher_engine ,
-.Nm ENGINE_get_digest_engine ,
-.Nm ENGINE_set_default_RSA ,
-.Nm ENGINE_set_default_DSA ,
-.Nm ENGINE_set_default_ECDH ,
-.Nm ENGINE_set_default_ECDSA ,
-.Nm ENGINE_set_default_DH ,
-.Nm ENGINE_set_default_RAND ,
-.Nm ENGINE_set_default_ciphers ,
-.Nm ENGINE_set_default_digests ,
-.Nm ENGINE_set_default_string ,
-.Nm ENGINE_set_default ,
-.Nm ENGINE_get_table_flags ,
-.Nm ENGINE_set_table_flags ,
-.Nm ENGINE_register_RSA ,
-.Nm ENGINE_unregister_RSA ,
-.Nm ENGINE_register_all_RSA ,
-.Nm ENGINE_register_DSA ,
-.Nm ENGINE_unregister_DSA ,
-.Nm ENGINE_register_all_DSA ,
-.Nm ENGINE_register_ECDH ,
-.Nm ENGINE_unregister_ECDH ,
-.Nm ENGINE_register_all_ECDH ,
-.Nm ENGINE_register_ECDSA ,
-.Nm ENGINE_unregister_ECDSA ,
-.Nm ENGINE_register_all_ECDSA ,
-.Nm ENGINE_register_DH ,
-.Nm ENGINE_unregister_DH ,
-.Nm ENGINE_register_all_DH ,
-.Nm ENGINE_register_RAND ,
-.Nm ENGINE_unregister_RAND ,
-.Nm ENGINE_register_all_RAND ,
-.Nm ENGINE_register_STORE ,
-.Nm ENGINE_unregister_STORE ,
-.Nm ENGINE_register_all_STORE ,
-.Nm ENGINE_register_ciphers ,
-.Nm ENGINE_unregister_ciphers ,
-.Nm ENGINE_register_all_ciphers ,
-.Nm ENGINE_register_digests ,
-.Nm ENGINE_unregister_digests ,
-.Nm ENGINE_register_all_digests ,
-.Nm ENGINE_register_complete ,
-.Nm ENGINE_register_all_complete ,
-.Nm ENGINE_ctrl ,
-.Nm ENGINE_cmd_is_executable ,
-.Nm ENGINE_ctrl_cmd ,
-.Nm ENGINE_ctrl_cmd_string ,
 .Nm ENGINE_new ,
 .Nm ENGINE_free ,
 .Nm ENGINE_up_ref ,
@@ -135,15 +72,11 @@
 .Nm ENGINE_set_RAND ,
 .Nm ENGINE_set_STORE ,
 .Nm ENGINE_set_destroy_function ,
-.Nm ENGINE_set_init_function ,
-.Nm ENGINE_set_finish_function ,
-.Nm ENGINE_set_ctrl_function ,
 .Nm ENGINE_set_load_privkey_function ,
 .Nm ENGINE_set_load_pubkey_function ,
 .Nm ENGINE_set_ciphers ,
 .Nm ENGINE_set_digests ,
 .Nm ENGINE_set_flags ,
-.Nm ENGINE_set_cmd_defns ,
 .Nm ENGINE_get_id ,
 .Nm ENGINE_get_name ,
 .Nm ENGINE_get_RSA ,
@@ -154,9 +87,6 @@
 .Nm ENGINE_get_RAND ,
 .Nm ENGINE_get_STORE ,
 .Nm ENGINE_get_destroy_function ,
-.Nm ENGINE_get_init_function ,
-.Nm ENGINE_get_finish_function ,
-.Nm ENGINE_get_ctrl_function ,
 .Nm ENGINE_get_load_privkey_function ,
 .Nm ENGINE_get_load_pubkey_function ,
 .Nm ENGINE_get_ciphers ,
@@ -164,247 +94,19 @@
 .Nm ENGINE_get_cipher ,
 .Nm ENGINE_get_digest ,
 .Nm ENGINE_get_flags ,
-.Nm ENGINE_get_cmd_defns ,
 .Nm ENGINE_load_private_key ,
 .Nm ENGINE_load_public_key
 .Nd ENGINE cryptographic module support
 .Sh SYNOPSIS
 .In openssl/engine.h
-.Ft ENGINE *
-.Fn ENGINE_get_first void
-.Ft ENGINE *
-.Fn ENGINE_get_last void
-.Ft ENGINE *
-.Fo ENGINE_get_next
-.Fa "ENGINE *e"
-.Fc
-.Ft ENGINE *
-.Fo ENGINE_get_prev
-.Fa "ENGINE *e"
-.Fc
-.Ft int
-.Fo ENGINE_add
-.Fa "ENGINE *e"
-.Fc
-.Ft int
-.Fo ENGINE_remove
-.Fa "ENGINE *e"
-.Fc
-.Ft ENGINE *
-.Fo ENGINE_by_id
-.Fa "const char *id"
-.Fc
-.Ft int
-.Fo ENGINE_init
-.Fa "ENGINE *e"
-.Fc
-.Ft int
-.Fo ENGINE_finish
-.Fa "ENGINE *e"
-.Fc
 .Ft void
 .Fn ENGINE_load_openssl void
 .Ft void
 .Fn ENGINE_load_dynamic void
 .Ft void
-.Fn ENGINE_load_cryptodev void
-.Ft void
 .Fn ENGINE_load_builtin_engines void
 .Ft void
 .Fn ENGINE_cleanup void
-.Ft ENGINE *
-.Fn ENGINE_get_default_RSA void
-.Ft ENGINE *
-.Fn ENGINE_get_default_DSA void
-.Ft ENGINE *
-.Fn ENGINE_get_default_ECDH void
-.Ft ENGINE *
-.Fn ENGINE_get_default_ECDSA void
-.Ft ENGINE *
-.Fn ENGINE_get_default_DH void
-.Ft ENGINE *
-.Fn ENGINE_get_default_RAND void
-.Ft ENGINE *
-.Fo ENGINE_get_cipher_engine
-.Fa "int nid"
-.Fc
-.Ft ENGINE *
-.Fo ENGINE_get_digest_engine
-.Fa "int nid"
-.Fc
-.Ft int
-.Fo ENGINE_set_default_RSA
-.Fa "ENGINE *e"
-.Fc
-.Ft int
-.Fo ENGINE_set_default_DSA
-.Fa "ENGINE *e"
-.Fc
-.Ft int
-.Fo ENGINE_set_default_ECDH
-.Fa "ENGINE *e"
-.Fc
-.Ft int
-.Fo ENGINE_set_default_ECDSA
-.Fa "ENGINE *e"
-.Fc
-.Ft int
-.Fo ENGINE_set_default_DH
-.Fa "ENGINE *e"
-.Fc
-.Ft int
-.Fo ENGINE_set_default_RAND
-.Fa "ENGINE *e"
-.Fc
-.Ft int
-.Fo ENGINE_set_default_ciphers
-.Fa "ENGINE *e"
-.Fc
-.Ft int
-.Fo ENGINE_set_default_digests
-.Fa "ENGINE *e"
-.Fc
-.Ft int
-.Fo ENGINE_set_default_string
-.Fa "ENGINE *e"
-.Fa "const char *list"
-.Fc
-.Ft int
-.Fo ENGINE_set_default
-.Fa "ENGINE *e"
-.Fa "unsigned int flags"
-.Fc
-.Ft unsigned int
-.Fn ENGINE_get_table_flags void
-.Ft void
-.Fo ENGINE_set_table_flags
-.Fa "unsigned int flags"
-.Fc
-.Ft int
-.Fo ENGINE_register_RSA
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fo ENGINE_unregister_RSA
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fn ENGINE_register_all_RSA void
-.Ft int
-.Fo ENGINE_register_DSA
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fo ENGINE_unregister_DSA
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fn ENGINE_register_all_DSA void
-.Ft int
-.Fo ENGINE_register_ECDH
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fo ENGINE_unregister_ECDH
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fn ENGINE_register_all_ECDH void
-.Ft int
-.Fo ENGINE_register_ECDSA
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fo ENGINE_unregister_ECDSA
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fn ENGINE_register_all_ECDSA void
-.Ft int
-.Fo ENGINE_register_DH
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fo ENGINE_unregister_DH
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fn ENGINE_register_all_DH void
-.Ft int
-.Fo ENGINE_register_RAND
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fo ENGINE_unregister_RAND
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fn ENGINE_register_all_RAND void
-.Ft int
-.Fo ENGINE_register_STORE
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fo ENGINE_unregister_STORE
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fn ENGINE_register_all_STORE void
-.Ft int
-.Fo ENGINE_register_ciphers
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fo ENGINE_unregister_ciphers
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fn ENGINE_register_all_ciphers void
-.Ft int
-.Fo ENGINE_register_digests
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fo ENGINE_unregister_digests
-.Fa "ENGINE *e"
-.Fc
-.Ft void
-.Fn ENGINE_register_all_digests void
-.Ft int
-.Fo ENGINE_register_complete
-.Fa "ENGINE *e"
-.Fc
-.Ft int
-.Fn ENGINE_register_all_complete void
-.Ft int
-.Fo ENGINE_ctrl
-.Fa "ENGINE *e"
-.Fa "int cmd"
-.Fa "long i"
-.Fa "void *p"
-.Fa "void (*f)(void)"
-.Fc
-.Ft int
-.Fo ENGINE_cmd_is_executable
-.Fa "ENGINE *e"
-.Fa "int cmd"
-.Fc
-.Ft int
-.Fo ENGINE_ctrl_cmd
-.Fa "ENGINE *e"
-.Fa "const char *cmd_name"
-.Fa "long i"
-.Fa "void *p"
-.Fa "void (*f)(void)"
-.Fa "int cmd_optional"
-.Fc
-.Ft int
-.Fo ENGINE_ctrl_cmd_string
-.Fa "ENGINE *e"
-.Fa "const char *cmd_name"
-.Fa "const char *arg"
-.Fa "int cmd_optional"
-.Fc
 .Ft ENGINE *
 .Fn ENGINE_new void
 .Ft int
@@ -466,21 +168,6 @@
 .Fa "ENGINE_GEN_INT_FUNC_PTR destroy_f"
 .Fc
 .Ft int
-.Fo ENGINE_set_init_function
-.Fa "ENGINE *e"
-.Fa "ENGINE_GEN_INT_FUNC_PTR init_f"
-.Fc
-.Ft int
-.Fo ENGINE_set_finish_function
-.Fa "ENGINE *e"
-.Fa "ENGINE_GEN_INT_FUNC_PTR finish_f"
-.Fc
-.Ft int
-.Fo ENGINE_set_ctrl_function
-.Fa "ENGINE *e"
-.Fa "ENGINE_CTRL_FUNC_PTR ctrl_f"
-.Fc
-.Ft int
 .Fo ENGINE_set_load_privkey_function
 .Fa "ENGINE *e"
 .Fa "ENGINE_LOAD_KEY_PTR loadpriv_f"
@@ -504,11 +191,6 @@
 .Fo ENGINE_set_flags
 .Fa "ENGINE *e"
 .Fa "int flags"
-.Fc
-.Ft int
-.Fo ENGINE_set_cmd_defns
-.Fa "ENGINE *e"
-.Fa "const ENGINE_CMD_DEFN *defns"
 .Fc
 .Ft const char *
 .Fo ENGINE_get_id
@@ -550,18 +232,6 @@
 .Fo ENGINE_get_destroy_function
 .Fa "const ENGINE *e"
 .Fc
-.Ft ENGINE_GEN_INT_FUNC_PTR
-.Fo ENGINE_get_init_function
-.Fa "const ENGINE *e"
-.Fc
-.Ft ENGINE_GEN_INT_FUNC_PTR
-.Fo ENGINE_get_finish_function
-.Fa "const ENGINE *e"
-.Fc
-.Ft ENGINE_CTRL_FUNC_PTR
-.Fo ENGINE_get_ctrl_function
-.Fa "const ENGINE *e"
-.Fc
 .Ft ENGINE_LOAD_KEY_PTR
 .Fo ENGINE_get_load_privkey_function
 .Fa "const ENGINE *e"
@@ -590,10 +260,6 @@
 .Fc
 .Ft int
 .Fo ENGINE_get_flags
-.Fa "const ENGINE *e"
-.Fc
-.Ft const ENGINE_CMD_DEFN *
-.Fo ENGINE_get_cmd_defns
 .Fa "const ENGINE *e"
 .Fc
 .Ft EVP_PKEY *
@@ -712,20 +378,23 @@ and its functional reference count to 0.
 Many functions increment the structural reference count by 1
 when successful.
 Some of them, including
-.Fn ENGINE_by_id ,
-.Fn ENGINE_get_first ,
-.Fn ENGINE_get_last ,
-.Fn ENGINE_get_next ,
+.Xr ENGINE_by_id 3 ,
+.Xr ENGINE_get_first 3 ,
+.Xr ENGINE_get_last 3 ,
+.Xr ENGINE_get_next 3 ,
 and
-.Fn ENGINE_get_prev ,
+.Xr ENGINE_get_prev 3 ,
 do so because they return a structural reference to the user.
 Other functions, including
-.Fn ENGINE_add ,
-.Fn ENGINE_init ,
-.Fn ENGINE_get_default_* ,
-.Fn ENGINE_get_*_engine ,
+.Xr ENGINE_add 3 ,
+.Xr ENGINE_init 3 ,
+.Xr ENGINE_get_cipher_engine 3 ,
+.Xr ENGINE_get_digest_engine 3 ,
+and the
+.Xr ENGINE_get_default_RSA 3
 and
-.Fn ENGINE_set_default_* ,
+.Xr ENGINE_set_default 3
+families of functions
 do so because they store a structural refence internally.
 .Fn ENGINE_up_ref
 explicitly increment the structural reference count by 1.
@@ -747,144 +416,17 @@ pointer, no action occurs.
 Many functions internally call the equivalent of
 .Fn ENGINE_free .
 Some of them, including
-.Fn ENGINE_get_next
+.Xr ENGINE_get_next 3
 and
-.Fn ENGINE_get_prev ,
+.Xr ENGINE_get_prev 3 ,
 thus invalidate the structural reference passed in by the user.
 Other functions, including
-.Fn ENGINE_finish ,
-.Fn ENGINE_remove ,
-.Fn ENGINE_get_default_* ,
-.Fn ENGINE_get_*_engine ,
-and
-.Fn ENGINE_set_default_* ,
+.Xr ENGINE_finish 3 ,
+.Xr ENGINE_remove 3 ,
+and the
+.Xr ENGINE_set_default 3
+family of functions
 do so when an internally stored structural reference is no longer needed.
-.Pp
-.Em Functional references
-.Pp
-As mentioned, functional references exist when the cryptographic
-functionality of an
-.Vt ENGINE
-is required to be available.
-A functional reference can be obtained in one of two ways; from an
-existing structural reference to the required
-.Vt ENGINE ,
-or by asking OpenSSL for the default operational
-.Vt ENGINE
-for a given cryptographic purpose.
-.Pp
-To obtain a functional reference from an existing structural reference,
-call the
-.Fn ENGINE_init
-function.
-This returns zero if the
-.Vt ENGINE
-was not already operational and couldn't be successfully initialised
-(e.g. lack of system drivers, no special hardware attached),
-otherwise it will return non-zero to indicate that the
-.Vt ENGINE
-is now operational and will have allocated a new
-.Sy functional
-reference to the
-.Vt ENGINE .
-All functional references are released by calling
-.Fn ENGINE_finish ,
-which removes the implicit structural reference as well.
-.Pp
-The second way to get a functional reference is by asking OpenSSL for a
-default implementation for a given task, e.g.
-by
-.Fn ENGINE_get_default_RSA ,
-.Fn ENGINE_get_default_cipher_engine ,
-etc.
-These are discussed in the next section, though they are not usually
-required by application programmers as they are used automatically when
-creating and using the relevant algorithm-specific types in OpenSSL,
-such as RSA, DSA, EVP_CIPHER_CTX, etc.
-.Ss Default implementations
-For each supported abstraction, the
-.Nm engine
-code maintains an internal table of state to control which
-implementations are available for a given abstraction and which
-should be used by default.
-These implementations are registered in the tables and indexed by an
-.Fa nid
-value, because abstractions like
-.Vt EVP_CIPHER
-and
-.Vt EVP_DIGEST
-support many distinct algorithms and modes, and
-.Vt ENGINE Ns s
-can support arbitrarily many of them.
-In the case of other abstractions like RSA, DSA, etc., there is
-only one "algorithm" so all implementations implicitly register
-using the same
-.Fa nid
-index.
-.Pp
-When a default
-.Vt ENGINE
-is requested for a given abstraction/algorithm/mode, (e.g. when
-calling
-.Fn RSA_new_method NULL ) ,
-a "get_default" call will be made to the
-.Nm engine
-subsystem to process the corresponding state table and return
-a functional reference to an initialised
-.Vt ENGINE
-whose implementation should be used.
-If no
-.Vt ENGINE
-should (or can) be used, it will return
-.Dv NULL
-and the caller will operate with a
-.Dv NULL
-.Vt ENGINE
-handle.
-This usually equates to using the conventional software implementation.
-In the latter case, OpenSSL will from then on behave the way it used to
-before the
-.Nm engine
-API existed.
-.Pp
-Each state table has a flag to note whether it has processed this
-"get_default" query since the table was last modified, because to
-process this question it must iterate across all the registered
-.Vt ENGINE Ns s
-in the table trying to initialise each of them in turn, in case one of
-them is operational.
-If it returns a functional reference to an
-.Vt ENGINE ,
-it will also cache another reference to speed up processing future
-queries (without needing to iterate across the table).
-Likewise, it will cache a
-.Dv NULL
-response if no
-.Vt ENGINE
-was available so that future queries won't repeat the same iteration
-unless the state table changes.
-This behaviour can also be changed; if the
-.Dv ENGINE_TABLE_FLAG_NOINIT
-flag is set (using
-.Fn ENGINE_set_table_flags ) ,
-no attempted initialisations will take place, instead the only way for
-the state table to return a
-.Pf non- Dv NULL
-.Vt ENGINE
-to the "get_default" query will be if one is expressly set in the table.
-For example,
-.Fn ENGINE_set_default_RSA
-does the same job as
-.Fn ENGINE_register_RSA
-except that it also sets the state table's cached response for the
-"get_default" query.
-In the case of abstractions like
-.Vt EVP_CIPHER ,
-where implementations are indexed by
-.Fa nid ,
-these flags and cached-responses are distinct for each
-.Fa nid
-value.
 .Ss Application requirements
 This section will explain the basic things an application programmer
 should support to make the most useful elements of the
@@ -1029,7 +571,7 @@ For example, the next time OpenSSL tries to set up an RSA key, any bundled
 that implement
 .Vt RSA_METHOD
 will be passed to
-.Fn ENGINE_init
+.Xr ENGINE_init 3
 and if any of those succeed, that
 .Vt ENGINE
 will be set as the default for RSA use from then on.
@@ -1074,11 +616,11 @@ This class of commands typically needs to be passed to an
 .Vt ENGINE
 .Sy before
 attempting to initialise it, i.e. before calling
-.Fn ENGINE_init .
+.Xr ENGINE_init 3 .
 The other class of commands consist of settings or operations that tweak
 certain behaviour or cause certain operations to take place, and these
 commands may work either before or after
-.Fn ENGINE_init ,
+.Xr ENGINE_init 3 ,
 or in some cases both.
 .Vt ENGINE
 implementations should provide indications of this in the descriptions
@@ -1295,54 +837,21 @@ to see if they implement "FOO_GET_VENDOR_LOGO_GIF" - and
 could therefore decide whether or not to support this "foo"-specific
 extension).
 .Sh RETURN VALUES
-.Fn ENGINE_get_first ,
-.Fn ENGINE_get_last ,
-.Fn ENGINE_get_next ,
-.Fn ENGINE_get_prev ,
-.Fn ENGINE_by_id ,
 .Fn ENGINE_get_cipher_engine ,
 .Fn ENGINE_get_digest_engine ,
-.Fn ENGINE_new ,
-and all
-.Fn ENGINE_get_default_*
-functions return a valid
+and
+.Fn ENGINE_new
+return a valid
 .Vt ENGINE
 structure or
 .Dv NULL
 if an error occurred.
 .Pp
-.Fn ENGINE_add ,
-.Fn ENGINE_remove ,
-.Fn ENGINE_init ,
-.Fn ENGINE_finish ,
-.Fn ENGINE_ctrl_cmd ,
-.Fn ENGINE_ctrl_cmd_string ,
 .Fn ENGINE_free ,
 .Fn ENGINE_up_ref ,
 and all
 .Fn ENGINE_set_*
-and
-.Fn ENGINE_register_*
 functions return 1 on success or 0 on error.
-.Pp
-.Fn ENGINE_get_table_flags
-returns an unsigned integer value representing the global table
-flags which are used to control the registration behaviour of
-.Vt ENGINE
-implementations.
-.Pp
-For
-.Fn ENGINE_ctrl ,
-positive return values indicate success and negative return values
-indicate failure.
-The meaning of a zero return value depends on the particular
-.Fa cmd
-and may indicate both success and failure, which is pathetic.
-.Pp
-.Fn ENGINE_cmd_is_executable
-returns 1 if
-.Fa cmd
-is executable or 0 otherwise.
 .Pp
 .Fn ENGINE_get_id
 and
@@ -1361,9 +870,6 @@ and
 return a method structure for the respective algorithm.
 .Pp
 .Fn ENGINE_get_destroy_function ,
-.Fn ENGINE_get_init_function ,
-.Fn ENGINE_get_finish_function ,
-.Fn ENGINE_get_ctrl_function ,
 .Fn ENGINE_get_load_privkey_function ,
 .Fn ENGINE_get_load_pubkey_function ,
 .Fn ENGINE_get_ciphers ,
@@ -1389,13 +895,6 @@ if an error occurred.
 returns an integer representing the flags
 which are used to control various behaviours of an
 .Vt ENGINE .
-.Pp
-.Fn ENGINE_get_cmd_defns
-returns an
-.Vt ENGINE_CMD_DEFN
-structure or
-.Dv NULL
-if none is set.
 .Pp
 .Fn ENGINE_load_private_key
 and
