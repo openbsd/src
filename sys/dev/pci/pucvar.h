@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucvar.h,v 1.13 2011/11/15 22:27:53 deraadt Exp $	*/
+/*	$OpenBSD: pucvar.h,v 1.14 2018/04/15 00:10:59 jcs Exp $	*/
 /*	$NetBSD: pucvar.h,v 1.2 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -38,6 +38,8 @@
  * Author: Christopher G. Demetriou, May 14, 1998.
  */
 
+#include <dev/ic/comreg.h>
+
 #define	PUC_MAX_PORTS		16
 
 struct puc_device_description {
@@ -50,20 +52,30 @@ struct puc_device_description {
 	}			ports[PUC_MAX_PORTS];
 };
 
-/*
- * For serial ports, the type field also encodes a multiplier
- * of the speed.
- */
-#define PUC_LPT			(0x00 | 0x40)
-#define PUC_COM_MUL(mul)	(0x80 | 0x40 | (mul))
-#define PUC_COM_POW2(pow2)	(0x80 |        (pow2))
+struct puc_port_type {
+	enum {
+		PUC_PORT_LPT = 1,
+		PUC_PORT_COM,
+		PUC_PORT_COM_MUL4,
+		PUC_PORT_COM_MUL8,
+		PUC_PORT_COM_MUL10,
+		PUC_PORT_COM_MUL128,
+		PUC_PORT_COM_125MHZ,
+	} type;
+	u_int32_t	freq;
+};
 
-#define PUC_IS_LPT(type)	(((type) & 0xc0) == 0x40)
-#define PUC_IS_COM(type)	(((type) & 0x80) == 0x80)
+static const struct puc_port_type puc_port_types[] = {
+	{ PUC_PORT_LPT,		0		},
+	{ PUC_PORT_COM,		COM_FREQ	},
+	{ PUC_PORT_COM_MUL4,	COM_FREQ * 4	},
+	{ PUC_PORT_COM_MUL8,	COM_FREQ * 8	},
+	{ PUC_PORT_COM_MUL10,	COM_FREQ * 10	},
+	{ PUC_PORT_COM_MUL128,	COM_FREQ * 128	},
+};
 
-#define PUC_IS_COM_MUL(type)	((type) & 0x40)
-#define PUC_COM_GET_MUL(type)	((type) & 0x3f)
-#define PUC_COM_GET_POW2(type)	((type) & 0x3f)
+#define PUC_IS_LPT(type)	((type) == PUC_PORT_LPT)
+#define PUC_IS_COM(type)	((type) != PUC_PORT_LPT)
 
 #define PUC_PORT_BAR_INDEX(bar)	(((bar) - PCI_MAPREG_START) / 4)
 
