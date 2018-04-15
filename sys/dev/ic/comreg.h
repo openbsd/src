@@ -1,4 +1,4 @@
-/*	$OpenBSD: comreg.h,v 1.17 2016/09/03 14:43:37 jsg Exp $	*/
+/*	$OpenBSD: comreg.h,v 1.18 2018/04/15 15:07:25 jcs Exp $	*/
 /*	$NetBSD: comreg.h,v 1.8 1996/02/05 23:01:50 scottr Exp $	*/
 
 /*
@@ -181,6 +181,11 @@
 #define ISR_RXPL	0x10	/* negative receive data polarity */
 
 #define	COM_NPORTS	8
+
+/* Exar XR17V35X */
+#define UART_EXAR_INT0	0x80
+#define UART_EXAR_SLEEP	0x8b	/* Sleep mode */
+#define UART_EXAR_DVID	0x8d	/* Device identification */
 
 /*
  * WARNING: Serial console is assumed to be at COM1 address

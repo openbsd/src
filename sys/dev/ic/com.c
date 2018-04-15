@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.166 2018/04/02 07:45:20 kettenis Exp $	*/
+/*	$OpenBSD: com.c,v 1.167 2018/04/15 15:07:25 jcs Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -306,6 +306,9 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 			case COM_UART_TI16750:
 				com_write_reg(sc, com_ier, 0);
 				break;
+			case COM_UART_XR17V35X:
+				com_write_reg(sc, UART_EXAR_SLEEP, 0);
+				break;
 			}
 		}
 
@@ -498,6 +501,9 @@ compwroff(struct com_softc *sc)
 		case COM_UART_TI16750:
 			com_write_reg(sc, com_ier, IER_SLEEP);
 			break;
+		case COM_UART_XR17V35X:
+			com_write_reg(sc, UART_EXAR_SLEEP, 0xff);
+			break;
 		}
 	}
 }
@@ -532,6 +538,9 @@ com_resume(struct com_softc *sc)
 			break;
 		case COM_UART_TI16750:
 			com_write_reg(sc, com_ier, 0);
+			break;
+		case COM_UART_XR17V35X:
+			com_write_reg(sc, UART_EXAR_SLEEP, 0);
 			break;
 		}
 	}
@@ -919,7 +928,7 @@ comstart(struct tty *tp)
 	}
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
-		u_char buffer[128];	/* largest fifo */
+		u_char buffer[256];	/* largest fifo */
 		int i, n;
 
 		n = q_to_b(&tp->t_outq, buffer,
@@ -1308,7 +1317,7 @@ void
 com_attach_subr(struct com_softc *sc)
 {
 	int probe = 0;
-	u_int8_t lcr;
+	u_int8_t lcr, dvid;
 
 	sc->sc_ier = 0;
 	/* disable interrupts */
@@ -1353,6 +1362,13 @@ com_attach_subr(struct com_softc *sc)
 			break;
 		}
 		probe = 1;
+	}
+
+	/* Probe for XR17V35X */
+	if (probe && sc->sc_uarttype == COM_UART_16550A) {
+		dvid = com_read_reg(sc, UART_EXAR_DVID);
+		if (dvid == 0x82 || dvid == 0x84 || dvid == 0x88)
+			sc->sc_uarttype = COM_UART_XR17V35X;
 	}
 
 	/* Probe for ST16650s */
@@ -1483,6 +1499,11 @@ com_attach_subr(struct com_softc *sc)
 		break;
 #endif
 #endif
+	case COM_UART_XR17V35X:
+		printf(": xr17v35x, 256 byte fifo\n");
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		sc->sc_fifolen = 256;
+		break;
 	default:
 		panic("comattach: bad fifo type");
 	}
@@ -1490,7 +1511,8 @@ com_attach_subr(struct com_softc *sc)
 #ifdef COM_CONSOLE
 	if (!ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 #endif
-		com_fifo_probe(sc);
+		if (sc->sc_fifolen < 256)
+			com_fifo_probe(sc);
 
 	if (sc->sc_fifolen == 0) {
 		CLR(sc->sc_hwflags, COM_HW_FIFO);
