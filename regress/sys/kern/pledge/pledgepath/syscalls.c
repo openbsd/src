@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.7 2017/11/30 00:01:50 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.8 2018/04/16 14:28:44 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -109,6 +109,12 @@ test_open(int do_pp)
 	PP_SHOULD_FAIL(((dirfd3= open(pp_dir2, O_RDONLY | O_DIRECTORY)) == -1), "open");
 
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
+	if (!do_pp) {
+		/* Unlink the pledgepathed file and make it again */
+		PP_SHOULD_SUCCEED((unlink(pp_file1) == -1), "unlink");
+		PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR|O_CREAT) == -1), "open");
+	}
+	sleep(1);
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
 	PP_SHOULD_SUCCEED((openat(dirfd, "etc/hosts", O_RDONLY) == -1), "openat");
 	PP_SHOULD_FAIL((openat(dirfd, pp_file2, O_RDWR) == -1), "openat");
