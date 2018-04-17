@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.171 2017/02/22 11:42:46 mpi Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.172 2018/04/17 07:45:24 mpi Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -769,6 +769,7 @@ nfs_lookup(void *v)
 	flags = cnp->cn_flags;
 
 	*vpp = NULLVP;
+	newvp = NULLVP;
 	if ((flags & ISLASTCN) && (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
@@ -836,8 +837,10 @@ nfs_lookup(void *v)
 			if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 				cnp->cn_flags |= SAVENAME;
 			if ((!lockparent || !(flags & ISLASTCN)) &&
-			     newvp != dvp)
+			     newvp != dvp) {
 				VOP_UNLOCK(dvp, p);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 			return (0);
 		}
 		cache_purge(newvp);
@@ -1282,7 +1285,6 @@ nfs_mknodrpc(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp,
 		rdev = nfs_xdrneg1;
 	else {
 		VOP_ABORTOP(dvp, cnp);
-		vput(dvp);
 		return (EOPNOTSUPP);
 	}
 	nfsstats.rpccnt[NFSPROC_MKNOD]++;
@@ -1318,10 +1320,6 @@ nfs_mknodrpc(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp,
 	if (!error) {
 		nfsm_mtofh(dvp, newvp, info.nmi_v3, gotvp);
 		if (!gotvp) {
-			if (newvp) {
-				vrele(newvp);
-				newvp = NULL;
-			}
 			error = nfs_lookitup(dvp, cnp->cn_nameptr,
 			    cnp->cn_namelen, cnp->cn_cred, cnp->cn_proc, &np);
 			if (!error)
@@ -1335,7 +1333,7 @@ nfs_mknodrpc(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp,
 nfsmout: 
 	if (error) {
 		if (newvp)
-			vrele(newvp);
+			vput(newvp);
 	} else {
 		if (cnp->cn_flags & MAKEENTRY)
 			nfs_cache_enter(dvp, newvp, cnp);
@@ -1345,7 +1343,6 @@ nfsmout:
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
-	vrele(dvp);
 	return (error);
 }
 
@@ -1362,9 +1359,10 @@ nfs_mknod(void *v)
 
 	error = nfs_mknodrpc(ap->a_dvp, &newvp, ap->a_cnp, ap->a_vap);
 	if (!error)
-		vrele(newvp);
+		vput(newvp);
 
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+	vput(ap->a_dvp);
 
 	return (error);
 }
@@ -1390,8 +1388,11 @@ nfs_create(void *v)
 	/*
 	 * Oops, not for me..
 	 */
-	if (vap->va_type == VSOCK)
-		return (nfs_mknodrpc(dvp, ap->a_vpp, cnp, vap));
+	if (vap->va_type == VSOCK) {
+		error = nfs_mknodrpc(dvp, ap->a_vpp, cnp, vap);
+		vput(dvp);
+		return (error);
+	}
 
 	if (vap->va_vaflags & VA_EXCLUSIVE)
 		fmode |= O_EXCL;
@@ -1430,10 +1431,6 @@ again:
 	if (!error) {
 		nfsm_mtofh(dvp, newvp, info.nmi_v3, gotvp);
 		if (!gotvp) {
-			if (newvp) {
-				vrele(newvp);
-				newvp = NULL;
-			}
 			error = nfs_lookitup(dvp, cnp->cn_nameptr,
 			    cnp->cn_namelen, cnp->cn_cred, cnp->cn_proc, &np);
 			if (!error)
@@ -1446,12 +1443,14 @@ again:
 
 nfsmout: 
 	if (error) {
+		if (newvp) {
+			vput(newvp);
+			newvp = NULL;
+		}
 		if (info.nmi_v3 && (fmode & O_EXCL) && error == NFSERR_NOTSUPP) {
 			fmode &= ~O_EXCL;
 			goto again;
 		}
-		if (newvp)
-			vrele(newvp);
 	} else if (info.nmi_v3 && (fmode & O_EXCL))
 		error = nfs_setattrrpc(newvp, vap, cnp->cn_cred, cnp->cn_proc);
 	if (!error) {
@@ -1464,7 +1463,7 @@ nfsmout:
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	vrele(dvp);
+	vput(dvp);
 	return (error);
 }
 
@@ -1530,12 +1529,13 @@ nfs_remove(void *v)
 		error = nfs_sillyrename(dvp, vp, cnp);
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 	NFS_INVALIDATE_ATTRCACHE(np);
-	vrele(dvp);
-	vrele(vp);
-
 	VN_KNOTE(vp, NOTE_DELETE);
 	VN_KNOTE(dvp, NOTE_WRITE);
-
+	if (vp == dvp)
+		vrele(vp);
+	else
+		vput(vp);
+	vput(dvp);
 	return (error);
 }
 
@@ -1628,7 +1628,7 @@ nfs_rename(void *v)
 	if (tvp && tvp->v_usecount > 1 && !VTONFS(tvp)->n_sillyrename &&
 	    tvp->v_type != VDIR && !nfs_sillyrename(tdvp, tvp, tcnp)) {
 		VN_KNOTE(tvp, NOTE_DELETE);
-		vrele(tvp);
+		vput(tvp);
 		tvp = NULL;
 	}
 
@@ -1827,13 +1827,13 @@ nfs_symlink(void *v)
 
 nfsmout: 
 	if (newvp)
-		vrele(newvp);
+		vput(newvp);
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vrele(dvp);
+	vput(dvp);
 	return (error);
 }
 
@@ -1904,7 +1904,7 @@ nfsmout:
 	}
 	if (error) {
 		if (newvp)
-			vrele(newvp);
+			vput(newvp);
 	} else {
 		VN_KNOTE(dvp, NOTE_WRITE|NOTE_LINK);
 		if (cnp->cn_flags & MAKEENTRY)
@@ -1912,7 +1912,7 @@ nfsmout:
 		*ap->a_vpp = newvp;
 	}
 	pool_put(&namei_pool, cnp->cn_pnbuf);
-	vrele(dvp);
+	vput(dvp);
 	return (error);
 }
 
@@ -1936,7 +1936,7 @@ nfs_rmdir(void *v)
 
 	if (dvp == vp) {
 		vrele(dvp);
-		vrele(dvp);
+		vput(dvp);
 		pool_put(&namei_pool, cnp->cn_pnbuf);
 		return (EINVAL);
 	}
@@ -1964,8 +1964,8 @@ nfsmout:
 	VN_KNOTE(vp, NOTE_DELETE);
 
 	cache_purge(vp);
-	vrele(vp);
-	vrele(dvp);
+	vput(vp);
+	vput(dvp);
 	/*
 	 * Kludge: Map ENOENT => 0 assuming that you have a reply to a retry.
 	 */
@@ -2492,7 +2492,10 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 				nfsm_adv(nfsm_rndup(i));
 			}
 			if (newvp != NULLVP) {
-				vrele(newvp);
+				if (newvp == vp)
+					vrele(newvp);
+				else
+					vput(newvp);
 				newvp = NULLVP;
 			}
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
@@ -2533,8 +2536,12 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 	}
 
 nfsmout:
-	if (newvp != NULLVP)
-		vrele(newvp);
+	if (newvp != NULLVP) {
+		if (newvp == vp)
+			vrele(newvp);
+		else
+			vput(newvp);
+	}
 	return (error);
 }
 
@@ -2659,7 +2666,10 @@ nfs_lookitup(struct vnode *dvp, char *name, int len, struct ucred *cred,
 			nfsm_postop_attr(newvp, attrflag);
 			if (!attrflag && *npp == NULL) {
 				m_freem(info.nmi_mrep);
-				vrele(newvp);
+				if (newvp == dvp)
+					vrele(newvp);
+				else
+					vput(newvp);
 				return (ENOENT);
 			}
 		} else
@@ -2669,8 +2679,10 @@ nfs_lookitup(struct vnode *dvp, char *name, int len, struct ucred *cred,
 nfsmout:
 	if (npp && *npp == NULL) {
 		if (error) {
-			if (newvp)
+			if (newvp == dvp)
 				vrele(newvp);
+			else
+				vput(newvp);
 		} else
 			*npp = np;
 	}
