@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.17 2017/08/14 19:46:44 jasper Exp $ */
+/* $OpenBSD: i8253.c,v 1.18 2018/04/17 14:34:09 cheloha Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <event.h>
 #include <string.h>
 #include <stddef.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "i8253.h"
@@ -53,7 +54,7 @@ void
 i8253_init(uint32_t vm_id)
 {
 	memset(&i8253_channel, 0, sizeof(struct i8253_channel));
-	gettimeofday(&i8253_channel[0].tv, NULL);
+	clock_gettime(CLOCK_MONOTONIC, &i8253_channel[0].ts);
 	i8253_channel[0].start = 0xFFFF;
 	i8253_channel[0].mode = TIMER_INTTC;
 	i8253_channel[0].last_r = 1;
@@ -86,8 +87,10 @@ i8253_init(uint32_t vm_id)
 void
 i8253_do_readback(uint32_t data)
 {
-	struct timeval now, delta;
+	struct timespec now, delta;
 	uint64_t ns, ticks;
+	int readback_channel[3] = { TIMER_RB_C0, TIMER_RB_C1, TIMER_RB_C2 };
+	int i;
 
 	/* bits are inverted here - !TIMER_RB_STATUS == enable chan readback */
 	if (data & ~TIMER_RB_STATUS) {
@@ -98,73 +101,19 @@ i8253_do_readback(uint32_t data)
 
 	/* !TIMER_RB_COUNT == enable counter readback */
 	if (data & ~TIMER_RB_COUNT) {
-		if (data & TIMER_RB_C0) {
-			gettimeofday(&now, NULL);
-			delta.tv_sec = now.tv_sec - i8253_channel[0].tv.tv_sec;
-			delta.tv_usec = now.tv_usec -
-			    i8253_channel[0].tv.tv_usec;
-			if (delta.tv_usec < 0) {
-				delta.tv_sec--;
-				delta.tv_usec += 1000000;
+		for (i = 0; i < 3; i++) {
+			if (data & readback_channel[i]) {
+				clock_gettime(CLOCK_MONOTONIC, &now);
+				timespecsub(&now, &i8253_channel[i].ts, &delta);
+				ns = delta.tv_sec * 1000000000 + delta.tv_nsec;
+				ticks = ns / NS_PER_TICK;
+				if (i8253_channel[i].start)
+					i8253_channel[i].olatch =
+					    i8253_channel[i].start -
+					    ticks % i8253_channel[i].start;
+				else
+					i8253_channel[i].olatch = 0;
 			}
-			if (delta.tv_usec > 1000000) {
-				delta.tv_sec++;
-				delta.tv_usec -= 1000000;
-			}
-			ns = delta.tv_usec * 1000 + delta.tv_sec * 1000000000;
-			ticks = ns / NS_PER_TICK;
-			if (i8253_channel[0].start)
-				i8253_channel[0].olatch =
-				    i8253_channel[0].start -
-				    ticks % i8253_channel[0].start;
-			else
-				i8253_channel[0].olatch = 0;
-		}
-
-		if (data & TIMER_RB_C1) {
-			gettimeofday(&now, NULL);
-			delta.tv_sec = now.tv_sec - i8253_channel[1].tv.tv_sec;
-			delta.tv_usec = now.tv_usec -
-			    i8253_channel[1].tv.tv_usec;
-			if (delta.tv_usec < 0) {
-				delta.tv_sec--;
-				delta.tv_usec += 1000000;
-			}
-			if (delta.tv_usec > 1000000) {
-				delta.tv_sec++;
-				delta.tv_usec -= 1000000;
-			}
-			ns = delta.tv_usec * 1000 + delta.tv_sec * 1000000000;
-			ticks = ns / NS_PER_TICK;
-			if (i8253_channel[1].start)
-				i8253_channel[1].olatch =
-				    i8253_channel[1].start -
-				    ticks % i8253_channel[1].start;
-			else
-				i8253_channel[1].olatch = 0;
-		}
-
-		if (data & TIMER_RB_C2) {
-			gettimeofday(&now, NULL);
-			delta.tv_sec = now.tv_sec - i8253_channel[2].tv.tv_sec;
-			delta.tv_usec = now.tv_usec -
-			    i8253_channel[2].tv.tv_usec;
-			if (delta.tv_usec < 0) {
-				delta.tv_sec--;
-				delta.tv_usec += 1000000;
-			}
-			if (delta.tv_usec > 1000000) {
-				delta.tv_sec++;
-				delta.tv_usec -= 1000000;
-			}
-			ns = delta.tv_usec * 1000 + delta.tv_sec * 1000000000;
-			ticks = ns / NS_PER_TICK;
-			if (i8253_channel[2].start)
-				i8253_channel[2].olatch =
-				    i8253_channel[2].start -
-				    ticks % i8253_channel[2].start;
-			else
-				i8253_channel[2].olatch = 0;
 		}
 	}
 }
@@ -188,7 +137,7 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 	uint32_t out_data;
 	uint8_t sel, rw, data, mode;
 	uint64_t ns, ticks;
-	struct timeval now, delta;
+	struct timespec now, delta;
 	union vm_exit *vei = vrp->vrp_exit;
 
 	get_input_data(vei, &out_data);
@@ -216,21 +165,9 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 			 * rate.
 			 */
 			if (rw == TIMER_LATCH) {
-				gettimeofday(&now, NULL);
-				delta.tv_sec = now.tv_sec -
-				    i8253_channel[sel].tv.tv_sec;
-				delta.tv_usec = now.tv_usec -
-				    i8253_channel[sel].tv.tv_usec;
-				if (delta.tv_usec < 0) {
-					delta.tv_sec--;
-					delta.tv_usec += 1000000;
-				}
-				if (delta.tv_usec > 1000000) {
-					delta.tv_sec++;
-					delta.tv_usec -= 1000000;
-				}
-				ns = delta.tv_usec * 1000 +
-				    delta.tv_sec * 1000000000;
+				clock_gettime(CLOCK_MONOTONIC, &now);
+				timespecsub(&now, &i8253_channel[sel].ts, &delta);
+				ns = delta.tv_sec * 1000000000 + delta.tv_nsec;
 				ticks = ns / NS_PER_TICK;
 				if (i8253_channel[sel].start) {
 					i8253_channel[sel].olatch =

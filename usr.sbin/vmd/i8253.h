@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.h,v 1.7 2017/07/09 00:51:40 pd Exp $ */
+/* $OpenBSD: i8253.h,v 1.8 2018/04/17 14:34:09 cheloha Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -29,7 +29,7 @@
 
 /* i8253 registers */
 struct i8253_channel {
-	struct timeval tv;	/* timer start time */
+	struct timespec ts;	/* timer start time */
 	uint16_t start;		/* starting value */
 	uint16_t olatch;	/* output latch */
 	uint16_t ilatch;	/* input latch */
