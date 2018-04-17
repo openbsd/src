@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.25 2018/04/10 12:27:01 otto Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.26 2018/04/17 15:50:05 otto Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1322,15 +1322,6 @@ uaddr_pivot_print(struct uvm_addr_state *uaddr_p, boolean_t full,
 
 #ifndef SMALL_KERNEL
 /*
- * Strategy for uaddr_stack_brk_select.
- */
-struct uaddr_bs_strat {
-	vaddr_t			start;		/* Start of area. */
-	vaddr_t			end;		/* End of area. */
-	int			dir;		/* Search direction. */
-};
-
-/*
  * Stack/break allocator.
  *
  * Stack area is grown into in the opposite direction of the stack growth,
@@ -1355,53 +1346,41 @@ uaddr_stack_brk_select(struct vm_map *map, struct uvm_addr_state *uaddr,
     vsize_t sz, vaddr_t align, vaddr_t offset,
     vm_prot_t prot, vaddr_t hint)
 {
-	vsize_t			before_gap, after_gap;
-	int			stack_idx, brk_idx;
-	struct uaddr_bs_strat	strat[2], *s;
-	vsize_t			sb_size;
+	vaddr_t			start;
+	vaddr_t			end;
+	vsize_t			before_gap;
+	vsize_t			after_gap;
+	int			dir;
 
-	/*
-	 * Choose gap size and if the stack is searched before or after the
-	 * brk area.
-	 */
-	before_gap = ((arc4random() & 0x3) + 1) << PAGE_SHIFT;
-	after_gap = ((arc4random() & 0x3) + 1) << PAGE_SHIFT;
+	/* Set up brk search strategy. */
+	start = MAX(map->b_start, uaddr->uaddr_minaddr);
+	end = MIN(map->b_end, uaddr->uaddr_maxaddr);
+	before_gap = 0;
+	after_gap = 0;
+	dir = -1;	/* Opposite of brk() growth. */
 
-	sb_size = (map->s_end - map->s_start) + (map->b_end - map->b_start);
-	sb_size >>= PAGE_SHIFT;
-	if (arc4random_uniform(MAX(sb_size, 0xffffffff)) >
-	    map->b_end - map->b_start) {
-		brk_idx = 1;
-		stack_idx = 0;
-	} else {
-		brk_idx = 0;
-		stack_idx = 1;
+	if (end - start >= sz) {
+		if (uvm_addr_linsearch(map, uaddr, entry_out, addr_out,
+		    0, sz, align, offset, dir, start, end - sz,
+		    before_gap, after_gap) == 0)
+			return 0;
 	}
 
 	/* Set up stack search strategy. */
-	s = &strat[stack_idx];
-	s->start = MAX(map->s_start, uaddr->uaddr_minaddr);
-	s->end = MIN(map->s_end, uaddr->uaddr_maxaddr);
+	start = MAX(map->s_start, uaddr->uaddr_minaddr);
+	end = MIN(map->s_end, uaddr->uaddr_maxaddr);
+	before_gap = ((arc4random() & 0x3) + 1) << PAGE_SHIFT;
+	after_gap = ((arc4random() & 0x3) + 1) << PAGE_SHIFT;
 #ifdef MACHINE_STACK_GROWS_UP
-	s->dir = -1;
+	dir = -1;
 #else
-	s->dir =  1;
+	dir =  1;
 #endif
-
-	/* Set up brk search strategy. */
-	s = &strat[brk_idx];
-	s->start = MAX(map->b_start, uaddr->uaddr_minaddr);
-	s->end = MIN(map->b_end, uaddr->uaddr_maxaddr);
-	s->dir = -1;	/* Opposite of brk() growth. */
-
-	/* Linear search for space.  */
-	for (s = &strat[0]; s < &strat[nitems(strat)]; s++) {
-		if (s->end - s->start < sz)
-			continue;
+	if (end - start >= sz + before_gap + after_gap) {
 		if (uvm_addr_linsearch(map, uaddr, entry_out, addr_out,
-		    0, sz, align, offset, s->dir, s->start, s->end - sz,
+		    0, sz, align, offset, dir, start, end - sz,
 		    before_gap, after_gap) == 0)
-			return 0;
+		return 0;
 	}
 
 	return ENOMEM;

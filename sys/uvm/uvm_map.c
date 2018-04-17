@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.235 2018/04/17 14:39:59 stefan Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.236 2018/04/17 15:50:05 otto Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3989,19 +3989,17 @@ uvm_map_hint(struct vmspace *vm, vm_prot_t prot, vaddr_t minaddr,
 #endif
 
 #if defined (__LP64__)
-	spacing = (MIN((4UL * 1024 * 1024 * 1024), BRKSIZ) - 1);
+	spacing = MIN(4UL * 1024 * 1024 * 1024, MAXDSIZ) - 1;
 #else
-	spacing = (MIN((256 * 1024 * 1024), BRKSIZ) - 1);
+	spacing = MIN(1 * 1024 * 1024 * 1024, MAXDSIZ) - 1;
 #endif
 
-	addr = (vaddr_t)vm->vm_daddr;
 	/*
 	 * Start malloc/mmap after the brk.
-	 * If the random spacing area has been used up,
-	 * the brk area becomes fair game for mmap as well.
 	 */
-	if (vm->vm_dused < spacing >> PAGE_SHIFT)
-		addr += BRKSIZ;
+	addr = (vaddr_t)vm->vm_daddr + BRKSIZ;
+	addr = MAX(addr, minaddr);
+
 	if (addr < maxaddr) {
 		while (spacing > maxaddr - addr)
 			spacing >>= 1;
