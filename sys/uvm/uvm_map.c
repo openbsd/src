@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.234 2018/04/12 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.235 2018/04/17 14:39:59 stefan Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1816,8 +1816,7 @@ uvm_map_is_stack_remappable(struct vm_map *map, vaddr_t addr, vaddr_t sz)
 	}
 
 	/*
-	 * Check that the address range exists, is contiguous, and
-	 * has the right protection.
+	 * Check that the address range exists and is contiguous.
 	 */
 	for (iter = first; iter != NULL && iter->start < end;
 	    prev = iter, iter = RBT_NEXT(uvm_map_addr, iter)) {
@@ -1840,18 +1839,6 @@ uvm_map_is_stack_remappable(struct vm_map *map, vaddr_t addr, vaddr_t sz)
 		if (iter->start == iter->end || UVM_ET_ISHOLE(iter)) {
 			printf("map stack 0x%lx-0x%lx of map %p failed: "
 			    "hole in range\n", addr, end, map);
-			return FALSE;
-		}
-
-		/*
-		 * Now check the protection.
-		 */
-#if 0
-		printf("iter prot: 0x%x\n", iter->protection);
-#endif
-		if (iter->protection != (PROT_READ | PROT_WRITE)) {
-			printf("map stack 0x%lx-0x%lx of map %p failed: "
-			    "bad protection\n", addr, end, map);
 			return FALSE;
 		}
 	}
