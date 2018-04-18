@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.90 2018/02/19 08:59:52 mpi Exp $ */
+/* $OpenBSD: wskbd.c,v 1.91 2018/04/18 10:24:32 mpi Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -362,7 +362,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	struct wskbddev_attach_args *ap = aux;
 	kbd_t layout;
 #if NWSMUX > 0
-	struct wsmux_softc *wsmux_sc;
+	struct wsmux_softc *wsmux_sc = NULL;
 	int mux, error;
 #endif
 
@@ -373,21 +373,8 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #if NWSMUX > 0
 	mux = sc->sc_base.me_dv.dv_cfdata->wskbddevcf_mux;
-	if (ap->console) {
-		/* Ignore mux for console; it always goes to the console mux. */
-		/* printf(" (mux %d ignored for console)", mux); */
-		mux = -1;
-	}
-	if (mux >= 0) {
-		printf(" mux %d", mux);
+	if (mux >= 0)
 		wsmux_sc = wsmux_getmux(mux);
-	} else
-		wsmux_sc = NULL;
-#else
-#if 0	/* not worth keeping, especially since the default value is not -1... */
-	if (sc->sc_base.me_dv.dv_cfdata->wskbddevcf_mux >= 0)
-		printf(" (mux ignored)");
-#endif
 #endif	/* NWSMUX > 0 */
 
 	if (ap->console) {
@@ -459,10 +446,11 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 			printf(", using %s", sc->sc_displaydv->dv_xname);
 #endif
 	}
-	printf("\n");
 
 #if NWSMUX > 0
-	if (wsmux_sc != NULL) {
+	/* Ignore mux for console; it always goes to the console mux. */
+	if (wsmux_sc != NULL && ap->console == 0) {
+		printf(" mux %d\n", mux);
 		error = wsmux_attach_sc(wsmux_sc, &sc->sc_base);
 		if (error)
 			printf("%s: attach error=%d\n",
@@ -477,8 +465,9 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		if (wsmux_get_layout(wsmux_sc) == KB_NONE)
 			wsmux_set_layout(wsmux_sc, layout);
-	}
+	} else
 #endif
+	printf("\n");
 
 #if NWSDISPLAY > 0 && NWSMUX == 0
 	if (ap->console == 0) {
