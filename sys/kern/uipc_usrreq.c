@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.123 2018/01/04 10:45:30 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.124 2018/04/18 09:56:57 mpi Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -838,6 +838,7 @@ morespace:
 			error = EBADF;
 			goto fail;
 		}
+		FREF(fp);
 		if (fp->f_count == LONG_MAX-2) {
 			error = EDEADLK;
 			goto fail;
@@ -845,7 +846,7 @@ morespace:
 		error = pledge_sendfd(p, fp);
 		if (error)
 			goto fail;
-		    
+
 		/* kqueue descriptors cannot be copied */
 		if (fp->f_type == DTYPE_KQUEUE) {
 			error = EINVAL;
@@ -854,7 +855,6 @@ morespace:
 		rp->fp = fp;
 		rp->flags = fdp->fd_ofileflags[fd] & UF_PLEDGED;
 		rp--;
-		fp->f_count++;
 		if ((unp = fptounp(fp)) != NULL) {
 			unp->unp_file = fp;
 			unp->unp_msgcount++;
@@ -863,13 +863,15 @@ morespace:
 	}
 	return (0);
 fail:
+	if (fp != NULL)
+		FRELE(fp, p);
 	/* Back out what we just did. */
 	for ( ; i > 0; i--) {
 		rp++;
 		fp = rp->fp;
-		fp->f_count--;
 		if ((unp = fptounp(fp)) != NULL)
 			unp->unp_msgcount--;
+		FRELE(fp, p);
 		unp_rights--;
 	}
 
