@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.236 2018/04/17 15:50:05 otto Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.237 2018/04/18 16:05:21 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1869,6 +1869,13 @@ uvm_map_remap_as_stack(struct proc *p, vaddr_t addr, vaddr_t sz)
 
 	start = round_page(addr);
 	end = trunc_page(addr + sz);
+#ifdef MACHINE_STACK_GROWS_UP
+	if (end == addr + sz)
+		end -= PAGE_SIZE;
+#else
+	if (start == addr)
+		start += PAGE_SIZE;
+#endif
 
 	if (start < map->min_offset || end >= map->max_offset || end < start)
 		return EINVAL;
