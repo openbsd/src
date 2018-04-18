@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.21 2018/04/15 18:23:50 jsing Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.22 2018/04/18 16:34:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -107,13 +107,7 @@ run_loadfile(u_long *marks, int howto)
 	bcopy(bootdev_dip->disklabel.d_uid, &bootduid.duid, sizeof(bootduid));
 	addbootarg(BOOTARG_BOOTDUID, sizeof(bootduid), &bootduid);
 
-#if 0
-	/*
-	 * Disabled for now - the implementation will exceed the boot loader
-	 * heap size with large firmware.
-	 */
 	ucode_load();
-#endif
 
 #ifdef SOFTRAID
 	if (bootdev_dip->sr_vol != NULL) {
@@ -212,8 +206,12 @@ ucode_load(void)
 		return;
 
 	buflen = sb.st_size;
-	if ((buf = alloc(buflen)) == NULL)
+	if (buflen > 128*1024) {
+		printf("ucode too large\n");
 		return;
+	}
+
+	buf = (char *)(1*1024*1024);
 
 	if (read(fd, buf, buflen) != buflen) {
 		free(buf, buflen);
