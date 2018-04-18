@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DSA_new.3,v 1.9 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: DSA_new.3,v 1.10 2018/04/18 01:11:45 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,17 +48,22 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: April 18 2018 $
 .Dt DSA_NEW 3
 .Os
 .Sh NAME
 .Nm DSA_new ,
+.Nm DSA_up_ref ,
 .Nm DSA_free
 .Nd allocate and free DSA objects
 .Sh SYNOPSIS
 .In openssl/dsa.h
 .Ft DSA*
 .Fn DSA_new void
+.Ft int
+.Fo DSA_up_ref
+.Fa "DSA *dsa"
+.Fc
 .Ft void
 .Fo DSA_free
 .Fa "DSA *dsa"
@@ -69,12 +74,19 @@ The DSA functions implement the Digital Signature Algorithm.
 .Fn DSA_new
 allocates and initializes a
 .Vt DSA
-structure.
+structure, setting the reference count to 1.
 It is equivalent to calling
-.Fn DSA_new_method NULL .
+.Xr DSA_new_method 3
+with a
+.Dv NULL
+argument.
+.Pp
+.Fn DSA_up_ref
+increments the reference count by 1.
 .Pp
 .Fn DSA_free
-frees the
+decrements the reference count by 1.
+If it reaches 0, it frees the
 .Vt DSA
 structure and its components.
 The values are erased before the memory is returned to the system.
@@ -91,6 +103,9 @@ returns
 and sets an error code that can be obtained by
 .Xr ERR_get_error 3 .
 Otherwise it returns a pointer to the newly allocated structure.
+.Pp
+.Fn DSA_up_ref
+returns 1 for success or 0 for failure.
 .Sh SEE ALSO
 .Xr BN_new 3 ,
 .Xr d2i_DSAPublicKey 3 ,
@@ -107,7 +122,6 @@ Otherwise it returns a pointer to the newly allocated structure.
 .Xr DSA_SIG_new 3 ,
 .Xr DSA_sign 3 ,
 .Xr DSA_size 3 ,
-.Xr engine 3 ,
 .Xr ERR_get_error 3 ,
 .Xr EVP_PKEY_set1_DSA 3 ,
 .Xr RSA_new 3
@@ -120,3 +134,7 @@ and
 .Fn DSA_free
 first appeared in SSLeay 0.6.0 and have been available since
 .Ox 2.4 .
+.Pp
+.Fn DSA_up_ref
+first appeared in OpenSSL 0.9.7 and has been available since
+.Ox 3.2 .

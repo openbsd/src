@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_new.3,v 1.9 2018/04/03 21:20:49 tb Exp $
+.\"	$OpenBSD: RSA_new.3,v 1.10 2018/04/18 01:11:45 schwarze Exp $
 .\"	OpenSSL doc/man3/RSA_new.pod 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"	OpenSSL doc/crypto/rsa.pod 35d2e327 Jun 3 16:19:49 2016 -0400
 .\"
@@ -49,17 +49,22 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 3 2018 $
+.Dd $Mdocdate: April 18 2018 $
 .Dt RSA_NEW 3
 .Os
 .Sh NAME
 .Nm RSA_new ,
+.Nm RSA_up_ref ,
 .Nm RSA_free
 .Nd allocate and free RSA objects
 .Sh SYNOPSIS
 .In openssl/rsa.h
 .Ft RSA *
 .Fn RSA_new void
+.Ft int
+.Fo RSA_up_ref
+.Fa "RSA *rsa"
+.Fc
 .Ft void
 .Fo RSA_free
 .Fa "RSA *rsa"
@@ -71,12 +76,19 @@ as defined in PKCS #1 v2.0 (RFC 2437).
 .Fn RSA_new
 allocates and initializes an
 .Vt RSA
-structure.
+structure, setting the reference count to 1.
 It is equivalent to calling
-.Fn RSA_new_method NULL .
+.Xr RSA_new_method 3
+with a
+.Dv NULL
+argument.
+.Pp
+.Fn RSA_up_ref
+increments the reference count by 1.
 .Pp
 .Fn RSA_free
-frees the
+decrements the reference count by 1.
+If it reaches 0, it frees the
 .Vt RSA
 structure and its components.
 The key is erased before the memory is returned to the system.
@@ -149,12 +161,14 @@ returns
 and sets an error code that can be obtained by
 .Xr ERR_get_error 3 .
 Otherwise it returns a pointer to the newly allocated structure.
+.Pp
+.Fn RSA_up_ref
+returns 1 for success or 0 for failure.
 .Sh SEE ALSO
 .Xr BN_new 3 ,
 .Xr d2i_RSAPublicKey 3 ,
 .Xr DH_new 3 ,
 .Xr DSA_new 3 ,
-.Xr engine 3 ,
 .Xr ERR_get_error 3 ,
 .Xr EVP_PKEY_set1_RSA 3 ,
 .Xr RSA_blinding_on 3 ,
@@ -181,3 +195,7 @@ and
 .Fn RSA_free
 appeared in SSLeay 0.4 or earlier and have been available since
 .Ox 2.4 .
+.Pp
+.Fn RSA_up_ref
+first appeared in OpenSSL 0.9.7 and has been available since
+.Ox 3.2 .
