@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoconf.9,v 1.16 2015/12/11 16:07:02 mpi Exp $
+.\"     $OpenBSD: autoconf.9,v 1.17 2018/04/18 22:33:18 dlg Exp $
 .\"     $NetBSD: autoconf.9,v 1.9 2002/02/13 08:18:35 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 11 2015 $
+.Dd $Mdocdate: April 18 2018 $
 .Dt CONFIG_SEARCH 9
 .Os
 .Sh NAME
@@ -41,6 +41,21 @@
 .Sh SYNOPSIS
 .In sys/param.h
 .In sys/device.h
+.Ft "void *"
+.Fn config_search "cfmatch_t func" "struct device *parent" "void *aux"
+.Ft "void *"
+.Fn config_rootsearch "cfmatch_t func" "char *rootname" "void *aux"
+.Ft "struct device *"
+.Fo config_found_sm
+.Fa "struct device *parent"
+.Fa "void *aux"
+.Fa "cfprint_t print"
+.Fa "cfmatch_t submatch"
+.Fc
+.Ft "struct device *"
+.Fn config_found "struct device *parent" "void *aux" "cfprint_t print"
+.Ft "struct device *"
+.Fn config_rootfound "char *rootname" "void *aux"
 .Sh DESCRIPTION
 Autoconfiguration is the process of matching hardware devices with an
 appropriate device driver.
@@ -77,14 +92,7 @@ ends with a unit number.
 The unit number identifies an instance of the driver.
 Device data structures are allocated dynamically during autoconfiguration,
 giving a unique address for each instance.
-.Sh INDIRECT CONFIGURATION
-.nr nS 1
-.Ft "void *"
-.Fn config_search "cfmatch_t func" "struct device *parent" "void *aux"
-.Ft "void *"
-.Fn config_rootsearch "cfmatch_t func" "char *rootname" "void *aux"
-.nr nS 0
-.Pp
+.Ss Indirect Configuration
 The
 .Fn config_search
 function performs indirect configuration of physical devices by iterating
@@ -142,17 +150,7 @@ itself.
 Note that this function is designed so that it can be used to apply an
 arbitrary function to all potential children.
 In this case callers may choose to ignore the return value.
-.Sh DIRECT CONFIGURATION
-.nr nS 1
-.Ft "struct device *"
-.Fn config_found_sm "struct device *parent" "void *aux" "cfprint_t print" \
-                    "cfmatch_t submatch"
-.Ft "struct device *"
-.Fn config_found "struct device *parent" "void *aux" "cfprint_t print"
-.Ft "struct device *"
-.Fn config_rootfound "char *rootname" "void *aux"
-.nr nS 0
-.Pp
+.Ss Direct Configuration
 The
 .Fn config_found_sm
 function performs direct configuration on a physical device.
