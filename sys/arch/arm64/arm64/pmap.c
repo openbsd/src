@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.50 2018/04/18 11:40:30 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.51 2018/04/18 11:41:16 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -512,9 +512,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	if (pg != NULL &&
 	    ((flags & PROT_MASK) || (pg->pg_flags & PG_PMAP_REF))) {
-		pg->pg_flags |= PG_PMAP_REF;
+		atomic_setbits_int(&pg->pg_flags, PG_PMAP_REF);
 		if ((prot & PROT_WRITE) && (flags & PROT_WRITE)) {
-			pg->pg_flags |= PG_PMAP_MOD;
+			atomic_setbits_int(&pg->pg_flags, PG_PMAP_MOD);
 			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
 		}
 	}
@@ -1633,8 +1633,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		 * a reference.  This means that we can enable read and
 		 * exec as well, akin to the page reference emulation.
 		 */
-		pg->pg_flags |= PG_PMAP_MOD;
-		pg->pg_flags |= PG_PMAP_REF;
+		atomic_setbits_int(&pg->pg_flags, PG_PMAP_MOD|PG_PMAP_REF);
 		atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
 
 		/* Thus, enable read, write and exec. */
@@ -1649,7 +1648,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		 * the page has been accesed, we can enable read as well
 		 * if UVM allows it.
 		 */
-		pg->pg_flags |= PG_PMAP_REF;
+		atomic_setbits_int(&pg->pg_flags, PG_PMAP_REF);
 
 		/* Thus, enable read and exec. */
 		pted->pted_pte |= (pted->pted_va & (PROT_READ|PROT_EXEC));
@@ -1662,7 +1661,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		 * has been accessed, we can enable exec as well if UVM
 		 * allows it.
 		 */
-		pg->pg_flags |= PG_PMAP_REF;
+		atomic_setbits_int(&pg->pg_flags, PG_PMAP_REF);
 
 		/* Thus, enable read and exec. */
 		pted->pted_pte |= (pted->pted_va & (PROT_READ|PROT_EXEC));
