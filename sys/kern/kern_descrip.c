@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.150 2018/04/12 10:30:18 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.151 2018/04/18 09:59:09 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -344,7 +344,7 @@ sys_fcntl(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
 	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
+	struct file *fp, *fp2;
 	struct vnode *vp;
 	int i, tmp, newmin, flg = F_POSIX;
 	struct flock fl;
@@ -530,7 +530,10 @@ restart:
 			goto out;
 		}
 
-		if (fp != fd_getfile(fdp, fd)) {
+		fp2 = fd_getfile(fdp, fd);
+		if (fp2 != NULL)
+			FREF(fp2);
+		if (fp != fp2) {
 			/*
 			 * We have lost the race with close() or dup2();
 			 * unlock, pretend that we've won the race and that
@@ -542,6 +545,8 @@ restart:
 			VOP_ADVLOCK(vp, fdp, F_UNLCK, &fl, F_POSIX);
 			fl.l_type = F_UNLCK;
 		}
+		if (fp2 != NULL)
+			FRELE(fp2, p);
 		goto out;
 
 
