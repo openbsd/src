@@ -1,4 +1,4 @@
-.\"	$OpenBSD: evp.3,v 1.4 2016/12/06 15:15:26 schwarze Exp $
+.\"	$OpenBSD: evp.3,v 1.5 2018/04/18 01:12:11 schwarze Exp $
 .\"	OpenSSL a9c85cea Nov 11 09:33:55 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>,
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: April 18 2018 $
 .Dt EVP 3
 .Os
 .Sh NAME
@@ -158,16 +158,15 @@ Algorithms are loaded with
 .Pp
 All the symmetric algorithms (ciphers), digests and asymmetric
 algorithms (public key algorithms) can be replaced by
-.Xr engine 3
-modules providing alternative implementations.
+.Vt ENGINE
+modules providing alternative implementations; see
+.Xr ENGINE_register_RSA 3
+and the related manual pages for more information.
 If
 .Vt ENGINE
 implementations of ciphers or digests are registered as defaults,
 then the various EVP functions will automatically use those
 implementations in preference to built in software implementations.
-For more information, consult the
-.Xr engine 3
-manual page.
 .Pp
 Although low level algorithm specific functions exist for many
 algorithms, their use is discouraged.
@@ -181,7 +180,7 @@ Using them also makes code harder to adapt to new algorithms, some
 options are not cleanly supported at the low level, and some
 operations are more efficient using the high level interfaces.
 .Sh SEE ALSO
-.Xr engine 3 ,
+.Xr ENGINE_register_RSA 3 ,
 .Xr EVP_AEAD_CTX_init 3 ,
 .Xr EVP_BytesToKey 3 ,
 .Xr EVP_DigestInit 3 ,
