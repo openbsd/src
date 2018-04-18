@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.60 2018/03/17 16:48:17 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.61 2018/04/18 14:35:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -122,7 +122,7 @@ cmd_find_client_better(struct client *c, struct client *than)
 }
 
 /* Find best client for session. */
-static struct client *
+struct client *
 cmd_find_best_client(struct session *s)
 {
 	struct client	*c_loop, *c;
