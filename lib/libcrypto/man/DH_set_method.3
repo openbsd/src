@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DH_set_method.3,v 1.6 2018/03/22 16:06:33 schwarze Exp $
+.\"	$OpenBSD: DH_set_method.3,v 1.7 2018/04/18 01:09:01 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: April 18 2018 $
 .Dt DH_SET_METHOD 3
 .Os
 .Sh NAME
@@ -84,53 +84,44 @@
 .Sh DESCRIPTION
 A
 .Vt DH_METHOD
-specifies the functions that OpenSSL uses for Diffie-Hellman operations.
-By modifying the method, alternative implementations such as hardware
-accelerators may be used.
-See the
-.Sx CAVEATS
-section for how these DH API functions are affected by the use of
-.Xr engine 3
-API calls.
-.Pp
-Initially, the default
-.Vt DH_METHOD
-is the OpenSSL internal implementation as returned by
-.Fn DH_OpenSSL .
+object contains pointers to the functions
+used for Diffie-Hellman operations.
+By default, the internal implementation returned by
+.Fn DH_OpenSSL
+is used.
+By selecting another method, alternative implementations
+such as hardware accelerators may be used.
 .Pp
 .Fn DH_set_default_method
-makes
+selects
 .Fa meth
-the default method for all
+as the default method for all
 .Vt DH
 structures created later.
-.Sy NB :
-This is true only whilst no
+If any
 .Vt ENGINE
-has been set as a default for DH, so this function is no longer
-recommended.
+was registered with
+.Xr ENGINE_register_DH 3
+that can be successfully initialized, it overrides the default.
 .Pp
 .Fn DH_get_default_method
-returns a pointer to the current default
-.Vt DH_METHOD .
-However, the meaningfulness of this result is dependent on whether the
-.Xr engine 3
-API is being used, so this function is no longer recommended.
+returns a pointer to the current default method,
+even if it is actually overridded by an
+.Vt ENGINE .
 .Pp
 .Fn DH_set_method
 selects
 .Fa meth
 to perform all operations using the key
 .Fa dh .
-This will replace the
+This replaces the
 .Vt DH_METHOD
 used by the
 .Fa dh
 key and if the previous method was supplied by an
 .Vt ENGINE ,
-the handle to that
-.Vt ENGINE
-will be released during the change.
+.Xr ENGINE_finish 3
+is called on it.
 It is possible to have
 .Vt DH
 keys that only work with certain
@@ -147,18 +138,16 @@ allocates and initializes a
 .Vt DH
 structure so that
 .Fa engine
-will be used for the DH operations.
+is used for the DH operations.
 If
 .Fa engine
 is
 .Dv NULL ,
-the default
-.Vt ENGINE
-for DH operations is used and, if no default
-.Vt ENGINE
-is set, the
-.Vt DH_METHOD
-controlled by
+.Xr ENGINE_get_default_DH 3
+is used.
+If that returns
+.Dv NULL ,
+the default method controlled by
 .Fn DH_set_default_method
 is used.
 .Pp
@@ -199,17 +188,11 @@ typedef struct dh_meth_st
 and
 .Fn DH_get_default_method
 return pointers to the respective
-.Sy DH_METHOD Ns s.
+.Vt DH_METHOD .
 .Pp
 .Fn DH_set_method
-returns non-zero if the provided
-.Fa meth
-was successfully set as the method for
-.Fa dh
-(including unloading the
-.Vt ENGINE
-handle if the previous method was supplied by an
-.Vt ENGINE ) .
+returns 1 on success or 0 on failure.
+Currently, it cannot fail.
 .Pp
 .Fn DH_new_method
 returns
@@ -219,7 +202,10 @@ and sets an error code that can be obtained by
 if the allocation fails.
 Otherwise it returns a pointer to the newly allocated structure.
 .Sh SEE ALSO
-.Xr DH_new 3
+.Xr DH_new 3 ,
+.Xr ENGINE_get_default_DH 3 ,
+.Xr ENGINE_register_DH 3 ,
+.Xr ENGINE_set_default_DH 3
 .Sh HISTORY
 .Fn DH_set_default_method ,
 .Fn DH_get_default_method ,
@@ -229,20 +215,3 @@ and
 .Fn DH_OpenSSL
 first appeared in OpenSSL 0.9.5 and have been available since
 .Ox 2.7 .
-.Sh CAVEATS
-As of version 0.9.7,
-.Vt DH_METHOD
-implementations are grouped together with other algorithmic APIs
-(e.g. RSA_METHOD, EVP_CIPHER) in
-.Vt ENGINE
-modules.
-If a default
-.Vt ENGINE
-is specified for DH functionality using an
-.Xr engine 3
-API function, that will override any DH defaults set using the DH API
-.Pq i.e. Fn DH_set_default_method .
-For this reason, the
-.Xr engine 3
-API is the recommended way to control default implementations
-for use in DH and other cryptographic algorithms.
