@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_set_method.3,v 1.11 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: RSA_set_method.3,v 1.12 2018/04/18 01:07:38 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: April 18 2018 $
 .Dt RSA_SET_METHOD 3
 .Os
 .Sh NAME
@@ -59,7 +59,6 @@
 .Nm RSA_set_method ,
 .Nm RSA_get_method ,
 .Nm RSA_PKCS1_SSLeay ,
-.Nm RSA_null_method ,
 .Nm RSA_flags ,
 .Nm RSA_new_method
 .Nd select RSA method
@@ -69,78 +68,65 @@
 .Fo RSA_set_default_method
 .Fa "const RSA_METHOD *meth"
 .Fc
-.Ft RSA_METHOD *
+.Ft const RSA_METHOD *
 .Fn RSA_get_default_method void
 .Ft int
 .Fo RSA_set_method
 .Fa "RSA *rsa"
 .Fa "const RSA_METHOD *meth"
 .Fc
-.Ft RSA_METHOD *
+.Ft const RSA_METHOD *
 .Fo RSA_get_method
 .Fa "const RSA *rsa"
 .Fc
-.Ft RSA_METHOD *
+.Ft const RSA_METHOD *
 .Fn RSA_PKCS1_SSLeay void
-.Ft RSA_METHOD *
-.Fn RSA_null_method void
 .Ft int
 .Fo RSA_flags
 .Fa "const RSA *rsa"
 .Fc
 .Ft RSA *
 .Fo RSA_new_method
-.Fa "RSA_METHOD *meth"
+.Fa "ENGINE *engine"
 .Fc
 .Sh DESCRIPTION
 An
 .Vt RSA_METHOD
-specifies the functions that OpenSSL uses for RSA operations.
-By modifying the method, alternative implementations such as hardware
-accelerators may be used.
-See the
-.Sx CAVEATS
-section for how these RSA API functions are affected by the use of
-.Xr engine 3
-API calls.
-.Pp
-Initially, the default
-.Vt RSA_METHOD
-is the OpenSSL internal implementation, as returned by
-.Fn RSA_PKCS1_SSLeay .
+object contains pointers to the functions used for RSA operations.
+By default, the internal implementation returned by
+.Fn RSA_PKCS1_SSLeay
+is used.
+By selecting another method, alternative implementations
+such as hardware accelerators may be used.
 .Pp
 .Fn RSA_set_default_method
-makes
+selects
 .Fa meth
-the default method for all
+as the default method for all
 .Vt RSA
 structures created later.
-.Sy NB :
-This is true only whilst no
+If any
 .Vt ENGINE
-has been set as a default for RSA, so this function is no longer
-recommended.
+was registered with
+.Xr ENGINE_register_RSA 3
+that can be successfully initialized, it overrides the default.
 .Pp
 .Fn RSA_get_default_method
-returns a pointer to the current default
-.Vt RSA_METHOD .
-However, the meaningfulness of this result is dependent on whether
-the
-.Xr engine 3
-API is being used, so this function is no longer recommended.
+returns a pointer to the current default method,
+even if it is actually overridded by an
+.Vt ENGINE .
 .Pp
 .Fn RSA_set_method
 selects
 .Fa meth
 to perform all operations using the key
 .Fa rsa .
-This will replace the
+This replaces the
 .Vt RSA_METHOD
 used by the RSA key, and if the previous method was supplied by an
 .Vt ENGINE ,
-the handle to that
-.Vt ENGINE
-will be released during the change.
+.Xr ENGINE_finish 3
+is called on it.
 It is possible to have RSA keys that only work with certain
 .Vt RSA_METHOD
 implementations (e.g. from an
@@ -175,34 +161,23 @@ section.
 allocates and initializes an
 .Vt RSA
 structure so that
-.Fa meth
-will be used for the RSA operations.
+.Fa engine
+is used for the RSA operations.
 If
-.Sy engine
-is NULL, the default ENGINE for RSA operations is used and, if no
-default ENGINE is set, the RSA_METHOD controlled by
+.Fa engine
+is
+.Dv NULL ,
+.Xr ENGINE_get_default_RSA 3
+is used.
+If that returns
+.Dv NULL ,
+the default method controlled by
 .Fn RSA_set_default_method
 is used.
 .Pp
-.Fn RSA_flags
-returns the
-.Sy flags
-that are set for
-.Fa rsa Ns 's
-current method.
-.Pp
-.Fn RSA_new_method
-allocates and initializes an
-.Vt RSA
-structure so that
-.Fa meth
-will be used for the RSA operations.
-If
-.Fa meth
-is
-.Dv NULL ,
-the default method is used.
-.Sh THE RSA_METHOD STRUCTURE
+The
+.Dv RSA_METHOD
+structure is defined as follows:
 .Bd -literal
 typedef struct rsa_meth_st
 {
@@ -265,30 +240,15 @@ typedef struct rsa_meth_st
 .Ed
 .Sh RETURN VALUES
 .Fn RSA_PKCS1_SSLeay ,
-.Fn RSA_null_method ,
-.Fn RSA_get_default_method
+.Fn RSA_get_default_method ,
 and
 .Fn RSA_get_method
 return pointers to the respective
 .Vt RSA_METHOD .
 .Pp
 .Fn RSA_set_method
-returns a pointer to the old
-.Vt RSA_METHOD
-implementation that was replaced.
-However, this return value should probably be ignored because if it was
-supplied by an
-.Vt ENGINE ,
-the pointer could be invalidated at any time if the
-.Vt ENGINE
-is unloaded.
-In fact, it could be unloaded as a result of the
-.Fn RSA_set_method
-function releasing its handle to the
-.Vt ENGINE .
-For this reason, the return type may be replaced with a
-.Vt void
-declaration in a future release.
+returns 1 on success or 0 on failure.
+Currently, it cannot fail.
 .Pp
 .Fn RSA_new_method
 returns
@@ -298,6 +258,9 @@ and sets an error code that can be obtained by
 if the allocation fails.
 Otherwise it returns a pointer to the newly allocated structure.
 .Sh SEE ALSO
+.Xr ENGINE_get_default_RSA 3 ,
+.Xr ENGINE_register_RSA 3 ,
+.Xr ENGINE_set_default_RSA 3 ,
 .Xr RSA_meth_new 3 ,
 .Xr RSA_new 3
 .Sh HISTORY
@@ -323,31 +286,6 @@ components of
 .Vt RSA_METHOD
 first appeared in OpenSSL 0.9.4 and have been available since
 .Ox 2.6 .
-.Pp
-.Fn RSA_null_method
-first appeared in OpenSSL 0.9.5 and has been available since
-.Ox 2.7 .
-.Sh CAVEATS
-As of version 0.9.7,
-.Vt RSA_METHOD
-implementations are grouped together with other algorithmic APIs (e.g.\&
-.Vt DSA_METHOD
-or
-.Vt EVP_CIPHER )
-into
-.Vt ENGINE
-modules.
-If a default
-.Vt ENGINE
-is specified for RSA functionality using an
-.Xr engine 3
-API function, that will override any RSA defaults set using the RSA
-API, i.e.\&
-.Fn RSA_set_default_method .
-For this reason, the
-.Xr engine 3
-API is the recommended way to control default implementations for
-use in RSA and other cryptographic algorithms.
 .Sh BUGS
 The behaviour of
 .Fn RSA_flags
