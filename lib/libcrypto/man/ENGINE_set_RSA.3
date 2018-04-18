@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_set_RSA.3,v 1.1 2018/04/15 17:02:03 schwarze Exp $
+.\" $OpenBSD: ENGINE_set_RSA.3,v 1.2 2018/04/18 03:39:22 schwarze Exp $
 .\" content checked up to:
 .\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 15 2018 $
+.Dd $Mdocdate: April 18 2018 $
 .Dt ENGINE_SET_RSA 3
 .Os
 .Sh NAME
@@ -286,3 +286,40 @@ or
 if
 .Fa e
 does not implement that digest.
+.Sh SEE ALSO
+.Xr ENGINE_ctrl 3 ,
+.Xr ENGINE_new 3 ,
+.Xr ENGINE_register_RSA 3 ,
+.Xr ENGINE_set_default 3 ,
+.Xr ENGINE_set_flags 3
+.Sh HISTORY
+.Fn ENGINE_set_RSA ,
+.Fn ENGINE_get_RSA ,
+.Fn ENGINE_set_DSA ,
+.Fn ENGINE_get_DSA ,
+.Fn ENGINE_set_DH ,
+.Fn ENGINE_get_DH ,
+.Fn ENGINE_set_RAND ,
+.Fn ENGINE_get_RAND ,
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 2.9 .
+.Pp
+.Fn ENGINE_set_ciphers ,
+.Fn ENGINE_get_ciphers ,
+.Fn ENGINE_get_cipher ,
+.Fn ENGINE_set_digests ,
+.Fn ENGINE_get_digests ,
+and
+.Fn ENGINE_get_digest
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
+.Pp
+.Fn ENGINE_set_ECDH ,
+.Fn ENGINE_get_ECDH ,
+.Fn ENGINE_set_ECDSA ,
+.Fn ENGINE_get_ECDSA ,
+.Fn ENGINE_set_STORE ,
+and
+.Fn ENGINE_get_STORE
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_get_default_RSA.3,v 1.1 2018/04/15 01:43:45 schwarze Exp $
+.\" $OpenBSD: ENGINE_get_default_RSA.3,v 1.2 2018/04/18 03:39:22 schwarze Exp $
 .\" content checked up to:
 .\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 15 2018 $
+.Dd $Mdocdate: April 18 2018 $
 .Dt ENGINE_GET_DEFAULT_RSA 3
 .Os
 .Sh NAME
@@ -131,3 +131,30 @@ is used in that case, if one is available.
 returns
 .Dv ENGINE_TABLE_FLAG_NOINIT
 if the global flag is set or 0 otherwise.
+.Sh SEE ALSO
+.Xr ENGINE_init 3 ,
+.Xr ENGINE_new 3 ,
+.Xr ENGINE_register_RSA 3 ,
+.Xr ENGINE_set_default 3
+.Sh HISTORY
+.Fn ENGINE_get_default_RSA ,
+.Fn ENGINE_get_default_DSA ,
+.Fn ENGINE_get_default_DH ,
+and
+.Fn ENGINE_get_default_RAND
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 2.9 .
+.Pp
+.Fn ENGINE_get_cipher_engine ,
+.Fn ENGINE_get_digest_engine ,
+.Fn ENGINE_set_table_flags ,
+and
+.Fn ENGINE_get_table_flags
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
+.Pp
+.Fn ENGINE_get_default_ECDH
+and
+.Fn ENGINE_get_default_ECDSA
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_set_default.3,v 1.1 2018/04/15 01:43:45 schwarze Exp $
+.\" $OpenBSD: ENGINE_set_default.3,v 1.2 2018/04/18 03:39:22 schwarze Exp $
 .\" content checked up to:
 .\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 15 2018 $
+.Dd $Mdocdate: April 18 2018 $
 .Dt ENGINE 3
 .Os
 .Sh NAME
@@ -141,6 +141,34 @@ These functions return 1 on success or 0 on error.
 They fail if
 .Xr ENGINE_init 3
 fails or if insufficient memory is available.
+.Sh SEE ALSO
+.Xr ENGINE_get_default_RSA 3 ,
+.Xr ENGINE_init 3 ,
+.Xr ENGINE_new 3 ,
+.Xr ENGINE_register_RSA 3 ,
+.Xr ENGINE_set_RSA 3 ,
+.Xr ENGINE_unregister_RSA 3
+.Sh HISTORY
+.Fn ENGINE_set_default ,
+.Fn ENGINE_set_default_RSA ,
+.Fn ENGINE_set_default_DSA ,
+.Fn ENGINE_set_default_DH and,
+.Fn ENGINE_set_default_RAND
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 2.9 .
+.Pp
+.Fn ENGINE_set_default_string ,
+.Fn ENGINE_set_default_ciphers ,
+and
+.Fn ENGINE_set_default_digests
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
+.Pp
+.Fn ENGINE_set_default_ECDH
+and
+.Fn ENGINE_set_default_ECDSA
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .
 .Sh CAVEATS
 Failure of
 .Xr ENGINE_finish 3

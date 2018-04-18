@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_get_ex_new_index.3,v 1.8 2018/03/23 00:09:11 schwarze Exp $
+.\" $OpenBSD: BIO_get_ex_new_index.3,v 1.9 2018/04/18 03:39:22 schwarze Exp $
 .\" full merge up to: OpenSSL a970b14f Jul 31 18:58:40 2017 -0400
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: April 18 2018 $
 .Dt BIO_GET_EX_NEW_INDEX 3
 .Os
 .Sh NAME
@@ -149,6 +149,9 @@ and
 first appeared in OpenSSL 0.9.5 and have been available since
 .Ox 2.7 .
 .Pp
+.Fn ENGINE_get_ex_new_index ,
+.Fn ENGINE_set_ex_data ,
+.Fn ENGINE_get_ex_data ,
 .Fn UI_get_ex_new_index ,
 .Fn UI_set_ex_data ,
 and
