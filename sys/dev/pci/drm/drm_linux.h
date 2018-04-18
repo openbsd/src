@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.84 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.85 2018/04/18 12:05:31 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -2304,7 +2304,8 @@ request_firmware(const struct firmware **fw, const char *name,
     struct device *device)
 {
 	int r;
-	struct firmware *f = malloc(sizeof(struct firmware), M_DRM, M_WAITOK);
+	struct firmware *f = malloc(sizeof(struct firmware), M_DRM,
+	    M_WAITOK | M_ZERO);
 	*fw = f;
 	r = loadfirmware(name, __DECONST(u_char **, &f->data), &f->size);
 	if (r != 0)
@@ -2318,7 +2319,8 @@ request_firmware(const struct firmware **fw, const char *name,
 static inline void
 release_firmware(const struct firmware *fw)
 {
-	free(__DECONST(u_char *, fw->data), M_DRM, fw->size);
+	if (fw)
+		free(__DECONST(u_char *, fw->data), M_DEVBUF, fw->size);
 	free(__DECONST(struct firmware *, fw), M_DRM, sizeof(*fw));
 }
 
