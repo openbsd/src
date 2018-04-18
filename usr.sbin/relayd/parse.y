@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.221 2017/11/29 15:24:50 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.222 2018/04/18 12:10:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1081,7 +1081,7 @@ tcpflags	: SACK			{ proto->tcpflags |= TCPFLAG_SACK; }
 		| SPLICE		{ /* default */ }
 		| NO SPLICE		{ proto->tcpflags |= TCPFLAG_NSPLICE; }
 		| BACKLOG NUMBER	{
-			if ($2 < 0 || $2 > RELAY_MAX_SESSIONS) {
+			if ($2 < 0 || $2 > RELAY_MAX_BACKLOG) {
 				yyerror("invalid backlog: %d", $2);
 				YYERROR;
 			}

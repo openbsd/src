@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.237 2017/12/27 15:53:30 benno Exp $	*/
+/*	$OpenBSD: relay.c,v 1.238 2018/04/18 12:10:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1077,8 +1077,7 @@ relay_accept(int fd, short event, void *arg)
 		}
 		return;
 	}
-	if (relay_sessions >= RELAY_MAX_SESSIONS ||
-	    rlay->rl_conf.flags & F_DISABLE)
+	if (rlay->rl_conf.flags & F_DISABLE)
 		goto err;
 
 	if ((con = calloc(1, sizeof(*con))) == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.248 2017/11/28 18:25:53 claudio Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.249 2018/04/18 12:10:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -68,7 +68,7 @@
 
 #define FD_RESERVE		5
 
-#define RELAY_MAX_SESSIONS	1024
+#define RELAY_MAX_BACKLOG	512
 #define RELAY_TIMEOUT		600
 #define RELAY_CACHESIZE		-1	/* use default size */
 #define RELAY_NUMPROC		3

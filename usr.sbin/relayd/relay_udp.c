@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.47 2017/07/04 19:59:51 benno Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.48 2018/04/18 12:10:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -191,8 +191,7 @@ relay_udp_response(int fd, short sig, void *arg)
 		return;
 	}
 
-	if (relay_sessions >= RELAY_MAX_SESSIONS ||
-	    rlay->rl_conf.flags & F_DISABLE)
+	if (rlay->rl_conf.flags & F_DISABLE)
 		return;
 
 	slen = sizeof(ss);
@@ -226,8 +225,7 @@ relay_udp_server(int fd, short sig, void *arg)
 
 	event_add(&rlay->rl_ev, NULL);
 
-	if (relay_sessions >= RELAY_MAX_SESSIONS ||
-	    rlay->rl_conf.flags & F_DISABLE)
+	if (rlay->rl_conf.flags & F_DISABLE)
 		return;
 
 	slen = sizeof(ss);
