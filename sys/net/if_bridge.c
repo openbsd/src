@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.307 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.308 2018/04/19 22:31:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -359,6 +359,11 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifs = ifunit(req->ifbr_ifsname);
 		if (ifs == NULL) {			/* no such interface */
 			error = ENOENT;
+			break;
+		}
+		if (ifs->if_type != IFT_ETHER &&
+		    ifs->if_type != IFT_MPLSTUNNEL) {
+			error = EINVAL;
 			break;
 		}
 		if (ifs->if_bridgeport != NULL) {
