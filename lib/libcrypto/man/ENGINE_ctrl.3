@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_ctrl.3,v 1.3 2018/04/18 03:39:22 schwarze Exp $
+.\" $OpenBSD: ENGINE_ctrl.3,v 1.4 2018/04/19 18:43:58 schwarze Exp $
 .\" content checked up to:
 .\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 18 2018 $
+.Dd $Mdocdate: April 19 2018 $
 .Dt ENGINE_CTRL 3
 .Os
 .Sh NAME
@@ -31,6 +31,7 @@
 .Nd control commands for ENGINE objects
 .Sh SYNOPSIS
 .In openssl/engine.h
+.Ft int
 .Fo ENGINE_ctrl
 .Fa "ENGINE *e"
 .Fa "int cmd"
@@ -242,6 +243,19 @@ are considered success, and the command has no effect.
 Otherwise, these problems cause
 .Fn ENGINE_ctrl_cmd
 to fail.
+.Pp
+Neither
+.Fn ENGINE_ctrl
+nor
+.Fn ENGINE_ctrl_cmd
+ever call the
+.Fa f
+callback, but merely pass it on as an argument to the engine-specific
+.Fa ctrl_f
+control function.
+It is up to
+.Fa ctrl_f
+how to use it, or alternatively to ignore it as well.
 .Pp
 .Fn ENGINE_ctrl_cmd_string
 translates the
