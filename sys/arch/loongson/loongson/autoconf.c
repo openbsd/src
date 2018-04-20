@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 2018/01/27 22:55:23 naddy Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 2018/04/20 14:08:12 visa Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -24,7 +24,10 @@
 
 #include <machine/autoconf.h>
 
+#define DUID_SIZE	8
+
 extern void dumpconf(void);
+int	parseduid(const char *, u_char *);
 void	parsepmonbp(void);
 
 int	cold = 1;
@@ -51,8 +54,9 @@ cpu_configure(void)
 void
 parsepmonbp(void)
 {
-	char *p, *q;
-	size_t len;
+	char *p = NULL;
+	char *q;
+	size_t len = 0;
 
 	if (strncmp(pmon_bootp, "tftp://", 7) == 0) {
 		bootdev_class = DV_IFNET;
@@ -65,6 +69,10 @@ parsepmonbp(void)
 		/* kernel loaded by our boot blocks */
 		p = pmon_bootp + 10;
 		len = strlen(p);
+	} else if (strncmp(pmon_bootp, "bootduid=", 9) == 0) {
+		/* kernel loaded by our boot blocks */
+		if (parseduid(pmon_bootp + 9, bootduid) != 0)
+			return;
 	} else {
 		/* kernel loaded by PMON */
 		p = strchr(pmon_bootp, '@');
@@ -83,6 +91,36 @@ parsepmonbp(void)
 	memcpy(bootdev, p, len);
 	bootdev[len] = '\0';
 	bootdev_class = DV_DISK;
+}
+
+static unsigned int
+parsehex(int c)
+{
+	if (c >= 'a')
+		return c - 'a' + 10;
+	else
+		return c - '0';
+}
+
+int
+parseduid(const char *str, u_char *duid)
+{
+	int i;
+
+	for (i = 0; i < DUID_SIZE * 2; i++) {
+		if (!(str[i] >= '0' && str[i] <= '9') &&
+		    !(str[i] >= 'a' && str[i] <= 'f'))
+			return -1;
+	}
+	if (str[DUID_SIZE * 2] != '\0')
+		return -1;
+
+	for (i = 0; i < DUID_SIZE; i++) {
+		duid[i] = parsehex(str[i * 2]) * 0x10 +
+		    parsehex(str[i * 2 + 1]);
+	}
+
+	return 0;
 }
 
 void
