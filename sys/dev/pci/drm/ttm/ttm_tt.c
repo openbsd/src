@@ -1,3 +1,4 @@
+/*	$OpenBSD: ttm_tt.c,v 1.6 2018/04/20 16:09:37 deraadt Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -48,12 +49,9 @@ static void ttm_tt_alloc_page_directory(struct ttm_tt *ttm)
 
 static void ttm_dma_tt_alloc_page_directory(struct ttm_dma_tt *ttm)
 {
-	ttm->ttm.pages = drm_calloc_large(ttm->ttm.num_pages,
-					  sizeof(*ttm->ttm.pages) +
-					  sizeof(*ttm->dma_address) +
-					  sizeof(*ttm->cpu_address));
-	ttm->cpu_address = (void *) (ttm->ttm.pages + ttm->ttm.num_pages);
-	ttm->dma_address = (void *) (ttm->cpu_address + ttm->ttm.num_pages);
+	ttm->ttm.pages = drm_calloc_large(ttm->ttm.num_pages, sizeof(void*));
+	ttm->dma_address = drm_calloc_large(ttm->ttm.num_pages,
+					    sizeof(*ttm->dma_address));
 }
 
 #ifdef CONFIG_X86
@@ -113,7 +111,11 @@ static int ttm_tt_set_caching(struct ttm_tt *ttm,
 	}
 
 	if (ttm->caching_state == tt_cached)
+#ifdef notyet
 		drm_clflush_pages(ttm->pages, ttm->num_pages);
+#else
+		printf("%s partial stub\n", __func__);
+#endif
 
 	for (i = 0; i < ttm->num_pages; ++i) {
 		cur_page = ttm->pages[i];
@@ -166,8 +168,9 @@ void ttm_tt_destroy(struct ttm_tt *ttm)
 		ttm_tt_unbind(ttm);
 	}
 
-	if (ttm->state == tt_unbound)
-		ttm_tt_unpopulate(ttm);
+	if (ttm->state == tt_unbound) {
+		ttm->bdev->driver->ttm_tt_unpopulate(ttm);
+	}
 
 	if (!(ttm->page_flags & TTM_PAGE_FLAG_PERSISTENT_SWAP) &&
 	    ttm->swap_storage)
@@ -224,7 +227,7 @@ int ttm_dma_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_bo_device *bdev,
 
 	INIT_LIST_HEAD(&ttm_dma->pages_list);
 	ttm_dma_tt_alloc_page_directory(ttm_dma);
-	if (!ttm->pages) {
+	if (!ttm->pages || !ttm_dma->dma_address) {
 		ttm_tt_destroy(ttm);
 		pr_err("Failed allocating page table\n");
 		return -ENOMEM;
@@ -239,7 +242,7 @@ void ttm_dma_tt_fini(struct ttm_dma_tt *ttm_dma)
 
 	drm_free_large(ttm->pages);
 	ttm->pages = NULL;
-	ttm_dma->cpu_address = NULL;
+	drm_free_large(ttm_dma->dma_address);
 	ttm_dma->dma_address = NULL;
 }
 EXPORT_SYMBOL(ttm_dma_tt_fini);
@@ -312,7 +315,6 @@ int ttm_tt_swapin(struct ttm_tt *ttm)
 	ttm->swap_storage = NULL;
 	ttm->page_flags &= ~TTM_PAGE_FLAG_SWAPPED;
 
-
 	return 0;
 out_err:
 	return ret;
@@ -372,29 +374,4 @@ out_err:
 		uao_detach(swap_storage);
 
 	return ret;
-}
-
-static void ttm_tt_clear_mapping(struct ttm_tt *ttm)
-{
-	int i;
-	struct vm_page *page;
-
-	if (ttm->page_flags & TTM_PAGE_FLAG_SG)
-		return;
-
-	for (i = 0; i < ttm->num_pages; ++i) {
-		page = ttm->pages[i];
-		if (unlikely(page == NULL))
-			continue;
-		pmap_page_protect(page, PROT_NONE);
-	}
-}
-
-void ttm_tt_unpopulate(struct ttm_tt *ttm)
-{
-	if (ttm->state == tt_unpopulated)
-		return;
-
-	ttm_tt_clear_mapping(ttm);
-	ttm->bdev->driver->ttm_tt_unpopulate(ttm);
 }

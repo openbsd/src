@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.39 2018/04/20 16:06:05 deraadt Exp $
+# $OpenBSD: files.drm,v 1.40 2018/04/20 16:09:36 deraadt Exp $
 
 # direct rendering modules
 define drmbase {[console = -1]}
@@ -28,13 +28,12 @@ file	dev/pci/drm/drm_bridge.c		drm
 file	dev/pci/drm/drm_gem.c			drm
 file	dev/pci/drm/drm_vma_manager.c		drm
 file	dev/pci/drm/drm_linux.c			drm
-file	dev/pci/drm/drm_cache.c			drm
+file	dev/pci/drm/drm_cache.c			drm & inteldrm
 file	dev/pci/drm/drm_panel.c			drm & inteldrm
 file	dev/pci/drm/drm_dp_mst_topology.c	drm
 file	dev/pci/drm/drm_mipi_dsi.c		drm & inteldrm
 file	dev/pci/drm/linux_hdmi.c		drm
 file	dev/pci/drm/linux_list_sort.c		drm
-file	dev/pci/drm/linux_reservation.c		drm
 
 define	ttm
 file	dev/pci/drm/ttm/ttm_agp_backend.c	ttm & agp
@@ -43,12 +42,10 @@ file	dev/pci/drm/ttm/ttm_bo_manager.c	ttm
 file	dev/pci/drm/ttm/ttm_bo_util.c		ttm
 file	dev/pci/drm/ttm/ttm_bo_vm.c		ttm
 file	dev/pci/drm/ttm/ttm_execbuf_util.c	ttm
-#file	dev/pci/drm/ttm/ttm_lock.c		ttm
+file	dev/pci/drm/ttm/ttm_lock.c		ttm
 file	dev/pci/drm/ttm/ttm_memory.c		ttm
-#file	dev/pci/drm/ttm/ttm_module.c		ttm
-#file	dev/pci/drm/ttm/ttm_object.c		ttm
+file	dev/pci/drm/ttm/ttm_object.c		ttm
 file	dev/pci/drm/ttm/ttm_page_alloc.c	ttm
-file	dev/pci/drm/ttm/ttm_page_alloc_dma.c	ttm
 file	dev/pci/drm/ttm/ttm_tt.c		ttm
 
 device	inteldrm: agpint, drmbase, wsemuldisplaydev, rasops32, rasops_rotation, i2cbus, i2c_bitbang
@@ -130,42 +127,28 @@ file	dev/pci/drm/radeon/atombios_crtc.c		radeondrm
 file	dev/pci/drm/radeon/atombios_dp.c		radeondrm
 file	dev/pci/drm/radeon/atombios_encoders.c		radeondrm
 file	dev/pci/drm/radeon/atombios_i2c.c		radeondrm
-file	dev/pci/drm/radeon/btc_dpm.c			radeondrm
 file	dev/pci/drm/radeon/cayman_blit_shaders.c	radeondrm
-file	dev/pci/drm/radeon/ci_dpm.c			radeondrm
-file	dev/pci/drm/radeon/ci_smc.c			radeondrm
-file	dev/pci/drm/radeon/cik.c			radeondrm
-file	dev/pci/drm/radeon/cik_blit_shaders.c		radeondrm
-file	dev/pci/drm/radeon/cik_sdma.c			radeondrm
-file	dev/pci/drm/radeon/cypress_dpm.c		radeondrm
-file	dev/pci/drm/radeon/dce3_1_afmt.c		radeondrm
-file	dev/pci/drm/radeon/dce6_afmt.c			radeondrm
 file	dev/pci/drm/radeon/evergreen.c			radeondrm
+file	dev/pci/drm/radeon/evergreen_blit_kms.c		radeondrm
 file	dev/pci/drm/radeon/evergreen_blit_shaders.c	radeondrm
 file	dev/pci/drm/radeon/evergreen_cs.c		radeondrm
-file	dev/pci/drm/radeon/evergreen_dma.c		radeondrm
 file	dev/pci/drm/radeon/evergreen_hdmi.c		radeondrm
-file	dev/pci/drm/radeon/kv_dpm.c			radeondrm
-file	dev/pci/drm/radeon/kv_smc.c			radeondrm
 file	dev/pci/drm/radeon/ni.c				radeondrm
-file	dev/pci/drm/radeon/ni_dma.c			radeondrm
-file	dev/pci/drm/radeon/ni_dpm.c			radeondrm
 file	dev/pci/drm/radeon/r100.c			radeondrm
 file	dev/pci/drm/radeon/r200.c			radeondrm
 file	dev/pci/drm/radeon/r300.c			radeondrm
 file	dev/pci/drm/radeon/r420.c			radeondrm
 file	dev/pci/drm/radeon/r520.c			radeondrm
 file	dev/pci/drm/radeon/r600.c			radeondrm
+file	dev/pci/drm/radeon/r600_audio.c			radeondrm
+file	dev/pci/drm/radeon/r600_blit_kms.c		radeondrm
 file	dev/pci/drm/radeon/r600_blit_shaders.c		radeondrm
 file	dev/pci/drm/radeon/r600_cs.c			radeondrm
-file	dev/pci/drm/radeon/r600_dma.c			radeondrm
-file	dev/pci/drm/radeon/r600_dpm.c			radeondrm
 file	dev/pci/drm/radeon/r600_hdmi.c			radeondrm
 #file	dev/pci/drm/radeon/radeon_acpi.c		radeondrm
 file	dev/pci/drm/radeon/radeon_agp.c			radeondrm
 file	dev/pci/drm/radeon/radeon_asic.c		radeondrm
 file	dev/pci/drm/radeon/radeon_atombios.c		radeondrm
-file	dev/pci/drm/radeon/radeon_audio.c		radeondrm
 file	dev/pci/drm/radeon/radeon_benchmark.c		radeondrm
 file	dev/pci/drm/radeon/radeon_bios.c		radeondrm
 file	dev/pci/drm/radeon/radeon_clocks.c		radeondrm
@@ -176,61 +159,30 @@ file	dev/pci/drm/radeon/radeon_cursor.c		radeondrm
 file	dev/pci/drm/radeon/radeon_device.c		radeondrm
 file	dev/pci/drm/radeon/radeon_display.c		radeondrm
 file	dev/pci/drm/radeon/radeon_dp_auxch.c		radeondrm
-file	dev/pci/drm/radeon/radeon_dp_mst.c		radeondrm
-file	dev/pci/drm/radeon/radeon_drv.c			radeondrm
 file	dev/pci/drm/radeon/radeon_encoders.c		radeondrm
 file	dev/pci/drm/radeon/radeon_fb.c			radeondrm
 file	dev/pci/drm/radeon/radeon_fence.c		radeondrm
 file	dev/pci/drm/radeon/radeon_gart.c		radeondrm
 file	dev/pci/drm/radeon/radeon_gem.c			radeondrm
 file	dev/pci/drm/radeon/radeon_i2c.c			radeondrm
-file	dev/pci/drm/radeon/radeon_ib.c			radeondrm
-#file	dev/pci/drm/radeon/radeon_ioc32.c		radeondrm	COMPAT
 file	dev/pci/drm/radeon/radeon_irq_kms.c		radeondrm
-#file	dev/pci/drm/radeon/radeon_kfd.c			radeondrm
 file	dev/pci/drm/radeon/radeon_kms.c			radeondrm
 file	dev/pci/drm/radeon/radeon_legacy_crtc.c		radeondrm
 file	dev/pci/drm/radeon/radeon_legacy_encoders.c	radeondrm
 file	dev/pci/drm/radeon/radeon_legacy_tv.c		radeondrm
-#file	dev/pci/drm/radeon/radeon_mn.c			radeondrm	not needed?
 file	dev/pci/drm/radeon/radeon_object.c		radeondrm
 file	dev/pci/drm/radeon/radeon_pm.c			radeondrm
 #file	dev/pci/drm/radeon/radeon_prime.c		radeondrm
 file	dev/pci/drm/radeon/radeon_ring.c		radeondrm
 file	dev/pci/drm/radeon/radeon_sa.c			radeondrm
 file	dev/pci/drm/radeon/radeon_semaphore.c		radeondrm
-file	dev/pci/drm/radeon/radeon_sync.c		radeondrm
 file	dev/pci/drm/radeon/radeon_test.c		radeondrm
 #file	dev/pci/drm/radeon/radeon_trace_points.c	radeondrm
 file	dev/pci/drm/radeon/radeon_ttm.c			radeondrm
-file	dev/pci/drm/radeon/radeon_ucode.c		radeondrm
-file	dev/pci/drm/radeon/radeon_uvd.c			radeondrm
-file	dev/pci/drm/radeon/radeon_vce.c			radeondrm
-file	dev/pci/drm/radeon/radeon_vm.c			radeondrm
 file	dev/pci/drm/radeon/rs400.c			radeondrm
 file	dev/pci/drm/radeon/rs600.c			radeondrm
 file	dev/pci/drm/radeon/rs690.c			radeondrm
-file	dev/pci/drm/radeon/rs780_dpm.c			radeondrm
 file	dev/pci/drm/radeon/rv515.c			radeondrm
-file	dev/pci/drm/radeon/rv6xx_dpm.c			radeondrm
-file	dev/pci/drm/radeon/rv730_dpm.c			radeondrm
-file	dev/pci/drm/radeon/rv740_dpm.c			radeondrm
 file	dev/pci/drm/radeon/rv770.c			radeondrm
-file	dev/pci/drm/radeon/rv770_dma.c			radeondrm
-file	dev/pci/drm/radeon/rv770_dpm.c			radeondrm
-file	dev/pci/drm/radeon/rv770_smc.c			radeondrm
 file	dev/pci/drm/radeon/si.c				radeondrm
 file	dev/pci/drm/radeon/si_blit_shaders.c		radeondrm
-file	dev/pci/drm/radeon/si_dma.c			radeondrm
-file	dev/pci/drm/radeon/si_dpm.c			radeondrm
-file	dev/pci/drm/radeon/si_smc.c			radeondrm
-file	dev/pci/drm/radeon/sumo_dpm.c			radeondrm
-file	dev/pci/drm/radeon/sumo_smc.c			radeondrm
-file	dev/pci/drm/radeon/trinity_dpm.c		radeondrm
-file	dev/pci/drm/radeon/trinity_smc.c		radeondrm
-file	dev/pci/drm/radeon/uvd_v1_0.c			radeondrm
-file	dev/pci/drm/radeon/uvd_v2_2.c			radeondrm
-file	dev/pci/drm/radeon/uvd_v3_1.c			radeondrm
-file	dev/pci/drm/radeon/uvd_v4_2.c			radeondrm
-file	dev/pci/drm/radeon/vce_v1_0.c			radeondrm
-file	dev/pci/drm/radeon/vce_v2_0.c			radeondrm

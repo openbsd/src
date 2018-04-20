@@ -1,3 +1,4 @@
+/*	$OpenBSD: r420d.h,v 1.3 2018/04/20 16:09:36 deraadt Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.

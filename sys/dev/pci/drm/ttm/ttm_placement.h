@@ -1,3 +1,4 @@
+/*	$OpenBSD: ttm_placement.h,v 1.3 2018/04/20 16:09:37 deraadt Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -65,8 +66,6 @@
  * reference the buffer.
  * TTM_PL_FLAG_NO_EVICT means that the buffer may never
  * be evicted to make room for other buffers.
- * TTM_PL_FLAG_TOPDOWN requests to be placed from the
- * top of the memory area, instead of the bottom.
  */
 
 #define TTM_PL_FLAG_CACHED      (1 << 16)
@@ -74,7 +73,6 @@
 #define TTM_PL_FLAG_WC          (1 << 18)
 #define TTM_PL_FLAG_SHARED      (1 << 20)
 #define TTM_PL_FLAG_NO_EVICT    (1 << 21)
-#define TTM_PL_FLAG_TOPDOWN     (1 << 22)
 
 #define TTM_PL_MASK_CACHING     (TTM_PL_FLAG_CACHED | \
 				 TTM_PL_FLAG_UNCACHED | \

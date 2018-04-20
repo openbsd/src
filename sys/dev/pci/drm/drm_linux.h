@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.86 2018/04/20 16:06:05 deraadt Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.87 2018/04/20 16:09:36 deraadt Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -53,8 +53,6 @@
 #else
 #pragma GCC diagnostic ignored "-Wformat-zero-length"
 #endif
-
-#define STUB() do { printf("%s: stub\n", __func__); } while(0)
 
 typedef int irqreturn_t;
 enum irqreturn {
@@ -560,72 +558,45 @@ _spin_unlock_irqrestore(struct mutex *mtxp, __unused unsigned long flags
 #define free_irq(irq, dev)
 #define synchronize_irq(x)
 
-typedef struct wait_queue wait_queue_t;
-struct wait_queue {
-	unsigned int flags;
-	void *private;
-	int (*func)(wait_queue_t *, unsigned, int, void *);
-};
-
-extern struct mutex sch_mtx;
-extern void *sch_ident;
-extern int sch_priority;
+#define fence_wait(x, y)
+#define fence_put(x)
 
 struct wait_queue_head {
 	struct mutex lock;
 	unsigned int count;
-	struct wait_queue *_wq;
 };
 typedef struct wait_queue_head wait_queue_head_t;
-
-#define MAX_SCHEDULE_TIMEOUT (INT32_MAX)
 
 static inline void
 init_waitqueue_head(wait_queue_head_t *wq)
 {
 	mtx_init(&wq->lock, IPL_TTY);
 	wq->count = 0;
-	wq->_wq = NULL;
-}
-
-static inline void
-__add_wait_queue(wait_queue_head_t *head, wait_queue_t *new)
-{
-	head->_wq = new;
-}
-
-static inline void
-__remove_wait_queue(wait_queue_head_t *head, wait_queue_t *old)
-{
-	head->_wq = NULL;
 }
 
 #define __wait_event_intr_timeout(wq, condition, timo, prio)		\
 ({									\
 	long ret = timo;						\
+	mtx_enter(&(wq).lock);						\
 	do {								\
 		int deadline, __error;					\
 									\
 		KASSERT(!cold);						\
-									\
-		mtx_enter(&sch_mtx);					\
 		atomic_inc_int(&(wq).count);				\
 		deadline = ticks + ret;					\
-		__error = msleep(&wq, &sch_mtx, prio, "drmweti", ret);	\
+		__error = msleep(&wq, &(wq).lock, prio, "drmweti", ret); \
 		ret = deadline - ticks;					\
 		atomic_dec_int(&(wq).count);				\
 		if (__error == ERESTART || __error == EINTR) {		\
 			ret = -ERESTARTSYS;				\
-			mtx_leave(&sch_mtx);				\
 			break;						\
 		}							\
 		if (timo && (ret <= 0 || __error == EWOULDBLOCK)) { 	\
-			mtx_leave(&sch_mtx);				\
 			ret = ((condition)) ? 1 : 0;			\
 			break;						\
  		}							\
-		mtx_leave(&sch_mtx);					\
 	} while (ret > 0 && !(condition));				\
+	mtx_leave(&(wq).lock);						\
 	ret;								\
 })
 
@@ -637,14 +608,6 @@ do {						\
 	if (!(condition))			\
 		__wait_event_intr_timeout(wq, condition, 0, 0); \
 } while (0)
-
-#define wait_event_interruptible_locked(wq, condition) 		\
-({						\
-	int __ret = 0;				\
-	if (!(condition))			\
-		__ret = __wait_event_intr_timeout(wq, condition, 0, PCATCH); \
-	__ret;					\
-})
 
 /*
  * Sleep until `condition' gets true or `timo' expires.
@@ -676,43 +639,16 @@ do {						\
 	__ret;					\
 })
 
-static inline void
-_wake_up(wait_queue_head_t *wq LOCK_FL_VARS)
-{
-	_mtx_enter(&wq->lock LOCK_FL_ARGS);
-	if (wq->_wq != NULL && wq->_wq->func != NULL)
-		wq->_wq->func(wq->_wq, 0, wq->_wq->flags, NULL);
-	else {
-		mtx_enter(&sch_mtx);
-		wakeup(wq);
-		mtx_leave(&sch_mtx);
-	}
-	_mtx_leave(&wq->lock LOCK_FL_ARGS);
-}
-
-#define wake_up_process(task)			\
+#define wake_up(wq)				\
 do {						\
-	mtx_enter(&sch_mtx);			\
-	wakeup(task);				\
-	mtx_leave(&sch_mtx);			\
+	mtx_enter(&(wq)->lock);			\
+	wakeup(wq);				\
+	mtx_leave(&(wq)->lock);			\
 } while (0)
+#define wake_up_all(wq)			wake_up(wq)
+#define wake_up_all_locked(wq)		wakeup(wq)
+#define wake_up_interruptible(wq)	wake_up(wq)
 
-#define wake_up(wq)			_wake_up(wq LOCK_FILE_LINE)
-#define wake_up_all(wq)			_wake_up(wq LOCK_FILE_LINE)
-
-static inline void
-wake_up_all_locked(wait_queue_head_t *wq)
-{
-	if (wq->_wq != NULL && wq->_wq->func != NULL)
-		wq->_wq->func(wq->_wq, 0, wq->_wq->flags, NULL);
-	else {
-		mtx_enter(&sch_mtx);
-		wakeup(wq);
-		mtx_leave(&sch_mtx);
-	}
-}
-
-#define wake_up_interruptible(wq)	_wake_up(wq LOCK_FILE_LINE)
 #define waitqueue_active(wq)		((wq)->count > 0)
 
 struct completion {
@@ -912,7 +848,6 @@ typedef void *async_cookie_t;
 
 #define TASK_UNINTERRUPTIBLE	0
 #define TASK_INTERRUPTIBLE	PCATCH
-#define TASK_RUNNING		-1
 
 #define signal_pending_state(x, y) CURSIG(curproc)
 #define signal_pending(y) CURSIG(curproc)
@@ -939,7 +874,6 @@ timespec_sub(struct timespec t1, struct timespec t2)
 #define time_in_range(x, min, max) ((x) >= (min) && (x) <= (max))
 
 extern volatile unsigned long jiffies;
-#define jiffies_64 jiffies /* XXX */
 #undef HZ
 #define HZ	hz
 
@@ -1284,306 +1218,27 @@ static inline void
 prepare_to_wait(wait_queue_head_t *wq, wait_queue_head_t **wait, int state)
 {
 	if (*wait == NULL) {
-		mtx_enter(&sch_mtx);
+		mtx_enter(&wq->lock);
 		*wait = wq;
 	}
-	MUTEX_ASSERT_LOCKED(&sch_mtx);
-	sch_ident = wq;
-	sch_priority = state;
 }
 
 static inline void
 finish_wait(wait_queue_head_t *wq, wait_queue_head_t **wait)
 {
-	if (*wait) {
-		MUTEX_ASSERT_LOCKED(&sch_mtx);
-		sch_ident = NULL;
-		mtx_leave(&sch_mtx);
-	}
-}
-
-static inline void
-set_current_state(int state)
-{
-	if (sch_ident != curproc)
-		mtx_enter(&sch_mtx);
-	MUTEX_ASSERT_LOCKED(&sch_mtx);
-	sch_ident = curproc;
-	sch_priority = state;
-}
-
-static inline void
-__set_current_state(int state)
-{
-	KASSERT(state == TASK_RUNNING);
-	if (sch_ident == curproc) {
-		MUTEX_ASSERT_LOCKED(&sch_mtx);
-		sch_ident = NULL;
-		mtx_leave(&sch_mtx);
-	}
+	if (*wait)
+		mtx_leave(&wq->lock);
 }
 
 static inline long
-schedule_timeout(long timeout)
+schedule_timeout(long timeout, wait_queue_head_t **wait)
 {
-	int err;
-	long deadline;
-
 	if (cold) {
 		delay((timeout * 1000000) / hz);
-		return 0;
+		return -ETIMEDOUT;
 	}
 
-	if (timeout == MAX_SCHEDULE_TIMEOUT) {
-		err = msleep(sch_ident, &sch_mtx, sch_priority, "schto", 0);
-		sch_ident = curproc;
-		return timeout;
-	}
-
-	deadline = ticks + timeout;
-	err = msleep(sch_ident, &sch_mtx, sch_priority, "schto", timeout);
-	timeout = deadline - ticks;
-	if (timeout < 0)
-		timeout = 0;
-	sch_ident = curproc;
-	return timeout;
-}
-
-struct seq_file;
-
-static inline void
-seq_printf(struct seq_file *m, const char *fmt, ...) {};
-
-#define preempt_enable()
-#define preempt_disable()
-
-#define FENCE_TRACE(fence, fmt, args...) do {} while(0)
-
-struct fence {
-	struct kref refcount;
-	const struct fence_ops *ops;
-	unsigned long flags;
-	unsigned int context;
-	unsigned int seqno;
-	spinlock_t *lock;
-	struct list_head cb_list;
-};
-
-enum fence_flag_bits {
-	FENCE_FLAG_SIGNALED_BIT,
-	FENCE_FLAG_ENABLE_SIGNAL_BIT,
-	FENCE_FLAG_USER_BITS,
-};
-
-struct fence_ops {
-	const char * (*get_driver_name)(struct fence *);
-	const char * (*get_timeline_name)(struct fence *);
-	bool (*enable_signaling)(struct fence *);
-	bool (*signaled)(struct fence *);
-	long (*wait)(struct fence *, bool, long);
-	void (*release)(struct fence *);
-};
-
-struct fence_cb;
-typedef void (*fence_func_t)(struct fence *fence, struct fence_cb *cb);
-
-struct fence_cb {
-	struct list_head node;
-	fence_func_t func;
-};
-
-unsigned int fence_context_alloc(unsigned int);
-
-static inline struct fence *
-fence_get(struct fence *fence)
-{
-	if (fence)
-		kref_get(&fence->refcount);
-	return fence;
-}
-
-static inline struct fence *
-fence_get_rcu(struct fence *fence)
-{
-	if (fence)
-		kref_get(&fence->refcount);
-	return fence;
-}
-
-static inline void
-fence_release(struct kref *ref)
-{
-	struct fence *fence = container_of(ref, struct fence, refcount);
-	if (fence->ops && fence->ops->release)
-		fence->ops->release(fence);
-	else
-		free(fence, M_DRM, 0);
-}
-
-static inline void
-fence_put(struct fence *fence)
-{
-	if (fence)
-		kref_put(&fence->refcount, fence_release);
-}
-
-static inline int
-fence_signal(struct fence *fence)
-{
-	unsigned long flags;
-
-	if (fence == NULL)
-		return -EINVAL;
-
-	if (test_and_set_bit(FENCE_FLAG_SIGNALED_BIT, &fence->flags))
-		return -EINVAL;
-
-	if (test_bit(FENCE_FLAG_ENABLE_SIGNAL_BIT, &fence->flags)) {
-		struct fence_cb *cur, *tmp;
-
-		spin_lock_irqsave(fence->lock, flags);
-		list_for_each_entry_safe(cur, tmp, &fence->cb_list, node) {
-			list_del_init(&cur->node);
-			cur->func(fence, cur);
-		}
-		spin_unlock_irqrestore(fence->lock, flags);
-	}
-
-	return 0;
-}
-
-static inline int
-fence_signal_locked(struct fence *fence)
-{
-	struct fence_cb *cur, *tmp;
-
-	if (fence == NULL)
-		return -EINVAL;
-
-	if (test_and_set_bit(FENCE_FLAG_SIGNALED_BIT, &fence->flags))
-		return -EINVAL;
-
-	list_for_each_entry_safe(cur, tmp, &fence->cb_list, node) {
-		list_del_init(&cur->node);
-		cur->func(fence, cur);
-	}
-
-	return 0;
-}
-
-static inline bool
-fence_is_signaled(struct fence *fence)
-{
-	if (test_bit(FENCE_FLAG_SIGNALED_BIT, &fence->flags))
-		return true;
-
-	if (fence->ops->signaled && fence->ops->signaled(fence)) {
-		fence_signal(fence);
-		return true;
-	}
-
-	return false;
-}
-
-static inline long
-fence_wait_timeout(struct fence *fence, bool intr, signed long timeout)
-{
-	if (timeout < 0)
-		return -EINVAL;
-
-	if (timeout == 0)
-		return fence_is_signaled(fence);
-
-	return fence->ops->wait(fence, intr, timeout);
-}
-
-static inline long
-fence_wait(struct fence *fence, bool intr)
-{
-	return fence_wait_timeout(fence, intr, MAX_SCHEDULE_TIMEOUT);
-}
-
-static inline void
-fence_enable_sw_signaling(struct fence *fence)
-{
-	unsigned long flags;
-
-	if (!test_and_set_bit(FENCE_FLAG_ENABLE_SIGNAL_BIT, &fence->flags) &&
-	    !test_bit(FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
-		spin_lock_irqsave(fence->lock, flags);
-		if (!fence->ops->enable_signaling(fence))
-			fence_signal_locked(fence);
-		spin_unlock_irqrestore(fence->lock, flags);
-	}
-}
-
-static inline void
-fence_init(struct fence *fence, const struct fence_ops *ops,
-    spinlock_t *lock, unsigned context, unsigned seqno)
-{
-	fence->ops = ops;
-	fence->lock = lock;
-	fence->context = context;
-	fence->seqno = seqno;
-	fence->flags = 0;
-	kref_init(&fence->refcount);
-	INIT_LIST_HEAD(&fence->cb_list);
-}
-
-static inline int
-fence_add_callback(struct fence *fence, struct fence_cb *cb,
-    fence_func_t func)
-{
-	unsigned long flags;
-	int ret = 0;
-	bool was_set;
-
-	if (WARN_ON(!fence || !func))
-		return -EINVAL;
-
-	if (test_bit(FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
-		INIT_LIST_HEAD(&cb->node);
-		return -ENOENT;
-	}
-
-	spin_lock_irqsave(fence->lock, flags);
-
-	was_set = test_and_set_bit(FENCE_FLAG_ENABLE_SIGNAL_BIT, &fence->flags);
-
-	if (test_bit(FENCE_FLAG_SIGNALED_BIT, &fence->flags))
-		ret = -ENOENT;
-	else if (!was_set) {
-		if (!fence->ops->enable_signaling(fence)) {
-			fence_signal_locked(fence);
-			ret = -ENOENT;
-		}
-	}
-
-	if (!ret) {
-		cb->func = func;
-		list_add_tail(&cb->node, &fence->cb_list);
-	} else
-		INIT_LIST_HEAD(&cb->node);
-	spin_unlock_irqrestore(fence->lock, flags);
-
-	return ret;
-}
-
-static inline bool
-fence_remove_callback(struct fence *fence, struct fence_cb *cb)
-{
-	unsigned long flags;
-	bool ret;
-
-	spin_lock_irqsave(fence->lock, flags);
-
-	ret = !list_empty(&cb->node);
-	if (ret)
-		list_del_init(&cb->node);
-
-	spin_unlock_irqrestore(fence->lock, flags);
-
-	return ret;
+	return -msleep(*wait, &(*wait)->lock, PZERO, "schto", timeout);
 }
 
 struct idr_entry {
@@ -2208,55 +1863,6 @@ cpu_relax(void)
 #define cpu_relax_lowlatency() CPU_BUSY_CYCLE()
 #define cpu_has_pat	1
 #define cpu_has_clflush	1
-
-struct lock_class_key {
-};
-
-typedef struct {
-	unsigned int sequence;
-} seqcount_t;
-
-static inline void
-__seqcount_init(seqcount_t *s, const char *name,
-    struct lock_class_key *key)
-{
-	s->sequence = 0;
-}
-
-static inline unsigned int
-read_seqcount_begin(const seqcount_t *s)
-{
-	unsigned int r;
-	for (;;) {
-		r = s->sequence;
-		if ((r & 1) == 0)
-			break;
-		cpu_relax();
-	}
-	membar_consumer();
-	return r;
-}
-
-static inline int
-read_seqcount_retry(const seqcount_t *s, unsigned start)
-{
-	membar_consumer();
-	return (s->sequence != start);
-}
-
-static inline void
-write_seqcount_begin(seqcount_t *s)
-{
-	s->sequence++;
-	membar_producer();
-}
-
-static inline void
-write_seqcount_end(seqcount_t *s)
-{
-	membar_producer();
-	s->sequence++;
-}
 
 static inline uint32_t ror32(uint32_t word, unsigned int shift)
 {

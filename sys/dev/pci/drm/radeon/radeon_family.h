@@ -1,3 +1,4 @@
+/*	$OpenBSD: radeon_family.h,v 1.3 2018/04/20 16:09:37 deraadt Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -91,13 +92,6 @@ enum radeon_family {
 	CHIP_TAHITI,
 	CHIP_PITCAIRN,
 	CHIP_VERDE,
-	CHIP_OLAND,
-	CHIP_HAINAN,
-	CHIP_BONAIRE,
-	CHIP_KAVERI,
-	CHIP_KABINI,
-	CHIP_HAWAII,
-	CHIP_MULLINS,
 	CHIP_LAST,
 };
 
@@ -116,7 +110,6 @@ enum radeon_chip_flags {
 	RADEON_NEW_MEMMAP = 0x00400000UL,
 	RADEON_IS_PCI = 0x00800000UL,
 	RADEON_IS_IGPGART = 0x01000000UL,
-	RADEON_IS_PX = 0x02000000UL,
 };
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.41 2018/04/20 16:06:04 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.42 2018/04/20 16:09:36 deraadt Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -255,21 +255,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 #if NEFIFB > 0
 	if (bios_efiinfo != NULL || efifb_cb_found()) {
-		mba.mba_eaa.eaa_name = "efifb";
-		config_found(self, &mba, mainbus_print);
-	}
-#endif
-}
-
-void
-mainbus_efifb_reattach(void)
-{
-#if NEFIFB > 0
-	union mainbus_attach_args mba;
-	struct device *self = device_mainbus();
-
-	if (bios_efiinfo != NULL || efifb_cb_found()) {
-		efifb_cnreattach();
 		mba.mba_eaa.eaa_name = "efifb";
 		config_found(self, &mba, mainbus_print);
 	}

@@ -1925,7 +1925,6 @@ int	inteldrm_list_font(void *, struct wsdisplay_font *);
 int	inteldrm_getchar(void *, int, int, struct wsdisplay_charcell *);
 void	inteldrm_burner(void *, u_int, u_int);
 void	inteldrm_burner_cb(void *);
-void	inteldrm_scrollback(void *, void *, int lines);
 
 struct wsscreen_descr inteldrm_stdscreen = {
 	"std",
@@ -1954,7 +1953,6 @@ struct wsdisplay_accessops inteldrm_accessops = {
 	.getchar = inteldrm_getchar,
 	.load_font = inteldrm_load_font,
 	.list_font = inteldrm_list_font,
-	.scrollback = inteldrm_scrollback,
 	.burn_screen = inteldrm_burner
 };
 
@@ -2175,15 +2173,6 @@ const struct backlight_ops inteldrm_backlight_ops = {
 	.update_status = inteldrm_backlight_update_status,
 	.get_brightness = inteldrm_backlight_get_brightness
 };
-
-void
-inteldrm_scrollback(void *v, void *cookie, int lines)
-{
-	struct inteldrm_softc *dev_priv = v;
-	struct rasops_info *ri = &dev_priv->ro;
-
-	rasops_scrollback(ri, cookie, lines);
-}
 
 int	inteldrm_match(struct device *, void *, void *);
 void	inteldrm_attach(struct device *, struct device *, void *);

@@ -1,3 +1,4 @@
+/*	$OpenBSD: cayman_blit_shaders.c,v 1.3 2018/04/20 16:09:36 deraadt Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -24,13 +25,15 @@
  *     Alex Deucher <alexander.deucher@amd.com>
  */
 
-#include <dev/pci/drm/drm_linux.h>
+#include <sys/types.h>
+
+#include <dev/pci/drm/drmP.h>
 
 /*
  * evergreen cards need to use the 3D engine to blit data which requires
  * quite a bit of hw state setup.  Rather than pull the whole 3D driver
  * (which normally generates the 3D state) into the DRM, we opt to use
- * statically generated state tables.  The register state and shaders
+ * statically generated state tables.  The regsiter state and shaders
  * were hand generated to support blitting functionality.  See the 3D
  * driver or documentation for descriptions of the registers and
  * shader instructions.
@@ -315,4 +318,58 @@ const u32 cayman_default_state[] =
 	0x00000010, /*  */
 };
 
+const u32 cayman_vs[] =
+{
+	0x00000004,
+	0x80400400,
+	0x0000a03c,
+	0x95000688,
+	0x00004000,
+	0x15000688,
+	0x00000000,
+	0x88000000,
+	0x04000000,
+	0x67961001,
+#ifdef __BIG_ENDIAN
+	0x00020000,
+#else
+	0x00000000,
+#endif
+	0x00000000,
+	0x04000000,
+	0x67961000,
+#ifdef __BIG_ENDIAN
+	0x00020008,
+#else
+	0x00000008,
+#endif
+	0x00000000,
+};
+
+const u32 cayman_ps[] =
+{
+	0x00000004,
+	0xa00c0000,
+	0x00000008,
+	0x80400000,
+	0x00000000,
+	0x95000688,
+	0x00000000,
+	0x88000000,
+	0x00380400,
+	0x00146b10,
+	0x00380000,
+	0x20146b10,
+	0x00380400,
+	0x40146b00,
+	0x80380000,
+	0x60146b00,
+	0x00000010,
+	0x000d1000,
+	0xb0800000,
+	0x00000000,
+};
+
+const u32 cayman_ps_size = ARRAY_SIZE(cayman_ps);
+const u32 cayman_vs_size = ARRAY_SIZE(cayman_vs);
 const u32 cayman_default_size = ARRAY_SIZE(cayman_default_state);

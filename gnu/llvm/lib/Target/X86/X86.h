@@ -21,11 +21,6 @@ namespace llvm {
 
 class FunctionPass;
 class ImmutablePass;
-class InstructionSelector;
-class ModulePass;
-class PassRegistry;
-class X86RegisterBankInfo;
-class X86Subtarget;
 class X86TargetMachine;
 
 /// This pass converts a legalized DAG into a X86-specific DAG, ready for
@@ -63,12 +58,6 @@ FunctionPass *createX86FixupLEAs();
 /// recalculations.
 FunctionPass *createX86OptimizeLEAs();
 
-/// Return a pass that transforms setcc + movzx pairs into xor + setcc.
-FunctionPass *createX86FixupSetCC();
-
-/// Return a pass that expands WinAlloca pseudo-instructions.
-FunctionPass *createX86WinAllocaExpander();
-
 /// Return a pass that optimizes the code-size of x86 call sequences. This is
 /// done by replacing esp-relative movs with pushes.
 FunctionPass *createX86CallFrameOptimization();
@@ -83,39 +72,6 @@ FunctionPass *createX86WinEHStatePass();
 /// must run after prologue/epilogue insertion and before lowering
 /// the MachineInstr to MC.
 FunctionPass *createX86ExpandPseudoPass();
-
-/// This pass converts X86 cmov instructions into branch when profitable.
-FunctionPass *createX86CmovConverterPass();
-
-/// Return a Machine IR pass that selectively replaces
-/// certain byte and word instructions by equivalent 32 bit instructions,
-/// in order to eliminate partial register usage, false dependences on
-/// the upper portions of registers, and to save code size.
-FunctionPass *createX86FixupBWInsts();
-
-/// Return a Machine IR pass that reassigns instruction chains from one domain
-/// to another, when profitable.
-FunctionPass *createX86DomainReassignmentPass();
-
-void initializeFixupBWInstPassPass(PassRegistry &);
-
-/// Return a Machine Function pass that attempts to replace
-/// ROP friendly instructions with alternatives.
-FunctionPass *createX86FixupGadgetsPass();
-
-/// This pass replaces EVEX encoded of AVX-512 instructiosn by VEX
-/// encoding when possible in order to reduce code size.
-FunctionPass *createX86EvexToVexInsts();
-
-/// This pass creates the thunks for the retpoline feature.
-FunctionPass *createX86RetpolineThunksPass();
-
-InstructionSelector *createX86InstructionSelector(const X86TargetMachine &TM,
-                                                  X86Subtarget &,
-                                                  X86RegisterBankInfo &);
-
-void initializeEvexToVexInstPassPass(PassRegistry &);
-
 } // End llvm namespace
 
 #endif

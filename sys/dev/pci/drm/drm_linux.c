@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.21 2018/04/20 16:06:05 deraadt Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.22 2018/04/20 16:09:36 deraadt Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -19,10 +19,6 @@
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/ppbreg.h>
 #include <sys/event.h>
-
-struct mutex sch_mtx = MUTEX_INITIALIZER(IPL_SCHED);
-void *sch_ident;
-int sch_priority;
 
 void
 flush_barrier(void *arg)
@@ -83,7 +79,7 @@ flush_delayed_work(struct delayed_work *dwork)
 		tsleep(&barrier, PWAIT, "fldwto", 1);
 
 	task_set(&task, flush_barrier, &barrier);
-	task_add(dwork->tq ? dwork->tq : systq, &task);
+	task_add(dwork->tq, &task);
 	while (!barrier) {
 		sleep_setup(&sls, &barrier, PWAIT, "fldwbar");
 		sleep_finish(&sls, !barrier);
@@ -794,12 +790,4 @@ void
 drm_sysfs_hotplug_event(struct drm_device *dev)
 {
 	KNOTE(&dev->note, NOTE_CHANGE);
-}
-
-unsigned int drm_fence_count;
-
-unsigned int
-fence_context_alloc(unsigned int num)
-{
-	return __sync_add_and_fetch(&drm_fence_count, num) - num;
 }

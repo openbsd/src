@@ -47,32 +47,34 @@ static char *pre_emph_names[] = {
 
 /***** radeon AUX functions *****/
 
-/* Atom needs data in little endian format so swap as appropriate when copying
- * data to or from atom. Note that atom operates on dw units.
- *
- * Use to_le=true when sending data to atom and provide at least
- * ALIGN(num_bytes,4) bytes in the dst buffer.
- *
- * Use to_le=false when receiving data from atom and provide ALIGN(num_bytes,4)
- * byes in the src buffer.
+/* Atom needs data in little endian format
+ * so swap as appropriate when copying data to
+ * or from atom. Note that atom operates on
+ * dw units.
  */
 void radeon_atom_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le)
 {
 #ifdef __BIG_ENDIAN
-	u32 src_tmp[5], dst_tmp[5];
+	u8 src_tmp[20], dst_tmp[20]; /* used for byteswapping */
+	u32 *dst32, *src32;
 	int i;
-	u8 align_num_bytes = roundup2(num_bytes, 4);
 
+	memcpy(src_tmp, src, num_bytes);
+	src32 = (u32 *)src_tmp;
+	dst32 = (u32 *)dst_tmp;
 	if (to_le) {
-		memcpy(src_tmp, src, num_bytes);
-		for (i = 0; i < align_num_bytes / 4; i++)
-			dst_tmp[i] = cpu_to_le32(src_tmp[i]);
-		memcpy(dst, dst_tmp, align_num_bytes);
-	} else {
-		memcpy(src_tmp, src, align_num_bytes);
-		for (i = 0; i < align_num_bytes / 4; i++)
-			dst_tmp[i] = le32_to_cpu(src_tmp[i]);
+		for (i = 0; i < ((num_bytes + 3) / 4); i++)
+			dst32[i] = cpu_to_le32(src32[i]);
 		memcpy(dst, dst_tmp, num_bytes);
+	} else {
+		u8 dws = num_bytes & ~3;
+		for (i = 0; i < ((num_bytes + 3) / 4); i++)
+			dst32[i] = le32_to_cpu(src32[i]);
+		memcpy(dst, dst_tmp, dws);
+		if (num_bytes % 4) {
+			for (i = 0; i < (num_bytes % 4); i++)
+				dst[dws+i] = dst_tmp[dws+i];
+		}
 	}
 #else
 	memcpy(dst, src, num_bytes);
@@ -99,9 +101,6 @@ static int radeon_process_aux_ch(struct radeon_i2c_chan *chan,
 
 	memset(&args, 0, sizeof(args));
 
-	mutex_lock(&chan->mutex);
-	mutex_lock(&rdev->mode_info.atom_context->scratch_mutex);
-
 	base = (unsigned char *)(rdev->mode_info.atom_context->scratch + 1);
 
 	radeon_atom_copy_swap(base, send, send_bytes, true);
@@ -114,7 +113,7 @@ static int radeon_process_aux_ch(struct radeon_i2c_chan *chan,
 	if (ASIC_IS_DCE4(rdev))
 		args.v2.ucHPD_ID = chan->rec.hpd;
 
-	atom_execute_table_scratch_unlocked(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
 
 	*ack = args.v1.ucReplyStatus;
 
@@ -148,9 +147,6 @@ static int radeon_process_aux_ch(struct radeon_i2c_chan *chan,
 
 	r = recv_bytes;
 done:
-	mutex_unlock(&rdev->mode_info.atom_context->scratch_mutex);
-	mutex_unlock(&chan->mutex);
-
 	return r;
 }
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: radeon_legacy_encoders.c,v 1.8 2018/04/20 16:09:37 deraadt Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -28,9 +29,6 @@
 #include <dev/pci/drm/radeon_drm.h>
 #include "radeon.h"
 #include "atom.h"
-#ifdef CONFIG_PMAC_BACKLIGHT
-#include <asm/backlight.h>
-#endif
 
 static void radeon_legacy_encoder_disable(struct drm_encoder *encoder)
 {
@@ -389,14 +387,11 @@ void radeon_legacy_backlight_init(struct radeon_encoder *radeon_encoder,
 	memset(&props, 0, sizeof(props));
 	props.max_brightness = RADEON_MAX_BL_LEVEL;
 	props.type = BACKLIGHT_RAW;
-#ifdef notyet
+#ifdef __linux__
 	snprintf(bl_name, sizeof(bl_name),
 		 "radeon_bl%d", dev->primary->index);
-#else
-	snprintf(bl_name, sizeof(bl_name),
-		 "radeon_bl%d", 0);
 #endif
-	bd = backlight_device_register(bl_name, drm_connector->kdev,
+	bd = backlight_device_register(bl_name, &drm_connector->kdev,
 				       pdata, &radeon_backlight_ops, &props);
 	if (IS_ERR(bd)) {
 		DRM_ERROR("Backlight registration failed\n");
@@ -445,7 +440,6 @@ void radeon_legacy_backlight_init(struct radeon_encoder *radeon_encoder,
 	backlight_update_status(bd);
 
 	DRM_INFO("radeon legacy LVDS backlight initialized\n");
-	rdev->mode_info.bl_encoder = radeon_encoder;
 
 	return;
 

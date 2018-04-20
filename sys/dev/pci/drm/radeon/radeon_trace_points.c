@@ -1,3 +1,5 @@
+/*	$OpenBSD: radeon_trace_points.c,v 1.3 2018/04/20 16:09:37 deraadt Exp $	*/
+
 /* Copyright Red Hat Inc 2010.
  * Author : Dave Airlie <airlied@redhat.com>
  */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: rs690d.h,v 1.3 2018/04/20 16:09:37 deraadt Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -29,9 +30,6 @@
 #define __RS690D_H__
 
 /* Registers */
-#define R_00001E_K8_FB_LOCATION                      0x00001E
-#define R_00005F_MC_MISC_UMA_CNTL                    0x00005F
-#define   G_00005F_K8_ADDR_EXT(x)                      (((x) >> 0) & 0xFF)
 #define R_000078_MC_INDEX                            0x000078
 #define   S_000078_MC_IND_ADDR(x)                      (((x) & 0x1FF) << 0)
 #define   G_000078_MC_IND_ADDR(x)                      (((x) >> 0) & 0x1FF)

@@ -1,3 +1,4 @@
+/*	$OpenBSD: radeon_irq_kms.c,v 1.12 2018/04/20 16:09:37 deraadt Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -32,13 +33,12 @@
 #include "radeon.h"
 #include "atom.h"
 
-
 #define RADEON_WAIT_IDLE_TIMEOUT 200
 
 /**
  * radeon_driver_irq_handler_kms - irq handler for KMS
  *
- * @int irq, void *arg: args
+ * @DRM_IRQ_ARGS: args
  *
  * This is the irq handler for the radeon KMS driver (all asics).
  * radeon_irq_process is a macro that points to the per-asic
@@ -46,17 +46,13 @@
  */
 irqreturn_t radeon_driver_irq_handler_kms(void *arg)
 {
-	struct drm_device *dev = (struct drm_device *) arg;
+	struct drm_device *dev = arg;
 	struct radeon_device *rdev = dev->dev_private;
-	irqreturn_t ret;
 
 	if (!rdev->irq.installed)
-		return 0;
+		return (0);
 
-	ret = radeon_irq_process(rdev);
-	if (ret == IRQ_HANDLED)
-		pm_runtime_mark_last_busy(dev->dev);
-	return ret;
+	return radeon_irq_process(rdev);
 }
 
 /*
@@ -73,43 +69,21 @@ irqreturn_t radeon_driver_irq_handler_kms(void *arg)
  * and calls the hotplug handler for each one, then sends
  * a drm hotplug event to alert userspace.
  */
-static void radeon_hotplug_work_func(struct work_struct *work)
+static void radeon_hotplug_work_func(void *arg1)
 {
-	struct radeon_device *rdev = container_of(work, struct radeon_device,
-						  hotplug_work.work);
+	struct radeon_device *rdev = arg1;
 	struct drm_device *dev = rdev->ddev;
 	struct drm_mode_config *mode_config = &dev->mode_config;
 	struct drm_connector *connector;
 
-	/* we can race here at startup, some boards seem to trigger
-	 * hotplug irqs when they shouldn't. */
-	if (!rdev->mode_info.mode_config_initialized)
-		return;
-
-	mutex_lock(&mode_config->mutex);
 	if (mode_config->num_connector) {
 		list_for_each_entry(connector, &mode_config->connector_list, head)
 			radeon_connector_hotplug(connector);
 	}
-	mutex_unlock(&mode_config->mutex);
 	/* Just fire off a uevent and let userspace tell us what to do */
 	drm_helper_hpd_irq_event(dev);
 }
 
-static void radeon_dp_work_func(struct work_struct *work)
-{
-	struct radeon_device *rdev = container_of(work, struct radeon_device,
-						  dp_work);
-	struct drm_device *dev = rdev->ddev;
-	struct drm_mode_config *mode_config = &dev->mode_config;
-	struct drm_connector *connector;
-
-	/* this should take a mutex */
-	if (mode_config->num_connector) {
-		list_for_each_entry(connector, &mode_config->connector_list, head)
-			radeon_connector_hotplug(connector);
-	}
-}
 /**
  * radeon_driver_irq_preinstall_kms - drm irq preinstall callback
  *
@@ -128,7 +102,6 @@ void radeon_driver_irq_preinstall_kms(struct drm_device *dev)
 	/* Disable *all* interrupts */
 	for (i = 0; i < RADEON_NUM_RINGS; i++)
 		atomic_set(&rdev->irq.ring_int[i], 0);
-	rdev->irq.dpm_thermal = false;
 	for (i = 0; i < RADEON_MAX_HPD_PINS; i++)
 		rdev->irq.hpd[i] = false;
 	for (i = 0; i < RADEON_MAX_CRTCS; i++) {
@@ -152,13 +125,7 @@ void radeon_driver_irq_preinstall_kms(struct drm_device *dev)
  */
 int radeon_driver_irq_postinstall_kms(struct drm_device *dev)
 {
-	struct radeon_device *rdev = dev->dev_private;
-
-	if (ASIC_IS_AVIVO(rdev))
-		dev->max_vblank_count = 0x00ffffff;
-	else
-		dev->max_vblank_count = 0x001fffff;
-
+	dev->max_vblank_count = 0x001fffff;
 	return 0;
 }
 
@@ -182,7 +149,6 @@ void radeon_driver_irq_uninstall_kms(struct drm_device *dev)
 	/* Disable *all* interrupts */
 	for (i = 0; i < RADEON_NUM_RINGS; i++)
 		atomic_set(&rdev->irq.ring_int[i], 0);
-	rdev->irq.dpm_thermal = false;
 	for (i = 0; i < RADEON_MAX_HPD_PINS; i++)
 		rdev->irq.hpd[i] = false;
 	for (i = 0; i < RADEON_MAX_CRTCS; i++) {
@@ -213,18 +179,6 @@ bool radeon_msi_ok(struct radeon_device *rdev)
 	/* MSIs don't work on AGP */
 	if (rdev->flags & RADEON_IS_AGP)
 		return false;
-
-	/*
-	 * Older chips have a HW limitation, they can only generate 40 bits
-	 * of address for "64-bit" MSIs which breaks on some platforms, notably
-	 * IBM POWER servers, so we limit them
-	 */
-#ifdef notyet
-	if (rdev->family < CHIP_BONAIRE) {
-		dev_info(rdev->dev, "radeon: MSI limited to 32-bit\n");
-		rdev->pdev->no_64bit_msi = 1;
-	}
-#endif
 
 	/* force MSI on */
 	if (radeon_msi == 1)
@@ -290,6 +244,9 @@ int radeon_irq_kms_init(struct radeon_device *rdev)
 {
 	int r = 0;
 
+	task_set(&rdev->hotplug_task, radeon_hotplug_work_func, rdev);
+	task_set(&rdev->audio_task, r600_audio_update_hdmi, rdev);
+
 	mtx_init(&rdev->irq.lock, IPL_TTY);
 	r = drm_vblank_init(rdev->ddev, rdev->num_crtc);
 	if (r) {
@@ -307,25 +264,18 @@ int radeon_irq_kms_init(struct radeon_device *rdev)
 		}
 	}
 #endif
-
-	INIT_DELAYED_WORK(&rdev->hotplug_work, radeon_hotplug_work_func);
-	INIT_WORK(&rdev->dp_work, radeon_dp_work_func);
-	INIT_WORK(&rdev->audio_work, r600_audio_update_hdmi);
-
 	rdev->irq.installed = true;
 	r = drm_irq_install(rdev->ddev, rdev->ddev->pdev->irq);
 	if (r) {
 		rdev->irq.installed = false;
-		flush_delayed_work(&rdev->hotplug_work);
 		return r;
 	}
-
 	DRM_INFO("radeon: irq initialized.\n");
 	return 0;
 }
 
 /**
- * radeon_irq_kms_fini - tear down driver interrupt info
+ * radeon_irq_kms_fini - tear down driver interrrupt info
  *
  * @rdev: radeon device pointer
  *
@@ -337,10 +287,14 @@ void radeon_irq_kms_fini(struct radeon_device *rdev)
 	if (rdev->irq.installed) {
 		drm_irq_uninstall(rdev->ddev);
 		rdev->irq.installed = false;
+#ifdef notyet
 		if (rdev->msi_enabled)
 			pci_disable_msi(rdev->pdev);
-		flush_delayed_work(&rdev->hotplug_work);
+#endif
 	}
+#ifdef notyet
+	flush_work(&rdev->hotplug_work);
+#endif
 }
 
 /**
@@ -365,21 +319,6 @@ void radeon_irq_kms_sw_irq_get(struct radeon_device *rdev, int ring)
 		radeon_irq_set(rdev);
 		spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
 	}
-}
-
-/**
- * radeon_irq_kms_sw_irq_get_delayed - enable software interrupt
- *
- * @rdev: radeon device pointer
- * @ring: ring whose interrupt you want to enable
- *
- * Enables the software interrupt for a specific ring (all asics).
- * The software interrupt is generally used to signal a fence on
- * a particular ring.
- */
-bool radeon_irq_kms_sw_irq_get_delayed(struct radeon_device *rdev, int ring)
-{
-	return atomic_inc_return(&rdev->irq.ring_int[ring]) == 1;
 }
 
 /**

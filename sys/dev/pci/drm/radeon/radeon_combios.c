@@ -1,3 +1,4 @@
+/*	$OpenBSD: radeon_combios.c,v 1.13 2018/04/20 16:09:37 deraadt Exp $	*/
 /*
  * Copyright 2004 ATI Technologies Inc., Markham, Ontario
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -29,13 +30,21 @@
 #include "radeon.h"
 #include "atom.h"
 
-#ifdef CONFIG_PPC_PMAC
-/* not sure which of these are needed */
-#include <asm/machdep.h>
-#include <asm/pmac_feature.h>
-#include <asm/prom.h>
-#include <asm/pci-bridge.h>
-#endif /* CONFIG_PPC_PMAC */
+/* from radeon_encoder.c */
+extern uint32_t
+radeon_get_encoder_enum(struct drm_device *dev, uint32_t supported_device,
+			uint8_t dac);
+extern void radeon_link_encoder_connector(struct drm_device *dev);
+
+/* from radeon_connector.c */
+extern void
+radeon_add_legacy_connector(struct drm_device *dev,
+			    uint32_t connector_id,
+			    uint32_t supported_device,
+			    int connector_type,
+			    struct radeon_i2c_bus_rec *i2c_bus,
+			    uint16_t connector_object_id,
+			    struct radeon_hpd *hpd);
 
 /* from radeon_legacy_encoder.c */
 extern void
@@ -116,7 +125,7 @@ enum radeon_combios_connector {
 	CONNECTOR_UNSUPPORTED_LEGACY
 };
 
-static const int legacy_connector_convert[] = {
+const int legacy_connector_convert[] = {
 	DRM_MODE_CONNECTOR_Unknown,
 	DRM_MODE_CONNECTOR_DVID,
 	DRM_MODE_CONNECTOR_VGA,
@@ -355,13 +364,11 @@ static uint16_t combios_get_table_offset(struct drm_device *dev,
 		}
 		break;
 	default:
-		check_offset = 0;
 		break;
 	}
 
 	size = RBIOS8(rdev->bios_header_start + 0x6);
-	/* check absolute offset tables */
-	if (table < COMBIOS_ASIC_INIT_3_TABLE && check_offset && check_offset < size)
+	if (table < COMBIOS_ASIC_INIT_3_TABLE && check_offset < size)
 		offset = RBIOS16(rdev->bios_header_start + check_offset);
 
 	return offset;
@@ -414,9 +421,9 @@ radeon_bios_get_hardcoded_edid(struct radeon_device *rdev)
 
 #ifdef __clang__
 static inline struct radeon_i2c_bus_rec combios_setup_i2c_bus(struct radeon_device *rdev,
-						       enum radeon_combios_ddc ddc,
-						       u32 clk_mask,
-						       u32 data_mask)
+							      enum radeon_combios_ddc ddc,
+							      u32 clk_mask,
+							      u32 data_mask)
 #else
 static struct radeon_i2c_bus_rec combios_setup_i2c_bus(struct radeon_device *rdev,
 						       enum radeon_combios_ddc ddc,
@@ -1262,15 +1269,10 @@ struct radeon_encoder_lvds *radeon_combios_get_lvds_info(struct radeon_encoder
 
 			if ((RBIOS16(tmp) == lvds->native_mode.hdisplay) &&
 			    (RBIOS16(tmp + 2) == lvds->native_mode.vdisplay)) {
-				u32 hss = (RBIOS16(tmp + 21) - RBIOS16(tmp + 19) - 1) * 8;
-
-				if (hss > lvds->native_mode.hdisplay)
-					hss = (10 - 1) * 8;
-
 				lvds->native_mode.htotal = lvds->native_mode.hdisplay +
 					(RBIOS16(tmp + 17) - RBIOS16(tmp + 19)) * 8;
 				lvds->native_mode.hsync_start = lvds->native_mode.hdisplay +
-					hss;
+					(RBIOS16(tmp + 21) - RBIOS16(tmp + 19) - 1) * 8;
 				lvds->native_mode.hsync_end = lvds->native_mode.hsync_start +
 					(RBIOS8(tmp + 23) * 8);
 
@@ -3399,21 +3401,6 @@ void radeon_combios_asic_init(struct drm_device *dev)
 	    rdev->pdev->subsystem_vendor == 0x103c &&
 	    rdev->pdev->subsystem_device == 0x30ae)
 		return;
-
-	/* quirk for rs4xx HP Compaq dc5750 Small Form Factor to make it resume
-	 * - it hangs on resume inside the dynclk 1 table.
-	 */
-	if (rdev->family == CHIP_RS480 &&
-	    rdev->pdev->subsystem_vendor == 0x103c &&
-	    rdev->pdev->subsystem_device == 0x280a)
-		return;
-	/* quirk for rs4xx Toshiba Sattellite L20-183 latop to make it resume
-	 * - it hangs on resume inside the dynclk 1 table.
-	 */
-	if (rdev->family == CHIP_RS400 &&
-	    rdev->pdev->subsystem_vendor == 0x1179 &&
-	    rdev->pdev->subsystem_device == 0xff31)
-	        return;
 
 	/* DYN CLK 1 */
 	table = combios_get_table_offset(dev, COMBIOS_DYN_CLK_1_TABLE);

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ttm_page_alloc.h,v 1.3 2018/04/20 16:09:37 deraadt Exp $	*/
 /*
  * Copyright (c) Red Hat Inc.
 
@@ -29,8 +30,6 @@
 #include <dev/pci/drm/ttm/ttm_bo_driver.h>
 #include <dev/pci/drm/ttm/ttm_memory.h>
 
-struct device;
-
 /**
  * Initialize pool allocator.
  */
@@ -61,10 +60,12 @@ extern void ttm_pool_unpopulate(struct ttm_tt *ttm);
 /**
  * Output the state of pools to debugfs file
  */
+#ifdef notyet
 extern int ttm_page_alloc_debugfs(struct seq_file *m, void *data);
+#endif
 
 
-#if defined(CONFIG_SWIOTLB) || defined(CONFIG_INTEL_IOMMU)
+#ifdef CONFIG_SWIOTLB
 /**
  * Initialize pool allocator.
  */
@@ -92,19 +93,12 @@ static inline int ttm_dma_page_alloc_init(struct ttm_mem_global *glob,
 
 static inline void ttm_dma_page_alloc_fini(void) { return; }
 
+#ifdef notyet
 static inline int ttm_dma_page_alloc_debugfs(struct seq_file *m, void *data)
 {
 	return 0;
 }
-static inline int ttm_dma_populate(struct ttm_dma_tt *ttm_dma,
-				   struct device *dev)
-{
-	return -ENOMEM;
-}
-static inline void ttm_dma_unpopulate(struct ttm_dma_tt *ttm_dma,
-				      struct device *dev)
-{
-}
+#endif
 #endif
 
 #endif

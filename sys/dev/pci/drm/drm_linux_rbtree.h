@@ -60,10 +60,8 @@ RB_PROTOTYPE(linux_root, rb_node, __entry, panic_cmp);
 #define	rb_set_parent(r, p)	rb_parent((r)) = (p)
 #define	rb_set_color(r, c)	rb_color((r)) = (c)
 #define	rb_entry(ptr, type, member)	container_of(ptr, type, member)
-#define	rb_entry_safe(ptr, type, member) \
-	(ptr ? rb_entry(ptr, type, member) : NULL)
 
-#define RB_EMPTY_ROOT(root)	((root)->rb_node == NULL)
+#define RB_EMPTY_ROOT(root)     RB_EMPTY((struct linux_root *)root)
 #define RB_EMPTY_NODE(node)     (rb_parent(node) == node)
 #define RB_CLEAR_NODE(node)     (rb_set_parent(node, node))
 
@@ -75,12 +73,6 @@ RB_PROTOTYPE(linux_root, rb_node, __entry, panic_cmp);
 #define	rb_prev(node)	RB_PREV(linux_root, NULL, (node))
 #define	rb_first(root)	RB_MIN(linux_root, (struct linux_root *)(root))
 #define	rb_last(root)	RB_MAX(linux_root, (struct linux_root *)(root))
-#define	rbtree_postorder_for_each_entry_safe(x, y, head, member)			\
-	for ((x) = rb_entry_safe(RB_MIN(linux_root, (struct linux_root *)head),		\
-	    __typeof(*x), member);							\
-	    ((x) != NULL) && ({(y) =							\
-	     rb_entry_safe(linux_root_RB_NEXT(&x->member), typeof(*x), member); 1; });	\
-	    (x) = (y))
 
 static inline void
 rb_link_node(struct rb_node *node, struct rb_node *parent,
@@ -115,37 +107,5 @@ rb_replace_node(struct rb_node *victim, struct rb_node *new,
 
 #undef RB_ROOT
 #define RB_ROOT		(struct rb_root) { NULL }
-
-struct interval_tree_node {
-	struct rb_node rb;
-	unsigned long start;
-	unsigned long last;
-};
-
-static inline struct interval_tree_node *
-interval_tree_iter_first(struct rb_root *root,
-    unsigned long start, unsigned long last)
-{
-#ifdef DRMDEBUG
-	printf("%s: stub start: 0x%lx last: 0x%lx\n", __func__, start, last);
-#endif
-	return NULL;
-}
-
-static inline void
-interval_tree_insert(struct interval_tree_node *node, struct rb_root *root)
-{
-#ifdef DRMDEBUG
-	printf("%s: stub start: 0x%lx last: 0x%lx\n", __func__, node->start, node->last);
-#endif
-}
-
-static inline void
-interval_tree_remove(struct interval_tree_node *node, struct rb_root *root)
-{
-#ifdef DRMDEBUG
-	printf("%s: stub start: 0x%lx last: 0x%lx\n", __func__, node->start, node->last);
-#endif
-}
 
 #endif	/* _LINUX_RBTREE_H_ */

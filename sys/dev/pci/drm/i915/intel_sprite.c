@@ -128,7 +128,7 @@ void intel_pipe_update_start(struct intel_crtc *crtc)
 
 		local_irq_enable();
 
-		timeout = schedule_timeout(timeout);
+		timeout = schedule_timeout(timeout, &wait);
 
 		local_irq_disable();
 	}

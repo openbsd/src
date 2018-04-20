@@ -1,3 +1,4 @@
+/*	$OpenBSD: r600_reg.h,v 1.3 2018/04/20 16:09:37 deraadt Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -30,12 +31,6 @@
 
 #define R600_PCIE_PORT_INDEX                0x0038
 #define R600_PCIE_PORT_DATA                 0x003c
-
-#define R600_RCU_INDEX                      0x0100
-#define R600_RCU_DATA                       0x0104
-
-#define R600_UVD_CTX_INDEX                  0xf4a0
-#define R600_UVD_CTX_DATA                   0xf4a4
 
 #define R600_MC_VM_FB_LOCATION			0x2180
 #define		R600_MC_FB_BASE_MASK			0x0000FFFF
