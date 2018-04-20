@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1843 2018/04/14 20:27:17 jcs Exp 
+ *	OpenBSD: pcidevs,v 1.1844 2018/04/20 04:34:11 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -724,6 +724,8 @@
 #define	PCI_PRODUCT_AMD_AMD64_15_1x_PCIE_7	0x1418		/* AMD64 15/1xh PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_15_1x_IOMMU	0x1419		/* AMD64 15/1xh IOMMU */
 #define	PCI_PRODUCT_AMD_AMD64_16_PCIE	0x1439		/* AMD64 16h PCIE */
+#define	PCI_PRODUCT_AMD_CCPV5A	0x1456		/* Cryptographic Co-processor v5a */
+#define	PCI_PRODUCT_AMD_CCPV5B	0x1468		/* Cryptographic Co-processor v5b */
 #define	PCI_PRODUCT_AMD_AMD64_14_HB	0x1510		/* AMD64 14h Host */
 #define	PCI_PRODUCT_AMD_AMD64_14_PCIE_1	0x1512		/* AMD64 14h PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_14_PCIE_2	0x1513		/* AMD64 14h PCIE */
@@ -736,7 +738,7 @@
 #define	PCI_PRODUCT_AMD_AMD64_16_MISC	0x1533		/* AMD64 16h Misc Cfg */
 #define	PCI_PRODUCT_AMD_AMD64_16_CPU_PM	0x1534		/* AMD64 16h CPU Power */
 #define	PCI_PRODUCT_AMD_AMD64_16_HB	0x1536		/* AMD64 16h Host */
-#define	PCI_PRODUCT_AMD_CCP	0x1537		/* CCP */
+#define	PCI_PRODUCT_AMD_CCPV3	0x1537		/* Cryptographic Co-processor v3 */
 #define	PCI_PRODUCT_AMD_AMD64_16_3X_RC	0x1566		/* AMD64 16h Root Complex */
 #define	PCI_PRODUCT_AMD_AMD64_16_3X_HB	0x156b		/* AMD64 16h Host */
 #define	PCI_PRODUCT_AMD_AMD64_15_6X_LINK	0x1570		/* AMD64 15h Link Cfg */

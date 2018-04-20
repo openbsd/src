@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1843 2018/04/14 20:27:17 jcs Exp 
+ *	OpenBSD: pcidevs,v 1.1844 2018/04/20 04:34:11 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1232,6 +1232,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AMD64 16h PCIE",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CCPV5A,
+	    "Cryptographic Co-processor v5a",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CCPV5B,
+	    "Cryptographic Co-processor v5b",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_14_HB,
 	    "AMD64 14h Host",
 	},
@@ -1280,8 +1288,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AMD64 16h Host",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CCP,
-	    "CCP",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CCPV3,
+	    "Cryptographic Co-processor v3",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_3X_RC,
