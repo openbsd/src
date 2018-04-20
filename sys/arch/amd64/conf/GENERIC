@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.452 2018/03/27 21:11:16 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.453 2018/04/20 04:39:37 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -98,6 +98,7 @@ kate*	at pci?			# AMD K8 temperature sensor
 km*	at pci?			# AMD K10 temperature sensor
 amas*	at pci? disable		# AMD memory configuration
 pchtemp* at pci?		# Intel C610 termperature sensor
+ccp*	at pci?			# AMD Cryptographic Co-processor
 
 # National Semiconductor LM7[89] and compatible hardware monitors
 lm0	at isa? port 0x290
