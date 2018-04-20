@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.71 2018/03/12 00:42:50 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.72 2018/04/20 22:55:53 bentley Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 12 2018 $
+.Dd $Mdocdate: April 20 2018 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ Point-to-multipoint Layer 3 tunnel interfaces.
 .It Nm egre
 Point-to-point Ethernet tunnel interfaces.
 .It Nm nvgre
-Network Virtualization Using Generic Routing Encapsulation
+Network Virtualization using Generic Routing Encapsulation
 (NVGRE) overlay Ethernet network interfaces.
 .El
 .Pp
@@ -143,7 +143,7 @@ tunnel interface carries Ethernet over GRE (EoGRE).
 Ethernet traffic is encapsulated using Transparent Ethernet (0x6558)
 as the protocol identifier in the GRE header, as per RFC 1701.
 The MTU is set to 1500 by default.
-.Ss Network Virtualization Using GRE interfaces (nvgre)
+.Ss Network Virtualization using GRE interfaces (nvgre)
 .Nm nvgre
 interfaces allow construction of virtual overlay Ethernet networks
 on top of an IPv4 or IPv6 underlay network as per RFC 7367.
@@ -352,8 +352,7 @@ value to restrict the traffic to the local network:
 # ifconfig gre0 tunnelttl 1
 .Ed
 .Sh EXAMPLES
-.Ss Point-to-Point Layer 3 GRE tunnel interfaces (gre)
-Configuration example:
+.Ss Point-to-Point Layer 3 GRE tunnel interfaces (gre) example
 .Bd -literal
 Host X ---- Host A ------------ tunnel ------------ Cisco D ---- Host E
                \e                                      /
@@ -434,7 +433,7 @@ In most cases the following should work:
 .Bd -literal -offset indent
 pass quick on gre proto gre no state
 .Ed
-.Ss Point-to-Point Ethernet over GRE tunnel interfaces (egre)
+.Ss Point-to-Point Ethernet over GRE tunnel interfaces (egre) example
 .Nm egre
 can be used to carry Ethernet traffic between two endpoints over
 an IP network, including the public internet.
@@ -504,7 +503,7 @@ At the second site:
 # ifconfig egre1 up
 # ifconfig bridge1 add vlan1 add egre1 up
 .Ed
-.Ss Network Virtualization Using GRE interfaces (nvgre)
+.Ss Network Virtualization using GRE interfaces (nvgre) example
 NVGRE can be used to build a distinct logical Ethernet network
 on top of another network.
 .Nm nvgre
@@ -671,7 +670,7 @@ section for an example.
 .%A P. Garg
 .%A Y. Wang
 .%D September 2015
-.%R RFC 7647
+.%R RFC 7637
 .%T NVGRE: Network Virtualization Using Generic Routing Encapsulation
 .Re
 .Pp
