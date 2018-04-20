@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.660 2018/02/14 23:51:49 jsg Exp $
+#	$OpenBSD: files,v 1.661 2018/04/20 04:37:21 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -463,6 +463,10 @@ file	dev/usb/ehci.c			ehci	needs-flag
 # XHCI USB controller
 device	xhci: usbus
 file	dev/usb/xhci.c			xhci	needs-flag
+
+# AMD Cryptographic Co-processor
+device	ccp
+file	dev/ic/ccp.c			ccp
 
 # SDHC SD/MMC controller
 device	sdhc: sdmmcbus
