@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2018/04/20 16:06:00 deraadt Exp $
+# $OpenBSD: Makefile,v 1.8 2018/04/20 21:12:50 naddy Exp $
 
 LIB=	LLVMX86CodeGen
 NOPIC=
@@ -17,7 +17,6 @@ SRCS=	X86AsmPrinter.cpp \
 	X86ExpandPseudo.cpp \
 	X86FastISel.cpp \
 	X86FixupBWInsts.cpp \
-	X86FixupGadgets.cpp \
 	X86FixupLEAs.cpp \
 	X86FixupSetCC.cpp \
 	X86FloatingPoint.cpp \
