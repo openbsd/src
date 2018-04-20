@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.66 2018/04/07 18:31:22 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.67 2018/04/20 04:38:47 dlg Exp $
 #
 # GENERIC machine description file
 #
@@ -60,6 +60,7 @@ pci*		at pciecam?
 sdhc*		at fdt?
 sdmmc*		at sdhc?
 xhci*		at fdt?
+ccp*		at fdt?		# AMD Cryptographic Co-processor
 
 # NS16550 compatible serial ports
 com*		at fdt?
