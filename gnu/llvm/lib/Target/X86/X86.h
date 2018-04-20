@@ -99,6 +99,10 @@ FunctionPass *createX86DomainReassignmentPass();
 
 void initializeFixupBWInstPassPass(PassRegistry &);
 
+/// Return a Machine Function pass that attempts to replace
+/// ROP friendly instructions with alternatives.
+FunctionPass *createX86FixupGadgetsPass();
+
 /// This pass replaces EVEX encoded of AVX-512 instructiosn by VEX
 /// encoding when possible in order to reduce code size.
 FunctionPass *createX86EvexToVexInsts();

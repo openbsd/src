@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.19 2017/08/17 20:21:53 kettenis Exp $ */
+/*	$OpenBSD: rasops.h,v 1.20 2018/04/20 16:06:07 deraadt Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -178,6 +178,7 @@ int	rasops_show_screen(void *, void *, int,
 int	rasops_load_font(void *, void *, struct wsdisplay_font *);
 int	rasops_list_font(void *, struct wsdisplay_font *);
 int	rasops_getchar(void *, int, int, struct wsdisplay_charcell *);
+void	rasops_scrollback(void *, void *, int);
 
 extern const u_char	rasops_isgray[16];
 extern const u_char	rasops_cmap[256*3];

@@ -1,4 +1,3 @@
-/*	$OpenBSD: atombios_i2c.c,v 1.7 2017/07/14 11:18:04 kettenis Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -28,12 +27,10 @@
 #include "radeon.h"
 #include "atom.h"
 
-extern void radeon_atom_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le);
-
 #define TARGET_HW_I2C_CLOCK 50
 
 /* these are a limitation of ProcessI2cChannelTransaction not the hw */
-#define ATOM_MAX_HW_I2C_WRITE 2
+#define ATOM_MAX_HW_I2C_WRITE 3
 #define ATOM_MAX_HW_I2C_READ  255
 
 static int radeon_process_i2c_ch(struct radeon_i2c_chan *chan,
@@ -46,15 +43,20 @@ static int radeon_process_i2c_ch(struct radeon_i2c_chan *chan,
 	int index = GetIndexIntoMasterTable(COMMAND, ProcessI2cChannelTransaction);
 	unsigned char *base;
 	u16 out = cpu_to_le16(0);
+	int r = 0;
 
 	memset(&args, 0, sizeof(args));
+
+	mutex_lock(&chan->mutex);
+	mutex_lock(&rdev->mode_info.atom_context->scratch_mutex);
 
 	base = (unsigned char *)rdev->mode_info.atom_context->scratch;
 
 	if (flags & HW_I2C_WRITE) {
 		if (num > ATOM_MAX_HW_I2C_WRITE) {
-			DRM_ERROR("hw i2c: tried to write too many bytes (%d vs 2)\n", num);
-			return -EINVAL;
+			DRM_ERROR("hw i2c: tried to write too many bytes (%d vs 3)\n", num);
+			r = -EINVAL;
+			goto done;
 		}
 		if (buf == NULL)
 			args.ucRegIndex = 0;
@@ -65,33 +67,45 @@ static int radeon_process_i2c_ch(struct radeon_i2c_chan *chan,
 		if (num)
 			memcpy(&out, &buf[1], num);
 		args.lpI2CDataOut = cpu_to_le16(out);
-#if 0
 	} else {
+#if 0
+		/*
+		 * gcc 4.2 gives 'warning: comparison is always false
+		 * due to limited range of data type'
+		 */
 		if (num > ATOM_MAX_HW_I2C_READ) {
 			DRM_ERROR("hw i2c: tried to read too many bytes (%d vs 255)\n", num);
-			return -EINVAL;
+			r = -EINVAL;
+			goto done;
 		}
 #endif
+		args.ucRegIndex = 0;
+		args.lpI2CDataOut = 0;
 	}
 
+	args.ucFlag = flags;
 	args.ucI2CSpeed = TARGET_HW_I2C_CLOCK;
-	args.ucRegIndex = 0;
 	args.ucTransBytes = num;
 	args.ucSlaveAddr = slave_addr << 1;
 	args.ucLineNumber = chan->rec.i2c_id;
 
-	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table_scratch_unlocked(rdev->mode_info.atom_context, index, (uint32_t *)&args);
 
 	/* error */
 	if (args.ucStatus != HW_ASSISTED_I2C_STATUS_SUCCESS) {
 		DRM_DEBUG_KMS("hw_i2c error\n");
-		return -EIO;
+		r = -EIO;
+		goto done;
 	}
 
 	if (!(flags & HW_I2C_WRITE))
 		radeon_atom_copy_swap(buf, base, num, false);
 
-	return 0;
+done:
+	mutex_unlock(&rdev->mode_info.atom_context->scratch_mutex);
+	mutex_unlock(&chan->mutex);
+
+	return r;
 }
 
 int radeon_atom_hw_i2c_xfer(struct i2c_adapter *i2c_adap,
@@ -148,3 +162,4 @@ u32 radeon_atom_hw_i2c_func(struct i2c_adapter *adap)
 {
 	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
 }
+

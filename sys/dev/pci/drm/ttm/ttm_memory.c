@@ -1,4 +1,3 @@
-/*	$OpenBSD: ttm_memory.c,v 1.10 2015/09/27 11:09:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -28,7 +27,7 @@
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
-#include <dev/pci/drm/drmP.h>
+#include <dev/pci/drm/drm_linux.h>
 #include <dev/pci/drm/ttm/ttm_memory.h>
 #include <dev/pci/drm/ttm/ttm_module.h>
 #include <dev/pci/drm/ttm/ttm_page_alloc.h>
@@ -144,9 +143,7 @@ static ssize_t ttm_mem_zone_store(struct kobject *kobj,
 
 	return size;
 }
-#endif
 
-#ifdef notyet
 static struct attribute *ttm_mem_zone_attrs[] = {
 	&ttm_mem_sys,
 	&ttm_mem_emer,
@@ -194,7 +191,7 @@ static bool ttm_zones_above_swap_target(struct ttm_mem_global *glob,
 
 		if (from_wq)
 			target = zone->swap_limit;
-		else if (DRM_SUSER(curproc))
+		else if (capable(CAP_SYS_ADMIN))
 			target = zone->emer_mem;
 		else
 			target = zone->max_mem;
@@ -233,13 +230,15 @@ static void ttm_shrink(struct ttm_mem_global *glob, bool from_wq,
 			goto out;
 	}
 out:
-	glob->task_queued = false;
 	spin_unlock(&glob->lock);
 }
 
-static void ttm_shrink_work(void *arg1)
+
+
+static void ttm_shrink_work(struct work_struct *work)
 {
-	struct ttm_mem_global *glob = arg1;
+	struct ttm_mem_global *glob =
+	    container_of(work, struct ttm_mem_global, work);
 
 	ttm_shrink(glob, true, 0ULL);
 }
@@ -294,7 +293,8 @@ static int ttm_mem_init_highmem_zone(struct ttm_mem_global *glob,
 	zone->glob = glob;
 	glob->zone_highmem = zone;
 	ret = kobject_init_and_add(
-		&zone->kobj, &ttm_mem_zone_kobj_type, &glob->kobj, zone->name);
+		&zone->kobj, &ttm_mem_zone_kobj_type, &glob->kobj, "%s",
+		zone->name);
 	if (unlikely(ret != 0)) {
 		kobject_put(&zone->kobj);
 		return ret;
@@ -351,16 +351,12 @@ int ttm_mem_global_init(struct ttm_mem_global *glob)
 {
 	uint64_t mem;
 	int ret;
-#ifdef DRMDEBUG
 	int i;
 	struct ttm_mem_zone *zone;
-#endif
 
 	mtx_init(&glob->lock, IPL_TTY);
-	glob->swap_queue = taskq_create("ttm_swap", 1, IPL_TTY, 0);
-	glob->task_queued = false;
-	task_set(&glob->task, ttm_shrink_work, glob);
-
+	glob->swap_queue = create_singlethread_workqueue("ttm_swap");
+	INIT_WORK(&glob->work, ttm_shrink_work);
 	ret = kobject_init_and_add(
 		&glob->kobj, &ttm_mem_glob_kobj_type, ttm_get_kobj(), "memory_accounting");
 	if (unlikely(ret != 0)) {
@@ -382,13 +378,11 @@ int ttm_mem_global_init(struct ttm_mem_global *glob)
 	if (unlikely(ret != 0))
 		goto out_no_zone;
 #endif
-#ifdef DRMDEBUG
 	for (i = 0; i < glob->num_zones; ++i) {
 		zone = glob->zones[i];
 		pr_info("Zone %7s: Available graphics memory: %llu kiB\n",
 			zone->name, (unsigned long long)zone->max_mem >> 10);
 	}
-#endif
 	ttm_page_alloc_init(glob, glob->zone_kernel->max_mem/(2*PAGE_SIZE));
 	ttm_dma_page_alloc_init(glob, glob->zone_kernel->max_mem/(2*PAGE_SIZE));
 	return 0;
@@ -407,13 +401,14 @@ void ttm_mem_global_release(struct ttm_mem_global *glob)
 	ttm_page_alloc_fini();
 	ttm_dma_page_alloc_fini();
 
-	taskq_destroy(glob->swap_queue);
+	flush_workqueue(glob->swap_queue);
+	destroy_workqueue(glob->swap_queue);
 	glob->swap_queue = NULL;
 	for (i = 0; i < glob->num_zones; ++i) {
 		zone = glob->zones[i];
 		kobject_del(&zone->kobj);
 		kobject_put(&zone->kobj);
-	}
+			}
 	kobject_del(&glob->kobj);
 	kobject_put(&glob->kobj);
 }
@@ -434,14 +429,11 @@ static void ttm_check_swapping(struct ttm_mem_global *glob)
 		}
 	}
 
-	if (glob->task_queued)
-		needs_swapping = false;
-	else
-		glob->task_queued = true;
 	spin_unlock(&glob->lock);
 
 	if (unlikely(needs_swapping))
-		task_add(glob->swap_queue, &glob->task);
+		(void)queue_work(glob->swap_queue, &glob->work);
+
 }
 
 static void ttm_mem_global_free_zone(struct ttm_mem_global *glob,
@@ -483,7 +475,7 @@ static int ttm_mem_global_reserve(struct ttm_mem_global *glob,
 		if (single_zone && zone != single_zone)
 			continue;
 
-		limit = (DRM_SUSER(curproc)) ?
+		limit = (capable(CAP_SYS_ADMIN)) ?
 			zone->emer_mem : zone->max_mem;
 
 		if (zone->used_mem > limit)

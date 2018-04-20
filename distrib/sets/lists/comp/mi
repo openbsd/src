@@ -222,6 +222,7 @@
 ./usr/include/dev/ic/bwivar.h
 ./usr/include/dev/ic/cacreg.h
 ./usr/include/dev/ic/cacvar.h
+./usr/include/dev/ic/ccpvar.h
 ./usr/include/dev/ic/cd1190reg.h
 ./usr/include/dev/ic/cd1400reg.h
 ./usr/include/dev/ic/cissreg.h
@@ -2755,6 +2756,7 @@
 ./usr/share/man/man3/wscanf.3
 ./usr/share/man/man3/xdr.3
 ./usr/share/man/man3/ypclnt.3
+./usr/share/man/man9/KASSERT.9
 ./usr/share/man/man9/RBT_INIT.9
 ./usr/share/man/man9/SRPL_EMPTY_LOCKED.9
 ./usr/share/man/man9/SipHash24.9

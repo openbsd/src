@@ -441,6 +441,7 @@ void X86PassConfig::addPreEmitPass() {
     addPass(createX86FixupLEAs());
     addPass(createX86EvexToVexInsts());
   }
+  addPass(createX86FixupGadgetsPass());
 }
 
 void X86PassConfig::addPreEmitPass2() {

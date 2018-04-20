@@ -1,4 +1,3 @@
-/*	$OpenBSD: radeon_legacy_crtc.c,v 1.4 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -332,6 +331,8 @@ static void radeon_crtc_dpms(struct drm_crtc *crtc, int mode)
 			WREG32_P(RADEON_CRTC_EXT_CNTL, crtc_ext_cntl, ~(mask | crtc_ext_cntl));
 		}
 		drm_vblank_post_modeset(dev, radeon_crtc->crtc_id);
+		/* Make sure vblank interrupt is still enabled if needed */
+		radeon_irq_set(rdev);
 		radeon_crtc_load_lut(crtc);
 		break;
 	case DRM_MODE_DPMS_STANDBY:
@@ -709,9 +710,6 @@ static bool radeon_set_crtc_timing(struct drm_crtc *crtc, struct drm_display_mod
 				  RADEON_CRTC_VSYNC_DIS |
 				  RADEON_CRTC_HSYNC_DIS |
 				  RADEON_CRTC_DISPLAY_DIS);
-		crtc_ext_cntl &= ~(RADEON_CRTC_SYNC_TRISTAT |
-				   RADEON_CRTC_VSYNC_TRISTAT |
-				   RADEON_CRTC_HSYNC_TRISTAT);
 
 		disp_merge_cntl = RREG32(RADEON_DISP_MERGE_CNTL);
 		disp_merge_cntl &= ~RADEON_DISP_RGB_OFFSET_EN;
@@ -1058,16 +1056,15 @@ static int radeon_crtc_mode_set(struct drm_crtc *crtc,
 			DRM_ERROR("Mode need scaling but only first crtc can do that.\n");
 		}
 	}
+	radeon_cursor_reset(crtc);
 	return 0;
 }
 
 static void radeon_crtc_prepare(struct drm_crtc *crtc)
 {
-	struct radeon_crtc *radeon_crtc = to_radeon_crtc(crtc);
 	struct drm_device *dev = crtc->dev;
 	struct drm_crtc *crtci;
 
-	radeon_crtc->in_mode_set = true;
 	/*
 	* The hardware wedges sometimes if you reconfigure one CRTC
 	* whilst another is running (see fdo bug #24611).
@@ -1078,7 +1075,6 @@ static void radeon_crtc_prepare(struct drm_crtc *crtc)
 
 static void radeon_crtc_commit(struct drm_crtc *crtc)
 {
-	struct radeon_crtc *radeon_crtc = to_radeon_crtc(crtc);
 	struct drm_device *dev = crtc->dev;
 	struct drm_crtc *crtci;
 
@@ -1089,7 +1085,26 @@ static void radeon_crtc_commit(struct drm_crtc *crtc)
 		if (crtci->enabled)
 			radeon_crtc_dpms(crtci, DRM_MODE_DPMS_ON);
 	}
-	radeon_crtc->in_mode_set = false;
+}
+
+static void radeon_crtc_disable(struct drm_crtc *crtc)
+{
+	radeon_crtc_dpms(crtc, DRM_MODE_DPMS_OFF);
+	if (crtc->primary->fb) {
+		int r;
+		struct radeon_framebuffer *radeon_fb;
+		struct radeon_bo *rbo;
+
+		radeon_fb = to_radeon_framebuffer(crtc->primary->fb);
+		rbo = gem_to_radeon_bo(radeon_fb->obj);
+		r = radeon_bo_reserve(rbo, false);
+		if (unlikely(r))
+			DRM_ERROR("failed to reserve rbo before unpin\n");
+		else {
+			radeon_bo_unpin(rbo);
+			radeon_bo_unreserve(rbo);
+		}
+	}
 }
 
 static const struct drm_crtc_helper_funcs legacy_helper_funcs = {
@@ -1101,6 +1116,7 @@ static const struct drm_crtc_helper_funcs legacy_helper_funcs = {
 	.prepare = radeon_crtc_prepare,
 	.commit = radeon_crtc_commit,
 	.load_lut = radeon_crtc_load_lut,
+	.disable = radeon_crtc_disable
 };
 
 

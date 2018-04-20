@@ -1,4 +1,3 @@
-/*	$OpenBSD: si_blit_shaders.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -25,9 +24,7 @@
  *     Alex Deucher <alexander.deucher@amd.com>
  */
 
-#include <sys/types.h>
-
-#include <dev/pci/drm/drmP.h>
+#include <dev/pci/drm/drm_linux.h>
 
 const u32 si_default_state[] =
 {
