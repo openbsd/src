@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.45 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.46 2018/04/20 07:27:54 mlarkin Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -85,7 +85,7 @@ lapic_map(paddr_t lapic_base)
 
 	/*
 	 * Map local apic.  If we have a local apic, it's safe to assume
-	 * we're on a 486 or better and can use invlpg and non-cacheable PTE's
+	 * we're on a 486 or better and can use invlpg and non-cacheable PTEs
 	 *
 	 * Whap the PTE "by hand" rather than calling pmap_kenter_pa because
 	 * the latter will attempt to invoke TLB shootdown code just as we

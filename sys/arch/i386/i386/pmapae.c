@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.53 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.54 2018/04/20 07:27:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -433,8 +433,8 @@ extern vaddr_t kernel_text, etext, __rodata_start, erodata, __data_start;
 extern vaddr_t edata, __bss_start, end, ssym, esym, PTmap;
 
 /*
- * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
- * MAXCPUS*NPTECL array of PTE's, to avoid cache line thrashing
+ * MULTIPROCESSOR: special VAs/ PTEs are actually allocated inside a
+ * MAXCPUS*NPTECL array of PTEs, to avoid cache line thrashing
  * due to false sharing.
  */
 

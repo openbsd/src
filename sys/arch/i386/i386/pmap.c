@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.200 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.201 2018/04/20 07:27:54 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -393,8 +393,8 @@ uint32_t protection_codes[8];		/* maps MI prot to i386 prot code */
 boolean_t pmap_initialized = FALSE;	/* pmap_init done yet? */
 
 /*
- * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
- * MAXCPUS*NPTECL array of PTE's, to avoid cache line thrashing
+ * MULTIPROCESSOR: special VAs/ PTEs are actually allocated inside a
+ * MAXCPUS*NPTECL array of PTEs, to avoid cache line thrashing
  * due to false sharing.
  */
 
@@ -974,7 +974,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	/*
 	 * Waste some VA space to avoid false sharing of cache lines
 	 * for page table pages: Give each possible CPU a cache line
-	 * of PTE's (16) to play with, though we only need 4.  We could
+	 * of PTEs (16) to play with, though we only need 4.  We could
 	 * recycle some of this waste by putting the idle stacks here
 	 * as well; we could waste less space if we knew the largest
 	 * CPU ID beforehand.

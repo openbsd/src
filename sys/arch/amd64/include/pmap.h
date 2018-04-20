@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.66 2018/03/13 07:37:58 guenther Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.67 2018/04/20 07:27:54 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -243,7 +243,7 @@
 /* PG_AVAIL3 not used */
 
 /*
- * Number of PTE's per cache line.  8 byte pte, 64-byte cache line
+ * Number of PTEs per cache line.  8 byte pte, 64-byte cache line
  * Used to avoid false sharing of cache lines.
  */
 #define NPTECL		8
