@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.159 2018/03/14 14:12:31 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.160 2018/04/22 09:16:15 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -298,8 +298,11 @@ sub parse_problems
 			my ($scheme, $newhost) = ($1, $2);
 			$self->{state}->print("#1", $_);
 			next if $scheme ne $self->urlscheme;
-			$self->{state}->syslog("Redirected from #1 to #2",
-			    $self->{host}, $newhost);
+			# XXX try logging but syslog doesn't exist for Info
+			eval { 
+			    $self->{state}->syslog("Redirected from #1 to #2",
+				$self->{host}, $newhost);
+			};
 			$self->{host} = $newhost;
 			$self->setup_session;
 			$baseurl = $self->url;
