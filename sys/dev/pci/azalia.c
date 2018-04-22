@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.243 2018/04/22 09:51:27 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.244 2018/04/22 10:02:13 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2119,7 +2119,7 @@ azalia_codec_select_dacs(codec_t *this)
 		}
 	}
 
-	free(convs, M_DEVBUF, 0);
+	free(convs, M_DEVBUF, this->na_dacs * sizeof(nid_t));
 	return(err);
 }
 
