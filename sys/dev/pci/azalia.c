@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.242 2018/04/11 04:48:31 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.243 2018/04/22 09:51:27 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -3832,14 +3832,11 @@ azalia_match_format(codec_t *codec, int mode, audio_params_t *par)
 int
 azalia_set_params_sub(codec_t *codec, int mode, audio_params_t *par)
 {
-	char *cmode;
 	int i, j;
 	uint ochan, oenc, opre;
-
-	if (mode == AUMODE_PLAY)
-		cmode = "play";
-	else
-		cmode = "record";
+#ifdef AZALIA_DEBUG
+	char *cmode = (mode == AUMODE_PLAY) ? "play" : "record";
+#endif
 
 	ochan = par->channels;
 	oenc = par->encoding;
