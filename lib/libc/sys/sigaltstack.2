@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaltstack.2,v 1.21 2018/03/21 16:22:21 gsoares Exp $
+.\"	$OpenBSD: sigaltstack.2,v 1.22 2018/04/22 12:55:11 deraadt Exp $
 .\"	$NetBSD: sigaltstack.2,v 1.3 1995/02/27 10:41:52 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sigaltstack.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: April 22 2018 $
 .Dt SIGALTSTACK 2
 .Os
 .Sh NAME
@@ -93,14 +93,17 @@ if the thread is currently on a signal stack and
 .Dv SS_DISABLE
 if the signal stack is currently disabled.
 .Pp
-The stack must be allocated using
-.Xr mmap 2
-with
-.Ar MAP_STACK
-to inform the kernel that the memory is being used as a stack.
-Otherwise, the first system call performed while operating on
-that stack will deliver
-.Dv SIGABRT .
+To permit the space to operate as a stack, a page-aligned
+inner region will be zeroed and have
+.Dv MAP_STACK
+(see
+.Xr mmap 2 )
+enabled.
+Once the sigaltstack is disabled,
+.Dv MAP_STACK
+remains on the memory, so it is best to deallocate the memory
+via a method that results in
+.Xr munmap 2 .
 .Sh NOTES
 The value
 .Dv SIGSTKSZ
@@ -108,8 +111,7 @@ is defined to be the number of bytes/chars that would be used to cover
 the usual case when allocating an alternate stack area.
 The following code fragment is typically used to allocate an alternate stack.
 .Bd -literal -offset indent
-if ((sigstk.ss_sp = mmap(NULL, SIGSTKSZ, PROT_WRITE | PROT_READ,
-    MAP_PRIVATE | MAP_ANON | MAP_STACK, -1, 0)) == MAP_FAILED)
+if ((sigstk.ss_sp = malloc(SIGSTKSZ)) == NULL)
 	/* error return */
 sigstk.ss_size = SIGSTKSZ;
 sigstk.ss_flags = 0;
