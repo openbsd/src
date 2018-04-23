@@ -1,4 +1,4 @@
-/* $OpenBSD: freenull.c,v 1.9 2018/04/23 08:09:57 tb Exp $ */
+/* $OpenBSD: freenull.c,v 1.10 2018/04/23 09:02:19 tb Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -190,6 +190,7 @@ main(int argc, char **argv)
 	X509_CERT_PAIR_free(NULL);			/* ASN1_item_free */
 	X509_CINF_free(NULL);				/* ASN1_item_free */
 	X509_CRL_INFO_free(NULL);			/* ASN1_item_free */
+	X509_CRL_METHOD_free(NULL);
 	X509_CRL_free(NULL);				/* ASN1_item_free */
 	X509_EXTENSION_free(NULL);			/* ASN1_item_free */
 	X509_INFO_free(NULL);
