@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.25 2018/03/12 13:14:21 inoguchi Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.26 2018/04/23 09:37:50 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -86,6 +86,7 @@ EC_GROUP_get_basis_type(const EC_GROUP * group)
 		/* everything else is currently not supported */
 		return 0;
 }
+
 #ifndef OPENSSL_NO_EC2M
 int 
 EC_GROUP_get_trinomial_basis(const EC_GROUP * group, unsigned int *k)
@@ -104,6 +105,7 @@ EC_GROUP_get_trinomial_basis(const EC_GROUP * group, unsigned int *k)
 
 	return 1;
 }
+
 int 
 EC_GROUP_get_pentanomial_basis(const EC_GROUP * group, unsigned int *k1,
     unsigned int *k2, unsigned int *k3)
@@ -127,7 +129,6 @@ EC_GROUP_get_pentanomial_basis(const EC_GROUP * group, unsigned int *k1,
 	return 1;
 }
 #endif
-
 
 /* some structures needed for the asn1 encoding */
 typedef struct x9_62_pentanomial_st {
@@ -334,6 +335,7 @@ const ASN1_ITEM X9_62_CHARACTERISTIC_TWO_it = {
 	.size = sizeof(X9_62_CHARACTERISTIC_TWO),
 	.sname = "X9_62_CHARACTERISTIC_TWO",
 };
+
 X9_62_CHARACTERISTIC_TWO *X9_62_CHARACTERISTIC_TWO_new(void);
 void X9_62_CHARACTERISTIC_TWO_free(X9_62_CHARACTERISTIC_TWO *a);
 
@@ -348,6 +350,7 @@ X9_62_CHARACTERISTIC_TWO_free(X9_62_CHARACTERISTIC_TWO *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X9_62_CHARACTERISTIC_TWO_it);
 }
+
 static const ASN1_TEMPLATE fieldID_def_tt = {
 	.flags = 0,
 	.tag = 0,
@@ -506,6 +509,7 @@ const ASN1_ITEM ECPARAMETERS_it = {
 	.size = sizeof(ECPARAMETERS),
 	.sname = "ECPARAMETERS",
 };
+
 ECPARAMETERS *ECPARAMETERS_new(void);
 void ECPARAMETERS_free(ECPARAMETERS *a);
 
@@ -655,6 +659,7 @@ EC_PRIVATEKEY_free(EC_PRIVATEKEY *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &EC_PRIVATEKEY_it);
 }
+
 /* some declarations of internal function */
 
 /* ec_asn1_group2field() sets the values in a X9_62_FIELDID object */
@@ -674,7 +679,6 @@ static EC_GROUP *ec_asn1_pkparameters2group(const ECPKPARAMETERS *);
  * EC_GROUP object */
 static ECPKPARAMETERS *ec_asn1_group2pkparameters(const EC_GROUP *,
     ECPKPARAMETERS *);
-
 
 /* the function definitions */
 
