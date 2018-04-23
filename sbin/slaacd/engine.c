@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.23 2018/03/13 13:57:07 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.24 2018/04/23 13:49:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -2087,12 +2087,16 @@ address_proposal_timeout(int fd, short events, void *arg)
 			log_debug("%s: removing address proposal", __func__);
 			break;
 		}
-		if (addr_proposal->privacy)
-			break; /* just let it expire */
 
 		engine_imsg_compose_frontend(IMSG_CTL_SEND_SOLICITATION,
 		    0, &addr_proposal->if_index,
 		    sizeof(addr_proposal->if_index));
+
+		if (addr_proposal->privacy) {
+			addr_proposal->next_timeout = 0;
+			break; /* just let it expire */
+		}
+
 		tv.tv_sec = addr_proposal->next_timeout;
 		tv.tv_usec = arc4random_uniform(1000000);
 		addr_proposal->next_timeout *= 2;
