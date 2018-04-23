@@ -1228,6 +1228,50 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AMD64 15/1xh IOMMU",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_3X_LINK,
+	    "AMD64 15h Link Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_3X_ADDR,
+	    "AMD64 15h Address Map",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_3X_DRAM,
+	    "AMD64 15h DRAM Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_3X_MISC,
+	    "AMD64 15h Misc Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_3X_CPU_PM,
+	    "AMD64 15h CPU Power",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_3X_MISC_2,
+	    "AMD64 15h Misc Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_3X_RC,
+	    "AMD64 15h Root Complex",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_3X_IOMMU,
+	    "AMD64 15h IOMMU",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_3X_PCIE_1,
+	    "AMD64 15h PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_3X_PCIE_2,
+	    "AMD64 15h PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_3X_PCIE_3,
+	    "AMD64 15h PCIE",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_PCIE,
 	    "AMD64 16h PCIE",
 	},
@@ -2292,8 +2336,100 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ISDN",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_1,
+	    "Kaveri",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_2,
+	    "Kaveri",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_3,
+	    "Kaveri",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_4,
+	    "Kaveri",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_HDA,
+	    "Kaveri HD Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_5,
+	    "Kaveri Radeon R6/R7",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_6,
+	    "Kaveri Radeon R6",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_7,
+	    "Kaveri Radeon R4",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_8,
+	    "Kaveri Radeon R7",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_9,
+	    "Kaveri Radeon R6",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_10,
+	    "Kaveri Radeon R5",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_11,
+	    "Kaveri Radeon R7",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_12,
+	    "Kaveri",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_13,
+	    "Kaveri",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_14,
+	    "Kaveri",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_15,
+	    "Kaveri Radeon R7",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6310_HDA,
 	    "Radeon HD 6310 HD Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_16,
+	    "Kaveri Radeon R5",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_17,
+	    "Kaveri Radeon R5",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_18,
+	    "Kaveri",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_19,
+	    "Kaveri Radeon R5",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_20,
+	    "Kaveri Radeon R4",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_21,
+	    "Kaveri Radeon R7",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_22,
+	    "Kaveri Radeon R6",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6500D_HDA,

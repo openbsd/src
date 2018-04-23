@@ -723,6 +723,17 @@
 #define	PCI_PRODUCT_AMD_AMD64_15_1x_PCIE_6	0x1417		/* AMD64 15/1xh PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_15_1x_PCIE_7	0x1418		/* AMD64 15/1xh PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_15_1x_IOMMU	0x1419		/* AMD64 15/1xh IOMMU */
+#define	PCI_PRODUCT_AMD_AMD64_15_3X_LINK	0x141a		/* AMD64 15h Link Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_15_3X_ADDR	0x141b		/* AMD64 15h Address Map */
+#define	PCI_PRODUCT_AMD_AMD64_15_3X_DRAM	0x141c		/* AMD64 15h DRAM Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_15_3X_MISC	0x141d		/* AMD64 15h Misc Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_15_3X_CPU_PM	0x141e		/* AMD64 15h CPU Power */
+#define	PCI_PRODUCT_AMD_AMD64_15_3X_MISC_2	0x141f		/* AMD64 15h Misc Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_15_3X_RC	0x1422		/* AMD64 15h Root Complex */
+#define	PCI_PRODUCT_AMD_AMD64_15_3X_IOMMU	0x1423		/* AMD64 15h IOMMU */
+#define	PCI_PRODUCT_AMD_AMD64_15_3X_PCIE_1	0x1424		/* AMD64 15h PCIE */
+#define	PCI_PRODUCT_AMD_AMD64_15_3X_PCIE_2	0x1425		/* AMD64 15h PCIE */
+#define	PCI_PRODUCT_AMD_AMD64_15_3X_PCIE_3	0x1426		/* AMD64 15h PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_16_PCIE	0x1439		/* AMD64 16h PCIE */
 #define	PCI_PRODUCT_AMD_CCPV5A	0x1456		/* Cryptographic Co-processor v5a */
 #define	PCI_PRODUCT_AMD_CCPV5B	0x1468		/* Cryptographic Co-processor v5b */
@@ -1014,7 +1025,30 @@
 #define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* ISDN */
 
 /* ATI Technologies */
+#define	PCI_PRODUCT_ATI_KAVERI_1	0x1304		/* Kaveri */
+#define	PCI_PRODUCT_ATI_KAVERI_2	0x1305		/* Kaveri */
+#define	PCI_PRODUCT_ATI_KAVERI_3	0x1306		/* Kaveri */
+#define	PCI_PRODUCT_ATI_KAVERI_4	0x1307		/* Kaveri */
+#define	PCI_PRODUCT_ATI_KAVERI_HDA	0x1308		/* Kaveri HD Audio */
+#define	PCI_PRODUCT_ATI_KAVERI_5	0x1309		/* Kaveri Radeon R6/R7 */
+#define	PCI_PRODUCT_ATI_KAVERI_6	0x130a		/* Kaveri Radeon R6 */
+#define	PCI_PRODUCT_ATI_KAVERI_7	0x130b		/* Kaveri Radeon R4 */
+#define	PCI_PRODUCT_ATI_KAVERI_8	0x130c		/* Kaveri Radeon R7 */
+#define	PCI_PRODUCT_ATI_KAVERI_9	0x130d		/* Kaveri Radeon R6 */
+#define	PCI_PRODUCT_ATI_KAVERI_10	0x130e		/* Kaveri Radeon R5 */
+#define	PCI_PRODUCT_ATI_KAVERI_11	0x130f		/* Kaveri Radeon R7 */
+#define	PCI_PRODUCT_ATI_KAVERI_12	0x1310		/* Kaveri */
+#define	PCI_PRODUCT_ATI_KAVERI_13	0x1311		/* Kaveri */
+#define	PCI_PRODUCT_ATI_KAVERI_14	0x1312		/* Kaveri */
+#define	PCI_PRODUCT_ATI_KAVERI_15	0x1313		/* Kaveri Radeon R7 */
 #define	PCI_PRODUCT_ATI_RADEON_HD6310_HDA	0x1314		/* Radeon HD 6310 HD Audio */
+#define	PCI_PRODUCT_ATI_KAVERI_16	0x1315		/* Kaveri Radeon R5 */
+#define	PCI_PRODUCT_ATI_KAVERI_17	0x1316		/* Kaveri Radeon R5 */
+#define	PCI_PRODUCT_ATI_KAVERI_18	0x1317		/* Kaveri */
+#define	PCI_PRODUCT_ATI_KAVERI_19	0x1318		/* Kaveri Radeon R5 */
+#define	PCI_PRODUCT_ATI_KAVERI_20	0x131b		/* Kaveri Radeon R4 */
+#define	PCI_PRODUCT_ATI_KAVERI_21	0x131c		/* Kaveri Radeon R7 */
+#define	PCI_PRODUCT_ATI_KAVERI_22	0x131d		/* Kaveri Radeon R6 */
 #define	PCI_PRODUCT_ATI_RADEON_HD6500D_HDA	0x1714		/* Radeon HD 6500D HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_M241P	0x3150		/* Mobility Radeon X600 */
 #define	PCI_PRODUCT_ATI_FIREMV_2400_1	0x3151		/* FireMV 2400 */
