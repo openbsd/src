@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.30 2018/03/17 14:33:20 jsing Exp $ */
+/* $OpenBSD: x_crl.c,v 1.31 2018/04/23 09:00:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -675,7 +675,7 @@ X509_CRL_METHOD_new(int (*crl_init)(X509_CRL *crl),
 void
 X509_CRL_METHOD_free(X509_CRL_METHOD *m)
 {
-	if (!(m->flags & X509_CRL_METHOD_DYNAMIC))
+	if (m == NULL || !(m->flags & X509_CRL_METHOD_DYNAMIC))
 		return;
 	free(m);
 }
