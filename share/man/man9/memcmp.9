@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kern.9,v 1.24 2018/04/19 22:46:21 dlg Exp $
+.\"	$OpenBSD: memcmp.9,v 1.1 2018/04/23 10:30:39 dlg Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -24,95 +24,19 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 19 2018 $
-.Dt IMAX 9
+.Dd $Mdocdate: April 23 2018 $
+.Dt MEMCMP 9
 .Os
 .Sh NAME
-.Nm imax ,
-.Nm imin ,
-.Nm lmax ,
-.Nm lmin ,
-.Nm max ,
-.Nm min ,
-.Nm ulmax ,
-.Nm ulmin ,
-.Nm abs ,
 .Nm skpc ,
 .Nm scanc ,
 .Nm bcmp ,
 .Nm timingsafe_bcmp ,
 .Nm memchr ,
-.Nm memcmp ,
-.Nm ffs ,
-.Nm fls ,
-.Nm flsl ,
-.Nm strlen ,
-.Nm strnlen ,
-.Nm strncpy ,
-.Nm strlcpy ,
-.Nm strlcat ,
-.Nm strcmp ,
-.Nm strncmp ,
-.Nm strncasecmp ,
-.Nm getsn
-.Nd kernel library routines
+.Nm memcmp
+.Nd kernel library byte string routines
 .Sh SYNOPSIS
 .In lib/libkern/libkern.h
-.Sh DESCRIPTION
-The
-.Nm
-library implements a set of useful functions and macros inside the kernel.
-.Sh MATH
-.nr nS 1
-.Ft int
-.Fn imax "int a" "int b"
-.Ft int
-.Fn imin "int a" "int b"
-.Ft long
-.Fn lmax "long a" "long b"
-.Ft long
-.Fn lmin "long a" "long b"
-.Ft u_int
-.Fn max "u_int a" "u_int b"
-.Ft u_int
-.Fn min "u_int a" "u_int b"
-.Ft u_long
-.Fn ulmax "u_long a" "u_long b"
-.Ft u_long
-.Fn ulmin "u_long a" "u_long b"
-.Ft int
-.Fn abs "int j"
-.nr nS 0
-.Pp
-The
-.Fn min ,
-.Fn imin ,
-.Fn lmin
-and
-.Fn ulmin
-functions return the smallest integer between
-.Fa a
-and
-.Fa b ,
-inclusive.
-The
-.Fn max ,
-.Fn imax ,
-.Fn lmax
-and
-.Fn ulmax
-functions return the largest integer between
-.Fa a
-and
-.Fa b ,
-inclusive.
-.Pp
-The
-.Fn abs
-function computes the absolute value of integer
-.Fa j .
-.Sh BYTE STRINGS
-.nr nS 1
 .Ft int
 .Fn skpc "int mask" "size_t size" "u_char *cp"
 .Ft int
@@ -125,14 +49,7 @@ function computes the absolute value of integer
 .Fn memchr "const void *b" "int c" "size_t len"
 .Ft int
 .Fn memcmp "const void *b1" "const void *b2" "size_t len"
-.Ft int
-.Fn ffs "int value"
-.Ft int
-.Fn fls "int value"
-.Ft int
-.Fn flsl "long value"
-.nr nS 0
-.Pp
+.Sh DESCRIPTION
 The
 .Fn skpc
 function locates the first unsigned character of value different than
@@ -157,81 +74,17 @@ occurred, or zero if
 .Fa mask
 is not present in the string.
 .Pp
-The
-.Fn fls
-and
-.Fn flsl
-functions find the last bit set in
-.Fa value
-and return the index of that bit.
-.Pp
 The remaining functions have the same semantics as their libc counterparts,
 .Xr bcmp 3 ,
 .Xr timingsafe_bcmp 3 ,
 .Xr memchr 3 ,
-.Xr memcmp 3
 and
-.Xr ffs 3 .
-.Sh CHARACTER STRINGS
-.nr nS 1
-.Ft size_t
-.Fn strlen "const char *s"
-.Ft size_t
-.Fn strnlen "const char *s" "size_t maxlen"
-.Ft char *
-.Fn strncpy "char *dst" "const char *src" "size_t len"
-.Ft size_t
-.Fn strlcpy "char *dst" "const char *src" "size_t size"
-.Ft size_t
-.Fn strlcat "char *dst" "const char *src" "size_t size"
-.Ft int
-.Fn strcmp "const char *s1" "const char *s2"
-.Ft int
-.Fn strncmp "const char *s1" "const char *s2" "size_t len"
-.Ft int
-.Fn strncasecmp "const char *s1" "const char *s2" "size_tlen"
-.nr nS 0
-.Pp
-Those functions have the same semantics as their libc counterparts,
-.Xr strlen 3 ,
-.Xr strncpy 3 ,
-.Xr strnlen 3 ,
-.Xr strlcpy 3 ,
-.Xr strlcat 3 ,
-.Xr strcmp 3 ,
-.Xr strncmp 3
-and
-.Xr strncasecmp 3 .
-.Sh MISCELLANEOUS
-.nr nS 1
-.Ft int
-.Fn getsn "char *cp" "int size"
-.nr nS 0
-.Pp
-The
-.Fn getsn
-function reads user input from the console and returns on newline.
-The result is written into
-.Fa cp ,
-which is assumed to be
-.Fa size
-bytes long.
-.Sh SEE ALSO
-.Xr bcmp 3 ,
-.Xr ffs 3 ,
-.Xr memchr 3 ,
-.Xr memcmp 3
+.Xr memcmp 3 .
 .Sh STANDARDS
 The
-.Fn abs ,
-.Fn memchr ,
-.Fn memcmp ,
-.Fn strlen ,
-.Fn strncpy ,
-.Fn strcmp ,
-.Fn strncmp
+.Fn memchr
 and
-.Fn strcasecmp
+.Fn memcmp
 functions conform to
 .St -ansiC .
 .Sh HISTORY

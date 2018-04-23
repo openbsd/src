@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.289 2018/04/19 22:46:21 dlg Exp $
+#	$OpenBSD: Makefile,v 1.290 2018/04/23 10:30:39 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -13,16 +13,16 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	cpumem_get.9 crypto.9 \
 	delay.9 disk.9 disklabel.9 dma_alloc.9 dohooks.9 \
 	dostartuphooks.9 \
-	evcount.9 extent.9 fb_setup.9 file.9 fork1.9 \
-	getdevvp.9 getnewvnode.9 hashinit.9 \
+	evcount.9 extent.9 fb_setup.9 file.9 fork1.9 ffs.9 \
+	getdevvp.9 getnewvnode.9 getsn.9 hashinit.9 \
 	hardclock.9 hook_establish.9 hz.9 idgen32.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
 	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
 	ieee80211_radiotap.9 if_get.9 if_rxr_init.9 ifq_enqueue.9 \
-	ifq_deq_begin.9 iic.9 intro.9 inittodr.9 intr_barrier.9 \
-	KASSERT.9 kern.9 km_alloc.9 knote.9 kthread.9 ktrace.9 \
+	ifq_deq_begin.9 imax.9 iic.9 intro.9 inittodr.9 intr_barrier.9 \
+	KASSERT.9 km_alloc.9 knote.9 kthread.9 ktrace.9 \
 	loadfirmware.9 log.9 \
-	malloc.9 membar_sync.9 mbuf.9 mbuf_tags.9 md5.9 mi_switch.9 \
+	malloc.9 membar_sync.9 memcmp.9 mbuf.9 mbuf_tags.9 md5.9 mi_switch.9 \
 	microtime.9 ml_init.9 mq_init.9 mutex.9 \
 	namei.9 \
 	panic.9 pci_conf_read.9 pci_intr_map.9 physio.9 pmap.9 \
@@ -33,7 +33,7 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	rtlabel_id2name.9 rtrequest.9 rwlock.9 SRPL_EMPTY_LOCKED.9 SipHash24.9 \
 	sensor_attach.9 \
 	spl.9 srp_enter.9 srpl_rc_init.9 startuphook_establish.9 \
-	socreate.9 sosplice.9 style.9 syscall.9 sysctl_int.9 \
+	socreate.9 sosplice.9 strcmp.9 style.9 syscall.9 sysctl_int.9 \
 	task_add.9 tc_init.9 tfind.9 thread_fork.9 \
 	time_second.9 timeout.9 tsleep.9 tvtohz.9 \
 	uiomove.9 uvm.9 usb_add_task.9 usbd_close_pipe.9 usbd_open_pipe.9 \
