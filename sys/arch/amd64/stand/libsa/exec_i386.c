@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.22 2018/04/18 16:34:42 deraadt Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.23 2018/04/23 23:14:10 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -78,7 +78,7 @@ run_loadfile(u_long *marks, int howto)
 	bios_bootsr_t bootsr;
 	struct sr_boot_volume *bv;
 #endif
-#if defined(EFIBOOT)
+#ifdef EFIBOOT
 	int i;
 	u_long delta;
 	extern u_long efi_loadaddr;
@@ -86,6 +86,7 @@ run_loadfile(u_long *marks, int howto)
 	if ((av = alloc(ac)) == NULL)
 		panic("alloc for bootarg");
 	efi_makebootargs();
+	delta = DEFAULT_KERNEL_ADDRESS - efi_loadaddr;
 #endif
 	if (sa_cleanup != NULL)
 		(*sa_cleanup)();
@@ -124,6 +125,17 @@ run_loadfile(u_long *marks, int howto)
 	sr_clear_keys();
 #endif
 
+	entry = marks[MARK_ENTRY] & 0x0fffffff;
+#ifdef EFIBOOT
+	entry += delta;
+#endif
+
+	printf("entry point at 0x%lx\n", entry);
+
+#ifdef EFIBOOT
+	/* Sync the memory map and call ExitBootServices() */
+	efi_cleanup();
+#endif
 	/* Pass memory map to the kernel */
 	mem_pass();
 
@@ -137,33 +149,24 @@ run_loadfile(u_long *marks, int howto)
 	makebootargs(av, &ac);
 #endif
 
-	entry = marks[MARK_ENTRY] & 0x0fffffff;
-
-	printf("entry point at 0x%lx\n", entry);
-
-#ifndef EFIBOOT
-	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER, marks[MARK_END],
-	    extmem, cnvmem, ac, (int)av);
-#else
+#ifdef EFIBOOT
 	/*
 	 * Move the loaded kernel image to the usual place after calling
 	 * ExitBootServices().
 	 */
-	delta = DEFAULT_KERNEL_ADDRESS - efi_loadaddr;
-	efi_cleanup();
 	memcpy((void *)marks[MARK_START] + delta, (void *)marks[MARK_START],
 	    marks[MARK_END] - marks[MARK_START]);
 	for (i = 0; i < MARK_MAX; i++)
 		marks[i] += delta;
-	entry += delta;
+#endif
+
 #ifdef __amd64__
 	(*run_i386)((u_long)run_i386, entry, howto, bootdev, BOOTARG_APIVER,
 	    marks[MARK_END], extmem, cnvmem, ac, (intptr_t)av);
 #else
+	/* stack and the gung is ok at this point, so, no need for asm setup */
 	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER, marks[MARK_END],
 	    extmem, cnvmem, ac, (int)av);
-#endif
 #endif
 	/* not reached */
 }
