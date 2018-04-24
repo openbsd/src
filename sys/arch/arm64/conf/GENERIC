@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.67 2018/04/20 04:38:47 dlg Exp $
+# $OpenBSD: GENERIC,v 1.68 2018/04/24 11:23:27 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -297,6 +297,12 @@ uk*		at scsibus?
 # I2C devices
 islrtc*		at iic?			# ISL1208 RTC
 rkpmic*		at iic?			# RK808 PMIC
+
+# GPIO "pin bus" drivers
+gpioiic*	at gpio?		# I2C bus bit-banging
+iic*		at gpioiic?
+gpioow*		at gpio?		# 1-Wire bus bit-banging
+onewire*	at gpioow?
 
 # 1-Wire devices
 option	ONEWIREVERBOSE
