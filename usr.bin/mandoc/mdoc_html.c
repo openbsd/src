@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.171 2018/04/13 16:27:14 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.172 2018/04/24 00:36:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -514,7 +514,7 @@ mdoc_sh_pre(MDOC_ARGS)
 		id = html_make_id(n);
 		print_otag(h, TAG_H1, "cTi", "Sh", id);
 		if (id != NULL)
-			print_otag(h, TAG_A, "chR", "selflink", id);
+			print_otag(h, TAG_A, "chR", "permalink", id);
 		free(id);
 		break;
 	case ROFFT_BODY:
@@ -538,7 +538,7 @@ mdoc_ss_pre(MDOC_ARGS)
 	id = html_make_id(n);
 	print_otag(h, TAG_H2, "cTi", "Ss", id);
 	if (id != NULL)
-		print_otag(h, TAG_A, "chR", "selflink", id);
+		print_otag(h, TAG_A, "chR", "permalink", id);
 	free(id);
 	return 1;
 }
@@ -549,7 +549,7 @@ mdoc_fl_pre(MDOC_ARGS)
 	char	*id;
 
 	if ((id = cond_id(n)) != NULL)
-		print_otag(h, TAG_A, "chR", "selflink", id);
+		print_otag(h, TAG_A, "chR", "permalink", id);
 	print_otag(h, TAG_B, "cTi", "Fl", id);
 	free(id);
 
@@ -569,7 +569,7 @@ mdoc_cm_pre(MDOC_ARGS)
 	char	*id;
 
 	if ((id = cond_id(n)) != NULL)
-		print_otag(h, TAG_A, "chR", "selflink", id);
+		print_otag(h, TAG_A, "chR", "permalink", id);
 	print_otag(h, TAG_B, "cTi", "Cm", id);
 	free(id);
 	return 1;
@@ -1068,7 +1068,7 @@ mdoc_dv_pre(MDOC_ARGS)
 	char	*id;
 
 	if ((id = cond_id(n)) != NULL)
-		print_otag(h, TAG_A, "chR", "selflink", id);
+		print_otag(h, TAG_A, "chR", "permalink", id);
 	print_otag(h, TAG_CODE, "cTi", "Dv", id);
 	free(id);
 	return 1;
@@ -1080,7 +1080,7 @@ mdoc_ev_pre(MDOC_ARGS)
 	char	*id;
 
 	if ((id = cond_id(n)) != NULL)
-		print_otag(h, TAG_A, "chR", "selflink", id);
+		print_otag(h, TAG_A, "chR", "permalink", id);
 	print_otag(h, TAG_CODE, "cTi", "Ev", id);
 	free(id);
 	return 1;
@@ -1098,7 +1098,7 @@ mdoc_er_pre(MDOC_ARGS)
 	    html_make_id(n) : NULL;
 
 	if (id != NULL)
-		print_otag(h, TAG_A, "chR", "selflink", id);
+		print_otag(h, TAG_A, "chR", "permalink", id);
 	print_otag(h, TAG_CODE, "cTi", "Er", id);
 	free(id);
 	return 1;
@@ -1449,7 +1449,7 @@ mdoc_ic_pre(MDOC_ARGS)
 	char	*id;
 
 	if ((id = cond_id(n)) != NULL)
-		print_otag(h, TAG_A, "chR", "selflink", id);
+		print_otag(h, TAG_A, "chR", "permalink", id);
 	print_otag(h, TAG_B, "cTi", "Ic", id);
 	free(id);
 	return 1;
@@ -1506,7 +1506,7 @@ mdoc_ms_pre(MDOC_ARGS)
 	char *id;
 
 	if ((id = cond_id(n)) != NULL)
-		print_otag(h, TAG_A, "chR", "selflink", id);
+		print_otag(h, TAG_A, "chR", "permalink", id);
 	print_otag(h, TAG_B, "cTi", "Ms", id);
 	free(id);
 	return 1;
@@ -1547,7 +1547,7 @@ mdoc_no_pre(MDOC_ARGS)
 	char *id;
 
 	if ((id = cond_id(n)) != NULL)
-		print_otag(h, TAG_A, "chR", "selflink", id);
+		print_otag(h, TAG_A, "chR", "permalink", id);
 	print_otag(h, TAG_SPAN, "ci", "No", id);
 	free(id);
 	return 1;
@@ -1559,7 +1559,7 @@ mdoc_li_pre(MDOC_ARGS)
 	char	*id;
 
 	if ((id = cond_id(n)) != NULL)
-		print_otag(h, TAG_A, "chR", "selflink", id);
+		print_otag(h, TAG_A, "chR", "permalink", id);
 	print_otag(h, TAG_CODE, "ci", "Li", id);
 	free(id);
 	return 1;

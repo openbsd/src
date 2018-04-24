@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.9 2017/07/16 18:44:15 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.10 2018/04/24 00:36:04 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -14,7 +14,7 @@ ul, ol, dl {	margin-top: 0em;
 		margin-bottom: 0em; }
 li, dt {	margin-top: 1em; }
 
-a.selflink {	border-bottom: thin dotted;
+a.permalink {	border-bottom: thin dotted;
 		color: inherit;
 		font: inherit;
 		text-decoration: inherit; }
