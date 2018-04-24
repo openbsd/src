@@ -2796,12 +2796,12 @@
 ./usr/share/man/man9/evcount.9
 ./usr/share/man/man9/extent.9
 ./usr/share/man/man9/fb_setup.9
-./usr/share/man/man9/ffs.9                              
+./usr/share/man/man9/ffs.9
 ./usr/share/man/man9/file.9
 ./usr/share/man/man9/fork1.9
 ./usr/share/man/man9/getdevvp.9
 ./usr/share/man/man9/getnewvnode.9
-./usr/share/man/man9/getsn.9                        
+./usr/share/man/man9/getsn.9
 ./usr/share/man/man9/hardclock.9
 ./usr/share/man/man9/hashinit.9
 ./usr/share/man/man9/hook_establish.9
@@ -2820,7 +2820,7 @@
 ./usr/share/man/man9/ifq_deq_begin.9
 ./usr/share/man/man9/ifq_enqueue.9
 ./usr/share/man/man9/iic.9
-./usr/share/man/man9/imax.9                         
+./usr/share/man/man9/imax.9
 ./usr/share/man/man9/inittodr.9
 ./usr/share/man/man9/intr_barrier.9
 ./usr/share/man/man9/intro.9
@@ -2835,7 +2835,7 @@
 ./usr/share/man/man9/mbuf_tags.9
 ./usr/share/man/man9/md5.9
 ./usr/share/man/man9/membar_sync.9
-./usr/share/man/man9/memcmp.9                    
+./usr/share/man/man9/memcmp.9
 ./usr/share/man/man9/mi_switch.9
 ./usr/share/man/man9/microtime.9
 ./usr/share/man/man9/ml_init.9
