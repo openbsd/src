@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.187 2018/04/18 06:50:35 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.188 2018/04/24 17:05:54 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3825,6 +3825,8 @@ vmm_fpusave(void)
 	p = ci->ci_fpcurproc;
 	if (p == NULL)
 		return;
+
+	uvmexp.fpswtch++;
 
 	if (ci->ci_fpsaving != 0)
 		panic("%s: recursive save!", __func__);
