@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.143 2017/12/14 00:41:58 dlg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.144 2018/04/24 16:28:42 pirofti Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -592,7 +592,7 @@ out:
 	p->p_thrslpid = 0;
 
 	if (error == ERESTART)
-		error = EINTR;
+		error = ECANCELED;
 
 	return (error);
 
@@ -614,13 +614,17 @@ sys___thrsleep(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, tp) != NULL) {
 		if ((error = copyin(SCARG(uap, tp), &ts, sizeof(ts)))) {
 			*retval = error;
-			return (0);
+			return 0;
+		}
+		if (ts.tv_nsec < 0 || ts.tv_nsec >= 1000000000) {
+			*retval = EINVAL;
+			return 0;
 		}
 		SCARG(uap, tp) = &ts;
 	}
 
 	*retval = thrsleep(p, uap);
-	return (0);
+	return 0;
 }
 
 int
