@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.167 2018/02/05 14:53:26 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.168 2018/04/24 15:40:55 pirofti Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -131,8 +131,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	int error = 0;
 	short ostate;
 
-	soassertlocked(so);
-
 	if (req == PRU_CONTROL) {
 #ifdef INET6
 		if (sotopf(so) == PF_INET6)
@@ -143,6 +141,9 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			return (in_control(so, (u_long)m, (caddr_t)nam,
 			    (struct ifnet *)control));
 	}
+
+	soassertlocked(so);
+
 	if (control && control->m_len) {
 		m_freem(control);
 		m_freem(m);

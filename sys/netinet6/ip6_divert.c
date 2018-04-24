@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.55 2017/11/02 14:01:18 florian Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.56 2018/04/24 15:40:55 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -245,12 +245,13 @@ divert6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
 
-	soassertlocked(so);
-
 	if (req == PRU_CONTROL) {
 		return (in6_control(so, (u_long)m, (caddr_t)addr,
 		    (struct ifnet *)control));
 	}
+
+	soassertlocked(so);
+
 	if (inp == NULL) {
 		error = EINVAL;
 		goto release;

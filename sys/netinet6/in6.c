@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.220 2018/04/24 10:46:25 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.221 2018/04/24 15:40:55 pirofti Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -181,7 +181,9 @@ int
 in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 {
 	int privileged;
+	int error;
 
+	NET_LOCK();
 	privileged = 0;
 	if ((so->so_state & SS_PRIV) != 0)
 		privileged++;
@@ -190,11 +192,16 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	switch (cmd) {
 	case SIOCGETSGCNT_IN6:
 	case SIOCGETMIFCNT_IN6:
-		return (mrt6_ioctl(so, cmd, data));
+		error = mrt6_ioctl(so, cmd, data);
+		goto out;
 	}
 #endif /* MROUTING */
 
-	return (in6_ioctl(cmd, data, ifp, privileged));
+	error = in6_ioctl(cmd, data, ifp, privileged);
+
+out:
+	NET_UNLOCK();
+	return error;
 }
 
 int
