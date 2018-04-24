@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.39 2018/03/01 20:48:11 jmc Exp $
+ * $OpenBSD: calendar.openbsd,v 1.40 2018/04/24 19:14:04 mlarkin Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -35,6 +35,7 @@ Apr 16	OpenBSD/i386 is ELF, 2003
 Apr 17	m2k14: Mini-hackathon, Marrakech, Morocco, 12 developers, 2014
 Apr 19	OpenBSD/solbourne port is added, 2005
 Apr 21	OpenBSD/luna88k port is added, 2004
+Apr 23	p2k18: Ports hackathon, Nantes, France, 24 developers, 2018
 Apr 24	pf2k4: PF hackathon, Sechelt, BC, 12 developers, 2004
 Apr 27	i386/PAE work integrated, 2006
 May 01	OpenBSD 3.3 released, exploiting W^X, 2003
