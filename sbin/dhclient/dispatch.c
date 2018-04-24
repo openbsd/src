@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.150 2018/02/28 22:16:56 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.151 2018/04/24 07:06:49 stsp Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -137,17 +137,17 @@ dispatch(struct interface_info *ifi, int routefd)
 		}
 
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			log_warnx("%s: bfdesc: ERR|HUP|NVAL", log_procname);
+			log_debug("%s: bfdesc: ERR|HUP|NVAL", log_procname);
 			quit = INTERNALSIG;
 			continue;
 		}
 		if ((fds[1].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			log_warnx("%s: routefd: ERR|HUP|NVAL", log_procname);
+			log_debug("%s: routefd: ERR|HUP|NVAL", log_procname);
 			quit = INTERNALSIG;
 			continue;
 		}
 		if ((fds[2].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			log_warnx("%s: unpriv_ibuf: ERR|HUP|NVAL", log_procname);
+			log_debug("%s: unpriv_ibuf: ERR|HUP|NVAL", log_procname);
 			quit = INTERNALSIG;
 			continue;
 		}
