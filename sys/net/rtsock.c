@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.262 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.263 2018/04/24 06:19:47 florian Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1509,7 +1509,7 @@ rtm_ifchg(struct ifnet *ifp)
  * copies of it.
  */
 void
-rtm_addr(struct rtentry *rt, int cmd, struct ifaddr *ifa)
+rtm_addr(int cmd, struct ifaddr *ifa)
 {
 	struct ifnet		*ifp = ifa->ifa_ifp;
 	struct mbuf		*m;
