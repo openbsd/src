@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.30 2018/03/20 15:45:32 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.31 2018/04/24 20:29:15 guenther Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <machine/db_machdep.h>
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
-#include <machine/i82489reg.h>
 #include <machine/atomic.h>
 
 #include <ddb/db_sym.h>

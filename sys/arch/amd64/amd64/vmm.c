@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.188 2018/04/24 17:05:54 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.189 2018/04/24 20:29:15 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -37,7 +37,6 @@
 #include <machine/segments.h>
 #include <machine/cpufunc.h>
 #include <machine/vmmvar.h>
-#include <machine/i82489reg.h>
 
 #include <dev/isa/isareg.h>
 
