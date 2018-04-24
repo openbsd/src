@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.8 2018/04/16 14:28:44 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.9 2018/04/24 12:21:51 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -58,6 +58,8 @@ do_pledgepath(void)
                 err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	if (pledgepath(pp_file1, 0) == -1)
                 err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
+	if (pledgepath("/usr/bin/true", 0) == -1)
+                err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 }
 
 static int
@@ -96,6 +98,7 @@ test_open(int do_pp)
 	int dirfd;
 	int dirfd2;
 	int dirfd3;
+	int dirfd4;
 
 
 	PP_SHOULD_SUCCEED(((dirfd = open("/", O_RDONLY | O_DIRECTORY)) == -1), "open");
@@ -104,9 +107,17 @@ test_open(int do_pp)
 		printf("testing open and openat\n");
 		do_pledgepath();
 	}
+	PP_SHOULD_SUCCEED((pledge("paths stdio rpath cpath wpath", NULL) == -1), "pledge");
+	if (do_pp) {
+		printf("(testing pledgepath after pledge)\n");
+		do_pledgepath();
+	}
+	PP_SHOULD_SUCCEED(((dirfd3= open(pp_dir2, O_RDONLY | O_DIRECTORY)) == -1), "open");
+	PP_SHOULD_SUCCEED((open(pp_file2, O_RDWR) == -1), "open");
+
 	PP_SHOULD_SUCCEED((pledge("stdio rpath cpath wpath", NULL) == -1), "pledge");
 
-	PP_SHOULD_FAIL(((dirfd3= open(pp_dir2, O_RDONLY | O_DIRECTORY)) == -1), "open");
+	PP_SHOULD_FAIL(((dirfd4= open(pp_dir2, O_RDONLY | O_DIRECTORY)) == -1), "open");
 
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
 	if (!do_pp) {
