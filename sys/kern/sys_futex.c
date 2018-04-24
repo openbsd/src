@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.6 2018/01/08 22:33:13 mpi Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.7 2018/04/24 17:19:35 pirofti Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -226,7 +226,7 @@ futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout)
 
 	error = rwsleep(p, &ftlock, PUSER|PCATCH, "fsleep", (int)to_ticks);
 	if (error == ERESTART)
-		error = EINTR;
+		error = ECANCELED;
 	else if (error == EWOULDBLOCK) {
 		/* A race occured between a wakeup and a timeout. */
 		if (p->p_futex == NULL)
