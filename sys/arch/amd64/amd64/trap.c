@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.65 2018/04/12 17:13:43 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.66 2018/04/24 20:58:48 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -95,7 +95,7 @@ void trap(struct trapframe *);
 void ast(struct trapframe *);
 void syscall(struct trapframe *);
 
-const char *trap_type[] = {
+const char * const trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
 	"breakpoint trap",			/*  1 T_BPTFLT */
 	"arithmetic trap",			/*  2 T_ARITHTRAP */
@@ -117,17 +117,19 @@ const char *trap_type[] = {
 	"machine check",			/* 18 T_MCA */
 	"SSE FP exception",			/* 19 T_XMM */
 };
-int	trap_types = nitems(trap_type);
+const int	trap_types = nitems(trap_type);
 
 #ifdef DEBUG
 int	trapdebug = 0;
 #endif
 
-#define	IDTVEC(name)	__CONCAT(X, name)
+static inline void frame_dump(struct trapframe *_tf, struct proc *_p,
+    const char *_sig, uint64_t _cr2);
+static inline void verify_smap(const char *_func);
+static inline void debug_trap(struct trapframe *_frame, struct proc *_p,
+    long _type);
+static inline void check_stack(struct proc *_p, long _type);
 
-#ifdef TRAP_SIGDEBUG
-static void frame_dump(struct trapframe *);
-#endif
 
 /*
  * trap(frame):
@@ -149,54 +151,17 @@ trap(struct trapframe *frame)
 	uint64_t cr2;
 	union sigval sv;
 
+	verify_smap(__func__);
 	uvmexp.traps++;
+	debug_trap(frame, p, type);
 
 	pcb = (p != NULL && p->p_addr != NULL) ? &p->p_addr->u_pcb : NULL;
 
-#ifdef DEBUG
-	if (trapdebug) {
-		printf("trap %d code %llx rip %llx cs %llx rflags %llx "
-		       "cr2 %llx cpl %x\n",
-		    type, frame->tf_err, frame->tf_rip, frame->tf_cs,
-		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel);
-		printf("curproc %p\n", (void *)p);
-		if (p != NULL)
-			printf("pid %d\n", p->p_p->ps_pid);
-	}
-#endif
-#ifdef DIAGNOSTIC
-	if (curcpu()->ci_feature_sefflags_ebx & SEFF0EBX_SMAP) {
-		u_long rf = read_rflags();
-		if (rf & PSL_AC) {
-			write_rflags(rf & ~PSL_AC);
-			panic("%s: AC set on entry", "trap");
-		}
-	}
-#endif
-
 	if (!KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
-		vaddr_t sp;
-
 		type |= T_USER;
 		p->p_md.md_regs = frame;
 		refreshcreds(p);
-
-		sp = PROC_STACK(p);
-		if (p->p_vmspace->vm_map.serial != p->p_spserial ||
-		    p->p_spstart == 0 || sp < p->p_spstart ||
-		    sp >= p->p_spend) {
-			KERNEL_LOCK();
-			if (!uvm_map_check_stack_range(p, sp)) {
-				printf("trap [%s]%d/%d type %d: sp %lx not inside %lx-%lx\n",
-				    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
-				    (int)frame->tf_trapno, sp, p->p_spstart, p->p_spend);
-				sv.sival_ptr = (void *)PROC_PC(p);
-				trapsignal(p, SIGSEGV, type & ~T_USER,
-				    SEGV_ACCERR, sv);
-			}
-
-			KERNEL_UNLOCK();
-		}
+		check_stack(p, type);
 	}
 
 	switch (type) {
@@ -260,12 +225,7 @@ copyfault:
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
-#ifdef TRAP_SIGDEBUG
-		printf("pid %d (%s): %s at rip %llx addr %llx\n",
-		    p->p_p->ps_pid, p->p_p->ps_comm, "BUS",
-		    frame->tf_rip, rcr2());
-		frame_dump(frame);
-#endif
+		frame_dump(frame, p, "BUS", 0);
 		sv.sival_ptr = (void *)frame->tf_rip;
 		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, type & ~T_USER, BUS_OBJERR, sv);
@@ -284,30 +244,10 @@ copyfault:
 		trapsignal(p, SIGILL, type & ~T_USER, ILL_PRVOPC, sv);
 		KERNEL_UNLOCK();
 		goto out;
-	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-#ifdef TRAP_SIGDEBUG
-		printf("pid %d (%s): %s at rip %llx addr %llx\n",
-		    p->p_p->ps_pid, p->p_p->ps_comm, "ILL",
-		    frame->tf_rip, rcr2());
-		frame_dump(frame);
-#endif
-		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_LOCK();
-		trapsignal(p, SIGILL, type & ~T_USER, ILL_COPROC, sv);
-		KERNEL_UNLOCK();
-		goto out;
+	case T_FPOPFLT|T_USER:		/* impossible without 32bit compat */
 	case T_BOUND|T_USER:
-		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_LOCK();
-		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTSUB, sv);
-		KERNEL_UNLOCK();
-		goto out;
 	case T_OFLOW|T_USER:
-		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_LOCK();
-		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTOVF, sv);
-		KERNEL_UNLOCK();
-		goto out;
+		panic("impossible trap");
 	case T_DIVIDE|T_USER:
 		sv.sival_ptr = (void *)frame->tf_rip;
 		KERNEL_LOCK();
@@ -422,18 +362,13 @@ faultcommon:
 			    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
 			signal = SIGKILL;
 		} else {
-#ifdef TRAP_SIGDEBUG
-			printf("pid %d (%s): %s at rip %llx addr %llx\n",
-			    p->p_p->ps_pid, p->p_p->ps_comm, "SEGV",
-			    frame->tf_rip, rcr2());
-			frame_dump(frame);
-#endif
-		}
-		if (error == EACCES)
-			sicode = SEGV_ACCERR;
-		if (error == EIO) {
-			signal = SIGBUS;
-			sicode = BUS_OBJERR;
+			frame_dump(frame, p, "SEGV", cr2);
+			if (error == EACCES)
+				sicode = SEGV_ACCERR;
+			else if (error == EIO) {
+				signal = SIGBUS;
+				sicode = BUS_OBJERR;
+			}
 		}
 		sv.sival_ptr = (void *)fa;
 		trapsignal(p, signal, T_PAGEFLT, sicode, sv);
@@ -476,10 +411,12 @@ out:
 	userret(p);
 }
 
-#ifdef TRAP_SIGDEBUG
-static void
-frame_dump(struct trapframe *tf)
+static inline void
+frame_dump(struct trapframe *tf, struct proc *p, const char *sig, uint64_t cr2)
 {
+#ifdef TRAP_SIGDEBUG
+	printf("pid %d (%s): %s at rip %llx addr %llx\n",
+	    p->p_p->ps_pid, p->p_p->ps_comm, sig, frame->tf_rip, cr2);
 	printf("rip %p  cs 0x%x  rfl %p  rsp %p  ss 0x%x\n",
 	    (void *)tf->tf_rip, (unsigned)tf->tf_cs & 0xffff,
 	    (void *)tf->tf_rflags,
@@ -496,8 +433,59 @@ frame_dump(struct trapframe *tf)
 	    (void *)tf->tf_r13, (void *)tf->tf_r14, (void *)tf->tf_r15);
 	printf("rbp %p  rbx %p  rax %p\n",
 	    (void *)tf->tf_rbp, (void *)tf->tf_rbx, (void *)tf->tf_rax);
-}
 #endif
+}
+
+static inline void
+verify_smap(const char *func)
+{
+#ifdef DIAGNOSTIC
+	if (curcpu()->ci_feature_sefflags_ebx & SEFF0EBX_SMAP) {
+		u_long rf = read_rflags();
+		if (rf & PSL_AC) {
+			write_rflags(rf & ~PSL_AC);
+			panic("%s: AC set on entry", func);
+		}
+	}
+#endif
+}
+
+static inline void
+debug_trap(struct trapframe *frame, struct proc *p, long type)
+{
+#ifdef DEBUG
+	if (trapdebug) {
+		printf("trap %lld code %llx rip %llx cs %llx rflags %llx "
+		       "cr2 %llx cpl %x\n",
+		    type, frame->tf_err, frame->tf_rip, frame->tf_cs,
+		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel);
+		printf("curproc %p\n", (void *)p);
+		if (p != NULL)
+			printf("pid %d\n", p->p_p->ps_pid);
+	}
+#endif
+}
+
+static inline void
+check_stack(struct proc *p, long type)
+{
+	vaddr_t sp = PROC_STACK(p);
+
+	if (p->p_vmspace->vm_map.serial != p->p_spserial ||
+	    p->p_spstart == 0 || sp < p->p_spstart || sp >= p->p_spend) {
+		KERNEL_LOCK();
+		if (!uvm_map_check_stack_range(p, sp)) {
+			union sigval sv;
+
+			printf("trap [%s]%d/%d type %ld: sp %lx not inside"
+			    " %lx-%lx\n", p->p_p->ps_comm, p->p_p->ps_pid,
+			    p->p_tid, type, sp, p->p_spstart, p->p_spend);
+			sv.sival_ptr = (void *)PROC_PC(p);
+			trapsignal(p, SIGSEGV, type, SEGV_ACCERR, sv);
+		}
+		KERNEL_UNLOCK();
+	}
+}
 
 
 /*
@@ -535,16 +523,7 @@ syscall(struct trapframe *frame)
 	size_t argsize, argoff;
 	register_t code, args[9], rval[2], *argp;
 
-#ifdef DIAGNOSTIC
-	if (curcpu()->ci_feature_sefflags_ebx & SEFF0EBX_SMAP) {
-		u_long rf = read_rflags();
-		if (rf & PSL_AC) {
-			write_rflags(rf & ~PSL_AC);
-			panic("%s: AC set on entry", "syscall");
-		}
-	}
-#endif
-
+	verify_smap(__func__);
 	uvmexp.syscalls++;
 	p = curproc;
 
