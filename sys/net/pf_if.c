@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.92 2018/02/06 09:16:11 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.93 2018/04/24 20:23:41 bluhm Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -180,7 +180,7 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 	case PFI_KIF_REF_ROUTE:
 		if (kif->pfik_routes <= 0) {
 			DPFPRINTF(LOG_ERR,
-			    "pfi_kif_unref: state refcount <= 0");
+			    "pfi_kif_unref: route refcount <= 0");
 			return;
 		}
 		kif->pfik_routes--;
