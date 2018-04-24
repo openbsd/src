@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.333 2018/04/13 14:09:42 mikeb Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.334 2018/04/24 23:05:09 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1415,7 +1415,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 #endif /* INET6 */
 			default:
-				pool_put(&pf_rule_pl, newrule);
+				pf_rm_rule(NULL, newrule);
 				error = EAFNOSUPPORT;
 				PF_UNLOCK();
 				goto fail;
