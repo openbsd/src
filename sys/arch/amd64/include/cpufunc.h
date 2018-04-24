@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.24 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.25 2018/04/24 20:33:28 mlarkin Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -304,6 +304,18 @@ xgetbv(uint32_t reg)
 	__asm volatile("xgetbv" : "=a" (lo), "=d" (hi) : "c" (reg));
 
 	return (((uint64_t)hi << 32) | (uint64_t)lo);
+}
+
+static __inline void
+stgi(void)
+{
+	__asm volatile("stgi");
+}
+
+static __inline void
+clgi(void)
+{
+	__asm volatile("clgi");
 }
 
 /* Break into DDB. */
