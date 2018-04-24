@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.134 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.135 2018/04/24 17:22:33 landry Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -61,8 +61,6 @@ extern int usbdebug;
 
 usbd_status	usbd_set_config(struct usbd_device *, int);
 void		usbd_devinfo(struct usbd_device *, int, char *, size_t);
-void		usbd_devinfo_vp(struct usbd_device *, char *, size_t,
-		    char *, size_t, int);
 char		*usbd_get_device_string(struct usbd_device *, uByte);
 char		*usbd_get_string(struct usbd_device *, int, char *, size_t);
 int		usbd_getnewaddr(struct usbd_bus *);
