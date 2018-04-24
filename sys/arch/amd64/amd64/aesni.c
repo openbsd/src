@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.45 2018/04/22 02:59:03 visa Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.46 2018/04/24 02:53:44 visa Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -442,7 +442,6 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	aadlen = rlen = err = iskip = oskip = 0;
 
 	if (crd->crd_len > ses->ses_buflen) {
-		KERNEL_LOCK();
 		if (buf != NULL) {
 			explicit_bzero(buf, ses->ses_buflen);
 			free(buf, M_DEVBUF, ses->ses_buflen);
@@ -452,7 +451,6 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		rlen = roundup(crd->crd_len, EALG_MAX_BLOCK_LEN);
 		ses->ses_buf = buf = malloc(rlen, M_DEVBUF, M_NOWAIT |
 		    M_ZERO);
-		KERNEL_UNLOCK();
 		if (buf == NULL)
 			return (ENOMEM);
 		ses->ses_buflen = rlen;
