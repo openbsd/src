@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.192 2018/02/19 04:43:48 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.193 2018/04/25 16:05:58 jca Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -58,6 +58,10 @@ __END_DECLS
 #endif
 
 #if __BSD_VISIBLE
+
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/socket.h>
 
 /*
  * Structure used to query names of interface cloners.
