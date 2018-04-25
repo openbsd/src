@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.79 2018/03/20 15:28:12 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.80 2018/04/25 07:10:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1092,13 +1092,13 @@ void
 
 void
 SSL_CTX_sess_set_get_cb(SSL_CTX *ctx, SSL_SESSION *(*cb)(struct ssl_st *ssl,
-    unsigned char *data, int len, int *copy))
+    const unsigned char *data, int len, int *copy))
 {
 	ctx->internal->get_session_cb = cb;
 }
 
 SSL_SESSION *
-(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(SSL *ssl, unsigned char *data,
+(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(SSL *ssl, const unsigned char *data,
     int len, int *copy)
 {
 	return ctx->internal->get_session_cb;
@@ -1158,7 +1158,7 @@ SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
 
 void
 SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
-    int (*cb)(SSL *ssl, unsigned char *cookie, unsigned int cookie_len))
+    int (*cb)(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len))
 {
 	ctx->internal->app_verify_cookie_cb = cb;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.184 2018/04/14 07:09:21 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.185 2018/04/25 07:10:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2654,7 +2654,7 @@ SSL_get_certificate(const SSL *s)
 
 /* Fix this function so that it takes an optional type parameter */
 EVP_PKEY *
-SSL_get_privatekey(SSL *s)
+SSL_get_privatekey(const SSL *s)
 {
 	if (s->cert != NULL)
 		return (s->cert->key->privatekey);

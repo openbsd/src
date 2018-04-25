@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.155 2018/04/11 17:47:36 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.156 2018/04/25 07:10:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -727,10 +727,10 @@ void SSL_CTX_sess_set_remove_cb(SSL_CTX *ctx,
 void (*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx))(struct ssl_ctx_st *ctx,
     SSL_SESSION *sess);
 void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx,
-    SSL_SESSION *(*get_session_cb)(struct ssl_st *ssl, unsigned char *data,
-    int len, int *copy));
+    SSL_SESSION *(*get_session_cb)(struct ssl_st *ssl,
+    const unsigned char *data, int len, int *copy));
 SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(struct ssl_st *ssl,
-    unsigned char *Data, int len, int *copy);
+    const unsigned char *Data, int len, int *copy);
 void SSL_CTX_set_info_callback(SSL_CTX *ctx, void (*cb)(const SSL *ssl,
     int type, int val));
 void (*SSL_CTX_get_info_callback(SSL_CTX *ctx))(const SSL *ssl, int type,
@@ -746,7 +746,7 @@ void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
     int (*app_gen_cookie_cb)(SSL *ssl, unsigned char *cookie,
     unsigned int *cookie_len));
 void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
-    int (*app_verify_cookie_cb)(SSL *ssl, unsigned char *cookie,
+    int (*app_verify_cookie_cb)(SSL *ssl, const unsigned char *cookie,
     unsigned int cookie_len));
 void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *s, int (*cb)(SSL *ssl,
     const unsigned char **out, unsigned int *outlen, void *arg), void *arg);
@@ -1247,7 +1247,7 @@ const SSL_CIPHER *SSL_get_current_cipher(const SSL *s);
 const SSL_CIPHER *SSL_CIPHER_get_by_id(unsigned int id);
 const SSL_CIPHER *SSL_CIPHER_get_by_value(uint16_t value);
 int	SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits);
-char *	SSL_CIPHER_get_version(const SSL_CIPHER *c);
+const char *	SSL_CIPHER_get_version(const SSL_CIPHER *c);
 const char *	SSL_CIPHER_get_name(const SSL_CIPHER *c);
 unsigned long 	SSL_CIPHER_get_id(const SSL_CIPHER *c);
 uint16_t SSL_CIPHER_get_value(const SSL_CIPHER *c);
@@ -1279,7 +1279,7 @@ void	SSL_set_verify(SSL *s, int mode,
 	    int (*callback)(int ok, X509_STORE_CTX *ctx));
 void	SSL_set_verify_depth(SSL *s, int depth);
 int	SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa);
-int	SSL_use_RSAPrivateKey_ASN1(SSL *ssl, unsigned char *d, long len);
+int	SSL_use_RSAPrivateKey_ASN1(SSL *ssl, const unsigned char *d, long len);
 int	SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey);
 int	SSL_use_PrivateKey_ASN1(int pk, SSL *ssl, const unsigned char *d, long len);
 int	SSL_use_certificate(SSL *ssl, X509 *x);
@@ -1457,12 +1457,12 @@ long SSL_get_default_timeout(const SSL *s);
 int SSL_library_init(void );
 
 char *SSL_CIPHER_description(const SSL_CIPHER *, char *buf, int size);
-STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk);
+STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk);
 
 SSL *SSL_dup(SSL *ssl);
 
 X509 *SSL_get_certificate(const SSL *ssl);
-/* EVP_PKEY */ struct evp_pkey_st *SSL_get_privatekey(SSL *ssl);
+/* EVP_PKEY */ struct evp_pkey_st *SSL_get_privatekey(const SSL *ssl);
 
 void SSL_CTX_set_quiet_shutdown(SSL_CTX *ctx,int mode);
 int SSL_CTX_get_quiet_shutdown(const SSL_CTX *ctx);

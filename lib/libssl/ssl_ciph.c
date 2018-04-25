@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.98 2018/03/17 14:40:45 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.99 2018/04/25 07:10:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1674,7 +1674,7 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	return (ret);
 }
 
-char *
+const char *
 SSL_CIPHER_get_version(const SSL_CIPHER *c)
 {
 	if (c == NULL)
