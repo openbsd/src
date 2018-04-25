@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.54 2018/03/09 07:43:07 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.55 2018/04/25 17:35:04 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -202,59 +202,47 @@ IDTVEC(trap0b)
 IDTVEC(trap0c)
 	TRAP(T_STKFLT)
 
-	/*
-	 * If iretq faults, we'll get a trap at doreti_iret with CPL==0 but
-	 * the user's GS.base, which INTRENTRY wouldn't handle correctly
-	 * (it would skip the swapgs), so locally expand both it and
-	 * INTR_SAVE_GPRS, but add an extra test comparing %rip to doreti_iret
-	 * so that we can do the necessary swapgs in that case.
-	 */
+/*
+ * The #GP (general protection fault) handler has a couple weird cases
+ * to handle:
+ *  - trapping in iretq to userspace and
+ *  - trapping in xrstor in the kernel.
+ * We detect both of these by examining the %rip in the iretq_frame.
+ * Handling them is done by updating %rip in the iretq_frame to point
+ * to a stub handler of some sort and then iretq'ing to it.  For the
+ * iretq fault we resume in a stub which acts like we got a fresh #GP.
+ * For the xrstor fault we resume to a stub which returns an error to
+ * the routine that requested the xrstor.
+ */
 IDTVEC(trap0d)
+	pushq	%rdx
 	pushq	%rcx
+	movq	24(%rsp),%rdx		/* over %r[cd]x and err to %rip */
 	leaq	_C_LABEL(doreti_iret)(%rip),%rcx
-	cmpq	%rcx,16(%rsp)		/* over %rcx and err to %rip */
+	cmpq	%rcx,%rdx
+	je	.Lhandle_doreti
+	leaq	_C_LABEL(xrstor_fault)(%rip),%rcx
+	cmpq	%rcx,%rdx
+	je	.Lhandle_xrstor
 	popq	%rcx
-	je	1f
-	testq	$SEL_RPL,16(%rsp)	/* over err and %rip to %cs */
-	je	INTRENTRY_LABEL(trap0d)
-1:	swapgs
-	movq	%rax,CPUVAR(SCRATCH)
-	movq	CPUVAR(KERN_CR3),%rax
-	testq	%rax,%rax
-	jz	98f
-	movq	%rax,%cr3
-	jmp	98f
-	.text
-	.globl	INTRENTRY_LABEL(trap0d)
-INTRENTRY_LABEL(trap0d):	/* from kernel */
-	pushq	$T_PROTFLT
-	subq	$152,%rsp
-	movq	%rcx,TF_RCX(%rsp)
-	jmp	99f
-98:	/* from userspace */
-	movq	CPUVAR(KERN_RSP),%rax
-	xchgq	%rax,%rsp
-	movq	%rcx,TF_RCX(%rsp)
-	/* set trapno in the trap frame */
-	movq	$T_PROTFLT,TF_TRAPNO(%rsp)
-	/* copy err and iretq frame to the trap frame */
-	movq	0(%rax),%rcx
-	movq	%rcx,TF_ERR(%rsp)
-	add	$8,%rax
-	movq	IRETQ_RIP(%rax),%rcx
-	movq	%rcx,TF_RIP(%rsp)
-	movq	IRETQ_CS(%rax),%rcx
-	movq	%rcx,TF_CS(%rsp)
-	movq	IRETQ_RFLAGS(%rax),%rcx
-	movq	%rcx,TF_RFLAGS(%rsp)
-	movq	IRETQ_RSP(%rax),%rcx
-	movq	%rcx,TF_RSP(%rsp)
-	movq	IRETQ_SS(%rax),%rcx
-	movq	%rcx,TF_SS(%rsp)
-	movq	CPUVAR(SCRATCH),%rax
-99:	INTR_SAVE_MOST_GPRS_NO_ADJ
-	sti
-	jmp	calltrap
+	popq	%rdx
+	TRAP(T_PROTFLT)
+
+.Lhandle_xrstor:
+	/* xrstor faulted; just resume in xrstor_resume */
+	leaq	_C_LABEL(xrstor_resume)(%rip),%rcx
+	jmp	1f
+
+.Lhandle_doreti:
+	/* iretq faulted; resume in a stub that acts like we got a #GP */
+	leaq	.Lhandle_doreti_resume(%rip),%rcx
+1:	movq	%rcx,24(%rsp)		/* over %r[cd]x and err to %rip */
+	popq	%rcx
+	popq	%rdx
+	addq	$8,%rsp			/* pop the err code */
+	jmp	doreti_iret
+.Lhandle_doreti_resume:
+	ZTRAP(T_PROTFLT)
 
 IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
@@ -303,50 +291,6 @@ Xexceptions:
 	.quad	_C_LABEL(Xtrap1a), _C_LABEL(Xtrap1b)
 	.quad	_C_LABEL(Xtrap1c), _C_LABEL(Xtrap1d)
 	.quad	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
-
-/*
- * If an error is detected during trap, syscall, or interrupt exit
- * then it occurs with CPL==0, but with the user GS.base and on the
- * U-K page tables and tramp stack, pushing another iretq_frame on
- * top of the one we were trying to use.  trap0d above will handle
- * switching the GS.base, page table, and stack and call trap(),
- * which will change tf_rip from pointing to the failed iretq to
- * instead point to resume_iret here.  Since we trapped with CPL==0,
- * intr_fast_exit will leave us at CPL==0 on the U+K page tables
- * and the kernel GS.base, but the iretq will take us back to the
- * tramp stack and our original iretq_frame which was from CPL==3.
- * That means a simple INTRENTRY won't work for us: despite appearing
- * to be coming from CPL==3 we don't need the page table change or
- * swapgs, but we do need the stack switch.
- *
- * So, locally expand INTRENTRY for the bits we need: switch stacks,
- * and set up a trapframe as if we were handling a general protection
- * fault.  This will cause the process to get a SIGBUS.
- */
-NENTRY(resume_iret)
-	movq	%rax,CPUVAR(SCRATCH)
-	movq	CPUVAR(KERN_RSP),%rax
-	xchgq	%rax,%rsp
-	movq	%rcx,TF_RCX(%rsp)
-	/* set trapno+err in the trap frame */
-	movq	$T_PROTFLT,TF_TRAPNO(%rsp)
-	movq	$0,TF_ERR(%rsp)
-	/* copy iretq frame to the trap frame */
-	movq	IRETQ_RIP(%rax),%rcx
-	movq	%rcx,TF_RIP(%rsp)
-	movq	IRETQ_CS(%rax),%rcx
-	movq	%rcx,TF_CS(%rsp)
-	movq	IRETQ_RFLAGS(%rax),%rcx
-	movq	%rcx,TF_RFLAGS(%rsp)
-	movq	IRETQ_RSP(%rax),%rcx
-	movq	%rcx,TF_RSP(%rsp)
-	movq	IRETQ_SS(%rax),%rcx
-	movq	%rcx,TF_SS(%rsp)
-	movq	CPUVAR(SCRATCH),%rax
-	INTR_SAVE_MOST_GPRS_NO_ADJ
-	sti
-	jmp	calltrap
-
 
 /*
  * All traps go through here. Call the generic trap handler, and

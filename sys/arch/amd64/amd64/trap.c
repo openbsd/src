@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.66 2018/04/24 20:58:48 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.67 2018/04/25 17:35:04 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -144,8 +144,6 @@ trap(struct trapframe *frame)
 	struct proc *p = curproc;
 	int type = (int)frame->tf_trapno;
 	struct pcb *pcb;
-	extern char doreti_iret[], resume_iret[];
-	extern char xrstor_fault[], xrstor_resume[];
 	caddr_t onfault;
 	int error;
 	uint64_t cr2;
@@ -187,27 +185,6 @@ trap(struct trapframe *frame)
 		/*NOTREACHED*/
 
 	case T_PROTFLT:
-		/*
-		 * Check for xrstor faulting because of invalid xstate
-		 * We do this by looking at the address of the
-		 * instruction that faulted.
-		 */
-		if (frame->tf_rip == (u_int64_t)xrstor_fault && p != NULL) {
-			frame->tf_rip = (u_int64_t)xrstor_resume;
-			return;
-		}
-
-		/*
-		 * Check for failure during return to user mode.
-		 * We do this by looking at the address of the
-		 * instruction that faulted.
-		 */
-		if (frame->tf_rip == (u_int64_t)doreti_iret) {
-			frame->tf_rip = (u_int64_t)resume_iret;
-			return;
-		}
-		/* FALLTHROUGH */
-
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
 	case T_TSSFLT:
