@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_TIME_set.3,v 1.12 2018/03/29 20:17:44 schwarze Exp $
+.\" $OpenBSD: ASN1_TIME_set.3,v 1.13 2018/04/25 15:17:52 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\" selective merge up to: OpenSSL b0edda11 Mar 20 13:00:17 2018 +0000
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 29 2018 $
+.Dd $Mdocdate: April 25 2018 $
 .Dt ASN1_TIME_SET 3
 .Os
 .Sh NAME
@@ -158,7 +158,7 @@
 .Fc
 .Ft ASN1_GENERALIZEDTIME *
 .Fo ASN1_TIME_to_generalizedtime
-.Fa "ASN1_TIME *t"
+.Fa "const ASN1_TIME *t"
 .Fa "ASN1_GENERALIZEDTIME **out"
 .Fc
 .Sh DESCRIPTION
