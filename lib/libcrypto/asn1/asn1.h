@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.46 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.47 2018/04/25 12:07:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -759,7 +759,7 @@ void ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value);
 int ASN1_TYPE_set1(ASN1_TYPE *a, int type, const void *value);
 int ASN1_TYPE_cmp(const ASN1_TYPE *a, const ASN1_TYPE *b);
 
-ASN1_OBJECT *ASN1_OBJECT_new(void );
+ASN1_OBJECT *ASN1_OBJECT_new(void);
 void ASN1_OBJECT_free(ASN1_OBJECT *a);
 int i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp);
 ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
@@ -775,7 +775,7 @@ ASN1_STRING *ASN1_STRING_new(void);
 void ASN1_STRING_free(ASN1_STRING *a);
 int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str);
 ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *a);
-ASN1_STRING *ASN1_STRING_type_new(int type );
+ASN1_STRING *ASN1_STRING_type_new(int type);
 int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b);
   /* Since this is used to store all sorts of things, via macros, for now, make
      its data void * */
@@ -795,7 +795,7 @@ extern const ASN1_ITEM ASN1_BIT_STRING_it;
 int i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp);
 ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
     const unsigned char **pp, long length);
-int ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d, int length );
+int ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d, int length);
 int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
 int ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n);
 int ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
@@ -1113,7 +1113,7 @@ int ASN1_TYPE_get_int_octetstring(const ASN1_TYPE *a, long *num,
 STACK_OF(OPENSSL_BLOCK) *ASN1_seq_unpack(const unsigned char *buf, int len,
     d2i_of_void *d2i, void (*free_func)(OPENSSL_BLOCK));
 unsigned char *ASN1_seq_pack(STACK_OF(OPENSSL_BLOCK) *safes, i2d_of_void *i2d,
-    unsigned char **buf, int *len );
+    unsigned char **buf, int *len);
 void *ASN1_unpack_string(ASN1_STRING *oct, d2i_of_void *d2i);
 void *ASN1_item_unpack(const ASN1_STRING *oct, const ASN1_ITEM *it);
 ASN1_STRING *ASN1_pack_string(void *obj, i2d_of_void *i2d,
