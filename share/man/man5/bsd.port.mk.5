@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.477 2018/04/25 14:36:38 danj Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.478 2018/04/25 19:49:49 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2424,7 +2424,8 @@ Basically,
 must be able to write into
 .Pa ${WRKOBJDIR} , ${PACKAGE_REPOSITORY} , ${PLIST_REPOSITORY}
 and
-.Ev FETCH_USER must be able to write into
+.Ev FETCH_USER
+must be able to write into
 .Pa ${DISTDIR} .
 .Pp
 Note that this also means that
