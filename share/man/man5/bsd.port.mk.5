@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.475 2018/04/04 07:42:04 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.476 2018/04/25 14:06:11 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 4 2018 $
+.Dd $Mdocdate: April 25 2018 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2411,8 +2411,23 @@ and friends won't work otherwise
 .Pp
 Meant to use in concert with
 .Xr dpb 1 ,
-which uses the same permissions.
-Note that this means that
+which uses the same permissions
+.Po
+see
+.Sq THE SECURITY MODEL OF DPB
+in
+.Xr dpb 1
+.Pc .
+.Pp
+Basically,
+.Ev BUILD_USER
+must be able to write into
+.Pa ${WKROBJDIR} , ${PACKAGE_REPOSITORY} , ${PLIST_REPOSITORY}
+and
+.Ev FETCH_USER must be able to write into
+.Pa ${DISTDIR} .
+.Pp
+Note that this also means that
 .Xr doas 1
 must be configured to work within the chroot
 created by
