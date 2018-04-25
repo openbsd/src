@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.128 2017/11/21 12:20:34 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.129 2018/04/25 07:48:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -261,7 +261,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 				 * if any
 				 */
 				n = io_printf(s->io,
-				    "Return-Path: %s\n"
+				    "Return-Path: <%s>\n"
 				    "Delivered-To: %s\n",
 				    e->sender,
 				    e->rcpt ? e->rcpt : e->dest);
