@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.190 2018/04/24 20:33:28 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.191 2018/04/25 16:22:19 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4066,7 +4066,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		KERNEL_ASSERT_LOCKED();
 #endif /* VMM_DEBUG */
 
-		/* Disable interrupts and save the current FPU state. */
+		/* Disable interrupts and save the current host FPU state. */
 		disable_intr();
 		clts();
 		vmm_fpusave();
@@ -6133,7 +6133,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		KERNEL_ASSERT_LOCKED();
 #endif /* VMM_DEBUG */
 
-		/* Disable interrupts and save the current FPU state. */
+		/* Disable interrupts and save the current host FPU state. */
 		clgi();
 		clts();
 		vmm_fpusave();
