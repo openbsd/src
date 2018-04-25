@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.172 2018/04/17 07:45:24 mpi Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.173 2018/04/25 15:53:08 visa Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -986,9 +986,10 @@ nfsmout:
 			nfs_cache_enter(dvp, NULL, cnp);
 		}
 		if (newvp != NULLVP) {
-			vrele(newvp);
 			if (newvp != dvp)
-				VOP_UNLOCK(newvp, p);
+				vput(newvp);
+			else
+				vrele(newvp);
 		}
 		if ((cnp->cn_nameiop == CREATE || cnp->cn_nameiop == RENAME) &&
 		    (flags & ISLASTCN) && error == ENOENT) {
