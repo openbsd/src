@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.40 2018/02/10 05:24:23 deraadt Exp $	*/
+/*	$OpenBSD: file.h,v 1.41 2018/04/25 10:29:16 mpi Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -106,7 +106,6 @@ struct file {
 int	fdrop(struct file *, struct proc *);
 
 LIST_HEAD(filelist, file);
-extern struct filelist filehead;	/* head of list of open files */
 extern int maxfiles;			/* kernel limit on number of open files */
 extern int numfiles;			/* actual number of open files */
 extern struct fileops vnops;		/* vnode operations for files */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.151 2018/04/18 09:59:09 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.152 2018/04/25 10:29:16 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -177,6 +177,28 @@ fd_unused(struct filedesc *fdp, int fd)
 	if (fd == fdp->fd_lastfile)
 		fdp->fd_lastfile = find_last_set(fdp, fd);
 	fdp->fd_openfd--;
+}
+
+struct file *
+fd_iterfile(struct file *fp, struct proc *p)
+{
+	struct file *nfp;
+
+	if (fp == NULL)
+		nfp = LIST_FIRST(&filehead);
+	else
+		nfp = LIST_NEXT(fp, f_list);
+
+	/* don't FREF when f_count == 0 to avoid race in fdrop() */
+	while (nfp != NULL && nfp->f_count == 0)
+		nfp = LIST_NEXT(nfp, f_list);
+	if (nfp != NULL)
+		FREF(nfp);
+
+	if (fp != NULL)
+		FRELE(fp, p);
+
+	return nfp;
 }
 
 struct file *
