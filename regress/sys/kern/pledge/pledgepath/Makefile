@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.1 2017/11/27 18:10:30 beck Exp $
+#	$OpenBSD: Makefile,v 1.2 2018/04/25 11:55:18 beck Exp $
 PROG=	pledgepath_test
 SRCS+=	syscalls.c
 NOMAN=	yes
 
 LDADD+=		-lutil
-CFLAGS+=	-Wall -Werror
+CFLAGS+=	-Wall
 
 REGRESS_TARGETS+=	test_normal
 
