@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.476 2018/04/25 14:06:11 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.477 2018/04/25 14:36:38 danj Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2422,7 +2422,7 @@ in
 Basically,
 .Ev BUILD_USER
 must be able to write into
-.Pa ${WKROBJDIR} , ${PACKAGE_REPOSITORY} , ${PLIST_REPOSITORY}
+.Pa ${WRKOBJDIR} , ${PACKAGE_REPOSITORY} , ${PLIST_REPOSITORY}
 and
 .Ev FETCH_USER must be able to write into
 .Pa ${DISTDIR} .
