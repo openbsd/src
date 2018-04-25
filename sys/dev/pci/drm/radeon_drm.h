@@ -1,4 +1,3 @@
-/* $OpenBSD: radeon_drm.h,v 1.14 2018/04/20 16:09:36 deraadt Exp $ */
 /* radeon_drm.h -- Public header for the radeon driver -*- linux-c -*-
  *
  * Copyright 2000 Precision Insight, Inc., Cedar Park, Texas.
@@ -512,6 +511,7 @@ typedef struct {
 #define DRM_RADEON_GEM_BUSY		0x2a
 #define DRM_RADEON_GEM_VA		0x2b
 #define DRM_RADEON_GEM_OP		0x2c
+#define DRM_RADEON_GEM_USERPTR		0x2d
 
 #define DRM_IOCTL_RADEON_CP_INIT    DRM_IOW( DRM_COMMAND_BASE + DRM_RADEON_CP_INIT, drm_radeon_init_t)
 #define DRM_IOCTL_RADEON_CP_START   DRM_IO(  DRM_COMMAND_BASE + DRM_RADEON_CP_START)
@@ -555,6 +555,7 @@ typedef struct {
 #define DRM_IOCTL_RADEON_GEM_BUSY	DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_BUSY, struct drm_radeon_gem_busy)
 #define DRM_IOCTL_RADEON_GEM_VA		DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_VA, struct drm_radeon_gem_va)
 #define DRM_IOCTL_RADEON_GEM_OP		DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_OP, struct drm_radeon_gem_op)
+#define DRM_IOCTL_RADEON_GEM_USERPTR	DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_USERPTR, struct drm_radeon_gem_userptr)
 
 typedef struct drm_radeon_init {
 	enum {
@@ -715,7 +716,6 @@ typedef struct drm_radeon_indirect {
 #define RADEON_PARAM_NUM_GB_PIPES          15   /* num GB pipes */
 #define RADEON_PARAM_DEVICE_ID             16
 #define RADEON_PARAM_NUM_Z_PIPES           17   /* num Z pipes */
-#define RADEON_PARAM_LAST_SWI              18
 
 typedef struct drm_radeon_getparam {
 	int param;
@@ -798,7 +798,13 @@ struct drm_radeon_gem_info {
 	uint64_t	vram_visible;
 };
 
-#define RADEON_GEM_NO_BACKING_STORE 1
+#define RADEON_GEM_NO_BACKING_STORE	(1 << 0)
+#define RADEON_GEM_GTT_UC		(1 << 1)
+#define RADEON_GEM_GTT_WC		(1 << 2)
+/* BO is expected to be accessed by the CPU */
+#define RADEON_GEM_CPU_ACCESS		(1 << 3)
+/* CPU access is not expected to work for this BO */
+#define RADEON_GEM_NO_CPU_ACCESS	(1 << 4)
 
 struct drm_radeon_gem_create {
 	uint64_t	size;
@@ -808,10 +814,26 @@ struct drm_radeon_gem_create {
 	uint32_t	flags;
 };
 
+/*
+ * This is not a reliable API and you should expect it to fail for any
+ * number of reasons and have fallback path that do not use userptr to
+ * perform any operation.
+ */
+#define RADEON_GEM_USERPTR_READONLY	(1 << 0)
+#define RADEON_GEM_USERPTR_ANONONLY	(1 << 1)
+#define RADEON_GEM_USERPTR_VALIDATE	(1 << 2)
+#define RADEON_GEM_USERPTR_REGISTER	(1 << 3)
+
+struct drm_radeon_gem_userptr {
+	uint64_t		addr;
+	uint64_t		size;
+	uint32_t		flags;
+	uint32_t		handle;
+};
+
 #define RADEON_TILING_MACRO				0x1
 #define RADEON_TILING_MICRO				0x2
 #define RADEON_TILING_SWAP_16BIT			0x4
-#define RADEON_TILING_R600_NO_SCANOUT                   RADEON_TILING_SWAP_16BIT
 #define RADEON_TILING_SWAP_32BIT			0x8
 /* this object requires a surface when mapped - i.e. front buffer */
 #define RADEON_TILING_SURFACE				0x10
@@ -924,7 +946,6 @@ struct drm_radeon_gem_va {
 #define RADEON_CHUNK_ID_IB	0x02
 #define RADEON_CHUNK_ID_FLAGS	0x03
 #define RADEON_CHUNK_ID_CONST_IB	0x04
-#define RADEON_CHUNK_ID_OLD	0xff
 
 /* The first dword of RADEON_CHUNK_ID_FLAGS is a uint32 of these flags: */
 #define RADEON_CS_KEEP_TILING_FLAGS 0x01
@@ -946,6 +967,7 @@ struct drm_radeon_cs_chunk {
 };
 
 /* drm_radeon_cs_reloc.flags */
+#define RADEON_RELOC_PRIO_MASK		(0xf << 0)
 
 struct drm_radeon_cs_reloc {
 	uint32_t		handle;
@@ -1011,7 +1033,13 @@ struct drm_radeon_cs {
 #define RADEON_INFO_NUM_BYTES_MOVED	0x1d
 #define RADEON_INFO_VRAM_USAGE		0x1e
 #define RADEON_INFO_GTT_USAGE		0x1f
-
+#define RADEON_INFO_ACTIVE_CU_COUNT	0x20
+#define RADEON_INFO_CURRENT_GPU_TEMP	0x21
+#define RADEON_INFO_CURRENT_GPU_SCLK	0x22
+#define RADEON_INFO_CURRENT_GPU_MCLK	0x23
+#define RADEON_INFO_READ_REG		0x24
+#define RADEON_INFO_VA_UNMAP_WORKING	0x25
+#define RADEON_INFO_GPU_RESET_COUNTER	0x26
 
 struct drm_radeon_info {
 	uint32_t		request;
@@ -1037,13 +1065,6 @@ struct drm_radeon_info {
 #define SI_TILE_MODE_DEPTH_STENCIL_2D_4AA	3
 #define SI_TILE_MODE_DEPTH_STENCIL_2D_8AA	2
 
-#define CIK_TILE_MODE_COLOR_2D			14
-#define CIK_TILE_MODE_COLOR_2D_SCANOUT		10
-#define CIK_TILE_MODE_DEPTH_STENCIL_2D_TILESPLIT_64       0
-#define CIK_TILE_MODE_DEPTH_STENCIL_2D_TILESPLIT_128      1
-#define CIK_TILE_MODE_DEPTH_STENCIL_2D_TILESPLIT_256      2
-#define CIK_TILE_MODE_DEPTH_STENCIL_2D_TILESPLIT_512      3
-#define CIK_TILE_MODE_DEPTH_STENCIL_2D_TILESPLIT_ROW_SIZE 4
 #define CIK_TILE_MODE_DEPTH_STENCIL_1D		5
 
 #endif

@@ -1,4 +1,3 @@
-/*	$OpenBSD: radeon_acpi.h,v 1.3 2018/04/20 16:09:37 deraadt Exp $	*/
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *

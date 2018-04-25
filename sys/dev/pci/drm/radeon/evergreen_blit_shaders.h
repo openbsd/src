@@ -1,4 +1,3 @@
-/*	$OpenBSD: evergreen_blit_shaders.h,v 1.3 2018/04/20 16:09:36 deraadt Exp $	*/
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
  *

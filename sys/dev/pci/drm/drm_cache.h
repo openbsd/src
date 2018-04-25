@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_cache.h,v 1.3 2018/04/20 16:09:36 deraadt Exp $	*/
+/*	$OpenBSD: drm_cache.h,v 1.4 2018/04/25 01:27:46 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright 2009 Red Hat Inc.
@@ -37,5 +37,16 @@
 #ifdef notyet
 void drm_clflush_pages(struct page *pages[], unsigned long num_pages);
 #endif
+
+static inline bool drm_arch_can_wc_memory(void)
+{
+#if defined(__powerpc__)
+	return false;
+#elif defined(__mips__)
+	return false;
+#else
+	return true;
+#endif
+}
 
 #endif

@@ -1,8 +1,5 @@
-/*	$OpenBSD: radeon_blit_common.h,v 1.3 2018/04/20 21:12:50 naddy Exp $	*/
 /*
- * Copyright 2009 Advanced Micro Devices, Inc.
- * Copyright 2009 Red Hat Inc.
- * Copyright 2012 Alcatel-Lucent, Inc.
+ * Copyright 2012 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,21 +22,11 @@
  *
  */
 
-#ifndef __RADEON_BLIT_COMMON_H__
+#ifndef CIK_BLIT_SHADERS_H
+#define CIK_BLIT_SHADERS_H
 
-#define DI_PT_RECTLIST        0x11
-#define DI_INDEX_SIZE_16_BIT  0x0
-#define DI_SRC_SEL_AUTO_INDEX 0x2
+extern const u32 cik_default_state[];
 
-#define FMT_8                 0x1
-#define FMT_5_6_5             0x8
-#define FMT_8_8_8_8           0x1a
-#define COLOR_8               0x1
-#define COLOR_5_6_5           0x8
-#define COLOR_8_8_8_8         0x1a
+extern const u32 cik_default_size;
 
-#define RECT_UNIT_H           32
-#define RECT_UNIT_W           (RADEON_GPU_PAGE_SIZE / 4 / RECT_UNIT_H)
-
-#define __RADEON_BLIT_COMMON_H__
 #endif

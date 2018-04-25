@@ -1,4 +1,3 @@
-/*	$OpenBSD: r600_blit_shaders.h,v 1.3 2018/04/20 16:09:36 deraadt Exp $	*/
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
  * Copyright 2009 Red Hat Inc.
@@ -36,5 +35,4 @@ extern const u32 r6xx_default_state[];
 extern const u32 r6xx_ps_size, r6xx_vs_size;
 extern const u32 r6xx_default_size, r7xx_default_size;
 
-__pure uint32_t int2float(uint32_t x);
 #endif

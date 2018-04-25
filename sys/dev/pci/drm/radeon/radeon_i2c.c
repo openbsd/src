@@ -1,4 +1,3 @@
-/*	$OpenBSD: radeon_i2c.c,v 1.9 2018/04/20 16:09:37 deraadt Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -90,12 +89,14 @@ bool radeon_ddc_probe(struct radeon_connector *radeon_connector, bool use_aux)
 
 /* bit banging i2c */
 
-static int pre_xfer(void *cookie)
+static int pre_xfer(struct i2c_adapter *i2c_adap)
 {
-	struct radeon_i2c_chan *i2c = cookie;
+	struct radeon_i2c_chan *i2c = i2c_get_adapdata(i2c_adap);
 	struct radeon_device *rdev = i2c->dev->dev_private;
 	struct radeon_i2c_bus_rec *rec = &i2c->rec;
 	uint32_t temp;
+
+	mutex_lock(&i2c->mutex);
 
 	/* RV410 appears to have a bug where the hw i2c in reset
 	 * holds the i2c port in a bad state - switch hw i2c away before
@@ -158,9 +159,9 @@ static int pre_xfer(void *cookie)
 	return 0;
 }
 
-static void post_xfer(void *cookie)
+static void post_xfer(struct i2c_adapter *i2c_adap)
 {
-	struct radeon_i2c_chan *i2c = cookie;
+	struct radeon_i2c_chan *i2c = i2c_get_adapdata(i2c_adap);
 	struct radeon_device *rdev = i2c->dev->dev_private;
 	struct radeon_i2c_bus_rec *rec = &i2c->rec;
 	uint32_t temp;
@@ -173,6 +174,8 @@ static void post_xfer(void *cookie)
 	temp = RREG32(rec->mask_data_reg) & ~rec->mask_data_mask;
 	WREG32(rec->mask_data_reg, temp);
 	temp = RREG32(rec->mask_data_reg);
+
+	mutex_unlock(&i2c->mutex);
 }
 
 static int get_clock(void *i2c_priv)
@@ -280,14 +283,16 @@ radeon_bb_read_bits(void *cookie)
 int
 radeon_acquire_bus(void *cookie, int flags)
 {
-	pre_xfer(cookie);
+	struct radeon_i2c_chan *i2c = cookie;
+	pre_xfer(&i2c->adapter);
 	return (0);
 }
 
 void
 radeon_release_bus(void *cookie, int flags)
 {
-	post_xfer(cookie);
+	struct radeon_i2c_chan *i2c = cookie;
+	post_xfer(&i2c->adapter);
 }
 
 int
@@ -319,6 +324,7 @@ radeon_write_byte(void *cookie, u_int8_t byte, int flags)
 {
 	return (i2c_bitbang_write_byte(cookie, byte, flags, &radeon_bbops));
 }
+
 
 /* hw i2c */
 
@@ -906,6 +912,8 @@ static int radeon_hw_i2c_xfer(struct i2c_adapter *i2c_adap,
 	struct radeon_i2c_bus_rec *rec = &i2c->rec;
 	int ret = 0;
 
+	mutex_lock(&i2c->mutex);
+
 	switch (rdev->family) {
 	case CHIP_R100:
 	case CHIP_RV100:
@@ -972,6 +980,8 @@ static int radeon_hw_i2c_xfer(struct i2c_adapter *i2c_adap,
 		break;
 	}
 
+	mutex_unlock(&i2c->mutex);
+
 	return ret;
 }
 
@@ -996,7 +1006,7 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 {
 	struct radeon_device *rdev = dev->dev_private;
 	struct radeon_i2c_chan *i2c;
-	int ret = 0;
+	int ret;
 
 	/* don't add the mm_i2c bus unless hw_i2c is enabled */
 	if (rec->mm_i2c && (radeon_hw_i2c == 0))
@@ -1007,13 +1017,14 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 		return NULL;
 
 	i2c->rec = *rec;
-#ifdef notyet
+#ifdef __linux__
 	i2c->adapter.owner = THIS_MODULE;
 	i2c->adapter.class = I2C_CLASS_DDC;
 	i2c->adapter.dev.parent = &dev->pdev->dev;
 #endif
 	i2c->dev = dev;
 	i2c_set_adapdata(&i2c->adapter, i2c);
+	rw_init(&i2c->mutex, "riic");
 	if (rec->mm_i2c ||
 	    (rec->hw_capable &&
 	     radeon_hw_i2c &&
@@ -1044,28 +1055,28 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 		/* set the radeon bit adapter */
 		snprintf(i2c->adapter.name, sizeof(i2c->adapter.name),
 			 "Radeon i2c bit bus %s", name);
+		i2c->adapter.algo_data = &i2c->bit;
 #ifdef notyet
-		i2c->adapter.algo_data = &i2c->algo.bit;
-		i2c->algo.bit.pre_xfer = pre_xfer;
-		i2c->algo.bit.post_xfer = post_xfer;
-		i2c->algo.bit.setsda = set_data;
-		i2c->algo.bit.setscl = set_clock;
-		i2c->algo.bit.getsda = get_data;
-		i2c->algo.bit.getscl = get_clock;
-		i2c->algo.bit.udelay = 10;
-		i2c->algo.bit.timeout = usecs_to_jiffies(2200);	/* from VESA */
-		i2c->algo.bit.data = i2c;
-		ret = i2c_bit_add_bus(&i2c->adapter);
+		i2c->bit.pre_xfer = pre_xfer;
+		i2c->bit.post_xfer = post_xfer;
+		i2c->bit.setsda = set_data;
+		i2c->bit.setscl = set_clock;
+		i2c->bit.getsda = get_data;
+		i2c->bit.getscl = get_clock;
+		i2c->bit.udelay = 10;
+		i2c->bit.timeout = usecs_to_jiffies(2200);	/* from VESA */
+		i2c->bit.data = i2c;
 #else
-		i2c->adapter.ic.ic_cookie = i2c;
-		i2c->adapter.ic.ic_acquire_bus = radeon_acquire_bus;
-		i2c->adapter.ic.ic_release_bus = radeon_release_bus;
-		i2c->adapter.ic.ic_send_start = radeon_send_start;
-		i2c->adapter.ic.ic_send_stop = radeon_send_stop;
-		i2c->adapter.ic.ic_initiate_xfer = radeon_initiate_xfer;
-		i2c->adapter.ic.ic_read_byte = radeon_read_byte;
-		i2c->adapter.ic.ic_write_byte = radeon_write_byte;
+		i2c->bit.ic.ic_cookie = i2c;
+		i2c->bit.ic.ic_acquire_bus = radeon_acquire_bus;
+		i2c->bit.ic.ic_release_bus = radeon_release_bus;
+		i2c->bit.ic.ic_send_start = radeon_send_start;
+		i2c->bit.ic.ic_send_stop = radeon_send_stop;
+		i2c->bit.ic.ic_initiate_xfer = radeon_initiate_xfer;
+		i2c->bit.ic.ic_read_byte = radeon_read_byte;
+		i2c->bit.ic.ic_write_byte = radeon_write_byte;
 #endif
+		ret = i2c_bit_add_bus(&i2c->adapter);
 		if (ret) {
 			DRM_ERROR("Failed to register bit i2c %s\n", name);
 			goto out_free;
@@ -1076,6 +1087,7 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 out_free:
 	kfree(i2c);
 	return NULL;
+
 }
 
 void radeon_i2c_destroy(struct radeon_i2c_chan *i2c)
@@ -1141,11 +1153,6 @@ struct radeon_i2c_chan *radeon_i2c_lookup(struct radeon_device *rdev,
 			return rdev->i2c_bus[i];
 		}
 	}
-	return NULL;
-}
-
-struct drm_encoder *radeon_best_encoder(struct drm_connector *connector)
-{
 	return NULL;
 }
 

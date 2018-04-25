@@ -1,4 +1,3 @@
-/*	$OpenBSD: atom-names.h,v 1.3 2018/04/20 16:09:36 deraadt Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  *
