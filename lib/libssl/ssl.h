@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.156 2018/04/25 07:10:39 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.157 2018/04/25 07:25:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -730,7 +730,7 @@ void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx,
     SSL_SESSION *(*get_session_cb)(struct ssl_st *ssl,
     const unsigned char *data, int len, int *copy));
 SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(struct ssl_st *ssl,
-    const unsigned char *Data, int len, int *copy);
+    const unsigned char *data, int len, int *copy);
 void SSL_CTX_set_info_callback(SSL_CTX *ctx, void (*cb)(const SSL *ssl,
     int type, int val));
 void (*SSL_CTX_get_info_callback(SSL_CTX *ctx))(const SSL *ssl, int type,
