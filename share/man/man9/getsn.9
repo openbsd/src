@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsn.9,v 1.1 2018/04/23 10:30:39 dlg Exp $
+.\"	$OpenBSD: getsn.9,v 1.2 2018/04/25 11:15:58 dlg Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 23 2018 $
+.Dd $Mdocdate: April 25 2018 $
 .Dt GETSN 9
 .Os
 .Sh NAME
@@ -32,8 +32,8 @@
 .Nd read user input from the console
 .Sh SYNOPSIS
 .In lib/libkern/libkern.h
-.Ft int
-.Fn getsn "char *cp" "int size"
+.Ft size_t
+.Fn getsn "char *cp" "size_t size"
 .Sh DESCRIPTION
 The
 .Fn getsn
