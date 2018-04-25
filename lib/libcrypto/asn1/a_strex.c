@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strex.c,v 1.25 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: a_strex.c,v 1.26 2018/04/25 11:48:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -289,7 +289,7 @@ do_hex_dump(char_io *io_ch, void *arg, unsigned char *buf, int buflen)
  */
 
 static int
-do_dump(unsigned long lflags, char_io *io_ch, void *arg, ASN1_STRING *str)
+do_dump(unsigned long lflags, char_io *io_ch, void *arg, const ASN1_STRING *str)
 {
 	/* Placing the ASN1_STRING in a temp ASN1_TYPE allows
 	 * the DER encoding to readily obtained
@@ -346,7 +346,8 @@ static const signed char tag2nbyte[] = {
  */
 
 static int
-do_print_ex(char_io *io_ch, void *arg, unsigned long lflags, ASN1_STRING *str)
+do_print_ex(char_io *io_ch, void *arg, unsigned long lflags,
+    const ASN1_STRING *str)
 {
 	int outlen, len;
 	int type;
@@ -605,13 +606,13 @@ X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent, unsigned long flags)
 }
 
 int
-ASN1_STRING_print_ex(BIO *out, ASN1_STRING *str, unsigned long flags)
+ASN1_STRING_print_ex(BIO *out, const ASN1_STRING *str, unsigned long flags)
 {
 	return do_print_ex(send_bio_chars, out, flags, str);
 }
 
 int
-ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags)
+ASN1_STRING_print_ex_fp(FILE *fp, const ASN1_STRING *str, unsigned long flags)
 {
 	return do_print_ex(send_fp_chars, fp, flags, str);
 }

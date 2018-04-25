@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_asn1.c,v 1.20 2017/11/28 16:51:21 jsing Exp $ */
+/* $OpenBSD: evp_asn1.c,v 1.21 2018/04/25 11:48:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,7 +79,7 @@ ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
 }
 
 int
-ASN1_TYPE_get_octetstring(ASN1_TYPE *a, unsigned char *data, int max_len)
+ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_len)
 {
 	int ret, num;
 	unsigned char *p;
@@ -162,7 +162,7 @@ ASN1_TYPE_set_int_octetstring(ASN1_TYPE *at, long num, unsigned char *data,
 }
 
 int
-ASN1_TYPE_get_int_octetstring(ASN1_TYPE *at, long *num, unsigned char *data,
+ASN1_TYPE_get_int_octetstring(const ASN1_TYPE *at, long *num, unsigned char *data,
     int max_len)
 {
 	ASN1_STRING *sp = at->value.sequence;

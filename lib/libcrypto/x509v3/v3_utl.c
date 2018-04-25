@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.27 2018/03/20 16:16:59 jsing Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.28 2018/04/25 11:48:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -180,7 +180,7 @@ i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, ASN1_INTEGER *a)
 }
 
 ASN1_INTEGER *
-s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
+s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
 {
 	BIGNUM *bn = NULL;
 	ASN1_INTEGER *aint;

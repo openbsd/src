@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_pack.c,v 1.16 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: asn_pack.c,v 1.17 2018/04/25 11:48:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -203,7 +203,7 @@ err:
 /* Extract an ASN1 object from an ASN1_STRING */
 
 void *
-ASN1_item_unpack(ASN1_STRING *oct, const ASN1_ITEM *it)
+ASN1_item_unpack(const ASN1_STRING *oct, const ASN1_ITEM *it)
 {
 	const unsigned char *p;
 	void *ret;

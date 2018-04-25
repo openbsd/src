@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.40 2018/02/14 16:46:04 jsing Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.41 2018/04/25 11:48:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -474,7 +474,7 @@ ASN1_STRING_length_set(ASN1_STRING *x, int len)
 }
 
 int
-ASN1_STRING_type(ASN1_STRING *x)
+ASN1_STRING_type(const ASN1_STRING *x)
 {
 	return (x->type);
 }

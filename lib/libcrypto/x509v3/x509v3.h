@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.22 2017/06/22 17:28:00 jsing Exp $ */
+/* $OpenBSD: x509v3.h,v 1.23 2018/04/25 11:48:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -528,7 +528,7 @@ int SXNET_add_id_asc(SXNET **psx, char *zone, char *user, int userlen);
 int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, char *user, int userlen); 
 int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *izone, char *user, int userlen); 
 
-ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, char *zone);
+ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, const char *zone);
 ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone);
 ASN1_OCTET_STRING *SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone);
 
@@ -735,7 +735,7 @@ int X509V3_add_value_bool(const char *name, int asn1_bool,
 int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
 						STACK_OF(CONF_VALUE) **extlist);
 char * i2s_ASN1_INTEGER(X509V3_EXT_METHOD *meth, ASN1_INTEGER *aint);
-ASN1_INTEGER * s2i_ASN1_INTEGER(X509V3_EXT_METHOD *meth, char *value);
+ASN1_INTEGER * s2i_ASN1_INTEGER(X509V3_EXT_METHOD *meth, const char *value);
 char * i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *meth, ASN1_ENUMERATED *aint);
 char * i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *meth, ASN1_ENUMERATED *aint);
 int X509V3_EXT_add(X509V3_EXT_METHOD *ext);

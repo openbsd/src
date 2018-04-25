@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.24 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.25 2018/04/25 11:48:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -222,7 +222,7 @@ ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 }
 
 int
-ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n)
+ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n)
 {
 	int w, v;
 
@@ -240,7 +240,8 @@ ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n)
  * 'len' is the length of 'flags'.
  */
 int
-ASN1_BIT_STRING_check(ASN1_BIT_STRING *a, unsigned char *flags, int flags_len)
+ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a, const unsigned char *flags,
+    int flags_len)
 {
 	int i, ok;
 
