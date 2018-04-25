@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_sess_set_get_cb.3,v 1.5 2018/04/25 13:51:34 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_sess_set_get_cb.3,v 1.6 2018/04/25 14:07:57 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -79,34 +79,34 @@
 .Fc
 .Ft int
 .Fo "(*SSL_CTX_sess_get_new_cb(SSL_CTX *ctx))"
-.Fa "struct ssl_st *ssl"
+.Fa "SSL *ssl"
 .Fa "SSL_SESSION *sess"
 .Fc
 .Ft void
 .Fo "(*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx))"
-.Fa "struct ssl_ctx_st *ctx"
+.Fa "SSL_CTX *ctx"
 .Fa "SSL_SESSION *sess"
 .Fc
 .Ft SSL_SESSION *
 .Fo "(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))"
-.Fa "struct ssl_st *ssl"
+.Fa "SSL *ssl"
 .Fa "const unsigned char *data"
 .Fa "int len"
 .Fa "int *copy"
 .Fc
 .Ft int
 .Fo "(*new_session_cb)"
-.Fa "struct ssl_st *ssl"
+.Fa "SSL *ssl"
 .Fa "SSL_SESSION *sess"
 .Fc
 .Ft void
 .Fo "(*remove_session_cb)"
-.Fa "struct ssl_ctx_st *ctx"
+.Fa "SSL_CTX *ctx"
 .Fa "SSL_SESSION *sess"
 .Fc
 .Ft SSL_SESSION *
 .Fo "(*get_session_cb)"
-.Fa "struct ssl_st *ssl"
+.Fa "SSL *ssl"
 .Fa "unsigned char *data"
 .Fa "int len"
 .Fa "int *copy"
