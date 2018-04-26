@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.94 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.95 2018/04/26 14:09:05 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -496,7 +496,7 @@ ENTRY(cpu_idle_leave)
 
 #ifdef DIAGNOSTIC
 NENTRY(switch_pmcpu_set)
-	movabsq	$switch_active,%rdi
+	leaq	switch_active(%rip),%rdi
 	call	_C_LABEL(panic)
 	/* NOTREACHED */
 
@@ -644,7 +644,7 @@ KUENTRY(syscall_trampback)
 
 #ifdef DIAGNOSTIC
 .Lsyscall_spl_not_lowered:
-	movabsq	$spl_lowered, %rdi
+	leaq	spl_lowered(%rip), %rdi
 	movl	TF_RAX(%rsp),%esi
 	movl	TF_RDI(%rsp),%edx
 	movl	%ebx,%ecx
@@ -845,7 +845,7 @@ xrstor_fault:
 	xrstor	(%rdi)
 	xorl	%eax, %eax
 	ret
-ENTRY(xrstor_resume)
+NENTRY(xrstor_resume)
 	movl	$1, %eax
 	ret
 

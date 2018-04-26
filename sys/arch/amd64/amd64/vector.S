@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.55 2018/04/25 17:35:04 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.56 2018/04/26 14:09:05 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -218,10 +218,10 @@ IDTVEC(trap0d)
 	pushq	%rdx
 	pushq	%rcx
 	movq	24(%rsp),%rdx		/* over %r[cd]x and err to %rip */
-	leaq	_C_LABEL(doreti_iret)(%rip),%rcx
+	leaq	doreti_iret(%rip),%rcx
 	cmpq	%rcx,%rdx
 	je	.Lhandle_doreti
-	leaq	_C_LABEL(xrstor_fault)(%rip),%rcx
+	leaq	xrstor_fault(%rip),%rcx
 	cmpq	%rcx,%rdx
 	je	.Lhandle_xrstor
 	popq	%rcx
@@ -230,7 +230,7 @@ IDTVEC(trap0d)
 
 .Lhandle_xrstor:
 	/* xrstor faulted; just resume in xrstor_resume */
-	leaq	_C_LABEL(xrstor_resume)(%rip),%rcx
+	leaq	xrstor_resume(%rip),%rcx
 	jmp	1f
 
 .Lhandle_doreti:
@@ -342,7 +342,7 @@ calltrap:
 	jne	3f
 	INTRFASTEXIT
 3:	sti
-	movabsq	$spl_lowered,%rdi
+	leaq	spl_lowered(%rip),%rdi
 	movl	CPUVAR(ILEVEL),%esi
 	movl	%ebx,%edx
 	xorq	%rax,%rax
