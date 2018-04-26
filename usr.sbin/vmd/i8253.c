@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.19 2018/04/26 16:56:13 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.20 2018/04/26 17:10:09 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -37,8 +37,9 @@ extern char *__progname;
 
 /*
  * Channel 0 is used to generate the legacy hardclock interrupt (HZ).
- * Channels 1 and 2 are not connected to any output (although someone
- * could hook channel 2 up to an emulated pcppi(4) at some point).
+ * Channels 1 and 2 can be used by the guest OS as regular timers,
+ * but channel 2 is not connected to any pcppi(4)-like device. Like
+ * a regular PC, channel 2 status can also be read from port 0x61.
  */
 struct i8253_channel i8253_channel[3];
 
@@ -59,16 +60,19 @@ i8253_init(uint32_t vm_id)
 	i8253_channel[0].mode = TIMER_INTTC;
 	i8253_channel[0].last_r = 1;
 	i8253_channel[0].vm_id = vm_id;
+	i8253_channel[0].state = 0;
 
 	i8253_channel[1].start = 0xFFFF;
 	i8253_channel[1].mode = TIMER_INTTC;
 	i8253_channel[1].last_r = 1;
 	i8253_channel[1].vm_id = vm_id;
+	i8253_channel[1].state = 0;
 
 	i8253_channel[2].start = 0xFFFF;
 	i8253_channel[2].mode = TIMER_INTTC;
 	i8253_channel[2].last_r = 1;
 	i8253_channel[2].vm_id = vm_id;
+	i8253_channel[2].state = 0;
 
 	evtimer_set(&i8253_channel[0].timer, i8253_fire, &i8253_channel[0]);
 	evtimer_set(&i8253_channel[1].timer, i8253_fire, &i8253_channel[1]);
@@ -116,6 +120,40 @@ i8253_do_readback(uint32_t data)
 			}
 		}
 	}
+}
+
+/*
+ * vcpu_exit_i8253_misc
+ *
+ * Handles the 0x61 misc i8253 PIT register in/out exits.
+ *
+ * Parameters:
+ *  vrp: vm run parameters containing exit information for the I/O
+ *      instruction being performed
+ *
+ * Return value:
+ *  Always 0xFF (no interrupt should be injected)
+ */
+uint8_t
+vcpu_exit_i8253_misc(struct vm_run_params *vrp)
+{
+	union vm_exit *vei = vrp->vrp_exit;
+
+	if (vei->vei.vei_dir == VEI_DIR_IN) {
+		/* Port 0x61[5] = counter channel 2 state */
+		if (i8253_channel[2].state) {
+			set_return_data(vei, (1 << 5));
+			log_debug("%s: counter 2 fired, returning 0x20", __func__);
+		} else {
+			set_return_data(vei, 0);
+			log_debug("%s: counter 2 clear, returning 0x0", __func__);
+		}
+	} else {
+		log_debug("%s: discarding data written to PIT misc port\n",
+		    __func__);
+	}
+
+	return 0xFF;
 }
 
 /*
@@ -254,6 +292,7 @@ i8253_reset(uint8_t chn)
 	timerclear(&tv);
 
 	i8253_channel[chn].in_use = 1;
+	i8253_channel[chn].state = 0;
 	tv.tv_usec = (i8253_channel[chn].start * NS_PER_TICK) / 1000;
 	evtimer_add(&i8253_channel[chn].timer, &tv);
 }
@@ -282,6 +321,8 @@ i8253_fire(int fd, short type, void *arg)
 
 	if (ctr->mode != TIMER_INTTC)
 		evtimer_add(&ctr->timer, &tv);
+	else
+		ctr->state = 1;
 }
 
 int
