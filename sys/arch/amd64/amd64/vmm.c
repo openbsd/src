@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.192 2018/04/26 10:43:58 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.193 2018/04/26 11:37:25 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6026,7 +6026,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 int
 vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 {
-	int ret = 0, resume, locked;
+	int ret = 0, resume;
 	struct region_descriptor gdt;
 	struct cpu_info *ci;
 	uint64_t exit_reason;
@@ -6209,6 +6209,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		 * (external interrupt), the interrupt will be processed now.
 		 */
 		stgi();
+		KERNEL_LOCK();
 
 		vcpu->vc_gueststate.vg_rip = vmcb->v_rip;
 		vmcb->v_tlb_control = SVM_TLB_CONTROL_FLUSH_NONE;
@@ -6219,12 +6220,6 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			exit_reason = vmcb->v_exitcode;
 			vcpu->vc_gueststate.vg_exit_reason = exit_reason;
 		}	
-
-		if (ret || exit_reason != SVM_VMEXIT_INTR) {
-			KERNEL_LOCK();
-			locked = 1;
-		} else
-			locked = 0;
 
 		/* If we exited successfully ... */
 		if (ret == 0) {
@@ -6237,9 +6232,6 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			 * the exit handler determines help from vmd is needed.
 			 */
 			ret = svm_handle_exit(vcpu);
-
-			if (!locked)
-				KERNEL_LOCK();
 
 			if (vcpu->vc_gueststate.vg_rflags & PSL_I)
 				vcpu->vc_irqready = 1;
