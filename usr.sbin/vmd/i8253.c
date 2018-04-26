@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.18 2018/04/17 14:34:09 cheloha Exp $ */
+/* $OpenBSD: i8253.c,v 1.19 2018/04/26 16:56:13 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -196,7 +196,8 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 				i8253_channel[sel].ilatch |= (out_data & 0xff);
 				i8253_channel[sel].last_w = 1;
 			} else {
-				i8253_channel[sel].ilatch |= ((out_data & 0xff) << 8);
+				i8253_channel[sel].ilatch |=
+				    ((out_data & 0xff) << 8);
 				i8253_channel[sel].start =
 				    i8253_channel[sel].ilatch;
 				i8253_channel[sel].last_w = 0;
@@ -205,7 +206,8 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 				if (i8253_channel[sel].start == 0)
 					i8253_channel[sel].start = 0xffff;
 
-				log_debug("%s: channel %d reset, mode=%d, start=%d", __func__,
+				log_debug("%s: channel %d reset, mode=%d, "
+				    "start=%d", __func__,
 				    sel, mode, i8253_channel[sel].start);
 				i8253_channel[sel].mode = mode;
 				i8253_reset(sel);
