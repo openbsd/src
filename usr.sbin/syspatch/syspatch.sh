@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.135 2018/03/10 12:34:53 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.136 2018/04/26 12:50:41 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -159,7 +159,7 @@ ls_missing()
 
 	# don't output anything on stdout to prevent corrupting the patch list
 	unpriv -f "${_sha}.sig" ftp -MVo "${_sha}.sig" "${_MIRROR}/SHA256.sig" \
-		>/dev/null 2>&1 # hide stderr (nonexistent = no patch available)
+		>/dev/null
 	unpriv -f "${_sha}" signify -Veq -x ${_sha}.sig -m ${_sha} -p \
 		/etc/signify/openbsd-${_OSrev}-syspatch.pub >/dev/null
 
