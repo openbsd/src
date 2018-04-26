@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.acl.5,v 1.24 2018/04/26 13:11:09 schwarze Exp $
+.\"	$OpenBSD: ypserv.acl.5,v 1.25 2018/04/26 13:31:46 schwarze Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -29,90 +29,73 @@
 .Os
 .Sh NAME
 .Nm ypserv.acl
-.Nd ypserv(8) configuration file
+.Nd ypserv(8) access control configuration
 .Sh DESCRIPTION
 The
 .Nm
 file controls which hosts can connect to the
-.Nm YP
+.Xr yp 8
 server.
 .Pp
 The format is more complex than the format for
 .Xr securenet 5 .
 The first two words on each line controls if the line will
-.Nm allow
+.Ic allow
 or
-.Nm deny
+.Ic deny
 access for a
-.Nm host ,
+.Cm host ,
 network
-.Nm (net)
+.Pq Cm net ,
 or
-.Nm all
+.Cm all
 hosts.
 .Pp
-The
-.Nm YP
+The YP
 server reads the configuration file and builds a list in memory.
 This list is processed from the beginning for every incoming request.
 As soon as a
 match is found in the list the search terminates and it returns success
 or failure depending on which of
-.Nm allow
+.Ic allow
 or
-.Nm deny
+.Ic deny
 was specified.
 If no match was found in the list success is returned.
 .Pp
 If access is denied every call will cause a
-.Nm no such domain
+.Dq no such domain
 error for the caller.
 .Pp
 Normally both the local hostname and localhost must be
 allowed access.
 Otherwise
-.Nm ypserv
+.Xr ypserv 8
 might not work correctly.
 .Pp
 There is no default name for this file.
 Start
-.Nm ypserv
+.Xr ypserv 8
 with
 .Fl a Ar filename
 to read a file with this format.
 .Pp
 The following syntax may be used:
 .Pp
-<
-.Ic allow|deny
->
-.Ic host
-<
-.Ic hostname|ip-address
->
+.D1 Ic allow Ns | Ns Ic deny Cm host Ar hostname Ns | Ns Ar ip-address
 .Pp
 If
 .Ic hostname
 has more than one IP address, they will all be added to the list.
 .Pp
-<
-.Ic allow|deny
->
-.Ic net
-<
-.Ic netnumber
->
-.Op Ic netmask <netnumber>
+.D1 Ic allow Ns | Ns Ic deny Cm net Ar netnumber Op Cm netmask Ar netnumber
 .Pp
 If the
-.Ic netmask
+.Cm netmask
 part of the command isn't given then the netmask will be assumed to be a
 class A, B or C net depending on the net number.
 .Pp
-<
-.Ic allow|deny
->
-.Ic all
+.D1 Ic allow Ns | Ns Ic deny Cm all
 .Pp
 A line containing one of these commands will always match any host.
 .Sh FILES
