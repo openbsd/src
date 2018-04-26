@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.21 2018/04/26 17:21:50 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.22 2018/04/26 18:19:37 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -175,7 +175,7 @@ uint8_t
 vcpu_exit_i8253(struct vm_run_params *vrp)
 {
 	uint32_t out_data;
-	uint8_t sel, rw, data, mode;
+	uint8_t sel, rw, data;
 	uint64_t ns, ticks;
 	struct timespec now, delta;
 	union vm_exit *vei = vrp->vrp_exit;
@@ -222,6 +222,7 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 				    "%d rw mode 0x%x selected", __func__,
 				    sel, (rw & TIMER_16BIT));
 			}
+			i8253_channel[sel].mode = (out_data & 0xe) >> 1;
 
 			goto ret;
 		} else {
@@ -242,15 +243,15 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 				i8253_channel[sel].start =
 				    i8253_channel[sel].ilatch;
 				i8253_channel[sel].last_w = 0;
-				mode = (out_data & 0xe) >> 1;
 
 				if (i8253_channel[sel].start == 0)
 					i8253_channel[sel].start = 0xffff;
 
 				log_debug("%s: channel %d reset, mode=%d, "
 				    "start=%d", __func__,
-				    sel, mode, i8253_channel[sel].start);
-				i8253_channel[sel].mode = mode;
+				    sel, i8253_channel[sel].mode,
+				    i8253_channel[sel].start);
+
 				i8253_reset(sel);
 			}
 		} else {
@@ -297,6 +298,7 @@ i8253_reset(uint8_t chn)
 	i8253_channel[chn].in_use = 1;
 	i8253_channel[chn].state = 0;
 	tv.tv_usec = (i8253_channel[chn].start * NS_PER_TICK) / 1000;
+	clock_gettime(CLOCK_MONOTONIC, &i8253_channel[chn].ts);
 	evtimer_add(&i8253_channel[chn].timer, &tv);
 }
 
@@ -317,14 +319,13 @@ i8253_fire(int fd, short type, void *arg)
 	struct timeval tv;
 	struct i8253_channel *ctr = (struct i8253_channel *)arg;
 
-	timerclear(&tv);
-	tv.tv_usec = (ctr->start * NS_PER_TICK) / 1000;
-
 	vcpu_assert_pic_irq(ctr->vm_id, 0, 0);
 
-	if (ctr->mode != TIMER_INTTC)
+	if (ctr->mode != TIMER_INTTC) {
+		timerclear(&tv);
+		tv.tv_usec = (ctr->start * NS_PER_TICK) / 1000;
 		evtimer_add(&ctr->timer, &tv);
-	else
+	} else
 		ctr->state = 1;
 }
 
