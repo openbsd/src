@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.72 2016/05/17 23:36:29 tb Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.73 2018/04/26 12:42:51 guenther Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -12,14 +12,12 @@
  * S/Key initialization and seed update
  */
 
-#include <sys/file.h>
-#include <sys/resource.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <readpassphrase.h>
 #include <stdio.h>

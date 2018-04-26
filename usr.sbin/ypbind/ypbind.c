@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.70 2017/06/12 18:56:13 millert Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.71 2018/04/26 12:42:51 guenther Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -29,11 +29,11 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/file.h>
 #include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <sys/syslog.h>
 #include <net/if.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.38 2015/11/15 07:12:50 deraadt Exp $	*/
+/*	$OpenBSD: more.c,v 1.39 2018/04/26 12:42:50 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -65,9 +65,7 @@
 #include <sys/types.h>
 #include <sys/exec.h>
 #include <sys/ioctl.h>
-#include <sys/file.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 
 #include <ctype.h>
 #include <curses.h>
@@ -75,7 +73,6 @@
 #include <locale.h>
 #include <regex.h>
 #include <signal.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

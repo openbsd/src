@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.158 2017/10/04 23:56:48 jca Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.159 2018/04/26 12:42:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -122,10 +122,8 @@
  */
 
 #include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/resource.h>

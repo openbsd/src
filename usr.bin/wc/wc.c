@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.21 2016/09/16 09:25:23 fcambus Exp $	*/
+/*	$OpenBSD: wc.c,v 1.22 2018/04/26 12:42:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -31,7 +31,8 @@
 
 #include <sys/param.h>	/* MAXBSIZE */
 #include <sys/stat.h>
-#include <sys/file.h>
+
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.36 2015/10/16 18:21:43 mmcc Exp $	*/
+/*	$OpenBSD: fio.c,v 1.37 2018/04/26 12:42:51 guenther Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -31,8 +31,6 @@
  */
 
 #include "rcv.h"
-#include <sys/file.h>
-#include <sys/wait.h>
 
 #include <unistd.h>
 #include <paths.h>

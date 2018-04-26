@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.35 2017/05/18 11:38:07 mpi Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.36 2018/04/26 12:42:51 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@
 #define _KERNEL
 #include <sys/timeout.h>		/* to get timeout_pending() and such */
 #undef _KERNEL
-#include <sys/file.h>
 
 #include <net/route.h>
 #include <net/if.h>
@@ -91,6 +90,7 @@
 #include <err.h>
 #include <stdio.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <kvm.h>
 #include <nlist.h>
 #include <paths.h>

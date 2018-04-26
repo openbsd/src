@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprint.c,v 1.12 2015/03/15 00:41:28 millert Exp $	*/
+/*	$OpenBSD: lprint.c,v 1.13 2018/04/26 12:42:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -32,10 +32,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>

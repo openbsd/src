@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.126 2018/01/16 17:07:49 cheloha Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.127 2018/04/26 12:42:51 guenther Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -17,7 +17,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -30,6 +29,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <login_cap.h>
 #include <pwd.h>
 #include <grp.h>

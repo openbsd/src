@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.25 2017/12/03 19:32:19 tb Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.26 2018/04/26 12:42:50 guenther Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -35,15 +35,14 @@
  */
 
 #include <sys/types.h>
-#include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
 #include <elf.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <nlist.h>
 
 #include "elfrdsetroot.h"
 
