@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.330 2018/04/26 13:07:54 yasuoka Exp $	*/
+/*	$OpenBSD: editor.c,v 1.331 2018/04/26 14:36:25 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <string.h>
 #include <libgen.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -1378,6 +1379,9 @@ edit_parms(struct disklabel *lp)
 			return;
 		} else if (ui == ULLONG_MAX)
 			;	/* Try again. */
+		else if (ui > UINT32_MAX)
+			fprintf(stderr, "sectors/track must be <= %u\n",
+			    UINT32_MAX);
 		else
 			break;
 	}
@@ -1393,6 +1397,9 @@ edit_parms(struct disklabel *lp)
 			return;
 		} else if (ui == ULLONG_MAX)
 			;	/* Try again. */
+		else if (ui > UINT32_MAX)
+			fprintf(stderr, "tracks/cylinder must be <= %u\n",
+			    UINT32_MAX);
 		else
 			break;
 	}
@@ -1409,6 +1416,9 @@ edit_parms(struct disklabel *lp)
 			return;
 		} else if (ui == ULLONG_MAX)
 			;	/* Try again. */
+		else if (ui > UINT32_MAX)
+			fprintf(stderr, "sectors/cylinder must be <= %u\n",
+			   UINT32_MAX);
 		else
 			break;
 	}
@@ -1424,6 +1434,9 @@ edit_parms(struct disklabel *lp)
 			return;
 		} else if (ui == ULLONG_MAX)
 			;	/* Try again. */
+		else if (ui > UINT32_MAX)
+			fprintf(stderr, "number of cylinders must be < %u\n",
+			    UINT32_MAX);
 		else
 			break;
 	}
@@ -1581,24 +1594,38 @@ set_bounds(struct disklabel *lp)
 	u_int64_t ui, start_temp;
 
 	/* Starting sector */
-	do {
+	for (;;) {
 		ui = getuint64(lp, "Starting sector",
 		    "The start of the OpenBSD portion of the disk.",
 		    starting_sector, DL_GETDSIZE(lp), 0, 0);
 		if (ui == ULLONG_MAX - 1)
-			return;
-	} while (ui >= DL_GETDSIZE(lp));
+			    return;
+		else if (ui == ULLONG_MAX)
+			;	/* Try again. */
+		else if (ui >= DL_GETDSIZE(lp))
+			fprintf(stderr, "starting sector must be < %llu\n",
+			    DL_GETDSIZE(lp));
+		else
+			break;
+	}
 	start_temp = ui;
 
 	/* Size */
-	do {
+	for (;;) {
 		ui = getuint64(lp, "Size ('*' for entire disk)",
 		    "The size of the OpenBSD portion of the disk ('*' for the "
 		    "entire disk).", ending_sector - starting_sector,
 		    DL_GETDSIZE(lp) - start_temp, 0, 0);
 		if (ui == ULLONG_MAX - 1)
 			return;
-	} while (ui > DL_GETDSIZE(lp) - start_temp);
+		else if (ui == ULLONG_MAX)
+			;	/* Try again. */
+		else if (ui > DL_GETDSIZE(lp) - start_temp)
+			fprintf(stderr, "size must be <= %llu\n",
+			    DL_GETDSIZE(lp) - start_temp);
+		else
+			break;
+	}
 	ending_sector = start_temp + ui;
 	DL_SETBEND(lp, ending_sector);
 	starting_sector = start_temp;
@@ -2060,9 +2087,9 @@ get_bsize(struct disklabel *lp, int partno)
 		else if (ui == ULLONG_MAX)
 			;	/* Try again. */
 		else if (ui < getpagesize())
-		fprintf(stderr,
-		    "Error: block size must be at least as big "
-		    "as page size (%d).\n", getpagesize());
+			fprintf(stderr,
+			    "Error: block size must be at least as big "
+			    "as page size (%d).\n", getpagesize());
 		else if (ui < fsize || (fsize != ui && fsize * 2 != ui &&
 		    fsize * 4 != ui && fsize * 8 != ui))
 			fprintf(stderr, "Error: block size must be 1, 2, 4 or "
@@ -2148,6 +2175,9 @@ get_fstype(struct disklabel *lp, int partno)
 				return (1);
 			else if (ui == ULLONG_MAX)
 				;	/* Try again. */
+			else if (ui > UINT8_MAX)
+				fprintf(stderr, "FS type must be < %u\n",
+				    UINT8_MAX);
 			else
 				break;
 		}
