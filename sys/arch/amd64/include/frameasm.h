@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.12 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.13 2018/04/26 12:47:02 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -28,6 +28,7 @@
 	movq	%rdi,TF_RDI(%rsp)	; \
 	movq	%rsi,TF_RSI(%rsp)	; \
 	movq	%rbp,TF_RBP(%rsp)	; \
+	leaq	TF_RBP(%rsp),%rbp	; \
 	movq	%rbx,TF_RBX(%rsp)	; \
 	movq	%rdx,TF_RDX(%rsp)	; \
 	movq	%rax,TF_RAX(%rsp)
@@ -49,6 +50,10 @@
 INTRENTRY_LABEL(label):	/* from kernel */ \
 	subq	$152,%rsp		; \
 	movq	%rcx,TF_RCX(%rsp)	; \
+	/* the hardware puts err next to %rip, we move it elsewhere and */ \
+	/* later put %rbp in this slot to make it look like a call frame */ \
+	movq	(TF_RIP - 8)(%rsp),%rcx	; \
+	movq	%rcx,TF_ERR(%rsp)	; \
 	jmp	99f			; \
 98:	/* from userspace */		  \
 	movq	CPUVAR(KERN_RSP),%rax	; \

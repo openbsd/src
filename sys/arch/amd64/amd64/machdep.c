@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.241 2018/04/12 17:13:43 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.242 2018/04/26 12:47:02 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -586,8 +586,27 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	register_t sp, scp, sip;
 	u_long sss;
 
-	memcpy(&ksc, tf, sizeof(*tf));
-	bzero((char *)&ksc + sizeof(*tf), sizeof(ksc) - sizeof(*tf));
+	memset(&ksc, 0, sizeof ksc);
+	ksc.sc_rdi = tf->tf_rdi;
+	ksc.sc_rsi = tf->tf_rsi;
+	ksc.sc_rdx = tf->tf_rdx;
+	ksc.sc_rcx = tf->tf_rcx;
+	ksc.sc_r8  = tf->tf_r8;
+	ksc.sc_r9  = tf->tf_r9;
+	ksc.sc_r10 = tf->tf_r10;
+	ksc.sc_r11 = tf->tf_r11;
+	ksc.sc_r12 = tf->tf_r12;
+	ksc.sc_r13 = tf->tf_r13;
+	ksc.sc_r14 = tf->tf_r14;
+	ksc.sc_r15 = tf->tf_r15;
+	ksc.sc_rbx = tf->tf_rbx;
+	ksc.sc_rax = tf->tf_rax;
+	ksc.sc_rbp = tf->tf_rbp;
+	ksc.sc_rip = tf->tf_rip;
+	ksc.sc_cs  = tf->tf_cs;
+	ksc.sc_rflags = tf->tf_rflags;
+	ksc.sc_rsp = tf->tf_rsp;
+	ksc.sc_ss  = tf->tf_ss;
 	ksc.sc_mask = mask;
 
 	/* Allocate space for the signal handler context. */
@@ -696,9 +715,26 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		p->p_md.md_flags |= MDP_USEDFPU;
 	}
 
-	ksc.sc_trapno = tf->tf_trapno;
-	ksc.sc_err = tf->tf_err;
-	memcpy(tf, &ksc, sizeof(*tf));
+	tf->tf_rdi = ksc.sc_rdi;
+	tf->tf_rsi = ksc.sc_rsi;
+	tf->tf_rdx = ksc.sc_rdx;
+	tf->tf_rcx = ksc.sc_rcx;
+	tf->tf_r8  = ksc.sc_r8;
+	tf->tf_r9  = ksc.sc_r9;
+	tf->tf_r10 = ksc.sc_r10;
+	tf->tf_r11 = ksc.sc_r11;
+	tf->tf_r12 = ksc.sc_r12;
+	tf->tf_r13 = ksc.sc_r13;
+	tf->tf_r14 = ksc.sc_r14;
+	tf->tf_r15 = ksc.sc_r15;
+	tf->tf_rbx = ksc.sc_rbx;
+	tf->tf_rax = ksc.sc_rax;
+	tf->tf_rbp = ksc.sc_rbp;
+	tf->tf_rip = ksc.sc_rip;
+	tf->tf_cs  = ksc.sc_cs;
+	tf->tf_rflags = ksc.sc_rflags;
+	tf->tf_rsp = ksc.sc_rsp;
+	tf->tf_ss  = ksc.sc_ss;
 
 	/* Restore signal mask. */
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
