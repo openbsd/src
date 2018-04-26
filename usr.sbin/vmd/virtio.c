@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.57 2018/04/26 01:10:10 ccardenas Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.58 2018/04/26 14:17:23 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1060,10 +1060,12 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	ptrdiff_t off;
 	int ret;
 	char *vr;
+	ssize_t rem;
 	struct vring_desc *desc, *pkt_desc, *hdr_desc;
 	struct vring_avail *avail;
 	struct vring_used *used;
 	struct vring_used_elem *ue;
+	struct virtio_net_hdr hdr;
 
 	ret = 0;
 
@@ -1103,25 +1105,66 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	pkt_desc_idx = hdr_desc->next & VIONET_QUEUE_MASK;
 	pkt_desc = &desc[pkt_desc_idx];
 
-	/* must be not readable */
-	if ((pkt_desc->flags & VRING_DESC_F_WRITE) == 0) {
-		log_warnx("unexpected readable rx descriptor %d",
-		    pkt_desc_idx);
+	/* Set up the virtio header (written first, before the packet data) */
+	memset(&hdr, 0, sizeof(struct virtio_net_hdr));
+	hdr.hdr_len = sizeof(struct virtio_net_hdr);
+
+	/* Check size of header descriptor */
+	if (hdr_desc->len < sizeof(struct virtio_net_hdr)) {
+		log_warnx("%s: invalid header descriptor (too small)",
+		    __func__);
 		goto out;
 	}
 
-	/* Write packet to descriptor ring */
-	if (write_mem(pkt_desc->addr, pkt, sz)) {
-		log_warnx("vionet: rx enq packet write_mem error @ "
-		    "0x%llx", pkt_desc->addr);
+	/* Write out virtio header */
+	if (write_mem(hdr_desc->addr, &hdr, sizeof(struct virtio_net_hdr))) {
+		log_warnx("vionet: rx enq header write_mem error @ "
+		    "0x%llx", hdr_desc->addr);
 		goto out;
+	}
+
+	/*
+	 * Compute remaining space in the first (header) descriptor, and
+	 * copy the packet data after if space is available. Otherwise,
+	 * copy to the pkt_desc descriptor.
+	 */
+	rem = hdr_desc->len - sizeof(struct virtio_net_hdr);
+
+	if (rem >= sz) {
+		if (write_mem(hdr_desc->addr + sizeof(struct virtio_net_hdr),
+		    pkt, sz)) {
+			log_warnx("vionet: rx enq packet write_mem error @ "
+			    "0x%llx", pkt_desc->addr);
+			goto out;
+		}
+	} else {
+		/* Fallback to pkt_desc descriptor */
+		if (pkt_desc->len >= sz) {
+			/* Must be not readable */
+			if ((pkt_desc->flags & VRING_DESC_F_WRITE) == 0) {
+				log_warnx("unexpected readable rx desc %d",
+				    pkt_desc_idx);
+				goto out;
+			}
+
+			/* Write packet to descriptor ring */
+			if (write_mem(pkt_desc->addr, pkt, sz)) {
+				log_warnx("vionet: rx enq packet write_mem "
+				    "error @ 0x%llx", pkt_desc->addr);
+				goto out;
+			}
+		} else {
+			log_warnx("%s: descriptor too small for packet data",
+			    __func__);
+			goto out;
+		}
 	}
 
 	ret = 1;
 	dev->cfg.isr_status = 1;
 	ue = &used->ring[used->idx & VIONET_QUEUE_MASK];
 	ue->id = hdr_desc_idx;
-	ue->len = hdr_desc->len + sz;
+	ue->len = sz + sizeof(struct virtio_net_hdr);
 	used->idx++;
 	dev->vq[0].last_avail = (dev->vq[0].last_avail + 1);
 	*spc = dev->vq[0].notified_avail - dev->vq[0].last_avail;
@@ -1282,7 +1325,7 @@ vionet_notify_rx(struct vionet_dev *dev)
 	    dev->vq[dev->cfg.queue_notify].vq_availoffset);
 
 	dev->rx_added = 1;
-	dev->vq[0].notified_avail = avail->idx;
+	dev->vq[0].notified_avail = avail->idx - 1;
 
 	free(vr);
 }
