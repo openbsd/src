@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.12 2018/02/10 05:57:59 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.13 2018/04/26 17:07:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -61,6 +61,7 @@ enum imsg_type {
 	IMSG_ROUTESOCK,
 	IMSG_CONTROLFD,
 	IMSG_STARTUP,
+	IMSG_STARTUP_DONE,
 	IMSG_UPDATE_IF,
 	IMSG_REMOVE_IF,
 	IMSG_RA,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.13 2018/02/20 16:22:19 otto Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.14 2018/04/26 17:07:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -615,6 +615,8 @@ frontend_startup(void)
 
 	if ((ifnidxp = if_nameindex()) == NULL)
 		fatalx("if_nameindex");
+
+	frontend_imsg_compose_main(IMSG_STARTUP_DONE, 0, NULL, 0);
 
 	for(ifnidx = ifnidxp; ifnidx->if_index !=0 && ifnidx->if_name != NULL;
 	    ifnidx++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.16 2018/04/26 17:06:27 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.17 2018/04/26 17:07:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -74,6 +74,7 @@ const char* imsg_type_name[] = {
 	"IMSG_ROUTESOCK",
 	"IMSG_CONTROLFD",
 	"IMSG_STARTUP",
+	"IMSG_STARTUP_DONE",
 	"IMSG_UPDATE_IF",
 	"IMSG_REMOVE_IF",
 	"IMSG_RA",
@@ -451,6 +452,13 @@ main_dispatch_frontend(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_STARTUP_DONE:
+#if 0
+			/* XXX ioctl SIOCAIFADDR_IN6 */
+BROKEN			if (pledge("stdio cpath", NULL) == -1)
+				fatal("pledge");
+#endif
+			break;
 #ifndef	SMALL
 		case IMSG_CTL_LOG_VERBOSE:
 			/* Already checked by frontend. */
