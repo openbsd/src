@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.191 2018/04/25 16:22:19 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.192 2018/04/26 10:43:58 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6169,6 +6169,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		} else
 			fxrstor(&vcpu->vc_g_fpu.fp_fxsave);
 
+		KASSERT(vmcb->v_intercept1 & SVM_INTERCEPT_INTR);
 		KERNEL_UNLOCK();
 
 		wrmsr(MSR_AMD_VM_HSAVE_PA, vcpu->vc_svm_hsa_pa);
