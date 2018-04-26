@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.236 2018/04/26 15:05:31 phessler Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.237 2018/04/26 16:13:13 phessler Exp $
 
 machine		i386
 maxusers	4
@@ -54,7 +54,6 @@ isa0		at mainbus0
 isa0		at pcib?
 eisa0		at mainbus0
 pci*		at mainbus0
-vmm0		at mainbus0
 
 pchb*		at pci?			# PCI-Host bridges
 ppb*		at pci?			# PCI-PCI bridges
