@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_client.c,v 1.1 2018/04/26 13:57:13 eric Exp $	*/
+/*	$OpenBSD: smtp_client.c,v 1.2 2018/04/26 21:19:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -90,6 +90,10 @@ struct smtp_client {
 	int			 rcptidx;
 	int			 rcptok;
 };
+
+void log_trace_verbose(int);
+void log_trace(int, const char *, ...)
+    __attribute__((format (printf, 2, 3)));
 
 static void smtp_client_io(struct io *, int, void *);
 static void smtp_client_free(struct smtp_client *);
