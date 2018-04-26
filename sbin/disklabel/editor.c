@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.329 2018/04/26 10:58:11 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.330 2018/04/26 13:07:54 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1243,7 +1243,7 @@ getuint64(struct disklabel *lp, char *prompt, char *helpstring,
 			/* Round to start of next cylinder <= maxval */
 			nextcyl = ((offset + rval + secpercyl - 1) / secpercyl)
 			    * secpercyl;
-			lastcyl = (maxval / secpercyl) * secpercyl;
+			lastcyl = ((maxval + offset) / secpercyl) * secpercyl;
 			if (nextcyl > lastcyl)
 				nextcyl = lastcyl;
 			rval = nextcyl - offset;
