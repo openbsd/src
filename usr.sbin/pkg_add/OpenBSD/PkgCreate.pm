@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.132 2018/02/27 22:46:53 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.133 2018/04/26 12:18:44 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -733,7 +733,7 @@ sub new
 {
 	my ($class, $filename) = @_;
 
-	open(my $fh, '<', $filename) or die "Missing file $filename";
+	open(my $fh, '<', $filename) or return undef;
 
 	bless { fh => $fh, name => $filename }, (ref($class) || $class);
 }
@@ -758,7 +758,7 @@ sub close
 
 sub deduce_name
 {
-	my ($self, $frag, $not) = @_;
+	my ($self, $frag, $not, $p, $state) = @_;
 
 	my $o = $self->name;
 	my $noto = $o;
@@ -770,7 +770,8 @@ sub deduce_name
 	$noto =~ s/PFRAG\./PFRAG.no-$frag-/o or
 	    $noto =~ s/PLIST/PFRAG.no-$frag/o;
 	unless (-e $o or -e $noto) {
-		die "Missing fragments for $frag: $o and $noto don't exist";
+		$p->missing_fragments($state, $frag, $o, $noto);
+		return;
 	}
 	if ($not) {
 		return $noto if -e $noto;
@@ -1053,11 +1054,16 @@ sub handle_fragment
 	} else {
 		return undef unless defined $not;
 	}
-	my $newname = $old->deduce_name($frag, $not);
+	my $newname = $old->deduce_name($frag, $not, $self, $state);
 	if (defined $newname) {
 		$state->set_status("switching to $newname")
 		    unless $state->{silent};
-		return $old->new($newname);
+		my $f = $old->new($newname);
+		if (!defined $f) {
+			$self->cant_read_fragment($state, $newname);
+		} else {
+			return $f;
+		}
 	}
 	return undef;
 }
@@ -1073,7 +1079,9 @@ sub read_fragments
 
 	my $stack = [];
 	my $subst = $state->{subst};
-	push(@$stack, $self->FileClass->new($filename));
+	my $main = $self->FileClass->new($filename);
+	return undef if !defined $main;
+	push(@$stack, $main);
 	my $fast = $subst->value("LIBS_ONLY");
 
 	return $plist->read($stack,
@@ -1231,6 +1239,13 @@ sub cant_read_fragment
 {
 	my ($self, $state, $frag) = @_;
 	$state->fatal("can't read packing-list #1", $frag);
+}
+
+sub missing_fragments
+{
+	my ($self, $state, $frag, $o, $noto) = @_;
+	$state->fatal("Missing fragments for #1: #2 and #3 don't exist",
+		$frag, $o, $noto);
 }
 
 sub read_all_fragments
