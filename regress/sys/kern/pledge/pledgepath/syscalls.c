@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.13 2018/04/26 08:23:35 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.14 2018/04/26 08:42:42 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -188,6 +188,8 @@ test_open(int do_pp)
 	PP_SHOULD_SUCCEED((open(filename, O_RDWR|O_CREAT) == -1), "open");
 	(void) snprintf(filename, sizeof(filename), "/%s//%s", pp_dir1, "doubleslash2");
 	PP_SHOULD_SUCCEED((open(filename, O_RDWR|O_CREAT) == -1), "open");
+	(void) snprintf(filename, sizeof(filename), "%s/../..%s/%s", pp_dir1, pp_dir1, "blem");
+	PP_SHOULD_FAIL((open(filename, O_RDWR|O_CREAT) == -1), "open");
 	(void) snprintf(filename, sizeof(filename), "%s/%s", pp_dir2, "newfile");
 	PP_SHOULD_FAIL((open(filename, O_RDWR|O_CREAT) == -1), "open");
 
