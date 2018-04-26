@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.38 2015/01/20 18:22:20 deraadt Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.39 2018/04/26 17:40:48 guenther Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -156,7 +156,7 @@ fs_mapinodes(ino_t maxino, int64_t *tapesize, int *anydirskipped)
 		quit("fs_mapinodes: cannot allocate memory.\n");
 
 	for (cg = 0; cg < sblock->fs_ncg; cg++) {
-		ino = cg * sblock->fs_ipg;
+		ino = cg * (ino_t)sblock->fs_ipg;
 		bread(fsbtodb(sblock, cgtod(sblock, cg)), (char *)cgp,
 		    sblock->fs_cgsize);
 		if (sblock->fs_magic == FS_UFS2_MAGIC)
