@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.yp,v 1.17 2015/11/29 15:20:46 rpe Exp $
+#	$OpenBSD: Makefile.yp,v 1.18 2018/04/26 12:53:09 schwarze Exp $
 
 # ----------------------------------------------------------------------
 # User-configurable settings; see Makefile.yp(8) for details.
@@ -23,7 +23,7 @@ MAXGID=32765
 # Set this to -b to have ypserv ask DNS for unknown hosts.
 USEDNS=
 
-all: passwd group hosts ethers networks rpc services protocols netid netgroup amd.home aliases
+all: passwd group hosts ethers rpc services protocols netid netgroup amd.home aliases
 	pkill -HUP ypserv
 
 # ----------------------------------------------------------------------
@@ -168,26 +168,6 @@ ethers.time: $(DIR)/ethers
 			$(YPPUSH) -d $(DOMAIN) ethers.byaddr; \
 			$(YPPUSH) -d $(DOMAIN) ethers.byname; \
 			$(ECHO) "pushed ethers"; \
-		else \
-			: ; \
-		fi \
-	else \
-		$(ECHO) "couldn't find $(>)"; \
-	fi
-
-networks.time: $(DIR)/networks
-	-@if [ -f $(>) ]; then \
-		$(SED) -e "/^#/d" -e s/#.*$$// $(>) | \
-		$(AWK) '{print $$1, $$0; for (i = 3;i <= NF;i++) print $$i,$$0}' | \
-		$(MAKEDBM) - networks.byname; \
-		$(AWK) 'BEGIN { OFS="\t"; } $$1 !~ /^#/ { print $$2, $$0 }' $(>) | \
-		$(MAKEDBM) - networks.byaddr; \
-		$(TOUCH) $(@); \
-		$(ECHO) "updated networks"; \
-		if [ ! $(NOPUSH) ]; then \
-			$(YPPUSH) -d $(DOMAIN) networks.byname; \
-			$(YPPUSH) -d $(DOMAIN) networks.byaddr; \
-			$(ECHO) "pushed networks"; \
 		else \
 			: ; \
 		fi \
@@ -341,7 +321,6 @@ passwd: passwd.time
 group: group.time
 hosts: hosts.time
 ethers: ethers.time
-networks: networks.time
 rpc: rpc.time
 services: services.time
 protocols: protocols.time
@@ -353,7 +332,6 @@ $(DIR)/passwd:
 $(DIR)/group:
 $(DIR)/hosts:
 $(DIR)/ethers:
-$(DIR)/networks:
 $(DIR)/rpc:
 $(DIR)/services:
 $(DIR)/protocols:
