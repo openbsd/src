@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.78 2018/04/26 10:14:26 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.79 2018/04/26 10:19:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -2619,7 +2619,7 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 	struct xhci_pipe *xp = (struct xhci_pipe *)xfer->pipe;
 	struct xhci_trb *trb0, *trb;
 	uint32_t len, remain, flags;
-	uint32_t len0, mps;
+	uint32_t len0, mps = UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
 	uint64_t paddr = DMAADDR(&xfer->dmabuf, 0);
 	uint8_t toggle0, toggle;
 	int s, i, ntrb;
@@ -2640,7 +2640,6 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 		len0 = xfer->length;
 
 	/* If we need to append a zero length packet, we need one more. */
-	mps = UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
 	if ((xfer->flags & USBD_FORCE_SHORT_XFER || xfer->length == 0) &&
 	    (xfer->length % mps == 0))
 		ntrb++;
@@ -2653,10 +2652,11 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 
 	remain = xfer->length - len0;
 	paddr += len0;
-	len = min(remain, XHCI_TRB_MAXSIZE);
 
 	/* Chain more TRBs if needed. */
 	for (i = ntrb - 1; i > 0; i--) {
+		len = min(remain, XHCI_TRB_MAXSIZE);
+
 		/* Next (or Last) TRB. */
 		trb = xhci_xfer_get_trb(sc, xfer, &toggle, (i == 1));
 		flags = XHCI_TRB_TYPE_NORMAL | toggle;
@@ -2677,7 +2677,6 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 
 		remain -= len;
 		paddr += len;
-		len = min(remain, XHCI_TRB_MAXSIZE);
 	}
 
 	/* First TRB. */
@@ -2751,13 +2750,19 @@ xhci_device_isoc_start(struct usbd_xfer *xfer)
 	struct xhci_trb *trb0, *trb;
 	uint32_t len, remain, flags;
 	uint64_t paddr = DMAADDR(&xfer->dmabuf, 0);
-	uint32_t len0, offs = 0;
+	uint32_t len0, mps = UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
 	uint8_t toggle0, toggle;
 	int s, i, ntrb = xfer->nframes, maxb;
-	int mps = UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
 	int npkt = xfer->length / mps;
 
 	KASSERT(!(xfer->rqflags & URQ_REQUEST));
+
+	if (sc->sc_bus.dying || xp->halted)
+		return (USBD_IOERROR);
+
+	/* Why would you do that anyway? */
+	if (sc->sc_bus.use_polling)
+		return (USBD_INVAL);
 
 	/*
 	 * To allow continuous transfers, above we start all transfers
@@ -2768,15 +2773,7 @@ xhci_device_isoc_start(struct usbd_xfer *xfer)
 	if (xx->ntrb > 0)
 		return (USBD_IN_PROGRESS);
 
-	if (sc->sc_bus.dying || xp->halted)
-		return (USBD_IOERROR);
-
-	/* Why would you do that anyway? */
-	if (sc->sc_bus.use_polling)
-		return (USBD_INVAL);
-
-	/* Driver MUST respect frlengths <= wMaxPacketSize. */
-	if (xp->free_trbs < xfer->nframes)
+	if (xp->free_trbs < ntrb)
 		return (USBD_NOMEM);
 
 	len0 = xfer->frlengths[0];
@@ -2785,8 +2782,7 @@ xhci_device_isoc_start(struct usbd_xfer *xfer)
 	trb0 = xhci_xfer_get_trb(sc, xfer, &toggle0, (ntrb == 1));
 
 	remain = xfer->length;
-	offs = len0;
-	paddr = DMAADDR(&xfer->dmabuf, offs);
+	paddr += len0;
 
 	/* Chain more TRBs if needed. */
 	for (i = ntrb - 1; i > 0; i--) {
@@ -2808,9 +2804,12 @@ xhci_device_isoc_start(struct usbd_xfer *xfer)
 		);
 		trb->trb_flags = htole32(flags);
 
+		bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
+		    TRBOFF(&xp->ring, trb), sizeof(struct xhci_trb),
+		    BUS_DMASYNC_PREWRITE);
+
 		remain -= len;
-		offs += len;
-		paddr = DMAADDR(&xfer->dmabuf, offs);
+		paddr += len;
 	}
 
 	/* First TRB. */
@@ -2834,7 +2833,7 @@ xhci_device_isoc_start(struct usbd_xfer *xfer)
 	trb0->trb_flags = htole32(flags);
 
 	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
-	    TRBOFF(&xp->ring, trb0), sizeof(struct xhci_trb) * ntrb,
+	    TRBOFF(&xp->ring, trb0), sizeof(struct xhci_trb),
 	    BUS_DMASYNC_PREWRITE);
 
 	s = splusb();
