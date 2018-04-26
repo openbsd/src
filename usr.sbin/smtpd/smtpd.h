@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.538 2018/03/14 22:25:21 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.539 2018/04/26 20:57:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1487,6 +1487,9 @@ int getmailname(char *, size_t);
 int base64_encode(unsigned char const *, size_t, char *, size_t);
 int base64_decode(char const *, unsigned char *, size_t);
 
+void log_trace_verbose(int);
+void log_trace(int, const char *, ...)
+    __attribute__((format (printf, 2, 3)));
 
 /* waitq.c */
 int  waitq_wait(void *, void (*)(void *, void *, void *), void *);

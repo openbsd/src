@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.133 2018/01/30 12:44:55 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.134 2018/04/26 20:57:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -45,6 +45,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 

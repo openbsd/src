@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.158 2018/03/14 22:22:30 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.159 2018/04/26 20:57:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 #include <vis.h>

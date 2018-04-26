@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.292 2018/01/27 08:32:03 anton Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.293 2018/04/26 20:57:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -42,6 +42,7 @@
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
+#include <syslog.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
