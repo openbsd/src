@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.23 2018/01/15 04:26:58 ccardenas Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.24 2018/04/26 15:58:30 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -269,6 +269,7 @@ void vionet_update_qs(struct vionet_dev *);
 void vionet_update_qa(struct vionet_dev *);
 int vionet_notifyq(struct vionet_dev *);
 void vionet_notify_rx(struct vionet_dev *);
+int vionet_notify_tx(struct vionet_dev *);
 void vionet_process_rx(uint32_t);
 int vionet_enq_rx(struct vionet_dev *, char *, ssize_t, int *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.58 2018/04/26 14:17:23 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.59 2018/04/26 15:58:30 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -64,6 +64,9 @@ int nr_vioblk;
 #define VMMCI_F_TIMESYNC	(1<<0)
 #define VMMCI_F_ACK		(1<<1)
 #define VMMCI_F_SYNCRTC		(1<<2)
+
+#define RXQ	0
+#define TXQ	1
 
 const char *
 vioblk_cmd_name(uint32_t type)
@@ -966,10 +969,10 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 				dev->cfg.queue_select = 0;
 				dev->cfg.queue_notify = 0;
 				dev->cfg.isr_status = 0;
-				dev->vq[0].last_avail = 0;
-				dev->vq[0].notified_avail = 0;
-				dev->vq[1].last_avail = 0;
-				dev->vq[1].notified_avail = 0;
+				dev->vq[RXQ].last_avail = 0;
+				dev->vq[RXQ].notified_avail = 0;
+				dev->vq[TXQ].last_avail = 0;
+				dev->vq[TXQ].notified_avail = 0;
 			}
 			break;
 		default:
@@ -1073,7 +1076,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 		return ret;
 
 	vr_sz = vring_size(VIONET_QUEUE_SIZE);
-	q_gpa = dev->vq[0].qa;
+	q_gpa = dev->vq[RXQ].qa;
 	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
 
 	vr = calloc(1, vr_sz);
@@ -1089,12 +1092,12 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
 	desc = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr + dev->vq[0].vq_availoffset);
-	used = (struct vring_used *)(vr + dev->vq[0].vq_usedoffset);
+	avail = (struct vring_avail *)(vr + dev->vq[RXQ].vq_availoffset);
+	used = (struct vring_used *)(vr + dev->vq[RXQ].vq_usedoffset);
 
-	idx = dev->vq[0].last_avail & VIONET_QUEUE_MASK;
+	idx = dev->vq[RXQ].last_avail & VIONET_QUEUE_MASK;
 
-	if ((dev->vq[0].notified_avail & VIONET_QUEUE_MASK) == idx) {
+	if ((dev->vq[RXQ].notified_avail & VIONET_QUEUE_MASK) == idx) {
 		log_debug("vionet queue notify - no space, dropping packet");
 		goto out;
 	}
@@ -1166,8 +1169,8 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	ue->id = hdr_desc_idx;
 	ue->len = sz + sizeof(struct virtio_net_hdr);
 	used->idx++;
-	dev->vq[0].last_avail = (dev->vq[0].last_avail + 1);
-	*spc = dev->vq[0].notified_avail - dev->vq[0].last_avail;
+	dev->vq[RXQ].last_avail++;
+	*spc = dev->vq[RXQ].notified_avail - dev->vq[RXQ].last_avail;
 
 	off = (char *)ue - vr;
 	if (write_mem(q_gpa + off, ue, sizeof *ue))
@@ -1305,7 +1308,7 @@ vionet_notify_rx(struct vionet_dev *dev)
 	struct vring_avail *avail;
 
 	vr_sz = vring_size(VIONET_QUEUE_SIZE);
-	q_gpa = dev->vq[dev->cfg.queue_notify].qa;
+	q_gpa = dev->vq[RXQ].qa;
 	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
 
 	vr = malloc(vr_sz);
@@ -1321,23 +1324,51 @@ vionet_notify_rx(struct vionet_dev *dev)
 	}
 
 	/* Compute offset into avail ring */
-	avail = (struct vring_avail *)(vr +
-	    dev->vq[dev->cfg.queue_notify].vq_availoffset);
+	avail = (struct vring_avail *)(vr + dev->vq[RXQ].vq_availoffset);
 
 	dev->rx_added = 1;
-	dev->vq[0].notified_avail = avail->idx - 1;
+	dev->vq[RXQ].notified_avail = avail->idx - 1;
 
 	free(vr);
 }
 
 /*
  * Must be called with dev->mutex acquired.
- *
- * XXX cant trust ring data from VM, be extra cautious.
- * XXX advertise link status to guest
  */
 int
 vionet_notifyq(struct vionet_dev *dev)
+{
+	int ret;
+
+	switch (dev->cfg.queue_notify) {
+	case RXQ:
+		vionet_notify_rx(dev);
+		ret = 0;
+		break;
+	case TXQ:
+		ret = vionet_notify_tx(dev);
+		break;
+	default:
+		/*
+		 * Catch the unimplemented queue ID 2 (control queue) as
+		 * well as any bogus queue IDs.
+		 */
+		log_debug("%s: notify for unimplemented queue ID %d",
+		    __func__, dev->cfg.queue_notify);
+		ret = 0;
+		break;
+	}
+
+	return (ret);
+}
+
+/*
+ * Must be called with dev->mutex acquired.
+ *
+ * XXX cant trust ring data from VM, be extra cautious.
+ */
+int
+vionet_notify_tx(struct vionet_dev *dev)
 {
 	uint64_t q_gpa;
 	uint32_t vr_sz;
@@ -1355,14 +1386,8 @@ vionet_notifyq(struct vionet_dev *dev)
 	ret = spc = 0;
 	dhcpsz = 0;
 
-	/* Invalid queue? */
-	if (dev->cfg.queue_notify != 1) {
-		vionet_notify_rx(dev);
-		goto out;
-	}
-
 	vr_sz = vring_size(VIONET_QUEUE_SIZE);
-	q_gpa = dev->vq[dev->cfg.queue_notify].qa;
+	q_gpa = dev->vq[TXQ].qa;
 	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
 
 	vr = calloc(1, vr_sz);
@@ -1378,14 +1403,12 @@ vionet_notifyq(struct vionet_dev *dev)
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
 	desc = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr +
-	    dev->vq[dev->cfg.queue_notify].vq_availoffset);
-	used = (struct vring_used *)(vr +
-	    dev->vq[dev->cfg.queue_notify].vq_usedoffset);
+	avail = (struct vring_avail *)(vr + dev->vq[TXQ].vq_availoffset);
+	used = (struct vring_used *)(vr + dev->vq[TXQ].vq_usedoffset);
 
 	num_enq = 0;
 
-	idx = dev->vq[dev->cfg.queue_notify].last_avail & VIONET_QUEUE_MASK;
+	idx = dev->vq[TXQ].last_avail & VIONET_QUEUE_MASK;
 
 	if ((avail->idx & VIONET_QUEUE_MASK) == idx) {
 		log_warnx("vionet tx queue notify - nothing to do?");
@@ -1485,12 +1508,10 @@ vionet_notifyq(struct vionet_dev *dev)
 		used->ring[used->idx & VIONET_QUEUE_MASK].len = hdr_desc->len;
 		used->idx++;
 
-		dev->vq[dev->cfg.queue_notify].last_avail =
-		    (dev->vq[dev->cfg.queue_notify].last_avail + 1);
+		dev->vq[TXQ].last_avail++;
 		num_enq++;
 
-		idx = dev->vq[dev->cfg.queue_notify].last_avail &
-		    VIONET_QUEUE_MASK;
+		idx = dev->vq[TXQ].last_avail & VIONET_QUEUE_MASK;
 	}
 
 	if (write_mem(q_gpa, vr, vr_sz)) {
@@ -1821,21 +1842,21 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 				return;
 			}
 
-			vionet[i].vq[0].qs = VIONET_QUEUE_SIZE;
-			vionet[i].vq[0].vq_availoffset =
+			vionet[i].vq[RXQ].qs = VIONET_QUEUE_SIZE;
+			vionet[i].vq[RXQ].vq_availoffset =
 			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE;
-			vionet[i].vq[0].vq_usedoffset = VIRTQUEUE_ALIGN(
+			vionet[i].vq[RXQ].vq_usedoffset = VIRTQUEUE_ALIGN(
 			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE
 			    + sizeof(uint16_t) * (2 + VIONET_QUEUE_SIZE));
-			vionet[i].vq[0].last_avail = 0;
-			vionet[i].vq[1].qs = VIONET_QUEUE_SIZE;
-			vionet[i].vq[1].vq_availoffset =
+			vionet[i].vq[RXQ].last_avail = 0;
+			vionet[i].vq[TXQ].qs = VIONET_QUEUE_SIZE;
+			vionet[i].vq[TXQ].vq_availoffset =
 			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE;
-			vionet[i].vq[1].vq_usedoffset = VIRTQUEUE_ALIGN(
+			vionet[i].vq[TXQ].vq_usedoffset = VIRTQUEUE_ALIGN(
 			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE
 			    + sizeof(uint16_t) * (2 + VIONET_QUEUE_SIZE));
-			vionet[i].vq[1].last_avail = 0;
-			vionet[i].vq[1].notified_avail = 0;
+			vionet[i].vq[TXQ].last_avail = 0;
+			vionet[i].vq[TXQ].notified_avail = 0;
 			vionet[i].fd = child_taps[i];
 			vionet[i].rx_pending = 0;
 			vionet[i].vm_id = vcp->vcp_id;
