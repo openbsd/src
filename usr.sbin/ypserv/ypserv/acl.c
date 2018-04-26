@@ -1,4 +1,4 @@
-/*	$OpenBSD: acl.c,v 1.15 2013/12/04 02:18:05 deraadt Exp $ */
+/*	$OpenBSD: acl.c,v 1.16 2018/04/26 12:48:10 schwarze Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -138,7 +138,6 @@ acl_init(char *file)
 	int allow = TRUE, error_cnt = 0;
 	struct in_addr addr, mask, *host_addr;
 	struct hostent *host;
-	struct netent *net;
 	FILE *data_file = NULL;
 
 	if (file != NULL)
@@ -262,15 +261,8 @@ acl_init(char *file)
 				if (*k >= '0' && *k <= '9') {
 					(void)inet_aton(k, &addr);
 					state = state + ACLD_NET_DONE;
-				} else {
-					net = getnetbyname(k);
-					if (net == NULL) {
-						state = ACLE_NONET;
-					} else {
-						addr.s_addr = ntohl(net->n_net);
-						state = state + ACLD_NET_DONE;
-					}
-				}
+				} else
+					state = ACLE_NONET;
 			}
 
 		}
@@ -338,15 +330,8 @@ acl_init(char *file)
 				if (*k >= '0' && *k <= '9') {
 					(void)inet_aton(k, &mask);
 					state = state + ACLD_NET_EOL;
-				} else {
-					net = getnetbyname(k);
-					if (net == NULL) {
-						state = ACLE_NONET;
-					} else {
-						mask.s_addr = ntohl(net->n_net);
-						state = state + ACLD_NET_EOL;
-					}
-				}
+				} else
+					state = ACLE_NONET;
 			}
 
 		}
@@ -424,7 +409,6 @@ acl_securenet(char *file)
 	int line_no = 0, len, i, allow = TRUE, state;
 	int error_cnt = 0;
 	struct in_addr addr, mask;
-	struct netent *net;
 	FILE *data_file = NULL;
 
 	if (file != NULL)
@@ -468,15 +452,8 @@ acl_securenet(char *file)
 			if (*k >= '0' && *k <= '9') {
 				(void)inet_aton(k, &mask);
 				state = ACLS_ALLOW_NET;
-			} else {
-				net = getnetbyname(k);
-				if (net == NULL) {
-					state = ACLE_NONET;
-				} else {
-					mask.s_addr = ntohl(net->n_net);
-					state = ACLS_ALLOW_NET;
-				}
-			}
+			} else
+				state = ACLE_NONET;
 
 			k = p;				/* save start of verb */
 			i = 0;
@@ -497,15 +474,8 @@ acl_securenet(char *file)
 			if (*k >= '0' && *k <= '9') {
 				(void)inet_aton(k, &addr);
 				state = ACLS_ALLOW_NET_EOL;
-			} else {
-				net = getnetbyname(k);
-				if (net == NULL) {
-					state = ACLE_NONET;
-				} else {
-					addr.s_addr = ntohl(net->n_net);
-					state = ACLS_ALLOW_NET_EOL;
-				}
-			}
+			} else
+				state = ACLE_NONET;
 		}
 
 		if (state == ACLS_ALLOW_NET)
