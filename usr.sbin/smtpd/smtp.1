@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtp.1,v 1.2 2018/04/26 14:40:09 eric Exp $
+.\"	$OpenBSD: smtp.1,v 1.3 2018/04/26 23:20:37 jmc Exp $
 .\"
 .\" Copyright (c) 2018, Eric Faurot <eric@openbsd.org>
 .\"
@@ -33,12 +33,12 @@ The
 .Nm
 utility is a Simple Mail Transfer Protocol
 .Pq SMTP
-client which can be used to run a SMTP transaction against a SMTP server.
+client which can be used to run an SMTP transaction against an SMTP server.
 .Pp
 By default,
 .Nm
-reads the mail content from the standard input, establishes a SMTP session,
-and runs a SMTP transaction for all the specified recipients.
+reads the mail content from the standard input, establishes an SMTP session,
+and runs an SMTP transaction for all the specified recipients.
 The content is sent unaltered as mail data.
 .Pp
 The options are as follows:
@@ -54,19 +54,18 @@ Define the hostname to advertise (HELO) when establishing the SMTP session.
 Display version and usage.
 .It Fl n
 Do not actually execute a transaction,
-just try to establish a SMTP session and quit.
+just try to establish an SMTP session and quit.
 When this option is given, no message is read from the standard input.
 .It Fl s Ar server
 Specify the server to connect to and connection parameters.
 The format is
 .Sm off
-.Pf
 .Ar proto :// Op Ar user : pass No @
-.Ar host Op : Ar port
-.Sm on .
+.Ar host Op : Ar port .
+.Sm on
 The following protocols are available:
 .Pp
-.Bl -tag -width Ds
+.Bl -tag -width "smtp+notls" -compact
 .It smtp
 Normal SMTP session, with opportunistic STARTTLS.
 .It smtp+tls
