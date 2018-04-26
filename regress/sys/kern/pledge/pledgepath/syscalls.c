@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.15 2018/04/26 08:53:20 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.16 2018/04/26 13:57:16 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -52,7 +52,7 @@ char pp_file2[] = "/tmp/ppfile2.XXXXXX"; /* not pledgepathed */
 } while(0)
 
 /* all the things unless we override */
-static int pp_flags = O_RDWR|O_EXEC|O_CREAT; 
+const char *pp_flags = "rwxc";
 
 static void
 do_pledgepath(void)
@@ -182,7 +182,7 @@ test_open(int do_pp)
 	sleep(1);
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
 	if (do_pp) {
-		if (pledgepath(pp_file1, O_RDONLY) == -1)
+		if (pledgepath(pp_file1, "r") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
 	PP_SHOULD_FAIL((open(pp_file1, O_RDWR) == -1), "open");
@@ -203,7 +203,7 @@ test_open(int do_pp)
 
 	if (do_pp) {
 		printf("testing O_RDONLY\n");
-		if (pledgepath(pp_file1, O_RDONLY) == -1)
+		if (pledgepath(pp_file1, "r") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
@@ -211,20 +211,18 @@ test_open(int do_pp)
 
 	if (do_pp) {
 		printf("testing O_RDWR\n");
-		if (pledgepath(pp_file1, O_RDWR) == -1)
+		if (pledgepath(pp_file1, "rw") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
-	PP_SHOULD_FAIL((open(pp_file2, O_EXEC) == -1), "open");
 
 	if (do_pp) {
 		printf("testing O_EXEC\n");
-		if (pledgepath(pp_file1, O_EXEC) == -1)
+		if (pledgepath(pp_file1, "x") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
-	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
-// XXX	PP_SHOULD_SUCCEED((open(pp_file1, O_EXEC) == -1), "open");
+	PP_SHOULD_FAIL((open(pp_file1, O_RDONLY) == -1), "open");
 	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
 
 	if (do_pp) {
@@ -267,7 +265,7 @@ test_unlink(int do_pp)
 	PP_SHOULD_FAIL((unlink(filename3) == -1), "unlink");
 	if (do_pp) {
 		printf("testing unlink without O_CREAT\n");
-		if (pledgepath(filename3, O_RDWR) == -1)
+		if (pledgepath(filename3, "rw") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 
 	}
@@ -300,7 +298,7 @@ test_link(int do_pp)
 	PP_SHOULD_FAIL((link(pp_file1, filename2) == -1), "link");
 	if (do_pp) {
 		printf("testing link without O_CREAT\n");
-		if (pledgepath(filename, O_RDWR) == -1)
+		if (pledgepath(filename, "rw") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 
 	}
@@ -477,7 +475,7 @@ test_symlink(int do_pp)
 
 	if (do_pp) {
 		printf("testing symlink without O_CREAT\n");
-		if (pledgepath(filename, O_RDWR) == -1)
+		if (pledgepath(filename, "rw") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
 	PP_SHOULD_FAIL((symlink(pp_file1, filename) == -1), "symlink");
@@ -507,7 +505,7 @@ test_exec(int do_pp)
 	extern char **environ;
 	if (do_pp) {
 		printf("testing execve with O_EXEC only\n");
-		if (pledgepath("/usr/bin/true", O_EXEC) == -1)
+		if (pledgepath("/usr/bin/true", "x") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
 	PP_SHOULD_SUCCEED((pledge("paths stdio fattr exec", NULL) == -1), "pledge");
@@ -521,7 +519,7 @@ test_exec2(int do_pp)
 	extern char **environ;
 	if (do_pp) {
 		printf("testing execve without O_EXEC\n");
-		if (pledgepath("/usr/bin/true", O_RDWR) == -1)
+		if (pledgepath("/usr/bin/true", "rw") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
 	PP_SHOULD_SUCCEED((pledge("paths stdio fattr exec", NULL) == -1), "pledge");
