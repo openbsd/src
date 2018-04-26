@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.14 2018/04/26 08:42:42 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.15 2018/04/26 08:53:20 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -75,6 +75,10 @@ runcompare(int (*func)(int))
 	waitpid(pid, &status, 0);
 	if (WIFEXITED(status))
 		nonppath = WEXITSTATUS(status);
+	if (WIFSIGNALED(status)) {
+		printf("[FAIL] nonppath exited with signal %d\n", WTERMSIG(status));
+		goto fail;
+	}
 	pid = fork();
 	if (pid == 0) {
 		exit(func(1));
@@ -83,12 +87,16 @@ runcompare(int (*func)(int))
 	waitpid(pid, &status, 0);
 	if (WIFEXITED(status))
 		ppath = WEXITSTATUS(status);
-
+	if (WIFSIGNALED(status)) {
+		printf("[FAIL] nonppath exited with signal %d\n", WTERMSIG(status));
+		goto fail;
+	}
 	if (ppath == nonppath) {
 		printf("[SUCCESS] ppath = %d, nonppath = %d\n", ppath, nonppath);
 		return 0;
 	}
 	printf("[FAIL] ppath = %d, nonppath = %d\n", ppath, nonppath);
+ fail:
 	return 1;
 }
 
