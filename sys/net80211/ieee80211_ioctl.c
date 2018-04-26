@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.59 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.60 2018/04/26 12:50:07 pirofti Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -670,42 +670,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCS80211SCAN:
-		if ((error = suser(curproc)) != 0)
-			break;
-#ifndef IEEE80211_STA_ONLY
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
-			break;
-#endif
-		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
-		    (IFF_UP | IFF_RUNNING)) {
-			error = ENETDOWN;
-			break;
-		}
-		if ((ic->ic_scan_lock & IEEE80211_SCAN_REQUEST) == 0) {
-			if (ic->ic_scan_lock & IEEE80211_SCAN_LOCKED)
-				ic->ic_scan_lock |= IEEE80211_SCAN_RESUME;
-			ic->ic_scan_lock |= IEEE80211_SCAN_REQUEST;
-			if (ic->ic_state != IEEE80211_S_SCAN) {
-				ieee80211_clean_cached(ic);
-				if (ic->ic_opmode == IEEE80211_M_STA &&
-				    ic->ic_state == IEEE80211_S_RUN &&
-				    IFM_MODE(ic->ic_media.ifm_cur->ifm_media)
-				    == IFM_AUTO) {
-					/* 
-					 * We're already associated to an AP.
-					 * Make the scanning loop start off in
-					 * auto mode so all supported bands
-					 * get scanned.
-					 */
-					ieee80211_setmode(ic,
-					    IEEE80211_MODE_AUTO);
-				}
-				ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-			}
-		}
-		/* Let the userspace process wait for completion */
-		error = tsleep(&ic->ic_scan_lock, PCATCH, "80211scan",
-		    hz * IEEE80211_SCAN_TIMEOUT);
+		/* Disabled. SIOCG80211ALLNODES is enough. */
 		break;
 	case SIOCG80211NODE:
 		nr = (struct ieee80211_nodereq *)data;
@@ -769,6 +734,12 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 #endif
 	case SIOCG80211ALLNODES:
+		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
+		    (IFF_UP | IFF_RUNNING)) {
+			error = ENETDOWN;
+			break;
+		}
+
 		na = (struct ieee80211_nodereq_all *)data;
 		na->na_nodes = i = 0;
 		ni = RBT_MIN(ieee80211_tree, &ic->ic_tree);

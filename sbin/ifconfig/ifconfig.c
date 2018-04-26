@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.364 2018/04/26 12:23:56 schwarze Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.365 2018/04/26 12:50:07 pirofti Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2257,11 +2257,11 @@ ieee80211_listnodes(void)
 	struct ieee80211_nodereq_all na;
 	struct ieee80211_nodereq nr[512];
 	struct ifreq ifr;
-	int i, down = 0;
+	int i;
 
 	if ((flags & IFF_UP) == 0) {
-		down = 1;
-		setifflags("up", IFF_UP);
+		printf("\t\tcannot scan, interface is down\n");
+		return;
 	}
 
 	bzero(&ifr, sizeof(ifr));
@@ -2270,7 +2270,7 @@ ieee80211_listnodes(void)
 	if (ioctl(s, SIOCS80211SCAN, (caddr_t)&ifr) != 0) {
 		if (errno == EPERM)
 			printf("\t\tno permission to scan\n");
-		goto done;
+		return;
 	}
 
 	bzero(&na, sizeof(na));
@@ -2281,7 +2281,7 @@ ieee80211_listnodes(void)
 
 	if (ioctl(s, SIOCG80211ALLNODES, &na) != 0) {
 		warn("SIOCG80211ALLNODES");
-		goto done;
+		return;
 	}
 
 	if (!na.na_nodes)
@@ -2294,10 +2294,6 @@ ieee80211_listnodes(void)
 		ieee80211_printnode(&nr[i]);
 		putchar('\n');
 	}
-
- done:
-	if (down)
-		setifflags("restore", -IFF_UP);
 }
 
 void

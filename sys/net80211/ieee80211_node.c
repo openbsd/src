@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.126 2018/02/06 22:14:52 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.127 2018/04/26 12:50:07 pirofti Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -244,10 +244,6 @@ void
 ieee80211_begin_scan(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
-
-	if (ic->ic_scan_lock & IEEE80211_SCAN_LOCKED)
-		return;
-	ic->ic_scan_lock |= IEEE80211_SCAN_LOCKED;
 
 	/*
 	 * In all but hostap mode scanning starts off in
@@ -709,7 +705,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 					break;
 		}
 		ieee80211_create_ibss(ic, &ic->ic_channels[i]);
-		goto wakeup;
+		return;
 	}
 #endif
 	if (ni == NULL) {
@@ -721,7 +717,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 		    (ic->ic_flags & IEEE80211_F_IBSSON) &&
 		    ic->ic_des_esslen != 0) {
 			ieee80211_create_ibss(ic, ic->ic_ibss_chan);
-			goto wakeup;
+			return;
 		}
 #endif
 		/*
@@ -735,14 +731,8 @@ ieee80211_end_scan(struct ifnet *ifp)
 		 */
 		if (ieee80211_next_mode(ifp) == IEEE80211_MODE_AUTO ||
 		    (ic->ic_caps & IEEE80211_C_SCANALLBAND)) {
-			if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST &&
-			    ic->ic_scan_lock & IEEE80211_SCAN_RESUME) {
-				ic->ic_scan_lock = IEEE80211_SCAN_LOCKED;
-				/* Return from a user-initiated scan. */
-				wakeup(&ic->ic_scan_lock);
-			} else if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST)
-				goto wakeup;
 			ic->ic_scan_count++;
+			return;
 		}
 
 		/*
@@ -819,13 +809,13 @@ ieee80211_end_scan(struct ifnet *ifp)
 			if (ic->ic_bgscan_fail < IEEE80211_BGSCAN_FAIL_MAX)
 				ic->ic_bgscan_fail++;
 			ic->ic_flags &= ~IEEE80211_F_BGSCAN;
-			goto wakeup;
+			return;
 		}
 	
 		arg = malloc(sizeof(*arg), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (arg == NULL) {
 			ic->ic_flags &= ~IEEE80211_F_BGSCAN;
-			goto wakeup;
+			return;
 		}
 
 		ic->ic_bgscan_fail = 0;
@@ -838,7 +828,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 		    IEEE80211_FC0_SUBTYPE_DEAUTH,
 		    IEEE80211_REASON_AUTH_LEAVE) != 0) {
 			ic->ic_flags &= ~IEEE80211_F_BGSCAN;
-			goto wakeup;
+			return;
 		}
 
 		/* Prevent dispatch of additional data frames to hardware. */
@@ -854,19 +844,11 @@ ieee80211_end_scan(struct ifnet *ifp)
 		ic->ic_bss->ni_unref_arg_size = sizeof(*arg);
 		ic->ic_bss->ni_unref_cb = ieee80211_node_switch_bss;
 		/* F_BGSCAN flag gets cleared in ieee80211_node_join_bss(). */
-		goto wakeup;
+		return;
 	} else if (selbs == NULL)
 		goto notfound;
 
 	ieee80211_node_join_bss(ic, selbs);
-
- wakeup:
-	if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST) {
-		/* Return from a user-initiated scan. */
-		wakeup(&ic->ic_scan_lock);
-	}
-
-	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 }
 
 /*

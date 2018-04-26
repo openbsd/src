@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.42 2018/01/31 12:36:13 stsp Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.43 2018/04/26 12:50:07 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2312,9 +2312,6 @@ rsu_stop(struct ifnet *ifp)
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
-
-	/* In case we were scanning, release the scan "lock". */
-	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	s = splusb();
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);

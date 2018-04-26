@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.84 2018/02/05 08:44:13 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.85 2018/04/26 12:50:07 pirofti Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -240,7 +240,6 @@ struct ieee80211com {
 	u_char			ic_chan_scan[howmany(IEEE80211_CHAN_MAX,NBBY)];
 	struct mbuf_queue	ic_mgtq;
 	struct mbuf_queue	ic_pwrsaveq;
-	u_int			ic_scan_lock;	/* user-initiated scan */
 	u_int8_t		ic_scan_count;	/* count scans */
 	u_int32_t		ic_flags;	/* state flags */
 	u_int32_t		ic_xflags;	/* more flags */

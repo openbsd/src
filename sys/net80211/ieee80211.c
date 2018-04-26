@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.66 2018/04/20 09:40:36 jmatthew Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.67 2018/04/26 12:50:07 pirofti Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -143,7 +143,6 @@ ieee80211_channel_init(struct ifnet *ifp)
 	if ((ic->ic_modecaps & (1<<ic->ic_curmode)) == 0)
 		ic->ic_curmode = IEEE80211_MODE_AUTO;
 	ic->ic_des_chan = IEEE80211_CHAN_ANYC;	/* any channel is ok */
-	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.142 2018/01/31 12:36:13 stsp Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.143 2018/04/26 12:50:07 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -3318,9 +3318,6 @@ wpi_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
-
-	/* In case we were scanning, release the scan "lock". */
-	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
