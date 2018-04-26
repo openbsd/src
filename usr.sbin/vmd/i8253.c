@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.20 2018/04/26 17:10:09 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.21 2018/04/26 17:21:50 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -143,10 +143,12 @@ vcpu_exit_i8253_misc(struct vm_run_params *vrp)
 		/* Port 0x61[5] = counter channel 2 state */
 		if (i8253_channel[2].state) {
 			set_return_data(vei, (1 << 5));
-			log_debug("%s: counter 2 fired, returning 0x20", __func__);
+			log_debug("%s: counter 2 fired, returning 0x20",
+			    __func__);
 		} else {
 			set_return_data(vei, 0);
-			log_debug("%s: counter 2 clear, returning 0x0", __func__);
+			log_debug("%s: counter 2 clear, returning 0x0",
+			    __func__);
 		}
 	} else {
 		log_debug("%s: discarding data written to PIT misc port\n",
@@ -204,7 +206,8 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 			 */
 			if (rw == TIMER_LATCH) {
 				clock_gettime(CLOCK_MONOTONIC, &now);
-				timespecsub(&now, &i8253_channel[sel].ts, &delta);
+				timespecsub(&now, &i8253_channel[sel].ts,
+				    &delta);
 				ns = delta.tv_sec * 1000000000 + delta.tv_nsec;
 				ticks = ns / NS_PER_TICK;
 				if (i8253_channel[sel].start) {
