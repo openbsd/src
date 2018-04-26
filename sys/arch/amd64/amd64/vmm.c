@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.193 2018/04/26 11:37:25 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.194 2018/04/26 14:34:42 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4461,6 +4461,15 @@ svm_handle_exit(struct vcpu *vcpu)
 			break;
 		}
 
+		/*
+		 * Guest is now ready for interrupts, so disable interrupt
+		 * window exiting.
+		 */
+		vmcb->v_irq = 0;
+		vmcb->v_intr_vector = 0;
+		vmcb->v_intercept1 &= ~SVM_INTERCEPT_VINTR;
+		svm_set_dirty(vcpu, SVM_CLEANBITS_TPR | SVM_CLEANBITS_I);
+
 		update_rip = 0;
 		break;
 	case SVM_VMEXIT_INTR:
@@ -6089,29 +6098,16 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		/* Handle vmd(8) injected interrupts */
 		/* Is there an interrupt pending injection? */
-		if (irq != 0xFFFF) {
-			if (vcpu->vc_irqready) {
-				vmcb->v_eventinj = (irq & 0xFF) | (1<<31);
-			} else {
-				vmcb->v_irq = 1;
-				vmcb->v_intr_misc = SVM_INTR_MISC_V_IGN_TPR;
-				vmcb->v_intr_vector = 0;
-				vmcb->v_intercept1 |= SVM_INTERCEPT_VINTR;
-				svm_set_dirty(vcpu, SVM_CLEANBITS_TPR |
-				    SVM_CLEANBITS_I);
-			}
-
+		if (irq != 0xFFFF && vcpu->vc_irqready) {
+			DPRINTF("%s: inject irq %d\n", __func__, irq & 0xFF);
+			vmcb->v_eventinj = (irq & 0xFF) | (1<<31);
 			irq = 0xFFFF;
-		} else if (!vcpu->vc_intr) {
-			/* Disable interrupt window */
-			vmcb->v_irq = 0;
-			vmcb->v_intr_vector = 0;
-			vmcb->v_intercept1 &= ~SVM_INTERCEPT_VINTR;
-			svm_set_dirty(vcpu, SVM_CLEANBITS_TPR | SVM_CLEANBITS_I);
-		}
+		} 
 
 		/* Inject event if present */
 		if (vcpu->vc_event != 0) {
+			DPRINTF("%s: inject event %d\n", __func__,
+			    vcpu->vc_event);
 			/* Set the "Send error code" flag for certain vectors */
 			switch (vcpu->vc_event & 0xFF) {
 				case VMM_EX_DF:
