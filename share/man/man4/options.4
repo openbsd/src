@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.257 2018/03/16 16:58:26 schwarze Exp $
+.\"	$OpenBSD: options.4,v 1.258 2018/04/26 20:40:54 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: March 16 2018 $
+.Dd $Mdocdate: April 26 2018 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -83,8 +83,7 @@ system call.
 .It Cd option DDB
 Compiles in a kernel debugger for diagnosing kernel problems.
 See
-.Xr ddb 4
-for details.
+.Xr ddb 4 .
 .It Cd option DDB_SAFE_CONSOLE
 Allows a break into the kernel debugger during boot.
 Useful when debugging problems that can cause
@@ -114,8 +113,7 @@ Adds code to the kernel for kernel profiling with
 Adds hooks for the system call tracing facility, which allows users to
 watch the system call invocation behavior of processes.
 See
-.Xr ktrace 1
-for details.
+.Xr ktrace 1 .
 .It Cd option NO_PROPOLICE
 Do not compile the kernel with the ProPolice stack protection.
 See
@@ -125,8 +123,7 @@ for more information about ProPolice.
 Adds hooks for the process tracing facility, allowing a process to
 control and observe another process.
 See
-.Xr ptrace 2
-for details.
+.Xr ptrace 2 .
 .It Cd option SMALL_KERNEL
 Removes some features and some optimizations from the kernel to reduce the
 size of the resulting kernel binary.
@@ -135,13 +132,11 @@ for general purpose kernels.
 .It Cd option VFSLCKDEBUG
 Turns on debugging for the Virtual File System interface.
 See
-.Xr vfs 9
-for details.
+.Xr vfs 9 .
 .It Cd option WITNESS
 Compiles in a lock checker for detecting lock order violations in the kernel.
 See
-.Xr witness 4
-for details.
+.Xr witness 4 .
 .It Cd option WITNESS_COUNT= Ns Ar integer
 Maximum number of lock types that are tracked by
 .Xr witness 4 .
@@ -154,8 +149,7 @@ Includes code for the ISO 9660 + Rock Ridge file system, which is the
 standard file system used on many CD-ROMs.
 It also supports Joliet extensions.
 See
-.Xr mount_cd9660 8
-for details.
+.Xr mount_cd9660 8 .
 .It Cd option EXT2FS
 Includes code implementing the Second Extended File System
 .Em ( EXT2FS ) ,
@@ -175,8 +169,7 @@ differing byte-orders.
 That is, a big-endian machine will not be able to read an
 ext2fs filesystem created on an i386 or other little-endian machine.
 See
-.Xr mount_ext2fs 8
-for details.
+.Xr mount_ext2fs 8 .
 .It Cd option FFS
 Includes code implementing the Berkeley Fast File System
 .Em ( FFS ) .
@@ -193,8 +186,7 @@ for
 .Pa /tmp
 or similar mount points.
 See
-.Xr mount_mfs 8
-for details.
+.Xr mount_mfs 8 .
 .It Cd option MSDOSFS
 Includes support for the MS-DOS FAT file system.
 The kernel also implements the Windows 95
@@ -202,8 +194,7 @@ extensions which permit the use of longer, mixed-case file names.
 See
 .Xr mount_msdos 8
 and
-.Xr fsck_msdos 8
-for details.
+.Xr fsck_msdos 8 .
 .It Cd option NFSCLIENT
 Include the client side of the
 .Em NFS
@@ -217,18 +208,15 @@ for details on NFS.
 .It Cd option NTFS
 Includes support for reading NTFS file systems.
 See
-.Xr mount_ntfs 8
-for details.
+.Xr mount_ntfs 8 .
 .It Cd option UDF
 Includes code for the UDF file systems typically found on DVD discs.
 See
-.Xr mount_udf 8
-for details.
+.Xr mount_udf 8 .
 .It Cd option TMPFS
 Includes code for the TMPFS efficient memory file system.
 See
-.Xr mount_tmpfs 8
-for details.
+.Xr mount_tmpfs 8 .
 .El
 .Sh FILE SYSTEM OPTIONS
 .Bl -ohang
@@ -256,8 +244,7 @@ retaining the safety of synchronous metadata updates.
 .Pp
 Soft updates must be enabled on a per-filesystem basis.
 See
-.Xr mount 8
-for details.
+.Xr mount 8 .
 .Pp
 Processors with a small kernel address space, such as the sun4 and sun4c, do
 not have enough kernel memory to support soft updates.
@@ -282,8 +269,7 @@ work.
 See
 .Xr mountd 8
 and
-.Xr nfsd 8
-for details.
+.Xr nfsd 8 .
 .It Cd option QUOTA
 Enables kernel support for file system quotas.
 See
@@ -291,8 +277,7 @@ See
 .Xr edquota 8 ,
 .Xr repquota 8 ,
 and
-.Xr quota 1
-for details.
+.Xr quota 1 .
 Note that quotas only work on
 .Dq ffs
 file systems, although
@@ -309,6 +294,8 @@ in large directories.
 Provide in-kernel support for controlling VGA framebuffer mapping
 and PCI configuration registers by user-processes
 (such as an X Window System server).
+See
+.Xr xf86 4 .
 This option is supported on the
 .Va alpha ,
 .Va amd64 ,
@@ -323,15 +310,18 @@ Adds support for the
 boot option (User Kernel Config).
 Allows modification of kernel settings (e.g., device parameters) before
 booting the system.
+See
+.Xr boot_config 8 .
 .It Cd option CRYPTO
 Enables support for the kernel cryptographic framework.
 See
-.Xr crypto 9
-for details.
+.Xr crypto 9 .
 While not IP specific, this option is usually used in conjunction with option
 .Em IPSEC .
 .It Cd option EISAVERBOSE
 Makes the boot process more verbose for EISA peripherals.
+See
+.Xr eisa 4 .
 .It Cd option KMEMSTATS
 The kernel memory allocator,
 .Xr malloc 9 ,
@@ -341,19 +331,23 @@ On those architectures that have it, this enables multiprocessor support.
 .It Cd option PCIVERBOSE
 Makes the boot process more verbose for PCI peripherals
 (vendor names and other information is printed, etc.).
+See
+.Xr pci 4 .
 .It Cd option PCMCIAVERBOSE
 Makes the boot process more verbose for PCMCIA peripherals.
+See
+.Xr pcmcia 4 .
 .It Cd option USER_PCICONF
 Enables the user level access to the PCI bus configuration space
 through ioctls on the
 .Pa /dev/pci
 device.
-It's used by the
+It's used by
 .Xr Xorg 1
-server on some architectures.
+and
+.Xr pcidump 8 .
 See
-.Xr pci 4
-for details.
+.Xr pci 4 .
 .It Cd option UVM_SWAP_ENCRYPT
 Enables kernel support for encrypting pages that are written out to
 swap storage.
@@ -366,8 +360,7 @@ controls its behaviour.
 See
 .Xr sysctl 8
 and
-.Xr sysctl 2
-for details.
+.Xr sysctl 2 .
 .El
 .Sh NETWORKING OPTIONS
 .Bl -ohang
@@ -385,13 +378,11 @@ is 1, debug logging is on.
 See
 .Xr sysctl 8
 and
-.Xr sysctl 2
-for details.
+.Xr sysctl 2 .
 .It Cd option INET6
 Includes support for the IPv6 protocol stack.
 See
-.Xr inet6 4
-for details.
+.Xr inet6 4 .
 .Em INET6
 enables multicast routing code as well.
 .It Cd option IPSEC
@@ -410,13 +401,11 @@ The option sets the default value of
 to 1,
 for debugging IPv6 neighbor discovery protocol handling.
 See
-.Xr sysctl 2
-for details.
+.Xr sysctl 2 .
 .It Cd option PIPEX
 Includes pipex in-kernel acceleration for PPPoE, L2TP or PPTP.
 See
-.Xr pipex 4
-for details.
+.Xr pipex 4 .
 .It Cd option PPP_BSDCOMP
 Enables BSD compressor for PPP connections.
 .It Cd option PPP_DEFLATE
@@ -433,8 +422,7 @@ See
 in
 .Xr setsockopt 2
 and
-.Xr sosplice 9
-for details.
+.Xr sosplice 9 .
 .It Cd option TCP_ECN
 Turns on Explicit Congestion Notification (RFC 3168).
 .Em ECN
@@ -511,6 +499,8 @@ Double quotes are needed when specifying a negative
 .Ar value .
 .El
 .Sh SCSI SUBSYSTEM OPTIONS
+See
+.Xr scsi 4 .
 .Bl -ohang
 .It Cd option SCSI_DELAY= Ns Ar value
 Delay for
