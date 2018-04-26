@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.152 2018/04/25 10:29:16 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.153 2018/04/26 06:28:43 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1016,18 +1016,19 @@ struct filedesc *
 fdcopy(struct process *pr)
 {
 	struct filedesc *newfdp, *fdp = pr->ps_fd;
-	struct file **fpp;
 	int i;
 
+	newfdp = fdinit();
+
 	fdplock(fdp);
-	newfdp = pool_get(&fdesc_pool, PR_WAITOK);
-	memcpy(newfdp, fdp, sizeof(struct filedesc));
-	if (newfdp->fd_cdir)
-		vref(newfdp->fd_cdir);
-	if (newfdp->fd_rdir)
-		vref(newfdp->fd_rdir);
-	newfdp->fd_refcnt = 1;
-	rw_init(&newfdp->fd_lock, "fdlock");
+	if (fdp->fd_cdir) {
+		vref(fdp->fd_cdir);
+		newfdp->fd_cdir = fdp->fd_cdir;
+	}
+	if (fdp->fd_rdir) {
+		vref(fdp->fd_rdir);
+		newfdp->fd_rdir = fdp->fd_rdir;
+	}
 
 	/*
 	 * If the number of open files fits in the internal arrays
@@ -1035,45 +1036,34 @@ fdcopy(struct process *pr)
 	 * additional memory for the number of descriptors currently
 	 * in use.
 	 */
-	if (newfdp->fd_lastfile < NDFILE) {
-		newfdp->fd_ofiles = ((struct filedesc0 *) newfdp)->fd_dfiles;
-		newfdp->fd_ofileflags =
-		    ((struct filedesc0 *) newfdp)->fd_dfileflags;
-		i = NDFILE;
-	} else {
+	if (fdp->fd_lastfile >= NDFILE) {
 		/*
 		 * Compute the smallest multiple of NDEXTENT needed
 		 * for the file descriptors currently in use,
 		 * allowing the table to shrink.
 		 */
-		i = newfdp->fd_nfiles;
-		while (i >= 2 * NDEXTENT && i > newfdp->fd_lastfile * 2)
+		i = fdp->fd_nfiles;
+		while (i >= 2 * NDEXTENT && i > fdp->fd_lastfile * 2)
 			i /= 2;
-		newfdp->fd_ofiles = mallocarray(i, OFILESIZE, M_FILEDESC, M_WAITOK);
+		newfdp->fd_ofiles = mallocarray(i, OFILESIZE, M_FILEDESC,
+		    M_WAITOK | M_ZERO);
 		newfdp->fd_ofileflags = (char *) &newfdp->fd_ofiles[i];
+		newfdp->fd_nfiles = i;
 	}
-	if (NDHISLOTS(i) <= NDHISLOTS(NDFILE)) {
-		newfdp->fd_himap =
-			((struct filedesc0 *) newfdp)->fd_dhimap;
-		newfdp->fd_lomap =
-			((struct filedesc0 *) newfdp)->fd_dlomap;
-	} else {
-		newfdp->fd_himap = mallocarray(NDHISLOTS(i), sizeof(u_int),
-		    M_FILEDESC, M_WAITOK);
-		newfdp->fd_lomap = mallocarray(NDLOSLOTS(i), sizeof(u_int),
-		    M_FILEDESC, M_WAITOK);
+	if (NDHISLOTS(newfdp->fd_nfiles) > NDHISLOTS(NDFILE)) {
+		newfdp->fd_himap = mallocarray(NDHISLOTS(newfdp->fd_nfiles),
+		    sizeof(u_int), M_FILEDESC, M_WAITOK | M_ZERO);
+		newfdp->fd_lomap = mallocarray(NDLOSLOTS(newfdp->fd_nfiles),
+		    sizeof(u_int), M_FILEDESC, M_WAITOK | M_ZERO);
 	}
-	newfdp->fd_nfiles = i;
-	memcpy(newfdp->fd_ofiles, fdp->fd_ofiles, i * sizeof(struct file *));
-	memcpy(newfdp->fd_ofileflags, fdp->fd_ofileflags, i * sizeof(char));
-	memcpy(newfdp->fd_himap, fdp->fd_himap, NDHISLOTS(i) * sizeof(u_int));
-	memcpy(newfdp->fd_lomap, fdp->fd_lomap, NDLOSLOTS(i) * sizeof(u_int));
-	fdpunlock(fdp);
+	newfdp->fd_freefile = fdp->fd_freefile;
+	newfdp->fd_flags = fdp->fd_flags;
+	newfdp->fd_cmask = fdp->fd_cmask;
 
-	fdplock(newfdp);
-	fpp = newfdp->fd_ofiles;
-	for (i = 0; i <= newfdp->fd_lastfile; i++, fpp++)
-		if (*fpp != NULL) {
+	for (i = 0; i <= fdp->fd_lastfile; i++) {
+		struct file *fp = fdp->fd_ofiles[i];
+
+		if (fp != NULL) {
 			/*
 			 * XXX Gruesome hack. If count gets too high, fail
 			 * to copy an fd, since fdcopy()'s callers do not
@@ -1082,22 +1072,18 @@ fdcopy(struct process *pr)
 			 * tied to the process that opened them to enforce
 			 * their internal consistency, so close them here.
 			 */
-			if ((*fpp)->f_count == LONG_MAX-2 ||
-			    (*fpp)->f_type == DTYPE_KQUEUE)
-				fdremove(newfdp, i);
-			else
-				(*fpp)->f_count++;
+			if (fp->f_count == LONG_MAX-2 ||
+			    fp->f_type == DTYPE_KQUEUE)
+				continue;
+
+			FREF(fp);
+			newfdp->fd_ofiles[i] = fp;
+			newfdp->fd_ofileflags[i] = fdp->fd_ofileflags[i];
+			fd_used(newfdp, i);
 		}
-
-	/* finish cleaning up kq bits */
-	if (newfdp->fd_knlistsize != -1) {
-		newfdp->fd_knlist = NULL;
-		newfdp->fd_knlistsize = -1;
-		newfdp->fd_knhash = NULL;
-		newfdp->fd_knhashmask = 0;
 	}
+	fdpunlock(fdp);
 
-	fdpunlock(newfdp);
 	return (newfdp);
 }
 
