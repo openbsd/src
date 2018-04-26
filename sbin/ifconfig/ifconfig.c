@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.363 2018/04/26 06:58:50 akoshibe Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.364 2018/04/26 12:23:56 schwarze Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -5412,7 +5412,6 @@ in_getaddr(const char *s, int which)
 {
 	struct sockaddr_in *sin = sintab[which], tsin;
 	struct hostent *hp;
-	struct netent *np;
 	int bits, l;
 	char p[3];
 
@@ -5432,8 +5431,6 @@ in_getaddr(const char *s, int which)
 	} else if (inet_aton(s, &sin->sin_addr) == 0) {
 		if ((hp = gethostbyname(s)))
 			memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
-		else if ((np = getnetbyname(s)))
-			sin->sin_addr = inet_makeaddr(np->n_net, INADDR_ANY);
 		else
 			errx(1, "%s: bad value", s);
 	}
