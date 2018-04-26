@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.169 2017/11/16 18:12:27 jcs Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.170 2018/04/26 15:05:31 phessler Exp $
 
 machine		amd64
 maxusers	4
@@ -53,6 +53,7 @@ ioapic*		at mainbus?
 isa0		at mainbus0
 #isa0		at pcib?
 pci*		at mainbus0
+vmm0		at mainbus0
 pvbus0		at mainbus0
 
 xen0		at pvbus?		# Xen HVM domU
@@ -299,6 +300,7 @@ vioblk*		at virtio?		# Virtio block device
 vio*		at virtio?		# Virtio network device
 viornd*		at virtio?		# Virtio entropy device
 vioscsi*	at virtio?		# Virtio SCSI device
+vmmci*		at virtio?		# VMM control interface
 
 pseudo-device	loop 1
 pseudo-device	vlan

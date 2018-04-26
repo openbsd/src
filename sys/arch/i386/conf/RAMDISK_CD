@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.235 2018/03/27 21:11:17 kettenis Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.236 2018/04/26 15:05:31 phessler Exp $
 
 machine		i386
 maxusers	4
@@ -54,6 +54,7 @@ isa0		at mainbus0
 isa0		at pcib?
 eisa0		at mainbus0
 pci*		at mainbus0
+vmm0		at mainbus0
 
 pchb*		at pci?			# PCI-Host bridges
 ppb*		at pci?			# PCI-PCI bridges
@@ -327,6 +328,7 @@ vioblk*		at virtio?			# Virtio block device
 vio*		at virtio?			# Virtio network device
 viornd*		at virtio?			# Virtio entropy device
 vioscsi*	at virtio?			# Virtio SCSI device
+vmmci*		at virtio?			# VMM control interface
 
 pseudo-device	loop 1
 pseudo-device	vlan
