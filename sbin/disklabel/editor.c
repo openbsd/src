@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.331 2018/04/26 14:36:25 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.332 2018/04/26 15:27:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1109,25 +1109,18 @@ getuint64(struct disklabel *lp, char *prompt, char *helpstring,
 	int64_t mult = 1;
 	size_t n;
 	double d, percent = 1.0;
+	int rslt;
 
-	buf[0] = '\0';
-	do {
-		printf("%s: [%llu] ", prompt, oval);
-		if (fgets(buf, sizeof(buf), stdin) == NULL) {
-			buf[0] = '\0';
-			if (feof(stdin)) {
-				clearerr(stdin);
-				putchar('\n');
-				fputs("Command aborted\n", stderr);
-				return (ULLONG_MAX - 1);
-			}
-		}
-		n = strlen(buf);
-		if (n > 0 && buf[n-1] == '\n')
-			buf[--n] = '\0';
-		if (buf[0] == '?')
-			puts(helpstring);
-	} while (buf[0] == '?');
+	rslt = snprintf(buf, sizeof(buf), "%llu", oval);
+	if (rslt == -1 || (unsigned int)rslt >= sizeof(buf))
+		goto invalid;
+
+	p = getstring(prompt, helpstring, buf);
+	if (p == NULL)
+		return (ULLONG_MAX - 1);
+	if (strlcpy(buf, p, sizeof(buf)) >= sizeof(buf))
+		goto invalid;
+	n = strlen(buf);
 
 	if (buf[0] == '*' && buf[1] == '\0') {
 		rval = maxval;
@@ -1182,7 +1175,7 @@ getuint64(struct disklabel *lp, char *prompt, char *helpstring,
 					if (*p == '+' || *p == '-')
 						operator = *p++;
 					percent = strtod(p, NULL) / 100.0;
-					snprintf(buf, sizeof(buf), "%lld",
+					snprintf(buf, sizeof(buf), "%llu",
 					    maxval);
 					break;
 				}
@@ -1418,7 +1411,7 @@ edit_parms(struct disklabel *lp)
 			;	/* Try again. */
 		else if (ui > UINT32_MAX)
 			fprintf(stderr, "sectors/cylinder must be <= %u\n",
-			   UINT32_MAX);
+			    UINT32_MAX);
 		else
 			break;
 	}
@@ -1599,7 +1592,7 @@ set_bounds(struct disklabel *lp)
 		    "The start of the OpenBSD portion of the disk.",
 		    starting_sector, DL_GETDSIZE(lp), 0, 0);
 		if (ui == ULLONG_MAX - 1)
-			    return;
+			return;
 		else if (ui == ULLONG_MAX)
 			;	/* Try again. */
 		else if (ui >= DL_GETDSIZE(lp))
