@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.362 2018/02/27 22:32:26 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.363 2018/04/26 06:58:50 akoshibe Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -203,6 +203,7 @@ void	settunnel(const char *, const char *);
 void	settunneladdr(const char *, int);
 void	deletetunnel(const char *, int);
 void	settunnelinst(const char *, int);
+void	unsettunnelinst(const char *, int);
 void	settunnelttl(const char *, int);
 void	setvnetid(const char *, int);
 void	delvnetid(const char *, int);
@@ -459,6 +460,7 @@ const struct	cmd {
 	/* deletetunnel is for backward compat, remove during 6.4-current */
 	{ "deletetunnel",  0,		0,		deletetunnel },
 	{ "tunneldomain", NEXTARG,	0,		settunnelinst },
+	{ "-tunneldomain", 0,		0,		unsettunnelinst },
 	{ "tunnelttl",	NEXTARG,	0,		settunnelttl },
 	{ "tunneldf",	0,		0,		settunneldf },
 	{ "-tunneldf",	0,		0,		settunnelnodf },
@@ -3363,6 +3365,15 @@ settunnelinst(const char *id, int param)
 
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_rdomainid = rdomainid;
+	if (ioctl(s, SIOCSLIFPHYRTABLE, (caddr_t)&ifr) < 0)
+		warn("SIOCSLIFPHYRTABLE");
+}
+
+void
+unsettunnelinst(const char *ignored, int alsoignored)
+{
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_rdomainid = 0;
 	if (ioctl(s, SIOCSLIFPHYRTABLE, (caddr_t)&ifr) < 0)
 		warn("SIOCSLIFPHYRTABLE");
 }
