@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.143 2018/04/10 06:34:04 mlarkin Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.144 2018/04/26 15:55:14 guenther Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -35,7 +35,6 @@
 #include <sys/proc.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
-#include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/device.h>
@@ -43,19 +42,21 @@
 #include <sys/sched.h>
 #include <sys/vmmeter.h>
 
-#include <time.h>
-#include <nlist.h>
-#include <kvm.h>
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <unistd.h>
+#include <fcntl.h>
+#include <kvm.h>
+#include <limits.h>
+#include <nlist.h>
+#include <paths.h>
 #include <signal.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <paths.h>
-#include <limits.h>
+#include <time.h>
+#include <unistd.h>
+
 #include "dkstats.h"
 
 struct nlist namelist[] = {

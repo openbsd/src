@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.71 2018/04/26 12:42:51 guenther Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.72 2018/04/26 15:55:14 guenther Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -29,31 +29,32 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <sys/syslog.h>
-#include <net/if.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <errno.h>
-#include <ctype.h>
-#include <netdb.h>
-#include <string.h>
-#include <dirent.h>
+#include <arpa/inet.h>
+#include <net/if.h>
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
-#include <arpa/inet.h>
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_rmt.h>
-#include <unistd.h>
-#include <err.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
+
+#include <ctype.h>
+#include <dirent.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <ifaddrs.h>
+#include <limits.h>
+#include <netdb.h>
 #include <poll.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define SERVERSDIR	"/etc/yp"
 #define BINDINGDIR	"/var/yp/binding"

@@ -1,4 +1,4 @@
-/* $OpenBSD: bwx.c,v 1.8 2014/12/13 16:26:13 miod Exp $ */
+/* $OpenBSD: bwx.c,v 1.9 2018/04/26 15:55:14 guenther Exp $ */
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -27,13 +27,13 @@
 
 #include <sys/param.h>
 #include <sys/mman.h>
-#include <sys/fcntl.h>
 #include <sys/sysctl.h>
-#include <err.h>
-#include <paths.h>
 #include <machine/bwx.h>
 #include <machine/cpu.h>
 #include <machine/sysarch.h>
+#include <err.h>
+#include <fcntl.h>
+#include <paths.h>
 #include <stdlib.h>
 #include <unistd.h>
 

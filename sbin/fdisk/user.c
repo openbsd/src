@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.50 2016/01/09 18:10:57 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.51 2018/04/26 15:55:14 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -17,10 +17,10 @@
  */
 
 #include <sys/types.h>
-#include <sys/fcntl.h>
 #include <sys/disklabel.h>
 
 #include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
