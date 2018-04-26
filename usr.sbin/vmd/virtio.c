@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.56 2018/02/01 18:33:27 pd Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.57 2018/04/26 01:10:10 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -363,7 +363,7 @@ vioblk_start_read(struct vioblk_dev *dev, off_t sector, ssize_t sz)
 
 nomem:
 	free(info);
-	log_warn("malloc errror vioblk read");
+	log_warn("malloc error vioblk read");
 	return (NULL);
 }
 
@@ -404,7 +404,7 @@ vioblk_start_write(struct vioblk_dev *dev, off_t sector, paddr_t addr, size_t le
 
 nomem:
 	free(info);
-	log_warn("malloc errror vioblk write");
+	log_warn("malloc error vioblk write");
 	return (NULL);
 }
 
