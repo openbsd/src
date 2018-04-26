@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.11 2018/04/26 08:02:23 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.12 2018/04/26 08:15:41 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -159,7 +159,7 @@ test_open(int do_pp)
 		if (pledgepath("/tmp/zulu", pp_flags) == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
-	PP_SHOULD_SUCCEED((pledge("paths stdio rpath cpath wpath", NULL) == -1), "pledge");
+	PP_SHOULD_SUCCEED((pledge("paths stdio rpath cpath wpath exec", NULL) == -1), "pledge");
 
 
 	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
@@ -188,10 +188,38 @@ test_open(int do_pp)
 	PP_SHOULD_FAIL((open(filename, O_RDWR|O_CREAT) == -1), "open");
 
 	if (do_pp) {
+		printf("testing O_RDONLY\n");
+		if (pledgepath(pp_file1, O_RDONLY) == -1)
+			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
+	}
+	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
+	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
+
+	if (do_pp) {
+		printf("testing O_RDWR\n");
+		if (pledgepath(pp_file1, O_RDWR) == -1)
+			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
+	}
+	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
+	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
+	PP_SHOULD_FAIL((open(pp_file2, O_EXEC) == -1), "open");
+
+	if (do_pp) {
+		printf("testing O_EXEC\n");
+		if (pledgepath(pp_file1, O_EXEC) == -1)
+			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
+	}
+	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
+// XXX	PP_SHOULD_SUCCEED((open(pp_file1, O_EXEC) == -1), "open");
+	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
+
+	if (do_pp) {
 		printf("(testing pledgepath after pledge)\n");
 		do_pledgepath();
 	}
-	PP_SHOULD_SUCCEED((pledge("stdio fattr rpath cpath wpath", NULL) == -1), "pledge");
+	PP_SHOULD_SUCCEED((pledge("stdio rpath cpath wpath", NULL) == -1), "pledge");
+
+	printf("(testing dropping ppath)\n");
 
 	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
 	return 0;
@@ -496,6 +524,7 @@ main (int argc, char *argv[])
 	PP_SHOULD_SUCCEED((mkdtemp(pp_dir2) == NULL), "mkdtmp");
 	PP_SHOULD_SUCCEED(((fd1 = mkstemp(pp_file1)) == -1), "mkstemp");
 	close(fd1);
+	PP_SHOULD_SUCCEED((chmod(pp_file1, S_IRWXU) == -1), "chmod");
 	PP_SHOULD_SUCCEED(((fd2 = mkstemp(pp_file2)) == -1), "mkstemp");
 	close(fd2);
 
