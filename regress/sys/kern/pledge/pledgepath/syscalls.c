@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.16 2018/04/26 13:57:16 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.17 2018/04/26 18:11:12 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -201,6 +201,22 @@ test_open(int do_pp)
 	(void) snprintf(filename, sizeof(filename), "%s/%s", pp_dir2, "newfile");
 	PP_SHOULD_FAIL((open(filename, O_RDWR|O_CREAT) == -1), "open");
 
+	if (do_pp) {
+		printf("testing clearing flags\n");
+		if (pledgepath(pp_dir1, "") == -1)
+			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
+	}
+	(void) snprintf(filename, sizeof(filename), "%s/%s", pp_dir1, "noflagsiamboned");
+	PP_SHOULD_FAIL((open(filename, O_RDWR|O_CREAT) == -1), "open");
+
+	if (do_pp) {
+		printf("testing restoring flags\n");
+		if (pledgepath(pp_dir1, "rwxc") == -1)
+			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
+	}
+
+	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
+	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");	
 	if (do_pp) {
 		printf("testing O_RDONLY\n");
 		if (pledgepath(pp_file1, "r") == -1)
@@ -553,6 +569,6 @@ main (int argc, char *argv[])
 	failures += runcompare(test_chmod);
 	failures += runcompare(test_exec);
 	failures += runcompare(test_exec2);
-
 	exit(failures);
+
 }
