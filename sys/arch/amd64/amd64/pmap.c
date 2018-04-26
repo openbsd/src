@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.113 2018/04/17 06:31:55 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.114 2018/04/26 06:51:48 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2832,6 +2832,10 @@ pmap_convert(struct pmap *pmap, int mode)
  * doesn't hold since we can end up in situations where noone will
  * release the lock if we get an interrupt in a bad moment.
  */
+#ifdef MP_LOCKDEBUG
+#include <ddb/db_output.h>
+extern int __mp_lock_spinout;
+#endif
 
 volatile long tlb_shoot_wait __attribute__((section(".kudata")));
 
@@ -2858,8 +2862,20 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va, int shootself)
 		int s = splvm();
 
 		while (atomic_cas_ulong(&tlb_shoot_wait, 0, wait) != 0) {
-			while (tlb_shoot_wait != 0)
+#ifdef MP_LOCKDEBUG
+			int nticks = __mp_lock_spinout;
+#endif
+			while (tlb_shoot_wait != 0) {
 				CPU_BUSY_CYCLE();
+#ifdef MP_LOCKDEBUG
+
+				if (--nticks <= 0) {
+					db_printf("%s: spun out", __func__);
+					db_enter();
+					nticks = __mp_lock_spinout;
+				}
+#endif
+			}
 		}
 		tlb_shoot_addr1 = va;
 		CPU_INFO_FOREACH(cii, ci) {
@@ -2896,8 +2912,20 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva, int shootself)
 		int s = splvm();
 
 		while (atomic_cas_ulong(&tlb_shoot_wait, 0, wait) != 0) {
-			while (tlb_shoot_wait != 0)
+#ifdef MP_LOCKDEBUG
+			int nticks = __mp_lock_spinout;
+#endif
+			while (tlb_shoot_wait != 0) {
 				CPU_BUSY_CYCLE();
+#ifdef MP_LOCKDEBUG
+
+				if (--nticks <= 0) {
+					db_printf("%s: spun out", __func__);
+					db_enter();
+					nticks = __mp_lock_spinout;
+				}
+#endif
+			}
 		}
 		tlb_shoot_addr1 = sva;
 		tlb_shoot_addr2 = eva;
@@ -2935,8 +2963,20 @@ pmap_tlb_shoottlb(struct pmap *pm, int shootself)
 		int s = splvm();
 
 		while (atomic_cas_ulong(&tlb_shoot_wait, 0, wait) != 0) {
-			while (tlb_shoot_wait != 0)
+#ifdef MP_LOCKDEBUG
+			int nticks = __mp_lock_spinout;
+#endif
+			while (tlb_shoot_wait != 0) {
 				CPU_BUSY_CYCLE();
+#ifdef MP_LOCKDEBUG
+
+				if (--nticks <= 0) {
+					db_printf("%s: spun out", __func__);
+					db_enter();
+					nticks = __mp_lock_spinout;
+				}
+#endif
+			}
 		}
 
 		CPU_INFO_FOREACH(cii, ci) {
@@ -2955,11 +2995,22 @@ pmap_tlb_shoottlb(struct pmap *pm, int shootself)
 void
 pmap_tlb_shootwait(void)
 {
-	while (tlb_shoot_wait != 0)
+#ifdef MP_LOCKDEBUG
+	int nticks = __mp_lock_spinout;
+#endif
+	while (tlb_shoot_wait != 0) {
 		CPU_BUSY_CYCLE();
+#ifdef MP_LOCKDEBUG
+		if (--nticks <= 0) {
+			db_printf("%s: spun out", __func__);
+			db_enter();
+			nticks = __mp_lock_spinout;
+		}
+#endif
+	}
 }
 
-#else
+#else /* MULTIPROCESSOR */
 
 void
 pmap_tlb_shootpage(struct pmap *pm, vaddr_t va, int shootself)
