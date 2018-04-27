@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.22 2018/04/26 18:19:37 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.23 2018/04/27 06:44:43 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -175,6 +175,7 @@ uint8_t
 vcpu_exit_i8253(struct vm_run_params *vrp)
 {
 	uint32_t out_data;
+	uint16_t ul;
 	uint8_t sel, rw, data;
 	uint64_t ns, ticks;
 	struct timespec now, delta;
@@ -263,12 +264,23 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 				goto ret;
 			}
 
+			/* Unlatched read mode */
+			clock_gettime(CLOCK_MONOTONIC, &now);
+			timespecsub(&now, &i8253_channel[sel].ts, &delta);
+			ns = delta.tv_sec * 1000000000 + delta.tv_nsec;
+			ticks = ns / NS_PER_TICK;
+			if (i8253_channel[sel].start) {
+				ul = i8253_channel[sel].start -
+				    ticks % i8253_channel[sel].start;
+			} else
+				ul = 0;
+
 			if (i8253_channel[sel].last_r == 0) {
-				data = i8253_channel[sel].olatch >> 8;
+				data = ul >> 8;
 				set_return_data(vei, data);
 				i8253_channel[sel].last_r = 1;
 			} else {
-				data = i8253_channel[sel].olatch & 0xFF;
+				data = ul & 0xFF;
 				set_return_data(vei, data);
 				i8253_channel[sel].last_r = 0;
 			}
