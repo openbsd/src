@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.198 2017/12/12 15:57:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.199 2018/04/27 17:03:09 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -268,7 +268,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		ni->ni_rstamp = rxi->rxi_tstamp;
 		ni->ni_inact = 0;
 
-		if (ic->ic_state == IEEE80211_S_RUN) {
+		if (ic->ic_state == IEEE80211_S_RUN && ic->ic_bgscan_start) {
 			/* Cancel or start background scan based on RSSI. */
 			if ((*ic->ic_node_checkrssi)(ic, ni))
 				timeout_del(&ic->ic_bgscan_timeout);
