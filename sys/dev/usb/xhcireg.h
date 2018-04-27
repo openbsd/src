@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.12 2017/09/08 10:25:19 stsp Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.13 2018/04/27 14:17:52 mpi Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -71,10 +71,11 @@
 #define  XHCI_HCS1_N_PORTS(x)	(((x) >> 24) & 0xff)
 
 #define XHCI_HCSPARAMS2		0x08	/* RO structual parameters 2 */
-#define  XHCI_HCS2_IST(x)	((x) & 0xF)
+#define  XHCI_HCS2_IST(x)	((x) & 0xf)
 #define  XHCI_HCS2_ERST_MAX(x)	(((x) >> 4) & 0xf)
-#define  XHCI_HCS2_SPR(x)	(((x) >> 24) & 0x1)
-#define  XHCI_HCS2_SPB_MAX(x)	(((x) >> 27) & 0x7f)
+#define  XHCI_HCS2_ETE(x)	(((x) >> 8) & 0x1)
+#define  XHCI_HCS2_SPR(x)	(((x) >> 26) & 0x1)
+#define  XHCI_HCS2_SPB_MAX(x)	((((x) >> 16) & 0x3e0) | (((x) >> 27) & 0x1f))
 
 #define XHCI_HCSPARAMS3		0x0c	/* RO structual parameters 3 */
 #define  XHCI_HCS3_U1_DEL(x)	((x) & 0xff)
