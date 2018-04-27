@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.20 2018/04/27 12:07:36 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.21 2018/04/27 15:28:00 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -312,19 +312,14 @@ test_unlink(int do_pp)
 	if (do_pp) {
 		printf("testing unlink\n");
 		do_pledgepath();
+		if (pledgepath(filename3, "rw") == -1)
+			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
 
 	PP_SHOULD_SUCCEED((pledge("paths stdio fattr rpath cpath wpath", NULL) == -1),
 	    "pledge");
 	PP_SHOULD_SUCCEED((unlink(filename1) == -1), "unlink");
 	PP_SHOULD_FAIL((unlink(filename2) == -1), "unlink");
-	PP_SHOULD_FAIL((unlink(filename3) == -1), "unlink");
-	if (do_pp) {
-		printf("testing unlink without O_CREAT\n");
-		if (pledgepath(filename3, "rw") == -1)
-			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
-
-	}
 	PP_SHOULD_FAIL((unlink(filename3) == -1), "unlink");
 	return 0;
 }
