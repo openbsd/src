@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.h,v 1.3 2017/05/08 09:08:40 reyk Exp $ */
+/* $OpenBSD: i8259.h,v 1.4 2018/04/27 12:15:10 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -68,3 +68,7 @@ uint16_t i8259_ack(void);
 uint8_t i8259_is_pending(void);
 int i8259_restore(int);
 int i8259_dump(int);
+
+/* ELCR functions */
+void pic_set_elcr(uint8_t, uint8_t);
+uint8_t vcpu_exit_elcr(struct vm_run_params *);

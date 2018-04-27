@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.16 2017/11/29 22:08:40 mlarkin Exp $ */
+/* $OpenBSD: i8259.c,v 1.17 2018/04/27 12:15:10 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -48,6 +48,9 @@ struct i8259 {
 	uint8_t asserted;
 };
 
+/* Edge Level Control Registers */
+uint8_t elcr[2];
+
 #define PIC_IRR 0
 #define PIC_ISR 1
 
@@ -88,6 +91,9 @@ i8259_init(void)
 	memset(&pics, 0, sizeof(pics));
 	pics[MASTER].cur_icw = 1;
 	pics[SLAVE].cur_icw = 1;
+
+	elcr[MASTER] = 0;
+	elcr[SLAVE] = 0;
 
 	if (pthread_mutex_init(&pic_mtx, NULL) != 0)
 		fatalx("unable to create pic mutex");
@@ -246,15 +252,21 @@ void
 i8259_deassert_irq(uint8_t irq)
 {
 	mutex_lock(&pic_mtx);
-	if (irq <= 7)
-		CLR(pics[MASTER].irr, 1 << irq);
-	else {
+	if (irq <= 7) {
+		if (elcr[MASTER] & (1 << irq))
+			CLR(pics[MASTER].irr, 1 << irq);
+	} else {
 		irq -= 8;
-		CLR(pics[SLAVE].irr, 1 << irq);
+		if (elcr[SLAVE] & (1 << irq)) {
+			CLR(pics[SLAVE].irr, 1 << irq);
 
-		/* Deassert cascade IRQ on master if no IRQs on slave */
-		if (pics[SLAVE].irr == 0)
-			CLR(pics[MASTER].irr, 1 << 2);
+			/*
+			 * Deassert cascade IRQ on master if no IRQs on
+			 * slave
+			 */
+			if (pics[SLAVE].irr == 0)
+				CLR(pics[MASTER].irr, 1 << 2);
+		}
 	}
 	mutex_unlock(&pic_mtx);
 }
@@ -669,12 +681,84 @@ vcpu_exit_i8259(struct vm_run_params *vrp)
 	return (0xFF);
 }
 
+/*
+ * pic_set_elcr
+ *
+ * Sets edge or level triggered mode for the given IRQ. Used internally
+ * by the vmd PCI setup code. Guest VMs writing to ELCRx will do so via
+ * vcpu_exit_elcr.
+ *
+ * Parameters:
+ *  irq: IRQ (0-15) to set
+ *  val: 0 if edge triggered mode, 1 if level triggered mode
+ */
+void
+pic_set_elcr(uint8_t irq, uint8_t val)
+{
+	if (irq > 15 || val > 1)
+		return;
+
+	log_debug("%s: setting %s triggered mode for irq %d", __func__,
+	    val ? "level" : "edge", irq);
+
+	if (irq > 7) {
+		if (val)
+			elcr[SLAVE] |= (1 << (irq - 8));
+		else
+			elcr[SLAVE] &= ~(1 << (irq - 8));
+	} else {
+		if (val)
+			elcr[MASTER] |= (1 << irq);
+		else
+			elcr[MASTER] &= ~(1 << irq);
+	}
+}
+
+/*
+ * vcpu_exit_elcr
+ *
+ * Handler for the ELCRx registers
+ *
+ * Parameters:
+ *  vrp: VCPU run parameters (contains exit information) for this ELCR I/O
+ *
+ * Return value:
+ *  Always 0xFF (PIC read/writes don't generate interrupts directly)
+ */
+uint8_t
+vcpu_exit_elcr(struct vm_run_params *vrp)
+{
+	union vm_exit *vei = vrp->vrp_exit;
+	uint8_t elcr_reg = vei->vei.vei_port - ELCR0;
+
+	if (elcr_reg > 1) {
+		log_debug("%s: invalid ELCR index %d", __func__, elcr_reg);
+		return (0xFF);
+	}
+
+	if (vei->vei.vei_dir == VEI_DIR_OUT) {
+		log_debug("%s: ELCR[%d] set to 0x%x", __func__, elcr_reg,
+		    (uint8_t)vei->vei.vei_data);
+		elcr[elcr_reg] = (uint8_t)vei->vei.vei_data;	
+	} else {
+		set_return_data(vei, elcr[elcr_reg]);
+	}
+
+	return (0xFF);
+}
+
 int
 i8259_dump(int fd)
 {
 	log_debug("%s: sending PIC", __func__);
 	if (atomicio(vwrite, fd, &pics, sizeof(pics)) != sizeof(pics)) {
 		log_warnx("%s: error writing PIC to fd", __func__);
+		return (-1);
+	}
+
+	log_debug("%s: sending ELCR", __func__);
+	if (atomicio(vwrite, fd, &elcr, sizeof(elcr)) != sizeof(elcr)) {
+		log_warnx("%s: error writing ELCR to fd", __func__);
 		return (-1);
 	}
 	return (0);
@@ -686,6 +770,12 @@ i8259_restore(int fd)
 	log_debug("%s: restoring PIC", __func__);
 	if (atomicio(read, fd, &pics, sizeof(pics)) != sizeof(pics)) {
 		log_warnx("%s: error reading PIC from fd", __func__);
+		return (-1);
+	}
+
+	log_debug("%s: restoring ELCR", __func__);
+	if (atomicio(read, fd, &elcr, sizeof(elcr)) != sizeof(elcr)) {
+		log_warnx("%s: error reading ELCR from fd", __func__);
 		return (-1);
 	}
 

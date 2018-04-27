@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.23 2018/02/15 05:35:36 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.24 2018/04/27 12:15:10 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -28,6 +28,7 @@
 #include "vmd.h"
 #include "pci.h"
 #include "vmm.h"
+#include "i8259.h"
 #include "atomicio.h"
 
 struct pci pci;
@@ -193,6 +194,7 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
 		pci.pci_next_pic_irq++;
 		dprintf("assigned irq %d to pci dev %d",
 		    pci.pci_devices[*id].pd_irq, *id);
+		pic_set_elcr(pci.pci_devices[*id].pd_irq, 1);
 	}
 
 	pci.pci_dev_ct ++;
