@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.19 2018/04/27 10:47:58 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.20 2018/04/27 12:07:36 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -216,7 +216,7 @@ test_r(int do_pp)
 		if (pledgepath(pp_file1, "r") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
-	PP_SHOULD_SUCCEED((pledge("stdio rpath cpath wpath exec", NULL) == -1), "pledge");
+	PP_SHOULD_SUCCEED((pledgepath(NULL, NULL) == -1), "pledgepath");
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
 	PP_SHOULD_FAIL((open(pp_file1, O_RDWR) == -1), "open");
 	return 0;
@@ -230,7 +230,7 @@ test_rw(int do_pp)
 		if (pledgepath(pp_file1, "rw") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
-	PP_SHOULD_SUCCEED((pledge("stdio rpath cpath wpath exec", NULL) == -1), "pledge");
+	PP_SHOULD_SUCCEED((pledgepath(NULL, NULL) == -1), "pledgepath");
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
 	return 0;
@@ -244,7 +244,7 @@ test_x(int do_pp)
 		if (pledgepath(pp_file1, "x") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
-	PP_SHOULD_SUCCEED((pledge("stdio rpath cpath wpath exec", NULL) == -1), "pledge");
+	PP_SHOULD_SUCCEED((pledgepath(NULL, NULL) == -1), "pledgepath");
 	PP_SHOULD_FAIL((open(pp_file1, O_RDONLY) == -1), "open");
 	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
 	return 0;
