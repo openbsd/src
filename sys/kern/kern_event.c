@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.87 2018/04/10 09:17:45 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.88 2018/04/27 10:13:37 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -481,7 +481,6 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
-	FREF(fp);
 
 	if (fp->f_type != DTYPE_KQUEUE) {
 		error = EBADF;
@@ -583,7 +582,6 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 			return (EBADF);
 		if ((fp = fd_getfile(fdp, kev->ident)) == NULL)
 			return (EBADF);
-		FREF(fp);
 
 		if (kev->ident < fdp->fd_knlistsize) {
 			SLIST_FOREACH(kn, &fdp->fd_knlist[kev->ident], kn_link) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.117 2018/04/09 09:53:13 mpi Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.118 2018/04/27 10:13:37 mpi Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -94,8 +94,6 @@ sys_read(struct proc *p, void *v, register_t *retval)
 	iov.iov_base = SCARG(uap, buf);
 	iov.iov_len = SCARG(uap, nbyte);
 
-	FREF(fp);
-
 	/* dofilereadv() will FRELE the descriptor for us */
 	return (dofilereadv(p, fd, fp, &iov, 1, 0, &fp->f_offset, retval));
 }
@@ -117,7 +115,6 @@ sys_readv(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile_mode(fdp, fd, FREAD)) == NULL)
 		return (EBADF);
-	FREF(fp);
 
 	/* dofilereadv() will FRELE the descriptor for us */
 	return (dofilereadv(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt), 1,
@@ -246,8 +243,6 @@ sys_write(struct proc *p, void *v, register_t *retval)
 	iov.iov_base = (void *)SCARG(uap, buf);
 	iov.iov_len = SCARG(uap, nbyte);
 
-	FREF(fp);
-
 	/* dofilewritev() will FRELE the descriptor for us */
 	return (dofilewritev(p, fd, fp, &iov, 1, 0, &fp->f_offset, retval));
 }
@@ -269,7 +264,6 @@ sys_writev(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
-	FREF(fp);
 
 	/* dofilewritev() will FRELE the descriptor for us */
 	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt), 1,
@@ -403,7 +397,6 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	fdp = p->p_fd;
 	if ((fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE)) == NULL)
 		return (EBADF);
-	FREF(fp);
 
 	if (fp->f_type == DTYPE_SOCKET) {
 		struct socket *so = fp->f_data;
@@ -745,7 +738,6 @@ selscan(struct proc *p, fd_set *ibits, fd_set *obits, int nfd, int ni,
 				bits &= ~(1 << j);
 				if ((fp = fd_getfile(fdp, fd)) == NULL)
 					return (EBADF);
-				FREF(fp);
 				if ((*fp->f_ops->fo_poll)(fp, flag[msk], p)) {
 					FD_SET(fd, pobits);
 					n++;
@@ -842,7 +834,6 @@ pollscan(struct proc *p, struct pollfd *pl, u_int nfd, register_t *retval)
 			n++;
 			continue;
 		}
-		FREF(fp);
 		pl->revents = (*fp->f_ops->fo_poll)(fp, pl->events, p);
 		FRELE(fp, p);
 		if (pl->revents != 0)

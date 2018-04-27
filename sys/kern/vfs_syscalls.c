@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.279 2018/04/03 09:10:02 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.280 2018/04/27 10:13:37 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -745,7 +745,6 @@ sys_fchdir(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
-	FREF(fp);
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type != VDIR) {
 		FRELE(fp, p);
@@ -1616,7 +1615,6 @@ sys_lseek(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
-	FREF(fp);
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
 		error = ESPIPE;
@@ -2900,7 +2898,6 @@ getvnode(struct proc *p, int fd, struct file **fpp)
 
 	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
 		return (EBADF);
-	FREF(fp);
 
 	if (fp->f_type != DTYPE_VNODE) {
 		FRELE(fp, p);
@@ -2943,7 +2940,6 @@ sys_pread(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile_mode(fdp, fd, FREAD)) == NULL)
 		return (EBADF);
-	FREF(fp);
 
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
@@ -2983,7 +2979,6 @@ sys_preadv(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile_mode(fdp, fd, FREAD)) == NULL)
 		return (EBADF);
-	FREF(fp);
 
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
@@ -3028,7 +3023,6 @@ sys_pwrite(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
-	FREF(fp);
 
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
@@ -3068,7 +3062,6 @@ sys_pwritev(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
-	FREF(fp);
 
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||

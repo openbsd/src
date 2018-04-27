@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.149 2018/04/12 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.150 2018/04/27 10:13:37 mpi Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -433,8 +433,6 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 			KERNEL_UNLOCK();
 			return (EBADF);
 		}
-
-		FREF(fp);
 
 		if (fp->f_type != DTYPE_VNODE) {
 			error = ENODEV;		/* only mmap vnodes! */

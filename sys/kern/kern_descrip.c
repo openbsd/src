@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.153 2018/04/26 06:28:43 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.154 2018/04/27 10:13:37 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -212,6 +212,7 @@ fd_getfile(struct filedesc *fdp, int fd)
 	if (!FILE_IS_USABLE(fp))
 		return (NULL);
 
+	FREF(fp);
 	return (fp);
 }
 
@@ -223,9 +224,13 @@ fd_getfile_mode(struct filedesc *fdp, int fd, int mode)
 	KASSERT(mode != 0);
 
 	fp = fd_getfile(fdp, fd);
-
-	if (fp == NULL || (fp->f_flag & mode) == 0)
+	if (fp == NULL)
 		return (NULL);
+
+	if ((fp->f_flag & mode) == 0) {
+		FRELE(fp, curproc);
+		return (NULL);
+	}
 
 	return (fp);
 }
@@ -252,7 +257,6 @@ sys_dup(struct proc *p, void *v, register_t *retval)
 restart:
 	if ((fp = fd_getfile(fdp, old)) == NULL)
 		return (EBADF);
-	FREF(fp);
 	fdplock(fdp);
 	if ((error = fdalloc(p, 0, &new)) != 0) {
 		FRELE(fp, p);
@@ -312,7 +316,6 @@ dodup3(struct proc *p, int old, int new, int flags, register_t *retval)
 restart:
 	if ((fp = fd_getfile(fdp, old)) == NULL)
 		return (EBADF);
-	FREF(fp);
 	if ((u_int)new >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 	    (u_int)new >= maxfiles) {
 		FRELE(fp, p);
@@ -379,7 +382,6 @@ sys_fcntl(struct proc *p, void *v, register_t *retval)
 restart:
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
-	FREF(fp);
 	switch (SCARG(uap, cmd)) {
 
 	case F_DUPFD:
@@ -553,8 +555,6 @@ restart:
 		}
 
 		fp2 = fd_getfile(fdp, fd);
-		if (fp2 != NULL)
-			FREF(fp2);
 		if (fp != fp2) {
 			/*
 			 * We have lost the race with close() or dup2();
@@ -701,9 +701,13 @@ sys_close(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	int fd = SCARG(uap, fd), error;
 	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 
-	if (fd_getfile(fdp, fd) == NULL)
+	fp = fd_getfile(fdp, fd);
+	if (fp == NULL)
 		return (EBADF);
+	FRELE(fp, p);
+
 	fdplock(fdp);
 	error = fdrelease(p, fd);
 	fdpunlock(fdp);
@@ -729,7 +733,6 @@ sys_fstat(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
-	FREF(fp);
 	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
 	FRELE(fp, p);
 	if (error == 0) {
@@ -767,7 +770,6 @@ sys_fpathconf(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
-	FREF(fp);
 	switch (fp->f_type) {
 	case DTYPE_PIPE:
 	case DTYPE_SOCKET:
@@ -1220,7 +1222,6 @@ sys_flock(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
-	FREF(fp);
 	if (fp->f_type != DTYPE_VNODE) {
 		error = EOPNOTSUPP;
 		goto out;
@@ -1309,7 +1310,6 @@ dupfdopen(struct proc *p, int indx, int mode)
 	 */
 	if ((wfp = fd_getfile(fdp, dupfd)) == NULL)
 		return (EBADF);
-	FREF(wfp);
 
 	/*
 	 * Check that the mode the file is being opened for is a

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.124 2018/04/18 09:56:57 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.125 2018/04/27 10:13:37 mpi Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -838,7 +838,6 @@ morespace:
 			error = EBADF;
 			goto fail;
 		}
-		FREF(fp);
 		if (fp->f_count == LONG_MAX-2) {
 			error = EDEADLK;
 			goto fail;

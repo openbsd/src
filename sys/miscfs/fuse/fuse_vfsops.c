@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.33 2018/03/28 16:34:28 visa Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.34 2018/04/27 10:13:37 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -84,7 +84,6 @@ fusefs_mount(struct mount *mp, const char *path, void *data,
 
 	if ((fp = fd_getfile(p->p_fd, args->fd)) == NULL)
 		return (EBADF);
-	FREF(fp);
 
 	if (fp->f_type != DTYPE_VNODE) {
 		error = EINVAL;

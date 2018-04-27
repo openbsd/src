@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.66 2018/04/09 09:59:32 mpi Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.67 2018/04/27 10:13:37 mpi Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -190,7 +190,6 @@ fail:
 			pool_put(&namei_pool, cnp->cn_pnbuf);
 			return (EBADF);
 		}
-		FREF(fp);
 		dp = (struct vnode *)fp->f_data;
 		if (fp->f_type != DTYPE_VNODE || dp->v_type != VDIR) {
 			FRELE(fp, p);
