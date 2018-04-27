@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.83 2018/02/06 22:14:52 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.84 2018/04/27 15:33:49 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -948,7 +948,8 @@ justcleanup:
 			break;
 		}
 		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
-		ieee80211_crypto_clear_groupkeys(ic);
+		if (ic->ic_flags & IEEE80211_F_RSNON)
+			ieee80211_crypto_clear_groupkeys(ic);
 		break;
 	case IEEE80211_S_SCAN:
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
@@ -960,7 +961,8 @@ justcleanup:
 		ni->ni_associd = 0;
 		ni->ni_rstamp = 0;
 		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
-		ieee80211_crypto_clear_groupkeys(ic);
+		if (ic->ic_flags & IEEE80211_F_RSNON)
+			ieee80211_crypto_clear_groupkeys(ic);
 		switch (ostate) {
 		case IEEE80211_S_INIT:
 #ifndef IEEE80211_STA_ONLY
@@ -1006,7 +1008,8 @@ justcleanup:
 		break;
 	case IEEE80211_S_AUTH:
 		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
-		ieee80211_crypto_clear_groupkeys(ic);
+		if (ic->ic_flags & IEEE80211_F_RSNON)
+			ieee80211_crypto_clear_groupkeys(ic);
 		switch (ostate) {
 		case IEEE80211_S_INIT:
 			if (ifp->if_flags & IFF_DEBUG)
