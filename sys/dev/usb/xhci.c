@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.80 2018/04/27 10:11:28 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.81 2018/04/27 10:16:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -719,11 +719,11 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 
 	switch (code) {
 	case XHCI_CODE_RING_UNDERRUN:
-		DPRINTFN(4, ("%s: slot %d underrun wih %zu TRB\n", DEVNAME(sc),
+		DPRINTFN(4, ("%s: slot %u underrun wih %zu TRB\n", DEVNAME(sc),
 		    slot, xp->ring.ntrb - xp->free_trbs));
 		return;
 	case XHCI_CODE_RING_OVERRUN:
-		DPRINTFN(4, ("%s: slot %d overrun wih %zu TRB\n", DEVNAME(sc),
+		DPRINTFN(4, ("%s: slot %u overrun wih %zu TRB\n", DEVNAME(sc),
 		    slot, xp->ring.ntrb - xp->free_trbs));
 		return;
 	default:
@@ -732,7 +732,7 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 
 	trb_idx = (paddr - xp->ring.dma.paddr) / sizeof(struct xhci_trb);
 	if (trb_idx < 0 || trb_idx >= xp->ring.ntrb) {
-		printf("%s: wrong trb index (%d) max is %zu\n", DEVNAME(sc),
+		printf("%s: wrong trb index (%u) max is %zu\n", DEVNAME(sc),
 		    trb_idx, xp->ring.ntrb - 1);
 		return;
 	}
@@ -827,7 +827,7 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 
 	trb_idx = (paddr - sc->sc_cmd_ring.dma.paddr) / sizeof(*trb);
 	if (trb_idx < 0 || trb_idx >= sc->sc_cmd_ring.ntrb) {
-		printf("%s: wrong trb index (%d) max is %zu\n", DEVNAME(sc),
+		printf("%s: wrong trb index (%u) max is %zu\n", DEVNAME(sc),
 		    trb_idx, sc->sc_cmd_ring.ntrb - 1);
 		return;
 	}
