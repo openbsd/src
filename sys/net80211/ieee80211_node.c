@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.127 2018/04/26 12:50:07 pirofti Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.128 2018/04/27 15:27:10 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -730,10 +730,8 @@ ieee80211_end_scan(struct ifnet *ifp)
 		 * This will loop forever except for user-initiated scans.
 		 */
 		if (ieee80211_next_mode(ifp) == IEEE80211_MODE_AUTO ||
-		    (ic->ic_caps & IEEE80211_C_SCANALLBAND)) {
+		    (ic->ic_caps & IEEE80211_C_SCANALLBAND))
 			ic->ic_scan_count++;
-			return;
-		}
 
 		/*
 		 * Reset the list of channels to scan and start again.
