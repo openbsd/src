@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.21 2018/04/27 15:28:00 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.22 2018/04/27 18:05:44 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -239,12 +239,15 @@ test_rw(int do_pp)
 static int
 test_x(int do_pp)
 {
+	struct stat sb;
 	if (do_pp) {
 		printf("testing \"x\"\n");
 		if (pledgepath(pp_file1, "x") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
 	PP_SHOULD_SUCCEED((pledgepath(NULL, NULL) == -1), "pledgepath");
+	PP_SHOULD_SUCCEED((lstat(pp_file1, &sb) == -1), "lstat");
+	PP_SHOULD_FAIL((open(pp_file1, O_RDONLY) == -1), "open");
 	PP_SHOULD_FAIL((open(pp_file1, O_RDONLY) == -1), "open");
 	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
 	return 0;
@@ -610,5 +613,4 @@ main (int argc, char *argv[])
 	failures += runcompare(test_exec);
 	failures += runcompare(test_exec2);
 	exit(failures);
-
 }
