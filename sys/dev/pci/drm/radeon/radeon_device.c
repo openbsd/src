@@ -650,8 +650,8 @@ void radeon_gtt_location(struct radeon_device *rdev, struct radeon_mc *mc)
  */
 static bool radeon_device_is_virtual(void)
 {
-#ifdef CONFIG_X86
-	return boot_cpu_has(X86_FEATURE_HYPERVISOR);
+#if defined(__amd64__) || defined(__i386__)
+	return (cpu_ecxfeature & CPUIDECX_HV);
 #else
 	return false;
 #endif
