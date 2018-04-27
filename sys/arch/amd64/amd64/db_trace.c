@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.39 2018/04/26 12:47:02 guenther Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.40 2018/04/27 08:14:15 guenther Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -155,10 +155,10 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			unsigned long instr = db_get_value(callpc, 8, FALSE);
 
 			offset = 1;
-			if ((instr & 0x00ffffff) == 0x00e58955 ||
-					/* enter: pushl %ebp, movl %esp, %ebp */
-			    (instr & 0x0000ffff) == 0x0000e589
-					/* enter+1: movl %esp, %ebp */) {
+			if (instr == 0xe5894855 ||
+					/* enter: pushl %rbp, movq %rsp, %rbp */
+			    (instr & 0x00ffffff) == 0x00e58948
+					/* enter+1: movq %rsp, %rbp */) {
 				offset = 0;
 			}
 		}
