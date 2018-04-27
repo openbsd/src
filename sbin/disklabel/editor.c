@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.333 2018/04/27 20:20:12 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.334 2018/04/27 20:28:25 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -48,7 +48,7 @@
 #define	DO_CONVERSIONS	0x00000001
 #define	DO_ROUNDING	0x00000002
 
-/* Special return values for getuint64() */
+/* Special return values for getnumber and getuint64() */
 #define	CMD_ABORTED	(ULLONG_MAX - 1)
 #define	CMD_BADVALUE	(ULLONG_MAX)
 
@@ -134,6 +134,7 @@ void	editor_name(struct disklabel *, char *);
 char	*getstring(const char *, const char *, const char *);
 u_int64_t getuint64(struct disklabel *, char *, char *, u_int64_t, u_int64_t,
     u_int64_t, int);
+u_int64_t getnumber(char *, char *, u_int32_t, u_int32_t);
 int	has_overlap(struct disklabel *);
 int	partition_cmp(const void *, const void *);
 struct partition **sort_partitions(struct disklabel *);
@@ -1107,6 +1108,39 @@ getstring(const char *prompt, const char *helpstring, const char *oval)
  * CMD_ABORTED		==> ^D on input
  */
 u_int64_t
+getnumber(char *prompt, char *helpstring, u_int32_t oval, u_int32_t maxval)
+{
+	char buf[BUFSIZ], *p;
+	int rslt;
+	long long rval;
+	const char *errstr;
+
+	rslt = snprintf(buf, sizeof(buf), "%u", oval);
+	if (rslt == -1 || (unsigned int)rslt >= sizeof(buf))
+		return (CMD_BADVALUE);
+
+	p = getstring(prompt, helpstring, buf);
+	if (p == NULL)
+		return (CMD_ABORTED);
+	if (strlen(p) == 0)
+		return (oval);
+
+	rval = strtonum(p, 0, maxval, &errstr);
+	if (errstr != NULL) {
+		printf("%s must be between 0 and %u\n", prompt, maxval);
+		return (CMD_BADVALUE);
+	}
+
+	return (rval);
+}
+
+/*
+ * Returns
+ * 0 .. CMD_ABORTED - 1	==> valid value
+ * CMD_BADVALUE		==> invalid value
+ * CMD_ABORTED		==> ^D on input
+ */
+u_int64_t
 getuint64(struct disklabel *lp, char *prompt, char *helpstring,
     u_int64_t oval, u_int64_t maxval, u_int64_t offset, int flags)
 {
@@ -1370,17 +1404,14 @@ edit_parms(struct disklabel *lp)
 
 	/* sectors/track */
 	for (;;) {
-		ui = getuint64(lp, "sectors/track",
+		ui = getnumber("sectors/track",
 		    "The Number of sectors per track.", lp->d_nsectors,
-		    lp->d_nsectors, 0, 0);
+		    UINT32_MAX);
 		if (ui == CMD_ABORTED) {
 			*lp = oldlabel;		/* undo damage */
 			return;
 		} else if (ui == CMD_BADVALUE)
 			;	/* Try again. */
-		else if (ui > UINT32_MAX)
-			fprintf(stderr, "sectors/track must be <= %u\n",
-			    UINT32_MAX);
 		else
 			break;
 	}
@@ -1388,17 +1419,14 @@ edit_parms(struct disklabel *lp)
 
 	/* tracks/cylinder */
 	for (;;) {
-		ui = getuint64(lp, "tracks/cylinder",
+		ui = getnumber("tracks/cylinder",
 		    "The number of tracks per cylinder.", lp->d_ntracks,
-		    lp->d_ntracks, 0, 0);
+		    UINT32_MAX);
 		if (ui == CMD_ABORTED) {
 			*lp = oldlabel;		/* undo damage */
 			return;
 		} else if (ui == CMD_BADVALUE)
 			;	/* Try again. */
-		else if (ui > UINT32_MAX)
-			fprintf(stderr, "tracks/cylinder must be <= %u\n",
-			    UINT32_MAX);
 		else
 			break;
 	}
@@ -1406,18 +1434,14 @@ edit_parms(struct disklabel *lp)
 
 	/* sectors/cylinder */
 	for (;;) {
-		ui = getuint64(lp, "sectors/cylinder",
+		ui = getnumber("sectors/cylinder",
 		    "The number of sectors per cylinder (Usually sectors/track "
-		    "* tracks/cylinder).", lp->d_secpercyl, lp->d_secpercyl,
-		    0, 0);
+		    "* tracks/cylinder).", lp->d_secpercyl, UINT32_MAX);
 		if (ui == CMD_ABORTED) {
 			*lp = oldlabel;		/* undo damage */
 			return;
 		} else if (ui == CMD_BADVALUE)
 			;	/* Try again. */
-		else if (ui > UINT32_MAX)
-			fprintf(stderr, "sectors/cylinder must be <= %u\n",
-			    UINT32_MAX);
 		else
 			break;
 	}
@@ -1425,17 +1449,14 @@ edit_parms(struct disklabel *lp)
 
 	/* number of cylinders */
 	for (;;) {
-		ui = getuint64(lp, "number of cylinders",
+		ui = getnumber("number of cylinders",
 		    "The total number of cylinders on the disk.",
-		    lp->d_ncylinders, lp->d_ncylinders, 0, 0);
+		    lp->d_ncylinders, UINT32_MAX);
 		if (ui == CMD_ABORTED) {
 			*lp = oldlabel;		/* undo damage */
 			return;
 		} else if (ui == CMD_BADVALUE)
 			;	/* Try again. */
-		else if (ui > UINT32_MAX)
-			fprintf(stderr, "number of cylinders must be < %u\n",
-			    UINT32_MAX);
 		else
 			break;
 	}
@@ -1984,16 +2005,12 @@ get_cpg(struct disklabel *lp, int partno)
 		return (0);
 
 	for (;;) {
-		ui = getuint64(lp, "cpg",
-		    "Size of partition in fs blocks.",
-		    pp->p_cpg, pp->p_cpg, 0, 0);
+		ui = getnumber("cpg", "Size of partition in fs blocks.",
+		    pp->p_cpg, USHRT_MAX);
 		if (ui == CMD_ABORTED)
 			return (1);
 		else if (ui == CMD_BADVALUE)
 			;	/* Try again. */
-		else if (ui > USHRT_MAX)
-			fprintf(stderr, "Error: cpg should be smaller than "
-			    "65536\n");
 		else
 			break;
 	}
@@ -2032,9 +2049,9 @@ get_fsize(struct disklabel *lp, int partno)
 		return (0);
 
 	for (;;) {
-		ui = getuint64(lp, "fragment size",
+		ui = getnumber("fragment size",
 		    "Size of ffs block fragments. A multiple of the disk "
-		    "sector-size.", fsize, ULLONG_MAX-2, 0, 0);
+		    "sector-size.", fsize, UINT32_MAX);
 		if (ui == CMD_ABORTED)
 			return (1);
 		else if (ui == CMD_BADVALUE)
@@ -2076,9 +2093,9 @@ get_bsize(struct disklabel *lp, int partno)
 	frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
 
 	for (;;) {
-		ui = getuint64(lp, "block size",
+		ui = getnumber("block size",
 		    "Size of ffs blocks. 1, 2, 4 or 8 times ffs fragment size.",
-		    fsize * frag, ULLONG_MAX - 2, 0, 0);
+		    fsize * frag, UINT32_MAX);
 
 		/* sanity checks */
 		if (ui == CMD_ABORTED)
@@ -2166,17 +2183,14 @@ get_fstype(struct disklabel *lp, int partno)
 		}
 	} else {
 		for (;;) {
-			ui = getuint64(lp, "FS type (decimal)",
+			ui = getnumber("FS type (decimal)",
 			    "Filesystem type as a decimal number; usually 7 "
 			    "(4.2BSD) or 1 (swap).",
-			    pp->p_fstype, pp->p_fstype, 0, 0);
+			    pp->p_fstype, UINT8_MAX);
 			if (ui == CMD_ABORTED)
 				return (1);
 			else if (ui == CMD_BADVALUE)
 				;	/* Try again. */
-			else if (ui > UINT8_MAX)
-				fprintf(stderr, "FS type must be < %u\n",
-				    UINT8_MAX);
 			else
 				break;
 		}
