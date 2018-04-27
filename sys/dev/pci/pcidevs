@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1845 2018/04/23 05:19:57 ccardenas Exp $
+$OpenBSD: pcidevs,v 1.1846 2018/04/27 10:35:28 mlarkin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5350,6 +5350,7 @@ product MARVELL 88W8310		0x1fa7	Libertas 88W8310
 product MARVELL 88W8335_1	0x1faa	Libertas 88W8335
 product MARVELL 88W8335_2	0x1fab	Libertas 88W8335
 product MARVELL	88W8300_2	0x2a01	Libertas 88W8300
+product MARVELL 88W8897		0x2b38	88W8897 802.11ac Wireless
 product MARVELL YUKON		0x4320	Yukon 88E8001/8003/8010
 product MARVELL YUKON_8021CU	0x4340	Yukon 88E8021CU
 product MARVELL YUKON_8022CU	0x4341	Yukon 88E8022CU
