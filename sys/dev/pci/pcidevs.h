@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1844 2018/04/20 04:34:11 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1846 2018/04/27 10:35:28 mlarkin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5355,6 +5355,7 @@
 #define	PCI_PRODUCT_MARVELL_88W8335_1	0x1faa		/* Libertas 88W8335 */
 #define	PCI_PRODUCT_MARVELL_88W8335_2	0x1fab		/* Libertas 88W8335 */
 #define	PCI_PRODUCT_MARVELL_88W8300_2	0x2a01		/* Libertas 88W8300 */
+#define	PCI_PRODUCT_MARVELL_88W8897	0x2b38		/* 88W8897 802.11ac Wireless */
 #define	PCI_PRODUCT_MARVELL_YUKON	0x4320		/* Yukon 88E8001/8003/8010 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8021CU	0x4340		/* Yukon 88E8021CU */
 #define	PCI_PRODUCT_MARVELL_YUKON_8022CU	0x4341		/* Yukon 88E8022CU */
