@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.15 2018/04/25 00:46:28 jsg Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.16 2018/04/27 21:36:12 jcs Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -101,6 +101,7 @@ int	 efifb_show_screen(void *, void *, int, void (*cb) (void *, int, int),
 	    void *);
 int	 efifb_list_font(void *, struct wsdisplay_font *);
 int	 efifb_load_font(void *, void *, struct wsdisplay_font *);
+void	 efifb_scrollback(void *, void *, int lines);
 void	 efifb_efiinfo_init(struct efifb *);
 void	 efifb_cnattach_common(void);
 
@@ -133,7 +134,8 @@ struct wsdisplay_accessops efifb_accessops = {
 	.free_screen = efifb_free_screen,
 	.show_screen = efifb_show_screen,
 	.load_font = efifb_load_font,
-	.list_font = efifb_list_font
+	.list_font = efifb_list_font,
+	.scrollback = efifb_scrollback,
 };
 
 struct cfdriver efifb_cd = {
@@ -397,6 +399,15 @@ efifb_list_font(void *v, struct wsdisplay_font *font)
 	struct rasops_info	*ri = &sc->sc_fb->rinfo;
 
 	return (rasops_list_font(ri, font));
+}
+
+void
+efifb_scrollback(void *v, void *cookie, int lines)
+{
+	struct efifb_softc	*sc = v;
+	struct rasops_info	*ri = &sc->sc_fb->rinfo;
+
+	rasops_scrollback(ri, cookie, lines);
 }
 
 int
