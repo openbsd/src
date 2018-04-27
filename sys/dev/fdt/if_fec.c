@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.2 2018/04/02 17:52:36 patrick Exp $ */
+/* $OpenBSD: if_fec.c,v 1.3 2018/04/27 06:41:12 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -216,7 +216,7 @@ struct fec_softc {
 	int			sc_node;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	void			*sc_ih; /* Interrupt handler */
+	void			*sc_ih[3]; /* Interrupt handler */
 	bus_dma_tag_t		sc_dma_tag;
 	struct fec_dma_alloc	txdma;		/* bus_dma glue for tx desc */
 	struct fec_buf_desc	*tx_desc_base;
@@ -344,7 +344,11 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	HWRITE4(sc, ENET_EIMR, 0);
 	HWRITE4(sc, ENET_EIR, 0xffffffff);
 
-	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_NET,
+	sc->sc_ih[0] = arm_intr_establish_fdt_idx(faa->fa_node, 0, IPL_NET,
+	    fec_intr, sc, sc->sc_dev.dv_xname);
+	sc->sc_ih[1] = arm_intr_establish_fdt_idx(faa->fa_node, 1, IPL_NET,
+	    fec_intr, sc, sc->sc_dev.dv_xname);
+	sc->sc_ih[2] = arm_intr_establish_fdt_idx(faa->fa_node, 2, IPL_NET,
 	    fec_intr, sc, sc->sc_dev.dv_xname);
 
 	tsize = ENET_MAX_TXD * sizeof(struct fec_buf_desc);
