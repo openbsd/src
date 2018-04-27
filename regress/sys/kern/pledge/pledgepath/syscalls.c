@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.17 2018/04/26 18:11:12 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.18 2018/04/27 09:07:16 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -218,7 +218,7 @@ test_open(int do_pp)
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
 	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");	
 	if (do_pp) {
-		printf("testing O_RDONLY\n");
+		printf("testing \"r\"\n");
 		if (pledgepath(pp_file1, "r") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
@@ -226,7 +226,7 @@ test_open(int do_pp)
 	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
 
 	if (do_pp) {
-		printf("testing O_RDWR\n");
+		printf("testing \"rw\"\n");
 		if (pledgepath(pp_file1, "rw") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
@@ -234,7 +234,7 @@ test_open(int do_pp)
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
 
 	if (do_pp) {
-		printf("testing O_EXEC\n");
+		printf("testing \"x\"\n");
 		if (pledgepath(pp_file1, "x") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
@@ -490,7 +490,7 @@ test_symlink(int do_pp)
 	unlink(filename);
 
 	if (do_pp) {
-		printf("testing symlink without O_CREAT\n");
+		printf("testing symlink with \"rw\"\n");
 		if (pledgepath(filename, "rw") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
@@ -520,7 +520,7 @@ test_exec(int do_pp)
 	char *argv[] = {"/usr/bin/true", NULL};
 	extern char **environ;
 	if (do_pp) {
-		printf("testing execve with O_EXEC only\n");
+		printf("testing execve with \"x\"\n");
 		if (pledgepath("/usr/bin/true", "x") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
@@ -534,7 +534,7 @@ test_exec2(int do_pp)
 	char *argv[] = {"/usr/bin/true", NULL};
 	extern char **environ;
 	if (do_pp) {
-		printf("testing execve without O_EXEC\n");
+		printf("testing execve with \"rw\"\n");
 		if (pledgepath("/usr/bin/true", "rw") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
