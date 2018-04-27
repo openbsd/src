@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.79 2018/04/26 10:19:31 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.80 2018/04/27 10:11:28 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -2488,7 +2488,7 @@ xhci_xfer_tdsize(struct usbd_xfer *xfer, uint32_t remain, uint32_t len)
 	if (len == 0)
 		return XHCI_TRB_TDREM(0);
 
-	npkt = (remain - len) / mps;
+	npkt = howmany(remain - len, UE_GET_SIZE(mps));
 	if (npkt > 31)
 		npkt = 31;
 
@@ -2630,7 +2630,7 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 		return (USBD_IOERROR);
 
 	/* How many TRBs do we need for this transfer? */
-	ntrb = (xfer->length + XHCI_TRB_MAXSIZE - 1) / XHCI_TRB_MAXSIZE;
+	ntrb = howmany(xfer->length, XHCI_TRB_MAXSIZE);
 
 	/* If the buffer crosses a 64k boundary, we need one more. */
 	len0 = XHCI_TRB_MAXSIZE - (paddr & (XHCI_TRB_MAXSIZE - 1));
@@ -2641,7 +2641,7 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 
 	/* If we need to append a zero length packet, we need one more. */
 	if ((xfer->flags & USBD_FORCE_SHORT_XFER || xfer->length == 0) &&
-	    (xfer->length % mps == 0))
+	    (xfer->length % UE_GET_SIZE(mps) == 0))
 		ntrb++;
 
 	if (xp->free_trbs < ntrb)
@@ -2781,14 +2781,12 @@ xhci_device_isoc_start(struct usbd_xfer *xfer)
 	/* We'll do the first TRB once we're finished with the chain. */
 	trb0 = xhci_xfer_get_trb(sc, xfer, &toggle0, (ntrb == 1));
 
-	remain = xfer->length;
+	remain = xfer->length - len0;
 	paddr += len0;
 
 	/* Chain more TRBs if needed. */
 	for (i = ntrb - 1; i > 0; i--) {
 		len = xfer->frlengths[ntrb - i];
-
-		KASSERT(len <= UGETW(ed->wMaxPacketSize));
 
 		/* Next (or Last) TRB. */
 		trb = xhci_xfer_get_trb(sc, xfer, &toggle, (i == 1));
