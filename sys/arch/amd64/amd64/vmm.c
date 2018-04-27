@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.196 2018/04/27 10:26:15 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.197 2018/04/27 15:45:52 jasper Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -7755,7 +7755,7 @@ vmm_decode_cr0(uint64_t cr0)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 11; i++)
+	for (i = 0; i < nitems(cr0_info); i++)
 		if (cr0 & cr0_info[i].vrdi_bit)
 			DPRINTF("%s", cr0_info[i].vrdi_present);
 		else
@@ -7783,7 +7783,7 @@ vmm_decode_cr3(uint64_t cr3)
 	/* If CR4.PCIDE = 0, interpret CR3.PWT and CR3.PCD */
 	if ((cr4 & CR4_PCIDE) == 0) {
 		DPRINTF("(");
-		for (i = 0 ; i < 2 ; i++)
+		for (i = 0 ; i < nitems(cr3_info) ; i++)
 			if (cr3 & cr3_info[i].vrdi_bit)
 				DPRINTF("%s", cr3_info[i].vrdi_present);
 			else
@@ -7823,7 +7823,7 @@ vmm_decode_cr4(uint64_t cr4)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 19; i++)
+	for (i = 0; i < nitems(cr4_info); i++)
 		if (cr4 & cr4_info[i].vrdi_bit)
 			DPRINTF("%s", cr4_info[i].vrdi_present);
 		else
@@ -7844,7 +7844,7 @@ vmm_decode_apicbase_msr_value(uint64_t apicbase)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < nitems(acpibase_info); i++)
 		if (apicbase & apicbase_info[i].vrdi_bit)
 			DPRINTF("%s", apicbase_info[i].vrdi_present);
 		else
@@ -7866,7 +7866,7 @@ vmm_decode_ia32_fc_value(uint64_t fcr)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < nitems(fcr_info); i++)
 		if (fcr & fcr_info[i].vrdi_bit)
 			DPRINTF("%s", fcr_info[i].vrdi_present);
 		else
@@ -7891,7 +7891,7 @@ vmm_decode_mtrrcap_value(uint64_t val)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < nitems(mtrrcap_info); i++)
 		if (val & mtrrcap_info[i].vrdi_bit)
 			DPRINTF("%s", mtrrcap_info[i].vrdi_present);
 		else
@@ -7928,7 +7928,7 @@ vmm_decode_mtrrdeftype_value(uint64_t mtrrdeftype)
 	int type;
 
 	DPRINTF("(");
-	for (i = 0; i < 2; i++)
+	for (i = 0; i < nitems(mtrrdeftype_info); i++)
 		if (mtrrdeftype & mtrrdeftype_info[i].vrdi_bit)
 			DPRINTF("%s", mtrrdeftype_info[i].vrdi_present);
 		else
@@ -7964,7 +7964,7 @@ vmm_decode_efer_value(uint64_t efer)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < nitems(efer_info); i++)
 		if (efer & efer_info[i].vrdi_bit)
 			DPRINTF("%s", efer_info[i].vrdi_present);
 		else
@@ -8014,7 +8014,7 @@ vmm_decode_rflags(uint64_t rflags)
 	uint8_t i, iopl;
 
 	DPRINTF("(");
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < nitems(rflags_info); i++)
 		if (rflags & rflags_info[i].vrdi_bit)
 			DPRINTF("%s", rflags_info[i].vrdi_present);
 		else
@@ -8045,7 +8045,7 @@ vmm_decode_misc_enable_value(uint64_t misc)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < nitems(misc_info); i++)
 		if (misc & misc_info[i].vrdi_bit)
 			DPRINTF("%s", misc_info[i].vrdi_present);
 		else

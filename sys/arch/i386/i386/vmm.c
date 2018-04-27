@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.37 2018/03/31 13:45:03 bluhm Exp $ */
+/* $OpenBSD: vmm.c,v 1.38 2018/04/27 15:45:52 jasper Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5733,7 +5733,7 @@ vmm_decode_cr0(uint32_t cr0)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 11; i++)
+	for (i = 0; i < nitems(cr0_info); i++)
 		if (cr0 & cr0_info[i].vrdi_bit)
 			DPRINTF("%s", cr0_info[i].vrdi_present);
 		else
@@ -5753,7 +5753,7 @@ vmm_decode_cr3(uint32_t cr3)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0 ; i < 2 ; i++)
+	for (i = 0 ; i < nitems(cr3_info) ; i++)
 		if (cr3 & cr3_info[i].vrdi_bit)
 			DPRINTF("%s", cr3_info[i].vrdi_present);
 		else
@@ -5790,7 +5790,7 @@ vmm_decode_cr4(uint32_t cr4)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 19; i++)
+	for (i = 0; i < nitems(cr4_info); i++)
 		if (cr4 & cr4_info[i].vrdi_bit)
 			DPRINTF("%s", cr4_info[i].vrdi_present);
 		else
@@ -5811,7 +5811,7 @@ vmm_decode_apicbase_msr_value(uint64_t apicbase)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < nitems(acpibase_info); i++)
 		if (apicbase & apicbase_info[i].vrdi_bit)
 			DPRINTF("%s", apicbase_info[i].vrdi_present);
 		else
@@ -5833,7 +5833,7 @@ vmm_decode_ia32_fc_value(uint64_t fcr)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < nitems(fcr_info); i++)
 		if (fcr & fcr_info[i].vrdi_bit)
 			DPRINTF("%s", fcr_info[i].vrdi_present);
 		else
@@ -5858,7 +5858,7 @@ vmm_decode_mtrrcap_value(uint64_t val)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < nitems(mtrrcap_info); i++)
 		if (val & mtrrcap_info[i].vrdi_bit)
 			DPRINTF("%s", mtrrcap_info[i].vrdi_present);
 		else
@@ -5895,7 +5895,7 @@ vmm_decode_mtrrdeftype_value(uint64_t mtrrdeftype)
 	int type;
 
 	DPRINTF("(");
-	for (i = 0; i < 2; i++)
+	for (i = 0; i < nitems(mtrrdeftype_info); i++)
 		if (mtrrdeftype & mtrrdeftype_info[i].vrdi_bit)
 			DPRINTF("%s", mtrrdeftype_info[i].vrdi_present);
 		else
@@ -5931,7 +5931,7 @@ vmm_decode_efer_value(uint64_t efer)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < nitems(efer_info); i++)
 		if (efer & efer_info[i].vrdi_bit)
 			DPRINTF("%s", efer_info[i].vrdi_present);
 		else
