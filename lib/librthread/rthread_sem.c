@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.27 2018/04/24 16:28:42 pirofti Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.28 2018/04/27 06:47:34 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -53,7 +53,7 @@
  * Internal implementation of semaphores
  */
 int
-_sem_wait(sem_t sem, int tryonly, const struct timespec *abstime,
+_sem_wait(sem_t sem, int can_eintr, const struct timespec *abstime,
     int *delayed_cancel)
 {
 	void *ident = (void *)&sem->waitcount;
@@ -66,8 +66,6 @@ _sem_wait(sem_t sem, int tryonly, const struct timespec *abstime,
 	if (sem->value) {
 		sem->value--;
 		r = 0;
-	} else if (tryonly) {
-		r = EAGAIN;
 	} else {
 		sem->waitcount++;
 		do {
@@ -75,8 +73,8 @@ _sem_wait(sem_t sem, int tryonly, const struct timespec *abstime,
 			    &sem->lock, delayed_cancel);
 			_spinlock(&sem->lock);
 			/* ignore interruptions other than cancelation */
-			if (r == ECANCELED && (delayed_cancel == NULL ||
-			    *delayed_cancel == 0))
+			if ((r == ECANCELED && *delayed_cancel == 0) ||
+			    (r == EINTR && !can_eintr))
 				r = 0;
 		} while (r == 0 && sem->value == 0);
 		sem->waitcount--;
@@ -248,7 +246,7 @@ sem_wait(sem_t *semp)
 	}
 
 	ENTER_DELAYED_CANCEL_POINT(tib, self);
-	r = _sem_wait(sem, 0, NULL, &self->delayed_cancel);
+	r = _sem_wait(sem, 1, NULL, &self->delayed_cancel);
 	LEAVE_CANCEL_POINT_INNER(tib, r);
 
 	if (r) {
@@ -279,7 +277,7 @@ sem_timedwait(sem_t *semp, const struct timespec *abstime)
 	self = tib->tib_thread;
 
 	ENTER_DELAYED_CANCEL_POINT(tib, self);
-	r = _sem_wait(sem, 0, abstime, &self->delayed_cancel);
+	r = _sem_wait(sem, 1, abstime, &self->delayed_cancel);
 	LEAVE_CANCEL_POINT_INNER(tib, r);
 
 	if (r) {
@@ -301,7 +299,13 @@ sem_trywait(sem_t *semp)
 		return (-1);
 	}
 
-	r = _sem_wait(sem, 1, NULL, NULL);
+	_spinlock(&sem->lock);
+	if (sem->value) {
+		sem->value--;
+		r = 0;
+	} else
+		r = EAGAIN;
+	_spinunlock(&sem->lock);
 
 	if (r) {
 		errno = r;
