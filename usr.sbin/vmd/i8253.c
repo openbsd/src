@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.23 2018/04/27 06:44:43 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.24 2018/04/27 08:57:13 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -138,17 +138,36 @@ uint8_t
 vcpu_exit_i8253_misc(struct vm_run_params *vrp)
 {
 	union vm_exit *vei = vrp->vrp_exit;
+	uint16_t cur;
+	uint64_t ns, ticks;
+	struct timespec now, delta;
 
 	if (vei->vei.vei_dir == VEI_DIR_IN) {
 		/* Port 0x61[5] = counter channel 2 state */
-		if (i8253_channel[2].state) {
-			set_return_data(vei, (1 << 5));
-			log_debug("%s: counter 2 fired, returning 0x20",
-			    __func__);
-		} else {
-			set_return_data(vei, 0);
-			log_debug("%s: counter 2 clear, returning 0x0",
-			    __func__);
+		if (i8253_channel[2].mode == TIMER_INTTC) {
+			if (i8253_channel[2].state) {
+				set_return_data(vei, (1 << 5));
+				log_debug("%s: counter 2 fired, returning "
+				    "0x20", __func__);
+			} else {
+				set_return_data(vei, 0);
+				log_debug("%s: counter 2 clear, returning 0x0",
+				    __func__);
+			}
+		} else if (i8253_channel[2].mode == TIMER_SQWAVE) {
+			clock_gettime(CLOCK_MONOTONIC, &now);
+			timespecsub(&now, &i8253_channel[2].ts, &delta);
+			ns = delta.tv_sec * 1000000000 + delta.tv_nsec;
+			ticks = ns / NS_PER_TICK;
+			if (i8253_channel[2].start) {
+				cur = i8253_channel[2].start -
+				    ticks % i8253_channel[2].start;
+
+				if (cur > i8253_channel[2].start / 2)
+					set_return_data(vei, 1);
+				else
+					set_return_data(vei, 0);
+			}
 		}
 	} else {
 		log_debug("%s: discarding data written to PIT misc port\n",
