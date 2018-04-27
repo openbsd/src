@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.52 2018/04/26 17:15:39 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.53 2018/04/27 10:26:15 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -324,7 +324,9 @@ enum {
 /*
  * Port definitions not found elsewhere
  */
-#define PCKBC_AUX	 0x61
+#define PCKBC_AUX	0x61
+#define ELCR0		0x4D0
+#define ELCR1		0x4D1
 
 /*
  * vm exit data

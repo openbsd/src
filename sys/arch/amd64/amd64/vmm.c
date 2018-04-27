@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.195 2018/04/26 17:15:39 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.196 2018/04/27 10:26:15 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4987,6 +4987,7 @@ svm_handle_inout(struct vcpu *vcpu)
 	case IO_RTC ... IO_RTC + 1:
 	case IO_ICU2 ... IO_ICU2 + 1:
 	case 0x3f8 ... 0x3ff:
+	case ELCR0 ... ELCR1:
 	case 0x500 ... 0x50f:
 	case 0xcf8:
 	case 0xcfc ... 0xcff:
@@ -5069,6 +5070,7 @@ vmx_handle_inout(struct vcpu *vcpu)
 	case IO_RTC ... IO_RTC + 1:
 	case IO_ICU2 ... IO_ICU2 + 1:
 	case 0x3f8 ... 0x3ff:
+	case ELCR0 ... ELCR1:
 	case 0xcf8:
 	case 0xcfc ... 0xcff:
 	case 0x500 ... 0x50f:
