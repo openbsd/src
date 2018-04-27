@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.122 2018/02/09 03:59:15 tb Exp $
+#	$OpenBSD: Makefile.i386,v 1.123 2018/04/27 15:19:32 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -36,6 +36,8 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
  .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
+.else
+CMACHFLAGS+=	-mretpoline
 .endif
 .if ${COMPILER_VERSION:Mclang}
 NO_INTEGR_AS=	-no-integrated-as
