@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.190 2018/03/19 16:35:29 jsing Exp $ */
+/* $OpenBSD: netcat.c,v 1.191 2018/04/27 15:17:53 beck Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -349,27 +349,6 @@ main(int argc, char *argv[])
 		if (setrtable(rtableid) == -1)
 			err(1, "setrtable");
 
-	if (family == AF_UNIX) {
-		if (pledge("stdio rpath wpath cpath tmppath unix", NULL) == -1)
-			err(1, "pledge");
-	} else if (Fflag && Pflag) {
-		if (pledge("stdio inet dns sendfd tty", NULL) == -1)
-			err(1, "pledge");
-	} else if (Fflag) { 
-		if (pledge("stdio inet dns sendfd", NULL) == -1)
-			err(1, "pledge");
-	} else if (Pflag && usetls) {
-		if (pledge("stdio rpath inet dns tty", NULL) == -1)
-			err(1, "pledge");
-	} else if (Pflag) {
-		if (pledge("stdio inet dns tty", NULL) == -1)
-			err(1, "pledge");
-	} else if (usetls) {
-		if (pledge("stdio rpath inet dns", NULL) == -1)
-			err(1, "pledge");
-	} else if (pledge("stdio inet dns", NULL) == -1)
-		err(1, "pledge");
-
 	/* Cruft to make sure options are clean, and used properly. */
 	if (argv[0] && !argv[1] && family == AF_UNIX) {
 		host = argv[0];
@@ -384,6 +363,27 @@ main(int argc, char *argv[])
 		uport = argv[1];
 	} else
 		usage(1);
+
+	if (family == AF_UNIX) {
+		if (pledge("stdio rpath wpath cpath tmppath unix", NULL) == -1)
+			err(1, "pledge");
+	} else if (Fflag && Pflag) {
+		if (pledge("stdio inet dns sendfd tty", NULL) == -1)
+			err(1, "pledge");
+	} else if (Fflag) {
+		if (pledge("stdio inet dns sendfd", NULL) == -1)
+			err(1, "pledge");
+	} else if (Pflag && usetls) {
+		if (pledge("stdio rpath inet dns tty", NULL) == -1)
+			err(1, "pledge");
+	} else if (Pflag) {
+		if (pledge("stdio inet dns tty", NULL) == -1)
+			err(1, "pledge");
+	} else if (usetls) {
+		if (pledge("stdio rpath inet dns", NULL) == -1)
+			err(1, "pledge");
+	} else if (pledge("stdio inet dns", NULL) == -1)
+		err(1, "pledge");
 
 	if (lflag && sflag)
 		errx(1, "cannot use -s and -l");
