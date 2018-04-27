@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.18 2018/04/27 09:07:16 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.19 2018/04/27 10:47:58 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -181,11 +181,6 @@ test_open(int do_pp)
 	}
 	sleep(1);
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
-	if (do_pp) {
-		if (pledgepath(pp_file1, "r") == -1)
-			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
-	}
-	PP_SHOULD_FAIL((open(pp_file1, O_RDWR) == -1), "open");
 	PP_SHOULD_SUCCEED((openat(dirfd, "etc/hosts", O_RDONLY) == -1), "openat");
 	PP_SHOULD_FAIL((openat(dirfd, pp_file2, O_RDWR) == -1), "openat");
 	PP_SHOULD_SUCCEED((openat(dirfd2, "hooray", O_RDWR|O_CREAT) == -1), "openat");
@@ -202,54 +197,99 @@ test_open(int do_pp)
 	PP_SHOULD_FAIL((open(filename, O_RDWR|O_CREAT) == -1), "open");
 
 	if (do_pp) {
-		printf("testing clearing flags\n");
-		if (pledgepath(pp_dir1, "") == -1)
+		printf("testing flag escalation\n");
+		if (pledgepath(pp_file1, "x") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
+		if (pledgepath(pp_file1, "rx") == -1)
+			if (errno != EPERM)
+				err(1, "%s:%d - pledgepath", __FILE__,
+				    __LINE__);
 	}
-	(void) snprintf(filename, sizeof(filename), "%s/%s", pp_dir1, "noflagsiamboned");
-	PP_SHOULD_FAIL((open(filename, O_RDWR|O_CREAT) == -1), "open");
+	return 0;
+}
 
-	if (do_pp) {
-		printf("testing restoring flags\n");
-		if (pledgepath(pp_dir1, "rwxc") == -1)
-			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
-	}
-
-	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
-	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");	
+static int
+test_r(int do_pp)
+{
 	if (do_pp) {
 		printf("testing \"r\"\n");
 		if (pledgepath(pp_file1, "r") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
+	PP_SHOULD_SUCCEED((pledge("stdio rpath cpath wpath exec", NULL) == -1), "pledge");
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
-	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
+	PP_SHOULD_FAIL((open(pp_file1, O_RDWR) == -1), "open");
+	return 0;
+}
 
+static int
+test_rw(int do_pp)
+{
 	if (do_pp) {
 		printf("testing \"rw\"\n");
 		if (pledgepath(pp_file1, "rw") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
-	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
+	PP_SHOULD_SUCCEED((pledge("stdio rpath cpath wpath exec", NULL) == -1), "pledge");
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
+	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
+	return 0;
+}
 
+static int
+test_x(int do_pp)
+{
 	if (do_pp) {
 		printf("testing \"x\"\n");
 		if (pledgepath(pp_file1, "x") == -1)
 			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
 	}
+	PP_SHOULD_SUCCEED((pledge("stdio rpath cpath wpath exec", NULL) == -1), "pledge");
 	PP_SHOULD_FAIL((open(pp_file1, O_RDONLY) == -1), "open");
 	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
+	return 0;
+}
 
+static int
+test_noflags(int do_pp)
+{
+	char filename[256];
+
+	if (do_pp) {
+		printf("testing clearing flags\n");
+		do_pledgepath();
+	}
+
+	PP_SHOULD_SUCCEED((pledge("paths stdio rpath cpath wpath exec", NULL) == -1), "pledge");
+	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
+	if (do_pp) {
+		if (pledgepath(pp_dir1, "") == -1)
+			err(1, "%s:%d - pledgepath", __FILE__, __LINE__);
+	}
+	(void) snprintf(filename, sizeof(filename), "%s/%s", pp_dir1, "noflagsiamboned");
+	PP_SHOULD_FAIL((open(filename, O_RDWR|O_CREAT) == -1), "open");
+	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
+	return 0;
+}
+
+
+static int
+test_droppath(int do_pp)
+{
 	if (do_pp) {
 		printf("(testing pledgepath after pledge)\n");
 		do_pledgepath();
 	}
+
+	PP_SHOULD_SUCCEED((pledge("paths stdio rpath cpath wpath exec", NULL) == -1), "pledge");
+
+	if (do_pp) {
+		do_pledgepath();
+	}
 	PP_SHOULD_SUCCEED((pledge("stdio rpath cpath wpath", NULL) == -1), "pledge");
 
-	printf("(testing dropping ppath)\n");
-
 	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
+	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
 	return 0;
 }
 
@@ -557,6 +597,11 @@ main (int argc, char *argv[])
 	close(fd2);
 
 	failures += runcompare(test_open);
+	failures += runcompare(test_noflags);
+	failures += runcompare(test_droppath);
+	failures += runcompare(test_r);
+	failures += runcompare(test_rw);
+	failures += runcompare(test_x);
 	failures += runcompare(test_unlink);
 	failures += runcompare(test_link);
 	failures += runcompare(test_chdir);
