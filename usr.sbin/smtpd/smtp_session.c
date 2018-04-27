@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.319 2018/03/14 22:02:51 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.320 2018/04/27 15:16:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -174,6 +174,7 @@ static void smtp_message_end(struct smtp_session *);
 static int smtp_message_printf(struct smtp_session *, const char *, ...);
 static void smtp_free(struct smtp_session *, const char *);
 static const char *smtp_strstate(int);
+static void smtp_tls_init(struct smtp_session *);
 static int smtp_verify_certificate(struct smtp_session *);
 static uint8_t dsn_notify_str_to_uint8(const char *);
 static void smtp_auth_failure_pause(struct smtp_session *);
@@ -971,7 +972,6 @@ smtp_message_fd(struct smtp_session *s, int fd)
 static void
 smtp_io(struct io *io, int evt, void *arg)
 {
-	struct ca_cert_req_msg	req_ca_cert;
 	struct smtp_session    *s = arg;
 	char		       *line;
 	size_t			len;
@@ -1071,21 +1071,7 @@ smtp_io(struct io *io, int evt, void *arg)
 
 		/* Wait for the client to start tls */
 		if (s->state == STATE_TLS) {
-			req_ca_cert.reqid = s->id;
-
-			if (s->listener->pki_name[0]) {
-				(void)strlcpy(req_ca_cert.name, s->listener->pki_name,
-				    sizeof req_ca_cert.name);
-				req_ca_cert.fallback = 0;
-			}
-			else {
-				(void)strlcpy(req_ca_cert.name, s->smtpname,
-				    sizeof req_ca_cert.name);
-				req_ca_cert.fallback = 1;
-			}
-			m_compose(p_lka, IMSG_SMTP_TLS_INIT, 0, 0, -1,
-			    &req_ca_cert, sizeof(req_ca_cert));
-			tree_xset(&wait_ssl_init, s->id, s);
+			smtp_tls_init(s);
 			break;
 		}
 
@@ -1784,7 +1770,6 @@ smtp_lookup_servername(struct smtp_session *s)
 static void
 smtp_connected(struct smtp_session *s)
 {
-	struct ca_cert_req_msg	req_ca_cert;
 	struct sockaddr_storage	ss;
 	socklen_t		sl;
 
@@ -1800,20 +1785,7 @@ smtp_connected(struct smtp_session *s)
 	}
 
 	if (s->listener->flags & F_SMTPS) {
-		req_ca_cert.reqid = s->id;
-		if (s->listener->pki_name[0]) {
-			(void)strlcpy(req_ca_cert.name, s->listener->pki_name,
-			    sizeof req_ca_cert.name);
-			req_ca_cert.fallback = 0;
-		}
-		else {
-			(void)strlcpy(req_ca_cert.name, s->smtpname,
-			    sizeof req_ca_cert.name);
-			req_ca_cert.fallback = 1;
-		}
-		m_compose(p_lka, IMSG_SMTP_TLS_INIT, 0, 0, -1,
-		    &req_ca_cert, sizeof(req_ca_cert));
-		tree_xset(&wait_ssl_init, s->id, s);
+		smtp_tls_init(s);
 		return;
 	}
 
@@ -2033,6 +2005,27 @@ smtp_mailaddr(struct mailaddr *maddr, char *line, int mailfrom, char **args,
 	}
 
 	return (1);
+}
+
+static void
+smtp_tls_init(struct smtp_session *s)
+{
+	struct ca_cert_req_msg req_ca_cert;
+
+	req_ca_cert.reqid = s->id;
+	if (s->listener->pki_name[0]) {
+		(void)strlcpy(req_ca_cert.name, s->listener->pki_name,
+		    sizeof req_ca_cert.name);
+		req_ca_cert.fallback = 0;
+	}
+	else {
+		(void)strlcpy(req_ca_cert.name, s->smtpname,
+		    sizeof req_ca_cert.name);
+		req_ca_cert.fallback = 1;
+	}
+	m_compose(p_lka, IMSG_SMTP_TLS_INIT, 0, 0, -1,
+	    &req_ca_cert, sizeof(req_ca_cert));
+	tree_xset(&wait_ssl_init, s->id, s);
 }
 
 static int
