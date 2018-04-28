@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.207 2018/01/16 10:33:55 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.208 2018/04/28 18:53:12 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -233,6 +233,9 @@ main(int argc, char **argv)
 	    &tableid, sizeof(tableid)) == -1)
 		err(1, "setsockopt(ROUTE_TABLEFILTER)");
 
+	if (pledge("stdio dns route", NULL) == -1)
+		err(1, "pledge");
+
 	switch (kw) {
 	case K_SHOW:
 		uid = 0;
@@ -243,7 +246,7 @@ main(int argc, char **argv)
 		break;
 	}
 
-	if (pledge("stdio rpath dns", NULL) == -1)
+	if (pledge("stdio dns", NULL) == -1)
 		err(1, "pledge");
 
 	switch (kw) {
@@ -342,7 +345,7 @@ flushroutes(int argc, char **argv)
 		break;
 	}
 
-	if (pledge("stdio rpath dns", NULL) == -1)
+	if (pledge("stdio dns", NULL) == -1)
 		err(1, "pledge");
 
 	if (verbose) {
@@ -1107,9 +1110,6 @@ monitor(int argc, char *argv[])
 	int n;
 	char msg[2048];
 	time_t now;
-
-	if (pledge("stdio rpath dns", NULL) == -1)
-		err(1, "pledge");
 
 	verbose = 1;
 	if (debugonly) {
