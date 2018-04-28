@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.67 2018/04/28 07:45:47 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.68 2018/04/28 07:46:56 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -226,17 +226,14 @@ bfdclear(struct rtentry *rt)
 	if ((bfd = bfd_lookup(rt)) == NULL)
 		return;
 
-	task_add(systqmp, &bfd->bc_clear_task);
+	task_add(bfdtq, &bfd->bc_clear_task);
 }
 
 void
 bfd_clear_task(void *arg)
 {
-	struct rtentry *rt = (struct rtentry *)arg;
-	struct bfd_config *bfd;
-
-	if ((bfd = bfd_lookup(rt)) == NULL)
-		return;
+	struct bfd_config	*bfd = (struct bfd_config *)arg;
+	struct rtentry		*rt = bfd->bc_rt;
 
 	timeout_del(&bfd->bc_timo_rx);
 	timeout_del(&bfd->bc_timo_tx);
@@ -305,6 +302,7 @@ bfddestroy(void)
 		bfdclear(bfd->bc_rt);
 	}
 
+	taskq_barrier(bfdtq);
 	taskq_destroy(bfdtq);
 	pool_destroy(&bfd_pool_time);
 	pool_destroy(&bfd_pool_neigh);
