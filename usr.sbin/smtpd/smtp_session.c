@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.320 2018/04/27 15:16:12 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.321 2018/04/28 08:49:13 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -182,13 +182,11 @@ static void smtp_auth_failure_resume(int, short, void *);
 
 static int  smtp_tx(struct smtp_session *);
 static void smtp_tx_free(struct smtp_tx *);
-
-static void smtp_queue_create_message(struct smtp_session *);
-static void smtp_queue_open_message(struct smtp_session *);
-static void smtp_queue_commit(struct smtp_session *);
-static void smtp_queue_rollback(struct smtp_session *);
-
-static int smtp_dataline(struct smtp_session *, const char *);
+static void smtp_tx_create_message(struct smtp_tx *);
+static void smtp_tx_open_message(struct smtp_tx *);
+static void smtp_tx_commit(struct smtp_tx *);
+static void smtp_tx_rollback(struct smtp_tx *);
+static int  smtp_tx_dataline(struct smtp_tx *, const char *);
 
 static struct { int code; const char *cmd; } commands[] = {
 	{ CMD_HELO,		"HELO" },
@@ -625,7 +623,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		s = tree_xpop(&wait_lka_mail, reqid);
 		switch (status) {
 		case LKA_OK:
-			smtp_queue_create_message(s);
+			smtp_tx_create_message(s->tx);
 			break;
 
 		case LKA_PERMFAIL:
@@ -1025,7 +1023,7 @@ smtp_io(struct io *io, int evt, void *arg)
 		/* Message body */
 		eom = 0;
 		if (s->state == STATE_BODY) {
-			eom = smtp_dataline(s, line);
+			eom = smtp_tx_dataline(s->tx, line);
 			if (eom == 0)
 				goto nextline;
 		}
@@ -1419,7 +1417,7 @@ smtp_command(struct smtp_session *s, char *line)
 			tree_xset(&wait_lka_mail, s->id, s);
 		}
 		else
-			smtp_queue_create_message(s);
+			smtp_tx_create_message(s->tx);
 		break;
 	/*
 	 * TRANSACTION
@@ -1466,7 +1464,7 @@ smtp_command(struct smtp_session *s, char *line)
 
 		if (s->tx) {
 			if (s->tx->msgid)
-				smtp_queue_rollback(s);
+				smtp_tx_rollback(s->tx);
 			smtp_tx_free(s->tx);
 		}
 
@@ -1488,7 +1486,7 @@ smtp_command(struct smtp_session *s, char *line)
 			break;
 		}
 
-		smtp_queue_open_message(s);
+		smtp_tx_open_message(s->tx);
 		break;
 	/*
 	 * ANY
@@ -1818,7 +1816,7 @@ smtp_message_end(struct smtp_session *s)
 
 	switch(s->tx->error) {
 	case TX_OK:
-		smtp_queue_commit(s);
+		smtp_tx_commit(s->tx);
 		return;		
 
 	case TX_ERROR_SIZE:
@@ -1850,7 +1848,7 @@ smtp_message_end(struct smtp_session *s)
 		smtp_reply(s, "421 Internal server error");
 	}
 
-	smtp_queue_rollback(s);
+	smtp_tx_rollback(s->tx);
 	smtp_tx_free(s->tx);
 	smtp_enter_state(s, STATE_HELO);
 }
@@ -1941,7 +1939,7 @@ smtp_free(struct smtp_session *s, const char * reason)
 
 	if (s->tx) {
 		if (s->tx->msgid)
-			smtp_queue_rollback(s);
+			smtp_tx_rollback(s->tx);
 		smtp_tx_free(s->tx);
 	}
 
@@ -2174,44 +2172,44 @@ smtp_auth_failure_pause(struct smtp_session *s)
 }
 
 static void
-smtp_queue_create_message(struct smtp_session *s)
+smtp_tx_create_message(struct smtp_tx *tx)
 {
 	m_create(p_queue, IMSG_SMTP_MESSAGE_CREATE, 0, 0, -1);
-	m_add_id(p_queue, s->id);
+	m_add_id(p_queue, tx->session->id);
 	m_close(p_queue);
-	tree_xset(&wait_queue_msg, s->id, s);
+	tree_xset(&wait_queue_msg, tx->session->id, tx->session);
 }
 
 static void
-smtp_queue_open_message(struct smtp_session *s)
+smtp_tx_open_message(struct smtp_tx *tx)
 {
 	m_create(p_queue, IMSG_SMTP_MESSAGE_OPEN, 0, 0, -1);
-	m_add_id(p_queue, s->id);
-	m_add_msgid(p_queue, s->tx->msgid);
+	m_add_id(p_queue, tx->session->id);
+	m_add_msgid(p_queue, tx->msgid);
 	m_close(p_queue);
-	tree_xset(&wait_queue_fd, s->id, s);
+	tree_xset(&wait_queue_fd, tx->session->id, tx->session);
 }
 
 static void
-smtp_queue_commit(struct smtp_session *s)
+smtp_tx_commit(struct smtp_tx *tx)
 {
 	m_create(p_queue, IMSG_SMTP_MESSAGE_COMMIT, 0, 0, -1);
-	m_add_id(p_queue, s->id);
-	m_add_msgid(p_queue, s->tx->msgid);
+	m_add_id(p_queue, tx->session->id);
+	m_add_msgid(p_queue, tx->msgid);
 	m_close(p_queue);
-	tree_xset(&wait_queue_commit, s->id, s);
+	tree_xset(&wait_queue_commit, tx->session->id, tx->session);
 }
 
 static void
-smtp_queue_rollback(struct smtp_session *s)
+smtp_tx_rollback(struct smtp_tx *tx)
 {
 	m_create(p_queue, IMSG_SMTP_MESSAGE_ROLLBACK, 0, 0, -1);
-	m_add_msgid(p_queue, s->tx->msgid);
+	m_add_msgid(p_queue, tx->msgid);
 	m_close(p_queue);
 }
 
 static int
-smtp_dataline(struct smtp_session *s, const char *line)
+smtp_tx_dataline(struct smtp_tx *tx, const char *line)
 {
 	int	ret;
 
@@ -2219,13 +2217,13 @@ smtp_dataline(struct smtp_session *s, const char *line)
 
 	if (!strcmp(line, ".")) {
 		log_trace(TRACE_SMTP, "<<< [EOM]");
-		if (!s->tx->error)
-			rfc2822_parser_flush(&s->tx->rfc2822_parser);
+		if (!tx->error)
+			rfc2822_parser_flush(&tx->rfc2822_parser);
 		return 1;
 	}
 
 	/* ignore data line if an error is set */
-	if (s->tx->error)
+	if (tx->error)
 		return 0;
 
 	/* escape lines starting with a '.' */
@@ -2233,44 +2231,44 @@ smtp_dataline(struct smtp_session *s, const char *line)
 		line += 1;
 
 	/* account for newline */
-	s->tx->datain += strlen(line) + 1;
-	if (s->tx->datain > env->sc_maxsize) {
-		s->tx->error = TX_ERROR_SIZE;
+	tx->datain += strlen(line) + 1;
+	if (tx->datain > env->sc_maxsize) {
+		tx->error = TX_ERROR_SIZE;
 		return 0;
 	}
 
-	if (!s->tx->hdrdone) {
+	if (!tx->hdrdone) {
 
 		/* folded header that must be skipped */
-		if (isspace((unsigned char)line[0]) && s->tx->skiphdr)
+		if (isspace((unsigned char)line[0]) && tx->skiphdr)
 			return 0;
-		s->tx->skiphdr = 0;
+		tx->skiphdr = 0;
 
 		/* BCC should be stripped from headers */
 		if (strncasecmp("bcc:", line, 4) == 0) {
-			s->tx->skiphdr = 1;
+			tx->skiphdr = 1;
 			return 0;
 		}
 
 		/* check for loop */
 		if (strncasecmp("Received: ", line, 10) == 0)
-			s->tx->rcvcount++;
-		if (s->tx->rcvcount == MAX_HOPS_COUNT) {
-			s->tx->error = TX_ERROR_LOOP;
+			tx->rcvcount++;
+		if (tx->rcvcount == MAX_HOPS_COUNT) {
+			tx->error = TX_ERROR_LOOP;
 			log_warnx("warn: loop detected");
 			return 0;
 		}
 
 		if (line[0] == '\0')
-			s->tx->hdrdone = 1;
+			tx->hdrdone = 1;
 	}
 
-	ret = rfc2822_parser_feed(&s->tx->rfc2822_parser, line);
+	ret = rfc2822_parser_feed(&tx->rfc2822_parser, line);
 	if (ret == -1)
-		s->tx->error = TX_ERROR_RESOURCES;
+		tx->error = TX_ERROR_RESOURCES;
 
 	if (ret == 0)
-		s->tx->error = TX_ERROR_MALFORMED;
+		tx->error = TX_ERROR_MALFORMED;
 
 	return 0;
 }
