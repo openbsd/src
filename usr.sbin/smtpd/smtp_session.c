@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.321 2018/04/28 08:49:13 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.322 2018/04/28 08:58:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1102,77 +1102,6 @@ smtp_io(struct io *io, int evt, void *arg)
 	}
 }
 
-static int
-smtp_tx(struct smtp_session *s)
-{
-	struct smtp_tx *tx;
-
-	tx = calloc(1, sizeof(*tx));
-	if (tx == NULL)
-		return 0;
-
-	TAILQ_INIT(&tx->rcpts);
-
-	s->tx = tx;
-	tx->session = s;
-
-	/* setup the envelope */
-	s->tx->evp.ss = s->ss;
-	(void)strlcpy(s->tx->evp.tag, s->listener->tag, sizeof(s->tx->evp.tag));
-	(void)strlcpy(s->tx->evp.smtpname, s->smtpname, sizeof(s->tx->evp.smtpname));
-	(void)strlcpy(s->tx->evp.hostname, s->hostname, sizeof s->tx->evp.hostname);
-	(void)strlcpy(s->tx->evp.helo, s->helo, sizeof s->tx->evp.helo);
-
-	if (s->flags & SF_BOUNCE)
-		s->tx->evp.flags |= EF_BOUNCE;
-	if (s->flags & SF_AUTHENTICATED)
-		s->tx->evp.flags |= EF_AUTHENTICATED;
-
-	/* Setup parser and callbacks */
-	rfc2822_parser_init(&tx->rfc2822_parser);
-	rfc2822_header_default_callback(&tx->rfc2822_parser,
-	    header_default_callback, s);
-	rfc2822_header_callback(&tx->rfc2822_parser, "bcc",
-	    header_bcc_callback, s);
-	rfc2822_header_callback(&tx->rfc2822_parser, "from",
-	    header_domain_append_callback, s);
-	rfc2822_header_callback(&tx->rfc2822_parser, "to",
-	    header_domain_append_callback, s);
-	rfc2822_header_callback(&tx->rfc2822_parser, "cc",
-	    header_domain_append_callback, s);
-	rfc2822_body_callback(&tx->rfc2822_parser,
-	    dataline_callback, s);
-
-	if (s->listener->local || s->listener->port == htons(587)) {
-		rfc2822_missing_header_callback(&tx->rfc2822_parser, "date",
-		    header_missing_callback, s);
-		rfc2822_missing_header_callback(&tx->rfc2822_parser, "message-id",
-		    header_missing_callback, s);
-	}
-
-	return 1;
-}
-
-static void
-smtp_tx_free(struct smtp_tx *tx)
-{
-	struct smtp_rcpt *rcpt;
-
-	rfc2822_parser_release(&tx->rfc2822_parser);
-
-	while ((rcpt = TAILQ_FIRST(&tx->rcpts))) {
-		TAILQ_REMOVE(&tx->rcpts, rcpt, entry);
-		free(rcpt);
-	}
-
-	if (tx->ofile)
-		fclose(tx->ofile);
-
-	tx->session->tx = NULL;
-
-	free(tx);
-}
-
 static void
 smtp_command(struct smtp_session *s, char *line)
 {
@@ -2169,6 +2098,77 @@ smtp_auth_failure_pause(struct smtp_session *s)
 	    "will defer answer for %lu microseconds", tv.tv_usec);
 	evtimer_set(&s->pause, smtp_auth_failure_resume, s);
 	evtimer_add(&s->pause, &tv);
+}
+
+static int
+smtp_tx(struct smtp_session *s)
+{
+	struct smtp_tx *tx;
+
+	tx = calloc(1, sizeof(*tx));
+	if (tx == NULL)
+		return 0;
+
+	TAILQ_INIT(&tx->rcpts);
+
+	s->tx = tx;
+	tx->session = s;
+
+	/* setup the envelope */
+	s->tx->evp.ss = s->ss;
+	(void)strlcpy(s->tx->evp.tag, s->listener->tag, sizeof(s->tx->evp.tag));
+	(void)strlcpy(s->tx->evp.smtpname, s->smtpname, sizeof(s->tx->evp.smtpname));
+	(void)strlcpy(s->tx->evp.hostname, s->hostname, sizeof s->tx->evp.hostname);
+	(void)strlcpy(s->tx->evp.helo, s->helo, sizeof s->tx->evp.helo);
+
+	if (s->flags & SF_BOUNCE)
+		s->tx->evp.flags |= EF_BOUNCE;
+	if (s->flags & SF_AUTHENTICATED)
+		s->tx->evp.flags |= EF_AUTHENTICATED;
+
+	/* Setup parser and callbacks */
+	rfc2822_parser_init(&tx->rfc2822_parser);
+	rfc2822_header_default_callback(&tx->rfc2822_parser,
+	    header_default_callback, s);
+	rfc2822_header_callback(&tx->rfc2822_parser, "bcc",
+	    header_bcc_callback, s);
+	rfc2822_header_callback(&tx->rfc2822_parser, "from",
+	    header_domain_append_callback, s);
+	rfc2822_header_callback(&tx->rfc2822_parser, "to",
+	    header_domain_append_callback, s);
+	rfc2822_header_callback(&tx->rfc2822_parser, "cc",
+	    header_domain_append_callback, s);
+	rfc2822_body_callback(&tx->rfc2822_parser,
+	    dataline_callback, s);
+
+	if (s->listener->local || s->listener->port == htons(587)) {
+		rfc2822_missing_header_callback(&tx->rfc2822_parser, "date",
+		    header_missing_callback, s);
+		rfc2822_missing_header_callback(&tx->rfc2822_parser, "message-id",
+		    header_missing_callback, s);
+	}
+
+	return 1;
+}
+
+static void
+smtp_tx_free(struct smtp_tx *tx)
+{
+	struct smtp_rcpt *rcpt;
+
+	rfc2822_parser_release(&tx->rfc2822_parser);
+
+	while ((rcpt = TAILQ_FIRST(&tx->rcpts))) {
+		TAILQ_REMOVE(&tx->rcpts, rcpt, entry);
+		free(rcpt);
+	}
+
+	if (tx->ofile)
+		fclose(tx->ofile);
+
+	tx->session->tx = NULL;
+
+	free(tx);
 }
 
 static void
