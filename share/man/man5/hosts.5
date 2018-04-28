@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.5,v 1.22 2014/08/23 07:25:54 jmc Exp $
+.\"	$OpenBSD: hosts.5,v 1.23 2018/04/28 16:40:10 schwarze Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,20 +30,20 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: August 23 2014 $
+.Dd $Mdocdate: April 28 2018 $
 .Dt HOSTS 5
 .Os
 .Sh NAME
 .Nm hosts
-.Nd host name database
+.Nd host and network name database
 .Sh DESCRIPTION
 The
 .Nm
-file contains information regarding the known hosts on the network.
-For each host, a single line should be present with the following information:
+file associates names and IP addresses.
+Each line has the following format:
 .Bd -unfilled -offset indent
 Internet address
-Official host name
+Host or network name
 Aliases
 .Ed
 .Pp
@@ -99,8 +99,13 @@ file format appeared in
 .Bx 4.2 .
 .Pp
 An official host database used to be maintained at
-the Network Information Control Center
-.Pq Tn NIC .
+the Network Information Control Center (NIC).
+.Pp
+Up to
+.Ox 6.3 ,
+a separate file
+.Pa /etc/networks
+could be used to store network names.
 .Sh BUGS
 A name server should be used instead of a static file.
 .Pp
