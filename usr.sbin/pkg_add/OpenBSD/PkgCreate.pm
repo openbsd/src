@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.133 2018/04/26 12:18:44 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.134 2018/04/28 09:49:20 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1073,6 +1073,16 @@ sub FileClass
 	return "MyFile";
 }
 
+# hook for update-plist, which wants to record fragment positions
+sub record_fragment
+{
+}
+
+# hook for update-plist, which wants to record original file info
+sub annotate
+{
+}
+
 sub read_fragments
 {
 	my ($self, $state, $plist, $filename) = @_;
@@ -1091,10 +1101,13 @@ sub read_fragments
 			while (my $l = $file->readline) {
 				$state->progress->working(2048) 
 				    unless $state->{silent};
+				# strip the actual CVS entry so the
+				# plist is always the same
 				if ($l =~m/^(\@comment\s+\$(?:Open)BSD\$)$/o) {
 					$l = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
 				if ($l =~ m/^(\!)?\%\%(.*)\%\%$/) {
+					$self->record_fragment($plist, $1, $2);
 					if (my $f2 = $self->handle_fragment($state, $file, $1, $2, $l, $cont, $filename)) {
 						push(@$stack, $file);
 						$file = $f2;
@@ -1114,10 +1127,6 @@ sub read_fragments
 			}
 		}
 	    });
-}
-
-sub annotate
-{
 }
 
 sub add_description
