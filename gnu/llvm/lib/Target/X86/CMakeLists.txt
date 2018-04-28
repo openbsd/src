@@ -29,6 +29,7 @@ set(sources
   X86ExpandPseudo.cpp
   X86FastISel.cpp
   X86FixupBWInsts.cpp
+  X86FixupGadgets.cpp
   X86FixupLEAs.cpp
   X86FixupSetCC.cpp
   X86FloatingPoint.cpp
