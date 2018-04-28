@@ -1,7 +1,7 @@
-/*	$OpenBSD: bfd.c,v 1.69 2018/04/28 08:13:42 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.70 2018/04/28 08:14:09 phessler Exp $	*/
 
 /*
- * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
+ * Copyright (c) 2016-2018 Peter Hessler <phessler@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
