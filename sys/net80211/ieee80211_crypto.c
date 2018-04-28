@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.71 2017/08/18 17:30:12 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.72 2018/04/28 14:45:28 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -225,8 +225,7 @@ ieee80211_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 		break;
 	default:
 		/* should not get there */
-		m_freem(m0);
-		m0 = NULL;
+		panic("invalid key cipher 0x%x", k->k_cipher);
 	}
 	return m0;
 }
