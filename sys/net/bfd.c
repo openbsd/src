@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.66 2018/04/28 07:44:44 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.67 2018/04/28 07:45:47 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -149,7 +149,7 @@ void		 bfddestroy(void);
 struct socket	*bfd_listener(struct bfd_config *, unsigned int);
 struct socket	*bfd_sender(struct bfd_config *, unsigned int);
 void		 bfd_input(struct bfd_config *, struct mbuf *);
-void		 bfd_set_state(struct bfd_config *, int);
+void		 bfd_set_state(struct bfd_config *, unsigned int);
 
 int	 bfd_send(struct bfd_config *, struct mbuf *);
 void	 bfd_send_control(void *);
@@ -904,7 +904,7 @@ bfd_input(struct bfd_config *bfd, struct mbuf *m)
 }
 
 void
-bfd_set_state(struct bfd_config *bfd, int state)
+bfd_set_state(struct bfd_config *bfd, unsigned int state)
 {
 	struct ifnet	*ifp;
 	struct rtentry	*rt = bfd->bc_rt;
