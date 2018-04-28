@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.93 2017/06/10 06:52:28 akfaew Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.94 2018/04/28 16:22:08 schwarze Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: June 10 2017 $
+.Dd $Mdocdate: April 28 2018 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -539,9 +539,9 @@ True if the IP destination address of the packet has a network number of
 .Ar net .
 .Ar net
 may be either a name from
-.Pa /etc/networks
+.Pa /etc/hosts
 or a network number (see
-.Xr networks 5
+.Xr hosts 5
 for details).
 .It Cm src net Ar net
 True if the IP source address of the packet has a network number of
@@ -671,27 +671,18 @@ header, which is usually layered on top of the FDDI header.
 assumes, when filtering on the protocol identifier, that all FDDI packets
 include an LLC header, and that the LLC header is in so-called SNAP format.
 .It Cm decnet src Ar host
-True if the
-.Tn DECNET
-source address is
+True if the DECNET source address is
 .Ar host ,
 which may be an address of the form
 .Dq 10.123 ,
-or a
-.Tn DECNET
-host name.
-.Tn DECNET
-host name support is only available on systems that are configured to run
-.Tn DECNET .
+or a DECNET host name.
+DECNET host name support is only available on systems that are
+configured to run DECNET.
 .It Cm decnet dst Ar host
-True if the
-.Tn DECNET
-destination address is
+True if the DECNET destination address is
 .Ar host .
 .It Cm decnet host Ar host
-True if either the
-.Tn DECNET
-source or destination address is
+True if either the DECNET source or destination address is
 .Ar host .
 .It Cm ifname Ar interface
 True if the packet was logged as coming from the specified interface
@@ -1208,18 +1199,18 @@ are the source and destination IP addresses and ports.
 .Ar flags
 is some combination of
 .Sq S
-.Pq Tn SYN ,
+.Pq SYN ,
 .Sq F
-.Pq Tn FIN ,
+.Pq FIN ,
 .Sq P
-.Pq Tn PUSH ,
+.Pq PUSH ,
 or
 .Sq R
-.Pq Tn RST ,
+.Pq RST ,
 .Sq W
-.Pq Tn congestion Window reduced ,
+.Pq congestion Window reduced ,
 .Sq E
-.Pq Tn ecn ECHO
+.Pq ecn ECHO
 or a single
 .Ql \&.
 .Pq no flags .
@@ -1384,7 +1375,7 @@ had been anything else, it would have been printed between the 3 and the
 Similarly, the
 .Ar qclass
 was the normal one
-.Pq Tn C_IN
+.Pq C_IN
 and was omitted.
 Any other
 .Ar qclass
@@ -1663,7 +1654,7 @@ with packets, this can fool you.
 A packet with the IP
 .Sy don't fragment
 flag is marked with a trailing
-.Dq Pq Tn DF .
+.Dq Pq DF .
 .Ss Timestamps
 By default, all output lines are preceded by a timestamp.
 The timestamp is the current clock time in the form
@@ -1694,7 +1685,7 @@ sees the packet.
 .Xr pflog 4 ,
 .Xr tcp 4 ,
 .Xr udp 4 ,
-.Xr networks 5 ,
+.Xr hosts 5 ,
 .Xr pf.os 5 ,
 .Xr protocols 5 ,
 .Xr services 5
@@ -1772,9 +1763,7 @@ skewed time stamps
 .Pp
 Filter expressions that manipulate FDDI headers assume that all FDDI packets
 are encapsulated Ethernet packets.
-This is true for IP, ARP, and
-.Tn DECNET
-Phase IV,
+This is true for IP, ARP, and DECNET Phase IV,
 but is not true for protocols such as ISO CLNS.
 Therefore, the filter may inadvertently accept certain packets that
 do not properly match the filter expression.
