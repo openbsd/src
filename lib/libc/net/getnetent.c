@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetent.c,v 1.17 2015/01/16 18:20:14 millert Exp $ */
+/*	$OpenBSD: getnetent.c,v 1.18 2018/04/28 15:05:40 schwarze Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,93 +28,22 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <netdb.h>
-#include <stdio.h>
-#include <string.h>
-#include <limits.h>
-
-#define	MAXALIASES	35
-
-static FILE *netf;
-static char line[BUFSIZ+1];
-static struct netent net;
-static char *net_aliases[MAXALIASES];
-int _net_stayopen;
+#include <stddef.h>
 
 void
 setnetent(int f)
 {
-	if (netf == NULL)
-		netf = fopen(_PATH_NETWORKS, "re" );
-	else
-		rewind(netf);
-	_net_stayopen |= f;
 }
 
 void
 endnetent(void)
 {
-	if (netf) {
-		fclose(netf);
-		netf = NULL;
-	}
-	_net_stayopen = 0;
 }
 
 struct netent *
 getnetent(void)
 {
-	char *p, *cp, **q;
-	size_t len;
-
-	if (netf == NULL && (netf = fopen(_PATH_NETWORKS, "re" )) == NULL)
-		return (NULL);
-again:
-	if ((p = fgetln(netf, &len)) == NULL)
-		return (NULL);
-	if (p[len-1] == '\n')
-		len--;
-	if (len >= sizeof(line) || len == 0)
-		goto again;
-	p = memcpy(line, p, len);
-	line[len] = '\0';
-	if (*p == '#')
-		goto again;
-	if ((cp = strchr(p, '#')) != NULL)
-		*cp = '\0';
-	net.n_name = p;
-	if (strlen(net.n_name) > HOST_NAME_MAX)
-		net.n_name[HOST_NAME_MAX] = '\0';
-	cp = strpbrk(p, " \t");
-	if (cp == NULL)
-		goto again;
-	*cp++ = '\0';
-	while (*cp == ' ' || *cp == '\t')
-		cp++;
-	p = strpbrk(cp, " \t");
-	if (p != NULL)
-		*p++ = '\0';
-	net.n_net = inet_network(cp);
-	net.n_addrtype = AF_INET;
-	q = net.n_aliases = net_aliases;
-	cp = p;
-	while (cp && *cp) {
-		if (*cp == ' ' || *cp == '\t') {
-			cp++;
-			continue;
-		}
-		if (q < &net_aliases[MAXALIASES - 1]) {
-			*q++ = cp;
-			if (strlen(cp) > HOST_NAME_MAX)
-				cp[HOST_NAME_MAX] = '\0';
-		}
-		cp = strpbrk(cp, " \t");
-		if (cp != NULL)
-			*cp++ = '\0';
-	}
-	*q = NULL;
-	return (&net);
+	h_errno = NETDB_INTERNAL;
+	return NULL;
 }
