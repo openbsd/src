@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.324 2018/04/28 10:53:12 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.325 2018/04/28 11:09:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -910,69 +910,6 @@ smtp_tls_verified(struct smtp_session *s)
 	}
 }
 
-void
-smtp_message_fd(struct smtp_tx *tx, int fd)
-{
-	struct smtp_session *s;
-	X509 *x;
-
-	s = tx->session;
-
-	log_debug("smtp: %p: message fd %d", s, fd);
-
-	if ((s->tx->ofile = fdopen(fd, "w")) == NULL) {
-		close(fd);
-		smtp_reply(s, "421 %s: Temporary Error",
-		    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
-		smtp_enter_state(s, STATE_QUIT);
-		return;
-	}
-
-	smtp_message_printf(tx, "Received: ");
-	if (!(s->listener->flags & F_MASK_SOURCE)) {
-		smtp_message_printf(tx, "from %s (%s [%s])",
-		    s->helo,
-		    s->hostname,
-		    ss_to_text(&s->ss));
-	}
-	smtp_message_printf(tx, "\n\tby %s (%s) with %sSMTP%s%s id %08x",
-	    s->smtpname,
-	    SMTPD_NAME,
-	    s->flags & SF_EHLO ? "E" : "",
-	    s->flags & SF_SECURE ? "S" : "",
-	    s->flags & SF_AUTHENTICATED ? "A" : "",
-	    s->tx->msgid);
-
-	if (s->flags & SF_SECURE) {
-		x = SSL_get_peer_certificate(io_ssl(s->io));
-		smtp_message_printf(tx, " (%s:%s:%d:%s)",
-		    SSL_get_version(io_ssl(s->io)),
-		    SSL_get_cipher_name(io_ssl(s->io)),
-		    SSL_get_cipher_bits(io_ssl(s->io), NULL),
-		    (s->flags & SF_VERIFIED) ? "YES" : (x ? "FAIL" : "NO"));
-		X509_free(x);
-
-		if (s->listener->flags & F_RECEIVEDAUTH) {
-			smtp_message_printf(tx, " auth=%s",
-			    s->username[0] ? "yes" : "no");
-			if (s->username[0])
-				smtp_message_printf(tx, " user=%s", s->username);
-		}
-	}
-
-	if (tx->rcptcount == 1) {
-		smtp_message_printf(tx, "\n\tfor <%s@%s>",
-		    tx->evp.rcpt.user,
-		    tx->evp.rcpt.domain);
-	}
-
-	smtp_message_printf(tx, ";\n\t%s\n", time_to_text(time(&tx->time)));
-
-	smtp_enter_state(s, STATE_BODY);
-	smtp_reply(s, "354 Enter mail, end with \".\""
-	    " on a line by itself");
-}
-
 static void
 smtp_io(struct io *io, int evt, void *arg)
 {
@@ -1742,80 +1679,6 @@ smtp_enter_state(struct smtp_session *s, int newstate)
 }
 
 static void
-smtp_message_end(struct smtp_tx *tx)
-{
-	struct smtp_session *s;
-
-	s = tx->session;
-
-	log_debug("debug: %p: end of message, error=%d", s, tx->error);
-
-	fclose(tx->ofile);
-	tx->ofile = NULL;
-
-	switch(tx->error) {
-	case TX_OK:
-		smtp_tx_commit(tx);
-		return;		
-
-	case TX_ERROR_SIZE:
-		smtp_reply(s, "554 %s %s: Transaction failed, message too big",
-		    esc_code(ESC_STATUS_PERMFAIL, ESC_MESSAGE_TOO_BIG_FOR_SYSTEM),
-		    esc_description(ESC_MESSAGE_TOO_BIG_FOR_SYSTEM));
-		break;
-
-	case TX_ERROR_LOOP:
-		smtp_reply(s, "500 %s %s: Loop detected",
-		   esc_code(ESC_STATUS_PERMFAIL, ESC_ROUTING_LOOP_DETECTED),
-		   esc_description(ESC_ROUTING_LOOP_DETECTED));
-		break;
-
-	case TX_ERROR_MALFORMED:
-		smtp_reply(s, "550 %s %s: Message is not RFC 2822 compliant",
-		    esc_code(ESC_STATUS_PERMFAIL, ESC_DELIVERY_NOT_AUTHORIZED_MESSAGE_REFUSED),
-		    esc_description(ESC_DELIVERY_NOT_AUTHORIZED_MESSAGE_REFUSED));
-		break;
-
-	case TX_ERROR_IO:
-	case TX_ERROR_RESOURCES:
-		smtp_reply(s, "421 %s: Temporary Error",
-		    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
-		break;
-
-	default:
-		/* fatal? */
-		smtp_reply(s, "421 Internal server error");
-	}
-
-	smtp_tx_rollback(tx);
-	smtp_tx_free(tx);
-	smtp_enter_state(s, STATE_HELO);
-}
-
-static int
-smtp_message_printf(struct smtp_tx *tx, const char *fmt, ...)
-{
-	va_list	ap;
-	int	len;
-
-	if (tx->error)
-		return -1;
-
-	va_start(ap, fmt);
-	len = vfprintf(tx->ofile, fmt, ap);
-	va_end(ap);
-
-	if (len < 0) {
-		log_warn("smtp-in: session %016"PRIx64": vfprintf", tx->session->id);
-		tx->error = TX_ERROR_IO;
-	}
-	else
-		tx->odatalen += len;
-
-	return len;
-}
-
-static void
 smtp_reply(struct smtp_session *s, char *fmt, ...)
 {
 	va_list	 ap;
@@ -2281,6 +2144,143 @@ smtp_tx_dataline(struct smtp_tx *tx, const char *line)
 		tx->error = TX_ERROR_MALFORMED;
 
 	return 0;
+}
+
+static void
+smtp_message_fd(struct smtp_tx *tx, int fd)
+{
+	struct smtp_session *s;
+	X509 *x;
+
+	s = tx->session;
+
+	log_debug("smtp: %p: message fd %d", s, fd);
+
+	if ((s->tx->ofile = fdopen(fd, "w")) == NULL) {
+		close(fd);
+		smtp_reply(s, "421 %s: Temporary Error",
+		    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
+		smtp_enter_state(s, STATE_QUIT);
+		return;
+	}
+
+	smtp_message_printf(tx, "Received: ");
+	if (!(s->listener->flags & F_MASK_SOURCE)) {
+		smtp_message_printf(tx, "from %s (%s [%s])",
+		    s->helo,
+		    s->hostname,
+		    ss_to_text(&s->ss));
+	}
+	smtp_message_printf(tx, "\n\tby %s (%s) with %sSMTP%s%s id %08x",
+	    s->smtpname,
+	    SMTPD_NAME,
+	    s->flags & SF_EHLO ? "E" : "",
+	    s->flags & SF_SECURE ? "S" : "",
+	    s->flags & SF_AUTHENTICATED ? "A" : "",
+	    s->tx->msgid);
+
+	if (s->flags & SF_SECURE) {
+		x = SSL_get_peer_certificate(io_ssl(s->io));
+		smtp_message_printf(tx, " (%s:%s:%d:%s)",
+		    SSL_get_version(io_ssl(s->io)),
+		    SSL_get_cipher_name(io_ssl(s->io)),
+		    SSL_get_cipher_bits(io_ssl(s->io), NULL),
+		    (s->flags & SF_VERIFIED) ? "YES" : (x ? "FAIL" : "NO"));
+		X509_free(x);
+
+		if (s->listener->flags & F_RECEIVEDAUTH) {
+			smtp_message_printf(tx, " auth=%s",
+			    s->username[0] ? "yes" : "no");
+			if (s->username[0])
+				smtp_message_printf(tx, " user=%s", s->username);
+		}
+	}
+
+	if (tx->rcptcount == 1) {
+		smtp_message_printf(tx, "\n\tfor <%s@%s>",
+		    tx->evp.rcpt.user,
+		    tx->evp.rcpt.domain);
+	}
+
+	smtp_message_printf(tx, ";\n\t%s\n", time_to_text(time(&tx->time)));
+
+	smtp_enter_state(s, STATE_BODY);
+	smtp_reply(s, "354 Enter mail, end with \".\""
+	    " on a line by itself");
+}
+
+static void
+smtp_message_end(struct smtp_tx *tx)
+{
+	struct smtp_session *s;
+
+	s = tx->session;
+
+	log_debug("debug: %p: end of message, error=%d", s, tx->error);
+
+	fclose(tx->ofile);
+	tx->ofile = NULL;
+
+	switch(tx->error) {
+	case TX_OK:
+		smtp_tx_commit(tx);
+		return;		
+
+	case TX_ERROR_SIZE:
+		smtp_reply(s, "554 %s %s: Transaction failed, message too big",
+		    esc_code(ESC_STATUS_PERMFAIL, ESC_MESSAGE_TOO_BIG_FOR_SYSTEM),
+		    esc_description(ESC_MESSAGE_TOO_BIG_FOR_SYSTEM));
+		break;
+
+	case TX_ERROR_LOOP:
+		smtp_reply(s, "500 %s %s: Loop detected",
+		   esc_code(ESC_STATUS_PERMFAIL, ESC_ROUTING_LOOP_DETECTED),
+		   esc_description(ESC_ROUTING_LOOP_DETECTED));
+		break;
+
+	case TX_ERROR_MALFORMED:
+		smtp_reply(s, "550 %s %s: Message is not RFC 2822 compliant",
+		    esc_code(ESC_STATUS_PERMFAIL, ESC_DELIVERY_NOT_AUTHORIZED_MESSAGE_REFUSED),
+		    esc_description(ESC_DELIVERY_NOT_AUTHORIZED_MESSAGE_REFUSED));
+		break;
+
+	case TX_ERROR_IO:
+	case TX_ERROR_RESOURCES:
+		smtp_reply(s, "421 %s: Temporary Error",
+		    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
+		break;
+
+	default:
+		/* fatal? */
+		smtp_reply(s, "421 Internal server error");
+	}
+
+	smtp_tx_rollback(tx);
+	smtp_tx_free(tx);
+	smtp_enter_state(s, STATE_HELO);
+}
+
+static int
+smtp_message_printf(struct smtp_tx *tx, const char *fmt, ...)
+{
+	va_list	ap;
+	int	len;
+
+	if (tx->error)
+		return -1;
+
+	va_start(ap, fmt);
+	len = vfprintf(tx->ofile, fmt, ap);
+	va_end(ap);
+
+	if (len < 0) {
+		log_warn("smtp-in: session %016"PRIx64": vfprintf", tx->session->id);
+		tx->error = TX_ERROR_IO;
+	}
+	else
+		tx->odatalen += len;
+
+	return len;
 }
 
 #define CASE(x) case x : return #x
