@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.125 2018/04/28 14:49:07 stsp Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.126 2018/04/28 16:05:56 phessler Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1221,6 +1221,7 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			printf("%s: %s -> %s\n", ifp->if_xname,
 			    ieee80211_state_name[ic->ic_state],
 			    ieee80211_state_name[nstate]);
+		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
 		ic->ic_state = nstate;
 		return (0);
 

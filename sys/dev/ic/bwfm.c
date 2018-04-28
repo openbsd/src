@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.42 2018/04/26 12:50:07 pirofti Exp $ */
+/* $OpenBSD: bwfm.c,v 1.43 2018/04/28 16:05:56 phessler Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2294,6 +2294,8 @@ bwfm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			printf("%s: %s -> %s\n", DEVNAME(sc),
 			    ieee80211_state_name[ic->ic_state],
 			    ieee80211_state_name[nstate]);
+		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
+		ieee80211_free_allnodes(ic, 1);
 		ic->ic_state = nstate;
 		splx(s);
 		return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.202 2018/04/26 12:50:07 pirofti Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.203 2018/04/28 16:05:56 phessler Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1808,6 +1808,10 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			printf("%s: %s -> %s\n", ifp->if_xname,
 			    ieee80211_state_name[ic->ic_state],
 			    ieee80211_state_name[nstate]);
+		if ((sc->sc_flags & IWN_FLAG_BGSCAN) == 0) {
+			ieee80211_set_link_state(ic, LINK_STATE_DOWN);
+			ieee80211_free_allnodes(ic, 1);
+		}
 		ic->ic_state = nstate;
 		return 0;
 
