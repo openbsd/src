@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.323 2018/04/28 10:10:47 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.324 2018/04/28 10:53:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -218,11 +218,8 @@ static struct tree wait_ssl_verify;
 static void
 header_default_callback(const struct rfc2822_header *hdr, void *arg)
 {
-	struct smtp_session    *s = arg;
-	struct smtp_tx         *tx;
+	struct smtp_tx         *tx = arg;
 	struct rfc2822_line    *l;
-
-	tx = s->tx;
 
 	if (smtp_message_printf(tx, "%s:", hdr->name) == -1)
 		return;
@@ -235,9 +232,9 @@ header_default_callback(const struct rfc2822_header *hdr, void *arg)
 static void
 dataline_callback(const char *line, void *arg)
 {
-	struct smtp_session	*s = arg;
+	struct smtp_tx *tx = arg;
 
-	smtp_message_printf(s->tx, "%s\n", line);
+	smtp_message_printf(tx, "%s\n", line);
 }
 
 static void
@@ -410,15 +407,15 @@ header_address_rewrite_buffer(char *buffer, const char *address, size_t len)
 static void
 header_domain_append_callback(const struct rfc2822_header *hdr, void *arg)
 {
-	struct smtp_session    *s = arg;
-	struct smtp_tx         *tx;
+	struct smtp_session    *s;
+	struct smtp_tx         *tx = arg;
 	struct rfc2822_line    *l;
 	size_t			i, j;
 	int			escape, quote, comment, skip;
 	char			buffer[APPEND_DOMAIN_BUFFER_SIZE];
 
-	tx = s->tx;
-	
+	s = tx->session;
+
 	if (smtp_message_printf(tx, "%s:", hdr->name) == -1)
 		return;
 
@@ -507,14 +504,11 @@ header_domain_append_callback(const struct rfc2822_header *hdr, void *arg)
 static void
 header_missing_callback(const char *header, void *arg)
 {
-	struct smtp_session	*s = arg;
-	struct smtp_tx	        *tx;
-
-	tx = s->tx;
+	struct smtp_tx *tx = arg;
 
 	if (strcasecmp(header, "message-id") == 0)
 		smtp_message_printf(tx, "Message-Id: <%016"PRIx64"@%s>\n",
-		    generate_uid(), s->listener->hostname);
+		    generate_uid(), tx->session->listener->hostname);
 
 	if (strcasecmp(header, "date") == 0)
 		smtp_message_printf(tx, "Date: %s\n", time_to_text(tx->time));
@@ -2145,23 +2139,23 @@ smtp_tx(struct smtp_session *s)
 	/* Setup parser and callbacks */
 	rfc2822_parser_init(&tx->rfc2822_parser);
 	rfc2822_header_default_callback(&tx->rfc2822_parser,
-	    header_default_callback, s);
+	    header_default_callback, tx);
 	rfc2822_header_callback(&tx->rfc2822_parser, "bcc",
-	    header_bcc_callback, s);
+	    header_bcc_callback, tx);
 	rfc2822_header_callback(&tx->rfc2822_parser, "from",
-	    header_domain_append_callback, s);
+	    header_domain_append_callback, tx);
 	rfc2822_header_callback(&tx->rfc2822_parser, "to",
-	    header_domain_append_callback, s);
+	    header_domain_append_callback, tx);
 	rfc2822_header_callback(&tx->rfc2822_parser, "cc",
-	    header_domain_append_callback, s);
+	    header_domain_append_callback, tx);
 	rfc2822_body_callback(&tx->rfc2822_parser,
-	    dataline_callback, s);
+	    dataline_callback, tx);
 
 	if (s->listener->local || s->listener->port == htons(587)) {
 		rfc2822_missing_header_callback(&tx->rfc2822_parser, "date",
-		    header_missing_callback, s);
+		    header_missing_callback, tx);
 		rfc2822_missing_header_callback(&tx->rfc2822_parser, "message-id",
-		    header_missing_callback, s);
+		    header_missing_callback, tx);
 	}
 
 	return 1;
