@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.112 2017/12/30 20:47:00 guenther Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.113 2018/04/28 03:13:05 visa Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -2105,7 +2105,7 @@ nfsrv_readdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		error = 0;
 		goto nfsmout;
 	}
-	VOP_UNLOCK(vp, procp);
+	VOP_UNLOCK(vp);
 	rbuf = malloc(fullsiz, M_TEMP, M_WAITOK);
 again:
 	iv.iov_base = rbuf;
@@ -2129,7 +2129,7 @@ again:
 			error = getret;
 	}
 
-	VOP_UNLOCK(vp, procp);
+	VOP_UNLOCK(vp);
 	if (error) {
 		vrele(vp);
 		free(rbuf, M_TEMP, fullsiz);
@@ -2304,7 +2304,7 @@ nfsrv_readdirplus(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		error = 0;
 		goto nfsmout;
 	}
-	VOP_UNLOCK(vp, procp);
+	VOP_UNLOCK(vp);
 
 	rbuf = malloc(fullsiz, M_TEMP, M_WAITOK);
 again:
@@ -2325,7 +2325,7 @@ again:
 	off = (u_quad_t)io.uio_offset;
 	getret = VOP_GETATTR(vp, &at, cred, procp);
 
-	VOP_UNLOCK(vp, procp);
+	VOP_UNLOCK(vp);
 
 	if (!error)
 		error = getret;

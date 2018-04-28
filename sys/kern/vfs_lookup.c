@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.67 2018/04/27 10:13:37 mpi Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.68 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ fail:
 			return(0);
 		}
 		if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
-			VOP_UNLOCK(ndp->ni_dvp, p);
+			VOP_UNLOCK(ndp->ni_dvp);
 		if (ndp->ni_loopcnt++ >= SYMLOOP_MAX) {
 			error = ELOOP;
 			break;
@@ -553,7 +553,7 @@ dirloop:
 	    (cnp->cn_flags & NOCROSSMOUNT) == 0) {
 		if (vfs_busy(mp, VB_READ|VB_WAIT))
 			continue;
-		VOP_UNLOCK(dp, p);
+		VOP_UNLOCK(dp);
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);
 		if (error) {
@@ -620,13 +620,13 @@ terminal:
 			vrele(ndp->ni_dvp);
 	}
 	if ((cnp->cn_flags & LOCKLEAF) == 0)
-		VOP_UNLOCK(dp, p);
+		VOP_UNLOCK(dp);
 	return (0);
 
 bad2:
 	if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN) &&
 	    ((cnp->cn_flags & PDIRUNLOCK) == 0))
-		VOP_UNLOCK(ndp->ni_dvp, p);
+		VOP_UNLOCK(ndp->ni_dvp);
 	vrele(ndp->ni_dvp);
 bad:
 	if (dpunlocked)
@@ -754,12 +754,12 @@ vfs_relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	if (!wantparent)
 		vrele(dvp);
 	if ((cnp->cn_flags & LOCKLEAF) == 0)
-		VOP_UNLOCK(dp, p);
+		VOP_UNLOCK(dp);
 	return (0);
 
 bad2:
 	if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
-		VOP_UNLOCK(dvp, p);
+		VOP_UNLOCK(dvp);
 	vrele(dvp);
 bad:
 	vput(dp);

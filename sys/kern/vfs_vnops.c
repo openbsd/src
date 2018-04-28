@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.90 2018/04/10 09:17:45 mpi Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.91 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 
 		ndp->ni_vp = cip->ci_vp;	/* return cloned vnode */
 		vp->v_data = cip->ci_data;	/* restore v_data */
-		VOP_UNLOCK(vp, p);		/* keep a reference */
+		VOP_UNLOCK(vp);			/* keep a reference */
 		vp = ndp->ni_vp;		/* for the increment below */
 
 		free(cip, M_TEMP, sizeof(*cip));
@@ -318,7 +318,7 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
 		error = VOP_WRITE(vp, &auio, ioflg, cred);
 	}
 	if ((ioflg & IO_NODELOCKED) == 0)
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 
 	if (aresid)
 		*aresid = auio.uio_resid;
@@ -351,7 +351,7 @@ vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	error = VOP_READ(vp, uio, (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0,
 	    cred);
 	*poff += count - uio->uio_resid;
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -383,7 +383,7 @@ vn_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 		*poff = uio->uio_offset;
 	else
 		*poff += count - uio->uio_resid;
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -528,7 +528,7 @@ vn_lock(struct vnode *vp, int flags, struct proc *p)
 			tsleep(vp, PINOD, "vn_lock", 0);
 			error = ENOENT;
 		} else {
-			error = VOP_LOCK(vp, flags, p);
+			error = VOP_LOCK(vp, flags);
 			if (error == 0)
 				return (error);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.267 2018/03/07 18:30:23 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.268 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -587,7 +587,7 @@ loop:
 	 * The vnodes created by bdevvp should not be aliased (why?).
 	 */
 
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	vclean(vp, 0, p);
 	vp->v_op = nvp->v_op;
 	vp->v_tag = nvp->v_tag;
@@ -718,7 +718,7 @@ vput(struct vnode *vp)
 #endif
 	vp->v_usecount--;
 	if (vp->v_usecount > 0) {
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 		return;
 	}
 
@@ -970,7 +970,7 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	 * For active vnodes, it ensures that no other activity can
 	 * occur while the underlying object is being cleaned out.
 	 */
-	VOP_LOCK(vp, LK_DRAIN | LK_EXCLUSIVE, p);
+	VOP_LOCK(vp, LK_DRAIN | LK_EXCLUSIVE);
 
 	/*
 	 * Clean out any VM data associated with the vnode.
@@ -995,7 +995,7 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 		 * Any other processes trying to obtain this lock must first
 		 * wait for VXLOCK to clear, then call the new lock operation.
 		 */
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.79 2018/01/08 16:15:34 millert Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.80 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -477,7 +477,7 @@ ext2fs_link(void *v)
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 out1:
 	if (dvp != vp)
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 out2:
 	vput(dvp);
 	return (error);
@@ -585,13 +585,13 @@ abortit:
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
 	if ((nlink_t)ip->i_e2fs_nlink >= LINK_MAX) {
-		VOP_UNLOCK(fvp, p);
+		VOP_UNLOCK(fvp);
 		error = EMLINK;
 		goto abortit;
 	}
 	if ((ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
 		(dp->i_e2fs_flags & EXT2_APPEND)) {
-		VOP_UNLOCK(fvp, p);
+		VOP_UNLOCK(fvp);
 		error = EPERM;
 		goto abortit;
 	}
@@ -601,7 +601,7 @@ abortit:
                 	error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred,
 			    tcnp->cn_proc);
         	if (error) {
-                	VOP_UNLOCK(fvp, p);
+                	VOP_UNLOCK(fvp);
                 	error = EACCES;
                 	goto abortit;
         	}
@@ -613,7 +613,7 @@ abortit:
 			(fcnp->cn_flags&ISDOTDOT) ||
 			(tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
-			VOP_UNLOCK(fvp, p);
+			VOP_UNLOCK(fvp);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -641,7 +641,7 @@ abortit:
 	ip->i_e2fs_nlink++;
 	ip->i_flag |= IN_CHANGE;
 	if ((error = ext2fs_update(ip, 1)) != 0) {
-		VOP_UNLOCK(fvp, p);
+		VOP_UNLOCK(fvp);
 		goto bad;
 	}
 
@@ -656,7 +656,7 @@ abortit:
 	 * call to checkpath().
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-	VOP_UNLOCK(fvp, p);
+	VOP_UNLOCK(fvp);
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
 	if (doingdirectory && newparent) {

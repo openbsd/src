@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.104 2018/03/28 09:37:42 mpi Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.105 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -572,7 +572,7 @@ out:
 		brelse(bp);
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 	if (ump) {
 		free(ump->um_e2fs, M_UFSMNT, sizeof *ump->um_e2fs);
 		free(ump, M_UFSMNT, sizeof *ump);
@@ -641,7 +641,7 @@ ext2fs_flushfiles(struct mount *mp, int flags, struct proc *p)
 	 */
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_FSYNC(ump->um_devvp, p->p_ucred, MNT_WAIT, p);
-	VOP_UNLOCK(ump->um_devvp, p);
+	VOP_UNLOCK(ump->um_devvp);
 	return (error);
 }
 
@@ -780,7 +780,7 @@ ext2fs_sync(struct mount *mp, int waitfor, int stall,
 		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
 			allerror = error;
-		VOP_UNLOCK(ump->um_devvp, p);
+		VOP_UNLOCK(ump->um_devvp);
 	}
 	/*
 	 * Write back modified superblock.

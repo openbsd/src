@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.197 2018/04/24 17:22:33 landry Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.198 2018/04/28 03:13:04 visa Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2741,7 +2741,7 @@ uvideo_debug_file_open(struct uvideo_softc *sc)
 	}
 
 	sc->sc_vp = nd.ni_vp;
-	VOP_UNLOCK(sc->sc_vp, p);
+	VOP_UNLOCK(sc->sc_vp);
 	if (nd.ni_vp->v_type != VREG) {
 		vn_close(nd.ni_vp, FWRITE, p->p_ucred, p);
 		return (EIO);

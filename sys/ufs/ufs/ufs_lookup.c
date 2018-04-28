@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.50 2016/09/10 16:53:30 natano Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.51 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -422,7 +422,7 @@ notfound:
 		 */
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent) {
-			VOP_UNLOCK(vdp, p);
+			VOP_UNLOCK(vdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (EJUSTRETURN);
@@ -504,7 +504,7 @@ found:
 		}
 		*vpp = tdp;
 		if (!lockparent) {
-			VOP_UNLOCK(vdp, p);
+			VOP_UNLOCK(vdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (0);
@@ -533,7 +533,7 @@ found:
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent) {
-			VOP_UNLOCK(vdp, p);
+			VOP_UNLOCK(vdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (0);
@@ -560,7 +560,7 @@ found:
 	 */
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp, p);	/* race to get the inode */
+		VOP_UNLOCK(pdp);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
 		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
 		if (error) {
@@ -584,7 +584,7 @@ found:
 		if (error)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(pdp, p);
+			VOP_UNLOCK(pdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		*vpp = tdp;
@@ -779,7 +779,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 			if ((error = VOP_BWRITE(bp)))
 				return (error);
 			if (tvp != NULL)
-				VOP_UNLOCK(tvp, p);
+				VOP_UNLOCK(tvp);
 			error = VOP_FSYNC(dvp, p->p_ucred, MNT_WAIT, p);
 			if (tvp != NULL)
 				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -919,7 +919,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 
 	if (error == 0 && dp->i_endoff && dp->i_endoff < DIP(dp, size)) {
 		if (tvp != NULL)
-			VOP_UNLOCK(tvp, p);
+			VOP_UNLOCK(tvp);
 		error = UFS_TRUNCATE(dp, (off_t)dp->i_endoff, IO_SYNC, cr);
 #ifdef UFS_DIRHASH
 		if (error == 0 && dp->i_dirhash != NULL)

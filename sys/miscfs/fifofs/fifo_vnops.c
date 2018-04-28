@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.64 2018/04/08 18:57:39 guenther Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.65 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ fifo_open(void *v)
 	sounlock(s);
 	if ((ap->a_mode & O_NONBLOCK) == 0) {
 		if ((ap->a_mode & FREAD) && fip->fi_writers == 0) {
-			VOP_UNLOCK(vp, p);
+			VOP_UNLOCK(vp);
 			error = tsleep(&fip->fi_readers,
 			    PCATCH | PSOCK, "fifor", 0);
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -191,7 +191,7 @@ fifo_open(void *v)
 				goto bad;
 		}
 		if ((ap->a_mode & FWRITE) && fip->fi_readers == 0) {
-			VOP_UNLOCK(vp, p);
+			VOP_UNLOCK(vp);
 			error = tsleep(&fip->fi_writers,
 			    PCATCH | PSOCK, "fifow", 0);
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -226,7 +226,7 @@ fifo_read(void *v)
 		return (0);
 	if (ap->a_ioflag & IO_NDELAY)
 		rso->so_state |= SS_NBIO;
-	VOP_UNLOCK(ap->a_vp, p);
+	VOP_UNLOCK(ap->a_vp);
 	error = soreceive(rso, NULL, uio, NULL, NULL, NULL, 0);
 	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (ap->a_ioflag & IO_NDELAY) {
@@ -257,7 +257,7 @@ fifo_write(void *v)
 	/* XXXSMP changing state w/o lock isn't safe. */
 	if (ap->a_ioflag & IO_NDELAY)
 		wso->so_state |= SS_NBIO;
-	VOP_UNLOCK(ap->a_vp, p);
+	VOP_UNLOCK(ap->a_vp);
 	error = sosend(wso, NULL, ap->a_uio, NULL, NULL, 0);
 	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (ap->a_ioflag & IO_NDELAY)
@@ -346,7 +346,7 @@ fifo_inactive(void *v)
 {
 	struct vop_inactive_args *ap = v;
 
-	VOP_UNLOCK(ap->a_vp, ap->a_p);
+	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 

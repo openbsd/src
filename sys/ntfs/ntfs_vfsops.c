@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.58 2018/02/10 05:24:23 deraadt Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.59 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -280,7 +280,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 		return (EBUSY);
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
 
@@ -445,7 +445,7 @@ out:
 	/* lock the device vnode before calling VOP_CLOSE() */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	(void)VOP_CLOSE(devvp, FREAD, NOCRED, p);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 	
 	return (error);
 }

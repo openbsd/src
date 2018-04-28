@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.219 2018/04/12 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.220 2018/04/28 03:13:04 visa Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1569,7 +1569,7 @@ coredump(struct proc *p)
 	 */
 	vp = nd.ni_vp;
 	if ((error = VOP_GETATTR(vp, &vattr, cred, p)) != 0) {
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 		vn_close(vp, FWRITE, cred, p);
 		goto out;
 	}
@@ -1577,7 +1577,7 @@ coredump(struct proc *p)
 	    vattr.va_mode & ((VREAD | VWRITE) >> 3 | (VREAD | VWRITE) >> 6) ||
 	    vattr.va_uid != cred->cr_uid) {
 		error = EACCES;
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 		vn_close(vp, FWRITE, cred, p);
 		goto out;
 	}
@@ -1590,7 +1590,7 @@ coredump(struct proc *p)
 	io.io_vp = vp;
 	io.io_cred = cred;
 	io.io_offset = 0;
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	vref(vp);
 	error = vn_close(vp, FWRITE, cred, p);
 	if (error == 0)

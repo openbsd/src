@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.37 2017/11/30 11:29:03 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.38 2018/04/28 03:13:05 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -601,7 +601,7 @@ fusefs_link(void *v)
 
 out1:
 	if (dvp != vp)
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 out2:
 	vput(dvp);
 	return (error);
@@ -773,7 +773,7 @@ fusefs_inactive(void *v)
 
 	error = VOP_GETATTR(vp, &vattr, cred, p);
 
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 
 	if (error)
 		vrecycle(vp, p);
@@ -1211,7 +1211,7 @@ abortit:
 		    dp == ip ||
 		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT)) {
-			VOP_UNLOCK(fvp, p);
+			VOP_UNLOCK(fvp);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -1220,13 +1220,13 @@ abortit:
 
 	if (!fmp->sess_init) {
 		error = ENXIO;
-		VOP_UNLOCK(fvp, p);
+		VOP_UNLOCK(fvp);
 		goto abortit;
 	}
 
 	if (fmp->undef_op & UNDEF_RENAME) {
 		error = ENOSYS;
-		VOP_UNLOCK(fvp, p);
+		VOP_UNLOCK(fvp);
 		goto abortit;
 	}
 
@@ -1248,14 +1248,14 @@ abortit:
 		}
 
 		fb_delete(fbuf);
-		VOP_UNLOCK(fvp, p);
+		VOP_UNLOCK(fvp);
 		goto abortit;
 	}
 
 	fb_delete(fbuf);
 	VN_KNOTE(fvp, NOTE_RENAME);
 
-	VOP_UNLOCK(fvp, p);
+	VOP_UNLOCK(fvp);
 	if (tdvp == tvp)
 		vrele(tdvp);
 	else

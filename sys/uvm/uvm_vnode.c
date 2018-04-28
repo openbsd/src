@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.100 2018/03/30 11:22:58 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.101 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1197,7 +1197,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 			    curproc->p_ucred);
 
 		if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-			VOP_UNLOCK(vn, curproc);
+			VOP_UNLOCK(vn);
 
 	}
 
@@ -1323,7 +1323,7 @@ uvm_vnp_uncache(struct vnode *vp)
 	 * unlocked causing us to return TRUE when we should not.   we ignore
 	 * this as a false-positive return value doesn't hurt us.
 	 */
-	VOP_UNLOCK(vp, curproc);
+	VOP_UNLOCK(vp);
 	uvn_detach(&uvn->u_obj);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, curproc);
 

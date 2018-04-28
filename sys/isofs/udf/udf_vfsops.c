@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.63 2018/03/28 16:34:28 visa Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.64 2018/04/28 03:13:04 visa Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -240,7 +240,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 		return (EBUSY);
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
 
@@ -443,7 +443,7 @@ bail:
 
 	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY, p);
 	VOP_CLOSE(devvp, FREAD, FSCRED, p);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 
 	return (error);
 }
@@ -467,7 +467,7 @@ udf_unmount(struct mount *mp, int mntflags, struct proc *p)
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	vinvalbuf(devvp, V_SAVE, NOCRED, p, 0, 0);
 	(void)VOP_CLOSE(devvp, FREAD, NOCRED, p);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 
 	devvp->v_specmountpoint = NULL;
 	vrele(devvp);

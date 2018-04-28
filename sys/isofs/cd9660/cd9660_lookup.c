@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.25 2017/12/30 20:47:00 guenther Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.26 2018/04/28 03:13:04 visa Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -376,7 +376,7 @@ found:
 	 */
 	if (flags & ISDOTDOT) {
 		brelse(bp);
-		VOP_UNLOCK(pdp, p);	/* race to get the inode */
+		VOP_UNLOCK(pdp);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
 		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
 			    dp->i_ino != ino, NULL);
@@ -404,7 +404,7 @@ found:
 		if (error)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(pdp, p);
+			VOP_UNLOCK(pdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		*vpp = tdp;

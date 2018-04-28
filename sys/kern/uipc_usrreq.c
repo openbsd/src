@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.125 2018/04/27 10:13:37 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.126 2018/04/28 03:13:04 visa Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -468,7 +468,7 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	unp->unp_connid.gid = p->p_ucred->cr_gid;
 	unp->unp_connid.pid = p->p_p->ps_pid;
 	unp->unp_flags |= UNP_FEIDSBIND;
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	return (0);
 }
 

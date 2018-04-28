@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.64 2016/06/19 11:54:33 natano Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.65 2018/04/28 03:13:04 visa Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -1104,7 +1104,7 @@ lookloop:
 				nchstats.ncs_pass2++;
 			if (!(flags & LOCKPARENT) || !(flags & ISLASTCN)) {
 				ap->a_cnp->cn_flags |= PDIRUNLOCK;
-				VOP_UNLOCK(dvp, p);
+				VOP_UNLOCK(dvp);
 			}
 
 			*vpp = tdp;
@@ -1146,12 +1146,11 @@ udf_inactive(void *v)
 {
 	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct proc *p = ap->a_p;
 
 	/*
 	 * No need to sync anything, so just unlock the vnode and return.
 	 */
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.35 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.36 2018/04/28 03:13:04 visa Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ sys_acct(struct proc *p, void *v, register_t *retval)
 		    p);
 		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
-		VOP_UNLOCK(nd.ni_vp, p);
+		VOP_UNLOCK(nd.ni_vp);
 		if (nd.ni_vp->v_type != VREG) {
 			vn_close(nd.ni_vp, FWRITE, p->p_ucred, p);
 			return (EACCES);

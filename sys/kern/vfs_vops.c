@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.17 2018/02/10 05:24:23 deraadt Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.18 2018/04/28 03:13:05 visa Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -584,12 +584,11 @@ VOP_RECLAIM(struct vnode *vp, struct proc *p)
 }
 
 int
-VOP_LOCK(struct vnode *vp, int flags, struct proc *p)
+VOP_LOCK(struct vnode *vp, int flags)
 {
 	struct vop_lock_args a;
 	a.a_vp = vp;
 	a.a_flags = flags;
-	a.a_p = p;
 
 	if (vp->v_op->vop_lock == NULL)
 		return (EOPNOTSUPP);
@@ -598,12 +597,11 @@ VOP_LOCK(struct vnode *vp, int flags, struct proc *p)
 }
 
 int
-VOP_UNLOCK(struct vnode *vp, struct proc *p)
+VOP_UNLOCK(struct vnode *vp)
 {
 	int r;
 	struct vop_unlock_args a;
 	a.a_vp = vp;
-	a.a_p = p;
 
 	if (vp->v_op->vop_unlock == NULL)
 		return (EOPNOTSUPP);

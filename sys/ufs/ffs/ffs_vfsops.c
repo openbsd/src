@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.174 2018/03/30 17:35:20 dhill Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.175 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -564,7 +564,7 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	devvp = VFSTOUFS(mountp)->um_devvp;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, 0, cred, p, 0, 0);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 	if (error)
 		panic("ffs_reload: dirty1");
 
@@ -710,7 +710,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		return (EBUSY);
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
 
@@ -933,7 +933,7 @@ out:
 
 	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY, p);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 
 	if (ump) {
 		free(ump->um_fs, M_UFSMNT, ump->um_fs->fs_sbsize);
@@ -1098,7 +1098,7 @@ ffs_flushfiles(struct mount *mp, int flags, struct proc *p)
 	 */
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_FSYNC(ump->um_devvp, p->p_ucred, MNT_WAIT, p);
-	VOP_UNLOCK(ump->um_devvp, p);
+	VOP_UNLOCK(ump->um_devvp);
 	return (error);
 }
 
@@ -1186,7 +1186,7 @@ ffs_sync_vnode(struct vnode *vp, void *arg)
 
 	if ((error = VOP_FSYNC(vp, fsa->cred, fsa->waitfor, fsa->p)))
 		fsa->allerror = error;
-	VOP_UNLOCK(vp, fsa->p);
+	VOP_UNLOCK(vp);
 	vrele(vp);
 
 end:
@@ -1252,7 +1252,7 @@ ffs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred, struct pr
 		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
 			allerror = error;
-		VOP_UNLOCK(ump->um_devvp, p);
+		VOP_UNLOCK(ump->um_devvp);
 	}
 	qsync(mp);
 	/*

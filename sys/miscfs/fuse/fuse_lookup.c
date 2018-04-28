@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.17 2017/11/27 13:15:56 helg Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.18 2018/04/28 03:13:05 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -101,7 +101,7 @@ fusefs_lookup(void *v)
 				cnp->cn_flags |= SAVENAME;
 
 				if (!lockparent) {
-					VOP_UNLOCK(vdp, p);
+					VOP_UNLOCK(vdp);
 					cnp->cn_flags |= PDIRUNLOCK;
 				}
 
@@ -149,7 +149,7 @@ fusefs_lookup(void *v)
 	}
 
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(vdp, p);	/* race to get the inode */
+		VOP_UNLOCK(vdp);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
 
 		error = VFS_VGET(fmp->mp, nid, &tdp);
@@ -184,7 +184,7 @@ fusefs_lookup(void *v)
 		tdp->v_type = nvtype;
 
 		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(vdp, p);
+			VOP_UNLOCK(vdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 

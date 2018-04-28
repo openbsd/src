@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.117 2018/01/02 06:38:45 guenther Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.118 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1013,7 +1013,7 @@ abortit:
 		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->de_flag & DE_RENAME)) {
-			VOP_UNLOCK(fvp, p);
+			VOP_UNLOCK(fvp);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -1045,7 +1045,7 @@ abortit:
 	 * call to doscheckpath().
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-	VOP_UNLOCK(fvp, p);
+	VOP_UNLOCK(fvp);
 	if (VTODE(fdvp)->de_StartCluster != VTODE(tdvp)->de_StartCluster)
 		newparent = 1;
 	vrele(fdvp);
@@ -1114,7 +1114,7 @@ abortit:
 	if ((fcnp->cn_flags & SAVESTART) == 0)
 		panic("msdosfs_rename: lost from startdir");
 	if (!newparent)
-		VOP_UNLOCK(tdvp, p);
+		VOP_UNLOCK(tdvp);
 	(void) vfs_relookup(fdvp, &fvp, fcnp);
 	if (fvp == NULL) {
 		/*
@@ -1124,7 +1124,7 @@ abortit:
 			panic("rename: lost dir entry");
 		vrele(ap->a_fvp);
 		if (newparent)
-			VOP_UNLOCK(tdvp, p);
+			VOP_UNLOCK(tdvp);
 		vrele(tdvp);
 		return 0;
 	}
@@ -1145,7 +1145,7 @@ abortit:
 			panic("rename: lost dir entry");
 		vrele(ap->a_fvp);
 		if (newparent)
-			VOP_UNLOCK(fdvp, p);
+			VOP_UNLOCK(fdvp);
 		xp = NULL;
 	} else {
 		vrele(fvp);
@@ -1167,7 +1167,7 @@ abortit:
 		if (error) {
 			bcopy(oldname, ip->de_Name, 11);
 			if (newparent)
-				VOP_UNLOCK(fdvp, p);
+				VOP_UNLOCK(fdvp);
 			goto bad;
 		}
 		ip->de_refcnt++;
@@ -1175,7 +1175,7 @@ abortit:
 		if ((error = removede(zp, ip)) != 0) {
 			/* XXX should really panic here, fs is corrupt */
 			if (newparent)
-				VOP_UNLOCK(fdvp, p);
+				VOP_UNLOCK(fdvp);
 			goto bad;
 		}
 
@@ -1187,7 +1187,7 @@ abortit:
 			if (error) {
 				/* XXX should really panic here, fs is corrupt */
 				if (newparent)
-					VOP_UNLOCK(fdvp, p);
+					VOP_UNLOCK(fdvp);
 				goto bad;
 			}
 			ip->de_diroffset = to_diroffset;
@@ -1196,7 +1196,7 @@ abortit:
 		}
 		reinsert(ip);
 		if (newparent)
-			VOP_UNLOCK(fdvp, p);
+			VOP_UNLOCK(fdvp);
 	}
 
 	/*
@@ -1235,7 +1235,7 @@ abortit:
 	VN_KNOTE(fvp, NOTE_RENAME);
 
 bad:
-	VOP_UNLOCK(fvp, p);
+	VOP_UNLOCK(fvp);
 	vrele(fdvp);
 bad1:
 	if (xp)

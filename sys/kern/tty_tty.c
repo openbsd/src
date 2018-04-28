@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.22 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.23 2018/04/28 03:13:04 visa Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@ cttyopen(dev_t dev, int flag, int mode, struct proc *p)
 		return (ENXIO);
 	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_OPEN(ttyvp, flag, NOCRED, p);
-	VOP_UNLOCK(ttyvp, p);
+	VOP_UNLOCK(ttyvp);
 	return (error);
 }
 
@@ -74,7 +74,7 @@ cttyread(dev_t dev, struct uio *uio, int flag)
 		return (EIO);
 	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_READ(ttyvp, uio, flag, NOCRED);
-	VOP_UNLOCK(ttyvp, p);
+	VOP_UNLOCK(ttyvp);
 	return (error);
 }
 
@@ -89,7 +89,7 @@ cttywrite(dev_t dev, struct uio *uio, int flag)
 		return (EIO);
 	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_WRITE(ttyvp, uio, flag, NOCRED);
-	VOP_UNLOCK(ttyvp, p);
+	VOP_UNLOCK(ttyvp);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.136 2018/01/08 16:15:34 millert Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.137 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -685,7 +685,7 @@ ufs_link(void *v)
 	VN_KNOTE(dvp, NOTE_WRITE);
 out1:
 	if (dvp != vp)
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 out2:
 	vput(dvp);
 	return (error);
@@ -810,13 +810,13 @@ abortit:
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
 	if ((nlink_t) DIP(ip, nlink) >= LINK_MAX) {
-		VOP_UNLOCK(fvp, p);
+		VOP_UNLOCK(fvp);
 		error = EMLINK;
 		goto abortit;
 	}
 	if ((DIP(ip, flags) & (IMMUTABLE | APPEND)) ||
 	    (DIP(dp, flags) & APPEND)) {
-		VOP_UNLOCK(fvp, p);
+		VOP_UNLOCK(fvp);
 		error = EPERM;
 		goto abortit;
 	}
@@ -825,7 +825,7 @@ abortit:
 		if (!error && tvp)
 			error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
 		if (error) {
-			VOP_UNLOCK(fvp, p);
+			VOP_UNLOCK(fvp);
 			error = EACCES;
 			goto abortit;
 		}
@@ -837,7 +837,7 @@ abortit:
 		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
-			VOP_UNLOCK(fvp, p);
+			VOP_UNLOCK(fvp);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -868,7 +868,7 @@ abortit:
 	if (DOINGSOFTDEP(fvp))
 		softdep_change_linkcnt(ip, 0);
 	if ((error = UFS_UPDATE(ip, !DOINGSOFTDEP(fvp))) != 0) {
-		VOP_UNLOCK(fvp, p);
+		VOP_UNLOCK(fvp);
 		goto bad;
 	}
 
@@ -883,7 +883,7 @@ abortit:
 	 * call to checkpath().
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-	VOP_UNLOCK(fvp, p);
+	VOP_UNLOCK(fvp);
 
 	/* tdvp and tvp locked */
 	if (oldparent != dp->i_number)

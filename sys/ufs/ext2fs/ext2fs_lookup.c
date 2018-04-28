@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.42 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.43 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ searchloop:
 		 */
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent) {
-			VOP_UNLOCK(vdp, p);
+			VOP_UNLOCK(vdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (EJUSTRETURN);
@@ -512,7 +512,7 @@ found:
 		}
 		*vpp = tdp;
 		if (!lockparent) {
-			VOP_UNLOCK(vdp, p);
+			VOP_UNLOCK(vdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (0);
@@ -538,7 +538,7 @@ found:
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent) {
-			VOP_UNLOCK(vdp, p);
+			VOP_UNLOCK(vdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (0);
@@ -565,7 +565,7 @@ found:
 	 */
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp, p);	/* race to get the inode */
+		VOP_UNLOCK(pdp);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
 		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0) {
 			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
@@ -587,7 +587,7 @@ found:
 		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(pdp, p);
+			VOP_UNLOCK(pdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		*vpp = tdp;

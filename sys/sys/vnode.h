@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.143 2018/02/10 05:24:23 deraadt Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.144 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -514,15 +514,13 @@ int VOP_RECLAIM(struct vnode *, struct proc *);
 struct vop_lock_args {
 	struct vnode *a_vp;
 	int a_flags;
-	struct proc *a_p;
 };
-int VOP_LOCK(struct vnode *, int, struct proc *);
+int VOP_LOCK(struct vnode *, int);
 
 struct vop_unlock_args {
 	struct vnode *a_vp;
-	struct proc *a_p;
 };
-int VOP_UNLOCK(struct vnode *, struct proc *);
+int VOP_UNLOCK(struct vnode *);
 
 struct vop_bmap_args {
 	struct vnode *a_vp;

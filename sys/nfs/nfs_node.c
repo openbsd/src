@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.67 2018/04/09 09:39:53 mpi Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.68 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ nfs_inactive(void *v)
 	}
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT);
 
-	VOP_UNLOCK(ap->a_vp, ap->a_p);
+	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 
