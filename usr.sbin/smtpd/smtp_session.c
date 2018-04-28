@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.325 2018/04/28 11:09:18 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.326 2018/04/28 16:13:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -173,7 +173,6 @@ static void smtp_free(struct smtp_session *, const char *);
 static const char *smtp_strstate(int);
 static void smtp_tls_init(struct smtp_session *);
 static int smtp_verify_certificate(struct smtp_session *);
-static uint8_t dsn_notify_str_to_uint8(const char *);
 static void smtp_auth_failure_pause(struct smtp_session *);
 static void smtp_auth_failure_resume(int, short, void *);
 
@@ -1508,26 +1507,10 @@ abort:
 	smtp_enter_state(s, STATE_HELO);
 }
 
-static uint8_t
-dsn_notify_str_to_uint8(const char *arg)
-{
-	if (strcasecmp(arg, "SUCCESS") == 0)
-		return DSN_SUCCESS;
-	else if (strcasecmp(arg, "FAILURE") == 0)
-		return DSN_FAILURE;
-	else if (strcasecmp(arg, "DELAY") == 0)
-		return DSN_DELAY;
-	else if (strcasecmp(arg, "NEVER") == 0)
-		return DSN_NEVER;
-
-	return (0);
-}
-
 static int
 smtp_parse_rcpt_args(struct smtp_session *s, char *args)
 {
-	char 	*b, *p;
-	uint8_t flag;
+	char *b, *p;
 
 	while ((b = strsep(&args, " "))) {
 		if (*b == '\0')
@@ -1536,14 +1519,16 @@ smtp_parse_rcpt_args(struct smtp_session *s, char *args)
 		if (ADVERTISE_EXT_DSN(s) && strncasecmp(b, "NOTIFY=", 7) == 0) {
 			b += 7;
 			while ((p = strsep(&b, ","))) {
-				if (*p == '\0')
-					continue;
-
-				if ((flag = dsn_notify_str_to_uint8(p)) == 0)
-					continue;
-
-				s->tx->evp.dsn_notify |= flag;
+				if (strcasecmp(p, "SUCCESS") == 0)
+					s->tx->evp.dsn_notify |= DSN_SUCCESS;
+				else if (strcasecmp(p, "FAILURE") == 0)
+					s->tx->evp.dsn_notify |= DSN_FAILURE;
+				else if (strcasecmp(p, "DELAY") == 0)
+					s->tx->evp.dsn_notify |= DSN_DELAY;
+				else if (strcasecmp(p, "NEVER") == 0)
+					s->tx->evp.dsn_notify |= DSN_NEVER;
 			}
+
 			if (s->tx->evp.dsn_notify & DSN_NEVER &&
 			    s->tx->evp.dsn_notify & (DSN_SUCCESS | DSN_FAILURE |
 			    DSN_DELAY)) {
