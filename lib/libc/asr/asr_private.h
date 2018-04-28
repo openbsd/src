@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.46 2017/02/27 11:38:08 jca Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.47 2018/04/28 15:16:49 schwarze Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -113,8 +113,6 @@ enum async_type {
 	ASR_GETRRSETBYNAME,
 	ASR_GETHOSTBYNAME,
 	ASR_GETHOSTBYADDR,
-	ASR_GETNETBYNAME,
-	ASR_GETNETBYADDR,
 	ASR_GETADDRINFO,
 	ASR_GETNAMEINFO,
 };
@@ -158,6 +156,7 @@ struct asr {
 #define	ASYNC_NODATA		0x00000100
 #define	ASYNC_AGAIN		0x00000200
 
+#define	ASYNC_GETNET		0x00001000
 #define	ASYNC_EXTOBUF		0x00002000
 
 #define	ASYNC_NO_INET		0x00010000
@@ -228,12 +227,6 @@ struct asr_query {
 			int		 addrlen;
 			int		 subq_h_errno;
 		} hostnamadr;
-
-		struct {
-			char		*name;
-			int		 family;
-			in_addr_t	 addr;
-		} netnamadr;
 
 		struct {
 			char		*hostname;

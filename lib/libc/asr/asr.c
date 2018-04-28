@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.59 2018/03/13 12:25:34 jca Exp $	*/
+/*	$OpenBSD: asr.c,v 1.60 2018/04/28 15:16:49 schwarze Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -280,12 +280,6 @@ _asr_async_free(struct asr_query *as)
 	case ASR_GETHOSTBYADDR:
 		if (as->as.hostnamadr.name)
 			free(as->as.hostnamadr.name);
-		break;
-
-	case ASR_GETNETBYNAME:
-	case ASR_GETNETBYADDR:
-		if (as->as.netnamadr.name)
-			free(as->as.netnamadr.name);
 		break;
 
 	case ASR_GETADDRINFO:
