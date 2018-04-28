@@ -1,4 +1,4 @@
-/*	$OpenBSD: uonerng.c,v 1.2 2016/09/02 09:14:59 mpi Exp $ */
+/*	$OpenBSD: uonerng.c,v 1.3 2018/04/28 15:44:59 jasper Exp $ */
 /*
  * Copyright (C) 2015 Devin Reade <gdr@gno.org>
  * Copyright (C) 2015 Sean Levy <attila@stalphonsos.com>
@@ -424,7 +424,7 @@ uonerng_task(void *arg)
 
 	int_count = len / sizeof(int);
 	for (i = 0; i < int_count; i++) {
-		add_true_randomness(sc->sc_buf[i]);
+		enqueue_randomness(sc->sc_buf[i]);
 	}
 bail:
 

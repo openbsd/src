@@ -1,4 +1,4 @@
-/*	$OpenBSD: vrng.c,v 1.4 2010/08/07 03:50:01 krw Exp $	*/
+/*	$OpenBSD: vrng.c,v 1.5 2018/04/28 15:44:59 jasper Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -149,8 +149,8 @@ vrng_rnd(void *v)
 		if ((sc->sc_count++ % 100) == 0)
 			printf("vrng: %lx\n", rnd);
 #endif
-		add_true_randomness(rnd);
-		add_true_randomness(rnd >> 32);
+		enqueue_randomness(rnd);
+		enqueue_randomness(rnd >> 32);
 	}
 	if (err != H_EOK && err != H_EWOULDBLOCK)
 		printf("vrng_rnd: err = %d\n", err);

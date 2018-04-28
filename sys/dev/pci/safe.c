@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.42 2017/02/07 17:25:46 patrick Exp $	*/
+/*	$OpenBSD: safe.c,v 1.43 2018/04/28 15:44:59 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -1236,7 +1236,7 @@ retry:
 		WRITE_REG(sc, SAFE_RNG_ALM_CNT, 0);
 
 	for (i = 0; i < maxwords; i++)
-		add_true_randomness(buf[i]);
+		enqueue_randomness(buf[i]);
 
 	timeout_add_sec(&sc->sc_rngto, safe_rnginterval);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpihve.4,v 1.1 2017/01/10 08:54:14 jsg Exp $
+.\"	$OpenBSD: acpihve.4,v 1.2 2018/04/28 15:44:59 jasper Exp $
 .\"
 .\" Copyright (c) 2017 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 10 2017 $
+.Dd $Mdocdate: April 28 2018 $
 .Dt ACPIHVE 4
 .Os
 .Sh NAME
@@ -29,7 +29,7 @@ The
 driver feeds this entropy into the kernel's entropy pool.
 .Sh SEE ALSO
 .Xr acpi 4 ,
-.Xr add_true_randomness 9
+.Xr enqueue_randomness 9
 .Sh HISTORY
 The
 .Nm

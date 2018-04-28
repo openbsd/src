@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.117 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: bios.c,v 1.118 2018/04/28 15:44:59 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -1008,7 +1008,7 @@ smbios_info(char * str)
 	if (sminfop) {
 		infolen = strlen(sminfop) + 1;
 		for (i = 0; i < infolen - 1; i++)
-			add_timer_randomness(sminfop[i]);
+			enqueue_randomness(sminfop[i]);
 		hw_serial = malloc(infolen, M_DEVBUF, M_NOWAIT);
 		if (hw_serial)
 			strlcpy(hw_serial, sminfop, infolen);
@@ -1033,7 +1033,7 @@ smbios_info(char * str)
 			hw_uuid = "Not Set";
 		else {
 			for (i = 0; i < sizeof(sys->uuid); i++)
-				add_timer_randomness(sys->uuid[i]);
+				enqueue_randomness(sys->uuid[i]);
 			hw_uuid = malloc(SMBIOS_UUID_REPLEN, M_DEVBUF,
 			    M_NOWAIT);
 			if (hw_uuid) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.90 2018/04/20 07:27:54 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.91 2018/04/28 15:44:59 jasper Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -530,7 +530,7 @@ rdrand(void *v)
 			    "setc	%1\n"
 			    : "=r" (r), "=qm" (valid) );
 		if (valid)
-			add_true_randomness(r);
+			enqueue_randomness(r);
 	}
 
 	if (tmo)

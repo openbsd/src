@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.116 2018/04/24 15:32:28 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.117 2018/04/28 15:44:59 jasper Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -929,8 +929,8 @@ rdrand(void *v)
 
 	if (valid)
 		t.u64 ^= r.u64;
-	add_true_randomness(t.u32[0]);
-	add_true_randomness(t.u32[1]);
+	enqueue_randomness(t.u32[0]);
+	enqueue_randomness(t.u32[1]);
 
 	if (tmo)
 		timeout_add_msec(tmo, 10);

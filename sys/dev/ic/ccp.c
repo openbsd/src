@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.1 2018/04/20 04:37:21 dlg Exp $ */
+/*	$OpenBSD: ccp.c,v 1.2 2018/04/28 15:44:59 jasper Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -57,7 +57,7 @@ ccp_rng(void *arg)
 
 	trng = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CCP_REG_TRNG);
 	if (trng != 0)
-		add_true_randomness(trng);
+		enqueue_randomness(trng);
 
 	timeout_add_msec(&sc->sc_tick, 100);
 }

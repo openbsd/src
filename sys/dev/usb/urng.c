@@ -1,4 +1,4 @@
-/*	$OpenBSD: urng.c,v 1.7 2017/09/12 19:14:35 jasper Exp $ */
+/*	$OpenBSD: urng.c,v 1.8 2018/04/28 15:44:59 jasper Exp $ */
 
 /*
  * Copyright (c) 2017 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -280,7 +280,7 @@ urng_task(void *arg)
 
 	len /= sizeof(int);
 	for (i = 0; i < len; i++) {
-		add_true_randomness(sc->sc_buf[i]);
+		enqueue_randomness(sc->sc_buf[i]);
 	}
 bail:
 #ifdef URNG_MEASURE_RATE

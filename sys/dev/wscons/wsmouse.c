@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.43 2018/01/13 11:54:01 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.44 2018/04/28 15:44:59 jasper Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1106,7 +1106,7 @@ wsmouse_input_sync(struct device *sc)
 	evq.result = EVQ_RESULT_NONE;
 	getnanotime(&evq.ts);
 
-	add_mouse_randomness(input->btn.buttons
+	enqueue_randomness(input->btn.buttons
 	    ^ input->motion.dx ^ input->motion.dy
 	    ^ input->motion.pos.x ^ input->motion.pos.y
 	    ^ input->motion.dz ^ input->motion.dw);

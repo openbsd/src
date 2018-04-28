@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.38 2016/05/23 15:48:59 deraadt Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.39 2018/04/28 15:44:59 jasper Exp $	*/
 
 /*
  * Copyright (c) 1996,2000 Michael Shalayeff.
@@ -31,29 +31,10 @@
 #ifndef __RNDVAR_H__
 #define __RNDVAR_H__
 
-#define	RND_SRC_TRUE	0
-#define	RND_SRC_TIMER	1
-#define	RND_SRC_MOUSE	2
-#define	RND_SRC_TTY	3
-#define	RND_SRC_DISK	4
-#define	RND_SRC_NET	5
-#define	RND_SRC_AUDIO	6
-#define	RND_SRC_VIDEO	7
-#define	RND_SRC_NUM	8
-
 #ifdef _KERNEL
-#define	add_true_randomness(d)	enqueue_randomness(RND_SRC_TRUE,  (int)(d))
-#define	add_timer_randomness(d)	enqueue_randomness(RND_SRC_TIMER, (int)(d))
-#define	add_mouse_randomness(d)	enqueue_randomness(RND_SRC_MOUSE, (int)(d))
-#define	add_tty_randomness(d)	enqueue_randomness(RND_SRC_TTY,   (int)(d))
-#define	add_disk_randomness(d)	enqueue_randomness(RND_SRC_DISK,  (int)(d))
-#define	add_net_randomness(d)	enqueue_randomness(RND_SRC_NET,   (int)(d))
-#define	add_audio_randomness(d)	enqueue_randomness(RND_SRC_AUDIO, (int)(d))
-#define	add_video_randomness(d)	enqueue_randomness(RND_SRC_VIDEO, (int)(d))
-
 void random_start(void);
 
-void enqueue_randomness(unsigned int, unsigned int);
+void enqueue_randomness(unsigned int);
 void suspend_randomness(void);
 void resume_randomness(char *, size_t);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvrng.c,v 1.1 2018/04/02 21:40:59 kettenis Exp $	*/
+/*	$OpenBSD: mvrng.c,v 1.2 2018/04/28 15:44:59 jasper Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -136,10 +136,10 @@ mvrng_rnd(void *arg)
 		HWRITE4(sc, RNG_STATUS, RNG_STATUS_SHUTDOWN);
 	}
 	if (status & RNG_STATUS_READY) {
-		add_true_randomness(HREAD4(sc, RNG_OUTPUT0));
-		add_true_randomness(HREAD4(sc, RNG_OUTPUT1));
-		add_true_randomness(HREAD4(sc, RNG_OUTPUT2));
-		add_true_randomness(HREAD4(sc, RNG_OUTPUT3));
+		enqueue_randomness(HREAD4(sc, RNG_OUTPUT0));
+		enqueue_randomness(HREAD4(sc, RNG_OUTPUT1));
+		enqueue_randomness(HREAD4(sc, RNG_OUTPUT2));
+		enqueue_randomness(HREAD4(sc, RNG_OUTPUT3));
 		HWRITE4(sc, RNG_STATUS, RNG_STATUS_READY);
 	}
 

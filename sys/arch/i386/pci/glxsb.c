@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.34 2017/12/27 15:10:16 fcambus Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.35 2018/04/28 15:44:59 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -314,7 +314,7 @@ glxsb_rnd(void *v)
 	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SB_RANDOM_NUM_STATUS);
 	if (status & SB_RNS_TRNG_VALID) {
 		value = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SB_RANDOM_NUM);
-		add_true_randomness(value);
+		enqueue_randomness(value);
 	}
 
 	timeout_add_msec(&sc->sc_to, 10);

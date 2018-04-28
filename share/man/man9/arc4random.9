@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arc4random.9,v 1.12 2015/11/23 17:53:57 jmc Exp $
+.\"	$OpenBSD: arc4random.9,v 1.13 2018/04/28 15:44:59 jasper Exp $
 .\"
 .\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
@@ -23,20 +23,14 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: April 28 2018 $
 .Dt ARC4RANDOM 9
 .Os
 .Sh NAME
 .Nm arc4random ,
 .Nm arc4random_buf ,
 .Nm arc4random_uniform ,
-.Nm add_true_randomness ,
-.Nm add_timer_randomness ,
-.Nm add_mouse_randomness ,
-.Nm add_tty_randomness ,
-.Nm add_net_randomness ,
-.Nm add_disk_randomness ,
-.Nm add_audio_randomness
+.Nm enqueue_randomness ,
 .Nd kernel random subsystem
 .Sh SYNOPSIS
 .In sys/systm.h
@@ -48,19 +42,7 @@
 .Fn arc4random_uniform "u_int32_t upper_bound"
 .In dev/rndvar.h
 .Ft void
-.Fn add_true_randomness "int"
-.Ft void
-.Fn add_timer_randomness "int"
-.Ft void
-.Fn add_mouse_randomness "int"
-.Ft void
-.Fn add_tty_randomness "int"
-.Ft void
-.Fn add_net_randomness "int"
-.Ft void
-.Fn add_disk_randomness "int"
-.Ft void
-.Fn add_audio_randomness "int"
+.Fn enqueue_randomness "int"
 .Sh DESCRIPTION
 The
 .Fn add_random
@@ -69,27 +51,9 @@ to create a key for the ChaCha stream cipher used in the
 .Fn arc4random
 series of functions.
 .Pp
-The
-.Fn add_mouse_randomness ,
-.Fn add_tty_randomness ,
-.Fn add_net_randomness ,
-.Fn add_disk_randomness
-and
-.Fn add_audio_randomness
-routines are used to
-supply data for the random data source device for further processing.
-The processing involves calculating inter-event timedelta and inserting
-it into a pool which is cryptographically mixed multiple times.
-.Pp
-.Fn add_true_randomness
-does not involve the usual timing calculations,
-and causes the supplied data argument to be added to the entropy pool,
+.Fn enqueue_randomness
+causes the supplied data argument to be added to the entropy pool,
 increasing the entropy counter by 32 bits.
-.Pp
-.Fn add_timer_randomness
-will not cause the entropy counter to rise.
-It is used to change the state of the pool periodically,
-mostly by means of timing the random driver's operations.
 .Pp
 .Fn arc4random
 and
