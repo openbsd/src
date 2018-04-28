@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.134 2018/04/28 09:49:20 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.135 2018/04/28 10:10:02 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -880,7 +880,7 @@ sub to_cache
 
 sub ask_tree
 {
-	my ($self, $state, $dep, $portsdir, @action) = @_;
+	my ($self, $state, $pkgpath, $portsdir, $data, @action) = @_;
 
 	my $make = OpenBSD::Paths->make;
 	my $pid = open(my $fh, "-|");
@@ -893,15 +893,14 @@ sub ask_tree
 		$ENV{FULLPATH} = 'Yes';
 		delete $ENV{FLAVOR};
 		delete $ENV{SUBPACKAGE};
-		$ENV{SUBDIR} = $dep->{pkgpath};
+		$ENV{SUBDIR} = $pkgpath;
 		$ENV{ECHO_MSG} = ':';
 		# XXX we're already running as ${BUILD_USER}
 		# so we can't do this again
 		push(@action, 'PORTS_PRIVSEP=No');
 		exec $make ('make', @action);
 	}
-	my $plist = OpenBSD::PackingList->read($fh,
-	    \&OpenBSD::PackingList::PrelinkStuffOnly);
+	my $plist = OpenBSD::PackingList->read($fh, $data);
 	close($fh);
 	return $plist;
 }
@@ -916,7 +915,8 @@ sub really_solve_from_ports
 	if (defined $diskcache && -f $diskcache) {
 		$plist = OpenBSD::PackingList->fromfile($diskcache);
 	} else {
-		$plist = $self->ask_tree($state, $dep, $portsdir,
+		$plist = $self->ask_tree($state, $dep->{pkgpath}, $portsdir,
+		    \&OpenBSD::PackingList::PrelinkStuffOnly,
 		    'print-plist-libs-with-depends',
 		    'wantlib_args=no-wantlib-args');
 		if ($? != 0 || !defined $plist->pkgname) {
