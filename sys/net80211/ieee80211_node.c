@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.128 2018/04/27 15:27:10 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.129 2018/04/28 14:49:07 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -205,7 +205,7 @@ ieee80211_node_detach(struct ifnet *ifp)
 		(*ic->ic_node_free)(ic, ic->ic_bss);
 		ic->ic_bss = NULL;
 	}
-	ieee80211_free_allnodes(ic);
+	ieee80211_free_allnodes(ic, 1);
 #ifndef IEEE80211_STA_ONLY
 	free(ic->ic_aid_bitmap, M_DEVBUF,
 	    howmany(ic->ic_max_aid, 32) * sizeof(u_int32_t));
@@ -271,7 +271,7 @@ ieee80211_begin_scan(struct ifnet *ifp)
 	 * otherwise we'll potentially flush state of stations
 	 * associated with us.
 	 */
-	ieee80211_free_allnodes(ic);
+	ieee80211_free_allnodes(ic, 1);
 
 	/*
 	 * Reset the current mode. Setting the current mode will also
@@ -1348,7 +1348,7 @@ ieee80211_release_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 
 void
-ieee80211_free_allnodes(struct ieee80211com *ic)
+ieee80211_free_allnodes(struct ieee80211com *ic, int clear_ic_bss)
 {
 	struct ieee80211_node *ni;
 	int s;
@@ -1359,7 +1359,7 @@ ieee80211_free_allnodes(struct ieee80211com *ic)
 		ieee80211_free_node(ic, ni);
 	splx(s);
 
-	if (ic->ic_bss != NULL)
+	if (clear_ic_bss && ic->ic_bss != NULL)
 		ieee80211_node_cleanup(ic, ic->ic_bss);	/* for station mode */
 }
 

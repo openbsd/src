@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.73 2018/02/06 22:17:03 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.74 2018/04/28 14:49:07 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -382,7 +382,7 @@ struct ieee80211_node *
 		const char *, u_int8_t);
 void ieee80211_release_node(struct ieee80211com *,
 		struct ieee80211_node *);
-void ieee80211_free_allnodes(struct ieee80211com *);
+void ieee80211_free_allnodes(struct ieee80211com *, int);
 void ieee80211_iterate_nodes(struct ieee80211com *,
 		ieee80211_iter_func *, void *);
 void ieee80211_clean_cached(struct ieee80211com *);

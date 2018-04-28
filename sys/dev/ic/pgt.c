@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.91 2018/04/28 11:17:08 pirofti Exp $  */
+/*	$OpenBSD: pgt.c,v 1.92 2018/04/28 14:49:07 stsp Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2936,7 +2936,7 @@ pgt_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			ic->ic_if.if_timer = 0;
 		ic->ic_mgt_timer = 0;
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
-		ieee80211_free_allnodes(ic);
+		ieee80211_free_allnodes(ic, 1);
 		break;
 	case IEEE80211_S_SCAN:
 		ic->ic_if.if_timer = 1;
@@ -2944,7 +2944,7 @@ pgt_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		if (sc->sc_flags & SC_NOFREE_ALLNODES)
 			sc->sc_flags &= ~SC_NOFREE_ALLNODES;
 		else
-			ieee80211_free_allnodes(ic);
+			ieee80211_free_allnodes(ic, 1);
 
 #ifndef IEEE80211_STA_ONLY
 		/* Just use any old channel; we override it anyway. */

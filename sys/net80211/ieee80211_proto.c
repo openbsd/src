@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.84 2018/04/27 15:33:49 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.85 2018/04/28 14:49:07 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -944,7 +944,7 @@ justcleanup:
 			ic->ic_mgt_timer = 0;
 			mq_purge(&ic->ic_mgtq);
 			mq_purge(&ic->ic_pwrsaveq);
-			ieee80211_free_allnodes(ic);
+			ieee80211_free_allnodes(ic, 1);
 			break;
 		}
 		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
@@ -994,7 +994,7 @@ justcleanup:
 			}
 			timeout_del(&ic->ic_bgscan_timeout);
 			ic->ic_bgscan_fail = 0;
-			ieee80211_free_allnodes(ic);
+			ieee80211_free_allnodes(ic, 1);
 			/* FALLTHROUGH */
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_ASSOC:

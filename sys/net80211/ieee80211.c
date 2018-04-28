@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.67 2018/04/26 12:50:07 pirofti Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.68 2018/04/28 14:49:07 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -81,6 +81,15 @@ ieee80211_begin_bgscan(struct ifnet *ifp)
 		return;
 
 	if (ic->ic_bgscan_start != NULL && ic->ic_bgscan_start(ic) == 0) {
+		/*
+		 * Free the nodes table to ensure we get an up-to-date view
+		 * of APs around us. In particular, we need to kick out the
+		 * AP we are associated to. Otherwise, our current AP might
+		 * stay cached if it is turned off while we are scanning, and
+		 * we could end up picking a now non-existent AP over and over.
+		 */
+		ieee80211_free_allnodes(ic, 0 /* keep ic->ic_bss */);
+
 		ic->ic_flags |= IEEE80211_F_BGSCAN;
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: begin background scan\n", ifp->if_xname);

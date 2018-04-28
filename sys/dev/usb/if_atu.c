@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.124 2018/01/31 12:36:13 stsp Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.125 2018/04/28 14:49:07 stsp Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1210,7 +1210,7 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_SCAN:
 		memcpy(ic->ic_chan_scan, ic->ic_chan_active,
 		    sizeof(ic->ic_chan_active));
-		ieee80211_free_allnodes(ic);
+		ieee80211_free_allnodes(ic, 1);
 
 		/* tell the event thread that we want a scan */
 		sc->sc_cmd = ATU_C_SCAN;
