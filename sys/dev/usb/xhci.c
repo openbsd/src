@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.82 2018/04/27 13:25:08 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.83 2018/04/28 08:20:23 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -712,19 +712,21 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 	}
 
 	xp = sc->sc_sdevs[slot].pipes[dci - 1];
-	if (xp == NULL)
+	if (xp == NULL) {
+		DPRINTF(("%s: incorrect dci (%u)\n", DEVNAME(sc), dci));
 		return;
+	}
 
 	code = XHCI_TRB_GET_CODE(status);
 	remain = XHCI_TRB_REMAIN(status);
 
 	switch (code) {
 	case XHCI_CODE_RING_UNDERRUN:
-		DPRINTFN(4, ("%s: slot %u underrun wih %zu TRB\n", DEVNAME(sc),
+		DPRINTF(("%s: slot %u underrun wih %zu TRB\n", DEVNAME(sc),
 		    slot, xp->ring.ntrb - xp->free_trbs));
 		return;
 	case XHCI_CODE_RING_OVERRUN:
-		DPRINTFN(4, ("%s: slot %u overrun wih %zu TRB\n", DEVNAME(sc),
+		DPRINTF(("%s: slot %u overrun wih %zu TRB\n", DEVNAME(sc),
 		    slot, xp->ring.ntrb - xp->free_trbs));
 		return;
 	default:
@@ -768,8 +770,11 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		 * had a change to schedule the softinterrupt.
 		 */
 		xx = (struct xhci_xfer *)xfer;
-		if (xx->index != trb_idx)
+		if (xx->index != trb_idx) {
+			DPRINTF(("%s: short xfer %p for %u\n", DEVNAME(sc),
+			    xfer, xx->index));
 			return;
+		}
 
 		xfer->status = USBD_NORMAL_COMPLETION;
 		break;
