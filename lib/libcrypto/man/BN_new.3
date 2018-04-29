@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_new.3,v 1.13 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: BN_new.3,v 1.14 2018/04/29 15:58:21 schwarze Exp $
 .\" full merge up to: OpenSSL man3/BN_new 2457c19d Mar 6 08:43:36 2004 +0000
 .\" selective merge up to: man3/BN_new 681acb31 Sep 29 13:10:34 2017 +0200
 .\" full merge up to: OpenSSL man7/bn 05ea606a May 20 20:52:46 2016 -0400
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: April 29 2018 $
 .Dt BN_NEW 3
 .Os
 .Sh NAME
@@ -102,7 +102,11 @@ or accessed directly.
 .Fn BN_new
 allocates and initializes a
 .Vt BIGNUM
-structure, in particular setting the value to zero.
+structure, in particular setting the value to zero and the flags to
+.Dv BN_FLG_MALLOCED .
+The security-relevant flag
+.Dv BN_FLG_CONSTTIME
+is not set by default.
 .Pp
 .Fn BN_init
 initializes an existing uninitialized
