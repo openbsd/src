@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.327 2018/04/29 08:59:30 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.328 2018/04/29 09:23:00 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1931,16 +1931,16 @@ smtp_tx(struct smtp_session *s)
 	tx->session = s;
 
 	/* setup the envelope */
-	s->tx->evp.ss = s->ss;
-	(void)strlcpy(s->tx->evp.tag, s->listener->tag, sizeof(s->tx->evp.tag));
-	(void)strlcpy(s->tx->evp.smtpname, s->smtpname, sizeof(s->tx->evp.smtpname));
-	(void)strlcpy(s->tx->evp.hostname, s->hostname, sizeof s->tx->evp.hostname);
-	(void)strlcpy(s->tx->evp.helo, s->helo, sizeof s->tx->evp.helo);
+	tx->evp.ss = s->ss;
+	(void)strlcpy(tx->evp.tag, s->listener->tag, sizeof(tx->evp.tag));
+	(void)strlcpy(tx->evp.smtpname, s->smtpname, sizeof(tx->evp.smtpname));
+	(void)strlcpy(tx->evp.hostname, s->hostname, sizeof tx->evp.hostname);
+	(void)strlcpy(tx->evp.helo, s->helo, sizeof(tx->evp.helo));
 
 	if (s->flags & SF_BOUNCE)
-		s->tx->evp.flags |= EF_BOUNCE;
+		tx->evp.flags |= EF_BOUNCE;
 	if (s->flags & SF_AUTHENTICATED)
-		s->tx->evp.flags |= EF_AUTHENTICATED;
+		tx->evp.flags |= EF_AUTHENTICATED;
 
 	/* Setup parser and callbacks */
 	rfc2822_parser_init(&tx->rfc2822_parser);
@@ -2159,7 +2159,7 @@ smtp_message_fd(struct smtp_tx *tx, int fd)
 
 	log_debug("smtp: %p: message fd %d", s, fd);
 
-	if ((s->tx->ofile = fdopen(fd, "w")) == NULL) {
+	if ((tx->ofile = fdopen(fd, "w")) == NULL) {
 		close(fd);
 		smtp_reply(s, "421 %s: Temporary Error",
 		    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
@@ -2180,7 +2180,7 @@ smtp_message_fd(struct smtp_tx *tx, int fd)
 	    s->flags & SF_EHLO ? "E" : "",
 	    s->flags & SF_SECURE ? "S" : "",
 	    s->flags & SF_AUTHENTICATED ? "A" : "",
-	    s->tx->msgid);
+	    tx->msgid);
 
 	if (s->flags & SF_SECURE) {
 		x = SSL_get_peer_certificate(io_ssl(s->io));
