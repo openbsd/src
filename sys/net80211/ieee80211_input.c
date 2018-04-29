@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.199 2018/04/27 17:03:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.200 2018/04/29 12:11:48 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -273,7 +273,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			if ((*ic->ic_node_checkrssi)(ic, ni))
 				timeout_del(&ic->ic_bgscan_timeout);
 			else if (!timeout_pending(&ic->ic_bgscan_timeout) &&
-			    (ic->ic_flags & IEEE80211_F_BGSCAN) == 0)
+			    (ic->ic_flags & IEEE80211_F_BGSCAN) == 0 &&
+			    (ic->ic_flags & IEEE80211_F_DESBSSID) == 0)
 				timeout_add_msec(&ic->ic_bgscan_timeout,
 				    500 * (ic->ic_bgscan_fail + 1));
 		}
