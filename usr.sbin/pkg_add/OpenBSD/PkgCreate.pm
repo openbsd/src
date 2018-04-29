@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.135 2018/04/28 10:10:02 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.136 2018/04/29 20:38:17 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1107,7 +1107,8 @@ sub read_fragments
 					$l = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
 				if ($l =~ m/^(\!)?\%\%(.*)\%\%$/) {
-					$self->record_fragment($plist, $1, $2);
+					$self->record_fragment($plist, $1, $2, 
+					    $file);
 					if (my $f2 = $self->handle_fragment($state, $file, $1, $2, $l, $cont, $filename)) {
 						push(@$stack, $file);
 						$file = $f2;
