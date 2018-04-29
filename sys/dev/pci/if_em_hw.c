@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.101 2018/04/29 08:45:01 sf Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.102 2018/04/29 08:47:10 sf Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -1493,6 +1493,8 @@ em_init_hw(struct em_hw *hw)
 	/* Set the media type and TBI compatibility */
 	em_set_media_type(hw);
 
+	/* Magic delay that improves problems with i219LM on HP Elitebook */
+	msec_delay(1);
 	/* Must be called after em_set_media_type because media_type is used */
 	em_initialize_hardware_bits(hw);
 
