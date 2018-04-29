@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.99 2018/04/07 11:55:14 sf Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.100 2018/04/29 08:42:16 sf Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -9613,9 +9613,21 @@ em_get_software_flag(struct em_hw *hw)
 	if (IS_ICH8(hw->mac_type)) {
 		while (timeout) {
 			extcnf_ctrl = E1000_READ_REG(hw, EXTCNF_CTRL);
-			extcnf_ctrl |= E1000_EXTCNF_CTRL_SWFLAG;
-			E1000_WRITE_REG(hw, EXTCNF_CTRL, extcnf_ctrl);
+			if (!(extcnf_ctrl & E1000_EXTCNF_CTRL_SWFLAG))
+				break;
+			msec_delay_irq(1);
+			timeout--;
+		}
+		if (!timeout) {
+			printf("%s: SW has already locked the resource?\n",
+			    __func__);
+			return -E1000_ERR_CONFIG;
+		}
+		timeout = SW_FLAG_TIMEOUT;
+		extcnf_ctrl |= E1000_EXTCNF_CTRL_SWFLAG;
+		E1000_WRITE_REG(hw, EXTCNF_CTRL, extcnf_ctrl);
 
+		while (timeout) {
 			extcnf_ctrl = E1000_READ_REG(hw, EXTCNF_CTRL);
 			if (extcnf_ctrl & E1000_EXTCNF_CTRL_SWFLAG)
 				break;
@@ -9624,7 +9636,11 @@ em_get_software_flag(struct em_hw *hw)
 		}
 
 		if (!timeout) {
-			DEBUGOUT("FW or HW locks the resource too long.\n");
+			printf("Failed to acquire the semaphore, FW or HW "
+			    "has it: FWSM=0x%8.8x EXTCNF_CTRL=0x%8.8x)\n",
+			    E1000_READ_REG(hw, FWSM), extcnf_ctrl);
+			extcnf_ctrl &= ~E1000_EXTCNF_CTRL_SWFLAG;
+			E1000_WRITE_REG(hw, EXTCNF_CTRL, extcnf_ctrl);
 			return -E1000_ERR_CONFIG;
 		}
 	}
