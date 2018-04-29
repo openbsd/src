@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.85 2018/04/28 14:49:07 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.86 2018/04/29 08:35:28 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -1075,6 +1075,8 @@ justcleanup:
 	case IEEE80211_S_RUN:
 		switch (ostate) {
 		case IEEE80211_S_INIT:
+			if (ic->ic_opmode == IEEE80211_M_MONITOR)
+				break;
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_RUN:
 			if (ifp->if_flags & IFF_DEBUG)
