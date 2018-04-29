@@ -126,7 +126,6 @@
 ./etc/mtree/BSD.x11.dist
 ./etc/mtree/special
 ./etc/netstart
-./etc/networks
 ./etc/npppd
 ./etc/pf.os
 ./etc/ppp
@@ -535,6 +534,7 @@
 ./usr/bin/skeyinfo
 ./usr/bin/skeyinit
 ./usr/bin/skeyprune
+./usr/bin/smtp
 ./usr/bin/sndiod
 ./usr/bin/sort
 ./usr/bin/spell

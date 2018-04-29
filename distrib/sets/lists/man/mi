@@ -397,6 +397,7 @@
 ./usr/share/man/man1/skeyinfo.1
 ./usr/share/man/man1/skeyinit.1
 ./usr/share/man/man1/sleep.1
+./usr/share/man/man1/smtp.1
 ./usr/share/man/man1/sort.1
 ./usr/share/man/man1/sparc64/fdformat.1
 ./usr/share/man/man1/sparc64/mksuncd.1
@@ -2018,7 +2019,6 @@
 ./usr/share/man/man5/myname.5
 ./usr/share/man/man5/netgroup.5
 ./usr/share/man/man5/netid.5
-./usr/share/man/man5/networks.5
 ./usr/share/man/man5/npppd-users.5
 ./usr/share/man/man5/npppd.conf.5
 ./usr/share/man/man5/nsd.conf.5
