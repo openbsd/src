@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.83 2018/04/28 08:20:23 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.84 2018/04/29 09:00:42 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -1149,7 +1149,7 @@ xhci_pipe_interval(struct usbd_pipe *pipe)
 		}
 	}
 
-	KASSERT(ival >= 0 && ival <= 15);
+	KASSERT(ival <= 15);
 	return (XHCI_EPCTX_SET_IVAL(ival));
 }
 
