@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.11 2017/10/05 15:13:43 jmc Exp $
+.\" $OpenBSD: clang-local.1,v 1.12 2018/04/29 02:31:11 mortimer Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 5 2017 $
+.Dd $Mdocdate: April 29 2018 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -101,6 +101,11 @@ and
 .Xr free 3
 builtins are disabled to prevent undesirable optimizations of calls to
 these functions.
+.It
+.Nm clang
+includes a security pass that exchanges some ROP-friendly instructions
+for safe alternatives on i386 and amd64 (X86FixupGadgets pass).
+There is no option to disable this pass.
 .El
 .Sh SEE ALSO
 .Xr clang 1
