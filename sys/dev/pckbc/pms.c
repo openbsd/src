@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.85 2018/01/29 21:54:11 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.86 2018/04/29 08:50:04 krw Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -2448,7 +2448,7 @@ pms_proc_elantech_v3(struct pms_softc *sc)
 		}
 	}
 
-	/* Prevent juming cursor if pad isn't touched or reports garbage. */
+	/* Prevent jumping cursor if pad isn't touched or reports garbage. */
 	if (w == 0 ||
 	    ((x == 0 || y == 0 || x == elantech->max_x || y == elantech->max_y)
 	    && (x != elantech->old_x || y != elantech->old_y))) {
