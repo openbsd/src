@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.97 2018/02/03 13:37:37 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.98 2018/04/29 08:57:48 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -769,13 +769,11 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 
 	if (!pipe->repeat) {
 		/* Remove request from queue. */
+		KASSERT(xfer == SIMPLEQ_FIRST(&pipe->queue));
+		SIMPLEQ_REMOVE_HEAD(&pipe->queue, next);
 #ifdef DIAGNOSTIC
-		if (xfer != SIMPLEQ_FIRST(&pipe->queue))
-			printf("usb_transfer_complete: bad dequeue %p != %p\n",
-			    xfer, SIMPLEQ_FIRST(&pipe->queue));
 		xfer->busy_free = XFER_FREE;
 #endif
-		SIMPLEQ_REMOVE_HEAD(&pipe->queue, next);
 	}
 	DPRINTFN(5,("usb_transfer_complete: repeat=%d new head=%p\n",
 	    pipe->repeat, SIMPLEQ_FIRST(&pipe->queue)));
