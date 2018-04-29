@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.147 2018/04/13 19:55:13 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.148 2018/04/29 14:27:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 13 2018 $
+.Dd $Mdocdate: April 29 2018 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -34,9 +34,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility formats
-.Ux
-manual pages for display.
+utility formats manual pages for display.
 .Pp
 By default,
 .Nm
@@ -132,13 +130,32 @@ With other arguments,
 is silently ignored.
 .It Fl O Ar options
 Comma-separated output options.
+See the descriptions of the individual output formats for supported
+.Ar options .
 .It Fl T Ar output
-Output format.
-See
-.Sx Output Formats
-for available formats.
-Defaults to
-.Fl T Cm locale .
+Select the output format.
+Supported values for the
+.Ar output
+argument are
+.Cm ascii ,
+.Cm html ,
+the default of
+.Cm locale ,
+.Cm man ,
+.Cm markdown ,
+.Cm pdf ,
+.Cm ps ,
+.Cm tree ,
+and
+.Cm utf8 .
+.Pp
+The special
+.Fl T Cm lint
+mode only parses the input and produces no output.
+It implies
+.Fl W Cm all
+and redirects parser messages, which usually appear on standard
+error output, to standard output.
 .It Fl W Ar level
 Specify the minimum message
 .Ar level
@@ -196,11 +213,11 @@ and
 are requested, they can be joined with a comma, for example
 .Fl W Cm error , Ns Cm stop .
 .It Ar file
-Read input from zero or more files.
-If unspecified, reads from stdin.
-If multiple files are specified,
+Read from the given input file.
+If multiple files are specified, they are processed in the given order.
+If unspecified,
 .Nm
-will halt with the first failed parse.
+reads from standard input.
 .El
 .Pp
 The options
@@ -220,69 +237,14 @@ manual.
 The options
 .Fl fkl
 are mutually exclusive and override each other.
-.Ss Output Formats
-The
-.Nm
-utility accepts the following
-.Fl T
-arguments, which correspond to output modes:
-.Bl -tag -width "-T markdown"
-.It Fl T Cm ascii
-Produce 7-bit ASCII output.
-See
-.Sx ASCII Output .
-.It Fl T Cm html
-Produce HTML5, CSS1, and MathML output.
-See
-.Sx HTML Output .
-.It Fl T Cm lint
-Parse only: produce no output.
-Implies
-.Fl W Cm all
-and redirects parser messages, which usually appear
-on standard error output, to standard output.
-.It Fl T Cm locale
-Encode output using the current locale.
-This is the default.
-See
-.Sx Locale Output .
-.It Fl T Cm man
-Produce
-.Xr man 7
-format output.
-See
-.Sx Man Output .
-.It Fl T Cm markdown
-Produce output in
-.Sy markdown
-format.
-See
-.Sx Markdown Output .
-.It Fl T Cm pdf
-Produce PDF output.
-See
-.Sx PDF Output .
-.It Fl T Cm ps
-Produce PostScript output.
-See
-.Sx PostScript Output .
-.It Fl T Cm tree
-Produce an indented parse tree.
-See
-.Sx Syntax tree output .
-.It Fl T Cm utf8
-Encode output in the UTF\-8 multi-byte format.
-See
-.Sx UTF\-8 Output .
-.El
-.Pp
-If multiple input files are specified, these will be processed by the
-corresponding filter in-order.
 .Ss ASCII Output
-Output produced by
+Use
 .Fl T Cm ascii
-is rendered in standard 7-bit ASCII documented in
-.Xr ascii 7 .
+to force text output in 7-bit ASCII character encoding documented in the
+.Xr ascii 7
+manual page, ignoring the
+.Xr locale 1
+set in the environment.
 .Pp
 Font styles are applied by using back-spaced encoding such that an
 underlined character
@@ -356,7 +318,8 @@ defaults to simple output (via an embedded style-sheet)
 readable in any graphical or text-based web
 browser.
 .Pp
-Special characters are rendered in decimal-encoded UTF\-8.
+Non-ASCII characters are rendered
+as decimal numeric Unicode character references.
 .Pp
 The following
 .Fl O
@@ -406,19 +369,28 @@ This must be a valid absolute or
 relative URI.
 .El
 .Ss Locale Output
-Locale-depending output encoding is triggered with
+By default,
+.Nm
+automatically selects UTF-8 or ASCII output according to the current
+.Xr locale 1 .
+If any of the environment variables
+.Ev LC_ALL ,
+.Ev LC_CTYPE ,
+or
+.Ev LANG
+are set and the first one that is set
+selects the UTF-8 character encoding, it produces
+.Sx UTF-8 Output ;
+otherwise, it falls back to
+.Sx ASCII Output .
+This output mode can also be selected explicitly with
 .Fl T Cm locale .
-This is the default.
-.Pp
-This option is not available on all systems: systems without locale
-support, or those whose internal representation is not natively UCS-4,
-will fall back to
-.Fl T Cm ascii .
-See
-.Sx ASCII Output
-for font style specification and available command-line arguments.
 .Ss Man Output
-Translate input format into
+Use
+.Fl T Cm man
+to translate
+.Xr mdoc 7
+input into
 .Xr man 7
 output format.
 This is useful for distributing manual sources to legacy systems
@@ -426,11 +398,7 @@ lacking
 .Xr mdoc 7
 formatters.
 .Pp
-If
-.Xr mdoc 7
-is passed as input, it is translated into
-.Xr man 7 .
-If the input format is
+If the input format of a file is
 .Xr man 7 ,
 the input is copied to the output, expanding any
 .Xr roff 7
@@ -442,11 +410,11 @@ level controls which
 .Sx DIAGNOSTICS
 are displayed before copying the input to the output.
 .Ss Markdown Output
-Translate
+Use
+.Fl T Cm markdown
+to translate
 .Xr mdoc 7
-input to the
-.Sy markdown
-format conforming to
+input to the markdown format conforming to
 .Lk http://daringfireball.net/projects/markdown/syntax.text\
  "John Gruber's 2004 specification" .
 The output also almost conforms to the
@@ -517,13 +485,24 @@ If an unknown value is encountered,
 .Ar letter
 is used.
 .El
-.Ss UTF\-8 Output
+.Ss UTF-8 Output
 Use
 .Fl T Cm utf8
-to force a UTF\-8 locale.
+to force text output in UTF-8 multi-byte character encoding,
+ignoring the
+.Xr locale 1
+settings in the environment.
 See
-.Sx Locale Output
-for details and options.
+.Sx ASCII Output
+regarding font styles and
+.Fl O
+arguments.
+.Pp
+On operating systems lacking locale or wide character support, and
+on those where the internal character representation is not UCS-4,
+.Nm
+always falls back to
+.Sx ASCII Output .
 .Ss Syntax tree output
 Use
 .Fl T Cm tree
@@ -592,6 +571,13 @@ Meta data is not available in this case.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width MANPAGER
+.It Ev LC_CTYPE
+The character encoding
+.Xr locale 1 .
+When
+.Sx Locale Output
+is selected, it decides whether to use ASCII or UTF-8 output format.
+It never affects the interpretation of input files.
 .It Ev MANPAGER
 Any non-empty value of the environment variable
 .Ev MANPAGER
