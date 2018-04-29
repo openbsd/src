@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.75 2018/04/29 08:42:16 sf Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.76 2018/04/29 08:45:01 sf Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -1634,6 +1634,7 @@ struct em_hw {
     uint8_t bus_func;
     uint16_t swfw;
     boolean_t eee_enable;
+    int sw_flag;
 };
 
 #define E1000_EEPROM_SWDPIN0   0x0001   /* SWDPIN 0 EEPROM Value */

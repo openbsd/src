@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.100 2018/04/29 08:42:16 sf Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.101 2018/04/29 08:45:01 sf Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -945,6 +945,8 @@ em_reset_hw(struct em_hw *hw)
 		}
 		em_get_software_flag(hw);
 		E1000_WRITE_REG(hw, CTRL, (ctrl | E1000_CTRL_RST));
+		/* HW reset releases software_flag */
+		hw->sw_flag = 0;
 		msec_delay(20);
 
 		/* Ungate automatic PHY configuration on non-managed 82579 */
@@ -9611,6 +9613,10 @@ em_get_software_flag(struct em_hw *hw)
 	DEBUGFUNC("em_get_software_flag");
 
 	if (IS_ICH8(hw->mac_type)) {
+		if (hw->sw_flag) {
+			hw->sw_flag++;
+			return E1000_SUCCESS;
+		}
 		while (timeout) {
 			extcnf_ctrl = E1000_READ_REG(hw, EXTCNF_CTRL);
 			if (!(extcnf_ctrl & E1000_EXTCNF_CTRL_SWFLAG))
@@ -9644,6 +9650,7 @@ em_get_software_flag(struct em_hw *hw)
 			return -E1000_ERR_CONFIG;
 		}
 	}
+	hw->sw_flag++;
 	return E1000_SUCCESS;
 }
 
@@ -9663,6 +9670,9 @@ em_release_software_flag(struct em_hw *hw)
 	DEBUGFUNC("em_release_software_flag");
 
 	if (IS_ICH8(hw->mac_type)) {
+		KASSERT(hw->sw_flag > 0);
+		if (--hw->sw_flag > 0)
+			return;
 		extcnf_ctrl = E1000_READ_REG(hw, EXTCNF_CTRL);
 		extcnf_ctrl &= ~E1000_EXTCNF_CTRL_SWFLAG;
 		E1000_WRITE_REG(hw, EXTCNF_CTRL, extcnf_ctrl);
