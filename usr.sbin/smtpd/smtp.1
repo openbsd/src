@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtp.1,v 1.4 2018/04/28 16:17:39 eric Exp $
+.\"	$OpenBSD: smtp.1,v 1.5 2018/04/29 11:58:45 bentley Exp $
 .\"
 .\" Copyright (c) 2018, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2018 $
+.Dd $Mdocdate: April 29 2018 $
 .Dt SMTP 1
 .Os
 .Sh NAME
@@ -26,8 +26,7 @@
 .Op Fl F Ar from
 .Op Fl H Ar helo
 .Op Fl s Ar server
-.Op rcpt
-.Ar ...
+.Op Ar recipient ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -60,7 +59,7 @@ When this option is given, no message is read from the standard input.
 Specify the server to connect to and connection parameters.
 The format is
 .Sm off
-.Ar proto :// Op Ar user : pass No @
+.Ar proto No :// Op Ar user : pass No @
 .Ar host Op : Ar port .
 .Sm on
 The following protocols are available:
@@ -82,7 +81,8 @@ Plain text LMTP session.
 SMTP session with forced TLS on connection.
 .El
 .Pp
-Defaults to "smtp://localhost:25".
+Defaults to
+.Dq smtp://localhost:25 .
 .It Fl v
 Be more verbose.
 This option can be specified multiple times.
