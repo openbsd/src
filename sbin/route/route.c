@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.208 2018/04/28 18:53:12 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.209 2018/04/30 10:18:00 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ union sockunion so_dst, so_gate, so_mask, so_ifa, so_ifp, so_label, so_src;
 typedef union sockunion *sup;
 pid_t	pid;
 int	rtm_addrs, s;
-int	forcehost, forcenet, Fflag, nflag, af, qflag, tflag, Tflag;
+int	forcehost, forcenet, Fflag, nflag, qflag, tflag, Tflag;
 int	iflag, verbose, aflen = sizeof(struct sockaddr_in);
 int	locking, lockrest, debugonly;
 u_long	mpls_flags = MPLS_OP_LOCAL;
@@ -89,7 +89,7 @@ int	 show(int, char *[]);
 int	 keycmp(const void *, const void *);
 int	 keyword(char *);
 void	 monitor(int, char *[]);
-int	 prefixlen(char *);
+int	 prefixlen(int, char *);
 void	 sockaddr(char *, struct sockaddr *);
 void	 sodump(sup, char *);
 char	*priorityname(uint8_t);
@@ -109,7 +109,7 @@ void	 pmsg_addrs(char *, int);
 void	 bprintf(FILE *, int, char *);
 void	 mask_addr(union sockunion *, union sockunion *, int);
 int	 inet6_makenetandmask(struct sockaddr_in6 *, char *);
-int	 getaddr(int, char *, struct hostent **);
+int	 getaddr(int, int, char *, struct hostent **);
 void	 getmplslabel(char *, int);
 int	 rtmsg(int, int, int, uint8_t);
 __dead void usage(char *);
@@ -145,10 +145,12 @@ usage(char *cp)
 int
 main(int argc, char **argv)
 {
+	unsigned int filter = 0;
 	int ch;
 	int rval = 0;
 	int kw;
 	int Terr = 0;
+	int af = AF_UNSPEC;
 
 	if (argc < 2)
 		usage(NULL);
@@ -195,13 +197,7 @@ main(int argc, char **argv)
 	if (kw == K_EXEC)
 		exit(rdomain(argc - 1, argv + 1));
 
-	s = socket(PF_ROUTE, SOCK_RAW, 0);
-	if (s == -1)
-		err(1, "socket");
 	if (kw == K_MONITOR) {
-		unsigned int filter = 0;
-		int af = 0;
-
 		while (--argc > 0) {
 			if (**(++argv)== '-')
 				switch (keyword(*argv + 1)) {
@@ -223,10 +219,18 @@ main(int argc, char **argv)
 			else
 				usage(*argv);
 		}
+	}
+
+	s = socket(PF_ROUTE, SOCK_RAW, af);
+	if (s == -1)
+		err(1, "socket");
+
+	if (filter != 0) {
 		if (setsockopt(s, AF_ROUTE, ROUTE_MSGFILTER, &filter,
 		    sizeof(filter)) == -1)
 			err(1, "setsockopt(ROUTE_MSGFILTER)");
 	}
+
 	/* force socket onto table user requested */
 	if (Tflag == 1 && Terr == 0 &&
 	    setsockopt(s, AF_ROUTE, ROUTE_TABLEFILTER,
@@ -277,7 +281,7 @@ int
 flushroutes(int argc, char **argv)
 {
 	size_t needed;
-	int mib[7], rlen, seqno;
+	int mib[7], rlen, seqno, af = AF_UNSPEC;
 	char *buf = NULL, *next, *lim = NULL;
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
@@ -456,7 +460,7 @@ newroute(int argc, char **argv)
 {
 	char *cmd, *dest = "", *gateway = "", *error;
 	int ishost = 0, ret = 0, attempts, oerrno, flags = RTF_STATIC;
-	int fmask = 0;
+	int fmask = 0, af = AF_UNSPEC;
 	int key;
 	uint8_t prio = 0;
 	struct hostent *hp = NULL;
@@ -573,23 +577,23 @@ newroute(int argc, char **argv)
 			case K_IFA:
 				if (!--argc)
 					usage(1+*argv);
-				getaddr(RTA_IFA, *++argv, NULL);
+				getaddr(RTA_IFA, af, *++argv, NULL);
 				break;
 			case K_IFP:
 				if (!--argc)
 					usage(1+*argv);
-				getaddr(RTA_IFP, *++argv, NULL);
+				getaddr(RTA_IFP, af, *++argv, NULL);
 				break;
 			case K_GATEWAY:
 				if (!--argc)
 					usage(1+*argv);
-				getaddr(RTA_GATEWAY, *++argv, NULL);
+				getaddr(RTA_GATEWAY, af, *++argv, NULL);
 				gateway = *argv;
 				break;
 			case K_DST:
 				if (!--argc)
 					usage(1+*argv);
-				ishost = getaddr(RTA_DST, *++argv, &hp);
+				ishost = getaddr(RTA_DST, af, *++argv, &hp);
 				dest = *argv;
 				break;
 			case K_LABEL:
@@ -600,7 +604,7 @@ newroute(int argc, char **argv)
 			case K_NETMASK:
 				if (!--argc)
 					usage(1+*argv);
-				getaddr(RTA_NETMASK, *++argv, NULL);
+				getaddr(RTA_NETMASK, af, *++argv, NULL);
 				/* FALLTHROUGH */
 			case K_NET:
 				forcenet++;
@@ -608,7 +612,7 @@ newroute(int argc, char **argv)
 			case K_PREFIXLEN:
 				if (!--argc)
 					usage(1+*argv);
-				ishost = prefixlen(*++argv);
+				ishost = prefixlen(af, *++argv);
 				break;
 			case K_MPATH:
 				flags |= RTF_MPATH;
@@ -645,10 +649,10 @@ newroute(int argc, char **argv)
 		} else {
 			if ((rtm_addrs & RTA_DST) == 0) {
 				dest = *argv;
-				ishost = getaddr(RTA_DST, *argv, &hp);
+				ishost = getaddr(RTA_DST, af, *argv, &hp);
 			} else if ((rtm_addrs & RTA_GATEWAY) == 0) {
 				gateway = *argv;
-				getaddr(RTA_GATEWAY, *argv, &hp);
+				getaddr(RTA_GATEWAY, af, *argv, &hp);
 			} else
 				usage(NULL);
 		}
@@ -711,7 +715,7 @@ newroute(int argc, char **argv)
 int
 show(int argc, char *argv[])
 {
-	int		 af = 0;
+	int		 af = AF_UNSPEC;
 	char		 prio = 0;
 
 	while (--argc > 0) {
@@ -825,7 +829,7 @@ inet6_makenetandmask(struct sockaddr_in6 *sin6, char *plen)
 		return (1);
 	else {
 		rtm_addrs |= RTA_NETMASK;
-		prefixlen(plen);
+		prefixlen(AF_INET6, plen);
 
 		len = strtonum(plen, 0, 128, &errstr);
 		if (errstr)
@@ -849,7 +853,7 @@ inet6_makenetandmask(struct sockaddr_in6 *sin6, char *plen)
  * returning 1 if a host address, 0 if a network address.
  */
 int
-getaddr(int which, char *s, struct hostent **hpp)
+getaddr(int which, int af, char *s, struct hostent **hpp)
 {
 	sup su = NULL;
 	struct hostent *hp;
@@ -896,7 +900,7 @@ getaddr(int which, char *s, struct hostent **hpp)
 		switch (which) {
 		case RTA_DST:
 			forcenet++;
-			getaddr(RTA_NETMASK, s, NULL);
+			getaddr(RTA_NETMASK, af, s, NULL);
 			break;
 		case RTA_NETMASK:
 			su->sa.sa_len = 0;
@@ -1027,7 +1031,7 @@ getmplslabel(char *s, int in)
 }
 
 int
-prefixlen(char *s)
+prefixlen(int af, char *s)
 {
 	const char *errstr;
 	int len, q, r;
