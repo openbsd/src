@@ -1,4 +1,4 @@
-/*	$OpenBSD: strstr.c,v 1.7 2017/04/12 16:06:12 millert Exp $ */
+/*	$OpenBSD: strstr.c,v 1.8 2018/04/30 07:44:56 denis Exp $ */
 
 /*
  * Copyright (c) 2005-2014 Rich Felker
@@ -26,6 +26,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+
+#ifdef DEBUG
+#include <stdio.h>
+#endif
 
 static char *
 twobyte_strstr(const unsigned char *h, const unsigned char *n)
