@@ -347,9 +347,35 @@ amd64obsd_collect_uthread (const struct regcache *regcache,
 
 /* Kernel debugging support.  */
 
-/* From <machine/frame.h>.  Easy since `struct trapframe' matches
-   `struct sigcontext'.  */
-#define amd64obsd_tf_reg_offset amd64obsd_sc_reg_offset
+/* From <machine/frame.h> */
+static int amd64obsd_tf_reg_offset[] =
+{
+  14 * 8,			/* %rax */
+  13 * 8,			/* %rbx */
+  3 * 8,			/* %rcx */
+  2 * 8,			/* %rdx */
+  1 * 8,			/* %rsi */
+  0 * 8,			/* %rdi */
+  20 * 8,			/* %rbp */
+  24 * 8,			/* %rsp */
+  4 * 8,			/* %r8 ... */
+  5 * 8,
+  6 * 8,
+  7 * 8,
+  8 * 8,
+  9 * 8,
+  10 * 8,
+  11 * 8,			/* ... %r15 */
+  21 * 8,			/* %rip */
+  23 * 8,			/* %eflags */
+  22 * 8,			/* %cs */
+  25 * 8,			/* %ss */
+  18 * 8,			/* %ds */
+  17 * 8,			/* %es */
+  16 * 8,			/* %fs */
+  15 * 8			/* %gs */
+};
+
 
 static struct trad_frame_cache *
 amd64obsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
@@ -438,13 +464,10 @@ amd64obsd_trapframe_sniffer (const struct frame_unwind *self,
 
   find_pc_partial_function (frame_pc_unwind (next_frame), &name, NULL, NULL);
   return (name && ((strcmp (name, "calltrap") == 0)
+		   || (name[0] == 'X' && strncmp(name, "Xipi_", 5) != 0)
 		   || (strcmp (name, "alltraps") == 0)
-		   || (strcmp (name, "Xsyscall") == 0)
-		   || (strncmp (name, "Xintr", 5) == 0)
-		   || (strncmp (name, "Xresume", 7) == 0)
-		   || (strncmp (name, "Xrecurse", 8) == 0)
-		   || (strcmp (name, "Xdoreti") == 0)
-		   || (strncmp (name, "Xsoft", 5) == 0)));
+		   || (strcmp (name, "intr_fast_exit") == 0)
+		   || (strcmp (name, "intr_exit_recurse") == 0)));
 }
 
 static const struct frame_unwind amd64obsd_trapframe_unwind = {
