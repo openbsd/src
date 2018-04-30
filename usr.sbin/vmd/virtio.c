@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.59 2018/04/26 15:58:30 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.60 2018/04/30 08:27:53 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1142,7 +1142,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 		}
 	} else {
 		/* Fallback to pkt_desc descriptor */
-		if (pkt_desc->len >= sz) {
+		if ((uint64_t)pkt_desc->len >= (uint64_t)sz) {
 			/* Must be not readable */
 			if ((pkt_desc->flags & VRING_DESC_F_WRITE) == 0) {
 				log_warnx("unexpected readable rx desc %d",

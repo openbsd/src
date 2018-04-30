@@ -275,6 +275,13 @@ enum {
 };
 
 /*
+ * Port definitions not found elsewhere
+ */
+#define PCKBC_AUX	0x61
+#define ELCR0		0x4D0
+#define ELCR1		0x4D1
+
+/*
  * vm exit data
  *  vm_exit_inout		: describes an IN/OUT exit
  */
