@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.209 2018/04/30 10:18:00 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.210 2018/04/30 10:29:28 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -329,9 +329,9 @@ flushroutes(int argc, char **argv)
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
 	mib[2] = 0;		/* protocol */
-	mib[3] = 0;		/* wildcard address family */
+	mib[3] = af;
 	mib[4] = NET_RT_DUMP;
-	mib[5] = 0;		/* no flags */
+	mib[5] = prio;
 	mib[6] = tableid;
 	while (1) {
 		if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1)
@@ -372,11 +372,7 @@ flushroutes(int argc, char **argv)
 		if ((rtm->rtm_flags & (RTF_LOCAL|RTF_BROADCAST)) != 0)
 			continue;
 		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
-		if (af && sa->sa_family != af)
-			continue;
 		if (ifindex && rtm->rtm_index != ifindex)
-			continue;
-		if (prio && rtm->rtm_priority != prio)
 			continue;
 		if (sa->sa_family == AF_KEY)
 			continue;  /* Don't flush SPD */
