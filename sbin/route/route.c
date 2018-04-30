@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.211 2018/04/30 10:32:02 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.212 2018/04/30 15:06:18 schwarze Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -853,8 +853,8 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 {
 	sup su = NULL;
 	struct hostent *hp;
-	struct netent *np;
-	int afamily, bits;
+	int afamily, bits, irc;
+	in_addr_t addr;
 
 	if (af == 0) {
 		if (strchr(s, ':') != NULL) {
@@ -976,18 +976,24 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 				    &su->sin, bits);
 				return (0);
 			}
-			np = getnetbyname(s);
-			if (np != NULL && np->n_net != 0) {
-				inet_makenetandmask(np->n_net, &su->sin, 0);
-				return (0);
-			}
-			if (forcenet)
-				errx(1, "%s: not a network", s);
-		}
-		if (inet_pton(AF_INET, s, &su->sin.sin_addr) == 1)
-			return (1);
+		} else if (which != RTA_DST || !forcenet)
+			if (inet_pton(AF_INET, s, &su->sin.sin_addr) == 1)
+				return (1);
 		hp = gethostbyname(s);
 		if (hp != NULL) {
+			if (which == RTA_DST && !forcehost) {
+				addr = ((struct in_addr *)hp->h_addr)->s_addr;
+				if (addr != 0) {
+					inet_makenetandmask(ntohl(addr),
+					    &su->sin, 0);
+					irc = so_mask.sin.sin_addr.s_addr ==
+					    0xffffffff;
+					if (irc == 0 || !forcenet)
+						return (irc);
+				}
+				if (forcenet)
+					errx(1, "%s: not a network", s);
+			}
 			if (hpp != NULL)
 				*hpp = hp;
 			su->sin.sin_addr = *(struct in_addr *)hp->h_addr;

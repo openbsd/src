@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.84 2018/04/28 21:45:38 schwarze Exp $
+.\"	$OpenBSD: route.8,v 1.85 2018/04/30 15:06:18 schwarze Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: April 28 2018 $
+.Dd $Mdocdate: April 30 2018 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -454,11 +454,8 @@ All symbolic names specified for a
 .Ar destination
 or
 .Ar gateway
-are looked up first as a network name using
-.Xr getnetbyname 3 .
-If this lookup fails,
-.Xr gethostbyname 3
-is then used to interpret the name as a valid host name.
+are looked up using
+.Xr gethostbyname 3 .
 .Pp
 .Nm
 uses a routing socket (see

@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.110 2018/04/30 10:32:02 florian Exp $	*/
+/*	$OpenBSD: show.c,v 1.111 2018/04/30 15:06:18 schwarze Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -518,27 +518,24 @@ routename6(struct sockaddr_in6 *sin6)
 	return (line);
 }
 
-/*
- * Return the name of the network whose address is given.
- * The address is assumed to be that of a net or subnet, not a host.
- */
 char *
 netname4(in_addr_t in, struct sockaddr_in *maskp)
 {
 	char *cp = NULL;
-	struct netent *np = NULL;
+	struct hostent *hp;
 	in_addr_t mask;
 	int mbits;
 
-	in = ntohl(in);
 	mask = maskp && maskp->sin_len != 0 ? ntohl(maskp->sin_addr.s_addr) : 0;
 	if (!nflag && in != INADDR_ANY) {
-		if ((np = getnetbyaddr(in, AF_INET)) != NULL)
-			cp = np->n_name;
+		if ((hp = gethostbyaddr((char *)&in,
+		    sizeof(in), AF_INET)) != NULL)
+			cp = hp->h_name;
 	}
 	if (in == INADDR_ANY && mask == INADDR_ANY)
 		cp = "default";
 	mbits = mask ? 33 - ffs(mask) : 0;
+	in = ntohl(in);
 	if (cp)
 		strlcpy(line, cp, sizeof(line));
 #define C(x)	((x) & 0xff)
