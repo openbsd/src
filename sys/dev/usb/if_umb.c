@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.18 2018/02/19 08:59:52 mpi Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.19 2018/04/30 19:07:44 tb Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -965,7 +965,6 @@ umb_state_task(void *arg)
 			 */
 			memset(sc->sc_info.ipv4dns, 0,
 			    sizeof (sc->sc_info.ipv4dns));
-			NET_LOCK();
 			if (in_ioctl(SIOCGIFADDR, (caddr_t)&ifr, ifp, 1) == 0 &&
 			    satosin(&ifr.ifr_addr)->sin_addr.s_addr !=
 			    INADDR_ANY) {
@@ -974,7 +973,6 @@ umb_state_task(void *arg)
 				    sizeof (ifra.ifra_addr));
 				in_ioctl(SIOCDIFADDR, (caddr_t)&ifra, ifp, 1);
 			}
-			NET_UNLOCK();
 		}
 		if_link_state_change(ifp);
 	}
@@ -1661,9 +1659,7 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		sin->sin_len = sizeof (ifra.ifra_mask);
 		in_len2mask(&sin->sin_addr, ipv4elem.prefixlen);
 
-		NET_LOCK();
 		rv = in_ioctl(SIOCAIFADDR, (caddr_t)&ifra, ifp, 1);
-		NET_UNLOCK();
 		if (rv == 0) {
 			if (ifp->if_flags & IFF_DEBUG)
 				log(LOG_INFO, "%s: IPv4 addr %s, mask %s, "
