@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.96 2018/04/30 17:43:36 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.97 2018/05/01 15:11:42 anton Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -676,7 +676,8 @@ preloadcache(const char *name, uint16_t type, void *rdata, uint16_t rdatalen)
 	ttl = htonl(10);
 	memcpy(p, &ttl, 4);
 	p += 4;
-	memcpy(p, &rdatalen, 2);
+	len = htons(rdatalen);
+	memcpy(p, &len, 2);
 	p += 2;
 	memcpy(p, rdata, rdatalen);
 
