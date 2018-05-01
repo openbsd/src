@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.31 2018/03/20 04:18:40 jmatthew Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.32 2018/05/01 18:30:37 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -673,6 +673,12 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	int speed = 20000;
 	int timing = SDMMC_TIMING_LEGACY;
 	u_int32_t sectors = 0;
+
+	error = sdmmc_chip_bus_clock(sc->sct, sc->sch, speed, timing);
+	if (error) {
+		printf("%s: can't change bus clock\n", DEVNAME(sc));
+		return error;
+	}
 
 	if (sf->csd.mmcver >= MMC_CSD_MMCVER_4_0) {
 		/* read EXT_CSD */
