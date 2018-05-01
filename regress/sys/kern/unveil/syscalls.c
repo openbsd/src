@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.1 2018/04/28 21:10:30 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.2 2018/05/01 00:03:56 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <err.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -40,9 +41,20 @@ char pp_file2[] = "/tmp/ppfile2.XXXXXX"; /* not unveiled */
 	}									\
 } while (0)
 
-#define PP_SHOULD_FAIL(A, B) do {						\
+#define PP_SHOULD_ENOENT(A, B) do {						\
 	if (A) {				 				\
-		if (do_pp && errno != ENOENT)		     			\
+		if (do_pp && errno != ENOENT)					\
+			err(1, "%s:%d - %s", __FILE__, __LINE__, B);		\
+	} else {								\
+		if (do_pp)							\
+			errx(1, "%s:%d - %s worked when it should not "		\
+			    "have",  __FILE__, __LINE__, B);			\
+	}									\
+} while(0)
+
+#define PP_SHOULD_EACCES(A, B) do {						\
+	if (A) {				 				\
+		if (do_pp && errno != EACCES)					\
 			err(1, "%s:%d - %s", __FILE__, __LINE__, B);		\
 	} else {								\
 		if (do_pp)							\
@@ -170,8 +182,8 @@ test_open(int do_pp)
 	PP_SHOULD_SUCCEED((pledge("unveil stdio rpath cpath wpath exec", NULL) == -1), "pledge");
 
 
-	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
-	PP_SHOULD_FAIL(((dirfd3= open(pp_dir2, O_RDONLY | O_DIRECTORY)) == -1), "open");
+	PP_SHOULD_ENOENT((open(pp_file2, O_RDWR) == -1), "open");
+	PP_SHOULD_ENOENT(((dirfd3= open(pp_dir2, O_RDONLY | O_DIRECTORY)) == -1), "open");
 
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
 	if (!do_pp) {
@@ -181,20 +193,19 @@ test_open(int do_pp)
 	}
 	sleep(1);
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
-	PP_SHOULD_SUCCEED((openat(dirfd, "etc/hosts", O_RDONLY) == -1), "openat");
-	PP_SHOULD_FAIL((openat(dirfd, pp_file2, O_RDWR) == -1), "openat");
-	PP_SHOULD_SUCCEED((openat(dirfd2, "hooray", O_RDWR|O_CREAT) == -1), "openat");
-	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
+	PP_SHOULD_ENOENT((openat(dirfd, "etc/hosts", O_RDONLY) == -1), "openat");
+	PP_SHOULD_ENOENT((openat(dirfd, pp_file2, O_RDWR) == -1), "openat");
+	PP_SHOULD_ENOENT((openat(dirfd2, "hooray", O_RDWR|O_CREAT) == -1), "openat");
+	PP_SHOULD_ENOENT((open(pp_file2, O_RDWR) == -1), "open");
 	(void) snprintf(filename, sizeof(filename), "%s/%s", pp_dir1, "newfile");
 	PP_SHOULD_SUCCEED((open(filename, O_RDWR|O_CREAT) == -1), "open");
 	(void) snprintf(filename, sizeof(filename), "/%s/%s", pp_dir1, "doubleslash");
 	PP_SHOULD_SUCCEED((open(filename, O_RDWR|O_CREAT) == -1), "open");
 	(void) snprintf(filename, sizeof(filename), "/%s//%s", pp_dir1, "doubleslash2");
 	PP_SHOULD_SUCCEED((open(filename, O_RDWR|O_CREAT) == -1), "open");
-	(void) snprintf(filename, sizeof(filename), "%s/../..%s/%s", pp_dir1, pp_dir1, "blem");
-	PP_SHOULD_FAIL((open(filename, O_RDWR|O_CREAT) == -1), "open");
+
 	(void) snprintf(filename, sizeof(filename), "%s/%s", pp_dir2, "newfile");
-	PP_SHOULD_FAIL((open(filename, O_RDWR|O_CREAT) == -1), "open");
+	PP_SHOULD_ENOENT((open(filename, O_RDWR|O_CREAT) == -1), "open");
 
 	if (do_pp) {
 		printf("testing flag escalation\n");
@@ -209,16 +220,44 @@ test_open(int do_pp)
 }
 
 static int
+test_opendir(int do_pp)
+{
+	char filename[256];
+	if (do_pp) {
+		printf("testing opendir\n");
+		do_unveil();
+	}
+	PP_SHOULD_SUCCEED((opendir(pp_dir1) == NULL), "opendir");
+	PP_SHOULD_ENOENT((opendir(pp_dir2) == NULL), "opendir");
+	(void) snprintf(filename, sizeof(filename), "/%s/.", pp_dir1);
+	PP_SHOULD_SUCCEED((opendir(filename) == NULL), "opendir");
+	(void) snprintf(filename, sizeof(filename), "/%s/..", pp_dir1);
+	PP_SHOULD_EACCES((opendir(filename) == NULL), "opendir");
+	(void) snprintf(filename, sizeof(filename), "/%s/subdir", pp_dir1);
+	PP_SHOULD_SUCCEED((opendir(filename) == NULL), "opendir");
+	(void) snprintf(filename, sizeof(filename), "/%s/subdir/../subdir", pp_dir1);
+	PP_SHOULD_SUCCEED((opendir(filename) == NULL), "opendir");
+	(void) snprintf(filename, sizeof(filename), "/%s/../../%s/subdir", pp_dir1, pp_dir1);
+	PP_SHOULD_SUCCEED((opendir(filename) == NULL), "opendir");
+	(void) snprintf(filename, sizeof(filename), "/%s/subdir", pp_dir2);
+	PP_SHOULD_ENOENT((opendir(filename) == NULL), "opendir");
+	(void) snprintf(filename, sizeof(filename), "/%s/../../%s/subdir", pp_dir1, pp_dir2);
+	PP_SHOULD_ENOENT((opendir(filename) == NULL), "opendir");
+	return 0;
+}
+
+static int
 test_r(int do_pp)
 {
 	if (do_pp) {
 		printf("testing \"r\"\n");
 		if (unveil(pp_file1, "r") == -1)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+		if (unveil("/", "") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
 	}
-	PP_SHOULD_SUCCEED((unveil(NULL, NULL) == -1), "unveil");
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
-	PP_SHOULD_FAIL((open(pp_file1, O_RDWR) == -1), "open");
+	PP_SHOULD_EACCES((open(pp_file1, O_RDWR) == -1), "open");
 	return 0;
 }
 
@@ -229,8 +268,9 @@ test_rw(int do_pp)
 		printf("testing \"rw\"\n");
 		if (unveil(pp_file1, "rw") == -1)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+		if (unveil("/", "") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
 	}
-	PP_SHOULD_SUCCEED((unveil(NULL, NULL) == -1), "unveil");
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDONLY) == -1), "open");
 	return 0;
@@ -244,12 +284,13 @@ test_x(int do_pp)
 		printf("testing \"x\"\n");
 		if (unveil(pp_file1, "x") == -1)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+		if (unveil("/", "") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
 	}
-	PP_SHOULD_SUCCEED((unveil(NULL, NULL) == -1), "unveil");
 	PP_SHOULD_SUCCEED((lstat(pp_file1, &sb) == -1), "lstat");
-	PP_SHOULD_FAIL((open(pp_file1, O_RDONLY) == -1), "open");
-	PP_SHOULD_FAIL((open(pp_file1, O_RDONLY) == -1), "open");
-	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
+	PP_SHOULD_EACCES((open(pp_file1, O_RDONLY) == -1), "open");
+	PP_SHOULD_EACCES((open(pp_file1, O_RDONLY) == -1), "open");
+	PP_SHOULD_ENOENT((open(pp_file2, O_RDWR) == -1), "open");
 	return 0;
 }
 
@@ -270,7 +311,7 @@ test_noflags(int do_pp)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
 	}
 	(void) snprintf(filename, sizeof(filename), "%s/%s", pp_dir1, "noflagsiamboned");
-	PP_SHOULD_FAIL((open(filename, O_RDWR|O_CREAT) == -1), "open");
+	PP_SHOULD_ENOENT((open(filename, O_RDWR|O_CREAT) == -1), "open");
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
 	return 0;
 }
@@ -291,7 +332,7 @@ test_droppath(int do_pp)
 	}
 	PP_SHOULD_SUCCEED((pledge("stdio rpath cpath wpath", NULL) == -1), "pledge");
 
-	PP_SHOULD_FAIL((open(pp_file2, O_RDWR) == -1), "open");
+	PP_SHOULD_ENOENT((open(pp_file2, O_RDWR) == -1), "open");
 	PP_SHOULD_SUCCEED((open(pp_file1, O_RDWR) == -1), "open");
 	return 0;
 }
@@ -322,8 +363,8 @@ test_unlink(int do_pp)
 	PP_SHOULD_SUCCEED((pledge("unveil stdio fattr rpath cpath wpath", NULL) == -1),
 	    "pledge");
 	PP_SHOULD_SUCCEED((unlink(filename1) == -1), "unlink");
-	PP_SHOULD_FAIL((unlink(filename2) == -1), "unlink");
-	PP_SHOULD_FAIL((unlink(filename3) == -1), "unlink");
+	PP_SHOULD_ENOENT((unlink(filename2) == -1), "unlink");
+	PP_SHOULD_EACCES((unlink(filename3) == -1), "unlink");
 	return 0;
 }
 
@@ -348,15 +389,15 @@ test_link(int do_pp)
 	unlink(filename2);
 	PP_SHOULD_SUCCEED((link(pp_file1, filename) == -1), "link");
 	unlink(filename);
-	PP_SHOULD_FAIL((link(pp_file2, filename) == -1), "link");
-	PP_SHOULD_FAIL((link(pp_file1, filename2) == -1), "link");
+	PP_SHOULD_ENOENT((link(pp_file2, filename) == -1), "link");
+	PP_SHOULD_ENOENT((link(pp_file1, filename2) == -1), "link");
 	if (do_pp) {
 		printf("testing link without O_CREAT\n");
 		if (unveil(filename, "rw") == -1)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
 
 	}
-	PP_SHOULD_FAIL((link(pp_file1, filename) == -1), "link");
+	PP_SHOULD_EACCES((link(pp_file1, filename) == -1), "link");
 	unlink(filename);
 
 	return 0;
@@ -373,7 +414,7 @@ test_chdir(int do_pp)
 
 	PP_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
 	PP_SHOULD_SUCCEED((chdir(pp_dir1) == -1), "chdir");
-	PP_SHOULD_FAIL((chdir(pp_dir2) == -1), "chdir");
+	PP_SHOULD_ENOENT((chdir(pp_dir2) == -1), "chdir");
 
 	return 0;
 }
@@ -409,16 +450,16 @@ test_rename(int do_pp)
 	PP_SHOULD_SUCCEED((pledge("stdio fattr rpath wpath cpath", NULL) == -1),
 	    "pledge");
 	PP_SHOULD_SUCCEED((rename(filename1, rfilename1) == -1), "rename");
-	PP_SHOULD_FAIL((rename(filename2, rfilename2) == -1), "rename");
+	PP_SHOULD_ENOENT((rename(filename2, rfilename2) == -1), "rename");
 	PP_SHOULD_SUCCEED((open(filename1, O_RDWR|O_CREAT) == -1), "open");
-	PP_SHOULD_FAIL((rename(filename1, rfilename2) == -1), "rename");
+	PP_SHOULD_ENOENT((rename(filename1, rfilename2) == -1), "rename");
 	PP_SHOULD_SUCCEED((open(filename1, O_RDWR|O_CREAT) == -1), "open");
-	PP_SHOULD_FAIL((rename(filename1, pp_file2) == -1), "rename");
+	PP_SHOULD_ENOENT((rename(filename1, pp_file2) == -1), "rename");
 	PP_SHOULD_SUCCEED((open(filename1, O_RDWR|O_CREAT) == -1), "open");
-	PP_SHOULD_SUCCEED((renameat(dirfd1, "file1", dirfd2, "rfile2") == -1),
+	PP_SHOULD_ENOENT((renameat(dirfd1, "file1", dirfd2, "rfile2") == -1),
 	    "renameat");
 	PP_SHOULD_SUCCEED((open(filename1, O_RDWR|O_CREAT) == -1), "open");
-	PP_SHOULD_FAIL((renameat(dirfd1, "file1", dirfd2, rfilename2) == -1),
+	PP_SHOULD_ENOENT((renameat(dirfd1, "file1", dirfd2, rfilename2) == -1),
 	    "renameat");
 
 	return (0);
@@ -435,9 +476,9 @@ test_access(int do_pp)
 
 	PP_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
 	PP_SHOULD_SUCCEED((access(pp_file1, R_OK) == -1), "access");
-	PP_SHOULD_FAIL((access(pp_file2, R_OK) == -1), "access");
+	PP_SHOULD_ENOENT((access(pp_file2, R_OK) == -1), "access");
 	PP_SHOULD_SUCCEED((access(pp_dir1, R_OK) == -1), "access");
-	PP_SHOULD_FAIL((access(pp_dir2, R_OK) == -1), "access");
+	PP_SHOULD_ENOENT((access(pp_dir2, R_OK) == -1), "access");
 
 	return 0;
 }
@@ -452,7 +493,7 @@ test_chflags(int do_pp)
 
 	PP_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
 	PP_SHOULD_SUCCEED((chflags(pp_file1, UF_NODUMP) == -1), "chflags");
-	PP_SHOULD_FAIL((chflags(pp_file2, UF_NODUMP) == -1), "chflags");
+	PP_SHOULD_ENOENT((chflags(pp_file2, UF_NODUMP) == -1), "chflags");
 
 	return 0;
 }
@@ -468,9 +509,9 @@ test_stat(int do_pp)
 
 	PP_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
 	PP_SHOULD_SUCCEED((stat(pp_file1, &sb) == -1), "stat");
-	PP_SHOULD_FAIL((stat(pp_file2, &sb) == -1), "stat");
+	PP_SHOULD_ENOENT((stat(pp_file2, &sb) == -1), "stat");
 	PP_SHOULD_SUCCEED((stat(pp_dir1, &sb) == -1), "stat");
-	PP_SHOULD_FAIL((stat(pp_dir2, &sb) == -1), "stat");
+	PP_SHOULD_ENOENT((stat(pp_dir2, &sb) == -1), "stat");
 
 	return 0;
 }
@@ -486,9 +527,9 @@ test_statfs(int do_pp)
 
 	PP_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
 	PP_SHOULD_SUCCEED((statfs(pp_file1, &sb) == -1), "statfs");
-	PP_SHOULD_FAIL((statfs(pp_file2, &sb) == -1), "statfs");
+	PP_SHOULD_ENOENT((statfs(pp_file2, &sb) == -1), "statfs");
 	PP_SHOULD_SUCCEED((statfs(pp_dir1, &sb) == -1), "statfs");
-	PP_SHOULD_FAIL((statfs(pp_dir2, &sb) == -1), "statfs");
+	PP_SHOULD_ENOENT((statfs(pp_dir2, &sb) == -1), "statfs");
 
 	return 0;
 }
@@ -522,9 +563,9 @@ test_symlink(int do_pp)
 	PP_SHOULD_SUCCEED((symlink(pp_file2, filename) == -1), "symlink");
 	PP_SHOULD_SUCCEED((lstat(filename, &sb) == -1), "lstat");
 	PP_SHOULD_SUCCEED((readlink(filename, buf, sizeof(buf)) == -1), "readlink");
-	PP_SHOULD_FAIL((lstat(pp_file2, &sb) == -1), "lstat");
-	PP_SHOULD_FAIL((symlink(pp_file1, filename2) == -1), "symlink");
-	PP_SHOULD_FAIL((readlink(filename2, buf, sizeof(buf)) == -1), "readlink");
+	PP_SHOULD_ENOENT((lstat(pp_file2, &sb) == -1), "lstat");
+	PP_SHOULD_ENOENT((symlink(pp_file1, filename2) == -1), "symlink");
+	PP_SHOULD_ENOENT((readlink(filename2, buf, sizeof(buf)) == -1), "readlink");
 	unlink(filename);
 
 	if (do_pp) {
@@ -532,7 +573,7 @@ test_symlink(int do_pp)
 		if (unveil(filename, "rw") == -1)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
 	}
-	PP_SHOULD_FAIL((symlink(pp_file1, filename) == -1), "symlink");
+	PP_SHOULD_EACCES((symlink(pp_file1, filename) == -1), "symlink");
 
 	return 0;
 }
@@ -546,9 +587,9 @@ test_chmod(int do_pp)
 	}
 	PP_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
 	PP_SHOULD_SUCCEED((chmod(pp_file1, S_IRWXU) == -1), "chmod");
-	PP_SHOULD_FAIL((chmod(pp_file2, S_IRWXU) == -1), "chmod");
+	PP_SHOULD_ENOENT((chmod(pp_file2, S_IRWXU) == -1), "chmod");
 	PP_SHOULD_SUCCEED((chmod(pp_dir1, S_IRWXU) == -1), "chmod");
-	PP_SHOULD_FAIL((chmod(pp_dir2, S_IRWXU) == -1), "chmod");
+	PP_SHOULD_ENOENT((chmod(pp_dir2, S_IRWXU) == -1), "chmod");
 
 	return 0;
 }
@@ -577,7 +618,7 @@ test_exec2(int do_pp)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
 	}
 	PP_SHOULD_SUCCEED((pledge("unveil stdio fattr exec", NULL) == -1), "pledge");
-	PP_SHOULD_FAIL((execve(argv[0], argv, environ) == -1), "execve");
+	PP_SHOULD_EACCES((execve(argv[0], argv, environ) == -1), "execve");
 	return 0;
 }
 
@@ -585,6 +626,7 @@ int
 main (int argc, char *argv[])
 {
 	int fd1, fd2, failures = 0;
+	char filename[256];
 
 	PP_SHOULD_SUCCEED((mkdtemp(pp_dir1) == NULL), "mkdtmp");
 	PP_SHOULD_SUCCEED((mkdtemp(pp_dir2) == NULL), "mkdtmp");
@@ -592,9 +634,14 @@ main (int argc, char *argv[])
 	close(fd1);
 	PP_SHOULD_SUCCEED((chmod(pp_file1, S_IRWXU) == -1), "chmod");
 	PP_SHOULD_SUCCEED(((fd2 = mkstemp(pp_file2)) == -1), "mkstemp");
+	(void) snprintf(filename, sizeof(filename), "/%s/subdir", pp_dir1);
+	PP_SHOULD_SUCCEED((mkdir(filename, 0777) == -1), "mkdir");
+	(void) snprintf(filename, sizeof(filename), "/%s/subdir", pp_dir2);
+	PP_SHOULD_SUCCEED((mkdir(filename, 0777) == -1), "mkdir");
 	close(fd2);
 
 	failures += runcompare(test_open);
+	failures += runcompare(test_opendir);
 	failures += runcompare(test_noflags);
 	failures += runcompare(test_droppath);
 	failures += runcompare(test_r);
