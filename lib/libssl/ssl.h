@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.157 2018/04/25 07:25:17 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.158 2018/05/01 13:30:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1221,7 +1221,7 @@ int SSL_set_max_proto_version(SSL *ssl, uint16_t version);
 #define SSL_set_max_proto_version	SSL_set_max_proto_version
 #endif
 
-BIO_METHOD *BIO_f_ssl(void);
+const BIO_METHOD *BIO_f_ssl(void);
 BIO *BIO_new_ssl(SSL_CTX *ctx, int client);
 BIO *BIO_new_ssl_connect(SSL_CTX *ctx);
 BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx);

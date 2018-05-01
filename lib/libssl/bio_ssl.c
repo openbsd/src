@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ssl.c,v 1.27 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: bio_ssl.c,v 1.28 2018/05/01 13:30:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,7 +85,7 @@ typedef struct bio_ssl_st {
 	time_t last_time;
 } BIO_SSL;
 
-static BIO_METHOD methods_sslp = {
+static const BIO_METHOD methods_sslp = {
 	.type = BIO_TYPE_SSL,
 	.name = "ssl",
 	.bwrite = ssl_write,
@@ -97,7 +97,7 @@ static BIO_METHOD methods_sslp = {
 	.callback_ctrl = ssl_callback_ctrl,
 };
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_f_ssl(void)
 {
 	return (&methods_sslp);
