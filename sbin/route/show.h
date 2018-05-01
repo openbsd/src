@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.h,v 1.13 2018/04/30 10:32:02 florian Exp $ */
+/*	$OpenBSD: show.h,v 1.14 2018/05/01 18:13:21 florian Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -34,6 +34,7 @@ void	 p_sockaddr(struct sockaddr *, struct sockaddr *, int, int);
 char	*routename(struct sockaddr *);
 char	*netname(struct sockaddr *, struct sockaddr *);
 char	*mpls_op(u_int32_t);
+size_t	 get_sysctl(const int *, u_int, char **);
 
 extern int nflag;
 extern int Fflag;

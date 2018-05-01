@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.111 2018/04/30 15:06:18 schwarze Exp $	*/
+/*	$OpenBSD: show.c,v 1.112 2018/05/01 18:13:21 florian Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -107,6 +107,29 @@ char	*routename6(struct sockaddr_in6 *);
 char	*netname4(in_addr_t, struct sockaddr_in *);
 char	*netname6(struct sockaddr_in6 *, struct sockaddr_in6 *);
 
+size_t
+get_sysctl(const int *mib, u_int mcnt, char **buf)
+{
+	size_t needed;
+
+	while (1) {
+		if (sysctl(mib, mcnt, NULL, &needed, NULL, 0) == -1)
+			err(1, "sysctl-estimate");
+		if (needed == 0)
+			break;
+		if ((*buf = realloc(*buf, needed)) == NULL)
+			err(1, NULL);
+		if (sysctl(mib, mcnt, *buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
+			err(1, "sysctl");
+		}
+		break;
+	}
+
+	return needed;
+}
+
 /*
  * Print routing tables.
  */
@@ -116,7 +139,7 @@ p_rttables(int af, u_int tableid, char prio)
 	struct rt_msghdr *rtm;
 	char *buf = NULL, *next, *lim = NULL;
 	size_t needed;
-	int mib[7];
+	int mib[7], mcnt;
 	struct sockaddr *sa;
 
 	mib[0] = CTL_NET;
@@ -126,22 +149,10 @@ p_rttables(int af, u_int tableid, char prio)
 	mib[4] = NET_RT_DUMP;
 	mib[5] = prio;
 	mib[6] = tableid;
+	mcnt = 7;
 
-	while (1) {
-		if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1)
-			err(1, "route-sysctl-estimate");
-		if (needed == 0)
-			break;
-		if ((buf = realloc(buf, needed)) == NULL)
-			err(1, NULL);
-		if (sysctl(mib, 7, buf, &needed, NULL, 0) == -1) {
-			if (errno == ENOMEM)
-				continue;
-			err(1, "sysctl of routing table");
-		}
-		lim = buf + needed;
-		break;
-	}
+	needed = get_sysctl(mib, mcnt, &buf);
+	lim = buf + needed;
 
 	if (pledge("stdio dns", NULL) == -1)
 		err(1, "pledge");
@@ -156,9 +167,8 @@ p_rttables(int af, u_int tableid, char prio)
 			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 			p_rtentry(rtm);
 		}
-		free(buf);
-		buf = NULL;
 	}
+	free(buf);
 }
 
 /*

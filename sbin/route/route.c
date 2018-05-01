@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.212 2018/04/30 15:06:18 schwarze Exp $	*/
+/*	$OpenBSD: route.c,v 1.213 2018/05/01 18:13:21 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ int
 flushroutes(int argc, char **argv)
 {
 	size_t needed;
-	int mib[7], rlen, seqno, af = AF_UNSPEC;
+	int mib[7], mcnt, rlen, seqno, af = AF_UNSPEC;
 	char *buf = NULL, *next, *lim = NULL;
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
@@ -333,21 +333,10 @@ flushroutes(int argc, char **argv)
 	mib[4] = NET_RT_DUMP;
 	mib[5] = prio;
 	mib[6] = tableid;
-	while (1) {
-		if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1)
-			err(1, "route-sysctl-estimate");
-		if (needed == 0)
-			break;
-		if ((buf = realloc(buf, needed)) == NULL)
-			err(1, "realloc");
-		if (sysctl(mib, 7, buf, &needed, NULL, 0) == -1) {
-			if (errno == ENOMEM)
-				continue;
-			err(1, "actual retrieval of routing table");
-		}
-		lim = buf + needed;
-		break;
-	}
+	mcnt = 7;
+
+	needed = get_sysctl(mib, mcnt, &buf);
+	lim = buf + needed;
 
 	if (pledge("stdio dns", NULL) == -1)
 		err(1, "pledge");
