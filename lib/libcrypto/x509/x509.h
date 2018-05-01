@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.44 2018/03/17 15:28:27 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.45 2018/05/01 16:14:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -653,8 +653,8 @@ int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey);
 
 int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki);
 
-int X509_signature_dump(BIO *bp,const ASN1_STRING *sig, int indent);
-int X509_signature_print(BIO *bp,X509_ALGOR *alg, ASN1_STRING *sig);
+int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent);
+int X509_signature_print(BIO *bp, X509_ALGOR *alg, ASN1_STRING *sig);
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx);
@@ -909,8 +909,8 @@ int X509_get_signature_nid(const X509 *x);
 
 int X509_alias_set1(X509 *x, unsigned char *name, int len);
 int X509_keyid_set1(X509 *x, unsigned char *id, int len);
-unsigned char * X509_alias_get0(X509 *x, int *len);
-unsigned char * X509_keyid_get0(X509 *x, int *len);
+unsigned char *X509_alias_get0(X509 *x, int *len);
+unsigned char *X509_keyid_get0(X509 *x, int *len);
 int (*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int);
 int X509_TRUST_set(int *t, int trust);
 int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj);
