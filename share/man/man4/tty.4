@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.49 2017/06/29 16:20:49 anton Exp $
+.\"	$OpenBSD: tty.4,v 1.50 2018/05/01 15:16:50 anton Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: June 29 2017 $
+.Dd $Mdocdate: May 1 2018 $
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -313,7 +313,7 @@ system call which will place the process into its own session - which
 has the effect of disassociating it from the controlling terminal.
 This is the new and preferred method for programs to lose their controlling
 terminal.
-.It Dv TIOCSETVERAUTH Fa int secs
+.It Dv TIOCSETVERAUTH Fa int *secs
 Indicate that the current user has successfully authenticated to this session.
 Future authentication checks may then be bypassed by performing a
 .Dv TIOCCHKVERAUTH
