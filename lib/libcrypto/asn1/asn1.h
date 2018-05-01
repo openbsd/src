@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.47 2018/04/25 12:07:40 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.48 2018/05/01 13:29:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1187,7 +1187,7 @@ void ASN1_PCTX_set_oid_flags(ASN1_PCTX *p, unsigned long flags);
 unsigned long ASN1_PCTX_get_str_flags(const ASN1_PCTX *p);
 void ASN1_PCTX_set_str_flags(ASN1_PCTX *p, unsigned long flags);
 
-BIO_METHOD *BIO_f_asn1(void);
+const BIO_METHOD *BIO_f_asn1(void);
 
 BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it);
 

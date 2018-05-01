@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.27 2018/02/22 16:38:43 jsing Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.28 2018/05/01 13:29:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,7 +79,7 @@ BIO_get_new_index(void)
 }
 
 BIO *
-BIO_new(BIO_METHOD *method)
+BIO_new(const BIO_METHOD *method)
 {
 	BIO *ret = NULL;
 
@@ -96,7 +96,7 @@ BIO_new(BIO_METHOD *method)
 }
 
 int
-BIO_set(BIO *bio, BIO_METHOD *method)
+BIO_set(BIO *bio, const BIO_METHOD *method)
 {
 	bio->method = method;
 	bio->callback = NULL;

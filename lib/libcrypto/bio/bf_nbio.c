@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_nbio.c,v 1.19 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: bf_nbio.c,v 1.20 2018/05/01 13:29:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,7 +80,7 @@ typedef struct nbio_test_st {
 	int lwn;
 } NBIO_TEST;
 
-static BIO_METHOD methods_nbiof = {
+static const BIO_METHOD methods_nbiof = {
 	.type = BIO_TYPE_NBIO_TEST,
 	.name = "non-blocking IO test filter",
 	.bwrite = nbiof_write,
@@ -93,7 +93,7 @@ static BIO_METHOD methods_nbiof = {
 	.callback_ctrl = nbiof_callback_ctrl
 };
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_f_nbio_test(void)
 {
 	return (&methods_nbiof);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.40 2018/03/17 15:05:55 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.41 2018/05/01 13:29:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -286,7 +286,7 @@ typedef struct bio_method_st {
 } BIO_METHOD;
 
 struct bio_st {
-	BIO_METHOD *method;
+	const BIO_METHOD *method;
 	/* bio, mode, argp, argi, argl, ret */
 	long (*callback)(struct bio_st *, int, const char *, int, long, long);
 	char *cb_arg; /* first argument for the callback */
@@ -601,8 +601,8 @@ BIO_METHOD *BIO_s_file(void );
 BIO *BIO_new_file(const char *filename, const char *mode);
 BIO *BIO_new_fp(FILE *stream, int close_flag);
 # define BIO_s_file_internal	BIO_s_file
-BIO *	BIO_new(BIO_METHOD *type);
-int	BIO_set(BIO *a, BIO_METHOD *type);
+BIO	*BIO_new(const BIO_METHOD *type);
+int	BIO_set(BIO *a, const BIO_METHOD *type);
 int	BIO_free(BIO *a);
 int	BIO_up_ref(BIO *bio);
 void 	*BIO_get_data(BIO *a);
@@ -643,16 +643,16 @@ long BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi,
 
 BIO_METHOD *BIO_s_mem(void);
 BIO *BIO_new_mem_buf(void *buf, int len);
-BIO_METHOD *BIO_s_socket(void);
-BIO_METHOD *BIO_s_connect(void);
-BIO_METHOD *BIO_s_accept(void);
-BIO_METHOD *BIO_s_fd(void);
-BIO_METHOD *BIO_s_log(void);
-BIO_METHOD *BIO_s_bio(void);
-BIO_METHOD *BIO_s_null(void);
-BIO_METHOD *BIO_f_null(void);
-BIO_METHOD *BIO_f_buffer(void);
-BIO_METHOD *BIO_f_nbio_test(void);
+const BIO_METHOD *BIO_s_socket(void);
+const BIO_METHOD *BIO_s_connect(void);
+const BIO_METHOD *BIO_s_accept(void);
+const BIO_METHOD *BIO_s_fd(void);
+const BIO_METHOD *BIO_s_log(void);
+const BIO_METHOD *BIO_s_bio(void);
+const BIO_METHOD *BIO_s_null(void);
+const BIO_METHOD *BIO_f_null(void);
+const BIO_METHOD *BIO_f_buffer(void);
+const BIO_METHOD *BIO_f_nbio_test(void);
 #ifndef OPENSSL_NO_DGRAM
 BIO_METHOD *BIO_s_datagram(void);
 #endif
