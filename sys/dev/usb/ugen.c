@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.97 2017/12/30 23:08:29 guenther Exp $ */
+/*	$OpenBSD: ugen.c,v 1.98 2018/05/01 18:14:46 landry Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1202,7 +1202,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd, caddr_t addr,
 	}
 	case USB_GET_DEVICEINFO:
 		usbd_fill_deviceinfo(sc->sc_udev,
-				     (struct usb_device_info *)addr, 1);
+				     (struct usb_device_info *)addr);
 		break;
 	default:
 		return (EINVAL);

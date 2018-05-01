@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.45 2016/08/03 13:44:49 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.46 2018/05/01 18:14:46 landry Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ umass_scsi_probe(struct scsi_link *link)
 	if (sc->maxlun > 0)
 		return (0);
 
-	usbd_fill_deviceinfo(sc->sc_udev, &udi, 1);
+	usbd_fill_deviceinfo(sc->sc_udev, &udi);
 
 	/*
 	 * Create a fake devid using the vendor and product ids and the last

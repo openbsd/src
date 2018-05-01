@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.118 2018/02/26 13:06:49 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.119 2018/05/01 18:14:46 landry Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -527,7 +527,7 @@ usb_fill_di_task(void *arg)
 	if (dev == NULL)
 		return;
 
-	usbd_fill_deviceinfo(dev, di, 0);
+	usbd_fill_deviceinfo(dev, di);
 }
 
 void
