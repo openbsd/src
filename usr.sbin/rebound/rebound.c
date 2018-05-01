@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.97 2018/05/01 15:11:42 anton Exp $ */
+/* $OpenBSD: rebound.c,v 1.98 2018/05/01 15:14:43 anton Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -765,7 +765,7 @@ readconfig(int conffd, union sockun *remoteaddr)
 			if (strcmp(rectype, "A") == 0) {
 				if (strlen(name) < 2 ||
 				    name[strlen(name) - 1] != '.') {
-					logmsg(LOG_ERR, "do not like name %s\n", name);
+					logmsg(LOG_ERR, "do not like name %s", name);
 					continue;
 				}
 				preloadA(name, value);
