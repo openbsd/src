@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.67 2018/04/23 10:38:00 dlg Exp $
+.\"	$OpenBSD: uvm.9,v 1.68 2018/05/01 12:55:04 stefan Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: April 23 2018 $
+.Dd $Mdocdate: May 1 2018 $
 .Dt UVM_INIT 9
 .Os
 .Sh NAME
@@ -298,13 +298,17 @@ The values that
 .Fa flags
 can take are:
 .Bd -literal
-#define UVM_FLAG_FIXED   0x010000 /* find space */
-#define UVM_FLAG_OVERLAY 0x020000 /* establish overlay */
-#define UVM_FLAG_NOMERGE 0x040000 /* don't merge map entries */
-#define UVM_FLAG_COPYONW 0x080000 /* set copy_on_write flag */
-#define UVM_FLAG_AMAPPAD 0x100000 /* bss: pad amap to reduce malloc() */
-#define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
-#define UVM_FLAG_HOLE    0x400000 /* no backend */
+#define UVM_FLAG_FIXED   0x0010000 /* find space */
+#define UVM_FLAG_OVERLAY 0x0020000 /* establish overlay */
+#define UVM_FLAG_NOMERGE 0x0040000 /* don't merge map entries */
+#define UVM_FLAG_COPYONW 0x0080000 /* set copy_on_write flag */
+#define UVM_FLAG_TRYLOCK 0x0100000 /* fail if we can not lock map */
+#define UVM_FLAG_HOLE    0x0200000 /* no backend */
+#define UVM_FLAG_QUERY   0x0400000 /* do everything,
+                                      except actual execution */
+#define UVM_FLAG_NOFAULT 0x0800000 /* don't fault */
+#define UVM_FLAG_UNMAP   0x1000000 /* unmap to make space */
+#define UVM_FLAG_STACK   0x2000000 /* page may contain a stack */
 .Ed
 .Pp
 The
