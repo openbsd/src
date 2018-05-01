@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.45 2018/05/01 16:14:54 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.46 2018/05/01 19:01:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -654,7 +654,8 @@ int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey);
 int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki);
 
 int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent);
-int X509_signature_print(BIO *bp, X509_ALGOR *alg, ASN1_STRING *sig);
+int X509_signature_print(BIO *bp, const X509_ALGOR *alg,
+    const ASN1_STRING *sig);
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx);
@@ -758,8 +759,8 @@ X509_CRL *X509_CRL_dup(X509_CRL *crl);
 X509_REQ *X509_REQ_dup(X509_REQ *req);
 X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn);
 int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval);
-void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
-						X509_ALGOR *algor);
+void X509_ALGOR_get0(const ASN1_OBJECT **paobj, int *pptype, const void **ppval,
+    const X509_ALGOR *algor);
 void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md);
 int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b);
 
@@ -907,14 +908,14 @@ void X509_get0_signature(const ASN1_BIT_STRING **psig,
     const X509_ALGOR **palg, const X509 *x);
 int X509_get_signature_nid(const X509 *x);
 
-int X509_alias_set1(X509 *x, unsigned char *name, int len);
-int X509_keyid_set1(X509 *x, unsigned char *id, int len);
+int X509_alias_set1(X509 *x, const unsigned char *name, int len);
+int X509_keyid_set1(X509 *x, const unsigned char *id, int len);
 unsigned char *X509_alias_get0(X509 *x, int *len);
 unsigned char *X509_keyid_get0(X509 *x, int *len);
 int (*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int);
 int X509_TRUST_set(int *t, int trust);
-int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj);
-int X509_add1_reject_object(X509 *x, ASN1_OBJECT *obj);
+int X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj);
+int X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj);
 void X509_trust_clear(X509 *x);
 void X509_reject_clear(X509 *x);
 
@@ -999,7 +1000,7 @@ const ASN1_TIME *X509_get0_notAfter(const X509 *x);
 ASN1_TIME *X509_getm_notAfter(const X509 *x);
 int 		X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_get_pubkey(X509 *x);
-EVP_PKEY *	X509_get0_pubkey(X509 *x);
+EVP_PKEY *	X509_get0_pubkey(const X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
 int		X509_certificate_type(X509 *x,EVP_PKEY *pubkey /* optional */);
 
@@ -1121,7 +1122,7 @@ int 		X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne,
 			ASN1_OBJECT *obj);
 int 		X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
 			const unsigned char *bytes, int len);
-ASN1_OBJECT *	X509_NAME_ENTRY_get_object(X509_NAME_ENTRY *ne);
+ASN1_OBJECT *	X509_NAME_ENTRY_get_object(const X509_NAME_ENTRY *ne);
 ASN1_STRING *	X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne);
 int		X509_NAME_ENTRY_set(const X509_NAME_ENTRY *ne);
 
