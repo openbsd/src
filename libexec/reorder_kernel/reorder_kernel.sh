@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: reorder_kernel.sh,v 1.4 2017/11/05 10:29:24 rpe Exp $
+# $OpenBSD: reorder_kernel.sh,v 1.5 2018/05/01 09:45:39 rpe Exp $
 #
 # Copyright (c) 2017 Robert Peichaer <rpe@openbsd.org>
 #
@@ -50,7 +50,17 @@ if [[ -f $KERNEL_DIR.tgz ]]; then
 	rm -f $KERNEL_DIR.tgz
 fi
 
-sha256 -C $SHA256 /bsd
+if ! sha256 -C $SHA256 /bsd; then
+	cat <<__EOF
+
+Failed to verify /bsd's checksum, therefore a randomly linked kernel (KARL)
+is not being built. KARL can be re-enabled for next boot by issuing as root:
+
+sha256 -h $SHA256 /bsd
+__EOF
+	# Trigger ERR trap
+	false
+fi
 
 cd $KERNEL_DIR/$KERNEL
 make newbsd
