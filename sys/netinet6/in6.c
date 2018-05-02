@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.222 2018/04/24 19:53:38 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.223 2018/05/02 07:19:45 tb Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -183,7 +183,6 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	int privileged;
 	int error;
 
-	NET_LOCK();
 	privileged = 0;
 	if ((so->so_state & SS_PRIV) != 0)
 		privileged++;
@@ -200,7 +199,6 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		break;
 	}
 
-	NET_UNLOCK();
 	return error;
 }
 
@@ -211,11 +209,10 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	struct	in6_ifaddr *ia6 = NULL;
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
 	struct sockaddr_in6 *sa6;
+	int	error = 0;
 
 	if (ifp == NULL)
 		return (ENXIO);
-
-	NET_ASSERT_LOCKED();
 
 	switch (cmd) {
 	case SIOCGIFINFO_IN6:
@@ -252,13 +249,16 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCSIFNETMASK:
 		/*
 		 * Do not pass those ioctl to driver handler since they are not
-		 * properly setup. Instead just error out.
+		 * properly set up. Instead just error out.
 		 */
 		return (EINVAL);
 	default:
 		sa6 = NULL;
 		break;
 	}
+
+	NET_LOCK();
+
 	if (sa6 && sa6->sin6_family == AF_INET6) {
 		if (IN6_IS_ADDR_LINKLOCAL(&sa6->sin6_addr)) {
 			if (sa6->sin6_addr.s6_addr16[1] == 0) {
@@ -267,12 +267,15 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 				    htons(ifp->if_index);
 			} else if (sa6->sin6_addr.s6_addr16[1] !=
 			    htons(ifp->if_index)) {
-				return (EINVAL);	/* link ID contradicts */
+				error = EINVAL;	/* link ID contradicts */
+				goto err;
 			}
 			if (sa6->sin6_scope_id) {
 				if (sa6->sin6_scope_id !=
-				    (u_int32_t)ifp->if_index)
-					return (EINVAL);
+				    (u_int32_t)ifp->if_index) {
+					error = EINVAL;
+					goto err;
+				}
 				sa6->sin6_scope_id = 0; /* XXX: good way? */
 			}
 		}
@@ -289,8 +292,10 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		 * interface address from the day one, we consider "remove the
 		 * first one" semantics to be not preferable.
 		 */
-		if (ia6 == NULL)
-			return (EADDRNOTAVAIL);
+		if (ia6 == NULL) {
+			error = EADDRNOTAVAIL;
+			goto err;
+		}
 		/* FALLTHROUGH */
 	case SIOCAIFADDR_IN6:
 		/*
@@ -298,11 +303,14 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		 * the corresponding operation.
 		 */
 		if (ifra->ifra_addr.sin6_family != AF_INET6 ||
-		    ifra->ifra_addr.sin6_len != sizeof(struct sockaddr_in6))
-			return (EAFNOSUPPORT);
-		if (!privileged)
-			return (EPERM);
-
+		    ifra->ifra_addr.sin6_len != sizeof(struct sockaddr_in6)) {
+			error = EAFNOSUPPORT;
+			goto err;
+		}
+		if (!privileged) {
+			error = EPERM;
+			goto err;
+		}
 		break;
 
 	case SIOCGIFAFLAG_IN6:
@@ -310,15 +318,19 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCGIFDSTADDR_IN6:
 	case SIOCGIFALIFETIME_IN6:
 		/* must think again about its semantics */
-		if (ia6 == NULL)
-			return (EADDRNOTAVAIL);
+		if (ia6 == NULL) {
+			error = EADDRNOTAVAIL;
+			goto err;
+		}
 		break;
 	}
 
 	switch (cmd) {
 	case SIOCGIFDSTADDR_IN6:
-		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
-			return (EINVAL);
+		if ((ifp->if_flags & IFF_POINTOPOINT) == 0) {
+			error = EINVAL;
+			break;
+		}
 		/*
 		 * XXX: should we check if ifa_dstaddr is NULL and return
 		 * an error?
@@ -392,7 +404,8 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
 		    (ifra->ifra_flags & IN6_IFF_DETACHED) != 0 ||
 		    (ifra->ifra_flags & IN6_IFF_DEPRECATED) != 0) {
-			return (EINVAL);
+			error = EINVAL;
+			break;
 		}
 
 		if (ia6 == NULL)
@@ -413,10 +426,10 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		 */
 		error = in6_ifattach(ifp);
 		if (error != 0)
-			return (error);
+			break;
 		error = in6_update_ifa(ifp, ifra, ia6);
 		if (error != 0)
-			return (error);
+			break;
 
 		ia6 = in6ifa_ifpwithaddr(ifp, &ifra->ifra_addr.sin6_addr);
 		if (ia6 == NULL) {
@@ -446,7 +459,7 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		    ia6->ia_ifa.ifa_addr);
 		if (error) {
 			in6_purgeaddr(&ia6->ia_ifa);
-			return (error);
+			break;
 		}
 		dohooks(ifp->if_addrhooks, 0);
 		break;
@@ -458,10 +471,13 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		break;
 
 	default:
-		return (EOPNOTSUPP);
+		error = EOPNOTSUPP;
+		break;
 	}
 
-	return (0);
+err:
+	NET_UNLOCK();
+	return (error);
 }
 
 /*

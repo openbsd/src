@@ -242,17 +242,26 @@ int
 mrt6_ioctl(struct socket *so, u_long cmd, caddr_t data)
 {
 	struct inpcb *inp = sotoinpcb(so);
+	int error;
 
 	switch (cmd) {
 	case SIOCGETSGCNT_IN6:
-		return (get_sg6_cnt((struct sioc_sg_req6 *)data,
-		    inp->inp_rtableid));
+		NET_RLOCK();
+		error = get_sg6_cnt((struct sioc_sg_req6 *)data,
+		    inp->inp_rtableid);
+		NET_RUNLOCK();
+		break;
 	case SIOCGETMIFCNT_IN6:
-		return (get_mif6_cnt((struct sioc_mif_req6 *)data,
-		    inp->inp_rtableid));
+		NET_RLOCK();
+		error = get_mif6_cnt((struct sioc_mif_req6 *)data,
+		    inp->inp_rtableid);
+		NET_RUNLOCK();
+		break;
 	default:
-		return (ENOTTY);
+		error = ENOTTY;
+		break;
 	}
+	return error;
 }
 
 /*
