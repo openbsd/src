@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.45 2018/04/09 13:46:15 visa Exp $
+#	$OpenBSD: files.octeon,v 1.46 2018/05/02 16:09:08 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -17,6 +17,7 @@ file	dev/ofw/fdt.c
 file	dev/ofw/ofw_gpio.c
 file	dev/ofw/ofw_misc.c
 file	dev/ofw/ofw_pinctrl.c
+file	dev/ofw/ofw_power.c
 file	dev/ofw/ofw_regulator.c
 file	arch/octeon/octeon/autoconf.c
 file	arch/octeon/octeon/bus_dma.c
