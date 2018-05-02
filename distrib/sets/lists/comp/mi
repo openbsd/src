@@ -480,6 +480,7 @@
 ./usr/include/dev/ofw/ofw_misc.h
 ./usr/include/dev/ofw/ofw_pci.h
 ./usr/include/dev/ofw/ofw_pinctrl.h
+./usr/include/dev/ofw/ofw_power.h
 ./usr/include/dev/ofw/ofw_regulator.h
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/onewire
