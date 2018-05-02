@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.174 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.175 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -750,7 +750,6 @@ nfs_lookup(void *v)
 	struct componentname *cnp = ap->a_cnp;
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
-	struct proc *p = cnp->cn_proc;
 	struct nfsm_info	info;
 	int flags;
 	struct vnode *newvp;
@@ -799,7 +798,7 @@ nfs_lookup(void *v)
 		}
 
 		if (cnp->cn_flags & PDIRUNLOCK) {
-			err2 = vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY, p);
+			err2 = vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			if (err2 != 0) {
 				*vpp = NULLVP;
 				return (err2);
@@ -923,7 +922,7 @@ dorpc:
 
 		error = nfs_nget(dvp->v_mount, fhp, fhsize, &np);
 		if (error) {
-			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			m_freem(info.nmi_mrep);
 			return (error);
@@ -937,7 +936,7 @@ dorpc:
 			nfsm_loadattr(newvp, NULL);
 
 		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE, p))) {
+			if ((error = vn_lock(dvp, LK_EXCLUSIVE))) {
 				m_freem(info.nmi_mrep);
 				vput(newvp);
 				return error;

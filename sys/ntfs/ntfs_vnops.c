@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.43 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.44 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -584,13 +584,13 @@ ntfs_lookup(void *v)
 				 vap->va_a_name->n_pnumber,ap->a_vpp); 
 		ntfs_ntvattrrele(vap);
 		if (error) {
-			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 
 		if (lockparent && (cnp->cn_flags & ISLASTCN)) {
-			error = vn_lock(dvp, LK_EXCLUSIVE, p);
+			error = vn_lock(dvp, LK_EXCLUSIVE);
 			if (error) {
 				vput( *(ap->a_vpp) );
 				return (error);

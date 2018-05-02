@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.65 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.66 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ fifo_open(void *v)
 	struct vop_open_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fifoinfo *fip;
-	struct proc *p = ap->a_p;
 	struct socket *rso, *wso;
 	int s, error;
 
@@ -186,7 +185,7 @@ fifo_open(void *v)
 			VOP_UNLOCK(vp);
 			error = tsleep(&fip->fi_readers,
 			    PCATCH | PSOCK, "fifor", 0);
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			if (error)
 				goto bad;
 		}
@@ -194,7 +193,7 @@ fifo_open(void *v)
 			VOP_UNLOCK(vp);
 			error = tsleep(&fip->fi_writers,
 			    PCATCH | PSOCK, "fifow", 0);
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			if (error)
 				goto bad;
 		}
@@ -215,7 +214,6 @@ fifo_read(void *v)
 	struct vop_read_args *ap = v;
 	struct uio *uio = ap->a_uio;
 	struct socket *rso = ap->a_vp->v_fifoinfo->fi_readsock;
-	struct proc *p = uio->uio_procp;
 	int error;
 
 #ifdef DIAGNOSTIC
@@ -228,7 +226,7 @@ fifo_read(void *v)
 		rso->so_state |= SS_NBIO;
 	VOP_UNLOCK(ap->a_vp);
 	error = soreceive(rso, NULL, uio, NULL, NULL, NULL, 0);
-	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 	if (ap->a_ioflag & IO_NDELAY) {
 		rso->so_state &= ~SS_NBIO;
 		if (error == EWOULDBLOCK &&
@@ -247,7 +245,6 @@ fifo_write(void *v)
 {
 	struct vop_write_args *ap = v;
 	struct socket *wso = ap->a_vp->v_fifoinfo->fi_writesock;
-	struct proc *p = ap->a_uio->uio_procp;
 	int error;
 
 #ifdef DIAGNOSTIC
@@ -259,7 +256,7 @@ fifo_write(void *v)
 		wso->so_state |= SS_NBIO;
 	VOP_UNLOCK(ap->a_vp);
 	error = sosend(wso, NULL, ap->a_uio, NULL, NULL, 0);
-	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 	if (ap->a_ioflag & IO_NDELAY)
 		wso->so_state &= ~SS_NBIO;
 	return (error);

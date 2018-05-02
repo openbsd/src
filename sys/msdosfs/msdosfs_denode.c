@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.61 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.62 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -189,7 +189,6 @@ deget(struct msdosfsmount *pmp, uint32_t dirclust, uint32_t diroffset,
 	struct denode *ldep;
 	struct vnode *nvp;
 	struct buf *bp;
-	struct proc *p = curproc; /* XXX */
 
 #ifdef MSDOSFS_DEBUG
 	printf("deget(pmp %p, dirclust %d, diroffset %x, depp %p)\n",
@@ -249,7 +248,7 @@ retry:
 	 * can't be accessed until we've read it in and have done what we
 	 * need to it.
 	 */
-	vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY);
 	error = msdosfs_hashins(ldep);
 
 	if (error) {

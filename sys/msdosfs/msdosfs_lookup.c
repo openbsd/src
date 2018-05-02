@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.31 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.32 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -85,7 +85,6 @@ msdosfs_lookup(void *v)
 	struct vnode *vdp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
-	struct proc *p = cnp->cn_proc;
 	daddr_t bn;
 	int error;
 	int lockparent;
@@ -552,13 +551,12 @@ foundroot:;
 		VOP_UNLOCK(pdp);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0) {
-			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY,
-			    p))) {
+			if ((error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY))) {
 				vput(DETOV(tdp));
 				return (error);
 			}

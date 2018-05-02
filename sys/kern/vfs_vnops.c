@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.91 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.92 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -282,7 +282,7 @@ vn_close(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
 
 	if (flags & FWRITE)
 		vp->v_writecount--;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(vp, flags, cred, p);
 	vput(vp);
 	return (error);
@@ -311,7 +311,7 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
 	auio.uio_procp = p;
 
 	if ((ioflg & IO_NODELOCKED) == 0)
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (rw == UIO_READ) {
 		error = VOP_READ(vp, &auio, ioflg, cred);
 	} else {
@@ -337,7 +337,6 @@ vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	struct vnode *vp = fp->f_data;
 	int error;
 	size_t count = uio->uio_resid;
-	struct proc *p = uio->uio_procp;
 
 	/* no wrap around of offsets except on character devices */
 	if (vp->v_type != VCHR && count > LLONG_MAX - *poff)
@@ -346,7 +345,7 @@ vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	if (vp->v_type == VDIR)
 		return (EISDIR);
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *poff;
 	error = VOP_READ(vp, uio, (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0,
 	    cred);
@@ -362,7 +361,6 @@ int
 vn_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 	struct vnode *vp = fp->f_data;
-	struct proc *p = uio->uio_procp;
 	int error, ioflag = IO_UNIT;
 	size_t count;
 
@@ -375,7 +373,7 @@ vn_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	if ((fp->f_flag & FFSYNC) ||
 	    (vp->v_mount && (vp->v_mount->mnt_flag & MNT_SYNCHRONOUS)))
 		ioflag |= IO_SYNC;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *poff;
 	count = uio->uio_resid;
 	error = VOP_WRITE(vp, uio, ioflag, cred);
@@ -518,7 +516,7 @@ vn_poll(struct file *fp, int events, struct proc *p)
  * acquire requested lock.
  */
 int
-vn_lock(struct vnode *vp, int flags, struct proc *p)
+vn_lock(struct vnode *vp, int flags)
 {
 	int error;
 

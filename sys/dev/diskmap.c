@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskmap.c,v 1.18 2018/04/28 03:13:04 visa Exp $	*/
+/*	$OpenBSD: diskmap.c,v 1.19 2018/05/02 02:24:55 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
@@ -99,7 +99,7 @@ diskmapioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		ovp->v_writecount--;
 
 	if (ovp->v_writecount == 0) {
-		vn_lock(ovp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(ovp, LK_EXCLUSIVE | LK_RETRY);
 		VOP_CLOSE(ovp, fp->f_flag, p->p_ucred, p);
 		vput(ovp);
 	}

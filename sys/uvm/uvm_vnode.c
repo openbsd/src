@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.101 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.102 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1185,7 +1185,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	 */
 	result = 0;
 	if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-		result = vn_lock(vn, LK_EXCLUSIVE | LK_RECURSEFAIL, curproc);
+		result = vn_lock(vn, LK_EXCLUSIVE | LK_RECURSEFAIL);
 
 	if (result == 0) {
 		/* NOTE: vnode now locked! */
@@ -1325,7 +1325,7 @@ uvm_vnp_uncache(struct vnode *vp)
 	 */
 	VOP_UNLOCK(vp);
 	uvn_detach(&uvn->u_obj);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, curproc);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	return(TRUE);
 }

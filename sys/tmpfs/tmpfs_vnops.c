@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.28 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.29 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -189,7 +189,7 @@ tmpfs_lookup(void *v)
 		 * Release the tn_nlock.
 		 */
 		error = tmpfs_vnode_get(dvp->v_mount, pnode, vpp);
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY, curproc);
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		goto out;
 
 	} else if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
@@ -791,7 +791,7 @@ tmpfs_link(void *v)
 	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_NODE(vp);
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, curproc);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	/* Check for maximum number of links limit. */
 	if (node->tn_links == LINK_MAX) {
@@ -1910,7 +1910,7 @@ tmpfs_rename_lock_directory(struct vnode *vp, struct tmpfs_node *node)
 	KASSERT(node->tn_vnode == vp);
 	KASSERT(node->tn_type == VDIR);
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, curproc);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (node->tn_spec.tn_dir.tn_parent == NULL) {
 		VOP_UNLOCK(vp);
 		return ENOENT;

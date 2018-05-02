@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.91 2018/04/28 03:13:04 visa Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.92 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ spec_open(void *v)
 			return (spec_open_clone(ap));
 		VOP_UNLOCK(vp);
 		error = (*cdevsw[maj].d_open)(dev, ap->a_mode, S_IFCHR, p);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
 	case VBLK:
@@ -222,7 +222,7 @@ spec_read(void *v)
 		VOP_UNLOCK(vp);
 		error = (*cdevsw[major(vp->v_rdev)].d_read)
 			(vp->v_rdev, uio, ap->a_ioflag);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
 	case VBLK:
@@ -309,7 +309,7 @@ spec_write(void *v)
 		VOP_UNLOCK(vp);
 		error = (*cdevsw[major(vp->v_rdev)].d_write)
 			(vp->v_rdev, uio, ap->a_ioflag);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
 	case VBLK:
@@ -522,7 +522,7 @@ spec_close(void *v)
 		 * vclean(), the vnode is already locked.
 		 */
 		if (!(vp->v_flag & VXLOCK))
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		error = vinvalbuf(vp, V_SAVE, ap->a_cred, p, 0, 0);
 		if (!(vp->v_flag & VXLOCK))
 			VOP_UNLOCK(vp);
@@ -553,7 +553,7 @@ spec_close(void *v)
 		VOP_UNLOCK(vp);
 	error = (*devclose)(dev, ap->a_fflag, mode, p);
 	if (relock)
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	return (error);
 }
 
@@ -580,7 +580,7 @@ spec_setattr(void *v)
 	if (!(vp->v_flag & VCLONE))
 		return (EBADF);
 
-	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY, p);
+	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY);
 	error = VOP_SETATTR(vp->v_specparent, ap->a_vap, ap->a_cred, p);
 	VOP_UNLOCK(vp);
 
@@ -728,7 +728,7 @@ spec_open_clone(struct vop_open_args *ap)
 	error = cdevsw[major(vp->v_rdev)].d_open(cvp->v_rdev, ap->a_mode,
 	    S_IFCHR, ap->a_p);
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, ap->a_p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	if (error) {
 		vput(cvp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.51 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.52 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -128,7 +128,6 @@ ufs_lookup(void *v)
 	struct ucred *cred = cnp->cn_cred;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
-	struct proc *p = cnp->cn_proc;
 
 	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
@@ -564,12 +563,12 @@ found:
 		cnp->cn_flags |= PDIRUNLOCK;
 		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
 		if (error) {
-			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(pdp, LK_EXCLUSIVE, p))) {
+			if ((error = vn_lock(pdp, LK_EXCLUSIVE))) {
 				vput(tdp);
 				return (error);
 			}
@@ -782,7 +781,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 				VOP_UNLOCK(tvp);
 			error = VOP_FSYNC(dvp, p->p_ucred, MNT_WAIT, p);
 			if (tvp != NULL)
-				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY, p);
+				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
 		}
 		error = VOP_BWRITE(bp);
@@ -926,7 +925,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 			ufsdirhash_dirtrunc(dp, dp->i_endoff);
 #endif
 		if (tvp != NULL)
-			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY, p);
+			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 	}
 	return (error);
 }

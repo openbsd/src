@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.268 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.269 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -640,7 +640,7 @@ vget(struct vnode *vp, int flags, struct proc *p)
 
  	vp->v_usecount++;
 	if (flags & LK_TYPE_MASK) {
-		if ((error = vn_lock(vp, flags, p)) != 0) {
+		if ((error = vn_lock(vp, flags)) != 0) {
 			vp->v_usecount--;
 			if (vp->v_usecount == 0 && onfreelist)
 				vputonfreelist(vp);
@@ -767,7 +767,7 @@ vrele(struct vnode *vp)
 	}
 #endif
 
-	if (vn_lock(vp, LK_EXCLUSIVE, p)) {
+	if (vn_lock(vp, LK_EXCLUSIVE)) {
 #ifdef DIAGNOSTIC
 		vprint("vrele: cannot lock", vp);
 #endif

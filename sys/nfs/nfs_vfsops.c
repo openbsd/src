@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.118 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.119 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -764,7 +764,7 @@ nfs_root(struct mount *mp, struct vnode **vpp)
 	nmp = VFSTONFS(mp);
 	vp = nmp->nm_vnode;
 	vref(vp);
-	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, curproc);
+	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error) {
 		vrele(vp);
 		return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.44 2018/04/28 03:13:04 visa Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.45 2018/05/02 02:24:55 visa Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -1011,7 +1011,7 @@ vdsp_readlabel(struct vdsp_softc *sc)
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = p;
 
-	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	err = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
 	VOP_UNLOCK(sc->sc_vp);
 	if (err) {
@@ -1041,7 +1041,7 @@ vdsp_writelabel(struct vdsp_softc *sc)
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_procp = p;
 
-	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	err = VOP_WRITE(sc->sc_vp, &uio, 0, p->p_ucred);
 	VOP_UNLOCK(sc->sc_vp);
 
@@ -1072,7 +1072,7 @@ vdsp_is_iso(struct vdsp_softc *sc)
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = p;
 
-	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	err = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
 	VOP_UNLOCK(sc->sc_vp);
 
@@ -1151,7 +1151,7 @@ vdsp_read_desc(struct vdsp_softc *sc, struct vdsk_desc_msg *dm)
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = p;
 
-	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	dm->status = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
 	VOP_UNLOCK(sc->sc_vp);
 
@@ -1225,7 +1225,7 @@ vdsp_read_dring(void *arg1, void *arg2)
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = p;
 
-	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	vd->status = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
 	VOP_UNLOCK(sc->sc_vp);
 
@@ -1324,7 +1324,7 @@ vdsp_write_dring(void *arg1, void *arg2)
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_procp = p;
 
-	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	vd->status = VOP_WRITE(sc->sc_vp, &uio, 0, p->p_ucred);
 	VOP_UNLOCK(sc->sc_vp);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.59 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.60 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -278,7 +278,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 	ncount = vcount(devvp);
 	if (ncount > 1 && devvp != rootvp)
 		return (EBUSY);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
 	VOP_UNLOCK(devvp);
 	if (error)
@@ -443,7 +443,7 @@ out:
 	}
 
 	/* lock the device vnode before calling VOP_CLOSE() */
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, FREAD, NOCRED, p);
 	VOP_UNLOCK(devvp);
 	
@@ -502,7 +502,7 @@ ntfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		ntmp->ntm_devvp->v_specmountpoint = NULL;
 
 	/* lock the device vnode before calling VOP_CLOSE() */
-	vn_lock(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
 	(void)VOP_CLOSE(ntmp->ntm_devvp, FREAD, NOCRED, p);
 	vput(ntmp->ntm_devvp);
@@ -761,7 +761,7 @@ ntfs_vgetex(struct mount *mp, ntfsino_t ino, u_int32_t attrtype, char *attrname,
 		vp->v_flag |= VROOT;
 
 	if (lkflags & LK_TYPE_MASK) {
-		error = vn_lock(vp, lkflags, p);
+		error = vn_lock(vp, lkflags);
 		if (error) {
 			vput(vp);
 			return (error);

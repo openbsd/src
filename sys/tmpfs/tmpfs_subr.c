@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.19 2018/03/28 16:34:28 visa Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.20 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ again:
 	uvm_vnp_setsize(vp, node->tn_size);
 	vp->v_data = node;
 	node->tn_vnode = vp;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, curproc);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	rw_exit_write(&node->tn_nlock);
 
 	KASSERT(VOP_ISLOCKED(vp));

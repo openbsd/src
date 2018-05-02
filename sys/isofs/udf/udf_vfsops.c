@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.64 2018/04/28 03:13:04 visa Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.65 2018/05/02 02:24:55 visa Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -238,7 +238,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
 	VOP_UNLOCK(devvp);
 	if (error)
@@ -441,7 +441,7 @@ bail:
 	if (bp != NULL)
 		brelse(bp);
 
-	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY);
 	VOP_CLOSE(devvp, FREAD, FSCRED, p);
 	VOP_UNLOCK(devvp);
 
@@ -464,7 +464,7 @@ udf_unmount(struct mount *mp, int mntflags, struct proc *p)
 	if ((error = vflush(mp, NULL, flags)))
 		return (error);
 
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	vinvalbuf(devvp, V_SAVE, NOCRED, p, 0, 0);
 	(void)VOP_CLOSE(devvp, FREAD, NOCRED, p);
 	VOP_UNLOCK(devvp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.54 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.55 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 		 * ISLASTCN is set, lock the directory vnode as well.
 		 */
 		if (!error && (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) == 0) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE, p)) != 0) {
+			if ((error = vn_lock(dvp, LK_EXCLUSIVE)) != 0) {
 				vput(vp);
 				return (error);
 			}
@@ -252,7 +252,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 		 */
 		if (vp == dvp || error ||
 		    (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) != 0) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE, p)) != 0)
+			if ((error = vn_lock(dvp, LK_EXCLUSIVE)) != 0)
 				return (error);
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.42 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.43 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -838,7 +838,6 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
     struct dquot **dqp)
 {
 	SIPHASH_CTX ctx;
-	struct proc *p = curproc;
 	struct dquot *dq;
 	struct dqhash *dqh;
 	struct vnode *dqvp;
@@ -899,7 +898,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	 * Initialize the contents of the dquot structure.
 	 */
 	if (vp != dqvp)
-		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	LIST_INSERT_HEAD(dqh, dq, dq_hash);
 	dqref(dq);
 	dq->dq_flags = DQ_LOCK;
@@ -978,7 +977,6 @@ dqrele(struct vnode *vp, struct dquot *dq)
 int
 dqsync(struct vnode *vp, struct dquot *dq)
 {
-	struct proc *p = curproc;
 	struct vnode *dqvp;
 	struct iovec aiov;
 	struct uio auio;
@@ -992,7 +990,7 @@ dqsync(struct vnode *vp, struct dquot *dq)
 		panic("dqsync: file");
 
 	if (vp != dqvp)
-		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
 		(void) tsleep(dq, PINOD+2, "dqsync", 0);

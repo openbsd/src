@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.137 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.138 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -630,7 +630,6 @@ ufs_link(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
-	struct proc *p = cnp->cn_proc;
 	struct inode *ip;
 	struct direct newdir;
 	int error;
@@ -649,7 +648,7 @@ ufs_link(void *v)
 		error = EXDEV;
 		goto out2;
 	}
-	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE, p))) {
+	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE))) {
 		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
@@ -725,7 +724,6 @@ ufs_rename(void *v)
 	struct vnode *fdvp = ap->a_fdvp;
 	struct componentname *tcnp = ap->a_tcnp;
 	struct componentname *fcnp = ap->a_fcnp;
-	struct proc *p = fcnp->cn_proc;
 	struct inode *ip, *xp, *dp;
 	struct direct newdir;
 	int doingdirectory = 0, oldparent = 0, newparent = 0;
@@ -803,7 +801,7 @@ abortit:
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
 
-	if ((error = vn_lock(fvp, LK_EXCLUSIVE, p)) != 0)
+	if ((error = vn_lock(fvp, LK_EXCLUSIVE)) != 0)
 		goto abortit;
 
 	/* fvp, tdvp, tvp now locked */
@@ -1115,7 +1113,7 @@ out:
 	vrele(fdvp);
 	if (doingdirectory)
 		ip->i_flag &= ~IN_RENAME;
-	if (vn_lock(fvp, LK_EXCLUSIVE, p) == 0) {
+	if (vn_lock(fvp, LK_EXCLUSIVE) == 0) {
 		ip->i_effnlink--;
 		DIP_ADD(ip, nlink, -1);
 		ip->i_flag |= IN_CHANGE;

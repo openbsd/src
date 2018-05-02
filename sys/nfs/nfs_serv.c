@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.113 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.114 2018/05/02 02:24:56 visa Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -2119,7 +2119,7 @@ again:
 	io.uio_procp = NULL;
 	eofflag = 0;
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, procp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_READDIR(vp, &io, cred, &eofflag);
 
 	off = (off_t)io.uio_offset;
@@ -2319,7 +2319,7 @@ again:
 	io.uio_procp = NULL;
 	eofflag = 0;
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, procp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_READDIR(vp, &io, cred, &eofflag);
 
 	off = (u_quad_t)io.uio_offset;

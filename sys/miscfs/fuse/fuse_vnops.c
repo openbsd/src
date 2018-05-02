@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.38 2018/04/28 03:13:05 visa Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.39 2018/05/02 02:24:56 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -573,7 +573,7 @@ fusefs_link(void *v)
 		error = EXDEV;
 		goto out2;
 	}
-	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE, p))) {
+	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE))) {
 		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
@@ -1191,7 +1191,7 @@ abortit:
 		goto abortit;
 	}
 
-	if ((error = vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY, p)) != 0)
+	if ((error = vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY)) != 0)
 		goto abortit;
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);

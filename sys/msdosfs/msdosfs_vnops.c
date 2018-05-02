@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.118 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.119 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -944,7 +944,6 @@ msdosfs_rename(void *v)
 	struct vnode *fdvp = ap->a_fdvp;
 	struct componentname *tcnp = ap->a_tcnp;
 	struct componentname *fcnp = ap->a_fcnp;
-	struct proc *p = curproc; /* XXX */
 	struct denode *ip, *xp, *dp, *zp;
 	u_char toname[11], oldname[11];
 	uint32_t from_diroffset, to_diroffset;
@@ -993,7 +992,7 @@ abortit:
 	}
 
 	/* */
-	if ((error = vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY, p)) != 0)
+	if ((error = vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY)) != 0)
 		goto abortit;
 	dp = VTODE(fdvp);
 	ip = VTODE(fvp);

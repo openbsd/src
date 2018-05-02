@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.18 2018/04/28 03:13:05 visa Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.19 2018/05/02 02:24:56 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -155,7 +155,7 @@ fusefs_lookup(void *v)
 		error = VFS_VGET(fmp->mp, nid, &tdp);
 
 		if (error) {
-			if (vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+			if (vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 
 			goto reclaim;
@@ -164,7 +164,7 @@ fusefs_lookup(void *v)
 		tdp->v_type = nvtype;
 
 		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(vdp, LK_EXCLUSIVE, p))) {
+			if ((error = vn_lock(vdp, LK_EXCLUSIVE))) {
 				vput(tdp);
 				return (error);
 			}

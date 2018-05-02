@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.43 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.44 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /*
@@ -249,7 +249,6 @@ ext2fs_lookup(void *v)
 	struct ucred *cred = cnp->cn_cred;
 	int flags = cnp->cn_flags;
 	int nameiop = cnp->cn_nameiop;
-	struct proc *p = cnp->cn_proc;
 	int dirblksize, entry_found = 0, error;
 
 	ss.slotstatus = FOUND;
@@ -568,12 +567,12 @@ found:
 		VOP_UNLOCK(pdp);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
 		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0) {
-			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(pdp, LK_EXCLUSIVE, p)) != 0) {
+			if ((error = vn_lock(pdp, LK_EXCLUSIVE)) != 0) {
 				vput(tdp);
 				return (error);
 			}

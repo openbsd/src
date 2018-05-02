@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.139 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: tty.c,v 1.140 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -795,7 +795,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = namei(&nid);
 			if (error)
 				return (error);
-			vn_lock(nid.ni_vp, LK_EXCLUSIVE | LK_RETRY, p);
+			vn_lock(nid.ni_vp, LK_EXCLUSIVE | LK_RETRY);
 			error = VOP_ACCESS(nid.ni_vp, VREAD, p->p_ucred, p);
 			VOP_UNLOCK(nid.ni_vp);
 			vrele(nid.ni_vp);
