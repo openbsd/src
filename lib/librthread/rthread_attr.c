@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.24 2018/04/12 17:15:34 deraadt Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.25 2018/05/02 14:06:00 bluhm Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -126,7 +126,7 @@ pthread_attr_setstack(pthread_attr_t *attrp, void *stackaddr, size_t stacksize)
 	struct syslog_data data = SYSLOG_DATA_INIT;
 
 	if (stacksize < PTHREAD_STACK_MIN) {
-		syslog_r(LOG_USER, &data,
+		syslog_r(LOG_ERR, &data,
 		    "pthread_attr_setstack(%p, %zu): "
 		    "stack size below min size %d",
 		    stackaddr, stacksize, PTHREAD_STACK_MIN);
@@ -139,7 +139,7 @@ pthread_attr_setstack(pthread_attr_t *attrp, void *stackaddr, size_t stacksize)
 	 */
 	if (((uintptr_t)stackaddr % PTHREAD_STACK_MIN) != 0
 	    || (stacksize % PTHREAD_STACK_MIN) != 0) {
-		syslog_r(LOG_USER, &data,
+		syslog_r(LOG_ERR, &data,
 		    "pthread_attr_setstack(%p, 0x%zx): "
 		    "unaligned thread stack start and/or size",
 		    stackaddr, stacksize);
@@ -163,7 +163,7 @@ pthread_attr_setstack(pthread_attr_t *attrp, void *stackaddr, size_t stacksize)
 
 	if (mmap(stackaddr, stacksize, PROT_READ|PROT_WRITE,
 	    MAP_FIXED|MAP_STACK|MAP_ANON|MAP_PRIVATE, -1, 0) == MAP_FAILED) {
-		syslog_r(LOG_USER, &data,
+		syslog_r(LOG_ERR, &data,
 		    "pthread_attr_setstack(%p, %zu): mmap error %m",
 		    stackaddr, stacksize);
 		return (errno);
