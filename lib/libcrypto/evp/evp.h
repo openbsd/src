@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.58 2018/02/20 18:05:28 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.59 2018/05/02 15:51:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -651,9 +651,9 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key);
 
 #ifndef OPENSSL_NO_BIO
-BIO_METHOD *BIO_f_md(void);
-BIO_METHOD *BIO_f_base64(void);
-BIO_METHOD *BIO_f_cipher(void);
+const BIO_METHOD *BIO_f_md(void);
+const BIO_METHOD *BIO_f_base64(void);
+const BIO_METHOD *BIO_f_cipher(void);
 void BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
     const unsigned char *i, int enc);
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_enc.c,v 1.20 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: bio_enc.c,v 1.21 2018/05/02 15:51:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -87,7 +87,7 @@ typedef struct enc_struct {
 	char buf[ENC_BLOCK_SIZE + BUF_OFFSET + 2];
 } BIO_ENC_CTX;
 
-static BIO_METHOD methods_enc = {
+static const BIO_METHOD methods_enc = {
 	.type = BIO_TYPE_CIPHER,
 	.name = "cipher",
 	.bwrite = enc_write,
@@ -98,7 +98,7 @@ static BIO_METHOD methods_enc = {
 	.callback_ctrl = enc_callback_ctrl
 };
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_f_cipher(void)
 {
 	return (&methods_enc);
