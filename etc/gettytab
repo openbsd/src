@@ -1,4 +1,4 @@
-#	$OpenBSD: gettytab,v 1.5 2013/12/10 20:56:59 naddy Exp $
+#	$OpenBSD: gettytab,v 1.6 2018/05/02 21:06:14 kettenis Exp $
 #
 # Most of the table entries here are just copies of the old getty table.
 # It is by no means certain, or even likely, that any of them are optimal
@@ -47,6 +47,8 @@ std.57600|57600-baud:\
 	:sp#57600:
 std.115200|115200-baud:\
 	:sp#115200:
+std.1500000|1500000-baud:\
+	:sp#1500000:
 
 #
 # Dial in rotary tables, speed selection via 'break'
