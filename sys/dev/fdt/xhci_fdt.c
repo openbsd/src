@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.8 2018/04/09 20:39:03 kettenis Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.9 2018/05/02 15:17:45 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark kettenis <kettenis@openbsd.org>
  *
@@ -25,6 +25,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_misc.h>
+#include <dev/ofw/ofw_power.h>
 #include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
@@ -94,6 +95,9 @@ xhci_fdt_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	/* Set up power domain */
+	power_domain_enable(sc->sc_node);
 
 	/* 
 	 * Synopsys Designware USB3 controller needs some extra
