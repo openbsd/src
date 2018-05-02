@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.138 2018/03/14 22:38:46 bluhm Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.139 2018/05/02 21:28:01 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -855,10 +855,16 @@ ah_input_cb(struct cryptop *crp)
 		 * the mbuf.
 		 */
 		m_adj(m1, rplen + ahx->authsize);
-		if (!(m1->m_flags & M_PKTHDR))
+		/*
+		 * If m1 is the first mbuf, it has set M_PKTHDR and m_adj()
+		 * has already adjusted the packet header length for us.
+		 */
+		if (m1 != m)
 			m->m_pkthdr.len -= rplen + ahx->authsize;
 	} else
 		if (roff + rplen + ahx->authsize >= m1->m_len) {
+			int adjlen;
+
 			/*
 			 * Part or all of the AH header is at the end
 			 * of this mbuf, so first let's remove the
@@ -867,16 +873,16 @@ ah_input_cb(struct cryptop *crp)
 			 * chain, if any.
 			 */
 			if (roff + rplen + ahx->authsize > m1->m_len) {
+				adjlen = roff + rplen + ahx->authsize -
+				    m1->m_len;
 				/* Adjust the next mbuf by the remainder. */
-				m_adj(m1->m_next, roff + rplen +
-				    ahx->authsize - m1->m_len);
+				m_adj(m1->m_next, adjlen);
 
 				/*
 				 * The second mbuf is guaranteed not
 				 * to have a pkthdr...
 				 */
-				m->m_pkthdr.len -=
-				    (roff + rplen + ahx->authsize - m1->m_len);
+				m->m_pkthdr.len -= adjlen;
 			}
 
 			/* Now, let's unlink the mbuf chain for a second... */
@@ -887,9 +893,14 @@ ah_input_cb(struct cryptop *crp)
 			 * ...and trim the end of the first part of
 			 * the chain...sick
 			 */
-			m_adj(m1, -(m1->m_len - roff));
-			if (!(m1->m_flags & M_PKTHDR))
-				m->m_pkthdr.len -= (m1->m_len - roff);
+			adjlen = m1->m_len - roff;
+			m_adj(m1, -adjlen);
+			/*
+			 * If m1 is the first mbuf, it has set M_PKTHDR and
+			 * m_adj() has already adjusted the packet header len.
+			 */
+			if (m1 != m)
+				m->m_pkthdr.len -= adjlen;
 
 			/* Finally, let's relink. */
 			m1->m_next = m0;
