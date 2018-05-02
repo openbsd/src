@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.33 2017/06/14 13:12:49 patrick Exp $
+#	$OpenBSD: files.armv7,v 1.34 2018/05/02 15:16:31 patrick Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -31,6 +31,7 @@ file	dev/ofw/ofw_clock.c
 file	dev/ofw/ofw_gpio.c
 file	dev/ofw/ofw_misc.c
 file	dev/ofw/ofw_pinctrl.c
+file	dev/ofw/ofw_power.c
 file	dev/ofw/ofw_regulator.c
 
 include "dev/sdmmc/files.sdmmc"
