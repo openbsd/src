@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slaacd.8,v 1.5 2018/05/01 18:54:34 florian Exp $
+.\"	$OpenBSD: slaacd.8,v 1.6 2018/05/02 14:55:37 jmc Exp $
 .\"
 .\" Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 1 2018 $
+.Dd $Mdocdate: May 2 2018 $
 .Dt SLAACD 8
 .Os
 .Sh NAME
@@ -84,6 +84,14 @@ socket used for communication with
 .Xr slaacctl 8
 .Sh STANDARDS
 .Rs
+.%A R. Draves
+.%A D. Thaler
+.%D November 2005
+.%R RFC 4191
+.%T Default Router Preferences and More-Specific Routes
+.Re
+.Pp
+.Rs
 .%A T. Narten
 .%A E. Nordmark
 .%A W. Simpson
@@ -101,14 +109,6 @@ socket used for communication with
 .%D November 2010
 .%R RFC 6106
 .%T IPv6 Router Advertisement Options for DNS Configuration
-.Re
-.Pp
-.Rs
-.%A R. Draves
-.%A D. Thaler
-.%D November 2005
-.%R RFC 4191
-.%T Default Router Preferences and More-Specific Routes
 .Re
 .Pp
 .Rs
