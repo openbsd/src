@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.9 2018/04/30 11:29:16 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.10 2018/05/02 01:59:34 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -560,15 +560,17 @@ witness_init(struct lock_object *lock, struct lock_type *type)
 
 	/*
 	 * If we shouldn't watch this lock, then just clear lo_witness.
+	 * Record the type in case the lock becomes watched later.
 	 * Otherwise, if witness_cold is set, then it is too early to
 	 * enroll this lock, so defer it to witness_initialize() by adding
 	 * it to the pending_locks list.  If it is not too early, then enroll
 	 * the lock now.
 	 */
 	if (witness_watch < 1 || panicstr != NULL || db_active ||
-	    (lock->lo_flags & LO_WITNESS) == 0)
+	    (lock->lo_flags & LO_WITNESS) == 0) {
 		lock->lo_witness = NULL;
-	else if (witness_cold) {
+		lock->lo_type = type;
+	} else if (witness_cold) {
 		pending_locks[pending_cnt].wh_lock = lock;
 		pending_locks[pending_cnt++].wh_type = type;
 		if (pending_cnt > WITNESS_PENDLIST)
