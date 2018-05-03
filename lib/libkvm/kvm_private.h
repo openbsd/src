@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_private.h,v 1.25 2017/12/14 17:06:33 guenther Exp $ */
+/*	$OpenBSD: kvm_private.h,v 1.26 2018/05/03 15:47:41 zhuk Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -53,10 +53,16 @@ struct __kvm {
 	struct kinfo_file *filebase;
 	int	nbpg;		/* page size */
 	char	*swapspc;	/* (dynamic) storage for swapped pages */
+
 	char	*argspc, *argbuf; /* (dynamic) storage for argv strings */
 	int	arglen;		/* length of the above */
 	char	**argv;		/* (dynamic) storage for argv pointers */
 	int	argc;		/* length of above (not actual # present) */
+
+	char	*envspc, *envbuf; /* (dynamic) storage for environ strings */
+	int	envlen;		/* length of the above */
+	char	**envp;		/* (dynamic) storage for environ pointers */
+	int	envc;		/* length of above (not actual # present) */
 
 	/*
 	 * Header structures for kernel dumps. Only gets filled in for

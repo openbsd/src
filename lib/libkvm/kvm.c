@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.63 2017/12/14 17:06:33 guenther Exp $ */
+/*	$OpenBSD: kvm.c,v 1.64 2018/05/03 15:47:41 zhuk Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -191,6 +191,9 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 	kd->argspc = 0;
 	kd->argbuf = 0;
 	kd->argv = 0;
+	kd->envspc = 0;
+	kd->envbuf = 0;
+	kd->envp = 0;
 	kd->vmst = NULL;
 	kd->vm_page_buckets = 0;
 	kd->kcore_hdr = 0;
@@ -660,6 +663,12 @@ kvm_close(kvm_t *kd)
 		free((void *)kd->argbuf);
 	if (kd->argv != 0)
 		free((void *)kd->argv);
+	if (kd->envspc != 0)
+		free((void *)kd->envspc);
+	if (kd->envbuf != 0)
+		free((void *)kd->envbuf);
+	if (kd->envp != 0)
+		free((void *)kd->envp);
 	free((void *)kd);
 
 	return (error);
