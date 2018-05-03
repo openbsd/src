@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.3 2018/04/27 06:45:40 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.4 2018/05/03 11:18:08 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -310,6 +310,8 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	pinctrl_byname(faa->fa_node, "default");
+
+	clock_set_assigned(faa->fa_node);
 
 	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_SDMMC,
 	   imxesdhc_intr, sc, sc->sc_dev.dv_xname);
