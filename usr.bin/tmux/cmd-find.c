@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.61 2018/04/18 14:35:37 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.62 2018/05/03 16:56:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -437,13 +437,13 @@ cmd_find_get_window_with_session(struct cmd_find_state *fs, const char *window)
 	if (window[0] != '+' && window[0] != '-') {
 		idx = strtonum(window, 0, INT_MAX, &errstr);
 		if (errstr == NULL) {
-			if (fs->flags & CMD_FIND_WINDOW_INDEX) {
-				fs->idx = idx;
-				return (0);
-			}
 			fs->wl = winlink_find_by_index(&fs->s->windows, idx);
 			if (fs->wl != NULL) {
 				fs->w = fs->wl->window;
+				return (0);
+			}
+			if (fs->flags & CMD_FIND_WINDOW_INDEX) {
+				fs->idx = idx;
 				return (0);
 			}
 		}
@@ -1182,7 +1182,8 @@ cmd_find_target(struct cmd_find_state *fs, struct cmdq_item *item,
 		/* This will fill in session, winlink and window. */
 		if (cmd_find_get_window(fs, window, window_only) != 0)
 			goto no_window;
-		fs->wp = fs->wl->window->active;
+		if (fs->wl != NULL) /* can be NULL if index only */
+			fs->wp = fs->wl->window->active;
 		goto found;
 	}
 

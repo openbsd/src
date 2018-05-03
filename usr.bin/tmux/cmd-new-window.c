@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.73 2018/03/01 12:53:08 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.74 2018/05/03 16:56:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -63,7 +63,7 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 	struct environ_entry	*envent;
 	struct cmd_find_state	 fs;
 
-	if (args_has(args, 'a')) {
+	if (args_has(args, 'a') && wl != NULL) {
 		if ((idx = winlink_shuffle_up(s, wl)) == -1) {
 			cmdq_error(item, "no free window indexes");
 			return (CMD_RETURN_ERROR);
