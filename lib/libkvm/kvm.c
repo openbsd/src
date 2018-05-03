@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.64 2018/05/03 15:47:41 zhuk Exp $ */
+/*	$OpenBSD: kvm.c,v 1.65 2018/05/03 16:42:07 zhuk Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -649,27 +649,18 @@ kvm_close(kvm_t *kd)
 	if (kd->vmst)
 		_kvm_freevtop(kd);
 	kd->cpu_dsize = 0;
-	if (kd->cpu_data != NULL)
-		free((void *)kd->cpu_data);
-	if (kd->kcore_hdr != NULL)
-		free((void *)kd->kcore_hdr);
+	free(kd->cpu_data);
+	free(kd->kcore_hdr);
 	free(kd->filebase);
 	free(kd->procbase);
-	if (kd->swapspc != 0)
-		free((void *)kd->swapspc);
-	if (kd->argspc != 0)
-		free((void *)kd->argspc);
-	if (kd->argbuf != 0)
-		free((void *)kd->argbuf);
-	if (kd->argv != 0)
-		free((void *)kd->argv);
-	if (kd->envspc != 0)
-		free((void *)kd->envspc);
-	if (kd->envbuf != 0)
-		free((void *)kd->envbuf);
-	if (kd->envp != 0)
-		free((void *)kd->envp);
-	free((void *)kd);
+	free(kd->swapspc);
+	free(kd->argspc);
+	free(kd->argbuf);
+	free(kd->argv);
+	free(kd->envspc);
+	free(kd->envbuf);
+	free(kd->envp);
+	free(kd);
 
 	return (error);
 }
