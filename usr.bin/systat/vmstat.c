@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.82 2016/12/18 23:36:32 krw Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.83 2018/05/03 07:49:18 otto Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -180,6 +180,8 @@ initvmstat(void)
 
 	intrloc = calloc(nintr, sizeof(long));
 	intrname = calloc(nintr, sizeof(char *));
+	if (intrloc == NULL || intrname == NULL)
+		err(2, NULL);
 
 	for (i = 0; i < nintr; i++) {
 		char name[128];
@@ -634,7 +636,7 @@ allocinfo(struct Info *si)
 	memset(si, 0, sizeof(*si));
 	si->intrcnt = calloc(nintr, sizeof(*si->intrcnt));
 	if (si->intrcnt == NULL)
-		errx(2, "out of memory");
+		err(2, NULL);
 }
 
 static void
