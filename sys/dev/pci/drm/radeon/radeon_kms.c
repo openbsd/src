@@ -202,6 +202,7 @@ struct wsdisplay_accessops radeondrm_accessops = {
 	.getchar = rasops_getchar,
 	.load_font = rasops_load_font,
 	.list_font = rasops_list_font,
+	.scrollback = rasops_scrollback,
 	.burn_screen = radeondrm_burner
 };
 
