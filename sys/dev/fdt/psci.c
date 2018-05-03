@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.6 2018/02/23 19:08:56 kettenis Exp $	*/
+/*	$OpenBSD: psci.c,v 1.7 2018/05/03 09:45:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -31,14 +31,19 @@
 extern void (*cpuresetfn)(void);
 extern void (*powerdownfn)(void);
 
-#define PSCI_VERSION	0x84000000
-#define SYSTEM_OFF	0x84000008
-#define SYSTEM_RESET	0x84000009
+#define SMCCC_VERSION		0x80000000
+#define SMCCC_ARCH_FEATURES	0x80000001
+#define SMCCC_ARCH_WORKAROUND_1	0x80008000
+
+#define PSCI_VERSION		0x84000000
 #ifdef __LP64__
-#define CPU_ON		0xc4000003
+#define CPU_ON			0xc4000003
 #else
-#define CPU_ON		0x84000003
+#define CPU_ON			0x84000003
 #endif
+#define SYSTEM_OFF		0x84000008
+#define SYSTEM_RESET		0x84000009
+#define PSCI_FEATURES		0x8400000a
 
 struct psci_softc {
 	struct device	 sc_dev;
@@ -48,6 +53,9 @@ struct psci_softc {
 	uint32_t	 sc_system_off;
 	uint32_t	 sc_system_reset;
 	uint32_t	 sc_cpu_on;
+
+	uint32_t	 sc_version;
+	uint32_t	 sc_smccc_version;
 };
 
 struct psci_softc *psci_sc;
@@ -59,6 +67,12 @@ void	psci_powerdown(void);
 
 extern register_t hvc_call(register_t, register_t, register_t, register_t);
 extern register_t smc_call(register_t, register_t, register_t, register_t);
+
+int32_t smccc_version(void);
+int32_t smccc_arch_features(uint32_t);
+
+uint32_t psci_version(void);
+int32_t psci_features(uint32_t);
 
 struct cfattach psci_ca = {
 	sizeof(struct psci_softc), psci_match, psci_attach
@@ -84,7 +98,6 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 	struct psci_softc *sc = (struct psci_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	char method[128];
-	uint32_t version;
 
 	if (OF_getprop(faa->fa_node, "method", method, sizeof(method))) {
 		if (strcmp(method, "hvc") == 0)
@@ -114,13 +127,128 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 
 	psci_sc = sc;
 
-	version = psci_version();
-	printf(": PSCI %d.%d\n", version >> 16, version & 0xffff);
+	sc->sc_version = psci_version();
+	printf(": PSCI %d.%d", sc->sc_version >> 16, sc->sc_version & 0xffff);
+
+	if (sc->sc_version >= 0x10000) {
+		if (psci_features(SMCCC_VERSION) == PSCI_SUCCESS) {
+			sc->sc_smccc_version = smccc_version();
+			printf(", SMCCC %d.%d", sc->sc_smccc_version >> 16,
+			    sc->sc_smccc_version & 0xffff);
+		}
+	}
+
+	printf("\n");
 
 	if (sc->sc_system_off != 0)
 		powerdownfn = psci_powerdown;
 	if (sc->sc_system_reset != 0)
 		cpuresetfn = psci_reset;
+}
+
+void
+psci_reset(void)
+{
+	struct psci_softc *sc = psci_sc;
+
+	if (sc->sc_callfn)
+		(*sc->sc_callfn)(sc->sc_system_reset, 0, 0, 0);
+}
+
+void
+psci_powerdown(void)
+{
+	struct psci_softc *sc = psci_sc;
+
+	if (sc->sc_callfn)
+		(*sc->sc_callfn)(sc->sc_system_off, 0, 0, 0);
+}
+
+/*
+ * Firmware-based workaround for CVE-2017-5715.  We pick the
+ * appropriate mechanism based on the PSCI and SMCCC versions.  We
+ * determine whether the workaround is actually needed the first time
+ * we are invoked such that we only make the firmware call if we
+ * really need to.
+ */
+
+void
+psci_flush_bp_none(void)
+{
+}
+
+void
+psci_flush_bp_psci_version(void)
+{
+	struct psci_softc *sc = psci_sc;
+
+	(*sc->sc_callfn)(PSCI_VERSION, 0, 0, 0);
+}
+
+void
+psci_flush_bp_smccc_arch_workaround_1(void)
+{
+	struct psci_softc *sc = psci_sc;
+
+	(*sc->sc_callfn)(SMCCC_ARCH_WORKAROUND_1, 0, 0, 0);
+}
+
+void
+psci_flush_bp(void)
+{
+	struct psci_softc *sc = psci_sc;
+	struct cpu_info *ci = curcpu();
+
+	/* No PSCI or an old version of PSCI; nothing we can do. */
+	if (sc == NULL || sc->sc_version < 0x10000) {
+		ci->ci_flush_bp = psci_flush_bp_none;
+		return;
+	}
+
+	/*
+	 * PSCI 1.0 or later with SMCCC 1.0; invoke PSCI_VERSION and
+	 * hope for the best.
+	 */
+	if (sc->sc_smccc_version < 0x10001) {
+		ci->ci_flush_bp = psci_flush_bp_psci_version;
+		ci->ci_flush_bp();
+		return;
+	}
+
+	/*
+	 * SMCCC 1.1 or later; we can actually detect if the
+	 * workaround is implemented and needed.
+	 */
+	if (smccc_arch_features(SMCCC_ARCH_WORKAROUND_1) == 0) {
+		/* Workaround implemented and needed. */
+		ci->ci_flush_bp = psci_flush_bp_smccc_arch_workaround_1;
+		ci->ci_flush_bp();
+	} else {
+		/* No workaround needed. */
+		ci->ci_flush_bp = psci_flush_bp_none;
+	}
+}
+
+int32_t
+smccc_version(void)
+{
+	struct psci_softc *sc = psci_sc;
+
+	if (sc && sc->sc_callfn)
+		return (*sc->sc_callfn)(SMCCC_VERSION, 0, 0, 0);
+
+	return PSCI_NOT_SUPPORTED;
+}
+
+int32_t
+smccc_arch_features(uint32_t arch_func_id)
+{
+	struct psci_softc *sc = psci_sc;
+
+	if (sc && sc->sc_callfn)
+		return (*sc->sc_callfn)(SMCCC_ARCH_FEATURES, arch_func_id, 0, 0);
+
+	return PSCI_NOT_SUPPORTED;
 }
 
 uint32_t
@@ -135,22 +263,6 @@ psci_version(void)
 	return 0;
 }
 
-void
-psci_reset(void)
-{
-	struct psci_softc *sc = psci_sc;
-	if (sc->sc_callfn)
-		(*sc->sc_callfn)(sc->sc_system_reset, 0, 0, 0);
-}
-
-void
-psci_powerdown(void)
-{
-	struct psci_softc *sc = psci_sc;
-	if (sc->sc_callfn)
-		(*sc->sc_callfn)(sc->sc_system_off, 0, 0, 0);
-}
-
 int32_t
 psci_cpu_on(register_t target_cpu, register_t entry_point_address,
     register_t context_id)
@@ -160,6 +272,17 @@ psci_cpu_on(register_t target_cpu, register_t entry_point_address,
 	if (sc && sc->sc_callfn && sc->sc_cpu_on != 0)
 		return (*sc->sc_callfn)(sc->sc_cpu_on, target_cpu,
 		    entry_point_address, context_id);
+
+	return PSCI_NOT_SUPPORTED;
+}
+
+int32_t
+psci_features(uint32_t psci_func_id)
+{
+	struct psci_softc *sc = psci_sc;
+
+	if (sc && sc->sc_callfn)
+		return (*sc->sc_callfn)(PSCI_FEATURES, psci_func_id, 0, 0);
 
 	return PSCI_NOT_SUPPORTED;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.17 2018/03/29 19:48:14 patrick Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.18 2018/05/03 09:45:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -165,7 +165,7 @@ cpu_identify(struct cpu_info *ci)
 
 	/*
 	 * Some ARM processors are vulnerable to branch target
-	 * injection attacks.
+	 * injection attacks (CVE-2017-5715).
 	 */
 	switch (impl) {
 	case CPU_IMPL_ARM:
@@ -182,7 +182,7 @@ cpu_identify(struct cpu_info *ci)
 		case CPU_PART_CORTEX_A75:
 		default:
 			/*
-			 * Vulnerable; call PSCI_VERSION and hope
+			 * Vulnerable; call into the firmware and hope
 			 * we're running on top of Arm Trusted
 			 * Firmware with a fix for Security Advisory
 			 * TFV 6.
@@ -305,7 +305,7 @@ void
 cpu_flush_bp_psci(void)
 {
 #if NPSCI > 0
-	psci_version();
+	psci_flush_bp();
 #endif
 }
 
