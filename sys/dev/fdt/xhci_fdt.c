@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.9 2018/05/02 15:17:45 patrick Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.10 2018/05/03 10:57:37 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark kettenis <kettenis@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/ofw_power.h>
 #include <dev/ofw/ofw_regulator.h>
@@ -196,13 +197,14 @@ struct xhci_phy {
 };
 
 void exynos5_usbdrd_init(struct xhci_fdt_softc *, uint32_t *);
+void imx8mq_usb_init(struct xhci_fdt_softc *, uint32_t *);
 void nop_xceiv_init(struct xhci_fdt_softc *, uint32_t *);
 
 struct xhci_phy xhci_phys[] = {
+	{ "fsl,imx8mq-usb-phy", imx8mq_usb_init },
 	{ "samsung,exynos5250-usbdrd-phy", exynos5_usbdrd_init },
 	{ "samsung,exynos5420-usbdrd-phy", exynos5_usbdrd_init },
 	{ "usb-nop-xceiv", nop_xceiv_init },
-	
 };
 
 uint32_t *
@@ -360,6 +362,63 @@ exynos5_usbdrd_init(struct xhci_fdt_softc *sc, uint32_t *cells)
 	delay(10);
 	CLR(val, EXYNOS5_PHYCLKRST_PORTRESET);
 	bus_space_write_4(sc->sc.iot, sc->ph_ioh, EXYNOS5_PHYCLKRST, val);
+}
+
+/*
+ * i.MX8MQ PHYs.
+ */
+
+/* Registers */
+#define IMX8MQ_PHY_CTRL0			0x0000
+#define  IMX8MQ_PHY_CTRL0_REF_SSP_EN			(1 << 2)
+#define IMX8MQ_PHY_CTRL1			0x0004
+#define  IMX8MQ_PHY_CTRL1_RESET				(1 << 0)
+#define  IMX8MQ_PHY_CTRL1_ATERESET			(1 << 3)
+#define  IMX8MQ_PHY_CTRL1_VDATSRCENB0			(1 << 19)
+#define  IMX8MQ_PHY_CTRL1_VDATDETENB0			(1 << 20)
+#define IMX8MQ_PHY_CTRL2			0x0008
+#define  IMX8MQ_PHY_CTRL2_TXENABLEN0			(1 << 8)
+#define IMX8MQ_PHY_CTRL3			0x000c
+
+void
+imx8mq_usb_init(struct xhci_fdt_softc *sc, uint32_t *cells)
+{
+	uint32_t phy_reg[4], reg;
+	int node;
+
+	node = OF_getnodebyphandle(cells[0]);
+	KASSERT(node != 0);
+
+	if (OF_getpropintarray(node, "reg", phy_reg,
+	    sizeof(phy_reg)) != sizeof(phy_reg))
+		return;
+
+	if (bus_space_map(sc->sc.iot, phy_reg[1],
+	    phy_reg[3], 0, &sc->ph_ioh)) {
+		printf("%s: can't map PHY registers\n",
+		    sc->sc.sc_bus.bdev.dv_xname);
+		return;
+	}
+
+	clock_set_assigned(node);
+	clock_enable_all(node);
+
+	reg = bus_space_read_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL1);
+	reg &= ~(IMX8MQ_PHY_CTRL1_VDATSRCENB0 | IMX8MQ_PHY_CTRL1_VDATDETENB0);
+	reg |= IMX8MQ_PHY_CTRL1_RESET | IMX8MQ_PHY_CTRL1_ATERESET;
+	bus_space_write_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL1, reg);
+
+	reg = bus_space_read_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL0);
+	reg |= IMX8MQ_PHY_CTRL0_REF_SSP_EN;
+	bus_space_write_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL0, reg);
+
+	reg = bus_space_read_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL2);
+	reg |= IMX8MQ_PHY_CTRL2_TXENABLEN0;
+	bus_space_write_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL2, reg);
+
+	reg = bus_space_read_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL1);
+	reg &= ~(IMX8MQ_PHY_CTRL1_RESET | IMX8MQ_PHY_CTRL1_ATERESET);
+	bus_space_write_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL1, reg);
 }
 
 void
