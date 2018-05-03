@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.53 2018/04/27 21:36:12 jcs Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.54 2018/05/03 10:05:47 jsg Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1373,6 +1373,7 @@ struct rasops_screen {
 	int rs_visible;
 	int rs_crow;
 	int rs_ccol;
+	long rs_defattr;
 
 	int rs_sbscreens;
 #define RS_SCROLLBACK_SCREENS 5
@@ -1412,10 +1413,11 @@ rasops_alloc_screen(void *v, void **cookiep,
 	scr->rs_visible = (ri->ri_nscreens == 0);
 	scr->rs_crow = -1;
 	scr->rs_ccol = -1;
+	scr->rs_defattr = *attrp;
 
 	for (i = 0; i < scr->rs_dispoffset; i++) {
 		scr->rs_bs[i].uc = ' ';
-		scr->rs_bs[i].attr = *attrp;
+		scr->rs_bs[i].attr = scr->rs_defattr;
 	}
 
 	if (ri->ri_bs && scr->rs_visible) {
@@ -1425,7 +1427,8 @@ rasops_alloc_screen(void *v, void **cookiep,
 	} else {
 		for (i = 0; i < ri->ri_rows * ri->ri_cols; i++) {
 			scr->rs_bs[scr->rs_dispoffset + i].uc = ' ';
-			scr->rs_bs[scr->rs_dispoffset + i].attr = *attrp;
+			scr->rs_bs[scr->rs_dispoffset + i].attr =
+			    scr->rs_defattr;
 		}
 	}
 
@@ -1474,12 +1477,10 @@ rasops_doswitch(void *v)
 	struct rasops_info *ri = v;
 	struct rasops_screen *scr = ri->ri_switchcookie;
 	int row, col;
-	long attr;
 
 	rasops_cursor(ri, 0, 0, 0);
 	ri->ri_active->rs_visible = 0;
-	ri->ri_alloc_attr(ri, 0, 0, 0, &attr);
-	ri->ri_eraserows(ri, 0, ri->ri_rows, attr);
+	ri->ri_eraserows(ri, 0, ri->ri_rows, scr->rs_defattr);
 	ri->ri_active = scr;
 	ri->ri_active->rs_visible = 1;
 	ri->ri_active->rs_visibleoffset = ri->ri_active->rs_dispoffset;
@@ -1906,7 +1907,6 @@ rasops_scrollback(void *v, void *cookie, int lines)
 	struct rasops_info *ri = v;
 	struct rasops_screen *scr = cookie;
 	int row, col, oldvoff;
-	long attr;
 
 	oldvoff = scr->rs_visibleoffset;
 
@@ -1927,7 +1927,7 @@ rasops_scrollback(void *v, void *cookie, int lines)
 		return;
 
 	rasops_cursor(ri, 0, 0, 0);
-	ri->ri_eraserows(ri, 0, ri->ri_rows, attr);
+	ri->ri_eraserows(ri, 0, ri->ri_rows, scr->rs_defattr);
 	for (row = 0; row < ri->ri_rows; row++) {
 		for (col = 0; col < ri->ri_cols; col++) {
 			int off = row * scr->rs_ri->ri_cols + col +
