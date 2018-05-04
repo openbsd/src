@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.119 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.120 2018/05/04 11:16:04 bluhm Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -84,6 +84,7 @@ int	nfs_start(struct mount *, int, struct proc *);
 int	nfs_statfs(struct mount *, struct statfs *, struct proc *);
 int	nfs_sync(struct mount *, int, int, struct ucred *, struct proc *);
 int	nfs_unmount(struct mount *, int, struct proc *);
+void	nfs_reaper(void *);
 int	nfs_vget(struct mount *, ino_t, struct vnode **);
 int	nfs_vptofh(struct vnode *, struct fid *);
 int	nfs_mountroot(void);
@@ -746,9 +747,21 @@ nfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
 	timeout_del(&nmp->nm_rtimeout);
-	free(nmp, M_NFSMNT, sizeof(*nmp));
+	timeout_set_proc(&nmp->nm_rtimeout, nfs_reaper, nmp);
+	timeout_add(&nmp->nm_rtimeout, 0);
 	mp->mnt_data = NULL;
 	return (0);
+}
+
+/*
+ * Delay nfs mount point free until pending or sleeping timeouts have finished.
+ */
+void
+nfs_reaper(void *arg)
+{
+	struct nfsmount *nmp = arg;
+
+	free(nmp, M_NFSMNT, sizeof(*nmp));
 }
 
 /*
