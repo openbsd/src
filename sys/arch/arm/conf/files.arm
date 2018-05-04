@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.48 2018/02/10 12:44:20 mpi Exp $
+#	$OpenBSD: files.arm,v 1.49 2018/05/04 16:12:12 visa Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -28,7 +28,7 @@ attach	simplebus at fdt
 file	arch/arm/simplebus/simplebus.c		simplebus
 
 # FDT support
-file	dev/ofw/fdt.c
+include "dev/ofw/files.ofw"
 
 include "arch/arm/cortex/files.cortex"
 

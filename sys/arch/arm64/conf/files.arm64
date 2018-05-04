@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.20 2018/05/02 15:16:31 patrick Exp $
+# $OpenBSD: files.arm64,v 1.21 2018/05/04 16:12:12 visa Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -63,13 +63,7 @@ attach	efi at fdt
 file	arch/arm64/dev/efi.c			efi
 
 # FDT support
-file	dev/ofw/fdt.c
-file	dev/ofw/ofw_clock.c
-file	dev/ofw/ofw_gpio.c
-file	dev/ofw/ofw_misc.c
-file	dev/ofw/ofw_pinctrl.c
-file	dev/ofw/ofw_power.c
-file	dev/ofw/ofw_regulator.c
+include "dev/ofw/files.ofw"
 
 # Machine-independent SCSI drivers
 include "scsi/files.scsi"
