@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.223 2018/05/02 07:19:45 tb Exp $	*/
+/*	$OpenBSD: in6.c,v 1.224 2018/05/04 19:43:07 tb Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -116,6 +116,7 @@ const struct in6_addr in6mask96 = IN6MASK96;
 const struct in6_addr in6mask128 = IN6MASK128;
 
 int in6_ioctl(u_long, caddr_t, struct ifnet *, int);
+int in6_ioctl_get(u_long, caddr_t, struct ifnet *);
 int in6_ifinit(struct ifnet *, struct in6_ifaddr *, int);
 void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
 
@@ -218,6 +219,28 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCGIFINFO_IN6:
 	case SIOCGNBRINFO_IN6:
 		return (nd6_ioctl(cmd, data, ifp));
+	case SIOCGIFDSTADDR_IN6:
+	case SIOCGIFNETMASK_IN6:
+	case SIOCGIFAFLAG_IN6:
+	case SIOCGIFALIFETIME_IN6:
+		return (in6_ioctl_get(cmd, data, ifp));
+	case SIOCAIFADDR_IN6:
+		sa6 = &ifra->ifra_addr;
+		break;
+	case SIOCDIFADDR_IN6:
+		sa6 = &ifr->ifr_addr;
+		break;
+	case SIOCSIFADDR:
+	case SIOCSIFDSTADDR:
+	case SIOCSIFBRDADDR:
+	case SIOCSIFNETMASK:
+		/*
+		 * Do not pass those ioctl to driver handler since they are not
+		 * properly set up. Instead just error out.
+		 */
+		return (EINVAL);
+	default:
+		return (EOPNOTSUPP);
 	}
 
 	/*
@@ -232,30 +255,6 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	 * presence of ifra_addr, and reject invalid ones here.
 	 * It also decreases duplicated code among SIOC*_IN6 operations.
 	 */
-	switch (cmd) {
-	case SIOCAIFADDR_IN6:
-		sa6 = &ifra->ifra_addr;
-		break;
-	case SIOCGIFDSTADDR_IN6:
-	case SIOCGIFNETMASK_IN6:
-	case SIOCDIFADDR_IN6:
-	case SIOCGIFAFLAG_IN6:
-	case SIOCGIFALIFETIME_IN6:
-		sa6 = &ifr->ifr_addr;
-		break;
-	case SIOCSIFADDR:
-	case SIOCSIFDSTADDR:
-	case SIOCSIFBRDADDR:
-	case SIOCSIFNETMASK:
-		/*
-		 * Do not pass those ioctl to driver handler since they are not
-		 * properly set up. Instead just error out.
-		 */
-		return (EINVAL);
-	default:
-		sa6 = NULL;
-		break;
-	}
 
 	NET_LOCK();
 
@@ -312,93 +311,12 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 			goto err;
 		}
 		break;
-
-	case SIOCGIFAFLAG_IN6:
-	case SIOCGIFNETMASK_IN6:
-	case SIOCGIFDSTADDR_IN6:
-	case SIOCGIFALIFETIME_IN6:
-		/* must think again about its semantics */
-		if (ia6 == NULL) {
-			error = EADDRNOTAVAIL;
-			goto err;
-		}
-		break;
 	}
 
 	switch (cmd) {
-	case SIOCGIFDSTADDR_IN6:
-		if ((ifp->if_flags & IFF_POINTOPOINT) == 0) {
-			error = EINVAL;
-			break;
-		}
-		/*
-		 * XXX: should we check if ifa_dstaddr is NULL and return
-		 * an error?
-		 */
-		ifr->ifr_dstaddr = ia6->ia_dstaddr;
-		break;
-
-	case SIOCGIFNETMASK_IN6:
-		ifr->ifr_addr = ia6->ia_prefixmask;
-		break;
-
-	case SIOCGIFAFLAG_IN6:
-		ifr->ifr_ifru.ifru_flags6 = ia6->ia6_flags;
-		break;
-
-	case SIOCGIFALIFETIME_IN6:
-		ifr->ifr_ifru.ifru_lifetime = ia6->ia6_lifetime;
-		if (ia6->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME) {
-			time_t expire, maxexpire;
-			struct in6_addrlifetime *retlt =
-			    &ifr->ifr_ifru.ifru_lifetime;
-
-			/*
-			 * XXX: adjust expiration time assuming time_t is
-			 * signed.
-			 */
-			maxexpire =
-			    (time_t)~(1ULL << ((sizeof(maxexpire) * 8) - 1));
-			if (ia6->ia6_lifetime.ia6t_vltime <
-			    maxexpire - ia6->ia6_updatetime) {
-				expire = ia6->ia6_updatetime +
-				    ia6->ia6_lifetime.ia6t_vltime;
-				if (expire != 0) {
-					expire -= time_uptime;
-					expire += time_second;
-				}
-				retlt->ia6t_expire = expire;
-			} else
-				retlt->ia6t_expire = maxexpire;
-		}
-		if (ia6->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME) {
-			time_t expire, maxexpire;
-			struct in6_addrlifetime *retlt =
-			    &ifr->ifr_ifru.ifru_lifetime;
-
-			/*
-			 * XXX: adjust expiration time assuming time_t is
-			 * signed.
-			 */
-			maxexpire =
-			    (time_t)~(1ULL << ((sizeof(maxexpire) * 8) - 1));
-			if (ia6->ia6_lifetime.ia6t_pltime <
-			    maxexpire - ia6->ia6_updatetime) {
-				expire = ia6->ia6_updatetime +
-				    ia6->ia6_lifetime.ia6t_pltime;
-				if (expire != 0) {
-					expire -= time_uptime;
-					expire += time_second;
-				}
-				retlt->ia6t_preferred = expire;
-			} else
-				retlt->ia6t_preferred = maxexpire;
-		}
-		break;
-
 	case SIOCAIFADDR_IN6:
 	{
-		int plen, error = 0, newifaddr = 0;
+		int plen, newifaddr = 0;
 
 		/* reject read-only flags */
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
@@ -469,14 +387,131 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		in6_purgeaddr(&ia6->ia_ifa);
 		dohooks(ifp->if_addrhooks, 0);
 		break;
-
-	default:
-		error = EOPNOTSUPP;
-		break;
 	}
 
 err:
 	NET_UNLOCK();
+	return (error);
+}
+
+int
+in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
+{
+	struct	in6_ifreq *ifr = (struct in6_ifreq *)data;
+	struct	in6_ifaddr *ia6 = NULL;
+	struct sockaddr_in6 *sa6;
+	int	error = 0;
+
+	sa6 = &ifr->ifr_addr;
+
+	NET_RLOCK();
+
+	if (sa6 && sa6->sin6_family == AF_INET6) {
+		if (IN6_IS_ADDR_LINKLOCAL(&sa6->sin6_addr)) {
+			if (sa6->sin6_addr.s6_addr16[1] == 0) {
+				/* link ID is not embedded by the user */
+				sa6->sin6_addr.s6_addr16[1] =
+				    htons(ifp->if_index);
+			} else if (sa6->sin6_addr.s6_addr16[1] !=
+			    htons(ifp->if_index)) {
+				error = EINVAL;	/* link ID contradicts */
+				goto err;
+			}
+			if (sa6->sin6_scope_id) {
+				if (sa6->sin6_scope_id !=
+				    (u_int32_t)ifp->if_index) {
+					error = EINVAL;
+					goto err;
+				}
+				sa6->sin6_scope_id = 0; /* XXX: good way? */
+			}
+		}
+		ia6 = in6ifa_ifpwithaddr(ifp, &sa6->sin6_addr);
+	}
+
+	/* must think again about its semantics */
+	if (ia6 == NULL) {
+		error = EADDRNOTAVAIL;
+		goto err;
+	}
+
+	switch(cmd) {
+	case SIOCGIFDSTADDR_IN6:
+		if ((ifp->if_flags & IFF_POINTOPOINT) == 0) {
+			error = EINVAL;
+			break;
+		}
+		/*
+		 * XXX: should we check if ifa_dstaddr is NULL and return
+		 * an error?
+		 */
+		ifr->ifr_dstaddr = ia6->ia_dstaddr;
+		break;
+
+	case SIOCGIFNETMASK_IN6:
+		ifr->ifr_addr = ia6->ia_prefixmask;
+		break;
+
+	case SIOCGIFAFLAG_IN6:
+		ifr->ifr_ifru.ifru_flags6 = ia6->ia6_flags;
+		break;
+
+	case SIOCGIFALIFETIME_IN6:
+		ifr->ifr_ifru.ifru_lifetime = ia6->ia6_lifetime;
+		if (ia6->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME) {
+			time_t expire, maxexpire;
+			struct in6_addrlifetime *retlt =
+			    &ifr->ifr_ifru.ifru_lifetime;
+
+			/*
+			 * XXX: adjust expiration time assuming time_t is
+			 * signed.
+			 */
+			maxexpire =
+			    (time_t)~(1ULL << ((sizeof(maxexpire) * 8) - 1));
+			if (ia6->ia6_lifetime.ia6t_vltime <
+			    maxexpire - ia6->ia6_updatetime) {
+				expire = ia6->ia6_updatetime +
+				    ia6->ia6_lifetime.ia6t_vltime;
+				if (expire != 0) {
+					expire -= time_uptime;
+					expire += time_second;
+				}
+				retlt->ia6t_expire = expire;
+			} else
+				retlt->ia6t_expire = maxexpire;
+		}
+		if (ia6->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME) {
+			time_t expire, maxexpire;
+			struct in6_addrlifetime *retlt =
+			    &ifr->ifr_ifru.ifru_lifetime;
+
+			/*
+			 * XXX: adjust expiration time assuming time_t is
+			 * signed.
+			 */
+			maxexpire =
+			    (time_t)~(1ULL << ((sizeof(maxexpire) * 8) - 1));
+			if (ia6->ia6_lifetime.ia6t_pltime <
+			    maxexpire - ia6->ia6_updatetime) {
+				expire = ia6->ia6_updatetime +
+				    ia6->ia6_lifetime.ia6t_pltime;
+				if (expire != 0) {
+					expire -= time_uptime;
+					expire += time_second;
+				}
+				retlt->ia6t_preferred = expire;
+			} else
+				retlt->ia6t_preferred = maxexpire;
+		}
+		break;
+
+	default:
+		panic("invalid ioctl %lu", cmd);
+	}
+
+err:
+	NET_RUNLOCK();
 	return (error);
 }
 
