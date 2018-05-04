@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.328 2018/04/29 09:23:00 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.329 2018/05/04 10:49:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1992,9 +1992,9 @@ smtp_tx_mail_from(struct smtp_tx *tx, char *line)
 {
 	if (smtp_mailaddr(&tx->evp.sender, line, 1, &line,
 		tx->session->smtpname) == 0) {
-		smtp_tx_free(tx);
 		smtp_reply(tx->session, "553 %s: Sender address syntax error",
 		    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_ADDRESS_STATUS));
+		smtp_tx_free(tx);
 		return;
 	}
 
