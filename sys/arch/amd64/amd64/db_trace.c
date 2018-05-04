@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.40 2018/04/27 08:14:15 guenther Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.41 2018/05/04 02:51:34 visa Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -268,13 +268,7 @@ db_save_stack_trace(struct db_stack_trace *st)
 
 	lastframe = NULL;
 	for (i = 0; i < DB_STACK_TRACE_MAX && frame != NULL; i++) {
-		char		*name;
-		db_expr_t	offset;
-		Elf_Sym *	sym;
-
 		st->st_pc[st->st_count++] = callpc;
-		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
-		db_symbol_values(sym, &name, NULL);
 
 		lastframe = frame;
 		callpc = frame->f_retaddr;
