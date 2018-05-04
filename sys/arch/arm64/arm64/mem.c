@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 2018/05/04 15:45:11 visa Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -97,6 +97,7 @@ static int ap_open_count = 0;
 extern int allowaperture;
 #endif
 
+static struct rwlock physlock = RWLOCK_INITIALIZER("mmrw");
 
 int
 mmopen(dev_t dev, int flag, int mode, struct proc *p)
@@ -143,7 +144,6 @@ mmclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
-	static struct rwlock physlock = RWLOCK_INITIALIZER("mmrw");
 	vaddr_t o, v;
 	size_t c;
 	struct iovec *iov;
