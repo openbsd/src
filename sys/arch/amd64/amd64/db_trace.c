@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.41 2018/05/04 02:51:34 visa Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.42 2018/05/04 02:54:23 visa Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -267,6 +267,7 @@ db_save_stack_trace(struct db_stack_trace *st)
 	frame = frame->f_frame;
 
 	lastframe = NULL;
+	st->st_count = 0;
 	for (i = 0; i < DB_STACK_TRACE_MAX && frame != NULL; i++) {
 		st->st_pc[st->st_count++] = callpc;
 
