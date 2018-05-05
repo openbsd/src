@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.307 2018/04/26 12:23:56 schwarze Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.308 2018/05/05 16:52:59 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: April 26 2018 $
+.Dd $Mdocdate: May 5 2018 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1195,7 +1195,7 @@ Fill the interface index
 .Pq the lowermost 64th bit of an IPv6 address
 automatically.
 .It Cm pltime Ar n
-Set preferred lifetime for the address.
+Set preferred lifetime for the address, in seconds.
 .It Cm soii
 Enable persistent Semantically Opaque Interface Identifiers (SOIIs),
 as per RFC 7217, for link local and SLAAC addresses on the interface.
@@ -1217,7 +1217,7 @@ Set the IPv6 tentative address bit.
 .It Cm -tentative
 Clear the IPv6 tentative address bit.
 .It Cm vltime Ar n
-Set valid lifetime for the address.
+Set valid lifetime for the address, in seconds.
 .El
 .Sh INTERFACE GROUPS
 .Nm ifconfig
