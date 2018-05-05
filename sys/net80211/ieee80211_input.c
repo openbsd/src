@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.200 2018/04/29 12:11:48 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.201 2018/05/05 06:58:05 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1689,13 +1689,26 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		memcpy(ni->ni_essid, &ssid[2], ssid[1]);
 	}
 	IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
-	ni->ni_rssi = rxi->rxi_rssi;
+	/* XXX validate channel # */
+	ni->ni_chan = &ic->ic_channels[chan];
+	if (ic->ic_state == IEEE80211_S_SCAN &&
+	    IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) {
+		/*
+		 * During a scan on 5Ghz, prefer RSSI measured for probe
+		 * response frames. i.e. don't allow beacons to lower the
+		 * measured RSSI. Some 5GHz APs send beacons with much
+		 * less Tx power than they use for probe responses.
+		 */
+		 if (isprobe)
+			ni->ni_rssi = rxi->rxi_rssi;
+		else if (ni->ni_rssi < rxi->rxi_rssi)
+			ni->ni_rssi = rxi->rxi_rssi;
+	} else
+		ni->ni_rssi = rxi->rxi_rssi;
 	ni->ni_rstamp = rxi->rxi_tstamp;
 	memcpy(ni->ni_tstamp, tstamp, sizeof(ni->ni_tstamp));
 	ni->ni_intval = bintval;
 	ni->ni_capinfo = capinfo;
-	/* XXX validate channel # */
-	ni->ni_chan = &ic->ic_channels[chan];
 	ni->ni_erp = erp;
 	/* NB: must be after ni_chan is setup */
 	ieee80211_setup_rates(ic, ni, rates, xrates, IEEE80211_F_DOSORT);
