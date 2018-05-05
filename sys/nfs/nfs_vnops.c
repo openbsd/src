@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.175 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.176 2018/05/05 11:54:11 mpi Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -88,7 +88,9 @@ int nfs_flush(struct vnode *, struct ucred *, int, struct proc *, int);
 int nfs_fsync(void *);
 int nfs_getattr(void *);
 int nfs_getreq(struct nfsrv_descript *, struct nfsd *, int);
+int nfs_islocked(void *);
 int nfs_link(void *);
+int nfs_lock(void *);
 int nfs_lookitup(struct vnode *, char *, int, struct ucred *, struct proc *,
 	struct nfsnode **);
 int nfs_lookup(void *);
@@ -120,6 +122,7 @@ int nfs_sillyrename(struct vnode *, struct vnode *,
 			 struct componentname *);
 int nfs_strategy(void *);
 int nfs_symlink(void *);
+int nfs_unlock(void *);
 
 void nfs_cache_enter(struct vnode *, struct vnode *, struct componentname *);
 
@@ -161,12 +164,12 @@ struct vops nfs_vops = {
 	.vop_abortop	= vop_generic_abortop,
 	.vop_inactive	= nfs_inactive,
 	.vop_reclaim	= nfs_reclaim,
-	.vop_lock	= vop_generic_lock,	/* XXX: beck@ must fix this. */
-	.vop_unlock	= vop_generic_unlock,
+	.vop_lock	= nfs_lock,
+	.vop_unlock	= nfs_unlock,
 	.vop_bmap	= nfs_bmap,
 	.vop_strategy	= nfs_strategy,
 	.vop_print	= nfs_print,
-	.vop_islocked	= vop_generic_islocked,
+	.vop_islocked	= nfs_islocked,
 	.vop_pathconf	= nfs_pathconf,
 	.vop_advlock	= nfs_advlock,
 	.vop_bwrite	= nfs_bwrite
@@ -183,10 +186,10 @@ struct vops nfs_specvops = {
 	.vop_fsync	= nfs_fsync,
 	.vop_inactive	= nfs_inactive,
 	.vop_reclaim	= nfs_reclaim,
-	.vop_lock	= vop_generic_lock,
-	.vop_unlock	= vop_generic_unlock,
+	.vop_lock	= nfs_lock,
+	.vop_unlock	= nfs_unlock,
 	.vop_print	= nfs_print,
-	.vop_islocked	= vop_generic_islocked,
+	.vop_islocked	= nfs_islocked,
 
 	/* XXX: Keep in sync with spec_vops. */
 	.vop_lookup	= vop_generic_lookup,
@@ -224,10 +227,10 @@ struct vops nfs_fifovops = {
 	.vop_fsync	= nfs_fsync,
 	.vop_inactive	= nfs_inactive,
 	.vop_reclaim	= nfsfifo_reclaim,
-	.vop_lock	= vop_generic_lock,
-	.vop_unlock	= vop_generic_unlock,
+	.vop_lock	= nfs_lock,
+	.vop_unlock	= nfs_unlock,
 	.vop_print	= nfs_print,
-	.vop_islocked	= vop_generic_islocked,
+	.vop_islocked	= nfs_islocked,
 	.vop_bwrite	= vop_generic_bwrite,
 
 	/* XXX: Keep in sync with fifo_vops. */
@@ -1034,6 +1037,42 @@ nfs_readlink(void *v)
 }
 
 /*
+ * Lock an inode.
+ */
+int
+nfs_lock(void *v)
+{
+	struct vop_lock_args *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	return rrw_enter(&VTONFS(vp)->n_lock, ap->a_flags & LK_RWFLAGS);
+}
+
+/*
+ * Unlock an inode.
+ */
+int
+nfs_unlock(void *v)
+{
+	struct vop_unlock_args *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	rrw_exit(&VTONFS(vp)->n_lock);
+	return 0;
+}
+
+/*
+ * Check for a locked inode.
+ */
+int
+nfs_islocked(void *v)
+{
+	struct vop_islocked_args *ap = v;
+
+	return rrw_status(&VTONFS(ap->a_vp)->n_lock);
+}
+
+/*
  * Do a readlink rpc.
  * Called by nfs_doio() from below the buffer cache.
  */
@@ -1545,9 +1584,9 @@ nfs_remove(void *v)
 int
 nfs_removeit(struct sillyrename *sp)
 {
+	KASSERT(VOP_ISLOCKED(sp->s_dvp));
 	/*
 	 * Make sure that the directory vnode is still valid.
-	 * XXX we should lock sp->s_dvp here.
 	 *
 	 * NFS can potentially try to nuke a silly *after* the directory
 	 * has already been pushed out on a forced unmount. Since the silly
@@ -1738,6 +1777,12 @@ nfs_link(void *v)
 		vput(dvp);
 		return (EXDEV);
 	}
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error != 0) {
+		VOP_ABORTOP(dvp, cnp);
+		vput(dvp);
+		return (error);
+	}
 
 	/*
 	 * Push all writes to the server, so that the attribute cache
@@ -1771,6 +1816,7 @@ nfsmout:
 
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
+	VOP_UNLOCK(vp);
 	vput(dvp);
 	return (error);
 }

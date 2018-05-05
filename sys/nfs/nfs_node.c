@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.68 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.69 2018/05/05 11:54:11 mpi Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -134,6 +134,10 @@ loop:
 	}
 
 	vp = nvp;
+#ifdef VFSLCKDEBUG
+	vp->v_flag |= VLOCKSWORK;
+#endif
+	rrw_init_flags(&np->n_lock, "nfsnode", RWL_DUPOK | RWL_IS_VNODE);
 	vp->v_data = np;
 	/* we now have an nfsnode on this vnode */
 	vp->v_flag &= ~VLARVAL;
@@ -142,6 +146,8 @@ loop:
 	np->n_fhp = &np->n_fh;
 	bcopy(fh, np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
+	/* lock the nfsnode, then put it on the rbtree */
+	rrw_enter(&np->n_lock, RW_WRITE);
 	np2 = RBT_INSERT(nfs_nodetree, &nmp->nm_ntree, np);
 	KASSERT(np2 == NULL);
 	np->n_accstamp = -1;
@@ -183,9 +189,10 @@ nfs_inactive(void *v)
 		 * Remove the silly file that was rename'd earlier
 		 */
 		nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, curproc);
+		vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_RETRY);
 		nfs_removeit(sp);
 		crfree(sp->s_cred);
-		vrele(sp->s_dvp);
+		vput(sp->s_dvp);
 		free(sp, M_NFSREQ, sizeof(*sp));
 	}
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT);

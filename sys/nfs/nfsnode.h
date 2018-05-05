@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.39 2009/12/15 15:53:48 beck Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.40 2018/05/05 11:54:11 mpi Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <nfs/nfs.h>
 #endif
 
-#include <sys/rwlock.h>
+#include <sys/lock.h>
 
 /*
  * Silly rename structure that hangs off the nfsnode until the name
@@ -79,6 +79,7 @@ struct nfsnode {
 	nfsfh_t			*n_fhp;		/* NFS File Handle */
 	struct vnode		*n_vnode;	/* associated vnode */
 	struct lockf		*n_lockf;	/* Locking record of file */
+	struct rrwlock		n_lock;		/* NFSnode lock */
 	int			n_error;	/* Save write error value */
 	union {
 		struct timespec	nf_atim;	/* Special file times */
