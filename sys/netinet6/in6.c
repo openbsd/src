@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.224 2018/05/04 19:43:07 tb Exp $	*/
+/*	$OpenBSD: in6.c,v 1.225 2018/05/06 14:03:03 tb Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -116,6 +116,7 @@ const struct in6_addr in6mask96 = IN6MASK96;
 const struct in6_addr in6mask128 = IN6MASK128;
 
 int in6_ioctl(u_long, caddr_t, struct ifnet *, int);
+int in6_ioctl_change_ifaddr(u_long, caddr_t, struct ifnet *);
 int in6_ioctl_get(u_long, caddr_t, struct ifnet *);
 int in6_ifinit(struct ifnet *, struct in6_ifaddr *, int);
 void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
@@ -206,12 +207,6 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 int
 in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 {
-	struct	in6_ifreq *ifr = (struct in6_ifreq *)data;
-	struct	in6_ifaddr *ia6 = NULL;
-	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
-	struct sockaddr_in6 *sa6;
-	int	error = 0;
-
 	if (ifp == NULL)
 		return (ENXIO);
 
@@ -225,11 +220,10 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCGIFALIFETIME_IN6:
 		return (in6_ioctl_get(cmd, data, ifp));
 	case SIOCAIFADDR_IN6:
-		sa6 = &ifra->ifra_addr;
-		break;
 	case SIOCDIFADDR_IN6:
-		sa6 = &ifr->ifr_addr;
-		break;
+		if (!privileged)
+			return (EPERM);
+		return (in6_ioctl_change_ifaddr(cmd, data, ifp));
 	case SIOCSIFADDR:
 	case SIOCSIFDSTADDR:
 	case SIOCSIFBRDADDR:
@@ -242,6 +236,16 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	default:
 		return (EOPNOTSUPP);
 	}
+}
+
+int
+in6_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
+{
+	struct	in6_ifreq *ifr = (struct in6_ifreq *)data;
+	struct	in6_ifaddr *ia6 = NULL;
+	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
+	struct sockaddr_in6 *sa6;
+	int	error = 0, newifaddr = 0, plen;
 
 	/*
 	 * Find address for this interface, if it exists.
@@ -255,6 +259,16 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	 * presence of ifra_addr, and reject invalid ones here.
 	 * It also decreases duplicated code among SIOC*_IN6 operations.
 	 */
+	switch (cmd) {
+	case SIOCAIFADDR_IN6:
+		sa6 = &ifra->ifra_addr;
+		break;
+	case SIOCDIFADDR_IN6:
+		sa6 = &ifr->ifr_addr;
+		break;
+	default:
+		panic("unknown ioctl %lu", cmd);
+	}
 
 	NET_LOCK();
 
@@ -279,8 +293,7 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 			}
 		}
 		ia6 = in6ifa_ifpwithaddr(ifp, &sa6->sin6_addr);
-	} else
-		ia6 = NULL;
+	}
 
 	switch (cmd) {
 	case SIOCDIFADDR_IN6:
@@ -293,9 +306,21 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		 */
 		if (ia6 == NULL) {
 			error = EADDRNOTAVAIL;
-			goto err;
+			break;
 		}
-		/* FALLTHROUGH */
+		/*
+		 * We always require users to specify a valid IPv6 address for
+		 * the corresponding operation.
+		 */
+		if (ifra->ifra_addr.sin6_family != AF_INET6 ||
+		    ifra->ifra_addr.sin6_len != sizeof(struct sockaddr_in6)) {
+			error = EAFNOSUPPORT;
+			break;
+		}
+		in6_purgeaddr(&ia6->ia_ifa);
+		dohooks(ifp->if_addrhooks, 0);
+		break;
+
 	case SIOCAIFADDR_IN6:
 		/*
 		 * We always require users to specify a valid IPv6 address for
@@ -304,19 +329,8 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		if (ifra->ifra_addr.sin6_family != AF_INET6 ||
 		    ifra->ifra_addr.sin6_len != sizeof(struct sockaddr_in6)) {
 			error = EAFNOSUPPORT;
-			goto err;
+			break;
 		}
-		if (!privileged) {
-			error = EPERM;
-			goto err;
-		}
-		break;
-	}
-
-	switch (cmd) {
-	case SIOCAIFADDR_IN6:
-	{
-		int plen, newifaddr = 0;
 
 		/* reject read-only flags */
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
@@ -383,12 +397,6 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		break;
 	}
 
-	case SIOCDIFADDR_IN6:
-		in6_purgeaddr(&ia6->ia_ifa);
-		dohooks(ifp->if_addrhooks, 0);
-		break;
-	}
-
 err:
 	NET_UNLOCK();
 	return (error);
@@ -435,7 +443,7 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 		goto err;
 	}
 
-	switch(cmd) {
+	switch (cmd) {
 	case SIOCGIFDSTADDR_IN6:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0) {
 			error = EINVAL;
