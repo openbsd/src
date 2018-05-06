@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.225 2018/05/06 14:03:03 tb Exp $	*/
+/*	$OpenBSD: in6.c,v 1.226 2018/05/06 15:21:25 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -645,7 +645,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia6->ia_ifa.ifa_addr = sin6tosa(&ia6->ia_addr);
 		ia6->ia_addr.sin6_family = AF_INET6;
 		ia6->ia_addr.sin6_len = sizeof(ia6->ia_addr);
-		ia6->ia6_createtime = ia6->ia6_updatetime = time_uptime;
+		ia6->ia6_updatetime = time_uptime;
 		if ((ifp->if_flags & (IFF_POINTOPOINT | IFF_LOOPBACK)) != 0) {
 			/*
 			 * XXX: some functions expect that ifa_dstaddr is not

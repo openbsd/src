@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.71 2017/10/26 15:05:41 mpi Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.72 2018/05/06 15:21:25 florian Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -107,9 +107,6 @@ struct	in6_ifaddr {
 	int	ia6_flags;
 
 	struct in6_addrlifetime ia6_lifetime;
-	time_t	ia6_createtime; /* the creation time of this address, which is
-				 * currently used for temporary addresses only.
-				 */
 	time_t	ia6_updatetime;
 
 	/* multicast addresses joined from the kernel */
