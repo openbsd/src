@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.31 2018/03/29 21:35:23 patrick Exp $ */
+/* $OpenBSD: machdep.c,v 1.32 2018/05/06 17:16:48 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -56,7 +56,8 @@ uint8_t *bootmac = NULL;
 
 extern uint64_t esym;
 
-int stdout_node = 0;
+int stdout_node;
+int stdout_speed;
 
 void (*cpuresetfn)(void);
 void (*powerdownfn)(void);
@@ -150,6 +151,30 @@ inittodr(time_t base)
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
+static int
+atoi(const char *s)
+{
+	int n, neg;
+
+	n = 0;
+	neg = 0;
+
+	while (*s == '-') {
+		s++;
+		neg = !neg;
+	}
+
+	while (*s != '\0') {
+		if (*s < '0' || *s > '9')
+			break;
+
+		n = (10 * n) + (*s - '0');
+		s++;
+	}
+
+	return (neg ? -n : n);
+}
+
 void *
 fdt_find_cons(const char *name)
 {
@@ -165,8 +190,10 @@ fdt_find_cons(const char *name)
 		if (fdt_node_property(node, "stdout-path", &stdout) > 0) {
 			if (strchr(stdout, ':') != NULL) {
 				strlcpy(buf, stdout, sizeof(buf));
-				if ((p = strchr(buf, ':')) != NULL)
-					*p = '\0';
+				if ((p = strchr(buf, ':')) != NULL) {
+					*p++ = '\0';
+					stdout_speed = atoi(p);
+				}
 				stdout = buf;
 			}
 			if (stdout[0] != '/') {
