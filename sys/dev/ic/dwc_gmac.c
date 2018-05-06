@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc_gmac.c,v 1.9 2018/04/07 22:43:12 kettenis Exp $	*/
+/*	$OpenBSD: dwc_gmac.c,v 1.10 2018/05/06 17:08:08 kettenis Exp $	*/
 /* $NetBSD: dwc_gmac.c,v 1.34 2015/08/21 20:12:29 jmcneill Exp $ */
 
 /*-
@@ -304,13 +304,13 @@ dwc_gmac_reset(struct dwc_gmac_softc *sc)
 void
 dwc_gmac_write_hwaddr(struct dwc_gmac_softc *sc, uint8_t *enaddr)
 {
-	uint32_t lo, hi;
+	uint32_t hi, lo;
 
+	hi = enaddr[4] | (enaddr[5] << 8);
 	lo = enaddr[0] | (enaddr[1] << 8) | (enaddr[2] << 16)
 	    | (enaddr[3] << 24);
-	hi = enaddr[4] | (enaddr[5] << 8);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0LO, lo);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0HI, hi);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0LO, lo);
 }
 
 int
