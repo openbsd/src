@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.44 2018/04/28 15:44:59 jasper Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.45 2018/05/07 21:58:42 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1076,6 +1076,53 @@ wsmouse_touch_sync(struct wsmouseinput *input, struct evq_access *evq)
 		wsmouse_evq_put(evq, WSCONS_EVENT_TOUCH_WIDTH, touch->width);
 }
 
+void
+wsmouse_log_input(struct wsmouseinput *input, struct timespec *ts)
+{
+	struct motion_state *motion = &input->motion;
+	int t_sync, mt_sync;
+
+	t_sync = (input->touch.sync & SYNC_CONTACTS);
+	mt_sync = (input->mt.frame && (input->mt.sync[MTS_TOUCH]
+	    || input->mt.ptr != input->mt.prev_ptr));
+
+	if (motion->sync || mt_sync || t_sync || input->btn.sync)
+		printf("[%s-in][%04d]", DEVNAME(input), LOGTIME(ts));
+	else
+		return;
+
+	if (motion->sync & SYNC_POSITION)
+		printf(" abs:%d,%d", motion->pos.x, motion->pos.y);
+	if (motion->sync & SYNC_DELTAS)
+		printf(" rel:%d,%d,%d,%d", motion->dx, motion->dy,
+		    motion->dz, motion->dw);
+	if (mt_sync)
+		printf(" mt:0x%02x:%d", input->mt.touches,
+		    ffs(input->mt.ptr) - 1);
+	else if (t_sync)
+		printf(" t:%d", input->touch.contacts);
+	if (input->btn.sync)
+		printf(" btn:0x%02x", input->btn.buttons);
+	printf("\n");
+}
+
+void
+wsmouse_log_events(struct wsmouseinput *input, struct evq_access *evq)
+{
+	struct wscons_event *ev;
+	int n = evq->evar->put;
+
+	if (n != evq->put) {
+		printf("[%s-ev][%04d]", DEVNAME(input), LOGTIME(&evq->ts));
+		while (n != evq->put) {
+			ev = &evq->evar->q[n++];
+			n %= WSEVENT_QSIZE;
+			printf(" %d:%d", ev->type, ev->value);
+		}
+		printf("\n");
+	}
+}
+
 static inline void
 clear_sync_flags(struct wsmouseinput *input)
 {
@@ -1118,6 +1165,9 @@ wsmouse_input_sync(struct device *sc)
 	if (input->touch.sync)
 		wsmouse_touch_update(input);
 
+	if (input->flags & LOG_INPUT)
+		wsmouse_log_input(input, &evq.ts);
+
 	if (input->flags & TPAD_COMPAT_MODE)
 		wstpad_compat_convert(input, &evq);
 
@@ -1139,6 +1189,9 @@ wsmouse_input_sync(struct device *sc)
 	if (evq.result == EVQ_RESULT_SUCCESS) {
 		wsmouse_evq_put(&evq, WSCONS_EVENT_SYNC, 0);
 		if (evq.result == EVQ_RESULT_SUCCESS) {
+			if (input->flags & LOG_EVENTS) {
+				wsmouse_log_events(input, &evq);
+			}
 			evq.evar->put = evq.put;
 			WSEVENT_WAKEUP(evq.evar);
 		}
@@ -1443,6 +1496,12 @@ wsmouse_get_params(struct device *sc,
 			params[i].value =
 			    input->filter.mode & SMOOTHING_MASK;
 			break;
+		case WSMOUSECFG_LOG_INPUT:
+			params[i].value = !!(input->flags & LOG_INPUT);
+			break;
+		case WSMOUSECFG_LOG_EVENTS:
+			params[i].value = !!(input->flags & LOG_EVENTS);
+			break;
 		default:
 			error = wstpad_get_param(input, key, &params[i].value);
 			if (error != 0)
@@ -1520,6 +1579,18 @@ wsmouse_set_params(struct device *sc,
 		case WSMOUSECFG_SMOOTHING:
 			input->filter.mode &= ~SMOOTHING_MASK;
 			input->filter.mode |= (val & SMOOTHING_MASK);
+			break;
+		case WSMOUSECFG_LOG_INPUT:
+			if (val)
+				input->flags |= LOG_INPUT;
+			else
+				input->flags &= ~LOG_INPUT;
+			break;
+		case WSMOUSECFG_LOG_EVENTS:
+			if (val)
+				input->flags |= LOG_EVENTS;
+			else
+				input->flags &= ~LOG_EVENTS;
 			break;
 		default:
 			needreset = 1;
