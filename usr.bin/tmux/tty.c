@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.301 2018/04/23 07:41:30 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.302 2018/05/07 13:39:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2000,8 +2000,7 @@ tty_colours_fg(struct tty *tty, const struct grid_cell *gc)
 	char			 s[32];
 
 	/* Is this a 24-bit or 256-colour colour? */
-	if (gc->fg & COLOUR_FLAG_RGB ||
-	    gc->fg & COLOUR_FLAG_256) {
+	if (gc->fg & COLOUR_FLAG_RGB || gc->fg & COLOUR_FLAG_256) {
 		if (tty_try_colour(tty, gc->fg, "38") == 0)
 			goto save_fg;
 		/* Should not get here, already converted in tty_check_fg. */
@@ -2030,8 +2029,7 @@ tty_colours_bg(struct tty *tty, const struct grid_cell *gc)
 	char			 s[32];
 
 	/* Is this a 24-bit or 256-colour colour? */
-	if (gc->bg & COLOUR_FLAG_RGB ||
-	    gc->bg & COLOUR_FLAG_256) {
+	if (gc->bg & COLOUR_FLAG_RGB || gc->bg & COLOUR_FLAG_256) {
 		if (tty_try_colour(tty, gc->bg, "48") == 0)
 			goto save_bg;
 		/* Should not get here, already converted in tty_check_bg. */

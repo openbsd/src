@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.58 2018/02/04 10:10:39 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.59 2018/05/07 13:39:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -488,8 +488,9 @@ tty_term_find(char *name, int fd, char **cause)
 		goto error;
 	}
 
-	/* Figure out if we have 256. */
-	if (tty_term_number(term, TTYC_COLORS) == 256)
+	/* Figure out if we have 256 colours (or more). */
+	if (tty_term_number(term, TTYC_COLORS) >= 256 ||
+	    tty_term_has(term, TTYC_RGB))
 		term->flags |= TERM_256COLOURS;
 
 	/*
