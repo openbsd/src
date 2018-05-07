@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1066 2018/03/15 17:43:54 anton Exp $
+#	$OpenBSD: install.sub,v 1.1067 2018/05/07 10:44:01 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1802,7 +1802,7 @@ install_http() {
 	# In case of URL redirection, use the final location to retrieve the
 	# rest of the files from. Redirection does not change INSTALL_MIRROR.
 	_rurl_base=$(sed -n 's/^Requesting //p' $_ftp_stdout | sed '$!d')
-	_rurl_base=${_rurl_base%/SHA256.sig}
+	_rurl_base=${_rurl_base%/SHA256.sig*}
 
 	# Verify SHA256.sig, write SHA256 and extract the list of files.
 	if unpriv -f $_sha \
