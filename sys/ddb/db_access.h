@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_access.h,v 1.8 2017/04/20 12:41:43 visa Exp $	*/
+/*	$OpenBSD: db_access.h,v 1.9 2018/05/07 15:52:46 visa Exp $	*/
 /*	$NetBSD: db_access.h,v 1.6 1994/10/09 08:29:57 mycroft Exp $	*/
 
 /*
@@ -46,5 +46,5 @@ struct db_stack_trace {
 	db_addr_t	st_pc[DB_STACK_TRACE_MAX];
 };
 
-void db_print_stack_trace(struct db_stack_trace *);
+void db_print_stack_trace(struct db_stack_trace *, int (*)(const char *, ...));
 void db_save_stack_trace(struct db_stack_trace *);

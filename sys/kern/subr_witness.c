@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.10 2018/05/02 01:59:34 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.11 2018/05/07 15:52:47 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -2233,7 +2233,8 @@ restart:
 				    tmp_w1.w_class->lc_name,
 				    tmp_w2.w_type->lt_name,
 				    tmp_w2.w_class->lc_name);
-				db_print_stack_trace(&tmp_data1.wlod_stack);
+				db_print_stack_trace(&tmp_data1.wlod_stack,
+				    db_printf);
 				db_printf("\n");
 			}
 			if (data2 && data2 != data1) {
@@ -2243,7 +2244,8 @@ restart:
 				    tmp_w2.w_class->lc_name,
 				    tmp_w1.w_type->lt_name,
 				    tmp_w1.w_class->lc_name);
-				db_print_stack_trace(&tmp_data2.wlod_stack);
+				db_print_stack_trace(&tmp_data2.wlod_stack,
+				    db_printf);
 				db_printf("\n");
 			}
 		}
