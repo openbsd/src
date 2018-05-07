@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.31 2017/12/30 20:47:00 guenther Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.32 2018/05/07 14:43:01 mpi Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -1020,14 +1020,12 @@ extendfile(struct denode *dep, uint32_t count, struct buf **bpp, uint32_t *ncp,
 					bp = getblk(pmp->pm_devvp, cntobn(pmp, cn++),
 						    pmp->pm_bpcluster, 0, 0);
 				else {
-					bp = getblk(DETOV(dep), de_cn2bn(pmp, frcn++),
+					bp = getblk(DETOV(dep), frcn++,
 					    pmp->pm_bpcluster, 0, 0);
 					/*
 					 * Do the bmap now, as in msdosfs_write
 					 */
-					if (pcbmap(dep,
-					    de_bn2cn(pmp, bp->b_lblkno),
-					    &bp->b_blkno, 0, 0))
+					if (pcbmap(dep, bp->b_lblkno, &bp->b_blkno, 0, 0))
 						bp->b_blkno = -1;
 					if (bp->b_blkno == -1)
 						panic("extendfile: pcbmap");
