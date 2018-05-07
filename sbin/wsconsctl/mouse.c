@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.17 2018/01/22 22:14:11 bru Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.18 2018/05/07 22:15:36 bru Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -60,6 +60,8 @@ struct field mouse_field_tab[] = {
     { "tp.disable",		&cfg_disable,	FMT_CFG,	FLG_NORDBACK },
     { "tp.edges",		&cfg_edges,	FMT_CFG,	FLG_NORDBACK },
     { "tp.param",		&cfg_param,	FMT_CFG,	FLG_WRONLY },
+    /* Add an alias.  This field is valid for all wsmouse devices. */
+    { "param",			&cfg_param,	FMT_CFG,	FLG_WRONLY },
     { NULL }
 };
 
@@ -81,13 +83,20 @@ mouse_init(int devfd, int devidx) {
 			if (f->format == FMT_CFG)
 				f->flags |= FLG_DEAD;
 		}
-		if (errstr != NULL)
-			warnx("mousecfg error: %s (%d)", errstr, err);
-	} else {
-		for (f = mouse_field_tab; f->name != NULL; f++) {
-			if (f->format == FMT_CFG)
+		warnx("mousecfg error: %s (%d)", errstr, err);
+	} else if (cfg_touchpad) {
+		for (f = mouse_field_tab; f->name != NULL; f++)
+			if (f->format == FMT_CFG) {
 				f->flags &= ~FLG_DEAD;
-		}
+			}
+	} else {
+		for (f = mouse_field_tab; f->name != NULL; f++)
+			if (f->format == FMT_CFG) {
+				if (f->valp != &cfg_param)
+					f->flags |= FLG_DEAD;
+				else
+					f->flags &= ~FLG_DEAD;
+			}
 	}
 
 	dev_index = devidx;
@@ -123,9 +132,8 @@ mouse_get_values(int fd)
 	}
 
 	for (f = mouse_field_tab; f->name != NULL; f++) {
-		if (f->format != FMT_CFG || !(f->flags & FLG_GET))
-			continue;
-		if (f->valp == &cfg_param)
+		if (f->format != FMT_CFG || !(f->flags & FLG_GET)
+		    || f->valp == &cfg_param || (f->flags & FLG_DEAD))
 			continue;
 		if (mousecfg_get_field((struct wsmouse_parameters *) f->valp)) {
 			f->flags |= FLG_DEAD;

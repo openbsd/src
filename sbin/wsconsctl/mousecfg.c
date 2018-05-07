@@ -1,4 +1,4 @@
-/* $OpenBSD: mousecfg.c,v 1.3 2018/01/22 22:14:11 bru Exp $ */
+/* $OpenBSD: mousecfg.c,v 1.4 2018/05/07 22:15:36 bru Exp $ */
 
 /*
  * Copyright (c) 2017 Ulf Brosziewski
@@ -38,14 +38,19 @@
 #define TP_FEATURES_LAST	WSMOUSECFG_TAPPING
 #define TP_SETUP_FIRST		WSMOUSECFG_LEFT_EDGE
 #define TP_SETUP_LAST		WSMOUSECFG_TAP_LOCKTIME
+#define LOG_FIRST		WSMOUSECFG_LOG_INPUT
+#define LOG_LAST		WSMOUSECFG_LOG_EVENTS
 
-#define BUFSIZE ((BASE_LAST - BASE_FIRST + 1) \
+#define BASESIZE ((BASE_LAST - BASE_FIRST + 1) + (LOG_LAST - LOG_FIRST + 1))
+
+#define BUFSIZE (BASESIZE \
     + (TP_FILTER_LAST - TP_FILTER_FIRST + 1) \
     + (TP_FEATURES_LAST - TP_FEATURES_FIRST + 1) \
     + (TP_SETUP_LAST - TP_SETUP_FIRST + 1))
 
 static const int range[][2] = {
 	{ BASE_FIRST, BASE_LAST },
+	{ LOG_FIRST, LOG_LAST },
 	{ TP_FILTER_FIRST, TP_FILTER_LAST },
 	{ TP_FEATURES_FIRST, TP_FEATURES_LAST },
 	{ TP_SETUP_FIRST, TP_SETUP_LAST },
@@ -101,6 +106,8 @@ struct wsmouse_parameters cfg_param = {
 	4
 };
 
+int cfg_touchpad;
+
 static int cfg_horiz_res;
 static int cfg_vert_res;
 static struct wsmouse_param cfg_buffer[BUFSIZE];
@@ -121,23 +128,19 @@ mousecfg_init(int dev_fd, const char **errstr)
 		*errstr = "WSMOUSEIO_GTYPE";
 		return err;
 	}
-	for (i = 0; i < nitems(touchpad_types)
-	    && type != touchpad_types[i]; i++) {}
+	cfg_touchpad = 0;
+	for (i = 0; !cfg_touchpad && i < nitems(touchpad_types); i++)
+		cfg_touchpad = (type == touchpad_types[i]);
 
-	/*
-	 * If the device is not a touchpad, return an error without
-	 * setting the error string.  The caller shouldn't print a
-	 * warning in this case.
-	 */
-	if (i == nitems(touchpad_types))
-		return (-1);
-
-	if ((err = ioctl(dev_fd, WSMOUSEIO_GCALIBCOORDS, &coords))) {
-		*errstr = "WSMOUSEIO_GCALIBCOORDS";
-		return err;
+	cfg_horiz_res = cfg_vert_res = 0;
+	if (cfg_touchpad) {
+		if ((err = ioctl(dev_fd, WSMOUSEIO_GCALIBCOORDS, &coords))) {
+			*errstr = "WSMOUSEIO_GCALIBCOORDS";
+			return err;
+		}
+		cfg_horiz_res = coords.resx;
+		cfg_vert_res = coords.resy;
 	}
-	cfg_horiz_res = coords.resx;
-	cfg_vert_res = coords.resy;
 
 	param = cfg_buffer;
 	for (i = 0; i < nitems(range); i++)
@@ -147,7 +150,7 @@ mousecfg_init(int dev_fd, const char **errstr)
 		}
 
 	parameters.params = cfg_buffer;
-	parameters.nparams = BUFSIZE;
+	parameters.nparams = (cfg_touchpad ? BUFSIZE : BASESIZE);
 	if ((err = ioctl(dev_fd, WSMOUSEIO_GETPARAMS, &parameters))) {
 		*errstr = "WSMOUSEIO_GETPARAMS";
 		return (err);
@@ -162,11 +165,14 @@ index_of(enum wsmousecfg key)
 {
 	int i, n;
 
-	for (i = 0, n = 0; i < nitems(range); i++)
-		if (key <= range[i][1] && key >= range[i][0])
+	for (i = 0, n = 0; i < nitems(range); i++) {
+		if (key <= range[i][1] && key >= range[i][0]) {
 			return (key - range[i][0] + n);
-		else
-			n += range[i][1] - range[i][0] + 1;
+		}
+		n += range[i][1] - range[i][0] + 1;
+		if (!cfg_touchpad && n >= BASESIZE)
+			break;
+	}
 
 	return (-1);
 }
