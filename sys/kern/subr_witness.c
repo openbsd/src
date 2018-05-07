@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.11 2018/05/07 15:52:47 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.12 2018/05/07 15:54:03 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -2144,7 +2144,6 @@ witness_print_badstacks(void)
 	static struct witness_lock_order_data tmp_data1, tmp_data2;
 	struct witness_lock_order_data *data1, *data2;
 	struct witness *w1, *w2;
-	u_int w_rmatrix1, w_rmatrix2;
 	int error, generation, i, j;
 
 	if (witness_watch < 1) {
@@ -2213,8 +2212,6 @@ restart:
 			 * spin lock.
 			 */
 			tmp_w2 = *w2;
-			w_rmatrix1 = (unsigned int)w_rmatrix[i][j];
-			w_rmatrix2 = (unsigned int)w_rmatrix[j][i];
 
 			if (data1)
 				tmp_data1.wlod_stack = data1->wlod_stack;
