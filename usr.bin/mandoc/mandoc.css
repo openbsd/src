@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.10 2018/04/24 00:36:04 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.11 2018/05/08 17:52:24 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -145,13 +145,21 @@ table.tbl { }
 /* Semantic markup for command line utilities. */
 
 table.Nm { }
-b.Nm {		font-style: normal; }
-b.Fl {		font-style: normal; }
-b.Cm {		font-style: normal; }
+code.Nm {	font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
+code.Fl {	font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
+code.Cm {	font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
 var.Ar {	font-style: italic;
 		font-weight: normal; }
 span.Op { }
-b.Ic {		font-style: normal; }
+code.Ic {	font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
 code.Ev {	font-style: normal;
 		font-weight: normal;
 		font-family: monospace; }
@@ -160,12 +168,18 @@ i.Pa {		font-weight: normal; }
 /* Semantic markup for function libraries. */
 
 span.Lb { }
-b.In {		font-style: normal; }
+code.In {	font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
 a.In { }
-b.Fd {		font-style: normal; }
+code.Fd {	font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
 var.Ft {	font-style: italic;
 		font-weight: normal; }
-b.Fn {		font-style: normal; }
+code.Fn {	font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
 var.Fa {	font-style: italic;
 		font-weight: normal; }
 var.Vt {	font-style: italic;
@@ -184,7 +198,9 @@ code.Er {	font-style: normal;
 span.An { }
 a.Lk { }
 a.Mt { }
-b.Cd {		font-style: normal; }
+code.Cd {	font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
 i.Ad {		font-weight: normal; }
 b.Ms {		font-style: normal; }
 span.St { }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.172 2018/04/24 00:36:04 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.173 2018/05/08 17:52:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -550,7 +550,7 @@ mdoc_fl_pre(MDOC_ARGS)
 
 	if ((id = cond_id(n)) != NULL)
 		print_otag(h, TAG_A, "chR", "permalink", id);
-	print_otag(h, TAG_B, "cTi", "Fl", id);
+	print_otag(h, TAG_CODE, "cTi", "Fl", id);
 	free(id);
 
 	print_text(h, "\\-");
@@ -570,7 +570,7 @@ mdoc_cm_pre(MDOC_ARGS)
 
 	if ((id = cond_id(n)) != NULL)
 		print_otag(h, TAG_A, "chR", "permalink", id);
-	print_otag(h, TAG_B, "cTi", "Cm", id);
+	print_otag(h, TAG_CODE, "cTi", "Cm", id);
 	free(id);
 	return 1;
 }
@@ -596,7 +596,7 @@ mdoc_nm_pre(MDOC_ARGS)
 		print_otag(h, TAG_TD, "");
 		/* FALLTHROUGH */
 	case ROFFT_ELEM:
-		print_otag(h, TAG_B, "cT", "Nm");
+		print_otag(h, TAG_CODE, "cT", "Nm");
 		return 1;
 	case ROFFT_BODY:
 		print_otag(h, TAG_TD, "");
@@ -1058,7 +1058,7 @@ static int
 mdoc_cd_pre(MDOC_ARGS)
 {
 	synopsis_pre(h, n);
-	print_otag(h, TAG_B, "cT", "Cd");
+	print_otag(h, TAG_CODE, "cT", "Cd");
 	return 1;
 }
 
@@ -1147,11 +1147,11 @@ mdoc_fd_pre(MDOC_ARGS)
 	assert(n->type == ROFFT_TEXT);
 
 	if (strcmp(n->string, "#include")) {
-		print_otag(h, TAG_B, "cT", "Fd");
+		print_otag(h, TAG_CODE, "cT", "Fd");
 		return 1;
 	}
 
-	print_otag(h, TAG_B, "cT", "In");
+	print_otag(h, TAG_CODE, "cT", "In");
 	print_text(h, n->string);
 
 	if (NULL != (n = n->next)) {
@@ -1237,7 +1237,7 @@ mdoc_fn_pre(MDOC_ARGS)
 		print_tagq(h, t);
 	}
 
-	t = print_otag(h, TAG_B, "cT", "Fn");
+	t = print_otag(h, TAG_CODE, "cT", "Fn");
 
 	if (sp)
 		print_text(h, sp);
@@ -1380,7 +1380,7 @@ mdoc_fo_pre(MDOC_ARGS)
 		return 0;
 
 	assert(n->child->string);
-	t = print_otag(h, TAG_B, "cT", "Fn");
+	t = print_otag(h, TAG_CODE, "cT", "Fn");
 	print_text(h, n->child->string);
 	print_tagq(h, t);
 	return 0;
@@ -1404,7 +1404,7 @@ mdoc_in_pre(MDOC_ARGS)
 	struct tag	*t;
 
 	synopsis_pre(h, n);
-	print_otag(h, TAG_B, "cT", "In");
+	print_otag(h, TAG_CODE, "cT", "In");
 
 	/*
 	 * The first argument of the `In' gets special treatment as
@@ -1450,7 +1450,7 @@ mdoc_ic_pre(MDOC_ARGS)
 
 	if ((id = cond_id(n)) != NULL)
 		print_otag(h, TAG_A, "chR", "permalink", id);
-	print_otag(h, TAG_B, "cTi", "Ic", id);
+	print_otag(h, TAG_CODE, "cTi", "Ic", id);
 	free(id);
 	return 1;
 }
