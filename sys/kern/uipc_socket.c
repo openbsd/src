@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.220 2018/04/08 18:57:39 guenther Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.221 2018/05/08 15:03:27 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ int	sosplice(struct socket *, int, off_t, struct timeval *);
 void	sounsplice(struct socket *, struct socket *, int);
 void	soidle(void *);
 void	sotask(void *);
+void	soreaper(void *);
 void	soput(void *);
 int	somove(struct socket *, int);
 
@@ -219,9 +220,9 @@ sofree(struct socket *so)
 	sorflush(so);
 #ifdef SOCKET_SPLICE
 	if (so->so_sp) {
-		/* Reuse splice task, sounsplice() has been called before. */
-		task_set(&so->so_sp->ssp_task, soput, so);
-		task_add(sosplice_taskq, &so->so_sp->ssp_task);
+		/* Reuse splice idle, sounsplice() has been called before. */
+		timeout_set_proc(&so->so_sp->ssp_idleto, soreaper, so);
+		timeout_add(&so->so_sp->ssp_idleto, 0);
 	} else 
 #endif /* SOCKET_SPLICE */
 	{
@@ -1244,11 +1245,22 @@ sotask(void *arg)
 }
 
 /*
- * The socket splicing task may sleep while grabbing the net lock.  As sofree()
- * can be called anytime, sotask() can access the socket memory of a freed
- * socket after wakeup.  So delay the pool_put() after all pending socket
- * splicing tasks have finished.  Do this by scheduling it on the same thread.
+ * The socket splicing task or idle timeout may sleep while grabbing the net
+ * lock.  As sofree() can be called anytime, sotask() or soidle() could access
+ * the socket memory of a freed socket after wakeup.  So delay the pool_put()
+ * after all pending socket splicing tasks or timeouts have finished.  Do this
+ * by scheduling it on the same threads.
  */
+void
+soreaper(void *arg)
+{
+	struct socket *so = arg;
+
+	/* Reuse splice task, sounsplice() has been called before. */
+	task_set(&so->so_sp->ssp_task, soput, so);
+	task_add(sosplice_taskq, &so->so_sp->ssp_task);
+}
+
 void
 soput(void *arg)
 {
