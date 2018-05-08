@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.157 2018/05/08 08:53:41 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.158 2018/05/08 09:03:58 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ fd_iterfile(struct file *fp, struct proc *p)
 		nfp = LIST_NEXT(fp, f_list);
 
 	/* don't FREF when f_count == 0 to avoid race in fdrop() */
-	while (nfp != NULL && nfp->f_count == 0)
+	while (nfp != NULL && (nfp->f_count == 0 || !FILE_IS_USABLE(nfp)))
 		nfp = LIST_NEXT(nfp, f_list);
 	if (nfp != NULL)
 		FREF(nfp);

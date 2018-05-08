@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.334 2018/05/08 08:53:41 mpi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.335 2018/05/08 09:03:58 mpi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1322,9 +1322,7 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 		}
 		fp = NULL;
 		while ((fp = fd_iterfile(fp, p)) != NULL) {
-			if (fp->f_count > 1 && /* 0, +1 for our FREF() */
-			    FILE_IS_USABLE(fp) &&
-			    (arg == 0 || fp->f_type == arg)) {
+			if ((arg == 0 || fp->f_type == arg)) {
 				int af, skip = 0;
 				if (arg == DTYPE_SOCKET && fp->f_type == arg) {
 					af = ((struct socket *)fp->f_data)->
