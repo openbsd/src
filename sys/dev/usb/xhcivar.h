@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcivar.h,v 1.8 2015/01/18 20:35:11 mpi Exp $ */
+/* $OpenBSD: xhcivar.h,v 1.9 2018/05/08 13:41:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -91,6 +91,7 @@ struct xhci_softc {
 	bus_size_t		 sc_runt_off;	/* Runtime */
 	bus_size_t		 sc_door_off;	/* Doorbell  */
 
+	uint16_t		 sc_version;	/* xHCI version */
 	uint32_t		 sc_pagesize;	/* xHCI page size, minimum 4k */
 	uint32_t		 sc_ctxsize;	/* 32/64 byte context structs */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.84 2018/04/29 09:00:42 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.85 2018/05/08 13:41:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -286,12 +286,6 @@ xhci_init(struct xhci_softc *sc)
 	uint32_t hcr;
 	int npage, error;
 
-#ifdef XHCI_DEBUG
-	uint16_t vers;
-
-	vers = XREAD2(sc, XHCI_HCIVERSION);
-	printf("%s: xHCI version %x.%x\n", DEVNAME(sc), vers >> 8, vers & 0xff);
-#endif
 	sc->sc_bus.usbrev = USBREV_3_0;
 	sc->sc_bus.methods = &xhci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct xhci_pipe);
@@ -299,6 +293,9 @@ xhci_init(struct xhci_softc *sc)
 	sc->sc_oper_off = XREAD1(sc, XHCI_CAPLENGTH);
 	sc->sc_door_off = XREAD4(sc, XHCI_DBOFF);
 	sc->sc_runt_off = XREAD4(sc, XHCI_RTSOFF);
+
+	sc->sc_version = XREAD2(sc, XHCI_HCIVERSION);
+	printf(", xHCI %u.%u\n", sc->sc_version >> 8, sc->sc_version & 0xff);
 
 #ifdef XHCI_DEBUG
 	printf("%s: CAPLENGTH=%#lx\n", DEVNAME(sc), sc->sc_oper_off);

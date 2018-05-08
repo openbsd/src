@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.8 2016/06/01 06:19:59 mpi Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.9 2018/05/08 13:41:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ xhci_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		goto unmap_ret;
 	}
-	printf(": %s\n", intrstr);
+	printf(": %s", intrstr);
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = pci_findvendor(pa->pa_id);
