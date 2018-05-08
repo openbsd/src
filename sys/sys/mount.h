@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.135 2018/02/10 05:24:23 deraadt Exp $	*/
+/*	$OpenBSD: mount.h,v 1.136 2018/05/08 08:58:49 mpi Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -575,6 +575,7 @@ int	vfs_rootmountalloc(char *, char *, struct mount **);
 void	vfs_unbusy(struct mount *);
 extern	TAILQ_HEAD(mntlist, mount) mountlist;
 int	vfs_stall(struct proc *, int);
+void	vfs_stall_barrier(void);
 
 struct	mount *getvfs(fsid_t *);	    /* return vfs given fsid */
 					    /* process mount export info */

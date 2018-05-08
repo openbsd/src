@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.42 2018/05/08 08:53:41 mpi Exp $	*/
+/*	$OpenBSD: file.h,v 1.43 2018/05/08 08:58:49 mpi Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #else /* _KERNEL */
 #include <sys/queue.h>
 #include <sys/mutex.h>
+#include <sys/mount.h>	/* vfs_stall_barrier() */
 
 struct proc;
 struct uio;
@@ -98,9 +99,7 @@ struct file {
 
 #define FREF(fp) \
 	do { \
-		extern struct rwlock vfs_stall_lock; \
-		rw_enter_read(&vfs_stall_lock); \
-		rw_exit_read(&vfs_stall_lock); \
+		vfs_stall_barrier(); \
 		(fp)->f_count++; \
 	} while (0)
 #define FRELE(fp,p)	(--(fp)->f_count == 0 ? fdrop(fp, p) : 0)

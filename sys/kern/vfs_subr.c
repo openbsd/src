@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.270 2018/05/07 15:24:05 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.271 2018/05/08 08:58:49 mpi Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1625,6 +1625,13 @@ vfs_stall(struct proc *p, int stall)
 		rw_exit_write(&vfs_stall_lock);
 
 	return (allerror);
+}
+
+void
+vfs_stall_barrier(void)
+{
+	rw_enter_read(&vfs_stall_lock);
+	rw_exit_read(&vfs_stall_lock);
 }
 
 /*
