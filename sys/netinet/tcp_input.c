@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.354 2017/12/04 13:40:34 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.355 2018/05/08 15:10:33 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -176,12 +176,12 @@ do { \
 	struct ifnet *ifp = NULL; \
 	if (m && (m->m_flags & M_PKTHDR)) \
 		ifp = if_get(m->m_pkthdr.ph_ifidx); \
-	if ((tp)->t_flags & TF_DELACK || \
+	if (TCP_TIMER_ISARMED(tp, TCPT_DELACK) || \
 	    (tcp_ack_on_push && (tiflags) & TH_PUSH) || \
 	    (ifp && (ifp->if_flags & IFF_LOOPBACK))) \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
-		TCP_SET_DELACK(tp); \
+		TCP_TIMER_ARM_MSEC(tp, TCPT_DELACK, tcp_delack_msecs); \
 	if_put(ifp); \
 } while (0)
 

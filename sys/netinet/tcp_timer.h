@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.17 2018/02/07 00:31:10 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.18 2018/05/08 15:10:33 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -36,16 +36,16 @@
 #define _NETINET_TCP_TIMER_H_
 
 /*
- * Definitions of the TCP timers.  These timers are counted
- * down PR_SLOWHZ times a second.
+ * Definitions of the TCP timers.
  */
-#define	TCPT_NTIMERS	5
-
 #define	TCPT_REXMT	0		/* retransmit */
 #define	TCPT_PERSIST	1		/* retransmit persistence */
 #define	TCPT_KEEP	2		/* keep alive */
 #define	TCPT_2MSL	3		/* 2*msl quiet time timer */
 #define	TCPT_REAPER	4		/* delayed cleanup timeout */
+#define	TCPT_DELACK	5		/* delayed ack timeout */
+
+#define	TCPT_NTIMERS	6
 
 /*
  * The TCPT_REXMT timer is used to force retransmissions.
@@ -110,7 +110,7 @@
 
 #ifdef	TCPTIMERS
 const char *tcptimers[TCPT_NTIMERS] =
-    { "REXMT", "PERSIST", "KEEP", "2MSL", "REAPER" };
+    { "REXMT", "PERSIST", "KEEP", "2MSL", "REAPER", "DELACK" };
 #endif /* TCPTIMERS */
 
 /*
@@ -123,6 +123,12 @@ const char *tcptimers[TCPT_NTIMERS] =
 do {									\
 	SET((tp)->t_flags, TF_TIMER << (timer));			\
 	timeout_add_msec(&(tp)->t_timer[(timer)], (nticks) * 500);	\
+} while (0)
+
+#define	TCP_TIMER_ARM_MSEC(tp, timer, msecs)				\
+do {									\
+	SET((tp)->t_flags, TF_TIMER << (timer));			\
+	timeout_add_msec(&(tp)->t_timer[(timer)], (msecs));	\
 } while (0)
 
 #define	TCP_TIMER_DISARM(tp, timer)					\

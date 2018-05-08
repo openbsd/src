@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.170 2018/04/02 14:19:17 dhill Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.171 2018/05/08 15:10:33 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -433,7 +433,6 @@ tcp_newtcpcb(struct inpcb *inp)
 	tp->t_maxseg = tcp_mssdflt;
 	tp->t_maxopd = 0;
 
-	TCP_INIT_DELACK(tp);
 	for (i = 0; i < TCPT_NTIMERS; i++)
 		TCP_TIMER_INIT(tp, i);
 
@@ -517,7 +516,6 @@ tcp_close(struct tcpcb *tp)
 	tcp_freeq(tp);
 
 	tcp_canceltimers(tp);
-	TCP_CLEAR_DELACK(tp);
 	syn_cache_cleanup(tp);
 
 	/* Free SACK holes. */
@@ -529,8 +527,7 @@ tcp_close(struct tcpcb *tp)
 	}
 
 	m_free(tp->t_template);
-
-	tp->t_flags |= TF_DEAD;
+	/* Free tcpcb after all pending timers have been run. */
 	TCP_TIMER_ARM(tp, TCPT_REAPER, 0);
 
 	inp->inp_ppcb = NULL;

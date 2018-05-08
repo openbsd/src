@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.64 2018/02/07 00:31:10 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.65 2018/05/08 15:10:33 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -71,6 +71,7 @@ void	tcp_timer_persist(void *);
 void	tcp_timer_keep(void *);
 void	tcp_timer_2msl(void *);
 void	tcp_timer_reaper(void *);
+void	tcp_timer_delack(void *);
 
 const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS] = {
 	tcp_timer_rexmt,
@@ -78,6 +79,7 @@ const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS] = {
 	tcp_timer_keep,
 	tcp_timer_2msl,
 	tcp_timer_reaper,
+	tcp_timer_delack,
 };
 
 /*
@@ -104,7 +106,7 @@ tcp_timer_init(void)
  * Callout to process delayed ACKs for a TCPCB.
  */
 void
-tcp_delack(void *arg)
+tcp_timer_delack(void *arg)
 {
 	struct tcpcb *tp = arg;
 
@@ -114,8 +116,12 @@ tcp_delack(void *arg)
 	 * ACK callout.
 	 */
 	NET_LOCK();
-	if (tp->t_flags & TF_DEAD)
+	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
+	if (!ISSET((tp)->t_flags, TF_TMR_DELACK) ||
+	    timeout_pending(&tp->t_timer[TCPT_DELACK]))
 		goto out;
+	CLR((tp)->t_flags, TF_TMR_DELACK);
+
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
  out:

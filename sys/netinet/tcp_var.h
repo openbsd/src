@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.131 2018/02/07 00:31:10 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.132 2018/05/08 15:10:33 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -78,7 +78,6 @@ struct tcpcb {
 	char	t_force;		/* 1 if forcing out a byte */
 	u_int	t_flags;
 #define	TF_ACKNOW	0x0001		/* ack peer immediately */
-#define	TF_DELACK	0x0002		/* ack, but try to delay it */
 #define	TF_NODELAY	0x0004		/* don't delay packets to coalesce */
 #define	TF_NOOPT	0x0008		/* don't use tcp options */
 #define	TF_SENTFIN	0x0010		/* have sent FIN */
@@ -95,7 +94,6 @@ struct tcpcb {
 #define TF_DISABLE_ECN	0x00040000	/* disable ECN for this connection */
 #endif
 #define TF_LASTIDLE	0x00100000	/* no outstanding ACK on last send */
-#define TF_DEAD		0x00200000	/* dead and to-be-released */
 #define TF_PMTUD_PEND	0x00400000	/* Path MTU Discovery pending */
 #define TF_NEEDOUTPUT	0x00800000	/* call tcp_output after tcp_input */
 #define TF_BLOCKOUTPUT	0x01000000	/* avert tcp_output during tcp_input */
@@ -105,11 +103,11 @@ struct tcpcb {
 #define TF_TMR_KEEP	0x10000000	/* keep alive timer armed */
 #define TF_TMR_2MSL	0x20000000	/* 2*msl quiet time timer armed */
 #define TF_TMR_REAPER	0x40000000	/* delayed cleanup timer armed, dead */
+#define TF_TMR_DELACK	0x80000000	/* delayed ack timer armed */
 #define TF_TIMER	TF_TMR_REXMT	/* used to shift with TCPT values */
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
-	struct	timeout t_delack_to;	/* delayed ACK callback */
 /*
  * The following fields are used as in the protocol specification.
  * See RFC793, Dec. 1981, page 21.
@@ -205,30 +203,6 @@ struct tcpcb {
 #define	sototcpcb(so)	(intotcpcb(sotoinpcb(so)))
 
 #ifdef _KERNEL
-void	tcp_delack(void *);
-
-#define TCP_INIT_DELACK(tp)						\
-	timeout_set_proc(&(tp)->t_delack_to, tcp_delack, tp)
-
-#define TCP_RESTART_DELACK(tp)						\
-	timeout_add_msec(&(tp)->t_delack_to, tcp_delack_msecs)
-
-#define	TCP_SET_DELACK(tp)						\
-do {									\
-	if (((tp)->t_flags & TF_DELACK) == 0) {				\
-		(tp)->t_flags |= TF_DELACK;				\
-		TCP_RESTART_DELACK(tp);					\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-#define	TCP_CLEAR_DELACK(tp)						\
-do {									\
-	if ((tp)->t_flags & TF_DELACK) {				\
-		(tp)->t_flags &= ~TF_DELACK;				\
-		timeout_del(&(tp)->t_delack_to);			\
-	}								\
-} while (/* CONSTCOND */ 0)
-
 /*
  * Handy way of passing around TCP option info.
  */
