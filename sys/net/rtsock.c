@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.263 2018/04/24 06:19:47 florian Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.264 2018/05/08 14:10:43 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -113,7 +113,8 @@ int	route_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
 void	route_input(struct mbuf *m0, struct socket *, sa_family_t);
 int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
-void	route_senddesync(void *);
+void	rtm_senddesync(void *);
+int	rtm_sendup(struct socket *, struct mbuf *, int);
 
 int	rtm_getifa(struct rt_addrinfo *, unsigned int);
 int	rtm_output(struct rt_msghdr *, struct rtentry **, struct rt_addrinfo *,
@@ -240,7 +241,7 @@ route_attach(struct socket *so, int proto)
 	rp = &rop->rcb;
 	so->so_pcb = rop;
 	/* Init the timeout structure */
-	timeout_set(&rop->timeout, route_senddesync, rop);
+	timeout_set(&rop->timeout, rtm_senddesync, rop);
 	refcnt_init(&rop->refcnt);
 
 	if (curproc == NULL)
@@ -373,7 +374,7 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 }
 
 void
-route_senddesync(void *data)
+rtm_senddesync(void *data)
 {
 	struct routecb	*rop;
 	struct mbuf	*desync_mbuf;
@@ -479,47 +480,47 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 			continue;
 
 		if (last) {
-			struct mbuf *n;
-			if ((n = m_copym(m, 0, M_COPYALL, M_NOWAIT)) != NULL) {
-				if (sbspace(last, &last->so_rcv) < (2*MSIZE) ||
-				    sbappendaddr(last, &last->so_rcv,
-				    &route_src, n, (struct mbuf *)NULL) == 0) {
-					/*
-					 * Flag socket as desync'ed and
-					 * flush required
-					 */
-					sotoroutecb(last)->flags |=
-					    ROUTECB_FLAG_DESYNC |
-					    ROUTECB_FLAG_FLUSH;
-					route_senddesync(sotoroutecb(last));
-					m_freem(n);
-				} else {
-					sorwakeup(last);
-				}
-			}
+			rtm_sendup(last, m, 1);
 			refcnt_rele_wake(&sotoroutecb(last)->refcnt);
 		}
 		/* keep a reference for last */
 		refcnt_take(&rop->refcnt);
 		last = rop->rcb.rcb_socket;
 	}
+
 	if (last) {
-		if (sbspace(last, &last->so_rcv) < (2 * MSIZE) ||
-		    sbappendaddr(last, &last->so_rcv, &route_src,
-		    m, (struct mbuf *)NULL) == 0) {
-			/* Flag socket as desync'ed and flush required */
-			sotoroutecb(last)->flags |=
-			    ROUTECB_FLAG_DESYNC | ROUTECB_FLAG_FLUSH;
-			route_senddesync(sotoroutecb(last));
-			m_freem(m);
-		} else {
-			sorwakeup(last);
-		}
+		rtm_sendup(last, m, 0);
 		refcnt_rele_wake(&sotoroutecb(last)->refcnt);
 	} else
 		m_freem(m);
 
 	SRPL_LEAVE(&sr);
+}
+
+int
+rtm_sendup(struct socket *so, struct mbuf *m0, int more)
+{
+	struct routecb *rop = sotoroutecb(so);
+	struct mbuf *m;
+
+	if (more) {
+		m = m_copym(m0, 0, M_COPYALL, M_NOWAIT);
+		if (m == NULL)
+			return (ENOMEM);
+	} else
+		m = m0;
+
+	if (sbspace(so, &so->so_rcv) < (2 * MSIZE) ||
+	    sbappendaddr(so, &so->so_rcv, &route_src, m, NULL) == 0) {
+		/* Flag socket as desync'ed and flush required */
+		rop->flags |= ROUTECB_FLAG_DESYNC | ROUTECB_FLAG_FLUSH;
+		rtm_senddesync(rop);
+		m_freem(m);
+		return (ENOBUFS);
+	}
+
+	sorwakeup(so);
+	return (0);
 }
 
 struct rt_msghdr *

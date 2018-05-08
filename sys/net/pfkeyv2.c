@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.176 2018/02/19 08:59:52 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.177 2018/05/08 14:10:43 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -332,21 +332,21 @@ ret:
 }
 
 int
-pfkey_sendup(struct keycb *kp, struct mbuf *packet, int more)
+pfkey_sendup(struct keycb *kp, struct mbuf *m0, int more)
 {
 	struct socket *so = kp->rcb.rcb_socket;
-	struct mbuf *packet2;
+	struct mbuf *m;
 
 	NET_ASSERT_LOCKED();
 
 	if (more) {
-		if (!(packet2 = m_dup_pkt(packet, 0, M_DONTWAIT)))
+		if (!(m = m_dup_pkt(m0, 0, M_DONTWAIT)))
 			return (ENOMEM);
 	} else
-		packet2 = packet;
+		m = m0;
 
-	if (!sbappendaddr(so, &so->so_rcv, &pfkey_addr, packet2, NULL)) {
-		m_freem(packet2);
+	if (!sbappendaddr(so, &so->so_rcv, &pfkey_addr, m, NULL)) {
+		m_freem(m);
 		return (ENOBUFS);
 	}
 
