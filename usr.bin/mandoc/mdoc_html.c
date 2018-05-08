@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_html.c,v 1.173 2018/05/08 17:52:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.174 2018/05/08 21:42:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -666,49 +666,12 @@ mdoc_it_pre(MDOC_ARGS)
 {
 	const struct roff_node	*bl;
 	struct tag		*t;
-	const char		*cattr;
 	enum mdoc_list		 type;
 
 	bl = n->parent;
 	while (bl->tok != MDOC_Bl)
 		bl = bl->parent;
 	type = bl->norm->Bl.type;
-
-	switch (type) {
-	case LIST_bullet:
-		cattr = "It-bullet";
-		break;
-	case LIST_dash:
-	case LIST_hyphen:
-		cattr = "It-dash";
-		break;
-	case LIST_item:
-		cattr = "It-item";
-		break;
-	case LIST_enum:
-		cattr = "It-enum";
-		break;
-	case LIST_diag:
-		cattr = "It-diag";
-		break;
-	case LIST_hang:
-		cattr = "It-hang";
-		break;
-	case LIST_inset:
-		cattr = "It-inset";
-		break;
-	case LIST_ohang:
-		cattr = "It-ohang";
-		break;
-	case LIST_tag:
-		cattr = "It-tag";
-		break;
-	case LIST_column:
-		cattr = "It-column";
-		break;
-	default:
-		break;
-	}
 
 	switch (type) {
 	case LIST_bullet:
@@ -720,7 +683,7 @@ mdoc_it_pre(MDOC_ARGS)
 		case ROFFT_HEAD:
 			return 0;
 		case ROFFT_BODY:
-			print_otag(h, TAG_LI, "c", cattr);
+			print_otag(h, TAG_LI, "");
 			break;
 		default:
 			break;
@@ -732,13 +695,10 @@ mdoc_it_pre(MDOC_ARGS)
 	case LIST_ohang:
 		switch (n->type) {
 		case ROFFT_HEAD:
-			print_otag(h, TAG_DT, "c", cattr);
-			if (type == LIST_diag)
-				print_otag(h, TAG_B, "c", cattr);
+			print_otag(h, TAG_DT, "");
 			break;
 		case ROFFT_BODY:
-			print_otag(h, TAG_DD, "csw*+l", cattr,
-			    bl->norm->Bl.width);
+			print_otag(h, TAG_DD, "sw*+l", bl->norm->Bl.width);
 			break;
 		default:
 			break;
@@ -751,24 +711,23 @@ mdoc_it_pre(MDOC_ARGS)
 			    (n->parent->prev == NULL ||
 			     n->parent->prev->body == NULL ||
 			     n->parent->prev->body->child != NULL)) {
-				t = print_otag(h, TAG_DT, "csw*+-l",
-				    cattr, bl->norm->Bl.width);
+				t = print_otag(h, TAG_DT, "sw*+-l",
+				    bl->norm->Bl.width);
 				print_text(h, "\\ ");
 				print_tagq(h, t);
-				t = print_otag(h, TAG_DD, "c", cattr);
+				t = print_otag(h, TAG_DD, "");
 				print_text(h, "\\ ");
 				print_tagq(h, t);
 			}
-			print_otag(h, TAG_DT, "csw*+-l", cattr,
-			    bl->norm->Bl.width);
+			print_otag(h, TAG_DT, "sw*+-l", bl->norm->Bl.width);
 			break;
 		case ROFFT_BODY:
 			if (n->child == NULL) {
-				print_otag(h, TAG_DD, "css?", cattr,
+				print_otag(h, TAG_DD, "ss?",
 				    "width", "auto");
 				print_text(h, "\\ ");
 			} else
-				print_otag(h, TAG_DD, "c", cattr);
+				print_otag(h, TAG_DD, "");
 			break;
 		default:
 			break;
@@ -779,10 +738,10 @@ mdoc_it_pre(MDOC_ARGS)
 		case ROFFT_HEAD:
 			break;
 		case ROFFT_BODY:
-			print_otag(h, TAG_TD, "c", cattr);
+			print_otag(h, TAG_TD, "");
 			break;
 		default:
-			print_otag(h, TAG_TR, "c", cattr);
+			print_otag(h, TAG_TR, "");
 		}
 	default:
 		break;

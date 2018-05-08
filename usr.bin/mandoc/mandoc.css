@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.11 2018/05/08 17:52:24 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.12 2018/05/08 21:42:11 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -72,42 +72,49 @@ div.D1 {	margin-left: 5ex; }
 
 ul.Bl-bullet {	list-style-type: disc;
 		padding-left: 1em; }
-li.It-bullet { }
+ul.Bl-bullet > li { }
 ul.Bl-dash {	list-style-type: none;
 		padding-left: 0em; }
-li.It-dash:before {
+ul.Bl-dash > li:before {
 		content: "\2014  "; }
 ul.Bl-item {	list-style-type: none;
 		padding-left: 0em; }
-li.It-item { }
+ul.Bl-item > li { }
 ul.Bl-compact > li {
 		margin-top: 0ex; }
 
 ol.Bl-enum {	padding-left: 2em; }
-li.It-enum { }
+ol.Bl-enum > li { }
 ol.Bl-compact > li {
 		margin-top: 0ex; }
 
 dl.Bl-diag { }
-dt.It-diag { }
-dd.It-diag {	margin-left: 0ex; }
-b.It-diag {	font-style: normal; }
+dl.Bl-diag > dt {
+		font-style: normal;
+		font-weight: bold; }
+dl.Bl-diag > dd {
+		margin-left: 0ex; }
 dl.Bl-hang { }
-dt.It-hang { }
-dd.It-hang {	margin-left: 10.2ex; }
+dl.Bl-hang > dt { }
+dl.Bl-hang > dd {
+		margin-left: 10.2ex; }
 dl.Bl-inset { }
-dt.It-inset { }
-dd.It-inset {	margin-left: 0ex; }
+dl.Bl-inset > dt { }
+dl.Bl-inset > dd {
+		margin-left: 0ex; }
 dl.Bl-ohang { }
-dt.It-ohang { }
-dd.It-ohang {	margin-left: 0ex; }
+dl.Bl-ohang > dt { }
+dl.Bl-ohang > dd {
+		margin-left: 0ex; }
 dl.Bl-tag {	margin-left: 10.2ex; }
-dt.It-tag {	float: left;
+dl.Bl-tag > dt {
+		float: left;
 		margin-top: 0ex;
 		margin-left: -10.2ex;
 		padding-right: 2ex;
 		vertical-align: top; }
-dd.It-tag {	clear: right;
+dl.Bl-tag > dd {
+		clear: right;
 		width: 100%;
 		margin-top: 0ex;
 		margin-left: 0ex;
@@ -117,8 +124,9 @@ dl.Bl-compact > dt {
 		margin-top: 0ex; }
 
 table.Bl-column { }
-tr.It-column { }
-td.It-column {	margin-top: 1em; }
+table.Bl-column > tbody > tr { }
+table.Bl-column > tbody > tr > td {
+		margin-top: 1em; }
 table.Bl-compact > tbody > tr > td {
 		margin-top: 0ex; }
 
