@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.335 2018/05/08 09:03:58 mpi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.336 2018/05/08 14:15:30 mpi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1364,11 +1364,10 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			if (pr->ps_tracevp)
 				FILLIT(NULL, NULL, KERN_FILE_TRACE, pr->ps_tracevp, pr);
 			for (i = 0; i < fdp->fd_nfiles; i++) {
-				if ((fp = fdp->fd_ofiles[i]) == NULL)
-					continue;
-				if (!FILE_IS_USABLE(fp))
+				if ((fp = fd_getfile(fdp, i)) == NULL)
 					continue;
 				FILLIT(fp, fdp, i, NULL, pr);
+				FRELE(fp, p);
 			}
 		}
 		if (!matched)
@@ -1394,11 +1393,10 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			if (pr->ps_tracevp)
 				FILLIT(NULL, NULL, KERN_FILE_TRACE, pr->ps_tracevp, pr);
 			for (i = 0; i < fdp->fd_nfiles; i++) {
-				if ((fp = fdp->fd_ofiles[i]) == NULL)
-					continue;
-				if (!FILE_IS_USABLE(fp))
+				if ((fp = fd_getfile(fdp, i)) == NULL)
 					continue;
 				FILLIT(fp, fdp, i, NULL, pr);
+				FRELE(fp, p);
 			}
 		}
 		break;
