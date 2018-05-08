@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.156 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.157 2018/05/08 08:53:41 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -957,6 +957,7 @@ restart:
 	 */
 	numfiles++;
 	fp = pool_get(&file_pool, PR_WAITOK|PR_ZERO);
+	mtx_init(&fp->f_mtx, IPL_NONE);
 	fp->f_iflags = FIF_LARVAL;
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);

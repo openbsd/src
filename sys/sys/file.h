@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.41 2018/04/25 10:29:16 mpi Exp $	*/
+/*	$OpenBSD: file.h,v 1.42 2018/05/08 08:53:41 mpi Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 
 #else /* _KERNEL */
 #include <sys/queue.h>
+#include <sys/mutex.h>
 
 struct proc;
 struct uio;
@@ -61,26 +62,32 @@ struct	fileops {
 /*
  * Kernel descriptor table.
  * One entry for each open kernel vnode and socket.
+ *
+ *  Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	f	per file `f_mtx'
+ *	k	kernel lock
  */
 struct file {
-	LIST_ENTRY(file) f_list;/* list of active files */
-	short	f_flag;		/* see fcntl.h */
+	LIST_ENTRY(file) f_list;/* [k] list of active files */
+	struct mutex f_mtx;
+	short	f_flag;		/* [k] see fcntl.h */
 #define	DTYPE_VNODE	1	/* file */
 #define	DTYPE_SOCKET	2	/* communications endpoint */
 #define	DTYPE_PIPE	3	/* pipe */
 #define	DTYPE_KQUEUE	4	/* event queue */
-	short	f_type;		/* descriptor type */
-	long	f_count;	/* reference count */
-	struct	ucred *f_cred;	/* credentials associated with descriptor */
-	struct	fileops *f_ops;
-	off_t	f_offset;
-	void 	*f_data;	/* private data */
-	int	f_iflags;	/* internal flags */
-	u_int64_t f_rxfer;	/* total number of read transfers */
-	u_int64_t f_wxfer;	/* total number of write transfers */
-	u_int64_t f_seek;	/* total independent seek operations */
-	u_int64_t f_rbytes;	/* total bytes read */
-	u_int64_t f_wbytes;	/* total bytes written */
+	short	f_type;		/* [I] descriptor type */
+	long	f_count;	/* [k] reference count */
+	struct	ucred *f_cred;	/* [I] credentials associated with descriptor */
+	struct	fileops *f_ops; /* [k] file operation pointers */
+	off_t	f_offset;	/* [k] */
+	void 	*f_data;	/* [k] private data */
+	int	f_iflags;	/* [k] internal flags */
+	uint64_t f_rxfer;	/* [f] total number of read transfers */
+	uint64_t f_wxfer;	/* [f] total number of write transfers */
+	uint64_t f_seek;	/* [f] total independent seek operations */
+	uint64_t f_rbytes;	/* [f] total bytes read */
+	uint64_t f_wbytes;	/* [f] total bytes written */
 };
 
 #define FIF_HASLOCK		0x01	/* descriptor holds advisory lock */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.118 2018/04/27 10:13:37 mpi Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.119 2018/05/08 08:53:41 mpi Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -203,8 +203,10 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 			error = 0;
 	cnt -= auio.uio_resid;
 
+	mtx_enter(&fp->f_mtx);
 	fp->f_rxfer++;
 	fp->f_rbytes += cnt;
+	mtx_leave(&fp->f_mtx);
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
@@ -355,8 +357,10 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	}
 	cnt -= auio.uio_resid;
 
+	mtx_enter(&fp->f_mtx);
 	fp->f_wxfer++;
 	fp->f_wbytes += cnt;
+	mtx_leave(&fp->f_mtx);
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.333 2018/04/25 10:29:16 mpi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.334 2018/05/08 08:53:41 mpi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1067,11 +1067,13 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 
 		if (suser(p) == 0 || p->p_ucred->cr_uid == fp->f_cred->cr_uid) {
 			kf->f_offset = fp->f_offset;
+			mtx_enter(&fp->f_mtx);
 			kf->f_rxfer = fp->f_rxfer;
 			kf->f_rwfer = fp->f_wxfer;
 			kf->f_seek = fp->f_seek;
 			kf->f_rbytes = fp->f_rbytes;
 			kf->f_wbytes = fp->f_wbytes;
+			mtx_leave(&fp->f_mtx);
 		} else
 			kf->f_offset = -1;
 	} else if (vp != NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.282 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.283 2018/05/08 08:53:41 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1650,7 +1650,9 @@ sys_lseek(struct proc *p, void *v, register_t *retval)
 		}
 	}
 	*(off_t *)retval = fp->f_offset = newoff;
+	mtx_enter(&fp->f_mtx);
 	fp->f_seek++;
+	mtx_leave(&fp->f_mtx);
 	error = 0;
  bad:
 	FRELE(fp, p);
