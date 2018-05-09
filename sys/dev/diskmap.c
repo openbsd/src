@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskmap.c,v 1.19 2018/05/02 02:24:55 visa Exp $	*/
+/*	$OpenBSD: diskmap.c,v 1.20 2018/05/09 08:42:02 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
@@ -56,7 +56,7 @@ diskmapioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct dk_diskmap *dm;
 	struct nameidata ndp;
-	struct filedesc *fdp;
+	struct filedesc *fdp = p->p_fd;
 	struct file *fp = NULL;
 	struct vnode *vp = NULL, *ovp;
 	char *devname;
@@ -83,7 +83,9 @@ diskmapioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	if ((error = getvnode(p, fd, &fp)) != 0)
 		goto invalid;
 
-	fdp = p->p_fd;
+	KASSERT(fp->f_type == DTYPE_VNODE);
+	KASSERT(fp->f_ops == &vnops);
+
 	fdplock(fdp);
 
 	NDINIT(&ndp, 0, 0, UIO_SYSSPACE, devname, p);
@@ -104,15 +106,15 @@ diskmapioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		vput(ovp);
 	}
 
-	fp->f_type = DTYPE_VNODE;
-	fp->f_ops = &vnops;
 	fp->f_data = (caddr_t)vp;
 	fp->f_offset = 0;
+	mtx_enter(&fp->f_mtx);
 	fp->f_rxfer = 0;
 	fp->f_wxfer = 0;
 	fp->f_seek = 0;
 	fp->f_rbytes = 0;
 	fp->f_wbytes = 0;
+	mtx_leave(&fp->f_mtx);
 
 	VOP_UNLOCK(vp);
 

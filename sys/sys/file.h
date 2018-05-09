@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.44 2018/05/08 14:43:24 mpi Exp $	*/
+/*	$OpenBSD: file.h,v 1.45 2018/05/09 08:42:02 mpi Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ struct file {
 	short	f_type;		/* [I] descriptor type */
 	long	f_count;	/* [k] reference count */
 	struct	ucred *f_cred;	/* [I] credentials associated with descriptor */
-	struct	fileops *f_ops; /* [k] file operation pointers */
+	struct	fileops *f_ops; /* [I] file operation pointers */
 	off_t	f_offset;	/* [k] */
 	void 	*f_data;	/* [k] private data */
 	int	f_iflags;	/* [k] internal flags */
