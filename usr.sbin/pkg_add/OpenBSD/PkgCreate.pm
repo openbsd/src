@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.137 2018/05/04 08:58:52 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.138 2018/05/09 15:02:08 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -891,7 +891,7 @@ sub ask_tree
 		# make things debuggable because this child doesn't matter
 		$DB::inhibit_exit = 0;
 		chdir $portsdir or exit 2;
-#		open STDERR, '>', '/dev/null';
+		open STDERR, '>', '/dev/null';
 		$ENV{FULLPATH} = 'Yes';
 		delete $ENV{FLAVOR};
 		delete $ENV{SUBPACKAGE};
