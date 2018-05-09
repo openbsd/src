@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.108 2018/01/06 06:30:11 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.109 2018/05/09 14:28:36 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1030,6 +1030,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		("pmap_enter(%p, %p, %p, 0x%x, 0x%x)\n",
 		    pmap, (void *)va, (void *)pa, prot, flags));
 
+	pg = PHYS_TO_VM_PAGE(pa);
+
 	pmap_lock(pmap);
 
 #ifdef DIAGNOSTIC
@@ -1044,8 +1046,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			panic("pmap_enter: uva %p", (void *)va);
 	}
 #endif
-
-	pg = PHYS_TO_VM_PAGE(pa);
 
 	if (pg != NULL) {
 		mtx_enter(&pg->mdpage.pv_mtx);
