@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.85 2017/12/18 05:51:53 cheloha Exp $	*/
+/*	$OpenBSD: mib.c,v 1.86 2018/05/09 13:56:46 sthen Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -1109,7 +1109,11 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber = ber_add_integer(ber, kif->if_mtu);
 		break;
 	case 5:
-		ber = ber_add_integer(ber, kif->if_baudrate);
+		if (kif->if_baudrate > UINT32_MAX) {
+			/* speed should be obtained from ifHighSpeed instead */
+			ber = ber_add_integer(ber, UINT32_MAX);
+		} else
+			ber = ber_add_integer(ber, kif->if_baudrate);
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_GAUGE32);
 		break;
 	case 6:
