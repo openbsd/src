@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.63 2018/05/04 08:21:42 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.64 2018/05/09 07:50:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1159,7 +1159,8 @@ cmd_find_target(struct cmd_find_state *fs, struct cmdq_item *item,
 			/* This will fill in winlink and window. */
 			if (cmd_find_get_window_with_session(fs, window) != 0)
 				goto no_window;
-			fs->wp = fs->wl->window->active;
+			if (fs->wl != NULL) /* can be NULL if index only */
+				fs->wp = fs->wl->window->active;
 			goto found;
 		}
 
