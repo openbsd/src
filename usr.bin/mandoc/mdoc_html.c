@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.174 2018/05/08 21:42:11 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.175 2018/05/09 00:45:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -581,10 +581,9 @@ mdoc_nd_pre(MDOC_ARGS)
 	if (n->type != ROFFT_BODY)
 		return 1;
 
-	/* XXX: this tag in theory can contain block elements. */
-
 	print_text(h, "\\(em");
-	print_otag(h, TAG_SPAN, "cT", "Nd");
+	/* Cannot use TAG_SPAN because it may contain blocks. */
+	print_otag(h, TAG_DIV, "cT", "Nd");
 	return 1;
 }
 
@@ -1442,20 +1441,16 @@ mdoc_bf_pre(MDOC_ARGS)
 		return 1;
 
 	if (FONT_Em == n->norm->Bf.font)
-		cattr = "Em";
+		cattr = "Bf Em";
 	else if (FONT_Sy == n->norm->Bf.font)
-		cattr = "Sy";
+		cattr = "Bf Sy";
 	else if (FONT_Li == n->norm->Bf.font)
-		cattr = "Li";
+		cattr = "Bf Li";
 	else
-		cattr = "No";
+		cattr = "Bf No";
 
-	/*
-	 * We want this to be inline-formatted, but needs to be div to
-	 * accept block children.
-	 */
-
-	print_otag(h, TAG_DIV, "css?hl", cattr, "display", "inline", 1);
+	/* Cannot use TAG_SPAN because it may contain blocks. */
+	print_otag(h, TAG_DIV, "cshl", cattr, 1);
 	return 1;
 }
 
@@ -1676,7 +1671,8 @@ mdoc_quote_pre(MDOC_ARGS)
 	case MDOC_Op:
 		print_text(h, "\\(lB");
 		h->flags |= HTML_NOSPACE;
-		print_otag(h, TAG_SPAN, "c", "Op");
+		/* Cannot use TAG_SPAN because it may contain blocks. */
+		print_otag(h, TAG_IDIV, "c", "Op");
 		break;
 	case MDOC_En:
 		if (NULL == n->norm->Es ||
