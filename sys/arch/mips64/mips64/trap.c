@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.131 2018/04/12 17:13:43 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.132 2018/05/09 03:23:20 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,6 +73,7 @@
 
 #ifdef DDB
 #include <mips64/db_machdep.h>
+#include <ddb/db_access.h>
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
 #endif
@@ -1480,6 +1481,104 @@ end:
 			(*pr)("User-level: curproc NULL\n");
 	}
 }
+
+#ifdef DDB
+void
+db_save_stack_trace(struct db_stack_trace *st)
+{
+	extern char k_general[];
+	extern char u_general[];
+	extern char k_intr[];
+	extern char u_intr[];
+	db_expr_t diff;
+	char *name;
+	Elf_Sym *sym;
+	struct trapframe *tf;
+	vaddr_t pc, ra, sp, subr, va;
+	InstFmt inst;
+	int first = 1;
+	int done, framesize;
+
+	/* Get a pc that comes after the prologue in this subroutine. */
+	__asm__ volatile ("1: dla %0, 1b" : "=r" (pc));
+
+	ra = (vaddr_t)__builtin_return_address(0);
+	sp = (vaddr_t)__builtin_frame_address(0);
+
+	st->st_count = 0;
+	while (st->st_count < DB_STACK_TRACE_MAX && pc != 0) {
+		if (!VALID_ADDRESS(pc) || !VALID_ADDRESS(sp))
+			break;
+
+		if (!first)
+			st->st_pc[st->st_count++] = pc;
+		first = 0;
+
+		/* Determine the start address of the current subroutine. */
+		sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
+		if (sym == NULL)
+			break;
+		db_symbol_values(sym, &name, NULL);
+		subr = pc - (vaddr_t)diff;
+
+		if (subr == (vaddr_t)k_general || subr == (vaddr_t)k_intr ||
+		    subr == (vaddr_t)u_general || subr == (vaddr_t)u_intr) {
+			tf = (struct trapframe *)*(register_t *)sp;
+			pc = tf->pc;
+			ra = tf->ra;
+			sp = tf->sp;
+			continue;
+		}
+
+		/*
+		 * Figure out the return address and the size of the current
+		 * stack frame by analyzing the subroutine's prologue.
+		 */
+		done = 0;
+		framesize = 0;
+		for (va = subr; va < pc && !done; va += 4) {
+			inst.word = kdbpeek(va);
+			if (inst_branch(inst.word) || inst_call(inst.word) ||
+			    inst_return(inst.word)) {
+				/* Check the delay slot and stop. */
+				va += 4;
+				inst.word = kdbpeek(va);
+				done = 1;
+			}
+			switch (inst.JType.op) {
+			case OP_SPECIAL:
+				switch (inst.RType.func) {
+				case OP_SYSCALL:
+				case OP_BREAK:
+					done = 1;
+				}
+				break;
+			case OP_SD:
+				if (inst.IType.rs == SP &&
+				    inst.IType.rt == RA && ra == 0)
+					ra = kdbpeekd(sp +
+					    (int16_t)inst.IType.imm);
+				break;
+			case OP_DADDI:
+			case OP_DADDIU:
+				if (inst.IType.rs == SP &&
+				    inst.IType.rt == SP &&
+				    (int16_t)inst.IType.imm < 0 &&
+				    framesize == 0)
+					framesize = -(int16_t)inst.IType.imm;
+				break;
+			}
+
+			if (framesize != 0 && ra != 0)
+				break;
+		}
+
+		pc = ra;
+		ra = 0;
+		sp += framesize;
+	}
+}
+#endif
 
 #undef	VALID_ADDRESS
 
