@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.136 2018/04/26 12:50:41 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.137 2018/05/09 10:22:06 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -44,7 +44,8 @@ apply_patch()
 
 	${_BSDMP} && _s="-s @usr/share/relink/kernel/GENERIC/.*@@g" ||
 		_s="-s @usr/share/relink/kernel/GENERIC.MP/.*@@g"
-	_files="$(tar -xvzphf ${_TMP}/syspatch${_patch}.tgz -C ${_edir} ${_s})"
+	_files="$(tar -xvzphf ${_TMP}/syspatch${_patch}.tgz -C ${_edir} \
+		${_s})" || { rm -r ${_PDIR}/${_patch}; return 1; }
 
 	checkfs ${_files}
 	create_rollback ${_patch} "${_files}"
