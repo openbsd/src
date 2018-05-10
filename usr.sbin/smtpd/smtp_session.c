@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.329 2018/05/04 10:49:49 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.330 2018/05/10 07:21:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -165,8 +165,6 @@ static void smtp_io(struct io *, int, void *);
 static void smtp_enter_state(struct smtp_session *, int);
 static void smtp_reply(struct smtp_session *, char *, ...);
 static void smtp_command(struct smtp_session *, char *);
-static int smtp_parse_mail_args(struct smtp_session *, char *);
-static int smtp_parse_rcpt_args(struct smtp_session *, char *);
 static void smtp_rfc4954_auth_plain(struct smtp_session *, char *);
 static void smtp_rfc4954_auth_login(struct smtp_session *, char *);
 static void smtp_free(struct smtp_session *, const char *);
@@ -1466,95 +1464,6 @@ abort:
 }
 
 static int
-smtp_parse_rcpt_args(struct smtp_session *s, char *args)
-{
-	char *b, *p;
-
-	while ((b = strsep(&args, " "))) {
-		if (*b == '\0')
-			continue;
-
-		if (ADVERTISE_EXT_DSN(s) && strncasecmp(b, "NOTIFY=", 7) == 0) {
-			b += 7;
-			while ((p = strsep(&b, ","))) {
-				if (strcasecmp(p, "SUCCESS") == 0)
-					s->tx->evp.dsn_notify |= DSN_SUCCESS;
-				else if (strcasecmp(p, "FAILURE") == 0)
-					s->tx->evp.dsn_notify |= DSN_FAILURE;
-				else if (strcasecmp(p, "DELAY") == 0)
-					s->tx->evp.dsn_notify |= DSN_DELAY;
-				else if (strcasecmp(p, "NEVER") == 0)
-					s->tx->evp.dsn_notify |= DSN_NEVER;
-			}
-
-			if (s->tx->evp.dsn_notify & DSN_NEVER &&
-			    s->tx->evp.dsn_notify & (DSN_SUCCESS | DSN_FAILURE |
-			    DSN_DELAY)) {
-				smtp_reply(s,
-				    "553 NOTIFY option NEVER cannot be \
-				    combined with other options");
-				return (-1);
-			}
-		} else if (ADVERTISE_EXT_DSN(s) && strncasecmp(b, "ORCPT=", 6) == 0) {
-			b += 6;
-			if (!text_to_mailaddr(&s->tx->evp.dsn_orcpt, b)) {
-				smtp_reply(s, "553 ORCPT address syntax error");
-				return (-1);
-			}
-		} else {
-			smtp_reply(s, "503 Unsupported option %s", b);
-			return (-1);
-		}
-	}
-
-	return (0);
-}
-
-static int
-smtp_parse_mail_args(struct smtp_session *s, char *args)
-{
-	char *b;
-
-	while ((b = strsep(&args, " "))) {
-		if (*b == '\0')
-			continue;
-
-		if (strncasecmp(b, "AUTH=", 5) == 0)
-			log_debug("debug: smtp: AUTH in MAIL FROM command");
-		else if (strncasecmp(b, "SIZE=", 5) == 0)
-			log_debug("debug: smtp: SIZE in MAIL FROM command");
-		else if (strcasecmp(b, "BODY=7BIT") == 0)
-			/* XXX only for this transaction */
-			s->flags &= ~SF_8BITMIME;
-		else if (strcasecmp(b, "BODY=8BITMIME") == 0)
-			;
-		else if (ADVERTISE_EXT_DSN(s) && strncasecmp(b, "RET=", 4) == 0) {
-			b += 4;
-			if (strcasecmp(b, "HDRS") == 0)
-				s->tx->evp.dsn_ret = DSN_RETHDRS;
-			else if (strcasecmp(b, "FULL") == 0)
-				s->tx->evp.dsn_ret = DSN_RETFULL;
-		} else if (ADVERTISE_EXT_DSN(s) && strncasecmp(b, "ENVID=", 6) == 0) {
-			b += 6;
-			if (strlcpy(s->tx->evp.dsn_envid, b, sizeof(s->tx->evp.dsn_envid))
-			    >= sizeof(s->tx->evp.dsn_envid)) {
-				smtp_reply(s, "503 %s %s: option too large, truncated: %s",
-				    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND_ARGUMENTS),
-				    esc_description(ESC_INVALID_COMMAND_ARGUMENTS), b);
-				return (-1);
-			}
-		} else {
-			smtp_reply(s, "503 %s %s: Unsupported option %s",
-			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND_ARGUMENTS),
-			    esc_description(ESC_INVALID_COMMAND_ARGUMENTS), b);
-			return (-1);
-		}
-	}
-
-	return (0);
-}
-
-static int
 smtp_lookup_servername(struct smtp_session *s)
 {
 	struct sockaddr		*sa;
@@ -1990,6 +1899,8 @@ smtp_tx_free(struct smtp_tx *tx)
 static void
 smtp_tx_mail_from(struct smtp_tx *tx, char *line)
 {
+	char *opt;
+
 	if (smtp_mailaddr(&tx->evp.sender, line, 1, &line,
 		tx->session->smtpname) == 0) {
 		smtp_reply(tx->session, "553 %s: Sender address syntax error",
@@ -1998,9 +1909,43 @@ smtp_tx_mail_from(struct smtp_tx *tx, char *line)
 		return;
 	}
 
-	if (line && smtp_parse_mail_args(tx->session, line) == -1) {
-		smtp_tx_free(tx);
-		return;
+	while ((opt = strsep(&line, " "))) {
+		if (*opt == '\0')
+			continue;
+
+		if (strncasecmp(opt, "AUTH=", 5) == 0)
+			log_debug("debug: smtp: AUTH in MAIL FROM command");
+		else if (strncasecmp(opt, "SIZE=", 5) == 0)
+			log_debug("debug: smtp: SIZE in MAIL FROM command");
+		else if (strcasecmp(opt, "BODY=7BIT") == 0)
+			/* XXX only for this transaction */
+			tx->session->flags &= ~SF_8BITMIME;
+		else if (strcasecmp(opt, "BODY=8BITMIME") == 0)
+			;
+		else if (ADVERTISE_EXT_DSN(tx->session) && strncasecmp(opt, "RET=", 4) == 0) {
+			opt += 4;
+			if (strcasecmp(opt, "HDRS") == 0)
+				tx->evp.dsn_ret = DSN_RETHDRS;
+			else if (strcasecmp(opt, "FULL") == 0)
+				tx->evp.dsn_ret = DSN_RETFULL;
+		} else if (ADVERTISE_EXT_DSN(tx->session) && strncasecmp(opt, "ENVID=", 6) == 0) {
+			opt += 6;
+			if (strlcpy(tx->evp.dsn_envid, opt, sizeof(tx->evp.dsn_envid))
+			    >= sizeof(tx->evp.dsn_envid)) {
+				smtp_reply(tx->session,
+				    "503 %s %s: option too large, truncated: %s",
+				    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND_ARGUMENTS),
+				    esc_description(ESC_INVALID_COMMAND_ARGUMENTS), opt);
+				smtp_tx_free(tx);
+				return;
+			}
+		} else {
+			smtp_reply(tx->session, "503 %s %s: Unsupported option %s",
+			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND_ARGUMENTS),
+			    esc_description(ESC_INVALID_COMMAND_ARGUMENTS), opt);
+			smtp_tx_free(tx);
+			return;
+		}
 	}
 
 	/* only check sendertable if defined and user has authenticated */
@@ -2030,6 +1975,8 @@ smtp_tx_create_message(struct smtp_tx *tx)
 static void
 smtp_tx_rcpt_to(struct smtp_tx *tx, char *line)
 {
+	char *opt, *p;
+
 	if (tx->rcptcount >= env->sc_session_max_rcpt) {
 		smtp_reply(tx->session, "451 %s %s: Too many recipients",
 		    esc_code(ESC_STATUS_TEMPFAIL, ESC_TOO_MANY_RECIPIENTS),
@@ -2046,8 +1993,43 @@ smtp_tx_rcpt_to(struct smtp_tx *tx, char *line)
 		return;
 	}
 
-	if (line && smtp_parse_rcpt_args(tx->session, line) == -1)
-		return;
+	while ((opt = strsep(&line, " "))) {
+		if (*opt == '\0')
+			continue;
+
+		if (ADVERTISE_EXT_DSN(tx->session) && strncasecmp(opt, "NOTIFY=", 7) == 0) {
+			opt += 7;
+			while ((p = strsep(&opt, ","))) {
+				if (strcasecmp(p, "SUCCESS") == 0)
+					tx->evp.dsn_notify |= DSN_SUCCESS;
+				else if (strcasecmp(p, "FAILURE") == 0)
+					tx->evp.dsn_notify |= DSN_FAILURE;
+				else if (strcasecmp(p, "DELAY") == 0)
+					tx->evp.dsn_notify |= DSN_DELAY;
+				else if (strcasecmp(p, "NEVER") == 0)
+					tx->evp.dsn_notify |= DSN_NEVER;
+			}
+
+			if (tx->evp.dsn_notify & DSN_NEVER &&
+			    tx->evp.dsn_notify & (DSN_SUCCESS | DSN_FAILURE |
+			    DSN_DELAY)) {
+				smtp_reply(tx->session,
+				    "553 NOTIFY option NEVER cannot be"
+				    " combined with other options");
+				return;
+			}
+		} else if (ADVERTISE_EXT_DSN(tx->session) && strncasecmp(opt, "ORCPT=", 6) == 0) {
+			opt += 6;
+			if (!text_to_mailaddr(&tx->evp.dsn_orcpt, opt)) {
+				smtp_reply(tx->session,
+				    "553 ORCPT address syntax error");
+				return;
+			}
+		} else {
+			smtp_reply(tx->session, "503 Unsupported option %s", opt);
+			return;
+		}
+	}
 
 	m_create(p_lka, IMSG_SMTP_EXPAND_RCPT, 0, 0, -1);
 	m_add_id(p_lka, tx->session->id);
