@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1064 2018/04/06 10:39:15 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1065 2018/05/10 08:52:01 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5984,7 +5984,8 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 		goto bad;
 	}
 	/* A locally generated packet may have invalid source address. */
-	if ((ntohl(ip->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
+	if ((ntohl(ip->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET &&
+	    (ifp->if_flags & IFF_LOOPBACK) == 0)
 		ip->ip_src = ifatoia(rt->rt_ifa)->ia_addr.sin_addr;
 
 	in_proto_cksum_out(m0, ifp);
@@ -6139,7 +6140,8 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 		goto bad;
 	}
 	/* A locally generated packet may have invalid source address. */
-	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src))
+	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) &&
+	    (ifp->if_flags & IFF_LOOPBACK) == 0)
 		ip6->ip6_src = ifatoia6(rt->rt_ifa)->ia_addr.sin6_addr;
 
 	in6_proto_cksum_out(m0, ifp);
