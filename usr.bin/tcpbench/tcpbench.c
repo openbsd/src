@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.54 2018/05/10 14:19:03 bluhm Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.55 2018/05/10 14:29:17 benno Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -457,9 +457,9 @@ check_prepare_kvars(char *list)
 	while ((item = strsep(&list, ", \t\n")) != NULL) {
 		check_kvar(item);
 		if ((ret = reallocarray(ret, (++n + 1), sizeof(*ret))) == NULL)
-			errx(1, "reallocarray(kvars)");
+			err(1, "reallocarray(kvars)");
 		if ((ret[n - 1] = strdup(item)) == NULL)
-			errx(1, "strdup");
+			err(1, "strdup");
 		ret[n] = NULL;
 	}
 	return (ret);
