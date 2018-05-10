@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.36 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.37 2018/05/10 13:30:25 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -308,7 +308,7 @@ tcp_trace(short act, short ostate, struct tcpcb *tp,
     struct tcpiphdr *ti, struct tcpipv6hdr *ti6, int req)
 {
 	tcp_seq seq, ack;
-	int flags, len, win, timer;
+	int flags, len, win;
 	struct tcphdr *th;
 	char hbuf[INET6_ADDRSTRLEN];
 
@@ -376,11 +376,10 @@ tcp_trace(short act, short ostate, struct tcpcb *tp,
 		}
 		break;
 	case TA_USER:
-		timer = req >> 8;
-		req &= 0xff;
 		printf("%s", prurequests[req]);
-		if (req == PRU_SLOWTIMO || req == PRU_FASTTIMO)
-			printf("<%s>", tcptimers[timer]);
+		break;
+	case TA_TIMER:
+		printf("%s", tcptimers[req]);
 		break;
 	}
 	printf(" -> %s", tcpstates[tp->t_state]);

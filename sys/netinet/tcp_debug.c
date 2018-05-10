@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.25 2018/01/23 20:41:42 bluhm Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.26 2018/05/10 13:30:25 bluhm Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -194,9 +194,11 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, caddr_t headers,
 		break;
 
 	case TA_USER:
-		printf("%s", prurequests[req&0xff]);
-		if ((req & 0xff) == PRU_SLOWTIMO)
-			printf("<%s>", tcptimers[req>>8]);
+		printf("%s", prurequests[req]);
+		break;
+
+	case TA_TIMER:
+		printf("%s", tcptimers[req]);
 		break;
 	}
 	if (tp)
