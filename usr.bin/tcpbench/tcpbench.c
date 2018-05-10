@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.52 2016/09/19 18:58:39 bluhm Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.53 2018/05/10 13:53:05 benno Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -1041,7 +1041,7 @@ main(int argc, char **argv)
 			exit(0);
 		case 'k':
 			if ((tmp = strdup(optarg)) == NULL)
-				errx(1, "strdup");
+				err(1, "strdup");
 			ptb->kvars = check_prepare_kvars(tmp);
 			free(tmp);
 			break;
