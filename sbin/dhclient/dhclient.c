@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.568 2018/03/31 19:01:22 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.569 2018/05/11 15:44:15 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -162,7 +162,7 @@ void make_request(struct interface_info *, struct client_lease *);
 void make_decline(struct interface_info *, struct client_lease *);
 
 void write_lease_db(struct interface_info *);
-void rewrite_option_db(char *, struct client_lease *, struct client_lease *);
+void write_option_db(char *, struct client_lease *, struct client_lease *);
 char *lease_as_string(char *, char *, struct client_lease *);
 struct proposal *lease_as_proposal(struct client_lease *);
 void append_statement(char *, size_t, char *, char *);
@@ -947,7 +947,7 @@ bind_lease(struct interface_info *ifi)
 	struct client_lease	*lease, *pl;
 	struct proposal		*offered_proposal = NULL;
 	struct proposal		*effective_proposal = NULL;
-	char			*msg;
+	char			*msg = NULL;
 	time_t			 cur_time, renewal, tickstart, tickstop;
 	int			 rslt, seen;
 
@@ -1006,27 +1006,8 @@ bind_lease(struct interface_info *ifi)
 	    (ifi->offer_src == NULL) ? "<unknown>" : ifi->offer_src);
 	if (rslt == -1)
 		fatal("bind msg");
-	if ((cmd_opts & OPT_FOREGROUND) != 0) {
-		/* log_info() will put messages on console only. */
-		;
-	} else if (isatty(STDERR_FILENO) != 0) {
-		/* log_info() to console and then /var/log/daemon. */
-		log_info("%s: %s", log_procname, msg);
-		go_daemon();
-	}
-	log_info("%s: %s", log_procname, msg);
-	free(msg);
 
 newlease:
-	write_resolv_conf();
-	free(ifi->offer_src);
-	ifi->offer_src = NULL;
-	go_daemon();
-	rewrite_option_db(ifi->name, ifi->active, lease);
-	free_client_lease(lease);
-	free(offered_proposal);
-	free(effective_proposal);
-
 	/*
 	 * Remove previous dynamic lease(es) for this address, and any expired
 	 * dynamic leases.
@@ -1051,10 +1032,41 @@ newlease:
 	if (seen == 0)
 		TAILQ_INSERT_HEAD(&ifi->lease_db, ifi->active,  next);
 
-	/* Write out new lease db. */
+	/*
+	 * Write out updated information before going daemon.
+	 *
+	 * Some scripts (e.g. the installer in autoinstall mode) assume that
+	 * the bind process is complete and all related information is in
+	 * place when dhclient(8) goes daemon.
+	 */
 	write_lease_db(ifi);
+	write_option_db(ifi->name, ifi->active, lease);
+	write_resolv_conf();
+
+	free_client_lease(lease);
+	free(offered_proposal);
+	free(effective_proposal);
+	free(ifi->offer_src);
+	ifi->offer_src = NULL;
+
+	if (msg != NULL) {
+		if ((cmd_opts & OPT_FOREGROUND) != 0) {
+			/* log msg on console only. */
+			;
+		} else if (isatty(STDERR_FILENO) != 0) {
+			/*
+			 * log msg to console and then go_daemon() so it is
+			 * logged again, this time to /var/log/daemon.
+			 */
+			log_info("%s: %s", log_procname, msg);
+			go_daemon();
+		}
+		log_info("%s: %s", log_procname, msg);
+		free(msg);
+	}
 
 	ifi->state = S_BOUND;
+	go_daemon();
 
 	/*
 	 * Set timeout to start the renewal process.
@@ -1773,7 +1785,7 @@ write_lease_db(struct interface_info *ifi)
 }
 
 void
-rewrite_option_db(char *name, struct client_lease *offered,
+write_option_db(char *name, struct client_lease *offered,
     struct client_lease *effective)
 {
 	char	*leasestr;
