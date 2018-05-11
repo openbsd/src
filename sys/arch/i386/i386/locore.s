@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.185 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: locore.s,v 1.186 2018/05/11 15:27:43 bluhm Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -988,6 +988,7 @@ IDTVEC(dna)
 	pushl	$0			# dummy error code
 	pushl	$T_DNA
 	INTRENTRY(dna)
+	sti
 	pushl	CPUVAR(SELF)
 	call	*_C_LABEL(npxdna_func)
 	addl	$4,%esp
@@ -996,6 +997,7 @@ IDTVEC(dna)
 #ifdef DIAGNOSTIC
 	movl	$0xfd,%esi
 #endif
+	cli
 	INTRFASTEXIT
 #else
 	ZTRAP(T_DNA)
@@ -1015,6 +1017,7 @@ IDTVEC(prot)
 IDTVEC(f00f_redirect)
 	pushl	$T_PAGEFLT
 	INTRENTRY(f00f_redirect)
+	sti
 	testb	$PGEX_U,TF_ERR(%esp)
 	jnz	calltrap
 	movl	%cr2,%eax
@@ -1050,6 +1053,7 @@ IDTVEC(fpu)
 	 */
 	subl	$8,%esp			/* space for tf_{err,trapno} */
 	INTRENTRY(fpu)
+	sti
 	pushl	CPL			# if_ppl in intrframe
 	pushl	%esp			# push address of intrframe
 	incl	_C_LABEL(uvmexp)+V_TRAP
@@ -1058,6 +1062,7 @@ IDTVEC(fpu)
 #ifdef DIAGNOSTIC
 	movl	$0xfc,%esi
 #endif
+	cli
 	INTRFASTEXIT
 #else
 	ZTRAP(T_ARITHTRAP)
