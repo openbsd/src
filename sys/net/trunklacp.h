@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.h,v 1.12 2017/10/29 08:36:10 mpi Exp $	*/
+/*	$OpenBSD: trunklacp.h,v 1.13 2018/05/12 02:02:34 ccardenas Exp $	*/
 /*	$NetBSD: ieee8023ad_impl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*
@@ -110,6 +110,17 @@ struct lacp_markerinfo {
 	u_int8_t		mi_pad[2];
 } __packed;
 
+#define	LACP_STATE_BITS		\
+	"\020"			\
+	"\001ACTIVITY"		\
+	"\002TIMEOUT"		\
+	"\003AGGREGATION"	\
+	"\004SYNC"		\
+	"\005COLLECTING"	\
+	"\006DISTRIBUTING"	\
+	"\007DEFAULTED"		\
+	"\010EXPIRED"
+
 #ifdef _KERNEL
 
 /*
@@ -141,17 +152,6 @@ struct lacp_markerinfo {
 
 #define	LACP_PORT_NTT		0x00000001
 #define	LACP_PORT_MARK		0x00000002
-
-#define	LACP_STATE_BITS		\
-	"\020"			\
-	"\001ACTIVITY"		\
-	"\002TIMEOUT"		\
-	"\003AGGREGATION"	\
-	"\004SYNC"		\
-	"\005COLLECTING"	\
-	"\006DISTRIBUTING"	\
-	"\007DEFAULTED"		\
-	"\010EXPIRED"
 
 struct markerdu {
 	struct ether_header	mdu_eh;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.365 2018/04/26 12:50:07 pirofti Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.366 2018/05/12 02:02:34 ccardenas Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 #include <net/if_pflow.h>
 #include <net/if_pppoe.h>
 #include <net/if_trunk.h>
+#include <net/trunklacp.h>
 #include <net/if_sppp.h>
 #include <net/ppp_defs.h>
 
@@ -3957,6 +3958,20 @@ trunk_status(void)
 		}
 
 		for (i = 0; i < ra.ra_ports; i++) {
+			lp = (struct lacp_opreq *)&(rpbuf[i].rp_lacpreq);
+			if (ra.ra_proto == TRUNK_PROTO_LACP) {
+				printf("\t\ttrunkport %s lacp_state actor ",
+				    rpbuf[i].rp_portname);
+				printb_status(lp->actor_state,
+				    LACP_STATE_BITS);
+				putchar('\n');
+				printf("\t\ttrunkport %s lacp_state partner ",
+				    rpbuf[i].rp_portname);
+				printb_status(lp->partner_state,
+				    LACP_STATE_BITS);
+				putchar('\n');
+			}
+
 			printf("\t\ttrunkport %s ", rpbuf[i].rp_portname);
 			printb_status(rpbuf[i].rp_flags, TRUNK_PORT_BITS);
 			putchar('\n');
