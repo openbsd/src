@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.21 2018/02/08 11:30:30 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.22 2018/05/12 17:27:22 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -333,14 +333,16 @@ tlsext_ecpf_parse(SSL *s, CBS *cbs, int *alert)
 
 	if (!s->internal->hit) {
 		if (!CBS_stow(&ecpf, &(SSI(s)->tlsext_ecpointformatlist),
-		    &(SSI(s)->tlsext_ecpointformatlist_length)))
-			goto err;
+		    &(SSI(s)->tlsext_ecpointformatlist_length))) {
+			*alert = TLS1_AD_INTERNAL_ERROR;
+			return 0;
+		}
 	}
 
 	return 1;
 
  err:
-	*alert = TLS1_AD_INTERNAL_ERROR;
+	*alert = SSL_AD_DECODE_ERROR;
 	return 0;
 }
 
