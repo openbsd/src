@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.226 2018/05/06 15:21:25 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.227 2018/05/12 09:43:02 tb Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -118,6 +118,8 @@ const struct in6_addr in6mask128 = IN6MASK128;
 int in6_ioctl(u_long, caddr_t, struct ifnet *, int);
 int in6_ioctl_change_ifaddr(u_long, caddr_t, struct ifnet *);
 int in6_ioctl_get(u_long, caddr_t, struct ifnet *);
+int in6_check_embed_scope(struct sockaddr_in6 *, unsigned int);
+int in6_clear_scope_id(struct sockaddr_in6 *, unsigned int);
 int in6_ifinit(struct ifnet *, struct in6_ifaddr *, int);
 void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
 
@@ -273,25 +275,12 @@ in6_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 	NET_LOCK();
 
 	if (sa6 && sa6->sin6_family == AF_INET6) {
-		if (IN6_IS_ADDR_LINKLOCAL(&sa6->sin6_addr)) {
-			if (sa6->sin6_addr.s6_addr16[1] == 0) {
-				/* link ID is not embedded by the user */
-				sa6->sin6_addr.s6_addr16[1] =
-				    htons(ifp->if_index);
-			} else if (sa6->sin6_addr.s6_addr16[1] !=
-			    htons(ifp->if_index)) {
-				error = EINVAL;	/* link ID contradicts */
-				goto err;
-			}
-			if (sa6->sin6_scope_id) {
-				if (sa6->sin6_scope_id !=
-				    (u_int32_t)ifp->if_index) {
-					error = EINVAL;
-					goto err;
-				}
-				sa6->sin6_scope_id = 0; /* XXX: good way? */
-			}
-		}
+		error = in6_check_embed_scope(sa6, ifp->if_index);
+		if (error)
+			goto err;
+		error = in6_clear_scope_id(sa6, ifp->if_index);
+		if (error)
+			goto err;
 		ia6 = in6ifa_ifpwithaddr(ifp, &sa6->sin6_addr);
 	}
 
@@ -415,25 +404,12 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 	NET_RLOCK();
 
 	if (sa6 && sa6->sin6_family == AF_INET6) {
-		if (IN6_IS_ADDR_LINKLOCAL(&sa6->sin6_addr)) {
-			if (sa6->sin6_addr.s6_addr16[1] == 0) {
-				/* link ID is not embedded by the user */
-				sa6->sin6_addr.s6_addr16[1] =
-				    htons(ifp->if_index);
-			} else if (sa6->sin6_addr.s6_addr16[1] !=
-			    htons(ifp->if_index)) {
-				error = EINVAL;	/* link ID contradicts */
-				goto err;
-			}
-			if (sa6->sin6_scope_id) {
-				if (sa6->sin6_scope_id !=
-				    (u_int32_t)ifp->if_index) {
-					error = EINVAL;
-					goto err;
-				}
-				sa6->sin6_scope_id = 0; /* XXX: good way? */
-			}
-		}
+		error = in6_check_embed_scope(sa6, ifp->if_index);
+		if (error)
+			goto err;
+		error = in6_clear_scope_id(sa6, ifp->if_index);
+		if (error)
+			goto err;
 		ia6 = in6ifa_ifpwithaddr(ifp, &sa6->sin6_addr);
 	}
 
@@ -523,6 +499,32 @@ err:
 	return (error);
 }
 
+int
+in6_check_embed_scope(struct sockaddr_in6 *sa6, unsigned int ifidx)
+{
+	if (IN6_IS_ADDR_LINKLOCAL(&sa6->sin6_addr)) {
+		if (sa6->sin6_addr.s6_addr16[1] == 0) {
+			/* link ID is not embedded by the user */
+			sa6->sin6_addr.s6_addr16[1] = htons(ifidx);
+		} else if (sa6->sin6_addr.s6_addr16[1] != htons(ifidx))
+			return EINVAL;	/* link ID contradicts */
+	}
+	return 0;
+}
+
+int
+in6_clear_scope_id(struct sockaddr_in6 *sa6, unsigned int ifidx)
+{
+	if (IN6_IS_ADDR_LINKLOCAL(&sa6->sin6_addr)) {
+		if (sa6->sin6_scope_id) {
+			if (sa6->sin6_scope_id != (u_int32_t)ifidx)
+				return EINVAL;
+			sa6->sin6_scope_id = 0; /* XXX: good way? */
+		}
+	}
+	return 0;
+}
+
 /*
  * Update parameters of an IPv6 interface address.
  * If necessary, a new entry is created and linked into address chains.
@@ -589,20 +591,9 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	dst6 = ifra->ifra_dstaddr;
 	if ((ifp->if_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)) != 0 &&
 	    (dst6.sin6_family == AF_INET6)) {
-		/* link-local index check: should be a separate function? */
-		if (IN6_IS_ADDR_LINKLOCAL(&dst6.sin6_addr)) {
-			if (dst6.sin6_addr.s6_addr16[1] == 0) {
-				/*
-				 * interface ID is not embedded by
-				 * the user
-				 */
-				dst6.sin6_addr.s6_addr16[1] =
-				    htons(ifp->if_index);
-			} else if (dst6.sin6_addr.s6_addr16[1] !=
-			    htons(ifp->if_index)) {
-				return (EINVAL);	/* ifid contradicts */
-			}
-		}
+		error = in6_check_embed_scope(&dst6, ifp->if_index);
+		if (error)
+			return error;
 	}
 	/*
 	 * The destination address can be specified only for a p2p or a
