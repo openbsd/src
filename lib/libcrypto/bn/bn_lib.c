@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.39 2018/02/20 17:13:14 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.40 2018/05/12 17:31:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -529,7 +529,7 @@ BN_clear(BIGNUM *a)
 {
 	bn_check_top(a);
 	if (a->d != NULL)
-		memset(a->d, 0, a->dmax * sizeof(a->d[0]));
+		explicit_bzero(a->d, a->dmax * sizeof(a->d[0]));
 	a->top = 0;
 	a->neg = 0;
 }
