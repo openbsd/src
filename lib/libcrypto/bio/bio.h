@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.41 2018/05/01 13:29:09 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.42 2018/05/12 17:47:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -641,7 +641,7 @@ int BIO_nwrite(BIO *bio, char **buf, int num);
 long BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi,
     long argl, long ret);
 
-BIO_METHOD *BIO_s_mem(void);
+const BIO_METHOD *BIO_s_mem(void);
 BIO *BIO_new_mem_buf(void *buf, int len);
 const BIO_METHOD *BIO_s_socket(void);
 const BIO_METHOD *BIO_s_connect(void);
@@ -654,7 +654,7 @@ const BIO_METHOD *BIO_f_null(void);
 const BIO_METHOD *BIO_f_buffer(void);
 const BIO_METHOD *BIO_f_nbio_test(void);
 #ifndef OPENSSL_NO_DGRAM
-BIO_METHOD *BIO_s_datagram(void);
+const BIO_METHOD *BIO_s_datagram(void);
 #endif
 
 /* BIO_METHOD *BIO_f_ber(void); */
