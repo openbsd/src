@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.25 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.26 2018/05/12 17:39:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -147,6 +147,11 @@ c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **pp, long len)
 
 	p = *pp;
 	i = *(p++);
+	if (i > 7) {
+		ASN1error(ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
+		goto err;
+	}
+
 	/* We do this to preserve the settings.  If we modify
 	 * the settings, via the _set_bit function, we will recalculate
 	 * on output */
