@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.26 2018/05/12 17:39:05 jsing Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.27 2018/05/12 17:44:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -135,15 +135,15 @@ c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **pp, long len)
 	int i;
 
 	if (len < 1) {
-		i = ASN1_R_STRING_TOO_SHORT;
+		ASN1error(ASN1_R_STRING_TOO_SHORT);
 		goto err;
 	}
 
-	if ((a == NULL) || ((*a) == NULL)) {
+	if (a == NULL || *a == NULL) {
 		if ((ret = ASN1_BIT_STRING_new()) == NULL)
 			return (NULL);
 	} else
-		ret = (*a);
+		ret = *a;
 
 	p = *pp;
 	i = *(p++);
@@ -152,17 +152,17 @@ c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **pp, long len)
 		goto err;
 	}
 
-	/* We do this to preserve the settings.  If we modify
-	 * the settings, via the _set_bit function, we will recalculate
-	 * on output */
-	ret->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07); /* clear */
-	ret->flags|=(ASN1_STRING_FLAG_BITS_LEFT|(i&0x07)); /* set */
+	/*
+	 * We do this to preserve the settings. If we modify the settings,
+	 * via the _set_bit function, we will recalculate on output.
+	 */
+	ret->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07); /* clear */
+	ret->flags |= (ASN1_STRING_FLAG_BITS_LEFT | i); /* set */
 
-	if (len-- > 1) /* using one because of the bits left byte */
-	{
-		s = malloc(len);
-		if (s == NULL) {
-			i = ERR_R_MALLOC_FAILURE;
+	/* using one because of the bits left byte */
+	if (len-- > 1) {
+		if ((s = malloc(len)) == NULL) {
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		memcpy(s, p, len);
@@ -171,19 +171,22 @@ c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **pp, long len)
 	} else
 		s = NULL;
 
-	ret->length = (int)len;
 	free(ret->data);
 	ret->data = s;
+	ret->length = (int)len;
 	ret->type = V_ASN1_BIT_STRING;
+
 	if (a != NULL)
-		(*a) = ret;
+		*a = ret;
+
 	*pp = p;
+
 	return (ret);
 
-err:
-	ASN1error(i);
-	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
+ err:
+	if (a == NULL || *a != ret)
 		ASN1_BIT_STRING_free(ret);
+
 	return (NULL);
 }
 
