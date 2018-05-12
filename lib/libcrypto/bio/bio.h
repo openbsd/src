@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.42 2018/05/12 17:47:53 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.43 2018/05/12 18:51:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -642,7 +642,7 @@ long BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi,
     long argl, long ret);
 
 const BIO_METHOD *BIO_s_mem(void);
-BIO *BIO_new_mem_buf(void *buf, int len);
+BIO *BIO_new_mem_buf(const void *buf, int len);
 const BIO_METHOD *BIO_s_socket(void);
 const BIO_METHOD *BIO_s_connect(void);
 const BIO_METHOD *BIO_s_accept(void);
@@ -698,8 +698,8 @@ int BIO_set_tcp_ndelay(int sock, int turn_on);
 BIO *BIO_new_socket(int sock, int close_flag);
 BIO *BIO_new_dgram(int fd, int close_flag);
 BIO *BIO_new_fd(int fd, int close_flag);
-BIO *BIO_new_connect(char *host_port);
-BIO *BIO_new_accept(char *host_port);
+BIO *BIO_new_connect(const char *host_port);
+BIO *BIO_new_accept(const char *host_port);
 
 int
 BIO_new_bio_pair(BIO **bio1, size_t writebuf1,

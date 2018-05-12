@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_acpt.c,v 1.28 2018/05/01 13:29:09 tb Exp $ */
+/* $OpenBSD: bss_acpt.c,v 1.29 2018/05/12 18:51:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -436,7 +436,7 @@ acpt_puts(BIO *bp, const char *str)
 }
 
 BIO *
-BIO_new_accept(char *str)
+BIO_new_accept(const char *str)
 {
 	BIO *ret;
 

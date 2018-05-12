@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_mem.c,v 1.16 2018/05/12 17:47:53 tb Exp $ */
+/* $OpenBSD: bss_mem.c,v 1.17 2018/05/12 18:51:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -94,7 +94,7 @@ BIO_s_mem(void)
 }
 
 BIO *
-BIO_new_mem_buf(void *buf, int len)
+BIO_new_mem_buf(const void *buf, int len)
 {
 	BIO *ret;
 	BUF_MEM *b;
@@ -108,7 +108,7 @@ BIO_new_mem_buf(void *buf, int len)
 	if (!(ret = BIO_new(BIO_s_mem())))
 		return NULL;
 	b = (BUF_MEM *)ret->ptr;
-	b->data = buf;
+	b->data = (void *)buf;	/* Trust in the BIO_FLAGS_MEM_RDONLY flag. */
 	b->length = sz;
 	b->max = sz;
 	ret->flags |= BIO_FLAGS_MEM_RDONLY;
