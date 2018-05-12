@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.13 2018/04/26 17:07:31 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.14 2018/05/12 07:39:06 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -28,8 +28,8 @@
 
 static const char * const log_procnames[] = {
 	"main",
-	"frontend",
-	"engine"
+	"engine",
+	"frontend"
 };
 
 struct imsgev {
