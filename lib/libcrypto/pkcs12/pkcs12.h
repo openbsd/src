@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.h,v 1.17 2016/12/30 15:08:58 jsing Exp $ */
+/* $OpenBSD: pkcs12.h,v 1.18 2018/05/13 13:46:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -264,15 +264,15 @@ extern const ASN1_ITEM PKCS12_AUTHSAFES_it;
 void PKCS12_PBE_add(void);
 int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
     STACK_OF(X509) **ca);
-PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
-    STACK_OF(X509) *ca, int nid_key, int nid_cert, int iter,
+PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey,
+    X509 *cert, STACK_OF(X509) *ca, int nid_key, int nid_cert, int iter,
     int mac_iter, int keytype);
 
 PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert);
 PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags, EVP_PKEY *key,
-    int key_usage, int iter, int key_nid, char *pass);
+    int key_usage, int iter, int key_nid, const char *pass);
 int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
-    int safe_nid, int iter, char *pass);
+    int safe_nid, int iter, const char *pass);
 PKCS12 *PKCS12_add_safes(STACK_OF(PKCS7) *safes, int p7_nid);
 
 int i2d_PKCS12_bio(BIO *bp, PKCS12 *p12);
