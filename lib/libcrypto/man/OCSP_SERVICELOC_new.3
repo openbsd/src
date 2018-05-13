@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_SERVICELOC_new.3,v 1.6 2018/03/22 21:08:22 schwarze Exp $
+.\"	$OpenBSD: OCSP_SERVICELOC_new.3,v 1.7 2018/05/13 14:36:05 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: May 13 2018 $
 .Dt OCSP_SERVICELOC_NEW 3
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@
 .Ft X509_EXTENSION *
 .Fo OCSP_url_svcloc_new
 .Fa "X509_NAME *issuer"
-.Fa "char **urls"
+.Fa "const char **urls"
 .Fc
 .Sh DESCRIPTION
 Due to restrictions of network routing, a client may be unable to
