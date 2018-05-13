@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.61 2018/05/13 06:37:14 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.62 2018/05/13 06:38:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -872,7 +872,7 @@ int EVP_PKEY_size(EVP_PKEY *pkey);
 int EVP_PKEY_set_type(EVP_PKEY *pkey, int type);
 int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key);
-void *EVP_PKEY_get0(EVP_PKEY *pkey);
+void *EVP_PKEY_get0(const EVP_PKEY *pkey);
 
 #ifndef OPENSSL_NO_RSA
 struct rsa_st;
