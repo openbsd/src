@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.67 2018/04/25 17:35:04 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.68 2018/05/13 22:01:13 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -393,7 +393,7 @@ frame_dump(struct trapframe *tf, struct proc *p, const char *sig, uint64_t cr2)
 {
 #ifdef TRAP_SIGDEBUG
 	printf("pid %d (%s): %s at rip %llx addr %llx\n",
-	    p->p_p->ps_pid, p->p_p->ps_comm, sig, frame->tf_rip, cr2);
+	    p->p_p->ps_pid, p->p_p->ps_comm, sig, tf->tf_rip, cr2);
 	printf("rip %p  cs 0x%x  rfl %p  rsp %p  ss 0x%x\n",
 	    (void *)tf->tf_rip, (unsigned)tf->tf_cs & 0xffff,
 	    (void *)tf->tf_rflags,
@@ -432,7 +432,7 @@ debug_trap(struct trapframe *frame, struct proc *p, long type)
 {
 #ifdef DEBUG
 	if (trapdebug) {
-		printf("trap %lld code %llx rip %llx cs %llx rflags %llx "
+		printf("trap %ld code %llx rip %llx cs %llx rflags %llx "
 		       "cr2 %llx cpl %x\n",
 		    type, frame->tf_err, frame->tf_rip, frame->tf_cs,
 		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel);
