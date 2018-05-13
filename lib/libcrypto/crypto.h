@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.45 2018/03/19 03:35:38 beck Exp $ */
+/* $OpenBSD: crypto.h,v 1.46 2018/05/13 13:48:08 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -299,6 +299,7 @@ DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
  * via CRYPTO_ex_data_new_class). */
 #define CRYPTO_EX_INDEX_USER		100
 
+#ifndef LIBRESSL_INTERNAL
 #define CRYPTO_malloc_init()		(0)
 #define CRYPTO_malloc_debug_init()	(0)
 
@@ -329,6 +330,7 @@ int CRYPTO_is_mem_check_on(void);
 #define OPENSSL_malloc_locked(num) \
 	CRYPTO_malloc_locked((int)num,__FILE__,__LINE__)
 #define OPENSSL_free_locked(addr) CRYPTO_free_locked(addr)
+#endif
 
 const char *OpenSSL_version(int type);
 #define OPENSSL_VERSION		0
