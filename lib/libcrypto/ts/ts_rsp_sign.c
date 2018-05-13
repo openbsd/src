@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.21 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.22 2018/05/13 15:04:05 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -201,7 +201,7 @@ TS_RESP_CTX_set_signer_key(TS_RESP_CTX *ctx, EVP_PKEY *key)
 }
 
 int
-TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, ASN1_OBJECT *def_policy)
+TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *def_policy)
 {
 	if (ctx->default_policy)
 		ASN1_OBJECT_free(ctx->default_policy);
@@ -238,7 +238,7 @@ TS_RESP_CTX_set_certs(TS_RESP_CTX *ctx, STACK_OF(X509) *certs)
 }
 
 int
-TS_RESP_CTX_add_policy(TS_RESP_CTX *ctx, ASN1_OBJECT *policy)
+TS_RESP_CTX_add_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *policy)
 {
 	ASN1_OBJECT *copy = NULL;
 
