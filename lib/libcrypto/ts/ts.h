@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.h,v 1.9 2018/05/13 15:04:05 tb Exp $ */
+/* $OpenBSD: ts.h,v 1.10 2018/05/13 15:35:46 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@opentsa.org) for the OpenSSL
  * project 2002, 2003, 2004.
  */
@@ -439,7 +439,8 @@ STACK_OF(X509_EXTENSION) *TS_TST_INFO_get_exts(TS_TST_INFO *a);
 void TS_TST_INFO_ext_free(TS_TST_INFO *a);
 int TS_TST_INFO_get_ext_count(TS_TST_INFO *a);
 int TS_TST_INFO_get_ext_by_NID(TS_TST_INFO *a, int nid, int lastpos);
-int TS_TST_INFO_get_ext_by_OBJ(TS_TST_INFO *a, ASN1_OBJECT *obj, int lastpos);
+int TS_TST_INFO_get_ext_by_OBJ(TS_TST_INFO *a, const ASN1_OBJECT *obj,
+    int lastpos);
 int TS_TST_INFO_get_ext_by_critical(TS_TST_INFO *a, int crit, int lastpos);
 X509_EXTENSION *TS_TST_INFO_get_ext(TS_TST_INFO *a, int loc);
 X509_EXTENSION *TS_TST_INFO_delete_ext(TS_TST_INFO *a, int loc);

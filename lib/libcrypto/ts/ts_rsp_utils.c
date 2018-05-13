@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_utils.c,v 1.6 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ts_rsp_utils.c,v 1.7 2018/05/13 15:35:46 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -398,7 +398,7 @@ TS_TST_INFO_get_ext_by_NID(TS_TST_INFO *a, int nid, int lastpos)
 }
 
 int
-TS_TST_INFO_get_ext_by_OBJ(TS_TST_INFO *a, ASN1_OBJECT *obj, int lastpos)
+TS_TST_INFO_get_ext_by_OBJ(TS_TST_INFO *a, const ASN1_OBJECT *obj, int lastpos)
 {
 	return X509v3_get_ext_by_OBJ(a->extensions, obj, lastpos);
 }
