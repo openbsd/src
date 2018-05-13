@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.h,v 1.18 2018/05/13 13:46:55 tb Exp $ */
+/* $OpenBSD: pkcs12.h,v 1.19 2018/05/13 13:51:22 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -179,8 +179,8 @@ PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
     int nid1, int nid2);
 PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8);
 PKCS8_PRIV_KEY_INFO *PKCS8_decrypt(X509_SIG *p8, const char *pass, int passlen);
-PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(PKCS12_SAFEBAG *bag, const char *pass,
-    int passlen);
+PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(const PKCS12_SAFEBAG *bag,
+    const char *pass, int passlen);
 X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
     const char *pass, int passlen, unsigned char *salt, int saltlen, int iter,
     PKCS8_PRIV_KEY_INFO *p8);

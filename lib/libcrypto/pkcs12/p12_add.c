@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_add.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p12_add.c,v 1.16 2018/05/13 13:51:22 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -232,7 +232,7 @@ PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass, int passlen)
 }
 
 PKCS8_PRIV_KEY_INFO *
-PKCS12_decrypt_skey(PKCS12_SAFEBAG *bag, const char *pass, int passlen)
+PKCS12_decrypt_skey(const PKCS12_SAFEBAG *bag, const char *pass, int passlen)
 {
 	return PKCS8_decrypt(bag->value.shkeybag, pass, passlen);
 }
