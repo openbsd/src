@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.24 2018/04/07 16:55:13 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.25 2018/05/13 17:31:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2113,7 +2113,7 @@ ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 	}
 
 	/* Generate a new ECDH key pair. */
-	if (!(EC_KEY_generate_key(ecdh))) {
+	if (!EC_KEY_generate_key(ecdh)) {
 		SSLerror(s, ERR_R_ECDH_LIB);
 		goto err;
 	}
@@ -2123,6 +2123,7 @@ ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 	}
 	if ((key = malloc(key_size)) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
+		goto err;
 	}
 	key_len = ECDH_compute_key(key, key_size, point, ecdh, NULL);
 	if (key_len <= 0) {
