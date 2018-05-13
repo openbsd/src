@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ext.c,v 1.15 2016/12/27 16:01:19 jsing Exp $ */
+/* $OpenBSD: ocsp_ext.c,v 1.16 2018/05/13 10:28:04 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -88,7 +88,7 @@ OCSP_REQUEST_get_ext_by_NID(OCSP_REQUEST *x, int nid, int lastpos)
 }
 
 int
-OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, ASN1_OBJECT *obj, int lastpos)
+OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, const ASN1_OBJECT *obj, int lastpos)
 {
 	return X509v3_get_ext_by_OBJ(x->tbsRequest->requestExtensions, obj,
 	    lastpos);
@@ -149,7 +149,7 @@ OCSP_ONEREQ_get_ext_by_NID(OCSP_ONEREQ *x, int nid, int lastpos)
 }
 
 int
-OCSP_ONEREQ_get_ext_by_OBJ(OCSP_ONEREQ *x, ASN1_OBJECT *obj, int lastpos)
+OCSP_ONEREQ_get_ext_by_OBJ(OCSP_ONEREQ *x, const ASN1_OBJECT *obj, int lastpos)
 {
 	return X509v3_get_ext_by_OBJ(x->singleRequestExtensions, obj, lastpos);
 }
@@ -209,7 +209,8 @@ OCSP_BASICRESP_get_ext_by_NID(OCSP_BASICRESP *x, int nid, int lastpos)
 }
 
 int
-OCSP_BASICRESP_get_ext_by_OBJ(OCSP_BASICRESP *x, ASN1_OBJECT *obj, int lastpos)
+OCSP_BASICRESP_get_ext_by_OBJ(OCSP_BASICRESP *x, const ASN1_OBJECT *obj,
+    int lastpos)
 {
 	return X509v3_get_ext_by_OBJ(x->tbsResponseData->responseExtensions,
 	    obj, lastpos);
@@ -271,7 +272,7 @@ OCSP_SINGLERESP_get_ext_by_NID(OCSP_SINGLERESP *x, int nid, int lastpos)
 }
 
 int
-OCSP_SINGLERESP_get_ext_by_OBJ(OCSP_SINGLERESP *x, ASN1_OBJECT *obj,
+OCSP_SINGLERESP_get_ext_by_OBJ(OCSP_SINGLERESP *x, const ASN1_OBJECT *obj,
     int lastpos)
 {
 	return X509v3_get_ext_by_OBJ(x->singleExtensions, obj, lastpos);
