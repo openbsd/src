@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.85 2018/05/08 13:41:52 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.86 2018/05/13 06:58:42 visa Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -1647,11 +1647,16 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 	trb = xhci_ring_produce(sc, &sc->sc_cmd_ring);
 	if (trb == NULL)
 		return (EAGAIN);
-	memcpy(trb, trb0, sizeof(struct xhci_trb));
+	trb->trb_paddr = trb0->trb_paddr;
+	trb->trb_status = trb0->trb_status;
 	bus_dmamap_sync(sc->sc_cmd_ring.dma.tag, sc->sc_cmd_ring.dma.map,
 	    TRBOFF(&sc->sc_cmd_ring, trb), sizeof(struct xhci_trb),
 	    BUS_DMASYNC_PREWRITE);
 
+	trb->trb_flags = trb0->trb_flags;
+	bus_dmamap_sync(sc->sc_cmd_ring.dma.tag, sc->sc_cmd_ring.dma.map,
+	    TRBOFF(&sc->sc_cmd_ring, trb), sizeof(struct xhci_trb),
+	    BUS_DMASYNC_PREWRITE);
 
 	if (timeout == 0) {
 		XDWRITE4(sc, XHCI_DOORBELL(0), 0);
@@ -2635,8 +2640,11 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	memcpy(&trb0->trb_paddr, &xfer->request, sizeof(trb0->trb_paddr));
 	trb0->trb_status = htole32(XHCI_TRB_INTR(0) | XHCI_TRB_LEN(8));
-	trb0->trb_flags = htole32(flags);
+	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
+	    TRBOFF(&xp->ring, trb0), sizeof(struct xhci_trb),
+	    BUS_DMASYNC_PREWRITE);
 
+	trb0->trb_flags = htole32(flags);
 	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
 	    TRBOFF(&xp->ring, trb0), sizeof(struct xhci_trb),
 	    BUS_DMASYNC_PREWRITE);
@@ -2751,8 +2759,11 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 	    XHCI_TRB_INTR(0) | XHCI_TRB_LEN(len0) |
 	    xhci_xfer_tdsize(xfer, xfer->length, len0)
  	);
-	trb0->trb_flags = htole32(flags);
+	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
+	    TRBOFF(&xp->ring, trb0), sizeof(struct xhci_trb),
+	    BUS_DMASYNC_PREWRITE);
 
+	trb0->trb_flags = htole32(flags);
 	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
 	    TRBOFF(&xp->ring, trb0), sizeof(struct xhci_trb),
 	    BUS_DMASYNC_PREWRITE);
@@ -2883,8 +2894,11 @@ xhci_device_isoc_start(struct usbd_xfer *xfer)
 	    XHCI_TRB_INTR(0) | XHCI_TRB_LEN(len0) |
 	    xhci_xfer_tdsize(xfer, xfer->length, len0)
 	);
-	trb0->trb_flags = htole32(flags);
+	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
+	    TRBOFF(&xp->ring, trb0), sizeof(struct xhci_trb),
+	    BUS_DMASYNC_PREWRITE);
 
+	trb0->trb_flags = htole32(flags);
 	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
 	    TRBOFF(&xp->ring, trb0), sizeof(struct xhci_trb),
 	    BUS_DMASYNC_PREWRITE);
