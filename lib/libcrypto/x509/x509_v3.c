@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.14 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.15 2018/05/13 10:25:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,8 +86,8 @@ X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x, int nid, int lastpos)
 }
 
 int
-X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk, ASN1_OBJECT *obj,
-    int lastpos)
+X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,
+    const ASN1_OBJECT *obj, int lastpos)
 {
 	int n;
 	X509_EXTENSION *ex;
