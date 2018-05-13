@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.13 2017/11/04 22:53:57 jca Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 2018/05/13 16:23:45 visa Exp $
 
 .PATH: ${LIBCSRCDIR}/thread
 
@@ -19,7 +19,8 @@ notyet= rthread_condattr_clock.c \
 	spinlock.c \
 	spinlocktry.c
 
-.if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386" || \
+.if ${MACHINE_ARCH} == "aarch64" || \
+    ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "mips64" || ${MACHINE_ARCH} == "mips64el"
 CFLAGS+= -DFUTEX
 SRCS+=	rthread_mutex.c \
