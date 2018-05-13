@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.6 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.7 2018/05/13 06:35:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -166,7 +166,7 @@ EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 }
 
 int
-EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, unsigned char *sig, size_t siglen)
+EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig, size_t siglen)
 {
 	EVP_MD_CTX tmp_ctx;
 	unsigned char md[EVP_MAX_MD_SIZE];
