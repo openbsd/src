@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ext.c,v 1.16 2018/05/13 10:28:04 tb Exp $ */
+/* $OpenBSD: ocsp_ext.c,v 1.17 2018/05/13 10:42:03 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -436,7 +436,7 @@ OCSP_copy_nonce(OCSP_BASICRESP *resp, OCSP_REQUEST *req)
 }
 
 X509_EXTENSION *
-OCSP_crlID_new(char *url, long *n, char *tim)
+OCSP_crlID_new(const char *url, long *n, char *tim)
 {
 	X509_EXTENSION *x = NULL;
 	OCSP_CRLID *cid = NULL;
@@ -518,7 +518,7 @@ err:
  * method forces NID_ad_ocsp and uniformResourceLocator [6] IA5String.
  */
 X509_EXTENSION *
-OCSP_url_svcloc_new(X509_NAME* issuer, char **urls)
+OCSP_url_svcloc_new(X509_NAME* issuer, const char **urls)
 {
 	X509_EXTENSION *x = NULL;
 	ASN1_IA5STRING *ia5 = NULL;

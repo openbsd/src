@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.h,v 1.14 2018/05/13 10:30:52 tb Exp $ */
+/* $OpenBSD: ocsp.h,v 1.15 2018/05/13 10:42:03 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -383,8 +383,8 @@ typedef struct ocsp_service_locator_st {
 
 OCSP_CERTID *OCSP_CERTID_dup(OCSP_CERTID *id);
 
-OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, char *path, OCSP_REQUEST *req);
-OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req,
+OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req);
+OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
 	    int maxline);
 int	OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx);
 void	OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx);
@@ -428,8 +428,8 @@ int	OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 int	OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
 	    X509_STORE *store, unsigned long flags);
 
-int	OCSP_parse_url(char *url, char **phost, char **pport, char **ppath,
-	    int *pssl);
+int	OCSP_parse_url(const char *url, char **phost, char **pport,
+	    char **ppath, int *pssl);
 
 int	OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
 int	OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
@@ -449,13 +449,13 @@ int	OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert);
 int	OCSP_basic_sign(OCSP_BASICRESP *brsp, X509 *signer, EVP_PKEY *key,
 	    const EVP_MD *dgst, STACK_OF(X509) *certs, unsigned long flags);
 
-X509_EXTENSION *OCSP_crlID_new(char *url, long *n, char *tim);
+X509_EXTENSION *OCSP_crlID_new(const char *url, long *n, char *tim);
 
 X509_EXTENSION *OCSP_accept_responses_new(char **oids);
 
 X509_EXTENSION *OCSP_archive_cutoff_new(char* tim);
 
-X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME* issuer, char **urls);
+X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME* issuer, const char **urls);
 
 int	OCSP_REQUEST_get_ext_count(OCSP_REQUEST *x);
 int	OCSP_REQUEST_get_ext_by_NID(OCSP_REQUEST *x, int nid, int lastpos);

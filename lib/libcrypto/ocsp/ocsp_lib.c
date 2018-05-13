@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_lib.c,v 1.21 2018/05/13 10:30:52 tb Exp $ */
+/* $OpenBSD: ocsp_lib.c,v 1.22 2018/05/13 10:42:03 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -180,7 +180,8 @@ OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
  * it is SSL.
  */
 int
-OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl)
+OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
+    int *pssl)
 {
 	char *host, *path, *port, *tmp;
 
