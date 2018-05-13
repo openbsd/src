@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.27 2018/01/03 05:39:56 ccardenas Exp $
+.\" $OpenBSD: vm.conf.5,v 1.28 2018/05/13 22:48:11 pd Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 3 2018 $
+.Dd $Mdocdate: May 13 2018 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -206,7 +206,8 @@ Memory size of the VM, in bytes, rounded to megabytes.
 The default is 512M.
 .It Cm owner Ar user Ns Op : Ns Ar group
 Set the owner of the VM to the specified user or group.
-The owner will be allowed to start or stop the VM and open the VM's console.
+The owner will be allowed to start or stop the VM, pause or unpause the VM,
+and open the VM's console.
 .It Cm owner Pf : Ar group
 Set the owner to the specified group.
 .El

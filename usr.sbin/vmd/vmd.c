@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.84 2018/04/25 15:49:48 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.85 2018/05/13 22:48:11 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -186,8 +186,13 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			} else {
 				vid.vid_id = vm->vm_vmid;
 			}
-		} else if (vm_getbyid(vid.vid_id) == NULL) {
+		} else if ((vm = vm_getbyid(vid.vid_id)) == NULL) {
 			res = ENOENT;
+			cmd = IMSG_VMDOP_PAUSE_VM_RESPONSE;
+			break;
+		}
+		if (vm_checkperm(vm, vid.vid_uid) != 0) {
+			res = EPERM;
 			cmd = IMSG_VMDOP_PAUSE_VM_RESPONSE;
 			break;
 		}
