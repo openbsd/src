@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.h,v 1.21 2018/05/13 14:22:34 tb Exp $ */
+/* $OpenBSD: pkcs12.h,v 1.22 2018/05/13 14:24:07 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -195,7 +195,7 @@ STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass,
     int passlen);
 
 int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes);
-STACK_OF(PKCS7) *PKCS12_unpack_authsafes(PKCS12 *p12);
+STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12);
 
 int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, unsigned char *name,
     int namelen);
