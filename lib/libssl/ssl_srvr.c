@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.29 2018/04/11 17:47:36 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.30 2018/05/13 15:51:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1727,12 +1727,18 @@ static int
 ssl3_get_client_kex_rsa(SSL *s, unsigned char *p, long n)
 {
 	unsigned char fakekey[SSL_MAX_MASTER_KEY_LENGTH];
-	unsigned char *d;
-	RSA *rsa = NULL;
+	unsigned char *pms = NULL;
+	size_t pms_len = 0;
 	EVP_PKEY *pkey = NULL;
-	int i, al;
+	RSA *rsa = NULL;
+	CBS cbs, enc_pms;
+	int decrypt_len;
+	int al = -1;
 
-	d = p;
+	if (n < 0)
+		goto err;
+
+	CBS_init(&cbs, p, n);
 
 	arc4random_buf(fakekey, sizeof(fakekey));
 	fakekey[0] = s->client_version >> 8;
@@ -1747,30 +1753,32 @@ ssl3_get_client_kex_rsa(SSL *s, unsigned char *p, long n)
 	}
 	rsa = pkey->pkey.rsa;
 
-	if (2 > n)
+	pms_len = RSA_size(rsa);
+	if (pms_len < SSL_MAX_MASTER_KEY_LENGTH)
+		goto err;
+	if ((pms = malloc(pms_len)) == NULL)
+		goto err;
+	p = pms;
+
+	if (!CBS_get_u16_length_prefixed(&cbs, &enc_pms))
 		goto truncated;
-	n2s(p, i);
-	if (n != i + 2) {
+	if (CBS_len(&cbs) != 0 || CBS_len(&enc_pms) != RSA_size(rsa)) {
 		SSLerror(s, SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG);
 		goto err;
-	} else
-		n = i;
+	}
 
-	i = RSA_private_decrypt((int)n, p, p, rsa, RSA_PKCS1_PADDING);
+	decrypt_len = RSA_private_decrypt(CBS_len(&enc_pms), CBS_data(&enc_pms),
+	    pms, rsa, RSA_PKCS1_PADDING);
 
 	ERR_clear_error();
 
-	al = -1;
-
-	if (i != SSL_MAX_MASTER_KEY_LENGTH) {
+	if (decrypt_len != SSL_MAX_MASTER_KEY_LENGTH) {
 		al = SSL_AD_DECODE_ERROR;
 		/* SSLerror(s, SSL_R_BAD_RSA_DECRYPT); */
 	}
 
-	if (p - d + 2 > n)	/* needed in the SSL3 case */
-		goto truncated;
-	if ((al == -1) && !((p[0] == (s->client_version >> 8)) &&
-	    (p[1] == (s->client_version & 0xff)))) {
+	if ((al == -1) && !((pms[0] == (s->client_version >> 8)) &&
+	    (pms[1] == (s->client_version & 0xff)))) {
 		/*
 		 * The premaster secret must contain the same version number
 		 * as the ClientHello to detect version rollback attacks
@@ -1796,23 +1804,25 @@ ssl3_get_client_kex_rsa(SSL *s, unsigned char *p, long n)
 		 * on PKCS #1 v1.5 RSA padding (see RFC 2246,
 		 * section 7.4.7.1).
 		 */
-		i = SSL_MAX_MASTER_KEY_LENGTH;
 		p = fakekey;
 	}
 
 	s->session->master_key_length =
 	    tls1_generate_master_secret(s,
-	        s->session->master_key, p, i);
+	        s->session->master_key, p, SSL_MAX_MASTER_KEY_LENGTH);
 
-	explicit_bzero(p, i);
+	freezero(pms, pms_len);
 
 	return (1);
-truncated:
+
+ truncated:
 	al = SSL_AD_DECODE_ERROR;
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
-f_err:
+ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
-err:
+ err:
+	freezero(pms, pms_len);
+
 	return (-1);
 }
 
