@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cmp.c,v 1.31 2018/05/01 19:01:28 tb Exp $ */
+/* $OpenBSD: x509_cmp.c,v 1.32 2018/05/13 10:36:35 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -145,7 +145,7 @@ X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
 #endif
 
 X509_NAME *
-X509_get_issuer_name(X509 *a)
+X509_get_issuer_name(const X509 *a)
 {
 	return (a->cert_info->issuer);
 }
@@ -165,7 +165,7 @@ X509_issuer_name_hash_old(X509 *x)
 #endif
 
 X509_NAME *
-X509_get_subject_name(X509 *a)
+X509_get_subject_name(const X509 *a)
 {
 	return (a->cert_info->subject);
 }

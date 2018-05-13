@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.48 2018/05/13 10:25:06 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.49 2018/05/13 10:36:35 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -987,9 +987,9 @@ int 		X509_set_version(X509 *x, long version);
 int 		X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
 ASN1_INTEGER *	X509_get_serialNumber(X509 *x);
 int 		X509_set_issuer_name(X509 *x, X509_NAME *name);
-X509_NAME *	X509_get_issuer_name(X509 *a);
+X509_NAME *	X509_get_issuer_name(const X509 *a);
 int 		X509_set_subject_name(X509 *x, X509_NAME *name);
-X509_NAME *	X509_get_subject_name(X509 *a);
+X509_NAME *	X509_get_subject_name(const X509 *a);
 int 		X509_set_notBefore(X509 *x, const ASN1_TIME *tm);
 int 		X509_set1_notBefore(X509 *x, const ASN1_TIME *tm);
 int 		X509_set_notAfter(X509 *x, const ASN1_TIME *tm);
