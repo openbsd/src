@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.138 2018/05/09 15:02:08 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.139 2018/05/13 11:05:39 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1103,8 +1103,8 @@ sub read_fragments
 			while (my $l = $file->readline) {
 				$state->progress->working(2048) 
 				    unless $state->{silent};
-				# strip the actual CVS entry so the
-				# plist is always the same
+				# add a file name to uncommitted cvs tags so
+				# that the plist is always the same
 				if ($l =~m/^(\@comment\s+\$(?:Open)BSD\$)$/o) {
 					$l = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
