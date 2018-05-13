@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_p8d.c,v 1.6 2016/12/30 15:34:35 jsing Exp $ */
+/* $OpenBSD: p12_p8d.c,v 1.7 2018/05/13 14:28:14 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -61,7 +61,7 @@
 #include <openssl/pkcs12.h>
 
 PKCS8_PRIV_KEY_INFO *
-PKCS8_decrypt(X509_SIG *p8, const char *pass, int passlen)
+PKCS8_decrypt(const X509_SIG *p8, const char *pass, int passlen)
 {
 	return PKCS12_item_decrypt_d2i(p8->algor,
 	    &PKCS8_PRIV_KEY_INFO_it, pass, passlen, p8->digest, 1);
