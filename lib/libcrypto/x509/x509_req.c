@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.20 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: x509_req.c,v 1.21 2018/05/13 06:48:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -286,7 +286,8 @@ X509_REQ_get_attr_by_NID(const X509_REQ *req, int nid, int lastpos)
 }
 
 int
-X509_REQ_get_attr_by_OBJ(const X509_REQ *req, ASN1_OBJECT *obj, int lastpos)
+X509_REQ_get_attr_by_OBJ(const X509_REQ *req, const ASN1_OBJECT *obj,
+    int lastpos)
 {
 	return X509at_get_attr_by_OBJ(req->req_info->attributes, obj, lastpos);
 }

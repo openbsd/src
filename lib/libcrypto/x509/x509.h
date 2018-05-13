@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.46 2018/05/01 19:01:28 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.47 2018/05/13 06:48:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1018,7 +1018,7 @@ int X509_REQ_add_extensions(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts);
 int X509_REQ_get_attr_count(const X509_REQ *req);
 int X509_REQ_get_attr_by_NID(const X509_REQ *req, int nid,
 			  int lastpos);
-int X509_REQ_get_attr_by_OBJ(const X509_REQ *req, ASN1_OBJECT *obj,
+int X509_REQ_get_attr_by_OBJ(const X509_REQ *req, const ASN1_OBJECT *obj,
 			  int lastpos);
 X509_ATTRIBUTE *X509_REQ_get_attr(const X509_REQ *req, int loc);
 X509_ATTRIBUTE *X509_REQ_delete_attr(X509_REQ *req, int loc);
@@ -1186,8 +1186,8 @@ int		X509_EXTENSION_get_critical(X509_EXTENSION *ex);
 int X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x);
 int X509at_get_attr_by_NID(const STACK_OF(X509_ATTRIBUTE) *x, int nid,
 			  int lastpos);
-int X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk, ASN1_OBJECT *obj,
-			  int lastpos);
+int X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk,
+    const ASN1_OBJECT *obj, int lastpos);
 X509_ATTRIBUTE *X509at_get_attr(const STACK_OF(X509_ATTRIBUTE) *x, int loc);
 X509_ATTRIBUTE *X509at_delete_attr(STACK_OF(X509_ATTRIBUTE) *x, int loc);
 STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
@@ -1202,7 +1202,7 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) **x,
 			const char *attrname, int type,
 			const unsigned char *bytes, int len);
 void *X509at_get0_data_by_OBJ(STACK_OF(X509_ATTRIBUTE) *x,
-				ASN1_OBJECT *obj, int lastpos, int type);
+    const ASN1_OBJECT *obj, int lastpos, int type);
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
 	     int atrtype, const void *data, int len);
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
@@ -1220,7 +1220,7 @@ ASN1_TYPE *X509_ATTRIBUTE_get0_type(X509_ATTRIBUTE *attr, int idx);
 int EVP_PKEY_get_attr_count(const EVP_PKEY *key);
 int EVP_PKEY_get_attr_by_NID(const EVP_PKEY *key, int nid,
 			  int lastpos);
-int EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, ASN1_OBJECT *obj,
+int EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, const ASN1_OBJECT *obj,
 			  int lastpos);
 X509_ATTRIBUTE *EVP_PKEY_get_attr(const EVP_PKEY *key, int loc);
 X509_ATTRIBUTE *EVP_PKEY_delete_attr(EVP_PKEY *key, int loc);
