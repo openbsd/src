@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.h,v 1.19 2018/05/13 13:51:22 tb Exp $ */
+/* $OpenBSD: pkcs12.h,v 1.20 2018/05/13 14:15:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -206,7 +206,8 @@ int PKCS12_add_CSPName_asc(PKCS12_SAFEBAG *bag, const char *name,
 int PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag, const unsigned char *name,
     int namelen);
 int PKCS8_add_keyusage(PKCS8_PRIV_KEY_INFO *p8, int usage);
-ASN1_TYPE *PKCS12_get_attr_gen(STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid);
+ASN1_TYPE *PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs,
+    int attr_nid);
 char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag);
 unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
     int passlen, unsigned char *in, int inlen, unsigned char **data,

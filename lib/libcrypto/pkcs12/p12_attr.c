@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_attr.c,v 1.10 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: p12_attr.c,v 1.11 2018/05/13 14:15:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -122,7 +122,7 @@ PKCS12_add_CSPName_asc(PKCS12_SAFEBAG *bag, const char *name, int namelen)
 }
 
 ASN1_TYPE *
-PKCS12_get_attr_gen(STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid)
+PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid)
 {
 	X509_ATTRIBUTE *attrib;
 	int i;
