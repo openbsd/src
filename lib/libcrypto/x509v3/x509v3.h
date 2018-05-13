@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.23 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.24 2018/05/13 15:03:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -524,9 +524,12 @@ SXNETID *d2i_SXNETID(SXNETID **a, const unsigned char **in, long len);
 int i2d_SXNETID(SXNETID *a, unsigned char **out);
 extern const ASN1_ITEM SXNETID_it;
 
-int SXNET_add_id_asc(SXNET **psx, char *zone, char *user, int userlen); 
-int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, char *user, int userlen); 
-int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *izone, char *user, int userlen); 
+int SXNET_add_id_asc(SXNET **psx, const char *zone, const char *user,
+    int userlen); 
+int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
+    int userlen); 
+int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *izone, const char *user,
+    int userlen); 
 
 ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, const char *zone);
 ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone);
