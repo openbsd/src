@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.20 2017/07/28 12:58:52 florian Exp $ */
+/*	$OpenBSD: modify.c,v 1.21 2018/05/14 07:53:47 reyk Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -32,10 +32,11 @@ int
 ldap_delete(struct request *req)
 {
 	struct btval		 key;
-	char			*dn;
+	char			*dn, *s;
 	struct namespace	*ns;
 	struct referrals	*refs;
 	struct cursor		*cursor;
+	struct ber_element	*entry, *elm, *a;
 	int			 rc = LDAP_OTHER;
 
 	++stats.req_mod;
@@ -54,7 +55,7 @@ ldap_delete(struct request *req)
 			return ldap_refer(req, dn, NULL, refs);
 	}
 
-	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE))
+	if (!authorized(req->conn, ns, ACI_WRITE, dn, NULL, LDAP_SCOPE_BASE))
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
 
 	if (namespace_begin(ns) != 0) {
@@ -89,6 +90,24 @@ ldap_delete(struct request *req)
 	} else if (has_suffix(&key, dn)) {
 		rc = LDAP_NOT_ALLOWED_ON_NONLEAF;
 		goto done;
+	}
+
+	if ((entry = namespace_get(ns, dn)) == NULL) {
+		rc = LDAP_NO_SUCH_OBJECT;
+		goto done;
+	}
+
+	/* Fail if this leaf node includes non-writeable attributes */
+	if (entry->be_encoding != BER_TYPE_SEQUENCE)
+		goto done;
+	for (elm = entry->be_sub; elm != NULL; elm = elm->be_next) {
+		a = elm->be_sub;
+		if (a && ber_get_string(a, &s) == 0 &&
+		    !authorized(req->conn, ns, ACI_WRITE, dn, s,
+		    LDAP_SCOPE_BASE)) {
+			rc = LDAP_INSUFFICIENT_ACCESS;
+			goto done;
+		}
 	}
 
 	if (namespace_del(ns, dn) == 0 && namespace_commit(ns) == 0)
@@ -132,7 +151,7 @@ ldap_add(struct request *req)
 			return ldap_refer(req, dn, NULL, refs);
 	}
 
-	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE))
+	if (!authorized(req->conn, ns, ACI_WRITE, dn, NULL, LDAP_SCOPE_BASE))
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
 
 	/* Check that we're not adding immutable attributes.
@@ -141,6 +160,9 @@ ldap_add(struct request *req)
 		attr = elm->be_sub;
 		if (attr == NULL || ber_get_string(attr, &s) != 0)
 			return ldap_respond(req, LDAP_PROTOCOL_ERROR);
+		if (!authorized(req->conn, ns, ACI_WRITE, dn, s,
+		    LDAP_SCOPE_BASE))
+			return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
 		if (!ns->relax) {
 			at = lookup_attribute(conf->schema, s);
 			if (at == NULL) {
@@ -242,8 +264,14 @@ ldap_modify(struct request *req)
 			return ldap_refer(req, dn, NULL, refs);
 	}
 
-	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE))
-		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
+	/* Check authorization for each mod to consider attributes */
+	for (mod = mods->be_sub; mod; mod = mod->be_next) {
+		if (ber_scanf_elements(mod, "{E{es", &op, &prev, &attr) != 0)
+			return ldap_respond(req, LDAP_PROTOCOL_ERROR);
+		if (!authorized(req->conn, ns, ACI_WRITE, dn, attr,
+		    LDAP_SCOPE_BASE))
+			return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
+	}
 
 	if (namespace_begin(ns) == -1) {
 		if (errno == EBUSY) {

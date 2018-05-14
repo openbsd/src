@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.18 2017/01/20 11:55:08 benno Exp $ */
+/*	$OpenBSD: search.c,v 1.19 2018/05/14 07:53:47 reyk Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -222,7 +222,7 @@ check_search_entry(struct btval *key, struct btval *val, struct search *search)
 	}
 
 	if (!authorized(search->conn, search->ns, ACI_READ, dn0,
-	    LDAP_SCOPE_BASE)) {
+	    NULL, LDAP_SCOPE_BASE)) {
 		/* LDAP_INSUFFICIENT_ACCESS */
 		free(dn0);
 		return 0;
@@ -880,7 +880,7 @@ ldap_search(struct request *req)
 	if (*search->basedn == '\0') {
 		/* request for the root DSE */
 		if (!authorized(req->conn, NULL, ACI_READ, "",
-		    LDAP_SCOPE_BASE)) {
+		    NULL, LDAP_SCOPE_BASE)) {
 			reason = LDAP_INSUFFICIENT_ACCESS;
 			goto done;
 		}
@@ -897,7 +897,7 @@ ldap_search(struct request *req)
 	if (strcasecmp(search->basedn, "cn=schema") == 0) {
 		/* request for the subschema subentries */
 		if (!authorized(req->conn, NULL, ACI_READ,
-		    "cn=schema", LDAP_SCOPE_BASE)) {
+		    "cn=schema", NULL, LDAP_SCOPE_BASE)) {
 			reason = LDAP_INSUFFICIENT_ACCESS;
 			goto done;
 		}
@@ -926,7 +926,7 @@ ldap_search(struct request *req)
 	}
 
 	if (!authorized(req->conn, search->ns, ACI_READ,
-	    search->basedn, search->scope)) {
+	    search->basedn, NULL, search->scope)) {
 		reason = LDAP_INSUFFICIENT_ACCESS;
 		goto done;
 	}
