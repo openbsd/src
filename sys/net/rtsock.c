@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.264 2018/05/08 14:10:43 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.265 2018/05/14 07:33:59 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -103,8 +103,8 @@ struct walkarg {
 };
 
 void	route_prinit(void);
-void	route_ref(void *, void *);
-void	route_unref(void *, void *);
+void	rcb_ref(void *, void *);
+void	rcb_unref(void *, void *);
 int	route_output(struct mbuf *, struct socket *, struct sockaddr *,
 	    struct mbuf *);
 int	route_ctloutput(int, struct socket *, int, int, struct mbuf *);
@@ -169,13 +169,13 @@ struct route_cb route_cb;
 void
 route_prinit(void)
 {
-	srpl_rc_init(&route_cb.rcb_rc, route_ref, route_unref, NULL);
+	srpl_rc_init(&route_cb.rcb_rc, rcb_ref, rcb_unref, NULL);
 	rw_init(&route_cb.rcb_lk, "rtsock");
 	SRPL_INIT(&route_cb.rcb);
 }
 
 void
-route_ref(void *null, void *v)
+rcb_ref(void *null, void *v)
 {
 	struct routecb *rop = v;
 
@@ -183,7 +183,7 @@ route_ref(void *null, void *v)
 }
 
 void
-route_unref(void *null, void *v)
+rcb_unref(void *null, void *v)
 {
 	struct routecb *rop = v;
 
@@ -265,10 +265,8 @@ route_attach(struct socket *so, int proto)
 	rp->rcb_faddr = &route_src;
 
 	rw_enter(&route_cb.rcb_lk, RW_WRITE);
-
 	SRPL_INSERT_HEAD_LOCKED(&route_cb.rcb_rc, &route_cb.rcb, rop, rcb_list);
 	route_cb.any_count++;
-
 	rw_exit(&route_cb.rcb_lk);
 
 	return (0);
@@ -292,8 +290,8 @@ route_detach(struct socket *so)
 
 	SRPL_REMOVE_LOCKED(&route_cb.rcb_rc, &route_cb.rcb,
 	    rop, routecb, rcb_list);
-
 	rw_exit(&route_cb.rcb_lk);
+
 	/* wait for all references to drop */
 	refcnt_finalize(&rop->refcnt, "rtsockrefs");
 
@@ -487,14 +485,13 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 		refcnt_take(&rop->refcnt);
 		last = rop->rcb.rcb_socket;
 	}
+	SRPL_LEAVE(&sr);
 
 	if (last) {
 		rtm_sendup(last, m, 0);
 		refcnt_rele_wake(&sotoroutecb(last)->refcnt);
 	} else
 		m_freem(m);
-
-	SRPL_LEAVE(&sr);
 }
 
 int
