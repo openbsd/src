@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.31 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: dino.c,v 1.32 2018/05/14 13:54:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Michael Shalayeff
@@ -394,7 +394,7 @@ dino_intr_string(void *v, pci_intr_handle_t ih)
 {
 	static char buf[32];
 
-	snprintf(buf, 32, "irq %ld", ih);
+	snprintf(buf, 32, "dino irq %ld", ih);
 
 	return (buf);
 }
@@ -1681,7 +1681,7 @@ dinoattach(parent, self, aux)
 	volatile struct dino_regs *r;
 	const char *p = NULL;
 	u_int data;
-	int s;
+	int s, irqbit;
 
 	sc->sc_bt = ca->ca_iot;
 	sc->sc_dmat = ca->ca_dmatag;
@@ -1731,20 +1731,6 @@ dinoattach(parent, self, aux)
 
 	/* TODO reserve dino's pci space ? */
 
-	s = splhigh();
-	r->imr = ~0;
-	data = r->irr0;
-	data = r->irr1;
-	r->imr = 0;
-	__asm volatile ("" ::: "memory");
-	r->icr = 0;
-	r->iar0 = cpu_gethpa(0) | (31 - ca->ca_irq);
-	splx(s);
-
-	sc->sc_ih = cpu_intr_establish(IPL_NESTED, ca->ca_irq,
-	    dino_intr, (void *)sc->sc_regs, sc->sc_dv.dv_xname);
-	/* TODO establish the bus error interrupt */
-
 	sc->sc_ver = ca->ca_type.iodc_revision;
 	switch ((ca->ca_type.iodc_model << 4) |
 	    (ca->ca_type.iodc_revision >> 4)) {
@@ -1774,7 +1760,38 @@ dinoattach(parent, self, aux)
 		break;
 	}
 
+	irqbit = cpu_intr_findirq();
+	if (irqbit >= 0)
+		printf(" irq %d", irqbit);
+
 	printf(": %s V%d.%d\n", p, sc->sc_ver >> 4, sc->sc_ver & 0xf);
+
+	s = splhigh();
+	r->imr = ~0;
+	data = r->irr0;
+	data = r->irr1;
+	r->imr = 0;
+	__asm volatile ("" ::: "memory");
+	r->icr = 0;
+	if (irqbit >= 0)
+		r->iar0 = cpu_gethpa(0) | (31 - irqbit);
+	splx(s);
+
+	if (irqbit < 0)
+		sc->sc_ih = NULL;
+	else
+		sc->sc_ih = cpu_intr_establish(IPL_NESTED, irqbit,
+		    dino_intr, (void *)sc->sc_regs, sc->sc_dv.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf("%s: can't establish interrupt\n", sc->sc_dv.dv_xname);
+		return;
+	}
+
+	/* TODO establish the bus error interrupt */
+
+	/* scan for ps2 kbd/ms, serial, and flying toasters */
+	ca->ca_hpamask = -1;
+	pdc_scanbus(self, ca, MAXMODBUS, 0, 0);
 
 	sc->sc_iot = dino_iomemt;
 	sc->sc_iot.hbt_cookie = sc;
@@ -1788,10 +1805,6 @@ dinoattach(parent, self, aux)
 	sc->sc_pc._cookie = sc;
 	sc->sc_dmatag = dino_dmat;
 	sc->sc_dmatag._cookie = sc;
-
-	/* scan for ps2 kbd/ms, serial, and flying toasters */
-	ca->ca_hpamask = -1;
-	pdc_scanbus(self, ca, MAXMODBUS, 0, 0);
 
 	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";

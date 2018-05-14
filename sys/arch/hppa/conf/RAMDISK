@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.109 2016/12/30 22:36:07 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.110 2018/05/14 13:54:39 kettenis Exp $
 
 machine		hppa
 maxusers	4
@@ -48,20 +48,18 @@ uturn0		at mainbus0		# U2/UTurn Runway IOA
 uturn1		at mainbus0
 astro*		at mainbus0		# Astro memory & I/O controller
 
-lasi0		at mainbus0 offset 0x100000 irq 28	# LASI host adapter
-lasi0		at mainbus0 offset 0xfd00000 irq 28	# LASI on C1[01]0, J2[01]0
-lasi0		at phantomas0 offset 0xfd00000 irq 28	# LASI on [AB]*
-lasi0		at uturn? offset 0xfd00000 irq 28	# LASI on [CJ]*
-lasi1		at mainbus0 offset 0x500000 irq 27	# 712 GIO card
-asp*		at mainbus0 irq 28	# this one comes w/ Viper and LEDs
-wax*		at mainbus0 irq 24	# Wax may host EISA as well
-wax*		at phantomas0 irq 24	# Wax on [AB]*
-wax*		at uturn? irq 24	# Wax on C*
+lasi0		at mainbus0 offset 0x100000	# LASI host adapter
+lasi0		at mainbus0 offset 0xfd00000	# LASI on C1[01]0, J2[01]0
+lasi0		at phantomas0 offset 0xfd00000	# LASI on [AB]*
+lasi0		at uturn? offset 0xfd00000	# LASI on [CJ]*
+lasi1		at mainbus0 offset 0x500000	# 712 GIO card
+asp*		at mainbus0		# this one comes w/ Viper and LEDs
+wax*		at mainbus0		# Wax may host EISA as well
+wax*		at phantomas0		# Wax on [AB]*
+wax*		at uturn?		# Wax on C*
 mongoose*	at mainbus0 irq 17	# EISA Bus Adapter (i82350 or TI???)
-dino0		at phantomas? irq 26	# PCI bus bridge on [AB]*
-dino1		at phantomas? irq 25
-dino0		at uturn0 irq 26	# PCI bus bridge on [CJ]*
-dino1		at uturn1 irq 25
+dino*		at phantomas?		# PCI bus bridge on [AB]*
+dino*		at uturn0		# PCI bus bridge on [CJ]*
 pci*		at dino?
 com1		at dino? irq 11
 
@@ -112,12 +110,9 @@ ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 ural*		at uhub?		# Ralink RT2500
 
-sti0		at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
-sti0		at phantomas0 irq 11	# builtin graphics on BC*
-sti0		at uturn? irq 11
-sti1		at mainbus0 irq 12
-sti1		at phantomas0 irq 12
-sti1		at uturn? irq 12
+sti*		at mainbus0		# [H]CRX-{8,24,48}[Z] graphics
+sti*		at phantomas0		# builtin graphics on BC*
+sti*		at uturn?
 sti*		at pci?			# EG-PCI, FX*
 
 gsc0		at asp?			# Snakes, old 715, old 725, 735/755

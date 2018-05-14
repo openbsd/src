@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.30 2010/11/28 20:09:40 miod Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.31 2018/05/14 13:54:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -38,13 +38,14 @@
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
 #include <machine/cpufunc.h>
+#include <hppa/dev/viper.h>
 
 #include <hppa/gsc/gscbusvar.h>
 
 int	gscmatch(struct device *, void *, void *);
 void	gscattach(struct device *, struct device *, void *);
 
-struct cfattach gsc_ca = {
+const struct cfattach gsc_ca = {
 	sizeof(struct gsc_softc), gscmatch, gscattach
 };
 
@@ -71,9 +72,14 @@ gscattach(parent, self, aux)
 {
 	struct gsc_softc *sc = (struct gsc_softc *)self;
 	struct gsc_attach_args *ga = aux;
+	int s, irqbit;
 
 	sc->sc_iot = ga->ga_iot;
 	sc->sc_ic = ga->ga_ic;
+
+	irqbit = cpu_intr_findirq();
+	if (irqbit >= 0)
+		printf(" irq %d", irqbit);
 
 #ifdef USELEDS
 	if (machine_ledaddr)
@@ -81,8 +87,26 @@ gscattach(parent, self, aux)
 #endif
 	printf ("\n");
 
-	sc->sc_ih = cpu_intr_establish(IPL_NESTED, ga->ga_irq,
-	    gsc_intr, (void *)sc->sc_ic->gsc_base, sc->sc_dev.dv_xname);
+	if (irqbit < 0)
+		sc->sc_ih = NULL;
+	else
+		sc->sc_ih = cpu_intr_establish(IPL_NESTED, irqbit,
+		    gsc_intr, (void *)sc->sc_ic, sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	/*
+	 * On ASP, the IAR register is not writable; we need to go through
+	 * the memory controller to achieve proper routing.
+	 */
+	s = splhigh();
+	if (ga->ga_parent == gsc_asp)
+		viper_setintrwnd(1 << irqbit);
+	else
+		sc->sc_ic->iar = cpu_gethpa(0) | (31 - irqbit);
+	splx(s);
 
 	pdc_scanbus(self, &ga->ga_ca, MAXMODBUS, 0, 0);
 }
@@ -108,11 +132,10 @@ gsc_intr_establish(sc, irq, pri, handler, arg, name)
 	void *arg;
 	const char *name;
 {
-	volatile u_int32_t *r = sc->sc_ic->gsc_base;
 	void *iv;
 
 	if ((iv = cpu_intr_map(sc->sc_ih, pri, irq, handler, arg, name)))
-		r[1] |= (1 << irq);
+		sc->sc_ic->imr |= (1 << irq);
 	else {
 #ifdef GSCDEBUG
 		printf("%s: attaching irq %d, already occupied\n",
@@ -129,9 +152,7 @@ gsc_intr_disestablish(sc, v)
 	void *v;
 {
 #if notyet
-	volatile u_int32_t *r = sc->sc_ic->gsc_base;
-
-	r[1] &= ~(1 << irq);
+	sc->sc_ic->imr &= ~(1 << irq);
 
 	cpu_intr_unmap(sc->sc_ih, v);
 #endif
