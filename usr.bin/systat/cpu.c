@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.5 2016/01/02 20:02:40 benno Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.6 2018/05/14 12:31:21 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -68,21 +68,23 @@ field_def fields_cpu[] = {
 	{ "User", 10, 20, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0 },
 	{ "Nice", 10, 20, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0 },
 	{ "System", 10, 20, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0 },
+	{ "Spin", 10, 20, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0 },
 	{ "Interrupt", 10, 20, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0 },
 	{ "Idle", 10, 20, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0 },
 };
 
 #define FLD_CPU_CPU	FIELD_ADDR(fields_cpu, 0)
-#define FLD_CPU_INT	FIELD_ADDR(fields_cpu, 1)
-#define FLD_CPU_SYS	FIELD_ADDR(fields_cpu, 2)
-#define FLD_CPU_USR	FIELD_ADDR(fields_cpu, 3)
-#define FLD_CPU_NIC	FIELD_ADDR(fields_cpu, 4)
-#define FLD_CPU_IDLE	FIELD_ADDR(fields_cpu, 5)
+#define FLD_CPU_USR	FIELD_ADDR(fields_cpu, 1)
+#define FLD_CPU_NIC	FIELD_ADDR(fields_cpu, 2)
+#define FLD_CPU_SYS	FIELD_ADDR(fields_cpu, 3)
+#define FLD_CPU_SPIN	FIELD_ADDR(fields_cpu, 4)
+#define FLD_CPU_INT	FIELD_ADDR(fields_cpu, 5)
+#define FLD_CPU_IDLE	FIELD_ADDR(fields_cpu, 6)
 
 /* Define views */
 field_def *view_cpu_0[] = {
-	FLD_CPU_CPU,
-	FLD_CPU_INT, FLD_CPU_SYS, FLD_CPU_USR, FLD_CPU_NIC, FLD_CPU_IDLE, NULL
+	FLD_CPU_CPU, FLD_CPU_USR, FLD_CPU_NIC, FLD_CPU_SYS, FLD_CPU_SPIN,
+	FLD_CPU_INT, FLD_CPU_IDLE, NULL
 };
 
 /* Define view managers */
@@ -232,11 +234,12 @@ initcpu(void)
 	do {								\
 		if (cur >= dispstart && cur < end) { 			\
 			print_fld_size(FLD_CPU_CPU, (v));		\
-			print_fld_percentage(FLD_CPU_INT, (cs[0]));	\
-			print_fld_percentage(FLD_CPU_SYS, (cs[1]));	\
-			print_fld_percentage(FLD_CPU_USR, (cs[2]));	\
-			print_fld_percentage(FLD_CPU_NIC, (cs[3]));	\
-			print_fld_percentage(FLD_CPU_IDLE, (cs[4]));	\
+			print_fld_percentage(FLD_CPU_USR, (cs[CP_USER]));\
+			print_fld_percentage(FLD_CPU_NIC, (cs[CP_NICE]));\
+			print_fld_percentage(FLD_CPU_SYS, (cs[CP_SYS]));\
+			print_fld_percentage(FLD_CPU_SPIN, (cs[CP_SPIN]));\
+			print_fld_percentage(FLD_CPU_INT, (cs[CP_INTR]));\
+			print_fld_percentage(FLD_CPU_IDLE, (cs[CP_IDLE]));	\
 			end_line();					\
 		}							\
 		if (++cur >= end)					\

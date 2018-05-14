@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.63 2018/04/26 06:51:48 mpi Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.64 2018/05/14 12:31:21 mpi Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -113,10 +113,12 @@ ___mp_lock_init(struct __mp_lock *mpl, struct lock_type *type)
 static __inline void
 __mp_lock_spin(struct __mp_lock *mpl, u_int me)
 {
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 #ifdef MP_LOCKDEBUG
 	int nticks = __mp_lock_spinout;
 #endif
 
+	spc->spc_spinning++;
 	while (mpl->mpl_ticket != me) {
 		CPU_BUSY_CYCLE();
 
@@ -128,6 +130,7 @@ __mp_lock_spin(struct __mp_lock *mpl, u_int me)
 		}
 #endif
 	}
+	spc->spc_spinning--;
 }
 
 void
@@ -257,10 +260,12 @@ __mtx_init(struct mutex *mtx, int wantipl)
 void
 __mtx_enter(struct mutex *mtx)
 {
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 #ifdef MP_LOCKDEBUG
 	int nticks = __mp_lock_spinout;
 #endif
 
+	spc->spc_spinning++;
 	while (__mtx_enter_try(mtx) == 0) {
 		CPU_BUSY_CYCLE();
 
@@ -272,6 +277,7 @@ __mtx_enter(struct mutex *mtx)
 		}
 #endif
 	}
+	spc->spc_spinning--;
 }
 
 int

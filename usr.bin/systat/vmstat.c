@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.83 2018/05/03 07:49:18 otto Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.84 2018/05/14 12:31:21 mpi Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -268,7 +268,7 @@ labelkre(void)
 	mvprintw(GENSTATROW, GENSTATCOL, "   Csw   Trp   Sys   Int   Sof  Flt");
 
 	mvprintw(GRAPHROW, GRAPHCOL,
-	    "    . %%Int    . %%Sys    . %%Usr    . %%Nic    . %%Idle");
+	    "    . %%Int    . %%Sys    . %%Usr    . %%Spn    . %%Idle");
 	mvprintw(PROCSROW, PROCSCOL, "Proc:r  d  s  w");
 	mvprintw(GRAPHROW + 1, GRAPHCOL,
 	    "|    |    |    |    |    |    |    |    |    |    |");
@@ -306,8 +306,8 @@ labelkre(void)
 	} while (0)
 #define MAXFAIL 5
 
-static	char cpuchar[CPUSTATES] = { '|', '=', '>', '-', ' ' };
-static	char cpuorder[CPUSTATES] = { CP_INTR, CP_SYS, CP_USER, CP_NICE, CP_IDLE };
+static	char cpuchar[] = { '|', '=', '>', '-', ' ' };
+static	char cpuorder[] = { CP_INTR, CP_SYS, CP_USER, CP_SPIN, CP_IDLE };
 
 void
 showkre(void)
@@ -367,7 +367,7 @@ showkre(void)
 	psiz = 0;
 	f2 = 0.0;
 
-	for (c = 0; c < CPUSTATES; c++) {
+	for (c = 0; c < nitems(cpuorder); c++) {
 		i = cpuorder[c];
 		f1 = cputime(i);
 		f2 += f1;
