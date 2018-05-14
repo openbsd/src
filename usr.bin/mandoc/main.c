@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.208 2018/04/19 16:25:11 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.209 2018/05/14 14:09:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -297,7 +297,8 @@ main(int argc, char *argv[])
 
 	if (use_pager &&
 	    (conf.output.width == 0 || conf.output.indent == 0) &&
-	    ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != -1) {
+	    ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != -1 &&
+	    ws.ws_col > 1) {
 		if (conf.output.width == 0 && ws.ws_col < 79)
 			conf.output.width = ws.ws_col - 1;
 		if (conf.output.indent == 0 && ws.ws_col < 66)
