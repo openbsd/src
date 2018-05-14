@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.70 2017/11/08 16:29:20 visa Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.71 2018/05/14 15:04:05 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -321,7 +321,10 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 					 */
 					dstopt = 2;
 				}
-
+				if (m->m_pkthdr.len < hlen + sizeof(ip6e)) {
+					m_freem(m);
+					return EINVAL;
+				}
 				/* skip this header */
 				m_copydata(m, hlen, sizeof(ip6e),
 				    (caddr_t)&ip6e);
@@ -340,6 +343,11 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	exitip6loop:;
 		break;
 #endif /* INET6 */
+	}
+
+	if (m->m_pkthdr.len < hlen) {
+		m_freem(m);
+		return EINVAL;
 	}
 
 	/* Non expansion policy for IPCOMP */
