@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.121 2018/01/27 08:32:03 anton Exp $	*/
+/*	$OpenBSD: control.c,v 1.122 2018/05/14 15:23:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -101,7 +101,6 @@ control_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_CTL_LIST_ENVELOPES:
 	case IMSG_CTL_DISCOVER_EVPID:
 	case IMSG_CTL_DISCOVER_MSGID:
-	case IMSG_CTL_UNCORRUPT_MSGID:
 	case IMSG_CTL_MTA_SHOW_HOSTS:
 	case IMSG_CTL_MTA_SHOW_RELAYS:
 	case IMSG_CTL_MTA_SHOW_ROUTES:
@@ -751,7 +750,6 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		return;
 
 	case IMSG_CTL_DISCOVER_MSGID:
-	case IMSG_CTL_UNCORRUPT_MSGID:
 		if (c->euid)
 			goto badcred;
 

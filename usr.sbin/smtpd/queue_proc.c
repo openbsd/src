@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_proc.c,v 1.6 2015/12/05 13:14:21 claudio Exp $	*/
+/*	$OpenBSD: queue_proc.c,v 1.7 2018/05/14 15:23:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -117,7 +117,7 @@ queue_proc_close(void)
 {
 	int	r;
 
-	imsg_compose(&ibuf, PROC_QUEUE_MESSAGE_CORRUPT, 0, 0, -1, NULL, 0);
+	imsg_compose(&ibuf, PROC_QUEUE_CLOSE, 0, 0, -1, NULL, 0);
 
 	queue_proc_call();
 	queue_proc_read(&r, sizeof(r));
@@ -188,21 +188,6 @@ queue_proc_message_fd_r(uint32_t msgid)
 	queue_proc_end();
 
 	return (imsg.fd);
-}
-
-static int
-queue_proc_message_corrupt(uint32_t msgid)
-{
-	int	r;
-
-	imsg_compose(&ibuf, PROC_QUEUE_MESSAGE_CORRUPT, 0, 0, -1, &msgid,
-	    sizeof(msgid));
-
-	queue_proc_call();
-	queue_proc_read(&r, sizeof(r));
-	queue_proc_end();
-
-	return (r);
 }
 
 static int
@@ -334,7 +319,6 @@ queue_proc_init(struct passwd *pw, int server, const char *conf)
 	queue_api_on_message_commit(queue_proc_message_commit);
 	queue_api_on_message_delete(queue_proc_message_delete);
 	queue_api_on_message_fd_r(queue_proc_message_fd_r);
-	queue_api_on_message_corrupt(queue_proc_message_corrupt);
 	queue_api_on_envelope_create(queue_proc_envelope_create);
 	queue_api_on_envelope_delete(queue_proc_envelope_delete);
 	queue_api_on_envelope_update(queue_proc_envelope_update);

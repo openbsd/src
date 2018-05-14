@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.184 2017/11/21 12:20:34 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.185 2018/05/14 15:23:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -523,15 +523,6 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 		tv.tv_sec = 0;
 		tv.tv_usec = 10;
 		evtimer_add(&wi->ev, &tv);
-		return;
-
-	case IMSG_CTL_UNCORRUPT_MSGID:
-		m_msg(&m, imsg);
-		m_get_msgid(&m, &msgid);
-		m_end(&m);
-		ret = queue_message_uncorrupt(msgid);
-		m_compose(p_control, imsg->hdr.type, imsg->hdr.peerid,
-		    0, -1, &ret, sizeof ret);
 		return;
 	}
 

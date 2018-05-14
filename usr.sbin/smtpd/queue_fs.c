@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fs.c,v 1.15 2017/10/10 05:03:52 guenther Exp $	*/
+/*	$OpenBSD: queue_fs.c,v 1.16 2018/05/14 15:23:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -44,7 +44,6 @@
 #include "log.h"
 
 #define PATH_QUEUE		"/queue"
-#define PATH_CORRUPT		"/corrupt"
 #define PATH_INCOMING		"/incoming"
 #define PATH_EVPTMP		PATH_INCOMING "/envelope.tmp"
 #define PATH_MESSAGE		"/message"
@@ -63,7 +62,6 @@ static void	fsqueue_envelope_path(uint64_t, char *, size_t);
 static void	fsqueue_envelope_incoming_path(uint64_t, char *, size_t);
 static int	fsqueue_envelope_dump(char *, const char *, size_t, int, int);
 static void	fsqueue_message_path(uint32_t, char *, size_t);
-static void	fsqueue_message_corrupt_path(uint32_t, char *, size_t);
 static void	fsqueue_message_incoming_path(uint32_t, char *, size_t);
 static void    *fsqueue_qwalk_new(void);
 static int	fsqueue_qwalk(void *, uint64_t *);
@@ -204,82 +202,6 @@ queue_fs_message_delete(uint32_t msgid)
 	tree_pop(&evpcount, msgid);
 
 	return 1;
-}
-
-static int
-queue_fs_message_corrupt(uint32_t msgid)
-{
-	struct stat sb;
-	char rootdir[PATH_MAX];
-	char corruptdir[PATH_MAX];
-	char buf[64];
-	int  retry = 0;
-
-	fsqueue_message_path(msgid, rootdir, sizeof(rootdir));
-	fsqueue_message_corrupt_path(msgid, corruptdir,
-	    sizeof(corruptdir));
-
-again:
-	if (stat(corruptdir, &sb) != -1 || errno != ENOENT) {
-		fsqueue_message_corrupt_path(msgid, corruptdir,
-		    sizeof(corruptdir));
-		(void)snprintf(buf, sizeof (buf), ".%d", retry++);
-		(void)strlcat(corruptdir, buf, sizeof(corruptdir));
-		goto again;
-	}
-
-	if (rename(rootdir, corruptdir) == -1) {
-		log_warn("warn: queue-fs: rename");
-		return 0;
-	}
-
-	tree_pop(&evpcount, msgid);
-
-	return 1;
-}
-
-static int
-queue_fs_message_uncorrupt(uint32_t msgid)
-{
-	struct stat	sb;
-	char		bucketdir[PATH_MAX];
-	char		queuedir[PATH_MAX];
-	char		corruptdir[PATH_MAX];
-
-	fsqueue_message_corrupt_path(msgid, corruptdir, sizeof(corruptdir));
-	if (stat(corruptdir, &sb) == -1) {
-		log_warnx("warn: queue-fs: stat %s failed", corruptdir);
-		return (0);
-	}
-
-	fsqueue_message_path(msgid, queuedir, sizeof(queuedir));
-	if (stat(queuedir, &sb) == 0) {
-		log_warnx("warn: queue-fs: %s already exists", queuedir);
-		return (0);
-	}
-
-	if (!bsnprintf(bucketdir, sizeof bucketdir, "%s/%02x", PATH_QUEUE,
-	    (msgid & 0xff000000) >> 24)) {
-		log_warnx("warn: queue-fs: path too long");
-		return (0);
-	}
-
-	/* create the bucket */
-	if (mkdir(bucketdir, 0700) == -1) {
-		if (errno == ENOSPC)
-			return (0);
-		if (errno != EEXIST) {
-			log_warn("warn: queue-fs: mkdir");
-			return (0);
-		}
-	}
-
-	if (rename(corruptdir, queuedir) == -1) {
-		log_warn("warn: queue-fs: rename");
-		return (0);
-	}
-
-	return (1);
 }
 
 static int
@@ -624,15 +546,6 @@ fsqueue_message_path(uint32_t msgid, char *buf, size_t len)
 }
 
 static void
-fsqueue_message_corrupt_path(uint32_t msgid, char *buf, size_t len)
-{
-	if (!bsnprintf(buf, len, "%s/%08x",
-		PATH_CORRUPT,
-		msgid))
-		fatalx("fsqueue_message_corrupt_path: path does not fit buffer");
-}
-
-static void
 fsqueue_message_incoming_path(uint32_t msgid, char *buf, size_t len)
 {
 	if (!bsnprintf(buf, len, "%s/%08x",
@@ -726,7 +639,7 @@ static int
 queue_fs_init(struct passwd *pw, int server, const char *conf)
 {
 	unsigned int	 n;
-	char		*paths[] = { PATH_QUEUE, PATH_CORRUPT, PATH_INCOMING };
+	char		*paths[] = { PATH_QUEUE, PATH_INCOMING };
 	char		 path[PATH_MAX];
 	int		 ret;
 
@@ -754,8 +667,6 @@ queue_fs_init(struct passwd *pw, int server, const char *conf)
 	queue_api_on_message_commit(queue_fs_message_commit);
 	queue_api_on_message_delete(queue_fs_message_delete);
 	queue_api_on_message_fd_r(queue_fs_message_fd_r);
-	queue_api_on_message_corrupt(queue_fs_message_corrupt);
-	queue_api_on_message_uncorrupt(queue_fs_message_uncorrupt);
 	queue_api_on_envelope_create(queue_fs_envelope_create);
 	queue_api_on_envelope_delete(queue_fs_envelope_delete);
 	queue_api_on_envelope_update(queue_fs_envelope_update);

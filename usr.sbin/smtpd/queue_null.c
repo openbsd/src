@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_null.c,v 1.6 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: queue_null.c,v 1.7 2018/05/14 15:23:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -67,12 +67,6 @@ queue_null_message_fd_r(uint32_t msgid)
 }
 
 static int
-queue_null_message_corrupt(uint32_t msgid)
-{
-	return (0);
-}
-
-static int
 queue_null_envelope_create(uint32_t msgid, const char *buf, size_t len,
     uint64_t *evpid)
 {
@@ -111,7 +105,6 @@ queue_null_init(struct passwd *pw, int server, const char *conf)
 	queue_api_on_message_commit(queue_null_message_commit);
 	queue_api_on_message_delete(queue_null_message_delete);
 	queue_api_on_message_fd_r(queue_null_message_fd_r);
-	queue_api_on_message_corrupt(queue_null_message_corrupt);
 	queue_api_on_envelope_create(queue_null_envelope_create);
 	queue_api_on_envelope_delete(queue_null_envelope_delete);
 	queue_api_on_envelope_update(queue_null_envelope_update);
