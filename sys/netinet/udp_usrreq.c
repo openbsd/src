@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.247 2018/04/24 15:40:55 pirofti Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.248 2018/05/14 15:24:23 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -270,7 +270,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 
 #ifdef IPSEC
-	if (udpencap_enable && udpencap_port &&
+	if (udpencap_enable && udpencap_port && esp_enable &&
 #if NPF > 0
 	    !(m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) &&
 #endif
