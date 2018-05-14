@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.56 2018/04/26 14:09:05 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.57 2018/05/14 03:14:47 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -299,7 +299,6 @@ Xexceptions:
 KUENTRY(alltraps)
 	INTRENTRY(alltraps)
 	sti
-calltrap:
 	cld
 	SMAP_CLAC
 #ifdef DIAGNOSTIC
@@ -330,7 +329,7 @@ calltrap:
 	je	1f
 	testb	$SEL_RPL,TF_CS(%rsp)
 	jz	1f
-5:	CLEAR_ASTPENDING(%r11)
+	CLEAR_ASTPENDING(%r11)
 	sti
 	movq	%rsp, %rdi
 	call	_C_LABEL(ast)
@@ -547,7 +546,6 @@ KIDTVEC(resume_xen_upcall)
 2:
 	movq	$(1 << LIR_XEN),%rax
 	orq	%rax,CPUVAR(IPENDING)
-3:
 	INTRFASTEXIT
 #endif /* NXEN > 0 */
 
@@ -582,7 +580,6 @@ KIDTVEC(resume_hyperv_upcall)
 2:
 	movq	$(1 << LIR_HYPERV),%rax
 	orq	%rax,CPUVAR(IPENDING)
-3:
 	INTRFASTEXIT
 #endif /* NHYPERV > 0 */
 #endif /* NLAPIC > 0 */
