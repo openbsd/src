@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ext.c,v 1.17 2018/05/13 10:42:03 tb Exp $ */
+/* $OpenBSD: ocsp_ext.c,v 1.18 2018/05/14 23:47:10 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -88,7 +88,8 @@ OCSP_REQUEST_get_ext_by_NID(OCSP_REQUEST *x, int nid, int lastpos)
 }
 
 int
-OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, const ASN1_OBJECT *obj, int lastpos)
+OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, const ASN1_OBJECT *obj,
+    int lastpos)
 {
 	return X509v3_get_ext_by_OBJ(x->tbsRequest->requestExtensions, obj,
 	    lastpos);
