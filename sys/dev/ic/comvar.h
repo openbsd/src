@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.56 2018/05/02 13:20:12 kettenis Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.57 2018/05/14 19:25:54 kettenis Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -150,6 +150,9 @@ int	comparam(struct tty *, struct termios *);
 void	comstart(struct tty *);
 void	comsoft(void *);
 
+uint8_t	comcn_read_reg(bus_size_t);
+void	comcn_write_reg(bus_size_t, uint8_t);
+
 struct consdev;
 int	comcnattach(bus_space_tag_t, bus_addr_t, int, int, tcflag_t);
 void	comcnprobe(struct consdev *);
@@ -157,8 +160,6 @@ void	comcninit(struct consdev *);
 int	comcngetc(dev_t);
 void	comcnputc(dev_t, int);
 void	comcnpollc(dev_t, int);
-int	com_common_getc(bus_space_tag_t, bus_space_handle_t);
-void	com_common_putc(bus_space_tag_t, bus_space_handle_t, int);
 void	com_raisedtr(void *);
 
 void com_attach_subr(struct com_softc *);
@@ -173,3 +174,5 @@ extern bus_space_tag_t comconsiot;
 extern bus_space_handle_t comconsioh;
 extern int comconsunit;
 extern tcflag_t comconscflag;
+extern u_char comcons_reg_width;
+extern u_char comcons_reg_shift;

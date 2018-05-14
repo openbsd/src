@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.5 2018/05/06 17:16:48 kettenis Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.6 2018/05/14 19:25:54 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -28,8 +28,6 @@
 #include <dev/ic/comvar.h>
 #include <dev/cons.h>
 
-#include <arm64/arm64/arm64var.h>
-
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
@@ -45,12 +43,8 @@ struct cfattach com_fdt_ca = {
 	sizeof (struct com_softc), com_fdt_match, com_fdt_attach
 };
 
-int com_fdt_cngetc(dev_t);
-void com_fdt_cnputc(dev_t, int);
-void com_fdt_cnpollc(dev_t, int);
-
 struct consdev com_fdt_cons = {
-	NULL, NULL, com_fdt_cngetc, com_fdt_cnputc, com_fdt_cnpollc, NULL,
+	NULL, NULL, comcngetc, comcnputc, comcnpollc, NULL,
 	NODEV, CN_LOWPRI
 };
 
@@ -76,7 +70,10 @@ com_fdt_init_cons(void)
 	 * comcnattach() does by doing the minimal setup here.
 	 */
 
-	comconsiot = &arm64_a4x_bs_tag;
+	comcons_reg_width = OF_getpropint(stdout_node, "reg-io-width", 4);
+	comcons_reg_shift = OF_getpropint(stdout_node, "reg-shift", 2);
+
+	comconsiot = fdt_cons_bs_tag;
 	if (bus_space_map(comconsiot, reg.addr, reg.size, 0, &comconsioh))
 		return;
 
@@ -160,21 +157,4 @@ com_fdt_intr_designware(void *cookie)
 	com_read_reg(sc, com_usr);
 
 	return comintr(sc);
-}
-
-int
-com_fdt_cngetc(dev_t dev)
-{
-	return com_common_getc(comconsiot, comconsioh);
-}
-
-void
-com_fdt_cnputc(dev_t dev, int c)
-{
-	com_common_putc(comconsiot, comconsioh, c);
-}
-
-void
-com_fdt_cnpollc(dev_t dev, int on)
-{
 }
