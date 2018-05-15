@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_bus_space.c,v 1.5 2018/03/20 23:04:48 patrick Exp $ */
+/*	$OpenBSD: arm64_bus_space.c,v 1.6 2018/05/15 11:12:35 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -59,29 +59,6 @@ bus_space_t arm64_bs_tag = {
 	._space_vaddr =		generic_space_vaddr
 };
 bus_space_t *fdt_cons_bs_tag = &arm64_bs_tag;
-
-bus_space_t arm64_a4x_bs_tag = {
-	.bus_base = 0ULL, // XXX
-	.bus_private = NULL,
-	._space_read_1 =	a4x_space_read_1,
-	._space_write_1 =	a4x_space_write_1,
-	._space_read_2 =	a4x_space_read_2,
-	._space_write_2 =	a4x_space_write_2,
-	._space_read_4 =	a4x_space_read_4,
-	._space_write_4 =	a4x_space_write_4,
-	._space_read_8 =	a4x_space_read_8,
-	._space_write_8 =	a4x_space_write_8,
-	._space_read_raw_2 =	a4x_space_read_raw_2,
-	._space_write_raw_2 =	a4x_space_write_raw_2,
-	._space_read_raw_4 =	a4x_space_read_raw_4,
-	._space_write_raw_4 =	a4x_space_write_raw_4,
-	._space_read_raw_8 =	a4x_space_read_raw_8,
-	._space_write_raw_8 =	a4x_space_write_raw_8,
-	._space_map =		generic_space_map,
-	._space_unmap =		generic_space_unmap,
-	._space_subregion =	generic_space_region,
-	._space_vaddr =		generic_space_vaddr
-};
 
 uint8_t
 generic_space_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
@@ -258,128 +235,4 @@ void *
 generic_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
 {
 	return (void *)h;
-}
-
-uint8_t
-a4x_space_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	return *(volatile uint32_t *)(h + (o*4));
-}
-
-uint16_t
-a4x_space_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	return *(volatile uint32_t *)(h + (o*4));
-}
-
-uint32_t
-a4x_space_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	return *(volatile uint32_t *)(h + (o*4));
-}
-
-uint64_t
-a4x_space_read_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	return *(volatile uint64_t *)(h + (o*4));
-}
-
-void
-a4x_space_write_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    uint8_t v)
-{
-	*(volatile uint32_t *)(h + (o*4)) = v;
-}
-
-void
-a4x_space_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    uint16_t v)
-{
-	*(volatile uint32_t *)(h + (o*4)) = v;
-}
-
-void
-a4x_space_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    uint32_t v)
-{
-	*(volatile uint32_t *)(h + (o*4)) = v;
-}
-
-void
-a4x_space_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    uint64_t v)
-{
-	*(volatile uint64_t *)(h + (o*4)) = v;
-}
-
-void
-a4x_space_read_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
-    uint8_t *buf, bus_size_t len)
-{
-	volatile uint16_t *addr = (volatile uint16_t *)(h + (o*4));
-	len >>= 1;
-	while (len-- != 0) {
-		*(uint16_t *)buf = *addr;
-		buf += 2;
-	}
-}
-
-void
-a4x_space_write_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
-    const uint8_t *buf, bus_size_t len)
-{
-	volatile uint16_t *addr = (volatile uint16_t *)(h + (o*4));
-	len >>= 1;
-	while (len-- != 0) {
-		*addr = *(uint16_t *)buf;
-		buf += 2;
-	}
-}
-
-void
-a4x_space_read_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
-    uint8_t *buf, bus_size_t len)
-{
-	volatile uint32_t *addr = (volatile uint32_t *)(h + (o*4));
-	len >>= 2;
-	while (len-- != 0) {
-		*(uint32_t *)buf = *addr;
-		buf += 4;
-	}
-}
-
-void
-a4x_space_write_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
-    const uint8_t *buf, bus_size_t len)
-{
-	volatile uint32_t *addr = (volatile uint32_t *)(h + (o*4));
-	len >>= 2;
-	while (len-- != 0) {
-		*addr = *(uint32_t *)buf;
-		buf += 4;
-	}
-}
-
-void
-a4x_space_read_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
-    uint8_t *buf, bus_size_t len)
-{
-	volatile uint64_t *addr = (volatile uint64_t *)(h + (o*4));
-	len >>= 3;
-	while (len-- != 0) {
-		*(uint64_t *)buf = *addr;
-		buf += 8;
-	}
-}
-
-void
-a4x_space_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
-    const uint8_t *buf, bus_size_t len)
-{
-	volatile uint64_t *addr = (volatile uint64_t *)(h + (o*4));
-	len >>= 3;
-	while (len-- != 0) {
-		*addr = *(uint64_t *)buf;
-		buf += 8;
-	}
 }

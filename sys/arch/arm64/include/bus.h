@@ -1,4 +1,4 @@
-/* $OpenBSD: bus.h,v 1.3 2017/05/08 00:27:45 dlg Exp $ */
+/* $OpenBSD: bus.h,v 1.4 2018/05/15 11:12:35 kettenis Exp $ */
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
  *
@@ -502,31 +502,6 @@ void	generic_space_write_raw_4(bus_space_tag_t, bus_space_handle_t,
 void	generic_space_read_raw_8(bus_space_tag_t, bus_space_handle_t,
 	    bus_addr_t, uint8_t *, bus_size_t);
 void	generic_space_write_raw_8(bus_space_tag_t, bus_space_handle_t,
-	    bus_addr_t, const uint8_t *, bus_size_t);
-
-uint8_t a4x_space_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-uint16_t a4x_space_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-uint32_t a4x_space_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-uint64_t a4x_space_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-void	a4x_space_read_raw_2(bus_space_tag_t, bus_space_handle_t,
-	    bus_addr_t, uint8_t *, bus_size_t);
-void	a4x_space_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    uint8_t);
-void	a4x_space_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    uint16_t);
-void	a4x_space_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    uint32_t);
-void	a4x_space_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    uint64_t);
-void	a4x_space_write_raw_2(bus_space_tag_t, bus_space_handle_t,
-	    bus_addr_t, const uint8_t *, bus_size_t);
-void	a4x_space_read_raw_4(bus_space_tag_t, bus_space_handle_t,
-	    bus_addr_t, uint8_t *, bus_size_t);
-void	a4x_space_write_raw_4(bus_space_tag_t, bus_space_handle_t,
-	    bus_addr_t, const uint8_t *, bus_size_t);
-void	a4x_space_read_raw_8(bus_space_tag_t, bus_space_handle_t,
-	    bus_addr_t, uint8_t *, bus_size_t);
-void	a4x_space_write_raw_8(bus_space_tag_t, bus_space_handle_t,
 	    bus_addr_t, const uint8_t *, bus_size_t);
 
 #endif /* _MACHINE_BUS_H_ */

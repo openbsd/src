@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.32 2018/05/06 17:16:48 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.33 2018/05/15 11:12:35 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -795,8 +795,6 @@ initarm(struct arm64_bootparams *abp)
 	EFI_PHYSICAL_ADDRESS system_table = 0;
 	int (*map_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
-	int (*map_a4x_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *);
 
 	// NOTE that 1GB of ram is mapped in by default in
 	// the bootstrap memory config, so nothing is necessary
@@ -947,16 +945,12 @@ initarm(struct arm64_bootparams *abp)
 	    bus_size_t size, int flags, bus_space_handle_t *bshp);
 
 	map_func_save = arm64_bs_tag._space_map;
-	map_a4x_func_save = arm64_a4x_bs_tag._space_map;
-
 	arm64_bs_tag._space_map = pmap_bootstrap_bs_map;
-	arm64_a4x_bs_tag._space_map = pmap_bootstrap_bs_map;
 
 	// cninit
 	consinit();
 
 	arm64_bs_tag._space_map = map_func_save;
-	arm64_a4x_bs_tag._space_map = map_a4x_func_save;
 
 	/* Remap EFI runtime. */
 	if (mmap_start != 0 && system_table != 0)
