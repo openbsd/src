@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.43 2017/12/18 14:20:23 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.44 2018/05/15 11:57:32 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -296,7 +296,7 @@ fuse_mount(const char *dir, struct fuse_args *args)
 		goto bad;
 	}
 
-	bzero(&opts, sizeof(opts));
+	memset(&opts, 0, sizeof(opts));
 	if (fuse_opt_parse(args, &opts, fuse_mount_opts, NULL) == -1)
 		goto bad;
 
@@ -312,7 +312,7 @@ fuse_mount(const char *dir, struct fuse_args *args)
 		goto bad;
 	}
 
-	bzero(&fargs, sizeof(fargs));
+	memset(&fargs, 0, sizeof(fargs));
 	fargs.fd = fc->fd;
 	fargs.max_read = opts.max_read;
 
@@ -567,7 +567,7 @@ fuse_parse_cmdline(struct fuse_args *args, char **mp, int *mt, int *fg)
 {
 	struct fuse_core_opts opt;
 
-	bzero(&opt, sizeof(opt));
+	memset(&opt, 0, sizeof(opt));
 	if (fuse_opt_parse(args, &opt, fuse_core_opts, ifuse_process_opt) == -1)
 		return (-1);
 

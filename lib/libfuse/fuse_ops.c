@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.28 2017/11/30 11:29:03 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.29 2018/05/15 11:57:32 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -66,7 +66,7 @@ ifuse_ops_init(struct fuse *f)
 	DPRINTF("Opcode:\tinit\n");
 
 	if (f->op.init) {
-		bzero(&fci, sizeof fci);
+		memset(&fci, 0, sizeof(fci));
 		fci.proto_minor = FUSE_MINOR_VERSION;
 		fci.proto_major = FUSE_MAJOR_VERSION;
 
@@ -139,7 +139,7 @@ ifuse_ops_open(struct fuse *f, struct fusebuf *fbuf)
 
 	CHECK_OPT(open);
 
-	bzero(&ffi, sizeof(ffi));
+	memset(&ffi, 0, sizeof(ffi));
 	ffi.flags = fbuf->fb_io_flags;
 
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
@@ -277,7 +277,7 @@ ifuse_fill_getdir(fuse_dirh_t fd, const char *name, int type, ino_t ino)
 {
 	struct stat st;
 
-	bzero(&st, sizeof(st));
+	memset(&st, 0, sizeof(st));
 	st.st_mode = type << 12;
 	if (ino == 0)
 		st.st_ino = 0xffffffff;
@@ -302,7 +302,7 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 	DPRINTF("Offset:\t%llu\n", fbuf->fb_io_off);
 	DPRINTF("Size:\t%lu\n", fbuf->fb_io_len);
 
-	bzero(&ffi, sizeof(ffi));
+	memset(&ffi, 0, sizeof(ffi));
 	ffi.fh = fbuf->fb_io_fd;
 	offset = fbuf->fb_io_off;
 	size = fbuf->fb_io_len;
@@ -376,7 +376,7 @@ ifuse_ops_releasedir(struct fuse *f, struct fusebuf *fbuf)
 	DPRINTF("Opcode:\treleasedir\n");
 	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
 
-	bzero(&ffi, sizeof(ffi));
+	memset(&ffi, 0, sizeof(ffi));
 	ffi.fh = fbuf->fb_io_fd;
 	ffi.fh_old = ffi.fh;
 	ffi.flags = fbuf->fb_io_flags;
@@ -413,7 +413,7 @@ ifuse_ops_release(struct fuse *f, struct fusebuf *fbuf)
 
 	CHECK_OPT(release);
 
-	bzero(&ffi, sizeof(ffi));
+	memset(&ffi, 0, sizeof(ffi));
 	ffi.fh = fbuf->fb_io_fd;
 	ffi.fh_old = ffi.fh;
 	ffi.flags = fbuf->fb_io_flags;
@@ -496,7 +496,7 @@ ifuse_ops_read(struct fuse *f, struct fusebuf *fbuf)
 
 	CHECK_OPT(read);
 
-	bzero(&ffi, sizeof(ffi));
+	memset(&ffi, 0, sizeof(ffi));
 	ffi.fh = fbuf->fb_io_fd;
 	size = fbuf->fb_io_len;
 	offset = fbuf->fb_io_off;
@@ -546,7 +546,7 @@ ifuse_ops_write(struct fuse *f, struct fusebuf *fbuf)
 
 	CHECK_OPT(write);
 
-	bzero(&ffi, sizeof(ffi));
+	memset(&ffi, 0, sizeof(ffi));
 	ffi.fh = fbuf->fb_io_fd;
 	ffi.fh_old = ffi.fh;
 	ffi.writepage = fbuf->fb_io_flags & 1;
@@ -721,7 +721,7 @@ ifuse_ops_statfs(struct fuse *f, struct fusebuf *fbuf)
 	struct fuse_vnode *vn;
 	char *realname;
 
-	bzero(&fbuf->fb_stat, sizeof(fbuf->fb_stat));
+	memset(&fbuf->fb_stat, 0, sizeof(fbuf->fb_stat));
 
 	CHECK_OPT(statfs);
 

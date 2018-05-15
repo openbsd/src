@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.24 2018/01/22 13:16:48 helg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.25 2018/05/15 11:57:32 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -101,11 +101,11 @@ fuse_dump_buff(char *buff, int len)
 		return;
 	}
 
-	bzero(text, 17);
+	memset(text, 0, 17);
 	for (i = 0; i < len; i++) {
 		if (i != 0 && (i % 16) == 0) {
 			printf(": %s\n", text);
-			bzero(text, 17);
+			memset(text, 0, 17);
 		}
 
 		printf("%.2x ", buff[i] & 0xff);
@@ -438,7 +438,7 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 
 	/* Do not send kernel pointers */
 	memcpy(&hdr.fh_next, &fbuf->fb_next, sizeof(fbuf->fb_next));
-	bzero(&fbuf->fb_next, sizeof(fbuf->fb_next));
+	memset(&fbuf->fb_next, 0, sizeof(fbuf->fb_next));
 	tmpaddr = fbuf->fb_dat;
 	fbuf->fb_dat = NULL;
 	error = uiomove(fbuf, FUSEBUFSIZE, uio);
