@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1 2017/08/27 21:59:51 deraadt Exp $ */
+/*	$OpenBSD: SYS.h,v 1.2 2018/05/15 20:37:48 kettenis Exp $ */
 
 /*
  * Copyright (c) 2016 Dale Rahn
@@ -42,5 +42,5 @@ __CONCAT(_dl_,n):					;\
 	ret
 
 .L_cerr:
-	neg	w0, w0		/* r0 = -errno */
+	neg	x0, x0		/* r0 = -errno */
 	ret
