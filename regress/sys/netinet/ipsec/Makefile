@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.18 2018/04/12 00:05:17 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.19 2018/05/15 14:10:16 mpi Exp $
 
 # This test needs a manual setup of four machines, the make
-# target create-setup can be used distribute the configuration.
+# target create-setup can be used to distribute the configuration.
 # The setup is the same as for regress/sys/net/pf_forward.
 # Set up machines: SRC IPS RT ECO
 # SRC is the machine where this makefile is running.
@@ -781,8 +781,8 @@ check-setup-ips:
 	ssh ${IPS_SSH} sysctl net.inet.ah.enable | fgrep =1
 	ssh ${IPS_SSH} sysctl net.inet.ipip.allow | fgrep =1
 	ssh ${IPS_SSH} sysctl net.inet.ipcomp.enable | fgrep =1
-	ssh ${PF_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
-	ssh ${PF_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
+	ssh ${IPS_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
+	ssh ${IPS_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
 
 check-setup-rt:
 	@echo '\n======== $@ ========'
