@@ -1,4 +1,4 @@
-/* $OpenBSD: freenull.c,v 1.12 2018/05/15 07:08:16 tb Exp $ */
+/* $OpenBSD: freenull.c,v 1.13 2018/05/15 07:11:31 tb Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <openssl/cmac.h>
 #include <openssl/comp.h>
 #include <openssl/conf_api.h>
+#include <openssl/dso.h>
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
@@ -89,6 +90,7 @@ main(int argc, char **argv)
 	DSA_SIG_free(NULL);
 	DSA_free(NULL);
 	DSA_meth_free(NULL);
+	DSO_free(NULL);
 	ECDSA_SIG_free(NULL);
 	EC_GROUP_clear_free(NULL);
 	EC_GROUP_free(NULL);
