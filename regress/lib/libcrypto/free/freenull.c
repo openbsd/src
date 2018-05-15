@@ -1,4 +1,4 @@
-/* $OpenBSD: freenull.c,v 1.11 2018/05/15 07:05:23 tb Exp $ */
+/* $OpenBSD: freenull.c,v 1.12 2018/05/15 07:08:16 tb Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -210,7 +210,6 @@ main(int argc, char **argv)
 	X509_email_free(NULL);
 	X509_free(NULL);
 	X509_policy_tree_free(NULL);
-	_CONF_free_data(NULL);
 
 	lh_FUNCTION_free(NULL);
 
@@ -232,5 +231,5 @@ main(int argc, char **argv)
 
 	printf("PASS\n");
 
-	return (0);
+	return 0;
 }
