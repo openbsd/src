@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.48 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.49 2018/05/15 08:57:21 mpi Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -255,6 +255,7 @@ pppasyncrelinq(struct ppp_softc *sc)
 {
     int s;
 
+    KERNEL_LOCK();
     s = spltty();
     m_freem(sc->sc_outm);
     sc->sc_outm = NULL;
@@ -268,6 +269,7 @@ pppasyncrelinq(struct ppp_softc *sc)
 	sc->sc_flags &= ~SC_TIMEOUT;
     }
     splx(s);
+    KERNEL_UNLOCK();
 }
 
 /*
@@ -496,6 +498,7 @@ pppasyncstart(struct ppp_softc *sc)
     struct mbuf *m2;
     int s;
 
+    KERNEL_LOCK();
     idle = 0;
     while (CCOUNT(&tp->t_outq) < tp->t_hiwat) {
 	/*
@@ -662,6 +665,7 @@ pppasyncstart(struct ppp_softc *sc)
     }
 
     splx(s);
+    KERNEL_UNLOCK();
 }
 
 /*
@@ -674,12 +678,14 @@ pppasyncctlp(struct ppp_softc *sc)
     struct tty *tp;
     int s;
 
+    KERNEL_LOCK();
     /* Put a placeholder byte in canq for ttpoll()/ttnread(). */
     s = spltty();
     tp = (struct tty *) sc->sc_devp;
     putc(0, &tp->t_canq);
     ttwakeup(tp);
     splx(s);
+    KERNEL_UNLOCK();
 }
 
 /*
