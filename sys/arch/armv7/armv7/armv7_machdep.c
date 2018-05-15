@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.52 2018/05/07 14:13:54 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.53 2018/05/15 11:11:35 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -411,14 +411,10 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 	/*
 	 * Temporarily replace bus_space_map() functions so that
 	 * console devices can get mapped.
-	 *
-	 * Note that this relies upon the fact that both regular
-	 * and a4x bus_space tags use the same map function.
 	 */
 	tmp_bs_tag = armv7_bs_tag;
 	map_func_save = armv7_bs_tag.bs_map;
 	armv7_bs_tag.bs_map = bootstrap_bs_map;
-	armv7_a4x_bs_tag.bs_map = bootstrap_bs_map;
 	tmp_bs_tag.bs_map = bootstrap_bs_map;
 
 	/*
@@ -791,7 +787,6 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 	 * Restore proper bus_space operation, now that pmap is initialized.
 	 */
 	armv7_bs_tag.bs_map = map_func_save;
-	armv7_a4x_bs_tag.bs_map = map_func_save;
 
 #ifdef DDB
 	db_machine_init();

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.49 2018/05/04 16:12:12 visa Exp $
+#	$OpenBSD: files.arm,v 1.50 2018/05/15 11:11:35 kettenis Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -69,8 +69,6 @@ file	arch/arm/arm/sys_machdep.c
 file	arch/arm/arm/vm_machdep.c
 
 file	arch/arm/armv7/armv7_space.c		cpu_armv7
-file	arch/arm/armv7/armv7_a4x_space.c	cpu_armv7
-file	arch/arm/armv7/armv7_a4x_io.S		cpu_armv7
 file	arch/arm/armv7/bus_space_asm_armv7.S	cpu_armv7
 file	arch/arm/arm/vfp.c			cpu_armv7
 
