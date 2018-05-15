@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2018/02/08 18:02:06 jca Exp $ */
+/*	$OpenBSD: util.c,v 1.10 2018/05/15 11:19:21 reyk Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -122,7 +122,7 @@ ber2db(struct ber_element *root, struct btval *val, int compression_level)
 		val->size = compressBound(len);
 		val->data = malloc(val->size + sizeof(uint32_t));
 		if (val->data == NULL) {
-			log_warn("malloc(%u)", val->size + sizeof(uint32_t));
+			log_warn("malloc(%zu)", val->size + sizeof(uint32_t));
 			ber_free(&ber);
 			return -1;
 		}
@@ -135,7 +135,7 @@ ber2db(struct ber_element *root, struct btval *val, int compression_level)
 			ber_free(&ber);
 			return -1;
 		}
-		log_debug("compressed entry from %u -> %u byte",
+		log_debug("compressed entry from %zd -> %lu byte",
 		    len, destlen + sizeof(uint32_t));
 
 		*(uint32_t *)val->data = len;
@@ -174,7 +174,7 @@ db2ber(struct btval *val, int compression_level)
 
 		len = *(uint32_t *)val->data;
 		if ((buf = malloc(len)) == NULL) {
-			log_warn("malloc(%u)", len);
+			log_warn("malloc(%lu)", len);
 			return NULL;
 		}
 
@@ -187,7 +187,7 @@ db2ber(struct btval *val, int compression_level)
 			return NULL;
 		}
 
-		log_debug("uncompressed entry from %u -> %u byte",
+		log_debug("uncompressed entry from %zu -> %lu byte",
 		    val->size, len);
 
 		ber_set_readbuf(&ber, buf, len);

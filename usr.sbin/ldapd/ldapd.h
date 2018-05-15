@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.29 2018/05/14 07:53:47 reyk Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.30 2018/05/15 11:19:21 reyk Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -471,6 +471,7 @@ SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);
 
 
 /* logmsg.c */
+void			 ldap_loginit(const char *, int, int);
 const char		*print_host(struct sockaddr_storage *ss, char *buf,
 				size_t len);
 void			 hexdump(void *data, size_t len, const char *fmt, ...);

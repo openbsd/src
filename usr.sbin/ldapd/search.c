@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.19 2018/05/14 07:53:47 reyk Exp $ */
+/*	$OpenBSD: search.c,v 1.20 2018/05/15 11:19:21 reyk Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -330,7 +330,7 @@ conn_search(struct search *search)
 		op = BT_NEXT;
 
 		if (rc == BT_SUCCESS && search->plan->indexed) {
-			log_debug("found index %.*s", key.size, key.data);
+			log_debug("found index %.*s", (int)key.size, key.data);
 
 			if (!has_prefix(&key, search->cindx->prefix)) {
 				log_debug("scanned past index prefix [%s]",
@@ -438,7 +438,7 @@ conn_search(struct search *search)
 		/* Check if we have passed the size limit. */
 		if (rc == BT_SUCCESS && search->szlim > 0 &&
 		    search->nmatched >= search->szlim) {
-			log_debug("search %d/%lld has reached size limit (%u)",
+			log_debug("search %d/%lld has reached size limit (%lld)",
 			    search->conn->fd, search->req->msgid,
 			    search->szlim);
 			reason = LDAP_SIZELIMIT_EXCEEDED;
@@ -450,7 +450,7 @@ conn_search(struct search *search)
 	now = time(0);
 	if (rc == 0 && search->tmlim > 0 &&
 	    search->started_at + search->tmlim <= now) {
-		log_debug("search %d/%lld has reached time limit (%u)",
+		log_debug("search %d/%lld has reached time limit (%lld)",
 		    search->conn->fd, search->req->msgid,
 		    search->tmlim);
 		reason = LDAP_TIMELIMIT_EXCEEDED;
@@ -803,7 +803,7 @@ search_planner(struct namespace *ns, struct ber_element *filter)
 		break;
 
 	default:
-		log_warnx("filter type %d not implemented", filter->be_type);
+		log_warnx("filter type %lu not implemented", filter->be_type);
 		plan->undefined = 1;
 		break;
 	}
@@ -875,7 +875,7 @@ ldap_search(struct request *req)
 	}
 
 	normalize_dn(search->basedn);
-	log_debug("base dn = %s, scope = %d", search->basedn, search->scope);
+	log_debug("base dn = %s, scope = %lld", search->basedn, search->scope);
 
 	if (*search->basedn == '\0') {
 		/* request for the root DSE */
