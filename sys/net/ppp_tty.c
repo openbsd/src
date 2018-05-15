@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.49 2018/05/15 08:57:21 mpi Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.50 2018/05/15 09:21:52 mikeb Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -426,7 +426,9 @@ ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	break;
 
     default:
+	NET_LOCK();
 	error = pppioctl(sc, cmd, data, flag, p);
+	NET_UNLOCK();
 	if (error == 0 && cmd == PPPIOCSMRU)
 	    ppppkt(sc);
     }
