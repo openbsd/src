@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.17 2018/04/26 17:07:31 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.18 2018/05/15 16:34:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -561,7 +561,7 @@ main_dispatch_engine(int fd, short event, void *bula)
 			break;
 		case IMSG_WITHDRAW_DFR:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(dfr))
-				fatal("%s: IMSG_CONFIGURE_DFR wrong "
+				fatal("%s: IMSG_WITHDRAW_DFR wrong "
 				    "length: %d", __func__, imsg.hdr.len);
 			memcpy(&dfr, imsg.data, sizeof(dfr));
 			delete_gateway(&dfr);
