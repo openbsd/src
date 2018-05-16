@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.569 2018/05/11 15:44:15 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.570 2018/05/16 19:51:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1268,6 +1268,21 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 		}
 		memcpy(lease->filename, packet->file, DHCP_FILE_LEN);
 		lease->filename[DHCP_FILE_LEN] = '\0';
+	}
+
+	/*
+	 * Record the client identifier used to obtain the lease.  We already
+	 * checked that the packet client identifier is absent (RFC 2131) or
+	 * matches what we sent (RFC 6842),
+	 */
+	i = DHO_DHCP_CLIENT_IDENTIFIER;
+	if (lease->options[i].len == 0 && config->send_options[i].len != 0) {
+		lease->options[i].len = config->send_options[i].len;
+		lease->options[i].data = malloc(lease->options[i].len);
+		if (lease->options[i].data == NULL)
+			fatal("lease client-identifier");
+		memcpy(lease->options[i].data, config->send_options[i].data,
+		    lease->options[i].len);
 	}
 
 	time(&lease->epoch);
