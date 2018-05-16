@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1846 2018/04/27 10:35:28 mlarkin Exp 
+ *	OpenBSD: pcidevs,v 1.1847 2018/05/16 21:14:39 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -17936,6 +17936,62 @@ static const struct pci_known_product pci_known_products[] = {
 	    "100 Series HD Audio",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C620_AHCI_1,
+	    "C620 AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C620_PCIE_1,
+	    "C620 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C620_PCIE_2,
+	    "C620 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C620_PM,
+	    "C620 Power",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C620_SMB,
+	    "C620 SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C620_SPI,
+	    "C620 SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C620_XHCI,
+	    "C620 xHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C620_THERM,
+	    "C620 Thermal",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C620_MEI_1,
+	    "C620 MEI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C620_MEI_2,
+	    "C620 MEI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C620_MEI_3,
+	    "C620 MEI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C621_LPC,
+	    "C621 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C620_AHCI_2,
+	    "C620 AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C620_MROM0,
+	    "C620 MROM",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_200SERIES_AHCI_1,
 	    "200 Series AHCI",
 	},
@@ -23338,6 +23394,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9080,
 	    "I/O 9080",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_9733,
+	    "PEX 9733",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_CRONYX_OMEGA,
