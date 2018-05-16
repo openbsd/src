@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.258 2018/04/26 20:40:54 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.259 2018/05/16 14:58:48 visa Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: April 26 2018 $
+.Dd $Mdocdate: May 16 2018 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -141,6 +141,15 @@ See
 Maximum number of lock types that are tracked by
 .Xr witness 4 .
 It defaults to 1536.
+.It Cd option WITNESS_WATCH
+Enable
+.Xr witness 4
+at boot.
+By default, the subsystem is disabled and has to be enabled at runtime
+by raising the
+.Va kern.witnesswatch
+.Xr sysctl 8
+variable.
 .El
 .Sh FILE SYSTEMS
 .Bl -ohang
