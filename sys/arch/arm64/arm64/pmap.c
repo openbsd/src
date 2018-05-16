@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.51 2018/04/18 11:41:16 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.52 2018/05/16 09:07:45 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1038,6 +1038,122 @@ VP_Lx(paddr_t pa)
 	return pa | Lx_TYPE_PT;
 }
 
+/*
+ * Allocator for growing the kernel page tables.  We use a dedicated
+ * submap to make sure we have the space to map them as we are called
+ * when address space is tight!
+ */
+
+struct vm_map *pmap_kvp_map;
+
+const struct kmem_va_mode kv_kvp = {
+	.kv_map = &pmap_kvp_map,
+	.kv_wait = 0
+};
+
+void *
+pmap_kvp_alloc(void)
+{
+	return km_alloc(sizeof(struct pmapvp0), &kv_kvp, &kp_zero, &kd_nowait);
+}
+
+struct pte_desc *
+pmap_kpted_alloc(void)
+{
+	static struct pte_desc *pted;
+	static int npted;
+
+	if (npted == 0) {
+		pted = km_alloc(PAGE_SIZE, &kv_kvp, &kp_zero, &kd_nowait);
+		if (pted == NULL)
+			return NULL;
+		npted = PAGE_SIZE / sizeof(struct pte_desc);
+	}
+
+	npted--;
+	return pted++;
+}
+
+/*
+ * In pmap_bootstrap() we allocate the page tables for the first 512 MB
+ * of the kernel address space.
+ */
+vaddr_t pmap_maxkvaddr = VM_MIN_KERNEL_ADDRESS + 512 * 1024 * 1024;
+
+vaddr_t
+pmap_growkernel(vaddr_t maxkvaddr)
+{
+	struct pmapvp1 *vp1 = pmap_kernel()->pm_vp.l1;
+	struct pmapvp2 *vp2;
+	struct pmapvp3 *vp3;
+	struct pte_desc *pted;
+	paddr_t pa;
+	int lb_idx2, ub_idx2;
+	int i, j, k;
+	int s;
+
+	if (maxkvaddr <= pmap_maxkvaddr)
+		return pmap_maxkvaddr;
+
+	/*
+	 * Not strictly necessary, but we use an interrupt-safe map
+	 * and uvm asserts that we're at IPL_VM.
+	 */
+	s = splvm();
+
+	for (i = VP_IDX1(pmap_maxkvaddr); i <= VP_IDX1(maxkvaddr - 1); i++) {
+		vp2 = vp1->vp[i];
+		if (vp2 == NULL) {
+			vp2 = pmap_kvp_alloc();
+			if (vp2 == NULL)
+				goto fail;
+			pmap_extract(pmap_kernel(), (vaddr_t)vp2, &pa);
+			vp1->vp[i] = vp2;
+			vp1->l1[i] = VP_Lx(pa);
+		}
+
+		if (i == VP_IDX1(pmap_maxkvaddr)) {
+			lb_idx2 = VP_IDX2(pmap_maxkvaddr);
+		} else {
+			lb_idx2 = 0;
+		}
+
+		if (i == VP_IDX1(maxkvaddr - 1)) {
+			ub_idx2 = VP_IDX2(maxkvaddr - 1);
+		} else {
+			ub_idx2 = VP_IDX2_CNT - 1;
+		}
+
+		for (j = lb_idx2; j <= ub_idx2; j++) {
+			vp3 = vp2->vp[j];
+			if (vp3 == NULL) {
+				vp3 = pmap_kvp_alloc();
+				if (vp3 == NULL)
+					goto fail;
+				pmap_extract(pmap_kernel(), (vaddr_t)vp3, &pa);
+				vp2->vp[j] = vp3;
+				vp2->l2[j] = VP_Lx(pa);
+			}
+
+			for (k = 0; k <= VP_IDX3_CNT - 1; k++) {
+				if (vp3->vp[k] == NULL) {
+					pted = pmap_kpted_alloc();
+					if (pted == NULL)
+						goto fail;
+					vp3->vp[k] = pted;
+					pmap_maxkvaddr += PAGE_SIZE;
+				}
+			}
+		}
+	}
+	KASSERT(pmap_maxkvaddr >= maxkvaddr);
+
+fail:
+	splx(s);
+	
+	return pmap_maxkvaddr;
+}
+
 void pmap_setup_avail(uint64_t ram_start, uint64_t ram_end, uint64_t kvo);
 
 /*
@@ -1100,7 +1216,7 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 
 	/* allocate Lx entries */
 	for (i = VP_IDX1(VM_MIN_KERNEL_ADDRESS);
-	    i <= VP_IDX1(VM_MAX_KERNEL_ADDRESS);
+	    i <= VP_IDX1(pmap_maxkvaddr - 1);
 	    i++) {
 		mappings_allocated++;
 		pa = pmap_steal_avail(sizeof(struct pmapvp2), Lx_TABLE_ALIGN,
@@ -1114,10 +1230,10 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 		} else {
 			lb_idx2 = 0;
 		}
-		if (i == VP_IDX1(VM_MAX_KERNEL_ADDRESS)) {
-			ub_idx2 = VP_IDX2(VM_MAX_KERNEL_ADDRESS);
+		if (i == VP_IDX1(pmap_maxkvaddr - 1)) {
+			ub_idx2 = VP_IDX2(pmap_maxkvaddr - 1);
 		} else {
-			ub_idx2 = VP_IDX2_CNT-1;
+			ub_idx2 = VP_IDX2_CNT - 1;
 		}
 		for (j = lb_idx2; j <= ub_idx2; j++) {
 			mappings_allocated++;
@@ -1131,7 +1247,7 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 	}
 	/* allocate Lx entries */
 	for (i = VP_IDX1(VM_MIN_KERNEL_ADDRESS);
-	    i <= VP_IDX1(VM_MAX_KERNEL_ADDRESS);
+	    i <= VP_IDX1(pmap_maxkvaddr - 1);
 	    i++) {
 		/* access must be performed physical */
 		vp2 = (void *)((long)vp1->vp[i] + kvo);
@@ -1141,16 +1257,16 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 		} else {
 			lb_idx2 = 0;
 		}
-		if (i == VP_IDX1(VM_MAX_KERNEL_ADDRESS)) {
-			ub_idx2 = VP_IDX2(VM_MAX_KERNEL_ADDRESS);
+		if (i == VP_IDX1(pmap_maxkvaddr - 1)) {
+			ub_idx2 = VP_IDX2(pmap_maxkvaddr - 1);
 		} else {
-			ub_idx2 = VP_IDX2_CNT-1;
+			ub_idx2 = VP_IDX2_CNT - 1;
 		}
 		for (j = lb_idx2; j <= ub_idx2; j++) {
 			/* access must be performed physical */
 			vp3 = (void *)((long)vp2->vp[j] + kvo);
 
-			for (k = 0; k <= VP_IDX3_CNT-1; k++) {
+			for (k = 0; k <= VP_IDX3_CNT - 1; k++) {
 				pted_allocated++;
 				pa = pmap_steal_avail(sizeof(struct pte_desc),
 				    4, &va);
@@ -1699,11 +1815,35 @@ pmap_postinit(void)
 {
 	extern char trampoline_vectors[];
 	paddr_t pa;
+	vaddr_t minaddr, maxaddr;
+	u_long npteds, npages;
 
 	memset(pmap_tramp.pm_vp.l1, 0, sizeof(struct pmapvp1));
 	pmap_extract(pmap_kernel(), (vaddr_t)trampoline_vectors, &pa);
 	pmap_enter(&pmap_tramp, (vaddr_t)trampoline_vectors, pa,
 	    PROT_READ | PROT_EXEC, PROT_READ | PROT_EXEC | PMAP_WIRED);
+
+	/*
+	 * Reserve enough virtual address space to grow the kernel
+	 * page tables.  We need a descriptor for each page as well as
+	 * an extra page for level 1/2/3 page tables for management.
+	 * To simplify the code, we always allocate full tables at
+	 * level 3, so take that into account.
+	 */
+	npteds = (VM_MAX_KERNEL_ADDRESS - pmap_maxkvaddr + 1) / PAGE_SIZE;
+	npteds = roundup(npteds, VP_IDX3_CNT);
+	npages = howmany(npteds, PAGE_SIZE / (sizeof(struct pte_desc)));
+	npages += 2 * howmany(npteds, VP_IDX3_CNT);
+	npages += 2 * howmany(npteds, VP_IDX3_CNT * VP_IDX2_CNT);
+	npages += 2 * howmany(npteds, VP_IDX3_CNT * VP_IDX2_CNT * VP_IDX1_CNT);
+
+	/*
+	 * Use an interrupt safe map such that we don't recurse into
+	 * uvm_map() to allocate map entries.
+	 */
+	minaddr = vm_map_min(kernel_map);
+	pmap_kvp_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+	    npages * PAGE_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 }
 
 void

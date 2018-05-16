@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.4 2017/10/01 17:05:50 naddy Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.5 2018/05/16 09:07:45 kettenis Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@
 #define	VM_MAXUSER_ADDRESS	((1ULL << USER_SPACE_BITS) - 0x8000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xffffff8000000000ULL)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xffffff804fffffffULL)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xffffff80ffffffffULL)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define	VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
