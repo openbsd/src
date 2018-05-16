@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.175 2017/10/12 09:14:16 mpi Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.176 2018/05/16 14:53:43 visa Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ struct ctlname {
 #define	KERN_STACKGAPRANDOM	50	/* int: stackgap_random */
 #define	KERN_SYSVIPC_INFO	51	/* struct: SysV sem/shm/msg info */
 #define KERN_ALLOWKMEM		52	/* int: allowkmem */
-/* was KERN_CRYPTODEVALLOWSOFT	53	*/
+#define KERN_WITNESSWATCH	53	/* int: witnesswatch */
 #define KERN_SPLASSERT		54	/* int: splassert */
 #define KERN_PROC_ARGS		55	/* node: proc args and env */
 #define	KERN_NFILES		56	/* int: number of open files */
@@ -240,7 +240,7 @@ struct ctlname {
 	{ "stackgap_random", CTLTYPE_INT }, \
 	{ "sysvipc_info", CTLTYPE_INT }, \
 	{ "allowkmem", CTLTYPE_INT }, \
-	{ "gap", 0 }, \
+	{ "witnesswatch", CTLTYPE_INT }, \
 	{ "splassert", CTLTYPE_INT }, \
 	{ "procargs", CTLTYPE_NODE }, \
 	{ "nfiles", CTLTYPE_INT }, \

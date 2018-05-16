@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.336 2018/05/08 14:15:30 mpi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.337 2018/05/16 14:53:43 visa Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -79,6 +79,7 @@
 #include <sys/sched.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/witness.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -650,6 +651,10 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		dnsjackport = port;
 		return 0;
 	}
+#ifdef WITNESS
+	case KERN_WITNESSWATCH:
+		return witness_sysctl_watch(oldp, oldlenp, newp, newlen);
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

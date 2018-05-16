@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.13 2018/05/09 03:43:45 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.14 2018/05/16 14:53:43 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -333,7 +333,7 @@ static void	witness_ddb_display_list(int(*prnt)(const char *fmt, ...),
 static void	witness_ddb_level_descendants(struct witness *parent, int l);
 static void	witness_ddb_list(struct proc *td);
 #endif
-static void	witness_debugger(int cond, const char *msg);
+static void	witness_debugger(int dump);
 static void	witness_free(struct witness *m);
 static struct witness	*witness_get(void);
 static uint32_t	witness_hash_djb2(const uint8_t *key, uint32_t size);
@@ -363,7 +363,11 @@ static void	witness_setflag(struct lock_object *lock, int flag, int set);
  * may be toggled.  However, witness cannot be reenabled once it is
  * completely disabled.
  */
-static int witness_watch = 1;
+#ifdef WITNESS_WATCH
+static int witness_watch = 3;
+#else
+static int witness_watch = 0;
+#endif
 
 #ifdef WITNESS_SKIPSPIN
 int	witness_skipspin = 1;
@@ -875,7 +879,7 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 			    fixup_filename(plock->li_file), plock->li_line);
 			db_printf(" 2nd %s @ %s:%d\n", lock->lo_name,
 			    fixup_filename(file), line);
-			witness_debugger(1, __func__);
+			witness_debugger(1);
 		} else
 			mtx_leave(&w_mtx);
 		goto out_splx;
@@ -1035,7 +1039,7 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 				    lock->lo_name, w->w_type->lt_name,
 				    fixup_filename(file), line);
 			}
-			witness_debugger(1, __func__);
+			witness_debugger(0);
 			goto out_splx;
 		}
 	}
@@ -1404,10 +1408,12 @@ witness_warn(int flags, struct lock_object *lock, const char *fmt, ...)
 		    (flags & WARN_SLEEPOK) != 0 ?  "non-sleepable " : "");
 		n += witness_list_locks(&lock_list, printf);
 	}
-	if (flags & WARN_PANIC && n)
-		panic("%s", __func__);
-	else
-		witness_debugger(n, __func__);
+	if (n > 0) {
+		if (flags & WARN_PANIC)
+			panic("%s", __func__);
+		else
+			witness_debugger(1);
+	}
 	return (n);
 }
 
@@ -2460,10 +2466,43 @@ witness_increment_graph_generation(void)
 }
 
 static void
-witness_debugger(int cond, const char *msg)
+witness_debugger(int dump)
 {
-	if (!cond)
-		return;
+	switch (witness_watch) {
+	case 1:
+		break;
+	case 2:
+		if (dump)
+			db_stack_dump();
+		break;
+	case 3:
+		if (dump)
+			db_stack_dump();
+		db_enter();
+		break;
+	default:
+		panic("witness: locking error");
+	}
+}
 
-	db_enter();
+int
+witness_sysctl_watch(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	int error;
+	int value;
+
+	value = witness_watch;
+	error = sysctl_int(oldp, oldlenp, newp, newlen, &value);
+	if (error == 0 && newp != NULL) {
+		if (value >= -1 && value <= 3) {
+			mtx_enter(&w_mtx);
+			if (value < 0 || witness_watch >= 0)
+				witness_watch = value;
+			else
+				error = EINVAL;
+			mtx_leave(&w_mtx);
+		} else
+			error = EINVAL;
+	}
+	return (error);
 }
