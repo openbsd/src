@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.51 2018/02/27 22:46:53 espie Exp $
+# $OpenBSD: State.pm,v 1.52 2018/05/16 10:02:40 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -356,12 +356,13 @@ sub find_window_size
 	my $self = shift;
 	require Term::ReadKey;
 	my @l = Term::ReadKey::GetTermSizeGWINSZ(\*STDOUT);
-	if (@l != 4) {
-		$self->{width} = 80;
-		$self->{height} = 24;
-	} else {
-		$self->{width} = $l[0];
-		$self->{height} = $l[1];
+	# default to sane values
+	$self->{width} = 80;
+	$self->{height} = 24;
+	if (@l == 4) {
+		# only use what we got if sane
+		$self->{width} = $l[0] if $l[0] > 0;
+		$self->{height} = $l[1] if $l[1] > 0;
 		$SIG{'WINCH'} = sub {
 			$self->find_window_size;
 		};
