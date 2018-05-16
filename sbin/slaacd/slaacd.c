@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.18 2018/05/15 16:34:18 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.19 2018/05/16 11:39:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -284,7 +284,8 @@ main(int argc, char *argv[])
 	if ((ioctl_sock = socket(AF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, 0)) < 0)
 		fatal("socket");
 
-	if ((icmp6sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
+	if ((icmp6sock = socket(AF_INET6, SOCK_RAW | SOCK_CLOEXEC,
+	    IPPROTO_ICMPV6)) < 0)
 		fatal("ICMPv6 socket");
 
 	if (setsockopt(icmp6sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
@@ -302,7 +303,8 @@ main(int argc, char *argv[])
 	    sizeof(filt)) == -1)
 		fatal("ICMP6_FILTER");
 
-	if ((frontend_routesock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
+	if ((frontend_routesock = socket(PF_ROUTE, SOCK_RAW | SOCK_CLOEXEC, 0))
+	    < 0)
 		fatal("route socket");
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_NEWADDR) |

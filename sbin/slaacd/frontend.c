@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.14 2018/04/26 17:07:31 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.15 2018/05/16 11:39:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -141,7 +141,7 @@ frontend(int debug, int verbose)
 	setproctitle("%s", log_procnames[slaacd_process]);
 	log_procinit(log_procnames[slaacd_process]);
 
-	if ((ioctlsock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+	if ((ioctlsock = socket(AF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, 0)) < 0)
 		fatal("socket");
 
 	if (setgroups(1, &pw->pw_gid) ||
