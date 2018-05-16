@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.178 2018/05/14 07:33:58 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.179 2018/05/16 13:19:00 reyk Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2013,7 +2013,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	/* XXX Should actually ask the crypto layer what's supported */
 	for (j = 0; j < sa_prop->sadb_prop_num; j++) {
 		sadb_comb->sadb_comb_flags = 0;
-
+#ifdef IPSEC
 		if (ipsec_require_pfs)
 			sadb_comb->sadb_comb_flags |= SADB_SAFLAGS_PFS;
 
@@ -2104,6 +2104,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 
 		sadb_comb->sadb_comb_soft_usetime = ipsec_soft_first_use;
 		sadb_comb->sadb_comb_hard_usetime = ipsec_exp_first_use;
+#endif
 		sadb_comb++;
 	}
 

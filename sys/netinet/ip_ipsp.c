@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.229 2017/11/06 15:12:43 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.230 2018/05/16 13:19:00 reyk Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -279,6 +279,7 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 		tdbp->tdb_satype = SADB_SATYPE_UNSPEC;
 		puttdb(tdbp);
 
+#ifdef IPSEC
 		/* Setup a "silent" expiration (since TDBF_INVALID's set). */
 		if (ipsec_keep_invalid > 0) {
 			tdbp->tdb_flags |= TDBF_TIMER;
@@ -286,6 +287,7 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 			timeout_add_sec(&tdbp->tdb_timer_tmo,
 			    ipsec_keep_invalid);
 		}
+#endif
 
 		return spi;
 	}
