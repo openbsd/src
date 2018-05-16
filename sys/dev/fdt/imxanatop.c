@@ -1,4 +1,4 @@
-/* $OpenBSD: imxanatop.c,v 1.1 2018/03/30 20:38:27 patrick Exp $ */
+/* $OpenBSD: imxanatop.c,v 1.2 2018/05/16 13:42:35 patrick Exp $ */
 /*
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,16 +28,82 @@
 #include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
+#include <dev/fdt/imxanatopvar.h>
+
+#define ANALOG_PLL_ARM				0x0000
+#define ANALOG_PLL_ARM_SET			0x0004
+#define ANALOG_PLL_ARM_CLR			0x0008
+#define  ANALOG_PLL_ARM_DIV_SELECT_MASK			0x7f
+#define  ANALOG_PLL_ARM_BYPASS				(1 << 16)
+#define ANALOG_PLL_USB1				0x0010
+#define ANALOG_PLL_USB1_SET			0x0014
+#define ANALOG_PLL_USB1_CLR			0x0018
+#define  ANALOG_PLL_USB1_DIV_SELECT_MASK		0x1
+#define  ANALOG_PLL_USB1_EN_USB_CLKS			(1 << 6)
+#define  ANALOG_PLL_USB1_POWER				(1 << 12)
+#define  ANALOG_PLL_USB1_ENABLE				(1 << 13)
+#define  ANALOG_PLL_USB1_BYPASS				(1 << 16)
+#define  ANALOG_PLL_USB1_LOCK				(1U << 31)
+#define ANALOG_PLL_USB2				0x0020
+#define ANALOG_PLL_USB2_SET			0x0024
+#define ANALOG_PLL_USB2_CLR			0x0028
+#define  ANALOG_PLL_USB2_DIV_SELECT_MASK		0x1
+#define  ANALOG_PLL_USB2_EN_USB_CLKS			(1 << 6)
+#define  ANALOG_PLL_USB2_POWER				(1 << 12)
+#define  ANALOG_PLL_USB2_ENABLE				(1 << 13)
+#define  ANALOG_PLL_USB2_BYPASS				(1 << 16)
+#define  ANALOG_PLL_USB2_LOCK				(1U << 31)
+#define ANALOG_PLL_SYS				0x0030
+#define  ANALOG_PLL_SYS_DIV_SELECT_MASK			0x1
+#define ANALOG_PLL_ENET				0x00e0
+#define ANALOG_PLL_ENET_SET			0x00e4
+#define ANALOG_PLL_ENET_CLR			0x00e8
+#define  ANALOG_PLL_ENET_DIV_125M			(1 << 11)
+#define  ANALOG_PLL_ENET_POWERDOWN			(1 << 12)
+#define  ANALOG_PLL_ENET_ENABLE				(1 << 13)
+#define  ANALOG_PLL_ENET_BYPASS				(1 << 16)
+#define  ANALOG_PLL_ENET_125M_PCIE			(1 << 19)
+#define  ANALOG_PLL_ENET_100M_SATA			(1 << 20)
+#define  ANALOG_PLL_ENET_LOCK				(1U << 31)
+#define ANALOG_PFD_480				0x00f0
+#define ANALOG_PFD_480_SET			0x00f4
+#define ANALOG_PFD_480_CLR			0x00f8
+#define  ANALOG_PFD_480_PFDx_FRAC(x, y)			(((x) >> ((y) << 3)) & 0x3f)
+#define ANALOG_PFD_528				0x0100
+#define ANALOG_PFD_528_SET			0x0104
+#define ANALOG_PFD_528_CLR			0x0108
+#define  ANALOG_PFD_528_PFDx_FRAC(x, y)			(((x) >> ((y) << 3)) & 0x3f)
+#define ANALOG_USB1_CHRG_DETECT			0x01b0
+#define ANALOG_USB1_CHRG_DETECT_SET		0x01b4
+#define ANALOG_USB1_CHRG_DETECT_CLR		0x01b8
+#define  ANALOG_USB1_CHRG_DETECT_CHK_CHRG_B		(1 << 19)
+#define  ANALOG_USB1_CHRG_DETECT_EN_B			(1 << 20)
+#define ANALOG_USB2_CHRG_DETECT			0x0210
+#define ANALOG_USB2_CHRG_DETECT_SET		0x0214
+#define ANALOG_USB2_CHRG_DETECT_CLR		0x0218
+#define  ANALOG_USB2_CHRG_DETECT_CHK_CHRG_B		(1 << 19)
+#define  ANALOG_USB2_CHRG_DETECT_EN_B			(1 << 20)
+#define ANALOG_DIGPROG				0x0260
+#define  ANALOG_DIGPROG_MINOR_MASK			0xff
+
+#define HCLK_FREQ				24000000
+
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
 #define HWRITE4(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+#define HSET4(sc, reg, bits)						\
+	HWRITE4((sc), (reg), HREAD4((sc), (reg)) | (bits))
+#define HCLR4(sc, reg, bits)						\
+	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
 struct imxanatop_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 };
+
+struct imxanatop_softc *imxanatop_sc;
 
 struct imxanatop_regulator {
 	struct imxanatop_softc *ir_sc;
@@ -70,6 +136,15 @@ struct cfdriver imxanatop_cd = {
 void	imxanatop_attach_regulator(struct imxanatop_softc *, int);
 uint32_t imxanatop_get_voltage(void *);
 int	imxanatop_set_voltage(void *, uint32_t);
+
+uint32_t imxanatop_decode_pll(enum imxanatop_clocks, uint32_t);
+uint32_t imxanatop_get_pll2_pfd(unsigned int);
+uint32_t imxanatop_get_pll3_pfd(unsigned int);
+void	imxanatop_enable_pll_usb1(void);
+void	imxanatop_enable_pll_usb2(void);
+void	imxanatop_enable_pll_enet(void);
+void	imxanatop_enable_enet(void);
+void	imxanatop_enable_sata(void);
 
 int
 imxanatop_match(struct device *parent, void *match, void *aux)
@@ -110,6 +185,8 @@ imxanatop_attach(struct device *parent, struct device *self, void *aux)
 	for (node = OF_child(faa->fa_node); node; node = OF_peer(node))
 		if (OF_is_compatible(node, "fsl,anatop-regulator"))
 			imxanatop_attach_regulator(sc, node);
+
+	imxanatop_sc = sc;
 }
 
 void
@@ -184,4 +261,119 @@ imxanatop_set_voltage(void *cookie, uint32_t voltage)
 	}
 
 	return 0;
+}
+
+uint32_t
+imxanatop_decode_pll(enum imxanatop_clocks pll, uint32_t freq)
+{
+	struct imxanatop_softc *sc = imxanatop_sc;
+	uint32_t div;
+
+	KASSERT(sc != NULL);
+
+	switch (pll) {
+	case ARM_PLL1:
+		if (HREAD4(sc, ANALOG_PLL_ARM)
+		    & ANALOG_PLL_ARM_BYPASS)
+			return freq;
+		div = HREAD4(sc, ANALOG_PLL_ARM)
+		    & ANALOG_PLL_ARM_DIV_SELECT_MASK;
+		return (freq * div) / 2;
+	case SYS_PLL2:
+		div = HREAD4(sc, ANALOG_PLL_SYS)
+		    & ANALOG_PLL_SYS_DIV_SELECT_MASK;
+		return freq * (20 + (div << 1));
+	case USB1_PLL3:
+		div = HREAD4(sc, ANALOG_PLL_USB2)
+		    & ANALOG_PLL_USB2_DIV_SELECT_MASK;
+		return freq * (20 + (div << 1));
+	default:
+		return 0;
+	}
+}
+
+uint32_t
+imxanatop_get_pll2_pfd(unsigned int pfd)
+{
+	struct imxanatop_softc *sc = imxanatop_sc;
+	KASSERT(sc != NULL);
+
+	return imxanatop_decode_pll(SYS_PLL2, HCLK_FREQ) * 18ULL
+	    / ANALOG_PFD_528_PFDx_FRAC(HREAD4(sc, ANALOG_PFD_528), pfd);
+}
+
+uint32_t
+imxanatop_get_pll3_pfd(unsigned int pfd)
+{
+	struct imxanatop_softc *sc = imxanatop_sc;
+	KASSERT(sc != NULL);
+
+	return imxanatop_decode_pll(USB1_PLL3, HCLK_FREQ) * 18ULL
+	    / ANALOG_PFD_480_PFDx_FRAC(HREAD4(sc, ANALOG_PFD_480), pfd);
+}
+
+void
+imxanatop_enable_pll_enet(void)
+{
+	struct imxanatop_softc *sc = imxanatop_sc;
+	KASSERT(sc != NULL);
+
+	if (HREAD4(sc, ANALOG_PLL_ENET) & ANALOG_PLL_ENET_ENABLE)
+		return;
+
+	HCLR4(sc, ANALOG_PLL_ENET, ANALOG_PLL_ENET_POWERDOWN);
+
+	HSET4(sc, ANALOG_PLL_ENET, ANALOG_PLL_ENET_ENABLE);
+
+	while(!(HREAD4(sc, ANALOG_PLL_ENET) & ANALOG_PLL_ENET_LOCK));
+
+	HCLR4(sc, ANALOG_PLL_ENET, ANALOG_PLL_ENET_BYPASS);
+}
+
+void
+imxanatop_enable_enet(void)
+{
+	struct imxanatop_softc *sc = imxanatop_sc;
+	KASSERT(sc != NULL);
+
+	imxanatop_enable_pll_enet();
+	HWRITE4(sc, ANALOG_PLL_ENET_SET, ANALOG_PLL_ENET_DIV_125M);
+}
+
+void
+imxanatop_enable_sata(void)
+{
+	struct imxanatop_softc *sc = imxanatop_sc;
+	KASSERT(sc != NULL);
+
+	imxanatop_enable_pll_enet();
+	HWRITE4(sc, ANALOG_PLL_ENET_SET, ANALOG_PLL_ENET_100M_SATA);
+}
+
+void
+imxanatop_enable_pll_usb1(void)
+{
+	struct imxanatop_softc *sc = imxanatop_sc;
+	KASSERT(sc != NULL);
+
+	HWRITE4(sc, ANALOG_PLL_USB1_CLR, ANALOG_PLL_USB1_BYPASS);
+
+	HWRITE4(sc, ANALOG_PLL_USB1_SET,
+	      ANALOG_PLL_USB1_ENABLE
+	    | ANALOG_PLL_USB1_POWER
+	    | ANALOG_PLL_USB1_EN_USB_CLKS);
+}
+
+void
+imxanatop_enable_pll_usb2(void)
+{
+	struct imxanatop_softc *sc = imxanatop_sc;
+	KASSERT(sc != NULL);
+
+	HWRITE4(sc, ANALOG_PLL_USB2_CLR, ANALOG_PLL_USB2_BYPASS);
+
+	HWRITE4(sc, ANALOG_PLL_USB2_SET,
+	      ANALOG_PLL_USB2_ENABLE
+	    | ANALOG_PLL_USB2_POWER
+	    | ANALOG_PLL_USB2_EN_USB_CLKS);
 }

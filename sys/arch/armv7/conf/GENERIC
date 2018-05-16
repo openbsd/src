@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.106 2018/01/06 13:05:20 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.107 2018/05/16 13:42:35 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -41,7 +41,7 @@ armliicc*	at cortex?
 # iMX
 imxccm*		at fdt? early 1		# clock control module
 imxiomuxc*	at fdt? early 1		# iomux controller
-imxanatop*	at fdt?			# anatop controller
+imxanatop*	at fdt? early 1		# anatop controller
 imxgpc*		at fdt?			# power controller
 imxdog*		at fdt?			# watchdog timer
 imxtemp*	at fdt?			# temperature monitor

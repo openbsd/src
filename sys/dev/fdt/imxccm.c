@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.1 2018/04/02 16:47:39 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.2 2018/05/16 13:42:35 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -32,6 +32,8 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
+
+#include <dev/fdt/imxanatopvar.h>
 
 /* registers */
 #define CCM_CCR		0x00
@@ -69,35 +71,6 @@
 #define CCM_CCGR7	0x84
 #define CCM_CMEOR	0x88
 
-/* ANALOG */
-#define CCM_ANALOG_PLL_ARM			0x4000
-#define CCM_ANALOG_PLL_ARM_SET			0x4004
-#define CCM_ANALOG_PLL_ARM_CLR			0x4008
-#define CCM_ANALOG_PLL_USB1			0x4010
-#define CCM_ANALOG_PLL_USB1_SET			0x4014
-#define CCM_ANALOG_PLL_USB1_CLR			0x4018
-#define CCM_ANALOG_PLL_USB2			0x4020
-#define CCM_ANALOG_PLL_USB2_SET			0x4024
-#define CCM_ANALOG_PLL_USB2_CLR			0x4028
-#define CCM_ANALOG_PLL_SYS			0x4030
-#define CCM_ANALOG_USB1_CHRG_DETECT		0x41b0
-#define CCM_ANALOG_USB1_CHRG_DETECT_SET		0x41b4
-#define CCM_ANALOG_USB1_CHRG_DETECT_CLR		0x41b8
-#define CCM_ANALOG_USB2_CHRG_DETECT		0x4210
-#define CCM_ANALOG_USB2_CHRG_DETECT_SET		0x4214
-#define CCM_ANALOG_USB2_CHRG_DETECT_CLR		0x4218
-#define CCM_ANALOG_DIGPROG			0x4260
-#define CCM_ANALOG_PLL_ENET			0x40e0
-#define CCM_ANALOG_PLL_ENET_SET			0x40e4
-#define CCM_ANALOG_PLL_ENET_CLR			0x40e8
-#define CCM_ANALOG_PFD_480			0x40f0
-#define CCM_ANALOG_PFD_480_SET			0x40f4
-#define CCM_ANALOG_PFD_480_CLR			0x40f8
-#define CCM_ANALOG_PFD_528			0x4100
-#define CCM_ANALOG_PFD_528_SET			0x4104
-#define CCM_ANALOG_PFD_528_CLR			0x4108
-#define CCM_PMU_MISC1				0x4160
-
 /* bits and bytes */
 #define CCM_CCSR_PLL3_SW_CLK_SEL		(1 << 0)
 #define CCM_CCSR_PLL2_SW_CLK_SEL		(1 << 1)
@@ -122,39 +95,6 @@
 #define CCM_CCGR5_100M_SATA			(3 << 4)
 #define CCM_CSCMR1_PERCLK_CLK_PODF_MASK		0x1f
 #define CCM_CSCMR1_PERCLK_CLK_SEL_MASK		(1 << 6)
-#define CCM_ANALOG_PLL_ARM_DIV_SELECT_MASK	0x7f
-#define CCM_ANALOG_PLL_ARM_BYPASS		(1 << 16)
-#define CCM_ANALOG_PLL_USB1_DIV_SELECT_MASK	0x1
-#define CCM_ANALOG_PLL_USB1_EN_USB_CLKS		(1 << 6)
-#define CCM_ANALOG_PLL_USB1_POWER		(1 << 12)
-#define CCM_ANALOG_PLL_USB1_ENABLE		(1 << 13)
-#define CCM_ANALOG_PLL_USB1_BYPASS		(1 << 16)
-#define CCM_ANALOG_PLL_USB1_LOCK		(1 << 31)
-#define CCM_ANALOG_PLL_USB2_DIV_SELECT_MASK	0x1
-#define CCM_ANALOG_PLL_USB2_EN_USB_CLKS		(1 << 6)
-#define CCM_ANALOG_PLL_USB2_POWER		(1 << 12)
-#define CCM_ANALOG_PLL_USB2_ENABLE		(1 << 13)
-#define CCM_ANALOG_PLL_USB2_BYPASS		(1 << 16)
-#define CCM_ANALOG_PLL_USB2_LOCK		(1U << 31)
-#define CCM_ANALOG_PLL_SYS_DIV_SELECT_MASK	0x1
-#define CCM_ANALOG_USB1_CHRG_DETECT_CHK_CHRG_B	(1 << 19)
-#define CCM_ANALOG_USB1_CHRG_DETECT_EN_B	(1 << 20)
-#define CCM_ANALOG_USB2_CHRG_DETECT_CHK_CHRG_B	(1 << 19)
-#define CCM_ANALOG_USB2_CHRG_DETECT_EN_B	(1 << 20)
-#define CCM_ANALOG_DIGPROG_MINOR_MASK		0xff
-#define CCM_ANALOG_PLL_ENET_DIV_125M		(1 << 11)
-#define CCM_ANALOG_PLL_ENET_POWERDOWN		(1 << 12)
-#define CCM_ANALOG_PLL_ENET_ENABLE		(1 << 13)
-#define CCM_ANALOG_PLL_ENET_BYPASS		(1 << 16)
-#define CCM_ANALOG_PLL_ENET_125M_PCIE		(1 << 19)
-#define CCM_ANALOG_PLL_ENET_100M_SATA		(1 << 20)
-#define CCM_ANALOG_PLL_ENET_LOCK		(1U << 31)
-#define CCM_ANALOG_PFD_480_PFDx_FRAC(x, y)	(((x) >> ((y) << 3)) & 0x3f)
-#define CCM_ANALOG_PFD_528_PFDx_FRAC(x, y)	(((x) >> ((y) << 3)) & 0x3f)
-#define CCM_PMU_MISC1_LVDSCLK1_CLK_SEL_SATA	(0xB << 0)
-#define CCM_PMU_MISC1_LVDSCLK1_CLK_SEL_MASK	(0x1f << 0)
-#define CCM_PMU_MISC1_LVDSCLK1_OBEN		(1 << 10)
-#define CCM_PMU_MISC1_LVDSCLK1_IBEN		(1 << 12)
 
 #define HCLK_FREQ				24000000
 #define PLL3_80M				80000000
@@ -187,32 +127,6 @@ struct imxccm_softc {
 	struct clock_device	sc_cd;
 };
 
-enum clocks {
-	/* OSC */
-	OSC,		/* 24 MHz OSC */
-
-	/* PLLs */
-	ARM_PLL1,	/* ARM core PLL */
-	SYS_PLL2,	/* System PLL: 528 MHz */
-	USB1_PLL3,	/* OTG USB PLL: 480 MHz */
-	USB2_PLL,	/* Host USB PLL: 480 MHz */
-	AUD_PLL4,	/* Audio PLL */
-	VID_PLL5,	/* Video PLL */
-	ENET_PLL6,	/* ENET PLL */
-	MLB_PLL,	/* MLB PLL */
-
-	/* SYS_PLL2 PFDs */
-	SYS_PLL2_PFD0,	/* 352 MHz */
-	SYS_PLL2_PFD1,	/* 594 MHz */
-	SYS_PLL2_PFD2,	/* 396 MHz */
-
-	/* USB1_PLL3 PFDs */
-	USB1_PLL3_PFD0,	/* 720 MHz */
-	USB1_PLL3_PFD1,	/* 540 MHz */
-	USB1_PLL3_PFD2,	/* 508.2 MHz */
-	USB1_PLL3_PFD3,	/* 454.7 MHz */
-};
-
 int	imxccm_match(struct device *, void *, void *);
 void	imxccm_attach(struct device *parent, struct device *self, void *args);
 
@@ -224,11 +138,8 @@ struct cfdriver imxccm_cd = {
 	NULL, "imxccm", DV_DULL
 };
 
-uint32_t imxccm_decode_pll(struct imxccm_softc *, enum clocks, uint32_t);
-uint32_t imxccm_get_pll2_pfd(struct imxccm_softc *, unsigned int);
-uint32_t imxccm_get_pll3_pfd(struct imxccm_softc *, unsigned int);
 uint32_t imxccm_get_armclk(struct imxccm_softc *);
-void imxccm_armclk_set_parent(struct imxccm_softc *, enum clocks);
+void imxccm_armclk_set_parent(struct imxccm_softc *, enum imxanatop_clocks);
 uint32_t imxccm_get_usdhx(struct imxccm_softc *, int x);
 uint32_t imxccm_get_periphclk(struct imxccm_softc *);
 uint32_t imxccm_get_ahbclk(struct imxccm_softc *);
@@ -237,11 +148,6 @@ uint32_t imxccm_get_ipg_perclk(struct imxccm_softc *);
 uint32_t imxccm_get_uartclk(struct imxccm_softc *);
 void imxccm_enable(void *, uint32_t *, int);
 uint32_t imxccm_get_frequency(void *, uint32_t *);
-void imxccm_enable_pll_usb1(struct imxccm_softc *);
-void imxccm_enable_pll_usb2(struct imxccm_softc *);
-void imxccm_enable_pll_enet(struct imxccm_softc *);
-void imxccm_enable_enet(struct imxccm_softc *);
-void imxccm_enable_sata(struct imxccm_softc *);
 
 int
 imxccm_match(struct device *parent, void *match, void *aux)
@@ -265,7 +171,7 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
-	    faa->fa_reg[0].size + 0x1000, 0, &sc->sc_ioh))
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
 	if (OF_is_compatible(sc->sc_node, "fsl,imx6ul-ccm")) {
@@ -275,10 +181,6 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_gates = imx6_gates;
 		sc->sc_ngates = nitems(imx6_gates);
 	}
-
-	printf(": imx6 rev 1.%d CPU freq: %d MHz",
-	    HREAD4(sc, CCM_ANALOG_DIGPROG) & CCM_ANALOG_DIGPROG_MINOR_MASK,
-	    imxccm_get_armclk(sc) / 1000000);
 
 	printf("\n");
 
@@ -290,60 +192,20 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 }
 
 uint32_t
-imxccm_decode_pll(struct imxccm_softc *sc, enum clocks pll, uint32_t freq)
-{
-	uint32_t div;
-
-	switch (pll) {
-	case ARM_PLL1:
-		if (HREAD4(sc, CCM_ANALOG_PLL_ARM)
-		    & CCM_ANALOG_PLL_ARM_BYPASS)
-			return freq;
-		div = HREAD4(sc, CCM_ANALOG_PLL_ARM)
-		    & CCM_ANALOG_PLL_ARM_DIV_SELECT_MASK;
-		return (freq * div) / 2;
-	case SYS_PLL2:
-		div = HREAD4(sc, CCM_ANALOG_PLL_SYS)
-		    & CCM_ANALOG_PLL_SYS_DIV_SELECT_MASK;
-		return freq * (20 + (div << 1));
-	case USB1_PLL3:
-		div = HREAD4(sc, CCM_ANALOG_PLL_USB2)
-		    & CCM_ANALOG_PLL_USB2_DIV_SELECT_MASK;
-		return freq * (20 + (div << 1));
-	default:
-		return 0;
-	}
-}
-
-uint32_t
-imxccm_get_pll2_pfd(struct imxccm_softc *sc, unsigned int pfd)
-{
-	return imxccm_decode_pll(sc, SYS_PLL2, HCLK_FREQ) * 18ULL
-	    / CCM_ANALOG_PFD_528_PFDx_FRAC(HREAD4(sc, CCM_ANALOG_PFD_528), pfd);
-}
-
-uint32_t
-imxccm_get_pll3_pfd(struct imxccm_softc *sc, unsigned int pfd)
-{
-	return imxccm_decode_pll(sc, USB1_PLL3, HCLK_FREQ) * 18ULL
-	    / CCM_ANALOG_PFD_480_PFDx_FRAC(HREAD4(sc, CCM_ANALOG_PFD_480), pfd);
-}
-
-uint32_t
 imxccm_get_armclk(struct imxccm_softc *sc)
 {
 	uint32_t ccsr = HREAD4(sc, CCM_CCSR);
 
 	if (!(ccsr & CCM_CCSR_PLL1_SW_CLK_SEL))
-		return imxccm_decode_pll(sc, ARM_PLL1, HCLK_FREQ);
+		return imxanatop_decode_pll(ARM_PLL1, HCLK_FREQ);
 	else if (ccsr & CCM_CCSR_STEP_SEL)
-		return imxccm_get_pll2_pfd(sc, 2);
+		return imxanatop_get_pll2_pfd(2);
 	else
 		return HCLK_FREQ;
 }
 
 void
-imxccm_armclk_set_parent(struct imxccm_softc *sc, enum clocks clock)
+imxccm_armclk_set_parent(struct imxccm_softc *sc, enum imxanatop_clocks clock)
 {
 	switch (clock)
 	{
@@ -384,9 +246,9 @@ imxccm_get_usdhx(struct imxccm_softc *sc, int x)
 		podf = ((cscdr1 >> (10 + 3*x)) & CCM_CSCDR1_USDHCx_PODF_MASK);
 
 	if (cscmr1 & (1 << CCM_CSCDR1_USDHCx_CLK_SEL_SHIFT(x)))
-		clkroot = imxccm_get_pll2_pfd(sc, 0); // 352 MHz
+		clkroot = imxanatop_get_pll2_pfd(0); // 352 MHz
 	else
-		clkroot = imxccm_get_pll2_pfd(sc, 2); // 396 MHz
+		clkroot = imxanatop_get_pll2_pfd(2); // 396 MHz
 
 	return clkroot / (podf + 1);
 }
@@ -408,7 +270,7 @@ imxccm_get_periphclk(struct imxccm_softc *sc)
 		switch((HREAD4(sc, CCM_CBCMR)
 		    >> CCM_CBCMR_PERIPH_CLK2_SEL_SHIFT) & CCM_CBCMR_PERIPH_CLK2_SEL_MASK) {
 		case 0:
-			return imxccm_decode_pll(sc, USB1_PLL3, HCLK_FREQ);
+			return imxanatop_decode_pll(USB1_PLL3, HCLK_FREQ);
 		case 1:
 		case 2:
 			return HCLK_FREQ;
@@ -421,13 +283,13 @@ imxccm_get_periphclk(struct imxccm_softc *sc)
 		    >> CCM_CBCMR_PRE_PERIPH_CLK_SEL_SHIFT) & CCM_CBCMR_PRE_PERIPH_CLK_SEL_MASK) {
 		default:
 		case 0:
-			return imxccm_decode_pll(sc, SYS_PLL2, HCLK_FREQ);
+			return imxanatop_decode_pll(SYS_PLL2, HCLK_FREQ);
 		case 1:
-			return imxccm_get_pll2_pfd(sc, 2); // 396 MHz
+			return imxanatop_get_pll2_pfd(2); // 396 MHz
 		case 2:
-			return imxccm_get_pll2_pfd(sc, 0); // 352 MHz
+			return imxanatop_get_pll2_pfd(0); // 352 MHz
 		case 3:
-			return imxccm_get_pll2_pfd(sc, 2) / 2; // 198 MHz
+			return imxanatop_get_pll2_pfd(2) / 2; // 198 MHz
 		}
 	}
 }
@@ -483,16 +345,16 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 	if (sc->sc_gates == imx6_gates) {
 		switch (idx) {
 		case IMX6_CLK_USBPHY1:
-			imxccm_enable_pll_usb1(sc);
+			imxanatop_enable_pll_usb1();
 			return;
 		case IMX6_CLK_USBPHY2:
-			imxccm_enable_pll_usb2(sc);
+			imxanatop_enable_pll_usb2();
 			return;
 		case IMX6_CLK_SATA_REF_100:
-			imxccm_enable_sata(sc);
+			imxanatop_enable_sata();
 			return;
 		case IMX6_CLK_ENET_REF:
-			imxccm_enable_enet(sc);
+			imxanatop_enable_enet();
 			return;
 		default:
 			break;
@@ -567,53 +429,3 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 	return 0;
 }
 
-void
-imxccm_enable_pll_enet(struct imxccm_softc *sc)
-{
-	if (HREAD4(sc, CCM_ANALOG_PLL_ENET) & CCM_ANALOG_PLL_ENET_ENABLE)
-		return;
-
-	HCLR4(sc, CCM_ANALOG_PLL_ENET, CCM_ANALOG_PLL_ENET_POWERDOWN);
-
-	HSET4(sc, CCM_ANALOG_PLL_ENET, CCM_ANALOG_PLL_ENET_ENABLE);
-
-	while(!(HREAD4(sc, CCM_ANALOG_PLL_ENET) & CCM_ANALOG_PLL_ENET_LOCK));
-
-	HCLR4(sc, CCM_ANALOG_PLL_ENET, CCM_ANALOG_PLL_ENET_BYPASS);
-}
-
-void
-imxccm_enable_enet(struct imxccm_softc *sc)
-{
-	imxccm_enable_pll_enet(sc);
-	HWRITE4(sc, CCM_ANALOG_PLL_ENET_SET, CCM_ANALOG_PLL_ENET_DIV_125M);
-}
-
-void
-imxccm_enable_sata(struct imxccm_softc *sc)
-{
-	imxccm_enable_pll_enet(sc);
-	HWRITE4(sc, CCM_ANALOG_PLL_ENET_SET, CCM_ANALOG_PLL_ENET_100M_SATA);
-}
-
-void
-imxccm_enable_pll_usb1(struct imxccm_softc *sc)
-{
-	HWRITE4(sc, CCM_ANALOG_PLL_USB1_CLR, CCM_ANALOG_PLL_USB1_BYPASS);
-
-	HWRITE4(sc, CCM_ANALOG_PLL_USB1_SET,
-	      CCM_ANALOG_PLL_USB1_ENABLE
-	    | CCM_ANALOG_PLL_USB1_POWER
-	    | CCM_ANALOG_PLL_USB1_EN_USB_CLKS);
-}
-
-void
-imxccm_enable_pll_usb2(struct imxccm_softc *sc)
-{
-	HWRITE4(sc, CCM_ANALOG_PLL_USB2_CLR, CCM_ANALOG_PLL_USB2_BYPASS);
-
-	HWRITE4(sc, CCM_ANALOG_PLL_USB2_SET,
-	      CCM_ANALOG_PLL_USB2_ENABLE
-	    | CCM_ANALOG_PLL_USB2_POWER
-	    | CCM_ANALOG_PLL_USB2_EN_USB_CLKS);
-}
