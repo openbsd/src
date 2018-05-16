@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.20 2018/05/15 11:19:21 reyk Exp $ */
+/*	$OpenBSD: search.c,v 1.21 2018/05/16 10:08:47 reyk Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -437,8 +437,8 @@ conn_search(struct search *search)
 
 		/* Check if we have passed the size limit. */
 		if (rc == BT_SUCCESS && search->szlim > 0 &&
-		    search->nmatched >= search->szlim) {
-			log_debug("search %d/%lld has reached size limit (%lld)",
+		    search->nmatched > search->szlim) {
+			log_debug("search %d/%lld has exceeded size limit (%lld)",
 			    search->conn->fd, search->req->msgid,
 			    search->szlim);
 			reason = LDAP_SIZELIMIT_EXCEEDED;
@@ -449,8 +449,8 @@ conn_search(struct search *search)
 	/* Check if we have passed the time limit. */
 	now = time(0);
 	if (rc == 0 && search->tmlim > 0 &&
-	    search->started_at + search->tmlim <= now) {
-		log_debug("search %d/%lld has reached time limit (%lld)",
+	    search->started_at + search->tmlim < now) {
+		log_debug("search %d/%lld has exceeded time limit (%lld)",
 		    search->conn->fd, search->req->msgid,
 		    search->tmlim);
 		reason = LDAP_TIMELIMIT_EXCEEDED;
