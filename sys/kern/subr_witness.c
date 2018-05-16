@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.15 2018/05/16 14:55:44 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.16 2018/05/16 14:57:22 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -869,7 +869,7 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 		i = w->w_index;
 		if (!(lock->lo_flags & LO_DUPOK) && !(flags & LOP_DUPOK) &&
 		    !(w_rmatrix[i][i] & WITNESS_REVERSAL)) {
-		    w_rmatrix[i][i] |= WITNESS_REVERSAL;
+			w_rmatrix[i][i] |= WITNESS_REVERSAL;
 			w->w_reversed = 1;
 			mtx_leave(&w_mtx);
 			db_printf(
