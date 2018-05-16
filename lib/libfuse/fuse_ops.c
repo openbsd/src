@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.29 2018/05/15 11:57:32 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.30 2018/05/16 13:09:17 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -193,19 +193,8 @@ ifuse_ops_opendir(struct fuse *f, struct fusebuf *fbuf)
 		free(realname);
 	}
 
-	if (!fbuf->fb_err) {
+	if (!fbuf->fb_err)
 		fbuf->fb_io_fd = ffi.fh;
-
-		vn->fd = calloc(1, sizeof(*vn->fd));
-		if (vn->fd == NULL) {
-			fbuf->fb_err = -errno;
-			return (0);
-		}
-
-		vn->fd->filled = 0;
-		vn->fd->size = 0;
-		vn->fd->start = 0;
-	}
 
 	return (0);
 }
@@ -230,22 +219,24 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 	namelen = strnlen(name, MAXNAMLEN);
 	len = GENERIC_DIRSIZ(namelen);
 
+	/* buffer is full so ignore the remaining entries */
 	if (fd->full || (fbuf->fb_len + len > fd->size)) {
 		fd->full = 1;
 		return (0);
 	}
 
-	if (fd->start != 0 &&  fd->idx < fd->start) {
+	/* already returned these entries in a previous call so skip */
+	if (fd->start != 0 && fd->idx < fd->start) {
 		fd->idx += len;
 		return (0);
 	}
 
 	dir = (struct dirent *) &fbuf->fb_dat[fbuf->fb_len];
 
-	if (off)
-		fd->filled = 0;
-
-	/* TODO Add support for use_ino and readdir_ino */
+	/*
+	 * This always behaves as if readdir_ino option is set so getcwd(3)
+	 * works.
+	 */
 	v = get_vn_by_name_and_parent(f, (uint8_t *)name, fbuf->fb_ino);
 	if (v == NULL) {
 		if (strcmp(name, ".") == 0)
@@ -266,7 +257,6 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 	dir->d_namlen = strlen(dir->d_name);
 
 	fbuf->fb_len += len;
-	fd->start += len;
 	fd->idx += len;
 
 	return (0);
@@ -291,11 +281,11 @@ static int
 ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 {
 	struct fuse_file_info ffi;
+	struct fuse_dirhandle fd;
 	struct fuse_vnode *vn;
 	char *realname;
 	uint64_t offset;
 	uint32_t size;
-	uint32_t startsave;
 
 	DPRINTF("Opcode:\treaddir\n");
 	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
@@ -306,7 +296,6 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 	ffi.fh = fbuf->fb_io_fd;
 	offset = fbuf->fb_io_off;
 	size = fbuf->fb_io_len;
-	startsave = offset;
 
 	fbuf->fb_dat = calloc(1, size);
 
@@ -322,42 +311,35 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 		return (0);
 	}
 
-	if (!vn->fd->filled) {
-		vn->fd->filler = ifuse_fill_readdir;
-		vn->fd->buf = fbuf;
-		vn->fd->full = 0;
-		vn->fd->size = size;
-		vn->fd->off = offset;
-		vn->fd->idx = 0;
-		vn->fd->fuse = f;
-		vn->fd->start = offset;
-		startsave = vn->fd->start;
+	memset(&fd, 0, sizeof(fd));
+	fd.filler = ifuse_fill_readdir;
+	fd.buf = fbuf;
+	fd.full = 0;
+	fd.size = size;
+	fd.off = offset;
+	fd.idx = 0;
+	fd.fuse = f;
+	fd.start = offset;
 
-		realname = build_realname(f, vn->ino);
-		if (realname == NULL) {
-			fbuf->fb_err = -errno;
-			free(fbuf->fb_dat);
-			return (0);
-		}
-
-		if (f->op.readdir)
-			fbuf->fb_err = f->op.readdir(realname, vn->fd,
-			    ifuse_fill_readdir, offset, &ffi);
-		else if (f->op.getdir)
-			fbuf->fb_err = f->op.getdir(realname, vn->fd,
-			    ifuse_fill_getdir);
-		else
-			fbuf->fb_err = -ENOSYS;
-		free(realname);
+	realname = build_realname(f, vn->ino);
+	if (realname == NULL) {
+		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
+		return (0);
 	}
 
-	if (!vn->fd->full && vn->fd->start == startsave)
-		vn->fd->filled = 1;
+	if (f->op.readdir)
+		fbuf->fb_err = f->op.readdir(realname, &fd, ifuse_fill_readdir,
+		    offset, &ffi);
+	else if (f->op.getdir)
+		fbuf->fb_err = f->op.getdir(realname, &fd, ifuse_fill_getdir);
+	else
+		fbuf->fb_err = -ENOSYS;
+	free(realname);
 
-	if (fbuf->fb_err) {
+	if (fbuf->fb_err)
 		fbuf->fb_len = 0;
-		vn->fd->filled = 1;
-	} else if (vn->fd->full && fbuf->fb_len == 0)
+	else if (fd.full && fbuf->fb_len == 0)
 		fbuf->fb_err = -ENOBUFS;
 
 	if (fbuf->fb_len == 0)
@@ -397,9 +379,6 @@ ifuse_ops_releasedir(struct fuse *f, struct fusebuf *fbuf)
 		fbuf->fb_err = f->op.releasedir(realname, &ffi);
 		free(realname);
 	}
-
-	if (!fbuf->fb_err)
-		free(vn->fd);
 
 	return (0);
 }

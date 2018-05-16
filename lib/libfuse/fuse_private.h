@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.17 2017/12/18 11:41:41 helg Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.18 2018/05/16 13:09:17 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -29,7 +29,6 @@
 
 #include "fuse.h"
 
-struct fuse_dirhandle;
 struct fuse_args;
 
 struct fuse_vnode {
@@ -38,10 +37,20 @@ struct fuse_vnode {
 	unsigned int ref;
 
 	char path[NAME_MAX + 1];
-	struct fuse_dirhandle *fd;
 
 	SIMPLEQ_ENTRY(fuse_vnode) node; /* for dict */
 };
+
+typedef struct fuse_dirhandle {
+	struct fuse *fuse;
+	fuse_fill_dir_t filler;
+	void *buf;
+	int full;
+	uint32_t size;
+	uint32_t start;
+	uint32_t idx;
+	off_t off;
+} *fuse_dirh_t;
 
 SIMPLEQ_HEAD(fuse_vn_head, fuse_vnode);
 SPLAY_HEAD(dict, dictentry);
