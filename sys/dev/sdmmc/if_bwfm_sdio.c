@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.8 2018/05/16 08:20:00 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.9 2018/05/16 14:10:26 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -962,7 +962,7 @@ bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *sc)
 	for (;;) {
 		m = mq_dequeue(&sc->sc_txdata_queue);
 		if (m == NULL)
-			return;
+			break;
 
 		len = sizeof(*hwhdr) + sizeof(*swhdr) + sizeof(*bcdc)
 		    + m->m_pkthdr.len;
@@ -993,7 +993,8 @@ bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *sc)
 		m_freem(m);
 	}
 
-	ifq_restart(&ifp->if_snd);
+	if (!mq_full(&sc->sc_txdata_queue))
+		ifq_restart(&ifp->if_snd);
 }
 
 void
