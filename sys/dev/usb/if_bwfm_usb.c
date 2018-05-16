@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.11 2018/02/11 05:13:07 patrick Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.12 2018/05/16 08:20:00 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -45,6 +45,7 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/ic/bwfmvar.h>
@@ -198,8 +199,8 @@ void		 bwfm_usb_free_tx_list(struct bwfm_usb_softc *);
 
 int		 bwfm_usb_txcheck(struct bwfm_softc *);
 int		 bwfm_usb_txdata(struct bwfm_softc *, struct mbuf *);
-int		 bwfm_usb_txctl(struct bwfm_softc *, char *, size_t);
-int		 bwfm_usb_rxctl(struct bwfm_softc *, char *, size_t *);
+int		 bwfm_usb_txctl(struct bwfm_softc *);
+void		 bwfm_usb_txctl_cb(struct usbd_xfer *, void *, usbd_status);
 
 struct mbuf *	 bwfm_usb_newbuf(void);
 void		 bwfm_usb_rxeof(struct usbd_xfer *, void *, usbd_status);
@@ -211,7 +212,6 @@ struct bwfm_bus_ops bwfm_usb_bus_ops = {
 	.bs_txcheck = bwfm_usb_txcheck,
 	.bs_txdata = bwfm_usb_txdata,
 	.bs_txctl = bwfm_usb_txctl,
-	.bs_rxctl = bwfm_usb_rxctl,
 };
 
 struct cfattach bwfm_usb_ca = {
@@ -779,67 +779,85 @@ bwfm_usb_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 }
 
 int
-bwfm_usb_txctl(struct bwfm_softc *bwfm, char *buf, size_t len)
+bwfm_usb_txctl(struct bwfm_softc *bwfm)
 {
 	struct bwfm_usb_softc *sc = (void *)bwfm;
+	struct bwfm_proto_bcdc_ctl *ctl, *tmp;
 	usb_device_request_t req;
+	struct usbd_xfer *xfer;
 	usbd_status error;
-	int ret = 1;
+	char *buf;
 
 	DPRINTFN(2, ("%s: %s\n", DEVNAME(sc), __func__));
 
-	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
-	req.bRequest = 0;
+	TAILQ_FOREACH_SAFE(ctl, &sc->sc_sc.sc_bcdc_txctlq, next, tmp) {
+		TAILQ_REMOVE(&sc->sc_sc.sc_bcdc_txctlq, ctl, next);
 
-	USETW(req.wValue, 0);
-	USETW(req.wIndex, sc->sc_ifaceno);
-	USETW(req.wLength, len);
+		/* Send out control packet. */
+		req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+		req.bRequest = 0;
+		USETW(req.wValue, 0);
+		USETW(req.wIndex, sc->sc_ifaceno);
+		USETW(req.wLength, ctl->len);
 
-	error = usbd_do_request(sc->sc_udev, &req, buf);
-	if (error != 0) {
-		printf("%s: could not read ctl packet: %s\n",
-		    DEVNAME(sc), usbd_errstr(error));
-		goto err;
+		error = usbd_do_request(sc->sc_udev, &req, ctl->buf);
+		if (error != 0) {
+			printf("%s: could not write ctl packet: %s\n",
+			    DEVNAME(sc), usbd_errstr(error));
+			free(ctl->buf, M_TEMP, ctl->len);
+			free(ctl, M_TEMP, sizeof(*ctl));
+			return 1;
+		}
+
+		/* Setup asynchronous receive. */
+		if ((xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
+			free(ctl->buf, M_TEMP, ctl->len);
+			free(ctl, M_TEMP, sizeof(*ctl));
+			return 1;
+		}
+		if ((buf = usbd_alloc_buffer(xfer, ctl->len)) == NULL) {
+			free(ctl, M_TEMP, sizeof(*ctl));
+			free(ctl->buf, M_TEMP, ctl->len);
+			usbd_free_xfer(xfer);
+			return 1;
+		}
+
+		memset(buf, 0, ctl->len);
+		req.bmRequestType = UT_READ_CLASS_INTERFACE;
+		req.bRequest = 1;
+		USETW(req.wValue, 0);
+		USETW(req.wIndex, sc->sc_ifaceno);
+		USETW(req.wLength, ctl->len);
+
+		error = usbd_request_async(xfer, &req, sc, bwfm_usb_txctl_cb);
+		if (error != 0) {
+			printf("%s: could not read ctl packet: %s\n",
+			    DEVNAME(sc), usbd_errstr(error));
+			free(ctl->buf, M_TEMP, ctl->len);
+			free(ctl, M_TEMP, sizeof(*ctl));
+			usbd_free_xfer(xfer);
+			return 1;
+		}
+
+		TAILQ_INSERT_TAIL(&sc->sc_sc.sc_bcdc_rxctlq, ctl, next);
 	}
 
-	ret = 0;
-err:
-	return ret;
+	return 0;
 }
 
-int
-bwfm_usb_rxctl(struct bwfm_softc *bwfm, char *buf, size_t *len)
+void
+bwfm_usb_txctl_cb(struct usbd_xfer *xfer, void *priv, usbd_status err)
 {
-	struct bwfm_usb_softc *sc = (void *)bwfm;
-	usb_device_request_t req;
-	usbd_status error;
-	uint32_t len32;
-	int ret = 1;
+	struct bwfm_usb_softc *sc = priv;
 
-	DPRINTFN(2, ("%s: %s\n", DEVNAME(sc), __func__));
-
-	req.bmRequestType = UT_READ_CLASS_INTERFACE;
-	req.bRequest = 1;
-
-	USETW(req.wValue, 0);
-	USETW(req.wIndex, sc->sc_ifaceno);
-	USETW(req.wLength, *len);
-
-	error = usbd_do_request_flags(sc->sc_udev, &req, buf, 0,
-	    &len32, USBD_DEFAULT_TIMEOUT);
-	if (error != 0) {
-		printf("%s: could not read ctl packet: %s\n",
-		    DEVNAME(sc), usbd_errstr(error));
+	if (usbd_is_dying(xfer->pipe->device))
 		goto err;
+
+	if (err == USBD_NORMAL_COMPLETION || err == USBD_SHORT_XFER) {
+		sc->sc_sc.sc_proto_ops->proto_rxctl(&sc->sc_sc,
+		    KERNADDR(&xfer->dmabuf, 0), xfer->actlen);
 	}
 
-	if (len32 > *len) {
-		printf("%s: broken length\n", DEVNAME(sc));
-		goto err;
-	}
-
-	*len = len32;
-	ret = 0;
 err:
-	return ret;
+	usbd_free_xfer(xfer);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.43 2018/04/28 16:05:56 phessler Exp $ */
+/* $OpenBSD: bwfm.c,v 1.44 2018/05/16 08:20:00 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -90,6 +90,8 @@ int	 bwfm_proto_bcdc_query_dcmd(struct bwfm_softc *, int,
 int	 bwfm_proto_bcdc_set_dcmd(struct bwfm_softc *, int,
 	     int, char *, size_t);
 void	 bwfm_proto_bcdc_rx(struct bwfm_softc *, struct mbuf *);
+int	 bwfm_proto_bcdc_txctl(struct bwfm_softc *, int, char *, size_t *);
+void	 bwfm_proto_bcdc_rxctl(struct bwfm_softc *, char *, size_t);
 
 int	 bwfm_fwvar_cmd_get_data(struct bwfm_softc *, int, void *, size_t);
 int	 bwfm_fwvar_cmd_set_data(struct bwfm_softc *, int, void *, size_t);
@@ -155,6 +157,7 @@ struct bwfm_proto_ops bwfm_proto_bcdc_ops = {
 	.proto_query_dcmd = bwfm_proto_bcdc_query_dcmd,
 	.proto_set_dcmd = bwfm_proto_bcdc_set_dcmd,
 	.proto_rx = bwfm_proto_bcdc_rx,
+	.proto_rxctl = bwfm_proto_bcdc_rxctl,
 };
 
 struct cfdriver bwfm_cd = {
@@ -168,6 +171,9 @@ bwfm_attach(struct bwfm_softc *sc)
 	struct ifnet *ifp = &ic->ic_if;
 	uint32_t bandlist[3], tmp;
 	int i, j, nbands, nmode, vhtmode;
+
+	TAILQ_INIT(&sc->sc_bcdc_rxctlq);
+	TAILQ_INIT(&sc->sc_bcdc_txctlq);
 
 	if (bwfm_fwvar_cmd_get_int(sc, BWFM_C_GET_VERSION, &tmp)) {
 		printf("%s: could not read io type\n", DEVNAME(sc));
@@ -1216,15 +1222,14 @@ bwfm_proto_bcdc_query_dcmd(struct bwfm_softc *sc, int ifidx,
 {
 	struct bwfm_proto_bcdc_dcmd *dcmd;
 	size_t size = sizeof(dcmd->hdr) + *len;
-	static int reqid = 0;
-	int ret = 1;
+	int ret = 1, reqid;
 
-	reqid++;
+	reqid = sc->sc_bcdc_reqid++;
 
-	dcmd = malloc(sizeof(*dcmd), M_TEMP, M_WAITOK | M_ZERO);
 	if (*len > sizeof(dcmd->buf))
-		goto err;
+		return ret;
 
+	dcmd = malloc(size, M_TEMP, M_WAITOK | M_ZERO);
 	dcmd->hdr.cmd = htole32(cmd);
 	dcmd->hdr.len = htole32(*len);
 	dcmd->hdr.flags |= BWFM_BCDC_DCMD_GET;
@@ -1233,33 +1238,13 @@ bwfm_proto_bcdc_query_dcmd(struct bwfm_softc *sc, int ifidx,
 	dcmd->hdr.flags = htole32(dcmd->hdr.flags);
 	memcpy(&dcmd->buf, buf, *len);
 
-	if (sc->sc_bus_ops->bs_txctl(sc, (void *)dcmd,
-	     sizeof(dcmd->hdr) + *len)) {
+	if (bwfm_proto_bcdc_txctl(sc, reqid, (char *)dcmd, &size)) {
 		DPRINTF(("%s: tx failed\n", DEVNAME(sc)));
-		goto err;
-	}
-
-	do {
-		if (sc->sc_bus_ops->bs_rxctl(sc, (void *)dcmd, &size)) {
-			DPRINTF(("%s: rx failed\n", DEVNAME(sc)));
-			goto err;
-		}
-		dcmd->hdr.cmd = letoh32(dcmd->hdr.cmd);
-		dcmd->hdr.len = letoh32(dcmd->hdr.len);
-		dcmd->hdr.flags = letoh32(dcmd->hdr.flags);
-		dcmd->hdr.status = letoh32(dcmd->hdr.status);
-	} while (BWFM_BCDC_DCMD_ID_GET(dcmd->hdr.flags) != reqid);
-
-	if (BWFM_BCDC_DCMD_ID_GET(dcmd->hdr.flags) != reqid) {
-		printf("%s: unexpected request id\n", DEVNAME(sc));
-		goto err;
+		return ret;
 	}
 
 	if (buf) {
-		if (size > *len)
-			size = *len;
-		if (size < *len)
-			*len = size;
+		*len = min(*len, size);
 		memcpy(buf, dcmd->buf, *len);
 	}
 
@@ -1267,8 +1252,7 @@ bwfm_proto_bcdc_query_dcmd(struct bwfm_softc *sc, int ifidx,
 		ret = dcmd->hdr.status;
 	else
 		ret = 0;
-err:
-	free(dcmd, M_TEMP, sizeof(*dcmd));
+	free(dcmd, M_TEMP, size);
 	return ret;
 }
 
@@ -1278,14 +1262,13 @@ bwfm_proto_bcdc_set_dcmd(struct bwfm_softc *sc, int ifidx,
 {
 	struct bwfm_proto_bcdc_dcmd *dcmd;
 	size_t size = sizeof(dcmd->hdr) + len;
-	int reqid = 0;
-	int ret = 1;
+	int ret = 1, reqid;
 
-	reqid++;
+	reqid = sc->sc_bcdc_reqid++;
 
-	dcmd = malloc(sizeof(*dcmd), M_TEMP, M_WAITOK | M_ZERO);
+	dcmd = malloc(size, M_TEMP, M_WAITOK | M_ZERO);
 	if (len > sizeof(dcmd->buf))
-		goto err;
+		return ret;
 
 	dcmd->hdr.cmd = htole32(cmd);
 	dcmd->hdr.len = htole32(len);
@@ -1295,34 +1278,92 @@ bwfm_proto_bcdc_set_dcmd(struct bwfm_softc *sc, int ifidx,
 	dcmd->hdr.flags = htole32(dcmd->hdr.flags);
 	memcpy(&dcmd->buf, buf, len);
 
-	if (sc->sc_bus_ops->bs_txctl(sc, (void *)dcmd, size)) {
-		DPRINTF(("%s: tx failed\n", DEVNAME(sc)));
-		goto err;
-	}
-
-	do {
-		if (sc->sc_bus_ops->bs_rxctl(sc, (void *)dcmd, &size)) {
-			DPRINTF(("%s: rx failed\n", DEVNAME(sc)));
-			goto err;
-		}
-		dcmd->hdr.cmd = letoh32(dcmd->hdr.cmd);
-		dcmd->hdr.len = letoh32(dcmd->hdr.len);
-		dcmd->hdr.flags = letoh32(dcmd->hdr.flags);
-		dcmd->hdr.status = letoh32(dcmd->hdr.status);
-	} while (BWFM_BCDC_DCMD_ID_GET(dcmd->hdr.flags) != reqid);
-
-	if (BWFM_BCDC_DCMD_ID_GET(dcmd->hdr.flags) != reqid) {
-		printf("%s: unexpected request id\n", DEVNAME(sc));
-		goto err;
+	if (bwfm_proto_bcdc_txctl(sc, reqid, (char *)dcmd, &size)) {
+		DPRINTF(("%s: txctl failed\n", DEVNAME(sc)));
+		return ret;
 	}
 
 	if (dcmd->hdr.flags & BWFM_BCDC_DCMD_ERROR)
-		return dcmd->hdr.status;
-
-	ret = 0;
-err:
-	free(dcmd, M_TEMP, sizeof(*dcmd));
+		ret = dcmd->hdr.status;
+	else
+		ret = 0;
+	free(dcmd, M_TEMP, size);
 	return ret;
+}
+
+int
+bwfm_proto_bcdc_txctl(struct bwfm_softc *sc, int reqid, char *buf, size_t *len)
+{
+	struct bwfm_proto_bcdc_ctl *ctl, *tmp;
+	int timeout = 0;
+
+	ctl = malloc(sizeof(*ctl), M_TEMP, M_WAITOK|M_ZERO);
+	ctl->reqid = reqid;
+	ctl->buf = buf;
+	ctl->len = *len;
+	TAILQ_INSERT_TAIL(&sc->sc_bcdc_txctlq, ctl, next);
+
+	if (sc->sc_bus_ops->bs_txctl(sc)) {
+		DPRINTF(("%s: tx failed\n", DEVNAME(sc)));
+		return 1;
+	}
+
+	if (tsleep(ctl, PWAIT, "bwfm", hz))
+		timeout = 1;
+
+	TAILQ_FOREACH_SAFE(ctl, &sc->sc_bcdc_rxctlq, next, tmp) {
+		if (ctl->reqid != reqid)
+			continue;
+		if (ctl->done) {
+			TAILQ_REMOVE(&sc->sc_bcdc_rxctlq, ctl, next);
+			*len = ctl->len;
+			free(ctl, M_TEMP, sizeof(*ctl));
+			return 0;
+		}
+		if (timeout) {
+			TAILQ_REMOVE(&sc->sc_bcdc_rxctlq, ctl, next);
+			DPRINTF(("%s: timeout waiting for txctl response\n",
+			    DEVNAME(sc)));
+			free(ctl->buf, M_TEMP, ctl->len);
+			free(ctl, M_TEMP, sizeof(*ctl));
+			return 1;
+		}
+		break;
+	}
+
+	DPRINTF(("%s: did%s find txctl metadata (timeout %d)\n",
+	    DEVNAME(sc), ctl == NULL ? " not": "", timeout));
+	return 1;
+}
+
+void
+bwfm_proto_bcdc_rxctl(struct bwfm_softc *sc, char *buf, size_t len)
+{
+	struct bwfm_proto_bcdc_dcmd *dcmd;
+	struct bwfm_proto_bcdc_ctl *ctl, *tmp;
+
+	if (len < sizeof(dcmd->hdr))
+		return;
+
+	dcmd = (struct bwfm_proto_bcdc_dcmd *)buf;
+	dcmd->hdr.cmd = letoh32(dcmd->hdr.cmd);
+	dcmd->hdr.len = letoh32(dcmd->hdr.len);
+	dcmd->hdr.flags = letoh32(dcmd->hdr.flags);
+	dcmd->hdr.status = letoh32(dcmd->hdr.status);
+
+	TAILQ_FOREACH_SAFE(ctl, &sc->sc_bcdc_rxctlq, next, tmp) {
+		if (ctl->reqid != BWFM_BCDC_DCMD_ID_GET(dcmd->hdr.flags))
+			continue;
+		if (ctl->len != len) {
+			free(ctl->buf, M_TEMP, ctl->len);
+			free(ctl, M_TEMP, sizeof(*ctl));
+			return;
+		}
+		memcpy(ctl->buf, buf, len);
+		ctl->done = 1;
+		wakeup(ctl);
+		return;
+	}
 }
 
 void
@@ -1349,7 +1390,7 @@ bwfm_proto_bcdc_rx(struct bwfm_softc *sc, struct mbuf *m)
 	/* Remaining data is an ethernet packet, so align. */
 	if ((mtod(m, paddr_t) & 0x3) != ETHER_ALIGN) {
 		struct mbuf *m0;
-		m0 = m_devget(mtod(m, caddr_t), m->m_len, ETHER_ALIGN);
+		m0 = m_dup_pkt(m, ETHER_ALIGN, M_WAITOK);
 		m_freem(m);
 		if (m0 == NULL) {
 			ifp->if_ierrors++;
@@ -1980,7 +2021,7 @@ bwfm_rx_event_cb(struct bwfm_softc *sc, void *arg)
 		}
 		len -= sizeof(*e);
 		if (len < sizeof(*res)) {
-			printf("%s: results too small\n", DEVNAME(sc));
+			DPRINTF(("%s: results too small\n", DEVNAME(sc)));
 			m_freem(m);
 			return;
 		}
@@ -1988,14 +2029,14 @@ bwfm_rx_event_cb(struct bwfm_softc *sc, void *arg)
 		res = malloc(len, M_TEMP, M_WAITOK);
 		memcpy(res, (void *)&e[1], len);
 		if (len < letoh32(res->buflen)) {
-			printf("%s: results too small\n", DEVNAME(sc));
+			DPRINTF(("%s: results too small\n", DEVNAME(sc)));
 			free(res, M_TEMP, reslen);
 			m_freem(m);
 			return;
 		}
 		len -= sizeof(*res);
 		if (len < letoh16(res->bss_count) * sizeof(struct bwfm_bss_info)) {
-			printf("%s: results too small\n", DEVNAME(sc));
+			DPRINTF(("%s: results too small\n", DEVNAME(sc)));
 			free(res, M_TEMP, reslen);
 			m_freem(m);
 			return;

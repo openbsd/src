@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.7 2018/02/11 21:10:03 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.8 2018/05/16 08:20:00 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -87,9 +87,6 @@ struct bwfm_sdio_softc {
 	struct bwfm_core	 *sc_cc;
 
 	uint8_t			  sc_tx_seq;
-	char			 *sc_txctl_buf;
-	size_t			  sc_txctl_len;
-	struct mbuf		 *sc_rxctl_buf;
 	char			 *sc_rxdata_buf;
 	struct mbuf_queue	  sc_txdata_queue;
 
@@ -144,8 +141,7 @@ void		 bwfm_sdio_rx_glom(struct bwfm_sdio_softc *, uint16_t *, int);
 
 int		 bwfm_sdio_txcheck(struct bwfm_softc *);
 int		 bwfm_sdio_txdata(struct bwfm_softc *, struct mbuf *);
-int		 bwfm_sdio_txctl(struct bwfm_softc *, char *, size_t);
-int		 bwfm_sdio_rxctl(struct bwfm_softc *, char *, size_t *);
+int		 bwfm_sdio_txctl(struct bwfm_softc *);
 
 struct bwfm_bus_ops bwfm_sdio_bus_ops = {
 	.bs_init = NULL,
@@ -153,7 +149,6 @@ struct bwfm_bus_ops bwfm_sdio_bus_ops = {
 	.bs_txcheck = bwfm_sdio_txcheck,
 	.bs_txdata = bwfm_sdio_txdata,
 	.bs_txctl = bwfm_sdio_txctl,
-	.bs_rxctl = bwfm_sdio_rxctl,
 };
 
 struct bwfm_buscore_ops bwfm_sdio_buscore_ops = {
@@ -593,7 +588,7 @@ bwfm_sdio_task(void *v)
 		bwfm_sdio_rx_frames(sc);
 	}
 
-	if (sc->sc_txctl_buf) {
+	if (!TAILQ_EMPTY(&sc->sc_sc.sc_bcdc_txctlq)) {
 		bwfm_sdio_tx_ctrlframe(sc);
 	}
 
@@ -923,32 +918,34 @@ bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *sc)
 {
 	struct bwfm_sdio_hwhdr *hwhdr;
 	struct bwfm_sdio_swhdr *swhdr;
+	struct bwfm_proto_bcdc_ctl *ctl, *tmp;
 	char *buf;
 	size_t len;
 
-	if (sc->sc_txctl_buf == NULL)
-		return;
+	TAILQ_FOREACH_SAFE(ctl, &sc->sc_sc.sc_bcdc_txctlq, next, tmp) {
+		TAILQ_REMOVE(&sc->sc_sc.sc_bcdc_txctlq, ctl, next);
 
-	len = sizeof(*hwhdr) + sizeof(*swhdr) + sc->sc_txctl_len;
-	buf = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
+		len = sizeof(*hwhdr) + sizeof(*swhdr) + ctl->len;
+		buf = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
 
-	hwhdr = (void *)buf;
-	hwhdr->frmlen = htole16(len);
-	hwhdr->cksum = htole16(~len);
+		hwhdr = (void *)buf;
+		hwhdr->frmlen = htole16(len);
+		hwhdr->cksum = htole16(~len);
 
-	swhdr = (void *)&hwhdr[1];
-	swhdr->seqnr = sc->sc_tx_seq++;
-	swhdr->chanflag = BWFM_SDIO_SWHDR_CHANNEL_CONTROL;
-	swhdr->nextlen = 0;
-	swhdr->dataoff = sizeof(*hwhdr) + sizeof(*swhdr);
-	swhdr->maxseqnr = 0;
+		swhdr = (void *)&hwhdr[1];
+		swhdr->seqnr = sc->sc_tx_seq++;
+		swhdr->chanflag = BWFM_SDIO_SWHDR_CHANNEL_CONTROL;
+		swhdr->nextlen = 0;
+		swhdr->dataoff = sizeof(*hwhdr) + sizeof(*swhdr);
+		swhdr->maxseqnr = 0;
 
-	memcpy(&swhdr[1], sc->sc_txctl_buf, sc->sc_txctl_len);
+		memcpy(&swhdr[1], ctl->buf, ctl->len);
 
-	bwfm_sdio_frame_read_write(sc, buf, len, 1);
+		bwfm_sdio_frame_read_write(sc, buf, len, 1);
+		free(buf, M_TEMP, len);
 
-	free(buf, M_TEMP, len);
-	wakeup(&sc->sc_txctl_buf);
+		TAILQ_INSERT_TAIL(&sc->sc_sc.sc_bcdc_rxctlq, ctl, next);
+	}
 }
 
 void
@@ -1053,24 +1050,8 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 
 		switch (swhdr.chanflag & BWFM_SDIO_SWHDR_CHANNEL_MASK) {
 		case BWFM_SDIO_SWHDR_CHANNEL_CONTROL:
-			if (sc->sc_rxctl_buf != NULL) {
-				printf("%s: new frame but old one still there\n",
-				    DEVNAME(sc));
-				break;
-			}
-			m = bwfm_sdio_newbuf();
-			if (m == NULL)
-				break;
-			if (flen - off > m->m_len) {
-				printf("%s: frame bigger than anticipated\n",
-				    DEVNAME(sc));
-				m_free(m);
-				break;
-			}
-			m->m_len = m->m_pkthdr.len = flen - off;
-			memcpy(mtod(m, char *), buf + off, flen - off);
-			sc->sc_rxctl_buf = m;
-			wakeup(&sc->sc_rxctl_buf);
+			sc->sc_sc.sc_proto_ops->proto_rxctl(&sc->sc_sc,
+			    buf + off, flen - off);
 			break;
 		case BWFM_SDIO_SWHDR_CHANNEL_EVENT:
 		case BWFM_SDIO_SWHDR_CHANNEL_DATA:
@@ -1232,44 +1213,9 @@ bwfm_sdio_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 }
 
 int
-bwfm_sdio_txctl(struct bwfm_softc *bwfm, char *buf, size_t len)
+bwfm_sdio_txctl(struct bwfm_softc *bwfm)
 {
 	struct bwfm_sdio_softc *sc = (void *)bwfm;
-
-	if (sc->sc_txctl_buf) {
-		printf("%s: another txctl in flight\n", DEVNAME(sc));
-		return 1;
-	}
-
-	sc->sc_txctl_buf = buf;
-	sc->sc_txctl_len = len;
-
 	task_add(systq, &sc->sc_task);
-	if (tsleep(&sc->sc_txctl_buf, PCATCH, "bwfm", hz)) {
-		printf("%s: timeout waiting for txctl response\n",
-		    DEVNAME(sc));
-		return 1;
-	}
-
-	sc->sc_txctl_buf = NULL;
-	return 0;
-}
-
-int
-bwfm_sdio_rxctl(struct bwfm_softc *bwfm, char *buf, size_t *len)
-{
-	struct bwfm_sdio_softc *sc = (void *)bwfm;
-
-	if (sc->sc_rxctl_buf == NULL) {
-		tsleep(&sc->sc_rxctl_buf, PCATCH, "bwfm", hz);
-		if (sc->sc_rxctl_buf == NULL)
-			return 1;
-	}
-
-	*len = min(*len, sc->sc_rxctl_buf->m_len);
-	memcpy(buf, mtod(sc->sc_rxctl_buf, char*), *len);
-	m_freem(sc->sc_rxctl_buf);
-	sc->sc_rxctl_buf = NULL;
-
 	return 0;
 }

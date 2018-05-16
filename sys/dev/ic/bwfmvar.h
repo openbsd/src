@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.12 2018/02/08 05:00:38 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.13 2018/05/16 08:20:00 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -89,8 +89,7 @@ struct bwfm_bus_ops {
 	void (*bs_stop)(struct bwfm_softc *);
 	int (*bs_txcheck)(struct bwfm_softc *);
 	int (*bs_txdata)(struct bwfm_softc *, struct mbuf *);
-	int (*bs_txctl)(struct bwfm_softc *, char *, size_t);
-	int (*bs_rxctl)(struct bwfm_softc *, char *, size_t *);
+	int (*bs_txctl)(struct bwfm_softc *);
 };
 
 struct bwfm_buscore_ops {
@@ -108,6 +107,7 @@ struct bwfm_proto_ops {
 	int (*proto_set_dcmd)(struct bwfm_softc *, int, int,
 	    char *, size_t);
 	void (*proto_rx)(struct bwfm_softc *, struct mbuf *);
+	void (*proto_rxctl)(struct bwfm_softc *, char *, size_t);
 };
 extern struct bwfm_proto_ops bwfm_proto_bcdc_ops;
 
@@ -139,6 +139,14 @@ struct bwfm_host_cmd_ring {
 	int			 queued;
 };
 
+struct bwfm_proto_bcdc_ctl {
+	int				 reqid;
+	char				*buf;
+	size_t				 len;
+	int				 done;
+	TAILQ_ENTRY(bwfm_proto_bcdc_ctl) next;
+};
+
 struct bwfm_softc {
 	struct device		 sc_dev;
 	struct ieee80211com	 sc_ic;
@@ -158,6 +166,10 @@ struct bwfm_softc {
 	struct bwfm_host_cmd_ring sc_cmdq;
 	struct taskq		*sc_taskq;
 	struct task		 sc_task;
+
+	int			 sc_bcdc_reqid;
+	TAILQ_HEAD(, bwfm_proto_bcdc_ctl) sc_bcdc_txctlq;
+	TAILQ_HEAD(, bwfm_proto_bcdc_ctl) sc_bcdc_rxctlq;
 };
 
 void bwfm_attach(struct bwfm_softc *);
