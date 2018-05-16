@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.26 2018/04/17 15:50:05 otto Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.27 2018/05/16 09:02:11 otto Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1376,7 +1376,8 @@ uaddr_stack_brk_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 #else
 	dir =  1;
 #endif
-	if (end - start >= sz + before_gap + after_gap) {
+	if (end - start >= before_gap + after_gap &&
+	    end - start - before_gap - after_gap >= sz) {
 		if (uvm_addr_linsearch(map, uaddr, entry_out, addr_out,
 		    0, sz, align, offset, dir, start, end - sz,
 		    before_gap, after_gap) == 0)
