@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.4 2018/03/05 13:35:09 otto Exp $
+.\"	$OpenBSD: sysctl.2,v 1.5 2018/05/16 15:24:10 visa Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 5 2018 $
+.Dd $Mdocdate: May 16 2018 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -479,6 +479,7 @@ information.
 .It Dv KERN_TTYCOUNT Ta "integer" Ta "no"
 .It Dv KERN_VERSION Ta "string" Ta "no"
 .It Dv KERN_WATCHDOG Ta "node" Ta "not applicable"
+.It Dv KERN_WITNESSWATCH Ta "integer" Ta "yes"
 .It Dv KERN_WXABORT Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
@@ -1046,6 +1047,32 @@ variable.
 The period of the watchdog timer in seconds.
 Set to 0 to disable the watchdog timer.
 .El
+.It Dv KERN_WITNESSWATCH Pq Va kern.witnesswatch
+Control how
+.Xr witness 4
+behaves on error.
+Valid values are:
+.Pp
+.Bl -tag -width 3n -offset indent -compact
+.It -1
+Disable
+.Xr witness 4
+completely.
+System reboot is needed to re-enable it.
+.It 0
+Disable lock order checking.
+.It 1
+Print a message if an error is detected.
+.It 2
+Print a message if an error is detected,
+and a stack trace if possible.
+.It 3
+The same as 2, but also drop into the kernel debugger.
+.El
+.Pp
+See
+.Xr witness 4
+for more information.
 .It Dv KERN_WXABORT Pq Va kern.wxabort
 Generate an abort,
 rather than returning an error,
