@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.236 2017/11/29 15:22:22 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.237 2018/05/17 09:22:18 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -46,6 +46,9 @@
 #define AML_INTSTRLEN		16
 #define AML_NAMESEG_LEN		4
 
+struct aml_value	*aml_loadtable(struct acpi_softc *, const char *,
+			    const char *, const char *, const char *,
+			    const char *, struct aml_value *);
 struct aml_scope	*aml_load(struct acpi_softc *, struct aml_scope *,
 			    struct aml_value *, struct aml_value *);
 
@@ -3530,6 +3533,37 @@ aml_seterror(struct aml_scope *scope, const char *fmt, ...)
 	return aml_allocvalue(AML_OBJTYPE_INTEGER, 0, 0);
 }
 
+struct aml_value *
+aml_loadtable(struct acpi_softc *sc, const char *signature,
+     const char *oemid, const char *oemtableid, const char *rootpath,
+     const char *parameterpath, struct aml_value *parameterdata)
+{
+	struct acpi_table_header *hdr;
+	struct acpi_dsdt *p_dsdt;
+	struct acpi_q *entry;
+
+	if (strlen(rootpath) > 0)
+		aml_die("LoadTable: RootPathString unsupported");
+	if (strlen(parameterpath) > 0)
+		aml_die("LoadTable: ParameterPathString unsupported");
+
+	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
+		hdr = entry->q_table;
+		if (strncmp(hdr->signature, signature,
+		    sizeof(hdr->signature)) == 0 &&
+		    strncmp(hdr->oemid, oemid, sizeof(hdr->oemid)) == 0 &&
+		    strncmp(hdr->oemtableid, oemtableid,
+		    sizeof(hdr->oemtableid)) == 0) {
+			p_dsdt = entry->q_table;
+			acpi_parse_aml(sc, p_dsdt->aml, p_dsdt->hdr_length -
+			    sizeof(p_dsdt->hdr));
+			return aml_allocvalue(AML_OBJTYPE_DDBHANDLE, 0, 0);
+		}
+	}
+
+	return aml_allocvalue(AML_OBJTYPE_INTEGER, 0, 0);
+}
+
 /* Load new SSDT scope from memory address */
 struct aml_scope *
 aml_load(struct acpi_softc *sc, struct aml_scope *scope,
@@ -4191,7 +4225,9 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_LOADTABLE:
 		/* LoadTable(Sig:Str, OEMID:Str, OEMTable:Str, [RootPath:Str], [ParmPath:Str],
 		   [ParmData:DataRefObj]) => DDBHandle */
-		aml_die("LoadTable");
+		my_ret = aml_loadtable(acpi_softc, opargs[0]->v_string,
+		    opargs[1]->v_string, opargs[2]->v_string,
+		    opargs[3]->v_string, opargs[4]->v_string, opargs[5]);
 		break;
 	case AMLOP_LOAD:
 		/* Load(Object:NameString, DDBHandle:SuperName) */
