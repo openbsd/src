@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.386 2017/08/17 12:28:34 jsg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.387 2018/05/17 05:17:44 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2879,11 +2879,11 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Try to reset the chip. */
 	DPRINTFN(5, ("bge_reset\n"));
-	bge_sig_pre_reset(sc, BGE_RESET_START);
+	bge_sig_pre_reset(sc, BGE_RESET_SHUTDOWN);
 	bge_reset(sc);
 
-	bge_sig_legacy(sc, BGE_RESET_START);
-	bge_sig_post_reset(sc, BGE_RESET_START);
+	bge_sig_legacy(sc, BGE_RESET_SHUTDOWN);
+	bge_sig_post_reset(sc, BGE_RESET_SHUTDOWN);
 
 	bge_chipinit(sc);
 
@@ -3233,6 +3233,19 @@ bge_reset(struct bge_softc *sc)
 	} else
 		write_op = bge_writereg_ind;
 
+	if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5700 &&
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5701) {
+		CSR_WRITE_4(sc, BGE_NVRAM_SWARB, BGE_NVRAMSWARB_SET1);
+		for (i = 0; i < 8000; i++) {
+			if (CSR_READ_4(sc, BGE_NVRAM_SWARB) &
+			    BGE_NVRAMSWARB_GNT1)
+				break;
+			DELAY(20);
+		}
+		if (i == 8000)
+			printf("%s: nvram lock timed out\n",
+			    sc->bge_dev.dv_xname);
+	}
 	/* Take APE lock when performing reset. */
 	bge_ape_lock(sc, BGE_APE_LOCK_GRC);
 
