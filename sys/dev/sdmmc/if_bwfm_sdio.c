@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.9 2018/05/16 14:10:26 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.10 2018/05/17 21:59:26 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -87,6 +87,7 @@ struct bwfm_sdio_softc {
 	struct bwfm_core	 *sc_cc;
 
 	uint8_t			  sc_tx_seq;
+	uint8_t			  sc_tx_max_seq;
 	char			 *sc_rxdata_buf;
 	struct mbuf_queue	  sc_txdata_queue;
 
@@ -134,6 +135,7 @@ int		 bwfm_sdio_buscore_prepare(struct bwfm_softc *);
 void		 bwfm_sdio_buscore_activate(struct bwfm_softc *, uint32_t);
 
 struct mbuf *	 bwfm_sdio_newbuf(void);
+int		 bwfm_sdio_tx_ok(struct bwfm_sdio_softc *);
 void		 bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *);
 void		 bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *);
 void		 bwfm_sdio_rx_frames(struct bwfm_sdio_softc *);
@@ -209,6 +211,7 @@ bwfm_sdio_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->sc_task, bwfm_sdio_task, sc);
 	mq_init(&sc->sc_txdata_queue, 16, IPL_SOFTNET);
 	sc->sc_rxdata_buf = malloc(64 * 1024, M_DEVBUF, M_WAITOK);
+	sc->sc_tx_seq = 0xff;
 
 	rw_assert_wrlock(&sf->sc->sc_lock);
 	sc->sc_lock = &sf->sc->sc_lock;
@@ -913,6 +916,13 @@ bwfm_sdio_newbuf(void)
 	return (m);
 }
 
+int
+bwfm_sdio_tx_ok(struct bwfm_sdio_softc *sc)
+{
+	return (uint8_t)(sc->sc_tx_max_seq - sc->sc_tx_seq) != 0 &&
+	    ((uint8_t)(sc->sc_tx_max_seq - sc->sc_tx_seq) & 0x80) == 0;
+}
+
 void
 bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *sc)
 {
@@ -921,6 +931,9 @@ bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *sc)
 	struct bwfm_proto_bcdc_ctl *ctl, *tmp;
 	char *buf;
 	size_t len;
+
+	if (!bwfm_sdio_tx_ok(sc))
+		return;
 
 	TAILQ_FOREACH_SAFE(ctl, &sc->sc_sc.sc_bcdc_txctlq, next, tmp) {
 		TAILQ_REMOVE(&sc->sc_sc.sc_bcdc_txctlq, ctl, next);
@@ -958,8 +971,13 @@ bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *sc)
 	struct mbuf *m;
 	char *buf;
 	size_t len;
+	int i;
 
-	for (;;) {
+	if (!bwfm_sdio_tx_ok(sc))
+		return;
+
+	i = min((uint8_t)(sc->sc_tx_max_seq - sc->sc_tx_seq), 32);
+	while (i--) {
 		m = mq_dequeue(&sc->sc_txdata_queue);
 		if (m == NULL)
 			break;
@@ -1033,6 +1051,8 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 		if (bwfm_sdio_frame_read_write(sc, (char *)&swhdr,
 		    sizeof(swhdr), 0))
 			break;
+
+		sc->sc_tx_max_seq = swhdr.maxseqnr;
 
 		flen = hwhdr.frmlen - (sizeof(hwhdr) + sizeof(swhdr));
 		if (flen == 0)
