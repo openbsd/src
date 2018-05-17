@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.19 2018/05/16 11:39:30 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.20 2018/05/17 11:51:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -728,8 +728,8 @@ handle_proposal(struct imsg_proposal *proposal)
 
 	rl.sr_len = sizeof(rl);
 	rl.sr_family = AF_UNSPEC;
-	if (snprintf(rl.sr_label, sizeof(rl.sr_label), "%s: %lld %d", "slaacd",
-	    proposal->id, (int32_t)proposal->pid) >=
+	if (snprintf(rl.sr_label, sizeof(rl.sr_label), "%s: %lld %d",
+	    SLAACD_RTA_LABEL, proposal->id, (int32_t)proposal->pid) >=
 	    (ssize_t)sizeof(rl.sr_label))
 		log_warnx("route label truncated");
 
@@ -859,7 +859,8 @@ configure_gateway(struct imsg_configure_dfr *dfr, uint8_t rtm_type)
 	memset(&rl, 0, sizeof(rl));
 	rl.sr_len = sizeof(rl);
 	rl.sr_family = AF_UNSPEC;
-	(void)snprintf(rl.sr_label, sizeof(rl.sr_label), "%s", "slaacd");
+	(void)snprintf(rl.sr_label, sizeof(rl.sr_label), "%s",
+	    SLAACD_RTA_LABEL);
 	iov[iovcnt].iov_base = &rl;
 	iov[iovcnt++].iov_len = sizeof(rl);
 	rtm.rtm_msglen += sizeof(rl);

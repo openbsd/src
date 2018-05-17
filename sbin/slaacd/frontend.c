@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.15 2018/05/16 11:39:30 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.16 2018/05/17 11:51:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -747,9 +747,10 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			}
 			*ap = NULL;
 
-			if (argv[0] != NULL && strncmp(argv[0], "slaacd:",
-			    strlen("slaacd:")) == 0 && argv[1] != NULL &&
-			    argv[2] != NULL && argv[3] == NULL) {
+			if (argv[0] != NULL && strncmp(argv[0],
+			    SLAACD_RTA_LABEL":", strlen(SLAACD_RTA_LABEL":"))
+			    == 0 && argv[1] != NULL && argv[2] != NULL &&
+			    argv[3] == NULL) {
 				id = strtonum(argv[1], 0, INT64_MAX, &errstr);
 				if (errstr != NULL) {
 					log_warn("%s: proposal seq is %s: %s",

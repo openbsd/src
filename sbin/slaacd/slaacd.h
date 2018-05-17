@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.14 2018/05/12 07:39:06 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.15 2018/05/17 11:51:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -20,6 +20,7 @@
 
 #define	SLAACD_SOCKET		"/dev/slaacd.sock"
 #define SLAACD_USER		"_slaacd"
+#define SLAACD_RTA_LABEL	"slaacd"
 
 #define SLAACD_SOIIKEY_LEN	16
 
