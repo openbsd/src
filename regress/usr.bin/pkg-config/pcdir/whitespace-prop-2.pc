@@ -3,5 +3,5 @@ includedir=${prefix}/include
 
 Name: Whitespace test
 Description: pkg-config(1) regress file
-Version: 0.0.0
+Version: 0.0.0 # intentional whitespace after value
 Cflags: -I${includedir}

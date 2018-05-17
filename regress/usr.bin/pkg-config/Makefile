@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.57 2017/08/26 09:07:52 jsg Exp $
+#	$OpenBSD: Makefile,v 1.58 2018/05/17 19:02:05 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -62,9 +62,13 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		whitespace-cflags \
 		whitespace-libs \
 		whitespace-linebreak \
+		whitespace-requires-1 \
+		whitespace-requires-2 \
 		whitespace-name \
 		whitespace-property-1 \
 		whitespace-property-2 \
+		whitespace-property-3 \
+		whitespace-property-4 \
 		quoting \
 		broken-require-1 \
 		broken-require-2 \
@@ -468,6 +472,14 @@ whitespace-linebreak:
 	@${VPCONFIG} --libs linebreak
 	@diff -u ${WANT} ${GOT}
 
+whitespace-requires-1:
+	# Test whitespace in version comparison
+	@${VPCONFIG} --exists $@
+
+whitespace-requires-2:
+	# Test whitespace in version comparison
+	@${VPCONFIG} --exists $@
+
 whitespace-name:
 	# Test whitespace in Name
 	@echo "Requested 'whitespace > 0.2.0' but version of Whitespace test is 0.0.0" > ${WANT}
@@ -481,7 +493,13 @@ whitespace-property-1:
 	@diff -u ${WANT} ${GOT}
 
 whitespace-property-2:
-	# Test whitespace after property name
+	# Test whitespace after property value
+	@echo "0.0.0" > ${WANT}
+	@${VPCONFIG} --modversion whitespace-prop-2
+	@diff -u ${WANT} ${GOT}
+
+whitespace-property-3:
+	# Test whitespace before property value
 	@echo "0.0.0" > ${WANT}
 	@${VPCONFIG} --modversion whitespace-prop-3
 	@diff -u ${WANT} ${GOT}
