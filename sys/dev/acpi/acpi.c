@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.341 2018/03/27 21:11:16 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.342 2018/05/17 20:21:15 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -917,6 +917,23 @@ acpi_register_gpio(struct acpi_softc *sc, struct aml_node *devnode)
 	if (aml_evalname(sc, devnode, "_AEI", 0, NULL, &res))
 		return;
 	aml_parse_resource(&res, acpi_gpio_parse_events, devnode);
+}
+
+void
+acpi_register_gsb(struct acpi_softc *sc, struct aml_node *devnode)
+{
+	struct aml_value arg[2];
+	struct aml_node *node;
+
+	/* Register GenericSerialBus address space. */
+	memset(&arg, 0, sizeof(arg));
+	arg[0].type = AML_OBJTYPE_INTEGER;
+	arg[0].v_integer = ACPI_OPREG_GSB;
+	arg[1].type = AML_OBJTYPE_INTEGER;
+	arg[1].v_integer = 1;
+	node = aml_searchname(devnode, "_REG");
+	if (node && aml_evalnode(sc, node, 2, arg, NULL))
+		printf("%s: _REG failed\n", node->name);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.89 2017/11/29 22:51:01 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.90 2018/05/17 20:21:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -333,6 +333,7 @@ void acpi_wakeup(void *);
 int acpi_gasio(struct acpi_softc *, int, int, uint64_t, int, int, void *);
 
 void	acpi_register_gpio(struct acpi_softc *, struct aml_node *);
+void	acpi_register_gsb(struct acpi_softc *, struct aml_node *);
 
 int	acpi_set_gpehandler(struct acpi_softc *, int,
 	    int (*)(struct acpi_softc *, int, void *), void *, int);
