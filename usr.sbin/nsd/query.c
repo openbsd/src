@@ -1490,8 +1490,10 @@ query_process(query_type *q, nsd_type *nsd)
 	if (query_state == QUERY_PROCESSED || query_state == QUERY_IN_AXFR) {
 		return query_state;
 	}
-	if(q->qtype == TYPE_ANY && nsd->options->refuse_any)
-		return query_error(q, NSD_RC_REFUSE);
+	if(q->qtype == TYPE_ANY && nsd->options->refuse_any && !q->tcp) {
+		TC_SET(q->packet);
+		return query_error(q, NSD_RC_OK);
+	}
 
 	answer_query(nsd, q);
 

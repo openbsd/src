@@ -380,7 +380,8 @@ The default is no.
 .B refuse\-any:\fR <yes or no>
 Refuse queries of type ANY.  This is useful to stop query floods trying
 to get large responses.  Note that rrl ratelimiting also has type ANY as
-a ratelimiting type.
+a ratelimiting type.  It sends truncation in response to UDP type ANY queries,
+and it allows TCP type ANY queries like normal.
 The default is no.
 .TP
 .B zonefiles\-check:\fR <yes or no>
