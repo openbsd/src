@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.238 2018/05/17 20:21:15 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.239 2018/05/17 20:46:45 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2517,6 +2517,8 @@ aml_rwgpio(struct aml_value *conn, int bpos, int blen, struct aml_value *val,
 	}
 }
 
+#ifndef SMALL_KERNEL
+
 void
 aml_rwgsb(struct aml_value *conn, int bpos, int blen, struct aml_value *val,
     int mode, int flag)
@@ -2606,6 +2608,8 @@ aml_rwgsb(struct aml_value *conn, int bpos, int blen, struct aml_value *val,
 	 */
 	buf[0] = err;
 }
+
+#endif
 
 void
 aml_rwindexfield(struct aml_value *fld, struct aml_value *val, int mode)
@@ -2708,10 +2712,12 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
 			aml_rwgpio(ref2, bpos, blen, val, mode,
 			    fld->v_field.flags);
 			break;
+#ifndef SMALL_KERNEL
 		case ACPI_OPREG_GSB:
 			aml_rwgsb(ref2, fld->v_field.bitpos + bpos, blen,
 			    val, mode, fld->v_field.flags);
 			break;
+#endif
 		default:
 			aml_rwgen(ref1, fld->v_field.bitpos + bpos, blen,
 			    val, mode, fld->v_field.flags);

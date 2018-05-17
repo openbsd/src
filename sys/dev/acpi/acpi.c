@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.342 2018/05/17 20:21:15 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.343 2018/05/17 20:46:45 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -919,6 +919,8 @@ acpi_register_gpio(struct acpi_softc *sc, struct aml_node *devnode)
 	aml_parse_resource(&res, acpi_gpio_parse_events, devnode);
 }
 
+#ifndef SMALL_KERNEL
+
 void
 acpi_register_gsb(struct acpi_softc *sc, struct aml_node *devnode)
 {
@@ -935,6 +937,8 @@ acpi_register_gsb(struct acpi_softc *sc, struct aml_node *devnode)
 	if (node && aml_evalnode(sc, node, 2, arg, NULL))
 		printf("%s: _REG failed\n", node->name);
 }
+
+#endif
 
 void
 acpi_attach(struct device *parent, struct device *self, void *aux)
