@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.16 2018/05/17 11:51:27 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.17 2018/05/17 13:39:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -674,7 +674,9 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 	struct if_msghdr		*ifm;
 	struct imsg_proposal_ack	 proposal_ack;
 	struct imsg_del_addr		 del_addr;
+	struct imsg_del_route		 del_route;
 	struct sockaddr_rtlabel		*rl;
+	struct in6_addr			*in6;
 	int64_t				 id, pid;
 	int				 flags, xflags, if_index;
 	char				 ifnamebuf[IFNAMSIZ];
@@ -728,6 +730,46 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			log_debug("RTM_DELADDR: %s[%u]", if_name,
 			    ifm->ifm_index);
 		}
+		break;
+	case RTM_DELETE:
+		ifm = (struct if_msghdr *)rtm;
+		if ((rtm->rtm_addrs & (RTA_DST | RTA_GATEWAY | RTA_LABEL)) !=
+		    (RTA_DST | RTA_GATEWAY | RTA_LABEL))
+			break;
+		if (rti_info[RTAX_DST]->sa_family != AF_INET6)
+			break;
+		if (!IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6 *)
+		    rti_info[RTAX_DST])->sin6_addr))
+			break;
+		if (rti_info[RTAX_GATEWAY]->sa_family != AF_INET6)
+			break;
+		if (rti_info[RTAX_LABEL]->sa_len !=
+		    sizeof(struct sockaddr_rtlabel))
+			break;
+
+		rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
+		if (strcmp(rl->sr_label, SLAACD_RTA_LABEL) != 0)
+			break;
+
+		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
+
+		del_route.if_index = ifm->ifm_index;
+		memcpy(&del_route.gw, rti_info[RTAX_GATEWAY],
+		    sizeof(del_route.gw));
+		in6 = &del_route.gw.sin6_addr;
+		/* XXX from route(8) p_sockaddr() */
+		if (IN6_IS_ADDR_LINKLOCAL(in6) ||
+		    IN6_IS_ADDR_MC_LINKLOCAL(in6) ||
+		    IN6_IS_ADDR_MC_INTFACELOCAL(in6)) {
+			del_route.gw.sin6_scope_id =
+			    (u_int32_t)ntohs(*(u_short *) &in6->s6_addr[2]);
+			*(u_short *)&in6->s6_addr[2] = 0;
+		}
+		frontend_imsg_compose_engine(IMSG_DEL_ROUTE,
+		    0, 0, &del_route, sizeof(del_route));
+		log_debug("RTM_DELETE: %s[%u]", if_name,
+		    ifm->ifm_index);
+
 		break;
 	case RTM_PROPOSAL:
 		ifm = (struct if_msghdr *)rtm;

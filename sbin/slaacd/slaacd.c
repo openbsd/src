@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.21 2018/05/17 11:52:04 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.22 2018/05/17 13:39:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -82,6 +82,7 @@ const char* imsg_type_name[] = {
 	"IMSG_PROPOSAL_ACK",
 	"IMSG_CONFIGURE_ADDRESS",
 	"IMSG_DEL_ADDRESS",
+	"IMSG_DEL_ROUTE",
 	"IMSG_FAKE_ACK",
 	"IMSG_CONFIGURE_DFR",
 	"IMSG_WITHDRAW_DFR",
@@ -308,7 +309,8 @@ main(int argc, char *argv[])
 		fatal("route socket");
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_NEWADDR) |
-	    ROUTE_FILTER(RTM_DELADDR) | ROUTE_FILTER(RTM_PROPOSAL);
+	    ROUTE_FILTER(RTM_DELADDR) | ROUTE_FILTER(RTM_PROPOSAL) |
+	    ROUTE_FILTER(RTM_DELETE);
 	if (setsockopt(frontend_routesock, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) < 0)
 		fatal("setsockopt(ROUTE_MSGFILTER)");

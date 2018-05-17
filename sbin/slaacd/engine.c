@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.24 2018/04/23 13:49:04 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.25 2018/05/17 13:39:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -259,6 +259,8 @@ struct address_proposal	*find_address_proposal_by_addr(struct slaacd_iface *,
 			     struct sockaddr_in6 *);
 struct dfr_proposal	*find_dfr_proposal_by_id(struct slaacd_iface *,
 			     int64_t);
+struct dfr_proposal	*find_dfr_proposal_by_gw(struct slaacd_iface *,
+			     struct sockaddr_in6 *);
 void			 find_prefix(struct slaacd_iface *, struct
 			     address_proposal *, struct radv **, struct
 			     radv_prefix **);
@@ -389,6 +391,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 	struct address_proposal		*addr_proposal = NULL;
 	struct dfr_proposal		*dfr_proposal = NULL;
 	struct imsg_del_addr		 del_addr;
+	struct imsg_del_route		 del_route;
 	ssize_t				 n;
 	int				 shut = 0;
 #ifndef	SMALL
@@ -520,6 +523,28 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				free_address_proposal(addr_proposal);
 			}
 
+			break;
+		case IMSG_DEL_ROUTE:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(del_route))
+				fatal("%s: IMSG_DEL_ROUTE wrong length: %d",
+				    __func__, imsg.hdr.len);
+			memcpy(&del_route, imsg.data, sizeof(del_route));
+			iface = get_slaacd_iface_by_id(del_addr.if_index);
+			if (iface == NULL) {
+				log_debug("IMSG_DEL_ROUTE: unknown interface"
+				    ", ignoring");
+				break;
+			}
+
+			dfr_proposal = find_dfr_proposal_by_gw(iface,
+			    &del_route.gw);
+
+			if (dfr_proposal) {
+				dfr_proposal->state = PROPOSAL_WITHDRAWN;
+				free_dfr_proposal(dfr_proposal);
+				start_probe(iface);
+			}
 			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
@@ -1932,10 +1957,7 @@ configure_dfr(struct dfr_proposal *dfr_proposal)
 
 	if (prev_state == PROPOSAL_CONFIGURED || prev_state ==
 	    PROPOSAL_NEARLY_EXPIRED) {
-		/*
-		 * nothing to do here, routes do not expire in the kernel
-		 * XXX check if the route got deleted and re-add it?
-		 */
+		/* nothing to do here, routes do not expire in the kernel */
 		return;
 	}
 
@@ -2270,6 +2292,20 @@ find_dfr_proposal_by_id(struct slaacd_iface *iface, int64_t id)
 
 	LIST_FOREACH (dfr_proposal, &iface->dfr_proposals, entries) {
 		if (dfr_proposal->id == id)
+			return (dfr_proposal);
+	}
+
+	return (NULL);
+}
+
+struct dfr_proposal*
+find_dfr_proposal_by_gw(struct slaacd_iface *iface, struct sockaddr_in6
+    *addr)
+{
+	struct dfr_proposal	*dfr_proposal;
+
+	LIST_FOREACH (dfr_proposal, &iface->dfr_proposals, entries) {
+		if (memcmp(&dfr_proposal->addr, addr, sizeof(*addr)) == 0)
 			return (dfr_proposal);
 	}
 
