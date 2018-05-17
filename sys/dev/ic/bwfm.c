@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.44 2018/05/16 08:20:00 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.45 2018/05/17 06:53:45 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1034,10 +1034,10 @@ bwfm_chip_sr_capable(struct bwfm_softc *sc)
 	if (sc->sc_chip.ch_pmurev < 17)
 		return 0;
 
-	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_CHIPCOMMON);
 	switch (sc->sc_chip.ch_chip) {
 	case BRCM_CC_4354_CHIP_ID:
 	case BRCM_CC_4356_CHIP_ID:
+		core = bwfm_chip_get_pmu(sc);
 		sc->sc_buscore_ops->bc_write(sc, core->co_base +
 		    BWFM_CHIP_REG_CHIPCONTROL_ADDR, 3);
 		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
@@ -1046,16 +1046,19 @@ bwfm_chip_sr_capable(struct bwfm_softc *sc)
 	case BRCM_CC_43241_CHIP_ID:
 	case BRCM_CC_4335_CHIP_ID:
 	case BRCM_CC_4339_CHIP_ID:
+		core = bwfm_chip_get_pmu(sc);
 		sc->sc_buscore_ops->bc_write(sc, core->co_base +
 		    BWFM_CHIP_REG_CHIPCONTROL_ADDR, 3);
 		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
 		    BWFM_CHIP_REG_CHIPCONTROL_DATA);
 		return reg != 0;
 	case BRCM_CC_43430_CHIP_ID:
+		core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_CHIPCOMMON);
 		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
 		    BWFM_CHIP_REG_SR_CONTROL1);
 		return reg != 0;
 	default:
+		core = bwfm_chip_get_pmu(sc);
 		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
 		    BWFM_CHIP_REG_PMUCAPABILITIES_EXT);
 		if ((reg & BWFM_CHIP_REG_PMUCAPABILITIES_SR_SUPP) == 0)
