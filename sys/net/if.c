@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.551 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: if.c,v 1.552 2018/05/17 11:04:14 tb Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -217,6 +217,9 @@ void	if_idxmap_insert(struct ifnet *);
 void	if_idxmap_remove(struct ifnet *);
 
 TAILQ_HEAD(, ifg_group) ifg_head = TAILQ_HEAD_INITIALIZER(ifg_head);
+
+/* Serialize access to &if_cloners and if_cloners_count */
+struct rwlock if_cloners_lock = RWLOCK_INITIALIZER("ifclonerslk");
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
 
@@ -1243,11 +1246,13 @@ if_clone_lookup(const char *name, int *unitp)
 	if (cp - name < IFNAMSIZ-1 && *cp == '0' && cp[1] != '\0')
 		return (NULL);	/* unit number 0 padded */
 
+	rw_enter_read(&if_cloners_lock);
 	LIST_FOREACH(ifc, &if_cloners, ifc_list) {
 		if (strlen(ifc->ifc_name) == cp - name &&
 		    !strncmp(name, ifc->ifc_name, cp - name))
 			break;
 	}
+	rw_exit_read(&if_cloners_lock);
 
 	if (ifc == NULL)
 		return (NULL);
@@ -1273,8 +1278,10 @@ if_clone_lookup(const char *name, int *unitp)
 void
 if_clone_attach(struct if_clone *ifc)
 {
+	rw_enter_write(&if_cloners_lock);
 	LIST_INSERT_HEAD(&if_cloners, ifc, ifc_list);
 	if_cloners_count++;
+	rw_exit_write(&if_cloners_lock);
 }
 
 /*
@@ -1283,9 +1290,10 @@ if_clone_attach(struct if_clone *ifc)
 void
 if_clone_detach(struct if_clone *ifc)
 {
-
+	rw_enter_write(&if_cloners_lock);
 	LIST_REMOVE(ifc, ifc_list);
 	if_cloners_count--;
+	rw_exit_write(&if_cloners_lock);
 }
 
 /*
@@ -1298,17 +1306,21 @@ if_clone_list(struct if_clonereq *ifcr)
 	struct if_clone *ifc;
 	int count, error = 0;
 
-	ifcr->ifcr_total = if_cloners_count;
 	if ((dst = ifcr->ifcr_buffer) == NULL) {
 		/* Just asking how many there are. */
+		rw_enter_read(&if_cloners_lock);
+		ifcr->ifcr_total = if_cloners_count;
+		rw_exit_read(&if_cloners_lock);
 		return (0);
 	}
 
 	if (ifcr->ifcr_count < 0)
 		return (EINVAL);
 
-	count = (if_cloners_count < ifcr->ifcr_count) ?
-	    if_cloners_count : ifcr->ifcr_count;
+	rw_enter_read(&if_cloners_lock);
+
+	ifcr->ifcr_total = if_cloners_count;
+	count = MIN(if_cloners_count, ifcr->ifcr_count);
 
 	LIST_FOREACH(ifc, &if_cloners, ifc_list) {
 		if (count == 0)
@@ -1322,6 +1334,7 @@ if_clone_list(struct if_clonereq *ifcr)
 		dst += IFNAMSIZ;
 	}
 
+	rw_exit_read(&if_cloners_lock);
 	return (error);
 }
 
@@ -2164,9 +2177,7 @@ ifioctl_get(u_long cmd, caddr_t data)
 		NET_RUNLOCK();
 		return (error);
 	case SIOCIFGCLONERS:
-		NET_RLOCK();
 		error = if_clone_list((struct if_clonereq *)data);
-		NET_RUNLOCK();
 		return (error);
 	case SIOCGIFGMEMB:
 		NET_RLOCK();
