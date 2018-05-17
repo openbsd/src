@@ -219,6 +219,7 @@ static void configure_handler_event_types(short event_types);
 static uint16_t *compressed_dname_offsets = 0;
 static uint32_t compression_table_capacity = 0;
 static uint32_t compression_table_size = 0;
+static domain_type* compressed_dnames[MAXRRSPP];
 
 /*
  * Remove the specified pid from the list of child pids.  Returns -1 if
@@ -2056,13 +2057,15 @@ server_child(struct nsd *nsd)
 	if (nsd->server_kind & NSD_SERVER_UDP) {
 #if (defined(NONBLOCKING_IS_BROKEN) || !defined(HAVE_RECVMMSG))
 		udp_query = query_create(server_region,
-			compressed_dname_offsets, compression_table_size);
+			compressed_dname_offsets, compression_table_size,
+			compressed_dnames);
 #else
 		udp_query = NULL;
 		memset(msgs, 0, sizeof(msgs));
 		for (i = 0; i < NUM_RECV_PER_SELECT; i++) {
 			queries[i] = query_create(server_region,
-				compressed_dname_offsets, compression_table_size);
+				compressed_dname_offsets,
+				compression_table_size, compressed_dnames);
 			query_reset(queries[i], UDP_MAX_MESSAGE_LEN, 0);
 			iovecs[i].iov_base          = buffer_begin(queries[i]->packet);
 			iovecs[i].iov_len           = buffer_remaining(queries[i]->packet);;
@@ -2935,7 +2938,7 @@ handle_tcp_accept(int fd, short event, void* arg)
 		tcp_region, sizeof(struct tcp_handler_data));
 	tcp_data->region = tcp_region;
 	tcp_data->query = query_create(tcp_region, compressed_dname_offsets,
-		compression_table_size);
+		compression_table_size, compressed_dnames);
 	tcp_data->nsd = data->nsd;
 	tcp_data->query_count = 0;
 

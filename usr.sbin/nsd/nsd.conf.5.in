@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Jun 14, 2016" "NLnet Labs" "nsd 4.1.10"
+.TH "nsd.conf" "5" "May 14, 2018" "NLnet Labs" "nsd 4.1.21"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -375,6 +375,12 @@ Extra data is only added for referrals, when it is really necessary.
 This is different from the \-\-enable-minimal-responses configure time option,
 that reduces packets, but exactly to the fragmentation length, the nsd.conf
 option reduces packets as small as possible.
+The default is no.
+.TP
+.B refuse\-any:\fR <yes or no>
+Refuse queries of type ANY.  This is useful to stop query floods trying
+to get large responses.  Note that rrl ratelimiting also has type ANY as
+a ratelimiting type.
 The default is no.
 .TP
 .B zonefiles\-check:\fR <yes or no>

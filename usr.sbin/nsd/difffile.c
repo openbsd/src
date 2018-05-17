@@ -1277,6 +1277,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 	uint8_t committed;
 	uint32_t i;
 	int num_bytes = 0;
+	assert(zonedb);
 
 	/* read zone name and serial */
 	if(!diff_read_32(in, &type)) {
@@ -1363,6 +1364,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 				i, num_parts, &is_axfr, &delete_mode,
 				&rr_count, (nsd->db->udb?&z:NULL), &zonedb,
 				patname_buf, &num_bytes, &softfail);
+			assert(zonedb);
 			if(ret == 0) {
 				log_msg(LOG_ERR, "bad ixfr packet part %d in diff file for %s", (int)i, zone_buf);
 				xfrd_unlink_xfrfile(nsd, xfrfilenr);

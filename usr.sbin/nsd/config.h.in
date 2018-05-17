@@ -392,6 +392,9 @@
 /* Define to the maximum message length to pass to syslog. */
 #undef MAXSYSLOGMSGLEN
 
+/* Define this to cleanup memory at exit (eg. for valgrind, etc.) */
+#undef MEMCLEAN
+
 /* Define if memcmp() does not compare unsigned bytes */
 #undef MEMCMP_IS_BROKEN
 

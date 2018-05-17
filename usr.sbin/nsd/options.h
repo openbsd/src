@@ -94,6 +94,7 @@ struct nsd_options {
 	int log_time_ascii;
 	int round_robin;
 	int minimal_responses;
+	int refuse_any;
 	int reuseport;
 
         /** remote control section. enable toggle. */

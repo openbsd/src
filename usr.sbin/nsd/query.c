@@ -184,7 +184,7 @@ query_cleanup(void *data)
 
 query_type *
 query_create(region_type *region, uint16_t *compressed_dname_offsets,
-	size_t compressed_dname_size)
+	size_t compressed_dname_size, domain_type **compressed_dnames)
 {
 	query_type *query
 		= (query_type *) region_alloc_zero(region, sizeof(query_type));
@@ -192,6 +192,7 @@ query_create(region_type *region, uint16_t *compressed_dname_offsets,
 	   saves many mallocs in the server */
 	query->region = region_create_custom(xalloc, free, 16384, 16384/8, 32, 0);
 	query->compressed_dname_offsets = compressed_dname_offsets;
+	query->compressed_dnames = compressed_dnames;
 	query->packet = buffer_create(region, QIOBUFSZ);
 	region_add_cleanup(region, query_cleanup, query);
 	query->compressed_dname_offsets_size = compressed_dname_size;
@@ -1215,6 +1216,7 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 			RCODE_SET(q->packet, RCODE_REFUSE);
 		return;
 	}
+	assert(closest_encloser); /* otherwise, no q->zone would be found */
 	if(!q->zone->apex || !q->zone->soa_rrset) {
 		/* zone is configured but not loaded */
 		if(q->cname_count == 0)
@@ -1488,6 +1490,8 @@ query_process(query_type *q, nsd_type *nsd)
 	if (query_state == QUERY_PROCESSED || query_state == QUERY_IN_AXFR) {
 		return query_state;
 	}
+	if(q->qtype == TYPE_ANY && nsd->options->refuse_any)
+		return query_error(q, NSD_RC_REFUSE);
 
 	answer_query(nsd, q);
 

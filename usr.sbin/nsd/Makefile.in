@@ -291,6 +291,7 @@ zlexer.c:	$(srcdir)/zlexer.lex
 		echo '#include "config.h"' > $@ ;\
 		$(LEX) -i -t $(srcdir)/zlexer.lex >> $@ ;\
 	fi
+	@if test ! -f $@; then echo "No $@ : need flex and bison to compile from source repository"; exit 1; fi
 
 zparser.c zparser.h: $(srcdir)/zparser.y
 	$(YACC) -d -o zparser.c $(srcdir)/zparser.y
@@ -300,6 +301,7 @@ configlexer.c:	$(srcdir)/configlexer.lex
 		echo '#include "configyyrename.h"' > $@ ;\
 		$(LEX) -i -t $(srcdir)/configlexer.lex >> $@ ;\
 	fi
+	@if test ! -f $@; then echo "No $@ : need flex and bison to compile from source repository"; exit 1; fi
 
 configparser.c configparser.h:	$(srcdir)/configparser.y
 	$(YACC) -d -o configparser.c $(srcdir)/configparser.y
