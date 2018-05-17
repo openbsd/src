@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.570 2018/05/16 19:51:10 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.571 2018/05/17 13:46:57 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -390,8 +390,6 @@ routehandler(struct interface_info *ifi, int routefd)
 	case RTM_DELADDR:
 		/* Need to check if it is time to write resolv.conf. */
 		ifam = (struct ifa_msghdr *)rtm;
-		if (ifam->ifam_index != ifi->index)
-			goto done;
 		if (get_ifa_family((char *)ifam + ifam->ifam_hdrlen,
 		    ifam->ifam_addrs) != AF_INET)
 			goto done;
