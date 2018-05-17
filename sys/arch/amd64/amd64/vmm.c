@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.197 2018/04/27 15:45:52 jasper Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.198 2018/05/17 08:09:26 mikeb Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -7844,7 +7844,7 @@ vmm_decode_apicbase_msr_value(uint64_t apicbase)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < nitems(acpibase_info); i++)
+	for (i = 0; i < nitems(apicbase_info); i++)
 		if (apicbase & apicbase_info[i].vrdi_bit)
 			DPRINTF("%s", apicbase_info[i].vrdi_present);
 		else
