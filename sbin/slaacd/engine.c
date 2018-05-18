@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.25 2018/05/17 13:39:00 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.26 2018/05/18 11:06:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -530,7 +530,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				fatal("%s: IMSG_DEL_ROUTE wrong length: %d",
 				    __func__, imsg.hdr.len);
 			memcpy(&del_route, imsg.data, sizeof(del_route));
-			iface = get_slaacd_iface_by_id(del_addr.if_index);
+			iface = get_slaacd_iface_by_id(del_route.if_index);
 			if (iface == NULL) {
 				log_debug("IMSG_DEL_ROUTE: unknown interface"
 				    ", ignoring");
