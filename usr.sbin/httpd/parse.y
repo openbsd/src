@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.95 2018/05/18 14:07:46 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.96 2018/05/18 14:24:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -136,7 +136,7 @@ typedef struct {
 %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
-%type	<v.port>	optport
+%type	<v.port>	port
 %type	<v.number>	opttls optmatch
 %type	<v.tv>		timeout
 %type	<v.string>	numberstring optstring
@@ -405,7 +405,7 @@ serveropts_l	: serveropts_l serveroptsl nl
 		| serveroptsl optnl
 		;
 
-serveroptsl	: LISTEN ON STRING opttls optport {
+serveroptsl	: LISTEN ON STRING opttls port {
 			struct addresslist	 al;
 			struct address		*h;
 			struct server_config	*s_conf, *alias = NULL;
@@ -452,14 +452,8 @@ serveroptsl	: LISTEN ON STRING opttls optport {
 					s_conf = &srv->srv_conf;
 
 				memcpy(&s_conf->ss, &h->ss, sizeof(s_conf->ss));
+				s_conf->port = h->port.val[0];
 				s_conf->prefixlen = h->prefixlen;
-
-				/* Set the default port to 80 or 443 */
-				if (!h->port.op)
-					s_conf->port = htons($4 ?
-					    HTTPS_PORT : HTTP_PORT);
-				else
-					s_conf->port = h->port.val[0];
 
 				if ($4)
 					s_conf->flags |= SRVFLAG_TLS;
@@ -1146,16 +1140,12 @@ medianamesl	: numberstring				{
 		}
 		;
 
-optport		: /* empty */ {
-			$$.op = 0;
-		}
-		| PORT NUMBER {
+port		: PORT NUMBER {
 			if ($2 <= 0 || $2 > (int)USHRT_MAX) {
 				yyerror("invalid port: %lld", $2);
 				YYERROR;
 			}
 			$$.val[0] = htons($2);
-			$$.op = 1;
 		}
 		| PORT STRING {
 			int	 val;
@@ -1168,7 +1158,6 @@ optport		: /* empty */ {
 			free($2);
 
 			$$.val[0] = val;
-			$$.op = 1;
 		}
 		;
 

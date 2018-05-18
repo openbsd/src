@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.91 2018/05/18 14:07:46 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.92 2018/05/18 14:24:26 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -99,7 +99,7 @@ For example:
 .Bd -literal -offset indent
 ext_ip="10.0.0.1"
 server "default" {
-	listen on $ext_ip
+	listen on $ext_ip port 80
 }
 .Ed
 .Sh GLOBAL CONFIGURATION
