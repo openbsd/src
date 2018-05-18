@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1848 2018/05/17 04:42:27 mlarkin Exp 
+ *	OpenBSD: pcidevs,v 1.1849 2018/05/18 19:01:08 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -17932,8 +17932,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CM236 LPC",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SUNRISE_PT_LPC,
-	    "Sunrise Point-H LPC",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CM238_LPC,
+	    "CM238 LPC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_I2C0,

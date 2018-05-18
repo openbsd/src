@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1848 2018/05/17 04:42:27 mlarkin Exp 
+ *	OpenBSD: pcidevs,v 1.1849 2018/05/18 19:01:08 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5111,7 +5111,7 @@
 #define	PCI_PRODUCT_INTEL_CQM170_LPC	0xa14d		/* CQM170 LPC */
 #define	PCI_PRODUCT_INTEL_HM170_LPC	0xa14e		/* HM170 LPC */
 #define	PCI_PRODUCT_INTEL_CM236_LPC	0xa150		/* CM236 LPC */
-#define	PCI_PRODUCT_INTEL_SUNRISE_PT_LPC	0xa154		/* Sunrise Point-H LPC */
+#define	PCI_PRODUCT_INTEL_CM238_LPC	0xa154		/* CM238 LPC */
 #define	PCI_PRODUCT_INTEL_100SERIES_I2C0	0xa160		/* 100 Series I2C */
 #define	PCI_PRODUCT_INTEL_100SERIES_I2C1	0xa161		/* 100 Series I2C */
 #define	PCI_PRODUCT_INTEL_100SERIES_PCIE_17	0xa167		/* 100 Series PCIE */
