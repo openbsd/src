@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.60 2018/05/18 18:23:24 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.61 2018/05/18 18:37:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1166,16 +1166,21 @@ void	*	X509_CRL_get_ext_d2i(const X509_CRL *x, int nid, int *crit,
 int		X509_CRL_add1_ext_i2d(X509_CRL *x, int nid, void *value,
 		    int crit, unsigned long flags);
 
-int		X509_REVOKED_get_ext_count(X509_REVOKED *x);
-int		X509_REVOKED_get_ext_by_NID(X509_REVOKED *x, int nid, int lastpos);
-int		X509_REVOKED_get_ext_by_OBJ(X509_REVOKED *x,ASN1_OBJECT *obj,int lastpos);
-int		X509_REVOKED_get_ext_by_critical(X509_REVOKED *x, int crit, int lastpos);
-X509_EXTENSION *X509_REVOKED_get_ext(X509_REVOKED *x, int loc);
+int		X509_REVOKED_get_ext_count(const X509_REVOKED *x);
+int		X509_REVOKED_get_ext_by_NID(const X509_REVOKED *x, int nid,
+		    int lastpos);
+int		X509_REVOKED_get_ext_by_OBJ(const X509_REVOKED *x,
+		    const ASN1_OBJECT *obj, int lastpos);
+int		X509_REVOKED_get_ext_by_critical(const X509_REVOKED *x,
+		    int crit, int lastpos);
+X509_EXTENSION *X509_REVOKED_get_ext(const X509_REVOKED *x, int loc);
 X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc);
-int		X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc);
-void	*	X509_REVOKED_get_ext_d2i(X509_REVOKED *x, int nid, int *crit, int *idx);
-int		X509_REVOKED_add1_ext_i2d(X509_REVOKED *x, int nid, void *value, int crit,
-							unsigned long flags);
+int		X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex,
+		    int loc);
+void	*	X509_REVOKED_get_ext_d2i(const X509_REVOKED *x, int nid,
+		    int *crit, int *idx);
+int		X509_REVOKED_add1_ext_i2d(X509_REVOKED *x, int nid, void *value,
+		    int crit, unsigned long flags);
 
 X509_EXTENSION *X509_EXTENSION_create_by_NID(X509_EXTENSION **ex,
 			int nid, int crit, ASN1_OCTET_STRING *data);
