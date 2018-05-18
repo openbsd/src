@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.56 2018/05/18 18:05:57 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.57 2018/05/18 18:12:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1099,9 +1099,9 @@ int		X509_NAME_get_text_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj,
 /* NOTE: you should be passsing -1, not 0 as lastpos.  The functions that use
  * lastpos, search after that position on. */
 int 		X509_NAME_get_index_by_NID(X509_NAME *name,int nid,int lastpos);
-int 		X509_NAME_get_index_by_OBJ(X509_NAME *name,ASN1_OBJECT *obj,
-			int lastpos);
-X509_NAME_ENTRY *X509_NAME_get_entry(X509_NAME *name, int loc);
+int 		X509_NAME_get_index_by_OBJ(X509_NAME *name,
+			const ASN1_OBJECT *obj, int lastpos);
+X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc);
 X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc);
 int 		X509_NAME_add_entry(X509_NAME *name, const X509_NAME_ENTRY *ne,
 			int loc, int set);

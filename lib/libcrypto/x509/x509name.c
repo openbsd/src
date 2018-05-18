@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.22 2018/05/18 18:05:57 tb Exp $ */
+/* $OpenBSD: x509name.c,v 1.23 2018/05/18 18:12:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,7 +119,7 @@ X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
 
 /* NOTE: you should be passsing -1, not 0 as lastpos */
 int
-X509_NAME_get_index_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int lastpos)
+X509_NAME_get_index_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, int lastpos)
 {
 	int n;
 	X509_NAME_ENTRY *ne;
@@ -140,7 +140,7 @@ X509_NAME_get_index_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int lastpos)
 }
 
 X509_NAME_ENTRY *
-X509_NAME_get_entry(X509_NAME *name, int loc)
+X509_NAME_get_entry(const X509_NAME *name, int loc)
 {
 	if (name == NULL || sk_X509_NAME_ENTRY_num(name->entries) <= loc ||
 	    loc < 0)
