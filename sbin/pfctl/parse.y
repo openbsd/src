@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.672 2018/05/09 11:07:20 otto Exp $	*/
+/*	$OpenBSD: parse.y,v 1.673 2018/05/18 13:39:49 benno Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -389,6 +390,7 @@ int	 invalid_redirect(struct node_host *, sa_family_t);
 u_int16_t parseicmpspec(char *, sa_family_t);
 int	 kw_casecmp(const void *, const void *);
 int	 map_tos(char *string, int *);
+int	 rdomain_exists(u_int);
 
 TAILQ_HEAD(loadanchorshead, loadanchors)
     loadanchorshead = TAILQ_HEAD_INITIALIZER(loadanchorshead);
@@ -2561,10 +2563,11 @@ if_item		: STRING			{
 			$$->tail = $$;
 		}
 		| RDOMAIN NUMBER		{
-			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
-				yyerror("rdomain outside range");
-				YYERROR;
-			}
+			if ($2 < 0 || $2 > RT_TABLEID_MAX)
+				yyerror("rdomain %lld outside range", $2);
+			else if (rdomain_exists($2) != 1)
+				yyerror("rdomain %lld does not exist", $2);
+
 			$$ = calloc(1, sizeof(struct node_if));
 			if ($$ == NULL)
 				err(1, "if_item: calloc");
@@ -5949,4 +5952,38 @@ map_tos(char *s, int *val)
 		return (1);
 	}
 	return (0);
+}
+
+int
+rdomain_exists(u_int rdomain)
+{
+	size_t			 len;
+	struct rt_tableinfo	 info;
+	int			 mib[6];
+	static u_int		 found[RT_TABLEID_MAX+1];
+
+	if (found[rdomain] == 1)
+		return 1;
+
+	mib[0] = CTL_NET;
+	mib[1] = PF_ROUTE;
+	mib[2] = 0;
+	mib[3] = 0;
+	mib[4] = NET_RT_TABLE;
+	mib[5] = rdomain;
+
+	len = sizeof(info);
+	if (sysctl(mib, 6, &info, &len, NULL, 0) == -1) {
+		if (errno == ENOENT) {
+			/* table nonexistent */
+			return 0;
+		}
+		err(1, "sysctl");
+	}
+	if (info.rti_domainid == rdomain) {
+		found[rdomain] = 1;
+		return 1;
+	}
+	/* rdomain is a table, but not an rdomain */
+	return 0;
 }
