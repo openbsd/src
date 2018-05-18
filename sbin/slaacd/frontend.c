@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.18 2018/05/18 11:19:03 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.19 2018/05/18 13:21:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -344,6 +344,11 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			event_set(&ev_route, fd, EV_READ | EV_PERSIST,
 			    route_receive, NULL);
 			break;
+		case IMSG_STARTUP:
+			if (pledge("stdio inet route", NULL) == -1)
+				fatal("pledge");
+			frontend_startup();
+			break;
 #ifndef	SMALL
 		case IMSG_CONTROLFD:
 			if ((fd = imsg.fd) == -1)
@@ -354,14 +359,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			/* Listen on control socket. */
 			TAILQ_INIT(&ctl_conns);
 			control_listen();
-#endif	/* SMALL */
 			break;
-		case IMSG_STARTUP:
-			if (pledge("stdio inet route", NULL) == -1)
-				fatal("pledge");
-			frontend_startup();
-			break;
-#ifndef	SMALL
 		case IMSG_CTL_END:
 			control_imsg_relay(&imsg);
 			break;
