@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cmp.c,v 1.32 2018/05/13 10:36:35 tb Exp $ */
+/* $OpenBSD: x509_cmp.c,v 1.33 2018/05/18 19:24:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -343,12 +343,12 @@ X509_get0_pubkey_bitstr(const X509 *x)
 }
 
 int
-X509_check_private_key(X509 *x, EVP_PKEY *k)
+X509_check_private_key(const X509 *x, const EVP_PKEY *k)
 {
-	EVP_PKEY *xk;
+	const EVP_PKEY *xk;
 	int ret;
 
-	xk = X509_get_pubkey(x);
+	xk = X509_get0_pubkey(x);
 
 	if (xk)
 		ret = EVP_PKEY_cmp(xk, k);
@@ -367,7 +367,6 @@ X509_check_private_key(X509 *x, EVP_PKEY *k)
 	case -2:
 		X509error(X509_R_UNKNOWN_KEY_TYPE);
 	}
-	EVP_PKEY_free(xk);
 	if (ret > 0)
 		return 1;
 	return 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.63 2018/05/18 19:21:33 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.64 2018/05/18 19:24:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1049,7 +1049,7 @@ int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial);
 
 int		X509_REQ_check_private_key(X509_REQ *x509,EVP_PKEY *pkey);
 
-int		X509_check_private_key(X509 *x509,EVP_PKEY *pkey);
+int		X509_check_private_key(const X509 *x509, const EVP_PKEY *pkey);
 
 int		X509_issuer_and_serial_cmp(const X509 *a, const X509 *b);
 unsigned long	X509_issuer_and_serial_hash(X509 *a);
