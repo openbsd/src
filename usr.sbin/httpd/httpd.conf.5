@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.92 2018/05/18 14:24:26 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.93 2018/05/18 15:04:07 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -99,7 +99,7 @@ For example:
 .Bd -literal -offset indent
 ext_ip="10.0.0.1"
 server "default" {
-	listen on $ext_ip port 80
+	listen on $ext_ip
 }
 .Ed
 .Sh GLOBAL CONFIGURATION
@@ -358,11 +358,8 @@ a browser's preload list.
 Signal to the receiving user agent that this host and all sub domains
 of the host's domain should be considered HSTS hosts.
 .El
-.It Ic listen on Ar address Oo Ic tls Oc Op Ic port Ar number
+.It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
 Set the listen address and port.
-The default port is 80, or 443 if HTTPS has been enabled with the
-.Ic tls
-keyword.
 This statement can be specified multiple times.
 .It Ic location Ar path Brq ...
 Specify server configuration rules for a specific location.
