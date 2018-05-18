@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.54 2018/05/18 05:17:40 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.55 2018/05/18 05:20:32 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1062,7 +1062,7 @@ mfii_aen_register(struct mfii_softc *sc)
 	struct mfii_dmamem *mdm;
 	int rv;
 
-	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
 	if (ccb == NULL) {
 		printf("%s: unable to allocate ccb for aen\n", DEVNAME(sc));
 		return (ENOMEM);
@@ -1824,7 +1824,11 @@ mfii_initialise_firmware(struct mfii_softc *sc)
 
 	iiq->timestamp = htole64(time_uptime);
 
-	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
+	if (ccb == NULL) {
+		/* shouldn't ever run out of ccbs during attach */
+		return (1);
+	}
 	mfii_scrub_ccb(ccb);
 	init = ccb->ccb_request;
 
