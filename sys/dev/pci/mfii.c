@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.50 2018/03/16 05:12:37 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.51 2018/05/18 05:11:53 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -373,6 +373,7 @@ int			mfii_mfa_poll(struct mfii_softc *, struct mfii_ccb *);
 int			mfii_mgmt(struct mfii_softc *, struct mfii_ccb *,
 			    u_int32_t, const union mfi_mbox *,
 			    void *, size_t, int);
+void			mfii_empty_done(struct mfii_softc *, struct mfii_ccb *);
 
 int			mfii_scsi_cmd_io(struct mfii_softc *,
 			    struct scsi_xfer *);
@@ -1444,6 +1445,8 @@ mfii_exec(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	ccb->ccb_cookie = &m;
 	ccb->ccb_done = mfii_exec_done;
 
+	mfii_start(sc, ccb);
+
 	mtx_enter(&m);
 	while (ccb->ccb_cookie != NULL)
 		msleep(ccb, &m, PRIBIO, "mfiiexec", 0);
@@ -1468,9 +1471,11 @@ mfii_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb,
     u_int32_t opc, const union mfi_mbox *mbox, void *buf, size_t len,
     int flags)
 {
-	struct mfi_dcmd_frame *dcmd = ccb->ccb_request;
-	struct mfi_frame_header	*hdr = &dcmd->mdf_header;
-	u_int64_t r;
+	struct mpii_msg_scsi_io *io = ccb->ccb_request;
+	struct mfii_raid_context *ctx = (struct mfii_raid_context *)(io + 1);
+	struct mfii_sge *sge = (struct mfii_sge *)(ctx + 1);
+	struct mfi_dcmd_frame *dcmd = ccb->ccb_mfi;
+	struct mfi_frame_header *hdr = &dcmd->mdf_header;
 	u_int8_t *dma_buf;
 	int rv = EIO;
 
@@ -1509,13 +1514,22 @@ mfii_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	if (mbox != NULL)
 		memcpy(&dcmd->mdf_mbox, mbox, sizeof(dcmd->mdf_mbox));
 
-	if (ISSET(flags, SCSI_NOSLEEP))
-		mfii_mfa_poll(sc, ccb);
-	else {
-		r = MFII_REQ_MFA(ccb->ccb_request_dva);
-		memcpy(&ccb->ccb_req, &r, sizeof(ccb->ccb_req));
+	io->function = MFII_FUNCTION_PASSTHRU_IO;
+	io->sgl_offset0 = ((u_int8_t *)sge - (u_int8_t *)io) / 4;
+	io->chain_offset = ((u_int8_t *)sge - (u_int8_t *)io) / 16;
+
+	htolem64(&sge->sg_addr, ccb->ccb_mfi_dva);
+	htolem32(&sge->sg_len, MFI_FRAME_SIZE);
+	sge->sg_flags = MFII_SGE_CHAIN_ELEMENT | MFII_SGE_ADDR_IOCPLBNTA;
+
+	ccb->ccb_req.flags = MFII_REQ_TYPE_SCSI;
+	ccb->ccb_req.smid = letoh16(ccb->ccb_smid);
+
+	if (ISSET(flags, SCSI_NOSLEEP)) {
+		ccb->ccb_done = mfii_empty_done;
+		mfii_poll(sc, ccb);
+	} else
 		mfii_exec(sc, ccb);
-	}
 
 	if (hdr->mfh_cmd_status == MFI_STAT_OK) {
 		rv = 0;
@@ -1528,6 +1542,12 @@ done:
 	dma_free(dma_buf, len);
 
 	return (rv);
+}
+
+void
+mfii_empty_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
+{
+	return;
 }
 
 int
