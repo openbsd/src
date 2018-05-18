@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.17 2018/05/01 19:01:28 tb Exp $ */
+/* $OpenBSD: x509name.c,v 1.18 2018/05/18 17:53:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -308,7 +308,7 @@ X509_NAME_ENTRY_create_by_txt(X509_NAME_ENTRY **ne,
 
 X509_NAME_ENTRY *
 X509_NAME_ENTRY_create_by_NID(X509_NAME_ENTRY **ne, int nid, int type,
-    unsigned char *bytes, int len)
+    const unsigned char *bytes, int len)
 {
 	ASN1_OBJECT *obj;
 	X509_NAME_ENTRY *nentry;
@@ -324,8 +324,8 @@ X509_NAME_ENTRY_create_by_NID(X509_NAME_ENTRY **ne, int nid, int type,
 }
 
 X509_NAME_ENTRY *
-X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne, ASN1_OBJECT *obj, int type,
-    const unsigned char *bytes, int len)
+X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne, const ASN1_OBJECT *obj,
+    int type, const unsigned char *bytes, int len)
 {
 	X509_NAME_ENTRY *ret;
 
@@ -351,7 +351,7 @@ err:
 }
 
 int
-X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne, ASN1_OBJECT *obj)
+X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne, const ASN1_OBJECT *obj)
 {
 	if ((ne == NULL) || (obj == NULL)) {
 		X509error(ERR_R_PASSED_NULL_PARAMETER);

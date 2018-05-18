@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.51 2018/05/18 16:55:58 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.52 2018/05/18 17:53:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1112,14 +1112,14 @@ int X509_NAME_add_entry_by_NID(X509_NAME *name, int nid, int type,
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_txt(X509_NAME_ENTRY **ne,
 		const char *field, int type, const unsigned char *bytes, int len);
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_NID(X509_NAME_ENTRY **ne, int nid,
-			int type,unsigned char *bytes, int len);
+			int type, const unsigned char *bytes, int len);
 int X509_NAME_add_entry_by_txt(X509_NAME *name, const char *field, int type,
 			const unsigned char *bytes, int len, int loc, int set);
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne,
-			ASN1_OBJECT *obj, int type,const unsigned char *bytes,
-			int len);
+			const ASN1_OBJECT *obj, int type,
+			const unsigned char *bytes, int len);
 int 		X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne,
-			ASN1_OBJECT *obj);
+			const ASN1_OBJECT *obj);
 int 		X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
 			const unsigned char *bytes, int len);
 ASN1_OBJECT *	X509_NAME_ENTRY_get_object(const X509_NAME_ENTRY *ne);
