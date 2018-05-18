@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.51 2018/05/18 05:11:53 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.52 2018/05/18 05:13:21 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -296,6 +296,32 @@ struct mfii_softc {
 
 	struct mfi_ctrl_info	sc_info;
 };
+
+#ifdef MFII_DEBUG
+#define DPRINTF(x...)		do { if (mfii_debug) printf(x); } while(0)
+#define DNPRINTF(n,x...)	do { if (mfii_debug & n) printf(x); } while(0)
+#define	MFII_D_CMD		0x0001
+#define	MFII_D_INTR		0x0002
+#define	MFII_D_MISC		0x0004
+#define	MFII_D_DMA		0x0008
+#define	MFII_D_IOCTL		0x0010
+#define	MFII_D_RW		0x0020
+#define	MFII_D_MEM		0x0040
+#define	MFII_D_CCB		0x0080
+uint32_t	mfii_debug = 0
+/*		    | MFII_D_CMD */
+/*		    | MFII_D_INTR */
+		    | MFII_D_MISC
+/*		    | MFII_D_DMA */
+/*		    | MFII_D_IOCTL */
+/*		    | MFII_D_RW */
+/*		    | MFII_D_MEM */
+/*		    | MFII_D_CCB */
+		;
+#else
+#define DPRINTF(x...)
+#define DNPRINTF(n,x...)
+#endif
 
 int		mfii_match(struct device *, void *, void *);
 void		mfii_attach(struct device *, struct device *, void *);
@@ -605,15 +631,13 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	while ((sc->sc_max_sgl << 1) <= (nsge_in_io + nsge_in_chain))
 		sc->sc_max_sgl <<= 1;
 
-#ifdef MFI_DEBUG
-	printf("%s: OSP 0x%08x, OSP2 0x%08x, OSP3 0x%08x\n",
+	DNPRINTF(MFII_D_MISC, "%s: OSP 0x%08x, OSP2 0x%08x, OSP3 0x%08x\n",
 	    DEVNAME(sc), status, scpad2, scpad3);
-	printf("%s: max_fw_cmds %d, max_cmds %d\n",
+	DNPRINTF(MFII_D_MISC, "%s: max_fw_cmds %d, max_cmds %d\n",
 	    DEVNAME(sc), sc->sc_max_fw_cmds, sc->sc_max_cmds);
-	printf("%s: nsge_in_io %d, nsge_in_chain %d, "
+	DNPRINTF(MFII_D_MISC, "%s: nsge_in_io %d, nsge_in_chain %d, "
 	    "max_sgl %d\n", DEVNAME(sc), nsge_in_io, nsge_in_chain,
 	    sc->sc_max_sgl);
-#endif
 
 	/* sense memory */
 	CTASSERT(sizeof(struct mfi_sense) == MFI_SENSE_SIZE);
@@ -1186,7 +1210,7 @@ int
 mfii_get_info(struct mfii_softc *sc)
 {
 	struct mfii_ccb *ccb;
-	int rv;
+	int i, rv;
 
 	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	rv = mfii_mgmt(sc, ccb, MR_DCMD_CTRL_GET_INFO, NULL,
@@ -1196,9 +1220,8 @@ mfii_get_info(struct mfii_softc *sc)
 	if (rv != 0)
 		return (rv);
 
-#ifdef MFI_DEBUG
 	for (i = 0; i < sc->sc_info.mci_image_component_count; i++) {
-		printf("%s: active FW %s Version %s date %s time %s\n",
+		DPRINTF("%s: active FW %s Version %s date %s time %s\n",
 		    DEVNAME(sc),
 		    sc->sc_info.mci_image_component[i].mic_name,
 		    sc->sc_info.mci_image_component[i].mic_version,
@@ -1207,7 +1230,7 @@ mfii_get_info(struct mfii_softc *sc)
 	}
 
 	for (i = 0; i < sc->sc_info.mci_pending_image_component_count; i++) {
-		printf("%s: pending FW %s Version %s date %s time %s\n",
+		DPRINTF("%s: pending FW %s Version %s date %s time %s\n",
 		    DEVNAME(sc),
 		    sc->sc_info.mci_pending_image_component[i].mic_name,
 		    sc->sc_info.mci_pending_image_component[i].mic_version,
@@ -1215,7 +1238,7 @@ mfii_get_info(struct mfii_softc *sc)
 		    sc->sc_info.mci_pending_image_component[i].mic_build_time);
 	}
 
-	printf("%s: max_arms %d max_spans %d max_arrs %d max_lds %d name %s\n",
+	DPRINTF("%s: max_arms %d max_spans %d max_arrs %d max_lds %d name %s\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_max_arms,
 	    sc->sc_info.mci_max_spans,
@@ -1223,7 +1246,7 @@ mfii_get_info(struct mfii_softc *sc)
 	    sc->sc_info.mci_max_lds,
 	    sc->sc_info.mci_product_name);
 
-	printf("%s: serial %s present %#x fw time %d max_cmds %d max_sg %d\n",
+	DPRINTF("%s: serial %s present %#x fw time %d max_cmds %d max_sg %d\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_serial_number,
 	    sc->sc_info.mci_hw_present,
@@ -1231,7 +1254,7 @@ mfii_get_info(struct mfii_softc *sc)
 	    sc->sc_info.mci_max_cmds,
 	    sc->sc_info.mci_max_sg_elements);
 
-	printf("%s: max_rq %d lds_pres %d lds_deg %d lds_off %d pd_pres %d\n",
+	DPRINTF("%s: max_rq %d lds_pres %d lds_deg %d lds_off %d pd_pres %d\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_max_request_size,
 	    sc->sc_info.mci_lds_present,
@@ -1239,59 +1262,59 @@ mfii_get_info(struct mfii_softc *sc)
 	    sc->sc_info.mci_lds_offline,
 	    sc->sc_info.mci_pd_present);
 
-	printf("%s: pd_dsk_prs %d pd_dsk_pred_fail %d pd_dsk_fail %d\n",
+	DPRINTF("%s: pd_dsk_prs %d pd_dsk_pred_fail %d pd_dsk_fail %d\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_pd_disks_present,
 	    sc->sc_info.mci_pd_disks_pred_failure,
 	    sc->sc_info.mci_pd_disks_failed);
 
-	printf("%s: nvram %d mem %d flash %d\n",
+	DPRINTF("%s: nvram %d mem %d flash %d\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_nvram_size,
 	    sc->sc_info.mci_memory_size,
 	    sc->sc_info.mci_flash_size);
 
-	printf("%s: ram_cor %d ram_uncor %d clus_all %d clus_act %d\n",
+	DPRINTF("%s: ram_cor %d ram_uncor %d clus_all %d clus_act %d\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_ram_correctable_errors,
 	    sc->sc_info.mci_ram_uncorrectable_errors,
 	    sc->sc_info.mci_cluster_allowed,
 	    sc->sc_info.mci_cluster_active);
 
-	printf("%s: max_strps_io %d raid_lvl %#x adapt_ops %#x ld_ops %#x\n",
+	DPRINTF("%s: max_strps_io %d raid_lvl %#x adapt_ops %#x ld_ops %#x\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_max_strips_per_io,
 	    sc->sc_info.mci_raid_levels,
 	    sc->sc_info.mci_adapter_ops,
 	    sc->sc_info.mci_ld_ops);
 
-	printf("%s: strp_sz_min %d strp_sz_max %d pd_ops %#x pd_mix %#x\n",
+	DPRINTF("%s: strp_sz_min %d strp_sz_max %d pd_ops %#x pd_mix %#x\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_stripe_sz_ops.min,
 	    sc->sc_info.mci_stripe_sz_ops.max,
 	    sc->sc_info.mci_pd_ops,
 	    sc->sc_info.mci_pd_mix_support);
 
-	printf("%s: ecc_bucket %d pckg_prop %s\n",
+	DPRINTF("%s: ecc_bucket %d pckg_prop %s\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_ecc_bucket_count,
 	    sc->sc_info.mci_package_version);
 
-	printf("%s: sq_nm %d prd_fail_poll %d intr_thrtl %d intr_thrtl_to %d\n",
+	DPRINTF("%s: sq_nm %d prd_fail_poll %d intr_thrtl %d intr_thrtl_to %d\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_properties.mcp_seq_num,
 	    sc->sc_info.mci_properties.mcp_pred_fail_poll_interval,
 	    sc->sc_info.mci_properties.mcp_intr_throttle_cnt,
 	    sc->sc_info.mci_properties.mcp_intr_throttle_timeout);
 
-	printf("%s: rbld_rate %d patr_rd_rate %d bgi_rate %d cc_rate %d\n",
+	DPRINTF("%s: rbld_rate %d patr_rd_rate %d bgi_rate %d cc_rate %d\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_properties.mcp_rebuild_rate,
 	    sc->sc_info.mci_properties.mcp_patrol_read_rate,
 	    sc->sc_info.mci_properties.mcp_bgi_rate,
 	    sc->sc_info.mci_properties.mcp_cc_rate);
 
-	printf("%s: rc_rate %d ch_flsh %d spin_cnt %d spin_dly %d clus_en %d\n",
+	DPRINTF("%s: rc_rate %d ch_flsh %d spin_cnt %d spin_dly %d clus_en %d\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_properties.mcp_recon_rate,
 	    sc->sc_info.mci_properties.mcp_cache_flush_interval,
@@ -1299,7 +1322,7 @@ mfii_get_info(struct mfii_softc *sc)
 	    sc->sc_info.mci_properties.mcp_spinup_delay,
 	    sc->sc_info.mci_properties.mcp_cluster_enable);
 
-	printf("%s: coerc %d alarm %d dis_auto_rbld %d dis_bat_wrn %d ecc %d\n",
+	DPRINTF("%s: coerc %d alarm %d dis_auto_rbld %d dis_bat_wrn %d ecc %d\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_properties.mcp_coercion_mode,
 	    sc->sc_info.mci_properties.mcp_alarm_enable,
@@ -1307,37 +1330,36 @@ mfii_get_info(struct mfii_softc *sc)
 	    sc->sc_info.mci_properties.mcp_disable_battery_warn,
 	    sc->sc_info.mci_properties.mcp_ecc_bucket_size);
 
-	printf("%s: ecc_leak %d rest_hs %d exp_encl_dev %d\n",
+	DPRINTF("%s: ecc_leak %d rest_hs %d exp_encl_dev %d\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_properties.mcp_ecc_bucket_leak_rate,
 	    sc->sc_info.mci_properties.mcp_restore_hotspare_on_insertion,
 	    sc->sc_info.mci_properties.mcp_expose_encl_devices);
 
-	printf("%s: vendor %#x device %#x subvendor %#x subdevice %#x\n",
+	DPRINTF("%s: vendor %#x device %#x subvendor %#x subdevice %#x\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_pci.mip_vendor,
 	    sc->sc_info.mci_pci.mip_device,
 	    sc->sc_info.mci_pci.mip_subvendor,
 	    sc->sc_info.mci_pci.mip_subdevice);
 
-	printf("%s: type %#x port_count %d port_addr ",
+	DPRINTF("%s: type %#x port_count %d port_addr ",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_host.mih_type,
 	    sc->sc_info.mci_host.mih_port_count);
 
 	for (i = 0; i < 8; i++)
-		printf("%.0llx ", sc->sc_info.mci_host.mih_port_addr[i]);
-	printf("\n");
+		DPRINTF("%.0llx ", sc->sc_info.mci_host.mih_port_addr[i]);
+	DPRINTF("\n");
 
-	printf("%s: type %.x port_count %d port_addr ",
+	DPRINTF("%s: type %.x port_count %d port_addr ",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_device.mid_type,
 	    sc->sc_info.mci_device.mid_port_count);
 
 	for (i = 0; i < 8; i++)
-		printf("%.0llx ", sc->sc_info.mci_device.mid_port_addr[i]);
-	printf("\n");
-#endif /* MFI_DEBUG */
+		DPRINTF("%.0llx ", sc->sc_info.mci_device.mid_port_addr[i]);
+	DPRINTF("\n");
 
 	return (0);
 }
