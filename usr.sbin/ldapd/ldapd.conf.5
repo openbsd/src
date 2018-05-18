@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.24 2018/05/14 11:10:15 reyk Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.25 2018/05/18 12:36:30 reyk Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 14 2018 $
+.Dd $Mdocdate: May 18 2018 $
 .Dt LDAPD.CONF 5
 .Os
 .Sh NAME
@@ -252,7 +252,6 @@ The scope can be restricted to an optional attribute:
 .Bl -tag -width Ds
 .It attribute Ar name
 The filter rule applies to the specified attribute.
-Attributes can only be specified for write access rules.
 .El
 .Pp
 Finally, the filter rule can match a bind DN:

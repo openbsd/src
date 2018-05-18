@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2018/05/14 07:53:47 reyk Exp $ */
+/*	$OpenBSD: parse.y,v 1.28 2018/05/18 12:36:30 reyk Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -1163,12 +1163,6 @@ mk_aci(int type, int rights, enum scope scope, char *target, char *attr,
 	    aci->attribute ? aci->attribute : "",
 	    aci->scope,
 	    aci->subject ? aci->subject : "any");
-
-	if (aci->attribute && aci->rights != ACI_WRITE) {
-		yyerror("attributes only supported for write access filters");
-		free(aci);
-		return NULL;
-	}
 
 	return aci;
 }

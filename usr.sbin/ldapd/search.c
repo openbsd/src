@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.21 2018/05/16 10:08:47 reyk Exp $ */
+/*	$OpenBSD: search.c,v 1.22 2018/05/18 12:36:30 reyk Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -102,7 +102,7 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 	struct ber_element	*root, *elm, *filtered_attrs = NULL, *link, *a;
 	struct ber_element	*prev, *next;
 	char			*adesc;
-	void			*buf;
+	void			*buf, *searchdn = NULL;
 
 	if ((root = ber_add_sequence(NULL)) == NULL)
 		goto fail;
@@ -111,10 +111,20 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 		goto fail;
 	link = filtered_attrs;
 
+	if ((searchdn = strndup(dn, dnlen)) == NULL)
+		goto fail;
+
 	for (prev = NULL, a = attrs->be_sub; a; a = next) {
 		if (ber_get_string(a->be_sub, &adesc) != 0)
 			goto fail;
-		if (should_include_attribute(adesc, search, 0)) {
+		/*
+		 * Check if read access to the attribute is allowed and if it
+		 * should be included in the search result.  The attribute is
+		 * filtered out in the result if one of these conditions fails.
+		 */
+		if (authorized(search->conn, search->ns, ACI_READ,
+		    searchdn, adesc, LDAP_SCOPE_BASE) &&
+		    should_include_attribute(adesc, search, 0)) {
 			next = a->be_next;
 			if (prev != NULL)
 				prev->be_next = a->be_next;	/* unlink a */
@@ -152,11 +162,13 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 		return -1;
 	}
 
+	free(searchdn);
 	return 0;
 fail:
 	log_warn("search result");
 	if (root)
 		ber_free_elements(root);
+	free(searchdn);
 	return -1;
 }
 
