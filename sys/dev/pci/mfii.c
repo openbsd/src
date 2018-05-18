@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.53 2018/05/18 05:15:10 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.54 2018/05/18 05:17:40 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -22,10 +22,14 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/dkio.h>
 #include <sys/pool.h>
 #include <sys/task.h>
 #include <sys/atomic.h>
+#include <sys/sensors.h>
+#include <sys/rwlock.h>
 
+#include <dev/biovar.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
@@ -294,7 +298,35 @@ struct mfii_softc {
 	struct mfii_pd_softc	*sc_pd;
 	struct scsi_iopool	sc_iopool;
 
+	/* save some useful information for logical drives that is missing
+	 * in sc_ld_list
+	 */
+	struct {
+		uint32_t	ld_present;
+		char		ld_dev[16];	/* device name sd? */
+	}			sc_ld[MFI_MAX_LD];
+
+	/* scsi ioctl from sd device */
+	int			(*sc_ioctl)(struct device *, u_long, caddr_t);
+
+	uint32_t		sc_ld_cnt;
+
+	/* bio */
+	struct mfi_conf		*sc_cfg;
 	struct mfi_ctrl_info	sc_info;
+	struct mfi_ld_list	sc_ld_list;
+	struct mfi_ld_details	*sc_ld_details; /* array to all logical disks */
+	int			sc_no_pd; /* used physical disks */
+	int			sc_ld_sz; /* sizeof sc_ld_details */
+
+	/* mgmt lock */
+	struct rwlock		sc_lock;
+
+	/* sensors */
+	struct ksensordev	sc_sensordev;
+	struct ksensor		*sc_bbu;
+	struct ksensor		*sc_bbu_status;
+	struct ksensor		*sc_sensors;
 };
 
 #ifdef MFII_DEBUG
@@ -342,13 +374,15 @@ struct cfdriver mfii_cd = {
 
 void		mfii_scsi_cmd(struct scsi_xfer *);
 void		mfii_scsi_cmd_done(struct mfii_softc *, struct mfii_ccb *);
+int		mfii_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
+int		mfii_ioctl_cache(struct scsi_link *, u_long, struct dk_cache *);
 
 struct scsi_adapter mfii_switch = {
 	mfii_scsi_cmd,
 	scsi_minphys,
 	NULL, /* probe */
 	NULL, /* unprobe */
-	NULL  /* ioctl */
+	mfii_scsi_ioctl
 };
 
 void		mfii_pd_scsi_cmd(struct scsi_xfer *);
@@ -433,6 +467,42 @@ void			mfii_aen_pd_remove(struct mfii_softc *,
 			    const struct mfi_evtarg_pd_address *);
 void			mfii_aen_pd_state_change(struct mfii_softc *,
 			    const struct mfi_evtarg_pd_state *);
+
+#if NBIO > 0
+int		mfii_ioctl(struct device *, u_long, caddr_t);
+int		mfii_bio_getitall(struct mfii_softc *);
+int		mfii_ioctl_inq(struct mfii_softc *, struct bioc_inq *);
+int		mfii_ioctl_vol(struct mfii_softc *, struct bioc_vol *);
+int		mfii_ioctl_disk(struct mfii_softc *, struct bioc_disk *);
+int		mfii_ioctl_alarm(struct mfii_softc *, struct bioc_alarm *);
+int		mfii_ioctl_blink(struct mfii_softc *sc, struct bioc_blink *);
+int		mfii_ioctl_setstate(struct mfii_softc *,
+		    struct bioc_setstate *);
+int		mfii_ioctl_patrol(struct mfii_softc *sc, struct bioc_patrol *);
+int		mfii_bio_hs(struct mfii_softc *, int, int, void *);
+
+#ifndef SMALL_KERNEL
+static const char *mfi_bbu_indicators[] = {
+	"pack missing",
+	"voltage low",
+	"temp high",
+	"charge active",
+	"discharge active",
+	"learn cycle req'd",
+	"learn cycle active",
+	"learn cycle failed",
+	"learn cycle timeout",
+	"I2C errors",
+	"replace pack",
+	"low capacity",
+	"periodic learn req'd"
+};
+
+int		mfii_create_sensors(struct mfii_softc *);
+void		mfii_refresh_sensors(void *);
+void		mfii_bbu(struct mfii_softc *);
+#endif /* SMALL_KERNEL */
+#endif /* NBIO > 0 */
 
 /*
  * mfii boards support asynchronous (and non-polled) completion of
@@ -564,7 +634,7 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	struct scsibus_attach_args saa;
 	u_int32_t status, scpad2, scpad3;
-	int chain_frame_sz, nsge_in_io, nsge_in_chain;
+	int chain_frame_sz, nsge_in_io, nsge_in_chain, i;
 
 	/* init sc */
 	sc->sc_iop = mfii_find_iop(aux);
@@ -574,6 +644,8 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	mtx_init(&sc->sc_post_mtx, IPL_BIO);
 	mtx_init(&sc->sc_reply_postq_mtx, IPL_BIO);
 	scsi_iopool_init(&sc->sc_iopool, sc, mfii_get_ccb, mfii_put_ccb);
+
+	rw_init(&sc->sc_lock, "mfii_lock");
 
 	sc->sc_aen_ccb = NULL;
 	task_set(&sc->sc_aen_task, mfii_aen, sc);
@@ -705,6 +777,10 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_ih == NULL)
 		goto free_sgl;
 
+	sc->sc_ld_cnt = sc->sc_info.mci_lds_present;
+	for (i = 0; i < sc->sc_ld_cnt; i++)
+		sc->sc_ld[i].ld_present = 1;
+
 	sc->sc_link.openings = sc->sc_max_cmds;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &mfii_switch;
@@ -715,7 +791,8 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
-	config_found(&sc->sc_dev, &saa, scsiprint);
+	sc->sc_scsibus = (struct scsibus_softc *)
+	    config_found(&sc->sc_dev, &saa, scsiprint);
 
 	mfii_syspd(sc);
 
@@ -727,6 +804,18 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	/* enable interrupts */
 	mfii_write(sc, MFI_OSTS, 0xffffffff);
 	mfii_write(sc, MFI_OMSK, ~MFII_OSTS_INTR_VALID);
+
+#if NBIO > 0
+	if (bio_register(&sc->sc_dev, mfii_ioctl) != 0)
+		panic("%s: controller registration failed", DEVNAME(sc));
+	else
+		sc->sc_ioctl = mfii_ioctl;
+
+#ifndef SMALL_KERNEL
+	if (mfii_create_sensors(sc) != 0)
+		printf("%s: unable to create sensors\n", DEVNAME(sc));
+#endif
+#endif /* NBIO > 0 */
 
 	return;
 intr_disestablish:
@@ -846,6 +935,23 @@ mfii_detach(struct device *self, int flags)
 
 	if (sc->sc_ih == NULL)
 		return (0);
+
+#ifndef SMALL_KERNEL
+	if (sc->sc_sensors) {
+		sensordev_deinstall(&sc->sc_sensordev);
+		free(sc->sc_sensors, M_DEVBUF,
+		    sc->sc_ld_cnt * sizeof(struct ksensor));
+	}
+
+	if (sc->sc_bbu) {
+		free(sc->sc_bbu, M_DEVBUF, 4 * sizeof(*sc->sc_bbu));
+	}
+
+	if (sc->sc_bbu_status) {
+		free(sc->sc_bbu_status, M_DEVBUF,
+		    sizeof(*sc->sc_bbu_status) * sizeof(mfi_bbu_indicators));
+	}
+#endif /* SMALL_KERNEL */
 
 	mfii_aen_unregister(sc);
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
@@ -1914,6 +2020,109 @@ mfii_scsi_cmd_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 }
 
 int
+mfii_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
+{
+	struct mfii_softc	*sc = (struct mfii_softc *)link->adapter_softc;
+
+	DNPRINTF(MFII_D_IOCTL, "%s: mfii_scsi_ioctl\n", DEVNAME(sc));
+
+	switch (cmd) {
+	case DIOCGCACHE:
+	case DIOCSCACHE:
+		return (mfii_ioctl_cache(link, cmd, (struct dk_cache *)addr));
+		break;
+
+	default:
+		if (sc->sc_ioctl)
+			return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
+		break;
+	}
+
+	return (ENOTTY);
+}
+
+int
+mfii_ioctl_cache(struct scsi_link *link, u_long cmd,  struct dk_cache *dc)
+{
+	struct mfii_softc	*sc = (struct mfii_softc *)link->adapter_softc;
+	int			 rv, wrenable, rdenable;
+	struct mfi_ld_prop	 ldp;
+	union mfi_mbox		 mbox;
+
+	if (mfii_get_info(sc)) {
+		rv = EIO;
+		goto done;
+	}
+
+	if (!sc->sc_ld[link->target].ld_present) {
+		rv = EIO;
+		goto done;
+	}
+
+	memset(&mbox, 0, sizeof(mbox));
+	mbox.b[0] = link->target;
+	rv = mfii_mgmt(sc, MR_DCMD_LD_GET_PROPERTIES, &mbox, &ldp, sizeof(ldp),
+	    SCSI_DATA_IN);
+	if (rv != 0)
+		goto done;
+
+	if (sc->sc_info.mci_memory_size > 0) {
+		wrenable = ISSET(ldp.mlp_cur_cache_policy,
+		    MR_LD_CACHE_ALLOW_WRITE_CACHE)? 1 : 0;
+		rdenable = ISSET(ldp.mlp_cur_cache_policy,
+		    MR_LD_CACHE_ALLOW_READ_CACHE)? 1 : 0;
+	} else {
+		wrenable = ISSET(ldp.mlp_diskcache_policy,
+		    MR_LD_DISK_CACHE_ENABLE)? 1 : 0;
+		rdenable = 0;
+	}
+
+	if (cmd == DIOCGCACHE) {
+		dc->wrcache = wrenable;
+		dc->rdcache = rdenable;
+		goto done;
+	} /* else DIOCSCACHE */
+
+	if (((dc->wrcache) ? 1 : 0) == wrenable &&
+	    ((dc->rdcache) ? 1 : 0) == rdenable)
+		goto done;
+
+	memset(&mbox, 0, sizeof(mbox));
+	mbox.b[0] = ldp.mlp_ld.mld_target;
+	mbox.b[1] = ldp.mlp_ld.mld_res;
+	mbox.s[1] = ldp.mlp_ld.mld_seq;
+
+	if (sc->sc_info.mci_memory_size > 0) {
+		if (dc->rdcache)
+			SET(ldp.mlp_cur_cache_policy,
+			    MR_LD_CACHE_ALLOW_READ_CACHE);
+		else
+			CLR(ldp.mlp_cur_cache_policy,
+			    MR_LD_CACHE_ALLOW_READ_CACHE);
+		if (dc->wrcache)
+			SET(ldp.mlp_cur_cache_policy,
+			    MR_LD_CACHE_ALLOW_WRITE_CACHE);
+		else
+			CLR(ldp.mlp_cur_cache_policy,
+			    MR_LD_CACHE_ALLOW_WRITE_CACHE);
+	} else {
+		if (dc->rdcache) {
+			rv = EOPNOTSUPP;
+			goto done;
+		}
+		if (dc->wrcache)
+			ldp.mlp_diskcache_policy = MR_LD_DISK_CACHE_ENABLE;
+		else
+			ldp.mlp_diskcache_policy = MR_LD_DISK_CACHE_DISABLE;
+	}
+
+	rv = mfii_mgmt(sc, MR_DCMD_LD_SET_PROPERTIES, &mbox, &ldp, sizeof(ldp),
+	    SCSI_DATA_OUT);
+done:
+	return (rv);
+}
+
+int
 mfii_scsi_cmd_io(struct mfii_softc *sc, struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
@@ -2408,3 +2617,1154 @@ destroy:
 	return (1);
 }
 
+#if NBIO > 0
+int
+mfii_ioctl(struct device *dev, u_long cmd, caddr_t addr)
+{
+	struct mfii_softc	*sc = (struct mfii_softc *)dev;
+	int error = 0;
+
+	DNPRINTF(MFII_D_IOCTL, "%s: mfii_ioctl ", DEVNAME(sc));
+
+	rw_enter_write(&sc->sc_lock);
+
+	switch (cmd) {
+	case BIOCINQ:
+		DNPRINTF(MFII_D_IOCTL, "inq\n");
+		error = mfii_ioctl_inq(sc, (struct bioc_inq *)addr);
+		break;
+
+	case BIOCVOL:
+		DNPRINTF(MFII_D_IOCTL, "vol\n");
+		error = mfii_ioctl_vol(sc, (struct bioc_vol *)addr);
+		break;
+
+	case BIOCDISK:
+		DNPRINTF(MFII_D_IOCTL, "disk\n");
+		error = mfii_ioctl_disk(sc, (struct bioc_disk *)addr);
+		break;
+
+	case BIOCALARM:
+		DNPRINTF(MFII_D_IOCTL, "alarm\n");
+		error = mfii_ioctl_alarm(sc, (struct bioc_alarm *)addr);
+		break;
+
+	case BIOCBLINK:
+		DNPRINTF(MFII_D_IOCTL, "blink\n");
+		error = mfii_ioctl_blink(sc, (struct bioc_blink *)addr);
+		break;
+
+	case BIOCSETSTATE:
+		DNPRINTF(MFII_D_IOCTL, "setstate\n");
+		error = mfii_ioctl_setstate(sc, (struct bioc_setstate *)addr);
+		break;
+
+	case BIOCPATROL:
+		DNPRINTF(MFII_D_IOCTL, "patrol\n");
+		error = mfii_ioctl_patrol(sc, (struct bioc_patrol *)addr);
+		break;
+
+	default:
+		DNPRINTF(MFII_D_IOCTL, " invalid ioctl\n");
+		error = EINVAL;
+	}
+
+	rw_exit_write(&sc->sc_lock);
+
+	return (error);
+}
+
+int
+mfii_bio_getitall(struct mfii_softc *sc)
+{
+	int			i, d, rv = EINVAL;
+	size_t			size;
+	union mfi_mbox		mbox;
+	struct mfi_conf		*cfg = NULL;
+	struct mfi_ld_details	*ld_det = NULL;
+
+	/* get info */
+	if (mfii_get_info(sc)) {
+		DNPRINTF(MFII_D_IOCTL, "%s: mfii_get_info failed\n",
+		    DEVNAME(sc));
+		goto done;
+	}
+
+	/* send single element command to retrieve size for full structure */
+	cfg = malloc(sizeof *cfg, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (cfg == NULL)
+		goto done;
+	if (mfii_mgmt(sc, MR_DCMD_CONF_GET, NULL, cfg, sizeof(*cfg),
+	    SCSI_DATA_IN)) {
+		free(cfg, M_DEVBUF, sizeof *cfg);
+		goto done;
+	}
+
+	size = cfg->mfc_size;
+	free(cfg, M_DEVBUF, sizeof *cfg);
+
+	/* memory for read config */
+	cfg = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (cfg == NULL)
+		goto done;
+	if (mfii_mgmt(sc, MR_DCMD_CONF_GET, NULL, cfg, size, SCSI_DATA_IN)) {
+		free(cfg, M_DEVBUF, size);
+		goto done;
+	}
+
+	/* replace current pointer with new one */
+	if (sc->sc_cfg)
+		free(sc->sc_cfg, M_DEVBUF, 0);
+	sc->sc_cfg = cfg;
+
+	/* get all ld info */
+	if (mfii_mgmt(sc, MR_DCMD_LD_GET_LIST, NULL, &sc->sc_ld_list,
+	    sizeof(sc->sc_ld_list), SCSI_DATA_IN))
+		goto done;
+
+	/* get memory for all ld structures */
+	size = cfg->mfc_no_ld * sizeof(struct mfi_ld_details);
+	if (sc->sc_ld_sz != size) {
+		if (sc->sc_ld_details)
+			free(sc->sc_ld_details, M_DEVBUF, 0);
+
+		ld_det = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
+		if (ld_det == NULL)
+			goto done;
+		sc->sc_ld_sz = size;
+		sc->sc_ld_details = ld_det;
+	}
+
+	/* find used physical disks */
+	size = sizeof(struct mfi_ld_details);
+	for (i = 0, d = 0; i < cfg->mfc_no_ld; i++) {
+		memset(&mbox, 0, sizeof(mbox));
+		mbox.b[0] = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
+		if (mfii_mgmt(sc, MR_DCMD_LD_GET_INFO, &mbox, &sc->sc_ld_details[i], size,
+		    SCSI_DATA_IN))
+			goto done;
+
+		d += sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_no_drv_per_span *
+		    sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_span_depth;
+	}
+	sc->sc_no_pd = d;
+
+	rv = 0;
+done:
+	return (rv);
+}
+
+int
+mfii_ioctl_inq(struct mfii_softc *sc, struct bioc_inq *bi)
+{
+	int			rv = EINVAL;
+	struct mfi_conf		*cfg = NULL;
+
+	DNPRINTF(MFII_D_IOCTL, "%s: mfii_ioctl_inq\n", DEVNAME(sc));
+
+	if (mfii_bio_getitall(sc)) {
+		DNPRINTF(MFII_D_IOCTL, "%s: mfii_bio_getitall failed\n",
+		    DEVNAME(sc));
+		goto done;
+	}
+
+	/* count unused disks as volumes */
+	if (sc->sc_cfg == NULL)
+		goto done;
+	cfg = sc->sc_cfg;
+
+	bi->bi_nodisk = sc->sc_info.mci_pd_disks_present;
+	bi->bi_novol = cfg->mfc_no_ld + cfg->mfc_no_hs;
+#if notyet
+	bi->bi_novol = cfg->mfc_no_ld + cfg->mfc_no_hs +
+	    (bi->bi_nodisk - sc->sc_no_pd);
+#endif
+	/* tell bio who we are */
+	strlcpy(bi->bi_dev, DEVNAME(sc), sizeof(bi->bi_dev));
+
+	rv = 0;
+done:
+	return (rv);
+}
+
+int
+mfii_ioctl_vol(struct mfii_softc *sc, struct bioc_vol *bv)
+{
+	int			i, per, rv = EINVAL;
+	struct scsi_link	*link;
+	struct device		*dev;
+
+	DNPRINTF(MFII_D_IOCTL, "%s: mfii_ioctl_vol %#x\n",
+	    DEVNAME(sc), bv->bv_volid);
+
+	/* we really could skip and expect that inq took care of it */
+	if (mfii_bio_getitall(sc)) {
+		DNPRINTF(MFII_D_IOCTL, "%s: mfii_bio_getitall failed\n",
+		    DEVNAME(sc));
+		goto done;
+	}
+
+	if (bv->bv_volid >= sc->sc_ld_list.mll_no_ld) {
+		/* go do hotspares & unused disks */
+		rv = mfii_bio_hs(sc, bv->bv_volid, MFI_MGMT_VD, bv);
+		goto done;
+	}
+
+	i = bv->bv_volid;
+	link = scsi_get_link(sc->sc_scsibus, i, 0);
+	if (link == NULL) {
+		strlcpy(bv->bv_dev, "cache", sizeof(bv->bv_dev));
+	} else {
+		dev = link->device_softc;
+		if (dev == NULL)
+			goto done;
+
+		strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
+	}
+
+	switch(sc->sc_ld_list.mll_list[i].mll_state) {
+	case MFI_LD_OFFLINE:
+		bv->bv_status = BIOC_SVOFFLINE;
+		break;
+
+	case MFI_LD_PART_DEGRADED:
+	case MFI_LD_DEGRADED:
+		bv->bv_status = BIOC_SVDEGRADED;
+		break;
+
+	case MFI_LD_ONLINE:
+		bv->bv_status = BIOC_SVONLINE;
+		break;
+
+	default:
+		bv->bv_status = BIOC_SVINVALID;
+		DNPRINTF(MFII_D_IOCTL, "%s: invalid logical disk state %#x\n",
+		    DEVNAME(sc),
+		    sc->sc_ld_list.mll_list[i].mll_state);
+	}
+
+	/* additional status can modify MFI status */
+	switch (sc->sc_ld_details[i].mld_progress.mlp_in_prog) {
+	case MFI_LD_PROG_CC:
+	case MFI_LD_PROG_BGI:
+		bv->bv_status = BIOC_SVSCRUB;
+		per = (int)sc->sc_ld_details[i].mld_progress.mlp_cc.mp_progress;
+		bv->bv_percent = (per * 100) / 0xffff;
+		bv->bv_seconds =
+		    sc->sc_ld_details[i].mld_progress.mlp_cc.mp_elapsed_seconds;
+		break;
+
+	case MFI_LD_PROG_FGI:
+	case MFI_LD_PROG_RECONSTRUCT:
+		/* nothing yet */
+		break;
+	}
+
+	if (sc->sc_ld_details[i].mld_cfg.mlc_prop.mlp_cur_cache_policy & 0x01)
+		bv->bv_cache = BIOC_CVWRITEBACK;
+	else
+		bv->bv_cache = BIOC_CVWRITETHROUGH;
+
+	/*
+	 * The RAID levels are determined per the SNIA DDF spec, this is only
+	 * a subset that is valid for the MFI controller.
+	 */
+	bv->bv_level = sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_pri_raid;
+	if (sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_span_depth > 1)
+		bv->bv_level *= 10;
+
+	bv->bv_nodisk = sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_no_drv_per_span *
+	    sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_span_depth;
+
+	bv->bv_size = sc->sc_ld_details[i].mld_size * 512; /* bytes per block */
+
+	rv = 0;
+done:
+	return (rv);
+}
+
+int
+mfii_ioctl_disk(struct mfii_softc *sc, struct bioc_disk *bd)
+{
+	struct mfi_conf		*cfg;
+	struct mfi_array	*ar;
+	struct mfi_ld_cfg	*ld;
+	struct mfi_pd_details	*pd;
+	struct mfi_pd_list	*pl;
+	struct mfi_pd_progress	*mfp;
+	struct mfi_progress	*mp;
+	struct scsi_inquiry_data *inqbuf;
+	char			vend[8+16+4+1], *vendp;
+	int			i, rv = EINVAL;
+	int			arr, vol, disk, span;
+	union mfi_mbox		mbox;
+
+	DNPRINTF(MFII_D_IOCTL, "%s: mfii_ioctl_disk %#x\n",
+	    DEVNAME(sc), bd->bd_diskid);
+
+	/* we really could skip and expect that inq took care of it */
+	if (mfii_bio_getitall(sc)) {
+		DNPRINTF(MFII_D_IOCTL, "%s: mfii_bio_getitall failed\n",
+		    DEVNAME(sc));
+		return (rv);
+	}
+	cfg = sc->sc_cfg;
+
+	pd = malloc(sizeof *pd, M_DEVBUF, M_WAITOK);
+	pl = malloc(sizeof *pl, M_DEVBUF, M_WAITOK);
+
+	ar = cfg->mfc_array;
+	vol = bd->bd_volid;
+	if (vol >= cfg->mfc_no_ld) {
+		/* do hotspares */
+		rv = mfii_bio_hs(sc, bd->bd_volid, MFI_MGMT_SD, bd);
+		goto freeme;
+	}
+
+	/* calculate offset to ld structure */
+	ld = (struct mfi_ld_cfg *)(
+	    ((uint8_t *)cfg) + offsetof(struct mfi_conf, mfc_array) +
+	    cfg->mfc_array_size * cfg->mfc_no_array);
+
+	/* use span 0 only when raid group is not spanned */
+	if (ld[vol].mlc_parm.mpa_span_depth > 1)
+		span = bd->bd_diskid / ld[vol].mlc_parm.mpa_no_drv_per_span;
+	else
+		span = 0;
+	arr = ld[vol].mlc_span[span].mls_index;
+
+	/* offset disk into pd list */
+	disk = bd->bd_diskid % ld[vol].mlc_parm.mpa_no_drv_per_span;
+
+	if (ar[arr].pd[disk].mar_pd.mfp_id == 0xffffU) {
+		/* disk is missing but succeed command */
+		bd->bd_status = BIOC_SDFAILED;
+		rv = 0;
+
+		/* try to find an unused disk for the target to rebuild */
+		if (mfii_mgmt(sc, MR_DCMD_PD_GET_LIST, NULL, pl, sizeof(*pl),
+		    SCSI_DATA_IN))
+			goto freeme;
+
+		for (i = 0; i < pl->mpl_no_pd; i++) {
+			if (pl->mpl_address[i].mpa_scsi_type != 0)
+				continue;
+
+			memset(&mbox, 0, sizeof(mbox));
+			mbox.s[0] = pl->mpl_address[i].mpa_pd_id;
+			if (mfii_mgmt(sc, MR_DCMD_PD_GET_INFO, &mbox, pd, sizeof(*pd),
+			    SCSI_DATA_IN))
+				continue;
+
+			if (pd->mpd_fw_state == MFI_PD_UNCONFIG_GOOD ||
+			    pd->mpd_fw_state == MFI_PD_UNCONFIG_BAD)
+				break;
+		}
+
+		if (i == pl->mpl_no_pd)
+			goto freeme;
+	} else {
+		memset(&mbox, 0, sizeof(mbox));
+		mbox.s[0] = ar[arr].pd[disk].mar_pd.mfp_id;
+		if (mfii_mgmt(sc, MR_DCMD_PD_GET_INFO, &mbox, pd, sizeof(*pd),
+		    SCSI_DATA_IN)) {
+			bd->bd_status = BIOC_SDINVALID;
+			goto freeme;
+		}
+	}
+
+	/* get the remaining fields */
+	bd->bd_channel = pd->mpd_enc_idx;
+	bd->bd_target = pd->mpd_enc_slot;
+
+	/* get status */
+	switch (pd->mpd_fw_state){
+	case MFI_PD_UNCONFIG_GOOD:
+	case MFI_PD_UNCONFIG_BAD:
+		bd->bd_status = BIOC_SDUNUSED;
+		break;
+
+	case MFI_PD_HOTSPARE: /* XXX dedicated hotspare part of array? */
+		bd->bd_status = BIOC_SDHOTSPARE;
+		break;
+
+	case MFI_PD_OFFLINE:
+		bd->bd_status = BIOC_SDOFFLINE;
+		break;
+
+	case MFI_PD_FAILED:
+		bd->bd_status = BIOC_SDFAILED;
+		break;
+
+	case MFI_PD_REBUILD:
+		bd->bd_status = BIOC_SDREBUILD;
+		break;
+
+	case MFI_PD_ONLINE:
+		bd->bd_status = BIOC_SDONLINE;
+		break;
+
+	case MFI_PD_COPYBACK:
+	case MFI_PD_SYSTEM:
+	default:
+		bd->bd_status = BIOC_SDINVALID;
+		break;
+	}
+
+	bd->bd_size = pd->mpd_size * 512; /* bytes per block */
+
+	inqbuf = (struct scsi_inquiry_data *)&pd->mpd_inq_data;
+	vendp = inqbuf->vendor;
+	memcpy(vend, vendp, sizeof vend - 1);
+	vend[sizeof vend - 1] = '\0';
+	strlcpy(bd->bd_vendor, vend, sizeof(bd->bd_vendor));
+
+	/* XXX find a way to retrieve serial nr from drive */
+	/* XXX find a way to get bd_procdev */
+
+	mfp = &pd->mpd_progress;
+	if (mfp->mfp_in_prog & MFI_PD_PROG_PR) {
+		mp = &mfp->mfp_patrol_read;
+		bd->bd_patrol.bdp_percent = (mp->mp_progress * 100) / 0xffff;
+		bd->bd_patrol.bdp_seconds = mp->mp_elapsed_seconds;
+	}
+
+	rv = 0;
+freeme:
+	free(pd, M_DEVBUF, sizeof *pd);
+	free(pl, M_DEVBUF, sizeof *pl);
+
+	return (rv);
+}
+
+int
+mfii_ioctl_alarm(struct mfii_softc *sc, struct bioc_alarm *ba)
+{
+	uint32_t		opc, flags = 0;
+	int			rv = 0;
+	int8_t			ret;
+
+	switch(ba->ba_opcode) {
+	case BIOC_SADISABLE:
+		opc = MR_DCMD_SPEAKER_DISABLE;
+		break;
+
+	case BIOC_SAENABLE:
+		opc = MR_DCMD_SPEAKER_ENABLE;
+		break;
+
+	case BIOC_SASILENCE:
+		opc = MR_DCMD_SPEAKER_SILENCE;
+		break;
+
+	case BIOC_GASTATUS:
+		opc = MR_DCMD_SPEAKER_GET;
+		flags = SCSI_DATA_IN;
+		break;
+
+	case BIOC_SATEST:
+		opc = MR_DCMD_SPEAKER_TEST;
+		break;
+
+	default:
+		DNPRINTF(MFII_D_IOCTL, "%s: mfii_ioctl_alarm biocalarm invalid "
+		    "opcode %x\n", DEVNAME(sc), ba->ba_opcode);
+		return (EINVAL);
+	}
+
+	if (mfii_mgmt(sc, opc, NULL, &ret, sizeof(ret), flags))
+		rv = EINVAL;
+	else
+		if (ba->ba_opcode == BIOC_GASTATUS)
+			ba->ba_status = ret;
+		else
+			ba->ba_status = 0;
+
+	return (rv);
+}
+
+int
+mfii_ioctl_blink(struct mfii_softc *sc, struct bioc_blink *bb)
+{
+	int			i, found, rv = EINVAL;
+	union mfi_mbox		mbox;
+	uint32_t		cmd;
+	struct mfi_pd_list	*pd;
+
+	DNPRINTF(MFII_D_IOCTL, "%s: mfii_ioctl_blink %x\n", DEVNAME(sc),
+	    bb->bb_status);
+
+	/* channel 0 means not in an enclosure so can't be blinked */
+	if (bb->bb_channel == 0)
+		return (EINVAL);
+
+	pd = malloc(sizeof(*pd), M_DEVBUF, M_WAITOK);
+
+	if (mfii_mgmt(sc, MR_DCMD_PD_GET_LIST, NULL, pd, sizeof(*pd), SCSI_DATA_IN))
+		goto done;
+
+	for (i = 0, found = 0; i < pd->mpl_no_pd; i++)
+		if (bb->bb_channel == pd->mpl_address[i].mpa_enc_index &&
+		    bb->bb_target == pd->mpl_address[i].mpa_enc_slot) {
+			found = 1;
+			break;
+		}
+
+	if (!found)
+		goto done;
+
+	memset(&mbox, 0, sizeof(mbox));
+	mbox.s[0] = pd->mpl_address[i].mpa_pd_id;
+
+	switch (bb->bb_status) {
+	case BIOC_SBUNBLINK:
+		cmd = MR_DCMD_PD_UNBLINK;
+		break;
+
+	case BIOC_SBBLINK:
+		cmd = MR_DCMD_PD_BLINK;
+		break;
+
+	case BIOC_SBALARM:
+	default:
+		DNPRINTF(MFII_D_IOCTL, "%s: mfii_ioctl_blink biocblink invalid "
+		    "opcode %x\n", DEVNAME(sc), bb->bb_status);
+		goto done;
+	}
+
+
+	if (mfii_mgmt(sc, cmd, &mbox, NULL, 0, 0))
+		goto done;
+
+	rv = 0;
+done:
+	free(pd, M_DEVBUF, sizeof *pd);
+	return (rv);
+}
+
+static int
+mfii_makegood(struct mfii_softc *sc, uint16_t pd_id)
+{
+	struct mfii_foreign_scan_info *fsi;
+	struct mfi_pd_details	*pd;
+	union mfi_mbox		mbox;
+	int			rv;
+
+	fsi = malloc(sizeof *fsi, M_DEVBUF, M_WAITOK);
+	pd = malloc(sizeof *pd, M_DEVBUF, M_WAITOK);
+
+	memset(&mbox, 0, sizeof mbox);
+	mbox.s[0] = pd_id;
+	rv = mfii_mgmt(sc, MR_DCMD_PD_GET_INFO, &mbox, pd, sizeof(*pd), SCSI_DATA_IN);
+	if (rv != 0)
+		goto done;
+
+	if (pd->mpd_fw_state == MFI_PD_UNCONFIG_BAD) {
+		mbox.s[0] = pd_id;
+		mbox.s[1] = pd->mpd_pd.mfp_seq;
+		mbox.b[4] = MFI_PD_UNCONFIG_GOOD;
+		rv = mfii_mgmt(sc, MR_DCMD_PD_SET_STATE, &mbox, NULL, 0, 0);
+		if (rv != 0)
+			goto done;
+	}
+
+	memset(&mbox, 0, sizeof mbox);
+	mbox.s[0] = pd_id;
+	rv = mfii_mgmt(sc, MR_DCMD_PD_GET_INFO, &mbox, pd, sizeof(*pd), SCSI_DATA_IN);
+	if (rv != 0)
+		goto done;
+
+	if (pd->mpd_ddf_state & MFI_DDF_FOREIGN) {
+		rv = mfii_mgmt(sc, MR_DCMD_CFG_FOREIGN_SCAN, NULL, fsi, sizeof(*fsi),
+		    SCSI_DATA_IN);
+		if (rv != 0)
+			goto done;
+
+		if (fsi->count > 0) {
+			rv = mfii_mgmt(sc, MR_DCMD_CFG_FOREIGN_CLEAR, NULL, NULL, 0, 0);
+			if (rv != 0)
+				goto done;
+		}
+	}
+
+	memset(&mbox, 0, sizeof mbox);
+	mbox.s[0] = pd_id;
+	rv = mfii_mgmt(sc, MR_DCMD_PD_GET_INFO, &mbox, pd, sizeof(*pd), SCSI_DATA_IN);
+	if (rv != 0)
+		goto done;
+
+	if (pd->mpd_fw_state != MFI_PD_UNCONFIG_GOOD ||
+	    pd->mpd_ddf_state & MFI_DDF_FOREIGN)
+		rv = ENXIO;
+
+done:
+	free(fsi, M_DEVBUF, sizeof *fsi);
+	free(pd, M_DEVBUF, sizeof *pd);
+
+	return (rv);
+}
+
+static int
+mfii_makespare(struct mfii_softc *sc, uint16_t pd_id)
+{
+	struct mfi_hotspare	*hs;
+	struct mfi_pd_details	*pd;
+	union mfi_mbox		mbox;
+	size_t			size;
+	int			rv = EINVAL;
+
+	/* we really could skip and expect that inq took care of it */
+	if (mfii_bio_getitall(sc)) {
+		DNPRINTF(MFII_D_IOCTL, "%s: mfii_bio_getitall failed\n",
+		    DEVNAME(sc));
+		return (rv);
+	}
+	size = sizeof *hs + sizeof(uint16_t) * sc->sc_cfg->mfc_no_array;
+
+	hs = malloc(size, M_DEVBUF, M_WAITOK);
+	pd = malloc(sizeof *pd, M_DEVBUF, M_WAITOK);
+
+	memset(&mbox, 0, sizeof mbox);
+	mbox.s[0] = pd_id;
+	rv = mfii_mgmt(sc, MR_DCMD_PD_GET_INFO, &mbox, pd, sizeof(*pd),
+	    SCSI_DATA_IN);
+	if (rv != 0)
+		goto done;
+
+	memset(hs, 0, size);
+	hs->mhs_pd.mfp_id = pd->mpd_pd.mfp_id;
+	hs->mhs_pd.mfp_seq = pd->mpd_pd.mfp_seq;
+	rv = mfii_mgmt(sc, MR_DCMD_CFG_MAKE_SPARE, NULL, hs, size, SCSI_DATA_OUT);
+
+done:
+	free(hs, M_DEVBUF, size);
+	free(pd, M_DEVBUF, sizeof *pd);
+
+	return (rv);
+}
+
+int
+mfii_ioctl_setstate(struct mfii_softc *sc, struct bioc_setstate *bs)
+{
+	struct mfi_pd_details	*pd;
+	struct mfi_pd_list	*pl;
+	int			i, found, rv = EINVAL;
+	union mfi_mbox		mbox;
+
+	DNPRINTF(MFII_D_IOCTL, "%s: mfii_ioctl_setstate %x\n", DEVNAME(sc),
+	    bs->bs_status);
+
+	pd = malloc(sizeof *pd, M_DEVBUF, M_WAITOK);
+	pl = malloc(sizeof *pl, M_DEVBUF, M_WAITOK);
+
+	if (mfii_mgmt(sc, MR_DCMD_PD_GET_LIST, NULL, pl, sizeof(*pl), SCSI_DATA_IN))
+		goto done;
+
+	for (i = 0, found = 0; i < pl->mpl_no_pd; i++)
+		if (bs->bs_channel == pl->mpl_address[i].mpa_enc_index &&
+		    bs->bs_target == pl->mpl_address[i].mpa_enc_slot) {
+			found = 1;
+			break;
+		}
+
+	if (!found)
+		goto done;
+
+	memset(&mbox, 0, sizeof(mbox));
+	mbox.s[0] = pl->mpl_address[i].mpa_pd_id;
+
+	if (mfii_mgmt(sc, MR_DCMD_PD_GET_INFO, &mbox, pd, sizeof(*pd), SCSI_DATA_IN))
+		goto done;
+
+	mbox.s[0] = pl->mpl_address[i].mpa_pd_id;
+	mbox.s[1] = pd->mpd_pd.mfp_seq;
+
+	switch (bs->bs_status) {
+	case BIOC_SSONLINE:
+		mbox.b[4] = MFI_PD_ONLINE;
+		break;
+
+	case BIOC_SSOFFLINE:
+		mbox.b[4] = MFI_PD_OFFLINE;
+		break;
+
+	case BIOC_SSHOTSPARE:
+		mbox.b[4] = MFI_PD_HOTSPARE;
+		break;
+
+	case BIOC_SSREBUILD:
+		if (pd->mpd_fw_state != MFI_PD_OFFLINE) {
+			if ((rv = mfii_makegood(sc,
+			    pl->mpl_address[i].mpa_pd_id)))
+				goto done;
+
+			if ((rv = mfii_makespare(sc,
+			    pl->mpl_address[i].mpa_pd_id)))
+				goto done;
+
+			memset(&mbox, 0, sizeof(mbox));
+			mbox.s[0] = pl->mpl_address[i].mpa_pd_id;
+			rv = mfii_mgmt(sc, MR_DCMD_PD_GET_INFO, &mbox, pd, sizeof(*pd),
+			    SCSI_DATA_IN);
+			if (rv != 0)
+				goto done;
+
+			/* rebuilding might be started by mfii_makespare() */
+			if (pd->mpd_fw_state == MFI_PD_REBUILD) {
+				rv = 0;
+				goto done;
+			}
+
+			mbox.s[0] = pl->mpl_address[i].mpa_pd_id;
+			mbox.s[1] = pd->mpd_pd.mfp_seq;
+		}
+		mbox.b[4] = MFI_PD_REBUILD;
+		break;
+
+	default:
+		DNPRINTF(MFII_D_IOCTL, "%s: mfii_ioctl_setstate invalid "
+		    "opcode %x\n", DEVNAME(sc), bs->bs_status);
+		goto done;
+	}
+
+
+	rv = mfii_mgmt(sc, MR_DCMD_PD_SET_STATE, &mbox, NULL, 0, 0);
+done:
+	free(pd, M_DEVBUF, sizeof *pd);
+	free(pl, M_DEVBUF, sizeof *pl);
+	return (rv);
+}
+
+int
+mfii_ioctl_patrol(struct mfii_softc *sc, struct bioc_patrol *bp)
+{
+	uint32_t		opc;
+	int			rv = 0;
+	struct mfi_pr_properties prop;
+	struct mfi_pr_status	status;
+	uint32_t		time, exec_freq;
+
+	switch (bp->bp_opcode) {
+	case BIOC_SPSTOP:
+	case BIOC_SPSTART:
+		if (bp->bp_opcode == BIOC_SPSTART)
+			opc = MR_DCMD_PR_START;
+		else
+			opc = MR_DCMD_PR_STOP;
+		if (mfii_mgmt(sc, opc, NULL, NULL, 0, SCSI_DATA_IN))
+			return (EINVAL);
+		break;
+
+	case BIOC_SPMANUAL:
+	case BIOC_SPDISABLE:
+	case BIOC_SPAUTO:
+		/* Get device's time. */
+		opc = MR_DCMD_TIME_SECS_GET;
+		if (mfii_mgmt(sc, opc, NULL, &time, sizeof(time), SCSI_DATA_IN))
+			return (EINVAL);
+
+		opc = MR_DCMD_PR_GET_PROPERTIES;
+		if (mfii_mgmt(sc, opc, NULL, &prop, sizeof(prop), SCSI_DATA_IN))
+			return (EINVAL);
+
+		switch (bp->bp_opcode) {
+		case BIOC_SPMANUAL:
+			prop.op_mode = MFI_PR_OPMODE_MANUAL;
+			break;
+		case BIOC_SPDISABLE:
+			prop.op_mode = MFI_PR_OPMODE_DISABLED;
+			break;
+		case BIOC_SPAUTO:
+			if (bp->bp_autoival != 0) {
+				if (bp->bp_autoival == -1)
+					/* continuously */
+					exec_freq = 0xffffffffU;
+				else if (bp->bp_autoival > 0)
+					exec_freq = bp->bp_autoival;
+				else
+					return (EINVAL);
+				prop.exec_freq = exec_freq;
+			}
+			if (bp->bp_autonext != 0) {
+				if (bp->bp_autonext < 0)
+					return (EINVAL);
+				else
+					prop.next_exec = time + bp->bp_autonext;
+			}
+			prop.op_mode = MFI_PR_OPMODE_AUTO;
+			break;
+		}
+
+		opc = MR_DCMD_PR_SET_PROPERTIES;
+		if (mfii_mgmt(sc, opc, NULL, &prop, sizeof(prop), SCSI_DATA_OUT))
+			return (EINVAL);
+
+		break;
+
+	case BIOC_GPSTATUS:
+		opc = MR_DCMD_PR_GET_PROPERTIES;
+		if (mfii_mgmt(sc, opc, NULL, &prop, sizeof(prop), SCSI_DATA_IN))
+			return (EINVAL);
+
+		opc = MR_DCMD_PR_GET_STATUS;
+		if (mfii_mgmt(sc, opc, NULL, &status, sizeof(status), SCSI_DATA_IN))
+			return (EINVAL);
+
+		/* Get device's time. */
+		opc = MR_DCMD_TIME_SECS_GET;
+		if (mfii_mgmt(sc, opc, NULL, &time, sizeof(time), SCSI_DATA_IN))
+			return (EINVAL);
+
+		switch (prop.op_mode) {
+		case MFI_PR_OPMODE_AUTO:
+			bp->bp_mode = BIOC_SPMAUTO;
+			bp->bp_autoival = prop.exec_freq;
+			bp->bp_autonext = prop.next_exec;
+			bp->bp_autonow = time;
+			break;
+		case MFI_PR_OPMODE_MANUAL:
+			bp->bp_mode = BIOC_SPMMANUAL;
+			break;
+		case MFI_PR_OPMODE_DISABLED:
+			bp->bp_mode = BIOC_SPMDISABLED;
+			break;
+		default:
+			printf("%s: unknown patrol mode %d\n",
+			    DEVNAME(sc), prop.op_mode);
+			break;
+		}
+
+		switch (status.state) {
+		case MFI_PR_STATE_STOPPED:
+			bp->bp_status = BIOC_SPSSTOPPED;
+			break;
+		case MFI_PR_STATE_READY:
+			bp->bp_status = BIOC_SPSREADY;
+			break;
+		case MFI_PR_STATE_ACTIVE:
+			bp->bp_status = BIOC_SPSACTIVE;
+			break;
+		case MFI_PR_STATE_ABORTED:
+			bp->bp_status = BIOC_SPSABORTED;
+			break;
+		default:
+			printf("%s: unknown patrol state %d\n",
+			    DEVNAME(sc), status.state);
+			break;
+		}
+
+		break;
+
+	default:
+		DNPRINTF(MFII_D_IOCTL, "%s: mfii_ioctl_patrol biocpatrol invalid "
+		    "opcode %x\n", DEVNAME(sc), bp->bp_opcode);
+		return (EINVAL);
+	}
+
+	return (rv);
+}
+
+int
+mfii_bio_hs(struct mfii_softc *sc, int volid, int type, void *bio_hs)
+{
+	struct mfi_conf		*cfg;
+	struct mfi_hotspare	*hs;
+	struct mfi_pd_details	*pd;
+	struct bioc_disk	*sdhs;
+	struct bioc_vol		*vdhs;
+	struct scsi_inquiry_data *inqbuf;
+	char			vend[8+16+4+1], *vendp;
+	int			i, rv = EINVAL;
+	uint32_t		size;
+	union mfi_mbox		mbox;
+
+	DNPRINTF(MFII_D_IOCTL, "%s: mfii_vol_hs %d\n", DEVNAME(sc), volid);
+
+	if (!bio_hs)
+		return (EINVAL);
+
+	pd = malloc(sizeof *pd, M_DEVBUF, M_WAITOK);
+
+	/* send single element command to retrieve size for full structure */
+	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
+	if (mfii_mgmt(sc, MR_DCMD_CONF_GET, NULL, cfg, sizeof(*cfg), SCSI_DATA_IN))
+		goto freeme;
+
+	size = cfg->mfc_size;
+	free(cfg, M_DEVBUF, sizeof *cfg);
+
+	/* memory for read config */
+	cfg = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
+	if (mfii_mgmt(sc, MR_DCMD_CONF_GET, NULL, cfg, size, SCSI_DATA_IN))
+		goto freeme;
+
+	/* calculate offset to hs structure */
+	hs = (struct mfi_hotspare *)(
+	    ((uint8_t *)cfg) + offsetof(struct mfi_conf, mfc_array) +
+	    cfg->mfc_array_size * cfg->mfc_no_array +
+	    cfg->mfc_ld_size * cfg->mfc_no_ld);
+
+	if (volid < cfg->mfc_no_ld)
+		goto freeme; /* not a hotspare */
+
+	if (volid > (cfg->mfc_no_ld + cfg->mfc_no_hs))
+		goto freeme; /* not a hotspare */
+
+	/* offset into hotspare structure */
+	i = volid - cfg->mfc_no_ld;
+
+	DNPRINTF(MFII_D_IOCTL, "%s: mfii_vol_hs i %d volid %d no_ld %d no_hs %d "
+	    "hs %p cfg %p id %02x\n", DEVNAME(sc), i, volid, cfg->mfc_no_ld,
+	    cfg->mfc_no_hs, hs, cfg, hs[i].mhs_pd.mfp_id);
+
+	/* get pd fields */
+	memset(&mbox, 0, sizeof(mbox));
+	mbox.s[0] = hs[i].mhs_pd.mfp_id;
+	if (mfii_mgmt(sc, MR_DCMD_PD_GET_INFO, &mbox, pd, sizeof(*pd),
+	    SCSI_DATA_IN)) {
+		DNPRINTF(MFII_D_IOCTL, "%s: mfii_vol_hs illegal PD\n",
+		    DEVNAME(sc));
+		goto freeme;
+	}
+
+	switch (type) {
+	case MFI_MGMT_VD:
+		vdhs = bio_hs;
+		vdhs->bv_status = BIOC_SVONLINE;
+		vdhs->bv_size = pd->mpd_size / 2 * 1024; /* XXX why? */
+		vdhs->bv_level = -1; /* hotspare */
+		vdhs->bv_nodisk = 1;
+		break;
+
+	case MFI_MGMT_SD:
+		sdhs = bio_hs;
+		sdhs->bd_status = BIOC_SDHOTSPARE;
+		sdhs->bd_size = pd->mpd_size / 2 * 1024; /* XXX why? */
+		sdhs->bd_channel = pd->mpd_enc_idx;
+		sdhs->bd_target = pd->mpd_enc_slot;
+		inqbuf = (struct scsi_inquiry_data *)&pd->mpd_inq_data;
+		vendp = inqbuf->vendor;
+		memcpy(vend, vendp, sizeof vend - 1);
+		vend[sizeof vend - 1] = '\0';
+		strlcpy(sdhs->bd_vendor, vend, sizeof(sdhs->bd_vendor));
+		break;
+
+	default:
+		goto freeme;
+	}
+
+	DNPRINTF(MFII_D_IOCTL, "%s: mfii_vol_hs 6\n", DEVNAME(sc));
+	rv = 0;
+freeme:
+	free(pd, M_DEVBUF, sizeof *pd);
+	free(cfg, M_DEVBUF, 0);
+
+	return (rv);
+}
+
+#ifndef SMALL_KERNEL
+
+#define MFI_BBU_SENSORS 4
+
+void
+mfii_bbu(struct mfii_softc *sc)
+{
+	struct mfi_bbu_status bbu;
+	u_int32_t status;
+	u_int32_t mask;
+	u_int32_t soh_bad;
+	int i;
+
+	if (mfii_mgmt(sc, MR_DCMD_BBU_GET_STATUS, NULL, &bbu,
+	    sizeof(bbu), SCSI_DATA_IN) != 0) {
+		for (i = 0; i < MFI_BBU_SENSORS; i++) {
+			sc->sc_bbu[i].value = 0;
+			sc->sc_bbu[i].status = SENSOR_S_UNKNOWN;
+		}
+		for (i = 0; i < nitems(mfi_bbu_indicators); i++) {
+			sc->sc_bbu_status[i].value = 0;
+			sc->sc_bbu_status[i].status = SENSOR_S_UNKNOWN;
+		}
+		return;
+	}
+
+	switch (bbu.battery_type) {
+	case MFI_BBU_TYPE_IBBU:
+		mask = MFI_BBU_STATE_BAD_IBBU;
+		soh_bad = 0;
+		break;
+	case MFI_BBU_TYPE_BBU:
+		mask = MFI_BBU_STATE_BAD_BBU;
+		soh_bad = (bbu.detail.bbu.is_SOH_good == 0);
+		break;
+
+	case MFI_BBU_TYPE_NONE:
+	default:
+		sc->sc_bbu[0].value = 0;
+		sc->sc_bbu[0].status = SENSOR_S_CRIT;
+		for (i = 1; i < MFI_BBU_SENSORS; i++) {
+			sc->sc_bbu[i].value = 0;
+			sc->sc_bbu[i].status = SENSOR_S_UNKNOWN;
+		}
+		for (i = 0; i < nitems(mfi_bbu_indicators); i++) {
+			sc->sc_bbu_status[i].value = 0;
+			sc->sc_bbu_status[i].status = SENSOR_S_UNKNOWN;
+		}
+		return;
+	}
+
+	status = letoh32(bbu.fw_status);
+
+	sc->sc_bbu[0].value = ((status & mask) || soh_bad) ? 0 : 1;
+	sc->sc_bbu[0].status = ((status & mask) || soh_bad) ? SENSOR_S_CRIT :
+	    SENSOR_S_OK;
+
+	sc->sc_bbu[1].value = letoh16(bbu.voltage) * 1000;
+	sc->sc_bbu[2].value = (int16_t)letoh16(bbu.current) * 1000;
+	sc->sc_bbu[3].value = letoh16(bbu.temperature) * 1000000 + 273150000;
+	for (i = 1; i < MFI_BBU_SENSORS; i++)
+		sc->sc_bbu[i].status = SENSOR_S_UNSPEC;
+
+	for (i = 0; i < nitems(mfi_bbu_indicators); i++) {
+		sc->sc_bbu_status[i].value = (status & (1 << i)) ? 1 : 0;
+		sc->sc_bbu_status[i].status = SENSOR_S_UNSPEC;
+	}
+}
+
+int
+mfii_create_sensors(struct mfii_softc *sc)
+{
+	struct device		*dev;
+	struct scsi_link	*link;
+	int			i;
+
+	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensordev.xname));
+
+	if (ISSET(letoh32(sc->sc_info.mci_hw_present), MFI_INFO_HW_BBU)) {
+		sc->sc_bbu = mallocarray(4, sizeof(*sc->sc_bbu),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+
+		sc->sc_bbu[0].type = SENSOR_INDICATOR;
+		sc->sc_bbu[0].status = SENSOR_S_UNKNOWN;
+		strlcpy(sc->sc_bbu[0].desc, "bbu ok",
+		    sizeof(sc->sc_bbu[0].desc));
+		sensor_attach(&sc->sc_sensordev, &sc->sc_bbu[0]);
+
+		sc->sc_bbu[1].type = SENSOR_VOLTS_DC;
+		sc->sc_bbu[1].status = SENSOR_S_UNSPEC;
+		sc->sc_bbu[2].type = SENSOR_AMPS;
+		sc->sc_bbu[2].status = SENSOR_S_UNSPEC;
+		sc->sc_bbu[3].type = SENSOR_TEMP;
+		sc->sc_bbu[3].status = SENSOR_S_UNSPEC;
+		for (i = 1; i < MFI_BBU_SENSORS; i++) {
+			strlcpy(sc->sc_bbu[i].desc, "bbu",
+			    sizeof(sc->sc_bbu[i].desc));
+			sensor_attach(&sc->sc_sensordev, &sc->sc_bbu[i]);
+		}
+
+		sc->sc_bbu_status = malloc(sizeof(*sc->sc_bbu_status) *
+		    sizeof(mfi_bbu_indicators), M_DEVBUF, M_WAITOK | M_ZERO);
+
+		for (i = 0; i < nitems(mfi_bbu_indicators); i++) {
+			sc->sc_bbu_status[i].type = SENSOR_INDICATOR;
+			sc->sc_bbu_status[i].status = SENSOR_S_UNSPEC;
+			strlcpy(sc->sc_bbu_status[i].desc,
+			    mfi_bbu_indicators[i],
+			    sizeof(sc->sc_bbu_status[i].desc));
+
+			sensor_attach(&sc->sc_sensordev, &sc->sc_bbu_status[i]);
+		}
+	}
+
+	sc->sc_sensors = mallocarray(sc->sc_ld_cnt, sizeof(struct ksensor),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (sc->sc_sensors == NULL)
+		return (1);
+
+	for (i = 0; i < sc->sc_ld_cnt; i++) {
+		link = scsi_get_link(sc->sc_scsibus, i, 0);
+
+		if (link == NULL) {
+			strlcpy(sc->sc_sensors[i].desc, "cache",
+			    sizeof(sc->sc_sensors[i].desc));
+		} else {
+			dev = link->device_softc;
+			if (dev == NULL)
+				continue;
+
+			strlcpy(sc->sc_sensors[i].desc, dev->dv_xname,
+			    sizeof(sc->sc_sensors[i].desc));
+		}
+
+		sc->sc_sensors[i].type = SENSOR_DRIVE;
+		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
+	}
+
+	if (sensor_task_register(sc, mfii_refresh_sensors, 10) == NULL)
+		goto bad;
+
+	sensordev_install(&sc->sc_sensordev);
+
+	return (0);
+
+bad:
+	free(sc->sc_sensors, M_DEVBUF,
+	    sc->sc_ld_cnt * sizeof(struct ksensor));
+
+	return (1);
+}
+
+void
+mfii_refresh_sensors(void *arg)
+{
+	struct mfii_softc	*sc = arg;
+	int			i, rv;
+	struct bioc_vol		bv;
+
+	if (sc->sc_bbu != NULL)
+		mfii_bbu(sc);
+
+	for (i = 0; i < sc->sc_ld_cnt; i++) {
+		bzero(&bv, sizeof(bv));
+		bv.bv_volid = i;
+
+		rw_enter_write(&sc->sc_lock);
+		rv = mfii_ioctl_vol(sc, &bv);
+		rw_exit_write(&sc->sc_lock);
+
+		if (rv != 0) {
+			sc->sc_sensors[i].value = 0; /* unknown */
+			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+			continue;
+		}
+
+		switch(bv.bv_status) {
+		case BIOC_SVOFFLINE:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_FAIL;
+			sc->sc_sensors[i].status = SENSOR_S_CRIT;
+			break;
+
+		case BIOC_SVDEGRADED:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_PFAIL;
+			sc->sc_sensors[i].status = SENSOR_S_WARN;
+			break;
+
+		case BIOC_SVSCRUB:
+		case BIOC_SVONLINE:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_ONLINE;
+			sc->sc_sensors[i].status = SENSOR_S_OK;
+			break;
+
+		case BIOC_SVINVALID:
+			/* FALLTRHOUGH */
+		default:
+			sc->sc_sensors[i].value = 0; /* unknown */
+			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+			break;
+		}
+	}
+}
+#endif /* SMALL_KERNEL */
+#endif /* NBIO > 0 */
