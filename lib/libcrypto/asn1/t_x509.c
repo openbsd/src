@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.30 2018/05/01 19:01:27 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.31 2018/05/18 18:23:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -490,7 +490,7 @@ err:
 }
 
 int
-X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
+X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
 {
 	char *s, *c, *b;
 	int ret = 0, l, i;

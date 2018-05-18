@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strex.c,v 1.26 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: a_strex.c,v 1.27 2018/05/18 18:23:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -440,7 +440,7 @@ do_indent(char_io *io_ch, void *arg, int indent)
 #define FN_WIDTH_SN	10
 
 static int
-do_name_ex(char_io *io_ch, void *arg, X509_NAME *n, int indent,
+do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n, int indent,
     unsigned long flags)
 {
 	int i, prev = -1, orflags, cnt;
@@ -582,7 +582,8 @@ do_name_ex(char_io *io_ch, void *arg, X509_NAME *n, int indent,
 /* Wrappers round the main functions */
 
 int
-X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent, unsigned long flags)
+X509_NAME_print_ex(BIO *out, const X509_NAME *nm, int indent,
+    unsigned long flags)
 {
 	if (flags == XN_FLAG_COMPAT)
 		return X509_NAME_print(out, nm, indent);
@@ -590,7 +591,8 @@ X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent, unsigned long flags)
 }
 
 int
-X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent, unsigned long flags)
+X509_NAME_print_ex_fp(FILE *fp, const X509_NAME *nm, int indent,
+    unsigned long flags)
 {
 	if (flags == XN_FLAG_COMPAT) {
 		BIO *btmp;
