@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_conf.c,v 1.22 2018/05/13 17:49:02 tb Exp $ */
+/* $OpenBSD: v3_conf.c,v 1.23 2018/05/18 19:34:37 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -411,27 +411,23 @@ X509V3_EXT_REQ_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
 /* Config database functions */
 
 char *
-X509V3_get_string(X509V3_CTX *ctx, char *name, char *section)
+X509V3_get_string(X509V3_CTX *ctx, const char *name, const char *section)
 {
 	if (!ctx->db || !ctx->db_meth || !ctx->db_meth->get_string) {
 		X509V3error(X509V3_R_OPERATION_NOT_DEFINED);
 		return NULL;
 	}
-	if (ctx->db_meth->get_string)
-		return ctx->db_meth->get_string(ctx->db, name, section);
-	return NULL;
+	return ctx->db_meth->get_string(ctx->db, name, section);
 }
 
 STACK_OF(CONF_VALUE) *
-X509V3_get_section(X509V3_CTX *ctx, char *section)
+X509V3_get_section(X509V3_CTX *ctx, const char *section)
 {
 	if (!ctx->db || !ctx->db_meth || !ctx->db_meth->get_section) {
 		X509V3error(X509V3_R_OPERATION_NOT_DEFINED);
 		return NULL;
 	}
-	if (ctx->db_meth->get_section)
-		return ctx->db_meth->get_section(ctx->db, section);
-	return NULL;
+	return ctx->db_meth->get_section(ctx->db, section);
 }
 
 void

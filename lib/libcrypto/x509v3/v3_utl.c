@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.28 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.29 2018/05/18 19:34:37 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -140,7 +140,7 @@ X509V3_add_value_bool(const char *name, int asn1_bool,
 }
 
 int
-X509V3_add_value_bool_nf(char *name, int asn1_bool,
+X509V3_add_value_bool_nf(const char *name, int asn1_bool,
     STACK_OF(CONF_VALUE) **extlist)
 {
 	if (asn1_bool)
@@ -246,7 +246,7 @@ X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
 }
 
 int
-X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool)
+X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
 {
 	char *btmp;
 
@@ -271,7 +271,7 @@ err:
 }
 
 int
-X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint)
+X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint)
 {
 	ASN1_INTEGER *itmp;
 
