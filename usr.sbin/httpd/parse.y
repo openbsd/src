@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.96 2018/05/18 14:24:26 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.97 2018/05/18 15:20:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -108,6 +108,7 @@ int		 host(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
 struct server	*server_inherit(struct server *, struct server_config *,
 		    struct server_config *);
+int		 listen_on(const char *, int, struct portrange *);
 int		 getservice(char *);
 int		 is_if_in_group(const char *, const char *);
 
@@ -405,73 +406,12 @@ serveropts_l	: serveropts_l serveroptsl nl
 		| serveroptsl optnl
 		;
 
-serveroptsl	: LISTEN ON STRING opttls port {
-			struct addresslist	 al;
-			struct address		*h;
-			struct server_config	*s_conf, *alias = NULL;
-
-			if (parentsrv != NULL) {
-				yyerror("listen %s inside location", $3);
+serveroptsl	: LISTEN ON STRING opttls port 		{
+			if (listen_on($3, $4, &$5) == -1) {
 				free($3);
 				YYERROR;
 			}
-
-			TAILQ_INIT(&al);
-			if (strcmp("*", $3) == 0) {
-				if (host("0.0.0.0", &al, 1, &$5, NULL, -1) <=
-				    0) {
-					yyerror("invalid listen ip: %s",
-					    "0.0.0.0");
-					free($3);
-					YYERROR;
-				}
-				if (host("::", &al, 1, &$5, NULL, -1) <= 0) {
-					yyerror("invalid listen ip: %s", "::");
-					free($3);
-					YYERROR;
-				}
-			} else {
-				if (host($3, &al, HTTPD_MAX_ALIAS_IP, &$5, NULL,
-				    -1) <= 0) {
-					yyerror("invalid listen ip: %s", $3);
-					free($3);
-					YYERROR;
-				}
-			}
 			free($3);
-			while ((h = TAILQ_FIRST(&al)) != NULL) {
-
-				if (srv->srv_conf.ss.ss_family != AF_UNSPEC) {
-					if ((alias = calloc(1,
-					    sizeof(*alias))) == NULL)
-						fatal("out of memory");
-
-					/* Add as an IP-based alias. */
-					s_conf = alias;
-				} else
-					s_conf = &srv->srv_conf;
-
-				memcpy(&s_conf->ss, &h->ss, sizeof(s_conf->ss));
-				s_conf->port = h->port.val[0];
-				s_conf->prefixlen = h->prefixlen;
-
-				if ($4)
-					s_conf->flags |= SRVFLAG_TLS;
-
-				if (alias != NULL) {
-					/*
-					 * IP-based; use name match flags from
-					 * parent
-					 */
-					alias->flags &= ~SRVFLAG_SERVER_MATCH;
-					alias->flags |= srv->srv_conf.flags &
-					    SRVFLAG_SERVER_MATCH;
-					TAILQ_INSERT_TAIL(&srv->srv_hosts,
-					    alias, entry);
-				}
-				TAILQ_REMOVE(&al, h, entry);
-				free(h);
-			}
 		}
 		| ALIAS optmatch STRING		{
 			struct server_config	*alias;
@@ -2149,6 +2089,76 @@ server_inherit(struct server *src, struct server_config *alias,
 	}
 
 	return (dst);
+}
+
+int
+listen_on(const char *addr, int tls, struct portrange *port)
+{
+	struct addresslist	 al;
+	struct address		*h;
+	struct server_config	*s_conf, *alias = NULL;
+
+	if (parentsrv != NULL) {
+		yyerror("listen %s inside location", addr);
+		return (-1);
+	}
+
+	TAILQ_INIT(&al);
+	if (strcmp("*", addr) == 0) {
+		if (host("0.0.0.0", &al, 1, port, NULL, -1) <= 0) {
+			yyerror("invalid listen ip: %s",
+			    "0.0.0.0");
+			return (-1);
+		}
+		if (host("::", &al, 1, port, NULL, -1) <= 0) {
+			yyerror("invalid listen ip: %s", "::");
+			return (-1);
+		}
+	} else {
+		if (host(addr, &al, HTTPD_MAX_ALIAS_IP, port, NULL,
+		    -1) <= 0) {
+			yyerror("invalid listen ip: %s", addr);
+			return (-1);
+		}
+	}
+
+	while ((h = TAILQ_FIRST(&al)) != NULL) {
+		if (srv->srv_conf.ss.ss_family != AF_UNSPEC) {
+			if ((alias = calloc(1,
+			    sizeof(*alias))) == NULL)
+				fatal("out of memory");
+				/* Add as an IP-based alias. */
+			s_conf = alias;
+		} else
+			s_conf = &srv->srv_conf;
+		memcpy(&s_conf->ss, &h->ss, sizeof(s_conf->ss));
+		s_conf->prefixlen = h->prefixlen;
+		/* Set the default port to 80 or 443 */
+		if (!h->port.op)
+			s_conf->port = htons(tls ?
+			    HTTPS_PORT : HTTP_PORT);
+		else
+			s_conf->port = h->port.val[0];
+
+		if (tls)
+			s_conf->flags |= SRVFLAG_TLS;
+
+		if (alias != NULL) {
+			/*
+			 * IP-based; use name match flags from
+			 * parent
+			 */
+			alias->flags &= ~SRVFLAG_SERVER_MATCH;
+			alias->flags |= srv->srv_conf.flags &
+			    SRVFLAG_SERVER_MATCH;
+			TAILQ_INSERT_TAIL(&srv->srv_hosts,
+			    alias, entry);
+		}
+		TAILQ_REMOVE(&al, h, entry);
+		free(h);
+	}
+
+	return (0);
 }
 
 int
