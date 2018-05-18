@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ext.c,v 1.11 2018/05/18 18:37:23 tb Exp $ */
+/* $OpenBSD: x509_ext.c,v 1.12 2018/05/18 19:28:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,32 +121,32 @@ X509_CRL_add_ext(X509_CRL *x, X509_EXTENSION *ex, int loc)
 }
 
 int
-X509_get_ext_count(X509 *x)
+X509_get_ext_count(const X509 *x)
 {
 	return (X509v3_get_ext_count(x->cert_info->extensions));
 }
 
 int
-X509_get_ext_by_NID(X509 *x, int nid, int lastpos)
+X509_get_ext_by_NID(const X509 *x, int nid, int lastpos)
 {
 	return (X509v3_get_ext_by_NID(x->cert_info->extensions, nid, lastpos));
 }
 
 int
-X509_get_ext_by_OBJ(X509 *x, ASN1_OBJECT *obj, int lastpos)
+X509_get_ext_by_OBJ(const X509 *x, const ASN1_OBJECT *obj, int lastpos)
 {
 	return (X509v3_get_ext_by_OBJ(x->cert_info->extensions, obj, lastpos));
 }
 
 int
-X509_get_ext_by_critical(X509 *x, int crit, int lastpos)
+X509_get_ext_by_critical(const X509 *x, int crit, int lastpos)
 {
 	return (X509v3_get_ext_by_critical(x->cert_info->extensions, crit,
 	    lastpos));
 }
 
 X509_EXTENSION *
-X509_get_ext(X509 *x, int loc)
+X509_get_ext(const X509 *x, int loc)
 {
 	return (X509v3_get_ext(x->cert_info->extensions, loc));
 }
@@ -164,7 +164,7 @@ X509_add_ext(X509 *x, X509_EXTENSION *ex, int loc)
 }
 
 void *
-X509_get_ext_d2i(X509 *x, int nid, int *crit, int *idx)
+X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx)
 {
 	return X509V3_get_d2i(x->cert_info->extensions, nid, crit, idx);
 }
