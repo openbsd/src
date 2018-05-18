@@ -64,8 +64,8 @@ nsd_options_create(region_type* region)
 	opt->logfile = 0;
 	opt->log_time_ascii = 1;
 	opt->round_robin = 0; /* also packet.h::round_robin */
-	opt->minimal_responses = 0; /* also packet.h::minimal_responses */
-	opt->refuse_any = 0;
+	opt->minimal_responses = 1; /* also packet.h::minimal_responses */
+	opt->refuse_any = 1;
 	opt->server_count = 1;
 	opt->tcp_count = 100;
 	opt->tcp_query_count = 0;
