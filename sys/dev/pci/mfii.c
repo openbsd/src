@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.52 2018/05/18 05:13:21 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.53 2018/05/18 05:15:10 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -396,9 +396,11 @@ int			mfii_load_mfa(struct mfii_softc *, struct mfii_ccb *,
 
 int			mfii_mfa_poll(struct mfii_softc *, struct mfii_ccb *);
 
-int			mfii_mgmt(struct mfii_softc *, struct mfii_ccb *,
-			    u_int32_t, const union mfi_mbox *,
-			    void *, size_t, int);
+int			mfii_mgmt(struct mfii_softc *, uint32_t,
+			    const union mfi_mbox *, void *, size_t, int);
+int			mfii_do_mgmt(struct mfii_softc *, struct mfii_ccb *,
+			    uint32_t, const union mfi_mbox *, void *, size_t,
+			    int);
 void			mfii_empty_done(struct mfii_softc *, struct mfii_ccb *);
 
 int			mfii_scsi_cmd_io(struct mfii_softc *,
@@ -764,17 +766,14 @@ mfii_dev_handles_update(struct mfii_softc *sc)
 {
 	struct mfii_ld_map *lm;
 	uint16_t *dev_handles = NULL;
-	struct mfii_ccb *ccb;
 	int i;
 	int rv = 0;
 
 	lm = malloc(sizeof(*lm), M_TEMP, M_WAITOK|M_ZERO);
-	ccb = scsi_io_get(&sc->sc_iopool, 0);
 
-	rv = mfii_mgmt(sc, ccb, MR_DCMD_LD_MAP_GET_INFO, NULL,
-	    lm, sizeof(*lm), SCSI_DATA_IN|SCSI_NOSLEEP);
+	rv = mfii_mgmt(sc, MR_DCMD_LD_MAP_GET_INFO, NULL, lm, sizeof(*lm),
+	    SCSI_DATA_IN|SCSI_NOSLEEP);
 
-	scsi_io_put(&sc->sc_iopool, ccb);
 	if (rv != 0) {
 		rv = EIO;
 		goto free_lm;
@@ -964,8 +963,9 @@ mfii_aen_register(struct mfii_softc *sc)
 	}
 
 	memset(&mel, 0, sizeof(mel));
+	mfii_scrub_ccb(ccb);
 
-	rv = mfii_mgmt(sc, ccb, MR_DCMD_CTRL_EVENT_GET_INFO, NULL,
+	rv = mfii_do_mgmt(sc, ccb, MR_DCMD_CTRL_EVENT_GET_INFO, NULL,
 	    &mel, sizeof(mel), SCSI_DATA_IN|SCSI_NOSLEEP);
 	if (rv != 0) {
 		scsi_io_put(&sc->sc_iopool, ccb);
@@ -1209,13 +1209,10 @@ mfii_transition_firmware(struct mfii_softc *sc)
 int
 mfii_get_info(struct mfii_softc *sc)
 {
-	struct mfii_ccb *ccb;
 	int i, rv;
 
-	ccb = scsi_io_get(&sc->sc_iopool, 0);
-	rv = mfii_mgmt(sc, ccb, MR_DCMD_CTRL_GET_INFO, NULL,
-	    &sc->sc_info, sizeof(sc->sc_info), SCSI_DATA_IN|SCSI_NOSLEEP);
-	scsi_io_put(&sc->sc_iopool, ccb);
+	rv = mfii_mgmt(sc, MR_DCMD_CTRL_GET_INFO, NULL, &sc->sc_info,
+	    sizeof(sc->sc_info), SCSI_DATA_IN|SCSI_NOSLEEP);
 
 	if (rv != 0)
 		return (rv);
@@ -1489,9 +1486,26 @@ mfii_exec_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 }
 
 int
-mfii_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb,
-    u_int32_t opc, const union mfi_mbox *mbox, void *buf, size_t len,
-    int flags)
+mfii_mgmt(struct mfii_softc *sc, uint32_t opc, const union mfi_mbox *mbox,
+    void *buf, size_t len, int flags)
+{
+	struct mfii_ccb *ccb;
+	int rv;
+
+	ccb = scsi_io_get(&sc->sc_iopool, flags);
+	if (ccb == NULL)
+		return (ENOMEM);
+
+	mfii_scrub_ccb(ccb);
+	rv = mfii_do_mgmt(sc, ccb, opc, mbox, buf, len, flags);
+	scsi_io_put(&sc->sc_iopool, ccb);
+
+	return (rv);
+}
+
+int
+mfii_do_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb, uint32_t opc,
+    const union mfi_mbox *mbox, void *buf, size_t len, int flags)
 {
 	struct mpii_msg_scsi_io *io = ccb->ccb_request;
 	struct mfii_raid_context *ctx = (struct mfii_raid_context *)(io + 1);
@@ -1501,11 +1515,13 @@ mfii_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	u_int8_t *dma_buf;
 	int rv = EIO;
 
+	if (cold)
+		flags |= SCSI_NOSLEEP;
+
 	dma_buf = dma_alloc(len, PR_WAITOK);
 	if (dma_buf == NULL)
 		return (ENOMEM);
 
-	mfii_scrub_ccb(ccb);
 	ccb->ccb_data = dma_buf;
 	ccb->ccb_len = len;
 	switch (flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
@@ -1517,6 +1533,10 @@ mfii_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb,
 		ccb->ccb_direction = MFII_DATA_OUT;
 		hdr->mfh_flags = htole16(MFI_FRAME_DIR_WRITE);
 		memcpy(dma_buf, buf, len);
+		break;
+	case 0:
+		ccb->ccb_direction = MFII_DATA_NONE;
+		hdr->mfh_flags = htole16(MFI_FRAME_DIR_NONE);
 		break;
 	}
 
@@ -2042,7 +2062,6 @@ int
 mfii_pd_scsi_probe(struct scsi_link *link)
 {
 	struct mfii_softc *sc = link->adapter_softc;
-	struct mfii_ccb *ccb;
 	struct mfi_pd_details mpd;
 	union mfi_mbox mbox;
 	int rv;
@@ -2053,10 +2072,8 @@ mfii_pd_scsi_probe(struct scsi_link *link)
 	memset(&mbox, 0, sizeof(mbox));
 	mbox.s[0] = htole16(link->target);
 
-	ccb = scsi_io_get(&sc->sc_iopool, 0);
-	rv = mfii_mgmt(sc, ccb, MR_DCMD_PD_GET_INFO, &mbox, &mpd, sizeof(mpd),
+	rv = mfii_mgmt(sc, MR_DCMD_PD_GET_INFO, &mbox, &mpd, sizeof(mpd),
 	    SCSI_DATA_IN|SCSI_NOSLEEP);
-	scsi_io_put(&sc->sc_iopool, ccb);
 	if (rv != 0)
 		return (EIO);
 
