@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.10 2018/05/17 21:59:26 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.11 2018/05/18 08:40:11 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -139,7 +139,8 @@ int		 bwfm_sdio_tx_ok(struct bwfm_sdio_softc *);
 void		 bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *);
 void		 bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *);
 void		 bwfm_sdio_rx_frames(struct bwfm_sdio_softc *);
-void		 bwfm_sdio_rx_glom(struct bwfm_sdio_softc *, uint16_t *, int);
+void		 bwfm_sdio_rx_glom(struct bwfm_sdio_softc *, uint16_t *, int,
+		    uint16_t *);
 
 int		 bwfm_sdio_txcheck(struct bwfm_softc *);
 int		 bwfm_sdio_txdata(struct bwfm_softc *, struct mbuf *);
@@ -210,7 +211,8 @@ bwfm_sdio_attach(struct device *parent, struct device *self, void *aux)
 
 	task_set(&sc->sc_task, bwfm_sdio_task, sc);
 	mq_init(&sc->sc_txdata_queue, 16, IPL_SOFTNET);
-	sc->sc_rxdata_buf = malloc(64 * 1024, M_DEVBUF, M_WAITOK);
+	sc->sc_rxdata_buf = malloc(64 * 1024 + sizeof(struct bwfm_sdio_hwhdr) +
+	    sizeof(struct bwfm_sdio_swhdr), M_DEVBUF, M_WAITOK);
 	sc->sc_tx_seq = 0xff;
 
 	rw_assert_wrlock(&sf->sc->sc_lock);
@@ -1018,61 +1020,78 @@ bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *sc)
 void
 bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 {
-	struct bwfm_sdio_hwhdr hwhdr;
-	struct bwfm_sdio_swhdr swhdr;
-	uint16_t *sublen;
+	struct bwfm_sdio_hwhdr *hwhdr;
+	struct bwfm_sdio_swhdr *swhdr;
+	uint16_t *sublen, nextlen = 0;
 	struct mbuf *m;
-	int nsub;
 	size_t flen;
+	char *data;
 	off_t off;
-	char *buf;
+	int nsub;
+
+	hwhdr = (struct bwfm_sdio_hwhdr *)sc->sc_rxdata_buf;
+	swhdr = (struct bwfm_sdio_swhdr *)&hwhdr[1];
+	data = (char *)&swhdr[1];
 
 	do {
-		if (bwfm_sdio_frame_read_write(sc, (char *)&hwhdr,
-		    sizeof(hwhdr), 0))
+		/* If we know the next size, just read ahead. */
+		if (nextlen) {
+			if (bwfm_sdio_frame_read_write(sc, sc->sc_rxdata_buf,
+			    nextlen, 0))
+				break;
+		} else {
+			if (bwfm_sdio_frame_read_write(sc, sc->sc_rxdata_buf,
+			    sizeof(*hwhdr) + sizeof(*swhdr), 0))
+				break;
+		}
+
+		hwhdr->frmlen = letoh16(hwhdr->frmlen);
+		hwhdr->cksum = letoh16(hwhdr->cksum);
+
+		if (hwhdr->frmlen == 0 && hwhdr->cksum == 0)
 			break;
 
-		hwhdr.frmlen = letoh16(hwhdr.frmlen);
-		hwhdr.cksum = letoh16(hwhdr.cksum);
-
-		if (hwhdr.frmlen == 0 && hwhdr.cksum == 0)
-			break;
-
-		if ((hwhdr.frmlen ^ hwhdr.cksum) != 0xffff) {
+		if ((hwhdr->frmlen ^ hwhdr->cksum) != 0xffff) {
 			printf("%s: checksum error\n", DEVNAME(sc));
 			break;
 		}
 
-		if (hwhdr.frmlen < sizeof(hwhdr) + sizeof(swhdr)) {
+		if (hwhdr->frmlen < sizeof(*hwhdr) + sizeof(*swhdr)) {
 			printf("%s: length error\n", DEVNAME(sc));
 			break;
 		}
 
-		if (bwfm_sdio_frame_read_write(sc, (char *)&swhdr,
-		    sizeof(swhdr), 0))
+		if (nextlen && hwhdr->frmlen > nextlen) {
+			printf("%s: read ahead length error (%u > %u)\n",
+			    DEVNAME(sc), hwhdr->frmlen, nextlen);
 			break;
+		}
 
-		sc->sc_tx_max_seq = swhdr.maxseqnr;
+		sc->sc_tx_max_seq = swhdr->maxseqnr;
 
-		flen = hwhdr.frmlen - (sizeof(hwhdr) + sizeof(swhdr));
-		if (flen == 0)
+		flen = hwhdr->frmlen - (sizeof(*hwhdr) + sizeof(*swhdr));
+		if (flen == 0) {
+			nextlen = swhdr->nextlen << 4;
 			continue;
+		}
 
-		buf = sc->sc_rxdata_buf;
-		if (bwfm_sdio_frame_read_write(sc, buf, flen, 0))
+		if (!nextlen) {
+			if (bwfm_sdio_frame_read_write(sc, data, flen, 0))
+				break;
+		}
+
+		if (swhdr->dataoff < (sizeof(*hwhdr) + sizeof(*swhdr)))
 			break;
 
-		if (swhdr.dataoff < (sizeof(hwhdr) + sizeof(swhdr)))
-			break;
-
-		off = swhdr.dataoff - (sizeof(hwhdr) + sizeof(swhdr));
+		off = swhdr->dataoff - (sizeof(*hwhdr) + sizeof(*swhdr));
 		if (off > flen)
 			break;
 
-		switch (swhdr.chanflag & BWFM_SDIO_SWHDR_CHANNEL_MASK) {
+		switch (swhdr->chanflag & BWFM_SDIO_SWHDR_CHANNEL_MASK) {
 		case BWFM_SDIO_SWHDR_CHANNEL_CONTROL:
 			sc->sc_sc.sc_proto_ops->proto_rxctl(&sc->sc_sc,
-			    buf + off, flen - off);
+			    data + off, flen - off);
+			nextlen = swhdr->nextlen << 4;
 			break;
 		case BWFM_SDIO_SWHDR_CHANNEL_EVENT:
 		case BWFM_SDIO_SWHDR_CHANNEL_DATA:
@@ -1086,8 +1105,9 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 				break;
 			}
 			m->m_len = m->m_pkthdr.len = flen - off;
-			memcpy(mtod(m, char *), buf + off, flen - off);
+			memcpy(mtod(m, char *), data + off, flen - off);
 			sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m);
+			nextlen = swhdr->nextlen << 4;
 			break;
 		case BWFM_SDIO_SWHDR_CHANNEL_GLOM:
 			if ((flen % sizeof(uint16_t)) != 0)
@@ -1095,19 +1115,20 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 			nsub = flen / sizeof(uint16_t);
 			sublen = mallocarray(nsub, sizeof(uint16_t),
 			    M_DEVBUF, M_WAITOK | M_ZERO);
-			memcpy(sublen, buf, nsub * sizeof(uint16_t));
-			bwfm_sdio_rx_glom(sc, sublen, nsub);
+			memcpy(sublen, data, nsub * sizeof(uint16_t));
+			bwfm_sdio_rx_glom(sc, sublen, nsub, &nextlen);
 			free(sublen, M_DEVBUF, nsub * sizeof(uint16_t));
 			break;
 		default:
 			printf("%s: unknown channel\n", DEVNAME(sc));
 			break;
 		}
-	} while (swhdr.nextlen);
+	} while (nextlen);
 }
 
 void
-bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub)
+bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub,
+    uint16_t *nextlen)
 {
 	struct bwfm_sdio_hwhdr hwhdr;
 	struct bwfm_sdio_swhdr swhdr;
@@ -1144,7 +1165,13 @@ bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub)
 
 	/* TODO: Verify actual superframe header */
 	m = MBUF_LIST_FIRST(&ml);
-	m_adj(m, sizeof(struct bwfm_sdio_hwhdr) + sizeof(struct bwfm_sdio_swhdr));
+	if (m->m_len >= sizeof(hwhdr) + sizeof(swhdr)) {
+		m_copydata(m, 0, sizeof(hwhdr), (caddr_t)&hwhdr);
+		m_copydata(m, sizeof(hwhdr), sizeof(swhdr), (caddr_t)&swhdr);
+		*nextlen = swhdr.nextlen << 4;
+		m_adj(m, sizeof(struct bwfm_sdio_hwhdr) +
+		    sizeof(struct bwfm_sdio_swhdr));
+	}
 
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		if (m->m_len < sizeof(hwhdr) + sizeof(swhdr))
