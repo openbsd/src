@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.18 2018/05/18 17:53:09 tb Exp $ */
+/* $OpenBSD: x509name.c,v 1.19 2018/05/18 17:56:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -396,7 +396,7 @@ X509_NAME_ENTRY_get_object(const X509_NAME_ENTRY *ne)
 }
 
 ASN1_STRING *
-X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne)
+X509_NAME_ENTRY_get_data(const X509_NAME_ENTRY *ne)
 {
 	if (ne == NULL)
 		return (NULL);

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.52 2018/05/18 17:53:09 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.53 2018/05/18 17:56:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1123,7 +1123,7 @@ int 		X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne,
 int 		X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
 			const unsigned char *bytes, int len);
 ASN1_OBJECT *	X509_NAME_ENTRY_get_object(const X509_NAME_ENTRY *ne);
-ASN1_STRING *	X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne);
+ASN1_STRING *	X509_NAME_ENTRY_get_data(const X509_NAME_ENTRY *ne);
 int		X509_NAME_ENTRY_set(const X509_NAME_ENTRY *ne);
 
 int		X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x);
