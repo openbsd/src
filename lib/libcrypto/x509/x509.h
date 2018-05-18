@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.62 2018/05/18 18:40:38 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.63 2018/05/18 19:21:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1225,7 +1225,7 @@ int X509_ATTRIBUTE_set1_object(X509_ATTRIBUTE *attr, const ASN1_OBJECT *obj);
 int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *data, int len);
 void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,
 					int atrtype, void *data);
-int X509_ATTRIBUTE_count(X509_ATTRIBUTE *attr);
+int X509_ATTRIBUTE_count(const X509_ATTRIBUTE *attr);
 ASN1_OBJECT *X509_ATTRIBUTE_get0_object(X509_ATTRIBUTE *attr);
 ASN1_TYPE *X509_ATTRIBUTE_get0_type(X509_ATTRIBUTE *attr, int idx);
 

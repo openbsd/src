@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_att.c,v 1.16 2018/05/13 06:48:00 tb Exp $ */
+/* $OpenBSD: x509_att.c,v 1.17 2018/05/18 19:21:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -353,7 +353,7 @@ err:
 }
 
 int
-X509_ATTRIBUTE_count(X509_ATTRIBUTE *attr)
+X509_ATTRIBUTE_count(const X509_ATTRIBUTE *attr)
 {
 	if (!attr->single)
 		return sk_ASN1_TYPE_num(attr->value.set);
