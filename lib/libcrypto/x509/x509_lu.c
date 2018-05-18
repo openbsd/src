@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.28 2018/03/17 15:43:32 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.29 2018/05/18 17:46:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -154,8 +154,8 @@ X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, int type, X509_NAME *name,
 }
 
 int
-X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, int type, unsigned char *bytes,
-    int len, X509_OBJECT *ret)
+X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, int type,
+    const unsigned char *bytes, int len, X509_OBJECT *ret)
 {
 	if ((ctx->method == NULL) || (ctx->method->get_by_fingerprint == NULL))
 		return X509_LU_FAIL;
@@ -163,7 +163,7 @@ X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, int type, unsigned char *bytes,
 }
 
 int
-X509_LOOKUP_by_alias(X509_LOOKUP *ctx, int type, char *str, int len,
+X509_LOOKUP_by_alias(X509_LOOKUP *ctx, int type, const char *str, int len,
     X509_OBJECT *ret)
 {
 	if ((ctx->method == NULL) || (ctx->method->get_by_alias == NULL))
