@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.53 2018/05/18 17:56:12 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.54 2018/05/18 17:59:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1103,7 +1103,7 @@ int 		X509_NAME_get_index_by_OBJ(X509_NAME *name,ASN1_OBJECT *obj,
 			int lastpos);
 X509_NAME_ENTRY *X509_NAME_get_entry(X509_NAME *name, int loc);
 X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc);
-int 		X509_NAME_add_entry(X509_NAME *name,X509_NAME_ENTRY *ne,
+int 		X509_NAME_add_entry(X509_NAME *name, const X509_NAME_ENTRY *ne,
 			int loc, int set);
 int X509_NAME_add_entry_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int type,
 			unsigned char *bytes, int len, int loc, int set);

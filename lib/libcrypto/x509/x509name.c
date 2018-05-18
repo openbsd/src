@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.19 2018/05/18 17:56:12 tb Exp $ */
+/* $OpenBSD: x509name.c,v 1.20 2018/05/18 17:59:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -235,7 +235,8 @@ X509_NAME_add_entry_by_txt(X509_NAME *name, const char *field, int type,
 /* if set is -1, append to previous set, 0 'a new one', and 1,
  * prepend to the guy we are about to stomp on. */
 int
-X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc, int set)
+X509_NAME_add_entry(X509_NAME *name, const X509_NAME_ENTRY *ne, int loc,
+    int set)
 {
 	X509_NAME_ENTRY *new_name = NULL;
 	int n, i, inc;
@@ -268,7 +269,8 @@ X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc, int set)
 			set = sk_X509_NAME_ENTRY_value(sk, loc)->set;
 	}
 
-	if ((new_name = X509_NAME_ENTRY_dup(ne)) == NULL)
+	/* OpenSSL has ASN1-generated X509_NAME_ENTRY_dup() without const. */
+	if ((new_name = X509_NAME_ENTRY_dup((X509_NAME_ENTRY *)ne)) == NULL)
 		goto err;
 	new_name->set = set;
 	if (!sk_X509_NAME_ENTRY_insert(sk, new_name, loc)) {
