@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.58 2018/05/18 18:16:39 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.59 2018/05/18 18:19:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -965,7 +965,7 @@ extern const ASN1_ITEM NETSCAPE_CERT_SEQUENCE_it;
 #ifndef OPENSSL_NO_EVP
 X509_INFO *	X509_INFO_new(void);
 void		X509_INFO_free(X509_INFO *a);
-char *		X509_NAME_oneline(X509_NAME *a,char *buf,int size);
+char *		X509_NAME_oneline(const X509_NAME *a, char *buf, int size);
 
 int ASN1_item_digest(const ASN1_ITEM *it,const EVP_MD *type,void *data,
 	unsigned char *md,unsigned int *len);
