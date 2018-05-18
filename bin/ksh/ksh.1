@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.198 2018/02/06 15:13:32 schwarze Exp $
+.\"	$OpenBSD: ksh.1,v 1.199 2018/05/18 13:25:20 benno Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: February 6 2018 $
+.Dd $Mdocdate: May 18 2018 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -858,8 +858,6 @@ The following command aliases are defined automatically by the shell:
 .Ic r Ns ='fc -s'
 .It
 .Ic stop Ns ='kill -STOP'
-.It
-.Ic type Ns ='whence -v'
 .El
 .Pp
 Tracked aliases allow the shell to remember where it found a particular
@@ -4074,6 +4072,11 @@ traps in functions are not yet implemented.
 .Pp
 .It Ic true
 A command that exits with a zero value.
+.Pp
+.It Ic type
+Short form of
+.Ic whence Fl v
+(see below).
 .Pp
 .It Xo
 .Ic typeset
