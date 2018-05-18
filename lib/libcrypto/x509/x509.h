@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.57 2018/05/18 18:12:08 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.58 2018/05/18 18:16:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1093,8 +1093,8 @@ int		X509_REQ_print(BIO *bp,X509_REQ *req);
 int 		X509_NAME_entry_count(const X509_NAME *name);
 int 		X509_NAME_get_text_by_NID(X509_NAME *name, int nid,
 			char *buf,int len);
-int		X509_NAME_get_text_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj,
-			char *buf,int len);
+int		X509_NAME_get_text_by_OBJ(X509_NAME *name,
+			const ASN1_OBJECT *obj, char *buf,int len);
 
 /* NOTE: you should be passsing -1, not 0 as lastpos.  The functions that use
  * lastpos, search after that position on. */

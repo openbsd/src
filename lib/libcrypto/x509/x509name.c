@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.23 2018/05/18 18:12:08 tb Exp $ */
+/* $OpenBSD: x509name.c,v 1.24 2018/05/18 18:16:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,7 +78,7 @@ X509_NAME_get_text_by_NID(X509_NAME *name, int nid, char *buf, int len)
 }
 
 int
-X509_NAME_get_text_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, char *buf,
+X509_NAME_get_text_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, char *buf,
     int len)
 {
 	int i;
