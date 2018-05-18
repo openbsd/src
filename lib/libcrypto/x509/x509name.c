@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.20 2018/05/18 17:59:16 tb Exp $ */
+/* $OpenBSD: x509name.c,v 1.21 2018/05/18 18:02:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -189,7 +189,7 @@ X509_NAME_delete_entry(X509_NAME *name, int loc)
 
 int
 X509_NAME_add_entry_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int type,
-    unsigned char *bytes, int len, int loc, int set)
+    const unsigned char *bytes, int len, int loc, int set)
 {
 	X509_NAME_ENTRY *ne;
 	int ret;
@@ -204,7 +204,7 @@ X509_NAME_add_entry_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int type,
 
 int
 X509_NAME_add_entry_by_NID(X509_NAME *name, int nid, int type,
-    unsigned char *bytes, int len, int loc, int set)
+    const unsigned char *bytes, int len, int loc, int set)
 {
 	X509_NAME_ENTRY *ne;
 	int ret;
