@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.25 2018/05/13 17:49:03 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.26 2018/05/18 18:30:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -782,16 +782,16 @@ int X509_check_issued(X509 *issuer, X509 *subject);
 int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid);
 int X509_PURPOSE_get_count(void);
 X509_PURPOSE * X509_PURPOSE_get0(int idx);
-int X509_PURPOSE_get_by_sname(char *sname);
+int X509_PURPOSE_get_by_sname(const char *sname);
 int X509_PURPOSE_get_by_id(int id);
 int X509_PURPOSE_add(int id, int trust, int flags,
 			int (*ck)(const X509_PURPOSE *, const X509 *, int),
-				char *name, char *sname, void *arg);
-char *X509_PURPOSE_get0_name(X509_PURPOSE *xp);
-char *X509_PURPOSE_get0_sname(X509_PURPOSE *xp);
-int X509_PURPOSE_get_trust(X509_PURPOSE *xp);
+			const char *name, const char *sname, void *arg);
+char *X509_PURPOSE_get0_name(const X509_PURPOSE *xp);
+char *X509_PURPOSE_get0_sname(const X509_PURPOSE *xp);
+int X509_PURPOSE_get_trust(const X509_PURPOSE *xp);
 void X509_PURPOSE_cleanup(void);
-int X509_PURPOSE_get_id(X509_PURPOSE *);
+int X509_PURPOSE_get_id(const X509_PURPOSE *);
 
 STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x);
 STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x);
