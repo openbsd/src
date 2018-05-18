@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.4 2018/05/17 20:21:15 kettenis Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.5 2018/05/18 06:49:47 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -193,8 +193,10 @@ dwiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	config_found((struct device *)sc, &sc->sc_iba, iicbus_print);
 
+#ifndef SMALL_KERNEL
 	sc->sc_devnode->i2c = &sc->sc_i2c_tag;
 	acpi_register_gsb(sc->sc_acpi, sc->sc_devnode);
+#endif
 
 	return;
 }
