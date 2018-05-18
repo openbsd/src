@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.28 2018/05/18 17:46:17 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.29 2018/05/18 22:02:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -134,17 +134,16 @@ typedef struct x509_lookup_method_st
 	void (*free)(X509_LOOKUP *ctx);
 	int (*init)(X509_LOOKUP *ctx);
 	int (*shutdown)(X509_LOOKUP *ctx);
-	int (*ctrl)(X509_LOOKUP *ctx,int cmd,const char *argc,long argl,
-			char **ret);
-	int (*get_by_subject)(X509_LOOKUP *ctx,int type,X509_NAME *name,
-			      X509_OBJECT *ret);
-	int (*get_by_issuer_serial)(X509_LOOKUP *ctx,int type,X509_NAME *name,
-				    ASN1_INTEGER *serial,X509_OBJECT *ret);
-	int (*get_by_fingerprint)(X509_LOOKUP *ctx,int type,
-				  const unsigned char *bytes,int len,
-				  X509_OBJECT *ret);
-	int (*get_by_alias)(X509_LOOKUP *ctx,int type, const char *str,int len,
-			    X509_OBJECT *ret);
+	int (*ctrl)(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
+	    char **ret);
+	int (*get_by_subject)(X509_LOOKUP *ctx, int type, X509_NAME *name,
+	    X509_OBJECT *ret);
+	int (*get_by_issuer_serial)(X509_LOOKUP *ctx, int type, X509_NAME *name,
+	    ASN1_INTEGER *serial,X509_OBJECT *ret);
+	int (*get_by_fingerprint)(X509_LOOKUP *ctx, int type,
+	    const unsigned char *bytes, int len, X509_OBJECT *ret);
+	int (*get_by_alias)(X509_LOOKUP *ctx, int type, const char *str,
+	    int len, X509_OBJECT *ret);
 	} X509_LOOKUP_METHOD;
 
 typedef struct X509_VERIFY_PARAM_ID_st X509_VERIFY_PARAM_ID;
