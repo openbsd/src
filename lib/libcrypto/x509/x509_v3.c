@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.15 2018/05/13 10:25:06 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.16 2018/05/18 16:55:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -240,7 +240,7 @@ err:
 }
 
 int
-X509_EXTENSION_set_object(X509_EXTENSION *ex, ASN1_OBJECT *obj)
+X509_EXTENSION_set_object(X509_EXTENSION *ex, const ASN1_OBJECT *obj)
 {
 	if ((ex == NULL) || (obj == NULL))
 		return (0);
@@ -288,7 +288,7 @@ X509_EXTENSION_get_data(X509_EXTENSION *ex)
 }
 
 int
-X509_EXTENSION_get_critical(X509_EXTENSION *ex)
+X509_EXTENSION_get_critical(const X509_EXTENSION *ex)
 {
 	if (ex == NULL)
 		return (0);
