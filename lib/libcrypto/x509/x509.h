@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.61 2018/05/18 18:37:23 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.62 2018/05/18 18:40:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1318,11 +1318,11 @@ int X509_TRUST_get_count(void);
 X509_TRUST * X509_TRUST_get0(int idx);
 int X509_TRUST_get_by_id(int id);
 int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
-					char *name, int arg1, void *arg2);
+    const char *name, int arg1, void *arg2);
 void X509_TRUST_cleanup(void);
-int X509_TRUST_get_flags(X509_TRUST *xp);
-char *X509_TRUST_get0_name(X509_TRUST *xp);
-int X509_TRUST_get_trust(X509_TRUST *xp);
+int X509_TRUST_get_flags(const X509_TRUST *xp);
+char *X509_TRUST_get0_name(const X509_TRUST *xp);
+int X509_TRUST_get_trust(const X509_TRUST *xp);
 
 int X509_up_ref(X509 *x);
 STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *chain);
