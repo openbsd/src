@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.48 2018/05/01 13:29:09 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.49 2018/05/19 10:46:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1055,7 +1055,7 @@ int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x);
 int ASN1_STRING_print_ex_fp(FILE *fp, const ASN1_STRING *str,
     unsigned long flags);
 
-int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in);
+int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in);
 
 #ifndef OPENSSL_NO_BIO
 void *ASN1_d2i_bio(void *(*xnew)(void), d2i_of_void *d2i, BIO *in, void **x);
