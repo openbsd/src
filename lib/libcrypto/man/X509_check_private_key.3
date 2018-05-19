@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_check_private_key.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: X509_check_private_key.3,v 1.5 2018/05/19 22:40:34 schwarze Exp $
 .\"	OpenSSL X509_check_private_key.pod 09ddb878 Jun 5 03:56:07 2017 +0800
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: May 19 2018 $
 .Dt X509_CHECK_PRIVATE_KEY 3
 .Os
 .Sh NAME
@@ -26,8 +26,8 @@
 .In openssl/x509.h
 .Ft int
 .Fo X509_check_private_key
-.Fa "X509 *x"
-.Fa "EVP_PKEY *k"
+.Fa "const X509 *x"
+.Fa "const EVP_PKEY *k"
 .Fc
 .Ft int
 .Fo X509_REQ_check_private_key
