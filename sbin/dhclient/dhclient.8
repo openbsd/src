@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.36 2018/02/06 00:25:09 krw Exp $
+.\" $OpenBSD: dhclient.8,v 1.37 2018/05/19 22:10:22 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" Enterprises.  To learn more about the Internet Software Consortium,
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
-.Dd $Mdocdate: February 6 2018 $
+.Dd $Mdocdate: May 19 2018 $
 .Dt DHCLIENT 8
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Nd Dynamic Host Configuration Protocol (DHCP) client
 .Sh SYNOPSIS
 .Nm
-.Op Fl dnv
+.Op Fl dnrv
 .Op Fl c Ar file
 .Op Fl i Ar options
 .Op Fl L Ar file
@@ -123,6 +123,22 @@ for the leases file.
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
+.It Fl r
+Release the current lease back to the server it came from.
+.Nm
+exits after removing the active lease from
+.Pa /var/db/dhclient.leases . Ns Aq Ar IFNAME ,
+deleting the address the lease caused to be added to the interface,
+truncating any option file specified by
+.Fl L
+and sending a DHCPRELEASE packet to
+the server that supplied the lease.
+.Pp
+If there is no
+.Nm
+controlling the specified interface, or
+.Nm
+has no active lease configured, no action is performed.
 .It Fl v
 Causes
 .Nm

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.571 2018/05/17 13:46:57 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.572 2018/05/19 22:10:22 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -152,6 +152,7 @@ void state_panic(struct interface_info *);
 void send_discover(struct interface_info *);
 void send_request(struct interface_info *);
 void send_decline(struct interface_info *);
+void send_release(struct interface_info *);
 
 void process_offer(struct interface_info *, struct option_data *,
     const char *);
@@ -160,6 +161,10 @@ void bind_lease(struct interface_info *);
 void make_discover(struct interface_info *, struct client_lease *);
 void make_request(struct interface_info *, struct client_lease *);
 void make_decline(struct interface_info *, struct client_lease *);
+void make_release(struct interface_info *, struct client_lease *);
+
+void release_lease(struct interface_info *);
+void propose_release(struct interface_info *);
 
 void write_lease_db(struct interface_info *);
 void write_option_db(char *, struct client_lease *, struct client_lease *);
@@ -347,6 +352,10 @@ routehandler(struct interface_info *ifi, int routefd)
 				    log_procname);
 				exit(0);
 			}
+		} else if ((rtm->rtm_flags & RTF_PROTO2) != 0) {
+			release_lease(ifi); /* OK even if we sent it. */
+			ifi->state = S_PREBOOT;
+			quit = INTERNALSIG;
 		}
 		break;
 	case RTM_DESYNC:
@@ -433,7 +442,7 @@ main(int argc, char *argv[])
 
 	log_setverbose(0);	/* Don't show log_debug() messages. */
 
-	while ((ch = getopt(argc, argv, "c:di:l:L:nv")) != -1)
+	while ((ch = getopt(argc, argv, "c:di:l:L:nrv")) != -1)
 		switch (ch) {
 		case 'c':
 			path_dhclient_conf = optarg;
@@ -462,6 +471,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			cmd_opts |= OPT_NOACTION;
+			break;
+		case 'r':
+			cmd_opts |= OPT_RELEASE;
 			break;
 		case 'v':
 			cmd_opts |= OPT_VERBOSE;
@@ -514,6 +526,12 @@ main(int argc, char *argv[])
 	/* Put us into the correct rdomain */
 	if (setrtable(ifi->rdomain) == -1)
 		fatal("setrtable(%u)", ifi->rdomain);
+
+	if ((cmd_opts & OPT_RELEASE) != 0) {
+		if ((cmd_opts & OPT_NOACTION) == 0)
+			propose_release(ifi);
+		exit(0);
+	}
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
 	    PF_UNSPEC, socket_fd) == -1)
@@ -679,7 +697,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-dnv] [-c file] [-i options] [-L file] "
+	    "usage: %s [-dnrv] [-c file] [-i options] [-L file] "
 	    "[-l file] interface\n", __progname);
 	exit(1);
 }
@@ -1527,6 +1545,17 @@ send_decline(struct interface_info *ifi)
 }
 
 void
+send_release(struct interface_info *ifi)
+{
+	ssize_t		rslt;
+
+	rslt = send_packet(ifi, ifi->configured->ifa, ifi->destination,
+	    "DHCPRELEASE");
+	if (rslt != -1)
+		log_debug("%s: DHCPRELEASE", log_procname);
+}
+
+void
 make_discover(struct interface_info *ifi, struct client_lease *lease)
 {
 	struct option_data	 options[DHO_COUNT];
@@ -1736,6 +1765,60 @@ make_decline(struct interface_info *ifi, struct client_lease *lease)
 
 	/* ciaddr must always be zero. */
 	packet->ciaddr.s_addr = INADDR_ANY;
+	packet->yiaddr.s_addr = INADDR_ANY;
+	packet->siaddr.s_addr = INADDR_ANY;
+	packet->giaddr.s_addr = INADDR_ANY;
+
+	memcpy(&packet->chaddr, ifi->hw_address.ether_addr_octet,
+	    ETHER_ADDR_LEN);
+}
+
+void
+make_release(struct interface_info *ifi, struct client_lease *lease)
+{
+	struct option_data	 options[DHO_COUNT];
+	struct dhcp_packet	*packet = &ifi->sent_packet;
+	unsigned char		 release = DHCPRELEASE;
+	int			 i;
+
+	memset(options, 0, sizeof(options));
+	memset(packet, 0, sizeof(*packet));
+
+	/* Set DHCP_MESSAGE_TYPE to DHCPRELEASE */
+	i = DHO_DHCP_MESSAGE_TYPE;
+	options[i].data = &release;
+	options[i].len = sizeof(release);
+
+	/* Send back the server identifier. */
+	i = DHO_DHCP_SERVER_IDENTIFIER;
+	options[i].data = lease->options[i].data;
+	options[i].len = lease->options[i].len;
+
+	i = pack_options(ifi->sent_packet.options, 576 - DHCP_FIXED_LEN,
+	    options);
+	if (i == -1 || packet->options[i] != DHO_END)
+		fatalx("options do not fit in DHCPRELEASE packet");
+	ifi->sent_packet_length = DHCP_FIXED_NON_UDP+i+1;
+	if (ifi->sent_packet_length < BOOTP_MIN_LEN)
+		ifi->sent_packet_length = BOOTP_MIN_LEN;
+
+	packet->op = BOOTREQUEST;
+	packet->htype = HTYPE_ETHER;
+	packet->hlen = ETHER_ADDR_LEN;
+	packet->hops = 0;
+	packet->xid = ifi->xid;
+	packet->secs = 0;
+	packet->flags = 0;
+
+	/*
+	 * Note we return the *offered* address. NOT the configured address
+	 * which could have been changed via dhclient.conf. But the packet
+	 * is sent from the *configured* address.
+	 *
+	 * This might easily confuse a server, but if you play with fire
+	 * by modifying the address you are on your own!
+	 */
+	packet->ciaddr.s_addr = ifi->active->address.s_addr;
 	packet->yiaddr.s_addr = INADDR_ANY;
 	packet->siaddr.s_addr = INADDR_ANY;
 	packet->giaddr.s_addr = INADDR_ANY;
@@ -2702,5 +2785,115 @@ tick_msg(const char *preamble, int success, time_t start, time_t stop)
 		fflush(stderr);
 		go_daemon();
 		preamble_sent = 0;
+	}
+}
+
+/*
+ * Release the lease used to configure the interface.
+ *
+ * 1) Send DHCPRELEASE.
+ * 2) Unconfigure address/routes/etc.
+ * 3) Remove lease from database & write updated DB.
+ * 4) Truncate optionDB if present.
+ */
+void
+release_lease(struct interface_info *ifi)
+{
+	char			 destbuf[INET_ADDRSTRLEN];
+	char			 ifabuf[INET_ADDRSTRLEN];
+	struct option_data	*opt;
+
+	if (ifi->configured == NULL || ifi->active == NULL)
+		return;	/* Nothing to release. */
+	strlcpy(ifabuf, inet_ntoa(ifi->configured->ifa), sizeof(ifabuf));
+
+	opt = &ifi->active->options[DHO_DHCP_SERVER_IDENTIFIER];
+	if (opt->len == sizeof(in_addr_t))
+		ifi->destination.s_addr = *(in_addr_t *)opt->data;
+	else
+		ifi->destination.s_addr = INADDR_ANY;
+	strlcpy(destbuf, inet_ntoa(ifi->destination), sizeof(destbuf));
+
+	ifi->xid = arc4random();
+	make_release(ifi, ifi->active);
+	send_release(ifi);
+
+	delete_address(ifi->configured->ifa);
+	imsg_flush(unpriv_ibuf);
+
+	TAILQ_REMOVE(&ifi->lease_db, ifi->active, next);
+	write_lease_db(ifi);
+
+	if (optionDB != NULL) {
+		ftruncate(fileno(optionDB), 0);
+		fclose(optionDB);
+		optionDB = NULL;
+	}
+
+	free_client_lease(ifi->active);
+	ifi->active = NULL;
+	free(ifi->configured);
+	ifi->configured = NULL;
+
+	log_warnx("%s: %s RELEASED to %s", log_procname, ifabuf, destbuf);
+}
+
+void
+propose_release(struct interface_info *ifi)
+{
+	struct pollfd		 fds[1];
+	struct rt_msghdr	 rtm;
+	time_t			 start_time, cur_time;
+	int			 nfds, routefd, rtfilter;
+
+	if (time(&start_time) == -1)
+		fatal("time");
+
+	if ((routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET)) == -1)
+		fatal("socket(PF_ROUTE, SOCK_RAW)");
+
+	rtfilter = ROUTE_FILTER(RTM_PROPOSAL);
+
+	if (setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
+	    &rtfilter, sizeof(rtfilter)) == -1)
+		fatal("setsockopt(ROUTE_MSGFILTER)");
+	if (setsockopt(routefd, AF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
+	    sizeof(ifi->rdomain)) == -1)
+		fatal("setsockopt(ROUTE_TABLEFILTER)");
+
+	memset(&rtm, 0, sizeof(rtm));
+	rtm.rtm_version = RTM_VERSION;
+	rtm.rtm_type = RTM_PROPOSAL;
+	rtm.rtm_msglen = sizeof(rtm);
+	rtm.rtm_tableid = ifi->rdomain;
+	rtm.rtm_index = ifi->index;
+	rtm.rtm_priority = RTP_PROPOSAL_DHCLIENT;
+	rtm.rtm_addrs = 0;
+	rtm.rtm_flags = RTF_UP;
+	rtm.rtm_flags |= RTF_PROTO2;
+	rtm.rtm_seq = ifi->xid = arc4random();
+
+	if (write(routefd, &rtm, sizeof(rtm)) == -1)
+		fatal("write(routefd)");
+	log_debug("%s: sent RTM_PROPOSAL to release lease", log_procname);
+
+	while (quit == 0) {
+		if (time(&cur_time) == -1)
+			fatal("time");
+		if ((cur_time - start_time) > 3)
+			break;
+		fds[0].fd = routefd;
+		fds[0].events = POLLIN;
+		nfds = poll(fds, 1, 3);
+		if (nfds == -1) {
+			if (errno == EINTR)
+				continue;
+			fatal("poll(routefd)");
+		}
+		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
+			fatal("routefd: ERR|HUP|NVAL");
+		if (nfds == 0 || (fds[0].revents & POLLIN) == 0)
+			continue;
+		routehandler(ifi, routefd);
 	}
 }
