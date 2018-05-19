@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.92 2017/11/29 07:28:21 anton Exp $
+.\"	$OpenBSD: ddb.4,v 1.93 2018/05/19 17:51:15 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: November 29 2017 $
+.Dd $Mdocdate: May 19 2018 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -278,9 +278,9 @@ plus the size of the data examined.
 .It Xo
 .Ic p Ns Op Ic rint
 .Op Cm /axzodurc
-.Op Ar addr Op Ar addr ...
+.Op Ar addr
 .Xc
-Print each
+Print
 .Ar addr
 according to the modifier character.
 The valid modifiers are a subset of those from the
@@ -290,20 +290,15 @@ If no modifier is specified, the last one specified in a
 previous use of
 .Ic print
 is used.
-The
-.Ar addr
-argument
-can be a string, and it is printed as a literal.
 .Pp
 For example,
 .Bd -literal -offset indent
-print/x "eax = " $eax "\enecx = " $ecx "\en"
+print/x $eax
 .Ed
 .Pp
 will print something like this:
 .Bd -literal -offset indent
-eax = xxxxxx
-ecx = yyyyyy
+xxxxxx
 .Ed
 .\" --------------------
 .It Xo
