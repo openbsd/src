@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.239 2018/05/17 20:46:45 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.240 2018/05/19 17:38:29 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2293,7 +2293,7 @@ aml_register_regionspace(struct aml_node *node, int iospace, void *cookie,
 
 void aml_rwgen(struct aml_value *, int, int, struct aml_value *, int, int);
 void aml_rwgpio(struct aml_value *, int, int, struct aml_value *, int, int);
-void aml_rwgsb(struct aml_value *, int, int, struct aml_value *, int, int);
+void aml_rwgsb(struct aml_value *, int, int, int, struct aml_value *, int, int);
 void aml_rwindexfield(struct aml_value *, struct aml_value *val, int);
 void aml_rwfield(struct aml_value *, int, int, struct aml_value *, int);
 
@@ -2520,8 +2520,8 @@ aml_rwgpio(struct aml_value *conn, int bpos, int blen, struct aml_value *val,
 #ifndef SMALL_KERNEL
 
 void
-aml_rwgsb(struct aml_value *conn, int bpos, int blen, struct aml_value *val,
-    int mode, int flag)
+aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
+    struct aml_value *val, int mode, int flag)
 {
 	union acpi_resource *crs = (union acpi_resource *)conn->v_buffer;
 	struct aml_node *node;
@@ -2565,6 +2565,14 @@ aml_rwgsb(struct aml_value *conn, int bpos, int blen, struct aml_value *val,
 		case 0x08:	/* AttribWord */
 			cmdlen = 1;
 			buflen = 2;
+			break;
+		case 0x0b:	/* AttribBytes */
+			cmdlen = 1;
+			buflen = alen;
+			break;
+		case 0x0e:	/* AttribRawBytes */
+			cmdlen = 0;
+			buflen = alen;
 			break;
 		default:
 			aml_die("unsupported access type 0x%x", flag);
@@ -2714,7 +2722,8 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
 			break;
 #ifndef SMALL_KERNEL
 		case ACPI_OPREG_GSB:
-			aml_rwgsb(ref2, fld->v_field.bitpos + bpos, blen,
+			aml_rwgsb(ref2, fld->v_field.ref3,
+			    fld->v_field.bitpos + bpos, blen,
 			    val, mode, fld->v_field.flags);
 			break;
 #endif
@@ -2801,17 +2810,17 @@ aml_parsefieldlist(struct aml_scope *mscope, int opcode, int flags,
 	bpos = 0;
 	while (mscope->pos < mscope->end) {
 		switch (*mscope->pos) {
-		case 0x00: /* reserved, length */
+		case 0x00: /* ReservedField */
 			mscope->pos++;
 			blen = aml_parselength(mscope);
 			break;
-		case 0x01: /* attrib */
+		case 0x01: /* AccessField */
 			mscope->pos++;
 			blen = 0;
 			flags = aml_get8(mscope->pos++);
 			flags |= aml_get8(mscope->pos++) << 8;
 			break;
-		case 0x02: /* connection */
+		case 0x02: /* ConnectionField */
 			mscope->pos++;
 			blen = 0;
 			conn = aml_parse(mscope, 'o', "Connection");
@@ -2819,7 +2828,14 @@ aml_parsefieldlist(struct aml_scope *mscope, int opcode, int flags,
 				aml_die("Could not parse connection");
 			conn->node = mscope->node;
 			break;
-		default: /* 4-byte name, length */
+		case 0x03: /* ExtendedAccessField */
+			mscope->pos++;
+			blen = 0;
+			flags = aml_get8(mscope->pos++);
+			flags |= aml_get8(mscope->pos++) << 8;
+			indexval = aml_get8(mscope->pos++);
+			break;
+		default: /* NamedField */
 			mscope->pos = aml_parsename(mscope->node, mscope->pos,
 			    &rv, 1);
 			blen = aml_parselength(mscope);
