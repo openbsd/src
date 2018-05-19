@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.230 2018/05/16 13:19:00 reyk Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.231 2018/05/19 12:34:35 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -79,10 +79,11 @@ void tdb_hashstats(void);
 #endif
 
 void		tdb_rehash(void);
-void		tdb_timeout(void *v);
-void		tdb_firstuse(void *v);
-void		tdb_soft_timeout(void *v);
-void		tdb_soft_firstuse(void *v);
+void		tdb_reaper(void *);
+void		tdb_timeout(void *);
+void		tdb_firstuse(void *);
+void		tdb_soft_timeout(void *);
+void		tdb_soft_firstuse(void *);
 int		tdb_hash(u_int, u_int32_t, union sockaddr_union *, u_int8_t);
 
 int ipsec_in_use = 0;
@@ -543,14 +544,13 @@ tdb_timeout(void *v)
 {
 	struct tdb *tdb = v;
 
-	if (!(tdb->tdb_flags & TDBF_TIMER))
-		return;
-
 	NET_LOCK();
-	/* If it's an "invalid" TDB do a silent expiration. */
-	if (!(tdb->tdb_flags & TDBF_INVALID))
-		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	tdb_delete(tdb);
+	if (tdb->tdb_flags & TDBF_TIMER) {
+		/* If it's an "invalid" TDB do a silent expiration. */
+		if (!(tdb->tdb_flags & TDBF_INVALID))
+			pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
+		tdb_delete(tdb);
+	}
 	NET_UNLOCK();
 }
 
@@ -559,14 +559,13 @@ tdb_firstuse(void *v)
 {
 	struct tdb *tdb = v;
 
-	if (!(tdb->tdb_flags & TDBF_SOFT_FIRSTUSE))
-		return;
-
 	NET_LOCK();
-	/* If the TDB hasn't been used, don't renew it. */
-	if (tdb->tdb_first_use != 0)
-		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	tdb_delete(tdb);
+	if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) {
+		/* If the TDB hasn't been used, don't renew it. */
+		if (tdb->tdb_first_use != 0)
+			pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
+		tdb_delete(tdb);
+	}
 	NET_UNLOCK();
 }
 
@@ -575,13 +574,12 @@ tdb_soft_timeout(void *v)
 {
 	struct tdb *tdb = v;
 
-	if (!(tdb->tdb_flags & TDBF_SOFT_TIMER))
-		return;
-
 	NET_LOCK();
-	/* Soft expirations. */
-	pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
-	tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
+	if (tdb->tdb_flags & TDBF_SOFT_TIMER) {
+		/* Soft expirations. */
+		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
+		tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
+	}
 	NET_UNLOCK();
 }
 
@@ -590,14 +588,13 @@ tdb_soft_firstuse(void *v)
 {
 	struct tdb *tdb = v;
 
-	if (!(tdb->tdb_flags & TDBF_SOFT_FIRSTUSE))
-		return;
-
 	NET_LOCK();
-	/* If the TDB hasn't been used, don't renew it. */
-	if (tdb->tdb_first_use != 0)
-		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
-	tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
+	if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) {
+		/* If the TDB hasn't been used, don't renew it. */
+		if (tdb->tdb_first_use != 0)
+			pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
+		tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
+	}
 	NET_UNLOCK();
 }
 
@@ -843,14 +840,6 @@ tdb_free(struct tdb *tdbp)
 		ipo->ipo_last_searched = 0; /* Force a re-search. */
 	}
 
-	/* Remove expiration timeouts. */
-	tdbp->tdb_flags &= ~(TDBF_FIRSTUSE | TDBF_SOFT_FIRSTUSE | TDBF_TIMER |
-	    TDBF_SOFT_TIMER);
-	timeout_del(&tdbp->tdb_timer_tmo);
-	timeout_del(&tdbp->tdb_first_tmo);
-	timeout_del(&tdbp->tdb_stimer_tmo);
-	timeout_del(&tdbp->tdb_sfirst_tmo);
-
 	if (tdbp->tdb_ids) {
 		ipsp_ids_free(tdbp->tdb_ids);
 		tdbp->tdb_ids = NULL;
@@ -868,6 +857,23 @@ tdb_free(struct tdb *tdbp)
 
 	if ((tdbp->tdb_inext) && (tdbp->tdb_inext->tdb_onext == tdbp))
 		tdbp->tdb_inext->tdb_onext = NULL;
+
+	/* Remove expiration timeouts. */
+	tdbp->tdb_flags &= ~(TDBF_FIRSTUSE | TDBF_SOFT_FIRSTUSE | TDBF_TIMER |
+	    TDBF_SOFT_TIMER);
+	timeout_del(&tdbp->tdb_timer_tmo);
+	timeout_del(&tdbp->tdb_first_tmo);
+	timeout_del(&tdbp->tdb_stimer_tmo);
+	timeout_del(&tdbp->tdb_sfirst_tmo);
+
+	timeout_set_proc(&tdbp->tdb_timer_tmo, tdb_reaper, tdbp);
+	timeout_add(&tdbp->tdb_timer_tmo, 0);
+}
+
+void
+tdb_reaper(void *xtdbp)
+{
+	struct tdb *tdbp = xtdbp;
 
 	free(tdbp, M_TDB, 0);
 }
