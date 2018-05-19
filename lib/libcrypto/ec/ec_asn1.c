@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.26 2018/04/23 09:37:50 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.27 2018/05/19 10:37:02 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1586,7 +1586,7 @@ o2i_ECPublicKey(EC_KEY ** a, const unsigned char **in, long len)
 }
 
 int 
-i2o_ECPublicKey(EC_KEY * a, unsigned char **out)
+i2o_ECPublicKey(const EC_KEY * a, unsigned char **out)
 {
 	size_t buf_len = 0;
 	int new_buffer = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.29 2018/05/18 19:34:37 tb Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.30 2018/05/19 10:37:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -150,7 +150,7 @@ X509V3_add_value_bool_nf(const char *name, int asn1_bool,
 
 
 char *
-i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *a)
+i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
 {
 	BIGNUM *bntmp = NULL;
 	char *strtmp = NULL;
@@ -165,7 +165,7 @@ i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *a)
 }
 
 char *
-i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, ASN1_INTEGER *a)
+i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
 {
 	BIGNUM *bntmp = NULL;
 	char *strtmp = NULL;

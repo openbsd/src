@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_skey.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_skey.c,v 1.16 2018/05/19 10:37:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -83,13 +83,14 @@ const X509V3_EXT_METHOD v3_skey_id = {
 };
 
 char *
-i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *oct)
+i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, const ASN1_OCTET_STRING *oct)
 {
 	return hex_to_string(oct->data, oct->length);
 }
 
 ASN1_OCTET_STRING *
-s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str)
+s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+    const char *str)
 {
 	ASN1_OCTET_STRING *oct;
 	long length;
