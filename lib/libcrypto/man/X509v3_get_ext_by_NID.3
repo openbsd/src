@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509v3_get_ext_by_NID.3,v 1.8 2018/05/13 14:13:08 schwarze Exp $
+.\"	$OpenBSD: X509v3_get_ext_by_NID.3,v 1.9 2018/05/19 22:37:10 schwarze Exp $
 .\"	OpenSSL c952780c Jun 21 07:03:34 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 13 2018 $
+.Dd $Mdocdate: May 19 2018 $
 .Dt X509V3_GET_EXT_BY_NID 3
 .Os
 .Sh NAME
@@ -123,28 +123,28 @@
 .Fc
 .Ft int
 .Fo X509_get_ext_count
-.Fa "X509 *x"
+.Fa "const X509 *x"
 .Fc
 .Ft X509_EXTENSION *
 .Fo X509_get_ext
-.Fa "X509 *x"
+.Fa "const X509 *x"
 .Fa "int loc"
 .Fc
 .Ft int
 .Fo X509_get_ext_by_NID
-.Fa "X509 *x"
+.Fa "const X509 *x"
 .Fa "int nid"
 .Fa "int lastpos"
 .Fc
 .Ft int
 .Fo X509_get_ext_by_OBJ
-.Fa "X509 *x"
-.Fa "ASN1_OBJECT *obj"
+.Fa "const X509 *x"
+.Fa "const ASN1_OBJECT *obj"
 .Fa "int lastpos"
 .Fc
 .Ft int
 .Fo X509_get_ext_by_critical
-.Fa "X509 *x"
+.Fa "const X509 *x"
 .Fa "int crit"
 .Fa "int lastpos"
 .Fc
@@ -199,28 +199,28 @@
 .Fc
 .Ft int
 .Fo X509_REVOKED_get_ext_count
-.Fa "X509_REVOKED *x"
+.Fa "const X509_REVOKED *x"
 .Fc
 .Ft X509_EXTENSION *
 .Fo X509_REVOKED_get_ext
-.Fa "X509_REVOKED *x"
+.Fa "const X509_REVOKED *x"
 .Fa "int loc"
 .Fc
 .Ft int
 .Fo X509_REVOKED_get_ext_by_NID
-.Fa "X509_REVOKED *x"
+.Fa "const X509_REVOKED *x"
 .Fa "int nid"
 .Fa "int lastpos"
 .Fc
 .Ft int
 .Fo X509_REVOKED_get_ext_by_OBJ
-.Fa "X509_REVOKED *x"
-.Fa "ASN1_OBJECT *obj"
+.Fa "const X509_REVOKED *x"
+.Fa "const ASN1_OBJECT *obj"
 .Fa "int lastpos"
 .Fc
 .Ft int
 .Fo X509_REVOKED_get_ext_by_critical
-.Fa "X509_REVOKED *x"
+.Fa "const X509_REVOKED *x"
 .Fa "int crit"
 .Fa "int lastpos"
 .Fc
