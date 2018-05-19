@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2018/05/19 10:50:57 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.21 2018/05/19 16:27:07 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used to distribute the configuration.
@@ -139,7 +139,7 @@ ECO_BUNDLE_TUNNEL6_IPV6 ?=	${PREFIX_IPV6}8f::72
 # ssh to log in.
 #
 # IPS and ECO need inetd echo service on TRANSP and TUNNEL addresses.
-# Run make create-setup to copy hostname.if files to the machines
+# Run make create-setup to copy hostname.if files to the machines.
 # Run make check-setup to see if you got the setup correct.
 
 SRC_OUT_IF ?=	tap4
@@ -192,7 +192,7 @@ addr.py: Makefile
 .endfor
 	mv $@.tmp $@
 
-# load the ipsec sa and flow into the kernel of the SRC and IPS machine
+# Load the ipsec sa and flow into the kernel of the SRC and IPS machine.
 stamp-ipsec: addr.py ipsec.conf
 	@echo '\n======== $@ ========'
 	cat addr.py ${.CURDIR}/ipsec.conf | ipsecctl -n -f -
@@ -203,7 +203,7 @@ stamp-ipsec: addr.py ipsec.conf
 	    -f - -D FROM=to -D TO=from -D LOCAL=peer -D PEER=local
 	@date >$@
 
-# load a pf log enc0 pass any rule into the kernel of the IPS machine
+# Load a pf log enc0 pass any rule into the kernel of the IPS machine.
 stamp-pfctl: addr.py pf.conf
 	@echo '\n======== $@ ========'
 	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
@@ -213,7 +213,7 @@ stamp-pfctl: addr.py pf.conf
 
 DUMPCMD=	tcpdump -l -e -vvv -s 2048 -ni
 
-# run tcpdump on enc device of IPS machine
+# Run tcpdump on enc device of IPS machine.
 stamp-bpf: Makefile stamp-drop
 	@echo '\n======== $@ ========'
 	rm -f enc0.tcpdump
@@ -223,7 +223,7 @@ stamp-bpf: Makefile stamp-drop
 	rm -f stamp-stop
 	@date >$@
 
-# run tcpdump on pflog device of IPS machine
+# Run tcpdump on pflog device of IPS machine.
 stamp-pflog: stamp-pfctl stamp-drop
 	@echo '\n======== $@ ========'
 	rm -f pflog0.tcpdump
@@ -275,14 +275,14 @@ run-regress-pflog-ping-IPS_AH_TRANSP_IPV4 \
 
 .for host dir in SRC OUT IPS IN IPS OUT RT IN RT OUT ECO IN
 .for ping ipv in ping IPV4 ping6 IPV6
-TARGETS +=      ping-${host}_${dir}_${ipv}
+TARGETS +=	ping-${host}_${dir}_${ipv}
 run-regress-send-ping-${host}_${dir}_${ipv}:
 	@echo '\n======== $@ ========'
 	${ping} -n -c 1 -w 2 ${${host}_${dir}_${ipv}}
 .endfor
 .endfor
 
-# send IPsec packets from SRC to IPS and expect response
+# Send IPsec packets from SRC to IPS and expect response.
 
 .for sec in ESP AH IPIP IPCOMP BUNDLE
 
@@ -292,7 +292,7 @@ run-regress-send-ping-${host}_${dir}_${ipv}:
 .for ping ipv in ping IPV4 ping6 IPV6
 .for len size in small -s24 big -s1000
 
-TARGETS +=      ping-${len}-${host}_${sec}_${mode}_${ipv}
+TARGETS +=	ping-${len}-${host}_${sec}_${mode}_${ipv}
 ping ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
     run-regress-send-ping-${len}-${host}_${sec}_${mode}_${ipv}
 run-regress-send-ping-${len}-${host}_${sec}_${mode}_${ipv}:
@@ -326,7 +326,7 @@ run-regress-send-ping-${len}-${host}_${sec}_${mode}_${ipv}:
     ECO TUNNEL4 ECO TUNNEL6
 .for ipv in IPV4 IPV6
 
-TARGETS +=      udp-${host}_${sec}_${mode}_${ipv}
+TARGETS +=	udp-${host}_${sec}_${mode}_${ipv}
 udp ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
     run-regress-send-udp-${host}_${sec}_${mode}_${ipv}
 run-regress-send-udp-${host}_${sec}_${mode}_${ipv}:
@@ -353,7 +353,7 @@ run-regress-send-udp-${host}_${sec}_${mode}_${ipv}:
 	    diff pkt.out -
 .endif
 
-TARGETS +=      tcp-${host}_${sec}_${mode}_${ipv}
+TARGETS +=	tcp-${host}_${sec}_${mode}_${ipv}
 tcp ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
     run-regress-send-tcp-${host}_${sec}_${mode}_${ipv}
 run-regress-send-tcp-${host}_${sec}_${mode}_${ipv}:
@@ -366,7 +366,7 @@ run-regress-send-tcp-${host}_${sec}_${mode}_${ipv}:
 
 # Deactivate for now until the raw IP reflector can be build and
 # started reliably on remote machine.  Manually run make nonxt.
-# XXX TARGETS +=      nonxt-${host}_${sec}_${mode}_${ipv}
+# XXX TARGETS +=	nonxt-${host}_${sec}_${mode}_${ipv}
 nonxt ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
     run-regress-send-nonxt-${host}_${sec}_${mode}_${ipv}
 run-regress-send-nonxt-${host}_${sec}_${mode}_${ipv}: nonxt-sendrecv
@@ -399,7 +399,7 @@ run-regress-send-nonxt-${host}_${sec}_${mode}_${ipv}: nonxt-sendrecv
 
 .endfor
 
-# Check bpf has dumped all IPsec packets to enc0 on IPS
+# Check bpf has dumped all IPsec packets to enc0 on IPS.
 
 REGEX_ESP=	\(authentic,confidential\): SPI 0x[0-9a-f]*:
 REGEX_AH=	\(authentic\): SPI 0x[0-9a-f]*:
@@ -492,11 +492,13 @@ ${REGRESS_TARGETS:Mrun-regress-send-*}: \
 
 CLEANFILES +=	addr.py *.pyc *.log stamp-* */hostname.* *.{in,out} *.tcpdump
 
-# create hostname.if files, copy them to the machines and install addresses
+# Run make create-setup to configure remote machines for test.
 
 .PHONY: create-setup
 
-create-setup: stamp-hostname
+create-setup: stamp-hostname stamp-inetd
+
+# Create hostname.if files, copy them to the machines and install addresses.
 
 etc/hostname.${SRC_OUT_IF}: Makefile
 	@echo '\n======== $@ ========'
@@ -727,9 +729,43 @@ stamp-hostname: etc/hostname.${SRC_OUT_IF} \
 .endfor
 	date >$@
 
-.PHONY: check-setup
+# Create inetd.conf files, copy them to the machines and start inetd.
 
-# Check whether the address, route and remote setup is correct
+.for host in IPS ECO
+${${host}_SSH}/inetd.conf: Makefile
+	@echo '\n======== $@ ========'
+	mkdir -p ${@:H}
+	rm -f $@ $@.tmp
+	echo '### regress ipsec $@' >$@.tmp
+	echo echo stream tcp nowait root internal >>$@.tmp
+	echo echo stream tcp6 nowait root internal >>$@.tmp
+.for sec in ESP AH IPIP IPCOMP BUNDLE
+.for mode in TRANSP TUNNEL4 TUNNEL6
+.if ! empty(${host}_${sec}_${mode}_IPV4)
+	echo '${${host}_${sec}_${mode}_IPV4}:echo'\
+	    dgram udp wait root internal >>$@.tmp
+	echo '[${${host}_${sec}_${mode}_IPV6}]:echo'\
+	    dgram udp6 wait root internal >>$@.tmp
+.endif
+.endfor
+.endfor
+	mv $@.tmp $@
+.endfor
+
+stamp-inetd: ${IPS_SSH}/inetd.conf ${ECO_SSH}/inetd.conf
+	@echo '\n======== $@ ========'
+.for host in IPS ECO
+	ssh root@${${host}_SSH} "umask 022;\
+	    { sed '/^### regress/,\$$d' /etc/inetd.conf && cat; }\
+	    >/etc/inetd.conf.tmp" <${${host}_SSH}/inetd.conf
+	ssh root@${${host}_SSH} "mv /etc/inetd.conf.tmp /etc/inetd.conf &&\
+	    rcctl enable inetd && rcctl restart inetd"
+.endfor
+	date >$@
+
+# Check whether the address, route and remote setup is correct.
+
+.PHONY: check-setup
 
 check-setup: check-setup-src check-setup-ips check-setup-rt check-setup-eco
 
