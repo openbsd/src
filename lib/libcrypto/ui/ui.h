@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.h,v 1.9 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: ui.h,v 1.10 2018/05/19 11:03:33 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -304,7 +304,7 @@ enum UI_string_types {
 };
 
 /* Create and manipulate methods */
-UI_METHOD *UI_create_method(char *name);
+UI_METHOD *UI_create_method(const char *name);
 void UI_destroy_method(UI_METHOD *ui_method);
 int UI_method_set_opener(UI_METHOD *method, int (*opener)(UI *ui));
 int UI_method_set_writer(UI_METHOD *method, int (*writer)(UI *ui, UI_STRING *uis));
