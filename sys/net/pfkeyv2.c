@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.179 2018/05/16 13:19:00 reyk Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.180 2018/05/19 20:04:55 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -381,12 +381,15 @@ pfkey_sendup(struct keycb *kp, struct mbuf *m0, int more)
 	} else
 		m = m0;
 
+	KERNEL_LOCK();
 	if (!sbappendaddr(so, &so->so_rcv, &pfkey_addr, m, NULL)) {
 		m_freem(m);
+		KERNEL_UNLOCK();
 		return (ENOBUFS);
 	}
 
 	sorwakeup(so);
+	KERNEL_UNLOCK();
 	return (0);
 }
 
