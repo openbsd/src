@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_NAME_get_index_by_NID.3,v 1.8 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: X509_NAME_get_index_by_NID.3,v 1.9 2018/05/19 21:48:19 schwarze Exp $
 .\"	OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: May 19 2018 $
 .Dt X509_NAME_GET_INDEX_BY_NID 3
 .Os
 .Sh NAME
@@ -71,16 +71,16 @@
 .Ft int
 .Fo X509_NAME_get_index_by_OBJ
 .Fa "X509_NAME *name"
-.Fa "ASN1_OBJECT *obj"
+.Fa "const ASN1_OBJECT *obj"
 .Fa "int lastpos"
 .Fc
 .Ft int
 .Fo X509_NAME_entry_count
-.Fa "X509_NAME *name"
+.Fa "const X509_NAME *name"
 .Fc
 .Ft X509_NAME_ENTRY *
 .Fo X509_NAME_get_entry
-.Fa "X509_NAME *name"
+.Fa "const X509_NAME *name"
 .Fa "int loc"
 .Fc
 .Ft int
@@ -93,7 +93,7 @@
 .Ft int
 .Fo X509_NAME_get_text_by_OBJ
 .Fa "X509_NAME *name"
-.Fa "ASN1_OBJECT *obj"
+.Fa "const ASN1_OBJECT *obj"
 .Fa "char *buf"
 .Fa "int len"
 .Fc
