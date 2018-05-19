@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.30 2018/05/13 15:51:29 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.31 2018/05/19 14:17:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2073,24 +2073,30 @@ ssl3_get_client_kex_ecdhe(SSL *s, unsigned char *p, long n)
 static int
 ssl3_get_client_kex_gost(SSL *s, unsigned char *p, long n)
 {
-
 	EVP_PKEY_CTX *pkey_ctx;
 	EVP_PKEY *client_pub_pkey = NULL, *pk = NULL;
-	unsigned char premaster_secret[32], *start;
-	size_t outlen = 32, inlen;
+	unsigned char premaster_secret[32];
 	unsigned long alg_a;
-	int Ttag, Tclass;
-	long Tlen;
+	size_t outlen = 32;
+	CBS cbs, gostblob;
 	int al;
 	int ret = 0;
+
+	if (n < 0)
+		goto err;
+
+	CBS_init(&cbs, p, n);
 
 	/* Get our certificate private key*/
 	alg_a = S3I(s)->hs.new_cipher->algorithm_auth;
 	if (alg_a & SSL_aGOST01)
 		pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
 
-	pkey_ctx = EVP_PKEY_CTX_new(pk, NULL);
-	EVP_PKEY_decrypt_init(pkey_ctx);
+	if ((pkey_ctx = EVP_PKEY_CTX_new(pk, NULL)) == NULL)
+		goto err;
+	if (EVP_PKEY_decrypt_init(pkey_ctx) <= 0)
+		goto gerr;
+
 	/*
 	 * If client certificate is present and is of the same type,
 	 * maybe use it for key exchange.
@@ -2098,32 +2104,28 @@ ssl3_get_client_kex_gost(SSL *s, unsigned char *p, long n)
 	 * it is completely valid to use a client certificate for
 	 * authorization only.
 	 */
-	client_pub_pkey = X509_get_pubkey(s->session->peer);
-	if (client_pub_pkey) {
+	if ((client_pub_pkey = X509_get_pubkey(s->session->peer)) != NULL) {
 		if (EVP_PKEY_derive_set_peer(pkey_ctx,
 		    client_pub_pkey) <= 0)
 			ERR_clear_error();
 	}
-	if (2 > n)
-		goto truncated;
+
 	/* Decrypt session key */
-	if (ASN1_get_object((const unsigned char **)&p, &Tlen, &Ttag,
-	    &Tclass, n) != V_ASN1_CONSTRUCTED ||
-	    Ttag != V_ASN1_SEQUENCE || Tclass != V_ASN1_UNIVERSAL) {
-		SSLerror(s, SSL_R_DECRYPTION_FAILED);
-		goto gerr;
-	}
-	start = p;
-	inlen = Tlen;
+	if (!CBS_get_asn1(&cbs, &gostblob, CBS_ASN1_SEQUENCE))
+		goto truncated;
+	if (CBS_len(&cbs) != 0)
+		goto truncated;
 	if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen,
-	    start, inlen) <=0) {
+	    CBS_data(&gostblob), CBS_len(&gostblob)) <= 0) {
 		SSLerror(s, SSL_R_DECRYPTION_FAILED);
 		goto gerr;
 	}
+
 	/* Generate master secret */
 	s->session->master_key_length =
 	    tls1_generate_master_secret(
 		s, s->session->master_key, premaster_secret, 32);
+
 	/* Check if pubkey from client certificate was used */
 	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1,
 	    EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0)
