@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.30 2018/05/19 10:37:02 tb Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.31 2018/05/19 10:50:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -230,7 +230,7 @@ s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
 }
 
 int
-X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
+X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
     STACK_OF(CONF_VALUE) **extlist)
 {
 	char *strtmp;

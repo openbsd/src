@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.29 2018/05/19 10:41:53 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.30 2018/05/19 10:50:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -744,7 +744,7 @@ int X509V3_add_value_uchar(const char *name, const unsigned char *value,
 						STACK_OF(CONF_VALUE) **extlist);
 int X509V3_add_value_bool(const char *name, int asn1_bool,
 						STACK_OF(CONF_VALUE) **extlist);
-int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
+int X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
 						STACK_OF(CONF_VALUE) **extlist);
 char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *meth, const ASN1_INTEGER *aint);
 ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *meth, const char *value);
