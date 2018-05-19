@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.11 2018/05/18 08:40:11 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.12 2018/05/19 10:43:10 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -83,6 +83,11 @@ struct bwfm_sdio_softc {
 	int			  sc_clkstate;
 	int			  sc_alp_only;
 	int			  sc_sr_enabled;
+	uint32_t		  sc_console_addr;
+
+	char			 *sc_console_buf;
+	size_t			  sc_console_buf_size;
+	uint32_t		  sc_console_readidx;
 
 	struct bwfm_core	 *sc_cc;
 
@@ -107,6 +112,7 @@ int		 bwfm_sdio_load_microcode(struct bwfm_sdio_softc *,
 void		 bwfm_sdio_clkctl(struct bwfm_sdio_softc *,
 		    enum bwfm_sdio_clkstate, int);
 void		 bwfm_sdio_htclk(struct bwfm_sdio_softc *, int, int);
+void		 bwfm_sdio_readshared(struct bwfm_sdio_softc *);
 
 void		 bwfm_sdio_backplane(struct bwfm_sdio_softc *, uint32_t);
 uint8_t		 bwfm_sdio_read_1(struct bwfm_sdio_softc *, uint32_t);
@@ -145,6 +151,10 @@ void		 bwfm_sdio_rx_glom(struct bwfm_sdio_softc *, uint16_t *, int,
 int		 bwfm_sdio_txcheck(struct bwfm_softc *);
 int		 bwfm_sdio_txdata(struct bwfm_softc *, struct mbuf *);
 int		 bwfm_sdio_txctl(struct bwfm_softc *);
+
+#ifdef BWFM_DEBUG
+void		 bwfm_sdio_debug_console(struct bwfm_sdio_softc *);
+#endif
 
 struct bwfm_bus_ops bwfm_sdio_bus_ops = {
 	.bs_init = NULL,
@@ -548,6 +558,35 @@ bwfm_sdio_htclk(struct bwfm_sdio_softc *sc, int on, int pendok)
 	}
 }
 
+void
+bwfm_sdio_readshared(struct bwfm_sdio_softc *sc)
+{
+	struct bwfm_softc *bwfm = (void *)sc;
+	struct bwfm_sdio_sdpcm sdpcm;
+	uint32_t addr, shaddr;
+	int err;
+
+	shaddr = bwfm->sc_chip.ch_rambase + bwfm->sc_chip.ch_ramsize - 4;
+	if (!bwfm->sc_chip.ch_rambase && bwfm_chip_sr_capable(bwfm))
+		shaddr -= bwfm->sc_chip.ch_srsize;
+
+	err = bwfm_sdio_ram_read_write(sc, shaddr, (char *)&addr,
+	    sizeof(addr), 0);
+	if (err)
+		return;
+
+	addr = letoh32(addr);
+	if (addr == 0 || ((~addr >> 16) & 0xffff) == (addr & 0xffff))
+		return;
+
+	err = bwfm_sdio_ram_read_write(sc, addr, (char *)&sdpcm,
+	    sizeof(sdpcm), 0);
+	if (err)
+		return;
+
+	sc->sc_console_addr = letoh32(sdpcm.console_addr);
+}
+
 int
 bwfm_sdio_intr(void *v)
 {
@@ -586,6 +625,9 @@ bwfm_sdio_task(void *v)
 		    SDPCMD_TOSBMAILBOX_INT_ACK);
 		if (hostint & SDPCMD_TOHOSTMAILBOXDATA_NAKHANDLED)
 			intstat |= SDPCMD_INTSTATUS_HMB_FRAME_IND;
+		if (hostint & SDPCMD_TOHOSTMAILBOXDATA_DEVREADY ||
+		    hostint & SDPCMD_TOHOSTMAILBOXDATA_FWREADY)
+			bwfm_sdio_readshared(sc);
 	}
 
 	/* FIXME: Might stall if we don't when not set. */
@@ -600,6 +642,10 @@ bwfm_sdio_task(void *v)
 	if (!mq_empty(&sc->sc_txdata_queue)) {
 		bwfm_sdio_tx_dataframe(sc);
 	}
+
+#ifdef BWFM_DEBUG
+	bwfm_sdio_debug_console(sc);
+#endif
 
 	rw_exit(sc->sc_lock);
 }
@@ -1267,3 +1313,52 @@ bwfm_sdio_txctl(struct bwfm_softc *bwfm)
 	task_add(systq, &sc->sc_task);
 	return 0;
 }
+
+#ifdef BWFM_DEBUG
+void
+bwfm_sdio_debug_console(struct bwfm_sdio_softc *sc)
+{
+	struct bwfm_sdio_console c;
+	uint32_t newidx;
+	int err;
+
+	if (!sc->sc_console_addr)
+		return;
+
+	err = bwfm_sdio_ram_read_write(sc, sc->sc_console_addr,
+	    (char *)&c, sizeof(c), 0);
+	if (err)
+		return;
+
+	c.log_buf = letoh32(c.log_buf);
+	c.log_bufsz = letoh32(c.log_bufsz);
+	c.log_idx = letoh32(c.log_idx);
+
+	if (sc->sc_console_buf == NULL) {
+		sc->sc_console_buf = malloc(c.log_bufsz, M_DEVBUF,
+		    M_WAITOK|M_ZERO);
+		sc->sc_console_buf_size = c.log_bufsz;
+	}
+
+	newidx = c.log_idx;
+	if (newidx >= sc->sc_console_buf_size)
+		return;
+
+	err = bwfm_sdio_ram_read_write(sc, c.log_buf, sc->sc_console_buf,
+	    sc->sc_console_buf_size, 0);
+	if (err)
+		return;
+
+	if (newidx != sc->sc_console_readidx)
+		DPRINTFN(3, ("BWFM CONSOLE: "));
+	while (newidx != sc->sc_console_readidx) {
+		uint8_t ch = sc->sc_console_buf[sc->sc_console_readidx];
+		sc->sc_console_readidx++;
+		if (sc->sc_console_readidx == sc->sc_console_buf_size)
+			sc->sc_console_readidx = 0;
+		if (ch == '\r')
+			continue;
+		DPRINTFN(3, ("%c", ch));
+	}
+}
+#endif

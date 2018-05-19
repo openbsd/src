@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_sdio.h,v 1.1 2018/02/07 21:44:09 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_sdio.h,v 1.2 2018/05/19 10:43:10 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -175,4 +175,24 @@ struct bwfm_sdio_swhdr {
 	uint8_t flowctl;
 	uint8_t maxseqnr;
 	uint16_t res0;
+};
+
+struct bwfm_sdio_sdpcm {
+	uint32_t flags;
+	uint32_t trap_addr;
+	uint32_t assert_exp_addr;
+	uint32_t assert_file_addr;
+	uint32_t assert_line;
+	uint32_t console_addr;
+	uint32_t msgtrace_addr;
+	uint8_t tag[32];
+	uint32_t brpt_addr;
+};
+
+struct bwfm_sdio_console {
+	uint32_t vcons_in;
+	uint32_t vcons_out;
+	uint32_t log_buf;
+	uint32_t log_bufsz;
+	uint32_t log_idx;
 };
