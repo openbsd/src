@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.28 2018/05/19 10:37:02 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.29 2018/05/19 10:41:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -761,7 +761,8 @@ const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid);
 int X509V3_add_standard_extensions(void);
 STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line);
 void *X509V3_EXT_d2i(X509_EXTENSION *ext);
-void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx);
+void *X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
+    int *idx);
 
 
 X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc);
@@ -776,7 +777,8 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
 int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int indent);
 int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
 
-int X509V3_extensions_print(BIO *out, char *title, STACK_OF(X509_EXTENSION) *exts, unsigned long flag, int indent);
+int X509V3_extensions_print(BIO *out, const char *title,
+    const STACK_OF(X509_EXTENSION) *exts, unsigned long flag, int indent);
 
 int X509_check_ca(X509 *x);
 int X509_check_purpose(X509 *x, int id, int ca);

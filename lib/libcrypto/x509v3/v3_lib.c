@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_lib.c,v 1.17 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_lib.c,v 1.18 2018/05/19 10:41:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -227,7 +227,7 @@ X509V3_EXT_d2i(X509_EXTENSION *ext)
  */
 
 void *
-X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
+X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 {
 	int lastpos, i;
 	X509_EXTENSION *ex, *found_ex = NULL;
