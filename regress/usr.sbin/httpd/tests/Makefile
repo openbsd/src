@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2017/11/10 23:29:09 naddy Exp $
+#	$OpenBSD: Makefile,v 1.10 2018/05/19 13:57:43 jsing Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -77,10 +77,16 @@ ca.crt:
 server.req:
 	openssl req -batch -new -subj /L=OpenBSD/O=httpd-regress/OU=server/CN=localhost/ -nodes -newkey rsa -keyout server.key -out server.req
 
+client.req:
+	openssl req -batch -new -subj /L=OpenBSD/O=httpd-regress/OU=client/CN=localhost/ -nodes -newkey rsa -keyout client.key -out $@
+
 server.crt: ca.crt server.req
 	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt -req -in server.req -out server.crt
 
-${REGRESS_TARGETS:M*tls*} ${REGRESS_TARGETS:M*https*}: server.crt
+client.crt: ca.crt client.req
+	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt -req -in client.req -out $@
+
+${REGRESS_TARGETS:M*tls*} ${REGRESS_TARGETS:M*https*}: server.crt client.crt
 
 # make perl syntax check for all args files
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Httpd.pm,v 1.2 2017/01/30 21:18:24 reyk Exp $
+#	$OpenBSD: Httpd.pm,v 1.3 2018/05/19 13:57:43 jsing Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -72,6 +72,8 @@ sub new {
 	    print $fh "\n";
 	    print $fh "\ttls certificate \"".$args{chroot}."/server.crt\"\n";
 	    print $fh "\ttls key \"".$args{chroot}."/server.key\"";
+	    $self->{verifytls}
+		and print $fh "\n\ttls client ca \"".$args{chroot}."/ca.crt\"";
 	}
 	print $fh "\n\troot \"/\"";
 	print $fh "\n\tlog style combined";
