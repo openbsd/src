@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.93 2018/05/18 15:04:07 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.94 2018/05/19 13:56:56 jsing Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 18 2018 $
+.Dd $Mdocdate: May 19 2018 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -342,6 +342,10 @@ The revision of the HTTP specification used.
 .It Ic SERVER_SOFTWARE
 The server software name of
 .Xr httpd 8 .
+.It Ic TLS_PEER_VERIFY
+A variable that is set to a comma separated list of TLS client verification
+features in use
+.Pq omitted when TLS client verification is not in use .
 .El
 .It Ic hsts Oo Ar option Oc
 Enable HTTP Strict Transport Security.
@@ -526,6 +530,23 @@ will be used (strong crypto cipher suites without anonymous DH).
 See the CIPHERS section of
 .Xr openssl 1
 for information about SSL/TLS cipher suites and preference lists.
+.It Ic client ca Ar cafile Oo Ic crl Ar crlfile Oc Op Ic optional
+Require
+.Po
+or, if
+.Ic optional
+is specified, request but do not require
+.Pc
+TLS client certificates whose authenticity can be verified
+against the CA certificate(s) in
+.Ar cafile
+in order to proceed beyond the TLS handshake.
+With
+.Ic crl
+specified, additionally require that no certificate in the client chain be
+listed as revoked in the CRL(s) in
+.Ar crlfile .
+CA certificates and CRLs should be PEM encoded.
 .It Ic dhe Ar params
 Specify the DHE parameters to use for DHE cipher suites.
 Valid parameter values are none, legacy and auto.

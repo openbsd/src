@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.136 2018/04/11 15:50:46 florian Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.137 2018/05/19 13:56:56 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -424,6 +424,11 @@ SPLAY_HEAD(client_tree, client);
 #define HSTSFLAG_PRELOAD	0x02
 #define HSTSFLAG_BITS		"\10\01SUBDOMAINS\02PRELOAD"
 
+#define TLSFLAG_CA		0x01
+#define TLSFLAG_CRL		0x02
+#define TLSFLAG_OPTIONAL	0x04
+#define TLSFLAG_BITS		"\10\01CA\02CRL\03OPTIONAL"
+
 enum log_format {
 	LOG_FORMAT_COMMON,
 	LOG_FORMAT_COMBINED,
@@ -480,12 +485,19 @@ struct server_config {
 	uint32_t		 maxrequests;
 	size_t			 maxrequestbody;
 
+	uint8_t			*tls_ca;
+	char			*tls_ca_file;
+	size_t			 tls_ca_len;
 	uint8_t			*tls_cert;
 	size_t			 tls_cert_len;
 	char			*tls_cert_file;
 	char			 tls_ciphers[HTTPD_TLS_CONFIG_MAX];
+	uint8_t			*tls_crl;
+	char			*tls_crl_file;
+	size_t			 tls_crl_len;
 	char			 tls_dhe_params[HTTPD_TLS_CONFIG_MAX];
 	char			 tls_ecdhe_curves[HTTPD_TLS_CONFIG_MAX];
+	uint8_t			 tls_flags;
 	uint8_t			*tls_key;
 	size_t			 tls_key_len;
 	char			*tls_key_file;
@@ -524,7 +536,9 @@ struct server_config {
 TAILQ_HEAD(serverhosts, server_config);
 
 enum tls_config_type {
+	TLS_CFG_CA,
 	TLS_CFG_CERT,
+	TLS_CFG_CRL,
 	TLS_CFG_KEY,
 	TLS_CFG_OCSP_STAPLE,
 };
@@ -598,6 +612,8 @@ int	 cmdline_symset(char *);
 /* server.c */
 void	 server(struct privsep *, struct privsep_proc *);
 int	 server_tls_cmp(struct server *, struct server *, int);
+int	 server_tls_load_ca(struct server *);
+int	 server_tls_load_crl(struct server *);
 int	 server_tls_load_keypair(struct server *);
 int	 server_tls_load_ocsp(struct server *);
 void	 server_generate_ticket_key(struct server_config *);

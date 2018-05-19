@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.97 2018/05/18 15:20:46 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.98 2018/05/19 13:56:56 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -135,6 +135,7 @@ typedef struct {
 %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
 %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
 %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS
+%token	CA CLIENT CRL OPTIONAL
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
@@ -346,6 +347,22 @@ server		: SERVER optmatch STRING	{
 				YYERROR;
 			}
 
+			if (server_tls_load_ca(srv) == -1) {
+				yyerror("server \"%s\": failed to load "
+				    "ca cert(s)", srv->srv_conf.name);
+				serverconfig_free(srv_conf);
+				free(srv);
+				YYERROR;
+			}
+
+			if (server_tls_load_crl(srv) == -1) {
+				yyerror("server \"%s\": failed to load crl(s)",
+				    srv->srv_conf.name);
+				serverconfig_free(srv_conf);
+				free(srv);
+				YYERROR;
+			}
+
 			if (server_tls_load_ocsp(srv) == -1) {
 				yyerror("server \"%s\": failed to load "
 				    "ocsp staple", srv->srv_conf.name);
@@ -527,6 +544,7 @@ serveroptsl	: LISTEN ON STRING opttls port 		{
 			    sizeof(s->srv_conf.ss));
 			s->srv_conf.port = srv->srv_conf.port;
 			s->srv_conf.prefixlen = srv->srv_conf.prefixlen;
+			s->srv_conf.tls_flags = srv->srv_conf.tls_flags;
 
 			if (last_server_id == INT_MAX) {
 				yyerror("too many servers/locations defined");
@@ -700,6 +718,13 @@ tlsopts		: CERTIFICATE STRING		{
 			}
 			free($2);
 		}
+		| CLIENT CA STRING tlsclientopt {
+			srv_conf->tls_flags |= TLSFLAG_CA;
+			free(srv_conf->tls_ca_file);
+			if ((srv_conf->tls_ca_file = strdup($3)) == NULL)
+				fatal("out of memory");
+			free($3);
+		}
 		| DHE STRING			{
 			if (strlcpy(srv_conf->tls_dhe_params, $2,
 			    sizeof(srv_conf->tls_dhe_params)) >=
@@ -748,6 +773,18 @@ tlsopts		: CERTIFICATE STRING		{
 		}
 		;
 
+tlsclientopt	: /* empty */
+		| tlsclientopt CRL STRING	{
+			srv_conf->tls_flags = TLSFLAG_CRL;
+			free(srv_conf->tls_crl_file);
+			if ((srv_conf->tls_crl_file = strdup($3)) == NULL)
+				fatal("out of memory");
+			free($3);
+		}
+		| tlsclientopt OPTIONAL		{
+			srv_conf->tls_flags |= TLSFLAG_OPTIONAL;
+		}
+		;
 root		: ROOT rootflags
 		| ROOT '{' optnl rootflags_l '}'
 		;
@@ -1180,12 +1217,15 @@ lookup(char *s)
 		{ "block",		BLOCK },
 		{ "body",		BODY },
 		{ "buffer",		BUFFER },
+		{ "ca",			CA },
 		{ "certificate",	CERTIFICATE },
 		{ "chroot",		CHROOT },
 		{ "ciphers",		CIPHERS },
+		{ "client",		CLIENT },
 		{ "combined",		COMBINED },
 		{ "common",		COMMON },
 		{ "connection",		CONNECTION },
+		{ "crl",		CRL },
 		{ "default",		DEFAULT },
 		{ "dhe",		DHE },
 		{ "directory",		DIRECTORY },
@@ -1210,6 +1250,7 @@ lookup(char *s)
 		{ "nodelay",		NODELAY },
 		{ "ocsp",		OCSP },
 		{ "on",			ON },
+		{ "optional",		OPTIONAL },
 		{ "pass",		PASS },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
@@ -2040,6 +2081,21 @@ server_inherit(struct server *src, struct server_config *alias,
 		serverconfig_free(&dst->srv_conf);
 		free(dst);
 		return (NULL);
+	}
+
+	if (server_tls_load_ca(dst) == -1) {
+		yyerror("falied to load ca cert(s) for server %s",
+		    dst->srv_conf.name);
+		serverconfig_free(&dst->srv_conf);
+		return NULL;
+	}
+
+	if (server_tls_load_crl(dst) == -1) {
+		yyerror("failed to load crl(s) for server %s",
+		    dst->srv_conf.name);
+		serverconfig_free(&dst->srv_conf);
+		free(dst);
+		return NULL;
 	}
 
 	if (server_tls_load_ocsp(dst) == -1) {
