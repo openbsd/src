@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.343 2018/05/17 20:46:45 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.344 2018/05/20 09:12:35 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -861,6 +861,7 @@ acpi_gpio_event(void *arg)
 	struct acpi_gpio_event *ev = arg;
 
 	acpi_addtask(acpi_softc, acpi_gpio_event_task, ev->node, ev->pin);
+	acpi_wakeup(acpi_softc);
 	return 1;
 }
 
