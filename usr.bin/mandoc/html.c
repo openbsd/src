@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.95 2018/05/09 00:45:33 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.96 2018/05/20 23:54:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -187,6 +187,8 @@ print_gen_head(struct html *h)
 	print_text(h, "div.Pp { margin: 1ex 0ex; }");
 	print_endline(h);
 	print_text(h, "div.Nd, div.Bf, div.Op { display: inline; }");
+	print_endline(h);
+	print_text(h, "span.Pa { font-style: italic; }");
 	print_endline(h);
 	print_text(h, "dl.Bl-diag ");
 	print_byte(h, '>');

@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.13 2018/05/09 00:45:33 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.14 2018/05/20 23:54:15 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -171,7 +171,8 @@ code.Ic {	font-style: normal;
 code.Ev {	font-style: normal;
 		font-weight: normal;
 		font-family: monospace; }
-i.Pa {		font-weight: normal; }
+span.Pa {	font-style: italic;
+		font-weight: normal; }
 
 /* Semantic markup for function libraries. */
 
