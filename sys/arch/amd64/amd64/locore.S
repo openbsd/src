@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.95 2018/04/26 14:09:05 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.96 2018/05/20 18:14:01 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -562,7 +562,7 @@ NENTRY(Xsyscall_untramp)
 	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
 	movq	$(GSEL(GUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
 	movq	%rcx,TF_RIP(%rsp)
-	movq	$2,TF_ERR(%rsp)		/* ignored */
+	movq	%rax,TF_ERR(%rsp)	/* stash syscall # for SPL check */
 
 	movq	CPUVAR(CURPROC),%r14
 	movq	%rsp,P_MD_REGS(%r14)	# save pointer to frame
@@ -645,7 +645,7 @@ KUENTRY(syscall_trampback)
 #ifdef DIAGNOSTIC
 .Lsyscall_spl_not_lowered:
 	leaq	spl_lowered(%rip), %rdi
-	movl	TF_RAX(%rsp),%esi
+	movl	TF_ERR(%rsp),%esi	/* syscall # stashed above */
 	movl	TF_RDI(%rsp),%edx
 	movl	%ebx,%ecx
 	movl	CPUVAR(ILEVEL),%r8d
