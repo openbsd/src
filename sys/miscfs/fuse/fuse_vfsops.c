@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.36 2018/05/17 11:25:11 helg Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.37 2018/05/20 03:06:50 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -68,6 +68,8 @@ const struct vfsops fusefs_vfsops = {
 
 struct pool fusefs_fbuf_pool;
 
+#define PENDING 2	/* FBT_INIT reply not yet received */
+
 int
 fusefs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct proc *p)
@@ -98,7 +100,7 @@ fusefs_mount(struct mount *mp, const char *path, void *data,
 
 	fmp = malloc(sizeof(*fmp), M_FUSEFS, M_WAITOK | M_ZERO);
 	fmp->mp = mp;
-	fmp->sess_init = 0;
+	fmp->sess_init = PENDING;
 	fmp->dev = vp->v_rdev;
 	if (args->max_read > 0)
 		fmp->max_read = MIN(args->max_read, FUSEBUFMAXSIZE);
@@ -202,7 +204,24 @@ fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 
 	copy_statfs_info(sbp, mp);
 
-	if (fmp->sess_init) {
+	/*
+	 * Both FBT_INIT and FBT_STATFS are sent to the FUSE file system
+	 * daemon when it is mounted. However, the daemon is the process
+	 * that called mount(2) so to prevent a deadlock return dummy
+	 * values until the response to FBT_INIT init is received. All
+	 * other VFS syscalls are queued.
+	 */
+	if (!fmp->sess_init || fmp->sess_init == PENDING) {
+		sbp->f_bavail = 0;
+		sbp->f_bfree = 0;
+		sbp->f_blocks = 0;
+		sbp->f_ffree = 0;
+		sbp->f_favail = 0;
+		sbp->f_files = 0;
+		sbp->f_bsize = 0;
+		sbp->f_iosize = 0;
+		sbp->f_namemax = 0;
+	} else {
 		fbuf = fb_setup(0, FUSE_ROOTINO, FBT_STATFS, p);
 
 		error = fb_queue(fmp->dev, fbuf);
@@ -222,16 +241,6 @@ fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 		sbp->f_iosize = fbuf->fb_stat.f_bsize;
 		sbp->f_namemax = fbuf->fb_stat.f_namemax;
 		fb_delete(fbuf);
-	} else {
-		sbp->f_bavail = 0;
-		sbp->f_bfree = 0;
-		sbp->f_blocks = 0;
-		sbp->f_ffree = 0;
-		sbp->f_favail = 0;
-		sbp->f_files = 0;
-		sbp->f_bsize = 0;
-		sbp->f_iosize = 0;
-		sbp->f_namemax = 0;
 	}
 
 	return (0);
