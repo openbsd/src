@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.42 2017/11/17 09:52:18 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.43 2018/05/20 11:48:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -157,6 +157,7 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 		screen_set_title(&wp->base, pane_title);
 		server_status_window(wp->window);
 		free(pane_title);
+		return (CMD_RETURN_NORMAL);
 	}
 
 	if (wp == w->active)
