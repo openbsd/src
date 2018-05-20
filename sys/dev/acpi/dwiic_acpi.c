@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.5 2018/05/18 06:49:47 kettenis Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.6 2018/05/20 09:30:00 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -393,6 +393,7 @@ dwiic_acpi_found_hid(struct aml_node *node, void *arg)
 	ia.ia_tag = sc->sc_iba.iba_tag;
 	ia.ia_name = dev;
 	ia.ia_addr = crs.i2c_addr;
+	ia.ia_cookie = node->parent;
 
 	config_found(sc->sc_iic, &ia, dwiic_i2c_print);
 	node->parent->attached = 1;
