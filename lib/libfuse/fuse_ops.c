@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.30 2018/05/16 13:09:17 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.31 2018/05/20 02:51:26 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -409,6 +409,37 @@ ifuse_ops_release(struct fuse *f, struct fusebuf *fbuf)
 		return (0);
 	}
 	fbuf->fb_err = f->op.release(realname, &ffi);
+	free(realname);
+
+	return (0);
+}
+
+static int
+ifuse_ops_flush(struct fuse *f, struct fusebuf *fbuf)
+{
+	struct fuse_file_info ffi;
+	struct fuse_vnode *vn;
+	char *realname;
+
+	CHECK_OPT(flush);
+
+	memset(&ffi, 0, sizeof(ffi));
+	ffi.fh = fbuf->fb_io_fd;
+	ffi.fh_old = ffi.fh;
+	ffi.flush = 1;
+
+	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
+	if (vn == NULL) {
+		fbuf->fb_err = -errno;
+		return (0);
+	}
+
+	realname = build_realname(f, vn->ino);
+	if (realname == NULL) {
+		fbuf->fb_err = -errno;
+		return (0);
+	}
+	fbuf->fb_err = f->op.flush(realname, &ffi);
 	free(realname);
 
 	return (0);
@@ -1041,6 +1072,9 @@ ifuse_exec_opcode(struct fuse *f, struct fusebuf *fbuf)
 		break;
 	case FBT_RELEASE:
 		ret = ifuse_ops_release(f, fbuf);
+		break;
+	case FBT_FLUSH:
+		ret = ifuse_ops_flush(f, fbuf);
 		break;
 	case FBT_INIT:
 		ret = ifuse_ops_init(f);

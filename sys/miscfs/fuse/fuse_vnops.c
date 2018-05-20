@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.41 2018/05/17 11:25:11 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.42 2018/05/20 02:51:26 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -204,6 +204,16 @@ filt_fusefsvnode(struct knote *kn, long int hint)
 	return (kn->kn_fflags != 0);
 }
 
+/*
+ * FUSE file systems can maintain a file handle for each VFS file descriptor
+ * that is opened. The OpenBSD VFS does not make file descriptors visible to 
+ * us so we fake it by mapping open flags to file handles.
+ * There is no way for FUSE to know which file descriptor is being used
+ * by an application for a file operation. We only maintain 3 descriptors,
+ * one each for O_RDONLY, O_WRONLY and O_RDWR. When reading and writing, the
+ * first open descriptor is used and this may well not be the one that was set
+ * by FUSE open and may have even been opened by another application.
+ */
 int
 fusefs_open(void *v)
 {
@@ -228,7 +238,7 @@ fusefs_open(void *v)
 	else {
 		if ((ap->a_mode & FREAD) && (ap->a_mode & FWRITE))
 			fufh_type = FUFH_RDWR;
-		else if (ap->a_mode  & (FWRITE))
+		else if (ap->a_mode & (FWRITE))
 			fufh_type = FUFH_WRONLY;
 	}
 
@@ -252,8 +262,9 @@ fusefs_close(void *v)
 	struct vop_close_args *ap;
 	struct fusefs_node *ip;
 	struct fusefs_mnt *fmp;
+	struct fusebuf *fbuf;
 	enum fufh_type fufh_type = FUFH_RDONLY;
-	int isdir, i;
+	int error = 0;
 
 	ap = v;
 	ip = VTOI(ap->a_vp);
@@ -262,34 +273,42 @@ fusefs_close(void *v)
 	if (!fmp->sess_init)
 		return (0);
 
-	if (ap->a_vp->v_type == VDIR) {
-		isdir = 1;
-
-		if (ip->fufh[fufh_type].fh_type != FUFH_INVALID)
-			return (fusefs_file_close(fmp, ip, fufh_type, O_RDONLY,
-			    isdir, ap->a_p));
-	} else {
-		if (ap->a_fflag & IO_NDELAY)
-			return (0);
-
-		if ((ap->a_fflag & FREAD) && (ap->a_fflag & FWRITE))
-			fufh_type = FUFH_RDWR;
-		else if (ap->a_fflag  & (FWRITE))
-			fufh_type = FUFH_WRONLY;
-	}
-
 	/*
-	 * if fh not valid lookup for another valid fh in vnode.
-	 * Do we need panic if there's not a valid fh ?
+	 * The file or directory may have been opened more than once so there
+	 * is no reliable way to determine when to ask the FUSE daemon to
+	 * release its file descriptor. For files, ask the daemon to flush any
+	 * buffers to disk now. All open file descriptors will be released on
+	 * VOP_INACTIVE(9).
 	 */
-	if (ip->fufh[fufh_type].fh_type != FUFH_INVALID) {
-		for (i = 0; i < FUFH_MAXTYPE; i++)
-			if (ip->fufh[fufh_type].fh_type != FUFH_INVALID)
-				break;
-		return (0);
-	}
 
-	return (0);
+	if (ap->a_vp->v_type == VDIR)
+		return (0);
+
+	if ((ap->a_fflag & FREAD) && (ap->a_fflag & FWRITE))
+		fufh_type = FUFH_RDWR;
+	else if (ap->a_fflag & (FWRITE))
+		fufh_type = FUFH_WRONLY;
+
+	if (ip->fufh[fufh_type].fh_type == FUFH_INVALID)
+		return (EBADF);
+
+	/* No need to flush read-only file descriptors. */
+	if (!(ap->a_fflag & FWRITE))
+		return (0);
+
+	/* Implementing flush is optional. */
+	if (fmp->undef_op & UNDEF_FLUSH)
+		return (0);
+
+	fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_FLUSH, ap->a_p);
+	fbuf->fb_io_fd = ip->fufh[fufh_type].fh_id;
+	error = fb_queue(fmp->dev, fbuf);
+	if (error == ENOSYS)
+		fmp->undef_op |= UNDEF_FLUSH;
+
+	fb_delete(fbuf);
+
+	return (error);
 }
 
 int
@@ -754,30 +773,42 @@ fusefs_inactive(void *v)
 	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct proc *p = ap->a_p;
-	struct ucred *cred = p->p_ucred;
 	struct fusefs_node *ip = VTOI(vp);
 	struct fusefs_filehandle *fufh = NULL;
 	struct fusefs_mnt *fmp;
-	struct vattr vattr;
-	int error = 0;
-	int type;
+	int type, flags;
 
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
+	/* Close all open file handles. */
 	for (type = 0; type < FUFH_MAXTYPE; type++) {
 		fufh = &(ip->fufh[type]);
-		if (fufh->fh_type != FUFH_INVALID)
-			fusefs_file_close(fmp, ip, fufh->fh_type, type,
-			    (vp->v_type == VDIR), ap->a_p);
-	}
+		if (fufh->fh_type != FUFH_INVALID) {
 
-	error = VOP_GETATTR(vp, &vattr, cred, p);
+			/*
+			 * FUSE file systems expect the same flags to be sent
+			 * on release that were sent on open. We don't have a 
+			 * record of them so make a best guess.
+			 */
+			switch (type) {
+			case FUFH_RDONLY:
+				flags = O_RDONLY;
+				break;
+			case FUFH_WRONLY:
+				flags = O_WRONLY;
+				break;
+			default:
+				flags = O_RDWR;
+			}
+
+			fusefs_file_close(fmp, ip, fufh->fh_type, flags,
+			    (vp->v_type == VDIR), p);
+		}
+	}
 
 	VOP_UNLOCK(vp);
 
-	if (error)
-		vrecycle(vp, p);
-
+	/* Don't return error to prevent kernel panic in vclean(9). */
 	return (0);
 }
 
